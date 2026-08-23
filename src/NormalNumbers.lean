@@ -27,4 +27,5 @@ import NormalNumbers.CFWordBridge
 import NormalNumbers.TBrick
 import NormalNumbers.TBrickRefine
 import NormalNumbers.CFLimit
+import NormalNumbers.CFSchedule
 import NormalNumbers.Stoneham

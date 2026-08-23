@@ -471,16 +471,16 @@ theorem exists_good_avoiding_bad {t : ℕ} (B : TBrick t)
     (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a)
     (n kmin : ℕ) (hn : 0 < n) {δ ε : ℝ} (hδ : 0 < δ) (hε0 : 0 < ε)
     (hεt : (t : ℝ) * ε ≤ 1) (hpos : volume (cfCylinder B.w) ≠ 0)
+    {C : ℝ}
+    (hhalf : volume (cfCylinder B.w) ≤ 2 * volume (goodExtSet B.w C n))
     (hCF : 14 * (∑ v ∈ F, (8 * (v.length : ℝ) + 80)) / (δ ^ 2 * n) < 1 / 4)
     (hdary : (∑ d ∈ Finset.Icc 2 t,
         24 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε))
       < 1 / 4) :
-    ∃ C : ℝ, 0 < C ∧ ∃ x ∈ goodExtSet B.w C n, Irrational x ∧
+    ∃ x ∈ goodExtSet B.w C n, Irrational x ∧
       x ∉ (⋃ v ∈ F, cfBadZone B.w v n δ) ∪
         (⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
           ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k) := by
-  obtain ⟨C, hC, hhalf⟩ := exists_C_half_le_volume_goodExtSet
-  refine ⟨C, hC, ?_⟩
   -- finiteness of the base cylinder
   have hwfin : volume (cfCylinder B.w) ≠ ⊤ := by
     have h1 : volume (cfCylinder B.w) ≤ volume (Set.Ioo (0 : ℝ) 1) :=
@@ -525,7 +525,7 @@ theorem exists_good_avoiding_bad {t : ℕ} (B : TBrick t)
           rw [(Set.countable_range _).measure_zero, add_zero]
       _ ≤ _ := hB₂
   obtain ⟨x, hxG, hxB⟩ := exists_mem_notMem_union_of_bounds hpCF hqD
-    (by linarith) hpos hwfin (hhalf B.w B.hw_ne B.hw_pos n)
+    (by linarith) hpos hwfin hhalf
     (volume_iUnion_cfBadZone_le_vol B.w B.hw_pos F hF n hn hδ) hB₂'
   refine ⟨x, hxG, fun hrat => hxB (Or.inr (Or.inr hrat)), fun hmem => ?_⟩
   rcases hmem with h | h
@@ -575,25 +575,37 @@ theorem exists_N_cfCoeff_lt (SL : ℝ) (hSL : 0 ≤ SL) {δ : ℝ} (hδ : 0 < δ
   rw [div_lt_iff₀ (by positivity : (0 : ℝ) < δ ^ 2 * n)]
   linarith
 
-/-- **Lemma-13 measure core, unconditional for large `n`, `kmin`.** For a
-t-brick with a positive-measure base cylinder, there exist thresholds `N`,
-`kmin₀` beyond which a good-length order-`n` extension of `I_w` avoids both the
-CF discrepancy bad zone and the wide d-ary bad zone.  (The construction's
-schedule supplies `n`, `kmin` past these thresholds.) -/
-theorem exists_good_avoiding_bad_of_large {t : ℕ} (B : TBrick t)
+/-- A genuine cylinder has positive Lebesgue measure (discharges the `hpos`
+hypothesis of `exists_good_avoiding_bad*`). -/
+theorem volume_cfCylinder_ne_zero (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) : volume (cfCylinder w) ≠ 0 := by
+  rw [volume_cfCylinder w hw hpos]
+  have hK : (1 : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast one_le_cfK w hpos
+  have hK' : (0 : ℝ) ≤ (cfK w.dropLast : ℝ) := by positivity
+  exact (ENNReal.ofReal_pos.2 (by positivity)).ne'
+
+/-- **Lemma-13 measure core, unconditional for large `n`, `kmin`.** For every
+t-brick (uniformly), there exist thresholds `N`, `kmin₀` beyond which a
+good-length order-`n` extension of `I_w` avoids both the CF discrepancy bad
+zone and the wide d-ary bad zone.  (The construction's schedule supplies `n`,
+`kmin` past these thresholds; the thresholds depend only on `t, F, δ, ε`.) -/
+theorem exists_good_avoiding_bad_of_large (t : ℕ)
     (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ ε : ℝ}
     (hδ : 0 < δ) (hε0 : 0 < ε) (hεt : (t : ℝ) * ε ≤ 1)
-    (hpos : volume (cfCylinder B.w) ≠ 0) :
-    ∃ N kmin₀ : ℕ, ∀ n, N ≤ n → 0 < n → ∀ kmin ≥ kmin₀,
-      ∃ C : ℝ, 0 < C ∧ ∃ x ∈ goodExtSet B.w C n, Irrational x ∧
+    {C : ℝ}
+    (hhalf : ∀ (w : List ℕ), w ≠ [] → (∀ a ∈ w, 1 ≤ a) → ∀ n : ℕ,
+      volume (cfCylinder w) ≤ 2 * volume (goodExtSet w C n)) :
+    ∃ N kmin₀ : ℕ, ∀ (B : TBrick t), ∀ n, N ≤ n → 0 < n → ∀ kmin ≥ kmin₀,
+      ∃ x ∈ goodExtSet B.w C n, Irrational x ∧
         x ∉ (⋃ v ∈ F, cfBadZone B.w v n δ) ∪
           (⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
             ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k) := by
   obtain ⟨N, hN⟩ := exists_N_cfCoeff_lt (∑ v ∈ F, (8 * (v.length : ℝ) + 80))
     (Finset.sum_nonneg fun v _ => by positivity) hδ
   obtain ⟨kmin₀, hkmin⟩ := exists_kmin_daryCoeff_lt t hε0
-  refine ⟨N, kmin₀, fun n hn hn0 kmin hk => ?_⟩
-  exact exists_good_avoiding_bad B F hF n kmin hn0 hδ hε0 hεt hpos
-    (hN n hn hn0) (hkmin kmin hk)
+  refine ⟨N, kmin₀, fun B n hn hn0 kmin hk => ?_⟩
+  exact exists_good_avoiding_bad B F hF n kmin hn0 hδ hε0 hεt
+    (volume_cfCylinder_ne_zero B.w B.hw_ne B.hw_pos)
+    (hhalf B.w B.hw_ne B.hw_pos n) (hN n hn hn0) (hkmin kmin hk)
 
 end NormalNumbers

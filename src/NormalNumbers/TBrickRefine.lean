@@ -37,15 +37,6 @@ namespace NormalNumbers
 
 open MeasureTheory
 
-/-- A genuine cylinder has positive Lebesgue measure (discharges the `hpos`
-hypothesis of `exists_good_avoiding_bad*`). -/
-theorem volume_cfCylinder_ne_zero (w : List ℕ) (hw : w ≠ [])
-    (hpos : ∀ a ∈ w, 1 ≤ a) : volume (cfCylinder w) ≠ 0 := by
-  rw [volume_cfCylinder w hw hpos]
-  have hK : (1 : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast one_le_cfK w hpos
-  have hK' : (0 : ℝ) ≤ (cfK w.dropLast : ℝ) := by positivity
-  exact (ENNReal.ofReal_pos.2 (by positivity)).ne'
-
 /-- Unpack membership in the good-length extension set. -/
 theorem exists_word_of_mem_goodExtSet {w : List ℕ} {C : ℝ} {n : ℕ} {x : ℝ}
     (hx : x ∈ goodExtSet w C n) :
@@ -438,12 +429,16 @@ large relative CF order `n`, a refined t-brick `B'` whose CF word extends
   old brick's block and its new length-`(B'.m d − B.m d)` digit block is
   `ε`-good (the d-ary discrepancy payload, Lemma-9-ready — transferred from
   the selected survivor via the widened zones). -/
-theorem TBrick.exists_refinement {t : ℕ} (B : TBrick t)
+theorem TBrick.exists_refinement_uniform (t : ℕ)
     (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a)
     (hFne : ∀ v ∈ F, v ≠ [])
-    {δ ε : ℝ} (hδ : 0 < δ) (hε0 : 0 < ε) (hεt : (t : ℝ) * ε ≤ 1) :
-    ∃ kmin₀ : ℕ, ∀ kmin, kmin₀ ≤ kmin → ∃ N : ℕ, ∀ n, N ≤ n → 0 < n →
-      ∃ (B' : TBrick t) (u : List ℕ) (C : ℝ), 0 < C ∧
+    {δ ε : ℝ} (hδ : 0 < δ) (hε0 : 0 < ε) (hεt : (t : ℝ) * ε ≤ 1)
+    {C : ℝ}
+    (hhalf : ∀ (w : List ℕ), w ≠ [] → (∀ a ∈ w, 1 ≤ a) → ∀ n : ℕ,
+      volume (cfCylinder w) ≤ 2 * volume (goodExtSet w C n)) :
+    ∃ kmin₀ : ℕ, ∀ kmin, kmin₀ ≤ kmin → ∃ N : ℕ,
+      ∀ (B : TBrick t) (n : ℕ), N ≤ n → 0 < n →
+      ∃ (B' : TBrick t) (u : List ℕ),
         B'.w = B.w ++ u ∧ u.length = n ∧ (∀ a ∈ u, 1 ≤ a) ∧
         (cfK u : ℝ) ≤ Real.exp (C * n) ∧
         (∀ v ∈ F, |(countOccurrences v u : ℝ)
@@ -456,14 +451,13 @@ theorem TBrick.exists_refinement {t : ℕ} (B : TBrick t)
               y ∈ daryCell d (B.m d + (B'.m d - B.m d))
                 ((B.j d + i) * d ^ (B'.m d - B.m d)
                   + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1) := by
-  have hpos := volume_cfCylinder_ne_zero B.w B.hw_ne B.hw_pos
   obtain ⟨N₁, kmin₀, hmain⟩ :=
-    exists_good_avoiding_bad_of_large B F hF hδ hε0 hεt hpos
+    exists_good_avoiding_bad_of_large t F hF hδ hε0 hεt hhalf
   refine ⟨kmin₀, fun kmin hkmin => ?_⟩
   obtain ⟨N₂, hN₂⟩ := exists_fib_threshold (4 * (t : ℝ) ^ kmin)
-  refine ⟨max N₁ N₂, fun n hn hn0 => ?_⟩
-  obtain ⟨C, hC, x, hxG, hirr, hnotbad⟩ :=
-    hmain n (le_trans (le_max_left _ _) hn) hn0 kmin hkmin
+  refine ⟨max N₁ N₂, fun B n hn hn0 => ?_⟩
+  obtain ⟨x, hxG, hirr, hnotbad⟩ :=
+    hmain B n (le_trans (le_max_left _ _) hn) hn0 kmin hkmin
   obtain ⟨u, huGen, hK, hxJ⟩ := exists_word_of_mem_goodExtSet hxG
   obtain ⟨hulen, hupos⟩ := huGen
   have hu_ne : u ≠ [] := by
@@ -495,7 +489,7 @@ theorem TBrick.exists_refinement {t : ℕ} (B : TBrick t)
   choose! m' j' hm hsubJ hrat using hspec
   refine ⟨⟨B.w ++ u, hwu_ne, hwu_pos, m', j', fun _ => 2,
     fun _ _ _ => by norm_num, fun _ _ _ => le_refl 2, hsubJ, hrat⟩,
-    u, C, hC, rfl, hulen, hupos, hK, ?_, hm, ?_⟩
+    u, rfl, hulen, hupos, hK, ?_, hm, ?_⟩
   · -- CF discrepancy payload
     intro v hv
     have hxw : x ∈ cfCylinder B.w := cfCylinder_append_subset _ _ hxJ
@@ -553,6 +547,36 @@ theorem TBrick.exists_refinement {t : ℕ} (B : TBrick t)
     obtain ⟨β, hβgood, hymem⟩ := goodBlock_transfer d (B.m d)
       (m' d - B.m d) hd1 (j' d) hyi hxc hyc havoid
     exact ⟨i, hi2, hyi, β, hβgood, hymem⟩
+
+/-- **B–Y Lemma 13, `t' = t` case (per-brick corollary).**  The original
+per-brick form, derived from `exists_refinement_uniform` with the global
+half-mass constant. -/
+theorem TBrick.exists_refinement {t : ℕ} (B : TBrick t)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a)
+    (hFne : ∀ v ∈ F, v ≠ [])
+    {δ ε : ℝ} (hδ : 0 < δ) (hε0 : 0 < ε) (hεt : (t : ℝ) * ε ≤ 1) :
+    ∃ kmin₀ : ℕ, ∀ kmin, kmin₀ ≤ kmin → ∃ N : ℕ, ∀ n, N ≤ n → 0 < n →
+      ∃ (B' : TBrick t) (u : List ℕ) (C : ℝ), 0 < C ∧
+        B'.w = B.w ++ u ∧ u.length = n ∧ (∀ a ∈ u, 1 ≤ a) ∧
+        (cfK u : ℝ) ≤ Real.exp (C * n) ∧
+        (∀ v ∈ F, |(countOccurrences v u : ℝ)
+          - (gaussMeasure (cfCylinder v)).toReal * n| < δ * n + v.length) ∧
+        (∀ d, 2 ≤ d → d ≤ t → B.m d + kmin ≤ B'.m d) ∧
+        (∀ d, 2 ≤ d → d ≤ t → ∀ y ∈ cfCylinder B'.w,
+          ∃ i : ℕ, i < 2 ∧ y ∈ daryCell d (B.m d) (B.j d + i) 1 ∧
+            ∃ β : Fin (B'.m d - B.m d) → Fin d,
+              β ∉ badBlocks d (B'.m d - B.m d) ε ∧
+              y ∈ daryCell d (B.m d + (B'.m d - B.m d))
+                ((B.j d + i) * d ^ (B'.m d - B.m d)
+                  + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1) := by
+  obtain ⟨C, hC, hhalf⟩ := exists_C_half_le_volume_goodExtSet
+  obtain ⟨kmin₀, hk⟩ :=
+    TBrick.exists_refinement_uniform t F hF hFne hδ hε0 hεt hhalf
+  refine ⟨kmin₀, fun kmin hkmin => ?_⟩
+  obtain ⟨N, hN⟩ := hk kmin hkmin
+  refine ⟨N, fun n hn hn0 => ?_⟩
+  obtain ⟨B', u, h1, h2, h3, h4, h5, h6, h7⟩ := hN B n hn hn0
+  exact ⟨B', u, C, hC, h1, h2, h3, h4, h5, h6, h7⟩
 
 /-- **Standalone Prop-12 cell block**: any genuine cylinder shorter than
 `d^{−m0}` sits in a 2-cell block of some order `m' ≥ m0` with the `1/(2d)`
