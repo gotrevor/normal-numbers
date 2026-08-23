@@ -183,7 +183,15 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
       k_d(J) ≥ kmin(n) := ⌊stuff·n⌋ → ∞; hence goodExtSet ∩ (d-ary bad at
       the RELEVANT order) ⊆ ⋃_{k≥kmin(n)} daryBadZoneWide, and
       `TBrick.volume_aggregate_bad_le` applies with that kmin.
-  (γ) **choose n₀**: both bad bounds are `< ¼·volume(I_w)` for n ≥ n₀(t,ε)
+  ✅ (γ-COMBINE) DONE 2026-08-24 (`TBrick.lean`, axiom-clean): the measure
+      core is assembled.  `exists_mem_notMem_union_of_bounds` (abstract:
+      good ≥ ½vol0, bads ≤ p·vol0, q·vol0, p+q<½ ⇒ ∃ x∈G avoiding both) +
+      `exists_good_avoiding_bad` (concrete Lemma-13 core): GIVEN the two
+      coefficient thresholds `14ΣL/(δ²n) < ¼` and `Σ_d 12d²ρ^kmin/(1−ρ) < ¼`
+      (and `vol(I_w) ≠ 0`), ∃ good-length order-n extension of I_w avoiding
+      BOTH the CF bad zone (all v∈F) AND the wide d-ary bad zone (all d≤t,
+      k≥kmin).  This is the measure-theoretic heart of Lemma 13.
+  (γ-leftover) **choose n₀**: both bad bounds are `< ¼·volume(I_w)` for n ≥ n₀(t,ε)
       (d-ary: geometric in kmin(n)→0; CF: O(1/n)→0).  Then
       `exists_mem_notMem_of_measure_lt` with M = ½vol(I_w) via
       `exists_C_half_le_volume_goodExtSet`, a = ¼+¼ < ½, gives x ∈ goodExtSet

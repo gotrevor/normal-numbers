@@ -215,6 +215,36 @@ theorem exists_mem_notMem_of_measure_lt {μ : Measure ℝ} {G B : Set ℝ}
   obtain ⟨x, hx⟩ := nonempty_of_measure_ne_zero hne
   exact ⟨x, hx.1, hx.2⟩
 
+/-- **Combine two bad zones against a good set.** If a good set `G` carries at
+least half of `vol0`, and two bad sets `B₁,B₂` have measure `≤ p·vol0` and
+`≤ q·vol0` with `p+q < ½`, then some point of `G` avoids both.  This packages
+the ENNReal arithmetic of the Lemma-13 balance. -/
+theorem exists_mem_notMem_union_of_bounds
+    {G B₁ B₂ : Set ℝ} {vol0 : ENNReal} {p q : ℝ}
+    (hp : 0 ≤ p) (hq : 0 ≤ q) (hpq : p + q < 1 / 2)
+    (hvol0 : vol0 ≠ 0) (hvoltop : vol0 ≠ ⊤)
+    (hG : vol0 ≤ 2 * volume G)
+    (hB₁ : volume B₁ ≤ ENNReal.ofReal p * vol0)
+    (hB₂ : volume B₂ ≤ ENNReal.ofReal q * vol0) :
+    ∃ x ∈ G, x ∉ B₁ ∪ B₂ := by
+  have hB : volume (B₁ ∪ B₂) ≤ ENNReal.ofReal (p + q) * vol0 := by
+    calc volume (B₁ ∪ B₂) ≤ volume B₁ + volume B₂ := measure_union_le _ _
+      _ ≤ ENNReal.ofReal p * vol0 + ENNReal.ofReal q * vol0 := add_le_add hB₁ hB₂
+      _ = ENNReal.ofReal (p + q) * vol0 := by rw [ENNReal.ofReal_add hp hq, add_mul]
+  have hpq2 : ENNReal.ofReal (p + q) < 2⁻¹ := by
+    have hhalf_eq : ENNReal.ofReal (1 / 2 : ℝ) = 2⁻¹ := by
+      rw [one_div, ENNReal.ofReal_inv_of_pos (by norm_num), ENNReal.ofReal_ofNat]
+    rw [← hhalf_eq]
+    exact (ENNReal.ofReal_lt_ofReal_iff (by norm_num)).2 hpq
+  have hlt : ENNReal.ofReal (p + q) * vol0 < volume G := by
+    have h1 : ENNReal.ofReal (p + q) * vol0 < vol0 / 2 := by
+      rw [ENNReal.div_eq_inv_mul]
+      exact ENNReal.mul_lt_mul_left hvol0 hvoltop hpq2
+    have h2 : vol0 / 2 ≤ volume G :=
+      ENNReal.div_le_of_le_mul (by rw [mul_comm]; exact hG)
+    exact lt_of_lt_of_le h1 h2
+  exact exists_mem_notMem_of_measure_lt (le_refl (volume G)) hB hlt
+
 /-- The **good-length extension set**: the union of the order-`n` CF extensions
 `cfCylinder (w ++ u)` whose continuant is short (`K(u) ≤ e^{Cn}`, i.e.
 relative length `≥ e^{-2Cn}/2`).  Encoded as a biUnion over *all* genuine
@@ -403,5 +433,59 @@ theorem exists_C_half_le_volume_goodExtSet :
   refine ⟨C, hC, fun w hw hpos n => ?_⟩
   rw [volume_goodExtSet]
   exact hbound w hw hpos n
+
+/-- **The Lemma-13 measure core.** Given a t-brick `B`, a finite CF word family
+`F`, and thresholds `n, kmin` large enough that the CF discrepancy coefficient
+`14·Σ(8|v|+80)/(δ²n) < ¼` and the d-ary coefficient
+`Σ_d 12d²ρ_d^kmin/(1−ρ_d) < ¼`, some good-length order-`n` extension of `I_w`
+avoids BOTH the CF discrepancy bad zone (for every `v ∈ F`) AND the aggregate
+wide d-ary bad zone (every base `2 ≤ d ≤ t`, every block length `≥ kmin`).
+
+This is the measure-theoretic heart of Becher–Yuhjtman Lemma 13: a point with
+good CF *length*, good CF *block frequencies*, and good *d-ary* digits.  The
+outstanding wiring (`kmin(n)` link + choosing `n₀` from the paper's schedule)
+only has to make the two coefficient hypotheses hold. -/
+theorem exists_good_avoiding_bad {t : ℕ} (B : TBrick t)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a)
+    (n kmin : ℕ) (hn : 0 < n) {δ ε : ℝ} (hδ : 0 < δ) (hε0 : 0 < ε)
+    (hεt : (t : ℝ) * ε ≤ 1) (hpos : volume (cfCylinder B.w) ≠ 0)
+    (hCF : 14 * (∑ v ∈ F, (8 * (v.length : ℝ) + 80)) / (δ ^ 2 * n) < 1 / 4)
+    (hdary : (∑ d ∈ Finset.Icc 2 t,
+        12 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε))
+      < 1 / 4) :
+    ∃ C : ℝ, 0 < C ∧ ∃ x ∈ goodExtSet B.w C n,
+      x ∉ (⋃ v ∈ F, cfBadZone B.w v n δ) ∪
+        (⋃ d ∈ Finset.Icc 2 t, ⋃ k : ℕ, ⋃ (_ : kmin ≤ k),
+          daryBadZoneWide d (B.m d) (B.j d) ε k) := by
+  obtain ⟨C, hC, hhalf⟩ := exists_C_half_le_volume_goodExtSet
+  refine ⟨C, hC, ?_⟩
+  -- finiteness of the base cylinder
+  have hwfin : volume (cfCylinder B.w) ≠ ⊤ := by
+    have h1 : volume (cfCylinder B.w) ≤ volume (Set.Ioo (0 : ℝ) 1) :=
+      measure_mono (fun x hx => hx.1)
+    rw [Real.volume_Ioo] at h1
+    exact (lt_of_le_of_lt h1 ENNReal.ofReal_lt_top).ne
+  -- per-base nonnegativity of the d-ary summand
+  have hxd : ∀ d ∈ Finset.Icc 2 t, 0 ≤ 12 * (d : ℝ) ^ 2
+      * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε) := by
+    intro d hd
+    rw [Finset.mem_Icc] at hd
+    have hd1 : 1 ≤ d := le_trans (by norm_num) hd.1
+    exact div_nonneg
+      (mul_nonneg (by positivity) (pow_nonneg (daryBadRatio_pos d ε).le _))
+      (by linarith [daryBadRatio_lt_one hd1 hε0])
+  -- d-ary bad in `ofReal (…) * vol` form
+  have hB₂ := TBrick.volume_aggregate_bad_le B hε0 hεt kmin
+  rw [← ENNReal.ofReal_sum_of_nonneg hxd] at hB₂
+  -- the two coefficients are nonnegative and sum below ½
+  have hpCF : 0 ≤ 14 * (∑ v ∈ F, (8 * (v.length : ℝ) + 80)) / (δ ^ 2 * n) :=
+    div_nonneg (mul_nonneg (by norm_num)
+      (Finset.sum_nonneg fun v _ => by positivity)) (by positivity)
+  have hqD : 0 ≤ ∑ d ∈ Finset.Icc 2 t, 12 * (d : ℝ) ^ 2
+      * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε) :=
+    Finset.sum_nonneg hxd
+  exact exists_mem_notMem_union_of_bounds hpCF hqD (by linarith) hpos hwfin
+    (hhalf B.w B.hw_ne B.hw_pos n)
+    (volume_iUnion_cfBadZone_le_vol B.w B.hw_pos F hF n hn hδ) hB₂
 
 end NormalNumbers
