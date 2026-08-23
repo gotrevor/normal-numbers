@@ -266,7 +266,7 @@ convergent-recovery bound in a Shor's-algorithm repo — different theorems.
   periodic), i.e. the φ-question.  Its Rényi-condition input is weaker than
   W3's `cylinder_mixing`; formalization assessment in the pin note.  Attack
   map for the open problem (unit-drift diagnosis, compact-fiber program,
-  brick-method witness route) → `drafts/vandehey-open-problem-attack-map.md`.
+  brick-method witness route) → `papers/vandehey-2017-open-problem-attack-map.md`.
 - A.-M. Scheerer, *On the continued fraction expansion of absolutely normal
   numbers*, arXiv:1701.07979.  (Absolutely normal + CF-normal, computable.)
 - V. Becher, S. A. Yuhjtman, *On absolutely normal and continued fraction
