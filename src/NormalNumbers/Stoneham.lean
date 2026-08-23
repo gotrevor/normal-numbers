@@ -37,8 +37,9 @@ cancellation needed (`segment_visit_upper`), and the **strong hot spot
 lemma** says one-sided bounds suffice: a non-normal number must have an
 interval family visited with frequency exceeding any constant multiple of
 its length, which the window counting rules out with an absolute constant.
-The hot-spot lemma (`not_isNormal_exists_hotspot`, statement to be pinned
-against Bailey–Misiurewicz, Proc. AMS 134 (2006) 2495–2501) is the one
+The hot-spot lemma (`isNormal_of_visit_upper_bound`, statement pinned
+2026-08-23 against Bailey–Misiurewicz — see
+`papers/bailey-misiurewicz-2006-hot-spot.md`) is the one
 piece of real analysis; everything else is exact counting in `(ℤ/3^M)ˣ`.
 No character sums and no Erdős–Turán inequality anywhere.
 -/
@@ -104,11 +105,14 @@ theorem segment_visit_upper (M : ℕ) (hM : 1 ≤ M) (u : ℕ)
 
 /-- **Strong hot spot lemma** (Bailey–Misiurewicz 2006), contrapositive
 form: if there is a constant `C` such that every b-adic interval's visit
-frequency has `limsup ≤ C·(its length)`, then `x` is normal.  ⚠️ Statement
-shape is provisional — pin it against Proc. AMS 134 (2006) 2495–2501
-before proving (the paper works with shrinking neighborhoods of a point;
-the b-adic-interval form here should be derived from, not substituted
-for, the paper's). -/
+frequency is eventually `≤ C·(its length)`, then `x` is normal.
+✅ Statement PINNED 2026-08-23 against the paper — see
+`papers/bailey-misiurewicz-2006-hot-spot.md`: this is a faithful corollary
+of its Theorem 1 ("α is b-normal iff it has no base-b hot spots") via a
+finite covering argument (any `(y−h, y+h)` meets at most `2b+1` scale-`k`
+b-adic intervals for `b⁻ᵏ ≤ h < b⁻ᵏ⁺¹`, so a uniform b-adic bound kills
+every hot spot).  The statement is fixed; the proof route is free — the
+paper's ergodic argument or elementary block counting both qualify. -/
 theorem isNormal_of_visit_upper_bound (b : ℕ) (hb : 2 ≤ b) (x : ℝ)
     (C : ℝ)
     (h : ∀ k m : ℕ, m < b ^ k → ∀ᶠ n in Filter.atTop,
