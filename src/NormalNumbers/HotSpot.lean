@@ -788,4 +788,197 @@ theorem card_filter_range_le_Ico_add (Q : ℕ → Prop) [DecidablePred Q] (n c :
         Finset.card_union_le _ _
     _ = ((Finset.Ico c n).filter Q).card + c := by rw [Finset.card_range]
 
+/-! ### Visits through the good/bad decomposition -/
+
+/-- Visits to a set of scale-`K` cells, summed cell by cell. -/
+theorem card_cellAt_mem (b : ℕ) (hb : 0 < b) (x : ℝ) (K n : ℕ) (S : Finset ℕ) :
+    ((Finset.range n).filter fun j => cellAt b x K j ∈ S).card
+      = ∑ m ∈ S, visitCount (orbit b x)
+          ((m : ℝ) / (b : ℝ) ^ K) ((m + 1 : ℝ) / (b : ℝ) ^ K) n := by
+  classical
+  have hv : ∀ m : ℕ, visitCount (orbit b x) ((m : ℝ) / (b : ℝ) ^ K)
+      ((m + 1 : ℝ) / (b : ℝ) ^ K) n
+      = ((Finset.range n).filter fun j => cellAt b x K j = m).card :=
+    fun m => visitCount_eq_card_floor b hb x K m n
+  simp_rw [hv, Finset.card_filter]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  rw [Finset.sum_ite_eq S (cellAt b x K j) (fun _ => 1)]
+
+/-- A `k ≤ K` window is never bad about its own count: cells outside
+`badSet` have sliding count within `T` of uniform.  Upper counting bound:
+`b^k·N·A(n) ≤ n·(N+T) + Bad·b^k·N + b^k·N·(K−k)`. -/
+theorem cell_visits_upper (b : ℕ) (hb : 0 < b) (x : ℝ) (K k w T n : ℕ)
+    (hkK : k ≤ K) :
+    b ^ k * ((K - k + 1) * visitCount (orbit b x)
+        ((w : ℝ) / (b : ℝ) ^ k) ((w + 1 : ℝ) / (b : ℝ) ^ k) n)
+      ≤ n * ((K - k + 1) + T)
+        + ((Finset.range n).filter
+            fun j => cellAt b x K j ∈ badSet b K k w T).card
+          * (b ^ k * (K - k + 1))
+        + b ^ k * ((K - k + 1) * (K - k)) := by
+  classical
+  set N := K - k + 1 with hN
+  set Q : ℕ → Prop := fun t => ⌊orbit b x t * (b : ℝ) ^ k⌋₊ = w with hQ
+  set F : ℕ → ℕ := fun n => ((Finset.range n).filter Q).card with hF
+  set Sn := ∑ j ∈ Finset.range n, occCount b K k w (cellAt b x K j) with hSn
+  have hA : visitCount (orbit b x) ((w : ℝ) / (b : ℝ) ^ k)
+      ((w + 1 : ℝ) / (b : ℝ) ^ k) n = F n :=
+    visitCount_eq_card_floor b hb x k w n
+  -- sliding lower: N·F(n) ≤ S(n) + N·(K−k)
+  have hslide : N * F n ≤ Sn + N * (K - k) := by
+    have h1 := le_sum_occCount_cellAt b hb x K k w n hkK
+    have h2 := card_filter_range_le_Ico_add Q n (K - k)
+    calc N * F n ≤ N * (((Finset.Ico (K - k) n).filter Q).card + (K - k)) :=
+          Nat.mul_le_mul_left N h2
+      _ = ((Finset.Ico (K - k) n).filter Q).card * N + N * (K - k) := by ring
+      _ ≤ Sn + N * (K - k) := Nat.add_le_add_right h1 _
+  -- good/bad split of b^k·S(n)
+  set P : ℕ → Prop := fun j => cellAt b x K j ∈ badSet b K k w T with hP
+  have hsplit : b ^ k * Sn ≤ n * (N + T)
+      + ((Finset.range n).filter P).card * (b ^ k * N) := by
+    have hgb : (∑ j ∈ (Finset.range n).filter P,
+          b ^ k * occCount b K k w (cellAt b x K j))
+        + (∑ j ∈ (Finset.range n).filter (fun j => ¬ P j),
+            b ^ k * occCount b K k w (cellAt b x K j))
+        = b ^ k * Sn := by
+      rw [hSn, Finset.mul_sum]
+      exact Finset.sum_filter_add_sum_filter_not (Finset.range n) P _
+    -- bad part: the trivial bound occCount ≤ N
+    have hbad : ∑ j ∈ (Finset.range n).filter P,
+          b ^ k * occCount b K k w (cellAt b x K j)
+        ≤ ((Finset.range n).filter P).card * (b ^ k * N) := by
+      have := Finset.sum_le_card_nsmul ((Finset.range n).filter P)
+        (fun j => b ^ k * occCount b K k w (cellAt b x K j)) (b ^ k * N)
+        (fun j _ => Nat.mul_le_mul_left _ (occCount_le b K k w _))
+      simpa [smul_eq_mul] using this
+    -- good part: sliding count within T of uniform
+    have hgood : ∑ j ∈ (Finset.range n).filter (fun j => ¬ P j),
+          b ^ k * occCount b K k w (cellAt b x K j)
+        ≤ n * (N + T) := by
+      have hpt : ∀ j ∈ (Finset.range n).filter (fun j => ¬ P j),
+          b ^ k * occCount b K k w (cellAt b x K j) ≤ N + T := by
+        intro j hj
+        rw [Finset.mem_filter] at hj
+        have hnb : cellAt b x K j ∉ badSet b K k w T := hj.2
+        rw [badSet, Finset.mem_filter, not_and] at hnb
+        have habs := hnb (Finset.mem_range.mpr (cellAt_lt b hb x K j))
+        rw [not_le] at habs
+        have h1 : ((b ^ k * occCount b K k w (cellAt b x K j) : ℕ) : ℤ)
+            - (N : ℤ) < T := by
+          calc ((b ^ k * occCount b K k w (cellAt b x K j) : ℕ) : ℤ) - (N : ℤ)
+              ≤ |((b : ℤ) ^ k * occCount b K k w (cellAt b x K j) : ℤ)
+                  - ((K - k + 1 : ℕ) : ℤ)| := by
+                rw [← hN]
+                push_cast
+                exact le_abs_self _
+            _ < T := habs
+        have h2 : b ^ k * occCount b K k w (cellAt b x K j) < N + T := by
+          exact_mod_cast (by linarith :
+            ((b ^ k * occCount b K k w (cellAt b x K j) : ℕ) : ℤ)
+              < (N : ℤ) + T)
+        omega
+      have := Finset.sum_le_card_nsmul _ _ _ hpt
+      have hcard : ((Finset.range n).filter (fun j => ¬ P j)).card ≤ n := by
+        calc ((Finset.range n).filter (fun j => ¬ P j)).card
+            ≤ (Finset.range n).card := Finset.card_filter_le _ _
+          _ = n := Finset.card_range n
+      calc ∑ j ∈ (Finset.range n).filter (fun j => ¬ P j),
+            b ^ k * occCount b K k w (cellAt b x K j)
+          ≤ ((Finset.range n).filter (fun j => ¬ P j)).card * (N + T) := by
+            simpa [smul_eq_mul] using this
+        _ ≤ n * (N + T) := Nat.mul_le_mul_right _ hcard
+    omega
+  -- assemble
+  rw [hA]
+  calc b ^ k * (N * F n) ≤ b ^ k * (Sn + N * (K - k)) :=
+        Nat.mul_le_mul_left _ hslide
+    _ = b ^ k * Sn + b ^ k * (N * (K - k)) := by ring
+    _ ≤ n * (N + T) + ((Finset.range n).filter P).card * (b ^ k * N)
+          + b ^ k * (N * (K - k)) := by omega
+
+/-- Lower counting bound:
+`n·(N−T) ≤ b^k·N·(A(n) + (K−k)) + Bad·(N−T)` (ℕ-truncated `N−T`). -/
+theorem cell_visits_lower (b : ℕ) (hb : 0 < b) (x : ℝ) (K k w T n : ℕ)
+    (hkK : k ≤ K) :
+    n * ((K - k + 1) - T)
+      ≤ b ^ k * ((K - k + 1) * (visitCount (orbit b x)
+          ((w : ℝ) / (b : ℝ) ^ k) ((w + 1 : ℝ) / (b : ℝ) ^ k) n + (K - k)))
+        + ((Finset.range n).filter
+            fun j => cellAt b x K j ∈ badSet b K k w T).card
+          * ((K - k + 1) - T) := by
+  classical
+  set N := K - k + 1 with hN
+  set Q : ℕ → Prop := fun t => ⌊orbit b x t * (b : ℝ) ^ k⌋₊ = w with hQ
+  set F : ℕ → ℕ := fun n => ((Finset.range n).filter Q).card with hF
+  set Sn := ∑ j ∈ Finset.range n, occCount b K k w (cellAt b x K j) with hSn
+  set P : ℕ → Prop := fun j => cellAt b x K j ∈ badSet b K k w T with hP
+  have hA : visitCount (orbit b x) ((w : ℝ) / (b : ℝ) ^ k)
+      ((w + 1 : ℝ) / (b : ℝ) ^ k) n = F n :=
+    visitCount_eq_card_floor b hb x k w n
+  -- sliding upper: S(n) ≤ N·(F(n) + (K−k))
+  have hslide : Sn ≤ (F n + (K - k)) * N := by
+    have h1 := sum_occCount_cellAt_le b hb x K k w n hkK
+    have h2 := card_filter_range_le_add Q n (K - k)
+    calc Sn ≤ ((Finset.range (n + (K - k))).filter Q).card * N := h1
+      _ ≤ (F n + (K - k)) * N := Nat.mul_le_mul_right N h2
+  -- every good step carries at least N − T sliding hits (scaled by b^k)
+  have hgood : ∀ j ∈ (Finset.range n).filter (fun j => ¬ P j),
+      N - T ≤ b ^ k * occCount b K k w (cellAt b x K j) := by
+    intro j hj
+    rw [Finset.mem_filter] at hj
+    have hnb : cellAt b x K j ∉ badSet b K k w T := hj.2
+    rw [badSet, Finset.mem_filter, not_and] at hnb
+    have habs := hnb (Finset.mem_range.mpr (cellAt_lt b hb x K j))
+    rw [not_le] at habs
+    have h1 : (N : ℤ) - (b ^ k * occCount b K k w (cellAt b x K j) : ℕ)
+        < T := by
+      calc (N : ℤ) - ((b ^ k * occCount b K k w (cellAt b x K j) : ℕ) : ℤ)
+          ≤ |((b : ℤ) ^ k * occCount b K k w (cellAt b x K j) : ℤ)
+              - ((K - k + 1 : ℕ) : ℤ)| := by
+            rw [← hN, abs_sub_comm]
+            push_cast
+            exact le_abs_self _
+        _ < T := habs
+    have h2 : (N : ℤ) < (b ^ k * occCount b K k w (cellAt b x K j) : ℕ) + T := by
+      linarith
+    have h3 : N < b ^ k * occCount b K k w (cellAt b x K j) + T := by
+      exact_mod_cast h2
+    omega
+  -- sum the good bound
+  have hsum : ((Finset.range n).filter (fun j => ¬ P j)).card * (N - T)
+      ≤ b ^ k * Sn := by
+    calc ((Finset.range n).filter (fun j => ¬ P j)).card * (N - T)
+        = ∑ _j ∈ (Finset.range n).filter (fun j => ¬ P j), (N - T) := by
+          rw [Finset.sum_const, smul_eq_mul]
+      _ ≤ ∑ j ∈ (Finset.range n).filter (fun j => ¬ P j),
+            b ^ k * occCount b K k w (cellAt b x K j) :=
+          Finset.sum_le_sum hgood
+      _ ≤ ∑ j ∈ Finset.range n,
+            b ^ k * occCount b K k w (cellAt b x K j) :=
+          Finset.sum_le_sum_of_subset (Finset.filter_subset _ _)
+      _ = b ^ k * Sn := by rw [hSn, Finset.mul_sum]
+  -- the two filters partition range n
+  have hpart : ((Finset.range n).filter P).card
+      + ((Finset.range n).filter (fun j => ¬ P j)).card = n := by
+    rw [Finset.filter_card_add_filter_neg_card_eq_card, Finset.card_range]
+  -- assemble
+  rw [hA]
+  have hchain : ((Finset.range n).filter (fun j => ¬ P j)).card * (N - T)
+      ≤ b ^ k * ((F n + (K - k)) * N) := by
+    calc ((Finset.range n).filter (fun j => ¬ P j)).card * (N - T)
+        ≤ b ^ k * Sn := hsum
+      _ ≤ b ^ k * ((F n + (K - k)) * N) := Nat.mul_le_mul_left _ hslide
+  have hexpand : n * (N - T)
+      = ((Finset.range n).filter P).card * (N - T)
+        + ((Finset.range n).filter (fun j => ¬ P j)).card * (N - T) := by
+      rw [← Nat.add_mul, hpart]
+  calc n * (N - T)
+      = ((Finset.range n).filter P).card * (N - T)
+        + ((Finset.range n).filter (fun j => ¬ P j)).card * (N - T) := hexpand
+    _ ≤ ((Finset.range n).filter P).card * (N - T)
+        + b ^ k * ((F n + (K - k)) * N) := by omega
+    _ = b ^ k * (N * (F n + (K - k)))
+        + ((Finset.range n).filter P).card * (N - T) := by ring
+
 end NormalNumbers
