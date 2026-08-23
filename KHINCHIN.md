@@ -95,10 +95,46 @@ Trevor's question: can a number be *both* normal and Khinchin-typical?
   control on top of CF-normality.
 - **Apparent literature gap**: neither abstract above claims Khinchin's
   geometric-mean law for its constructed number (checked 2026-08-23; abstracts
-  only — ~80% their stage-wise digit control would yield it as an easy
-  corollary, unverified).  ⭐ **B5′ upgrade**: a machine-checked witness that is
+  only).  ⭐ **B5′ upgrade**: a machine-checked witness that is
   *absolutely normal + CF-normal + Khinchin-typical* would be a
   first-anywhere exhibit — strictly stronger write-up bait than B5.
+
+## B5′ effort assessment (Becher–Yuhjtman read in full, 2026-08-23)
+
+Full dependency map → `papers/becher-yuhjtman-2019-abs-normal-cf-normal.md`.
+Headline: **the paper has exactly two deep imports (Morita/Vallée CLT;
+Kifer–Peres–Weiss large deviations), and both serve only the O(n⁴)
+efficiency claim** — which "a number in hand" does not need.  Dropping
+efficiency, the CLT is replaced by a two-line Markov argument
+(E[log qₙ] ≤ Cn elementarily) + the free Fibonacci upper bound, and the LD
+weakens to "any summable correlation decay + Chebyshev" (per-stage bad
+measure < ¼ is all the construction uses).  Everything else — continuant
+algebra, distortion Lemma 3, discrepancy concatenation, Hardy–Wright block
+counting, t-brick bookkeeping — is the repo's established counting culture,
+Birkhoff-free and ergodicity-free, exactly like the Stoneham route.
+
+Work packages (sizes calibrated against Stoneham = ~1k lines, 2 fable/low
+laps off a fully pinned plan):
+
+| WP | Content | Size | Risk |
+|----|---------|------|------|
+| W1 | CF cylinder toolkit: continuant α-algebra (Prop 2), distortion (Lemma 3), lengths, Fibonacci bound, Prop 12 | ~0.8–1.5k lines | low |
+| W2 | digit laws + Markov length substitute for Lemma 5 | ~0.4–0.8k | low |
+| W3 | **the core**: summable CF correlation decay — read KPW's proof first; fallback Kuzmin via Khinchin's book (= Track B's Gauss–Kuzmin flag as a lemma!); fallback vendor erdos1002-lean mixing | ~1.5–3k | **moderate-high** |
+| W4 | LD/Chebyshev assembly + b-ary side (Lemmas 8, 9; overlaps Counting/Visits) | ~0.8–1.2k | low |
+| W5 | t-bricks, main lemma (worse constants), schedule, limit x, three correctness proofs, + the Pillai powers-equivalence for "absolutely normal" | ~1.5–2.5k | medium (bookkeeping-dense) |
+| W6 | Khinchin graft: digit caps D_t in the refinement + uniform-integrability bookkeeping, K₀ as tprod | ~0.5–1k | medium (new on paper, ~90% sound) |
+
+**Total ≈ 5.5–10k lines, ~8–16 treadmill laps + a few attended
+scaffold/judge sessions; calendar ≈ 2–4 weeks of campaign time, dominated by
+W3** (estimate confidence ~65%; tail risk = W3 statement-shape + W5
+constant-wrangling).  Pre-flight before any lap: pull KPW 2001 and pin
+Lemma 3.1's proof (it decides W3's route), per the pin-the-statement
+doctrine.  Prize: one artifact = first formalized absolutely-normal number,
+first formalized CF-normal number, first Khinchin-typical witness (the
+conjunction apparently new even on paper) — and a natural reach-out to
+Becher/Yuhjtman/Scheerer.  B2/B3 (ergodicity, Birkhoff) stay a separate
+thread; B5′ does not wait on them.
 
 ## Formalization landscape (surveyed 2026-08-23; greps + searches, not proofs)
 

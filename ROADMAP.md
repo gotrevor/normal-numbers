@@ -57,6 +57,10 @@ no naturally-occurring number is proven Khinchin-typical.
 - ⬜ B4 harvests: Gauss–Kuzmin frequencies, Khinchin's theorem (K₀ as a tprod),
   Lévy's constant (stretch), arithmetic-mean divergence
 - ⬜ B5 stretch exhibit: machine-checked Khinchin-typical witness (Wieting 2008)
+- ⬜ **B5′ expedition (assessed 2026-08-23, plan W1–W6 in KHINCHIN.md)**: one
+  witness, absolutely normal + CF-normal + Khinchin-typical, via
+  Becher–Yuhjtman minus efficiency (pin note in `papers/`).  ≈ 5.5–10k lines,
+  ~8–16 laps, ≈ 2–4 weeks; Birkhoff-free.  Pre-flight: pin KPW 2001 Lemma 3.1.
 
 ## Phase 3 — outward
 
