@@ -113,10 +113,15 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
   ✅ (a) sum-over-orders corollary PROVED 2026-08-24 (@6742fb7,
   `volume_iUnion_daryBadZone_le`): ⋃_{k≥kmin} daryBadZone has measure
   ≤ (2d/d^m0)·ρ^kmin/(1−ρ), ρ = e^{−dε²/6}.
-- Next concrete step: (b) brick structure
-  definition with the 1/(2d) ratio; (c) digit-semantics bridge
-  (x ∈ sub-cell ↔ its new block, via floor/digitOf as in
-  DigitInterval.digits_prefix_iff) — then Lemma 13 assembly.
+  ✅ (c) digit-semantics bridge PROVED 2026-08-24, axiom-clean:
+  `exists_block_of_lt` (blockNatVal surjective onto [0,d^k)),
+  `floor_subCell_bounds` (a point's own order-(m0+k) sub-cell sits at
+  index j0·d^k + v, v < d^k), `exists_goodBlock_of_notMem_badZone`
+  (avoiding daryBadZone ⇒ the point's sub-cell carries a GOOD block).
+- Next concrete step: (b) brick structure definition with the 1/(2d)
+  ratio + neighbor-widened bad zone (needed so BOTH cells of a 2-cell
+  τ_d are good — wide zone = bad cells ∪ their neighbours, measure ×3),
+  then the CF-side good/bad bookkeeping, then Lemma 13 assembly.
 
 Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
 `IsProbabilityMeasure gaussMeasure` instance added in CFBlockFreq),

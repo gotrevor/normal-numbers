@@ -200,4 +200,103 @@ theorem volume_iUnion_daryBadZone_le (d m0 : ℕ) (hd : 1 ≤ d) (j0 : ℤ)
           ← ENNReal.ofReal_mul (by positivity)]
         rw [div_eq_mul_inv]
 
+/-- Every index `v < d^k` is the value of a length-`k` digit block. -/
+theorem exists_block_of_lt (d : ℕ) : ∀ (k : ℕ) {v : ℕ}, v < d ^ k →
+    ∃ β : Fin k → Fin d, blockNatVal d (List.ofFn fun i => (β i : ℕ)) = v := by
+  intro k
+  induction k with
+  | zero =>
+    intro v hv
+    have hv0 : v = 0 := by simpa [Nat.lt_one_iff] using hv
+    subst hv0
+    exact ⟨Fin.elim0, rfl⟩
+  | succ n ih =>
+    intro v hv
+    have hd : 0 < d := by
+      rcases Nat.eq_zero_or_pos d with h | h
+      · subst h; simp at hv
+      · exact h
+    have ha : v / d ^ n < d := by
+      rw [Nat.div_lt_iff_lt_mul (Nat.pow_pos hd (n := n))]
+      calc v < d ^ (n + 1) := hv
+        _ = d * d ^ n := by ring
+    obtain ⟨β', hβ'⟩ := ih (Nat.mod_lt v (Nat.pow_pos hd (n := n)))
+    refine ⟨Fin.cons ⟨v / d ^ n, ha⟩ β', ?_⟩
+    have hofn : (List.ofFn fun i : Fin (n + 1) =>
+        ((Fin.cons ⟨v / d ^ n, ha⟩ β' : Fin (n + 1) → Fin d) i : ℕ))
+        = (v / d ^ n) :: (List.ofFn fun i : Fin n => (β' i : ℕ)) := by
+      rw [List.ofFn_succ]
+      simp
+    rw [hofn, blockNatVal_cons, hβ', List.length_ofFn]
+    exact Nat.div_add_mod' v (d ^ n)
+
+/-- A point of an order-`m0` cell lies in the order-`(m0+k)` sub-cell of its
+own digit block; the sub-cell index is `j0·d^k +` a block value `< d^k`. -/
+theorem floor_subCell_bounds (d m0 k : ℕ) (hd : 1 ≤ d) (j0 : ℤ) {x : ℝ}
+    (hx : x ∈ daryCell d m0 j0 1) :
+    j0 * d ^ k ≤ ⌊x * d ^ (m0 + k)⌋ ∧
+      ⌊x * d ^ (m0 + k)⌋ < (j0 + 1) * d ^ k ∧
+      x ∈ daryCell d (m0 + k) ⌊x * d ^ (m0 + k)⌋ 1 := by
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd
+  have hpow0 : (0 : ℝ) < (d : ℝ) ^ m0 := by positivity
+  have hpowk : (0 : ℝ) < (d : ℝ) ^ k := by positivity
+  have hpow : (0 : ℝ) < (d : ℝ) ^ (m0 + k) := by positivity
+  obtain ⟨hxl, hxr⟩ := hx
+  have hxl' : (j0 : ℝ) * d ^ k ≤ x * d ^ (m0 + k) := by
+    rw [div_le_iff₀ hpow0] at hxl
+    calc (j0 : ℝ) * d ^ k ≤ x * d ^ m0 * d ^ k := by nlinarith
+      _ = x * d ^ (m0 + k) := by rw [pow_add]; ring
+  have hxr' : x * d ^ (m0 + k) < ((j0 : ℝ) + 1) * d ^ k := by
+    rw [lt_div_iff₀ hpow0] at hxr
+    have h1 : x * d ^ m0 < (j0 : ℝ) + 1 := by
+      push_cast at hxr ⊢
+      linarith
+    calc x * d ^ (m0 + k) = x * d ^ m0 * d ^ k := by rw [pow_add]; ring
+      _ < ((j0 : ℝ) + 1) * d ^ k := by nlinarith
+  have hlo : j0 * d ^ k ≤ ⌊x * d ^ (m0 + k)⌋ := by
+    apply Int.le_floor.2
+    push_cast
+    exact hxl'
+  have hhi : ⌊x * d ^ (m0 + k)⌋ < (j0 + 1) * d ^ k := by
+    apply Int.floor_lt.2
+    push_cast
+    exact hxr'
+  refine ⟨hlo, hhi, ?_, ?_⟩
+  · rw [div_le_iff₀ hpow]
+    exact Int.floor_le _
+  · rw [lt_div_iff₀ hpow]
+    push_cast
+    exact Int.lt_floor_add_one _
+  
+/-- **Bad-zone avoidance ⇒ good block**: a point of the order-`m0` cell that
+avoids the order-`(m0+k)` bad zone lies in the sub-cell of a *good* block. -/
+theorem exists_goodBlock_of_notMem_badZone (d m0 k : ℕ) (hd : 1 ≤ d)
+    (j0 : ℤ) {ε : ℝ} {x : ℝ} (hx : x ∈ daryCell d m0 j0 1)
+    (hbad : x ∉ daryBadZone d m0 j0 ε k) :
+    ∃ β : Fin k → Fin d, β ∉ badBlocks d k ε ∧
+      x ∈ daryCell d (m0 + k)
+        (j0 * d ^ k + blockNatVal d (List.ofFn fun i => (β i : ℕ))) 1 := by
+  obtain ⟨hlo, hhi, hmem⟩ := floor_subCell_bounds d m0 k hd j0 hx
+  set F := ⌊x * d ^ (m0 + k)⌋ with hF
+  clear_value F
+  have hcast : ((d : ℤ)) ^ k = ((d ^ k : ℕ) : ℤ) := by push_cast; ring
+  rw [add_mul, one_mul] at hhi
+  have hv : (F - j0 * d ^ k).toNat < d ^ k := by omega
+  obtain ⟨β, hβ⟩ := exists_block_of_lt d k hv
+  refine ⟨β, ?_, ?_⟩
+  · intro hmem_bad
+    apply hbad
+    rw [daryBadZone]
+    refine Set.mem_biUnion hmem_bad ?_
+    have hidx : j0 * d ^ k
+        + (blockNatVal d (List.ofFn fun i => (β i : ℕ)) : ℤ) = F := by
+      rw [hβ]
+      omega
+    rwa [hidx]
+  · have hidx : j0 * d ^ k
+        + (blockNatVal d (List.ofFn fun i => (β i : ℕ)) : ℤ) = F := by
+      rw [hβ]
+      omega
+    rwa [hidx]
+
 end NormalNumbers
