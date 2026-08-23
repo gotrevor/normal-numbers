@@ -30,15 +30,22 @@ DONE this lap (all axiom-clean, `#print axioms` = trust triple):
      `|γ(I_v∩T^{-m}I_v) − γ(I_v)²| ≤ (9/10)^{m−|v|}·4|I_v|·γ(I_v)` (m≥|v|),
      `≤ 2γ(I_v)` (m<|v|).  ← the route-decisive step; mixing→covariance done.
 
-REMAINING (2 disclosed sorries in src, pure Finset arithmetic — no more
-measure theory):
-  ⬜ `variance_blockCount_le` — `Var(S_n) ≤ (4|v|+80)·n·γ(I_v)`.  Route: combine
-     `integral_blockCount_sq` + `abs_cov_le` (via `pair_shift` at gap `|j−j'|`);
-     the only work is the double-sum gap-count reindex `Σ_{j,j'<n} B(|j−j'|) ≤
-     2n·Σ_{d<n}B(d)` + geometric tail `Σ_d B(d) ≤ (2|v|+40)γ(I_v)`.
-  ⬜ `chebyshev_blockCount` — `γ{|S_n/n − γ(I_v)| ≥ δ} ≤ (4|v|+80)γ(I_v)/(δ²n)`.
-     Markov on `(S_n − nγ(I_v))²` (`meas_ge_le_variance_div_sq` or
-     `mul_meas_ge_le_lintegral₀`) fed by `variance_blockCount_le`.
+  ✅ `abs_cov_pair_le` — per-pair bound at gap `|j−j'|`, uniform geometric
+     dominator `4γ(I_v)·(9/10)^{|j−j'|∸|v|}` (absorbs the overlap case).
+  ✅ `sum_range_dist_le` / `geom_trunc_sum_le` — the Finset gap-count reindex
+     (`Σ_{j'} g(dist j j') ≤ 2Σ_d g(d)`) + truncated geometric tail (`≤ L+10`).
+  ✅ `variance_blockCount_le` — `Var(S_n) ≤ (8|v|+80)·n·γ(I_v)`.  DONE this lap,
+     axiom-clean.  (Constant `8|v|+80` not `4|v|+80`: the clean uniform
+     dominator trades a factor 2 for a much shorter proof; harmless — any
+     `n`-independent `K(v)` suffices for the construction.)
+
+REMAINING (1 disclosed sorry in src):
+  ⬜ `chebyshev_blockCount` — `γ{|S_n/n − γ(I_v)| ≥ δ} ≤ (8|v|+80)γ(I_v)/(δ²n)`.
+     Route via mathlib `ProbabilityTheory.meas_ge_le_variance_div_sq` (needs
+     `MemLp S 2 γ` — bounded ⇒ `MemLp.of_bound`; and
+     `variance_eq_sub : Var X = μ[X²] − μ[X]²` to connect to
+     `variance_blockCount_le` via `integral_blockCount`).  Set rewrite
+     `{δ ≤ |S/n − μ|} = {δn ≤ |S − μ[S]|}` (n>0), then `.toReal` of the bound.
 
 Then: conditioned-on-brick version (s-started identity → same pin), and the
 b-ary side (B–Y Lemmas 8/9 — check Counting.lean/Visits.lean overlap).

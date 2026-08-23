@@ -214,33 +214,236 @@ theorem abs_cov_le (v : List ℕ) (hpos : ∀ a ∈ v, 1 ≤ a) (m : ℕ) :
     rw [abs_le]
     exact ⟨by nlinarith [sq_nonneg μr, hXnn], by nlinarith [hXle, hμsq]⟩
 
-/-! ## Variance bound and Chebyshev (W4 targets — decomposition in progress)
+/-! ## Finset arithmetic for the variance sum -/
 
-The two theorems below are the W4 headline shapes.  They are lap-authored
-*proposals* for judge ratification (like `CFGammaMixing.lean`), not
-judge-frozen statements.  Both reduce to the fully-proved fundamentals above;
-what remains is pure `Finset` arithmetic (no more analysis, no more measure
-theory), so the route is de-risked. -/
+/-- `|I_v| ≤ 1` — the cylinder sits in `(0,1)`. -/
+lemma volumeReal_cfCylinder_le_one (v : List ℕ) :
+    (volume (cfCylinder v)).toReal ≤ 1 := by
+  have h1 : volume (cfCylinder v) ≤ volume (Set.Ioo (0 : ℝ) 1) :=
+    measure_mono (cfCylinder_subset_Ioo v)
+  have h2 : volume (Set.Ioo (0 : ℝ) 1) = 1 := by rw [Real.volume_Ioo]; norm_num
+  rw [h2] at h1
+  calc (volume (cfCylinder v)).toReal ≤ (1 : ENNReal).toReal :=
+        ENNReal.toReal_mono ENNReal.one_ne_top h1
+    _ = 1 := ENNReal.toReal_one
 
-/-- **Variance bound** `Var(S_n) ≤ K(v)·n·γ(I_v)` with `K(v) = 4|v| + 80`.
+/-- **Per-pair covariance bound at gap `|j − j'|`**, with a single uniform
+geometric dominating factor: the two-case `abs_cov_le` is majorised by
+`4·γ(I_v)·(9/10)^{|j−j'| ∸ |v|}` (using `|I_v| ≤ 1` and truncated `∸`, so the
+crude `2γ(I_v)` overlap case is absorbed at exponent `0`). -/
+theorem abs_cov_pair_le (v : List ℕ) (hpos : ∀ a ∈ v, 1 ≤ a) (j j' : ℕ) :
+    |(gaussMeasure ((gaussMap^[j]) ⁻¹' cfCylinder v ∩
+          (gaussMap^[j']) ⁻¹' cfCylinder v)).toReal -
+        (gaussMeasure (cfCylinder v)).toReal ^ 2| ≤
+      4 * (gaussMeasure (cfCylinder v)).toReal *
+        ((9 : ℝ) / 10) ^ (Nat.dist j j' - v.length) := by
+  have hμnn : 0 ≤ (gaussMeasure (cfCylinder v)).toReal := ENNReal.toReal_nonneg
+  have hvol := volumeReal_cfCylinder_le_one v
+  -- the gap-form bound, uniform over `m`
+  have key : ∀ m : ℕ,
+      |(gaussMeasure (cfCylinder v ∩ (gaussMap^[m]) ⁻¹' cfCylinder v)).toReal -
+          (gaussMeasure (cfCylinder v)).toReal ^ 2| ≤
+        4 * (gaussMeasure (cfCylinder v)).toReal *
+          ((9 : ℝ) / 10) ^ (m - v.length) := by
+    intro m
+    refine (abs_cov_le v hpos m).trans ?_
+    by_cases hm : v.length ≤ m
+    · rw [if_pos hm]
+      have hp : (0 : ℝ) ≤ ((9 : ℝ) / 10) ^ (m - v.length) := by positivity
+      calc ((9 : ℝ) / 10) ^ (m - v.length) *
+              (4 * (volume (cfCylinder v)).toReal) * (gaussMeasure (cfCylinder v)).toReal
+          ≤ ((9 : ℝ) / 10) ^ (m - v.length) * (4 * 1) *
+              (gaussMeasure (cfCylinder v)).toReal := by gcongr
+        _ = 4 * (gaussMeasure (cfCylinder v)).toReal *
+              ((9 : ℝ) / 10) ^ (m - v.length) := by ring
+    · rw [if_neg hm]
+      have hz : m - v.length = 0 := by omega
+      rw [hz, pow_zero, mul_one]
+      linarith [hμnn]
+  rcases le_total j j' with hle | hle
+  · rw [Nat.dist_eq_sub_of_le hle]
+    have hps := gaussMeasureReal_pair_shift (cfCylinder v) (measurableSet_cfCylinder v) j (j' - j)
+    rw [Nat.add_sub_cancel' hle] at hps
+    rw [show (gaussMeasure ((gaussMap^[j]) ⁻¹' cfCylinder v ∩
+        (gaussMap^[j']) ⁻¹' cfCylinder v)).toReal =
+        (gaussMeasure (cfCylinder v ∩ (gaussMap^[j' - j]) ⁻¹' cfCylinder v)).toReal from hps]
+    exact key (j' - j)
+  · rw [Nat.dist_eq_sub_of_le_right hle, Set.inter_comm]
+    have hps := gaussMeasureReal_pair_shift (cfCylinder v) (measurableSet_cfCylinder v) j' (j - j')
+    rw [Nat.add_sub_cancel' hle] at hps
+    rw [show (gaussMeasure ((gaussMap^[j']) ⁻¹' cfCylinder v ∩
+        (gaussMap^[j]) ⁻¹' cfCylinder v)).toReal =
+        (gaussMeasure (cfCylinder v ∩ (gaussMap^[j - j']) ⁻¹' cfCylinder v)).toReal from hps]
+    exact key (j - j')
 
-Proof route (all ingredients above are proved):
-* `integral_blockCount_sq` writes `∫ S_n² dγ = Σ_{j,j'} γᵣ(T^{-j}I_v ∩ T^{-j'}I_v)`.
-* `(n·μ)² = Σ_{j,j'} μ²`, so `Var = Σ_{j,j'} (γᵣ(T^{-j}I_v ∩ T^{-j'}I_v) − μ²)`.
-* For each `(j,j')` set `d = |j−j'|`; `gaussMeasureReal_pair_shift` collapses
-  the pair correlation to gap `d`, and `abs_cov_le` bounds `|·| ≤ B(d)` where
-  `B(d) = (9/10)^{d−|v|}·4·|I_v|·μ` for `d ≥ |v|` and `2μ` for `d < |v|`.
-* The double sum `Σ_{j,j'<n} B(|j−j'|) ≤ 2n·Σ_{d<n} B(d)` (each gap value is
-  hit ≤ twice per row), and `Σ_{d} B(d) ≤ (2|v| + 40)·μ` (geometric tail sums
-  to `10`, using `|I_v| ≤ 1`).  So `Var ≤ 2n·(2|v|+40)·μ = (4|v|+80)·n·μ`.
+/-- Truncated geometric partial sum: `Σ_{d<n} (9/10)^{d ∸ L} ≤ L + 10`
+(`L` head terms are `1`; the tail is geometric with sum `≤ 10`). -/
+lemma geom_trunc_sum_le (L n : ℕ) :
+    ∑ d ∈ Finset.range n, ((9 : ℝ) / 10) ^ (d - L) ≤ (L : ℝ) + 10 := by
+  classical
+  rw [← Finset.sum_filter_add_sum_filter_not (Finset.range n) (· < L)]
+  apply add_le_add
+  · calc ∑ d ∈ (Finset.range n).filter (· < L), ((9 : ℝ) / 10) ^ (d - L)
+        = ∑ _d ∈ (Finset.range n).filter (· < L), (1 : ℝ) := by
+          apply Finset.sum_congr rfl
+          intro d hd
+          rw [Finset.mem_filter] at hd
+          rw [Nat.sub_eq_zero_of_le hd.2.le, pow_zero]
+      _ = (((Finset.range n).filter (· < L)).card : ℝ) := by
+          rw [Finset.sum_const, nsmul_eq_mul, mul_one]
+      _ ≤ (L : ℝ) := by
+          have hc : ((Finset.range n).filter (· < L)).card ≤ L := by
+            calc ((Finset.range n).filter (· < L)).card
+                ≤ (Finset.range L).card :=
+                  Finset.card_le_card (by
+                    intro d hd
+                    rw [Finset.mem_filter] at hd
+                    rw [Finset.mem_range]; exact hd.2)
+              _ = L := Finset.card_range L
+          exact_mod_cast hc
+  · have hgeo : ∑ k ∈ Finset.range n, ((9 : ℝ) / 10) ^ k ≤ 10 := by
+      have hsum : Summable (fun k => ((9 : ℝ) / 10) ^ k) :=
+        summable_geometric_of_lt_one (by norm_num) (by norm_num)
+      calc ∑ k ∈ Finset.range n, ((9 : ℝ) / 10) ^ k
+          ≤ ∑' k, ((9 : ℝ) / 10) ^ k := hsum.sum_le_tsum _ (fun k _ => by positivity)
+        _ = (1 - 9 / 10)⁻¹ := tsum_geometric_of_lt_one (by norm_num) (by norm_num)
+        _ = 10 := by norm_num
+    have hinj : ∀ a ∈ (Finset.range n).filter (¬ · < L),
+        ∀ b ∈ (Finset.range n).filter (¬ · < L), a - L = b - L → a = b := by
+      intro a ha b hb hab
+      rw [Finset.mem_filter] at ha hb; omega
+    calc ∑ d ∈ (Finset.range n).filter (¬ · < L), ((9 : ℝ) / 10) ^ (d - L)
+        = ∑ k ∈ ((Finset.range n).filter (¬ · < L)).image (fun d => d - L),
+            ((9 : ℝ) / 10) ^ k := (Finset.sum_image hinj).symm
+      _ ≤ ∑ k ∈ Finset.range n, ((9 : ℝ) / 10) ^ k := by
+          apply Finset.sum_le_sum_of_subset_of_nonneg
+          · intro k hk
+            rw [Finset.mem_image] at hk
+            obtain ⟨d, hd, rfl⟩ := hk
+            simp only [Finset.mem_filter, Finset.mem_range] at hd
+            rw [Finset.mem_range]; omega
+          · intro k _ _; positivity
+      _ ≤ 10 := hgeo
 
-The remaining work is the `Finset` gap-counting reindex + the geometric-tail
-sum — no measure theory. -/
+/-- Sum of a nonnegative function of the gap `|j − j'|`, over `j'` in a range
+containing `j`, is at most twice the sum over the range (each gap value is hit
+at most twice — once on each side of `j`). -/
+lemma sum_range_dist_le (g : ℕ → ℝ) (hg : ∀ d, 0 ≤ g d) (n j : ℕ) (hj : j < n) :
+    ∑ j' ∈ Finset.range n, g (Nat.dist j j') ≤ 2 * ∑ d ∈ Finset.range n, g d := by
+  classical
+  rw [two_mul, ← Finset.sum_filter_add_sum_filter_not (Finset.range n) (· ≤ j)
+    (fun j' => g (Nat.dist j j'))]
+  apply add_le_add
+  · have hinj : ∀ a ∈ (Finset.range n).filter (· ≤ j),
+        ∀ b ∈ (Finset.range n).filter (· ≤ j), j - a = j - b → a = b := by
+      intro a ha b hb hab
+      rw [Finset.mem_filter] at ha hb; omega
+    calc ∑ j' ∈ (Finset.range n).filter (· ≤ j), g (Nat.dist j j')
+        = ∑ j' ∈ (Finset.range n).filter (· ≤ j), g (j - j') := by
+          apply Finset.sum_congr rfl
+          intro j' hj'
+          rw [Finset.mem_filter] at hj'
+          rw [Nat.dist_eq_sub_of_le_right hj'.2]
+      _ = ∑ d ∈ ((Finset.range n).filter (· ≤ j)).image (fun j' => j - j'), g d :=
+          (Finset.sum_image hinj).symm
+      _ ≤ ∑ d ∈ Finset.range n, g d := by
+          apply Finset.sum_le_sum_of_subset_of_nonneg
+          · intro d hd
+            rw [Finset.mem_image] at hd
+            obtain ⟨j', hj', rfl⟩ := hd
+            simp only [Finset.mem_filter, Finset.mem_range] at hj'
+            rw [Finset.mem_range]; omega
+          · intro d _ _; exact hg d
+  · have hinj : ∀ a ∈ (Finset.range n).filter (¬ · ≤ j),
+        ∀ b ∈ (Finset.range n).filter (¬ · ≤ j), a - j = b - j → a = b := by
+      intro a ha b hb hab
+      rw [Finset.mem_filter] at ha hb; omega
+    calc ∑ j' ∈ (Finset.range n).filter (¬ · ≤ j), g (Nat.dist j j')
+        = ∑ j' ∈ (Finset.range n).filter (¬ · ≤ j), g (j' - j) := by
+          apply Finset.sum_congr rfl
+          intro j' hj'
+          rw [Finset.mem_filter] at hj'
+          rw [Nat.dist_eq_sub_of_le (by omega : j ≤ j')]
+      _ = ∑ d ∈ ((Finset.range n).filter (¬ · ≤ j)).image (fun j' => j' - j), g d :=
+          (Finset.sum_image hinj).symm
+      _ ≤ ∑ d ∈ Finset.range n, g d := by
+          apply Finset.sum_le_sum_of_subset_of_nonneg
+          · intro d hd
+            rw [Finset.mem_image] at hd
+            obtain ⟨j', hj', rfl⟩ := hd
+            simp only [Finset.mem_filter, Finset.mem_range] at hj'
+            rw [Finset.mem_range]; omega
+          · intro d _ _; exact hg d
+
+/-! ## Variance bound and Chebyshev (W4 targets)
+
+Lap-authored *proposals* for judge ratification (like `CFGammaMixing.lean`),
+not judge-frozen statements. -/
+
+/-- **Variance bound** `Var(S_n) ≤ (8|v| + 80)·n·γ(I_v)`.
+
+`integral_blockCount_sq` + `abs_cov_pair_le` (per-pair, via `pair_shift`) reduce
+the variance to `Σ_{j,j'} 4γ(I_v)(9/10)^{|j−j'|∸|v|}`; `sum_range_dist_le` folds
+each row to `2·Σ_d (9/10)^{d∸|v|}` and `geom_trunc_sum_le` bounds that by
+`2(|v|+10)`, giving `4γ(I_v)·n·2(|v|+10) = (8|v|+80)·n·γ(I_v)`. -/
 theorem variance_blockCount_le (v : List ℕ) (hpos : ∀ a ∈ v, 1 ≤ a) (n : ℕ) :
     |∫ x, blockCount (cfCylinder v) n x ^ 2 ∂gaussMeasure -
         (n * (gaussMeasure (cfCylinder v)).toReal) ^ 2| ≤
-      (4 * v.length + 80) * n * (gaussMeasure (cfCylinder v)).toReal := by
-  sorry
+      (8 * v.length + 80) * n * (gaussMeasure (cfCylinder v)).toReal := by
+  have hμnn : 0 ≤ (gaussMeasure (cfCylinder v)).toReal := ENNReal.toReal_nonneg
+  have hVmeas : MeasurableSet (cfCylinder v) := measurableSet_cfCylinder v
+  -- `(n·μ)²` as a double sum of `μ²`
+  have h2 : ((n : ℝ) * (gaussMeasure (cfCylinder v)).toReal) ^ 2 =
+      ∑ _j ∈ Finset.range n, ∑ _j' ∈ Finset.range n,
+        (gaussMeasure (cfCylinder v)).toReal ^ 2 := by
+    rw [show (n : ℝ) * (gaussMeasure (cfCylinder v)).toReal =
+        ∑ _j ∈ Finset.range n, (gaussMeasure (cfCylinder v)).toReal by
+      rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul], pow_two, Finset.sum_mul_sum]
+    apply Finset.sum_congr rfl; intro j _
+    apply Finset.sum_congr rfl; intro j' _; rw [pow_two]
+  rw [integral_blockCount_sq (cfCylinder v) hVmeas n, h2]
+  calc |∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+          gaussMeasure.real ((gaussMap^[j]) ⁻¹' cfCylinder v ∩ (gaussMap^[j']) ⁻¹' cfCylinder v) -
+        ∑ _j ∈ Finset.range n, ∑ _j' ∈ Finset.range n,
+          (gaussMeasure (cfCylinder v)).toReal ^ 2|
+      = |∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+          (gaussMeasure.real ((gaussMap^[j]) ⁻¹' cfCylinder v ∩ (gaussMap^[j']) ⁻¹' cfCylinder v) -
+            (gaussMeasure (cfCylinder v)).toReal ^ 2)| := by
+        rw [← Finset.sum_sub_distrib]
+        congr 1
+        apply Finset.sum_congr rfl; intro j _
+        rw [← Finset.sum_sub_distrib]
+    _ ≤ ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+          |gaussMeasure.real ((gaussMap^[j]) ⁻¹' cfCylinder v ∩ (gaussMap^[j']) ⁻¹' cfCylinder v) -
+            (gaussMeasure (cfCylinder v)).toReal ^ 2| := by
+        refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+        apply Finset.sum_le_sum; intro j _
+        exact Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+          4 * (gaussMeasure (cfCylinder v)).toReal *
+            ((9 : ℝ) / 10) ^ (Nat.dist j j' - v.length) := by
+        apply Finset.sum_le_sum; intro j _
+        apply Finset.sum_le_sum; intro j' _
+        exact abs_cov_pair_le v hpos j j'
+    _ ≤ ∑ _j ∈ Finset.range n, (8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal := by
+        apply Finset.sum_le_sum; intro j hj
+        rw [Finset.mem_range] at hj
+        rw [← Finset.mul_sum]
+        have hinner : ∑ j' ∈ Finset.range n, ((9 : ℝ) / 10) ^ (Nat.dist j j' - v.length)
+            ≤ 2 * ((v.length : ℝ) + 10) := by
+          calc ∑ j' ∈ Finset.range n, ((9 : ℝ) / 10) ^ (Nat.dist j j' - v.length)
+              ≤ 2 * ∑ d ∈ Finset.range n, ((9 : ℝ) / 10) ^ (d - v.length) :=
+                sum_range_dist_le (fun m => ((9 : ℝ) / 10) ^ (m - v.length))
+                  (fun d => by positivity) n j hj
+            _ ≤ 2 * ((v.length : ℝ) + 10) := by
+                have := geom_trunc_sum_le v.length n; linarith
+        calc 4 * (gaussMeasure (cfCylinder v)).toReal *
+              ∑ j' ∈ Finset.range n, ((9 : ℝ) / 10) ^ (Nat.dist j j' - v.length)
+            ≤ 4 * (gaussMeasure (cfCylinder v)).toReal * (2 * ((v.length : ℝ) + 10)) :=
+              mul_le_mul_of_nonneg_left hinner (by positivity)
+          _ = (8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal := by push_cast; ring
+    _ = (8 * v.length + 80) * n * (gaussMeasure (cfCylinder v)).toReal := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; ring
 
 /-- **Chebyshev block-frequency bound** — the per-stage input to the
 Becher–Yuhjtman refinement (`< ¼` bad measure for `n` large): for `δ > 0`,
@@ -255,7 +458,7 @@ theorem chebyshev_blockCount (v : List ℕ) (hpos : ∀ a ∈ v, 1 ≤ a)
     (n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
     (gaussMeasure {x | δ ≤ |blockCount (cfCylinder v) n x / n -
         (gaussMeasure (cfCylinder v)).toReal|}).toReal ≤
-      (4 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n) := by
+      (8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n) := by
   sorry
 
 end NormalNumbers
