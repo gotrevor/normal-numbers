@@ -89,17 +89,17 @@ genuine cylinder exhaust it up to a null set (irrationals have genuine
 digits; the rational junk is countable), and they are pairwise disjoint, so
 the measures add exactly.  This identity turns the distortion pair (B–Y
 Lemma 3.2, W1) into a conditional-probability calculus. -/
-private lemma measurable_gaussMap : Measurable gaussMap := by
+lemma measurable_gaussMap : Measurable gaussMap := by
   unfold gaussMap
   exact Measurable.ite (MeasurableSet.singleton 0) measurable_const
     (measurable_fract.comp measurable_inv)
 
-private lemma measurable_cfDigit (n : ℕ) : Measurable (cfDigit · n) := by
+lemma measurable_cfDigit (n : ℕ) : Measurable (cfDigit · n) := by
   unfold cfDigit
   exact Nat.measurable_floor.comp
     (measurable_inv.comp (measurable_gaussMap.iterate n))
 
-private lemma measurableSet_cfCylinder (w : List ℕ) :
+lemma measurableSet_cfCylinder (w : List ℕ) :
     MeasurableSet (cfCylinder w) := by
   have heq : cfCylinder w = Set.Ioo (0 : ℝ) 1 ∩
       ⋂ i, ⋂ _ : i < w.length, (cfDigit · i) ⁻¹' {w.getD i 0} := by
@@ -112,7 +112,7 @@ private lemma measurableSet_cfCylinder (w : List ℕ) :
       (measurable_cfDigit i) (measurableSet_singleton _))
 
 /-- Prefix property: extending the word shrinks the cylinder. -/
-private lemma cfCylinder_append_subset (w u : List ℕ) :
+lemma cfCylinder_append_subset (w u : List ℕ) :
     cfCylinder (w ++ u) ⊆ cfCylinder w := by
   rintro x ⟨hx, hd⟩
   refine ⟨hx, fun i hi => ?_⟩
@@ -120,7 +120,7 @@ private lemma cfCylinder_append_subset (w u : List ℕ) :
   rwa [List.getD_append _ _ _ _ hi] at h
 
 /-- Irrationals in `(0,1)` keep irrational, in-range Gauss orbits. -/
-private lemma irrational_orbit (x : ℝ) (hirr : Irrational x)
+lemma irrational_orbit (x : ℝ) (hirr : Irrational x)
     (hx : x ∈ Set.Ioo (0 : ℝ) 1) (k : ℕ) :
     Irrational (gaussMap^[k] x) ∧ gaussMap^[k] x ∈ Set.Ioo (0 : ℝ) 1 := by
   induction k with
@@ -130,7 +130,7 @@ private lemma irrational_orbit (x : ℝ) (hirr : Irrational x)
       exact irrational_gaussMap ih.1 ih.2
 
 /-- Every digit of an irrational in `(0,1)` is genuine (`≥ 1`). -/
-private lemma one_le_cfDigit (x : ℝ) (hirr : Irrational x)
+lemma one_le_cfDigit (x : ℝ) (hirr : Irrational x)
     (hx : x ∈ Set.Ioo (0 : ℝ) 1) (k : ℕ) : 1 ≤ cfDigit x k := by
   obtain ⟨hkirr, hk0, hk1⟩ := irrational_orbit x hirr hx k
   rw [cfDigit]

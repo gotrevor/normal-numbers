@@ -263,7 +263,7 @@ private lemma bumpLast_pos {w : List ℕ} (hpos : ∀ a ∈ w, 1 ≤ a) :
 private lemma bumpLast_ne_nil (w : List ℕ) : bumpLast w ≠ [] := by
   simp [bumpLast]
 
-private lemma cfK_concat (v : List ℕ) (z : ℕ) (hv : v ≠ []) :
+lemma cfK_concat (v : List ℕ) (z : ℕ) (hv : v ≠ []) :
     cfK (v ++ [z]) = z * cfK v + cfK v.dropLast := by
   rw [cfK_append v [z] hv (by simp)]
   simp [cfK]
@@ -365,15 +365,15 @@ private lemma abs_cfVal_sub_bumpLast (w : List ℕ) (hw : w ≠ [])
 
 /-! ### Digit reading and the cylinder recursion -/
 
-private lemma cfDigit_zero (x : ℝ) : cfDigit x 0 = ⌊x⁻¹⌋₊ := by
+lemma cfDigit_zero (x : ℝ) : cfDigit x 0 = ⌊x⁻¹⌋₊ := by
   simp [cfDigit]
 
-private lemma cfDigit_succ (x : ℝ) (n : ℕ) :
+lemma cfDigit_succ (x : ℝ) (n : ℕ) :
     cfDigit x (n + 1) = cfDigit (gaussMap x) n := by
   simp [cfDigit, Function.iterate_succ_apply]
 
 /-- The digit-reading bridge: `cfDigit x 0 = a ⇔ x ∈ (1/(a+1), 1/a]`. -/
-private lemma cfDigit_zero_eq_iff {x : ℝ} (hx : x ∈ Set.Ioo (0 : ℝ) 1)
+lemma cfDigit_zero_eq_iff {x : ℝ} (hx : x ∈ Set.Ioo (0 : ℝ) 1)
     {a : ℕ} (ha : 1 ≤ a) :
     cfDigit x 0 = a ↔ 1 / ((a : ℝ) + 1) < x ∧ x ≤ 1 / (a : ℝ) := by
   obtain ⟨hx0, _⟩ := hx
@@ -385,13 +385,13 @@ private lemma cfDigit_zero_eq_iff {x : ℝ} (hx : x ∈ Set.Ioo (0 : ℝ) 1)
     le_div_iff₀ (by linarith : (0 : ℝ) < (a : ℝ))]
   constructor <;> rintro ⟨h1, h2⟩ <;> constructor <;> nlinarith
 
-private lemma gaussMap_eq_inv_sub {x : ℝ} (hx : x ∈ Set.Ioo (0 : ℝ) 1) :
+lemma gaussMap_eq_inv_sub {x : ℝ} (hx : x ∈ Set.Ioo (0 : ℝ) 1) :
     gaussMap x = x⁻¹ - (cfDigit x 0 : ℝ) := by
   rw [gaussMap, if_neg hx.1.ne', Int.fract, cfDigit_zero]
   congr 1
   exact (natCast_floor_eq_intCast_floor (inv_nonneg.2 hx.1.le)).symm
 
-private lemma mem_cfCylinder_cons {a : ℕ} {w : List ℕ} {x : ℝ} :
+lemma mem_cfCylinder_cons {a : ℕ} {w : List ℕ} {x : ℝ} :
     x ∈ cfCylinder (a :: w) ↔
       x ∈ Set.Ioo (0 : ℝ) 1 ∧ cfDigit x 0 = a ∧
         (∀ i < w.length, cfDigit (gaussMap x) i = w.getD i 0) := by
