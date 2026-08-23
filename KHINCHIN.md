@@ -256,12 +256,15 @@ convergent-recovery bound in a Shor's-algorithm repo — different theorems.
 - R. L. Adler, M. Keane, M. Smorodinsky, *A construction of a normal number for
   the continued fraction transformation*, J. Number Theory 13 (1981) 95–105.
 - J. Vandehey, *Non-trivial matrix actions preserve normality for continued
-  fractions*, Compositio Math. 153 (2017) 274–293; arXiv:1504.05121.  Scope
-  verified via arXiv abstract 2026-08-23: x CF-normal ⇒ (ax+b)/(cx+d) CF-normal
-  for integers a,b,c,d with ad−bc ≠ 0 (the CF analogue of Wall's rational
-  corollary, and strictly stronger — dets ≠ ±1 allowed).  ⚠️ Statement is about
-  CF-*normality*; whether the Khinchin geometric-mean *value* transfers needs
-  the log-integrability tail step — check the paper body before claiming.
+  fractions*, Compositio Math. 153 (2017) 274–293; arXiv:1504.05121.  Read in
+  full 2026-08-23 → pin note `papers/vandehey-2017-matrix-actions-cf-normality.md`.
+  x CF-normal ⇒ (ax+b)/(cx+d) CF-normal, a,b,c,d ∈ ℤ, ad−bc ≠ 0 (CF analogue
+  of Wall's rational corollary; answers Bugeaud Problem 10.56).  Confirmed: the
+  paper does NOT address Khinchin geometric-mean transfer (block frequencies
+  only — the log-tail uniform-integrability gap is real and untouched).  Its
+  §7 open problem 1 = quadratic-irrational coefficients (qx + r, q,r eventually
+  periodic), i.e. the φ-question.  Its Rényi-condition input is weaker than
+  W3's `cylinder_mixing`; formalization assessment in the pin note.
 - A.-M. Scheerer, *On the continued fraction expansion of absolutely normal
   numbers*, arXiv:1701.07979.  (Absolutely normal + CF-normal, computable.)
 - V. Becher, S. A. Yuhjtman, *On absolutely normal and continued fraction
