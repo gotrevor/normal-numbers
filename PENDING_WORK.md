@@ -64,11 +64,18 @@ DONE this lap (all axiom-clean, `#print axioms` = trust triple):
      −bε²/6 per symbol; no calculus, no measure theory, and B–Y's extra
      hypothesis 6/k ≤ ε is NOT needed.
 
-NEXT ATTACK: B–Y Lemma 9 (b-ary discrepancy concatenation, BHS 3.1 —
-pure counting over `digitCount`; state for blocks as `Fin k → Fin b` or
-lists, check Counting.lean overlap), then Lemma 7 (CF-discrepancy
-concatenation) and the W5 t-brick bookkeeping (Defs 10–11, Prop 12,
-Lemma 13 assembly).
+  ✅ **B–Y Lemma 9 PROVED** 2026-08-24 (`BaryConcat.lean`), axiom-clean:
+     `HasDiscLt` (deviation-form simple discrepancy on `List (Fin b)`),
+     parts 1/2a/2b as `HasDiscLt.append` / `hasDiscLt_append_take` /
+     `hasDiscLt_short_append` (all triangle-inequality counting), plus
+     `digitCount_eq_count_ofFn` bridging to Lemma 8's `Fin k → Fin b`
+     blocks.  **The W4 b-ary side is now COMPLETE.**
+
+NEXT ATTACK: Lemma 7 (CF-discrepancy concatenation — same triangle
+shape over `blockCount`-style CF pattern counts; needs a finite-block
+CF discrepancy notion) and then the W5 t-brick bookkeeping (Defs 10–11,
+Prop 12, Lemma 13 assembly — the construction's main lemma, consuming
+`chebyshev_blockcount_brick` + Lemma 8 + distortion).
 
 Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
 `IsProbabilityMeasure gaussMeasure` instance added in CFBlockFreq),
