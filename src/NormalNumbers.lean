@@ -8,6 +8,7 @@ import NormalNumbers.Bridge
 import NormalNumbers.Wall
 import NormalNumbers.LnTwo
 import NormalNumbers.StonehamArith
+import NormalNumbers.Stoneham
 import NormalNumbers.CFDefs
 import NormalNumbers.CFCylinder
 import NormalNumbers.CFDigitLaw
@@ -31,4 +32,4 @@ import NormalNumbers.CFSchedule
 import NormalNumbers.CFCorrect
 import NormalNumbers.DaryDigits
 import NormalNumbers.DaryCorrect
-import NormalNumbers.Stoneham
+import NormalNumbers.Headline

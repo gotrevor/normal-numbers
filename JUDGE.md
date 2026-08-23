@@ -149,3 +149,22 @@ file and works the checklist.  Laps never edit this file above the Ledger.
   docstring still displays `4|v|+80` while the statement says `8|v|+80` —
   fix the docstring · full ratification (kernel sweep + /lean-review)
   at close-out.
+- 2026-08-23 ~18:35 · **post-kill judge pass** (treadmill stopped by Trevor,
+  token budget; last lap landed `9e7d0e4`) · reflection lap's doc refresh +
+  Tier-1/Tier-2 reframing reviewed — **ratified as SEQUENCING, not
+  descoping** (Tier 2 = the expedition destination; W6 fence until Tier 1
+  locked stands) · **HEADLINE SURFACE FROZEN by the judge**:
+  `src/NormalNumbers/Headline.lean` — defs `IsAbsolutelyNormal` (full
+  `IsNormal`, every `b ≥ 2`), `IsCFNormal` (general-`x` window-frequency
+  form), `khinchinK₀` (tprod, index `k` ↦ digit `k+1`), `KhinchinTypical`;
+  frozen statements `exists_absolutely_normal_cf_normal` (Tier 1, B–Y) +
+  `exists_absolutely_normal_cf_normal_khinchin` (Tier 2, headline) — both
+  ∃-form, deliberately not naming `xstar`, so W6's capped rebuild
+  discharges the same statements · 4 kernel-checked anchors (overlapping
+  window count; K₀ factor alignment at digits 1 and 2) · builds green
+  (2 sorries expected — the self-stop gate now encodes the full
+  conjunction) · DIRECTION.md judge addendum added (laps prove toward
+  Headline.lean, never restate) · relaunch prepped: model swap fable/low →
+  **sonnet/high** (Trevor's token budget; altitude laps stay opus) —
+  frozen-statement + directive + judge stack is exactly the harness that
+  makes a weaker grinder safe to try.

@@ -71,6 +71,25 @@ detail lives in PENDING_WORK.md.
   (campaign-original stretch). Redirected to the d-ary side, hardest-first at
   the `m`-growth estimate; Khinchin fenced off until Tier 1 is stated + proven.
 
+## JUDGE addendum (2026-08-23, post-kill judge pass) ⚖️
+
+- Directive item (3)'s "stage the conjunction for JUDGE to freeze" is **DONE —
+  by the judge, in `src/NormalNumbers/Headline.lean`**: frozen defs
+  (`IsAbsolutelyNormal`, `IsCFNormal`, `khinchinK₀`, `KhinchinTypical`) + two
+  frozen ∃-form statements — Tier 1 `exists_absolutely_normal_cf_normal`
+  (B–Y) and Tier 2 `exists_absolutely_normal_cf_normal_khinchin` (the
+  expedition headline).  **Deliberately witness-existence form** (does not
+  name `xstar`), so a W6 capped rebuild discharges the same statements.
+  Laps prove TOWARD these; do not restate or duplicate them.
+- The Tier-1/Tier-2 framing is ratified **as sequencing, not descoping**:
+  Tier 2 stays the expedition destination (its sorry now holds the
+  self-stop gate open); the directive's W6 fence until Tier 1 is locked
+  stands.
+- `IsCFNormal` is the general-`x` form of the proven `xstar_cf_freq_tendsto`
+  shape; discharging Tier 1's CF conjunct from it should be a wrapper, not
+  new math.  `IsAbsolutelyNormal` is Track A's FULL `IsNormal` — the
+  Pillai (or direct-blocks) obligation is unchanged.
+
 ## Standing charter (destination)
 
 Two classical harvests of one machine — Birkhoff-on-[0,1] applied to two
