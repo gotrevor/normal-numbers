@@ -1,97 +1,56 @@
-# HANDOFF — Stoneham campaign: prove the 7 sorries in `src/NormalNumbers/Stoneham.lean`
+# HANDOFF — B5′ / W1 campaign: prove the 12 sorries in `src/NormalNumbers/CFCylinder.lean`
 
-## ✅ CAMPAIGN COMPLETE AND VERIFIED (2026-08-23, host)
+**Objective**: work package W1 of expedition B5′ (one witness real that is
+absolutely normal + CF-normal + Khinchin-typical).  All 12 `src/` sorries
+live in `CFCylinder.lean`; `src/` sorry-free = done (the self-stop gate).
 
-The toolchain gate below is CLOSED: host ran in-repo `lake build` on v4.33.1
-(green, 8719 jobs, zero sorry warnings) and the guarded axiom check —
-`#print axioms isNormal_two_stoneham23` = exactly `[propext, Classical.choice,
-Quot.sound]` (`#guard_msgs`, PASS).  **Stoneham's theorem is sorry-free and
-axiom-clean, verified 2026-08-23.**  The box toolchain gap is fixed for good:
-`lean-box-toolchains add v4.33.1` ran; the box store now carries
-4.29.1/4.31.0/4.33.1.  ON-LINE-REQUEST resolved and removed.  Residual tidy
-(optional): a `Set.mem_setOf_eq` deprecation at `Stoneham.lean:421` + a few
-unused-binder lints.
+**Read first**: `KHINCHIN.md` (the plan, W1–W6 + the decided W3 route),
+`papers/becher-yuhjtman-2019-abs-normal-cf-normal.md` (the dependency map),
+and the module docstrings of `CFDefs.lean` / `CFCylinder.lean`.
 
-**Objective**: `isNormal_two_stoneham23` — Stoneham (1973): `α₂,₃ = Σ 1/(3ᵐ·2^(3ᵐ))` is
-normal in base 2.  All 7 `src/` sorries live in `Stoneham.lean`; `src/` sorry-free = done.
+**Statement discipline** 🎯: the 12 statement shapes are FROZEN
+(guard-by-name; anchors in the file are kernel-checked and must keep
+passing).  Add as many private intermediate lemmas as you like — in
+`CFCylinder.lean` or a new imported module — but do not weaken, reshape, or
+re-hypothesize a frozen statement.  If one looks *wrong*, STOP on it, write
+the evidence into this HANDOFF, and move to the others.
 
-**Route**: hot-spot, per the module docstring in `Stoneham.lean`.  Everything is exact
-counting in `(ℤ/3^M)ˣ` except `isNormal_of_visit_upper_bound`, whose statement is
-**PINNED** (2026-08-23) against `papers/bailey-misiurewicz-2006-hot-spot.md` — do not
-weaken or reshape that statement; the proof route is free (the paper's ergodic argument
-or elementary block counting; the pin note lists mathlib candidates to grep).
-💎 The pin note's "Section 4 cross-check" table maps the paper's own proof of our exact
-theorem onto our decomposition — read it before the counting lemmas, and cross-check
-against it in review laps.  Expect a single-digit uniform constant (theirs is `C = 8`)
-out of the window counting.
-⚠️ Do NOT revive the mod-3^M′ cascade plan — known-flawed (it localizes the *low*
-digits, not position).
+**Suggested order** (algebra first, measure last):
 
-**Suggested order** (counting first, analysis last):
-`stonehamState_succ` → `stonehamState_unit` → `card_units_Ico` → `stonehamState_approx`
-→ `segment_visit_upper` → `isNormal_of_visit_upper_bound` → `isNormal_two_stoneham23`.
+1. `cfK_drop_one_le` — direct from the `cfK` recursion; warm-up.
+2. `cfK_append` (Euler gluing) — **the keystone**; induction on `w`, likely
+   proving the pair `(cfK (w ++ u), cfK (w.drop 1 ++ u))` together or
+   strengthening the IH.  Deliberately NOT the paper's `α_{r,s}` subset
+   combinatorics.
+3. `cfK_dropLast_le` — from gluing with `u = [last]`, or its own induction.
+4. `cfK_mul_le_append`, `cfK_append_le` — one-liners from gluing +
+   monotonicity (B–Y Lemma 3.1's proof, verbatim).
+5. `fib_le_cfK` — two-step induction.
+6. `cfVal_eq_div` — induction via the `pₙ/qₙ` recursions.  Worth proving the
+   classical determinant identity `qₙ·pₙ₋₁ − pₙ·qₙ₋₁ = ±1` as an
+   intermediate (needed again for `volume_cfCylinder`).  Mathlib grep
+   candidates: `Mathlib/Algebra/ContinuedFractions/Determinant.lean`,
+   `ContinuantsRecurrence.lean` (statement shapes unverified — check before
+   leaning on them; self-contained induction is also fine).
+7. `tailDensity_mem_Icc`, `cylMap_denom_ratio_le` — pure real algebra
+   (`field_simp`/`nlinarith` territory); can be done any time.
+8. `volume_cfCylinder` — **the meaty one, expect it to be half the
+   campaign**.  Route: characterize `cfCylinder w` up to a countable junk
+   set as the interval between `cfVal w` and `cfVal (bump-last w)` (parity
+   decides orientation), via a digit-reading bridge: `cfDigit x 0 = k ⇔
+   x ∈ (1/(k+1), 1/k]`, then induct with `cylMap`/`gaussMap` (this is the
+   CF analog of `DigitInterval.lean`).  Endpoint/rational junk is countable
+   hence null — work up to measure zero throughout.
+9. `volume_cylinder_append_le`, `le_volume_cylinder_append` — from the
+   volume formula + quasi-multiplicativity; mirror B–Y's own one-page
+   Lemma 3.2 computation.
 
-**Existing assets — grep before re-proving**: `StonehamArith` (2 is a primitive root mod
-`3^M`, order `2·3^(M-1)`), the DigitInterval toolkit (`digits_prefix_iff`, shift lemma),
-the sequence↔real Bridge (`isNormal_realOfDigits`), counting/visit algebra, b-adic
-sandwich.  `ROADMAP.md` has the programme map.
+**Warnings** ⚠️: the digit-positivity hypotheses (`∀ a ∈ w, 1 ≤ a`) are
+load-bearing — digit `0` is the junk marker for rationals/out-of-range (see
+`CFDefs.lean` conventions).  Half-open vs open interval mismatches at
+cylinder endpoints are null sets, not equalities — don't chase set-level
+identities the statements don't need.
 
-**Hygiene**: park exploratory/helper sorries under `wip/`, keep `src/` honest; commit
-green builds; `#print axioms isNormal_two_stoneham23` at the end (target: standard 3).
-
----
-
-## Lap update 2026-08-23 (hot-spot campaign, lap B) — CAMPAIGN COMPLETE (modulo toolchain)
-
-**All 7 Stoneham sorries proven; `src/` is sorry-free.**  See PENDING_WORK.md
-for the proof map.  Final theorem `isNormal_two_stoneham23` assembled with
-constant `C = 6`, window cut `M0 = 2k+3`, windows indexed by `Nat.log 3`.
-
-**⚠️ Still blocked on the v4.33.1 toolchain** (ON-LINE-REQUEST.md): repo
-`lake build` has never run on this state.  All of `Stoneham.lean` was
-compiler-verified WHOLE-FILE against v4.31 mathlib (scratch harness,
-imports stubbed as axioms with verbatim repo statements).  First actions
-when the toolchain lands: `lake build`, then
-`#print axioms isNormal_two_stoneham23` (target: standard 3).
-
----
-
-## Lap update 2026-08-23 (hot-spot campaign, lap A)
-
-**HEAD**: `583c088` on `master`.  No uncommitted edits.
-
-**⚠️ Toolchain blocker**: the box has no v4.33.1 Lean toolchain (elan mount is
-read-only with only 4.29.1/4.31.0; no egress).  `lake build` is IMPOSSIBLE here
-until the host answers `ON-LINE-REQUEST.md`.  All new work is compiler-verified
-against the built v4.31.0 mathlib in `~/src/goodstein-ab-med` via the harness
-`<scratchpad>/check.sh` (direct `lean` + LEAN_PATH; repo imports → Mathlib.Tactic
-+ `stub.lean` axiom-stubs of Sandwich/Wall interfaces).  Re-verify in-repo
-(`lake build`) the moment the toolchain lands, before trusting anything here.
-
-**Done (new module `src/NormalNumbers/HotSpot.lean`, ~1050 lines, zero sorries)**:
-elementary proof of the hot-spot crux — no Birkhoff/Vitali/ergodicity:
-counting kit (`card_filter_div/mod/mod_div`, `card_filter_subword[_pair]`),
-moments (`sum_occCount`, `sum_occCount_sq_le`), Chebyshev (`card_badSet_le`),
-orbit layer (`mem_cell_iff_floor`, `orbit_add`, `cellAt`, `subword_cellAt`),
-sliding double count (`sum_occCount_cellAt_{eq,le}`, `le_sum_occCount_cellAt`),
-good/bad bounds (`cell_visits_{upper,lower}`, `card_cellAt_mem`), and the
-squeeze `tendsto_cell_of_visit_upper` → `equidistributed_orbit_of_visit_upper`.
-
-**Next steps** (in order):
-1. In `Stoneham.lean`: `import NormalNumbers.HotSpot`, prove the pinned
-   `isNormal_of_visit_upper_bound` ≈ 3 lines:
-   `rw [isNormal_iff_equidistributed_orbit b hb x]`; apply
-   `equidistributed_orbit_of_visit_upper` at `x' := Int.fract x` (hypothesis h
-   is already stated for `orbit b (Int.fract x)`); transport with
-   `funext (orbit_fract b x)`.
-2. Then the six counting sorries (`stonehamState_succ` → `segment_visit_upper`
-   → final assembly) per the original suggested order above.
-3. To scratch-verify `Stoneham.lean` pieces, extend `stub.lean` or develop
-   lemma bodies standalone; `check.sh <file> [stub]` is the loop.
-
-**Gotchas hit (v4.31 mathlib)**: `Finset.card_nbij'` wants `Finset.mem_coe` in
-simp sets; `Nat.mul_add_div/mod` need the modulus as FIRST factor (mul_comm
-first); `pow_le_pow_left` absent → `mul_self_le_mul_self` + `sq`; iff form of
-`mul_le_mul_right` absent → `le_of_mul_le_mul_right`; `set`-bound `K/N/T/An/Bn`
-must be `clear_value`d or nlinarith/whnf times out; prefer `linarith [explicit
-product hints]` over bare `nlinarith` in the squeeze.
+**Gates**: `lake build` green every commit (pre-commit hook enforces);
+anchors keep passing; once all 12 are discharged, `#print axioms` each of
+the 12 = exactly `propext`, `Classical.choice`, `Quot.sound`.
