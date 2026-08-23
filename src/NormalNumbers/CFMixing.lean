@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.CFDigitLaw
 import NormalNumbers.CFDensity
 import NormalNumbers.CFInvariance
+import NormalNumbers.CFPin
 
 /-!
 # W3 — Gauss-map mixing (scaffold)
@@ -110,7 +111,34 @@ theorem cylinder_mixing :
             volume (cfCylinder w ∩ (gaussMap^[w.length + k]) ⁻¹' A) ≤
               ENNReal.ofReal (1 + C * ρ ^ k) *
                 (gaussMeasure A * volume (cfCylinder w)) := by
-  sorry
+  refine ⟨8 * Real.log 2, 9 / 10,
+    by have := Real.log_pos (by norm_num : (1 : ℝ) < 2); positivity,
+    ⟨by norm_num, by norm_num⟩, ?_⟩
+  intro w _hw hpos k A hA hA1
+  have hγfin : gaussMeasure A ≠ ⊤ :=
+    ne_top_of_le_ne_top (by rw [gaussMeasure_univ]; exact ENNReal.one_ne_top)
+      (measure_mono (Set.subset_univ A))
+  have ht := tParam_mem_Icc w hpos
+  obtain ⟨hlo, hhi⟩ := horizonIntegral_envelope hA hA1 k ht
+  rw [volume_inter_preimage_horizon w hpos k A hA hA1]
+  have hγeq : gaussMeasure A =
+      ENNReal.ofReal ((gaussMeasure A).toReal) :=
+    (ENNReal.ofReal_toReal hγfin).symm
+  constructor
+  · rw [hγeq, ← mul_assoc]
+    gcongr
+    rcases le_or_gt (1 - 8 * Real.log 2 * (9 / 10) ^ k) 0 with hneg | hpos'
+    · rw [ENNReal.ofReal_eq_zero.mpr hneg, zero_mul]
+      exact bot_le
+    · rw [← ENNReal.ofReal_mul hpos'.le]
+      exact ENNReal.ofReal_le_ofReal hlo
+  · rw [hγeq, ← mul_assoc]
+    gcongr
+    have hnn : (0 : ℝ) ≤ 1 + 8 * Real.log 2 * (9 / 10) ^ k := by
+      have hlog : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+      positivity
+    rw [← ENNReal.ofReal_mul hnn]
+    exact ENNReal.ofReal_le_ofReal hhi
 
 /-- **Quantitative Gauss–Kuzmin from uniform start** (Track B flag B4;
 Gauss 1812 / Kuzmin 1928 / Lévy 1929): the uniform density is `h₀ = 1`,
@@ -125,6 +153,36 @@ theorem gauss_kuzmin :
             volume (Set.Ioo (0 : ℝ) 1 ∩ (gaussMap^[k]) ⁻¹' A) ∧
           volume (Set.Ioo (0 : ℝ) 1 ∩ (gaussMap^[k]) ⁻¹' A) ≤
             ENNReal.ofReal (1 + C * ρ ^ k) * gaussMeasure A := by
-  sorry
+  refine ⟨8 * Real.log 2, 9 / 10,
+    by have := Real.log_pos (by norm_num : (1 : ℝ) < 2); positivity,
+    ⟨by norm_num, by norm_num⟩, ?_⟩
+  intro k A hA hA1
+  have hγfin : gaussMeasure A ≠ ⊤ :=
+    ne_top_of_le_ne_top (by rw [gaussMeasure_univ]; exact ENNReal.one_ne_top)
+      (measure_mono (Set.subset_univ A))
+  have ht : (0 : ℝ) ∈ Set.Icc (0 : ℝ) 1 := ⟨le_refl 0, by norm_num⟩
+  obtain ⟨hlo, hhi⟩ := horizonIntegral_envelope hA hA1 k ht
+  have hvol : volume (Set.Ioo (0 : ℝ) 1 ∩ (gaussMap^[k]) ⁻¹' A) =
+      ENNReal.ofReal (horizonIntegral A k 0) := by
+    have h := volume_inter_preimage_horizon [] (by simp) k A hA hA1
+    rw [cfCylinder_nil, tParam_nil] at h
+    simpa [Real.volume_Ioo] using h
+  have hγeq : gaussMeasure A =
+      ENNReal.ofReal ((gaussMeasure A).toReal) :=
+    (ENNReal.ofReal_toReal hγfin).symm
+  rw [hvol]
+  constructor
+  · rw [hγeq]
+    rcases le_or_gt (1 - 8 * Real.log 2 * (9 / 10) ^ k) 0 with hneg | hpos'
+    · rw [ENNReal.ofReal_eq_zero.mpr hneg, zero_mul]
+      exact bot_le
+    · rw [← ENNReal.ofReal_mul hpos'.le]
+      exact ENNReal.ofReal_le_ofReal hlo
+  · rw [hγeq]
+    have hnn : (0 : ℝ) ≤ 1 + 8 * Real.log 2 * (9 / 10) ^ k := by
+      have hlog : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+      positivity
+    rw [← ENNReal.ofReal_mul hnn]
+    exact ENNReal.ofReal_le_ofReal hhi
 
 end NormalNumbers

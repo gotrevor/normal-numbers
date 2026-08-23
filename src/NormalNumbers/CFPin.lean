@@ -335,4 +335,48 @@ theorem abs_horizonIntegral_sub_gauss {A : Set ℝ} (hA : MeasurableSet A)
         norm_num
         ring
 
+/-- Real-form comparison: `|A| ≤ 2 log 2 · γ(A)`. -/
+lemma volume_toReal_le_gauss {A : Set ℝ} (hA : MeasurableSet A)
+    (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1) :
+    (volume A).toReal ≤ 2 * Real.log 2 * (gaussMeasure A).toReal := by
+  have hlog : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hAfin : volume A ≠ ⊤ :=
+    ne_top_of_le_ne_top (by simp [Real.volume_Ioo]) (measure_mono hA1)
+  have hγfin : gaussMeasure A ≠ ⊤ :=
+    ne_top_of_le_ne_top (by rw [gaussMeasure_univ]; exact ENNReal.one_ne_top)
+      (measure_mono (Set.subset_univ A))
+  have h := volume_le_gaussMeasure A hA hA1
+  have h2 := ENNReal.toReal_mono hγfin h
+  rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal (by positivity)] at h2
+  calc (volume A).toReal =
+      2 * Real.log 2 * ((2 * Real.log 2)⁻¹ * (volume A).toReal) := by
+        field_simp
+    _ ≤ 2 * Real.log 2 * (gaussMeasure A).toReal := by
+        apply mul_le_mul_of_nonneg_left h2 (by positivity)
+
+/-- **The two-sided envelope in real form**:
+`(1 ± 8 log 2·(9/10)ᵏ)·γ(A)` traps `G_k(t)` on `[0,1]`. -/
+theorem horizonIntegral_envelope {A : Set ℝ} (hA : MeasurableSet A)
+    (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1) (k : ℕ) {t : ℝ}
+    (ht : t ∈ Set.Icc (0 : ℝ) 1) :
+    (1 - 8 * Real.log 2 * (9 / 10) ^ k) * (gaussMeasure A).toReal ≤
+        horizonIntegral A k t ∧
+      horizonIntegral A k t ≤
+        (1 + 8 * Real.log 2 * (9 / 10) ^ k) * (gaussMeasure A).toReal := by
+  have hlog : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hρ : (0 : ℝ) ≤ (9 / 10 : ℝ) ^ k := by positivity
+  have hγ0 : 0 ≤ (gaussMeasure A).toReal := ENNReal.toReal_nonneg
+  have hpin := abs_horizonIntegral_sub_gauss hA hA1 k ht
+  have hcmp := volume_toReal_le_gauss hA hA1
+  have hbound : |horizonIntegral A k t - (gaussMeasure A).toReal| ≤
+      8 * Real.log 2 * (9 / 10) ^ k * (gaussMeasure A).toReal := by
+    calc |horizonIntegral A k t - (gaussMeasure A).toReal| ≤
+        (9 / 10) ^ k * (4 * (volume A).toReal) := hpin
+      _ ≤ (9 / 10) ^ k * (4 * (2 * Real.log 2 * (gaussMeasure A).toReal)) := by
+          apply mul_le_mul_of_nonneg_left _ hρ
+          linarith
+      _ = 8 * Real.log 2 * (9 / 10) ^ k * (gaussMeasure A).toReal := by ring
+  rw [abs_le] at hbound
+  constructor <;> nlinarith [hbound.1, hbound.2]
+
 end NormalNumbers
