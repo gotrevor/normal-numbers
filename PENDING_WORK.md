@@ -127,11 +127,39 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
   `blockCount_eq_card_matches`, `blockCount_sub_countOccurrences_bounds`
   (orbit count vs fitting-window count of the digit word differ ≤ |v|) —
   connects `chebyshev_blockCount_brick` to `CFDiscLt` of the new word.
-- Next concrete step: (b) brick structure definition with the 1/(2d)
-  ratio, the CF good-length/bad-zone selection inside I_w (Leb-vs-γ via
-  gaussMeasure_le_volume / volume_le_gaussMeasure), then Lemma 13
-  assembly (pick J in the half-mass collection avoiding CF bad zone +
-  all d-ary wide zones; measures: ½|I_w| good vs Σ small bads).
+- ✅ (b) BRICK STRUCTURE + d-ARY SIDE OF THE BALANCE PROVED 2026-08-24
+  (review lap, `TBrick.lean`, axiom-clean):
+  * `structure TBrick (t)` = Defs 10–11: genuine CF word `w`, per base
+    `2 ≤ d ≤ t` an order-`m d` cell block of `r d ∈ {1,2}` cells with
+    `cfCylinder w ⊆ daryCell d (m d) (j d) (r d)`, brick-ratio field
+    `hratio : d^{-m d} ≤ 2d·|I_w|` (the repo's Prop-12 `1/(2d)` route,
+    replacing B–Y's `1/(16 e^{4c} d)`).
+  * `volume_aggregate_daryBadZoneWide_le`: ⋃_{2≤d≤t} ⋃_{k≥kmin}
+    daryBadZoneWide ≤ Σ_d 6d·d^{-m0 d}·ρ_d^kmin/(1−ρ_d), ρ_d = e^{−dε²/6}
+    (via `measure_biUnion_finset_le` + the summed-zone lemma; needs only
+    `dε ≤ tε ≤ 1`).
+  * `TBrick.volume_aggregate_bad_le`: **the d-ary half of the Lemma-13
+    balance** — that aggregate bad zone ≤ (Σ_d 12d²ρ_d^kmin/(1−ρ_d))·|I_w|,
+    using `hratio` to turn each `d^{-m0 d}` into `2d|I_w|`.  The constant is
+    a finite sum of geometric-in-kmin terms ⇒ →0 as kmin→∞, so the d-ary bad
+    mass is eventually an arbitrarily small fraction of |I_w|. ✅ d-ary side
+    of the measure balance CLOSED.
+
+- NEXT concrete step (the remaining crux — the CF side + combine):
+  (i) **CF discrepancy side**: aggregate `chebyshev_blockCount_brick` across
+      CF words into a single bad-zone bound `≤ (small in n)·γ(I_w)`, via
+      `CFDiscLt` / `CFWordBridge` (blockCount ↔ countOccurrences).  Subtlety:
+      the CF alphabet is infinite — must use the `CFDiscLt` deviation-form
+      aggregation (finite weighted sum) not a per-word union.  This is the
+      one genuinely-open sub-piece left in the balance.
+  (ii) **kmin(n) link**: good-length extensions J have |J| ≤ 2φ^{-2(n-1)}|I_w|
+      (Fibonacci upper bound), so for each base d the "new digits" count
+      k_d(J) ≥ kmin(n) with kmin(n)→∞; hence the wide-zone union avoided is
+      exactly ⋃_{k≥kmin(n)} and `TBrick.volume_aggregate_bad_le` applies.
+  (iii) **combine** (Leb↔γ, factor-2 window): ½|I_w| good (Lemma-5 subst)
+      minus O(1/n)|I_w| CF minus (→0)|I_w| d-ary is > 0 for n ≥ n₀(t,ε) ⇒
+      a surviving good extension J.  Then Lemma 13 proper: J is an
+      ε-refinement; t→t+1 via Prop 12 (ratio 1/(2(t+1))).
 
 Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
 `IsProbabilityMeasure gaussMeasure` instance added in CFBlockFreq),

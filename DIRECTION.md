@@ -4,37 +4,55 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-23, review lap)
+## CURRENT DIRECTIVE (set 2026-08-24, review lap)
 
 - **THE objective**: advance the B5′ expedition (Track B) toward its headline —
   one explicit real that is absolutely normal + CF-normal + Khinchin-typical.
-  The current frontier is **W4: block-frequency variance/Chebyshev**, the
-  concrete consumer of the proven γ-mixing engine
-  (`gaussMeasure_cylinder_mixing`).
-- **Mandated next move**: build `CFBlockFreq.lean` (lap-authored W4 groundwork,
-  same pattern as `CFGammaMixing.lean`). Prove, in dependency order:
-  (1) first moment `∫ S_n dγ = n·γ(A)` via `measurePreserving_gaussMap`;
-  (2) pair-correlation invariance `γ(T^{-j}A ∩ T^{-j'}A) = γ(A ∩ T^{-|j-j'|}A)`;
-  (3) second-moment expansion `∫ S_n² dγ = Σ_{j,j'} γ(T^{-j}A ∩ T^{-j'}A)`;
-  (4) covariance-sum bound → `Var(S_n) ≤ K(v)·n·γ(I_v)` from γ-mixing;
-  (5) Chebyshev ⇒ `γ{|S_n/n − γ(I_v)| ≥ δ} ≤ K(v)·γ(I_v)/(δ²n)`.
-  Decompose freely into named sub-`sorry`s in src/ — that is progress.
-- **Forbidden drift**: do NOT open Track A side-quests (it is COMPLETE and
-  axiom-clean). Do NOT pivot to ergodicity/Birkhoff (B2/B3) — B5′ is
-  deliberately Birkhoff-free. Do NOT weaken/reshape any JUDGE-frozen statement
-  in CFCylinder/CFDigitLaw/CFMixing. Constants: distortion factor stays `2`,
-  γ-mixing rate stays geometric `(9/10)`.
-- **Why**: W3 (the expedition crux — correlation decay) is DONE and gives
-  *geometric* covariance decay, so the efficiency-free "Markov + Chebyshev
-  instead of CLT + KPW-LD" route is de-risked. W4 is now low-risk assembly on
-  the critical path to W5 (construction) and W6 (Khinchin graft). Grinding W4
-  turns the mixing engine into the per-stage bad-measure `< ¼` bound the whole
-  Becher–Yuhjtman construction rests on.
+  W1–W4 are DONE; the frontier is now **W5: the main refinement lemma
+  (B–Y Lemma 13)**. ALL of Lemma 13's inputs are proved (Lemmas 5-substitute,
+  6-substitute = γ-Chebyshev brick, 7/8/9, Prop 12, d-ary bad zones, CF word
+  bridge, digit semantics). Both deep ingredients are already discharged into
+  elementary machinery. **The remaining crux is the ASSEMBLY, not more inputs.**
+- **Mandated next move**: STOP gathering inputs; ATTACK the Lemma 13 assembly in
+  `TBrick*.lean` (new file(s), lap-authored). In order:
+  (1) t-brick structure + ε-refinement predicate (Defs 10–11): CF word `w` +
+      per-base `d ≤ t` containment `cfCylinder w ⊆ daryCell d m_d j_d r_d`
+      (r_d ∈ {1,2}), relative-length field ≥ `1/(2d)` (per-J m_d route, see
+      PENDING_WORK KEY ROUTE DECISION — NOT B–Y's uniform 16e^{4c});
+  (2) **the decisive core — the SELECTION/measure-balance lemma**: inside `I_w`,
+      good-length mass (≥ ½|I_w| via `half_mass_long_extensions`) MINUS the CF
+      discrepancy bad zone (`chebyshev_blockCount_brick` → `CFDiscLt` via
+      `CFWordBridge`, O(1/n)|I_w|) MINUS Σ_{d≤t} wide d-ary bad zones
+      (`volume_iUnion_daryBadZoneWide_le`, exp-small) is `> 0` for n ≥ n₀(t,ε).
+      Convert Leb↔γ with `gaussMeasure_le_volume`/`volume_le_gaussMeasure`
+      (factor-2 density window). **This inequality is the route-decisive test.**
+  (3) Lemma 13 proper: a good J in the surviving set is an ε-refinement; the
+      t→t+1 case via Prop 12 (new base ratio `1/(2(t+1))`).
+  Decompose freely into named sub-`sorry`s in src/ — raising the src sorry count
+  by decomposing the crux IS progress, not regression.
+- **Forbidden drift**: do NOT prove yet-more Lemma-13 *inputs* as a substitute
+  for attempting the assembly (input-gathering is now fixation — the balance
+  inequality decides the whole route). Do NOT open Track A side-quests (COMPLETE,
+  axiom-clean). Do NOT pivot to ergodicity/Birkhoff (B5′ is Birkhoff-free). Do
+  NOT weaken/reshape any JUDGE-frozen statement. Constants: distortion `2`,
+  γ-mixing `(9/10)`, brick ratio `1/(2d)`.
+- **Why**: W1–W4 turned both of B–Y's deep imports into proved elementary facts,
+  so Lemma 13 is now "long but elementary GIVEN the inputs" — and every input is
+  in the repo. The one thing still genuinely UNCERTAIN is whether the measure
+  balance closes with the repo's non-uniform-length Lemma-5 substitute (the
+  per-J m_d route is the proposed fix, unverified). Settling that inequality
+  de-risks all of W5/W6; everything downstream (schedule, limit x, correctness,
+  Khinchin graft) is bookkeeping on top of it.
 
 ### Directive history
 - 2026-08-23 (review lap): Track A certified complete + axiom-clean; kept Track
   B / B5′ direction; sharpened next move to the W4 block-frequency Chebyshev
   assembly (`CFBlockFreq.lean`). No route trigger fired.
+- 2026-08-24 (review lap): W4 + ALL Lemma-13 inputs certified proved & axiom-
+  clean (8 headlines trust-triple only, 8735 jobs green). Diagnosed input-
+  gathering fixation: crux (Lemma 13 assembly) untouched for ~10 laps. Redirected
+  from "prove inputs" to "ATTACK the measure-balance selection lemma" — the
+  route-decisive test. No route trigger fired (both deep imports discharged).
 
 ## Standing charter (destination)
 
