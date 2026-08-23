@@ -42,6 +42,22 @@ nonnormality theorem), and their Artin-prime conjecture `Σ 1/(p·2^p)`.
 Realistic new-math play: formalize the Stoneham mechanism *parametrically*
 and squeeze the hypotheses (e.g. Thm 4.8's monotonicity condition (ii)).
 
+## Track B — metric theory of continued fractions (→ KHINCHIN.md)
+
+Same Birkhoff-on-[0,1] machine, second digit system: the Gauss map.  Added
+2026-08-23; detail, landscape survey and references live in `KHINCHIN.md`.
+Headline targets: Gauss–Kuzmin digit law + **Khinchin's theorem** — apparently
+unformalized in any prover (surveyed 2026-08-23), and the founding hook's twin:
+no naturally-occurring number is proven Khinchin-typical.
+
+- ⬜ B0 defs: `gaussMap`, `cfDigit`, `gaussMeasure` (+ `GenContFract.of` bridge)
+- ⬜ B1 invariance of the Gauss measure
+- ⬜ B2 ergodicity of the Gauss map (Rényi bounded-distortion route first)
+- ⬜ B3 pointwise Birkhoff: consume mathlib PR #42078 or vendor behind an interface
+- ⬜ B4 harvests: Gauss–Kuzmin frequencies, Khinchin's theorem (K₀ as a tprod),
+  Lévy's constant (stretch), arithmetic-mean divergence
+- ⬜ B5 stretch exhibit: machine-checked Khinchin-typical witness (Wieting 2008)
+
 ## Phase 3 — outward
 
 - 🔨 PR to OldMathematician/ChampernowneNormality: **done and staged** —
