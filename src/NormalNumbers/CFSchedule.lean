@@ -317,4 +317,134 @@ theorem sched_t_mono : Monotone fun s => (sched s).t := by
   intro s
   rcases sched_t_step s with h | h <;> omega
 
+/-- The word length grows by exactly `nFn` of the new level each step. -/
+theorem sched_length_step (s : ℕ) :
+    ((sched (s + 1)).B.w).length
+      = ((sched s).B.w).length + nFn (sched (s + 1)).t := by
+  obtain ⟨u, -, -, -, -, hw, hlen, -⟩ := sched_step s
+  rw [hw, List.length_append, hlen]
+
+theorem sched_length_mono : Monotone fun s => ((sched s).B.w).length := by
+  apply monotone_nat_of_le_succ
+  intro s
+  rw [sched_length_step s]
+  omega
+
+/-- Linear length growth: each stage adds at least one digit. -/
+theorem sched_length_ge (s k : ℕ) :
+    ((sched s).B.w).length + k ≤ ((sched (s + k)).B.w).length := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    have hidx : s + (k + 1) = (s + k) + 1 := by omega
+    rw [hidx, sched_length_step (s + k)]
+    have h1 := nFn_pos (sched ((s + k) + 1)).t
+    omega
+
+/-- If the promotion threshold is met, the level increments. -/
+theorem sched_t_succ_of_prom (s : ℕ)
+    (h : promThreshold ((sched s).t + 1) ≤ ((sched s).B.w).length) :
+    (sched (s + 1)).t = (sched s).t + 1 := by
+  obtain ⟨u, -, -, -, ht, -⟩ := sched_step s
+  rw [ht, if_pos h]
+
+/-- **The promotion invariant**: the accumulated word always dominates
+`t` stages of the current level. -/
+theorem sched_prom_invariant (s : ℕ) :
+    promThreshold (sched s).t ≤ ((sched s).B.w).length := by
+  induction s with
+  | zero =>
+    show promThreshold seedState.t ≤ seedState.B.w.length
+    rw [seedState_w, seedWord_length]
+    exact le_refl _
+  | succ s ih =>
+    obtain ⟨u, -, -, -, ht, -⟩ := sched_step s
+    have hmono : ((sched s).B.w).length ≤ ((sched (s + 1)).B.w).length :=
+      sched_length_mono (Nat.le_succ s)
+    by_cases h : promThreshold ((sched s).t + 1) ≤ ((sched s).B.w).length
+    · have h2 : promThreshold (sched (s + 1)).t
+          = promThreshold ((sched s).t + 1) :=
+        congrArg promThreshold (by rw [ht, if_pos h])
+      omega
+    · have h2 : promThreshold (sched (s + 1)).t
+          = promThreshold (sched s).t :=
+        congrArg promThreshold (by rw [ht, if_neg h])
+      omega
+
+/-- The dominance condition in `promThreshold` form. -/
+theorem sched_dominance' (s : ℕ) :
+    promThreshold (sched (s + 1)).t ≤ ((sched s).B.w).length := by
+  obtain ⟨u, -, -, -, ht, -⟩ := sched_step s
+  by_cases h : promThreshold ((sched s).t + 1) ≤ ((sched s).B.w).length
+  · have h2 : promThreshold (sched (s + 1)).t
+        = promThreshold ((sched s).t + 1) :=
+      congrArg promThreshold (by rw [ht, if_pos h])
+    omega
+  · have h2 : promThreshold (sched (s + 1)).t
+        = promThreshold (sched s).t :=
+      congrArg promThreshold (by rw [ht, if_neg h])
+    have := sched_prom_invariant s
+    omega
+
+/-- **The dominance condition** (B–Y §2.2 schedule requirement): each new
+stage length is at most `1/t` of the already-accumulated word length. -/
+theorem sched_dominance (s : ℕ) :
+    (sched (s + 1)).t * nFn (sched (s + 1)).t ≤ ((sched s).B.w).length :=
+  sched_dominance' s
+
+/-- **Levels are unbounded**: every level is eventually exceeded (promotion
+cannot stall — the word grows linearly while the threshold is fixed). -/
+theorem sched_t_tendsto : ∀ T : ℕ, ∃ s, T ≤ (sched s).t := by
+  intro T
+  induction T with
+  | zero => exact ⟨0, Nat.zero_le _⟩
+  | succ T ih =>
+    obtain ⟨s, hs⟩ := ih
+    -- either some level `> t_s` is reached, or the level stalls at `t_s`
+    -- and the linearly growing word forces promotion
+    set t := (sched s).t with hts
+    by_cases hstall : ∃ r, s ≤ r ∧ (sched s).t < (sched r).t
+    · obtain ⟨r, hr, hlt⟩ := hstall
+      exact ⟨r, by omega⟩
+    · push Not at hstall
+      have hconst : ∀ k, (sched (s + k)).t = t := by
+        intro k
+        have h1 := hstall (s + k) (by omega)
+        have h2 : t ≤ (sched (s + k)).t :=
+          sched_t_mono (Nat.le_add_right s k)
+        omega
+      set k := promThreshold (t + 1) with hk
+      have hlen : promThreshold ((sched (s + k)).t + 1)
+          ≤ ((sched (s + k)).B.w).length := by
+        have h1 := sched_length_ge s k
+        have h2 : promThreshold ((sched (s + k)).t + 1) = k := by
+          rw [hconst k, hk]
+        omega
+      have hprom := sched_t_succ_of_prom (s + k) hlen
+      refine ⟨s + k + 1, ?_⟩
+      have h3 : (sched (s + k + 1)).t = t + 1 := by
+        rw [hprom, hconst k]
+      omega
+
+/-- Eventually the level exceeds any bound (monotone version). -/
+theorem sched_t_eventually (T : ℕ) : ∃ s₀, ∀ s, s₀ ≤ s → T ≤ (sched s).t := by
+  obtain ⟨s₀, hs₀⟩ := sched_t_tendsto T
+  exact ⟨s₀, fun s hs => le_trans hs₀ (sched_t_mono hs)⟩
+
+/-! ## The limit point -/
+
+private theorem sched_limit :
+    ∃ x : ℝ, Irrational x ∧ ∀ s, x ∈ cfCylinder ((sched s).B.w) :=
+  exists_irrational_mem_iInter_cfCylinder (fun s => (sched s).B.w)
+    (fun s => (sched s).B.hw_ne) (fun s => (sched s).B.hw_pos)
+    sched_word_extends
+
+/-- **The computed real `x*`** — the point of the B–Y construction. -/
+noncomputable def xstar : ℝ := sched_limit.choose
+
+theorem xstar_irrational : Irrational xstar := sched_limit.choose_spec.1
+
+theorem xstar_mem (s : ℕ) : xstar ∈ cfCylinder ((sched s).B.w) :=
+  sched_limit.choose_spec.2 s
+
 end NormalNumbers
