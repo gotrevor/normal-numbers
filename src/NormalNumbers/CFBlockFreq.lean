@@ -97,6 +97,18 @@ lemma integrable_blockIndic_iterate_mul (A : Set ℝ) (hA : MeasurableSet A)
   rw [heq]
   exact (integrable_const (1 : ℝ)).indicator hmeas
 
+/-- `S_n` is measurable (finite sum of indicators of measurable preimages). -/
+lemma measurable_blockCount (A : Set ℝ) (hA : MeasurableSet A) (n : ℕ) :
+    Measurable (blockCount A n) := by
+  have heq : blockCount A n = fun x =>
+      ∑ k ∈ Finset.range n, ((gaussMap^[k]) ⁻¹' A).indicator (1 : ℝ → ℝ) x := by
+    funext x
+    rw [blockCount_apply]
+    exact Finset.sum_congr rfl fun k _ => by rw [blockIndic_iterate]; rfl
+  rw [heq]
+  exact Finset.measurable_sum _ fun k _ =>
+    measurable_const.indicator ((measurable_gaussMap.iterate k) hA)
+
 /-! ## First moment -/
 
 /-- **First moment**: `∫ S_n dγ = n · γ(A)`. -/
@@ -461,17 +473,8 @@ theorem chebyshev_blockCount (v : List ℕ) (hpos : ∀ a ∈ v, 1 ≤ a)
       (8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n) := by
   have hVmeas : MeasurableSet (cfCylinder v) := measurableSet_cfCylinder v
   have hnR : (0 : ℝ) < n := by exact_mod_cast hn
-  -- `S_n` is measurable (finite sum of indicators of measurable preimages)
-  have hSmeas : Measurable (blockCount (cfCylinder v) n) := by
-    have heq : blockCount (cfCylinder v) n = fun x =>
-        ∑ k ∈ Finset.range n,
-          ((gaussMap^[k]) ⁻¹' cfCylinder v).indicator (1 : ℝ → ℝ) x := by
-      funext x
-      rw [blockCount_apply]
-      exact Finset.sum_congr rfl fun k _ => by rw [blockIndic_iterate]; rfl
-    rw [heq]
-    exact Finset.measurable_sum _ fun k _ =>
-      measurable_const.indicator ((measurable_gaussMap.iterate k) hVmeas)
+  have hSmeas : Measurable (blockCount (cfCylinder v) n) :=
+    measurable_blockCount (cfCylinder v) hVmeas n
   -- `0 ≤ S_n ≤ n`, hence `MemLp 2`
   have hind0 : ∀ y, 0 ≤ blockIndic (cfCylinder v) y := fun y =>
     Set.indicator_nonneg (fun _ _ => zero_le_one) y
@@ -528,5 +531,88 @@ theorem chebyshev_blockCount (v : List ℕ) (hpos : ∀ a ∈ v, 1 ≤ a)
         gcongr
     _ = (8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n) := by
         field_simp
+
+/-! ## Conditioned-on-brick bounds
+
+The Becher–Yuhjtman refinement works *inside the current brick* `I_w`: at each
+stage it needs the part of `I_w` whose continuation (after the `|w|` digits of
+the brick) has bad `v`-block frequency to have measure `< ¼·γ(I_w)`.  The `g=0`
+γ-mixing bound plus the density window `|A| ≤ 2·log 2·γ(A)` turn the
+unconditioned Chebyshev bound into exactly this, at the cost of a factor
+`1 + 8·log 2 < 7`. -/
+
+/-- Real form of the density window: `|A| ≤ 2·log 2·γ(A)` for `A ⊆ (0,1)`. -/
+lemma volume_toReal_le_gaussMeasure (A : Set ℝ) (hA : MeasurableSet A)
+    (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1) :
+    (volume A).toReal ≤ 2 * Real.log 2 * (gaussMeasure A).toReal := by
+  have hlog : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have h' := ENNReal.toReal_mono (measure_ne_top gaussMeasure A)
+    (volume_le_gaussMeasure A hA hA1)
+  rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal (by positivity)] at h'
+  calc (volume A).toReal
+      = 2 * Real.log 2 * ((2 * Real.log 2)⁻¹ * (volume A).toReal) := by
+        field_simp
+    _ ≤ 2 * Real.log 2 * (gaussMeasure A).toReal :=
+        mul_le_mul_of_nonneg_left h' (by positivity)
+
+/-- **Brick-conditioned measure bound**: for any brick word `w` and measurable
+`A ⊆ (0,1)`, `γ(I_w ∩ T^{-|w|}A) ≤ 7·γ(A)·γ(I_w)`.  This is `g = 0` γ-mixing
+plus the density window (`1 + 8·log 2 < 7`). -/
+theorem gaussMeasure_brick_inter_le (w : List ℕ) (hposw : ∀ a ∈ w, 1 ≤ a)
+    {A : Set ℝ} (hA : MeasurableSet A) (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1) :
+    (gaussMeasure (cfCylinder w ∩ (gaussMap^[w.length]) ⁻¹' A)).toReal ≤
+      7 * (gaussMeasure A).toReal * (gaussMeasure (cfCylinder w)).toReal := by
+  have hmix := gaussMeasure_cylinder_mixing w hposw 0 hA hA1
+  rw [Nat.add_zero, pow_zero, one_mul] at hmix
+  have hvol := volume_toReal_le_gaussMeasure A hA hA1
+  have hlt : Real.log 2 < 0.6931471808 := Real.log_two_lt_d9
+  have hγnn : (0 : ℝ) ≤ (gaussMeasure A).toReal := ENNReal.toReal_nonneg
+  have hwnn : (0 : ℝ) ≤ (gaussMeasure (cfCylinder w)).toReal := ENNReal.toReal_nonneg
+  have hVnn : (0 : ℝ) ≤ (volume A).toReal := ENNReal.toReal_nonneg
+  have h1 := (abs_le.mp hmix).2
+  nlinarith [mul_le_mul_of_nonneg_right hvol hwnn,
+    mul_nonneg hγnn hwnn]
+
+/-- **Brick-conditioned Chebyshev** — the per-stage Becher–Yuhjtman input:
+inside any brick `I_w`, the part whose continuation has bad `v`-block
+frequency at time `n` has γ-measure at most
+`7·(8|v|+80)·γ(I_v)/(δ²·n)·γ(I_w)`.  With `v` fixed, `δ` fixed and `n` large
+this is `< ¼·γ(I_w)`, the stage bound of the construction. -/
+theorem chebyshev_blockCount_brick (w v : List ℕ) (hposw : ∀ a ∈ w, 1 ≤ a)
+    (hpos : ∀ a ∈ v, 1 ≤ a) (n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
+    (gaussMeasure (cfCylinder w ∩ (gaussMap^[w.length]) ⁻¹'
+        {x ∈ Set.Ioo (0 : ℝ) 1 | δ ≤ |blockCount (cfCylinder v) n x / n -
+          (gaussMeasure (cfCylinder v)).toReal|})).toReal ≤
+      7 * ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal /
+        (δ ^ 2 * n)) * (gaussMeasure (cfCylinder w)).toReal := by
+  have hSmeas : Measurable (blockCount (cfCylinder v) n) :=
+    measurable_blockCount (cfCylinder v) (measurableSet_cfCylinder v) n
+  have hBadmeas : MeasurableSet {x ∈ Set.Ioo (0 : ℝ) 1 |
+      δ ≤ |blockCount (cfCylinder v) n x / n -
+        (gaussMeasure (cfCylinder v)).toReal|} :=
+    measurableSet_Ioo.inter (measurableSet_le measurable_const
+      (((hSmeas.div_const _).sub_const _).abs))
+  have hBadsub : {x ∈ Set.Ioo (0 : ℝ) 1 |
+      δ ≤ |blockCount (cfCylinder v) n x / n -
+        (gaussMeasure (cfCylinder v)).toReal|} ⊆ Set.Ioo (0 : ℝ) 1 :=
+    Set.sep_subset _ _
+  have hγBad : (gaussMeasure {x ∈ Set.Ioo (0 : ℝ) 1 |
+      δ ≤ |blockCount (cfCylinder v) n x / n -
+        (gaussMeasure (cfCylinder v)).toReal|}).toReal ≤
+      (8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n) := by
+    refine le_trans ?_ (chebyshev_blockCount v hpos n hn hδ)
+    exact ENNReal.toReal_mono (measure_ne_top _ _)
+      (measure_mono fun x hx => hx.2)
+  calc (gaussMeasure (cfCylinder w ∩ (gaussMap^[w.length]) ⁻¹'
+          {x ∈ Set.Ioo (0 : ℝ) 1 | δ ≤ |blockCount (cfCylinder v) n x / n -
+            (gaussMeasure (cfCylinder v)).toReal|})).toReal
+      ≤ 7 * (gaussMeasure {x ∈ Set.Ioo (0 : ℝ) 1 |
+          δ ≤ |blockCount (cfCylinder v) n x / n -
+            (gaussMeasure (cfCylinder v)).toReal|}).toReal *
+          (gaussMeasure (cfCylinder w)).toReal :=
+        gaussMeasure_brick_inter_le w hposw hBadmeas hBadsub
+    _ ≤ 7 * ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal /
+          (δ ^ 2 * n)) * (gaussMeasure (cfCylinder w)).toReal := by
+        gcongr
 
 end NormalNumbers
