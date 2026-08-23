@@ -423,4 +423,18 @@ theorem phaseWindowFreq_tendsto (b r L s : ℕ) (hb : 2 ≤ b) (hr : 1 ≤ r)
     field_simp
   rwa [hval] at hlim
 
+/-- **Straddling-phase count**: among the `r` phases `s ∈ [0,r)`, exactly
+`L-1` are "straddling" (`s + L > r`, i.e. the length-`L` window at that
+phase crosses a base-`b^r` digit boundary rather than sitting inside one).
+Density `(L-1)/r → 0` as `r → ∞` — this bounds the error from discarding
+straddling phases in Pillai's assembly. -/
+theorem card_straddling_phases (r L : ℕ) (hL1 : 1 ≤ L) (hLr : L ≤ r) :
+    ((Finset.range r).filter (fun s => r < s + L)).card = L - 1 := by
+  have hset : (Finset.range r).filter (fun s => r < s + L) = Finset.Ico (r - L + 1) r := by
+    ext s
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
+    omega
+  rw [hset, Nat.card_Ico]
+  omega
+
 end NormalNumbers
