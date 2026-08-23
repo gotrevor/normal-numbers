@@ -408,7 +408,7 @@ private lemma mem_cfCylinder_cons {a : ℕ} {w : List ℕ} {x : ℝ} :
         have hj : j < w.length := by simpa using hi
         simpa [cfDigit_succ] using hrest j hj
 
-private lemma irrational_gaussMap {x : ℝ} (hirr : Irrational x)
+lemma irrational_gaussMap {x : ℝ} (hirr : Irrational x)
     (hx : x ∈ Set.Ioo (0 : ℝ) 1) :
     Irrational (gaussMap x) ∧ gaussMap x ∈ Set.Ioo (0 : ℝ) 1 := by
   have hinv : Irrational x⁻¹ := hirr.inv

@@ -89,11 +89,112 @@ genuine cylinder exhaust it up to a null set (irrationals have genuine
 digits; the rational junk is countable), and they are pairwise disjoint, so
 the measures add exactly.  This identity turns the distortion pair (B–Y
 Lemma 3.2, W1) into a conditional-probability calculus. -/
+private lemma measurable_gaussMap : Measurable gaussMap := by
+  unfold gaussMap
+  exact Measurable.ite (MeasurableSet.singleton 0) measurable_const
+    (measurable_fract.comp measurable_inv)
+
+private lemma measurable_cfDigit (n : ℕ) : Measurable (cfDigit · n) := by
+  unfold cfDigit
+  exact Nat.measurable_floor.comp
+    (measurable_inv.comp (measurable_gaussMap.iterate n))
+
+private lemma measurableSet_cfCylinder (w : List ℕ) :
+    MeasurableSet (cfCylinder w) := by
+  have heq : cfCylinder w = Set.Ioo (0 : ℝ) 1 ∩
+      ⋂ i, ⋂ _ : i < w.length, (cfDigit · i) ⁻¹' {w.getD i 0} := by
+    ext x
+    simp only [cfCylinder, Set.mem_setOf_eq, Set.mem_inter_iff, Set.mem_iInter,
+      Set.mem_preimage, Set.mem_singleton_iff]
+  rw [heq]
+  exact measurableSet_Ioo.inter (MeasurableSet.iInter fun i =>
+    MeasurableSet.iInter fun _ =>
+      (measurable_cfDigit i) (measurableSet_singleton _))
+
+/-- Prefix property: extending the word shrinks the cylinder. -/
+private lemma cfCylinder_append_subset (w u : List ℕ) :
+    cfCylinder (w ++ u) ⊆ cfCylinder w := by
+  rintro x ⟨hx, hd⟩
+  refine ⟨hx, fun i hi => ?_⟩
+  have h := hd i (by simp only [List.length_append]; omega)
+  rwa [List.getD_append _ _ _ _ hi] at h
+
+/-- Irrationals in `(0,1)` keep irrational, in-range Gauss orbits. -/
+private lemma irrational_orbit (x : ℝ) (hirr : Irrational x)
+    (hx : x ∈ Set.Ioo (0 : ℝ) 1) (k : ℕ) :
+    Irrational (gaussMap^[k] x) ∧ gaussMap^[k] x ∈ Set.Ioo (0 : ℝ) 1 := by
+  induction k with
+  | zero => exact ⟨hirr, hx⟩
+  | succ m ih =>
+      rw [Function.iterate_succ_apply']
+      exact irrational_gaussMap ih.1 ih.2
+
+/-- Every digit of an irrational in `(0,1)` is genuine (`≥ 1`). -/
+private lemma one_le_cfDigit (x : ℝ) (hirr : Irrational x)
+    (hx : x ∈ Set.Ioo (0 : ℝ) 1) (k : ℕ) : 1 ≤ cfDigit x k := by
+  obtain ⟨hkirr, hk0, hk1⟩ := irrational_orbit x hirr hx k
+  rw [cfDigit]
+  refine Nat.le_floor ?_
+  rw [Nat.cast_one, le_inv_comm₀ one_pos hk0]
+  simpa using hk1.le
+
 theorem volume_eq_tsum_extensions (w : List ℕ) (hw : w ≠ [])
     (hpos : ∀ a ∈ w, 1 ≤ a) (n : ℕ) :
     volume (cfCylinder w) =
       ∑' u : genWords n, volume (cfCylinder (w ++ (u : List ℕ))) := by
-  sorry
+  have hcount : (genWords n).Countable :=
+    Set.Countable.mono (Set.subset_univ _) (Set.countable_univ)
+  -- pairwise disjoint
+  have hdisj : (genWords n).PairwiseDisjoint
+      fun u : List ℕ => cfCylinder (w ++ u) := by
+    intro u hu u' hu' hne
+    exact cfCylinder_disjoint
+      (by simp [hu.1, hu'.1]) (fun h => hne (List.append_cancel_left h))
+  -- the biUnion computes the tsum
+  have hbiu : volume (⋃ u ∈ genWords n, cfCylinder (w ++ u)) =
+      ∑' u : genWords n, volume (cfCylinder (w ++ (u : List ℕ))) :=
+    measure_biUnion hcount hdisj fun u _ => measurableSet_cfCylinder _
+  rw [← hbiu]
+  -- squeeze: the union is inside the cylinder and covers its irrationals
+  apply le_antisymm
+  · -- cover up to the countable rationals
+    have hcover : cfCylinder w ⊆
+        (⋃ u ∈ genWords n, cfCylinder (w ++ u)) ∪ Set.range ((↑) : ℚ → ℝ) := by
+      intro x hx
+      by_cases hirr : Irrational x
+      · left
+        obtain ⟨hx01, hd⟩ := hx
+        set u : List ℕ := (List.range n).map fun i => cfDigit x (w.length + i)
+          with hu_def
+        have hulen : u.length = n := by simp [hu_def]
+        have hugen : u ∈ genWords n := by
+          refine ⟨hulen, fun a ha => ?_⟩
+          simp only [hu_def, List.mem_map, List.mem_range] at ha
+          obtain ⟨i, _, rfl⟩ := ha
+          exact one_le_cfDigit x hirr hx01 _
+        refine Set.mem_biUnion hugen ⟨hx01, fun i hi => ?_⟩
+        rcases lt_or_ge i w.length with h | h
+        · rw [List.getD_append _ _ _ _ h]
+          exact hd i h
+        · obtain ⟨j, rfl⟩ := Nat.exists_eq_add_of_le h
+          have hj : j < n := by
+            simp only [List.length_append, hulen] at hi
+            omega
+          rw [List.getD_append_right _ _ _ _ h]
+          simp [hu_def, hj, List.getD_eq_getElem?_getD]
+      · right
+        rw [Irrational] at hirr
+        push_neg at hirr
+        exact hirr
+    calc volume (cfCylinder w)
+        ≤ volume ((⋃ u ∈ genWords n, cfCylinder (w ++ u)) ∪
+            Set.range ((↑) : ℚ → ℝ)) := measure_mono hcover
+      _ ≤ volume (⋃ u ∈ genWords n, cfCylinder (w ++ u)) +
+            volume (Set.range ((↑) : ℚ → ℝ)) := measure_union_le _ _
+      _ = volume (⋃ u ∈ genWords n, cfCylinder (w ++ u)) := by
+          rw [(Set.countable_range _).measure_zero, add_zero]
+  · exact measure_mono (Set.iUnion₂_subset fun u _ =>
+      cfCylinder_append_subset w u)
 
 /-! ## Gauss measure vs Lebesgue -/
 
