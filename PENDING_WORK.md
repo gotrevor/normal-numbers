@@ -110,8 +110,10 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
   over ALL orders m ≥ m_min(n) — the geometric sum over m of
   `volume_daryBadZone_le` is still exponentially small vs the ≥ |I_w|/2
   good mass.  Brick ratio constant becomes 1/(2d) (not 16e^{4c}d).
-- Next concrete step: (a) sum-over-orders bad-zone corollary
-  (Σ_{m≥m1} 2d e^{−dε²(m−ord)/6}·|σ_d| bound); (b) brick structure
+  ✅ (a) sum-over-orders corollary PROVED 2026-08-24 (@6742fb7,
+  `volume_iUnion_daryBadZone_le`): ⋃_{k≥kmin} daryBadZone has measure
+  ≤ (2d/d^m0)·ρ^kmin/(1−ρ), ρ = e^{−dε²/6}.
+- Next concrete step: (b) brick structure
   definition with the 1/(2d) ratio; (c) digit-semantics bridge
   (x ∈ sub-cell ↔ its new block, via floor/digitOf as in
   DigitInterval.digits_prefix_iff) — then Lemma 13 assembly.
