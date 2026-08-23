@@ -319,6 +319,80 @@ theorem volume_iUnion_cfBadZone_le
     _ = ENNReal.ofReal (2 * Real.log 2 * Sbd) :=
         (ENNReal.ofReal_mul hlog0).symm
 
+/-- **Step (γ-CF): the CF bad zone as a fraction of `|I_w|`.** Bounding
+`γ(I_v) ≤ 1` and converting `γ(I_w) ≤ (log 2)⁻¹·|I_w|`, the CF bad zone has
+Lebesgue measure `≤ (14·Σ_v(8|v|+80)/(δ²n))·|I_w|` — an explicit `O(1/n)`
+multiple of `|I_w|`, ready for the combine. -/
+theorem volume_iUnion_cfBadZone_le_vol
+    (w : List ℕ) (hposw : ∀ a ∈ w, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
+    volume (⋃ v ∈ F, cfBadZone w v n δ)
+      ≤ ENNReal.ofReal (14 * (∑ v ∈ F, (8 * (v.length : ℝ) + 80)) / (δ ^ 2 * n))
+          * volume (cfCylinder w) := by
+  have hlog0 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hn0 : (0 : ℝ) < n := by exact_mod_cast hn
+  have hwfin : volume (cfCylinder w) ≠ ⊤ := by
+    have h1 : volume (cfCylinder w) ≤ volume (Set.Ioo (0 : ℝ) 1) :=
+      measure_mono (fun x hx => hx.1)
+    rw [Real.volume_Ioo] at h1
+    exact (lt_of_le_of_lt h1 ENNReal.ofReal_lt_top).ne
+  set μw : ℝ := (volume (cfCylinder w)).toReal with hμw
+  have hα := volume_iUnion_cfBadZone_le w hposw F hF n hn hδ
+  set S : ℝ := ∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+    * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n))
+    * (gaussMeasure (cfCylinder w)).toReal with hS
+  set SL : ℝ := ∑ v ∈ F, (8 * (v.length : ℝ) + 80) with hSL
+  have hSL0 : 0 ≤ SL := Finset.sum_nonneg fun v _ => by positivity
+  -- γ(I_v) ≤ 1
+  have hγv : ∀ v : List ℕ, (gaussMeasure (cfCylinder v)).toReal ≤ 1 := by
+    intro v
+    have h := ENNReal.toReal_mono (measure_ne_top gaussMeasure Set.univ)
+      (measure_mono (Set.subset_univ (cfCylinder v)))
+    rwa [gaussMeasure_univ, ENNReal.toReal_one] at h
+  -- γ(I_w) ≤ (log 2)⁻¹·|I_w|
+  have hγw : (gaussMeasure (cfCylinder w)).toReal ≤ (Real.log 2)⁻¹ * μw := by
+    have h := gaussMeasure_le_volume (cfCylinder w) (measurableSet_cfCylinder w)
+    have h2 := ENNReal.toReal_mono
+      (ENNReal.mul_ne_top ENNReal.ofReal_ne_top hwfin) h
+    rwa [ENNReal.toReal_mul, ENNReal.toReal_ofReal (by positivity), ← hμw] at h2
+  -- S ≤ C0·SL with C0 = 7(log2)⁻¹μw/(δ²n)
+  have hSbound : S ≤ (7 * (Real.log 2)⁻¹ * μw / (δ ^ 2 * n)) * SL := by
+    rw [hS, hSL, Finset.mul_sum]
+    refine Finset.sum_le_sum fun v _ => ?_
+    have hvw : (gaussMeasure (cfCylinder v)).toReal
+        * (gaussMeasure (cfCylinder w)).toReal ≤ (Real.log 2)⁻¹ * μw :=
+      (mul_le_of_le_one_left ENNReal.toReal_nonneg (hγv v)).trans hγw
+    have hpre : (0 : ℝ) ≤ 7 * (8 * (v.length : ℝ) + 80) / (δ ^ 2 * n) := by
+      positivity
+    calc 7 * ((8 * (v.length : ℝ) + 80) * (gaussMeasure (cfCylinder v)).toReal
+            / (δ ^ 2 * n)) * (gaussMeasure (cfCylinder w)).toReal
+        = (7 * (8 * (v.length : ℝ) + 80) / (δ ^ 2 * n))
+            * ((gaussMeasure (cfCylinder v)).toReal
+              * (gaussMeasure (cfCylinder w)).toReal) := by ring
+      _ ≤ (7 * (8 * (v.length : ℝ) + 80) / (δ ^ 2 * n))
+            * ((Real.log 2)⁻¹ * μw) := mul_le_mul_of_nonneg_left hvw hpre
+      _ = 7 * (Real.log 2)⁻¹ * μw / (δ ^ 2 * n) * (8 * (v.length : ℝ) + 80) := by
+          ring
+  -- 2 log 2 · S ≤ 14·SL/(δ²n)·μw
+  have hkey : 2 * Real.log 2 * S ≤ 14 * SL / (δ ^ 2 * n) * μw := by
+    have hstep : 2 * Real.log 2 * ((7 * (Real.log 2)⁻¹ * μw / (δ ^ 2 * n)) * SL)
+        = 14 * SL / (δ ^ 2 * n) * μw := by
+      field_simp [hlog0.ne', hδ.ne', hn0.ne']
+      ring
+    calc 2 * Real.log 2 * S
+        ≤ 2 * Real.log 2 * ((7 * (Real.log 2)⁻¹ * μw / (δ ^ 2 * n)) * SL) :=
+          mul_le_mul_of_nonneg_left hSbound (mul_nonneg (by norm_num) hlog0.le)
+      _ = 14 * SL / (δ ^ 2 * n) * μw := hstep
+  have hcoef0 : (0 : ℝ) ≤ 14 * SL / (δ ^ 2 * n) :=
+    div_nonneg (mul_nonneg (by norm_num) hSL0) (by positivity)
+  calc volume (⋃ v ∈ F, cfBadZone w v n δ)
+      ≤ ENNReal.ofReal (2 * Real.log 2 * S) := hα
+    _ ≤ ENNReal.ofReal (14 * SL / (δ ^ 2 * n) * μw) :=
+        ENNReal.ofReal_le_ofReal hkey
+    _ = ENNReal.ofReal (14 * SL / (δ ^ 2 * n)) * volume (cfCylinder w) := by
+        rw [ENNReal.ofReal_mul hcoef0, hμw,
+          ENNReal.ofReal_toReal hwfin]
+
 /-- **The good-mass side of the Lemma-13 balance.** At least half the mass of
 a genuine cylinder `I_w` lies in its good-length order-`n` extensions.  (The
 constant `C` is the one from `half_mass_long_extensions`.) -/
