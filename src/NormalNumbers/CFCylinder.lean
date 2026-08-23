@@ -57,7 +57,7 @@ private lemma cfK_cons (a : ℕ) {m : List ℕ} (hm : m ≠ []) :
   | cons b l => rfl
 
 /-- Continuants of genuine digit words are positive. -/
-private lemma one_le_cfK (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) : 1 ≤ cfK w := by
+lemma one_le_cfK (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) : 1 ≤ cfK w := by
   induction w using cfK.induct with
   | case1 => simp [cfK]
   | case2 a => simpa [cfK] using hpos a (by simp)

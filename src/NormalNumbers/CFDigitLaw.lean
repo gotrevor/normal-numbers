@@ -66,13 +66,23 @@ Anchor: `k = 3` gives `1/12 = |(1/4, 1/3]|`. -/
 theorem volume_digit_cylinder (k : ℕ) (hk : 1 ≤ k) :
     volume (cfCylinder [k]) =
       ENNReal.ofReal (1 / ((k : ℝ) * ((k : ℝ) + 1))) := by
-  sorry
+  rw [volume_cfCylinder [k] (by simp) (by simpa using hk)]
+  norm_num [cfK]
 
 /-- Distinct words of the same length read incompatible digits, so their
 cylinders are disjoint.  No digit-positivity needed. -/
 theorem cfCylinder_disjoint {w w' : List ℕ} (hlen : w.length = w'.length)
     (hne : w ≠ w') : Disjoint (cfCylinder w) (cfCylinder w') := by
-  sorry
+  rw [Set.disjoint_left]
+  rintro x ⟨hx1, hd1⟩ ⟨hx2, hd2⟩
+  apply hne
+  apply List.ext_getElem hlen
+  intro i h1 h2
+  have e1 := hd1 i h1
+  have e2 := hd2 i (hlen ▸ h1)
+  rw [List.getD_eq_getElem w 0 h1] at e1
+  rw [List.getD_eq_getElem w' 0 h2] at e2
+  rw [← e1, ← e2]
 
 /-- **Relative-order-`n` partition**: the genuine `n`-digit extensions of a
 genuine cylinder exhaust it up to a null set (irrationals have genuine
@@ -91,19 +101,80 @@ theorem volume_eq_tsum_extensions (w : List ℕ) (hw : w ≠ [])
 `γ(s) ≤ (1/log 2)·|s|`. -/
 theorem gaussMeasure_le_volume (s : Set ℝ) (hs : MeasurableSet s) :
     gaussMeasure s ≤ ENNReal.ofReal (Real.log 2)⁻¹ * volume s := by
-  sorry
+  rw [gaussMeasure, withDensity_apply _ hs, Measure.restrict_restrict hs]
+  calc ∫⁻ x in s ∩ Set.Ioo (0 : ℝ) 1,
+        ENNReal.ofReal (((1 + x) * Real.log 2)⁻¹) ∂volume
+      ≤ ∫⁻ _ in s ∩ Set.Ioo (0 : ℝ) 1,
+          ENNReal.ofReal (Real.log 2)⁻¹ ∂volume := by
+        apply setLIntegral_mono measurable_const
+        intro x hx
+        apply ENNReal.ofReal_le_ofReal
+        have hlog : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+        have hx0 : (0 : ℝ) < x := hx.2.1
+        exact inv_anti₀ hlog (by nlinarith)
+    _ = ENNReal.ofReal (Real.log 2)⁻¹ * volume (s ∩ Set.Ioo (0 : ℝ) 1) :=
+        setLIntegral_const _ _
+    _ ≤ ENNReal.ofReal (Real.log 2)⁻¹ * volume s := by
+        gcongr
+        exact Set.inter_subset_left
 
 /-- Lower comparison on `(0,1)`: the Gauss density is at least
 `1/(2 log 2)` there, so `(1/(2 log 2))·|s| ≤ γ(s)`. -/
 theorem volume_le_gaussMeasure (s : Set ℝ) (hs : MeasurableSet s)
     (hsub : s ⊆ Set.Ioo (0 : ℝ) 1) :
     ENNReal.ofReal (2 * Real.log 2)⁻¹ * volume s ≤ gaussMeasure s := by
-  sorry
+  rw [gaussMeasure, withDensity_apply _ hs, Measure.restrict_restrict hs,
+    Set.inter_eq_self_of_subset_left hsub]
+  calc ENNReal.ofReal (2 * Real.log 2)⁻¹ * volume s
+      = ∫⁻ _ in s, ENNReal.ofReal (2 * Real.log 2)⁻¹ ∂volume :=
+        (setLIntegral_const _ _).symm
+    _ ≤ ∫⁻ x in s, ENNReal.ofReal (((1 + x) * Real.log 2)⁻¹) ∂volume := by
+        apply setLIntegral_mono
+          (by fun_prop)
+        intro x hx
+        apply ENNReal.ofReal_le_ofReal
+        have hlog : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+        have hx1 : x < 1 := (hsub hx).2
+        have hx0 : (0 : ℝ) < x := (hsub hx).1
+        exact inv_anti₀ (by nlinarith) (by nlinarith)
 
 /-- `γ` is a probability measure:
 `γ(0,1) = (1/log 2)·∫₀¹ dx/(1+x) = log 2/log 2 = 1`. -/
 theorem gaussMeasure_univ : gaussMeasure Set.univ = 1 := by
-  sorry
+  have hlog : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hpos : ∀ x ∈ Set.Icc (0 : ℝ) 1, (0 : ℝ) < (1 + x) * Real.log 2 := by
+    intro x hx
+    nlinarith [hx.1]
+  set g : ℝ → ℝ := fun x => ((1 + x) * Real.log 2)⁻¹ with hg
+  have hc : ContinuousOn g (Set.Icc (0 : ℝ) 1) := by
+    apply ContinuousOn.inv₀ (by fun_prop)
+    intro x hx
+    exact (hpos x hx).ne'
+  have hInt : MeasureTheory.IntegrableOn g (Set.Ioo (0 : ℝ) 1) volume :=
+    (hc.integrableOn_Icc).mono_set Set.Ioo_subset_Icc_self
+  have hnn : 0 ≤ᵐ[volume.restrict (Set.Ioo (0 : ℝ) 1)] g := by
+    filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioo] with x hx
+    have := hpos x (Set.Ioo_subset_Icc_self hx)
+    positivity
+  have hval : ∫ x in Set.Ioo (0 : ℝ) 1, g x ∂volume = 1 := by
+    rw [← MeasureTheory.integral_Ioc_eq_integral_Ioo,
+      ← intervalIntegral.integral_of_le zero_le_one]
+    have hsplit : ∀ x : ℝ, g x = (Real.log 2)⁻¹ * (1 + x)⁻¹ := by
+      intro x
+      simp only [hg]
+      rw [mul_inv, mul_comm]
+    simp only [hsplit]
+    have hint : ∫ x in (0 : ℝ)..1, (1 + x)⁻¹ = Real.log 2 := by
+      rw [intervalIntegral.integral_comp_add_left (fun y : ℝ => y⁻¹) 1,
+        show (1 : ℝ) + 0 = 1 by norm_num, show (1 : ℝ) + 1 = 2 by norm_num,
+        integral_inv_of_pos one_pos two_pos]
+      norm_num
+    rw [intervalIntegral.integral_const_mul, hint]
+    exact inv_mul_cancel₀ hlog.ne'
+  rw [gaussMeasure, withDensity_apply _ MeasurableSet.univ,
+    Measure.restrict_univ,
+    ← MeasureTheory.ofReal_integral_eq_lintegral_ofReal hInt hnn, hval,
+    ENNReal.ofReal_one]
 
 /-! ## The Markov substitute for B–Y Lemma 5 -/
 
@@ -111,7 +182,18 @@ theorem gaussMeasure_univ : gaussMeasure Set.univ = 1 := by
 `K(a₁…aₙ) ≤ ∏(aᵢ+1)`, hence `log qₙ ≤ Σ log(aᵢ+1)` — the elementary
 observable replacing B–Y Lemma 4's CLT.  No positivity hypothesis needed. -/
 theorem cfK_le_prod (w : List ℕ) : cfK w ≤ (w.map (· + 1)).prod := by
-  sorry
+  induction w using cfK.induct with
+  | case1 => simp [cfK]
+  | case2 a => simp [cfK]
+  | case3 a b l ih1 ih2 =>
+      simp only [List.map_cons, List.prod_cons] at *
+      have hP : (List.map (· + 1) l).prod ≤ (b + 1) * (List.map (· + 1) l).prod :=
+        Nat.le_mul_of_pos_left _ (by omega)
+      calc cfK (a :: b :: l) = a * cfK (b :: l) + cfK l := rfl
+        _ ≤ a * ((b + 1) * (List.map (· + 1) l).prod) +
+              (b + 1) * (List.map (· + 1) l).prod :=
+            Nat.add_le_add (Nat.mul_le_mul_left a ih1) (le_trans ih2 hP)
+        _ = (a + 1) * ((b + 1) * (List.map (· + 1) l).prod) := by ring
 
 /-- **Conditional expected log-continuant is linear in `n`**: for some
 constant `C` and every genuine base cylinder,
@@ -149,6 +231,30 @@ theorem volume_append_mul_fib_le (w u : List ℕ) (hw : w ≠ []) (hu : u ≠ []
     (hwpos : ∀ a ∈ w, 1 ≤ a) (hupos : ∀ a ∈ u, 1 ≤ a) :
     volume (cfCylinder (w ++ u)) * (Nat.fib (u.length + 1) : ENNReal) ^ 2 ≤
       2 * volume (cfCylinder w) := by
-  sorry
+  have hdist := volume_cylinder_append_le w u hw hu hwpos hupos
+  have hKu : 1 ≤ cfK u := one_le_cfK u hupos
+  have hfib : Nat.fib (u.length + 1) ≤ cfK u := fib_le_cfK u hupos
+  have hkey : volume (cfCylinder u) * (Nat.fib (u.length + 1) : ENNReal) ^ 2 ≤ 1 := by
+    rw [volume_cfCylinder u hu hupos,
+      show ((Nat.fib (u.length + 1) : ENNReal)) ^ 2 =
+        ENNReal.ofReal ((Nat.fib (u.length + 1) : ℝ) ^ 2) from by
+          rw [ENNReal.ofReal_pow (by positivity), ENNReal.ofReal_natCast],
+      ← ENNReal.ofReal_mul (by positivity)]
+    rw [show (1 : ENNReal) = ENNReal.ofReal 1 from ENNReal.ofReal_one.symm]
+    apply ENNReal.ofReal_le_ofReal
+    have hKuR : (1 : ℝ) ≤ (cfK u : ℝ) := by exact_mod_cast hKu
+    have hfibR : (Nat.fib (u.length + 1) : ℝ) ≤ (cfK u : ℝ) := by exact_mod_cast hfib
+    have hfib0 : (0 : ℝ) ≤ (Nat.fib (u.length + 1) : ℝ) := by positivity
+    have hK' : (0 : ℝ) ≤ (cfK u.dropLast : ℝ) := by positivity
+    rw [div_mul_eq_mul_div, div_le_one (by nlinarith)]
+    nlinarith
+  calc volume (cfCylinder (w ++ u)) * (Nat.fib (u.length + 1) : ENNReal) ^ 2
+      ≤ 2 * (volume (cfCylinder w) * volume (cfCylinder u)) *
+          (Nat.fib (u.length + 1) : ENNReal) ^ 2 := by gcongr
+    _ = 2 * volume (cfCylinder w) *
+          (volume (cfCylinder u) * (Nat.fib (u.length + 1) : ENNReal) ^ 2) := by
+        ring
+    _ ≤ 2 * volume (cfCylinder w) * 1 := by gcongr
+    _ = 2 * volume (cfCylinder w) := mul_one _
 
 end NormalNumbers
