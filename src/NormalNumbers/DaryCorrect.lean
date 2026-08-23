@@ -703,4 +703,51 @@ theorem dTailList_hasDiscLt (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s
       rw [dTailList]
       exact HasDiscLt.append (ih hk0) (hHDL.mono hεk)
 
+/-- **`mSched s d → ∞`** once `d` is active: `L_s → ∞` (`wSched_length_ge`)
+forces `m_d(s) → ∞` through `le_mSched_mul_log`'s linear lower bound. -/
+theorem mSched_tendsto_atTop (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s₀) :
+    Filter.Tendsto (fun s => (mSched (s₀ + s) d : ℝ)) Filter.atTop Filter.atTop := by
+  have hdR1 : (1 : ℝ) < d := by exact_mod_cast hd2
+  have hlogd : 0 < Real.log d := Real.log_pos hdR1
+  have hLtendsto : Filter.Tendsto (fun s => ((wSched (s₀ + s)).length : ℝ))
+      Filter.atTop Filter.atTop := by
+    rw [Filter.tendsto_atTop_atTop]
+    intro T
+    obtain ⟨T', hT'⟩ := exists_nat_ge T
+    refine ⟨T', fun s hs => ?_⟩
+    have h := wSched_length_ge s₀ s
+    have hlen : T' ≤ (wSched (s₀ + s)).length := by omega
+    calc T ≤ (T' : ℝ) := hT'
+      _ ≤ (wSched (s₀ + s)).length := by exact_mod_cast hlen
+  rw [Filter.tendsto_atTop_atTop]
+  intro T
+  obtain ⟨S, hS⟩ := (hLtendsto.eventually_ge_atTop
+    ((2 * (max T 0 * Real.log d) + Real.log 2 + Real.log (2 * d)) / Real.log 2))
+    |>.exists_forall_of_atTop
+  refine ⟨S, fun s hs => ?_⟩
+  have hdts : d ≤ tSched (s₀ + s) := le_trans hdt (sched_t_mono (by omega))
+  have hlow := le_mSched_mul_log (s₀ + s) d hd2 hdts
+  have hfloor : (2 : ℝ) * (((wSched (s₀ + s)).length / 2 : ℕ) : ℝ)
+      ≥ ((wSched (s₀ + s)).length : ℝ) - 1 := by
+    have h2 : (wSched (s₀ + s)).length ≤ 2 * ((wSched (s₀ + s)).length / 2) + 1 := by omega
+    have h3 : ((wSched (s₀ + s)).length : ℝ)
+        ≤ 2 * (((wSched (s₀ + s)).length / 2 : ℕ) : ℝ) + 1 := by exact_mod_cast h2
+    linarith
+  have hL := hS s hs
+  have hlog2nn : (0:ℝ) ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  have hLR : 2 * (max T 0 * Real.log d) + Real.log 2 + Real.log (2 * d)
+      ≤ (wSched (s₀ + s)).length * Real.log 2 := by
+    rw [div_le_iff₀ (Real.log_pos (by norm_num))] at hL
+    linarith [hL]
+  have hms : (mSched (s₀ + s) d : ℝ) * Real.log d
+      ≥ ((wSched (s₀ + s)).length : ℝ) * Real.log 2 - Real.log 2 - Real.log (2 * d) := by
+    nlinarith [hlow, mul_le_mul_of_nonneg_right hfloor hlog2nn]
+  have hTnn : (0:ℝ) ≤ max T 0 := le_max_right _ _
+  have hfinal : (max T 0 : ℝ) * Real.log d ≤ (mSched (s₀ + s) d : ℝ) * Real.log d := by
+    nlinarith [hms, hLR]
+  have hTle : (max T 0 : ℝ) ≤ (mSched (s₀ + s) d : ℝ) :=
+    le_of_mul_le_mul_right (by linarith [hfinal]) hlogd
+  calc T ≤ (max T 0 : ℝ) := le_max_left _ _
+    _ ≤ (mSched (s₀ + s) d : ℝ) := hTle
+
 end NormalNumbers
