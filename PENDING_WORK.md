@@ -97,9 +97,24 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
   (`chebyshev_blockCount_brick`, replaces B–Y Lemma 6/KPW — note 1/n
   decay beats the K/√n good mass, so the balance still works), Lemma 8
   (`card_baryDiscrepancy_ge_le`) for the d-ary bad zones.
-- Next concrete step: define the brick structure + refinement predicate;
-  then the per-base bad-zone measure bound inside σ_d (Lemma 8 ×
-  cell-measure + the ≤ 16e^{4c}d|σcf| comparison).
+  ✅ d-ary bad-zone bound PROVED 2026-08-24 (`volume_daryBadZone_le`,
+  axiom-clean): inside an order-m0 cell, the union of order-(m0+k)
+  sub-cells with ε-bad new blocks has measure ≤ 2d·e^{−dε²k/6}·d^{−m0}
+  (`badBlocks` Finset + `card_badBlocks_le` = Lemma 8 restated).
+- KEY ROUTE DECISION (recorded 2026-08-24): B–Y's uniform-m_d bookkeeping
+  (their tight two-sided length window J_n, constant 16e^{4c}) does NOT
+  match the repo's Lemma-5 substitute (`half_mass_long_extensions`, which
+  bounds cfK only above; individual lengths spread exponentially).  Fix:
+  choose m_d PER CHOSEN cylinder J maximal with |J| ≤ d^{−m_d} (Prop 12
+  ⇒ ratio > 1/(2d)), and make the chosen J avoid the union of bad zones
+  over ALL orders m ≥ m_min(n) — the geometric sum over m of
+  `volume_daryBadZone_le` is still exponentially small vs the ≥ |I_w|/2
+  good mass.  Brick ratio constant becomes 1/(2d) (not 16e^{4c}d).
+- Next concrete step: (a) sum-over-orders bad-zone corollary
+  (Σ_{m≥m1} 2d e^{−dε²(m−ord)/6}·|σ_d| bound); (b) brick structure
+  definition with the 1/(2d) ratio; (c) digit-semantics bridge
+  (x ∈ sub-cell ↔ its new block, via floor/digitOf as in
+  DigitInterval.digits_prefix_iff) — then Lemma 13 assembly.
 
 Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
 `IsProbabilityMeasure gaussMeasure` instance added in CFBlockFreq),

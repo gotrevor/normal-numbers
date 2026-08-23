@@ -3,7 +3,8 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import Mathlib
+import NormalNumbers.BaryBlockCount
+import NormalNumbers.DigitInterval
 
 /-!
 # W5 groundwork — d-ary cells and Becher–Yuhjtman Proposition 12
@@ -66,5 +67,67 @@ theorem interval_subset_daryCell_two (d m : ℕ) (hd : 1 ≤ d) {a c : ℝ}
         _ = a * d ^ m + 1 := by field_simp; ring
     push_cast
     nlinarith
+
+attribute [local instance] Classical.propDecidable
+
+/-- The `ε`-bad blocks of length `k` in base `d` — the Lemma 8 filter:
+some digit's count deviates from the fair share `k/d` by at least `εk`. -/
+noncomputable def badBlocks (d k : ℕ) (ε : ℝ) : Finset (Fin k → Fin d) :=
+  Finset.univ.filter fun u =>
+    ∃ s : Fin d, ε * k ≤ |(digitCount s u : ℝ) - k / d|
+
+/-- Lemma 8 in `badBlocks` form. -/
+theorem card_badBlocks_le (d k : ℕ) (hd : 1 ≤ d) {ε : ℝ} (hε0 : 0 ≤ ε)
+    (hεd : (d : ℝ) * ε ≤ 1) :
+    ((badBlocks d k ε).card : ℝ)
+      ≤ 2 * (d : ℝ) ^ (k + 1) * Real.exp (-((d : ℝ) * ε ^ 2 * k) / 6) := by
+  have h := card_baryDiscrepancy_ge_le d k hd hε0 hεd
+  calc ((badBlocks d k ε).card : ℝ)
+      = ((Finset.univ.filter fun u : Fin k → Fin d =>
+          ∃ s : Fin d, ε * k ≤ |(digitCount s u : ℝ) - k / d|).card : ℝ) := by
+        rw [badBlocks]
+    _ ≤ _ := by exact_mod_cast h
+  
+/-- **The d-ary bad zone is exponentially small**: inside one d-ary cell of
+order `m0`, the union of the order-`(m0+k)` sub-cells carrying an `ε`-bad
+new block has measure at most `2d·e^{−dε²k/6}·d^{−m0}`, i.e. `2d·e^{−dε²k/6}`
+times the measure of the cell. -/
+theorem volume_daryBadZone_le (d m0 k : ℕ) (hd : 1 ≤ d) (j0 : ℤ) {ε : ℝ}
+    (hε0 : 0 ≤ ε) (hεd : (d : ℝ) * ε ≤ 1) :
+    volume (⋃ β ∈ badBlocks d k ε,
+      daryCell d (m0 + k)
+        (j0 * d ^ k + blockNatVal d (List.ofFn fun i => (β i : ℕ))) 1)
+      ≤ ENNReal.ofReal
+          (2 * d * Real.exp (-((d : ℝ) * ε ^ 2 * k) / 6) / d ^ m0) := by
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd
+  calc volume (⋃ β ∈ badBlocks d k ε,
+      daryCell d (m0 + k)
+        (j0 * d ^ k + blockNatVal d (List.ofFn fun i => (β i : ℕ))) 1)
+      ≤ ∑ β ∈ badBlocks d k ε,
+          volume (daryCell d (m0 + k)
+            (j0 * d ^ k + blockNatVal d (List.ofFn fun i => (β i : ℕ))) 1) :=
+        measure_biUnion_finset_le _ _
+    _ = ∑ _β ∈ badBlocks d k ε,
+          ENNReal.ofReal ((1 : ℝ) / d ^ (m0 + k)) := by
+        refine Finset.sum_congr rfl fun β _ => ?_
+        rw [volume_daryCell d (m0 + k) hd _ 1]
+        norm_num
+    _ = ENNReal.ofReal (((badBlocks d k ε).card : ℝ) / d ^ (m0 + k)) := by
+        rw [Finset.sum_const, nsmul_eq_mul,
+          ← ENNReal.ofReal_natCast, ← ENNReal.ofReal_mul (by positivity)]
+        congr 1
+        ring
+    _ ≤ ENNReal.ofReal
+          ((2 * (d : ℝ) ^ (k + 1) * Real.exp (-((d : ℝ) * ε ^ 2 * k) / 6))
+            / d ^ (m0 + k)) := by
+        apply ENNReal.ofReal_le_ofReal
+        have hcard := card_badBlocks_le d k hd hε0 hεd
+        gcongr
+    _ = ENNReal.ofReal
+          (2 * d * Real.exp (-((d : ℝ) * ε ^ 2 * k) / 6) / d ^ m0) := by
+        congr 1
+        rw [pow_add, pow_succ]
+        field_simp
+        ring
 
 end NormalNumbers
