@@ -18,7 +18,7 @@ machine, applied to two different digit-reading dynamical systems:
 | Invariant measure | Lebesgue | Gauss: dγ = dx/((1+x) ln 2) |
 | a.e. theorem | Borel: a.e. x normal | Gauss–Kuzmin freqs; Khinchin (a₁⋯aₙ)^{1/n} → K₀ |
 | Explicit witness | Champernowne 1933 | Adler–Keane–Smorodinsky 1981 (CF-normal); Wieting 2008 (Khinchin-typical) |
-| Orbit-transfer theorem | Wall: normal ⟺ orbit equidistributed | Vandehey: CF-normality preserved by rational LFTs (⚠️ ~70% on exact scope — pin against the paper) |
+| Orbit-transfer theorem | Wall: normal ⟺ orbit equidistributed | Vandehey: x CF-normal ⇒ (ax+b)/(cx+d) CF-normal, a,b,c,d ∈ ℤ, ad−bc ≠ 0 (citation pinned 2026-08-23, see refs) |
 
 And the founding hook has an exact twin.  Track A: no naturally-occurring
 constant is proven normal in any base.  Track B: **no naturally-occurring
@@ -255,8 +255,13 @@ convergent-recovery bound in a Shor's-algorithm repo — different theorems.
   Gauss–Kusmin–Lévy…*, Acta Arith. 24 (1974).  (Rate ladder.)
 - R. L. Adler, M. Keane, M. Smorodinsky, *A construction of a normal number for
   the continued fraction transformation*, J. Number Theory 13 (1981) 95–105.
-- J. Vandehey, on CF-normality under rational LFTs (~2016; ⚠️ locate the exact
-  paper before citing outward).
+- J. Vandehey, *Non-trivial matrix actions preserve normality for continued
+  fractions*, Compositio Math. 153 (2017) 274–293; arXiv:1504.05121.  Scope
+  verified via arXiv abstract 2026-08-23: x CF-normal ⇒ (ax+b)/(cx+d) CF-normal
+  for integers a,b,c,d with ad−bc ≠ 0 (the CF analogue of Wall's rational
+  corollary, and strictly stronger — dets ≠ ±1 allowed).  ⚠️ Statement is about
+  CF-*normality*; whether the Khinchin geometric-mean *value* transfers needs
+  the log-integrability tail step — check the paper body before claiming.
 - A.-M. Scheerer, *On the continued fraction expansion of absolutely normal
   numbers*, arXiv:1701.07979.  (Absolutely normal + CF-normal, computable.)
 - V. Becher, S. A. Yuhjtman, *On absolutely normal and continued fraction
