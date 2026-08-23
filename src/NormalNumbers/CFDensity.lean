@@ -297,7 +297,34 @@ lemma volume_cfCylinder_concat (w : List ℕ) (b : ℕ) (hb : 1 ≤ b)
       ENNReal.ofReal ((1 + tParam w) /
         (((b : ℝ) + tParam w) * ((b : ℝ) + 1 + tParam w))) *
         volume (cfCylinder w) := by
-  sorry
+  have hbR : (1 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  rcases eq_or_ne w [] with rfl | hw
+  · rw [List.nil_append, tParam_nil, cfCylinder_nil, Real.volume_Ioo,
+      volume_cfCylinder [b] (by simp) (by simpa using hb)]
+    simp only [show [b].dropLast = ([] : List ℕ) from rfl,
+      show cfK [b] = b from rfl, show cfK ([] : List ℕ) = 1 from rfl]
+    norm_num
+  · have hpos' : ∀ a ∈ w ++ [b], 1 ≤ a := by
+      intro a ha
+      rcases List.mem_append.mp ha with h | h
+      · exact hpos a h
+      · simp only [List.mem_singleton] at h; omega
+    have hK : (1 : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast one_le_cfK w hpos
+    have hKd0 : (0 : ℝ) ≤ (cfK w.dropLast : ℝ) := by positivity
+    have hKd : (cfK w.dropLast : ℝ) ≤ (cfK w : ℝ) := by
+      exact_mod_cast cfK_dropLast_le w hpos
+    rw [volume_cfCylinder (w ++ [b]) (by simp) hpos',
+      volume_cfCylinder w hw hpos,
+      List.dropLast_concat, cfK_concat w b hw, tParam, if_neg hw]
+    rw [← ENNReal.ofReal_mul (by positivity)]
+    congr 1
+    have hbK : (0 : ℝ) < (b : ℝ) * (cfK w : ℝ) + (cfK w.dropLast : ℝ) := by
+      nlinarith
+    push_cast
+    rw [div_mul_div_comm, mul_one]
+    rw [div_eq_div_iff (by positivity) (by positivity)]
+    field_simp
+    ring
 
 /-- **The conditional density identity, all words** (`[]` included): the
 distribution of `T^{|w|}x` conditioned on `I_w` has density
@@ -307,6 +334,42 @@ theorem volume_inter_preimage_aux (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a)
     volume (cfCylinder w ∩ (gaussMap^[w.length]) ⁻¹' A) =
       ENNReal.ofReal (∫ y in A, tailDensity (tParam w) y) *
         volume (cfCylinder w) := by
-  sorry
+  induction w using List.reverseRecOn generalizing A with
+  | nil =>
+      have hAfin : volume A ≠ ⊤ := by
+        refine ne_top_of_le_ne_top ?_ (measure_mono hA1)
+        simp [Real.volume_Ioo]
+      rw [cfCylinder_nil, List.length_nil, Function.iterate_zero, Set.preimage_id,
+        Set.inter_eq_self_of_subset_right hA1, tParam_nil, Real.volume_Ioo]
+      have h1 : ∀ y ∈ A, tailDensity 0 y = 1 := by
+        intro y _
+        simp [tailDensity]
+      rw [MeasureTheory.setIntegral_congr_fun hA h1]
+      rw [MeasureTheory.setIntegral_const, smul_eq_mul, mul_one]
+      norm_num [MeasureTheory.measureReal_def, ENNReal.ofReal_toReal hAfin]
+  | append_singleton w b ih =>
+      have hb : 1 ≤ b := hpos b (by simp)
+      have hposw : ∀ a ∈ w, 1 ≤ a := fun a ha => hpos a (by simp [ha])
+      have ht := tParam_mem_Icc w hposw
+      -- the one-step conditional set
+      set A' : Set ℝ := cfCylinder [b] ∩ gaussMap ⁻¹' A with hA'
+      have hA'meas : MeasurableSet A' :=
+        (measurableSet_cfCylinder [b]).inter (measurable_gaussMap hA)
+      have hA'1 : A' ⊆ Set.Ioo (0 : ℝ) 1 := fun x hx => hx.1.1
+      have hlen : (w ++ [b]).length = w.length + 1 := by simp
+      rw [hlen, measure_congr (concat_inter_ae w b A), ih hposw A' hA'meas hA'1]
+      -- rewrite the integral over A' through the branch image
+      have hbranch : ∫ y in A', tailDensity (tParam w) y =
+          ∫ y in branchMap b '' A, tailDensity (tParam w) y :=
+        MeasureTheory.setIntegral_congr_set (branch_inter_ae b hb A hA1)
+      rw [hbranch, setIntegral_tailDensity_branch b hb hA hA1 ht,
+        volume_cfCylinder_concat w b hb hposw,
+        tParam_concat w b hb hposw,
+        ENNReal.ofReal_mul (by
+          have h0 := ht.1
+          have h1 := ht.2
+          have hbR : (1 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+          positivity)]
+      ring
 
 end NormalNumbers

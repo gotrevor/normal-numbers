@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.CFDigitLaw
+import NormalNumbers.CFDensity
 
 /-!
 # W3 — Gauss-map mixing (scaffold)
@@ -80,7 +81,8 @@ theorem volume_inter_preimage_eq_integral (w : List ℕ) (hw : w ≠ [])
       ENNReal.ofReal
           (∫ y in A, tailDensity ((cfK w.dropLast : ℝ) / (cfK w : ℝ)) y) *
         volume (cfCylinder w) := by
-  sorry
+  have h := volume_inter_preimage_aux w hpos A hA hA1
+  rwa [tParam, if_neg hw] at h
 
 /-! ## Mixing (route step 2 — the core) -/
 
