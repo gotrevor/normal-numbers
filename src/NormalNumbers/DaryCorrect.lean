@@ -864,4 +864,45 @@ theorem dTailList_append_take_hasDiscLt (s₀ d : ℕ) (hd2 : 2 ≤ d)
   have hshort : (((dBlock (s₀ + k) d)).length : ℝ) < ε * (dTailList s₀ d k).length := hratio
   exact hasDiscLt_append_take hd1 hv hshort l hl
 
+/-! ## Locating the stage of a digit position -/
+
+/-- Once `d` is active, `mSched` grows by at least `1` each stage (every
+block is nonempty, `dBlock_length_pos`). -/
+theorem mSched_ge_add (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s₀) :
+    ∀ k, mSched s₀ d + k ≤ mSched (s₀ + k) d := by
+  intro k
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    have hdts : d ≤ tSched (s₀ + k) := le_trans hdt (sched_t_mono (by omega))
+    have hpos := dBlock_length_pos (s₀ + k) d hd2 hdts
+    obtain ⟨-, -, hm⟩ := dBlock_spec (s₀ + k) d hd2 hdts
+    have heq : s₀ + (k + 1) = s₀ + k + 1 := by omega
+    rw [heq, hm]
+    omega
+
+/-- Every digit position `p` past `m_d(s₀)` lies in a definite stage window
+`[m_d(s), m_d(s+1))` with `s ≥ s₀` (mirrors `exists_stage`). -/
+theorem exists_mSched_stage (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s₀)
+    (p : ℕ) (hp : mSched s₀ d ≤ p) :
+    ∃ s, s₀ ≤ s ∧ mSched s d ≤ p ∧ p < mSched (s + 1) d := by
+  classical
+  set Q : ℕ → Prop := fun k => mSched (s₀ + k) d ≤ p with hQdef
+  have hQ0 : Q 0 := by simpa [hQdef] using hp
+  have hQbig : ¬ Q (p + 1) := by
+    have h := mSched_ge_add s₀ d hd2 hdt (p + 1)
+    simp only [hQdef]
+    omega
+  set k := Nat.findGreatest Q (p + 1) with hkdef
+  have hk : Q k := Nat.findGreatest_spec (Nat.zero_le _) hQ0
+  have hkb : k ≤ p + 1 := Nat.findGreatest_le _
+  have hkne : k ≠ p + 1 := fun h => hQbig (h ▸ hk)
+  have hk1 : ¬ Q (k + 1) :=
+    Nat.findGreatest_is_greatest (Nat.lt_succ_self _) (by omega)
+  refine ⟨s₀ + k, by omega, hk, ?_⟩
+  have h2 : s₀ + k + 1 = s₀ + (k + 1) := by omega
+  rw [h2]
+  simp only [hQdef] at hk1
+  omega
+
 end NormalNumbers
