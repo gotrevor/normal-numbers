@@ -261,4 +261,96 @@ theorem TBrick.volume_append_lt_dpow {t : ℕ} (B : TBrick t)
     _ < ENNReal.ofReal ((d : ℝ) ^ (B.m d + kmin))⁻¹ :=
         (ENNReal.ofReal_lt_ofReal_iff (by positivity)).2 hreal
 
+/-- Any cylinder has finite measure (it sits inside `(0,1)`). -/
+theorem volume_cfCylinder_ne_top (w : List ℕ) :
+    volume (cfCylinder w) ≠ ⊤ := by
+  have h1 : volume (cfCylinder w) ≤ volume (Set.Ioo (0 : ℝ) 1) :=
+    measure_mono (fun x hx => hx.1)
+  rw [Real.volume_Ioo] at h1
+  exact (lt_of_le_of_lt h1 ENNReal.ofReal_lt_top).ne
+
+attribute [local instance] Classical.propDecidable
+
+/-- **Greatest order**: if `L < d^{−m0}`, there is a greatest `m' ≥ m0` with
+`L < d^{−m'}`; at that order also `d^{−(m'+1)} ≤ L` — the two-sided window
+that Prop 12 turns into the `1/(2d)` brick ratio. -/
+theorem exists_greatest_inv_pow_lt {d : ℕ} (hd : 2 ≤ d) {L : ℝ}
+    (hL : 0 < L) {m0 : ℕ} (h : L < ((d : ℝ) ^ m0)⁻¹) :
+    ∃ m' : ℕ, m0 ≤ m' ∧ L < ((d : ℝ) ^ m')⁻¹ ∧
+      ((d : ℝ) ^ (m' + 1))⁻¹ ≤ L := by
+  have hd1 : (1 : ℝ) < d := by exact_mod_cast hd
+  obtain ⟨M0, hM0⟩ := pow_unbounded_of_one_lt (L⁻¹) hd1
+  set P : ℕ → Prop := fun m => L < ((d : ℝ) ^ m)⁻¹ with hP
+  set M : ℕ := max M0 m0 with hM
+  have hnotPM : ¬ P M := by
+    have h1 : ((d : ℝ) ^ M0)⁻¹ < L := inv_lt_of_inv_lt₀ hL hM0
+    have h2 : ((d : ℝ) ^ M)⁻¹ ≤ ((d : ℝ) ^ M0)⁻¹ := by
+      have hpow : (d : ℝ) ^ M0 ≤ (d : ℝ) ^ M :=
+        pow_le_pow_right₀ hd1.le (le_max_left _ _)
+      have := one_div_le_one_div_of_le (by positivity) hpow
+      simpa [one_div] using this
+    exact not_lt.2 (h2.trans h1.le)
+  have hm0M : m0 ≤ M := le_max_right _ _
+  have hPm0 : P m0 := h
+  refine ⟨Nat.findGreatest P M, Nat.le_findGreatest hm0M hPm0,
+    Nat.findGreatest_spec hm0M hPm0, ?_⟩
+  by_cases hcase : Nat.findGreatest P M = M
+  · exact absurd (hcase ▸ Nat.findGreatest_spec hm0M hPm0) hnotPM
+  · have hlt : Nat.findGreatest P M < M :=
+      lt_of_le_of_ne (Nat.findGreatest_le M) hcase
+    have hnot : ¬ P (Nat.findGreatest P M + 1) :=
+      Nat.findGreatest_is_greatest (Nat.lt_succ_self _) (by omega)
+    exact not_lt.1 hnot
+
+/-- **The refined d-ary cell block** (Prop-12 step of Lemma 13): for the
+survivor's cylinder `J = I_{w++u}`, the greatest order `m'` with
+`|J| < d^{−m'}` satisfies `m' ≥ m_d + kmin` (the `kmin(n)` link) and yields a
+2-cell block containing `J` with the `1/(2d)` brick ratio — the base-`d`
+component of the refined brick. -/
+theorem TBrick.exists_refined_cell {t : ℕ} (B : TBrick t)
+    {d : ℕ} (hd2 : 2 ≤ d) (hdt : d ≤ t) {u : List ℕ} (hu_ne : u ≠ [])
+    (hupos : ∀ a ∈ u, 1 ≤ a) (kmin : ℕ)
+    (hfib : 4 * (d : ℝ) ^ kmin < (Nat.fib (u.length + 1) : ℝ) ^ 2) :
+    ∃ m' : ℕ, ∃ j' : ℤ, B.m d + kmin ≤ m' ∧
+      cfCylinder (B.w ++ u) ⊆ daryCell d m' j' 2 ∧
+      ENNReal.ofReal ((d : ℝ) ^ m')⁻¹
+        ≤ ENNReal.ofReal (2 * d) * volume (cfCylinder (B.w ++ u)) := by
+  have hd1 : 1 ≤ d := le_trans (by norm_num) hd2
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd1
+  have hwu_ne : B.w ++ u ≠ [] := by
+    simp [B.hw_ne]
+  have hwupos : ∀ a ∈ B.w ++ u, 1 ≤ a := fun a ha =>
+    (List.mem_append.1 ha).elim (B.hw_pos a) (hupos a)
+  have hJ0 : volume (cfCylinder (B.w ++ u)) ≠ 0 :=
+    volume_cfCylinder_ne_zero _ hwu_ne hwupos
+  have hJtop : volume (cfCylinder (B.w ++ u)) ≠ ⊤ :=
+    volume_cfCylinder_ne_top _
+  set L : ℝ := (volume (cfCylinder (B.w ++ u))).toReal with hLdef
+  have hL0 : 0 < L := ENNReal.toReal_pos hJ0 hJtop
+  -- the `kmin(n)` link puts `L` below `d^{−(m_d+kmin)}`
+  have hLlt : L < ((d : ℝ) ^ (B.m d + kmin))⁻¹ := by
+    have hlt := B.volume_append_lt_dpow hd2 hdt hu_ne hupos kmin hfib
+    have := (ENNReal.toReal_lt_toReal hJtop ENNReal.ofReal_ne_top).2 hlt
+    rwa [ENNReal.toReal_ofReal (by positivity)] at this
+  obtain ⟨m', hm0, hPm', hPnext⟩ := exists_greatest_inv_pow_lt hd2 hL0 hLlt
+  obtain ⟨a, c, hsub, hlen⟩ :=
+    cfCylinder_subset_Icc_length (B.w ++ u) hwu_ne hwupos
+  have hprop12 : Set.Icc a c ⊆ daryCell d m' ⌊a * (d : ℝ) ^ m'⌋ 2 := by
+    apply interval_subset_daryCell_two d m' hd1
+    rw [hlen, ← hLdef, one_div]
+    exact hPm'
+  refine ⟨m', ⌊a * (d : ℝ) ^ m'⌋, hm0, hsub.trans hprop12, ?_⟩
+  -- ratio: `d^{−m'} = d·d^{−(m'+1)} ≤ d·L ≤ 2d·L`
+  have hratio : ((d : ℝ) ^ m')⁻¹ ≤ 2 * d * L := by
+    have hsplit : ((d : ℝ) ^ m')⁻¹ = d * ((d : ℝ) ^ (m' + 1))⁻¹ := by
+      rw [pow_succ]
+      field_simp
+    rw [hsplit]
+    nlinarith
+  calc ENNReal.ofReal ((d : ℝ) ^ m')⁻¹
+      ≤ ENNReal.ofReal (2 * d * L) := ENNReal.ofReal_le_ofReal hratio
+    _ = ENNReal.ofReal (2 * d) * volume (cfCylinder (B.w ++ u)) := by
+        rw [ENNReal.ofReal_mul (by positivity), hLdef,
+          ENNReal.ofReal_toReal hJtop]
+
 end NormalNumbers

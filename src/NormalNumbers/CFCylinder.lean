@@ -655,6 +655,29 @@ theorem volume_cfCylinder (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 
   rw [← hlen]
   exact le_antisymm hupper hlower
 
+/-- A genuine cylinder sits inside a closed interval whose length is exactly
+the cylinder's measure (public packaging of `cfCylinder_subset_uIcc` +
+`volume_cfCylinder`, for the Prop-12 step of the t-brick refinement). -/
+theorem cfCylinder_subset_Icc_length (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) :
+    ∃ a c : ℝ, cfCylinder w ⊆ Set.Icc a c ∧
+      c - a = (volume (cfCylinder w)).toReal := by
+  set E0 : ℝ := ((cfVal w : ℚ) : ℝ) with hE0
+  set E1 : ℝ := ((cfVal (bumpLast w) : ℚ) : ℝ) with hE1
+  have hlen : |E1 - E0| =
+      1 / ((cfK w : ℝ) * ((cfK w : ℝ) + (cfK w.dropLast : ℝ))) := by
+    have h := abs_cfVal_sub_bumpLast w hw hpos
+    have hcast : |E0 - E1| =
+        ((|cfVal w - cfVal (bumpLast w)| : ℚ) : ℝ) := by
+      rw [hE0, hE1]; push_cast; ring_nf
+    rw [abs_sub_comm, hcast, h, cfK_bumpLast hw]
+    push_cast
+    ring_nf
+  refine ⟨min E0 E1, max E0 E1, ?_, ?_⟩
+  · exact cfCylinder_subset_uIcc w hw hpos
+  · rw [max_sub_min_eq_abs, volume_cfCylinder w hw hpos,
+      ENNReal.toReal_ofReal (by positivity), ← hlen, abs_sub_comm]
+
 /-- **Bounded distortion, upper half** (B–Y Lemma 3.2):
 `|I_{wu}| ≤ 2·|I_w|·|I_u|`. -/
 theorem volume_cylinder_append_le (w u : List ℕ) (hw : w ≠ []) (hu : u ≠ [])
