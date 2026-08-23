@@ -319,4 +319,23 @@ theorem log_gain_bracket (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) {k :
     rw [hlogdk, Real.log_mul h32d hU2ne, hlogU2] at h
     linarith [h]
 
+/-- **(c3a) the numerator bound**: feeding the good-length control
+`cfK (uSched s) ≤ exp(goodC · nFn (tSched (s+1)))` (from `uSched_spec`) into the
+upper half of `log_gain_bracket`, the per-stage digit gain `k` obeys
+`k · log d ≤ 2·goodC·n_{s+1} + log(32d)` — i.e. `k` grows at most linearly in the
+stage length `n_{s+1} = nFn (tSched (s+1))`.  This is the numerator of the
+interior ratio `k_{s+1} / (m_d(s) − m_d(s₀))`. -/
+theorem gain_le (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) {k : ℕ}
+    (hk : mSched (s + 1) d = mSched s d + k) :
+    (k : ℝ) * Real.log d
+      ≤ 2 * goodC * nFn (tSched (s + 1)) + Real.log (32 * d) := by
+  obtain ⟨-, hup⟩ := log_gain_bracket s d hd2 hdt hk
+  have hgood := (uSched_spec s).2.2.1
+  have hU0 : (0 : ℝ) < (cfK (uSched s) : ℝ) := by
+    exact_mod_cast lt_of_lt_of_le one_pos (one_le_cfK _ (uSched_pos s))
+  have hlog : Real.log (cfK (uSched s)) ≤ goodC * nFn (tSched (s + 1)) := by
+    have h := Real.log_le_log hU0 hgood
+    rwa [Real.log_exp] at h
+  linarith [hup, hlog]
+
 end NormalNumbers
