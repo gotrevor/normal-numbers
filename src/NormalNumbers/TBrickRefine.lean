@@ -554,4 +554,130 @@ theorem TBrick.exists_refinement {t : ℕ} (B : TBrick t)
       (m' d - B.m d) hd1 (j' d) hyi hxc hyc havoid
     exact ⟨i, hi2, hyi, β, hβgood, hymem⟩
 
+/-- **Standalone Prop-12 cell block**: any genuine cylinder shorter than
+`d^{−m0}` sits in a 2-cell block of some order `m' ≥ m0` with the `1/(2d)`
+ratio.  (The brick-free core of `exists_refined_cell`; used to adjoin a NEW
+base — the `t → t+1` case of Lemma 13 and the seed brick.) -/
+theorem exists_cell_block {w : List ℕ} (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a)
+    {d : ℕ} (hd : 2 ≤ d) {m0 : ℕ}
+    (hlt : volume (cfCylinder w) < ENNReal.ofReal ((d : ℝ) ^ m0)⁻¹) :
+    ∃ m' : ℕ, ∃ j' : ℤ, m0 ≤ m' ∧
+      cfCylinder w ⊆ daryCell d m' j' 2 ∧
+      ENNReal.ofReal ((d : ℝ) ^ m')⁻¹
+        ≤ ENNReal.ofReal (2 * d) * volume (cfCylinder w) := by
+  have hd1 : 1 ≤ d := le_trans (by norm_num) hd
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd1
+  have hJ0 : volume (cfCylinder w) ≠ 0 := volume_cfCylinder_ne_zero w hw hpos
+  have hJtop : volume (cfCylinder w) ≠ ⊤ := volume_cfCylinder_ne_top w
+  set L : ℝ := (volume (cfCylinder w)).toReal with hLdef
+  have hL0 : 0 < L := ENNReal.toReal_pos hJ0 hJtop
+  have hLlt : L < ((d : ℝ) ^ m0)⁻¹ := by
+    have := (ENNReal.toReal_lt_toReal hJtop ENNReal.ofReal_ne_top).2 hlt
+    rwa [ENNReal.toReal_ofReal (by positivity)] at this
+  obtain ⟨m', hm0, hPm', hPnext⟩ := exists_greatest_inv_pow_lt hd hL0 hLlt
+  obtain ⟨a, c, hsub, hlen⟩ := cfCylinder_subset_Icc_length w hw hpos
+  have hprop12 : Set.Icc a c ⊆ daryCell d m' ⌊a * (d : ℝ) ^ m'⌋ 2 := by
+    apply interval_subset_daryCell_two d m' hd1
+    rw [hlen, ← hLdef, one_div]
+    exact hPm'
+  refine ⟨m', ⌊a * (d : ℝ) ^ m'⌋, hm0, hsub.trans hprop12, ?_⟩
+  have hratio : ((d : ℝ) ^ m')⁻¹ ≤ 2 * d * L := by
+    have hsplit : ((d : ℝ) ^ m')⁻¹ = d * ((d : ℝ) ^ (m' + 1))⁻¹ := by
+      rw [pow_succ]
+      field_simp
+    rw [hsplit]
+    nlinarith
+  calc ENNReal.ofReal ((d : ℝ) ^ m')⁻¹
+      ≤ ENNReal.ofReal (2 * d * L) := ENNReal.ofReal_le_ofReal hratio
+    _ = ENNReal.ofReal (2 * d) * volume (cfCylinder w) := by
+        rw [ENNReal.ofReal_mul (by positivity), hLdef,
+          ENNReal.ofReal_toReal hJtop]
+
+/-- A genuine cylinder has measure `< 1` (in fact `≤ ½`). -/
+theorem volume_cfCylinder_lt_one (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) :
+    volume (cfCylinder w) < ENNReal.ofReal 1 := by
+  rw [volume_cfCylinder w hw hpos]
+  have hK : (1 : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast one_le_cfK w hpos
+  have hK' : (1 : ℝ) ≤ (cfK w.dropLast : ℝ) := by
+    exact_mod_cast one_le_cfK w.dropLast
+      (fun a ha => hpos a (List.dropLast_subset _ ha))
+  refine (ENNReal.ofReal_lt_ofReal_iff (by norm_num)).2 ?_
+  rw [div_lt_one (by nlinarith)]
+  nlinarith
+
+/-- **Lemma 13, `t → t+1` step**: any t-brick extends to a `(t+1)`-brick on
+the SAME CF word — adjoin base `t+1` by the standalone Prop-12 block (no
+goodness required the first time a base appears; B–Y's closing paragraph). -/
+theorem TBrick.exists_extend_succ {t : ℕ} (B : TBrick t) :
+    ∃ B' : TBrick (t + 1), B'.w = B.w ∧
+      ∀ d, 2 ≤ d → d ≤ t → B'.m d = B.m d ∧ B'.j d = B.j d ∧
+        B'.r d = B.r d := by
+  by_cases ht1 : 2 ≤ t + 1
+  · have hlt : volume (cfCylinder B.w)
+        < ENNReal.ofReal (((t + 1 : ℕ) : ℝ) ^ (0 : ℕ))⁻¹ := by
+      simpa using volume_cfCylinder_lt_one B.w B.hw_ne B.hw_pos
+    obtain ⟨m', j', -, hsub', hrat'⟩ :=
+      exists_cell_block B.hw_ne B.hw_pos ht1 hlt
+    refine ⟨⟨B.w, B.hw_ne, B.hw_pos,
+      fun d => if d = t + 1 then m' else B.m d,
+      fun d => if d = t + 1 then j' else B.j d,
+      fun d => if d = t + 1 then 2 else B.r d,
+      ?_, ?_, ?_, ?_⟩, rfl, ?_⟩
+    · intro d hd2 hdt
+      by_cases h : d = t + 1
+      · rw [if_pos h]
+        norm_num
+      · rw [if_neg h]
+        exact B.hr1 d hd2 (by omega)
+    · intro d hd2 hdt
+      by_cases h : d = t + 1
+      · rw [if_pos h]
+      · rw [if_neg h]
+        exact B.hr2 d hd2 (by omega)
+    · intro d hd2 hdt
+      by_cases h : d = t + 1
+      · subst h
+        simpa using hsub'
+      · simp only [if_neg h]
+        exact B.hsub d hd2 (by omega)
+    · intro d hd2 hdt
+      by_cases h : d = t + 1
+      · subst h
+        simpa using hrat'
+      · simp only [if_neg h]
+        exact B.hratio d hd2 (by omega)
+    · intro d hd2 hdt
+      have h : d ≠ t + 1 := by omega
+      simp [h]
+  · -- degenerate `t = 0`: all base constraints on both sides are vacuous
+    have ht0 : t = 0 := by omega
+    subst ht0
+    exact ⟨⟨B.w, B.hw_ne, B.hw_pos, B.m, B.j, B.r,
+      fun d hd2 hdt => absurd hdt (by omega),
+      fun d hd2 hdt => absurd hdt (by omega),
+      fun d hd2 hdt => absurd hdt (by omega),
+      fun d hd2 hdt => absurd hdt (by omega)⟩, rfl,
+      fun d hd2 hdt => absurd hdt (by omega)⟩
+
+/-- **The seed brick**: a 2-brick on any genuine CF word (start of the B–Y
+induction, §2.1's initial step in brick form). -/
+theorem exists_seed_brick (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) : ∃ B : TBrick 2, B.w = w := by
+  have hlt : volume (cfCylinder w)
+      < ENNReal.ofReal (((2 : ℕ) : ℝ) ^ (0 : ℕ))⁻¹ := by
+    simpa using volume_cfCylinder_lt_one w hw hpos
+  obtain ⟨m', j', -, hsub', hrat'⟩ :=
+    exists_cell_block hw hpos (le_refl 2) hlt
+  refine ⟨⟨w, hw, hpos, fun _ => m', fun _ => j', fun _ => 2,
+    fun _ _ _ => by norm_num, fun _ _ _ => le_refl 2, ?_, ?_⟩, rfl⟩
+  · intro d hd2 hdt
+    have : d = 2 := by omega
+    subst this
+    exact hsub'
+  · intro d hd2 hdt
+    have : d = 2 := by omega
+    subst this
+    simpa using hrat'
+
 end NormalNumbers
