@@ -46,7 +46,15 @@ DONE this lap (all axiom-clean, `#print axioms` = trust triple):
      `ENNReal.toReal_mono`/`toReal_ofReal`, final arithmetic by
      `gcongr` + `field_simp`.  **src/ is sorry-free — W4 core COMPLETE.**
 
-NEXT ATTACK: conditioned-on-brick version (s-started identity → same pin), and the
+  ✅ conditioned-on-brick version — PROVED 2026-08-24 (@c598d81), axiom-clean:
+     `gaussMeasure_brick_inter_le` (γ(I_w ∩ T^{-|w|}A) ≤ 7·γ(A)·γ(I_w), via
+     g=0 mixing + density window `volume_toReal_le_gaussMeasure`) and
+     `chebyshev_blockCount_brick` (bad set inside a brick ≤
+     7·(8|v|+80)·γ(I_v)/(δ²n)·γ(I_w)).  Note: much simpler than the planned
+     s-started-identity route — the already-proved mixing theorem at gap 0
+     absorbs the conditioning.
+
+NEXT ATTACK: the b-ary side / W5 construction inputs (old plan below): conditioned-on-brick version (s-started identity → same pin), and the
 b-ary side (B–Y Lemmas 8/9 — check Counting.lean/Visits.lean overlap).
 
 Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
