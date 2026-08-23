@@ -29,6 +29,21 @@ green builds; `#print axioms isNormal_two_stoneham23` at the end (target: standa
 
 ---
 
+## Lap update 2026-08-23 (hot-spot campaign, lap B) — CAMPAIGN COMPLETE (modulo toolchain)
+
+**All 7 Stoneham sorries proven; `src/` is sorry-free.**  See PENDING_WORK.md
+for the proof map.  Final theorem `isNormal_two_stoneham23` assembled with
+constant `C = 6`, window cut `M0 = 2k+3`, windows indexed by `Nat.log 3`.
+
+**⚠️ Still blocked on the v4.33.1 toolchain** (ON-LINE-REQUEST.md): repo
+`lake build` has never run on this state.  All of `Stoneham.lean` was
+compiler-verified WHOLE-FILE against v4.31 mathlib (scratch harness,
+imports stubbed as axioms with verbatim repo statements).  First actions
+when the toolchain lands: `lake build`, then
+`#print axioms isNormal_two_stoneham23` (target: standard 3).
+
+---
+
 ## Lap update 2026-08-23 (hot-spot campaign, lap A)
 
 **HEAD**: `583c088` on `master`.  No uncommitted edits.

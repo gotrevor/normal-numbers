@@ -513,8 +513,435 @@ theorem isNormal_of_visit_upper_bound (b : ℕ) (hb : 2 ≤ b) (x : ℝ)
   rw [isNormal_iff_equidistributed_orbit b hb x, ← funext (orbit_fract b x)]
   exact equidistributed_orbit_of_visit_upper b hb (Int.fract x) C h
 
+/-- `α₂,₃` lies in `[0, 1)` (in fact in `(0, 1/12]`). -/
+theorem stoneham23_mem_Ico : stoneham23 ∈ Set.Ico (0 : ℝ) 1 := by
+  have hsum : Summable sterm := summable_sterm
+  have hgeom : Summable fun j : ℕ => (1 / 24 : ℝ) * (1 / 2) ^ j :=
+    (summable_geometric_of_lt_one (by norm_num) (by norm_num)).mul_left _
+  have hle : ∀ j, sterm j ≤ (1 / 24 : ℝ) * (1 / 2) ^ j := by
+    intro j
+    unfold sterm
+    rw [div_pow, one_pow, mul_one_div, div_div]
+    apply div_le_div_of_nonneg_left one_pos.le (by positivity)
+    have h3 : (3 : ℝ) ≤ 3 ^ (j + 1) :=
+      le_self_pow₀ (by norm_num) (by omega)
+    have h2 : (2 : ℝ) ^ (j + 3) ≤ 2 ^ (3 ^ (j + 1)) := by
+      apply pow_le_pow_right₀ one_le_two
+      calc j + 3 ≤ 3 * (j + 1) := by omega
+        _ ≤ 3 ^ (j + 1) := by
+            calc 3 * (j + 1) ≤ 3 * 3 ^ j := by
+                  have : j + 1 ≤ 3 ^ j := Nat.lt_pow_self (by norm_num)
+                  omega
+              _ = 3 ^ (j + 1) := (pow_succ' 3 j).symm
+    calc (24 : ℝ) * 2 ^ j = 3 * 2 ^ (j + 3) := by ring
+      _ ≤ 3 ^ (j + 1) * 2 ^ (3 ^ (j + 1)) := by
+          apply mul_le_mul h3 h2 (by positivity) (by positivity)
+  constructor
+  · unfold stoneham23
+    have : ∀ j : ℕ, (0:ℝ) ≤ 1 / ((3 : ℝ) ^ (j + 1) * 2 ^ (3 ^ (j + 1))) := by
+      intro j; positivity
+    exact tsum_nonneg this
+  · have h1 : stoneham23 ≤ ∑' j : ℕ, (1 / 24 : ℝ) * (1 / 2) ^ j :=
+      hsum.tsum_le_tsum hle hgeom
+    rw [tsum_mul_left, tsum_geometric_two] at h1
+    linarith
+
+/-- Orbit states across window `M`: the seed doubles, so
+`c_M(3^M + j) = c_M(3^M)·2^j mod 3^M`. -/
+theorem stonehamState_window (M : ℕ) (hM : 1 ≤ M) (j : ℕ) :
+    stonehamState M (3 ^ M + j) = stonehamState M (3 ^ M) * 2 ^ j % 3 ^ M := by
+  have hPpos : 0 < 3 ^ M := pow_pos (by norm_num) M
+  induction j with
+  | zero =>
+    rw [add_zero, pow_zero, mul_one]
+    exact (Nat.mod_eq_of_lt (Nat.mod_lt _ hPpos)).symm
+  | succ j ih =>
+    have hstep : 3 ^ M + (j + 1) = (3 ^ M + j) + 1 := by omega
+    rw [hstep, stonehamState_succ M _ hM (by omega), ih]
+    have hcong := (Nat.mod_modEq (stonehamState M (3 ^ M) * 2 ^ j) (3 ^ M)).mul_left 2
+    calc 2 * (stonehamState M (3 ^ M) * 2 ^ j % 3 ^ M) % 3 ^ M
+        = 2 * (stonehamState M (3 ^ M) * 2 ^ j) % 3 ^ M := hcong
+      _ = stonehamState M (3 ^ M) * 2 ^ (j + 1) % 3 ^ M := by
+          rw [pow_succ]; ring_nf
+
+/-- Shift a filtered-interval count to a filtered-range count. -/
+theorem card_filter_Ico_shift (s t : ℕ) (Q : ℕ → Prop) [DecidablePred Q] :
+    ((Finset.Ico s t).filter Q).card
+      = ((Finset.range (t - s)).filter fun j => Q (s + j)).card := by
+  classical
+  refine Finset.card_nbij' (fun n => n - s) (fun j => s + j) ?_ ?_ ?_ ?_
+  · intro n hn
+    simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_Ico,
+      Finset.mem_range] at hn ⊢
+    obtain ⟨⟨h1, h2⟩, hq⟩ := hn
+    refine ⟨by omega, ?_⟩
+    rwa [show s + (n - s) = n by omega]
+  · intro j hj
+    simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_range,
+      Finset.mem_Ico] at hj ⊢
+    exact ⟨⟨by omega, by omega⟩, hj.2⟩
+  · intro n hn
+    simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_Ico] at hn
+    show s + (n - s) = n
+    omega
+  · intro j _
+    show s + j - s = j
+    omega
+
+/-- Visits of an initial segment of window `M` to `[a, c)`, in terms of the
+window length: the interval widens by the approximation error `2/3^(M+1)`. -/
+theorem window_visit_bound (M : ℕ) (hM : 1 ≤ M) (a c : ℝ)
+    (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1) (ℓ : ℕ) (hℓ : ℓ ≤ 2 * 3 ^ M) :
+    (((Finset.range ℓ).filter fun j =>
+        orbit 2 stoneham23 (3 ^ M + j) ∈ Set.Ico a c).card : ℝ)
+      ≤ ((ℓ : ℝ) / (2 * 3 ^ (M - 1)) + 1)
+          * ((c - a + 2 / 3 ^ (M + 1)) * (2 * 3 ^ (M - 1)) + 4) := by
+  classical
+  set u : ℕ := stonehamState M (3 ^ M) with hu
+  have huu : ¬ 3 ∣ u := stonehamState_unit M hM
+  have h3M1 : (0:ℝ) < 3 ^ (M + 1) := by positivity
+  set a' : ℝ := max 0 (a - 2 / 3 ^ (M + 1)) with ha'
+  have ha'0 : 0 ≤ a' := le_max_left _ _
+  have ha'c : a' ≤ c := by
+    apply max_le (le_trans ha hac)
+    have : (0:ℝ) < 2 / 3 ^ (M + 1) := by positivity
+    linarith
+  -- each orbit visit forces a state visit to the widened interval
+  have hsub : ((Finset.range ℓ).filter fun j =>
+        orbit 2 stoneham23 (3 ^ M + j) ∈ Set.Ico a c)
+      ⊆ (Finset.range ℓ).filter fun j =>
+        ((u * 2 ^ j % 3 ^ M : ℕ) : ℝ) / 3 ^ M ∈ Set.Ico a' c := by
+    intro j hj
+    simp only [Finset.mem_filter, Finset.mem_range, Set.mem_Ico] at hj ⊢
+    obtain ⟨hjℓ, hlo, hhi⟩ := hj
+    have hn : 3 ^ M ≤ 3 ^ M + j := by omega
+    have hn' : 3 ^ M + j < 3 ^ (M + 1) := by
+      have : (3:ℕ) ^ (M + 1) = 3 * 3 ^ M := by rw [pow_succ]; ring
+      omega
+    obtain ⟨happ1, happ2⟩ := stonehamState_approx M (3 ^ M + j) hM hn hn'
+    rw [stonehamState_window M hM j, ← hu] at happ1 happ2
+    refine ⟨hjℓ, ?_, ?_⟩
+    · apply max_le
+      · positivity
+      · linarith
+    · linarith
+  calc (((Finset.range ℓ).filter fun j =>
+        orbit 2 stoneham23 (3 ^ M + j) ∈ Set.Ico a c).card : ℝ)
+      ≤ (((Finset.range ℓ).filter fun j =>
+          ((u * 2 ^ j % 3 ^ M : ℕ) : ℝ) / 3 ^ M ∈ Set.Ico a' c).card : ℝ) := by
+        exact_mod_cast Finset.card_le_card hsub
+    _ ≤ ((ℓ : ℝ) / (2 * 3 ^ (M - 1)) + 1) * ((c - a') * (2 * 3 ^ (M - 1)) + 4) :=
+        segment_visit_upper M hM u huu a' c ha'0 ha'c hc ℓ
+    _ ≤ ((ℓ : ℝ) / (2 * 3 ^ (M - 1)) + 1)
+          * ((c - a + 2 / 3 ^ (M + 1)) * (2 * 3 ^ (M - 1)) + 4) := by
+        have hwid : c - a' ≤ c - a + 2 / 3 ^ (M + 1) := by
+          have : a - 2 / 3 ^ (M + 1) ≤ a' := le_max_right _ _
+          linarith
+        have hordnn : (0:ℝ) ≤ 2 * 3 ^ (M - 1) := by positivity
+        have h1 : (0:ℝ) ≤ (ℓ : ℝ) / (2 * 3 ^ (M - 1)) + 1 := by positivity
+        apply mul_le_mul_of_nonneg_left _ h1
+        nlinarith [hwid, hordnn]
+
+/-- The window bound, simplified for a dyadic interval of length `1/2^k`
+in the regime `M ≥ 2k+3`: at most `2λ·ℓ + 3λ·ord` visits, `λ = 1/2^k`,
+`ord = 2·3^(M-1)`. -/
+theorem per_window_bound (k M ℓ : ℕ) (hMk : 2 * k + 3 ≤ M)
+    (hℓ : ℓ ≤ 2 * 3 ^ M) (a c : ℝ) (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1)
+    (hca : c - a = 1 / 2 ^ k) :
+    (((Finset.range ℓ).filter fun j =>
+        orbit 2 stoneham23 (3 ^ M + j) ∈ Set.Ico a c).card : ℝ)
+      ≤ 2 * (1 / 2 ^ k) * ℓ + 3 * (1 / 2 ^ k) * (2 * 3 ^ (M - 1)) := by
+  have hM : 1 ≤ M := by omega
+  have hord : (0:ℝ) < 2 * 3 ^ (M - 1) := by positivity
+  have h2k : (0:ℝ) < 2 ^ k := by positivity
+  have hlam : (0:ℝ) < 1 / 2 ^ k := by positivity
+  -- error term is at most λ
+  have herr : (2:ℝ) / 3 ^ (M + 1) ≤ 1 / 2 ^ k := by
+    rw [div_le_div_iff₀ (by positivity) h2k]
+    calc (2:ℝ) * 2 ^ k = 2 ^ (k + 1) := by rw [pow_succ]; ring
+      _ ≤ 3 ^ (k + 1) := by
+          apply pow_le_pow_left₀ (by norm_num) (by norm_num)
+      _ ≤ 3 ^ (M + 1) := pow_le_pow_right₀ (by norm_num) (by omega)
+      _ = 1 * 3 ^ (M + 1) := (one_mul _).symm
+  -- the additive constant is at most λ·ord
+  have h16 : (16:ℝ) ≤ 1 / 2 ^ k * (2 * 3 ^ (M - 1)) := by
+    rw [div_mul_eq_mul_div, one_mul, le_div_iff₀ h2k]
+    have h9 : (3:ℝ) ^ (2 * k + 2) = 9 * 9 ^ k := by
+      rw [pow_add, pow_mul]
+      norm_num
+      ring
+    calc (16:ℝ) * 2 ^ k = 2 * (8 * 2 ^ k) := by ring
+      _ ≤ 2 * (9 * 9 ^ k) := by
+          have : (2:ℝ) ^ k ≤ 9 ^ k := pow_le_pow_left₀ (by norm_num) (by norm_num) k
+          nlinarith
+      _ = 2 * 3 ^ (2 * k + 2) := by rw [h9]
+      _ ≤ 2 * 3 ^ (M - 1) := by
+          have : (3:ℝ) ^ (2 * k + 2) ≤ 3 ^ (M - 1) :=
+            pow_le_pow_right₀ (by norm_num) (by omega)
+          linarith
+  -- ℓ is at most three periods
+  have hlo : (ℓ:ℝ) / (2 * 3 ^ (M - 1)) ≤ 3 := by
+    rw [div_le_iff₀ hord]
+    have hcast : ((2 * 3 ^ M : ℕ) : ℝ) = 2 * 3 ^ M := by push_cast; ring
+    have h1 : (ℓ:ℝ) ≤ 2 * 3 ^ M := by
+      calc (ℓ:ℝ) ≤ ((2 * 3 ^ M : ℕ) : ℝ) := by exact_mod_cast hℓ
+        _ = 2 * 3 ^ M := hcast
+    have h3M : (3:ℝ) ^ M = 3 * 3 ^ (M - 1) := by
+      rw [← pow_succ']
+      congr 1
+      omega
+    nlinarith
+  have hbase := window_visit_bound M hM a c ha hac hc ℓ hℓ
+  rw [hca] at hbase
+  refine le_trans hbase ?_
+  set w : ℝ := 1 / 2 ^ k + 2 / 3 ^ (M + 1) with hw
+  set ord : ℝ := 2 * 3 ^ (M - 1) with hodef
+  set L : ℝ := (ℓ:ℝ) / ord with hL
+  have hLnn : 0 ≤ L := by positivity
+  have hw2 : w ≤ 2 * (1 / 2 ^ k) := by rw [hw]; linarith
+  have hwnn : 0 ≤ w := by rw [hw]; positivity
+  have hexp : (L + 1) * (w * ord + 4) = w * (L * ord) + 4 * L + w * ord + 4 := by
+    ring
+  have hLord : L * ord = (ℓ:ℝ) := by
+    rw [hL]
+    field_simp
+  rw [hexp, hLord]
+  have t1 : w * (ℓ:ℝ) ≤ 2 * (1 / 2 ^ k) * ℓ :=
+    mul_le_mul_of_nonneg_right hw2 (by positivity)
+  have t2 : 4 * L ≤ 12 := by linarith
+  have t3 : w * ord ≤ 2 * (1 / 2 ^ k) * ord :=
+    mul_le_mul_of_nonneg_right hw2 hord.le
+  have hfin : 2 * (1 / 2 ^ k) * ord + (1 / 2 ^ k) * ord
+      = 3 * (1 / 2 ^ k) * ord := by ring
+  linarith
+
+/-- Telescoping bound for total window lengths inside `[0, N)`. -/
+theorem sum_window_len_le (N M0 Mmax : ℕ)
+    (h : ∀ M ∈ Finset.Icc M0 Mmax, 3 ^ M ≤ N) :
+    ∑ M ∈ Finset.Icc M0 Mmax, ((min N (3 ^ (M + 1)) - 3 ^ M : ℕ) : ℝ)
+      ≤ N := by
+  rcases Nat.lt_or_ge Mmax M0 with hlt | hge
+  · rw [Finset.Icc_eq_empty (by omega)]
+    simp
+  · set fR : ℕ → ℝ := fun X => ((min N (3 ^ X) : ℕ) : ℝ) with hfR
+    have hstep : ∀ M ∈ Finset.Icc M0 Mmax,
+        ((min N (3 ^ (M + 1)) - 3 ^ M : ℕ) : ℝ) = fR (M + 1) - fR M := by
+      intro M hM
+      have h3M : 3 ^ M ≤ N := h M hM
+      have hminM : min N (3 ^ M) = 3 ^ M := min_eq_right h3M
+      have hle : (3:ℕ) ^ M ≤ min N (3 ^ (M + 1)) :=
+        le_min h3M (Nat.pow_le_pow_right (by norm_num) (by omega))
+      simp only [hfR]
+      push_cast [Nat.cast_sub hle, hminM]
+      ring
+    rw [Finset.sum_congr rfl hstep,
+      show Finset.Icc M0 Mmax = Finset.Ico M0 (Mmax + 1) from by
+        ext x; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega,
+      Finset.sum_Ico_eq_sum_range]
+    have htel := Finset.sum_range_sub (fun i => fR (M0 + i)) (Mmax + 1 - M0)
+    calc ∑ i ∈ Finset.range (Mmax + 1 - M0), (fR (M0 + i + 1) - fR (M0 + i))
+        = fR (M0 + (Mmax + 1 - M0)) - fR (M0 + 0) := by
+          rw [← htel]
+          refine Finset.sum_congr rfl fun i _ => ?_
+          congr 1
+      _ ≤ (N:ℝ) - 0 := by
+          apply sub_le_sub
+          · simp only [hfR]
+            exact_mod_cast Nat.cast_le.mpr (min_le_left _ _)
+          · simp only [hfR]; positivity
+      _ = N := by ring
+
+/-- Telescoping bound for total period lengths. -/
+theorem sum_ord_le (M0 Mmax : ℕ) (hM0 : 1 ≤ M0) (B : ℝ) (hB0 : 0 ≤ B)
+    (hB : (3:ℝ) ^ Mmax ≤ B) :
+    ∑ M ∈ Finset.Icc M0 Mmax, (2 * (3:ℝ) ^ (M - 1)) ≤ B := by
+  rcases Nat.lt_or_ge Mmax M0 with hlt | hge
+  · rw [Finset.Icc_eq_empty (by omega)]
+    simpa using hB0
+  · set gR : ℕ → ℝ := fun i => (3:ℝ) ^ (M0 - 1 + i) with hgR
+    have hstep : ∀ M ∈ Finset.Icc M0 Mmax,
+        (2 * (3:ℝ) ^ (M - 1)) = gR (M - M0 + 1) - gR (M - M0) := by
+      intro M hM
+      obtain ⟨h1, h2⟩ := Finset.mem_Icc.mp hM
+      have e1 : M0 - 1 + (M - M0 + 1) = M := by omega
+      have e2 : M0 - 1 + (M - M0) = M - 1 := by omega
+      simp only [hgR]
+      rw [e1, e2]
+      have h3M : (3:ℝ) ^ M = 3 * 3 ^ (M - 1) := by
+        rw [← pow_succ']
+        congr 1
+        omega
+      rw [h3M]
+      ring
+    rw [Finset.sum_congr rfl hstep,
+      show Finset.Icc M0 Mmax = Finset.Ico M0 (Mmax + 1) from by
+        ext x; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega,
+      Finset.sum_Ico_eq_sum_range]
+    have htel := Finset.sum_range_sub (fun i => gR i) (Mmax + 1 - M0)
+    calc ∑ i ∈ Finset.range (Mmax + 1 - M0),
+          (gR (M0 + i - M0 + 1) - gR (M0 + i - M0))
+        = ∑ i ∈ Finset.range (Mmax + 1 - M0), (gR (i + 1) - gR i) := by
+          refine Finset.sum_congr rfl fun i _ => ?_
+          congr 2
+          all_goals omega
+      _ = gR (Mmax + 1 - M0) - gR 0 := htel
+      _ ≤ gR (Mmax + 1 - M0) := by
+          have : (0:ℝ) ≤ gR 0 := by simp only [hgR]; positivity
+          linarith
+      _ = (3:ℝ) ^ Mmax := by
+          simp only [hgR]
+          congr 1
+          omega
+      _ ≤ B := hB
+
 /-- **Stoneham's theorem** (1973): `α₂,₃` is normal in base 2. -/
 theorem isNormal_two_stoneham23 : IsNormal 2 stoneham23 := by
-  sorry
-
+  classical
+  apply isNormal_of_visit_upper_bound 2 (by norm_num) stoneham23 6
+  intro k m hm
+  have hfr : Int.fract stoneham23 = stoneham23 :=
+    Int.fract_eq_self.mpr ⟨stoneham23_mem_Ico.1, stoneham23_mem_Ico.2⟩
+  have hb2 : ((2:ℕ):ℝ) = (2:ℝ) := by norm_num
+  rw [hfr, hb2]
+  set a : ℝ := (m:ℝ) / 2 ^ k with hadef
+  set c : ℝ := ((m:ℝ) + 1) / 2 ^ k with hcdef
+  have h2k : (0:ℝ) < 2 ^ k := by positivity
+  have hm' : (m:ℝ) + 1 ≤ 2 ^ k := by
+    have : (m + 1 : ℕ) ≤ 2 ^ k := hm
+    exact_mod_cast this
+  have ha : 0 ≤ a := by rw [hadef]; positivity
+  have hac : a ≤ c := by
+    rw [hadef, hcdef]
+    gcongr
+    linarith
+  have hc1 : c ≤ 1 := by rw [hcdef, div_le_one h2k]; exact hm'
+  have hca : c - a = 1 / 2 ^ k := by rw [hadef, hcdef]; ring
+  set M0 : ℕ := 2 * k + 3 with hM0def
+  refine Filter.eventually_atTop.mpr ⟨3 ^ M0 * 2 ^ k + 1, fun N hN => ?_⟩
+  have h3M0 : 27 ≤ 3 ^ M0 := by
+    calc (27:ℕ) = 3 ^ 3 := by norm_num
+      _ ≤ 3 ^ M0 := Nat.pow_le_pow_right (by norm_num) (by omega)
+  have h2k1 : 1 ≤ 2 ^ k := Nat.one_le_pow _ _ (by norm_num)
+  have hN2 : 2 ≤ N := by
+    have := Nat.mul_le_mul h3M0 h2k1
+    omega
+  set Mmax : ℕ := Nat.log 3 (N - 1) with hMdef
+  set P : ℕ → Prop := fun n => orbit 2 stoneham23 n ∈ Set.Ico a c with hP
+  -- decomposition of the count into windows
+  have hsplit : (Finset.range N).filter P ⊆
+      ((Finset.range (3 ^ M0)).filter P) ∪
+        (Finset.Icc M0 Mmax).biUnion
+          (fun M => (Finset.Ico (3 ^ M) (min N (3 ^ (M + 1)))).filter P) := by
+    intro n hn
+    simp only [Finset.mem_filter, Finset.mem_range] at hn
+    obtain ⟨hnN, hPn⟩ := hn
+    rcases Nat.lt_or_ge n (3 ^ M0) with hsmall | hbig
+    · exact Finset.mem_union_left _
+        (Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hsmall, hPn⟩)
+    · refine Finset.mem_union_right _ (Finset.mem_biUnion.mpr
+        ⟨Nat.log 3 n, ?_, ?_⟩)
+      · rw [Finset.mem_Icc]
+        constructor
+        · calc M0 = Nat.log 3 (3 ^ M0) := (Nat.log_pow (by norm_num) M0).symm
+            _ ≤ Nat.log 3 n := Nat.log_mono_right hbig
+        · rw [hMdef]
+          exact Nat.log_mono_right (by omega)
+      · rw [Finset.mem_filter, Finset.mem_Ico]
+        have hn0 : n ≠ 0 := by
+          have h1 : 1 ≤ 3 ^ M0 := Nat.one_le_pow _ _ (by norm_num)
+          omega
+        exact ⟨⟨Nat.pow_log_le_self 3 hn0,
+          lt_min hnN (Nat.lt_pow_succ_log_self (by norm_num) n)⟩, hPn⟩
+  have hcards : ((Finset.range N).filter P).card
+      ≤ 3 ^ M0 + ∑ M ∈ Finset.Icc M0 Mmax,
+          ((Finset.Ico (3 ^ M) (min N (3 ^ (M + 1)))).filter P).card := by
+    calc ((Finset.range N).filter P).card
+        ≤ (((Finset.range (3 ^ M0)).filter P) ∪
+            (Finset.Icc M0 Mmax).biUnion
+              (fun M => (Finset.Ico (3 ^ M) (min N (3 ^ (M + 1)))).filter P)).card :=
+          Finset.card_le_card hsplit
+      _ ≤ ((Finset.range (3 ^ M0)).filter P).card
+            + ((Finset.Icc M0 Mmax).biUnion
+              (fun M => (Finset.Ico (3 ^ M) (min N (3 ^ (M + 1)))).filter P)).card :=
+          Finset.card_union_le _ _
+      _ ≤ 3 ^ M0 + ∑ M ∈ Finset.Icc M0 Mmax,
+            ((Finset.Ico (3 ^ M) (min N (3 ^ (M + 1)))).filter P).card :=
+          add_le_add ((Finset.card_filter_le _ _).trans (Finset.card_range _).le)
+            Finset.card_biUnion_le
+  -- window bounds, over ℝ
+  have hwin : ∀ M ∈ Finset.Icc M0 Mmax,
+      (((Finset.Ico (3 ^ M) (min N (3 ^ (M + 1)))).filter P).card : ℝ)
+        ≤ 2 * (1 / 2 ^ k) * ((min N (3 ^ (M + 1)) - 3 ^ M : ℕ) : ℝ)
+          + 3 * (1 / 2 ^ k) * (2 * 3 ^ (M - 1)) := by
+    intro M hMmem
+    obtain ⟨hMlo, hMhi⟩ := Finset.mem_Icc.mp hMmem
+    have hℓ : min N (3 ^ (M + 1)) - 3 ^ M ≤ 2 * 3 ^ M := by
+      have hmr : min N (3 ^ (M + 1)) ≤ 3 ^ (M + 1) := min_le_right _ _
+      have h3 : (3:ℕ) ^ (M + 1) = 3 * 3 ^ M := by rw [pow_succ]; ring
+      omega
+    rw [card_filter_Ico_shift]
+    have := per_window_bound k M (min N (3 ^ (M + 1)) - 3 ^ M)
+      (by omega) hℓ a c ha hac hc1 hca
+    simpa [hP] using this
+  -- window-length and period sums
+  have hlog : (3:ℕ) ^ Mmax ≤ N - 1 := by
+    rw [hMdef]
+    exact Nat.pow_log_le_self 3 (by omega)
+  have hsum1 : ∑ M ∈ Finset.Icc M0 Mmax,
+      ((min N (3 ^ (M + 1)) - 3 ^ M : ℕ) : ℝ) ≤ N :=
+    sum_window_len_le N M0 Mmax (fun M hMm => by
+      obtain ⟨-, h2⟩ := Finset.mem_Icc.mp hMm
+      calc (3:ℕ) ^ M ≤ 3 ^ Mmax := Nat.pow_le_pow_right (by norm_num) h2
+        _ ≤ N - 1 := hlog
+        _ ≤ N := by omega)
+  have hsum2 : ∑ M ∈ Finset.Icc M0 Mmax, (2 * (3:ℝ) ^ (M - 1)) ≤ (N:ℝ) :=
+    sum_ord_le M0 Mmax (by omega) N (by positivity) (by
+      have h1 : (3:ℕ) ^ Mmax ≤ N := le_trans hlog (by omega)
+      exact_mod_cast h1)
+  -- combine
+  have hcardsR : (((Finset.range N).filter P).card : ℝ)
+      ≤ 3 ^ M0 + ∑ M ∈ Finset.Icc M0 Mmax,
+          (((Finset.Ico (3 ^ M) (min N (3 ^ (M + 1)))).filter P).card : ℝ) := by
+    exact_mod_cast hcards
+  have hchain : (((Finset.range N).filter P).card : ℝ)
+      ≤ 3 ^ M0 + 5 * (1 / 2 ^ k) * N := by
+    have hs := Finset.sum_le_sum hwin
+    have hexp : ∑ M ∈ Finset.Icc M0 Mmax,
+        (2 * (1 / 2 ^ k) * ((min N (3 ^ (M + 1)) - 3 ^ M : ℕ) : ℝ)
+          + 3 * (1 / 2 ^ k) * (2 * 3 ^ (M - 1)))
+        = 2 * (1 / 2 ^ k) * (∑ M ∈ Finset.Icc M0 Mmax,
+            ((min N (3 ^ (M + 1)) - 3 ^ M : ℕ) : ℝ))
+          + 3 * (1 / 2 ^ k) * (∑ M ∈ Finset.Icc M0 Mmax, (2 * (3:ℝ) ^ (M - 1))) := by
+      rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.mul_sum]
+    have hl : (0:ℝ) ≤ 1 / 2 ^ k := by positivity
+    have b1 : 2 * (1 / 2 ^ k) * (∑ M ∈ Finset.Icc M0 Mmax,
+        ((min N (3 ^ (M + 1)) - 3 ^ M : ℕ) : ℝ)) ≤ 2 * (1 / 2 ^ k) * N := by
+      apply mul_le_mul_of_nonneg_left hsum1 (by positivity)
+    have b2 : 3 * (1 / 2 ^ k) * (∑ M ∈ Finset.Icc M0 Mmax,
+        (2 * (3:ℝ) ^ (M - 1))) ≤ 3 * (1 / 2 ^ k) * N := by
+      apply mul_le_mul_of_nonneg_left hsum2 (by positivity)
+    calc (((Finset.range N).filter P).card : ℝ)
+        ≤ 3 ^ M0 + ∑ M ∈ Finset.Icc M0 Mmax,
+            (((Finset.Ico (3 ^ M) (min N (3 ^ (M + 1)))).filter P).card : ℝ) :=
+          hcardsR
+      _ ≤ 3 ^ M0 + (2 * (1 / 2 ^ k) * N + 3 * (1 / 2 ^ k) * N) := by
+          have hs2 := le_trans hs (le_of_eq hexp)
+          linarith [hs2, b1, b2]
+      _ = 3 ^ M0 + 5 * (1 / 2 ^ k) * N := by ring
+  -- divide by N
+  have hNpos : (0:ℝ) < N := by
+    have : (0:ℕ) < N := by omega
+    exact_mod_cast this
+  have hvc : (visitCount (orbit 2 stoneham23) a c N : ℝ)
+      = (((Finset.range N).filter P).card : ℝ) := rfl
+  rw [div_le_iff₀ hNpos, hvc]
+  have hNb : (3:ℝ) ^ M0 ≤ 1 / 2 ^ k * N := by
+    rw [div_mul_eq_mul_div, one_mul, le_div_iff₀ h2k]
+    have h1 : (3 ^ M0 * 2 ^ k : ℕ) ≤ N := by omega
+    calc (3:ℝ) ^ M0 * 2 ^ k = ((3 ^ M0 * 2 ^ k : ℕ) : ℝ) := by push_cast; ring
+      _ ≤ N := by exact_mod_cast h1
+  calc (((Finset.range N).filter P).card : ℝ)
+      ≤ 3 ^ M0 + 5 * (1 / 2 ^ k) * N := hchain
+    _ ≤ 1 / 2 ^ k * N + 5 * (1 / 2 ^ k) * N := by linarith
+    _ = 6 / 2 ^ k * N := by ring
 end NormalNumbers

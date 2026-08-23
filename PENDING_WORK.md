@@ -1,27 +1,21 @@
-# PENDING WORK — hot-spot campaign (2026-08-23)
+# PENDING WORK — Stoneham campaign (2026-08-23, lap B)
 
-**Lap advance**: the crux `isNormal_of_visit_upper_bound` now has a concrete
-elementary proof route (no Birkhoff needed — mathlib has none): sliding-window
-subword statistics + Chebyshev over scale-K words.  `HotSpot.lean` holds the
-proven counting core:
-- `card_filter_div/mod/mod_div` (div/mod bijections), `card_filter_subword`,
-  `card_filter_subword_pair` (= b^(K-k), b^(K-2k) exact counts),
-- `sum_occCount` (first moment, exact), `sum_occCount_sq_le` (second moment),
-- `card_badSet_le` (Chebyshev: T²·|Bad| ≤ 2kN·b^(K+k)).
+**All 7 Stoneham sorries are discharged; `src/` is sorry-free.**
+`Stoneham.lean` now proves `isNormal_two_stoneham23` end-to-end:
+pinned hot-spot corollary (via `HotSpot` + Wall), state recursion/seed/
+approximation, unit counting (`card_units_Ico`, exact floor formula),
+`segment_visit_upper` (period-`2·3^(M-1)` blocks + injection into units of
+an integer interval via `pow_injOn_Iio_orderOf`), and the final assembly:
+window decomposition by `Nat.log 3`, per-window bound `2λℓ + 3λ·ord`
+(`M0 = 2k+3` kills both the `2/3^(M+1)` approximation error and the
+`+16`-per-window constant), telescoping length/period sums, constant
+`C = 6`.
 
-**Blocker**: box lacks the v4.33.1 toolchain (see ON-LINE-REQUEST.md); repo
-`lake build` impossible.  Everything above is compiler-verified against the
-built v4.31.0 mathlib in `~/src/goodstein-ab-med` via
-`scratchpad/check.sh` (LEAN_PATH trick, imports → Mathlib.Tactic).  Port risk
-4.31→4.33 is small; re-verify in-repo when the toolchain lands.
-
-**Next attack** (in order):
-1. Orbit lemmas: `orbit_add` (u(j+i) = fract(u j·b^i)), cell membership of
-   `⌊u j·b^K⌋₊`, subword localization (y ∈ cell(K,m) → fract(y·b^i) ∈
-   cell(k, subword i m)).
-2. Sliding double-count: N·A(n) − N(K−k) ≤ Σ_{j<n} occCount(M j) ≤ N·A(n) + N(K−k).
-3. Bad-visit eventual bound from the hot-spot hypothesis at scale K
-   (`eventually_all_finset` over `badSet`), then the ε-squeeze
-   `tendsto_cell_of_visit_upper`, then `equidistributed_of_badic` + Wall.
-4. Then the 6 counting sorries in Stoneham.lean (`stonehamState_*`,
-   `card_units_Ico`, `segment_visit_upper`, final assembly).
+**⚠️ Sole remaining gate: the box still lacks the v4.33.1 toolchain**
+(see ON-LINE-REQUEST.md), so `lake build` has never run on this state.
+Everything is compiler-verified against v4.31 mathlib via the scratch
+harness, including a WHOLE-FILE check of `Stoneham.lean` (imports stubbed
+to axioms with verbatim repo statements).  When the toolchain lands:
+1. `lake build` (expect at most small 4.31→4.33 lemma-name drift),
+2. `#print axioms isNormal_two_stoneham23` — target: the standard 3
+   (`propext`, `Classical.choice`, `Quot.sound`).
