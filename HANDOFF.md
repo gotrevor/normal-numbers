@@ -1,5 +1,17 @@
 # HANDOFF — Stoneham campaign: prove the 7 sorries in `src/NormalNumbers/Stoneham.lean`
 
+## ✅ CAMPAIGN COMPLETE AND VERIFIED (2026-08-23, host)
+
+The toolchain gate below is CLOSED: host ran in-repo `lake build` on v4.33.1
+(green, 8719 jobs, zero sorry warnings) and the guarded axiom check —
+`#print axioms isNormal_two_stoneham23` = exactly `[propext, Classical.choice,
+Quot.sound]` (`#guard_msgs`, PASS).  **Stoneham's theorem is sorry-free and
+axiom-clean, verified 2026-08-23.**  The box toolchain gap is fixed for good:
+`lean-box-toolchains add v4.33.1` ran; the box store now carries
+4.29.1/4.31.0/4.33.1.  ON-LINE-REQUEST resolved and removed.  Residual tidy
+(optional): a `Set.mem_setOf_eq` deprecation at `Stoneham.lean:421` + a few
+unused-binder lints.
+
 **Objective**: `isNormal_two_stoneham23` — Stoneham (1973): `α₂,₃ = Σ 1/(3ᵐ·2^(3ᵐ))` is
 normal in base 2.  All 7 `src/` sorries live in `Stoneham.lean`; `src/` sorry-free = done.
 
