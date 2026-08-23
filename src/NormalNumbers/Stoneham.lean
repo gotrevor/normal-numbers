@@ -108,11 +108,12 @@ form: if there is a constant `C` such that every b-adic interval's visit
 frequency is eventually `≤ C·(its length)`, then `x` is normal.
 ✅ Statement PINNED 2026-08-23 against the paper — see
 `papers/bailey-misiurewicz-2006-hot-spot.md`: this is a faithful corollary
-of its Theorem 1 ("α is b-normal iff it has no base-b hot spots") via a
-finite covering argument (any `(y−h, y+h)` meets at most `2b+1` scale-`k`
-b-adic intervals for `b⁻ᵏ ≤ h < b⁻ᵏ⁺¹`, so a uniform b-adic bound kills
-every hot spot).  The statement is fixed; the proof route is free — the
-paper's ergodic argument or elementary block counting both qualify. -/
+of its Theorem 1.1 (weak hot spot theorem: `α` is b-normal iff visit
+frequencies are uniformly `O(length)` over all intervals) via a finite
+covering argument — any `[c,d)` meets at most `b+2` scale-`k` b-adic
+intervals for `b⁻ᵏ ≤ d−c < b⁻ᵏ⁺¹`, so the uniform b-adic bound extends to
+all intervals with `B = (b+2)·C`.  The statement is fixed; the proof route
+is free — ergodic or elementary block counting both qualify. -/
 theorem isNormal_of_visit_upper_bound (b : ℕ) (hb : 2 ≤ b) (x : ℝ)
     (C : ℝ)
     (h : ∀ k m : ℕ, m < b ^ k → ∀ᶠ n in Filter.atTop,
