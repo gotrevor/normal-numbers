@@ -375,4 +375,36 @@ theorem le_mSched_mul_log (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) :
     rwa [Real.log_pow] at h
   linarith [hlogcl, hlogW]
 
+/-- **(c4-core) the stage-length ratio vanishes**: `n_{s+1}/L_s → 0`, where
+`n_{s+1} = nFn (tSched (s+1))` is the stage length and `L_s = |wSched s|` the
+accumulated word length.  Immediate from the schedule dominance
+`tSched (s+1)·n_{s+1} ≤ L_s` (so the ratio is `≤ 1/tSched (s+1)`) and `tSched → ∞`.
+This is the engine that drives the interior ratio `k_{s+1}/(m_d(s)−m_d(s₀))` to
+`0`: numerator `∼ n_{s+1}` (c3a), denominator `∼ L_s` (c3b). -/
+theorem tendsto_nFn_div_wSched_length :
+    Filter.Tendsto (fun s => (nFn (tSched (s + 1)) : ℝ) / (wSched s).length)
+      Filter.atTop (nhds 0) := by
+  have htN : Filter.Tendsto (fun s => tSched (s + 1)) Filter.atTop Filter.atTop := by
+    rw [Filter.tendsto_atTop_atTop]
+    intro T
+    obtain ⟨s₀, hs₀⟩ := sched_t_tendsto T
+    exact ⟨s₀, fun s hs => le_trans hs₀ (sched_t_mono (by omega))⟩
+  have htL : Filter.Tendsto (fun s => (tSched (s + 1) : ℝ)) Filter.atTop Filter.atTop :=
+    tendsto_natCast_atTop_atTop.comp htN
+  have hinv : Filter.Tendsto (fun s => ((tSched (s + 1) : ℝ))⁻¹)
+      Filter.atTop (nhds 0) := tendsto_inv_atTop_zero.comp htL
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hinv
+    (Filter.Eventually.of_forall (fun s => by positivity)) ?_
+  filter_upwards [htL.eventually_ge_atTop 1] with s hs
+  have hL0 : (0 : ℝ) < (wSched s).length := by
+    exact_mod_cast List.length_pos_of_ne_nil (wSched_ne s)
+  have ht0 : (0 : ℝ) < (tSched (s + 1) : ℝ) := lt_of_lt_of_le one_pos hs
+  have hdom : (tSched (s + 1) : ℝ) * (nFn (tSched (s + 1)) : ℝ)
+      ≤ ((wSched s).length : ℝ) := by
+    have h := uSched_dominance s
+    rw [uSched_length] at h
+    exact_mod_cast h
+  rw [inv_eq_one_div, div_le_div_iff₀ hL0 ht0]
+  nlinarith [hdom]
+
 end NormalNumbers
