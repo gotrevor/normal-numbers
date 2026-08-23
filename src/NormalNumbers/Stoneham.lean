@@ -3,7 +3,8 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import NormalNumbers.RealDefs
+import NormalNumbers.HotSpot
+import NormalNumbers.StonehamArith
 
 /-!
 # Stoneham's theorem
@@ -64,13 +65,37 @@ def stonehamState (M n : ℕ) : ℕ :=
 /-- The state doubles mod `3^M` at each step (once `n ≥ 3^M`). -/
 theorem stonehamState_succ (M n : ℕ) (hM : 1 ≤ M) (hn : 3 ^ M ≤ n) :
     stonehamState M (n + 1) = 2 * stonehamState M n % 3 ^ M := by
-  sorry
+  unfold stonehamState
+  have hsum : ∑ m ∈ Finset.Icc 1 M, 3 ^ (M - m) * 2 ^ (n + 1 - 3 ^ m)
+      = 2 * ∑ m ∈ Finset.Icc 1 M, 3 ^ (M - m) * 2 ^ (n - 3 ^ m) := by
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun m hm => ?_
+    have hm' : m ≤ M := (Finset.mem_Icc.mp hm).2
+    have h3m : 3 ^ m ≤ n :=
+      le_trans (Nat.pow_le_pow_right (by norm_num) hm') hn
+    have : n + 1 - 3 ^ m = (n - 3 ^ m) + 1 := by omega
+    rw [this, pow_succ]
+    ring
+  rw [hsum, Nat.mul_mod, Nat.mul_mod 2 (_ % 3 ^ M), Nat.mod_mod_of_dvd _ dvd_rfl]
 
 /-- The seed of window `M` is a unit mod `3^M`: only the `m = M` term is
 prime to 3. -/
 theorem stonehamState_unit (M : ℕ) (hM : 1 ≤ M) :
     ¬ 3 ∣ stonehamState M (3 ^ M) := by
-  sorry
+  unfold stonehamState
+  rw [Nat.dvd_mod_iff (dvd_pow_self 3 (by omega : M ≠ 0))]
+  obtain ⟨M', rfl⟩ : ∃ M', M = M' + 1 := ⟨M - 1, by omega⟩
+  have hins : Finset.Icc 1 (M' + 1) = insert (M' + 1) (Finset.Icc 1 M') := by
+    ext u; simp only [Finset.mem_Icc, Finset.mem_insert]; omega
+  rw [hins, Finset.sum_insert (by simp [Finset.mem_Icc])]
+  simp only [Nat.sub_self, pow_zero, mul_one]
+  intro hdvd
+  have hdvd_sum : 3 ∣ ∑ m ∈ Finset.Icc 1 M',
+      3 ^ (M' + 1 - m) * 2 ^ (3 ^ (M' + 1) - 3 ^ m) := by
+    refine Finset.dvd_sum fun m hm => ?_
+    have hm' : m ≤ M' := (Finset.mem_Icc.mp hm).2
+    exact Dvd.dvd.mul_right (dvd_pow_self 3 (by omega)) _
+  omega
 
 /-- Orbit points in window `M` are the rational state plus a positive
 error under `2/3^(M+1)`: for `3^M ≤ n < 3^(M+1)`,
@@ -88,7 +113,29 @@ theorem stonehamState_approx (M n : ℕ) (hM : 1 ≤ M)
 theorem card_units_Ico (p q : ℕ) (hpq : p ≤ q) :
     2 * (q - p) - 6 ≤ 3 * ((Finset.Ico p q).filter fun u => ¬ 3 ∣ u).card ∧
       3 * ((Finset.Ico p q).filter fun u => ¬ 3 ∣ u).card ≤ 2 * (q - p) + 6 := by
-  sorry
+  suffices h : ((Finset.Ico p q).filter fun u => ¬ 3 ∣ u).card
+      = (q - (q + 2) / 3) - (p - (p + 2) / 3) by
+    rw [h]; omega
+  clear hpq
+  induction q with
+  | zero =>
+    rcases Nat.eq_zero_or_pos p with rfl | hp
+    · simp
+    · rw [Finset.Ico_eq_empty (by omega)]; simp
+  | succ q ih =>
+    rcases Nat.lt_or_ge q p with hq | hq
+    · rcases Nat.lt_or_ge (q + 1) p with hq1 | hq1
+      · rw [Finset.Ico_eq_empty (by omega)]; simp; omega
+      · have : p = q + 1 := by omega
+        subst this; simp
+    · rw [Nat.Ico_succ_right_eq_insert_Ico hq, Finset.filter_insert]
+      have hmem : q ∉ (Finset.Ico p q).filter fun u => ¬ 3 ∣ u := by
+        simp [Finset.mem_Ico]
+      by_cases h3 : 3 ∣ q
+      · rw [if_neg (by simpa using h3), ih]
+        omega
+      · rw [if_pos h3, Finset.card_insert_of_notMem hmem, ih]
+        omega
 
 /-- **One-sided segment bound**: a doubling-orbit segment of any length
 `ℓ` visits an interval at most as often as `⌈ℓ/ord⌉` full unit cycles do —
@@ -120,7 +167,8 @@ theorem isNormal_of_visit_upper_bound (b : ℕ) (hb : 2 ≤ b) (x : ℝ)
       (visitCount (orbit b (Int.fract x)) ((m : ℝ) / (b : ℝ) ^ k)
           ((m + 1 : ℝ) / (b : ℝ) ^ k) n : ℝ) / n ≤ C / (b : ℝ) ^ k) :
     IsNormal b x := by
-  sorry
+  rw [isNormal_iff_equidistributed_orbit b hb x, ← funext (orbit_fract b x)]
+  exact equidistributed_orbit_of_visit_upper b hb (Int.fract x) C h
 
 /-- **Stoneham's theorem** (1973): `α₂,₃` is normal in base 2. -/
 theorem isNormal_two_stoneham23 : IsNormal 2 stoneham23 := by
