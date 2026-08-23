@@ -70,3 +70,12 @@ file and works the checklist.  Laps never edit this file above the Ledger.
 
 - 2026-08-23 · judged through `4ad5f8e` (scaffold + briefs, pre-campaign
   baseline) · 12 sorries open · statements/anchors as frozen.
+- 2026-08-23 11:20 · judged through `8fa056f` (lap 1 algebra batch, 9/12
+  discharged) · statements + anchors character-identical vs `4ad5f8e` (only
+  `sorry` lines replaced; private helpers `cfK_cons`, `one_le_cfK` added —
+  in-charter) · smell scan of the Lean diff: greps clean (no `axiom`, no
+  `native_decide`, no `maxHeartbeats`, no import changes) · kernel-tier
+  `#print axioms` NOT run this visit (lap live, avoiding build contention) —
+  box's "axiom-clean" stands at its tier; full sweep owed at close-out ·
+  no wrongness flags in HANDOFF · lap grinding the 3 measure sorries
+  (`volume_cfCylinder` crux) · verdict: healthy, continue.
