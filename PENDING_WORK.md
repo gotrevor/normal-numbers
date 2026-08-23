@@ -54,8 +54,21 @@ DONE this lap (all axiom-clean, `#print axioms` = trust triple):
      s-started-identity route — the already-proved mixing theorem at gap 0
      absorbs the conditioning.
 
-NEXT ATTACK: the b-ary side / W5 construction inputs (old plan below): conditioned-on-brick version (s-started identity → same pin), and the
-b-ary side (B–Y Lemmas 8/9 — check Counting.lean/Visits.lean overlap).
+  ✅ **B–Y Lemma 8 PROVED** 2026-08-24 (@5142f84, `BaryBlockCount.lean`),
+     axiom-clean: `card_baryDiscrepancy_ge_le` — #(length-k base-b blocks
+     with simple discrepancy ≥ ε) ≤ 2·b^(k+1)·e^{−bε²k/6} for 0 ≤ ε ≤ 1/b.
+     Purely combinatorial Chernoff: generating identity
+     `sum_exp_digitCount` (Σ_u e^{λ·count} = (e^λ+b−1)^k via
+     `Finset.sum_prod_piFinset`), tilt λ = ±bε/2, per-symbol bases from
+     `Real.exp_bound` (order 2) + `add_one_le_exp` — both tails give exactly
+     −bε²/6 per symbol; no calculus, no measure theory, and B–Y's extra
+     hypothesis 6/k ≤ ε is NOT needed.
+
+NEXT ATTACK: B–Y Lemma 9 (b-ary discrepancy concatenation, BHS 3.1 —
+pure counting over `digitCount`; state for blocks as `Fin k → Fin b` or
+lists, check Counting.lean overlap), then Lemma 7 (CF-discrepancy
+concatenation) and the W5 t-brick bookkeeping (Defs 10–11, Prop 12,
+Lemma 13 assembly).
 
 Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
 `IsProbabilityMeasure gaussMeasure` instance added in CFBlockFreq),
