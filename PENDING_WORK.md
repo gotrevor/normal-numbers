@@ -1,5 +1,33 @@
 # PENDING WORK — B5′ campaign
 
+> **LATEST LAP (2026-08-25/26, `674ff52`).** Pillai's theorem build-out,
+> continuing from the digit-power foundation (`b537edd`). New in
+> `Pillai.lean`, all axiom-clean:
+> - `digitOf_pow_digitAt`: atomic single-digit phase correspondence.
+> - `blockNatVal_slice`: pure list/nat lemma generalizing `blockNatVal_digit`
+>   (L=1) to an arbitrary L-digit sub-block slice.
+> - `digitOf_pow_slice_eq_blockNatVal`: the non-straddling window/slice
+>   correspondence — a length-L window of y's base-b digits at phase s
+>   equals w iff c_q's (=digitOf(b^r) y q) shifted+masked value equals
+>   blockNatVal b w. This is the combinatorial core connecting simple
+>   normality at b^r to block frequency at base b.
+> - `card_matchingValues`: among c<b^r, exactly b^(r-L) have a fixed L-digit
+>   slice value — proved via explicit bijection c ↔ (c/D/b^L, c%D).
+> **Next**: combine `digitOf_pow_slice_eq_blockNatVal` + `card_matchingValues`
+> into the phase-s window-frequency limit (via `tendsto_finsetSum` over the
+> `b^(r-L)`-element matching set, using simple normality at base b^r), then
+> the straddling-density bound (O(L/r)→0) and the double limit (r→∞ then
+> N→∞) assembling the full Pillai theorem. See docstring route in
+> `Pillai.lean`. GOTCHA: `List.getElem_ofFn` + `congr 1` on Fin-coerced
+> indices needs an explicit `simp only [Fin.val_mk]` before `congr 1` —
+> omitting it (even though the linter flags it "unused" in some
+> elaborations) causes a nondeterministic omega failure on rebuild; keep it
+> despite the lint warning. Also: `Nat.add_mul_div_right`/
+> `Nat.add_mul_mod_self_right` need the term in `x + y*z` form with the
+> VARIABLE first and the fixed multiplier as the LAST factor before the
+> modulus/divisor — commute explicitly before rw, don't rely on `_left`
+> variants when the target's factor order doesn't match.
+
 > **CURRENT STATE (2026-08-25 grind lap, `e832d1d`).** Everything below the
 > "── ARCHIVE ──" divider is the W3/W4/W5-input history, kept for the proven-lemma
 > record but SUPERSEDED. Live state:
