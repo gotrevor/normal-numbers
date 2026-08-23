@@ -622,6 +622,18 @@ theorem dBlock_spec (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) :
     exact hspecβ.2.trans List.map_ofFn.symm
   · rw [List.length_ofFn]; exact hm
 
+/-- Each chosen block gains at least `kminFn`, hence is nonempty. -/
+theorem dBlock_length_pos (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) :
+    0 < (dBlock s d).length := by
+  have hdb : dBlock s d
+      = List.ofFn (xstar_dary_window s d hd2 hdt).choose_spec.2.2.choose := by
+    unfold dBlock
+    exact dif_pos ⟨hd2, hdt⟩
+  rw [hdb, List.length_ofFn]
+  have hkmin := (xstar_dary_window s d hd2 hdt).choose_spec.2.1
+  have h1 := one_le_kminFn (tSched (s + 1))
+  omega
+
 /-- **A helper splitting `List.range` over a sum**: `range (n+m) = range n ++
 (range m shifted by n)`. -/
 theorem range_add_eq (n m : ℕ) :
@@ -798,5 +810,58 @@ theorem dFixedPrefix_append_dTailList_hasDiscLt (s₀ d : ℕ) (hd2 : 2 ≤ d)
     nlinarith [h2]
   exact hasDiscLt_short_append hd1 (dTailList_hasDiscLt s₀ d hd2 hdt hε (k + 1) (by omega))
     hshort
+
+/-! ## Interior: the next partial block stays short -/
+
+/-- **The interior step**: past a large enough stage, the next block
+`dBlock (s₀+k) d` is short relative to the accumulated good tail
+`dTailList s₀ d k`, so `hasDiscLt_append_take` extends the good tail's
+discrepancy through any partial next block. This is the interior half of the
+B–Y Lemma 7/9 chain, powered by the closed `m`-growth ratio
+(`tendsto_gain_div_mSched_sub`). -/
+theorem dTailList_append_take_hasDiscLt (s₀ d : ℕ) (hd2 : 2 ≤ d)
+    (hdt : d ≤ tSched s₀) {ε : ℝ} (hε0 : 0 < ε) (hεg : schedEps (tSched (s₀ + 1)) ≤ ε) :
+    ∃ S, 1 ≤ S ∧ ∀ k, S ≤ k → ∀ l, l ≤ (dBlock (s₀ + k) d).length →
+      HasDiscLt (dTailList s₀ d k ++ (dBlock (s₀ + k) d).take l) (2 * ε) := by
+  have hd1 : 1 ≤ d := by omega
+  have hmem : Set.Iio ε ∈ nhds (0 : ℝ) := isOpen_Iio.mem_nhds hε0
+  obtain ⟨S₁, hS₁⟩ := ((tendsto_gain_div_mSched_sub s₀ d hd2 hdt).eventually hmem)
+    |>.exists_forall_of_atTop
+  refine ⟨max S₁ 1, le_trans (le_max_right _ _) (le_refl _), fun k hk l hl => ?_⟩
+  have hk1 : 1 ≤ k := le_trans (le_max_right _ _) hk
+  have hS1k : S₁ ≤ k := le_trans (le_max_left _ _) hk
+  have hratio : ((mSched (s₀ + k + 1) d - mSched (s₀ + k) d : ℕ) : ℝ)
+      / ((mSched (s₀ + k) d : ℝ) - (mSched s₀ d : ℝ)) < ε :=
+    hS₁ (s₀ + k) (le_trans hS1k (by omega))
+  have hdts : d ≤ tSched (s₀ + k) := le_trans hdt (sched_t_mono (by omega))
+  obtain ⟨-, -, hm⟩ := dBlock_spec (s₀ + k) d hd2 hdts
+  have hlen := dTailList_length_eq s₀ d hd2 hdt k
+  have hmono : mSched s₀ d ≤ mSched (s₀ + k) d := by
+    simpa using mSched_mono_of_active (s₀ := s₀) hd2 hdt (a := 0) (b := k) (by omega)
+  have hdenpos : 0 < (mSched (s₀ + k) d : ℝ) - (mSched s₀ d : ℝ) := by
+    have hlenpos : 0 < (dTailList s₀ d k).length := by
+      have heqk : k = (k - 1) + 1 := by omega
+      rw [heqk, dTailList, List.length_append]
+      have hdts' : d ≤ tSched (s₀ + (k - 1)) := le_trans hdt (sched_t_mono (by omega))
+      have := dBlock_length_pos (s₀ + (k - 1)) d hd2 hdts'
+      omega
+    rw [hlen] at hlenpos
+    have hmono' : mSched s₀ d ≤ mSched (s₀ + k) d := hmono
+    have : (0:ℝ) < ((mSched (s₀ + k) d - mSched s₀ d : ℕ) : ℝ) := by exact_mod_cast hlenpos
+    rwa [Nat.cast_sub hmono'] at this
+  have hnumeq : ((mSched (s₀ + k + 1) d - mSched (s₀ + k) d : ℕ) : ℝ)
+      = ((dBlock (s₀ + k) d).length : ℝ) := by
+    have heq2 : mSched (s₀ + k + 1) d - mSched (s₀ + k) d = (dBlock (s₀ + k) d).length := by
+      omega
+    rw [heq2]
+  have hdeneq : (mSched (s₀ + k) d : ℝ) - (mSched s₀ d : ℝ)
+      = ((dTailList s₀ d k).length : ℝ) := by
+    rw [hlen]
+    have := Nat.cast_sub hmono (R := ℝ)
+    linarith [this]
+  rw [hnumeq, hdeneq, div_lt_iff₀ (by rw [← hdeneq]; exact hdenpos)] at hratio
+  have hv : HasDiscLt (dTailList s₀ d k) ε := dTailList_hasDiscLt s₀ d hd2 hdt hεg k hk1
+  have hshort : (((dBlock (s₀ + k) d)).length : ℝ) < ε * (dTailList s₀ d k).length := hratio
+  exact hasDiscLt_append_take hd1 hv hshort l hl
 
 end NormalNumbers
