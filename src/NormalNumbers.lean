@@ -1,6 +1,11 @@
 import NormalNumbers.SeqDefs
 import NormalNumbers.RealDefs
+import NormalNumbers.Counting
+import NormalNumbers.Visits
+import NormalNumbers.DigitInterval
+import NormalNumbers.Sandwich
 import NormalNumbers.Bridge
 import NormalNumbers.Wall
 import NormalNumbers.LnTwo
+import NormalNumbers.StonehamArith
 import NormalNumbers.Stoneham
