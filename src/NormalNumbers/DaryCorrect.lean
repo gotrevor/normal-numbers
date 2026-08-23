@@ -750,4 +750,53 @@ theorem mSched_tendsto_atTop (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched 
   calc T ≤ (max T 0 : ℝ) := le_max_left _ _
     _ ≤ (mSched (s₀ + s) d : ℝ) := hTle
 
+/-! ## Boundary: the fixed prefix before `s₀` becomes negligible -/
+
+/-- The real base-`d` digit sequence, packaged as a `Fin d`-valued list of
+length `n` (the fixed prefix `[0, n)`). -/
+noncomputable def dFixedPrefix (d n : ℕ) (hd2 : 2 ≤ d) : List (Fin d) :=
+  List.ofFn (fun i : Fin n => (⟨digitOf d xstar i, digitOf_lt d hd2 xstar i⟩ : Fin d))
+
+theorem dFixedPrefix_digit_eq (d n : ℕ) (hd2 : 2 ≤ d) :
+    (List.range n).map (digitOf d xstar) = (dFixedPrefix d n hd2).map Fin.val := by
+  apply List.ext_getElem
+  · simp [dFixedPrefix]
+  · intro i h1 h2
+    simp [dFixedPrefix]
+
+theorem dFixedPrefix_length (d n : ℕ) (hd2 : 2 ≤ d) :
+    (dFixedPrefix d n hd2).length = n := List.length_ofFn
+
+/-- **The boundary step**: past a large enough number of stages `k` past the
+active stage `s₀`, the fixed prefix `[0, m_d(s₀))` is short relative to the
+accumulated good tail, so `hasDiscLt_short_append` gives the whole prefix
+`[0, m_d(s₀+k+1))` discrepancy `< 2ε`. -/
+theorem dFixedPrefix_append_dTailList_hasDiscLt (s₀ d : ℕ) (hd2 : 2 ≤ d)
+    (hdt : d ≤ tSched s₀) {ε : ℝ} (hε0 : 0 < ε)
+    (hε : schedEps (tSched (s₀ + 1)) ≤ ε) :
+    ∃ S, ∀ k, S ≤ k →
+      HasDiscLt (dFixedPrefix d (mSched s₀ d) hd2 ++ dTailList s₀ d (k + 1)) (2 * ε) := by
+  have hd1 : 1 ≤ d := by omega
+  obtain ⟨S, hS⟩ := ((mSched_tendsto_atTop s₀ d hd2 hdt).eventually_ge_atTop
+    ((mSched s₀ d : ℝ) / ε + (mSched s₀ d : ℝ) + 1)).exists_forall_of_atTop
+  refine ⟨S, fun k hSk => ?_⟩
+  have hlen := dTailList_length_eq s₀ d hd2 hdt (k + 1)
+  have hmono : mSched s₀ d ≤ mSched (s₀ + (k + 1)) d := by
+    have h := mSched_mono_of_active (s₀ := s₀) hd2 hdt (a := 0) (b := k + 1) (by omega)
+    simpa using h
+  have hSk' := hS (k + 1) (by omega)
+  have hshort : ((dFixedPrefix d (mSched s₀ d) hd2).length : ℝ)
+      < ε * (dTailList s₀ d (k + 1)).length := by
+    rw [dFixedPrefix_length, hlen]
+    have hcast : ((mSched (s₀ + (k + 1)) d - mSched s₀ d : ℕ) : ℝ)
+        = (mSched (s₀ + (k + 1)) d : ℝ) - (mSched s₀ d : ℝ) := Nat.cast_sub hmono
+    rw [hcast]
+    have h1 : (mSched s₀ d : ℝ) / ε + (mSched s₀ d : ℝ) + 1
+        ≤ (mSched (s₀ + (k + 1)) d : ℝ) := hSk'
+    have h2 := mul_le_mul_of_nonneg_right h1 hε0.le
+    rw [add_mul, add_mul, div_mul_cancel₀ _ hε0.ne'] at h2
+    nlinarith [h2]
+  exact hasDiscLt_short_append hd1 (dTailList_hasDiscLt s₀ d hd2 hdt hε (k + 1) (by omega))
+    hshort
+
 end NormalNumbers
