@@ -79,3 +79,22 @@ file and works the checklist.  Laps never edit this file above the Ledger.
   box's "axiom-clean" stands at its tier; full sweep owed at close-out ·
   no wrongness flags in HANDOFF · lap grinding the 3 measure sorries
   (`volume_cfCylinder` crux) · verdict: healthy, continue.
+- 2026-08-23 ~11:45 · **W1 CLOSE-OUT** · judged through `f76a1b1` (laps 2–3;
+  campaign complete, self-stopped after lap 3) · statements + anchors
+  character-identical vs baseline across the whole campaign (only the 12
+  `sorry` lines ever removed in `CFCylinder.lean`) · **kernel-tier
+  `#print axioms` sweep run by the judge on all 12: every one a subset of
+  {propext, Classical.choice, Quot.sound} — axiom-clean, verified
+  2026-08-23** · `/lean-review` on `4ad5f8e..HEAD`: no heartbeat bumps, no
+  `native_decide`, no `axiom` decls, no trust escapes, no silenced linters,
+  no Prop-def laundering, no import changes; residue = style lints only
+  (unused `hwpos`/`hupos` binders forced by the frozen shapes, a few
+  `<;>`/`simpa`/unreachable-tactic nits) · no wrongness flags · verdict:
+  **W1 ratified**.
+- 2026-08-23 ~11:50 · **W2 scaffold staged by the judge** (new frozen
+  statements): `CFDigitLaw.lean` — `genWords` def + 10 sorry'd statements
+  (digit law, disjointness, partition `tsum`, Gauss/Lebesgue two-sided
+  comparison, `γ(univ)=1`, `K ≤ ∏(aᵢ+1)`, conditional `E[log qₙ] ≤ Cn`,
+  Markov half-mass Lemma-5 substitute, Fibonacci relative-length bound) ·
+  4 kernel-checked anchors frozen · builds green (10 sorries expected) ·
+  these shapes are now the frozen trust surface for the W2 campaign.

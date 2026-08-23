@@ -61,9 +61,14 @@ no naturally-occurring number is proven Khinchin-typical.
   normal + CF-normal + Khinchin-typical, via Becher–Yuhjtman minus efficiency
   (pin notes in `papers/`).  ≈ 5.5–10k lines, ~8–16 laps, ≈ 2–4 weeks;
   Birkhoff-free.  Pre-flight ✅ (W3 route decided: self-contained
-  `tailDensity` + ratio-contraction; KPW non-blocking).  **W1 scaffold
-  staged 2026-08-23**: `CFDefs.lean` + `CFCylinder.lean`, 12 sorry'd
-  statements, builds green, anchors frozen — campaign-ready.
+  `tailDensity` + ratio-contraction; KPW non-blocking).
+  **W1 ✅ COMPLETE 2026-08-23** — all 12 `CFCylinder.lean` statements proved
+  in 3 treadmill laps (same day), statements character-frozen throughout,
+  axiom-clean verified by judge `#print axioms` sweep (the standard triple
+  only).  **W2 scaffold staged 2026-08-23**: `CFDigitLaw.lean` — digit law,
+  partition calculus, Gauss/Lebesgue comparison, `γ` probability, and the
+  Markov substitute for B–Y Lemma 5; 10 sorry'd frozen statements, builds
+  green, anchors frozen — campaign-ready.
 
 ## Phase 3 — outward
 

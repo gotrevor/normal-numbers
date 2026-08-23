@@ -119,8 +119,8 @@ laps off a fully pinned plan):
 
 | WP | Content | Size | Risk |
 |----|---------|------|------|
-| W1 | CF cylinder toolkit: continuant α-algebra (Prop 2), distortion (Lemma 3), lengths, Fibonacci bound, Prop 12 | ~0.8–1.5k lines | low |
-| W2 | digit laws + Markov length substitute for Lemma 5 | ~0.4–0.8k | low |
+| W1 ✅ | CF cylinder toolkit: continuant α-algebra (Prop 2), distortion (Lemma 3), lengths, Fibonacci bound, Prop 12 — **complete 2026-08-23**, 3 laps, 12/12 axiom-clean (judge-verified) | ~0.8–1.5k lines | low |
+| W2 | digit laws + Markov length substitute for Lemma 5 — **scaffold staged 2026-08-23** (`CFDigitLaw.lean`, 10 frozen statements) | ~0.4–0.8k | low |
 | W3 | **the core**: summable CF correlation decay — route DECIDED, see below | ~1.5–3k | **moderate** |
 | W4 | LD/Chebyshev assembly + b-ary side (Lemmas 8, 9; overlaps Counting/Visits) | ~0.8–1.2k | low |
 | W5 | t-bricks, main lemma (worse constants), schedule, limit x, three correctness proofs, + the Pillai powers-equivalence for "absolutely normal" | ~1.5–2.5k | medium (bookkeeping-dense) |
@@ -162,12 +162,21 @@ plants Track B's B4 flag as a lemma of the expedition.
 
 ### Staged so far (2026-08-23)
 
-- **W1 scaffold LIVE**: `CFDefs.lean` (gaussMap, cfDigit, cfK/cfP
-  continuants, cfVal, cfCylinder, gaussMeasure, cylMap, tailDensity — all
-  real bodies) + `CFCylinder.lean` (12 sorry'd statements: Euler gluing,
-  monotonicity, quasi-multiplicativity, Fibonacci bound, `pₙ/qₙ`, cylinder
-  volume, distortion ×2, density window, branch-ratio).  Builds green on
-  v4.33.1; 4 kernel-`decide`/`norm_num` anchors frozen with the statements.
+- **W1 ✅ COMPLETE** (same day it launched): `CFDefs.lean` (all real bodies)
+  + `CFCylinder.lean` — all 12 statements proved in 3 treadmill laps
+  (fable/low), statements character-frozen throughout, judge-verified
+  axiom-clean (`#print axioms` sweep = the standard triple on every one).
+  Highlights: Euler gluing by `cfK.induct` list induction (no `α_{r,s}`
+  combinatorics), `volume_cfCylinder` via `bumpLast` endpoints + countable
+  junk, distortion pair via the sharper `K(wu) ≤ (K(w)+K(w⁻))K(u)` gluing
+  bound.  Judged ledger: `JUDGE.md`.
+- **W2 scaffold LIVE**: `CFDigitLaw.lean` (10 sorry'd frozen statements:
+  single-digit law `|I_{[k]}| = 1/(k(k+1))`, cylinder disjointness, the
+  relative-order-`n` partition `tsum`, Gauss/Lebesgue two-sided comparison,
+  `γ(univ) = 1`, `K ≤ ∏(aᵢ+1)`, conditional `E[log qₙ] ≤ Cn`, the Markov
+  half-mass Lemma-5 substitute, the Fibonacci relative-length bound).
+  Builds green on v4.33.1; 4 kernel-checked anchors frozen with the
+  statements.
 
 ## Formalization landscape (surveyed 2026-08-23; greps + searches, not proofs)
 
