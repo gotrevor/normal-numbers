@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.DigitInterval
+import NormalNumbers.DaryDigits
 
 /-!
 # Pillai's theorem: simple normality at every power implies normality
@@ -122,5 +123,31 @@ theorem digitOf_pow_eq_blockNatVal (b r : ℕ) (hb : 2 ≤ b) (hr : 1 ≤ r)
     exact Int.toNat_natCast (b ^ r * c.toNat)
   rw [htoNat, Nat.mul_add_mod_self_left]
   exact Nat.mod_eq_of_lt hwval
+
+/-- **Phase-decomposition**: the `s`-th base-`b` digit (big-endian, `s < r`)
+of `c_q := digitOf (b^r) y q` is exactly the base-`b` digit of `y` at real
+position `r*q+s`. The atomic correspondence underlying Pillai's theorem: a
+base-`b^r` "digit" `c_q` is itself an `r`-digit base-`b` block, and its
+`s`-th sub-digit is literally the `(r*q+s)`-th base-`b` digit of `y`. -/
+theorem digitOf_pow_digitAt (b r : ℕ) (hb : 2 ≤ b) (hr : 1 ≤ r)
+    (y : ℝ) (hy : y ∈ Set.Ico (0 : ℝ) 1) (q s : ℕ) (hs : s < r) :
+    digitOf (b ^ r) y q / b ^ (r - 1 - s) % b = digitOf b y (r * q + s) := by
+  set w : List ℕ := List.ofFn fun i : Fin r => digitOf b y (r * q + i) with hwdef
+  have hwlen : w.length = r := List.length_ofFn
+  have hwlt : ∀ d ∈ w, d < b := by
+    intro d hd
+    rw [hwdef] at hd
+    obtain ⟨i, rfl⟩ := List.mem_ofFn.mp hd
+    exact digitOf_lt b hb y _
+  have hgetD : w.getD s 0 = digitOf b y (r * q + s) := by
+    rw [hwdef, List.getD_eq_getElem?_getD, List.getElem?_ofFn]
+    simp [hs]
+  have hq' := digitOf_pow_eq_blockNatVal b r hb hr y hy q
+  rw [← hwdef] at hq'
+  rw [hq']
+  have hs' : s < w.length := by rw [hwlen]; exact hs
+  have := blockNatVal_digit b w hwlt s hs'
+  rw [hwlen] at this
+  rw [this, hgetD]
 
 end NormalNumbers
