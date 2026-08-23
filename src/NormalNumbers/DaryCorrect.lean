@@ -428,6 +428,90 @@ theorem gain_le_mul_nFn (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) {k : 
   -- goal: k * log d ≤ (2 goodC + log 32d) * n_{s+1}
   nlinarith [hgain, mul_le_mul_of_nonneg_left hn1 hlog32d]
 
+/-- **`mSched` is monotone once `d` is active**: past the stage where `d`
+enters (`d ≤ tSched s`), the accumulated digit count never decreases (it only
+gains digits, `xstar_dary_step`). -/
+theorem mSched_mono_of_active {s₀ d : ℕ} (hd2 : 2 ≤ d) (hdt : d ≤ tSched s₀) :
+    Monotone fun s => mSched (s₀ + s) d := by
+  have hstep : ∀ s, mSched (s₀ + s) d ≤ mSched (s₀ + s + 1) d := by
+    intro s
+    have hdts : d ≤ tSched (s₀ + s) := le_trans hdt (sched_t_mono (by omega))
+    obtain ⟨k, hk, -, -⟩ := xstar_dary_step (s₀ + s) d hd2 hdts
+    omega
+  intro a b hab
+  obtain ⟨c, rfl⟩ := Nat.le.dest hab
+  simp only
+  induction c with
+  | zero => simp
+  | succ c ih =>
+    have hs := hstep (a + c)
+    have heq : s₀ + (a + (c + 1)) = s₀ + (a + c) + 1 := by omega
+    rw [heq]
+    have hprev : mSched (s₀ + a) d ≤ mSched (s₀ + (a + c)) d := ih (by omega)
+    omega
+
+/-- **(c4) denominator lower bound**: past a stage `s₀` past which `d` is
+active, the accumulated digit count `m_d(s) − m_d(s₀)` grows at least
+linearly in the word length `L_s`, eventually.  From `le_mSched_mul_log`
+(`m_d(s)·log d ≥ 2⌊L_s/2⌋·log 2 − log(2d)`), `⌊L_s/2⌋ ≥ (L_s − 1)/2`, and
+`L_s → ∞` (`wSched_length_ge`) swamping the fixed offset `m_d(s₀)` and the
+additive constants — with room to spare, using `cden = log 2 / (2 log d)`. -/
+theorem eventually_cden_mul_length_le_mSched_sub (s₀ d : ℕ) (hd2 : 2 ≤ d)
+    (hdt : d ≤ tSched s₀) :
+    ∃ S, ∀ s, S ≤ s →
+      (Real.log 2 / (2 * Real.log d)) * (wSched s).length
+        ≤ (mSched s d : ℝ) - (mSched s₀ d : ℝ) := by
+  have hdR1 : (1 : ℝ) < d := by exact_mod_cast hd2
+  have hlogd : 0 < Real.log d := Real.log_pos hdR1
+  -- eventually L_s is large enough to swamp the fixed offset
+  have hLtendsto : Filter.Tendsto (fun s => ((wSched s).length : ℝ))
+      Filter.atTop Filter.atTop := by
+    rw [Filter.tendsto_atTop_atTop]
+    intro T
+    obtain ⟨T', hT'⟩ := exists_nat_ge T
+    refine ⟨T' + s₀, fun s hs => ?_⟩
+    have h := wSched_length_ge s₀ (s - s₀)
+    have heq : s₀ + (s - s₀) = s := by omega
+    rw [heq] at h
+    have hlen : T' ≤ (wSched s).length := by omega
+    calc T ≤ (T' : ℝ) := hT'
+      _ ≤ (wSched s).length := by exact_mod_cast hlen
+  obtain ⟨S, hS⟩ := (hLtendsto.eventually_ge_atTop
+    ((2 * ((mSched s₀ d : ℝ) * Real.log d) + 2 * Real.log 2 + 2 * Real.log (2 * d))
+      / (Real.log 2))).exists_forall_of_atTop
+  refine ⟨max S s₀, fun s hs => ?_⟩
+  have hSs : S ≤ s := le_trans (le_max_left _ _) hs
+  have hs0s : s₀ ≤ s := le_trans (le_max_right _ _) hs
+  have hdts : d ≤ tSched s := le_trans hdt (sched_t_mono hs0s)
+  have hmono : mSched s₀ d ≤ mSched s d := by
+    have h := mSched_mono_of_active (s₀ := s₀) hd2 hdt
+    have := h (a := 0) (b := s - s₀) (by omega)
+    simpa [Nat.add_sub_cancel' hs0s] using this
+  have hlow := le_mSched_mul_log s d hd2 hdts
+  have hfloor : (2 : ℝ) * (((wSched s).length / 2 : ℕ) : ℝ)
+      ≥ ((wSched s).length : ℝ) - 1 := by
+    have h2 : (wSched s).length ≤ 2 * ((wSched s).length / 2) + 1 := by omega
+    have h3 : ((wSched s).length : ℝ) ≤ 2 * (((wSched s).length / 2 : ℕ) : ℝ) + 1 := by
+      exact_mod_cast h2
+    linarith
+  have hL := hS s hSs
+  have hLR : (2 * ((mSched s₀ d : ℝ) * Real.log d) + 2 * Real.log 2 + 2 * Real.log (2 * d))
+      / Real.log 2 ≤ ((wSched s).length : ℝ) := hL
+  rw [div_le_iff₀ (Real.log_pos (by norm_num))] at hLR
+  have hm0R : (mSched s₀ d : ℝ) ≤ (mSched s d : ℝ) := by exact_mod_cast hmono
+  have hlog2nn : (0:ℝ) ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  have hfloor' : 2 * ((((wSched s).length / 2 : ℕ) : ℝ)) * Real.log 2
+      ≥ (((wSched s).length : ℝ) - 1) * Real.log 2 :=
+    mul_le_mul_of_nonneg_right hfloor hlog2nn
+  have hms : (mSched s d : ℝ) * Real.log d
+      ≥ ((wSched s).length : ℝ) * Real.log 2 - Real.log 2 - Real.log (2 * d) := by
+    nlinarith [hlow, hfloor']
+  have h2ms : 2 * ((mSched s d : ℝ) * Real.log d)
+      ≥ 2 * ((wSched s).length : ℝ) * Real.log 2 - 2 * Real.log 2 - 2 * Real.log (2 * d) :=
+    by linarith [hms]
+  rw [div_mul_eq_mul_div, div_le_iff₀ (by positivity : (0:ℝ) < 2 * Real.log d)]
+  nlinarith [h2ms, hLR, hm0R]
+
 /-- **(c4) numerator ratio → 0**: the per-stage digit gain, divided by the word
 length, vanishes.  Squeeze of `gain_le_mul_nFn` (`gain ≤ Cnum·n_{s+1}`, once `d`
 is active) against `n_{s+1}/L_s → 0` (`tendsto_nFn_div_wSched_length`). -/
@@ -451,5 +535,61 @@ theorem tendsto_gain_div_length (d : ℕ) (hd2 : 2 ≤ d) :
   have hsub : mSched (s + 1) d - mSched s d = k := by omega
   rw [hsub, ← mul_div_assoc]
   exact div_le_div_of_nonneg_right (gain_le_mul_nFn s d hd2 hdt hk) (by positivity)
+
+/-- **(c4-full) the interior ratio vanishes**: the per-stage digit gain
+`k_{s+1}` is eventually a vanishing fraction of the accumulated digit count
+`m_d(s) − m_d(s₀)` past any fixed reference stage `s₀` where `d` is active.
+Squeeze of the numerator ratio `tendsto_gain_div_length` (`→ 0` against `L_s`)
+through the denominator lower bound `eventually_cden_mul_length_le_mSched_sub`
+(`m_d(s) − m_d(s₀) ≥ cden · L_s` eventually): ratio `≤ (num/L_s) / cden → 0`.
+This is the interior condition that drives `xstar_dary_freq_tendsto`. -/
+theorem tendsto_gain_div_mSched_sub (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s₀) :
+    Filter.Tendsto
+      (fun s => ((mSched (s + 1) d - mSched s d : ℕ) : ℝ)
+        / ((mSched s d : ℝ) - (mSched s₀ d : ℝ)))
+      Filter.atTop (nhds 0) := by
+  have hdR1 : (1 : ℝ) < d := by exact_mod_cast hd2
+  set cden : ℝ := Real.log 2 / (2 * Real.log d) with hcden
+  have hcdenpos : 0 < cden := by
+    rw [hcden]
+    exact div_pos (Real.log_pos (by norm_num)) (by positivity [Real.log_pos hdR1])
+  obtain ⟨S, hS⟩ := eventually_cden_mul_length_le_mSched_sub s₀ d hd2 hdt
+  have hnum := tendsto_gain_div_length d hd2
+  have hupper : Filter.Tendsto
+      (fun s => (((mSched (s + 1) d - mSched s d : ℕ) : ℝ) / (wSched s).length) / cden)
+      Filter.atTop (nhds 0) := by
+    have h := hnum.div_const cden
+    simpa using h
+  have hlowerev : ∀ᶠ s in Filter.atTop,
+      (0:ℝ) ≤ ((mSched (s + 1) d - mSched s d : ℕ) : ℝ)
+        / ((mSched s d : ℝ) - (mSched s₀ d : ℝ)) := by
+    filter_upwards [Filter.eventually_ge_atTop S] with s hs
+    have hden := hS s hs
+    have hLpos : 0 < (wSched s).length := List.length_pos_of_ne_nil (wSched_ne s)
+    have hLposR : (0:ℝ) < (wSched s).length := by exact_mod_cast hLpos
+    have hdenpos : 0 < (mSched s d : ℝ) - (mSched s₀ d : ℝ) := by
+      calc (0:ℝ) < cden * (wSched s).length := by positivity
+        _ ≤ _ := hden
+    exact div_nonneg (Nat.cast_nonneg _) hdenpos.le
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hupper
+    hlowerev ?_
+  filter_upwards [Filter.eventually_ge_atTop S, Filter.eventually_ge_atTop s₀]
+    with s hs hs0
+  have hden := hS s hs
+  have hL0 : (0 : ℝ) ≤ (wSched s).length := Nat.cast_nonneg _
+  have hkR : (0 : ℝ) ≤ ((mSched (s + 1) d - mSched s d : ℕ) : ℝ) := Nat.cast_nonneg _
+  have hdenpos : 0 < (mSched s d : ℝ) - (mSched s₀ d : ℝ) := by
+    have hLpos : 0 < (wSched s).length := List.length_pos_of_ne_nil (wSched_ne s)
+    have hLposR : (0:ℝ) < (wSched s).length := by exact_mod_cast hLpos
+    calc (0:ℝ) < cden * (wSched s).length := by positivity
+      _ ≤ _ := hden
+  have hLpos : 0 < (wSched s).length := List.length_pos_of_ne_nil (wSched_ne s)
+  have hLposR : (0:ℝ) < (wSched s).length := by exact_mod_cast hLpos
+  have hstep : (((mSched (s + 1) d - mSched s d : ℕ) : ℝ) / (wSched s).length) / cden
+      = ((mSched (s + 1) d - mSched s d : ℕ) : ℝ) / ((wSched s).length * cden) := by
+    rw [div_div]
+  rw [hstep]
+  exact div_le_div_of_nonneg_left hkR (mul_pos hLposR hcdenpos)
+    (by rw [mul_comm]; exact hden)
 
 end NormalNumbers
