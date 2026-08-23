@@ -39,15 +39,14 @@ DONE this lap (all axiom-clean, `#print axioms` = trust triple):
      dominator trades a factor 2 for a much shorter proof; harmless — any
      `n`-independent `K(v)` suffices for the construction.)
 
-REMAINING (1 disclosed sorry in src):
-  ⬜ `chebyshev_blockCount` — `γ{|S_n/n − γ(I_v)| ≥ δ} ≤ (8|v|+80)γ(I_v)/(δ²n)`.
-     Route via mathlib `ProbabilityTheory.meas_ge_le_variance_div_sq` (needs
-     `MemLp S 2 γ` — bounded ⇒ `MemLp.of_bound`; and
-     `variance_eq_sub : Var X = μ[X²] − μ[X]²` to connect to
-     `variance_blockCount_le` via `integral_blockCount`).  Set rewrite
-     `{δ ≤ |S/n − μ|} = {δn ≤ |S − μ[S]|}` (n>0), then `.toReal` of the bound.
+  ✅ `chebyshev_blockCount` — `γ{|S_n/n − γ(I_v)| ≥ δ} ≤ (8|v|+80)γ(I_v)/(δ²n)`.
+     PROVED 2026-08-24 (@2ac0e83), axiom-clean.  Route exactly as planned:
+     `MemLp.of_bound` (0 ≤ S_n ≤ n), `variance_eq_sub` + `Pi.pow_apply`,
+     set rescale via `abs_div`/`le_div_iff₀`, `meas_ge_le_variance_div_sq`,
+     `ENNReal.toReal_mono`/`toReal_ofReal`, final arithmetic by
+     `gcongr` + `field_simp`.  **src/ is sorry-free — W4 core COMPLETE.**
 
-Then: conditioned-on-brick version (s-started identity → same pin), and the
+NEXT ATTACK: conditioned-on-brick version (s-started identity → same pin), and the
 b-ary side (B–Y Lemmas 8/9 — check Counting.lean/Visits.lean overlap).
 
 Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
