@@ -13,5 +13,6 @@ import NormalNumbers.CFCylinder
 import NormalNumbers.CFDigitLaw
 import NormalNumbers.CFContraction
 import NormalNumbers.CFDensity
+import NormalNumbers.CFRecursion
 import NormalNumbers.CFMixing
 import NormalNumbers.Stoneham
