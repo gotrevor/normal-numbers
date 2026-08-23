@@ -130,4 +130,74 @@ theorem volume_daryBadZone_le (d m0 k : ℕ) (hd : 1 ≤ d) (j0 : ℤ) {ε : ℝ
         field_simp
         ring
 
+/-- The order-`(m0+k)` bad zone inside the order-`m0` cell at `j0`: the
+union of the sub-cells whose new length-`k` block is `ε`-bad. -/
+noncomputable def daryBadZone (d m0 : ℕ) (j0 : ℤ) (ε : ℝ) (k : ℕ) : Set ℝ :=
+  ⋃ β ∈ badBlocks d k ε,
+    daryCell d (m0 + k)
+      (j0 * d ^ k + blockNatVal d (List.ofFn fun i => (β i : ℕ))) 1
+
+theorem volume_daryBadZone_le' (d m0 : ℕ) (hd : 1 ≤ d) (j0 : ℤ) {ε : ℝ}
+    (hε0 : 0 ≤ ε) (hεd : (d : ℝ) * ε ≤ 1) (k : ℕ) :
+    volume (daryBadZone d m0 j0 ε k)
+      ≤ ENNReal.ofReal
+          (2 * d / d ^ m0 * Real.exp (-((d : ℝ) * ε ^ 2) / 6) ^ k) := by
+  have h := volume_daryBadZone_le d m0 k hd j0 hε0 hεd
+  rw [daryBadZone]
+  refine h.trans (le_of_eq ?_)
+  congr 1
+  have harg : (k : ℝ) * (-((d : ℝ) * ε ^ 2) / 6) = -((d : ℝ) * ε ^ 2 * k) / 6 := by
+    ring
+  rw [← Real.exp_nat_mul, harg]
+  ring
+
+/-- **Summed d-ary bad zone**: the union of the bad zones over all new-block
+lengths `k ≥ kmin` is still exponentially small in `kmin` relative to the
+cell — total measure `≤ (2d/d^m0)·ρ^kmin/(1−ρ)` with `ρ = e^{−dε²/6}`. -/
+theorem volume_iUnion_daryBadZone_le (d m0 : ℕ) (hd : 1 ≤ d) (j0 : ℤ)
+    {ε : ℝ} (hε0 : 0 < ε) (hεd : (d : ℝ) * ε ≤ 1) (kmin : ℕ) :
+    volume (⋃ k : ℕ, ⋃ (_ : kmin ≤ k), daryBadZone d m0 j0 ε k)
+      ≤ ENNReal.ofReal
+          (2 * d / d ^ m0 * Real.exp (-((d : ℝ) * ε ^ 2) / 6) ^ kmin
+            / (1 - Real.exp (-((d : ℝ) * ε ^ 2) / 6))) := by
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd
+  set ρ : ℝ := Real.exp (-((d : ℝ) * ε ^ 2) / 6) with hρ
+  have hρ0 : 0 < ρ := Real.exp_pos _
+  have hρ1 : ρ < 1 := by
+    rw [hρ, Real.exp_lt_one_iff]
+    have : 0 < (d : ℝ) * ε ^ 2 := by positivity
+    linarith
+  set A : ℝ := 2 * d / d ^ m0 with hA
+  have hA0 : 0 < A := by positivity
+  have hsub : (⋃ k : ℕ, ⋃ (_ : kmin ≤ k), daryBadZone d m0 j0 ε k)
+      ⊆ ⋃ i : ℕ, daryBadZone d m0 j0 ε (kmin + i) := by
+    intro x hx
+    simp only [Set.mem_iUnion] at hx ⊢
+    obtain ⟨k, hk, hxk⟩ := hx
+    exact ⟨k - kmin, by rwa [Nat.add_sub_cancel' hk]⟩
+  calc volume (⋃ k : ℕ, ⋃ (_ : kmin ≤ k), daryBadZone d m0 j0 ε k)
+      ≤ volume (⋃ i : ℕ, daryBadZone d m0 j0 ε (kmin + i)) :=
+        measure_mono hsub
+    _ ≤ ∑' i : ℕ, volume (daryBadZone d m0 j0 ε (kmin + i)) :=
+        measure_iUnion_le _
+    _ ≤ ∑' i : ℕ, ENNReal.ofReal (A * ρ ^ kmin * ρ ^ i) := by
+        refine ENNReal.tsum_le_tsum fun i => ?_
+        refine (volume_daryBadZone_le' d m0 hd j0 hε0.le hεd (kmin + i)).trans
+          (le_of_eq ?_)
+        rw [← hρ, ← hA, pow_add]
+        ring_nf
+    _ = ENNReal.ofReal (A * ρ ^ kmin) * ∑' i : ℕ, ENNReal.ofReal ρ ^ i := by
+        rw [← ENNReal.tsum_mul_left]
+        refine tsum_congr fun i => ?_
+        rw [← ENNReal.ofReal_pow hρ0.le,
+          ← ENNReal.ofReal_mul (by positivity)]
+    _ = ENNReal.ofReal (A * ρ ^ kmin) * (1 - ENNReal.ofReal ρ)⁻¹ := by
+        rw [ENNReal.tsum_geometric]
+    _ = ENNReal.ofReal (A * ρ ^ kmin / (1 - ρ)) := by
+        have h1 : (1 : ENNReal) - ENNReal.ofReal ρ = ENNReal.ofReal (1 - ρ) := by
+          rw [← ENNReal.ofReal_one, ← ENNReal.ofReal_sub _ hρ0.le]
+        rw [h1, ← ENNReal.ofReal_inv_of_pos (by linarith),
+          ← ENNReal.ofReal_mul (by positivity)]
+        rw [div_eq_mul_inv]
+
 end NormalNumbers
