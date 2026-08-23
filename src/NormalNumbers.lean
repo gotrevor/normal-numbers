@@ -14,5 +14,6 @@ import NormalNumbers.CFDigitLaw
 import NormalNumbers.CFContraction
 import NormalNumbers.CFDensity
 import NormalNumbers.CFRecursion
+import NormalNumbers.CFInvariance
 import NormalNumbers.CFMixing
 import NormalNumbers.Stoneham

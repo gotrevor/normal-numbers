@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.CFDigitLaw
 import NormalNumbers.CFDensity
+import NormalNumbers.CFInvariance
 
 /-!
 # W3 — Gauss-map mixing (scaffold)
@@ -62,7 +63,9 @@ The junk set `{x ∈ (0,1) : gaussMap x = 0} = {1/k} ∪ {0}` is countable,
 hence `γ`-null. -/
 theorem measurePreserving_gaussMap :
     MeasurePreserving gaussMap gaussMeasure gaussMeasure := by
-  sorry
+  refine ⟨measurable_gaussMap, MeasureTheory.Measure.ext fun S hS => ?_⟩
+  rw [MeasureTheory.Measure.map_apply measurable_gaussMap hS,
+    gaussMeasure_preimage hS]
 
 /-! ## The conditional density identity (route step 1) -/
 
