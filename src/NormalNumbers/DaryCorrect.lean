@@ -813,21 +813,18 @@ theorem dFixedPrefix_append_dTailList_hasDiscLt (s₀ d : ℕ) (hd2 : 2 ≤ d)
 
 /-! ## Interior: the next partial block stays short -/
 
-/-- **The interior step**: past a large enough stage, the next block
-`dBlock (s₀+k) d` is short relative to the accumulated good tail
-`dTailList s₀ d k`, so `hasDiscLt_append_take` extends the good tail's
-discrepancy through any partial next block. This is the interior half of the
-B–Y Lemma 7/9 chain, powered by the closed `m`-growth ratio
-(`tendsto_gain_div_mSched_sub`). -/
-theorem dTailList_append_take_hasDiscLt (s₀ d : ℕ) (hd2 : 2 ≤ d)
-    (hdt : d ≤ tSched s₀) {ε : ℝ} (hε0 : 0 < ε) (hεg : schedEps (tSched (s₀ + 1)) ≤ ε) :
-    ∃ S, 1 ≤ S ∧ ∀ k, S ≤ k → ∀ l, l ≤ (dBlock (s₀ + k) d).length →
-      HasDiscLt (dTailList s₀ d k ++ (dBlock (s₀ + k) d).take l) (2 * ε) := by
-  have hd1 : 1 ≤ d := by omega
+/-- **The interior shortness bound**: past a large enough stage, the next
+block is short relative to the accumulated good tail — extracted standalone
+(from `tendsto_gain_div_mSched_sub`) so it can be reused against a LARGER
+list whose length only exceeds the tail's (e.g. a fixed prefix prepended). -/
+theorem dBlock_short_of_dTailList (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s₀)
+    {ε : ℝ} (hε0 : 0 < ε) :
+    ∃ S, 1 ≤ S ∧ ∀ k, S ≤ k →
+      ((dBlock (s₀ + k) d).length : ℝ) < ε * (dTailList s₀ d k).length := by
   have hmem : Set.Iio ε ∈ nhds (0 : ℝ) := isOpen_Iio.mem_nhds hε0
   obtain ⟨S₁, hS₁⟩ := ((tendsto_gain_div_mSched_sub s₀ d hd2 hdt).eventually hmem)
     |>.exists_forall_of_atTop
-  refine ⟨max S₁ 1, le_trans (le_max_right _ _) (le_refl _), fun k hk l hl => ?_⟩
+  refine ⟨max S₁ 1, le_trans (le_max_right _ _) (le_refl _), fun k hk => ?_⟩
   have hk1 : 1 ≤ k := le_trans (le_max_right _ _) hk
   have hS1k : S₁ ≤ k := le_trans (le_max_left _ _) hk
   have hratio : ((mSched (s₀ + k + 1) d - mSched (s₀ + k) d : ℕ) : ℝ)
@@ -860,9 +857,18 @@ theorem dTailList_append_take_hasDiscLt (s₀ d : ℕ) (hd2 : 2 ≤ d)
     have := Nat.cast_sub hmono (R := ℝ)
     linarith [this]
   rw [hnumeq, hdeneq, div_lt_iff₀ (by rw [← hdeneq]; exact hdenpos)] at hratio
+  exact hratio
+
+theorem dTailList_append_take_hasDiscLt (s₀ d : ℕ) (hd2 : 2 ≤ d)
+    (hdt : d ≤ tSched s₀) {ε : ℝ} (hε0 : 0 < ε) (hεg : schedEps (tSched (s₀ + 1)) ≤ ε) :
+    ∃ S, 1 ≤ S ∧ ∀ k, S ≤ k → ∀ l, l ≤ (dBlock (s₀ + k) d).length →
+      HasDiscLt (dTailList s₀ d k ++ (dBlock (s₀ + k) d).take l) (2 * ε) := by
+  have hd1 : 1 ≤ d := by omega
+  obtain ⟨S, hS1, hSshort⟩ := dBlock_short_of_dTailList s₀ d hd2 hdt hε0
+  refine ⟨S, hS1, fun k hk l hl => ?_⟩
+  have hk1 : 1 ≤ k := le_trans hS1 hk
   have hv : HasDiscLt (dTailList s₀ d k) ε := dTailList_hasDiscLt s₀ d hd2 hdt hεg k hk1
-  have hshort : (((dBlock (s₀ + k) d)).length : ℝ) < ε * (dTailList s₀ d k).length := hratio
-  exact hasDiscLt_append_take hd1 hv hshort l hl
+  exact hasDiscLt_append_take hd1 hv (hSshort k hk) l hl
 
 /-! ## Locating the stage of a digit position -/
 
@@ -904,5 +910,149 @@ theorem exists_mSched_stage (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s
   rw [h2]
   simp only [hQdef] at hk1
   omega
+
+/-! ## Simple normality of `xstar` in base `d` -/
+
+/-- Bridge back to real digit counts: the count of a value `c < d` in the
+`ℕ`-valued image of a `Fin d` list equals the count of its `Fin d` witness in
+the original list. -/
+theorem count_map_val_eq {d : ℕ} (l : List (Fin d)) (c : ℕ) (hc : c < d) :
+    (l.map Fin.val).count c = l.count (⟨c, hc⟩ : Fin d) := by
+  induction l with
+  | nil => simp
+  | cons a l ih =>
+    simp only [List.map_cons, List.count_cons]
+    by_cases h : a.val = c
+    · have ha : a = ⟨c, hc⟩ := Fin.ext h
+      simp [h, ha, ih]
+    · have ha : a ≠ ⟨c, hc⟩ := fun heq => h (heq ▸ rfl)
+      simp [h, ha, ih]
+
+/-- **Simple normality of `xstar` in base `d`** (B–Y §2.2, d-ary side): every
+digit `c < d` occurs among the first `p` base-`d` digits of `xstar` with
+frequency tending to `1/d`. -/
+theorem xstar_dary_freq_tendsto (d : ℕ) (hd2 : 2 ≤ d) (c : ℕ) (hc : c < d) :
+    Filter.Tendsto
+      (fun p => (((List.range p).map (digitOf d xstar)).count c : ℝ) / p)
+      Filter.atTop (nhds ((d : ℝ)⁻¹)) := by
+  have hd1 : 1 ≤ d := by omega
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  have hε5 : 0 < ε / 5 := by positivity
+  -- pick an active stage `s₀` whose level clears the accuracy target
+  obtain ⟨s₁, hs₁⟩ := sched_t_tendsto d
+  obtain ⟨T, hT⟩ := exists_nat_ge (5 / ε)
+  obtain ⟨s₂, hs₂⟩ := sched_t_tendsto T
+  set s₀ := max s₁ s₂ with hs₀def
+  have hs₁s₀ : s₁ ≤ s₀ := le_max_left _ _
+  have hs₂s₀ : s₂ ≤ s₀ := le_max_right _ _
+  have hdt : d ≤ tSched s₀ := le_trans hs₁ (sched_t_mono hs₁s₀)
+  have hTt : T ≤ tSched (s₀ + 1) :=
+    le_trans hs₂ (sched_t_mono (le_trans hs₂s₀ (by omega)))
+  have hεg : schedEps (tSched (s₀ + 1)) ≤ ε / 5 := by
+    rw [schedEps,
+      div_le_div_iff₀ (by positivity : (0:ℝ) < (tSched (s₀+1) : ℝ) + 1) (by norm_num : (0:ℝ) < 5)]
+    have hT0 : (0:ℝ) ≤ T := Nat.cast_nonneg _
+    have hTtR : (T:ℝ) ≤ (tSched (s₀ + 1) : ℝ) := by exact_mod_cast hTt
+    have h5ε : (5:ℝ) ≤ ε * T := by
+      rw [div_le_iff₀ hε] at hT
+      linarith [hT]
+    nlinarith [hTtR, h5ε]
+  obtain ⟨Sb, hSb⟩ := dFixedPrefix_append_dTailList_hasDiscLt s₀ d hd2 hdt hε5 hεg
+  obtain ⟨Si, hSi1, hSishort⟩ := dBlock_short_of_dTailList s₀ d hd2 hdt hε5
+  set S := max Sb Si + 1 with hSdef
+  have hS1 : 1 ≤ S := by omega
+  set N := max (mSched (s₀ + S) d) 1 with hNdef
+  refine ⟨N, fun p hp => ?_⟩
+  have hp1 : 1 ≤ p := le_trans (le_max_right _ _) hp
+  have hpR : (0:ℝ) < p := by exact_mod_cast hp1
+  have hpN : mSched (s₀ + S) d ≤ p := le_trans (le_max_left _ _) hp
+  have hdtS : d ≤ tSched (s₀ + S) := le_trans hdt (sched_t_mono (by omega))
+  obtain ⟨s, hSs, hsle, hslt⟩ := exists_mSched_stage (s₀ + S) d hd2 hdtS p hpN
+  set K := s - s₀ with hKdef
+  have hKS : S ≤ K := by omega
+  have hK1 : 1 ≤ K := le_trans hS1 hKS
+  have hsK : s = s₀ + K := by omega
+  have hSbK : Sb ≤ K - 1 := by omega
+  have hSiK : Si ≤ K := by omega
+  have hboundary := hSb (K - 1) hSbK
+  have hK1eq : K - 1 + 1 = K := by omega
+  rw [hK1eq] at hboundary
+  -- the accumulated good spine covers `[0, m_d(s))`
+  set spine := dFixedPrefix d (mSched s₀ d) hd2 ++ dTailList s₀ d K with hspine
+  have hspineLen : spine.length = mSched s d := by
+    rw [hspine, List.length_append, dFixedPrefix_length,
+      dTailList_length_eq s₀ d hd2 hdt K, hsK]
+    have hmono : mSched s₀ d ≤ mSched (s₀ + K) d := by
+      simpa using mSched_mono_of_active (s₀ := s₀) hd2 hdt (a := 0) (b := K) (by omega)
+    omega
+  have hdts : d ≤ tSched s := by rw [hsK]; exact le_trans hdt (sched_t_mono (by omega))
+  set l := p - mSched s d with hldef
+  have hlle : l ≤ (dBlock s d).length := by
+    have hm := (dBlock_spec s d hd2 hdts).2.2
+    omega
+  have hshort : ((dBlock s d).length : ℝ) < (2 * (ε / 5)) * spine.length := by
+    have h1 : ((dBlock (s₀ + K) d).length : ℝ) < (ε / 5) * (dTailList s₀ d K).length :=
+      hSishort K hSiK
+    rw [← hsK] at h1
+    have h2 : ((dTailList s₀ d K).length : ℝ) ≤ (spine.length : ℝ) := by
+      rw [hspine, List.length_append]
+      have : (0:ℝ) ≤ (dFixedPrefix d (mSched s₀ d) hd2).length := Nat.cast_nonneg _
+      push_cast
+      linarith
+    have hlennn : (0:ℝ) ≤ (spine.length : ℝ) := Nat.cast_nonneg _
+    calc ((dBlock s d).length : ℝ) < (ε / 5) * (dTailList s₀ d K).length := h1
+      _ ≤ (ε / 5) * spine.length := mul_le_mul_of_nonneg_left h2 hε5.le
+      _ ≤ (2 * (ε / 5)) * spine.length := by nlinarith [hlennn]
+  have hcombined := hasDiscLt_append_take hd1 hboundary hshort l hlle
+  have hcombLen : (spine ++ (dBlock s d).take l).length = p := by
+    rw [List.length_append, hspineLen, List.length_take, min_eq_left hlle]
+    omega
+  -- digit equality: the combined Fin-d list matches the real digit prefix
+  have hdigeq : (spine ++ (dBlock s d).take l).map Fin.val
+      = (List.range p).map (digitOf d xstar) := by
+    have hfix := dFixedPrefix_digit_eq d (mSched s₀ d) hd2
+    have htail := dTailList_digit_eq s₀ d hd2 hdt K
+    rw [dTailList_length_eq s₀ d hd2 hdt K] at htail
+    have hblkfull := (dBlock_spec s d hd2 hdts).2.1
+    have hrangetake : (List.range (dBlock s d).length).take l = List.range l := by
+      apply List.ext_getElem
+      · simp; omega
+      · intro i h1 h2; simp
+    have hblktake : (List.range l).map (fun i => digitOf d xstar (mSched s d + i))
+        = ((dBlock s d).take l).map Fin.val := by
+      rw [← hrangetake, List.map_take, List.map_take, hblkfull]
+    have hmono : mSched s₀ d ≤ mSched (s₀ + K) d := by
+      simpa using mSched_mono_of_active (s₀ := s₀) hd2 hdt (a := 0) (b := K) (by omega)
+    have step1 : List.range p
+        = List.range (mSched s d) ++ (List.range l).map (mSched s d + ·) := by
+      rw [← range_add_eq]; congr 1; omega
+    have step2 : List.range (mSched s d)
+        = List.range (mSched s₀ d) ++ (List.range (mSched (s₀ + K) d - mSched s₀ d)).map
+            (mSched s₀ d + ·) := by
+      rw [← range_add_eq]; congr 1; rw [hsK]; omega
+    have hsplit : List.range p
+        = List.range (mSched s₀ d) ++ (List.range (mSched (s₀ + K) d - mSched s₀ d)).map
+            (mSched s₀ d + ·) ++ (List.range l).map (mSched s d + ·) := by
+      rw [step1, step2, List.append_assoc]
+    rw [List.map_append, List.map_append, hsplit, List.map_append, List.map_append,
+      List.map_map, List.map_map]
+    simp only [Function.comp_def]
+    rw [hfix, htail, hblktake]
+  -- assemble the final metric bound
+  have hHDL := hcombined ⟨c, hc⟩
+  rw [Real.dist_eq]
+  have heq : (((List.range p).map (digitOf d xstar)).count c : ℝ) / p - (d:ℝ)⁻¹
+      = ((((spine ++ (dBlock s d).take l).map Fin.val).count c : ℝ)
+          - (spine ++ (dBlock s d).take l).length / d) / p := by
+    rw [hdigeq, hcombLen]
+    have hdR : (d:ℝ) ≠ 0 := by positivity
+    field_simp
+  rw [heq, count_map_val_eq _ c hc, abs_div, abs_of_pos hpR, div_lt_iff₀ hpR]
+  calc |((spine ++ (dBlock s d).take l).count (⟨c, hc⟩ : Fin d) : ℝ)
+        - (spine ++ (dBlock s d).take l).length / d|
+      < 2 * (2 * (ε / 5)) * (spine ++ (dBlock s d).take l).length := hHDL
+    _ = 4 * (ε / 5) * p := by rw [hcombLen]; ring
+    _ ≤ ε * p := by nlinarith [hpR.le]
 
 end NormalNumbers
