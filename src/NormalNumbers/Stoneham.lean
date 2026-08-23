@@ -97,6 +97,27 @@ theorem stonehamState_unit (M : ℕ) (hM : 1 ≤ M) :
     exact Dvd.dvd.mul_right (dvd_pow_self 3 (by omega)) _
   omega
 
+/-- The Stoneham series' terms. -/
+noncomputable def sterm (j : ℕ) : ℝ := 1 / ((3 : ℝ) ^ (j + 1) * 2 ^ (3 ^ (j + 1)))
+
+theorem sterm_pos (j : ℕ) : 0 < sterm j := by unfold sterm; positivity
+
+theorem sterm_le (j : ℕ) : sterm j ≤ (1 / 2) ^ j := by
+  unfold sterm
+  rw [div_pow, one_pow]
+  apply div_le_div_of_nonneg_left one_pos.le (by positivity)
+  calc (2 : ℝ) ^ j ≤ 2 ^ (3 ^ (j + 1)) := by
+        apply pow_le_pow_right₀ one_le_two
+        calc j ≤ 3 ^ j := (Nat.lt_pow_self (by norm_num)).le
+          _ ≤ 3 ^ (j + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+    _ ≤ 3 ^ (j + 1) * 2 ^ (3 ^ (j + 1)) := by
+        nlinarith [one_le_pow₀ (by norm_num : (1:ℝ) ≤ 3) (n := j + 1),
+          pow_pos (by norm_num : (0:ℝ) < 2) (3 ^ (j + 1))]
+
+theorem summable_sterm : Summable sterm :=
+  Summable.of_nonneg_of_le (fun j => (sterm_pos j).le) sterm_le
+    (summable_geometric_of_lt_one (by norm_num) (by norm_num))
+
 /-- Orbit points in window `M` are the rational state plus a positive
 error under `2/3^(M+1)`: for `3^M ≤ n < 3^(M+1)`,
 `c_M(n)/3^M < 2^n·α mod 1 < c_M(n)/3^M + 2/3^(M+1)`. -/
@@ -105,7 +126,126 @@ theorem stonehamState_approx (M n : ℕ) (hM : 1 ≤ M)
     (stonehamState M n : ℝ) / 3 ^ M < orbit 2 stoneham23 n ∧
       orbit 2 stoneham23 n
         < (stonehamState M n : ℝ) / 3 ^ M + 2 / 3 ^ (M + 1) := by
-  sorry
+  have h3M : (0 : ℝ) < 3 ^ M := by positivity
+  have h3M1 : (0 : ℝ) < 3 ^ (M + 1) := by positivity
+  -- the scaled series
+  set g : ℕ → ℝ := fun j => (2 : ℝ) ^ n * sterm j with hg
+  have hg_sum : Summable g := summable_sterm.mul_left _
+  have hg_pos : ∀ j, 0 < g j := fun j => by
+    have := sterm_pos j
+    simp only [hg]; positivity
+  have hmul : stoneham23 * (2 : ℝ) ^ n = ∑' j, g j := by
+    rw [tsum_mul_left, mul_comm]; rfl
+  have hshift_sum : Summable fun j => g (j + M) :=
+    (summable_nat_add_iff M).2 hg_sum
+  -- split at M
+  have hsplit : ∑' j, g j
+      = (∑ j ∈ Finset.range M, g j) + ∑' j, g (j + M) :=
+    (hg_sum.sum_add_tsum_nat_add M).symm
+  set T : ℝ := ∑' j, g (j + M) with hT
+  -- the raw head sum (pre-mod)
+  set S : ℕ := ∑ m ∈ Finset.Icc 1 M, 3 ^ (M - m) * 2 ^ (n - 3 ^ m) with hS
+  -- head = S / 3^M
+  have hHead : (∑ j ∈ Finset.range M, g j) = (S : ℝ) / 3 ^ M := by
+    rw [hS]
+    push_cast
+    rw [Finset.sum_div,
+      show Finset.Icc 1 M = Finset.Ico 1 (M + 1) from by
+        ext u; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega,
+      Finset.sum_Ico_eq_sum_range]
+    simp only [Nat.add_sub_cancel]
+    refine Finset.sum_congr rfl fun j hj => ?_
+    have hjM : j < M := Finset.mem_range.mp hj
+    have h3le : 3 ^ (1 + j) ≤ n :=
+      le_trans (Nat.pow_le_pow_right (by norm_num) (by omega)) hn
+    have h2 : (2 : ℝ) ^ (n - 3 ^ (1 + j)) * 2 ^ (3 ^ (1 + j)) = 2 ^ n := by
+      rw [← pow_add]; congr 1; omega
+    have h3 : (3 : ℝ) ^ (M - (1 + j)) * 3 ^ (1 + j) = 3 ^ M := by
+      rw [← pow_add]; congr 1; omega
+    simp only [hg, sterm]
+    rw [mul_one_div, div_eq_div_iff (by positivity) h3M.ne']
+    rw [← h2, ← h3]; ring
+  -- tail bounds
+  have hT_pos : 0 < T := by
+    rw [hT]
+    exact Summable.tsum_pos hshift_sum (fun j => (hg_pos _).le) 0 (hg_pos _)
+  have hT_le : T ≤ 1 / 3 ^ (M + 1) := by
+    set c : ℝ := (2 : ℝ) ^ n / (3 ^ (M + 1) * 2 ^ (3 ^ (M + 1))) with hc
+    have hterm : ∀ j, g (j + M) ≤ c * (1 / 2) ^ j := by
+      intro j
+      have hexp : 3 ^ (M + 1) + j ≤ 3 ^ (j + M + 1) := by
+        have hj3 : j + 1 ≤ 3 ^ j := Nat.lt_pow_self (by norm_num)
+        have hP : 1 ≤ 3 ^ (M + 1) := Nat.one_le_pow _ _ (by norm_num)
+        calc 3 ^ (M + 1) + j ≤ 3 ^ (M + 1) * (j + 1) := by nlinarith
+          _ ≤ 3 ^ (M + 1) * 3 ^ j := Nat.mul_le_mul_left _ hj3
+          _ = 3 ^ (j + M + 1) := by rw [← pow_add]; congr 1; omega
+      have hkey : (3 : ℝ) ^ (M + 1) * 2 ^ (3 ^ (M + 1)) * 2 ^ j
+          ≤ 3 ^ (j + M + 1) * 2 ^ (3 ^ (j + M + 1)) := by
+        have h3 : (3 : ℝ) ^ (M + 1) ≤ 3 ^ (j + M + 1) :=
+          pow_le_pow_right₀ (by norm_num) (by omega)
+        have h2 : (2 : ℝ) ^ (3 ^ (M + 1)) * 2 ^ j ≤ 2 ^ (3 ^ (j + M + 1)) := by
+          rw [← pow_add]
+          exact pow_le_pow_right₀ one_le_two hexp
+        calc (3 : ℝ) ^ (M + 1) * 2 ^ (3 ^ (M + 1)) * 2 ^ j
+            = 3 ^ (M + 1) * (2 ^ (3 ^ (M + 1)) * 2 ^ j) := by ring
+          _ ≤ 3 ^ (j + M + 1) * 2 ^ (3 ^ (j + M + 1)) :=
+              mul_le_mul h3 h2 (by positivity) (by positivity)
+      simp only [hg, sterm, hc]
+      rw [mul_one_div, div_pow, one_pow, div_mul_div_comm, mul_one]
+      exact div_le_div_of_nonneg_left (by positivity) (by positivity) hkey
+    have hgeom : Summable fun j : ℕ => c * (1 / 2) ^ j :=
+      (summable_geometric_of_lt_one (by norm_num) (by norm_num)).mul_left c
+    have hle := hshift_sum.tsum_le_tsum hterm hgeom
+    rw [hT]
+    refine le_trans hle ?_
+    rw [tsum_mul_left, tsum_geometric_two, hc]
+    have h2n : (2 : ℝ) ^ n * 2 ≤ 2 ^ (3 ^ (M + 1)) := by
+      rw [← pow_succ]
+      exact pow_le_pow_right₀ one_le_two (by omega)
+    rw [div_mul_eq_mul_div, div_le_iff₀ (by positivity)]
+    calc (2:ℝ) ^ n * 2 ≤ 2 ^ (3 ^ (M + 1)) := h2n
+      _ = 1 / 3 ^ (M + 1) * (3 ^ (M + 1) * 2 ^ (3 ^ (M + 1))) := by
+          field_simp
+  -- peel the integer part
+  have hstate : stonehamState M n = S % 3 ^ M := rfl
+  have hstate_lt : stonehamState M n < 3 ^ M := by
+    rw [hstate]; exact Nat.mod_lt _ (pow_pos (by norm_num) M)
+  have hcast : (S : ℝ) / 3 ^ M
+      = ((S / 3 ^ M : ℕ) : ℝ) + (stonehamState M n : ℝ) / 3 ^ M := by
+    have h := Nat.div_add_mod S (3 ^ M)
+    rw [hstate]
+    have hSr : (S : ℝ) = (3:ℝ) ^ M * ((S / 3 ^ M : ℕ) : ℝ) + ((S % 3 ^ M : ℕ) : ℝ) := by
+      exact_mod_cast h.symm
+    rw [hSr]
+    field_simp
+  have hy_nonneg : 0 ≤ (stonehamState M n : ℝ) / 3 ^ M + T := by positivity
+  have hy_lt : (stonehamState M n : ℝ) / 3 ^ M + T < 1 := by
+    have h1 : (stonehamState M n : ℝ) ≤ (3:ℝ) ^ M - 1 := by
+      have : (stonehamState M n : ℕ) + 1 ≤ 3 ^ M := hstate_lt
+      have := (Nat.cast_le (α := ℝ)).2 this
+      push_cast at this
+      linarith
+    have h3 : (1:ℝ) / 3 ^ (M + 1) < 1 / 3 ^ M := by
+      apply div_lt_div_of_pos_left one_pos h3M
+      exact pow_lt_pow_right₀ (by norm_num) (by omega)
+    have hsplit1 : ((3:ℝ) ^ M - 1) / 3 ^ M + 1 / 3 ^ M = 1 := by
+      field_simp
+      ring
+    have hdiv : (stonehamState M n : ℝ) / 3 ^ M ≤ ((3:ℝ) ^ M - 1) / 3 ^ M := by
+      gcongr
+    linarith
+  have horb : orbit 2 stoneham23 n = (stonehamState M n : ℝ) / 3 ^ M + T := by
+    unfold orbit
+    have hb2 : ((2:ℕ) : ℝ) = (2:ℝ) := by norm_num
+    rw [hb2, hmul, hsplit, hHead, hcast, add_assoc, Int.fract_natCast_add]
+    exact Int.fract_eq_self.mpr ⟨hy_nonneg, hy_lt⟩
+  refine ⟨?_, ?_⟩
+  · rw [horb]; linarith
+  · rw [horb]
+    have h2x : (2:ℝ) / 3 ^ (M + 1) = 2 * (1 / 3 ^ (M + 1)) := by ring
+    have hxpos : (0:ℝ) < 1 / 3 ^ (M + 1) := by positivity
+    rw [h2x]
+    linarith
 
 /-- Units of `ℤ/3^M` in an integer interval are uniform to `±2`:
 `(q-p)·2/3 - 2 ≤ #{u ∈ [p,q) : ¬3∣u} ≤ (q-p)·2/3 + 2` (stated with
