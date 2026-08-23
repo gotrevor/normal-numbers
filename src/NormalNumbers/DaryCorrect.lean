@@ -407,4 +407,25 @@ theorem tendsto_nFn_div_wSched_length :
   rw [inv_eq_one_div, div_le_div_iff₀ hL0 ht0]
   nlinarith [hdom]
 
+/-- **(c4) numerator, clean form**: the per-stage digit gain is at most a
+constant times the stage length, `k ≤ Cnum·n_{s+1}` with
+`Cnum = (2·goodC + log(32d))/log d`.  Absorbs the additive `log(32d)` of
+`gain_le` using `n_{s+1} ≥ 1`.  Feeds the interior ratio numerator. -/
+theorem gain_le_mul_nFn (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) {k : ℕ}
+    (hk : mSched (s + 1) d = mSched s d + k) :
+    (k : ℝ)
+      ≤ (2 * goodC + Real.log (32 * d)) / Real.log d * nFn (tSched (s + 1)) := by
+  have hgain := gain_le s d hd2 hdt hk
+  have hdR1 : (1 : ℝ) < d := by exact_mod_cast hd2
+  have hlogd : 0 < Real.log d := Real.log_pos hdR1
+  have hn1 : (1 : ℝ) ≤ (nFn (tSched (s + 1)) : ℝ) := by
+    exact_mod_cast nFn_pos (tSched (s + 1))
+  have hlog32d : 0 ≤ Real.log (32 * d) := by
+    apply Real.log_nonneg
+    have : (2 : ℝ) ≤ d := by exact_mod_cast hd2
+    nlinarith [this]
+  rw [div_mul_eq_mul_div, le_div_iff₀ hlogd]
+  -- goal: k * log d ≤ (2 goodC + log 32d) * n_{s+1}
+  nlinarith [hgain, mul_le_mul_of_nonneg_left hn1 hlog32d]
+
 end NormalNumbers
