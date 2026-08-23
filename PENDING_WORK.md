@@ -23,10 +23,21 @@
 >    (`cfK ≥ 2^{(n−1)/2}`, proved); ratio ≲ `goodC·n_{s+1}/L_s → 0` by
 >    `sched_dominance`. It is the exact analogue of the CF interior condition
 >    already closed by the schedule dominance — high confidence it closes.
->    Needs: continuant append/submultiplicativity bound `cfK(w++u) ≤ 2 cfK w cfK u`
->    (CHECK `CFDefs`/`CFCylinder` — likely present) for the numerator; `Real.log`
->    monotone + `log_pow` for the log arithmetic. Decompose freely into named
->    sub-`sorry`s in `DaryCorrect.lean`.
+>    - ✅ **FOUNDATION LANDED** (2026-08-23, `dpow_mSched_bracket`, axiom-clean):
+>      per-stage bracket `cfK(wSched s)²/(2d) ≤ d^{mSched s d} ≤ 4·cfK(wSched s)²`,
+>      straight from the brick ratio field + `≤2`-cell containment. Dividing the
+>      bracket at `s+1` by the bracket at `s` (with `cfK_append_le` /
+>      `cfK_mul_le_append`, both in `CFCylinder`) gives the per-stage
+>      `cfK(uSched s)²/(8d) ≤ d^{k_{s+1}} ≤ 32d·cfK(uSched s)²`.
+>    - NEXT sub-steps: (c1) the per-stage `d^k` two-sided bound (quotient of the
+>      bracket, using `wSched_succ : wSched(s+1) = wSched s ++ uSched s` +
+>      `cfK_append_le`); (c2) take `Real.log`: `k_{s+1} ≤ (2 log cfK(u_s)
+>      + log(32d))/log d`, `k_{s+1} ≥ (2 log cfK(u_s) − log(8d))/log d`, via
+>      `Real.log_le_log`/`log_pow`/`Real.log_rpow`; (c3) numerator upper via
+>      good-length `cfK(u_s) ≤ e^{goodC·n_{s+1}}` (from the goodExtSet selection —
+>      LOCATE the exact repo lemma), denominator lower via `two_pow_le_cfK`
+>      summed; (c4) `sched_dominance` closes the ratio → 0. Decompose into named
+>      sub-`sorry`s in `DaryCorrect.lean` as needed.
 > 2. **(d) d-ary chain → `xstar_dary_freq_tendsto`**: TRANSCRIBE the proven
 >    `xstar_cf_freq_tendsto` skeleton (chain via `tailSched_*` analogue,
 >    boundary `hasDiscLt_short_append`, interior `hasDiscLt_append_take` + (c),

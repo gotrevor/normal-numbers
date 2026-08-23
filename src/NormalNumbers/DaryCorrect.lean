@@ -134,4 +134,67 @@ theorem two_pow_le_cfK (u : List ℕ) (hpos : ∀ a ∈ u, 1 ≤ a) :
     _ ≤ Nat.fib (u.length + 1) := Nat.fib_mono h2
     _ ≤ cfK u := h1
 
+/-- **The per-stage `d`-power bracket** (foundation of the `m`-growth estimate,
+DIRECTIVE item (c)): at every stage `s` with base `d` active, `d^{mSched s d}`
+is pinned within a constant factor of `cfK (wSched s)²`.  Both bounds come
+straight from the brick: the LOWER from the ratio field `d^{-m} ≤ 2d·|I_w|`
+(with `|I_w| ≤ 1/cfK²`), the UPPER from the `≤ 2`-cell containment
+`|I_w| ≤ 2·d^{-m}` (with `|I_w| ≥ 1/(2·cfK²)`).  This is the interval that will
+turn the per-stage digit gain `k = mSched (s+1) d − mSched s d` into a bounded
+multiple of `log cfK (uSched s)`: dividing the bracket at `s+1` by the bracket
+at `s` gives `cfK (uSched s)²/(8d) ≤ d^k ≤ 32d·cfK (uSched s)²`. -/
+theorem dpow_mSched_bracket (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) :
+    (cfK (wSched s) : ℝ) ^ 2 / (2 * d) ≤ (d : ℝ) ^ (mSched s d) ∧
+      (d : ℝ) ^ (mSched s d) ≤ 4 * (cfK (wSched s) : ℝ) ^ 2 := by
+  have hw_ne : wSched s ≠ [] := wSched_ne s
+  have hw_pos : ∀ a ∈ wSched s, 1 ≤ a := wSched_pos s
+  set Q : ℝ := (cfK (wSched s) : ℝ) with hQ
+  set D : ℝ := (cfK (wSched s).dropLast : ℝ) with hD
+  have hd1 : 1 ≤ d := le_trans (by norm_num) hd2
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd1
+  have hQ1 : (1 : ℝ) ≤ Q := by rw [hQ]; exact_mod_cast one_le_cfK (wSched s) hw_pos
+  have hQ0 : (0 : ℝ) < Q := lt_of_lt_of_le one_pos hQ1
+  have hD0 : (0 : ℝ) ≤ D := by rw [hD]; positivity
+  have hDQ : D ≤ Q := by rw [hD, hQ]; exact_mod_cast cfK_dropLast_le (wSched s) hw_pos
+  have hQQD : (0 : ℝ) < Q * (Q + D) := by positivity
+  have hmeq : mSched s d = (sched s).B.m d := rfl
+  have hwB : wSched s = (sched s).B.w := rfl
+  have hP0 : (0 : ℝ) < (d : ℝ) ^ (mSched s d) := by positivity
+  have hvol : volume (cfCylinder (wSched s)) = ENNReal.ofReal (1 / (Q * (Q + D))) := by
+    rw [hQ, hD]; exact volume_cfCylinder (wSched s) hw_ne hw_pos
+  -- LOWER bound `Q²/(2d) ≤ d^m` from the ratio field.
+  have hlow : Q ^ 2 / (2 * d) ≤ (d : ℝ) ^ (mSched s d) := by
+    have hratio := (sched s).B.hratio d hd2 hdt
+    rw [← hwB, hvol] at hratio
+    rw [← ENNReal.ofReal_mul (by positivity : (0 : ℝ) ≤ 2 * d)] at hratio
+    rw [ENNReal.ofReal_le_ofReal_iff (by positivity)] at hratio
+    -- hratio : ((d)^((sched s).B.m d))⁻¹ ≤ 2*d * (1/(Q*(Q+D)))
+    rw [← hmeq] at hratio
+    have hcross : Q * (Q + D) ≤ 2 * (d : ℝ) * (d : ℝ) ^ (mSched s d) := by
+      rw [inv_eq_one_div, mul_one_div, div_le_div_iff₀ hP0 hQQD, one_mul] at hratio
+      linarith [hratio]
+    rw [div_le_iff₀ (by positivity : (0 : ℝ) < 2 * d)]
+    nlinarith [hcross, mul_nonneg hQ0.le hD0]
+  -- UPPER bound `d^m ≤ 4Q²` from the ≤2-cell containment.
+  have hup : (d : ℝ) ^ (mSched s d) ≤ 4 * Q ^ 2 := by
+    have hr2 : ((sched s).B.r d : ℝ) ≤ 2 := by exact_mod_cast (sched s).B.hr2 d hd2 hdt
+    have hupvol : volume (cfCylinder (wSched s))
+        ≤ ENNReal.ofReal (2 / (d : ℝ) ^ (mSched s d)) := by
+      calc volume (cfCylinder (wSched s))
+          ≤ volume (daryCell d ((sched s).B.m d) ((sched s).B.j d) ((sched s).B.r d)) := by
+            rw [hwB]; exact measure_mono ((sched s).B.hsub d hd2 hdt)
+        _ = ENNReal.ofReal (((sched s).B.r d : ℝ) / (d : ℝ) ^ ((sched s).B.m d)) :=
+            volume_daryCell d ((sched s).B.m d) hd1 ((sched s).B.j d) ((sched s).B.r d)
+        _ ≤ ENNReal.ofReal (2 / (d : ℝ) ^ (mSched s d)) := by
+            rw [← hmeq]
+            exact ENNReal.ofReal_le_ofReal
+              (div_le_div_of_nonneg_right hr2 (pow_nonneg hdR.le _))
+    rw [hvol, ENNReal.ofReal_le_ofReal_iff (by positivity)] at hupvol
+    -- hupvol : 1/(Q*(Q+D)) ≤ 2/d^m
+    have hcross : (d : ℝ) ^ (mSched s d) ≤ 2 * (Q * (Q + D)) := by
+      rw [div_le_div_iff₀ hQQD hP0, one_mul] at hupvol
+      linarith [hupvol]
+    nlinarith [hcross, hDQ, hQ0, mul_le_mul_of_nonneg_left hDQ hQ0.le]
+  exact ⟨hlow, hup⟩
+
 end NormalNumbers
