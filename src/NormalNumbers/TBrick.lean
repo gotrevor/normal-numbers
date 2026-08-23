@@ -162,4 +162,35 @@ theorem TBrick.volume_aggregate_bad_le {t : ℕ} (B : TBrick t)
           ring
         rw [← mul_assoc, ← ENNReal.ofReal_mul hcoef_nonneg, hreal]
 
+/-- The **CF discrepancy bad zone** of a word `v` inside the brick `I_w`:
+points of `I_w` whose orbit block-count of `v` over the next `n` steps
+deviates from `γ(I_v)` by at least `δ`.  This is exactly the set controlled
+by `chebyshev_blockCount_brick`. -/
+def cfBadZone (w v : List ℕ) (n : ℕ) (δ : ℝ) : Set ℝ :=
+  cfCylinder w ∩ (gaussMap^[w.length]) ⁻¹'
+    {x ∈ Set.Ioo (0 : ℝ) 1 | δ ≤ |blockCount (cfCylinder v) n x / n -
+      (gaussMeasure (cfCylinder v)).toReal|}
+
+/-- **The CF side of the Lemma-13 balance.** For a *finite* family `F` of
+genuine CF words (at each construction stage only finitely many blocks — those
+of length ≤ t with digits ≤ t — need good frequency), the union of the CF
+discrepancy bad zones has γ-measure at most a finite sum of the per-word
+`chebyshev_blockCount_brick` bounds — i.e. `O(1/n)·γ(I_w)`. -/
+theorem gaussMeasure_aggregate_cfBadZone_le
+    (w : List ℕ) (hposw : ∀ a ∈ w, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
+    (gaussMeasure (⋃ v ∈ F, cfBadZone w v n δ)).toReal
+      ≤ ∑ v ∈ F, 7 * ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal
+          / (δ ^ 2 * n)) * (gaussMeasure (cfCylinder w)).toReal := by
+  calc (gaussMeasure (⋃ v ∈ F, cfBadZone w v n δ)).toReal
+      ≤ (∑ v ∈ F, gaussMeasure (cfBadZone w v n δ)).toReal := by
+        refine ENNReal.toReal_mono ?_ (measure_biUnion_finset_le F _)
+        exact (ENNReal.sum_lt_top.2 (fun v _ => measure_lt_top _ _)).ne
+    _ = ∑ v ∈ F, (gaussMeasure (cfBadZone w v n δ)).toReal :=
+        ENNReal.toReal_sum (fun v _ => measure_ne_top _ _)
+    _ ≤ ∑ v ∈ F, 7 * ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal
+          / (δ ^ 2 * n)) * (gaussMeasure (cfCylinder w)).toReal := by
+        refine Finset.sum_le_sum fun v hv => ?_
+        exact chebyshev_blockCount_brick w v hposw (hF v hv) n hn hδ
+
 end NormalNumbers

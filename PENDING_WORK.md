@@ -145,13 +145,18 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
     mass is eventually an arbitrarily small fraction of |I_w|. ✅ d-ary side
     of the measure balance CLOSED.
 
-- NEXT concrete step (the remaining crux — the CF side + combine):
-  (i) **CF discrepancy side**: aggregate `chebyshev_blockCount_brick` across
-      CF words into a single bad-zone bound `≤ (small in n)·γ(I_w)`, via
-      `CFDiscLt` / `CFWordBridge` (blockCount ↔ countOccurrences).  Subtlety:
-      the CF alphabet is infinite — must use the `CFDiscLt` deviation-form
-      aggregation (finite weighted sum) not a per-word union.  This is the
-      one genuinely-open sub-piece left in the balance.
+- ✅ (i) CF SIDE OF THE BALANCE PROVED 2026-08-24 (review lap, `TBrick.lean`,
+  axiom-clean): `cfBadZone w v n δ` (the set `chebyshev_blockCount_brick`
+  controls) + `gaussMeasure_aggregate_cfBadZone_le` — for a FINITE family `F`
+  of genuine CF words, `γ(⋃_{v∈F} cfBadZone w v n δ) ≤ Σ_{v∈F} 7(8|v|+80)
+  γ(I_v)/(δ²n)·γ(I_w)` = O(1/n)·γ(I_w).  Resolves the "infinite alphabet"
+  worry: the construction needs only finitely many blocks good per stage
+  (length ≤ t, digits ≤ t), so a finite `measure_biUnion_finset_le` aggregate
+  suffices — no `CFDiscLt` weighted sum needed for the measure step.
+  (`CFDiscLt`/`CFWordBridge` still used later to turn "good frequency for all
+  v ∈ F" into the refinement predicate of Def 11.)
+
+- NEXT concrete step (COMBINE — the last decisive piece):
   (ii) **kmin(n) link**: good-length extensions J have |J| ≤ 2φ^{-2(n-1)}|I_w|
       (Fibonacci upper bound), so for each base d the "new digits" count
       k_d(J) ≥ kmin(n) with kmin(n)→∞; hence the wide-zone union avoided is
