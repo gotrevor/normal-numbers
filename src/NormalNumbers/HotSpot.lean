@@ -650,4 +650,142 @@ theorem subword_cellAt (b : ℕ) (hb : 0 < b) (x : ℝ) (K k i j : ℕ)
     rw [← pow_add]; congr 1; omega
   rw [hsplit, Nat.mod_mul_right_div_self]
 
+/-! ### The sliding double count -/
+
+/-- The sliding count inside the current scale-`K` cell tallies the next
+`K - k + 1` orbit points' scale-`k` cells. -/
+theorem occCount_cellAt (b : ℕ) (hb : 0 < b) (x : ℝ) (K k w j : ℕ)
+    (hkK : k ≤ K) :
+    occCount b K k w (cellAt b x K j)
+      = ((Finset.range (K - k + 1)).filter
+          fun i => ⌊orbit b x (j + i) * (b : ℝ) ^ k⌋₊ = w).card := by
+  unfold occCount
+  congr 1
+  apply Finset.filter_congr
+  intro i hi
+  simp only [Finset.mem_range] at hi
+  rw [subword_cellAt b hb x K k i j (by omega)]
+
+/-- Visits to the scale-`k` cell of `w` are floor matches. -/
+theorem visitCount_eq_card_floor (b : ℕ) (hb : 0 < b) (x : ℝ) (k w n : ℕ) :
+    visitCount (orbit b x) ((w : ℝ) / (b : ℝ) ^ k) ((w + 1 : ℝ) / (b : ℝ) ^ k) n
+      = ((Finset.range n).filter
+          fun t => ⌊orbit b x t * (b : ℝ) ^ k⌋₊ = w).card := by
+  classical
+  unfold visitCount
+  congr 1
+  apply Finset.filter_congr
+  intro t _
+  exact mem_cell_iff_floor b k w hb (Int.fract_nonneg _)
+
+/-- Summed sliding counts along the orbit are the pair count of hits. -/
+theorem sum_occCount_cellAt_eq (b : ℕ) (hb : 0 < b) (x : ℝ) (K k w n : ℕ)
+    (hkK : k ≤ K) :
+    ∑ j ∈ Finset.range n, occCount b K k w (cellAt b x K j)
+      = ((Finset.range n ×ˢ Finset.range (K - k + 1)).filter
+          fun p => ⌊orbit b x (p.1 + p.2) * (b : ℝ) ^ k⌋₊ = w).card := by
+  classical
+  rw [Finset.card_filter, Finset.sum_product]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  rw [occCount_cellAt b hb x K k w j hkK, Finset.card_filter]
+
+/-- Sliding upper bound: pair hits inject into (hit time, offset). -/
+theorem sum_occCount_cellAt_le (b : ℕ) (hb : 0 < b) (x : ℝ) (K k w n : ℕ)
+    (hkK : k ≤ K) :
+    ∑ j ∈ Finset.range n, occCount b K k w (cellAt b x K j)
+      ≤ ((Finset.range (n + (K - k))).filter
+            fun t => ⌊orbit b x t * (b : ℝ) ^ k⌋₊ = w).card
+          * (K - k + 1) := by
+  classical
+  rw [sum_occCount_cellAt_eq b hb x K k w n hkK]
+  have hcp : (((Finset.range (n + (K - k))).filter
+        fun t => ⌊orbit b x t * (b : ℝ) ^ k⌋₊ = w)
+          ×ˢ Finset.range (K - k + 1)).card
+      = ((Finset.range (n + (K - k))).filter
+          fun t => ⌊orbit b x t * (b : ℝ) ^ k⌋₊ = w).card * (K - k + 1) := by
+    rw [Finset.card_product, Finset.card_range]
+  rw [← hcp]
+  apply Finset.card_le_card_of_injOn
+    (fun p : ℕ × ℕ => (p.1 + p.2, p.2))
+  · intro p hp
+    simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_product,
+      Finset.mem_range] at hp ⊢
+    exact ⟨⟨by omega, hp.2⟩, hp.1.2⟩
+  · intro p hp q hq heq
+    simp only [Prod.mk.injEq] at heq
+    have : p.1 = q.1 := by omega
+    exact Prod.ext this heq.2
+
+/-- Sliding lower bound: every hit at time `≥ K - k` owns all
+`K - k + 1` offsets. -/
+theorem le_sum_occCount_cellAt (b : ℕ) (hb : 0 < b) (x : ℝ) (K k w n : ℕ)
+    (hkK : k ≤ K) :
+    ((Finset.Ico (K - k) n).filter
+        fun t => ⌊orbit b x t * (b : ℝ) ^ k⌋₊ = w).card * (K - k + 1)
+      ≤ ∑ j ∈ Finset.range n, occCount b K k w (cellAt b x K j) := by
+  classical
+  rw [sum_occCount_cellAt_eq b hb x K k w n hkK]
+  have hcp : (((Finset.Ico (K - k) n).filter
+        fun t => ⌊orbit b x t * (b : ℝ) ^ k⌋₊ = w)
+          ×ˢ Finset.range (K - k + 1)).card
+      = ((Finset.Ico (K - k) n).filter
+          fun t => ⌊orbit b x t * (b : ℝ) ^ k⌋₊ = w).card * (K - k + 1) := by
+    rw [Finset.card_product, Finset.card_range]
+  rw [← hcp]
+  apply Finset.card_le_card_of_injOn
+    (fun p : ℕ × ℕ => (p.1 - p.2, p.2))
+  · intro p hp
+    simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_product,
+      Finset.mem_Ico, Finset.mem_range] at hp ⊢
+    obtain ⟨⟨⟨h1, h2⟩, hQ⟩, h3⟩ := hp
+    refine ⟨⟨by omega, by omega⟩, ?_⟩
+    rw [show p.1 - p.2 + p.2 = p.1 by omega]
+    exact hQ
+  · intro p hp q hq heq
+    simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_product,
+      Finset.mem_Ico, Finset.mem_range] at hp hq
+    simp only [Prod.mk.injEq] at heq
+    have : p.1 = q.1 := by omega
+    exact Prod.ext this heq.2
+
+/-- Truncating the count range costs at most the truncation length. -/
+theorem card_filter_range_le_add (Q : ℕ → Prop) [DecidablePred Q] (n c : ℕ) :
+    ((Finset.range (n + c)).filter Q).card
+      ≤ ((Finset.range n).filter Q).card + c := by
+  classical
+  have hsub : (Finset.range (n + c)).filter Q
+      ⊆ (Finset.range n).filter Q ∪ Finset.Ico n (n + c) := by
+    intro t ht
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_union,
+      Finset.mem_Ico] at ht ⊢
+    rcases lt_or_ge t n with h | h
+    · exact Or.inl ⟨h, ht.2⟩
+    · exact Or.inr ⟨h, ht.1⟩
+  calc ((Finset.range (n + c)).filter Q).card
+      ≤ ((Finset.range n).filter Q ∪ Finset.Ico n (n + c)).card :=
+        Finset.card_le_card hsub
+    _ ≤ ((Finset.range n).filter Q).card + (Finset.Ico n (n + c)).card :=
+        Finset.card_union_le _ _
+    _ = ((Finset.range n).filter Q).card + c := by rw [Nat.card_Ico]; omega
+
+/-- Dually, the head of the range holds at most `c` of the count. -/
+theorem card_filter_range_le_Ico_add (Q : ℕ → Prop) [DecidablePred Q] (n c : ℕ) :
+    ((Finset.range n).filter Q).card
+      ≤ ((Finset.Ico c n).filter Q).card + c := by
+  classical
+  have hsub : (Finset.range n).filter Q
+      ⊆ (Finset.Ico c n).filter Q ∪ Finset.range c := by
+    intro t ht
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_union,
+      Finset.mem_Ico] at ht ⊢
+    rcases lt_or_ge t c with h | h
+    · exact Or.inr h
+    · exact Or.inl ⟨⟨h, ht.1⟩, ht.2⟩
+  calc ((Finset.range n).filter Q).card
+      ≤ ((Finset.Ico c n).filter Q ∪ Finset.range c).card :=
+        Finset.card_le_card hsub
+    _ ≤ ((Finset.Ico c n).filter Q).card + (Finset.range c).card :=
+        Finset.card_union_le _ _
+    _ = ((Finset.Ico c n).filter Q).card + c := by rw [Finset.card_range]
+
 end NormalNumbers
