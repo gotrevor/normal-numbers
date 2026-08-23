@@ -69,6 +69,37 @@ naturally-occurring constant is Khinchin-typical, whether CF-normality and
 base-b normality imply each other pointwise (they don't a.e.-trivially, and no
 implication is known).
 
+## Both expansions at once? (2026-08-23 follow-up)
+
+Trevor's question: can a number be *both* normal and Khinchin-typical?
+
+- **Existence is free**: a.e. x is simultaneously absolutely normal, CF-normal
+  and Khinchin-typical (intersection of full-measure sets).  Explicitness is
+  the whole game.
+- **Why cheap constructions fail**: you get to steer exactly ONE expansion.
+  Fixing base-b digits determines the CF digits (opaquely) and vice versa —
+  the two digit systems don't commute, so concatenation/steering tricks
+  control one side and forfeit the other.
+- **The research answer — normal + CF-normal is DONE**: Scheerer
+  (arXiv:1701.07979) constructs a computable number that is absolutely normal
+  (all integer bases) AND CF-normal, via Sierpiński-style interval refinement
+  + large deviations for mixing random variables; Becher–Yuhjtman
+  (arXiv:1704.03622, IMRN 2019) give a faster construction (~n⁴ operations
+  for n CF digits).
+- **CF-normal ⇏ Khinchin-typical**: plant digit ⌈e^{2^j}⌉ at position 2^j of
+  a CF-normal number — a density-zero change preserves every pattern
+  frequency, but the running log-average gains Σ_{j≤J} 2^j/2^J ≈ 1–2 and
+  oscillates, so the geometric mean never converges to K₀.  Conversely
+  Khinchin ⇏ CF-normal (steer with 2s and 3s only: log 2 < log K₀ < log 3,
+  digit-1 frequency 0).  So the conjunction genuinely needs digit-size
+  control on top of CF-normality.
+- **Apparent literature gap**: neither abstract above claims Khinchin's
+  geometric-mean law for its constructed number (checked 2026-08-23; abstracts
+  only — ~80% their stage-wise digit control would yield it as an easy
+  corollary, unverified).  ⭐ **B5′ upgrade**: a machine-checked witness that is
+  *absolutely normal + CF-normal + Khinchin-typical* would be a
+  first-anywhere exhibit — strictly stronger write-up bait than B5.
+
 ## Formalization landscape (surveyed 2026-08-23; greps + searches, not proofs)
 
 **Nothing found in any prover** for Gauss–Kuzmin or Khinchin's theorem, ~92%.
@@ -138,6 +169,11 @@ convergent-recovery bound in a Shor's-algorithm repo — different theorems.
   the continued fraction transformation*, J. Number Theory 13 (1981) 95–105.
 - J. Vandehey, on CF-normality under rational LFTs (~2016; ⚠️ locate the exact
   paper before citing outward).
+- A.-M. Scheerer, *On the continued fraction expansion of absolutely normal
+  numbers*, arXiv:1701.07979.  (Absolutely normal + CF-normal, computable.)
+- V. Becher, S. A. Yuhjtman, *On absolutely normal and continued fraction
+  normal numbers*, IMRN 2019(19) 6136–6161, arXiv:1704.03622.  (Same
+  conjunction, ~n⁴ operations.)
 - M. Iosifescu, C. Kraaikamp, *Metrical Theory of Continued Fractions*, Kluwer
   2002.  (The comprehensive reference.)
 - M. Einsiedler, T. Ward, *Ergodic Theory: with a view towards Number Theory*,
