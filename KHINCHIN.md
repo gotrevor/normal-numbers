@@ -1,7 +1,8 @@
 # Track B — metric theory of continued fractions (Khinchin / Gauss–Kuzmin) 🎲
 
 *Added 2026-08-23 from the Khinchin research session.  This doc is the source of
-truth for the track; ROADMAP.md carries only the status line.*
+truth for the track; ROADMAP.md carries only the status line.  Campaign
+oversight: `JUDGE.md` (the attended architect/judge charter + ledger).*
 
 ## Why this lives in the normal-numbers repo
 
