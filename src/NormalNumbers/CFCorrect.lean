@@ -289,4 +289,156 @@ theorem tailSched_cfDiscLt (v : List ℕ) (hne : v ≠ [])
       have := hblock (k + 1)
       rwa [h1] at this)
 
+/-! ## Locating the stage of a position -/
+
+theorem wSched_length_ge (s k : ℕ) :
+    (wSched s).length + k ≤ (wSched (s + k)).length :=
+  sched_length_ge s k
+
+/-- Every position `p` past stage `s₁` lies in a definite stage window
+`[|wSched s|, |wSched (s+1)|)` with `s ≥ s₁`. -/
+theorem exists_stage (s₁ p : ℕ) (hp : (wSched s₁).length ≤ p) :
+    ∃ s, s₁ ≤ s ∧ (wSched s).length ≤ p ∧ p < (wSched (s + 1)).length := by
+  classical
+  set Q : ℕ → Prop := fun k => (wSched (s₁ + k)).length ≤ p with hQdef
+  have hQ0 : Q 0 := by simpa [hQdef] using hp
+  have hQbig : ¬ Q (p + 1) := by
+    have h := wSched_length_ge s₁ (p + 1)
+    simp only [hQdef]
+    omega
+  set k := Nat.findGreatest Q (p + 1) with hkdef
+  have hk : Q k := Nat.findGreatest_spec (Nat.zero_le _) hQ0
+  have hkb : k ≤ p + 1 := Nat.findGreatest_le _
+  have hkne : k ≠ p + 1 := fun h => hQbig (h ▸ hk)
+  have hk1 : ¬ Q (k + 1) :=
+    Nat.findGreatest_is_greatest (Nat.lt_succ_self _) (by omega)
+  refine ⟨s₁ + k, by omega, hk, ?_⟩
+  have h2 : s₁ + k + 1 = s₁ + (k + 1) := by omega
+  rw [h2]
+  simp only [hQdef] at hk1
+  omega
+
+/-! ## CF normality of `xstar` -/
+
+/-- **CF normality of `xstar`** (fitting-window frequency form, B–Y §2.2):
+for every genuine CF pattern `v`, the frequency of `v` among the windows of
+the length-`p` digit prefix of `xstar` tends to `γ(I_v)`. -/
+theorem xstar_cf_freq_tendsto (v : List ℕ) (hne : v ≠ [])
+    (hpos : ∀ a ∈ v, 1 ≤ a) :
+    Filter.Tendsto
+      (fun p => (countOccurrences v (cfPrefix p) : ℝ) / p)
+      Filter.atTop (nhds ((gaussMeasure (cfCylinder v)).toReal)) := by
+  set γv := (gaussMeasure (cfCylinder v)).toReal with hγdef
+  obtain ⟨hγ0, hγ1⟩ := gaussMeasure_toReal_mem_Icc (cfCylinder v)
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  have hε5 : 0 < ε / 5 := by positivity
+  have hv1 : (1 : ℝ) ≤ v.length := by
+    exact_mod_cast List.length_pos_of_ne_nil hne
+  obtain ⟨T, hT1, hTmem, hTmargin, hTinv⟩ := exists_level_margin v hne hpos hε5
+  obtain ⟨s₀, hs₀⟩ := sched_t_eventually T
+  have hchain : ∀ k, CFDiscLt v (tailSched s₀ (s₀ + k + 1)) γv (ε / 5) :=
+    tailSched_cfDiscLt v hne T hTmem hTmargin s₀ (hs₀ (s₀ + 1) (by omega))
+  set L₀ := (wSched s₀).length with hL₀
+  obtain ⟨K₁, hK₁⟩ := exists_nat_ge (((L₀ : ℝ) + v.length) / (ε / 5))
+  obtain ⟨K₂, hK₂⟩ := exists_nat_ge ((v.length : ℝ) / (ε / 5))
+  set K := max (max K₁ K₂) 1 with hK
+  -- boundary: whole scheduled words past stage `s₀ + K` are `2ε/5`-good
+  have hbound : ∀ s, s₀ + K ≤ s → CFDiscLt v (wSched s) γv (2 * (ε / 5)) := by
+    intro s hs
+    set k := s - s₀ with hk
+    have hks : s = s₀ + k := by omega
+    have hk1 : 1 ≤ k := by omega
+    have htail : CFDiscLt v (tailSched s₀ s) γv (ε / 5) := by
+      have h := hchain (k - 1)
+      have h2 : s₀ + (k - 1) + 1 = s := by omega
+      rwa [h2] at h
+    have hlen : (K : ℕ) ≤ (tailSched s₀ s).length := by
+      have h := le_tailSched_length s₀ k
+      rw [← hks] at h
+      omega
+    have hshort : ((wSched s₀).length : ℝ) + ((v.length : ℝ) - 1)
+        < (ε / 5) * (tailSched s₀ s).length := by
+      have hKk : ((L₀ : ℝ) + v.length) ≤ (ε / 5) * K₁ := by
+        rw [div_le_iff₀ hε5] at hK₁
+        linarith
+      have hK₁K : (K₁ : ℝ) ≤ K := by
+        exact_mod_cast le_trans (le_max_left _ _) (le_max_left _ _)
+      have hKlen : (K : ℝ) ≤ (tailSched s₀ s).length := by
+        exact_mod_cast hlen
+      have := mul_le_mul_of_nonneg_left (le_trans hK₁K hKlen) hε5.le
+      rw [hL₀] at hKk
+      linarith
+    have h := cfDiscLt_short_append hne hγ0 hγ1 htail hshort
+    have hsplit := wSched_eq_append_tail s₀ k
+    rw [← hks] at hsplit
+    rwa [← hsplit] at h
+  -- interior shortness: the next block is short relative to the word
+  have hshort2 : ∀ s, s₀ + K ≤ s →
+      ((uSched s).length : ℝ) + ((v.length : ℝ) - 1)
+        < 2 * (ε / 5) * (wSched s).length := by
+    intro s hs
+    set t := tSched (s + 1) with htdef
+    have hTt : T ≤ t := hs₀ (s + 1) (by omega)
+    have ht1 : 1 ≤ t := le_trans hT1 hTt
+    have htR : (0 : ℝ) < t := by exact_mod_cast ht1
+    have hdom := uSched_dominance s
+    have hdomR : (t : ℝ) * (uSched s).length ≤ (wSched s).length := by
+      exact_mod_cast hdom
+    have hLpos : (0 : ℝ) ≤ ((wSched s).length : ℝ) := Nat.cast_nonneg _
+    -- |u| ≤ L/t ≤ (ε/10)·L
+    have hu : ((uSched s).length : ℝ)
+        ≤ (ε / 5 / 2) * (wSched s).length := by
+      have hinv := hTinv t hTt
+      have h1 : ((uSched s).length : ℝ) ≤ (wSched s).length * (1 / t) := by
+        rw [mul_one_div, le_div_iff₀ htR]
+        linarith
+      calc ((uSched s).length : ℝ) ≤ (wSched s).length * (1 / t) := h1
+        _ ≤ (wSched s).length * (ε / 5 / 2) :=
+          mul_le_mul_of_nonneg_left hinv hLpos
+        _ = (ε / 5 / 2) * (wSched s).length := by ring
+    -- |v| ≤ (ε/5)·L
+    have hvL : (v.length : ℝ) ≤ (ε / 5) * (wSched s).length := by
+      have hK₂K : (K₂ : ℕ) ≤ K :=
+        le_trans (le_max_right _ _) (le_max_left _ _)
+      have hlen : (K₂ : ℕ) ≤ (wSched s).length := by
+        have h1 := wSched_length_ge s₀ (s - s₀)
+        have h2 : s₀ + (s - s₀) = s := by omega
+        rw [h2] at h1
+        omega
+      have hlenR : (K₂ : ℝ) ≤ (wSched s).length := by exact_mod_cast hlen
+      have hvK : (v.length : ℝ) ≤ (ε / 5) * K₂ := by
+        rw [div_le_iff₀ hε5] at hK₂
+        linarith
+      calc (v.length : ℝ) ≤ (ε / 5) * K₂ := hvK
+        _ ≤ (ε / 5) * (wSched s).length :=
+          mul_le_mul_of_nonneg_left hlenR hε5.le
+    nlinarith
+  -- interior: every prefix past stage `s₀ + K` is `4ε/5`-good
+  have hprefix : ∀ p, (wSched (s₀ + K)).length ≤ p →
+      CFDiscLt v (cfPrefix p) γv (2 * (2 * (ε / 5))) := by
+    intro p hp
+    obtain ⟨s, hs1, hsp, hsp1⟩ := exists_stage (s₀ + K) p hp
+    have hdecomp : cfPrefix p = wSched s ++ (uSched s).take (p - (wSched s).length) := by
+      rw [cfPrefix_take hsp1.le, cfPrefix_eq_wSched, wSched_succ,
+        List.take_append, List.take_of_length_le hsp]
+    rw [hdecomp]
+    exact cfDiscLt_append_take hne hγ0 hγ1 (hbound s hs1) (hshort2 s hs1) _
+  -- convert to the metric statement
+  set N := max (wSched (s₀ + K)).length 1 with hN
+  refine ⟨N, fun p hp => ?_⟩
+  have hp1 : 1 ≤ p := le_trans (le_max_right _ _) hp
+  have hpR : (0 : ℝ) < p := by exact_mod_cast hp1
+  have h := hprefix p (le_trans (le_max_left _ _) hp)
+  rw [CFDiscLt, cfPrefix_length] at h
+  rw [Real.dist_eq]
+  have heq : (countOccurrences v (cfPrefix p) : ℝ) / p - γv
+      = ((countOccurrences v (cfPrefix p) : ℝ) - γv * p) / p := by
+    field_simp
+  rw [heq, abs_div, abs_of_pos hpR, div_lt_iff₀ hpR]
+  calc |(countOccurrences v (cfPrefix p) : ℝ) - γv * p|
+      < 2 * (2 * (ε / 5)) * p := h
+    _ ≤ ε * p := by nlinarith
+  -- (4ε/5 < ε)
+
 end NormalNumbers
