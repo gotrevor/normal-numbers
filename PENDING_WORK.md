@@ -178,11 +178,20 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
       + `measurableSet_cfBadZone` (via `measurable_blockCount`).  Still to do
       for the balance: bound Σ_v ... by (const/n)·volume(I_w) via γ(I_v)≤1 and
       γ(I_w) ≤ ofReal((log2)⁻¹)·volume(I_w) (gaussMeasure_le_volume).
-  (β) **kmin(n) link**: good extensions have |J| ≤ 2φ^{-2(n-1)}|I_w|
-      (`volume_append_mul_fib_le`), so each base d's "new digit" count
-      k_d(J) ≥ kmin(n) := ⌊stuff·n⌋ → ∞; hence goodExtSet ∩ (d-ary bad at
-      the RELEVANT order) ⊆ ⋃_{k≥kmin(n)} daryBadZoneWide, and
-      `TBrick.volume_aggregate_bad_le` applies with that kmin.
+  ✅ (β) **kmin(n) link** DONE 2026-08-24 late lap (@10a8c6e,
+      `TBrickRefine.lean`, axiom-clean), LOG-FREE form: `4·d^kmin <
+      fib(n+1)²` ⇒ `|I_{w++u}| < d^{−(m_d+kmin)}`
+      (`TBrick.volume_append_lt_dpow`, via `volume_append_mul_fib_le` +
+      brick containment `|I_w| ≤ 2d^{−m_d}`); threshold
+      `exists_fib_threshold` (fib(n+1)² → ∞, via `Nat.le_fib_self`).
+      Same commit: bad zones now cover BOTH possible base cells
+      (j_d, j_d+1; coefficient 24d²), survivors are IRRATIONAL
+      (rationals absorbed as a null set), `volume_cfCylinder_ne_zero`
+      discharges hpos, and the survivor-unpacking toolkit is proved:
+      `exists_word_of_mem_goodExtSet`, `range_map_cfDigit_eq` (digit word
+      = u), `abs_blockCount_lt_of_notMem_cfBadZone` (CF side),
+      `TBrick.exists_goodBlock_of_avoid` (x's own new d-ary block good at
+      every k ≥ kmin, in x's definite cell).
   ✅ (γ-COMBINE) DONE 2026-08-24 (`TBrick.lean`, axiom-clean): the measure
       core is assembled.  `exists_mem_notMem_union_of_bounds` (abstract:
       good ≥ ½vol0, bads ≤ p·vol0, q·vol0, p+q<½ ⇒ ∃ x∈G avoiding both) +
@@ -203,10 +212,23 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
       `exists_mem_notMem_of_measure_lt` with M = ½vol(I_w) via
       `exists_C_half_le_volume_goodExtSet`, a = ¼+¼ < ½, gives x ∈ goodExtSet
       avoiding all bad zones.
-  (δ) **Lemma 13 proper**: x lies in a good-length cylinder J=cfCylinder(w++u)
-      with u CF-good; `badBlock_cell_far` gives x's d-ary cells good with
-      margin ≥ 2 ⇒ a sub-cylinder of J is a valid (t or t+1)-brick refining
-      the input brick.  t→t+1 via Prop 12 (ratio 1/(2(t+1))).
+  (δ) **Lemma 13 proper** (NEXT ATTACK — assembly only, all inputs proved):
+      from the irrational survivor x (exists_good_avoiding_bad_of_large +
+      the TBrickRefine toolkit): (1) extract u (exists_word_of_mem_goodExtSet);
+      (2) NEW BRICK: for each d ≤ t (or t+1) choose m'_d maximal with
+      |I_{w++u}| < d^{−m'_d} (nonempty by (β) with k := m'_d − m_d ≥ kmin;
+      well-defined since |I_{w++u}| > 0); Prop 12
+      (`interval_subset_daryCell_two`, needs I_{w++u} ⊆ an interval of that
+      length — use `cfCylinder_subset_uIcc` + `volume_cfCylinder`) gives the
+      ≤2-cell block + ratio 1/(2d); (3) GOODNESS: x's own new block is good
+      (`TBrick.exists_goodBlock_of_avoid` at k) — check the Prop-12 block's
+      cells sit within distance 1 of x's cell so `badBlock_cell_far`
+      covers the second cell; (4) CF goodness of u: bridge
+      `abs_blockCount_lt_of_notMem_cfBadZone` +
+      `blockCount_sub_countOccurrences_bounds` + `range_map_cfDigit_eq`
+      → countOccurrences bound on u for each v ∈ F (→ `CFDiscLt` form).
+      Package as `TBrick.exists_refinement` (statement = repo Lemma 13).
+      t→t+1: extra base via Prop 12 alone (no goodness needed at stage 1).
 
 - (OLD framing, superseded by (α)-(δ)):
   (ii) **kmin(n) link**: good-length extensions J have |J| ≤ 2φ^{-2(n-1)}|I_w|
