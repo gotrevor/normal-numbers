@@ -678,6 +678,46 @@ theorem cfCylinder_subset_Icc_length (w : List ℕ) (hw : w ≠ [])
   · rw [max_sub_min_eq_abs, volume_cfCylinder w hw hpos,
       ENNReal.toReal_ofReal (by positivity), ← hlen, abs_sub_comm]
 
+/-- **Rational-endpoint packaging** for the limit-point argument: a genuine
+cylinder sits between two explicit rationals `P/K` and `P'/(K+K')` (`K = cfK
+w`, `K' = cfK w.dropLast`) whose gap is exactly `1/(K(K+K'))`, and every
+irrational point strictly between them belongs to the cylinder. -/
+theorem cfCylinder_endpoints (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) :
+    ∃ P P' : ℕ,
+      |((P' : ℝ) / ((cfK w : ℝ) + (cfK w.dropLast : ℝ)))
+          - ((P : ℝ) / (cfK w : ℝ))|
+        = 1 / ((cfK w : ℝ) * ((cfK w : ℝ) + (cfK w.dropLast : ℝ))) ∧
+      cfCylinder w ⊆ Set.uIcc ((P : ℝ) / (cfK w : ℝ))
+        ((P' : ℝ) / ((cfK w : ℝ) + (cfK w.dropLast : ℝ))) ∧
+      ∀ x ∈ Set.uIoo ((P : ℝ) / (cfK w : ℝ))
+        ((P' : ℝ) / ((cfK w : ℝ) + (cfK w.dropLast : ℝ))),
+        Irrational x → x ∈ cfCylinder w := by
+  have hE0 : (((cfVal w : ℚ)) : ℝ) = (cfP w : ℝ) / (cfK w : ℝ) := by
+    rw [cfVal_eq_div w hw hpos]
+    push_cast
+    ring
+  have hE1 : (((cfVal (bumpLast w) : ℚ)) : ℝ)
+      = (cfP (bumpLast w) : ℝ) / ((cfK w : ℝ) + (cfK w.dropLast : ℝ)) := by
+    rw [cfVal_eq_div (bumpLast w) (bumpLast_ne_nil w) (bumpLast_pos hpos),
+      cfK_bumpLast hw]
+    push_cast
+    ring
+  refine ⟨cfP w, cfP (bumpLast w), ?_, ?_, ?_⟩
+  · have h := abs_cfVal_sub_bumpLast w hw hpos
+    have hcast : |(((cfVal w : ℚ)) : ℝ) - (((cfVal (bumpLast w) : ℚ)) : ℝ)|
+        = ((|cfVal w - cfVal (bumpLast w)| : ℚ) : ℝ) := by
+      push_cast
+      ring_nf
+    rw [← hE0, ← hE1, abs_sub_comm, hcast, h, cfK_bumpLast hw]
+    push_cast
+    ring_nf
+  · rw [← hE0, ← hE1]
+    exact cfCylinder_subset_uIcc w hw hpos
+  · intro x hx hirr
+    rw [← hE0, ← hE1] at hx
+    exact uIoo_subset_cfCylinder w hw hpos x hx hirr
+
 /-- **Bounded distortion, upper half** (B–Y Lemma 3.2):
 `|I_{wu}| ≤ 2·|I_w|·|I_u|`. -/
 theorem volume_cylinder_append_le (w u : List ℕ) (hw : w ≠ []) (hu : u ≠ [])
