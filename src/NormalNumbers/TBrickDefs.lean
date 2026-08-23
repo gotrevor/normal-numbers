@@ -299,4 +299,146 @@ theorem exists_goodBlock_of_notMem_badZone (d m0 k : ℕ) (hd : 1 ≤ d)
       omega
     rwa [hidx]
 
+/-- Generic geometric union bound: if `volume (S k) ≤ A·ρ^k` with `ρ < 1`,
+the tail union over `k ≥ kmin` has measure `≤ A·ρ^kmin/(1−ρ)`. -/
+theorem volume_iUnion_geom_le {S : ℕ → Set ℝ} {A ρ : ℝ} (hA : 0 ≤ A)
+    (hρ0 : 0 < ρ) (hρ1 : ρ < 1)
+    (h : ∀ k, volume (S k) ≤ ENNReal.ofReal (A * ρ ^ k)) (kmin : ℕ) :
+    volume (⋃ k : ℕ, ⋃ (_ : kmin ≤ k), S k)
+      ≤ ENNReal.ofReal (A * ρ ^ kmin / (1 - ρ)) := by
+  have hsub : (⋃ k : ℕ, ⋃ (_ : kmin ≤ k), S k) ⊆ ⋃ i : ℕ, S (kmin + i) := by
+    intro x hx
+    simp only [Set.mem_iUnion] at hx ⊢
+    obtain ⟨k, hk, hxk⟩ := hx
+    exact ⟨k - kmin, by rwa [Nat.add_sub_cancel' hk]⟩
+  calc volume (⋃ k : ℕ, ⋃ (_ : kmin ≤ k), S k)
+      ≤ volume (⋃ i : ℕ, S (kmin + i)) := measure_mono hsub
+    _ ≤ ∑' i : ℕ, volume (S (kmin + i)) := measure_iUnion_le _
+    _ ≤ ∑' i : ℕ, ENNReal.ofReal (A * ρ ^ kmin * ρ ^ i) := by
+        refine ENNReal.tsum_le_tsum fun i => ?_
+        refine (h (kmin + i)).trans (le_of_eq ?_)
+        rw [pow_add]
+        ring_nf
+    _ = ENNReal.ofReal (A * ρ ^ kmin) * ∑' i : ℕ, ENNReal.ofReal ρ ^ i := by
+        rw [← ENNReal.tsum_mul_left]
+        refine tsum_congr fun i => ?_
+        rw [← ENNReal.ofReal_pow hρ0.le,
+          ← ENNReal.ofReal_mul (by positivity)]
+    _ = ENNReal.ofReal (A * ρ ^ kmin) * (1 - ENNReal.ofReal ρ)⁻¹ := by
+        rw [ENNReal.tsum_geometric]
+    _ = ENNReal.ofReal (A * ρ ^ kmin / (1 - ρ)) := by
+        have h1 : (1 : ENNReal) - ENNReal.ofReal ρ = ENNReal.ofReal (1 - ρ) := by
+          rw [← ENNReal.ofReal_one, ← ENNReal.ofReal_sub _ hρ0.le]
+        rw [h1, ← ENNReal.ofReal_inv_of_pos (by linarith),
+          ← ENNReal.ofReal_mul (by positivity)]
+        rw [div_eq_mul_inv]
+
+/-- The neighbour-widened bad zone: each bad sub-cell together with its two
+neighbours.  Avoiding this zone makes *every* cell within distance 1 of the
+point's own cell good — what a two-cell `τ_d` needs. -/
+noncomputable def daryBadZoneWide (d m0 : ℕ) (j0 : ℤ) (ε : ℝ) (k : ℕ) :
+    Set ℝ :=
+  ⋃ β ∈ badBlocks d k ε,
+    daryCell d (m0 + k)
+      (j0 * d ^ k + blockNatVal d (List.ofFn fun i => (β i : ℕ)) - 1) 3
+
+theorem volume_daryBadZoneWide_le (d m0 : ℕ) (hd : 1 ≤ d) (j0 : ℤ) {ε : ℝ}
+    (hε0 : 0 ≤ ε) (hεd : (d : ℝ) * ε ≤ 1) (k : ℕ) :
+    volume (daryBadZoneWide d m0 j0 ε k)
+      ≤ ENNReal.ofReal
+          (6 * d / d ^ m0 * Real.exp (-((d : ℝ) * ε ^ 2) / 6) ^ k) := by
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd
+  calc volume (daryBadZoneWide d m0 j0 ε k)
+      ≤ ∑ β ∈ badBlocks d k ε,
+          volume (daryCell d (m0 + k)
+            (j0 * d ^ k + blockNatVal d (List.ofFn fun i => (β i : ℕ)) - 1)
+            3) := measure_biUnion_finset_le _ _
+    _ = ∑ _β ∈ badBlocks d k ε,
+          ENNReal.ofReal ((3 : ℝ) / d ^ (m0 + k)) := by
+        refine Finset.sum_congr rfl fun β _ => ?_
+        rw [volume_daryCell d (m0 + k) hd _ 3]
+        norm_num
+    _ = ENNReal.ofReal (((badBlocks d k ε).card : ℝ) * 3 / d ^ (m0 + k)) := by
+        rw [Finset.sum_const, nsmul_eq_mul,
+          ← ENNReal.ofReal_natCast, ← ENNReal.ofReal_mul (by positivity)]
+        congr 1
+        ring
+    _ ≤ ENNReal.ofReal
+          (6 * d / d ^ m0 * Real.exp (-((d : ℝ) * ε ^ 2) / 6) ^ k) := by
+        apply ENNReal.ofReal_le_ofReal
+        have hcard := card_badBlocks_le d k hd hε0 hεd
+        have hexp : Real.exp (-((d : ℝ) * ε ^ 2) / 6) ^ k
+            = Real.exp (-((d : ℝ) * ε ^ 2 * k) / 6) := by
+          rw [← Real.exp_nat_mul]
+          congr 1
+          ring
+        rw [hexp]
+        rw [div_le_iff₀ (by positivity), pow_add]
+        have hpow : (0 : ℝ) < (d : ℝ) ^ m0 := by positivity
+        calc ((badBlocks d k ε).card : ℝ) * 3
+            ≤ (2 * (d : ℝ) ^ (k + 1)
+                * Real.exp (-((d : ℝ) * ε ^ 2 * k) / 6)) * 3 := by
+              have h0 : (0 : ℝ) ≤ 3 := by norm_num
+              nlinarith [Real.exp_pos (-((d : ℝ) * ε ^ 2 * k) / 6)]
+          _ = 6 * d / d ^ m0 * Real.exp (-((d : ℝ) * ε ^ 2 * k) / 6)
+                * (d ^ m0 * d ^ k) := by
+              rw [pow_succ]
+              field_simp
+              ring
+    _ = _ := rfl
+
+/-- Summed widened bad zone over all block lengths `k ≥ kmin`. -/
+theorem volume_iUnion_daryBadZoneWide_le (d m0 : ℕ) (hd : 1 ≤ d) (j0 : ℤ)
+    {ε : ℝ} (hε0 : 0 < ε) (hεd : (d : ℝ) * ε ≤ 1) (kmin : ℕ) :
+    volume (⋃ k : ℕ, ⋃ (_ : kmin ≤ k), daryBadZoneWide d m0 j0 ε k)
+      ≤ ENNReal.ofReal
+          (6 * d / d ^ m0 * Real.exp (-((d : ℝ) * ε ^ 2) / 6) ^ kmin
+            / (1 - Real.exp (-((d : ℝ) * ε ^ 2) / 6))) := by
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd
+  refine volume_iUnion_geom_le (by positivity) (Real.exp_pos _) ?_
+    (fun k => volume_daryBadZoneWide_le d m0 hd j0 hε0.le hεd k) kmin
+  rw [Real.exp_lt_one_iff]
+  have : 0 < (d : ℝ) * ε ^ 2 := by positivity
+  linarith
+
+/-- **Wide avoidance**: if `x` (in the base cell) avoids the widened bad
+zone at length `k`, every bad sub-cell is at distance `≥ 2` from `x`'s own
+sub-cell. -/
+theorem badBlock_cell_far (d m0 k : ℕ) (hd : 1 ≤ d) (j0 : ℤ) {ε : ℝ}
+    {x : ℝ} (hx : x ∈ daryCell d m0 j0 1)
+    (hbad : x ∉ daryBadZoneWide d m0 j0 ε k) :
+    ∀ β ∈ badBlocks d k ε,
+      1 < |(j0 * d ^ k + blockNatVal d (List.ofFn fun i => (β i : ℕ)) : ℤ)
+            - ⌊x * d ^ (m0 + k)⌋| := by
+  intro β hβ
+  by_contra hnear
+  push Not at hnear
+  apply hbad
+  rw [daryBadZoneWide]
+  refine Set.mem_biUnion hβ ?_
+  obtain ⟨-, -, hmem⟩ := floor_subCell_bounds d m0 k hd j0 hx
+  obtain ⟨hml, hmr⟩ := hmem
+  set I : ℤ := j0 * d ^ k + blockNatVal d (List.ofFn fun i => (β i : ℕ))
+    with hI
+  set F : ℤ := ⌊x * d ^ (m0 + k)⌋ with hF
+  have habs : I - 1 ≤ F ∧ F + 1 ≤ I + 2 := by
+    rw [abs_le] at hnear
+    omega
+  have hpow : (0 : ℝ) < (d : ℝ) ^ (m0 + k) := by
+    have : (0 : ℝ) < d := by exact_mod_cast hd
+    positivity
+  constructor
+  · rw [div_le_iff₀ hpow]
+    rw [div_le_iff₀ hpow] at hml
+    have : ((I : ℝ) - 1) ≤ (F : ℝ) := by exact_mod_cast habs.1
+    push_cast
+    push_cast at hml
+    linarith
+  · rw [lt_div_iff₀ hpow]
+    rw [lt_div_iff₀ hpow] at hmr
+    have : ((F : ℝ) + 1) ≤ (I : ℝ) + 2 := by exact_mod_cast habs.2
+    push_cast
+    push_cast at hmr
+    linarith
+
 end NormalNumbers
