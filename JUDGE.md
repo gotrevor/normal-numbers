@@ -122,3 +122,30 @@ file and works the checklist.  Laps never edit this file above the Ledger.
   and Kuzmin `e^{-c√k}` is what materializes, the JUDGE (never a lap)
   weakens the rate to a summable-error form — W4 accepts either · these
   shapes are now the frozen trust surface for the W3 campaign.
+- 2026-08-23 15:05 · **mid-run visit (lap 5 live)** · judged through
+  `6539c55` (textual tier; kernel sweeps owed at close-out — lap live,
+  avoiding build contention) · **W3 COMPLETE at `a7a68b1`, 8 laps,
+  GEOMETRIC rate achieved (C = 8·log 2, ρ = 9/10) — escape valve unused** ·
+  `CFMixing.lean`: only the 4 `sorry` lines removed, statements + anchors
+  character-identical; imports of new proof modules added (in-charter) ·
+  `CFCylinder.lean`/`CFDigitLaw.lean`: 12 more pure privacy lifts,
+  signatures identical, frozen statements untouched · smell scan of the
+  full range: ONE local `set_option maxHeartbeats 1600000 in` on
+  `CFContraction.stepOp_lipschitz` (the analytic crux; scoped to the one
+  theorem, full proof-sketch docstring — 🟡 accepted, revisit if it rots) ·
+  **scope note**: box did NOT self-stop at W3-complete (src/ sorry-free,
+  eligible) — elected to continue into W4 groundwork; discipline good
+  (no fake-frozen scaffolds, ratification requested, per-lemma axiom
+  claims), bounded by the 12-lap breaker; continuation tolerated, close-out
+  will re-scope · **W4 shapes PROVISIONALLY RATIFIED** (box request):
+  `tChain` + `setIntegral_inter_preimage` (s-started identity) ·
+  `gaussMeasure_cylinder_mixing` (exact γ-correlation decay, geometric,
+  `≤ (9/10)^g·4|A|·γ(I_v)` — stronger than the planned Leb-only route,
+  accepted as the W4 engine) · `blockCount`/`variance_blockCount_le`
+  (`≤ (8|v|+80)·n·γ(I_v)`; the factor-2-for-simplicity trade accepted —
+  any n-independent K(v) suffices) · `chebyshev_blockCount` +
+  `chebyshev_blockCount_brick` (the per-stage B–Y `< ¼` inputs; brick
+  version's constant 7 fine) · nit for close-out: `chebyshev_blockCount`
+  docstring still displays `4|v|+80` while the statement says `8|v|+80` —
+  fix the docstring · full ratification (kernel sweep + /lean-review)
+  at close-out.
