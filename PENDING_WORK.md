@@ -191,7 +191,14 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
       (and `vol(I_w) ≠ 0`), ∃ good-length order-n extension of I_w avoiding
       BOTH the CF bad zone (all v∈F) AND the wide d-ary bad zone (all d≤t,
       k≥kmin).  This is the measure-theoretic heart of Lemma 13.
-  (γ-leftover) **choose n₀**: both bad bounds are `< ¼·volume(I_w)` for n ≥ n₀(t,ε)
+  ✅ (γ-leftover) DONE 2026-08-24 (`TBrick.lean`, axiom-clean): the two
+      coefficient thresholds hold eventually — `exists_N_cfCoeff_lt`
+      (14SL/(δ²n) < ¼ for n ≥ N, archimedean), `tendsto_daryCoeff` +
+      `exists_kmin_daryCoeff_lt` (Σ_d 12d²ρ^kmin/(1−ρ) < ¼ for kmin ≥ kmin₀,
+      finite geometric decay).  `exists_good_avoiding_bad_of_large` bundles
+      them: ∃ N kmin₀, ∀ n≥N ∀ kmin≥kmin₀, the surviving good extension
+      exists.  **The entire measure side of Lemma 13 is now UNCONDITIONAL.**
+  (γ-OLDtext) **choose n₀**: both bad bounds are `< ¼·volume(I_w)` for n ≥ n₀(t,ε)
       (d-ary: geometric in kmin(n)→0; CF: O(1/n)→0).  Then
       `exists_mem_notMem_of_measure_lt` with M = ½vol(I_w) via
       `exists_C_half_le_volume_goodExtSet`, a = ¼+¼ < ½, gives x ∈ goodExtSet

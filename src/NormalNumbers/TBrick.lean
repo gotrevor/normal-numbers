@@ -488,4 +488,68 @@ theorem exists_good_avoiding_bad {t : ℕ} (B : TBrick t)
     (hhalf B.w B.hw_ne B.hw_pos n)
     (volume_iUnion_cfBadZone_le_vol B.w B.hw_pos F hF n hn hδ) hB₂
 
+/-- The d-ary coefficient `Σ_d 12d²ρ_d^kmin/(1−ρ_d) → 0` as `kmin → ∞`
+(finite sum, each `ρ_d < 1`). -/
+theorem tendsto_daryCoeff (t : ℕ) {ε : ℝ} (hε0 : 0 < ε) :
+    Filter.Tendsto (fun kmin => ∑ d ∈ Finset.Icc 2 t,
+        12 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε))
+      Filter.atTop (nhds 0) := by
+  have h0 : (0 : ℝ) = ∑ _d ∈ Finset.Icc 2 t, (0 : ℝ) := by simp
+  rw [h0]
+  refine tendsto_finsetSum _ fun d hd => ?_
+  rw [Finset.mem_Icc] at hd
+  have hd1 : 1 ≤ d := le_trans (by norm_num) hd.1
+  have hρ0 : 0 ≤ daryBadRatio d ε := (daryBadRatio_pos d ε).le
+  have hρ1 : daryBadRatio d ε < 1 := daryBadRatio_lt_one hd1 hε0
+  have hkey : (fun kmin => 12 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin
+        / (1 - daryBadRatio d ε))
+      = (fun kmin => (12 * (d : ℝ) ^ 2 / (1 - daryBadRatio d ε))
+        * daryBadRatio d ε ^ kmin) := by
+    funext kmin; ring
+  rw [hkey]
+  simpa using (tendsto_pow_atTop_nhds_zero_of_lt_one hρ0 hρ1).const_mul
+    (12 * (d : ℝ) ^ 2 / (1 - daryBadRatio d ε))
+
+/-- For `kmin` large the d-ary coefficient drops below `¼` (the balance
+threshold). -/
+theorem exists_kmin_daryCoeff_lt (t : ℕ) {ε : ℝ} (hε0 : 0 < ε) :
+    ∃ kmin₀ : ℕ, ∀ kmin ≥ kmin₀, (∑ d ∈ Finset.Icc 2 t,
+      12 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε)) < 1 / 4 := by
+  have h := (tendsto_order.1 (tendsto_daryCoeff t hε0)).2 (1 / 4) (by norm_num)
+  exact Filter.eventually_atTop.1 h
+
+/-- For `n` large the CF discrepancy coefficient `14·SL/(δ²n)` drops below `¼`. -/
+theorem exists_N_cfCoeff_lt (SL : ℝ) (hSL : 0 ≤ SL) {δ : ℝ} (hδ : 0 < δ) :
+    ∃ N : ℕ, ∀ n : ℕ, N ≤ n → 0 < n → 14 * SL / (δ ^ 2 * n) < 1 / 4 := by
+  obtain ⟨N, hN⟩ := exists_nat_gt (56 * SL / δ ^ 2)
+  refine ⟨N, fun n hn hn0 => ?_⟩
+  have hδ2 : (0 : ℝ) < δ ^ 2 := by positivity
+  have hn0' : (0 : ℝ) < n := by exact_mod_cast hn0
+  have hNn : (56 * SL / δ ^ 2) < n := lt_of_lt_of_le hN (by exact_mod_cast hn)
+  have h56 : 56 * SL < δ ^ 2 * n := by
+    rw [div_lt_iff₀ hδ2] at hNn; linarith
+  rw [div_lt_iff₀ (by positivity : (0 : ℝ) < δ ^ 2 * n)]
+  linarith
+
+/-- **Lemma-13 measure core, unconditional for large `n`, `kmin`.** For a
+t-brick with a positive-measure base cylinder, there exist thresholds `N`,
+`kmin₀` beyond which a good-length order-`n` extension of `I_w` avoids both the
+CF discrepancy bad zone and the wide d-ary bad zone.  (The construction's
+schedule supplies `n`, `kmin` past these thresholds.) -/
+theorem exists_good_avoiding_bad_of_large {t : ℕ} (B : TBrick t)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ ε : ℝ}
+    (hδ : 0 < δ) (hε0 : 0 < ε) (hεt : (t : ℝ) * ε ≤ 1)
+    (hpos : volume (cfCylinder B.w) ≠ 0) :
+    ∃ N kmin₀ : ℕ, ∀ n, N ≤ n → 0 < n → ∀ kmin ≥ kmin₀,
+      ∃ C : ℝ, 0 < C ∧ ∃ x ∈ goodExtSet B.w C n,
+        x ∉ (⋃ v ∈ F, cfBadZone B.w v n δ) ∪
+          (⋃ d ∈ Finset.Icc 2 t, ⋃ k : ℕ, ⋃ (_ : kmin ≤ k),
+            daryBadZoneWide d (B.m d) (B.j d) ε k) := by
+  obtain ⟨N, hN⟩ := exists_N_cfCoeff_lt (∑ v ∈ F, (8 * (v.length : ℝ) + 80))
+    (Finset.sum_nonneg fun v _ => by positivity) hδ
+  obtain ⟨kmin₀, hkmin⟩ := exists_kmin_daryCoeff_lt t hε0
+  refine ⟨N, kmin₀, fun n hn hn0 kmin hk => ?_⟩
+  exact exists_good_avoiding_bad B F hF n kmin hn0 hδ hε0 hεt hpos
+    (hN n hn hn0) (hkmin kmin hk)
+
 end NormalNumbers
