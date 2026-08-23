@@ -150,4 +150,105 @@ theorem digitOf_pow_digitAt (b r : ℕ) (hb : 2 ≤ b) (hr : 1 ≤ r)
   rw [hwlen] at this
   rw [this, hgetD]
 
+/-- **Slice extraction**: the value of the length-`L` slice `w[s, s+L)` of a
+digit block `w` is `blockNatVal b w` shifted right by `(len−s−L)` places and
+masked to `L` digits. Generalizes `blockNatVal_digit` (the `L = 1` case)
+from a single digit to an arbitrary contiguous sub-block. Pure list/nat
+arithmetic, digit-independent — the combinatorial core of the
+non-straddling window/slice correspondence in Pillai's theorem. -/
+theorem blockNatVal_slice (b : ℕ) :
+    ∀ (w : List ℕ), (∀ a ∈ w, a < b) → ∀ s L, s + L ≤ w.length →
+      blockNatVal b w / b ^ (w.length - s - L) % b ^ L
+        = blockNatVal b ((w.drop s).take L) := by
+  intro w
+  induction w with
+  | nil =>
+    intro _ s L hsL
+    simp only [List.length_nil, Nat.le_zero, Nat.add_eq_zero_iff] at hsL
+    obtain ⟨rfl, rfl⟩ := hsL
+    simp [blockNatVal]
+  | cons d w ih =>
+    intro hw s L hsL
+    have hbpos : 0 < b := lt_of_le_of_lt (Nat.zero_le d) (hw d List.mem_cons_self)
+    rcases s with _ | s'
+    · rcases L with _ | L'
+      · simp [Nat.mod_one, blockNatVal]
+      · have hL'w : L' ≤ w.length := by
+          simp only [List.length_cons] at hsL; omega
+        simp only [List.drop_zero]
+        have htake : (d :: w).take (L' + 1) = d :: w.take L' := by simp
+        rw [htake]
+        have htklen : (w.take L').length = L' := by
+          rw [List.length_take]; omega
+        conv_rhs => rw [blockNatVal_cons]
+        rw [blockNatVal_cons, htklen]
+        have hlen1 : (d :: w).length - 0 - (L' + 1) = w.length - L' := by
+          simp only [List.length_cons]; omega
+        rw [hlen1]
+        have hpow : b ^ w.length = b ^ (w.length - L') * b ^ L' := by
+          rw [← pow_add]; congr 1; omega
+        have hd : d * b ^ w.length = d * b ^ L' * b ^ (w.length - L') := by
+          rw [hpow]; ring
+        rw [hd, Nat.add_comm (d * b ^ L' * b ^ (w.length - L')),
+          Nat.add_mul_div_right _ _ (pow_pos hbpos _)]
+        have hVlt : blockNatVal b w < b ^ w.length :=
+          blockNatVal_lt b w (fun a ha => hw a (List.mem_cons_of_mem d ha))
+        have hlt1 : blockNatVal b w / b ^ (w.length - L') < b ^ L' := by
+          rw [hpow] at hVlt
+          exact Nat.div_lt_of_lt_mul hVlt
+        have hdlt : d < b := hw d List.mem_cons_self
+        have hpow2 : b ^ (L' + 1) = b * b ^ L' := by ring
+        have hstep : (d + 1) * b ^ L' ≤ b * b ^ L' :=
+          Nat.mul_le_mul_right (b ^ L') (by omega)
+        have hsum_lt : d * b ^ L' + blockNatVal b w / b ^ (w.length - L') < b ^ (L' + 1) := by
+          rw [hpow2]; nlinarith
+        have hIH := ih (fun a ha => hw a (List.mem_cons_of_mem d ha)) 0 L' (by omega)
+        simp only [Nat.sub_zero, List.drop_zero] at hIH
+        rw [Nat.mod_eq_of_lt hlt1] at hIH
+        rw [show blockNatVal b w / b ^ (w.length - L') + d * b ^ L'
+              = d * b ^ L' + blockNatVal b w / b ^ (w.length - L') from by ring,
+          Nat.mod_eq_of_lt hsum_lt, hIH]
+    · simp only [List.length_cons] at hsL
+      have hs'L : s' + L ≤ w.length := by omega
+      have hdrop : (d :: w).drop (s' + 1) = w.drop s' := rfl
+      rw [hdrop]
+      have hlen2 : (d :: w).length - (s' + 1) - L = w.length - s' - L := by
+        simp only [List.length_cons]; omega
+      rw [hlen2, blockNatVal_cons]
+      have hpow2 : b ^ w.length = b ^ (w.length - s' - L) * b ^ (s' + L) := by
+        rw [← pow_add]; congr 1; omega
+      have hd2 : d * b ^ w.length = d * b ^ s' * b ^ L * b ^ (w.length - s' - L) := by
+        rw [hpow2, pow_add]; ring
+      rw [hd2, Nat.add_comm (d * b ^ s' * b ^ L * b ^ (w.length - s' - L)) (blockNatVal b w),
+        Nat.add_mul_div_right _ _ (pow_pos hbpos _), Nat.add_mul_mod_self_right]
+      exact ih (fun a ha => hw a (List.mem_cons_of_mem d ha)) s' L hs'L
+
+/-- **Non-straddling window correspondence** (Pillai's theorem, phase-`s`
+case): for `s + L ≤ r`, a length-`L` window of `y`'s base-`b` digits at
+`[r*q+s, r*q+s+L)` equals `w` iff the `L`-digit slice `[s,s+L)` of `c_q`'s
+`r`-digit base-`b` expansion equals `w` — i.e. iff `c_q`'s value shifted
+right by `r-s-L` and masked to `L` digits equals `blockNatVal b w`. This
+turns "window frequency at phase `s`" into "digit-value frequency at base
+`b^r`", the bridge simple normality at `b^r` acts on. -/
+theorem digitOf_pow_slice_eq_blockNatVal (b r L s q : ℕ) (hb : 2 ≤ b) (hr : 1 ≤ r)
+    (hL : s + L ≤ r) (y : ℝ) (hy : y ∈ Set.Ico (0 : ℝ) 1) :
+    digitOf (b ^ r) y q / b ^ (r - s - L) % b ^ L
+      = blockNatVal b (List.ofFn fun i : Fin L => digitOf b y (r * q + s + i)) := by
+  have hq' := digitOf_pow_eq_blockNatVal b r hb hr y hy q
+  have hwlt : ∀ d ∈ (List.ofFn fun i : Fin r => digitOf b y (r * q + i)), d < b := by
+    intro d hd
+    obtain ⟨i, rfl⟩ := List.mem_ofFn.mp hd
+    exact digitOf_lt b hb y _
+  have hslice := blockNatVal_slice b (List.ofFn fun i : Fin r => digitOf b y (r * q + i))
+    hwlt s L (by rw [List.length_ofFn]; omega)
+  rw [List.length_ofFn] at hslice
+  rw [hq', hslice]
+  congr 1
+  apply List.ext_getElem
+  · simp [List.length_take, List.length_drop, List.length_ofFn]; omega
+  · intro i h1 h2
+    rw [List.getElem_ofFn, List.getElem_take, List.getElem_drop, List.getElem_ofFn]
+    congr 1
+    omega
+
 end NormalNumbers
