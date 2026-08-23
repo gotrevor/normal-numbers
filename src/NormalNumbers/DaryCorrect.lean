@@ -428,4 +428,28 @@ theorem gain_le_mul_nFn (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) {k : 
   -- goal: k * log d ≤ (2 goodC + log 32d) * n_{s+1}
   nlinarith [hgain, mul_le_mul_of_nonneg_left hn1 hlog32d]
 
+/-- **(c4) numerator ratio → 0**: the per-stage digit gain, divided by the word
+length, vanishes.  Squeeze of `gain_le_mul_nFn` (`gain ≤ Cnum·n_{s+1}`, once `d`
+is active) against `n_{s+1}/L_s → 0` (`tendsto_nFn_div_wSched_length`). -/
+theorem tendsto_gain_div_length (d : ℕ) (hd2 : 2 ≤ d) :
+    Filter.Tendsto
+      (fun s => ((mSched (s + 1) d - mSched s d : ℕ) : ℝ) / (wSched s).length)
+      Filter.atTop (nhds 0) := by
+  have hupper : Filter.Tendsto
+      (fun s => ((2 * goodC + Real.log (32 * d)) / Real.log d)
+        * ((nFn (tSched (s + 1)) : ℝ) / (wSched s).length))
+      Filter.atTop (nhds 0) := by
+    have h := tendsto_nFn_div_wSched_length.const_mul
+      ((2 * goodC + Real.log (32 * d)) / Real.log d)
+    simpa using h
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hupper
+    (Filter.Eventually.of_forall (fun s => by positivity)) ?_
+  obtain ⟨s₀, hs₀⟩ := sched_t_tendsto d
+  filter_upwards [Filter.eventually_ge_atTop s₀] with s hs
+  have hdt : d ≤ tSched s := le_trans hs₀ (sched_t_mono hs)
+  obtain ⟨k, hk, -⟩ := xstar_dary_step s d hd2 hdt
+  have hsub : mSched (s + 1) d - mSched s d = k := by omega
+  rw [hsub, ← mul_div_assoc]
+  exact div_le_div_of_nonneg_right (gain_le_mul_nFn s d hd2 hdt hk) (by positivity)
+
 end NormalNumbers
