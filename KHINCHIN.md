@@ -120,7 +120,7 @@ laps off a fully pinned plan):
 |----|---------|------|------|
 | W1 | CF cylinder toolkit: continuant α-algebra (Prop 2), distortion (Lemma 3), lengths, Fibonacci bound, Prop 12 | ~0.8–1.5k lines | low |
 | W2 | digit laws + Markov length substitute for Lemma 5 | ~0.4–0.8k | low |
-| W3 | **the core**: summable CF correlation decay — read KPW's proof first; fallback Kuzmin via Khinchin's book (= Track B's Gauss–Kuzmin flag as a lemma!); fallback vendor erdos1002-lean mixing | ~1.5–3k | **moderate-high** |
+| W3 | **the core**: summable CF correlation decay — route DECIDED, see below | ~1.5–3k | **moderate** |
 | W4 | LD/Chebyshev assembly + b-ary side (Lemmas 8, 9; overlaps Counting/Visits) | ~0.8–1.2k | low |
 | W5 | t-bricks, main lemma (worse constants), schedule, limit x, three correctness proofs, + the Pillai powers-equivalence for "absolutely normal" | ~1.5–2.5k | medium (bookkeeping-dense) |
 | W6 | Khinchin graft: digit caps D_t in the refinement + uniform-integrability bookkeeping, K₀ as tprod | ~0.5–1k | medium (new on paper, ~90% sound) |
@@ -128,13 +128,45 @@ laps off a fully pinned plan):
 **Total ≈ 5.5–10k lines, ~8–16 treadmill laps + a few attended
 scaffold/judge sessions; calendar ≈ 2–4 weeks of campaign time, dominated by
 W3** (estimate confidence ~65%; tail risk = W3 statement-shape + W5
-constant-wrangling).  Pre-flight before any lap: pull KPW 2001 and pin
-Lemma 3.1's proof (it decides W3's route), per the pin-the-statement
-doctrine.  Prize: one artifact = first formalized absolutely-normal number,
-first formalized CF-normal number, first Khinchin-typical witness (the
-conjunction apparently new even on paper) — and a natural reach-out to
-Becher/Yuhjtman/Scheerer.  B2/B3 (ergodicity, Birkhoff) stay a separate
-thread; B5′ does not wait on them.
+constant-wrangling).  Prize: one artifact = first formalized
+absolutely-normal number, first formalized CF-normal number, first
+Khinchin-typical witness (the conjunction apparently new even on paper) —
+and a natural reach-out to Becher/Yuhjtman/Scheerer.  B2/B3 (ergodicity,
+Birkhoff) stay a separate thread; B5′ does not wait on them.
+
+### W3 route — decided 2026-08-23 (pre-flight done)
+
+KPW 2001 has no open-access copy (Springer
+https://link.springer.com/article/10.1007/BF02772607, EZproxy-able if ever
+wanted) — and it is **non-blocking**: Scheerer's §2 (pin note in `papers/`)
+shows the standard chain is Philipp-1967 exponential ψ-mixing + a generic
+mixing-LD theorem, both heavy imports, and reading it crystallized a fully
+**self-contained elementary route**:
+
+1. The conditional density of `Tⁿx` given `x ∈ I_w` is exactly
+   `h_t(y) = (1+t)/(1+ty)²` with `t = qₙ₋₁/qₙ ∈ [0,1]` — two lines from the
+   `cylMap` LFT algebra (W1), and `h_t ∈ [1/2, 2]` on the unit square
+   (`tailDensity` in `CFDefs.lean`).
+2. The transfer operator preserves the cone of `h_t`-mixtures
+   (`L h_t = Σₖ P(a=k|t) · h_{1/(k+t)}` — conditioning on one more digit),
+   and a Lévy-style ratio-oscillation argument contracts the density
+   envelope geometrically (fallback: Kuzmin's `e^{-c√n}` from Khinchin's
+   book ch. III — still summable, still sufficient).
+3. Summable covariance decay for cylinder events + the W1 distortion lemma
+   (conditioned version) + **Chebyshev** give the per-stage bad-measure
+   `< ¼` bound — no Philipp, no MPR, no KPW, no exponential LD anywhere.
+
+Bonus: step 2's statement *is* a quantitative Gauss–Kuzmin theorem, so W3
+plants Track B's B4 flag as a lemma of the expedition.
+
+### Staged so far (2026-08-23)
+
+- **W1 scaffold LIVE**: `CFDefs.lean` (gaussMap, cfDigit, cfK/cfP
+  continuants, cfVal, cfCylinder, gaussMeasure, cylMap, tailDensity — all
+  real bodies) + `CFCylinder.lean` (12 sorry'd statements: Euler gluing,
+  monotonicity, quasi-multiplicativity, Fibonacci bound, `pₙ/qₙ`, cylinder
+  volume, distortion ×2, density window, branch-ratio).  Builds green on
+  v4.33.1; 4 kernel-`decide`/`norm_num` anchors frozen with the statements.
 
 ## Formalization landscape (surveyed 2026-08-23; greps + searches, not proofs)
 

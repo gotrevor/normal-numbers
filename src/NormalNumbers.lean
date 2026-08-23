@@ -8,4 +8,6 @@ import NormalNumbers.Bridge
 import NormalNumbers.Wall
 import NormalNumbers.LnTwo
 import NormalNumbers.StonehamArith
+import NormalNumbers.CFDefs
+import NormalNumbers.CFCylinder
 import NormalNumbers.Stoneham
