@@ -88,17 +88,18 @@ lemma daryBadRatio_lt_one {d : ℕ} (hd : 1 ≤ d) {ε : ℝ} (hε0 : 0 < ε) :
   have : 0 < (d : ℝ) * ε ^ 2 := by positivity
   linarith
 
-/-- **Aggregate wide d-ary bad zone bound.** Over all bases `2 ≤ d ≤ t` and
-all block lengths `k ≥ kmin`, the union of wide d-ary bad zones (each inside
-its own order-`m0 d` cell at index `j0 d`) has measure at most a finite sum
-of geometric-in-`kmin` terms — one per base. -/
+/-- **Aggregate wide d-ary bad zone bound.** Over all bases `2 ≤ d ≤ t`, both
+possible base cells `j0 d` and `j0 d + 1` (a brick's `σ_d` may be two
+consecutive cells and the surviving point may lie in either), and all block
+lengths `k ≥ kmin`, the union of wide d-ary bad zones has measure at most a
+finite sum of geometric-in-`kmin` terms — one per base. -/
 theorem volume_aggregate_daryBadZoneWide_le
     (t kmin : ℕ) {ε : ℝ} (hε0 : 0 < ε) (hεt : (t : ℝ) * ε ≤ 1)
     (m0 : ℕ → ℕ) (j0 : ℕ → ℤ) :
-    volume (⋃ d ∈ Finset.Icc 2 t, ⋃ k : ℕ, ⋃ (_ : kmin ≤ k),
-        daryBadZoneWide d (m0 d) (j0 d) ε k)
+    volume (⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+        ⋃ (_ : kmin ≤ k), daryBadZoneWide d (m0 d) (j0 d + i) ε k)
       ≤ ∑ d ∈ Finset.Icc 2 t, ENNReal.ofReal
-          (6 * d / d ^ (m0 d) * daryBadRatio d ε ^ kmin
+          (12 * d / d ^ (m0 d) * daryBadRatio d ε ^ kmin
             / (1 - daryBadRatio d ε)) := by
   refine (measure_biUnion_finset_le _ _).trans (Finset.sum_le_sum ?_)
   intro d hd
@@ -108,7 +109,28 @@ theorem volume_aggregate_daryBadZoneWide_le
     have hdt : (d : ℝ) ≤ t := by exact_mod_cast hd.2
     calc (d : ℝ) * ε ≤ (t : ℝ) * ε := by gcongr
       _ ≤ 1 := hεt
-  exact volume_iUnion_daryBadZoneWide_le d (m0 d) hd1 (j0 d) hε0 hdε kmin
+  have hone : ∀ i : ℕ,
+      volume (⋃ k : ℕ, ⋃ (_ : kmin ≤ k),
+          daryBadZoneWide d (m0 d) (j0 d + i) ε k)
+        ≤ ENNReal.ofReal (6 * d / d ^ (m0 d) * daryBadRatio d ε ^ kmin
+            / (1 - daryBadRatio d ε)) := fun i =>
+    volume_iUnion_daryBadZoneWide_le d (m0 d) hd1 (j0 d + i) hε0 hdε kmin
+  calc volume (⋃ i ∈ Finset.range 2, ⋃ k : ℕ, ⋃ (_ : kmin ≤ k),
+        daryBadZoneWide d (m0 d) (j0 d + i) ε k)
+      ≤ ∑ i ∈ Finset.range 2, volume (⋃ k : ℕ, ⋃ (_ : kmin ≤ k),
+          daryBadZoneWide d (m0 d) (j0 d + i) ε k) :=
+        measure_biUnion_finset_le _ _
+    _ ≤ ∑ _i ∈ Finset.range 2, ENNReal.ofReal
+          (6 * d / d ^ (m0 d) * daryBadRatio d ε ^ kmin
+            / (1 - daryBadRatio d ε)) :=
+        Finset.sum_le_sum fun i _ => hone i
+    _ = ENNReal.ofReal (12 * d / d ^ (m0 d) * daryBadRatio d ε ^ kmin
+          / (1 - daryBadRatio d ε)) := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul,
+          show ((2 : ℕ) : ENNReal) = ENNReal.ofReal (2 : ℝ) by simp,
+          ← ENNReal.ofReal_mul (by norm_num)]
+        congr 1
+        ring
 
 /-- **The d-ary side of the Lemma-13 balance.** For a t-brick `B`, the
 aggregate wide d-ary bad zone (all bases `2 ≤ d ≤ t`, all block lengths
@@ -118,10 +140,10 @@ terms.  Since each term `→ 0` as `kmin → ∞`, so does the constant: the d-a
 bad mass is eventually an arbitrarily small fraction of `|I_w|`. -/
 theorem TBrick.volume_aggregate_bad_le {t : ℕ} (B : TBrick t)
     {ε : ℝ} (hε0 : 0 < ε) (hεt : (t : ℝ) * ε ≤ 1) (kmin : ℕ) :
-    volume (⋃ d ∈ Finset.Icc 2 t, ⋃ k : ℕ, ⋃ (_ : kmin ≤ k),
-        daryBadZoneWide d (B.m d) (B.j d) ε k)
+    volume (⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+        ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
       ≤ (∑ d ∈ Finset.Icc 2 t, ENNReal.ofReal
-          (12 * d ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε)))
+          (24 * d ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε)))
         * volume (cfCylinder B.w) := by
   refine (volume_aggregate_daryBadZoneWide_le t kmin hε0 hεt B.m B.j).trans ?_
   rw [Finset.sum_mul]
@@ -135,29 +157,29 @@ theorem TBrick.volume_aggregate_bad_le {t : ℕ} (B : TBrick t)
   have hden : 0 < 1 - daryBadRatio d ε := by linarith
   -- split the per-base bound as `(12 d² ρ^kmin/(1−ρ)) · d^{-m_d}`, then use
   -- the brick ratio `d^{-m_d} ≤ 2d·|I_w|`.
-  have hsplit : (6 * (d : ℝ) / d ^ (B.m d) * daryBadRatio d ε ^ kmin
+  have hsplit : (12 * (d : ℝ) / d ^ (B.m d) * daryBadRatio d ε ^ kmin
         / (1 - daryBadRatio d ε))
-      = (6 * d * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε))
+      = (12 * d * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε))
         * ((d : ℝ) ^ (B.m d))⁻¹ := by
     ring
-  have hcoef_nonneg : 0 ≤ 6 * (d : ℝ) * daryBadRatio d ε ^ kmin
+  have hcoef_nonneg : 0 ≤ 12 * (d : ℝ) * daryBadRatio d ε ^ kmin
       / (1 - daryBadRatio d ε) := by positivity
-  calc ENNReal.ofReal (6 * d / d ^ (B.m d) * daryBadRatio d ε ^ kmin
+  calc ENNReal.ofReal (12 * d / d ^ (B.m d) * daryBadRatio d ε ^ kmin
           / (1 - daryBadRatio d ε))
-      = ENNReal.ofReal (6 * d * daryBadRatio d ε ^ kmin
+      = ENNReal.ofReal (12 * d * daryBadRatio d ε ^ kmin
             / (1 - daryBadRatio d ε))
           * ENNReal.ofReal ((d : ℝ) ^ (B.m d))⁻¹ := by
         rw [hsplit, ENNReal.ofReal_mul hcoef_nonneg]
-    _ ≤ ENNReal.ofReal (6 * d * daryBadRatio d ε ^ kmin
+    _ ≤ ENNReal.ofReal (12 * d * daryBadRatio d ε ^ kmin
             / (1 - daryBadRatio d ε))
           * (ENNReal.ofReal (2 * d) * volume (cfCylinder B.w)) := by
         gcongr
         exact B.hratio d hd.1 hd.2
-    _ = ENNReal.ofReal (12 * d ^ 2 * daryBadRatio d ε ^ kmin
+    _ = ENNReal.ofReal (24 * d ^ 2 * daryBadRatio d ε ^ kmin
             / (1 - daryBadRatio d ε)) * volume (cfCylinder B.w) := by
-        have hreal : (6 * (d : ℝ) * daryBadRatio d ε ^ kmin
+        have hreal : (12 * (d : ℝ) * daryBadRatio d ε ^ kmin
               / (1 - daryBadRatio d ε)) * (2 * d)
-            = 12 * d ^ 2 * daryBadRatio d ε ^ kmin
+            = 24 * d ^ 2 * daryBadRatio d ε ^ kmin
               / (1 - daryBadRatio d ε) := by
           ring
         rw [← mul_assoc, ← ENNReal.ofReal_mul hcoef_nonneg, hreal]
@@ -451,12 +473,12 @@ theorem exists_good_avoiding_bad {t : ℕ} (B : TBrick t)
     (hεt : (t : ℝ) * ε ≤ 1) (hpos : volume (cfCylinder B.w) ≠ 0)
     (hCF : 14 * (∑ v ∈ F, (8 * (v.length : ℝ) + 80)) / (δ ^ 2 * n) < 1 / 4)
     (hdary : (∑ d ∈ Finset.Icc 2 t,
-        12 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε))
+        24 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε))
       < 1 / 4) :
-    ∃ C : ℝ, 0 < C ∧ ∃ x ∈ goodExtSet B.w C n,
+    ∃ C : ℝ, 0 < C ∧ ∃ x ∈ goodExtSet B.w C n, Irrational x ∧
       x ∉ (⋃ v ∈ F, cfBadZone B.w v n δ) ∪
-        (⋃ d ∈ Finset.Icc 2 t, ⋃ k : ℕ, ⋃ (_ : kmin ≤ k),
-          daryBadZoneWide d (B.m d) (B.j d) ε k) := by
+        (⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+          ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k) := by
   obtain ⟨C, hC, hhalf⟩ := exists_C_half_le_volume_goodExtSet
   refine ⟨C, hC, ?_⟩
   -- finiteness of the base cylinder
@@ -466,7 +488,7 @@ theorem exists_good_avoiding_bad {t : ℕ} (B : TBrick t)
     rw [Real.volume_Ioo] at h1
     exact (lt_of_le_of_lt h1 ENNReal.ofReal_lt_top).ne
   -- per-base nonnegativity of the d-ary summand
-  have hxd : ∀ d ∈ Finset.Icc 2 t, 0 ≤ 12 * (d : ℝ) ^ 2
+  have hxd : ∀ d ∈ Finset.Icc 2 t, 0 ≤ 24 * (d : ℝ) ^ 2
       * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε) := by
     intro d hd
     rw [Finset.mem_Icc] at hd
@@ -481,18 +503,40 @@ theorem exists_good_avoiding_bad {t : ℕ} (B : TBrick t)
   have hpCF : 0 ≤ 14 * (∑ v ∈ F, (8 * (v.length : ℝ) + 80)) / (δ ^ 2 * n) :=
     div_nonneg (mul_nonneg (by norm_num)
       (Finset.sum_nonneg fun v _ => by positivity)) (by positivity)
-  have hqD : 0 ≤ ∑ d ∈ Finset.Icc 2 t, 12 * (d : ℝ) ^ 2
+  have hqD : 0 ≤ ∑ d ∈ Finset.Icc 2 t, 24 * (d : ℝ) ^ 2
       * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε) :=
     Finset.sum_nonneg hxd
-  exact exists_mem_notMem_union_of_bounds hpCF hqD (by linarith) hpos hwfin
-    (hhalf B.w B.hw_ne B.hw_pos n)
-    (volume_iUnion_cfBadZone_le_vol B.w B.hw_pos F hF n hn hδ) hB₂
+  -- absorb the (null) rationals into the d-ary bad zone so the survivor is
+  -- irrational (`Irrational x` is by definition `x ∉ Set.range ((↑) : ℚ → ℝ)`)
+  have hB₂' : volume ((⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+        ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
+        ∪ Set.range ((↑) : ℚ → ℝ))
+      ≤ ENNReal.ofReal (∑ d ∈ Finset.Icc 2 t, 24 * (d : ℝ) ^ 2
+          * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε))
+        * volume (cfCylinder B.w) := by
+    calc volume ((⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+          ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
+          ∪ Set.range ((↑) : ℚ → ℝ))
+        ≤ volume (⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+            ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
+          + volume (Set.range ((↑) : ℚ → ℝ)) := measure_union_le _ _
+      _ = volume (⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+            ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k) := by
+          rw [(Set.countable_range _).measure_zero, add_zero]
+      _ ≤ _ := hB₂
+  obtain ⟨x, hxG, hxB⟩ := exists_mem_notMem_union_of_bounds hpCF hqD
+    (by linarith) hpos hwfin (hhalf B.w B.hw_ne B.hw_pos n)
+    (volume_iUnion_cfBadZone_le_vol B.w B.hw_pos F hF n hn hδ) hB₂'
+  refine ⟨x, hxG, fun hrat => hxB (Or.inr (Or.inr hrat)), fun hmem => ?_⟩
+  rcases hmem with h | h
+  · exact hxB (Or.inl h)
+  · exact hxB (Or.inr (Or.inl h))
 
 /-- The d-ary coefficient `Σ_d 12d²ρ_d^kmin/(1−ρ_d) → 0` as `kmin → ∞`
 (finite sum, each `ρ_d < 1`). -/
 theorem tendsto_daryCoeff (t : ℕ) {ε : ℝ} (hε0 : 0 < ε) :
     Filter.Tendsto (fun kmin => ∑ d ∈ Finset.Icc 2 t,
-        12 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε))
+        24 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε))
       Filter.atTop (nhds 0) := by
   have h0 : (0 : ℝ) = ∑ _d ∈ Finset.Icc 2 t, (0 : ℝ) := by simp
   rw [h0]
@@ -501,20 +545,20 @@ theorem tendsto_daryCoeff (t : ℕ) {ε : ℝ} (hε0 : 0 < ε) :
   have hd1 : 1 ≤ d := le_trans (by norm_num) hd.1
   have hρ0 : 0 ≤ daryBadRatio d ε := (daryBadRatio_pos d ε).le
   have hρ1 : daryBadRatio d ε < 1 := daryBadRatio_lt_one hd1 hε0
-  have hkey : (fun kmin => 12 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin
+  have hkey : (fun kmin => 24 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin
         / (1 - daryBadRatio d ε))
-      = (fun kmin => (12 * (d : ℝ) ^ 2 / (1 - daryBadRatio d ε))
+      = (fun kmin => (24 * (d : ℝ) ^ 2 / (1 - daryBadRatio d ε))
         * daryBadRatio d ε ^ kmin) := by
     funext kmin; ring
   rw [hkey]
   simpa using (tendsto_pow_atTop_nhds_zero_of_lt_one hρ0 hρ1).const_mul
-    (12 * (d : ℝ) ^ 2 / (1 - daryBadRatio d ε))
+    (24 * (d : ℝ) ^ 2 / (1 - daryBadRatio d ε))
 
 /-- For `kmin` large the d-ary coefficient drops below `¼` (the balance
 threshold). -/
 theorem exists_kmin_daryCoeff_lt (t : ℕ) {ε : ℝ} (hε0 : 0 < ε) :
     ∃ kmin₀ : ℕ, ∀ kmin ≥ kmin₀, (∑ d ∈ Finset.Icc 2 t,
-      12 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε)) < 1 / 4 := by
+      24 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε)) < 1 / 4 := by
   have h := (tendsto_order.1 (tendsto_daryCoeff t hε0)).2 (1 / 4) (by norm_num)
   exact Filter.eventually_atTop.1 h
 
@@ -541,10 +585,10 @@ theorem exists_good_avoiding_bad_of_large {t : ℕ} (B : TBrick t)
     (hδ : 0 < δ) (hε0 : 0 < ε) (hεt : (t : ℝ) * ε ≤ 1)
     (hpos : volume (cfCylinder B.w) ≠ 0) :
     ∃ N kmin₀ : ℕ, ∀ n, N ≤ n → 0 < n → ∀ kmin ≥ kmin₀,
-      ∃ C : ℝ, 0 < C ∧ ∃ x ∈ goodExtSet B.w C n,
+      ∃ C : ℝ, 0 < C ∧ ∃ x ∈ goodExtSet B.w C n, Irrational x ∧
         x ∉ (⋃ v ∈ F, cfBadZone B.w v n δ) ∪
-          (⋃ d ∈ Finset.Icc 2 t, ⋃ k : ℕ, ⋃ (_ : kmin ≤ k),
-            daryBadZoneWide d (B.m d) (B.j d) ε k) := by
+          (⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+            ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k) := by
   obtain ⟨N, hN⟩ := exists_N_cfCoeff_lt (∑ v ∈ F, (8 * (v.length : ℝ) + 80))
     (Finset.sum_nonneg fun v _ => by positivity) hδ
   obtain ⟨kmin₀, hkmin⟩ := exists_kmin_daryCoeff_lt t hε0

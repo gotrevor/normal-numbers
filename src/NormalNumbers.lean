@@ -25,4 +25,5 @@ import NormalNumbers.CFConcat
 import NormalNumbers.TBrickDefs
 import NormalNumbers.CFWordBridge
 import NormalNumbers.TBrick
+import NormalNumbers.TBrickRefine
 import NormalNumbers.Stoneham
