@@ -961,7 +961,7 @@ theorem cell_visits_lower (b : ℕ) (hb : 0 < b) (x : ℝ) (K k w T n : ℕ)
   -- the two filters partition range n
   have hpart : ((Finset.range n).filter P).card
       + ((Finset.range n).filter (fun j => ¬ P j)).card = n := by
-    rw [Finset.filter_card_add_filter_neg_card_eq_card, Finset.card_range]
+    rw [Finset.card_filter_add_card_filter_not, Finset.card_range]
   -- assemble
   rw [hA]
   have hchain : ((Finset.range n).filter (fun j => ¬ P j)).card * (N - T)
@@ -980,5 +980,289 @@ theorem cell_visits_lower (b : ℕ) (hb : 0 < b) (x : ℝ) (K k w T n : ℕ)
         + b ^ k * ((F n + (K - k)) * N) := by omega
     _ = b ^ k * (N * (F n + (K - k)))
         + ((Finset.range n).filter P).card * (N - T) := by ring
+
+/-! ### The squeeze: cell frequencies converge to cell length -/
+
+set_option maxHeartbeats 1000000 in
+/-- **Core of the hot-spot lemma**: a uniform eventual upper bound `C/bᴷ`
+on every scale-`K` cell's visit frequency forces every fixed cell's
+frequency to converge to its exact length `1/bᵏ`. -/
+theorem tendsto_cell_of_visit_upper (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (C : ℝ)
+    (h : ∀ K m : ℕ, m < b ^ K → ∀ᶠ n in atTop,
+      (visitCount (orbit b x) ((m : ℝ) / (b : ℝ) ^ K)
+          ((m + 1 : ℝ) / (b : ℝ) ^ K) n : ℝ) / n ≤ C / (b : ℝ) ^ K)
+    (k w : ℕ) (hk1 : 1 ≤ k) (hw : w < b ^ k) :
+    Tendsto (fun n => (visitCount (orbit b x) ((w : ℝ) / (b : ℝ) ^ k)
+        ((w + 1 : ℝ) / (b : ℝ) ^ k) n : ℝ) / n) atTop
+      (nhds (1 / (b : ℝ) ^ k)) := by
+  classical
+  have hb0 : (0 : ℕ) < b := by omega
+  have hbR : (1 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  have hbk : (0 : ℝ) < (b : ℝ) ^ k := by positivity
+  have hbk1 : (1 : ℝ) ≤ (b : ℝ) ^ k := one_le_pow₀ hbR.le
+  -- the constant is at least 1 (apply the hypothesis to the unit cell)
+  have hC1 : (1 : ℝ) ≤ C := by
+    have h00 := h 0 0 (by norm_num)
+    obtain ⟨n, hn1, hnC⟩ := ((eventually_ge_atTop 1).and h00).exists
+    have hv : visitCount (orbit b x) (((0 : ℕ) : ℝ) / (b : ℝ) ^ 0)
+        ((((0 : ℕ) : ℝ) + 1) / (b : ℝ) ^ 0) n = n := by
+      unfold visitCount
+      rw [Finset.filter_true_of_mem, Finset.card_range]
+      intro t _
+      simp only [pow_zero, Nat.cast_zero, zero_div, Set.mem_Ico]
+      constructor
+      · exact Int.fract_nonneg _
+      · rw [zero_add, div_one]
+        exact Int.fract_lt_one _
+    rw [hv] at hnC
+    have hn0 : (0 : ℝ) < n := by exact_mod_cast hn1
+    rw [div_self hn0.ne', pow_zero, div_one] at hnC
+    exact hnC
+  have hC0 : (0 : ℝ) < C := lt_of_lt_of_le one_pos hC1
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  set δ := ε / 5 with hδdef
+  have hδ : 0 < δ := by positivity
+  -- choose the window size K
+  obtain ⟨N₀, hN₀⟩ := exists_nat_gt
+    (max ((2 * k * C) / δ ^ 3) (1 / (δ * (b : ℝ) ^ k)))
+  set K := max (2 * k) (N₀ + k) with hKdef
+  set N := K - k + 1 with hNdef
+  have hk2K : 2 * k ≤ K := le_max_left _ _
+  have hkK : k ≤ K := by omega
+  have hN₀N : N₀ ≤ N := by
+    have : N₀ + k ≤ K := le_max_right _ _
+    omega
+  have hN1 : 1 ≤ N := by omega
+  have hNR : (0 : ℝ) < (N : ℕ) := by exact_mod_cast hN1
+  have hNge : (N₀ : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN₀N
+  have hNbig : max ((2 * k * C) / δ ^ 3) (1 / (δ * (b : ℝ) ^ k)) < (N : ℝ) :=
+    lt_of_lt_of_le hN₀ hNge
+  have hc3 : 2 * k * C ≤ δ ^ 3 * N := by
+    have h1 : (2 * k * C) / δ ^ 3 < (N : ℝ) :=
+      lt_of_le_of_lt (le_max_left _ _) hNbig
+    have hδ3 : (0 : ℝ) < δ ^ 3 := by positivity
+    rw [div_lt_iff₀ hδ3] at h1
+    linarith
+  have hc2 : 1 ≤ δ * ((N : ℝ) * (b : ℝ) ^ k) := by
+    have h1 : 1 / (δ * (b : ℝ) ^ k) < (N : ℝ) :=
+      lt_of_le_of_lt (le_max_right _ _) hNbig
+    have hpos : (0 : ℝ) < δ * (b : ℝ) ^ k := by positivity
+    rw [div_lt_iff₀ hpos] at h1
+    linarith [h1]
+  -- the deviation threshold
+  set T := ⌈δ * ((N : ℝ) * (b : ℝ) ^ k)⌉₊ with hTdef
+  have hT_lb : δ * ((N : ℝ) * (b : ℝ) ^ k) ≤ (T : ℝ) := Nat.le_ceil _
+  have hT_ub : (T : ℝ) ≤ 2 * δ * ((N : ℝ) * (b : ℝ) ^ k) := by
+    have := Nat.ceil_lt_add_one
+      (by positivity : (0:ℝ) ≤ δ * ((N : ℝ) * (b : ℝ) ^ k))
+    have h2 : (T : ℝ) < δ * ((N : ℝ) * (b : ℝ) ^ k) + 1 := this
+    nlinarith [hc2]
+  have hT1 : 1 ≤ T := by
+    rw [hTdef, Nat.one_le_ceil_iff]
+    positivity
+  clear_value T
+  clear_value N
+  clear_value K
+  -- the bad-set is small (Chebyshev)
+  have hbadcard : ((badSet b K k w T).card : ℝ) * ((T : ℝ) ^ 2)
+      ≤ 2 * k * (N : ℝ) * (b : ℝ) ^ (K + k) := by
+    have := card_badSet_le b K k w T hb0 hw hk2K hk1
+    rw [← hNdef] at this
+    calc ((badSet b K k w T).card : ℝ) * ((T : ℝ) ^ 2)
+        = ((T ^ 2 * (badSet b K k w T).card : ℕ) : ℝ) := by push_cast; ring
+      _ ≤ ((2 * k * N * b ^ (K + k) : ℕ) : ℝ) := by exact_mod_cast this
+      _ = 2 * k * (N : ℝ) * (b : ℝ) ^ (K + k) := by push_cast; ring
+  -- key consequence: total bad-cell frequency is at most δ
+  have hkey : ((badSet b K k w T).card : ℝ) * (C / (b : ℝ) ^ K) ≤ δ := by
+    have hbK : (0 : ℝ) < (b : ℝ) ^ K := by positivity
+    have hgoal : ((badSet b K k w T).card : ℝ) * C ≤ δ * (b : ℝ) ^ K := by
+        have hT2 : (δ * ((N : ℝ) * (b : ℝ) ^ k)) ^ 2 ≤ (T : ℝ) ^ 2 := by
+          have h0 : (0:ℝ) ≤ δ * ((N : ℝ) * (b : ℝ) ^ k) := by positivity
+          exact pow_le_pow_left₀ h0 hT_lb 2
+        have hcard0 : (0 : ℝ) ≤ ((badSet b K k w T).card : ℝ) :=
+          Nat.cast_nonneg _
+        have hE : ((badSet b K k w T).card : ℝ)
+            * (δ ^ 2 * (N : ℝ) ^ 2 * ((b : ℝ) ^ k) ^ 2)
+            ≤ 2 * k * (N : ℝ) * (b : ℝ) ^ (K + k) := by
+          calc ((badSet b K k w T).card : ℝ)
+              * (δ ^ 2 * (N : ℝ) ^ 2 * ((b : ℝ) ^ k) ^ 2)
+              = ((badSet b K k w T).card : ℝ)
+                  * (δ * ((N : ℝ) * (b : ℝ) ^ k)) ^ 2 := by ring
+            _ ≤ ((badSet b K k w T).card : ℝ) * (T : ℝ) ^ 2 :=
+                mul_le_mul_of_nonneg_left hT2 hcard0
+            _ ≤ 2 * k * (N : ℝ) * (b : ℝ) ^ (K + k) := hbadcard
+        have hpow : (b : ℝ) ^ (K + k) = (b : ℝ) ^ K * (b : ℝ) ^ k := pow_add _ _ _
+        -- multiply the target by the positive quantity δ²·N·b^{2k} and compare
+        have hmulpos : (0 : ℝ) < δ ^ 2 * (N : ℝ) * ((b : ℝ) ^ k) ^ 2 := by
+          positivity
+        refine le_of_mul_le_mul_right ?_ hmulpos
+        calc ((badSet b K k w T).card : ℝ) * C
+              * (δ ^ 2 * (N : ℝ) * ((b : ℝ) ^ k) ^ 2)
+            = C / (N : ℝ) * (((badSet b K k w T).card : ℝ)
+                * (δ ^ 2 * (N : ℝ) ^ 2 * ((b : ℝ) ^ k) ^ 2)) := by
+              field_simp
+              try ring
+          _ ≤ C / (N : ℝ) * (2 * k * (N : ℝ) * (b : ℝ) ^ (K + k)) := by
+              apply mul_le_mul_of_nonneg_left hE
+              positivity
+          _ = 2 * k * C * ((b : ℝ) ^ K * (b : ℝ) ^ k) := by
+              rw [hpow]
+              field_simp
+              try ring
+          _ ≤ δ ^ 3 * (N : ℝ) * ((b : ℝ) ^ K * (b : ℝ) ^ k) := by
+              apply mul_le_mul_of_nonneg_right hc3
+              positivity
+          _ ≤ δ * (b : ℝ) ^ K * (δ ^ 2 * (N : ℝ) * ((b : ℝ) ^ k) ^ 2) := by
+              have hsq : (b : ℝ) ^ k ≤ ((b : ℝ) ^ k) ^ 2 := by
+                nlinarith [hbk1, hbk]
+              nlinarith [mul_le_mul_of_nonneg_left hsq
+                (by positivity : (0 : ℝ) ≤ δ ^ 3 * (N : ℝ) * (b : ℝ) ^ K)]
+    calc ((badSet b K k w T).card : ℝ) * (C / (b : ℝ) ^ K)
+        = ((badSet b K k w T).card : ℝ) * C / (b : ℝ) ^ K := by ring
+      _ ≤ δ * (b : ℝ) ^ K / (b : ℝ) ^ K :=
+          div_le_div_of_nonneg_right hgoal hbK.le
+      _ = δ := by field_simp
+  -- eventual facts
+  have hE1 : ∀ᶠ n in atTop, ∀ m ∈ badSet b K k w T,
+      (visitCount (orbit b x) ((m : ℝ) / (b : ℝ) ^ K)
+        ((m + 1 : ℝ) / (b : ℝ) ^ K) n : ℝ) / n ≤ C / (b : ℝ) ^ K := by
+    rw [eventually_all_finset]
+    intro m hm
+    have hmlt : m < b ^ K := by
+      have := Finset.mem_filter.mp hm
+      exact Finset.mem_range.mp this.1
+    exact h K m hmlt
+  have hE2 : ∀ᶠ n : ℕ in atTop, 1 ≤ n := eventually_ge_atTop 1
+  have hE3 : ∀ᶠ n : ℕ in atTop, ((K : ℝ)) / n < δ :=
+    (tendsto_const_div_atTop_nhds_zero_nat (K : ℝ)).eventually_lt_const hδ
+  have hev : ∀ᶠ n in atTop, dist ((visitCount (orbit b x)
+      ((w : ℝ) / (b : ℝ) ^ k) ((w + 1 : ℝ) / (b : ℝ) ^ k) n : ℝ) / n)
+      (1 / (b : ℝ) ^ k) < ε := by
+    filter_upwards [hE1, hE2, hE3] with n hbadv hn1 hKn
+    set An := (visitCount (orbit b x) ((w : ℝ) / (b : ℝ) ^ k)
+      ((w + 1 : ℝ) / (b : ℝ) ^ k) n : ℕ) with hAndef
+    set Bn := ((Finset.range n).filter
+      fun j => cellAt b x K j ∈ badSet b K k w T).card with hBndef
+    clear_value An Bn
+    have hn0 : (0 : ℝ) < n := by exact_mod_cast hn1
+    -- bad visits are rare
+    have hBn : (Bn : ℝ) ≤ δ * n := by
+      have hident := card_cellAt_mem b hb0 x K n (badSet b K k w T)
+      have hsum : (Bn : ℝ) / n = ∑ m ∈ badSet b K k w T,
+          (visitCount (orbit b x) ((m : ℝ) / (b : ℝ) ^ K)
+            ((m + 1 : ℝ) / (b : ℝ) ^ K) n : ℝ) / n := by
+        rw [hBndef, hident]
+        push_cast
+        rw [Finset.sum_div]
+      have hle : (Bn : ℝ) / n ≤ ((badSet b K k w T).card : ℝ)
+          * (C / (b : ℝ) ^ K) := by
+        rw [hsum]
+        calc ∑ m ∈ badSet b K k w T,
+              (visitCount (orbit b x) ((m : ℝ) / (b : ℝ) ^ K)
+                ((m + 1 : ℝ) / (b : ℝ) ^ K) n : ℝ) / n
+            ≤ ∑ _m ∈ badSet b K k w T, C / (b : ℝ) ^ K :=
+              Finset.sum_le_sum hbadv
+          _ = ((badSet b K k w T).card : ℝ) * (C / (b : ℝ) ^ K) := by
+              rw [Finset.sum_const, nsmul_eq_mul]
+      have : (Bn : ℝ) / n ≤ δ := hle.trans hkey
+      rw [div_le_iff₀ hn0] at this
+      linarith
+    have hKn' : (K : ℝ) ≤ δ * n := by
+      rw [div_lt_iff₀ hn0] at hKn
+      linarith
+    -- cast the two counting bounds
+    have hup := cell_visits_upper b hb0 x K k w T n hkK
+    have hlo := cell_visits_lower b hb0 x K k w T n hkK
+    rw [← hNdef, ← hAndef, ← hBndef] at hup hlo
+    have hupR : (b : ℝ) ^ k * ((N : ℝ) * An)
+        ≤ n * ((N : ℝ) + T) + Bn * ((b : ℝ) ^ k * N)
+          + (b : ℝ) ^ k * ((N : ℝ) * (K - k : ℕ)) := by
+      exact_mod_cast hup
+    have hKkR : ((K - k : ℕ) : ℝ) ≤ (K : ℝ) := by
+      have : K - k ≤ K := Nat.sub_le _ _
+      exact_mod_cast this
+    -- upper estimate on the frequency
+    have hTle : (T : ℝ) * n ≤ 2 * δ * ((N : ℝ) * (b : ℝ) ^ k) * n :=
+      mul_le_mul_of_nonneg_right hT_ub hn0.le
+    have hKle : (b : ℝ) ^ k * ((N : ℝ) * ((K - k : ℕ) : ℝ))
+        ≤ (b : ℝ) ^ k * ((N : ℝ) * (δ * n)) := by
+      apply mul_le_mul_of_nonneg_left _ hbk.le
+      exact mul_le_mul_of_nonneg_left (hKkR.trans hKn') hNR.le
+    have hfreq_ub : (An : ℝ) / n - 1 / (b : ℝ) ^ k ≤ 4 * δ := by
+      rw [sub_le_iff_le_add, div_le_iff₀ hn0]
+      have hbkN : (0 : ℝ) < (b : ℝ) ^ k * N := by positivity
+      refine le_of_mul_le_mul_right ?_ hbkN
+      have hRHS : (4 * δ + 1 / (b : ℝ) ^ k) * n * ((b : ℝ) ^ k * N)
+          = 4 * δ * n * ((b : ℝ) ^ k * (N : ℝ)) + n * N := by
+        field_simp
+        try ring
+      rw [hRHS]
+      have hBnle : (Bn : ℝ) * ((b : ℝ) ^ k * N) ≤ δ * n * ((b : ℝ) ^ k * N) := by
+        apply mul_le_mul_of_nonneg_right hBn
+        positivity
+      linarith [hupR, hTle, hBnle, hKle]
+    -- lower estimate on the frequency
+    have hfreq_lb : 1 / (b : ℝ) ^ k - (An : ℝ) / n ≤ 4 * δ := by
+      by_cases hTN : N ≤ T
+      · -- degenerate: the cell is already shorter than the tolerance
+        have h1 : (N : ℝ) ≤ (T : ℝ) := by exact_mod_cast hTN
+        have h2 : (1 : ℝ) / (b : ℝ) ^ k ≤ 2 * δ := by
+          have := hT_ub
+          have hN' : (0 : ℝ) < (N : ℝ) := hNR
+          rw [div_le_iff₀ hbk]
+          nlinarith [h1, hT_ub, hNR]
+        have h3 : (0 : ℝ) ≤ (An : ℝ) / n := by positivity
+        linarith
+      · push_neg at hTN
+        have hcast : ((N - T : ℕ) : ℝ) = (N : ℝ) - T := by
+          rw [Nat.cast_sub hTN.le]
+        have hloR : n * ((N : ℝ) - T)
+            ≤ (b : ℝ) ^ k * ((N : ℝ) * (An + ((K - k : ℕ) : ℝ)))
+              + Bn * ((N : ℝ) - T) := by
+          rw [← hcast]
+          exact_mod_cast hlo
+        rw [sub_le_iff_le_add, ← sub_le_iff_le_add']
+        rw [le_div_iff₀ hn0]
+        have hbkN : (0 : ℝ) < (b : ℝ) ^ k * N := by positivity
+        refine le_of_mul_le_mul_right ?_ hbkN
+        have hLHS : (1 / (b : ℝ) ^ k - 4 * δ) * n * ((b : ℝ) ^ k * N)
+            = n * N - 4 * δ * n * ((b : ℝ) ^ k * (N : ℝ)) := by
+          field_simp
+          try ring
+        rw [hLHS]
+        have hBnle : (Bn : ℝ) * ((N : ℝ) - T) ≤ (Bn : ℝ) * N := by
+          apply mul_le_mul_of_nonneg_left _ (Nat.cast_nonneg _)
+          have : (0 : ℝ) ≤ (T : ℝ) := Nat.cast_nonneg _
+          linarith
+        have hBnle2 : (Bn : ℝ) * (N : ℝ) ≤ δ * n * ((b : ℝ) ^ k * (N : ℝ)) := by
+          calc (Bn : ℝ) * (N : ℝ) ≤ δ * n * N :=
+              mul_le_mul_of_nonneg_right hBn hNR.le
+            _ ≤ δ * n * ((b : ℝ) ^ k * (N : ℝ)) := by
+              apply mul_le_mul_of_nonneg_left _ (by positivity)
+              nlinarith [hNR, hbk1]
+        have hBnT : (0 : ℝ) ≤ (Bn : ℝ) * T := by positivity
+        linarith [hloR, hTle, hBnle2, hKle, hBnT]
+    -- combine
+    rw [Real.dist_eq, abs_sub_lt_iff]
+    constructor
+    · calc (An : ℝ) / n - 1 / (b : ℝ) ^ k ≤ 4 * δ := hfreq_ub
+        _ < 5 * δ := by linarith
+        _ = ε := by rw [hδdef]; ring
+    · calc 1 / (b : ℝ) ^ k - (An : ℝ) / n ≤ 4 * δ := hfreq_lb
+        _ < 5 * δ := by linarith
+        _ = ε := by rw [hδdef]; ring
+  exact Filter.eventually_atTop.mp hev
+
+/-- The hot-spot lemma, orbit form: uniform eventual b-adic upper bounds
+give equidistribution of the orbit. -/
+theorem equidistributed_orbit_of_visit_upper (b : ℕ) (hb : 2 ≤ b) (x : ℝ)
+    (C : ℝ)
+    (h : ∀ K m : ℕ, m < b ^ K → ∀ᶠ n in atTop,
+      (visitCount (orbit b x) ((m : ℝ) / (b : ℝ) ^ K)
+          ((m + 1 : ℝ) / (b : ℝ) ^ K) n : ℝ) / n ≤ C / (b : ℝ) ^ K) :
+    Equidistributed (orbit b x) :=
+  equidistributed_of_badic b hb _ fun k hk m hm =>
+    tendsto_cell_of_visit_upper b hb x C h k m hk hm
 
 end NormalNumbers
