@@ -592,4 +592,115 @@ theorem tendsto_gain_div_mSched_sub (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ 
   exact div_le_div_of_nonneg_left hkR (mul_pos hLposR hcdenpos)
     (by rw [mul_comm]; exact hden)
 
+/-! ## (d) the d-ary chain — tail decomposition -/
+
+/-- A concrete choice of per-stage good digit block, `[]` when `d` is not
+active at stage `s`. -/
+noncomputable def dBlock (s d : ℕ) : List (Fin d) :=
+  if h : 2 ≤ d ∧ d ≤ tSched s then
+    List.ofFn (xstar_dary_window s d h.1 h.2).choose_spec.2.2.choose
+  else []
+
+/-- The chosen block's defining properties, once `d` is active. -/
+theorem dBlock_spec (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) :
+    HasDiscLt (dBlock s d) (schedEps (tSched (s + 1))) ∧
+    (List.range (dBlock s d).length).map (fun l => digitOf d xstar (mSched s d + l))
+      = (dBlock s d).map Fin.val ∧
+    mSched (s + 1) d = mSched s d + (dBlock s d).length := by
+  have hdb : dBlock s d
+      = List.ofFn (xstar_dary_window s d hd2 hdt).choose_spec.2.2.choose := by
+    unfold dBlock
+    exact dif_pos ⟨hd2, hdt⟩
+  rw [hdb]
+  set W := xstar_dary_window s d hd2 hdt with hWdef
+  set spec2 := W.choose_spec.2.2 with hspec2def
+  have hm := W.choose_spec.1
+  have hspecβ := spec2.choose_spec
+  refine ⟨?_, ?_, ?_⟩
+  · simpa using hspecβ.1
+  · rw [List.length_ofFn]
+    exact hspecβ.2.trans List.map_ofFn.symm
+  · rw [List.length_ofFn]; exact hm
+
+/-- **A helper splitting `List.range` over a sum**: `range (n+m) = range n ++
+(range m shifted by n)`. -/
+theorem range_add_eq (n m : ℕ) :
+    List.range (n + m) = List.range n ++ (List.range m).map (n + ·) := by
+  induction m with
+  | zero => simp
+  | succ m ih =>
+    rw [show n + (m + 1) = (n + m) + 1 from by omega, List.range_succ, ih,
+      List.range_succ, List.map_append, List.map_singleton, List.append_assoc]
+
+/-- **The accumulated d-ary tail**: the concatenation of chosen good blocks
+from stage `s₀` (active) through `s₀ + k`. -/
+noncomputable def dTailList (s₀ d : ℕ) : ℕ → List (Fin d)
+  | 0 => []
+  | k + 1 => dTailList s₀ d k ++ dBlock (s₀ + k) d
+
+theorem dTailList_length_eq (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s₀) :
+    ∀ k, (dTailList s₀ d k).length = mSched (s₀ + k) d - mSched s₀ d := by
+  intro k
+  induction k with
+  | zero => simp [dTailList]
+  | succ k ih =>
+    have hdts : d ≤ tSched (s₀ + k) := le_trans hdt (sched_t_mono (by omega))
+    obtain ⟨-, -, hm⟩ := dBlock_spec (s₀ + k) d hd2 hdts
+    have hmono : mSched s₀ d ≤ mSched (s₀ + k) d := by
+      simpa using mSched_mono_of_active (s₀ := s₀) hd2 hdt (a := 0) (b := k) (by omega)
+    rw [dTailList, List.length_append, ih]
+    have heq : s₀ + (k + 1) = s₀ + k + 1 := by omega
+    rw [heq, hm]
+    omega
+
+theorem dTailList_digit_eq (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s₀) :
+    ∀ k, (List.range (dTailList s₀ d k).length).map
+        (fun l => digitOf d xstar (mSched s₀ d + l))
+      = (dTailList s₀ d k).map Fin.val := by
+  intro k
+  induction k with
+  | zero => simp [dTailList]
+  | succ k ih =>
+    have hdts : d ≤ tSched (s₀ + k) := le_trans hdt (sched_t_mono (by omega))
+    obtain ⟨-, hdig, hm⟩ := dBlock_spec (s₀ + k) d hd2 hdts
+    have hlen := dTailList_length_eq s₀ d hd2 hdt k
+    have hmono : mSched s₀ d ≤ mSched (s₀ + k) d := by
+      simpa using mSched_mono_of_active (s₀ := s₀) hd2 hdt (a := 0) (b := k) (by omega)
+    rw [dTailList, List.length_append, range_add_eq, List.map_append, List.map_append, ih]
+    congr 1
+    rw [List.map_map]
+    have hshift : (fun l => digitOf d xstar (mSched s₀ d + l))
+        ∘ ((dTailList s₀ d k).length + ·)
+        = fun l => digitOf d xstar (mSched (s₀ + k) d + l) := by
+      funext l
+      simp only [Function.comp_apply]
+      congr 1
+      omega
+    rw [hshift, ← hdig]
+
+/-- **The good-tail chain**: past an active stage `s₀`, the accumulated
+digit block over `k` stages has discrepancy `< ε` once `ε` clears the
+level-`s₀+1` accuracy (monotone decreasing, so any later block is at least
+as good). -/
+theorem dTailList_hasDiscLt (s₀ d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s₀)
+    {ε : ℝ} (hε : schedEps (tSched (s₀ + 1)) ≤ ε) :
+    ∀ k, 1 ≤ k → HasDiscLt (dTailList s₀ d k) ε := by
+  intro k hk
+  induction k with
+  | zero => omega
+  | succ k ih =>
+    rcases Nat.eq_zero_or_pos k with hk0 | hk0
+    · subst hk0
+      have hdts : d ≤ tSched s₀ := hdt
+      obtain ⟨hHDL, -, -⟩ := dBlock_spec s₀ d hd2 hdts
+      simpa [dTailList] using hHDL.mono hε
+    · have hdts : d ≤ tSched (s₀ + k) := le_trans hdt (sched_t_mono (by omega))
+      obtain ⟨hHDL, -, -⟩ := dBlock_spec (s₀ + k) d hd2 hdts
+      have hεk : schedEps (tSched (s₀ + k + 1)) ≤ ε := by
+        have := schedEps_le (t := tSched (s₀ + 1)) (t' := tSched (s₀ + k + 1))
+          (sched_t_mono (by omega))
+        linarith
+      rw [dTailList]
+      exact HasDiscLt.append (ih hk0) (hHDL.mono hεk)
+
 end NormalNumbers
