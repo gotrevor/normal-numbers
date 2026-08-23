@@ -165,4 +165,87 @@ theorem horizonIntegral_succ (A : Set ℝ) (hA : MeasurableSet A)
   · congr 2
     rw [one_div]
 
+/-! ## Lipschitz control of `G_k` -/
+
+/-- `t ↦ h_t(y)` is `2`-Lipschitz on `[0,1]`, uniformly in `y ∈ [0,1]`. -/
+lemma tailDensity_lipschitz {t t' y : ℝ} (ht : t ∈ Set.Icc (0 : ℝ) 1)
+    (ht' : t' ∈ Set.Icc (0 : ℝ) 1) (hy : y ∈ Set.Icc (0 : ℝ) 1) :
+    |tailDensity t y - tailDensity t' y| ≤ 2 * |t - t'| := by
+  obtain ⟨ht0, ht1⟩ := ht
+  obtain ⟨ht0', ht1'⟩ := ht'
+  obtain ⟨hy0, hy1⟩ := hy
+  have hv : (1 : ℝ) ≤ 1 + t * y := by nlinarith
+  have hu : (1 : ℝ) ≤ 1 + t' * y := by nlinarith
+  have hv2 : 1 + t * y ≤ 2 := by nlinarith
+  have hu2 : 1 + t' * y ≤ 2 := by nlinarith
+  have key : tailDensity t y - tailDensity t' y =
+      (t - t') * ((1 + t * y) * (1 - y) - (1 + t) * (1 + t' * y) * y) /
+        ((1 + t * y) ^ 2 * (1 + t' * y) ^ 2) := by
+    unfold tailDensity
+    field_simp
+    ring
+  rw [key, abs_div, abs_mul,
+    abs_of_pos (by positivity : (0 : ℝ) < (1 + t * y) ^ 2 * (1 + t' * y) ^ 2),
+    div_le_iff₀ (by positivity)]
+  have hM : |(1 + t * y) * (1 - y) - (1 + t) * (1 + t' * y) * y| ≤
+      2 * ((1 + t * y) ^ 2 * (1 + t' * y) ^ 2) := by
+    rw [abs_le]
+    constructor <;> nlinarith [sq_nonneg (t * y), sq_nonneg (t' * y),
+      sq_nonneg (1 + t * y), sq_nonneg (1 + t' * y),
+      mul_nonneg hy0 ht0, mul_nonneg hy0 ht0']
+  calc |t - t'| * |(1 + t * y) * (1 - y) - (1 + t) * (1 + t' * y) * y|
+      ≤ |t - t'| * (2 * ((1 + t * y) ^ 2 * (1 + t' * y) ^ 2)) :=
+        mul_le_mul_of_nonneg_left hM (abs_nonneg _)
+    _ = 2 * |t - t'| * ((1 + t * y) ^ 2 * (1 + t' * y) ^ 2) := by ring
+
+/-- `G_0` is `2·|A|`-Lipschitz on `[0,1]`. -/
+lemma horizonIntegral_zero_lipschitz {A : Set ℝ} (_hA : MeasurableSet A)
+    (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1) {t t' : ℝ} (ht : t ∈ Set.Icc (0 : ℝ) 1)
+    (ht' : t' ∈ Set.Icc (0 : ℝ) 1) :
+    |horizonIntegral A 0 t - horizonIntegral A 0 t'| ≤
+      2 * (volume A).toReal * |t - t'| := by
+  have hB0 : horizonSet A 0 = A := by
+    rw [horizonSet, Function.iterate_zero, Set.preimage_id,
+      Set.inter_eq_self_of_subset_right hA1]
+  have hAfin : volume A < ⊤ := by
+    refine lt_of_le_of_lt (measure_mono hA1) ?_
+    simp [Real.volume_Ioo]
+  have hint : IntegrableOn (tailDensity t) A volume :=
+    (integrableOn_tailDensity ht.1).mono_set hA1
+  have hint' : IntegrableOn (tailDensity t') A volume :=
+    (integrableOn_tailDensity ht'.1).mono_set hA1
+  rw [horizonIntegral, horizonIntegral, hB0, ← integral_sub hint hint']
+  have h := norm_setIntegral_le_of_norm_le_const (μ := volume)
+    (s := A) (C := 2 * |t - t'|) hAfin (fun y hy => by
+      rw [Real.norm_eq_abs]
+      exact tailDensity_lipschitz ht ht'
+        (Set.Icc_subset_Icc (le_refl _) (le_refl _)
+          (Set.Ioo_subset_Icc_self (hA1 hy))))
+  rw [Real.norm_eq_abs] at h
+  calc |∫ y in A, (tailDensity t y - tailDensity t' y)| ≤
+      2 * |t - t'| * volume.real A := h
+    _ = 2 * (volume A).toReal * |t - t'| := by
+        rw [measureReal_def]; ring
+
+/-- **Geometric Lipschitz decay**: `G_k` is `(9/10)ᵏ·2|A|`-Lipschitz on
+`[0,1]` (iterate `stepOp_lipschitz` through the recursion). -/
+theorem horizonIntegral_lipschitz {A : Set ℝ} (hA : MeasurableSet A)
+    (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1) (k : ℕ) {t t' : ℝ}
+    (ht : t ∈ Set.Icc (0 : ℝ) 1) (ht' : t' ∈ Set.Icc (0 : ℝ) 1) :
+    |horizonIntegral A k t - horizonIntegral A k t'| ≤
+      (9 / 10) ^ k * (2 * (volume A).toReal) * |t - t'| := by
+  induction k generalizing t t' with
+  | zero =>
+      simpa using horizonIntegral_zero_lipschitz hA hA1 ht ht'
+  | succ m ih =>
+      rw [horizonIntegral_succ A hA m ht, horizonIntegral_succ A hA m ht']
+      have hL : (0 : ℝ) ≤ (9 / 10) ^ m * (2 * (volume A).toReal) := by
+        have := ENNReal.toReal_nonneg (a := volume A)
+        positivity
+      have h := stepOp_lipschitz hL (fun x hx y hy => ih hx hy) ht ht'
+      calc |stepOp (horizonIntegral A m) t - stepOp (horizonIntegral A m) t'| ≤
+          9 / 10 * ((9 / 10) ^ m * (2 * (volume A).toReal)) * |t - t'| := h
+        _ = (9 / 10) ^ (m + 1) * (2 * (volume A).toReal) * |t - t'| := by
+            rw [pow_succ]; ring
+
 end NormalNumbers
