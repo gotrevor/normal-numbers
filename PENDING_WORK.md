@@ -156,7 +156,42 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
   (`CFDiscLt`/`CFWordBridge` still used later to turn "good frequency for all
   v ∈ F" into the refinement predicate of Def 11.)
 
-- NEXT concrete step (COMBINE — the last decisive piece):
+- ✅ (ii) GOOD-MASS SIDE + COMBINE CORE PROVED 2026-08-24 (review lap,
+  `TBrick.lean`, axiom-clean):
+  * `goodExtSet w C n` (biUnion of good-length order-n extensions, bad ones
+    sent to ∅) + `volume_goodExtSet` (= the `half_mass` tsum verbatim, via
+    `measure_biUnion` + `cfCylinder_disjoint`; the `if..else ∅` trick avoids
+    all subtype reindexing) + `exists_C_half_le_volume_goodExtSet`:
+    `|I_w| ≤ 2·volume(goodExtSet)`, i.e. good mass ≥ ½|I_w|.
+  * `exists_mem_notMem_of_measure_lt` (the COMBINE CORE): if `M ≤ μG`,
+    `μB ≤ a`, `a < M`, then `∃ x ∈ G, x ∉ B`.  The logical backbone of
+    "balance ⇒ surviving refinement".
+  ALL FOUR ingredients of the Lemma-13 measure balance are now proved:
+  good mass ≥ ½|I_w|, d-ary bad ≤ (→0)|I_w|, CF bad ≤ O(1/n)γ(I_w), and the
+  combine core.  What remains is the ARITHMETIC WIRING (below).
+
+- NEXT concrete step (WIRE THE BALANCE — mechanical, no new deep facts):
+  (α) **Leb↔γ unify**: put good mass (Leb), d-ary bad (Leb), CF bad (γ) in
+      one measure.  Convert CF bad γ→Leb via `volume_le_gaussMeasure`
+      (needs cfBadZone ⊆ Ioo 0 1; cfBadZone ⊆ cfCylinder w — check
+      cfCylinder ⊆ Ioo 0 1) losing ≤ factor 2log2, then γ(I_w)→Leb via
+      `gaussMeasure_le_volume`.  Net: volume(CF bad) ≤ 2·O(1/n)·volume(I_w).
+  (β) **kmin(n) link**: good extensions have |J| ≤ 2φ^{-2(n-1)}|I_w|
+      (`volume_append_mul_fib_le`), so each base d's "new digit" count
+      k_d(J) ≥ kmin(n) := ⌊stuff·n⌋ → ∞; hence goodExtSet ∩ (d-ary bad at
+      the RELEVANT order) ⊆ ⋃_{k≥kmin(n)} daryBadZoneWide, and
+      `TBrick.volume_aggregate_bad_le` applies with that kmin.
+  (γ) **choose n₀**: both bad bounds are `< ¼·volume(I_w)` for n ≥ n₀(t,ε)
+      (d-ary: geometric in kmin(n)→0; CF: O(1/n)→0).  Then
+      `exists_mem_notMem_of_measure_lt` with M = ½vol(I_w) via
+      `exists_C_half_le_volume_goodExtSet`, a = ¼+¼ < ½, gives x ∈ goodExtSet
+      avoiding all bad zones.
+  (δ) **Lemma 13 proper**: x lies in a good-length cylinder J=cfCylinder(w++u)
+      with u CF-good; `badBlock_cell_far` gives x's d-ary cells good with
+      margin ≥ 2 ⇒ a sub-cylinder of J is a valid (t or t+1)-brick refining
+      the input brick.  t→t+1 via Prop 12 (ratio 1/(2(t+1))).
+
+- (OLD framing, superseded by (α)-(δ)):
   (ii) **kmin(n) link**: good-length extensions J have |J| ≤ 2φ^{-2(n-1)}|I_w|
       (Fibonacci upper bound), so for each base d the "new digits" count
       k_d(J) ≥ kmin(n) with kmin(n)→∞; hence the wide-zone union avoided is

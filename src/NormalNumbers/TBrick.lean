@@ -193,4 +193,78 @@ theorem gaussMeasure_aggregate_cfBadZone_le
         refine Finset.sum_le_sum fun v hv => ?_
         exact chebyshev_blockCount_brick w v hposw (hF v hv) n hn hδ
 
+/-- **The combine core** (logical heart of the Lemma-13 balance). If the good
+set `G` has measure at least `M`, the bad set `B` has measure at most `a`, and
+`a < M`, then some point of `G` avoids `B`.  Instantiated in Lemma 13 with
+`G` = good-length extensions (`≥ ½|I_w|`), `B` = CF bad zone ∪ d-ary bad zones
+(`< ½|I_w|` for large `n`, `kmin`). -/
+theorem exists_mem_notMem_of_measure_lt {μ : Measure ℝ} {G B : Set ℝ}
+    {M a : ENNReal} (hG : M ≤ μ G) (hB : μ B ≤ a) (hlt : a < M) :
+    ∃ x ∈ G, x ∉ B := by
+  have hsub : μ G ≤ μ (G \ B) + μ B := by
+    have hcov : G ⊆ (G \ B) ∪ B := by
+      intro x hx
+      by_cases h : x ∈ B
+      · exact Or.inr h
+      · exact Or.inl ⟨hx, h⟩
+    exact (measure_mono hcov).trans (measure_union_le _ _)
+  have hne : μ (G \ B) ≠ 0 := by
+    intro h0
+    rw [h0, zero_add] at hsub
+    exact absurd (hG.trans (hsub.trans hB)) (not_le.2 hlt)
+  obtain ⟨x, hx⟩ := nonempty_of_measure_ne_zero hne
+  exact ⟨x, hx.1, hx.2⟩
+
+/-- The **good-length extension set**: the union of the order-`n` CF extensions
+`cfCylinder (w ++ u)` whose continuant is short (`K(u) ≤ e^{Cn}`, i.e.
+relative length `≥ e^{-2Cn}/2`).  Encoded as a biUnion over *all* genuine
+`n`-words with the bad ones sent to `∅`, so its measure matches
+`half_mass_long_extensions`'s tsum verbatim (no subtype reindexing). -/
+noncomputable def goodExtSet (w : List ℕ) (C : ℝ) (n : ℕ) : Set ℝ :=
+  ⋃ u ∈ genWords n,
+    (if (cfK u : ℝ) ≤ Real.exp (C * n) then cfCylinder (w ++ u) else ∅)
+
+/-- The good-length extensions are pairwise disjoint (distinct same-length
+words) and measurable, so their measure is exactly the good-length tsum. -/
+theorem volume_goodExtSet (w : List ℕ) (C : ℝ) (n : ℕ) :
+    volume (goodExtSet w C n)
+      = ∑' u : genWords n,
+          (if (cfK (u : List ℕ) : ℝ) ≤ Real.exp (C * n)
+            then volume (cfCylinder (w ++ (u : List ℕ))) else 0) := by
+  have hcount : (genWords n).Countable :=
+    Set.Countable.mono (Set.subset_univ _) (Set.countable_univ)
+  have hle : ∀ u : List ℕ,
+      (if (cfK u : ℝ) ≤ Real.exp (C * n) then cfCylinder (w ++ u) else ∅)
+        ⊆ cfCylinder (w ++ u) := by
+    intro u; split
+    · exact subset_rfl
+    · exact Set.empty_subset _
+  have hdisj : (genWords n).PairwiseDisjoint
+      fun u : List ℕ => (if (cfK u : ℝ) ≤ Real.exp (C * n)
+        then cfCylinder (w ++ u) else ∅) := by
+    intro u hu u' hu' hne
+    exact (cfCylinder_disjoint (by simp [hu.1, hu'.1])
+      (fun heq => hne (List.append_cancel_left heq))).mono (hle u) (hle u')
+  have hmeas : ∀ u ∈ genWords n, MeasurableSet
+      (if (cfK u : ℝ) ≤ Real.exp (C * n) then cfCylinder (w ++ u) else ∅) := by
+    intro u _; split
+    · exact measurableSet_cfCylinder _
+    · exact MeasurableSet.empty
+  rw [goodExtSet, measure_biUnion hcount hdisj hmeas]
+  refine tsum_congr fun u => ?_
+  split
+  · rfl
+  · exact measure_empty
+
+/-- **The good-mass side of the Lemma-13 balance.** At least half the mass of
+a genuine cylinder `I_w` lies in its good-length order-`n` extensions.  (The
+constant `C` is the one from `half_mass_long_extensions`.) -/
+theorem exists_C_half_le_volume_goodExtSet :
+    ∃ C : ℝ, 0 < C ∧ ∀ (w : List ℕ), w ≠ [] → (∀ a ∈ w, 1 ≤ a) → ∀ n : ℕ,
+      volume (cfCylinder w) ≤ 2 * volume (goodExtSet w C n) := by
+  obtain ⟨C, hC, hbound⟩ := half_mass_long_extensions
+  refine ⟨C, hC, fun w hw hpos n => ?_⟩
+  rw [volume_goodExtSet]
+  exact hbound w hw hpos n
+
 end NormalNumbers
