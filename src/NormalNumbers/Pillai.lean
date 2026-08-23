@@ -321,4 +321,28 @@ theorem card_matchingValues (b r L s V : ℕ) (hb : 2 ≤ b) (hL : s + L ≤ r)
     dsimp only
     rw [heq1, heq2, hdiv2]
 
+/-- **Window-match ↔ matching-value membership**: for `q < Q`, the phase-`s`
+window of `y`'s base-`b` digits at `q` equals `w` iff `digitOf (b^r) y q`
+lies in the finite "matching values" set — the bridge that turns a window
+count into a digit-value count at base `b^r`. -/
+theorem count_windowMatch_eq_count_matchingValues (b r L s : ℕ) (hb : 2 ≤ b) (hr : 1 ≤ r)
+    (hL : s + L ≤ r) (y : ℝ) (hy : y ∈ Set.Ico (0 : ℝ) 1) (w : List ℕ)
+    (hwlen : w.length = L) (hwlt : ∀ d ∈ w, d < b) (Q : ℕ) :
+    ((Finset.range Q).filter
+        (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card
+      = ((Finset.range Q).filter
+          (fun q => digitOf (b ^ r) y q / b ^ (r - s - L) % b ^ L = blockNatVal b w)).card := by
+  congr 1
+  apply Finset.filter_congr
+  intro q _
+  rw [digitOf_pow_slice_eq_blockNatVal b r L s q hb hr hL y hy]
+  constructor
+  · intro h; rw [h]
+  · intro h
+    have hwlt' : ∀ d ∈ List.ofFn fun i : Fin L => digitOf b y (r * q + s + i), d < b := by
+      intro d hd
+      obtain ⟨i, rfl⟩ := List.mem_ofFn.mp hd
+      exact digitOf_lt b hb y _
+    exact blockNatVal_inj b (by omega) _ w (by rw [List.length_ofFn, hwlen]) hwlt' hwlt h
+
 end NormalNumbers
