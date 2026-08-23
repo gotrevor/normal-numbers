@@ -14,3 +14,10 @@ host-side into the shared elan home.
 Meanwhile I am developing this lap's proofs against the built v4.31.0 mathlib in
 `~/src/goodstein-ab-med` (scratch harness, ported back verbatim), so nothing
 else is needed — but final in-repo verification waits on the toolchain.
+
+## 2026-08-23 (lap B) — toolchain still needed for final gate
+
+`src/` is now sorry-free: `isNormal_two_stoneham23` is fully proven
+(whole-file scratch-verified against v4.31 mathlib).  The v4.33.1 toolchain
+request above is now the ONLY blocker for the final in-repo gate:
+`lake build` + `#print axioms isNormal_two_stoneham23` (target: standard 3).
