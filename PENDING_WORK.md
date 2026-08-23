@@ -122,10 +122,16 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
   `daryBadZoneWide` (+ measure ≤ 6d e^{−dε²k/6}/d^m0, summed version via
   new generic `volume_iUnion_geom_le`), `badBlock_cell_far` (avoiding the
   wide zone puts every bad cell at distance ≥ 2 from x's own cell).
+  ✅ CF word bridge PROVED 2026-08-24 (`CFWordBridge.lean`), axiom-clean:
+  `iterate_mem_cfCylinder_iff` (cylinder membership = digit-window match),
+  `blockCount_eq_card_matches`, `blockCount_sub_countOccurrences_bounds`
+  (orbit count vs fitting-window count of the digit word differ ≤ |v|) —
+  connects `chebyshev_blockCount_brick` to `CFDiscLt` of the new word.
 - Next concrete step: (b) brick structure definition with the 1/(2d)
-  ratio, the CF-side good/bad bookkeeping (good-length collection from
-  `half_mass_long_extensions` + CF bad zone from
-  `chebyshev_blockCount_brick`), then Lemma 13 assembly.
+  ratio, the CF good-length/bad-zone selection inside I_w (Leb-vs-γ via
+  gaussMeasure_le_volume / volume_le_gaussMeasure), then Lemma 13
+  assembly (pick J in the half-mass collection avoiding CF bad zone +
+  all d-ary wide zones; measures: ½|I_w| good vs Σ small bads).
 
 Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
 `IsProbabilityMeasure gaussMeasure` instance added in CFBlockFreq),

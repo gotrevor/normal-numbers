@@ -23,4 +23,5 @@ import NormalNumbers.BaryBlockCount
 import NormalNumbers.BaryConcat
 import NormalNumbers.CFConcat
 import NormalNumbers.TBrickDefs
+import NormalNumbers.CFWordBridge
 import NormalNumbers.Stoneham
