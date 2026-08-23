@@ -40,14 +40,21 @@
 >      (c1), division-free `k·log d` form —
 >      `2 log cfK(u_s) − log(8d) ≤ k·log d ≤ 2 log cfK(u_s) + log(32d)`. Via
 >      `Real.log_le_log`/`Real.log_pow`/`Real.log_mul`.
->    - NEXT sub-steps:
->      (c3) numerator upper via good-length `cfK(u_s) ≤ e^{goodC·n_{s+1}}` — LOCATE
->      the exact repo lemma bounding the selected extension's `cfK` above (search
->      `goodExtSet`/`half_mass`/`goodC` in `CFSchedule`/`TBrick`); denominator
->      lower: `Σ_{j} k_j`, each `log cfK(u_j) ≥ ((n_j−1)/2)·log2` via
->      `two_pow_le_cfK`. (c4) `sched_dominance` (`t·n(t) ≤ L`) closes
->      `k_{s+1}/(m_d(s)−m_d(s₀)) ≲ goodC·n_{s+1}/L_s → 0`. Decompose into named
->      sub-`sorry`s in `DaryCorrect.lean` as needed.
+>    - ✅ **(c3a) LANDED** (`gain_le`, axiom-clean): numerator —
+>      `k·log d ≤ 2·goodC·nFn(tSched(s+1)) + log(32d)`, via `uSched_spec`'s
+>      good-length bound `cfK(uSched s) ≤ exp(goodC·nFn(tSched(s+1)))` + (c2).
+>    - ✅ **(c3b) LANDED** (`le_mSched_mul_log`, axiom-clean): denominator
+>      building block — `m_d(s)·log d ≥ 2·⌊L_s/2⌋·log2 − log(2d)` where
+>      `L_s = |wSched s|`, via the bracket lower half + `two_pow_le_cfK` on
+>      `wSched s`. (So `m_d(s) ≳ (log2/log d)·L_s`.)
+>    - NEXT: **(c4) close the interior ratio → 0**. Assemble: for fixed `d, ε`,
+>      ∃ s₁, ∀ s ≥ s₁, `(mSched(s+1)d − mSched s d) < ε·(mSched s d − mSched s₀ d)`.
+>      Numerator ≤ `(2goodC·nFn(tSched(s+1)) + log32d)/log d` (c3a). Denominator
+>      ≥ `(2⌊L_s/2⌋log2 − log2d)/log d − mSched s₀ d` (c3b), and `L_s → ∞`
+>      (`sched_length_mono`/`wSched_length_ge`). Ratio ≲ `2goodC·n_{s+1}/(log2·L_s)`;
+>      `n_{s+1}/L_s → 0` by `sched_dominance` (`t·nFn t ≤ L`) since `t → ∞`
+>      (`sched_t_tendsto`). This is the `hshort` feeding `hasDiscLt_append_take`.
+>      Then (d) the d-ary chain (mirror `xstar_cf_freq_tendsto`).
 > 2. **(d) d-ary chain → `xstar_dary_freq_tendsto`**: TRANSCRIBE the proven
 >    `xstar_cf_freq_tendsto` skeleton (chain via `tailSched_*` analogue,
 >    boundary `hasDiscLt_short_append`, interior `hasDiscLt_append_take` + (c),

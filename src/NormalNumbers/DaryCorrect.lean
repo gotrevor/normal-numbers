@@ -338,4 +338,41 @@ theorem gain_le (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) {k : ℕ}
     rwa [Real.log_exp] at h
   linarith [hup, hlog]
 
+/-- **(c3b) the denominator building block**: the lower half of
+`dpow_mSched_bracket` together with `two_pow_le_cfK` on `wSched s` pins the
+accumulated digit count from below by the word length —
+`m_d(s) · log d ≥ 2·⌊L_s/2⌋·log 2 − log(2d)` where `L_s = |wSched s|`.  Since the
+denominator of the interior ratio is `m_d(s) − m_d(s₀)` and `L_s → ∞`, this
+grows like `(log 2 / log d)·L_s`, beating the numerator's `∼ n_{s+1}` under the
+schedule dominance `t·n(t) ≤ L`. -/
+theorem le_mSched_mul_log (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) :
+    2 * (((wSched s).length / 2 : ℕ) : ℝ) * Real.log 2 - Real.log (2 * d)
+      ≤ (mSched s d : ℝ) * Real.log d := by
+  obtain ⟨hlo, -⟩ := dpow_mSched_bracket s d hd2 hdt
+  have hd1 : 1 ≤ d := le_trans (by norm_num) hd2
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd1
+  set W : ℝ := (cfK (wSched s) : ℝ) with hW
+  have hW0 : (0 : ℝ) < W := by
+    rw [hW]; exact_mod_cast lt_of_lt_of_le one_pos (one_le_cfK _ (wSched_pos s))
+  have hcleared : W ^ 2 ≤ 2 * d * (d : ℝ) ^ (mSched s d) := by
+    rw [div_le_iff₀ (by positivity : (0 : ℝ) < 2 * d)] at hlo
+    nlinarith [hlo]
+  have h2d : (2 : ℝ) * d ≠ 0 := (mul_pos (by norm_num : (0 : ℝ) < 2) hdR).ne'
+  have hdmne : ((d : ℝ) ^ (mSched s d)) ≠ 0 :=
+    (by positivity : (0 : ℝ) < (d : ℝ) ^ (mSched s d)).ne'
+  have hlogcl : (2 : ℝ) * Real.log W
+      ≤ Real.log (2 * d) + (mSched s d : ℝ) * Real.log d := by
+    have h := Real.log_le_log (pow_pos hW0 2) hcleared
+    rw [Real.log_mul h2d hdmne] at h
+    simp only [Real.log_pow] at h
+    push_cast at h
+    linarith [h]
+  have htwo : (2 : ℝ) ^ ((wSched s).length / 2) ≤ W := by
+    rw [hW]; exact_mod_cast two_pow_le_cfK (wSched s) (wSched_pos s)
+  have hlogW : (((wSched s).length / 2 : ℕ) : ℝ) * Real.log 2 ≤ Real.log W := by
+    have h := Real.log_le_log
+      (by positivity : (0 : ℝ) < (2 : ℝ) ^ ((wSched s).length / 2)) htwo
+    rwa [Real.log_pow] at h
+  linarith [hlogcl, hlogW]
+
 end NormalNumbers
