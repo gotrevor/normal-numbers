@@ -345,4 +345,82 @@ theorem count_windowMatch_eq_count_matchingValues (b r L s : ℕ) (hb : 2 ≤ b)
       exact digitOf_lt b hb y _
     exact blockNatVal_inj b (by omega) _ w (by rw [List.length_ofFn, hwlen]) hwlt' hwlt h
 
+/-- **Phase-`s` window frequency, from simple normality at base `b^r`**:
+if every digit value `c < b^r` occurs with frequency `→ 1/b^r` among the
+first `Q` base-`b^r` digits of `y` (simple normality at `b^r`), then the
+length-`L` window `w` occurs at phase `s` (`s+L≤r`) with frequency
+`→ 1/b^L` among the first `Q` base-`b^r` positions. Combines
+`count_windowMatch_eq_count_matchingValues` (window count = digit-value
+count) with `card_matchingValues` (`b^(r-L)` matching values) via
+`Finset.card_eq_sum_card_fiberwise` + `tendsto_finsetSum`. -/
+theorem phaseWindowFreq_tendsto (b r L s : ℕ) (hb : 2 ≤ b) (hr : 1 ≤ r)
+    (hL : s + L ≤ r) (y : ℝ) (hy : y ∈ Set.Ico (0 : ℝ) 1) (w : List ℕ)
+    (hwlen : w.length = L) (hwlt : ∀ d ∈ w, d < b)
+    (hsn : ∀ c < b ^ r, Filter.Tendsto
+        (fun Q : ℕ => (((Finset.range Q).filter (fun q => digitOf (b ^ r) y q = c)).card : ℝ) / Q)
+        Filter.atTop (nhds ((b : ℝ) ^ r)⁻¹)) :
+    Filter.Tendsto
+      (fun Q : ℕ => (((Finset.range Q).filter
+          (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card : ℝ) / Q)
+      Filter.atTop (nhds ((b : ℝ) ^ L)⁻¹) := by
+  have hVlt : blockNatVal b w < b ^ L := by
+    have := blockNatVal_lt b w hwlt
+    rwa [hwlen] at this
+  set V : ℕ := blockNatVal b w with hVdef
+  set mV : Finset ℕ := (Finset.range (b ^ r)).filter (fun c => c / b ^ (r - s - L) % b ^ L = V)
+    with hmVdef
+  have hmVcard : mV.card = b ^ (r - L) := card_matchingValues b r L s V hb hL hVlt
+  have hbr2 : 2 ≤ b ^ r := le_trans hb (Nat.le_self_pow (by omega) b)
+  have hcount_eq : ∀ Q, ((Finset.range Q).filter
+      (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card
+      = ∑ c ∈ mV, ((Finset.range Q).filter (fun q => digitOf (b ^ r) y q = c)).card := by
+    intro Q
+    rw [count_windowMatch_eq_count_matchingValues b r L s hb hr hL y hy w hwlen hwlt Q]
+    have hstep : ((Finset.range Q).filter (fun q => digitOf (b ^ r) y q ∈ mV)).card
+        = ∑ c ∈ mV, ((Finset.range Q).filter (fun q => digitOf (b ^ r) y q = c)).card := by
+      rw [Finset.card_eq_sum_card_fiberwise
+        (s := (Finset.range Q).filter (fun q => digitOf (b ^ r) y q ∈ mV))
+        (t := mV) (f := fun q => digitOf (b ^ r) y q)
+        (fun q hq => (Finset.mem_filter.mp hq).2)]
+      apply Finset.sum_congr rfl
+      intro c hc
+      congr 1
+      ext a
+      simp only [Finset.mem_filter, Finset.mem_range]
+      constructor
+      · rintro ⟨⟨ha, _⟩, hfa⟩; exact ⟨ha, hfa⟩
+      · rintro ⟨ha, hfa⟩; exact ⟨⟨ha, hfa ▸ hc⟩, hfa⟩
+    rw [← hstep]
+    congr 1
+    apply Finset.filter_congr
+    intro q _
+    simp only [hmVdef, Finset.mem_filter, Finset.mem_range]
+    exact ⟨fun h => ⟨digitOf_lt (b ^ r) hbr2 y q, h⟩, fun h => h.2⟩
+  have hfun_eq : (fun Q : ℕ => (((Finset.range Q).filter
+        (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card : ℝ) / Q)
+      = fun Q : ℕ => ∑ c ∈ mV,
+          (((Finset.range Q).filter (fun q => digitOf (b ^ r) y q = c)).card : ℝ) / Q := by
+    funext Q
+    rw [hcount_eq Q]
+    push_cast
+    rw [Finset.sum_div]
+  rw [hfun_eq]
+  have hlim : Filter.Tendsto
+      (fun Q : ℕ => ∑ c ∈ mV,
+        (((Finset.range Q).filter (fun q => digitOf (b ^ r) y q = c)).card : ℝ) / Q)
+      Filter.atTop (nhds (∑ _c ∈ mV, ((b : ℝ) ^ r)⁻¹)) := by
+    apply tendsto_finsetSum
+    intro c hc
+    exact hsn c (Finset.mem_range.mp (Finset.mem_filter.mp hc).1)
+  have hval : (∑ _c ∈ mV, ((b : ℝ) ^ r)⁻¹) = ((b : ℝ) ^ L)⁻¹ := by
+    rw [Finset.sum_const, hmVcard]
+    have hbpos : (0 : ℝ) < b := by positivity
+    have hsplit : (b : ℝ) ^ r = (b : ℝ) ^ L * (b : ℝ) ^ (r - L) := by
+      rw [← pow_add]; congr 1; omega
+    rw [nsmul_eq_mul, Nat.cast_pow, hsplit]
+    have hLpos : (0 : ℝ) < (b : ℝ) ^ L := by positivity
+    have hrLpos : (0 : ℝ) < (b : ℝ) ^ (r - L) := by positivity
+    field_simp
+  rwa [hval] at hlim
+
 end NormalNumbers
