@@ -62,13 +62,17 @@ no naturally-occurring number is proven Khinchin-typical.
   (pin notes in `papers/`).  ≈ 5.5–10k lines, ~8–16 laps, ≈ 2–4 weeks;
   Birkhoff-free.  Pre-flight ✅ (W3 route decided: self-contained
   `tailDensity` + ratio-contraction; KPW non-blocking).
-  **W1 ✅ COMPLETE 2026-08-23** — all 12 `CFCylinder.lean` statements proved
-  in 3 treadmill laps (same day), statements character-frozen throughout,
-  axiom-clean verified by judge `#print axioms` sweep (the standard triple
-  only).  **W2 scaffold staged 2026-08-23**: `CFDigitLaw.lean` — digit law,
-  partition calculus, Gauss/Lebesgue comparison, `γ` probability, and the
-  Markov substitute for B–Y Lemma 5; 10 sorry'd frozen statements, builds
-  green, anchors frozen — campaign-ready.
+  **W1 ✅ + W2 ✅ COMPLETE 2026-08-23** — all 12 `CFCylinder.lean` and all
+  10 `CFDigitLaw.lean` statements proved (3 treadmill laps each, same
+  day), statements character-frozen throughout, axiom-clean verified by
+  judge `#print axioms` sweeps (the standard triple only).
+  **W3 scaffold staged 2026-08-23**: `CFMixing.lean` — Gauss-measure
+  invariance (= flag B1), the conditional-density identity,
+  `cylinder_mixing` (cylinder-conditioned quantitative Gauss–Kuzmin–Lévy,
+  the expedition core, judge-governed rate escape valve), and
+  `gauss_kuzmin` (= flag B4); 4 sorry'd frozen statements, builds green,
+  anchors frozen — campaign-ready.  NB W3 completing will tick B1 and B4
+  below as expedition lemmas.
 
 ## Phase 3 — outward
 

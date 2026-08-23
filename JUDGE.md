@@ -98,3 +98,27 @@ file and works the checklist.  Laps never edit this file above the Ledger.
   Markov half-mass Lemma-5 substitute, Fibonacci relative-length bound) ·
   4 kernel-checked anchors frozen · builds green (10 sorries expected) ·
   these shapes are now the frozen trust surface for the W2 campaign.
+- 2026-08-23 ~12:15 · **W2 CLOSE-OUT** · judged through `2c8daa4` (laps
+  1–3; campaign complete, self-stopped) · `CFDigitLaw.lean`: only the 10
+  `sorry` lines removed — statements + anchors character-identical ·
+  `CFCylinder.lean`: two `private` helpers lifted public (`one_le_cfK`,
+  `irrational_gaussMap`), signatures identical, frozen statements
+  untouched — in-charter shared-scaffold lift · **kernel-tier
+  `#print axioms` sweep run by the judge on all 10: exactly
+  {propext, Classical.choice, Quot.sound} on every one — axiom-clean,
+  verified 2026-08-23** · smell scan of the campaign diff: clean (no
+  heartbeats, native_decide, axioms, trust escapes, silenced lints) ·
+  no wrongness flags · verdict: **W2 ratified**.
+- 2026-08-23 ~12:20 · **W3 scaffold staged by the judge** (new frozen
+  statements): `CFMixing.lean` — 4 sorry'd statements
+  (`measurePreserving_gaussMap` = B1 flag · the conditional-density
+  identity `|I_w ∩ T^{-|w|}A| = (∫_A h_t)·|I_w|`, `t = K(w⁻)/K(w)` ·
+  `cylinder_mixing` = cylinder-conditioned quantitative
+  Gauss–Kuzmin–Lévy, multiplicative `1 ± Cρᵏ` envelope, uniform in `w` ·
+  `gauss_kuzmin` = unconditioned corollary = B4 flag) · 4 kernel-checked
+  anchors (incl. the `t`-direction anchor `t([2]) = 1/2`) · builds green
+  (4 sorries expected) · ⚠️ **escape valve pre-authorized on
+  `cylinder_mixing` ONLY**: if laps evidence that geometric `ρᵏ` resists
+  and Kuzmin `e^{-c√k}` is what materializes, the JUDGE (never a lap)
+  weakens the rate to a summable-error form — W4 accepts either · these
+  shapes are now the frozen trust surface for the W3 campaign.

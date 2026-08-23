@@ -11,4 +11,5 @@ import NormalNumbers.StonehamArith
 import NormalNumbers.CFDefs
 import NormalNumbers.CFCylinder
 import NormalNumbers.CFDigitLaw
+import NormalNumbers.CFMixing
 import NormalNumbers.Stoneham

@@ -120,8 +120,8 @@ laps off a fully pinned plan):
 | WP | Content | Size | Risk |
 |----|---------|------|------|
 | W1 ✅ | CF cylinder toolkit: continuant α-algebra (Prop 2), distortion (Lemma 3), lengths, Fibonacci bound, Prop 12 — **complete 2026-08-23**, 3 laps, 12/12 axiom-clean (judge-verified) | ~0.8–1.5k lines | low |
-| W2 | digit laws + Markov length substitute for Lemma 5 — **scaffold staged 2026-08-23** (`CFDigitLaw.lean`, 10 frozen statements) | ~0.4–0.8k | low |
-| W3 | **the core**: summable CF correlation decay — route DECIDED, see below | ~1.5–3k | **moderate** |
+| W2 ✅ | digit laws + Markov length substitute for Lemma 5 — **complete 2026-08-23**, 3 laps, 10/10 axiom-clean (judge-verified); `CFDigitLaw.lean` | ~0.4–0.8k | low |
+| W3 | **the core**: summable CF correlation decay — route DECIDED, see below; **scaffold staged 2026-08-23** (`CFMixing.lean`, 4 frozen statements incl. the B1 + B4 flags; escape valve on the geometric rate) | ~1.5–3k | **moderate** |
 | W4 | LD/Chebyshev assembly + b-ary side (Lemmas 8, 9; overlaps Counting/Visits) | ~0.8–1.2k | low |
 | W5 | t-bricks, main lemma (worse constants), schedule, limit x, three correctness proofs, + the Pillai powers-equivalence for "absolutely normal" | ~1.5–2.5k | medium (bookkeeping-dense) |
 | W6 | Khinchin graft: digit caps D_t in the refinement + uniform-integrability bookkeeping, K₀ as tprod | ~0.5–1k | medium (new on paper, ~90% sound) |
@@ -170,13 +170,23 @@ plants Track B's B4 flag as a lemma of the expedition.
   combinatorics), `volume_cfCylinder` via `bumpLast` endpoints + countable
   junk, distortion pair via the sharper `K(wu) ≤ (K(w)+K(w⁻))K(u)` gluing
   bound.  Judged ledger: `JUDGE.md`.
-- **W2 scaffold LIVE**: `CFDigitLaw.lean` (10 sorry'd frozen statements:
-  single-digit law `|I_{[k]}| = 1/(k(k+1))`, cylinder disjointness, the
-  relative-order-`n` partition `tsum`, Gauss/Lebesgue two-sided comparison,
-  `γ(univ) = 1`, `K ≤ ∏(aᵢ+1)`, conditional `E[log qₙ] ≤ Cn`, the Markov
-  half-mass Lemma-5 substitute, the Fibonacci relative-length bound).
-  Builds green on v4.33.1; 4 kernel-checked anchors frozen with the
-  statements.
+- **W2 ✅ COMPLETE** (same day, 3 laps): `CFDigitLaw.lean` — all 10 proved,
+  statements character-frozen throughout, judge-verified axiom-clean.
+  Highlights: the partition crux went through outright cylinder
+  measurability (obsoleting W1's "never need measurability" stance);
+  `tsum_mul_log_cfK_le` by first-digit peeling + `genConsEquiv`
+  reindexing, summability via `log x ≤ 2√x` against the 3/2-p-series.
+  Per-lemma record: `archive/handoff/PENDING_WORK-2026-08-23-W2-final.md`.
+- **W3 scaffold LIVE**: `CFMixing.lean` (4 sorry'd frozen statements:
+  `measurePreserving_gaussMap` = the **B1 flag**; the conditional-density
+  identity `|I_w ∩ T^{-|w|}A| = (∫_A h_t)·|I_w|`; `cylinder_mixing` = the
+  workhorse — cylinder-conditioned quantitative Gauss–Kuzmin–Lévy with
+  multiplicative `1 ± Cρᵏ` envelope, uniform in `w`; `gauss_kuzmin` = the
+  unconditioned corollary = the **B4 flag**).  ⚠️ Judge-governed escape
+  valve on `cylinder_mixing`: if only Kuzmin's `e^{-c√k}` materializes,
+  the judge weakens the rate to summable-error (W4 accepts either).
+  Builds green on v4.33.1; 4 kernel-checked anchors frozen (incl. the
+  `t = K(w⁻)/K(w)` direction anchor).
 
 ## Formalization landscape (surveyed 2026-08-23; greps + searches, not proofs)
 
