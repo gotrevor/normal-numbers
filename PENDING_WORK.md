@@ -171,11 +171,13 @@ Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
   combine core.  What remains is the ARITHMETIC WIRING (below).
 
 - NEXT concrete step (WIRE THE BALANCE — mechanical, no new deep facts):
-  (α) **Leb↔γ unify**: put good mass (Leb), d-ary bad (Leb), CF bad (γ) in
-      one measure.  Convert CF bad γ→Leb via `volume_le_gaussMeasure`
-      (needs cfBadZone ⊆ Ioo 0 1; cfBadZone ⊆ cfCylinder w — check
-      cfCylinder ⊆ Ioo 0 1) losing ≤ factor 2log2, then γ(I_w)→Leb via
-      `gaussMeasure_le_volume`.  Net: volume(CF bad) ≤ 2·O(1/n)·volume(I_w).
+  ✅ (α) DONE 2026-08-24 (`TBrick.lean`, axiom-clean): `volume_iUnion_cfBadZone_le`
+      — volume(⋃ CF bad) ≤ ofReal(2log2·Σ_v 7(8|v|+80)γ(I_v)/(δ²n)·γ(I_w)),
+      i.e. the CF bad zone in LEBESGUE, still O(1/n).  Helpers:
+      `volume_le_ofReal_mul_gaussMeasure` (vol s ≤ ofReal(2log2)·γ s on Ioo 0 1)
+      + `measurableSet_cfBadZone` (via `measurable_blockCount`).  Still to do
+      for the balance: bound Σ_v ... by (const/n)·volume(I_w) via γ(I_v)≤1 and
+      γ(I_w) ≤ ofReal((log2)⁻¹)·volume(I_w) (gaussMeasure_le_volume).
   (β) **kmin(n) link**: good extensions have |J| ≤ 2φ^{-2(n-1)}|I_w|
       (`volume_append_mul_fib_le`), so each base d's "new digit" count
       k_d(J) ≥ kmin(n) := ⌊stuff·n⌋ → ∞; hence goodExtSet ∩ (d-ary bad at

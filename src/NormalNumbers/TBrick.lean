@@ -256,6 +256,69 @@ theorem volume_goodExtSet (w : List ℕ) (C : ℝ) (n : ℕ) :
   · rfl
   · exact measure_empty
 
+/-- Lebesgue ≤ `2 log 2 · γ` on `(0,1)` (invert the density-window lower
+bound `1/(2 log 2) ≤` density). -/
+lemma volume_le_ofReal_mul_gaussMeasure (s : Set ℝ) (hs : MeasurableSet s)
+    (hsub : s ⊆ Set.Ioo (0 : ℝ) 1) :
+    volume s ≤ ENNReal.ofReal (2 * Real.log 2) * gaussMeasure s := by
+  have hpos : (0 : ℝ) < 2 * Real.log 2 := by
+    have := Real.log_pos (by norm_num : (1 : ℝ) < 2); linarith
+  have h := volume_le_gaussMeasure s hs hsub
+  calc volume s
+      = ENNReal.ofReal (2 * Real.log 2)
+          * (ENNReal.ofReal (2 * Real.log 2)⁻¹ * volume s) := by
+        rw [← mul_assoc, ← ENNReal.ofReal_mul hpos.le,
+          mul_inv_cancel₀ (ne_of_gt hpos), ENNReal.ofReal_one, one_mul]
+    _ ≤ ENNReal.ofReal (2 * Real.log 2) * gaussMeasure s := by gcongr
+
+/-- The CF discrepancy bad zone is measurable (`blockCount` is measurable). -/
+lemma measurableSet_cfBadZone (w v : List ℕ) (n : ℕ) (δ : ℝ) :
+    MeasurableSet (cfBadZone w v n δ) := by
+  have hg : Measurable (fun x => |blockCount (cfCylinder v) n x / n
+      - (gaussMeasure (cfCylinder v)).toReal|) :=
+    (((measurable_blockCount (cfCylinder v) (measurableSet_cfCylinder v) n).div_const
+      _).sub_const _).abs
+  have hset : MeasurableSet {x : ℝ | x ∈ Set.Ioo (0 : ℝ) 1 ∧
+      δ ≤ |blockCount (cfCylinder v) n x / n
+        - (gaussMeasure (cfCylinder v)).toReal|} := by
+    rw [Set.setOf_and]
+    exact measurableSet_Ioo.inter (measurableSet_le measurable_const hg)
+  exact (measurableSet_cfCylinder w).inter
+    ((measurable_gaussMap.iterate w.length) hset)
+
+/-- **Step (α): the CF bad zone in Lebesgue.** The union of CF discrepancy bad
+zones over a finite word family has *Lebesgue* measure at most `2 log 2` times
+its γ-bound — i.e. still `O(1/n)`, now in the same measure as the good mass
+and d-ary bad zones. -/
+theorem volume_iUnion_cfBadZone_le
+    (w : List ℕ) (hposw : ∀ a ∈ w, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
+    volume (⋃ v ∈ F, cfBadZone w v n δ)
+      ≤ ENNReal.ofReal (2 * Real.log 2 *
+          ∑ v ∈ F, 7 * ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal
+            / (δ ^ 2 * n)) * (gaussMeasure (cfCylinder w)).toReal) := by
+  have hmeas : MeasurableSet (⋃ v ∈ F, cfBadZone w v n δ) :=
+    Finset.measurableSet_biUnion F (fun v _ => measurableSet_cfBadZone w v n δ)
+  have hsub : (⋃ v ∈ F, cfBadZone w v n δ) ⊆ Set.Ioo (0 : ℝ) 1 := by
+    refine Set.iUnion₂_subset fun v _ x hx => ?_
+    exact hx.1.1
+  set Sbd : ℝ := ∑ v ∈ F, 7 * ((8 * v.length + 80)
+    * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n))
+    * (gaussMeasure (cfCylinder w)).toReal with hSbd
+  have hlog0 : (0 : ℝ) ≤ 2 * Real.log 2 := by
+    have := Real.log_pos (by norm_num : (1 : ℝ) < 2); linarith
+  have hγle : gaussMeasure (⋃ v ∈ F, cfBadZone w v n δ) ≤ ENNReal.ofReal Sbd := by
+    rw [← ENNReal.ofReal_toReal (measure_ne_top gaussMeasure _)]
+    exact ENNReal.ofReal_le_ofReal
+      (gaussMeasure_aggregate_cfBadZone_le w hposw F hF n hn hδ)
+  calc volume (⋃ v ∈ F, cfBadZone w v n δ)
+      ≤ ENNReal.ofReal (2 * Real.log 2)
+          * gaussMeasure (⋃ v ∈ F, cfBadZone w v n δ) :=
+        volume_le_ofReal_mul_gaussMeasure _ hmeas hsub
+    _ ≤ ENNReal.ofReal (2 * Real.log 2) * ENNReal.ofReal Sbd := by gcongr
+    _ = ENNReal.ofReal (2 * Real.log 2 * Sbd) :=
+        (ENNReal.ofReal_mul hlog0).symm
+
 /-- **The good-mass side of the Lemma-13 balance.** At least half the mass of
 a genuine cylinder `I_w` lies in its good-length order-`n` extensions.  (The
 constant `C` is the one from `half_mass_long_extensions`.) -/
