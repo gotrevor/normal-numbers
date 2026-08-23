@@ -16,5 +16,6 @@ import NormalNumbers.CFDensity
 import NormalNumbers.CFRecursion
 import NormalNumbers.CFInvariance
 import NormalNumbers.CFPin
+import NormalNumbers.CFGammaMixing
 import NormalNumbers.CFMixing
 import NormalNumbers.Stoneham
