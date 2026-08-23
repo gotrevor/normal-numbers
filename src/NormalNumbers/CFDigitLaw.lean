@@ -296,6 +296,213 @@ theorem cfK_le_prod (w : List ℕ) : cfK w ≤ (w.map (· + 1)).prod := by
             Nat.add_le_add (Nat.mul_le_mul_left a ih1) (le_trans ih2 hP)
         _ = (a + 1) * ((b + 1) * (List.map (· + 1) l).prod) := by ring
 
+/-! ### Scaffolding for the conditional log-continuant bound -/
+
+private lemma log_le_two_sqrt {x : ℝ} (hx : 1 ≤ x) :
+    Real.log x ≤ 2 * Real.sqrt x := by
+  have h0 : (0 : ℝ) < x := by linarith
+  have hs : (0 : ℝ) < Real.sqrt x := Real.sqrt_pos.2 h0
+  have h1 : Real.log x = 2 * Real.log (Real.sqrt x) := by
+    rw [Real.log_sqrt h0.le]; ring
+  have h2 : Real.log (Real.sqrt x) ≤ Real.sqrt x - 1 :=
+    Real.log_le_sub_one_of_pos hs
+  nlinarith
+
+private lemma digitLog_nonneg (j : ℕ) :
+    0 ≤ Real.log ((j : ℝ) + 2) / (((j : ℝ) + 1) * ((j : ℝ) + 2)) := by
+  have h0 : (0 : ℝ) ≤ (j : ℝ) := Nat.cast_nonneg j
+  exact div_nonneg (Real.log_nonneg (by linarith)) (by positivity)
+
+/-- The summable majorant series `Σⱼ log(j+2)/((j+1)(j+2))` (digit `k = j+1`). -/
+private noncomputable def digitLogSum : ℝ :=
+  ∑' j : ℕ, Real.log ((j : ℝ) + 2) / (((j : ℝ) + 1) * ((j : ℝ) + 2))
+
+private lemma summable_digitLog :
+    Summable (fun j : ℕ =>
+      Real.log ((j : ℝ) + 2) / (((j : ℝ) + 1) * ((j : ℝ) + 2))) := by
+  have hp : Summable (fun j : ℕ => 1 / ((j : ℝ) + 1) ^ ((3 : ℝ) / 2)) := by
+    have h := (Real.summable_one_div_nat_rpow (p := (3 : ℝ) / 2)).2 (by norm_num)
+    have h1 := (summable_nat_add_iff 1).2 h
+    apply h1.congr
+    intro j
+    push_cast
+    ring
+  apply Summable.of_nonneg_of_le digitLog_nonneg (fun j => ?_)
+    (hp.mul_left (2 * Real.sqrt 2))
+  have hj0 : (0 : ℝ) ≤ (j : ℝ) := Nat.cast_nonneg j
+  have hx0 : (0 : ℝ) < (j : ℝ) + 1 := by linarith
+  have hsx : (0 : ℝ) ≤ Real.sqrt ((j : ℝ) + 1) := Real.sqrt_nonneg _
+  have hs2 : (0 : ℝ) ≤ Real.sqrt 2 := Real.sqrt_nonneg _
+  have hlog : Real.log ((j : ℝ) + 2) ≤
+      2 * (Real.sqrt 2 * Real.sqrt ((j : ℝ) + 1)) := by
+    calc Real.log ((j : ℝ) + 2) ≤ 2 * Real.sqrt ((j : ℝ) + 2) :=
+          log_le_two_sqrt (by linarith)
+      _ ≤ 2 * (Real.sqrt 2 * Real.sqrt ((j : ℝ) + 1)) := by
+          have := Real.sqrt_le_sqrt
+            (show (j : ℝ) + 2 ≤ 2 * ((j : ℝ) + 1) by linarith)
+          rw [Real.sqrt_mul (by norm_num)] at this
+          linarith
+  have hkey : Real.sqrt ((j : ℝ) + 1) * ((j : ℝ) + 1) ^ ((3 : ℝ) / 2) =
+      ((j : ℝ) + 1) ^ 2 := by
+    rw [Real.sqrt_eq_rpow, ← Real.rpow_add hx0,
+      show (1 : ℝ) / 2 + 3 / 2 = 2 by norm_num, Real.rpow_two]
+  have hr0 : (0 : ℝ) < ((j : ℝ) + 1) ^ ((3 : ℝ) / 2) :=
+    Real.rpow_pos_of_pos hx0 _
+  rw [mul_one_div, div_le_div_iff₀ (by positivity) hr0]
+  have hmul : Real.log ((j : ℝ) + 2) * ((j : ℝ) + 1) ^ ((3 : ℝ) / 2) ≤
+      (2 * (Real.sqrt 2 * Real.sqrt ((j : ℝ) + 1))) *
+        ((j : ℝ) + 1) ^ ((3 : ℝ) / 2) := by
+    apply mul_le_mul_of_nonneg_right hlog hr0.le
+  calc Real.log ((j : ℝ) + 2) * ((j : ℝ) + 1) ^ ((3 : ℝ) / 2)
+      ≤ (2 * (Real.sqrt 2 * Real.sqrt ((j : ℝ) + 1))) *
+          ((j : ℝ) + 1) ^ ((3 : ℝ) / 2) := hmul
+    _ = 2 * Real.sqrt 2 *
+          (Real.sqrt ((j : ℝ) + 1) * ((j : ℝ) + 1) ^ ((3 : ℝ) / 2)) := by ring
+    _ = 2 * Real.sqrt 2 * ((j : ℝ) + 1) ^ 2 := by rw [hkey]
+    _ ≤ 2 * Real.sqrt 2 * (((j : ℝ) + 1) * ((j : ℝ) + 2)) := by nlinarith
+
+private lemma digitLogSum_nonneg : 0 ≤ digitLogSum :=
+  tsum_nonneg digitLog_nonneg
+
+/-- Reindex `ℕ` onto the genuine digits `{k // 1 ≤ k}`. -/
+private def succEquiv : ℕ ≃ {k : ℕ // 1 ≤ k} where
+  toFun j := ⟨j + 1, Nat.succ_le_succ (Nat.zero_le _)⟩
+  invFun k := (k : ℕ) - 1
+  left_inv j := by simp
+  right_inv k := by
+    obtain ⟨v, hv⟩ := k
+    simp only [Subtype.mk.injEq]
+    omega
+
+/-- Peel the first digit: `{k // 1 ≤ k} × genWords n ≃ genWords (n+1)`. -/
+private noncomputable def genConsEquiv (n : ℕ) :
+    {k : ℕ // 1 ≤ k} × ↥(genWords n) ≃ ↥(genWords (n + 1)) :=
+  Equiv.ofBijective
+    (fun p => ⟨(p.1 : ℕ) :: (p.2 : List ℕ), by
+      obtain ⟨hlen, hp⟩ := p.2.2
+      refine ⟨by simp [hlen], fun a ha => ?_⟩
+      rcases List.mem_cons.1 ha with rfl | ha
+      · exact p.1.2
+      · exact hp a ha⟩)
+    (by
+      constructor
+      · rintro ⟨⟨k, hk⟩, ⟨s, hs⟩⟩ ⟨⟨k', hk'⟩, ⟨s', hs'⟩⟩ h
+        simp only [Subtype.mk.injEq, List.cons.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        rfl
+      · rintro ⟨v, hv⟩
+        obtain ⟨hlen, hp⟩ := hv
+        cases v with
+        | nil => simp at hlen
+        | cons a s =>
+            exact ⟨⟨⟨a, hp a (by simp)⟩,
+              ⟨s, ⟨by simpa using hlen,
+                fun x hx => hp x (List.mem_cons_of_mem _ hx)⟩⟩⟩, rfl⟩)
+
+/-- Genuine one-digit words are exactly the genuine digits. -/
+private noncomputable def digitEquiv : {k : ℕ // 1 ≤ k} ≃ ↥(genWords 1) :=
+  Equiv.ofBijective
+    (fun k => ⟨[(k : ℕ)], by
+      refine ⟨rfl, fun a ha => ?_⟩
+      rw [List.mem_singleton.1 ha]
+      exact k.2⟩)
+    (by
+      constructor
+      · intro k k' h
+        have h2 : ([(k : ℕ)] : List ℕ) = [(k' : ℕ)] := congrArg Subtype.val h
+        exact Subtype.ext (by simpa using h2)
+      · rintro ⟨v, hv⟩
+        obtain ⟨hlen, hp⟩ := hv
+        cases v with
+        | nil => simp at hlen
+        | cons a s =>
+            cases s with
+            | nil => exact ⟨⟨a, hp a (by simp)⟩, rfl⟩
+            | cons b l => simp at hlen)
+
+/-- `K(k::s) ≤ (k+1)·K(s)` for genuine `s` — the one-step log recursion. -/
+private lemma cfK_cons_le (k : ℕ) (s : List ℕ) (hs : ∀ a ∈ s, 1 ≤ a) :
+    cfK (k :: s) ≤ (k + 1) * cfK s := by
+  cases s with
+  | nil => simp [cfK]
+  | cons b l =>
+      show k * cfK (b :: l) + cfK l ≤ (k + 1) * cfK (b :: l)
+      have h := cfK_drop_one_le (b :: l) hs
+      simp only [List.drop_one, List.tail_cons] at h
+      calc k * cfK (b :: l) + cfK l ≤ k * cfK (b :: l) + cfK (b :: l) :=
+            Nat.add_le_add_left h _
+        _ = (k + 1) * cfK (b :: l) := (Nat.succ_mul k _).symm
+
+private lemma ofReal_log_cfK_cons_le (k : ℕ) (hk : 1 ≤ k) (s : List ℕ)
+    (hs : ∀ a ∈ s, 1 ≤ a) :
+    ENNReal.ofReal (Real.log (cfK (k :: s))) ≤
+      ENNReal.ofReal (Real.log ((k : ℝ) + 1)) +
+        ENNReal.ofReal (Real.log (cfK s)) := by
+  have hKs : 1 ≤ cfK s := one_le_cfK s hs
+  have hKsR : (1 : ℝ) ≤ (cfK s : ℝ) := by exact_mod_cast hKs
+  have hkR : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+  have hposN : 1 ≤ cfK (k :: s) := one_le_cfK (k :: s) (fun a ha => by
+    rcases List.mem_cons.1 ha with rfl | ha
+    · exact hk
+    · exact hs a ha)
+  have hpos : (0 : ℝ) < (cfK (k :: s) : ℝ) := by
+    have : (1 : ℝ) ≤ (cfK (k :: s) : ℝ) := by exact_mod_cast hposN
+    linarith
+  have h1 : (cfK (k :: s) : ℝ) ≤ ((k : ℝ) + 1) * (cfK s : ℝ) := by
+    exact_mod_cast cfK_cons_le k s hs
+  rw [← ENNReal.ofReal_add (Real.log_nonneg (by linarith))
+    (Real.log_nonneg hKsR)]
+  apply ENNReal.ofReal_le_ofReal
+  calc Real.log (cfK (k :: s))
+      ≤ Real.log (((k : ℝ) + 1) * (cfK s : ℝ)) := Real.log_le_log hpos h1
+    _ = Real.log ((k : ℝ) + 1) + Real.log (cfK s : ℝ) :=
+        Real.log_mul (by linarith) (by linarith)
+
+/-- Order-1 partition, digit-indexed: `Σₖ |I_{w·k}| = |I_w|`. -/
+private lemma tsum_digit_extension (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) :
+    ∑' k : {k : ℕ // 1 ≤ k}, volume (cfCylinder (w ++ [(k : ℕ)])) =
+      volume (cfCylinder w) := by
+  rw [volume_eq_tsum_extensions w hw hpos 1]
+  exact digitEquiv.tsum_eq
+    (fun u : genWords 1 => volume (cfCylinder (w ++ (u : List ℕ))))
+
+/-- The digit-law series bound: `Σₖ |I_{[k]}|·log(k+1) ≤ digitLogSum`. -/
+private lemma tsum_digit_mul_log_le :
+    ∑' k : {k : ℕ // 1 ≤ k},
+        volume (cfCylinder [(k : ℕ)]) *
+          ENNReal.ofReal (Real.log (((k : ℕ) : ℝ) + 1)) ≤
+      ENNReal.ofReal digitLogSum := by
+  rw [← succEquiv.tsum_eq (fun k : {k : ℕ // 1 ≤ k} =>
+    volume (cfCylinder [(k : ℕ)]) *
+      ENNReal.ofReal (Real.log (((k : ℕ) : ℝ) + 1)))]
+  have hterm : ∀ j : ℕ,
+      volume (cfCylinder [((succEquiv j : {k : ℕ // 1 ≤ k}) : ℕ)]) *
+        ENNReal.ofReal
+          (Real.log ((((succEquiv j : {k : ℕ // 1 ≤ k}) : ℕ) : ℝ) + 1)) =
+      ENNReal.ofReal
+        (Real.log ((j : ℝ) + 2) / (((j : ℝ) + 1) * ((j : ℝ) + 2))) := by
+    intro j
+    have hc : (((succEquiv j : {k : ℕ // 1 ≤ k}) : ℕ)) = j + 1 := rfl
+    rw [hc, volume_digit_cylinder (j + 1) (Nat.succ_le_succ (Nat.zero_le _)),
+      ← ENNReal.ofReal_mul (by positivity)]
+    have harg : ((j + 1 : ℕ) : ℝ) + 1 = (j : ℝ) + 2 := by push_cast; ring
+    rw [harg]
+    congr 1
+    have h2 : ((j + 1 : ℕ) : ℝ) = (j : ℝ) + 1 := by push_cast; ring
+    rw [h2]
+    ring
+  calc ∑' j : ℕ,
+        volume (cfCylinder [((succEquiv j : {k : ℕ // 1 ≤ k}) : ℕ)]) *
+          ENNReal.ofReal
+            (Real.log ((((succEquiv j : {k : ℕ // 1 ≤ k}) : ℕ) : ℝ) + 1))
+      = ∑' j : ℕ, ENNReal.ofReal
+          (Real.log ((j : ℝ) + 2) / (((j : ℝ) + 1) * ((j : ℝ) + 2))) := by
+        exact tsum_congr hterm
+    _ = ENNReal.ofReal digitLogSum :=
+        (ENNReal.ofReal_tsum_of_nonneg digitLog_nonneg summable_digitLog).symm
+    _ ≤ ENNReal.ofReal digitLogSum := le_rfl
+
 /-- **Conditional expected log-continuant is linear in `n`**: for some
 constant `C` and every genuine base cylinder,
 `Σ_u |I_{wu}|·log K(u) ≤ C·n·|I_w|` over genuine words `u` of length `n`.
@@ -308,7 +515,138 @@ theorem tsum_mul_log_cfK_le :
           volume (cfCylinder (w ++ (u : List ℕ))) *
             ENNReal.ofReal (Real.log (cfK (u : List ℕ))) ≤
         ENNReal.ofReal (C * n) * volume (cfCylinder w) := by
-  sorry
+  refine ⟨2 * digitLogSum + 1, by nlinarith [digitLogSum_nonneg], ?_⟩
+  set C : ℝ := 2 * digitLogSum + 1 with hC
+  have hC0 : (0 : ℝ) ≤ C := by nlinarith [digitLogSum_nonneg]
+  suffices key : ∀ n : ℕ, ∀ w : List ℕ, w ≠ [] → (∀ a ∈ w, 1 ≤ a) →
+      ∑' u : genWords n,
+          volume (cfCylinder (w ++ (u : List ℕ))) *
+            ENNReal.ofReal (Real.log (cfK (u : List ℕ))) ≤
+        ENNReal.ofReal (C * n) * volume (cfCylinder w) by
+    intro w hw hpos n
+    exact key n w hw hpos
+  intro n
+  induction n with
+  | zero =>
+      intro w hw hpos
+      have hzero : ∀ u : genWords 0,
+          volume (cfCylinder (w ++ (u : List ℕ))) *
+            ENNReal.ofReal (Real.log (cfK (u : List ℕ))) = 0 := by
+        intro u
+        have hnil : (u : List ℕ) = [] := List.length_eq_zero_iff.1 u.2.1
+        rw [hnil]
+        simp [cfK]
+      rw [tsum_congr hzero]
+      simp
+  | succ n ih =>
+      intro w hw hpos
+      have hwk : ∀ k : {k : ℕ // 1 ≤ k}, (w ++ [(k : ℕ)]) ≠ [] := by
+        intro k; simp
+      have hwkpos : ∀ k : {k : ℕ // 1 ≤ k}, ∀ a ∈ w ++ [(k : ℕ)], 1 ≤ a := by
+        intro k a ha
+        rcases List.mem_append.1 ha with h | h
+        · exact hpos a h
+        · rw [List.mem_singleton.1 h]; exact k.2
+      -- reindex by peeling the first digit
+      rw [← (genConsEquiv n).tsum_eq (fun u : genWords (n + 1) =>
+        volume (cfCylinder (w ++ (u : List ℕ))) *
+          ENNReal.ofReal (Real.log (cfK (u : List ℕ))))]
+      -- the reindexed term, in appended-base form
+      have hassoc : ∀ (k : {k : ℕ // 1 ≤ k}) (s : genWords n),
+          w ++ ((k : ℕ) :: (s : List ℕ)) = (w ++ [(k : ℕ)]) ++ (s : List ℕ) := by
+        intro k s; simp
+      -- pointwise: log K(k::s) ≤ log(k+1) + log K(s)
+      have hsplit : ∀ (k : {k : ℕ // 1 ≤ k}) (s : genWords n),
+          volume (cfCylinder ((w ++ [(k : ℕ)]) ++ (s : List ℕ))) *
+              ENNReal.ofReal (Real.log (cfK ((k : ℕ) :: (s : List ℕ)))) ≤
+            volume (cfCylinder ((w ++ [(k : ℕ)]) ++ (s : List ℕ))) *
+                ENNReal.ofReal (Real.log (((k : ℕ) : ℝ) + 1)) +
+              volume (cfCylinder ((w ++ [(k : ℕ)]) ++ (s : List ℕ))) *
+                ENNReal.ofReal (Real.log (cfK (s : List ℕ))) := by
+        intro k s
+        rw [← mul_add]
+        gcongr
+        exact ofReal_log_cfK_cons_le (k : ℕ) k.2 (s : List ℕ) s.2.2
+      calc ∑' (c : {k : ℕ // 1 ≤ k} × ↥(genWords n)),
+            volume (cfCylinder (w ++ (((genConsEquiv n) c : ↥(genWords (n+1))) : List ℕ))) *
+              ENNReal.ofReal
+                (Real.log (cfK (((genConsEquiv n) c : ↥(genWords (n+1))) : List ℕ)))
+          = ∑' (c : {k : ℕ // 1 ≤ k} × ↥(genWords n)),
+              volume (cfCylinder ((w ++ [(c.1 : ℕ)]) ++ (c.2 : List ℕ))) *
+                ENNReal.ofReal (Real.log (cfK ((c.1 : ℕ) :: (c.2 : List ℕ)))) := by
+            apply tsum_congr; rintro ⟨k, s⟩
+            rw [show (((genConsEquiv n) (k, s) : ↥(genWords (n+1))) : List ℕ) =
+              (k : ℕ) :: (s : List ℕ) from rfl, hassoc k s]
+        _ = ∑' (k : {k : ℕ // 1 ≤ k}) (s : genWords n),
+              volume (cfCylinder ((w ++ [(k : ℕ)]) ++ (s : List ℕ))) *
+                ENNReal.ofReal (Real.log (cfK ((k : ℕ) :: (s : List ℕ)))) := by
+            exact ENNReal.tsum_prod
+              (f := fun (k : {k : ℕ // 1 ≤ k}) (s : ↥(genWords n)) =>
+                volume (cfCylinder ((w ++ [(k : ℕ)]) ++ (s : List ℕ))) *
+                  ENNReal.ofReal (Real.log (cfK ((k : ℕ) :: (s : List ℕ)))))
+        _ ≤ ∑' (k : {k : ℕ // 1 ≤ k}) (s : genWords n),
+              (volume (cfCylinder ((w ++ [(k : ℕ)]) ++ (s : List ℕ))) *
+                  ENNReal.ofReal (Real.log (((k : ℕ) : ℝ) + 1)) +
+                volume (cfCylinder ((w ++ [(k : ℕ)]) ++ (s : List ℕ))) *
+                  ENNReal.ofReal (Real.log (cfK (s : List ℕ)))) := by
+            apply ENNReal.tsum_le_tsum; intro k
+            apply ENNReal.tsum_le_tsum; intro s
+            exact hsplit k s
+        _ = ∑' k : {k : ℕ // 1 ≤ k},
+              (volume (cfCylinder (w ++ [(k : ℕ)])) *
+                  ENNReal.ofReal (Real.log (((k : ℕ) : ℝ) + 1)) +
+                ∑' s : genWords n,
+                  volume (cfCylinder ((w ++ [(k : ℕ)]) ++ (s : List ℕ))) *
+                    ENNReal.ofReal (Real.log (cfK (s : List ℕ)))) := by
+            apply tsum_congr; intro k
+            rw [ENNReal.tsum_add, ENNReal.tsum_mul_right,
+              ← volume_eq_tsum_extensions (w ++ [(k : ℕ)]) (hwk k) (hwkpos k) n]
+        _ = (∑' k : {k : ℕ // 1 ≤ k},
+              volume (cfCylinder (w ++ [(k : ℕ)])) *
+                ENNReal.ofReal (Real.log (((k : ℕ) : ℝ) + 1))) +
+            ∑' k : {k : ℕ // 1 ≤ k},
+              ∑' s : genWords n,
+                volume (cfCylinder ((w ++ [(k : ℕ)]) ++ (s : List ℕ))) *
+                  ENNReal.ofReal (Real.log (cfK (s : List ℕ))) :=
+            ENNReal.tsum_add
+        _ ≤ (∑' k : {k : ℕ // 1 ≤ k},
+              2 * (volume (cfCylinder w) * volume (cfCylinder [(k : ℕ)])) *
+                ENNReal.ofReal (Real.log (((k : ℕ) : ℝ) + 1))) +
+            ∑' k : {k : ℕ // 1 ≤ k},
+              ENNReal.ofReal (C * n) * volume (cfCylinder (w ++ [(k : ℕ)])) := by
+            gcongr with k k
+            · exact volume_cylinder_append_le w [(k : ℕ)] hw (by simp) hpos
+                (fun a ha => by rw [List.mem_singleton.1 ha]; exact k.2)
+            · exact ih (w ++ [(k : ℕ)]) (hwk k) (hwkpos k)
+        _ = 2 * volume (cfCylinder w) *
+              (∑' k : {k : ℕ // 1 ≤ k},
+                volume (cfCylinder [(k : ℕ)]) *
+                  ENNReal.ofReal (Real.log (((k : ℕ) : ℝ) + 1))) +
+            ENNReal.ofReal (C * n) * volume (cfCylinder w) := by
+            rw [← ENNReal.tsum_mul_left, ENNReal.tsum_mul_left (a := ENNReal.ofReal (C * n)),
+              tsum_digit_extension w hw hpos]
+            congr 1
+            apply tsum_congr; intro k
+            ring
+        _ ≤ 2 * volume (cfCylinder w) * ENNReal.ofReal digitLogSum +
+            ENNReal.ofReal (C * n) * volume (cfCylinder w) := by
+            gcongr
+            exact tsum_digit_mul_log_le
+        _ ≤ ENNReal.ofReal (C * (n + 1)) * volume (cfCylinder w) := by
+            have h1 : 2 * volume (cfCylinder w) * ENNReal.ofReal digitLogSum =
+                ENNReal.ofReal (2 * digitLogSum) * volume (cfCylinder w) := by
+              rw [show (2 : ENNReal) = ENNReal.ofReal 2 from
+                  (ENNReal.ofReal_ofNat 2).symm,
+                ENNReal.ofReal_mul (by norm_num)]
+              ring
+            rw [h1, ← add_mul, ← ENNReal.ofReal_add (by nlinarith [digitLogSum_nonneg])
+              (by positivity)]
+            gcongr
+            simp only [hC]
+            push_cast
+            nlinarith [digitLogSum_nonneg]
+        _ = ENNReal.ofReal (C * ((n + 1 : ℕ) : ℝ)) * volume (cfCylinder w) := by
+            norm_cast
 
 /-- **The Lemma-5 substitute** (B–Y Lemma 5 without Morita/Vallée, worse
 constants, no complexity claim): for some `C`, at least half the mass of any
