@@ -36,10 +36,11 @@
 >      at `s+1` over `s`, with `cfK_append_le`/`cfK_mul_le_append` along
 >      `wSched_succ`. (Takes `hk : mSched(s+1)d = mSched s d + k` — supplied by
 >      `xstar_dary_step`.)
->    - NEXT sub-steps: (c2) take `Real.log` of (c1): with `L d := Real.log d > 0`,
->      `k·L d = log(d^k)`, so `k ≤ (2 log cfK(u_s) + log(32d))/L d` and
->      `k ≥ (2 log cfK(u_s) − log(8d))/L d` (via `Real.log_le_log`/
->      `Real.log_pow`/`Real.log_mul`; note `log cfK(u_s)² = 2 log cfK(u_s)`).
+>    - ✅ **(c2) LANDED** (2026-08-23, `log_gain_bracket`, axiom-clean): log of
+>      (c1), division-free `k·log d` form —
+>      `2 log cfK(u_s) − log(8d) ≤ k·log d ≤ 2 log cfK(u_s) + log(32d)`. Via
+>      `Real.log_le_log`/`Real.log_pow`/`Real.log_mul`.
+>    - NEXT sub-steps:
 >      (c3) numerator upper via good-length `cfK(u_s) ≤ e^{goodC·n_{s+1}}` — LOCATE
 >      the exact repo lemma bounding the selected extension's `cfK` above (search
 >      `goodExtSet`/`half_mass`/`goodC` in `CFSchedule`/`TBrick`); denominator

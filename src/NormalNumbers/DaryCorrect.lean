@@ -286,4 +286,37 @@ theorem dpow_gain_bracket (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) {k 
       exact le_trans (le_trans t1 t2) t3
     nlinarith [hchain, hWs2]
 
+/-- **(c2) the log of the gain bracket**: taking `Real.log` of `dpow_gain_bracket`
+turns the per-stage digit gain `k = mSched (s+1) d − mSched s d` into a two-sided
+bound by `log cfK (uSched s)`, in division-free `k·log d` form (`log d > 0` since
+`d ≥ 2`).  This is the shape the interior estimate sums: the numerator uses the
+upper bound (`k` small when `cfK (uSched s)` is small — good-length control),
+the denominator the lower bound (`Σ k_j` large via `two_pow_le_cfK`). -/
+theorem log_gain_bracket (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) {k : ℕ}
+    (hk : mSched (s + 1) d = mSched s d + k) :
+    2 * Real.log (cfK (uSched s)) - Real.log (8 * d) ≤ (k : ℝ) * Real.log d ∧
+      (k : ℝ) * Real.log d
+        ≤ 2 * Real.log (cfK (uSched s)) + Real.log (32 * d) := by
+  obtain ⟨hlo, hup⟩ := dpow_gain_bracket s d hd2 hdt hk
+  have hd1 : 1 ≤ d := le_trans (by norm_num) hd2
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd1
+  set U : ℝ := (cfK (uSched s) : ℝ) with hU
+  have hU0 : (0 : ℝ) < U := by
+    rw [hU]; exact_mod_cast lt_of_lt_of_le one_pos (one_le_cfK _ (uSched_pos s))
+  have hdk0 : (0 : ℝ) < (d : ℝ) ^ k := by positivity
+  have hlogdk : Real.log ((d : ℝ) ^ k) = (k : ℝ) * Real.log d := by rw [Real.log_pow]
+  have hlogU2 : Real.log (U ^ 2) = 2 * Real.log U := by
+    rw [Real.log_pow]; push_cast; ring
+  have h8d : (8 : ℝ) * d ≠ 0 := (mul_pos (by norm_num : (0 : ℝ) < 8) hdR).ne'
+  have h32d : (32 : ℝ) * d ≠ 0 := (mul_pos (by norm_num : (0 : ℝ) < 32) hdR).ne'
+  have hdkne : ((d : ℝ) ^ k) ≠ 0 := hdk0.ne'
+  have hU2ne : (U ^ 2) ≠ 0 := (pow_pos hU0 2).ne'
+  refine ⟨?_, ?_⟩
+  · have h := Real.log_le_log (pow_pos hU0 2) hlo
+    rw [hlogU2, Real.log_mul h8d hdkne, hlogdk] at h
+    linarith [h]
+  · have h := Real.log_le_log hdk0 hup
+    rw [hlogdk, Real.log_mul h32d hU2ne, hlogU2] at h
+    linarith [h]
+
 end NormalNumbers
