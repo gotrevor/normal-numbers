@@ -1,68 +1,46 @@
-# HANDOFF — B5′ / W2 campaign: prove the 10 sorries in `src/NormalNumbers/CFDigitLaw.lean`
+# HANDOFF — W2 campaign COMPLETE; next: stage W3
 
-**Objective**: work package W2 of expedition B5′ — digit laws, the partition
-calculus, the Gauss/Lebesgue comparison, and the Markov substitute for B–Y
-Lemma 5.  All 10 `src/` sorries live in `CFDigitLaw.lean`; `src/` sorry-free
-= done (the self-stop gate).  W1 (`CFCylinder.lean`) is complete and
-axiom-clean — build on it freely.
+**Date**: 2026-08-23 · **Branch**: `master` · W2 done in one session, 3 laps.
 
-**Read first**: `KHINCHIN.md` (the plan), the module docstrings of
-`CFDefs.lean` / `CFCylinder.lean` / `CFDigitLaw.lean`, and
-`papers/becher-yuhjtman-2019-abs-normal-cf-normal.md` §"Efficiency-free
-substitute" (the mathematical route for the two `∃ C` statements).
+## State
+- `src/` sorry-free.  All 10 W2 statements in `CFDigitLaw.lean` proved,
+  axiom-clean (`propext`/`Classical.choice`/`Quot.sound`, observed via
+  `#print axioms`), anchors passing, no frozen statement reshaped.
+- W1 (`CFCylinder.lean`, 12/12) and Stoneham unchanged.  Two W1 lemmas
+  lifted `private` → public: `one_le_cfK`, `irrational_gaussMap`.
+- Commits: `0f512a4` (7 warm-ups) → `9933e57` (partition crux) →
+  `fdc51a6` (log-continuant bound) → this one (Markov substitute, records).
+  Not pushed (host pushes).
 
-**Statement discipline** 🎯: the 10 statement shapes and the `genWords` def
-are FROZEN (guard-by-name; the 4 anchors are kernel-checked and must keep
-passing).  Add as many private intermediate lemmas as you like — in
-`CFDigitLaw.lean` or a new imported module — but do not weaken, reshape, or
-re-hypothesize a frozen statement.  If one looks *wrong*, STOP on it, write
-the evidence into this HANDOFF, and move to the others.  Oversight:
-`JUDGE.md`.
+## Technique notes worth carrying forward
+- **Measurability of cylinders is now proved outright**
+  (`measurable_gaussMap`/`measurable_cfDigit`/`measurableSet_cfCylinder`,
+  private in `CFDigitLaw.lean`) — W1's "never need measurability" stance is
+  obsolete; `measure_biUnion` is available for W3.
+- **`tsum_mul_log_cfK_le` went by first-digit peeling**, not positional
+  marginals: `K(k::s) ≤ (k+1)K(s)` + partition identities + distortion +
+  digit law, induction on `n` with the base word `w` generalized.
+  `genConsEquiv : {k // 1 ≤ k} × genWords n ≃ genWords (n+1)` (via
+  `Equiv.ofBijective`) and `ENNReal.tsum_prod` (needs the `f :=` binder
+  types spelled out) do the reindexing.
+- Summability of `Σ log(j+2)/((j+1)(j+2))`: `log x ≤ 2√x` (from
+  `Real.log_le_sub_one_of_pos` at `√x`) against the `3/2`-p-series
+  (`Real.summable_one_div_nat_rpow` + `summable_nat_add_iff`).
+- ENNReal gotchas hit: `mul_le_mul_right'`/`mul_le_mul_left'` do NOT
+  resolve in this pin — use `gcongr`; cancellation lemma is
+  `ENNReal.mul_le_mul_iff_left/right` (Operations.lean);
+  `ENNReal.add_le_add_iff_right` needs the finiteness argument
+  (cylinder ⊆ `Ioo 0 1` gives it).
+- `push_neg` deprecated in this pin (warns; prefer `push Not`).
 
-**Suggested order** (algebra → measure → the two `∃ C` headliners):
+## 🎬 Next actions (W3, per `KHINCHIN.md`)
+1. Read `KHINCHIN.md` §W3 and freeze the mixing/Chebyshev statement
+   shapes with kernel-checked anchors (planted-scaffold doctrine, as for
+   W1/W2).  Inputs ready: distortion pair, partition calculus,
+   `tailDensity_mem_Icc`, Gauss/Lebesgue comparison, `gaussMeasure_univ`,
+   `half_mass_long_extensions`.
+2. Then the W3 campaign itself.
 
-1. `cfK_le_prod` — direct `cfK.induct`; warm-up (W1's technique note: revert
-   hypotheses before the induction so the IHs carry them — not even needed
-   here, no hypotheses).
-2. `volume_digit_cylinder` — specialize `volume_cfCylinder` to `[k]`.
-3. `cfCylinder_disjoint` — two same-length words that differ read
-   incompatible digits at the first differing index; `List.ext_getD`-style
-   argument.  No positivity needed.
-4. `volume_append_mul_fib_le` — chain `volume_cylinder_append_le`,
-   `volume_cfCylinder` (for `|I_u| ≤ 1/K(u)²`), `fib_le_cfK`.  ENNReal
-   care: multiplicative form on purpose; avoid division.
-5. `gaussMeasure_le_volume`, `volume_le_gaussMeasure` — `withDensity` +
-   `setLIntegral` monotonicity against the density window
-   `1/(2 log 2) ≤ 1/((1+x) log 2) ≤ 1/log 2` on `(0,1)`.
-6. `gaussMeasure_univ` — `∫₀¹ dx/(1+x) = log 2`: mathlib's interval
-   integral of `(1+x)⁻¹` (e.g. via `integral_inv` on `[1,2]` after a shift,
-   or `intervalIntegral.integral_one_div`); then the `withDensity`/
-   `lintegral` bookkeeping.
-7. `volume_eq_tsum_extensions` — the meaty middle: extensions are subsets
-   (prefix property), pairwise disjoint (3), and their union covers the
-   irrationals of `cfCylinder w` (an irrational's Gauss orbit never hits 0,
-   so every digit is genuine — W1's `irrational_gaussMap` + digit lemmas
-   are `private` in `CFCylinder.lean`; re-prove locally or lift them into a
-   shared module, both fine).  Rationals are countable → null.
-   `measure_biUnion`/`tsum` over the countable type `↥(genWords n)`.
-8. `tsum_mul_log_cfK_le` — the conditional expectation bound: `cfK_le_prod`
-   turns `log K(u)` into `Σᵢ log(aᵢ+1)`; for each position `i`, the marginal
-   mass of digit `k` is `≤ 2·|I_w|/(k(k+1))` (partition + distortion + digit
-   law); `Σₖ log(k+1)/(k(k+1)) < ∞` (compare `log(k+1) ≤ √k`-style or
-   `Real.add_pow_le_pow_mul_pow_of_sq_le_sq` — any summable majorant).
-   Take `C = 2·Σ + 1`.
-9. `half_mass_long_extensions` — Markov on (8) with threshold `e^{Cn}`,
-   `C = 2·C₈`: the bad extensions carry `≤ |I_w|/2`, so the good carry
-   `≥ |I_w|/2`.  Handle `n = 0` separately (everything is good:
-   `K([]) = 1 ≤ e⁰`).
-
-**Warnings** ⚠️: digit-positivity (`∀ a ∈ w, 1 ≤ a`) stays load-bearing —
-digit `0` is the junk marker (`CFDefs.lean` conventions).  Work up to
-measure zero; don't chase set equalities the statements don't need.  `ℝ≥0∞`
-gotchas: `ring` won't distribute `⁻¹` (use `div_mul_div_comm` /
-`div_le_div_iff₀` at the ℝ layer and cross with `ENNReal.ofReal` lemmas);
-this repo writes `(2 : ENNReal)`, no `open ENNReal` notation.
-
-**Gates**: `lake build` green every commit; anchors keep passing; once all
-10 are discharged, `#print axioms` each of the 10 = exactly
-`propext`, `Classical.choice`, `Quot.sound`.
+---
+**→ Next session: don't summarize this doc back or wait for instructions;
+absorb it and start at Next actions #1.**

@@ -660,7 +660,110 @@ theorem half_mass_long_extensions :
         2 * ∑' u : genWords n,
           (if (cfK (u : List ℕ) : ℝ) ≤ Real.exp (C * n)
             then volume (cfCylinder (w ++ (u : List ℕ))) else 0) := by
-  sorry
+  obtain ⟨C₀, hC₀, hbound⟩ := tsum_mul_log_cfK_le
+  refine ⟨2 * C₀, by linarith, ?_⟩
+  intro w hw hpos n
+  have hfin : volume (cfCylinder w) ≠ ⊤ := by
+    have h1 : volume (cfCylinder w) ≤ volume (Set.Ioo (0 : ℝ) 1) :=
+      measure_mono fun x hx => hx.1
+    rw [Real.volume_Ioo] at h1
+    exact (lt_of_le_of_lt h1 ENNReal.ofReal_lt_top).ne
+  set T : ↥(genWords n) → ENNReal :=
+    fun u => volume (cfCylinder (w ++ (u : List ℕ))) with hT
+  set P : ↥(genWords n) → Prop :=
+    fun u => (cfK (u : List ℕ) : ℝ) ≤ Real.exp (2 * C₀ * n) with hP
+  have hsplitfun : ∀ u : genWords n,
+      T u = (if P u then T u else 0) + (if P u then 0 else T u) := by
+    intro u
+    by_cases h : P u <;> simp [h]
+  have hpart : volume (cfCylinder w) =
+      (∑' u : genWords n, if P u then T u else 0) +
+        ∑' u : genWords n, if P u then 0 else T u := by
+    rw [volume_eq_tsum_extensions w hw hpos n]
+    calc ∑' u : genWords n, T u
+        = ∑' u : genWords n,
+            ((if P u then T u else 0) + (if P u then 0 else T u)) :=
+          tsum_congr hsplitfun
+      _ = _ := ENNReal.tsum_add
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · -- n = 0: everything is good (K([]) = 1 ≤ e⁰)
+    have hall : ∀ u : genWords 0, (if P u then T u else 0) = T u := by
+      intro u
+      have hnil : (u : List ℕ) = [] := List.length_eq_zero_iff.1 u.2.1
+      have : P u := by
+        rw [hP]
+        simp only [hnil]
+        norm_num [cfK]
+      rw [if_pos this]
+    calc volume (cfCylinder w)
+        = ∑' u : genWords 0, T u := volume_eq_tsum_extensions w hw hpos 0
+      _ = 1 * ∑' u : genWords 0, (if P u then T u else 0) := by
+          rw [one_mul, tsum_congr hall]
+      _ ≤ 2 * ∑' u : genWords 0, (if P u then T u else 0) := by
+          gcongr
+          exact one_le_two
+  · -- n ≥ 1: Markov on the log-continuant bound
+    have hCn : (0 : ℝ) < 2 * C₀ * n := by
+      have : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+      nlinarith
+    set d : ENNReal := ENNReal.ofReal (2 * C₀ * n) with hd
+    have hd0 : d ≠ 0 := by
+      rw [hd]
+      simp [ENNReal.ofReal_eq_zero, not_le, hCn]
+    have hdtop : d ≠ ⊤ := ENNReal.ofReal_ne_top
+    -- bad mass · d ≤ C₀·n·|I_w|
+    have hbadmul : (∑' u : genWords n, if P u then 0 else T u) * d ≤
+        ENNReal.ofReal (C₀ * n) * volume (cfCylinder w) := by
+      rw [← ENNReal.tsum_mul_right]
+      refine le_trans (ENNReal.tsum_le_tsum fun u => ?_) (hbound w hw hpos n)
+      by_cases h : P u
+      · simp [h]
+      · rw [if_neg h]
+        have hKpos : 1 ≤ cfK (u : List ℕ) := one_le_cfK _ u.2.2
+        have hKR : (0 : ℝ) < (cfK (u : List ℕ) : ℝ) := by
+          have : (1 : ℝ) ≤ (cfK (u : List ℕ) : ℝ) := by exact_mod_cast hKpos
+          linarith
+        have hlt : Real.exp (2 * C₀ * n) < (cfK (u : List ℕ) : ℝ) := by
+          rw [hP] at h
+          push_neg at h
+          exact h
+        have hlog : 2 * C₀ * n ≤ Real.log (cfK (u : List ℕ)) := by
+          have h2 := Real.log_lt_log (Real.exp_pos _) hlt
+          rw [Real.log_exp] at h2
+          linarith
+        show T u * d ≤ T u * ENNReal.ofReal (Real.log (cfK (u : List ℕ)))
+        gcongr
+        rw [hd]
+        exact ENNReal.ofReal_le_ofReal hlog
+    -- hence bad mass ≤ |I_w|/2
+    have hbad : (∑' u : genWords n, if P u then 0 else T u) ≤
+        ENNReal.ofReal (1 / 2) * volume (cfCylinder w) := by
+      rw [← ENNReal.mul_le_mul_iff_left hd0 hdtop]
+      calc (∑' u : genWords n, if P u then 0 else T u) * d
+          ≤ ENNReal.ofReal (C₀ * n) * volume (cfCylinder w) := hbadmul
+        _ = ENNReal.ofReal (1 / 2) * volume (cfCylinder w) * d := by
+            rw [hd, mul_comm (ENNReal.ofReal (1 / 2) * volume (cfCylinder w)) _,
+              ← mul_assoc, ← ENNReal.ofReal_mul (by positivity)]
+            congr 2
+            ring
+    -- cancel: |I_w| + |I_w| ≤ 2·good + |I_w|
+    have htwo : (2 : ENNReal) * ENNReal.ofReal (1 / 2) = 1 := by
+      rw [show (2 : ENNReal) = ENNReal.ofReal 2 from
+        (ENNReal.ofReal_ofNat 2).symm, ← ENNReal.ofReal_mul (by norm_num)]
+      norm_num
+    rw [← ENNReal.add_le_add_iff_right hfin]
+    calc volume (cfCylinder w) + volume (cfCylinder w)
+        = 2 * volume (cfCylinder w) := (two_mul _).symm
+      _ = 2 * ((∑' u : genWords n, if P u then T u else 0) +
+            ∑' u : genWords n, if P u then 0 else T u) := by rw [← hpart]
+      _ = 2 * (∑' u : genWords n, if P u then T u else 0) +
+            2 * ∑' u : genWords n, if P u then 0 else T u := mul_add _ _ _
+      _ ≤ 2 * (∑' u : genWords n, if P u then T u else 0) +
+            2 * (ENNReal.ofReal (1 / 2) * volume (cfCylinder w)) := by
+          gcongr
+      _ = 2 * (∑' u : genWords n, if P u then T u else 0) +
+            volume (cfCylinder w) := by
+          rw [← mul_assoc, htwo, one_mul]
 
 /-- **Deterministic relative-length upper bound** (the free half of Lemma 5):
 every genuine relative-order-`n` extension shrinks a cylinder by at least
