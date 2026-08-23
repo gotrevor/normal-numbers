@@ -248,7 +248,77 @@ theorem digitOf_pow_slice_eq_blockNatVal (b r L s q : ℕ) (hb : 2 ≤ b) (hr : 
   · simp [List.length_take, List.length_drop, List.length_ofFn]; omega
   · intro i h1 h2
     rw [List.getElem_ofFn, List.getElem_take, List.getElem_drop, List.getElem_ofFn]
+    simp only [Fin.val_mk]
     congr 1
     omega
+
+/-- **Matching-value count**: among `c ∈ [0, b^r)`, exactly `b^(r−L)` values
+have `c` (shifted right by `r−s−L`, masked to `L` digits) equal to a fixed
+target `V < b^L`. Combinatorial fact underlying Pillai's frequency count:
+fixing an `L`-digit slice of an `r`-digit base-`b` number leaves `b^(r−L)`
+free choices for the remaining digits. Proved via the bijection
+`c ↔ (c / D / b^L, c % D)` with `D := b^(r−s−L)`, splitting the free
+digits into a length-`s` prefix and length-`(r−s−L)` suffix around the
+fixed slice. -/
+theorem card_matchingValues (b r L s V : ℕ) (hb : 2 ≤ b) (hL : s + L ≤ r)
+    (hV : V < b ^ L) :
+    ((Finset.range (b ^ r)).filter (fun c => c / b ^ (r - s - L) % b ^ L = V)).card
+      = b ^ (r - L) := by
+  set D : ℕ := b ^ (r - s - L) with hDdef
+  have hDpos : 0 < D := by rw [hDdef]; positivity
+  have hLpos : 0 < b ^ L := by positivity
+  have hexp : b ^ r = b ^ s * b ^ L * D := by
+    rw [hDdef, ← pow_add, ← pow_add]; congr 1; omega
+  have hcard : (Finset.range (b ^ s) ×ˢ Finset.range D).card = b ^ (r - L) := by
+    rw [Finset.card_product, Finset.card_range, Finset.card_range, hDdef, ← pow_add]
+    congr 1
+    omega
+  rw [← hcard]
+  apply Finset.card_nbij' (fun c => (c / D / b ^ L, c % D))
+    (fun p => (p.1 * b ^ L + V) * D + p.2)
+  · intro c hc
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq] at hc
+    obtain ⟨hcr, hcmod⟩ := hc
+    simp only [Finset.coe_product, Finset.mem_coe, Finset.mem_range, Set.mem_prod]
+    refine ⟨?_, Nat.mod_lt _ hDpos⟩
+    have hcD : c / D < b ^ s * b ^ L := by
+      rw [Nat.div_lt_iff_lt_mul hDpos, ← hexp]; exact hcr
+    exact Nat.div_lt_of_lt_mul (by rwa [Nat.mul_comm] at hcD)
+  · rintro ⟨k, t⟩ hkt
+    simp only [Finset.coe_product, Finset.mem_coe, Finset.mem_range, Set.mem_prod] at hkt
+    obtain ⟨hk, ht⟩ := hkt
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq]
+    have h1 : k * b ^ L + V < b ^ s * b ^ L := by
+      have hstep : (k + 1) * b ^ L ≤ b ^ s * b ^ L := Nat.mul_le_mul_right (b ^ L) hk
+      nlinarith
+    refine ⟨?_, ?_⟩
+    · calc (k * b ^ L + V) * D + t
+          < (k * b ^ L + V + 1) * D := by nlinarith [ht]
+        _ ≤ (b ^ s * b ^ L) * D := Nat.mul_le_mul_right D h1
+        _ = b ^ r := by rw [hexp]
+    · have hdiv : (k * b ^ L + V) * D + t = D * (k * b ^ L + V) + t := by ring
+      rw [hdiv, Nat.mul_add_div hDpos, Nat.div_eq_of_lt ht, Nat.add_zero,
+        Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hV]
+  · intro c hc
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq] at hc
+    obtain ⟨hcr, hcmod⟩ := hc
+    have hkey : c / D = c / D / b ^ L * b ^ L + V := by
+      conv_lhs => rw [← Nat.div_add_mod (c / D) (b ^ L)]
+      rw [hcmod, Nat.mul_comm]
+    show (c / D / b ^ L * b ^ L + V) * D + c % D = c
+    rw [← hkey, Nat.mul_comm, Nat.div_add_mod]
+  · rintro ⟨k, t⟩ hkt
+    simp only [Finset.coe_product, Finset.mem_coe, Finset.mem_range, Set.mem_prod] at hkt
+    obtain ⟨hk, ht⟩ := hkt
+    have hdiv : (k * b ^ L + V) * D + t = D * (k * b ^ L + V) + t := by ring
+    have heq1 : ((k * b ^ L + V) * D + t) / D = k * b ^ L + V := by
+      rw [hdiv, Nat.mul_add_div hDpos, Nat.div_eq_of_lt ht, Nat.add_zero]
+    have heq2 : ((k * b ^ L + V) * D + t) % D = t := by
+      rw [hdiv, Nat.mul_add_mod]
+      exact Nat.mod_eq_of_lt ht
+    have hdiv2 : (k * b ^ L + V) / b ^ L = k := by
+      rw [Nat.add_comm, Nat.add_mul_div_right _ _ hLpos, Nat.div_eq_of_lt hV, Nat.zero_add]
+    dsimp only
+    rw [heq1, heq2, hdiv2]
 
 end NormalNumbers
