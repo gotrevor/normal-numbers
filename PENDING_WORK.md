@@ -1,4 +1,4 @@
-# PENDING WORK — B5′ / W1 campaign (staged 2026-08-23; laps 1-2: algebra batch + crux volume formula)
+# PENDING WORK — B5′ / W1 campaign (staged 2026-08-23; CAMPAIGN COMPLETE 2026-08-23, 3 laps)
 
 **Campaign**: discharge the 12 sorries in `src/NormalNumbers/CFCylinder.lean`
 (work package W1 of expedition B5′ — see `HANDOFF.md` for the route and
@@ -6,10 +6,19 @@
 (Stoneham ✅ landed 2026-08-23; its record lives in `ROADMAP.md` and
 `archive/handoff/`).
 
-**Open (2/12)**: `volume_cylinder_append_le` · `le_volume_cylinder_append`
-— both are B–Y Lemma 3.2 one-pagers from the volume formula (now proved) +
-quasi-multiplicativity (done): |I_w| = 1/(q(q+q⁻)), so the ratio
-|I_{wu}|/(|I_w||I_u|) is a product of the K-ratios already bounded.
+**Open: NONE — 12/12 discharged, all axiom-clean
+(propext/Classical.choice/Quot.sound only), `src/` sorry-free.**
+
+**Lap 3 (2026-08-23)**: `volume_cylinder_append_le` /
+`le_volume_cylinder_append` via the sharper-than-quasi gluing bounds
+`K(wu) ≤ (K(w)+K(w⁻))·K(u)` and `K(w++u⁻) ≤ (K(w)+K(w⁻))·K(u⁻)` (plain
+quasi-multiplicativity is a factor of 2 too lossy for the lower half).
+Nat-side calc chains, then ENNReal.ofReal transport with
+`div_mul_div_comm`/`div_le_div_iff₀` (NB `ring` cannot distribute ⁻¹ over
+products — use div lemmas).
+
+**Next (W2, per KHINCHIN.md)**: the Gauss-measure comparison and the W3
+mixing setup build directly on `tailDensity_mem_Icc` + the distortion pair.
 
 **Crux DONE (2026-08-23)**: `volume_cfCylinder`, axiom-clean.  Route as
 planned: `bumpLast` endpoint + determinant computation in ℚ

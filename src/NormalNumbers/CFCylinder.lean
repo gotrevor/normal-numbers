@@ -661,7 +661,92 @@ theorem volume_cylinder_append_le (w u : List ℕ) (hw : w ≠ []) (hu : u ≠ [
     (hwpos : ∀ a ∈ w, 1 ≤ a) (hupos : ∀ a ∈ u, 1 ≤ a) :
     volume (cfCylinder (w ++ u)) ≤
       2 * (volume (cfCylinder w) * volume (cfCylinder u)) := by
-  sorry
+  have hapos : ∀ a ∈ w ++ u, 1 ≤ a := fun a ha =>
+    (List.mem_append.1 ha).elim (hwpos a) (hupos a)
+  have hwu : w ++ u ≠ [] := by simp [hw]
+  have hdpos : ∀ a ∈ u.dropLast, 1 ≤ a := fun a ha =>
+    hupos a (List.mem_of_mem_dropLast ha)
+  have hdl : (w ++ u).dropLast = w ++ u.dropLast := by
+    rw [List.dropLast_append_of_ne_nil hu]
+  -- sharper-than-quasi bounds from exact gluing
+  have h1 : cfK (w ++ u) ≤ (cfK w + cfK w.dropLast) * cfK u := by
+    rw [cfK_append w u hw hu, add_mul]
+    exact Nat.add_le_add le_rfl
+      (Nat.mul_le_mul le_rfl (cfK_drop_one_le u hupos))
+  have h2 : cfK (w ++ u.dropLast) ≤ (cfK w + cfK w.dropLast) * cfK u.dropLast := by
+    by_cases hud : u.dropLast = []
+    · rw [hud]
+      simp only [List.append_nil, show cfK ([] : List ℕ) = 1 from rfl, mul_one]
+      omega
+    · rw [cfK_append w _ hw hud, add_mul]
+      exact Nat.add_le_add le_rfl
+        (Nat.mul_le_mul le_rfl (cfK_drop_one_le _ hdpos))
+  have h3 : cfK w.dropLast ≤ cfK w := cfK_dropLast_le w hwpos
+  -- the Nat inequality A ≤ 2·B·C
+  have hN : cfK (w ++ u) * (cfK (w ++ u) + cfK (w ++ u.dropLast)) ≤
+      2 * ((cfK w * (cfK w + cfK w.dropLast)) *
+        (cfK u * (cfK u + cfK u.dropLast))) := by
+    calc cfK (w ++ u) * (cfK (w ++ u) + cfK (w ++ u.dropLast))
+        ≤ ((cfK w + cfK w.dropLast) * cfK u) *
+            ((cfK w + cfK w.dropLast) * cfK u +
+              (cfK w + cfK w.dropLast) * cfK u.dropLast) :=
+          Nat.mul_le_mul h1 (Nat.add_le_add h1 h2)
+      _ = ((cfK w + cfK w.dropLast) * (cfK w + cfK w.dropLast)) *
+            (cfK u * (cfK u + cfK u.dropLast)) := by ring
+      _ ≤ ((2 * cfK w) * (cfK w + cfK w.dropLast)) *
+            (cfK u * (cfK u + cfK u.dropLast)) :=
+          Nat.mul_le_mul (Nat.mul_le_mul (by omega) le_rfl) le_rfl
+      _ = 2 * ((cfK w * (cfK w + cfK w.dropLast)) *
+            (cfK u * (cfK u + cfK u.dropLast))) := by ring
+  -- pass to real volumes
+  rw [volume_cfCylinder _ hwu hapos, volume_cfCylinder w hw hwpos,
+    volume_cfCylinder u hu hupos, hdl,
+    ← ENNReal.ofReal_mul (by positivity),
+    show (2 : ENNReal) = ENNReal.ofReal 2 from (ENNReal.ofReal_ofNat 2).symm,
+    ← ENNReal.ofReal_mul (by norm_num)]
+  apply ENNReal.ofReal_le_ofReal
+  have hA : (0 : ℝ) < (cfK (w ++ u) : ℝ) *
+      ((cfK (w ++ u) : ℝ) + (cfK (w ++ u.dropLast) : ℝ)) := by
+    have := one_le_cfK (w ++ u) hapos
+    have h0 : (1 : ℝ) ≤ (cfK (w ++ u) : ℝ) := by exact_mod_cast this
+    positivity
+  have hB : (0 : ℝ) < (cfK w : ℝ) * ((cfK w : ℝ) + (cfK w.dropLast : ℝ)) := by
+    have h0 : (1 : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast one_le_cfK w hwpos
+    positivity
+  have hC : (0 : ℝ) < (cfK u : ℝ) * ((cfK u : ℝ) + (cfK u.dropLast : ℝ)) := by
+    have h0 : (1 : ℝ) ≤ (cfK u : ℝ) := by exact_mod_cast one_le_cfK u hupos
+    positivity
+  have key : (cfK w : ℝ) * ((cfK w : ℝ) + (cfK w.dropLast : ℝ)) *
+      ((cfK u : ℝ) * ((cfK u : ℝ) + (cfK u.dropLast : ℝ))) ≤
+      2 * ((cfK (w ++ u) : ℝ) *
+        ((cfK (w ++ u) : ℝ) + (cfK (w ++ u.dropLast) : ℝ))) := by
+    have h2N : (cfK w * (cfK w + cfK w.dropLast)) *
+        (cfK u * (cfK u + cfK u.dropLast)) ≤
+        2 * (cfK (w ++ u) * (cfK (w ++ u) + cfK (w ++ u.dropLast))) := by
+      -- BC ≤ 2A : the lower-distortion Nat inequality
+      have g1 : cfK w * cfK u ≤ cfK (w ++ u) :=
+        cfK_mul_le_append w u hw hu hwpos hupos
+      have g2 : cfK w * cfK u.dropLast ≤ cfK (w ++ u.dropLast) := by
+        by_cases hud : u.dropLast = []
+        · rw [hud]
+          simp only [List.append_nil, show cfK ([] : List ℕ) = 1 from rfl,
+            mul_one]
+          exact le_rfl
+        · exact cfK_mul_le_append w _ hw hud hwpos hdpos
+      calc (cfK w * (cfK w + cfK w.dropLast)) *
+            (cfK u * (cfK u + cfK u.dropLast))
+          ≤ (cfK w * (2 * cfK w)) * (cfK u * (cfK u + cfK u.dropLast)) :=
+            Nat.mul_le_mul (Nat.mul_le_mul le_rfl (by omega)) le_rfl
+        _ = 2 * ((cfK w * cfK u) * (cfK w * cfK u + cfK w * cfK u.dropLast)) := by
+            ring
+        _ ≤ 2 * (cfK (w ++ u) * (cfK (w ++ u) + cfK (w ++ u.dropLast))) := by
+            exact Nat.mul_le_mul le_rfl
+              (Nat.mul_le_mul g1 (Nat.add_le_add g1 g2))
+      -- (kept for symmetry; not needed here)
+    exact_mod_cast h2N
+  rw [div_mul_div_comm, one_mul, mul_one_div,
+    div_le_div_iff₀ hA (mul_pos hB hC)]
+  nlinarith [key]
 
 /-- **Bounded distortion, lower half** (B–Y Lemma 3.2):
 `|I_w|·|I_u| ≤ 2·|I_{wu}|`. -/
@@ -669,7 +754,67 @@ theorem le_volume_cylinder_append (w u : List ℕ) (hw : w ≠ []) (hu : u ≠ [
     (hwpos : ∀ a ∈ w, 1 ≤ a) (hupos : ∀ a ∈ u, 1 ≤ a) :
     volume (cfCylinder w) * volume (cfCylinder u) ≤
       2 * volume (cfCylinder (w ++ u)) := by
-  sorry
+  have hapos : ∀ a ∈ w ++ u, 1 ≤ a := fun a ha =>
+    (List.mem_append.1 ha).elim (hwpos a) (hupos a)
+  have hwu : w ++ u ≠ [] := by simp [hw]
+  have hdpos : ∀ a ∈ u.dropLast, 1 ≤ a := fun a ha =>
+    hupos a (List.mem_of_mem_dropLast ha)
+  have hdl : (w ++ u).dropLast = w ++ u.dropLast := by
+    rw [List.dropLast_append_of_ne_nil hu]
+  have h1 : cfK (w ++ u) ≤ (cfK w + cfK w.dropLast) * cfK u := by
+    rw [cfK_append w u hw hu, add_mul]
+    exact Nat.add_le_add le_rfl
+      (Nat.mul_le_mul le_rfl (cfK_drop_one_le u hupos))
+  have h2 : cfK (w ++ u.dropLast) ≤ (cfK w + cfK w.dropLast) * cfK u.dropLast := by
+    by_cases hud : u.dropLast = []
+    · rw [hud]
+      simp only [List.append_nil, show cfK ([] : List ℕ) = 1 from rfl, mul_one]
+      omega
+    · rw [cfK_append w _ hw hud, add_mul]
+      exact Nat.add_le_add le_rfl
+        (Nat.mul_le_mul le_rfl (cfK_drop_one_le _ hdpos))
+  have h3 : cfK w.dropLast ≤ cfK w := cfK_dropLast_le w hwpos
+  -- the Nat inequality A ≤ 2·B·C
+  have hN : cfK (w ++ u) * (cfK (w ++ u) + cfK (w ++ u.dropLast)) ≤
+      2 * ((cfK w * (cfK w + cfK w.dropLast)) *
+        (cfK u * (cfK u + cfK u.dropLast))) := by
+    calc cfK (w ++ u) * (cfK (w ++ u) + cfK (w ++ u.dropLast))
+        ≤ ((cfK w + cfK w.dropLast) * cfK u) *
+            ((cfK w + cfK w.dropLast) * cfK u +
+              (cfK w + cfK w.dropLast) * cfK u.dropLast) :=
+          Nat.mul_le_mul h1 (Nat.add_le_add h1 h2)
+      _ = ((cfK w + cfK w.dropLast) * (cfK w + cfK w.dropLast)) *
+            (cfK u * (cfK u + cfK u.dropLast)) := by ring
+      _ ≤ ((2 * cfK w) * (cfK w + cfK w.dropLast)) *
+            (cfK u * (cfK u + cfK u.dropLast)) :=
+          Nat.mul_le_mul (Nat.mul_le_mul (by omega) le_rfl) le_rfl
+      _ = 2 * ((cfK w * (cfK w + cfK w.dropLast)) *
+            (cfK u * (cfK u + cfK u.dropLast))) := by ring
+  rw [volume_cfCylinder _ hwu hapos, volume_cfCylinder w hw hwpos,
+    volume_cfCylinder u hu hupos, hdl,
+    ← ENNReal.ofReal_mul (by positivity),
+    show (2 : ENNReal) = ENNReal.ofReal 2 from (ENNReal.ofReal_ofNat 2).symm,
+    ← ENNReal.ofReal_mul (by norm_num)]
+  apply ENNReal.ofReal_le_ofReal
+  have hA : (0 : ℝ) < (cfK (w ++ u) : ℝ) *
+      ((cfK (w ++ u) : ℝ) + (cfK (w ++ u.dropLast) : ℝ)) := by
+    have h0 : (1 : ℝ) ≤ (cfK (w ++ u) : ℝ) := by
+      exact_mod_cast one_le_cfK (w ++ u) hapos
+    positivity
+  have hB : (0 : ℝ) < (cfK w : ℝ) * ((cfK w : ℝ) + (cfK w.dropLast : ℝ)) := by
+    have h0 : (1 : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast one_le_cfK w hwpos
+    positivity
+  have hC : (0 : ℝ) < (cfK u : ℝ) * ((cfK u : ℝ) + (cfK u.dropLast : ℝ)) := by
+    have h0 : (1 : ℝ) ≤ (cfK u : ℝ) := by exact_mod_cast one_le_cfK u hupos
+    positivity
+  have keyR : (cfK (w ++ u) : ℝ) *
+      ((cfK (w ++ u) : ℝ) + (cfK (w ++ u.dropLast) : ℝ)) ≤
+      2 * ((cfK w : ℝ) * ((cfK w : ℝ) + (cfK w.dropLast : ℝ)) *
+        ((cfK u : ℝ) * ((cfK u : ℝ) + (cfK u.dropLast : ℝ)))) := by
+    exact_mod_cast hN
+  rw [div_mul_div_comm, one_mul, mul_one_div,
+    div_le_div_iff₀ (mul_pos hB hC) hA]
+  nlinarith [keyR]
 
 /-! ## The density window (gateway to W3) -/
 
