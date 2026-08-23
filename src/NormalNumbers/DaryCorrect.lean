@@ -197,4 +197,93 @@ theorem dpow_mSched_bracket (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) :
     nlinarith [hcross, hDQ, hQ0, mul_le_mul_of_nonneg_left hDQ hQ0.le]
   exact ⟨hlow, hup⟩
 
+/-- The digits of the block appended at step `s` are genuine (`≥ 1`). -/
+theorem uSched_pos (s : ℕ) : ∀ a ∈ uSched s, 1 ≤ a := by
+  intro a ha
+  have hmem : a ∈ wSched (s + 1) := by
+    rw [wSched_succ]; exact List.mem_append_right _ ha
+  exact wSched_pos (s + 1) a hmem
+
+/-- **Per-stage `d`-power gain bracket** (c1): dividing `dpow_mSched_bracket` at
+`s+1` by the one at `s`, the multiplicative digit gain `d^k` (where
+`k = mSched (s+1) d − mSched s d`) is pinned within a constant factor of
+`cfK (uSched s)²`.  Stated in cleared (division-free) form.  Upper via
+`cfK (w++u) ≤ 2 cfK w cfK u`, lower via `cfK w cfK u ≤ cfK (w++u)`. -/
+theorem dpow_gain_bracket (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) {k : ℕ}
+    (hk : mSched (s + 1) d = mSched s d + k) :
+    (cfK (uSched s) : ℝ) ^ 2 ≤ 8 * d * (d : ℝ) ^ k ∧
+      (d : ℝ) ^ k ≤ 32 * d * (cfK (uSched s) : ℝ) ^ 2 := by
+  have hd1 : 1 ≤ d := le_trans (by norm_num) hd2
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd1
+  have hdt1 : d ≤ tSched (s + 1) := le_trans hdt (sched_t_mono (Nat.le_succ s))
+  obtain ⟨hlo_s, hup_s⟩ := dpow_mSched_bracket s d hd2 hdt
+  obtain ⟨hlo_s1, hup_s1⟩ := dpow_mSched_bracket (s + 1) d hd2 hdt1
+  set Ws : ℝ := (cfK (wSched s) : ℝ) with hWs
+  set Ws1 : ℝ := (cfK (wSched (s + 1)) : ℝ) with hWs1
+  set U : ℝ := (cfK (uSched s) : ℝ) with hU
+  have hWs0 : (0 : ℝ) < Ws := by
+    rw [hWs]; exact_mod_cast lt_of_lt_of_le one_pos (one_le_cfK _ (wSched_pos s))
+  have hU0 : (0 : ℝ) < U := by
+    rw [hU]; exact_mod_cast lt_of_lt_of_le one_pos (one_le_cfK _ (uSched_pos s))
+  -- quasi-multiplicativity of the continuant along `w(s+1) = w s ++ u s`
+  have happ_up : Ws1 ≤ 2 * (Ws * U) := by
+    rw [hWs1, hWs, hU, wSched_succ]
+    exact_mod_cast cfK_append_le (wSched s) (uSched s) (wSched_ne s) (uSched_ne s)
+      (wSched_pos s) (uSched_pos s)
+  have happ_lo : Ws * U ≤ Ws1 := by
+    rw [hWs1, hWs, hU, wSched_succ]
+    exact_mod_cast cfK_mul_le_append (wSched s) (uSched s) (wSched_ne s) (uSched_ne s)
+      (wSched_pos s) (uSched_pos s)
+  have hWs10 : (0 : ℝ) < Ws1 := lt_of_lt_of_le (by positivity) happ_lo
+  -- factor `d^{m(s+1)} = d^{m s} · d^k`
+  have hsplit : (d : ℝ) ^ (mSched (s + 1) d)
+      = (d : ℝ) ^ (mSched s d) * (d : ℝ) ^ k := by rw [hk, pow_add]
+  have hms0 : (0 : ℝ) < (d : ℝ) ^ (mSched s d) := by positivity
+  have hdk0 : (0 : ℝ) < (d : ℝ) ^ k := by positivity
+  have hWs2 : (0 : ℝ) < Ws ^ 2 := by positivity
+  -- cleared bracket hypotheses (division removed)
+  have hlo_s1' : Ws1 ^ 2 ≤ 2 * d * ((d : ℝ) ^ (mSched s d) * (d : ℝ) ^ k) := by
+    have h := hlo_s1
+    rw [hsplit, div_le_iff₀ (by positivity : (0 : ℝ) < 2 * d)] at h
+    nlinarith [h]
+  have hup_s1' : (d : ℝ) ^ (mSched s d) * (d : ℝ) ^ k ≤ 4 * Ws1 ^ 2 := by
+    have h := hup_s1; rw [hsplit] at h; linarith [h]
+  have hlo_s' : Ws ^ 2 ≤ 2 * d * (d : ℝ) ^ (mSched s d) := by
+    have h := hlo_s
+    rw [div_le_iff₀ (by positivity : (0 : ℝ) < 2 * d)] at h
+    nlinarith [h]
+  -- squared quasi-multiplicativity
+  have sqlo2 : Ws ^ 2 * U ^ 2 ≤ Ws1 ^ 2 := by
+    nlinarith [mul_nonneg (sub_nonneg.mpr happ_lo)
+      (by positivity : (0 : ℝ) ≤ Ws1 + Ws * U)]
+  have squp2 : Ws1 ^ 2 ≤ 4 * (Ws ^ 2 * U ^ 2) := by
+    nlinarith [mul_nonneg (sub_nonneg.mpr happ_up)
+      (by positivity : (0 : ℝ) ≤ 2 * (Ws * U) + Ws1)]
+  refine ⟨?_, ?_⟩
+  · -- lower: U² ≤ 8d·d^k
+    have hchain : Ws ^ 2 * U ^ 2 ≤ 8 * d * (Ws ^ 2 * (d : ℝ) ^ k) := by
+      have t1 : Ws ^ 2 * U ^ 2
+          ≤ 2 * d * ((d : ℝ) ^ (mSched s d) * (d : ℝ) ^ k) := le_trans sqlo2 hlo_s1'
+      have t2 : 2 * d * ((d : ℝ) ^ (mSched s d) * (d : ℝ) ^ k)
+          ≤ 8 * d * (Ws ^ 2 * (d : ℝ) ^ k) := by
+        nlinarith [mul_le_mul_of_nonneg_left hup_s
+          (by positivity : (0 : ℝ) ≤ 2 * d * (d : ℝ) ^ k)]
+      exact le_trans t1 t2
+    nlinarith [hchain, hWs2]
+  · -- upper: d^k ≤ 32d·U²
+    have hchain : Ws ^ 2 * (d : ℝ) ^ k ≤ 32 * d * (Ws ^ 2 * U ^ 2) := by
+      have t1 : Ws ^ 2 * (d : ℝ) ^ k
+          ≤ 2 * d * ((d : ℝ) ^ (mSched s d) * (d : ℝ) ^ k) := by
+        nlinarith [mul_le_mul_of_nonneg_right hlo_s'
+          (by positivity : (0 : ℝ) ≤ (d : ℝ) ^ k)]
+      have t2 : 2 * d * ((d : ℝ) ^ (mSched s d) * (d : ℝ) ^ k)
+          ≤ 2 * d * (4 * Ws1 ^ 2) := by
+        nlinarith [mul_le_mul_of_nonneg_left hup_s1'
+          (by positivity : (0 : ℝ) ≤ 2 * d)]
+      have t3 : 2 * d * (4 * Ws1 ^ 2) ≤ 32 * d * (Ws ^ 2 * U ^ 2) := by
+        nlinarith [mul_le_mul_of_nonneg_left squp2
+          (by positivity : (0 : ℝ) ≤ 2 * d)]
+      exact le_trans (le_trans t1 t2) t3
+    nlinarith [hchain, hWs2]
+
 end NormalNumbers

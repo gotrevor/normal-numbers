@@ -29,14 +29,23 @@
 >      bracket at `s+1` by the bracket at `s` (with `cfK_append_le` /
 >      `cfK_mul_le_append`, both in `CFCylinder`) gives the per-stage
 >      `cfK(uSched s)²/(8d) ≤ d^{k_{s+1}} ≤ 32d·cfK(uSched s)²`.
->    - NEXT sub-steps: (c1) the per-stage `d^k` two-sided bound (quotient of the
->      bracket, using `wSched_succ : wSched(s+1) = wSched s ++ uSched s` +
->      `cfK_append_le`); (c2) take `Real.log`: `k_{s+1} ≤ (2 log cfK(u_s)
->      + log(32d))/log d`, `k_{s+1} ≥ (2 log cfK(u_s) − log(8d))/log d`, via
->      `Real.log_le_log`/`log_pow`/`Real.log_rpow`; (c3) numerator upper via
->      good-length `cfK(u_s) ≤ e^{goodC·n_{s+1}}` (from the goodExtSet selection —
->      LOCATE the exact repo lemma), denominator lower via `two_pow_le_cfK`
->      summed; (c4) `sched_dominance` closes the ratio → 0. Decompose into named
+>    - ✅ **(c1) LANDED** (2026-08-23, `dpow_gain_bracket` + `uSched_pos`,
+>      axiom-clean): per-stage gain, cleared/division-free form —
+>      `cfK(uSched s)² ≤ 8d·d^k` and `d^k ≤ 32d·cfK(uSched s)²` where
+>      `k = mSched(s+1)d − mSched s d`. Proof = quotient of `dpow_mSched_bracket`
+>      at `s+1` over `s`, with `cfK_append_le`/`cfK_mul_le_append` along
+>      `wSched_succ`. (Takes `hk : mSched(s+1)d = mSched s d + k` — supplied by
+>      `xstar_dary_step`.)
+>    - NEXT sub-steps: (c2) take `Real.log` of (c1): with `L d := Real.log d > 0`,
+>      `k·L d = log(d^k)`, so `k ≤ (2 log cfK(u_s) + log(32d))/L d` and
+>      `k ≥ (2 log cfK(u_s) − log(8d))/L d` (via `Real.log_le_log`/
+>      `Real.log_pow`/`Real.log_mul`; note `log cfK(u_s)² = 2 log cfK(u_s)`).
+>      (c3) numerator upper via good-length `cfK(u_s) ≤ e^{goodC·n_{s+1}}` — LOCATE
+>      the exact repo lemma bounding the selected extension's `cfK` above (search
+>      `goodExtSet`/`half_mass`/`goodC` in `CFSchedule`/`TBrick`); denominator
+>      lower: `Σ_{j} k_j`, each `log cfK(u_j) ≥ ((n_j−1)/2)·log2` via
+>      `two_pow_le_cfK`. (c4) `sched_dominance` (`t·n(t) ≤ L`) closes
+>      `k_{s+1}/(m_d(s)−m_d(s₀)) ≲ goodC·n_{s+1}/L_s → 0`. Decompose into named
 >      sub-`sorry`s in `DaryCorrect.lean` as needed.
 > 2. **(d) d-ary chain → `xstar_dary_freq_tendsto`**: TRANSCRIBE the proven
 >    `xstar_cf_freq_tendsto` skeleton (chain via `tailSched_*` analogue,
