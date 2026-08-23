@@ -81,12 +81,25 @@ DONE this lap (all axiom-clean, `#print axioms` = trust triple):
      than paper's `|u|/|x| < ε`, absorbs the straddle; trivial for the W5
      schedule).  **All of B–Y Lemmas 7/8/9 are now formalized.**
 
-NEXT ATTACK: the W5 t-brick machinery — Defs 10–11 (t-brick, refinement),
-Prop 12 (interval inside ≤2 d-ary cells — trivial), then Lemma 13 (main
-lemma: every t-brick admits an ε-refinement for all large n), consuming
-`chebyshev_blockCount_brick` + Lemma 8 + W1 distortion.  This is the
-construction's core; start by drafting the t-brick structure and the
-per-base bad-measure bookkeeping.
+  ✅ **B–Y Prop 12 PROVED** 2026-08-24 (`TBrickDefs.lean`), axiom-clean:
+     `daryCell d m j r` (r consecutive order-m cells), `volume_daryCell`
+     (= r/d^m), `interval_subset_daryCell_two` (any interval of length
+     < d^{−m} sits inside the 2-cell at ⌊a·d^m⌋).
+
+NEXT ATTACK: W5 t-brick structure (Defs 10–11) + Lemma 13 (main lemma).
+Plan sketched from the paper (see scratch/by.txt §2, extracted 2026-08-24):
+- Brick: CF word w (σcf = cfCylinder w) + per-base (m_d, j_d, r_d ∈ {1,2})
+  with cfCylinder w ⊆ daryCell d m_d j_d r_d and relative length
+  ≥ 1/(C·d) (B–Y C = 16e^{4c}; repo distortion constant differs — pick
+  concrete C during Lemma 13, keep it a structure field or parameter).
+- Lemma 13 inputs already in repo: good-length collection (W2 Markov
+  substitute for B–Y Lemma 5 in CFDigitLaw), γ-Chebyshev brick bound
+  (`chebyshev_blockCount_brick`, replaces B–Y Lemma 6/KPW — note 1/n
+  decay beats the K/√n good mass, so the balance still works), Lemma 8
+  (`card_baryDiscrepancy_ge_le`) for the d-ary bad zones.
+- Next concrete step: define the brick structure + refinement predicate;
+  then the per-base bad-zone measure bound inside σ_d (Lemma 8 ×
+  cell-measure + the ≤ 16e^{4c}d|σcf| comparison).
 
 Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
 `IsProbabilityMeasure gaussMeasure` instance added in CFBlockFreq),
