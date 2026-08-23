@@ -353,4 +353,76 @@ theorem TBrick.exists_refined_cell {t : ℕ} (B : TBrick t)
         rw [ENNReal.ofReal_mul (by positivity), hLdef,
           ENNReal.ofReal_toReal hJtop]
 
+/-- Membership in a single order-`m` cell pins the floor. -/
+theorem floor_eq_of_mem_daryCell_one {d m : ℕ} (hd : 1 ≤ d) {j : ℤ} {x : ℝ}
+    (hx : x ∈ daryCell d m j 1) : ⌊x * (d : ℝ) ^ m⌋ = j := by
+  have hdpow : (0 : ℝ) < (d : ℝ) ^ m := by
+    have : (0 : ℝ) < d := by exact_mod_cast hd
+    positivity
+  obtain ⟨hl, hr⟩ := hx
+  rw [div_le_iff₀ hdpow] at hl
+  rw [lt_div_iff₀ hdpow] at hr
+  apply Int.floor_eq_iff.2
+  constructor
+  · exact hl
+  · push_cast
+    push_cast at hr
+    linarith
+
+/-- **Goodness transfer** (the purpose of the neighbour-widened zones): if
+the survivor `x` avoids the wide bad zone based at `y`'s cell, and `x`, `y`
+lie in a common 2-cell block at order `m0 + k` (the refined block from
+Prop 12), then `y`'s own new digit block is good — even though `y` itself
+was never selected. -/
+theorem goodBlock_transfer (d m0 k : ℕ) (hd : 1 ≤ d) (jc : ℤ) {j0y : ℤ}
+    {ε : ℝ} {x y : ℝ}
+    (hy0 : y ∈ daryCell d m0 j0y 1)
+    (hxc : x ∈ daryCell d (m0 + k) jc 2)
+    (hyc : y ∈ daryCell d (m0 + k) jc 2)
+    (havoid : x ∉ daryBadZoneWide d m0 j0y ε k) :
+    ∃ β : Fin k → Fin d, β ∉ badBlocks d k ε ∧
+      y ∈ daryCell d (m0 + k)
+        (j0y * d ^ k + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1 := by
+  have hdpow : (0 : ℝ) < (d : ℝ) ^ (m0 + k) := by
+    have : (0 : ℝ) < d := by exact_mod_cast hd
+    positivity
+  obtain ⟨hlo, hhi, hymem⟩ := floor_subCell_bounds d m0 k hd j0y hy0
+  set Fy : ℤ := ⌊y * (d : ℝ) ^ (m0 + k)⌋ with hFy
+  have hcast : ((d : ℤ)) ^ k = ((d ^ k : ℕ) : ℤ) := by push_cast; ring
+  rw [add_mul, one_mul] at hhi
+  have hv : (Fy - j0y * d ^ k).toNat < d ^ k := by omega
+  obtain ⟨β, hβ⟩ := exists_block_of_lt d k hv
+  have hidx : j0y * d ^ k
+      + (blockNatVal d (List.ofFn fun l => (β l : ℕ)) : ℤ) = Fy := by
+    rw [hβ]
+    omega
+  refine ⟨β, ?_, by rwa [hidx]⟩
+  intro hbad
+  apply havoid
+  rw [daryBadZoneWide]
+  refine Set.mem_biUnion hbad ?_
+  have hidx1 : j0y * d ^ k
+      + (blockNatVal d (List.ofFn fun l => (β l : ℕ)) : ℤ) - 1 = Fy - 1 := by
+    omega
+  rw [hidx1]
+  -- `x`'s own cell index is within 1 of `Fy` (both in the 2-cell block)
+  obtain ⟨ix, hix2, hxi⟩ := mem_daryCell_split hd hxc
+  obtain ⟨iy, hiy2, hyi⟩ := mem_daryCell_split hd hyc
+  have hFx : ⌊x * (d : ℝ) ^ (m0 + k)⌋ = jc + ix :=
+    floor_eq_of_mem_daryCell_one hd hxi
+  have hFy' : Fy = jc + iy := hFy ▸ floor_eq_of_mem_daryCell_one hd hyi
+  -- hence `x ∈ [Fy−1, Fy+2)/d^{m0+k}` — the widened 3-cell block
+  obtain ⟨hxl, hxr⟩ := hxi
+  have hb1 : Fy - 1 ≤ jc + ix := by omega
+  have hb2 : jc + ix + 1 ≤ Fy - 1 + 3 := by omega
+  constructor
+  · refine le_trans (div_le_div_of_nonneg_right ?_ hdpow.le) hxl
+    exact_mod_cast hb1
+  · refine lt_of_lt_of_le hxr (div_le_div_of_nonneg_right ?_ hdpow.le)
+    have hb2R : ((jc + ix + 1 : ℤ) : ℝ) ≤ ((Fy - 1 + 3 : ℤ) : ℝ) := by
+      exact_mod_cast hb2
+    push_cast
+    push_cast at hb2R
+    linarith
+
 end NormalNumbers
