@@ -19,4 +19,5 @@ import NormalNumbers.CFPin
 import NormalNumbers.CFGammaMixing
 import NormalNumbers.CFMixing
 import NormalNumbers.CFBlockFreq
+import NormalNumbers.BaryBlockCount
 import NormalNumbers.Stoneham
