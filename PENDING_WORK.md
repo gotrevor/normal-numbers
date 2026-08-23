@@ -17,13 +17,36 @@ KPW-Lemma-6 substitute — the W4 correlation-decay engine — axiom-clean:
   Route: mixture Fubini γ = ∫₀¹ h_s·Leb dλ(s) + the pin bound, which is
   uniform in the start t — no new analysis was needed.
 
-**W4 remaining** (statement freezing is JUDGE-owned; lap-legal work is
-intermediate lemmas + drafts):
-1. Block-frequency variance: for a digit word v, S_n = #{j < n :
-   T^j x ∈ I_v}; E_γ and Var_γ from γ-mixing (pair terms j, j' need
-   the gap ≥ |v| case from `gaussMeasure_cylinder_mixing` at base word
-   v; overlapping pairs (|j−j'| < |v|) bounded crudely by n·|v|·γ(I_v)).
-   Chebyshev ⇒ γ{|S_n/n − γ(I_v)| > δ} ≤ K/(δ²n).
+**W4 frontier — `CFBlockFreq.lean` (lap-authored groundwork).**
+`S_n x = blockCount A n x = Σ_{k<n} 1_A(Tᵏx)` (Birkhoff sum). Route DE-RISKED:
+γ-mixing is geometric ⇒ covariances summable ⇒ Var(S_n)=O(n).
+
+DONE this lap (all axiom-clean, `#print axioms` = trust triple):
+  ✅ `integral_blockCount` — first moment `∫ S_n dγ = n·γ(A)`.
+  ✅ `gaussMeasureReal_pair_shift` — `γ(T^{-j}A ∩ T^{-(j+m)}A) = γ(A ∩ T^{-m}A)`.
+  ✅ `integral_blockCount_sq` — second moment
+     `∫ S_n² dγ = Σ_{j,j'<n} γ(T^{-j}A ∩ T^{-j'}A)`.
+  ✅ `abs_cov_le` — **per-pair covariance bound** (the γ-mixing consumer):
+     `|γ(I_v∩T^{-m}I_v) − γ(I_v)²| ≤ (9/10)^{m−|v|}·4|I_v|·γ(I_v)` (m≥|v|),
+     `≤ 2γ(I_v)` (m<|v|).  ← the route-decisive step; mixing→covariance done.
+
+REMAINING (2 disclosed sorries in src, pure Finset arithmetic — no more
+measure theory):
+  ⬜ `variance_blockCount_le` — `Var(S_n) ≤ (4|v|+80)·n·γ(I_v)`.  Route: combine
+     `integral_blockCount_sq` + `abs_cov_le` (via `pair_shift` at gap `|j−j'|`);
+     the only work is the double-sum gap-count reindex `Σ_{j,j'<n} B(|j−j'|) ≤
+     2n·Σ_{d<n}B(d)` + geometric tail `Σ_d B(d) ≤ (2|v|+40)γ(I_v)`.
+  ⬜ `chebyshev_blockCount` — `γ{|S_n/n − γ(I_v)| ≥ δ} ≤ (4|v|+80)γ(I_v)/(δ²n)`.
+     Markov on `(S_n − nγ(I_v))²` (`meas_ge_le_variance_div_sq` or
+     `mul_meas_ge_le_lintegral₀`) fed by `variance_blockCount_le`.
+
+Then: conditioned-on-brick version (s-started identity → same pin), and the
+b-ary side (B–Y Lemmas 8/9 — check Counting.lean/Visits.lean overlap).
+
+Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
+`IsProbabilityMeasure gaussMeasure` instance added in CFBlockFreq),
+`gaussMeasure_cylinder_mixing`, `measureReal_preimage`, mathlib
+`meas_ge_le_variance_div_sq` (Probability/Moments/Variance.lean).
 2. Conditioned version on a base cylinder I_w (B–Y need per-stage bad
    measure < ¼ *given the current brick*): same computation under the
    conditional measure — the s-started identity makes every conditional

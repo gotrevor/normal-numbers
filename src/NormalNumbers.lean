@@ -18,4 +18,5 @@ import NormalNumbers.CFInvariance
 import NormalNumbers.CFPin
 import NormalNumbers.CFGammaMixing
 import NormalNumbers.CFMixing
+import NormalNumbers.CFBlockFreq
 import NormalNumbers.Stoneham

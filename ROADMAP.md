@@ -17,6 +17,9 @@ The programme, in dependency order.  Status keys: ✅ done · 🔨 in progress �
   Per the 2026-08-22 literature sweep, apparently the first formalization of
   Wall's theorem (and of interval equidistribution) in any proof assistant.
 
+**Track A is COMPLETE** (2026-08-23): all three Phase-2 headlines below are
+proved and axiom-clean.  Remaining Track-A work is outward (Phase 3), not proof.
+
 ## Phase 2 — the two headline artifacts
 
 - ✅ **Bailey–Crandall reduction** (`LnTwo.lean`):
@@ -24,13 +27,14 @@ The programme, in dependency order.  Status keys: ✅ done · 🔨 in progress �
   IsNormal 2 (Real.log 2)` — sorry-free, axiom-clean.  The open conjecture
   "ln 2 is normal in base 2" is now one machine-checked hypothesis about the
   explicit orbit `x₀ = 0, xₙ = 2xₙ₋₁ + 1/n mod 1`.
-- 🔨 **Stoneham's theorem** (`Stoneham.lean`), unconditional.  Plan v2 (the
-  hot-spot route): `StonehamArith.lean` ✅ (2 is a primitive root mod 3^M);
-  remaining queue = window state recurrence/seed/approx, unit counting,
-  one-sided segment bound, hot-spot lemma (pin statement against
-  Bailey–Misiurewicz 2006), assembly.  No Erdős–Turán, no character sums:
-  a partial cycle is a subset of a full cycle, and the hot-spot lemma only
-  needs upper visit bounds.
+- ✅ **Stoneham's theorem** (`Stoneham.lean`), unconditional — COMPLETE
+  2026-08-23, axiom-clean: `isNormal_two_stoneham23 : IsNormal 2 stoneham23`
+  (`#print axioms` = trust-base triple only).  Hot-spot route: `StonehamArith`
+  (2 a primitive root mod 3^M), window state recurrence/approx, unit counting,
+  one-sided `segment_visit_upper`, hot-spot lemma
+  (`isNormal_of_visit_upper_bound`, `HotSpot.lean`), assembly.  No Erdős–Turán,
+  no character sums — a partial cycle is a subset of a full cycle, and the
+  hot-spot lemma needs only upper visit bounds.
 
 ## Moonshot map (from the 2026-08-22 literature sweep)
 
