@@ -21,4 +21,5 @@ import NormalNumbers.CFMixing
 import NormalNumbers.CFBlockFreq
 import NormalNumbers.BaryBlockCount
 import NormalNumbers.BaryConcat
+import NormalNumbers.CFConcat
 import NormalNumbers.Stoneham

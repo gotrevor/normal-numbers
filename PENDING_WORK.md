@@ -71,11 +71,22 @@ DONE this lap (all axiom-clean, `#print axioms` = trust triple):
      `digitCount_eq_count_ofFn` bridging to Lemma 8's `Fin k → Fin b`
      blocks.  **The W4 b-ary side is now COMPLETE.**
 
-NEXT ATTACK: Lemma 7 (CF-discrepancy concatenation — same triangle
-shape over `blockCount`-style CF pattern counts; needs a finite-block
-CF discrepancy notion) and then the W5 t-brick bookkeeping (Defs 10–11,
-Prop 12, Lemma 13 assembly — the construction's main lemma, consuming
-`chebyshev_blockcount_brick` + Lemma 8 + distortion).
+  ✅ **B–Y Lemma 7 PROVED** 2026-08-24 (`CFConcat.lean`), axiom-clean:
+     window-count calculus for `countOccurrences` (cons recursion,
+     superadditivity, seam bound `count(x++u) ≤ count x + count u + (k−1)`
+     by index-set split fit-in-x / shifted-in-u / ≤(k−1) straddle), then
+     `CFDiscLt` deviation-form discrepancy and parts 1/2a/2b
+     (`CFDiscLt.append`, `cfDiscLt_append_take`, `cfDiscLt_short_append`).
+     Parts 2a/2b use hypothesis `|u|+(k−1) < ε|x|` (marginally stronger
+     than paper's `|u|/|x| < ε`, absorbs the straddle; trivial for the W5
+     schedule).  **All of B–Y Lemmas 7/8/9 are now formalized.**
+
+NEXT ATTACK: the W5 t-brick machinery — Defs 10–11 (t-brick, refinement),
+Prop 12 (interval inside ≤2 d-ary cells — trivial), then Lemma 13 (main
+lemma: every t-brick admits an ε-refinement for all large n), consuming
+`chebyshev_blockCount_brick` + Lemma 8 + W1 distortion.  This is the
+construction's core; start by drafting the t-brick structure and the
+per-base bad-measure bookkeeping.
 
 Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
 `IsProbabilityMeasure gaussMeasure` instance added in CFBlockFreq),
