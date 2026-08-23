@@ -459,6 +459,74 @@ theorem chebyshev_blockCount (v : List ℕ) (hpos : ∀ a ∈ v, 1 ≤ a)
     (gaussMeasure {x | δ ≤ |blockCount (cfCylinder v) n x / n -
         (gaussMeasure (cfCylinder v)).toReal|}).toReal ≤
       (8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n) := by
-  sorry
+  have hVmeas : MeasurableSet (cfCylinder v) := measurableSet_cfCylinder v
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  -- `S_n` is measurable (finite sum of indicators of measurable preimages)
+  have hSmeas : Measurable (blockCount (cfCylinder v) n) := by
+    have heq : blockCount (cfCylinder v) n = fun x =>
+        ∑ k ∈ Finset.range n,
+          ((gaussMap^[k]) ⁻¹' cfCylinder v).indicator (1 : ℝ → ℝ) x := by
+      funext x
+      rw [blockCount_apply]
+      exact Finset.sum_congr rfl fun k _ => by rw [blockIndic_iterate]; rfl
+    rw [heq]
+    exact Finset.measurable_sum _ fun k _ =>
+      measurable_const.indicator ((measurable_gaussMap.iterate k) hVmeas)
+  -- `0 ≤ S_n ≤ n`, hence `MemLp 2`
+  have hind0 : ∀ y, 0 ≤ blockIndic (cfCylinder v) y := fun y =>
+    Set.indicator_nonneg (fun _ _ => zero_le_one) y
+  have hind1 : ∀ y, blockIndic (cfCylinder v) y ≤ 1 := fun y => by
+    unfold blockIndic
+    by_cases h : y ∈ cfCylinder v
+    · simp [Set.indicator_of_mem h]
+    · simp [Set.indicator_of_notMem h]
+  have hSbound : ∀ x, ‖blockCount (cfCylinder v) n x‖ ≤ n := by
+    intro x
+    rw [Real.norm_eq_abs, blockCount_apply,
+      abs_of_nonneg (Finset.sum_nonneg fun k _ => hind0 _)]
+    calc ∑ k ∈ Finset.range n, blockIndic (cfCylinder v) (gaussMap^[k] x)
+        ≤ ∑ _k ∈ Finset.range n, (1 : ℝ) := Finset.sum_le_sum fun k _ => hind1 _
+      _ = n := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+  have hMem : MemLp (blockCount (cfCylinder v) n) 2 gaussMeasure :=
+    MemLp.of_bound hSmeas.aestronglyMeasurable n (Filter.Eventually.of_forall hSbound)
+  -- first moment
+  have hEX : ∫ x, blockCount (cfCylinder v) n x ∂gaussMeasure =
+      n * (gaussMeasure (cfCylinder v)).toReal := by
+    rw [integral_blockCount (cfCylinder v) hVmeas n, measureReal_def]
+  -- variance bound from `variance_blockCount_le`
+  have hVar : ProbabilityTheory.variance (blockCount (cfCylinder v) n) gaussMeasure ≤
+      (8 * v.length + 80) * n * (gaussMeasure (cfCylinder v)).toReal := by
+    rw [ProbabilityTheory.variance_eq_sub hMem]
+    simp only [Pi.pow_apply]
+    rw [hEX]
+    exact le_trans (le_abs_self _) (variance_blockCount_le v hpos n)
+  -- the deviation set, rescaled by `n`
+  have hset : {x | δ ≤ |blockCount (cfCylinder v) n x / n -
+        (gaussMeasure (cfCylinder v)).toReal|}
+      = {x | δ * n ≤ |blockCount (cfCylinder v) n x -
+          ∫ y, blockCount (cfCylinder v) n y ∂gaussMeasure|} := by
+    ext x
+    simp only [Set.mem_setOf_eq, hEX]
+    rw [show blockCount (cfCylinder v) n x / n - (gaussMeasure (cfCylinder v)).toReal
+        = (blockCount (cfCylinder v) n x - n * (gaussMeasure (cfCylinder v)).toReal) / n by
+          field_simp,
+      abs_div, abs_of_pos hnR, le_div_iff₀ hnR]
+  -- Chebyshev, then arithmetic
+  have hδn : 0 < δ * n := mul_pos hδ hnR
+  have hcheb := ProbabilityTheory.meas_ge_le_variance_div_sq (μ := gaussMeasure) hMem hδn
+  calc (gaussMeasure {x | δ ≤ |blockCount (cfCylinder v) n x / n -
+          (gaussMeasure (cfCylinder v)).toReal|}).toReal
+      ≤ (ENNReal.ofReal (ProbabilityTheory.variance (blockCount (cfCylinder v) n)
+          gaussMeasure / (δ * n) ^ 2)).toReal := by
+        rw [hset]
+        exact ENNReal.toReal_mono ENNReal.ofReal_ne_top hcheb
+    _ = ProbabilityTheory.variance (blockCount (cfCylinder v) n) gaussMeasure /
+          (δ * n) ^ 2 :=
+        ENNReal.toReal_ofReal (div_nonneg (ProbabilityTheory.variance_nonneg _ _)
+          (by positivity))
+    _ ≤ ((8 * v.length + 80) * n * (gaussMeasure (cfCylinder v)).toReal) / (δ * n) ^ 2 := by
+        gcongr
+    _ = (8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n) := by
+        field_simp
 
 end NormalNumbers
