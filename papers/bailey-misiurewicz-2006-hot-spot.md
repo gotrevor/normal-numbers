@@ -10,24 +10,22 @@ assembly — no change needed.  The statement is fixed; the proof route is free.
 ## Provenance ✅ (caveat closed 2026-08-23, same day)
 
 Two PDFs alongside this file (both untracked — never commit a PDF to a repo that may
-go public), both from `davidhbailey.com/dhbpapers/`:
+go public):
 
-- **`bailey-misiurewicz-2006-hot-spot-published.pdf`** (`dhb-mm-hotspot.pdf` upstream,
-  Trevor supplied the URL): "A Strong Hot Spot Theorem", **Bailey and Michał
-  Misiurewicz, dated 13 Feb 2006** — the author's-site copy of the actual published
-  text (Proc. AMS 134 (2006) 2495–2501, DOI `10.1090/S0002-9939-06-08551-0`).  **This
-  is the pin's primary source.**  ⚠️ The copy is **truncated**: page 3 announces a
-  Section 4 applying Theorem 3.5 to `α₂,₃(0) = Σ 1/(3ⁿ·2^(3ⁿ))` (exactly our Stoneham
-  constant), but the file ends at Theorem 3.5 with no Section 4 and no references.
-  Section 4 is a nice cross-check for the prover, not needed for the pin — our
-  `Stoneham.lean` plan already reconstructs that application (via the Bailey–Borwein
-  2013 exposition).  Complete text: the AMS PDF URL (Cloudflare-challenges curl;
-  works from a browser).
-- **`bailey-misiurewicz-2006-hot-spot.pdf`** (`hotspot.pdf` upstream): an earlier
-  **preprint of the same result with a different co-author** — "A Strong Hot Spot
-  Theorem", **Bailey and Daniel J. Rudolph**, dated 2 May 2003; real-line formulation,
-  self-contained 4-page ergodic proof.  Kept as corroboration (its Theorem 1 is the
-  interval form used in the derivation below).
+- **`bailey-misiurewicz-2006-hot-spot.pdf`** — the **complete official AMS text**:
+  "A Strong Hot Spot Theorem", David H. Bailey and Michał Misiurewicz, Proc. AMS 134
+  (2006) 2495–2501, DOI `10.1090/S0002-9939-06-08551-0`, communicated by Jonathan M.
+  Borwein, electronically published 2006-03-22.  Downloaded free from ams.org via
+  browser 2026-08-23 (the AMS site Cloudflare-challenges curl — not a paywall; an
+  earlier author's-site copy, `dhb-mm-hotspot.pdf`, was truncated before Section 4).
+  All 7 pages present, including **Section 4 / Theorem 4.1 — the paper's own proof
+  that our exact constant `α₂,₃` is 2-normal** (cross-check section below).
+- **`bailey-rudolph-2003-hot-spot-preprint.pdf`** (`hotspot.pdf` on
+  `davidhbailey.com/dhbpapers/`): an earlier **preprint of the same result with a
+  different co-author** — Bailey and Daniel J. Rudolph, dated 2 May 2003; real-line
+  formulation, self-contained 4-page ergodic proof.  (The published acknowledgments
+  thank Rudolph for helping sketch key ideas.)  Kept as corroboration (its Theorem 1
+  is the interval form used in the secondary derivation below).
 
 ## The published paper's content (Bailey–Misiurewicz 2006)
 
@@ -102,6 +100,36 @@ Notes on the formal shape:
   exactly what survives a partial doubling cycle (a subset of a full cycle) — no
   cancellation, no character sums.
 
+## Section 4 cross-check: the paper proves OUR theorem (Theorem 4.1) 🎯
+
+Section 4 of the published text is a complete (2-page) proof that
+`α = Σ_{m≥1} 1/(3ᵐ·2^(3ᵐ))` — exactly our `stoneham23` — is 2-normal, "first
+established by Stoneham [6] and more recently in [1]".  Its shape validates our plan
+piece by piece, and its final line is **exactly the interface of our pinned lemma**:
+
+> for all `y ∈ Σ` and all `m > 0`:  `limsup_n 2ᵐ·A(x,y,n,m)/n ≤ 8`, so by
+> Theorem 3.5, α is 2-normal.
+
+i.e. a **uniform constant `C = 8`** on all dyadic cylinders, established for all
+`n > 2^(2m)` — an *eventual* bound, matching our `∀ᶠ` hypothesis form.  (With the
+bound uniform in `y, m`, the weak Theorem 1.1 already suffices; 3.5 is overkill.)
+
+Correspondence with our `Stoneham.lean` decomposition:
+
+| Paper (Section 4) | Ours |
+|---|---|
+| z-sequence: `z₀ = 0`, `zₙ = {2zₙ₋₁ + rₙ}`, kick `rₙ = 1/n` at `n = 3ᵏ` (eq. 11) | `stonehamState M n / 3^M` per window (same dynamics, per-window packaging) |
+| `|{2ⁿα} − zₙ| < 1/(2n)` (eq. 12) | `stonehamState_approx` (error `< 2/3^(M+1)`; comparable, ours one-sided) |
+| segments of numerators prime to `3ᵐ`, each **triply repeated** — proof deferred to Bailey–Crandall [1] | `StonehamArith` (2 primitive root mod `3^M`, order `2·3^(M-1)`) + `|W_M| = 3` periods — proven in-repo, no external dep |
+| count multiples of `1/3ᵖ` in the widened interval, each hit ≤ 3× | `card_units_Ico` + `segment_visit_upper` (ours refines to *units*; their upper bound shows the coarser all-multiples count suffices) |
+| conclusion: uniform `C = 8` on dyadic cylinders → Thm 3.5/1.1 | hypothesis of `isNormal_of_visit_upper_bound` → `isNormal_two_stoneham23` |
+
+Two practical take-aways for the prover: (a) expect a single-digit constant (`8`-ish)
+out of the window counting — if the assembly needs a growing "constant", something is
+off; (b) their widening step (`[c−1/(2j), d+1/(2j)) ⊂ [c−2^(−m−1), d+2^(−m−1))` for
+`j ≥ 2ᵐ`, then count grid points in an interval of length `2^(−m+1)`) is a clean
+template for how `stonehamState_approx`'s error term gets absorbed.
+
 ## Proof-route notes for the prover 🔨
 
 The pin constrains the **statement only**.  Two routes exist:
@@ -118,3 +146,14 @@ The pin constrains the **statement only**.  Two routes exist:
    and is likely the shorter formal path.
 
 Pick whichever grinds; do not weaken or reshape the statement to fit the route.
+
+## Upstream references (from the paper's bibliography)
+
+- [1] Bailey–Crandall, "Random Generators and Normal Numbers", Exp. Math. 11 (2002)
+  527–546 — source of the z-sequence segment pattern (which we re-prove in-repo via
+  `StonehamArith`).
+- [5] Kuipers–Niederreiter, *Uniform Distribution of Sequences* (1974), page 77 —
+  the attributed source of Theorem 1.1 (non-ergodic).
+- [6] R. Stoneham, "On Absolute (j,ε)-Normality in the Rational Fractions with
+  Applications to Normal Numbers", Acta Arithmetica 22 (1973) 277–286 — the original
+  theorem.  Acta Arith is free (IMPAN moving wall / EuDML) if ever wanted.

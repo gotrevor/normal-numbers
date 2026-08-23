@@ -8,6 +8,10 @@ counting in `(ℤ/3^M)ˣ` except `isNormal_of_visit_upper_bound`, whose statemen
 **PINNED** (2026-08-23) against `papers/bailey-misiurewicz-2006-hot-spot.md` — do not
 weaken or reshape that statement; the proof route is free (the paper's ergodic argument
 or elementary block counting; the pin note lists mathlib candidates to grep).
+💎 The pin note's "Section 4 cross-check" table maps the paper's own proof of our exact
+theorem onto our decomposition — read it before the counting lemmas, and cross-check
+against it in review laps.  Expect a single-digit uniform constant (theirs is `C = 8`)
+out of the window counting.
 ⚠️ Do NOT revive the mod-3^M′ cascade plan — known-flawed (it localizes the *low*
 digits, not position).
 
