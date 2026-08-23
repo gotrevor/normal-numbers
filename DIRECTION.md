@@ -4,45 +4,54 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-24, review lap)
+## CURRENT DIRECTIVE (set 2026-08-23, reflection lap)
 
-- **THE objective**: advance the B5′ expedition (Track B) toward its headline —
-  one explicit real that is absolutely normal + CF-normal + Khinchin-typical.
-  W1–W4 are DONE; the frontier is now **W5: the main refinement lemma
-  (B–Y Lemma 13)**. ALL of Lemma 13's inputs are proved (Lemmas 5-substitute,
-  6-substitute = γ-Chebyshev brick, 7/8/9, Prop 12, d-ary bad zones, CF word
-  bridge, digit semantics). Both deep ingredients are already discharged into
-  elementary machinery. **The remaining crux is the ASSEMBLY, not more inputs.**
-- **Mandated next move**: STOP gathering inputs; ATTACK the Lemma 13 assembly in
-  `TBrick*.lean` (new file(s), lap-authored). In order:
-  (1) t-brick structure + ε-refinement predicate (Defs 10–11): CF word `w` +
-      per-base `d ≤ t` containment `cfCylinder w ⊆ daryCell d m_d j_d r_d`
-      (r_d ∈ {1,2}), relative-length field ≥ `1/(2d)` (per-J m_d route, see
-      PENDING_WORK KEY ROUTE DECISION — NOT B–Y's uniform 16e^{4c});
-  (2) **the decisive core — the SELECTION/measure-balance lemma**: inside `I_w`,
-      good-length mass (≥ ½|I_w| via `half_mass_long_extensions`) MINUS the CF
-      discrepancy bad zone (`chebyshev_blockCount_brick` → `CFDiscLt` via
-      `CFWordBridge`, O(1/n)|I_w|) MINUS Σ_{d≤t} wide d-ary bad zones
-      (`volume_iUnion_daryBadZoneWide_le`, exp-small) is `> 0` for n ≥ n₀(t,ε).
-      Convert Leb↔γ with `gaussMeasure_le_volume`/`volume_le_gaussMeasure`
-      (factor-2 density window). **This inequality is the route-decisive test.**
-  (3) Lemma 13 proper: a good J in the surviving set is an ε-refinement; the
-      t→t+1 case via Prop 12 (new base ratio `1/(2(t+1))`).
-  Decompose freely into named sub-`sorry`s in src/ — raising the src sorry count
-  by decomposing the crux IS progress, not regression.
-- **Forbidden drift**: do NOT prove yet-more Lemma-13 *inputs* as a substitute
-  for attempting the assembly (input-gathering is now fixation — the balance
-  inequality decides the whole route). Do NOT open Track A side-quests (COMPLETE,
-  axiom-clean). Do NOT pivot to ergodicity/Birkhoff (B5′ is Birkhoff-free). Do
-  NOT weaken/reshape any JUDGE-frozen statement. Constants: distortion `2`,
-  γ-mixing `(9/10)`, brick ratio `1/(2d)`.
-- **Why**: W1–W4 turned both of B–Y's deep imports into proved elementary facts,
-  so Lemma 13 is now "long but elementary GIVEN the inputs" — and every input is
-  in the repo. The one thing still genuinely UNCERTAIN is whether the measure
-  balance closes with the repo's non-uniform-length Lemma-5 substitute (the
-  per-J m_d route is the proposed fix, unverified). Settling that inequality
-  de-risks all of W5/W6; everything downstream (schedule, limit x, correctness,
-  Khinchin graft) is bookkeeping on top of it.
+- **THE objective**: **LOCK TIER 1** — prove `xstar` is **absolutely normal ∧
+  CF-normal** (the Becher–Yuhjtman result, first formalization). CF normality is
+  DONE (`xstar_cf_freq_tendsto`, axiom-clean). What remains for Tier 1 is the
+  **d-ary side**: base-`d` simple normality of `xstar` for every `d ≥ 2`, then
+  Pillai, then the stated conjunction. **Khinchin-typical (W6) is Tier 2 — a
+  stretch beyond the source paper; do NOT start it until Tier 1 is a proven,
+  axiom-clean, stated theorem.**
+- **Mandated next move**: attack the d-ary correctness chain in
+  `DaryCorrect.lean`, hardest-first. In order:
+  (1) **THE CRUX — the `m`-growth estimate** (interior condition, "the only
+      genuinely new math left"): per-stage base-`d` digit gain `k_{s+1}(d)` is
+      eventually a vanishing fraction of the accumulated count `m_d(s) − m_d(s₀)`.
+      Route (from HANDOFF-…-0900 §(c), source-verified this lap): numerator
+      `d^{k} ≤ 32d·cfK(u)²` from good-length upper bound + containment;
+      denominator `Σ k_j ≳ (log2/(4 log d))·(L_s − L_{s₀})` via
+      `two_pow_le_cfK` (`cfK(u_j) ≥ 2^{(n_j−1)/2}`, already proved); ratio
+      ≲ goodC·n_{s+1}/L_s → 0 by `sched_dominance`. Decompose into named
+      sub-`sorry`s in `DaryCorrect.lean` — that RAISES the src count and IS
+      progress.
+  (2) **the d-ary chain** → `xstar_dary_freq_tendsto` (digit `c` freq → 1/d):
+      MIRROR the proven `xstar_cf_freq_tendsto` skeleton (chain / boundary /
+      interior / `exists_stage` locator / metric limit), swapping
+      CFDiscLt→HasDiscLt. Lemma 9 (`BaryConcat`: `HasDiscLt.append`,
+      `hasDiscLt_append_take`, `hasDiscLt_short_append`) is the CF-chain analogue,
+      already proved. Do NOT re-derive the chain machinery — transcribe it.
+  (3) **Pillai** (`simple normal to all b^k ⇒ normal to b`) + **the headline
+      statement**: stage the conjunction `IsNormal b xstar (∀ b≥2) ∧
+      (CF-normal xstar)` for JUDGE to freeze. Pillai is NOT in mathlib/repo —
+      formalize it (classical, self-contained). Check `Sandwich`/`Counting`/
+      `Wall` for reusable window-frequency pieces first.
+- **Forbidden drift**: do NOT re-attack Lemma 13 / the schedule / the measure
+  balance / the CF side — ALL PROVED and axiom-clean (the previous directive's
+  "route-decisive crux" is closed). Do NOT start W6/Khinchin caps before Tier 1
+  is a stated axiom-clean theorem. Do NOT open Track A side-quests. Do NOT pivot
+  to ergodicity/Birkhoff (B5′ is Birkhoff-free). Do NOT weaken/reshape any
+  JUDGE-frozen statement. Constants: distortion `2`, γ-mixing `(9/10)`, brick
+  ratio `1/(2d)`.
+- **Why**: the W5 crux the last directive named (the measure-balance selection
+  lemma) is proved, and CF normality of the explicit witness `xstar` is proved
+  axiom-clean — the campaign is far past "will the route close". The only
+  genuinely-new-math obligation left for the source-backed headline is the d-ary
+  `m`-growth estimate (item 1); once it lands, the d-ary chain is a
+  transcription and Pillai is classical labor. Locking Tier 1 = a complete,
+  first-anywhere formalization; Khinchin (Tier 2) is a real research reach that
+  revisits the construction and must not be allowed to destabilize a lockable
+  Tier-1 result.
 
 ### Directive history
 - 2026-08-23 (review lap): Track A certified complete + axiom-clean; kept Track
@@ -53,6 +62,14 @@ detail lives in PENDING_WORK.md.
   gathering fixation: crux (Lemma 13 assembly) untouched for ~10 laps. Redirected
   from "prove inputs" to "ATTACK the measure-balance selection lemma" — the
   route-decisive test. No route trigger fired (both deep imports discharged).
+- 2026-08-23 (reflection lap): the measure-balance crux CLOSED — Lemma 13 +
+  schedule + `xstar` + CF normality (`xstar_cf_freq_tendsto`) all proved
+  axiom-clean since. ROUTE VERDICT: CONTINUE (no trigger fired; whole-lemma
+  targets closing fast, finishability IMPROVED). Refreshed the stale directive
+  (it still named the closed crux). Reframed destination: Tier 1 = B–Y
+  abs-normal + CF-normal (source-backed, lockable) vs Tier 2 = + Khinchin
+  (campaign-original stretch). Redirected to the d-ary side, hardest-first at
+  the `m`-growth estimate; Khinchin fenced off until Tier 1 is stated + proven.
 
 ## Standing charter (destination)
 
@@ -64,10 +81,13 @@ digit-reading dynamical systems:
   (`isNormal_log_two_of_equidistributed`), Stoneham's constant unconditional
   (`isNormal_two_stoneham23`).
 - **Track B — CF metric theory / Khinchin** (🔨 active): the B5′ expedition
-  (W1–W6, plan in `KHINCHIN.md`) building the combined
-  absolutely-normal + CF-normal + Khinchin-typical witness. W1✅ W2✅ W3✅ +
-  W4 γ-mixing engine ✅. Governance: statement freezing is JUDGE-owned
-  (`JUDGE.md`); grind laps prove frozen statements and add intermediate lemmas.
+  (W1–W6, plan in `KHINCHIN.md`). **Tier 1 (source-backed, lockable)** =
+  `xstar` absolutely normal ∧ CF-normal (Becher–Yuhjtman, first formalization).
+  **Tier 2 (stretch, original even on paper)** = + Khinchin-typical (W6 graft).
+  W1✅ W2✅ W3✅ W4✅ + W5 core ✅ (Lemma 13, schedule, `xstar`, CF normality —
+  all axiom-clean). Remaining Tier 1: d-ary simple normality + Pillai + stated
+  conjunction. Governance: statement freezing is JUDGE-owned (`JUDGE.md`);
+  grind laps prove frozen statements and add intermediate lemmas.
 
 Route-level abort/escalate triggers: (a) γ-mixing rate collapses below summable
 → escalate (would break W4/W5); NOT fired (geometric proven). (b) W5/W6 needs a

@@ -1,3 +1,80 @@
+# PENDING WORK — B5′ campaign
+
+> **CURRENT STATE (2026-08-23 reflection lap, `dac27b5`).** Everything below the
+> "── ARCHIVE ──" divider is the W3/W4/W5-input history, kept for the proven-lemma
+> record but SUPERSEDED. Live state:
+>
+> - ✅ W1–W4 done. ✅ **W5 core done**: B–Y Lemma 13 (`TBrick.exists_refinement`),
+>   THE SCHEDULE (`CFSchedule`), limit point `xstar` (irrational, in every
+>   scheduled cylinder), **CF normality of `xstar`** (`xstar_cf_freq_tendsto`).
+>   All axiom-clean. src/ sorry-free, 8742 jobs green.
+> - 🔨 **Frontier = d-ary side** (`DaryCorrect.lean`): base-`d` simple normality
+>   of `xstar` for every `d ≥ 2`. Staged: `xstar_dary_step`/`xstar_dary_window`
+>   (per-stage good block, ≥ `kmin` new digits), `badBlocks↔HasDiscLt` bridge,
+>   `two_pow_le_cfK`.
+>
+> ## Attack path (hardest-first) — mirrors DIRECTION CURRENT DIRECTIVE
+>
+> 1. **(c) THE CRUX — the `m`-growth estimate** (interior condition; the only
+>    genuinely-new-math left). Need: `k_{s+1}(d) ≤ ε·(m_d(s) − m_d(s₀))`
+>    eventually. Route (source-verified): numerator `d^{k} ≤ 32d·cfK(u)²`
+>    (good-length upper bound + brick containment); denominator
+>    `Σ k_j ≳ (log2/(4 log d))·(L_s − L_{s₀})` via `two_pow_le_cfK`
+>    (`cfK ≥ 2^{(n−1)/2}`, proved); ratio ≲ `goodC·n_{s+1}/L_s → 0` by
+>    `sched_dominance`. It is the exact analogue of the CF interior condition
+>    already closed by the schedule dominance — high confidence it closes.
+>    Needs: continuant append/submultiplicativity bound `cfK(w++u) ≤ 2 cfK w cfK u`
+>    (CHECK `CFDefs`/`CFCylinder` — likely present) for the numerator; `Real.log`
+>    monotone + `log_pow` for the log arithmetic. Decompose freely into named
+>    sub-`sorry`s in `DaryCorrect.lean`.
+> 2. **(d) d-ary chain → `xstar_dary_freq_tendsto`**: TRANSCRIBE the proven
+>    `xstar_cf_freq_tendsto` skeleton (chain via `tailSched_*` analogue,
+>    boundary `hasDiscLt_short_append`, interior `hasDiscLt_append_take` + (c),
+>    `exists_stage` locator, metric limit). Lemma 9 pieces are in `BaryConcat`.
+>    Do NOT reinvent the chain — it is a 1:1 port with CFDiscLt→HasDiscLt.
+> 3. **Pillai** (`simple normal to all b^k ⇒ normal to b`) + **headline
+>    statement**. Pillai NOT in mathlib/repo. Then state + JUDGE-freeze the
+>    conjunction `(∀ b≥2, IsNormal b xstar) ∧ CF-normal xstar` and add a
+>    Statement/audit surface (currently NONE for Track B).
+> 4. **(Tier 2, LATER) W6 Khinchin graft** — digit caps `D_t` in Def 11. Revisits
+>    the construction; do only after Tier 1 is stated + axiom-clean.
+>
+> ## Reflection — 2026-08-23 (deep reflection lap)
+>
+> - **Direction call: CONTINUE the route; refresh the docs.** No abort/escalate
+>   trigger fired. Both of B–Y's deep imports are discharged; the γ-mixing rate
+>   is geometric (stronger than the summable trigger threshold); no forbidden
+>   import (CLT/KPW/Birkhoff) has been reached. The route is not spinning — the
+>   OPPOSITE: whole-lemma targets (Lemma 13, schedule, `xstar`, CF normality)
+>   have been CLOSING lap over lap, and finishability has IMPROVED, not declined.
+>   The prior reflection's "route-decisive crux" (measure balance) is proved.
+> - **The one real defect this lap caught**: DIRECTION/STATUS/PENDING_WORK were
+>   all stale — they still named the Lemma-13 assembly the untouched crux, work
+>   the grind laps had already blown past. A grind lap literally obeying the old
+>   directive would have redone finished work. FIXED: all three refreshed; the
+>   binding directive now points at the d-ary `m`-growth estimate.
+> - **KEEP**: hardest-first on the d-ary interior estimate; the `Statement.lean`-
+>   style faithfulness discipline (10/10 headlines trust-triple, re-verified);
+>   the discharge-not-cite ethos (both deep imports gone); mirroring proven
+>   skeletons instead of re-deriving (the d-ary chain = the CF chain).
+> - **STOP**: treating "abs-normal + CF-normal + Khinchin" as one monolithic
+>   goal. Khinchin (W6) is NOT in the source paper — it is a campaign-original
+>   graft that must revisit the schedule (digit caps in Def 11) and carries the
+>   most feasibility risk of anything left. Fence it behind a LOCKED Tier 1.
+>   Also STOP letting the docs lag the git state by a whole review cycle.
+> - **Highest-value next target: (c) the `m`-growth estimate.** Reasoning: it is
+>   the most uncertain route-decisive blocker for the absolute-normality leg — if
+>   it fails, the entire d-ary correctness chain (hence Tier 1's abs-normal half)
+>   needs a redesign of the schedule dominance. Everything downstream of it ((d),
+>   Pillai) is transcription or classical labor. It is genuinely new math (the
+>   log-arithmetic interior estimate), and all its tools (`two_pow_le_cfK`,
+>   `sched_dominance`, the good-length upper bound) are already in the repo, so it
+>   is both the hardest and the ripest. Expert note: the whole d-ary correctness
+>   proof is a transcription of the proven CF proof with THIS as its single new
+>   analytic input — spend the lap here, not on re-scaffolding the chain.
+
+── ARCHIVE (pre-2026-08-23-reflection; W3/W4/W5-input history, superseded) ──
+
 # PENDING WORK — B5′ campaign (updated 2026-08-23, post-W3)
 
 **W3 ✅ COMPLETE** (2026-08-23, 8 laps): all four frozen `CFMixing.lean`
