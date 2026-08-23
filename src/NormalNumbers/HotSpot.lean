@@ -476,4 +476,178 @@ theorem card_badSet_le (b K k w T : ℕ) (hb : 0 < b) (hw : w < b ^ k)
       ≤ 2 * k * N * (b : ℤ) ^ (K + k) := hcheb.trans htotal
   exact_mod_cast hfin
 
+/-! ### Orbit points and b-adic cells -/
+
+/-- Membership in the scale-`k` cell `[w/b^k, (w+1)/b^k)` is exactly
+`⌊y·b^k⌋₊ = w` (for `y ≥ 0`, `b > 0`). -/
+theorem mem_cell_iff_floor (b k w : ℕ) (hb : 0 < b) {y : ℝ} (hy : 0 ≤ y) :
+    y ∈ Set.Ico ((w : ℝ) / (b : ℝ) ^ k) ((w + 1 : ℝ) / (b : ℝ) ^ k)
+      ↔ ⌊y * (b : ℝ) ^ k⌋₊ = w := by
+  have hb0 : (0 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  have hbk : (0 : ℝ) < (b : ℝ) ^ k := by positivity
+  rw [Set.mem_Ico, Nat.floor_eq_iff (mul_nonneg hy hbk.le)]
+  constructor
+  · rintro ⟨h1, h2⟩
+    refine ⟨(div_le_iff₀ hbk).mp h1, ?_⟩
+    rw [lt_div_iff₀ hbk] at h2
+    linarith
+  · rintro ⟨h1, h2⟩
+    exact ⟨(div_le_iff₀ hbk).mpr h1, (lt_div_iff₀ hbk).mpr (by linarith)⟩
+
+/-- The orbit advances by iterating `y ↦ {b·y}`. -/
+theorem orbit_add (b : ℕ) (x : ℝ) (j i : ℕ) :
+    orbit b x (j + i) = Int.fract (orbit b x j * (b : ℝ) ^ i) := by
+  unfold orbit
+  have h : Int.fract (x * (b : ℝ) ^ j) * (b : ℝ) ^ i
+      = x * (b : ℝ) ^ (j + i) - ((⌊x * (b : ℝ) ^ j⌋ * (b ^ i : ℤ) : ℤ) : ℝ) := by
+    rw [Int.fract]
+    push_cast
+    ring
+  rw [h, Int.fract_sub_intCast]
+
+/-- The index of the scale-`K` cell containing the `j`-th orbit point. -/
+noncomputable def cellAt (b : ℕ) (x : ℝ) (K j : ℕ) : ℕ :=
+  ⌊orbit b x j * (b : ℝ) ^ K⌋₊
+
+theorem cellAt_lt (b : ℕ) (hb : 0 < b) (x : ℝ) (K j : ℕ) :
+    cellAt b x K j < b ^ K := by
+  have hb0 : (0 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  have hbk : (0 : ℝ) < (b : ℝ) ^ K := by positivity
+  have h1 : orbit b x j < 1 := Int.fract_lt_one _
+  have h0 : 0 ≤ orbit b x j := Int.fract_nonneg _
+  unfold cellAt
+  rw [Nat.floor_lt (mul_nonneg h0 hbk.le)]
+  calc orbit b x j * (b : ℝ) ^ K < 1 * (b : ℝ) ^ K := by
+        exact mul_lt_mul_of_pos_right h1 hbk
+    _ = ((b ^ K : ℕ) : ℝ) := by push_cast; ring
+
+theorem orbit_mem_cellAt (b : ℕ) (hb : 0 < b) (x : ℝ) (K j : ℕ) :
+    orbit b x j ∈ Set.Ico ((cellAt b x K j : ℝ) / (b : ℝ) ^ K)
+      ((cellAt b x K j + 1 : ℝ) / (b : ℝ) ^ K) :=
+  (mem_cell_iff_floor b K (cellAt b x K j) hb (Int.fract_nonneg _)).mpr rfl
+
+/-- **Subword localization**: the scale-`k` cell of the orbit point `i`
+steps later is read off the `K`-digit expansion of the current scale-`K`
+cell index (as long as the lookahead stays inside the window:
+`i + k ≤ K`). -/
+theorem subword_cellAt (b : ℕ) (hb : 0 < b) (x : ℝ) (K k i j : ℕ)
+    (hik : i + k ≤ K) :
+    subword b K k i (cellAt b x K j) = ⌊orbit b x (j + i) * (b : ℝ) ^ k⌋₊ := by
+  have hb0 : (0 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  set m := cellAt b x K j with hm_def
+  set y := orbit b x j with hy_def
+  have hy0 : 0 ≤ y := Int.fract_nonneg _
+  have hycell := orbit_mem_cellAt b hb x K j
+  rw [← hm_def, ← hy_def] at hycell
+  -- decompose the cell index at the split point K - i
+  set a := m / b ^ (K - i) with ha_def
+  set r := m % b ^ (K - i) with hr_def
+  have hBpos : (0 : ℕ) < b ^ (K - i) := pow_pos hb _
+  have hr_lt : r < b ^ (K - i) := Nat.mod_lt _ hBpos
+  have hm_eq : m = a * b ^ (K - i) + r := by
+    rw [ha_def, hr_def, mul_comm]
+    exact (Nat.div_add_mod m (b ^ (K - i))).symm
+  -- real-arithmetic: y·bⁱ − a lies in the r-cell at scale K−i
+  have hpowKi : (b : ℝ) ^ K = (b : ℝ) ^ (K - i) * (b : ℝ) ^ i := by
+    rw [← pow_add]; congr 1; omega
+  have hbKi : (0 : ℝ) < (b : ℝ) ^ (K - i) := by positivity
+  have hbi : (0 : ℝ) < (b : ℝ) ^ i := by positivity
+  have h1 : (a : ℝ) + (r : ℝ) / (b : ℝ) ^ (K - i) ≤ y * (b : ℝ) ^ i := by
+    have := hycell.1
+    rw [div_le_iff₀ (by positivity : (0:ℝ) < (b : ℝ) ^ K)] at this
+    have hcast : (m : ℝ) = a * (b : ℝ) ^ (K - i) + r := by
+      rw [hm_eq]; push_cast; ring
+    rw [hcast, hpowKi] at this
+    rw [← sub_nonneg]
+    have hexp : y * (b : ℝ) ^ i - ((a : ℝ) + (r : ℝ) / (b : ℝ) ^ (K - i))
+        = (y * ((b : ℝ) ^ (K - i) * (b : ℝ) ^ i)
+            - ((a : ℝ) * (b : ℝ) ^ (K - i) + (r : ℝ)))
+          / (b : ℝ) ^ (K - i) := by
+      field_simp
+      try ring
+    rw [hexp]
+    exact div_nonneg (by linarith) hbKi.le
+  have h2 : y * (b : ℝ) ^ i < (a : ℝ) + ((r : ℝ) + 1) / (b : ℝ) ^ (K - i) := by
+    have := hycell.2
+    rw [lt_div_iff₀ (by positivity : (0:ℝ) < (b : ℝ) ^ K)] at this
+    have hcast : (m : ℝ) + 1 = a * (b : ℝ) ^ (K - i) + ((r : ℝ) + 1) := by
+      rw [hm_eq]; push_cast; ring
+    rw [hcast, hpowKi] at this
+    rw [← sub_neg]
+    have hexp : y * (b : ℝ) ^ i - ((a : ℝ) + ((r : ℝ) + 1) / (b : ℝ) ^ (K - i))
+        = (y * ((b : ℝ) ^ (K - i) * (b : ℝ) ^ i)
+            - ((a : ℝ) * (b : ℝ) ^ (K - i) + ((r : ℝ) + 1)))
+          / (b : ℝ) ^ (K - i) := by
+      field_simp
+      try ring
+    rw [hexp]
+    exact div_neg_of_neg_of_pos (by linarith) hbKi
+  -- hence the fractional part is exactly y·bⁱ − a
+  have hfrac : Int.fract (y * (b : ℝ) ^ i) = y * (b : ℝ) ^ i - a := by
+    have hmem : y * (b : ℝ) ^ i - a ∈ Set.Ico (0 : ℝ) 1 := by
+      constructor
+      · have : (0 : ℝ) ≤ (r : ℝ) / (b : ℝ) ^ (K - i) := by positivity
+        linarith
+      · have hr1 : ((r : ℝ) + 1) / (b : ℝ) ^ (K - i) ≤ 1 := by
+          rw [div_le_one hbKi]
+          have : (r : ℕ) + 1 ≤ b ^ (K - i) := hr_lt
+          exact_mod_cast this
+        linarith
+    have hsub : Int.fract (y * (b : ℝ) ^ i - ((a : ℤ) : ℝ))
+        = Int.fract (y * (b : ℝ) ^ i) := Int.fract_sub_intCast _ _
+    have : Int.fract (y * (b : ℝ) ^ i - ((a : ℤ) : ℝ))
+        = y * (b : ℝ) ^ i - a := by
+      rw [Int.fract_eq_self.mpr (by push_cast at hmem ⊢; exact hmem)]
+      push_cast
+      ring
+    rw [← hsub, this]
+  -- the shifted orbit point sits in the subword's scale-k cell
+  set w' := r / b ^ (K - i - k) with hw'_def
+  have hw'_lt : w' < b ^ k := by
+    rw [hw'_def]
+    have hsplit : b ^ (K - i) = b ^ (K - i - k) * b ^ k := by
+      rw [← pow_add]; congr 1; omega
+    rw [Nat.div_lt_iff_lt_mul (pow_pos hb _)]
+    calc r < b ^ (K - i) := hr_lt
+      _ = b ^ k * b ^ (K - i - k) := by rw [← pow_add]; congr 1; omega
+  have hr_lb : w' * b ^ (K - i - k) ≤ r := Nat.div_mul_le_self r _
+  have hr_ub : r + 1 ≤ (w' + 1) * b ^ (K - i - k) := by
+    have h1 : b ^ (K - i - k) * w' + r % b ^ (K - i - k) = r := by
+      rw [hw'_def]
+      exact Nat.div_add_mod r (b ^ (K - i - k))
+    have h2 : r % b ^ (K - i - k) < b ^ (K - i - k) :=
+      Nat.mod_lt _ (pow_pos hb _)
+    have h3 : (w' + 1) * b ^ (K - i - k)
+        = b ^ (K - i - k) * w' + b ^ (K - i - k) := by ring
+    linarith
+  have horbit : orbit b x (j + i) ∈ Set.Ico ((w' : ℝ) / (b : ℝ) ^ k)
+      ((w' + 1 : ℝ) / (b : ℝ) ^ k) := by
+    rw [orbit_add, ← hy_def, hfrac]
+    have hbik : (0 : ℝ) < (b : ℝ) ^ (K - i - k) := by positivity
+    have hsplitR : (b : ℝ) ^ (K - i) = (b : ℝ) ^ k * (b : ℝ) ^ (K - i - k) := by
+      rw [← pow_add]; congr 1; omega
+    constructor
+    · calc (w' : ℝ) / (b : ℝ) ^ k
+          = ((w' : ℝ) * (b : ℝ) ^ (K - i - k)) / (b : ℝ) ^ (K - i) := by
+            rw [hsplitR]; field_simp; try ring
+        _ ≤ (r : ℝ) / (b : ℝ) ^ (K - i) := by
+            apply div_le_div_of_nonneg_right _ hbKi.le
+            exact_mod_cast hr_lb
+        _ ≤ y * (b : ℝ) ^ i - a := by linarith
+    · calc y * (b : ℝ) ^ i - a
+          < ((r : ℝ) + 1) / (b : ℝ) ^ (K - i) := by linarith
+        _ ≤ (((w' : ℝ) + 1) * (b : ℝ) ^ (K - i - k)) / (b : ℝ) ^ (K - i) := by
+            apply div_le_div_of_nonneg_right _ hbKi.le
+            exact_mod_cast hr_ub
+        _ = ((w' : ℝ) + 1) / (b : ℝ) ^ k := by
+            rw [hsplitR]; field_simp; try ring
+  have hnn : (0 : ℝ) ≤ orbit b x (j + i) := Int.fract_nonneg _
+  have hfloor := (mem_cell_iff_floor b k w' hb hnn).mp horbit
+  rw [hfloor, hw'_def, hr_def]
+  -- finally, w' is the subword of m
+  unfold subword
+  have hsplit : b ^ (K - i) = b ^ (K - i - k) * b ^ k := by
+    rw [← pow_add]; congr 1; omega
+  rw [hsplit, Nat.mod_mul_right_div_self]
+
 end NormalNumbers
