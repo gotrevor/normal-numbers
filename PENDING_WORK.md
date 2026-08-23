@@ -1,6 +1,6 @@
 # PENDING WORK — B5′ campaign
 
-> **CURRENT STATE (2026-08-25 grind lap, `9efc492`).** Everything below the
+> **CURRENT STATE (2026-08-25 grind lap, `e832d1d`).** Everything below the
 > "── ARCHIVE ──" divider is the W3/W4/W5-input history, kept for the proven-lemma
 > record but SUPERSEDED. Live state:
 >
@@ -10,39 +10,36 @@
 >   All axiom-clean.
 > - ✅ **(c) THE d-ary `m`-growth CRUX IS CLOSED** (`9d8f265`): the interior
 >   ratio `k_{s+1}/(m_d(s)−m_d(s₀)) → 0` is proved
->   (`tendsto_gain_div_mSched_sub`), via a new denominator lower bound
->   (`eventually_cden_mul_length_le_mSched_sub`) squeezed against the
->   already-proved numerator ratio. This was the only genuinely-new-math
->   obligation for Tier 1 — everything left is transcription + classical labor.
-> - 🔨 **Frontier = (d) the d-ary chain** (`DaryCorrect.lean`): tail
->   decomposition landed (`9efc492`) — `dBlock`/`dBlock_spec` (per-stage good
->   block, extracted via choice from `xstar_dary_window`), `dTailList` +
->   length/digit-equality lemmas, `dTailList_hasDiscLt` (the chain step).
->   STILL NEEDED to close `xstar_dary_freq_tendsto`:
->   - **boundary**: `hasDiscLt_short_append` applied to the FIXED prefix
->     `[0, mSched s₀ d)` before the good tail (mirrors CF's `hbound`) — needs
->     that fixed prefix length to be `o(mSched s d)`, trivial since it's a
->     constant and `mSched s d → ∞` (from `mSched_mono_of_active` + `L_s → ∞`
->     + `le_mSched_mul_log`).
->   - **interior**: `hasDiscLt_append_take` applied to the accumulated tail
->     `dTailList s₀ d k` plus a short partial NEXT block — the "short" hyp is
->     now available from `tendsto_gain_div_mSched_sub` (CLOSED this lap),
->     unpack its `Tendsto … (nhds 0)` at a chosen `ε` into the needed
->     `hshort : (partial block length : ℝ) < ε · (dTailList length)`.
->   - **locator**: an `exists_stage`-analogue for `mSched s d` (find the stage
->     `s` with `mSched s d ≤ p < mSched (s+1) d` for a given digit position
->     `p`) — port `exists_stage`'s `Nat.findGreatest` argument, swapping
->     `wSched_length_ge` for `mSched` monotonicity (`mSched_mono_of_active`)
->     and eventual growth (already have `L_s → ∞`; need `mSched s d → ∞`,
->     one line from `le_mSched_mul_log`).
->   - **digitCount bridge**: `digitCount_eq_count_ofFn` (already in
->     `BaryConcat`) to translate the Fin-d `HasDiscLt` conclusion back into a
->     statement about `(u.count c : ℝ)` / `u.length` for the REAL digit list
->     `(List.range p).map (digitOf d xstar)` — needed since `IsNormal`/
->     `IsNormalSequence` are stated in ℕ-valued digit sequences, not `Fin d`.
->   - Then wrap as `Filter.Tendsto (fun p => countP.../p) atTop (nhds (1/d))`
->     for every digit `c < d`, matching the CF-side metric-limit assembly
->     pattern (`Metric.tendsto_atTop`, `N := max … 1`).
+>   (`tendsto_gain_div_mSched_sub`). This was the only genuinely-new-math
+>   obligation for Tier 1.
+> - ✅ **(d) THE d-ary CHAIN IS CLOSED** (`e832d1d`): `xstar_dary_freq_tendsto`
+>   is proved axiom-clean — for every base `d ≥ 2` and digit `c < d`, the
+>   frequency of `c` among the first `p` base-`d` digits of `xstar` tends to
+>   `1/d`. This is **simple normality of `xstar` in every base simultaneously**,
+>   the FIRST machine-checked formalization of the Becher–Yuhjtman d-ary
+>   result. Built from: `dBlock`/`dBlock_spec` (per-stage good block via
+>   choice), `dTailList` (tail decomposition), `dTailList_hasDiscLt` (chain),
+>   `dFixedPrefix_append_dTailList_hasDiscLt` (boundary),
+>   `dBlock_short_of_dTailList` + `dTailList_append_take_hasDiscLt` (interior),
+>   `exists_mSched_stage` (locator), `count_map_val_eq` (Fin-d → ℕ digit count
+>   bridge), assembled via a 3-way `List.range` split matched to the real
+>   digit sequence.
+> - 🔨 **Frontier = Tier 1 completion** (item 3 below): only classical labor
+>   and statement-staging remain — no more genuinely-open math for Tier 1.
+>   - **Pillai**: simple-normal-to-all-`b^k` ⇒ normal-to-`b`. NOT in
+>     mathlib/repo — check `Sandwich`/`Counting`/`Wall` for reusable
+>     window-frequency pieces before formalizing from scratch (classical,
+>     self-contained; combines `xstar_dary_freq_tendsto` at every base `d`
+>     with a block-frequency argument reducing general blocks to single-digit
+>     frequencies at higher bases).
+>   - **Headline conjunction**: stage `(∀ b≥2, IsNormal b xstar) ∧
+>     CF-normal xstar` for JUDGE — note `Headline.lean` already has
+>     witness-existence-form frozen statements
+>     (`exists_absolutely_normal_cf_normal` etc.) with two `sorry`s (lines
+>     91, 98) waiting for exactly this route to discharge them.
+>   - `IsCFNormal`'s wrapper from `xstar_cf_freq_tendsto` and
+>     `IsAbsolutelyNormal`'s wrapper from `xstar_dary_freq_tendsto`+Pillai
+>     should both be short once Pillai lands.
 >
 > ## Attack path (hardest-first) — mirrors DIRECTION CURRENT DIRECTIVE
 >
