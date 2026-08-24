@@ -1,5 +1,46 @@
 # PENDING WORK — B5′ campaign
 
+> **GRIND LAP (2026-08-26, `44fb8bb`).** ✅ **TIER 1 LOCKED** —
+> `exists_absolutely_normal_cf_normal` proved, axiom-clean (`b3bc2c4`; see
+> HANDOFF-2026-08-26-0630.md for the full route). ✅ **Khinchin (Tier 2) seed
+> landed**: `prod_le_cfK` (`CFDigitLaw.lean`, the missing continuant lower
+> bound `∏aᵢ ≤ K(a₁…aₙ)`) + `uSched_log_sum_le` (`CFCorrect.lean`): each
+> appended schedule block's total `log`-digit mass is `≤ goodC·(block
+> length)`. **Route insight this lap**: KHINCHIN.md's W6 assessment expected
+> a digit-cap re-plumb of the schedule for uniform-integrability control —
+> but the existing `cfK(uSched s) ≤ exp(goodC·n)` payload (already proved for
+> Tier 1) directly bounds the average `log`-digit per stage via
+> `prod_le_cfK`, with **no construction change needed**. This significantly
+> de-risks Tier 2: `xstar`'s *existing* schedule may already be
+> Khinchin-typical.
+>
+> **NEXT (Tier 2, `Headline.lean:134`, `exists_absolutely_normal_cf_normal_khinchin`)**:
+> assemble `uSched_log_sum_le` into the actual geometric-mean limit
+> `KhinchinTypical xstar`:
+> 1. Sum `uSched_log_sum_le` over stages `0..s-1` to bound `(wSched
+>    s).map log |>.sum` (telescoping `nFn`/length identities already exist,
+>    cf. `wSched_length_succ`) — gives an UPPER bound on the log-digit sum at
+>    stage boundaries, matching the schedule's word length.
+> 2. Need the MATCHING lower/limit bound: use `xstar_cf_freq_tendsto`
+>    (already proved) to get, for every digit value `k` (or every `v = [k]`
+>    cylinder), the frequency of digit `k` in the length-`p` prefix `→
+>    γ(cfCylinder [k])` = the Gauss–Kuzmin law. The target sum `Σ log(cfDigit
+>    xstar i)` should then match `p · Σ_k γ([k])·log k = p · log K₀` in the
+>    limit, PROVIDED a uniform-integrability interchange (dominated/bounded
+>    convergence style, using the `goodC` bound to truncate the tail) can be
+>    justified — this interchange (finite-pattern convergence + bounded tail
+>    ⇒ full log-average convergence) is now THE remaining crux, not a
+>    digit-cap graft. Likely needs: (a) a truncation argument bounding
+>    `Σ_{k>K} γ([k])·log k` uniformly small (from `Σ log k / k²  < ∞`,
+>    `CFDigitLaw.lean`'s existing summability work may be reusable), (b) an
+>    ε/δ argument combining finite-truncation convergence (from CF-normality)
+>    with the tail bound (from `uSched_log_sum_le`/`goodC`).
+> 3. Convert the log-average limit to `KhinchinTypical`'s geometric-mean form
+>    (`(∏...)^(1/n) → K₀` ⟺ `(1/n)Σlog → log K₀`, via `Real.exp`/`Real.log`
+>    continuity — should be short once the log-average limit is in hand).
+> Prior Tier-1 material (Pillai, d-ary chain, CF normality, measure balance,
+> schedule/Lemma-13) is CLOSED — do not reopen; see DIRECTION.md.
+
 > **GRIND LAP (2026-08-26, `e7705ee`).** ✅ **PILLAI'S THEOREM PROVED** —
 > `Pillai.lean` is now **sorry-free**. Chain landed this lap (all axiom-clean):
 > `windowCount_eq_sum_phaseCount` → `phaseOccCount_{tendsto_atTop,div_tendsto}` →
