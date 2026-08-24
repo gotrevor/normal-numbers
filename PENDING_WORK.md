@@ -162,7 +162,14 @@ L4 gives it a NEW proof; the two-stream proof (bottoming at the `schedA_block_li
 4. **Single-stream recursion.** Rebuild as ONE stream: a `SchedStateL4` carrying
    only `wx` + the interval, extended by brick-3 selection each stage; `wxSeq_L4`,
    its chain, limit `xA`. Reuse `chain_orbit_equidist_uniform` for `xA` (x-side).
-5. **z-side chain frequency.** `ψ(xA)`'s window frequency converges because at
+5. **z-side chain frequency.** ✅ **CORE DONE (2026-08-24, commit `6933f05`,
+   axiom-clean):** `tendsto_of_scale_coverage` (`CFScheduleA.lean`, after brick 3′) —
+   `f n → L` when `|f n − L| < δ s` for `n ∈ S s` and the stages cover all large `n`
+   with `δ s → 0`. This is the whole z-side engine; brick 5 proper = instantiate it
+   with `f n = blockCount (cfCyl v) n (ψxA)/n`, `S s = NSz_s`, `havoid` from the
+   stage's `ψ(x)∉cfBadZone[]` avoidance, `hcover` from the schedule's `δ_s→0` +
+   cofinal z-ranges. NO chain telescoping needed. Original note:
+   `ψ(xA)`'s window frequency converges because at
    stage `s` we forced `ψ(x) ∉ cfBadZone_z v n δ` for `n` in the stage's z-range,
    i.e. `|countOcc v (cfPref (ψxA) n) − γv·n| < δn + slack` at a cofinal set of
    `n` with `δ→0`. Package as a chain-frequency lemma for `ψxA` (mirror
