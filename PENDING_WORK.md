@@ -91,6 +91,15 @@ for `v∈F` at scales `nⱼ = n₁ + j²`, `j = 0..m` (so `n_m = n₁+m² =` the
    per-scale bound + `|countOcc(u.take k) − countOcc(u.take n)| ≤ k−n` for the
    largest `n∈NS` with `n ≤ k`. With `NS = {n₁+j² : j≤m}` the gap `k−n ≤ 2√k`.
    This slots directly into a hdom-free chain limit.
+   ✅ **Interpolation arithmetic DONE this lap:** `abs_countOccurrences_take_interp`
+   (CFScheduleA, after the multiscale block, axiom-clean): for `n ≤ k ≤ |u|`,
+   `|countOcc v (u.take k) − γv·k| ≤ |countOcc v (u.take n) − γv·n| + 2(k−n) + |v|`
+   (`countOcc` monotone in prefix + grows `≤1`/position + `|v|−1` seam). Combined
+   with the per-scale block, every prefix `k` is `(δ + (2(k−n)+2|v|)/k)`-good where
+   `n` = nearest lower scale; with `NS = {n₁+j²}` the gap `k−n ≤ 2√k` so it is
+   `δ + o(1)`-good. The uniformly-prefix-good block is now ASSEMBLED (per-scale +
+   interpolation); packaging it into a single `∀k` statement + the quadratic-`NS`
+   covering (`∀k∈[n₁,ntop], ∃n∈NS, n≤k ∧ k−n≤2√k`) is the next small step.
 4. hdom-free `chain_cf_digit_freq_tendsto` variant + the recursion.
 
 ---

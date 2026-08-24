@@ -889,6 +889,69 @@ theorem exists_multiscale_freq_good_block_steer_len (wx : List ℕ) (hwx : wx �
     · linarith
   exact ⟨u, hulen, hune, hupos, hsubcd, hfreqNS, x, hxcyl, hirr, hxcd⟩
 
+/-- **Prefix-frequency interpolation.**  If the frequency deviation of `v` is
+controlled at prefix length `n`, it is controlled at any larger prefix length
+`k ≤ |u|`, up to an additive `2(k−n) + |v|`.  (`countOccurrences` is monotone in
+the prefix and grows by at most `1` per position, plus a `|v|−1` seam term.)  With
+quadratically-spaced good scales `n`, the gap `k−n = o(k)`, so every prefix is
+good — the hdom-free replacement for block-shortness. -/
+theorem abs_countOccurrences_take_interp {v u : List ℕ} (hv : v ≠ []) {γv : ℝ}
+    (hγ0 : 0 ≤ γv) (hγ1 : γv ≤ 1) {n k : ℕ} (hnk : n ≤ k) (hku : k ≤ u.length) :
+    |(countOccurrences v (u.take k) : ℝ) - γv * k|
+      ≤ |(countOccurrences v (u.take n) : ℝ) - γv * n| + 2 * ((k : ℝ) - n)
+        + v.length := by
+  set rest : List ℕ := (u.take k).drop n with hrest
+  have hsplit : u.take n ++ rest = u.take k := by
+    have h1 : (u.take k).take n = u.take n := by
+      rw [List.take_take, Nat.min_eq_left hnk]
+    rw [hrest, ← h1, List.take_append_drop]
+  have hlenk : (u.take k).length = k := by
+    rw [List.length_take, Nat.min_eq_left hku]
+  have hlenrest : rest.length = k - n := by
+    rw [hrest, List.length_drop, hlenk]
+  -- (A) monotone: Cn ≤ Ck
+  have hA : countOccurrences v (u.take n) ≤ countOccurrences v (u.take k) := by
+    have := add_countOccurrences_le_append hv (u.take n) rest
+    rw [hsplit] at this
+    omega
+  -- (B) increment ≤ (k-n) + (|v|-1)
+  have hB : countOccurrences v (u.take k)
+      ≤ countOccurrences v (u.take n) + (k - n) + (v.length - 1) := by
+    have hle := countOccurrences_append_le hv (u.take n) rest
+    rw [hsplit] at hle
+    have hrl := countOccurrences_le_length hv rest
+    rw [hlenrest] at hrl
+    omega
+  -- cast to reals
+  set Cn : ℝ := (countOccurrences v (u.take n) : ℝ) with hCn
+  set Ck : ℝ := (countOccurrences v (u.take k) : ℝ) with hCk
+  have hAR : Cn ≤ Ck := by rw [hCn, hCk]; exact_mod_cast hA
+  have hnkR : (n : ℝ) ≤ k := by exact_mod_cast hnk
+  have hknR : (0 : ℝ) ≤ (k : ℝ) - n := by linarith
+  have hv1R : (1 : ℝ) ≤ v.length := by exact_mod_cast List.length_pos_of_ne_nil hv
+  have hv1 : 1 ≤ v.length := List.length_pos_of_ne_nil hv
+  have hBR : Ck ≤ Cn + ((k : ℝ) - n) + (v.length - 1) := by
+    have hc : (countOccurrences v (u.take k) : ℝ)
+        ≤ ((countOccurrences v (u.take n) + (k - n) + (v.length - 1) : ℕ) : ℝ) := by
+      exact_mod_cast hB
+    rw [Nat.cast_add, Nat.cast_add, Nat.cast_sub hnk, Nat.cast_sub hv1] at hc
+    push_cast at hc
+    rw [hCn, hCk]; linarith [hc]
+  -- assemble
+  have hCkCn : |Ck - Cn| ≤ ((k : ℝ) - n) + (v.length - 1) := by
+    rw [abs_le]; constructor <;> linarith [hAR, hBR]
+  have htri : |Ck - γv * k| ≤ |Cn - γv * n| + |Ck - Cn| + |γv * ((k : ℝ) - n)| := by
+    have hd : Ck - γv * k = (Cn - γv * n) + (Ck - Cn) + (-(γv * ((k : ℝ) - n))) := by ring
+    rw [hd]
+    calc |(Cn - γv * n) + (Ck - Cn) + (-(γv * ((k : ℝ) - n)))|
+        ≤ |(Cn - γv * n) + (Ck - Cn)| + |(-(γv * ((k : ℝ) - n)))| := abs_add_le _ _
+      _ ≤ |Cn - γv * n| + |Ck - Cn| + |γv * ((k : ℝ) - n)| := by
+          rw [abs_neg]; gcongr; exact abs_add_le _ _
+  have hmuleq : |γv * ((k : ℝ) - n)| = γv * ((k : ℝ) - n) := by
+    rw [abs_mul, abs_of_nonneg hγ0, abs_of_nonneg hknR]
+  have hγkn : γv * ((k : ℝ) - n) ≤ (k : ℝ) - n := by nlinarith [hγ1, hknR]
+  linarith [htri, hCkCn, hmuleq, hγkn, hv1R]
+
 /-- **One schedule stage (single stream).**  Given the current genuine word
 `wx`, a pattern family `F`, tolerance `δ > 0`, and a length target `L`, there is
 a strict genuine EXTENSION `wx'` of `wx` (i.e. `wx'.take |wx| = wx`, `|wx| <
