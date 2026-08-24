@@ -1124,6 +1124,57 @@ theorem exists_uniform_block_param (β : ℝ) (hβ : 0 < β) (Lc Nfib : ℕ) :
       nlinarith [ht]
     linarith [h1, h2, h3]
 
+/-- **Gauss-measure lower density bound.**  On `[0,1]` the Gauss density
+`1/((1+x)ln2)` is `≥ 1/(2ln2)`, so `μ_G(u,v) ≥ (v−u)/(2ln2)`.  With the matching
+upper bound below, ratios of Gauss measures of subintervals of `(0,1)` are pinned
+to their WIDTH ratios up to the constant `2` — the word-independent comparison the
+interleaved schedule's per-round measure budget needs (`γtar ≥ q·c₀·γwx`). -/
+theorem gaussMeasure_Ioo_toReal_ge {u v : ℝ} (hu : 0 ≤ u) (huv : u ≤ v) (hv : v ≤ 1) :
+    (v - u) / (2 * Real.log 2) ≤ (gaussMeasure (Set.Ioo u v)).toReal := by
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have h1u : (0:ℝ) < 1 + u := by linarith
+  have h1v : (0:ℝ) < 1 + v := by linarith
+  have hdiff : Real.log (1 + v) - Real.log (1 + u) = Real.log ((1+v)/(1+u)) := by
+    rw [Real.log_div (ne_of_gt h1v) (ne_of_gt h1u)]
+  have hxpos : (0:ℝ) < (1+v)/(1+u) := by positivity
+  have hx1 : (1:ℝ) ≤ (1+v)/(1+u) := (one_le_div h1u).mpr (by linarith)
+  have hnum : 0 ≤ Real.log (1 + v) - Real.log (1 + u) := by
+    rw [hdiff]; exact Real.log_nonneg hx1
+  have hlow : 1 - ((1+v)/(1+u))⁻¹ ≤ Real.log ((1+v)/(1+u)) :=
+    Real.one_sub_inv_le_log_of_pos hxpos
+  have hinv : ((1+v)/(1+u))⁻¹ = (1+u)/(1+v) := by rw [inv_div]
+  have h2 : 1 - (1+u)/(1+v) = (v - u)/(1+v) := by field_simp; ring
+  have h3 : (v - u)/2 ≤ (v - u)/(1+v) :=
+    div_le_div_of_nonneg_left (by linarith) (by linarith) (by linarith)
+  have hbound : (v - u) / 2 ≤ Real.log (1 + v) - Real.log (1 + u) := by
+    rw [hinv, h2] at hlow; rw [hdiff]; linarith [hlow, h3]
+  rw [gaussMeasure_Ioo hu huv hv, ENNReal.toReal_ofReal (div_nonneg hnum hl2.le)]
+  rw [div_le_div_iff₀ (by positivity) hl2]
+  nlinarith [hbound, hl2]
+
+/-- **Gauss-measure upper density bound.**  `μ_G(u,v) ≤ (v−u)/ln2` (density
+`≤ 1/ln2` on `[0,1]`).  Pairs with `gaussMeasure_Ioo_toReal_ge`. -/
+theorem gaussMeasure_Ioo_toReal_le {u v : ℝ} (hu : 0 ≤ u) (huv : u ≤ v) (hv : v ≤ 1) :
+    (gaussMeasure (Set.Ioo u v)).toReal ≤ (v - u) / Real.log 2 := by
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have h1u : (0:ℝ) < 1 + u := by linarith
+  have h1v : (0:ℝ) < 1 + v := by linarith
+  have hdiff : Real.log (1 + v) - Real.log (1 + u) = Real.log ((1+v)/(1+u)) := by
+    rw [Real.log_div (ne_of_gt h1v) (ne_of_gt h1u)]
+  have hxpos : (0:ℝ) < (1+v)/(1+u) := by positivity
+  have hx1 : (1:ℝ) ≤ (1+v)/(1+u) := (one_le_div h1u).mpr (by linarith)
+  have hnum : 0 ≤ Real.log (1 + v) - Real.log (1 + u) := by
+    rw [hdiff]; exact Real.log_nonneg hx1
+  have hup : Real.log ((1+v)/(1+u)) ≤ (1+v)/(1+u) - 1 := Real.log_le_sub_one_of_pos hxpos
+  have h2 : (1+v)/(1+u) - 1 = (v - u)/(1+u) := by field_simp; ring
+  have h3 : (v - u)/(1+u) ≤ v - u := by
+    rw [div_le_iff₀ (by linarith)]; nlinarith [huv, hu]
+  have hbound : Real.log (1 + v) - Real.log (1 + u) ≤ v - u := by
+    rw [h2] at hup; rw [hdiff]; linarith [hup, h3]
+  rw [gaussMeasure_Ioo hu huv hv, ENNReal.toReal_ofReal (div_nonneg hnum hl2.le)]
+  rw [div_le_div_iff₀ hl2 hl2]
+  nlinarith [hbound, hl2]
+
 /-- **Tight block parameter (word-independent block length).**  Like
 `exists_uniform_block_param` but returns `m` with `m² ~ max(Lc, Nfib, poly(1/β))`
 instead of the lossy `m ~ max(Lc, Nfib, …)` (whose `m² ~ Nfib²` is QUADRATIC in the
