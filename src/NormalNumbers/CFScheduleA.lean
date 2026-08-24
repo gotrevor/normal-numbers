@@ -2327,6 +2327,23 @@ theorem chain_slack_littleO {blk : ℕ → ℕ} (n₁ : ℕ → ℕ) (L : ℝ)
   have hb := (hbpos s).ne'
   field_simp
 
+/-- **Cylinder volume lower bound via `cfK`.**  `|I_w| = 1/(K(K+K')) ≥ 1/(2K²)`
+(`K = cfK w`, `K' = cfK w.dropLast ≤ K`).  The rigorous link the geometric
+block-length bound needs: a target interval `⊆ cfCylinder w` has width `≳ 1/cfK²`,
+so the resolution length is `Nfib ≈ log_φ(1/width) ≲ log cfK`.  ⇒ the steer block
+resolves in `O(log cfK w)` digits, which is `O(|w|)` ONLY IF `cfK w ≤ e^{O(|w|)}`,
+i.e. the block digits are controlled (the B5′ `cfK u ≤ exp(goodC·n)` mechanism the
+affine steer block currently LACKS — see `schedA_block_linear` docstring). -/
+theorem volume_cfCylinder_ge_inv (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a) :
+    1 / (2 * (cfK w : ℝ) ^ 2) ≤ (volume (cfCylinder w)).toReal := by
+  have hK1 : (1 : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast one_le_cfK w hpos
+  have hKd : (cfK w.dropLast : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast cfK_dropLast_le w hpos
+  have hKd0 : (0 : ℝ) ≤ (cfK w.dropLast : ℝ) := by positivity
+  rw [volume_cfCylinder w hw hpos, ENNReal.toReal_ofReal (by positivity)]
+  apply one_div_le_one_div_of_le
+  · nlinarith [hK1, hKd0]
+  · nlinarith [hK1, hKd, hKd0]
+
 /-- **Logarithmic fib threshold (bounded form).**  A resolution threshold `N` with
 `a < fib(n+1)²` for all `n ≥ N`, AND `N ≤ log_φ(√5·√a + 1) + 1` — logarithmic in
 `a`.  Packages `exists_nat_goldenRatio_pow_gt` (log-exponent solvability) with

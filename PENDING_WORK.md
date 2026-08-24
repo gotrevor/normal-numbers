@@ -26,8 +26,20 @@ for `schedA_block_linear` (+ the shift branch). Built this session (all axiom-cl
    lossy). Block `|u| = n₁+m² ≤ 2m²`. Expose `|u| ≤` explicit(L,Nfib,β) through
    `exists_freq_good_extend_affine_steer_uniform` → add an upper-length field to
    `StepSpecA`.
-2. **Resolution `Nfib ≲ |w|`.** Target width `d−c ≳ φ^{−c|w|}` (cylinder volume),
-   so `Nfib ≤ log_φ(√5√(4/(d−c))+1)+1 ≲ |w|` via `exists_fib_threshold_log` (PROVED).
+2. **Resolution `Nfib ≲ |w|`.** Target width `d−c ≳ 1/cfK²` (`volume_cfCylinder_ge_inv`,
+   PROVED), so `Nfib ≤ log_φ(√5√(4/(d−c))+1)+1 ≲ log(cfK)` via `exists_fib_threshold_log`
+   (PROVED). **🚩 ROUTE-DECISIVE FINDING (2026-08-24):** `log(cfK w) = O(|w|)` holds
+   ONLY IF the block digits are controlled — `cfK(a₁…aₙ) ≤ ∏(aᵢ+1)` (`cfK_le_prod`),
+   unbounded for large digits. The affine steer block (`exists_uniformly_freq_good_block_steer`)
+   currently produces digits ≥1 with NO upper bound, so `cfK` (hence target width, hence
+   `Nfib`) is UNCONTROLLED and `schedA_block_linear` is NOT provable as-is. **FIX:** the
+   steer block must additionally satisfy `cfK u ≤ exp(c·|u|)` — the B5′ `goodExtSet
+   goodC` mechanism (`CFSchedule` `SchedStep` line 233 `cfK u ≤ exp(goodC·nFn)`). Since
+   the bounded-`cfK` set has full Gauss measure (Lévy: `cfK^{1/n}→e^{π²/12ln2}` a.e.),
+   intersecting it with the bad-zone-avoiding set keeps positive measure ⇒ a freq-good
+   AND `cfK`-bounded block exists. This is the NEW hardest sub-obligation: rebuild the
+   steer block to carry a `cfK`-bound. (Atoms: `cfK_le_prod`, `tsum_mul_log_cfK_le`,
+   B5′ `goodExtSet`/`goodC`.)
 3. **Word-independent β.** `β = γtar·δ²/(S+1)`; `γtar/γwx = Θ(q)` by Gauss-density
    ratio bounds `gaussMeasure_Ioo_toReal_ge/le` (PROVED) ⇒ `⌈2/β⌉ ≲ poly(s) ≤ |w|`.
 4. Assemble `|u_s| ≤ K₁|w_s|+K₂`.
