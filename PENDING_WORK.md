@@ -32,19 +32,39 @@ boundary, so it lies within `M` of `a` or `b`; hence uncovered `⊆ [a−M,a+M] 
 disjointness/counting needed — the straddler-count plan was abandoned as
 unnecessary.
 
-**NEXT ATTACK — L2** (`volume_interval_good_ge`, currently `True` placeholder):
-pin the real shape against B5′ exports, then prove. The "good" rank-`n`
-extensions inside `(a,b)` should occupy `≥ (goodC/const)·|b−a|` beyond a rank.
-Ingredients on hand:
-- L1 gives: contained rank-`n` cylinders cover `(a,b)` up to `4/fib(n+1)²`.
-- `goodC_half` (`CFSchedule.lean:114`): for each genuine `w`, `volume (goodExtSet
-  w goodC m) ≥ (goodC/2)·volume (cfCylinder w)` (verify exact constant/shape).
-- Compose: within each contained rank-`n` cylinder `w ⊆ (a,b)`, its good
-  order-`m` extensions give `≥ (goodC/2)|I_w|` good mass, all inside `(a,b)`;
-  sum over contained `w` via the L1 covering (Σ|I_w| ≥ |b−a| − 4/fib²).
-- ALIGN FIRST: read `goodExtSet`/`goodC_half`/`goodC` signatures (`TBrick.lean:275`,
-  `CFSchedule.lean:109-146`) and record the pinned L2 statement here before
-  proving. Then move to L3 (`CFAffine.lean`, affine transport |ψ(A)|=|q||A|).
+## B6 — lap 3 landed (2026-08-24): L2 PROVED ✅
+
+`length_le_two_mul_good_add_err` discharged, axiom-clean, build green (8752).
+Both L1 and L2 now closed (ahead of the brief's lap plan).
+- `goodInInterval a b n m := ⋃ w ∈ {w∈genWords n | cfCylinder w ⊆ Ioo a b},
+  goodExtSet w goodC m` — good mass inside `(a,b)`.
+- **L2**: `|b−a| ≤ 2·volume(goodInInterval a b n m) + 4/fib(n+1)²` (for `n≥1`, any
+  `m`). ⇒ good mass inside any interval is `≥ (|b−a|−δ)/2` beyond a rank.
+- Proof: `measure_biUnion` over the contained-cylinder index (disjoint via
+  `cfCylinder_disjoint`, measurable) turns both covered/good masses into tsums;
+  per-term `goodC_half` (`|I_w| ≤ 2|goodExtSet w goodC m|`) + `ENNReal.tsum_le_tsum`
+  gives `covered ≤ 2·good`; `measure_inter_add_sdiff` + L1 close it. New helpers
+  `goodExtSet_subset_cfCylinder`, `measurableSet_goodExtSet`.
+- `goodExtSet`/`goodC`/`goodC_half` all live in `NormalNumbers` ns; import
+  `NormalNumbers.CFSchedule` (done in `CFIntervalGood.lean`).
+
+**NEXT ATTACK — L3 affine transport** (new module `CFAffine.lean`):
+The map `ψ(x) = q·x + r` (`q ≠ 0`). Needed facts:
+1. `ψ '' (Set.Ioo a b) = Set.Ioo (ψ a) (ψ b)` when `q>0` (reversed when `q<0`) —
+   affine image of an interval is an interval; `volume (ψ '' I) = |q|·volume I`
+   (`Real.volume` under affine map; mathlib `Real.volume_image_mul_left`/
+   `MeasurePreserving`? or measure_image of `x↦q*x+r` = `|q|` scaling — check
+   `Real.volume_preimage_mul` / `MeasureTheory.Measure.addHaar`).
+2. CF-normality is invariant under `x ↦ x+integer` and `x↦1/x`-tail shift — the
+   integer-part drift of `ψ(x)` absorbed (KHINCHIN.md L3 note: `CFDefs` tail
+   lemmas; find the tail-shift invariance of `IsCFNormal` used for `xstar`).
+3. GOAL of the B6 crux (L4): the schedule builds `xstar` so that for EACH image
+   system `(q_i,r_i)`, the pullback intervals `ψ_i⁻¹(cylinder)` still capture a
+   good density (L2 applied to `ψ_i(brick)` gives good mass, transported back).
+Record the pinned L3 statements here before proving. L4 (schedule surgery,
+`CFScheduleA.lean`) is the MODERATE-risk crux — do it after L3.
+Faithfulness: after any work, re-`#print axioms
+exists_absolutely_normal_cf_normal_khinchin` = trust triple (must stay locked).
 
 ---
 
