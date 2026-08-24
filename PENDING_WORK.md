@@ -87,19 +87,46 @@ L4 gives it a NEW proof; the two-stream proof (bottoming at the `schedA_block_li
    needs NO alignment.** This is the resolution of the whole B6 crux's feasibility.
 
    **Remaining route-B bricks (next laps, hardest-first):**
-   - **2b-i (covering):** interval `(α,β) ⊆ (0,1)`, depth `d`: the depth-`d`
-     z-cylinders meeting `(α,β)` = (those `⊆ (α,β)`) ⊔ (`≤2` straddling α,β);
-     γ of the straddling part `≤ 2/fib(d+1)²`. (Tools: `cfCylinder_disjoint`,
-     `volume_eq_tsum_extensions`, `volume_cfCylinder_le_fib`, `cfCylinder_subset_Icc_length`.)
-   - **2b-ii (two-scale split):** `cfBadZone [] v N δ ∩ cfCylinder wz'` (|wz'|=d)
-     `⊆ [prefix-bad: cfBadZone [] v d (δN/(2d))] ∪ [tail-bad: cfBadZone wz' v (N−d) δ']`;
-     mass of each `≤` Chebyshev at its scale. (Reuse `gaussMeasure_aggregate_cfBadZone_le`
-     + `countOccurrences_append`/`addslack₂` for the seam.)
-   - **2b-iii (assemble):** `γ(J ∩ ⋃_{v,N∈NS} cfBadZone [] v N δ) ≤
-     (2|NS|S/(δ²n₁))·γ(J) + 2Σ_N/fib(N/2)²`, for `n₁ ≳ 2·depth(J)`. Then feed
-     brick 3 (with `wz := []`, NS the absolute z-scales) — NOTE: brick 3 currently
-     takes a z-cylinder base `wz`; a `wz=[]` specialization or a route-B variant of
-     brick 3 is the bridge.
+   - **2b-i (covering): ✅ ALREADY EXISTS — reuse, do NOT re-derive.**
+     `volume_interval_sdiff_covered_le` (`CFIntervalGood.lean:89`, sorry-free) is
+     exactly this brick in Lebesgue form: `vol((a,b) \ coveredByCyl a b n) ≤
+     4/fib(n+1)²`, where `coveredByCyl a b n` (`:73`) = union of depth-`n` cylinders
+     `⊆ (a,b)`. This is the L1 boundary-strip lemma; the "≤2 straddling" count is
+     side-stepped (straddlers all lie within `M=1/fib(n+1)²` of an endpoint, total
+     mass `≤4M`). The γ-version is `≤2×` via `gaussMeasure_le_volume`. NOTE: base
+     `[]` in `cfBadZone` matches `coveredByCyl`'s genuine depth-`n` words; the seam
+     term is absorbed by 2b-ii, not the covering. **2b-iii only needs to package the
+     γ-residual and combine — the hard covering geometry is done.**
+   - **2b-ii (two-scale split): ✅ DONE (2026-08-24, this lap, axiom-clean).**
+     REFORMULATED far cleaner than the old "prefix-bad ∪ tail-bad Chebyshev" plan:
+     the count `blockCount` is a genuine Birkhoff sum, so `birkhoffSum_add` gives
+     `bc A N x = bc A d x + bc A (N−d)(gᵈx)` with NO seam junk. The length-`d` seam
+     term `∈[0,d]` shaves only `d/N` of the slack. Two src lemmas in `CFScheduleA.lean`
+     (after brick 2a):
+       · `cfBadZone_nil_shift_mem_cfBadZone` (pointwise): for `x ∈ cfBadZone [] v N δ
+         ∩ cfCylinder w'` with `gᵈx ∈ (0,1)` and `|w'|=d<N`, `x ∈ cfBadZone w' v (N−d)
+         (δ − d/N)`. Pure Birkhoff + triangle ineq; NO countOccurrences bridge.
+       · `gaussMeasure_cfBadZone_nil_inter_cylinder_le` (measure): `γ(cfBadZone [] v N δ
+         ∩ cfCylinder w') ≤ γ(cfBadZone w' v (N−d)(δ−d/N))`. Null rationals absorbed via
+         `withDensity_absolutelyContinuous`; `gᵈx∈(0,1)` from `irrational_orbit`.
+     So on each depth-`d` interior cylinder `w'`, the base-`[]` bad mass at scale `N`
+     is bounded by a base-`w'` bad mass at scale `N−d` (slack `δ−d/N`) — feed that to
+     `gaussMeasure_aggregate_cfBadZone_le`/`variance_blockCount_le` (Chebyshev) for the
+     per-cylinder fraction. δ−d/N ≈ δ when `N ≳ 2d` (route-B regime), so the fraction
+     is `≈ (8|v|+80)/((δ−d/N)²(N−d))·γ(w')`. NOTE the old `δN/(2d)` prefix scale is GONE
+     — there is no separate prefix-bad set, just a slack shave.
+   - **2b-iii (assemble): [NEXT crux].** Now has BOTH inputs in hand:
+     `γ(J ∩ ⋃_{v∈F,N∈NS} cfBadZone [] v N δ) ≤ (fraction)·γ(J) + residual`, `J=(α,β)`.
+     Decompose `J = coveredByCyl α β d ∪ (J \ coveredByCyl α β d)`, `d ≈ depth(J)`:
+       · residual term `γ(J \ coveredByCyl) ≤ 2·vol(J\coveredByCyl) ≤ 8/fib(d+1)²`
+         (brick 2b-i, `volume_interval_sdiff_covered_le` + `gaussMeasure_le_volume`);
+       · interior term: `coveredByCyl α β d ∩ bad = ⋃_{w'⊆J} (cfCylinder w' ∩ bad)`;
+         per interior `w'` apply 2b-ii (`gaussMeasure_cfBadZone_nil_inter_cylinder_le`)
+         then Chebyshev (`gaussMeasure_aggregate_cfBadZone_le`) → `≤ frac·γ(w')`;
+         sum over the DISJOINT interior `w'` (`cfCylinder_disjoint`) → `≤ frac·γ(J)`.
+     Regime `N ≳ 2d` makes `frac ≈ (8|v|+80)/(δ²N)` and residual `< γ(J)`. Then feed
+     brick 3 (with `wz := []`, NS the absolute z-scales) — brick 3 currently takes a
+     z-cylinder base `wz`; a `wz=[]` specialization or route-B variant is the bridge.
    - Then bricks 4 (recursion), 5 (z-coverage → `CFOrbitEquidist ψxA`), 6 (assemble).
 3. ✅ **DONE (2026-08-24, commit `d255444`, axiom-clean).**
    `exists_irrational_notMem_xbad_psi_zbad_in_Ioo` (`CFScheduleA.lean`, after

@@ -384,6 +384,139 @@ theorem gaussMeasure_preimage_multiscale_cfBadZone_le {q : ℝ} (hq : 0 < q) (r 
   rw [hpre]
   exact h1r.trans (mul_le_mul_of_nonneg_left h2 (by positivity))
 
+/-- **Brick 2b-ii — two-scale split (pointwise).**  Route-B analytic heart.  On a
+genuine depth-`d` cylinder `w'` (`d = |w'| < N`), an ABSOLUTE-scale (`base []`)
+`v`-bad point at scale `N` is, under its Gauss shift by `d`, a `v`-bad point at
+scale `N−d` with the prefix eating only `d/N` of the slack: the tail deviation is
+`≥ δ − d/N`.  Pure Birkhoff additivity (`birkhoffSum_add`) — the length-`N` count
+is the length-`d` seam count `∈ [0,d]` plus the shifted length-`(N−d)` count, so
+the seam contributes `≤ d/N` to the length-`N` average.  No orbit-length
+bookkeeping; the only geometric input is `gaussMap^[d] x ∈ (0,1)` (holds off a
+null set — supplied by irrationality downstream). -/
+theorem cfBadZone_nil_shift_mem_cfBadZone
+    (v w' : List ℕ) (N : ℕ) (δ : ℝ) (hdN : w'.length < N)
+    {x : ℝ} (hx : x ∈ cfBadZone [] v N δ) (hxc : x ∈ cfCylinder w')
+    (horb : gaussMap^[w'.length] x ∈ Set.Ioo (0 : ℝ) 1) :
+    x ∈ cfBadZone w' v (N - w'.length) (δ - (w'.length : ℝ) / (N : ℝ)) := by
+  set d : ℕ := w'.length with hd
+  set A : Set ℝ := cfCylinder v with hA
+  set γv : ℝ := (gaussMeasure A).toReal with hγ
+  -- unpack the base-`[]` bad-zone membership
+  simp only [cfBadZone, List.length_nil, Function.iterate_zero, Set.preimage_id,
+    Set.mem_inter_iff, Set.mem_setOf_eq] at hx
+  obtain ⟨-, hxIoo, hdev⟩ := hx
+  -- the two-scale Birkhoff split of the length-`N` count
+  have hNsum : d + (N - d) = N := Nat.add_sub_cancel' (le_of_lt hdN)
+  set P : ℝ := blockCount A d x with hP
+  set T : ℝ := blockCount A (N - d) (gaussMap^[d] x) with hT
+  have hsplit : blockCount A N x = P + T := by
+    have h := birkhoffSum_add gaussMap (blockIndic A) d (N - d) x
+    rw [hNsum] at h
+    rw [hP, hT]; exact h
+  -- seam bounds: `0 ≤ P ≤ d` and `0 ≤ γv ≤ 1`
+  have hind0 : ∀ y : ℝ, 0 ≤ blockIndic A y := by
+    intro y; unfold blockIndic
+    exact Set.indicator_nonneg (fun _ _ => by norm_num) y
+  have hind1 : ∀ y : ℝ, blockIndic A y ≤ 1 := by
+    intro y; unfold blockIndic
+    by_cases h : y ∈ A <;> simp [Set.indicator_of_mem, Set.indicator_of_notMem, h]
+  have hP0 : 0 ≤ P := by
+    rw [hP, blockCount_apply]; exact Finset.sum_nonneg fun k _ => hind0 _
+  have hPd : P ≤ (d : ℝ) := by
+    rw [hP, blockCount_apply]
+    calc ∑ k ∈ Finset.range d, blockIndic A (gaussMap^[k] x)
+        ≤ ∑ _k ∈ Finset.range d, (1 : ℝ) := Finset.sum_le_sum fun k _ => hind1 _
+      _ = (d : ℝ) := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+  have hγ0 : 0 ≤ γv := ENNReal.toReal_nonneg
+  have hγ1 : γv ≤ 1 := by
+    rw [hγ]; exact ENNReal.toReal_le_of_le_ofReal (by norm_num)
+      (by simpa using prob_le_one (μ := gaussMeasure) (s := A))
+  -- casts and positivity of the two scales
+  have hNpos : (0 : ℝ) < (N : ℝ) := by
+    have : 0 < N := by omega
+    exact_mod_cast this
+  have hNd : ((N - d : ℕ) : ℝ) = (N : ℝ) - (d : ℝ) := by
+    rw [Nat.cast_sub (le_of_lt hdN)]
+  have hNdpos : (0 : ℝ) < (N : ℝ) - (d : ℝ) := by
+    rw [← hNd]; exact_mod_cast Nat.sub_pos_of_lt hdN
+  -- the identity linking the two averages
+  set a : ℝ := T / ((N : ℝ) - (d : ℝ)) - γv with ha
+  have hE : blockCount A N x / (N : ℝ) - γv
+      = (P / (N : ℝ) - ((d : ℝ) / (N : ℝ)) * γv)
+        + (((N : ℝ) - (d : ℝ)) / (N : ℝ)) * a := by
+    rw [hsplit, ha]
+    field_simp
+    ring
+  -- triangle-inequality bound on the seam contribution
+  have hseam : |P / (N : ℝ) - ((d : ℝ) / (N : ℝ)) * γv| ≤ (d : ℝ) / (N : ℝ) := by
+    have heq : P / (N : ℝ) - ((d : ℝ) / (N : ℝ)) * γv = (P - (d : ℝ) * γv) / (N : ℝ) := by
+      field_simp
+    rw [heq, abs_div, abs_of_pos hNpos]
+    gcongr
+    rw [abs_le]
+    constructor <;> nlinarith [hP0, hPd, hγ0, hγ1]
+  have hcoef : (((N : ℝ) - (d : ℝ)) / (N : ℝ)) ≤ 1 := by
+    rw [div_le_one hNpos]; linarith
+  have hcoef0 : 0 ≤ ((N : ℝ) - (d : ℝ)) / (N : ℝ) := by positivity
+  -- conclude: tail deviation `≥ δ − d/N`
+  have hbig : δ ≤ (d : ℝ) / (N : ℝ) + |a| := by
+    calc δ ≤ |blockCount A N x / (N : ℝ) - γv| := hdev
+      _ = |(P / (N : ℝ) - ((d : ℝ) / (N : ℝ)) * γv)
+            + (((N : ℝ) - (d : ℝ)) / (N : ℝ)) * a| := by rw [hE]
+      _ ≤ |P / (N : ℝ) - ((d : ℝ) / (N : ℝ)) * γv|
+            + |(((N : ℝ) - (d : ℝ)) / (N : ℝ)) * a| := abs_add_le _ _
+      _ ≤ (d : ℝ) / (N : ℝ) + |a| := by
+          have : |(((N : ℝ) - (d : ℝ)) / (N : ℝ)) * a| ≤ |a| := by
+            rw [abs_mul, abs_of_nonneg hcoef0]
+            exact mul_le_of_le_one_left (abs_nonneg _) hcoef
+          linarith [hseam]
+  -- repackage into the target bad zone at scale `N−d`
+  refine ⟨hxc, ?_⟩
+  simp only [Set.mem_preimage, Set.mem_setOf_eq, ← hd]
+  refine ⟨horb, ?_⟩
+  have hgoal : δ - (d : ℝ) / (N : ℝ)
+      ≤ |blockCount A (N - d) (gaussMap^[d] x) / ((N - d : ℕ) : ℝ) - γv| := by
+    rw [hNd, ← hT, ← ha]; linarith [hbig]
+  simpa [hA, hγ, hd] using hgoal
+
+/-- **Brick 2b-ii — two-scale split (measure).**  The `γ`-mass of a base-`[]`
+`v`-bad zone at scale `N` intersected with a genuine depth-`d` cylinder `w'`
+(`d < N`) is bounded by the `γ`-mass of the base-`w'` `v`-bad zone at scale `N−d`
+with slack shaved to `δ − d/N`.  Off the (`γ`-null) rationals the pointwise split
+`cfBadZone_nil_shift_mem_cfBadZone` applies, using `irrational_orbit` to supply
+`gaussMap^[d] x ∈ (0,1)`. -/
+theorem gaussMeasure_cfBadZone_nil_inter_cylinder_le
+    (v w' : List ℕ) (N : ℕ) (δ : ℝ) (hdN : w'.length < N) :
+    gaussMeasure (cfBadZone [] v N δ ∩ cfCylinder w')
+      ≤ gaussMeasure (cfBadZone w' v (N - w'.length) (δ - (w'.length : ℝ) / (N : ℝ))) := by
+  -- `γ`-null rationals
+  have hrat0 : gaussMeasure (Set.range ((↑) : ℚ → ℝ)) = 0 := by
+    have hac : gaussMeasure ≪ volume.restrict (Set.Ioo (0 : ℝ) 1) := by
+      rw [gaussMeasure]; exact MeasureTheory.withDensity_absolutelyContinuous _ _
+    apply hac
+    rw [Measure.restrict_apply' measurableSet_Ioo]
+    exact measure_mono_null Set.inter_subset_left ((Set.countable_range _).measure_zero _)
+  -- a.e. inclusion: irrational bad points shift into the base-`w'` bad zone
+  have hsub : cfBadZone [] v N δ ∩ cfCylinder w'
+      ⊆ cfBadZone w' v (N - w'.length) (δ - (w'.length : ℝ) / (N : ℝ))
+        ∪ Set.range ((↑) : ℚ → ℝ) := by
+    rintro x ⟨hxbad, hxc⟩
+    by_cases hirr : Irrational x
+    · left
+      have hx01 : x ∈ Set.Ioo (0 : ℝ) 1 := cfCylinder_subset_Ioo w' hxc
+      have horb := (irrational_orbit x hirr hx01 w'.length).2
+      exact cfBadZone_nil_shift_mem_cfBadZone v w' N δ hdN hxbad hxc horb
+    · right
+      rw [Irrational, not_not] at hirr
+      exact hirr
+  calc gaussMeasure (cfBadZone [] v N δ ∩ cfCylinder w')
+      ≤ gaussMeasure (cfBadZone w' v (N - w'.length) (δ - (w'.length : ℝ) / (N : ℝ))
+          ∪ Set.range ((↑) : ℚ → ℝ)) := measure_mono hsub
+    _ ≤ gaussMeasure (cfBadZone w' v (N - w'.length) (δ - (w'.length : ℝ) / (N : ℝ)))
+          + gaussMeasure (Set.range ((↑) : ℚ → ℝ)) := measure_union_le _ _
+    _ = gaussMeasure (cfBadZone w' v (N - w'.length) (δ - (w'.length : ℝ) / (N : ℝ))) := by
+        rw [hrat0, add_zero]
+
 /-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
 finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
 cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every
