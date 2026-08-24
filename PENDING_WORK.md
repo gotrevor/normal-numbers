@@ -310,7 +310,39 @@ are now axiom-clean and in `src/`. Remaining is the recursive two-stream schedul
 Faithfulness gate after any schedule work: re-`#print axioms
 exists_absolutely_normal_cf_normal_khinchin` MUST stay trust-triple.
 
+### lap 14 landed (2026-08-24): cylinder↔interval bridge ✅
+`CFScheduleA.lean` (axiom-clean trust-triple, build green 8756):
+- `exists_irrational_mem_cfCylinder` — every genuine cylinder has an irrational
+  point (trivial `w++1ⁿ` extending chain + `exists_irrational_mem_iInter_cfCylinder`).
+- **`exists_Ioo_irrational_subset_cfCylinder`** — `cfCylinder w ⊇` all irrationals
+  of a fixed nondegenerate `(a,b)⊆(0,1)` (its convergent-endpoint interval
+  `cfCylinder_endpoints`, clamped to `(0,1)`; strictness from an irrational
+  witness strictly between the rational endpoints). **This is the bridge that
+  lets the schedule feed `cfCylinder wx` to `exists_freq_good_block_in_Ioo`**:
+  take `(a,b)` from this lemma, run the interval engine on it; the engine's
+  returned cylinder ⊆ `(a,b)`, and its irrational points land in `cfCylinder wx`.
+  Combined with `take_eq_of_mem_cfCylinder` (shared irrational point + length
+  ordering) the new word EXTENDS wx — no separate "extends" lemma needed.
+
+**NEXT ATTACK — assemble the schedule step `schedStepA` (still the crux).** Every
+geometric atom is now proved. One remaining glue lemma to prove first, then the
+recursion:
+- `exists_freq_good_extend_cfCylinder (wx genuine) (F) (δ>0) (L : ℕ) : ∃ wx'
+  genuine, wx'.take wx.length = wx ∧ wx.length < wx'.length ∧ L ≤ wx'.length ∧
+  cfCylinder wx' ⊆ cfCylinder wx ∧ (∀v∈F, freq-good on wx'‑suffix within δ) ∧
+  (cfCylinder wx').Nonempty`. Build it by: `(a,b) := exists_Ioo_irrational_subset_
+  cfCylinder wx`; `⟨w,_,_,hsub,N,hN⟩ := exists_freq_good_block_in_Ioo F .. (a,b)`;
+  pick `n := max N (max L wx.length) + 1`, get block `u` + irrational point `p ∈
+  cfCylinder(w++u) ⊆ (a,b)`; `p ∈ cfCylinder wx` (bridge) ∧ `p ∈ cfCylinder(w++u)`
+  with `|wx| ≤ |w++u|` ⇒ `take_eq_of_mem_cfCylinder` ⇒ `w++u` extends wx; set
+  `wx' := w++u`. NB the freq-good property is on the block `u` (a SUFFIX of wx'),
+  with the placement filler `w[|wx|:]` bounded — feed both to the telescoping.
+- Then `SchedStateA` + `schedStepA` (x/ψ parity) + `schedA : ℕ → SchedStateA` by
+  choice, `xA := ` limit point, and the per-stream freq telescoping (copy-extend
+  `CFCorrect`). This is the multi-lap body; atoms all green.
+
 ### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
+- CYL↔IOO `exists_Ioo_irrational_subset_cfCylinder` + `exists_irrational_mem_cfCylinder`.
 - INTERVAL ENGINE `exists_freq_good_block_in_Ioo` — freq-good block landing in a target interval.
 - `exists_cfCylinder_subset_Ioo` — placement: a genuine cylinder inside any nondegenerate interval.
 - ENGINE `exists_freq_good_block` — daryCell-free freq-good CF block (obligation B atom).

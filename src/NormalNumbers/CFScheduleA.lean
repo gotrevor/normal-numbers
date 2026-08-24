@@ -48,6 +48,62 @@ def CFOrbitEquidist (y : ℝ) : Prop :=
     Filter.Tendsto (fun p => blockCount (cfCylinder v) p y / (p : ℝ))
       Filter.atTop (nhds (gaussMeasure (cfCylinder v)).toReal)
 
+/-- Every genuine CF cylinder contains an irrational point (build the trivial
+one-extending-chain `w ++ 1ⁿ` and take its limit point). -/
+theorem exists_irrational_mem_cfCylinder (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) : ∃ x : ℝ, Irrational x ∧ x ∈ cfCylinder w := by
+  set c : ℕ → List ℕ := fun s => w ++ List.replicate s 1 with hc
+  have hcne : ∀ s, c s ≠ [] := fun s => by simp [hc, hw]
+  have hcpos : ∀ s, ∀ a ∈ c s, 1 ≤ a := by
+    intro s a ha
+    rcases List.mem_append.1 ha with h | h
+    · exact hpos a h
+    · rw [List.eq_of_mem_replicate h]
+  have hext : ∀ s, ∃ u, u ≠ [] ∧ c (s + 1) = c s ++ u := by
+    intro s
+    exact ⟨[1], by simp, by simp [hc, List.replicate_succ', List.append_assoc]⟩
+  obtain ⟨x, hxirr, hxmem⟩ :=
+    exists_irrational_mem_iInter_cfCylinder c hcne hcpos hext
+  exact ⟨x, hxirr, by have h := hxmem 0; simpa [hc] using h⟩
+
+/-- **A cylinder is an interval, for irrationals.**  A genuine CF cylinder
+`cfCylinder w` contains all irrationals of a fixed nondegenerate open interval
+`(a,b) ⊆ (0,1)` (its convergent-endpoint interval, clamped to `(0,1)`).  This is
+the form the schedule feeds to `exists_freq_good_block_in_Ioo`: refining inside
+`cfCylinder w` = refining inside `(a,b)`. -/
+theorem exists_Ioo_irrational_subset_cfCylinder (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) :
+    ∃ a b : ℝ, 0 ≤ a ∧ a < b ∧ b ≤ 1 ∧
+      ∀ x ∈ Set.Ioo a b, Irrational x → x ∈ cfCylinder w := by
+  obtain ⟨ξ, hξirr, hξmem⟩ := exists_irrational_mem_cfCylinder w hw hpos
+  obtain ⟨P, P', -, hIcc, hUIoo⟩ := cfCylinder_endpoints w hw hpos
+  set E0 : ℝ := (P : ℝ) / (cfK w : ℝ) with hE0
+  set E1 : ℝ := (P' : ℝ) / ((cfK w : ℝ) + (cfK w.dropLast : ℝ)) with hE1
+  have hE0mem : E0 ∈ Set.range ((↑) : ℚ → ℝ) :=
+    ⟨(P : ℚ) / (cfK w : ℚ), by rw [hE0]; push_cast; ring⟩
+  have hE1mem : E1 ∈ Set.range ((↑) : ℚ → ℝ) :=
+    ⟨(P' : ℚ) / ((cfK w : ℚ) + (cfK w.dropLast : ℚ)), by rw [hE1]; push_cast; ring⟩
+  have hne0 : ξ ≠ E0 := fun h => hξirr (by rw [h]; exact hE0mem)
+  have hne1 : ξ ≠ E1 := fun h => hξirr (by rw [h]; exact hE1mem)
+  have hξIcc : ξ ∈ Set.Icc (min E0 E1) (max E0 E1) := hIcc hξmem
+  rw [Set.mem_Icc] at hξIcc
+  have hξ01 := hξmem.1
+  have hnemin : ξ ≠ min E0 E1 := by
+    rcases min_choice E0 E1 with h | h <;> rw [h] <;> [exact hne0; exact hne1]
+  have hnemax : ξ ≠ max E0 E1 := by
+    rcases max_choice E0 E1 with h | h <;> rw [h] <;> [exact hne0; exact hne1]
+  have hminlt : min E0 E1 < ξ := lt_of_le_of_ne hξIcc.1 (Ne.symm hnemin)
+  have hltmax : ξ < max E0 E1 := lt_of_le_of_ne hξIcc.2 hnemax
+  refine ⟨max (min E0 E1) 0, min (max E0 E1) 1, le_max_right _ _, ?_,
+    min_le_right _ _, ?_⟩
+  · have h1 : max (min E0 E1) 0 < ξ := max_lt hminlt hξ01.1
+    have h2 : ξ < min (max E0 E1) 1 := lt_min hltmax hξ01.2
+    linarith
+  · intro x hx hirr
+    have hxlo : min E0 E1 < x := lt_of_le_of_lt (le_max_left _ _) hx.1
+    have hxhi : x < max E0 E1 := lt_of_lt_of_le hx.2 (min_le_left _ _)
+    exact hUIoo x (Set.mem_Ioo.2 ⟨hxlo, hxhi⟩) hirr
+
 /-- **Cylinder inside an interval.**  Every nondegenerate subinterval `(a,b)` of
 `(0,1)` contains a genuine CF cylinder.  Proof: `goodInInterval a b n 0` has
 positive volume once `4/fib(n+1)² < b−a` (`goodInInterval_pos_of_lt`), so it is
