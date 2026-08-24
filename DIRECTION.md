@@ -4,7 +4,19 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-24, reflection lap — route C′ RATIFIED, WIRE it)
+## CURRENT DIRECTIVE (set 2026-08-24, reflection lap — ✅ COMPLETE)
+
+- **THE EXPEDITION IS COMPLETE.** Both headlines are PROVED and axiom-clean
+  (trust triple): `exists_absolutely_normal_cf_normal` (Tier 1 = Becher–Yuhjtman)
+  and `exists_absolutely_normal_cf_normal_khinchin` (Tier 2 = + Khinchin-typical).
+  ZERO `sorry`/`admit` in `src/`, ZERO cited math axioms, all 10 headlines
+  certified trust-triple. There is no remaining proof obligation. Do NOT reopen
+  or modify any locked declaration. If resumed, the only work is optional
+  packaging (docstring tidy, outward PRs needing egress) — NOT proof.
+- Historical directive (the wiring plan that closed Tier 2) preserved below for
+  provenance.
+
+<details><summary>Superseded directive (route C′ wiring — now DONE)</summary>
 
 - **TIER 1 IS LOCKED**: `exists_absolutely_normal_cf_normal` (Becher–Yuhjtman,
   IMRN 2019, apparently first formalization) is **proved and axiom-clean**
@@ -64,7 +76,15 @@ detail lives in PENDING_WORK.md.
   generational wall. Descoping to "Tier 1 is the deliverable" would be
   miscalibrated caution.
 
+</details>
+
 ### Directive history
+- 2026-08-24 (reflection lap → COMPLETION): **Tier 2 CLOSED — expedition
+  complete, axiom-clean.** Executed the wiring directive to the finish in one lap:
+  CFSchedule family-rewire (step 1), log-tail telescoping + crux
+  `xstar_log_tail_uniform` (step 2), route-D′ layering + Tier-2 headline (step 3).
+  All 10 headlines re-`#print axioms`-verified trust-triple. No proof obligations
+  remain; ran the completion self-stop.
 - 2026-08-24 (reflection lap): **route C′ RATIFIED; directive de-staled to force
   WIRING.** The prior directive still named the Chebyshev/variance plan, but grind
   laps correctly pivoted to the simpler Markov first-moment tail route and BUILT

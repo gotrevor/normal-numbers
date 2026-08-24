@@ -1,56 +1,44 @@
 # STATUS — normal-numbers 📊
 
-**Two classical harvests of one Birkhoff-on-[0,1] machine: base-b normality (Track A, DONE) + CF/Khinchin metric theory (Track B — Tier 1 LOCKED, Tier 2 Khinchin in wiring).** · **Build**: 🟢 green (8750 jobs) · **Updated**: reflection lap · 2026-08-24 · `f34ba5a`
+**Two classical harvests of one Birkhoff-on-[0,1] machine: base-b normality (Track A) + CF/Khinchin metric theory (Track B — Tier 1 Becher–Yuhjtman + Tier 2 Khinchin). ALL PROVED, axiom-clean.** · **Build**: 🟢 green (8751 jobs) · **Updated**: reflection lap · 2026-08-24 · `4629029`
 
 ## Where it stands
 
-Track A **complete and axiom-clean** (Wall, ln 2 reduction, Stoneham,
-trust-triple only). **Tier 1 — the Becher–Yuhjtman theorem — is LOCKED**:
-`exists_absolutely_normal_cf_normal` (`Headline.lean:109`) is proved and
-axiom-clean (trust triple, re-verified this lap), apparently the first
-formalization in any prover. Everything under it (Pillai, the d-ary chain, CF
-normality, the measure-balance selection / Lemma 13, the schedule, `xstar`) is
-DONE and axiom-clean.
+**THE EXPEDITION IS COMPLETE.** All ten headline theorems are proved and
+`#print axioms`-clean (trust triple `propext, Classical.choice, Quot.sound`
+only); ZERO `sorry`/`admit` terms in `src/`; ZERO cited/proven-but-cited math
+axioms (the two B–Y deep imports — Morita/Vallée CLT and Kifer–Peres–Weiss
+large deviations — were discharged via elementary Markov + γ-mixing substitutes).
 
-**Tier 2 — the expedition headline `exists_absolutely_normal_cf_normal_khinchin`
-(`Headline.lean:136`, `sorry`)** — is the sole remaining obligation:
-additionally Khinchin-typical. The analytic reduction is DONE: via
-`khinchinTypical_iff_log_tendsto` + a `3ε` interchange (`xstar_log_digit_avg_tendsto`,
-proved *modulo one crux*), the whole headline funnels to the single
-schedule-dependent crux **`xstar_log_tail_uniform`** (`Khinchin.lean:527`,
-`sorry`): the average log-mass carried by CF digits `> K` is `≤ ε` uniformly in
-`n`. **Route C′ is settled and its machinery is COMPLETE + axiom-clean** — a
-**summable family** of log-tail **Markov** bad zones `(khinchinK j, khinchinEta j)`
-grafted *additively* into the schedule's union-bound selection: `KhinchinBrick`
-(Lebesgue bridge `volume_logBadZone_le_vol`), `KhinchinFamily`
-(`exists_good_avoiding_bad…_family`, geometric budget `≤1/7`),
-`KhinchinRefineFamily` (`exists_refinement_uniform_khinchin_family` — every
-extension word avoids ALL `j<tK` zones at once), `CFLogTail` (upstream,
-khinchinK₀-free). **A genuine design bug was found AND fixed this run**: the
-naive level-tied cutoff `K_t→∞` can never transfer to a fixed external `K`; the
-summable family with FIXED cutoffs `khinchinK j` fixes it (monotonicity of the
-nonnegative tail in `K` closes the crux's `∀K≥K₀`). Note the route SIMPLIFIED
-from the old directive's Chebyshev/variance plan to **Markov first-moment on the
-nonnegative log-tail** — cleaner, no two-sided variance needed. **The remaining
-gap is pure WIRING** (not more machinery): rewire `CFSchedule.lean` to record the
-family payload (`tK := level`), then assemble `xstar_log_tail_uniform` (weakened
-to eventual-in-`n`, its only consumer works via `Metric.tendsto_atTop`). Route D′
-(layering to close `Headline.lean:136`) is trivial after.
+- **Track A** (base-b normality): Wall, the ln 2 reduction (conditional on the
+  correct equidistribution hypothesis), Stoneham — axiom-clean.
+- **Tier 1 = Becher–Yuhjtman** (IMRN 2019): `exists_absolutely_normal_cf_normal`
+  (`Headline.lean`) — an explicit real absolutely normal ∧ CF-normal. Apparently
+  the first formalization in any prover.
+- **Tier 2 = the expedition headline**: `exists_absolutely_normal_cf_normal_khinchin`
+  — additionally **Khinchin-typical**. The conjunction is apparently new even on
+  paper. Closed via `xstar_khinchinTypical`, whose crux `xstar_log_tail_uniform`
+  is delivered by the route-C′ **summable Markov log-tail family** grafted
+  additively into the schedule (`xstar_logTail_prefix_bound`, `CFCorrect.lean`) —
+  and route D′ layering (`KhinchinDefs.lean`) to break the def/proof import cycle.
 
 ## What's happened (newest first)
 
-- 2026-08-24 (reflection lap): **route C′ RATIFIED, directive de-staled, crux
-  isolated to WIRING.** Re-derived ground truth: build green (8750 jobs), Tier-1
-  axiom-clean (trust triple), frozen headline statements faithful (khinchinK₀
-  tprod alignment, `KhinchinTypical`=geom-mean→K₀ re-checked vs source). Found
-  the CURRENT DIRECTIVE STALE — it still named the Chebyshev/variance plan, but
-  grind laps correctly pivoted to the simpler Markov first-moment tail route
-  (A′/B′/C′) and BUILT the full family machinery axiom-clean. Verified this is
-  forward motion, not a false summit: whole lemmas close lap-over-lap, the crux
-  keeps shrinking, and this run's design bug was fixed same-run. ROUTE VERDICT:
-  **CONTINUE** (neither charter trigger fired — route uses Markov+γ-mixing, not a
-  forbidden Birkhoff import). Rewrote the directive to force the CFSchedule
-  rewire + crux assembly (STOP building more upstream machinery).
+- 2026-08-24 (reflection lap → COMPLETION): **Tier 2 CLOSED — the whole
+  expedition is done, axiom-clean.** Steps 1–3 all landed this lap. (1) Rewired
+  `CFSchedule.lean` to the summable-**family** refinement (fixed cutoffs
+  `khinchinK j`, no level-tied `K_t→∞`). (2) Built the log-tail telescoping in
+  `CFCorrect.lean` (`logTailMass` + monotonicity, `uSched_logTail_le`,
+  `tailSched_logTail_le`, `xstar_logTail_prefix_bound`, `logTailMass_cfPrefix`)
+  and assembled the crux `xstar_log_tail_uniform`, hence `xstar_khinchinTypical`
+  (axiom-clean). (3) Route D′: relocated the frozen `khinchinK₀`/`KhinchinTypical`
+  defs byte-identical to a new upstream `KhinchinDefs.lean`, dropped Khinchin's
+  `import Headline`, and closed the Tier-2 headline
+  `⟨xstar, xstar_isAbsolutelyNormal, xstar_isCFNormal, xstar_khinchinTypical⟩`.
+  All 10 headlines re-`#print axioms`-verified trust-triple. Also (earlier in the
+  lap): ratified route C′ and de-staled the CURRENT DIRECTIVE (it still named the
+  superseded Chebyshev/variance plan). ROUTE VERDICT: CONTINUE → reached the
+  destination.
 - 2026-08-24 (grind run, route C′): **FAMILY machinery COMPLETE + axiom-clean.**
   `volume_logBadZone_le_vol` (Lebesgue bridge), three-zone combine
   (`exists_good_avoiding_bad_khinchin` + `_family`), `exists_refinement_uniform_khinchin_family`
@@ -117,44 +105,29 @@ to eventual-in-`n`, its only consumer works via `Metric.tendsto_atTop`). Route D
 
 ## Outstanding
 
-### Short-term (mirror PENDING_WORK top) — WIRE the family machinery (DIRECTIVE target)
-- **(1) Rewire `CFSchedule.lean`** to `TBrick.exists_refinement_uniform_khinchin_family`
-  (not the superseded single-zone `_khinchin`), with `tK := ` the level `t`. The
-  `SchedStep`/`nFn_spec`/`sched_refinement` log conjunct becomes `∀ j<t, (Σ_{a∈u,
-  a>khinchinK j} log a) ≤ khinchinEta j·|u|`. `KFn t` and the `∃K₀` layer
-  DISAPPEAR (family version has no per-call cutoff hypothesis). Downstream
-  `sched_step` destructures end in trailing `-` (safe) except
-  `DaryCorrect.lean:48` (one more `-`). After the edit: re-`#print axioms
-  exists_absolutely_normal_cf_normal` — MUST stay trust-triple.
-- **(2) Assemble `xstar_log_tail_uniform`** (`Khinchin.lean:527`): for target `ε`
-  take `j(ε):=⌈1/ε⌉` (`khinchinEta j(ε)≤ε`), fix cutoff `K₀:=khinchinK j(ε)`;
-  split `xstar`'s length-`n` prefix at the stage where level first exceeds `j(ε)`
-  (finite index, from `sched_t_eventually`). Early stages: bounded via the
-  `goodC`-telescope (`wSched_log_sum_le`-style, in `CFCorrect.lean`). Late stages
-  (level `> j(ε)`): the family guarantee AT INDEX `j(ε)` directly. Monotonicity of
-  the nonneg tail in `K` handles the crux's `∀K≥K₀`. WEAKEN the statement to
-  `∃N,∀n≥N` (internal lemma; consumer uses `Metric.tendsto_atTop`).
-- **(3) Route D′** (layering): move `KhinchinTypical`/`khinchinK₀` defs upstream so
-  `Headline.lean:136` can invoke `xstar_khinchinTypical` — trivial after (2).
+### Short-term
+- **NONE — the proof is complete.** No open `sorry`/`admit`, no cited axioms.
 
-### Long-term
-- Tier-2 witness: either a schedule parameterized by the bad-zone family, or a
-  fresh witness through the extended refinement (still abs-normal ∧ CF-normal —
-  it avoids a superset of zones). Additive only; Tier-1 axioms invariant.
+### Long-term / outward (packaging only — not proof obligations)
+- Stale docstrings in a few CF modules still say "left `sorry` for the campaign"
+  (historical prose describing lemmas long since proved) — harmless, could be
+  swept for tidiness.
+- Outward (Track A): PR to ChampernowneNormality (staged); comparator + Zulip —
+  needs host egress, not a proof step.
 
-### To completion
-- Tier 1 (source-backed): **DONE** — `exists_absolutely_normal_cf_normal`, first
-  formalization of the Becher–Yuhjtman witness, axiom-clean.
-- Tier 2 (stretch): + Khinchin-typical — apparently first-anywhere even on paper;
-  the sole open obligation.
-- Outward (Track A): PR to ChampernowneNormality (staged); comparator + Zulip.
+### To completion — DONE
+- Track A: **DONE**, axiom-clean.
+- Tier 1 (Becher–Yuhjtman): **DONE** — `exists_absolutely_normal_cf_normal`,
+  apparently the first formalization, axiom-clean.
+- Tier 2 (Khinchin, stretch — apparently first-anywhere even on paper):
+  **DONE** — `exists_absolutely_normal_cf_normal_khinchin`, axiom-clean.
 
 ## Axiom ledger (fidelity spine — all from real `#print axioms`, 2026-08-24 reflection lap)
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 |---|---|---|---|
-| `exists_absolutely_normal_cf_normal` (**Tier 1 = Becher–Yuhjtman**) | uncond | trust triple | 🟢 DONE (locked, first formalization; re-verified this lap) |
-| `exists_absolutely_normal_cf_normal_khinchin` (**Tier 2 headline**) | uncond | `sorryAx` (open) | 🟡 in progress — funnels to ONE crux `xstar_log_tail_uniform`; route C′ (summable Markov log-tail family) machinery COMPLETE + axiom-clean, gap = CFSchedule wiring + crux assembly |
+| `exists_absolutely_normal_cf_normal` (**Tier 1 = Becher–Yuhjtman**) | uncond | trust triple | 🟢 DONE (first formalization; re-verified this lap) |
+| `exists_absolutely_normal_cf_normal_khinchin` (**Tier 2 headline**) | uncond | trust triple | 🟢 DONE (route C′ summable Markov log-tail family + route-D′ layering; PROVED this lap) |
 | `isNormal_iff_equidistributed_orbit` (Wall) | uncond | trust triple | 🟢 DONE |
 | `isNormal_log_two_of_equidistributed` | cond (orbit equidist.) | trust triple | 🟢 DONE (hypothesis is the open conjecture, correctly a hypothesis) |
 | `isNormal_two_stoneham23` (Stoneham) | uncond | trust triple | 🟢 DONE |
@@ -165,11 +138,10 @@ to eventual-in-`n`, its only consumer works via `Metric.tendsto_atTop`). Route D
 | `summable_gaussKuzmin_logsq` (Tier-2 moment seed) | uncond | trust triple | 🟢 DONE (this lap) |
 
 Math-axiom count (🟢+🟡+🟠, excluding trust base + native_decide artifacts):
-**0** proven-but-cited axioms; the only non-green item is the Tier-2 headline
-itself, still `sorry` (route settled, in progress — 🟡). No 🔴 anywhere. Trust
-triple = propext, Classical.choice, Quot.sound throughout. Tier 1's `#print
-axioms` re-verified trust-triple-only this lap; the invariant for all W6 work is
-that it STAYS trust-triple (any change = locked machinery was modified).
+**0** proven-but-cited axioms. Every headline is 🟢 (trust triple only). No 🟡
+debt, no 🟠, no 🔴 — the frontier is saturated. Trust triple = propext,
+Classical.choice, Quot.sound throughout. All 10 headlines re-`#print
+axioms`-verified trust-triple-only this lap (the completion certification).
 
 ## Pointers
 DIRECTION.md (CURRENT DIRECTIVE) · ROADMAP.md · KHINCHIN.md (B5′ plan W1–W6) ·

@@ -1,26 +1,22 @@
 # PENDING WORK — B5′ campaign
 
-> **GRIND (2026-08-24 — CRUX PROVED; only route D′ remains).** Directive steps
-> 1+2 DONE this reflection lap. `xstar_log_tail_uniform` is PROVED (the sole
-> schedule-dependent Tier-2 crux), so `xstar_khinchinTypical : KhinchinTypical
-> xstar` is PROVED axiom-clean `[propext, Classical.choice, Quot.sound]`. New
-> log-tail telescoping lives in `CFCorrect.lean` (`logTailMass` + nonneg/append/
-> take-mono/cutoff-mono, `uSched_logTail_le`, `tailSched_logTail_le`,
-> `xstar_logTail_prefix_bound`, `logTailMass_cfPrefix`). Build green (8750 jobs).
+> **✅ COMPLETE (2026-08-24 — the whole B5′ expedition is PROVED, axiom-clean).**
+> Both headlines `exists_absolutely_normal_cf_normal` (Tier 1 = Becher–Yuhjtman)
+> and `exists_absolutely_normal_cf_normal_khinchin` (Tier 2 = + Khinchin-typical)
+> are `#print axioms`-clean (`[propext, Classical.choice, Quot.sound]`). ZERO
+> `sorry`/`admit` terms in `src/`; ZERO cited math axioms. All 10 headline
+> theorems certified trust-triple this lap.
 >
-> **THE ONLY REMAINING SORRY**: `Headline.lean:134`
-> (`exists_absolutely_normal_cf_normal_khinchin`). It needs `xstar_khinchinTypical`,
-> which lives DOWNSTREAM (`Khinchin.lean`), so Headline can't import it (cycle).
-> **Route D′ (layering)**: move the frozen defs `khinchinK₀` + `KhinchinTypical`
-> BYTE-IDENTICAL into a new upstream `KhinchinDefs.lean` imported by both sides;
-> drop Khinchin.lean's `import Headline` (it only needs those defs + the CF
-> machinery), so Khinchin no longer depends on Headline; then Headline imports
-> Khinchin and closes the headline via `⟨xstar, <abs-normal ∧ cf-normal as in
-> exists_absolutely_normal_cf_normal>, xstar_khinchinTypical⟩`. Keep the frozen
-> STATEMENT + def CONTENT identical (JUDGE invariant); after wiring, `#print
-> axioms exists_absolutely_normal_cf_normal_khinchin` must be trust-triple and
-> Tier-1 must stay trust-triple. Grep Khinchin.lean for any non-def Headline
-> references before dropping the import.
+> This lap closed it in three steps: (1) `CFSchedule.lean` rewired to the
+> summable-**family** refinement; (2) log-tail telescoping in `CFCorrect.lean`
+> (`logTailMass`, `uSched_logTail_le`, `tailSched_logTail_le`,
+> `xstar_logTail_prefix_bound`) + the crux `xstar_log_tail_uniform`, hence
+> `xstar_khinchinTypical`; (3) route D′ — frozen defs relocated byte-identical to
+> `KhinchinDefs.lean` to break the import cycle, headline discharged.
+>
+> **No open proof obligations remain.** Nice-to-have only: sweep stale "left
+> `sorry` for the campaign" docstrings in a few CF modules (historical prose);
+> the outward Track-A PR to ChampernowneNormality (needs host egress).
 
 ## Reflection — 2026-08-24 (deep reflection lap) 🧘
 

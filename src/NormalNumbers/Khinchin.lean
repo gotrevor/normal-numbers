@@ -26,10 +26,13 @@ the analytic assembly: match the (now uniformly bounded) log-digit average
 against the Gauss–Kuzmin frequencies already proved via
 `xstar_cf_freq_tendsto`.
 
-This file starts that assembly with the elementary reduction (geometric mean
-limit ⟺ log-average limit), fully proved, and isolates the one remaining
-purely-elementary gap (`khinchinK₀` is a genuine positive real, i.e. its
-defining `tprod` is `Multipliable`) as a named `sorry`.
+This file carries that assembly to completion: the elementary reduction
+(geometric mean limit ⟺ log-average limit, `khinchinTypical_iff_log_tendsto`),
+`khinchinK₀_pos`, the `3ε` interchange `xstar_log_digit_avg_tendsto`, the
+schedule-dependent crux `xstar_log_tail_uniform` (route C′, via
+`xstar_logTail_prefix_bound` in `CFCorrect.lean`), and finally
+`xstar_khinchinTypical : KhinchinTypical xstar` — all PROVED axiom-clean.
+`Headline.lean` invokes the last to discharge the Tier-2 headline.
 -/
 
 namespace NormalNumbers
@@ -505,20 +508,21 @@ theorem integral_logTailFn_tendsto :
   refine gaussKuzmin_logtail_tendsto.congr (fun K => ?_)
   rw [integral_logTailFn_eq]
 
-/-- **Uniform log-digit tail control** (the sole SCHEDULE-DEPENDENT crux of
-Tier 2, now isolated).  For every `ε > 0` there is a cutoff `K₀` such that for
-ALL cutoffs `K ≥ K₀` and ALL prefix lengths `n`, the empirical log-average
-`(1/n)·Σ_{i<n} log aᵢ` differs from its `≤ K`-truncation
+/-- **Uniform log-digit tail control** (the schedule-dependent crux of Tier 2 —
+PROVED, route C′).  For every `ε > 0` there is a cutoff `K₀` and threshold `N`
+such that for ALL cutoffs `K ≥ K₀` and ALL prefix lengths `n ≥ N`, the empirical
+log-average `(1/n)·Σ_{i<n} log aᵢ` differs from its `≤ K`-truncation
 `(1/n)·Σ_{a≤K} count[a]·log a` by at most `ε`.  Equivalently (via
 `xstar_logTail_eq`): the average log-mass carried by digits `> K`,
-`(1/n)·Σ_{i<n, aᵢ>K} log aᵢ`, is `≤ ε` uniformly in `n`.  This is exactly
-what pattern frequencies + the `goodC` total-mass bound provably CANNOT give
-(`DIRECTION.md` route note); it is delivered by the W6 log-concentration bad
-zone in the schedule (a MARKOV first-moment bound — the tail is nonnegative —
-with input `gaussKuzmin_logtail_tendsto`).  DISCLOSED `sorry`: the analytic
-assembly above reduces the whole Tier-2 headline to this one statement;
-`xstar_logTail_eq` further reduces it to bounding the nonnegative empirical
-tail, which the additive `logBadZone` in the schedule construction delivers. -/
+`(1/n)·Σ_{i<n, aᵢ>K} log aᵢ`, is `≤ ε` uniformly (eventually in `n`).  This is
+exactly what pattern frequencies + the `goodC` total-mass bound provably CANNOT
+give (`DIRECTION.md` route note); it is delivered by the route-C′ summable
+log-tail family grafted into the schedule (a MARKOV first-moment bound — the tail
+is nonnegative).  Proof: `xstar_logTail_prefix_bound` (`CFCorrect.lean`) bounds
+the nonnegative empirical tail at the FIXED family cutoff `khinchinK j(ε)`;
+cutoff-monotonicity reduces `∀ K ≥ K₀` to that fixed `K₀`.  The eventual (`∃ N`)
+form is all its one consumer `xstar_log_digit_avg_tendsto` needs (it goes through
+`Metric.tendsto_atTop`). -/
 theorem xstar_log_tail_uniform {ε : ℝ} (hε : 0 < ε) :
     ∃ K₀ N : ℕ, ∀ K : ℕ, K₀ ≤ K → ∀ n : ℕ, N ≤ n →
       |(1 / (n : ℝ)) * ((List.range n).map (fun i => Real.log (cfDigit xstar i : ℝ))).sum
