@@ -16,8 +16,9 @@ large deviations — were discharged via elementary Markov + γ-mixing substitut
   (`Headline.lean`) — an explicit real absolutely normal ∧ CF-normal. Apparently
   the first formalization in any prover.
 - **Tier 2 = the expedition headline**: `exists_absolutely_normal_cf_normal_khinchin`
-  — additionally **Khinchin-typical**. The conjunction is apparently new even on
-  paper. Closed via `xstar_khinchinTypical`, whose crux `xstar_log_tail_uniform`
+  — additionally **Khinchin-typical**. We found no write-up of the conjunction,
+  but that is NOT a novelty claim: the implication may well be routine and simply
+  unstated, and our survey instrument cannot speak to the paper literature. Closed via `xstar_khinchinTypical`, whose crux `xstar_log_tail_uniform`
   is delivered by the route-C′ **summable Markov log-tail family** grafted
   additively into the schedule (`xstar_logTail_prefix_bound`, `CFCorrect.lean`) —
   and route D′ layering (`KhinchinDefs.lean`) to break the def/proof import cycle.

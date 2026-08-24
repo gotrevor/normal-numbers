@@ -124,15 +124,15 @@ laps off a fully pinned plan):
 | W3 | **the core**: summable CF correlation decay — route DECIDED, see below; **scaffold staged 2026-08-23** (`CFMixing.lean`, 4 frozen statements incl. the B1 + B4 flags; escape valve on the geometric rate) | ~1.5–3k | **moderate** |
 | W4 | LD/Chebyshev assembly + b-ary side (Lemmas 8, 9; overlaps Counting/Visits) | ~0.8–1.2k | low |
 | W5 | t-bricks, main lemma (worse constants), schedule, limit x, three correctness proofs, + the Pillai powers-equivalence for "absolutely normal" | ~1.5–2.5k | medium (bookkeeping-dense) |
-| W6 | Khinchin graft: digit caps D_t in the refinement + uniform-integrability bookkeeping, K₀ as tprod | ~0.5–1k | medium (new on paper, ~90% sound) |
+| W6 | Khinchin graft: digit caps D_t in the refinement + uniform-integrability bookkeeping, K₀ as tprod | ~0.5–1k | medium (no write-up found, ~90% sound) |
 
 **Total ≈ 5.5–10k lines, ~8–16 treadmill laps + a few attended
 scaffold/judge sessions; calendar ≈ 2–4 weeks of campaign time, dominated by
 W3** (estimate confidence ~65%; tail risk = W3 statement-shape + W5
 constant-wrangling).  Prize: one artifact = first formalized
 absolutely-normal number, first formalized CF-normal number, first
-Khinchin-typical witness (the conjunction apparently new even on paper) —
-and a natural reach-out to Becher/Yuhjtman/Scheerer.  B2/B3 (ergodicity,
+Khinchin-typical witness (we found no write-up of the conjunction; that is
+not a claim it is new) — and a natural reach-out to Becher/Yuhjtman/Scheerer.  B2/B3 (ergodicity,
 Birkhoff) stay a separate thread; B5′ does not wait on them.
 
 ### W3 route — decided 2026-08-23 (pre-flight done)
@@ -203,10 +203,15 @@ lifted into `CFLogTail.lean` upstream of `TBrick.lean`.  Both B–Y deep imports
 elementary substitutes, so nothing is cited-but-unproved.  Verification detail:
 `JUDGE.md` close-out section.
 
-⚠️ The two survey-based claims below (first B–Y formalization in any prover; the
-three-way conjunction new even on paper) are **as of the 2026-08-23 launch-day
-sweep**.  Re-run the survey before either goes outward — a launch-day null is not
-a close-out null.
+⚠️ **Claim discipline.**  ONE claim is supportable: *apparently the first
+formalization of Becher–Yuhjtman in any prover*, as of the 2026-08-23 launch-day
+sweep — and re-run that sweep before it goes outward, since a launch-day null is
+not a close-out null.  **Do NOT claim the three-way conjunction is new even on
+paper.**  Our instrument greps provers, mathlib, Zulip and AFP; it is structurally
+incapable of establishing paper-level novelty, and the likeliest truth is that the
+implication is routine and simply went unstated.  Understate it: we formalized a
+witness for a conjunction we have not seen written down, which is not the same as
+a new theorem.
 
 ## Formalization landscape (surveyed 2026-08-23; greps + searches, not proofs)
 

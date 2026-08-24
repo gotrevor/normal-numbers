@@ -331,3 +331,34 @@ file and works the checklist.  Laps never edit this file above the Ledger.
   conjunction appears to be new even on paper.  Write-up + outreach
   (Becher, Yuhjtman, Scheerer) is DRAFT-ONLY; **all outward posts are
   Trevor's to send.**
+
+- 2026-08-24 · **CORRECTION to the close-out entry above (novelty claim
+  withdrawn)** · The close-out entry states "the three-way conjunction appears
+  to be new even on paper."  **That claim is withdrawn.**  Trevor, 2026-08-24:
+  *"I'd be careful making a big deal about this.  Perhaps the implication is
+  simply trivial & unstated.  Better to be understated in any public
+  announcement than overly excited."*  He is right, and the judge's error was
+  an **instrument mismatch**, not a degree of confidence: the survey greps
+  provers, mathlib, Zulip and AFP, so it can support a claim about
+  FORMALIZATIONS and is structurally blind to the paper literature.
+  "Unstated because trivial to an expert" is exactly the case it cannot see —
+  and Becher and Yuhjtman are precisely the readers who would know whether the
+  implication is routine.  **Standing rule for this repo**: claim only
+  *apparently the first formalization of Becher–Yuhjtman in any prover* (survey
+  named + dated, re-verified before outward use).  Describe the conjunction as
+  "no write-up found," never as new.  Scrubbed from `STATUS.md`, `KHINCHIN.md`
+  (×2) and the KB leaf; the historical `HANDOFF-*.md` batons still carry the
+  old phrasing and are left as-is, being a dated record of what was believed at
+  the time — a reason to archive them out of a public repo root rather than to
+  rewrite them.
+- 2026-08-24 · **Pre-public audit (no Lean touched)** · PDFs: 5 in `papers/`,
+  **never committed**, correctly ignored by `.gitignore:3` (`papers/*.pdf`) —
+  this repo is NOT on the expunge-PDFs-from-history todo, verified not assumed.
+  Secret/enclave scan of all tracked files: clean (only two `/Users/gotrevor/...`
+  path strings in handoff batons).  Repo has **no git remote at all**.
+  ⚠️ **`CLAUDE.local.md` is TRACKED** (committed at `bbdec5a`) — content is the
+  harmless one-line `@`-import, but it is the documented never-commit file and
+  should be untracked; the `git rm --cached` fix is currently blocked by the
+  bare-`rm` PreToolUse guard (false positive), so it is Trevor's to run or the
+  hook's to fix.  28 `HANDOFF-*.md` batons sit in the repo root with drifted
+  future dates — archive before publishing.
