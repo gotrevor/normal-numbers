@@ -164,7 +164,39 @@ iInter_cfCylinder` to that ψ-chain to get an irrational in the same intersectio
 this lemma forces ψ(x) = that irrational ⇒ **ψ(x) irrational in (0,1)**. Combined
 with `take_eq_of_mem_cfCylinder` the (A) side is nearly mechanical.
 
+### lap 11 landed (2026-08-24): obligation (A) discharged GENERICALLY ✅
+`irrational_mem_Ioo_of_mem_iInter_cfCylinder` (CFScheduleA, axiom-clean, build
+green 8745). For ANY extending chain of genuine CF words `w` and any point `y`
+in every `cfCylinder (w s)`: `Irrational y ∧ y ∈ (0,1)`. Proof = 4 lines:
+`exists_irrational_mem_iInter_cfCylinder` gives an irrational ξ in the ∩;
+`eq_of_mem_cfCylinder_chain` forces `y = ξ`; `cfCylinder_subset_Ioo` gives the
+box. **This closes BOTH `(A)`-side conjuncts of the crux** — apply it to `x`'s
+own word chain (⇒ `Irrational x ∧ x∈(0,1)`) and to the ψ-word chain with `ψ(x)`
+in each ψ-cylinder (⇒ `Irrational (ψx) ∧ ψx∈(0,1)`). What remains in the crux is
+ONLY obligation (B) (orbit equidistribution of both streams) + producing the two
+word chains from the interleaved schedule. Obligation (A) is now a one-liner
+given the chains.
+
+**NEXT ATTACK (obligation B, the genuine heart).** Build the light interleaved
+`SchedState` (fields: x-word `wx`, ψ-word `wz`, invariant `cfCylinder wx ⊆
+ψ⁻¹(cfCylinder wz)` nonempty). Alternate: x-stage appends a good block to `wx`
+inside `cfCylinder wx` (feasible: `goodInInterval_pos_of_lt`); ψ-stage appends a
+good block to `wz` after refining `wx` so `ψ(cfCylinder wx) ⊆ cfCylinder wz'`
+(feasible: `good_mass_in_affine_preimage` gives good x-density in the pullback).
+Then mirror `xstar_cf_freq_tendsto` (CFCorrect) for BOTH `wx` and `wz` streams.
+KEY sub-question to settle first (cheap probe next lap): the "uncontrolled"
+digits that x-stages force onto ψ(x) (and vice-versa) between good blocks must be
+asymptotically negligible — pick block lengths so the good-block count dominates.
+Verify the CFCorrect telescoping (`tailSched_cfDiscLt` + `exists_stage`) still
+gives the freq limit when a positive-density fraction of appended digits is
+"uncontrolled" — OR arrange the schedule so EVERY appended block (both streams)
+is good (no uncontrolled digits: each stage's refinement is itself a good block
+for the stream being extended, and the OTHER stream's cylinder is only refined
+at ITS own stages). The latter is cleaner: `wz` only grows at ψ-stages, `wx`
+only at x-stages, so each stream sees only good blocks — no uncontrolled digits.
+
 ### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
+- (A) `irrational_mem_Ioo_of_mem_iInter_cfCylinder` — irrationality+box from any word chain.
 - L1 `volume_interval_sdiff_covered_le` — interval covered by cylinders up to 4/fib².
 - L2 `length_le_two_mul_good_add_err` — good mass inside an interval.
 - `goodInInterval_pos_of_lt` — good mass STRICTLY positive beyond a rank (feasibility).

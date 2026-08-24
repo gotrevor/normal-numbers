@@ -47,6 +47,26 @@ def CFOrbitEquidist (y : ℝ) : Prop :=
     Filter.Tendsto (fun p => blockCount (cfCylinder v) p y / (p : ℝ))
       Filter.atTop (nhds (gaussMeasure (cfCylinder v)).toReal)
 
+/-- **Obligation (A), general form.**  A point lying in every member of an
+extending chain of genuine CF words is irrational and in `(0,1)`.  The chain
+pins a unique point (`eq_of_mem_cfCylinder_chain`), and that point equals the
+irrational the limit lemma supplies (`exists_irrational_mem_iInter_cfCylinder`),
+so the given point inherits both properties.  Applied to `x`'s own word chain
+this gives `Irrational x ∧ x ∈ (0,1)`; applied to the `ψ`-word chain (with
+`ψ(x)` in each `ψ`-cylinder, from the interleaved construction) it gives the
+`(A)`-side conclusion `Irrational (ψ x) ∧ ψ x ∈ (0,1)`. -/
+theorem irrational_mem_Ioo_of_mem_iInter_cfCylinder
+    (w : ℕ → List ℕ) (hne : ∀ s, w s ≠ [])
+    (hpos : ∀ s, ∀ a ∈ w s, 1 ≤ a)
+    (hext : ∀ s, ∃ u, u ≠ [] ∧ w (s + 1) = w s ++ u)
+    {y : ℝ} (hy : ∀ s, y ∈ cfCylinder (w s)) :
+    Irrational y ∧ y ∈ Set.Ioo (0 : ℝ) 1 := by
+  obtain ⟨ξ, hξirr, hξmem⟩ :=
+    exists_irrational_mem_iInter_cfCylinder w hne hpos hext
+  have hyξ : y = ξ := eq_of_mem_cfCylinder_chain hne hpos hext hy hξmem
+  subst hyξ
+  exact ⟨hξirr, cfCylinder_subset_Ioo _ (hy 0)⟩
+
 /-- **THE B6 CRUX (interleaved-schedule witness).**  For any `q > 0`, `r`, there
 is a single real `x` such that both `x` and `ψ(x) = q·x + r` are irrational in
 `(0,1)` with equidistributing Gauss orbits.  Disclosed `sorry`: this is the
