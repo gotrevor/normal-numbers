@@ -2074,6 +2074,182 @@ theorem slack_telescoping
     _ = (ε / 2) * word (s₀ + k) := by rw [hfin]
     _ < ε * word (s₀ + k) := by nlinarith [hwordpos, hε]
 
+/-! ## The two-stream interleaved recursion
+
+The crux `exists_interleaved_affine_witness` is assembled from the ψ-round step
+`exists_freq_good_extend_affine_steer_uniform` by a `Nat.rec` choice recursion,
+exactly mirroring `CFSchedule.sched`.  The state `SchedStateA` carries both
+streams' current genuine words `wx, wz`, the wz-interval `(e,f)`, the invariant
+`cfCylinder wx ⊆ ψ⁻¹(Ioo e f)`, and `hzint` (`(e,f)` lives inside `cfCylinder
+wz`'s hull).  Stage `s` refines at family `wordFamily s`, tolerance `schedEps s =
+1/(s+1) → 0`, depth `L = s → ∞`.  The two chains `wxSeq`, `wzSeq` strictly extend
+genuine chains, pinning limit points `xA` (and, via the shrinking interval,
+`ψ(xA)`); feeding each into `chain_orbit_equidist_uniform` yields both orbit
+equidistributions. -/
+
+/-- The interleaved schedule's state: both streams' genuine words, the
+wz-interval and the two coupling invariants. -/
+structure SchedStateA (q r : ℝ) where
+  wx : List ℕ
+  wz : List ℕ
+  e : ℝ
+  f : ℝ
+  hwxne : wx ≠ []
+  hwxpos : ∀ c ∈ wx, 1 ≤ c
+  hwzne : wz ≠ []
+  hwzpos : ∀ c ∈ wz, 1 ≤ c
+  he0 : 0 ≤ e
+  hef : e < f
+  hf1 : f ≤ 1
+  hzint : ∀ x ∈ Set.Ioo e f, Irrational x → x ∈ cfCylinder wz
+  hinv : cfCylinder wx ⊆ affineMap q r ⁻¹' Set.Ioo e f
+
+/-- The per-stage step relation: `S'` is a joint freq-good refinement of `S` at
+stage `s`, recording (for both streams) that the appended block is a strict
+genuine extension, reaches depth `s`, and is uniformly prefix-good for
+`wordFamily s` at tolerance `schedEps s` with slack `4√|blk| + 2|v| + n₁`
+(`n₁ = o(|blk|)` via `n₁² ≤ |blk|·√|blk|`).  This is exactly the conclusion of
+`exists_freq_good_extend_affine_steer_uniform` with `L := s`, `δ := schedEps s`,
+`F := wordFamily s`. -/
+def StepSpecA {q r : ℝ} (S S' : SchedStateA q r) (s : ℕ) : Prop :=
+  (S'.wz.take S.wz.length = S.wz ∧ S.wz.length < S'.wz.length ∧
+      s ≤ (S'.wz.drop S.wz.length).length ∧ ∃ n₁ : ℕ,
+        n₁ ^ 2 ≤ (S'.wz.drop S.wz.length).length * Nat.sqrt (S'.wz.drop S.wz.length).length ∧
+        (∀ k, k ≤ (S'.wz.drop S.wz.length).length → ∀ v ∈ wordFamily s,
+          |(countOccurrences v ((S'.wz.drop S.wz.length).take k) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * k|
+              < schedEps s * k
+                + (4 * Nat.sqrt (S'.wz.drop S.wz.length).length + 2 * v.length + n₁))) ∧
+  (S'.wx.take S.wx.length = S.wx ∧ S.wx.length < S'.wx.length ∧
+      s ≤ (S'.wx.drop S.wx.length).length ∧ ∃ n₁ : ℕ,
+        n₁ ^ 2 ≤ (S'.wx.drop S.wx.length).length * Nat.sqrt (S'.wx.drop S.wx.length).length ∧
+        (∀ k, k ≤ (S'.wx.drop S.wx.length).length → ∀ v ∈ wordFamily s,
+          |(countOccurrences v ((S'.wx.drop S.wx.length).take k) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * k|
+              < schedEps s * k
+                + (4 * Nat.sqrt (S'.wx.drop S.wx.length).length + 2 * v.length + n₁)))
+
+/-- Every state steps (the ψ-round step applied at stage `s`). -/
+theorem schedStepA_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateA q r) (s : ℕ) :
+    ∃ S' : SchedStateA q r, StepSpecA S S' s := by
+  obtain ⟨wx', wz', e', f', hz, hx, hint, hinv'⟩ :=
+    exists_freq_good_extend_affine_steer_uniform hq r S.wx S.wz S.hwxne S.hwxpos
+      S.hwzne S.hwzpos S.he0 S.hef S.hf1 S.hzint S.hinv
+      (wordFamily s) (wordFamily_pos s) (wordFamily_ne s) (schedEps_pos s) s
+  obtain ⟨hz'ne, hz'pos, hztake, hzgt, _hzL, _hzsub, hzdropL, n₁z, hz'sq, hz'freq⟩ := hz
+  obtain ⟨hx'ne, hx'pos, hxtake, hxgt, _hxL, _hxsub, hxdropL, n₁x, hx'sq, hx'freq⟩ := hx
+  obtain ⟨he'0, he'f', hf'1, hz'int⟩ := hint
+  exact ⟨⟨wx', wz', e', f', hx'ne, hx'pos, hz'ne, hz'pos, he'0, he'f', hf'1, hz'int, hinv'⟩,
+    ⟨hztake, hzgt, hzdropL, n₁z, hz'sq, hz'freq⟩,
+    ⟨hxtake, hxgt, hxdropL, n₁x, hx'sq, hx'freq⟩⟩
+
+/-- **The seed state (feasible regime).**  For `-q < r < 1` the feasible z-region
+`(max 0 r, min 1 (q+r)) = (0,1) ∩ ψ((0,1))` is a nondegenerate subinterval of
+`(0,1)`; place a genuine `wz` inside it, take a small sub-interval `(e,f)` of its
+hull that still lies in `[r, q+r]` (so `ψ⁻¹(e,f) ⊆ (0,1)`), and place a genuine
+`wx` inside `ψ⁻¹(Ioo e f)`.  All invariants hold by construction. -/
+theorem exists_seedStateA {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+    Nonempty (SchedStateA q r) := by
+  obtain ⟨hr1, hr2⟩ := hr
+  set c := max 0 r with hcdef
+  set d := min 1 (q + r) with hddef
+  have hc0 : 0 ≤ c := le_max_left _ _
+  have hd1 : d ≤ 1 := min_le_left _ _
+  have hcr : r ≤ c := le_max_right _ _
+  have hdqr : d ≤ q + r := min_le_right _ _
+  have hcd : c < d := by
+    apply max_lt
+    · exact lt_min one_pos (by linarith)
+    · exact lt_min hr2 (by linarith)
+  -- place `wz` inside the feasible z-region
+  obtain ⟨wz, hwzne, hwzpos, hwzsub⟩ := exists_cfCylinder_subset_Ioo hc0 hcd hd1
+  -- `wz`'s hull interval `(e0,f0)` and its irrational witness `q0`
+  obtain ⟨e0, f0, he00, he0f0, hf01, hwzIcc, hwzUIoo⟩ :=
+    exists_Ioo_irrational_subset_cfCylinder wz hwzne hwzpos
+  obtain ⟨q0, hq0irr, hq0mem⟩ := exists_irrational_mem_cfCylinder wz hwzne hwzpos
+  have hq0cd := Set.mem_Ioo.1 (hwzsub hq0mem)
+  have hq0Icc := Set.mem_Icc.1 (hwzIcc hq0mem)
+  -- `(e,f) := (max e0 c, min f0 d)` lies in `(e0,f0) ∩ (c,d) ⊆ [r, q+r]`
+  set e := max e0 c with hedef
+  set f := min f0 d with hfdef
+  have he0d : e0 < d := lt_of_le_of_lt hq0Icc.1 hq0cd.2
+  have hcf0 : c < f0 := lt_of_lt_of_le hq0cd.1 hq0Icc.2
+  have hef : e < f := by
+    apply max_lt
+    · exact lt_min he0f0 he0d
+    · exact lt_min hcf0 hcd
+  have he0 : 0 ≤ e := le_trans hc0 (le_max_right _ _)
+  have hf1 : f ≤ 1 := le_trans (min_le_right _ _) hd1
+  have hre : r ≤ e := le_trans hcr (le_max_right _ _)
+  have hfqr : f ≤ q + r := le_trans (min_le_right _ _) hdqr
+  -- hzint: `(e,f) ⊆ (e0,f0)`, on which `hwzUIoo` applies
+  have hzint : ∀ x ∈ Set.Ioo e f, Irrational x → x ∈ cfCylinder wz := by
+    intro x hx hxirr
+    obtain ⟨hx1, hx2⟩ := Set.mem_Ioo.1 hx
+    exact hwzUIoo x (Set.mem_Ioo.2 ⟨lt_of_le_of_lt (le_max_left _ _) hx1,
+      lt_of_lt_of_le hx2 (min_le_left _ _)⟩) hxirr
+  -- place `wx` inside `ψ⁻¹(Ioo e f)`
+  have hpre0 : 0 ≤ (e - r) / q := div_nonneg (by linarith) hq.le
+  have hprelt : (e - r) / q < (f - r) / q := by
+    have h : (0:ℝ) < (f - e) / q := div_pos (by linarith [hef]) hq
+    have e2 : (f - r) / q - (e - r) / q = (f - e) / q := by rw [div_sub_div_same]; ring_nf
+    linarith [e2, h]
+  have hpre1 : (f - r) / q ≤ 1 := by rw [div_le_one hq]; linarith
+  obtain ⟨wx, hwxne, hwxpos, hwxsub⟩ :=
+    exists_cfCylinder_subset_affine_preimage hq r e f hpre0 hprelt hpre1
+  exact ⟨⟨wx, wz, e, f, hwxne, hwxpos, hwzne, hwzpos, he0, hef, hf1, hzint, hwxsub⟩⟩
+
+/-- **The interleaved schedule** (feasible regime): the state sequence produced by
+seeding with `exists_seedStateA` and iterating the choice step. -/
+noncomputable def schedA {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+    ℕ → SchedStateA q r
+  | 0 => (exists_seedStateA hq hr).some
+  | s + 1 => (schedStepA_exists hq (schedA hq hr s) s).choose
+
+theorem schedA_step {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    StepSpecA (schedA hq hr s) (schedA hq hr (s + 1)) s :=
+  (schedStepA_exists hq (schedA hq hr s) s).choose_spec
+
+/-- The x-stream chain. -/
+noncomputable def wxSeq {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) : List ℕ :=
+  (schedA hq hr s).wx
+
+/-- The z-stream chain. -/
+noncomputable def wzSeq {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) : List ℕ :=
+  (schedA hq hr s).wz
+
+theorem wxSeq_ne {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    wxSeq hq hr s ≠ [] := (schedA hq hr s).hwxne
+
+theorem wxSeq_pos {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    ∀ a ∈ wxSeq hq hr s, 1 ≤ a := (schedA hq hr s).hwxpos
+
+theorem wzSeq_ne {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    wzSeq hq hr s ≠ [] := (schedA hq hr s).hwzne
+
+theorem wzSeq_pos {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    ∀ a ∈ wzSeq hq hr s, 1 ≤ a := (schedA hq hr s).hwzpos
+
+/-- The x-chain strictly extends by a nonempty block each stage. -/
+theorem wxSeq_ext {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    ∃ u, u ≠ [] ∧ wxSeq hq hr (s + 1) = wxSeq hq hr s ++ u := by
+  obtain ⟨-, hxtake, hxgt, -⟩ := schedA_step hq hr s
+  refine ⟨(schedA hq hr (s + 1)).wx.drop (schedA hq hr s).wx.length, ?_, ?_⟩
+  · rw [← List.length_pos_iff_ne_nil, List.length_drop]; omega
+  · show (schedA hq hr (s + 1)).wx = (schedA hq hr s).wx ++ _
+    conv_lhs => rw [← List.take_append_drop (schedA hq hr s).wx.length (schedA hq hr (s + 1)).wx]
+    rw [hxtake]
+
+/-- The z-chain strictly extends by a nonempty block each stage. -/
+theorem wzSeq_ext {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    ∃ u, u ≠ [] ∧ wzSeq hq hr (s + 1) = wzSeq hq hr s ++ u := by
+  obtain ⟨⟨hztake, hzgt, -⟩, -⟩ := schedA_step hq hr s
+  refine ⟨(schedA hq hr (s + 1)).wz.drop (schedA hq hr s).wz.length, ?_, ?_⟩
+  · rw [← List.length_pos_iff_ne_nil, List.length_drop]; omega
+  · show (schedA hq hr (s + 1)).wz = (schedA hq hr s).wz ++ _
+    conv_lhs => rw [← List.take_append_drop (schedA hq hr s).wz.length (schedA hq hr (s + 1)).wz]
+    rw [hztake]
+
 /-- **THE B6 CRUX (interleaved-schedule witness), FEASIBLE REGIME.**  For `q > 0`
 and `r ∈ (-q, 1)` — exactly the range in which the feasible set
 `(0,1) ∩ ψ⁻¹(0,1)` is nonempty — there is a single real `x` such that both `x`
