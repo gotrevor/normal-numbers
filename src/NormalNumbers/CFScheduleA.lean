@@ -2299,6 +2299,7 @@ theorem exists_uniformly_freq_good_block_steer_len (wx : List ℕ) (hwx : wx ≠
       have hrest : (0 : ℝ) ≤ 4 * (Nat.sqrt u.length : ℝ) + 2 * v.length := by positivity
       linarith [hcrude, hklt, hδk, hrest]
 
+
 /-- **One schedule stage (single stream).**  Given the current genuine word
 `wx`, a pattern family `F`, tolerance `δ > 0`, and a length target `L`, there is
 a strict genuine EXTENSION `wx'` of `wx` (i.e. `wx'.take |wx| = wx`, `|wx| <
@@ -3326,6 +3327,140 @@ theorem exists_fib_threshold_log (a : ℝ) :
     calc Real.sqrt 5 * Real.sqrt a + 1 < Real.goldenRatio ^ n := hn1
       _ ≤ Real.goldenRatio ^ (k + 1) := pow_le_pow_right₀ hφ1 (by omega)
   · rw [hmax] at hn2; exact hn2
+
+set_option maxHeartbeats 1000000 in
+/-- **Relative-regularization uniform steer block — WORD-INDEPENDENT linear length
+(block-linear crux resolution).**  Identical to `exists_uniformly_freq_good_block_steer_len`
+but the internal block parameter uses the RELATIVE regularizer `β_rel = γtar·δ²/(S+γwx)`
+(valid since `γwx > 0`, `gaussMeasure_cfCylinder_toReal_pos`) with the TIGHT param
+(`exists_uniform_block_param_tight`), and the conclusion EXPOSES the block length
+`|u| = n₁ + m²` together with the tight upper bound `m² ≤ 6(L+Nfib)+2+2(⌈2/β_rel⌉+1)⁴`
+and the LOGARITHMIC resolution bound `Nfib ≤ log_φ(√5·√(4/(d−c))+1)+1`
+(`exists_fib_threshold_log`).  These two exposures are exactly the ingredients the L4
+schedule folds — via `two_div_beta_rel_le` (`⌈2/β_rel⌉` word-independent for the self-hull
+steer, `γtar ≥ γwx/8` by `gaussMeasure_middle_half_ge`) and the hull-width lower bound
+(`Nfib ≲ |wx|`) — into `schedL4_block_linear`, closing the B6 crux. -/
+theorem exists_uniformly_freq_good_block_steer_len_rel (wx : List ℕ) (hwx : wx ≠ [])
+    (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
+    {δ : ℝ} (hδ : 0 < δ) {c d : ℝ} (hc0 : 0 ≤ c) (hcd : c < d) (hd1 : d ≤ 1)
+    (hsub : ∀ y ∈ Set.Ioo c d, Irrational y → y ∈ cfCylinder wx) (L : ℕ) :
+    ∃ (u : List ℕ) (n₁ m Nfib : ℕ), L ≤ u.length ∧ u ≠ [] ∧ (∀ a ∈ u, 1 ≤ a) ∧
+      cfCylinder (wx ++ u) ⊆ Set.Ioo c d ∧
+      n₁ ^ 2 ≤ u.length * Nat.sqrt u.length ∧
+      (∀ k, k ≤ u.length → ∀ v ∈ F,
+        |(countOccurrences v (u.take k) : ℝ) - (gaussMeasure (cfCylinder v)).toReal * k|
+          < δ * k + (4 * Nat.sqrt u.length + 2 * v.length + n₁)) ∧
+      (∃ x : ℝ, x ∈ cfCylinder (wx ++ u) ∧ Irrational x ∧ x ∈ Set.Ioo c d) ∧
+      u.length = n₁ + m ^ 2 ∧
+      m ^ 2 ≤ 6 * (L + Nfib) + 2 + 2 * (Nat.ceil (2 / ((gaussMeasure
+          (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal * δ ^ 2
+        / (∑ v ∈ F, 7 * (8 * (v.length : ℝ) + 80) * (gaussMeasure (cfCylinder v)).toReal
+            * (gaussMeasure (cfCylinder wx)).toReal
+          + (gaussMeasure (cfCylinder wx)).toReal))) + 1) ^ 4 ∧
+      (Nfib : ℝ) ≤ Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt (4 / (d - c)) + 1) + 1 := by
+  have hu0v0 : c + (d - c) / 4 < d - (d - c) / 4 := by nlinarith [hcd]
+  have hu00 : 0 ≤ c + (d - c) / 4 := by nlinarith [hc0, hcd]
+  have hv01 : d - (d - c) / 4 ≤ 1 := by nlinarith [hd1, hcd]
+  have hposreal : 0 < (Real.log (1 + (d - (d - c) / 4)) - Real.log (1 + (c + (d - c) / 4)))
+      / Real.log 2 := by
+    apply div_pos
+    · rw [sub_pos]; apply Real.log_lt_log (by nlinarith [hu00]) (by linarith [hu0v0])
+    · exact Real.log_pos (by norm_num)
+  have hγtar : 0 < (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal := by
+    rw [gaussMeasure_Ioo hu00 hu0v0.le hv01, ENNReal.toReal_ofReal hposreal.le]; exact hposreal
+  set γtar := (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal with hγtardef
+  set γwx := (gaussMeasure (cfCylinder wx)).toReal with hγwxdef
+  have hγwx0 : 0 < γwx := gaussMeasure_cfCylinder_toReal_pos wx hwx hwxpos
+  set S := ∑ v ∈ F, 7 * (8 * (v.length : ℝ) + 80)
+      * (gaussMeasure (cfCylinder v)).toReal * γwx with hSdef
+  have hS0 : 0 ≤ S := by
+    rw [hSdef]; refine Finset.sum_nonneg fun v _ => ?_
+    have : 0 ≤ (gaussMeasure (cfCylinder v)).toReal := ENNReal.toReal_nonneg
+    have : 0 ≤ γwx := ENNReal.toReal_nonneg
+    positivity
+  set β := γtar * δ ^ 2 / (S + γwx) with hβdef
+  have hSγ0 : 0 < S + γwx := by linarith [hS0, hγwx0]
+  have hβ : 0 < β := by rw [hβdef]; exact div_pos (mul_pos hγtar (by positivity)) hSγ0
+  obtain ⟨Nfib, hNfib, hNfiblog⟩ := exists_fib_threshold_log (4 / (d - c))
+  obtain ⟨m, hm0, hLm, hNfibm, hfrac, hm2ub⟩ := exists_uniform_block_param_tight β hβ L Nfib
+  have hsqrtm1 : 1 ≤ Nat.sqrt m := by
+    have h := Nat.sqrt_le_sqrt (show 1 ≤ m by omega); simpa using h
+  set n₁ := m * Nat.sqrt m with hn₁def
+  have hn₁0 : 0 < n₁ := by rw [hn₁def]; exact Nat.mul_pos hm0 hsqrtm1
+  have hn₁R : (n₁ : ℝ) = (m : ℝ) * (Nat.sqrt m : ℝ) := by rw [hn₁def]; push_cast; ring
+  have hbound : ((m + 1 : ℕ) : ℝ) * (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * (n₁ : ℝ)))
+        * γwx) < γtar := by
+    have hsumeq : (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * (n₁ : ℝ))) * γwx)
+        = S / (δ ^ 2 * (n₁ : ℝ)) := by
+      rw [hSdef, Finset.sum_div]; exact Finset.sum_congr rfl fun v _ => by ring
+    rw [hsumeq]
+    have hfrac2 : ((m : ℝ) + 1) / (n₁ : ℝ) < γtar * δ ^ 2 / (S + γwx) := by
+      rw [hn₁R]; rw [hβdef] at hfrac; exact hfrac
+    rw [div_lt_div_iff₀ (by rw [hn₁R]; positivity) hSγ0] at hfrac2
+    -- hfrac2 : (m+1)*(S+γwx) < γtar*δ²*n₁
+    have hden : (0 : ℝ) < δ ^ 2 * (n₁ : ℝ) := by rw [hn₁R]; positivity
+    rw [← mul_div_assoc, div_lt_iff₀ hden]
+    have hm1R : (0 : ℝ) < (m : ℝ) + 1 := by positivity
+    push_cast
+    push_cast at hfrac2
+    nlinarith [hfrac2, hm1R, hγwx0, mul_pos hm1R hγwx0]
+  have hres : 4 / (d - c) < (Nat.fib (wx.length + (n₁ + m ^ 2) + 1) : ℝ) ^ 2 :=
+    hNfib (wx.length + (n₁ + m ^ 2)) (by omega)
+  obtain ⟨u, hulen, hune, hupos, hsubcd, hufreq, x, hxcyl, hxirr, hxcd⟩ :=
+    exists_uniformly_freq_good_block_steer wx hwx hwxpos F hF hFne hδ hc0 hcd hd1 hsub
+      m (n₁ := n₁) hn₁0 hbound hres
+  have hn₁sq : n₁ ^ 2 ≤ u.length * Nat.sqrt u.length := by
+    rw [hulen]
+    have hsm : Nat.sqrt m ^ 2 ≤ m := Nat.sqrt_le' m
+    have h1 : n₁ ^ 2 ≤ m ^ 3 := by
+      have he : n₁ ^ 2 = m ^ 2 * Nat.sqrt m ^ 2 := by rw [hn₁def]; ring
+      rw [he]; nlinarith [hsm, Nat.zero_le (m ^ 2)]
+    have hge : m ^ 2 ≤ n₁ + m ^ 2 := by omega
+    have hsq : m ≤ Nat.sqrt (n₁ + m ^ 2) := by
+      have h := Nat.sqrt_le_sqrt hge; rwa [Nat.sqrt_eq'] at h
+    have h2 : m ^ 3 ≤ (n₁ + m ^ 2) * Nat.sqrt (n₁ + m ^ 2) := by
+      calc m ^ 3 = m ^ 2 * m := by ring
+        _ ≤ (n₁ + m ^ 2) * Nat.sqrt (n₁ + m ^ 2) := Nat.mul_le_mul hge hsq
+    exact le_trans h1 h2
+  have hfolded : ∀ k, k ≤ u.length → ∀ v ∈ F,
+      |(countOccurrences v (u.take k) : ℝ) - (gaussMeasure (cfCylinder v)).toReal * k|
+        < δ * k + (4 * Nat.sqrt u.length + 2 * v.length + n₁) := by
+    intro k hk v hv
+    set γv := (gaussMeasure (cfCylinder v)).toReal with hγvdef
+    obtain ⟨hγ0v, hγ1v⟩ := gaussMeasure_toReal_mem_Icc (cfCylinder v)
+    have hsqle : (Nat.sqrt k : ℝ) ≤ (Nat.sqrt u.length : ℝ) := by
+      exact_mod_cast Nat.sqrt_le_sqrt hk
+    have hn₁nn : (0 : ℝ) ≤ (n₁ : ℝ) := Nat.cast_nonneg _
+    by_cases hkn₁ : n₁ ≤ k
+    · have hb := hufreq k hkn₁ hk v hv
+      have : δ * k + (4 * (Nat.sqrt k : ℝ) + 2 * v.length)
+          ≤ δ * k + (4 * (Nat.sqrt u.length : ℝ) + 2 * v.length + n₁) := by
+        push_cast; nlinarith [hsqle, hn₁nn]
+      calc |(countOccurrences v (u.take k) : ℝ) - γv * k|
+          < δ * k + (4 * (Nat.sqrt k : ℝ) + 2 * v.length) := hb
+        _ ≤ δ * k + (4 * (Nat.sqrt u.length : ℝ) + 2 * v.length + n₁) := this
+    · push_neg at hkn₁
+      have hvne := hFne v hv
+      have hcnt : (countOccurrences v (u.take k) : ℝ) ≤ (k : ℝ) := by
+        have h1 := countOccurrences_le_length hvne (u.take k)
+        have h2 : (u.take k).length ≤ k := by rw [List.length_take]; exact min_le_left _ _
+        exact_mod_cast le_trans h1 h2
+      have hccnn : (0 : ℝ) ≤ (countOccurrences v (u.take k) : ℝ) := Nat.cast_nonneg _
+      have hkR : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg _
+      have hcrude : |(countOccurrences v (u.take k) : ℝ) - γv * k| ≤ (k : ℝ) := by
+        rw [abs_le]; constructor <;> nlinarith [hcnt, hccnn, hγ0v, hγ1v, hkR]
+      have hklt : (k : ℝ) < (n₁ : ℝ) := by exact_mod_cast hkn₁
+      have hδk : (0 : ℝ) ≤ δ * k := by positivity
+      have hrest : (0 : ℝ) ≤ 4 * (Nat.sqrt u.length : ℝ) + 2 * v.length := by positivity
+      linarith [hcrude, hklt, hδk, hrest]
+  refine ⟨u, n₁, m, Nfib, by rw [hulen]; omega, hune, hupos, hsubcd, hn₁sq, hfolded,
+    ⟨x, hxcyl, hxirr, hxcd⟩, hulen, ?_, hNfiblog⟩
+  -- the tight m² bound: after the `set`s the goal is folded to β's components
+  rw [hβdef] at hm2ub
+  exact hm2ub
 
 /-- **cfK-controlled resolution is AFFINE in `|w|`** (resolution half of
 `schedA_block_linear`, discharged CONDITIONALLY on the B5′ log-cfK bound).  If the
