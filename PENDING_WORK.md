@@ -1,5 +1,24 @@
 # PENDING WORK — B5′ campaign
 
+> **GRIND LAP (2026-08-26, `e7705ee`).** ✅ **PILLAI'S THEOREM PROVED** —
+> `Pillai.lean` is now **sorry-free**. Chain landed this lap (all axiom-clean):
+> `windowCount_eq_sum_phaseCount` → `phaseOccCount_{tendsto_atTop,div_tendsto}` →
+> `phaseWindowFreq_div_N_tendsto` → `sum_{nonStrad,strad}_..._tendsto` →
+> `windowCount_div_sandwich` → **`windowFreq_tendsto`** (THE double-limit crux,
+> block freq → b^{-L} via ε-in-r squeeze) → **`pillai`** (`∀ r≥1 simple normal at
+> b^r ⇒ IsNormalSequence b (digitOf b y)`; bridge via `countOccurrences_range_map`
+> + `MatchesAt ↔ ofFn-window`). See HANDOFF-2026-08-26-0600.md for the full route
+> + gotchas.
+>
+> **NEXT = Tier-1 headline conjunction** (`Headline.lean:93`, ONLY classical
+> wiring): `∃ x, IsAbsolutelyNormal x ∧ IsCFNormal x`, witness `xstar`.
+> (1) `IsAbsolutelyNormal xstar` = `∀ b≥2, IsNormal b xstar` = pillai (y :=
+> Int.fract xstar) fed by `xstar_dary_freq_tendsto (b^r)`; FIRST check the exact
+> form of `xstar_dary_freq_tendsto` vs pillai's `hsn`, and `digitOf d xstar =
+> digitOf d (Int.fract xstar)`. (2) `IsCFNormal xstar` = wrapper of
+> `xstar_cf_freq_tendsto` (JUDGE: not new math). (3) `refine ⟨xstar, ?_, ?_⟩`.
+> Tier 2 (`:100`, Khinchin/W6) stays `sorry` — fenced.
+
 > **REVIEW LAP (2026-08-24).** ✅ **`windowCount_eq_sum_phaseCount` PROVED**
 > (axiom-clean) — the `Q`-scale↔`N`-scale phase-count identity, closing last
 > lap's disclosed `sorry`. Winning move on the `r*(i/r)` vs `(i/r)*r` omega-atom
