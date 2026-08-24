@@ -69,4 +69,18 @@ theorem isCFNormal_of_orbit_freq (y : ℝ)
       gcongr
       exact (hbnds p).1
 
+/-- **CF-normality from orbit frequencies, irrational form.**  Irrationals in
+`(0,1)` automatically have a full Gauss orbit (`irrational_orbit`), so the
+`horb` hypothesis of `isCFNormal_of_orbit_freq` is discharged.  This is the
+interface the affine-image endgame (L5) uses: the schedule delivers
+`ψ(xstar)` irrational in `(0,1)` (obligation A) and its orbit equidistributing
+(obligation B), whence `IsCFNormal (ψ xstar)`. -/
+theorem isCFNormal_of_irrational_orbit_freq (y : ℝ)
+    (hirr : Irrational y) (hy : y ∈ Set.Ioo (0 : ℝ) 1)
+    (hfreq : ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
+      Filter.Tendsto (fun p => blockCount (cfCylinder v) p y / (p : ℝ))
+        Filter.atTop (nhds (gaussMeasure (cfCylinder v)).toReal)) :
+    IsCFNormal y :=
+  isCFNormal_of_orbit_freq y (fun j => (irrational_orbit y hirr hy j).2) hfreq
+
 end NormalNumbers
