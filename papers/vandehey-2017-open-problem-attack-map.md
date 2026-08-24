@@ -101,7 +101,10 @@ CF-normal + Khinchin-typical + φ·(it) CF-normal; extends to any finite set
 of quadratic maps (φx, x+φ, x/φ, …).  P(structurally sound) ≈ 75–90%; risk
 is bookkeeping bloat, not a conceptual wall.  This directly pokes Vandehey's
 question with a constructive data point and would be first-in-any-prover by
-a wide margin (it'd be first on PAPER).
+a wide margin.  ⚠️ SUPERSEDED CLAIM, corrected 2026-08-24: NOT "first witness
+on paper" — Becher–Madritsch (arXiv:2108.06804, 2021) built a computable
+witness for x, 1/x; B6's claim is "first formalization + first **affine**
+witness" only (see §6 and papers/README.md).
 
 ## 4½. Updates (2026-08-24)
 

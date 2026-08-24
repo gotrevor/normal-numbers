@@ -257,7 +257,9 @@ tracks brick rank up to O(log \|q\|) — the stage windows stay aligned.
 **Size / risk**: ~1–2k new lines + surgery on the two schedule modules;
 est. 3–6 fable/low laps off a pinned brief.  Dominant risk is L4 bookkeeping,
 not concept.  Prize: a constructive first data point on a named open problem
-of a Compositio paper, likely first on PAPER (the affine-family witness
+of a Compositio paper — "first formalization + first **affine** witness",
+NOT "first witness": Becher–Madritsch (arXiv:2108.06804, 2021) already built
+a paper witness for x, 1/x (the affine-family witness
 appears in no literature we can see), and the natural outreach hook doubles
 the B5′ one (Vandehey himself joins Becher/Yuhjtman/Scheerer).
 
