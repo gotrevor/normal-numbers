@@ -203,6 +203,63 @@ lifted into `CFLogTail.lean` upstream of `TBrick.lean`.  Both B–Y deep imports
 elementary substitutes, so nothing is cited-but-unproved.  Verification detail:
 `JUDGE.md` close-out section.
 
+## B6 — next-expedition spec: affine images (the Vandehey §7 poke) 🎯
+
+*Speced 2026-08-24, the day after B5′ closed.  Companion analysis:
+`papers/vandehey-2017-open-problem-attack-map.md` (Route B here; Route A =
+the compact-fiber paper-track, parked).  Status: SPEC ONLY — not launched.*
+
+**Target.**  Vandehey (Compositio 2017) §7 problem 1 asks: x CF-normal, q, r
+quadratic irrationals, q ≠ 0 ⇒ qx + r CF-normal?  Open (lit-swept 2026-08-24,
+see below).  B6 attacks the witness form: extend `xstar` so that its affine
+images are CF-normal too.
+
+**The affine-transport insight (why B6 is stronger than the question).**  The
+brick construction never uses any *arithmetic* of q, r — only that
+ψ(x) = qx + r maps intervals to intervals with constant distortion |q|.  So
+the witness route works for ARBITRARY real q ≠ 0, r, and the schedule absorbs
+a countable family of maps exactly the way it absorbs growing base-t.  Tiers:
+
+- **Tier 1 (the φ headline)**: explicit x with x, φx, x + φ all CF-normal.
+- **Tier 2 (general)**: fix a countable set Q ⊂ (ℝ\{0}) × ℝ (e.g. all real
+  algebraic pairs); explicit x with qx + r CF-normal for EVERY (q,r) ∈ Q —
+  simultaneously with B5′'s conjunction (absolutely normal ∧ CF-normal ∧
+  Khinchin-typical).
+- **Greedy stretch**: Khinchin-typicality of the images too (CFLogTail graft
+  applied per image system).
+
+**Lemma plan (anchored in landed modules):**
+
+| # | Content | Builds on | Risk |
+|---|---------|-----------|------|
+| L1 | Interval→cylinder reduction: maximal CF-cylinders inside any interval J cover ≥ (1−δ)\|J\| beyond a rank (two boundary slivers) | `CFCylinder` lengths + `volume_cfCylinder` | low |
+| L2 | Good-block density on ARBITRARY intervals (not just cylinders): compose L1 with the cylinder-conditioned bounds | `cylinder_mixing` / `goodC_half` culture | low |
+| L3 | Affine transport: ψ(I) bookkeeping, \|ψ(A)\| = \|q\|·\|A\|; integer-part drift of the image absorbed by tail-shift invariance of CF-normality | `CFDefs` tail lemmas | low |
+| L4 | Schedule surgery: add the image-system list m(s) to `wordFamily`/`schedEps`/`sched_refinement`; re-split the per-stage union-bound budget | `CFSchedule`, `TBrickRefine` | **moderate** (core-construction diff) |
+| L5 | Per-map assembly: concatenation-correctness chain on the image digit stream → `CFNormal (q*xstar + r)` | W5 correctness pattern | low |
+
+Rank alignment note for L4: ψ has constant distortion, so image-cylinder rank
+tracks brick rank up to O(log \|q\|) — the stage windows stay aligned.
+
+**Size / risk**: ~1–2k new lines + surgery on the two schedule modules;
+est. 3–6 fable/low laps off a pinned brief.  Dominant risk is L4 bookkeeping,
+not concept.  Prize: a constructive first data point on a named open problem
+of a Compositio paper, likely first on PAPER (the affine-family witness
+appears in no literature we can see), and the natural outreach hook doubles
+the B5′ one (Vandehey himself joins Becher/Yuhjtman/Scheerer).
+
+**Lit sweep (2026-08-24, web-search tier — re-run deeper before any outward
+novelty claim).**  No trace of §7 problem 1 being resolved (~85%; instrument
+= web search over arXiv/journals, NOT a MathSciNet/Scholar forward-citation
+crawl — that deeper crawl is the Route A pre-step).  Adjacent finds, both
+worth reading before launch: **Heersink–Vandehey, arXiv:1509.05501** — CF
+normality is NOT preserved along arithmetic progressions of digit indices
+(the fragility direction: digit-selection breaks what matrix actions
+preserve); **Scheerer–Vandehey** reportedly prove CF-normality and base-b
+normality *incomparable* (⚠️ unread — if confirmed, it upgrades this doc's
+"no implication is known" flavor-bullet from open to settled; verify before
+editing that line).
+
 ⚠️ **Claim discipline.**  ONE claim is supportable: *apparently the first
 formalization of Becher–Yuhjtman in any prover*, as of the 2026-08-23 launch-day
 sweep — and re-run that sweep before it goes outward, since a launch-day null is

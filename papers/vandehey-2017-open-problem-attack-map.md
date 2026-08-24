@@ -106,6 +106,23 @@ is bookkeeping bloat, not a conceptual wall.  This directly pokes Vandehey's
 question with a constructive data point and would be first-in-any-prover by
 a wide margin (it'd be first on PAPER).
 
+## 4½. Updates (2026-08-24)
+
+- **B5′ landed** (both tiers axiom-clean), so Route B's machinery exists and
+  is battle-tested.  Route B is now speced as **B6** in `KHINCHIN.md` (lemma
+  table L1–L5, tiers, size).  Key upgrade found while spec-ing: the witness
+  construction uses only that ψ(x) = qx + r has constant distortion — **q
+  need not be quadratic**; Tier 2 handles a countable family of arbitrary
+  real affine maps simultaneously.  The quadratic-irrational restriction
+  matters only for Route A (where the transducer needs O_K arithmetic).
+- **Lit sweep run** (web-search tier): no sign §7 problem 1 is resolved
+  (~85%).  Finds: Heersink–Vandehey arXiv:1509.05501 (CF normality NOT
+  preserved along arithmetic progressions — the fragility direction);
+  Scheerer–Vandehey reportedly prove CF-normality vs base-b normality
+  incomparable (unread).  Fisher–Schmidt ETDS 2014 still unread — that plus
+  a Scholar forward-citation crawl of Vandehey 2017 remain the Route A
+  pre-steps.
+
 ## 5. Bonus separations worth remembering
 
 - Khinchin-value transfer is a SEPARATE gap even over ℤ (pin note §
