@@ -214,6 +214,19 @@ quadratic irrationals, q ≠ 0 ⇒ qx + r CF-normal?  Open (lit-swept 2026-08-24
 see below).  B6 attacks the witness form: extend `xstar` so that its affine
 images are CF-normal too.
 
+**Pre-reads DONE 2026-08-24** (full evidence: attack map §6, index: `papers/README.md`):
+- §7 problem 1 **untouched since 2017 (~90%)** — 9-paper citation cone, all passing cites;
+  **every published use of Vandehey's Theorem 3.1 uses a FINITE fiber**.
+- **Fisher–Schmidt ETDS 2014 read in full: not usable for Route A** (finite coset fiber,
+  ergodicity free from Hopf *because finite volume* — the very hypothesis that dies over
+  `ℤ[φ]` — and an a.e./Birkhoff conclusion, not pointwise).
+- 🚨 **Vandehey's Lemma 3.2 is false as stated** (Moshchevitin–Shkredov Thm 1, refuted on
+  non-compact spaces by Airey–Mance 2019).  Thm 1.1 survives via an unwritten tightness
+  lemma.  Route A's cost estimate must include it; B6 does not touch §3, so B6 is unaffected.
+- **Precedent for the witness play**: Becher–Madritsch (arXiv:2108.06804, 2021) — computable
+  `x` with `x`, `1/x` both CF-normal *and* absolutely normal.  ⚠️ B6 is therefore "first
+  formalization + first **affine** witness", NOT "first witness".
+
 **The affine-transport insight (why B6 is stronger than the question).**  The
 brick construction never uses any *arithmetic* of q, r — only that
 ψ(x) = qx + r maps intervals to intervals with constant distortion |q|.  So

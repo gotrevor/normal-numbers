@@ -383,6 +383,9 @@ digit-reading dynamical systems:
   conjunction. Governance: statement freezing is JUDGE-owned (`JUDGE.md`);
   grind laps prove frozen statements and add intermediate lemmas.
 
+- **Track C — affine images / Vandehey §7** (spec in `KHINCHIN.md` "B6"): pre-reads done
+  2026-08-24; literature standing findings + the crawl recipe in `papers/README.md`.
+
 Route-level abort/escalate triggers: (a) γ-mixing rate collapses below summable
 → escalate (would break W4/W5); NOT fired (geometric proven). (b) W5/W6 needs a
 deep import the charter forbids (CLT/KPW/Birkhoff) → escalate; not yet reached.

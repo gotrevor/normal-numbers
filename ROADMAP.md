@@ -101,6 +101,10 @@ no naturally-occurring number is proven Khinchin-typical.
 
 ## References
 
+📚 **Pinned sources + the literature-crawl recipe live in [`papers/README.md`](papers/README.md)**
+— read that before re-searching anything; it carries the standing findings from the
+2026-08-24 citation crawl (including a load-bearing erratum in Vandehey's §3).
+
 - D. G. Champernowne, *The construction of decimals normal in the scale of ten*,
   J. London Math. Soc. 8 (1933) 254–260.
 - D. D. Wall, *Normal numbers*, PhD thesis, UC Berkeley, 1949.

@@ -110,6 +110,23 @@ Khinchin-typical (none proven — the founding hook); whether CF-normality and
 base-b normality imply each other pointwise (unknown either direction). None of
 these gate the construction — the witness is purpose-built.
 
+## Track C (B6 / Vandehey §7) — what the 2026-08-24 crawl added
+
+The B5′ read above is settled.  The next expedition's literature is crawled and lives in
+`vandehey-2017-open-problem-attack-map.md` §6, indexed from `papers/README.md`.  The four
+things that change decisions:
+
+| Finding | Consequence |
+|---|---|
+| Fisher–Schmidt ETDS 2014 has a **finite** fiber, free ergodicity from finite volume, and an a.e. conclusion | Route A gains a sharper statement of its own obstruction, and no machinery.  Do not re-open FS hoping for a Theorem-3.1 analogue |
+| Vandehey's **Lemma 3.2 is false as stated** (Moshchevitin–Shkredov Thm 1, refuted on non-compact spaces by Airey–Mance 2019) | Formalizing §3 owes a tightness lemma nobody has written.  Our base-`b` `HotSpot.lean` is unaffected |
+| **Becher–Madritsch 2021** already build a witness for a map (`x`, `1/x` jointly CF-normal + absolutely normal) | B6's novelty is *formalization* + the **affine** family, not the witness idea.  Cite them |
+| **CF-Pillai** (Nandakumar et al. 2019) exists on paper, unformalized | Cheapest adjacent target on the landed CF stack, and the same non-compactness technology |
+
+Method and instrument caveats (Scholar unreachable; Unpaywall + Semantic Scholar are one
+instrument) are recorded once, in `papers/README.md` — re-use that recipe rather than
+improvising the next crawl.
+
 ## References
 See KHINCHIN.md §References and the per-paper `.md` pin notes
 (`becher-yuhjtman-2019-*.md`, `scheerer-2017-*.md`, `bailey-misiurewicz-2006-*.md`).
