@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.CFAffine
 import NormalNumbers.CFOrbitFreq
+import NormalNumbers.CFFreqBlock
 
 /-!
 # B6 / L4–L5 — the affine-image witness (interleaved schedule)
@@ -46,6 +47,65 @@ def CFOrbitEquidist (y : ℝ) : Prop :=
   ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
     Filter.Tendsto (fun p => blockCount (cfCylinder v) p y / (p : ℝ))
       Filter.atTop (nhds (gaussMeasure (cfCylinder v)).toReal)
+
+/-- **Cylinder inside an interval.**  Every nondegenerate subinterval `(a,b)` of
+`(0,1)` contains a genuine CF cylinder.  Proof: `goodInInterval a b n 0` has
+positive volume once `4/fib(n+1)² < b−a` (`goodInInterval_pos_of_lt`), so it is
+nonempty; a point of it lies in `goodExtSet w goodC 0` for some genuine rank-`n`
+word `w` with `cfCylinder w ⊆ (a,b)`.  This is the placement primitive the
+interval-relativized frequency engine needs (pick a deep reference word inside
+the target interval, then run `exists_freq_good_block` on it). -/
+theorem exists_cfCylinder_subset_Ioo {a b : ℝ} (ha : 0 ≤ a) (hab : a < b)
+    (hb : b ≤ 1) :
+    ∃ w : List ℕ, w ≠ [] ∧ (∀ c ∈ w, 1 ≤ c) ∧ cfCylinder w ⊆ Set.Ioo a b := by
+  have hbma : 0 < b - a := by linarith
+  obtain ⟨N, hN⟩ := exists_fib_threshold (4 / (b - a))
+  set n := max N 1 with hndef
+  have hn1 : 1 ≤ n := le_max_right _ _
+  have hnN : N ≤ n := le_max_left _ _
+  have hFpos : (0 : ℝ) < (Nat.fib (n + 1) : ℝ) ^ 2 := by
+    have : 0 < Nat.fib (n + 1) := Nat.fib_pos.2 (by omega)
+    positivity
+  have hcmp : 4 / (b - a) < (Nat.fib (n + 1) : ℝ) ^ 2 := hN n hnN
+  have h4 : 4 < (Nat.fib (n + 1) : ℝ) ^ 2 * (b - a) := by
+    rw [div_lt_iff₀ hbma] at hcmp; linarith
+  have hfib : 4 / (Nat.fib (n + 1) : ℝ) ^ 2 < b - a := by
+    rw [div_lt_iff₀ hFpos]; nlinarith [h4]
+  have hpos := goodInInterval_pos_of_lt ha hab hb hn1 hfib 0
+  obtain ⟨y, hy⟩ := nonempty_of_measure_ne_zero hpos.ne'
+  rw [goodInInterval] at hy
+  obtain ⟨w, hwmem, -⟩ := Set.mem_iUnion₂.1 hy
+  obtain ⟨hwgen, hwsub⟩ := hwmem
+  obtain ⟨hwlen, hwpos⟩ := hwgen
+  refine ⟨w, ?_, hwpos, hwsub⟩
+  intro h; rw [h] at hwlen; simp at hwlen; omega
+
+/-- **Interval-relativized frequency engine.**  Given a nondegenerate
+subinterval `(a,b)` of `(0,1)`, a finite family `F`, and `δ > 0`, there is a
+genuine "placement" word `w` with `cfCylinder w ⊆ (a,b)` such that beyond a
+length threshold every long block `u` appended to `w` can be chosen
+frequency-good (matching `γ(I_v)` to within `δ` for all `v ∈ F`) with an
+irrational witness point of `cfCylinder (w ++ u)` inside `(a,b)`.  Composes the
+placement primitive (`exists_cfCylinder_subset_Ioo`) with the daryCell-free
+engine (`exists_freq_good_block`): the placement word is the schedule's per-stage
+"filler" (bounded, chosen once to enter `(a,b)`), the block `u` its
+frequency-good payload (taken arbitrarily long, so the filler is asymptotically
+negligible in the per-stream telescoping). -/
+theorem exists_freq_good_block_in_Ioo (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
+    {δ : ℝ} (hδ : 0 < δ) {a b : ℝ} (ha : 0 ≤ a) (hab : a < b) (hb : b ≤ 1) :
+    ∃ w : List ℕ, w ≠ [] ∧ (∀ c ∈ w, 1 ≤ c) ∧ cfCylinder w ⊆ Set.Ioo a b ∧
+      ∃ N : ℕ, ∀ n, N ≤ n → 0 < n → ∃ u : List ℕ,
+        u ≠ [] ∧ u.length = n ∧ (∀ c ∈ u, 1 ≤ c) ∧
+        (∀ v ∈ F, |(countOccurrences v u : ℝ)
+          - (gaussMeasure (cfCylinder v)).toReal * n| < δ * n + v.length) ∧
+        (∃ x : ℝ, x ∈ cfCylinder (w ++ u) ∧ Irrational x ∧ x ∈ Set.Ioo a b) := by
+  obtain ⟨w, hwne, hwpos, hwsub⟩ := exists_cfCylinder_subset_Ioo ha hab hb
+  obtain ⟨N, hN⟩ := exists_freq_good_block w hwne hwpos F hF hFne hδ
+  refine ⟨w, hwne, hwpos, hwsub, N, fun n hn hn0 => ?_⟩
+  obtain ⟨u, hune, hulen, hupos, hfreq, x, hxu, hxirr⟩ := hN n hn hn0
+  exact ⟨u, hune, hulen, hupos, hfreq,
+    x, hxu, hxirr, hwsub (cfCylinder_append_subset _ _ hxu)⟩
 
 /-- **Obligation (A), general form.**  A point lying in every member of an
 extending chain of genuine CF words is irrational and in `(0,1)`.  The chain

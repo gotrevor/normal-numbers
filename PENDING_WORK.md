@@ -267,7 +267,52 @@ in hand, build the two-stream construction in `CFScheduleA` (or a new
    via per-stream telescoping mirroring `xstar_cf_freq_tendsto` (the freq-good
    blocks are exactly its `uSched`/`wordFamily` inputs).
 
+### lap 13 landed (2026-08-24): placement primitive + INTERVAL-RELATIVIZED engine ✅
+`CFScheduleA.lean` (axiom-clean trust-triple, build green 8756):
+- `exists_cfCylinder_subset_Ioo` — every nondegenerate `(a,b)⊆(0,1)` contains a
+  genuine CF cylinder (via `goodInInterval_pos_of_lt` nonempty + index unpack).
+- **`exists_freq_good_block_in_Ioo`** — THE interval-relativized frequency engine
+  (route (a) from lap 12): for family `F`, `δ>0`, and `(a,b)⊆(0,1)`, ∃ placement
+  word `w` with `cfCylinder w ⊆ (a,b)` and ∃N ∀n≥N a freq-good block `u` (`∀v∈F,
+  |countOccurrences v u − γ(I_v)·n|<δn+|v|`) with an irrational point of
+  `cfCylinder(w++u)` INSIDE `(a,b)`. Composes the placement primitive with
+  `exists_freq_good_block`. **This is exactly what each schedule stage consumes**:
+  x-stage on `(a,b)=cfCylinder wx` (or `J`), ψ-stage on `(a,b)=ψ(cfCylinder wx)`
+  (an interval via `CFAffine` image lemmas), then pull back through `ψ⁻¹`. The
+  placement word `w` is the bounded per-stage "filler" (chosen once to enter the
+  interval), `u` the long freq-good payload ⇒ filler asymptotically negligible.
+
+**NEXT ATTACK — the interleaved schedule assembly (the crux itself).** All atoms
+are now axiom-clean and in `src/`. Remaining is the recursive two-stream schedule
++ per-stream telescoping:
+1. Joint `SchedStateA ⟨wx, wz, hx_gen, hz_gen, hψ : ψ(cfCylinder wx) ⊆
+   cfCylinder wz⟩` (invariant makes `J = cfCylinder wx`, a cylinder).
+2. `schedStepA`: alternate (parity on stage index).
+   - x-stage: `exists_freq_good_block_in_Ioo` on `(a,b) := endpoints of cfCylinder
+     wx` (`cfCylinder_endpoints`); the returned `w++u` extends wx
+     (`take_eq_of_mem_cfCylinder`); new wx' = that word, wz unchanged; invariant
+     preserved (cfCylinder wx' ⊆ cfCylinder wx ⇒ ψ-image still ⊆ cfCylinder wz).
+   - ψ-stage: `(a,b) := endpoints of ψ(cfCylinder wx)` (`image_affineMap_Ioo`
+     applied to wx's endpoints); engine gives `w_z'`=`wz''++u_z` with
+     `cfCylinder w_z' ⊆ ψ(cfCylinder wx)`; set wz' = that word (extends wz via
+     take_eq since ⊆ cfCylinder wz), and REFINE wx to wx'' = the pullback deep
+     word so `ψ(cfCylinder wx'') ⊆ cfCylinder wz'` (feasible: pick wx'' with
+     `cfCylinder wx'' ⊆ ψ⁻¹(cfCylinder w_z') ∩ cfCylinder wx`, nonempty interval,
+     via `exists_cfCylinder_subset_Ioo` on that combined interval's endpoints).
+3. `xA := ` unique point of `⋂ cfCylinder wx` (limit lemmas). (A) both sides via
+   `irrational_mem_Ioo_of_mem_iInter_cfCylinder`; ψ(xA) lies in `⋂ cfCylinder wz`.
+4. (B) per stream: mirror `CFCorrect.xstar_cf_freq_tendsto` — the appended
+   segments are `exists_freq_good_block_in_Ioo`'s freq-good `u`'s (plus bounded
+   fillers, absorbed by `cfDiscLt_short_append`). Needs a light re-derivation of
+   `tailSched_cfDiscLt`/`uSched_dominance` for THIS schedule (copy-extend
+   CFCorrect; never edit it). This is the multi-lap body — but now every
+   analytic/geometric atom it calls is proved.
+Faithfulness gate after any schedule work: re-`#print axioms
+exists_absolutely_normal_cf_normal_khinchin` MUST stay trust-triple.
+
 ### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
+- INTERVAL ENGINE `exists_freq_good_block_in_Ioo` — freq-good block landing in a target interval.
+- `exists_cfCylinder_subset_Ioo` — placement: a genuine cylinder inside any nondegenerate interval.
 - ENGINE `exists_freq_good_block` — daryCell-free freq-good CF block (obligation B atom).
 - (A) `irrational_mem_Ioo_of_mem_iInter_cfCylinder` — irrationality+box from any word chain.
 - L1 `volume_interval_sdiff_covered_le` — interval covered by cylinders up to 4/fib².
