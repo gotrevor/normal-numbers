@@ -34,3 +34,4 @@ import NormalNumbers.DaryDigits
 import NormalNumbers.DaryCorrect
 import NormalNumbers.Headline
 import NormalNumbers.Khinchin
+import NormalNumbers.KhinchinBrick
