@@ -1717,6 +1717,134 @@ theorem exists_freq_good_extend_affine_steer {q : ℝ} (hq : 0 < q) (r : ℝ)
   · rw [hdropx]; exact huxL
   · rw [hdropx]; exact huxfreq
 
+/-- **THE ψ-ROUND STEP, FILLER-FREE + UNIFORM-PREFIX (interleaved schedule).**
+Same interval-threading as `exists_freq_good_extend_affine_steer`, but each
+stream's appended block `w'.drop w.length` is produced by
+`exists_uniformly_freq_good_block_steer_len`, so the frequency-goodness holds
+UNIFORMLY over every prefix `q ≤ |block|` with an `o(|block|)` slack
+`C = 4·√|block| + 2|v| + n₁` (`n₁² ≤ |block|·√|block|`).  This is exactly the
+`hblock` payload the HDOM-FREE `chain_orbit_equidist_uniform` consumes for both
+streams — the steer blocks are `Θ(word)` (so `chain_orbit_equidist`'s `hdom`
+fails) but ARE uniformly prefix-good with sublinear slack. -/
+theorem exists_freq_good_extend_affine_steer_uniform {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (wx wz : List ℕ) (hwx : wx ≠ []) (hwxpos : ∀ c ∈ wx, 1 ≤ c)
+    (hwz : wz ≠ []) (hwzpos : ∀ c ∈ wz, 1 ≤ c)
+    {e f : ℝ} (he0 : 0 ≤ e) (hef : e < f) (hf1 : f ≤ 1)
+    (hzint : ∀ x ∈ Set.Ioo e f, Irrational x → x ∈ cfCylinder wz)
+    (hinv : cfCylinder wx ⊆ affineMap q r ⁻¹' Set.Ioo e f)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
+    {δ : ℝ} (hδ : 0 < δ) (L : ℕ) :
+    ∃ wx' wz' : List ℕ, ∃ e' f' : ℝ,
+      (wz' ≠ [] ∧ (∀ c ∈ wz', 1 ≤ c) ∧ wz'.take wz.length = wz ∧
+        wz.length < wz'.length ∧ L ≤ wz'.length ∧ cfCylinder wz' ⊆ cfCylinder wz ∧
+        L ≤ (wz'.drop wz.length).length ∧ ∃ n₁ : ℕ,
+          n₁ ^ 2 ≤ (wz'.drop wz.length).length * Nat.sqrt (wz'.drop wz.length).length ∧
+          (∀ k, k ≤ (wz'.drop wz.length).length → ∀ v ∈ F,
+            |(countOccurrences v ((wz'.drop wz.length).take k) : ℝ)
+              - (gaussMeasure (cfCylinder v)).toReal * k|
+                < δ * k + (4 * Nat.sqrt (wz'.drop wz.length).length + 2 * v.length + n₁))) ∧
+      (wx' ≠ [] ∧ (∀ c ∈ wx', 1 ≤ c) ∧ wx'.take wx.length = wx ∧
+        wx.length < wx'.length ∧ L ≤ wx'.length ∧ cfCylinder wx' ⊆ cfCylinder wx ∧
+        L ≤ (wx'.drop wx.length).length ∧ ∃ n₁ : ℕ,
+          n₁ ^ 2 ≤ (wx'.drop wx.length).length * Nat.sqrt (wx'.drop wx.length).length ∧
+          (∀ k, k ≤ (wx'.drop wx.length).length → ∀ v ∈ F,
+            |(countOccurrences v ((wx'.drop wx.length).take k) : ℝ)
+              - (gaussMeasure (cfCylinder v)).toReal * k|
+                < δ * k + (4 * Nat.sqrt (wx'.drop wx.length).length + 2 * v.length + n₁))) ∧
+      (0 ≤ e' ∧ e' < f' ∧ f' ≤ 1 ∧
+        (∀ x ∈ Set.Ioo e' f', Irrational x → x ∈ cfCylinder wz')) ∧
+      cfCylinder wx' ⊆ affineMap q r ⁻¹' Set.Ioo e' f' := by
+  -- (1) wx-interval (a,b); (2) image bounds ψ((a,b)) ⊆ Icc e f
+  obtain ⟨a, b, ha, hab, hb, hxIcc, hxint⟩ :=
+    exists_Ioo_irrational_subset_cfCylinder wx hwx hwxpos
+  have hinvIcc : cfCylinder wx ⊆ affineMap q r ⁻¹' Set.Icc e f :=
+    fun x hx => Set.Ioo_subset_Icc_self (hinv hx)
+  have himg : Set.Ioo (q * a + r) (q * b + r) ⊆ Set.Icc e f := by
+    have h := affine_image_Ioo_subset_Icc_pre hq r hinvIcc hxint
+    rwa [image_affineMap_Ioo hq] at h
+  have huv : q * a + r < q * b + r := by nlinarith
+  have hcl : Set.Icc (q * a + r) (q * b + r) ⊆ Set.Icc e f := by
+    rw [← closure_Ioo (ne_of_lt huv)]
+    exact isClosed_Icc.closure_subset_iff.mpr himg
+  obtain ⟨hlo, hhi⟩ := (Set.Icc_subset_Icc_iff huv.le).1 hcl
+  have hJ0 : 0 ≤ q * a + r := le_trans he0 hlo
+  have hJ1 : q * b + r ≤ 1 := le_trans hhi hf1
+  -- (3) steer a UNIFORM freq-good z-block into J_z = Ioo(qa+r)(qb+r)
+  have hzsub : ∀ y ∈ Set.Ioo (q * a + r) (q * b + r), Irrational y → y ∈ cfCylinder wz := by
+    intro y hy hyirr
+    obtain ⟨h1, h2⟩ := Set.mem_Ioo.1 hy
+    exact hzint y (Set.mem_Ioo.2 ⟨lt_of_le_of_lt hlo h1, lt_of_lt_of_le h2 hhi⟩) hyirr
+  obtain ⟨uz, n₁z, huzL, huzne, huzpos, huzsubcd, hn₁zsq, huzfreq, pz, hpzmem, hpzirr, hpzcd⟩ :=
+    exists_uniformly_freq_good_block_steer_len wz hwz hwzpos F hF hFne hδ hJ0 huv hJ1 hzsub L
+  set wz' := wz ++ uz with hwz'def
+  have hwz'ne : wz' ≠ [] := by simp [hwz'def, huzne]
+  have hwz'pos : ∀ c ∈ wz', 1 ≤ c := fun c hc =>
+    (List.mem_append.1 hc).elim (hwzpos c) (huzpos c)
+  have htakez : wz'.take wz.length = wz := by rw [hwz'def, List.take_left]
+  have hdropz : wz'.drop wz.length = uz := by rw [hwz'def, List.drop_left]
+  have hzgt : wz.length < wz'.length := by
+    rw [hwz'def, List.length_append]
+    have : 0 < uz.length := List.length_pos_of_ne_nil huzne
+    omega
+  have hsubz : cfCylinder wz' ⊆ cfCylinder wz := by
+    rw [hwz'def]; exact cfCylinder_append_subset wz uz
+  have hzL : L ≤ wz'.length := by
+    rw [hwz'def, List.length_append]; omega
+  -- (4) wz'-interval (e',f')
+  obtain ⟨e', f', he'0, he'f', hf'1, hz'Icc, hz'int⟩ :=
+    exists_Ioo_irrational_subset_cfCylinder wz' hwz'ne hwz'pos
+  -- (5) steer a UNIFORM freq-good x-block into (a,b) ∩ ψ⁻¹(Ioo e' f')
+  have hpzIcc : pz ∈ Set.Icc e' f' := hz'Icc (by rw [hwz'def]; exact hpzmem)
+  have he'pz : e' ≤ pz := hpzIcc.1
+  have hpzf' : pz ≤ f' := hpzIcc.2
+  obtain ⟨hpzlo, hpzhi⟩ := Set.mem_Ioo.1 hpzcd
+  set a' := (e' - r) / q with ha'def
+  set b' := (f' - r) / q with hb'def
+  have ha'b : a' < b := (div_lt_iff₀ hq).mpr (by rw [ha'def] at *; nlinarith)
+  have hab' : a < b' := (lt_div_iff₀ hq).mpr (by nlinarith)
+  have ha'b' : a' < b' := by rw [ha'def, hb'def]; gcongr
+  have hmax : max a a' < min b b' :=
+    max_lt (lt_min hab hab') (lt_min ha'b ha'b')
+  have hm0 : 0 ≤ max a a' := le_trans ha (le_max_left _ _)
+  have hm1 : min b b' ≤ 1 := le_trans (min_le_left _ _) hb
+  have hxsub : ∀ y ∈ Set.Ioo (max a a') (min b b'), Irrational y → y ∈ cfCylinder wx := by
+    intro y hy hyirr
+    obtain ⟨h1, h2⟩ := Set.mem_Ioo.1 hy
+    exact hxint y (Set.mem_Ioo.2 ⟨lt_of_le_of_lt (le_max_left _ _) h1,
+      lt_of_lt_of_le h2 (min_le_left _ _)⟩) hyirr
+  obtain ⟨ux, n₁x, huxL, huxne, huxpos, huxsubcd, hn₁xsq, huxfreq, px, hpxmem, hpxirr, hpxcd⟩ :=
+    exists_uniformly_freq_good_block_steer_len wx hwx hwxpos F hF hFne hδ hm0 hmax hm1 hxsub L
+  set wx' := wx ++ ux with hwx'def
+  have hwx'ne : wx' ≠ [] := by simp [hwx'def, huxne]
+  have hwx'pos : ∀ c ∈ wx', 1 ≤ c := fun c hc =>
+    (List.mem_append.1 hc).elim (hwxpos c) (huxpos c)
+  have htakex : wx'.take wx.length = wx := by rw [hwx'def, List.take_left]
+  have hdropx : wx'.drop wx.length = ux := by rw [hwx'def, List.drop_left]
+  have hxgt : wx.length < wx'.length := by
+    rw [hwx'def, List.length_append]
+    have : 0 < ux.length := List.length_pos_of_ne_nil huxne
+    omega
+  have hsubx : cfCylinder wx' ⊆ cfCylinder wx := by
+    rw [hwx'def]; exact cfCylinder_append_subset wx ux
+  have hxL : L ≤ wx'.length := by rw [hwx'def, List.length_append]; omega
+  have hinv' : cfCylinder wx' ⊆ affineMap q r ⁻¹' Set.Ioo e' f' := by
+    rw [preimage_affineMap_Ioo hq]
+    intro y hy
+    have hy2 := huxsubcd hy
+    obtain ⟨h1, h2⟩ := Set.mem_Ioo.1 hy2
+    exact Set.mem_Ioo.2 ⟨lt_of_le_of_lt (le_max_right _ _) h1,
+      lt_of_lt_of_le h2 (min_le_right _ _)⟩
+  refine ⟨wx', wz', e', f',
+    ⟨hwz'ne, hwz'pos, htakez, hzgt, hzL, hsubz, ?_, n₁z, ?_, ?_⟩,
+    ⟨hwx'ne, hwx'pos, htakex, hxgt, hxL, hsubx, ?_, n₁x, ?_, ?_⟩,
+    ⟨he'0, he'f', hf'1, hz'int⟩, hinv'⟩
+  · rw [hdropz]; exact huzL
+  · rw [hdropz]; exact hn₁zsq
+  · rw [hdropz]; exact huzfreq
+  · rw [hdropx]; exact huxL
+  · rw [hdropx]; exact hn₁xsq
+  · rw [hdropx]; exact huxfreq
+
 /-- **THE B6 CRUX (interleaved-schedule witness).**  For any `q > 0`, `r`, there
 is a single real `x` such that both `x` and `ψ(x) = q·x + r` are irrational in
 `(0,1)` with equidistributing Gauss orbits.  Disclosed `sorry`: this is the
