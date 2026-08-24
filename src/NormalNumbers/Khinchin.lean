@@ -216,6 +216,65 @@ theorem khinchinK₀_pos : 0 < khinchinK₀ := by
   rw [hprod.tprod_eq]
   exact Real.exp_pos _
 
+/-- **The Gauss–Kuzmin log-average equals `log K₀`** (`Σₐ γ([a])·log a =
+log khinchinK₀`, as a `HasSum` over `k`-indexed digit values `a = k + 1`).
+This is the identity that makes Khinchin's constant the target of the
+log-digit average: the single-digit Gauss–Kuzmin weight `γ([a]) = logb 2
+(1 + 1/(a(a+2)))` (`gaussMeasure_digit_cylinder`) times `log a`, summed, is
+`log K₀`.  Both sides are `(1/log 2)·Σₖ log(k+1)·log(1 + 1/((k+1)(k+3)))` —
+the `logb`-vs-`log` factors swap, so this reuses `khinchinK₀_summable_log`'s
+series verbatim (term-by-term equal). -/
+theorem gaussKuzmin_logsum_hasSum :
+    HasSum (fun k : ℕ => (gaussMeasure (cfCylinder [k + 1])).toReal * Real.log ((k : ℝ) + 1))
+      (Real.log khinchinK₀) := by
+  have hfn := khinchinK₀_term_pos
+  have hsum := khinchinK₀_summable_log
+  have hprod := Real.hasProd_of_hasSum_log hfn hsum.hasSum
+  have hlogK0 : Real.log khinchinK₀
+      = ∑' k : ℕ, Real.log ((1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) ^ Real.logb 2 ((k : ℝ) + 1)) := by
+    rw [khinchinK₀, hprod.tprod_eq, Real.log_exp]
+  have key : ∀ k : ℕ,
+      (gaussMeasure (cfCylinder [k + 1])).toReal * Real.log ((k : ℝ) + 1)
+        = Real.log ((1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) ^ Real.logb 2 ((k : ℝ) + 1)) := by
+    intro k
+    rw [gaussMeasure_digit_cylinder (k + 1) (by omega),
+      ENNReal.toReal_ofReal (Real.logb_nonneg (by norm_num)
+        (le_add_of_nonneg_right (by positivity))),
+      Real.log_rpow (by positivity)]
+    push_cast
+    simp only [Real.logb]
+    ring
+  rw [show (fun k : ℕ => (gaussMeasure (cfCylinder [k + 1])).toReal * Real.log ((k : ℝ) + 1))
+      = (fun k : ℕ => Real.log ((1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) ^ Real.logb 2 ((k : ℝ) + 1)))
+    from funext key, hlogK0]
+  exact hsum.hasSum
+
+/-- `Finset.Icc 1 K` sum reindexed to a `Finset.range K` sum shifted by one. -/
+private lemma sum_Icc_one_eq_sum_range {β : Type*} [AddCommMonoid β] (F : ℕ → β) (K : ℕ) :
+    ∑ a ∈ Finset.Icc 1 K, F a = ∑ k ∈ Finset.range K, F (k + 1) := by
+  induction K with
+  | zero => simp
+  | succ K ih =>
+      rw [Finset.sum_Icc_succ_top (Nat.le_add_left 1 K), ih, Finset.sum_range_succ]
+
+/-- The `K → ∞` limit of the truncated Gauss–Kuzmin log-average: the partial
+sums `Σ_{a=1}^{K} γ([a])·log a → log K₀` (the target that
+`xstar_log_digit_avg_truncated_tendsto` converges to for each fixed `K`, now
+as `K → ∞`).  Reindexes `gaussKuzmin_logsum_hasSum`'s `range`-partial-sums to
+`Finset.Icc 1 K`. -/
+theorem gaussKuzmin_logsum_tendsto :
+    Filter.Tendsto
+      (fun K : ℕ => ∑ a ∈ Finset.Icc 1 K,
+        (gaussMeasure (cfCylinder [a])).toReal * Real.log (a : ℝ))
+      Filter.atTop (nhds (Real.log khinchinK₀)) := by
+  have h := gaussKuzmin_logsum_hasSum.tendsto_sum_nat
+  refine h.congr (fun K => ?_)
+  rw [sum_Icc_one_eq_sum_range
+    (fun a => (gaussMeasure (cfCylinder [a])).toReal * Real.log (a : ℝ)) K]
+  refine Finset.sum_congr rfl (fun k _ => ?_)
+  push_cast
+  ring
+
 /-- **Elementary reduction**: `KhinchinTypical x` (the geometric mean of the
 CF digits `→ K₀`) is equivalent to the corresponding `log`-average tending to
 `log K₀` — the standard exp/log swap, using that every CF digit of an

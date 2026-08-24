@@ -1,5 +1,21 @@
 # PENDING WORK — B5′ campaign
 
+> **GRIND (2026-08-24, same lap follow-on — step C2 landed).** Proved the
+> Tier-2 assembly's **target limit value**: `gaussKuzmin_logsum_hasSum`
+> (`Σ_k γ([k+1])·log(k+1) = log khinchinK₀`, as `HasSum`) and
+> `gaussKuzmin_logsum_tendsto` (its `Finset.Icc 1 K` partial sums `→ log K₀`
+> as `K→∞`), both axiom-clean (`Khinchin.lean`). Key identity:
+> `γ([a])·log a` and `log((1+1/(a(a+2)))^{logb 2 a})` are term-by-term equal
+> (the `logb`/`log` factors swap), so it reuses `khinchinK₀_summable_log`'s
+> series verbatim. This pins the limit that the truncated-convergence lemma
+> `xstar_log_digit_avg_truncated_tendsto` (fixed `K`) converges to.
+> **Reduction (C) status**: fixed-`K` convergence ✓ + `K→∞` limit value ✓;
+> the two remaining gaps are (i) the value-count identity `Σ_{i<n} log aᵢ =
+> Σ_a count[a]·log a` (elementary, wireable now) and (ii) the uniform tail
+> control `xstar_log_tail_uniform` (schedule-dependent, needs A+B). Next lap:
+> either wire (i)+the 3ε skeleton reducing the crux to a single
+> `xstar_log_tail_uniform` sorry, or start (A) the γ-mixing variance bound.
+
 > **REVIEW LAP (2026-08-24 — route DECISION + moment seed proved).** The last
 > three laps (fc801ba/17dc2c9/7d6740f, all pure route-analysis) converged on
 > "step-2 crux is operator-gated, need Trevor to authorize a schedule touch —
