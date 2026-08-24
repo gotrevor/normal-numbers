@@ -952,6 +952,131 @@ theorem abs_countOccurrences_take_interp {v u : List ℕ} (hv : v ≠ []) {γv :
   have hγkn : γv * ((k : ℝ) - n) ≤ (k : ℝ) - n := by nlinarith [hγ1, hknR]
   linarith [htri, hCkCn, hmuleq, hγkn, hv1R]
 
+/-- Quadratically-spaced scale set `{n₁ + j² : j ≤ m}`. -/
+def quadScales (n₁ m : ℕ) : Finset ℕ :=
+  (Finset.range (m + 1)).image (fun j => n₁ + j ^ 2)
+
+theorem quadScales_nonempty (n₁ m : ℕ) : (quadScales n₁ m).Nonempty := by
+  refine Finset.Nonempty.image ?_ _
+  exact ⟨0, Finset.mem_range.2 (Nat.succ_pos _)⟩
+
+theorem quadScales_card_le (n₁ m : ℕ) : (quadScales n₁ m).card ≤ m + 1 := by
+  refine le_trans (Finset.card_image_le) ?_
+  rw [Finset.card_range]
+
+theorem quadScales_mem_ge (n₁ m : ℕ) : ∀ n ∈ quadScales n₁ m, n₁ ≤ n := by
+  intro n hn
+  rw [quadScales, Finset.mem_image] at hn
+  obtain ⟨j, -, rfl⟩ := hn
+  omega
+
+theorem quadScales_max (n₁ m : ℕ) :
+    (quadScales n₁ m).max' (quadScales_nonempty n₁ m) = n₁ + m ^ 2 := by
+  refine le_antisymm ?_ ?_
+  · refine Finset.max'_le _ _ _ (fun n hn => ?_)
+    rw [quadScales, Finset.mem_image] at hn
+    obtain ⟨j, hj, rfl⟩ := hn
+    have hjm : j ≤ m := by rw [Finset.mem_range] at hj; omega
+    have : j ^ 2 ≤ m ^ 2 := Nat.pow_le_pow_left hjm 2
+    omega
+  · refine Finset.le_max' _ _ ?_
+    rw [quadScales, Finset.mem_image]
+    exact ⟨m, Finset.mem_range.2 (Nat.lt_succ_self _), rfl⟩
+
+/-- **Quadratic covering.**  Every `k ∈ [n₁, n₁+m²]` sits just above a scale
+`n ∈ quadScales n₁ m` with gap `k − n ≤ 2·√(k−n₁)`. -/
+theorem quadScales_cover {n₁ m k : ℕ} (hk1 : n₁ ≤ k) (hk2 : k ≤ n₁ + m ^ 2) :
+    ∃ n ∈ quadScales n₁ m, n ≤ k ∧ k - n ≤ 2 * Nat.sqrt (k - n₁) := by
+  set j := Nat.sqrt (k - n₁) with hj
+  have hjm : j ≤ m := by
+    rw [hj]
+    have h1 : Nat.sqrt (k - n₁) ≤ Nat.sqrt (m ^ 2) := Nat.sqrt_le_sqrt (by omega)
+    rwa [Nat.sqrt_eq'] at h1
+  have hj2le : j ^ 2 ≤ k - n₁ := by rw [hj]; exact Nat.sqrt_le' _
+  have hj2lt : k - n₁ < (j + 1) ^ 2 := by
+    rw [hj, pow_two]; exact Nat.lt_succ_sqrt _
+  refine ⟨n₁ + j ^ 2, ?_, by omega, ?_⟩
+  · rw [quadScales, Finset.mem_image]
+    exact ⟨j, Finset.mem_range.2 (by omega), rfl⟩
+  · have : (j + 1) ^ 2 = j ^ 2 + 2 * j + 1 := by ring
+    omega
+
+/-- **THE UNIFORMLY-PREFIX-GOOD STEERABLE BLOCK (B6 crux crack).**  A steer block
+`u` of length `n₁+m²` landing `cfCylinder(wx++u) ⊆ (c,d)` whose EVERY prefix
+`u.take k` (`n₁ ≤ k ≤ |u|`) is freq-good with slack `4√k + 2|v| = o(k)`:
+`|countOcc v (u.take k) − γv·k| < δ·k + (4√k + 2|v|)`.  This is the hdom-FREE
+replacement for block-shortness — the property the affine two-stream schedule needs
+because its blocks are `Θ(word)`.  Assembles the multi-scale per-scale block
+(`exists_multiscale_freq_good_block_steer_len` at `NS = quadScales n₁ m`) with the
+prefix interpolation (`abs_countOccurrences_take_interp`) via the quadratic
+covering. -/
+theorem exists_uniformly_freq_good_block_steer (wx : List ℕ) (hwx : wx ≠ [])
+    (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
+    {δ : ℝ} (hδ : 0 < δ) {c d : ℝ} (hc0 : 0 ≤ c) (hcd : c < d) (hd1 : d ≤ 1)
+    (hsub : ∀ y ∈ Set.Ioo c d, Irrational y → y ∈ cfCylinder wx)
+    (m : ℕ) {n₁ : ℕ} (hn₁ : 0 < n₁)
+    (hbound : ((m + 1 : ℕ) : ℝ) * ((∑ v ∈ F, 7 * ((8 * v.length + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁))
+        * (gaussMeasure (cfCylinder wx)).toReal))
+        < (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal)
+    (hres : 4 / (d - c) < (Nat.fib (wx.length + (n₁ + m ^ 2) + 1) : ℝ) ^ 2) :
+    ∃ u : List ℕ, u.length = n₁ + m ^ 2 ∧ u ≠ [] ∧ (∀ a ∈ u, 1 ≤ a) ∧
+      cfCylinder (wx ++ u) ⊆ Set.Ioo c d ∧
+      (∀ k, n₁ ≤ k → k ≤ u.length → ∀ v ∈ F,
+        |(countOccurrences v (u.take k) : ℝ)
+          - (gaussMeasure (cfCylinder v)).toReal * k|
+          < δ * k + (4 * Nat.sqrt k + 2 * v.length)) ∧
+      ∃ x : ℝ, x ∈ cfCylinder (wx ++ u) ∧ Irrational x ∧ x ∈ Set.Ioo c d := by
+  set NS := quadScales n₁ m with hNSdef
+  have hNSne : NS.Nonempty := quadScales_nonempty n₁ m
+  have hmax : NS.max' hNSne = n₁ + m ^ 2 := quadScales_max n₁ m
+  set A₁ : ℝ := ∑ v ∈ F, 7 * ((8 * v.length + 80)
+      * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁))
+      * (gaussMeasure (cfCylinder wx)).toReal with hA₁
+  have hA₁0 : 0 ≤ A₁ := by
+    rw [hA₁]
+    refine Finset.sum_nonneg fun v _ => ?_
+    have h0 : (0:ℝ) ≤ 8 * v.length + 80 := by positivity
+    have h1 : (0:ℝ) ≤ (gaussMeasure (cfCylinder v)).toReal := ENNReal.toReal_nonneg
+    have h2 : (0:ℝ) ≤ (gaussMeasure (cfCylinder wx)).toReal := ENNReal.toReal_nonneg
+    positivity
+  have hcard : (NS.card : ℝ) ≤ ((m + 1 : ℕ) : ℝ) := by exact_mod_cast quadScales_card_le n₁ m
+  have hboundNS : (NS.card : ℝ) * A₁
+      < (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal := by
+    have : (NS.card : ℝ) * A₁ ≤ ((m + 1 : ℕ) : ℝ) * A₁ :=
+      mul_le_mul_of_nonneg_right hcard hA₁0
+    linarith [this, hbound]
+  have hresNS : 4 / (d - c) < (Nat.fib (wx.length + NS.max' hNSne + 1) : ℝ) ^ 2 := by
+    rw [hmax]; exact hres
+  obtain ⟨u, hulen, hune, hupos, hsubcd, hfreqNS, x, hxcyl, hirr, hxcd⟩ :=
+    exists_multiscale_freq_good_block_steer_len wx hwx hwxpos F hF hFne hδ hc0 hcd hd1 hsub
+      NS hNSne hn₁ (quadScales_mem_ge n₁ m) hboundNS hresNS
+  have hulen' : u.length = n₁ + m ^ 2 := by rw [hulen, hmax]
+  refine ⟨u, hulen', hune, hupos, hsubcd, ?_, x, hxcyl, hirr, hxcd⟩
+  intro k hk1 hk2 v hv
+  have hk2' : k ≤ n₁ + m ^ 2 := by rw [← hulen']; exact hk2
+  obtain ⟨n, hnNS, hnk, hgap⟩ := quadScales_cover hk1 hk2'
+  have hgood := hfreqNS n hnNS v hv
+  obtain ⟨hγ0, hγ1⟩ := gaussMeasure_toReal_mem_Icc (cfCylinder v)
+  have hku : k ≤ u.length := hk2
+  have hinterp := abs_countOccurrences_take_interp (hFne v hv) hγ0 hγ1 hnk hku
+  have hsqrt : Nat.sqrt (k - n₁) ≤ Nat.sqrt k := Nat.sqrt_le_sqrt (by omega)
+  have hgapN : k - n ≤ 2 * Nat.sqrt k := le_trans hgap (by omega)
+  have hgapR : (k : ℝ) - (n : ℝ) ≤ 2 * (Nat.sqrt k : ℝ) := by
+    have hc : ((k - n : ℕ) : ℝ) ≤ ((2 * Nat.sqrt k : ℕ) : ℝ) := by exact_mod_cast hgapN
+    rw [Nat.cast_sub hnk] at hc
+    push_cast at hc
+    linarith [hc]
+  have hδnk : δ * (n : ℝ) ≤ δ * (k : ℝ) := by
+    apply mul_le_mul_of_nonneg_left ?_ hδ.le; exact_mod_cast hnk
+  calc |(countOccurrences v (u.take k) : ℝ)
+        - (gaussMeasure (cfCylinder v)).toReal * k|
+      ≤ |(countOccurrences v (u.take n) : ℝ)
+        - (gaussMeasure (cfCylinder v)).toReal * n| + 2 * ((k : ℝ) - n) + v.length := hinterp
+    _ < (δ * n + v.length) + 2 * ((k : ℝ) - n) + v.length := by linarith [hgood]
+    _ ≤ δ * k + (4 * Nat.sqrt k + 2 * v.length) := by linarith [hδnk, hgapR]
+
 /-- **One schedule stage (single stream).**  Given the current genuine word
 `wx`, a pattern family `F`, tolerance `δ > 0`, and a length target `L`, there is
 a strict genuine EXTENSION `wx'` of `wx` (i.e. `wx'.take |wx| = wx`, `|wx| <

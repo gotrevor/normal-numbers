@@ -102,6 +102,30 @@ for `v∈F` at scales `nⱼ = n₁ + j²`, `j = 0..m` (so `n_m = n₁+m² =` the
    covering (`∀k∈[n₁,ntop], ∃n∈NS, n≤k ∧ k−n≤2√k`) is the next small step.
 4. hdom-free `chain_cf_digit_freq_tendsto` variant + the recursion.
 
+### ✅✅✅ UNIFORMLY-PREFIX-GOOD BLOCK ASSEMBLED (this lap) — the crux crack is PROVED
+`exists_uniformly_freq_good_block_steer` (CFScheduleA, axiom-clean): a steer block
+`u` of length `n₁+m²` with `cfCylinder(wx++u) ⊆ (c,d)` AND **every** prefix good:
+`∀ k∈[n₁,|u|], ∀ v∈F, |countOcc v (u.take k) − γv·k| < δ·k + (4√k + 2|v|)`.
+The slack `4√k+2|v| = o(k)`, so this is the hdom-FREE block-goodness the affine
+schedule needs. Supporting (all axiom-clean, CFScheduleA): `quadScales n₁ m` +
+`quadScales_{nonempty,card_le,mem_ge,max,cover}`. Caller supplies the measure
+budget `(m+1)·A₁(n₁) < γ(c',d')` and the top-scale resolution
+`4/(d−c) < fib(|wx|+n₁+m²+1)²`.
+
+### REMAINING (step 4 only): plug into the schedule
+- **hdom-free chain limit:** a variant of `chain_cf_digit_freq_tendsto` /
+  `chain_orbit_equidist` whose per-block hypothesis is uniform-prefix-goodness
+  (`∀k, |dev(u.take k)| < δ_s·k + o(k)`) INSTEAD of `hgood ∧ hdom`. With the block
+  above, mid-block prefixes are handled by the block's OWN prefix bound (no
+  `cfDiscLt_append_take`/hdom needed); across blocks, `δ_s → 0`. This replaces the
+  `hdom` reliance at CFChainFreq:391-397.
+- **ψ-round + recursion:** rebuild `exists_freq_good_extend_affine_steer` to emit
+  uniformly-good blocks (call `exists_uniformly_freq_good_block_steer` for each
+  stream, choosing `m_s, n₁,s` per the budget/resolution — `n₁,s ~ poly(1/δ_s)`,
+  `m_s` s.t. `n₁+m²` hits the resolution length `~κ|w_s|`), then the two-stream
+  `SchedStateA`/`schedStepA`/`schedA` recursion → two uniformly-good chains → the
+  hdom-free limit → `CFOrbitEquidist` for both streams → the crux witness.
+
 ---
 
 ## ⭐⭐⭐⭐⭐ ROUTE-DECISIVE CORRECTION 2026-08-24 (this lap): `hdom` needs TIGHT (logarithmic) steer blocks — the current steer lemma's block length is EXPONENTIAL and BREAKS `hdom`
