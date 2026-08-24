@@ -1,5 +1,43 @@
 # PENDING WORK — B5′ campaign
 
+> **GRIND LAP (2026-08-24, `76e042e`).** Continued the step-2 assembly
+> (log-average crux). Two sub-lemmas landed, both axiom-clean, no `sorry`:
+> `xstar_log_digit_avg_truncated_tendsto` (`Khinchin.lean`) — the `≤ K`
+> finite-truncation slice of the empirical log-digit average converges to
+> the matching finite Gauss–Kuzmin sum (direct from `xstar_cf_freq_tendsto`
+> + `tendsto_finsetSum`); `getElem_le_cfK` (`CFCylinder.lean`) — every digit
+> in a genuine word is `≤` the word's continuant.
+>
+> **Route-scoping insight this lap (important, changes the difficulty
+> picture)**: chased whether `wSched_log_sum_le`'s total-mass bound
+> (`Σ log(digit) ≤ goodC·n`) alone suffices for the K→∞ tail-vanishing that
+> `xstar_log_digit_avg_tendsto` needs. It does **not**, obviously — a bounded
+> total doesn't imply the mass concentrated on large digits shrinks as `K`
+> grows; that needs a genuine per-magnitude decomposition. Checked whether
+> `getElem_le_cfK` + `uSched_spec`'s `cfK(uSched s) ≤ exp(goodC·n_s)` gives
+> that decomposition: it gives a per-block digit CAP `exp(goodC·n_s)`, but
+> that cap is far LOOSER than the block's frequency-control threshold
+> `t_{s+1}` (recall `t² < nFn t = n_s`, i.e. `t_{s+1} < √(n_s)`, while the
+> continuant cap is exponential in `n_s`) — so `uSched_spec`'s per-word
+> frequency bound (4th clause, only proven `∀ v ∈ wordFamily t_{s+1}`, i.e.
+> digits `≤ t_{s+1}`) does NOT cover digits between `t_{s+1}` and
+> `exp(goodC·n_s)`, which is exactly where "escaping mass" could hide.
+> **This is the precise open question**, sharper than the handoff's vague
+> "Markov/Chebyshev" framing: either (a) find a genuine escaping-mass bound
+> — e.g. show the CONTRIBUTION of digits `> t_{s+1}` to the block's log-sum
+> is itself `o(n_s)` (not just capped by the loose exponential bound), using
+> `uSched_spec`'s frequency-control on the complementary low digits to
+> squeeze the high-digit contribution via the SAME total (`wSched_log_sum_le`
+> minus the low-digit part, itself estimated via the frequency bound) — this
+> looks tractable and is the next thing to try; or (b) conclude the current
+> schedule construction genuinely lacks the control needed and a tighter
+> digit-cap re-plumb (the ORIGINAL W6 assessment, which this campaign's
+> `44fb8bb`/`e018429` route insight had set aside) is unavoidable after all.
+> Try (a) first — do NOT re-open the schedule construction (route (b))
+> without exhausting (a); the frequency-bound-on-the-complement trick is a
+> standard measure-theory move (bound the tail of a nonneg sum by
+> total-minus-known-part) and hasn't been attempted yet.
+
 > **GRIND LAP (2026-08-24, `42ec6a7`).** ✅ **Gauss-Kuzmin single-digit law
 > PROVED** (step 1 of HANDOFF-2026-08-26-0730.md's Tier-2 NEXT list):
 > `gaussMeasure_digit_cylinder` (`CFCylinder.lean`) — closed form
