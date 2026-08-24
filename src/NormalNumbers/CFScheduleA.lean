@@ -1033,6 +1033,36 @@ theorem tendsto_of_scale_coverage {L : ℝ} {f : ℕ → ℝ}
   rw [Real.dist_eq]
   exact lt_trans (havoid s n hnS) hδs
 
+/-- **Digit-agreement transfer for `blockCount` (brick-4 z-transfer core).**  Two
+full-orbit reals that agree on their first `m` CF digits have EQUAL `v`-block count
+at every scale `n` with `n + |v| ≤ m`: the length-`n` orbit count of `cfCylinder v`
+reads only digits `< n + |v|`.  This is the mechanism by which point-avoidance of an
+ABSOLUTE-scale z-bad zone transfers to the chain LIMIT: once the `x`-cylinder is deep
+enough that `ψ(cfCylinder wx')` fixes `ψ(x)`'s first `m` z-digits, `ψ(xA)` inherits the
+selected point's `z`-frequency at all scales `≤ m − |v|`. -/
+theorem blockCount_eq_of_cfDigit_agree {z z' : ℝ}
+    (horb : ∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1)
+    (horb' : ∀ j : ℕ, gaussMap^[j] z' ∈ Set.Ioo (0 : ℝ) 1)
+    (v : List ℕ) (n m : ℕ) (hm : n + v.length ≤ m)
+    (hagree : ∀ i < m, cfDigit z i = cfDigit z' i) :
+    blockCount (cfCylinder v) n z = blockCount (cfCylinder v) n z' := by
+  have hz := blockCount_eq_card_matches horb v 0 n
+  have hz' := blockCount_eq_card_matches horb' v 0 n
+  simp only [Function.iterate_zero_apply] at hz hz'
+  rw [hz, hz']
+  have hfilter : (Finset.range n).filter (fun j => MatchesAt (cfDigit z) v (0 + j))
+      = (Finset.range n).filter (fun j => MatchesAt (cfDigit z') v (0 + j)) := by
+    apply Finset.filter_congr
+    intro j hj
+    simp only [Finset.mem_range] at hj
+    simp only [Nat.zero_add, eq_iff_iff]
+    constructor
+    · intro hM i hi
+      rw [← hagree (j + i) (by omega)]; exact hM i hi
+    · intro hM i hi
+      rw [hagree (j + i) (by omega)]; exact hM i hi
+  rw [hfilter]
+
 /-- **Multi-scale + cfK measure core** (the cfK-steer selection).  Like
 `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`, but the aggregate bound
 `hbound` additionally leaves room for the cfK-large extension mass

@@ -455,9 +455,57 @@ class AdversarialStream:
         return self.base.next()
 
 
+class StructuredStream:
+    """A DETERMINISTIC, measure-zero input: concatenate the CF expansions of p/q for
+    q = 2,3,4,... and 0 < p < q, gcd(p,q) = 1.
+
+    Why this stream and not a random one: crux risk (i) in the attack map is UNIFORMITY
+    over all CF-normal x, and a.e.-typical inputs say nothing about it -- for a.e. x both
+    x and Mx are CF-normal for free, so a random-input frequency test is vacuous.  This
+    stream lies in a Lebesgue-null set, so no a.e. argument reaches it, and by Heilbronn's
+    theorem the digit statistics of p/q averaged over p follow Gauss-Kuzmin, so it is a
+    plausible CF-normal candidate.  The probe never has to TRUST that: `freq` mode reports
+    the input's own distance from Gauss alongside the output's, so the stream validates
+    itself in the same run.
+    """
+
+    name = "structured (CFs of p/q concatenated -- DETERMINISTIC, measure zero)"
+
+    def __init__(self, _rng=None):
+        self.buf = []
+        self.i = 0
+        self.q = 2
+        self.p = 1
+
+    def _refill(self):
+        while not self.buf:
+            q, p = self.q, self.p
+            self.p += 1
+            if self.p >= self.q:
+                self.q += 1
+                self.p = 1
+            if math.gcd(p, q) != 1:
+                continue
+            n, d = p, q
+            while d:
+                a = n // d
+                if a >= 1:
+                    self.buf.append(a)
+                n, d = d, n - a * d
+                n, d = d, n
+            # the loop above is the plain Euclidean CF of p/q with the leading 0 skipped
+
+    def next(self):
+        if not self.buf:
+            self._refill()
+        return self.buf.pop(0)
+
+
 def make_stream(kind, rng, period=25):
     if kind == "lebesgue":
         return LebesgueStream(rng)
+    if kind == "structured":
+        return StructuredStream()
     if kind == "iid":
         return IidStream(rng)
     if kind == "adversarial":
@@ -756,6 +804,35 @@ def mode_memory(args, rng):
           % hist_tv(hA, hC))
     print("      output 2-block TV, different start              : %.4f" % tv_between(oA, oB))
     print("      output 2-block TV, same start (noise floor)     : %.4f" % tv_between(oA, oC))
+
+    # --- Birkhoff-Hopf: how fast does the FORWARD map forget its argument? ------
+    # The attack map's merging clause is "compositions of POSITIVE matrices, so
+    # Birkhoff-Hopf contraction of the Hilbert projective metric supplies asymptotic
+    # loss of memory".  That is a rate, and the rate is measurable: the Hilbert
+    # diameter of A_{a1}..A_{ak}(positive cone) is |log(p*s/(q*r))|, and anything the
+    # state knew before the block is squeezed into that diameter.
+    print()
+    print("   -- Birkhoff-Hopf contraction of the input blocks (the cited mechanism) --")
+    print("      %-6s %-14s %-14s" % ("k", "mean diam", "per-step rate"))
+    rr = random.Random(args.seed + 77)
+    for k in (2, 3, 4, 6, 8, 12):
+        diams = []
+        for _ in range(40):
+            st = LebesgueStream(rr)
+            P = (1, 0, 0, 1)
+            for _ in range(k):
+                a = st.next()
+                p_, q_, r_, s_ = P
+                P = (q_, p_ + q_ * a, s_, r_ + s_ * a)
+            p_, q_, r_, s_ = P
+            if p_ * s_ > 0 and q_ * r_ > 0:
+                diams.append(abs(math.log(p_ * s_ / (q_ * r_))))
+        if diams:
+            md = sum(diams) / len(diams)
+            print("      %-6d %-14.4f %-14s"
+                  % (k, md, "%.4f" % (md / k) if k else "-"))
+    print("      (diameter -> 0 means the block has forgotten what preceded it; this is")
+    print("       the only loss-of-memory available once exact merging is off the table.)")
     return {"merged_at": merged_at, "tail": best[0]}
 
 
@@ -1020,7 +1097,7 @@ def main():
                     choices=["window", "memory", "freq", "compare", "all", "selftest"])
     ap.add_argument("--map", default="phi", choices=sorted(MAPS))
     ap.add_argument("--input", default="lebesgue",
-                    help="lebesgue | iid | adversarial | periodic:1,2,3")
+                    help="lebesgue | structured | iid | adversarial | periodic:1,2,3")
     ap.add_argument("--steps", type=int, default=2000)
     ap.add_argument("--burn", type=int, default=150)
     ap.add_argument("--seed", type=int, default=20260824)
