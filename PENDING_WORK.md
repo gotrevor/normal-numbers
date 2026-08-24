@@ -106,7 +106,14 @@ axiom-clean) — the measure core: for `n ≥ N`, an irrational `x ∈ (c,d)` av
 ALL of `wx`'s `n`-step CF bad zones for `F`. Hypotheses: `Ioo c d ⊆ cfCylinder wx`,
 `0 < γ(Ioo c d)`. This is the crack — freq-good digits steer into the target.
 
-1. **`exists_freq_good_block_steer`** (CFScheduleA): wrap the core into a WORD.
+✅ **`exists_freq_good_block_steer`** (CFScheduleA, commit `80faa12`, axiom-clean) —
+DONE. The steerable filler-free freq-good block: given `(c,d)` with all its
+irrationals in `cfCylinder wx`, yields genuine `u` (`|u|≥L`, δ-good ∀v∈F) with
+`cfCylinder (wx++u) ⊆ (c,d)` + irrational witness. NO placement prefix. **The crux
+ingredient is now in hand.** Remaining = pure schedule wiring (items 2–3 below).
+
+<details><summary>(superseded) build recipe for exists_freq_good_block_steer</summary>
+1. wrap the core into a WORD.
    From `x` (the core's output at suitable `n ≥ max(N, L, …)`): set
    `u := (range n).map (fun i => cfDigit x (wx.length+i))`, so `x ∈ cfCylinder (wx++u)`
    (via `range_map_cfDigit_eq`, as `exists_freq_good_block` CFFreqBlock:90-91).
@@ -120,6 +127,8 @@ ALL of `wx`'s `n`-step CF bad zones for `F`. Hypotheses: `Ioo c d ⊆ cfCylinder
    - genuineness/extension: `|u|=n > wx.length`, `wx++u` extends `wx` trivially.
    Output signature ~ `exists_freq_good_block_in_Ioo` but `u` is the WHOLE steered
    block (no placement prefix) and lands in `(c,d)`.
+</details>
+
 2. **Rebuild the ψ-round `exists_freq_good_extend_affine` filler-free**: replace its
    step (5) x-reselection (`exists_cfCylinder_subset_affine_preimage` placement +
    `exists_freq_good_extend_cfCylinder`) with a single `exists_freq_good_block_steer`
