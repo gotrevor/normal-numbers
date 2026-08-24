@@ -513,7 +513,29 @@ Still need: the ψ-stage `exists_freq_good_extend_affine` producing the interval
 invariant + wz freq-good chain, and the per-stream freq telescoping (copy-extend
 `CFCorrect`). Multi-lap; all atoms green.
 
+### lap 21 landed (2026-08-24): chain volumes → 0 `cfCylinder_chain_volume_tendsto` ✅
+`CFScheduleA`, axiom-clean, green 8756: along a strictly extending genuine chain,
+`volume(cfCylinder(w s)).toReal → 0` (squeeze by `1/fib(|w_s|+1)² ≤ 1/fib(s+1)`,
+`fib→∞`). Combined with `cfCylinder_subset_Icc_length` (Icc of diameter =
+volume), this is the `hdiam` input to `eq_of_mem_iInter_Icc` for the wz-chain —
+so the ψ(xA)=ζ squeeze is now fully powered. The LIMIT-side machinery (recover
+ψ(xA) irrationality + membership in ⋂cfCylinder wz_t) is COMPLETE modulo wiring.
+
+**NEXT — the ψ-stage `exists_freq_good_extend_affine` + the recursion.** The
+limit toolkit (`eq_of_mem_iInter_Icc` + `cfCylinder_chain_volume_tendsto` +
+`cfCylinder_subset_Icc_length` + `exists_irrational_mem_iInter_cfCylinder` +
+`cfCylinder_endpoints`.hUIoo) can now close: given the schedule produces wx-chain
+and wz-chain with interval invariant `cfCylinder wx_s ⊆ ψ⁻¹(Icc(lo_t)(hi_t))`
+(lo,hi = wz_t Icc-endpoints), then ψ(xA)∈Icc(lo_t)(hi_t)∀t, ζ (irrational, ∈
+cfCylinder wz_t) ∈Icc too ⇒ `eq_of_mem_iInter_Icc` ⇒ ψ(xA)=ζ ⇒ done. Still to
+build: (a) `exists_freq_good_extend_affine` (ψ-stage, recipe above — produces the
+interval invariant + wz freq-good extension); (b) `SchedStateA`/`schedStepA`/
+`schedA`/limit; (c) per-stream freq telescoping (copy-extend `CFCorrect`). All
+geometric/analytic atoms are now proved & axiom-clean; (a)–(c) are wiring + the
+telescoping port.
+
 ### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
+- CHAIN→0 `cfCylinder_chain_volume_tendsto` — cylinder volumes vanish along a chain.
 - SQUEEZE `eq_of_mem_iInter_Icc` — nesting-uniqueness (recovers ψ(xA) irrationality at the limit).
 - ψ-IMAGE `affine_image_Ioo_subset_Icc` — ψ((a,b))⊆Icc e f under the invariant (analytic step).
 - INTER `exists_cfCylinder_subset_Ioo_inter` — cylinder in the intersection of two intervals.

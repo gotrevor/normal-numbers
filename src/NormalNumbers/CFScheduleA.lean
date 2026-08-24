@@ -48,6 +48,59 @@ def CFOrbitEquidist (y : ℝ) : Prop :=
     Filter.Tendsto (fun p => blockCount (cfCylinder v) p y / (p : ℝ))
       Filter.atTop (nhds (gaussMeasure (cfCylinder v)).toReal)
 
+/-- **Chain cylinders shrink to zero.**  Along a strictly extending genuine word
+chain the cylinder volumes tend to `0` (volume `≤ 1/fib(|w_s|+1)²` and `|w_s| ≥
+s → ∞`).  Feeds `eq_of_mem_iInter_Icc` at the wz-chain: the enclosing Icc's
+(from `cfCylinder_subset_Icc_length`) have diameters `= volume → 0`. -/
+theorem cfCylinder_chain_volume_tendsto {w : ℕ → List ℕ}
+    (hne : ∀ s, w s ≠ []) (hpos : ∀ s, ∀ a ∈ w s, 1 ≤ a)
+    (hext : ∀ s, ∃ u, u ≠ [] ∧ w (s + 1) = w s ++ u) :
+    Filter.Tendsto (fun s => (volume (cfCylinder (w s))).toReal)
+      Filter.atTop (nhds 0) := by
+  have hself : ∀ n : ℕ, n ≤ Nat.fib (n + 1) := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ k ih =>
+      rw [Nat.fib_add_two]
+      rcases Nat.eq_zero_or_pos k with hk | hk
+      · subst hk; simp
+      · have hfk : 1 ≤ Nat.fib k := Nat.fib_pos.mpr hk
+        omega
+  have hfib_top : Filter.Tendsto (fun s => (Nat.fib (s + 1) : ℝ)) Filter.atTop Filter.atTop :=
+    tendsto_atTop_mono (fun s => by exact_mod_cast hself s)
+      tendsto_natCast_atTop_atTop
+  have hg : Filter.Tendsto (fun s => ((Nat.fib (s + 1) : ℝ))⁻¹)
+      Filter.atTop (nhds 0) := hfib_top.inv_tendsto_atTop
+  refine squeeze_zero (fun s => ENNReal.toReal_nonneg) (fun s => ?_) hg
+  have hb := volume_cfCylinder_le_fib (w s) (hne s) (hpos s)
+  have h1 : (volume (cfCylinder (w s))).toReal
+      ≤ 1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2 := by
+    calc (volume (cfCylinder (w s))).toReal
+        ≤ (ENNReal.ofReal (1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2)).toReal :=
+          ENNReal.toReal_mono ENNReal.ofReal_ne_top hb
+      _ = 1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2 :=
+          ENNReal.toReal_ofReal (by positivity)
+  have hlen : s + 1 ≤ (w s).length + 1 := by
+    have := le_length_of_extending w hext s; omega
+  have hfibmono : (Nat.fib (s + 1) : ℝ) ≤ (Nat.fib ((w s).length + 1) : ℝ) := by
+    exact_mod_cast Nat.fib_mono hlen
+  have hpos1 : (0 : ℝ) < (Nat.fib (s + 1) : ℝ) ^ 2 := by
+    have : 0 < Nat.fib (s + 1) := Nat.fib_pos.2 (by omega); positivity
+  have hfibpos1 : (0 : ℝ) < (Nat.fib (s + 1) : ℝ) := by
+    have : 0 < Nat.fib (s + 1) := Nat.fib_pos.2 (by omega); exact_mod_cast this
+  have hfibge1 : (1 : ℝ) ≤ (Nat.fib (s + 1) : ℝ) := by
+    have : 1 ≤ Nat.fib (s + 1) := Nat.fib_pos.2 (by omega); exact_mod_cast this
+  have hmono : 1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2
+      ≤ ((Nat.fib (s + 1) : ℝ))⁻¹ := by
+    rw [← one_div]
+    calc 1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2
+        ≤ 1 / (Nat.fib (s + 1) : ℝ) ^ 2 :=
+          one_div_le_one_div_of_le hpos1 (by nlinarith [hfibmono, hpos1])
+      _ ≤ 1 / (Nat.fib (s + 1) : ℝ) :=
+          one_div_le_one_div_of_le hfibpos1 (by nlinarith [hfibge1])
+  exact le_trans h1 hmono
+
 /-- **Squeeze to a point.**  Two reals in every member of a sequence of closed
 intervals whose diameters tend to `0` are equal.  The abstract nesting-uniqueness
 the schedule uses: at the limit, `ψ(xA)` and the wz-chain's irrational point both
