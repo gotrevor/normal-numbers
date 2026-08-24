@@ -2367,6 +2367,81 @@ theorem exists_fib_threshold_log (a : ℝ) :
       _ ≤ Real.goldenRatio ^ (k + 1) := pow_le_pow_right₀ hφ1 (by omega)
   · rw [hmax] at hn2; exact hn2
 
+/-- **cfK-controlled resolution is AFFINE in `|w|`** (resolution half of
+`schedA_block_linear`, discharged CONDITIONALLY on the B5′ log-cfK bound).  If the
+target-width reciprocal `a = 4/(d−c)` is at most `8·cfK(w)²` (which holds when the
+target is a fixed fraction of the cylinder, `d−c ≥ 1/(2·cfK w²)` via
+`volume_cfCylinder_ge_inv`) AND the word carries the log-cfK bound
+`cfK w ≤ exp(κ·|w|)` (the B5′ `goodExtSet goodC` mechanism, `CFSchedule`
+`SchedStep`), then the Fibonacci resolution threshold `N` (with `a < fib(n+1)²` for
+all `n ≥ N`) is bounded by an AFFINE function of `|w|`:
+`N ≤ (κ/log φ)·|w| + (log_φ(√5·√8+1)+1)`.
+
+**ROUTE CORRECTION (2026-08-28, this lap).**  The current directive's *digit-cap*
+route (`digits ≤ D`) is FATAL: a FIXED cap `D` makes the limit badly approximable
+(no digit `> D`), hence NOT CF-normal; a GROWING cap `D_s→∞` makes `log cfK`
+super-linear (`≈ ∑ block_t·log D_t`), breaking the very geometric bound it was
+meant to secure.  The correct control is the B5′ `cfK u ≤ exp(goodC·|u|)` bound
+(full Gauss measure via `goodExtSet`, compatible with normality — it is the Lévy
+constant `(1/n)log q_n → π²/(12ln2)` made uniform, NOT a support restriction).
+This lemma isolates exactly the arithmetic that bound buys.  The remaining open
+work is grafting `exp(goodC·n)` onto the steer block
+(`exists_multiscale_freq_good_block_steer_len`) — intersect the multiscale
+selection set with `goodExtSet w goodC ·`, which keeps positive measure. -/
+theorem exists_fib_threshold_linear_of_cfK {κ : ℝ} (hκ : 0 ≤ κ)
+    (w : List ℕ) (a : ℝ) (ha : a ≤ 8 * (cfK w : ℝ) ^ 2)
+    (hK : (cfK w : ℝ) ≤ Real.exp (κ * (w.length : ℝ))) :
+    ∃ N : ℕ, (∀ n : ℕ, N ≤ n → a < (Nat.fib (n + 1) : ℝ) ^ 2) ∧
+      (N : ℝ) ≤ (κ / Real.log Real.goldenRatio) * (w.length : ℝ)
+        + (Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt 8 + 1) + 1) := by
+  obtain ⟨N, hN1, hN2⟩ := exists_fib_threshold_log a
+  refine ⟨N, hN1, ?_⟩
+  have hlogφ : 0 < Real.log Real.goldenRatio := Real.log_pos Real.one_lt_goldenRatio
+  have hcfK0 : (0 : ℝ) ≤ (cfK w : ℝ) := by positivity
+  have hexp1 : (1 : ℝ) ≤ Real.exp (κ * (w.length : ℝ)) := Real.one_le_exp (by positivity)
+  have hexp0 : (0 : ℝ) < Real.exp (κ * (w.length : ℝ)) := Real.exp_pos _
+  have h5 : (0 : ℝ) ≤ Real.sqrt 5 := Real.sqrt_nonneg _
+  -- `√a ≤ √8 · cfK`
+  have hsqa : Real.sqrt a ≤ Real.sqrt 8 * (cfK w : ℝ) := by
+    have h1 : Real.sqrt a ≤ Real.sqrt (8 * (cfK w : ℝ) ^ 2) := Real.sqrt_le_sqrt ha
+    rwa [Real.sqrt_mul (by norm_num), Real.sqrt_sq hcfK0] at h1
+  -- `√5·√a + 1 ≤ (√5·√8 + 1)·exp(κ|w|)`
+  have hkey : Real.sqrt 5 * Real.sqrt a + 1
+      ≤ (Real.sqrt 5 * Real.sqrt 8 + 1) * Real.exp (κ * (w.length : ℝ)) := by
+    have hb : Real.sqrt 5 * Real.sqrt a
+        ≤ Real.sqrt 5 * Real.sqrt 8 * Real.exp (κ * (w.length : ℝ)) := by
+      calc Real.sqrt 5 * Real.sqrt a
+          ≤ Real.sqrt 5 * (Real.sqrt 8 * (cfK w : ℝ)) :=
+            mul_le_mul_of_nonneg_left hsqa h5
+        _ = Real.sqrt 5 * Real.sqrt 8 * (cfK w : ℝ) := by ring
+        _ ≤ Real.sqrt 5 * Real.sqrt 8 * Real.exp (κ * (w.length : ℝ)) :=
+            mul_le_mul_of_nonneg_left hK (by positivity)
+    have hexpand : (Real.sqrt 5 * Real.sqrt 8 + 1) * Real.exp (κ * (w.length : ℝ))
+        = Real.sqrt 5 * Real.sqrt 8 * Real.exp (κ * (w.length : ℝ))
+          + Real.exp (κ * (w.length : ℝ)) := by ring
+    rw [hexpand]; linarith [hb, hexp1]
+  -- push through `log`
+  have hpos1 : (0 : ℝ) < Real.sqrt 5 * Real.sqrt a + 1 := by positivity
+  have hpos2 : (0 : ℝ) < (Real.sqrt 5 * Real.sqrt 8 + 1) * Real.exp (κ * (w.length : ℝ)) := by
+    positivity
+  have hlogle : Real.log (Real.sqrt 5 * Real.sqrt a + 1)
+      ≤ Real.log ((Real.sqrt 5 * Real.sqrt 8 + 1) * Real.exp (κ * (w.length : ℝ))) :=
+    (Real.log_le_log_iff hpos1 hpos2).mpr hkey
+  rw [Real.log_mul (by positivity) (Real.exp_ne_zero _), Real.log_exp] at hlogle
+  have hlogle' : Real.log (Real.sqrt 5 * Real.sqrt a + 1)
+      ≤ κ * (w.length : ℝ) + Real.log (Real.sqrt 5 * Real.sqrt 8 + 1) := by linarith [hlogle]
+  have hsub : Real.log (Real.sqrt 5 * Real.sqrt a + 1) / Real.log Real.goldenRatio
+      ≤ κ / Real.log Real.goldenRatio * (w.length : ℝ)
+        + Real.log (Real.sqrt 5 * Real.sqrt 8 + 1) / Real.log Real.goldenRatio := by
+    have heq : κ / Real.log Real.goldenRatio * (w.length : ℝ)
+        + Real.log (Real.sqrt 5 * Real.sqrt 8 + 1) / Real.log Real.goldenRatio
+        = (κ * (w.length : ℝ) + Real.log (Real.sqrt 5 * Real.sqrt 8 + 1))
+          / Real.log Real.goldenRatio := by ring
+    rw [heq]
+    exact div_le_div_of_nonneg_right hlogle' hlogφ.le
+  simp only [Real.logb] at hN2 ⊢
+  linarith [hN2, hsub]
+
 /-- **Linear block-length bound** (route-decisive core, DISCLOSED `sorry`).  The
 sharp form of the geometric bound: the steer-block length is bounded by an AFFINE
 function of the accumulated word length, `|chainApp w s| ≤ K₁·|w s| + K₂`.  With

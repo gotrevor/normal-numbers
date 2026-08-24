@@ -1,5 +1,47 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🧭 ROUTE CORRECTION (2026-08-28 grind lap) — DIGIT-CAP IS FATAL; cfK-BOUND-VIA-goodC IS THE ROUTE
+
+The CURRENT DIRECTIVE's ratified "DIGIT-CAPPED steering" route for
+`schedA_block_linear` is **refuted**, on two independent grounds:
+- **A FIXED cap `D`** makes the limit `x` have no CF digit `> D` ⇒ `x` is badly
+  approximable ⇒ NOT CF-normal (Gauss–Kuzmin puts mass on every digit).  Fatal to
+  the headline.
+- **A GROWING cap `D_s → ∞`** (needed for normality) makes
+  `log cfK(w_s) ≈ ∑_t block_t·log(D_t+1)` **super-linear**, so the block length
+  `|u_s| ≳ log cfK(w_s)` grows FASTER than `|w_s|` and the geometric bound
+  `blk ≤ ρ·word` (fixed `ρ`, the exact hypothesis `slack_telescoping` needs)
+  **fails**.  So the cap that was meant to *secure* the geometric bound *destroys*
+  it.
+
+**Correct control = the B5′ `cfK u ≤ exp(goodC·|u|)` bound** (`CFSchedule.lean`
+`SchedStep` line 224, from `goodExtSet w goodC n` with volume `≥ ½·|I_w|`).  This
+is the Lévy constant `(1/n)log q_n → π²/(12 ln 2)` made *uniform* — it holds on a
+FULL-Gauss-measure set (not a support restriction), so it is compatible with
+CF-normality, and it gives `log cfK(w_s) = O(|w_s|)` ⇒ resolution length `Nfib =
+O(|w_s|)` ⇒ the geometric/affine block bound.
+
+**Landed this lap (axiom-clean, `CFScheduleA.lean`):**
+`exists_fib_threshold_linear_of_cfK` — the RESOLUTION HALF of
+`schedA_block_linear`, discharged conditionally on the cfK-exp-bound:
+`a ≤ 8·cfK(w)² ∧ cfK w ≤ exp(κ|w|) ⇒ ∃ N, (∀ n≥N, a < fib(n+1)²) ∧
+N ≤ (κ/log φ)·|w| + C`.  The target-width reciprocal `a = 4/(d−c) ≤ 8 cfK²` holds
+because `d−c ≥ 1/(2 cfK²)` (`volume_cfCylinder_ge_inv`, PROVED) when the target is
+a fixed fraction of the cylinder.
+
+**NEW hardest sub-obligation** (the single remaining gap for `schedA_block_linear`):
+graft `cfK u ≤ exp(goodC·|u|)` onto the multiscale steer block
+`exists_multiscale_freq_good_block_steer_len` — intersect its scale-selection set
+with `goodExtSet wx goodC ·` (positive measure retained: freq-good set has measure
+`≥ γ`, `goodExtSet` has measure `≥ ½·|I_w|`, and for the tail-controlled subset
+both hold simultaneously by the B5′ `goodC_half` union bound).  Once the steer
+block carries an exp-cfK field, thread it up through `StepSpecA` and feed
+`exists_fib_threshold_linear_of_cfK` to close `schedA_block_linear` with an
+explicit affine `(K₁,K₂)`.  **This SUPERSEDES the `exists_uniform_block_param_tight`
+"tight length" path in the item-1 note below — the length is now controlled through
+`Nfib = O(|w|)`, not through shrinking `m`.**
+
+
 ## 🟢🟢🟢 FRONTIER (2026-08-24 grind session): B6 CRUX ASSEMBLED — rests on ONE math lemma
 
 The crux `exists_interleaved_affine_witness` is now FULLY MACHINE-CHECKED except
