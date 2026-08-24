@@ -4,53 +4,71 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-24 review lap — B6: PIVOT TO THE CRUX)
+## CURRENT DIRECTIVE (set 2026-08-24 review lap — B6: HDOM REFUTED, ASSEMBLE THE HDOM-FREE LIMIT)
 
 - **Objective (unchanged): B6 — affine images (Vandehey §7).**  Prove the crux
-  `exists_interleaved_affine_witness` (`CFScheduleA.lean:404`, sole open `sorry`
-  in `src/`), whence `exists_cfNormal_and_affine_cfNormal`.
-- **THE MANDATED MOVE — build the frequency telescoping; STOP proving atoms.**
-  The geometric/analytic atom toolkit is DECLARED COMPLETE (laps 11–21, all
-  axiom-clean; inventory in `PENDING_WORK.md` "TOOLKIT NOW COMPLETE").  Do NOT
-  prove another convenience atom — that is the drift this review is correcting
-  (11 straight laps of leaves; the crux `sorry` untouched, the recursion
-  deferred "next lap" ~7 times).  Every lap from here advances ONE of:
-  1. **`chain_orbit_equidist` (THE CRUX, hardest-first).**  The abstract
-     generic-chain frequency telescoping: given a nested genuine-word chain
-     `w : ℕ → List ℕ`, `w(s+1) = w s ++ filler_s ++ u_s` with each `u_s`
-     freq-good and the DOMINANCE condition (|w s| ≤ t·|appended|, so prefix +
-     fillers are asymptotically negligible), the limit point `y ∈ ⋂ cfCylinder(w s)`
-     has `CFOrbitEquidist y`.  Port `CFCorrect.xstar_cf_freq_tendsto` +
-     `tailSched_cfDiscLt` + `cfDiscLt_short_append` from the specific `sched`
-     to this abstract hypothesis (copy-extend `CFCorrect`, NEVER edit it).
-  2. **`exists_freq_good_extend_affine` (ψ-stage wiring)** — compose the ready
-     atoms (recipe: `PENDING_WORK.md` lap-21 item 1) to emit a freq-good wz
-     extension + the interval invariant, choosing the block depth `L_s` large
-     enough to KEEP dominance despite the growing per-stage fillers.
-  3. **`SchedStateA`/`schedStepA`/`schedA`/limit** — the joint recursion by
-     choice (mirror `CFSchedule.sched`), feeding two chains into (1).
+  `exists_interleaved_affine_witness` (`CFScheduleA.lean:1559`, sole open `sorry`
+  in `src/`), whence `exists_cfNormal_and_affine_cfNormal`.  Both B5′ headlines
+  stay proved + axiom-clean (re-verified this review: trust-triple).
+- **ROUTE PIVOT RATIFIED — the `hdom` route is DEAD, uniform-goodness is MANDATORY.**
+  The prior directive mandated `chain_orbit_equidist` *with* a DOMINANCE
+  hypothesis (`|chainApp w s| < ε·|w s|`).  Commit `ec0875d` REFUTED that as
+  unattainable: steering resolves each stream to the other's metric scale at cost
+  `Θ(log_φ cfK) = Θ(word)`, so blocks are `Θ(word)`, growth is geometric,
+  `block/word → κ ≠ 0` — `hdom` CANNOT hold.  The crux crack that replaces it,
+  **`exists_uniformly_freq_good_block_steer`** (a steer block whose EVERY prefix
+  is `δ·k + (4√k+2|v|)`-good, slack `o(k)`), is PROVED + axiom-clean (commit
+  `f2b4b33`).  Do NOT resurrect `hdom` or the `filler` framing anywhere.
+- **THE MANDATED MOVE — build the hdom-FREE chain limit (step 4 assembly); the
+  block/measure toolkit is CLOSED.**  The uniformly-good-block toolkit
+  (`exists_uniformly_freq_good_block_steer` + `quadScales*` + multiscale measure +
+  interpolation arith) is COMPLETE and axiom-clean; **proving another block or
+  measure atom is the forbidden drift** (the crux crack already landed — polishing
+  more block lemmas is leaf-work now).  Every lap advances ONE of, hardest-first:
+  1. **hdom-free `chain_cf_digit_freq_tendsto` variant (THE remaining crux).**
+     Copy-extend `CFChainFreq` (NEVER edit the existing lemma).  Swap the per-block
+     hypothesis from `hgood ∧ hdom` to **uniform-prefix-goodness**
+     (`∀k, |dev((chainApp w s).take k)| < δ_s·k + (4√k+2|v|)`, `δ_s→0`).  The one
+     hdom use is line 450's `cfDiscLt_append_take` on the partial last block —
+     REPLACE it: decompose the mid-block prefix `p` as `w s ++ (chainApp w s).take j`
+     and bound via `countOccurrences_append_addslack₂` from (whole-word-good `w s`)
+     ⊕ (the block's OWN prefix bound at `j`).  Whole-word goodness comes from
+     `chainTail_dev_split_var` (BUILT) once `∑ C_j = o(word)` (a `Tendsto` lemma:
+     geometric `|u_j|` ⇒ `∑ 4√|u_j| + 2j|v| = o(|w|)`).  Then wrap via the reusable
+     `chain_orbit_equidist` orbit↔window tail.
+  2. **ψ-round `_uniform`** — rebuild `exists_freq_good_extend_affine_steer` to
+     emit uniformly-good blocks (call `exists_uniformly_freq_good_block_steer` per
+     stream; choose `n₁,s ~ poly(1/δ_s)` for the measure budget and `m_s` so
+     `n₁+m²` reaches resolution length `~κ|w_s|`).  Per-round feasibility
+     `(m+1)·A₁(n₁) < γ(c',d')` holds once `|w_s|` large (geometric beats poly).
+  3. **`SchedStateA`/`schedStepA`/`schedA`/limit** — the two-stream recursion
+     (mirror `CFSchedule.sched`) → two uniformly-good chains → step-1 limit →
+     `CFOrbitEquidist` both streams → assemble `exists_interleaved_affine_witness`.
+     Gluing toolkit READY (`eq_of_mem_iInter_Icc`, `cfCylinder_chain_volume_tendsto`,
+     `irrational_mem_Ioo_of_mem_iInter_cfCylinder`).
 - **ROUTE-DECISIVE UNCERTAIN CASE (name it, probe it first):** whether the
-  CFCorrect dominance/telescoping SURVIVES the interleaved schedule's TWO new
-  frictions absent in B5′ — (i) a per-stage *filler* whose length grows as the
-  target interval shrinks (B5′ appended a pure freq-good block, no filler), and
-  (ii) x/ψ *alternation*, so each stream's prefix also absorbs the OTHER
-  stream's fillers.  Both are defeated only if each stage picks `L_s` (hence
-  `|u_s|`) large enough to dominate the accumulated length; the smallest probe
-  is drafting `chain_orbit_equidist`'s statement + its dominance hypothesis and
-  checking `tailSched_cfDiscLt`'s argument goes through with a `cfDiscLt_short_append`
-  absorbing the filler.  If it does NOT abstract cleanly, THAT is the real crux
-  — escalate, do not retreat to leaf work.
+  mid-block prefix bound actually CLOSES hdom-free — i.e. `countOccurrences_append_addslack₂`
+  applied to (whole-word-good `w s`, slack `o(|w s|)`) ⊕ (block prefix good at `j`,
+  slack `δ_s·j + 4√j + 2|v|`) yields `|dev(p)| < ε·p` for the concatenation of
+  length `p`, with `δ_s → 0` across stages.  Smallest probe: draft the hdom-free
+  variant's statement + do the mid-block `hprefix` case (line 438–450 analogue)
+  with `addslack₂` in place of `cfDiscLt_append_take`, and confirm the boundary
+  `hbound` survives on `chainTail_dev_split_var`'s `o(word)` slack instead of the
+  clean `ε·len`.  If the `o(word)` boundary slack does NOT divide out (`∑C_j/len↛0`),
+  THAT is the real crux — escalate, do not retreat to block/measure leaf work.
 - **ADDITIVE ONLY 🧊**: B5′ is COMPLETE and LOCKED.  Never edit/weaken a frozen
   decl or landed module (`TBrick*`, `CFSchedule`, `CFCorrect`, `CFLogTail`,
-  `Headline`, `KhinchinDefs`, …); copy-extend into `CFScheduleA`/new files.
+  `Headline`, `KhinchinDefs`, the existing `chain_cf_digit_freq_tendsto` /
+  `chainTail_dev_split`, …); copy-extend into `CFChainFreq`/`CFScheduleA`/new files.
   After ANY schedule work re-`#print axioms exists_absolutely_normal_cf_normal_khinchin`
   — MUST stay trust-triple `[propext, Classical.choice, Quot.sound]`.
 - Escape valves (judge-governed, see brief): Tier 2 may drop to a finite
   family; the image-Khinchin stretch detaches freely.
-- **Why**: the atoms are worthless if the telescoping doesn't close, and the
-  telescoping is the ONLY piece whose feasibility is in real doubt (it must
-  survive fillers + alternation).  Settling it early is worth more than more
-  scaffolding.  Historical B5′-wiring directive preserved below for provenance.
+- **Why**: the block toolkit is worthless if the limit doesn't telescope, and the
+  hdom-free limit (step 1) is the ONLY piece whose feasibility is still in real
+  doubt — its mid-block bound must close without the (refuted) `hdom`.  Settling it
+  early is worth more than more block scaffolding.  Historical B5′-wiring directive
+  preserved below for provenance.
 
 <details><summary>Superseded directive (route C′ wiring — now DONE)</summary>
 
@@ -115,6 +133,20 @@ detail lives in PENDING_WORK.md.
 </details>
 
 ### Directive history
+- 2026-08-24 (review lap → HDOM REFUTED, ASSEMBLE HDOM-FREE LIMIT): validated the
+  executed route pivot. Confirmed one open `sorry` (the crux) + both B5′ headlines
+  axiom-clean via real `#print axioms`. The prior directive's item (1) mandated
+  `chain_orbit_equidist` WITH a dominance hypothesis — but the grind laps (correctly
+  following the math) refuted `hdom` as unattainable (`ec0875d`) and PROVED the
+  replacement crux crack `exists_uniformly_freq_good_block_steer` (`f2b4b33`,
+  axiom-clean). So the directive was STALE (a literal grind lap would chase the dead
+  hdom route). Rewrote the mandated move to the **hdom-free `chain_cf_digit_freq_tendsto`
+  variant** (step-4 assembly), named the route-decisive case (does the mid-block bound
+  close via `countOccurrences_append_addslack₂` without hdom, and does the `o(word)`
+  boundary slack divide out), and FORBADE proving further block/measure atoms (the
+  toolkit is closed). No charter route trigger fired (route needs a `CFChainFreq`
+  copy-extend, not a forbidden import). Build green 8757; not-complete (open crux) so
+  no self-stop despite ALLOW_STOP=1.
 - 2026-08-24 (review lap → B6 PIVOT TO CRUX): 11 straight grind laps (11–21)
   proved geometric/analytic ATOMS (each axiom-clean, each a green commit) but
   the crux `sorry` `exists_interleaved_affine_witness` stayed untouched and the

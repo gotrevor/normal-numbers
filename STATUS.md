@@ -1,23 +1,27 @@
 # STATUS — normal-numbers 📊
 
-**B5′ COMPLETE + axiom-clean (10 headlines); B6 campaign OPEN — Vandehey §7 affine images, additive, one crux `sorry` left.** · **Build**: 🟢 green (8756 jobs) · **Updated**: review lap · 2026-08-24 · `96e8c00`
+**B5′ COMPLETE + axiom-clean (10 headlines); B6 campaign OPEN — Vandehey §7 affine images, additive, one crux `sorry` left.** · **Build**: 🟢 green (8757 jobs) · **Updated**: review lap · 2026-08-24 · `7f46d25`
 
 ## Where it stands
 
-**B5′ is DONE; B6 is the active frontier.** The whole B5′ expedition (ten
-headline theorems — Track A base-b normality + Track B Tier 1 Becher–Yuhjtman +
-Tier 2 Khinchin) is proved and `#print axioms`-clean (trust triple only). The
-LIVE work is the **additive B6 campaign** (Vandehey, Compositio 2017, §7): a real
-`x` with BOTH `x` and its affine image `ψ(x)=q·x+r` CF-normal, for `q>0`. It
-reduces (`isCFNormal_of_irrational_orbit_freq`) to ONE crux —
-`exists_interleaved_affine_witness` (`CFScheduleA.lean:404`), the **sole open
-`sorry` in `src/`**: an interleaved (diagonal) schedule building `x` as a limit
-of nested intervals whose x-stages and ψ-stages alternate. Laps 11–21 proved the
-ENTIRE geometric/analytic atom toolkit (all axiom-clean); the crux now reduces
-to the **frequency telescoping** — porting `CFCorrect.xstar_cf_freq_tendsto` to
-an abstract freq-good dominant chain — plus the joint recursion. The
-route-decisive uncertainty: whether that telescoping's dominance survives the
-schedule's growing per-stage fillers + x/ψ alternation (both absent in B5′).
+**B5′ is DONE; B6 is the active frontier — route PIVOTED (hdom refuted).** The
+whole B5′ expedition (ten headline theorems — Track A base-b normality + Track B
+Tier 1 Becher–Yuhjtman + Tier 2 Khinchin) is proved and `#print axioms`-clean
+(trust triple only). The LIVE work is the **additive B6 campaign** (Vandehey,
+Compositio 2017, §7): a real `x` with BOTH `x` and its affine image `ψ(x)=q·x+r`
+CF-normal, for `q>0`. It reduces (`isCFNormal_of_irrational_orbit_freq`) to ONE
+crux — `exists_interleaved_affine_witness` (`CFScheduleA.lean:1559`), the **sole
+open `sorry` in `src/`**: an interleaved (diagonal) schedule building `x` as a
+limit of nested intervals whose x-stages and ψ-stages alternate. The
+route-decisive uncertainty was SETTLED this cycle: the natural **dominance**
+hypothesis (`|block| = o(word)`) is UNATTAINABLE — steering resolves each stream
+to the other's metric scale at cost `Θ(word)`, so blocks are `Θ(word)` and growth
+is geometric. The hdom-free **uniform-prefix-goodness** route is mandatory, and
+its crux crack — `exists_uniformly_freq_good_block_steer` (a steer block whose
+EVERY prefix is `δ·k + o(k)`-good) — is PROVED + axiom-clean. What remains is the
+**hdom-free chain-limit assembly**: a copy-extended `chain_cf_digit_freq_tendsto`
+whose mid-block bound uses the block's own prefix bound (not the refuted `hdom`),
+then the ψ-round rebuild + two-stream recursion.
 
 - **Track A** (base-b normality): Wall, the ln 2 reduction (conditional on the
   correct equidistribution hypothesis), Stoneham — axiom-clean.
@@ -30,6 +34,21 @@ schedule's growing per-stage fillers + x/ψ alternation (both absent in B5′).
   proved MODULO the crux `sorry`; depends on `sorryAx` until the schedule closes.
 
 ## What's happened (newest first)
+
+- 2026-08-24 (review lap): **B6 route pivot RATIFIED — hdom refuted, hdom-free
+  limit is the last crux.** Inventory (real `#print axioms`): build green 8757,
+  both B5′ headlines trust-triple, sole `src/` `sorry` = the B6 crux
+  `exists_interleaved_affine_witness`. Confirmed the grind laps since the last
+  review CORRECTLY diverged from the prior directive: they refuted `hdom`
+  (`ec0875d` — steer blocks are `Θ(word)`, dominance impossible) and PROVED the
+  replacement crux crack `exists_uniformly_freq_good_block_steer` (`f2b4b33`,
+  axiom-clean) + the full uniformly-good-block toolkit (`quadScales*`, multiscale
+  measure, interpolation arith) + `chainTail_dev_split_var`. The CURRENT DIRECTIVE
+  was STALE (still mandated `chain_orbit_equidist` WITH dominance); rewrote it to
+  the **hdom-free `chain_cf_digit_freq_tendsto` variant** (step-4 assembly),
+  FORBADE more block/measure atoms, named the route-decisive case (mid-block bound
+  closing via `addslack₂` + `o(word)` boundary slack dividing out). No charter
+  trigger fired.
 
 - 2026-08-24 (review lap): **B6 course-correction — PIVOT TO THE CRUX.**
   Inventory: build green 8756, B5′ headlines re-verified trust-triple, sole
@@ -109,26 +128,20 @@ schedule's growing per-stage fillers + x/ψ alternation (both absent in B5′).
   zones) made UNCONDITIONAL; seed brick + refinement toolkit (`TBrickRefine`).
 - 2026-08-23 (review lap): diagnosed input-gathering fixation, redirected to the
   Lemma-13 measure-balance assembly (now proved).
-- 2026-08-23: W5 Lemma-13 inputs COMPLETE — B–Y Lemmas 7/8/9, Prop 12, d-ary bad
-  zones (summed + widened), CF word bridge, digit semantics.
-- 2026-08-23: W4 CORE COMPLETE — `CFBlockFreq.lean` first→second moment→
-  covariance (γ-mixing consumer) → `variance_blockCount_le` →
-  `chebyshev_blockCount` (+ brick version), axiom-clean.
-- 2026-08-23 (review lap): certified Track A complete + headlines axiom-clean;
-  set directive to the W4 Chebyshev assembly; created STATUS/DIRECTION.
-- 2026-08-23: W4/W3/W2/W1 COMPLETE — γ-mixing (`CFGammaMixing`), `cylinder_mixing`
-  + `gauss_kuzmin`, `CFDigitLaw`, `CFCylinder`/`CFDefs`.
-- 2026-08-22: Track A foundations + headlines — Wall, ln 2 reduction, Stoneham.
 
 ## Outstanding
 
-### Short-term (mirror PENDING_WORK top — B6 crux)
-1. **`chain_orbit_equidist` (THE CRUX)** — abstract generic-chain frequency
-   telescoping (port `CFCorrect.xstar_cf_freq_tendsto` to a freq-good dominant
-   chain). The route-decisive piece; must survive fillers + alternation.
-2. **`exists_freq_good_extend_affine`** — ψ-stage wiring (compose ready atoms;
-   pick `L_s` large to keep dominance).
-3. **`SchedStateA`/`schedStepA`/`schedA`/limit** — joint interleaved recursion.
+### Short-term (mirror PENDING_WORK top — B6 hdom-free assembly)
+1. **hdom-free `chain_cf_digit_freq_tendsto` variant (THE remaining crux)** —
+   copy-extend `CFChainFreq`; per-block hypothesis = uniform-prefix-goodness
+   (`δ_s→0`); replace line 450's `cfDiscLt_append_take`/hdom with
+   `countOccurrences_append_addslack₂` (whole-word-good `w s` ⊕ block's own prefix
+   bound); whole-word goodness via `chainTail_dev_split_var` once `∑C_j = o(word)`.
+2. **ψ-round `_uniform`** — rebuild `exists_freq_good_extend_affine_steer` to emit
+   uniformly-good blocks (call `exists_uniformly_freq_good_block_steer`; pick
+   `n₁,s`, `m_s` per the measure budget + resolution length).
+3. **`SchedStateA`/`schedStepA`/`schedA`/limit** — two-stream recursion → two
+   uniformly-good chains → step-1 limit → both streams `CFOrbitEquidist` → the crux.
 
 ### Long-term
 - B6 general family / Tier-2 image-Khinchin stretch (detaches freely; after the
