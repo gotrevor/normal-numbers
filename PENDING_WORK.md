@@ -129,13 +129,14 @@ ingredient is now in hand.** Remaining = pure schedule wiring (items 2–3 below
    block (no placement prefix) and lands in `(c,d)`.
 </details>
 
-2. **Rebuild the ψ-round `exists_freq_good_extend_affine` filler-free**: replace its
-   step (5) x-reselection (`exists_cfCylinder_subset_affine_preimage` placement +
-   `exists_freq_good_extend_cfCylinder`) with a single `exists_freq_good_block_steer`
-   into `(a,b) ∩ ψ⁻¹(Ioo e' f')`. Now BOTH exposed blocks are the whole freq-good
-   `u` (no `wp` filler). [The z-block already uses `exists_freq_good_block_in_Ioo`;
-   swap it too for `_steer` so `wz'`'s block is filler-free.]
-3. **Wire `exists_interleaved_affine_witness`**: `SchedStateA`/`schedStepA` mirroring
+✅ 2. **`exists_freq_good_extend_affine_steer`** (CFScheduleA, commit `2adf047`,
+   axiom-clean) — DONE. The filler-free ψ-round: `wz' = wz ++ uz`, `wx' = wx ++ ux`
+   with `uz, ux` single steerable freq-good blocks, each exposed as `w'.drop w.length`
+   (the WHOLE freq-good word, no `wp`), maintaining the interval invariant. This is
+   the drop-in whose `chainApp = w'.drop w.length` is a single margin-good block.
+
+3. **Wire `exists_interleaved_affine_witness`** (THE remaining sole `src/` `sorry`,
+   CFScheduleA:~975): `SchedStateA`/`schedStepA` mirroring
    `CFSchedule.sched`, feeding both chains (blocks = whole freq-good `u`, `o(word)`
    under slow growth ⇒ `hdom` holds) into the EXISTING `chain_orbit_equidist`.
    The interval invariant glues the ψ-chain limit to `ψ(xA)` (limit toolkit ready:
