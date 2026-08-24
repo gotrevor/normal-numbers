@@ -2287,7 +2287,45 @@ theorem chain_slack_littleO {blk : ℕ → ℕ} (n₁ : ℕ → ℕ) (L : ℝ)
     (hblktop : Filter.Tendsto (fun s => (blk s : ℝ)) Filter.atTop Filter.atTop) :
     (fun s => 4 * (Nat.sqrt (blk s) : ℝ) + L + (n₁ s : ℝ)) =o[Filter.atTop]
       fun s => (blk s : ℝ) := by
-  sorry
+  have hbpos : ∀ s, (0 : ℝ) < blk s := fun s => by exact_mod_cast hblk1 s
+  have hinv : Filter.Tendsto (fun s => ((blk s : ℝ))⁻¹) Filter.atTop (nhds 0) :=
+    hblktop.inv_tendsto_atTop
+  -- `P s → 0` whenever `0 ≤ P s` and `(P s)² ≤ G s → 0` (squaring dodges `Real.sqrt`)
+  have key : ∀ (P G : ℕ → ℝ), (∀ s, 0 ≤ P s) → (∀ s, (P s) ^ 2 ≤ G s) →
+      Filter.Tendsto G Filter.atTop (nhds 0) → Filter.Tendsto P Filter.atTop (nhds 0) := by
+    intro P G hP hle hG
+    have hP2 : Filter.Tendsto (fun s => (P s) ^ 2) Filter.atTop (nhds 0) :=
+      squeeze_zero (fun s => sq_nonneg _) hle hG
+    have h := hP2.sqrt
+    rw [Real.sqrt_zero] at h
+    exact h.congr (fun s => Real.sqrt_sq (hP s))
+  have hq : Filter.Tendsto (fun s => (Nat.sqrt (blk s) : ℝ) / (blk s)) Filter.atTop (nhds 0) := by
+    refine key _ (fun s => ((blk s : ℝ))⁻¹) (fun s => by positivity) (fun s => ?_) hinv
+    have hbp := hbpos s
+    have h1 : (Nat.sqrt (blk s) : ℝ) ^ 2 ≤ (blk s : ℝ) := by exact_mod_cast Nat.sqrt_le' (blk s)
+    rw [div_pow]
+    calc (Nat.sqrt (blk s) : ℝ) ^ 2 / (blk s : ℝ) ^ 2
+        ≤ (blk s : ℝ) / (blk s : ℝ) ^ 2 := by gcongr
+      _ = ((blk s : ℝ))⁻¹ := by rw [sq, ← div_div, div_self hbp.ne', one_div]
+  have hp : Filter.Tendsto (fun s => (n₁ s : ℝ) / (blk s)) Filter.atTop (nhds 0) := by
+    refine key _ (fun s => (Nat.sqrt (blk s) : ℝ) / (blk s)) (fun s => by positivity)
+      (fun s => ?_) hq
+    have hbp := hbpos s
+    have h2 : (n₁ s : ℝ) ^ 2 ≤ (blk s : ℝ) * (Nat.sqrt (blk s) : ℝ) := by exact_mod_cast hn₁ s
+    rw [div_pow]
+    calc (n₁ s : ℝ) ^ 2 / (blk s : ℝ) ^ 2
+        ≤ ((blk s : ℝ) * (Nat.sqrt (blk s) : ℝ)) / (blk s : ℝ) ^ 2 := by gcongr
+      _ = (Nat.sqrt (blk s) : ℝ) / (blk s : ℝ) := by rw [sq, mul_div_mul_left _ _ hbp.ne']
+  rw [isLittleO_iff_tendsto (fun s h => absurd h (hbpos s).ne')]
+  have hsum : Filter.Tendsto
+      (fun s => 4 * ((Nat.sqrt (blk s) : ℝ) / blk s) + L * ((blk s : ℝ))⁻¹ + (n₁ s : ℝ) / blk s)
+      Filter.atTop (nhds 0) := by
+    have h0 : (0 : ℝ) = 4 * 0 + L * 0 + 0 := by ring
+    rw [h0]
+    exact ((hq.const_mul 4).add (hinv.const_mul L)).add hp
+  refine hsum.congr (fun s => ?_)
+  have hb := (hbpos s).ne'
+  field_simp
 
 /-- **Geometric block-length bound** (route-decisive, DISCLOSED `sorry`).  The
 steer-block length is `O(|w_s|)`: `∃ ρ ≥ 0, ∀ s, |chainApp w s| ≤ ρ·|w s|`.  This
