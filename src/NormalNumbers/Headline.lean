@@ -5,6 +5,8 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.RealDefs
 import NormalNumbers.CFDigitLaw
+import NormalNumbers.DaryCorrect
+import NormalNumbers.Pillai
 
 /-!
 # B5′ headline statement surface (judge-frozen)
@@ -84,13 +86,47 @@ def KhinchinTypical (x : ℝ) : Prop :=
 
 /-! ## The frozen headline statements -/
 
+/-- Bridge: the `List.count` of a value among the mapped-range digit prefix
+equals the `Finset.filter`-card of matching indices (the two count idioms
+used by `xstar_dary_freq_tendsto` and `pillai` respectively). -/
+theorem count_map_range_eq_card_filter (f : ℕ → ℕ) (c p : ℕ) :
+    ((List.range p).map f).count c = ((Finset.range p).filter (fun q => f q = c)).card := by
+  induction p with
+  | zero => simp
+  | succ n ih =>
+    rw [List.range_succ, List.map_append, List.count_append, Finset.range_add_one]
+    simp only [List.map_cons, List.map_nil, List.count_cons, List.count_nil, zero_add]
+    by_cases h : f n = c
+    · rw [Finset.filter_insert, if_pos h, Finset.card_insert_of_notMem (by simp), ih]
+      simp [h]
+    · rw [Finset.filter_insert, if_neg h, ih]
+      simp [h]
+
 /-- **Tier 1 — the Becher–Yuhjtman theorem** (IMRN 2019, minus
 efficiency): there is a real number that is absolutely normal and
 CF-normal.  Witness: `xstar` (its machinery lives in the `CF*`/`TBrick*`
 modules; this statement deliberately does not name it). -/
 theorem exists_absolutely_normal_cf_normal :
     ∃ x : ℝ, IsAbsolutelyNormal x ∧ IsCFNormal x := by
-  sorry
+  refine ⟨xstar, ?_, ?_⟩
+  · intro b hb
+    have hxfrac : Int.fract xstar = xstar :=
+      Int.fract_eq_self.mpr ⟨xstar_mem_Ioo.1.le, xstar_mem_Ioo.2⟩
+    have hy : xstar ∈ Set.Ico (0 : ℝ) 1 := ⟨xstar_mem_Ioo.1.le, xstar_mem_Ioo.2⟩
+    show IsNormalSequence b (digitOf b (Int.fract xstar))
+    rw [hxfrac]
+    apply pillai b hb xstar hy
+    intro r hr1 c hc
+    have hd2 : 2 ≤ b ^ r := by
+      calc 2 ≤ b := hb
+        _ = b ^ 1 := (pow_one b).symm
+        _ ≤ b ^ r := Nat.pow_le_pow_right (by omega) hr1
+    have h := xstar_dary_freq_tendsto (b ^ r) hd2 c hc
+    have h2 := h.congr (fun p => by rw [count_map_range_eq_card_filter])
+    have hcast : ((b : ℝ) ^ r)⁻¹ = ((b ^ r : ℕ) : ℝ)⁻¹ := by push_cast; ring
+    rwa [hcast]
+  · intro v hne hpos
+    exact xstar_cf_freq_tendsto v hne hpos
 
 /-- **Tier 2 — the expedition headline** (the conjunction apparently new
 even on paper): there is a real number that is absolutely normal,
