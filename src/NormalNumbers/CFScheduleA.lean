@@ -2276,16 +2276,105 @@ theorem Ioo_sub_le_volume_cfCylinder (w : List ℕ) (hw : w ≠ [])
     exact absurd hymem.2 (not_le.2 (lt_of_le_of_lt (le_max_left _ _) hy1))
   linarith [hlen]
 
-/-- **x-stream frequency obligation** (hardest-open, DISCLOSED `sorry`).  The
-`chain_orbit_equidist_uniform` hypothesis for the x-chain: for each genuine `v`
-there is a slack `C` with the uniform prefix-goodness (`hblock`) and the `o(word)`
-telescoping (`hslack`).  `hblock` is direct from `StepSpecA` (the step exposes
-`(wxSeq (s+1)).drop |wxSeq s|`-goodness at tolerance `schedEps s → 0`, with slack
-`C s = 4√|blk s| + 2|v| + n₁ s`, once `v ∈ wordFamily s`, i.e. `s ≥ s_v`);
-`hslack` is `slack_telescoping` with `c = |v|−1`, using `C s = o(blk s)` (from
-`n₁ s² ≤ |blk s|·√|blk s|`), `blk → ∞` (from `L_s = s`), and the geometric bound
-`blk s ≤ ρ·word s` (THE route-decisive coupled-bookkeeping obligation: the
-steer-block length must be `O(|w_s|)` — see `DIRECTION.md` ROUTE-DECISIVE case). -/
+/-- **Slack is sublinear in the block length** (DISCLOSED `sorry`, dischargeable
+leaf).  For a chain whose per-stage slack is `C s = 4√|blk s| + 2|v| + n₁ s` with
+`n₁ s² ≤ |blk s|·√|blk s|` (so `n₁ s ≤ |blk s|^{3/4}`) and `|blk s| ≥ 1`, the slack
+is `o(|blk s|)`.  Pure real-analysis (each term `√blk, const, blk^{3/4}` is
+`o(blk)`); no schedule coupling.  Isolated so the crux rests only on the
+route-decisive geometric bound. -/
+theorem chain_slack_littleO {blk : ℕ → ℕ} (n₁ : ℕ → ℕ) (L : ℝ)
+    (hblk1 : ∀ s, 1 ≤ blk s) (hn₁ : ∀ s, n₁ s ^ 2 ≤ blk s * Nat.sqrt (blk s))
+    (hblktop : Filter.Tendsto (fun s => (blk s : ℝ)) Filter.atTop Filter.atTop) :
+    (fun s => 4 * (Nat.sqrt (blk s) : ℝ) + L + (n₁ s : ℝ)) =o[Filter.atTop]
+      fun s => (blk s : ℝ) := by
+  sorry
+
+/-- **Geometric block-length bound** (route-decisive, DISCLOSED `sorry`).  The
+steer-block length is `O(|w_s|)`: `∃ ρ ≥ 0, ∀ s, |chainApp w s| ≤ ρ·|w s|`.  This
+is THE coupled-bookkeeping obligation `DIRECTION.md` flags as route-decisive — it
+needs the ψ-step to expose an UPPER bound on the block length (currently only the
+lower bound `L = s` is threaded).  Stated abstractly for either chain. -/
+theorem schedA_block_geom {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
+    (w : ℕ → List ℕ) (hw : w = wxSeq hq hr ∨ w = wzSeq hq hr) :
+    ∃ ρ : ℝ, 0 ≤ ρ ∧ ∀ s, ((chainApp w s).length : ℝ) ≤ ρ * (w s).length := by
+  sorry
+
+/-- **Abstract chain frequency obligation from per-stage uniform block goodness.**
+Given a strictly-extending chain whose stage-`s` block `chainApp w s` reaches
+depth `s` and is uniformly prefix-good for `wordFamily s` at tolerance `schedEps
+s` (slack `4√|blk|+2|v|+n₁`, `n₁²≤|blk|·√|blk|`), plus the geometric bound
+`schedA_block_geom`, produce the `chain_orbit_equidist_uniform` hypothesis.
+`hblock`: schedule `schedEps s→0` beats any `ε` past `s_v`; `hslack`:
+`slack_telescoping` with `c=|v|−1`, `C=o(blk)` (`chain_slack_littleO`), `blk→∞`,
+`blk≤ρ·word`. -/
+theorem chain_hfreq_of_uniform_blocks (w : ℕ → List ℕ)
+    (hext : ∀ s, ∃ u, u ≠ [] ∧ w (s + 1) = w s ++ u)
+    (hgood : ∀ s, s ≤ (chainApp w s).length ∧ ∃ n₁ : ℕ,
+        n₁ ^ 2 ≤ (chainApp w s).length * Nat.sqrt (chainApp w s).length ∧
+        (∀ k, k ≤ (chainApp w s).length → ∀ v ∈ wordFamily s,
+          |(countOccurrences v ((chainApp w s).take k) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * k|
+              < schedEps s * k
+                + (4 * Nat.sqrt (chainApp w s).length + 2 * v.length + n₁)))
+    (hgeom : ∃ ρ : ℝ, 0 ≤ ρ ∧ ∀ s, ((chainApp w s).length : ℝ) ≤ ρ * (w s).length) :
+    ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
+      ∃ C : ℕ → ℝ, (∀ s, 0 ≤ C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∃ s₀, ∀ s, s₀ ≤ s → ∀ p, p ≤ (chainApp w s).length →
+          |(countOccurrences v ((chainApp w s).take p) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * p| < ε * p + C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∀ s₀, ∃ K, ∀ k, K ≤ k →
+          (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+            < ε * (w (s₀ + k)).length) := by
+  intro v hvne hvpos
+  choose n₁ hn₁sq hn₁good using fun s => (hgood s).2
+  have hblk1 : ∀ s, 1 ≤ (chainApp w s).length :=
+    fun s => List.length_pos_of_ne_nil (chainApp_eq w hext s).2
+  set C : ℕ → ℝ := fun s => 4 * Nat.sqrt (chainApp w s).length + 2 * v.length + n₁ s with hCdef
+  refine ⟨C, fun s => by rw [hCdef]; positivity, ?_, ?_⟩
+  · -- hblock
+    intro ε hε
+    obtain ⟨t₀, ht₀⟩ := mem_wordFamily_eventually v hvne hvpos
+    obtain ⟨Nε, hNε⟩ := exists_nat_gt (1 / ε)
+    refine ⟨max t₀ Nε, fun s hs p hp => ?_⟩
+    have hvfam : v ∈ wordFamily s := ht₀ s (le_trans (le_max_left _ _) hs)
+    have hsEps : schedEps s ≤ ε := by
+      have hsNε : Nε ≤ s := le_trans (le_max_right _ _) hs
+      have hNεs : (Nε : ℝ) ≤ (s : ℝ) := by exact_mod_cast hsNε
+      have h1 : (1 : ℝ) / ε < (s : ℝ) + 1 := lt_of_lt_of_le hNε (by linarith)
+      rw [schedEps, div_le_iff₀ (by positivity : (0 : ℝ) < (s : ℝ) + 1)]
+      rw [div_lt_iff₀ hε] at h1
+      nlinarith [h1]
+    have hb := hn₁good s p hp v hvfam
+    have hp0 : (0 : ℝ) ≤ (p : ℝ) := Nat.cast_nonneg _
+    have hmul : schedEps s * p ≤ ε * p := mul_le_mul_of_nonneg_right hsEps hp0
+    rw [hCdef]
+    calc |(countOccurrences v ((chainApp w s).take p) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * p|
+        < schedEps s * p
+            + (4 * Nat.sqrt (chainApp w s).length + 2 * v.length + n₁ s) := hb
+      _ ≤ ε * p + (4 * Nat.sqrt (chainApp w s).length + 2 * v.length + n₁ s) := by linarith
+  · -- hslack via slack_telescoping
+    obtain ⟨ρ, hρ0, hgeomρ⟩ := hgeom
+    have hvlen1 : 1 ≤ v.length := List.length_pos_of_ne_nil hvne
+    have hblktop : Filter.Tendsto (fun s => ((chainApp w s).length : ℝ)) Filter.atTop Filter.atTop :=
+      tendsto_atTop_mono (fun s => by exact_mod_cast (hgood s).1) tendsto_natCast_atTop_atTop
+    have hClit : (fun s => C s) =o[Filter.atTop]
+        fun s => ((chainApp w s).length : ℝ) := by
+      have := chain_slack_littleO (blk := fun s => (chainApp w s).length) n₁ (2 * v.length)
+        hblk1 (fun s => hn₁sq s) hblktop
+      simpa [hCdef, add_assoc, add_left_comm, add_comm] using this
+    have hslk := slack_telescoping (fun s => ((w s).length : ℝ))
+      (fun s => ((chainApp w s).length : ℝ)) C ((v.length : ℝ) - 1) ρ
+      (by simp; exact_mod_cast hvlen1) hρ0 (by positivity)
+      (fun s => by rw [hCdef]; positivity)
+      (fun s => by positivity)
+      (fun s => by
+        have h := (chainApp_eq w hext s).1
+        rw [h, List.length_append]; push_cast; ring)
+      hgeomρ hClit hblktop
+    exact hslk
+
+/-- x-stream frequency obligation (instantiates `chain_hfreq_of_uniform_blocks`). -/
 theorem schedA_hfreq_x {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
     ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
       ∃ C : ℕ → ℝ, (∀ s, 0 ≤ C s) ∧
@@ -2294,11 +2383,11 @@ theorem schedA_hfreq_x {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) 
             - (gaussMeasure (cfCylinder v)).toReal * p| < ε * p + C s) ∧
         (∀ ε : ℝ, 0 < ε → ∀ s₀, ∃ K, ∀ k, K ≤ k →
           (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
-            < ε * (wxSeq hq hr (s₀ + k)).length) := by
-  sorry
+            < ε * (wxSeq hq hr (s₀ + k)).length) :=
+  chain_hfreq_of_uniform_blocks (wxSeq hq hr) (wxSeq_ext hq hr)
+    (fun s => (schedA_step hq hr s).2.2.2) (schedA_block_geom hq hr _ (Or.inl rfl))
 
-/-- **z-stream frequency obligation** (hardest-open, DISCLOSED `sorry`).  Same as
-`schedA_hfreq_x` for the z-chain (`wzSeq`). -/
+/-- z-stream frequency obligation (instantiates `chain_hfreq_of_uniform_blocks`). -/
 theorem schedA_hfreq_z {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
     ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
       ∃ C : ℕ → ℝ, (∀ s, 0 ≤ C s) ∧
@@ -2307,8 +2396,9 @@ theorem schedA_hfreq_z {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) 
             - (gaussMeasure (cfCylinder v)).toReal * p| < ε * p + C s) ∧
         (∀ ε : ℝ, 0 < ε → ∀ s₀, ∃ K, ∀ k, K ≤ k →
           (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
-            < ε * (wzSeq hq hr (s₀ + k)).length) := by
-  sorry
+            < ε * (wzSeq hq hr (s₀ + k)).length) :=
+  chain_hfreq_of_uniform_blocks (wzSeq hq hr) (wzSeq_ext hq hr)
+    (fun s => (schedA_step hq hr s).1.2.2) (schedA_block_geom hq hr _ (Or.inr rfl))
 
 /-- **THE B6 CRUX (interleaved-schedule witness), FEASIBLE REGIME.**  For `q > 0`
 and `r ∈ (-q, 1)` — exactly the range in which the feasible set
