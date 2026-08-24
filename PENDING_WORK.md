@@ -82,9 +82,15 @@ for `v∈F` at scales `nⱼ = n₁ + j²`, `j = 0..m` (so `n_m = n₁+m² =` the
    `|NS|·(Σ_v …/(δ²n₁))·γw < γ(c,d)`; returns an irrational point of `(c,d)`
    avoiding `⋃_{n∈NS}⋃_{v∈F} cfBadZone wx v n δ` simultaneously. Same combine
    core (A\B positive, strip rationals).
-3. Uniformly-prefix-good steer block (mirror `exists_freq_good_block_steer_len`,
-   output `∀ k≤|u|, δ'-good (u.take k)` from step (2) + `abs_blockCount_…` at each
-   scale + interpolation).
+3. **PER-SCALE part DONE this lap:** `exists_multiscale_freq_good_block_steer_len`
+   (CFScheduleA, after `exists_freq_good_block_steer_len`, axiom-clean). Block `u`
+   of length `NS.max'` with `cfCylinder(wx++u) ⊆ (c,d)` AND
+   `∀ n∈NS, ∀ v∈F, |countOcc v (u.take n) − γv·n| < δ·n + |v|` (freq-good at EVERY
+   scale in `NS`). REMAINING (interpolation to all `k`): a pure arithmetic lemma
+   `∀ k ≤ |u|, |countOcc v (u.take k) − γv·k| < δ·k + |v| + 2·(gap near k)` from the
+   per-scale bound + `|countOcc(u.take k) − countOcc(u.take n)| ≤ k−n` for the
+   largest `n∈NS` with `n ≤ k`. With `NS = {n₁+j² : j≤m}` the gap `k−n ≤ 2√k`.
+   This slots directly into a hdom-free chain limit.
 4. hdom-free `chain_cf_digit_freq_tendsto` variant + the recursion.
 
 ---
