@@ -1124,6 +1124,69 @@ theorem exists_uniform_block_param (β : ℝ) (hβ : 0 < β) (Lc Nfib : ℕ) :
       nlinarith [ht]
     linarith [h1, h2, h3]
 
+/-- **Tight block parameter (word-independent block length).**  Like
+`exists_uniform_block_param` but returns `m` with `m² ~ max(Lc, Nfib, poly(1/β))`
+instead of the lossy `m ~ max(Lc, Nfib, …)` (whose `m² ~ Nfib²` is QUADRATIC in the
+resolution `Nfib`).  Concretely `m = max(⌈√max(Lc,Nfib)⌉+1, (⌈2/β⌉+1)²)`, giving
+the same three feasibility clauses PLUS the explicit upper bound
+`m² ≤ 6(Lc+Nfib) + 2 + 2(⌈2/β⌉+1)⁴` — LINEAR in `Lc, Nfib`, with the only
+`β`-dependence isolated in the last (word-independent) term.  This is what lets the
+interleaved schedule keep each block `|u_s| = n₁+m² = O(|w_s|)` (`hgeom` for
+`slack_telescoping`): with `Nfib ~ |w_s|` (resolution) and `Lc, β` per-level
+bounded, the block stays `≲ |w_s|` so the word grows at most geometrically. -/
+theorem exists_uniform_block_param_tight (β : ℝ) (hβ : 0 < β) (Lc Nfib : ℕ) :
+    ∃ m : ℕ, 0 < m ∧ Lc ≤ m ^ 2 ∧ Nfib ≤ m ^ 2 ∧
+      ((m : ℝ) + 1) / ((m : ℝ) * (Nat.sqrt m : ℝ)) < β ∧
+      m ^ 2 ≤ 6 * (Lc + Nfib) + 2 + 2 * (Nat.ceil (2 / β) + 1) ^ 4 := by
+  set t : ℕ := Nat.ceil (2 / β) + 1 with htdef
+  set s : ℕ := Nat.sqrt (max Lc Nfib) + 1 with hsdef
+  set m : ℕ := max s (t ^ 2) with hmdef
+  have hs2 : max Lc Nfib < s ^ 2 := by
+    rw [hsdef, pow_two]; exact Nat.lt_succ_sqrt (max Lc Nfib)
+  have hsm : s ≤ m := le_max_left _ _
+  have htm : t ^ 2 ≤ m := le_max_right _ _
+  have hs1 : 1 ≤ s := by rw [hsdef]; omega
+  have hm1 : 1 ≤ m := le_trans hs1 hsm
+  have hm0 : 0 < m := hm1
+  have hms2 : s ^ 2 ≤ m ^ 2 := Nat.pow_le_pow_left hsm 2
+  have hLcm : Lc ≤ m ^ 2 := le_trans (le_trans (le_max_left _ _) (le_of_lt hs2)) hms2
+  have hNfibm : Nfib ≤ m ^ 2 := le_trans (le_trans (le_max_right _ _) (le_of_lt hs2)) hms2
+  have ht1 : 1 ≤ t := by omega
+  have htpos : (0:ℝ) < (t:ℝ) := by exact_mod_cast ht1
+  have hsqrtm : t ≤ Nat.sqrt m := by
+    have h := Nat.sqrt_le_sqrt htm; rwa [Nat.sqrt_eq'] at h
+  have hsqrtmR : (t:ℝ) ≤ (Nat.sqrt m : ℝ) := by exact_mod_cast hsqrtm
+  have hsqrtpos : (0:ℝ) < (Nat.sqrt m : ℝ) := lt_of_lt_of_le htpos hsqrtmR
+  have hmR : (1:ℝ) ≤ (m:ℝ) := by exact_mod_cast hm1
+  have hβbound : ((m : ℝ) + 1) / ((m : ℝ) * (Nat.sqrt m : ℝ)) < β := by
+    have h1 : ((m : ℝ) + 1) / ((m : ℝ) * (Nat.sqrt m : ℝ)) ≤ 2 / (Nat.sqrt m : ℝ) := by
+      rw [div_le_div_iff₀ (by positivity) hsqrtpos]; nlinarith [hmR, hsqrtpos.le]
+    have h2 : (2:ℝ) / (Nat.sqrt m : ℝ) ≤ 2 / (t:ℝ) := by gcongr
+    have h3 : (2:ℝ) / (t:ℝ) < β := by
+      have hceil : (2/β : ℝ) ≤ (Nat.ceil (2/β) : ℝ) := Nat.le_ceil _
+      have htgt : (2/β : ℝ) < (t:ℝ) := by rw [htdef]; push_cast; linarith [hceil]
+      rw [div_lt_iff₀ htpos]
+      have := (div_lt_iff₀ hβ).mp htgt
+      nlinarith [this]
+    linarith [h1, h2, h3]
+  refine ⟨m, hm0, hLcm, hNfibm, hβbound, ?_⟩
+  have hsq : Nat.sqrt (max Lc Nfib) ^ 2 ≤ max Lc Nfib := Nat.sqrt_le' _
+  have hsqle : Nat.sqrt (max Lc Nfib) ≤ max Lc Nfib := Nat.sqrt_le_self _
+  have hmaxle : max Lc Nfib ≤ Lc + Nfib := max_le (Nat.le_add_right _ _) (Nat.le_add_left _ _)
+  have hs2ub : s ^ 2 ≤ 3 * (Lc + Nfib) + 1 := by
+    have hexp : s ^ 2 = Nat.sqrt (max Lc Nfib) ^ 2 + 2 * Nat.sqrt (max Lc Nfib) + 1 := by
+      rw [hsdef]; ring
+    rw [hexp]; omega
+  have hm2ub : m ^ 2 ≤ s ^ 2 + t ^ 4 := by
+    rcases le_total s (t ^ 2) with h | h
+    · rw [hmdef, max_eq_right h]
+      have ht4 : (t ^ 2) ^ 2 = t ^ 4 := by ring
+      rw [ht4]; omega
+    · rw [hmdef, max_eq_left h]; nlinarith [Nat.zero_le (t ^ 4)]
+  calc m ^ 2 ≤ s ^ 2 + t ^ 4 := hm2ub
+    _ ≤ 3 * (Lc + Nfib) + 1 + t ^ 4 := by omega
+    _ ≤ 6 * (Lc + Nfib) + 2 + 2 * t ^ 4 := by omega
+
 /-- **Length-driven uniformly-good steer block (per-round FEASIBILITY discharged).**
 Like `exists_uniformly_freq_good_block_steer` but the caller supplies only a
 minimum length `L`; the two budget inequalities (`hbound` measure, `hres`
