@@ -35,17 +35,57 @@ L4 gives it a NEW proof; the two-stream proof (bottoming at the `schedA_block_li
    `volume_le_ofReal_mul_gaussMeasure`; the two `log2` cancel to `2/q`. The
    route-decisive measure-budget probe — PASSED (clean, small). **Next lap starts
    at brick 2.**
-2. **Pulled-back z-bad-zone relative-mass bound.** Within `cfCylinder wx`, show
-   `gaussMeasure (cfCylinder wx ∩ ψ⁻¹(⋃_{v∈F,n∈NS} cfBadZone_z v n δ))` is a small
-   fraction of `gaussMeasure (cfCylinder wx)`. Route: `ψ(cfCylinder wx)` is an
-   interval of width `≈ q·φ^{−2|wx|}`; it is covered by O(1) depth-`m` z-cylinders
-   with `m ≈ |wx|+O(1)` (use `cfCylinder_subset_Icc_length` / `volume_cfCylinder`);
-   apply `gaussMeasure_multiscale_cfBadZone_le` RELATIVE to each covering z-cylinder
-   for z-scales `n ∈ NS ⊆ [m+gap, m+gap+M²]`; pull back via brick 1. Relative mass
-   `≤ (2/q)·O(1)·|NS|·S/(δ²·gap)`, small once `gap = poly` is large. ⚠️ decisive
-   sub-question: the "O(1) covering" count — an interval of width `W` meets
-   `≤ W/(min depth-m cylinder width)+2` depth-m cylinders; pick `m` so depth-m
-   width `≈ W` ⇒ O(1). Prove a covering lemma or bound the meeting count directly.
+2. **Pulled-back z-bad-zone control — SPLIT this lap into 2a (DONE) + 2b (the
+   route-decisive crux).**
+
+   2a. ✅ **DONE (2026-08-24, commit `3169e1a`, axiom-clean).**
+   `gaussMeasure_preimage_multiscale_cfBadZone_le` (`CFScheduleA.lean`, after
+   `gaussMeasure_multiscale_cfBadZone_le`): the ψ-preimage of the z-cylinder-based
+   multiscale bad zone (base `wz`) has γ-measure `≤ (2/q)·|NS|·(∑_v …/(δ²n₁))·γ(cfCylinder wz)`.
+   Clean: brick 1 ∘ `gaussMeasure_multiscale_cfBadZone_le`. Bound is ABSOLUTE
+   (`·γ(cfCylinder wz)`).
+
+   2b. **⚠️⚠️ ALIGNMENT — the true route-decisive crux (attack next, hardest-first).**
+   Brick 2a's bound is `∝ γ(cfCylinder wz)`. For the L4 SELECTION inside
+   `cfCylinder wx` (target = full x-cylinder, `ρ=1`) we need it `< γ(cfCylinder wx)`,
+   i.e. we need a z-word `wz` with **(i)** `ψ(cfCylinder wx) ⊆ cfCylinder wz` (so
+   `ψ(x)`'s first `|wz|` z-digits are FIXED, and the NS-scales control z-digits
+   PAST `|wz|`) and **(ii)** `γ(cfCylinder wz) ≤ C·γ(cfCylinder wx)` with `C = O(1)`.
+   Then relative mass `≤ (2/q)·C·|NS|·S/(δ²n₁)` — polynomial, small, **no exponential
+   blowup**. The ENTIRE L4 obstruction-removal hinges on (ii).
+   - **Why (ii) is nontrivial:** `ψ(cfCylinder wx)` is an INTERVAL `J`, generally
+     NOT a z-cylinder. The deepest z-cylinder `wz₀ ⊇ J` = longest common CF-prefix
+     of all z ∈ J. If `J` straddles a shallow z-boundary (a rational `p/q_d` with
+     small `d`), then `wz₀` is shallow ⇒ `γ(wz₀)` ≫ `γ(J)` ≈ `γ(cfCylinder wx)` ⇒
+     `C` exponential. Straddling a DEEP boundary is fine (`wz₀` deep, `C=O(1)`).
+     CF non-uniformity (large digits ⇒ wildly varying cylinder widths at a fixed
+     depth) is why "just take depth ≈ |wx|" doesn't directly work.
+   - **Candidate route A (refine-to-align, O(1)-amortized placement):** at each
+     stage, before the freq-block, prepend a SHORT placement word `p_s` to `wx` so
+     that `ψ(cfCylinder (wx++p_s))` lands strictly inside a z-cylinder `wz_s` of
+     depth `≈ |wx++p_s|` with `γ(wz_s) ≤ C·γ(cfCylinder(wx++p_s))`. `J` straddles
+     only finitely many z-boundaries down to its own width-scale; a bounded refine
+     dodges the shallow ones. NEED: a lemma "∀ interval `J`, ∃ sub-cylinder
+     `cfCylinder(w++p) ⊆ J` with `|p|` bounded by `O(log(1/relative-gap))` and
+     `ψ`-image inside a comparable z-cylinder", and that `∑ |p_s| = o(word)`
+     (placement is amortized-negligible, UNLIKE the two-stream's Θ(word) placement).
+     ⚠️ The obstruction doc's "navigate-then-select fails" was for placing into a
+     DEEP (block-deeper) z-cylinder; here we place into a COMPARABLE-depth one, so
+     re-examine whether `|p_s|` is genuinely bounded — THIS is the decisive probe.
+   - **Candidate route B (interval covering):** bound `γ(J ∩ z-bad)` directly by
+     covering `J` with maximal z-cylinders inside it (`cfCylinder_disjoint`,
+     `volume_eq_tsum_extensions`) + 2 boundary chains of tiny total measure;
+     apply 2a's relative bound per covering cylinder, sum to `γ(J)`. Avoids
+     placement but needs CF-cover regularity (deep boundary cylinders have small
+     total mass). Heavier; keep as fallback.
+   - **Smallest decisive probe for next lap:** formalize the deepest-containing
+     z-cylinder `wz₀(J)` of an interval and TEST whether, for `J = ψ(cfCylinder wx)`
+     with a ONE-DIGIT x-refinement chosen to avoid the shallowest straddled
+     z-boundary, `γ(wz₀) ≤ C·γ(J)` with `C` bounded. If a single/bounded refine
+     provably bounds `C`, route A wins and L4 is through its hardest point. If the
+     refinement length is unbounded (deep boundary pathology survives), escalate to
+     route B (covering) or record a genuine obstruction. **Do NOT grind past this
+     without settling the `C`-bound — it is the whole ballgame.**
 3. **Combined single-selection.** Feed
    `gaussMeasure(x-bad ∪ ψ⁻¹(z-bad)) < gaussMeasure(cfCylinder wx interval)` to
    `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt` (`:402`) → ONE irrational

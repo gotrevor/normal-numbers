@@ -31,16 +31,30 @@ crux `sorry` under the TWO-STREAM proof of `exists_interleaved_affine_witness`.
 single-stream proof of `exists_interleaved_affine_witness` (statement UNCHANGED,
 route-agnostic, `:2676`) lands.
 
+## Progress this session (append)
+
+- **Brick 2a DONE (commit `3169e1a`, axiom-clean):**
+  `gaussMeasure_preimage_multiscale_cfBadZone_le` — ψ-preimage of the
+  z-cylinder-based multiscale bad zone has γ-mass `≤ (2/q)·(multiscale bound for wz)`.
+  Clean: brick 1 ∘ `gaussMeasure_multiscale_cfBadZone_le`. Bound is ABSOLUTE
+  (`∝ γ(cfCylinder wz)`).
+
 ## Next steps (priority order — L4 attack path, PENDING_WORK.md top)
 
-2. **[NEXT] Pulled-back z-bad-zone relative-mass bound.** Within `cfCylinder wx`,
-   `ψ⁻¹(⋃_{v∈F,n∈NS} cfBadZone_z v n δ)` has small relative Gauss-mass. Route:
-   `ψ(cfCylinder wx)` is an interval of width `≈ q·φ^{−2|wx|}`, covered by O(1)
-   depth-`m` z-cylinders (`m ≈ |wx|+O(1)`); apply `gaussMeasure_multiscale_cfBadZone_le`
-   relative to each covering z-cylinder, pull back via **brick 1**. Decisive
-   sub-question = the O(1) covering count (interval of width W meets ≤ W/(depth-m
-   cylinder width)+2 cylinders; pick m so depth-m width ≈ W ⇒ O(1)). Prove a small
-   covering lemma from `volume_cfCylinder` / `cfCylinder_subset_Icc_length`.
+2b. **[NEXT — THE ROUTE-DECISIVE CRUX] ALIGNMENT.** Brick 2a's bound is
+   `∝ γ(cfCylinder wz)`; the L4 selection inside `cfCylinder wx` needs it
+   `< γ(cfCylinder wx)`, i.e. a z-word `wz` with `ψ(cfCylinder wx) ⊆ cfCylinder wz`
+   AND `γ(cfCylinder wz) ≤ C·γ(cfCylinder wx)`, `C=O(1)`. The whole
+   obstruction-removal hinges on this `C`-bound. `ψ(cfCylinder wx)` is an INTERVAL,
+   not a z-cylinder; if it straddles a SHALLOW z-boundary, the deepest containing
+   z-cylinder is shallow ⇒ `C` exponential. Two routes (full analysis in
+   PENDING_WORK top, "2b"): **A** refine-to-align (short placement `p_s` dodging
+   shallow boundaries; check `∑|p_s| = o(word)`, unlike the two-stream's Θ(word));
+   **B** interval-covering by maximal z-cylinders (`cfCylinder_disjoint`,
+   `volume_eq_tsum_extensions`) + tiny boundary chains. **Smallest decisive probe:**
+   formalize `wz₀(J)` = deepest z-cylinder ⊇ `J`, and test whether a bounded
+   x-refinement bounds `C`. SETTLE the `C`-bound before grinding downstream — it is
+   the whole ballgame; if unbounded, escalate.
 3. Combined single-selection via `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt`.
 4. Single-stream recursion + limit `xA` (reuse `chain_orbit_equidist_uniform`).
 5. z-side chain frequency for `ψ(xA)` (mirror `chain_cf_digit_freq_tendsto_uniform`).

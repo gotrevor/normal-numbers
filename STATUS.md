@@ -156,9 +156,12 @@ the ψ-pullback Gauss distortion bound `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gauss
 1. ✅ **DONE** (`5ba3a3d`, axiom-clean) — ψ-pullback Gauss distortion bound
    `gaussMeasure_preimage_affineMap_le`: `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gaussMeasure S`
    for measurable `S ⊆ (0,1)`, `q>0`. Route-decisive measure-budget probe PASSED.
-2. **Pulled-back z-bad-zone relative-mass bound** — within `cfCylinder wx`,
-   `ψ⁻¹(⋃ cfBadZone_z)` small; via brick 1 + `gaussMeasure_multiscale_cfBadZone_le`
-   on the O(1) z-cylinders covering `ψ(cfCylinder wx)`.
+2. Pulled-back z-bad-zone control — SPLIT: **2a ✅ DONE** (`3169e1a`,
+   `gaussMeasure_preimage_multiscale_cfBadZone_le`, axiom-clean; ABSOLUTE bound
+   `∝ γ(cfCylinder wz)`). **2b = ALIGNMENT, the true route-decisive crux** (next):
+   find z-word `wz` with `ψ(cfCylinder wx) ⊆ cfCylinder wz` and `γ(wz) ≤ C·γ(wx)`,
+   `C=O(1)` — settle the `C`-bound (refine-to-align vs interval-covering) BEFORE
+   grinding further. See PENDING_WORK top.
 3. **Combined single-selection** — feed `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt`
    the x-bad ∪ ψ⁻¹(z-bad) mass → ONE `x` avoiding both.
 4. **Single-stream recursion + limit `xA`** (`wxSeq` only); x-side reuses
