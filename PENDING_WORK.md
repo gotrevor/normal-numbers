@@ -20,19 +20,31 @@ frozen B5′ modules untouched). Build green (8752).
 - **L2** `volume_interval_good_ge` — PLACEHOLDER (`True`); pin to real
   `goodExtSet`/`goodC` exports once L1 lands.
 
-**NEXT ATTACK — L1 straddler count** (`volume_interval_sdiff_covered_le`):
-1. A rank-`n` cylinder is an interval up-to-null: `uIoo E0 E1 \ ℚ ⊆ cfCylinder w
-   ⊆ uIcc E0 E1` (`uIoo_subset_cfCylinder` + `cfCylinder_subset_uIcc`, both in
-   `CFCylinder`). A point of `Ioo a b` not in any contained cylinder lies in a
-   cylinder that meets `Ioo a b` but is not `⊆ Ioo a b` — a straddler containing
-   `a` or `b`.
-2. Straddlers ⊆ (cylinder containing `a`) ∪ (cylinder containing `b`);
-   `cfCylinder_disjoint` ⇒ ≤2. Cover `Ioo a b \ coveredByCyl` by these two,
-   bound each by `volume_cfCylinder_le_fib`, sum ≤ `2/(fib(n+1))^2`.
-   - Route to (1): genuine rank-`n` cylinders + `Set.range (ℚ→ℝ)` cover `Ioo 0 1`
-     (`CFDigitLaw` ~line 160 `hcover`); intersect with `Ioo a b`.
-   - TODO(alt): bound the uncovered set by the ≤2-element straddler index via
-     disjoint intervals ordered on the line if endpoint bookkeeping is fiddly.
+## B6 — lap 2 landed (2026-08-24): L1 PROVED ✅
+
+`volume_interval_sdiff_covered_le` discharged, axiom-clean (trust triple),
+build green (8752). RHS relaxed from `2/fib²` to `4/fib²` — the **soft
+M-neighborhood** proof (cleaner than the straddler-count route drafted below):
+`M := 1/fib(n+1)²`; every rank-`n` cylinder that straddles `∂(a,b)` has diameter
+`≤ M` (`cfCylinder_subset_Icc_length` + `volume_cfCylinder_le_fib`) and meets the
+boundary, so it lies within `M` of `a` or `b`; hence uncovered `⊆ [a−M,a+M] ∪
+[b−M,b+M]`, mass `≤ 4M`. `n=0` handled separately (mass ≤ 1 ≤ 4). No
+disjointness/counting needed — the straddler-count plan was abandoned as
+unnecessary.
+
+**NEXT ATTACK — L2** (`volume_interval_good_ge`, currently `True` placeholder):
+pin the real shape against B5′ exports, then prove. The "good" rank-`n`
+extensions inside `(a,b)` should occupy `≥ (goodC/const)·|b−a|` beyond a rank.
+Ingredients on hand:
+- L1 gives: contained rank-`n` cylinders cover `(a,b)` up to `4/fib(n+1)²`.
+- `goodC_half` (`CFSchedule.lean:114`): for each genuine `w`, `volume (goodExtSet
+  w goodC m) ≥ (goodC/2)·volume (cfCylinder w)` (verify exact constant/shape).
+- Compose: within each contained rank-`n` cylinder `w ⊆ (a,b)`, its good
+  order-`m` extensions give `≥ (goodC/2)|I_w|` good mass, all inside `(a,b)`;
+  sum over contained `w` via the L1 covering (Σ|I_w| ≥ |b−a| − 4/fib²).
+- ALIGN FIRST: read `goodExtSet`/`goodC_half`/`goodC` signatures (`TBrick.lean:275`,
+  `CFSchedule.lean:109-146`) and record the pinned L2 statement here before
+  proving. Then move to L3 (`CFAffine.lean`, affine transport |ψ(A)|=|q||A|).
 
 ---
 
