@@ -135,6 +135,18 @@ feasible; `volume_preimage_affineMap` bounds the pullback bad zone.
 **src/ now carries exactly ONE active sorry** — the isolated B6 crux (correct
 decomposition). All B6 substrate below it is axiom-clean.
 
+### lap 8 landed (2026-08-24): feasibility core `goodInInterval_pos_of_lt` ✅
+
+Axiom-clean, build green (8755). Beyond a rank (`4/fib(n+1)² < b−a`), good mass
+inside any nondegenerate `(a,b)⊆(0,1)` is STRICTLY positive ⇒ `goodInInterval`
+nonempty ⇒ a good CF-cylinder exists inside `(a,b)`. **This discharges the
+per-stage feasibility of the interleaved schedule** — every refinement step
+(x-stage on `cfCylinder wx`, ψ-stage on the pullback `((c−r)/q,(d−r)/q)`, or the
+combined interval `cfCylinder wx ∩ ψ⁻¹(cfCylinder wz)`, all intervals) has a good
+block to pick. The ψ-side needs NO separate lemma: apply `goodInInterval_pos_of_lt`
+to the pullback endpoints (from `preimage_affineMap_Ioo`). Substrate for the
+crux is now essentially complete; what remains is purely the schedule bookkeeping.
+
 **Sub-obligations of the crux (next laps, copy-extend frozen modules into
 `CFScheduleA`/new files, NEVER edit frozen):**
 1. Orbit⇔window bridge for the IMAGE: `T^k(ψ xstar) ∈ cfCylinder v` ⇔ ψ(xstar)'s
