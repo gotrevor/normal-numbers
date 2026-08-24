@@ -1063,6 +1063,59 @@ theorem blockCount_eq_of_cfDigit_agree {z z' : ℝ}
       rw [hagree (j + i) (by omega)]; exact hM i hi
   rw [hfilter]
 
+/-- **Local CF-digit stability around an irrational (brick-4 geometric core).**
+Around an irrational `y ∈ (0,1)` there is an open neighbourhood on which the first
+`m` CF digits are CONSTANT (equal to `y`'s): `y` sits strictly inside its own
+depth-`m` cylinder (a rational-endpoint interval), so a small enough ball lands in
+the cylinder's irrational interior.  With `ψ` Lipschitz this is what lets a deep
+enough `x`-cylinder pin `ψ(x)`'s first `m` z-digits for ALL its points, so the
+brick-3′ point's z-frequency transfers to the chain limit `ψ(xA)`
+(`blockCount_eq_of_cfDigit_agree`). -/
+theorem exists_nhds_cfDigit_eq {y : ℝ} (hy : y ∈ Set.Ioo (0 : ℝ) 1)
+    (hyirr : Irrational y) (m : ℕ) :
+    ∃ ε > 0, ∀ x ∈ Set.Ioo (y - ε) (y + ε), Irrational x → x ∈ Set.Ioo (0 : ℝ) 1 →
+      ∀ i < m, cfDigit x i = cfDigit y i := by
+  rcases Nat.eq_zero_or_pos m with hm0 | hmpos
+  · exact ⟨1, one_pos, fun x _ _ _ i hi => absurd hi (by omega)⟩
+  set w : List ℕ := (List.range m).map (cfDigit y) with hwdef
+  have hwlen : w.length = m := by simp [hwdef]
+  have hwne : w ≠ [] := by rw [← List.length_pos_iff_ne_nil, hwlen]; omega
+  have hwpos : ∀ a ∈ w, 1 ≤ a := by
+    intro a ha; rw [hwdef, List.mem_map] at ha; obtain ⟨i, _, rfl⟩ := ha
+    exact one_le_cfDigit y hyirr hy i
+  have hwgetD : ∀ i, i < m → w.getD i 0 = cfDigit y i := by
+    intro i hi
+    rw [hwdef, List.getD_eq_getElem _ _ (by simpa [hwlen] using hi)]
+    simp [hwdef]
+  have hywmem : y ∈ cfCylinder w := by
+    refine ⟨hy, fun i hi => ?_⟩
+    rw [hwlen] at hi; rw [hwgetD i hi]
+  set E0 : ℝ := ((cfVal w : ℚ) : ℝ) with hE0
+  set E1 : ℝ := ((cfVal (bumpLast w) : ℚ) : ℝ) with hE1
+  have hyIcc : y ∈ Set.Icc (min E0 E1) (max E0 E1) := cfCylinder_subset_uIcc w hwne hwpos hywmem
+  have hirrE0 : y ≠ E0 := fun h => hyirr ⟨cfVal w, h.symm⟩
+  have hirrE1 : y ≠ E1 := fun h => hyirr ⟨cfVal (bumpLast w), h.symm⟩
+  have hlo : min E0 E1 < y := lt_of_le_of_ne hyIcc.1 fun h => by
+    rcases min_choice E0 E1 with h' | h' <;> rw [h'] at h
+    · exact hirrE0 h.symm
+    · exact hirrE1 h.symm
+  have hhi : y < max E0 E1 := lt_of_le_of_ne hyIcc.2 fun h => by
+    rcases max_choice E0 E1 with h' | h' <;> rw [h'] at h
+    · exact hirrE0 h
+    · exact hirrE1 h
+  refine ⟨min (y - min E0 E1) (max E0 E1 - y), by positivity, ?_⟩
+  intro x hx hxirr _ i hi
+  have hxuIoo : x ∈ Set.uIoo E0 E1 := by
+    show x ∈ Set.Ioo (min E0 E1) (max E0 E1)
+    obtain ⟨hx1, hx2⟩ := hx
+    have hleL : min (y - min E0 E1) (max E0 E1 - y) ≤ y - min E0 E1 := min_le_left _ _
+    have hleR : min (y - min E0 E1) (max E0 E1 - y) ≤ max E0 E1 - y := min_le_right _ _
+    exact ⟨by linarith, by linarith⟩
+  have hxw : x ∈ cfCylinder w := uIoo_subset_cfCylinder w hwne hwpos x hxuIoo hxirr
+  have := hxw.2 i (by rw [hwlen]; exact hi)
+  rw [hwgetD i hi] at this
+  exact this
+
 /-- **Multi-scale + cfK measure core** (the cfK-steer selection).  Like
 `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`, but the aggregate bound
 `hbound` additionally leaves room for the cfK-large extension mass

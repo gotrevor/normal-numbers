@@ -487,13 +487,13 @@ class StructuredStream:
             if math.gcd(p, q) != 1:
                 continue
             n, d = p, q
+            first = True
             while d:
                 a = n // d
-                if a >= 1:
+                if not (first and a == 0):
                     self.buf.append(a)
+                first = False
                 n, d = d, n - a * d
-                n, d = d, n
-            # the loop above is the plain Euclidean CF of p/q with the leading 0 skipped
 
     def next(self):
         if not self.buf:
