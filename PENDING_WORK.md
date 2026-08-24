@@ -1,3 +1,41 @@
+# PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
+
+## B6 — lap 1 landed (2026-08-24): scaffold + single-cylinder bound ✅
+
+New additive leaf `src/NormalNumbers/CFIntervalGood.lean` (imports `CFDigitLaw`;
+frozen B5′ modules untouched). Build green (8752).
+
+**Proved this lap** (axiom-clean, on-path leaf):
+- `volume_cfCylinder_le_fib (w) (hw) (hpos) : volume (cfCylinder w) ≤
+  ENNReal.ofReal (1/(fib (|w|+1))^2)` — the "cylinders shrink" driver. From
+  `volume_cfCylinder` (`=1/(qₙ(qₙ+qₙ₋₁))`) + `fib_le_cfK` (`qₙ ≥ fib(n+1)`) +
+  `qₙ₋₁ ≥ 0`.
+
+**Aligned statement shapes** (recorded per directive — L1 FINAL, L2 provisional):
+- `coveredByCyl a b n := ⋃ w ∈ {w ∈ genWords n | cfCylinder w ⊆ Ioo a b}, cfCylinder w`
+  (index over `genWords n` = the CFDigitLaw partition index; avoids a Decidable
+  instance on the `⊆` predicate).
+- **L1** `volume_interval_sdiff_covered_le (a b) (0≤a) (a≤b) (b≤1) (n) :
+  volume (Ioo a b \ coveredByCyl a b n) ≤ ENNReal.ofReal (2/(fib(n+1))^2)`.
+- **L2** `volume_interval_good_ge` — PLACEHOLDER (`True`); pin to real
+  `goodExtSet`/`goodC` exports once L1 lands.
+
+**NEXT ATTACK — L1 straddler count** (`volume_interval_sdiff_covered_le`):
+1. A rank-`n` cylinder is an interval up-to-null: `uIoo E0 E1 \ ℚ ⊆ cfCylinder w
+   ⊆ uIcc E0 E1` (`uIoo_subset_cfCylinder` + `cfCylinder_subset_uIcc`, both in
+   `CFCylinder`). A point of `Ioo a b` not in any contained cylinder lies in a
+   cylinder that meets `Ioo a b` but is not `⊆ Ioo a b` — a straddler containing
+   `a` or `b`.
+2. Straddlers ⊆ (cylinder containing `a`) ∪ (cylinder containing `b`);
+   `cfCylinder_disjoint` ⇒ ≤2. Cover `Ioo a b \ coveredByCyl` by these two,
+   bound each by `volume_cfCylinder_le_fib`, sum ≤ `2/(fib(n+1))^2`.
+   - Route to (1): genuine rank-`n` cylinders + `Set.range (ℚ→ℝ)` cover `Ioo 0 1`
+     (`CFDigitLaw` ~line 160 `hcover`); intersect with `Ioo a b`.
+   - TODO(alt): bound the uncovered set by the ≤2-element straddler index via
+     disjoint intervals ordered on the line if endpoint bookkeeping is fiddly.
+
+---
+
 # PENDING WORK — B5′ campaign
 
 > **✅ COMPLETE (2026-08-24 — the whole B5′ expedition is PROVED, axiom-clean).**
