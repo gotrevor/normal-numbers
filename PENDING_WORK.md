@@ -490,7 +490,31 @@ Recast with the interval invariant (mechanical from the atoms):
    per-stream `cfDiscLt` telescoping (copy-extend `CFCorrect`). Multi-lap body;
    all atoms green.
 
+### lap 20 landed (2026-08-24): squeeze-to-a-point `eq_of_mem_iInter_Icc` ✅
+`CFScheduleA`, axiom-clean, green 8756: two reals in every member of a sequence
+of closed intervals with diameters `→0` are equal (`|y−z|≤hi_s−lo_s→0`). The
+abstract nesting-uniqueness for the lap-19 resolution: `ψ(xA)` and the wz-chain's
+irrational point ζ both lie in every wz-endpoint interval (diam `1/(K(K+K'))→0`)
+⇒ `ψ(xA)=ζ` ⇒ `ψ(xA)` irrational + `∈⋂cfCylinder wz_t`.
+
+**NEXT — the wz-endpoint diameter `→0` fact + wire the limit.** To use
+`eq_of_mem_iInter_Icc` at the wz-chain: need `lo_t,hi_t := ` wz_t endpoints (from
+`cfCylinder_endpoints`) with `hi_t−lo_t = 1/(cfK(wz_t)·(cfK(wz_t)+cfK'))→0`
+(cfK(wz_t)≥fib(|wz_t|+1)→∞ since the chain extends). Mirror the diameter bound
+already inside `eq_of_mem_cfCylinder_chain`/`exists_irrational_mem_iInter_
+cfCylinder` (they compute the same `→0`). Then the limit assembly:
+  • ζ, Irrational ζ, ζ∈cfCylinder wz_t ∀t  [`exists_irrational_mem_iInter_
+    cfCylinder` on wz-chain];
+  • ψ(xA)∈Icc(lo_t)(hi_t) ∀t  [invariant + xA∈cfCylinder wx_s];
+  • `eq_of_mem_iInter_Icc` ⇒ ψ(xA)=ζ ⇒ Irrational(ψ xA) ∧ ψ(xA)∈cfCylinder wz_t ∀t;
+  • ⇒ CFOrbitEquidist(ψ xA) via `irrational_mem_Ioo_of_mem_iInter_cfCylinder`
+    (obligation A for ψ side) + the freq telescoping (obligation B).
+Still need: the ψ-stage `exists_freq_good_extend_affine` producing the interval
+invariant + wz freq-good chain, and the per-stream freq telescoping (copy-extend
+`CFCorrect`). Multi-lap; all atoms green.
+
 ### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
+- SQUEEZE `eq_of_mem_iInter_Icc` — nesting-uniqueness (recovers ψ(xA) irrationality at the limit).
 - ψ-IMAGE `affine_image_Ioo_subset_Icc` — ψ((a,b))⊆Icc e f under the invariant (analytic step).
 - INTER `exists_cfCylinder_subset_Ioo_inter` — cylinder in the intersection of two intervals.
 - ψ-SELECT `exists_cfCylinder_subset_affine_preimage` — x-cylinder in ψ⁻¹(target z-interval).

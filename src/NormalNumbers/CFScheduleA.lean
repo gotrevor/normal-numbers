@@ -48,6 +48,26 @@ def CFOrbitEquidist (y : ℝ) : Prop :=
     Filter.Tendsto (fun p => blockCount (cfCylinder v) p y / (p : ℝ))
       Filter.atTop (nhds (gaussMeasure (cfCylinder v)).toReal)
 
+/-- **Squeeze to a point.**  Two reals in every member of a sequence of closed
+intervals whose diameters tend to `0` are equal.  The abstract nesting-uniqueness
+the schedule uses: at the limit, `ψ(xA)` and the wz-chain's irrational point both
+lie in every `wz_t` convergent-endpoint interval (diameters `1/(K(K+K')) → 0`),
+so they coincide — hence `ψ(xA)` inherits that point's irrationality and its
+membership in every `cfCylinder wz_t`, dodging `ψ`'s non-preservation of
+irrationality. -/
+theorem eq_of_mem_iInter_Icc {lo hi : ℕ → ℝ}
+    (hdiam : Filter.Tendsto (fun s => hi s - lo s) Filter.atTop (nhds 0))
+    {y z : ℝ} (hy : ∀ s, y ∈ Set.Icc (lo s) (hi s))
+    (hz : ∀ s, z ∈ Set.Icc (lo s) (hi s)) : y = z := by
+  have hle : ∀ s, |y - z| ≤ hi s - lo s := by
+    intro s
+    obtain ⟨hy1, hy2⟩ := hy s
+    obtain ⟨hz1, hz2⟩ := hz s
+    rw [abs_sub_le_iff]; exact ⟨by linarith, by linarith⟩
+  have hz0 : |y - z| ≤ 0 :=
+    le_of_tendsto_of_tendsto' tendsto_const_nhds hdiam hle
+  exact sub_eq_zero.mp (abs_eq_zero.mp (le_antisymm hz0 (abs_nonneg _)))
+
 /-- Every genuine CF cylinder contains an irrational point (build the trivial
 one-extending-chain `w ++ 1ⁿ` and take its limit point). -/
 theorem exists_irrational_mem_cfCylinder (w : List ℕ) (hw : w ≠ [])
