@@ -44,13 +44,15 @@ Landed (TBrickRefine, axiom-clean `[propext, Classical.choice, Quot.sound]`):
   consumes). The three lemmas together are the full logarithmic-block toolkit.
 
 ### NEXT (concrete, ordered)
-1. **Re-derive a TIGHT `exists_freq_good_block_steer`** (or a `_tightlen` variant)
-   whose output length is `≤ |wx| + O(log(1/β))` instead of `≈ 1/β`: swap the
-   `exists_fib_threshold (1/β)` step for a choice of `n` via
-   `fib_sq_gt_of_goldenRatio` (pick `n` minimal with `φ^(|wx|+n+1) > √5·√(1/β)+1`),
-   and EXPOSE the length bound in the signature (the schedule needs an explicit
-   upper bound on the block length to prove `hdom`). Everything else in the steer
-   lemma (measure core, freq-goodness, `cfCylinder ⊆ (c,d)`) is unchanged.
+1. ✅ **DONE (this lap): `exists_freq_good_block_steer_len`** (CFScheduleA, after
+   `exists_freq_good_block_steer`, axiom-clean). The tight-length steer lemma:
+   exposes the measure-core threshold `N0` and takes the block length `n` as an
+   EXPLICIT caller parameter, returning `∃ u, u.length = n ∧ …` given only the
+   resolution hypothesis `4/(d-c) < fib(|wx|+n+1)²` (which the caller discharges at
+   logarithmic `n` via `fib_sq_gt_of_goldenRatio`+`exists_nat_goldenRatio_pow_gt`).
+   Length is now fully caller-controlled — the `hdom` handle. Everything else
+   (measure core, freq-goodness, `cfCylinder ⊆ (c,d)`) copied verbatim from
+   `exists_freq_good_block_steer`.
 2. Propagate the length bound through `exists_freq_good_extend_affine_steer` (both
    `ux`, `uz` blocks) so the ψ-round outputs `|block| ≤ (prev word) + O(log …)`.
 3. THEN the recursion (`SchedStateA`/`schedStepA`/`schedA`, `L_s = s`) can prove

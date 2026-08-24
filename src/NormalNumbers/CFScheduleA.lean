@@ -493,6 +493,146 @@ theorem exists_freq_good_block_steer (wx : List ℕ) (hwx : wx ≠ [])
     · linarith
   exact ⟨u, hune, hulen ▸ hnL, hupos, hsubcd, hfreq, x, hxcyl, hirr, hxcd⟩
 
+/-- **Tight-length steerable freq-good block.**  Same as `exists_freq_good_block_steer`
+but the block length is the CALLER's explicit `n` (given the resolution hypothesis
+`4/(d-c) < fib(|wx|+n+1)²`), and the measure-core threshold `N0` is EXPOSED.  This
+lets the interleaved schedule pick `n` logarithmic in the target width (via
+`fib_sq_gt_of_goldenRatio`/`exists_nat_goldenRatio_pow_gt`), the control `hdom`
+needs. -/
+theorem exists_freq_good_block_steer_len (wx : List ℕ) (hwx : wx ≠ [])
+    (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
+    {δ : ℝ} (hδ : 0 < δ) {c d : ℝ} (hc0 : 0 ≤ c) (hcd : c < d) (hd1 : d ≤ 1)
+    (hsub : ∀ y ∈ Set.Ioo c d, Irrational y → y ∈ cfCylinder wx) :
+    ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n → 1 ≤ n →
+      (4 / (d - c) < (Nat.fib (wx.length + n + 1) : ℝ) ^ 2) →
+      ∃ u : List ℕ, u.length = n ∧ u ≠ [] ∧ (∀ a ∈ u, 1 ≤ a) ∧
+        cfCylinder (wx ++ u) ⊆ Set.Ioo c d ∧
+        (∀ v ∈ F, |(countOccurrences v u : ℝ)
+          - (gaussMeasure (cfCylinder v)).toReal * u.length| < δ * u.length + v.length) ∧
+        ∃ x : ℝ, x ∈ cfCylinder (wx ++ u) ∧ Irrational x ∧ x ∈ Set.Ioo c d := by
+  have hμpos : ∀ p q : ℝ, 0 ≤ p → p < q → q ≤ 1 →
+      0 < (gaussMeasure (Set.Ioo p q)).toReal := by
+    intro p q hp hpq hq
+    have hlp : Real.log (1 + p) < Real.log (1 + q) :=
+      Real.log_lt_log (by linarith) (by linarith)
+    have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+    have harg : 0 < (Real.log (1 + q) - Real.log (1 + p)) / Real.log 2 :=
+      div_pos (by linarith) hl2
+    rw [gaussMeasure_Ioo hp hpq.le hq, ENNReal.toReal_ofReal harg.le]
+    exact harg
+  -- buffered target (c', d') ⊂⊂ (c, d)
+  set β : ℝ := (d - c) / 4 with hβ
+  have hβ0 : 0 < β := by rw [hβ]; linarith
+  set c' : ℝ := c + β with hc'
+  set d' : ℝ := d - β with hd'
+  have hcc' : c < c' := by rw [hc']; linarith
+  have hc'd' : c' < d' := by rw [hc', hd', hβ]; linarith
+  have hd'd : d' < d := by rw [hd']; linarith
+  have hc'0 : 0 ≤ c' := by rw [hc']; linarith
+  have hd'1 : d' ≤ 1 := by rw [hd']; linarith
+  have hμc'd' : 0 < (gaussMeasure (Set.Ioo c' d')).toReal := hμpos c' d' hc'0 hc'd' hd'1
+  obtain ⟨N0, hN0⟩ :=
+    exists_irrational_notMem_cfBadZone_in_Ioo wx hwx hwxpos F hF hδ (c := c') (d := d') hμc'd'
+  refine ⟨N0, fun n hnN0 hn1 hres => ?_⟩
+  have hn0 : 0 < n := hn1
+  obtain ⟨x, hirr, hxc'd', hxnot⟩ := hN0 n hnN0 hn0
+  -- x lands in (c,d) hence in cfCylinder wx
+  have hxcd : x ∈ Set.Ioo c d := by
+    obtain ⟨h1, h2⟩ := Set.mem_Ioo.1 hxc'd'
+    exact Set.mem_Ioo.2 ⟨lt_trans hcc' h1, lt_trans h2 hd'd⟩
+  have hxwx : x ∈ cfCylinder wx := hsub x hxcd hirr
+  have hx01 : x ∈ Set.Ioo (0 : ℝ) 1 := hxwx.1
+  set u : List ℕ := (List.range n).map (fun i => cfDigit x (wx.length + i)) with hudef
+  have hulen : u.length = n := by rw [hudef, List.length_map, List.length_range]
+  have hune : u ≠ [] := by
+    intro h; rw [h] at hulen; simp only [List.length_nil] at hulen; omega
+  have hupos : ∀ a ∈ u, 1 ≤ a := by
+    intro a ha
+    rw [hudef, List.mem_map] at ha
+    obtain ⟨i, -, rfl⟩ := ha
+    exact one_le_cfDigit x hirr hx01 _
+  have hxcyl : x ∈ cfCylinder (wx ++ u) := by
+    refine ⟨hx01, fun i hi => ?_⟩
+    rw [List.length_append, hulen] at hi
+    rcases lt_or_ge i wx.length with hlt | hge
+    · rw [List.getD_append wx u 0 i hlt]
+      exact hxwx.2 i hlt
+    · rw [List.getD_append_right wx u 0 i hge, hudef]
+      have hidx : i - wx.length < n := by omega
+      rw [List.getD_eq_getElem _ _ (by rw [List.length_map, List.length_range]; exact hidx),
+        List.getElem_map, List.getElem_range]
+      congr 1
+      omega
+  have hsubcd : cfCylinder (wx ++ u) ⊆ Set.Ioo c d := by
+    obtain ⟨aC, cC, hIcc, hwidth⟩ :=
+      cfCylinder_subset_Icc_length (wx ++ u) (by simp [hwx]) (fun a ha =>
+        (List.mem_append.1 ha).elim (hwxpos a) (hupos a))
+    have hvol : (volume (cfCylinder (wx ++ u))).toReal
+        ≤ 1 / (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2 := by
+      have hb := volume_cfCylinder_le_fib (wx ++ u) (by simp [hwx]) (fun a ha =>
+        (List.mem_append.1 ha).elim (hwxpos a) (hupos a))
+      calc (volume (cfCylinder (wx ++ u))).toReal
+          ≤ (ENNReal.ofReal (1 / (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2)).toReal :=
+            ENNReal.toReal_mono ENNReal.ofReal_ne_top hb
+        _ = 1 / (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2 :=
+            ENNReal.toReal_ofReal (by positivity)
+    have hfibgt : 1 / β < (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2 := by
+      have hidx : (wx ++ u).length + 1 = wx.length + n + 1 := by
+        rw [List.length_append, hulen]
+      rw [hidx]
+      have h1β : 1 / β = 4 / (d - c) := by rw [hβ]; rw [one_div_div]
+      rw [h1β]; exact hres
+    have hfibpos : (0 : ℝ) < (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2 := by
+      have : 0 < Nat.fib ((wx ++ u).length + 1) := Nat.fib_pos.2 (by omega); positivity
+    have hwlt : (volume (cfCylinder (wx ++ u))).toReal < β := by
+      have h1 : 1 / (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2 < β := by
+        rw [div_lt_iff₀ hfibpos]
+        rw [div_lt_iff₀ hβ0] at hfibgt
+        nlinarith [hfibgt]
+      linarith [hvol, h1]
+    rw [← hwidth] at hwlt
+    have hxIcc := hIcc hxcyl
+    obtain ⟨haC, hcC⟩ := Set.mem_Icc.1 hxIcc
+    obtain ⟨hxc, hxd⟩ := Set.mem_Ioo.1 hxc'd'
+    intro y hy
+    obtain ⟨hya, hyc⟩ := Set.mem_Icc.1 (hIcc hy)
+    refine Set.mem_Ioo.2 ⟨?_, ?_⟩
+    · have : c < aC := by
+        have : x - β < aC := by linarith [hcC, hwlt]
+        linarith [hxc]
+      linarith
+    · have : cC < d := by
+        have : cC < x + β := by linarith [haC, hwlt]
+        linarith [hxd]
+      linarith
+  have hfreq : ∀ v ∈ F, |(countOccurrences v u : ℝ)
+      - (gaussMeasure (cfCylinder v)).toReal * u.length| < δ * u.length + v.length := by
+    have horb : ∀ j : ℕ, gaussMap^[j] x ∈ Set.Ioo (0 : ℝ) 1 :=
+      fun j => (irrational_orbit x hirr hxwx.1 j).2
+    intro v hv
+    have hnotCF : x ∉ cfBadZone wx v n δ :=
+      fun h => hxnot (Set.mem_biUnion hv h)
+    have habs := abs_blockCount_lt_of_notMem_cfBadZone hxwx hirr hnotCF
+    have hbr := blockCount_sub_countOccurrences_bounds horb v (hFne v hv) wx.length n
+    have hword : (List.range n).map (fun i => cfDigit x (wx.length + i)) = u := hudef.symm
+    rw [hword] at hbr
+    obtain ⟨hbr1, hbr2⟩ := hbr
+    set bc : ℝ := blockCount (cfCylinder v) n (gaussMap^[wx.length] x) with hbc
+    set γv : ℝ := (gaussMeasure (cfCylinder v)).toReal with hγv
+    have hn0R : (0 : ℝ) < n := by exact_mod_cast hn0
+    have habs' : |bc - γv * n| < δ * n := by
+      have h1 : bc / n - γv = (bc - γv * n) / n := by field_simp
+      rw [h1, abs_div, abs_of_pos hn0R, div_lt_iff₀ hn0R] at habs
+      linarith [habs]
+    rw [hulen]
+    rw [abs_lt] at habs' ⊢
+    have hv0 : (0 : ℝ) ≤ v.length := by positivity
+    constructor
+    · linarith
+    · linarith
+  exact ⟨u, hulen, hune, hupos, hsubcd, hfreq, x, hxcyl, hirr, hxcd⟩
+
 /-- **One schedule stage (single stream).**  Given the current genuine word
 `wx`, a pattern family `F`, tolerance `δ > 0`, and a length target `L`, there is
 a strict genuine EXTENSION `wx'` of `wx` (i.e. `wx'.take |wx| = wx`, `|wx| <
