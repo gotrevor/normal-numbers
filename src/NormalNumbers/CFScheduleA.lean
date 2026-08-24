@@ -568,6 +568,62 @@ theorem exists_irrational_notMem_multiscale_cfBadZone_in_Ioo
   obtain ⟨⟨hxA, hxB⟩, hxQ⟩ := hx
   exact ⟨x, hxQ, hxA, hxB⟩
 
+/-- **L4 route — brick 3: combined single-stream selection.**  Selects ONE
+irrational `x ∈ (c,d)` that SIMULTANEOUSLY avoids (i) the `x`-CF bad zones (base
+`wx`, scales `NSx`) — so `x` itself is freq-good — AND (ii) the ψ-pullback of the
+`z`-CF bad zones (base `wz`, scales `NSz`) — so `ψ(x)` is freq-good at `z`-scales
+past `|wz|`.  The caller supplies ONE measure hypothesis `hbound`: the `x`-bad
+multiscale mass PLUS `(2/q)·`(the `z`-bad multiscale mass for `wz`) stays below
+`γ(c,d)`.  This is the single-stream heart of L4: no two-stream alternation, target
+is the full `x`-interval `(c,d)`.  The `z`-bad term carries the factor
+`γ(cfCylinder wz)` (via brick 2a `gaussMeasure_preimage_multiscale_cfBadZone_le`);
+the alignment brick 2b bounds `γ(cfCylinder wz) ≤ C·γ(c,d)` so `hbound` holds once
+`n₁z ≳ C` (polynomial, NO exponential `1/ρ` blowup). -/
+theorem exists_irrational_notMem_xbad_psi_zbad_in_Ioo {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (wx : List ℕ) (hwxpos : ∀ a ∈ wx, 1 ≤ a)
+    (wz : List ℕ) (hwzpos : ∀ a ∈ wz, 1 ≤ a)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ : ℝ} (hδ : 0 < δ)
+    {c d : ℝ} (hpos : 0 < (gaussMeasure (Set.Ioo c d)).toReal)
+    (NSx : Finset ℕ) {n₁x : ℕ} (hn₁x : 0 < n₁x) (hNSx : ∀ n ∈ NSx, n₁x ≤ n)
+    (NSz : Finset ℕ) {n₁z : ℕ} (hn₁z : 0 < n₁z) (hNSz : ∀ n ∈ NSz, n₁z ≤ n)
+    (hbound : (NSx.card : ℝ) * (∑ v ∈ F, 7 * ((8 * v.length + 80)
+          * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁x))
+          * (gaussMeasure (cfCylinder wx)).toReal)
+        + (2 / q) * ((NSz.card : ℝ) * (∑ v ∈ F, 7 * ((8 * v.length + 80)
+          * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁z))
+          * (gaussMeasure (cfCylinder wz)).toReal))
+        < (gaussMeasure (Set.Ioo c d)).toReal) :
+    ∃ x : ℝ, Irrational x ∧ x ∈ Set.Ioo c d ∧
+      x ∉ (⋃ n ∈ NSx, ⋃ v ∈ F, cfBadZone wx v n δ) ∧
+      x ∉ (⋃ n ∈ NSz, ⋃ v ∈ F, affineMap q r ⁻¹' cfBadZone wz v n δ) := by
+  set A : Set ℝ := Set.Ioo c d with hA
+  set Bx : Set ℝ := ⋃ n ∈ NSx, ⋃ v ∈ F, cfBadZone wx v n δ with hBx
+  set Bz : Set ℝ := ⋃ n ∈ NSz, ⋃ v ∈ F, affineMap q r ⁻¹' cfBadZone wz v n δ with hBz
+  have hxbad := gaussMeasure_multiscale_cfBadZone_le wx hwxpos F hF NSx hn₁x hNSx hδ
+  have hzbad := gaussMeasure_preimage_multiscale_cfBadZone_le hq r wz hwzpos F hF NSz hn₁z hNSz hδ
+  -- combined bad set and its real-valued mass bound
+  set B : Set ℝ := Bx ∪ Bz with hBdef
+  have hBr : (gaussMeasure B).toReal
+      ≤ (gaussMeasure Bx).toReal + (gaussMeasure Bz).toReal := by
+    calc (gaussMeasure B).toReal
+        ≤ (gaussMeasure Bx + gaussMeasure Bz).toReal :=
+          ENNReal.toReal_mono
+            (ENNReal.add_ne_top.mpr ⟨measure_ne_top _ _, measure_ne_top _ _⟩)
+            (measure_union_le _ _)
+      _ = (gaussMeasure Bx).toReal + (gaussMeasure Bz).toReal :=
+          ENNReal.toReal_add (measure_ne_top _ _) (measure_ne_top _ _)
+  have hBltA : gaussMeasure B < gaussMeasure A := by
+    rw [← ENNReal.toReal_lt_toReal (measure_ne_top _ _) (measure_ne_top _ _)]
+    calc (gaussMeasure B).toReal
+        ≤ (gaussMeasure Bx).toReal + (gaussMeasure Bz).toReal := hBr
+      _ ≤ _ := by
+          refine add_le_add hxbad ?_
+          exact hzbad
+      _ < (gaussMeasure A).toReal := hbound
+  obtain ⟨x, hxirr, hxA, hxB⟩ := exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt B hBltA
+  rw [hBdef, Set.mem_union, not_or] at hxB
+  exact ⟨x, hxirr, hxA, hxB.1, hxB.2⟩
+
 /-- **Multi-scale + cfK measure core** (the cfK-steer selection).  Like
 `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`, but the aggregate bound
 `hbound` additionally leaves room for the cfK-large extension mass
