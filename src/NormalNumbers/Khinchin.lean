@@ -491,6 +491,18 @@ collapse the resulting `tsum` via `hasSum_nat_add_iff'` against
 private noncomputable def logTailTerm (K n : ℕ) : ℝ → ℝ :=
   (cfCylinder [K + 1 + n]).indicator (fun _ => Real.log ((K : ℝ) + 1 + n))
 
+private lemma logTailTerm_value_nonneg (K n : ℕ) : (0 : ℝ) ≤ Real.log ((K : ℝ) + 1 + n) :=
+  Real.log_nonneg (by
+    have hK := Nat.cast_nonneg (α := ℝ) K
+    have hn := Nat.cast_nonneg (α := ℝ) n
+    linarith)
+
+private lemma logTailTerm_nonneg (K n : ℕ) (x : ℝ) : 0 ≤ logTailTerm K n x := by
+  unfold logTailTerm
+  by_cases hmem : x ∈ cfCylinder [K + 1 + n]
+  · rw [Set.indicator_of_mem hmem]; exact logTailTerm_value_nonneg K n
+  · rw [Set.indicator_of_notMem hmem]
+
 /-- The single-digit tail indicator: `log(cfDigit x 0)` when the digit exceeds
 `K`, else `0`. -/
 private noncomputable def logTailFn (K : ℕ) : ℝ → ℝ :=
@@ -546,6 +558,62 @@ private lemma ae_mem_Ioo_gaussMeasure : ∀ᵐ x ∂gaussMeasure, x ∈ Set.Ioo 
   rw [MeasureTheory.ae_iff]
   exact gaussMeasure_compl_Ioo
 
+/-- The Gauss–Kuzmin log-series term, `G k = γ([k+1])·log(k+1)`. -/
+private noncomputable def logTailG : ℕ → ℝ :=
+  fun k => (gaussMeasure (cfCylinder [k + 1])).toReal * Real.log ((k : ℝ) + 1)
+
+private lemma logTailG_hasSum : HasSum logTailG (Real.log khinchinK₀) :=
+  gaussKuzmin_logsum_hasSum
+
+/-- `G (n + K) = ∫ logTailTerm K n` (and its `norm`), the reindexing identity
+used for the integrability input and the final `tsum` collapse. -/
+private lemma logTailG_shift (K n : ℕ) : logTailG (n + K) =
+    (gaussMeasure (cfCylinder [K + 1 + n])).toReal * Real.log (((K : ℝ) + n) + 1) := by
+  unfold logTailG
+  have hidx : n + K + 1 = K + 1 + n := by omega
+  rw [hidx]
+  congr 1
+  push_cast
+  ring
+
+/-- Pointwise a.e. collapse of the tsum of terms to `logTailFn`. -/
+private lemma logTailTerm_tsum_ae_eq (K : ℕ) :
+    ∀ᵐ x ∂gaussMeasure, ∑' n, logTailTerm K n x = logTailFn K x := by
+  filter_upwards [ae_mem_Ioo_gaussMeasure] with x hx
+  unfold logTailFn
+  by_cases hd : K < cfDigit x 0
+  · obtain ⟨m, hm⟩ := Nat.exists_eq_add_of_lt hd
+    have hkey : K + 1 + m = cfDigit x 0 := by omega
+    rw [if_pos hd, tsum_eq_single m]
+    · unfold logTailTerm
+      rw [Set.indicator_of_mem (mem_cfCylinder_singleton.mpr ⟨hx, hkey.symm⟩)]
+      rw [← hkey]
+      push_cast
+      ring
+    · intro n hne
+      unfold logTailTerm
+      rw [Set.indicator_of_notMem]
+      rw [mem_cfCylinder_singleton]
+      rintro ⟨-, hcd⟩
+      exact hne (by omega)
+  · rw [if_neg hd]
+    have hzero : (fun n => logTailTerm K n x) = fun _ => (0 : ℝ) := by
+      funext n
+      unfold logTailTerm
+      rw [Set.indicator_of_notMem]
+      rw [mem_cfCylinder_singleton]
+      rintro ⟨-, hcd⟩
+      omega
+    rw [hzero, tsum_zero]
+
+private lemma logTailTerm_summable_norm_integral (K : ℕ) :
+    Summable (fun n => ∫ x, ‖logTailTerm K n x‖ ∂gaussMeasure) := by
+  have heq : (fun n => ∫ x, ‖logTailTerm K n x‖ ∂gaussMeasure) = fun n => logTailG (n + K) := by
+    funext n
+    rw [integral_norm_logTailTerm, logTailG_shift]
+  rw [heq]
+  exact (summable_nat_add_iff K).2 logTailG_hasSum.summable
+
 /-- **First-moment tail integral**: `∫ logTailFn K dγ = log K₀ − Σ_{k<K}
 γ([k+1])·log(k+1)`, the Gauss–Kuzmin log-tail. -/
 theorem integral_logTailFn_eq (K : ℕ) :
@@ -553,68 +621,92 @@ theorem integral_logTailFn_eq (K : ℕ) :
       = Real.log khinchinK₀
           - ∑ k ∈ Finset.range K, (gaussMeasure (cfCylinder [k + 1])).toReal
               * Real.log ((k : ℝ) + 1) := by
-  set G : ℕ → ℝ := fun k => (gaussMeasure (cfCylinder [k + 1])).toReal * Real.log ((k : ℝ) + 1)
-    with hGdef
-  have hGsum : HasSum G (Real.log khinchinK₀) := by
-    simpa [hGdef] using gaussKuzmin_logsum_hasSum
-  -- `G (n + K) = ∫ logTailTerm K n` (and its `norm`), the reindexing identity
-  -- used for both the integrability input and the final `tsum` collapse.
-  have hGshift : ∀ n : ℕ, G (n + K) =
-      (gaussMeasure (cfCylinder [K + 1 + n])).toReal * Real.log (((K : ℝ) + n) + 1) := by
-    intro n
-    simp only [hGdef]
-    have hidx : n + K + 1 = K + 1 + n := by omega
-    rw [hidx]
-    congr 1
-    push_cast
-    ring
-  -- Pointwise a.e. collapse of the tsum of terms to `logTailFn`.
-  have htsum_eq : ∀ᵐ x ∂gaussMeasure, ∑' n, logTailTerm K n x = logTailFn K x := by
-    filter_upwards [ae_mem_Ioo_gaussMeasure] with x hx
-    unfold logTailFn
-    by_cases hd : K < cfDigit x 0
-    · obtain ⟨m, hm⟩ := Nat.exists_eq_add_of_lt hd
-      have hkey : K + 1 + m = cfDigit x 0 := by omega
-      rw [if_pos hd, tsum_eq_single m]
-      · unfold logTailTerm
-        rw [Set.indicator_of_mem (mem_cfCylinder_singleton.mpr ⟨hx, hkey.symm⟩)]
-        rw [← hkey]
-        push_cast
-        ring
-      · intro n hne
-        unfold logTailTerm
-        rw [Set.indicator_of_notMem]
-        rw [mem_cfCylinder_singleton]
-        rintro ⟨-, hcd⟩
-        exact hne (by omega)
-    · rw [if_neg hd]
-      have hzero : (fun n => logTailTerm K n x) = fun _ => (0 : ℝ) := by
-        funext n
-        unfold logTailTerm
-        rw [Set.indicator_of_notMem]
-        rw [mem_cfCylinder_singleton]
-        rintro ⟨-, hcd⟩
-        omega
-      rw [hzero, tsum_zero]
-  -- Integrability + summable-norm inputs for the tsum-integral swap.
   have hInt : ∀ n, Integrable (logTailTerm K n) gaussMeasure := logTailTerm_integrable K
-  have hSumNorm : Summable (fun n => ∫ x, ‖logTailTerm K n x‖ ∂gaussMeasure) := by
-    have heq : (fun n => ∫ x, ‖logTailTerm K n x‖ ∂gaussMeasure) = fun n => G (n + K) := by
-      funext n
-      rw [integral_norm_logTailTerm, hGshift]
-    rw [heq]
-    exact (summable_nat_add_iff K).2 hGsum.summable
+  have hSumNorm := logTailTerm_summable_norm_integral K
   have hswap := MeasureTheory.integral_tsum_of_summable_integral_norm hInt hSumNorm
-  -- Assemble: `∑' n, ∫ term = ∫ ∑' n, term = ∫ logTailFn K = LHS`; the middle
-  -- `∑'` collapses via `hasSum_nat_add_iff'` against `hGsum`.
-  have hlhs : ∑' n, ∫ x, logTailTerm K n x ∂gaussMeasure = ∑' n, G (n + K) := by
+  have hlhs : ∑' n, ∫ x, logTailTerm K n x ∂gaussMeasure = ∑' n, logTailG (n + K) := by
     refine tsum_congr fun n => ?_
-    rw [integral_logTailTerm, hGshift]
-  have htail : HasSum (fun n => G (n + K))
-      (Real.log khinchinK₀ - ∑ k ∈ Finset.range K, G k) :=
-    (hasSum_nat_add_iff' K).2 hGsum
+    rw [integral_logTailTerm, logTailG_shift]
+  have htail : HasSum (fun n => logTailG (n + K))
+      (Real.log khinchinK₀ - ∑ k ∈ Finset.range K, logTailG k) :=
+    (hasSum_nat_add_iff' K).2 logTailG_hasSum
   rw [hlhs, htail.tsum_eq] at hswap
-  rw [← MeasureTheory.integral_congr_ae htsum_eq, hswap]
+  simp only [logTailG] at hswap
+  rw [← MeasureTheory.integral_congr_ae (logTailTerm_tsum_ae_eq K), hswap]
+
+/-- `logTailFn K` is measurable: `cfDigit · 0` is measurable and the
+post-composition with the (discrete-domain) threshold/`log` map is
+automatically measurable. -/
+private lemma measurable_logTailFn (K : ℕ) : Measurable (logTailFn K) := by
+  have hd : Measurable (fun x => cfDigit x 0) := measurable_cfDigit 0
+  have hg : Measurable (fun d : ℕ => if K < d then Real.log (d : ℝ) else 0) :=
+    measurable_from_top
+  exact hg.comp hd
+
+/-- **`logTailFn K` is integrable.** Nonneg + measurable + a finite `lintegral`
+computed by the SAME tsum-swap route as `integral_logTailFn_eq`, but in
+`ℝ≥0∞` via `lintegral_tsum` (unconditional — no summability side-condition
+needed there, unlike the Bochner swap). -/
+private lemma integrable_logTailFn (K : ℕ) : Integrable (logTailFn K) gaussMeasure := by
+  have hnonneg : 0 ≤ᵐ[gaussMeasure] logTailFn K := by
+    filter_upwards with x
+    unfold logTailFn
+    split
+    · exact Real.log_natCast_nonneg _
+    · exact le_refl (0 : ℝ)
+  refine ⟨(measurable_logTailFn K).aestronglyMeasurable, ?_⟩
+  rw [MeasureTheory.hasFiniteIntegral_iff_ofReal hnonneg]
+  have hstep1 : ∫⁻ x, ENNReal.ofReal (logTailFn K x) ∂gaussMeasure
+      = ∫⁻ x, ENNReal.ofReal (∑' n, logTailTerm K n x) ∂gaussMeasure := by
+    refine MeasureTheory.lintegral_congr_ae ?_
+    filter_upwards [logTailTerm_tsum_ae_eq K] with x hx
+    rw [hx]
+  have hpt : ∀ x, ENNReal.ofReal (∑' n, logTailTerm K n x)
+      = ∑' n, ENNReal.ofReal (logTailTerm K n x) := by
+    intro x
+    have hloc : Summable (fun n => logTailTerm K n x) := by
+      unfold logTailTerm
+      by_cases hcase : ∃ n, x ∈ cfCylinder [K + 1 + n]
+      · obtain ⟨n₀, hn₀⟩ := hcase
+        apply summable_of_ne_finset_zero (s := {n₀})
+        intro n hn
+        simp only [Finset.mem_singleton] at hn
+        rw [Set.indicator_of_notMem]
+        intro hmem
+        apply hn
+        have h1 := (mem_cfCylinder_singleton.mp hn₀).2
+        have h2 := (mem_cfCylinder_singleton.mp hmem).2
+        omega
+      · push_neg at hcase
+        simp only [Set.indicator_of_notMem (hcase _)]
+        exact summable_zero
+    exact ENNReal.ofReal_tsum_of_nonneg (fun n => logTailTerm_nonneg K n x) hloc
+  have hstep2 : ∫⁻ x, ENNReal.ofReal (∑' n, logTailTerm K n x) ∂gaussMeasure
+      = ∫⁻ x, ∑' n, ENNReal.ofReal (logTailTerm K n x) ∂gaussMeasure := by
+    exact MeasureTheory.lintegral_congr_ae (Filter.Eventually.of_forall hpt)
+  have hstep3 : ∫⁻ x, ∑' n, ENNReal.ofReal (logTailTerm K n x) ∂gaussMeasure
+      = ∑' n, ∫⁻ x, ENNReal.ofReal (logTailTerm K n x) ∂gaussMeasure := by
+    refine MeasureTheory.lintegral_tsum fun n => ?_
+    exact (measurable_const.indicator (measurableSet_cfCylinder [K + 1 + n])).aemeasurable.ennreal_ofReal
+  have hstep4 : ∀ n, ∫⁻ x, ENNReal.ofReal (logTailTerm K n x) ∂gaussMeasure
+      = ENNReal.ofReal (∫ x, logTailTerm K n x ∂gaussMeasure) := by
+    intro n
+    rw [MeasureTheory.ofReal_integral_eq_lintegral_ofReal (logTailTerm_integrable K n)]
+    filter_upwards with x
+    exact logTailTerm_nonneg K n x
+  have hterm_nonneg : ∀ n : ℕ, 0 ≤ ∫ x, logTailTerm K n x ∂gaussMeasure := fun n =>
+    MeasureTheory.integral_nonneg (logTailTerm_nonneg K n)
+  have hstep5 : ∑' n, ENNReal.ofReal (∫ x, logTailTerm K n x ∂gaussMeasure)
+      = ENNReal.ofReal (∑' n, ∫ x, logTailTerm K n x ∂gaussMeasure) := by
+    refine (ENNReal.ofReal_tsum_of_nonneg hterm_nonneg
+      ((logTailTerm_summable_norm_integral K).congr fun n => ?_)).symm
+    apply MeasureTheory.integral_congr_ae
+    filter_upwards with x
+    rw [Real.norm_eq_abs, abs_of_nonneg (logTailTerm_nonneg K n x)]
+  rw [hstep1, hstep2, hstep3]
+  simp_rw [hstep4]
+  rw [hstep5]
+  exact ENNReal.ofReal_lt_top
 
 /-- **The tail integral vanishes as `K → ∞`**: `∫ logTailFn K dγ → 0`, the
 `K`-selection input for the Markov bound powering `logBadZone` (route B′).
