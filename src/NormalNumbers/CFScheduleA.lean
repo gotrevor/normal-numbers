@@ -2718,6 +2718,22 @@ theorem exists_interleaved_affine_witness {q : ℝ} (hq : 0 < q) (r : ℝ)
   rw [hpsi_eq]
   exact ⟨hzAirr, hzA01, hoz⟩
 
+/-- **Signpost (necessity of the feasibility hypothesis `-q < r < 1`).**  The
+interleaving target `x ∈ (0,1) ∧ ψ(x) ∈ (0,1)` that
+`exists_interleaved_affine_witness` delivers under `-q < r < 1` is genuinely
+EMPTY for some `r ∉ (-q,1)`: with `q = 1, r = 1` no `x ∈ (0,1)` maps into `(0,1)`
+under `ψ(x) = x + 1` (it lands in `(1,2)`).  So the hypothesis cannot be dropped —
+the general-`r` headline (`exists_cfNormal_and_affine_cfNormal`) instead routes
+through the integer-shift reduction (`isCFNormal_add_nat`), never through this
+witness in the infeasible regime. -/
+theorem interleaved_affine_target_not_always_nonempty :
+    ¬ ∀ (q : ℝ), 0 < q → ∀ r : ℝ,
+      ∃ x : ℝ, x ∈ Set.Ioo (0 : ℝ) 1 ∧ affineMap q r x ∈ Set.Ioo (0 : ℝ) 1 := by
+  intro h
+  obtain ⟨x, ⟨hx0, _⟩, _, hy1⟩ := h 1 one_pos 1
+  simp only [affineMap_apply, one_mul] at hy1
+  linarith
+
 /-- **Window-frequency limit is invariant under a fixed digit shift.**  If the
 digit sequence `d'` is `d` shifted right by `m` (`d' (k + m) = d k`; the first `m`
 entries are arbitrary), then the length-`p` window frequency of any pattern `v`
