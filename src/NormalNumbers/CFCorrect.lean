@@ -67,6 +67,48 @@ theorem uSched_ne (s : ℕ) : uSched s ≠ [] := by
   simp at this
   exact absurd this.symm (nFn_pos _).ne'
 
+/-- **Khinchin uniform-integrability seed**: the total `log`-digit mass of
+each appended schedule block is bounded by `goodC` times the block length —
+i.e. the average `log`-digit per stage is uniformly bounded by the constant
+`goodC`, with no digit-cap re-plumb needed (the existing `cfK`-continuant
+payload already controls it via `prod_le_cfK`). -/
+private theorem log_sum_eq_log_prod (l : List ℕ) (hpos : ∀ a ∈ l, 1 ≤ a) :
+    (l.map (fun a : ℕ => Real.log a)).sum = Real.log (l.prod : ℝ) := by
+  induction l with
+  | nil => simp
+  | cons a l ih =>
+      have ha1 : 1 ≤ a := hpos a List.mem_cons_self
+      have hl : ∀ b ∈ l, 1 ≤ b := fun b hb => hpos b (List.mem_cons_of_mem a hb)
+      have hlpos : 0 < l.prod := by
+        rcases Nat.eq_zero_or_pos l.prod with h0 | h0
+        · exact absurd ((List.prod_eq_zero_iff).mp h0) (fun h0' => by
+            have := hl 0 h0'; omega)
+        · exact h0
+      have ha0 : (a : ℝ) ≠ 0 := by exact_mod_cast (by omega : a ≠ 0)
+      have hl0 : (l.prod : ℝ) ≠ 0 := by exact_mod_cast hlpos.ne'
+      simp only [List.map_cons, List.sum_cons, List.prod_cons]
+      rw [ih hl, Nat.cast_mul, Real.log_mul ha0 hl0]
+
+theorem uSched_log_sum_le (s : ℕ) :
+    ((uSched s).map (fun a : ℕ => Real.log a)).sum ≤ goodC * nFn (tSched (s + 1)) := by
+  obtain ⟨-, hpos, hK, -⟩ := uSched_spec s
+  have hprod : (uSched s).prod ≤ cfK (uSched s) := prod_le_cfK (uSched s)
+  have hprodR : ((uSched s).prod : ℝ) ≤ Real.exp (goodC * nFn (tSched (s + 1))) := by
+    calc ((uSched s).prod : ℝ) ≤ (cfK (uSched s) : ℝ) := by exact_mod_cast hprod
+      _ ≤ Real.exp (goodC * nFn (tSched (s + 1))) := hK
+  have hpos0 : 0 ∉ uSched s := fun h0 => absurd (hpos 0 h0) (by norm_num)
+  have hprodpos : 0 < (uSched s).prod := by
+    rcases Nat.eq_zero_or_pos (uSched s).prod with h0 | h0
+    · exact absurd ((List.prod_eq_zero_iff).mp h0) hpos0
+    · exact h0
+  have hpos' : (0 : ℝ) < ((uSched s).prod : ℝ) := by exact_mod_cast hprodpos
+  have hlogle : Real.log ((uSched s).prod : ℝ) ≤ goodC * nFn (tSched (s + 1)) := by
+    calc Real.log ((uSched s).prod : ℝ)
+        ≤ Real.log (Real.exp (goodC * nFn (tSched (s + 1)))) :=
+          Real.log_le_log hpos' hprodR
+      _ = goodC * nFn (tSched (s + 1)) := Real.log_exp _
+  rwa [log_sum_eq_log_prod (uSched s) hpos]
+
 /-- Word length at stage `s`. -/
 theorem wSched_length_succ (s : ℕ) :
     (wSched (s + 1)).length = (wSched s).length + nFn (tSched (s + 1)) := by

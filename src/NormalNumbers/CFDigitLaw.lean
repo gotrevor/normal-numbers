@@ -296,6 +296,21 @@ theorem cfK_le_prod (w : List ℕ) : cfK w ≤ (w.map (· + 1)).prod := by
             Nat.add_le_add (Nat.mul_le_mul_left a ih1) (le_trans ih2 hP)
         _ = (a + 1) * ((b + 1) * (List.map (· + 1) l).prod) := by ring
 
+/-- **Lower bound: the continuant dominates the digit product**
+`∏ aᵢ ≤ K(a₁…aₙ)`.  Feeds the Khinchin-typicality uniform-integrability
+bound: combined with the schedule's `cfK u ≤ exp(goodC·n)` payload, this
+bounds each stage's average `log`-digit by `goodC`. -/
+theorem prod_le_cfK (w : List ℕ) : w.prod ≤ cfK w := by
+  induction w using cfK.induct with
+  | case1 => simp [cfK]
+  | case2 a => simp [cfK]
+  | case3 a b l ih1 ih2 =>
+      simp only [List.prod_cons] at *
+      calc a * (b * l.prod) ≤ a * cfK (b :: l) := by
+            exact Nat.mul_le_mul_left a (by simpa [List.prod_cons] using ih1)
+        _ ≤ a * cfK (b :: l) + cfK l := Nat.le_add_right _ _
+        _ = cfK (a :: b :: l) := rfl
+
 /-! ### Scaffolding for the conditional log-continuant bound -/
 
 private lemma log_le_two_sqrt {x : ℝ} (hx : 1 ≤ x) :
