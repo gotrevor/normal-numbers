@@ -2327,15 +2327,40 @@ theorem chain_slack_littleO {blk : ℕ → ℕ} (n₁ : ℕ → ℕ) (L : ℝ)
   have hb := (hbpos s).ne'
   field_simp
 
-/-- **Geometric block-length bound** (route-decisive, DISCLOSED `sorry`).  The
-steer-block length is `O(|w_s|)`: `∃ ρ ≥ 0, ∀ s, |chainApp w s| ≤ ρ·|w s|`.  This
-is THE coupled-bookkeeping obligation `DIRECTION.md` flags as route-decisive — it
-needs the ψ-step to expose an UPPER bound on the block length (currently only the
-lower bound `L = s` is threaded).  Stated abstractly for either chain. -/
+/-- **Linear block-length bound** (route-decisive core, DISCLOSED `sorry`).  The
+sharp form of the geometric bound: the steer-block length is bounded by an AFFINE
+function of the accumulated word length, `|chainApp w s| ≤ K₁·|w s| + K₂`.  With
+the tight block parameter (`exists_uniform_block_param_tight`) the block length is
+`n₁ + m² ≤ 2m²` with `m² ≤ 6(L + Nfib) + 2 + 2⌈2/β⌉⁴` LINEAR in `L = s ≤ |w s|`,
+in the resolution length `Nfib ≈ log_φ(1/(d−c))` (target width `d−c ≳ φ^{−c|w s|}`
+⇒ `Nfib ≲ |w s|`), and in the word-independent `β`-constant (`γtar/γwx = Θ(q)` by
+the Gauss-density ratio bounds, so `⌈2/β⌉` is a per-level constant `≤ |w s|`
+eventually).  The three sub-bounds (tight length exposure through the ψ-step,
+resolution `Nfib ≲ |w|`, word-independent `β`) are `PENDING_WORK.md` item (ii)/(iii)
+— the remaining coupled bookkeeping.  Isolated here as the single genuinely-open
+math obligation the B6 crux rests on. -/
+theorem schedA_block_linear {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
+    (w : ℕ → List ℕ) (hw : w = wxSeq hq hr ∨ w = wzSeq hq hr) :
+    ∃ K₁ K₂ : ℝ, 0 ≤ K₁ ∧ 0 ≤ K₂ ∧
+      ∀ s, ((chainApp w s).length : ℝ) ≤ K₁ * (w s).length + K₂ := by
+  sorry
+
+/-- **Geometric block-length bound** (route-decisive).  `∃ ρ ≥ 0, ∀ s, |chainApp w
+s| ≤ ρ·|w s|`.  Follows from the affine bound `schedA_block_linear` because
+`|w s| ≥ 1` (genuine nonempty chain), so `K₁·|w| + K₂ ≤ (K₁+K₂)·|w|`. -/
 theorem schedA_block_geom {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
     (w : ℕ → List ℕ) (hw : w = wxSeq hq hr ∨ w = wzSeq hq hr) :
     ∃ ρ : ℝ, 0 ≤ ρ ∧ ∀ s, ((chainApp w s).length : ℝ) ≤ ρ * (w s).length := by
-  sorry
+  obtain ⟨K₁, K₂, hK₁, hK₂, hlin⟩ := schedA_block_linear hq hr w hw
+  refine ⟨K₁ + K₂, by positivity, fun s => ?_⟩
+  have hne : w s ≠ [] := by
+    rcases hw with h | h <;> rw [h]
+    · exact wxSeq_ne hq hr s
+    · exact wzSeq_ne hq hr s
+  have hw1 : (1 : ℝ) ≤ ((w s).length : ℝ) := by
+    have := List.length_pos_of_ne_nil hne; exact_mod_cast this
+  calc ((chainApp w s).length : ℝ) ≤ K₁ * (w s).length + K₂ := hlin s
+    _ ≤ (K₁ + K₂) * (w s).length := by nlinarith [hK₂, hw1]
 
 /-- **Abstract chain frequency obligation from per-stage uniform block goodness.**
 Given a strictly-extending chain whose stage-`s` block `chainApp w s` reaches
