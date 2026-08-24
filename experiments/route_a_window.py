@@ -1036,7 +1036,9 @@ def selftest(args):
         print("      !! transducer is WRONG -- nothing below means anything")
 
     # --- T2  integer control must show a FINITE state set -----------------------
-    print("\nT2  integer control (Vandehey's theorem applies -> state set must saturate)")
+    print("\nT2  state-set cardinality: integer M repeats states constantly; a Z[phi] M")
+    print("    provably never can (G_n = G_m needs M^-1 V M integral for integer V, which")
+    print("    for M = diag(phi,1) forces V diagonal, i.e. the same input prefix).")
     for name in ("2x", "3x"):
         r = random.Random(args.seed + 7)
         s = LebesgueStream(r)
