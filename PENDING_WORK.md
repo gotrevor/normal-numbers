@@ -1,5 +1,29 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🛑🛑🛑 ROUTE-DECISIVE OBSTRUCTION (2026-08-28) — see `OBSTRUCTION-2026-08-28-block-measure-budget.md`
+
+**The two-stream construction forces SUPER-EXPONENTIAL blocks; `schedA_block_linear`
+is NOT provable as-is.**  Deeper than the cfK issue: the freq-good *measure budget*
+`n₁ ≳ 1/ρ` blows up because the x-block target `ρ = μ(target)/μ(cfCylinder wx) ≈
+e^{-2κ|zblock|}` is exponentially small (the other stream is one full block deeper).
+`n₁` sits inside the slack `C_s`, so `hslack` (`CFChainFreq.lean:567`) fails
+independently of the length bound.  Verified against the code (target = full hull
+`exists_Ioo_irrational_subset_cfCylinder`; budget `NS.card·A₁ < μ(target)`;
+`schedEps s = 1/(s+1)`).  **This session's cfK lemmas are correct and reusable but
+do NOT fix this** — the blowup is in the measure budget, not the resolution.
+
+**PROPOSED PIVOT (needs attended ratification — DIRECTION mandates the two-stream
+route, so a review lap must sanction the change):** single-stream construction
+selecting `x` to avoid BOTH the x-CF bad zones AND the ψ-pullback
+`ψ⁻¹(cfBadZone_z …)` of the z-bad-zones.  Target becomes the full `cfCylinder wx`
+(`ρ=1`), budget polynomial, blocks linear.  Full analysis + why alternatives fail
+in the obstruction doc.
+
+**Meanwhile (directive item 2, still open & allowed):** `IsCFNormal_add_int` /
+the `TODO(shift)` reduction (`CFScheduleA.lean` shift `sorry`) — the general-`r`
+representative reduction.  Independent of the crux route; the next productive grind
+target while the crux awaits review.
+
 ## 🧭 ROUTE CORRECTION (2026-08-28 grind lap) — DIGIT-CAP IS FATAL; cfK-BOUND-VIA-goodC IS THE ROUTE
 
 The CURRENT DIRECTIVE's ratified "DIGIT-CAPPED steering" route for
