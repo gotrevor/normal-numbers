@@ -1,6 +1,17 @@
 # HANDOFF — 2026-08-24 — B6 L4: ROUTE-B MEASURE+SELECTION+Z-ENGINE LAYER COMPLETE
 
-**Branch:** `master`  **Build:** 🟢 8757 jobs.  **Sole open `src/` sorry:** the DEAD
+**Branch:** `master`  **HEAD:** `3b6d753`  **Build:** 🟢 8757 jobs, clean tree.
+
+## Brick-4 z-transfer prerequisites also DONE this session (axiom-clean)
+- `blockCount_eq_of_cfDigit_agree` (`4b8cfb8`) — digit agreement on first `m` ⇒ equal
+  `v`-block count at scales `n` with `n+|v| ≤ m`.
+- `exists_nhds_cfDigit_eq` (`3b6d753`) — local CF-digit stability: an open ball around an
+  irrational `y∈(0,1)` on which the first `m` CF digits are constant.
+- **NEXT (compose these + ψ-Lipschitz):** transfer lemma `ψ(xA) ∉ cfBadZone [] v n δ_s`
+  from a deep-enough `x`-cylinder + the brick-3′ point's avoidance; then the
+  `SchedStateL4` recursion, brick 5-proper (`tendsto_of_scale_coverage`), brick 6.
+
+  **Sole open `src/` sorry:** the DEAD
 two-stream crux `schedA_block_linear` (`CFScheduleA.lean`), reached only via
 `schedA_hfreq_x`/`schedA_hfreq_z` → `schedA_block_geom` → `schedA_block_linear`.
 It is to be EXCISED once the route-B single-stream `exists_interleaved_affine_witness`

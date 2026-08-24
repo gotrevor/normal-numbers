@@ -568,6 +568,25 @@ def tv_against_gauss(digits):
     return tv1, tv2
 
 
+def tv_small(digits):
+    """TV over digits 1..5 CONDITIONED on the digit being < BUCKET_K.
+
+    The bucketed TV above puts everything heavy into one tail cell, and a stream whose
+    digits are bounded (the structured input's are capped by the denominator it has
+    reached) is penalised there for a reason that has nothing to do with the transducer.
+    Conditioning removes that artefact, so the two sides are compared on a shared scale."""
+    c = Counter(d for d in digits if d < BUCKET_K)
+    n = sum(c.values())
+    if n < 50:
+        return None
+    z = sum(GAUSS1[k] for k in range(1, BUCKET_K))
+    return 0.5 * sum(abs(c.get(k, 0) / n - GAUSS1[k] / z) for k in range(1, BUCKET_K))
+
+
+def tail_mass(digits):
+    return sum(1 for d in digits if d >= BUCKET_K) / max(1, len(digits))
+
+
 def tv_between(d1, d2):
     c1 = Counter((bucket(a), bucket(b)) for a, b in zip(d1, d1[1:]))
     c2 = Counter((bucket(a), bucket(b)) for a, b in zip(d2, d2[1:]))
@@ -850,12 +869,23 @@ def mode_freq(args, rng):
     i1, i2 = tv_against_gauss(din)
     o1, o2 = tv_against_gauss(dout)
     print()
-    print("   %-28s %-10s %-10s %s" % ("stream", "TV 1-block", "TV 2-block", "n"))
+    print("   %-28s %-10s %-10s %-10s %-9s %s"
+          % ("stream", "TV 1-block", "TV 2-block", "TV|d<6", "P(d>=6)", "n"))
     if i1 is not None:
-        print("   %-28s %-10.4f %-10.4f %d" % ("input", i1, i2, len(din)))
+        print("   %-28s %-10.4f %-10.4f %-10.4f %-9.4f %d"
+              % ("input", i1, i2, tv_small(din) or 0.0, tail_mass(din), len(din)))
     if o1 is not None:
-        print("   %-28s %-10.4f %-10.4f %d" % ("output (Mx)", o1, o2, len(dout)))
-        print("   %-28s %-10s %-10.4f" % ("noise floor (half-vs-half)", "-", noise_floor(dout)))
+        print("   %-28s %-10.4f %-10.4f %-10.4f %-9.4f %d"
+              % ("output (Mx)", o1, o2, tv_small(dout) or 0.0, tail_mass(dout), len(dout)))
+        rr = LebesgueStream(random.Random(args.seed + 9091))
+        base = [rr.next() for _ in range(len(dout))]
+        b1, b2 = tv_against_gauss(base)
+        print("   %-28s %-10.4f %-10.4f %-10.4f %-9.4f %d"
+              % ("random-real baseline", b1, b2, tv_small(base) or 0.0,
+                 tail_mass(base), len(base)))
+        print("   %-28s %-10s %-10.4f" % ("noise floor (half-vs-half)", "-",
+                                          noise_floor(dout)))
+        print("   Gauss tail mass P(d>=6) = %.4f" % GAUSS1[BUCKET_K])
     return {"in": (i1, i2), "out": (o1, o2)}
 
 
