@@ -29,6 +29,35 @@ The feasible set `(0,1) ∩ ψ⁻¹(0,1) = (max 0 (-r/q), min 1 ((1-r)/q))` is n
 **Two open `src/` sorries now:** (1) the feasible crux (item-3 recursion, below),
 (2) the `TODO(shift)` general-`r` reduction (leaf: `IsCFNormal_add_int`).
 
+### 🎯 NEXT crux-blocker (grind lap 2026-08-24): `hgeom` (block ≤ ρ·word) needs a WORD-INDEPENDENT block bound — the current block sizer is quadratically lossy
+`slack_telescoping` (PROVED this lap) reduces `hslack` to `hgeom : blk s ≤ ρ·word s`
+(+ `C=o(blk)`, `blk→∞`).  Supplying `hgeom` needs the per-round block length
+`|u_s| = n₁+m²` bounded by `ρ·|w_s|`.  Two lossy spots in the CURRENT sizer block this:
+1. **`exists_uniform_block_param` is quadratically lossy.**  It returns
+   `m = max(Lc, Nfib, ⌈2/β⌉², 1)` but the constraints only require `m² ≥ Lc`,
+   `m² ≥ Nfib`, `(m+1)/(m√m) < β` — i.e. `m ≥ √Lc, √Nfib, ~1/β²`.  Picking `m ≥ Lc`
+   (not `√Lc`) makes `|u| = m² ~ Nfib² ~ |wx|²` — QUADRATIC in the word, breaking
+   `hgeom`.  **Fix:** a tight variant returning `m = max(⌈√Lc⌉, ⌈√Nfib⌉, ⌈4/β²⌉+1)`,
+   so `m² ~ max(Lc, Nfib, 16/β⁴)`.  Since `Nfib ~ |wx|` (resolution `4/(d−c) <
+   fib(|wx|+block+1)²`, `d−c ~ φ^{−2|wx|}` ⇒ `Nfib ~ |wx|`), tight `|u| ~ |wx|` ⇒
+   `word` roughly DOUBLES per step (geometric) ⇒ `hgeom` with `ρ ~ 2`. ✓
+2. **`β = γtar·δ²/(S+1)` with `S ∋ γwx` is word-dependent.**  As `|wx|→∞`,
+   `γtar, γwx ~ φ^{−2|wx|} → 0`, so the `+1` dominates `S`, `β ~ γtar·δ² → 0`, and
+   `1/β⁴ → φ^{8|wx|}` (exponential block).  **Fix:** the REAL constraint `hbound` is
+   `(m+1)·S₀·γwx/(δ²n₁) < γtar` i.e. `(m+1)/n₁ < (δ²/S₀)·(γtar/γwx)`, and
+   **`γtar/γwx = Θ(q)` is WORD-INDEPENDENT** (both are Gauss measures of intervals
+   of comparable width `~φ^{−2|wx|}`; the Gauss density is bounded in `[1/(2ln2),
+   1/ln2]` on `[0,1]`, and `|ψ-image|/|source| = q`).  So use `β := (δ²/(S₀+1))·(q-lower-bound-on-γtar/γwx)`, word-independent ⇒ the `16/β⁴` term is a
+   per-level CONSTANT `B(t)` ⇒ with promotion (`|w_s| ≥ B(t)` before bumping `t`),
+   `|u_s| ~ max(|wx|, B(t)) ~ |wx|`. ✓
+- **Net remaining item-3 build (revised, hardest-first):**
+  (i) tight `exists_uniform_block_param'` (`m ~ √max(...)`) — self-contained arithmetic;
+  (ii) word-independent-`β` uniform block variant exposing `|u| ≤ ρ·|wx|` (factor
+       `γwx` out of the budget via `γtar/γwx ≥ q·c₀`); (iii) length-exposing affine
+  step; (iv) `SchedStateA`+promotion; (v) chains → `slack_telescoping`+`hblock` →
+  `chain_orbit_equidist_uniform` → assemble feasible crux.  Analytic core DONE
+  (`slack_telescoping`); (i)–(ii) are the route-decisive length-control lemmas.
+
 ### ✅ RESOLVED item-3 feasibility (grind lap 2026-08-24, later): `hslack` CLOSES — tool = `Asymptotics.IsLittleO.sum_range`; needs block ≤ ρ·word (length-exposing step + promotion)
 Corrects the (over-pessimistic) note below.  Two facts settle `hslack`:
 - **Geometric measure factors CANCEL.**  Budget `hbound`: `(m+1)·A₁ < γtar` with
