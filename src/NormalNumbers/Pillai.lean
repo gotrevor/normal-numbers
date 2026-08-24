@@ -437,4 +437,60 @@ theorem card_straddling_phases (r L : ℕ) (hL1 : 1 ≤ L) (hLr : L ≤ r) :
   rw [hset, Nat.card_Ico]
   omega
 
+/-- The number of valid phase-`s` occurrences within `[0, N)`: values `q`
+with `r*q + s + L ≤ N`, i.e. `q < (N - s - L)/r + 1` when `s ≤ N - L`
+(else there are none). The bridge between the `Q`-scale (index into the
+base-`b^r` digit sequence) used by `phaseWindowFreq_tendsto` and the
+`N`-scale (real base-`b` digit position) used by `IsNormalSequence`. -/
+def phaseOccCount (r L s N : ℕ) : ℕ :=
+  if h : s + L ≤ N then (N - s - L) / r + 1 else 0
+
+/-- **Real-position window count, decomposed by phase**: the number of
+start positions `i` with `i + L ≤ N` where the base-`b` digit window of
+`y` matches `w` equals the sum, over the `r` phases `s < r`, of the
+phase-`s` window-match count among `q < phaseOccCount r L s N`. Pure
+combinatorics (an `i ↔ (i/r, i%r)` bijection, same flavor as
+`card_matchingValues`'s bijection) — no limits involved. This is the exact
+identity Pillai's final assembly divides through by `N` and takes `N → ∞`
+(phase-by-phase, via `phaseWindowFreq_tendsto`) then `r → ∞` (discarding
+the `card_straddling_phases`-many straddling phases).
+
+**Status (disclosed `sorry`, next lap's target)**: this identity plus the
+subsequent `N → ∞, r → ∞` double-limit ε-management are the last
+obligations for Pillai's theorem. The two already-proved ingredients
+(`phaseWindowFreq_tendsto`, `card_straddling_phases`) are exactly what
+this identity needs downstream to make the final assembly go through —
+see the file docstring for the full route. -/
+theorem windowCount_eq_sum_phaseCount (b r L : ℕ) (hr : 1 ≤ r) (hL : 1 ≤ L)
+    (y : ℝ) (w : List ℕ) (hwlen : w.length = L) (N : ℕ) :
+    ((Finset.range (N + 1)).filter
+        (fun i => i + L ≤ N ∧ List.ofFn (fun j : Fin L => digitOf b y (i + j)) = w)).card
+      = ∑ s ∈ Finset.range r, ((Finset.range (phaseOccCount r L s N)).filter
+          (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card := by
+  have hrpos : 0 < r := by omega
+  rw [Finset.card_eq_sum_card_fiberwise
+      (s := (Finset.range (N + 1)).filter
+        (fun i => i + L ≤ N ∧ List.ofFn (fun j : Fin L => digitOf b y (i + j)) = w))
+      (t := Finset.range r) (f := fun i => i % r)
+      (fun i _ => Finset.mem_range.mpr (Nat.mod_lt i hrpos))]
+  apply Finset.sum_congr rfl
+  intro s hs
+  have hsr : s < r := Finset.mem_range.mp hs
+  have hfiber_eq : ((Finset.range (N + 1)).filter
+        (fun i => i + L ≤ N ∧ List.ofFn (fun j : Fin L => digitOf b y (i + j)) = w)).filter
+        (fun i => i % r = s)
+      = (Finset.range (N + 1)).filter
+        (fun i => i + L ≤ N ∧ List.ofFn (fun j : Fin L => digitOf b y (i + j)) = w ∧ i % r = s) := by
+    ext i
+    simp only [Finset.mem_filter, Finset.mem_range]
+    tauto
+  rw [hfiber_eq]
+  -- TODO: bijection `i ↔ i/r` between this flat filter (fixed `i%r=s`) and
+  -- `(range (phaseOccCount r L s N)).filter (window-at-phase-s q = w)`.
+  -- The correspondence is `i = r*(i/r)+s`; div/mod bookkeeping via
+  -- `Nat.le_div_iff_mul_le` got tangled in commutativity mismatches
+  -- (`r*(i/r)` vs `(i/r)*r`) across three attempts this lap — see
+  -- HANDOFF for the exact blocker and a cleaner restart plan.
+  sorry
+
 end NormalNumbers
