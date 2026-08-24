@@ -485,12 +485,56 @@ theorem windowCount_eq_sum_phaseCount (b r L : ℕ) (hr : 1 ≤ r) (hL : 1 ≤ L
     simp only [Finset.mem_filter, Finset.mem_range]
     tauto
   rw [hfiber_eq]
-  -- TODO: bijection `i ↔ i/r` between this flat filter (fixed `i%r=s`) and
-  -- `(range (phaseOccCount r L s N)).filter (window-at-phase-s q = w)`.
-  -- The correspondence is `i = r*(i/r)+s`; div/mod bookkeeping via
-  -- `Nat.le_div_iff_mul_le` got tangled in commutativity mismatches
-  -- (`r*(i/r)` vs `(i/r)*r`) across three attempts this lap — see
-  -- HANDOFF for the exact blocker and a cleaner restart plan.
-  sorry
+  -- Bijection `i ↔ i/r` between the flat fiber filter (fixed `i%r=s`) and the
+  -- phase-`s` occurrence filter, via `i = r*(i/r)+s`.  Canonical decomposition
+  -- is `Nat.div_add_mod i r : r*(i/r)+i%r = i` (factor order `r*(i/r)`); the one
+  -- place `Nat.le_div_iff_mul_le` produces `(i/r)*r` is normalized back with an
+  -- explicit `Nat.mul_comm`.
+  apply Finset.card_nbij' (fun i => i / r) (fun q => r * q + s)
+  · -- forward MapsTo: `i ↦ i/r` lands in the phase-`s` occurrence filter
+    intro i hi
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq] at hi
+    obtain ⟨_hiN1, hiN, hwin, hmod⟩ := hi
+    have hqi : r * (i / r) + s = i := by rw [← hmod]; exact Nat.div_add_mod i r
+    have hsLN : s + L ≤ N := by omega
+    have hPO : phaseOccCount r L s N = (N - s - L) / r + 1 := by
+      unfold phaseOccCount; exact dif_pos hsLN
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq]
+    refine ⟨?_, ?_⟩
+    · have hle : i / r ≤ (N - s - L) / r := by
+        rw [Nat.le_div_iff_mul_le hrpos, Nat.mul_comm]
+        omega
+      rw [hPO]; omega
+    · rw [hqi]; exact hwin
+  · -- backward MapsTo: `q ↦ r*q+s` lands in the flat fiber filter
+    intro q hq
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq] at hq
+    obtain ⟨hqP, hwin⟩ := hq
+    have hsLN : s + L ≤ N := by
+      by_contra h
+      have h0 : phaseOccCount r L s N = 0 := by unfold phaseOccCount; exact dif_neg h
+      omega
+    have hPO : phaseOccCount r L s N = (N - s - L) / r + 1 := by
+      unfold phaseOccCount; exact dif_pos hsLN
+    rw [hPO] at hqP
+    have hqle : q ≤ (N - s - L) / r := by omega
+    have hmul : r * q ≤ N - s - L := by
+      have h := (Nat.le_div_iff_mul_le hrpos).mp hqle
+      rwa [Nat.mul_comm] at h
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq]
+    refine ⟨?_, ?_, hwin, ?_⟩
+    · omega
+    · omega
+    · rw [Nat.add_comm (r * q) s, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hsr]
+  · -- left inverse: `r*(i/r)+s = i` on the fiber
+    intro i hi
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq] at hi
+    obtain ⟨_hiN1, _hiN, _hwin, hmod⟩ := hi
+    show r * (i / r) + s = i
+    rw [← hmod]; exact Nat.div_add_mod i r
+  · -- right inverse: `(r*q+s)/r = q`
+    intro q _hq
+    show (r * q + s) / r = q
+    rw [Nat.mul_add_div hrpos, Nat.div_eq_of_lt hsr, Nat.add_zero]
 
 end NormalNumbers

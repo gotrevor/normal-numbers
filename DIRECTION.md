@@ -4,56 +4,61 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-23, reflection lap)
+## CURRENT DIRECTIVE (set 2026-08-24, review lap)
 
 - **THE objective**: **LOCK TIER 1** — prove `xstar` is **absolutely normal ∧
-  CF-normal** (the Becher–Yuhjtman result, first formalization). CF normality is
-  DONE (`xstar_cf_freq_tendsto`, axiom-clean). What remains for Tier 1 is the
-  **d-ary side**: base-`d` simple normality of `xstar` for every `d ≥ 2`, then
-  Pillai, then the stated conjunction. **Khinchin-typical (W6) is Tier 2 — a
-  stretch beyond the source paper; do NOT start it until Tier 1 is a proven,
-  axiom-clean, stated theorem.**
-- **Mandated next move**: attack the d-ary correctness chain in
-  `DaryCorrect.lean`, hardest-first. In order:
-  (1) **THE CRUX — the `m`-growth estimate** (interior condition, "the only
-      genuinely new math left"): per-stage base-`d` digit gain `k_{s+1}(d)` is
-      eventually a vanishing fraction of the accumulated count `m_d(s) − m_d(s₀)`.
-      Route (from HANDOFF-…-0900 §(c), source-verified this lap): numerator
-      `d^{k} ≤ 32d·cfK(u)²` from good-length upper bound + containment;
-      denominator `Σ k_j ≳ (log2/(4 log d))·(L_s − L_{s₀})` via
-      `two_pow_le_cfK` (`cfK(u_j) ≥ 2^{(n_j−1)/2}`, already proved); ratio
-      ≲ goodC·n_{s+1}/L_s → 0 by `sched_dominance`. Decompose into named
-      sub-`sorry`s in `DaryCorrect.lean` — that RAISES the src count and IS
-      progress.
-  (2) **the d-ary chain** → `xstar_dary_freq_tendsto` (digit `c` freq → 1/d):
-      MIRROR the proven `xstar_cf_freq_tendsto` skeleton (chain / boundary /
-      interior / `exists_stage` locator / metric limit), swapping
-      CFDiscLt→HasDiscLt. Lemma 9 (`BaryConcat`: `HasDiscLt.append`,
-      `hasDiscLt_append_take`, `hasDiscLt_short_append`) is the CF-chain analogue,
-      already proved. Do NOT re-derive the chain machinery — transcribe it.
-  (3) **Pillai** (`simple normal to all b^k ⇒ normal to b`) + **the headline
-      statement**: stage the conjunction `IsNormal b xstar (∀ b≥2) ∧
-      (CF-normal xstar)` for JUDGE to freeze. Pillai is NOT in mathlib/repo —
-      formalize it (classical, self-contained). Check `Sandwich`/`Counting`/
-      `Wall` for reusable window-frequency pieces first.
-- **Forbidden drift**: do NOT re-attack Lemma 13 / the schedule / the measure
-  balance / the CF side — ALL PROVED and axiom-clean (the previous directive's
-  "route-decisive crux" is closed). Do NOT start W6/Khinchin caps before Tier 1
-  is a stated axiom-clean theorem. Do NOT open Track A side-quests. Do NOT pivot
-  to ergodicity/Birkhoff (B5′ is Birkhoff-free). Do NOT weaken/reshape any
-  JUDGE-frozen statement. Constants: distortion `2`, γ-mixing `(9/10)`, brick
-  ratio `1/(2d)`.
-- **Why**: the W5 crux the last directive named (the measure-balance selection
-  lemma) is proved, and CF normality of the explicit witness `xstar` is proved
-  axiom-clean — the campaign is far past "will the route close". The only
-  genuinely-new-math obligation left for the source-backed headline is the d-ary
-  `m`-growth estimate (item 1); once it lands, the d-ary chain is a
-  transcription and Pillai is classical labor. Locking Tier 1 = a complete,
-  first-anywhere formalization; Khinchin (Tier 2) is a real research reach that
-  revisits the construction and must not be allowed to destabilize a lockable
-  Tier-1 result.
+  CF-normal** (Becher–Yuhjtman, first formalization). CF normality DONE
+  (`xstar_cf_freq_tendsto`). d-ary simple normality at every base DONE
+  (`xstar_dary_freq_tendsto`, axiom-clean). The whole d-ary correctness chain +
+  the `m`-growth crux the LAST directive named are **CLOSED**. The sole remaining
+  math obligation is **Pillai's theorem** (`Pillai.lean`), then the headline
+  conjunction (`Headline.lean:93,100`). **Khinchin-typical (W6) is Tier 2 —
+  do NOT start it until Tier 1 is a proven, axiom-clean, stated theorem.**
+- **Mandated next move**: FINISH Pillai in `Pillai.lean`, hardest-first, in this
+  order (all leaves feed the one headline; the analytic crux is (1)):
+  (1) **THE CRUX — the double-limit assembly**: divide
+      `windowCount_eq_sum_phaseCount` (PROVED this lap, axiom-clean) by `N`,
+      apply `phaseWindowFreq_tendsto` per non-straddling phase (`s ≤ r−L`) as
+      `N→∞` (each `phaseOccCount r L s N / N → 1/r`), bound the `L−1` straddling
+      phases via `card_straddling_phases`, sum the finite phase-limits, then let
+      `r→∞` (ε-managed, style of `xstar_dary_freq_tendsto`'s
+      `Metric.tendsto_atTop` but simpler — arithmetic-progression decomposition,
+      no schedule machinery). Decompose into named sub-`sorry`s if it doesn't
+      close in one lap — that RAISES the src count and IS progress.
+  (2) **State + prove Pillai's theorem**: hypothesis `∀ r ≥ 1,
+      SimplyNormalAt (b^r) y` (check for an existing equivalent def before adding
+      one), conclusion `IsNormalSequence b (digitOf b y)`. Needs a short bridge
+      from `IsNormalSequence`'s `countOccurrences` (`l.tails.countP …`) to the
+      filter-based window count — via `List.isPrefixOf_iff_prefix` +
+      `List.prefix_iff_eq_take` + `List.getElem_tails`.
+  (3) **Headline conjunction** (`Headline.lean:93,100`): discharge
+      `exists_absolutely_normal_cf_normal` from Pillai +
+      `xstar_dary_freq_tendsto` (abs-normal leg) and `xstar_cf_freq_tendsto`
+      (CF leg, a wrapper per the JUDGE addendum).
+- **Forbidden drift**: do NOT re-attack the d-ary chain / `m`-growth estimate /
+  Lemma 13 / the schedule / the measure balance / the CF side — ALL PROVED and
+  axiom-clean. Do NOT re-prove `windowCount_eq_sum_phaseCount`,
+  `phaseWindowFreq_tendsto`, or `card_straddling_phases` — DONE this lap. Do NOT
+  start W6/Khinchin caps before Tier 1 is a stated axiom-clean theorem. Do NOT
+  open Track A side-quests. Do NOT pivot to ergodicity/Birkhoff. Do NOT
+  weaken/reshape any JUDGE-frozen statement. Constants: distortion `2`, γ-mixing
+  `(9/10)`, brick ratio `1/(2d)`.
+- **Why**: every genuinely-new-math obligation for the source-backed headline is
+  now discharged — CF normality, d-ary simple normality at every base, and (this
+  lap) the Pillai window/phase count identity `windowCount_eq_sum_phaseCount`.
+  What remains is the double-limit ANALYSIS (item 1, the real crux: a Cesàro /
+  arithmetic-progression limit interchange) plus classical statement labor. Once
+  Pillai closes, the headline conjunction is a wiring of two proven `Tendsto`
+  results. Locking Tier 1 = a complete, first-anywhere formalization; Khinchin
+  (Tier 2) must not destabilize a lockable Tier-1 result.
 
 ### Directive history
+- 2026-08-24 (review lap): d-ary chain + `m`-growth crux + Pillai window/phase
+  count identity (`windowCount_eq_sum_phaseCount`) ALL closed & axiom-clean since
+  last directive. Refreshed the stale directive (it still named the closed
+  `m`-growth estimate as THE crux). Redirected to FINISH Pillai: the double-limit
+  assembly (new crux), then the theorem statement, then the headline. No route
+  trigger fired (whole-lemma targets closing fast; finishability improving).
 - 2026-08-23 (review lap): Track A certified complete + axiom-clean; kept Track
   B / B5′ direction; sharpened next move to the W4 block-frequency Chebyshev
   assembly (`CFBlockFreq.lean`). No route trigger fired.

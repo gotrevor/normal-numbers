@@ -1,6 +1,6 @@
 # STATUS — normal-numbers 📊
 
-**Two classical harvests of one Birkhoff-on-[0,1] machine: base-b normality (Track A, DONE) + CF/Khinchin metric theory (Track B, active B5′ expedition).** · **Build**: 🟢 green (8742 jobs) · **Updated**: reflection lap · 2026-08-23 · `dac27b5`
+**Two classical harvests of one Birkhoff-on-[0,1] machine: base-b normality (Track A, DONE) + CF/Khinchin metric theory (Track B, active B5′ expedition).** · **Build**: 🟢 green (8743 jobs) · **Updated**: review lap · 2026-08-24 · `eaa3b38`+
 
 ## Where it stands
 
@@ -17,22 +17,36 @@ genuine pattern `v`, window frequency → γ(I_v)). The measure-balance selectio
 lemma that the 2026-08-24 directive called the "route-decisive test" is
 **proved and consumed** — the route CLOSED.
 
-The frontier is now the **d-ary (base-d) side**: base-`d` simple normality of
-`xstar` for every `d ≥ 2`. Staged (axiom-clean): `xstar_dary_step` /
-`xstar_dary_window` (each active stage gains ≥ `kmin` new base-`d` digits
-forming a good block), `badBlocks ↔ HasDiscLt` bridge, continuant growth
-(`two_pow_le_cfK`). **The immediate crux is the `m`-growth estimate** (interior
-condition: per-stage digit gain `k_{s+1}` is eventually a vanishing fraction of
-the accumulated digit count) — "the only genuinely new math left" on the d-ary
-chain, and it is the exact analogue of the CF interior condition already closed
-by the schedule dominance. After it, the d-ary HasDiscLt chain is a
-transcription of the proven CF chain, then **Pillai** (simple normality to all
-`b^k` ⇒ full normality to `b`; NOT in mathlib/repo) upgrades to "absolutely
-normal", and the headline conjunction gets stated + frozen. **Khinchin-typical
-(W6) is a stretch beyond the source paper, not a prerequisite** — see Reflection.
+The d-ary side is now **DONE and axiom-clean**: `xstar_dary_freq_tendsto` —
+base-`d` simple normality of `xstar` for every `d ≥ 2` simultaneously — is
+proved, the `m`-growth crux and the full d-ary HasDiscLt chain closed. The sole
+remaining math obligation is **Pillai's theorem** (`Pillai.lean`; simple
+normality to all `b^k` ⇒ full normality to `b`, NOT in mathlib/repo). Its
+combinatorial core is now built out and axiom-clean: `phaseWindowFreq_tendsto`
+(phase-`s` window frequency → `b^{-L}` from simple normality at `b^r`),
+`card_straddling_phases` (`L−1` of `r` phases straddle a boundary, density →0),
+and — **this review lap** — `windowCount_eq_sum_phaseCount`, the exact
+combinatorial identity converting the `Q`-scale phase counts into `N`-scale real
+digit-position counts (the `i ↔ (i/r, i%r)` bijection). **The immediate crux is
+now the double-limit assembly** (`N→∞` per phase, then `r→∞`); after it the
+Pillai theorem statement + the headline conjunction (`Headline.lean:93,100`)
+close Tier 1. **Khinchin-typical (W6) is a stretch beyond the source paper, not
+a prerequisite** — see Reflection.
 
 ## What's happened (newest first)
 
+- 2026-08-24 (review lap): **Pillai crux `windowCount_eq_sum_phaseCount` PROVED**
+  (axiom-clean) — the `Q`-scale↔`N`-scale phase-count identity, via a
+  `Finset.card_nbij'` bijection `i ↔ i/r`; dodged last lap's `r*(i/r)` vs
+  `(i/r)*r` omega-atom trap by anchoring on `Nat.div_add_mod` + one explicit
+  `Nat.mul_comm`. Re-verified headlines axiom-clean (trust triple), build green
+  (8743 jobs). Directive refreshed (it still named the closed `m`-growth
+  estimate as THE crux) → FINISH Pillai, now double-limit-first. No trigger fired.
+- 2026-08-24 (grind laps): **d-ary side CLOSED** — `xstar_dary_freq_tendsto`
+  (base-`d` simple normality every base, axiom-clean); the `m`-growth interior
+  crux (`tendsto_gain_div_mSched_sub`) + Pillai combinatorial core
+  (`phaseWindowFreq_tendsto`, `card_straddling_phases`, window/slice
+  correspondence, `card_matchingValues`).
 - 2026-08-23 (reflection lap): re-verified 10 headlines axiom-clean (trust
   triple), build green (8742 jobs), src/ sorry-free. Found DIRECTION/STATUS/
   PENDING_WORK badly STALE — they still named the Lemma-13 assembly the
@@ -68,21 +82,20 @@ normal", and the headline conjunction gets stated + frozen. **Khinchin-typical
 
 ## Outstanding
 
-### Short-term (mirror PENDING_WORK top)
-- **(c) the d-ary `m`-growth estimate** (THE crux, DIRECTIVE target): per-stage
-  digit gain `k_{s+1}(d) ≤ ε·(m_d(s) − m_d(s₀))` eventually, via
-  `d^k ≤ 32d·cfK(u)²` (numerator, good-length upper bound) over
-  `cfK(u_j) ≥ 2^{(n_j−1)/2}` (denominator, `two_pow_le_cfK`) ⇒ ratio
-  ≲ goodC·n_{s+1}/L_s → 0 by dominance (same mechanism as the CF interior).
-- **(d) d-ary HasDiscLt chain → Tendsto** (base-d simple normality): mirror
-  `xstar_cf_freq_tendsto`'s proof skeleton (chain/boundary/interior/locator),
-  swapping CFDiscLt→HasDiscLt (Lemma 9 already in `BaryConcat`).
+### Short-term (mirror PENDING_WORK top) — FINISH Pillai (DIRECTIVE target)
+- **(1) THE crux — the double-limit assembly** (`Pillai.lean`): divide
+  `windowCount_eq_sum_phaseCount` by `N`, apply `phaseWindowFreq_tendsto` per
+  non-straddling phase as `N→∞` (`phaseOccCount r L s N / N → 1/r`), bound the
+  `L−1` straddling phases via `card_straddling_phases`, sum the finite phase
+  limits, then `r→∞` (ε-managed, simpler than `xstar_dary_freq_tendsto`'s metric
+  proof — arithmetic-progression decomposition, no schedule machinery).
+- **(2) State + prove Pillai's theorem**: `∀ r≥1, SimplyNormalAt (b^r) y ⇒
+  IsNormalSequence b (digitOf b y)`; short bridge from `countOccurrences` to the
+  filter-based window count.
+- **(3) Headline conjunction** (`Headline.lean:93,100`): wire Pillai +
+  `xstar_dary_freq_tendsto` (abs-normal) and `xstar_cf_freq_tendsto` (CF).
 
 ### Long-term
-- **Pillai powers-equivalence** (simple normal to all `b^k` ⇒ normal to `b`) —
-  needed for "absolutely normal"; NOT in mathlib/repo, must be formalized.
-- **Headline statement + audit surface**: state + freeze the conjunction
-  (abs-normal ∧ CF-normal) for `xstar`; there is currently no Statement.lean.
 - **W6 Khinchin graft** (Tier-2 stretch): digit caps `D_t` in Def 11, uniform
   integrability, K₀ as tprod. Original even on paper (~90%); revisits the
   construction, so do it AFTER Tier 1 is locked.
@@ -93,7 +106,7 @@ normal", and the headline conjunction gets stated + frozen. **Khinchin-typical
 - Tier 2 (stretch): + Khinchin-typical — apparently first-anywhere even on paper.
 - Outward (Track A): PR to ChampernowneNormality (staged); comparator + Zulip.
 
-## Axiom ledger (fidelity spine — all from real `#print axioms`, 2026-08-23)
+## Axiom ledger (fidelity spine — all from real `#print axioms`, 2026-08-24)
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 |---|---|---|---|
@@ -106,7 +119,8 @@ normal", and the headline conjunction gets stated + frozen. **Khinchin-typical
 | `chebyshev_blockCount` (W4 Chebyshev) | uncond | trust triple | 🟢 DONE |
 | `xstar_irrational` (W5 limit point) | uncond | trust triple | 🟢 DONE |
 | `xstar_cf_freq_tendsto` (**CF normality of x\***) | uncond | trust triple | 🟢 DONE |
-| `xstar_dary_window` (W5 d-ary per-stage) | uncond | trust triple | 🟢 DONE |
+| `xstar_dary_freq_tendsto` (**d-ary simple normality, every base**) | uncond | trust triple | 🟢 DONE |
+| `windowCount_eq_sum_phaseCount` (Pillai count identity) | uncond | trust triple | 🟢 DONE (this lap) |
 
 Math-axiom count (🟢+🟡+🟠, excluding trust base + native_decide artifacts):
 **0**. No 🔴 in any unconditional headline. Trust triple = propext,
@@ -118,5 +132,5 @@ leg is already proved axiom-clean).
 
 ## Pointers
 DIRECTION.md (CURRENT DIRECTIVE) · ROADMAP.md · KHINCHIN.md (B5′ plan W1–W6) ·
-JUDGE.md · papers/literature-review.md · newest HANDOFF-2026-08-25-0900.md ·
+JUDGE.md · papers/literature-review.md · newest HANDOFF-2026-08-26-0100.md ·
 PENDING_WORK.md · papers/becher-yuhjtman-2019-*.md

@@ -1,21 +1,30 @@
 # PENDING WORK — B5′ campaign
 
-> **LATEST LAP+1 (2026-08-26, in progress).** Added `phaseWindowFreq_tendsto`
-> (axiom-clean — the phase-`s` window-frequency limit itself, a major
-> milestone) and `card_straddling_phases`. Then started
-> `windowCount_eq_sum_phaseCount` (the exact-count identity bridging
-> `Q`-scale phase counts to `N`-scale real digit-position counts) —
-> **disclosed `sorry`** after 3 attempts got tangled in `Nat.div`/`Nat.mod`
-> commutativity mismatches (`r*(i/r)` vs `(i/r)*r` as DIFFERENT atoms to
-> `omega`/`rw` — a recurring theme this session, see Gotchas below). The
-> statement + `phaseOccCount` def + the `hfiber_eq` flattening step (nested
-> filter → single filter, needed before `Finset.card_nbij'`) are all solid
-> and axiom-clean-adjacent (only the final bijection direction proofs are
-> `sorry`'d). **Next lap: retry this bijection FRESH** — establish
-> `i/r*r + s = i` (note: `i/r * r`, NOT `r*(i/r)`) as the canonical
-> decomposition up front and thread that single form through every step,
-> rather than let `Nat.le_div_iff_mul_le`/`Nat.mul_add_div`/etc. each
-> introduce their own preferred factor order.
+> **REVIEW LAP (2026-08-24).** ✅ **`windowCount_eq_sum_phaseCount` PROVED**
+> (axiom-clean) — the `Q`-scale↔`N`-scale phase-count identity, closing last
+> lap's disclosed `sorry`. Winning move on the `r*(i/r)` vs `(i/r)*r` omega-atom
+> trap: `Finset.card_nbij' (fun i => i/r) (fun q => r*q+s)`, anchoring EVERY
+> decomposition on `Nat.div_add_mod i r` (canonical `r*(i/r)`); the ONLY place a
+> `(i/r)*r` appears is right after `Nat.le_div_iff_mul_le`, where a single
+> `rw [Nat.mul_comm]` normalizes it back BEFORE `omega`. Mod dir:
+> `Nat.add_comm (r*q) s` → `Nat.add_mul_mod_self_left` + `Nat.mod_eq_of_lt hsr`.
+> Div dir: `Nat.mul_add_div hrpos` + `Nat.div_eq_of_lt hsr`. (omega never has to
+> reconcile the two factor orders — the rewrite does it first.)
+>
+> **NEXT (the new crux — the double-limit assembly)**: Pillai's phase→block
+> frequency limit. `freq_w(N) = windowCount/N`. Route:
+> (a) `windowCount_eq_sum_phaseCount / N = Σ_{s<r} phaseCount_s(N)/N`;
+> (b) non-straddling `s ≤ r−L`: `phaseCount_s(N)/N =
+>     (phaseCount_s/phaseOccCount_s)·(phaseOccCount_s/N)`; factor 1 → `b^{-L}` by
+>     `phaseWindowFreq_tendsto` (a `Q→∞` limit — needs `phaseOccCount r L s N →∞`
+>     as `N→∞`, then `Filter.Tendsto.comp`); factor 2 `phaseOccCount r L s N / N
+>     → 1/r` (since `phaseOccCount ≈ (N−s−L)/r`);
+> (c) straddling `s` (`r < s+L`, `L−1` of them by `card_straddling_phases`):
+>     bound each `phaseCount_s(N)/N ≤ phaseOccCount/N → 1/r`, total ≤ `(L−1)/r`;
+> (d) sum finite phases; then `r→∞` (ε-manage via `Metric.tendsto_atTop`: pick
+>     `r` with `(L−1)/r < ε/2` and `|((r−L+1)/r − 1)·b^{-L}| < ε/2`, then `N`
+>     large). Simpler than `xstar_dary_freq_tendsto`'s metric proof — no schedule.
+>     Decompose into named sub-`sorry`s in `Pillai.lean` if not one lap.
 
 > **LATEST LAP (2026-08-25/26, `674ff52`).** Pillai's theorem build-out,
 > continuing from the digit-power foundation (`b537edd`). New in
