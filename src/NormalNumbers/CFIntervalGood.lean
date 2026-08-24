@@ -258,6 +258,28 @@ theorem length_le_two_mul_good_add_err (a b : ℝ)
         gcongr
         exact volume_interval_sdiff_covered_le a b ha hab hb n
 
+/-- **Cylinder nesting ⇒ word prefix.**  If a point lies in both `cfCylinder w`
+and `cfCylinder w'` with `|w| ≤ |w'|`, then `w` is a prefix of `w'` (`w'.take
+|w| = w`).  Consequence: a deep CF-cylinder that meets `cfCylinder wx` is a
+genuine word-EXTENSION of `wx` — the bridge letting the interleaved schedule
+treat a good geometric cylinder inside `cfCylinder wx` as an appended block. -/
+theorem take_eq_of_mem_cfCylinder {w w' : List ℕ} (hlen : w.length ≤ w'.length)
+    {x : ℝ} (hx : x ∈ cfCylinder w) (hx' : x ∈ cfCylinder w') :
+    w'.take w.length = w := by
+  have hmatch : ∀ i, i < w.length → w'.getD i 0 = w.getD i 0 := by
+    intro i hi
+    have h1 := hx.2 i hi
+    have h2 := hx'.2 i (lt_of_lt_of_le hi hlen)
+    rw [← h1, ← h2]
+  apply List.ext_getElem
+  · rw [List.length_take]; omega
+  · intro i h1 h2
+    have hi : i < w.length := by rw [List.length_take] at h1; omega
+    have hi' : i < w'.length := lt_of_lt_of_le hi hlen
+    rw [List.getElem_take]
+    have := hmatch i hi
+    rwa [List.getD_eq_getElem _ _ hi', List.getD_eq_getElem _ _ hi] at this
+
 /-- **Feasibility core.**  Beyond a rank (once the L1 error `4/fib(n+1)²` drops
 below `|b−a|`), the good mass inside a nondegenerate interval `(a,b) ⊆ (0,1)` is
 STRICTLY positive — so `goodInInterval` is nonempty and a good CF-cylinder can
