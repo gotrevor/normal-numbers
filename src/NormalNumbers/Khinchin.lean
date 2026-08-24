@@ -383,15 +383,80 @@ theorem xstar_log_digit_avg_truncated_tendsto (K : ℕ) :
   refine hsum.congr (fun n => ?_)
   rw [Finset.mul_sum]
 
-/-- **Target of the Tier-2 assembly** (`Headline.lean:136`'s obligation via
+/-- **Uniform log-digit tail control** (the sole SCHEDULE-DEPENDENT crux of
+Tier 2, now isolated).  For every `ε > 0` there is a cutoff `K₀` such that for
+ALL cutoffs `K ≥ K₀` and ALL prefix lengths `n`, the empirical log-average
+`(1/n)·Σ_{i<n} log aᵢ` differs from its `≤ K`-truncation
+`(1/n)·Σ_{a≤K} count[a]·log a` by at most `ε`.  Equivalently: the average
+log-mass carried by digits `> K` is `≤ ε` uniformly in `n`.  This is exactly
+what pattern frequencies + the `goodC` total-mass bound provably CANNOT give
+(`DIRECTION.md` route note); it is delivered by the W6 log-concentration bad
+zone in the schedule (a Chebyshev/variance bound with moment input
+`summable_gaussKuzmin_logsq`).  DISCLOSED `sorry`: the analytic assembly below
+reduces the whole Tier-2 headline to this one statement; proving it is the
+remaining construction work (variance bound → `logBadZone` → additive union
+bound). -/
+theorem xstar_log_tail_uniform {ε : ℝ} (hε : 0 < ε) :
+    ∃ K₀ : ℕ, ∀ K : ℕ, K₀ ≤ K → ∀ n : ℕ,
+      |(1 / (n : ℝ)) * ((List.range n).map (fun i => Real.log (cfDigit xstar i : ℝ))).sum
+          - (1 / (n : ℝ)) * ∑ a ∈ Finset.Icc 1 K,
+              (countOccurrences [a] (cfPrefix n) : ℝ) * Real.log a|
+        ≤ ε := by
+  sorry
+
+/-- **Target of the Tier-2 assembly** (`Headline.lean`'s obligation via
 `khinchinTypical_iff_log_tendsto`): `xstar`'s empirical CF log-digit average
-tends to `log khinchinK₀`. See the module docstring above for the attack
-decomposition; not yet attempted beyond the route confirmation. -/
+tends to `log khinchinK₀`.  PROVED modulo the single schedule-dependent crux
+`xstar_log_tail_uniform`: a `3ε` interchange combining the finite-truncation
+convergence (`xstar_log_digit_avg_truncated_tendsto`, for each fixed `K`), the
+`K → ∞` limit of the truncated Gauss–Kuzmin target (`gaussKuzmin_logsum_tendsto`),
+and the uniform tail control. -/
 theorem xstar_log_digit_avg_tendsto :
     Filter.Tendsto
       (fun n : ℕ =>
         (1 / (n : ℝ)) * ((List.range n).map (fun i => Real.log (cfDigit xstar i : ℝ))).sum)
       Filter.atTop (nhds (Real.log khinchinK₀)) := by
-  sorry
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  have hδ : 0 < ε / 3 := by linarith
+  obtain ⟨K₀, htail⟩ := xstar_log_tail_uniform hδ
+  obtain ⟨K_g, hgauss⟩ :=
+    (Metric.tendsto_atTop.1 gaussKuzmin_logsum_tendsto) (ε / 3) hδ
+  set K := max K₀ K_g with hKdef
+  have hKtail : K₀ ≤ K := by rw [hKdef]; exact le_max_left _ _
+  have hKg : K_g ≤ K := by rw [hKdef]; exact le_max_right _ _
+  obtain ⟨N, hN⟩ :=
+    (Metric.tendsto_atTop.1 (xstar_log_digit_avg_truncated_tendsto K)) (ε / 3) hδ
+  refine ⟨N, fun n hn => ?_⟩
+  have h1 := htail K hKtail n
+  have h2 := hN n hn
+  have h3 := hgauss K hKg
+  rw [Real.dist_eq] at h2 h3 ⊢
+  set A := (1 / (n : ℝ)) * ((List.range n).map (fun i => Real.log (cfDigit xstar i : ℝ))).sum
+  set B := (1 / (n : ℝ)) * ∑ a ∈ Finset.Icc 1 K,
+      (countOccurrences [a] (cfPrefix n) : ℝ) * Real.log a
+  set C := ∑ a ∈ Finset.Icc 1 K, (gaussMeasure (cfCylinder [a])).toReal * Real.log a
+  have htri : |A - Real.log khinchinK₀|
+      ≤ |A - B| + |B - C| + |C - Real.log khinchinK₀| := by
+    have t1 := abs_sub_le A B (Real.log khinchinK₀)
+    have t2 := abs_sub_le B C (Real.log khinchinK₀)
+    linarith
+  linarith [htri, h1, h2, h3]
+
+/-- **`xstar` is Khinchin-typical** (the geometric mean of its CF digits →
+`K₀`), modulo the schedule-dependent crux `xstar_log_tail_uniform`.  Converts
+`xstar_log_digit_avg_tendsto` through the elementary reduction
+`khinchinTypical_iff_log_tendsto` (digit positivity from `one_le_cfDigit` at
+the irrational `xstar ∈ (0,1)`).  This is the Tier-2 conjunct that, together
+with the LOCKED Tier-1 legs, discharges the frozen headline
+`exists_absolutely_normal_cf_normal_khinchin` — the last assembly step is a
+layering refactor (the frozen `KhinchinTypical`/`khinchinK₀` defs live in
+`Headline.lean`, which this module imports; moving them upstream lets
+`Headline.lean` close its `sorry`). -/
+theorem xstar_khinchinTypical : KhinchinTypical xstar := by
+  have hpos : ∀ i, 1 ≤ cfDigit xstar i :=
+    fun i => one_le_cfDigit xstar xstar_irrational xstar_mem_Ioo i
+  rw [khinchinTypical_iff_log_tendsto xstar hpos]
+  exact xstar_log_digit_avg_tendsto
 
 end NormalNumbers

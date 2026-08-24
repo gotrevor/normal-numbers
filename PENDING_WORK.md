@@ -1,20 +1,38 @@
 # PENDING WORK — B5′ campaign
 
-> **GRIND (2026-08-24, same lap follow-on — step C2 landed).** Proved the
-> Tier-2 assembly's **target limit value**: `gaussKuzmin_logsum_hasSum`
-> (`Σ_k γ([k+1])·log(k+1) = log khinchinK₀`, as `HasSum`) and
-> `gaussKuzmin_logsum_tendsto` (its `Finset.Icc 1 K` partial sums `→ log K₀`
-> as `K→∞`), both axiom-clean (`Khinchin.lean`). Key identity:
-> `γ([a])·log a` and `log((1+1/(a(a+2)))^{logb 2 a})` are term-by-term equal
-> (the `logb`/`log` factors swap), so it reuses `khinchinK₀_summable_log`'s
-> series verbatim. This pins the limit that the truncated-convergence lemma
-> `xstar_log_digit_avg_truncated_tendsto` (fixed `K`) converges to.
-> **Reduction (C) status**: fixed-`K` convergence ✓ + `K→∞` limit value ✓;
-> the two remaining gaps are (i) the value-count identity `Σ_{i<n} log aᵢ =
-> Σ_a count[a]·log a` (elementary, wireable now) and (ii) the uniform tail
-> control `xstar_log_tail_uniform` (schedule-dependent, needs A+B). Next lap:
-> either wire (i)+the 3ε skeleton reducing the crux to a single
-> `xstar_log_tail_uniform` sorry, or start (A) the γ-mixing variance bound.
+> **GRIND (2026-08-24, same lap follow-on — REDUCTION (C) COMPLETE, crux
+> isolated to ONE schedule lemma).** The entire Tier-2 headline now provably
+> rests on a single, precisely-stated lemma. Landed (all in `Khinchin.lean`):
+> - `gaussKuzmin_logsum_hasSum` / `gaussKuzmin_logsum_tendsto` (axiom-clean):
+>   the assembly's **target limit value** `Σ_a γ([a])·log a = log K₀` (HasSum +
+>   `Icc 1 K` partial sums `→ log K₀`). Key identity: `γ([a])·log a` = the term
+>   of `khinchinK₀`'s series (logb/log factors swap), reused verbatim.
+> - `xstar_log_digit_avg_tendsto` — **PROVED** via a clean `3ε` interchange over
+>   `xstar_log_digit_avg_truncated_tendsto` (fixed-K, proved) +
+>   `gaussKuzmin_logsum_tendsto` (K→∞, proved) + the tail lemma. The value-count
+>   identity is ABSORBED into the tail lemma (stated with `abs`, so no separate
+>   nonneg/identity lemma needed).
+> - `xstar_khinchinTypical : KhinchinTypical xstar` — **PROVED** via
+>   `khinchinTypical_iff_log_tendsto` (digit positivity from `one_le_cfDigit`).
+> `#print axioms` of both: `[propext, sorryAx, Classical.choice, Quot.sound]` —
+> the ONLY non-trust-triple dependency is `sorryAx`, sourced entirely from:
+>
+> **THE SOLE REMAINING TIER-2 CRUX** — `xstar_log_tail_uniform` (disclosed
+> `sorry`, `Khinchin.lean`): `∀ε>0 ∃K₀ ∀K≥K₀ ∀n, |(1/n)Σ_{i<n}log aᵢ −
+> (1/n)Σ_{a≤K}count[a]·log a| ≤ ε`. This is the uniform log-tail control the
+> schedule must deliver — exactly what the W6 log-concentration bad zone
+> provides (variance bound via γ-mixing, moment input `summable_gaussKuzmin_logsq`).
+>
+> **NEXT**: the construction work, steps (A)+(B) from the review entry below —
+> (A) `Var(Σ_{i<n} log aᵢ) ≤ C·n` under γ-mixing (adapt `CFBlockFreq`'s
+> covariance machinery to the L² observable `log a₁`); (B) `logBadZone` +
+> Chebyshev measure bound + additive union-bound wrapper; then instantiate at
+> `xstar`'s schedule to discharge `xstar_log_tail_uniform`. Also a mechanical
+> layering refactor is needed to close `Headline.lean:134` itself: the frozen
+> `KhinchinTypical`/`khinchinK₀` defs live in `Headline.lean` (which `Khinchin.lean`
+> imports), so the headline `sorry` can only be closed after moving those defs
+> to an upstream module (verbatim — preserves the frozen statement) so the
+> assembly + `xstar_khinchinTypical` become upstream of the headline.
 
 > **REVIEW LAP (2026-08-24 — route DECISION + moment seed proved).** The last
 > three laps (fc801ba/17dc2c9/7d6740f, all pure route-analysis) converged on
