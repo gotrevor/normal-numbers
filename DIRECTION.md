@@ -25,18 +25,15 @@ detail lives in PENDING_WORK.md.
   interpolation arith) is COMPLETE and axiom-clean; **proving another block or
   measure atom is the forbidden drift** (the crux crack already landed — polishing
   more block lemmas is leaf-work now).  Every lap advances ONE of, hardest-first:
-  1. **hdom-free `chain_cf_digit_freq_tendsto` variant (THE remaining crux).**
-     Copy-extend `CFChainFreq` (NEVER edit the existing lemma).  Swap the per-block
-     hypothesis from `hgood ∧ hdom` to **uniform-prefix-goodness**
-     (`∀k, |dev((chainApp w s).take k)| < δ_s·k + (4√k+2|v|)`, `δ_s→0`).  The one
-     hdom use is line 450's `cfDiscLt_append_take` on the partial last block —
-     REPLACE it: decompose the mid-block prefix `p` as `w s ++ (chainApp w s).take j`
-     and bound via `countOccurrences_append_addslack₂` from (whole-word-good `w s`)
-     ⊕ (the block's OWN prefix bound at `j`).  Whole-word goodness comes from
-     `chainTail_dev_split_var` (BUILT) once `∑ C_j = o(word)` (a `Tendsto` lemma:
-     geometric `|u_j|` ⇒ `∑ 4√|u_j| + 2j|v| = o(|w|)`).  Then wrap via the reusable
-     `chain_orbit_equidist` orbit↔window tail.
-  2. **ψ-round `_uniform`** — rebuild `exists_freq_good_extend_affine_steer` to
+  1. ✅ **DONE (2026-08-24 review-lap grind, commits `2c61e7c`/`5fe8f09`).** The
+     hdom-free chain limit is BUILT and axiom-clean: `chainTail_dev_prefix_var`
+     (recursion core), `chain_cf_digit_freq_tendsto_uniform` (window freq limit,
+     mid-block via `addslack₂` not `cfDiscLt_append_take`), and
+     `chain_orbit_equidist_uniform` (the `CFOrbitEquidist` payload).  Hypotheses it
+     needs from the schedule: `hblock` (uniform block prefix-goodness, margin→0) +
+     `hslack` (`∑_{i≤k}(C(s₀+i)+(|v|−1)) < ε·|w(s₀+k)|`, the `o(word)` telescoping).
+     **The next grind lap goes straight to item 2/3 — do NOT rebuild item 1.**
+  2. **ψ-round `_uniform` (NOW hardest-first)** — rebuild `exists_freq_good_extend_affine_steer` to
      emit uniformly-good blocks (call `exists_uniformly_freq_good_block_steer` per
      stream; choose `n₁,s ~ poly(1/δ_s)` for the measure budget and `m_s` so
      `n₁+m²` reaches resolution length `~κ|w_s|`).  Per-round feasibility
@@ -46,16 +43,19 @@ detail lives in PENDING_WORK.md.
      `CFOrbitEquidist` both streams → assemble `exists_interleaved_affine_witness`.
      Gluing toolkit READY (`eq_of_mem_iInter_Icc`, `cfCylinder_chain_volume_tendsto`,
      `irrational_mem_Ioo_of_mem_iInter_cfCylinder`).
-- **ROUTE-DECISIVE UNCERTAIN CASE (name it, probe it first):** whether the
-  mid-block prefix bound actually CLOSES hdom-free — i.e. `countOccurrences_append_addslack₂`
-  applied to (whole-word-good `w s`, slack `o(|w s|)`) ⊕ (block prefix good at `j`,
-  slack `δ_s·j + 4√j + 2|v|`) yields `|dev(p)| < ε·p` for the concatenation of
-  length `p`, with `δ_s → 0` across stages.  Smallest probe: draft the hdom-free
-  variant's statement + do the mid-block `hprefix` case (line 438–450 analogue)
-  with `addslack₂` in place of `cfDiscLt_append_take`, and confirm the boundary
-  `hbound` survives on `chainTail_dev_split_var`'s `o(word)` slack instead of the
-  clean `ε·len`.  If the `o(word)` boundary slack does NOT divide out (`∑C_j/len↛0`),
-  THAT is the real crux — escalate, do not retreat to block/measure leaf work.
+- **ROUTE-DECISIVE UNCERTAIN CASE (updated — item 1's is now SETTLED in-kernel):**
+  the item-1 mid-block question ("does `addslack₂` close hdom-free") is PROVED YES
+  (`chainTail_dev_prefix_var`).  The remaining decisive case is **per-round
+  feasibility of the ψ-stage**: can each round pick `n₁,s` and `m_s` that
+  SIMULTANEOUSLY satisfy (a) the measure budget `(m+1)·A₁(n₁) < γ(target)` (wants
+  `n₁` large `~ poly(1/δ_s)`) and (b) the resolution `4/(d−c) < fib(|wx|+n₁+m²+1)²`
+  (wants top-scale `n₁+m² ≳ κ|w_s|`) — AND does `hslack` (`∑ C = o(word)`, with
+  `C_s = 4√|block_s|+2|v|+n₁,s`) then follow from the resulting geometric block
+  growth?  Smallest probe: instantiate `exists_uniformly_freq_good_block_steer`
+  for ONE ψ-round with explicit `n₁,s ≈ (s+1)^a`, `m_s` from
+  `exists_nat_goldenRatio_pow_gt`, and check both budget inequalities hold for
+  `|w_s|` past a threshold (geometric beats poly).  If (a) and (b) CONFLICT
+  (block forced simultaneously short and long), THAT is the real crux — escalate.
 - **ADDITIVE ONLY 🧊**: B5′ is COMPLETE and LOCKED.  Never edit/weaken a frozen
   decl or landed module (`TBrick*`, `CFSchedule`, `CFCorrect`, `CFLogTail`,
   `Headline`, `KhinchinDefs`, the existing `chain_cf_digit_freq_tendsto` /
@@ -133,6 +133,12 @@ detail lives in PENDING_WORK.md.
 </details>
 
 ### Directive history
+- 2026-08-24 (review lap, grind portion): after retargeting, PROVED item 1 end to
+  end — `chainTail_dev_prefix_var` (`2c61e7c`) then `chain_cf_digit_freq_tendsto_uniform`
+  + `chain_orbit_equidist_uniform` (`5fe8f09`), all axiom-clean, build green 8757.
+  The route-decisive mid-block question is settled YES in-kernel.  Marked item 1
+  DONE, repointed the mandated move to item 2 (ψ-round `_uniform`) hardest-first,
+  and updated the route-decisive case to per-round ψ feasibility.
 - 2026-08-24 (review lap → HDOM REFUTED, ASSEMBLE HDOM-FREE LIMIT): validated the
   executed route pivot. Confirmed one open `sorry` (the crux) + both B5′ headlines
   axiom-clean via real `#print axioms`. The prior directive's item (1) mandated

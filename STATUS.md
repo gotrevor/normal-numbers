@@ -132,16 +132,15 @@ then the ψ-round rebuild + two-stream recursion.
 ## Outstanding
 
 ### Short-term (mirror PENDING_WORK top — B6 hdom-free assembly)
-1. **hdom-free `chain_cf_digit_freq_tendsto` variant (THE remaining crux)** —
-   copy-extend `CFChainFreq`; per-block hypothesis = uniform-prefix-goodness
-   (`δ_s→0`); replace line 450's `cfDiscLt_append_take`/hdom with
-   `countOccurrences_append_addslack₂` (whole-word-good `w s` ⊕ block's own prefix
-   bound); whole-word goodness via `chainTail_dev_split_var` once `∑C_j = o(word)`.
-2. **ψ-round `_uniform`** — rebuild `exists_freq_good_extend_affine_steer` to emit
-   uniformly-good blocks (call `exists_uniformly_freq_good_block_steer`; pick
-   `n₁,s`, `m_s` per the measure budget + resolution length).
+1. ✅ **DONE** — hdom-free chain limit: `chainTail_dev_prefix_var`,
+   `chain_cf_digit_freq_tendsto_uniform`, `chain_orbit_equidist_uniform`
+   (`CFChainFreq`, axiom-clean). Needs `hblock`/`hslack` from the schedule.
+2. **ψ-round `_uniform` (NOW hardest-first)** — rebuild `exists_freq_good_extend_affine_steer`
+   to emit uniformly-good blocks (call `exists_uniformly_freq_good_block_steer`;
+   pick `n₁,s`, `m_s` per the measure budget + resolution length). Route-decisive:
+   per-round feasibility (budget vs resolution) + `hslack` from geometric growth.
 3. **`SchedStateA`/`schedStepA`/`schedA`/limit** — two-stream recursion → two
-   uniformly-good chains → step-1 limit → both streams `CFOrbitEquidist` → the crux.
+   uniformly-good chains → `chain_orbit_equidist_uniform` both streams → the crux.
 
 ### Long-term
 - B6 general family / Tier-2 image-Khinchin stretch (detaches freely; after the
