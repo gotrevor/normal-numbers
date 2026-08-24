@@ -225,3 +225,34 @@ file and works the checklist.  Laps never edit this file above the Ledger.
   committed; close-out nit · breaker: lap 7/12, prev lap +7 commits in 54m,
   ~5 laps of headroom · verdict: **healthy, continue** — funnel unchanged,
   one crux + plumbing + assembly still the whole remaining distance.
+- 2026-08-23 23:43 · **mid-run visit (lap 8 grind live, 27m in)** · judged
+  through `ce7fe12` (textual tier) · **ON TARGET — funnel unmoved, machinery
+  grew under it** · statement integrity over `f505a11..HEAD`: **zero changed
+  lines in ANY frozen file** (`Headline`/`CFCylinder`/`CFDigitLaw`/`CFMixing`)
+  — headline surface and Tier-1 decl untouched across +1385 lines · **crux
+  `xstar_log_tail_uniform` is character-identical** to the 22:50 reading —
+  the whole lap's output is machinery *beneath* it, not a restatement of it ·
+  **my lap-7 orphan flag CLOSED inside the lap**: `integral_logTailFn_eq` is
+  now PROVED (via `integral_logTailFn_eq_of_hasSum` + `gaussKuzmin_logsum_hasSum`)
+  and USED by `integral_logTailFn_tendsto`; `src/` sorries 3 → **2**, the two
+  sanctioned ones · route relabelled **C′** and now fully visible as
+  A′ first-moment integral → B′ Markov bad zone → C′ union plumbing → D′
+  schedule layering, in 4 new modules (`CFLogTail` 552, `KhinchinBrick` 254,
+  `KhinchinRefine` 200, `KhinchinFamily` 110) + `CFSchedule` threading —
+  **A′/B′/C′ landed; D′ threading landed (`949f0b1`: xstar carries the
+  guarantee); what remains is the final assembly into the crux** · schedule
+  WAS edited (`CFSchedule.lean`, payload conjunct added to
+  `exists_refinement_uniform`/`kminFn_spec`/`sched_step`) — in-charter under
+  the relaxed additive-only fence, no frozen statement touched, build green at
+  every commit, but this **arms the hard invariant: `#print axioms` on Tier 1
+  is now OWED at close-out** (was already owed for W4→Tier 1; the schedule
+  edit makes it non-optional) · smell scan: clean except **2 NEW localized
+  `set_option maxHeartbeats 800000 in`** (`CFLogTail.lean:397,406`) — scoped
+  form, acceptable, logged 🟡 for close-out review (repo total now 4) · doc
+  nit: `integral_logTailFn_tendsto` docstring says "route B′" while the
+  commits say C′ · breaker: lap 8/12, prev lap +8 commits in 32m — **~4 laps
+  of headroom against one remaining lemma, and it is the hardest one**
+  (schedule-dependent assembly).  ⚠️ `ce7fe12` is a late DESIGN FIX (summable
+  family replaces level-tied cutoff) — a redesign this deep in the breaker is
+  the one genuine schedule risk on the board · verdict: **healthy, on target,
+  continue**.
