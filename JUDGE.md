@@ -184,3 +184,21 @@ file and works the checklist.  Laps never edit this file above the Ledger.
   judge route-note added to DIRECTION: frequencies-alone derivation is
   provably impossible (KHINCHIN.md counterexample); tail-control or W6
   caps required · verdict: healthy, continue.
+- 2026-08-23 22:45 · **mid-run visit (lap 6 review live)** · judged through
+  `6f18228` (textual tier) · **fence flag adjudication CONCURRED**: grind
+  laps hit the old "don't touch the schedule" fence, raised `JUDGE-FLAG`
+  (`fc801ba`) and STOPPED rather than crossing — correct charter behavior;
+  the review lap adjudicated within its directive authority: fence relaxed
+  to ADDITIVE-ONLY with the hard invariant (never modify a Tier-1 decl or
+  a JUDGE-frozen statement; re-run `#print axioms` on Tier 1 after any
+  TBrick/schedule edit).  Judge concurs — the ∃-form headline freeze
+  anticipated exactly this W6 rebuild · route findings ratified: the
+  "goodC total-mass suffices" claim REFUTED quantitatively (`7d6740f`);
+  Birkhoff import correctly rejected as charter-forbidden; route = the
+  original W6 log-concentration bad zone · Tier-2 funnel is now clean:
+  `gaussKuzmin_logsum = log K₀` proved, `khinchinTypical_iff_log_tendsto`
+  + value-count bridge proved — **the crux is ONE staged schedule lemma
+  (`xstar_log_tail_uniform`, a pure tail-mass bound) + the additive
+  union-bound plumbing + assembly** · src/ 1→2 sorries is the sanctioned
+  decomposition pattern, not regression · verdict: healthy, continue;
+  breaker has ~6 laps.
