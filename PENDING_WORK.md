@@ -147,6 +147,31 @@ block to pick. The ψ-side needs NO separate lemma: apply `goodInInterval_pos_of
 to the pullback endpoints (from `preimage_affineMap_Ioo`). Substrate for the
 crux is now essentially complete; what remains is purely the schedule bookkeeping.
 
+### lap 9 landed (2026-08-24): structural helper `take_eq_of_mem_cfCylinder` ✅
+
+Axiom-clean, build green (8755). Nesting ⇒ prefix: a point in `cfCylinder w` ∩
+`cfCylinder w'` with `|w|≤|w'|` forces `w'.take|w| = w`. So a deep good cylinder
+inside `cfCylinder wx` (from `goodInInterval_pos_of_lt`) is a genuine EXTENSION of
+`wx` — the bridge from "good geometric cylinder in the interval" to "appended
+block", keeping x's prescribed digits consistent across ψ-stage refinements.
+
+### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
+- L1 `volume_interval_sdiff_covered_le` — interval covered by cylinders up to 4/fib².
+- L2 `length_le_two_mul_good_add_err` — good mass inside an interval.
+- `goodInInterval_pos_of_lt` — good mass STRICTLY positive beyond a rank (feasibility).
+- `take_eq_of_mem_cfCylinder` — good cylinder in `cfCylinder wx` = extension of wx.
+- L3 `preimage_affineMap_Ioo` / `image_affineMap_Ioo` / `volume_preimage_affineMap`
+  / `good_mass_in_affine_preimage` — ψ transports intervals & density; pullback mass.
+- `isCFNormal_of_irrational_orbit_freq` — orbit-freq ⇒ IsCFNormal (final step).
+What remains is PURELY the schedule bookkeeping (no new analytic content).
+
+**NOTE for next session — Tier-1 needs only CF-normality**, NOT base-b/Khinchin.
+So the interleaved schedule can be built LIGHT: control only CF-digit-window
+freqs of x and ψ(x) (append good CF-blocks alternately), reusing the CF part of
+`goodExtSet`/`CFDiscLt`/`CFCorrect` telescoping — NOT the full TBrick
+(daryCell/khinchin) apparatus. Consider a fresh light `SchedState` (word wx +
+ψ-word wz + nonempty combined interval invariant) rather than extending TBrick.
+
 **Sub-obligations of the crux (next laps, copy-extend frozen modules into
 `CFScheduleA`/new files, NEVER edit frozen):**
 1. Orbit⇔window bridge for the IMAGE: `T^k(ψ xstar) ∈ cfCylinder v` ⇔ ψ(xstar)'s
