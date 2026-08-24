@@ -849,6 +849,75 @@ theorem frac_mass_bad_extensions (ε : ℝ) (hε : 0 < ε) :
     rw [← hεκn] at hbadmul
     exact (ENNReal.mul_le_mul_iff_left hd0 hdtop).mp hbadmul
 
+/-- **The cfK-large extension set.**  The union of order-`n` extension cylinders
+of `w` whose continuant is LARGE (`cfK u > e^{κn}`) — the complement, within the
+extensions of `w`, of the `goodExtSet`.  Packaged as a set so the B6 cfK-steer
+graft can exclude it via `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt`. -/
+noncomputable def cfKbadExtSet (w : List ℕ) (κ : ℝ) (n : ℕ) : Set ℝ :=
+  ⋃ u ∈ genWords n,
+    (if (cfK u : ℝ) ≤ Real.exp (κ * n) then ∅ else cfCylinder (w ++ u))
+
+theorem measurableSet_cfKbadExtSet (w : List ℕ) (κ : ℝ) (n : ℕ) :
+    MeasurableSet (cfKbadExtSet w κ n) := by
+  rw [cfKbadExtSet]
+  apply MeasurableSet.biUnion
+    (Set.Countable.mono (Set.subset_univ _) (Set.countable_univ))
+  intro u _; split
+  · exact MeasurableSet.empty
+  · exact measurableSet_cfCylinder _
+
+/-- The cfK-large extension set has measure exactly the bad-branch tsum. -/
+theorem volume_cfKbadExtSet (w : List ℕ) (κ : ℝ) (n : ℕ) :
+    volume (cfKbadExtSet w κ n)
+      = ∑' u : genWords n,
+          (if (cfK (u : List ℕ) : ℝ) ≤ Real.exp (κ * n) then 0
+            else volume (cfCylinder (w ++ (u : List ℕ)))) := by
+  have hcount : (genWords n).Countable :=
+    Set.Countable.mono (Set.subset_univ _) (Set.countable_univ)
+  have hle : ∀ u : List ℕ,
+      (if (cfK u : ℝ) ≤ Real.exp (κ * n) then ∅ else cfCylinder (w ++ u))
+        ⊆ cfCylinder (w ++ u) := by
+    intro u; split
+    · exact Set.empty_subset _
+    · exact subset_rfl
+  have hdisj : (genWords n).PairwiseDisjoint
+      fun u : List ℕ => (if (cfK u : ℝ) ≤ Real.exp (κ * n)
+        then ∅ else cfCylinder (w ++ u)) := by
+    intro u hu u' hu' hne
+    exact (cfCylinder_disjoint (by simp [hu.1, hu'.1])
+      (fun heq => hne (List.append_cancel_left heq))).mono (hle u) (hle u')
+  have hmeas : ∀ u ∈ genWords n, MeasurableSet
+      (if (cfK u : ℝ) ≤ Real.exp (κ * n) then ∅ else cfCylinder (w ++ u)) := by
+    intro u _; split
+    · exact MeasurableSet.empty
+    · exact measurableSet_cfCylinder _
+  rw [cfKbadExtSet, measure_biUnion hcount hdisj hmeas]
+  refine tsum_congr fun u => ?_
+  split
+  · exact measure_empty
+  · rfl
+
+/-- **cfK-steer measure enabler (packaged).**  For any `ε > 0` there is a rate
+`κ` such that in EVERY genuine cylinder the cfK-large extension set carries Gauss
+measure `≤ (log 2)⁻¹·ε·|I_w|` (Lebesgue) — bridged from `frac_mass_bad_extensions`
+via `gaussMeasure_le_volume`.  This is the exact `B'`-mass bound the graft feeds to
+`exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt`. -/
+theorem exists_rate_gaussMeasure_cfKbadExtSet_le (ε : ℝ) (hε : 0 < ε) :
+    ∃ κ : ℝ, 0 < κ ∧ ∀ (w : List ℕ), w ≠ [] → (∀ a ∈ w, 1 ≤ a) → ∀ n : ℕ,
+      gaussMeasure (cfKbadExtSet w κ n)
+        ≤ ENNReal.ofReal ((Real.log 2)⁻¹ * ε) * volume (cfCylinder w) := by
+  obtain ⟨κ, hκ, hb⟩ := frac_mass_bad_extensions ε hε
+  refine ⟨κ, hκ, fun w hw hpos n => ?_⟩
+  have hvol : volume (cfKbadExtSet w κ n) ≤ ENNReal.ofReal ε * volume (cfCylinder w) := by
+    rw [volume_cfKbadExtSet]; exact hb w hw hpos n
+  calc gaussMeasure (cfKbadExtSet w κ n)
+      ≤ ENNReal.ofReal (Real.log 2)⁻¹ * volume (cfKbadExtSet w κ n) :=
+        gaussMeasure_le_volume _ (measurableSet_cfKbadExtSet w κ n)
+    _ ≤ ENNReal.ofReal (Real.log 2)⁻¹ * (ENNReal.ofReal ε * volume (cfCylinder w)) := by
+        gcongr
+    _ = ENNReal.ofReal ((Real.log 2)⁻¹ * ε) * volume (cfCylinder w) := by
+        rw [← mul_assoc, ← ENNReal.ofReal_mul (by positivity)]
+
 /-- **Deterministic relative-length upper bound** (the free half of Lemma 5):
 every genuine relative-order-`n` extension shrinks a cylinder by at least
 `fib(n+1)²/2` — from `volume_cylinder_append_le`, `volume_cfCylinder`, and

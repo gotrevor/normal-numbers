@@ -44,16 +44,25 @@ freq-good surplus `μ(A\B)`).
 d`.  The graft passes `B' = (bad zones) ∪ (cfK-large extensions)`; it now only
 needs `gaussMeasure(bad ∪ cfKbad) < gaussMeasure(Ioo c d)`.
 
-**IMMEDIATE NEXT STEP (packaging the cfK-bad set):** define
-`cfKbadExtSet w κ n := ⋃ u ∈ genWords n, (if cfK u ≤ e^{κn} then ∅ else
-cfCylinder (w++u))`, prove `volume (cfKbadExtSet w κ n) = ∑'(if good then 0 else
-vol(w++u))` (mirror `volume_goodExtSet`'s disjoint `measure_biUnion`), hence
-`≤ ε·volume(cfCylinder w)` by `frac_mass_bad_extensions`.  Bridge to Gauss with
-`gaussMeasure_le_volume` (`gaussMeasure s ≤ ofReal (log 2)⁻¹ · volume s`) and
-`volume_le_gaussMeasure`, giving `gaussMeasure(cfKbadExtSet) ≤ (2ε)·gaussMeasure
-(cfCylinder wx)`.  Choose ε below the freq-good surplus and combine with the
-multiscale `gaussMeasure_multiscale_cfBadZone_le` bound to feed
-`exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt`.
+**IMMEDIATE NEXT STEP — DONE (2026-08-28, axiom-clean, `CFDigitLaw.lean`):**
+`cfKbadExtSet w κ n` defined; `volume_cfKbadExtSet` (= bad-branch tsum),
+`measurableSet_cfKbadExtSet`, and `exists_rate_gaussMeasure_cfKbadExtSet_le`
+(∀ε>0 ∃κ>0, `gaussMeasure(cfKbadExtSet w κ n) ≤ ofReal((log 2)⁻¹·ε)·volume(I_w)`)
+all proved.  So the graft's `B'`-mass bound is in hand.
+
+**NOW: assemble the cfK-carrying steer block.** With `A = Ioo c' d'`,
+`B` = multiscale bad zones, `S = cfKbadExtSet wx κ ntop`:
+`gaussMeasure (B ∪ S) ≤ gaussMeasure B + gaussMeasure S`; bound `gaussMeasure B`
+by `gaussMeasure_multiscale_cfBadZone_le`+`hbound` (already `< μ(inner target)`)
+and `gaussMeasure S ≤ ofReal((log2)⁻¹ε)·volume(I_wx) ≤ 2ε·gaussMeasure(I_wx)`
+(via `volume_le_gaussMeasure`).  Pick ε so the sum stays `< gaussMeasure(Ioo c
+d)`; feed `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt` to get an
+irrational `x ∈ (c,d)\(B∪S)`.  `x∉S` + `range_map_cfDigit_eq` ⇒ the block word
+`u` has `cfK u ≤ e^{κ·ntop} = e^{κ·|u|}`.  Thread this cfK field up through
+`StepSpecA`/`schedStepA`, maintain the accumulated invariant `cfK(w_s) ≤
+e^{κ|w_s|}` (needs a `cfK_append_le`: `log cfK(w++u) ≤ log cfK w + log cfK u +
+O(1)` — check `CFCylinder`/`CFDigitLaw` for `cfK` recurrence), and feed
+`exists_fib_threshold_linear_of_cfK` to close `schedA_block_linear`.
 
 **⚠️ ROUTE-DECISIVE QUESTION SURFACED THIS LAP (κ-uniformity):** the rate
 `κ = C₀/ε` from `frac_mass_bad_extensions` grows as the surplus fraction
