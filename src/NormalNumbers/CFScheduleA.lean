@@ -3048,6 +3048,26 @@ structure SchedStateA (q r : ℝ) where
   hzhull : cfCylinder wz ⊆ Set.Icc e f
   hinv : cfCylinder wx ⊆ affineMap q r ⁻¹' Set.Ioo e f
 
+/-- **The single-stream L4 schedule state (route B).**  Carries ONLY the `x`-stream's
+genuine word `wx` and an interval `(e,f) ⊆ (0,1)` with `cfCylinder wx ⊆ ψ⁻¹(Ioo e f)` — NO
+`wz` stream (route B reads `ψ(x)`'s z-frequency statistically via pullback bad-zone
+avoidance, never nesting a z-cylinder).  The step (`schedStepL4_exists`, TODO) extends `wx`
+by a relative-regularization freq-good block (`exists_uniformly_freq_good_block_steer_len_rel`,
+LINEAR by the crux resolution) steering into the CURRENT cylinder's own hull, and refines the
+interval; the per-stage brick-3′ selection point supplies the z-avoidance record transferred
+to the chain limit `ψ(xA)` via the (already axiom-clean) brick-4a transfer lemmas.  `zA :=
+ψ(xA)` is DEFINITIONAL — no gluing/squeeze. -/
+structure SchedStateL4 (q r : ℝ) where
+  wx : List ℕ
+  e : ℝ
+  f : ℝ
+  hwxne : wx ≠ []
+  hwxpos : ∀ c ∈ wx, 1 ≤ c
+  he0 : 0 ≤ e
+  hef : e < f
+  hf1 : f ≤ 1
+  hinv : cfCylinder wx ⊆ affineMap q r ⁻¹' Set.Ioo e f
+
 /-- The per-stage step relation: `S'` is a joint freq-good refinement of `S` at
 stage `s`, recording (for both streams) that the appended block is a strict
 genuine extension, reaches depth `s`, and is uniformly prefix-good for
