@@ -3305,6 +3305,27 @@ theorem gaussMeasure_cfCylinder_toReal_pos (w : List ℕ) (hw : w ≠ [])
   refine lt_of_lt_of_le ?_ hmono
   exact mul_pos (by positivity) hvolpos
 
+/-- **Hull-width reciprocal ≤ `8·cfK²` (resolution input for the self-hull steer).**  For a
+genuine word `w`, `4 / vol(cfCylinder w) ≤ 8·cfK(w)²`: the cylinder width is
+`≥ 1/(2·cfK²)` (`volume_cfCylinder_ge_inv`).  When the L4 steer targets the cylinder's own
+hull `(c,d)` with `d−c = vol(cfCylinder w)`, this is exactly the `a = 4/(d−c) ≤ 8·cfK²`
+hypothesis of `exists_fib_threshold_linear_of_cfK` — so with the cfK-cap the resolution
+`Nfib` is AFFINE in `|w|`. -/
+theorem four_div_volume_cfCylinder_le (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) :
+    4 / (volume (cfCylinder w)).toReal ≤ 8 * (cfK w : ℝ) ^ 2 := by
+  have hK1 : (1 : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast one_le_cfK w hpos
+  have hge := volume_cfCylinder_ge_inv w hw hpos
+  have hvolpos : 0 < (volume (cfCylinder w)).toReal :=
+    lt_of_lt_of_le (by positivity) hge
+  rw [div_le_iff₀ hvolpos]
+  -- 4 ≤ 8·cfK²·vol, from vol ≥ 1/(2 cfK²)
+  have hcfKsq : 0 < (cfK w : ℝ) ^ 2 := by positivity
+  have := mul_le_mul_of_nonneg_left hge (by positivity : (0:ℝ) ≤ 8 * (cfK w : ℝ) ^ 2)
+  calc (4 : ℝ) = 8 * (cfK w : ℝ) ^ 2 * (1 / (2 * (cfK w : ℝ) ^ 2)) := by
+        rw [mul_one_div, eq_div_iff (by positivity)]; ring
+    _ ≤ 8 * (cfK w : ℝ) ^ 2 * (volume (cfCylinder w)).toReal := this
+
 /-- **Logarithmic fib threshold (bounded form).**  A resolution threshold `N` with
 `a < fib(n+1)²` for all `n ≥ N`, AND `N ≤ log_φ(√5·√a + 1) + 1` — logarithmic in
 `a`.  Packages `exists_nat_goldenRatio_pow_gt` (log-exponent solvability) with
