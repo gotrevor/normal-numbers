@@ -372,7 +372,38 @@ proved, remaining:
 Faithfulness gate after schedule work: `#print axioms
 exists_absolutely_normal_cf_normal_khinchin` MUST stay trust-triple.
 
+### lap 16 landed (2026-08-24): ψ-stage x-selection primitive ✅
+`exists_cfCylinder_subset_affine_preimage` (CFScheduleA, axiom-clean, green
+8756): for `q>0` and target `z`-interval `(c,d)` with `ψ`-preimage in `(0,1)`, a
+genuine `x`-cylinder sits inside `ψ⁻¹(c,d)` (= `preimage_affineMap_Ioo` +
+`exists_cfCylinder_subset_Ioo`). Places `x` so `ψ(x)` enters a prescribed good
+`z`-cylinder — the ψ-stage counterpart of the x-stage's placement.
+
+**NEXT — assemble the ψ-stage `exists_freq_good_extend_affine`** (the last atom
+before the recursion). Given genuine `wx, wz` with invariant `cfCylinder wx ⊆
+ψ⁻¹(cfCylinder wz)`, `F`, `δ`, depth `L`: produce `wz'` (extends wz, freq-good,
+`cfCylinder wz'⊆cfCylinder wz`) and `wx'` (extends wx, `cfCylinder wx'⊆cfCylinder
+wx`, `ψ(cfCylinder wx')⊆cfCylinder wz'`). Recipe (all atoms now proved):
+  (i) wz-interval `(e,f)` via `exists_Ioo_irrational_subset_cfCylinder wz`;
+      wx-interval `(a,b)` via same on wx; image `(qa+r,qb+r)` via
+      `image_affineMap_Ioo`. Target `J_z := (max(qa+r) e ⊓ …, …)` = the z-interval
+      inside BOTH `ψ(wx-interval)` and `(e,f)` — nonempty since ψ(irrational of
+      (a,b)⊆cfCylinder wx)⊆cfCylinder wz gives a common point.
+  (ii) `exists_freq_good_block_in_Ioo F .. J_z` ⇒ `wz'` freq-good, cfCylinder
+      wz'⊆J_z⊆(e,f) ⇒ extends wz (irrational pt + take_eq).
+  (iii) `wz'`'s interval `(c,d)` (its endpoints); `exists_cfCylinder_subset_
+      affine_preimage` on `(c,d)` intersected with `(a,b)` ⇒ `wx'` with
+      cfCylinder wx'⊆ψ⁻¹(cfCylinder wz')∩cfCylinder wx ⇒ ψ(cfCylinder wx')⊆
+      cfCylinder wz' and nested in wx.
+CAVEAT to handle: ψ does NOT preserve irrationality, so the "irrationals of
+(c,d)⊆cfCylinder wz'" bridge can't transfer across ψ — that's why (iii) selects
+the x-cylinder via the PREIMAGE interval directly (no irrational transfer
+needed), and (ii) places wz' via the z-side interval bridge (`exists_Ioo_
+irrational_subset_cfCylinder wz`), keeping all irrational-caveats on ONE side of
+ψ each. Then the recursion (`SchedStateA`/`schedStepA`/limit/telescoping).
+
 ### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
+- ψ-SELECT `exists_cfCylinder_subset_affine_preimage` — x-cylinder in ψ⁻¹(target z-interval).
 - STAGE `exists_freq_good_extend_cfCylinder` — one freq-good nested extension (the x-stage).
 - CYL↔IOO `exists_Ioo_irrational_subset_cfCylinder` + `exists_irrational_mem_cfCylinder`.
 - INTERVAL ENGINE `exists_freq_good_block_in_Ioo` — freq-good block landing in a target interval.

@@ -222,6 +222,20 @@ theorem exists_freq_good_extend_cfCylinder (wx : List ℕ) (hwx : wx ≠ [])
   have hf := hfreq v hv
   rwa [hulen]
 
+/-- **ψ-stage x-selection primitive.**  For `q > 0` and a target `z`-interval
+`(c,d)` whose `ψ`-preimage lands in `(0,1)`, there is a genuine `x`-cylinder
+inside `ψ⁻¹(c,d)`.  Immediate from `preimage_affineMap_Ioo` (the preimage IS the
+open interval `((c−r)/q,(d−r)/q)`) + `exists_cfCylinder_subset_Ioo`.  In the
+interleaved schedule's ψ-stage this places `x` so that `ψ(x)` enters a prescribed
+good `z`-cylinder: pick the target `(c,d)` to be a good `ψ`-cylinder's interval,
+then any point of the returned `x`-cylinder has `ψ`-image in `(c,d)`. -/
+theorem exists_cfCylinder_subset_affine_preimage {q : ℝ} (hq : 0 < q) (r c d : ℝ)
+    (h0 : 0 ≤ (c - r) / q) (hlt : (c - r) / q < (d - r) / q) (h1 : (d - r) / q ≤ 1) :
+    ∃ w : List ℕ, w ≠ [] ∧ (∀ e ∈ w, 1 ≤ e) ∧
+      cfCylinder w ⊆ affineMap q r ⁻¹' Set.Ioo c d := by
+  rw [preimage_affineMap_Ioo hq]
+  exact exists_cfCylinder_subset_Ioo h0 hlt h1
+
 /-- **Obligation (A), general form.**  A point lying in every member of an
 extending chain of genuine CF words is irrational and in `(0,1)`.  The chain
 pins a unique point (`eq_of_mem_cfCylinder_chain`), and that point equals the
