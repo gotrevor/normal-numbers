@@ -4,7 +4,41 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-24 review lap — B6: HDOM REFUTED, ASSEMBLE THE HDOM-FREE LIMIT)
+## CURRENT DIRECTIVE (set 2026-08-24 attended — B6 ENDGAME: TWO SORRIES, CAPPED-DIGIT ROUTE)
+
+- **State (baton `HANDOFF-2026-08-24-B6-crux-assembled.md`)**: the crux
+  `exists_interleaved_affine_witness` is ASSEMBLED and machine-checked except
+  TWO `sorry`s.  Build green, B5′ headlines untouched (trust-triple).  Close
+  them in this order:
+  1. **`schedA_block_linear` (`CFScheduleA.lean:2386`) — THE math obligation,
+     hardest-first.  Ratified route: DIGIT-CAPPED steering.**  Steer blocks
+     restricted to digits ≤ D have `log K(u) ≤ n·log(D+1)` — linear by
+     construction, killing the Lévy-rate obstruction (the cfK finding).
+     Freq-goodness survives the cap: for target blocks v containing a digit
+     > D the count is 0 and the requirement `< δn + |v|` holds once the
+     γ-tail mass past D is < δ (pick D = D(δ)).  **ROUTE-DECISIVE CASE, probe
+     FIRST**: *navigation under the cap* — landing `cfCylinder(w·u)` inside a
+     target interval can force one large first digit when the target sits in
+     the small-x corner.  Two candidate discharges, in order: (a) the
+     recursion CHOOSES its target cells — co-design targets away from the
+     corner (bounded first-digit cells); (b) allow ONE uncapped entry digit
+     per block (a single digit adds `log(a)` = O(1)·log(scale), still o(n)
+     amortized — check it against the budget).  If BOTH fail, that is the
+     real crux: record the obstruction precisely and STOP for an attended
+     review — do not grind substitutes.
+  2. **`TODO(shift)` (`:2584`)**: `IsCFNormal_add_int` (Gauss orbit ignores
+     the integer part) + the `(-q,1)`-representative reduction.  Bounded and
+     well-posed — OFFLOAD TO ARISTOTLE at lap start, prove locally only if
+     the poll comes back empty.
+  3. **Signpost negations (owed, see SIGNPOST RULE below)**: the
+     `r ∉ (-q,1)` falsity theorem beside the restricted crux; the hdom
+     refutation marker (kernel-tier iff a concrete witness is cheap).
+- Both B5′ headlines stay proved + axiom-clean; re-`#print axioms` after any
+  schedule work (trust triple, else revert).
+- Historical review-lap directive below still governs anything it covers that
+  this endgame note doesn't.
+
+## PREVIOUS DIRECTIVE (2026-08-24 review lap — B6: HDOM REFUTED, ASSEMBLE THE HDOM-FREE LIMIT)
 
 - **Objective (unchanged): B6 — affine images (Vandehey §7).**  Prove the crux
   `exists_interleaved_affine_witness` (`CFScheduleA.lean:1559`, sole open `sorry`
