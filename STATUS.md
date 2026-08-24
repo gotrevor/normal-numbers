@@ -165,8 +165,14 @@ the ψ-pullback Gauss distortion bound `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gauss
 3. ✅ **DONE** (`d255444`, axiom-clean) — `exists_irrational_notMem_xbad_psi_zbad_in_Ioo`:
    selects ONE irrational `x ∈ (c,d)` avoiding x-bad AND ψ⁻¹(z-bad) via one measure
    hypothesis. **Measure+selection layer of L4 (bricks 1, 2a, 3) COMPLETE + axiom-clean.**
+2b. **✅ ROUTE-DECISIVE UNCERTAINTY RESOLVED** (analysis lap): the "alignment
+   C-bound" framing is DEAD (shallow-straddle ⇒ exponential, no bounded refine
+   fixes it). Correct route = **absolute-scale z-bad-zones (`cfBadZone []`) +
+   interval covering at scales `N ≳ 2|wx|`** ⇒ **linear blocks, NO alignment**;
+   z-normality by scale-COVERAGE (δ→0), not telescoping. Remaining bricks 2b-i
+   (covering), 2b-ii (two-scale Chebyshev split), 2b-iii (assemble). See PENDING_WORK.
 4. **Single-stream recursion + limit `xA`** (`wxSeq` only); x-side reuses
-   `chain_orbit_equidist_uniform`. Needs the **2b C-bound** to discharge `hbound`.
+   `chain_orbit_equidist_uniform`. 5. z-coverage → `CFOrbitEquidist ψxA`. 6. assemble.
 5. **z-side chain frequency** for `ψ(xA)` (mirror `chain_cf_digit_freq_tendsto_uniform`,
    blocks = z-ranges, goodness from pullback-avoidance) → `CFOrbitEquidist (ψxA)`.
 6. **Assemble** the NEW `exists_interleaved_affine_witness` proof; excise the

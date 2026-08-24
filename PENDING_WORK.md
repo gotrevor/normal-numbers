@@ -45,47 +45,62 @@ L4 gives it a NEW proof; the two-stream proof (bottoming at the `schedA_block_li
    Clean: brick 1 ∘ `gaussMeasure_multiscale_cfBadZone_le`. Bound is ABSOLUTE
    (`·γ(cfCylinder wz)`).
 
-   2b. **⚠️⚠️ ALIGNMENT — the true route-decisive crux (attack next, hardest-first).**
-   Brick 2a's bound is `∝ γ(cfCylinder wz)`. For the L4 SELECTION inside
-   `cfCylinder wx` (target = full x-cylinder, `ρ=1`) we need it `< γ(cfCylinder wx)`,
-   i.e. we need a z-word `wz` with **(i)** `ψ(cfCylinder wx) ⊆ cfCylinder wz` (so
-   `ψ(x)`'s first `|wz|` z-digits are FIXED, and the NS-scales control z-digits
-   PAST `|wz|`) and **(ii)** `γ(cfCylinder wz) ≤ C·γ(cfCylinder wx)` with `C = O(1)`.
-   Then relative mass `≤ (2/q)·C·|NS|·S/(δ²n₁)` — polynomial, small, **no exponential
-   blowup**. The ENTIRE L4 obstruction-removal hinges on (ii).
-   - **Why (ii) is nontrivial:** `ψ(cfCylinder wx)` is an INTERVAL `J`, generally
-     NOT a z-cylinder. The deepest z-cylinder `wz₀ ⊇ J` = longest common CF-prefix
-     of all z ∈ J. If `J` straddles a shallow z-boundary (a rational `p/q_d` with
-     small `d`), then `wz₀` is shallow ⇒ `γ(wz₀)` ≫ `γ(J)` ≈ `γ(cfCylinder wx)` ⇒
-     `C` exponential. Straddling a DEEP boundary is fine (`wz₀` deep, `C=O(1)`).
-     CF non-uniformity (large digits ⇒ wildly varying cylinder widths at a fixed
-     depth) is why "just take depth ≈ |wx|" doesn't directly work.
-   - **Candidate route A (refine-to-align, O(1)-amortized placement):** at each
-     stage, before the freq-block, prepend a SHORT placement word `p_s` to `wx` so
-     that `ψ(cfCylinder (wx++p_s))` lands strictly inside a z-cylinder `wz_s` of
-     depth `≈ |wx++p_s|` with `γ(wz_s) ≤ C·γ(cfCylinder(wx++p_s))`. `J` straddles
-     only finitely many z-boundaries down to its own width-scale; a bounded refine
-     dodges the shallow ones. NEED: a lemma "∀ interval `J`, ∃ sub-cylinder
-     `cfCylinder(w++p) ⊆ J` with `|p|` bounded by `O(log(1/relative-gap))` and
-     `ψ`-image inside a comparable z-cylinder", and that `∑ |p_s| = o(word)`
-     (placement is amortized-negligible, UNLIKE the two-stream's Θ(word) placement).
-     ⚠️ The obstruction doc's "navigate-then-select fails" was for placing into a
-     DEEP (block-deeper) z-cylinder; here we place into a COMPARABLE-depth one, so
-     re-examine whether `|p_s|` is genuinely bounded — THIS is the decisive probe.
-   - **Candidate route B (interval covering):** bound `γ(J ∩ z-bad)` directly by
-     covering `J` with maximal z-cylinders inside it (`cfCylinder_disjoint`,
-     `volume_eq_tsum_extensions`) + 2 boundary chains of tiny total measure;
-     apply 2a's relative bound per covering cylinder, sum to `γ(J)`. Avoids
-     placement but needs CF-cover regularity (deep boundary cylinders have small
-     total mass). Heavier; keep as fallback.
-   - **Smallest decisive probe for next lap:** formalize the deepest-containing
-     z-cylinder `wz₀(J)` of an interval and TEST whether, for `J = ψ(cfCylinder wx)`
-     with a ONE-DIGIT x-refinement chosen to avoid the shallowest straddled
-     z-boundary, `γ(wz₀) ≤ C·γ(J)` with `C` bounded. If a single/bounded refine
-     provably bounds `C`, route A wins and L4 is through its hardest point. If the
-     refinement length is unbounded (deep boundary pathology survives), escalate to
-     route B (covering) or record a genuine obstruction. **Do NOT grind past this
-     without settling the `C`-bound — it is the whole ballgame.**
+   2b. **✅ ROUTE-DECISIVE UNCERTAINTY RESOLVED (2026-08-24 grind lap): use
+   ABSOLUTE-scale z-bad-zones + INTERVAL COVERING at scales `N ≳ 2|wx|` — no
+   alignment, LINEAR blocks. (Supersedes the "alignment C-bound" framing, which was
+   the WRONG cut.)**
+
+   The alignment framing ("find z-cylinder `wz ⊇ ψ(cfCylinder wx)` with
+   `γ(wz)=O(1)·γ(wx)`") FAILS: `J = ψ(cfCylinder wx)` can straddle a shallow
+   z-boundary ⇒ deepest containing z-cylinder is shallow ⇒ `C` exponential, and
+   no bounded refinement provably fixes it (straddle recursion). Both refine-to-align
+   and "deepest containing cylinder" are DEAD. The correct route:
+
+   - **Control `ψ(x)`'s z-frequency at ABSOLUTE scales via `cfBadZone [] v N δ`**
+     (base EMPTY: bad v-freq in the FIRST `N` z-digits, clean slack `δN`, no
+     cylinder-prefix seam). Select `x ∈ cfCylinder wx` avoiding `ψ⁻¹(cfBadZone [] v N δ)`.
+   - **The selection mass is `(2/q)·γ(J ∩ cfBadZone [] v N δ)`, `J = ψ(cfCylinder wx)`.**
+     `cfBadZone [] v N δ` is a union of BAD depth-`N` z-cylinders (freq depends only
+     on first `N` digits). Bound `γ(J ∩ bad)` by covering `J` with depth-`d`
+     z-cylinders (`d ≈ |wx|`, so depth-`d` width `≈ |J|`): full-inside cylinders +
+     `≤ 2` boundary cylinders (residual `≤ 2·max depth-d width ≤ 2/fib(d+1)²`, via
+     `volume_cfCylinder_le_fib`). On each full cylinder, TWO-SCALE Chebyshev split:
+     `[0,N)`-bad ⊆ (`[0,d)`-prefix-bad, scale `d`) ∪ (`[d,N)`-tail-bad, base = that
+     cylinder = existing `cfBadZone wz'`); both controlled by
+     `gaussMeasure_aggregate_cfBadZone_le`.
+   - **THE key regime: `N ≳ 2|wx|`.** Then depth-`N` z-cylinders are `≪ |J|` (no
+     all-or-nothing straddle — that pathology only bites when `N < |wx|`), the bad
+     mass is a genuine fraction `≈ S/(δ²N)·γ(J)`, and the residual `2/fib(N/2)² ≈
+     φ^{−N}` is `< γ(J) ≈ φ^{−2|wx|}` exactly when `N ≳ 2|wx|`. So the z-burn-in
+     `n₁z ≳ 2|wx|` — **LINEAR in the word, i.e. exactly `schedA_block_linear`'s
+     budget.** Blocks `|u_s| ≈ 2|wx_s| + m_s²` linear; word grows geometrically.
+   - **z-side normality = SCALE COVERAGE, not telescoping.** `ψ(xA)`'s digits are
+     NOT built blockwise, so there is NO z-side `hslack`. Instead: the controlled
+     z-scale-ranges `[≈2|wx_s|, …]` (with `δ_s → 0`) cover all large `N` cofinally;
+     for each large `N`, the stage controlling it gives `δ_{s(N)}`-goodness,
+     `δ_{s(N)} → 0`, so `ψ(xA)`'s window freq at `N → γ`. ⇒ `CFOrbitEquidist (ψxA)`.
+     (x-side STILL uses the blockwise `chain_cf_digit_freq_tendsto_uniform`
+     telescoping — its `C_s = 4√|u_s| + 2|v| + n₁x` with n₁x poly is `o(word)`,
+     fine under geometric growth.)
+
+   **Route B is UNCONDITIONAL (works for any interval `J`), gives linear blocks, and
+   needs NO alignment.** This is the resolution of the whole B6 crux's feasibility.
+
+   **Remaining route-B bricks (next laps, hardest-first):**
+   - **2b-i (covering):** interval `(α,β) ⊆ (0,1)`, depth `d`: the depth-`d`
+     z-cylinders meeting `(α,β)` = (those `⊆ (α,β)`) ⊔ (`≤2` straddling α,β);
+     γ of the straddling part `≤ 2/fib(d+1)²`. (Tools: `cfCylinder_disjoint`,
+     `volume_eq_tsum_extensions`, `volume_cfCylinder_le_fib`, `cfCylinder_subset_Icc_length`.)
+   - **2b-ii (two-scale split):** `cfBadZone [] v N δ ∩ cfCylinder wz'` (|wz'|=d)
+     `⊆ [prefix-bad: cfBadZone [] v d (δN/(2d))] ∪ [tail-bad: cfBadZone wz' v (N−d) δ']`;
+     mass of each `≤` Chebyshev at its scale. (Reuse `gaussMeasure_aggregate_cfBadZone_le`
+     + `countOccurrences_append`/`addslack₂` for the seam.)
+   - **2b-iii (assemble):** `γ(J ∩ ⋃_{v,N∈NS} cfBadZone [] v N δ) ≤
+     (2|NS|S/(δ²n₁))·γ(J) + 2Σ_N/fib(N/2)²`, for `n₁ ≳ 2·depth(J)`. Then feed
+     brick 3 (with `wz := []`, NS the absolute z-scales) — NOTE: brick 3 currently
+     takes a z-cylinder base `wz`; a `wz=[]` specialization or a route-B variant of
+     brick 3 is the bridge.
+   - Then bricks 4 (recursion), 5 (z-coverage → `CFOrbitEquidist ψxA`), 6 (assemble).
 3. ✅ **DONE (2026-08-24, commit `d255444`, axiom-clean).**
    `exists_irrational_notMem_xbad_psi_zbad_in_Ioo` (`CFScheduleA.lean`, after
    `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`): selects ONE irrational
