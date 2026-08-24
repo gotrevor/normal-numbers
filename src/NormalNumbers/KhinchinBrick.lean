@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.CFLogTail
 import NormalNumbers.TBrick
+import NormalNumbers.Khinchin
 
 /-!
 # The Khinchin log-tail bad zone in Lebesgue measure (route C′)
@@ -187,5 +188,68 @@ theorem exists_good_avoiding_bad_khinchin {t : ℕ} (B : TBrick t)
   · rcases h with h | h
     · exact hxB (Or.inr (Or.inl (Or.inl h)))
     · exact hxB (Or.inr (Or.inl (Or.inr h)))
+
+/-- For `n` large the CF discrepancy coefficient `14·SL/(δ²n)` drops below any
+target `c > 0` (generalises `exists_N_cfCoeff_lt`'s hard-coded `¼`). -/
+theorem exists_N_cfCoeff_lt' (SL : ℝ) (hSL : 0 ≤ SL) {δ c : ℝ} (hδ : 0 < δ) (hc : 0 < c) :
+    ∃ N : ℕ, ∀ n : ℕ, N ≤ n → 0 < n → 14 * SL / (δ ^ 2 * n) < c := by
+  obtain ⟨N, hN⟩ := exists_nat_gt (14 * SL / (δ ^ 2 * c))
+  refine ⟨N, fun n hn hn0 => ?_⟩
+  have hδ2 : (0 : ℝ) < δ ^ 2 := by positivity
+  have hn0' : (0 : ℝ) < n := by exact_mod_cast hn0
+  have hNn : (14 * SL / (δ ^ 2 * c)) < n := lt_of_lt_of_le hN (by exact_mod_cast hn)
+  have hprod : (0 : ℝ) < δ ^ 2 * c := by positivity
+  have h14 : 14 * SL < δ ^ 2 * c * n := by
+    rw [div_lt_iff₀ hprod] at hNn; linarith
+  rw [div_lt_iff₀ (by positivity : (0 : ℝ) < δ ^ 2 * n)]
+  nlinarith
+
+/-- For `kmin` large the d-ary coefficient drops below any target `c > 0`
+(generalises `exists_kmin_daryCoeff_lt`'s hard-coded `¼`). -/
+theorem exists_kmin_daryCoeff_lt' (t : ℕ) {ε c : ℝ} (hε0 : 0 < ε) (hc : 0 < c) :
+    ∃ kmin₀ : ℕ, ∀ kmin ≥ kmin₀, (∑ d ∈ Finset.Icc 2 t,
+      24 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε)) < c := by
+  have h := (tendsto_order.1 (tendsto_daryCoeff t hε0)).2 c hc
+  exact Filter.eventually_atTop.1 h
+
+/-- For `K` large the Khinchin log-tail coefficient `14·(∫ logTailFn K dγ)/η`
+drops below any target `c > 0`, via `integral_logTailFn_tendsto`'s `K → ∞`
+vanishing fact (`Khinchin.lean`). -/
+theorem exists_K_logCoeff_lt (η : ℝ) (hη : 0 < η) {c : ℝ} (hc : 0 < c) :
+    ∃ K₀ : ℕ, ∀ K : ℕ, K₀ ≤ K → 14 * (∫ x, logTailFn K x ∂gaussMeasure) / η < c := by
+  have htendsto : Filter.Tendsto
+      (fun K : ℕ => 14 * (∫ x, logTailFn K x ∂gaussMeasure) / η) Filter.atTop (nhds 0) := by
+    have := integral_logTailFn_tendsto.const_mul (14 : ℝ)
+    simp only [mul_zero] at this
+    simpa [div_eq_mul_inv] using this.mul_const η⁻¹
+  have h := (tendsto_order.1 htendsto).2 c hc
+  exact Filter.eventually_atTop.1 h
+
+/-- **Lemma-13 measure core, Khinchin form, unconditional for large `n`,
+`kmin`, `K`.** Mirrors `exists_good_avoiding_bad_of_large` (`TBrick.lean:592`)
+with the third (log) zone folded in: for every t-brick (uniformly), there
+exist thresholds `N`, `kmin₀`, `K₀` beyond which a good-length order-`n`
+extension of `I_w` avoids the CF discrepancy bad zone, the wide d-ary bad
+zone, AND the Khinchin log-tail bad zone (cutoff `K`, slack `η`). -/
+theorem exists_good_avoiding_bad_of_large_khinchin (t : ℕ)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ ε η : ℝ}
+    (hδ : 0 < δ) (hε0 : 0 < ε) (hεt : (t : ℝ) * ε ≤ 1) (hη : 0 < η)
+    {C : ℝ}
+    (hhalf : ∀ (w : List ℕ), w ≠ [] → (∀ a ∈ w, 1 ≤ a) → ∀ n : ℕ,
+      volume (cfCylinder w) ≤ 2 * volume (goodExtSet w C n)) :
+    ∃ N kmin₀ K₀ : ℕ, ∀ (B : TBrick t), ∀ n, N ≤ n → 0 < n → ∀ kmin ≥ kmin₀, ∀ K ≥ K₀,
+      ∃ x ∈ goodExtSet B.w C n, Irrational x ∧
+        x ∉ (⋃ v ∈ F, cfBadZone B.w v n δ) ∪
+          ((⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+            ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
+            ∪ logBadZone B.w n K η) := by
+  obtain ⟨N, hN⟩ := exists_N_cfCoeff_lt' (∑ v ∈ F, (8 * (v.length : ℝ) + 80))
+    (Finset.sum_nonneg fun v _ => by positivity) hδ (by norm_num : (0:ℝ) < 1/6)
+  obtain ⟨kmin₀, hkmin⟩ := exists_kmin_daryCoeff_lt' t hε0 (by norm_num : (0:ℝ) < 1/6)
+  obtain ⟨K₀, hK⟩ := exists_K_logCoeff_lt η hη (by norm_num : (0:ℝ) < 1/6)
+  refine ⟨N, kmin₀, K₀, fun B n hn hn0 kmin hk K hKk => ?_⟩
+  exact exists_good_avoiding_bad_khinchin B F hF n kmin K hn0 hδ hε0 hη hεt
+    (volume_cfCylinder_ne_zero B.w B.hw_ne B.hw_pos)
+    (hhalf B.w B.hw_ne B.hw_pos n) (hN n hn hn0) (hkmin kmin hk) (hK K hKk)
 
 end NormalNumbers
