@@ -341,7 +341,39 @@ recursion:
   choice, `xA := ` limit point, and the per-stream freq telescoping (copy-extend
   `CFCorrect`). This is the multi-lap body; atoms all green.
 
+### lap 15 landed (2026-08-24): single-stream stage `exists_freq_good_extend_cfCylinder` ✅
+`CFScheduleA.lean` (axiom-clean trust-triple, build green 8756). The atomic
+schedule refinement: given genuine `wx`, family `F`, `δ>0`, depth target `L`, ∃
+strict genuine extension `wx'` (`wx'.take|wx|=wx`, `|wx|<|wx'|`, `L≤|wx'|`) with
+`cfCylinder wx' ⊆ cfCylinder wx`, split `wx'=w++u` with the tail block `u`
+`F`-frequency-good. Composes lap-14 bridge + lap-13 interval engine + `take_eq_of_
+mem_cfCylinder` (shared irrational point ⇒ extension). **This is the x-stage in
+one lemma** (and the ψ-stage after mapping through the affine image interval).
+
+**NEXT ATTACK — the recursion + telescoping (crux body).** With the atomic stage
+proved, remaining:
+1. ψ-stage variant: `exists_freq_good_extend_affine` — same, but the new
+   x-refinement `wx'` ALSO forces `ψ(cfCylinder wx') ⊆` a fresh good ψ-cylinder
+   `wz'` extending `wz`. Build from `exists_freq_good_extend_cfCylinder` applied
+   to the ψ-image interval `ψ(cfCylinder wx)` (via `image_affineMap_Ioo` on wx's
+   endpoints from `exists_Ioo_irrational_subset_cfCylinder`) to get `wz'`, then
+   refine wx into `ψ⁻¹(cfCylinder wz') ∩ cfCylinder wx` (nonempty interval;
+   `exists_cfCylinder_subset_Ioo` on its endpoints) to get `wx'`.
+2. `SchedStateA ⟨wx, wz, invariants⟩`; `schedStepA` alternates x/ψ by parity;
+   `schedA : ℕ → SchedStateA` by choice (mirror `CFSchedule.sched`).
+3. `xA := ` limit of `⋂ cfCylinder (schedA s).wx`; obligation (A) both sides via
+   `irrational_mem_Ioo_of_mem_iInter_cfCylinder`.
+4. Obligation (B): per-stream freq telescoping. The appended segments are the
+   `u`'s of `exists_freq_good_extend_cfCylinder` (freq-good) plus bounded
+   placement fillers `w[|wx|:]`; mirror `CFCorrect.xstar_cf_freq_tendsto`'s
+   `cfDiscLt` telescoping (needs light re-derivation of `tailSched_cfDiscLt` /
+   `uSched_dominance` analogues — copy-extend CFCorrect, never edit). This is the
+   multi-lap analytic body; every atom it calls is now proved & axiom-clean.
+Faithfulness gate after schedule work: `#print axioms
+exists_absolutely_normal_cf_normal_khinchin` MUST stay trust-triple.
+
 ### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
+- STAGE `exists_freq_good_extend_cfCylinder` — one freq-good nested extension (the x-stage).
 - CYL↔IOO `exists_Ioo_irrational_subset_cfCylinder` + `exists_irrational_mem_cfCylinder`.
 - INTERVAL ENGINE `exists_freq_good_block_in_Ioo` — freq-good block landing in a target interval.
 - `exists_cfCylinder_subset_Ioo` — placement: a genuine cylinder inside any nondegenerate interval.

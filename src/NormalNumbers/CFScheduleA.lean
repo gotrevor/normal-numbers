@@ -163,6 +163,65 @@ theorem exists_freq_good_block_in_Ioo (F : Finset (List ℕ))
   exact ⟨u, hune, hulen, hupos, hfreq,
     x, hxu, hxirr, hwsub (cfCylinder_append_subset _ _ hxu)⟩
 
+/-- **One schedule stage (single stream).**  Given the current genuine word
+`wx`, a pattern family `F`, tolerance `δ > 0`, and a length target `L`, there is
+a strict genuine EXTENSION `wx'` of `wx` (i.e. `wx'.take |wx| = wx`, `|wx| <
+|wx'|`, `L ≤ |wx'|`) with `cfCylinder wx' ⊆ cfCylinder wx`, split as `wx' = w ++
+u` where the tail block `u` is `F`-frequency-good.  This is the atomic refinement
+the interleaved schedule performs at each x-stage (and, via the affine image
+interval, each ψ-stage): it advances the stream's CF digits by a frequency-good
+block while keeping the running cylinder nested and reaching any prescribed
+depth.  Composes `exists_Ioo_irrational_subset_cfCylinder` (view `cfCylinder wx`
+as an interval) with `exists_freq_good_block_in_Ioo` (freq-good block inside it),
+and `take_eq_of_mem_cfCylinder` (shared irrational point ⇒ genuine extension). -/
+theorem exists_freq_good_extend_cfCylinder (wx : List ℕ) (hwx : wx ≠ [])
+    (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
+    {δ : ℝ} (hδ : 0 < δ) (L : ℕ) :
+    ∃ wx' : List ℕ, wx' ≠ [] ∧ (∀ a ∈ wx', 1 ≤ a) ∧
+      wx'.take wx.length = wx ∧ wx.length < wx'.length ∧ L ≤ wx'.length ∧
+      cfCylinder wx' ⊆ cfCylinder wx ∧
+      ∃ w u : List ℕ, wx' = w ++ u ∧
+        (∀ v ∈ F, |(countOccurrences v u : ℝ)
+          - (gaussMeasure (cfCylinder v)).toReal * u.length|
+            < δ * u.length + v.length) := by
+  obtain ⟨a, b, ha, hab, hb, hIoo⟩ :=
+    exists_Ioo_irrational_subset_cfCylinder wx hwx hwxpos
+  obtain ⟨w, hwne, hwpos, hwsub, N, hN⟩ :=
+    exists_freq_good_block_in_Ioo F hF hFne hδ ha hab hb
+  set n := max (max N L) wx.length + 1 with hndef
+  have hNn : N ≤ n := by
+    rw [hndef]
+    exact le_trans (le_trans (le_max_left N L) (le_max_left _ _)) (Nat.le_succ _)
+  have hLn : L ≤ n := by
+    rw [hndef]
+    exact le_trans (le_trans (le_max_right N L) (le_max_left _ _)) (Nat.le_succ _)
+  have hnwx : wx.length < n := by
+    rw [hndef]; exact Nat.lt_succ_of_le (le_max_right _ _)
+  have hn0 : 0 < n := by omega
+  obtain ⟨u, hune, hulen, hupos, hfreq, x, hxu, hxirr, hxab⟩ := hN n hNn hn0
+  set wx' := w ++ u with hwx'
+  have hwx'ne : wx' ≠ [] := by simp [hwx', hune]
+  have hwx'pos : ∀ c ∈ wx', 1 ≤ c := fun c hc =>
+    (List.mem_append.1 hc).elim (hwpos c) (hupos c)
+  have hwx'len : wx'.length = w.length + n := by
+    rw [hwx', List.length_append, hulen]
+  have hgtwx : wx.length < wx'.length := by rw [hwx'len]; omega
+  have hgeL : L ≤ wx'.length := by rw [hwx'len]; omega
+  have hxwx : x ∈ cfCylinder wx := hIoo x hxab hxirr
+  have hxwx' : x ∈ cfCylinder wx' := hxu
+  have htake : wx'.take wx.length = wx :=
+    take_eq_of_mem_cfCylinder (le_of_lt hgtwx) hxwx hxwx'
+  have hsplit : wx' = wx ++ wx'.drop wx.length := by
+    conv_lhs => rw [← List.take_append_drop wx.length wx']
+    rw [htake]
+  have hsub : cfCylinder wx' ⊆ cfCylinder wx := by
+    rw [hsplit]; exact cfCylinder_append_subset wx (wx'.drop wx.length)
+  refine ⟨wx', hwx'ne, hwx'pos, htake, hgtwx, hgeL, hsub, w, u, hwx', ?_⟩
+  intro v hv
+  have hf := hfreq v hv
+  rwa [hulen]
+
 /-- **Obligation (A), general form.**  A point lying in every member of an
 extending chain of genuine CF words is irrational and in `(0,1)`.  The chain
 pins a unique point (`eq_of_mem_cfCylinder_chain`), and that point equals the
