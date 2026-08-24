@@ -354,6 +354,90 @@ theorem chainTail_dev_split_var (w : ℕ → List ℕ)
     rw [hassoc]
     exact hcomb
 
+/-- **Varying-slack uniform PREFIX bound.**  Strengthens `chainTail_dev_split_var`
+from whole tails to EVERY prefix: if each appended block is uniformly
+prefix-good (`∀ q ≤ |block|, |dev(block.take q)| < ε·q + C stage`), then EVERY
+prefix of the accumulated tail is good with the accumulated additive slack.
+This is the hdom-FREE replacement for `cfDiscLt_append_take`: a mid-block prefix
+`A ++ B.take j` is controlled by the whole-tail bound on `A` (via
+`chainTail_dev_split_var`) plus the block `B`'s OWN prefix bound at `j` (via
+`countOccurrences_append_addslack₂`), with NO shortness/dominance needed. -/
+theorem chainTail_dev_prefix_var (w : ℕ → List ℕ)
+    (hext : ∀ s, ∃ u, u ≠ [] ∧ w (s + 1) = w s ++ u)
+    (v : List ℕ) (hne : v ≠ []) {γv ε : ℝ} (C : ℕ → ℝ) (hC : ∀ s, 0 ≤ C s) (s₀ : ℕ)
+    (hblock : ∀ k q, q ≤ (chainApp w (s₀ + k)).length →
+      |(countOccurrences v ((chainApp w (s₀ + k)).take q) : ℝ) - γv * q|
+        < ε * q + C (s₀ + k)) :
+    ∀ k q, q ≤ (chainTail w s₀ (s₀ + k + 1)).length →
+      |(countOccurrences v ((chainTail w s₀ (s₀ + k + 1)).take q) : ℝ) - γv * q|
+        < ε * q + ∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)) := by
+  have hv1 : (0 : ℝ) ≤ (v.length : ℝ) - 1 := by
+    have : (1 : ℝ) ≤ v.length := by exact_mod_cast List.length_pos_of_ne_nil hne
+    linarith
+  -- whole-block bound, derived from the uniform hypothesis at `q = |block|`
+  have hwhole : ∀ k, |(countOccurrences v (chainApp w (s₀ + k)) : ℝ)
+      - γv * (chainApp w (s₀ + k)).length|
+      < ε * (chainApp w (s₀ + k)).length + C (s₀ + k) := by
+    intro k
+    have h := hblock k (chainApp w (s₀ + k)).length (le_refl _)
+    rwa [List.take_length] at h
+  intro k
+  induction k with
+  | zero =>
+    intro q hq
+    have h0 : chainTail w s₀ (s₀ + 0 + 1) = chainApp w s₀ := by
+      have := chainTail_succ w hext s₀ 0
+      simpa [chainTail_self] using this
+    rw [h0] at hq ⊢
+    have hb := hblock 0 q (by simpa using hq)
+    simp only [Nat.add_zero] at hb ⊢
+    rw [Finset.sum_range_one]
+    simp only [Nat.add_zero]
+    linarith [hb, hv1]
+  | succ k ih =>
+    intro q hq
+    have hstep := chainTail_succ w hext s₀ (k + 1)
+    rw [hstep] at hq ⊢
+    set A := chainTail w s₀ (s₀ + (k + 1)) with hA
+    set B := chainApp w (s₀ + (k + 1)) with hB
+    have e1 : s₀ + k + 1 = s₀ + (k + 1) := by omega
+    have hsum : ∑ i ∈ Finset.range (k + 1 + 1), (C (s₀ + i) + ((v.length : ℝ) - 1))
+        = (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+          + (C (s₀ + (k + 1)) + ((v.length : ℝ) - 1)) := Finset.sum_range_succ _ _
+    by_cases hcase : q ≤ A.length
+    · -- prefix lands inside the accumulated tail `A`: use IH
+      have hih := ih q hcase
+      rw [e1, ← hA] at hih
+      rw [List.take_append_of_le_length hcase, hsum]
+      have hnn : 0 ≤ C (s₀ + (k + 1)) + ((v.length : ℝ) - 1) := by
+        have := hC (s₀ + (k + 1)); linarith
+      linarith [hih]
+    · -- prefix reaches into the last block `B`: `q = |A| + j`, `j ≤ |B|`
+      push_neg at hcase
+      set j := q - A.length with hj
+      have hqj : q = A.length + j := by omega
+      have hjB : j ≤ B.length := by
+        rw [List.length_append] at hq; omega
+      have htake : (A ++ B).take q = A ++ B.take j := by
+        rw [hqj, List.take_append, Nat.add_sub_cancel_left,
+          List.take_of_length_le (Nat.le_add_right _ _)]
+      rw [htake, hsum]
+      -- whole-`A` bound (normalize the `s₀ + k + 1` index to `s₀ + (k+1)`)
+      have hAbnd := chainTail_dev_split_var w hext v hne C s₀ hwhole k
+      rw [e1, ← hA] at hAbnd
+      -- block `B`'s own prefix bound at `j`, in `.length` form
+      have hlenj : (B.take j).length = j := by
+        rw [List.length_take, Nat.min_eq_left hjB]
+      have hBj : |(countOccurrences v (B.take j) : ℝ) - γv * (B.take j).length|
+          < ε * (B.take j).length + C (s₀ + (k + 1)) := by
+        rw [hlenj]; exact hblock (k + 1) j hjB
+      have hcomb := countOccurrences_append_addslack₂ (v := v) (x := A) (t := B.take j)
+        hne hAbnd hBj
+      have hlenq : (A ++ B.take j).length = q := by
+        rw [List.length_append, hlenj]; omega
+      rw [hlenq] at hcomb
+      linarith [hcomb]
+
 /-! ## The digit prefix identity -/
 
 /-- The length-`|w s|` CF digit prefix of a point `y` in every chain cylinder
