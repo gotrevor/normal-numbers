@@ -19,58 +19,70 @@ point `x₀=(pz−r)/q` gives strict overlap `max a a' < min b b'` of `(a,b)` wi
 pullback `ψ⁻¹(Ioo e' f')` ⇒ place good x-block in the overlap; both extensions via
 `take_eq_of_mem_cfCylinder` with block length `n > |word|`.
 
-### REMAINING for the crux (`exists_interleaved_affine_witness`, sole `src/` sorry)
-Every ATOM is now proved & axiom-clean. What's left is pure ASSEMBLY:
-1. **`SchedStateA` structure** carrying `wx wz : List ℕ` (genuine), `e f : ℝ`
-   (`0≤e<f≤1`, `irr(e,f)⊆cfCylinder wz`), `hinv : cfCylinder wx ⊆ ψ⁻¹(Ioo e f)`,
-   and a growing family `F_s`/tolerance `δ_s`/depth `L_s` bookkeeping.
-   Seed state: `wx₀ wz₀` = any genuine words with a compatible invariant (e.g.
-   `wz₀ := [k]`, `(e,f)` its endpoints, `wx₀` a cylinder in `ψ⁻¹(Ioo e f)` via
-   `exists_cfCylinder_subset_affine_preimage`).
-2. **`schedStepA : SchedStateA → SchedStateA`** = apply `exists_freq_good_extend_affine`
-   with the round's `(F_s, δ_s, L_s)`; choose `L_s ≥` a growing target (e.g.
-   `≥ (s+2)·(|wx_s|+|wz_s|)`) so both streams get `|u_s|`/`|word_s|→∞` (dominance)
-   and filler/`|u_s|→0`. Family `F_s` = all genuine words of length ≤ s over
-   alphabet ≤ s (so every fixed genuine v is eventually in F_s), `δ_s := 1/(s+1)`.
-3. **`schedA : ℕ → SchedStateA`** by `Nat.rec` on the seed + step; extract
-   `wxSeq s := (schedA s).wx`, `wzSeq s := (schedA s).wz` — two nested genuine
-   chains with `chainApp` = the round's `word'.drop|word|`.
-4. **Feed `chain_orbit_equidist`** (in `CFChainFreq`) to each chain. The two
-   hypotheses per genuine `v`:
-   - `hgood ε`: chainApp margin-good. From the exposed freq-good block `u_s`
-     (δ_s-good, δ_s→0) + the ALIGNMENT/short-edit argument (chainApp is `u_s`
-     perturbed on ≤|word_s| entries) via `cfDiscLt_short_append`/`_append_take`.
-   - `hdom ε`: chainApp short vs word. From `|chainApp|=|word'|−|word|` and the
-     `L_s` sizing (word grows, but next block dominates). ← needs a length bound:
-     expose `|word'| ≤ |wp|+|u|` with `|wp|` controlled? Actually dominance is
-     `|chainApp_s| < ε|word_s|`?? NO — re-check direction: CFCorrect's `hshort2`
-     is `|app_s| < 2ε|word_s|` (block SHORT vs accumulated word). But here the
-     block IS the freq-good payload and must be LONG for `hgood`… ⚠ the tension:
-     `hdom` wants app short vs word, `hgood` wants app's u long. Resolved because
-     "word" = the ACCUMULATED prefix `w s` which grows super-linearly if each
-     block is ≥ (s+2)·|prev word|; then a single block is a vanishing FRACTION of
-     the cumulative word (geometric growth ⇒ last block ~ (1−1/(s+2)) of total,
-     hmm that's NOT small). RE-EXAMINE: CFCorrect dominance `t·|u_s|≤|w_s|` means
-     block ≤ |word|/t, i.e. block SMALL vs word — the OPPOSITE of geometric. So
-     blocks must GROW SLOWLY (sub-linearly in cumulative length): `|u_s| ≤
-     |w_s|/t_s` with `t_s→∞`. Then how is `u_s` "long enough" for margin-good?
-     margin-good needs `|u_s|` large in ABSOLUTE terms (≥ (2/ε)(|v|+filler)), NOT
-     relative. Both hold: `|u_s|→∞` absolutely while `|u_s|/|w_s|→0`. So `L_s`
-     grows to ∞ but SLOWER than `|w_s|`. Concretely pick `|u_s| := L_s` with
-     `s ≤ L_s` and `L_s · (s+2) ≤ |w_s|`… but `|w_s|=Σ|app_j|` is built FROM the
-     L_j — circular. Handle by making the filler+block per round bounded by a
-     fraction of the running length: choose `L_s := |w_s|` is TOO big (ratio→1).
-     **This is the one genuine design knot left** — the L_s schedule must give
-     `|u_s|→∞` yet `(|filler_s|+|u_s|)/|w_s|→0`. Since `|w_{s+1}|=|w_s|+|filler_s|
-     +|u_s|`, want `|app_s|=o(|w_s|)`, i.e. `|w_s|` grows super-linearly while
-     each increment is o(previous). E.g. `|app_s| ≈ √|w_s|`: then `|w_s|~s²/4→∞`,
-     `|app_s|~s→∞` (margin-good OK), `|app_s|/|w_s|~4/s→0` (dominance OK). So set
-     `L_s := ⌈√|w_s|⌉` (or any `ω(1)∩o(|w_s|)`). The round step accepts any `L`,
-     so this is a scheduling choice, NOT a new lemma. VERIFY at assembly.
+### ⚠️ ROUTE-DECISIVE FINDING (this lap): the FILLER/BALANCE obstruction is REAL
+Analyzing the telescoping wiring quantitatively surfaced a genuine difficulty the
+"just assembly" framing hid. `chain_orbit_equidist` needs, per stream: `hgood`
+(chainApp margin-good) AND `hdom` (`|chainApp_s| < ε|w_s|`, block a VANISHING
+fraction of the accumulated word — CFCorrect's `uSched_dominance` direction:
+block SMALL vs word). The interleaved schedule's navigation FILLERS threaten both:
 
-The crux is now assembly + the L_s-schedule verification (item 4). No new
-geometry/telescoping. Next lap: build `SchedStateA`/`schedStepA`/`schedA` and
-discharge `hgood`/`hdom` with the `√|w_s|` block schedule.
+- **Filler size = the OTHER stream's payload.** To make `ψ(cfCylinder wx')` land
+  in the new good z-cylinder `wz'` (width `~φ^{-2|wz'|}`), `x` must be refined to
+  depth `|wx'| ≳ |wz'|`; the FORCED navigation digits number `~|wz'|−|wx| ≈` z's
+  growth this round `≈ z-payload`. Symmetrically z's placement into `J_z=ψ(wx-int)`
+  costs `~x-payload` when x leads. So **filler_s ≈ (other stream's payload)**,
+  NOT `o(payload)`.
+- **The tension.** To BURY a stream's filler we need its own payload
+  `≫ filler ≈ other-payload`; but then that stream outgrows the other, and next
+  round the LAGGING stream's filler `≈` this stream's (now huge) payload. The
+  imbalance + fillers compound: with alternating navigation the fillers are an
+  IRREDUCIBLE Θ(payload) fraction, so the appended block is a constant-fraction
+  of uncontrolled (non-freq-good) digits ⇒ frequency need not converge.
+- **Why `hdom` alone doesn't save it.** Even sub-linear block growth
+  (`|app_s|=o(|w_s|)`, e.g. `√|w_s|`) keeps `hdom`, but the filler is a constant
+  fraction of each `app_s`, so a prefix ending mid-filler (length `~|w_s|+filler`)
+  has count deviating by `~filler ≈ payload ≈ |app_s|` — a Θ(1)·|app_s| error;
+  since `hdom` only says `|app_s|<ε|w_s|`, at that prefix the deviation/prefixlen
+  can still be Θ(ε), not →0. Actually CFCorrect's `cfDiscLt_short_append` REQUIRES
+  the foreign (filler) segment to be short vs the GOOD block (`|u|+(k−1)<ε|x|`),
+  i.e. filler `o(good mass)` — which the Θ(payload) filler VIOLATES.
+
+**So this is a genuine route-decisive obstruction, not assembly bookkeeping.**
+The abstract telescoping (`chain_orbit_equidist`) and the round step
+(`exists_freq_good_extend_affine`) are both CORRECT and reusable, but wiring them
+needs the navigation fillers to be `o(freq-good mass)`, which the naive
+alternating navigation does not provide.
+
+**Candidate escapes (next lap must pick/test ONE, hardest-first):**
+1. **Make the fillers freq-good too.** The navigation digits into `ψ⁻¹(wz')` have
+   FREEDOM (any x-cylinder inside the target preimage interval works); choose that
+   whole extension freq-good via `exists_freq_good_block_in_Ioo` on the preimage
+   interval — then there is NO uncontrolled filler, only a bounded PLACEMENT word
+   `wp` whose length is the RELATIVE depth `~log_φ(width(cfCylinder word)/width(target))`
+   `≈ payload`. ⚠ but `wp` is still Θ(payload) and uncontrolled → same problem
+   unless `wp` is ALSO absorbed. Needs: expose `|wp_s|` from the round step and
+   bound it, then require `|wp_s| = o(|u_s|)` (payload `≫` placement) — but that
+   reintroduces the burial-vs-balance tension. LIKELY still stuck.
+2. **Relative-placement primitive.** Prove that extending `word` into a
+   sub-interval of `cfCylinder word` of RELATIVE width `ρ` costs only
+   `~log_φ(1/ρ)` new digits AND those can be chosen freq-good — i.e. a
+   `exists_freq_good_extend_into_subcylinder`. Then the x-reselection into
+   `ψ⁻¹(wz')` (relative width `~q·φ^{-2·zpayload}`, so `~zpayload` new digits) is
+   itself freq-good, killing the filler entirely. This is the most promising —
+   the navigation digits become part of the freq-good block. Requires a genuinely
+   new placement lemma with freq control on the navigation portion.
+3. **Different frequency criterion** tolerating Θ(1)-fraction STRUCTURED fillers
+   (prove the forced navigation digits are themselves equidistributed / the
+   targets are "generic"). Deep; likely needs a natural-extension/measure argument
+   (closer to Vandehey's actual method). Escalate if 1–2 fail.
+
+**DECISION for next lap:** attack escape #2 (relative freq-good placement) — it is
+the route-decisive probe: if a word can be freq-good-extended into a preimage
+sub-interval with new-digit-count `≈` the relative depth (all freq-good, no
+uncontrolled filler), the interleaved schedule closes; if not, escalate toward #3
+(write `ROUTE-ESCALATION`). Do NOT build `SchedStateA` until #2 is settled — the
+recursion is worthless if the per-round extension carries Θ(payload) uncontrolled
+filler.
 
 ---
 
