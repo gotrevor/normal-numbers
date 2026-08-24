@@ -113,6 +113,12 @@ budget `(m+1)·A₁(n₁) < γ(c',d')` and the top-scale resolution
 `4/(d−c) < fib(|wx|+n₁+m²+1)²`.
 
 ### REMAINING (step 4 only): plug into the schedule
+- ✅ **STARTED this lap:** `chainTail_dev_split_var` (CFChainFreq, after
+  `chainTail_dev_split`, axiom-clean) — the varying-slack telescoping: per-block
+  slack `C s` may grow (uniformly-good blocks have `C_s = 4√|u_s|+2|v|`), tail
+  deviation `< ε·len + ∑_{i≤k}(C(s₀+i)+(|v|−1))`. The `∑ C_j` is `o(word)` when
+  `|u_j|` grows geometrically, so the accumulated word stays good. This is the
+  base-word-goodness half of the hdom-free limit.
 - **hdom-free chain limit:** a variant of `chain_cf_digit_freq_tendsto` /
   `chain_orbit_equidist` whose per-block hypothesis is uniform-prefix-goodness
   (`∀k, |dev(u.take k)| < δ_s·k + o(k)`) INSTEAD of `hgood ∧ hdom`. With the block

@@ -301,6 +301,59 @@ theorem chainTail_dev_split (w : ℕ → List ℕ)
     rw [hslack] at hcomb
     convert hcomb using 2
 
+/-- **Varying-slack tail split.**  Like `chainTail_dev_split` but the per-block
+additive slack `C s` may vary with the stage (uniformly-good blocks have slack
+`4√|u_s| + 2|v|`, which grows).  The tail deviation past `s₀` is
+`< ε·len + ∑_{i≤k} (C(s₀+i) + (|v|−1))`.  Divided by `len` the additive sum is
+`o(1)` when `Σ C_j = o(word)`, so the accumulated word stays asymptotically good. -/
+theorem chainTail_dev_split_var (w : ℕ → List ℕ)
+    (hext : ∀ s, ∃ u, u ≠ [] ∧ w (s + 1) = w s ++ u)
+    (v : List ℕ) (hne : v ≠ []) {γv ε : ℝ} (C : ℕ → ℝ) (s₀ : ℕ)
+    (hblock : ∀ k, |(countOccurrences v (chainApp w (s₀ + k)) : ℝ)
+        - γv * (chainApp w (s₀ + k)).length|
+      < ε * (chainApp w (s₀ + k)).length + C (s₀ + k)) :
+    ∀ k, |(countOccurrences v (chainTail w s₀ (s₀ + k + 1)) : ℝ)
+        - γv * (chainTail w s₀ (s₀ + k + 1)).length|
+      < ε * (chainTail w s₀ (s₀ + k + 1)).length
+        + ∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)) := by
+  have hv1 : (0 : ℝ) ≤ (v.length : ℝ) - 1 := by
+    have : (1 : ℝ) ≤ v.length := by exact_mod_cast List.length_pos_of_ne_nil hne
+    linarith
+  intro k
+  induction k with
+  | zero =>
+    have h0 : chainTail w s₀ (s₀ + 0 + 1) = chainApp w s₀ := by
+      have := chainTail_succ w hext s₀ 0
+      simpa [chainTail_self] using this
+    rw [h0]
+    have h := hblock 0
+    simp only [Nat.add_zero] at h ⊢
+    rw [Finset.sum_range_one]
+    simp only [Nat.add_zero]
+    push_cast
+    nlinarith [h, hv1]
+  | succ k ih =>
+    have h1 : s₀ + (k + 1) = s₀ + k + 1 := by omega
+    have hstep := chainTail_succ w hext s₀ (k + 1)
+    rw [hstep, h1]
+    have hblk := hblock (k + 1)
+    rw [h1] at hblk
+    have hcomb := countOccurrences_append_addslack₂ (v := v) (x := chainTail w s₀ (s₀ + k + 1))
+      (t := chainApp w (s₀ + k + 1)) hne ih hblk
+    have hsum : ∑ i ∈ Finset.range (k + 1 + 1), (C (s₀ + i) + ((v.length : ℝ) - 1))
+        = (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+          + (C (s₀ + (k + 1)) + ((v.length : ℝ) - 1)) :=
+      Finset.sum_range_succ _ _
+    rw [hsum]
+    have hassoc : ε * (chainTail w s₀ (s₀ + k + 1) ++ chainApp w (s₀ + k + 1)).length
+        + ((∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+          + (C (s₀ + (k + 1)) + ((v.length : ℝ) - 1)))
+      = ε * (chainTail w s₀ (s₀ + k + 1) ++ chainApp w (s₀ + k + 1)).length
+        + ((∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+          + C (s₀ + (k + 1)) + ((v.length : ℝ) - 1)) := by ring
+    rw [hassoc]
+    exact hcomb
+
 /-! ## The digit prefix identity -/
 
 /-- The length-`|w s|` CF digit prefix of a point `y` in every chain cylinder
