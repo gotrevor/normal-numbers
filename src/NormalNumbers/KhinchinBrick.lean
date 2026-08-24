@@ -98,4 +98,94 @@ theorem volume_logBadZone_le_vol
     _ = ENNReal.ofReal (14 * (∫ x, logTailFn K x ∂gaussMeasure) / η) * volume (cfCylinder w) := by
         rw [hT]; ring_nf
 
+/-- **The three-zone combine** (route C′): mirrors `exists_good_avoiding_bad`
+(`TBrick.lean:470`) with the Khinchin `logBadZone` folded into the d-ary
+bad-zone union via `measure_union_le` subadditivity, so the abstract two-zone
+`exists_mem_notMem_union_of_bounds` still applies with `B₂' = dary ∪ log ∪
+ℚ`. Coefficients are tightened from the original `<¼` each to `<⅙` each so
+all THREE (CF, d-ary, log) sum below `½`. -/
+theorem exists_good_avoiding_bad_khinchin {t : ℕ} (B : TBrick t)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a)
+    (n kmin K : ℕ) (hn : 0 < n) {δ ε η : ℝ} (hδ : 0 < δ) (hε0 : 0 < ε) (hη : 0 < η)
+    (hεt : (t : ℝ) * ε ≤ 1) (hpos : volume (cfCylinder B.w) ≠ 0)
+    {C : ℝ}
+    (hhalf : volume (cfCylinder B.w) ≤ 2 * volume (goodExtSet B.w C n))
+    (hCF : 14 * (∑ v ∈ F, (8 * (v.length : ℝ) + 80)) / (δ ^ 2 * n) < 1 / 6)
+    (hdary : (∑ d ∈ Finset.Icc 2 t,
+        24 * (d : ℝ) ^ 2 * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε))
+      < 1 / 6)
+    (hlog : 14 * (∫ x, logTailFn K x ∂gaussMeasure) / η < 1 / 6) :
+    ∃ x ∈ goodExtSet B.w C n, Irrational x ∧
+      x ∉ (⋃ v ∈ F, cfBadZone B.w v n δ) ∪
+        ((⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+          ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
+          ∪ logBadZone B.w n K η) := by
+  have hwfin : volume (cfCylinder B.w) ≠ ⊤ := by
+    have h1 : volume (cfCylinder B.w) ≤ volume (Set.Ioo (0 : ℝ) 1) :=
+      measure_mono (fun x hx => hx.1)
+    rw [Real.volume_Ioo] at h1
+    exact (lt_of_le_of_lt h1 ENNReal.ofReal_lt_top).ne
+  have hxd : ∀ d ∈ Finset.Icc 2 t, 0 ≤ 24 * (d : ℝ) ^ 2
+      * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε) := by
+    intro d hd
+    rw [Finset.mem_Icc] at hd
+    have hd1 : 1 ≤ d := le_trans (by norm_num) hd.1
+    exact div_nonneg
+      (mul_nonneg (by positivity) (pow_nonneg (daryBadRatio_pos d ε).le _))
+      (by linarith [daryBadRatio_lt_one hd1 hε0])
+  have hqD : 0 ≤ ∑ d ∈ Finset.Icc 2 t, 24 * (d : ℝ) ^ 2
+      * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε) :=
+    Finset.sum_nonneg hxd
+  set qlog : ℝ := 14 * (∫ x, logTailFn K x ∂gaussMeasure) / η with hqlog
+  have hqlog0 : 0 ≤ qlog := by
+    rw [hqlog]
+    have := volume_logBadZone_le_vol B.w B.hw_pos n K hη
+    have hT0 : 0 ≤ (∫ x, logTailFn K x ∂gaussMeasure) :=
+      MeasureTheory.integral_nonneg fun x => logTailFn_nonneg_pointwise K x
+    positivity
+  have hpCF : 0 ≤ 14 * (∑ v ∈ F, (8 * (v.length : ℝ) + 80)) / (δ ^ 2 * n) :=
+    div_nonneg (mul_nonneg (by norm_num)
+      (Finset.sum_nonneg fun v _ => by positivity)) (by positivity)
+  -- the combined d-ary ∪ log ∪ ℚ zone, in `ofReal(q+qlog) * vol0` form
+  have hB₂dary := TBrick.volume_aggregate_bad_le B hε0 hεt kmin
+  rw [← ENNReal.ofReal_sum_of_nonneg hxd] at hB₂dary
+  have hB₂log := volume_logBadZone_le_vol B.w B.hw_pos n K hη
+  have hB₂' : volume (((⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+        ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
+        ∪ logBadZone B.w n K η)
+        ∪ Set.range ((↑) : ℚ → ℝ))
+      ≤ ENNReal.ofReal (∑ d ∈ Finset.Icc 2 t, 24 * (d : ℝ) ^ 2
+          * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε) + qlog)
+        * volume (cfCylinder B.w) := by
+    calc volume (((⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+          ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
+          ∪ logBadZone B.w n K η) ∪ Set.range ((↑) : ℚ → ℝ))
+        ≤ volume ((⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+            ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
+            ∪ logBadZone B.w n K η)
+          + volume (Set.range ((↑) : ℚ → ℝ)) := measure_union_le _ _
+      _ = volume ((⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+            ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
+            ∪ logBadZone B.w n K η) := by
+          rw [(Set.countable_range _).measure_zero, add_zero]
+      _ ≤ volume (⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+            ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
+          + volume (logBadZone B.w n K η) := measure_union_le _ _
+      _ ≤ ENNReal.ofReal (∑ d ∈ Finset.Icc 2 t, 24 * (d : ℝ) ^ 2
+            * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε)) * volume (cfCylinder B.w)
+          + ENNReal.ofReal qlog * volume (cfCylinder B.w) := add_le_add hB₂dary hB₂log
+      _ = ENNReal.ofReal (∑ d ∈ Finset.Icc 2 t, 24 * (d : ℝ) ^ 2
+            * daryBadRatio d ε ^ kmin / (1 - daryBadRatio d ε) + qlog)
+          * volume (cfCylinder B.w) := by
+          rw [← add_mul, ← ENNReal.ofReal_add hqD hqlog0]
+  obtain ⟨x, hxG, hxB⟩ := exists_mem_notMem_union_of_bounds hpCF (by linarith [hqD, hqlog0])
+    (by linarith) hpos hwfin hhalf
+    (volume_iUnion_cfBadZone_le_vol B.w B.hw_pos F hF n hn hδ) hB₂'
+  refine ⟨x, hxG, fun hrat => hxB (Or.inr (Or.inr hrat)), fun hmem => ?_⟩
+  rcases hmem with h | h
+  · exact hxB (Or.inl h)
+  · rcases h with h | h
+    · exact hxB (Or.inr (Or.inl (Or.inl h)))
+    · exact hxB (Or.inr (Or.inl (Or.inr h)))
+
 end NormalNumbers
