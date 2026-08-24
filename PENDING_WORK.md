@@ -1,5 +1,35 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🚩🚩🚩 JUDGE-FLAG 2026-08-24 (grind lap): the crux was FALSE as stated — RESTRICTED to feasible `r`, deliverable reduction now needs a shift lemma (commit `<this>`)
+
+**Route-decisive discovery (for the altitude/review lap to ratify).** The crux
+`exists_interleaved_affine_witness` demanded, unconditionally in `r`, a single
+`x` with `x ∈ (0,1)` AND `ψ(x)=q·x+r ∈ (0,1)`. **This is outright FALSE for
+`r ∉ (-q, 1)`**: e.g. `(q,r)=(1,5)` needs `x∈(0,1)` and `x+5∈(0,1)`, impossible.
+The feasible set `(0,1) ∩ ψ⁻¹(0,1) = (max 0 (-r/q), min 1 ((1-r)/q))` is nonempty
+**iff `-q < r < 1`**.  No hdom-free assembly can ever discharge the old statement
+— the entire directive's "assemble the limit" plan rested on a false target.
+
+**Fix applied this lap (additive-safe; crux was the open `sorry`, not frozen):**
+- **Crux now carries `(hr : -q < r ∧ r < 1)`** — exactly the feasibility that
+  seeding the two-stream recursion needs, and now a TRUE statement the recursion
+  CAN close.  The item-2/item-3 recipe below is unchanged EXCEPT the seed state
+  is built inside the feasible interval (`hr` gives it nonempty).
+- **`exists_cfNormal_and_affine_cfNormal` stays UNCONDITIONAL** (`q>0`, all `r`):
+  `by_cases` on `-q<r<1`; feasible → crux directly; else a NEW disclosed `sorry`
+  (`TODO(shift)`) reducing general `r` to the feasible representative via
+  integer-shift invariance of CF-normality (the Gauss orbit ignores the integer
+  part of `ψ(x)`).  **New leaf obligation:** `IsCFNormal_add_int` (or a mod-1
+  reduction) — CF-normality of `y` and `y - ⌊y⌋` coincide asymptotically because
+  a single anomalous digit-0 at position 0 is frequency-negligible.  This is the
+  ONLY piece keeping the deliverable at `sorryAx`; it is genuine but leaf-level.
+- Axioms re-checked: B5′ headline stays `[propext, Classical.choice, Quot.sound]`;
+  `exists_cfNormal_and_affine_cfNormal` carries `sorryAx` (crux + shift, disclosed).
+
+**Two open `src/` sorries now:** (1) the feasible crux (item-3 recursion, below),
+(2) the `TODO(shift)` general-`r` reduction (leaf: `IsCFNormal_add_int`).
+
+
 ## ⭐⭐⭐⭐⭐⭐⭐ ADVANCE 2026-08-24 (review lap, later): per-round FEASIBILITY discharged — `exists_uniformly_freq_good_block_steer_len` (commit `4d1e5c9`, axiom-clean)
 
 The directive's item-2 route-decisive question — *can each round jointly satisfy

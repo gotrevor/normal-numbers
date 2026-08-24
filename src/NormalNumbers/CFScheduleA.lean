@@ -1845,13 +1845,23 @@ theorem exists_freq_good_extend_affine_steer_uniform {q : ℝ} (hq : 0 < q) (r :
   · rw [hdropx]; exact hn₁xsq
   · rw [hdropx]; exact huxfreq
 
-/-- **THE B6 CRUX (interleaved-schedule witness).**  For any `q > 0`, `r`, there
-is a single real `x` such that both `x` and `ψ(x) = q·x + r` are irrational in
-`(0,1)` with equidistributing Gauss orbits.  Disclosed `sorry`: this is the
-interleaved schedule (module docstring + `PENDING_WORK.md`); the metric
-substrate it consumes (L1–L3, the pullback measure, the orbit-frequency
-interface) is all proved and axiom-clean. -/
-theorem exists_interleaved_affine_witness {q : ℝ} (hq : 0 < q) (r : ℝ) :
+/-- **THE B6 CRUX (interleaved-schedule witness), FEASIBLE REGIME.**  For `q > 0`
+and `r ∈ (-q, 1)` — exactly the range in which the feasible set
+`(0,1) ∩ ψ⁻¹(0,1)` is nonempty — there is a single real `x` such that both `x`
+and `ψ(x) = q·x + r` are irrational in `(0,1)` with equidistributing Gauss
+orbits.  Disclosed `sorry`: this is the interleaved schedule (module docstring +
+`PENDING_WORK.md`); the metric substrate it consumes (L1–L3, the pullback
+measure, the orbit-frequency interface) is all proved and axiom-clean.
+
+**Feasibility hypothesis `hr` is MANDATORY** (added 2026-08-24): without it the
+conclusion is outright FALSE — e.g. `(q,r) = (1,5)` makes `x ∈ (0,1) ∧ x+5 ∈
+(0,1)` contradictory.  `-q < r < 1 ⟺ (0,1) ∩ ψ⁻¹(0,1) ≠ ∅`, which is precisely
+what seeding the two-stream recursion needs.  The unconditional deliverable
+`exists_cfNormal_and_affine_cfNormal` reduces the general `r` to this regime via
+integer-shift invariance of CF-normality (asymptotic; the Gauss orbit ignores
+the integer part). -/
+theorem exists_interleaved_affine_witness {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (hr : -q < r ∧ r < 1) :
     ∃ x : ℝ,
       (Irrational x ∧ x ∈ Set.Ioo (0 : ℝ) 1 ∧ CFOrbitEquidist x) ∧
       (Irrational (affineMap q r x) ∧ affineMap q r x ∈ Set.Ioo (0 : ℝ) 1
@@ -1864,8 +1874,18 @@ its affine image `q·x + r` CF-normal — a constructive data point on Vandehey
 witness via the orbit-frequency interface. -/
 theorem exists_cfNormal_and_affine_cfNormal {q : ℝ} (hq : 0 < q) (r : ℝ) :
     ∃ x : ℝ, IsCFNormal x ∧ IsCFNormal (affineMap q r x) := by
-  obtain ⟨x, ⟨hx1, hx2, hx3⟩, ⟨hy1, hy2, hy3⟩⟩ := exists_interleaved_affine_witness hq r
-  exact ⟨x, isCFNormal_of_irrational_orbit_freq x hx1 hx2 hx3,
-    isCFNormal_of_irrational_orbit_freq (affineMap q r x) hy1 hy2 hy3⟩
+  by_cases hr : -q < r ∧ r < 1
+  · -- feasible regime: `(0,1) ∩ ψ⁻¹(0,1) ≠ ∅`, the interleaved witness applies directly
+    obtain ⟨x, ⟨hx1, hx2, hx3⟩, ⟨hy1, hy2, hy3⟩⟩ := exists_interleaved_affine_witness hq r hr
+    exact ⟨x, isCFNormal_of_irrational_orbit_freq x hx1 hx2 hx3,
+      isCFNormal_of_irrational_orbit_freq (affineMap q r x) hy1 hy2 hy3⟩
+  · -- TODO(shift): general `r`.  CF-normality of `ψ(x) = q·x + r` depends only on
+    -- the tail of its Gauss orbit, which ignores the integer part of `ψ(x)`; so the
+    -- claim for arbitrary `r` reduces to the feasible representative `r₀ = r - ⌊r⌋`
+    -- adjusted into `(-q, 1)` (always possible since `q > 0`).  Requires the
+    -- integer-shift invariance lemma `IsCFNormal_add_int` (not yet formalized); the
+    -- `isCFNormal_of_irrational_orbit_freq` bridge needs `ψ(x) ∈ (0,1)`, which fails
+    -- outside the feasible regime, so this genuinely needs the shift reduction.
+    sorry
 
 end NormalNumbers
