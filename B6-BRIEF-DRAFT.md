@@ -35,7 +35,7 @@ refinement machinery reshaped, copy-and-extend rather than edit in place.
 The existing `exists_absolutely_normal_cf_normal_khinchin` must still build
 character-identical at every lap.
 
-## Lap plan (est. 3–6 fable/low + judge gates; breaker rec --max-laps 8)
+## Lap plan (est. 3–6 opus/low + judge gates; breaker rec --max-laps 8)
 
 1. **Lap 1**: L1 (interval→cylinder covering) + L2 (good-block density on
    arbitrary intervals).  Self-contained, consumes `CFCylinder` +

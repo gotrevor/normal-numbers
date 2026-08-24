@@ -4,17 +4,27 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-24, reflection lap — ✅ COMPLETE)
+## CURRENT DIRECTIVE (set 2026-08-24, attended — B6 CAMPAIGN OPEN)
 
-- **THE EXPEDITION IS COMPLETE.** Both headlines are PROVED and axiom-clean
-  (trust triple): `exists_absolutely_normal_cf_normal` (Tier 1 = Becher–Yuhjtman)
-  and `exists_absolutely_normal_cf_normal_khinchin` (Tier 2 = + Khinchin-typical).
-  ZERO `sorry`/`admit` in `src/`, ZERO cited math axioms, all 10 headlines
-  certified trust-triple. There is no remaining proof obligation. Do NOT reopen
-  or modify any locked declaration. If resumed, the only work is optional
-  packaging (docstring tidy, outward PRs needing egress) — NOT proof.
-- Historical directive (the wiring plan that closed Tier 2) preserved below for
-  provenance.
+- **New objective: B6 — affine images (Vandehey §7 poke).**  Spec:
+  `KHINCHIN.md` §B6 (lemma table L1–L5, tiers).  Brief: `B6-BRIEF-DRAFT.md`
+  (statement shapes are PROPOSED, not yet judge-frozen — lap 1 must align
+  them with the real B5′ exports in `Headline.lean`/`KhinchinDefs.lean` and
+  record the aligned shapes in PENDING_WORK.md before proving against them).
+- **Lap 1 = scaffold**: create `src/NormalNumbers/CFIntervalGood.lean` with
+  the L1+L2 statements (interval→cylinder covering; good-block density on
+  arbitrary intervals) as `sorry`s, building green, then start proving L1.
+  Then L3 (`CFAffine.lean`), then L4/L5 per the brief's lap plan.
+- **ADDITIVE ONLY 🧊**: the B5′ expedition is COMPLETE and LOCKED — both
+  headlines axiom-clean, zero sorries in `src/`.  Do NOT reopen or modify any
+  locked declaration or landed module (`TBrick*`, `CFSchedule`, `CFLogTail`,
+  `Headline`, …).  Where L4 needs the refinement machinery reshaped,
+  copy-and-extend into new modules.  `exists_absolutely_normal_cf_normal_khinchin`
+  must build character-identical every lap.
+- Escape valves (judge-governed, see brief): Tier 2 may drop to a finite
+  family; the image-Khinchin stretch detaches freely.
+- Historical directive (the wiring plan that closed B5′ Tier 2) preserved
+  below for provenance.
 
 <details><summary>Superseded directive (route C′ wiring — now DONE)</summary>
 
