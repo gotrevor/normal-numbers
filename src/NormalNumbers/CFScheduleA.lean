@@ -1866,7 +1866,8 @@ theorem exists_freq_good_extend_affine_steer_uniform {q : ℝ} (hq : 0 < q) (r :
               - (gaussMeasure (cfCylinder v)).toReal * k|
                 < δ * k + (4 * Nat.sqrt (wx'.drop wx.length).length + 2 * v.length + n₁))) ∧
       (0 ≤ e' ∧ e' < f' ∧ f' ≤ 1 ∧
-        (∀ x ∈ Set.Ioo e' f', Irrational x → x ∈ cfCylinder wz')) ∧
+        (∀ x ∈ Set.Ioo e' f', Irrational x → x ∈ cfCylinder wz') ∧
+        cfCylinder wz' ⊆ Set.Icc e' f') ∧
       cfCylinder wx' ⊆ affineMap q r ⁻¹' Set.Ioo e' f' := by
   -- (1) wx-interval (a,b); (2) image bounds ψ((a,b)) ⊆ Icc e f
   obtain ⟨a, b, ha, hab, hb, hxIcc, hxint⟩ :=
@@ -1951,7 +1952,7 @@ theorem exists_freq_good_extend_affine_steer_uniform {q : ℝ} (hq : 0 < q) (r :
   refine ⟨wx', wz', e', f',
     ⟨hwz'ne, hwz'pos, htakez, hzgt, hzL, hsubz, ?_, n₁z, ?_, ?_⟩,
     ⟨hwx'ne, hwx'pos, htakex, hxgt, hxL, hsubx, ?_, n₁x, ?_, ?_⟩,
-    ⟨he'0, he'f', hf'1, hz'int⟩, hinv'⟩
+    ⟨he'0, he'f', hf'1, hz'int, hz'Icc⟩, hinv'⟩
   · rw [hdropz]; exact huzL
   · rw [hdropz]; exact hn₁zsq
   · rw [hdropz]; exact huzfreq
@@ -2102,6 +2103,7 @@ structure SchedStateA (q r : ℝ) where
   hef : e < f
   hf1 : f ≤ 1
   hzint : ∀ x ∈ Set.Ioo e f, Irrational x → x ∈ cfCylinder wz
+  hzhull : cfCylinder wz ⊆ Set.Icc e f
   hinv : cfCylinder wx ⊆ affineMap q r ⁻¹' Set.Ioo e f
 
 /-- The per-stage step relation: `S'` is a joint freq-good refinement of `S` at
@@ -2138,8 +2140,8 @@ theorem schedStepA_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateA q r)
       (wordFamily s) (wordFamily_pos s) (wordFamily_ne s) (schedEps_pos s) s
   obtain ⟨hz'ne, hz'pos, hztake, hzgt, _hzL, _hzsub, hzdropL, n₁z, hz'sq, hz'freq⟩ := hz
   obtain ⟨hx'ne, hx'pos, hxtake, hxgt, _hxL, _hxsub, hxdropL, n₁x, hx'sq, hx'freq⟩ := hx
-  obtain ⟨he'0, he'f', hf'1, hz'int⟩ := hint
-  exact ⟨⟨wx', wz', e', f', hx'ne, hx'pos, hz'ne, hz'pos, he'0, he'f', hf'1, hz'int, hinv'⟩,
+  obtain ⟨he'0, he'f', hf'1, hz'int, hz'hull⟩ := hint
+  exact ⟨⟨wx', wz', e', f', hx'ne, hx'pos, hz'ne, hz'pos, he'0, he'f', hf'1, hz'int, hz'hull, hinv'⟩,
     ⟨hztake, hzgt, hzdropL, n₁z, hz'sq, hz'freq⟩,
     ⟨hxtake, hxgt, hxdropL, n₁x, hx'sq, hx'freq⟩⟩
 
@@ -2169,35 +2171,34 @@ theorem exists_seedStateA {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 
   obtain ⟨q0, hq0irr, hq0mem⟩ := exists_irrational_mem_cfCylinder wz hwzne hwzpos
   have hq0cd := Set.mem_Ioo.1 (hwzsub hq0mem)
   have hq0Icc := Set.mem_Icc.1 (hwzIcc hq0mem)
-  -- `(e,f) := (max e0 c, min f0 d)` lies in `(e0,f0) ∩ (c,d) ⊆ [r, q+r]`
-  set e := max e0 c with hedef
-  set f := min f0 d with hfdef
+  -- `irr(e0,f0) ⊆ cfCylinder wz ⊆ Ioo c d` forces the hull `(e0,f0) ⊆ [c,d] ⊆ [r,q+r]`
   have he0d : e0 < d := lt_of_le_of_lt hq0Icc.1 hq0cd.2
   have hcf0 : c < f0 := lt_of_lt_of_le hq0cd.1 hq0Icc.2
-  have hef : e < f := by
-    apply max_lt
-    · exact lt_min he0f0 he0d
-    · exact lt_min hcf0 hcd
-  have he0 : 0 ≤ e := le_trans hc0 (le_max_right _ _)
-  have hf1 : f ≤ 1 := le_trans (min_le_right _ _) hd1
-  have hre : r ≤ e := le_trans hcr (le_max_right _ _)
-  have hfqr : f ≤ q + r := le_trans (min_le_right _ _) hdqr
-  -- hzint: `(e,f) ⊆ (e0,f0)`, on which `hwzUIoo` applies
-  have hzint : ∀ x ∈ Set.Ioo e f, Irrational x → x ∈ cfCylinder wz := by
-    intro x hx hxirr
-    obtain ⟨hx1, hx2⟩ := Set.mem_Ioo.1 hx
-    exact hwzUIoo x (Set.mem_Ioo.2 ⟨lt_of_le_of_lt (le_max_left _ _) hx1,
-      lt_of_lt_of_le hx2 (min_le_left _ _)⟩) hxirr
-  -- place `wx` inside `ψ⁻¹(Ioo e f)`
-  have hpre0 : 0 ≤ (e - r) / q := div_nonneg (by linarith) hq.le
-  have hprelt : (e - r) / q < (f - r) / q := by
-    have h : (0:ℝ) < (f - e) / q := div_pos (by linarith [hef]) hq
-    have e2 : (f - r) / q - (e - r) / q = (f - e) / q := by rw [div_sub_div_same]; ring_nf
+  have hce0 : c ≤ e0 := by
+    by_contra h; push_neg at h
+    obtain ⟨y, hyirr, hy1, hy2⟩ := exists_irrational_btwn h
+    have hymem : y ∈ cfCylinder wz :=
+      hwzUIoo y (Set.mem_Ioo.2 ⟨hy1, lt_trans hy2 hcf0⟩) hyirr
+    exact absurd (Set.mem_Ioo.1 (hwzsub hymem)).1 (not_lt.2 hy2.le)
+  have hf0d : f0 ≤ d := by
+    by_contra h; push_neg at h
+    obtain ⟨y, hyirr, hy1, hy2⟩ := exists_irrational_btwn h
+    have hymem : y ∈ cfCylinder wz :=
+      hwzUIoo y (Set.mem_Ioo.2 ⟨lt_trans he0d hy1, hy2⟩) hyirr
+    exact absurd hy1 (not_lt.2 (Set.mem_Ioo.1 (hwzsub hymem)).2.le)
+  have hre : r ≤ e0 := le_trans hcr hce0
+  have hf0qr : f0 ≤ q + r := le_trans hf0d hdqr
+  -- place `wx` inside `ψ⁻¹(Ioo e0 f0)`
+  have hpre0 : 0 ≤ (e0 - r) / q := div_nonneg (by linarith) hq.le
+  have hprelt : (e0 - r) / q < (f0 - r) / q := by
+    have h : (0:ℝ) < (f0 - e0) / q := div_pos (by linarith [he0f0]) hq
+    have e2 : (f0 - r) / q - (e0 - r) / q = (f0 - e0) / q := by rw [div_sub_div_same]; ring_nf
     linarith [e2, h]
-  have hpre1 : (f - r) / q ≤ 1 := by rw [div_le_one hq]; linarith
+  have hpre1 : (f0 - r) / q ≤ 1 := by rw [div_le_one hq]; linarith
   obtain ⟨wx, hwxne, hwxpos, hwxsub⟩ :=
-    exists_cfCylinder_subset_affine_preimage hq r e f hpre0 hprelt hpre1
-  exact ⟨⟨wx, wz, e, f, hwxne, hwxpos, hwzne, hwzpos, he0, hef, hf1, hzint, hwxsub⟩⟩
+    exists_cfCylinder_subset_affine_preimage hq r e0 f0 hpre0 hprelt hpre1
+  exact ⟨⟨wx, wz, e0, f0, hwxne, hwxpos, hwzne, hwzpos, he00, he0f0, hf01,
+    hwzUIoo, hwzIcc, hwxsub⟩⟩
 
 /-- **The interleaved schedule** (feasible regime): the state sequence produced by
 seeding with `exists_seedStateA` and iterating the choice step. -/
