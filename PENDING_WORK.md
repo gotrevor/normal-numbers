@@ -53,8 +53,20 @@ Landed (TBrickRefine, axiom-clean `[propext, Classical.choice, Quot.sound]`):
    Length is now fully caller-controlled — the `hdom` handle. Everything else
    (measure core, freq-goodness, `cfCylinder ⊆ (c,d)`) copied verbatim from
    `exists_freq_good_block_steer`.
-2. Propagate the length bound through `exists_freq_good_extend_affine_steer` (both
-   `ux`, `uz` blocks) so the ψ-round outputs `|block| ≤ (prev word) + O(log …)`.
+2. **Propagate the length bound through `exists_freq_good_extend_affine_steer`**
+   (→ `_len` variant) so the ψ-round outputs, for both `ux`,`uz`, an explicit
+   `|block| ≤ (input word length gap) + O(log …)`. Needs, per stream:
+   (i) a LOWER bound on the convergent-interval width `b−a ≥ c/fib(|w|+O(1))²` (so
+   the target width `≥ c'/fib²`, giving `4/width ≤ C·fib(|w|)²`); (ii) the tight
+   Binet bounds — LANDED both:
+   `goldenRatio_pow_le_sqrt5_mul_fib_add_one` (φⁿ ≤ √5·fibₙ+1) and its dual
+   `sqrt5_mul_fib_le_goldenRatio_pow_add_one` (√5·fibₙ ≤ φⁿ+1), pinning
+   `√5·fibₙ ∈ [φⁿ−1, φⁿ+1]`; combine with `exists_nat_goldenRatio_pow_gt` to solve
+   `4/width < fib(|w|+n+1)²` at `n = |wtarget|−|w| + O(1)`. Then call
+   `exists_freq_good_block_steer_len` at that `n`. The interval-width LOWER bound
+   (i) is the one still-missing analytic atom — check `cfCylinder_endpoints` /
+   `cfCylinder_subset_Icc_length` for an existing two-sided width bound before
+   proving it.
 3. THEN the recursion (`SchedStateA`/`schedStepA`/`schedA`, `L_s = s`) can prove
    `hdom` from the length bounds + `|w_s| ≥ Σ L_j`, and feed
    `chain_orbit_equidist`. Items 2–5 of `HANDOFF-2026-08-27-2359.md` (limit point,

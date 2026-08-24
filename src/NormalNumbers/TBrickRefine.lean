@@ -221,6 +221,27 @@ theorem fib_sq_gt_of_goldenRatio (n : ℕ) (a : ℝ)
     have hsq : Real.sqrt a ^ 2 = a := Real.sq_sqrt ha.le
     nlinarith [hsqa, Real.sqrt_nonneg a, hsq]
 
+/-- **Tight Binet upper bound.**  `√5·fib(n) ≤ φⁿ + 1` (from `ψⁿ ≥ -1`).  The
+dual of `goldenRatio_pow_le_sqrt5_mul_fib_add_one`; together they pin
+`√5·fib(n) ∈ [φⁿ−1, φⁿ+1]`.  The interleaved schedule needs the UPPER bound to
+cap the steer-block length from above (a target of width `≥ c·fib(|w|)⁻²` is
+resolved in `≤ log_φ(…) + O(1)` digits), the other half of the `hdom` control. -/
+theorem sqrt5_mul_fib_le_goldenRatio_pow_add_one (n : ℕ) :
+    Real.sqrt 5 * (Nat.fib n : ℝ) ≤ Real.goldenRatio ^ n + 1 := by
+  have hbinet := Real.coe_fib_eq n
+  have hpsi_ge : (-1 : ℝ) ≤ Real.goldenConj ^ n := by
+    have habs : |Real.goldenConj| < 1 := by
+      rw [abs_lt]
+      exact ⟨Real.neg_one_lt_goldenConj, by linarith [Real.goldenConj_neg]⟩
+    have h1 : |Real.goldenConj ^ n| ≤ 1 := by
+      rw [abs_pow]; exact pow_le_one₀ (abs_nonneg _) habs.le
+    linarith [neg_abs_le (Real.goldenConj ^ n), abs_nonneg (Real.goldenConj ^ n),
+      (abs_le.1 h1).1]
+  have hmul : Real.sqrt 5 * (Nat.fib n : ℝ)
+      = Real.goldenRatio ^ n - Real.goldenConj ^ n := by
+    rw [hbinet]; field_simp
+  linarith [hmul, hpsi_ge]
+
 /-- **Logarithmic exponent solvability.**  For any bound `y`, some natural `n`
 with `y < φⁿ` AND `n ≤ log_φ(max y 1) + 1` — i.e. the minimal exponent beating
 `y` is `O(log y)`.  Combined with `fib_sq_gt_of_goldenRatio`, this gives the
