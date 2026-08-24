@@ -1,29 +1,45 @@
 # STATUS — normal-numbers 📊
 
-**Two classical harvests of one Birkhoff-on-[0,1] machine: base-b normality (Track A) + CF/Khinchin metric theory (Track B — Tier 1 Becher–Yuhjtman + Tier 2 Khinchin). ALL PROVED, axiom-clean.** · **Build**: 🟢 green (8751 jobs) · **Updated**: reflection lap · 2026-08-24 · `4629029`
+**B5′ COMPLETE + axiom-clean (10 headlines); B6 campaign OPEN — Vandehey §7 affine images, additive, one crux `sorry` left.** · **Build**: 🟢 green (8756 jobs) · **Updated**: review lap · 2026-08-24 · `96e8c00`
 
 ## Where it stands
 
-**THE EXPEDITION IS COMPLETE.** All ten headline theorems are proved and
-`#print axioms`-clean (trust triple `propext, Classical.choice, Quot.sound`
-only); ZERO `sorry`/`admit` terms in `src/`; ZERO cited/proven-but-cited math
-axioms (the two B–Y deep imports — Morita/Vallée CLT and Kifer–Peres–Weiss
-large deviations — were discharged via elementary Markov + γ-mixing substitutes).
+**B5′ is DONE; B6 is the active frontier.** The whole B5′ expedition (ten
+headline theorems — Track A base-b normality + Track B Tier 1 Becher–Yuhjtman +
+Tier 2 Khinchin) is proved and `#print axioms`-clean (trust triple only). The
+LIVE work is the **additive B6 campaign** (Vandehey, Compositio 2017, §7): a real
+`x` with BOTH `x` and its affine image `ψ(x)=q·x+r` CF-normal, for `q>0`. It
+reduces (`isCFNormal_of_irrational_orbit_freq`) to ONE crux —
+`exists_interleaved_affine_witness` (`CFScheduleA.lean:404`), the **sole open
+`sorry` in `src/`**: an interleaved (diagonal) schedule building `x` as a limit
+of nested intervals whose x-stages and ψ-stages alternate. Laps 11–21 proved the
+ENTIRE geometric/analytic atom toolkit (all axiom-clean); the crux now reduces
+to the **frequency telescoping** — porting `CFCorrect.xstar_cf_freq_tendsto` to
+an abstract freq-good dominant chain — plus the joint recursion. The
+route-decisive uncertainty: whether that telescoping's dominance survives the
+schedule's growing per-stage fillers + x/ψ alternation (both absent in B5′).
 
 - **Track A** (base-b normality): Wall, the ln 2 reduction (conditional on the
   correct equidistribution hypothesis), Stoneham — axiom-clean.
 - **Tier 1 = Becher–Yuhjtman** (IMRN 2019): `exists_absolutely_normal_cf_normal`
-  (`Headline.lean`) — an explicit real absolutely normal ∧ CF-normal. Apparently
-  the first formalization in any prover.
-- **Tier 2 = the expedition headline**: `exists_absolutely_normal_cf_normal_khinchin`
-  — additionally **Khinchin-typical**. We found no write-up of the conjunction,
-  but that is NOT a novelty claim: the implication may well be routine and simply
-  unstated, and our survey instrument cannot speak to the paper literature. Closed via `xstar_khinchinTypical`, whose crux `xstar_log_tail_uniform`
-  is delivered by the route-C′ **summable Markov log-tail family** grafted
-  additively into the schedule (`xstar_logTail_prefix_bound`, `CFCorrect.lean`) —
-  and route D′ layering (`KhinchinDefs.lean`) to break the def/proof import cycle.
+  — an explicit real absolutely normal ∧ CF-normal. Apparently the first
+  formalization in any prover. Axiom-clean.
+- **Tier 2 = expedition headline**: `exists_absolutely_normal_cf_normal_khinchin`
+  — additionally Khinchin-typical. Axiom-clean.
+- **B6 = affine images (active)**: `exists_cfNormal_and_affine_cfNormal` — target
+  proved MODULO the crux `sorry`; depends on `sorryAx` until the schedule closes.
 
 ## What's happened (newest first)
+
+- 2026-08-24 (review lap): **B6 course-correction — PIVOT TO THE CRUX.**
+  Inventory: build green 8756, B5′ headlines re-verified trust-triple, sole
+  `src/` `sorry` = the B6 crux `exists_interleaved_affine_witness`. Diagnosed
+  crux-neglect: 11 straight grind laps (11–21) each proved a geometric ATOM
+  (axiom-clean, green) but the crux stayed untouched and the recursion/telescoping
+  was deferred "next lap" ~7×. Declared the atom toolkit COMPLETE; reset the
+  CURRENT DIRECTIVE to build the frequency telescoping hardest-first via an
+  abstract generic-chain lemma `chain_orbit_equidist`, naming the route-decisive
+  case (dominance vs growing fillers + alternation). No charter trigger fired.
 
 - 2026-08-24 (reflection lap → COMPLETION): **Tier 2 CLOSED — the whole
   expedition is done, axiom-clean.** Steps 1–3 all landed this lap. (1) Rewired
@@ -106,29 +122,30 @@ large deviations — were discharged via elementary Markov + γ-mixing substitut
 
 ## Outstanding
 
-### Short-term
-- **NONE — the proof is complete.** No open `sorry`/`admit`, no cited axioms.
+### Short-term (mirror PENDING_WORK top — B6 crux)
+1. **`chain_orbit_equidist` (THE CRUX)** — abstract generic-chain frequency
+   telescoping (port `CFCorrect.xstar_cf_freq_tendsto` to a freq-good dominant
+   chain). The route-decisive piece; must survive fillers + alternation.
+2. **`exists_freq_good_extend_affine`** — ψ-stage wiring (compose ready atoms;
+   pick `L_s` large to keep dominance).
+3. **`SchedStateA`/`schedStepA`/`schedA`/limit** — joint interleaved recursion.
 
-### Long-term / outward (packaging only — not proof obligations)
-- Stale docstrings in a few CF modules still say "left `sorry` for the campaign"
-  (historical prose describing lemmas long since proved) — harmless, could be
-  swept for tidiness.
-- Outward (Track A): PR to ChampernowneNormality (staged); comparator + Zulip —
-  needs host egress, not a proof step.
+### Long-term
+- B6 general family / Tier-2 image-Khinchin stretch (detaches freely; after the
+  single-map crux closes).
 
-### To completion — DONE
-- Track A: **DONE**, axiom-clean.
-- Tier 1 (Becher–Yuhjtman): **DONE** — `exists_absolutely_normal_cf_normal`,
-  apparently the first formalization, axiom-clean.
-- Tier 2 (Khinchin, stretch — apparently first-anywhere even on paper):
-  **DONE** — `exists_absolutely_normal_cf_normal_khinchin`, axiom-clean.
+### To completion
+- B5′ (Track A + Tier 1 + Tier 2): **DONE**, all axiom-clean.
+- B6 single-map (`exists_cfNormal_and_affine_cfNormal`): crux `sorry` open →
+  close via the 3 items above.
 
-## Axiom ledger (fidelity spine — all from real `#print axioms`, 2026-08-24 reflection lap)
+## Axiom ledger (fidelity spine — all from real `#print axioms`, 2026-08-24 review lap)
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 |---|---|---|---|
-| `exists_absolutely_normal_cf_normal` (**Tier 1 = Becher–Yuhjtman**) | uncond | trust triple | 🟢 DONE (first formalization; re-verified this lap) |
-| `exists_absolutely_normal_cf_normal_khinchin` (**Tier 2 headline**) | uncond | trust triple | 🟢 DONE (route C′ summable Markov log-tail family + route-D′ layering; PROVED this lap) |
+| `exists_absolutely_normal_cf_normal` (**Tier 1 = Becher–Yuhjtman**) | uncond | trust triple | 🟢 DONE (re-verified this lap) |
+| `exists_absolutely_normal_cf_normal_khinchin` (**Tier 2 headline**) | uncond | trust triple | 🟢 DONE (re-verified this lap) |
+| `exists_cfNormal_and_affine_cfNormal` (**B6 affine image**, active) | uncond (q>0) | `[propext, sorryAx, Classical.choice, Quot.sound]` | 🔨 crux `sorry` (`exists_interleaved_affine_witness`); NOT a math axiom — disclosed decomposition, being discharged |
 | `isNormal_iff_equidistributed_orbit` (Wall) | uncond | trust triple | 🟢 DONE |
 | `isNormal_log_two_of_equidistributed` | cond (orbit equidist.) | trust triple | 🟢 DONE (hypothesis is the open conjecture, correctly a hypothesis) |
 | `isNormal_two_stoneham23` (Stoneham) | uncond | trust triple | 🟢 DONE |
@@ -136,13 +153,14 @@ large deviations — were discharged via elementary Markov + γ-mixing substitut
 | `xstar_dary_freq_tendsto` (d-ary simple normality, every base) | uncond | trust triple | 🟢 DONE |
 | `pillai` (simple-to-all-powers ⇒ full normality) | uncond | trust triple | 🟢 DONE |
 | `gaussMeasure_digit_cylinder` (Gauss–Kuzmin single-digit law) | uncond | trust triple | 🟢 DONE |
-| `summable_gaussKuzmin_logsq` (Tier-2 moment seed) | uncond | trust triple | 🟢 DONE (this lap) |
+| `summable_gaussKuzmin_logsq` (Tier-2 moment seed) | uncond | trust triple | 🟢 DONE |
 
 Math-axiom count (🟢+🟡+🟠, excluding trust base + native_decide artifacts):
-**0** proven-but-cited axioms. Every headline is 🟢 (trust triple only). No 🟡
-debt, no 🟠, no 🔴 — the frontier is saturated. Trust triple = propext,
-Classical.choice, Quot.sound throughout. All 10 headlines re-`#print
-axioms`-verified trust-triple-only this lap (the completion certification).
+**0** proven-but-cited axioms across all 10 B5′ headlines (every one 🟢, trust
+triple only). The B6 target carries `sorryAx` — a **disclosed decomposition
+`sorry`**, NOT a cited math axiom — being actively discharged (the interleaved
+schedule). No 🟡/🟠 debt, no 🔴. Trust triple = propext, Classical.choice,
+Quot.sound throughout.
 
 ## Pointers
 DIRECTION.md (CURRENT DIRECTIVE) · ROADMAP.md · KHINCHIN.md (B5′ plan W1–W6) ·

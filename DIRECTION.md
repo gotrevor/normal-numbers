@@ -4,27 +4,53 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-24, attended — B6 CAMPAIGN OPEN)
+## CURRENT DIRECTIVE (set 2026-08-24 review lap — B6: PIVOT TO THE CRUX)
 
-- **New objective: B6 — affine images (Vandehey §7 poke).**  Spec:
-  `KHINCHIN.md` §B6 (lemma table L1–L5, tiers).  Brief: `B6-BRIEF-DRAFT.md`
-  (statement shapes are PROPOSED, not yet judge-frozen — lap 1 must align
-  them with the real B5′ exports in `Headline.lean`/`KhinchinDefs.lean` and
-  record the aligned shapes in PENDING_WORK.md before proving against them).
-- **Lap 1 = scaffold**: create `src/NormalNumbers/CFIntervalGood.lean` with
-  the L1+L2 statements (interval→cylinder covering; good-block density on
-  arbitrary intervals) as `sorry`s, building green, then start proving L1.
-  Then L3 (`CFAffine.lean`), then L4/L5 per the brief's lap plan.
-- **ADDITIVE ONLY 🧊**: the B5′ expedition is COMPLETE and LOCKED — both
-  headlines axiom-clean, zero sorries in `src/`.  Do NOT reopen or modify any
-  locked declaration or landed module (`TBrick*`, `CFSchedule`, `CFLogTail`,
-  `Headline`, …).  Where L4 needs the refinement machinery reshaped,
-  copy-and-extend into new modules.  `exists_absolutely_normal_cf_normal_khinchin`
-  must build character-identical every lap.
+- **Objective (unchanged): B6 — affine images (Vandehey §7).**  Prove the crux
+  `exists_interleaved_affine_witness` (`CFScheduleA.lean:404`, sole open `sorry`
+  in `src/`), whence `exists_cfNormal_and_affine_cfNormal`.
+- **THE MANDATED MOVE — build the frequency telescoping; STOP proving atoms.**
+  The geometric/analytic atom toolkit is DECLARED COMPLETE (laps 11–21, all
+  axiom-clean; inventory in `PENDING_WORK.md` "TOOLKIT NOW COMPLETE").  Do NOT
+  prove another convenience atom — that is the drift this review is correcting
+  (11 straight laps of leaves; the crux `sorry` untouched, the recursion
+  deferred "next lap" ~7 times).  Every lap from here advances ONE of:
+  1. **`chain_orbit_equidist` (THE CRUX, hardest-first).**  The abstract
+     generic-chain frequency telescoping: given a nested genuine-word chain
+     `w : ℕ → List ℕ`, `w(s+1) = w s ++ filler_s ++ u_s` with each `u_s`
+     freq-good and the DOMINANCE condition (|w s| ≤ t·|appended|, so prefix +
+     fillers are asymptotically negligible), the limit point `y ∈ ⋂ cfCylinder(w s)`
+     has `CFOrbitEquidist y`.  Port `CFCorrect.xstar_cf_freq_tendsto` +
+     `tailSched_cfDiscLt` + `cfDiscLt_short_append` from the specific `sched`
+     to this abstract hypothesis (copy-extend `CFCorrect`, NEVER edit it).
+  2. **`exists_freq_good_extend_affine` (ψ-stage wiring)** — compose the ready
+     atoms (recipe: `PENDING_WORK.md` lap-21 item 1) to emit a freq-good wz
+     extension + the interval invariant, choosing the block depth `L_s` large
+     enough to KEEP dominance despite the growing per-stage fillers.
+  3. **`SchedStateA`/`schedStepA`/`schedA`/limit** — the joint recursion by
+     choice (mirror `CFSchedule.sched`), feeding two chains into (1).
+- **ROUTE-DECISIVE UNCERTAIN CASE (name it, probe it first):** whether the
+  CFCorrect dominance/telescoping SURVIVES the interleaved schedule's TWO new
+  frictions absent in B5′ — (i) a per-stage *filler* whose length grows as the
+  target interval shrinks (B5′ appended a pure freq-good block, no filler), and
+  (ii) x/ψ *alternation*, so each stream's prefix also absorbs the OTHER
+  stream's fillers.  Both are defeated only if each stage picks `L_s` (hence
+  `|u_s|`) large enough to dominate the accumulated length; the smallest probe
+  is drafting `chain_orbit_equidist`'s statement + its dominance hypothesis and
+  checking `tailSched_cfDiscLt`'s argument goes through with a `cfDiscLt_short_append`
+  absorbing the filler.  If it does NOT abstract cleanly, THAT is the real crux
+  — escalate, do not retreat to leaf work.
+- **ADDITIVE ONLY 🧊**: B5′ is COMPLETE and LOCKED.  Never edit/weaken a frozen
+  decl or landed module (`TBrick*`, `CFSchedule`, `CFCorrect`, `CFLogTail`,
+  `Headline`, `KhinchinDefs`, …); copy-extend into `CFScheduleA`/new files.
+  After ANY schedule work re-`#print axioms exists_absolutely_normal_cf_normal_khinchin`
+  — MUST stay trust-triple `[propext, Classical.choice, Quot.sound]`.
 - Escape valves (judge-governed, see brief): Tier 2 may drop to a finite
   family; the image-Khinchin stretch detaches freely.
-- Historical directive (the wiring plan that closed B5′ Tier 2) preserved
-  below for provenance.
+- **Why**: the atoms are worthless if the telescoping doesn't close, and the
+  telescoping is the ONLY piece whose feasibility is in real doubt (it must
+  survive fillers + alternation).  Settling it early is worth more than more
+  scaffolding.  Historical B5′-wiring directive preserved below for provenance.
 
 <details><summary>Superseded directive (route C′ wiring — now DONE)</summary>
 
@@ -89,6 +115,17 @@ detail lives in PENDING_WORK.md.
 </details>
 
 ### Directive history
+- 2026-08-24 (review lap → B6 PIVOT TO CRUX): 11 straight grind laps (11–21)
+  proved geometric/analytic ATOMS (each axiom-clean, each a green commit) but
+  the crux `sorry` `exists_interleaved_affine_witness` stayed untouched and the
+  recursion/telescoping was deferred "next lap" ~7 times — textbook crux-neglect
+  (tractable leaves over the headline). Declared the atom toolkit COMPLETE;
+  redirected to build the **frequency telescoping** hardest-first via an abstract
+  generic-chain lemma `chain_orbit_equidist`, and named the route-decisive case:
+  does CFCorrect's dominance survive the growing per-stage FILLERS + x/ψ
+  ALTERNATION (both absent in B5′). No charter route trigger fired (route needs
+  a CFCorrect port, not a forbidden import). Build green 8756; B5′ headlines
+  re-verified trust-triple; B6 target = `sorryAx` (disclosed crux).
 - 2026-08-24 (reflection lap → COMPLETION): **Tier 2 CLOSED — expedition
   complete, axiom-clean.** Executed the wiring directive to the finish in one lap:
   CFSchedule family-rewire (step 1), log-tail telescoping + crux

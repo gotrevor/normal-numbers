@@ -1,5 +1,65 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## ⭐ REVIEW LAP 2026-08-24 — PIVOT TO THE CRUX (read this first)
+
+**Finding:** laps 11–21 proved 15 geometric/analytic ATOMS (all axiom-clean,
+each a green commit) but the crux `sorry` `exists_interleaved_affine_witness`
+stayed untouched and the recursion/telescoping was deferred "next lap" ~7×. The
+atom toolkit is now DECLARED COMPLETE (list under "TOOLKIT NOW COMPLETE" below).
+**No more atoms.** The remaining work is the frequency telescoping + recursion,
+and the telescoping is the ONLY piece whose feasibility is in real doubt.
+
+**Attack order (hardest-first):**
+
+1. **`chain_orbit_equidist` — THE CRUX.** Abstract generic-chain frequency
+   telescoping. Statement shape (draft against the real `CFCorrect` exports):
+   given `w : ℕ → List ℕ`, each `w s` genuine (`≠[]`, digits `≥1`), a strict
+   extension chain `w(s+1) = w s ++ app_s` with each appended block `app_s`
+   carrying a freq-good sub-block `u_s` (a `CFDiscLt v u_s γv ε`-style guarantee
+   for every pattern `v`, eventually in `s`) AND a DOMINANCE bound
+   `|w s| ≤ C·|u_s|` (prefix + fillers negligible vs the freq-good tail), the
+   unique limit point `y ∈ ⋂ cfCylinder (w s)` satisfies `CFOrbitEquidist y`.
+   PORT `CFCorrect`'s `tailSched_cfDiscLt` (chain the `CFDiscLt` payloads via
+   `CFDiscLt.append` + `cfDiscLt_short_append` to absorb fillers) →
+   `xstar_cf_freq_tendsto`'s ε-split → the `blockCount .../p → gaussMeasure`
+   limit, but with the `sched`-specific `uSched_spec`/`uSched_dominance`
+   replaced by the abstract hypotheses. Copy-extend `CFCorrect` into
+   `CFScheduleA` (or a new `CFChainFreq.lean`); NEVER edit `CFCorrect`.
+   **The route-decisive test lives here** — see below.
+
+2. **`exists_freq_good_extend_affine` (ψ-stage).** Recipe = lap-21 item 1
+   (below). Compose the ready atoms; the NEW obligation vs the x-stage is to
+   pick the block depth `L_s` large enough that `|u_s|` dominates the ACCUMULATED
+   length (prefix + this stage's filler), so hypothesis (dominance) of (1) holds.
+
+3. **`SchedStateA`/`schedStepA`/`schedA`/limit.** Joint recursion by choice
+   (mirror `CFSchedule.sched`): a state carrying `wx`, `wz`, the interval
+   invariant `cfCylinder wx ⊆ ψ⁻¹(Icc (lo wz) (hi wz))`, and the per-stream
+   freq-good/dominance data; `schedStepA` alternates x/ψ by parity of the stage
+   index; `xA :=` the limit of the wx-chain. Then: obligation (A) both sides via
+   `irrational_mem_Ioo_of_mem_iInter_cfCylinder`; `ψ(xA)=ζ` (the wz-chain's
+   irrational limit) via `eq_of_mem_iInter_Icc` + `cfCylinder_chain_volume_tendsto`;
+   `CFOrbitEquidist xA` and `CFOrbitEquidist (ψ xA)=CFOrbitEquidist ζ` BOTH from
+   (1) applied to the wx- and wz-chains respectively. ← this is the elegant part:
+   we telescope the wz-chain's OWN limit ζ, then glue ζ=ψ(xA); no need to
+   telescope ψ(xA)'s orbit directly.
+
+**ROUTE-DECISIVE UNCERTAIN CASE (probe in step 1, before building 2–3):** B5′'s
+telescoping (`CFCorrect`) appended a PURE freq-good block each stage with
+built-in dominance (`uSched_dominance`). The interleaved schedule has TWO new
+frictions: **(i) a per-stage filler** (from `exists_cfCylinder_subset_Ioo`,
+placing the stream back into a shrinking target interval) whose length GROWS
+like `log(1/|interval|)` as cylinders shrink — B5′ had none; **(ii) x/ψ
+alternation**, so each stream's prefix also absorbs the OTHER stream's fillers.
+Both are harmless IFF each stage picks `L_s` big enough that `|u_s|` dominates
+the cumulative length. Smallest probe: draft `chain_orbit_equidist` and check
+`tailSched_cfDiscLt`'s induction still closes with `cfDiscLt_short_append`
+absorbing a filler of bounded-but-growing length between consecutive `u_s`. If
+it abstracts cleanly, 2–3 are mechanical. If NOT, that is the real crux —
+escalate (write ROUTE-ESCALATION), do not retreat to more atoms.
+
+---
+
 ## B6 — lap 1 landed (2026-08-24): scaffold + single-cylinder bound ✅
 
 New additive leaf `src/NormalNumbers/CFIntervalGood.lean` (imports `CFDigitLaw`;
