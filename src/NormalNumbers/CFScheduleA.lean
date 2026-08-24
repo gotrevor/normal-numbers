@@ -345,6 +345,47 @@ theorem affine_image_Ioo_subset_Icc {q : ℝ} (hq : 0 < q) (r : ℝ)
       simp only [affineMap]; rw [mul_comm]; linarith
     linarith
 
+/-- **ψ-image inclusion, INTERVAL-preimage form (the establishable invariant).**
+Same conclusion as `affine_image_Ioo_subset_Icc`, but the hypothesis is the
+INTERVAL-preimage invariant `cfCylinder wx ⊆ ψ⁻¹(Icc e f)` — the one the
+interleaved schedule can actually MAINTAIN (lap 19 obstruction: the set invariant
+`⊆ ψ⁻¹(cfCylinder wz)` is unestablishable because ψ need not preserve
+irrationality; `exists_cfCylinder_subset_affine_preimage` only ever delivers
+`⊆ ψ⁻¹(Ioo …)`).  Proof is the two `exists_irrational_btwn` contradiction blocks,
+now landing an out-of-range image directly in `Icc e f` via `hinv` (no wz
+cylinder hop). -/
+theorem affine_image_Ioo_subset_Icc_pre {q : ℝ} (hq : 0 < q) (r : ℝ)
+    {wx : List ℕ} {a b e f : ℝ}
+    (hinv : cfCylinder wx ⊆ affineMap q r ⁻¹' Set.Icc e f)
+    (hxint : ∀ x ∈ Set.Ioo a b, Irrational x → x ∈ cfCylinder wx) :
+    affineMap q r '' Set.Ioo a b ⊆ Set.Icc e f := by
+  rw [image_affineMap_Ioo hq]
+  intro y hy
+  obtain ⟨hy1, hy2⟩ := Set.mem_Ioo.1 hy
+  have hax : a < (y - r) / q := (lt_div_iff₀ hq).mpr (by rw [mul_comm]; linarith)
+  have hxb : (y - r) / q < b := (div_lt_iff₀ hq).mpr (by rw [mul_comm]; linarith)
+  refine ⟨?_, ?_⟩
+  · by_contra hlt
+    push_neg at hlt          -- y < e
+    obtain ⟨x', hx'irr, hax', hx'x⟩ := exists_irrational_btwn hax
+    have hx'b : x' < b := lt_trans hx'x hxb
+    have hle : e ≤ affineMap q r x' :=
+      (hinv (hxint x' (Set.mem_Ioo.2 ⟨hax', hx'b⟩) hx'irr)).1
+    have hxy : x' * q < y - r := (lt_div_iff₀ hq).mp hx'x
+    have hψlt : affineMap q r x' < e := by
+      simp only [affineMap]; rw [mul_comm]; linarith
+    linarith
+  · by_contra hgt
+    push_neg at hgt          -- f < y
+    obtain ⟨x', hx'irr, hx'lo, hx'hi⟩ := exists_irrational_btwn hxb
+    have hax' : a < x' := lt_trans hax hx'lo
+    have hge : affineMap q r x' ≤ f :=
+      (hinv (hxint x' (Set.mem_Ioo.2 ⟨hax', hx'hi⟩) hx'irr)).2
+    have hyx : y - r < x' * q := (div_lt_iff₀ hq).mp hx'lo
+    have hψgt : f < affineMap q r x' := by
+      simp only [affineMap]; rw [mul_comm]; linarith
+    linarith
+
 /-- **Cylinder inside an intersection of two intervals.**  If the open
 intersection `(max a c, min b d)` is a nondegenerate subinterval of `(0,1)`, it
 contains a genuine CF cylinder, which therefore lies in BOTH `(a,b)` and `(c,d)`.

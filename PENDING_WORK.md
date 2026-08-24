@@ -1,5 +1,56 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## ⭐⭐⭐ CRUX ADVANCE 2026-08-24 (cont.): interval-invariant image lemma + round-step design
+
+`affine_image_Ioo_subset_Icc_pre` PROVED (`CFScheduleA`, axiom-clean, green 8757):
+the ESTABLISHABLE-invariant variant of `affine_image_Ioo_subset_Icc`. Hypothesis
+is the interval-preimage invariant `cfCylinder wx ⊆ ψ⁻¹(Icc e f)` (the one the
+schedule can maintain — lap 19), conclusion `ψ((a,b)) ⊆ Icc e f`. Same two
+`exists_irrational_btwn` contradiction blocks, landing the image directly in
+`Icc e f` (no wz-cylinder hop). This unblocks the ψ-round's image step.
+
+### The round step `exists_freq_good_extend_affine` (NEXT — the crux body)
+Proposed signature (interval invariant, Ioo form):
+```
+(wx wz genuine) (0≤e<f≤1) (hzint: ∀x∈Ioo e f, Irr x→x∈cfCylinder wz)
+(hinv: cfCylinder wx ⊆ ψ⁻¹(Ioo e f)) (F δ>0 L) →
+∃ wx' wz' e' f', <wz' extends wz, freq-good> ∧ <wx' extends wx, freq-good, L≤|wx'|>
+  ∧ 0≤e'<f'≤1 ∧ (∀x∈Ioo e' f',Irr x→x∈cfCylinder wz') ∧ cfCylinder wz'⊆Icc e' f'
+  ∧ cfCylinder wx' ⊆ ψ⁻¹(Ioo e' f')
+```
+Recipe (atoms all ready):
+1. wx-interval `(a,b)` [`exists_Ioo_irrational_subset_cfCylinder wx`].
+2. `hinv`→Icc; `affine_image_Ioo_subset_Icc_pre` ⇒ `ψ((a,b))=Ioo(qa+r)(qb+r)⊆Icc e f`;
+   extract `e ≤ qa+r`, `qb+r ≤ f` via `closure_Ioo`+`Icc_subset_Icc_iff`.
+3. `J_z:=Ioo(qa+r)(qb+r)` (0≤qa+r<qb+r≤1). `exists_freq_good_block_in_Ioo F .. J_z`
+   ⇒ wz'=wpz++uz freq-good, cfCylinder wz'⊆J_z, irr pt pz. pz∈J_z⇒(e<pz<f)⇒
+   pz∈cfCylinder wz (hzint) ⇒ (take_eq) wz' extends wz.
+4. wz'-interval `(e',f')` [`exists_Ioo_irrational_subset_cfCylinder wz'`];
+   cfCylinder wz'⊆Icc e' f', irr(e',f')⊆cfCylinder wz'.
+5. wx': `exists_cfCylinder_subset_affine_preimage` on `(e',f')` INTERSECTED with
+   `(a,b)` [`_Ioo_inter`] ⇒ wx_mid ⊆ ψ⁻¹(Ioo e' f')∩(a,b), extends wx (via irr pt
+   in cfCylinder wx). Then `exists_freq_good_extend_cfCylinder wx_mid F δ L` ⇒ wx'
+   freq-good, ⊆cfCylinder wx_mid ⊆ ψ⁻¹(Ioo e' f'). New invariant ✓.
+   ⚠ nonemptiness of the intersection `(a,b)∩((e'-r)/q,(f'-r)/q)`: cfCylinder wz'
+   ⊆ Ioo(qa+r)(qb+r)=ψ((a,b)), so its interval (e',f') overlaps ψ((a,b));
+   pull back ⇒ overlaps (a,b). Establish `max lo < min hi` from a shared point
+   (e.g. pz, or an irrational of cfCylinder wz' pulled back).
+
+### ⚠️ ALIGNMENT / margin-good insight (for the recursion-assembly lap)
+The engines give `word' = wp ++ u` with `u` freq-good at the END and
+`word'.take|word| = word`. The chain contract wants `chainApp = word'.drop|word|`
+MARGIN-good. Two cases by `|wp|` vs `|word|`: if `|wp|≥|word|`, chainApp =
+`wp.drop|word| ++ u` (short filler ++ good); if `|wp|<|word|`, chainApp =
+`u.drop(|word|−|wp|)` (a suffix of u, a bounded-length edit of a good block).
+EITHER WAY chainApp is a margin-good block perturbed on ≤|word| entries, hence
+margin-good once `|u|=L` dominates `|word|` and `|v|`. So the recursion must pick
+`L_s` per round ≥ (growing) `|word_s|`·(2/ε)+… — the sizing discipline. The
+`hgood`/`hdom` proofs at assembly use `cfDiscLt_short_append`/`_append_take`
+(both already in `CFConcat`) to absorb the ≤|word| edit. NOT an abstraction gap;
+a per-round length choice + a short-edit lemma.
+
+---
+
 ## ⭐⭐ CRUX ADVANCE 2026-08-24 (review lap, same session): `chain_orbit_equidist` PROVED ✅
 
 **The route-decisive question is ANSWERED: CFCorrect's telescoping DOES abstract
