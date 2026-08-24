@@ -129,6 +129,15 @@ L4 gives it a NEW proof; the two-stream proof (bottoming at the `schedA_block_li
      is currently a z-CYLINDER-based multiscale bound (`wz≠[]`); needs a `wz=[]` /
      route-B variant fed by this lemma + brick 1 pullback (`gaussMeasure_preimage_affineMap_le`).
      THEN bricks 4/5/6.
+     **✅ (a) DONE `37ba36a` `gaussMeasure_interval_inter_iUnion_cfBadZone_nil_le`
+     (F/NS aggregate). ✅ (b) DONE: ψ-pullback bridge `08ba500`
+     `gaussMeasure_interval_inter_preimage_affineMap_le` (`γ((c,d)∩ψ⁻¹S) ≤
+     (2/q)γ(S∩ψ((c,d)))`) + route-B brick 3′ `f4ac8fd`
+     `exists_irrational_notMem_xbad_psi_zbad_nil_in_Ioo` (combined single-stream
+     selection, base-`[]` z-bad, linear budget). THE ENTIRE ROUTE-B MEASURE+SELECTION
+     LAYER IS NOW COMPLETE + AXIOM-CLEAN.** Only remaining `hbound` plumbing for a
+     concrete stage: choose `d, n₁z` s.t. the double-sum + residual `< γ(c,d)` (a
+     numeric threshold pick — done inside the recursion, brick 4). NEXT = bricks 4/5/6.
    - **2b-iii (OLD framing — superseded, kept for context):** Now has BOTH inputs in hand:
      `γ(J ∩ ⋃_{v∈F,N∈NS} cfBadZone [] v N δ) ≤ (fraction)·γ(J) + residual`, `J=(α,β)`.
      Decompose `J = coveredByCyl α β d ∪ (J \ coveredByCyl α β d)`, `d ≈ depth(J)`:
