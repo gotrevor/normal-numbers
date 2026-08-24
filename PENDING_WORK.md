@@ -1,5 +1,53 @@
 # PENDING WORK — B5′ campaign
 
+> **REVIEW LAP (2026-08-24 — route DECISION + moment seed proved).** The last
+> three laps (fc801ba/17dc2c9/7d6740f, all pure route-analysis) converged on
+> "step-2 crux is operator-gated, need Trevor to authorize a schedule touch —
+> stop." That is a **false stop**: this is an autonomous run, there is no
+> operator, and the review lap owns exactly this call. DECISION (now binding in
+> `DIRECTION.md`):
+>
+> 1. **The route is settled** — the diagnosis of the last laps is CORRECT and
+>    ratified: frequencies + the `goodC` total-mass bound provably cannot give
+>    the uniform tail control (`limsup(1/n)Σ_{aᵢ>K} log aᵢ ≤ goodC−log K₀ > 0`;
+>    plus the frequencies-only counterexample). The ergodic route is a forbidden
+>    import. So the ONLY route is the original `KHINCHIN.md` W6 log-concentration
+>    bad zone. The `44fb8bb`/`e018429` "goodC suffices, no re-plumb" insight is
+>    formally **REFUTED** (docstring in `Khinchin.lean` step-2 block records it).
+> 2. **The schedule fence is RELAXED** — additive extension of `TBrick.lean`/
+>    `TBrickRefine.lean`/`CFSchedule.lean` for the W6 graft is authorized. The old
+>    blanket "don't touch the schedule" was over-broad; its real purpose is
+>    protecting locked Tier-1, which an additive lemma cannot threaten (the JUDGE
+>    froze witness-existence form precisely to permit a W6 rebuild). Hard
+>    invariant: never edit/weaken an existing Tier-1 decl or frozen statement;
+>    after any schedule edit re-run `#print axioms exists_absolutely_normal_cf_normal`
+>    and confirm it stays the trust triple.
+> 3. **Proof landed this lap**: `summable_gaussKuzmin_logsq` (`Khinchin.lean`,
+>    axiom-clean) — the moment condition `E[(log a₁)²] = Σₐ γ([a])·(log a)² < ∞`
+>    that the Chebyshev/variance bad-zone bound needs. Comparison with
+>    `1/(k+1)^{3/2}` via `log(1+x)≤x` and `(log(k+1))²≤16√(k+1)`.
+>
+> **NEXT ATTACK (in order; start analytic, defer the invasive plumbing):**
+> - (A) **Variance bound** `Var(Σ_{i<n} log aᵢ) ≤ C·n` under γ-mixing — adapt
+>   `CFBlockFreq.lean`'s `variance_blockCount_le`/covariance machinery from a
+>   cylinder-indicator observable to the unbounded L² observable `log a₁`. This
+>   is the real new estimate; `summable_gaussKuzmin_logsq` is its moment input.
+>   The γ-mixing covariance bound must be checked to hold for L² (not just
+>   bounded) observables — likely the one genuine subtlety. NEW file
+>   (`CFLogMoment.lean` or similar), no TBrick edit.
+> - (B) **`logBadZone` + Chebyshev measure bound** `≤ C/(η²n)`; then the additive
+>   union-bound wrapper (`exists_good_avoiding_bad_khinchin`), re-balancing the
+>   coefficient budget in `exists_mem_notMem_union_of_bounds` from 2 zones to 3
+>   (each `<1/6`, or keep `<1/4`+`<1/4` and add the log zone with the surplus of
+>   a stronger half-mass — check the exact threshold the general lemma needs).
+> - (C) **Elementary reduction (parallelizable, `Khinchin.lean`)**: reduce
+>   `xstar_log_digit_avg_tendsto` to a single clean tail-control lemma
+>   `xstar_log_tail_uniform : ∀ε>0, ∃K, ∀n, (1/n)Σ_{aᵢ>K} log aᵢ ≤ ε` via the 3ε
+>   argument over `xstar_log_digit_avg_truncated_tendsto` (done) + the
+>   value-count identity `Σ_{i<n} log aᵢ = Σ_a count[a]·log a`. This isolates
+>   the schedule-dependent piece (the tail-control, delivered by A+B) from the
+>   elementary analysis (wireable now).
+
 > **ANALYSIS LAP (2026-08-24, part 2, no code — construction survey).**
 > Traced the previous entry's option (1) (dig into `kminFn_spec`) down to
 > the actual selection mechanism: `TBrick.exists_refinement_uniform`

@@ -120,6 +120,88 @@ private lemma khinchinK₀_summable_log :
     _ ≤ (2 / Real.log 2) * (1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2)) :=
         mul_le_mul_of_nonneg_left hle (div_nonneg (by norm_num) hlog2pos.le)
 
+/-- **Second moment of `log a₁` under the Gauss measure is finite**: the
+Gauss–Kuzmin-weighted series `Σₐ γ([a])·(log a)²` converges, where `γ([a]) =
+logb 2 (1 + 1/(a(a+2)))` is the single-digit Gauss–Kuzmin law
+(`gaussMeasure_digit_cylinder`), `k`-indexed with `a = k + 1`.  This is the
+moment condition `E[(log a₁)²] < ∞` that a Chebyshev/variance bound on the
+log-digit sum `Σ_{i<n} log aᵢ` requires — the analytic seed of the Khinchin
+concentration bad zone (`DIRECTION.md` 2026-08-24 route, the step-2 crux).
+Comparison with `1/(k+1)^{3/2}`, in the style of `khinchinK₀_summable_log`:
+`γ([a]) ≤ 1/(log 2·(k+1)²)` (from `log(1+x) ≤ x`) and `(log(k+1))² ≤ 16·√(k+1)`
+(from `log y ≤ 4·y^{1/4}`, i.e. `khinchinK₀_log_le_two_sqrt` applied at `√y`). -/
+theorem summable_gaussKuzmin_logsq :
+    Summable (fun k : ℕ =>
+      Real.logb 2 (1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)))
+        * (Real.log ((k : ℝ) + 1)) ^ 2) := by
+  have hlog2pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  -- nonnegativity of each term
+  have hnonneg : ∀ k : ℕ, 0 ≤ Real.logb 2 (1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)))
+      * (Real.log ((k : ℝ) + 1)) ^ 2 := by
+    intro k
+    apply mul_nonneg
+    · exact Real.logb_nonneg (by norm_num) (by
+        have : (0 : ℝ) ≤ 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)) := by positivity
+        linarith)
+    · positivity
+  -- summable majorant `(16/log 2)·1/(k+1)^{3/2}`
+  have hmaj : Summable (fun k : ℕ => (16 / Real.log 2) * (1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2))) := by
+    have hp : Summable (fun k : ℕ => 1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2)) := by
+      have h := (Real.summable_one_div_nat_rpow (p := (3 : ℝ) / 2)).2 (by norm_num)
+      have h1 := (summable_nat_add_iff 1).2 h
+      apply h1.congr
+      intro k
+      push_cast
+      ring
+    exact hp.mul_left _
+  apply Summable.of_nonneg_of_le hnonneg (fun k => ?_) hmaj
+  have hk1 : (1 : ℝ) ≤ (k : ℝ) + 1 := by linarith [Nat.cast_nonneg (α := ℝ) k]
+  have hk1pos : (0 : ℝ) < (k : ℝ) + 1 := by linarith
+  -- bound the logb factor: γ([a]) ≤ 1/(log 2·(k+1)²)
+  have hlogb_le : Real.logb 2 (1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)))
+      ≤ (1 / (((k : ℝ) + 1) ^ 2)) / Real.log 2 := by
+    rw [Real.logb, div_le_div_iff_of_pos_right hlog2pos]
+    have hinner : Real.log (1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)))
+        ≤ 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)) := by
+      have := Real.log_le_sub_one_of_pos
+        (show (0 : ℝ) < 1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)) by positivity)
+      linarith
+    have hmono : 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)) ≤ 1 / (((k : ℝ) + 1) ^ 2) := by
+      apply one_div_le_one_div_of_le (by positivity)
+      nlinarith
+    linarith
+  -- bound the squared-log factor: (log(k+1))² ≤ 16·√(k+1)
+  have hsqrt1 : (1 : ℝ) ≤ Real.sqrt ((k : ℝ) + 1) :=
+    Real.one_le_sqrt.2 hk1
+  have hlog4 : Real.log ((k : ℝ) + 1) ≤ 4 * Real.sqrt (Real.sqrt ((k : ℝ) + 1)) := by
+    have h1 : Real.log (Real.sqrt ((k : ℝ) + 1)) ≤ 2 * Real.sqrt (Real.sqrt ((k : ℝ) + 1)) :=
+      khinchinK₀_log_le_two_sqrt hsqrt1
+    rw [Real.log_sqrt hk1pos.le] at h1
+    linarith
+  have hlognn : 0 ≤ Real.log ((k : ℝ) + 1) := Real.log_nonneg hk1
+  have hlogsq_le : (Real.log ((k : ℝ) + 1)) ^ 2 ≤ 16 * Real.sqrt ((k : ℝ) + 1) := by
+    have h4nn : (0 : ℝ) ≤ 4 * Real.sqrt (Real.sqrt ((k : ℝ) + 1)) := by positivity
+    have hsq : (Real.log ((k : ℝ) + 1)) ^ 2 ≤ (4 * Real.sqrt (Real.sqrt ((k : ℝ) + 1))) ^ 2 := by
+      apply sq_le_sq' (by linarith) hlog4
+    have hss : Real.sqrt (Real.sqrt ((k : ℝ) + 1)) ^ 2 = Real.sqrt ((k : ℝ) + 1) :=
+      Real.sq_sqrt (Real.sqrt_nonneg _)
+    nlinarith [hss]
+  -- combine, then simplify √(k+1)/(k+1)² = 1/(k+1)^{3/2}
+  have hr0 : (0 : ℝ) < ((k : ℝ) + 1) ^ ((3 : ℝ) / 2) := Real.rpow_pos_of_pos hk1pos _
+  have hkey : Real.sqrt ((k : ℝ) + 1) * ((k : ℝ) + 1) ^ ((3 : ℝ) / 2) = ((k : ℝ) + 1) ^ 2 := by
+    rw [Real.sqrt_eq_rpow, ← Real.rpow_add hk1pos,
+      show (1 : ℝ) / 2 + 3 / 2 = 2 by norm_num, Real.rpow_two]
+  have hfrac : Real.sqrt ((k : ℝ) + 1) / (((k : ℝ) + 1) ^ 2) = 1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2) := by
+    rw [div_eq_div_iff (by positivity : (0:ℝ) < ((k:ℝ)+1)^2).ne' hr0.ne', one_mul]
+    exact hkey
+  calc Real.logb 2 (1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) * (Real.log ((k : ℝ) + 1)) ^ 2
+      ≤ ((1 / (((k : ℝ) + 1) ^ 2)) / Real.log 2) * (16 * Real.sqrt ((k : ℝ) + 1)) := by
+        apply mul_le_mul hlogb_le hlogsq_le (by positivity)
+          (div_nonneg (by positivity) hlog2pos.le)
+    _ = (16 / Real.log 2) * (Real.sqrt ((k : ℝ) + 1) / (((k : ℝ) + 1) ^ 2)) := by
+        rw [div_eq_mul_inv, div_eq_mul_inv]; ring
+    _ = (16 / Real.log 2) * (1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2)) := by rw [hfrac]
+
 /-- **Khinchin's constant is a genuine positive real**: its defining `tprod`
 converges (`Multipliable`), and the value of ANY convergent product of
 positive terms via `Real.hasProd_of_hasSum_log` is `exp` of the log-sum, so
@@ -177,27 +259,39 @@ theorem khinchinTypical_iff_log_tendsto (x : ℝ) (hpos : ∀ i, 1 ≤ cfDigit x
     refine hexp.congr (fun n => ?_)
     exact Real.exp_log (hgeomdef n)
 
-/-! ## Step 2 (open): the log-average / frequency assembly
+/-! ## Step 2 (open): the log-average / frequency assembly — ROUTE SETTLED
 
-The remaining crux (`PENDING_WORK.md`, 2026-08-24 lap): combine
-`xstar_cf_freq_tendsto` (single-digit frequency `→` `gaussMeasure`,
-`CFCorrect.lean`), `gaussMeasure_digit_cylinder` (the Gauss–Kuzmin closed
-form, `CFCylinder.lean`), and `wSched_log_sum_le` (the uniform `goodC`
-tail bound, `CFCorrect.lean`) into the log-average limit that
-`khinchinTypical_iff_log_tendsto` needs.
+The remaining crux: the empirical log-average `(1/n)·Σ_{i<n} log aᵢ →
+log K₀`.  The `liminf ≥ log K₀` direction is free from CF-normality
+(`xstar_cf_freq_tendsto` + `xstar_log_digit_avg_truncated_tendsto`); the
+`limsup ≤ log K₀` direction is the genuine content and needs **uniform
+tail control** of the log-digit average (no mass escaping to large digits).
 
-Decomposition (dominated-convergence-style interchange, not yet attempted):
-for `ε > 0`, pick a truncation level `K` so the Gauss–Kuzmin tail
-`∑_{a > K} γ([a]) · log a` is `< ε/3` (from `khinchinK₀_summable_log`'s
-summability); the empirical log-average splits as a `≤ K` part (converges
-to the matching finite Gauss–Kuzmin sum by `xstar_cf_freq_tendsto`, finitely
-many `a`) plus a `> K` empirical tail, which needs a UNIFORM (in `n`) bound
-`o(ε)` — `wSched_log_sum_le` gives `Σ log(digit) ≤ goodC · n` at schedule
-checkpoints `n = (wSched s).length` (via `cfPrefix_eq_wSched`), which bounds
-the *total* mass but not yet the truncated-tail mass specifically; whether
-that total bound alone suffices (e.g. via a Chebyshev/Markov argument on how
-many digits can exceed `K` before the `goodC · n` cap is violated) or a finer
-per-digit-value split of the schedule bound is needed is the open question. -/
+**REFUTED route** (`44fb8bb`/`e018429` "route insight", now retracted —
+`DIRECTION.md` 2026-08-26 review): the total-mass bound `wSched_log_sum_le`
+(`Σ log aᵢ ≤ goodC·n`) does NOT suffice.  Quantitatively (PENDING_WORK
+2026-08-24): via the complement split, `limsup(1/n)Σ_{aᵢ>K} log aᵢ ≤
+goodC − Σ_{a≤K} γ([a])log a → goodC − log K₀`, and `goodC` is an unrelated
+Markov constant with genuine slack over `log K₀`, so this floor never
+reaches `0`.  Pattern-frequency data alone provably cannot close it either
+(`KHINCHIN.md` "Both expansions at once" counterexample — density-zero
+large-digit planting preserves all frequencies yet breaks the mean).
+
+**CONFIRMED route** (the step-2 crux, now authorized per `DIRECTION.md`):
+enforce the tail control *in the construction* by adding a Khinchin
+log-concentration **bad zone** to the schedule's union-bound selection
+(`exists_good_avoiding_bad`, `TBrick.lean`), **additively** — a
+`logBadZone w n η := {x | |Σ_{i<n} log(digit_i) − n·log K₀| ≥ η·n}` whose
+Gauss/Lebesgue measure is small by a **Chebyshev/variance** bound on
+`Σ log aᵢ` under the existing γ-mixing machinery (`CFGammaMixing`,
+`CFBlockFreq`), exactly as `cfBadZone` is handled for indicators but with
+the observable `log a₁` in place of a cylinder indicator.  The moment
+condition that bound needs, `E[(log a₁)²] = Σₐ γ([a])·(log a)² < ∞`, is
+`summable_gaussKuzmin_logsq` above (proved this lap).  This is the ORIGINAL
+`KHINCHIN.md` W6 digit-cap plan; the frozen headline is witness-existence
+form precisely so a schedule extension discharges it (`Headline.lean` doc).
+Invariant: additive only — no existing Tier-1 declaration modified, Tier-1
+`#print axioms` stays `[propext, Classical.choice, Quot.sound]`. -/
 
 /-- **Finite-truncation convergence** (real sub-piece of the step-2
 assembly): for any fixed cutoff `K`, the `≤ K` slice of the empirical
