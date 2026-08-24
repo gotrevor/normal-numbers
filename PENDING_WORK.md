@@ -1,5 +1,57 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## ⭐⭐⭐⭐⭐⭐ ROUTE-DECISIVE CORRECTION 2026-08-24 (this lap, LATER): `hdom` is UNATTAINABLE for the affine schedule — steer blocks are `Θ(word)`, NOT `o(word)`. The hdom-free UNIFORM-GOODNESS route is MANDATORY, and its crux is **uniformly-good steer blocks**.
+
+**This SUPERSEDES the "tight blocks ⇒ hdom holds" claim I made earlier THIS lap
+(the four `goldenRatio`/`fib` commits).** Those lemmas are still needed (they cut
+block length from `exp(word)` to `Θ(word)` and bound the additive slack), but they
+do NOT rescue `hdom`. Compiler-grounded proof of unattainability:
+
+### Why blocks are `Θ(word)`, not `o(word)`
+To keep `ψ(cfCylinder wx') ⊆ cfCylinder wz'`, the x-block must RESOLVE `wx` down to
+`wz'`'s metric scale. The z-target width is `≈ volume(cfCylinder wx) = 1/(Kₓ(Kₓ+Kₓ'))`
+where `Kₓ = cfK wx` (the continuant), so the resolution needs
+`fib(|wz|+nz+1)² > 4/(q·width) ≈ Kₓ²`, i.e. `|wz|+nz ≈ log_φ Kₓ`. But `log_φ Kₓ`
+is `Θ(|wx|)` — NOT `O(1)` — because `cfK` grows geometrically with LENGTH
+(Lévy: `log Kₙ/n → π²/(12 ln2) ≈ 1.19`, so `log_φ Kₓ ≈ 2.46·|wx|`). Hence
+`nz ≈ 2.46|wx| − |wz| = Θ(word)`. Balanced streams ⇒ each round appends
+`block_s ≈ κ·|w_s|` (`κ = Θ(1)`) ⇒ `|w_{s+1}| ≈ (1+κ)|w_s|` (GEOMETRIC growth) ⇒
+`block_s/|w_s| ≈ κ`, a CONSTANT. `hdom` (`block_s < ε|w_s|` ∀ε) is impossible.
+Unbalancing only compounds (the resolve cost feeds back). **`hdom` cannot hold.**
+(This is the same "each block ≈ accumulated word" the 2026-08-24 super-exponential
+analysis flagged; the intervening "filler-free ⇒ o(word)" optimism was the error.)
+
+### Why uniform-goodness is then FORCED (not optional)
+`chain_cf_digit_freq_tendsto` (CFChainFreq:327) needs the frequency at EVERY
+prefix length `p`, incl. mid-block. It handles a mid-block `p` by decomposing
+`prefix = w s ++ (chainApp w s).take (p−|w s|)` (line 391-397) and calling
+**`cfDiscLt_append_take`**, whose control of the partial last block IS `hdom`
+(block short vs word). With `block = Θ(word)` the partial block is `Θ(p)`, so the
+frequency can OSCILLATE by a constant WITHIN each block — equidistribution FAILS at
+those `p` — UNLESS the partial block is itself freq-good, i.e. the block is
+**uniformly prefix-good**. A maximal/dyadic union bound over all prefix lengths `k`
+does NOT close (`Σₖ O(1/(δ²k)) = O(log n)` diverges; dyadic chaining leaves an
+`Θ(p)` interpolation gap). So uniform-goodness needs a genuine idea, not a union
+bound.
+
+### THE REAL CRUX (next attack)
+Build a **uniformly-prefix-good steerable block**: `∃ u` with `cfCylinder(wx++u) ⊆
+(c,d)` AND `∀ k ≤ |u|, u.take k` is `δ`-freq-good (bounded additive slack), then a
+hdom-FREE `chain_cf_digit_freq_tendsto` variant that consumes it via
+`chainTail_dev_split` (already built) for the boundary tail + the per-block uniform
+bound for the partial. Candidate constructions to probe (smallest first):
+  (a) **maximal inequality** on `cfBadZone` deviations (Doob/Kolmogorov over the
+      orbit) — deep but standard; check if the γ-mixing already proved gives it.
+  (b) **self-similar block**: build `u` as a concatenation of geometrically-growing
+      freq-good sub-blocks with the RESOLVING sub-block LAST (so every proper prefix
+      is a union of good sub-blocks + a partial that is `o(sub-accumulation)` —
+      recovering the single-stream `hdom` WITHIN the block, where there is no
+      per-sub-block resolution constraint). This localizes the resolution to the
+      final sub-block and may dodge the maximal inequality entirely.
+Probe (b) first — it reuses the single-stream engine and needs no new deep import.
+
+---
+
 ## ⭐⭐⭐⭐⭐ ROUTE-DECISIVE CORRECTION 2026-08-24 (this lap): `hdom` needs TIGHT (logarithmic) steer blocks — the current steer lemma's block length is EXPONENTIAL and BREAKS `hdom`
 
 Before wiring `exists_interleaved_affine_witness` I quantified the ONE unverified
