@@ -56,6 +56,17 @@ detail lives in PENDING_WORK.md.
   `exists_nat_goldenRatio_pow_gt`, and check both budget inequalities hold for
   `|w_s|` past a threshold (geometric beats poly).  If (a) and (b) CONFLICT
   (block forced simultaneously short and long), THAT is the real crux — escalate.
+- **SIGNPOST RULE (attended, 2026-08-24, Trevor-ratified)**: a refuted route gets
+  a PROVED negation, not just a prose note — a named theorem (e.g.
+  `..._unrestricted_false : ¬ (∀ …)`) stating the exact refuted shape, landed
+  directly beside the restricted/replacement lemma, docstrings pointing both
+  ways.  Land it AT the moment of refutation when the witness is concrete; if
+  only an asymptotic/measure argument exists, a docstring naming the informal
+  witness suffices (label the evidence tier honestly).  Never as standalone
+  leaf-quests.  **Concretely owed now**: (a) the `r ∉ (-q,1)` counterexample
+  beside the restricted crux (a single explicit (q,r) witness is enough);
+  (b) the `hdom` refutation (`ec0875d`) — kernel-tier if a concrete witness is
+  cheap, else the docstring-tier signpost on the replacement crack.
 - **ADDITIVE ONLY 🧊**: B5′ is COMPLETE and LOCKED.  Never edit/weaken a frozen
   decl or landed module (`TBrick*`, `CFSchedule`, `CFCorrect`, `CFLogTail`,
   `Headline`, `KhinchinDefs`, the existing `chain_cf_digit_freq_tendsto` /
