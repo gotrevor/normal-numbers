@@ -1,5 +1,43 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## ⭐⭐⭐⭐⭐⭐⭐ ADVANCE 2026-08-24 (review lap, later): per-round FEASIBILITY discharged — `exists_uniformly_freq_good_block_steer_len` (commit `4d1e5c9`, axiom-clean)
+
+The directive's item-2 route-decisive question — *can each round jointly satisfy
+the measure budget AND the resolution?* — is now settled YES in the kernel.
+- **`exists_uniform_block_param`** (`CFScheduleA`): archimedean core. For any
+  `β>0`, `Lc`, `Nfib`, gives `m>0` with `m²≥Lc`, `m²≥Nfib`,
+  `(m+1)/(m·⌊√m⌋) < β`.  (`n₁ = m·⌊√m⌋` ⇒ `m ≪ n₁ ≪ m²`.)
+- **`exists_uniformly_freq_good_block_steer_len`** (`CFScheduleA`): caller gives
+  only a min-length `L`; internally sets `β = γtar·δ²/(S+1)` and discharges both
+  budget inequalities. Output: `∃ u n₁, L≤|u| ∧ … ∧ cfCylinder(wx++u)⊆(c,d) ∧
+  n₁²≤|u|·⌊√|u|⌋ ∧ (∀k≤|u|,∀v∈F, |dev(u.take k)| < δ·k + (4⌊√|u|⌋+2|v|+n₁)) ∧ ∃x…`.
+  The folded bound is EXACTLY the `hblock` shape; `n₁²≤|u|·⌊√|u|⌋` (⇒ `n₁≤|u|^{3/4}`)
+  is the `o(|u|)` witness the `hslack` telescoping needs.
+
+### REMAINING item 2 — wire the len-wrapper into the ψ-round
+Build `exists_freq_good_extend_affine_steer_uniform` (copy-extend, do NOT edit the
+existing `exists_freq_good_extend_affine_steer`): same shape but call
+`exists_uniformly_freq_good_block_steer_len` for BOTH streams (z into the image
+interval `J_z`, x into `(a,b)∩ψ⁻¹(J_z')`), passing a caller min-length `L`. Emit,
+per stream, the appended block `w'.drop|w| = u` with:
+  (i) the folded uniform prefix bound (`hblock`-ready), and (ii) `n₁,u² ≤ |u|·⌊√|u|⌋`.
+Everything else (interval bookkeeping, `hinv'`, nesting) copies the existing steer
+ψ-round verbatim — only the block-producer call + the two extra emitted facts change.
+
+### THEN item 3 — the two-stream recursion (`SchedStateA`/`schedStepA`/`schedA`)
+Mirror `CFSchedule.sched`. Choose per round `δ_s = 1/(s+1)` (→0 ⇒ `hblock` margin),
+`L_s = |w_s|` (⇒ geometric growth `|w_{s+1}| ≥ 2|w_s|`). Then build, for each stream,
+`C_s := 4⌊√|u_s|⌋ + 2|v| + n₁,s` and prove:
+  - `hblock`: `∀ε>0 ∃s₀ ∀s≥s₀ ∀q≤|u_s|, |dev(u_s.take q)| < ε·q + C_s` — from the
+    folded bound + `δ_s→0` (pick `s₀` with `1/(s₀+1)<ε`).
+  - `hslack`: `∑_{i≤k}(C(s₀+i)+(|v|−1)) < ε·|w(s₀+k)|` — from geometric `|w_s|`
+    growth: `∑4⌊√|u_i|⌋`, `∑n₁,i` (each `≤|u_i|^{3/4}=o(|w_i|)`), `∑2|v|`, `∑(|v|−1)`
+    all `o(word)` (geometric sum dominated by last term; `Filter.Tendsto` lemmas).
+Feed both into `chain_orbit_equidist_uniform` → both streams `CFOrbitEquidist` →
+assemble `exists_interleaved_affine_witness`. Limit-gluing toolkit READY
+(`eq_of_mem_iInter_Icc`, `cfCylinder_chain_volume_tendsto`,
+`irrational_mem_Ioo_of_mem_iInter_cfCylinder`).
+
 ## ⭐⭐⭐⭐⭐⭐⭐ ADVANCE 2026-08-24 (review lap): the ROUTE-DECISIVE mid-block bound is PROVED hdom-free — `chainTail_dev_prefix_var` (commit `2c61e7c`, axiom-clean)
 
 The review lap named the decisive open question: *does the mid-block prefix bound

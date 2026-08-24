@@ -135,10 +135,11 @@ then the ψ-round rebuild + two-stream recursion.
 1. ✅ **DONE** — hdom-free chain limit: `chainTail_dev_prefix_var`,
    `chain_cf_digit_freq_tendsto_uniform`, `chain_orbit_equidist_uniform`
    (`CFChainFreq`, axiom-clean). Needs `hblock`/`hslack` from the schedule.
-2. **ψ-round `_uniform` (NOW hardest-first)** — rebuild `exists_freq_good_extend_affine_steer`
-   to emit uniformly-good blocks (call `exists_uniformly_freq_good_block_steer`;
-   pick `n₁,s`, `m_s` per the measure budget + resolution length). Route-decisive:
-   per-round feasibility (budget vs resolution) + `hslack` from geometric growth.
+2. **ψ-round `_uniform`** — per-round FEASIBILITY now DONE
+   (`exists_uniformly_freq_good_block_steer_len`, axiom-clean: discharges both
+   budget inequalities via `n₁=m·⌊√m⌋`). Remaining: wire it into
+   `exists_freq_good_extend_affine_steer_uniform` (call the len-wrapper per stream,
+   emit the folded `hblock` bound + `n₁²≤|u|·⌊√|u|⌋`).
 3. **`SchedStateA`/`schedStepA`/`schedA`/limit** — two-stream recursion → two
    uniformly-good chains → `chain_orbit_equidist_uniform` both streams → the crux.
 
