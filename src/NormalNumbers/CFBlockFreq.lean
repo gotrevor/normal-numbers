@@ -460,12 +460,12 @@ theorem variance_blockCount_le (v : List ℕ) (hpos : ∀ a ∈ v, 1 ≤ a) (n :
 /-- **Chebyshev block-frequency bound** — the per-stage input to the
 Becher–Yuhjtman refinement (`< ¼` bad measure for `n` large): for `δ > 0`,
 
-`γ{ x : |S_n(x)/n − γ(I_v)| ≥ δ } ≤ (4|v|+80)·γ(I_v)/(δ²·n)`.
+`γ{ x : |S_n(x)/n − γ(I_v)| ≥ δ } ≤ (8|v|+80)·γ(I_v)/(δ²·n)`.
 
 From `variance_blockCount_le` via Markov applied to `(S_n − n·γ(I_v))²`
 (mathlib `meas_ge_le_variance_div_sq`, or `mul_meas_ge_le_lintegral₀`).  Given
 `γ(I_v) → 0` and `δ` fixed, the RHS `→ 0` as `n → ∞`; choosing `n` with
-`(4|v|+80)·γ(I_v)/(δ²n) < ¼` is exactly the stage bound the construction uses. -/
+`(8|v|+80)·γ(I_v)/(δ²n) < ¼` is exactly the stage bound the construction uses. -/
 theorem chebyshev_blockCount (v : List ℕ) (hpos : ∀ a ∈ v, 1 ≤ a)
     (n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
     (gaussMeasure {x | δ ≤ |blockCount (cfCylinder v) n x / n -

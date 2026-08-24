@@ -84,7 +84,7 @@ The anchors above pin the `tprod` alignment (`k ↦ k+1`) that `khinchinK₀` us
 /-- Bridge: the `List.count` of a value among the mapped-range digit prefix
 equals the `Finset.filter`-card of matching indices (the two count idioms
 used by `xstar_dary_freq_tendsto` and `pillai` respectively). -/
-theorem count_map_range_eq_card_filter (f : ℕ → ℕ) (c p : ℕ) :
+private theorem count_map_range_eq_card_filter (f : ℕ → ℕ) (c p : ℕ) :
     ((List.range p).map f).count c = ((Finset.range p).filter (fun q => f q = c)).card := by
   induction p with
   | zero => simp

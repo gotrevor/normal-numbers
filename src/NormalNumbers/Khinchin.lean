@@ -442,7 +442,7 @@ theorem logTail_list_eq (K : ℕ) (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
         rw [List.count_cons]
         simp only [beq_iff_eq]
         by_cases h : a = b
-        · subst h; simp only [if_pos rfl]; push_cast; ring
+        · subst h; simp only [if_true]; push_cast; ring
         · rw [if_neg (fun hh => h hh.symm), if_neg h]; push_cast; ring
       rw [List.map_cons, List.sum_cons, hcount, List.map_cons, List.sum_cons]
       have hmem : (b ∈ Finset.Icc 1 K) ↔ ¬ (K < b) := by
