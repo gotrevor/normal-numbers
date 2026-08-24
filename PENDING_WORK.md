@@ -1,5 +1,43 @@
 # PENDING WORK — B5′ campaign
 
+> **ANALYSIS LAP (2026-08-24, part 2, no code — construction survey).**
+> Traced the previous entry's option (1) (dig into `kminFn_spec`) down to
+> the actual selection mechanism: `TBrick.exists_refinement_uniform`
+> (`TBrickRefine.lean:432`) builds the extension word `u` by picking a
+> point `x` that simultaneously **avoids a union of finitely many small-
+> measure "bad zones"** — `exists_good_avoiding_bad_of_large` unions one
+> `cfBadZone B.w v n δ` per `v ∈ F` (the frequency-deviation zones) plus
+> the d-ary `daryBadZoneWide` zones, then a measure/counting argument
+> (`goodExtSet`, the Markov good-length machinery) shows a point avoiding
+> ALL of them exists. **The per-`v` error bound is a DIRECT consequence of
+> which bad zones got unioned in** — `F = wordFamily t` only, so there is
+> no log-weighted zone to inherit; option (1) as "just read harder" is a
+> dead end confirmed — the existing construction genuinely does not carry
+> the needed fact implicitly.
+>
+> **Concrete, additive next step (supersedes both prior options)**: this
+> union-bound architecture is EXTENSIBLE without touching any frozen Tier-1
+> statement — add ONE more bad zone to the union, a `logBadZone B.w n η`
+> analogous to `cfBadZone`, defined so avoiding it bounds `|Σ_{i<n}
+> log(digit_i) - n·log khinchinK₀| < η·n` (a large-deviation / concentration
+> statement for the log-digit sum under `gaussMeasure`, needing an
+> exponential-moment / Chernoff-type bound — `Σ_a γ([a])·a^θ < ∞` for small
+> `θ` would give it via Markov's inequality on `exp(θ·Σlog a_i)`). Package
+> this as a NEW theorem `TBrick.exists_refinement_uniform_khinchin` (or a
+> `khinchinBadZone` variant of the existing union-bound lemma) that returns
+> everything `exists_refinement_uniform` does PLUS this log-average
+> guarantee — purely additive, doesn't reshape `IsAbsolutelyNormal`,
+> `IsCFNormal`, `khinchinK₀`, or any Tier-1 theorem statement, so it does
+> NOT violate `DIRECTION.md`'s "forbidden drift" (that clause bars
+> RE-ATTACKING/reshaping Tier 1, not building a new corollary on top of its
+> existing machinery). This is a genuine new measure-theory lemma (the
+> concentration bound), not mechanical assembly — realistically the size of
+> a fresh work package (comparable to W1-W6 in `KHINCHIN.md`), likely
+> multiple laps just for the concentration estimate before even touching
+> the union-bound plumbing. Record as the leading candidate; if the
+> concentration estimate itself proves intractable, THAT is the point to
+> escalate to an altitude/review lap for a route call, not before.
+
 > **ANALYSIS LAP (2026-08-24, no code — route-refutation only).** Chased
 > route (a) from the previous entry (escaping-mass argument from
 > `uSched_spec`'s existing frequency bound) to a concrete numeric
