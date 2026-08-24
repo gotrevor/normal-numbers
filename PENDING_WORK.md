@@ -50,41 +50,66 @@ spurious `hgood`-on-the-whole-block requirement, now dropped.
   — the hdom-free replacement for `chainTail_cfDiscLt`, no per-round tolerance
   compounding (additive term ÷ len is bounded, → small with long payloads).
 
-### KEY REFINEMENT (schedule design): constant per-round payloads ⇒ bounded fillers
-`filler_s ~ log_φ(1/ρ_s)` where `ρ_s = φ^{-2·payload_other,s}` = relative width of
-the target preimage sub-interval. With CONSTANT per-round payload length `c`, each
-`ρ_s` is constant ⇒ **`filler_s` is BOUNDED** ⇒ `filler_s = o(|w s|)` trivially
-(|w s| ~ s·c → ∞). The earlier "cumulative filler = Θ(word)" worry is a red
-herring: frequency at any prefix is dragged by the LOCAL (single-round) filler
-only — prior fillers are already absorbed into the good prefix `w s` (inductive
-short-append), so the running deviation is `≤ filler_s / prefixlen → 0`. Bounded
-gaps ⇒ equidistribution. Route CONFIRMED viable.
+### ⚠️ DEFINITIVE ROUTE FINDING (2026-08-27, cont.): a per-round UNCONTROLLED filler CANNOT be telescoped away — item 2 (freq-good navigation) is UNAVOIDABLE
+Pushed the telescoping analysis to the end. Two — and only two — ways to fold a
+per-round filler into the frequency limit, BOTH fail when `filler_s ~ payload_s`
+(which the geometry forces — see below):
+- **`cfDiscLt_short_append` (ε→2ε per filler).** The existing proof keeps the tail
+  at a FIXED tolerance across arbitrarily many blocks ONLY because every block is
+  margin-good (`CFDiscLt.append` preserves ε exactly). A filler needs
+  `short_append`, which DOUBLES the tolerance. One filler per round ⇒ `2^s·ε` —
+  compounds without bound. Fillers therefore cannot live in the tolerance-preserving
+  tail-chain.
+- **`countOccurrences_append_addslack₂` (no compounding, but +C accumulates).** The
+  hdom-free path this lap built: no tolerance doubling, but each filler leaves a
+  residual additive `C_s ~ |filler_s|`. `chainTail_dev_split` ⇒ total additive
+  `Σ_j C_j`. When `filler_s ~ payload_s`, `Σ C_j ~ Σ payload_j ~ |w s|`, so
+  `additive/len ~ Θ(1)` — the tail is NOT asymptotically good.
 
-### NEXT (build on this)
-1. **`chain_cf_digit_freq_tendsto_split`** (CFChainFreq): assemble the window-freq
-   limit from three tiers, mirroring `chain_cf_digit_freq_tendsto` but hdom-free:
-   - **tail-good**: `chainTail_dev_split` ⇒ tail `(ε + small)`-good past `s₀`
-     (need `#blocks·(C+|v|)/taillen ≤ small`; `taillen ≥ #blocks·c`, so `c` large).
-   - **boundary (`hbound`)**: `w s = w s₀ ++ tail`, fixed short prefix `w s₀` +
-     good tail via `cfDiscLt_short_append` (K-threshold, as existing proof).
-   - **mid-block**: prefix `= w s ++ (chainApp).take j`. TWO sub-cases by whether
-     `j ≤ |filler s|` (short-filler append, `cfDiscLt_append_take`) or `j` reaches
-     into payload (`w s ++ filler s` good, then `payload.take` via the UNIFORM
-     payload bound + `…addslack`). Needs the per-block hyp as `filler` short vs
-     `|w s|` + payload uniformly-good.
-   Then `chain_orbit_equidist_split` wrapper (copy `chain_orbit_equidist`, swap the
-   inner limit lemma).
-2. **Steerable uniformly-good payload primitive** (the genuine remaining geometric
-   crux): a freq-good block that NAVIGATES `wx` into target `ψ⁻¹(Ioo e' f')` with
-   the block good AS A WHOLE, its steering prefix `= o(word)` (bounded, per §
-   above). Measure argument: good-and-in-target set has positive measure (good
-   density →1, target relative measure `~ρ>0`); extract via the engine
-   (`exists_good_avoiding_bad_of_large`) applied to the target sub-region. This is
-   `exists_freq_good_block` steered — replaces `exists_freq_good_block_in_Ioo`'s
-   uncontrolled placement prefix with a bounded steering absorbed as `filler`.
-3. Re-wire `exists_interleaved_affine_witness`: constant-`c` lockstep payloads,
-   `filler_s` = bounded cross-navigation (invariant maintained, increment only),
-   feed both chains into `chain_orbit_equidist_split`.
+**Why `filler_s ~ payload_s` is forced (not a schedule artifact):** the ψ-stage
+must land `ψ(cfCylinder wx')` in the freshly-refined z-cylinder `wz'`. `wz'` shrank
+by `~φ^{-2·payload_{z,s}}`, so x's re-navigation into `ψ⁻¹(wz')` costs
+`~payload_{z,s}` digits — the OTHER stream's per-round payload. Symmetric for z.
+Driving `δ_s→0` (required for equidistribution) forces BOTH payloads `→∞`, hence
+BOTH fillers `~` the other payload `→∞`. No schedule makes `filler_s = o(payload_s)`
+on both streams simultaneously (would need `n_{other,s}=o(n_s)` AND `n_s=o(n_{other,s})`).
+
+**Conclusion:** the interleaved schedule closes IFF the navigation digits are
+themselves frequency-good — then `chainApp = (good nav)++(good payload)` is a single
+margin-good block, `filler` vanishes, the EXISTING `chain_orbit_equidist` applies
+(blocks are `o(word)` under slow growth ⇒ `hdom` holds). **The route-decisive crux
+is entirely `exists_freq_good_block` STEERED into `ψ⁻¹(target)` (item 2 below).**
+The addslack/split-tail lemmas remain valid reusable infrastructure (they close the
+weaker case `filler = o(payload)`, should a partial item-2 deliver only that), but
+they do NOT bypass item 2.
+
+### NEXT — item 2 is THE crux (hardest-first). Attack it directly.
+1. **`exists_freq_good_block_in_Ioo_whole`** (CFScheduleA or CFFreqBlock): the
+   STEERABLE freq-good block. Given genuine `wx`, a target sub-interval `(c,d) ⊆
+   cfCylinder wx`-region, family `F`, `δ`, `L`: a SINGLE block `u` (`|u| ≥ L`,
+   `δ`-good for all `v∈F`) with `cfCylinder (wx ++ u) ⊆ Ioo c d` — good AS A WHOLE,
+   NO placement/tail split. **Probe first (smallest test of feasibility):** does the
+   engine `exists_good_avoiding_bad_of_large` restrict to a sub-interval? i.e. is
+   the good-and-not-bad set of positive measure INSIDE `(c,d)`? Measure heuristic:
+   `μ(good ∩ (c,d)) ≥ (μ(c,d)) − μ(badzones) = ρ·μ(cfCylinder wx) − o(1)·μ > 0` for
+   block length large (bad-zone measure `→0`). The obstacle is that the current
+   engine produces goodness relative to `cfCylinder wx` uniformly, NOT conditioned
+   on landing in `(c,d)`; check whether `goodInInterval`/`cfBadZone`
+   (`CFIntervalGood.lean`) already supports an interval-restricted positive-measure
+   statement (it underlies `exists_cfCylinder_subset_Ioo`), and whether the freq
+   control survives the restriction. If the freq-good density inside `(c,d)` is NOT
+   provably positive at fixed `δ`, THAT is the true wall (escape #3 / Vandehey
+   natural-extension) — write `ROUTE-ESCALATION-2026-08-27.md`.
+2. **IF item 1 lands** → `chainApp = u` is a single margin-good block; feed both
+   chains straight into the EXISTING `chain_orbit_equidist` (no split lemma needed —
+   blocks are `o(word)` under slow growth ⇒ `hdom` holds). Then wire
+   `exists_interleaved_affine_witness`: `SchedStateA`/`schedStepA` mirroring
+   `CFSchedule.sched`, each ψ-stage a `exists_freq_good_block_in_Ioo_whole` into
+   `ψ⁻¹(new z-cylinder)`, x/z alternating.
+3. **Fallback infra (already proved, if item 1 delivers only `filler=o(payload)`):**
+   `chain_cf_digit_freq_tendsto_split` via `chainTail_dev_split` + `…addslack₂`
+   (three tiers: tail-good, boundary, mid-block). Only build this if item 1 forces
+   a residual bounded filler.
 
 ---
 
