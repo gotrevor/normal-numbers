@@ -45,7 +45,7 @@ theorem xstar_dary_step (s d : ℕ) (hd2 : 2 ≤ d) (hdt : d ≤ tSched s) :
             ((jSched s d + i) * d ^ k
               + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1 := by
   obtain ⟨u, m₁, j₁, r₁, ht, hw, hlen, hpos, hold, hstart, hK, hCF, hgrow,
-    hgood⟩ := sched_step s
+    hgood, -⟩ := sched_step s
   have hdt' : d ≤ tSched (s + 1) := le_trans hdt (sched_t_mono (Nat.le_succ s))
   obtain ⟨hm₁, hj₁⟩ := hold d hd2 hdt
   have hx : xstar ∈ cfCylinder ((sched (s + 1)).B.w) := xstar_mem (s + 1)

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.CFLimit
+import NormalNumbers.KhinchinRefine
 
 /-!
 # W5 — the construction schedule (B–Y §2.1)
@@ -115,10 +116,12 @@ theorem goodC_half : ∀ (w : List ℕ), w ≠ [] → (∀ a ∈ w, 1 ≤ a) →
   exists_C_half_le_volume_goodExtSet.choose_spec.2
 
 /-- The uniform refinement lemma, instantiated at the canonical level-`t`
-parameters (`F = wordFamily t`, `δ = ε = schedEps t`, `C = goodC`). -/
+parameters (`F = wordFamily t`, `δ = ε = η = schedEps t`, `C = goodC`).
+Khinchin form (route C′): the extension word also carries a log-tail bound
+past cutoff `K`, for `K` beyond a level-dependent threshold. -/
 theorem sched_refinement (t : ℕ) :
-    ∃ kmin₀ : ℕ, ∀ kmin, kmin₀ ≤ kmin → ∃ N : ℕ,
-      ∀ (B : TBrick t) (n : ℕ), N ≤ n → 0 < n →
+    ∃ kmin₀ : ℕ, ∀ kmin, kmin₀ ≤ kmin → ∃ N K₀ : ℕ,
+      ∀ (B : TBrick t) (n : ℕ), N ≤ n → 0 < n → ∀ K, K₀ ≤ K →
       ∃ (B' : TBrick t) (u : List ℕ),
         B'.w = B.w ++ u ∧ u.length = n ∧ (∀ a ∈ u, 1 ≤ a) ∧
         (cfK u : ℝ) ≤ Real.exp (goodC * n) ∧
@@ -132,18 +135,20 @@ theorem sched_refinement (t : ℕ) :
               β ∉ badBlocks d (B'.m d - B.m d) (schedEps t) ∧
               y ∈ daryCell d (B.m d + (B'.m d - B.m d))
                 ((B.j d + i) * d ^ (B'.m d - B.m d)
-                  + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1) :=
-  TBrick.exists_refinement_uniform t (wordFamily t) (wordFamily_pos t)
-    (wordFamily_ne t) (schedEps_pos t) (schedEps_pos t)
-    (mul_schedEps_le t) goodC_half
+                  + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1) ∧
+        (u.map (fun a : ℕ => if K < a then Real.log (a : ℝ) else 0)).sum
+          ≤ schedEps t * n :=
+  TBrick.exists_refinement_uniform_khinchin t (wordFamily t) (wordFamily_pos t)
+    (wordFamily_ne t) (schedEps_pos t) (schedEps_pos t) (mul_schedEps_le t)
+    (schedEps_pos t) goodC_half
 
 /-- The level-`t` block-length floor (`≥ 1`). -/
 noncomputable def kminFn (t : ℕ) : ℕ := max (sched_refinement t).choose 1
 
 theorem one_le_kminFn (t : ℕ) : 1 ≤ kminFn t := le_max_right _ _
 
-theorem kminFn_spec (t : ℕ) : ∃ N : ℕ,
-    ∀ (B : TBrick t) (n : ℕ), N ≤ n → 0 < n →
+theorem kminFn_spec (t : ℕ) : ∃ N K₀ : ℕ,
+    ∀ (B : TBrick t) (n : ℕ), N ≤ n → 0 < n → ∀ K, K₀ ≤ K →
     ∃ (B' : TBrick t) (u : List ℕ),
       B'.w = B.w ++ u ∧ u.length = n ∧ (∀ a ∈ u, 1 ≤ a) ∧
       (cfK u : ℝ) ≤ Real.exp (goodC * n) ∧
@@ -157,7 +162,9 @@ theorem kminFn_spec (t : ℕ) : ∃ N : ℕ,
             β ∉ badBlocks d (B'.m d - B.m d) (schedEps t) ∧
             y ∈ daryCell d (B.m d + (B'.m d - B.m d))
               ((B.j d + i) * d ^ (B'.m d - B.m d)
-                + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1) :=
+                + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1) ∧
+      (u.map (fun a : ℕ => if K < a then Real.log (a : ℝ) else 0)).sum
+        ≤ schedEps t * n :=
   (sched_refinement t).choose_spec (kminFn t) (le_max_left _ _)
 
 /-- The canonical level-`t` stage length: at least the refinement threshold
@@ -170,9 +177,13 @@ theorem nFn_pos (t : ℕ) : 0 < nFn t :=
 theorem sq_lt_nFn (t : ℕ) : t * t < nFn t :=
   lt_of_lt_of_le (Nat.lt_succ_self _) (le_max_right _ _)
 
+/-- The level-`t` log-tail cutoff threshold: any `K ≥ KFn t` gives the
+`nFn_spec` log-tail guarantee. -/
+noncomputable def KFn (t : ℕ) : ℕ := (kminFn_spec t).choose_spec.choose
+
 /-- The per-stage refinement at the canonical parameters: every level-`t`
 brick refines by a genuine word of length exactly `nFn t` carrying all
-Lemma-13 payloads. -/
+Lemma-13 payloads, PLUS the Khinchin log-tail payload at cutoff `KFn t`. -/
 theorem nFn_spec (t : ℕ) (B : TBrick t) :
     ∃ (B' : TBrick t) (u : List ℕ),
       B'.w = B.w ++ u ∧ u.length = nFn t ∧ (∀ a ∈ u, 1 ≤ a) ∧
@@ -187,8 +198,11 @@ theorem nFn_spec (t : ℕ) (B : TBrick t) :
             β ∉ badBlocks d (B'.m d - B.m d) (schedEps t) ∧
             y ∈ daryCell d (B.m d + (B'.m d - B.m d))
               ((B.j d + i) * d ^ (B'.m d - B.m d)
-                + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1) :=
-  (kminFn_spec t).choose_spec B (nFn t) (le_max_left _ _) (nFn_pos t)
+                + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1) ∧
+      (u.map (fun a : ℕ => if KFn t < a then Real.log (a : ℝ) else 0)).sum
+        ≤ schedEps t * nFn t :=
+  (kminFn_spec t).choose_spec.choose_spec B (nFn t) (le_max_left _ _) (nFn_pos t)
+    (KFn t) (le_refl _)
 
 /-! ## The schedule -/
 
@@ -228,7 +242,9 @@ def SchedStep (S S' : SchedState) : Prop :=
           β ∉ badBlocks d (S'.B.m d - m₁ d) (schedEps S'.t) ∧
           y ∈ daryCell d (m₁ d + (S'.B.m d - m₁ d))
             ((j₁ d + i) * d ^ (S'.B.m d - m₁ d)
-              + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1)
+              + blockNatVal d (List.ofFn fun l => (β l : ℕ))) 1) ∧
+    (u.map (fun a : ℕ => if KFn S'.t < a then Real.log (a : ℝ) else 0)).sum
+      ≤ schedEps S'.t * nFn S'.t
 
 /-- Every state steps: promote if the threshold is met, then refine at the
 (possibly new) level. -/
@@ -236,9 +252,9 @@ theorem schedStep_exists (S : SchedState) : ∃ S', SchedStep S S' := by
   by_cases hprom : promThreshold (S.t + 1) ≤ S.B.w.length
   · -- promotion: adjoin base `S.t + 1`, then refine at level `S.t + 1`
     obtain ⟨B₁, hB₁w, hB₁pres⟩ := TBrick.exists_extend_succ S.B
-    obtain ⟨B', u, h1, h2, h3, h4, h5, h6, h7⟩ := nFn_spec (S.t + 1) B₁
+    obtain ⟨B', u, h1, h2, h3, h4, h5, h6, h7, h8⟩ := nFn_spec (S.t + 1) B₁
     refine ⟨⟨S.t + 1, B'⟩, u, B₁.m, B₁.j, B₁.r,
-      by simp [hprom], by rw [h1, hB₁w], h2, h3, ?_, ?_, h4, h5, h6, ?_⟩
+      by simp [hprom], by rw [h1, hB₁w], h2, h3, ?_, ?_, h4, h5, h6, ?_, h8⟩
     · intro d hd2 hdt
       obtain ⟨hm, hj, -⟩ := hB₁pres d hd2 hdt
       exact ⟨hm, hj⟩
@@ -248,9 +264,9 @@ theorem schedStep_exists (S : SchedState) : ∃ S', SchedStep S S' := by
       exact B₁.hsub d hd2 hdt
     · exact h7
   · -- no promotion: refine at the current level
-    obtain ⟨B', u, h1, h2, h3, h4, h5, h6, h7⟩ := nFn_spec S.t S.B
+    obtain ⟨B', u, h1, h2, h3, h4, h5, h6, h7, h8⟩ := nFn_spec S.t S.B
     refine ⟨⟨S.t, B'⟩, u, S.B.m, S.B.j, S.B.r,
-      by simp [hprom], h1, h2, h3, fun d _ _ => ⟨rfl, rfl⟩, ?_, h4, h5, h6, h7⟩
+      by simp [hprom], h1, h2, h3, fun d _ _ => ⟨rfl, rfl⟩, ?_, h4, h5, h6, h7, h8⟩
     intro d hd2 hdt
     exact ⟨S.B.hr1 d hd2 hdt, S.B.hr2 d hd2 hdt, S.B.hsub d hd2 hdt⟩
 
