@@ -3285,6 +3285,25 @@ theorem volume_cfCylinder_ge_inv (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a �
   · nlinarith [hK1, hKd0]
   · nlinarith [hK1, hKd, hKd0]
 
+/-- **A genuine cylinder has strictly positive Gauss mass.**  `γ(cfCylinder w) > 0` for a
+genuine word `w`: the cylinder has positive Lebesgue volume (`volume_cfCylinder_ge_inv`,
+`≥ 1/(2·cfK²)`) and the Gauss density is bounded below (`volume_le_gaussMeasure`).  The
+`γwx > 0` fact the relative block-parameter regularization `S + γwx` needs to be a valid
+(nonzero) denominator. -/
+theorem gaussMeasure_cfCylinder_toReal_pos (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) : 0 < (gaussMeasure (cfCylinder w)).toReal := by
+  have hsub : cfCylinder w ⊆ Set.Ioo (0 : ℝ) 1 := cfCylinder_subset_Ioo w
+  have hmeas : MeasurableSet (cfCylinder w) := measurableSet_cfCylinder w
+  have hK1 : (1 : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast one_le_cfK w hpos
+  have hvolpos : 0 < (volume (cfCylinder w)).toReal :=
+    lt_of_lt_of_le (by positivity) (volume_cfCylinder_ge_inv w hw hpos)
+  have hle := volume_le_gaussMeasure (cfCylinder w) hmeas hsub
+  have hγfin : gaussMeasure (cfCylinder w) ≠ ⊤ := measure_ne_top _ _
+  have hmono := ENNReal.toReal_mono hγfin hle
+  rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal (by positivity)] at hmono
+  refine lt_of_lt_of_le ?_ hmono
+  exact mul_pos (by positivity) hvolpos
+
 /-- **Logarithmic fib threshold (bounded form).**  A resolution threshold `N` with
 `a < fib(n+1)²` for all `n ≥ N`, AND `N ≤ log_φ(√5·√a + 1) + 1` — logarithmic in
 `a`.  Packages `exists_nat_goldenRatio_pow_gt` (log-exponent solvability) with
