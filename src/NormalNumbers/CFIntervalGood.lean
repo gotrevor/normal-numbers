@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.CFDigitLaw
+import NormalNumbers.CFSchedule
 
 /-!
 # B6 / L1+L2 — interval covering and good-block density on arbitrary intervals
@@ -18,19 +19,17 @@ themselves CF-cylinders.  This module supplies the two purely metric bridges,
 
 * **L1** (`volume_interval_sdiff_covered_le`): the rank-`n` CF-cylinders that
   are FULLY CONTAINED in an interval `J = (a,b) ⊆ (0,1)` cover all of `J`
-  except at most the two boundary cylinders straddling `a` and `b`; hence the
-  uncovered measure is `≤ 2 · maxₙ`, where `maxₙ = 1/fib(n+1)²` bounds a single
-  rank-`n` cylinder length (`fib_le_cfK`).  Beyond a rank this is `< δ` for any
-  `δ > 0`.
-* **L2** (`volume_interval_good_ge`, provisional): composing L1 with the
-  cylinder-conditioned good-mass bound (`goodC_half` culture) gives a lower
-  bound on the good-block mass inside an arbitrary interval — the input the
-  affine schedule (L4) consumes.
+  except a neighborhood of the two endpoints; the uncovered measure is
+  `≤ 4·maxₙ = 4/fib(n+1)²`, where `maxₙ` bounds a single rank-`n` cylinder
+  length (`fib_le_cfK`).  Beyond a rank this is `< δ` for any `δ > 0`.
+* **L2** (`length_le_two_mul_good_add_err`): composing L1 with the
+  cylinder-conditioned good-mass bound (`goodC_half`: `|I_w| ≤ 2·|good ext of
+  w|`) gives `|b−a| ≤ 2·|good mass inside (a,b)| + 4/fib(n+1)²` — so beyond a
+  rank the good mass inside any interval is `≥ (|b−a| − δ)/2`, the affine
+  schedule (L4) input.
 
-Lemma table and lap plan: `B6-BRIEF-DRAFT.md`.  **Statement-alignment note**:
-the L1 shape below is final (self-contained metric fact); the L2 shape is
-PROVISIONAL — it will be pinned against the real `goodExtSet`/`goodC_half`
-exports once L1 is discharged.  See `PENDING_WORK.md`.
+Lemma table and lap plan: `B6-BRIEF-DRAFT.md`.  Both statements are now final
+and axiom-clean; `goodInInterval` is the good-mass-inside-`(a,b)` set.
 -/
 
 namespace NormalNumbers
@@ -176,16 +175,87 @@ theorem volume_interval_sdiff_covered_le (a b : ℝ)
         congr 1
         rw [hM]; ring
 
-/-! ## L2 — good-block density on arbitrary intervals (provisional) -/
+/-! ## L2 — good-block density on arbitrary intervals -/
 
-/-- **L2 — good-block density on an arbitrary interval** (PROVISIONAL shape).
-Composing L1 with the cylinder-conditioned good-mass bound (`goodC_half`),
-the "good" rank-`n` extensions inside an interval `(a,b) ⊆ (0,1)` occupy at
-least a fixed fraction of `|b − a|` beyond a rank.  The exact statement will
-be pinned to the real `goodExtSet`/`goodC` exports once L1 lands. -/
-theorem volume_interval_good_ge (a b : ℝ)
-    (_ha : 0 ≤ a) (_hab : a ≤ b) (_hb : b ≤ 1) :
-    True := by
-  trivial
+/-- The good order-`m` extensions live inside their base cylinder. -/
+lemma goodExtSet_subset_cfCylinder (w : List ℕ) (C : ℝ) (m : ℕ) :
+    goodExtSet w C m ⊆ cfCylinder w := by
+  refine Set.iUnion₂_subset fun u _ => ?_
+  split
+  · exact cfCylinder_append_subset w u
+  · exact Set.empty_subset _
+
+/-- The good-length extension set is measurable (countable union of cylinders). -/
+lemma measurableSet_goodExtSet (w : List ℕ) (C : ℝ) (m : ℕ) :
+    MeasurableSet (goodExtSet w C m) := by
+  refine MeasurableSet.biUnion
+    (Set.Countable.mono (Set.subset_univ _) Set.countable_univ) fun u _ => ?_
+  split
+  · exact measurableSet_cfCylinder _
+  · exact MeasurableSet.empty
+
+/-- The union of the good order-`m` extensions of every rank-`n` cylinder that
+is contained in `(a,b)` — the "good mass inside the interval `(a,b)`". -/
+noncomputable def goodInInterval (a b : ℝ) (n m : ℕ) : Set ℝ :=
+  ⋃ w ∈ {w ∈ genWords n | cfCylinder w ⊆ Set.Ioo a b}, goodExtSet w goodC m
+
+/-- **L2 — good-block density on an arbitrary interval.**  Composing L1
+(`volume_interval_sdiff_covered_le`) with the cylinder-conditioned good-mass
+bound (`goodC_half`: `|I_w| ≤ 2·|good extensions of w|`): the length of any
+interval `(a,b) ⊆ (0,1)` is at most twice the good mass inside it plus the L1
+covering error `4/fib(n+1)²`, which `→ 0`.  So beyond a rank the good mass
+inside `(a,b)` is at least `(|b−a| − δ)/2` — the affine schedule (L4) input.
+
+`n ≥ 1` (rank 0 is the whole space; the density statement is for genuine
+cylinders).  `m` is the free extension order carried through from `goodC_half`. -/
+theorem length_le_two_mul_good_add_err (a b : ℝ)
+    (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1) {n : ℕ} (hn : 1 ≤ n) (m : ℕ) :
+    ENNReal.ofReal (b - a)
+      ≤ 2 * volume (goodInInterval a b n m)
+        + ENNReal.ofReal (4 / (Nat.fib (n + 1) : ℝ) ^ 2) := by
+  set idx : Set (List ℕ) := {w ∈ genWords n | cfCylinder w ⊆ Set.Ioo a b} with hidx
+  have hidxcount : idx.Countable :=
+    Set.Countable.mono (Set.subset_univ _) Set.countable_univ
+  have hdisj_cyl : idx.PairwiseDisjoint (fun w => cfCylinder w) := by
+    intro u hu u' hu' hne
+    exact cfCylinder_disjoint (by rw [hu.1.1, hu'.1.1]) hne
+  have hdisj_good : idx.PairwiseDisjoint (fun w => goodExtSet w goodC m) := by
+    intro u hu u' hu' hne
+    exact (cfCylinder_disjoint (by rw [hu.1.1, hu'.1.1]) hne).mono
+      (goodExtSet_subset_cfCylinder u goodC m) (goodExtSet_subset_cfCylinder u' goodC m)
+  have hcov : volume (coveredByCyl a b n) = ∑' w : idx, volume (cfCylinder (w : List ℕ)) := by
+    rw [coveredByCyl]
+    exact measure_biUnion hidxcount hdisj_cyl (fun w _ => measurableSet_cfCylinder w)
+  have hgood : volume (goodInInterval a b n m)
+      = ∑' w : idx, volume (goodExtSet (w : List ℕ) goodC m) := by
+    rw [goodInInterval]
+    exact measure_biUnion hidxcount hdisj_good
+      (fun w _ => measurableSet_goodExtSet w goodC m)
+  have hterm : ∀ w : idx,
+      volume (cfCylinder (w : List ℕ)) ≤ 2 * volume (goodExtSet (w : List ℕ) goodC m) := by
+    rintro ⟨w, hw⟩
+    have hne : w ≠ [] := by
+      have hlen : w.length = n := hw.1.1
+      rw [← List.length_pos_iff]; omega
+    exact goodC_half w hne hw.1.2 m
+  have hcov_le : volume (coveredByCyl a b n) ≤ 2 * volume (goodInInterval a b n m) := by
+    rw [hcov, hgood, ← ENNReal.tsum_mul_left]
+    exact ENNReal.tsum_le_tsum hterm
+  have hcovsub : coveredByCyl a b n ⊆ Set.Ioo a b := by
+    rw [coveredByCyl]; exact Set.iUnion₂_subset fun w hw => hw.2
+  have hmeascov : MeasurableSet (coveredByCyl a b n) := by
+    rw [coveredByCyl]
+    exact MeasurableSet.biUnion hidxcount (fun w _ => measurableSet_cfCylinder w)
+  have hsplit : volume (coveredByCyl a b n)
+      + volume (Set.Ioo a b \ coveredByCyl a b n) = volume (Set.Ioo a b) := by
+    have h := measure_inter_add_sdiff (μ := volume) (Set.Ioo a b) hmeascov
+    rwa [Set.inter_eq_right.mpr hcovsub] at h
+  calc ENNReal.ofReal (b - a)
+      = volume (Set.Ioo a b) := by rw [Real.volume_Ioo]
+    _ = volume (coveredByCyl a b n) + volume (Set.Ioo a b \ coveredByCyl a b n) := hsplit.symm
+    _ ≤ 2 * volume (goodInInterval a b n m)
+          + ENNReal.ofReal (4 / (Nat.fib (n + 1) : ℝ) ^ 2) := by
+        gcongr
+        exact volume_interval_sdiff_covered_le a b ha hab hb n
 
 end NormalNumbers
