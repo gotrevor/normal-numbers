@@ -3503,6 +3503,55 @@ theorem exists_uniformly_freq_good_block_steer_len_rel (wx : List ℕ) (hwx : wx
   rw [hβdef] at hm2ub
   exact hm2ub
 
+/-- **The single-stream L4 step relation.**  `S'` extends `S`'s word by a strict genuine
+block reaching depth `s`, uniformly prefix-good for `wordFamily s` at tolerance `schedEps s`
+(slack `4√|blk|+2|v|+n₁`, `n₁²≤|blk|·√|blk|`).  Same shape as `StepSpecA`'s x-half — the
+x-side chain frequency (`chain_hfreq_of_uniform_blocks`) consumes exactly this.  The
+appended block comes from the RELATIVE-regularization steer into the current cylinder's own
+hull (`exists_uniformly_freq_good_block_steer_len_rel`), which additionally exposes the
+LINEAR length bound feeding `schedL4_block_linear` (recorded separately, needs the cfK-cap). -/
+def StepSpecL4 {q r : ℝ} (S S' : SchedStateL4 q r) (s : ℕ) : Prop :=
+  S'.wx.take S.wx.length = S.wx ∧ S.wx.length < S'.wx.length ∧
+    s ≤ (S'.wx.drop S.wx.length).length ∧ ∃ n₁ : ℕ,
+      n₁ ^ 2 ≤ (S'.wx.drop S.wx.length).length * Nat.sqrt (S'.wx.drop S.wx.length).length ∧
+      (∀ k, k ≤ (S'.wx.drop S.wx.length).length → ∀ v ∈ wordFamily s,
+        |(countOccurrences v ((S'.wx.drop S.wx.length).take k) : ℝ)
+          - (gaussMeasure (cfCylinder v)).toReal * k|
+            < schedEps s * k
+              + (4 * Nat.sqrt (S'.wx.drop S.wx.length).length + 2 * v.length + n₁))
+
+/-- **Every L4 state steps** (single-stream, route B).  Extend `wx` by a
+relative-regularization freq-good block steering into the cylinder's OWN hull (so the block
+is LINEAR by the crux resolution), keeping the interval `(e,f)` FIXED — legitimate because
+`cfCylinder (wx++u) ⊆ cfCylinder wx ⊆ ψ⁻¹(Ioo e f)`, so `hinv` is preserved.  (Route B does
+NOT nest the interval; `ψ(xA)` is pinned by the cylinder shrinking, not the interval.) -/
+theorem schedStepL4_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateL4 q r) (s : ℕ) :
+    ∃ S' : SchedStateL4 q r, StepSpecL4 S S' s := by
+  obtain ⟨a, b, ha, hab, hb, _hIcc, hIoo⟩ :=
+    exists_Ioo_irrational_subset_cfCylinder S.wx S.hwxne S.hwxpos
+  obtain ⟨u, n₁, m, Nfib, huL, hune, hupos, hsubcd, hn₁sq, hufreq, _hwit, _hlen, _hm2, _hNf⟩ :=
+    exists_uniformly_freq_good_block_steer_len_rel S.wx S.hwxne S.hwxpos
+      (wordFamily s) (wordFamily_pos s) (wordFamily_ne s) (schedEps_pos s)
+      ha hab hb hIoo s
+  set wx' := S.wx ++ u with hwx'def
+  have hwx'ne : wx' ≠ [] := by rw [hwx'def]; simp [hune]
+  have hwx'pos : ∀ c ∈ wx', 1 ≤ c := fun c hc =>
+    (List.mem_append.1 hc).elim (S.hwxpos c) (hupos c)
+  have htake : wx'.take S.wx.length = S.wx := by rw [hwx'def, List.take_left]
+  have hdrop : wx'.drop S.wx.length = u := by rw [hwx'def, List.drop_left]
+  have hsub : cfCylinder wx' ⊆ cfCylinder S.wx := by
+    rw [hwx'def]; exact cfCylinder_append_subset S.wx u
+  have hinv' : cfCylinder wx' ⊆ affineMap q r ⁻¹' Set.Ioo S.e S.f :=
+    hsub.trans S.hinv
+  have hgt : S.wx.length < wx'.length := by
+    rw [hwx'def, List.length_append]
+    have : 0 < u.length := List.length_pos_of_ne_nil hune
+    omega
+  refine ⟨⟨wx', S.e, S.f, hwx'ne, hwx'pos, S.he0, S.hef, S.hf1, hinv'⟩, htake, hgt, ?_, n₁, ?_, ?_⟩
+  · rw [hdrop]; exact huL
+  · rw [hdrop]; exact hn₁sq
+  · rw [hdrop]; exact hufreq
+
 /-- **cfK-controlled resolution is AFFINE in `|w|`** (resolution half of
 `schedA_block_linear`, discharged CONDITIONALLY on the B5′ log-cfK bound).  If the
 target-width reciprocal `a = 4/(d−c)` is at most `8·cfK(w)²` (which holds when the
