@@ -402,7 +402,31 @@ needed), and (ii) places wz' via the z-side interval bridge (`exists_Ioo_
 irrational_subset_cfCylinder wz`), keeping all irrational-caveats on ONE side of
 ψ each. Then the recursion (`SchedStateA`/`schedStepA`/limit/telescoping).
 
+### lap 17 landed (2026-08-24): two-interval intersection placement ✅
+`exists_cfCylinder_subset_Ioo_inter` (CFScheduleA, axiom-clean, green 8756): a
+genuine cylinder inside `Ioo a b ∩ Ioo c d` whenever `(max a c, min b d)` is a
+nondegenerate subinterval of `(0,1)`. Lets the ψ-stage place `x` in
+`cfCylinder wx`'s interval AND a good z-cylinder's ψ-preimage at once.
+
+**KEY REMAINING SUB-LEMMA for the ψ-stage (next lap): the image-inclusion**
+`affine_image_wxInterval_subset_wzInterval`. Setup: wx,wz genuine, invariant
+`cfCylinder wx ⊆ ψ⁻¹(cfCylinder wz)` (q>0); `(a,b)` the wx-interval (irr(a,b)⊆
+cfCylinder wx), `(e,f)` the wz-interval (cfCylinder wz ⊆ Icc e f — use the uIcc
+bound from `cfCylinder_endpoints`, NOT just the irr-subset). CLAIM: `ψ((a,b)) =
+(qa+r,qb+r) ⊆ (e,f)` — hence the target z-interval `J_z := ψ((a,b))` is nonempty
+and inside the wz-region, so the ψ-stage can run `exists_freq_good_block_in_Ioo`
+on `J_z` (z-side, no ψ-transfer) and `exists_cfCylinder_subset_affine_preimage`
+on the resulting good z-cylinder (x-side). PROOF of the claim: irr(a,b)⊆
+cfCylinder wx ⇒ ψ(irr(a,b))⊆cfCylinder wz⊆Icc e f; irr(a,b) dense in (a,b), ψ
+continuous+increasing ⇒ ψ((a,b))⊆closure(ψ(irr(a,b)))⊆Icc e f; ψ((a,b)) open ⇒
+⊆(e,f). (Endpoints: `qa+r = ⨅ψ((a,b))≥e`, `qb+r≤f` — a `le_of_forall_lt` / inf
+argument, or a direct sequential limit `x_n↑a` irrational with ψ(x_n)≥e.) This is
+the one genuinely analytic step of the ψ-stage (~15-30 lines); everything else is
+the composed atoms. Then assemble `exists_freq_good_extend_affine`, then the
+recursion + telescoping.
+
 ### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
+- INTER `exists_cfCylinder_subset_Ioo_inter` — cylinder in the intersection of two intervals.
 - ψ-SELECT `exists_cfCylinder_subset_affine_preimage` — x-cylinder in ψ⁻¹(target z-interval).
 - STAGE `exists_freq_good_extend_cfCylinder` — one freq-good nested extension (the x-stage).
 - CYL↔IOO `exists_Ioo_irrational_subset_cfCylinder` + `exists_irrational_mem_cfCylinder`.

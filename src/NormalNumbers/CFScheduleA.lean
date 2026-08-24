@@ -222,6 +222,23 @@ theorem exists_freq_good_extend_cfCylinder (wx : List ℕ) (hwx : wx ≠ [])
   have hf := hfreq v hv
   rwa [hulen]
 
+/-- **Cylinder inside an intersection of two intervals.**  If the open
+intersection `(max a c, min b d)` is a nondegenerate subinterval of `(0,1)`, it
+contains a genuine CF cylinder, which therefore lies in BOTH `(a,b)` and `(c,d)`.
+The ψ-stage uses this to place `x` inside `cfCylinder wx`'s interval AND the
+`ψ`-preimage of a good `z`-cylinder simultaneously. -/
+theorem exists_cfCylinder_subset_Ioo_inter {a b c d : ℝ}
+    (h0 : 0 ≤ max a c) (hlt : max a c < min b d) (h1 : min b d ≤ 1) :
+    ∃ w : List ℕ, w ≠ [] ∧ (∀ e ∈ w, 1 ≤ e) ∧
+      cfCylinder w ⊆ Set.Ioo a b ∩ Set.Ioo c d := by
+  obtain ⟨w, hne, hpos, hsub⟩ := exists_cfCylinder_subset_Ioo h0 hlt h1
+  refine ⟨w, hne, hpos, fun x hx => ?_⟩
+  have hxm := Set.mem_Ioo.1 (hsub hx)
+  exact ⟨Set.mem_Ioo.2 ⟨lt_of_le_of_lt (le_max_left _ _) hxm.1,
+      lt_of_lt_of_le hxm.2 (min_le_left _ _)⟩,
+    Set.mem_Ioo.2 ⟨lt_of_le_of_lt (le_max_right _ _) hxm.1,
+      lt_of_lt_of_le hxm.2 (min_le_right _ _)⟩⟩
+
 /-- **ψ-stage x-selection primitive.**  For `q > 0` and a target `z`-interval
 `(c,d)` whose `ψ`-preimage lands in `(0,1)`, there is a genuine `x`-cylinder
 inside `ψ⁻¹(c,d)`.  Immediate from `preimage_affineMap_Ioo` (the preimage IS the
