@@ -659,6 +659,38 @@ theorem gaussMeasure_interval_inter_cfBadZone_nil_le
           + ENNReal.ofReal ((Real.log 2)⁻¹ * (4 / (Nat.fib (d + 1) : ℝ) ^ 2)) := by
         gcongr
 
+/-- **Brick 2b-iii — route-B assembly (aggregate over `F` and `NS`).**  Finite
+double-subadditivity on top of the single scale/family lemma: the `γ`-mass of the
+base-`[]` bad zone over ALL `v ∈ F` and ALL absolute scales `n ∈ NS`, inside an
+interval `(a,b)`, is bounded by the double sum of the per-`(n,v)` (fraction·γ +
+residual) bounds.  Covering depth `d` fixed (`d < n` for every `n ∈ NS`).  This is
+the full route-B interval bound the ψ-pullback bridge to brick 3 consumes. -/
+theorem gaussMeasure_interval_inter_iUnion_cfBadZone_nil_le
+    (a b : ℝ) (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1)
+    (F : Finset (List ℕ)) (hposF : ∀ v ∈ F, ∀ x ∈ v, 1 ≤ x)
+    (NS : Finset ℕ) (d : ℕ) (δ : ℝ)
+    (hdN : ∀ n ∈ NS, d < n) (hδ' : ∀ n ∈ NS, 0 < δ - (d : ℝ) / (n : ℝ)) :
+    gaussMeasure (Set.Ioo a b ∩ ⋃ n ∈ NS, ⋃ v ∈ F, cfBadZone [] v n δ)
+      ≤ ∑ n ∈ NS, ∑ v ∈ F,
+          (ENNReal.ofReal (7 * ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal
+                / ((δ - (d : ℝ) / (n : ℝ)) ^ 2 * ((n - d : ℕ) : ℝ))))
+              * gaussMeasure (Set.Ioo a b)
+            + ENNReal.ofReal ((Real.log 2)⁻¹ * (4 / (Nat.fib (d + 1) : ℝ) ^ 2))) := by
+  have hrw : Set.Ioo a b ∩ ⋃ n ∈ NS, ⋃ v ∈ F, cfBadZone [] v n δ
+      = ⋃ n ∈ NS, ⋃ v ∈ F, (Set.Ioo a b ∩ cfBadZone [] v n δ) := by
+    simp only [Set.inter_iUnion]
+  rw [hrw]
+  calc gaussMeasure (⋃ n ∈ NS, ⋃ v ∈ F, (Set.Ioo a b ∩ cfBadZone [] v n δ))
+      ≤ ∑ n ∈ NS, gaussMeasure (⋃ v ∈ F, (Set.Ioo a b ∩ cfBadZone [] v n δ)) :=
+        measure_biUnion_finset_le _ _
+    _ ≤ ∑ n ∈ NS, ∑ v ∈ F, gaussMeasure (Set.Ioo a b ∩ cfBadZone [] v n δ) := by
+        refine Finset.sum_le_sum fun n _ => ?_
+        exact measure_biUnion_finset_le _ _
+    _ ≤ _ := by
+        refine Finset.sum_le_sum fun n hn => Finset.sum_le_sum fun v hv => ?_
+        exact gaussMeasure_interval_inter_cfBadZone_nil_le a b ha hab hb v (hposF v hv)
+          n d δ (hdN n hn) (hδ' n hn)
+
 /-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
 finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
 cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every
