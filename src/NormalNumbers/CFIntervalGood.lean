@@ -258,6 +258,66 @@ theorem length_le_two_mul_good_add_err (a b : ℝ)
         gcongr
         exact volume_interval_sdiff_covered_le a b ha hab hb n
 
+private lemma self_le_fib_succ : ∀ n : ℕ, n ≤ Nat.fib (n + 1) := by
+  intro n
+  induction n with
+  | zero => simp
+  | succ k ih =>
+    rw [Nat.fib_add_two]
+    rcases Nat.eq_zero_or_pos k with hk | hk
+    · subst hk; simp
+    · have hfk : 1 ≤ Nat.fib k := Nat.fib_pos.mpr hk
+      omega
+
+/-- **Nested cylinder chains pin a unique point.**  If `x` and `y` both lie in
+every cylinder of an extending genuine chain, they coincide — the cylinders'
+diameters shrink to `0` (`volume_cfCylinder_le_fib`, `fib → ∞`).  Needed to
+force the affine image `ψ(x)` (which lies in the whole `ψ`-word chain) to be the
+unique irrational limit, hence irrational — an obligation-(A) ingredient. -/
+theorem eq_of_mem_cfCylinder_chain {w : ℕ → List ℕ}
+    (hne : ∀ s, w s ≠ []) (hpos : ∀ s, ∀ a ∈ w s, 1 ≤ a)
+    (hext : ∀ s, ∃ u, u ≠ [] ∧ w (s + 1) = w s ++ u)
+    {x y : ℝ} (hx : ∀ s, x ∈ cfCylinder (w s)) (hy : ∀ s, y ∈ cfCylinder (w s)) :
+    x = y := by
+  have hlen : ∀ s, s ≤ (w s).length := by
+    intro s; induction s with
+    | zero => exact Nat.zero_le _
+    | succ k ih =>
+        obtain ⟨u, hu, heq⟩ := hext k
+        rw [heq, List.length_append]
+        have : 0 < u.length := List.length_pos_iff.mpr hu
+        omega
+  apply eq_of_forall_dist_le
+  intro ε hε
+  obtain ⟨n, hn⟩ := exists_nat_one_div_lt hε
+  set s := n + 1 with hsdef
+  have hs1 : 1 ≤ s := by omega
+  have hs : 1 / (s : ℝ) < ε := by rw [hsdef]; push_cast; exact hn
+  obtain ⟨a, c, hIcc, hac⟩ := cfCylinder_subset_Icc_length (w s) (hne s) (hpos s)
+  have hfibge : (s : ℝ) ≤ (Nat.fib ((w s).length + 1) : ℝ) := by
+    have h1 : (w s).length ≤ Nat.fib ((w s).length + 1) := self_le_fib_succ _
+    exact_mod_cast le_trans (hlen s) h1
+  have hspos : (0 : ℝ) < s := by exact_mod_cast hs1
+  have hs1R : (1 : ℝ) ≤ s := by exact_mod_cast hs1
+  have hdiam : c - a ≤ 1 / (s : ℝ) := by
+    rw [hac]
+    have hv := volume_cfCylinder_le_fib (w s) (hne s) (hpos s)
+    have hle : (volume (cfCylinder (w s))).toReal
+        ≤ 1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2 := by
+      rw [← ENNReal.toReal_ofReal (show (0:ℝ) ≤ 1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2 by positivity)]
+      exact ENNReal.toReal_mono (by simp) hv
+    have hsA : (s : ℝ) ≤ (Nat.fib ((w s).length + 1) : ℝ) ^ 2 := by
+      nlinarith [hfibge, hs1R]
+    have hmono : 1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2 ≤ 1 / (s : ℝ) :=
+      one_div_le_one_div_of_le hspos hsA
+    linarith
+  have hxm := hIcc (hx s)
+  have hym := hIcc (hy s)
+  rw [Real.dist_eq]
+  rw [abs_sub_le_iff]
+  constructor <;> [skip; skip] <;>
+    (rw [Set.mem_Icc] at hxm hym; linarith [hdiam, hs])
+
 /-- **Cylinder nesting ⇒ word prefix.**  If a point lies in both `cfCylinder w`
 and `cfCylinder w'` with `|w| ≤ |w'|`, then `w` is a prefix of `w'` (`w'.take
 |w| = w`).  Consequence: a deep CF-cylinder that meets `cfCylinder wx` is a
