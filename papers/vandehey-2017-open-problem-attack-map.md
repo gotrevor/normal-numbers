@@ -80,13 +80,10 @@ window lemma; (iii) stationary measure on W may be singular/weird — fine,
 nothing needs smoothness.  Estimate: months-scale research program, paper-
 sized.  P(this program closes it) ≈ 50%; P(wall at uniform merging) ≈ 35%.
 
-⚠️ **Lit sweep before investing**: Fisher–Schmidt, *Distribution of
-approximants and geodesic flows*, ETDS 34 (2014) — Vandehey's own Remark 4.2
-says "non-trivial resemblance… no direct overlap"; check whether their
-skew-product with continuous fiber already contains Route A's Theorem-3.1
-analogue.  Also sweep: Rosen CFs / ℚ(√5)-continued fractions; literature on
-regular CFs of quadratic-irrational multiples (Burger?); anything citing
-Vandehey 2017 (Google Scholar forward citations — has someone resolved §7?).
+✅ **Lit sweep DONE 2026-08-24** (§6 below).  Fisher–Schmidt ETDS 2014 read in
+full: **no Theorem-3.1 analogue, and its fiber is finite, not continuous** — see
+`papers/fisher-schmidt-2014-approximants-geodesic-flows.md`.  Forward-citation
+crawl of Vandehey 2017: §7 problem 1 still open and untouched (~85%).
 
 ## 4. Route B (our lane, concrete): an explicit WITNESS via the brick method
 
@@ -117,11 +114,13 @@ a wide margin (it'd be first on PAPER).
   matters only for Route A (where the transducer needs O_K arithmetic).
 - **Lit sweep run** (web-search tier): no sign §7 problem 1 is resolved
   (~85%).  Finds: Heersink–Vandehey arXiv:1509.05501 (CF normality NOT
-  preserved along arithmetic progressions — the fragility direction);
-  Scheerer–Vandehey reportedly prove CF-normality vs base-b normality
-  incomparable (unread).  Fisher–Schmidt ETDS 2014 still unread — that plus
-  a Scholar forward-citation crawl of Vandehey 2017 remain the Route A
-  pre-steps.
+  preserved along arithmetic progressions — the fragility direction).
+  ⚠️ Its third claim was garbled: the CF-vs-base-b **incomparability** result is
+  **Jackson–Mance–Vandehey 2021** (arXiv:2111.11522, unconditional and
+  descriptive-set-theoretic: the two normalities are *maximally* logically
+  separate, `D₂(Π⁰₃)`-complete), superseding Vandehey's GRH-conditional
+  arXiv:1512.00337.  Scheerer 2017 is a different paper (a construction, already
+  pinned).  Both Route-A pre-steps are now DONE — see §6.
 
 ## 5. Bonus separations worth remembering
 
@@ -131,3 +130,104 @@ a wide margin (it'd be first on PAPER).
   gaps, one elementary-looking.
 - Mendès France's simple-normality version (§7 problem 2) is independent and
   might be MUCH harder (Vandehey's proof needs full normality).
+
+## 6. Forward-citation crawl, 2026-08-24 🕸️
+
+**Instruments** (two independent aggregators + targeted arXiv sweeps; Google Scholar
+unreachable from here, so preprints/theses outside these indexes are a blind spot):
+OpenAlex `cites:W1898830595` → **6** citing works; Semantic Scholar
+`DOI:10.1112/s0010437x16007740/citations` → **9**; union = 9 distinct.  Plus arXiv
+metadata sweeps (`au:Vandehey`, `abs:"continued fraction" AND abs:"normal number"`,
+`abs:"continued fraction normality"`), and a PDF-level read of every citing arXiv paper
+grepped for `matrix action | quadratic irrational | Möbius | fractional linear`.
+
+**Headline: §7 problem 1 is untouched.**  Every one of the 9 citing works cites the paper
+in passing (bibliography or "Theorem 3.1 gives us the lifted-normality tool"); not one
+restates, attacks, or reports partial progress on the quadratic-irrational question.
+Vandehey himself has published 12+ papers since and never returned to it — including
+Lukyanenko–Vandehey *A geometric proof of Lagrange's theorem for continued fractions*
+(arXiv:2603.12425, **March 2026**), which is entirely about characterizing quadratic
+irrationals as fixed points of loxodromic elements and would be the natural place to say
+something if he had it.  Confidence §7-1 is open: **~90%** (up from 85%).
+
+### 6.1 🚨 The one thing that changes our plans: Vandehey's Lemma 3.2 is false as stated
+
+**Airey–Mance, *Hotspot lemmas for non-compact spaces*** (arXiv:1912.10265, Math. Notes
+108 (2020)) prove that **Theorems 1, 4 and 5 of Moshchevitin–Shkredov** [Math. Notes 73
+(2003), *On the Pyatetskii-Shapiro criterion for normality*] **are incorrect as stated on
+non-compact spaces**.  The error: a `lim sup` distributed over an *infinite* sum.  Their
+counterexample is `x₀ = (1,2,3,4,…) ∈ ℕ^ℕ` under the shift — every cylinder has visit
+frequency `0 ≤ φ(µ(I))`, so the hypothesis holds vacuously while `x₀` is not normal.
+
+Vandehey's **Lemma 3.2** (the Pyatetskii-Shapiro criterion in the form his whole §3 runs
+on) says in its proof: *"This is a simple consequence of Theorem 1 in [17]"* — that is
+**exactly the broken theorem** — and he applies it on `Ω̃ = Ω × M` where `Ω` is the CF
+space: countably infinite alphabet, **non-compact**, escape of mass available.  The
+counterexample lifts verbatim, so Lemma 3.2 as stated is false.
+
+**Theorem 1.1 is almost certainly fine**, because Lemma 3.2 is only ever applied to
+`(x, M)` with `x` **CF-normal**, and CF-normality forces the empirical measures
+`E(x,n) = (1/n) Σ δ_{Tⁱx}` to be **tight** (digit-`≤K` cylinder frequencies converge to
+Gauss measure, `µ(a₁ > K) = O(1/K)`; the finitely many small `n` are absorbed into the
+compact set).  Tightness is precisely the hypothesis Airey–Mance add in their **Theorem
+A** (and Theorem B, stated for the Gauss map itself).  But that argument is **nowhere in
+the paper**, and it is a real lemma, not a typo fix.
+
+Consequences, in order of who cares:
+- **Formalizing §3 (Route A pre-req, and the "formalize Vandehey" target on the shelf)
+  now owes an extra obligation**: state the *corrected* hot-spot criterion with the
+  tightness hypothesis, and prove tightness of the empirical measures of a CF-normal
+  point.  Our pin note's dependency list said "P-S criterion (self-contained counting
+  lemma)" — that was written against the broken statement.  Budget the tightness lemma.
+- Nobody appears to have written this down: the erratum's own citers are Farhangi–Mance,
+  Seiller–Simonsen, Nandakumar et al., and one unrelated paper — none mentions Compositio
+  2017.  This is a live **literature hole** of the [[formalization-literature-holes]]
+  kind, found by crawling rather than by proving.
+- ✅ **Our landed work is unaffected**: the only hot-spot machinery in this repo is
+  `HotSpot.lean`, base-`b` (Bailey–Misiurewicz, compact alphabet), where the
+  Moshchevitin–Shkredov defect does not arise.
+
+### 6.2 Route B / B6 has a paper-level precedent — cite it, do not claim around it
+
+**Becher–Madritsch, *On a question of Mendès France on normal numbers***
+(arXiv:2108.06804, 2021) construct a **computable** `x` such that **`x` and `1/x` are
+both CF-normal and normal to every integer base**.  Read the content correctly: CF
+normality of `1/x` is free (inversion is the det = ±1 / Serret case), so their theorem is
+the *base-b* half — but the **method is exactly B6's play**: build one explicit witness
+that survives a map which is not known to preserve normality, by refining intervals under
+two incommensurable digit systems at once.  It is Becher–Yuhjtman-family machinery, which
+we have now formalized.  Implication: B6's framing is "first *formalization*, and the
+first witness for an **affine** `ψ(x) = qx + r`", not "first witness for any map".
+
+### 6.3 A shovel-ready adjacent target: CF-Pillai
+
+**Nandakumar–Pulari–Vishnoi–Viswanathan, *An analogue of Pillai's theorem for continued
+fraction normality…*** (arXiv:1909.03431, Bull. LMS 2021): overlapping-occurrence and
+disjoint-occurrence CF-normality coincide, and the proof needs genuinely different
+technique from base-`b` "since the continued fraction expansion utilizes a countably
+infinite alphabet, leading to a non-compact space" (same wall as §6.1).  They also reprove
+Heersink–Vandehey from it.  We formalized **base-`b` Pillai from scratch** during B5′
+(`Pillai.lean`, not in mathlib) — the CF analogue is self-contained, sits directly on our
+`CFCylinder`/`CFDigitLaw` stack, and is the cheapest publishable-adjacent thing in this
+whole cone.
+
+### 6.4 The rest of the cone (nothing to act on, recorded so we do not re-crawl)
+
+- **Carton–Vandehey**, *Preservation of normality by non-oblivious group selection*
+  (arXiv:1905.05801, Theory Comput. Syst. 2020) — uses Theorem 3.1 verbatim with the fiber
+  = states of a **finite automaton**.  Together with Vandehey's own arXiv:1607.03531
+  (Theorem 3.1 re-run over base-`b`), this confirms the pattern: **every application of
+  Theorem 3.1 in print uses a FINITE fiber**.  Route A's compact-fiber version is
+  unexplored territory, not a gap someone quietly filled.
+- **Blackman**, *A geometric interpretation of the p-adic Littlewood conjecture*
+  (arXiv:1809.09670) and **Blackman–Kristensen–Northey** (arXiv:2306.09853, 2023) — an
+  independent, *geometric* realization of the "multiply a CF by an integer" transducer
+  (Raney automata, cutting sequences on the Farey complex), driven by p-adic Littlewood.
+  Live community working on Vandehey's §2 layer with different tools; a real contact
+  point if Route A ever needs the transducer drawn geometrically.
+- **Jackson–Mance–Vandehey** (arXiv:2111.11522) — CF-normal vs base-`b` normal are
+  maximally separate; see §4½ correction above.
+- **Dajani–Kraaikamp–Nakada–Natsui** (arXiv:2405.10921, 2024) — the set of α-CF normal
+  numbers does **not** depend on `α ∈ (0,1)`; the transfer-between-CF-algorithms line.
+- Airey–Jackson–Mance (complexity), Lukyanenko–Vandehey (Iwasawa CF ergodicity),
+  Vandehey (uncanny subsequences), Steiner (numeration-systems survey) — passing cites.

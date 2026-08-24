@@ -33,7 +33,11 @@ Kraaikamp–Nakada + [21] transfer the theorem to nearest-integer and odd CFs.
    3.6), T̃-invariant, ergodic, AND x CF-normal ⇒ (x,M) is T̃-normal wrt ρ for
    EVERY M — pointwise, via the Pyatetskii-Shapiro criterion
    (Moshchevitin–Shkredov form, Lemma 3.2: lim sup ≤ σ·ρ on cylinders
-   suffices), NOT via Birkhoff.  Inputs: Rényi quasi-independence (10)
+   suffices), NOT via Birkhoff.  🚨 **Lemma 3.2 is FALSE as stated** — it cites
+   Moshchevitin–Shkredov Theorem 1, which Airey–Mance (arXiv:1912.10265) show is
+   incorrect on non-compact spaces, and the CF alphabet is non-compact; the
+   repair is a tightness hypothesis that CF-normal x does satisfy but that the
+   paper never proves.  Full diagnosis + formalization cost → attack-map §6.1.  Inputs: Rényi quasi-independence (10)
    (∃C: μ(T⁻ⁿE ∩ C_s) ≍ μ(E)μ(C_s)) — **our W3 `cylinder_mixing` with its
    1±Cρᵏ envelope is strictly stronger than this**; a time-inhomogeneous
    Markov merging lemma (3.4, from Saloff-Coste–Zúñiga); quasi-invariance
@@ -56,7 +60,7 @@ Kraaikamp–Nakada + [21] transfer the theorem to nearest-integer and odd CFs.
    either ρ_r ≡ μ(C_r) and E_M ⊆ E, or E_M ∩ E = ∅; but E_M has positive
    Lebesgue measure and E is co-null ⇒ E_M ⊆ E.  No ρ_r is ever computed.
 
-## §7 Open problems (both still open AFAIK 2026-08-23)
+## §7 Open problems (forward-citation crawl 2026-08-24: both still open, ~90%)
 
 1. **Quadratic-irrational coefficients**: x CF-normal, q, r quadratic
    irrationals (i.e. eventually periodic CFs), q ≠ 0 — must qx + r be
@@ -83,9 +87,12 @@ gaps, both plausibly publishable, certainly formalizable-frontier.
 
 - **Dependencies we already have or are building**: Rényi (10) ⊆ W3
   `cylinder_mixing`; cylinder measure toolkit = W1/W2.  Dependencies we
-  lack: P-S criterion (self-contained counting lemma), the Markov merging
-  lemma (or bypass via our quantitative rate), Ryll-Nardzewski/VHS (or
-  bypass likewise), and the whole §2 transducer layer (elementary, chunky).
+  lack: P-S criterion (self-contained counting lemma) **in the corrected,
+  tightness-carrying form, PLUS a proof that a CF-normal point's empirical
+  measures are tight** (see §3 above — this is an obligation the paper does not
+  discharge), the Markov merging lemma (or bypass via our quantitative rate),
+  Ryll-Nardzewski/VHS (or bypass likewise), and the whole §2 transducer layer
+  (elementary, chunky).
 - **No deep imports**: no natural extension, no transfer operator, no
   geodesic flow.  Character: long elementary case analysis + one soft-
   analysis patch that quantitative mixing likely replaces.
