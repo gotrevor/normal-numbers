@@ -573,6 +573,92 @@ theorem gaussMeasure_cfBadZone_nil_inter_cylinder_frac_le
   rw [← ENNReal.ofReal_toReal hfin]
   exact ENNReal.ofReal_le_ofReal hcheb
 
+/-- **Brick 2b-iii — route-B assembly (single scale/family element).**  The whole
+route-B bound in one lemma, for a single `v` and single absolute scale `N`: the
+`γ`-mass of the base-`[]` `v`-bad zone at scale `N` inside an interval `(a,b)` is a
+FRACTION of `γ(a,b)` plus a boundary residual.  Cover `(a,b)` by depth-`d`
+cylinders (`d < N`): the interior (fully-contained) cylinders carry a `frac·γ`
+each (`gaussMeasure_cfBadZone_nil_inter_cylinder_frac_le`, `frac` uniform since all
+have length `d`), summed over the DISJOINT cover (`measure_biUnion`) to `frac·γ(a,b)`;
+the uncovered boundary strip carries `≤ (log 2)⁻¹·4/fib(d+1)²`
+(`gaussMeasure_interval_sdiff_covered_le`).  In the route-B regime `N ≳ 2d` the
+fraction is `≈ (8|v|+80)γ(v)/(δ²N)` and the residual `< γ(a,b)`.  This is the
+route-decisive B6 bound; 2b-iii proper aggregates it over `v ∈ F` and `N ∈ NS`
+(finite sums on top). -/
+theorem gaussMeasure_interval_inter_cfBadZone_nil_le
+    (a b : ℝ) (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1)
+    (v : List ℕ) (hposv : ∀ x ∈ v, 1 ≤ x) (N d : ℕ) (δ : ℝ)
+    (hdN : d < N) (hδ' : 0 < δ - (d : ℝ) / (N : ℝ)) :
+    gaussMeasure (Set.Ioo a b ∩ cfBadZone [] v N δ)
+      ≤ ENNReal.ofReal (7 * ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal
+            / ((δ - (d : ℝ) / (N : ℝ)) ^ 2 * ((N - d : ℕ) : ℝ))))
+          * gaussMeasure (Set.Ioo a b)
+        + ENNReal.ofReal ((Real.log 2)⁻¹ * (4 / (Nat.fib (d + 1) : ℝ) ^ 2)) := by
+  set B : Set ℝ := cfBadZone [] v N δ with hB
+  set frac : ℝ := 7 * ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal
+      / ((δ - (d : ℝ) / (N : ℝ)) ^ 2 * ((N - d : ℕ) : ℝ))) with hfrac
+  have hfrac0 : 0 ≤ frac := by rw [hfrac]; positivity
+  set S : Set (List ℕ) := {w ∈ genWords d | cfCylinder w ⊆ Set.Ioo a b} with hSdef
+  have hmemS : ∀ w : List ℕ, w ∈ S ↔
+      (w.length = d ∧ (∀ a ∈ w, 1 ≤ a)) ∧ cfCylinder w ⊆ Set.Ioo a b := by
+    intro w; rw [hSdef]; simp only [genWords, Set.mem_setOf_eq]
+  have hScount : S.Countable := Set.Countable.mono (Set.sep_subset _ _)
+    (Set.Countable.mono (Set.subset_univ _) Set.countable_univ)
+  have hSdisj : S.PairwiseDisjoint (fun w => cfCylinder w) := by
+    intro w hw w' hw' hne
+    exact cfCylinder_disjoint (by rw [((hmemS w).1 hw).1.1, ((hmemS w').1 hw').1.1]) hne
+  have hcov_eq : coveredByCyl a b d = ⋃ w ∈ S, cfCylinder w := rfl
+  have hcovsub : coveredByCyl a b d ⊆ Set.Ioo a b := by
+    rw [hcov_eq]; exact Set.iUnion₂_subset fun w hw => ((hmemS w).1 hw).2
+  have hcovmeas : gaussMeasure (coveredByCyl a b d)
+      = ∑' w : S, gaussMeasure (cfCylinder (w : List ℕ)) := by
+    rw [hcov_eq]
+    exact measure_biUnion hScount hSdisj (fun w _ => measurableSet_cfCylinder w)
+  -- interior bound
+  have hint : gaussMeasure (coveredByCyl a b d ∩ B)
+      ≤ ENNReal.ofReal frac * gaussMeasure (Set.Ioo a b) := by
+    have hdist : coveredByCyl a b d ∩ B = ⋃ w ∈ S, (cfCylinder w ∩ B) := by
+      rw [hcov_eq, Set.iUnion₂_inter]
+    rw [hdist]
+    calc gaussMeasure (⋃ w ∈ S, (cfCylinder w ∩ B))
+        ≤ ∑' w : S, gaussMeasure (cfCylinder (w : List ℕ) ∩ B) :=
+          measure_biUnion_le gaussMeasure hScount _
+      _ ≤ ∑' w : S, ENNReal.ofReal frac * gaussMeasure (cfCylinder (w : List ℕ)) := by
+          apply ENNReal.tsum_le_tsum
+          intro w
+          obtain ⟨⟨hwlen, hwpos⟩, -⟩ := (hmemS (w : List ℕ)).1 w.2
+          have hd' : (w : List ℕ).length < N := by rw [hwlen]; exact hdN
+          have hδ'w : 0 < δ - ((w : List ℕ).length : ℝ) / (N : ℝ) := by rw [hwlen]; exact hδ'
+          have hfr := gaussMeasure_cfBadZone_nil_inter_cylinder_frac_le v (w : List ℕ) N δ
+            hwpos hposv hd' hδ'w
+          rw [Set.inter_comm (cfCylinder (w : List ℕ)) B]
+          rw [hwlen, ← hfrac, ← hB,
+            ENNReal.ofReal_mul hfrac0,
+            ENNReal.ofReal_toReal (measure_ne_top gaussMeasure (cfCylinder (w : List ℕ)))]
+            at hfr
+          exact hfr
+      _ = ENNReal.ofReal frac * ∑' w : S, gaussMeasure (cfCylinder (w : List ℕ)) :=
+          ENNReal.tsum_mul_left
+      _ = ENNReal.ofReal frac * gaussMeasure (coveredByCyl a b d) := by rw [hcovmeas]
+      _ ≤ ENNReal.ofReal frac * gaussMeasure (Set.Ioo a b) := by
+          gcongr
+  -- combine with residual
+  have hsplit : Set.Ioo a b ∩ B
+      ⊆ (coveredByCyl a b d ∩ B) ∪ (Set.Ioo a b \ coveredByCyl a b d) := by
+    rintro x ⟨hxJ, hxB⟩
+    by_cases hc : x ∈ coveredByCyl a b d
+    · exact Or.inl ⟨hc, hxB⟩
+    · exact Or.inr ⟨hxJ, hc⟩
+  have hres := gaussMeasure_interval_sdiff_covered_le a b ha hab hb d
+  calc gaussMeasure (Set.Ioo a b ∩ B)
+      ≤ gaussMeasure ((coveredByCyl a b d ∩ B) ∪ (Set.Ioo a b \ coveredByCyl a b d)) :=
+        measure_mono hsplit
+    _ ≤ gaussMeasure (coveredByCyl a b d ∩ B)
+          + gaussMeasure (Set.Ioo a b \ coveredByCyl a b d) := measure_union_le _ _
+    _ ≤ ENNReal.ofReal frac * gaussMeasure (Set.Ioo a b)
+          + ENNReal.ofReal ((Real.log 2)⁻¹ * (4 / (Nat.fib (d + 1) : ℝ) ^ 2)) := by
+        gcongr
+
 /-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
 finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
 cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every
