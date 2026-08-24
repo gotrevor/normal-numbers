@@ -114,6 +114,34 @@ theorem wSched_length_succ (s : ℕ) :
     (wSched (s + 1)).length = (wSched s).length + nFn (tSched (s + 1)) := by
   rw [wSched_succ, List.length_append, uSched_length]
 
+/-- **Telescoped Khinchin bound**: the total `log`-digit mass of the whole
+scheduled word `wSched s` is bounded by `goodC` times its length — the seed
+word (all `1`s, `log 1 = 0`) contributes nothing, and each stage adds at
+most `goodC · (block length)` by `uSched_log_sum_le`. -/
+theorem wSched_log_sum_le (s : ℕ) :
+    ((wSched s).map (fun a : ℕ => Real.log a)).sum ≤ goodC * (wSched s).length := by
+  induction s with
+  | zero =>
+      have hw : wSched 0 = seedWord := by rw [wSched, sched_zero, seedState_w]
+      rw [hw]
+      have hlog1 : ((seedWord).map (fun a : ℕ => Real.log a)).sum = 0 := by
+        have heq : (seedWord).map (fun a : ℕ => Real.log a)
+            = List.replicate (promThreshold 2) (Real.log (1 : ℕ)) := by
+          rw [seedWord, List.map_replicate]
+        rw [heq, List.sum_replicate]
+        norm_num
+      rw [hlog1]
+      exact mul_nonneg goodC_pos.le (Nat.cast_nonneg _)
+  | succ s ih =>
+      have hu := uSched_log_sum_le s
+      rw [wSched_succ, List.map_append, List.sum_append, List.length_append, uSched_length]
+      push_cast
+      calc ((wSched s).map (fun a : ℕ => Real.log a)).sum
+            + ((uSched s).map (fun a : ℕ => Real.log a)).sum
+          ≤ goodC * (wSched s).length + goodC * nFn (tSched (s + 1)) :=
+            add_le_add ih hu
+        _ = goodC * ((wSched s).length + nFn (tSched (s + 1)) : ℝ) := by ring
+
 /-- The dominance condition in accessor form: the appended block has length
 at most `|wSched s| / tSched (s+1)`. -/
 theorem uSched_dominance (s : ℕ) :
