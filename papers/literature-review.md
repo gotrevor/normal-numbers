@@ -76,8 +76,22 @@ Tier-1 headline, when stated, can be trust-triple-only — no cited deep axiom.
   2026-08-23 — every mathlib "Normal" is order/field/group-normal) and NOT in the
   repo. Must be formalized to state "absolutely normal". Self-contained; the
   repo's `Sandwich`/`Counting` window-frequency machinery may supply pieces.
-- **Khinchin graft** (Tier 2): must be originated end-to-end — digit caps `D_t`
-  in the refinement, uniform integrability of log a, K₀ as a tprod. No source.
+- **Khinchin graft** (Tier 2): must be originated end-to-end — uniform
+  integrability of `log a`, K₀ as a tprod. No source. **Route status (2026-08-24
+  reflection):** the graft is realized NOT by hard digit caps `D_t` but by an
+  ADDITIVE family of log-tail bad zones in the refinement selection, with measure
+  controlled by **Markov's first-moment inequality** on the *nonnegative* tail
+  `Σ_{aᵢ>K} log aᵢ` (we need only the `limsup ≤ log K₀` upper direction; the
+  lower is free from CF-normality). This is a genuine simplification over the
+  originally-planned Chebyshev/variance bound (no two-sided deviation, no L²
+  moment machinery beyond `E[log a₁]<∞`). The uniform-integrability transfer to a
+  FIXED cutoff is secured by a summable family `(khinchinK j, khinchinEta j)` with
+  a geometric coefficient budget `≤1/7` (fixing a real design bug: a level-tied
+  cutoff `K_t→∞` never transfers to a fixed external `K`). All the analytic
+  machinery is proved axiom-clean; the sole remaining step is wiring it through
+  the schedule construction. This is the campaign's original contribution — the
+  Markov-tail realization of uniform integrability inside an explicit
+  normal-number construction appears nowhere in the sources.
 
 ## Related Lean ecosystem (peers, not dependencies)
 

@@ -4,68 +4,76 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-24, review lap — route SETTLED, fence relaxed)
+## CURRENT DIRECTIVE (set 2026-08-24, reflection lap — route C′ RATIFIED, WIRE it)
 
 - **TIER 1 IS LOCKED**: `exists_absolutely_normal_cf_normal` (Becher–Yuhjtman,
   IMRN 2019, apparently first formalization) is **proved and axiom-clean**
   (`propext, Classical.choice, Quot.sound` only) — `Headline.lean:109`
   (re-verified this lap). Do NOT reopen or MODIFY any of it.
-- **THE objective now**: **Tier 2 — Khinchin-typical (W6)**, the frozen headline
-  `exists_absolutely_normal_cf_normal_khinchin` (`Headline.lean:134`, `sorry`):
-  a real that is absolutely normal ∧ CF-normal ∧ Khinchin-typical. Reduces (via
-  `khinchinTypical_iff_log_tendsto`, proved) to `xstar_log_digit_avg_tendsto`
-  (`Khinchin.lean`, the sole crux `sorry`): `(1/n)·Σ_{i<n} log aᵢ → log K₀`.
-- **ROUTE — settled, no longer an open question**: the last 3 laps (route-analysis)
-  established, and this review ratifies: pattern-frequency data + the total-mass
-  bound `wSched_log_sum_le` (`Σ log aᵢ ≤ goodC·n`) do **NOT** suffice — the
-  `44fb8bb`/`e018429` "goodC suffices" insight is **REFUTED** (quantitative:
-  `limsup(1/n)Σ_{aᵢ>K} log aᵢ ≤ goodC − log K₀ > 0`, and `KHINCHIN.md`'s
-  large-digit-planting counterexample kills frequencies-only). The ergodic-theorem
-  route (Birkhoff for the Gauss map) is a charter-forbidden import (trigger b).
-  The ONLY viable route is the **original `KHINCHIN.md` W6 plan**: enforce
-  uniform tail control *in the construction* via a Khinchin log-concentration
-  bad zone.
-- **Mandated next move — BUILD the concentration bad zone, ADDITIVELY**:
-  1. `summable_gaussKuzmin_logsq` — moment condition `E[(log a₁)²]<∞` — DONE
-     this lap (`Khinchin.lean`, axiom-clean).
-  2. Variance bound `Var(Σ_{i<n} log aᵢ) ≤ C·n` under the existing γ-mixing
-     machinery (`CFGammaMixing`/`CFBlockFreq`), with observable `log a₁` in place
-     of a cylinder indicator — mirror `cfBadZone`'s Chebyshev treatment.
-  3. `logBadZone w n η := {x | |Σ_{i<n} log(digit_i x) − n·log K₀| ≥ η·n}`;
-     Chebyshev ⇒ its cylinder-relative measure `≤ C/(η²n)` — small.
-  4. Thread it through the union bound **additively**: a new
-     `exists_good_avoiding_bad_khinchin` / `exists_refinement_uniform_khinchin`
-     that unions this ONE extra zone (re-balance the coeff budget: three zones
-     each `<1/6` in `exists_mem_notMem_union_of_bounds`), returning everything
-     the Tier-1 version does PLUS the log-sum guarantee. Then a witness (new or a
-     schedule parameterized by the bad-zone family) that is abs-normal ∧ CF-normal
-     (unchanged proofs — it avoids a SUPERSET of zones) ∧ has `(1/n)Σ log aᵢ →
-     log K₀`, closing the headline.
-  Start with steps 2–3 (analytic, developable in a NEW file, no TBrick edit yet);
-  do the invasive step-4 plumbing only once 2–3 are solid. Elementary reduction
-  (the 3ε assembly of truncated-convergence + tail-control into
-  `xstar_log_digit_avg_tendsto`) can be wired in `Khinchin.lean` in parallel and
-  reduces the crux to a single clean tail-control lemma.
-- **Fence (REVISED — this is the sticky change)**: additive extension of the
-  schedule/refinement machinery (`TBrick.lean`, `TBrickRefine.lean`,
-  `CFSchedule.lean`) **IS authorized** for the W6 graft — the prior "do NOT touch
-  the schedule" was over-broad (its purpose is protecting locked Tier-1, which an
-  additive lemma does not threaten; the JUDGE froze witness-existence form
-  precisely to allow a W6 rebuild). **Hard invariant**: NEVER edit/weaken an
-  existing Tier-1 declaration or any JUDGE-frozen statement (`IsAbsolutelyNormal`,
-  `IsCFNormal`, `khinchinK₀`, `KhinchinTypical`, both headlines). After ANY
-  TBrick/schedule edit, re-run `#print axioms exists_absolutely_normal_cf_normal`
-  and confirm it stays `[propext, Classical.choice, Quot.sound]` — a change there
-  means you modified locked machinery; revert and make it purely additive.
-  Constants: distortion `2`, γ-mixing `(9/10)`, brick ratio `1/(2d)`.
-- **Why**: the "operator-gated, cannot proceed" conclusion the grind laps reached
-  is a false stop — there is no operator (autonomous run), the extension is
-  additive/tractable/multi-lap, and it is exactly the source-backed W6 plan.
-  Descoping Tier 2 to "Tier 1 is the deliverable" would be miscalibrated caution;
-  the expedition headline (the conjunction, apparently new even on paper) stays
-  the destination and is now unblocked.
+- **THE objective**: **Tier 2 — Khinchin-typical**, the frozen headline
+  `exists_absolutely_normal_cf_normal_khinchin` (`Headline.lean:136`, `sorry`).
+  The analytic reduction is DONE; the whole headline funnels to ONE crux
+  **`xstar_log_tail_uniform`** (`Khinchin.lean:527`, `sorry`): the empirical
+  log-mass of CF digits `> K` is `≤ ε` uniformly in `n`.
+- **ROUTE — C′ (summable Markov log-tail family), RATIFIED, machinery COMPLETE**:
+  frequencies-only is REFUTED (`KHINCHIN.md` large-digit counterexample); the
+  needed ingredient is uniform integrability of `log a`, enforced *in the
+  construction* by an ADDITIVE family of log-tail bad zones. **This lap noted the
+  route SIMPLIFIED** from the prior directive's Chebyshev/variance plan to a
+  **Markov first-moment bound on the nonnegative log-tail** (the tail past a
+  cutoff is `≥0`, so first moment suffices — no two-sided variance). The design
+  bug of a level-tied cutoff (`K_t→∞` never transfers to a fixed external `K`) is
+  FIXED by a summable family with FIXED cutoffs `khinchinK j` (`KhinchinFamily`).
+  All of `KhinchinBrick`/`KhinchinFamily`/`KhinchinRefineFamily`/`CFLogTail` is
+  proved axiom-clean. **The remaining gap is pure WIRING, not more machinery.**
+- **Mandated next move — WIRE, do NOT build more upstream lemmas**:
+  1. **Rewire `CFSchedule.lean`** from the superseded single-zone
+     `TBrick.exists_refinement_uniform_khinchin` to the FAMILY form
+     `TBrick.exists_refinement_uniform_khinchin_family`, with `tK := ` the level
+     `t`. `sched_refinement`/`nFn_spec`/`SchedStep`'s final log conjunct becomes
+     `∀ j<t, (Σ_{a∈u, a>khinchinK j} log a) ≤ khinchinEta j·|u|`; the `KFn t` /
+     `∃K₀` layer disappears. `sched_step` destructures end in trailing `-` (safe);
+     `DaryCorrect.lean:48` needs one more `-` (same fix as commit `949f0b1`).
+  2. **Assemble `xstar_log_tail_uniform`** (`Khinchin.lean:527`): pick
+     `j(ε):=⌈1/ε⌉`, fix `K₀:=khinchinK j(ε)`; split the length-`n` prefix at the
+     stage where level first exceeds `j(ε)` (`sched_t_eventually`). Early stages
+     bounded via the `goodC`-telescope (`wSched_log_sum_le`-style, `CFCorrect.lean`);
+     late stages use the family guarantee AT index `j(ε)`. Monotonicity of the
+     nonneg tail in `K` gives the `∀K≥K₀`. WEAKEN the lemma to `∃N,∀n≥N` (internal;
+     its one consumer `xstar_log_digit_avg_tendsto` uses `Metric.tendsto_atTop`).
+  3. **Route D′**: move `KhinchinTypical`/`khinchinK₀` upstream so
+     `Headline.lean:136` invokes `xstar_khinchinTypical` — trivial after (2).
+- **FORBIDDEN DRIFT**: do NOT add MORE standalone Khinchin machinery (the
+  `KhinchinBrick`/`Family`/`RefineFamily` layer is DONE); every lap must now
+  advance the WIRING (step 1 or 2) — the crux, not the scaffold. The
+  route-decisive uncertain case is whether the per-stage family guarantee
+  transfers to a mid-stage prefix (the analogue of the CF/d-ary prefix-frequency
+  transfer already solved via `sched_dominance`); the smallest probe is step 2's
+  early/late split. Do NOT retreat to easier off-path leaf work.
+- **Fence (unchanged, sticky)**: additive extension of `TBrick`/`CFSchedule` IS
+  authorized. **Hard invariant**: NEVER edit/weaken an existing Tier-1 decl or any
+  JUDGE-frozen statement (`IsAbsolutelyNormal`, `IsCFNormal`, `khinchinK₀`,
+  `KhinchinTypical`, both headlines). After ANY schedule edit, re-run `#print
+  axioms exists_absolutely_normal_cf_normal` — MUST stay `[propext,
+  Classical.choice, Quot.sound]`; a change means locked machinery was modified —
+  revert. Constants: distortion `2`, γ-mixing `(9/10)`, brick ratio `1/(2d)`.
+- **Why**: Tier 1 is banked (first formalization, axiom-clean). Tier 2 is the
+  sole open obligation, the route is source-backed (KHINCHIN.md W6, uniform-
+  integrability), the machinery is proved, and only bookkeeping (schedule rewire +
+  a `3ε`/telescope assembly) remains. This is tractable multi-lap work, NOT a
+  generational wall. Descoping to "Tier 1 is the deliverable" would be
+  miscalibrated caution.
 
 ### Directive history
+- 2026-08-24 (reflection lap): **route C′ RATIFIED; directive de-staled to force
+  WIRING.** The prior directive still named the Chebyshev/variance plan, but grind
+  laps correctly pivoted to the simpler Markov first-moment tail route and BUILT
+  the full family machinery (`KhinchinBrick`/`Family`/`RefineFamily`/`CFLogTail`),
+  all axiom-clean, finding+fixing a real level-tied-cutoff design bug same-run.
+  Confirmed genuine forward motion (whole lemmas closing, crux shrinking), not a
+  false summit. ROUTE VERDICT: CONTINUE (no charter trigger fired). Rewrote the
+  mandated move to the CFSchedule family-rewire + `xstar_log_tail_uniform`
+  assembly; forbade building more upstream machinery.
 - 2026-08-24 (review lap): **Tier-2 route SETTLED, schedule fence RELAXED.** Last
   3 laps (fc801ba/17dc2c9/7d6740f) diagnosed the step-2 crux as "operator-gated"
   and stopped — a false stop (no operator on an autonomous run). Ratified the

@@ -1,5 +1,53 @@
 # PENDING WORK — B5′ campaign
 
+## Reflection — 2026-08-24 (deep reflection lap) 🧘
+
+**Ground truth re-derived** (not taken from handoffs): `lake build` green (8750
+jobs); `#print axioms exists_absolutely_normal_cf_normal` = trust triple (also
+`xstar_cf_freq_tendsto`, `xstar_dary_freq_tendsto`, `pillai`); frozen headline
+statements read faithfully vs source (khinchinK₀ tprod index alignment k↦k+1
+verified via the in-file anchors; `KhinchinTypical`=geom-mean→K₀; `IsAbsolutelyNormal`
+=full normality every base; `IsCFNormal`=window-freq→γ). Only two real `src/`
+sorries: `Headline.lean:136` (Tier-2 headline) and `Khinchin.lean:527`
+(`xstar_log_tail_uniform`, the crux). The rest are docstring mentions.
+
+**DIRECTION CALL — CONTINUE route C′; the directive was STALE and is now fixed.**
+The prior CURRENT DIRECTIVE still described the Chebyshev/variance bad-zone plan,
+but the grind laps correctly pivoted to the simpler **Markov first-moment bound on
+the nonnegative log-tail** and built the entire summable-family machinery
+(`KhinchinBrick`, `KhinchinFamily`, `KhinchinRefineFamily`, `CFLogTail`) —
+all axiom-clean. This is genuine forward motion, NOT a false summit: whole lemmas
+close lap-over-lap (Lebesgue bridge → three-zone combine → refinement-family), the
+crux keeps SHRINKING (whole log-average → one tail-mass bound → schedule wiring),
+and this run's real design bug (level-tied cutoff `K_t→∞` can't transfer to a fixed
+external `K`) was found AND fixed same-run via the fixed-cutoff summable family.
+ROUTE VERDICT: **CONTINUE** — neither charter trigger fired (route uses
+Markov+γ-mixing, explicitly Birkhoff-free; γ-mixing rate is proven geometric).
+
+**KEEP doing**: the route C′ family graft; treating Tier 1 as banked/untouchable.
+
+**STOP doing**: building MORE upstream Khinchin lemmas. That layer is COMPLETE
+(handoff items 6–8 confirm `exists_good_avoiding_bad…_family` +
+`exists_refinement_uniform_khinchin_family` are proved axiom-clean). Every further
+lap that adds standalone machinery instead of WIRING is drift. The value is now
+100% in the plumbing.
+
+**HIGHEST-VALUE NEXT TARGET**: rewire `CFSchedule.lean` to the family refinement
+(`tK := level`), then assemble `xstar_log_tail_uniform` from the schedule's family
+payload. Reasoning: this is the route-DECISIVE test. The one genuinely uncertain
+step is whether the per-stage family guarantee (each good block avoids all `j<t`
+log zones) transfers to a **mid-stage prefix** of `xstar` — the exact analogue of
+the CF/d-ary per-block→prefix-frequency transfer ALREADY solved via
+`sched_dominance` + the `goodC`-telescope, so precedented and tractable, but the
+last untested link. If it goes through, Tier 2 closes; if it walls, that wall is
+the real obstacle to surface (and Tier 1 remains a complete standalone deliverable).
+The crux's `∀K≥K₀` is handled by monotonicity of the nonnegative tail in `K`, so
+controlling it at the single fixed cutoff `khinchinK j(ε)` suffices. Weaken
+`xstar_log_tail_uniform` to `∃N,∀n≥N` — its only consumer works via
+`Metric.tendsto_atTop`.
+
+---
+
 > **GRIND (2026-08-24 — value-count bridge PROVED; crux is now a pure
 > tail-mass bound).** Landed three axiom-clean lemmas in `Khinchin.lean`:
 > - `countOccurrences_singleton`: `countOccurrences [a] l = l.count a`.
