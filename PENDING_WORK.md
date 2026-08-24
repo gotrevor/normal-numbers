@@ -38,6 +38,36 @@ This is the FRACTIONAL cfK-tail control the steer graft needs (the half-measure
 I_wx`; the ε-version lets κ be chosen so the cfK-bad set cannot swallow the
 freq-good surplus `μ(A\B)`).
 
+**Landed 2026-08-28 (extraction core, axiom-clean, `CFScheduleA.lean`):**
+`exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt` — abstract: any `B'` with
+`gaussMeasure B' < gaussMeasure (Ioo c d)` misses an irrational point of `Ioo c
+d`.  The graft passes `B' = (bad zones) ∪ (cfK-large extensions)`; it now only
+needs `gaussMeasure(bad ∪ cfKbad) < gaussMeasure(Ioo c d)`.
+
+**IMMEDIATE NEXT STEP (packaging the cfK-bad set):** define
+`cfKbadExtSet w κ n := ⋃ u ∈ genWords n, (if cfK u ≤ e^{κn} then ∅ else
+cfCylinder (w++u))`, prove `volume (cfKbadExtSet w κ n) = ∑'(if good then 0 else
+vol(w++u))` (mirror `volume_goodExtSet`'s disjoint `measure_biUnion`), hence
+`≤ ε·volume(cfCylinder w)` by `frac_mass_bad_extensions`.  Bridge to Gauss with
+`gaussMeasure_le_volume` (`gaussMeasure s ≤ ofReal (log 2)⁻¹ · volume s`) and
+`volume_le_gaussMeasure`, giving `gaussMeasure(cfKbadExtSet) ≤ (2ε)·gaussMeasure
+(cfCylinder wx)`.  Choose ε below the freq-good surplus and combine with the
+multiscale `gaussMeasure_multiscale_cfBadZone_le` bound to feed
+`exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt`.
+
+**⚠️ ROUTE-DECISIVE QUESTION SURFACED THIS LAP (κ-uniformity):** the rate
+`κ = C₀/ε` from `frac_mass_bad_extensions` grows as the surplus fraction
+`ε ~ μ(A\B)/μ(I_wx)` shrinks.  For `schedA_block_linear` to have a FIXED `K₁ =
+κ/log φ`, `κ` must be bounded across stages, i.e. the steering target `A_s` must
+stay a bounded fraction of `cfCylinder wx_s`.  If targets shrink unboundedly
+(likely, since nested cylinders converge), `κ_s → ∞` and the affine bound
+degrades.  **Candidate fix:** apply `frac_mass` to the TARGET sub-cylinder rather
+than `I_wx` (the block's cfK is a property of digits past `wx`, so the relevant
+base is the deepest common cylinder containing `A_s`, not `wx_s`), OR restructure
+so each block first refines to a cfK-good sub-cylinder of controlled relative
+size THEN steers within it (B5′-style refine-then-place).  This is the next
+route-decisive probe; settle it before the full plumbing.
+
 **NEXT (the graft, now with both halves in hand):** build
 `exists_multiscale_freq_good_block_steer_len` + a cfK conclusion by intersecting
 the selection with the `cfK ≤ e^{κ·ntop}` set.  Concretely, in

@@ -392,6 +392,43 @@ theorem exists_irrational_notMem_cfBadZone_in_Ioo (wx : List ℕ) (hwx : wx ≠ 
   obtain ⟨⟨hxA, hxB⟩, hxQ⟩ := hx
   exact ⟨x, hxQ, hxA, hxB⟩
 
+/-- **Abstract irrational-selection core.**  Any set `B'` of Gauss measure
+strictly below that of `Ioo c d` misses an irrational point of `Ioo c d`.  The
+measure-theoretic heart shared by the bad-zone selection lemmas, factored out so
+the cfK-steer graft can pass `B' = (bad zones) ∪ (cfK-large extensions)` and get a
+point that is BOTH freq-good AND cfK-controlled in one shot — it only needs to
+prove `gaussMeasure (bad ∪ cfKbad) < gaussMeasure (Ioo c d)`, which
+`frac_mass_bad_extensions` (+ the volume↔Gauss bridge) supplies. -/
+theorem exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt {c d : ℝ} (B' : Set ℝ)
+    (hlt : gaussMeasure B' < gaussMeasure (Set.Ioo c d)) :
+    ∃ x : ℝ, Irrational x ∧ x ∈ Set.Ioo c d ∧ x ∉ B' := by
+  set A : Set ℝ := Set.Ioo c d with hA
+  have hAsub : gaussMeasure A ≤ gaussMeasure (A \ B') + gaussMeasure B' := by
+    have hcov : A ⊆ (A \ B') ∪ B' := fun x hx => by
+      by_cases h : x ∈ B'
+      · exact Or.inr h
+      · exact Or.inl ⟨hx, h⟩
+    exact (measure_mono hcov).trans (measure_union_le _ _)
+  have hABpos : 0 < gaussMeasure (A \ B') := by
+    rw [pos_iff_ne_zero]
+    intro h0
+    rw [h0, zero_add] at hAsub
+    exact absurd (lt_of_lt_of_le hlt hAsub) (lt_irrefl _)
+  have hac : gaussMeasure ≪ (MeasureTheory.volume.restrict (Set.Ioo (0 : ℝ) 1)) :=
+    MeasureTheory.withDensity_absolutelyContinuous _ _
+  have hQnull : gaussMeasure (Set.range ((↑) : ℚ → ℝ)) = 0 := by
+    apply hac
+    rw [Measure.restrict_apply' measurableSet_Ioo]
+    exact measure_mono_null Set.inter_subset_left
+      ((Set.countable_range _).measure_zero volume)
+  have hposdiff : 0 < gaussMeasure ((A \ B') \ Set.range ((↑) : ℚ → ℝ)) := by
+    have heq : gaussMeasure ((A \ B') \ Set.range ((↑) : ℚ → ℝ)) = gaussMeasure (A \ B') :=
+      measure_sdiff_null (s := A \ B') hQnull
+    rw [heq]; exact hABpos
+  obtain ⟨x, hx⟩ := nonempty_of_measure_ne_zero hposdiff.ne'
+  obtain ⟨⟨hxA, hxB⟩, hxQ⟩ := hx
+  exact ⟨x, hxQ, hxA, hxB⟩
+
 /-- **Multi-scale measure core.**  Given the aggregate multi-scale bad-zone
 measure bound is below `γ(c,d)` (the caller supplies this, having chosen `n₁`
 large relative to `|NS|`), there is an irrational point of `(c,d)` avoiding EVERY
