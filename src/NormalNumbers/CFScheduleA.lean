@@ -241,6 +241,103 @@ theorem exists_freq_good_block_in_Ioo (F : Finset (List ℕ))
   exact ⟨u, hune, hulen, hupos, hfreq,
     x, hxu, hxirr, hwsub (cfCylinder_append_subset _ _ hxu)⟩
 
+/-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
+finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
+cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every
+`n ≥ N` admits an IRRATIONAL point `x ∈ (c,d)` avoiding ALL of `wx`'s CF
+`n`-step discrepancy bad zones for `F`.  Its length-`n` orbit block from `wx` is
+therefore `δ`-frequency-good FOR EVERY `v ∈ F` — AND the point already lies in
+the target `(c,d)`, so the freq-good digits THEMSELVES steer into the target: no
+uncontrolled navigation filler.  This is the route-decisive crux ingredient (the
+interleaved schedule's ψ-stage): the aggregate bad-zone mass is `O(1/n)·γ(I_wx)`
+(`gaussMeasure_aggregate_cfBadZone_le`) while `γ(c,d)` is a fixed positive
+fraction, so for `n` large the good mass FILLS `(c,d)`. -/
+theorem exists_irrational_notMem_cfBadZone_in_Ioo (wx : List ℕ) (hwx : wx ≠ [])
+    (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ : ℝ} (hδ : 0 < δ) {c d : ℝ}
+    (hcd : Set.Ioo c d ⊆ cfCylinder wx)
+    (hpos : 0 < (gaussMeasure (Set.Ioo c d)).toReal) :
+    ∃ N : ℕ, ∀ n, N ≤ n → 0 < n → ∃ x : ℝ, Irrational x ∧ x ∈ Set.Ioo c d ∧
+      x ∉ ⋃ v ∈ F, cfBadZone wx v n δ := by
+  -- aggregate bad-zone measure bound: `≤ S / n · 1`, with `S` an explicit constant
+  set S : ℝ := ∑ v ∈ F, 7 * ((8 * v.length + 80)
+      * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2))
+      * (gaussMeasure (cfCylinder wx)).toReal with hS
+  have hS0 : 0 ≤ S := by
+    refine Finset.sum_nonneg fun v _ => ?_
+    have h1 : (0:ℝ) ≤ (gaussMeasure (cfCylinder v)).toReal := ENNReal.toReal_nonneg
+    have h2 : (0:ℝ) ≤ (gaussMeasure (cfCylinder wx)).toReal := ENNReal.toReal_nonneg
+    have : (0:ℝ) ≤ (8 * v.length + 80) := by positivity
+    positivity
+  -- pick N large enough that `S / N < γ(c,d)`
+  obtain ⟨N, hN⟩ := exists_nat_gt (S / (gaussMeasure (Set.Ioo c d)).toReal)
+  refine ⟨max N 1, fun n hn hn0 => ?_⟩
+  have hnN : N ≤ n := le_trans (le_max_left _ _) hn
+  have hnR : (0:ℝ) < n := by exact_mod_cast hn0
+  -- the bad zone measure (toReal) is `≤ S / n`
+  have hbad := gaussMeasure_aggregate_cfBadZone_le wx hwxpos F hF n hn0 hδ
+  have hSn : (∑ v ∈ F, 7 * ((8 * v.length + 80)
+      * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n))
+      * (gaussMeasure (cfCylinder wx)).toReal) = S / n := by
+    rw [hS, Finset.sum_div]
+    refine Finset.sum_congr rfl fun v _ => ?_
+    have hne : (δ:ℝ) ^ 2 * n ≠ 0 := by positivity
+    have hne2 : (δ:ℝ) ^ 2 ≠ 0 := by positivity
+    have hnn : (n:ℝ) ≠ 0 := hnR.ne'
+    field_simp
+  rw [hSn] at hbad
+  -- `S / n ≤ S / N < γ(c,d)`
+  have hglt : S / (n:ℝ) < (gaussMeasure (Set.Ioo c d)).toReal := by
+    have hNn : (N:ℝ) ≤ n := by exact_mod_cast hnN
+    have hNpos : (0:ℝ) < N := by
+      rcases Nat.eq_zero_or_pos N with h | h
+      · rw [h] at hN; simp only [Nat.cast_zero] at hN
+        have : 0 ≤ S / (gaussMeasure (Set.Ioo c d)).toReal := div_nonneg hS0 hpos.le
+        linarith
+      · exact_mod_cast h
+    have hmono : S / (n:ℝ) ≤ S / N := by
+      apply div_le_div_of_nonneg_left hS0 hNpos hNn
+    have hNlt : S / (N:ℝ) < (gaussMeasure (Set.Ioo c d)).toReal := by
+      rw [div_lt_iff₀ hNpos]
+      rw [div_lt_iff₀ hpos] at hN
+      linarith [hN]
+    linarith
+  -- so `γ(⋃ bad) < γ(c,d)` as `ENNReal`
+  set A : Set ℝ := Set.Ioo c d with hA
+  set B : Set ℝ := ⋃ v ∈ F, cfBadZone wx v n δ with hB
+  have hBfin : gaussMeasure B ≠ ⊤ := measure_ne_top _ _
+  have hAfin : gaussMeasure A ≠ ⊤ := measure_ne_top _ _
+  have hBltA : gaussMeasure B < gaussMeasure A := by
+    rw [← ENNReal.toReal_lt_toReal hBfin hAfin]
+    exact lt_of_le_of_lt hbad hglt
+  -- hence `γ(A \ B) > 0`
+  have hAsub : gaussMeasure A ≤ gaussMeasure (A \ B) + gaussMeasure B := by
+    have hcov : A ⊆ (A \ B) ∪ B := fun x hx => by
+      by_cases h : x ∈ B
+      · exact Or.inr h
+      · exact Or.inl ⟨hx, h⟩
+    exact (measure_mono hcov).trans (measure_union_le _ _)
+  have hABpos : 0 < gaussMeasure (A \ B) := by
+    rw [pos_iff_ne_zero]
+    intro h0
+    rw [h0, zero_add] at hAsub
+    exact absurd (lt_of_lt_of_le hBltA hAsub) (lt_irrefl _)
+  -- remove the (null) rationals and extract an irrational point
+  have hac : gaussMeasure ≪ (MeasureTheory.volume.restrict (Set.Ioo (0:ℝ) 1)) :=
+    MeasureTheory.withDensity_absolutelyContinuous _ _
+  have hQnull : gaussMeasure (Set.range ((↑) : ℚ → ℝ)) = 0 := by
+    apply hac
+    rw [Measure.restrict_apply' measurableSet_Ioo]
+    exact measure_mono_null Set.inter_subset_left
+      ((Set.countable_range _).measure_zero volume)
+  have hposdiff : 0 < gaussMeasure ((A \ B) \ Set.range ((↑) : ℚ → ℝ)) := by
+    have heq : gaussMeasure ((A \ B) \ Set.range ((↑) : ℚ → ℝ)) = gaussMeasure (A \ B) :=
+      measure_sdiff_null (s := A \ B) hQnull
+    rw [heq]; exact hABpos
+  obtain ⟨x, hx⟩ := nonempty_of_measure_ne_zero hposdiff.ne'
+  obtain ⟨⟨hxA, hxB⟩, hxQ⟩ := hx
+  exact ⟨x, hxQ, hxA, hxB⟩
+
 /-- **One schedule stage (single stream).**  Given the current genuine word
 `wx`, a pattern family `F`, tolerance `δ > 0`, and a length target `L`, there is
 a strict genuine EXTENSION `wx'` of `wx` (i.e. `wx'.take |wx| = wx`, `|wx| <

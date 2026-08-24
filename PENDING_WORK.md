@@ -75,13 +75,30 @@ BOTH fillers `~` the other payload `→∞`. No schedule makes `filler_s = o(pay
 on both streams simultaneously (would need `n_{other,s}=o(n_s)` AND `n_s=o(n_{other,s})`).
 
 **Conclusion:** the interleaved schedule closes IFF the navigation digits are
-themselves frequency-good — then `chainApp = (good nav)++(good payload)` is a single
-margin-good block, `filler` vanishes, the EXISTING `chain_orbit_equidist` applies
-(blocks are `o(word)` under slow growth ⇒ `hdom` holds). **The route-decisive crux
-is entirely `exists_freq_good_block` STEERED into `ψ⁻¹(target)` (item 2 below).**
-The addslack/split-tail lemmas remain valid reusable infrastructure (they close the
-weaker case `filler = o(payload)`, should a partial item-2 deliver only that), but
-they do NOT bypass item 2.
+themselves frequency-good — then `chainApp = u` is a single margin-good block,
+`filler` vanishes, the EXISTING `chain_orbit_equidist` applies (blocks are `o(word)`
+under slow growth ⇒ `hdom` holds). **The route-decisive crux is `exists_freq_good_block`
+STEERED into `ψ⁻¹(target)`.**
+
+### ✅✅ CRACK (2026-08-27, cont.): the steerable good block is TRACTABLE (NOT a deep wall)
+Earlier pessimism ("steering base uncontrolled ⇒ deep Vandehey wall") was WRONG — it
+conflated the split engine `exists_freq_good_block_in_Ioo` (placement base + good
+tail) with what the bad-zone machinery actually gives. `cfBadZone wx v n δ`
+(`TBrick.lean:191`) controls `blockCount v` over the ENTIRE next `n` steps FROM base
+`wx` — so take base = `wx` directly (NO navigation prefix) and intersect the good set
+with the target interval:
+- `Gₙ := cfCylinder wx \ ⋃_{v∈F} cfBadZone wx v n δ`.
+- `gaussMeasure (⋃ cfBadZone wx v n δ) ≤ (Σ_v 7(8|v|+80)γ(I_v)/(δ²n))·γ(I_wx)` —
+  **already proved: `gaussMeasure_aggregate_cfBadZone_le` (TBrick.lean:201)**, `= O(1/n)·γ(I_wx)`.
+- target `(c,d) ⊆ cfCylinder wx` has `γ(c,d) = ρ·γ(I_wx)`, INDEPENDENT of `n`.
+- ⇒ `γ(Gₙ ∩ (c,d)) ≥ ρ·γ(I_wx) − O(1/n)·γ(I_wx) > 0` for `n > O(1/ρ)`.
+Extract irrational `x ∈ Gₙ ∩ (c,d)`: `x ∈ (c,d)` AND its `n`-block `u` from `wx` is
+δ-freq-good (via `abs_blockCount_lt_of_notMem_cfBadZone` + blockCount↔countOccurrences
+bridge, EXACTLY as `exists_freq_good_block` CFFreqBlock:86–100). **The freq-good digits
+themselves steer into `(c,d)` — no separate filler.** `cfCylinder (wx++u) ⊆ (c,d)`
+by choosing the point in `(c',d') ⊂⊂ (c,d)` with `n` large (cylinder width → 0), as
+`exists_cfCylinder_subset_Ioo` does.
+The addslack/split-tail lemmas become UNNEEDED for the main route (kept as infra).
 
 ### NEXT — item 2 is THE crux (hardest-first). Attack it directly.
 1. **`exists_freq_good_block_in_Ioo_whole`** (CFScheduleA or CFFreqBlock): the
