@@ -62,30 +62,62 @@ q>0 only; general q≠0 via `x↦−x` at point of use.
 **L1+L2+L3 all closed — the metric substrate of B6 is DONE.** What remains is
 the genuine crux:
 
-**NEXT ATTACK — L4 schedule surgery (MODERATE-risk crux)** + L5 assembly.
-The hard content: arrange `xstar` so that for each image system `(qᵢ,rᵢ)`,
-`ψᵢ(xstar) = qᵢ·xstar+rᵢ` is CF-normal — i.e. its CF-digit-window freqs → γ
-(`IsCFNormal`, `Headline.lean:71`). The witness route: the schedule must, at
-each stage, also drive the digit-window counts of the *image* streams. Design
-questions to resolve NEXT LAP (study `CFSchedule.lean`, `TBrickRefine.lean`,
-`TBrick.exists_refinement_uniform*`, and how `xstar_cf_freq_tendsto` is proved
-in `CFCorrect.lean`):
-1. How does the current schedule force `xstar`'s OWN CF-freqs (the
-   `blockCount`/`cfBadZone` union-bound at each brick)? `good_mass_in_affine_preimage`
-   is the image analogue of the base good-density — the image bad zones pull back
-   to `ψᵢ⁻¹(cfBadZone)` intervals, boundable by L1/L2 on those preimage intervals.
-2. Budget: `exists_mem_notMem_union_of_bounds` (`TBrick.lean:244`) currently
-   folds a fixed number of zones with `Σ coeff < 1/2`. Adding `m(s)` image
-   systems per stage (growing like B–Y `(log s)^{1/5}`) needs the per-stage
-   union budget re-split — copy-and-extend `TBrick`/`TBrickRefine` into new
-   modules (`CFScheduleA.lean`), NEVER edit the frozen ones.
-3. L5: concatenation-correctness on the image digit stream (mirror
-   `xstar_cf_freq_tendsto`'s window→freq chain) → `IsCFNormal (ψᵢ xstar)`.
-Escape valve (judge-governed): Tier 2 may drop to a FINITE family; Tier 1 (the
-φ headline `x, φx, x+φ`) uses just a 2-element family.
-Faithfulness gate after any schedule work: `#print axioms
-exists_absolutely_normal_cf_normal_khinchin` MUST stay `[propext,
-Classical.choice, Quot.sound]` (frozen headline unmodified).
+## B6 — lap 5 landed (2026-08-24): affine pullback measure + L4 ROUTE ANALYSIS ✅
+
+Proved `volume_preimage_affineMap` (CFAffine.lean, axiom-clean): `volume(ψ⁻¹ s) =
+|q⁻¹|·volume s` for any `q≠0,s` — the L4 union-bound ingredient. Build green (8753).
+
+### ⚠️ ROUTE-DECISIVE FINDING (L4 is a REAL theorem, not "mechanical threading")
+
+`IsCFNormal (ψ xstar)` is about the CF-digit **windows of the single real number
+`ψ(xstar)`**, read off by iterating the Gauss map `T` on `ψ(xstar)` ITSELF
+(`IsCFNormal`, `Headline.lean:71`: `T^k(ψ xstar) ∈ cfCylinder v` frequency → γ).
+Crucially **`T` does NOT commute with `ψ`** — the CF expansion of `qx+r` has no
+finite relation to that of `x` for general real `q`. (This is exactly why
+Vandehey §7 restricts to `q,r` QUADRATIC: only then does `ψ` act nicely on CF
+tails via the geodesic flow. For arbitrary real `q` the problem is likely open
+or false.) So the B5′ trick — *prescribe* xstar's digit sequence to be
+CF-normal, and windows-of-the-prefix = orbit-visits — does NOT directly give
+`ψ(xstar)` CF-normal: we cannot independently prescribe both digit sequences.
+
+**Consequence for the interval-transport insight (KHINCHIN.md §B6).** L1–L3
+(ψ maps intervals to intervals, |ψ⁻¹(J)|=|J|/q, good density transports) are
+NECESSARY but NOT SUFFICIENT. Interval nesting controls only the FIRST few CF
+digits of `ψ(xstar)` per stage, not its whole orbit.
+
+**The route that CAN work — INTERLEAVED (diagonal) schedule.** Build xstar as a
+limit of nested x-intervals where stages ALTERNATE:
+- **x-stages**: refine to a good x-cylinder (fixes next block of xstar's OWN CF
+  digits with correct freq) — the existing B5′ mechanism.
+- **ψ-stages** (per image system i): refine so `ψᵢ(xstar)` enters a prescribed
+  GOOD ψ-cylinder = xstar enters `ψᵢ⁻¹(good ψ-cylinder)`, an x-INTERVAL. L1/L2/L3
+  say that interval contains good x-cylinders of positive density, so the refine
+  is feasible; `good_mass_in_affine_preimage` is exactly this density.
+Over infinitely many alternating stages: xstar's digit seq is CF-normal (x-stages)
+AND `ψᵢ(xstar)`'s digit seq is CF-normal (ψ-stages). The digits contributed by
+the "other" stages must not spoil frequency — they do not, because every stage
+selects a GOOD (correct-freq) block. This is a genuine but plausible multi-lap
+construction; the density substrate (L1–L3) is now all proved.
+
+**Sub-obligations to formalize (next laps, in new `CFScheduleA.lean`, additive):**
+1. Orbit⇔window bridge for the IMAGE: `T^k(ψ xstar) ∈ cfCylinder v` ⇔ ψ(xstar)'s
+   CF digits `k..k+|v|` = v — needed to turn "ψ(xstar) in prescribed ψ-cylinders"
+   into window-frequency (mirror how `xstar_cf_freq_tendsto`/`CFCorrect.lean`
+   turns the prescribed x-digit seq into orbit visits). **This is the crux
+   sub-question**: does landing ψ(xstar) in a nested chain of ψ-cylinders control
+   its whole orbit's visit frequencies? (For xstar it works because the chain IS
+   the digit sequence; for ψ(xstar) the chain of ψ-cylinders likewise IS ψ(xstar)'s
+   digit sequence — so YES, provided the ψ-stage refinements prescribe ψ(xstar)'s
+   digits consecutively. Verify this consecutiveness is maintainable while also
+   interleaving x-stages.)
+2. Interleaved schedule def + the per-stage union bound: bad_x ∪ ψᵢ⁻¹(bad_ψ)
+   has measure < brick mass (base zone via `cfBadZone`; image zone via
+   `volume_preimage_affineMap` + L1/L2). Copy-extend `TBrick`/`TBrickRefine`;
+   NEVER edit frozen modules.
+3. L5 per-map assembly → `IsCFNormal (ψᵢ xstar)`.
+Escape valve: Tier 1 (φ headline `x,φx,x+φ`) = 2-element family; Tier 2 general
+family the stretch. Faithfulness gate after any work: `#print axioms
+exists_absolutely_normal_cf_normal_khinchin` MUST stay trust-triple.
 
 ---
 ### (historical) original L3 plan
