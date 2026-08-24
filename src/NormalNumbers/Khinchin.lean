@@ -717,6 +717,74 @@ theorem integral_logTailFn_tendsto :
   refine gaussKuzmin_logtail_tendsto.congr (fun K => ?_)
   rw [integral_logTailFn_eq]
 
+/-! ## The `n`-step log-tail Birkhoff sum (route B′)
+
+`logBirkhoffSum K n x = Σ_{i<n} logTailFn K (Tⁱx)`, the empirical log-tail
+mass over `n` steps.  Mirrors `blockCount`'s Birkhoff-sum machinery
+(`CFBlockFreq.lean`) with the unbounded weight `logTailFn K` in place of a
+`{0,1}`-valued indicator; `integral_logTailFn_eq`/`integrable_logTailFn`
+supply exactly the per-step input `integral_blockCount`'s proof needs. -/
+
+/-- The `n`-step log-tail Birkhoff sum. -/
+noncomputable def logBirkhoffSum (K n : ℕ) : ℝ → ℝ :=
+  birkhoffSum gaussMap (logTailFn K) n
+
+lemma logBirkhoffSum_apply (K n : ℕ) (x : ℝ) :
+    logBirkhoffSum K n x = ∑ k ∈ Finset.range n, logTailFn K (gaussMap^[k] x) := rfl
+
+-- Each shifted term is integrable: `logTailFn K` is integrable
+-- (`integrable_logTailFn`) and `gaussMap^[k]` is measure-preserving.
+set_option maxHeartbeats 800000 in
+private lemma integrable_logTailFn_iterate (K k : ℕ) :
+    Integrable (fun x => logTailFn K (gaussMap^[k] x)) gaussMeasure := by
+  have h := (measurePreserving_gaussMap.iterate k).integrable_comp_of_integrable
+    (integrable_logTailFn K)
+  exact h
+
+-- Each shifted term has the SAME integral as the base step (measure
+-- preservation): `∫ logTailFn K ∘ Tᵏ dγ = ∫ logTailFn K dγ`.
+set_option maxHeartbeats 800000 in
+private lemma integral_logTailFn_iterate (K k : ℕ) :
+    ∫ x, logTailFn K (gaussMap^[k] x) ∂gaussMeasure
+      = ∫ x, logTailFn K x ∂gaussMeasure := by
+  conv_rhs => rw [← (measurePreserving_gaussMap.iterate k).map_eq]
+  exact (integral_map (measurePreserving_gaussMap.iterate k).measurable.aemeasurable
+    (measurable_logTailFn K).aestronglyMeasurable).symm
+
+/-- `logBirkhoffSum K n` is measurable. -/
+lemma measurable_logBirkhoffSum (K n : ℕ) : Measurable (logBirkhoffSum K n) := by
+  have heq : logBirkhoffSum K n
+      = fun x => ∑ k ∈ Finset.range n, logTailFn K (gaussMap^[k] x) := rfl
+  rw [heq]
+  exact Finset.measurable_sum _ fun k _ =>
+    (measurable_logTailFn K).comp (measurable_gaussMap.iterate k)
+
+/-- **First moment of the `n`-step log-tail Birkhoff sum**: `∫ logBirkhoffSum
+K n dγ = n · ∫ logTailFn K dγ`.  Same route as `integral_blockCount`: split
+the finite sum, use measure preservation per step. -/
+theorem integral_logBirkhoffSum (K n : ℕ) :
+    ∫ x, logBirkhoffSum K n x ∂gaussMeasure
+      = n * ∫ x, logTailFn K x ∂gaussMeasure := by
+  calc ∫ x, logBirkhoffSum K n x ∂gaussMeasure
+      = ∑ k ∈ Finset.range n, ∫ x, logTailFn K (gaussMap^[k] x) ∂gaussMeasure := by
+        rw [show (fun x => logBirkhoffSum K n x)
+            = fun x => ∑ k ∈ Finset.range n, logTailFn K (gaussMap^[k] x) from
+          funext (logBirkhoffSum_apply K n)]
+        exact integral_finsetSum _ (fun k _ => integrable_logTailFn_iterate K k)
+    _ = ∑ _k ∈ Finset.range n, ∫ x, logTailFn K x ∂gaussMeasure :=
+        Finset.sum_congr rfl fun k _ => integral_logTailFn_iterate K k
+    _ = n * ∫ x, logTailFn K x ∂gaussMeasure := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+
+/-- `logBirkhoffSum` is pointwise nonnegative (each term is). -/
+lemma logBirkhoffSum_nonneg (K n : ℕ) (x : ℝ) : 0 ≤ logBirkhoffSum K n x := by
+  rw [logBirkhoffSum_apply]
+  refine Finset.sum_nonneg fun k _ => ?_
+  unfold logTailFn
+  split
+  · exact Real.log_natCast_nonneg _
+  · exact le_refl 0
+
 /-- **Uniform log-digit tail control** (the sole SCHEDULE-DEPENDENT crux of
 Tier 2, now isolated).  For every `ε > 0` there is a cutoff `K₀` such that for
 ALL cutoffs `K ≥ K₀` and ALL prefix lengths `n`, the empirical log-average
