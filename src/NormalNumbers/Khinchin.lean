@@ -199,6 +199,37 @@ that total bound alone suffices (e.g. via a Chebyshev/Markov argument on how
 many digits can exceed `K` before the `goodC · n` cap is violated) or a finer
 per-digit-value split of the schedule bound is needed is the open question. -/
 
+/-- **Finite-truncation convergence** (real sub-piece of the step-2
+assembly): for any fixed cutoff `K`, the `≤ K` slice of the empirical
+log-digit average tends to the matching finite Gauss–Kuzmin sum. Direct
+consequence of `xstar_cf_freq_tendsto` at each `a ∈ [1,K]` (finitely many
+digit values), via `tendsto_finsetSum`. Does NOT yet connect to the full
+empirical average `(1/n)·Σ_{i<n} log(digit i)` from
+`xstar_log_digit_avg_tendsto` — that needs (a) the list-sum-by-value-count
+identity `Σ_{i<n} log(digit i) = Σ_a countOccurrences [a] (cfPrefix n) ·
+log a` and (b) the uniform tail control past `K`, both still open. -/
+theorem xstar_log_digit_avg_truncated_tendsto (K : ℕ) :
+    Filter.Tendsto
+      (fun n : ℕ =>
+        (1 / (n : ℝ)) *
+          ∑ a ∈ Finset.Icc 1 K, (countOccurrences [a] (cfPrefix n) : ℝ) * Real.log a)
+      Filter.atTop
+      (nhds (∑ a ∈ Finset.Icc 1 K, (gaussMeasure (cfCylinder [a])).toReal * Real.log a)) := by
+  have hterm : ∀ a ∈ Finset.Icc 1 K,
+      Filter.Tendsto
+        (fun n : ℕ => (1 / (n : ℝ)) * ((countOccurrences [a] (cfPrefix n) : ℝ) * Real.log a))
+        Filter.atTop (nhds ((gaussMeasure (cfCylinder [a])).toReal * Real.log a)) := by
+    intro a ha
+    have ha1 : 1 ≤ a := (Finset.mem_Icc.1 ha).1
+    have h := xstar_cf_freq_tendsto [a] (by simp) (by simpa using ha1)
+    have h2 := h.mul_const (Real.log a)
+    refine h2.congr (fun n => ?_)
+    rw [cfPrefix]
+    ring
+  have hsum := tendsto_finsetSum (Finset.Icc 1 K) hterm
+  refine hsum.congr (fun n => ?_)
+  rw [Finset.mul_sum]
+
 /-- **Target of the Tier-2 assembly** (`Headline.lean:136`'s obligation via
 `khinchinTypical_iff_log_tendsto`): `xstar`'s empirical CF log-digit average
 tends to `log khinchinK₀`. See the module docstring above for the attack
