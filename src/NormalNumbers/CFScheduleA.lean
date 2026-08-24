@@ -241,6 +241,45 @@ theorem exists_freq_good_block_in_Ioo (F : Finset (List ℕ))
   exact ⟨u, hune, hulen, hupos, hfreq,
     x, hxu, hxirr, hwsub (cfCylinder_append_subset _ _ hxu)⟩
 
+/-- **L4 route — ψ-pullback Gauss distortion bound (route-decisive first brick).**
+For `q > 0` and a measurable `S ⊆ (0,1)`, the affine pullback `ψ⁻¹ = (q·+r)⁻¹`
+scales `gaussMeasure` by at most `2/q`:  `γ(ψ⁻¹ S) ≤ (2/q)·γ(S)`.  Assembled from
+the upper Gauss/Lebesgue comparison `gaussMeasure_le_volume` (density `≤ (log2)⁻¹`),
+the EXACT Lebesgue pullback `volume_preimage_affineMap` (`vol(ψ⁻¹ S)=|q⁻¹|·vol S`),
+and the lower comparison `volume_le_ofReal_mul_gaussMeasure` (`vol S ≤ (2 log2)·γ(S)`
+on `(0,1)`); the two `log 2` factors cancel.  This is the foundational measure
+lemma of the single-stream L4 route (`PENDING_WORK.md` top): an image-space bad set
+of small `γ`-mass pulls back to a small `γ`-mass in `x`-space, so `ψ(x)`'s CF
+frequency can be controlled STATISTICALLY (via `x` avoiding `ψ⁻¹(z-bad-zones)`)
+without nesting a `z`-cylinder — killing the two-stream super-exponential blowup. -/
+theorem gaussMeasure_preimage_affineMap_le {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (S : Set ℝ) (hS : MeasurableSet S) (hSsub : S ⊆ Set.Ioo (0 : ℝ) 1) :
+    gaussMeasure (affineMap q r ⁻¹' S)
+      ≤ ENNReal.ofReal (2 / q) * gaussMeasure S := by
+  have hcont : Continuous (affineMap q r) := by unfold affineMap; fun_prop
+  have hmeas : MeasurableSet (affineMap q r ⁻¹' S) := hS.preimage hcont.measurable
+  have hlog : Real.log 2 ≠ 0 := ne_of_gt (Real.log_pos (by norm_num))
+  have hq0 : q ≠ 0 := ne_of_gt hq
+  calc gaussMeasure (affineMap q r ⁻¹' S)
+      ≤ ENNReal.ofReal (Real.log 2)⁻¹ * volume (affineMap q r ⁻¹' S) :=
+        gaussMeasure_le_volume _ hmeas
+    _ = ENNReal.ofReal (Real.log 2)⁻¹ * (ENNReal.ofReal |q⁻¹| * volume S) := by
+        rw [volume_preimage_affineMap hq0]
+    _ ≤ ENNReal.ofReal (Real.log 2)⁻¹ * (ENNReal.ofReal |q⁻¹| *
+          (ENNReal.ofReal (2 * Real.log 2) * gaussMeasure S)) := by
+        gcongr
+        exact volume_le_ofReal_mul_gaussMeasure _ hS hSsub
+    _ = ENNReal.ofReal (2 / q) * gaussMeasure S := by
+        have hloginv : (0 : ℝ) ≤ (Real.log 2)⁻¹ :=
+          inv_nonneg.mpr (Real.log_nonneg (by norm_num))
+        have hconst : ENNReal.ofReal (Real.log 2)⁻¹ * ENNReal.ofReal |q⁻¹| *
+            ENNReal.ofReal (2 * Real.log 2) = ENNReal.ofReal (2 / q) := by
+          rw [abs_of_pos (inv_pos.mpr hq), ← ENNReal.ofReal_mul hloginv,
+            ← ENNReal.ofReal_mul (mul_nonneg hloginv (inv_nonneg.mpr hq.le))]
+          congr 1
+          field_simp
+        rw [← mul_assoc, ← mul_assoc, hconst]
+
 /-- **Multi-scale aggregate bad-zone measure bound.**  The union of the CF
 discrepancy bad zones over a finite family `F` of patterns AND a finite set `NS`
 of scales (all `≥ n₁`) has `γ`-measure `≤ |NS| · (S/(δ²·n₁)) · γ(I_w)`, where `S`
