@@ -1009,6 +1009,30 @@ theorem exists_irrational_notMem_xbad_psi_zbad_nil_in_Ioo {q : ℝ} (hq : 0 < q)
   have hxBz : x ∉ Bz := fun h => hxB ⟨hxA, Or.inr h⟩
   exact ⟨x, hxirr, hxA, hxBx, hxBz⟩
 
+/-- **Brick 5 core — scale-coverage ⇒ convergence (route-B z-side engine).**  A
+purely quantitative packaging: if `f n` is within `δ s` of the target `L`
+whenever `n` lies in stage `s`'s controlled scale set `S s` (`havoid`), and the
+stages COVER all large `n` with arbitrarily small tolerance (`hcover`: for every
+`ε` there is a threshold past which every `n` sits in SOME stage with `δ s < ε`),
+then `f n → L`.  This is exactly how `ψ(xA)`'s window frequency equidistributes in
+route B: the digit stream of `ψ(xA)` is NOT built blockwise (so the telescoping
+`chain_orbit_equidist_uniform` does not apply), but every stage forces `ψ(x) ∉
+cfBadZone [] v n δ_s` for `n` in that stage's z-range, i.e. `|blockCount v n
+(ψxA)/n − γv| < δ_s`, and the ranges cover all large `n` with `δ_s → 0`.  Pure
+`Metric.tendsto_atTop`. -/
+theorem tendsto_of_scale_coverage {L : ℝ} {f : ℕ → ℝ}
+    (δ : ℕ → ℝ) (S : ℕ → Set ℕ)
+    (havoid : ∀ s, ∀ n ∈ S s, |f n - L| < δ s)
+    (hcover : ∀ ε : ℝ, 0 < ε → ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → ∃ s, δ s < ε ∧ n ∈ S s) :
+    Filter.Tendsto f Filter.atTop (nhds L) := by
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨n₀, hn₀⟩ := hcover ε hε
+  refine ⟨n₀, fun n hn => ?_⟩
+  obtain ⟨s, hδs, hnS⟩ := hn₀ n hn
+  rw [Real.dist_eq]
+  exact lt_trans (havoid s n hnS) hδs
+
 /-- **Multi-scale + cfK measure core** (the cfK-steer selection).  Like
 `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`, but the aggregate bound
 `hbound` additionally leaves room for the cfK-large extension mass
