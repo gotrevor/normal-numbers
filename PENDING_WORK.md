@@ -195,7 +195,80 @@ for the stream being extended, and the OTHER stream's cylinder is only refined
 at ITS own stages). The latter is cleaner: `wz` only grows at ψ-stages, `wx`
 only at x-stages, so each stream sees only good blocks — no uncontrolled digits.
 
+### lap 11 (cont.) — ROUTE-DECISIVE finding on obligation (B)'s missing atom 🔍
+Traced exactly what obligation (B) still needs and where it lives:
+- `goodInInterval`/`goodExtSet` give only **DENSITY** (short-continuant ⇒
+  positive relative length, `goodExtSet` = extensions with `cfK u ≤ e^{Cn}`),
+  NOT **frequency** control. So `goodInInterval_pos_of_lt` alone cannot supply a
+  CF-normal block — it keeps intervals fat but says nothing about digit-window
+  frequencies.
+- The FREQUENCY control lives in `TBrick.exists_refinement_uniform`
+  (`TBrickRefine.lean:432`) — its conclusion bundles the `CFDiscLt`-style
+  `∀ v∈F, |countOccurrences v u − γ(I_v)·n| < δn + |v|` payload TOGETHER with the
+  base-`d` `daryCell` cell-nesting. `TBrick.exists_refinement` (line 554) wraps
+  it but is still TBrick-bound.
+- **THE single missing engine** for the light interleaved schedule =
+  a **daryCell-free CF core** of `exists_refinement_uniform`: for genuine `w`,
+  finite pattern family `F`, `δ>0`, produce arbitrarily long blocks `u` that are
+  BOTH short-continuant (density) AND `F`-frequency-good, with `cfCylinder(w++u)`
+  landing in a PRESCRIBED subinterval of `cfCylinder w` (needed so x-stage /
+  ψ-stage refinements can target the combined interval `cfCylinder wx ∩
+  ψ⁻¹(cfCylinder wz)`). Extract by re-running `exists_refinement_uniform`'s proof
+  and DROPPING the `daryCell` conclusion (keep the badBlocks/half-mass density +
+  the `wordFamily` count bound). This is additive (new file, e.g.
+  `CFFreqBlock.lean`, imports `TBrickRefine` for the density lemmas; never edits
+  it). Once it exists, the interleaved schedule is: maintain nonempty combined
+  Ioo `J_n`; x-stage appends a freq-good block landing in `J_n` (feasible: `J_n`
+  nondegenerate ⇒ engine gives block, `take_eq_of_mem_cfCylinder` ⇒ extends wx);
+  ψ-stage appends a freq-good block to wz landing in `ψ(J_n)` (feasible via
+  `good_mass_in_affine_preimage`+engine, then pull back). Each stream then sees
+  ONLY freq-good blocks ⇒ mirror `xstar_cf_freq_tendsto` per stream ⇒ (B). Design
+  verified sound this lap (x-stage keeps ψ(x)∈cfCylinder wz since J shrinks
+  inside ψ⁻¹(cfCylinder wz); ψ-stage symmetric). **Next lap: build
+  `exists_freq_good_block` (the daryCell-free core) — the whole crux funnels to
+  it + the per-stream telescoping.**
+
+### lap 12 landed (2026-08-24): the frequency engine `exists_freq_good_block` ✅
+`CFFreqBlock.lean` (new additive module, axiom-clean trust-triple, build green
+8756). The daryCell-free CF core of `TBrick.exists_refinement_uniform` is DONE:
+for genuine `w`, finite family `F`, `δ>0`, ∃N ∀n≥N ∃ genuine block `u` (`|u|=n`)
+that is `F`-frequency-good (`|countOccurrences v u − γ(I_v)·n| < δn+|v|` ∀v∈F)
+with an irrational point in `cfCylinder(w++u)`. **Extraction trick**: instantiate
+`exists_good_avoiding_bad_of_large` at level `t=1` (⇒ `Finset.Icc 2 1 = ∅`, the
+whole d-ary bad-zone union vanishes) on a `trivBrick w` (vacuous cell obligations
+since `2≤d≤1` is false); unpack the survivor's goodExtSet word + cfBadZone
+avoidance exactly as the CF payload of `exists_refinement_uniform` does. **This is
+THE atom obligation (B) funnels to.** No edits to any frozen module.
+
+**NEXT ATTACK (the interleaved schedule itself).** With `exists_freq_good_block`
+in hand, build the two-stream construction in `CFScheduleA` (or a new
+`CFScheduleAImpl.lean`):
+1. Joint state `⟨wx, wz, hx: genuine, hz: genuine, hJ: (cfCylinder wx ∩
+   ψ⁻¹(cfCylinder wz)).Nonempty⟩`. Note `cfCylinder w` IS an open interval (its
+   endpoints are `cfCylinder_endpoints`), so `J` is an Ioo — get its endpoints to
+   apply the affine/good lemmas.
+2. x-STAGE: `J` nondegenerate ⇒ (density via `goodInInterval_pos_of_lt`) a good
+   x-cylinder sits in `J`; use `exists_freq_good_block` on `wx` with a large-`n`
+   freq-good block, then INTERSECT the choice with landing in `J` — CAVEAT: the
+   engine gives *a* freq-good block, not one whose cylinder ⊆ `J`. Bridge needed:
+   either (a) a version of the engine RELATIVIZED to an interval (pick the
+   surviving `x` inside `J` — feasible because `J∩goodExtSet` still has ≥ half of
+   `J`'s mass by the same union bound, since the bad zones are measured against
+   `cfCylinder wx ⊇ J`), or (b) show the freq-good block can be chosen with
+   `cfCylinder(wx++u) ⊆ J` by taking `n` large enough that the cylinder is smaller
+   than `J` AND lands in it (needs a placement argument). **(a) is the clean route
+   — next lap: prove `exists_freq_good_block_in_interval`, the engine with the
+   survivor confined to a subinterval `J ⊆ cfCylinder w` of positive measure.**
+3. ψ-STAGE: symmetric, on `wz`, targeting `ψ(J)` (an interval via `CFAffine`
+   image lemmas); pull the chosen point back through `ψ⁻¹`.
+4. Take `x := ` unique point of `⋂ cfCylinder wx` (`eq_of_mem_cfCylinder_chain` +
+   `exists_irrational_mem_iInter_cfCylinder`); obligation (A) via lap-11
+   `irrational_mem_Ioo_of_mem_iInter_cfCylinder` on both chains; obligation (B)
+   via per-stream telescoping mirroring `xstar_cf_freq_tendsto` (the freq-good
+   blocks are exactly its `uSched`/`wordFamily` inputs).
+
 ### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
+- ENGINE `exists_freq_good_block` — daryCell-free freq-good CF block (obligation B atom).
 - (A) `irrational_mem_Ioo_of_mem_iInter_cfCylinder` — irrationality+box from any word chain.
 - L1 `volume_interval_sdiff_covered_le` — interval covered by cylinders up to 4/fib².
 - L2 `length_le_two_mul_good_add_err` — good mass inside an interval.
