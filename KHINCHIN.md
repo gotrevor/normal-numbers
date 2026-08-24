@@ -188,6 +188,26 @@ plants Track B's B4 flag as a lemma of the expedition.
   Builds green on v4.33.1; 4 kernel-checked anchors frozen (incl. the
   `t = K(w⁻)/K(w)` direction anchor).
 
+## 🏁 EXPEDITION COMPLETE (2026-08-24)
+
+Both tiers proved and judge-ratified at kernel tier.  **Tier 1**
+`exists_absolutely_normal_cf_normal` (`b3bc2c4`), **Tier 2**
+`exists_absolutely_normal_cf_normal_khinchin` (`4629029`): one explicit real
+`xstar`, absolutely normal ∧ CF-normal ∧ Khinchin-typical.  Route to the Tier-2
+crux was **C′**: A′ exact first-moment tail integral → B′ **Markov** bad zone
+(first moment suffices; the tail is nonnegative, so no Chebyshev) → C′
+summable-family union plumbing → D′ schedule layering.  The unlock was
+structural: the log-tail machinery needs zero dependency on `khinchinK₀`, so it
+lifted into `CFLogTail.lean` upstream of `TBrick.lean`.  Both B–Y deep imports
+(Morita/Vallée CLT, Kifer–Peres–Weiss large deviations) were discharged by
+elementary substitutes, so nothing is cited-but-unproved.  Verification detail:
+`JUDGE.md` close-out section.
+
+⚠️ The two survey-based claims below (first B–Y formalization in any prover; the
+three-way conjunction new even on paper) are **as of the 2026-08-23 launch-day
+sweep**.  Re-run the survey before either goes outward — a launch-day null is not
+a close-out null.
+
 ## Formalization landscape (surveyed 2026-08-23; greps + searches, not proofs)
 
 **Nothing found in any prover** for Gauss–Kuzmin or Khinchin's theorem, ~92%.

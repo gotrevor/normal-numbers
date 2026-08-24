@@ -61,6 +61,14 @@ no naturally-occurring number is proven Khinchin-typical.
 - ⬜ B4 harvests: Gauss–Kuzmin frequencies, Khinchin's theorem (K₀ as a tprod),
   Lévy's constant (stretch), arithmetic-mean divergence
 - ⬜ B5 stretch exhibit: machine-checked Khinchin-typical witness (Wieting 2008)
+- ✅ **B5′ expedition COMPLETE 2026-08-24** — plan W1–W6 in KHINCHIN.md, run in
+  ONE day (launched 2026-08-23).  **Tier 1** `exists_absolutely_normal_cf_normal`
+  (Becher–Yuhjtman, `b3bc2c4`; Pillai formalized from scratch) and **Tier 2**
+  `exists_absolutely_normal_cf_normal_khinchin` (`4629029`) both PROVED.
+  Judge-ratified at kernel tier 2026-08-24: 8 headline decls, trust triple only,
+  sweep instrument red-tested; statement integrity clean since the freeze (three
+  privacy lifts, nothing else); `/lean-review` over 151 commits, zero 🔴.
+  Ledger: `JUDGE.md` close-out section.  Historical plan text follows.
 - 🔨 **B5′ expedition (plan W1–W6 in KHINCHIN.md)**: one witness, absolutely
   normal + CF-normal + Khinchin-typical, via Becher–Yuhjtman minus efficiency
   (pin notes in `papers/`).  ≈ 5.5–10k lines, ~8–16 laps, ≈ 2–4 weeks;
