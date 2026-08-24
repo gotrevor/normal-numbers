@@ -732,4 +732,108 @@ theorem windowCount_div_sandwich (b r L : ℕ) (hr : 1 ≤ r) (hL : 1 ≤ L)
     gcongr with s hs
     exact_mod_cast le_trans (Finset.card_filter_le _ _) (Finset.card_range _).le
 
+/-- **Pillai window-frequency limit** (the double-limit crux): if `y` is simply
+normal in base `b^r` for every `r ≥ 1`, then every length-`L` base-`b` block `w`
+occurs among the first `N` digits with frequency `→ b^{-L}`.  Proof: for each
+fixed `r ≥ L`, the sandwich `Lo_r(N) ≤ W(N)/N ≤ Hi_r(N)` with
+`Lo_r → ℓ_r ≤ b^{-L}`, `Hi_r → h_r ≥ b^{-L}`, gap `h_r − ℓ_r = (L−1)/r`; take
+`r → ∞` (ε-managed) to squeeze out `b^{-L}`. -/
+theorem windowFreq_tendsto (b : ℕ) (hb : 2 ≤ b) (y : ℝ) (hy : y ∈ Set.Ico (0 : ℝ) 1)
+    (w : List ℕ) (hL1 : 1 ≤ w.length) (hwlt : ∀ d ∈ w, d < b)
+    (hsn : ∀ r, 1 ≤ r → ∀ c < b ^ r, Filter.Tendsto
+        (fun Q : ℕ => (((Finset.range Q).filter (fun q => digitOf (b ^ r) y q = c)).card : ℝ) / Q)
+        Filter.atTop (nhds ((b : ℝ) ^ r)⁻¹)) :
+    Filter.Tendsto (fun N : ℕ =>
+        (((Finset.range (N + 1)).filter (fun i => i + w.length ≤ N ∧
+          List.ofFn (fun j : Fin w.length => digitOf b y (i + j)) = w)).card : ℝ) / N)
+      Filter.atTop (nhds ((b : ℝ) ^ w.length)⁻¹) := by
+  set L := w.length with hLdef
+  have hwlen : w.length = L := hLdef.symm
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  -- choose `r ≥ L` with the straddling density `(L-1)/r < ε/4`
+  obtain ⟨r₀, hr₀⟩ := exists_nat_gt (4 * ((L : ℝ) - 1) / ε)
+  set r := max r₀ L with hrdef
+  have hrL : L ≤ r := le_max_right _ _
+  have hr1 : 1 ≤ r := le_trans hL1 hrL
+  have hr0R : (0 : ℝ) < r := by exact_mod_cast hr1
+  have hrne : (r : ℝ) ≠ 0 := hr0R.ne'
+  have hr₀r : (r₀ : ℝ) ≤ r := by exact_mod_cast le_max_left _ _
+  have hL1R : (1 : ℝ) ≤ L := by exact_mod_cast hL1
+  have hbne : (b : ℝ) ^ L ≠ 0 := by positivity
+  have hbLpos : (0 : ℝ) < ((b : ℝ) ^ L)⁻¹ := by positivity
+  have hbe1 : (1 : ℝ) ≤ (b : ℝ) ^ L := one_le_pow₀ (by exact_mod_cast (by omega : 1 ≤ b))
+  have hbL1 : ((b : ℝ) ^ L)⁻¹ ≤ 1 := inv_le_one_of_one_le₀ hbe1
+  -- the straddling-density bound
+  have hgap : ((L : ℝ) - 1) * (r : ℝ)⁻¹ < ε / 4 := by
+    rw [← div_eq_mul_inv, div_lt_iff₀ hr0R]
+    have h4 : 4 * ((L : ℝ) - 1) < r * ε := by
+      have hlt : 4 * ((L : ℝ) - 1) / ε < r := lt_of_lt_of_le hr₀ hr₀r
+      calc 4 * ((L : ℝ) - 1) = (4 * ((L : ℝ) - 1) / ε) * ε := by field_simp
+        _ < r * ε := mul_lt_mul_of_pos_right hlt hε
+    nlinarith [h4]
+  -- cardinalities of the phase partition
+  have hNScard : ((Finset.range r).filter (fun s => s + L ≤ r)).card = r - L + 1 := by
+    rw [show (Finset.range r).filter (fun s => s + L ≤ r) = Finset.range (r - L + 1) from by
+      ext s; simp only [Finset.mem_filter, Finset.mem_range]; omega, Finset.card_range]
+  have hcast1 : ((r - L + 1 : ℕ) : ℝ) = (r : ℝ) - L + 1 := by
+    rw [Nat.cast_add, Nat.cast_sub hrL, Nat.cast_one]
+  have hcast2 : ((L - 1 : ℕ) : ℝ) = (L : ℝ) - 1 := by
+    rw [Nat.cast_sub hL1, Nat.cast_one]
+  -- `Lo_r(N) → ℓ_r` and the straddling slot-sum `→ (L-1)/r`
+  have hLoval : (∑ _s ∈ (Finset.range r).filter (fun s => s + L ≤ r), ((b : ℝ) ^ L)⁻¹ * (r : ℝ)⁻¹)
+      = ((r : ℝ) - L + 1) * (((b : ℝ) ^ L)⁻¹ * (r : ℝ)⁻¹) := by
+    rw [Finset.sum_const, hNScard, nsmul_eq_mul, hcast1]
+  have hSTval : (∑ _s ∈ (Finset.range r).filter (fun s => r < s + L), (r : ℝ)⁻¹)
+      = ((L : ℝ) - 1) * (r : ℝ)⁻¹ := by
+    rw [Finset.sum_const, card_straddling_phases r L hL1 hrL, nsmul_eq_mul, hcast2]
+  have hLo_tendsto : Filter.Tendsto (fun N : ℕ =>
+        ∑ s ∈ (Finset.range r).filter (fun s => s + L ≤ r),
+          (((Finset.range (phaseOccCount r L s N)).filter
+            (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card : ℝ) / N)
+      Filter.atTop (nhds (((r : ℝ) - L + 1) * (((b : ℝ) ^ L)⁻¹ * (r : ℝ)⁻¹))) := by
+    have h := sum_nonStrad_phaseCount_div_tendsto b r L hb hr1 y hy w hwlen hwlt
+      (fun c hc => hsn r hr1 c hc)
+    rwa [hLoval] at h
+  have hStrad_tendsto : Filter.Tendsto (fun N : ℕ =>
+        ∑ s ∈ (Finset.range r).filter (fun s => r < s + L), (phaseOccCount r L s N : ℝ) / N)
+      Filter.atTop (nhds (((L : ℝ) - 1) * (r : ℝ)⁻¹)) := by
+    have h := sum_strad_phaseOccCount_div_tendsto r L hr1
+    rwa [hSTval] at h
+  -- `ℓ_r ≤ b^{-L} ≤ ℓ_r + (L-1)/r`
+  have hlo_le : ((r : ℝ) - L + 1) * (((b : ℝ) ^ L)⁻¹ * (r : ℝ)⁻¹) ≤ ((b : ℝ) ^ L)⁻¹ := by
+    have h1 : ((r : ℝ) - L + 1) * (r : ℝ)⁻¹ ≤ 1 := by
+      rw [← div_eq_mul_inv, div_le_one₀ hr0R]; linarith
+    calc ((r : ℝ) - L + 1) * (((b : ℝ) ^ L)⁻¹ * (r : ℝ)⁻¹)
+        = (((r : ℝ) - L + 1) * (r : ℝ)⁻¹) * ((b : ℝ) ^ L)⁻¹ := by ring
+      _ ≤ 1 * ((b : ℝ) ^ L)⁻¹ := mul_le_mul_of_nonneg_right h1 hbLpos.le
+      _ = ((b : ℝ) ^ L)⁻¹ := one_mul _
+  have hkey : ((b : ℝ) ^ L)⁻¹ - ((r : ℝ) - L + 1) * (((b : ℝ) ^ L)⁻¹ * (r : ℝ)⁻¹)
+      = ((b : ℝ) ^ L)⁻¹ * (((L : ℝ) - 1) * (r : ℝ)⁻¹) := by
+    field_simp
+    ring
+  have hhi : ((b : ℝ) ^ L)⁻¹
+      ≤ ((r : ℝ) - L + 1) * (((b : ℝ) ^ L)⁻¹ * (r : ℝ)⁻¹) + ((L : ℝ) - 1) * (r : ℝ)⁻¹ := by
+    have hnn : (0 : ℝ) ≤ ((L : ℝ) - 1) * (r : ℝ)⁻¹ := by
+      apply mul_nonneg (by linarith) (by positivity)
+    have hle2 : ((b : ℝ) ^ L)⁻¹ * (((L : ℝ) - 1) * (r : ℝ)⁻¹) ≤ ((L : ℝ) - 1) * (r : ℝ)⁻¹ := by
+      calc ((b : ℝ) ^ L)⁻¹ * (((L : ℝ) - 1) * (r : ℝ)⁻¹)
+          ≤ 1 * (((L : ℝ) - 1) * (r : ℝ)⁻¹) := mul_le_mul_of_nonneg_right hbL1 hnn
+        _ = ((L : ℝ) - 1) * (r : ℝ)⁻¹ := one_mul _
+    linarith [hkey, hle2]
+  -- eventual ε/4 bounds from the two convergences, then squeeze
+  obtain ⟨Na, hNa⟩ := Metric.tendsto_atTop.mp hLo_tendsto (ε / 4) (by positivity)
+  obtain ⟨Nb, hNb⟩ := Metric.tendsto_atTop.mp hStrad_tendsto (ε / 4) (by positivity)
+  refine ⟨max (max Na Nb) 1, fun N hN => ?_⟩
+  have hNa' := hNa N (by omega)
+  have hNb' := hNb N (by omega)
+  have hN1 : 1 ≤ N := by omega
+  obtain ⟨hlow, hhigh⟩ := windowCount_div_sandwich b r L hr1 hL1 y w hwlen N
+  rw [Real.dist_eq] at hNa' hNb' ⊢
+  rw [abs_lt] at hNa' hNb'
+  rw [abs_lt]
+  refine ⟨?_, ?_⟩
+  · linarith [hlow, hhigh, hNa'.1, hNa'.2, hNb'.1, hNb'.2, hlo_le, hhi, hgap]
+  · linarith [hlow, hhigh, hNa'.1, hNa'.2, hNb'.1, hNb'.2, hlo_le, hhi, hgap]
+
 end NormalNumbers
