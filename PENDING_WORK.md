@@ -51,12 +51,37 @@ The feasible set `(0,1) ∩ ψ⁻¹(0,1) = (max 0 (-r/q), min 1 ((1-r)/q))` is n
    per-level CONSTANT `B(t)` ⇒ with promotion (`|w_s| ≥ B(t)` before bumping `t`),
    `|u_s| ~ max(|wx|, B(t)) ~ |wx|`. ✓
 - **Net remaining item-3 build (revised, hardest-first):**
-  (i) tight `exists_uniform_block_param'` (`m ~ √max(...)`) — self-contained arithmetic;
+  (i) tight `exists_uniform_block_param'` (`m ~ √max(...)`) — ✅ DONE
+      (`exists_uniform_block_param_tight`, commit `9b90960`, axiom-clean).
   (ii) word-independent-`β` uniform block variant exposing `|u| ≤ ρ·|wx|` (factor
        `γwx` out of the budget via `γtar/γwx ≥ q·c₀`); (iii) length-exposing affine
   step; (iv) `SchedStateA`+promotion; (v) chains → `slack_telescoping`+`hblock` →
   `chain_orbit_equidist_uniform` → assemble feasible crux.  Analytic core DONE
-  (`slack_telescoping`); (i)–(ii) are the route-decisive length-control lemmas.
+  (`slack_telescoping`); (i) DONE; (ii) is the route-decisive measure lemma.
+
+### 🔗 item-(ii) REFINEMENT (grind lap 2026-08-24): the measure ratio needs STREAM BALANCE `|wx| ~ |wz|`
+Building (ii), the `γtar/γwx` cancellation is subtler than "both `~φ^{−2|wx|}`":
+- In the z-block placement (`exists_freq_good_block_steer wz … into ψ((a,b))`), the
+  `_len` budget's `γwx` is `gaussMeasure (cfCylinder wz)` (word being extended) while
+  `γtar` = middle-half measure of the target `ψ((a,b))`, with `(a,b) ~ cfCylinder wx`.
+  So `γtar/γwz ~ q·(φ^{−2|wx|}/φ^{−2|wz|})` — word-independent **iff `|wx| ~ |wz|`**
+  (the two streams' cylinder widths must stay comparable).  If a stream races ahead,
+  its cylinder is exponentially narrower and the ratio blows up.
+- **⇒ new recursion invariant: `|wx_s| ~ |wz_s|` (balance).**  The affine step already
+  extends both streams each round by comparable freq-good blocks; the schedule must
+  pick block lengths to keep `| |wx_s| − |wz_s| |` bounded (e.g. extend the shorter
+  stream first, or clamp both blocks to a common target length).  This is an EXTRA
+  invariant `SchedStateA` carries alongside promotion + the interval invariant.
+- **Cleaner build for (ii)+(iii):** do NOT rebuild `exists_uniformly_freq_good_block_steer_len`.
+  Call the non-`_len` `exists_uniformly_freq_good_block_steer` DIRECTLY (it takes
+  `m,n₁,hbound,hres` and returns exact `|u| = n₁+m²`).  Supply `m` from
+  `exists_uniform_block_param_tight` (word-independent bound), and prove `hbound`
+  from the measure-ratio lemma `γtar ≥ q·c₀·γwx` (the one genuinely new measure fact,
+  provable from Gauss-density bounds `[1/(2ln2), 1/ln2]` + `|ψ-image|/|source| = q` +
+  balance) and `hres` from `Nfib ~ |wx|`.  Output exposes `|u| = n₁+m² ≤ tight-bound`.
+- **Route status:** both isolated analytic doubts (telescoping, tight length) are
+  KERNEL-PROVED; remaining item-3 work is COUPLED BOOKKEEPING (balance + promotion +
+  measure-ratio), not a new analytic wall.
 
 ### ✅ RESOLVED item-3 feasibility (grind lap 2026-08-24, later): `hslack` CLOSES — tool = `Asymptotics.IsLittleO.sum_range`; needs block ≤ ρ·word (length-exposing step + promotion)
 Corrects the (over-pessimistic) note below.  Two facts settle `hslack`:
