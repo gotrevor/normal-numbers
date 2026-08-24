@@ -256,3 +256,78 @@ file and works the checklist.  Laps never edit this file above the Ledger.
   family replaces level-tied cutoff) — a redesign this deep in the breaker is
   the one genuine schedule risk on the board · verdict: **healthy, on target,
   continue**.
+
+## 🏁 CLOSE-OUT RATIFICATION — B5′ expedition COMPLETE
+
+- 2026-08-24 06:15 · **CLOSE-OUT VISIT** (treadmill stopped; self-stop gate
+  cleared — `src/` sorry-free) · judged through `4abec6d`, then `33cbd06`
+  (judge nit commit) · **VERDICT: RATIFIED at KERNEL TIER.**
+
+  **What landed**: `exists_absolutely_normal_cf_normal_khinchin` (Tier 2, the
+  headline) PROVED at `4629029`, closing the expedition — one explicit real
+  `xstar` that is simultaneously **absolutely normal ∧ CF-normal ∧
+  Khinchin-typical**.  Tier 1 (Becher–Yuhjtman) had landed at `b3bc2c4`.
+  The crux `xstar_log_tail_uniform` fell at `ed1a3e0` via route C′
+  (A′ first-moment integral → B′ Markov bad zone → C′ family union plumbing →
+  D′ schedule layering), after the `ce7fe12` design fix I flagged as the
+  campaign's one real schedule risk — it was the right call, not a thrash.
+
+  **Kernel verification (the tier this claim is now entitled to):**
+  `#print axioms` on a settled tree (`lake build` green, 8751 jobs, exit 0),
+  eight declarations, ALL `[propext, Classical.choice, Quot.sound]` — the
+  mathlib-admissible trust triple, no `sorryAx`, no bespoke axiom, no
+  `ofReduceBool`:
+  `exists_absolutely_normal_cf_normal` · `exists_absolutely_normal_cf_normal_khinchin` ·
+  `xstar_isAbsolutelyNormal` · `xstar_isCFNormal` · `xstar_khinchinTypical` ·
+  `xstar_log_tail_uniform` · `xstar_log_digit_avg_tendsto` · `xstar_dary_freq_tendsto`.
+  **This discharges the W4 → Tier 1 kernel debt AND the schedule-edit
+  invariant** (both were owed from the 22:45 and 23:43 ledger entries).
+  🧪 **Instrument red-tested**: the same harness was run against a deliberately
+  `sorry`'d canary and its downstream consumer — both correctly reported
+  `sorryAx`.  The sweep can fail, so its green means something.
+
+  **Statement integrity, freeze (`9e7d0e4`) → HEAD**: the ONLY minus lines in
+  any frozen file across the entire campaign are **three privacy lifts**
+  (`bumpLast`, `cfCylinder_subset_uIcc`, `uIoo_subset_cfCylinder`:
+  `private X` → `X`, statements byte-identical) — explicitly in-charter.
+  The frozen defs (`IsAbsolutelyNormal`, `IsCFNormal`, `khinchinK₀`,
+  `KhinchinTypical`) and both ∃-form tier statements are **character-identical
+  to the freeze**.  Tier 2 was proved by discharging the frozen statement, not
+  by weakening it — which is exactly what the ∃-form freeze was built to
+  guarantee, and it held through a full W6 construction rebuild.
+
+  **`/lean-review` over `3460cd7..HEAD`** (151 commits, +11593 lines, 33 files):
+  🔴 zero · 🟡 three `maxHeartbeats` (all LOCAL `set_option … in` form:
+  `CFContraction.lean:280` @1600000 previously accepted, `CFLogTail.lean:397`
+  and `:406` @800000, new — accepted, the Markov integral swap is genuinely
+  expensive) · zero `native_decide`, zero hand-declared `axiom`, zero
+  `unsafe`/`partial`/`implemented_by`, zero silenced linters, zero bare
+  `#print axioms` in built sources.
+  **Check 10 (Prop-def laundering) audited explicitly** — the smell no axiom
+  gate can see.  Six added Prop-defs, ALL discharged: the three headline defs
+  by the three proved `xstar_*` theorems above; `SchedStep` by `schedStep_exists`
+  + `sched_step` (both proved); `HasDiscLt`/`CFDiscLt` are constructed
+  predicates with proved `.mono`/`.append` API.  **No laundered holes.**
+
+  **Nits closed** (`33cbd06`): `chebyshev_blockCount` docstring `4|v|+80` →
+  `8|v|+80` (two sites) · count-bridge helper `count_map_range_eq_card_filter`
+  privatized in `Headline.lean` (used only at :117; statement byte-identical —
+  a privacy NARROWING by the judge, logged here as a frozen-file touch) ·
+  unused simp arg at `Khinchin.lean:445` fixed.  ⚠️ The naive fix (deleting
+  the whole `simp only`) BROKE the build — the tactic was really reducing
+  `if True`; correct fix was `simp only [if_true]`.  Axioms re-swept after
+  these edits: unchanged, still the clean triple.  Scratch `ZZTest.lean` was
+  cleaned up by the fleet on its own.  **Retracted nit**: the
+  `integral_logTailFn_tendsto` "route B′" docstring I flagged at 23:43 is
+  CORRECT (B′ *is* the bad-zone stage; that lemma is its input) — no change.
+
+  **Residual debt**: none blocking.  Remaining build warnings
+  (`HotSpot.lean`, `Stoneham.lean`: unused simp arg, deprecated `push_neg`,
+  unreferenced binders) are all in files **untouched by this campaign** —
+  pre-existing, not this expedition's to fix.
+
+  **Outward status**: this is a major milestone — apparently the first
+  formalization of Becher–Yuhjtman in any prover, and the three-way
+  conjunction appears to be new even on paper.  Write-up + outreach
+  (Becher, Yuhjtman, Scheerer) is DRAFT-ONLY; **all outward posts are
+  Trevor's to send.**
