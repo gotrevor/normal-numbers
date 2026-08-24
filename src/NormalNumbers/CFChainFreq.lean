@@ -41,6 +41,52 @@ namespace NormalNumbers
 
 open MeasureTheory Filter
 
+/-! ## Additive-slack append (the hdom-free ingredient)
+
+`cfDiscLt_short_append`/`cfDiscLt_append_take` (frozen `CFConcat`) both require the
+foreign block to be *short* relative to the good block.  That shortness is exactly
+`chain_orbit_equidist`'s `hdom` hypothesis, and the route analysis (PENDING_WORK,
+B6) shows the interleaved schedule CANNOT satisfy it: lockstep cross-navigation
+forces each round's appended block to be a constant fraction of the accumulated
+word.  The escape is to never require the *whole* appended block to be good; only
+that a good word extended by a **uniformly-good** payload stays good — with an
+additive (not multiplicative) slack, and **no shortness requirement** on the
+payload.  That is `countOccurrences_append_addslack`. -/
+
+/-- **Append with additive slack, no shortness.**  A block `x` whose `v`-count is
+within `ε·|x|` of `m·|x|`, extended by a block `t` whose `v`-count is within
+`ε·|t| + C` of `m·|t|`, has combined `v`-count within `ε·|x++t| + (C + (|v|−1))`
+of `m·|x++t|`.  Crucially `t` need NOT be short relative to `x` (contrast
+`cfDiscLt_short_append`): the price is only the constant seam term `|v|−1` added
+to `t`'s own slack `C`.  This is the ingredient that lets the interleaved schedule
+append a payload that is a constant fraction of the accumulated word, as long as
+that payload is (uniformly) frequency-good. -/
+theorem countOccurrences_append_addslack {v x t : List ℕ} (hv : v ≠ [])
+    {m ε C : ℝ}
+    (hx : |(countOccurrences v x : ℝ) - m * x.length| < ε * x.length)
+    (ht : |(countOccurrences v t : ℝ) - m * t.length| < ε * t.length + C) :
+    |(countOccurrences v (x ++ t) : ℝ) - m * (x ++ t).length|
+      < ε * (x ++ t).length + (C + ((v.length : ℝ) - 1)) := by
+  have hk : 1 ≤ v.length := List.length_pos_of_ne_nil hv
+  have hkR : (1 : ℝ) ≤ v.length := by exact_mod_cast hk
+  have hlo := add_countOccurrences_le_append hv x t
+  have hhi := countOccurrences_append_le hv x t
+  have hloR : (countOccurrences v x : ℝ) + countOccurrences v t
+      ≤ countOccurrences v (x ++ t) := by exact_mod_cast hlo
+  have hhiR : (countOccurrences v (x ++ t) : ℝ)
+      ≤ countOccurrences v x + countOccurrences v t + ((v.length : ℝ) - 1) := by
+    calc (countOccurrences v (x ++ t) : ℝ)
+        ≤ ((countOccurrences v x + countOccurrences v t + (v.length - 1) : ℕ) : ℝ) := by
+          exact_mod_cast hhi
+      _ = _ := by push_cast [Nat.cast_sub hk]; ring
+  have hlen : ((x ++ t).length : ℝ) = (x.length : ℝ) + t.length := by
+    push_cast [List.length_append]; ring
+  rw [hlen]
+  rw [abs_lt] at hx ht ⊢
+  obtain ⟨hx1, hx2⟩ := hx
+  obtain ⟨ht1, ht2⟩ := ht
+  constructor <;> nlinarith [hloR, hhiR]
+
 /-! ## Generic chain tail machinery (ports `CFCorrect`'s `tailSched` block) -/
 
 /-- The block appended to the chain when going from stage `s` to `s + 1`. -/

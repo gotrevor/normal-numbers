@@ -1,5 +1,68 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## ⭐⭐⭐⭐⭐ ROUTE-DECISIVE RESOLUTION 2026-08-27: the `hdom` obstruction is REMOVABLE
+
+**The filler/balance obstruction (recorded 2026-08-24) is pinned to a SINGLE
+hypothesis of the abstract telescoping — `chain_orbit_equidist`'s `hdom` — and
+`hdom` is STRONGER THAN NECESSARY.** This lap proved the enabling lemma that lets
+us drop it; the schedule can then close.
+
+### The precise diagnosis
+`chain_cf_digit_freq_tendsto` (CFChainFreq) needs, per stream, TWO facts on each
+appended block `chainApp w s`:
+- `hgood` — the block is freq-good (used for the tail-chain tier + `hbound`);
+- `hdom` — `|chainApp w s| ≪ |w s|` (block a VANISHING fraction of the accumulated
+  word). **Used ONLY for mid-block prefixes** (line ~262-274, via
+  `cfDiscLt_append_take`): a prefix ending inside a block must not see enough
+  uncontrolled digits to move the frequency.
+
+The interleaved schedule CANNOT satisfy `hgood ∧ hdom` simultaneously: maintaining
+the interval invariant in lockstep forces `filler_s ≈ (other stream's payload
+this round)`, and burying the filler under the freq-good tail (`hgood`) forces
+tails to grow super-exponentially (`tail_x,k ≫ tail_z,k ≫ tail_x,k-1 ≫ …`), which
+makes each block `≈` the accumulated word — the exact NEGATION of `hdom`.
+
+### The escape (proved viable this lap)
+**Never require the whole appended block to be freq-good.** Split each block as
+`chainApp = filler ++ payload` and require only:
+  - **(a)** `filler_s = o(|w s|)` — the SHORT-vs-accumulated-word part of `hdom`,
+    but on the FILLER ONLY (not the payload);
+  - **(b)** `payload_s` **uniformly good** — every prefix `(payload_s).take k` is
+    freq-good with a bounded additive slack.
+Then every prefix stays good by two sub-steps, NEITHER needing the payload short:
+  1. prefix ends in filler → `cfDiscLt_append_take` (filler short vs `|w s|`) ✓;
+  2. prefix ends in payload → `(w s ++ filler)` good, then append `payload.take k`
+     via the NEW **`countOccurrences_append_addslack`** (good ++ uniformly-good
+     stays good, **additive slack, NO shortness**) ✓.
+Both (a),(b) ARE satisfiable: with SLOW lockstep growth (e.g. linear payloads) no
+single payload dominates the accumulated sum, so `filler_s ≈ other-payload_s =
+o(word)` — (a); and payloads built from the single-stream engine keep every prefix
+good — (b). The super-exponential-growth contradiction was an artifact of the
+spurious `hgood`-on-the-whole-block requirement, now dropped.
+
+### Landed this lap (axiom-clean `[propext, Classical.choice, Quot.sound]`, green 8743)
+`countOccurrences_append_addslack` (CFChainFreq): `|count v x − m|x|| < ε|x|` and
+`|count v t − m|t|| < ε|t| + C` ⇒ `|count v (x++t) − m|x++t|| < ε|x++t| + (C+(|v|−1))`.
+The hdom-free append. This is the missing ingredient; `cfDiscLt_short_append` and
+`_append_take` (frozen CFConcat) only cover the SHORT-block case.
+
+### NEXT (build on this)
+1. **`chain_cf_digit_freq_tendsto_split`** (CFChainFreq): restructure the
+   telescoping around a chain with `w(s+1) = w s ++ filler s ++ payload s` and
+   hypotheses (a)+(b) above, concluding window-freq → γv. Reuse
+   `cfDiscLt_append_take` (tier: prefix-in-filler) + `countOccurrences_append_addslack`
+   (tier: prefix-in-payload), and prove `w s` good by induction (never the block).
+   Then `chain_orbit_equidist_split` wrapper.
+2. **Uniformly-good payload primitive**: strengthen `exists_freq_good_block` /
+   `exists_freq_good_extend_cfCylinder` to expose that EVERY prefix of the freq-good
+   tail is good (the single-stream engine already grows gradually — the uniform
+   bound should fall out of the existing per-prefix control; verify).
+3. Re-wire `exists_interleaved_affine_witness` recursion: slow (linear) lockstep
+   payloads, per-round `filler_s` = the cross-navigation into the OTHER stream's
+   new cylinder (increment only, invariant maintained), bounded `o(word)`.
+
+---
+
 ## ⭐⭐⭐⭐ CRUX ADVANCE 2026-08-24 (cont.): ψ-ROUND STEP `exists_freq_good_extend_affine` PROVED ✅
 
 `CFScheduleA`, **axiom-clean** `[propext, Classical.choice, Quot.sound]`, green 8757.
