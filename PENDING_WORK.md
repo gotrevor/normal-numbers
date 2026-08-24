@@ -179,28 +179,36 @@ L4 gives it a NEW proof; the two-stream proof (bottoming at the `schedA_block_li
    - `cfDigit_eq_of_mem_cfCylinder` (this lap) — co-membership in a cylinder pins the
      leading digits (cylinder-based agreement, no metric ε).
 
-   **⚠️ ROUTE-DECISIVE DESIGN NOTE — the refinement circularity + its resolution.**
-   The step must (A) freq-good-extend `wx→wx₁` (LINEAR block, uniform-good, x-side) and
-   (B) make `ψ(cfCylinder wx₁)` pin the first `m_s := max NSz_s + max_{v∈F}|v|` z-digits
-   for ALL its points, so both `ψ(xA)` and the brick-3′ point `ψ(p_s)` (all in
-   `cfCylinder wx₁`) avoid the stage z-bad zones via `blockCount_eq_of_cfDigit_agree`.
-   Naive "select p then refine `wx₁` deeper to fit `exists_ball_cfDigit_psi_eq`'s ball
-   `ε_p`" is CIRCULAR: `ε_p` depends on `p`, `p` is chosen after fixing the block depth,
-   and appended refinement digits (length `t`) hurt uniform goodness unless `t=O(√blk)`.
-   **RESOLUTION (adopted): boundary-strip avoidance, NO post-refinement (`t=0`).** Set the
-   freq-extend depth `L` deep enough that `diam(cfCylinder wx₁) < η_s` for a FIXED `η_s`;
-   AUGMENT the brick-3′ selection to also avoid `ψ⁻¹(η_s-boundary-strip of the depth-`m_s`
-   z-cylinders)` — the set of `x` whose `ψx` is within `η_s` of a depth-`m_s` z-boundary.
-   That strip has small γ-mass (`coveredByCyl`/`volume_interval_sdiff_covered_le`-style,
-   the SAME straddle-by-measure device as brick 2b, NOT alignment). Then the selected
-   `p_s` has `ψp_s` interior to its depth-`m_s` z-cylinder by margin `>η_s>diam`, so all of
-   `ψ(cfCylinder wx₁)` lands in that one z-cylinder ⇒ first `m_s` z-digits fixed ⇒
-   `cfDigit_eq_of_mem_cfCylinder` gives agreement with `t=0`. `|wx₁|≈m_s` LINEAR (the
-   straddle is handled by measure, so no exponential x-target). **NEXT BRICK: the
-   η-boundary-strip γ-mass bound** (`gaussMeasure_psi_boundary_strip_le`), then fold it
-   into a route-B brick-3″ selection, then `SchedStateL4`/`schedStepL4_exists`.
-   TODO(alt: keep the metric-ball path with `t=O(√blk)` refinement + a `√`-slack bump in
-   `chain_orbit_equidist_uniform` — heavier, deferred).
+   **✅ ROUTE-DECISIVE DESIGN — z-transfer needs NO boundary strip; irrationality of
+   `ψ(xA)` does all the work.** (Supersedes an earlier over-complicated "boundary-strip
+   avoidance" note — that was solving a non-problem.)  The per-stage step just
+   freq-good-extends `wx→wx₁` (LINEAR block, uniform-good, x-side) and selects a brick-3′
+   point `p_s ∈ cfCylinder wx₁` with `ψ(p_s) ∉ cfBadZone [] v n δ_s` for `n∈NSz_s,v∈F`.
+   NO ball-refinement, NO straddle worry at selection time.  The transfer to the limit is
+   deferred to the z-side assembly and rests on ONE fact: **`ψ(xA)` is IRRATIONAL** (xA
+   irrational, `q≠0`), so for every depth `m` it is STRICTLY interior to its own depth-`m`
+   z-cylinder.  Hence (via `exists_ball_cfDigit_psi_eq` applied at `x₀:=xA`) there is an
+   x-ball around `xA` on which every point's ψ-image agrees with `ψ(xA)` on the first `m`
+   z-digits; since `cfCylinder (wxSeq s) → {xA}` (diam→0), for large `s` the WHOLE cylinder
+   sits in that ball, so `ψ(p_s)` (for `s` large) agrees with `ψ(xA)` on `m` digits ⇒
+   `blockCount` equal (`blockCount_eq_of_cfDigit_agree`) ⇒ `ψ(xA) ∉ cfBadZone [] v n δ_s`
+   (`notMem_cfBadZone_nil_of_cfDigit_agree`).  Feed that + `δ_s→0` + cofinal `NSz_s` to
+   `tendsto_of_scale_coverage`.  Straddle is irrelevant: we never demand a single cylinder
+   contain the whole image, only that the SHRINKING images eventually enter a fixed ball
+   around the irrational `ψ(xA)` — which they must.  Blocks stay LINEAR.
+
+   **NEXT BRICKS (concrete, hardest-first):**
+   - (4a) `exists_tail_cfCylinder_subset_ball`: for a genuine extending chain `w` with
+     limit `xA ∈ ⋂ cfCylinder (w s)` and `ε>0`, `∃ S, ∀ s≥S, cfCylinder (w s) ⊆
+     Ioo (xA-ε)(xA+ε)` (diam→0, reuse `eq_of_mem_cfCylinder_chain`'s diameter estimate). ✅ NEXT.
+   - (4b) `SchedStateL4` (only `wx` + interval `(e,f)`, invariant `cfCylinder wx ⊆
+     ψ⁻¹(Ioo e f)`) + `StepSpecL4` (x-side uniform block payload + the per-stage
+     `ψ(p_s)`-avoidance record) + `schedStepL4_exists` (mirror
+     `exists_freq_good_extend_cfCylinder` for the x-block, brick-3′ for `p_s`).
+   - (4c) `wxSeq_L4`, its chain, limit `xA`; x-side via `chain_orbit_equidist_uniform`.
+   - (5-proper) z-side: assemble `ψ(xA)` avoidance at every controlled scale from (4a)+
+     the transfer lemmas, feed `tendsto_of_scale_coverage` ⇒ `CFOrbitEquidist (ψxA)`.
+   - (6) NEW `exists_interleaved_affine_witness`; excise the two-stream `sorry`.
 5. **z-side chain frequency.** ✅ **CORE DONE (2026-08-24, commit `6933f05`,
    axiom-clean):** `tendsto_of_scale_coverage` (`CFScheduleA.lean`, after brick 3′) —
    `f n → L` when `|f n − L| < δ s` for `n ∈ S s` and the stages cover all large `n`

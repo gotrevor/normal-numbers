@@ -1216,6 +1216,55 @@ theorem cfDigit_eq_of_mem_cfCylinder {w : List ℕ} {x y : ℝ}
   intro i hi
   rw [hx.2 i hi, hy.2 i hi]
 
+/-- **Tail cylinders of a chain enter any ball around the limit (brick 4a).**  If `xA`
+lies in every cylinder of a genuine extending chain `w`, then for every `ε>0` all
+sufficiently deep cylinders `cfCylinder (w s)` sit inside `Ioo (xA-ε) (xA+ε)` — their
+diameters `≤ 1/fib(|w s|+1)²` shrink to `0` (`cfCylinder_subset_Icc_length` +
+`volume_cfCylinder_le_fib`).  This is the z-transfer clock: composed with
+`exists_ball_cfDigit_psi_eq` at `x₀:=xA`, for large `s` every point of `cfCylinder (w s)`
+maps under `ψ` to within the digit-pinning ball around `ψ(xA)`. -/
+theorem exists_tail_cfCylinder_subset_ball {w : ℕ → List ℕ}
+    (hne : ∀ s, w s ≠ []) (hpos : ∀ s, ∀ a ∈ w s, 1 ≤ a)
+    (hext : ∀ s, ∃ u, u ≠ [] ∧ w (s + 1) = w s ++ u)
+    {xA : ℝ} (hxA : ∀ s, xA ∈ cfCylinder (w s)) {ε : ℝ} (hε : 0 < ε) :
+    ∃ S : ℕ, ∀ s, S ≤ s → cfCylinder (w s) ⊆ Set.Ioo (xA - ε) (xA + ε) := by
+  have hlen : ∀ s, s ≤ (w s).length := by
+    intro s; induction s with
+    | zero => exact Nat.zero_le _
+    | succ k ih =>
+        obtain ⟨u, hu, heq⟩ := hext k
+        rw [heq, List.length_append]
+        have : 0 < u.length := List.length_pos_iff.mpr hu
+        omega
+  obtain ⟨N, hN⟩ := exists_nat_one_div_lt hε
+  refine ⟨max (N + 1) 5, fun s hs => ?_⟩
+  have hs5 : 5 ≤ s := le_trans (le_max_right _ _) hs
+  have hsN : N + 1 ≤ s := le_trans (le_max_left _ _) hs
+  obtain ⟨a, c, hIcc, hac⟩ := cfCylinder_subset_Icc_length (w s) (hne s) (hpos s)
+  have hfibge : (s : ℝ) + 1 ≤ (Nat.fib ((w s).length + 1) : ℝ) := by
+    have h1 : (w s).length + 1 ≤ Nat.fib ((w s).length + 1) := Nat.le_fib_self (by have := hlen s; omega)
+    have h2 : s + 1 ≤ (w s).length + 1 := by have := hlen s; omega
+    exact_mod_cast le_trans h2 h1
+  have hsR : (0 : ℝ) < (N : ℝ) + 1 := by positivity
+  have hdiam : c - a < ε := by
+    rw [hac]
+    have hle : (volume (cfCylinder (w s))).toReal
+        ≤ 1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2 := by
+      rw [← ENNReal.toReal_ofReal (show (0:ℝ) ≤ 1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2 by positivity)]
+      exact ENNReal.toReal_mono (by simp) (volume_cfCylinder_le_fib (w s) (hne s) (hpos s))
+    have hsNR : (N : ℝ) + 1 ≤ (s : ℝ) + 1 := by exact_mod_cast (by omega : N + 1 ≤ s + 1)
+    have hfibsq : ((N : ℝ) + 1) ≤ (Nat.fib ((w s).length + 1) : ℝ) ^ 2 := by
+      nlinarith [hfibge, hsNR]
+    have hmono : 1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2 ≤ 1 / ((N : ℝ) + 1) :=
+      one_div_le_one_div_of_le hsR hfibsq
+    have hlast : 1 / ((N : ℝ) + 1) < ε := by have := hN; push_cast at this; linarith
+    linarith
+  intro z hz
+  have hzIcc := hIcc hz
+  have hxAIcc := hIcc (hxA s)
+  rw [Set.mem_Icc] at hzIcc hxAIcc
+  exact ⟨by linarith [hzIcc.1, hxAIcc.2], by linarith [hzIcc.2, hxAIcc.1]⟩
+
 /-- **Absolute-scale bad-zone avoidance transfers along CF-digit agreement.**  If two
 full-orbit reals `z, z'` agree on their first `m` CF digits with `n + |v| ≤ m`, then
 avoidance of the ABSOLUTE-scale bad zone `cfBadZone [] v n δ` transfers from `z'` to `z`
