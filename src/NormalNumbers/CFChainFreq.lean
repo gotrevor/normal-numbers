@@ -87,6 +87,35 @@ theorem countOccurrences_append_addslack {v x t : List ℕ} (hv : v ≠ [])
   obtain ⟨ht1, ht2⟩ := ht
   constructor <;> nlinarith [hloR, hhiR]
 
+/-- **Append with additive slack on BOTH sides.**  Generalizes
+`countOccurrences_append_addslack` to allow an additive slack `C₁` on the left
+block too, so it can be ITERATED (the accumulated word carries growing additive
+slack).  The seam costs one more `|v|−1`. -/
+theorem countOccurrences_append_addslack₂ {v x t : List ℕ} (hv : v ≠ [])
+    {m ε C₁ C₂ : ℝ}
+    (hx : |(countOccurrences v x : ℝ) - m * x.length| < ε * x.length + C₁)
+    (ht : |(countOccurrences v t : ℝ) - m * t.length| < ε * t.length + C₂) :
+    |(countOccurrences v (x ++ t) : ℝ) - m * (x ++ t).length|
+      < ε * (x ++ t).length + (C₁ + C₂ + ((v.length : ℝ) - 1)) := by
+  have hk : 1 ≤ v.length := List.length_pos_of_ne_nil hv
+  have hlo := add_countOccurrences_le_append hv x t
+  have hhi := countOccurrences_append_le hv x t
+  have hloR : (countOccurrences v x : ℝ) + countOccurrences v t
+      ≤ countOccurrences v (x ++ t) := by exact_mod_cast hlo
+  have hhiR : (countOccurrences v (x ++ t) : ℝ)
+      ≤ countOccurrences v x + countOccurrences v t + ((v.length : ℝ) - 1) := by
+    calc (countOccurrences v (x ++ t) : ℝ)
+        ≤ ((countOccurrences v x + countOccurrences v t + (v.length - 1) : ℕ) : ℝ) := by
+          exact_mod_cast hhi
+      _ = _ := by push_cast [Nat.cast_sub hk]; ring
+  have hlen : ((x ++ t).length : ℝ) = (x.length : ℝ) + t.length := by
+    push_cast [List.length_append]; ring
+  rw [hlen]
+  rw [abs_lt] at hx ht ⊢
+  obtain ⟨hx1, hx2⟩ := hx
+  obtain ⟨ht1, ht2⟩ := ht
+  constructor <;> nlinarith [hloR, hhiR]
+
 /-! ## Generic chain tail machinery (ports `CFCorrect`'s `tailSched` block) -/
 
 /-- The block appended to the chain when going from stage `s` to `s + 1`. -/
@@ -223,6 +252,54 @@ theorem chainTail_cfDiscLt (w : ℕ → List ℕ)
     exact CFDiscLt.append hne ih (by
       have := hblock (k + 1)
       rwa [h1] at this)
+
+/-- **The good-tail chain, SPLIT form (additive-slack, hdom-free).**  If every
+appended block past `s₀` is good with a UNIFORM additive slack `C` (multiplicative
+tolerance `ε`, plus a constant `C` — as `filler ++ payload` blocks are: the
+freq-good payload gives `ε`, the bounded filler gives `C`), then the tail past
+`s₀` has deviation `< ε·len + (#blocks)·(C + (|v|−1))`.  The additive term grows
+with the block COUNT, not compounding the multiplicative tolerance; divided by the
+tail length (`≥ #blocks · min-payload`) it is a bounded constant made small by
+taking each payload long.  This is what replaces `chainTail_cfDiscLt`'s reliance
+on every block being margin-good — a filler-carrying block is NOT margin-good, but
+IS good-with-additive-slack (`countOccurrences_append_addslack₂` iterated). -/
+theorem chainTail_dev_split (w : ℕ → List ℕ)
+    (hext : ∀ s, ∃ u, u ≠ [] ∧ w (s + 1) = w s ++ u)
+    (v : List ℕ) (hne : v ≠ []) {γv ε C : ℝ} (s₀ : ℕ)
+    (hblock : ∀ k, |(countOccurrences v (chainApp w (s₀ + k)) : ℝ)
+        - γv * (chainApp w (s₀ + k)).length|
+      < ε * (chainApp w (s₀ + k)).length + C) :
+    ∀ k, |(countOccurrences v (chainTail w s₀ (s₀ + k + 1)) : ℝ)
+        - γv * (chainTail w s₀ (s₀ + k + 1)).length|
+      < ε * (chainTail w s₀ (s₀ + k + 1)).length
+        + (↑(k + 1)) * (C + ((v.length : ℝ) - 1)) := by
+  have hv1 : (0 : ℝ) ≤ (v.length : ℝ) - 1 := by
+    have : (1 : ℝ) ≤ v.length := by exact_mod_cast List.length_pos_of_ne_nil hne
+    linarith
+  intro k
+  induction k with
+  | zero =>
+    have h0 : chainTail w s₀ (s₀ + 0 + 1) = chainApp w s₀ := by
+      have := chainTail_succ w hext s₀ 0
+      simpa [chainTail_self] using this
+    rw [h0]
+    have h := hblock 0
+    simp only [Nat.add_zero] at h
+    push_cast
+    nlinarith [h]
+  | succ k ih =>
+    have h1 : s₀ + (k + 1) = s₀ + k + 1 := by omega
+    have hstep := chainTail_succ w hext s₀ (k + 1)
+    rw [hstep, h1]
+    have hblk := hblock (k + 1)
+    rw [h1] at hblk
+    have hcomb := countOccurrences_append_addslack₂ (v := v) (x := chainTail w s₀ (s₀ + k + 1))
+      (t := chainApp w (s₀ + k + 1)) hne ih hblk
+    have hslack : ((↑(k + 1) : ℝ) * (C + ((v.length : ℝ) - 1)) + C
+        + ((v.length : ℝ) - 1))
+      = (↑(k + 1 + 1) : ℝ) * (C + ((v.length : ℝ) - 1)) := by push_cast; ring
+    rw [hslack] at hcomb
+    convert hcomb using 2
 
 /-! ## The digit prefix identity -/
 
