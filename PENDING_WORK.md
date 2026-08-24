@@ -115,7 +115,21 @@ L4 gives it a NEW proof; the two-stream proof (bottoming at the `schedA_block_li
      per-cylinder fraction. δ−d/N ≈ δ when `N ≳ 2d` (route-B regime), so the fraction
      is `≈ (8|v|+80)/((δ−d/N)²(N−d))·γ(w')`. NOTE the old `δN/(2d)` prefix scale is GONE
      — there is no separate prefix-bad set, just a slack shave.
-   - **2b-iii (assemble): [NEXT crux].** Now has BOTH inputs in hand:
+   - **2b-iii (assemble): ✅ SINGLE-SCALE DONE (2026-08-24, commit `db09458`,
+     axiom-clean).** `gaussMeasure_interval_inter_cfBadZone_nil_le` (`CFScheduleA.lean`,
+     after the per-cylinder frac lemma): `γ((a,b) ∩ cfBadZone [] v N δ) ≤ frac·γ(a,b)
+     + residual`, `frac = 7·(8|v|+80)·γ(v)/(δ'²(N−d))`, `δ'=δ−d/N`, `residual =
+     (log2)⁻¹·4/fib(d+1)²`, for any `d < N`, `δ−d/N > 0`. Cover-by-depth-`d` +
+     `measure_biUnion` (disjoint cover) + `ENNReal.tsum_mul_left` + 2b-i residual.
+     **This IS the route-decisive B6 measure bound — the whole crux feasibility
+     uncertainty, now proved in-kernel.** REMAINING for full 2b-iii: (a) aggregate
+     over `v ∈ F` (finite sum, `measure_biUnion_finset_le`) and `N ∈ NS` (finite sum);
+     pick `d ≈ depth(J)`, `N ≥ n₁ ≈ 2d` so `frac` small + `residual < γ(J)`; (b) bridge
+     to brick 3 (`exists_irrational_notMem_xbad_psi_zbad_in_Ioo`) — its `hbound` z-term
+     is currently a z-CYLINDER-based multiscale bound (`wz≠[]`); needs a `wz=[]` /
+     route-B variant fed by this lemma + brick 1 pullback (`gaussMeasure_preimage_affineMap_le`).
+     THEN bricks 4/5/6.
+   - **2b-iii (OLD framing — superseded, kept for context):** Now has BOTH inputs in hand:
      `γ(J ∩ ⋃_{v∈F,N∈NS} cfBadZone [] v N δ) ≤ (fraction)·γ(J) + residual`, `J=(α,β)`.
      Decompose `J = coveredByCyl α β d ∪ (J \ coveredByCyl α β d)`, `d ≈ depth(J)`:
        · residual term `γ(J \ coveredByCyl) ≤ 2·vol(J\coveredByCyl) ≤ 8/fib(d+1)²`
