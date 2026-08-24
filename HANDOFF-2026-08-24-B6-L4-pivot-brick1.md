@@ -1,8 +1,19 @@
-# HANDOFF — 2026-08-24 — B6 L4 pivot RATIFIED + brick 1 landed
+# HANDOFF — 2026-08-24 — B6 L4: pivot ratified + bricks 1/2a/3 landed + 2b route resolved
 
-**Branch:** `master`  **HEAD:** `5ba3a3d`  **Build:** 🟢 8757 jobs, clean tree.
+**Branch:** `master`  **HEAD:** `5eb62d1`  **Build:** 🟢 8757 jobs, clean tree.
 **B5′ headlines:** both re-verified trust-triple `[propext, Classical.choice,
-Quot.sound]` (real `#print axioms` this lap).
+Quot.sound]` (real `#print axioms`).  **Sole open `src/` sorry:** the B6 crux
+`schedA_block_linear` (`CFScheduleA.lean`, two-stream — DEAD route, to be excised
+once L4 closes `exists_interleaved_affine_witness`).
+
+**This session (multiple laps):** ratified the single-stream L4 pivot (broke a
+false stop); landed the full MEASURE+SELECTION layer of L4 — brick 1
+`gaussMeasure_preimage_affineMap_le` (`5ba3a3d`), brick 2a
+`gaussMeasure_preimage_multiscale_cfBadZone_le` (`3169e1a`), brick 3
+`exists_irrational_notMem_xbad_psi_zbad_in_Ioo` (`d255444`), all axiom-clean; and
+RESOLVED the route-decisive uncertainty of brick 2b (route B / interval covering,
+LINEAR blocks, no alignment wall — `69f06a3`).  Next = route-B bricks 2b-i/ii/iii
+then recursion/z-coverage/assemble (see below + PENDING_WORK top).
 
 ## What this lap did (fresh-mind review lap → review + first brick)
 
