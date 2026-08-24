@@ -2091,6 +2091,31 @@ theorem gaussMeasure_middle_half_ge {c d : ℝ} (hc : 0 ≤ c) (hcd : c ≤ d) (
     nlinarith [hthis, hl2]
   exact le_trans hstep hlow
 
+/-- **Relative regularization kills the block parameter's word-dependence.**  With the
+block parameter `β_rel = γtar·δ²/(S + γwx)`, `S = γwx·Sg` (relative regularizer `+γwx`
+instead of the scaling-breaking absolute `+1`), the quantity `2/β_rel` — which drives the
+tight block length via `⌈2/β_rel⌉` — is bounded by `2(Sg+1)/(ratio·δ²)`, WORD-INDEPENDENT,
+as soon as the target carries a fixed fraction of the cylinder mass, `γtar ≥ ratio·γwx`.
+The `γwx` cancels top and bottom: `2/β_rel = 2·γwx(Sg+1)/(γtar·δ²) ≤ 2(Sg+1)/(ratio·δ²)`.
+This is the arithmetic core of the block-linear crux resolution (see PENDING_WORK): for the
+L4 self-hull steer `ratio = 1/8` (`gaussMeasure_middle_half_ge`), so the block stays linear
+in `L + Nfib` and the word grows only geometrically. -/
+theorem two_div_beta_rel_le {Sg δ ratio γwx γtar : ℝ}
+    (hSg : 0 ≤ Sg) (hδ : 0 < δ) (hratio : 0 < ratio) (hγwx : 0 < γwx)
+    (htar : ratio * γwx ≤ γtar) :
+    2 / (γtar * δ ^ 2 / (γwx * Sg + γwx)) ≤ 2 * (Sg + 1) / (ratio * δ ^ 2) := by
+  have hγtar : 0 < γtar := lt_of_lt_of_le (mul_pos hratio hγwx) htar
+  have hden : (0 : ℝ) < γwx * Sg + γwx := by nlinarith [mul_nonneg hγwx.le hSg, hγwx]
+  have hβpos : (0 : ℝ) < γtar * δ ^ 2 / (γwx * Sg + γwx) := by positivity
+  rw [div_div_eq_mul_div,
+    div_le_div_iff₀ (by positivity : (0:ℝ) < γtar * δ ^ 2) (by positivity : (0:ℝ) < ratio * δ ^ 2)]
+  -- 2*(γwx*Sg+γwx) * (ratio*δ²) ≤ 2*(Sg+1) * (γtar*δ²)
+  have hfactor : γwx * Sg + γwx = γwx * (Sg + 1) := by ring
+  rw [hfactor]
+  have hδ2 : 0 < δ ^ 2 := by positivity
+  nlinarith [mul_le_mul_of_nonneg_right htar (by positivity : (0:ℝ) ≤ (Sg + 1) * δ ^ 2),
+    mul_nonneg hγwx.le hSg, hγtar.le, hδ2]
+
 /-- **Tight block parameter (word-independent block length).**  Like
 `exists_uniform_block_param` but returns `m` with `m² ~ max(Lc, Nfib, poly(1/β))`
 instead of the lossy `m ~ max(Lc, Nfib, …)` (whose `m² ~ Nfib²` is QUADRATIC in the
