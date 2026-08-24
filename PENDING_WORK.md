@@ -1,5 +1,50 @@
 # PENDING WORK — B5′ campaign
 
+> **GRIND LAP (2026-08-24, `42ec6a7`).** ✅ **Gauss-Kuzmin single-digit law
+> PROVED** (step 1 of HANDOFF-2026-08-26-0730.md's Tier-2 NEXT list):
+> `gaussMeasure_digit_cylinder` (`CFCylinder.lean`) — closed form
+> `γ(cfCylinder [a]) = logb 2 (1 + 1/(a(a+2)))` for `a ≥ 1`, matching
+> `khinchinK₀`'s tprod term exactly (`a(a+2)+1 = (a+1)²`), axiom-clean.
+> Route: `gaussMeasure_cfCylinder` mirrors `volume_cfCylinder`'s
+> `uIcc`/`uIoo` squeeze verbatim but for `gaussMeasure` — endpoints and the
+> rational range are `gaussMeasure`-null via
+> `MeasureTheory.withDensity_absolutelyContinuous` (`gaussMeasure ≪ volume`,
+> so every Lebesgue-null set is `gaussMeasure`-null; no need for the
+> one-directional `gaussMeasure_le_volume`/`volume_le_gaussMeasure` bounds
+> the original plan cited). **Refactor gotcha**: `gaussMeasure_Ioo` had to
+> move from `CFDigitLaw.lean` to `CFDefs.lean` (right after `gaussMeasure`'s
+> def) — it's pure real analysis on the definition with no `cfCylinder`
+> dependency, but `CFCylinder.lean` needed it and `CFDigitLaw.lean` imports
+> `CFCylinder.lean` (not the reverse), so leaving it in place would have been
+> circular. **Lean gotcha**: multi-line `calc` first-step terms
+> (`calc ENNReal.ofReal\n  (long arg)\n  = ... := ...`) mis-parse in this pin
+> — the continuation line reads as a new command, producing bogus "expected
+> ℝ got ENNReal" / "left-hand side is true : Bool" errors far from the real
+> bug. Fix: `set T := <the long RHS term>` once, then write the whole `calc`
+> in terms of the short name `T` (no multi-line calc heads at all).
+>
+> **NEXT (step 2, the genuine remaining crux)**: assemble
+> `xstar_cf_freq_tendsto [a]` (single-digit frequency, already proved,
+> `CFCorrect.lean`) with `gaussMeasure_digit_cylinder`'s closed form and
+> `wSched_log_sum_le`'s uniform tail bound (`CFCorrect.lean`, from the
+> `goodC` schedule payload) into
+> `Tendsto (fun n => (1/n)·Σ_{i<n} log(cfDigit xstar i)) atTop (nhds (log
+> khinchinK₀))`. This is a dominated-convergence-style interchange: for each
+> `ε`, truncate at digit `K` (using `Σ_a p_a·log a` convergence, i.e.
+> `khinchinK₀_summable_log` in `Khinchin.lean`, to bound the tail
+> `Σ_{a>K} p_a·log a`), get finite-truncation convergence of the empirical
+> log-average from `xstar_cf_freq_tendsto` on each `a ≤ K`, and bound the
+> empirical tail `(1/n)Σ_{i<n, cfDigit xstar i > K} log(cfDigit xstar i)`
+> using `wSched_log_sum_le`'s `≤ goodC·n` mass bound plus a Chebyshev-style
+> "few large digits" argument (or a cruder direct bound if the `goodC`
+> bound alone suffices — check whether `uSched_log_sum_le`'s per-stage
+> bound already gives what's needed without further partitioning). Likely
+> the hardest remaining step; budget 2-3+ laps. Then
+> `khinchinTypical_iff_log_tendsto` (`Khinchin.lean`, already proved)
+> converts this limit to `KhinchinTypical xstar`, closing
+> `exists_absolutely_normal_cf_normal_khinchin` (`Headline.lean:136`, the
+> ONLY remaining `sorry` in `src/`).
+
 > **GRIND LAP (2026-08-26, `44fb8bb`).** ✅ **TIER 1 LOCKED** —
 > `exists_absolutely_normal_cf_normal` proved, axiom-clean (`b3bc2c4`; see
 > HANDOFF-2026-08-26-0630.md for the full route). ✅ **Khinchin (Tier 2) seed
