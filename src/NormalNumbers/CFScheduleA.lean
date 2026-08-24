@@ -1140,6 +1140,71 @@ theorem exists_ball_cfDigit_psi_eq (q r : ℝ) (hq : 0 < q)
   constructor <;>
     nlinarith [le_abs_self (x - x₀), neg_abs_le (x - x₀), hqx, hq.le]
 
+/-- **A deep CF-cylinder of an irrational point fits any ball around it (brick-4
+refine step).**  Given a genuine word `wx` and an irrational `p ∈ cfCylinder wx`, for
+every `ε > 0` there is a strict genuine EXTENSION `wx'` of `wx` (namely `p`'s own
+depth-`K` CF word for `K` large) with `p ∈ cfCylinder wx'` and `cfCylinder wx' ⊆
+Ioo (p-ε) (p+ε)` — cylinder diameters shrink to `0` (`cfCylinder_subset_Icc_length` +
+`volume_cfCylinder_le_fib`).  This is exactly the "refine the `x`-cylinder below the
+`exists_ball_cfDigit_psi_eq` ball" move: after refining, every point of `cfCylinder wx'`
+maps under `ψ` to within the ball, so shares `ψ(p)`'s first `m` z-digits. -/
+theorem exists_cfCylinder_prefix_subset_ball {wx : List ℕ} (hwxne : wx ≠ [])
+    (hwxpos : ∀ a ∈ wx, 1 ≤ a) {p : ℝ} (hp : p ∈ cfCylinder wx) (hpirr : Irrational p)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ wx' : List ℕ, wx' ≠ [] ∧ (∀ a ∈ wx', 1 ≤ a) ∧ wx'.take wx.length = wx ∧
+      wx.length < wx'.length ∧ p ∈ cfCylinder wx' ∧
+      cfCylinder wx' ⊆ Set.Ioo (p - ε) (p + ε) := by
+  have hp01 : p ∈ Set.Ioo (0 : ℝ) 1 := cfCylinder_subset_Ioo wx hp
+  obtain ⟨n, hn⟩ := exists_nat_one_div_lt hε
+  set K := max (max (wx.length + 1) (n + 1)) 5 with hKdef
+  have hKwx : wx.length < K := by omega
+  have hK5 : 5 ≤ K := by omega
+  have hK1 : 1 ≤ K := by omega
+  set wx' : List ℕ := (List.range K).map (cfDigit p) with hwx'def
+  have hwx'len : wx'.length = K := by simp [hwx'def]
+  have hwx'ne : wx' ≠ [] := by rw [← List.length_pos_iff_ne_nil, hwx'len]; omega
+  have hwx'pos : ∀ a ∈ wx', 1 ≤ a := by
+    intro a ha; rw [hwx'def, List.mem_map] at ha; obtain ⟨i, _, rfl⟩ := ha
+    exact one_le_cfDigit p hpirr hp01 i
+  have hwx'getD : ∀ i, i < K → wx'.getD i 0 = cfDigit p i := by
+    intro i hi
+    rw [hwx'def, List.getD_eq_getElem _ _ (by simpa [hwx'len] using hi)]
+    simp
+  have hpmem' : p ∈ cfCylinder wx' := by
+    refine ⟨hp01, fun i hi => ?_⟩
+    rw [hwx'len] at hi; rw [hwx'getD i hi]
+  have htake : wx'.take wx.length = wx :=
+    take_eq_of_mem_cfCylinder (by rw [hwx'len]; omega) hp hpmem'
+  have hlt : wx.length < wx'.length := by rw [hwx'len]; exact hKwx
+  refine ⟨wx', hwx'ne, hwx'pos, htake, hlt, hpmem', ?_⟩
+  -- diameter of cfCylinder wx' is < ε, and p is inside it
+  obtain ⟨a, c, hIcc, hac⟩ := cfCylinder_subset_Icc_length wx' hwx'ne hwx'pos
+  have hvol := volume_cfCylinder_le_fib wx' hwx'ne hwx'pos
+  have hfibge : (K : ℝ) ≤ (Nat.fib (wx'.length + 1) : ℝ) := by
+    have h1 : wx'.length + 1 ≤ Nat.fib (wx'.length + 1) :=
+      Nat.le_fib_self (by rw [hwx'len]; omega)
+    exact_mod_cast le_trans (by rw [hwx'len]; omega : K ≤ wx'.length + 1) h1
+  have hnR : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  have hdiam : c - a < ε := by
+    rw [hac]
+    have hle : (volume (cfCylinder wx')).toReal
+        ≤ 1 / (Nat.fib (wx'.length + 1) : ℝ) ^ 2 := by
+      rw [← ENNReal.toReal_ofReal (show (0:ℝ) ≤ 1 / (Nat.fib (wx'.length + 1) : ℝ) ^ 2 by positivity)]
+      exact ENNReal.toReal_mono (by simp) hvol
+    have hKR : (n : ℝ) + 1 ≤ (K : ℝ) := by exact_mod_cast (by omega : n + 1 ≤ K)
+    have hK5R : (5 : ℝ) ≤ (K : ℝ) := by exact_mod_cast hK5
+    have hfibsq : ((n : ℝ) + 1) ≤ (Nat.fib (wx'.length + 1) : ℝ) ^ 2 := by
+      nlinarith [hfibge, hKR, hK5R]
+    have hmono : 1 / (Nat.fib (wx'.length + 1) : ℝ) ^ 2 ≤ 1 / ((n : ℝ) + 1) :=
+      one_div_le_one_div_of_le hnR hfibsq
+    have hlast : 1 / ((n : ℝ) + 1) < ε := by have := hn; push_cast at this; linarith
+    linarith
+  intro z hz
+  have hzIcc := hIcc hz
+  have hpIcc := hIcc hpmem'
+  rw [Set.mem_Icc] at hzIcc hpIcc
+  exact ⟨by linarith [hzIcc.1, hpIcc.2], by linarith [hzIcc.2, hpIcc.1]⟩
+
 /-- **Absolute-scale bad-zone avoidance transfers along CF-digit agreement.**  If two
 full-orbit reals `z, z'` agree on their first `m` CF digits with `n + |v| ≤ m`, then
 avoidance of the ABSOLUTE-scale bad zone `cfBadZone [] v n δ` transfers from `z'` to `z`
