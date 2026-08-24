@@ -7,6 +7,8 @@ import NormalNumbers.RealDefs
 import NormalNumbers.CFDigitLaw
 import NormalNumbers.DaryCorrect
 import NormalNumbers.Pillai
+import NormalNumbers.KhinchinDefs
+import NormalNumbers.Khinchin
 
 /-!
 # B5′ headline statement surface (judge-frozen)
@@ -72,17 +74,10 @@ def IsCFNormal (x : ℝ) : Prop :=
       (fun p => (countOccurrences v ((List.range p).map (cfDigit x)) : ℝ) / p)
       Filter.atTop (nhds ((gaussMeasure (cfCylinder v)).toReal))
 
-/-- **Khinchin's constant** `K₀ = ∏_{a≥1} (1 + 1/(a(a+2)))^{log₂ a}
-≈ 2.685…`, as a `tprod` over `k : ℕ` with digit value `a = k + 1`
-(anchors above pin the alignment). -/
-noncomputable def khinchinK₀ : ℝ :=
-  ∏' k : ℕ, (1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) ^ Real.logb 2 ((k : ℝ) + 1)
-
-/-- Khinchin-typical: the geometric mean of the CF digits tends to `K₀`. -/
-def KhinchinTypical (x : ℝ) : Prop :=
-  Filter.Tendsto
-    (fun n => (∏ i ∈ Finset.range n, (cfDigit x i : ℝ)) ^ (1 / (n : ℝ)))
-    Filter.atTop (nhds khinchinK₀)
+/-! `khinchinK₀` and `KhinchinTypical` are the JUDGE-frozen Khinchin definitions;
+they now live BYTE-IDENTICAL in `KhinchinDefs.lean` (upstream) so `Khinchin.lean`
+can prove `xstar_khinchinTypical` and this file can invoke it (route-D′ layering).
+The anchors above pin the `tprod` alignment (`k ↦ k+1`) that `khinchinK₀` uses. -/
 
 /-! ## The frozen headline statements -/
 
@@ -102,37 +97,47 @@ theorem count_map_range_eq_card_filter (f : ℕ → ℕ) (c p : ℕ) :
     · rw [Finset.filter_insert, if_neg h, ih]
       simp [h]
 
+/-- `xstar` is absolutely normal (Track A's full `IsNormal` in every base
+`b ≥ 2`): Pillai's powers-equivalence fed by the d-ary simple normality of
+`xstar` at every `b^r` (`xstar_dary_freq_tendsto`). -/
+theorem xstar_isAbsolutelyNormal : IsAbsolutelyNormal xstar := by
+  intro b hb
+  have hxfrac : Int.fract xstar = xstar :=
+    Int.fract_eq_self.mpr ⟨xstar_mem_Ioo.1.le, xstar_mem_Ioo.2⟩
+  have hy : xstar ∈ Set.Ico (0 : ℝ) 1 := ⟨xstar_mem_Ioo.1.le, xstar_mem_Ioo.2⟩
+  show IsNormalSequence b (digitOf b (Int.fract xstar))
+  rw [hxfrac]
+  apply pillai b hb xstar hy
+  intro r hr1 c hc
+  have hd2 : 2 ≤ b ^ r := by
+    calc 2 ≤ b := hb
+      _ = b ^ 1 := (pow_one b).symm
+      _ ≤ b ^ r := Nat.pow_le_pow_right (by omega) hr1
+  have h := xstar_dary_freq_tendsto (b ^ r) hd2 c hc
+  have h2 := h.congr (fun p => by rw [count_map_range_eq_card_filter])
+  have hcast : ((b : ℝ) ^ r)⁻¹ = ((b ^ r : ℕ) : ℝ)⁻¹ := by push_cast; ring
+  rwa [hcast]
+
+/-- `xstar` is CF-normal (B–Y §2.2 window-frequency form),
+`xstar_cf_freq_tendsto`. -/
+theorem xstar_isCFNormal : IsCFNormal xstar :=
+  fun v hne hpos => xstar_cf_freq_tendsto v hne hpos
+
 /-- **Tier 1 — the Becher–Yuhjtman theorem** (IMRN 2019, minus
 efficiency): there is a real number that is absolutely normal and
 CF-normal.  Witness: `xstar` (its machinery lives in the `CF*`/`TBrick*`
 modules; this statement deliberately does not name it). -/
 theorem exists_absolutely_normal_cf_normal :
-    ∃ x : ℝ, IsAbsolutelyNormal x ∧ IsCFNormal x := by
-  refine ⟨xstar, ?_, ?_⟩
-  · intro b hb
-    have hxfrac : Int.fract xstar = xstar :=
-      Int.fract_eq_self.mpr ⟨xstar_mem_Ioo.1.le, xstar_mem_Ioo.2⟩
-    have hy : xstar ∈ Set.Ico (0 : ℝ) 1 := ⟨xstar_mem_Ioo.1.le, xstar_mem_Ioo.2⟩
-    show IsNormalSequence b (digitOf b (Int.fract xstar))
-    rw [hxfrac]
-    apply pillai b hb xstar hy
-    intro r hr1 c hc
-    have hd2 : 2 ≤ b ^ r := by
-      calc 2 ≤ b := hb
-        _ = b ^ 1 := (pow_one b).symm
-        _ ≤ b ^ r := Nat.pow_le_pow_right (by omega) hr1
-    have h := xstar_dary_freq_tendsto (b ^ r) hd2 c hc
-    have h2 := h.congr (fun p => by rw [count_map_range_eq_card_filter])
-    have hcast : ((b : ℝ) ^ r)⁻¹ = ((b ^ r : ℕ) : ℝ)⁻¹ := by push_cast; ring
-    rwa [hcast]
-  · intro v hne hpos
-    exact xstar_cf_freq_tendsto v hne hpos
+    ∃ x : ℝ, IsAbsolutelyNormal x ∧ IsCFNormal x :=
+  ⟨xstar, xstar_isAbsolutelyNormal, xstar_isCFNormal⟩
 
 /-- **Tier 2 — the expedition headline** (the conjunction apparently new
 even on paper): there is a real number that is absolutely normal,
-CF-normal, and Khinchin-typical. -/
+CF-normal, and Khinchin-typical.  Witness: `xstar`; the Khinchin leg is
+`xstar_khinchinTypical` (`Khinchin.lean`, delivered by the route-C′ summable
+log-tail family grafted into the schedule). -/
 theorem exists_absolutely_normal_cf_normal_khinchin :
-    ∃ x : ℝ, IsAbsolutelyNormal x ∧ IsCFNormal x ∧ KhinchinTypical x := by
-  sorry
+    ∃ x : ℝ, IsAbsolutelyNormal x ∧ IsCFNormal x ∧ KhinchinTypical x :=
+  ⟨xstar, xstar_isAbsolutelyNormal, xstar_isCFNormal, xstar_khinchinTypical⟩
 
 end NormalNumbers
