@@ -1845,6 +1845,18 @@ theorem exists_freq_good_extend_affine_steer_uniform {q : ℝ} (hq : 0 < q) (r :
   · rw [hdropx]; exact hn₁xsq
   · rw [hdropx]; exact huxfreq
 
+/-- **Every genuine pattern is eventually in `wordFamily`.**  For a genuine word
+`v` (nonempty, digits `≥ 1`), `v ∈ wordFamily t` for all `t ≥ max |v| (v.sum)`.
+The coverage fact the two-stream recursion needs so that fixing `v` and taking
+`s` large enough puts `v` in every stage family (via `wordFamily_mono`). -/
+theorem mem_wordFamily_eventually (v : List ℕ) (hvne : v ≠ [])
+    (hvpos : ∀ a ∈ v, 1 ≤ a) :
+    ∃ t₀ : ℕ, ∀ t, t₀ ≤ t → v ∈ wordFamily t := by
+  refine ⟨max v.length v.sum, fun t ht => mem_wordFamily.2 ⟨⟨?_, ?_⟩, fun a ha => ⟨hvpos a ha, ?_⟩⟩⟩
+  · exact List.length_pos_of_ne_nil hvne
+  · exact le_trans (le_max_left _ _) ht
+  · exact le_trans (le_trans (List.le_sum_of_mem ha) (le_max_right _ _)) ht
+
 /-- **THE B6 CRUX (interleaved-schedule witness), FEASIBLE REGIME.**  For `q > 0`
 and `r ∈ (-q, 1)` — exactly the range in which the feasible set
 `(0,1) ∩ ψ⁻¹(0,1)` is nonempty — there is a single real `x` such that both `x`

@@ -29,6 +29,32 @@ The feasible set `(0,1) ∩ ψ⁻¹(0,1) = (max 0 (-r/q), min 1 ((1-r)/q))` is n
 **Two open `src/` sorries now:** (1) the feasible crux (item-3 recursion, below),
 (2) the `TODO(shift)` general-`r` reduction (leaf: `IsCFNormal_add_int`).
 
+### ⚠️ SHARPENED item-3 feasibility (grind lap 2026-08-24): the NAIVE schedule breaks `hslack` — SLOW PROMOTION is mandatory
+The directive/handoff item-3 sketch (`F_s = wordFamily s`, `δ_s = 1/(s+1)`,
+`L_s = |w_s|`) does NOT close `hslack`.  Reason, traced through the block sizer:
+- `exists_uniformly_freq_good_block_steer` fixes `|u| = n₁ + m²` with `n₁ = m·⌊√m⌋`,
+  and the measure budget forces `m ≳ (S/(δ²·γtar))²` where
+  `S = ∑_{v∈F} 7(8|v|+80)·γ_v·γ_wx` (`exists_uniform_block_param`, `hbound`).
+- With `F_s = wordFamily s`, `|F_s| ~ s^s` and `δ_s² = 1/(s+1)²`, so `S_s` and hence
+  the forced block `|u_s| = m² ≳ (S_s (s+1)²/γtar)²` grow **tower-like** — far faster
+  than any geometric word growth.  Then `|w_{s+1}| ≫ |w_s|`, and the `hslack` term
+  `C(s₀+k) ~ |u_{s₀+k}|^{3/4} ~ |w_{s₀+k+1}|^{3/4}` is NOT `o(|w_{s₀+k}|)` (ratio
+  `|w_{s+1}|^{3/4}/|w_s| → ∞` once `|w_{s+1}| ≫ |w_s|^{4/3}`).  **`hslack` FAILS.**
+- **Fix = mirror `CFSchedule`'s promotion** (`SchedState.t`, `promThreshold`,
+  `sched_prom_invariant`): keep the family FIXED at `wordFamily t` across many
+  stages, bumping `t → t+1` only once the accumulated word is long enough that the
+  next block is still `o(word)`.  Then between promotions `S` is constant, blocks
+  are `poly`-bounded, word growth dominates, and `∑ C_i = o(word)` telescopes.
+  Coverage (every `v` eventually in `F`) still holds because `t → ∞` (mirror
+  `sched_t_tendsto`); `mem_wordFamily_eventually` (PROVED this lap, `CFScheduleA`)
+  supplies the per-`v` threshold.
+- **Net:** item-3's `SchedStateA` must carry a promotion counter `t` (as
+  `CFSchedule.SchedState` does), not just `(wx,wz,e,f)`.  `L_s`/`δ_s` tie to `t`,
+  and the promotion rule guarantees `|u_s|/|w_s|` stays bounded — the real content
+  behind `hslack`.  This is the route-decisive uncertainty, now LOCALIZED to the
+  promotion-rate bookkeeping (not a new analytic wall).  Building block landed:
+  `mem_wordFamily_eventually`.
+
 
 ## ⭐⭐⭐⭐⭐⭐⭐ ADVANCE 2026-08-24 (review lap, later): per-round FEASIBILITY discharged — `exists_uniformly_freq_good_block_steer_len` (commit `4d1e5c9`, axiom-clean)
 
