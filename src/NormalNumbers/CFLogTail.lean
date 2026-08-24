@@ -280,6 +280,28 @@ theorem integral_logTailFn_eq_of_hasSum (K : ℕ) {L : ℝ} (hL : HasSum logTail
   rw [hlhs, htail.tsum_eq] at hswap
   rw [← MeasureTheory.integral_congr_ae (logTailTerm_tsum_ae_eq K), hswap]
 
+/-- **The tail integral vanishes as `K → ∞`, KHINCHINK₀-FREE.** Instantiates
+`integral_logTailFn_eq_of_hasSum` at `L = ∑' n, logTailG n` (`logTailG`'s own
+sum, via `summable_gaussKuzmin_log` — no reference to `khinchinK₀`'s VALUE),
+so `∫ logTailFn K dγ` is exactly the `K`-tail of a summable series, which
+`HasSum.tendsto_sum_nat` sends to `0`.  This is the layering-safe route: it
+lives upstream of `Headline.lean`/`khinchinK₀` (unlike `Khinchin.lean`'s
+`integral_logTailFn_tendsto`, which proves the same fact via
+`gaussKuzmin_logtail_tendsto` but needs `khinchinK₀` to STATE the intermediate
+value `log khinchinK₀`), so it is what `KhinchinBrick.lean`'s `K`-selection
+uses to stay upstream of `CFSchedule.lean`. -/
+theorem integral_logTailFn_tendsto_zero :
+    Filter.Tendsto (fun K : ℕ => ∫ x, logTailFn K x ∂gaussMeasure)
+      Filter.atTop (nhds 0) := by
+  have hL : HasSum logTailG (∑' n, logTailG n) := summable_gaussKuzmin_log.hasSum
+  have heq : ∀ K : ℕ, ∫ x, logTailFn K x ∂gaussMeasure
+      = (∑' n, logTailG n) - ∑ k ∈ Finset.range K, logTailG k :=
+    fun K => integral_logTailFn_eq_of_hasSum K hL
+  simp_rw [heq]
+  have hpartial := hL.tendsto_sum_nat
+  have hsub := Filter.Tendsto.const_sub (∑' n, logTailG n) hpartial
+  simpa using hsub
+
 /-- `logTailFn K` is measurable: `cfDigit · 0` is measurable and the
 post-composition with the (discrete-domain) threshold/`log` map is
 automatically measurable. -/

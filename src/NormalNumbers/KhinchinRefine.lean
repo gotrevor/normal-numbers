@@ -19,6 +19,17 @@ namespace NormalNumbers
 
 open MeasureTheory
 
+/-- `Finset.range`-sum of any list-indexed function equals the `List.range`
+`map`+`sum` form (duplicated from `Khinchin.lean`'s `finset_sum_range_eq_list_sum`
+— that copy is downstream of `khinchinK₀`/`Headline.lean`, unusable here). -/
+theorem finset_sum_range_eq_list_sum' {β : Type*} [AddCommMonoid β] (n : ℕ) (f : ℕ → β) :
+    ∑ i ∈ Finset.range n, f i = ((List.range n).map f).sum := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      rw [Finset.sum_range_succ, ih, List.range_succ, List.map_append, List.sum_append]
+      simp
+
 /-- **Digit-shift identity**: the `n`-step log-tail Birkhoff sum evaluated at
 the `m`-th iterate is the empirical log-tail mass of `x`'s digits `m, …,
 m+n−1`. Converts `logBadZone`-avoidance (a statement about `gaussMap`
@@ -181,7 +192,7 @@ theorem TBrick.exists_refinement_uniform_khinchin (t : ℕ)
         = ∑ i ∈ Finset.range n,
             (if K < cfDigit x (B.w.length + i) then
               Real.log ((cfDigit x (B.w.length + i) : ℕ) : ℝ) else 0) := by
-      rw [finset_sum_range_eq_list_sum, ← hword, List.map_map]
+      rw [finset_sum_range_eq_list_sum', ← hword, List.map_map]
       rfl
     rw [hsum_eq]
     exact hle

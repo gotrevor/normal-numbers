@@ -5,7 +5,6 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.CFLogTail
 import NormalNumbers.TBrick
-import NormalNumbers.Khinchin
 
 /-!
 # The Khinchin log-tail bad zone in Lebesgue measure (route C′)
@@ -213,13 +212,13 @@ theorem exists_kmin_daryCoeff_lt' (t : ℕ) {ε c : ℝ} (hε0 : 0 < ε) (hc : 0
   exact Filter.eventually_atTop.1 h
 
 /-- For `K` large the Khinchin log-tail coefficient `14·(∫ logTailFn K dγ)/η`
-drops below any target `c > 0`, via `integral_logTailFn_tendsto`'s `K → ∞`
+drops below any target `c > 0`, via `integral_logTailFn_tendsto_zero`'s `K → ∞`
 vanishing fact (`Khinchin.lean`). -/
 theorem exists_K_logCoeff_lt (η : ℝ) (hη : 0 < η) {c : ℝ} (hc : 0 < c) :
     ∃ K₀ : ℕ, ∀ K : ℕ, K₀ ≤ K → 14 * (∫ x, logTailFn K x ∂gaussMeasure) / η < c := by
   have htendsto : Filter.Tendsto
       (fun K : ℕ => 14 * (∫ x, logTailFn K x ∂gaussMeasure) / η) Filter.atTop (nhds 0) := by
-    have := integral_logTailFn_tendsto.const_mul (14 : ℝ)
+    have := integral_logTailFn_tendsto_zero.const_mul (14 : ℝ)
     simp only [mul_zero] at this
     simpa [div_eq_mul_inv] using this.mul_const η⁻¹
   have h := (tendsto_order.1 htendsto).2 c hc
