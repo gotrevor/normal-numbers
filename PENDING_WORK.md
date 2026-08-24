@@ -29,7 +29,32 @@ N ≤ (κ/log φ)·|w| + C`.  The target-width reciprocal `a = 4/(d−c) ≤ 8 c
 because `d−c ≥ 1/(2 cfK²)` (`volume_cfCylinder_ge_inv`, PROVED) when the target is
 a fixed fraction of the cylinder.
 
-**NEW hardest sub-obligation** (the single remaining gap for `schedA_block_linear`):
+**Landed 2026-08-28 (measure enabler, axiom-clean, `CFDigitLaw.lean`):**
+`frac_mass_bad_extensions` — the ε-strengthening of `half_mass_long_extensions`:
+`∀ ε>0, ∃ κ>0, ∀ w n, (cfK-bad extension mass, cfK u > e^{κn}) ≤ ε·|I_w|`.
+Same Markov-on-`tsum_mul_log_cfK_le` argument, threshold `e^{κn}`, `κ = C₀/ε`.
+This is the FRACTIONAL cfK-tail control the steer graft needs (the half-measure
+`goodExtSet` bound alone is too weak to dominate a small steering target `A ⊆
+I_wx`; the ε-version lets κ be chosen so the cfK-bad set cannot swallow the
+freq-good surplus `μ(A\B)`).
+
+**NEXT (the graft, now with both halves in hand):** build
+`exists_multiscale_freq_good_block_steer_len` + a cfK conclusion by intersecting
+the selection with the `cfK ≤ e^{κ·ntop}` set.  Concretely, in
+`exists_irrational_notMem_multiscale_cfBadZone_in_Ioo` the point is chosen from
+`A \ B` with `μ(A\B) > 0` (`A = Ioo c' d'`, `B` = bad zones,
+`μ(B) < μ(A) − μ(A\B)`).  Add a third excluded set `G^c` (cfK-bad extensions
+past `wx`): by `frac_mass_bad_extensions` with `ε = μ(A\B)/(2·μ(I_wx))` and the
+volume→gauss comparison, `μ(A ∩ G^c) ≤ ...` stays below `μ(A\B)`, so
+`(A\B) ∩ G` has positive measure ⇒ an irrational point there.  Read off its digit
+word `u` (`range_map_cfDigit_eq`); `exists_word_of_mem_goodExtSet`-style gives
+`cfK u ≤ e^{κ·ntop} = e^{κ·|u|}`.  Then feed `exists_fib_threshold_linear_of_cfK`
+to close `schedA_block_linear`.  ⚠️ the one arithmetic wrinkle: `frac_mass_bad`
+bounds LEBESGUE volume of the bad extensions, while `A\B` positivity is in GAUSS
+measure — bridge with `volume_le_ofReal_mul_gaussMeasure` /
+`volume_le_gaussMeasure` (`TBrickRefine.lean`), both directions available.
+
+**OLD framing (superseded by the two lemmas above):**
 graft `cfK u ≤ exp(goodC·|u|)` onto the multiscale steer block
 `exists_multiscale_freq_good_block_steer_len` — intersect its scale-selection set
 with `goodExtSet wx goodC ·` (positive measure retained: freq-good set has measure

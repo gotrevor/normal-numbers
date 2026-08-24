@@ -780,6 +780,75 @@ theorem half_mass_long_extensions :
             volume (cfCylinder w) := by
           rw [← mul_assoc, htwo, one_mul]
 
+/-- **Fractional-mass cfK tail bound** (the ε-strengthening of
+`half_mass_long_extensions`, the measure enabler the B6 cfK-steer graft needs).
+For any `ε > 0` there is a threshold rate `κ` such that in EVERY genuine cylinder
+the extensions with a LARGE continuant (`cfK u > e^{κ·n}`) carry at most an
+`ε`-fraction of the mass.  Same Markov argument on `tsum_mul_log_cfK_le` as
+`half_mass_long_extensions`, but with threshold `e^{κn}`, `κ = C₀/ε`, giving
+bad-mass `≤ (C₀ n)/(κ n)·|I_w| = ε·|I_w|`.  This is what lets the steer-block
+selection (`exists_multiscale_freq_good_block_steer_len`) additionally land its
+point in a `cfK ≤ e^{κ·|u|}` extension: choose `ε` below the freq-good surplus
+`μ(A\B)/μ(I_w)` so the cfK-bad set cannot swallow the surplus, then the point
+avoiding bad zones AND the cfK-bad set exists.  Resolves the route-decisive
+finding (log-cfK linear ⇒ `Nfib = O(|w|)` ⇒ `schedA_block_linear`) WITHOUT a digit
+cap. -/
+theorem frac_mass_bad_extensions (ε : ℝ) (hε : 0 < ε) :
+    ∃ κ : ℝ, 0 < κ ∧ ∀ (w : List ℕ), w ≠ [] → (∀ a ∈ w, 1 ≤ a) → ∀ n : ℕ,
+      (∑' u : genWords n,
+        (if (cfK (u : List ℕ) : ℝ) ≤ Real.exp (κ * n) then 0
+         else volume (cfCylinder (w ++ (u : List ℕ)))))
+        ≤ ENNReal.ofReal ε * volume (cfCylinder w) := by
+  obtain ⟨C₀, hC₀, hbound⟩ := tsum_mul_log_cfK_le
+  refine ⟨C₀ / ε, by positivity, ?_⟩
+  intro w hw hpos n
+  set κ := C₀ / ε with hκ
+  have hκ0 : 0 < κ := by rw [hκ]; positivity
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · -- n = 0: `K([]) = 1 ≤ e⁰`, so every extension is good, bad mass is 0
+    have hzero : (∑' u : genWords 0,
+        (if (cfK (u : List ℕ) : ℝ) ≤ Real.exp (κ * ((0 : ℕ) : ℝ)) then (0 : ENNReal)
+         else volume (cfCylinder (w ++ (u : List ℕ))))) = 0 := by
+      rw [ENNReal.tsum_eq_zero]
+      intro u
+      have hnil : (u : List ℕ) = [] := List.length_eq_zero_iff.1 u.2.1
+      have hgood : (cfK (u : List ℕ) : ℝ) ≤ Real.exp (κ * ((0 : ℕ) : ℝ)) := by
+        simp only [hnil]; norm_num [cfK]
+      exact if_pos hgood
+    rw [hzero]; exact zero_le'
+  · -- n ≥ 1: Markov on the log-continuant bound
+    have hCn : (0 : ℝ) < κ * n := by
+      have : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+      nlinarith
+    set d : ENNReal := ENNReal.ofReal (κ * n) with hd
+    have hd0 : d ≠ 0 := by rw [hd]; simp [ENNReal.ofReal_eq_zero, not_le, hCn]
+    have hdtop : d ≠ ⊤ := ENNReal.ofReal_ne_top
+    have hbadmul : (∑' u : genWords n,
+        (if (cfK (u : List ℕ) : ℝ) ≤ Real.exp (κ * (n : ℝ)) then (0 : ENNReal)
+         else volume (cfCylinder (w ++ (u : List ℕ))))) * d ≤
+        ENNReal.ofReal (C₀ * n) * volume (cfCylinder w) := by
+      rw [← ENNReal.tsum_mul_right]
+      refine le_trans (ENNReal.tsum_le_tsum fun u => ?_) (hbound w hw hpos n)
+      by_cases h : (cfK (u : List ℕ) : ℝ) ≤ Real.exp (κ * (n : ℝ))
+      · simp [h]
+      · rw [if_neg h]
+        have hlt : Real.exp (κ * n) < (cfK (u : List ℕ) : ℝ) := by push_neg at h; exact h
+        have hlog : κ * n ≤ Real.log (cfK (u : List ℕ)) := by
+          have h2 := Real.log_lt_log (Real.exp_pos _) hlt
+          rw [Real.log_exp] at h2; linarith
+        show volume (cfCylinder (w ++ (u : List ℕ))) * d
+          ≤ volume (cfCylinder (w ++ (u : List ℕ))) * ENNReal.ofReal (Real.log (cfK (u : List ℕ)))
+        gcongr
+        rw [hd]; exact ENNReal.ofReal_le_ofReal hlog
+    have hεκn : ENNReal.ofReal ε * volume (cfCylinder w) * d
+        = ENNReal.ofReal (C₀ * n) * volume (cfCylinder w) := by
+      rw [hd, mul_right_comm (ENNReal.ofReal ε) (volume (cfCylinder w))
+        (ENNReal.ofReal (κ * n)), ← ENNReal.ofReal_mul hε.le]
+      have hcalc : ε * (κ * n) = C₀ * n := by rw [hκ]; field_simp
+      rw [hcalc]
+    rw [← hεκn] at hbadmul
+    exact (ENNReal.mul_le_mul_iff_left hd0 hdtop).mp hbadmul
+
 /-- **Deterministic relative-length upper bound** (the free half of Lemma 5):
 every genuine relative-order-`n` extension shrinks a cylinder by at least
 `fib(n+1)²/2` — from `volume_cylinder_append_le`, `volume_cfCylinder`, and
