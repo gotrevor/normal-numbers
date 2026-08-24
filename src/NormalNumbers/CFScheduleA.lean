@@ -335,6 +335,55 @@ theorem gaussMeasure_multiscale_cfBadZone_le
     _ ≤ ∑ _n ∈ NS, A₁ := Finset.sum_le_sum hterm
     _ = (NS.card : ℝ) * A₁ := by rw [Finset.sum_const, nsmul_eq_mul]
 
+/-- **L4 route — brick 2a: ψ-pullback of a z-cylinder-based multiscale bad zone.**
+The `ψ`-preimage of the union of `z`-CF discrepancy bad zones (base `z`-cylinder
+`wz`, family `F`, scales `NS`) has `γ`-measure at most `2/q` times the multiscale
+bound for `wz`.  Combines brick 1 (`gaussMeasure_preimage_affineMap_le`) with the
+`z`-space multiscale bound (`gaussMeasure_multiscale_cfBadZone_le`).  This is the
+object the single-stream L4 selection avoids: `x` such that `ψ(x)` has good
+`z`-frequency at every scale in `NS` `⟺` `x ∉ ψ⁻¹(z-bad-zones)`.  The bound is
+ABSOLUTE (`·γ(cfCylinder wz)`, not relative to `cfCylinder wx`); the alignment
+brick (2b) supplies `γ(cfCylinder wz) ≤ C·γ(cfCylinder wx)` so this becomes a small
+fraction of the current `x`-cylinder — NO exponential `1/ρ` blowup (that was the
+two-stream defect). -/
+theorem gaussMeasure_preimage_multiscale_cfBadZone_le {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (wz : List ℕ) (hposwz : ∀ a ∈ wz, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (NS : Finset ℕ) {n₁ : ℕ} (hn₁ : 0 < n₁)
+    (hNS : ∀ n ∈ NS, n₁ ≤ n) {δ : ℝ} (hδ : 0 < δ) :
+    (gaussMeasure (⋃ n ∈ NS, ⋃ v ∈ F, affineMap q r ⁻¹' cfBadZone wz v n δ)).toReal
+      ≤ (2 / q) * ((NS.card : ℝ) * (∑ v ∈ F, 7 * ((8 * v.length + 80) *
+          (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁)) *
+          (gaussMeasure (cfCylinder wz)).toReal)) := by
+  set B : Set ℝ := ⋃ n ∈ NS, ⋃ v ∈ F, cfBadZone wz v n δ with hBdef
+  have hpre : (⋃ n ∈ NS, ⋃ v ∈ F, affineMap q r ⁻¹' cfBadZone wz v n δ)
+      = affineMap q r ⁻¹' B := by
+    rw [hBdef]; simp only [Set.preimage_iUnion]
+  have hBmeas : MeasurableSet B := by
+    rw [hBdef]
+    exact MeasurableSet.biUnion NS.countable_toSet fun n _ =>
+      Finset.measurableSet_biUnion F fun v _ => measurableSet_cfBadZone wz v n δ
+  have hBsub : B ⊆ Set.Ioo (0 : ℝ) 1 := by
+    rw [hBdef]
+    refine Set.iUnion₂_subset fun n _ => Set.iUnion₂_subset fun v _ => ?_
+    exact Set.inter_subset_left.trans (cfCylinder_subset_Ioo wz)
+  have hfin : gaussMeasure B ≠ ⊤ := measure_ne_top _ _
+  have h1 : gaussMeasure (affineMap q r ⁻¹' B) ≤ ENNReal.ofReal (2 / q) * gaussMeasure B :=
+    gaussMeasure_preimage_affineMap_le hq r B hBmeas hBsub
+  have h1r : (gaussMeasure (affineMap q r ⁻¹' B)).toReal
+      ≤ (2 / q) * (gaussMeasure B).toReal := by
+    calc (gaussMeasure (affineMap q r ⁻¹' B)).toReal
+        ≤ (ENNReal.ofReal (2 / q) * gaussMeasure B).toReal :=
+          ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top hfin) h1
+      _ = (2 / q) * (gaussMeasure B).toReal := by
+          rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal (by positivity)]
+  have h2 : (gaussMeasure B).toReal
+      ≤ (NS.card : ℝ) * (∑ v ∈ F, 7 * ((8 * v.length + 80) *
+          (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁)) *
+          (gaussMeasure (cfCylinder wz)).toReal) :=
+    gaussMeasure_multiscale_cfBadZone_le wz hposwz F hF NS hn₁ hNS hδ
+  rw [hpre]
+  exact h1r.trans (mul_le_mul_of_nonneg_left h2 (by positivity))
+
 /-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
 finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
 cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every
