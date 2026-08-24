@@ -100,33 +100,40 @@ by choosing the point in `(c',d') ⊂⊂ (c,d)` with `n` large (cylinder width �
 `exists_cfCylinder_subset_Ioo` does.
 The addslack/split-tail lemmas become UNNEEDED for the main route (kept as infra).
 
-### NEXT — item 2 is THE crux (hardest-first). Attack it directly.
-1. **`exists_freq_good_block_in_Ioo_whole`** (CFScheduleA or CFFreqBlock): the
-   STEERABLE freq-good block. Given genuine `wx`, a target sub-interval `(c,d) ⊆
-   cfCylinder wx`-region, family `F`, `δ`, `L`: a SINGLE block `u` (`|u| ≥ L`,
-   `δ`-good for all `v∈F`) with `cfCylinder (wx ++ u) ⊆ Ioo c d` — good AS A WHOLE,
-   NO placement/tail split. **Probe first (smallest test of feasibility):** does the
-   engine `exists_good_avoiding_bad_of_large` restrict to a sub-interval? i.e. is
-   the good-and-not-bad set of positive measure INSIDE `(c,d)`? Measure heuristic:
-   `μ(good ∩ (c,d)) ≥ (μ(c,d)) − μ(badzones) = ρ·μ(cfCylinder wx) − o(1)·μ > 0` for
-   block length large (bad-zone measure `→0`). The obstacle is that the current
-   engine produces goodness relative to `cfCylinder wx` uniformly, NOT conditioned
-   on landing in `(c,d)`; check whether `goodInInterval`/`cfBadZone`
-   (`CFIntervalGood.lean`) already supports an interval-restricted positive-measure
-   statement (it underlies `exists_cfCylinder_subset_Ioo`), and whether the freq
-   control survives the restriction. If the freq-good density inside `(c,d)` is NOT
-   provably positive at fixed `δ`, THAT is the true wall (escape #3 / Vandehey
-   natural-extension) — write `ROUTE-ESCALATION-2026-08-27.md`.
-2. **IF item 1 lands** → `chainApp = u` is a single margin-good block; feed both
-   chains straight into the EXISTING `chain_orbit_equidist` (no split lemma needed —
-   blocks are `o(word)` under slow growth ⇒ `hdom` holds). Then wire
-   `exists_interleaved_affine_witness`: `SchedStateA`/`schedStepA` mirroring
-   `CFSchedule.sched`, each ψ-stage a `exists_freq_good_block_in_Ioo_whole` into
-   `ψ⁻¹(new z-cylinder)`, x/z alternating.
-3. **Fallback infra (already proved, if item 1 delivers only `filler=o(payload)`):**
-   `chain_cf_digit_freq_tendsto_split` via `chainTail_dev_split` + `…addslack₂`
-   (three tiers: tail-good, boundary, mid-block). Only build this if item 1 forces
-   a residual bounded filler.
+### NEXT — measure core DONE; wrap it into the steerable freq-good WORD.
+✅ **`exists_irrational_notMem_cfBadZone_in_Ioo`** (CFScheduleA, commit `010c30e`,
+axiom-clean) — the measure core: for `n ≥ N`, an irrational `x ∈ (c,d)` avoiding
+ALL of `wx`'s `n`-step CF bad zones for `F`. Hypotheses: `Ioo c d ⊆ cfCylinder wx`,
+`0 < γ(Ioo c d)`. This is the crack — freq-good digits steer into the target.
+
+1. **`exists_freq_good_block_steer`** (CFScheduleA): wrap the core into a WORD.
+   From `x` (the core's output at suitable `n ≥ max(N, L, …)`): set
+   `u := (range n).map (fun i => cfDigit x (wx.length+i))`, so `x ∈ cfCylinder (wx++u)`
+   (via `range_map_cfDigit_eq`, as `exists_freq_good_block` CFFreqBlock:90-91).
+   - freq-good of `u`: `abs_blockCount_lt_of_notMem_cfBadZone` (TBrickRefine:78) +
+     `blockCount_sub_countOccurrences_bounds` bridge ⇒ `|count v u − γv·n| < δn + |v|`
+     for all `v∈F` (COPY CFFreqBlock:84-105 verbatim — same shape).
+   - `cfCylinder (wx++u) ⊆ Ioo c d`: choose the core's target as `(c',d') ⊂⊂ (c,d)`
+     with a buffer, and `n` large enough that cylinder width `≤ 1/fib(...)² <` buffer
+     ⇒ the whole cylinder ⊆ (c,d). (Or: derive from `x ∈ (c',d')` + `cfCylinder_subset`
+     diameter bound; see `exists_cfCylinder_subset_Ioo` for the fib-threshold idiom.)
+   - genuineness/extension: `|u|=n > wx.length`, `wx++u` extends `wx` trivially.
+   Output signature ~ `exists_freq_good_block_in_Ioo` but `u` is the WHOLE steered
+   block (no placement prefix) and lands in `(c,d)`.
+2. **Rebuild the ψ-round `exists_freq_good_extend_affine` filler-free**: replace its
+   step (5) x-reselection (`exists_cfCylinder_subset_affine_preimage` placement +
+   `exists_freq_good_extend_cfCylinder`) with a single `exists_freq_good_block_steer`
+   into `(a,b) ∩ ψ⁻¹(Ioo e' f')`. Now BOTH exposed blocks are the whole freq-good
+   `u` (no `wp` filler). [The z-block already uses `exists_freq_good_block_in_Ioo`;
+   swap it too for `_steer` so `wz'`'s block is filler-free.]
+3. **Wire `exists_interleaved_affine_witness`**: `SchedStateA`/`schedStepA` mirroring
+   `CFSchedule.sched`, feeding both chains (blocks = whole freq-good `u`, `o(word)`
+   under slow growth ⇒ `hdom` holds) into the EXISTING `chain_orbit_equidist`.
+   The interval invariant glues the ψ-chain limit to `ψ(xA)` (limit toolkit ready:
+   `eq_of_mem_iInter_Icc`, `cfCylinder_chain_volume_tendsto`).
+- **Infra kept (now off the main route):** `countOccurrences_append_addslack`/`₂`,
+  `chainTail_dev_split` — the hdom-free telescoping, reusable if a future variant
+  needs a residual bounded filler; not needed for the filler-free route above.
 
 ---
 
