@@ -537,4 +537,95 @@ theorem windowCount_eq_sum_phaseCount (b r L : ℕ) (hr : 1 ≤ r) (hL : 1 ≤ L
     show (r * q + s) / r = q
     rw [Nat.mul_add_div hrpos, Nat.div_eq_of_lt hsr, Nat.add_zero]
 
+/-- **Phase occurrence slots → ∞**: `phaseOccCount r L s N → ∞` as `N → ∞`
+(there are `≈ N/r` phase-`s` positions up to `N`). Needed to push
+`phaseWindowFreq_tendsto`'s `Q → ∞` limit through the `N`-scale. -/
+theorem phaseOccCount_tendsto_atTop (r L s : ℕ) (hr : 1 ≤ r) :
+    Filter.Tendsto (fun N : ℕ => phaseOccCount r L s N) Filter.atTop Filter.atTop := by
+  rw [Filter.tendsto_atTop_atTop]
+  intro M
+  refine ⟨s + L + r * M, fun N hN => ?_⟩
+  have hNsL : s + L ≤ N := by omega
+  rw [show phaseOccCount r L s N = (N - s - L) / r + 1 from by
+    unfold phaseOccCount; exact dif_pos hNsL]
+  have hrM : r * M ≤ N - s - L := by omega
+  have hle : M ≤ (N - s - L) / r := by
+    rw [Nat.le_div_iff_mul_le (by omega), Nat.mul_comm]; exact hrM
+  omega
+
+/-- **Phase occurrence density**: `phaseOccCount r L s N / N → 1/r`.  The count of
+phase-`s` slots up to `N` is `(N−s−L)/r + 1`, so its density is `1/r`.  This is the
+`P_s(N)/N → 1/r` factor in Pillai's double-limit assembly (the other factor,
+`phaseCount/P_s → b^{-L}`, is `phaseWindowFreq_tendsto` pushed through
+`phaseOccCount_tendsto_atTop`). -/
+theorem phaseOccCount_div_tendsto (r L s : ℕ) (hr : 1 ≤ r) :
+    Filter.Tendsto (fun N : ℕ => (phaseOccCount r L s N : ℝ) / N)
+      Filter.atTop (nhds ((r : ℝ)⁻¹)) := by
+  have hr0 : (0 : ℝ) < r := by exact_mod_cast hr
+  have hNinv : Filter.Tendsto (fun N : ℕ => ((N : ℝ))⁻¹) Filter.atTop (nhds 0) :=
+    tendsto_inv_atTop_zero.comp tendsto_natCast_atTop_atTop
+  have h1N : Filter.Tendsto (fun N : ℕ => (1 : ℝ) / N) Filter.atTop (nhds 0) := by
+    simpa [one_div] using hNinv
+  have hsL : Filter.Tendsto (fun N : ℕ => ((s : ℝ) + L) * (N : ℝ)⁻¹) Filter.atTop (nhds 0) := by
+    simpa using hNinv.const_mul ((s : ℝ) + L)
+  -- `(N-s-L)/N → 1`
+  have hquot : Filter.Tendsto (fun N : ℕ => ((N : ℝ) - s - L) / N) Filter.atTop (nhds 1) := by
+    have hconst : Filter.Tendsto (fun N : ℕ => (1 : ℝ) - ((s : ℝ) + L) * (N : ℝ)⁻¹)
+        Filter.atTop (nhds 1) := by
+      have := (tendsto_const_nhds : Filter.Tendsto (fun _ : ℕ => (1 : ℝ)) Filter.atTop (nhds 1)).sub hsL
+      simpa using this
+    refine hconst.congr' ?_
+    filter_upwards [Filter.eventually_gt_atTop 0] with N hN
+    have hN0 : (N : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+    field_simp
+    ring
+  -- lower bounding sequence `g(N) = (N-s-L)/(r*N) → 1/r`
+  have hg : Filter.Tendsto (fun N : ℕ => ((N : ℝ) - s - L) / (r * N))
+      Filter.atTop (nhds ((r : ℝ)⁻¹)) := by
+    have h := hquot.const_mul ((r : ℝ)⁻¹)
+    rw [mul_one] at h
+    refine h.congr' (Filter.Eventually.of_forall (fun N => ?_))
+    simp only [div_eq_mul_inv]; rw [mul_inv]; ring
+  -- upper bounding sequence `h(N) = g(N) + 1/N → 1/r`
+  have hh : Filter.Tendsto (fun N : ℕ => ((N : ℝ) - s - L) / (r * N) + 1 / N)
+      Filter.atTop (nhds ((r : ℝ)⁻¹)) := by
+    simpa using hg.add h1N
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hg hh ?_ ?_
+  · -- `g(N) ≤ phaseOccCount/N`
+    filter_upwards [Filter.eventually_ge_atTop (s + L), Filter.eventually_gt_atTop 0]
+      with N hNsL hN0
+    have hN0' : (0 : ℝ) ≤ N := by positivity
+    have hPO : phaseOccCount r L s N = (N - s - L) / r + 1 := by
+      unfold phaseOccCount; exact dif_pos hNsL
+    have hmcast : ((N - s - L : ℕ) : ℝ) = (N : ℝ) - s - L := by
+      rw [Nat.cast_sub (by omega : L ≤ N - s), Nat.cast_sub (by omega : s ≤ N)]
+    have hnatm : N - s - L < ((N - s - L) / r + 1) * r :=
+      (Nat.div_lt_iff_lt_mul (by omega)).mp (Nat.lt_succ_self _)
+    have hcast_lt : ((N : ℝ) - s - L) < ((((N - s - L) / r : ℕ) : ℝ) + 1) * r := by
+      have h2 : ((N - s - L : ℕ) : ℝ) < (((N - s - L) / r + 1 : ℕ) : ℝ) * (r : ℝ) := by
+        exact_mod_cast hnatm
+      rw [hmcast] at h2; push_cast at h2; linarith [h2]
+    have hdiv_lb : ((N : ℝ) - s - L) / r ≤ (phaseOccCount r L s N : ℝ) := by
+      rw [hPO]; push_cast
+      rw [div_le_iff₀ hr0]; linarith [hcast_lt]
+    rw [show ((N : ℝ) - s - L) / (r * N) = (((N : ℝ) - s - L) / r) / N from (div_div _ _ _).symm]
+    exact div_le_div_of_nonneg_right hdiv_lb hN0'
+  · -- `phaseOccCount/N ≤ h(N)`
+    filter_upwards [Filter.eventually_ge_atTop (s + L), Filter.eventually_gt_atTop 0]
+      with N hNsL hN0
+    have hN0' : (0 : ℝ) ≤ N := by positivity
+    have hPO : phaseOccCount r L s N = (N - s - L) / r + 1 := by
+      unfold phaseOccCount; exact dif_pos hNsL
+    have hmcast : ((N - s - L : ℕ) : ℝ) = (N : ℝ) - s - L := by
+      rw [Nat.cast_sub (by omega : L ≤ N - s), Nat.cast_sub (by omega : s ≤ N)]
+    have hdiv_ub : (phaseOccCount r L s N : ℝ) ≤ ((N : ℝ) - s - L) / r + 1 := by
+      rw [hPO]; push_cast
+      have hcd : (((N - s - L) / r : ℕ) : ℝ) ≤ ((N - s - L : ℕ) : ℝ) / r := Nat.cast_div_le
+      rw [hmcast] at hcd; linarith [hcd]
+    have step : (phaseOccCount r L s N : ℝ) / N ≤ (((N : ℝ) - s - L) / r + 1) / N :=
+      div_le_div_of_nonneg_right hdiv_ub hN0'
+    rw [add_div,
+      show ((N : ℝ) - s - L) / r / N = ((N : ℝ) - s - L) / (r * N) from div_div _ _ _] at step
+    exact step
+
 end NormalNumbers
