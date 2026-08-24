@@ -820,3 +820,22 @@ Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
 **Judge attention requested**: ratify W4 statement shapes; note the
 γ-mixing bonus (stronger than the planned Leb-only route: it is exact
 γ-correlation decay, geometric, multiplicative in γ(I_v)).
+
+> **GRIND (2026-08-24 lap N — route C′ core lemmas PROVED).** Two green
+> commits: (1) `volume_logBadZone_le_vol` (new file `KhinchinBrick.lean`) —
+> bridges `markov_logBadZone_brick`'s `gaussMeasure` bound into Lebesgue
+> `volume` via the same `2 log 2` density-window factor `TBrick.lean` uses
+> for the CF bad zone, giving the matching `14·(∫ logTailFn K dγ)/η`
+> coefficient form. (2) `exists_good_avoiding_bad_khinchin` — mirrors
+> `exists_good_avoiding_bad` (`TBrick.lean:470`) with `logBadZone` folded
+> into the d-ary union via `measure_union_le`; NO `TBrick.lean` edits needed
+> (as the prior handoff predicted). Coefficients tightened `<¼`→`<⅙` each so
+> CF+d-ary+log sum `<½`. Both axiom-clean.
+> **NEXT**: thread `exists_good_avoiding_bad_khinchin` through
+> `exists_refinement_uniform` (`TBrickRefine.lean`/`CFSchedule.lean`) and the
+> `xstar` schedule rederivation — this needs reading how `xstar`'s schedule
+> currently invokes `exists_good_avoiding_bad`/`_of_large` (likely in
+> `CFSchedule.lean` or `Headline.lean`) and adding the parallel K/η-indexed
+> log-zone-avoidance guarantee, choosing `K` via `integral_logTailFn_tendsto`
+> to satisfy `hlog`. This is the remaining mechanical (but nontrivial)
+> plumbing to close `xstar_log_tail_uniform`.
