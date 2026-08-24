@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.CFAffine
 import NormalNumbers.CFOrbitFreq
 import NormalNumbers.CFFreqBlock
+import NormalNumbers.CFChainFreq
 
 /-!
 # B6 / L4–L5 — the affine-image witness (interleaved schedule)

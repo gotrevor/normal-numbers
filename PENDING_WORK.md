@@ -1,5 +1,63 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## ⭐⭐ CRUX ADVANCE 2026-08-24 (review lap, same session): `chain_orbit_equidist` PROVED ✅
+
+**The route-decisive question is ANSWERED: CFCorrect's telescoping DOES abstract
+cleanly.** New additive module `src/NormalNumbers/CFChainFreq.lean` (imports
+`CFConcat`, `CFOrbitFreq`, `TBrickRefine`; frozen modules untouched), green 8757,
+**axiom-clean** `[propext, Classical.choice, Quot.sound]`. B5′ headlines
+re-verified trust-triple.
+
+Proved (all axiom-clean):
+- `chainApp`/`chainTail` + algebra (`chainApp_eq`, `w_eq_append_tail`,
+  `chainTail_succ`, `w_length_ge`, `le_chainTail_length`, `chain_exists_stage`)
+  — the generic ports of `CFCorrect`'s `tailSched`/`exists_stage` block.
+- `chainTail_cfDiscLt` — abstract B–Y Lemma 7 induction (tail is ε-good from
+  margin-good blocks).
+- `chain_cf_digit_freq_tendsto` — **THE CRUX PORT**: for a nested genuine chain
+  `w` with limit `y∈⋂cfCylinder(w s)`, IF appended blocks are eventually
+  margin-good (`hgood`) AND eventually short vs the accumulated word (`hdom`),
+  THEN `countOccurrences v (y's digit prefix)/p → γv`. Faithful port of
+  `xstar_cf_freq_tendsto` with the `sched`-specific level machinery replaced by
+  the two abstract hypotheses.
+- `chain_orbit_equidist` — wraps the above + the orbit↔window bridge
+  (`blockCount_sub_countOccurrences_bounds`) → `blockCount(cfCylinder v) p y/p →
+  γv` ∀ genuine v, i.e. the `CFOrbitEquidist` payload, for an irrational chain
+  limit `y∈(0,1)`.
+
+**What this buys.** The two abstract hypotheses are EXACTLY the contract the
+interleaved schedule must fulfil, for EACH stream:
+```
+hgood : ∀ε>0, ∃s₀, ∀s≥s₀, |count v (chainApp w s) − γv·|app s|| < ε·|app s| − (|v|−1)
+hdom  : ∀ε>0, ∃s₀, ∀s≥s₀, |chainApp w s| + (|v|−1) < ε·|w s|
+```
+(per genuine v; `chainApp w s = (w(s+1)).drop|w s|` = the block appended at stage s.)
+The FILLER + ALTERNATION frictions are now PRECISELY localized: `chainApp w s`
+is the whole appended block INCLUDING the per-stage filler, so the recursion must
+make each stage's block (filler ++ freq-good `u`) margin-good and dominant. Since
+`u`'s length `L_s` is chosen freely AFTER the filler is placed, pick `L_s` huge so
+`u` dominates the filler AND the accumulated word — then `hgood`/`hdom` hold. No
+abstraction gap remains; it's a per-stage sizing discipline in `schedStepA`.
+
+**REMAINING (mechanical modulo sizing):**
+1. **`exists_freq_good_extend_affine` (ψ-stage)** — emit wz freq-good extension
+   + interval invariant (recipe: lap-21 item 1 below), choosing `L_s` to satisfy
+   the `hgood`/`hdom` contract.
+2. **`SchedStateA`/`schedStepA`/`schedA`/limit** — joint recursion by choice;
+   at build time record, for each stream, the per-stage `hgood`/`hdom` witnesses
+   (choose `L_s ≥` a growing target so `|u_s|`/`|w s|→∞` and filler/`|u_s|→0`).
+   Then feed each stream's chain into `chain_orbit_equidist`.
+3. **Glue**: `xA` = wx-limit; `CFOrbitEquidist xA` from stream-x
+   `chain_orbit_equidist`; `ψ(xA)=ζ` (wz-limit) via `eq_of_mem_iInter_Icc` +
+   `cfCylinder_chain_volume_tendsto`; `CFOrbitEquidist (ψ xA)=CFOrbitEquidist ζ`
+   from stream-z `chain_orbit_equidist`. Obligation (A) both via
+   `irrational_mem_Ioo_of_mem_iInter_cfCylinder`.
+
+The hardest, most uncertain piece is now BANKED. Next lap: the ψ-stage sizing
+(item 1) — the smallest probe that the `hgood`/`hdom` contract is fulfillable.
+
+---
+
 ## ⭐ REVIEW LAP 2026-08-24 — PIVOT TO THE CRUX (read this first)
 
 **Finding:** laps 11–21 proved 15 geometric/analytic ATOMS (all axiom-clean,
