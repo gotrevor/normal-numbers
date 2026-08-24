@@ -1778,6 +1778,166 @@ theorem exists_multiscale_freq_good_block_steer_len (wx : List ℕ) (hwx : wx �
     · linarith
   exact ⟨u, hulen, hune, hupos, hsubcd, hfreqNS, x, hxcyl, hirr, hxcd⟩
 
+/-- **cfK-cap bridge.**  A point `x` avoiding the cfK-large extension set
+`cfKbadExtSet wx κ ntop` and lying in `cfCylinder (wx ++ u)` for a genuine block `u`
+of length `ntop` HAS a cfK-capped block: `cfK u ≤ e^{κ·ntop}`.  (Else `u ∈ genWords ntop`
+with `cfK u > e^{κ·ntop}` would put `x` in the else-branch `cfCylinder (wx ++ u)` of the
+bad-set union.)  This is the sole cfK step: the whole block-builder chain reads `u` off
+`x`'s digits, so grafting the cfK cap reduces to swapping the selection core for its
+cfK-aware variant (`exists_irrational_notMem_multiscale_cfBadZone_cfK_in_Ioo`) and
+invoking this bridge. -/
+theorem cfK_le_of_notMem_cfKbadExtSet {wx u : List ℕ} {κ : ℝ} {ntop : ℕ}
+    (hulen : u.length = ntop) (hupos : ∀ a ∈ u, 1 ≤ a) {x : ℝ}
+    (hxcyl : x ∈ cfCylinder (wx ++ u)) (hxni : x ∉ cfKbadExtSet wx κ ntop) :
+    (cfK u : ℝ) ≤ Real.exp (κ * ntop) := by
+  by_contra h
+  apply hxni
+  rw [cfKbadExtSet, Set.mem_iUnion₂]
+  exact ⟨u, ⟨hulen, hupos⟩, by rw [if_neg h]; exact hxcyl⟩
+
+/-- **Multi-scale steer block with a cfK cap** (cfK-graft layer 1).  Identical to
+`exists_multiscale_freq_good_block_steer_len`, but the aggregate `hbound` additionally
+leaves room for the cfK-large extension mass at relative order `NS.max' hNSne`, and the
+conclusion EXPOSES `cfK u ≤ e^{κ·|u|}` — the Lévy-uniform bound (`exists_rate_gaussMeasure_cfKbadExtSet_le`
+supplies the rate `κ`) that turns the resolution `Nfib` AFFINE in `|wx|`
+(`exists_fib_threshold_linear_of_cfK`).  Swaps the selection core for its cfK-aware form
+and reads the cap off the bridge `cfK_le_of_notMem_cfKbadExtSet`. -/
+theorem exists_multiscale_freq_good_block_steer_len_cfK (wx : List ℕ) (hwx : wx ≠ [])
+    (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
+    {δ : ℝ} (hδ : 0 < δ) {c d : ℝ} (hc0 : 0 ≤ c) (hcd : c < d) (hd1 : d ≤ 1)
+    (hsub : ∀ y ∈ Set.Ioo c d, Irrational y → y ∈ cfCylinder wx)
+    (NS : Finset ℕ) (hNSne : NS.Nonempty) {n₁ : ℕ} (hn₁ : 0 < n₁)
+    (hNS : ∀ n ∈ NS, n₁ ≤ n) (κ : ℝ)
+    (hbound : (NS.card : ℝ) * ((∑ v ∈ F, 7 * ((8 * v.length + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁))
+        * (gaussMeasure (cfCylinder wx)).toReal))
+        + (gaussMeasure (cfKbadExtSet wx κ (NS.max' hNSne))).toReal
+        < (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal)
+    (hres : 4 / (d - c) < (Nat.fib (wx.length + NS.max' hNSne + 1) : ℝ) ^ 2) :
+    ∃ u : List ℕ, u.length = NS.max' hNSne ∧ u ≠ [] ∧ (∀ a ∈ u, 1 ≤ a) ∧
+      cfCylinder (wx ++ u) ⊆ Set.Ioo c d ∧
+      (∀ n ∈ NS, ∀ v ∈ F, |(countOccurrences v (u.take n) : ℝ)
+        - (gaussMeasure (cfCylinder v)).toReal * n| < δ * n + v.length) ∧
+      (cfK u : ℝ) ≤ Real.exp (κ * (u.length : ℝ)) ∧
+      ∃ x : ℝ, x ∈ cfCylinder (wx ++ u) ∧ Irrational x ∧ x ∈ Set.Ioo c d := by
+  set ntop := NS.max' hNSne with hntopdef
+  have hn₁top : n₁ ≤ ntop := hNS ntop (NS.max'_mem hNSne)
+  have hntop0 : 0 < ntop := lt_of_lt_of_le hn₁ hn₁top
+  set β : ℝ := (d - c) / 4 with hβ
+  have hβ0 : 0 < β := by rw [hβ]; linarith
+  set c' : ℝ := c + β with hc'
+  set d' : ℝ := d - β with hd'
+  have hcc' : c < c' := by rw [hc']; linarith
+  have hc'd' : c' < d' := by rw [hc', hd', hβ]; linarith
+  have hd'd : d' < d := by rw [hd']; linarith
+  have hc'0 : 0 ≤ c' := by rw [hc']; linarith
+  have hd'1 : d' ≤ 1 := by rw [hd']; linarith
+  -- multi-scale + cfK core on (c', d')
+  obtain ⟨x, hirr, hxc'd', hxnot, hxnicfK⟩ :=
+    exists_irrational_notMem_multiscale_cfBadZone_cfK_in_Ioo wx hwxpos F hF hδ
+      (c := c') (d := d') NS hn₁ hNS κ ntop (by rw [hc', hd']; exact hbound)
+  have hxcd : x ∈ Set.Ioo c d := by
+    obtain ⟨h1, h2⟩ := Set.mem_Ioo.1 hxc'd'
+    exact Set.mem_Ioo.2 ⟨lt_trans hcc' h1, lt_trans h2 hd'd⟩
+  have hxwx : x ∈ cfCylinder wx := hsub x hxcd hirr
+  have hx01 : x ∈ Set.Ioo (0 : ℝ) 1 := hxwx.1
+  set u : List ℕ := (List.range ntop).map (fun i => cfDigit x (wx.length + i)) with hudef
+  have hulen : u.length = ntop := by rw [hudef, List.length_map, List.length_range]
+  have hune : u ≠ [] := by
+    intro h; rw [h] at hulen; simp only [List.length_nil] at hulen; omega
+  have hupos : ∀ a ∈ u, 1 ≤ a := by
+    intro a ha
+    rw [hudef, List.mem_map] at ha
+    obtain ⟨i, -, rfl⟩ := ha
+    exact one_le_cfDigit x hirr hx01 _
+  have hxcyl : x ∈ cfCylinder (wx ++ u) := by
+    refine ⟨hx01, fun i hi => ?_⟩
+    rw [List.length_append, hulen] at hi
+    rcases lt_or_ge i wx.length with hlt | hge
+    · rw [List.getD_append wx u 0 i hlt]
+      exact hxwx.2 i hlt
+    · rw [List.getD_append_right wx u 0 i hge, hudef]
+      have hidx : i - wx.length < ntop := by omega
+      rw [List.getD_eq_getElem _ _ (by rw [List.length_map, List.length_range]; exact hidx),
+        List.getElem_map, List.getElem_range]
+      congr 1
+      omega
+  have hsubcd : cfCylinder (wx ++ u) ⊆ Set.Ioo c d := by
+    obtain ⟨aC, cC, hIcc, hwidth⟩ :=
+      cfCylinder_subset_Icc_length (wx ++ u) (by simp [hwx]) (fun a ha =>
+        (List.mem_append.1 ha).elim (hwxpos a) (hupos a))
+    have hvol : (volume (cfCylinder (wx ++ u))).toReal
+        ≤ 1 / (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2 := by
+      have hb := volume_cfCylinder_le_fib (wx ++ u) (by simp [hwx]) (fun a ha =>
+        (List.mem_append.1 ha).elim (hwxpos a) (hupos a))
+      calc (volume (cfCylinder (wx ++ u))).toReal
+          ≤ (ENNReal.ofReal (1 / (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2)).toReal :=
+            ENNReal.toReal_mono ENNReal.ofReal_ne_top hb
+        _ = 1 / (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2 :=
+            ENNReal.toReal_ofReal (by positivity)
+    have hfibgt : 1 / β < (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2 := by
+      have hidx : (wx ++ u).length + 1 = wx.length + ntop + 1 := by
+        rw [List.length_append, hulen]
+      rw [hidx]
+      have h1β : 1 / β = 4 / (d - c) := by rw [hβ]; rw [one_div_div]
+      rw [h1β]; exact hres
+    have hfibpos : (0 : ℝ) < (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2 := by
+      have : 0 < Nat.fib ((wx ++ u).length + 1) := Nat.fib_pos.2 (by omega); positivity
+    have hwlt : (volume (cfCylinder (wx ++ u))).toReal < β := by
+      have h1 : 1 / (Nat.fib ((wx ++ u).length + 1) : ℝ) ^ 2 < β := by
+        rw [div_lt_iff₀ hfibpos]
+        rw [div_lt_iff₀ hβ0] at hfibgt
+        nlinarith [hfibgt]
+      linarith [hvol, h1]
+    rw [← hwidth] at hwlt
+    have hxIcc := hIcc hxcyl
+    obtain ⟨haC, hcC⟩ := Set.mem_Icc.1 hxIcc
+    obtain ⟨hxc, hxd⟩ := Set.mem_Ioo.1 hxc'd'
+    intro y hy
+    obtain ⟨hya, hyc⟩ := Set.mem_Icc.1 (hIcc hy)
+    refine Set.mem_Ioo.2 ⟨?_, ?_⟩
+    · have : c < aC := by
+        have : x - β < aC := by linarith [hcC, hwlt]
+        linarith [hxc]
+      linarith
+    · have : cC < d := by
+        have : cC < x + β := by linarith [haC, hwlt]
+        linarith [hxd]
+      linarith
+  have horb : ∀ j : ℕ, gaussMap^[j] x ∈ Set.Ioo (0 : ℝ) 1 :=
+    fun j => (irrational_orbit x hirr hxwx.1 j).2
+  have hfreqNS : ∀ n ∈ NS, ∀ v ∈ F, |(countOccurrences v (u.take n) : ℝ)
+      - (gaussMeasure (cfCylinder v)).toReal * n| < δ * n + v.length := by
+    intro n hnNS v hv
+    have hnn1 : n₁ ≤ n := hNS n hnNS
+    have hn0' : 0 < n := lt_of_lt_of_le hn₁ hnn1
+    have hntop : n ≤ ntop := NS.le_max' n hnNS
+    have hutaken : u.take n = (List.range n).map (fun i => cfDigit x (wx.length + i)) := by
+      rw [hudef, ← List.map_take, List.take_range, Nat.min_eq_left hntop]
+    rw [hutaken]
+    have hnotCF : x ∉ cfBadZone wx v n δ :=
+      fun h => hxnot (Set.mem_biUnion hnNS (Set.mem_biUnion hv h))
+    have habs := abs_blockCount_lt_of_notMem_cfBadZone hxwx hirr hnotCF
+    have hbr := blockCount_sub_countOccurrences_bounds horb v (hFne v hv) wx.length n
+    obtain ⟨hbr1, hbr2⟩ := hbr
+    set bc : ℝ := blockCount (cfCylinder v) n (gaussMap^[wx.length] x) with hbc
+    set γv : ℝ := (gaussMeasure (cfCylinder v)).toReal with hγv
+    have hn0R : (0 : ℝ) < n := by exact_mod_cast hn0'
+    have habs' : |bc - γv * n| < δ * n := by
+      have h1 : bc / n - γv = (bc - γv * n) / n := by field_simp
+      rw [h1, abs_div, abs_of_pos hn0R, div_lt_iff₀ hn0R] at habs
+      linarith [habs]
+    rw [abs_lt] at habs' ⊢
+    have hv0 : (0 : ℝ) ≤ v.length := by positivity
+    constructor
+    · linarith
+    · linarith
+  have hcfKu : (cfK u : ℝ) ≤ Real.exp (κ * (u.length : ℝ)) := by
+    have := cfK_le_of_notMem_cfKbadExtSet hulen hupos hxcyl hxnicfK
+    rwa [hulen]
+  exact ⟨u, hulen, hune, hupos, hsubcd, hfreqNS, hcfKu, x, hxcyl, hirr, hxcd⟩
+
 /-- **Prefix-frequency interpolation.**  If the frequency deviation of `v` is
 controlled at prefix length `n`, it is controlled at any larger prefix length
 `k ≤ |u|`, up to an additive `2(k−n) + |v|`.  (`countOccurrences` is monotone in

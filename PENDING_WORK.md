@@ -1,5 +1,50 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🎯 2026-08-24 REVIEW LAP — CRUX = the cfK-cap graft (bridge + layer 1 DONE)
+
+The block-linear support layer is proved (relative regularization, below). The ONE
+remaining open sub-obstruction for `schedL4_block_linear` is the **cfK cap**: the
+steer block must expose `cfK(u) ≤ e^{κ|u|}` so `exists_fib_threshold_linear_of_cfK`
+(proved) + `four_div_volume_cfCylinder_le` (proved) make the resolution `Nfib` AFFINE
+in `|wx|` (⇒ linear blocks). This is a POSITIVE-MEASURE Lévy-uniform selection, NOT
+the refuted hard digit-cap (L4's target is the cylinder's OWN hull, `ρ=1`, no
+small-corner navigation). Whole measure/selection stack pre-exists:
+`exists_rate_gaussMeasure_cfKbadExtSet_le`, `cfK_append_le`,
+`exists_irrational_notMem_multiscale_cfBadZone_cfK_in_Ioo`.
+
+**Attack path (cfK cap threads up the 3-layer block-builder chain, then assembles):**
+- ✅ **layer 0 (bridge)** `cfK_le_of_notMem_cfKbadExtSet` — a point avoiding
+  `cfKbadExtSet wx κ ntop` in `cfCylinder(wx++u)` (u genuine, |u|=ntop) has
+  `cfK u ≤ e^{κ·ntop}`.  DONE this lap.
+- ✅ **layer 1** `exists_multiscale_freq_good_block_steer_len_cfK` — mirror of
+  `..._len`, swaps in the cfK selection core, exposes `cfK u ≤ e^{κ|u|}`.  DONE.
+- ⬜ **layer 2** `exists_uniformly_freq_good_block_steer_cfK` — mirror of
+  `exists_uniformly_freq_good_block_steer` (:2136-ish) calling layer 1 at
+  `NS = quadScales n₁ m`; cfK bound `e^{κ(n₁+m²)}=e^{κ|u|}` passes straight through
+  (same digit block, |u| unchanged). The `hbound` gains the cfKbadExtSet-mass room
+  term (at `ntop = quadScales.max' = n₁+m²`).
+- ⬜ **layer 3** `exists_uniformly_freq_good_block_steer_len_rel_cfK` — mirror of
+  `..._len_rel` calling layer 2; carries cfK through the relative-β length exposure.
+  The `hbound`/measure-budget grows by the cfK term; check `(m+1)·A₁(n₁)+cfKmass < γtar`
+  still solvable (it is: cfKmass `≤ (log2)⁻¹·ε·|I_wx|`, pick ε small via the rate κ).
+- ⬜ **assemble `schedL4_block_linear`** — fix κ once (`exists_rate_gaussMeasure_cfKbadExtSet_le`
+  with `ε := γtar/4`); `schedStepL4_exists` calls the layer-3 cfK builder so each
+  block carries `cfK(u_s) ≤ e^{κ|u_s|}`; thread through recursion with `cfK_append_le`
+  (`cfK(wxSeq s) ≤ 2^s·∏cfK(u_i) ≤ C₀·e^{(κ+log2)|wxSeq s|}`, using `s ≤ |wxSeq s|`);
+  then `four_div_volume_cfCylinder_le` + `exists_fib_threshold_linear_of_cfK` ⇒
+  `Nfib ≲ |wx|`; combine with exposed `|u|=n₁+m²`, the `m²` bound, `two_div_beta_rel_le`
+  ⇒ `|chainApp| ≤ K₁|w|+K₂`.
+- ⬜ **downstream = REUSE**: seed `exists_seedStateL4`, `wxSeq_L4` (`Nat.rec`), x-side
+  `chain_orbit_equidist_uniform`, z-side scale-coverage (`tendsto_of_scale_coverage`
+  + brick-4a transfer lemmas), assemble new `exists_interleaved_affine_witness`,
+  excise the two-stream `sorry`.
+
+NOTE: `StepSpecL4` currently does NOT carry the length/cfK fields — extend it to
+expose `|u|`'s bound and the cfK cap when wiring `schedL4_block_linear` (thread the
+layer-3 builder's extra return values through the step, as the len_rel docstring notes).
+
+---
+
 ## 🎯🎯🎯 2026-08-24 CRUX LOCATED — block-linear fails at the `S+1` ABSOLUTE regularization, NOT the route
 
 **Sharpest finding of the L4 campaign.** After reading the full block machinery

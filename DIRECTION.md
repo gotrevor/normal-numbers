@@ -4,62 +4,65 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-24 REVIEW LAP — B6: PIVOT RATIFIED → RESUME SINGLE-STREAM L4)
+## CURRENT DIRECTIVE (set 2026-08-24 REVIEW LAP — B6 L4: CLOSE `schedL4_block_linear` VIA THE cfK-CAP GRAFT)
 
 - **State (ground truth, real `#print axioms` this lap):** build 🟢 8757; both
   B5′ headlines trust-triple `[propext, Classical.choice, Quot.sound]`;
   `exists_cfNormal_and_affine_cfNormal` = `+ sorryAx`.  **The SOLE open `src/`
-  sorry is the B6 crux `schedA_block_linear` (`CFScheduleA.lean:2537`).**  Item-2
-  (integer-shift, all real `r`) and both signposts are DONE.
-- **RATIFIED PIVOT — the two-stream route is DEAD; RESUME the single-stream L4
-  route.**  The two-stream construction (`wxSeq`/`wzSeq`/`schedA` →
-  `schedA_block_linear`) is OBSTRUCTED: it nests a z-cylinder as an
-  exponentially-small x-target (`ρ ≈ e^{−2κ|zblock|}`), forcing super-exponential
-  blocks (`OBSTRUCTION-2026-08-28-block-measure-budget.md`, re-verified sound this
-  lap).  Digit-cap is independently REFUTED.  **The single-stream L4 route — the
-  ORIGINAL design in this module's docstring (`CFScheduleA.lean:24–31`) — is sound
-  and its foundation is ALREADY PROVED: `volume_preimage_affineMap` (`CFAffine:94`,
-  `volume(ψ⁻¹ s)=|q⁻¹|·volume s`), docstringed as "the union-bound ingredient for
-  L4".**  The two-stream layer was a later drift that hit the wall; L4 removes the
-  obstruction at the root (target = FULL cylinder, `ρ=1`, blocks polynomial ⇒
-  `o(word)`).  This ratification IS the altitude decision the "box stuck" grind
-  laps were waiting for — there is no operator; EXECUTE the pivot, do not
-  box-stuck again.
-- **THE MANDATED MOVE — build the L4 single-stream witness, hardest-first:**
-  1. **[ROUTE-DECISIVE FIRST BRICK] ψ-pullback Gauss distortion bound**
-     `gaussMeasure_preimage_affineMap_le`: for `q>0`, measurable `S ⊆ (0,1)`,
-     `gaussMeasure(ψ⁻¹ S) ≤ C_q · gaussMeasure S` (assemble from
-     `gaussMeasure_le_volume` ∘ `volume_preimage_affineMap` ∘
-     `volume_le_ofReal_mul_gaussMeasure`; `C_q ≈ 2/(q·ln2)`).  SMALL, additive,
-     reusable.  Prove FIRST — it is the smallest probe of the whole measure budget.
-  2. **Pulled-back z-bad-zone selection** — within `cfCylinder wx`, the set
-     `ψ⁻¹(⋃_{v∈F,n∈NS} cfBadZone_z v n δ)` has relative Gauss-mass
-     `≤ C_q·(covering O(1))·(m+1)·S/(δ²·gap)` (brick 1 + `gaussMeasure_multiscale_cfBadZone_le`
-     applied in z-space to the O(1) depth-≈|wx| z-cylinders covering `ψ(cfCylinder
-     wx)`).  Add the x-bad-zone mass and feed `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt`
-     to select ONE `x` avoiding BOTH.  Controlled z-scales per stage:
-     `[|wx_s|+gap_s, |wx_s|+gap_s+m_s²]`, `gap_s = poly(s)` (NOT exponential).
-  3. **Single-stream recursion + z-side chain frequency** — rebuild the recursion
-     as ONE stream (`wxSeq` only).  `zA := ψ(xA)` is DEFINITIONAL (`hpsi_eq`
-     trivial — no gluing/squeeze).  x-side reuses `chain_orbit_equidist_uniform`.
-     z-side: an analogous chain-frequency argument fed by pullback-bad-zone
-     avoidance (`ψ(x)∉cfBadZone_z ⟺ x∉ψ⁻¹(cfBadZone_z)`).  Assemble a NEW proof of
-     `exists_interleaved_affine_witness` — **statement UNCHANGED (route-agnostic).**
-- **FORBIDDEN DRIFT:** do NOT grind `schedA_block_linear` or any
-  `wxSeq`/`wzSeq`/`schedA` two-stream lemma (dead route); do NOT resurrect
-  digit-cap or `hdom`; do NOT "box stuck" / operator-gate.  Two-stream decls stay
-  in `src/` (green, unused) — don't delete or extend them; when L4 closes
-  `exists_interleaved_affine_witness` the two-stream `sorry` becomes excisable dead
-  code.
+  sorry is the DEAD two-stream `schedA_block_linear` (`CFScheduleA.lean:3802`)**,
+  excised once L4 lands its own `exists_interleaved_affine_witness`.  The L4
+  single-stream route (RATIFIED, two-stream is proven-infeasible) is well
+  advanced: the block-linear SUPPORT layer is proved axiom-clean (relative
+  regularization `β_rel`, `two_div_beta_rel_le`, `four_div_volume_cfCylinder_le`,
+  `exists_uniformly_freq_good_block_steer_len_rel`, `exists_fib_threshold_linear_of_cfK`),
+  and the recursion skeleton (`SchedStateL4`/`StepSpecL4`/`schedStepL4_exists`) is
+  landed.
+- **THE CRUX IS NOW SHARP: `schedL4_block_linear` (`|chainApp w s| ≤ K₁|w s|+K₂`).**
+  Its ONE remaining sub-obstruction is the **cfK cap**: the block builder must
+  expose `cfK(u) ≤ e^{κ|u|}` so `exists_fib_threshold_linear_of_cfK` +
+  `four_div_volume_cfCylinder_le` make the resolution `Nfib` AFFINE in `|wx|`
+  (⇒ linear blocks).  This is NOT the refuted hard digit-cap: it is a POSITIVE-
+  MEASURE selection (Lévy-uniform, full measure), legitimate because L4's target
+  is the cylinder's OWN hull (`ρ=1`, no small-corner navigation).  The measure
+  enabler (`exists_rate_gaussMeasure_cfKbadExtSet_le`), the append law
+  (`cfK_append_le`), and the joint freq+cfK selection core
+  (`exists_irrational_notMem_multiscale_cfBadZone_cfK_in_Ioo`) are ALL proved.
+- **THE MANDATED MOVE — thread the cfK cap up the block-builder chain, hardest-first:**
+  1. ✅ **DONE this lap** — the bridge `cfK_le_of_notMem_cfKbadExtSet` (a point
+     avoiding `cfKbadExtSet wx κ ntop` has `cfK u ≤ e^{κ·ntop}`) + the layer-1
+     variant `exists_multiscale_freq_good_block_steer_len_cfK` (swaps in the cfK
+     selection core, exposes `cfK u ≤ e^{κ|u|}`).  Build green, additive.
+  2. **Layer-2 cfK variant** `exists_uniformly_freq_good_block_steer_cfK`: call
+     layer 1 at `NS = quadScales n₁ m`; the cfK bound `cfK u ≤ e^{κ(n₁+m²)}=e^{κ|u|}`
+     passes straight through (u is the same digit block, |u|=n₁+m² unchanged).
+     Then layer-3 `exists_uniformly_freq_good_block_steer_len_rel_cfK` carries it
+     through the relative-β length exposure the same way.
+  3. **`schedL4_block_linear`.**  Fix `κ` once via `exists_rate_gaussMeasure_cfKbadExtSet_le`
+     (`ε := γtar/4` so measure balance holds); have `schedStepL4_exists` call the
+     cfK block builder so each block carries `cfK(u_s) ≤ e^{κ|u_s|}`; thread through
+     the recursion with `cfK_append_le` (⇒ `cfK(wxSeq s) ≤ C₀·e^{(κ+log2)|wxSeq s|}`,
+     using `s ≤ |wxSeq s|`); feed `four_div_volume_cfCylinder_le` +
+     `exists_fib_threshold_linear_of_cfK` ⇒ `Nfib ≲ |wx|`; combine with the exposed
+     `|u|=n₁+m²`, the `m²` bound, and `two_div_beta_rel_le` ⇒ `|chainApp| ≤ K₁|w|+K₂`.
+  4. **Downstream is REUSE** — seed `exists_seedStateL4`, `wxSeq_L4` (`Nat.rec`),
+     x-side `chain_orbit_equidist_uniform`, z-side scale-coverage
+     (`tendsto_of_scale_coverage` + brick-4a transfer lemmas), assemble the NEW
+     `exists_interleaved_affine_witness`, excise the two-stream `sorry`.
+- **FORBIDDEN DRIFT:** do NOT grind the two-stream `schedA_block_linear` /
+  `wxSeq`/`wzSeq`/`schedA` (dead route, becomes excisable when L4 lands); do NOT
+  resurrect the HARD digit-cap or `hdom`; do NOT "box stuck"/operator-gate.  The
+  cfK cap is the ONE open sub-obstruction — advance it (layer 2 → 3 →
+  `schedL4_block_linear`) each lap; the smallest next probe is the layer-2 pass-through.
 - Both B5′ headlines stay proved + axiom-clean; re-`#print axioms` after any
   schedule work (trust triple, else revert).  ADDITIVE ONLY 🧊.
-- **Why:** the two-stream route is PROVEN infeasible; single-stream L4 is the
-  original, sound design with its L3 foundation already in the kernel.  The
-  route-decisive uncertainty is now the pullback measure budget (brick 1→2), whose
-  smallest probe is the distortion bound; everything downstream (chain frequency,
-  gluing) is reuse.
-- Historical endgame directive below is SUPERSEDED (its capped-digit route was
-  refuted and its two-stream fallback obstructed).
+- **Why:** the block-linear bound is the whole B6 crux, and the cfK cap is its ONLY
+  piece whose feasibility was in doubt — now de-risked (bridge + layer 1 proved,
+  the entire measure/selection stack pre-exists).  Everything downstream is reuse
+  of the B5′/uniform-block machinery.  The route-decisive uncertainty has collapsed
+  to bookkeeping: thread one bound through three mirror-lemmas.
+- Historical directives below are SUPERSEDED (the earlier L4 measure/selection
+  bricks 1/2a/3 they mandate are all DONE; the capped-digit and two-stream
+  fallbacks were refuted/obstructed).
 
 ## SUPERSEDED DIRECTIVE (2026-08-24 attended — B6 ENDGAME: CAPPED-DIGIT ROUTE, refuted + two-stream obstructed)
 
@@ -235,6 +238,22 @@ detail lives in PENDING_WORK.md.
 </details>
 
 ### Directive history
+- 2026-08-24 (review lap → B6 L4: CLOSE `schedL4_block_linear` VIA cfK-CAP GRAFT):
+  inventory by real `#print axioms` — build green 8757, both B5′ headlines
+  trust-triple, sole `src/` sorry = the DEAD two-stream `schedA_block_linear`.
+  Validated the L4 pivot as SOUND and the grind as ON-PATH (not leaf-fixated): the
+  last ~5 laps located + proved the block-linear support layer (relative
+  regularization) and started the recursion skeleton — all genuine crux work. Found
+  the CURRENT DIRECTIVE STALE in specifics (it mandated L4 measure bricks 1/2a/3,
+  all since DONE) while the grind had correctly advanced to the recursion +
+  block-linear crux. Diagnosed the ONE open sub-obstruction as the cfK cap (turns
+  `Nfib` affine in `|wx|`), confirmed it is a positive-measure selection (NOT the
+  refuted hard digit-cap) with its entire measure/selection stack already proved.
+  De-risked it in-lap: proved the bridge `cfK_le_of_notMem_cfKbadExtSet` + layer-1
+  `exists_multiscale_freq_good_block_steer_len_cfK` (build green, additive).
+  Rewrote CURRENT DIRECTIVE to mandate the cfK-cap graft (layer 2 → 3 →
+  `schedL4_block_linear`), forbade grinding the dead two-stream lemmas. No charter
+  trigger fired.
 - 2026-08-24 (review lap → B6 PIVOT RATIFIED, RESUME SINGLE-STREAM L4): inventory
   by real `#print axioms` — build green 8757, both B5′ headlines trust-triple, sole
   `src/` sorry = the B6 crux `schedA_block_linear`. Diagnosed a FALSE STOP: the last

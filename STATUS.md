@@ -1,31 +1,33 @@
 # STATUS — normal-numbers 📊
 
-**B5′ COMPLETE + axiom-clean (10 headlines); B6 campaign OPEN — Vandehey §7 affine images, additive, one crux `sorry` left, route PIVOTED to single-stream L4.** · **Build**: 🟢 green (8757 jobs) · **Updated**: review lap · 2026-08-24 · `5fdc4da`
+**B5′ COMPLETE + axiom-clean (10 headlines); B6 campaign OPEN — Vandehey §7 affine images, additive, one crux `sorry` left, single-stream L4 route; crux collapsed to the cfK-cap graft (bridge + layer 1 proved this lap).** · **Build**: 🟢 green (8757 jobs) · **Updated**: review lap · 2026-08-24 · `922af68`+
 
 ## Where it stands
 
-**B5′ is DONE; B6 is the active frontier — route PIVOTED to single-stream L4
-(the two-stream construction was proven infeasible).** The whole B5′ expedition
-(ten headline theorems — Track A base-b normality + Track B Tier 1
+**B5′ is DONE; B6 is the active frontier — single-stream L4 route (the two-stream
+construction was proven infeasible), now advanced to its final crux.** The whole
+B5′ expedition (ten headline theorems — Track A base-b normality + Track B Tier 1
 Becher–Yuhjtman + Tier 2 Khinchin) is proved and `#print axioms`-clean (trust
 triple only). The LIVE work is the **additive B6 campaign** (Vandehey, Compositio
 2017, §7): a real `x` with BOTH `x` and its affine image `ψ(x)=q·x+r` CF-normal,
-for `q>0`. It reduces (`isCFNormal_of_irrational_orbit_freq`) to ONE crux —
-`exists_interleaved_affine_witness` (`CFScheduleA.lean:2676`), whose proof bottoms
-out at `schedA_block_linear` (`:2537`, the **sole open `sorry` in `src/`**). This
-review lap made a route call: the **two-stream** construction
-(`wxSeq`/`wzSeq`/`schedA`) is OBSTRUCTED — it nests a z-cylinder as an
-exponentially-small x-target, forcing super-exponential blocks
-(`OBSTRUCTION-2026-08-28`, re-verified sound). The prior grind laps correctly
-diagnosed this and proposed the single-stream pivot, but then "box stuck" awaiting
-an operator ratification that never comes on an autonomous run — a FALSE STOP.
-The fix: **resume the single-stream "L4" route**, which is the ORIGINAL module
-design (`CFScheduleA.lean:24–31`) whose foundational pullback lemma
-`volume_preimage_affineMap` is already proved. L4 keeps the target = the FULL
-x-cylinder (`ρ=1`) and controls `ψ(x)`'s frequency by having `x` avoid the
-ψ-pullback of the z-bad-zones ⇒ polynomial blocks, obstruction gone. First brick:
-the ψ-pullback Gauss distortion bound `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gaussMeasure S`
-(all ingredients present). Attack path in `PENDING_WORK.md` (top).
+for `q>0`. It reduces to ONE crux — `exists_interleaved_affine_witness` — whose L4
+proof bottoms out at the block-linear bound `schedL4_block_linear`
+(`|chainApp w s| ≤ K₁|w s|+K₂`). The SOLE open `src/` sorry is still the DEAD
+two-stream `schedA_block_linear` (`:3802`), excised once L4 lands its own witness.
+The L4 SUPPORT layer is proved axiom-clean (relative regularization `β_rel` +
+`two_div_beta_rel_le` + `four_div_volume_cfCylinder_le` +
+`exists_uniformly_freq_good_block_steer_len_rel` + `exists_fib_threshold_linear_of_cfK`),
+and the recursion skeleton (`SchedStateL4`/`StepSpecL4`/`schedStepL4_exists`) is
+landed. **This review lap collapsed the crux to its ONE open sub-obstruction — the
+cfK cap** (bounding `cfK(u) ≤ e^{κ|u|}` so the resolution `Nfib` is affine in
+`|wx|`): a positive-measure Lévy-uniform selection (NOT the refuted hard
+digit-cap), whose full measure/selection stack (`exists_rate_gaussMeasure_cfKbadExtSet_le`,
+`cfK_append_le`, `exists_irrational_notMem_multiscale_cfBadZone_cfK_in_Ioo`)
+pre-exists. De-risked in-lap: the bridge `cfK_le_of_notMem_cfKbadExtSet` + the
+layer-1 block-builder variant `exists_multiscale_freq_good_block_steer_len_cfK`
+(exposes `cfK u ≤ e^{κ|u|}`) are proved, build green. Remaining: thread the cap
+through layers 2–3 and assemble `schedL4_block_linear` (DIRECTION.md CURRENT
+DIRECTIVE; attack path in PENDING_WORK top).
 
 - **Track A** (base-b normality): Wall, the ln 2 reduction (conditional on the
   correct equidistribution hypothesis), Stoneham — axiom-clean.
@@ -38,6 +40,22 @@ the ψ-pullback Gauss distortion bound `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gauss
   proved MODULO the crux `sorry`; depends on `sorryAx` until the schedule closes.
 
 ## What's happened (newest first)
+
+- 2026-08-24 (review lap): **B6 L4 crux collapsed to the cfK-cap graft; bridge +
+  layer 1 PROVED.** Inventory by real `#print axioms`: build green 8757, both B5′
+  headlines trust-triple, sole `src/` sorry = the DEAD two-stream
+  `schedA_block_linear`. Validated the L4 pivot SOUND and the grind ON-PATH (the
+  last ~5 laps located + proved the block-linear support layer and started the
+  recursion — genuine crux work, not leaf-fixation). Found the CURRENT DIRECTIVE
+  stale in specifics (mandated L4 measure bricks all since DONE) and re-pointed it
+  at the real crux `schedL4_block_linear`, whose ONE open sub-obstruction is the
+  **cfK cap** (`cfK u ≤ e^{κ|u|}` ⇒ `Nfib` affine in `|wx|`). Confirmed it is a
+  positive-measure selection (NOT the refuted hard digit-cap) with its whole
+  measure/selection stack already proved, then de-risked it: proved the bridge
+  `cfK_le_of_notMem_cfKbadExtSet` + the layer-1 variant
+  `exists_multiscale_freq_good_block_steer_len_cfK` (exposes `cfK u ≤ e^{κ|u|}`),
+  build green, additive. Rewrote DIRECTION to mandate the graft (layer 2 → 3 →
+  `schedL4_block_linear`). No charter trigger fired.
 
 - 2026-08-24 (review lap): **B6 PIVOT RATIFIED — two-stream route DEAD, RESUME
   single-stream L4; broke a FALSE STOP.** Inventory by real `#print axioms`: build
@@ -187,13 +205,13 @@ the ψ-pullback Gauss distortion bound `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gauss
 - B6 single-map (`exists_cfNormal_and_affine_cfNormal`): crux `sorry` open →
   close via the single-stream L4 route (6 items above).
 
-## Axiom ledger (fidelity spine — all from real `#print axioms`, 2026-08-24 review lap, HEAD `5fdc4da`)
+## Axiom ledger (fidelity spine — all from real `#print axioms`, 2026-08-24 review lap, HEAD `922af68`+)
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 |---|---|---|---|
 | `exists_absolutely_normal_cf_normal` (**Tier 1 = Becher–Yuhjtman**) | uncond | trust triple | 🟢 DONE (re-verified this lap) |
 | `exists_absolutely_normal_cf_normal_khinchin` (**Tier 2 headline**) | uncond | trust triple | 🟢 DONE (re-verified this lap) |
-| `exists_cfNormal_and_affine_cfNormal` (**B6 affine image**, active) | uncond (q>0) | `[propext, sorryAx, Classical.choice, Quot.sound]` | 🔨 crux `sorry` (`schedA_block_linear`, `:2537`); NOT a math axiom — disclosed decomposition, route pivoted to single-stream L4, being discharged |
+| `exists_cfNormal_and_affine_cfNormal` (**B6 affine image**, active) | uncond (q>0) | `[propext, sorryAx, Classical.choice, Quot.sound]` | 🔨 crux `sorry` (DEAD two-stream `schedA_block_linear`, `:3802`); NOT a math axiom — disclosed decomposition, single-stream L4 route, crux collapsed to the cfK-cap graft (bridge + layer 1 proved), being discharged |
 | `isNormal_iff_equidistributed_orbit` (Wall) | uncond | trust triple | 🟢 DONE |
 | `isNormal_log_two_of_equidistributed` | cond (orbit equidist.) | trust triple | 🟢 DONE (hypothesis is the open conjecture, correctly a hypothesis) |
 | `isNormal_two_stoneham23` (Stoneham) | uncond | trust triple | 🟢 DONE |
