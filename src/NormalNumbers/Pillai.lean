@@ -685,4 +685,51 @@ theorem sum_strad_phaseOccCount_div_tendsto (r L : ℕ) (hr : 1 ≤ r) :
   intro s _
   exact phaseOccCount_div_tendsto r L s hr
 
+/-- **Phase-sum sandwich**: the real window frequency `W(N)/N` is bounded below by
+the non-straddling phase-frequency sum `Lo_r(N)` and above by
+`Lo_r(N) + ∑_{strad} P_s(N)/N` (`= Hi_r(N)`).  Lower: drop the nonneg straddling
+terms.  Upper: split `range r` into non-strad/strad and bound each straddling
+window count `pc_s ≤ P_s` (`card_filter_le`). -/
+theorem windowCount_div_sandwich (b r L : ℕ) (hr : 1 ≤ r) (hL : 1 ≤ L)
+    (y : ℝ) (w : List ℕ) (hwlen : w.length = L) (N : ℕ) :
+    (∑ s ∈ (Finset.range r).filter (fun s => s + L ≤ r),
+        (((Finset.range (phaseOccCount r L s N)).filter
+          (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card : ℝ) / N)
+      ≤ (((Finset.range (N + 1)).filter
+          (fun i => i + L ≤ N ∧ List.ofFn (fun j : Fin L => digitOf b y (i + j)) = w)).card : ℝ) / N
+    ∧ (((Finset.range (N + 1)).filter
+          (fun i => i + L ≤ N ∧ List.ofFn (fun j : Fin L => digitOf b y (i + j)) = w)).card : ℝ) / N
+      ≤ (∑ s ∈ (Finset.range r).filter (fun s => s + L ≤ r),
+          (((Finset.range (phaseOccCount r L s N)).filter
+            (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card : ℝ) / N)
+        + (∑ s ∈ (Finset.range r).filter (fun s => r < s + L),
+            (phaseOccCount r L s N : ℝ) / N) := by
+  have hWsum : (((Finset.range (N + 1)).filter
+        (fun i => i + L ≤ N ∧ List.ofFn (fun j : Fin L => digitOf b y (i + j)) = w)).card : ℝ) / N
+      = ∑ s ∈ Finset.range r,
+          (((Finset.range (phaseOccCount r L s N)).filter
+            (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card : ℝ) / N := by
+    rw [windowCount_eq_sum_phaseCount b r L hr hL y w hwlen N, Nat.cast_sum, Finset.sum_div]
+  refine ⟨?_, ?_⟩
+  · rw [hWsum]
+    exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+      (fun i _ _ => by positivity)
+  · rw [hWsum]
+    have hpart : (∑ s ∈ Finset.range r,
+          (((Finset.range (phaseOccCount r L s N)).filter
+            (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card : ℝ) / N)
+        = (∑ s ∈ (Finset.range r).filter (fun s => s + L ≤ r),
+            (((Finset.range (phaseOccCount r L s N)).filter
+              (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card : ℝ) / N)
+          + (∑ s ∈ (Finset.range r).filter (fun s => r < s + L),
+              (((Finset.range (phaseOccCount r L s N)).filter
+                (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card : ℝ) / N) := by
+      rw [← Finset.sum_filter_add_sum_filter_not (Finset.range r) (fun s => s + L ≤ r),
+        show (Finset.range r).filter (fun s => ¬ (s + L ≤ r))
+            = (Finset.range r).filter (fun s => r < s + L) from by
+          ext s; simp only [Finset.mem_filter, Finset.mem_range]; omega]
+    rw [hpart]
+    gcongr with s hs
+    exact_mod_cast le_trans (Finset.card_filter_le _ _) (Finset.card_range _).le
+
 end NormalNumbers
