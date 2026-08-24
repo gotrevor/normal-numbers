@@ -1,5 +1,27 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 📌 LAP STATUS 2026-08-24 (grind) — all DIRECTION-permitted doable work DONE; crux operator-gated
+
+This lap discharged EVERY open DIRECTION obligation except the crux:
+- **Item 2 (`TODO(shift)`) — DONE.** `exists_cfNormal_and_affine_cfNormal` proved
+  for ALL real `r` (both infeasible halves) via new axiom-clean integer-shift
+  machinery (`gaussMap_iter_two_add_nat`, `cfDigit_add_nat_shift`,
+  `isCFNormal_add_nat`).  Commits `768edf0`, `da17950`.
+- **Item 3 signpost (a) — DONE.** `interleaved_affine_target_not_always_nonempty`
+  (proved negation, `q=1,r=1` witness).  Commit `83a420b`.
+- **Item 3 signpost (b) — SATISFIED at sanctioned tier.** The `hdom` refutation is
+  docstring-tier on both replacement cracks (`chain_cf_digit_freq_tendsto_uniform`,
+  `chain_orbit_equidist_uniform`); kernel-tier is NOT owed (no cheap concrete
+  witness — refuting the asymptotic needs the full Θ(word) construction).
+- **Item 1 (crux `schedA_block_linear` :2537) — OPERATOR-GATED.** DIRECTION's
+  ratified digit-capped route is refuted; the two-stream construction is obstructed
+  (measure-budget blowup, `OBSTRUCTION-2026-08-28`); the obstruction doc + DIRECTION
+  both say STOP for attended review, and the only viable route (single-stream
+  pivot) needs altitude ratification a grind lap may not give ("do not grind
+  substitutes").  → this is the `box stuck` (blocked-on-operator) condition:
+  an altitude/attended lap must re-route DIRECTION to the single-stream pivot
+  before the crux can advance.
+
 ## 🛑🛑🛑 ROUTE-DECISIVE OBSTRUCTION (2026-08-28) — see `OBSTRUCTION-2026-08-28-block-measure-budget.md`
 
 **The two-stream construction forces SUPER-EXPONENTIAL blocks; `schedA_block_linear`
