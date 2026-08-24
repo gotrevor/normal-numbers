@@ -955,6 +955,60 @@ theorem exists_irrational_notMem_xbad_psi_zbad_in_Ioo {q : ℝ} (hq : 0 < q) (r 
   rw [hBdef, Set.mem_union, not_or] at hxB
   exact ⟨x, hxirr, hxA, hxB.1, hxB.2⟩
 
+/-- **L4 route — brick 3′ (route-B, `wz = []`): combined single-stream selection
+via the ψ-pullback bridge.**  Like `exists_irrational_notMem_xbad_psi_zbad_in_Ioo`
+but the `z`-bad zones use ABSOLUTE scales (base `[]`), and the measure hypothesis
+`hbound` bounds the `z`-term by the ψ-image interval mass `γ(ψ((c,d)) ∩ zBadUnion)`
+(supplied by `gaussMeasure_interval_inter_iUnion_cfBadZone_nil_le`) rather than a
+`z`-cylinder mass.  The pullback factor `2/q` comes from
+`gaussMeasure_interval_inter_preimage_affineMap_le`.  This is the selection heart
+of route B: `x ∈ (c,d)` freq-good AND `ψ(x)` freq-good at every absolute `z`-scale
+in `NSz` — with LINEAR (not two-stream super-exponential) mass budget. -/
+theorem exists_irrational_notMem_xbad_psi_zbad_nil_in_Ioo {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (wx : List ℕ) (F : Finset (List ℕ)) {δ : ℝ}
+    {c d : ℝ}
+    (NSx : Finset ℕ) (NSz : Finset ℕ)
+    (hbound : gaussMeasure (⋃ n ∈ NSx, ⋃ v ∈ F, cfBadZone wx v n δ)
+        + ENNReal.ofReal (2 / q)
+          * gaussMeasure (Set.Ioo (q * c + r) (q * d + r)
+              ∩ ⋃ n ∈ NSz, ⋃ v ∈ F, cfBadZone [] v n δ)
+        < gaussMeasure (Set.Ioo c d)) :
+    ∃ x : ℝ, Irrational x ∧ x ∈ Set.Ioo c d ∧
+      x ∉ (⋃ n ∈ NSx, ⋃ v ∈ F, cfBadZone wx v n δ) ∧
+      x ∉ (⋃ n ∈ NSz, ⋃ v ∈ F, affineMap q r ⁻¹' cfBadZone [] v n δ) := by
+  set Bx : Set ℝ := ⋃ n ∈ NSx, ⋃ v ∈ F, cfBadZone wx v n δ with hBx
+  set U : Set ℝ := ⋃ n ∈ NSz, ⋃ v ∈ F, cfBadZone [] v n δ with hU
+  set Bz : Set ℝ := ⋃ n ∈ NSz, ⋃ v ∈ F, affineMap q r ⁻¹' cfBadZone [] v n δ with hBz
+  -- `Bz` is the affine pullback of the whole absolute-scale bad union `U`
+  have hBzeq : Bz = affineMap q r ⁻¹' U := by
+    rw [hBz, hU]; simp only [Set.preimage_iUnion]
+  have hUmeas : MeasurableSet U := by
+    rw [hU]
+    exact MeasurableSet.biUnion NSz.countable_toSet fun n _ =>
+      Finset.measurableSet_biUnion F fun v _ => measurableSet_cfBadZone [] v n δ
+  have hUsub : U ⊆ Set.Ioo (0 : ℝ) 1 := by
+    rw [hU]
+    refine Set.iUnion₂_subset fun n _ => Set.iUnion₂_subset fun v _ => ?_
+    exact Set.inter_subset_left.trans (cfCylinder_subset_Ioo [])
+  -- combined bad set restricted to the target interval
+  set B' : Set ℝ := Set.Ioo c d ∩ (Bx ∪ Bz) with hB'
+  have hlt : gaussMeasure B' < gaussMeasure (Set.Ioo c d) := by
+    refine lt_of_le_of_lt ?_ hbound
+    calc gaussMeasure B'
+        ≤ gaussMeasure (Set.Ioo c d ∩ Bx) + gaussMeasure (Set.Ioo c d ∩ Bz) := by
+          rw [hB', Set.inter_union_distrib_left]; exact measure_union_le _ _
+      _ ≤ gaussMeasure Bx
+            + ENNReal.ofReal (2 / q) * gaussMeasure (Set.Ioo (q * c + r) (q * d + r) ∩ U) := by
+          gcongr ?_ + ?_
+          · exact measure_mono Set.inter_subset_right
+          · rw [hBzeq, Set.inter_comm (Set.Ioo (q * c + r) (q * d + r)) U]
+            exact gaussMeasure_interval_inter_preimage_affineMap_le hq r c d U hUmeas hUsub
+  obtain ⟨x, hxirr, hxA, hxB⟩ := exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt B' hlt
+  rw [hB'] at hxB
+  have hxBx : x ∉ Bx := fun h => hxB ⟨hxA, Or.inl h⟩
+  have hxBz : x ∉ Bz := fun h => hxB ⟨hxA, Or.inr h⟩
+  exact ⟨x, hxirr, hxA, hxBx, hxBz⟩
+
 /-- **Multi-scale + cfK measure core** (the cfK-steer selection).  Like
 `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`, but the aggregate bound
 `hbound` additionally leaves room for the cfK-large extension mass
