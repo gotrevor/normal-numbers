@@ -258,4 +258,19 @@ theorem length_le_two_mul_good_add_err (a b : ℝ)
         gcongr
         exact volume_interval_sdiff_covered_le a b ha hab hb n
 
+/-- **Feasibility core.**  Beyond a rank (once the L1 error `4/fib(n+1)²` drops
+below `|b−a|`), the good mass inside a nondegenerate interval `(a,b) ⊆ (0,1)` is
+STRICTLY positive — so `goodInInterval` is nonempty and a good CF-cylinder can
+be selected inside `(a,b)`.  This is the per-stage feasibility the interleaved
+affine schedule (B6 crux) needs: every refinement step has a good block to pick.
+Immediate from L2 (`length_le_two_mul_good_add_err`). -/
+theorem goodInInterval_pos_of_lt {a b : ℝ} (ha : 0 ≤ a) (hab : a < b) (hb : b ≤ 1)
+    {n : ℕ} (hn : 1 ≤ n) (hfib : 4 / (Nat.fib (n + 1) : ℝ) ^ 2 < b - a) (m : ℕ) :
+    0 < volume (goodInInterval a b n m) := by
+  rw [pos_iff_ne_zero]
+  intro hV
+  have hL2 := length_le_two_mul_good_add_err a b ha hab.le hb hn m
+  rw [hV, mul_zero, zero_add, ENNReal.ofReal_le_ofReal_iff (by positivity)] at hL2
+  linarith
+
 end NormalNumbers
