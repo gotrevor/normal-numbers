@@ -192,4 +192,30 @@ theorem exists_good_avoiding_bad_khinchin_family {t : ℕ} (B : TBrick t)
     · exact hxB (Or.inr (Or.inl (Or.inl h)))
     · exact hxB (Or.inr (Or.inl (Or.inr h)))
 
+/-- **Lemma-13 measure core, FAMILY form, unconditional for large `n`,
+`kmin`.** Mirrors `exists_good_avoiding_bad_of_large_khinchin`
+(`KhinchinBrick.lean`) but the log budget is FIXED (`1/7`, no `K`/`η`
+hypothesis needed) so there is no third threshold to extract — `tK` is a
+FREE parameter at call sites (the caller picks how many family zones to
+avoid, e.g. `tK = level`). -/
+theorem exists_good_avoiding_bad_of_large_khinchin_family (t : ℕ)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ ε : ℝ}
+    (hδ : 0 < δ) (hε0 : 0 < ε) (hεt : (t : ℝ) * ε ≤ 1)
+    {C : ℝ}
+    (hhalf : ∀ (w : List ℕ), w ≠ [] → (∀ a ∈ w, 1 ≤ a) → ∀ n : ℕ,
+      volume (cfCylinder w) ≤ 2 * volume (goodExtSet w C n)) :
+    ∃ N kmin₀ : ℕ, ∀ (B : TBrick t), ∀ n, N ≤ n → 0 < n → ∀ kmin ≥ kmin₀, ∀ tK : ℕ,
+      ∃ x ∈ goodExtSet B.w C n, Irrational x ∧
+        x ∉ (⋃ v ∈ F, cfBadZone B.w v n δ) ∪
+          ((⋃ d ∈ Finset.Icc 2 t, ⋃ i ∈ Finset.range 2, ⋃ k : ℕ,
+            ⋃ (_ : kmin ≤ k), daryBadZoneWide d (B.m d) (B.j d + i) ε k)
+            ∪ (⋃ j ∈ Finset.range tK, logBadZone B.w n (khinchinK j) (khinchinEta j))) := by
+  obtain ⟨N, hN⟩ := exists_N_cfCoeff_lt' (∑ v ∈ F, (8 * (v.length : ℝ) + 80))
+    (Finset.sum_nonneg fun v _ => by positivity) hδ (by norm_num : (0:ℝ) < 1/6)
+  obtain ⟨kmin₀, hkmin⟩ := exists_kmin_daryCoeff_lt' t hε0 (by norm_num : (0:ℝ) < 1/6)
+  refine ⟨N, kmin₀, fun B n hn hn0 kmin hk tK => ?_⟩
+  exact exists_good_avoiding_bad_khinchin_family B F hF n kmin tK hn0 hδ hε0 hεt
+    (volume_cfCylinder_ne_zero B.w B.hw_ne B.hw_pos)
+    (hhalf B.w B.hw_ne B.hw_pos n) (hN n hn hn0) (hkmin kmin hk)
+
 end NormalNumbers
