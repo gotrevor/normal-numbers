@@ -40,26 +40,51 @@ o(word)` — (a); and payloads built from the single-stream engine keep every pr
 good — (b). The super-exponential-growth contradiction was an artifact of the
 spurious `hgood`-on-the-whole-block requirement, now dropped.
 
-### Landed this lap (axiom-clean `[propext, Classical.choice, Quot.sound]`, green 8743)
-`countOccurrences_append_addslack` (CFChainFreq): `|count v x − m|x|| < ε|x|` and
-`|count v t − m|t|| < ε|t| + C` ⇒ `|count v (x++t) − m|x++t|| < ε|x++t| + (C+(|v|−1))`.
-The hdom-free append. This is the missing ingredient; `cfDiscLt_short_append` and
-`_append_take` (frozen CFConcat) only cover the SHORT-block case.
+### Landed (axiom-clean `[propext, Classical.choice, Quot.sound]`)
+- `countOccurrences_append_addslack` / `…₂` (CFChainFreq): good-with-slack `++`
+  good-with-slack stays good, additive slack, **NO shortness**. The hdom-free
+  append. `cfDiscLt_short_append`/`_append_take` (frozen CFConcat) cover only the
+  SHORT-block case.
+- `chainTail_dev_split` (CFChainFreq, commit `c0c9db1`): iterating `…addslack₂`
+  over `filler++payload` blocks gives tail deviation `< ε·len + (#blocks)·(C+(|v|−1))`
+  — the hdom-free replacement for `chainTail_cfDiscLt`, no per-round tolerance
+  compounding (additive term ÷ len is bounded, → small with long payloads).
+
+### KEY REFINEMENT (schedule design): constant per-round payloads ⇒ bounded fillers
+`filler_s ~ log_φ(1/ρ_s)` where `ρ_s = φ^{-2·payload_other,s}` = relative width of
+the target preimage sub-interval. With CONSTANT per-round payload length `c`, each
+`ρ_s` is constant ⇒ **`filler_s` is BOUNDED** ⇒ `filler_s = o(|w s|)` trivially
+(|w s| ~ s·c → ∞). The earlier "cumulative filler = Θ(word)" worry is a red
+herring: frequency at any prefix is dragged by the LOCAL (single-round) filler
+only — prior fillers are already absorbed into the good prefix `w s` (inductive
+short-append), so the running deviation is `≤ filler_s / prefixlen → 0`. Bounded
+gaps ⇒ equidistribution. Route CONFIRMED viable.
 
 ### NEXT (build on this)
-1. **`chain_cf_digit_freq_tendsto_split`** (CFChainFreq): restructure the
-   telescoping around a chain with `w(s+1) = w s ++ filler s ++ payload s` and
-   hypotheses (a)+(b) above, concluding window-freq → γv. Reuse
-   `cfDiscLt_append_take` (tier: prefix-in-filler) + `countOccurrences_append_addslack`
-   (tier: prefix-in-payload), and prove `w s` good by induction (never the block).
-   Then `chain_orbit_equidist_split` wrapper.
-2. **Uniformly-good payload primitive**: strengthen `exists_freq_good_block` /
-   `exists_freq_good_extend_cfCylinder` to expose that EVERY prefix of the freq-good
-   tail is good (the single-stream engine already grows gradually — the uniform
-   bound should fall out of the existing per-prefix control; verify).
-3. Re-wire `exists_interleaved_affine_witness` recursion: slow (linear) lockstep
-   payloads, per-round `filler_s` = the cross-navigation into the OTHER stream's
-   new cylinder (increment only, invariant maintained), bounded `o(word)`.
+1. **`chain_cf_digit_freq_tendsto_split`** (CFChainFreq): assemble the window-freq
+   limit from three tiers, mirroring `chain_cf_digit_freq_tendsto` but hdom-free:
+   - **tail-good**: `chainTail_dev_split` ⇒ tail `(ε + small)`-good past `s₀`
+     (need `#blocks·(C+|v|)/taillen ≤ small`; `taillen ≥ #blocks·c`, so `c` large).
+   - **boundary (`hbound`)**: `w s = w s₀ ++ tail`, fixed short prefix `w s₀` +
+     good tail via `cfDiscLt_short_append` (K-threshold, as existing proof).
+   - **mid-block**: prefix `= w s ++ (chainApp).take j`. TWO sub-cases by whether
+     `j ≤ |filler s|` (short-filler append, `cfDiscLt_append_take`) or `j` reaches
+     into payload (`w s ++ filler s` good, then `payload.take` via the UNIFORM
+     payload bound + `…addslack`). Needs the per-block hyp as `filler` short vs
+     `|w s|` + payload uniformly-good.
+   Then `chain_orbit_equidist_split` wrapper (copy `chain_orbit_equidist`, swap the
+   inner limit lemma).
+2. **Steerable uniformly-good payload primitive** (the genuine remaining geometric
+   crux): a freq-good block that NAVIGATES `wx` into target `ψ⁻¹(Ioo e' f')` with
+   the block good AS A WHOLE, its steering prefix `= o(word)` (bounded, per §
+   above). Measure argument: good-and-in-target set has positive measure (good
+   density →1, target relative measure `~ρ>0`); extract via the engine
+   (`exists_good_avoiding_bad_of_large`) applied to the target sub-region. This is
+   `exists_freq_good_block` steered — replaces `exists_freq_good_block_in_Ioo`'s
+   uncontrolled placement prefix with a bounded steering absorbed as `filler`.
+3. Re-wire `exists_interleaved_affine_witness`: constant-`c` lockstep payloads,
+   `filler_s` = bounded cross-navigation (invariant maintained, increment only),
+   feed both chains into `chain_orbit_equidist_split`.
 
 ---
 
