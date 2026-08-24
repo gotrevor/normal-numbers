@@ -120,7 +120,23 @@ nested chain of GOOD ψ-cylinders (⇒ its digit sequence is prescribed CF-norma
 (`good_mass_in_affine_preimage`) supply the density that makes each ψ-stage refine
 feasible; `volume_preimage_affineMap` bounds the pullback bad zone.
 
-**Sub-obligations to formalize (next laps, in new `CFScheduleA.lean`, additive):**
+### lap 7 landed (2026-08-24): CFScheduleA scaffold — target reduced to ONE crux sorry ✅
+
+`CFScheduleA.lean` (build green 8755, one disclosed sorry). Also
+`isCFNormal_of_irrational_orbit_freq` (CFOrbitFreq, axiom-clean).
+- `CFOrbitEquidist y := ∀ genuine v, blockCount(I_v) p y/p → γ(I_v)`.
+- **`exists_cfNormal_and_affine_cfNormal {q}(hq:0<q)(r) : ∃ x, IsCFNormal x ∧
+  IsCFNormal (affineMap q r x)` is PROVED** modulo one crux — the assembly uses
+  the orbit-frequency interface, real content.
+- **THE ONE CRUX (`exists_interleaved_affine_witness`, sorry, CFScheduleA:56/61):**
+  `∃ x, (Irrational x ∧ x∈(0,1) ∧ CFOrbitEquidist x) ∧ (Irrational (ψx) ∧
+  ψx∈(0,1) ∧ CFOrbitEquidist (ψx))`. This is the interleaved schedule.
+
+**src/ now carries exactly ONE active sorry** — the isolated B6 crux (correct
+decomposition). All B6 substrate below it is axiom-clean.
+
+**Sub-obligations of the crux (next laps, copy-extend frozen modules into
+`CFScheduleA`/new files, NEVER edit frozen):**
 1. Orbit⇔window bridge for the IMAGE: `T^k(ψ xstar) ∈ cfCylinder v` ⇔ ψ(xstar)'s
    CF digits `k..k+|v|` = v — needed to turn "ψ(xstar) in prescribed ψ-cylinders"
    into window-frequency (mirror how `xstar_cf_freq_tendsto`/`CFCorrect.lean`
