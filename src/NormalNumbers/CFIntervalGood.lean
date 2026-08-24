@@ -75,20 +75,106 @@ noncomputable def coveredByCyl (a b : ℝ) (n : ℕ) : Set ℝ :=
   ⋃ w ∈ {w ∈ genWords n | cfCylinder w ⊆ Set.Ioo a b}, cfCylinder w
 
 /-- **L1 — interval→cylinder covering.**  For `0 ≤ a ≤ b ≤ 1`, the rank-`n`
-CF-cylinders contained in `(a,b)` cover all of `(a,b)` except at most the two
-boundary cylinders straddling `a` and `b`; each has length `≤ 1/fib(n+1)²`, so
-the uncovered mass is `≤ 2/fib(n+1)²`.  Beyond a rank this is `< δ`.
+CF-cylinders contained in `(a,b)` cover all of `(a,b)` except a neighborhood of
+the two endpoints: every rank-`n` cylinder that *straddles* the boundary has
+length `≤ M := 1/fib(n+1)²` and meets the boundary, hence lies within `M` of `a`
+or `b`.  So the uncovered mass is `≤ 4M = 4/fib(n+1)²`, which `→ 0`; beyond a
+rank it is `< δ` for any `δ > 0`.
 
-TODO(L1): the straddler count.  Rank-`n` cylinders are pairwise-disjoint
-intervals (`cfCylinder_disjoint` + `cfCylinder_subset_uIcc`/
-`uIoo_subset_cfCylinder`); one that meets `(a,b)` but is not `⊆ (a,b)` must
-contain `a` or `b`; disjointness caps that at two, each bounded by
-`volume_cfCylinder_le_fib`. -/
+Proof: an irrational point of `(a,b)` not covered lies in a rank-`n` cylinder
+`cfCylinder u` (its own digits, `u ∈ genWords n`) that is NOT `⊆ (a,b)` — so
+`u` has a companion point outside `(a,b)`.  Packaging `cfCylinder u ⊆ Icc lo hi`
+with `hi − lo ≤ M` (`cfCylinder_subset_Icc_length` + `volume_cfCylinder_le_fib`),
+the two points pin `a` (or `b`) into `[lo,hi]`, so the whole cylinder — and in
+particular the point — sits in `[a−M,a+M] ∪ [b−M,b+M]`.  Rationals are null. -/
 theorem volume_interval_sdiff_covered_le (a b : ℝ)
-    (_ha : 0 ≤ a) (_hab : a ≤ b) (_hb : b ≤ 1) (n : ℕ) :
+    (ha : 0 ≤ a) (_hab : a ≤ b) (hb : b ≤ 1) (n : ℕ) :
     volume (Set.Ioo a b \ coveredByCyl a b n)
-      ≤ ENNReal.ofReal (2 / (Nat.fib (n + 1) : ℝ) ^ 2) := by
-  sorry
+      ≤ ENNReal.ofReal (4 / (Nat.fib (n + 1) : ℝ) ^ 2) := by
+  set M : ℝ := 1 / (Nat.fib (n + 1) : ℝ) ^ 2 with hM
+  have hFpos : (0 : ℝ) < (Nat.fib (n + 1) : ℝ) := by
+    exact_mod_cast Nat.fib_pos.mpr (Nat.succ_pos _)
+  have hMpos : 0 < M := by rw [hM]; positivity
+  rcases Nat.eq_zero_or_pos n with hn0 | hnpos
+  · -- rank 0: RHS = 4, and the whole interval has mass ≤ 1
+    subst hn0
+    calc volume (Set.Ioo a b \ coveredByCyl a b 0)
+        ≤ volume (Set.Ioo a b) := measure_mono Set.diff_subset
+      _ ≤ ENNReal.ofReal 1 := by
+          rw [Real.volume_Ioo]; exact ENNReal.ofReal_le_ofReal (by linarith)
+      _ ≤ ENNReal.ofReal (4 / (Nat.fib (0 + 1) : ℝ) ^ 2) := by
+          apply ENNReal.ofReal_le_ofReal; rw [Nat.fib_one]; norm_num
+  -- The straddler neighborhood of the two endpoints.
+  set S : Set ℝ := Set.Icc (a - M) (a + M) ∪ Set.Icc (b - M) (b + M) with hS
+  -- Key containment: uncovered ⊆ S ∪ ℚ.
+  have hsub : Set.Ioo a b \ coveredByCyl a b n ⊆ S ∪ Set.range ((↑) : ℚ → ℝ) := by
+    rintro x ⟨⟨hax, hxb⟩, hxnc⟩
+    by_cases hirr : Irrational x
+    · -- x is in its own rank-n cylinder u
+      left
+      have hx01 : x ∈ Set.Ioo (0 : ℝ) 1 :=
+        ⟨lt_of_le_of_lt ha hax, lt_of_lt_of_le hxb hb⟩
+      set u : List ℕ := (List.range n).map fun i => cfDigit x i with hu_def
+      have hulen : u.length = n := by simp [hu_def]
+      have hugen : u ∈ genWords n := by
+        refine ⟨hulen, fun c hc => ?_⟩
+        simp only [hu_def, List.mem_map, List.mem_range] at hc
+        obtain ⟨i, _, rfl⟩ := hc
+        exact one_le_cfDigit x hirr hx01 _
+      have hxu : x ∈ cfCylinder u := by
+        refine ⟨hx01, fun i hi => ?_⟩
+        rw [hulen] at hi
+        simp [hu_def, hi, List.getD_eq_getElem?_getD]
+      -- u's cylinder is NOT ⊆ (a,b), else x would be covered
+      have hunotsub : ¬ (cfCylinder u ⊆ Set.Ioo a b) := by
+        intro hcon
+        exact hxnc (Set.mem_biUnion ⟨hugen, hcon⟩ hxu)
+      obtain ⟨y, hyu, hyab⟩ := Set.not_subset.mp hunotsub
+      -- package u into an Icc of length ≤ M
+      have hune : u ≠ [] := by
+        rw [← List.length_pos_iff]; omega
+      obtain ⟨lo, hi, hIcc, hlen⟩ :=
+        cfCylinder_subset_Icc_length u hune hugen.2
+      have hlenM : hi - lo ≤ M := by
+        rw [hlen]
+        have := volume_cfCylinder_le_fib u hune hugen.2
+        rw [hulen] at this
+        calc (volume (cfCylinder u)).toReal
+            ≤ (ENNReal.ofReal M).toReal :=
+              ENNReal.toReal_mono (by simp) (by rw [hM]; simpa using this)
+          _ = M := ENNReal.toReal_ofReal hMpos.le
+      have hxlo : lo ≤ x := (hIcc hxu).1
+      have hxhi : x ≤ hi := (hIcc hxu).2
+      have hylo : lo ≤ y := (hIcc hyu).1
+      have hyhi : y ≤ hi := (hIcc hyu).2
+      -- y ∉ (a,b): y ≤ a or b ≤ y
+      rw [Set.mem_Ioo, not_and_or, not_lt, not_lt] at hyab
+      rcases hyab with hya | hby
+      · -- y ≤ a < x: a ∈ [lo,hi], so x ∈ [a-M, a+M]
+        left
+        constructor
+        · linarith [hxhi, hlenM, hxlo]
+        · linarith [hxhi, hlenM, hylo, hya, hax]
+      · -- x < b ≤ y: b ∈ [lo,hi], so x ∈ [b-M, b+M]
+        right
+        constructor
+        · linarith [hxlo, hlenM, hyhi, hby, hxb]
+        · linarith [hxlo, hlenM, hxhi]
+    · right
+      rw [Irrational] at hirr
+      push_neg at hirr
+      exact hirr
+  -- measure the neighborhood
+  calc volume (Set.Ioo a b \ coveredByCyl a b n)
+      ≤ volume (S ∪ Set.range ((↑) : ℚ → ℝ)) := measure_mono hsub
+    _ ≤ volume S + volume (Set.range ((↑) : ℚ → ℝ)) := measure_union_le _ _
+    _ = volume S := by rw [(Set.countable_range _).measure_zero, add_zero]
+    _ ≤ volume (Set.Icc (a - M) (a + M)) + volume (Set.Icc (b - M) (b + M)) :=
+        measure_union_le _ _
+    _ = ENNReal.ofReal (4 / (Nat.fib (n + 1) : ℝ) ^ 2) := by
+        rw [Real.volume_Icc, Real.volume_Icc, ← ENNReal.ofReal_add (by linarith) (by linarith)]
+        congr 1
+        rw [hM]; ring
 
 /-! ## L2 — good-block density on arbitrary intervals (provisional) -/
 
