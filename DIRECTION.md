@@ -89,6 +89,21 @@ detail lives in PENDING_WORK.md.
   new math.  `IsAbsolutelyNormal` is Track A's FULL `IsNormal` — the
   Pillai (or direct-blocks) obligation is unchanged.
 
+### JUDGE note on the Tier-2 route question (2026-08-23) ⚖️
+
+The directive's route-decisive question — "can `KhinchinTypical xstar` be
+derived from already-proved frequency data alone?" — has a **known NO in
+general**: `KHINCHIN.md` §"Both expansions at once" holds the
+counterexample (planting digit `⌈e^{2^j}⌉` at position `2^j` is a
+density-zero change that preserves EVERY pattern frequency yet breaks the
+geometric mean).  Pattern frequencies can never suffice as a formal
+implication; the missing ingredient is **large-digit tail control /
+uniform integrability of `log a`**.  So the honest fork is: (a) find a
+digit-size/tail-mass bound already implicit in the schedule's good-block
+selection (the `uSched_log_sum_le`-style log-sum telescopes are the right
+family), or (b) the W6 digit-cap re-plumb per `KHINCHIN.md` W6.  Do not
+spend laps attempting the frequencies-only derivation.
+
 ## Standing charter (destination)
 
 Two classical harvests of one machine — Birkhoff-on-[0,1] applied to two

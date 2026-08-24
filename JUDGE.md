@@ -168,3 +168,19 @@ file and works the checklist.  Laps never edit this file above the Ledger.
   **sonnet/high** (Trevor's token budget; altitude laps stay opus) —
   frozen-statement + directive + judge stack is exactly the harness that
   makes a weaker grinder safe to try.
+- 2026-08-23 21:25 · **mid-run visit (sonnet lap 4 live)** · judged through
+  `ed2b9cc` (textual tier) · **TIER 1 DISCHARGED at `b3bc2c4`** —
+  `exists_absolutely_normal_cf_normal` proved (Pillai.lean sorry-free +
+  `xstar_dary_freq_tendsto` + the count-bridge lemma) · statement
+  integrity: the ONLY minus line in `Headline.lean` since the freeze is
+  Tier 1's `sorry`; defs/anchors/Tier-2 statement character-identical;
+  added imports + one public bridge lemma in the frozen file (in-charter;
+  bridge should be `private` — hygiene nit for close-out) · smell scan of
+  the range: clean · axiom tier: review lap claims kernel-verified
+  trust-triple; **judge's independent `#print axioms` attempt hit the live
+  lap's rebuild (missing olean) — owed at close-out on a settled tree** ·
+  box now on Tier 2 per directive (Khinchin.lean: geometric-mean →
+  log-average reduction, schedule log-sum telescopes, `khinchinK0_pos`) ·
+  judge route-note added to DIRECTION: frequencies-alone derivation is
+  provably impossible (KHINCHIN.md counterexample); tail-control or W6
+  caps required · verdict: healthy, continue.
