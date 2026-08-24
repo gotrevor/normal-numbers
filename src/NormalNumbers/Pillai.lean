@@ -628,4 +628,31 @@ theorem phaseOccCount_div_tendsto (r L s : ℕ) (hr : 1 ≤ r) :
       show ((N : ℝ) - s - L) / r / N = ((N : ℝ) - s - L) / (r * N) from div_div _ _ _] at step
     exact step
 
+/-- **Per-phase `N`-scale frequency (non-straddling)**: for a non-straddling
+phase `s ≤ r−L`, the phase-`s` window-match count divided by `N` tends to
+`b^{-L}·(1/r)`.  This is the product of the two factors
+`phaseCount_s(N)/P_s(N) → b^{-L}` (`phaseWindowFreq_tendsto` pushed through
+`phaseOccCount_tendsto_atTop`) and `P_s(N)/N → 1/r`
+(`phaseOccCount_div_tendsto`). -/
+theorem phaseWindowFreq_div_N_tendsto (b r L s : ℕ) (hb : 2 ≤ b) (hr : 1 ≤ r)
+    (hL : s + L ≤ r) (y : ℝ) (hy : y ∈ Set.Ico (0 : ℝ) 1) (w : List ℕ)
+    (hwlen : w.length = L) (hwlt : ∀ d ∈ w, d < b)
+    (hsn : ∀ c < b ^ r, Filter.Tendsto
+        (fun Q : ℕ => (((Finset.range Q).filter (fun q => digitOf (b ^ r) y q = c)).card : ℝ) / Q)
+        Filter.atTop (nhds ((b : ℝ) ^ r)⁻¹)) :
+    Filter.Tendsto (fun N : ℕ => (((Finset.range (phaseOccCount r L s N)).filter
+          (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card : ℝ) / N)
+      Filter.atTop (nhds (((b : ℝ) ^ L)⁻¹ * (r : ℝ)⁻¹)) := by
+  have hpwf := phaseWindowFreq_tendsto b r L s hb hr hL y hy w hwlen hwlt hsn
+  have hPtop := phaseOccCount_tendsto_atTop r L s hr
+  have hcomp := hpwf.comp hPtop
+  have hden := phaseOccCount_div_tendsto r L s hr
+  have hmul := hcomp.mul hden
+  refine hmul.congr' ?_
+  filter_upwards [hPtop.eventually_gt_atTop 0, Filter.eventually_gt_atTop 0] with N hNpos hN0
+  have hP0 : (phaseOccCount r L s N : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  have hN0' : (N : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  simp only [Function.comp]
+  field_simp
+
 end NormalNumbers
