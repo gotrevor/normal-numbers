@@ -2251,6 +2251,65 @@ theorem wzSeq_ext {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : 
     conv_lhs => rw [← List.take_append_drop (schedA hq hr s).wz.length (schedA hq hr (s + 1)).wz]
     rw [hztake]
 
+/-- **Interval width ≤ cylinder volume.**  If every irrational of `(e,f)` lies in
+`cfCylinder w`, then `(e,f) ⊆ closure(cfCylinder w)`, so its width is at most the
+cylinder volume.  Feeds the shrinking-`Icc` squeeze that pins `ψ(xA)` to the
+z-chain limit. -/
+theorem Ioo_sub_le_volume_cfCylinder (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) {e f : ℝ} (hef : e < f)
+    (hsub : ∀ x ∈ Set.Ioo e f, Irrational x → x ∈ cfCylinder w) :
+    f - e ≤ (volume (cfCylinder w)).toReal := by
+  obtain ⟨a, c, hac, hlen⟩ := cfCylinder_subset_Icc_length w hw hpos
+  have hae : a ≤ e := by
+    by_contra h; push_neg at h
+    have hlt : e < min a f := lt_min h hef
+    obtain ⟨y, hyirr, hy1, hy2⟩ := exists_irrational_btwn hlt
+    have hyf : y < f := lt_of_lt_of_le hy2 (min_le_right _ _)
+    have hymem := hac (hsub y (Set.mem_Ioo.2 ⟨hy1, hyf⟩) hyirr)
+    exact absurd hymem.1 (not_le.2 (lt_of_lt_of_le hy2 (min_le_left _ _)))
+  have hfc : f ≤ c := by
+    by_contra h; push_neg at h
+    have hlt : max c e < f := max_lt h hef
+    obtain ⟨y, hyirr, hy1, hy2⟩ := exists_irrational_btwn hlt
+    have hey : e < y := lt_of_le_of_lt (le_max_right _ _) hy1
+    have hymem := hac (hsub y (Set.mem_Ioo.2 ⟨hey, hy2⟩) hyirr)
+    exact absurd hymem.2 (not_le.2 (lt_of_le_of_lt (le_max_left _ _) hy1))
+  linarith [hlen]
+
+/-- **x-stream frequency obligation** (hardest-open, DISCLOSED `sorry`).  The
+`chain_orbit_equidist_uniform` hypothesis for the x-chain: for each genuine `v`
+there is a slack `C` with the uniform prefix-goodness (`hblock`) and the `o(word)`
+telescoping (`hslack`).  `hblock` is direct from `StepSpecA` (the step exposes
+`(wxSeq (s+1)).drop |wxSeq s|`-goodness at tolerance `schedEps s → 0`, with slack
+`C s = 4√|blk s| + 2|v| + n₁ s`, once `v ∈ wordFamily s`, i.e. `s ≥ s_v`);
+`hslack` is `slack_telescoping` with `c = |v|−1`, using `C s = o(blk s)` (from
+`n₁ s² ≤ |blk s|·√|blk s|`), `blk → ∞` (from `L_s = s`), and the geometric bound
+`blk s ≤ ρ·word s` (THE route-decisive coupled-bookkeeping obligation: the
+steer-block length must be `O(|w_s|)` — see `DIRECTION.md` ROUTE-DECISIVE case). -/
+theorem schedA_hfreq_x {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+    ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
+      ∃ C : ℕ → ℝ, (∀ s, 0 ≤ C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∃ s₀, ∀ s, s₀ ≤ s → ∀ p, p ≤ (chainApp (wxSeq hq hr) s).length →
+          |(countOccurrences v ((chainApp (wxSeq hq hr) s).take p) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * p| < ε * p + C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∀ s₀, ∃ K, ∀ k, K ≤ k →
+          (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+            < ε * (wxSeq hq hr (s₀ + k)).length) := by
+  sorry
+
+/-- **z-stream frequency obligation** (hardest-open, DISCLOSED `sorry`).  Same as
+`schedA_hfreq_x` for the z-chain (`wzSeq`). -/
+theorem schedA_hfreq_z {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+    ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
+      ∃ C : ℕ → ℝ, (∀ s, 0 ≤ C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∃ s₀, ∀ s, s₀ ≤ s → ∀ p, p ≤ (chainApp (wzSeq hq hr) s).length →
+          |(countOccurrences v ((chainApp (wzSeq hq hr) s).take p) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * p| < ε * p + C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∀ s₀, ∃ K, ∀ k, K ≤ k →
+          (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+            < ε * (wzSeq hq hr (s₀ + k)).length) := by
+  sorry
+
 /-- **THE B6 CRUX (interleaved-schedule witness), FEASIBLE REGIME.**  For `q > 0`
 and `r ∈ (-q, 1)` — exactly the range in which the feasible set
 `(0,1) ∩ ψ⁻¹(0,1)` is nonempty — there is a single real `x` such that both `x`
@@ -2272,7 +2331,44 @@ theorem exists_interleaved_affine_witness {q : ℝ} (hq : 0 < q) (r : ℝ)
       (Irrational x ∧ x ∈ Set.Ioo (0 : ℝ) 1 ∧ CFOrbitEquidist x) ∧
       (Irrational (affineMap q r x) ∧ affineMap q r x ∈ Set.Ioo (0 : ℝ) 1
         ∧ CFOrbitEquidist (affineMap q r x)) := by
-  sorry
+  have hxne := wxSeq_ne hq hr
+  have hxpos := wxSeq_pos hq hr
+  have hxext := wxSeq_ext hq hr
+  have hzne := wzSeq_ne hq hr
+  have hzpos := wzSeq_pos hq hr
+  have hzext := wzSeq_ext hq hr
+  -- the two chain limit points
+  obtain ⟨xA, hxAirr, hxAmem⟩ :=
+    exists_irrational_mem_iInter_cfCylinder (wxSeq hq hr) hxne hxpos hxext
+  have hxA01 : xA ∈ Set.Ioo (0 : ℝ) 1 :=
+    (irrational_mem_Ioo_of_mem_iInter_cfCylinder (wxSeq hq hr) hxne hxpos hxext hxAmem).2
+  obtain ⟨zA, hzAirr, hzAmem⟩ :=
+    exists_irrational_mem_iInter_cfCylinder (wzSeq hq hr) hzne hzpos hzext
+  have hzA01 : zA ∈ Set.Ioo (0 : ℝ) 1 :=
+    (irrational_mem_Ioo_of_mem_iInter_cfCylinder (wzSeq hq hr) hzne hzpos hzext hzAmem).2
+  -- ψ(xA) and zA both live in every shrinking wz-interval, so they coincide
+  have hpsiIcc : ∀ s, affineMap q r xA ∈ Set.Icc (schedA hq hr s).e (schedA hq hr s).f := by
+    intro s
+    have hmem := (schedA hq hr s).hinv (hxAmem s)
+    rw [Set.mem_preimage] at hmem
+    exact Set.Ioo_subset_Icc_self hmem
+  have hzAIcc : ∀ s, zA ∈ Set.Icc (schedA hq hr s).e (schedA hq hr s).f :=
+    fun s => (schedA hq hr s).hzhull (hzAmem s)
+  have hdiam : Filter.Tendsto (fun s => (schedA hq hr s).f - (schedA hq hr s).e)
+      Filter.atTop (nhds 0) := by
+    refine squeeze_zero (fun s => by linarith [(schedA hq hr s).hef]) (fun s => ?_)
+      (cfCylinder_chain_volume_tendsto hzne hzpos hzext)
+    exact Ioo_sub_le_volume_cfCylinder (wzSeq hq hr s) (hzne s) (hzpos s)
+      (schedA hq hr s).hef (schedA hq hr s).hzint
+  have hpsi_eq : affineMap q r xA = zA := eq_of_mem_iInter_Icc hdiam hpsiIcc hzAIcc
+  -- orbit equidistribution for both streams
+  have hox : CFOrbitEquidist xA :=
+    chain_orbit_equidist_uniform (wxSeq hq hr) hxext hxAirr hxA01 hxAmem (schedA_hfreq_x hq hr)
+  have hoz : CFOrbitEquidist zA :=
+    chain_orbit_equidist_uniform (wzSeq hq hr) hzext hzAirr hzA01 hzAmem (schedA_hfreq_z hq hr)
+  refine ⟨xA, ⟨hxAirr, hxA01, hox⟩, ?_⟩
+  rw [hpsi_eq]
+  exact ⟨hzAirr, hzA01, hoz⟩
 
 /-- **B6 target (single affine map).**  There is a real `x` with both `x` and
 its affine image `q·x + r` CF-normal — a constructive data point on Vandehey
