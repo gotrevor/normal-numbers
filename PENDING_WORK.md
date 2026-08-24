@@ -1,5 +1,60 @@
 # PENDING WORK — B5′ campaign
 
+> **ANALYSIS LAP (2026-08-24, no code — route-refutation only).** Chased
+> route (a) from the previous entry (escaping-mass argument from
+> `uSched_spec`'s existing frequency bound) to a concrete numeric
+> conclusion: **it does NOT work**, and the failure is quantitatively
+> precise, not just a vague gap. Worked out by hand (not yet formalized):
+> `uSched_spec`'s per-digit-value error bound is `|count[a] - γ([a])·n_s| <
+> schedEps(t_{s+1})·n_s + 1` for every `a ≤ t_{s+1}`, i.e. `schedEps(t)·n +
+> 1` with `schedEps(t) = 1/(t+1)`, **uniform in `a`** (not shrinking as `a`
+> grows toward `t`). Summing the log-weighted error over `a = 1..t`:
+> `Σ_{a≤t} |err_a|·log a ≤ (schedEps(t)·n + 1)·Σ_{a≤t} log a ≈ (n/t)·(t log
+> t) = n·log t` (Stirling, `log(t!) ~ t log t`). As a FRACTION of the block
+> length `n`, this error is `~ log t_{s+1} → ∞` as `s → ∞` (since
+> `t_{s+1} → ∞` is required for Tier 1's own base-coverage) — the error
+> does NOT vanish relative to `n`, for ANY choice of cutoff (fixed or
+> growing with `s`). This kills the naive combination outright, not just
+> weakly.
+>
+> **Also checked**: `goodC` (the `wSched_log_sum_le` total-mass cap) is an
+> unrelated Markov constant from `half_mass_long_extensions`
+> (`exists_C_half_le_volume_goodExtSet.choose`, `CFSchedule.lean:108`) —
+> it has NO known relation to `khinchinK₀`/`log khinchinK₀` (not proven
+> `= log khinchinK₀`, almost certainly strictly larger with real slack), so
+> `Σ log(digit) ≤ goodC·n` cannot by itself pin the limit to exactly
+> `log khinchinK₀` even before worrying about tails.
+>
+> **Conclusion — route-decisive**: the Tier-1 schedule's EXPOSED interface
+> (`uSched_spec`/`nFn_spec`'s packaged frequency + total-mass facts) does
+> not carry enough quantitative information for the Khinchin log-average
+> limit; the per-word error bound was built for FIXED-length pattern
+> frequency (Tier 1's `IsCFNormal`, no log-weighting) and is provably too
+> weak once digit magnitude enters as a weight. Two live options for the
+> NEXT lap, in order of preference:
+> (1) **Dig into `kminFn_spec` / the underlying Lemma-13 refinement
+>     construction** (`TBrickRefine.lean`) for a genuinely finer,
+>     log-weighted quantitative estimate — e.g. does the actual
+>     construction (not just its packaged `nFn_spec` corollary) support a
+>     bound like `Σ_{a≤t} err_a·log a = o(n)` via cancellation the crude
+>     triangle-inequality packaging discards? This is READING/extending
+>     Tier-1 internals for a NEW corollary, not modifying the frozen
+>     schedule or its statements — allowed under `DIRECTION.md`'s "forbidden
+>     drift" clause (which bars re-attacking/reshaping Tier 1, not reading
+>     it for a new Tier-2 fact). Needs real investment (Lemma-13's actual
+>     proof, likely `TBrickRefine.lean`'s badBlocks/daryCell combinatorics)
+>     — budget a full lap just to understand what's provable there before
+>     attempting a new lemma.
+> (2) If (1) turns up nothing usable: the honest conclusion is Tier 2
+>     genuinely needs a schedule re-plumb (the ORIGINAL W6 assessment this
+>     campaign's `44fb8bb` route-insight had set aside) — but that is a
+>     `DIRECTION.md`-level call (touches locked Tier-1 machinery), not a
+>     grind-lap decision; flag for an altitude/review lap rather than
+>     unilaterally reopening the schedule.
+> Do NOT retry route (a) as stated (fixed-or-growing cutoff `K` against the
+> existing frequency bound) — it is refuted above with an explicit
+> divergent-error computation, not merely "not yet tried."
+
 > **GRIND LAP (2026-08-24, `76e042e`).** Continued the step-2 assembly
 > (log-average crux). Two sub-lemmas landed, both axiom-clean, no `sorry`:
 > `xstar_log_digit_avg_truncated_tendsto` (`Khinchin.lean`) — the `≤ K`
