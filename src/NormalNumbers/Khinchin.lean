@@ -44,13 +44,95 @@ theorem finset_sum_range_eq_list_sum {β : Type*} [AddCommMonoid β] (n : ℕ) (
       rw [Finset.sum_range_succ, ih, List.range_succ, List.map_append, List.sum_append]
       simp
 
-/-- **Khinchin's constant is a genuine positive real** (its defining `tprod`
-converges to a positive value; the K₀-exponent series `Σₐ log₂(a)·log(1 +
-1/(a(a+2)))` is summable by comparison with `log(a)/a^{3/2}`, in the style of
-`CFDigitLaw.lean`'s `summable_digitLog`).  Needed for the log/exp swap in
-`khinchinTypical_iff_log_tendsto` below; not yet attempted. -/
+private lemma khinchinK₀_term_pos (k : ℕ) :
+    0 < (1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) ^ Real.logb 2 ((k : ℝ) + 1) :=
+  Real.rpow_pos_of_pos (by positivity) _
+
+private lemma khinchinK₀_log_le_two_sqrt {x : ℝ} (hx : 1 ≤ x) :
+    Real.log x ≤ 2 * Real.sqrt x := by
+  have h0 : (0 : ℝ) < x := by linarith
+  have hs : (0 : ℝ) < Real.sqrt x := Real.sqrt_pos.2 h0
+  have h1 : Real.log x = 2 * Real.log (Real.sqrt x) := by
+    rw [Real.log_sqrt h0.le]; ring
+  have h2 : Real.log (Real.sqrt x) ≤ Real.sqrt x - 1 := Real.log_le_sub_one_of_pos hs
+  nlinarith
+
+private lemma khinchinK₀_summable_log :
+    Summable (fun k : ℕ => Real.log
+      ((1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) ^ Real.logb 2 ((k : ℝ) + 1))) := by
+  have hterm : ∀ k : ℕ, Real.log
+      ((1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) ^ Real.logb 2 ((k : ℝ) + 1))
+      = Real.logb 2 ((k : ℝ) + 1)
+          * Real.log (1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) := by
+    intro k
+    rw [Real.log_rpow (by positivity)]
+  simp only [hterm]
+  have hnonneg : ∀ k : ℕ, 0 ≤ Real.logb 2 ((k : ℝ) + 1)
+      * Real.log (1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) := by
+    intro k
+    apply mul_nonneg
+    · exact Real.logb_nonneg (by norm_num) (by linarith [Nat.cast_nonneg (α := ℝ) k])
+    · exact Real.log_nonneg (by
+        have : (0 : ℝ) ≤ 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)) := by positivity
+        linarith)
+  have hmaj : Summable (fun k : ℕ => (2 / Real.log 2) * (1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2))) := by
+    have hp : Summable (fun k : ℕ => 1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2)) := by
+      have h := (Real.summable_one_div_nat_rpow (p := (3 : ℝ) / 2)).2 (by norm_num)
+      have h1 := (summable_nat_add_iff 1).2 h
+      apply h1.congr
+      intro k
+      push_cast
+      ring
+    exact hp.mul_left _
+  apply Summable.of_nonneg_of_le hnonneg (fun k => ?_) hmaj
+  have hk1 : (1 : ℝ) ≤ (k : ℝ) + 1 := by linarith [Nat.cast_nonneg (α := ℝ) k]
+  have hlogb_le : Real.logb 2 ((k : ℝ) + 1) ≤ 2 * Real.sqrt ((k : ℝ) + 1) / Real.log 2 := by
+    rw [Real.logb, div_le_div_iff_of_pos_right (Real.log_pos (by norm_num))]
+    exact khinchinK₀_log_le_two_sqrt hk1
+  have hlog2pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hloginner_le : Real.log (1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)))
+      ≤ 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)) := by
+    have := Real.log_le_sub_one_of_pos
+      (show (0 : ℝ) < 1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)) by positivity)
+    linarith
+  have hsq_pos : (0 : ℝ) ≤ Real.sqrt ((k : ℝ) + 1) := Real.sqrt_nonneg _
+  have hr0 : (0 : ℝ) < ((k : ℝ) + 1) ^ ((3 : ℝ) / 2) := Real.rpow_pos_of_pos (by linarith) _
+  have hkey : Real.sqrt ((k : ℝ) + 1) * ((k : ℝ) + 1) ^ ((3 : ℝ) / 2) = ((k : ℝ) + 1) ^ 2 := by
+    rw [Real.sqrt_eq_rpow, ← Real.rpow_add (by linarith),
+      show (1 : ℝ) / 2 + 3 / 2 = 2 by norm_num, Real.rpow_two]
+  have hle : Real.sqrt ((k : ℝ) + 1) * (((k : ℝ) + 1) * ((k : ℝ) + 3))⁻¹
+      ≤ 1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2) := by
+    rw [← div_eq_mul_inv, div_le_div_iff₀ (by positivity) hr0]
+    have hb : Real.sqrt ((k : ℝ) + 1) * ((k : ℝ) + 1) ^ ((3 : ℝ) / 2) ≤
+        (((k : ℝ) + 1) * ((k : ℝ) + 3)) := by rw [hkey]; nlinarith
+    calc Real.sqrt ((k : ℝ) + 1) * ((k : ℝ) + 1) ^ ((3 : ℝ) / 2) ≤ _ := hb
+      _ = _ := by ring
+  calc Real.logb 2 ((k : ℝ) + 1) * Real.log (1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)))
+      ≤ (2 * Real.sqrt ((k : ℝ) + 1) / Real.log 2)
+          * (1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) := by
+        apply mul_le_mul hlogb_le hloginner_le
+          (Real.log_nonneg (by
+            have : (0 : ℝ) ≤ 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)) := by positivity
+            linarith))
+          (div_nonneg (by positivity) hlog2pos.le)
+    _ = (2 / Real.log 2) * (Real.sqrt ((k : ℝ) + 1) * (((k : ℝ) + 1) * ((k : ℝ) + 3))⁻¹) := by
+        rw [div_eq_mul_inv]; ring
+    _ ≤ (2 / Real.log 2) * (1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2)) :=
+        mul_le_mul_of_nonneg_left hle (div_nonneg (by norm_num) hlog2pos.le)
+
+/-- **Khinchin's constant is a genuine positive real**: its defining `tprod`
+converges (`Multipliable`), and the value of ANY convergent product of
+positive terms via `Real.hasProd_of_hasSum_log` is `exp` of the log-sum, so
+positive automatically — the summability of the K₀-exponent series `Σₐ
+log₂(a)·log(1 + 1/(a(a+2)))` (by comparison with `log(a)/a^{3/2}`, in the
+style of `CFDigitLaw.lean`'s `summable_digitLog`) is the only real content. -/
 theorem khinchinK₀_pos : 0 < khinchinK₀ := by
-  sorry
+  have hfn := khinchinK₀_term_pos
+  have hsum := khinchinK₀_summable_log
+  have hprod := Real.hasProd_of_hasSum_log hfn hsum.hasSum
+  rw [khinchinK₀]
+  rw [hprod.tprod_eq]
+  exact Real.exp_pos _
 
 /-- **Elementary reduction**: `KhinchinTypical x` (the geometric mean of the
 CF digits `→ K₀`) is equivalent to the corresponding `log`-average tending to
