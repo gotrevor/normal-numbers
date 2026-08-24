@@ -1,5 +1,46 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🎯🎯🎯 2026-08-24 CRUX LOCATED — block-linear fails at the `S+1` ABSOLUTE regularization, NOT the route
+
+**Sharpest finding of the L4 campaign.** After reading the full block machinery
+(`exists_uniformly_freq_good_block_steer_len` :2139, `exists_uniform_block_param_tight`
+:2077, `schedA_block_linear` :3346), the `|chainApp| ≤ K₁|w|+K₂` obligation reduces
+to bounding the block `|u| = n₁ + m²` with `m² ≤ 6(Lc+Nfib)+2+2(⌈2/β⌉+1)⁴`
+(tight param). The three inputs:
+- **Lc = L = s** — LINEAR in stage, fine.
+- **Nfib** = fib-threshold for `4/(d−c)`; for the L4 self-hull steer `d−c ≈ φ^{−|wx|}`
+  so `Nfib ≈ |wx|` — LINEAR, fine (needs a small `Nfib ≲ |wx|` lemma).
+- **β = γtar·δ²/(S+1)**, `S = γwx·Σ'`, `Σ' = ∑_{v∈F} 7(8|v|+80)γ(cfCyl v)`
+  (word-independent), `γtar = γ(middle-half of hull) ≈ γwx/8`. **← THE OBSTRUCTION.**
+
+**The `+1` in `S+1` breaks the scaling.** Both `γtar` and `S` are `Θ(γwx)`, so the
+ratio `γtar/S = Θ(1/Σ')` is WORD-INDEPENDENT — that's the whole point of route B (x
+steers into its OWN hull, `γtar/γwx = Θ(1)`, unlike two-stream's `γtar/γwx ≈ φ^{−κ|zblk|}`).
+But `β = γtar·δ²/(S+1)`: as the cylinder deepens `γwx→0` ⇒ `γtar→0`, `S→0`, so
+`β → γtar·δ² ≈ (γwx/8)δ² ≈ φ^{−|wx|}δ² → 0`. Then `⌈2/β⌉ ≈ φ^{|wx|}/δ²` EXPONENTIAL,
+`m² ≈ (⌈2/β⌉)⁴` SUPER-exponential. **So the current block lemma gives
+super-exponential blocks even for the L4 self-hull steer — block-linear is NOT
+automatic from the route pivot.** (This is why `schedA_block_linear` is genuinely open,
+independent of two- vs single-stream.)
+
+**THE FIX — relative regularization `S + γwx` (or `S + c·γwx`) in place of `S + 1`.**
+Then `β = γtar·δ²/(S+γwx) = γtar·δ²/(γwx(Σ'+1)) = (γtar/γwx)·δ²/(Σ'+1) ≥ (1/8)δ²/(Σ'+1)`
+— WORD-INDEPENDENT and bounded below, so `⌈2/β⌉` is a per-family constant and `m²`,
+hence `|u|`, is LINEAR in `Lc+Nfib ≈ s+|wx|`. `γwx > 0` always (genuine cylinder), so
+`S+γwx > 0` is a valid regularizer; `F` nonempty ⇒ `Σ'>0`. The density machinery is
+ALREADY present: `gaussMeasure_Ioo_toReal_ge` (:2021, docstring literally says
+"`γtar ≥ q·c₀·γwx`") + a matching upper bound give `γtar/γwx ∈ [c₀, 1]`.
+
+**NEXT BRICK (the real crux, hardest-first):** a variant
+`exists_uniformly_freq_good_block_steer_len_rel` using `β := γtar·δ²/(S+γwx)` + the
+TIGHT param, exposing `|u| ≤ Krel·(L + Nfib) + Crel(F,δ)` with `Krel, Crel`
+word-INDEPENDENT. Then: (b) `Nfib ≲ |wx|` from `d−c = width(hull) ≥ φ^{−(|wx|+O(1))}`
+(`volume_cfCylinder_ge_fib`-type / hull-width lower bound); (c) `γtar ≥ γwx/8` from the
+density bounds. Feed all into the L4 schedule ⇒ `schedL4_block_linear` (the L4 analog
+of the open `schedA_block_linear`), now PROVABLE. THEN `SchedStateL4`/step/chain/z-side.
+The z-transfer machinery (bricks 4a + 5 transfer lemmas) is already complete + axiom-clean.
+
+
 ## ✅✅✅ 2026-08-24 REVIEW LAP — PIVOT RATIFIED: RESUME SINGLE-STREAM L4 (the two-stream route is DEAD)
 
 **The "box stuck" was a FALSE STOP.** The two-stream construction is genuinely

@@ -2064,6 +2064,33 @@ theorem gaussMeasure_Ioo_toReal_le {u v : ℝ} (hu : 0 ≤ u) (huv : u ≤ v) (h
   rw [div_le_div_iff₀ hl2 hl2]
   nlinarith [hbound, hl2]
 
+/-- **Middle-half Gauss mass is a WORD-INDEPENDENT fraction of the whole interval.**
+For `0 ≤ c ≤ d ≤ 1`, the middle half `(c+(d−c)/4, d−(d−c)/4)` carries `≥ ¼` of the Gauss
+mass of `(c,d)`.  Proof: width of the middle half is `(d−c)/2`, so its mass is
+`≥ (d−c)/(4 ln2)` (lower density `1/(2ln2)`), while `γ(c,d) ≤ (d−c)/ln2` (upper density
+`1/ln2`); the ratio is `≥ ¼` with NO dependence on `c,d` (hence none on the cylinder
+depth).  This is exactly the `γtar/γ(hull) = Θ(1)` fact that makes the L4 self-hull
+steer's block parameter `β = γtar·δ²/(S+γwx)` word-independent — the resolution of the
+block-linear crux (see PENDING_WORK: relative regularization). -/
+theorem gaussMeasure_middle_half_ge {c d : ℝ} (hc : 0 ≤ c) (hcd : c ≤ d) (hd : d ≤ 1) :
+    (1 / 4) * (gaussMeasure (Set.Ioo c d)).toReal
+      ≤ (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal := by
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hm0 : 0 ≤ c + (d - c) / 4 := by nlinarith [hcd]
+  have hmm : c + (d - c) / 4 ≤ d - (d - c) / 4 := by nlinarith [hcd]
+  have hm1 : d - (d - c) / 4 ≤ 1 := by nlinarith [hcd, hd]
+  have hlow := gaussMeasure_Ioo_toReal_ge hm0 hmm hm1
+  have hup := gaussMeasure_Ioo_toReal_le hc hcd hd
+  have hmidwidth : (d - (d - c) / 4) - (c + (d - c) / 4) = (d - c) / 2 := by ring
+  rw [hmidwidth] at hlow
+  -- γ(mid) ≥ (d−c)/(4 ln2) ≥ ¼·γ(c,d)
+  have hstep : (1 / 4) * (gaussMeasure (Set.Ioo c d)).toReal ≤ (d - c) / 2 / (2 * Real.log 2) := by
+    rw [le_div_iff₀ (by positivity)]
+    have hthis : (gaussMeasure (Set.Ioo c d)).toReal * Real.log 2 ≤ (d - c) :=
+      (le_div_iff₀ hl2).mp hup
+    nlinarith [hthis, hl2]
+  exact le_trans hstep hlow
+
 /-- **Tight block parameter (word-independent block length).**  Like
 `exists_uniform_block_param` but returns `m` with `m² ~ max(Lc, Nfib, poly(1/β))`
 instead of the lossy `m ~ max(Lc, Nfib, …)` (whose `m² ~ Nfib²` is QUADRATIC in the
