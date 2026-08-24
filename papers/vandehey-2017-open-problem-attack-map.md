@@ -187,6 +187,11 @@ Consequences, in order of who cares:
   `HotSpot.lean`, base-`b` (Bailey–Misiurewicz, compact alphabet), where the
   Moshchevitin–Shkredov defect does not arise.
 
+**Disposition (Trevor, 2026-08-24): this stays in the repo.**  No outreach to Vandehey about the
+gap — *"noting it in the repo is sufficient"* — though it may serve as stated motivation if he ever
+asks the author for a copy of the published edition.  A future session finding this should not
+re-propose telling him.  (Standing rule anyway: document ≠ announce.)
+
 ### 6.2 Route B / B6 has a paper-level precedent — cite it, do not claim around it
 
 **Becher–Madritsch, *On a question of Mendès France on normal numbers***
