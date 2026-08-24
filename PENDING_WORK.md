@@ -1,6 +1,93 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
-## 📌 LAP STATUS 2026-08-24 (grind) — all DIRECTION-permitted doable work DONE; crux operator-gated
+## ✅✅✅ 2026-08-24 REVIEW LAP — PIVOT RATIFIED: RESUME SINGLE-STREAM L4 (the two-stream route is DEAD)
+
+**The "box stuck" was a FALSE STOP.** The two-stream construction is genuinely
+obstructed (super-exponential blocks — `OBSTRUCTION-2026-08-28`, re-verified), but
+the fix does not need an operator: the **single-stream L4 route is the ORIGINAL
+design** (`CFScheduleA.lean:24–31` module docstring) and its foundational pullback
+lemma is ALREADY PROVED — `volume_preimage_affineMap` (`CFAffine:94`,
+`volume(ψ⁻¹ s)=|q⁻¹|·volume s`), whose own docstring says it is "the union-bound
+ingredient for L4". The two-stream `wxSeq`/`wzSeq`/`schedA`/`schedA_block_linear`
+layer was a later drift into a wall. **DIRECTION.md CURRENT DIRECTIVE now mandates
+resuming L4.** This section is the attack path.
+
+### Why L4 removes the obstruction
+Two-stream nests a z-cylinder as the x-target ⇒ target relative size
+`ρ ≈ e^{−2κ|zblock|}` ⇒ measure budget `n₁ ≳ 1/ρ` ⇒ super-exponential blocks.
+L4 keeps the target = the FULL current x-cylinder (`ρ=1`): control `ψ(x)`'s
+z-frequency STATISTICALLY by having `x` avoid the ψ-PULLBACK of the z-bad-zones,
+never nesting a z-cylinder. `zA := ψ(xA)` is then DEFINITIONAL (no gluing/squeeze).
+Blocks become polynomial-in-stage ⇒ `o(word)` — comfortably past the affine bound.
+
+### The crux statement does NOT change
+`exists_interleaved_affine_witness` (`:2676`) is route-agnostic:
+`∃ x, (Irr x ∧ x∈(0,1) ∧ CFOrbitEquidist x) ∧ (Irr ψx ∧ ψx∈(0,1) ∧ CFOrbitEquidist ψx)`.
+L4 gives it a NEW proof; the two-stream proof (bottoming at the `schedA_block_linear`
+`sorry`) becomes excisable dead code once L4 lands.
+
+### Attack path (hardest-first)
+1. **[FIRST BRICK — ROUTE-DECISIVE] ψ-pullback Gauss distortion bound.**
+   `gaussMeasure_preimage_affineMap_le`: for `q>0`, measurable `S ⊆ (0,1)`,
+   `gaussMeasure (affineMap q r ⁻¹' S) ≤ ENNReal.ofReal (2/q) * gaussMeasure S`.
+   Proof (few lines, additive, put in `CFAffine.lean` or a new `CFAffinePullback.lean`):
+   `gaussMeasure(ψ⁻¹ S) ≤[gaussMeasure_le_volume] ofReal(log2)⁻¹·volume(ψ⁻¹ S)
+   =[volume_preimage_affineMap] ofReal(log2)⁻¹·ofReal|q⁻¹|·volume S
+   ≤[volume_le_ofReal_mul_gaussMeasure, S⊆(0,1)] ofReal(log2)⁻¹·|q⁻¹|·(2 log2)·gaussMeasure S
+   = ofReal(2/q)·gaussMeasure S` (the `log2` cancels). Needs `ψ⁻¹ S` measurable
+   (affineMap is measurable/continuous) and `|q⁻¹| = 1/q` for `q>0`.
+   **Prove this FIRST — it is the smallest probe of the whole L4 measure budget.**
+2. **Pulled-back z-bad-zone relative-mass bound.** Within `cfCylinder wx`, show
+   `gaussMeasure (cfCylinder wx ∩ ψ⁻¹(⋃_{v∈F,n∈NS} cfBadZone_z v n δ))` is a small
+   fraction of `gaussMeasure (cfCylinder wx)`. Route: `ψ(cfCylinder wx)` is an
+   interval of width `≈ q·φ^{−2|wx|}`; it is covered by O(1) depth-`m` z-cylinders
+   with `m ≈ |wx|+O(1)` (use `cfCylinder_subset_Icc_length` / `volume_cfCylinder`);
+   apply `gaussMeasure_multiscale_cfBadZone_le` RELATIVE to each covering z-cylinder
+   for z-scales `n ∈ NS ⊆ [m+gap, m+gap+M²]`; pull back via brick 1. Relative mass
+   `≤ (2/q)·O(1)·|NS|·S/(δ²·gap)`, small once `gap = poly` is large. ⚠️ decisive
+   sub-question: the "O(1) covering" count — an interval of width `W` meets
+   `≤ W/(min depth-m cylinder width)+2` depth-m cylinders; pick `m` so depth-m
+   width `≈ W` ⇒ O(1). Prove a covering lemma or bound the meeting count directly.
+3. **Combined single-selection.** Feed
+   `gaussMeasure(x-bad ∪ ψ⁻¹(z-bad)) < gaussMeasure(cfCylinder wx interval)` to
+   `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt` (`:402`) → ONE irrational
+   `x` in the current x-interval avoiding BOTH. (x-bad handled by the existing
+   `gaussMeasure_multiscale_cfBadZone_le` on `wx`.)
+4. **Single-stream recursion.** Rebuild as ONE stream: a `SchedStateL4` carrying
+   only `wx` + the interval, extended by brick-3 selection each stage; `wxSeq_L4`,
+   its chain, limit `xA`. Reuse `chain_orbit_equidist_uniform` for `xA` (x-side).
+5. **z-side chain frequency.** `ψ(xA)`'s window frequency converges because at
+   stage `s` we forced `ψ(x) ∉ cfBadZone_z v n δ` for `n` in the stage's z-range,
+   i.e. `|countOcc v (cfPref (ψxA) n) − γv·n| < δn + slack` at a cofinal set of
+   `n` with `δ→0`. Package as a chain-frequency lemma for `ψxA` (mirror
+   `chain_cf_digit_freq_tendsto_uniform`, blocks = z-digit ranges; per-block
+   goodness from pullback-avoidance). ⇒ `CFOrbitEquidist (ψxA)`.
+6. **Assemble** the NEW `exists_interleaved_affine_witness` proof: `xA` from (4),
+   `ψxA` equidist from (5), `ψxA ∈ (0,1)` from feasibility + interval nesting,
+   irrationality of `ψxA` from `xA` irrational + `q≠0`. Then EXCISE the two-stream
+   `sorry` block (`schedA_block_linear` and its dead callers).
+
+### Machinery confirmed present (survey 2026-08-24)
+- Pullback: `affineMap`, `preimage_affineMap_Ioo`, `image_affineMap_Ioo`,
+  `volume_preimage_affineMap_Ioo`, `volume_preimage_affineMap`,
+  `good_mass_in_affine_preimage`, `affine_image_Ioo_subset_Icc_pre` (CFAffine / CFScheduleA).
+- Gauss↔vol: `gaussMeasure_le_volume` (`≤ (log2)⁻¹·vol`), `volume_le_gaussMeasure`,
+  `volume_le_ofReal_mul_gaussMeasure` (`vol ≤ (2 log2)·gauss` on `(0,1)`),
+  `gaussMeasure_Ioo_toReal_ge/le`.
+- Bad zones: `cfBadZone` (`TBrick:191`), `gaussMeasure_aggregate_cfBadZone_le`
+  (`TBrick:201`, relative to base cylinder), `gaussMeasure_multiscale_cfBadZone_le`
+  (`CFScheduleA:252`), `volume_iUnion_cfBadZone_le_vol`.
+- Selection: `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt` (`:402`),
+  `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo` (`:438`).
+- Cylinder geom: `volume_cfCylinder` (`=1/(K(K+K'))`), `cfK_append_le`,
+  `cfCylinder_subset_Icc_length`, `cfCylinder_endpoints`, `volume_cfCylinder_ge_inv`.
+- Chain freq (reuse for x-side, mirror for z-side): `chainApp`,
+  `chain_cf_digit_freq_tendsto_uniform`, `chain_orbit_equidist_uniform`,
+  `chainTail_dev_prefix_var`, `slack_telescoping` (CFChainFreq).
+
+---
+
+## 📌 LAP STATUS 2026-08-24 (grind) — all DIRECTION-permitted doable work DONE; crux operator-gated (SUPERSEDED by the review-lap pivot above)
 
 This lap discharged EVERY open DIRECTION obligation except the crux:
 - **Item 2 (`TODO(shift)`) — DONE.** `exists_cfNormal_and_affine_cfNormal` proved

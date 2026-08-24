@@ -1,27 +1,31 @@
 # STATUS — normal-numbers 📊
 
-**B5′ COMPLETE + axiom-clean (10 headlines); B6 campaign OPEN — Vandehey §7 affine images, additive, one crux `sorry` left.** · **Build**: 🟢 green (8757 jobs) · **Updated**: review lap · 2026-08-24 · `7f46d25`
+**B5′ COMPLETE + axiom-clean (10 headlines); B6 campaign OPEN — Vandehey §7 affine images, additive, one crux `sorry` left, route PIVOTED to single-stream L4.** · **Build**: 🟢 green (8757 jobs) · **Updated**: review lap · 2026-08-24 · `5fdc4da`
 
 ## Where it stands
 
-**B5′ is DONE; B6 is the active frontier — route PIVOTED (hdom refuted).** The
-whole B5′ expedition (ten headline theorems — Track A base-b normality + Track B
-Tier 1 Becher–Yuhjtman + Tier 2 Khinchin) is proved and `#print axioms`-clean
-(trust triple only). The LIVE work is the **additive B6 campaign** (Vandehey,
-Compositio 2017, §7): a real `x` with BOTH `x` and its affine image `ψ(x)=q·x+r`
-CF-normal, for `q>0`. It reduces (`isCFNormal_of_irrational_orbit_freq`) to ONE
-crux — `exists_interleaved_affine_witness` (`CFScheduleA.lean:1559`), the **sole
-open `sorry` in `src/`**: an interleaved (diagonal) schedule building `x` as a
-limit of nested intervals whose x-stages and ψ-stages alternate. The
-route-decisive uncertainty was SETTLED this cycle: the natural **dominance**
-hypothesis (`|block| = o(word)`) is UNATTAINABLE — steering resolves each stream
-to the other's metric scale at cost `Θ(word)`, so blocks are `Θ(word)` and growth
-is geometric. The hdom-free **uniform-prefix-goodness** route is mandatory, and
-its crux crack — `exists_uniformly_freq_good_block_steer` (a steer block whose
-EVERY prefix is `δ·k + o(k)`-good) — is PROVED + axiom-clean. What remains is the
-**hdom-free chain-limit assembly**: a copy-extended `chain_cf_digit_freq_tendsto`
-whose mid-block bound uses the block's own prefix bound (not the refuted `hdom`),
-then the ψ-round rebuild + two-stream recursion.
+**B5′ is DONE; B6 is the active frontier — route PIVOTED to single-stream L4
+(the two-stream construction was proven infeasible).** The whole B5′ expedition
+(ten headline theorems — Track A base-b normality + Track B Tier 1
+Becher–Yuhjtman + Tier 2 Khinchin) is proved and `#print axioms`-clean (trust
+triple only). The LIVE work is the **additive B6 campaign** (Vandehey, Compositio
+2017, §7): a real `x` with BOTH `x` and its affine image `ψ(x)=q·x+r` CF-normal,
+for `q>0`. It reduces (`isCFNormal_of_irrational_orbit_freq`) to ONE crux —
+`exists_interleaved_affine_witness` (`CFScheduleA.lean:2676`), whose proof bottoms
+out at `schedA_block_linear` (`:2537`, the **sole open `sorry` in `src/`**). This
+review lap made a route call: the **two-stream** construction
+(`wxSeq`/`wzSeq`/`schedA`) is OBSTRUCTED — it nests a z-cylinder as an
+exponentially-small x-target, forcing super-exponential blocks
+(`OBSTRUCTION-2026-08-28`, re-verified sound). The prior grind laps correctly
+diagnosed this and proposed the single-stream pivot, but then "box stuck" awaiting
+an operator ratification that never comes on an autonomous run — a FALSE STOP.
+The fix: **resume the single-stream "L4" route**, which is the ORIGINAL module
+design (`CFScheduleA.lean:24–31`) whose foundational pullback lemma
+`volume_preimage_affineMap` is already proved. L4 keeps the target = the FULL
+x-cylinder (`ρ=1`) and controls `ψ(x)`'s frequency by having `x` avoid the
+ψ-pullback of the z-bad-zones ⇒ polynomial blocks, obstruction gone. First brick:
+the ψ-pullback Gauss distortion bound `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gaussMeasure S`
+(all ingredients present). Attack path in `PENDING_WORK.md` (top).
 
 - **Track A** (base-b normality): Wall, the ln 2 reduction (conditional on the
   correct equidistribution hypothesis), Stoneham — axiom-clean.
@@ -35,8 +39,25 @@ then the ψ-round rebuild + two-stream recursion.
 
 ## What's happened (newest first)
 
-- 2026-08-24 (review lap): **B6 route pivot RATIFIED — hdom refuted, hdom-free
-  limit is the last crux.** Inventory (real `#print axioms`): build green 8757,
+- 2026-08-24 (review lap): **B6 PIVOT RATIFIED — two-stream route DEAD, RESUME
+  single-stream L4; broke a FALSE STOP.** Inventory by real `#print axioms`: build
+  green 8757, both B5′ headlines trust-triple, sole `src/` sorry = the B6 crux
+  `schedA_block_linear` (`:2537`). The prior grind laps hit a genuine obstruction
+  (two-stream forces super-exponential blocks, `OBSTRUCTION-2026-08-28`) and
+  correctly proposed the single-stream pivot, but then declared the crux
+  "operator-gated" and stopped — a false stop (no operator on an autonomous run).
+  Discovered the single-stream "L4" route is the ORIGINAL module design
+  (`CFScheduleA.lean:24–31`) whose L3 foundation `volume_preimage_affineMap`
+  (`CFAffine:94`) is already proved; the two-stream layer was a later drift into
+  the wall. Rewrote DIRECTION.md CURRENT DIRECTIVE to resume L4 (brick 1 = the
+  ψ-pullback Gauss distortion bound `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gaussMeasure S`,
+  ingredients confirmed present), decomposed the full L4 path in PENDING_WORK, and
+  forbade grinding the dead two-stream lemmas / any further box-stuck. Item-2
+  (integer-shift, all real `r`) + both signposts remain DONE. No charter trigger
+  fired (L4 additive, no forbidden import).
+
+- 2026-08-24 (review lap): **B6 route pivot (hdom refuted).** Inventory (real
+  `#print axioms`): build green 8757,
   both B5′ headlines trust-triple, sole `src/` `sorry` = the B6 crux
   `exists_interleaved_affine_witness`. Confirmed the grind laps since the last
   review CORRECTLY diverged from the prior directive: they refuted `hdom`
@@ -131,17 +152,22 @@ then the ψ-round rebuild + two-stream recursion.
 
 ## Outstanding
 
-### Short-term (mirror PENDING_WORK top — B6 hdom-free assembly)
-1. ✅ **DONE** — hdom-free chain limit: `chainTail_dev_prefix_var`,
-   `chain_cf_digit_freq_tendsto_uniform`, `chain_orbit_equidist_uniform`
-   (`CFChainFreq`, axiom-clean). Needs `hblock`/`hslack` from the schedule.
-2. **ψ-round `_uniform`** — per-round FEASIBILITY now DONE
-   (`exists_uniformly_freq_good_block_steer_len`, axiom-clean: discharges both
-   budget inequalities via `n₁=m·⌊√m⌋`). Remaining: wire it into
-   `exists_freq_good_extend_affine_steer_uniform` (call the len-wrapper per stream,
-   emit the folded `hblock` bound + `n₁²≤|u|·⌊√|u|⌋`).
-3. **`SchedStateA`/`schedStepA`/`schedA`/limit** — two-stream recursion → two
-   uniformly-good chains → `chain_orbit_equidist_uniform` both streams → the crux.
+### Short-term (mirror PENDING_WORK top — B6 single-stream L4 route)
+1. **[FIRST BRICK] ψ-pullback Gauss distortion bound** `gaussMeasure_preimage_affineMap_le`:
+   `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gaussMeasure S` for measurable `S ⊆ (0,1)`, `q>0`.
+   Few lines from `gaussMeasure_le_volume` ∘ `volume_preimage_affineMap` ∘
+   `volume_le_ofReal_mul_gaussMeasure`. Route-decisive smallest probe.
+2. **Pulled-back z-bad-zone relative-mass bound** — within `cfCylinder wx`,
+   `ψ⁻¹(⋃ cfBadZone_z)` small; via brick 1 + `gaussMeasure_multiscale_cfBadZone_le`
+   on the O(1) z-cylinders covering `ψ(cfCylinder wx)`.
+3. **Combined single-selection** — feed `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt`
+   the x-bad ∪ ψ⁻¹(z-bad) mass → ONE `x` avoiding both.
+4. **Single-stream recursion + limit `xA`** (`wxSeq` only); x-side reuses
+   `chain_orbit_equidist_uniform`.
+5. **z-side chain frequency** for `ψ(xA)` (mirror `chain_cf_digit_freq_tendsto_uniform`,
+   blocks = z-ranges, goodness from pullback-avoidance) → `CFOrbitEquidist (ψxA)`.
+6. **Assemble** the NEW `exists_interleaved_affine_witness` proof; excise the
+   two-stream `schedA_block_linear` `sorry` (dead code once L4 lands).
 
 ### Long-term
 - B6 general family / Tier-2 image-Khinchin stretch (detaches freely; after the
@@ -150,15 +176,15 @@ then the ψ-round rebuild + two-stream recursion.
 ### To completion
 - B5′ (Track A + Tier 1 + Tier 2): **DONE**, all axiom-clean.
 - B6 single-map (`exists_cfNormal_and_affine_cfNormal`): crux `sorry` open →
-  close via the 3 items above.
+  close via the single-stream L4 route (6 items above).
 
-## Axiom ledger (fidelity spine — all from real `#print axioms`, 2026-08-24 review lap)
+## Axiom ledger (fidelity spine — all from real `#print axioms`, 2026-08-24 review lap, HEAD `5fdc4da`)
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 |---|---|---|---|
 | `exists_absolutely_normal_cf_normal` (**Tier 1 = Becher–Yuhjtman**) | uncond | trust triple | 🟢 DONE (re-verified this lap) |
 | `exists_absolutely_normal_cf_normal_khinchin` (**Tier 2 headline**) | uncond | trust triple | 🟢 DONE (re-verified this lap) |
-| `exists_cfNormal_and_affine_cfNormal` (**B6 affine image**, active) | uncond (q>0) | `[propext, sorryAx, Classical.choice, Quot.sound]` | 🔨 crux `sorry` (`exists_interleaved_affine_witness`); NOT a math axiom — disclosed decomposition, being discharged |
+| `exists_cfNormal_and_affine_cfNormal` (**B6 affine image**, active) | uncond (q>0) | `[propext, sorryAx, Classical.choice, Quot.sound]` | 🔨 crux `sorry` (`schedA_block_linear`, `:2537`); NOT a math axiom — disclosed decomposition, route pivoted to single-stream L4, being discharged |
 | `isNormal_iff_equidistributed_orbit` (Wall) | uncond | trust triple | 🟢 DONE |
 | `isNormal_log_two_of_equidistributed` | cond (orbit equidist.) | trust triple | 🟢 DONE (hypothesis is the open conjecture, correctly a hypothesis) |
 | `isNormal_two_stoneham23` (Stoneham) | uncond | trust triple | 🟢 DONE |

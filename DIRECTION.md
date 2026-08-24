@@ -4,7 +4,64 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-24 attended — B6 ENDGAME: TWO SORRIES, CAPPED-DIGIT ROUTE)
+## CURRENT DIRECTIVE (set 2026-08-24 REVIEW LAP — B6: PIVOT RATIFIED → RESUME SINGLE-STREAM L4)
+
+- **State (ground truth, real `#print axioms` this lap):** build 🟢 8757; both
+  B5′ headlines trust-triple `[propext, Classical.choice, Quot.sound]`;
+  `exists_cfNormal_and_affine_cfNormal` = `+ sorryAx`.  **The SOLE open `src/`
+  sorry is the B6 crux `schedA_block_linear` (`CFScheduleA.lean:2537`).**  Item-2
+  (integer-shift, all real `r`) and both signposts are DONE.
+- **RATIFIED PIVOT — the two-stream route is DEAD; RESUME the single-stream L4
+  route.**  The two-stream construction (`wxSeq`/`wzSeq`/`schedA` →
+  `schedA_block_linear`) is OBSTRUCTED: it nests a z-cylinder as an
+  exponentially-small x-target (`ρ ≈ e^{−2κ|zblock|}`), forcing super-exponential
+  blocks (`OBSTRUCTION-2026-08-28-block-measure-budget.md`, re-verified sound this
+  lap).  Digit-cap is independently REFUTED.  **The single-stream L4 route — the
+  ORIGINAL design in this module's docstring (`CFScheduleA.lean:24–31`) — is sound
+  and its foundation is ALREADY PROVED: `volume_preimage_affineMap` (`CFAffine:94`,
+  `volume(ψ⁻¹ s)=|q⁻¹|·volume s`), docstringed as "the union-bound ingredient for
+  L4".**  The two-stream layer was a later drift that hit the wall; L4 removes the
+  obstruction at the root (target = FULL cylinder, `ρ=1`, blocks polynomial ⇒
+  `o(word)`).  This ratification IS the altitude decision the "box stuck" grind
+  laps were waiting for — there is no operator; EXECUTE the pivot, do not
+  box-stuck again.
+- **THE MANDATED MOVE — build the L4 single-stream witness, hardest-first:**
+  1. **[ROUTE-DECISIVE FIRST BRICK] ψ-pullback Gauss distortion bound**
+     `gaussMeasure_preimage_affineMap_le`: for `q>0`, measurable `S ⊆ (0,1)`,
+     `gaussMeasure(ψ⁻¹ S) ≤ C_q · gaussMeasure S` (assemble from
+     `gaussMeasure_le_volume` ∘ `volume_preimage_affineMap` ∘
+     `volume_le_ofReal_mul_gaussMeasure`; `C_q ≈ 2/(q·ln2)`).  SMALL, additive,
+     reusable.  Prove FIRST — it is the smallest probe of the whole measure budget.
+  2. **Pulled-back z-bad-zone selection** — within `cfCylinder wx`, the set
+     `ψ⁻¹(⋃_{v∈F,n∈NS} cfBadZone_z v n δ)` has relative Gauss-mass
+     `≤ C_q·(covering O(1))·(m+1)·S/(δ²·gap)` (brick 1 + `gaussMeasure_multiscale_cfBadZone_le`
+     applied in z-space to the O(1) depth-≈|wx| z-cylinders covering `ψ(cfCylinder
+     wx)`).  Add the x-bad-zone mass and feed `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt`
+     to select ONE `x` avoiding BOTH.  Controlled z-scales per stage:
+     `[|wx_s|+gap_s, |wx_s|+gap_s+m_s²]`, `gap_s = poly(s)` (NOT exponential).
+  3. **Single-stream recursion + z-side chain frequency** — rebuild the recursion
+     as ONE stream (`wxSeq` only).  `zA := ψ(xA)` is DEFINITIONAL (`hpsi_eq`
+     trivial — no gluing/squeeze).  x-side reuses `chain_orbit_equidist_uniform`.
+     z-side: an analogous chain-frequency argument fed by pullback-bad-zone
+     avoidance (`ψ(x)∉cfBadZone_z ⟺ x∉ψ⁻¹(cfBadZone_z)`).  Assemble a NEW proof of
+     `exists_interleaved_affine_witness` — **statement UNCHANGED (route-agnostic).**
+- **FORBIDDEN DRIFT:** do NOT grind `schedA_block_linear` or any
+  `wxSeq`/`wzSeq`/`schedA` two-stream lemma (dead route); do NOT resurrect
+  digit-cap or `hdom`; do NOT "box stuck" / operator-gate.  Two-stream decls stay
+  in `src/` (green, unused) — don't delete or extend them; when L4 closes
+  `exists_interleaved_affine_witness` the two-stream `sorry` becomes excisable dead
+  code.
+- Both B5′ headlines stay proved + axiom-clean; re-`#print axioms` after any
+  schedule work (trust triple, else revert).  ADDITIVE ONLY 🧊.
+- **Why:** the two-stream route is PROVEN infeasible; single-stream L4 is the
+  original, sound design with its L3 foundation already in the kernel.  The
+  route-decisive uncertainty is now the pullback measure budget (brick 1→2), whose
+  smallest probe is the distortion bound; everything downstream (chain frequency,
+  gluing) is reuse.
+- Historical endgame directive below is SUPERSEDED (its capped-digit route was
+  refuted and its two-stream fallback obstructed).
+
+## SUPERSEDED DIRECTIVE (2026-08-24 attended — B6 ENDGAME: CAPPED-DIGIT ROUTE, refuted + two-stream obstructed)
 
 - **State (baton `HANDOFF-2026-08-24-B6-crux-assembled.md`)**: the crux
   `exists_interleaved_affine_witness` is ASSEMBLED and machine-checked except
@@ -178,6 +235,19 @@ detail lives in PENDING_WORK.md.
 </details>
 
 ### Directive history
+- 2026-08-24 (review lap → B6 PIVOT RATIFIED, RESUME SINGLE-STREAM L4): inventory
+  by real `#print axioms` — build green 8757, both B5′ headlines trust-triple, sole
+  `src/` sorry = the B6 crux `schedA_block_linear`. Diagnosed a FALSE STOP: the last
+  grind laps hit a genuine, well-analysed obstruction (two-stream forces
+  super-exponential blocks, `OBSTRUCTION-2026-08-28`), correctly proposed the
+  single-stream pivot, then "box stuck" awaiting an operator ratification that never
+  comes on an autonomous run. Discovered the single-stream "L4" route is the ORIGINAL
+  module design (`CFScheduleA.lean:24–31`) whose L3 foundation `volume_preimage_affineMap`
+  (`CFAffine:94`) is already proved; the two-stream layer was a later drift into the wall.
+  RATIFIED the pivot: rewrote CURRENT DIRECTIVE to resume L4 (brick 1 = the ψ-pullback
+  Gauss distortion bound `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gaussMeasure S`, all ingredients
+  confirmed present), forbade grinding the dead two-stream lemmas and any further
+  box-stuck. No charter route trigger fired (L4 is additive, no forbidden import).
 - 2026-08-24 (review lap, grind portion): after retargeting, PROVED item 1 end to
   end — `chainTail_dev_prefix_var` (`2c61e7c`) then `chain_cf_digit_freq_tendsto_uniform`
   + `chain_orbit_equidist_uniform` (`5fe8f09`), all axiom-clean, build green 8757.
