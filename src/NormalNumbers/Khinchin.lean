@@ -519,12 +519,31 @@ assembly above reduces the whole Tier-2 headline to this one statement;
 `xstar_logTail_eq` further reduces it to bounding the nonnegative empirical
 tail, which the additive `logBadZone` in the schedule construction delivers. -/
 theorem xstar_log_tail_uniform {ε : ℝ} (hε : 0 < ε) :
-    ∃ K₀ : ℕ, ∀ K : ℕ, K₀ ≤ K → ∀ n : ℕ,
+    ∃ K₀ N : ℕ, ∀ K : ℕ, K₀ ≤ K → ∀ n : ℕ, N ≤ n →
       |(1 / (n : ℝ)) * ((List.range n).map (fun i => Real.log (cfDigit xstar i : ℝ))).sum
           - (1 / (n : ℝ)) * ∑ a ∈ Finset.Icc 1 K,
               (countOccurrences [a] (cfPrefix n) : ℝ) * Real.log a|
         ≤ ε := by
-  sorry
+  obtain ⟨K₀, N, hbound⟩ := xstar_logTail_prefix_bound hε
+  refine ⟨K₀, max N 1, fun K hK n hn => ?_⟩
+  have hn1 : 1 ≤ n := le_trans (le_max_right _ _) hn
+  have hnN : N ≤ n := le_trans (le_max_left _ _) hn
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn1
+  -- the inner difference equals `(1/n)·(nonnegative log-tail mass)`
+  have hdiff : (1 / (n : ℝ)) * ((List.range n).map (fun i => Real.log (cfDigit xstar i : ℝ))).sum
+      - (1 / (n : ℝ)) * ∑ a ∈ Finset.Icc 1 K,
+          (countOccurrences [a] (cfPrefix n) : ℝ) * Real.log a
+      = (1 / (n : ℝ)) * logTailMass K (cfPrefix n) := by
+    rw [← mul_sub, xstar_logTail_eq, ← logTailMass_cfPrefix]
+  rw [hdiff]
+  have hinvnn : 0 ≤ 1 / (n : ℝ) := by positivity
+  rw [abs_of_nonneg (mul_nonneg hinvnn (logTailMass_nonneg _ _))]
+  -- monotone in the cutoff, then the prefix bound at the fixed `K₀`
+  have hle : logTailMass K (cfPrefix n) ≤ ε * n :=
+    le_trans (logTailMass_cutoff_mono hK _) (hbound n hnN)
+  calc (1 / (n : ℝ)) * logTailMass K (cfPrefix n)
+      ≤ (1 / (n : ℝ)) * (ε * n) := mul_le_mul_of_nonneg_left hle hinvnn
+    _ = ε := by field_simp
 
 /-- **Target of the Tier-2 assembly** (`Headline.lean`'s obligation via
 `khinchinTypical_iff_log_tendsto`): `xstar`'s empirical CF log-digit average
@@ -541,7 +560,7 @@ theorem xstar_log_digit_avg_tendsto :
   rw [Metric.tendsto_atTop]
   intro ε hε
   have hδ : 0 < ε / 3 := by linarith
-  obtain ⟨K₀, htail⟩ := xstar_log_tail_uniform hδ
+  obtain ⟨K₀, N₀, htail⟩ := xstar_log_tail_uniform hδ
   obtain ⟨K_g, hgauss⟩ :=
     (Metric.tendsto_atTop.1 gaussKuzmin_logsum_tendsto) (ε / 3) hδ
   set K := max K₀ K_g with hKdef
@@ -549,9 +568,9 @@ theorem xstar_log_digit_avg_tendsto :
   have hKg : K_g ≤ K := by rw [hKdef]; exact le_max_right _ _
   obtain ⟨N, hN⟩ :=
     (Metric.tendsto_atTop.1 (xstar_log_digit_avg_truncated_tendsto K)) (ε / 3) hδ
-  refine ⟨N, fun n hn => ?_⟩
-  have h1 := htail K hKtail n
-  have h2 := hN n hn
+  refine ⟨max N N₀, fun n hn => ?_⟩
+  have h1 := htail K hKtail n (le_trans (le_max_right _ _) hn)
+  have h2 := hN n (le_trans (le_max_left _ _) hn)
   have h3 := hgauss K hKg
   rw [Real.dist_eq] at h2 h3 ⊢
   set A := (1 / (n : ℝ)) * ((List.range n).map (fun i => Real.log (cfDigit xstar i : ℝ))).sum

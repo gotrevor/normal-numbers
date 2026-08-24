@@ -511,4 +511,209 @@ theorem xstar_cf_freq_tendsto (v : List ℕ) (hne : v ≠ [])
     _ ≤ ε * p := by nlinarith
   -- (4ε/5 < ε)
 
+/-! ## Khinchin log-tail telescoping (route C′ — consumes the family payload)
+
+The schedule's summable-family payload (`SchedStep`'s final conjunct) says each
+appended block avoids every family log-tail zone `j < level`.  Here we surface
+that per-stage (`uSched_logTail_le`), telescope it along the tail
+(`tailSched_logTail_le`), and combine with monotonicity (in the cutoff and under
+`take`) to bound the empirical log-tail mass of EVERY prefix of `xstar` at a
+FIXED family cutoff — the analytic content of `xstar_log_tail_uniform`. -/
+
+/-- The empirical `log`-tail mass of a digit list past cutoff `K`:
+`Σ_{a ∈ l, a > K} log a`.  Every term is `≥ 0` (a digit `> K ≥ 0` is `≥ 1`). -/
+noncomputable def logTailMass (K : ℕ) (l : List ℕ) : ℝ :=
+  (l.map (fun a : ℕ => if K < a then Real.log a else 0)).sum
+
+theorem logTailMass_nonneg (K : ℕ) (l : List ℕ) : 0 ≤ logTailMass K l := by
+  apply List.sum_nonneg
+  intro x hx
+  rw [List.mem_map] at hx
+  obtain ⟨a, -, rfl⟩ := hx
+  by_cases h : K < a
+  · rw [if_pos h]
+    exact Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ a))
+  · rw [if_neg h]
+
+theorem logTailMass_append (K : ℕ) (l₁ l₂ : List ℕ) :
+    logTailMass K (l₁ ++ l₂) = logTailMass K l₁ + logTailMass K l₂ := by
+  simp only [logTailMass, List.map_append, List.sum_append]
+
+theorem logTailMass_take_le (K m : ℕ) (l : List ℕ) :
+    logTailMass K (l.take m) ≤ logTailMass K l := by
+  conv_rhs => rw [← List.take_append_drop m l]
+  rw [logTailMass_append]
+  linarith [logTailMass_nonneg K (l.drop m)]
+
+/-- Larger cutoff ⟹ smaller tail (nonnegative terms drop to `0`). -/
+theorem logTailMass_cutoff_mono {K K' : ℕ} (h : K ≤ K') (l : List ℕ) :
+    logTailMass K' l ≤ logTailMass K l := by
+  induction l with
+  | nil => simp [logTailMass]
+  | cons a t ih =>
+    simp only [logTailMass, List.map_cons, List.sum_cons] at ih ⊢
+    have hterm : (if K' < a then Real.log a else 0) ≤ (if K < a then Real.log a else 0) := by
+      by_cases hK' : K' < a
+      · rw [if_pos hK', if_pos (lt_of_le_of_lt h hK')]
+      · rw [if_neg hK']
+        by_cases hK : K < a
+        · rw [if_pos hK]
+          exact Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ a))
+        · rw [if_neg hK]
+    linarith
+
+/-- **Family log-tail payload, per stage**: the block appended at step `s` has
+empirical `log`-tail mass past `khinchinK j` at most `khinchinEta j·|uSched s|`,
+for every family index `j` below the block's level.  Surfaces `SchedStep`'s
+final (summable-family) conjunct. -/
+theorem uSched_logTail_le (s j : ℕ) (hj : j < tSched (s + 1)) :
+    logTailMass (khinchinK j) (uSched s) ≤ khinchinEta j * (uSched s).length := by
+  obtain ⟨u, m₁, j₁, r₁, -, hw, hlen, -, -, -, -, -, -, -, hlog⟩ := sched_step s
+  have hu : uSched s = u := by rw [uSched, wSched, wSched, hw, List.drop_left]
+  have h := hlog j hj
+  simp only [logTailMass, hu, hlen]
+  exact h
+
+/-- **Telescoped tail bound**: past `s₀` (where the level clears `j`), the tail
+`tailSched s₀ (s₀+k)` has `log`-tail mass past `khinchinK j` at most
+`khinchinEta j·|tail|` — the per-stage bounds add up with a shared coefficient. -/
+theorem tailSched_logTail_le (j s₀ : ℕ)
+    (hlvl : ∀ s, s₀ ≤ s → j < tSched (s + 1)) :
+    ∀ k, logTailMass (khinchinK j) (tailSched s₀ (s₀ + k))
+      ≤ khinchinEta j * (tailSched s₀ (s₀ + k)).length := by
+  intro k
+  induction k with
+  | zero =>
+    rw [Nat.add_zero, tailSched_self]
+    simp [logTailMass]
+  | succ k ih =>
+    have hidx : s₀ + (k + 1) = s₀ + k + 1 := by omega
+    rw [hidx, tailSched_succ, logTailMass_append, List.length_append]
+    have hblock := uSched_logTail_le (s₀ + k) j (hlvl (s₀ + k) (by omega))
+    push_cast
+    calc logTailMass (khinchinK j) (tailSched s₀ (s₀ + k))
+          + logTailMass (khinchinK j) (uSched (s₀ + k))
+        ≤ khinchinEta j * ((tailSched s₀ (s₀ + k)).length : ℝ)
+          + khinchinEta j * ((uSched (s₀ + k)).length : ℝ) := add_le_add ih hblock
+      _ = khinchinEta j * (((tailSched s₀ (s₀ + k)).length : ℝ)
+          + ((uSched (s₀ + k)).length : ℝ)) := by ring
+
+/-- The word splits additively at `s₀`: `logTailMass K (wSched (s₀+k)) =
+logTailMass K (wSched s₀) + logTailMass K (tailSched s₀ (s₀+k))`. -/
+theorem wSched_logTail_split (K s₀ k : ℕ) :
+    logTailMass K (wSched (s₀ + k))
+      = logTailMass K (wSched s₀) + logTailMass K (tailSched s₀ (s₀ + k)) := by
+  conv_lhs => rw [wSched_eq_append_tail s₀ k]
+  rw [logTailMass_append]
+
+/-- **The prefix log-tail bound** (the analytic core of `xstar_log_tail_uniform`):
+for every `ε > 0` there is a FIXED family cutoff `K₀` and threshold `N` such
+that every prefix `cfPrefix n` (`n ≥ N`) of `xstar` has empirical `log`-tail
+mass past `K₀` at most `ε·n`.  The fixed cutoff (no level-tied `K_t → ∞`) is the
+summable-family design; the early word contributes a bounded amount `< (ε/2)·n`
+and every late block contributes `≤ (ε/4)·(block length)`. -/
+theorem xstar_logTail_prefix_bound {ε : ℝ} (hε : 0 < ε) :
+    ∃ (K₀ N : ℕ), ∀ n : ℕ, N ≤ n → logTailMass K₀ (cfPrefix n) ≤ ε * n := by
+  -- family index `j` with slack `khinchinEta j ≤ ε/4`
+  obtain ⟨j, hj⟩ := exists_nat_ge (4 / ε)
+  have hη : khinchinEta j ≤ ε / 4 := by
+    have hjp : (0 : ℝ) < (j : ℝ) + 1 := by positivity
+    have h4 : (4 : ℝ) / ε ≤ (j : ℝ) + 1 := le_trans hj (by linarith)
+    rw [div_le_iff₀ hε] at h4
+    rw [khinchinEta, div_le_div_iff₀ hjp (by norm_num : (0 : ℝ) < 4)]
+    nlinarith
+  set K₀ := khinchinK j with hK₀
+  -- stage past which the level exceeds `j`
+  obtain ⟨s₀, hs₀⟩ := sched_t_eventually (j + 1)
+  have hlvl : ∀ s, s₀ ≤ s → j < tSched (s + 1) := by
+    intro s hs
+    exact lt_of_lt_of_le (Nat.lt_succ_self j) (hs₀ (s + 1) (by omega))
+  set C₀ := logTailMass K₀ (wSched s₀) with hC₀
+  have hC₀nn : 0 ≤ C₀ := logTailMass_nonneg _ _
+  obtain ⟨N₀, hN₀⟩ := exists_nat_ge (2 * C₀ / ε)
+  refine ⟨K₀, max (max (wSched s₀).length N₀) 1, fun n hn => ?_⟩
+  have hn1 : 1 ≤ n := le_trans (le_max_right _ _) hn
+  have hns₀ : (wSched s₀).length ≤ n :=
+    le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hn
+  have hnN₀ : N₀ ≤ n := le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) hn
+  obtain ⟨s, hs1, hsp, hsp1⟩ := exists_stage s₀ n hns₀
+  have hnle : n ≤ (wSched (s + 1)).length := le_of_lt hsp1
+  have hk : s + 1 = s₀ + (s + 1 - s₀) := by omega
+  -- prefix ≤ full word (monotone under `take`)
+  have hstep1 : logTailMass K₀ (cfPrefix n) ≤ logTailMass K₀ (wSched (s + 1)) := by
+    calc logTailMass K₀ (cfPrefix n)
+        = logTailMass K₀ ((cfPrefix (wSched (s + 1)).length).take n) := by
+          rw [cfPrefix_take hnle]
+      _ ≤ logTailMass K₀ (cfPrefix (wSched (s + 1)).length) := logTailMass_take_le _ _ _
+      _ = logTailMass K₀ (wSched (s + 1)) := by rw [cfPrefix_eq_wSched]
+  -- split at `s₀` and telescope the tail
+  have hsplit : logTailMass K₀ (wSched (s + 1))
+      = C₀ + logTailMass K₀ (tailSched s₀ (s + 1)) := by
+    have h := wSched_logTail_split K₀ s₀ (s + 1 - s₀)
+    rw [← hk] at h
+    rw [hC₀]; exact h
+  have htail : logTailMass K₀ (tailSched s₀ (s + 1))
+      ≤ khinchinEta j * (tailSched s₀ (s + 1)).length := by
+    have h := tailSched_logTail_le j s₀ hlvl (s + 1 - s₀)
+    rw [← hk] at h
+    exact h
+  -- `|tail| ≤ |wSched (s+1)|`
+  have hwsplit_len : (wSched (s + 1)).length
+      = (wSched s₀).length + (tailSched s₀ (s + 1)).length := by
+    conv_lhs => rw [hk, wSched_eq_append_tail s₀ (s + 1 - s₀)]
+    rw [List.length_append, ← hk]
+  have htlen : ((tailSched s₀ (s + 1)).length : ℝ) ≤ ((wSched (s + 1)).length : ℝ) := by
+    rw [hwsplit_len]; push_cast
+    have h0 : (0 : ℝ) ≤ ((wSched s₀).length : ℝ) := by positivity
+    linarith
+  -- `|wSched (s+1)| ≤ 2n`
+  have ht2 : 2 ≤ tSched (s + 1) := by
+    have h := sched_t_mono (Nat.zero_le (s + 1))
+    simp only [sched_zero, seedState_t] at h
+    exact h
+  have huws : (uSched s).length ≤ (wSched s).length := by
+    have hdom := uSched_dominance s
+    have h1 : (uSched s).length ≤ tSched (s + 1) * (uSched s).length :=
+      Nat.le_mul_of_pos_left _ (by omega)
+    omega
+  have hbound2n : ((wSched (s + 1)).length : ℝ) ≤ 2 * n := by
+    have hws : (wSched (s + 1)).length = (wSched s).length + (uSched s).length := by
+      rw [wSched_succ, List.length_append]
+    have : (wSched (s + 1)).length ≤ 2 * n := by omega
+    exact_mod_cast this
+  -- assemble
+  have hfinal : logTailMass K₀ (cfPrefix n)
+      ≤ C₀ + khinchinEta j * ((wSched (s + 1)).length : ℝ) := by
+    have hηnn : 0 ≤ khinchinEta j := (khinchinEta_pos j).le
+    calc logTailMass K₀ (cfPrefix n)
+        ≤ logTailMass K₀ (wSched (s + 1)) := hstep1
+      _ = C₀ + logTailMass K₀ (tailSched s₀ (s + 1)) := hsplit
+      _ ≤ C₀ + khinchinEta j * ((tailSched s₀ (s + 1)).length : ℝ) := by linarith [htail]
+      _ ≤ C₀ + khinchinEta j * ((wSched (s + 1)).length : ℝ) := by nlinarith [htlen, hηnn]
+  have hC₀n : C₀ ≤ (ε / 2) * n := by
+    have hnR : (N₀ : ℝ) ≤ n := by exact_mod_cast hnN₀
+    have hle : 2 * C₀ / ε ≤ n := le_trans hN₀ hnR
+    rw [div_le_iff₀ hε] at hle
+    linarith
+  have hηbound : khinchinEta j * ((wSched (s + 1)).length : ℝ) ≤ (ε / 2) * n := by
+    have hηnn : 0 ≤ khinchinEta j := (khinchinEta_pos j).le
+    have h1 : khinchinEta j * ((wSched (s + 1)).length : ℝ) ≤ (ε / 4) * (2 * n) :=
+      mul_le_mul hη hbound2n (Nat.cast_nonneg _) (by linarith)
+    calc khinchinEta j * ((wSched (s + 1)).length : ℝ) ≤ (ε / 4) * (2 * n) := h1
+      _ = (ε / 2) * n := by ring
+  calc logTailMass K₀ (cfPrefix n)
+      ≤ C₀ + khinchinEta j * ((wSched (s + 1)).length : ℝ) := hfinal
+    _ ≤ (ε / 2) * n + (ε / 2) * n := by linarith [hC₀n, hηbound]
+    _ = ε * n := by ring
+
+/-- Bridge: the empirical `log`-tail mass of `cfPrefix n` past `K` is the
+`Finset.range` tail sum used by `xstar_logTail_eq`. -/
+theorem logTailMass_cfPrefix (K n : ℕ) :
+    logTailMass K (cfPrefix n)
+      = ∑ i ∈ Finset.range n,
+          (if K < cfDigit xstar i then Real.log (cfDigit xstar i : ℝ) else 0) := by
+  unfold logTailMass cfPrefix
+  rw [List.map_map, finset_sum_range_eq_list_sum']
+  rfl
+
 end NormalNumbers
