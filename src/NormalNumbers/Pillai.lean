@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.DigitInterval
 import NormalNumbers.DaryDigits
+import NormalNumbers.Counting
 
 /-!
 # Pillai's theorem: simple normality at every power implies normality
@@ -835,5 +836,48 @@ theorem windowFreq_tendsto (b : ℕ) (hb : 2 ≤ b) (y : ℝ) (hy : y ∈ Set.Ic
   refine ⟨?_, ?_⟩
   · linarith [hlow, hhigh, hNa'.1, hNa'.2, hNb'.1, hNb'.2, hlo_le, hhi, hgap]
   · linarith [hlow, hhigh, hNa'.1, hNa'.2, hNb'.1, hNb'.2, hlo_le, hhi, hgap]
+
+/-- **Pillai's theorem** (`simple normal to every power ⇒ normal`): if `y ∈ [0,1)`
+is simply normal in base `b^r` for every `r ≥ 1` — every base-`b^r` digit value
+`c` occurs with frequency `→ (b^r)^{-1}` — then the base-`b` digit sequence of
+`y` is normal (`IsNormalSequence b (digitOf b y)`): every nonempty base-`b` block
+occurs with the frequency demanded by normality.  The classical reduction of full
+normality to simple normality at every power, not previously in mathlib/repo. -/
+theorem pillai (b : ℕ) (hb : 2 ≤ b) (y : ℝ) (hy : y ∈ Set.Ico (0 : ℝ) 1)
+    (hsn : ∀ r, 1 ≤ r → ∀ c < b ^ r, Filter.Tendsto
+        (fun Q : ℕ => (((Finset.range Q).filter (fun q => digitOf (b ^ r) y q = c)).card : ℝ) / Q)
+        Filter.atTop (nhds ((b : ℝ) ^ r)⁻¹)) :
+    IsNormalSequence b (digitOf b y) := by
+  intro w hwne hwlt
+  have hL1 : 1 ≤ w.length := List.length_pos_of_ne_nil hwne
+  -- `MatchesAt (digitOf b y) w i ↔` the `ofFn` window at `i` equals `w`
+  have hpred : ∀ i, (List.ofFn (fun j : Fin w.length => digitOf b y (i + (j : ℕ))) = w)
+      ↔ MatchesAt (digitOf b y) w i := by
+    intro i
+    constructor
+    · intro h j hj
+      have hf : (fun j : Fin w.length => digitOf b y (i + (j : ℕ))) = w.get :=
+        List.ofFn_injective (h.trans (List.ofFn_get w).symm)
+      have hval := congrFun hf ⟨j, hj⟩
+      rw [List.getD_eq_getElem w 0 hj, List.get_eq_getElem] at *
+      exact hval
+    · intro h
+      have hf : (fun j : Fin w.length => digitOf b y (i + (j : ℕ))) = w.get := by
+        funext j
+        have hj := h j.1 j.2
+        rw [List.getD_eq_getElem w 0 j.2] at hj
+        rw [List.get_eq_getElem]
+        exact hj
+      rw [hf, List.ofFn_get]
+  have hwf := windowFreq_tendsto b hb y hy w hL1 hwlt hsn
+  refine Filter.Tendsto.congr (fun n => ?_) hwf
+  rw [countOccurrences_range_map]
+  have hfilt : (Finset.range (n + 1)).filter (fun i => i + w.length ≤ n ∧
+        List.ofFn (fun j : Fin w.length => digitOf b y (i + j)) = w)
+      = (Finset.range (n + 1)).filter (fun i => i + w.length ≤ n ∧ MatchesAt (digitOf b y) w i) := by
+    apply Finset.filter_congr
+    intro i _
+    rw [hpred i]
+  rw [congrArg Finset.card hfilt]
 
 end NormalNumbers
