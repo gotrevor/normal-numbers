@@ -1140,6 +1140,30 @@ theorem exists_ball_cfDigit_psi_eq (q r : ℝ) (hq : 0 < q)
   constructor <;>
     nlinarith [le_abs_self (x - x₀), neg_abs_le (x - x₀), hqx, hq.le]
 
+/-- **Absolute-scale bad-zone avoidance transfers along CF-digit agreement.**  If two
+full-orbit reals `z, z'` agree on their first `m` CF digits with `n + |v| ≤ m`, then
+avoidance of the ABSOLUTE-scale bad zone `cfBadZone [] v n δ` transfers from `z'` to `z`
+(the membership reads only `blockCount (cfCylinder v) n`, which
+`blockCount_eq_of_cfDigit_agree` pins to be equal).  This is the final z-transfer step:
+the brick-3′ point `z' = ψ(p)` avoids the stage's z-bad zone, and once the `x`-cylinder is
+refined below `exists_ball_cfDigit_psi_eq`'s ball the chain limit `z = ψ(xA)` agrees with
+it on the first `m` z-digits, hence inherits the avoidance. -/
+theorem notMem_cfBadZone_nil_of_cfDigit_agree {z z' : ℝ}
+    (horb : ∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1)
+    (horb' : ∀ j : ℕ, gaussMap^[j] z' ∈ Set.Ioo (0 : ℝ) 1)
+    (v : List ℕ) (n m : ℕ) (δ : ℝ) (hm : n + v.length ≤ m)
+    (hagree : ∀ i < m, cfDigit z i = cfDigit z' i)
+    (hz' : z' ∉ cfBadZone [] v n δ) : z ∉ cfBadZone [] v n δ := by
+  intro hz
+  apply hz'
+  have hbc : blockCount (cfCylinder v) n z = blockCount (cfCylinder v) n z' :=
+    blockCount_eq_of_cfDigit_agree horb horb' v n m hm hagree
+  have hz'01 : z' ∈ Set.Ioo (0 : ℝ) 1 := by simpa using horb' 0
+  rw [cfBadZone, cfCylinder_nil, List.length_nil, Function.iterate_zero,
+    Set.preimage_id] at hz ⊢
+  obtain ⟨-, -, hzdisc⟩ := hz
+  exact ⟨hz'01, hz'01, by rwa [hbc] at hzdisc⟩
+
 /-- **Multi-scale + cfK measure core** (the cfK-steer selection).  Like
 `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`, but the aggregate bound
 `hbound` additionally leaves room for the cfK-large extension mass
