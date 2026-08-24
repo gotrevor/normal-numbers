@@ -153,10 +153,9 @@ the ψ-pullback Gauss distortion bound `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gauss
 ## Outstanding
 
 ### Short-term (mirror PENDING_WORK top — B6 single-stream L4 route)
-1. **[FIRST BRICK] ψ-pullback Gauss distortion bound** `gaussMeasure_preimage_affineMap_le`:
-   `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gaussMeasure S` for measurable `S ⊆ (0,1)`, `q>0`.
-   Few lines from `gaussMeasure_le_volume` ∘ `volume_preimage_affineMap` ∘
-   `volume_le_ofReal_mul_gaussMeasure`. Route-decisive smallest probe.
+1. ✅ **DONE** (`5ba3a3d`, axiom-clean) — ψ-pullback Gauss distortion bound
+   `gaussMeasure_preimage_affineMap_le`: `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gaussMeasure S`
+   for measurable `S ⊆ (0,1)`, `q>0`. Route-decisive measure-budget probe PASSED.
 2. **Pulled-back z-bad-zone relative-mass bound** — within `cfCylinder wx`,
    `ψ⁻¹(⋃ cfBadZone_z)` small; via brick 1 + `gaussMeasure_multiscale_cfBadZone_le`
    on the O(1) z-cylinders covering `ψ(cfCylinder wx)`.

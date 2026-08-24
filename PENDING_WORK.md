@@ -27,16 +27,14 @@ L4 gives it a NEW proof; the two-stream proof (bottoming at the `schedA_block_li
 `sorry`) becomes excisable dead code once L4 lands.
 
 ### Attack path (hardest-first)
-1. **[FIRST BRICK — ROUTE-DECISIVE] ψ-pullback Gauss distortion bound.**
-   `gaussMeasure_preimage_affineMap_le`: for `q>0`, measurable `S ⊆ (0,1)`,
+1. ✅ **DONE (2026-08-24, commit `5ba3a3d`, axiom-clean).**
+   `gaussMeasure_preimage_affineMap_le` (`CFScheduleA.lean`, just before
+   `gaussMeasure_multiscale_cfBadZone_le`): for `q>0`, measurable `S ⊆ (0,1)`,
    `gaussMeasure (affineMap q r ⁻¹' S) ≤ ENNReal.ofReal (2/q) * gaussMeasure S`.
-   Proof (few lines, additive, put in `CFAffine.lean` or a new `CFAffinePullback.lean`):
-   `gaussMeasure(ψ⁻¹ S) ≤[gaussMeasure_le_volume] ofReal(log2)⁻¹·volume(ψ⁻¹ S)
-   =[volume_preimage_affineMap] ofReal(log2)⁻¹·ofReal|q⁻¹|·volume S
-   ≤[volume_le_ofReal_mul_gaussMeasure, S⊆(0,1)] ofReal(log2)⁻¹·|q⁻¹|·(2 log2)·gaussMeasure S
-   = ofReal(2/q)·gaussMeasure S` (the `log2` cancels). Needs `ψ⁻¹ S` measurable
-   (affineMap is measurable/continuous) and `|q⁻¹| = 1/q` for `q>0`.
-   **Prove this FIRST — it is the smallest probe of the whole L4 measure budget.**
+   Assembled from `gaussMeasure_le_volume` ∘ `volume_preimage_affineMap` ∘
+   `volume_le_ofReal_mul_gaussMeasure`; the two `log2` cancel to `2/q`. The
+   route-decisive measure-budget probe — PASSED (clean, small). **Next lap starts
+   at brick 2.**
 2. **Pulled-back z-bad-zone relative-mass bound.** Within `cfCylinder wx`, show
    `gaussMeasure (cfCylinder wx ∩ ψ⁻¹(⋃_{v∈F,n∈NS} cfBadZone_z v n δ))` is a small
    fraction of `gaussMeasure (cfCylinder wx)`. Route: `ψ(cfCylinder wx)` is an
