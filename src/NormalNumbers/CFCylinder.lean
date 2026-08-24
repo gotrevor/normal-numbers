@@ -245,7 +245,7 @@ determinant computation.  Everything here is private scaffolding for
 
 /-- Bump the last digit: the second endpoint of `I_w` is
 `cfVal (bumpLast w)`. -/
-private def bumpLast (w : List ℕ) : List ℕ := w.dropLast ++ [w.getLastD 0 + 1]
+def bumpLast (w : List ℕ) : List ℕ := w.dropLast ++ [w.getLastD 0 + 1]
 
 private lemma bumpLast_cons {a : ℕ} {m : List ℕ} (hm : m ≠ []) :
     bumpLast (a :: m) = a :: bumpLast m := by
@@ -426,7 +426,7 @@ lemma irrational_gaussMap {x : ℝ} (hirr : Irrational x)
 
 /-! ### The two inclusions -/
 
-private lemma cfCylinder_subset_uIcc (w : List ℕ) (hw : w ≠ [])
+lemma cfCylinder_subset_uIcc (w : List ℕ) (hw : w ≠ [])
     (hpos : ∀ a ∈ w, 1 ≤ a) :
     cfCylinder w ⊆
       Set.uIcc ((cfVal w : ℚ) : ℝ) ((cfVal (bumpLast w) : ℚ) : ℝ) := by
@@ -503,7 +503,7 @@ private lemma cfCylinder_subset_uIcc (w : List ℕ) (hw : w ≠ [])
         · exact Set.mem_uIcc.2 (Or.inl ⟨by gcongr <;> linarith,
             by gcongr <;> linarith⟩)
 
-private lemma uIoo_subset_cfCylinder (w : List ℕ) (hw : w ≠ [])
+lemma uIoo_subset_cfCylinder (w : List ℕ) (hw : w ≠ [])
     (hpos : ∀ a ∈ w, 1 ≤ a) :
     ∀ x ∈ Set.uIoo ((cfVal w : ℚ) : ℝ) ((cfVal (bumpLast w) : ℚ) : ℝ),
       Irrational x → x ∈ cfCylinder w := by
@@ -654,6 +654,124 @@ theorem volume_cfCylinder (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 
       _ ≤ volume (cfCylinder w) := measure_mono hsub
   rw [← hlen]
   exact le_antisymm hupper hlower
+
+/-- `gaussMeasure` is absolutely continuous w.r.t. Lebesgue volume (it's a
+`withDensity`), so every volume-null set is `gaussMeasure`-null. -/
+private lemma gaussMeasure_ac_volume :
+    gaussMeasure ≪ (volume.restrict (Set.Ioo (0 : ℝ) 1)) :=
+  MeasureTheory.withDensity_absolutelyContinuous _ _
+
+/-- A single point has zero Gauss measure. -/
+private lemma gaussMeasure_singleton (p : ℝ) : gaussMeasure {p} = 0 :=
+  gaussMeasure_ac_volume (by simp)
+
+/-- A countable set has zero Gauss measure (transfers from Lebesgue-null
+via `withDensity` absolute continuity, same route as `gaussMeasure_singleton`
+but for the countable range of `ℚ`, needed for the rational-junk removal in
+`gaussMeasure_cfCylinder`'s lower bound). -/
+private lemma gaussMeasure_range_rat : gaussMeasure (Set.range ((↑) : ℚ → ℝ)) = 0 := by
+  apply gaussMeasure_ac_volume
+  rw [Measure.restrict_apply' measurableSet_Ioo]
+  exact measure_mono_null Set.inter_subset_left ((Set.countable_range _).measure_zero _)
+
+/-- **Gauss measure of the cylinder** (Gauss–Kuzmin precursor): same squeeze
+as `volume_cfCylinder`, but for `gaussMeasure` instead of Lebesgue `volume`.
+The cylinder sits between `min E0 E1` and `max E0 E1` (both in `[0,1]`), so
+`gaussMeasure_Ioo` computes the closed form directly; endpoints are
+`gaussMeasure`-null (`gaussMeasure_singleton`), transferring the
+`uIcc`/`uIoo` squeeze from the volume proof verbatim. -/
+theorem gaussMeasure_cfCylinder (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a) :
+    gaussMeasure (cfCylinder w) =
+      ENNReal.ofReal
+        ((Real.log (1 + max ((cfVal w : ℚ) : ℝ) ((cfVal (bumpLast w) : ℚ) : ℝ))
+            - Real.log (1 + min ((cfVal w : ℚ) : ℝ) ((cfVal (bumpLast w) : ℚ) : ℝ)))
+          / Real.log 2) := by
+  set E0 : ℝ := ((cfVal w : ℚ) : ℝ) with hE0
+  set E1 : ℝ := ((cfVal (bumpLast w) : ℚ) : ℝ) with hE1
+  have hE0mem : E0 ∈ Set.Icc (0 : ℝ) 1 := by
+    have h := cfVal_mem_Icc w hpos
+    rw [hE0]
+    exact ⟨by exact_mod_cast h.1, by exact_mod_cast h.2⟩
+  have hE1mem : E1 ∈ Set.Icc (0 : ℝ) 1 := by
+    have h := cfVal_mem_Icc (bumpLast w) (bumpLast_pos hpos)
+    rw [hE1]
+    exact ⟨by exact_mod_cast h.1, by exact_mod_cast h.2⟩
+  have hmin0 : (0 : ℝ) ≤ min E0 E1 := le_min hE0mem.1 hE1mem.1
+  have hminmax : min E0 E1 ≤ max E0 E1 := min_le_max
+  have hmax1 : max E0 E1 ≤ 1 := max_le hE0mem.2 hE1mem.2
+  have hset : Set.uIcc E0 E1 = Set.Icc (min E0 E1) (max E0 E1) := rfl
+  have hset' : Set.uIoo E0 E1 = Set.Ioo (min E0 E1) (max E0 E1) := rfl
+  set T : ENNReal :=
+    ENNReal.ofReal ((Real.log (1 + max E0 E1) - Real.log (1 + min E0 E1)) / Real.log 2) with hT
+  have hIoo : gaussMeasure (Set.uIoo E0 E1) = T := by
+    rw [hset']; exact gaussMeasure_Ioo hmin0 hminmax hmax1
+  have hupper : gaussMeasure (cfCylinder w) ≤ T := by
+    calc gaussMeasure (cfCylinder w) ≤ gaussMeasure (Set.uIcc E0 E1) :=
+          measure_mono (cfCylinder_subset_uIcc w hw hpos)
+      _ = gaussMeasure (Set.uIoo E0 E1) := by
+          rw [hset, hset']
+          exact MeasureTheory.measure_congr
+            (Ioo_ae_eq_Icc' (gaussMeasure_singleton _) (gaussMeasure_singleton _)).symm
+      _ = T := hIoo
+  have hlower : T ≤ gaussMeasure (cfCylinder w) := by
+    have hnull : gaussMeasure (Set.range ((↑) : ℚ → ℝ)) = 0 := gaussMeasure_range_rat
+    have hsub : Set.uIoo E0 E1 \ Set.range ((↑) : ℚ → ℝ) ⊆ cfCylinder w :=
+      fun x hx => uIoo_subset_cfCylinder w hw hpos x hx.1 hx.2
+    calc T = gaussMeasure (Set.uIoo E0 E1) := hIoo.symm
+      _ = gaussMeasure (Set.uIoo E0 E1 \ Set.range ((↑) : ℚ → ℝ)) :=
+          (measure_sdiff_null hnull).symm
+      _ ≤ gaussMeasure (cfCylinder w) := measure_mono hsub
+  exact le_antisymm hupper hlower
+
+/-- **Gauss–Kuzmin single-digit law**: closed form for the Gauss measure of
+the length-one cylinder `[a]`, matching `khinchinK₀`'s defining product term
+at index `a` exactly (`a(a+2) + 1 = (a+1)²`, so this equals
+`logb 2 (1 + 1/(a(a+2)))`). -/
+theorem gaussMeasure_digit_cylinder (a : ℕ) (ha : 1 ≤ a) :
+    gaussMeasure (cfCylinder [a]) =
+      ENNReal.ofReal (Real.logb 2 (1 + 1 / ((a : ℝ) * (a + 2)))) := by
+  have hw : gaussMeasure (cfCylinder [a]) =
+      ENNReal.ofReal
+        ((Real.log (1 + max ((cfVal [a] : ℚ) : ℝ) ((cfVal (bumpLast [a]) : ℚ) : ℝ))
+            - Real.log (1 + min ((cfVal [a] : ℚ) : ℝ) ((cfVal (bumpLast [a]) : ℚ) : ℝ)))
+          / Real.log 2) :=
+    gaussMeasure_cfCylinder [a] (by simp) (by simpa using ha)
+  have hbump : bumpLast [a] = [a + 1] := by simp [bumpLast]
+  have hE0 : ((cfVal [a] : ℚ) : ℝ) = 1 / (a : ℝ) := by
+    have : cfVal [a] = 1 / (a : ℚ) := by simp [cfVal]
+    rw [this]; push_cast; ring
+  have hE1 : ((cfVal (bumpLast [a]) : ℚ) : ℝ) = 1 / ((a : ℝ) + 1) := by
+    rw [hbump]
+    have : cfVal [a + 1] = 1 / ((a : ℚ) + 1) := by push_cast; simp [cfVal]
+    rw [this]; push_cast; ring
+  have hapos : (0 : ℝ) < a := by exact_mod_cast ha
+  have hmin : min ((cfVal [a] : ℚ) : ℝ) ((cfVal (bumpLast [a]) : ℚ) : ℝ) = 1 / ((a : ℝ) + 1) := by
+    rw [hE0, hE1]
+    apply min_eq_right
+    apply div_le_div_of_nonneg_left (by norm_num) hapos
+    linarith
+  have hmax : max ((cfVal [a] : ℚ) : ℝ) ((cfVal (bumpLast [a]) : ℚ) : ℝ) = 1 / (a : ℝ) := by
+    rw [hE0, hE1]
+    apply max_eq_left
+    apply div_le_div_of_nonneg_left (by norm_num) hapos
+    linarith
+  rw [hw, hmin, hmax]
+  congr 1
+  have h1 : (1 : ℝ) + 1 / (a : ℝ) = (a + 1) / a := by field_simp
+  have h2 : (1 : ℝ) + 1 / ((a : ℝ) + 1) = (a + 2) / (a + 1) := by field_simp; ring
+  have harg : (1 : ℝ) + 1 / ((a : ℝ) * (a + 2)) = ((a : ℝ) + 1) ^ 2 / (a * (a + 2)) := by
+    have : (a : ℝ) * (a + 2) ≠ 0 := by positivity
+    field_simp
+    ring
+  have hnum : Real.log (1 + 1 / (a : ℝ)) - Real.log (1 + 1 / ((a : ℝ) + 1))
+      = Real.log (1 + 1 / ((a : ℝ) * (a + 2))) := by
+    rw [h1, h2, harg, Real.log_div (by positivity) (by positivity),
+      Real.log_div (by positivity) (by positivity),
+      Real.log_div (by positivity) (by positivity), Real.log_pow,
+      Real.log_mul (by positivity) (by positivity)]
+    push_cast
+    ring
+  rw [hnum, Real.logb]
 
 /-- A genuine cylinder sits inside a closed interval whose length is exactly
 the cylinder's measure (public packaging of `cfCylinder_subset_uIcc` +
