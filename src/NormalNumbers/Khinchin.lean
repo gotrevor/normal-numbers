@@ -177,4 +177,37 @@ theorem khinchinTypical_iff_log_tendsto (x : ℝ) (hpos : ∀ i, 1 ≤ cfDigit x
     refine hexp.congr (fun n => ?_)
     exact Real.exp_log (hgeomdef n)
 
+/-! ## Step 2 (open): the log-average / frequency assembly
+
+The remaining crux (`PENDING_WORK.md`, 2026-08-24 lap): combine
+`xstar_cf_freq_tendsto` (single-digit frequency `→` `gaussMeasure`,
+`CFCorrect.lean`), `gaussMeasure_digit_cylinder` (the Gauss–Kuzmin closed
+form, `CFCylinder.lean`), and `wSched_log_sum_le` (the uniform `goodC`
+tail bound, `CFCorrect.lean`) into the log-average limit that
+`khinchinTypical_iff_log_tendsto` needs.
+
+Decomposition (dominated-convergence-style interchange, not yet attempted):
+for `ε > 0`, pick a truncation level `K` so the Gauss–Kuzmin tail
+`∑_{a > K} γ([a]) · log a` is `< ε/3` (from `khinchinK₀_summable_log`'s
+summability); the empirical log-average splits as a `≤ K` part (converges
+to the matching finite Gauss–Kuzmin sum by `xstar_cf_freq_tendsto`, finitely
+many `a`) plus a `> K` empirical tail, which needs a UNIFORM (in `n`) bound
+`o(ε)` — `wSched_log_sum_le` gives `Σ log(digit) ≤ goodC · n` at schedule
+checkpoints `n = (wSched s).length` (via `cfPrefix_eq_wSched`), which bounds
+the *total* mass but not yet the truncated-tail mass specifically; whether
+that total bound alone suffices (e.g. via a Chebyshev/Markov argument on how
+many digits can exceed `K` before the `goodC · n` cap is violated) or a finer
+per-digit-value split of the schedule bound is needed is the open question. -/
+
+/-- **Target of the Tier-2 assembly** (`Headline.lean:136`'s obligation via
+`khinchinTypical_iff_log_tendsto`): `xstar`'s empirical CF log-digit average
+tends to `log khinchinK₀`. See the module docstring above for the attack
+decomposition; not yet attempted beyond the route confirmation. -/
+theorem xstar_log_digit_avg_tendsto :
+    Filter.Tendsto
+      (fun n : ℕ =>
+        (1 / (n : ℝ)) * ((List.range n).map (fun i => Real.log (cfDigit xstar i : ℝ))).sum)
+      Filter.atTop (nhds (Real.log khinchinK₀)) := by
+  sorry
+
 end NormalNumbers
