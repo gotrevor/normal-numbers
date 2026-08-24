@@ -2898,11 +2898,53 @@ theorem exists_cfNormal_and_affine_cfNormal {q : ℝ} (hq : 0 < q) (r : ℝ) :
       refine ⟨x, isCFNormal_of_irrational_orbit_freq x hx1 hx2 hx3, ?_⟩
       rw [heq]
       exact isCFNormal_add_nat hy2 hn1 hy0
-    · -- `r ≤ -q`: the shift is negative (`n ≤ -1`), so `ψ(x) < 0` and the up-shift
-      -- lemma does not apply.  Needs a down-shift orbit fact
-      -- (`cfDigit (y - m)` for `m ≥ 1`) OR placing `x` in a higher unit interval so
-      -- `q·x + r ∈ (0,1)` — the latter needs an integer in `((-r/q)-1, (1-r)/q)`,
-      -- length `1/q`, not guaranteed for `q > 1`.  TODO(shift-neg).
-      sorry
+    · -- `r ≤ -q`: shift the DOMAIN up instead.  Choose natural `M ≥ 1` with
+      -- `r₁ = q·M + r ∈ (-q,1)`; the admissible `M`-interval
+      -- `((-q-r)/q, (1-r)/q)` has length `1 + 1/q > 1`, so it contains an integer,
+      -- and `(-q-r)/q ≥ 0` (as `r ≤ -q`) forces `M ≥ 1`.  Feasible witness at `r₁`
+      -- gives `x` with `x` and `y = q·x + r₁ ∈ (0,1)` CF-normal; then `x' = x + M`
+      -- is CF-normal (up-shift) and `ψ(x') = q·x' + r = q·x + r₁ = y`.
+      have hrle : r ≤ -q := by
+        rcases (not_and_or.mp hr) with h | h
+        · linarith [not_lt.mp h]
+        · exact absurd (not_lt.mp h) (by linarith [not_le.mp hr1])
+      set L : ℝ := (-q - r) / q with hL_def
+      set U : ℝ := (1 - r) / q with hU_def
+      have hLnonneg : 0 ≤ L := by rw [hL_def]; apply div_nonneg (by linarith) (le_of_lt hq)
+      set M : ℤ := ⌊L⌋ + 1 with hM_def
+      have hMgtL : L < (M : ℝ) := by rw [hM_def]; push_cast; exact Int.lt_floor_add_one L
+      have hMltU : (M : ℝ) < U := by
+        have h1 : (M : ℝ) ≤ L + 1 := by rw [hM_def]; push_cast; linarith [Int.floor_le L]
+        have hUL : U - L = 1 + 1 / q := by
+          rw [hU_def, hL_def]; field_simp; ring
+        have hq' : 0 < 1 / q := one_div_pos.mpr hq
+        linarith
+      have hMge1 : 1 ≤ M := by
+        have : (0 : ℝ) < (M : ℝ) := lt_of_le_of_lt hLnonneg hMgtL
+        have : (0 : ℤ) < M := by exact_mod_cast this
+        omega
+      set nn : ℕ := M.toNat with hnn_def
+      have hnnM : (nn : ℤ) = M := Int.toNat_of_nonneg (by omega)
+      have hnn1 : 1 ≤ nn := by omega
+      have hnncast : (nn : ℝ) = (M : ℝ) := by exact_mod_cast hnnM
+      set r₁ : ℝ := q * (M : ℝ) + r with hr1_def
+      have hmc : (M : ℝ) * q = q * (M : ℝ) := mul_comm _ _
+      have hr1feas : -q < r₁ ∧ r₁ < 1 := by
+        constructor
+        · have hlow : -q - r < (M : ℝ) * q := by
+            rw [hL_def] at hMgtL; exact (div_lt_iff₀ hq).mp hMgtL
+          rw [hr1_def]; linarith [hlow, hmc]
+        · have hhi : (M : ℝ) * q < 1 - r := by
+            rw [hU_def] at hMltU; exact (lt_div_iff₀ hq).mp hMltU
+          rw [hr1_def]; linarith [hhi, hmc]
+      obtain ⟨x, ⟨hx1, hx2, hx3⟩, ⟨hy1, hy2, hy3⟩⟩ :=
+        exists_interleaved_affine_witness hq r₁ hr1feas
+      have hxN : IsCFNormal x := isCFNormal_of_irrational_orbit_freq x hx1 hx2 hx3
+      have hyN : IsCFNormal (affineMap q r₁ x) :=
+        isCFNormal_of_irrational_orbit_freq (affineMap q r₁ x) hy1 hy2 hy3
+      refine ⟨x + (nn : ℝ), isCFNormal_add_nat hx2 hnn1 hxN, ?_⟩
+      have heq : affineMap q r (x + (nn : ℝ)) = affineMap q r₁ x := by
+        simp only [affineMap_apply, hr1_def, hnncast]; ring
+      rw [heq]; exact hyN
 
 end NormalNumbers

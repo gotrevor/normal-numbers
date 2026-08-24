@@ -19,19 +19,21 @@ selecting `x` to avoid BOTH the x-CF bad zones AND the ψ-pullback
 (`ρ=1`), budget polynomial, blocks linear.  Full analysis + why alternatives fail
 in the obstruction doc.
 
-**Meanwhile (directive item 2):** shift reduction — **`r ≥ 1` HALF DONE**
-(2026-08-24). Landed axiom-clean in `CFScheduleA.lean`:
-`gaussMap_iter_two_add_nat` (`g²(y+n)=y`), `cfDigit_add_nat_shift`
-(`cfDigit(y+n)(k+2)=cfDigit y k`), `isCFNormal_add_nat` (integer up-shift
-invariance). The infeasible branch of `exists_cfNormal_and_affine_cfNormal` now
-splits: `r ≥ 1` closes via `n=⌊r⌋≥1`, `r₀=r−n=fract r∈[0,1)`, feasible witness at
-`r₀`, then `ψ(x)=y+n` up-shifted. **REMAINING (`TODO(shift-neg)` :2867):** the
-`r ≤ −q` half — shift is negative (`n ≤ −1`), `ψ(x)<0`, up-shift lemma N/A. Needs
-EITHER a down-shift orbit fact (`cfDigit(y−m)` for `m≥1`: `y−m∈(−m,−m+1)`,
-`g(y−m)=Int.fract((y−m)⁻¹)`, messier sign analysis) OR place `x` in a higher unit
-interval `(M,M+1)` so `qx+r∈(0,1)` — but that needs an integer in
-`((−r/q)−1,(1−r)/q)` of length `1/q`, NOT guaranteed for `q>1`. Down-shift orbit
-fact is the robust route.
+**Directive item 2 — DONE (2026-08-24).** `exists_cfNormal_and_affine_cfNormal`
+now proved for ALL real `r` (was: feasible `-q<r<1` only). Landed axiom-clean in
+`CFScheduleA.lean`: `gaussMap_iter_two_add_nat` (`g²(y+n)=y`),
+`cfDigit_add_nat_shift` (`cfDigit(y+n)(k+2)=cfDigit y k`), `isCFNormal_add_nat`
+(integer up-shift invariance of CF-normality). Infeasible regime splits:
+- **`r ≥ 1`:** shift the IMAGE up. `n=⌊r⌋≥1`, `r₀=r−n=fract r∈[0,1)⊂(−q,1)`,
+  feasible witness at `r₀`, `ψ(x)=y+n` normal via `isCFNormal_add_nat`.
+- **`r ≤ −q`:** shift the DOMAIN up (the earlier "length 1/q" worry was a MISCALC;
+  shifting `x`, not the image, gives an interval of length `1+1/q>1` that ALWAYS
+  contains an integer). Pick `M=⌊(−q−r)/q⌋+1≥1` (lower end `≥0` as `r≤−q`), so
+  `r₁=qM+r∈(−q,1)`; feasible witness at `r₁` gives `x`, `y=qx+r₁∈(0,1)` normal;
+  witness real `x'=x+M` is normal (up-shift) and `ψ(x')=qx'+r=qx+r₁=y`.
+
+**The B6 crux `schedA_block_linear` (:2537) is now the SOLE remaining `sorry` in
+src/** — under the two-stream measure-budget obstruction (below).
 
 - **Landed 2026-08-28 (reusable core, axiom-clean, `CFScheduleA.lean`):**
   `cfFreq_tendsto_of_digit_shift` — window-frequency limit is invariant under a
