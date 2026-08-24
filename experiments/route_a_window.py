@@ -937,6 +937,46 @@ def mode_compare(args, rng):
     print("   has lost.  A separated column is a wall.")
 
 
+LEVY = math.pi ** 2 / (12 * LOG2)  # Levy's constant: log q_n ~ n * LEVY
+
+
+def mode_burst(args, rng):
+    """Vandehey's Lemma 2.2 says the emitted burst per input digit is uniformly bounded by
+    a constant depending on D.  His proof DERIVES that from M_D being finite ("there are
+    only finitely many choices for -gamma'/alpha', since M_D is a finite set"), so it has
+    no analogue once finiteness is gone.  This measures what replaces it: drive one planted
+    digit a through many random states and average the burst it triggers."""
+    print("== BURST ==  Vandehey Lemma 2.2 ('m is uniformly bounded by a constant")
+    print("             dependent on D') against the Z[phi] maps.")
+    print("   Levy's constant lambda = pi^2/(12 log 2) = %.4f;  1/lambda = %.4f" % (LEVY, 1 / LEVY))
+    print()
+    names = ["2x", "3x", "phi", "x/phi", "xphi", "sqrt5x"]
+    print("   %-10s %-7s %s" % ("a", "ln a", "  ".join("%-8s" % n for n in names)))
+    for a in (10, 10**2, 10**3, 10**5, 10**8, 10**12, 10**18, 10**25):
+        cells = []
+        for name in names:
+            tot = 0
+            for seed in range(args.burst_trials):
+                st = LebesgueStream(random.Random(args.seed + seed))
+                td = Transducer(MAPS[name][0])
+                for _ in range(40):
+                    td.feed(st.next())
+                before = len(td.out)
+                td.feed(a)
+                tot += len(td.out) - before
+            cells.append(tot / args.burst_trials)
+        print("   %-10.0e %-7.2f %s"
+              % (a, math.log(a), "  ".join("%-8.2f" % c for c in cells)))
+    print()
+    print("   A flat column IS Lemma 2.2.  A column growing like ln(a)/lambda = %.3f*ln(a)"
+          % (1 / LEVY))
+    print("   is the replacement: one input digit of size a pins the image interval to")
+    print("   precision ~a^-2, i.e. 2*ln(a) nats, and CF digits carry lambda nats each.")
+    print("   That is unbounded, so Lemma 2.2 does not port -- but int log(a) dmu is finite")
+    print("   (the same finiteness behind Khinchin's constant), so the MEAN burst is finite")
+    print("   and Lemma 6.1's l(n) = c1*n(1+o(1)) survives.  c1 is measured in `compare`.")
+
+
 # --------------------------------------------------------------------------- self-test
 
 
@@ -1124,7 +1164,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("mode",
-                    choices=["window", "memory", "freq", "compare", "all", "selftest"])
+                    choices=["window", "memory", "freq", "compare", "burst",
+                             "all", "selftest"])
     ap.add_argument("--map", default="phi", choices=sorted(MAPS))
     ap.add_argument("--input", default="lebesgue",
                     help="lebesgue | structured | iid | adversarial | periodic:1,2,3")
@@ -1134,6 +1175,7 @@ def main():
     ap.add_argument("--break-emission", dest="break_p", type=float, default=0.0)
     ap.add_argument("--period", type=int, default=25, help="adversarial planting period")
     ap.add_argument("--state-cap", type=int, default=2500)
+    ap.add_argument("--burst-trials", type=int, default=40)
     ap.add_argument("--max-bits", type=int, default=400000)
     args = ap.parse_args()
 
@@ -1141,6 +1183,9 @@ def main():
         return selftest(args)
 
     rng = random.Random(args.seed)
+    if args.mode in ("burst", "all"):
+        mode_burst(args, rng)
+        print()
     if args.mode in ("compare", "all"):
         mode_compare(args, rng)
         print()

@@ -1116,6 +1116,30 @@ theorem exists_nhds_cfDigit_eq {y : ℝ} (hy : y ∈ Set.Ioo (0 : ℝ) 1)
   rw [hwgetD i hi] at this
   exact this
 
+/-- **ψ-transfer of CF-digit agreement (brick-4 bridge).**  If `ψ = affineMap q r`
+(`q>0`) maps `x₀` to an irrational point of `(0,1)`, then for any digit-depth `m`
+there is a ball around `x₀` on which every point whose ψ-image is irrational-in-(0,1)
+has ψ-image agreeing with `ψ x₀` on its first `m` CF digits.  `ψ` is `q`-Lipschitz,
+so shrinking the `exists_nhds_cfDigit_eq` z-neighbourhood by `1/q` pulls it back to an
+x-ball.  Composed with `blockCount_eq_of_cfDigit_agree` this transfers the selected
+point's z-frequency to any nearby point — in particular to the chain limit `xA` once
+the `x`-cylinder is refined below this ball. -/
+theorem exists_ball_cfDigit_psi_eq (q r : ℝ) (hq : 0 < q)
+    {x₀ : ℝ} (hx₀ : affineMap q r x₀ ∈ Set.Ioo (0:ℝ) 1)
+    (hx₀irr : Irrational (affineMap q r x₀)) (m : ℕ) :
+    ∃ ε > 0, ∀ x : ℝ, |x - x₀| < ε → Irrational (affineMap q r x) →
+      affineMap q r x ∈ Set.Ioo (0:ℝ) 1 →
+      ∀ i < m, cfDigit (affineMap q r x) i = cfDigit (affineMap q r x₀) i := by
+  obtain ⟨εz, hεz, hnhds⟩ := exists_nhds_cfDigit_eq hx₀ hx₀irr m
+  refine ⟨εz / q, by positivity, ?_⟩
+  intro x hx hxirr hxIoo i hi
+  refine hnhds (affineMap q r x) ?_ hxirr hxIoo i hi
+  have hqx : q * |x - x₀| < εz := by
+    rw [lt_div_iff₀ hq] at hx; nlinarith [hx]
+  simp only [affineMap_apply, Set.mem_Ioo]
+  constructor <;>
+    nlinarith [le_abs_self (x - x₀), neg_abs_le (x - x₀), hqx, hq.le]
+
 /-- **Multi-scale + cfK measure core** (the cfK-steer selection).  Like
 `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`, but the aggregate bound
 `hbound` additionally leaves room for the cfK-large extension mass
