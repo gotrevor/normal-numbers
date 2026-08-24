@@ -155,6 +155,15 @@ inside `cfCylinder wx` (from `goodInInterval_pos_of_lt`) is a genuine EXTENSION 
 `wx` — the bridge from "good geometric cylinder in the interval" to "appended
 block", keeping x's prescribed digits consistent across ψ-stage refinements.
 
+### lap 10 landed (2026-08-24): `eq_of_mem_cfCylinder_chain` ✅
+
+Axiom-clean, build green (8755). Nested extending genuine cylinder chains pin a
+UNIQUE point (diam ≤ 1/fib(len+1)² → 0). Obligation-(A) ingredient: the affine
+image ψ(x) lies in the whole ψ-word chain, and (applying `exists_irrational_mem_
+iInter_cfCylinder` to that ψ-chain to get an irrational in the same intersection)
+this lemma forces ψ(x) = that irrational ⇒ **ψ(x) irrational in (0,1)**. Combined
+with `take_eq_of_mem_cfCylinder` the (A) side is nearly mechanical.
+
 ### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
 - L1 `volume_interval_sdiff_covered_le` — interval covered by cylinders up to 4/fib².
 - L2 `length_le_two_mul_good_add_err` — good mass inside an interval.
