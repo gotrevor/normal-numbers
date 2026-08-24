@@ -176,6 +176,51 @@ theorem exists_fib_threshold (a : ℝ) :
     exact_mod_cast hfib
   nlinarith
 
+/-- **Tight Binet lower bound.**  `φⁿ ≤ √5·fib(n) + 1` — the exponential lower
+bound on Fibonacci (from `|ψ| < 1`, so `ψⁿ ≤ 1`).  This is the LOGARITHMIC
+sharpening of `exists_fib_threshold`: to make `fib(n+1)² > a` one needs only
+`n ≈ log_φ(√a)`, not the crude `n ≈ a` that `exists_fib_threshold` gives.  The
+interleaved affine schedule needs this: a steerable block placed inside a target
+of width `β` must resolve the cylinder to width `< β`, costing `≈ log_φ(1/β)`
+digits; with the crude threshold the block would be `≈ 1/β` (exponentially long),
+breaking the `hdom` (`block = o(word)`) hypothesis of `chain_orbit_equidist`. -/
+theorem goldenRatio_pow_le_sqrt5_mul_fib_add_one (n : ℕ) :
+    Real.goldenRatio ^ n ≤ Real.sqrt 5 * (Nat.fib n : ℝ) + 1 := by
+  have hbinet := Real.coe_fib_eq n
+  have h5 : (0 : ℝ) < Real.sqrt 5 := Real.sqrt_pos.2 (by norm_num)
+  have hpsi_le : Real.goldenConj ^ n ≤ 1 := by
+    have habs : |Real.goldenConj| < 1 := by
+      rw [abs_lt]
+      exact ⟨Real.neg_one_lt_goldenConj, by linarith [Real.goldenConj_neg]⟩
+    calc Real.goldenConj ^ n ≤ |Real.goldenConj ^ n| := le_abs_self _
+      _ = |Real.goldenConj| ^ n := by rw [abs_pow]
+      _ ≤ 1 := pow_le_one₀ (abs_nonneg _) habs.le
+  have hmul : Real.sqrt 5 * (Nat.fib n : ℝ)
+      = Real.goldenRatio ^ n - Real.goldenConj ^ n := by
+    rw [hbinet]; field_simp
+  linarith [hmul, hpsi_le]
+
+/-- **Logarithmic fib threshold (consumable form).**  `a < fib(n+1)²` as soon as
+`√5·√a + 1 < φ^(n+1)`.  Since `φ^(n+1)` grows geometrically, the minimal such `n`
+is `≈ log_φ(√a) = (1/2)log_φ a` — logarithmic in `a`, the sharpening the affine
+schedule consumes to keep steerable-block lengths `= o(accumulated word)`. -/
+theorem fib_sq_gt_of_goldenRatio (n : ℕ) (a : ℝ)
+    (h : Real.sqrt 5 * Real.sqrt a + 1 < Real.goldenRatio ^ (n + 1)) :
+    a < (Nat.fib (n + 1) : ℝ) ^ 2 := by
+  have hlb := goldenRatio_pow_le_sqrt5_mul_fib_add_one (n + 1)
+  have h5pos : (0 : ℝ) < Real.sqrt 5 := Real.sqrt_pos.2 (by norm_num)
+  have hfibpos : (1 : ℝ) ≤ (Nat.fib (n + 1) : ℝ) := by
+    have : 1 ≤ Nat.fib (n + 1) := Nat.fib_pos.2 (by omega)
+    exact_mod_cast this
+  rcases le_or_gt a 0 with ha | ha
+  · nlinarith [hfibpos]
+  · have hsa : Real.sqrt 5 * Real.sqrt a < Real.sqrt 5 * (Nat.fib (n + 1) : ℝ) := by
+      nlinarith [hlb, h]
+    have hsqa : Real.sqrt a < (Nat.fib (n + 1) : ℝ) :=
+      lt_of_mul_lt_mul_left hsa h5pos.le
+    have hsq : Real.sqrt a ^ 2 = a := Real.sq_sqrt ha.le
+    nlinarith [hsqa, Real.sqrt_nonneg a, hsq]
+
 /-- **The `kmin(n)` link** (step (β)): if `4·d^{kmin} < fib(n+1)²`, every
 genuine order-`n` extension of the brick's cylinder is shorter than
 `d^{−(m_d + kmin)}` — so the maximal new d-ary order beats `m_d + kmin` and

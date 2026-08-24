@@ -1,5 +1,66 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## ⭐⭐⭐⭐⭐ ROUTE-DECISIVE CORRECTION 2026-08-24 (this lap): `hdom` needs TIGHT (logarithmic) steer blocks — the current steer lemma's block length is EXPONENTIAL and BREAKS `hdom`
+
+Before wiring `exists_interleaved_affine_witness` I quantified the ONE unverified
+hypothesis the whole route rests on: `chain_orbit_equidist`'s `hdom`
+(`|chainApp w s| < ε·|w s|` eventually, i.e. each appended block `= o(accumulated
+word)`). The last handoff asserted "hdom follows from slow growth" and marked the
+recursion as pure wiring. **That is wrong as currently built**, for a concrete,
+compiler-checkable reason:
+
+- `exists_freq_good_block_steer` (CFScheduleA:352) fixes its block length as
+  `n = max(N0, N1, L, 1)+1` where **`N1 := (exists_fib_threshold (1/β)).choose`**
+  and `β = (target width)/4`. `exists_fib_threshold` (TBrickRefine:164) is the
+  CRUDE threshold: its `N ≈ a` (LINEAR in `a`), because it only uses
+  `n+1 ≤ fib(n+1)`. So the steer block has length `n ≳ N1 ≈ 1/β`.
+- In the interleaved schedule the x-target is the overlap of `wx`'s convergent
+  interval (width `≈ φ^{-2|wx|}`) with `ψ⁻¹(wz'-interval)` (width `≈ φ^{-2|wz'|}`),
+  so `β ≈ φ^{-2|w_s|}` and `1/β ≈ φ^{2|w_s|}`. Hence the steer block is
+  `n_s ≈ φ^{2|w_s|}` — **exponentially longer than the accumulated word**, the
+  exact negation of `hdom` (`n_s = o(|w_s|)`). Even the information-theoretic
+  minimum (resolve a cylinder of the OTHER stream's scale) is `n_s ≈ |w_s|`, still
+  only a constant factor — with the crude `N1` it is doubly hopeless.
+
+### The fix (STARTED this lap, axiom-clean): tight logarithmic block length
+The minimal `n` with `fib(n+1)² > 1/β` is `≈ (1/2)log_φ(1/β) ≈ |w_s|·(refinement
+ratio)`, NOT `1/β`. The per-round refinement ratio is what matters, not the
+absolute cylinder scale: placing a block inside a target that is a bounded factor
+`ρ` smaller than the current cylinder costs only `≈ log_φ(1/ρ)` digits. So with
+the schedule `L_s = s`, `δ_s = 1/(s+1)`: each stream's block length
+`n_s ≈ L_s ≈ s`, the accumulated word `|w_s| = Σ_{j<s} n_j ≈ s²/2`, and
+`n_s/|w_s| ≈ 2/s → 0` — **`hdom` HOLDS** (with the tight bound, not the crude one).
+
+Landed (TBrickRefine, axiom-clean `[propext, Classical.choice, Quot.sound]`):
+- **`goldenRatio_pow_le_sqrt5_mul_fib_add_one`**: `φⁿ ≤ √5·fib(n) + 1` (tight
+  Binet lower bound, from `ψⁿ ≤ 1`). The exponential lower bound on `fib`.
+- **`fib_sq_gt_of_goldenRatio`**: `a < fib(n+1)²` as soon as `√5·√a + 1 < φ^(n+1)`
+  — the LOGARITHMIC (consumable) threshold: minimal `n ≈ log_φ√a`, replacing the
+  crude `exists_fib_threshold`.
+
+### NEXT (concrete, ordered)
+1. **Re-derive a TIGHT `exists_freq_good_block_steer`** (or a `_tightlen` variant)
+   whose output length is `≤ |wx| + O(log(1/β))` instead of `≈ 1/β`: swap the
+   `exists_fib_threshold (1/β)` step for a choice of `n` via
+   `fib_sq_gt_of_goldenRatio` (pick `n` minimal with `φ^(|wx|+n+1) > √5·√(1/β)+1`),
+   and EXPOSE the length bound in the signature (the schedule needs an explicit
+   upper bound on the block length to prove `hdom`). Everything else in the steer
+   lemma (measure core, freq-goodness, `cfCylinder ⊆ (c,d)`) is unchanged.
+2. Propagate the length bound through `exists_freq_good_extend_affine_steer` (both
+   `ux`, `uz` blocks) so the ψ-round outputs `|block| ≤ (prev word) + O(log …)`.
+3. THEN the recursion (`SchedStateA`/`schedStepA`/`schedA`, `L_s = s`) can prove
+   `hdom` from the length bounds + `|w_s| ≥ Σ L_j`, and feed
+   `chain_orbit_equidist`. Items 2–5 of `HANDOFF-2026-08-27-2359.md` (limit point,
+   ψ-chain gluing) are unaffected — only the block-length control was missing.
+
+**Provenance:** the "infra not needed / pure wiring" claim in the 2026-08-27
+handoff is SUPERSEDED by this correction. The uniform-goodness / `addslack` infra
+is a SECOND independent escape (drop `hdom` entirely by requiring every block
+PREFIX freq-good) — kept in reserve; the tight-block route above is simpler
+(reuses `chain_orbit_equidist` as-is) and is the primary plan.
+
+---
+
 ## ⭐⭐⭐⭐⭐ ROUTE-DECISIVE RESOLUTION 2026-08-27: the `hdom` obstruction is REMOVABLE
 
 **The filler/balance obstruction (recorded 2026-08-24) is pinned to a SINGLE
