@@ -1,5 +1,79 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## ⭐⭐⭐⭐ CRUX ADVANCE 2026-08-24 (cont.): ψ-ROUND STEP `exists_freq_good_extend_affine` PROVED ✅
+
+`CFScheduleA`, **axiom-clean** `[propext, Classical.choice, Quot.sound]`, green 8757.
+B5′ headlines re-verified trust-triple. **The novel geometric heart of B6 —
+maintaining the interval invariant `cfCylinder wx ⊆ ψ⁻¹(Ioo e f)` through one
+joint refinement round — is done.** Given genuine `wx, wz`, the wz-interval `(e,f)`
+(`irr(e,f)⊆cfCylinder wz`), the invariant, `F`, `δ`, `L`, it produces:
+- `wz'` extends wz, freq-good, `L≤|wz'|`, `cfCylinder wz'⊆cfCylinder wz`, with the
+  freq-good block exposed `∃ wp u, wz'=wp++u ∧ L≤|u| ∧ (∀v∈F, δ-good u)`;
+- `wx'` extends wx, freq-good, `L≤|wx'|`, `cfCylinder wx'⊆cfCylinder wx`, same
+  exposed block;
+- new wz-interval `(e',f')` (`0≤e'<f'≤1`, `irr(e',f')⊆cfCylinder wz'`);
+- **new invariant** `cfCylinder wx' ⊆ ψ⁻¹(Ioo e' f')`.
+Proof followed the recipe exactly: image bounds (`affine_image_Ioo_subset_Icc_pre`
++ `closure_Ioo`/`Icc_subset_Icc_iff`) ⇒ place good z-block in `ψ((a,b))` ⇒ shared
+point `x₀=(pz−r)/q` gives strict overlap `max a a' < min b b'` of `(a,b)` with the
+pullback `ψ⁻¹(Ioo e' f')` ⇒ place good x-block in the overlap; both extensions via
+`take_eq_of_mem_cfCylinder` with block length `n > |word|`.
+
+### REMAINING for the crux (`exists_interleaved_affine_witness`, sole `src/` sorry)
+Every ATOM is now proved & axiom-clean. What's left is pure ASSEMBLY:
+1. **`SchedStateA` structure** carrying `wx wz : List ℕ` (genuine), `e f : ℝ`
+   (`0≤e<f≤1`, `irr(e,f)⊆cfCylinder wz`), `hinv : cfCylinder wx ⊆ ψ⁻¹(Ioo e f)`,
+   and a growing family `F_s`/tolerance `δ_s`/depth `L_s` bookkeeping.
+   Seed state: `wx₀ wz₀` = any genuine words with a compatible invariant (e.g.
+   `wz₀ := [k]`, `(e,f)` its endpoints, `wx₀` a cylinder in `ψ⁻¹(Ioo e f)` via
+   `exists_cfCylinder_subset_affine_preimage`).
+2. **`schedStepA : SchedStateA → SchedStateA`** = apply `exists_freq_good_extend_affine`
+   with the round's `(F_s, δ_s, L_s)`; choose `L_s ≥` a growing target (e.g.
+   `≥ (s+2)·(|wx_s|+|wz_s|)`) so both streams get `|u_s|`/`|word_s|→∞` (dominance)
+   and filler/`|u_s|→0`. Family `F_s` = all genuine words of length ≤ s over
+   alphabet ≤ s (so every fixed genuine v is eventually in F_s), `δ_s := 1/(s+1)`.
+3. **`schedA : ℕ → SchedStateA`** by `Nat.rec` on the seed + step; extract
+   `wxSeq s := (schedA s).wx`, `wzSeq s := (schedA s).wz` — two nested genuine
+   chains with `chainApp` = the round's `word'.drop|word|`.
+4. **Feed `chain_orbit_equidist`** (in `CFChainFreq`) to each chain. The two
+   hypotheses per genuine `v`:
+   - `hgood ε`: chainApp margin-good. From the exposed freq-good block `u_s`
+     (δ_s-good, δ_s→0) + the ALIGNMENT/short-edit argument (chainApp is `u_s`
+     perturbed on ≤|word_s| entries) via `cfDiscLt_short_append`/`_append_take`.
+   - `hdom ε`: chainApp short vs word. From `|chainApp|=|word'|−|word|` and the
+     `L_s` sizing (word grows, but next block dominates). ← needs a length bound:
+     expose `|word'| ≤ |wp|+|u|` with `|wp|` controlled? Actually dominance is
+     `|chainApp_s| < ε|word_s|`?? NO — re-check direction: CFCorrect's `hshort2`
+     is `|app_s| < 2ε|word_s|` (block SHORT vs accumulated word). But here the
+     block IS the freq-good payload and must be LONG for `hgood`… ⚠ the tension:
+     `hdom` wants app short vs word, `hgood` wants app's u long. Resolved because
+     "word" = the ACCUMULATED prefix `w s` which grows super-linearly if each
+     block is ≥ (s+2)·|prev word|; then a single block is a vanishing FRACTION of
+     the cumulative word (geometric growth ⇒ last block ~ (1−1/(s+2)) of total,
+     hmm that's NOT small). RE-EXAMINE: CFCorrect dominance `t·|u_s|≤|w_s|` means
+     block ≤ |word|/t, i.e. block SMALL vs word — the OPPOSITE of geometric. So
+     blocks must GROW SLOWLY (sub-linearly in cumulative length): `|u_s| ≤
+     |w_s|/t_s` with `t_s→∞`. Then how is `u_s` "long enough" for margin-good?
+     margin-good needs `|u_s|` large in ABSOLUTE terms (≥ (2/ε)(|v|+filler)), NOT
+     relative. Both hold: `|u_s|→∞` absolutely while `|u_s|/|w_s|→0`. So `L_s`
+     grows to ∞ but SLOWER than `|w_s|`. Concretely pick `|u_s| := L_s` with
+     `s ≤ L_s` and `L_s · (s+2) ≤ |w_s|`… but `|w_s|=Σ|app_j|` is built FROM the
+     L_j — circular. Handle by making the filler+block per round bounded by a
+     fraction of the running length: choose `L_s := |w_s|` is TOO big (ratio→1).
+     **This is the one genuine design knot left** — the L_s schedule must give
+     `|u_s|→∞` yet `(|filler_s|+|u_s|)/|w_s|→0`. Since `|w_{s+1}|=|w_s|+|filler_s|
+     +|u_s|`, want `|app_s|=o(|w_s|)`, i.e. `|w_s|` grows super-linearly while
+     each increment is o(previous). E.g. `|app_s| ≈ √|w_s|`: then `|w_s|~s²/4→∞`,
+     `|app_s|~s→∞` (margin-good OK), `|app_s|/|w_s|~4/s→0` (dominance OK). So set
+     `L_s := ⌈√|w_s|⌉` (or any `ω(1)∩o(|w_s|)`). The round step accepts any `L`,
+     so this is a scheduling choice, NOT a new lemma. VERIFY at assembly.
+
+The crux is now assembly + the L_s-schedule verification (item 4). No new
+geometry/telescoping. Next lap: build `SchedStateA`/`schedStepA`/`schedA` and
+discharge `hgood`/`hdom` with the `√|w_s|` block schedule.
+
+---
+
 ## ⭐⭐⭐ CRUX ADVANCE 2026-08-24 (cont.): interval-invariant image lemma + round-step design
 
 `affine_image_Ioo_subset_Icc_pre` PROVED (`CFScheduleA`, axiom-clean, green 8757):
