@@ -99,6 +99,27 @@ the "other" stages must not spoil frequency — they do not, because every stage
 selects a GOOD (correct-freq) block. This is a genuine but plausible multi-lap
 construction; the density substrate (L1–L3) is now all proved.
 
+### lap 6 landed (2026-08-24): L4 KERNEL `isCFNormal_of_orbit_freq` PROVED ✅
+
+`CFOrbitFreq.lean` (axiom-clean, build green 8754). `x`-generic:
+`IsCFNormal y ⟸ (∀j, Tʲy ∈ (0,1)) ∧ (∀ genuine v, blockCount(I_v) p y / p →
+γ(I_v))`. Via the existing generic bridge `blockCount_sub_countOccurrences_bounds`
+(`CFWordBridge`, orbit-count vs window-count differ by ≤|v|) + squeeze.
+**Sub-obligation 1 is thus DONE** — the orbit⇔window machinery is `x`-generic and
+already in the codebase (`iterate_mem_cfCylinder_iff`, `blockCount_eq_card_matches`,
+`blockCount_sub_countOccurrences_bounds`, all take `y`/`x` free).
+
+**REFINED L4 target.** `IsCFNormal (ψ xstar)` now reduces (via
+`isCFNormal_of_orbit_freq` at `y := affineMap q r xstar`) to TWO obligations:
+  (A) `∀ j, gaussMap^[j] (ψ xstar) ∈ (0,1)` — ψ(xstar) has a full Gauss orbit;
+  (B) `∀ genuine v, blockCount (cfCylinder v) p (ψ xstar) / p → γ(I_v)` — the
+      orbit of ψ(xstar) equidistributes (Birkhoff/orbit-frequency form).
+(B) is the genuine crux. The interleaved schedule must make ψ(xstar) land in a
+nested chain of GOOD ψ-cylinders (⇒ its digit sequence is prescribed CF-normal
+⇒ orbit-freq → γ, exactly as `xstar_cf_freq_tendsto` gives it for xstar). L2/L3
+(`good_mass_in_affine_preimage`) supply the density that makes each ψ-stage refine
+feasible; `volume_preimage_affineMap` bounds the pullback bad zone.
+
 **Sub-obligations to formalize (next laps, in new `CFScheduleA.lean`, additive):**
 1. Orbit⇔window bridge for the IMAGE: `T^k(ψ xstar) ∈ cfCylinder v` ⇔ ψ(xstar)'s
    CF digits `k..k+|v|` = v — needed to turn "ψ(xstar) in prescribed ψ-cylinders"
