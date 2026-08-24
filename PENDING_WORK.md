@@ -48,6 +48,47 @@ Both L1 and L2 now closed (ahead of the brief's lap plan).
 - `goodExtSet`/`goodC`/`goodC_half` all live in `NormalNumbers` ns; import
   `NormalNumbers.CFSchedule` (done in `CFIntervalGood.lean`).
 
+## B6 — lap 4 landed (2026-08-24): L3 PROVED ✅
+
+`CFAffine.lean` (new additive module, axiom-clean, build green 8753). The affine
+map `affineMap q r x = q*x+r` (q>0) as interval algebra:
+- `preimage_affineMap_Ioo`: `ψ⁻¹(c,d) = ((c−r)/q, (d−r)/q)`
+- `image_affineMap_Ioo`: `ψ''(a,b) = (q*a+r, q*b+r)`
+- `volume_preimage_affineMap_Ioo`: `|ψ⁻¹(c,d)| = (d−c)/q`
+- `good_mass_in_affine_preimage`: transports L2 through the pullback — target
+  interval preimage length `≤ 2·good mass inside + 4/fib(n+1)²`.
+q>0 only; general q≠0 via `x↦−x` at point of use.
+
+**L1+L2+L3 all closed — the metric substrate of B6 is DONE.** What remains is
+the genuine crux:
+
+**NEXT ATTACK — L4 schedule surgery (MODERATE-risk crux)** + L5 assembly.
+The hard content: arrange `xstar` so that for each image system `(qᵢ,rᵢ)`,
+`ψᵢ(xstar) = qᵢ·xstar+rᵢ` is CF-normal — i.e. its CF-digit-window freqs → γ
+(`IsCFNormal`, `Headline.lean:71`). The witness route: the schedule must, at
+each stage, also drive the digit-window counts of the *image* streams. Design
+questions to resolve NEXT LAP (study `CFSchedule.lean`, `TBrickRefine.lean`,
+`TBrick.exists_refinement_uniform*`, and how `xstar_cf_freq_tendsto` is proved
+in `CFCorrect.lean`):
+1. How does the current schedule force `xstar`'s OWN CF-freqs (the
+   `blockCount`/`cfBadZone` union-bound at each brick)? `good_mass_in_affine_preimage`
+   is the image analogue of the base good-density — the image bad zones pull back
+   to `ψᵢ⁻¹(cfBadZone)` intervals, boundable by L1/L2 on those preimage intervals.
+2. Budget: `exists_mem_notMem_union_of_bounds` (`TBrick.lean:244`) currently
+   folds a fixed number of zones with `Σ coeff < 1/2`. Adding `m(s)` image
+   systems per stage (growing like B–Y `(log s)^{1/5}`) needs the per-stage
+   union budget re-split — copy-and-extend `TBrick`/`TBrickRefine` into new
+   modules (`CFScheduleA.lean`), NEVER edit the frozen ones.
+3. L5: concatenation-correctness on the image digit stream (mirror
+   `xstar_cf_freq_tendsto`'s window→freq chain) → `IsCFNormal (ψᵢ xstar)`.
+Escape valve (judge-governed): Tier 2 may drop to a FINITE family; Tier 1 (the
+φ headline `x, φx, x+φ`) uses just a 2-element family.
+Faithfulness gate after any schedule work: `#print axioms
+exists_absolutely_normal_cf_normal_khinchin` MUST stay `[propext,
+Classical.choice, Quot.sound]` (frozen headline unmodified).
+
+---
+### (historical) original L3 plan
 **NEXT ATTACK — L3 affine transport** (new module `CFAffine.lean`):
 The map `ψ(x) = q·x + r` (`q ≠ 0`). Needed facts:
 1. `ψ '' (Set.Ioo a b) = Set.Ioo (ψ a) (ψ b)` when `q>0` (reversed when `q<0`) —
