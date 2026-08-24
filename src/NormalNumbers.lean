@@ -40,3 +40,4 @@ import NormalNumbers.KhinchinRefineFamily
 import NormalNumbers.KhinchinRefine
 import NormalNumbers.CFIntervalGood
 import NormalNumbers.CFAffine
+import NormalNumbers.CFOrbitFreq
