@@ -39,3 +39,4 @@ import NormalNumbers.KhinchinFamily
 import NormalNumbers.KhinchinRefineFamily
 import NormalNumbers.KhinchinRefine
 import NormalNumbers.CFIntervalGood
+import NormalNumbers.CFAffine
