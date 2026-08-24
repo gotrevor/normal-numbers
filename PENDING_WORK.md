@@ -37,6 +37,11 @@ Landed (TBrickRefine, axiom-clean `[propext, Classical.choice, Quot.sound]`):
 - **`fib_sq_gt_of_goldenRatio`**: `a < fib(n+1)²` as soon as `√5·√a + 1 < φ^(n+1)`
   — the LOGARITHMIC (consumable) threshold: minimal `n ≈ log_φ√a`, replacing the
   crude `exists_fib_threshold`.
+- **`exists_nat_goldenRatio_pow_gt`**: `∃ n, y < φⁿ ∧ (n:ℝ) ≤ log_φ(max y 1)+1`
+  — the EXPLICIT logarithmic exponent. Feeding `y = √5·√(1/β)+1` into this then
+  `fib_sq_gt_of_goldenRatio` gives a resolve-block of length `≤ log_φ(1/β)+O(1)`
+  with an explicit numeric handle (what the `hdom` bookkeeping in the recursion
+  consumes). The three lemmas together are the full logarithmic-block toolkit.
 
 ### NEXT (concrete, ordered)
 1. **Re-derive a TIGHT `exists_freq_good_block_steer`** (or a `_tightlen` variant)

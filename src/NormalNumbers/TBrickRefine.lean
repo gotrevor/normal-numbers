@@ -221,6 +221,41 @@ theorem fib_sq_gt_of_goldenRatio (n : ℕ) (a : ℝ)
     have hsq : Real.sqrt a ^ 2 = a := Real.sq_sqrt ha.le
     nlinarith [hsqa, Real.sqrt_nonneg a, hsq]
 
+/-- **Logarithmic exponent solvability.**  For any bound `y`, some natural `n`
+with `y < φⁿ` AND `n ≤ log_φ(max y 1) + 1` — i.e. the minimal exponent beating
+`y` is `O(log y)`.  Combined with `fib_sq_gt_of_goldenRatio`, this gives the
+schedule an EXPLICIT logarithmic upper bound on the steer-block length needed to
+resolve a target of width `β` (take `y = √5·√(1/β) + 1`), which is what proves
+`hdom` (`block = o(word)`) for the interleaved recursion. -/
+theorem exists_nat_goldenRatio_pow_gt (y : ℝ) :
+    ∃ n : ℕ, y < Real.goldenRatio ^ n ∧
+      (n : ℝ) ≤ Real.logb Real.goldenRatio (max y 1) + 1 := by
+  have hφ1 : (1 : ℝ) < Real.goldenRatio := Real.one_lt_goldenRatio
+  have hφ0 : (0 : ℝ) < Real.goldenRatio := Real.goldenRatio_pos
+  set Y : ℝ := max y 1 with hY
+  have hY1 : (1 : ℝ) ≤ Y := le_max_right _ _
+  set L : ℝ := Real.logb Real.goldenRatio Y with hL
+  have hL0 : 0 ≤ L := Real.logb_nonneg hφ1 hY1
+  set n : ℕ := ⌊L⌋₊ + 1 with hn
+  have hnR : (n : ℝ) ≤ L + 1 := by
+    rw [hn]; push_cast
+    have := Nat.floor_le hL0
+    linarith
+  have hnL : L < (n : ℝ) := by
+    rw [hn]; push_cast
+    have := Nat.lt_floor_add_one L
+    linarith
+  refine ⟨n, ?_, hnR⟩
+  have hrpow : Real.goldenRatio ^ n = Real.goldenRatio ^ (n : ℝ) := by
+    rw [Real.rpow_natCast]
+  have hYeq : Real.goldenRatio ^ L = Y := Real.rpow_logb hφ0 (by linarith) (by linarith)
+  have hmono : Real.goldenRatio ^ L < Real.goldenRatio ^ (n : ℝ) :=
+    Real.rpow_lt_rpow_left_iff hφ1 |>.2 hnL
+  rw [hrpow]
+  have hyY : y ≤ Y := le_max_left _ _
+  rw [hYeq] at hmono
+  linarith
+
 /-- **The `kmin(n)` link** (step (β)): if `4·d^{kmin} < fib(n+1)²`, every
 genuine order-`n` extension of the brick's cylinder is shorter than
 `d^{−(m_d + kmin)}` — so the maximal new d-ary order beats `m_d + kmin` and
