@@ -434,8 +434,45 @@ pulls back to an irrational of (a,b) whose image escapes Icc e f). **This is the
 one genuinely analytic step of the ψ-stage** — no ψ-irrationality transfer, no
 sequences. Every ψ-stage ingredient is now proved & axiom-clean.
 
+### lap 19 (design-decisive) — the ψ-irrationality obstruction RESOLVED 🔑
+Strengthened `exists_Ioo_irrational_subset_cfCylinder` to ALSO return
+`cfCylinder w ⊆ Icc a b` (green, axiom-clean; caller updated). More importantly,
+worked out the correct schedule INVARIANT that dodges the "ψ doesn't preserve
+irrationality" wall:
+
+**Problem.** The naive invariant `cfCylinder wx ⊆ ψ⁻¹(cfCylinder wz)` (set
+inclusion) is NOT establishable: placing `wx'` needs `ψ(cfCylinder wx')⊆
+cfCylinder wz'`, but `cfCylinder wz'` is only an interval FOR IRRATIONALS, and
+`ψ` maps some irrationals to rationals — so the interval-placement gives only
+`ψ(cfCylinder wx')⊆Ioo(wz'-endpoints)`, which does NOT imply ⊆cfCylinder wz'.
+Symmetrically, even the limit `ψ(xA)` isn't obviously in `cfCylinder wz'` because
+`ψ(xA)` may be rational.
+
+**Resolution (interval invariant + irrational-by-nesting).** Maintain instead the
+INTERVAL-preimage invariant
+  `cfCylinder wx_s ⊆ ψ⁻¹(Ioo (E0 wz_t) (E1 wz_t))`   (a genuine interval preimage,
+establishable via `exists_cfCylinder_subset_affine_preimage`/`_Ioo_inter`, where
+`E0,E1` are `wz_t`'s convergent endpoints). Then:
+  • the wz-endpoint intervals `Ioo(E0 wz_t)(E1 wz_t)` are NESTED with rational
+    endpoints shrinking to a point (diam ≤ 1/fib² → 0, `cfCylinder_endpoints`);
+  • `ψ(xA) ∈ ⋂_t Ioo(E0 wz_t)(E1 wz_t)` (from the invariant + `xA∈cfCylinder
+    wx_s` all s);
+  • a point in infinitely many shrinking RATIONAL-endpoint intervals is
+    IRRATIONAL (same argument as `CFLimit`/`exists_irrational_mem_iInter_
+    cfCylinder`) ⇒ `ψ(xA)` irrational;
+  • `ψ(xA)` irrational ∈ Ioo(E0 wz_t)(E1 wz_t) ⇒ (the `hUIoo` clause of
+    `cfCylinder_endpoints`) `ψ(xA) ∈ cfCylinder wz_t` — for EVERY t. Hence
+    `ψ(xA)` is pinned into the whole wz-chain ⇒ CF-normal by the same
+    freq-telescoping as xA.
+So the ψ-side never needs ψ to preserve irrationality: irrationality of ψ(xA) is
+RECOVERED at the limit from the nested rational-endpoint intervals, exactly as
+for xA itself. This is the key that makes B6 provable for general real q>0
+(NOT just quadratic). Record the invariant as the `SchedStateA` field; the
+ψ-stage lemma below produces the interval-preimage nesting, not a cylinder
+inclusion.
+
 **NEXT — assemble `exists_freq_good_extend_affine` (the ψ-stage), then recursion.**
-Now fully mechanical from the atoms:
+Recast with the interval invariant (mechanical from the atoms):
 1. wx-interval (a,b) [`exists_Ioo_irrational_subset_cfCylinder wx`]; wz-endpoints
    (e,f) with cfCylinder wz⊆Icc e f AND irr(e,f)⊆cfCylinder wz [both from
    `cfCylinder_endpoints`/`exists_Ioo_irrational_subset_cfCylinder wz` — may need

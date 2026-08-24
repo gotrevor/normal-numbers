@@ -73,7 +73,7 @@ the form the schedule feeds to `exists_freq_good_block_in_Ioo`: refining inside
 `cfCylinder w` = refining inside `(a,b)`. -/
 theorem exists_Ioo_irrational_subset_cfCylinder (w : List ℕ) (hw : w ≠ [])
     (hpos : ∀ a ∈ w, 1 ≤ a) :
-    ∃ a b : ℝ, 0 ≤ a ∧ a < b ∧ b ≤ 1 ∧
+    ∃ a b : ℝ, 0 ≤ a ∧ a < b ∧ b ≤ 1 ∧ cfCylinder w ⊆ Set.Icc a b ∧
       ∀ x ∈ Set.Ioo a b, Irrational x → x ∈ cfCylinder w := by
   obtain ⟨ξ, hξirr, hξmem⟩ := exists_irrational_mem_cfCylinder w hw hpos
   obtain ⟨P, P', -, hIcc, hUIoo⟩ := cfCylinder_endpoints w hw hpos
@@ -95,10 +95,14 @@ theorem exists_Ioo_irrational_subset_cfCylinder (w : List ℕ) (hw : w ≠ [])
   have hminlt : min E0 E1 < ξ := lt_of_le_of_ne hξIcc.1 (Ne.symm hnemin)
   have hltmax : ξ < max E0 E1 := lt_of_le_of_ne hξIcc.2 hnemax
   refine ⟨max (min E0 E1) 0, min (max E0 E1) 1, le_max_right _ _, ?_,
-    min_le_right _ _, ?_⟩
+    min_le_right _ _, ?_, ?_⟩
   · have h1 : max (min E0 E1) 0 < ξ := max_lt hminlt hξ01.1
     have h2 : ξ < min (max E0 E1) 1 := lt_min hltmax hξ01.2
     linarith
+  · intro x hxc
+    have hxIcc := Set.mem_Icc.1 (hIcc hxc)
+    have hx01 := Set.mem_Ioo.1 hxc.1
+    exact Set.mem_Icc.2 ⟨max_le hxIcc.1 hx01.1.le, le_min hxIcc.2 hx01.2.le⟩
   · intro x hx hirr
     have hxlo : min E0 E1 < x := lt_of_le_of_lt (le_max_left _ _) hx.1
     have hxhi : x < max E0 E1 := lt_of_lt_of_le hx.2 (min_le_left _ _)
@@ -185,7 +189,7 @@ theorem exists_freq_good_extend_cfCylinder (wx : List ℕ) (hwx : wx ≠ [])
         (∀ v ∈ F, |(countOccurrences v u : ℝ)
           - (gaussMeasure (cfCylinder v)).toReal * u.length|
             < δ * u.length + v.length) := by
-  obtain ⟨a, b, ha, hab, hb, hIoo⟩ :=
+  obtain ⟨a, b, ha, hab, hb, -, hIoo⟩ :=
     exists_Ioo_irrational_subset_cfCylinder wx hwx hwxpos
   obtain ⟨w, hwne, hwpos, hwsub, N, hN⟩ :=
     exists_freq_good_block_in_Ioo F hF hFne hδ ha hab hb
