@@ -50,7 +50,31 @@ needs `gaussMeasure(bad ∪ cfKbad) < gaussMeasure(Ioo c d)`.
 (∀ε>0 ∃κ>0, `gaussMeasure(cfKbadExtSet w κ n) ≤ ofReal((log 2)⁻¹·ε)·volume(I_w)`)
 all proved.  So the graft's `B'`-mass bound is in hand.
 
-**NOW: assemble the cfK-carrying steer block.** With `A = Ioo c' d'`,
+**Landed 2026-08-28 (combined selection, axiom-clean, `CFScheduleA.lean`):**
+`exists_irrational_notMem_multiscale_cfBadZone_cfK_in_Ioo` — same as the
+multiscale selection but `hbound` leaves room for `(gaussMeasure(cfKbadExtSet wx κ
+ntop)).toReal`, returning an irrational point of `(c,d)` that is freq-good at every
+scale AND avoids the cfK-large set (⇒ `cfK` of its length-`ntop` extension past
+`wx` is `≤ e^{κ·ntop}`).  Also confirmed `cfK_append_le` (`CFCylinder.lean`):
+`cfK(w++u) ≤ 2·cfK w·cfK u`, so the accumulated invariant `cfK(w_s) ≤ e^{κ'|w_s|}`
+closes with `κ' = κ + log 2` (each stage's `log 2` is absorbed since `s ≤ |w_s|`).
+
+**NOW: build the cfK-carrying steer block** — a `_cfK` variant of
+`exists_multiscale_freq_good_block_steer_len` that calls the combined selection
+above (instead of `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`), reads
+off the digit block `u` via `range_map_cfDigit_eq`, and adds the conclusion
+`(cfK u : ℝ) ≤ e^{κ·ntop}` (from `x ∉ cfKbadExtSet` unpacked through
+`cfKbadExtSet` membership: `x ∈ cfCylinder(wx++u)` with `u` its digit word forces
+the good branch, i.e. `cfK u ≤ e^{κ ntop}`).  The `hbound` for the combined
+selection is met by choosing `ntop`'s `n₁` large (measure budget, as now) AND `κ`
+from `exists_rate_gaussMeasure_cfKbadExtSet_le ε` with `ε` a fixed fraction of the
+inner-target surplus.  ⚠️ still open: the κ-uniformity check (see below) — verify
+`ε` (hence `κ`) can be a per-level CONSTANT, using the recursion's hull invariants
+(`SchedStateA.hzhull`, `hinv`) to lower-bound the target/cylinder Gauss-measure
+ratio.  If that ratio is bounded below across stages, `κ` is uniform and the graft
+closes; establish it as a lemma about the seeded recursion geometry.
+
+**(historical detail) assemble the cfK-carrying steer block.** With `A = Ioo c' d'`,
 `B` = multiscale bad zones, `S = cfKbadExtSet wx κ ntop`:
 `gaussMeasure (B ∪ S) ≤ gaussMeasure B + gaussMeasure S`; bound `gaussMeasure B`
 by `gaussMeasure_multiscale_cfBadZone_le`+`hbound` (already `< μ(inner target)`)

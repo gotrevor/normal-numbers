@@ -480,6 +480,49 @@ theorem exists_irrational_notMem_multiscale_cfBadZone_in_Ioo
   obtain ⟨⟨hxA, hxB⟩, hxQ⟩ := hx
   exact ⟨x, hxQ, hxA, hxB⟩
 
+/-- **Multi-scale + cfK measure core** (the cfK-steer selection).  Like
+`exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`, but the aggregate bound
+`hbound` additionally leaves room for the cfK-large extension mass
+`(gaussMeasure (cfKbadExtSet wx κ ntop)).toReal`, so the returned point is BOTH
+freq-good at every scale in `NS` AND has a `cfK ≤ e^{κ·ntop}` extension past `wx`.
+Combines `gaussMeasure_multiscale_cfBadZone_le` (bad-zone mass) with the packaged
+`exists_rate_gaussMeasure_cfKbadExtSet_le` bound (the caller instantiates `κ`),
+then extracts an irrational point via
+`exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt` with `B' = (bad) ∪ (cfK
+large)`.  This is the selection at the heart of the (resolved) cfK-steer route for
+`schedA_block_linear`. -/
+theorem exists_irrational_notMem_multiscale_cfBadZone_cfK_in_Ioo
+    (wx : List ℕ) (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ : ℝ} (hδ : 0 < δ) {c d : ℝ}
+    (NS : Finset ℕ) {n₁ : ℕ} (hn₁ : 0 < n₁) (hNS : ∀ n ∈ NS, n₁ ≤ n)
+    (κ : ℝ) (ntop : ℕ)
+    (hbound : (NS.card : ℝ) * (∑ v ∈ F, 7 * ((8 * v.length + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁))
+        * (gaussMeasure (cfCylinder wx)).toReal)
+        + (gaussMeasure (cfKbadExtSet wx κ ntop)).toReal
+        < (gaussMeasure (Set.Ioo c d)).toReal) :
+    ∃ x : ℝ, Irrational x ∧ x ∈ Set.Ioo c d ∧
+      x ∉ (⋃ n ∈ NS, ⋃ v ∈ F, cfBadZone wx v n δ) ∧
+      x ∉ cfKbadExtSet wx κ ntop := by
+  have hbad := gaussMeasure_multiscale_cfBadZone_le wx hwxpos F hF NS hn₁ hNS hδ
+  set Bbad : Set ℝ := ⋃ n ∈ NS, ⋃ v ∈ F, cfBadZone wx v n δ with hBbad
+  set S : Set ℝ := cfKbadExtSet wx κ ntop with hS
+  have hBfin : gaussMeasure Bbad ≠ ⊤ := measure_ne_top _ _
+  have hSfin : gaussMeasure S ≠ ⊤ := measure_ne_top _ _
+  have hIfin : gaussMeasure (Set.Ioo c d) ≠ ⊤ := measure_ne_top _ _
+  have hsumfin : gaussMeasure Bbad + gaussMeasure S ≠ ⊤ := by
+    rw [ENNReal.add_ne_top]; exact ⟨hBfin, hSfin⟩
+  have hunion_lt : gaussMeasure (Bbad ∪ S) < gaussMeasure (Set.Ioo c d) := by
+    have hlt_toReal : (gaussMeasure Bbad + gaussMeasure S).toReal
+        < (gaussMeasure (Set.Ioo c d)).toReal := by
+      rw [ENNReal.toReal_add hBfin hSfin]; linarith [hbad, hbound]
+    calc gaussMeasure (Bbad ∪ S)
+        ≤ gaussMeasure Bbad + gaussMeasure S := measure_union_le _ _
+      _ < gaussMeasure (Set.Ioo c d) := (ENNReal.toReal_lt_toReal hsumfin hIfin).mp hlt_toReal
+  obtain ⟨x, hirr, hxI, hxni⟩ :=
+    exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt (Bbad ∪ S) hunion_lt
+  exact ⟨x, hirr, hxI, fun h => hxni (Or.inl h), fun h => hxni (Or.inr h)⟩
+
 /-- **The STEERABLE frequency-good block (B6 crux, filler-free).**  Given a
 genuine base `wx`, family `F`, tolerance `δ`, length target `L`, and a target
 interval `(c,d)` all of whose irrationals lie in `cfCylinder wx`, there is a
