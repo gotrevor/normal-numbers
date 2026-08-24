@@ -655,4 +655,34 @@ theorem phaseWindowFreq_div_N_tendsto (b r L s : ℕ) (hb : 2 ≤ b) (hr : 1 ≤
   simp only [Function.comp]
   field_simp
 
+/-- **Non-straddling phase-sum limit**: summing `phaseWindowFreq_div_N_tendsto`
+over the non-straddling phases (`s + L ≤ r`) gives the `Lo_r` limit
+`∑_{non-strad} b^{-L}/r`. -/
+theorem sum_nonStrad_phaseCount_div_tendsto (b r L : ℕ) (hb : 2 ≤ b) (hr : 1 ≤ r)
+    (y : ℝ) (hy : y ∈ Set.Ico (0 : ℝ) 1) (w : List ℕ) (hwlen : w.length = L)
+    (hwlt : ∀ d ∈ w, d < b)
+    (hsn : ∀ c < b ^ r, Filter.Tendsto
+        (fun Q : ℕ => (((Finset.range Q).filter (fun q => digitOf (b ^ r) y q = c)).card : ℝ) / Q)
+        Filter.atTop (nhds ((b : ℝ) ^ r)⁻¹)) :
+    Filter.Tendsto (fun N : ℕ => ∑ s ∈ (Finset.range r).filter (fun s => s + L ≤ r),
+        (((Finset.range (phaseOccCount r L s N)).filter
+          (fun q => List.ofFn (fun i : Fin L => digitOf b y (r * q + s + i)) = w)).card : ℝ) / N)
+      Filter.atTop (nhds (∑ _s ∈ (Finset.range r).filter (fun s => s + L ≤ r),
+        ((b : ℝ) ^ L)⁻¹ * (r : ℝ)⁻¹)) := by
+  apply tendsto_finset_sum
+  intro s hs
+  have hsL : s + L ≤ r := (Finset.mem_filter.mp hs).2
+  exact phaseWindowFreq_div_N_tendsto b r L s hb hr hsL y hy w hwlen hwlt hsn
+
+/-- **Straddling phase-sum limit**: summing `phaseOccCount_div_tendsto` over the
+straddling phases (`r < s + L`) gives the `Hi_r − Lo_r` upper-bound limit
+`∑_{strad} 1/r = (L−1)/r`. -/
+theorem sum_strad_phaseOccCount_div_tendsto (r L : ℕ) (hr : 1 ≤ r) :
+    Filter.Tendsto (fun N : ℕ => ∑ s ∈ (Finset.range r).filter (fun s => r < s + L),
+        (phaseOccCount r L s N : ℝ) / N)
+      Filter.atTop (nhds (∑ _s ∈ (Finset.range r).filter (fun s => r < s + L), (r : ℝ)⁻¹)) := by
+  apply tendsto_finset_sum
+  intro s _
+  exact phaseOccCount_div_tendsto r L s hr
+
 end NormalNumbers
