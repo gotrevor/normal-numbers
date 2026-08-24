@@ -1205,6 +1205,17 @@ theorem exists_cfCylinder_prefix_subset_ball {wx : List ℕ} (hwxne : wx ≠ [])
   rw [Set.mem_Icc] at hzIcc hpIcc
   exact ⟨by linarith [hzIcc.1, hpIcc.2], by linarith [hzIcc.2, hpIcc.1]⟩
 
+/-- **Co-membership in a CF-cylinder pins the leading CF digits.**  Two points of the
+same cylinder `cfCylinder w` agree on their first `|w|` CF digits (both spell `w`).
+The cylinder-based counterpart of `exists_ball_cfDigit_psi_eq`: when the invariant places
+`ψ(cfCylinder wx)` inside a common depth-`m` z-cylinder, `ψ(xA)` and the selected point's
+image agree on their first `m` z-digits with no metric ball. -/
+theorem cfDigit_eq_of_mem_cfCylinder {w : List ℕ} {x y : ℝ}
+    (hx : x ∈ cfCylinder w) (hy : y ∈ cfCylinder w) :
+    ∀ i < w.length, cfDigit x i = cfDigit y i := by
+  intro i hi
+  rw [hx.2 i hi, hy.2 i hi]
+
 /-- **Absolute-scale bad-zone avoidance transfers along CF-digit agreement.**  If two
 full-orbit reals `z, z'` agree on their first `m` CF digits with `n + |v| ≤ m`, then
 avoidance of the ABSOLUTE-scale bad zone `cfBadZone [] v n δ` transfers from `z'` to `z`

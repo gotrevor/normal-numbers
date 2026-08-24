@@ -159,9 +159,48 @@ L4 gives it a NEW proof; the two-stream proof (bottoming at the `schedA_block_li
    (x-bad mass + `(2/q)`·z-bad mass < γ(c,d)). Uses brick 2a for the z-term. **The
    full MEASURE+SELECTION layer of L4 (bricks 1, 2a, 3) is now complete and
    axiom-clean.** What `hbound` needs from the schedule is exactly the C-bound (2b).
-4. **Single-stream recursion.** Rebuild as ONE stream: a `SchedStateL4` carrying
-   only `wx` + the interval, extended by brick-3 selection each stage; `wxSeq_L4`,
-   its chain, limit `xA`. Reuse `chain_orbit_equidist_uniform` for `xA` (x-side).
+4. **Single-stream recursion (brick 4).** Rebuild as ONE stream: a `SchedStateL4`
+   carrying only `wx` + the interval, extended by brick-3′ selection each stage;
+   `wxSeq_L4`, its chain, limit `xA`. Reuse `chain_orbit_equidist_uniform` for `xA`.
+
+   **✅ BRICK-4 Z-TRANSFER INGREDIENTS COMPLETE + AXIOM-CLEAN (2026-08-24, this lap
+   sequence).** The mechanism transferring the selected point's z-frequency to the
+   chain limit `ψ(xA)` is now fully in-kernel, via FIVE reusable lemmas in
+   `CFScheduleA.lean` (all trust-triple):
+   - `blockCount_eq_of_cfDigit_agree` (`4b8cfb8`) — first-`m` digit agreement (`n+|v|≤m`)
+     ⇒ equal `blockCount (cfCyl v) n`.
+   - `exists_nhds_cfDigit_eq` (`3b6d753`) — z-ball on which first `m` CF digits are const.
+   - `exists_ball_cfDigit_psi_eq` (`60c9465`) — ψ `q`-Lipschitz pullback of that ball to
+     an x-ball: nearby `x` ⇒ `ψx` agrees with `ψx₀` on first `m` z-digits.
+   - `notMem_cfBadZone_nil_of_cfDigit_agree` (`6186ef0`) — digit-agreement transfers
+     ABSOLUTE-scale bad-zone AVOIDANCE (`cfBadZone [] v n δ`).
+   - `exists_cfCylinder_prefix_subset_ball` (`bb439bd`) — a deep genuine extension of
+     `wx` whose cylinder ⊆ any ε-ball around one of its irrational points (diam→0).
+   - `cfDigit_eq_of_mem_cfCylinder` (this lap) — co-membership in a cylinder pins the
+     leading digits (cylinder-based agreement, no metric ε).
+
+   **⚠️ ROUTE-DECISIVE DESIGN NOTE — the refinement circularity + its resolution.**
+   The step must (A) freq-good-extend `wx→wx₁` (LINEAR block, uniform-good, x-side) and
+   (B) make `ψ(cfCylinder wx₁)` pin the first `m_s := max NSz_s + max_{v∈F}|v|` z-digits
+   for ALL its points, so both `ψ(xA)` and the brick-3′ point `ψ(p_s)` (all in
+   `cfCylinder wx₁`) avoid the stage z-bad zones via `blockCount_eq_of_cfDigit_agree`.
+   Naive "select p then refine `wx₁` deeper to fit `exists_ball_cfDigit_psi_eq`'s ball
+   `ε_p`" is CIRCULAR: `ε_p` depends on `p`, `p` is chosen after fixing the block depth,
+   and appended refinement digits (length `t`) hurt uniform goodness unless `t=O(√blk)`.
+   **RESOLUTION (adopted): boundary-strip avoidance, NO post-refinement (`t=0`).** Set the
+   freq-extend depth `L` deep enough that `diam(cfCylinder wx₁) < η_s` for a FIXED `η_s`;
+   AUGMENT the brick-3′ selection to also avoid `ψ⁻¹(η_s-boundary-strip of the depth-`m_s`
+   z-cylinders)` — the set of `x` whose `ψx` is within `η_s` of a depth-`m_s` z-boundary.
+   That strip has small γ-mass (`coveredByCyl`/`volume_interval_sdiff_covered_le`-style,
+   the SAME straddle-by-measure device as brick 2b, NOT alignment). Then the selected
+   `p_s` has `ψp_s` interior to its depth-`m_s` z-cylinder by margin `>η_s>diam`, so all of
+   `ψ(cfCylinder wx₁)` lands in that one z-cylinder ⇒ first `m_s` z-digits fixed ⇒
+   `cfDigit_eq_of_mem_cfCylinder` gives agreement with `t=0`. `|wx₁|≈m_s` LINEAR (the
+   straddle is handled by measure, so no exponential x-target). **NEXT BRICK: the
+   η-boundary-strip γ-mass bound** (`gaussMeasure_psi_boundary_strip_le`), then fold it
+   into a route-B brick-3″ selection, then `SchedStateL4`/`schedStepL4_exists`.
+   TODO(alt: keep the metric-ball path with `t=O(√blk)` refinement + a `√`-slack bump in
+   `chain_orbit_equidist_uniform` — heavier, deferred).
 5. **z-side chain frequency.** ✅ **CORE DONE (2026-08-24, commit `6933f05`,
    axiom-clean):** `tendsto_of_scale_coverage` (`CFScheduleA.lean`, after brick 3′) —
    `f n → L` when `|f n − L| < δ s` for `n ∈ S s` and the stages cover all large `n`
