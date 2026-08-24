@@ -549,6 +549,30 @@ theorem gaussMeasure_interval_sdiff_covered_le (a b : ℝ)
     _ = ENNReal.ofReal ((Real.log 2)⁻¹ * (4 / (Nat.fib (n + 1) : ℝ) ^ 2)) := by
         rw [← ENNReal.ofReal_mul (by positivity)]
 
+/-- **Brick 2b-iii per-cylinder term (2b-ii ∘ Chebyshev).**  On a genuine depth-`d`
+cylinder `w'` (`d < N`, slack `δ' := δ − d/N > 0`), the base-`[]` `v`-bad mass at
+scale `N` inside `w'` is a fixed FRACTION of `γ(cfCylinder w')` — the fraction
+`7·(8|v|+80)·γ(v)/(δ'²(N−d))` is INDEPENDENT of `w'`, so it factors out of the sum
+over interior cylinders in 2b-iii.  Composes `gaussMeasure_cfBadZone_nil_inter_cylinder_le`
+(2b-ii) with `chebyshev_blockCount_brick` at base `w'`, scale `N−d`, slack `δ'`. -/
+theorem gaussMeasure_cfBadZone_nil_inter_cylinder_frac_le
+    (v w' : List ℕ) (N : ℕ) (δ : ℝ)
+    (hposw' : ∀ a ∈ w', 1 ≤ a) (hposv : ∀ a ∈ v, 1 ≤ a)
+    (hdN : w'.length < N) (hδ' : 0 < δ - (w'.length : ℝ) / (N : ℝ)) :
+    gaussMeasure (cfBadZone [] v N δ ∩ cfCylinder w')
+      ≤ ENNReal.ofReal (7 * ((8 * v.length + 80)
+          * (gaussMeasure (cfCylinder v)).toReal
+          / ((δ - (w'.length : ℝ) / (N : ℝ)) ^ 2 * ((N - w'.length : ℕ) : ℝ)))
+          * (gaussMeasure (cfCylinder w')).toReal) := by
+  set δ' : ℝ := δ - (w'.length : ℝ) / (N : ℝ) with hδ'def
+  have hstep := gaussMeasure_cfBadZone_nil_inter_cylinder_le v w' N δ hdN
+  have hcheb := chebyshev_blockCount_brick w' v hposw' hposv (N - w'.length)
+    (by omega) hδ'
+  have hfin : gaussMeasure (cfBadZone w' v (N - w'.length) δ') ≠ ⊤ := measure_ne_top _ _
+  refine hstep.trans ?_
+  rw [← ENNReal.ofReal_toReal hfin]
+  exact ENNReal.ofReal_le_ofReal hcheb
+
 /-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
 finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
 cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every
