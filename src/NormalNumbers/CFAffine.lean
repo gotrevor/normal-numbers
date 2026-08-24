@@ -86,4 +86,15 @@ theorem good_mass_in_affine_preimage {q : ℝ} (hq : 0 < q) (r c d : ℝ)
   have h := length_le_two_mul_good_add_err ((c - r) / q) ((d - r) / q) h0 hcd h1 hn m
   rwa [show (d - r) / q - (c - r) / q = (d - c) / q by field_simp; ring] at h
 
+/-- **L3 (general pullback measure).**  For any `q ≠ 0` and measurable-or-not
+set `s`, the `ψ`-preimage scales Lebesgue measure by `|q⁻¹|` (translation is
+measure-invariant; `x ↦ q·x` scales by `|q⁻¹|`).  This is the union-bound
+ingredient for L4: a "bad" set `B` in image space of mass `≤ β` pulls back to
+mass `≤ |q⁻¹|·β` in `x`-space, so image bad zones stay controllable. -/
+lemma volume_preimage_affineMap {q : ℝ} (hq : q ≠ 0) (r : ℝ) (s : Set ℝ) :
+    volume (affineMap q r ⁻¹' s) = ENNReal.ofReal |q⁻¹| * volume s := by
+  have h1 : affineMap q r ⁻¹' s = (q * ·) ⁻¹' ((fun h => h + r) ⁻¹' s) := by
+    ext x; rfl
+  rw [h1, Real.volume_preimage_mul_left hq, measure_preimage_add_right]
+
 end NormalNumbers
