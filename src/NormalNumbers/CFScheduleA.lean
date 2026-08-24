@@ -39,7 +39,7 @@ Additive only: no edits to any frozen B5′ module.
 
 namespace NormalNumbers
 
-open MeasureTheory Filter
+open MeasureTheory Filter Asymptotics
 
 /-- Gauss-orbit equidistribution: the orbit block-count frequency of every
 genuine CF pattern `v` tends to its Gauss measure.  The `CFOrbitFreq` interface
@@ -1856,6 +1856,109 @@ theorem mem_wordFamily_eventually (v : List ℕ) (hvne : v ≠ [])
   · exact List.length_pos_of_ne_nil hvne
   · exact le_trans (le_max_left _ _) ht
   · exact le_trans (le_trans (List.le_sum_of_mem ha) (le_max_right _ _)) ht
+
+/-- **Abstract `hslack` telescoping** (the `o(word)` slack the hdom-free
+`chain_orbit_equidist_uniform` demands).  For accumulated `word`, per-stage block
+length `blk` (`word (s+1) = word s + blk s`), and slack `C` with `C =o[atTop] blk`
+(each block's slack is sublinear in its length) and `blk → ∞`, plus the geometric
+bound `blk s ≤ ρ · word s` (word grows at most geometrically — supplied by the
+schedule's promotion rule), the shifted partial slack sums stay `< ε · word`:
+`∀ ε>0, ∀ s₀, ∃ K, ∀ k≥K, ∑_{i≤k}(C(s₀+i)+c) < ε · word (s₀+k)`.  This is EXACTLY
+the `hslack` conjunct of `chain_orbit_equidist_uniform` (with `c = |v|−1`).
+Proof: `Asymptotics.IsLittleO.sum_range` gives `∑(C+c) =o ∑blk = word−word₀`;
+the off-by-one (`range (k+1)` vs the `k`-block word) is absorbed by `blk ≤ ρ·word`
+(so `word (s₀+k+1) ≤ (1+ρ)·word (s₀+k)`).  Schedule discharges: `C_s/|u_s|→0`
+from `n₁²≤|u|·√|u|`; `blk→∞` from `|u_s|≥L_s→∞`; `blk≤ρ·word` from promotion. -/
+theorem slack_telescoping
+    (word blk C : ℕ → ℝ) (c ρ : ℝ)
+    (hc : 0 ≤ c) (hρ : 0 ≤ ρ) (hword0 : 0 ≤ word 0)
+    (hC : ∀ s, 0 ≤ C s) (hblk : ∀ s, 0 ≤ blk s)
+    (hword : ∀ s, word (s + 1) = word s + blk s)
+    (hgeom : ∀ s, blk s ≤ ρ * word s)
+    (hClit : (fun s => C s) =o[atTop] fun s => blk s)
+    (hblktop : Tendsto blk atTop atTop) :
+    ∀ ε : ℝ, 0 < ε → ∀ s₀ : ℕ, ∃ K : ℕ, ∀ k : ℕ, K ≤ k →
+      (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + c)) < ε * word (s₀ + k) := by
+  have hpsum : ∀ s₀ n : ℕ, ∑ i ∈ Finset.range n, blk (s₀ + i) = word (s₀ + n) - word s₀ := by
+    intro s₀ n; induction n with
+    | zero => simp
+    | succ m ih => rw [Finset.sum_range_succ, ih, Nat.add_succ, hword]; ring
+  have hwordmono : ∀ a b, a ≤ b → word a ≤ word b := by
+    intro a b hab
+    induction b with
+    | zero => interval_cases a; rfl
+    | succ m ih =>
+      rcases Nat.lt_or_ge a (m+1) with h | h
+      · have := ih (Nat.lt_succ_iff.1 h); rw [hword m]; linarith [hblk m]
+      · have hEq : a = m + 1 := le_antisymm hab h; rw [hEq]
+  have hword_nonneg : ∀ n, 0 ≤ word n := fun n => le_trans hword0 (hwordmono 0 n (Nat.zero_le n))
+  have hwordtop : Tendsto word atTop atTop := by
+    have hsumtop : Tendsto (fun n => ∑ i ∈ Finset.range n, blk i) atTop atTop := by
+      obtain ⟨N, hN⟩ := eventually_atTop.1 (hblktop.eventually_ge_atTop 1)
+      apply tendsto_atTop_mono' _ _ (tendsto_atTop_add_const_right atTop (-(N:ℝ))
+        (tendsto_natCast_atTop_atTop))
+      filter_upwards [Ici_mem_atTop N] with n hn
+      calc ((n:ℝ) + -(N:ℝ)) = ((n - N : ℕ) : ℝ) := by rw [Nat.cast_sub hn]; ring
+        _ = ∑ _i ∈ Finset.Ico N n, (1:ℝ) := by rw [Finset.sum_const, Nat.card_Ico]; simp
+        _ ≤ ∑ i ∈ Finset.Ico N n, blk i := Finset.sum_le_sum (fun i hi => hN i (Finset.mem_Ico.1 hi).1)
+        _ ≤ ∑ i ∈ Finset.range n, blk i := by
+            rw [← Finset.sum_range_add_sum_Ico blk hn]
+            have : 0 ≤ ∑ i ∈ Finset.range N, blk i := Finset.sum_nonneg (fun i _ => hblk i)
+            linarith
+    have heq : word = fun n => (∑ i ∈ Finset.range n, blk i) + word 0 := by
+      funext n; have := hpsum 0 n; simp only [Nat.zero_add] at this; rw [this]; ring
+    rw [heq]; exact tendsto_atTop_add_const_right _ _ hsumtop
+  intro ε hε s₀
+  have hshift : Tendsto (fun i => s₀ + i) atTop atTop := by
+    simpa [Nat.add_comm] using tendsto_add_atTop_nat s₀
+  have hCshift : (fun i => C (s₀ + i)) =o[atTop] fun i => blk (s₀ + i) :=
+    hClit.comp_tendsto hshift
+  have hblkshift_top : Tendsto (fun i => blk (s₀ + i)) atTop atTop := hblktop.comp hshift
+  have hcshift : (fun _ : ℕ => c) =o[atTop] fun i => blk (s₀ + i) := by
+    rw [isLittleO_const_left]
+    refine Or.inr ?_
+    simp only [Function.comp_def, Real.norm_eq_abs]
+    exact tendsto_abs_atTop_atTop.comp hblkshift_top
+  have hflit : (fun i => C (s₀ + i) + c) =o[atTop] fun i => blk (s₀ + i) := hCshift.add hcshift
+  have hgshift_nonneg : (0 : ℕ → ℝ) ≤ fun i => blk (s₀ + i) := fun i => hblk _
+  have hgshift_sumtop : Tendsto (fun n => ∑ i ∈ Finset.range n, blk (s₀ + i)) atTop atTop := by
+    have : (fun n => ∑ i ∈ Finset.range n, blk (s₀ + i)) = fun n => word (s₀ + n) - word s₀ := by
+      funext n; exact hpsum s₀ n
+    rw [this]; exact tendsto_atTop_add_const_right _ _ (hwordtop.comp hshift)
+  have hsum_o := hflit.sum_range hgshift_nonneg hgshift_sumtop
+  set ε' : ℝ := ε / (2 * (1 + ρ)) with hε'def
+  have h1ρ : (0:ℝ) < 1 + ρ := by linarith
+  have hε' : 0 < ε' := by rw [hε'def]; positivity
+  rw [isLittleO_iff] at hsum_o
+  obtain ⟨N₁, hN₁⟩ := eventually_atTop.1 (hsum_o hε')
+  obtain ⟨N₂, hN₂⟩ := eventually_atTop.1 (hwordtop.eventually_gt_atTop 0)
+  refine ⟨max N₁ N₂, fun k hk => ?_⟩
+  have hkN₁ : N₁ ≤ k + 1 := le_trans (le_trans (le_max_left _ _) hk) (Nat.le_succ k)
+  have hkN₂ : N₂ ≤ s₀ + k := le_trans (le_max_right _ _) (le_trans hk (Nat.le_add_left k s₀))
+  have hbound := hN₁ (k + 1) hkN₁
+  have hSf_nonneg : 0 ≤ ∑ i ∈ Finset.range (k+1), (C (s₀+i) + c) :=
+    Finset.sum_nonneg (fun i _ => add_nonneg (hC _) hc)
+  have hSg_nonneg : 0 ≤ ∑ i ∈ Finset.range (k+1), blk (s₀ + i) :=
+    Finset.sum_nonneg (fun i _ => hblk _)
+  rw [Real.norm_of_nonneg hSf_nonneg, Real.norm_of_nonneg hSg_nonneg] at hbound
+  have hSg_eq : ∑ i ∈ Finset.range (k+1), blk (s₀ + i) = word (s₀ + (k+1)) - word s₀ := hpsum s₀ (k+1)
+  have hword_step : word (s₀ + (k+1)) = word (s₀ + k) + blk (s₀ + k) := by
+    rw [Nat.add_succ, hword]
+  have hgeom_k : blk (s₀ + k) ≤ ρ * word (s₀ + k) := hgeom _
+  have hwordpos : 0 < word (s₀ + k) := hN₂ (s₀ + k) hkN₂
+  have hword_s0 : 0 ≤ word s₀ := hword_nonneg s₀
+  have hfin : ε' * (1 + ρ) = ε / 2 := by rw [hε'def]; field_simp
+  calc ∑ i ∈ Finset.range (k+1), (C (s₀+i) + c)
+      ≤ ε' * ∑ i ∈ Finset.range (k+1), blk (s₀ + i) := hbound
+    _ = ε' * (word (s₀ + (k+1)) - word s₀) := by rw [hSg_eq]
+    _ ≤ ε' * word (s₀ + (k+1)) := by
+        apply mul_le_mul_of_nonneg_left _ hε'.le; linarith
+    _ = ε' * (word (s₀ + k) + blk (s₀ + k)) := by rw [hword_step]
+    _ ≤ ε' * (word (s₀ + k) + ρ * word (s₀ + k)) := by
+        apply mul_le_mul_of_nonneg_left _ hε'.le; linarith
+    _ = (ε' * (1 + ρ)) * word (s₀ + k) := by ring
+    _ = (ε / 2) * word (s₀ + k) := by rw [hfin]
+    _ < ε * word (s₀ + k) := by nlinarith [hwordpos, hε]
 
 /-- **THE B6 CRUX (interleaved-schedule witness), FEASIBLE REGIME.**  For `q > 0`
 and `r ∈ (-q, 1)` — exactly the range in which the feasible set

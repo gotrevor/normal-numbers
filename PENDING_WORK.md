@@ -29,7 +29,44 @@ The feasible set `(0,1) ∩ ψ⁻¹(0,1) = (max 0 (-r/q), min 1 ((1-r)/q))` is n
 **Two open `src/` sorries now:** (1) the feasible crux (item-3 recursion, below),
 (2) the `TODO(shift)` general-`r` reduction (leaf: `IsCFNormal_add_int`).
 
-### ⚠️ SHARPENED item-3 feasibility (grind lap 2026-08-24): the NAIVE schedule breaks `hslack` — SLOW PROMOTION is mandatory
+### ✅ RESOLVED item-3 feasibility (grind lap 2026-08-24, later): `hslack` CLOSES — tool = `Asymptotics.IsLittleO.sum_range`; needs block ≤ ρ·word (length-exposing step + promotion)
+Corrects the (over-pessimistic) note below.  Two facts settle `hslack`:
+- **Geometric measure factors CANCEL.**  Budget `hbound`: `(m+1)·A₁ < γtar` with
+  `A₁ = Σ_v 7(8|v|+80)·γ_v·γ_wx/(δ²n₁)` and `γtar` = middle-half measure of the
+  steer target.  BOTH `γ_wx` and `γtar` scale like the current interval width
+  `~φ^{-2|w_s|}`, so they cancel: forced block `|u_s| = n₁+m² ~ (S₀/δ²)²` with
+  `S₀ = Σ_v 7(8|v|+80)γ_v` **family-only, `|w_s|`-independent**.  ⇒ between
+  promotions block length is a CONSTANT `B(t)`; word grows LINEARLY by `B(t)/step`.
+- **`hslack` via `Asymptotics.IsLittleO.sum_range`** (mathlib,
+  `Analysis/Asymptotics/SpecificAsymptotics.lean:136`): if `f =o[atTop] g`, `g≥0`,
+  `Σg → ∞`, then `Σf =o Σg`.  Take `f i = C(s₀+i)+(|v|−1)`, `g i = |u_{s₀+i}|`.
+  Then (a) `C_s/|u_s| → 0` [from `n₁²≤|u|·√|u| ⇒ n₁≤|u|^{3/4}`, so
+  `C_s = 4√|u_s|+2|v|+n₁_s = o(|u_s|)`], (b) `Σ|u_s| → ∞` [from `|u_s|≥L_s→∞`].
+  ⇒ `Σ_{i<n} f = o(Σ_{i<n}|u|) = o(|w(s₀+n)|−|w s₀|)`.
+- **THE off-by-one CATCH (real, localizes the promotion need).**  `hslack`'s
+  numerator sums `range(k+1)` (`k+1` blocks) but its RHS word `|w(s₀+k)|` holds
+  only `k` blocks.  `o(|w(s₀+k+1)|)` gives the needed `< ε|w(s₀+k)|` **iff
+  `|w(s₀+k+1)| ≤ ρ·|w(s₀+k)|`** — block `≤ ρ·word`, i.e. word grows at most
+  geometrically.  This upper bound is the ONLY thing promotion is needed for: it
+  keeps `B(t) ≤ ρ|w_s|` (promote to `t` only once `|w_s| ≥ promThreshold(t)`), so
+  `|u_s| = O(|w_s|)`.  Without an UPPER block bound the tail term
+  `|u_{s₀+k}| ~ |w(s₀+k+1)|` can dwarf `|w(s₀+k)|`.
+
+**Concrete item-3 build order (revised):**
+1. **Length-exposing uniform affine step** — variant of
+   `exists_freq_good_extend_affine_steer_uniform` that calls
+   `exists_uniformly_freq_good_block_steer` DIRECTLY (not the `_len` wrapper),
+   taking `m,n₁` (or exposing `|u_·| = n₁+m²`) so the CALLER controls block length
+   and can enforce `|u_s| ≤ ρ|w_s|`.  (The `_len` wrapper hides the length — that's
+   why the current `_steer_uniform` can't supply the upper bound.)
+2. **Abstract slack lemma** `slack_telescoping` — from `IsLittleO.sum_range`, the
+   generic `Σ(C+c) < ε·word` conclusion given `C=o(blk)`, `Σblk→∞`,
+   `word(s+1)=word s+blk s`, `blk s ≤ ρ·word s`.  Self-contained; PROVABLE NOW.
+3. **`SchedStateA` + promotion** (counter `t`, mirror `CFSchedule`); `schedA`;
+   chains; feed `chain_orbit_equidist_uniform` (`hblock` from `δ_s→0`+coverage,
+   `hslack` from the abstract lemma).  Assemble the feasible crux.
+
+### ⚠️ (SUPERSEDED by the ✅ above) SHARPENED item-3 feasibility: the NAIVE schedule breaks `hslack` — SLOW PROMOTION is mandatory
 The directive/handoff item-3 sketch (`F_s = wordFamily s`, `δ_s = 1/(s+1)`,
 `L_s = |w_s|`) does NOT close `hslack`.  Reason, traced through the block sizer:
 - `exists_uniformly_freq_good_block_steer` fixes `|u| = n₁ + m²` with `n₁ = m·⌊√m⌋`,
