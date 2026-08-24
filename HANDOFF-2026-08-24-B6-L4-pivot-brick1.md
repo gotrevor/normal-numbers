@@ -38,6 +38,16 @@ route-agnostic, `:2676`) lands.
   z-cylinder-based multiscale bad zone has γ-mass `≤ (2/q)·(multiscale bound for wz)`.
   Clean: brick 1 ∘ `gaussMeasure_multiscale_cfBadZone_le`. Bound is ABSOLUTE
   (`∝ γ(cfCylinder wz)`).
+- **Brick 3 DONE (commit `d255444`, axiom-clean):**
+  `exists_irrational_notMem_xbad_psi_zbad_in_Ioo` — selects ONE irrational
+  `x ∈ (c,d)` avoiding x-CF bad zones (base wx) AND ψ⁻¹(z-CF bad zones) (base wz),
+  given ONE measure hypothesis (x-bad + `(2/q)`·z-bad < γ(c,d)). **The
+  MEASURE+SELECTION layer of L4 (bricks 1, 2a, 3) is COMPLETE + axiom-clean.**
+  What `hbound` needs from the schedule is exactly the 2b C-bound.
+- **Width machinery confirmed present:** `volume_cfCylinder_le_fib` (≤ 1/fib(|w|+1)²),
+  `fib_le_cfK`. cfK-control (`cfKbadExtSet`, `frac_mass_bad_extensions`,
+  `exists_rate_gaussMeasure_cfKbadExtSet_le`, `exists_fib_threshold_linear_of_cfK`)
+  reusable for the z-side (brick 1 pulls back `cfKbadExtSet` directly).
 
 ## Next steps (priority order — L4 attack path, PENDING_WORK.md top)
 

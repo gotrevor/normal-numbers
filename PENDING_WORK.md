@@ -86,11 +86,14 @@ L4 gives it a NEW proof; the two-stream proof (bottoming at the `schedA_block_li
      refinement length is unbounded (deep boundary pathology survives), escalate to
      route B (covering) or record a genuine obstruction. **Do NOT grind past this
      without settling the `C`-bound — it is the whole ballgame.**
-3. **Combined single-selection.** Feed
-   `gaussMeasure(x-bad ∪ ψ⁻¹(z-bad)) < gaussMeasure(cfCylinder wx interval)` to
-   `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt` (`:402`) → ONE irrational
-   `x` in the current x-interval avoiding BOTH. (x-bad handled by the existing
-   `gaussMeasure_multiscale_cfBadZone_le` on `wx`.)
+3. ✅ **DONE (2026-08-24, commit `d255444`, axiom-clean).**
+   `exists_irrational_notMem_xbad_psi_zbad_in_Ioo` (`CFScheduleA.lean`, after
+   `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`): selects ONE irrational
+   `x ∈ (c,d)` avoiding BOTH x-CF bad zones (base wx, scales NSx) AND ψ⁻¹(z-CF bad
+   zones) (base wz, scales NSz), given ONE measure hypothesis `hbound`
+   (x-bad mass + `(2/q)`·z-bad mass < γ(c,d)). Uses brick 2a for the z-term. **The
+   full MEASURE+SELECTION layer of L4 (bricks 1, 2a, 3) is now complete and
+   axiom-clean.** What `hbound` needs from the schedule is exactly the C-bound (2b).
 4. **Single-stream recursion.** Rebuild as ONE stream: a `SchedStateL4` carrying
    only `wx` + the interval, extended by brick-3 selection each stage; `wxSeq_L4`,
    its chain, limit `xA`. Reuse `chain_orbit_equidist_uniform` for `xA` (x-side).

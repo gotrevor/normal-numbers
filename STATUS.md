@@ -162,10 +162,11 @@ the ψ-pullback Gauss distortion bound `gaussMeasure(ψ⁻¹ S) ≤ (2/q)·gauss
    find z-word `wz` with `ψ(cfCylinder wx) ⊆ cfCylinder wz` and `γ(wz) ≤ C·γ(wx)`,
    `C=O(1)` — settle the `C`-bound (refine-to-align vs interval-covering) BEFORE
    grinding further. See PENDING_WORK top.
-3. **Combined single-selection** — feed `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt`
-   the x-bad ∪ ψ⁻¹(z-bad) mass → ONE `x` avoiding both.
+3. ✅ **DONE** (`d255444`, axiom-clean) — `exists_irrational_notMem_xbad_psi_zbad_in_Ioo`:
+   selects ONE irrational `x ∈ (c,d)` avoiding x-bad AND ψ⁻¹(z-bad) via one measure
+   hypothesis. **Measure+selection layer of L4 (bricks 1, 2a, 3) COMPLETE + axiom-clean.**
 4. **Single-stream recursion + limit `xA`** (`wxSeq` only); x-side reuses
-   `chain_orbit_equidist_uniform`.
+   `chain_orbit_equidist_uniform`. Needs the **2b C-bound** to discharge `hbound`.
 5. **z-side chain frequency** for `ψ(xA)` (mirror `chain_cf_digit_freq_tendsto_uniform`,
    blocks = z-ranges, goodness from pullback-avoidance) → `CFOrbitEquidist (ψxA)`.
 6. **Assemble** the NEW `exists_interleaved_affine_witness` proof; excise the
