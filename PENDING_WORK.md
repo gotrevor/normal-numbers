@@ -1,5 +1,22 @@
 # PENDING WORK — B5′ campaign
 
+> **GRIND (2026-08-24 — value-count bridge PROVED; crux is now a pure
+> tail-mass bound).** Landed three axiom-clean lemmas in `Khinchin.lean`:
+> - `countOccurrences_singleton`: `countOccurrences [a] l = l.count a`.
+> - `logTail_list_eq` (general list, by induction): for positive-digit `w`,
+>   `(Σ_{x∈w} log x) − Σ_{a≤K} (w.count a)·log a = Σ_{x∈w} (if K<x then log x else 0)`.
+> - `xstar_logTail_eq`: the difference INSIDE `xstar_log_tail_uniform` equals the
+>   nonnegative empirical tail `Σ_{i<n} (if K < cfDigit xstar i then log(cfDigit
+>   xstar i) else 0)`.
+> **Consequence**: `xstar_log_tail_uniform` now reduces (via `xstar_logTail_eq`)
+> to a pure **upper bound on the nonnegative empirical tail**: `∀ε>0 ∃K₀ ∀K≥K₀
+> ∀n, (1/n)·Σ_{i<n, cfDigit xstar i>K} log(cfDigit xstar i) ≤ ε`. All the
+> value-count/bookkeeping is discharged; what remains is exactly the schedule
+> guarantee that each good block's large-digit log-mass is `≤ η·(block length)`,
+> delivered by the Markov `logBadZone`. NEXT is unchanged (A′ first-moment
+> integral → B′ bad zone → C′ union plumbing → D′ layering); the bridge means
+> C′ can target the clean tail-mass form directly.
+
 > **GRIND (2026-08-24 — route SIMPLIFIED to Markov; plumbing scoped).** Two
 > route improvements that make `xstar_log_tail_uniform` markedly more tractable
 > than the "variance/Chebyshev" framing:

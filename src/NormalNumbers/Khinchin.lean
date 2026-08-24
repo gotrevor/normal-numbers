@@ -400,19 +400,91 @@ theorem xstar_log_digit_avg_truncated_tendsto (K : ℕ) :
   refine hsum.congr (fun n => ?_)
   rw [Finset.mul_sum]
 
+/-- Single-digit window count is the ordinary list `count`: `countOccurrences
+[a] l = l.count a`. -/
+theorem countOccurrences_singleton (a : ℕ) (l : List ℕ) :
+    countOccurrences [a] l = l.count a := by
+  induction l with
+  | nil => simp [countOccurrences_nil]
+  | cons b t ih =>
+      rw [countOccurrences_cons, ih, List.count_cons]
+      by_cases h : a = b
+      · subst h; simp [List.isPrefixOf]
+      · simp [List.isPrefixOf, h, Ne.symm h]
+
+/-- **Log-tail = full minus low-truncation** (list form, by induction): for a
+list `w` of positive digits, the total log-mass minus its `≤ K`
+value-truncation equals the log-mass of the entries `> K`.  This is the
+value-count bookkeeping that turns a bound on the tail log-mass into the
+`xstar_log_tail_uniform` statement. -/
+theorem logTail_list_eq (K : ℕ) (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
+    (w.map (fun a : ℕ => Real.log a)).sum
+        - ∑ a ∈ Finset.Icc 1 K, (w.count a : ℝ) * Real.log a
+      = (w.map (fun a : ℕ => if K < a then Real.log a else 0)).sum := by
+  induction w with
+  | nil => simp
+  | cons b t ih =>
+      have hb : 1 ≤ b := hpos b (List.mem_cons_self ..)
+      have hpos' : ∀ a ∈ t, 1 ≤ a := fun a ha => hpos a (List.mem_cons_of_mem b ha)
+      have hcount : ∑ a ∈ Finset.Icc 1 K, ((b :: t).count a : ℝ) * Real.log a
+          = (∑ a ∈ Finset.Icc 1 K, (t.count a : ℝ) * Real.log a)
+            + (if b ∈ Finset.Icc 1 K then Real.log b else 0) := by
+        rw [← Finset.sum_ite_eq' (Finset.Icc 1 K) b (fun _ => Real.log b),
+          ← Finset.sum_add_distrib]
+        apply Finset.sum_congr rfl
+        intro a _
+        rw [List.count_cons]
+        simp only [beq_iff_eq]
+        by_cases h : a = b
+        · subst h; simp only [if_pos rfl]; push_cast; ring
+        · rw [if_neg (fun hh => h hh.symm), if_neg h]; push_cast; ring
+      rw [List.map_cons, List.sum_cons, hcount, List.map_cons, List.sum_cons]
+      have hmem : (b ∈ Finset.Icc 1 K) ↔ ¬ (K < b) := by
+        rw [Finset.mem_Icc]
+        omega
+      by_cases h : K < b
+      · rw [if_pos h, if_neg (by rw [hmem]; simpa using h)]
+        linarith [ih hpos']
+      · rw [if_neg h, if_pos (by rw [hmem]; simpa using h)]
+        linarith [ih hpos']
+
+/-- **The tail bridge for `xstar`**: the difference inside `xstar_log_tail_uniform`
+is exactly the empirical log-mass of digits `> K`.  Specializes
+`logTail_list_eq` to `w = cfPrefix n` (positive CF digits), converting between
+the `countOccurrences`/`Finset` bookkeeping and the list form. -/
+theorem xstar_logTail_eq (K n : ℕ) :
+    ((List.range n).map (fun i => Real.log (cfDigit xstar i : ℝ))).sum
+        - ∑ a ∈ Finset.Icc 1 K, (countOccurrences [a] (cfPrefix n) : ℝ) * Real.log a
+      = ∑ i ∈ Finset.range n,
+          (if K < cfDigit xstar i then Real.log (cfDigit xstar i : ℝ) else 0) := by
+  have hpos : ∀ a ∈ cfPrefix n, 1 ≤ a := by
+    intro a ha
+    rw [cfPrefix, List.mem_map] at ha
+    obtain ⟨i, _, rfl⟩ := ha
+    exact one_le_cfDigit xstar xstar_irrational xstar_mem_Ioo i
+  have hcount : ∀ a, countOccurrences [a] (cfPrefix n) = (cfPrefix n).count a :=
+    fun a => countOccurrences_singleton a (cfPrefix n)
+  have hkey := logTail_list_eq K (cfPrefix n) hpos
+  simp only [hcount]
+  rw [show ((List.range n).map (fun i => Real.log (cfDigit xstar i : ℝ)))
+      = (cfPrefix n).map (fun a : ℕ => Real.log a) by rw [cfPrefix, List.map_map]; rfl]
+  rw [hkey, cfPrefix, List.map_map, finset_sum_range_eq_list_sum]
+  rfl
+
 /-- **Uniform log-digit tail control** (the sole SCHEDULE-DEPENDENT crux of
 Tier 2, now isolated).  For every `ε > 0` there is a cutoff `K₀` such that for
 ALL cutoffs `K ≥ K₀` and ALL prefix lengths `n`, the empirical log-average
 `(1/n)·Σ_{i<n} log aᵢ` differs from its `≤ K`-truncation
-`(1/n)·Σ_{a≤K} count[a]·log a` by at most `ε`.  Equivalently: the average
-log-mass carried by digits `> K` is `≤ ε` uniformly in `n`.  This is exactly
+`(1/n)·Σ_{a≤K} count[a]·log a` by at most `ε`.  Equivalently (via
+`xstar_logTail_eq`): the average log-mass carried by digits `> K`,
+`(1/n)·Σ_{i<n, aᵢ>K} log aᵢ`, is `≤ ε` uniformly in `n`.  This is exactly
 what pattern frequencies + the `goodC` total-mass bound provably CANNOT give
 (`DIRECTION.md` route note); it is delivered by the W6 log-concentration bad
-zone in the schedule (a Chebyshev/variance bound with moment input
-`summable_gaussKuzmin_logsq`).  DISCLOSED `sorry`: the analytic assembly below
-reduces the whole Tier-2 headline to this one statement; proving it is the
-remaining construction work (variance bound → `logBadZone` → additive union
-bound). -/
+zone in the schedule (a MARKOV first-moment bound — the tail is nonnegative —
+with input `gaussKuzmin_logtail_tendsto`).  DISCLOSED `sorry`: the analytic
+assembly above reduces the whole Tier-2 headline to this one statement;
+`xstar_logTail_eq` further reduces it to bounding the nonnegative empirical
+tail, which the additive `logBadZone` in the schedule construction delivers. -/
 theorem xstar_log_tail_uniform {ε : ℝ} (hε : 0 < ε) :
     ∃ K₀ : ℕ, ∀ K : ℕ, K₀ ≤ K → ∀ n : ℕ,
       |(1 / (n : ℝ)) * ((List.range n).map (fun i => Real.log (cfDigit xstar i : ℝ))).sum
