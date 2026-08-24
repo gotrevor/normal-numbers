@@ -2327,6 +2327,29 @@ theorem chain_slack_littleO {blk : ℕ → ℕ} (n₁ : ℕ → ℕ) (L : ℝ)
   have hb := (hbpos s).ne'
   field_simp
 
+/-- **Logarithmic fib threshold (bounded form).**  A resolution threshold `N` with
+`a < fib(n+1)²` for all `n ≥ N`, AND `N ≤ log_φ(√5·√a + 1) + 1` — logarithmic in
+`a`.  Packages `exists_nat_goldenRatio_pow_gt` (log-exponent solvability) with
+`fib_sq_gt_of_goldenRatio` (Binet lower bound).  The prerequisite the tight
+steer-block length needs: a target of width `d−c` is resolved with `Nfib ≈
+log_φ(1/(d−c))` digits (not the crude `1/(d−c)`), so `Nfib ≲ |w_s|` when the
+target width is `≳ φ^{−c|w_s|}` — the resolution half of `schedA_block_linear`. -/
+theorem exists_fib_threshold_log (a : ℝ) :
+    ∃ N : ℕ, (∀ n : ℕ, N ≤ n → a < (Nat.fib (n + 1) : ℝ) ^ 2) ∧
+      (N : ℝ) ≤ Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt a + 1) + 1 := by
+  obtain ⟨n, hn1, hn2⟩ := exists_nat_goldenRatio_pow_gt (Real.sqrt 5 * Real.sqrt a + 1)
+  have hφ1 : (1 : ℝ) ≤ Real.goldenRatio := le_of_lt Real.one_lt_goldenRatio
+  have hy1 : (1 : ℝ) ≤ Real.sqrt 5 * Real.sqrt a + 1 := by
+    have : 0 ≤ Real.sqrt 5 * Real.sqrt a := by positivity
+    linarith
+  have hmax : max (Real.sqrt 5 * Real.sqrt a + 1) 1 = Real.sqrt 5 * Real.sqrt a + 1 :=
+    max_eq_left hy1
+  refine ⟨n, fun k hk => ?_, ?_⟩
+  · apply fib_sq_gt_of_goldenRatio k a
+    calc Real.sqrt 5 * Real.sqrt a + 1 < Real.goldenRatio ^ n := hn1
+      _ ≤ Real.goldenRatio ^ (k + 1) := pow_le_pow_right₀ hφ1 (by omega)
+  · rw [hmax] at hn2; exact hn2
+
 /-- **Linear block-length bound** (route-decisive core, DISCLOSED `sorry`).  The
 sharp form of the geometric bound: the steer-block length is bounded by an AFFINE
 function of the accumulated word length, `|chainApp w s| ≤ K₁·|w s| + K₂`.  With

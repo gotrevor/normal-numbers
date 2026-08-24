@@ -1,5 +1,42 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🟢🟢🟢 FRONTIER (2026-08-24 grind session): B6 CRUX ASSEMBLED — rests on ONE math lemma
+
+The crux `exists_interleaved_affine_witness` is now FULLY MACHINE-CHECKED except
+for `schedA_block_linear` (+ the shift branch). Built this session (all axiom-clean,
+`CFScheduleA.lean`):
+- `SchedStateA`/`StepSpecA`/`schedStepA_exists`/`exists_seedStateA`/`schedA` — the
+  two-stream recursion + feasible seed (seed uses wz-hull `(e0,f0) ⊆ [r,q+r]`).
+- `wxSeq`/`wzSeq` genuine extending chains; `SchedStateA.hzhull` invariant
+  (`cfCylinder wz ⊆ Icc e f`) threaded through the uniform ψ-step.
+- Crux proof: both limit points; `ψ(xA)=zA` via shrinking-`Icc` squeeze
+  (`Ioo_sub_le_volume_cfCylinder` + `cfCylinder_chain_volume_tendsto` +
+  `eq_of_mem_iInter_Icc`); both orbits via `chain_orbit_equidist_uniform`.
+- `chain_hfreq_of_uniform_blocks` (shared): discharges `hblock` (schedEps→0) +
+  `hslack` (`slack_telescoping`), all hyps proved incl. `chain_slack_littleO`
+  (C=o(blk), PROVED via squaring trick) and `schedA_block_geom` (PROVED from
+  `schedA_block_linear` via `|w s|≥1`).
+- `exists_fib_threshold_log` (PROVED): resolution threshold `N ≤ log_φ(√5√a+1)+1`.
+
+**THE ONE OPEN MATH OBLIGATION — `schedA_block_linear`** (`CFScheduleA.lean`):
+`|chainApp w s| ≤ K₁·|w s| + K₂` (affine block-length bound). Path (all atoms exist):
+1. **Tight length-exposing ψ-step.** Rebuild `exists_uniformly_freq_good_block_steer_len`
+   → `_tight`: use `exists_uniform_block_param_tight` (PROVED, gives `m² ≤
+   6(L+Nfib)+2+2⌈2/β⌉⁴`) instead of `exists_uniform_block_param` (quadratically
+   lossy). Block `|u| = n₁+m² ≤ 2m²`. Expose `|u| ≤` explicit(L,Nfib,β) through
+   `exists_freq_good_extend_affine_steer_uniform` → add an upper-length field to
+   `StepSpecA`.
+2. **Resolution `Nfib ≲ |w|`.** Target width `d−c ≳ φ^{−c|w|}` (cylinder volume),
+   so `Nfib ≤ log_φ(√5√(4/(d−c))+1)+1 ≲ |w|` via `exists_fib_threshold_log` (PROVED).
+3. **Word-independent β.** `β = γtar·δ²/(S+1)`; `γtar/γwx = Θ(q)` by Gauss-density
+   ratio bounds `gaussMeasure_Ioo_toReal_ge/le` (PROVED) ⇒ `⌈2/β⌉ ≲ poly(s) ≤ |w|`.
+4. Assemble `|u_s| ≤ K₁|w_s|+K₂`.
+
+Then B6 (feasible) is DONE; only the shift branch (`IsCFNormal_add_int`) remains for
+the unconditional deliverable.
+
+---
+
 ## 🚩🚩🚩 JUDGE-FLAG 2026-08-24 (grind lap): the crux was FALSE as stated — RESTRICTED to feasible `r`, deliverable reduction now needs a shift lemma (commit `<this>`)
 
 **Route-decisive discovery (for the altitude/review lap to ratify).** The crux
