@@ -19,9 +19,19 @@ selecting `x` to avoid BOTH the x-CF bad zones AND the ψ-pullback
 (`ρ=1`), budget polynomial, blocks linear.  Full analysis + why alternatives fail
 in the obstruction doc.
 
-**Meanwhile (directive item 2, still open & allowed):** `IsCFNormal_add_int` /
-the `TODO(shift)` reduction (`CFScheduleA.lean` shift `sorry` :2828) — the
-general-`r` representative reduction.  Independent of the crux route.
+**Meanwhile (directive item 2):** shift reduction — **`r ≥ 1` HALF DONE**
+(2026-08-24). Landed axiom-clean in `CFScheduleA.lean`:
+`gaussMap_iter_two_add_nat` (`g²(y+n)=y`), `cfDigit_add_nat_shift`
+(`cfDigit(y+n)(k+2)=cfDigit y k`), `isCFNormal_add_nat` (integer up-shift
+invariance). The infeasible branch of `exists_cfNormal_and_affine_cfNormal` now
+splits: `r ≥ 1` closes via `n=⌊r⌋≥1`, `r₀=r−n=fract r∈[0,1)`, feasible witness at
+`r₀`, then `ψ(x)=y+n` up-shifted. **REMAINING (`TODO(shift-neg)` :2867):** the
+`r ≤ −q` half — shift is negative (`n ≤ −1`), `ψ(x)<0`, up-shift lemma N/A. Needs
+EITHER a down-shift orbit fact (`cfDigit(y−m)` for `m≥1`: `y−m∈(−m,−m+1)`,
+`g(y−m)=Int.fract((y−m)⁻¹)`, messier sign analysis) OR place `x` in a higher unit
+interval `(M,M+1)` so `qx+r∈(0,1)` — but that needs an integer in
+`((−r/q)−1,(1−r)/q)` of length `1/q`, NOT guaranteed for `q>1`. Down-shift orbit
+fact is the robust route.
 
 - **Landed 2026-08-28 (reusable core, axiom-clean, `CFScheduleA.lean`):**
   `cfFreq_tendsto_of_digit_shift` — window-frequency limit is invariant under a

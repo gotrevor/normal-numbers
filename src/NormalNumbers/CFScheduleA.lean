@@ -2821,6 +2821,45 @@ theorem cfFreq_tendsto_of_digit_shift (d d' : ℕ → ℕ) (m : ℕ)
     have hthis := div_le_div_of_nonneg_right (hhi p hpm) hpR
     rwa [add_div] at hthis
 
+/-- Gauss orbit of `y + n` returns to `y` after exactly two steps
+(`n ≥ 1` a natural, `y ∈ (0,1)`): `g(y+n) = 1/(n+y)`, `g²(y+n) = y`. -/
+lemma gaussMap_iter_two_add_nat {y : ℝ} (hy : y ∈ Set.Ioo (0 : ℝ) 1)
+    {n : ℕ} (hn : 1 ≤ n) : gaussMap^[2] (y + (n : ℝ)) = y := by
+  obtain ⟨hy0, hy1⟩ := hy
+  have hn1R : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+  have hgt1 : (1 : ℝ) < y + (n : ℝ) := by linarith
+  have hpos : (0 : ℝ) < y + (n : ℝ) := by linarith
+  -- step 1: gaussMap (y+n) = (y+n)⁻¹  (its inverse lies in (0,1))
+  have hstep1 : gaussMap (y + (n : ℝ)) = (y + (n : ℝ))⁻¹ := by
+    unfold gaussMap
+    rw [if_neg (ne_of_gt hpos)]
+    apply Int.fract_eq_self.mpr
+    constructor
+    · positivity
+    · exact inv_lt_one_of_one_lt₀ hgt1
+  have h2 : gaussMap^[2] (y + (n : ℝ)) = gaussMap (gaussMap (y + (n : ℝ))) := rfl
+  rw [h2, hstep1]
+  -- step 2: gaussMap ((y+n)⁻¹) = Int.fract (y+n) = y
+  unfold gaussMap
+  rw [if_neg (by positivity), inv_inv, Int.fract_add_natCast,
+    Int.fract_eq_self.mpr ⟨le_of_lt hy0, hy1⟩]
+
+/-- Digit shift under integer translation: `cfDigit (y+n) (k+2) = cfDigit y k`
+for `y ∈ (0,1)`, `n ≥ 1`.  Concretely `digits(y+n) = [0, n] ++ digits(y)`. -/
+lemma cfDigit_add_nat_shift {y : ℝ} (hy : y ∈ Set.Ioo (0 : ℝ) 1)
+    {n : ℕ} (hn : 1 ≤ n) (k : ℕ) : cfDigit (y + (n : ℝ)) (k + 2) = cfDigit y k := by
+  unfold cfDigit
+  rw [Function.iterate_add_apply, gaussMap_iter_two_add_nat hy hn]
+
+/-- **Integer-shift invariance of CF-normality (natural, `n ≥ 1`).**  If
+`y ∈ (0,1)` is CF-normal then so is `y + n`: the first two CF digits change
+(`[0, n]`) but every pattern's asymptotic window frequency is preserved. -/
+lemma isCFNormal_add_nat {y : ℝ} (hy : y ∈ Set.Ioo (0 : ℝ) 1)
+    {n : ℕ} (hn : 1 ≤ n) (hyn : IsCFNormal y) : IsCFNormal (y + (n : ℝ)) := by
+  intro v hv hpos
+  exact cfFreq_tendsto_of_digit_shift (cfDigit y) (cfDigit (y + (n : ℝ))) 2
+    (fun k => cfDigit_add_nat_shift hy hn k) v hv (hyn v hv hpos)
+
 /-- **B6 target (single affine map).**  There is a real `x` with both `x` and
 its affine image `q·x + r` CF-normal — a constructive data point on Vandehey
 (Compositio 2017) §7 problem 1 for `q > 0`.  Reduced to the interleaved-schedule
@@ -2832,13 +2871,38 @@ theorem exists_cfNormal_and_affine_cfNormal {q : ℝ} (hq : 0 < q) (r : ℝ) :
     obtain ⟨x, ⟨hx1, hx2, hx3⟩, ⟨hy1, hy2, hy3⟩⟩ := exists_interleaved_affine_witness hq r hr
     exact ⟨x, isCFNormal_of_irrational_orbit_freq x hx1 hx2 hx3,
       isCFNormal_of_irrational_orbit_freq (affineMap q r x) hy1 hy2 hy3⟩
-  · -- TODO(shift): general `r`.  CF-normality of `ψ(x) = q·x + r` depends only on
-    -- the tail of its Gauss orbit, which ignores the integer part of `ψ(x)`; so the
-    -- claim for arbitrary `r` reduces to the feasible representative `r₀ = r - ⌊r⌋`
-    -- adjusted into `(-q, 1)` (always possible since `q > 0`).  Requires the
-    -- integer-shift invariance lemma `IsCFNormal_add_int` (not yet formalized); the
-    -- `isCFNormal_of_irrational_orbit_freq` bridge needs `ψ(x) ∈ (0,1)`, which fails
-    -- outside the feasible regime, so this genuinely needs the shift reduction.
-    sorry
+  · -- infeasible regime: `¬(-q < r ∧ r < 1)`.  Split on the sign of the shift.
+    by_cases hr1 : 1 ≤ r
+    · -- `r ≥ 1`: shift the image UP by `n = ⌊r⌋ ≥ 1`.  Take the feasible witness
+      -- at `r₀ = r - n = Int.fract r ∈ [0,1) ⊂ (-q,1)`; then
+      -- `ψ(x) = q·x + r = (q·x + r₀) + n = y + n`, and `IsCFNormal (y+n)` follows
+      -- from `IsCFNormal y` by the integer-shift lemma.
+      set m : ℤ := ⌊r⌋ with hm_def
+      have hm1 : 1 ≤ m := Int.le_floor.mpr (by exact_mod_cast hr1)
+      set n : ℕ := m.toNat with hn_def
+      have hnm : (n : ℤ) = m := Int.toNat_of_nonneg (by omega)
+      have hn1 : 1 ≤ n := by omega
+      have hcast : (n : ℝ) = (m : ℝ) := by exact_mod_cast hnm
+      have hmle : (m : ℝ) ≤ r := by rw [hm_def]; exact Int.floor_le r
+      have hltm : r < (m : ℝ) + 1 := by rw [hm_def]; exact Int.lt_floor_add_one r
+      set r₀ : ℝ := r - (n : ℝ) with hr0_def
+      have hr0 : -q < r₀ ∧ r₀ < 1 := by
+        rw [hr0_def, hcast]; constructor <;> [linarith; linarith]
+      obtain ⟨x, ⟨hx1, hx2, hx3⟩, ⟨hy1, hy2, hy3⟩⟩ :=
+        exists_interleaved_affine_witness hq r₀ hr0
+      -- `affineMap q r x = affineMap q r₀ x + n`
+      have hy0 : IsCFNormal (affineMap q r₀ x) :=
+        isCFNormal_of_irrational_orbit_freq (affineMap q r₀ x) hy1 hy2 hy3
+      have heq : affineMap q r x = affineMap q r₀ x + (n : ℝ) := by
+        simp only [affineMap_apply, hr0_def]; ring
+      refine ⟨x, isCFNormal_of_irrational_orbit_freq x hx1 hx2 hx3, ?_⟩
+      rw [heq]
+      exact isCFNormal_add_nat hy2 hn1 hy0
+    · -- `r ≤ -q`: the shift is negative (`n ≤ -1`), so `ψ(x) < 0` and the up-shift
+      -- lemma does not apply.  Needs a down-shift orbit fact
+      -- (`cfDigit (y - m)` for `m ≥ 1`) OR placing `x` in a higher unit interval so
+      -- `q·x + r ∈ (0,1)` — the latter needs an integer in `((-r/q)-1, (1-r)/q)`,
+      -- length `1/q`, not guaranteed for `q > 1`.  TODO(shift-neg).
+      sorry
 
 end NormalNumbers
