@@ -517,6 +517,38 @@ theorem gaussMeasure_cfBadZone_nil_inter_cylinder_le
     _ = gaussMeasure (cfBadZone w' v (N - w'.length) (δ - (w'.length : ℝ) / (N : ℝ))) := by
         rw [hrat0, add_zero]
 
+/-- `coveredByCyl a b n` is measurable: a countable biUnion of measurable
+cylinders. -/
+theorem measurableSet_coveredByCyl (a b : ℝ) (n : ℕ) :
+    MeasurableSet (coveredByCyl a b n) := by
+  rw [coveredByCyl]
+  exact MeasurableSet.biUnion
+    (Set.Countable.mono (Set.sep_subset _ _)
+      (Set.Countable.mono (Set.subset_univ _) Set.countable_univ))
+    (fun w _ => measurableSet_cfCylinder w)
+
+/-- **Brick 2b-i (γ-residual, route-B covering).**  The `γ`-mass of the part of
+`(a,b)` NOT covered by depth-`n` cylinders fully inside `(a,b)` is `≤
+(log 2)⁻¹·4/fib(n+1)²` — the boundary-strip residual, `→ 0` as `n → ∞`.  Pure
+`gaussMeasure ≤ (log 2)⁻¹·volume` pushforward of the Lebesgue covering lemma
+`volume_interval_sdiff_covered_le` (`CFIntervalGood`); the hard geometry (`≤2`
+straddlers, each within `1/fib(n+1)²` of an endpoint) is already discharged
+there.  This is the residual term of the 2b-iii assembly. -/
+theorem gaussMeasure_interval_sdiff_covered_le (a b : ℝ)
+    (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1) (n : ℕ) :
+    gaussMeasure (Set.Ioo a b \ coveredByCyl a b n)
+      ≤ ENNReal.ofReal ((Real.log 2)⁻¹ * (4 / (Nat.fib (n + 1) : ℝ) ^ 2)) := by
+  have hmeas : MeasurableSet (Set.Ioo a b \ coveredByCyl a b n) :=
+    measurableSet_Ioo.diff (measurableSet_coveredByCyl a b n)
+  calc gaussMeasure (Set.Ioo a b \ coveredByCyl a b n)
+      ≤ ENNReal.ofReal (Real.log 2)⁻¹ * volume (Set.Ioo a b \ coveredByCyl a b n) :=
+        gaussMeasure_le_volume _ hmeas
+    _ ≤ ENNReal.ofReal (Real.log 2)⁻¹ * ENNReal.ofReal (4 / (Nat.fib (n + 1) : ℝ) ^ 2) := by
+        gcongr
+        exact volume_interval_sdiff_covered_le a b ha hab hb n
+    _ = ENNReal.ofReal ((Real.log 2)⁻¹ * (4 / (Nat.fib (n + 1) : ℝ) ^ 2)) := by
+        rw [← ENNReal.ofReal_mul (by positivity)]
+
 /-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
 finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
 cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every
