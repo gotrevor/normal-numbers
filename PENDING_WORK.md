@@ -425,7 +425,36 @@ the one genuinely analytic step of the ψ-stage (~15-30 lines); everything else 
 the composed atoms. Then assemble `exists_freq_good_extend_affine`, then the
 recursion + telescoping.
 
+### lap 18 landed (2026-08-24): ψ-image inclusion (the analytic step) ✅
+`affine_image_Ioo_subset_Icc` (CFScheduleA, axiom-clean, green 8756): under the
+invariant `cfCylinder wx ⊆ ψ⁻¹(cfCylinder wz)`, with irr(a,b)⊆cfCylinder wx and
+cfCylinder wz⊆Icc e f, the ψ-image `ψ((a,b)) ⊆ Icc e f`. Proof = two symmetric
+`exists_irrational_btwn` contradiction blocks (a boundary-violating image point
+pulls back to an irrational of (a,b) whose image escapes Icc e f). **This is the
+one genuinely analytic step of the ψ-stage** — no ψ-irrationality transfer, no
+sequences. Every ψ-stage ingredient is now proved & axiom-clean.
+
+**NEXT — assemble `exists_freq_good_extend_affine` (the ψ-stage), then recursion.**
+Now fully mechanical from the atoms:
+1. wx-interval (a,b) [`exists_Ioo_irrational_subset_cfCylinder wx`]; wz-endpoints
+   (e,f) with cfCylinder wz⊆Icc e f AND irr(e,f)⊆cfCylinder wz [both from
+   `cfCylinder_endpoints`/`exists_Ioo_irrational_subset_cfCylinder wz` — may need
+   a small helper exposing the Icc bound alongside the irr-subset; `cfCylinder_
+   endpoints` gives `cfCylinder wz ⊆ uIcc = Icc(min)(max)` directly].
+2. `affine_image_Ioo_subset_Icc` ⇒ J_z:=ψ((a,b))=Ioo(qa+r)(qb+r) ⊆ Icc e f, so
+   irr(J_z)⊆Ioo e f (irrationals dodge the rational endpoints) ⊆ cfCylinder wz.
+3. `exists_freq_good_block_in_Ioo F .. J_z` ⇒ wz' freq-good, cfCylinder wz'⊆J_z
+   ⇒ (irr pt) extends wz.
+4. wz'-endpoints (c,d); the preimage interval ((c-r)/q,(d-r)/q)⊆(a,b); intersect
+   with (a,b) [trivially ⊆] and use `exists_cfCylinder_subset_affine_preimage`
+   (or `_Ioo_inter`) ⇒ wx' with cfCylinder wx'⊆ψ⁻¹(cfCylinder wz')∩cfCylinder wx,
+   extends wx, ψ(cfCylinder wx')⊆cfCylinder wz'. New invariant holds.
+5. `SchedStateA`/`schedStepA` (parity x/ψ) + `schedA` by choice + limit point +
+   per-stream `cfDiscLt` telescoping (copy-extend `CFCorrect`). Multi-lap body;
+   all atoms green.
+
 ### TOOLKIT NOW COMPLETE for the interleaved schedule (all axiom-clean):
+- ψ-IMAGE `affine_image_Ioo_subset_Icc` — ψ((a,b))⊆Icc e f under the invariant (analytic step).
 - INTER `exists_cfCylinder_subset_Ioo_inter` — cylinder in the intersection of two intervals.
 - ψ-SELECT `exists_cfCylinder_subset_affine_preimage` — x-cylinder in ψ⁻¹(target z-interval).
 - STAGE `exists_freq_good_extend_cfCylinder` — one freq-good nested extension (the x-stage).

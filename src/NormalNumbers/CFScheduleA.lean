@@ -222,6 +222,51 @@ theorem exists_freq_good_extend_cfCylinder (wx : List ℕ) (hwx : wx ≠ [])
   have hf := hfreq v hv
   rwa [hulen]
 
+/-- **ψ-image inclusion (the analytic step of the ψ-stage).**  If the invariant
+`cfCylinder wx ⊆ ψ⁻¹(cfCylinder wz)` holds, `(a,b)` is an `x`-interval all of
+whose irrationals lie in `cfCylinder wx`, and `cfCylinder wz ⊆ [e,f]`, then the
+`ψ`-image of `(a,b)` lands in `[e,f]`.  Proof: were some `ψ`-image below `e`
+(resp. above `f`), an irrational point of `(a,b)` slightly further out would map
+strictly below `e` (above `f`), yet it lies in `cfCylinder wx`, so its image lies
+in `cfCylinder wz ⊆ [e,f]` — contradiction.  (Irrational density via
+`exists_irrational_btwn`; no `ψ`-irrationality transfer needed.)  Consequence
+used by the ψ-stage: since `[e,f]`'s endpoints are the rational convergent
+endpoints of `wz`, every IRRATIONAL point of the open image `ψ((a,b))` lands in
+`cfCylinder wz`. -/
+theorem affine_image_Ioo_subset_Icc {q : ℝ} (hq : 0 < q) (r : ℝ)
+    {wx wz : List ℕ} (hinv : cfCylinder wx ⊆ affineMap q r ⁻¹' cfCylinder wz)
+    {a b e f : ℝ} (hxint : ∀ x ∈ Set.Ioo a b, Irrational x → x ∈ cfCylinder wx)
+    (hzint : cfCylinder wz ⊆ Set.Icc e f) :
+    affineMap q r '' Set.Ioo a b ⊆ Set.Icc e f := by
+  rw [image_affineMap_Ioo hq]
+  intro y hy
+  obtain ⟨hy1, hy2⟩ := Set.mem_Ioo.1 hy
+  have hax : a < (y - r) / q := (lt_div_iff₀ hq).mpr (by rw [mul_comm]; linarith)
+  have hxb : (y - r) / q < b := (div_lt_iff₀ hq).mpr (by rw [mul_comm]; linarith)
+  refine ⟨?_, ?_⟩
+  · by_contra hlt
+    push_neg at hlt          -- y < e
+    obtain ⟨x', hx'irr, hax', hx'x⟩ := exists_irrational_btwn hax
+    have hx'b : x' < b := lt_trans hx'x hxb
+    have hψmem : affineMap q r x' ∈ cfCylinder wz :=
+      hinv (hxint x' (Set.mem_Ioo.2 ⟨hax', hx'b⟩) hx'irr)
+    have hle : e ≤ affineMap q r x' := (hzint hψmem).1
+    have hxy : x' * q < y - r := (lt_div_iff₀ hq).mp hx'x
+    have hψlt : affineMap q r x' < e := by
+      simp only [affineMap]; rw [mul_comm]; linarith
+    linarith
+  · by_contra hgt
+    push_neg at hgt          -- f < y
+    obtain ⟨x', hx'irr, hx'lo, hx'hi⟩ := exists_irrational_btwn hxb
+    have hax' : a < x' := lt_trans hax hx'lo
+    have hψmem : affineMap q r x' ∈ cfCylinder wz :=
+      hinv (hxint x' (Set.mem_Ioo.2 ⟨hax', hx'hi⟩) hx'irr)
+    have hge : affineMap q r x' ≤ f := (hzint hψmem).2
+    have hyx : y - r < x' * q := (div_lt_iff₀ hq).mp hx'lo
+    have hψgt : f < affineMap q r x' := by
+      simp only [affineMap]; rw [mul_comm]; linarith
+    linarith
+
 /-- **Cylinder inside an intersection of two intervals.**  If the open
 intersection `(max a c, min b d)` is a nondegenerate subinterval of `(0,1)`, it
 contains a genuine CF cylinder, which therefore lies in BOTH `(a,b)` and `(c,d)`.
