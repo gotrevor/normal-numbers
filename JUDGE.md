@@ -202,3 +202,26 @@ file and works the checklist.  Laps never edit this file above the Ledger.
   union-bound plumbing + assembly** · src/ 1→2 sorries is the sanctioned
   decomposition pattern, not regression · verdict: healthy, continue;
   breaker has ~6 laps.
+- 2026-08-23 22:50 · **mid-run visit (lap 7 grind live, 06m in)** · judged
+  through `f505a11` + the live uncommitted WIP (textual tier) · **no `src/`
+  commits since `6f18228`** — the two commits in range are doc/ledger only
+  (`a96c575` judge ledger, `f505a11` handoff), so **statement integrity is
+  trivially clean**: zero minus lines in any frozen file, Tier-1 decl
+  untouched · **WIP under the lap** (`Khinchin.lean`, +60/-1): the box is
+  building the Markov first-moment machinery behind the crux —
+  `logTailTerm` / `logTailFn` (private defs), `logTailTerm_integrable`,
+  `integral_norm_logTailTerm` (both proved), and a new **staged** theorem
+  `integral_logTailFn_eq` (`∫ logTailFn K dγ = log K₀ − Σ_{k<K} γ([k+1])·log(k+1)`)
+  carrying a `sorry` · smell scan of the added lines: **clean** (no
+  `native_decide`, no `maxHeartbeats`/`maxRecDepth`, no `axiom`/`admit`, no
+  new `set_option`) · `src/` sorries 2 → **3** — sanctioned decomposition,
+  NOT regression, but ⚠️ **`integral_logTailFn_eq` is currently an orphan**:
+  nothing references it yet, the crux `xstar_log_tail_uniform` is still a
+  bare `sorry`.  Close-out check item — it must end up either discharged
+  and *used* by the crux, or deleted; a proved-but-unreferenced tail lemma
+  is dead weight, an unproved-and-unreferenced one is a second obligation
+  masquerading as progress · untracked scratch `src/NormalNumbers/ZZTest.lean`
+  (3 lines, a `summable_nat_add_iff` name probe) — harmless, must not be
+  committed; close-out nit · breaker: lap 7/12, prev lap +7 commits in 54m,
+  ~5 laps of headroom · verdict: **healthy, continue** — funnel unchanged,
+  one crux + plumbing + assembly still the whole remaining distance.
