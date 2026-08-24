@@ -691,6 +691,30 @@ theorem gaussMeasure_interval_inter_iUnion_cfBadZone_nil_le
         exact gaussMeasure_interval_inter_cfBadZone_nil_le a b ha hab hb v (hposF v hv)
           n d δ (hdN n hn) (hδ' n hn)
 
+/-- **ψ-pullback bridge (route B).**  Pull the route-B image-space bound back into
+`x`-space over a target interval: `γ((c,d) ∩ ψ⁻¹ S) ≤ (2/q)·γ(ψ((c,d)) ∩ S)`, where
+`ψ((c,d)) = (qc+r, qd+r)`.  Uses the affine bijection identity `(c,d) ∩ ψ⁻¹ S =
+ψ⁻¹(S ∩ ψ((c,d)))` (`preimage_image_eq` for injective `ψ`) then brick 1
+(`gaussMeasure_preimage_affineMap_le`).  This is what turns the route-B interval
+bound `gaussMeasure_interval_inter_iUnion_cfBadZone_nil_le` (applied with `J =
+ψ((c,d))`) into the `z`-bad mass a `wz=[]` variant of brick 3 consumes. -/
+theorem gaussMeasure_interval_inter_preimage_affineMap_le {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (c d : ℝ) (S : Set ℝ) (hS : MeasurableSet S) (hSsub : S ⊆ Set.Ioo (0 : ℝ) 1) :
+    gaussMeasure (Set.Ioo c d ∩ affineMap q r ⁻¹' S)
+      ≤ ENNReal.ofReal (2 / q) * gaussMeasure (S ∩ Set.Ioo (q * c + r) (q * d + r)) := by
+  have hinj : Function.Injective (affineMap q r) := fun x y h => by
+    simp only [affineMap] at h; exact mul_left_cancel₀ (ne_of_gt hq) (by linarith)
+  have hkey : Set.Ioo c d ∩ affineMap q r ⁻¹' S
+      = affineMap q r ⁻¹' (S ∩ Set.Ioo (q * c + r) (q * d + r)) := by
+    rw [Set.preimage_inter, ← image_affineMap_Ioo hq, Set.preimage_image_eq _ hinj,
+      Set.inter_comm]
+  rw [hkey]
+  have hsub' : S ∩ Set.Ioo (q * c + r) (q * d + r) ⊆ Set.Ioo (0 : ℝ) 1 :=
+    Set.inter_subset_left.trans hSsub
+  have hmeas' : MeasurableSet (S ∩ Set.Ioo (q * c + r) (q * d + r)) :=
+    hS.inter measurableSet_Ioo
+  exact gaussMeasure_preimage_affineMap_le hq r _ hmeas' hsub'
+
 /-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
 finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
 cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every
