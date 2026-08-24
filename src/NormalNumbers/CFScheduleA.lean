@@ -2718,6 +2718,109 @@ theorem exists_interleaved_affine_witness {q : ℝ} (hq : 0 < q) (r : ℝ)
   rw [hpsi_eq]
   exact ⟨hzAirr, hzA01, hoz⟩
 
+/-- **Window-frequency limit is invariant under a fixed digit shift.**  If the
+digit sequence `d'` is `d` shifted right by `m` (`d' (k + m) = d k`; the first `m`
+entries are arbitrary), then the length-`p` window frequency of any pattern `v`
+has the same limit for `d'` as for `d`.  The reusable core of the integer-shift
+invariance of CF-normality (`IsCFNormal_add_int`): `digits(y+n) = [0,n] ++
+digits(y)` is the `m = 2` case, so prepending finitely many CF digits — as an
+integer shift does — cannot change any pattern's asymptotic frequency. -/
+theorem cfFreq_tendsto_of_digit_shift (d d' : ℕ → ℕ) (m : ℕ)
+    (hshift : ∀ k, d' (k + m) = d k) (v : List ℕ) (hv : v ≠ []) {γ : ℝ}
+    (h : Filter.Tendsto (fun p => (countOccurrences v ((List.range p).map d) : ℝ) / p)
+      Filter.atTop (nhds γ)) :
+    Filter.Tendsto (fun p => (countOccurrences v ((List.range p).map d') : ℝ) / p)
+      Filter.atTop (nhds γ) := by
+  have hvlen : 1 ≤ v.length := List.length_pos_of_ne_nil hv
+  -- split: for `p ≥ m`, `(range p).map d' = pre ++ (range (p-m)).map d`
+  have hsplit : ∀ p, m ≤ p → (List.range p).map d'
+      = (List.range m).map d' ++ (List.range (p - m)).map d := by
+    intro p hp
+    conv_lhs => rw [show p = m + (p - m) by omega, range_add_eq, List.map_append, List.map_map]
+    congr 1
+    apply List.map_congr_left
+    intro i _
+    simp only [Function.comp_apply]
+    rw [add_comm m i]; exact hshift i
+  -- `count_d p-m ≤ count_{d'} p ≤ count_d (p-m) + (m + v.length)`
+  have hlo : ∀ p, m ≤ p →
+      (countOccurrences v ((List.range (p - m)).map d) : ℝ)
+        ≤ (countOccurrences v ((List.range p).map d') : ℝ) := by
+    intro p hp
+    rw [hsplit p hp]
+    exact_mod_cast countOccurrences_le_append_left v ((List.range m).map d')
+      ((List.range (p - m)).map d)
+  have hhi : ∀ p, m ≤ p →
+      (countOccurrences v ((List.range p).map d') : ℝ)
+        ≤ (countOccurrences v ((List.range (p - m)).map d) : ℝ) + (m + v.length) := by
+    intro p hp
+    rw [hsplit p hp]
+    have hup := countOccurrences_append_le hv ((List.range m).map d')
+      ((List.range (p - m)).map d)
+    have hpre : countOccurrences v ((List.range m).map d') ≤ m := by
+      have := countOccurrences_le_length hv ((List.range m).map d')
+      simpa using this
+    have hnat : countOccurrences v ((List.range m).map d' ++ (List.range (p - m)).map d)
+        ≤ m + countOccurrences v ((List.range (p - m)).map d) + v.length := by omega
+    calc (countOccurrences v ((List.range m).map d' ++ (List.range (p - m)).map d) : ℝ)
+        ≤ ((m + countOccurrences v ((List.range (p - m)).map d) + v.length : ℕ) : ℝ) := by
+          exact_mod_cast hnat
+      _ = (countOccurrences v ((List.range (p - m)).map d) : ℝ) + (m + v.length) := by
+          push_cast; ring
+  have hshiftTop : Filter.Tendsto (fun p : ℕ => p - m) Filter.atTop Filter.atTop := by
+    apply Filter.tendsto_atTop_atTop.2
+    intro N
+    exact ⟨N + m, fun p hp => by omega⟩
+  -- `count_d (p-m) / p → γ`
+  have hcp : Filter.Tendsto
+      (fun p => (countOccurrences v ((List.range (p - m)).map d) : ℝ) / (p : ℝ))
+      Filter.atTop (nhds γ) := by
+    have hcomp : Filter.Tendsto
+        (fun p => (countOccurrences v ((List.range (p - m)).map d) : ℝ) / ((p - m : ℕ) : ℝ))
+        Filter.atTop (nhds γ) := h.comp hshiftTop
+    have hmdiv : Filter.Tendsto (fun p : ℕ => (m : ℝ) / (p : ℝ)) Filter.atTop (nhds 0) :=
+      Filter.Tendsto.div_atTop tendsto_const_nhds tendsto_natCast_atTop_atTop
+    have hratio : Filter.Tendsto (fun p : ℕ => ((p - m : ℕ) : ℝ) / (p : ℝ))
+        Filter.atTop (nhds 1) := by
+      have hbase : Filter.Tendsto (fun p : ℕ => 1 - (m : ℝ) / (p : ℝ)) Filter.atTop (nhds 1) := by
+        simpa using tendsto_const_nhds.sub hmdiv
+      refine hbase.congr' ?_
+      filter_upwards [Filter.eventually_ge_atTop (max m 1)] with p hp
+      have hpm : m ≤ p := le_trans (le_max_left _ _) hp
+      have hp1 : 1 ≤ p := le_trans (le_max_right _ _) hp
+      have hp0 : (p : ℝ) ≠ 0 := by
+        have : (0 : ℝ) < p := by exact_mod_cast hp1
+        exact this.ne'
+      rw [Nat.cast_sub hpm]; field_simp
+    have hprod := hcomp.mul hratio
+    rw [mul_one] at hprod
+    refine hprod.congr' ?_
+    filter_upwards [Filter.eventually_gt_atTop m] with p hp
+    have hpmR : ((p - m : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (by omega)
+    have hpR : (p : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (by omega)
+    field_simp
+  -- squeeze `count_{d'} p / p` between `count_d (p-m)/p` and `count_d (p-m)/p + (m+v.length)/p`
+  have herr : Filter.Tendsto
+      (fun p : ℕ => (countOccurrences v ((List.range (p - m)).map d) : ℝ) / (p : ℝ)
+        + ((m : ℝ) + v.length) / (p : ℝ)) Filter.atTop (nhds γ) := by
+    have hz : Filter.Tendsto (fun p : ℕ => ((m : ℝ) + v.length) / (p : ℝ))
+        Filter.atTop (nhds 0) :=
+      Filter.Tendsto.div_atTop tendsto_const_nhds tendsto_natCast_atTop_atTop
+    have h2 := hcp.add hz
+    simpa using h2
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hcp herr ?_ ?_
+  · filter_upwards [Filter.eventually_ge_atTop (max m 1)] with p hp
+    have hpm : m ≤ p := le_trans (le_max_left _ _) hp
+    have hp1 : 1 ≤ p := le_trans (le_max_right _ _) hp
+    have hpR : (0 : ℝ) ≤ p := by positivity
+    exact div_le_div_of_nonneg_right (hlo p hpm) hpR
+  · filter_upwards [Filter.eventually_ge_atTop (max m 1)] with p hp
+    have hpm : m ≤ p := le_trans (le_max_left _ _) hp
+    have hp1 : 1 ≤ p := le_trans (le_max_right _ _) hp
+    have hpR : (0 : ℝ) ≤ p := by positivity
+    have hthis := div_le_div_of_nonneg_right (hhi p hpm) hpR
+    rwa [add_div] at hthis
+
 /-- **B6 target (single affine map).**  There is a real `x` with both `x` and
 its affine image `q·x + r` CF-normal — a constructive data point on Vandehey
 (Compositio 2017) §7 problem 1 for `q > 0`.  Reduced to the interleaved-schedule

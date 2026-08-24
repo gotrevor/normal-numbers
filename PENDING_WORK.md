@@ -20,9 +20,30 @@ selecting `x` to avoid BOTH the x-CF bad zones AND the ψ-pullback
 in the obstruction doc.
 
 **Meanwhile (directive item 2, still open & allowed):** `IsCFNormal_add_int` /
-the `TODO(shift)` reduction (`CFScheduleA.lean` shift `sorry`) — the general-`r`
-representative reduction.  Independent of the crux route; the next productive grind
-target while the crux awaits review.
+the `TODO(shift)` reduction (`CFScheduleA.lean` shift `sorry` :2828) — the
+general-`r` representative reduction.  Independent of the crux route.
+
+- **Landed 2026-08-28 (reusable core, axiom-clean, `CFScheduleA.lean`):**
+  `cfFreq_tendsto_of_digit_shift` — window-frequency limit is invariant under a
+  fixed digit shift `d'(k+m)=d k` (first `m` entries arbitrary).  Proof: split
+  `(range p).map d' = pre ++ (range (p−m)).map d`, sandwich the count via
+  `countOccurrences_le_append_left` / `countOccurrences_append_le`, squeeze
+  `count_d(p−m)/p → γ` (product of `h∘(·−m)` and `(p−m)/p → 1`).
+- **Orbit fact still needed (item-2 remainder):** for `y ∈ (0,1)` irrational and
+  `n ≥ 1`, `cfDigit (y+n) 0 = 0`, `cfDigit (y+n) 1 = n`, and
+  `cfDigit (y+n) (k+2) = cfDigit y k` — i.e. `digits(y+n) = [0,n] ++ digits(y)`.
+  Verified on paper via the Gauss orbit: `g(y+n) = 1/(n+y)`, `g²(y+n) = y`, so the
+  orbit from position 2 is `y`'s orbit.  With this, `IsCFNormal (y+n)` follows from
+  `IsCFNormal y` by `cfFreq_tendsto_of_digit_shift` (`m := 2`, `d := cfDigit y`,
+  `d' := cfDigit (y+n)`).  Then the `TODO(shift)` `sorry` closes: pick integer
+  `n` with `r − n ∈ (−q, 1)` (feasible), apply the feasible witness at `r₀ = r−n`,
+  and shift `ψ(x) = (qx+r₀) + n`.  **Caveat (r ≤ −q case):** `n` may be negative,
+  making `qx+r < 0`; the `[0,n]++` prepend argument only covers `y+n > 1` (n ≥ 1).
+  For the `r ≥ 1` half of the infeasible regime, `n ≥ 1` and this closes it; the
+  `r ≤ −q` half needs either a negative-shift orbit fact or choosing `x` in a
+  higher unit interval so `qx+r ∈ (0,1)`.  Prove the `cfDigit`-orbit facts next
+  (elementary `gaussMap` computation — `gaussMap`, `Int.fract`, `cfDigit` defs in
+  `CFDefs.lean`).
 
 ## 🧭 ROUTE CORRECTION (2026-08-28 grind lap) — DIGIT-CAP IS FATAL; cfK-BOUND-VIA-goodC IS THE ROUTE
 
