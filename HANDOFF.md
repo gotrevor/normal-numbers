@@ -2,6 +2,14 @@
 
 **Thin pointer (plain file, never a symlink).**
 
+## ▶ NEWEST BATON — `HANDOFF-2026-08-28-B6-measure-obstruction.md`
+
+B6 crux `schedA_block_linear` route-decisively OBSTRUCTED (measure-budget forces
+super-exponential blocks) — see `OBSTRUCTION-2026-08-28-block-measure-budget.md`,
+needs attended pivot review. Productive next target: the `TODO(shift)` sorry
+(item 2), core lemma `cfFreq_tendsto_of_digit_shift` already landed. B5′ headlines
+stay trust-triple; build 🟢 8757.
+
 ## ✅ B5′ EXPEDITION COMPLETE
 
 Both headlines PROVED and `#print axioms`-clean (trust triple):
