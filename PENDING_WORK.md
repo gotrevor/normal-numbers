@@ -76,9 +76,12 @@ for `v∈F` at scales `nⱼ = n₁ + j²`, `j = 0..m` (so `n_m = n₁+m² =` the
    |NS|·(S/(δ²n₁))·γ(I_wx)`. Sum `gaussMeasure_aggregate_cfBadZone_le` over `NS`
    (each term `≤` the `n₁` term). ✅ DONE this lap (CFScheduleA, before
    `exists_irrational_notMem_cfBadZone_in_Ioo`, axiom-clean).
-2. `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo` — the measure-core with
-   multi-scale avoidance (mirror `exists_irrational_notMem_cfBadZone_in_Ioo`, swap
-   the single-scale measure bound for (1), pick `n₁` via `exists_nat_gt`).
+2. ✅ DONE this lap: `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo`
+   (CFScheduleA, after the single-scale core, axiom-clean). Takes the scale-set
+   `NS` (all `≥ n₁`) and the caller-supplied measure hypothesis
+   `|NS|·(Σ_v …/(δ²n₁))·γw < γ(c,d)`; returns an irrational point of `(c,d)`
+   avoiding `⋃_{n∈NS}⋃_{v∈F} cfBadZone wx v n δ` simultaneously. Same combine
+   core (A\B positive, strip rationals).
 3. Uniformly-prefix-good steer block (mirror `exists_freq_good_block_steer_len`,
    output `∀ k≤|u|, δ'-good (u.take k)` from step (2) + `abs_blockCount_…` at each
    scale + interpolation).

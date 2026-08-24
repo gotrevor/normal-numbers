@@ -392,6 +392,57 @@ theorem exists_irrational_notMem_cfBadZone_in_Ioo (wx : List ℕ) (hwx : wx ≠ 
   obtain ⟨⟨hxA, hxB⟩, hxQ⟩ := hx
   exact ⟨x, hxQ, hxA, hxB⟩
 
+/-- **Multi-scale measure core.**  Given the aggregate multi-scale bad-zone
+measure bound is below `γ(c,d)` (the caller supplies this, having chosen `n₁`
+large relative to `|NS|`), there is an irrational point of `(c,d)` avoiding EVERY
+CF bad zone `cfBadZone wx v n δ` for `v∈F` and `n∈NS` SIMULTANEOUSLY.  This is the
+uniform-goodness engine: with quadratically-spaced `NS` the point's digit block is
+freq-good at every prefix scale in `NS`. -/
+theorem exists_irrational_notMem_multiscale_cfBadZone_in_Ioo
+    (wx : List ℕ) (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ : ℝ} (hδ : 0 < δ) {c d : ℝ}
+    (hpos : 0 < (gaussMeasure (Set.Ioo c d)).toReal)
+    (NS : Finset ℕ) {n₁ : ℕ} (hn₁ : 0 < n₁) (hNS : ∀ n ∈ NS, n₁ ≤ n)
+    (hbound : (NS.card : ℝ) * ((∑ v ∈ F, 7 * ((8 * v.length + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁))
+        * (gaussMeasure (cfCylinder wx)).toReal))
+        < (gaussMeasure (Set.Ioo c d)).toReal) :
+    ∃ x : ℝ, Irrational x ∧ x ∈ Set.Ioo c d ∧
+      x ∉ ⋃ n ∈ NS, ⋃ v ∈ F, cfBadZone wx v n δ := by
+  have hbad := gaussMeasure_multiscale_cfBadZone_le wx hwxpos F hF NS hn₁ hNS hδ
+  set A : Set ℝ := Set.Ioo c d with hA
+  set B : Set ℝ := ⋃ n ∈ NS, ⋃ v ∈ F, cfBadZone wx v n δ with hB
+  have hBfin : gaussMeasure B ≠ ⊤ := measure_ne_top _ _
+  have hAfin : gaussMeasure A ≠ ⊤ := measure_ne_top _ _
+  have hBltA : gaussMeasure B < gaussMeasure A := by
+    rw [← ENNReal.toReal_lt_toReal hBfin hAfin]
+    exact lt_of_le_of_lt hbad hbound
+  have hAsub : gaussMeasure A ≤ gaussMeasure (A \ B) + gaussMeasure B := by
+    have hcov : A ⊆ (A \ B) ∪ B := fun x hx => by
+      by_cases h : x ∈ B
+      · exact Or.inr h
+      · exact Or.inl ⟨hx, h⟩
+    exact (measure_mono hcov).trans (measure_union_le _ _)
+  have hABpos : 0 < gaussMeasure (A \ B) := by
+    rw [pos_iff_ne_zero]
+    intro h0
+    rw [h0, zero_add] at hAsub
+    exact absurd (lt_of_lt_of_le hBltA hAsub) (lt_irrefl _)
+  have hac : gaussMeasure ≪ (MeasureTheory.volume.restrict (Set.Ioo (0:ℝ) 1)) :=
+    MeasureTheory.withDensity_absolutelyContinuous _ _
+  have hQnull : gaussMeasure (Set.range ((↑) : ℚ → ℝ)) = 0 := by
+    apply hac
+    rw [Measure.restrict_apply' measurableSet_Ioo]
+    exact measure_mono_null Set.inter_subset_left
+      ((Set.countable_range _).measure_zero volume)
+  have hposdiff : 0 < gaussMeasure ((A \ B) \ Set.range ((↑) : ℚ → ℝ)) := by
+    have heq : gaussMeasure ((A \ B) \ Set.range ((↑) : ℚ → ℝ)) = gaussMeasure (A \ B) :=
+      measure_sdiff_null (s := A \ B) hQnull
+    rw [heq]; exact hABpos
+  obtain ⟨x, hx⟩ := nonempty_of_measure_ne_zero hposdiff.ne'
+  obtain ⟨⟨hxA, hxB⟩, hxQ⟩ := hx
+  exact ⟨x, hxQ, hxA, hxB⟩
+
 /-- **The STEERABLE frequency-good block (B6 crux, filler-free).**  Given a
 genuine base `wx`, family `F`, tolerance `δ`, length target `L`, and a target
 interval `(c,d)` all of whose irrationals lie in `cfCylinder wx`, there is a
