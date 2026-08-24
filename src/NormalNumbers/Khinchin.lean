@@ -508,6 +508,12 @@ private lemma logTailTerm_nonneg (K n : ℕ) (x : ℝ) : 0 ≤ logTailTerm K n x
 private noncomputable def logTailFn (K : ℕ) : ℝ → ℝ :=
   fun x => if K < cfDigit x 0 then Real.log (cfDigit x 0 : ℝ) else 0
 
+private lemma logTailFn_nonneg_pointwise (K : ℕ) (x : ℝ) : 0 ≤ logTailFn K x := by
+  unfold logTailFn
+  split
+  · exact Real.log_natCast_nonneg _
+  · exact le_refl 0
+
 private lemma logTailTerm_integrable (K n : ℕ) :
     Integrable (logTailTerm K n) gaussMeasure :=
   (integrable_const (Real.log ((K : ℝ) + 1 + n))).indicator
@@ -784,6 +790,110 @@ lemma logBirkhoffSum_nonneg (K n : ℕ) (x : ℝ) : 0 ≤ logBirkhoffSum K n x :
   split
   · exact Real.log_natCast_nonneg _
   · exact le_refl 0
+
+/-- `logBirkhoffSum K n` is integrable (finite sum of integrable shifted
+terms). -/
+private lemma integrable_logBirkhoffSum (K n : ℕ) :
+    Integrable (logBirkhoffSum K n) gaussMeasure := by
+  have heq : logBirkhoffSum K n
+      = fun x => ∑ k ∈ Finset.range n, logTailFn K (gaussMap^[k] x) := rfl
+  rw [heq]
+  exact integrable_finsetSum _ (fun k _ => integrable_logTailFn_iterate K k)
+
+/-! ## The Khinchin log-tail bad zone (route B′/C′)
+
+`logBadZone w n K η`: points of the brick `I_w` whose orbit's `n`-step
+log-tail mass (past cutoff `K`) exceeds `η·n`.  Mirrors `cfBadZone`
+(`TBrick.lean`) with `logBirkhoffSum K n` in place of `blockCount`; the
+Markov bound below is the analogue of `chebyshev_blockCount_brick`
+(`CFBlockFreq.lean`), using the FIRST moment only (`integral_logBirkhoffSum`)
+since `logBirkhoffSum` is nonnegative — no second-moment/variance input
+needed. -/
+
+/-- The **Khinchin log-tail bad zone** of a brick `I_w`: points whose
+orbit's `n`-step log-tail mass past cutoff `K` exceeds `η·n`. -/
+def logBadZone (w : List ℕ) (n K : ℕ) (η : ℝ) : Set ℝ :=
+  cfCylinder w ∩ (gaussMap^[w.length]) ⁻¹'
+    {x ∈ Set.Ioo (0 : ℝ) 1 | η * n < logBirkhoffSum K n x}
+
+lemma measurableSet_logBadZone (w : List ℕ) (n K : ℕ) (η : ℝ) :
+    MeasurableSet (logBadZone w n K η) := by
+  have hset : MeasurableSet {x : ℝ | x ∈ Set.Ioo (0 : ℝ) 1 ∧ η * n < logBirkhoffSum K n x} := by
+    rw [Set.setOf_and]
+    exact measurableSet_Ioo.inter (measurableSet_lt measurable_const (measurable_logBirkhoffSum K n))
+  exact (measurableSet_cfCylinder w).inter ((measurable_gaussMap.iterate w.length) hset)
+
+/-- **Markov bound on the raw bad set**: `γ({x ∈ (0,1) | η·n < S_n(x)}) ≤
+(∫ logTailFn K dγ)/η`, uniformly in `n` (the `n` in the threshold and the
+`n` in the first moment `integral_logBirkhoffSum` CANCEL). This is the
+route-B′ punchline: dividing by `n` removes ALL `n`-dependence from the
+bound, leaving only a `K`-dependent tail that `integral_logTailFn_tendsto`
+sends to `0`. -/
+theorem gaussMeasure_logBadZone_raw_le (n K : ℕ) {η : ℝ} (hη : 0 < η) :
+    (gaussMeasure {x ∈ Set.Ioo (0 : ℝ) 1 | η * (n : ℝ) < logBirkhoffSum K n x}).toReal
+      ≤ (∫ x, logTailFn K x ∂gaussMeasure) / η := by
+  rcases Nat.eq_zero_or_pos n with hn0 | hnpos
+  · subst hn0
+    have hempty : {x ∈ Set.Ioo (0 : ℝ) 1 | η * ((0 : ℕ) : ℝ) < logBirkhoffSum K 0 x} = ∅ := by
+      ext x
+      simp only [Nat.cast_zero, mul_zero, Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false]
+      rintro ⟨-, hlt⟩
+      exact absurd hlt (not_lt.2 (logBirkhoffSum_nonneg K 0 x))
+    rw [hempty, measure_empty, ENNReal.toReal_zero]
+    exact div_nonneg (MeasureTheory.integral_nonneg fun x =>
+      logTailFn_nonneg_pointwise K x) hη.le
+  have hsub : {x ∈ Set.Ioo (0 : ℝ) 1 | η * (n : ℝ) < logBirkhoffSum K n x}
+      ⊆ {x : ℝ | η * (n : ℝ) ≤ logBirkhoffSum K n x} := fun x hx => hx.2.le
+  have hnn : 0 ≤ᵐ[gaussMeasure] logBirkhoffSum K n := by
+    filter_upwards with x
+    exact logBirkhoffSum_nonneg K n x
+  have hmarkov := mul_meas_ge_le_integral_of_nonneg hnn (integrable_logBirkhoffSum K n)
+    (η * (n : ℝ))
+  rw [integral_logBirkhoffSum] at hmarkov
+  have hle : gaussMeasure.real {x ∈ Set.Ioo (0 : ℝ) 1 | η * (n : ℝ) < logBirkhoffSum K n x}
+      ≤ gaussMeasure.real {x : ℝ | η * (n : ℝ) ≤ logBirkhoffSum K n x} :=
+    MeasureTheory.measureReal_mono hsub (measure_ne_top _ _)
+  have hn0 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hnpos
+  rw [MeasureTheory.measureReal_def] at hle hmarkov
+  rw [le_div_iff₀ hη]
+  have hstep : η * (n : ℝ) * (gaussMeasure {x ∈ Set.Ioo (0 : ℝ) 1 |
+      η * (n : ℝ) < logBirkhoffSum K n x}).toReal
+      ≤ (n : ℝ) * ∫ x, logTailFn K x ∂gaussMeasure := by
+    calc η * (n : ℝ) * (gaussMeasure {x ∈ Set.Ioo (0 : ℝ) 1 |
+          η * (n : ℝ) < logBirkhoffSum K n x}).toReal
+        ≤ η * (n : ℝ) * (gaussMeasure {x : ℝ | η * (n : ℝ) ≤ logBirkhoffSum K n x}).toReal :=
+          mul_le_mul_of_nonneg_left hle (by positivity)
+      _ ≤ (n : ℝ) * ∫ x, logTailFn K x ∂gaussMeasure := hmarkov
+  have := (mul_le_mul_iff_of_pos_left hn0).mp (by
+    calc (n : ℝ) * ((gaussMeasure {x ∈ Set.Ioo (0 : ℝ) 1 |
+          η * (n : ℝ) < logBirkhoffSum K n x}).toReal * η)
+        = η * (n : ℝ) * (gaussMeasure {x ∈ Set.Ioo (0 : ℝ) 1 |
+            η * (n : ℝ) < logBirkhoffSum K n x}).toReal := by ring
+      _ ≤ (n : ℝ) * ∫ x, logTailFn K x ∂gaussMeasure := hstep)
+  exact this
+
+/-- **Brick-conditioned Markov bound on the Khinchin bad zone**: inside any
+brick `I_w`, the part whose continuation has `n`-step log-tail mass past
+cutoff `K` exceeding `η·n` has γ-measure at most `7·(∫ logTailFn K dγ)/η·γ(I_w)`
+— UNIFORM in `n`.  Same `gaussMeasure_brick_inter_le` distortion step as
+`chebyshev_blockCount_brick`. -/
+theorem markov_logBadZone_brick (w : List ℕ) (hposw : ∀ a ∈ w, 1 ≤ a) (n K : ℕ) {η : ℝ}
+    (hη : 0 < η) :
+    (gaussMeasure (logBadZone w n K η)).toReal ≤
+      7 * ((∫ x, logTailFn K x ∂gaussMeasure) / η) * (gaussMeasure (cfCylinder w)).toReal := by
+  have hBadmeas : MeasurableSet {x ∈ Set.Ioo (0 : ℝ) 1 | η * (n : ℝ) < logBirkhoffSum K n x} := by
+    rw [Set.setOf_and]
+    exact measurableSet_Ioo.inter (measurableSet_lt measurable_const (measurable_logBirkhoffSum K n))
+  have hBadsub : {x ∈ Set.Ioo (0 : ℝ) 1 | η * (n : ℝ) < logBirkhoffSum K n x}
+      ⊆ Set.Ioo (0 : ℝ) 1 := Set.sep_subset _ _
+  calc (gaussMeasure (logBadZone w n K η)).toReal
+      ≤ 7 * (gaussMeasure {x ∈ Set.Ioo (0 : ℝ) 1 |
+          η * (n : ℝ) < logBirkhoffSum K n x}).toReal
+          * (gaussMeasure (cfCylinder w)).toReal :=
+        gaussMeasure_brick_inter_le w hposw hBadmeas hBadsub
+    _ ≤ 7 * ((∫ x, logTailFn K x ∂gaussMeasure) / η) * (gaussMeasure (cfCylinder w)).toReal := by
+        gcongr
+        exact gaussMeasure_logBadZone_raw_le n K hη
 
 /-- **Uniform log-digit tail control** (the sole SCHEDULE-DEPENDENT crux of
 Tier 2, now isolated).  For every `ε > 0` there is a cutoff `K₀` such that for
