@@ -241,6 +241,61 @@ theorem exists_freq_good_block_in_Ioo (F : Finset (List ℕ))
   exact ⟨u, hune, hulen, hupos, hfreq,
     x, hxu, hxirr, hwsub (cfCylinder_append_subset _ _ hxu)⟩
 
+/-- **Multi-scale aggregate bad-zone measure bound.**  The union of the CF
+discrepancy bad zones over a finite family `F` of patterns AND a finite set `NS`
+of scales (all `≥ n₁`) has `γ`-measure `≤ |NS| · (S/(δ²·n₁)) · γ(I_w)`, where `S`
+is the pattern constant.  Summing `gaussMeasure_aggregate_cfBadZone_le` over the
+scales (each `≤` the `n₁` term since `n ≥ n₁`).  This is the enabling measure
+bound for uniformly-prefix-good steer blocks: `Σ 1/nⱼ` over quadratically-spaced
+scales stays bounded (`≤ |NS|/n₁`), so avoiding bad zones at ALL scales
+simultaneously costs bounded measure. -/
+theorem gaussMeasure_multiscale_cfBadZone_le
+    (w : List ℕ) (hposw : ∀ a ∈ w, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (NS : Finset ℕ) {n₁ : ℕ} (hn₁ : 0 < n₁)
+    (hNS : ∀ n ∈ NS, n₁ ≤ n) {δ : ℝ} (hδ : 0 < δ) :
+    (gaussMeasure (⋃ n ∈ NS, ⋃ v ∈ F, cfBadZone w v n δ)).toReal
+      ≤ (NS.card : ℝ) * ((∑ v ∈ F, 7 * ((8 * v.length + 80)
+          * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁))
+          * (gaussMeasure (cfCylinder w)).toReal)) := by
+  set A₁ : ℝ := ∑ v ∈ F, 7 * ((8 * v.length + 80)
+      * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁))
+      * (gaussMeasure (cfCylinder w)).toReal with hA₁
+  have hstep : (gaussMeasure (⋃ n ∈ NS, ⋃ v ∈ F, cfBadZone w v n δ)).toReal
+      ≤ ∑ n ∈ NS, (gaussMeasure (⋃ v ∈ F, cfBadZone w v n δ)).toReal := by
+    calc (gaussMeasure (⋃ n ∈ NS, ⋃ v ∈ F, cfBadZone w v n δ)).toReal
+        ≤ (∑ n ∈ NS, gaussMeasure (⋃ v ∈ F, cfBadZone w v n δ)).toReal := by
+          refine ENNReal.toReal_mono ?_ (measure_biUnion_finset_le NS _)
+          exact (ENNReal.sum_lt_top.2 (fun n _ => measure_lt_top _ _)).ne
+      _ = ∑ n ∈ NS, (gaussMeasure (⋃ v ∈ F, cfBadZone w v n δ)).toReal :=
+          ENNReal.toReal_sum (fun n _ => measure_ne_top _ _)
+  have hterm : ∀ n ∈ NS, (gaussMeasure (⋃ v ∈ F, cfBadZone w v n δ)).toReal ≤ A₁ := by
+    intro n hn
+    have hn0 : 0 < n := lt_of_lt_of_le hn₁ (hNS n hn)
+    have hagg := gaussMeasure_aggregate_cfBadZone_le w hposw F hF n hn0 hδ
+    refine le_trans hagg ?_
+    rw [hA₁]
+    refine Finset.sum_le_sum fun v hv => ?_
+    have hγv : (0 : ℝ) ≤ (gaussMeasure (cfCylinder v)).toReal := ENNReal.toReal_nonneg
+    have hγw : (0 : ℝ) ≤ (gaussMeasure (cfCylinder w)).toReal := ENNReal.toReal_nonneg
+    have hpref : (0 : ℝ) ≤ 8 * v.length + 80 := by positivity
+    have hden : (0 : ℝ) < δ ^ 2 * n := by
+      have : (0:ℝ) < (n:ℝ) := by exact_mod_cast hn0
+      positivity
+    have hden1 : (0 : ℝ) < δ ^ 2 * n₁ := by
+      have : (0:ℝ) < (n₁:ℝ) := by exact_mod_cast hn₁
+      positivity
+    have hle : ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n))
+        ≤ ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁)) := by
+      apply div_le_div_of_nonneg_left ?_ hden1
+      · gcongr
+        · exact_mod_cast (hNS n hn)
+      all_goals positivity
+    gcongr
+  calc (gaussMeasure (⋃ n ∈ NS, ⋃ v ∈ F, cfBadZone w v n δ)).toReal
+      ≤ ∑ n ∈ NS, (gaussMeasure (⋃ v ∈ F, cfBadZone w v n δ)).toReal := hstep
+    _ ≤ ∑ _n ∈ NS, A₁ := Finset.sum_le_sum hterm
+    _ = (NS.card : ℝ) * A₁ := by rw [Finset.sum_const, nsmul_eq_mul]
+
 /-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
 finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
 cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every

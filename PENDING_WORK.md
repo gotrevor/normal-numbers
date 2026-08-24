@@ -50,6 +50,40 @@ bound for the partial. Candidate constructions to probe (smallest first):
       final sub-block and may dodge the maximal inequality entirely.
 Probe (b) first — it reuses the single-stream engine and needs no new deep import.
 
+### ✅ CRACK (this lap, refined): MULTI-SCALE bad-zone avoidance gives uniform-goodness with BOUNDED total measure — no maximal inequality needed
+The union bound over ALL prefix lengths `k` diverges, but over a SPARSE
+quadratically-spaced set of scales it CONVERGES, and quadratic spacing is `o(scale)`
+so it interpolates. Concretely, require the good point `x` to avoid `cfBadZone wx v nⱼ δ`
+for `v∈F` at scales `nⱼ = n₁ + j²`, `j = 0..m` (so `n_m = n₁+m² =` the block length `n`):
+- **Measure (crude, no integral needed):** each aggregate bad zone at scale `nⱼ`
+  has `γ ≤ (S/(δ²nⱼ))·γ(I_wx) ≤ (S/(δ²n₁))·γ(I_wx)` (since `nⱼ ≥ n₁`), where
+  `S = Σ_{v∈F} 7(8|v|+80)γ(I_v)` (`gaussMeasure_aggregate_cfBadZone_le`). So the
+  union over the `m+1` scales has `γ ≤ (m+1)·(S/(δ²n₁))·γ(I_wx)`. Pick `n₁` large
+  enough that `(m+1)S/(δ²n₁) < ρ` (`ρ = γ(target)/γ(I_wx)`), i.e.
+  `n₁ ≳ S·√n/(δ²ρ)` (`m ≈ √n`); then the good set ∩ target has positive measure.
+  Feasible per round once `|w_s|` is large: need `n ≳ 1/δ_s⁴`, and `n ≈ κ|w_s|`
+  (geometric) beats `1/δ_s⁴ = (s+1)⁴` (poly).
+- **Uniform goodness:** any prefix length `p ∈ [nⱼ, nⱼ₊₁)` has
+  `|dev(p)| ≤ |dev(nⱼ)| + (nⱼ₊₁−nⱼ) < δ·nⱼ + (2j+1) ≤ δ·p + 2√p` (since
+  `2j+1 ≤ 2√(p−n₁)+1 ≤ 2√p`). So EVERY prefix is `(δ + 2/√p)`-good — additive
+  interpolation term is `o(p)`. Exactly the `chainTail_dev_split` shape.
+- **⇒ uniformly-prefix-good steer block**, hdom-FREE. The outer chain feeds these
+  blocks to a hdom-free `chain_cf_digit_freq_tendsto` variant.
+
+### NEXT (concrete, this is the build):
+1. **`gaussMeasure_multiscale_cfBadZone_le`** (TBrick/CFScheduleA): for a Finset of
+   scales `NS` with `∀ n∈NS, n₁ ≤ n`, `γ(⋃_{n∈NS}⋃_{v∈F} cfBadZone wx v n δ) ≤
+   |NS|·(S/(δ²n₁))·γ(I_wx)`. Sum `gaussMeasure_aggregate_cfBadZone_le` over `NS`
+   (each term `≤` the `n₁` term). ✅ DONE this lap (CFScheduleA, before
+   `exists_irrational_notMem_cfBadZone_in_Ioo`, axiom-clean).
+2. `exists_irrational_notMem_multiscale_cfBadZone_in_Ioo` — the measure-core with
+   multi-scale avoidance (mirror `exists_irrational_notMem_cfBadZone_in_Ioo`, swap
+   the single-scale measure bound for (1), pick `n₁` via `exists_nat_gt`).
+3. Uniformly-prefix-good steer block (mirror `exists_freq_good_block_steer_len`,
+   output `∀ k≤|u|, δ'-good (u.take k)` from step (2) + `abs_blockCount_…` at each
+   scale + interpolation).
+4. hdom-free `chain_cf_digit_freq_tendsto` variant + the recursion.
+
 ---
 
 ## ⭐⭐⭐⭐⭐ ROUTE-DECISIVE CORRECTION 2026-08-24 (this lap): `hdom` needs TIGHT (logarithmic) steer blocks — the current steer lemma's block length is EXPONENTIAL and BREAKS `hdom`
