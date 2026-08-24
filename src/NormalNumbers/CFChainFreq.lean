@@ -548,6 +548,119 @@ theorem chain_cf_digit_freq_tendsto (w : ℕ → List ℕ)
       < 2 * (2 * (ε / 5)) * p := h
     _ ≤ ε * p := by nlinarith
 
+/-- **Abstract chain CF window-frequency convergence, HDOM-FREE.**  Replaces the
+dominance hypothesis of `chain_cf_digit_freq_tendsto` by uniform prefix-goodness
+of the appended blocks (`hblock`, margin → 0) plus the `o(word)` slack
+telescoping (`hslack`).  The mid-block prefix is handled by
+`chainTail_dev_prefix_var` (the block's OWN prefix bound) instead of
+`cfDiscLt_append_take` — no block need be short vs the accumulated word.  This is
+the limit the affine (interleaved) schedule consumes: its steer blocks are
+`Θ(word)`, so `hdom` fails, but they ARE uniformly prefix-good. -/
+theorem chain_cf_digit_freq_tendsto_uniform (w : ℕ → List ℕ)
+    (hext : ∀ s, ∃ u, u ≠ [] ∧ w (s + 1) = w s ++ u)
+    {y : ℝ} (hy : ∀ s, y ∈ cfCylinder (w s))
+    (v : List ℕ) (hne : v ≠ [])
+    {γv : ℝ} (hγ0 : 0 ≤ γv) (hγ1 : γv ≤ 1)
+    (C : ℕ → ℝ) (hC : ∀ s, 0 ≤ C s)
+    (hblock : ∀ ε : ℝ, 0 < ε → ∃ s₀, ∀ s, s₀ ≤ s → ∀ q, q ≤ (chainApp w s).length →
+      |(countOccurrences v ((chainApp w s).take q) : ℝ) - γv * q| < ε * q + C s)
+    (hslack : ∀ ε : ℝ, 0 < ε → ∀ s₀, ∃ K, ∀ k, K ≤ k →
+      (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+        < ε * (w (s₀ + k)).length) :
+    Filter.Tendsto
+      (fun p => (countOccurrences v ((List.range p).map (cfDigit y)) : ℝ) / p)
+      Filter.atTop (nhds γv) := by
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  have hε4 : 0 < ε / 4 := by positivity
+  have hv1 : (1 : ℝ) ≤ v.length := by exact_mod_cast List.length_pos_of_ne_nil hne
+  obtain ⟨s₀, hs₀⟩ := hblock (ε / 4) hε4
+  -- uniform tail-prefix bound via the recursion core
+  have htail : ∀ k q, q ≤ (chainTail w s₀ (s₀ + k + 1)).length →
+      |(countOccurrences v ((chainTail w s₀ (s₀ + k + 1)).take q) : ℝ) - γv * q|
+      < (ε / 4) * q + ∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)) :=
+    chainTail_dev_prefix_var w hext v hne C hC s₀
+      (fun k q hq => hs₀ (s₀ + k) (Nat.le_add_right _ _) q hq)
+  obtain ⟨K, hK⟩ := hslack (ε / 4) hε4 s₀
+  set L₀ := (w s₀).length with hL₀
+  set C₀ : ℝ := (L₀ : ℝ) + 1 with hC₀
+  -- crude fixed-prefix bound on `w s₀`
+  have hpref : |(countOccurrences v (w s₀) : ℝ) - γv * L₀| ≤ (L₀ : ℝ) := by
+    have hc := countOccurrences_le_length hne (w s₀)
+    have hcR : (countOccurrences v (w s₀) : ℝ) ≤ L₀ := by rw [hL₀]; exact_mod_cast hc
+    have h0L : (0 : ℝ) ≤ (L₀ : ℝ) := Nat.cast_nonneg _
+    have h0c : (0 : ℝ) ≤ (countOccurrences v (w s₀) : ℝ) := Nat.cast_nonneg _
+    rw [abs_le]; constructor <;> nlinarith
+  have hA : |(countOccurrences v (w s₀) : ℝ) - γv * (L₀ : ℝ)|
+      < (ε / 4) * (L₀ : ℝ) + C₀ := by
+    have h0L : (0 : ℝ) ≤ (L₀ : ℝ) := Nat.cast_nonneg _
+    have hq0 : (0 : ℝ) ≤ (ε / 4) * (L₀ : ℝ) := by positivity
+    rw [hC₀]; linarith [hpref]
+  obtain ⟨M, hM⟩ := exists_nat_ge (4 * (C₀ + ((v.length : ℝ) - 1)) / ε)
+  refine ⟨max ((w (s₀ + K)).length) (max M 1), fun p hp => ?_⟩
+  have hpwK : (w (s₀ + K)).length ≤ p := le_trans (le_max_left _ _) hp
+  have hpM : M ≤ p := le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) hp
+  have hp1 : 1 ≤ p := le_trans (le_trans (le_max_right _ _) (le_max_right _ _)) hp
+  have hpR : (0 : ℝ) < p := by exact_mod_cast hp1
+  -- locate the stage window `[|w s|, |w (s+1)|)` containing `p`
+  obtain ⟨s, hs1, hsp, hsp1⟩ := chain_exists_stage w hext (s₀ + K) p hpwK
+  set k := s - s₀ with hk
+  have hsk : s = s₀ + k := by omega
+  have hkK : K ≤ k := by omega
+  have hL₀s : L₀ ≤ (w s).length := by
+    rw [hL₀, hsk]
+    have := w_length_ge w hext s₀ k; omega
+  have hpL₀ : L₀ ≤ p := le_trans hL₀s hsp
+  -- the tail split `w (s+1) = w s₀ ++ chainTail w s₀ (s+1)`
+  have hsplit : w (s + 1) = w s₀ ++ chainTail w s₀ (s + 1) := by
+    have hidx : s + 1 = s₀ + (k + 1) := by omega
+    rw [hidx]; exact w_eq_append_tail w hext s₀ (k + 1)
+  set q := p - L₀ with hq
+  have hqlen : q ≤ (chainTail w s₀ (s + 1)).length := by
+    have hlen : (w (s + 1)).length = L₀ + (chainTail w s₀ (s + 1)).length := by
+      rw [hsplit, List.length_append, ← hL₀]
+    omega
+  set T := (chainTail w s₀ (s + 1)).take q with hT
+  have hTlen : T.length = q := by rw [hT, List.length_take, Nat.min_eq_left hqlen]
+  -- `cfPref y p = w s₀ ++ T`
+  have hdecomp : (List.range p).map (cfDigit y) = w s₀ ++ T := by
+    have hcfp : (List.range p).map (cfDigit y) = (w (s + 1)).take p := by
+      rw [cfPref_take (y := y) hsp1.le, chain_cfPref_eq w hy]
+    have hqeq : p - (w s₀).length = q := by rw [hq, hL₀]
+    rw [hcfp, hsplit, List.take_append,
+      List.take_of_length_le (show (w s₀).length ≤ p by rw [← hL₀]; exact hpL₀),
+      hqeq, ← hT]
+  -- tail-prefix bound at `q`, `.length` form
+  have hidxk : s₀ + k + 1 = s + 1 := by omega
+  have hTbnd : |(countOccurrences v T : ℝ) - γv * T.length|
+      < (ε / 4) * T.length + ∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)) := by
+    rw [hTlen]
+    have h := htail k q (by rw [hidxk]; exact hqlen)
+    rw [hidxk] at h; exact h
+  -- compose fixed prefix + tail via additive-slack append
+  have hcomb := countOccurrences_append_addslack₂ (v := v) (x := w s₀) (t := T) hne hA hTbnd
+  have hlenp : (w s₀ ++ T).length = p := by rw [List.length_append, hTlen, ← hL₀]; omega
+  rw [hlenp] at hcomb
+  -- slack < (ε/4)·p and constants < (ε/4)·p
+  have hslackp : (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+      < (ε / 4) * p := by
+    have h := hK k hkK
+    have hws : ((w (s₀ + k)).length : ℝ) ≤ p := by rw [← hsk]; exact_mod_cast hsp
+    have : (ε / 4) * ((w (s₀ + k)).length : ℝ) ≤ (ε / 4) * p :=
+      mul_le_mul_of_nonneg_left hws hε4.le
+    linarith
+  have hconstp : C₀ + ((v.length : ℝ) - 1) ≤ (ε / 4) * p := by
+    have hMp : (M : ℝ) ≤ p := by exact_mod_cast hpM
+    have hge : 4 * (C₀ + ((v.length : ℝ) - 1)) / ε ≤ p := le_trans hM hMp
+    rw [div_le_iff₀ hε] at hge
+    nlinarith [hge, hpR, hε]
+  -- assemble the metric bound
+  rw [Real.dist_eq, hdecomp]
+  have heq : (countOccurrences v (w s₀ ++ T) : ℝ) / p - γv
+      = ((countOccurrences v (w s₀ ++ T) : ℝ) - γv * p) / p := by field_simp
+  rw [heq, abs_div, abs_of_pos hpR, div_lt_iff₀ hpR]
+  nlinarith [hcomb, hslackp, hconstp, mul_pos hε hpR]
+
 /-! ## The orbit-equidistribution wrapper -/
 
 /-- **Abstract chain orbit equidistribution.**  Under the same chain +
@@ -582,6 +695,64 @@ theorem chain_orbit_equidist (w : ℕ → List ℕ)
   set B : ℕ → ℝ := fun p => blockCount (cfCylinder v) p y with hB
   have hAfreq : Tendsto (fun p => (A p : ℝ) / (p : ℝ)) atTop (nhds γv) :=
     chain_cf_digit_freq_tendsto w hext hy v hne hγ0 hγ1 hgood hdom
+  have hbnds : ∀ p, (A p : ℝ) ≤ B p ∧ B p ≤ (A p : ℝ) + v.length := by
+    intro p
+    have h := blockCount_sub_countOccurrences_bounds horb v hne 0 p
+    simp only [Function.iterate_zero_apply, Nat.zero_add] at h
+    exact h
+  have hzero : Tendsto (fun p : ℕ => (v.length : ℝ) / (p : ℝ)) atTop (nhds 0) :=
+    tendsto_const_div_atTop_nhds_zero_nat _
+  have hupp : Tendsto (fun p => (A p : ℝ) / (p : ℝ) + (v.length : ℝ) / (p : ℝ))
+      atTop (nhds γv) := by simpa using hAfreq.add hzero
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le hAfreq hupp ?_ ?_
+  · intro p
+    dsimp only
+    rcases Nat.eq_zero_or_pos p with hp | hp
+    · subst hp; simp
+    · have hpR : (0 : ℝ) ≤ (p : ℝ) := by positivity
+      gcongr
+      exact (hbnds p).1
+  · intro p
+    dsimp only
+    rcases Nat.eq_zero_or_pos p with hp | hp
+    · subst hp; simp
+    · have hpR : (0 : ℝ) ≤ (p : ℝ) := by positivity
+      rw [← add_div]
+      gcongr
+      linarith [(hbnds p).2]
+
+/-- **Abstract chain orbit equidistribution, HDOM-FREE.**  Same conclusion as
+`chain_orbit_equidist` but the per-`v` hypothesis is uniform prefix-goodness of
+the appended blocks (`hblock`) plus the `o(word)` slack telescoping (`hslack`),
+with NO dominance.  Feeds `chain_cf_digit_freq_tendsto_uniform` into the same
+orbit↔window bridge.  This is the `CFOrbitEquidist` payload the affine
+(interleaved) schedule consumes for both streams, whose steer blocks are
+`Θ(word)` (so `hdom` fails) but ARE uniformly prefix-good. -/
+theorem chain_orbit_equidist_uniform (w : ℕ → List ℕ)
+    (hext : ∀ s, ∃ u, u ≠ [] ∧ w (s + 1) = w s ++ u)
+    {y : ℝ} (hirr : Irrational y) (hy01 : y ∈ Set.Ioo (0 : ℝ) 1)
+    (hy : ∀ s, y ∈ cfCylinder (w s))
+    (hfreq : ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
+      ∃ C : ℕ → ℝ, (∀ s, 0 ≤ C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∃ s₀, ∀ s, s₀ ≤ s → ∀ q, q ≤ (chainApp w s).length →
+          |(countOccurrences v ((chainApp w s).take q) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * q| < ε * q + C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∀ s₀, ∃ K, ∀ k, K ≤ k →
+          (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+            < ε * (w (s₀ + k)).length)) :
+    ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
+      Filter.Tendsto (fun p => blockCount (cfCylinder v) p y / (p : ℝ))
+        Filter.atTop (nhds (gaussMeasure (cfCylinder v)).toReal) := by
+  intro v hne hpos
+  set γv := (gaussMeasure (cfCylinder v)).toReal with hγ
+  obtain ⟨hγ0, hγ1⟩ := gaussMeasure_toReal_mem_Icc (cfCylinder v)
+  obtain ⟨C, hC, hblock, hslack⟩ := hfreq v hne hpos
+  have horb : ∀ j : ℕ, gaussMap^[j] y ∈ Set.Ioo (0 : ℝ) 1 :=
+    fun j => (irrational_orbit y hirr hy01 j).2
+  set A : ℕ → ℕ := fun p => countOccurrences v ((List.range p).map (cfDigit y)) with hA
+  set B : ℕ → ℝ := fun p => blockCount (cfCylinder v) p y with hB
+  have hAfreq : Tendsto (fun p => (A p : ℝ) / (p : ℝ)) atTop (nhds γv) :=
+    chain_cf_digit_freq_tendsto_uniform w hext hy v hne hγ0 hγ1 C hC hblock hslack
   have hbnds : ∀ p, (A p : ℝ) ≤ B p ∧ B p ≤ (A p : ℝ) + v.length := by
     intro p
     have h := blockCount_sub_countOccurrences_bounds horb v hne 0 p

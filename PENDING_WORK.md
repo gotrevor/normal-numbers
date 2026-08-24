@@ -1,5 +1,49 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## ⭐⭐⭐⭐⭐⭐⭐ ADVANCE 2026-08-24 (review lap): the ROUTE-DECISIVE mid-block bound is PROVED hdom-free — `chainTail_dev_prefix_var` (commit `2c61e7c`, axiom-clean)
+
+The review lap named the decisive open question: *does the mid-block prefix bound
+close WITHOUT `hdom`?*  Now settled YES in the kernel.
+**`chainTail_dev_prefix_var`** (`CFChainFreq.lean`, after `chainTail_dev_split_var`):
+given each appended block is uniformly prefix-good
+(`∀ q ≤ |block s|, |dev(block_s.take q)| < ε·q + C s`), EVERY prefix of the
+accumulated tail `chainTail w s₀ (s₀+k+1)` is good:
+`∀ q ≤ |tail|, |dev(tail.take q)| < ε·q + ∑_{i≤k}(C(s₀+i)+(|v|−1))`.
+Induction on `k`: prefix lands in the tail (IH) or reaches the last block
+(whole-tail bound via `chainTail_dev_split_var` ⊕ block's OWN prefix bound at `j`,
+composed by `countOccurrences_append_addslack₂`).  This is the exact hdom-free
+replacement for `cfDiscLt_append_take` (CFChainFreq:450).
+
+### REMAINING for the hdom-free limit (metric wrapper) — decomposition worked out this lap
+**`chain_cf_digit_freq_tendsto_uniform`** (copy-extend `CFChainFreq`, NEVER edit
+the existing `chain_cf_digit_freq_tendsto`): `Tendsto (fun p => countOcc v (cfPref y p)/p) atTop (𝓝 γv)`.
+Clean hypothesis set (schedule-providable):
+- `C : ℕ → ℝ`, `hC : ∀ s, 0 ≤ C s`  (per-stage additive slack; for the schedule
+  `C_s = 4√|block_s| + 2|v| + n₁_s`).
+- `hblock : ∀ ε>0, ∃ s₀, ∀ s ≥ s₀, ∀ q ≤ |chainApp w s|, |dev((chainApp w s).take q)| < ε·q + C s`
+  — absorbs the margin `δ_s → 0` (past `s₀(ε)`, `δ_s < ε`).  Feeds `chainTail_dev_prefix_var`.
+- `hslack : ∀ ε>0, ∀ s₀, ∃ K, ∀ k ≥ K, ∑_{i∈range(k+1)}(C(s₀+i)+(|v|−1)) < ε·(w (s₀+k)).length`
+  — the `∑ C = o(word)` telescoping.  **NB use `(w (s₀+k)).length` (word BEFORE
+  the last block), not `(s₀+k+1)`**: for the stage `k` with `|w(s₀+k)| < p ≤ |w(s₀+k+1)|`,
+  this gives `∑ < ε·|w(s₀+k)| < ε·p` (the `+1` form is `≥ p`, wrong direction).
+Proof (mirror `chain_cf_digit_freq_tendsto` steps, hdom-free):
+  1. fix ε; `hblock (ε/4) → s₀`; feed `chainTail_dev_prefix_var` (ε:=ε/4) → tail
+     prefix bound.  `hslack (ε/4) s₀ → K`.
+  2. `cfPref y p = w s₀ ++ (chainTail w s₀ S).take (p−L₀)` for `S = s₀+k+1` large
+     (`chain_cfPref_eq` + `w_eq_append_tail` + `List.take_append`), `L₀ = |w s₀|`.
+     Locate `k` = least with `|w(s₀+k+1)| ≥ p` (via `chain_exists_stage`); then
+     `|w(s₀+k)| < p`.
+  3. compose fixed short prefix `w s₀` (`|dev(w s₀)| ≤ L₀`, crude `C₀ = L₀+1`) with
+     the tail prefix via `countOccurrences_append_addslack₂`:
+     `|dev(cfPref y p)| < (ε/4)·p + (C₀ + ∑_{i≤k}(...) + (|v|−1))`.
+  4. `∑_{i≤k} < (ε/4)|w(s₀+k)| < (ε/4)p` (hslack, k≥K), and `C₀+(|v|−1) < (ε/4)p`
+     for `p` large ⇒ `|dev| < ε·p`.  Convert to `Metric.tendsto_atTop` (mirror
+     CFChainFreq:451-465).
+Then `chain_orbit_equidist`-style wrapper (the orbit↔window tail at CFChainFreq:491-525
+is REUSABLE — feed the new limit instead of `chain_cf_digit_freq_tendsto`).
+Then ψ-round `_uniform` + `SchedStateA` recursion discharge `hblock`/`hslack` from
+`exists_uniformly_freq_good_block_steer` + geometric block growth.
+
 ## ⭐⭐⭐⭐⭐⭐ ROUTE-DECISIVE CORRECTION 2026-08-24 (this lap, LATER): `hdom` is UNATTAINABLE for the affine schedule — steer blocks are `Θ(word)`, NOT `o(word)`. The hdom-free UNIFORM-GOODNESS route is MANDATORY, and its crux is **uniformly-good steer blocks**.
 
 **This SUPERSEDES the "tight blocks ⇒ hdom holds" claim I made earlier THIS lap
