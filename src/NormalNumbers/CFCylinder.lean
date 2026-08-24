@@ -129,6 +129,44 @@ theorem cfK_drop_one_le (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
           simp only [List.drop_one, List.tail_cons, cfK]
           omega
 
+/-- The head digit of a genuine word is at most its continuant
+(`K(a :: rest) = a·K(rest) + K(rest') ≥ a·1`). -/
+theorem head_le_cfK {a : ℕ} {m : List ℕ} (hpos : ∀ x ∈ (a :: m), 1 ≤ x) :
+    a ≤ cfK (a :: m) := by
+  cases m with
+  | nil => simpa [cfK] using hpos a (by simp)
+  | cons b l =>
+      have h1 : 1 ≤ cfK (b :: l) :=
+        one_le_cfK _ fun x hx => hpos x (List.mem_cons_of_mem _ hx)
+      simp only [cfK]
+      nlinarith
+
+/-- Dropping any prefix does not increase the continuant (digits ≥ 1);
+generalizes `cfK_drop_one_le` from dropping one digit to dropping `i`. -/
+theorem cfK_drop_le (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) (i : ℕ) :
+    cfK (w.drop i) ≤ cfK w := by
+  induction i with
+  | zero => simp
+  | succ j ih =>
+      have hpos' : ∀ a ∈ w.drop j, 1 ≤ a := fun a ha => hpos a (List.mem_of_mem_drop ha)
+      calc cfK (w.drop (j + 1)) = cfK ((w.drop j).drop 1) := by rw [List.drop_drop]
+        _ ≤ cfK (w.drop j) := cfK_drop_one_le (w.drop j) hpos'
+        _ ≤ cfK w := ih
+
+/-- **Every digit of a genuine word is bounded by its continuant**: the
+schedule's `cfK(uSched s) ≤ exp(goodC·n)` payload (`uSched_spec`) thus caps
+every individual digit within a block, not just the aggregate `log`-sum
+(via `uSched_log_sum_le`). Needed for the Tier-2 step-2 tail control:
+digits within block `s` cannot exceed `exp(goodC · nFn(tSched (s+1)))`. -/
+theorem getElem_le_cfK (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) (i : ℕ) (hi : i < w.length) :
+    w[i] ≤ cfK w := by
+  have hdrop : w.drop i = w[i] :: w.drop (i + 1) := List.drop_eq_getElem_cons hi
+  have hpos' : ∀ a ∈ w.drop i, 1 ≤ a := fun a ha => hpos a (List.mem_of_mem_drop ha)
+  have h1 : w[i] ≤ cfK (w.drop i) := by
+    rw [hdrop] at hpos' ⊢
+    exact head_le_cfK hpos'
+  exact h1.trans (cfK_drop_le w hpos i)
+
 /-- Dropping the last digit does not increase the continuant (digits ≥ 1). -/
 theorem cfK_dropLast_le (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
     cfK w.dropLast ≤ cfK w := by
