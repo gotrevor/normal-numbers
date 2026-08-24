@@ -1,5 +1,44 @@
 # PENDING WORK — B5′ campaign
 
+> **GRIND (2026-08-24 — route SIMPLIFIED to Markov; plumbing scoped).** Two
+> route improvements that make `xstar_log_tail_uniform` markedly more tractable
+> than the "variance/Chebyshev" framing:
+>
+> 1. **Markov, NOT Chebyshev — first moment suffices.** The tail
+>    `Σ_{i<n, aᵢ>K} log aᵢ` is NONNEGATIVE and we only need an UPPER bound on it
+>    (the `limsup ≤ log K₀` direction; `liminf ≥` is free from frequencies). So
+>    the bad zone `logBadZone K n η := {x : Σ_{i<n, digit>K} log(digit) > η·n}`
+>    (relative to the brick cylinder) is controlled by **Markov's inequality**:
+>    `γ(logBadZone) ≤ (1/(η·n))·∫ tail dγ = (1/η)·Σ_{a>K} γ([a])·log a`, using
+>    T-invariance + `integral_blockCount` (∫ blockCount(cfCylinder[a],n) dγ =
+>    n·γ([a])) — **FIRST MOMENT ONLY**. No `Var(Σ log aᵢ)` bound, no covariance
+>    double-sum, no L²-observable γ-mixing extension needed. `summable_gaussKuzmin_logsq`
+>    (2nd moment) is therefore NOT on the critical path (still a correct lemma).
+>    The `K`-selection input `Σ_{a>K} γ([a])·log a → 0` is now proved:
+>    `gaussKuzmin_logtail_tendsto` (`Khinchin.lean`, axiom-clean).
+> 2. **The general union lemma needs NO change.** `exists_mem_notMem_union_of_bounds`
+>    (`TBrick.lean:244`) already takes TWO zones B₁,B₂ with `p+q<1/2`. Add the
+>    Khinchin zone B₃ by **unioning it into B₂** (the d-ary group):
+>    `vol(B₂∪B₃) ≤ ofReal(q+r)·vol0` by subadditivity, needing `p+q+r<1/2`. So
+>    the only edits are: `exists_good_avoiding_bad` (union B₃ in, tighten the two
+>    `<1/4` coeff thresholds so the three sum `<1/2` — e.g. `<1/6` each, larger
+>    N/kmin), its `_of_large` corollary, `exists_refinement_uniform`, and the
+>    schedule/`xstar` rederivation carrying the extra guarantee. All ADDITIVE
+>    (new hypotheses + new conclusion conjunct); Tier-1 decls untouched.
+>
+> **CONCRETE NEXT (in order):**
+> - (A′) First-moment integral: `∫ x, (Σ_{i<n} if cfDigit x i > K then
+>   log(cfDigit x i) else 0) dγ = n·Σ_{a>K} γ([a])·log a`. Express the tail
+>   observable via `blockCount (cfCylinder [a])` summed over `a>K` with `log a`
+>   weights; interchange ∫ with the (Tonelli, nonneg) sum; apply
+>   `integral_blockCount` per `a`. NEW file (`CFLogTail.lean`), no TBrick edit.
+> - (B′) `logBadZone` def + Markov measure bound `≤ (1/η)Σ_{a>K}γ([a])log a`
+>   (via `MeasureTheory.mul_meas_ge_le_integral`-style Markov on the nonneg tail).
+> - (C′) Union B₃ into `exists_good_avoiding_bad`; tighten coeffs; thread through
+>   `exists_refinement_uniform` + schedule; discharge `xstar_log_tail_uniform`.
+> - (D′) Layering refactor: move frozen `KhinchinTypical`/`khinchinK₀` defs to an
+>   upstream module so `Headline.lean:134` can close with `xstar_khinchinTypical`.
+
 > **GRIND (2026-08-24, same lap follow-on — REDUCTION (C) COMPLETE, crux
 > isolated to ONE schedule lemma).** The entire Tier-2 headline now provably
 > rests on a single, precisely-stated lemma. Landed (all in `Khinchin.lean`):

@@ -275,6 +275,23 @@ theorem gaussKuzmin_logsum_tendsto :
   push_cast
   ring
 
+/-- **The Gauss–Kuzmin log-tail vanishes**: `Σ_{a>K} γ([a])·log a → 0` as
+`K → ∞` (written as `log K₀ − Σ_{a≤K} γ([a])·log a`, the tail of the
+convergent series `gaussKuzmin_logsum_hasSum`).  This is the `K`-selection
+input for the Markov bound on the Khinchin log-tail bad zone: the bad zone
+`{x : Σ_{i<n, digit>K} log(digit) > η·n}` has Gauss measure `≤ (1/η)·(this
+tail)` by Markov + `integral_blockCount` (first moment only — the tail is
+nonnegative, so no variance/Chebyshev is needed), which → 0 as `K → ∞`. -/
+theorem gaussKuzmin_logtail_tendsto :
+    Filter.Tendsto
+      (fun K : ℕ => Real.log khinchinK₀
+        - ∑ k ∈ Finset.range K,
+            (gaussMeasure (cfCylinder [k + 1])).toReal * Real.log ((k : ℝ) + 1))
+      Filter.atTop (nhds 0) := by
+  have hpartial := gaussKuzmin_logsum_hasSum.tendsto_sum_nat
+  have h := (tendsto_const_nhds (x := Real.log khinchinK₀)).sub hpartial
+  simpa using h
+
 /-- **Elementary reduction**: `KhinchinTypical x` (the geometric mean of the
 CF digits `→ K₀`) is equivalent to the corresponding `log`-average tending to
 `log K₀` — the standard exp/log swap, using that every CF digit of an
