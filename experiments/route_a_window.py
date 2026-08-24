@@ -782,6 +782,54 @@ def mode_freq(args, rng):
     return {"in": (i1, i2), "out": (o1, o2)}
 
 
+def mode_compare(args, rng):
+    """The differential test.  Route A's bet is that the Z[phi] transducer behaves like the
+    integer one minus a certificate.  So run the SAME statistics on maps where Vandehey's
+    theorem is TRUE and on maps where the question is OPEN, and look for any dynamical
+    statistic that separates them.  Absolute thresholds are worthless here; only the
+    integer controls calibrate the scale."""
+    order = ["2x", "3x", "x/2", "(x+1)/2", "phi", "x/phi", "xphi", "sqrt5x"]
+    known = {"2x", "3x", "x/2", "(x+1)/2"}
+    print("== COMPARE ==  input: %s   steps: %d   seed: %d"
+          % (args.input, args.steps, args.seed))
+    print("   PROVED = Vandehey 2017 Theorem 1.1 applies;  OPEN = section 7 problem 1.")
+    print()
+    hdr = ("%-9s %-6s %7s %7s %7s %7s  %7s %7s %6s %7s %8s"
+           % ("map", "status", "med", "p99", "p99.9", "MAX", "medkap", "maxkap",
+              "burst", "c1", "conj/step"))
+    print("   " + hdr)
+    print("   " + "-" * (len(hdr)))
+    rows = []
+    for name in order:
+        M, desc = MAPS[name]
+        stream = make_stream(args.input, random.Random(args.seed), period=args.period)
+        td, rec, seen, din, per_digit, (sat, half) = run_window(
+            M, stream, args.steps, state_cap=args.state_cap, max_bits=args.max_bits)
+        if not rec:
+            continue
+        ln = [r[0] for r in rec]
+        lk = [r[3] for r in rec]
+        lc = [r[1] for r in rec]
+        q = quantiles(ln)
+        qk = quantiles(lk)
+        drift = (lc[-1] - lc[len(lc) // 4]) / max(1, len(lc) - len(lc) // 4)
+        rows.append((name, len(seen), len(rec)))
+        print("   %-9s %-6s %7.3f %7.3f %7.3f %7.3f  %7.3f %7.3f %6d %7.4f %8.3f"
+              % (name, "PROVED" if name in known else "OPEN", q[0.5], q[0.99], q[0.999],
+                 q[1.0], qk[0.5], qk[1.0], td.max_burst,
+                 (len(td.out) - 1) / max(1, len(din)), drift))
+    print()
+    print("   distinct post-emission states (the ONLY place finiteness shows up):")
+    for name, nst, nrec in rows:
+        print("      %-9s %6d states / %d steps%s"
+              % (name, nst, nrec, "   <- never repeats (theorem)" if nst == nrec else ""))
+    print()
+    print("   Read: if the OPEN rows sit inside the spread of the PROVED rows on every")
+    print("   DYNAMICAL column, then nothing the dynamics does distinguishes the two, and")
+    print("   the only difference is the arithmetic certificate Route A already knows it")
+    print("   has lost.  A separated column is a wall.")
+
+
 # --------------------------------------------------------------------------- self-test
 
 
@@ -851,7 +899,7 @@ def selftest(args):
         new2 = len(seen) - (half or 0)
         print("      %-4s distinct states %3d, new in 2nd half %3d   lognorm max %.3f"
               % (name, len(seen), new2, prof[-1][1]))
-        ok &= (new2 * 8 < len(seen))
+        ok &= (len(seen) < 0.2 * len(rec))   # repeats constantly
     print("      phi  (comparison, det a unit of Z[phi]):")
     r = random.Random(args.seed + 7)
     s = LebesgueStream(r)
@@ -860,6 +908,7 @@ def selftest(args):
     print("           distinct states %d in 2000 steps, new in 2nd half %d"
           % (len(seen), len(seen) - (half or 0)))
     print("           -> finiteness is genuinely GONE, exactly as Dirichlet predicts")
+    ok &= (len(seen) == 2000)
 
     # --- T3  the window statistic must blow up when renormalisation is broken ---
     print("\nT3  teeth on the window statistic: skip legal emissions and it must blow up")
@@ -967,7 +1016,8 @@ def verdict(res):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("mode", choices=["window", "memory", "freq", "all", "selftest"])
+    ap.add_argument("mode",
+                    choices=["window", "memory", "freq", "compare", "all", "selftest"])
     ap.add_argument("--map", default="phi", choices=sorted(MAPS))
     ap.add_argument("--input", default="lebesgue",
                     help="lebesgue | iid | adversarial | periodic:1,2,3")
@@ -984,6 +1034,9 @@ def main():
         return selftest(args)
 
     rng = random.Random(args.seed)
+    if args.mode in ("compare", "all"):
+        mode_compare(args, rng)
+        print()
     if args.mode in ("window", "all"):
         mode_window(args, rng)
         print()
