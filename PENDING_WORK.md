@@ -19,19 +19,15 @@ single-map measure route to a **countable FAMILY** of affine maps simultaneously
   the domain lands in `[0,∞)`; pull the null superset back, `γ≤C·vol`).
 - Assembly: `measure_biUnion_null_iff` (Q countable) + `measure_sdiff_null` + `γ(0,1)>0`.
 
-**NEXT ATTACK (hardest-first, to remove the `r≥0` restriction → full Vandehey generality):**
-The `r≥0` hypothesis is exactly what keeps every image `ψ((0,1))=(r,q+r)` inside `[0,∞)` where
-the positive shift applies. To allow `r<0` (negative images) the crux must become
-`volume {y|¬IsCFNormal y} = 0` on ALL of `ℝ`. The negative branch reduces via the UNIVERSAL
-one-step identity `cfDigit w (k+1) = cfDigit (gaussMap w) k` (holds ∀w by `Function.iterate_succ_apply`):
-for `w<0`, `gaussMap w = Int.fract w⁻¹ ∈ [0,1)`, and `cfFreq_tendsto_of_digit_shift` (m=1) gives
-`IsCFNormal (gaussMap w) → IsCFNormal w`, so `N∩(-∞,0) ⊆ gaussMap⁻¹(N∩[0,1))`. The remaining
-obligation is **`gaussMap` nonsingularity on the negatives**: `volume Z=0 → volume (gaussMap⁻¹ Z ∩ Iio 0)=0`.
-On `(-1/k, -1/(k+1))` (k≥1) `gaussMap` is the smooth diffeo `w↦w⁻¹+k`, so it's a countable
-piecewise-affine-in-`w⁻¹` change of variables — provable but ~150 lines. Alternatively note the same
-identity handles `w≥1` uniformly, giving a cleaner single lemma. This is a clean next lap.
+**✅ DONE (same grind) — FULL generality `exists_cfNormal_and_affine_family_cfNormal'` (any real `r`, `q>0`).**
+The `r≥0` restriction is REMOVED, matching Vandehey §7 exactly. Crux upgraded to
+`volume_notCFNormal_univ` (bad set Lebesgue-null on ALL of `ℝ`). Negative half avoided the
+piecewise change-of-variables: the involution identity `gaussMap⁻¹(Z)∩Iio0 = inv''(Int.fract⁻¹Z∩Iio0)`
+(inv is its own inverse on `Iio0`), `Int.fract⁻¹Z` null (`volume_fract_preimage_notCFNormal`,
+ℤ-translate union), inv differentiable off 0, then `addHaar_image_eq_zero_of_differentiableOn_of_addHaar_eq_zero`.
+Axiom-clean (trust triple). Both family forms + single-map B6 + B5′ headlines untouched.
 
-**ALSO (Tier-2 stretch, detaches freely):** image-Khinchin — strengthen the witness so `x` is
+**NEXT ATTACK (Tier-2 stretch, detaches freely):** image-Khinchin — strengthen the witness so `x` is
 additionally Khinchin-typical (the Khinchin-typical set is γ-co-null; intersect one more co-null
 set in the SAME assembly). Cheap given `KhinchinTypical` a.e. infrastructure if present.
 
