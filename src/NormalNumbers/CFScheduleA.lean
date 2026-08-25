@@ -848,6 +848,43 @@ theorem exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt {c d : ℝ} (B' : Se
   obtain ⟨⟨hxA, hxB⟩, hxQ⟩ := hx
   exact ⟨x, hxQ, hxA, hxB⟩
 
+/-- **Cylinder-based avoidance selector** (z-side point pick, brick Z-I core).  Inside a
+genuine cylinder `cfCylinder wx`, if the bad set's mass ON the cylinder is strictly below
+the cylinder's own mass, there is an irrational point of the cylinder avoiding `B'`.  Mirror
+of `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt` with the base interval replaced by a
+cylinder — used to select the per-stage z-good point `p_s ∈ cfCylinder wx'` whose ψ-image
+dodges the pulled-back z-bad zones, WITHOUT disturbing the (already-fixed, linear) block. -/
+theorem exists_irrational_mem_cfCylinder_notMem_of_gaussMeasure_lt
+    (wx : List ℕ) (B' : Set ℝ)
+    (hlt : gaussMeasure (cfCylinder wx ∩ B') < gaussMeasure (cfCylinder wx)) :
+    ∃ x : ℝ, Irrational x ∧ x ∈ cfCylinder wx ∧ x ∉ B' := by
+  set A : Set ℝ := cfCylinder wx with hA
+  have hAsub : gaussMeasure A ≤ gaussMeasure (A \ B') + gaussMeasure (A ∩ B') := by
+    have hcov : A ⊆ (A \ B') ∪ (A ∩ B') := fun x hx => by
+      by_cases h : x ∈ B'
+      · exact Or.inr ⟨hx, h⟩
+      · exact Or.inl ⟨hx, h⟩
+    exact (measure_mono hcov).trans (measure_union_le _ _)
+  have hABpos : 0 < gaussMeasure (A \ B') := by
+    rw [pos_iff_ne_zero]
+    intro h0
+    rw [h0, zero_add] at hAsub
+    exact absurd (lt_of_lt_of_le hlt hAsub) (lt_irrefl _)
+  have hac : gaussMeasure ≪ (MeasureTheory.volume.restrict (Set.Ioo (0 : ℝ) 1)) :=
+    MeasureTheory.withDensity_absolutelyContinuous _ _
+  have hQnull : gaussMeasure (Set.range ((↑) : ℚ → ℝ)) = 0 := by
+    apply hac
+    rw [Measure.restrict_apply' measurableSet_Ioo]
+    exact measure_mono_null Set.inter_subset_left
+      ((Set.countable_range _).measure_zero volume)
+  have hposdiff : 0 < gaussMeasure ((A \ B') \ Set.range ((↑) : ℚ → ℝ)) := by
+    have heq : gaussMeasure ((A \ B') \ Set.range ((↑) : ℚ → ℝ)) = gaussMeasure (A \ B') :=
+      measure_sdiff_null (s := A \ B') hQnull
+    rw [heq]; exact hABpos
+  obtain ⟨x, hx⟩ := nonempty_of_measure_ne_zero hposdiff.ne'
+  obtain ⟨⟨hxA, hxB⟩, hxQ⟩ := hx
+  exact ⟨x, hxQ, hxA, hxB⟩
+
 /-- **Multi-scale measure core.**  Given the aggregate multi-scale bad-zone
 measure bound is below `γ(c,d)` (the caller supplies this, having chosen `n₁`
 large relative to `|NS|`), there is an irrational point of `(c,d)` avoiding EVERY
