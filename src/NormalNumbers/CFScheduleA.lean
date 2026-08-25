@@ -2405,6 +2405,40 @@ theorem gaussMeasure_middle_half_hull_ge (w : List ℕ) {a b : ℝ}
   have hmid := gaussMeasure_middle_half_ge ha hab hb
   linarith [hmid, hleR]
 
+/-- **Pulled-back z-bad mass on a cylinder** (brick Z-I measure bound).  For a cylinder
+sitting inside its hull `Icc a b`, the ψ-pullback of a z-space set `S` meets the cylinder in
+mass at most `(2/q)·γ(S ∩ ψ(hull))`.  Composes `gaussMeasure_interval_inter_preimage_affineMap_le`
+(the interval pullback bound) with the null-endpoint passage `cfCylinder ⊆ Icc a b ⇒ Ioo a b`.
+Feeds the cylinder selector `exists_irrational_mem_cfCylinder_notMem_of_gaussMeasure_lt`: once
+`S`'s mass on `ψ(hull)` is small (Chebyshev, `n` large vs `cfK(wx)²`), the pulled-back z-bad
+mass drops below the cylinder mass and a z-good `p_s` exists. -/
+theorem gaussMeasure_cfCylinder_inter_preimage_affineMap_le {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (wx : List ℕ) {a b : ℝ} (hsub : cfCylinder wx ⊆ Set.Icc a b)
+    (S : Set ℝ) (hS : MeasurableSet S) (hSsub : S ⊆ Set.Ioo (0 : ℝ) 1) :
+    gaussMeasure (cfCylinder wx ∩ affineMap q r ⁻¹' S)
+      ≤ ENNReal.ofReal (2 / q) * gaussMeasure (S ∩ Set.Ioo (q * a + r) (q * b + r)) := by
+  have hstep : gaussMeasure (cfCylinder wx ∩ affineMap q r ⁻¹' S)
+      ≤ gaussMeasure (Set.Ioo a b ∩ affineMap q r ⁻¹' S) := by
+    have hcex : cfCylinder wx ∩ affineMap q r ⁻¹' S
+        ⊆ (Set.Ioo a b ∩ affineMap q r ⁻¹' S) ∪ ({a} ∪ {b}) := by
+      rintro x ⟨hxc, hxs⟩
+      have hxab := hsub hxc
+      rcases eq_or_lt_of_le hxab.1 with h | h
+      · exact Or.inr (Or.inl h.symm)
+      rcases eq_or_lt_of_le hxab.2 with h2 | h2
+      · exact Or.inr (Or.inr h2)
+      · exact Or.inl ⟨⟨h, h2⟩, hxs⟩
+    calc gaussMeasure (cfCylinder wx ∩ affineMap q r ⁻¹' S)
+        ≤ gaussMeasure ((Set.Ioo a b ∩ affineMap q r ⁻¹' S) ∪ ({a} ∪ {b})) :=
+          measure_mono hcex
+      _ ≤ gaussMeasure (Set.Ioo a b ∩ affineMap q r ⁻¹' S) + gaussMeasure ({a} ∪ {b}) :=
+          measure_union_le _ _
+      _ ≤ gaussMeasure (Set.Ioo a b ∩ affineMap q r ⁻¹' S)
+            + (gaussMeasure {a} + gaussMeasure {b}) := by gcongr; exact measure_union_le _ _
+      _ = gaussMeasure (Set.Ioo a b ∩ affineMap q r ⁻¹' S) := by
+          rw [gaussMeasure_singleton, gaussMeasure_singleton]; simp
+  exact le_trans hstep (gaussMeasure_interval_inter_preimage_affineMap_le hq r a b S hS hSsub)
+
 /-- **Relative regularization kills the block parameter's word-dependence.**  With the
 block parameter `β_rel = γtar·δ²/(S + γwx)`, `S = γwx·Sg` (relative regularizer `+γwx`
 instead of the scaling-breaking absolute `+1`), the quantity `2/β_rel` — which drives the
