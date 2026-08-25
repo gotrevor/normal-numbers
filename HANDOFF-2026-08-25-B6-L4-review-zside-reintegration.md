@@ -59,19 +59,40 @@ Tier 2) = trust-triple `[propext, Classical.choice, Quot.sound]` — **DONE**.
     κ+2log2`; update its statement + `schedL4_block_linear`'s Nfib consumption (bigger
     rate = bigger linear constant, no structural change).
 
-## NEXT (hardest-first) — finish DIRECTION step 1
+## PREREQUISITES — ALL LANDED (green, additive)
 
-1. **Generalise `chain_hfreq_of_uniform_blocks`** slack `2|v|→3|v|` (+ wrap the 2 dead
-   callers). Small, isolated; do FIRST + commit.
-2. **Rebuild `StepSpecL4` + `schedStepL4_exists`**: append `[a_s]`, add the `enum s ∉
-   cfCylinder S'.wx` conjunct, re-prove `hword`(+1)/`hfreq`(+|v|, via count lemmas)/
-   `hcfKb`(rate-bump helper). Fix the 4 consumers (`schedL4_block_linear`,
-   `schedL4_hfreq_x`, `wxSeq_L4_length_ge`, `cfK_wxSeq_L4_le`) — mostly the `hword`+1 and
-   rate bumps.
+- ✅ `affineMap_irrational_of_iInter_avoids` — irrationality reduction.
+- ✅ `cfK_snoc_le_exp_ratebump` — cfK filler bound (rate `κ→κ+log2`).
+- ✅ `chain_hfreq_of_uniform_blocks_snoc` — filler-tolerant freq variant (`3|v|` slack;
+  shared lemma + dead callers untouched).
+- ✅ `enumPsiRat` + `mem_range_enumPsiRat` — enumeration of `ψ⁻¹(ℚ)`.
+- ✅ `block_len_le'` — `+1`-filler length bound (`|blk|=n₁+m²+1 ⇒ ≤2m²+9`).
+
+## NEXT — the ONE coupled atomic edit (do as a single green unit)
+
+1. **Rebuild `StepSpecL4` + `schedStepL4_exists`**: in the step, append the
+   diagonalisation digit `[d]` (`d` from `exists_digit_cfCylinder_notMem (S.wx++u)
+   (enumPsiRat q r s)`), so `S'.wx = S.wx ++ (u ++ [d])`, block `= u++[d]`. StepSpecL4
+   changes: `hword` `= n₁+m²` → `= n₁+m²+1`; `hfreq` slack `2*v.length` → `3*v.length`
+   (prove the last-index case via `add_countOccurrences_le_append` / `countOccurrences_append_le`
+   + `countOccurrences_le_length` giving `count v [d] ≤ 1`); `hcfKb` rate `schedKappaL4` →
+   `schedKappaL4 + Real.log 2` (via `cfK_snoc_le_exp_ratebump`); ADD conjunct
+   `enumPsiRat q r s ∉ cfCylinder S'.wx` at the END (from `hdnotmem`).
+2. **Fix the 4 consumers:**
+   - `wxSeq_L4_length_ge`: uses `hlen` (5th conjunct) + trailing `-` → the added-at-END
+     conjunct just enlarges the clump; likely NO change (verify the destructure count).
+   - `cfK_wxSeq_L4_le`: `hcfKb` now rate `κ+log2` ⇒ its accumulated statement becomes rate
+     `κ+2log2`; update statement + proof (the `hcap` line + the `exp((κ+2log2)…)` calc).
+   - `schedL4_hfreq_x`: call `chain_hfreq_of_uniform_blocks_snoc` (not the base) and pass
+     `⟨hsdrop, n₁, hn₁sq, hfreq⟩` with the `3|v|` slack.
+   - `schedL4_block_linear`: `block_len_le hword hn₁sq` → `block_len_le' hword hn₁sq`
+     (`≤2m²+9`, +2 const absorbed); consume `cfK_wxSeq_L4_le` at the bumped rate `κ+2log2`.
 3. **`exists_xA_L4_psi_irrational`** — combine `exists_xA_L4_orbit_equidist` +
-   `affineMap_irrational_of_iInter_avoids` (havoid from the new conjunct + `enum` range).
+   `affineMap_irrational_of_iInter_avoids` (havoid: for `t` with `ψt∈ℚ`,
+   `mem_range_enumPsiRat` gives `t=enumPsiRat q r k`; the new StepSpecL4 conjunct at stage
+   `k` gives `enumPsiRat q r k ∉ cfCylinder(wxSeq_L4(k+1))`; so `s=k+1`).
 4. Then DIRECTION step 2 (Chebyshev budget + z-bad record), step 3 (Z-II transfer),
-   step 4 (assemble + excise).
+   step 4 (assemble + excise the two-stream sorry).
 
 ## Notes
 - ADDITIVE ONLY 🧊: re-`#print axioms` both B5′ headlines after any schedule wiring
