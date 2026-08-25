@@ -3882,6 +3882,68 @@ theorem exists_uniformly_freq_good_block_steer_len_rel_cfK (wx : List ℕ) (hwx 
   rw [hβdef] at hm2ub
   exact hm2ub
 
+/-- **Global cfK rate discharging the layer-3 `hcfK`** (the route-decisive feasibility
+of the cfK cap, settled in-kernel).  There is a WORD-INDEPENDENT rate `κ` so that for
+every genuine cylinder inside a hull `Icc c d ⊆ [0,1]`, the cfK-large extension mass is
+`≤ ½·γtar` (γtar = middle-half of the hull) — exactly layer 3's `hcfK` hypothesis.
+`ε := 1/32` suffices: `γ(cfKbad) ≤ vol(wx)/(32 ln2) ≤ (d−c)/(32 ln2)` (rate lemma +
+`vol(wx) ≤ d−c` since the cylinder sits in the hull), while `γtar ≥ ¼·γ(c,d) ≥
+(d−c)/(8 ln2)` (`gaussMeasure_middle_half_ge` + the lower Gauss density), so `γtar/2 ≥
+(d−c)/(16 ln2) ≥ (d−c)/(32 ln2)`.  NB the bound goes THROUGH the hull width `d−c`, never
+`γwx` — so no cylinder/hull atom bookkeeping is needed. -/
+theorem exists_kappa_cfKbadExtSet_le_half_middle :
+    ∃ κ : ℝ, 0 < κ ∧ ∀ (wx : List ℕ), wx ≠ [] → (∀ a ∈ wx, 1 ≤ a) →
+      ∀ (c d : ℝ), 0 ≤ c → c < d → d ≤ 1 → cfCylinder wx ⊆ Set.Icc c d →
+      ∀ n : ℕ, (gaussMeasure (cfKbadExtSet wx κ n)).toReal
+        ≤ (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal / 2 := by
+  obtain ⟨κ, hκ, hrate⟩ := exists_rate_gaussMeasure_cfKbadExtSet_le (1/32) (by norm_num)
+  refine ⟨κ, hκ, fun wx hwx hpos c d hc0 hcd hd1 hhull n => ?_⟩
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hr := hrate wx hwx hpos n
+  have hvfin : volume (cfCylinder wx) ≠ ⊤ := by
+    have h1 : volume (cfCylinder wx) ≤ volume (Set.Ioo (0:ℝ) 1) :=
+      measure_mono (cfCylinder_subset_Ioo wx)
+    rw [Real.volume_Ioo] at h1
+    exact ne_top_of_le_ne_top ENNReal.ofReal_ne_top h1
+  have hcfKbadReal : (gaussMeasure (cfKbadExtSet wx κ n)).toReal
+      ≤ (Real.log 2)⁻¹ * (1/32) * (volume (cfCylinder wx)).toReal := by
+    have hfin : ENNReal.ofReal ((Real.log 2)⁻¹ * (1/32)) * volume (cfCylinder wx) ≠ ⊤ :=
+      ENNReal.mul_ne_top ENNReal.ofReal_ne_top hvfin
+    have hmono := ENNReal.toReal_mono hfin hr
+    rwa [ENNReal.toReal_mul, ENNReal.toReal_ofReal (by positivity)] at hmono
+  have hV0 : 0 ≤ (volume (cfCylinder wx)).toReal := ENNReal.toReal_nonneg
+  have hvolle : (volume (cfCylinder wx)).toReal ≤ d - c := by
+    have hm : volume (cfCylinder wx) ≤ volume (Set.Icc c d) := measure_mono hhull
+    rw [Real.volume_Icc] at hm
+    have hmono := ENNReal.toReal_mono ENNReal.ofReal_ne_top hm
+    rwa [ENNReal.toReal_ofReal (by linarith)] at hmono
+  have hmid := gaussMeasure_middle_half_ge hc0 hcd.le hd1
+  have hlow := gaussMeasure_Ioo_toReal_ge hc0 hcd.le hd1
+  set γtar := (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal with hγtardef
+  set G := (gaussMeasure (Set.Ioo c d)).toReal with hGdef
+  have hcfKbad2 : (gaussMeasure (cfKbadExtSet wx κ n)).toReal
+      ≤ (Real.log 2)⁻¹ * (1/32) * (d - c) := by
+    have hcoef : 0 ≤ (Real.log 2)⁻¹ * (1/32) := by positivity
+    calc (gaussMeasure (cfKbadExtSet wx κ n)).toReal
+        ≤ (Real.log 2)⁻¹ * (1/32) * (volume (cfCylinder wx)).toReal := hcfKbadReal
+      _ ≤ (Real.log 2)⁻¹ * (1/32) * (d - c) := mul_le_mul_of_nonneg_left hvolle hcoef
+  have hγtar0 : 0 ≤ γtar := ENNReal.toReal_nonneg
+  have hGlow : (d - c) ≤ 2 * Real.log 2 * G := by
+    rw [div_le_iff₀ (by positivity)] at hlow; linarith [hlow]
+  have hγtar_ge : (d - c) ≤ 8 * Real.log 2 * γtar := by
+    nlinarith [hGlow, mul_le_mul_of_nonneg_left hmid (show (0:ℝ) ≤ 8 * Real.log 2 by positivity)]
+  have hkey : (Real.log 2)⁻¹ * (1/32) * (d - c) ≤ γtar / 2 := by
+    have hcoef : 0 ≤ (Real.log 2)⁻¹ * (1/32) := by positivity
+    calc (Real.log 2)⁻¹ * (1/32) * (d - c)
+        ≤ (Real.log 2)⁻¹ * (1/32) * (8 * Real.log 2 * γtar) :=
+          mul_le_mul_of_nonneg_left hγtar_ge hcoef
+      _ = (1/4) * γtar := by
+          rw [show (Real.log 2)⁻¹ * (1/32) * (8 * Real.log 2 * γtar)
+              = (1/4) * γtar * ((Real.log 2)⁻¹ * Real.log 2) by ring,
+            inv_mul_cancel₀ (ne_of_gt hl2), mul_one]
+      _ ≤ γtar / 2 := by linarith [hγtar0]
+  linarith [hcfKbad2, hkey]
+
 /-- **The single-stream L4 step relation.**  `S'` extends `S`'s word by a strict genuine
 block reaching depth `s`, uniformly prefix-good for `wordFamily s` at tolerance `schedEps s`
 (slack `4√|blk|+2|v|+n₁`, `n₁²≤|blk|·√|blk|`).  Same shape as `StepSpecA`'s x-half — the
