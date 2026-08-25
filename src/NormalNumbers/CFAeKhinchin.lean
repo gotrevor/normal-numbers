@@ -197,6 +197,27 @@ lemma summable_sqLog_gaussMeasure_cfCylinder :
           rw [← Real.rpow_add (by linarith), show (1 : ℝ) / 2 + 3 / 2 = 2 by norm_num, Real.rpow_two]
         rw [hpow]; nlinarith [Nat.cast_nonneg (α := ℝ) k]
 
+/-! ## The g-direct bridges (reduce `ae_khinchinTypical` to the `K=0` tail average)
+
+`g(x) = log(cfDigit x 0)` is `logTailFn 0` a.e. (the first digit is `≥ 1` a.e.),
+its integral is `log K₀`, and `logBirkhoffSum 0 n x = Σ_{i<n} log(a_i)` a.e.  So
+`ae_khinchinTypical` follows from `ae_tail_average_tendsto 0` alone. -/
+
+/-- `∫ logTailFn 0 dγ = log K₀` (the `K = 0` tail integral is the full
+Gauss–Kuzmin log-sum). -/
+lemma integral_logTailFn_zero :
+    ∫ x, logTailFn 0 x ∂gaussMeasure = Real.log khinchinK₀ := by
+  have h := integral_logTailFn_eq_of_hasSum 0 gaussKuzmin_logsum_hasSum
+  simpa using h
+
+/-- a.e., `logTailFn 0 x = log (cfDigit x 0)` — the first CF digit is `≥ 1`. -/
+lemma logTailFn_zero_ae_eq :
+    ∀ᵐ x ∂gaussMeasure, logTailFn 0 x = Real.log ((cfDigit x 0 : ℕ) : ℝ) := by
+  filter_upwards [ae_irrational, ae_mem_Ioo] with x hirr hx
+  have h1 : 1 ≤ cfDigit x 0 := one_le_cfDigit x hirr hx 0
+  unfold logTailFn
+  rw [if_pos (by omega)]
+
 /-- **The tail-average crux (disclosed).**  For a fixed cutoff `K`, the
 normalized log-tail Birkhoff sum converges a.e. to the tail integral.  Route:
 L²→a.e. Borel–Cantelli (as in `ae_orbit_freq`) via a variance bound for
@@ -207,5 +228,27 @@ theorem ae_tail_average_tendsto (K : ℕ) :
       Tendsto (fun n => logBirkhoffSum K n x / (n : ℝ)) atTop
         (nhds (∫ y, logTailFn K y ∂gaussMeasure)) := by
   sorry
+
+/-- **a.e. Khinchin-typicality** (modulo the disclosed tail-average crux at `K=0`).
+`ae_tail_average_tendsto 0` gives the log-average of the CF digits `→ log K₀` a.e.;
+`khinchinTypical_iff_log_tendsto` turns that into `KhinchinTypical`.  All the glue
+(digit identity, `∫ logTailFn 0 = log K₀`, first-digit positivity) is discharged. -/
+theorem ae_khinchinTypical : ∀ᵐ x ∂gaussMeasure, KhinchinTypical x := by
+  filter_upwards [ae_irrational, ae_mem_Ioo, ae_tail_average_tendsto 0] with x hirr hx htend
+  rw [integral_logTailFn_zero] at htend
+  have hpos : ∀ i, 1 ≤ cfDigit x i := fun i => one_le_cfDigit x hirr hx i
+  have hbirk : ∀ n, logBirkhoffSum 0 n x = ∑ i ∈ Finset.range n, Real.log ((cfDigit x i : ℕ) : ℝ) := by
+    intro n
+    rw [logBirkhoffSum_apply]
+    apply Finset.sum_congr rfl
+    intro k _
+    have hd : cfDigit (gaussMap^[k] x) 0 = cfDigit x k := by
+      unfold cfDigit; rw [Function.iterate_zero_apply]
+    unfold logTailFn
+    rw [hd, if_pos (by have := hpos k; omega)]
+  rw [khinchinTypical_iff_log_tendsto x hpos]
+  refine htend.congr (fun n => ?_)
+  rw [hbirk n, finset_sum_range_eq_list_sum]
+  ring
 
 end NormalNumbers
