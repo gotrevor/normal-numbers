@@ -4061,6 +4061,90 @@ theorem wxSeq_L4_ext {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s
     conv_lhs => rw [← List.take_append_drop (schedL4 hq hr s).wx.length (schedL4 hq hr (s + 1)).wx]
     rw [hxtake]
 
+/-- **Accumulated cfK bound along the L4 chain** (recursion of the per-block cfK cap).
+Each step's block carries `cfK u ≤ exp(schedKappaL4·|u|)` (`StepSpecL4`); the append law
+`cfK_append_le` (factor 2) folds these into a SINGLE exponential in the whole word length,
+absorbing the `2^s` into the rate via `s ≤ |wxSeq_L4 s|` (⇒ `2 ≤ 2^{|blockₛ|}` since blocks
+are nonempty).  This is the log-cfK linear bound that makes the Fibonacci resolution `Nfib`
+affine in `|wx|` — the recursion input to `schedL4_block_linear`. -/
+theorem cfK_wxSeq_L4_le {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    (cfK (wxSeq_L4 hq hr s) : ℝ)
+      ≤ (cfK (wxSeq_L4 hq hr 0) : ℝ)
+        * Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ)) := by
+  have hκ : 0 ≤ schedKappaL4 := schedKappaL4_pos.le
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hK0 : 0 ≤ schedKappaL4 + Real.log 2 := by linarith
+  induction s with
+  | zero =>
+    have h1 : (1 : ℝ) ≤ Real.exp ((schedKappaL4 + Real.log 2)
+        * ((wxSeq_L4 hq hr 0).length : ℝ)) :=
+      Real.one_le_exp (by positivity)
+    exact le_mul_of_one_le_right (by positivity) h1
+  | succ s ih =>
+    set block := (schedL4 hq hr (s + 1)).wx.drop (schedL4 hq hr s).wx.length with hblockdef
+    obtain ⟨htake, _hgt, _hslen, a, b, n₁, m, Nfib, _ha, _hab, _hb, _hIcc,
+      _hlen, _hn₁sq, _hfreq, hcfKb, _hm2, _hNf⟩ := schedL4_step hq hr s
+    -- the chain splits `W(s+1) = W s ++ block`
+    have hWeq : wxSeq_L4 hq hr (s + 1) = wxSeq_L4 hq hr s ++ block := by
+      show (schedL4 hq hr (s + 1)).wx = (schedL4 hq hr s).wx ++ block
+      conv_lhs =>
+        rw [← List.take_append_drop (schedL4 hq hr s).wx.length (schedL4 hq hr (s + 1)).wx]
+      rw [htake]
+    have hWne : wxSeq_L4 hq hr s ≠ [] := wxSeq_L4_ne hq hr s
+    have hbne : block ≠ [] := by
+      rw [hblockdef, ← List.length_pos_iff_ne_nil, List.length_drop]; omega
+    have hbpos : ∀ c ∈ block, 1 ≤ c := fun c hc =>
+      (schedL4 hq hr (s + 1)).hwxpos c (List.mem_of_mem_drop hc)
+    have hb1 : 1 ≤ block.length := List.length_pos_of_ne_nil hbne
+    -- lengths add
+    have hlenadd : ((wxSeq_L4 hq hr (s + 1)).length : ℝ)
+        = ((wxSeq_L4 hq hr s).length : ℝ) + (block.length : ℝ) := by
+      rw [hWeq, List.length_append]; push_cast; ring
+    -- cfK append law
+    have happ : (cfK (wxSeq_L4 hq hr (s + 1)) : ℝ)
+        ≤ 2 * ((cfK (wxSeq_L4 hq hr s) : ℝ) * (cfK block : ℝ)) := by
+      have h := cfK_append_le (wxSeq_L4 hq hr s) block hWne hbne (wxSeq_L4_pos hq hr s) hbpos
+      rw [← hWeq] at h
+      exact_mod_cast h
+    -- the per-block cfK cap (from the step); note the drop is defeq to `block`
+    have hcap : (cfK block : ℝ) ≤ Real.exp (schedKappaL4 * (block.length : ℝ)) := hcfKb
+    have hcfK0 : (0 : ℝ) ≤ (cfK (wxSeq_L4 hq hr s) : ℝ) := by positivity
+    have hcfKb0 : (0 : ℝ) ≤ (cfK block : ℝ) := by positivity
+    -- assemble
+    calc (cfK (wxSeq_L4 hq hr (s + 1)) : ℝ)
+        ≤ 2 * ((cfK (wxSeq_L4 hq hr s) : ℝ) * (cfK block : ℝ)) := happ
+      _ ≤ 2 * (((cfK (wxSeq_L4 hq hr 0) : ℝ)
+            * Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ)))
+          * Real.exp (schedKappaL4 * (block.length : ℝ))) := by
+        gcongr
+      _ ≤ (cfK (wxSeq_L4 hq hr 0) : ℝ)
+            * Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr (s + 1)).length : ℝ)) := by
+        rw [hlenadd]
+        rw [show (schedKappaL4 + Real.log 2)
+              * ((wxSeq_L4 hq hr s).length + (block.length : ℝ))
+            = ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
+              + (schedKappaL4 * (block.length : ℝ) + Real.log 2 * (block.length : ℝ)) by ring,
+          Real.exp_add, Real.exp_add]
+        have hle : (2 : ℝ) ≤ Real.exp (Real.log 2 * (block.length : ℝ)) := by
+          have hb1R : (1 : ℝ) ≤ (block.length : ℝ) := by exact_mod_cast hb1
+          have hmono : Real.exp (Real.log 2 * 1) ≤ Real.exp (Real.log 2 * (block.length : ℝ)) :=
+            Real.exp_le_exp.2 (by nlinarith [hl2.le, hb1R])
+          rwa [mul_one, Real.exp_log (by norm_num)] at hmono
+        set P := (cfK (wxSeq_L4 hq hr 0) : ℝ)
+            * Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
+            * Real.exp (schedKappaL4 * (block.length : ℝ)) with hPdef
+        have hAX : (0 : ℝ) ≤ P := by rw [hPdef]; positivity
+        calc 2 * ((cfK (wxSeq_L4 hq hr 0) : ℝ)
+              * Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
+              * Real.exp (schedKappaL4 * (block.length : ℝ)))
+            = P * 2 := by rw [hPdef]; ring
+          _ ≤ P * Real.exp (Real.log 2 * (block.length : ℝ)) :=
+              mul_le_mul_of_nonneg_left hle hAX
+          _ = (cfK (wxSeq_L4 hq hr 0) : ℝ)
+              * (Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
+                * (Real.exp (schedKappaL4 * (block.length : ℝ))
+                  * Real.exp (Real.log 2 * (block.length : ℝ)))) := by rw [hPdef]; ring
+
 /-- **cfK-controlled resolution is AFFINE in `|w|`** (resolution half of
 `schedA_block_linear`, discharged CONDITIONALLY on the B5′ log-cfK bound).  If the
 target-width reciprocal `a = 4/(d−c)` is at most `8·cfK(w)²` (which holds when the
