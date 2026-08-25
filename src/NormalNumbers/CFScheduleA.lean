@@ -4237,27 +4237,61 @@ theorem cfK_wxSeq_L4_le {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
                 * (Real.exp (schedKappaL4 * (block.length : ℝ))
                   * Real.exp (Real.log 2 * (block.length : ℝ)))) := by rw [hPdef]; ring
 
+/-- **The `logb φ(√5·√a+1)` resolution bound is affine in `ℓ` under a cfK cap.**  Pure
+real-analysis core of `exists_fib_threshold_linear_of_cfK`, abstracted over `ℓ` (word
+length) and `K` (cfK): if `a ≤ 8K²` and `K ≤ exp(κℓ)`, then
+`logb φ(√5√a+1)+1 ≤ (κ/logφ)ℓ + (logb φ(√5√8+1)+1)`.  Directly bounds the per-step
+`Nfib` (whose exposed bound is `logb φ(√5√(4/(b−a))+1)+1`) affinely in `|wx|` once the
+hull-width reciprocal is fed as `a := 4/(b−a) ≤ 8cfK²` and the cfK cap as `cfK_wxSeq_L4_le`. -/
+theorem logb_golden_sqrt_le {a κ ℓ K : ℝ} (hκ : 0 ≤ κ) (hℓ : 0 ≤ ℓ) (hK0 : 0 ≤ K)
+    (ha : a ≤ 8 * K ^ 2) (hK : K ≤ Real.exp (κ * ℓ)) :
+    Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt a + 1) + 1
+      ≤ (κ / Real.log Real.goldenRatio) * ℓ
+        + (Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt 8 + 1) + 1) := by
+  have hlogφ : 0 < Real.log Real.goldenRatio := Real.log_pos Real.one_lt_goldenRatio
+  have hexp1 : (1 : ℝ) ≤ Real.exp (κ * ℓ) := Real.one_le_exp (by positivity)
+  have h5 : (0 : ℝ) ≤ Real.sqrt 5 := Real.sqrt_nonneg _
+  have hsqa : Real.sqrt a ≤ Real.sqrt 8 * K := by
+    have h1 : Real.sqrt a ≤ Real.sqrt (8 * K ^ 2) := Real.sqrt_le_sqrt ha
+    rwa [Real.sqrt_mul (by norm_num), Real.sqrt_sq hK0] at h1
+  have hkey : Real.sqrt 5 * Real.sqrt a + 1
+      ≤ (Real.sqrt 5 * Real.sqrt 8 + 1) * Real.exp (κ * ℓ) := by
+    have hb : Real.sqrt 5 * Real.sqrt a
+        ≤ Real.sqrt 5 * Real.sqrt 8 * Real.exp (κ * ℓ) := by
+      calc Real.sqrt 5 * Real.sqrt a
+          ≤ Real.sqrt 5 * (Real.sqrt 8 * K) := mul_le_mul_of_nonneg_left hsqa h5
+        _ = Real.sqrt 5 * Real.sqrt 8 * K := by ring
+        _ ≤ Real.sqrt 5 * Real.sqrt 8 * Real.exp (κ * ℓ) :=
+            mul_le_mul_of_nonneg_left hK (by positivity)
+    have hexpand : (Real.sqrt 5 * Real.sqrt 8 + 1) * Real.exp (κ * ℓ)
+        = Real.sqrt 5 * Real.sqrt 8 * Real.exp (κ * ℓ) + Real.exp (κ * ℓ) := by ring
+    rw [hexpand]; linarith [hb, hexp1]
+  have hpos1 : (0 : ℝ) < Real.sqrt 5 * Real.sqrt a + 1 := by positivity
+  have hpos2 : (0 : ℝ) < (Real.sqrt 5 * Real.sqrt 8 + 1) * Real.exp (κ * ℓ) := by positivity
+  have hlogle : Real.log (Real.sqrt 5 * Real.sqrt a + 1)
+      ≤ Real.log ((Real.sqrt 5 * Real.sqrt 8 + 1) * Real.exp (κ * ℓ)) :=
+    (Real.log_le_log_iff hpos1 hpos2).mpr hkey
+  rw [Real.log_mul (by positivity) (Real.exp_ne_zero _), Real.log_exp] at hlogle
+  have hlogle' : Real.log (Real.sqrt 5 * Real.sqrt a + 1)
+      ≤ κ * ℓ + Real.log (Real.sqrt 5 * Real.sqrt 8 + 1) := by linarith [hlogle]
+  have hsub : Real.log (Real.sqrt 5 * Real.sqrt a + 1) / Real.log Real.goldenRatio
+      ≤ κ / Real.log Real.goldenRatio * ℓ
+        + Real.log (Real.sqrt 5 * Real.sqrt 8 + 1) / Real.log Real.goldenRatio := by
+    have heq : κ / Real.log Real.goldenRatio * ℓ
+        + Real.log (Real.sqrt 5 * Real.sqrt 8 + 1) / Real.log Real.goldenRatio
+        = (κ * ℓ + Real.log (Real.sqrt 5 * Real.sqrt 8 + 1)) / Real.log Real.goldenRatio := by ring
+    rw [heq]
+    exact div_le_div_of_nonneg_right hlogle' hlogφ.le
+  simp only [Real.logb]
+  linarith [hsub]
+
 /-- **cfK-controlled resolution is AFFINE in `|w|`** (resolution half of
 `schedA_block_linear`, discharged CONDITIONALLY on the B5′ log-cfK bound).  If the
-target-width reciprocal `a = 4/(d−c)` is at most `8·cfK(w)²` (which holds when the
-target is a fixed fraction of the cylinder, `d−c ≥ 1/(2·cfK w²)` via
-`volume_cfCylinder_ge_inv`) AND the word carries the log-cfK bound
-`cfK w ≤ exp(κ·|w|)` (the B5′ `goodExtSet goodC` mechanism, `CFSchedule`
-`SchedStep`), then the Fibonacci resolution threshold `N` (with `a < fib(n+1)²` for
-all `n ≥ N`) is bounded by an AFFINE function of `|w|`:
-`N ≤ (κ/log φ)·|w| + (log_φ(√5·√8+1)+1)`.
-
-**ROUTE CORRECTION (2026-08-28, this lap).**  The current directive's *digit-cap*
-route (`digits ≤ D`) is FATAL: a FIXED cap `D` makes the limit badly approximable
-(no digit `> D`), hence NOT CF-normal; a GROWING cap `D_s→∞` makes `log cfK`
-super-linear (`≈ ∑ block_t·log D_t`), breaking the very geometric bound it was
-meant to secure.  The correct control is the B5′ `cfK u ≤ exp(goodC·|u|)` bound
-(full Gauss measure via `goodExtSet`, compatible with normality — it is the Lévy
-constant `(1/n)log q_n → π²/(12ln2)` made uniform, NOT a support restriction).
-This lemma isolates exactly the arithmetic that bound buys.  The remaining open
-work is grafting `exp(goodC·n)` onto the steer block
-(`exists_multiscale_freq_good_block_steer_len`) — intersect the multiscale
-selection set with `goodExtSet w goodC ·`, which keeps positive measure. -/
+target-width reciprocal `a = 4/(d−c)` is at most `8·cfK(w)²` AND the word carries the
+log-cfK bound `cfK w ≤ exp(κ·|w|)`, then the Fibonacci resolution threshold `N` (with
+`a < fib(n+1)²` for all `n ≥ N`) is bounded by an AFFINE function of `|w|`:
+`N ≤ (κ/log φ)·|w| + (log_φ(√5·√8+1)+1)`.  (Now a thin wrapper over the abstract
+`logb_golden_sqrt_le`.) -/
 theorem exists_fib_threshold_linear_of_cfK {κ : ℝ} (hκ : 0 ≤ κ)
     (w : List ℕ) (a : ℝ) (ha : a ≤ 8 * (cfK w : ℝ) ^ 2)
     (hK : (cfK w : ℝ) ≤ Real.exp (κ * (w.length : ℝ))) :
