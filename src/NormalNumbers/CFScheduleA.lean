@@ -2126,6 +2126,82 @@ theorem exists_uniformly_freq_good_block_steer (wx : List ℕ) (hwx : wx ≠ [])
     _ < (δ * n + v.length) + 2 * ((k : ℝ) - n) + v.length := by linarith [hgood]
     _ ≤ δ * k + (4 * Nat.sqrt k + 2 * v.length) := by linarith [hδnk, hgapR]
 
+/-- **Uniformly-prefix-good steer block with a cfK cap** (cfK-graft layer 2).  Mirror of
+`exists_uniformly_freq_good_block_steer` calling the layer-1 cfK builder at
+`NS = quadScales n₁ m` (so `NS.max' = n₁+m²`).  The cfK cap `cfK u ≤ e^{κ|u|}` passes
+straight through — `u` is the same digit block, `|u| = n₁+m²` unchanged.  The aggregate
+`hbound` gains the cfK-large extension mass at relative order `n₁+m²`. -/
+theorem exists_uniformly_freq_good_block_steer_cfK (wx : List ℕ) (hwx : wx ≠ [])
+    (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
+    {δ : ℝ} (hδ : 0 < δ) {c d : ℝ} (hc0 : 0 ≤ c) (hcd : c < d) (hd1 : d ≤ 1)
+    (hsub : ∀ y ∈ Set.Ioo c d, Irrational y → y ∈ cfCylinder wx)
+    (m : ℕ) {n₁ : ℕ} (hn₁ : 0 < n₁) (κ : ℝ)
+    (hbound : ((m + 1 : ℕ) : ℝ) * ((∑ v ∈ F, 7 * ((8 * v.length + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁))
+        * (gaussMeasure (cfCylinder wx)).toReal))
+        + (gaussMeasure (cfKbadExtSet wx κ (n₁ + m ^ 2))).toReal
+        < (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal)
+    (hres : 4 / (d - c) < (Nat.fib (wx.length + (n₁ + m ^ 2) + 1) : ℝ) ^ 2) :
+    ∃ u : List ℕ, u.length = n₁ + m ^ 2 ∧ u ≠ [] ∧ (∀ a ∈ u, 1 ≤ a) ∧
+      cfCylinder (wx ++ u) ⊆ Set.Ioo c d ∧
+      (∀ k, n₁ ≤ k → k ≤ u.length → ∀ v ∈ F,
+        |(countOccurrences v (u.take k) : ℝ)
+          - (gaussMeasure (cfCylinder v)).toReal * k|
+          < δ * k + (4 * Nat.sqrt k + 2 * v.length)) ∧
+      (cfK u : ℝ) ≤ Real.exp (κ * (u.length : ℝ)) ∧
+      ∃ x : ℝ, x ∈ cfCylinder (wx ++ u) ∧ Irrational x ∧ x ∈ Set.Ioo c d := by
+  set NS := quadScales n₁ m with hNSdef
+  have hNSne : NS.Nonempty := quadScales_nonempty n₁ m
+  have hmax : NS.max' hNSne = n₁ + m ^ 2 := quadScales_max n₁ m
+  set A₁ : ℝ := ∑ v ∈ F, 7 * ((8 * v.length + 80)
+      * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁))
+      * (gaussMeasure (cfCylinder wx)).toReal with hA₁
+  have hA₁0 : 0 ≤ A₁ := by
+    rw [hA₁]
+    refine Finset.sum_nonneg fun v _ => ?_
+    have h0 : (0:ℝ) ≤ 8 * v.length + 80 := by positivity
+    have h1 : (0:ℝ) ≤ (gaussMeasure (cfCylinder v)).toReal := ENNReal.toReal_nonneg
+    have h2 : (0:ℝ) ≤ (gaussMeasure (cfCylinder wx)).toReal := ENNReal.toReal_nonneg
+    positivity
+  have hcard : (NS.card : ℝ) ≤ ((m + 1 : ℕ) : ℝ) := by exact_mod_cast quadScales_card_le n₁ m
+  have hboundNS : (NS.card : ℝ) * A₁
+      + (gaussMeasure (cfKbadExtSet wx κ (NS.max' hNSne))).toReal
+      < (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal := by
+    have hle : (NS.card : ℝ) * A₁ ≤ ((m + 1 : ℕ) : ℝ) * A₁ :=
+      mul_le_mul_of_nonneg_right hcard hA₁0
+    rw [hmax]
+    linarith [hle, hbound]
+  have hresNS : 4 / (d - c) < (Nat.fib (wx.length + NS.max' hNSne + 1) : ℝ) ^ 2 := by
+    rw [hmax]; exact hres
+  obtain ⟨u, hulen, hune, hupos, hsubcd, hfreqNS, hcfKu, x, hxcyl, hirr, hxcd⟩ :=
+    exists_multiscale_freq_good_block_steer_len_cfK wx hwx hwxpos F hF hFne hδ hc0 hcd hd1 hsub
+      NS hNSne hn₁ (quadScales_mem_ge n₁ m) κ hboundNS hresNS
+  have hulen' : u.length = n₁ + m ^ 2 := by rw [hulen, hmax]
+  refine ⟨u, hulen', hune, hupos, hsubcd, ?_, hcfKu, x, hxcyl, hirr, hxcd⟩
+  intro k hk1 hk2 v hv
+  have hk2' : k ≤ n₁ + m ^ 2 := by rw [← hulen']; exact hk2
+  obtain ⟨n, hnNS, hnk, hgap⟩ := quadScales_cover hk1 hk2'
+  have hgood := hfreqNS n hnNS v hv
+  obtain ⟨hγ0, hγ1⟩ := gaussMeasure_toReal_mem_Icc (cfCylinder v)
+  have hku : k ≤ u.length := hk2
+  have hinterp := abs_countOccurrences_take_interp (hFne v hv) hγ0 hγ1 hnk hku
+  have hsqrt : Nat.sqrt (k - n₁) ≤ Nat.sqrt k := Nat.sqrt_le_sqrt (by omega)
+  have hgapN : k - n ≤ 2 * Nat.sqrt k := le_trans hgap (by omega)
+  have hgapR : (k : ℝ) - (n : ℝ) ≤ 2 * (Nat.sqrt k : ℝ) := by
+    have hc : ((k - n : ℕ) : ℝ) ≤ ((2 * Nat.sqrt k : ℕ) : ℝ) := by exact_mod_cast hgapN
+    rw [Nat.cast_sub hnk] at hc
+    push_cast at hc
+    linarith [hc]
+  have hδnk : δ * (n : ℝ) ≤ δ * (k : ℝ) := by
+    apply mul_le_mul_of_nonneg_left ?_ hδ.le; exact_mod_cast hnk
+  calc |(countOccurrences v (u.take k) : ℝ)
+        - (gaussMeasure (cfCylinder v)).toReal * k|
+      ≤ |(countOccurrences v (u.take n) : ℝ)
+        - (gaussMeasure (cfCylinder v)).toReal * n| + 2 * ((k : ℝ) - n) + v.length := hinterp
+    _ < (δ * n + v.length) + 2 * ((k : ℝ) - n) + v.length := by linarith [hgood]
+    _ ≤ δ * k + (4 * Nat.sqrt k + 2 * v.length) := by linarith [hδnk, hgapR]
+
 /-- **Feasible block parameter.**  For any target ratio `β > 0` and length/fib
 thresholds `Lc`, `Nfib`, there is `m > 0` with `m² ≥ Lc`, `m² ≥ Nfib`, and
 `(m+1)/(m·⌊√m⌋) < β`.  The last is the measure-budget slack: with `n₁ = m·⌊√m⌋`
@@ -3660,6 +3736,149 @@ theorem exists_uniformly_freq_good_block_steer_len_rel (wx : List ℕ) (hwx : wx
   refine ⟨u, n₁, m, Nfib, by rw [hulen]; omega, hune, hupos, hsubcd, hn₁sq, hfolded,
     ⟨x, hxcyl, hxirr, hxcd⟩, hulen, ?_, hNfiblog⟩
   -- the tight m² bound: after the `set`s the goal is folded to β's components
+  rw [hβdef] at hm2ub
+  exact hm2ub
+
+set_option maxHeartbeats 1000000 in
+/-- **Relative-regularization uniform steer block WITH the cfK cap** (cfK-graft layer 3 —
+the block builder `schedL4_block_linear` calls).  Mirror of
+`exists_uniformly_freq_good_block_steer_len_rel` calling the layer-2 cfK builder.  Because
+the freq measure budget (`(m+1)·A₁`) and the cfK-large mass must BOTH fit under `γtar` and
+`m` is chosen internally, the relative regularizer is HALVED (`β = γtar·δ²/(2(S+γwx))`,
+`⌈4/β_rel⌉` in the `m²` bound — still word-independent) so the freq budget targets `γtar/2`;
+the caller supplies the UNIFORM cfK-mass room `hcfK : ∀ n, γ(cfKbadExtSet wx κ n) ≤ γtar/2`
+(dischargeable at the self-hull via `exists_rate_gaussMeasure_cfKbadExtSet_le` +
+`gaussMeasure_middle_half_ge` + the Gauss density bounds).  Exposes `cfK u ≤ e^{κ|u|}`
+alongside the length data. -/
+theorem exists_uniformly_freq_good_block_steer_len_rel_cfK (wx : List ℕ) (hwx : wx ≠ [])
+    (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
+    {δ : ℝ} (hδ : 0 < δ) {c d : ℝ} (hc0 : 0 ≤ c) (hcd : c < d) (hd1 : d ≤ 1)
+    (hsub : ∀ y ∈ Set.Ioo c d, Irrational y → y ∈ cfCylinder wx) (L : ℕ) (κ : ℝ)
+    (hcfK : ∀ n : ℕ, (gaussMeasure (cfKbadExtSet wx κ n)).toReal
+      ≤ (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal / 2) :
+    ∃ (u : List ℕ) (n₁ m Nfib : ℕ), L ≤ u.length ∧ u ≠ [] ∧ (∀ a ∈ u, 1 ≤ a) ∧
+      cfCylinder (wx ++ u) ⊆ Set.Ioo c d ∧
+      n₁ ^ 2 ≤ u.length * Nat.sqrt u.length ∧
+      (∀ k, k ≤ u.length → ∀ v ∈ F,
+        |(countOccurrences v (u.take k) : ℝ) - (gaussMeasure (cfCylinder v)).toReal * k|
+          < δ * k + (4 * Nat.sqrt u.length + 2 * v.length + n₁)) ∧
+      (∃ x : ℝ, x ∈ cfCylinder (wx ++ u) ∧ Irrational x ∧ x ∈ Set.Ioo c d) ∧
+      (cfK u : ℝ) ≤ Real.exp (κ * (u.length : ℝ)) ∧
+      u.length = n₁ + m ^ 2 ∧
+      m ^ 2 ≤ 6 * (L + Nfib) + 2 + 2 * (Nat.ceil (2 / ((gaussMeasure
+          (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal * δ ^ 2
+        / (2 * (∑ v ∈ F, 7 * (8 * (v.length : ℝ) + 80) * (gaussMeasure (cfCylinder v)).toReal
+            * (gaussMeasure (cfCylinder wx)).toReal
+          + (gaussMeasure (cfCylinder wx)).toReal)))) + 1) ^ 4 ∧
+      (Nfib : ℝ) ≤ Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt (4 / (d - c)) + 1) + 1 := by
+  have hu0v0 : c + (d - c) / 4 < d - (d - c) / 4 := by nlinarith [hcd]
+  have hu00 : 0 ≤ c + (d - c) / 4 := by nlinarith [hc0, hcd]
+  have hv01 : d - (d - c) / 4 ≤ 1 := by nlinarith [hd1, hcd]
+  have hposreal : 0 < (Real.log (1 + (d - (d - c) / 4)) - Real.log (1 + (c + (d - c) / 4)))
+      / Real.log 2 := by
+    apply div_pos
+    · rw [sub_pos]; apply Real.log_lt_log (by nlinarith [hu00]) (by linarith [hu0v0])
+    · exact Real.log_pos (by norm_num)
+  have hγtar : 0 < (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal := by
+    rw [gaussMeasure_Ioo hu00 hu0v0.le hv01, ENNReal.toReal_ofReal hposreal.le]; exact hposreal
+  set γtar := (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal with hγtardef
+  set γwx := (gaussMeasure (cfCylinder wx)).toReal with hγwxdef
+  have hγwx0 : 0 < γwx := gaussMeasure_cfCylinder_toReal_pos wx hwx hwxpos
+  set S := ∑ v ∈ F, 7 * (8 * (v.length : ℝ) + 80)
+      * (gaussMeasure (cfCylinder v)).toReal * γwx with hSdef
+  have hS0 : 0 ≤ S := by
+    rw [hSdef]; refine Finset.sum_nonneg fun v _ => ?_
+    have : 0 ≤ (gaussMeasure (cfCylinder v)).toReal := ENNReal.toReal_nonneg
+    have : 0 ≤ γwx := ENNReal.toReal_nonneg
+    positivity
+  set β := γtar * δ ^ 2 / (2 * (S + γwx)) with hβdef
+  have hSγ0 : 0 < S + γwx := by linarith [hS0, hγwx0]
+  have hβ : 0 < β := by rw [hβdef]; exact div_pos (mul_pos hγtar (by positivity)) (by linarith [hSγ0])
+  obtain ⟨Nfib, hNfib, hNfiblog⟩ := exists_fib_threshold_log (4 / (d - c))
+  obtain ⟨m, hm0, hLm, hNfibm, hfrac, hm2ub⟩ := exists_uniform_block_param_tight β hβ L Nfib
+  have hsqrtm1 : 1 ≤ Nat.sqrt m := by
+    have h := Nat.sqrt_le_sqrt (show 1 ≤ m by omega); simpa using h
+  set n₁ := m * Nat.sqrt m with hn₁def
+  have hn₁0 : 0 < n₁ := by rw [hn₁def]; exact Nat.mul_pos hm0 hsqrtm1
+  have hn₁R : (n₁ : ℝ) = (m : ℝ) * (Nat.sqrt m : ℝ) := by rw [hn₁def]; push_cast; ring
+  -- freq mass < γtar/2
+  have hfreqhalf : ((m + 1 : ℕ) : ℝ) * (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * (n₁ : ℝ)))
+        * γwx) < γtar / 2 := by
+    have hsumeq : (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * (n₁ : ℝ))) * γwx)
+        = S / (δ ^ 2 * (n₁ : ℝ)) := by
+      rw [hSdef, Finset.sum_div]; exact Finset.sum_congr rfl fun v _ => by ring
+    rw [hsumeq]
+    have hfrac2 : ((m : ℝ) + 1) / (n₁ : ℝ) < γtar * δ ^ 2 / (2 * (S + γwx)) := by
+      rw [hn₁R]; rw [hβdef] at hfrac; exact hfrac
+    rw [div_lt_div_iff₀ (by rw [hn₁R]; positivity) (by linarith [hSγ0])] at hfrac2
+    -- hfrac2 : (m+1)*(2*(S+γwx)) < γtar*δ²*n₁
+    have hden : (0 : ℝ) < δ ^ 2 * (n₁ : ℝ) := by rw [hn₁R]; positivity
+    rw [← mul_div_assoc, div_lt_iff₀ hden]
+    have hm1R : (0 : ℝ) < (m : ℝ) + 1 := by positivity
+    push_cast
+    push_cast at hfrac2
+    nlinarith [hfrac2, hm1R, hγwx0, mul_pos hm1R hγwx0]
+  -- combined budget for layer 2 cfK: freq + cfK mass < γtar
+  have hbound : ((m + 1 : ℕ) : ℝ) * (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * (n₁ : ℝ)))
+        * γwx)
+        + (gaussMeasure (cfKbadExtSet wx κ (n₁ + m ^ 2))).toReal < γtar := by
+    have hc2 := hcfK (n₁ + m ^ 2)
+    linarith [hfreqhalf, hc2]
+  have hres : 4 / (d - c) < (Nat.fib (wx.length + (n₁ + m ^ 2) + 1) : ℝ) ^ 2 :=
+    hNfib (wx.length + (n₁ + m ^ 2)) (by omega)
+  obtain ⟨u, hulen, hune, hupos, hsubcd, hufreq, hcfKu, x, hxcyl, hxirr, hxcd⟩ :=
+    exists_uniformly_freq_good_block_steer_cfK wx hwx hwxpos F hF hFne hδ hc0 hcd hd1 hsub
+      m (n₁ := n₁) hn₁0 κ hbound hres
+  have hn₁sq : n₁ ^ 2 ≤ u.length * Nat.sqrt u.length := by
+    rw [hulen]
+    have hsm : Nat.sqrt m ^ 2 ≤ m := Nat.sqrt_le' m
+    have h1 : n₁ ^ 2 ≤ m ^ 3 := by
+      have he : n₁ ^ 2 = m ^ 2 * Nat.sqrt m ^ 2 := by rw [hn₁def]; ring
+      rw [he]; nlinarith [hsm, Nat.zero_le (m ^ 2)]
+    have hge : m ^ 2 ≤ n₁ + m ^ 2 := by omega
+    have hsq : m ≤ Nat.sqrt (n₁ + m ^ 2) := by
+      have h := Nat.sqrt_le_sqrt hge; rwa [Nat.sqrt_eq'] at h
+    have h2 : m ^ 3 ≤ (n₁ + m ^ 2) * Nat.sqrt (n₁ + m ^ 2) := by
+      calc m ^ 3 = m ^ 2 * m := by ring
+        _ ≤ (n₁ + m ^ 2) * Nat.sqrt (n₁ + m ^ 2) := Nat.mul_le_mul hge hsq
+    exact le_trans h1 h2
+  have hfolded : ∀ k, k ≤ u.length → ∀ v ∈ F,
+      |(countOccurrences v (u.take k) : ℝ) - (gaussMeasure (cfCylinder v)).toReal * k|
+        < δ * k + (4 * Nat.sqrt u.length + 2 * v.length + n₁) := by
+    intro k hk v hv
+    set γv := (gaussMeasure (cfCylinder v)).toReal with hγvdef
+    obtain ⟨hγ0v, hγ1v⟩ := gaussMeasure_toReal_mem_Icc (cfCylinder v)
+    have hsqle : (Nat.sqrt k : ℝ) ≤ (Nat.sqrt u.length : ℝ) := by
+      exact_mod_cast Nat.sqrt_le_sqrt hk
+    have hn₁nn : (0 : ℝ) ≤ (n₁ : ℝ) := Nat.cast_nonneg _
+    by_cases hkn₁ : n₁ ≤ k
+    · have hb := hufreq k hkn₁ hk v hv
+      have : δ * k + (4 * (Nat.sqrt k : ℝ) + 2 * v.length)
+          ≤ δ * k + (4 * (Nat.sqrt u.length : ℝ) + 2 * v.length + n₁) := by
+        push_cast; nlinarith [hsqle, hn₁nn]
+      calc |(countOccurrences v (u.take k) : ℝ) - γv * k|
+          < δ * k + (4 * (Nat.sqrt k : ℝ) + 2 * v.length) := hb
+        _ ≤ δ * k + (4 * (Nat.sqrt u.length : ℝ) + 2 * v.length + n₁) := this
+    · push_neg at hkn₁
+      have hvne := hFne v hv
+      have hcnt : (countOccurrences v (u.take k) : ℝ) ≤ (k : ℝ) := by
+        have h1 := countOccurrences_le_length hvne (u.take k)
+        have h2 : (u.take k).length ≤ k := by rw [List.length_take]; exact min_le_left _ _
+        exact_mod_cast le_trans h1 h2
+      have hccnn : (0 : ℝ) ≤ (countOccurrences v (u.take k) : ℝ) := Nat.cast_nonneg _
+      have hkR : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg _
+      have hcrude : |(countOccurrences v (u.take k) : ℝ) - γv * k| ≤ (k : ℝ) := by
+        rw [abs_le]; constructor <;> nlinarith [hcnt, hccnn, hγ0v, hγ1v, hkR]
+      have hklt : (k : ℝ) < (n₁ : ℝ) := by exact_mod_cast hkn₁
+      have hδk : (0 : ℝ) ≤ δ * k := by positivity
+      have hrest : (0 : ℝ) ≤ 4 * (Nat.sqrt u.length : ℝ) + 2 * v.length := by positivity
+      linarith [hcrude, hklt, hδk, hrest]
+  refine ⟨u, n₁, m, Nfib, by rw [hulen]; omega, hune, hupos, hsubcd, hn₁sq, hfolded,
+    ⟨x, hxcyl, hxirr, hxcd⟩, hcfKu, hulen, ?_, hNfiblog⟩
   rw [hβdef] at hm2ub
   exact hm2ub
 
