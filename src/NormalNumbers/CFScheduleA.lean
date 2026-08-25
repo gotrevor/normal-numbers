@@ -728,6 +728,20 @@ theorem countable_preimage_affineMap_range_rat {q : ℝ} (hq : 0 < q) (r : ℝ) 
     simp only [affineMap] at h; exact mul_left_cancel₀ (ne_of_gt hq) (by linarith)
   exact (Set.countable_range _).preimage hinj
 
+/-- **Point-excluding extension digit** (brick Z-III steering core).  A genuine word `wx` has
+an extension digit `a ≥ 1` whose one-step sub-cylinder `cfCylinder (wx ++ [a])` misses any given
+point `t`: the sub-cylinders for distinct first digits are disjoint (`cfCylinder_disjoint`), so `t`
+lies in at most one.  Diagonalising this over an enumeration of `ψ⁻¹(ℚ)` (countable, above) steers
+the chain limit `xA` away from every ψ-rational point, forcing `ψ(xA)` irrational — the fix for
+the single-stream irrationality gap (subtlety 1, PENDING_WORK). -/
+theorem exists_digit_cfCylinder_notMem (wx : List ℕ) (t : ℝ) :
+    ∃ a : ℕ, 1 ≤ a ∧ t ∉ cfCylinder (wx ++ [a]) := by
+  by_cases h1 : t ∈ cfCylinder (wx ++ [1])
+  · refine ⟨2, by norm_num, fun h2 => ?_⟩
+    have hdisj := cfCylinder_disjoint (w := wx ++ [1]) (w' := wx ++ [2]) (by simp) (by simp)
+    exact (Set.disjoint_left.1 hdisj) h1 h2
+  · exact ⟨1, by norm_num, h1⟩
+
 /-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
 finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
 cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every
