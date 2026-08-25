@@ -314,6 +314,271 @@ theorem abs_cov_two_cyl_pair_le (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) {i j :
           have hpow' : 0 ≤ ((9 : ℝ) / 10) ^ (i - j - 1) := by positivity
           nlinarith [mul_nonneg hb0 hga0, mul_nonneg hpow' (mul_nonneg hb0 hga0)]
 
+/-! ## The truncated log-tail Birkhoff sum and its variance (Approach B)
+
+`S_n^M := Σ_{a<M} log(K+1+a)·blockCount [K+1+a] n` is a FINITE linear combination of
+block counts (= `Σ_{i<n} f_M∘gaussMapⁱ` for `f_M = Σ_{a<M} logTailTerm K a`).  Its
+second moment is a finite double sum of two-cylinder correlations, giving a variance
+bound UNIFORM in `M`; the MCT limit `M → ∞` then transfers it to `logBirkhoffSum K n`. -/
+
+/-- Truncated log-tail Birkhoff sum. -/
+noncomputable def logBirkhoffTrunc (K M n : ℕ) (x : ℝ) : ℝ :=
+  ∑ a ∈ Finset.range M, Real.log ((K : ℝ) + 1 + a) * blockCount (cfCylinder [K + 1 + a]) n x
+
+/-- Truncated log-tail mean: `Σ_{a<M} log(K+1+a)·γ([K+1+a])`.  Equals `∫ logBirkhoffTrunc / n`. -/
+noncomputable def logTruncMean (K M : ℕ) : ℝ :=
+  ∑ a ∈ Finset.range M, Real.log ((K : ℝ) + 1 + a) * (gaussMeasure (cfCylinder [K + 1 + a])).toReal
+
+/-- The product of two block counts is integrable (finite sum of bounded indicator products). -/
+lemma integrable_blockCount_mul (A B : Set ℝ) (hA : MeasurableSet A) (hB : MeasurableSet B)
+    (n : ℕ) : Integrable (fun x => blockCount A n x * blockCount B n x) gaussMeasure := by
+  have heq : (fun x => blockCount A n x * blockCount B n x)
+      = fun x => ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+          blockIndic A (gaussMap^[j] x) * blockIndic B (gaussMap^[j'] x) := by
+    funext x; rw [blockCount_apply, blockCount_apply, Finset.sum_mul_sum]
+  rw [heq]
+  exact integrable_finsetSum _ (fun j _ => integrable_finsetSum _ (fun j' _ =>
+    integrable_blockIndic_iterate_mul₂ A B hA hB j j'))
+
+/-- **Sub-lemma (a): truncated second-moment expansion.**  `∫(S_n^M)²` is the finite
+double sum over `(a,b)` of `log·log` times the cross second moment (brick 1). -/
+lemma integral_logBirkhoffTrunc_sq (K M n : ℕ) :
+    ∫ x, (logBirkhoffTrunc K M n x) ^ 2 ∂gaussMeasure =
+      ∑ a ∈ Finset.range M, ∑ b ∈ Finset.range M,
+        Real.log ((K : ℝ) + 1 + a) * Real.log ((K : ℝ) + 1 + b) *
+          ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+            gaussMeasure.real ((gaussMap^[j]) ⁻¹' cfCylinder [K + 1 + a] ∩
+              (gaussMap^[j']) ⁻¹' cfCylinder [K + 1 + b]) := by
+  have hsq : (fun x => (logBirkhoffTrunc K M n x) ^ 2) =
+      fun x => ∑ a ∈ Finset.range M, ∑ b ∈ Finset.range M,
+        Real.log ((K : ℝ) + 1 + a) * Real.log ((K : ℝ) + 1 + b) *
+          (blockCount (cfCylinder [K + 1 + a]) n x * blockCount (cfCylinder [K + 1 + b]) n x) := by
+    funext x
+    rw [logBirkhoffTrunc, pow_two, Finset.sum_mul_sum]
+    apply Finset.sum_congr rfl; intro a _
+    apply Finset.sum_congr rfl; intro b _
+    ring
+  rw [hsq,
+    integral_finsetSum _ (fun a _ => integrable_finsetSum _ (fun b _ =>
+      ((integrable_blockCount_mul (cfCylinder [K + 1 + a]) (cfCylinder [K + 1 + b])
+        (measurableSet_cfCylinder _) (measurableSet_cfCylinder _) n)).const_mul
+        (Real.log ((K : ℝ) + 1 + a) * Real.log ((K : ℝ) + 1 + b))))]
+  apply Finset.sum_congr rfl; intro a _
+  rw [integral_finsetSum _ (fun b _ =>
+      ((integrable_blockCount_mul (cfCylinder [K + 1 + a]) (cfCylinder [K + 1 + b])
+        (measurableSet_cfCylinder _) (measurableSet_cfCylinder _) n)).const_mul
+        (Real.log ((K : ℝ) + 1 + a) * Real.log ((K : ℝ) + 1 + b)))]
+  apply Finset.sum_congr rfl; intro b _
+  rw [integral_const_mul,
+    integral_blockCount_cross _ _ (measurableSet_cfCylinder _) (measurableSet_cfCylinder _) n]
+
+/-- **Sub-lemma (b): the squared truncated mean as a matching double sum.** -/
+lemma sq_logTruncMean_eq (K M n : ℕ) :
+    ((n : ℝ) * logTruncMean K M) ^ 2 =
+      ∑ a ∈ Finset.range M, ∑ b ∈ Finset.range M,
+        Real.log ((K : ℝ) + 1 + a) * Real.log ((K : ℝ) + 1 + b) *
+          ∑ _j ∈ Finset.range n, ∑ _j' ∈ Finset.range n,
+            (gaussMeasure (cfCylinder [K + 1 + a])).toReal *
+              (gaussMeasure (cfCylinder [K + 1 + b])).toReal := by
+  have hexp : logTruncMean K M ^ 2 =
+      ∑ a ∈ Finset.range M, ∑ b ∈ Finset.range M,
+        (Real.log ((K : ℝ) + 1 + a) * (gaussMeasure (cfCylinder [K + 1 + a])).toReal) *
+        (Real.log ((K : ℝ) + 1 + b) * (gaussMeasure (cfCylinder [K + 1 + b])).toReal) := by
+    rw [pow_two, logTruncMean, Finset.sum_mul_sum]
+  rw [mul_pow, hexp, Finset.mul_sum]
+  apply Finset.sum_congr rfl; intro a _
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl; intro b _
+  simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  push_cast; ring
+
+/-! ### M-independent variance constants (tails of the landed summability bricks) -/
+
+/-- `C₁(K) = Σ_{a} log(K+1+a)·γ([K+1+a])` — equals `∫ logTailFn K`. -/
+noncomputable def logTailC1 (K : ℕ) : ℝ :=
+  ∑' a : ℕ, Real.log ((K : ℝ) + 1 + a) * (gaussMeasure (cfCylinder [K + 1 + a])).toReal
+
+/-- `C₂(K) = Σ_{a} log(K+1+a)·|[K+1+a]|`. -/
+noncomputable def logTailC2 (K : ℕ) : ℝ :=
+  ∑' a : ℕ, Real.log ((K : ℝ) + 1 + a) * (volume (cfCylinder [K + 1 + a])).toReal
+
+/-- `C₃(K) = Σ_{a} log(K+1+a)²·γ([K+1+a])`. -/
+noncomputable def logTailC3 (K : ℕ) : ℝ :=
+  ∑' a : ℕ, (Real.log ((K : ℝ) + 1 + a)) ^ 2 * (gaussMeasure (cfCylinder [K + 1 + a])).toReal
+
+lemma summable_logTailC1 (K : ℕ) :
+    Summable (fun a : ℕ => Real.log ((K : ℝ) + 1 + a) * (gaussMeasure (cfCylinder [K + 1 + a])).toReal) := by
+  have h := (summable_nat_add_iff K).2 summable_gaussKuzmin_log
+  refine h.congr (fun a => ?_)
+  unfold logTailG
+  have hidx : a + K + 1 = K + 1 + a := by omega
+  rw [hidx]; push_cast; ring
+
+lemma summable_logTailC2 (K : ℕ) :
+    Summable (fun a : ℕ => Real.log ((K : ℝ) + 1 + a) * (volume (cfCylinder [K + 1 + a])).toReal) := by
+  have h := (summable_nat_add_iff K).2 summable_logMul_vol_cfCylinder
+  refine h.congr (fun a => ?_)
+  have hidx : a + K + 1 = K + 1 + a := by omega
+  rw [hidx]; push_cast; ring
+
+lemma summable_logTailC3 (K : ℕ) :
+    Summable (fun a : ℕ => (Real.log ((K : ℝ) + 1 + a)) ^ 2 * (gaussMeasure (cfCylinder [K + 1 + a])).toReal) := by
+  have h := (summable_nat_add_iff K).2 summable_sqLog_gaussMeasure_cfCylinder
+  refine h.congr (fun a => ?_)
+  have hidx : a + K + 1 = K + 1 + a := by omega
+  rw [hidx]; push_cast; ring
+
+lemma logTailC1_nonneg (K : ℕ) : 0 ≤ logTailC1 K :=
+  tsum_nonneg (fun a => mul_nonneg (Real.log_nonneg (by
+    have := Nat.cast_nonneg (α := ℝ) a; linarith)) ENNReal.toReal_nonneg)
+
+lemma logTailC2_nonneg (K : ℕ) : 0 ≤ logTailC2 K :=
+  tsum_nonneg (fun a => mul_nonneg (Real.log_nonneg (by
+    have := Nat.cast_nonneg (α := ℝ) a; linarith)) ENNReal.toReal_nonneg)
+
+lemma logTailC3_nonneg (K : ℕ) : 0 ≤ logTailC3 K :=
+  tsum_nonneg (fun a => mul_nonneg (by positivity) ENNReal.toReal_nonneg)
+
+/-- The overall (M-independent) variance constant `C₃ + C₁² + 176·C₁·C₂`. -/
+noncomputable def logVarConst (K : ℕ) : ℝ :=
+  logTailC3 K + (logTailC1 K) ^ 2 + 176 * logTailC1 K * logTailC2 K
+
+/-- **Disjointness collapse**: distinct singleton cylinders are disjoint, so the
+`(a,b)` double sum of `log·log·γ([a]∩[b])` collapses to the diagonal `Σ log²·γ([a])`. -/
+lemma sum_logMul_gaussMeasure_inter (K M : ℕ) :
+    ∑ a ∈ Finset.range M, ∑ b ∈ Finset.range M,
+      Real.log ((K : ℝ) + 1 + a) * Real.log ((K : ℝ) + 1 + b) *
+        (gaussMeasure (cfCylinder [K + 1 + a] ∩ cfCylinder [K + 1 + b])).toReal =
+      ∑ a ∈ Finset.range M, (Real.log ((K : ℝ) + 1 + a)) ^ 2 *
+        (gaussMeasure (cfCylinder [K + 1 + a])).toReal := by
+  apply Finset.sum_congr rfl; intro a ha
+  rw [Finset.sum_eq_single a]
+  · rw [Set.inter_self]; ring
+  · intro b _ hba
+    have hne : ([K + 1 + a] : List ℕ) ≠ [K + 1 + b] := by
+      simp only [ne_eq, List.cons.injEq, and_true]; omega
+    have hdisj : cfCylinder [K + 1 + a] ∩ cfCylinder [K + 1 + b] = ∅ :=
+      Set.disjoint_iff_inter_eq_empty.mp (cfCylinder_disjoint rfl hne)
+    rw [hdisj]; simp
+  · intro ha'; exact absurd ha ha'
+
+/-- **Per-pair inner bound** (the covariance fold): for fixed digits `[K+1+a]`, `[K+1+b]`,
+the inner `(j,j')` double sum of centered correlations is bounded by `O(n)`.  Diagonal
+`j=j'` gives the `γ(A∩B)+γ_aγ_b` term (measure-preserving); off-diagonal folds brick 2
+via `sum_range_dist_le` + `geom_trunc_sum_le`. -/
+lemma inner_pair_bound (K a b n : ℕ) :
+    |∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+        (gaussMeasure.real ((gaussMap^[j]) ⁻¹' cfCylinder [K + 1 + a] ∩
+            (gaussMap^[j']) ⁻¹' cfCylinder [K + 1 + b]) -
+          (gaussMeasure (cfCylinder [K + 1 + a])).toReal *
+            (gaussMeasure (cfCylinder [K + 1 + b])).toReal)|
+      ≤ (n : ℝ) * ((gaussMeasure (cfCylinder [K + 1 + a] ∩ cfCylinder [K + 1 + b])).toReal +
+            (gaussMeasure (cfCylinder [K + 1 + a])).toReal *
+              (gaussMeasure (cfCylinder [K + 1 + b])).toReal) +
+        88 * (n : ℝ) * ((volume (cfCylinder [K + 1 + b])).toReal *
+              (gaussMeasure (cfCylinder [K + 1 + a])).toReal +
+            (volume (cfCylinder [K + 1 + a])).toReal *
+              (gaussMeasure (cfCylinder [K + 1 + b])).toReal) := by
+  have hmp := measurePreserving_gaussMap
+  have hmA : MeasurableSet (cfCylinder [K + 1 + a]) := measurableSet_cfCylinder _
+  have hmB : MeasurableSet (cfCylinder [K + 1 + b]) := measurableSet_cfCylinder _
+  have hγAnn : (0 : ℝ) ≤ (gaussMeasure (cfCylinder [K + 1 + a])).toReal := ENNReal.toReal_nonneg
+  have hγBnn : (0 : ℝ) ≤ (gaussMeasure (cfCylinder [K + 1 + b])).toReal := ENNReal.toReal_nonneg
+  have hγABnn : (0 : ℝ) ≤ (gaussMeasure (cfCylinder [K + 1 + a] ∩ cfCylinder [K + 1 + b])).toReal :=
+    ENNReal.toReal_nonneg
+  set C : ℝ := (volume (cfCylinder [K + 1 + b])).toReal *
+        (gaussMeasure (cfCylinder [K + 1 + a])).toReal +
+      (volume (cfCylinder [K + 1 + a])).toReal *
+        (gaussMeasure (cfCylinder [K + 1 + b])).toReal with hC
+  have hCnn : 0 ≤ C := by rw [hC]; positivity
+  -- diagonal correlation is `γ(A∩B)`, independent of `j`
+  have hdiag : ∀ j : ℕ, gaussMeasure.real ((gaussMap^[j]) ⁻¹' cfCylinder [K + 1 + a] ∩
+        (gaussMap^[j]) ⁻¹' cfCylinder [K + 1 + b]) =
+      (gaussMeasure (cfCylinder [K + 1 + a] ∩ cfCylinder [K + 1 + b])).toReal := by
+    intro j
+    rw [← Set.preimage_inter,
+      (hmp.iterate j).measureReal_preimage (hmA.inter hmB).nullMeasurableSet]
+    rfl
+  -- per-row bound (peel the diagonal `j'=j`, fold the rest via brick 2)
+  have hrow : ∀ j ∈ Finset.range n,
+      ∑ j' ∈ Finset.range n, |gaussMeasure.real ((gaussMap^[j]) ⁻¹' cfCylinder [K + 1 + a] ∩
+            (gaussMap^[j']) ⁻¹' cfCylinder [K + 1 + b]) -
+          (gaussMeasure (cfCylinder [K + 1 + a])).toReal *
+            (gaussMeasure (cfCylinder [K + 1 + b])).toReal|
+        ≤ ((gaussMeasure (cfCylinder [K + 1 + a] ∩ cfCylinder [K + 1 + b])).toReal +
+              (gaussMeasure (cfCylinder [K + 1 + a])).toReal *
+                (gaussMeasure (cfCylinder [K + 1 + b])).toReal) +
+          ∑ j' ∈ Finset.range n, 4 * ((9 : ℝ) / 10) ^ (Nat.dist j j' - 1) * C := by
+    intro j hj
+    rw [← Finset.add_sum_erase (Finset.range n) _ hj]
+    apply add_le_add
+    · rw [hdiag j, abs_le]
+      exact ⟨by nlinarith [hγABnn, mul_nonneg hγAnn hγBnn],
+             by nlinarith [hγABnn, mul_nonneg hγAnn hγBnn]⟩
+    · refine le_trans (Finset.sum_le_sum ?_)
+        (Finset.sum_le_sum_of_subset_of_nonneg (Finset.erase_subset _ _)
+          (fun i _ _ => by positivity))
+      intro j' hj'
+      have hjj' : j ≠ j' := (Finset.ne_of_mem_erase hj').symm
+      have hbrick := abs_cov_two_cyl_pair_le (K + 1 + a) (K + 1 + b) (by omega) (by omega) hjj'
+      rw [hC]; exact hbrick
+  calc |∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+          (gaussMeasure.real ((gaussMap^[j]) ⁻¹' cfCylinder [K + 1 + a] ∩
+              (gaussMap^[j']) ⁻¹' cfCylinder [K + 1 + b]) -
+            (gaussMeasure (cfCylinder [K + 1 + a])).toReal *
+              (gaussMeasure (cfCylinder [K + 1 + b])).toReal)|
+      ≤ ∑ j ∈ Finset.range n, |∑ j' ∈ Finset.range n,
+          (gaussMeasure.real ((gaussMap^[j]) ⁻¹' cfCylinder [K + 1 + a] ∩
+              (gaussMap^[j']) ⁻¹' cfCylinder [K + 1 + b]) -
+            (gaussMeasure (cfCylinder [K + 1 + a])).toReal *
+              (gaussMeasure (cfCylinder [K + 1 + b])).toReal)| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+          |gaussMeasure.real ((gaussMap^[j]) ⁻¹' cfCylinder [K + 1 + a] ∩
+              (gaussMap^[j']) ⁻¹' cfCylinder [K + 1 + b]) -
+            (gaussMeasure (cfCylinder [K + 1 + a])).toReal *
+              (gaussMeasure (cfCylinder [K + 1 + b])).toReal| :=
+        Finset.sum_le_sum (fun j _ => Finset.abs_sum_le_sum_abs _ _)
+    _ ≤ ∑ j ∈ Finset.range n,
+          (((gaussMeasure (cfCylinder [K + 1 + a] ∩ cfCylinder [K + 1 + b])).toReal +
+              (gaussMeasure (cfCylinder [K + 1 + a])).toReal *
+                (gaussMeasure (cfCylinder [K + 1 + b])).toReal) +
+            ∑ j' ∈ Finset.range n, 4 * ((9 : ℝ) / 10) ^ (Nat.dist j j' - 1) * C) :=
+        Finset.sum_le_sum hrow
+    _ = (n : ℝ) * ((gaussMeasure (cfCylinder [K + 1 + a] ∩ cfCylinder [K + 1 + b])).toReal +
+              (gaussMeasure (cfCylinder [K + 1 + a])).toReal *
+                (gaussMeasure (cfCylinder [K + 1 + b])).toReal) +
+          ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+            4 * ((9 : ℝ) / 10) ^ (Nat.dist j j' - 1) * C := by
+        rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    _ ≤ (n : ℝ) * ((gaussMeasure (cfCylinder [K + 1 + a] ∩ cfCylinder [K + 1 + b])).toReal +
+              (gaussMeasure (cfCylinder [K + 1 + a])).toReal *
+                (gaussMeasure (cfCylinder [K + 1 + b])).toReal) +
+          88 * (n : ℝ) * C := by
+        have hgeom : ∀ j ∈ Finset.range n,
+            ∑ j' ∈ Finset.range n, 4 * ((9 : ℝ) / 10) ^ (Nat.dist j j' - 1) * C ≤ 88 * C := by
+          intro j hj
+          have hsum : ∑ j' ∈ Finset.range n, ((9 : ℝ) / 10) ^ (Nat.dist j j' - 1) ≤ 22 := by
+            calc ∑ j' ∈ Finset.range n, ((9 : ℝ) / 10) ^ (Nat.dist j j' - 1)
+                ≤ 2 * ∑ d ∈ Finset.range n, ((9 : ℝ) / 10) ^ (d - 1) :=
+                  sum_range_dist_le (fun m => ((9 : ℝ) / 10) ^ (m - 1)) (fun d => by positivity)
+                    n j (Finset.mem_range.mp hj)
+              _ ≤ 2 * (1 + 10) := by have := geom_trunc_sum_le 1 n; push_cast at this; linarith
+              _ = 22 := by norm_num
+          calc ∑ j' ∈ Finset.range n, 4 * ((9 : ℝ) / 10) ^ (Nat.dist j j' - 1) * C
+              = 4 * C * ∑ j' ∈ Finset.range n, ((9 : ℝ) / 10) ^ (Nat.dist j j' - 1) := by
+                rw [Finset.mul_sum]; apply Finset.sum_congr rfl; intro j' _; ring
+            _ ≤ 4 * C * 22 := by apply mul_le_mul_of_nonneg_left hsum (by positivity)
+            _ = 88 * C := by ring
+        have hfold : ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+              4 * ((9 : ℝ) / 10) ^ (Nat.dist j j' - 1) * C ≤ 88 * (n : ℝ) * C := by
+          calc ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+                4 * ((9 : ℝ) / 10) ^ (Nat.dist j j' - 1) * C
+              ≤ ∑ _j ∈ Finset.range n, 88 * C := Finset.sum_le_sum hgeom
+            _ = 88 * (n : ℝ) * C := by
+                rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; ring
+        linarith [hfold]
+
 /-! ## The g-direct bridges (reduce `ae_khinchinTypical` to the `K=0` tail average)
 
 `g(x) = log(cfDigit x 0)` is `logTailFn 0` a.e. (the first digit is `≥ 1` a.e.),

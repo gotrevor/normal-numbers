@@ -19,8 +19,21 @@ MCT limit, sidestepping fragile nested `integral_tsum`. Notation: `A_a := cfCyli
   `4·(9/10)^{dist(i,j)∸1}·(|[b]|γ[a] + |[a]|γ[b])`. Symmetric bound covers i<j and i>j (each branch
   reduces via `gaussMeasureReal_pair_shift₂` to an aligned gap, then `abs_cov_two_cyl_le`).
 
+**LANDED lap #3b (green, axiom-clean):** sub-lemmas `integral_logBirkhoffTrunc_sq` (2nd-moment
+expansion), `sq_logTruncMean_eq` (squared mean), constants `logTailC1/2/3` + summabilities +
+nonneg, `logVarConst K = C₃+C₁²+176C₁C₂`, `sum_logMul_gaussMeasure_inter` (disjointness collapse),
+and **`inner_pair_bound`** — the covariance FOLD: `|Σ_{j,j'}(γ.real(T⁻ʲ[K+1+a]∩T⁻ʲ'[K+1+b])−γ_aγ_b)|
+≤ n(γ(A∩B)+γ_aγ_b) + 88n(vol_bγ_a+vol_aγ_b)` (diagonal j=j' via measure-preservation; off-diag folds
+brick 2 via sum_range_dist_le+geom_trunc_sum_le). This is the hard analytic core.
+
 **REMAINING (hardest-first, next laps):**
-1. `variance_truncated_le K M n` : `|∫(S_n^M)² − (n·μ_M)²| ≤ n·(C₃+80C₁C₂)` UNIFORM in M. Via
+1. `variance_truncated_le K M n` : `|∫(S_n^M)² − (n·μ_M)²| ≤ n·logVarConst K`. ASSEMBLY (all pieces
+   landed): hΔ (combine the two sub-lemmas into `Σ_{a,b} u_au_b·Σ_{j,j'}(γ.real−γ_aγ_b)`), pull u≥0
+   out of abs (nested `Finset.abs_sum_le_sum_abs`), apply `inner_pair_bound` per (a,b), then bound
+   `Σ_{a,b}u_au_b·(inner RHS)` = `n·[collapse ⇒ Σu_a²γ_a ≤ C₃, plus (logTruncMean)² ≤ C₁²]` +
+   `88n·[2·μ_M·ν_M ≤ 2C₁C₂]` via `sum_le_tsum` partial-bounds. (Original note said 80C₁C₂; actual
+   fold constant is 176 = 8·22, absorbed into logVarConst.)
+   OLD note (superseded, kept for context): `|∫(S_n^M)² − (n·μ_M)²| ≤ n·(C₃+80C₁C₂)` UNIFORM in M. Via
    `integral_blockCount_cross` (S_n^M is a finite Σ_{a,b} u_a u_b blockCount·blockCount). Split
    `Σ_{i,j}` diagonal i=j (⇒ `n·Var(f_M) = n·(∫f_M²−μ_M²) ≤ n·∫f_M²`; distinct A_a,A_b DISJOINT so
    cross a≠b vanish at m=0, `∫f_M² = Σ_a u_a²γ(A_a) ≤ C₃`) vs off-diag i≠j (bound each via brick 2,
