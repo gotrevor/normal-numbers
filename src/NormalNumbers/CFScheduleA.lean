@@ -4023,6 +4023,44 @@ theorem schedStepL4_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateL4 q 
   · rw [hdrop]; exact hufreq
   · rw [hdrop]; exact hcfKu
 
+/-- **The single-stream L4 seed.**  Reuse the two-stream feasible seed's x-side data
+(`exists_seedStateA` already places `wx` inside `ψ⁻¹(Ioo e f)`); drop the `wz` stream. -/
+theorem exists_seedStateL4 {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+    Nonempty (SchedStateL4 q r) := by
+  obtain ⟨S⟩ := exists_seedStateA hq hr
+  exact ⟨⟨S.wx, S.e, S.f, S.hwxne, S.hwxpos, S.he0, S.hef, S.hf1, S.hinv⟩⟩
+
+/-- **The single-stream L4 schedule**: seed with `exists_seedStateL4`, iterate the
+choice step `schedStepL4_exists`. -/
+noncomputable def schedL4 {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+    ℕ → SchedStateL4 q r
+  | 0 => (exists_seedStateL4 hq hr).some
+  | s + 1 => (schedStepL4_exists hq (schedL4 hq hr s) s).choose
+
+theorem schedL4_step {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    StepSpecL4 (schedL4 hq hr s) (schedL4 hq hr (s + 1)) s :=
+  (schedStepL4_exists hq (schedL4 hq hr s) s).choose_spec
+
+/-- The L4 x-chain. -/
+noncomputable def wxSeq_L4 {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    List ℕ := (schedL4 hq hr s).wx
+
+theorem wxSeq_L4_ne {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    wxSeq_L4 hq hr s ≠ [] := (schedL4 hq hr s).hwxne
+
+theorem wxSeq_L4_pos {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    ∀ a ∈ wxSeq_L4 hq hr s, 1 ≤ a := (schedL4 hq hr s).hwxpos
+
+/-- The L4 x-chain strictly extends by a nonempty block each stage. -/
+theorem wxSeq_L4_ext {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    ∃ u, u ≠ [] ∧ wxSeq_L4 hq hr (s + 1) = wxSeq_L4 hq hr s ++ u := by
+  obtain ⟨hxtake, hxgt, -⟩ := schedL4_step hq hr s
+  refine ⟨(schedL4 hq hr (s + 1)).wx.drop (schedL4 hq hr s).wx.length, ?_, ?_⟩
+  · rw [← List.length_pos_iff_ne_nil, List.length_drop]; omega
+  · show (schedL4 hq hr (s + 1)).wx = (schedL4 hq hr s).wx ++ _
+    conv_lhs => rw [← List.take_append_drop (schedL4 hq hr s).wx.length (schedL4 hq hr (s + 1)).wx]
+    rw [hxtake]
+
 /-- **cfK-controlled resolution is AFFINE in `|w|`** (resolution half of
 `schedA_block_linear`, discharged CONDITIONALLY on the B5′ log-cfK bound).  If the
 target-width reciprocal `a = 4/(d−c)` is at most `8·cfK(w)²` (which holds when the
