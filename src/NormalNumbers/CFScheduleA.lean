@@ -728,6 +728,30 @@ theorem countable_preimage_affineMap_range_rat {q : ℝ} (hq : 0 < q) (r : ℝ) 
     simp only [affineMap] at h; exact mul_left_cancel₀ (ne_of_gt hq) (by linarith)
   exact (Set.countable_range _).preimage hinj
 
+open Classical in
+/-- **An enumeration of `ψ⁻¹(ℚ)`** (Z-III steering, diagonalisation target).  A total
+noncomputable `ℕ → ℝ` whose range covers the ψ-rational set `ψ⁻¹(ℚ)` whenever that set is
+countable and nonempty (which holds for `q > 0` — `countable_preimage_affineMap_range_rat`, and
+nonempty since `ψ(-r/q) = 0 ∈ ℚ`).  The schedule diagonalises against `enumPsiRat q r s` at each
+stage `s`, forcing the chain limit `xA` off every ψ-rational point ⇒ `ψ(xA)` irrational. -/
+noncomputable def enumPsiRat (q r : ℝ) : ℕ → ℝ :=
+  if h : (affineMap q r ⁻¹' Set.range ((↑) : ℚ → ℝ)).Nonempty
+      ∧ (affineMap q r ⁻¹' Set.range ((↑) : ℚ → ℝ)).Countable
+    then (h.2.exists_eq_range h.1).choose
+    else fun _ => 0
+
+/-- Under `q > 0`, every ψ-rational point is enumerated by `enumPsiRat`. -/
+theorem mem_range_enumPsiRat {q : ℝ} (hq : 0 < q) (r : ℝ) {t : ℝ}
+    (ht : affineMap q r t ∈ Set.range ((↑) : ℚ → ℝ)) : t ∈ Set.range (enumPsiRat q r) := by
+  classical
+  have hcount := countable_preimage_affineMap_range_rat hq r
+  have hne : (affineMap q r ⁻¹' Set.range ((↑) : ℚ → ℝ)).Nonempty := ⟨t, ht⟩
+  have hspec := (hcount.exists_eq_range hne).choose_spec
+  have hval : enumPsiRat q r = (hcount.exists_eq_range hne).choose := by
+    rw [enumPsiRat, dif_pos ⟨hne, hcount⟩]
+  rw [hval, ← hspec]
+  exact ht
+
 /-- **Point-excluding extension digit** (brick Z-III steering core).  A genuine word `wx` has
 an extension digit `a ≥ 1` whose one-step sub-cylinder `cfCylinder (wx ++ [a])` misses any given
 point `t`: the sub-cylinders for distinct first digits are disjoint (`cfCylinder_disjoint`), so `t`
@@ -4428,6 +4452,27 @@ theorem block_len_le {b n₁ m : ℕ} (hlen : b = n₁ + m ^ 2)
       · exact h
     have hlt : n₁ < 2 * t := by nlinarith [hsq, hb2, hn1pos, ht1]
     have ht3 : t ≤ 3 := by nlinarith [ht2, hb2, hlt, ht1]
+    omega
+
+/-- **`+1`-filler variant of `block_len_le`.**  When the block carries ONE extra diagonalisation
+digit (`|blk| = n₁ + m² + 1`, forcing `ψ(xA)` irrational), the linear bound survives with a
+slightly larger constant `2m² + 9`.  Same argument as `block_len_le` (the self-referential
+`n₁² ≤ b·√b` forces `n₁` bounded once `n₁ > m²`). -/
+theorem block_len_le' {b n₁ m : ℕ} (hlen : b = n₁ + m ^ 2 + 1)
+    (hsq : n₁ ^ 2 ≤ b * Nat.sqrt b) : b ≤ 2 * m ^ 2 + 9 := by
+  by_cases hnm : n₁ ≤ m ^ 2
+  · omega
+  · push_neg at hnm
+    set t := Nat.sqrt b with htdef
+    have ht2 : t ^ 2 ≤ b := Nat.sqrt_le' b
+    have hb2 : b ≤ 2 * n₁ := by omega
+    have hn1pos : 1 ≤ n₁ := by omega
+    have ht1 : 1 ≤ t := by
+      rcases Nat.eq_zero_or_pos t with h0 | h
+      · exfalso; rw [h0, Nat.mul_zero] at hsq; nlinarith [hsq, hn1pos]
+      · exact h
+    have hlt : n₁ ≤ 2 * t := by nlinarith [hsq, hb2, hn1pos, ht1]
+    have ht3 : t ≤ 4 := by nlinarith [ht2, hb2, hlt, ht1]
     omega
 
 /-- **Accumulated cfK bound along the L4 chain** (recursion of the per-block cfK cap).
