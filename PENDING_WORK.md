@@ -1,5 +1,38 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🟢 2026-08-25 (review lap #2) — LANDED: crux step 1a (restricted ψ-pushed 2nd-moment identities)
+
+Committed `a92dd8c` (build green 8757, axiom-clean). In `CFScheduleA.lean` before the crux:
+- `integral_blockCount_psi_restricted`   : `∫_S (S_n∘ψ) dγ  = Σ_{j<n} γ(S ∩ ψ⁻¹T^{-j}A)`
+- `integral_blockCount_sq_psi_restricted`: `∫_S (S_n∘ψ)² dγ = Σ_{j,j'<n} γ(S ∩ (ψ⁻¹T^{-j}A ∩ ψ⁻¹T^{-j'}A))`
+  (+ helpers `blockIndic_comp`, `measurable_affineMap`, `blockIndic_psi_mul`,
+  `setIntegral_indicator_one_gaussMeasure`). Pure measure theory, NO mixing. These reduce the
+  monolithic crux `variance_blockCount_psi_pushed` to **bounding the pair-correlation masses**
+  `γ(cfCyl wx' ∩ ψ⁻¹T^{-j}A ∩ ψ⁻¹T^{-j'}A)` — the ψ-conjugated interval-base Gauss mixing.
+
+**NEXT — crux step 1b (the hard core) + 1c (assembly). Concrete reduction of `variance_blockCount_psi_pushed`:**
+Set `S=cfCyl wx'`, `A=cfCyl v`, `c=nγv`, `μ_j=γ(S∩ψ⁻¹T^{-j}A)`, `μ_{jj'}=γ(S∩(ψ⁻¹T^{-j}A∩ψ⁻¹T^{-j'}A))`.
+Expand `(S_n∘ψ − c)² = (S_n∘ψ)² − 2c(S_n∘ψ) + c²`; integrate over S (each term is now a landed
+identity + `∫_S c² dγ = c²·γ(S)` via `setIntegral_const`):
+  `∫_S (S_n∘ψ−c)² dγ = Σ_{jj'} μ_{jj'} − 2c Σ_j μ_j + c²·γ(S)`.
+The bound needs, per pair, TWO ψ-conjugated interval-base mixing facts (state as named sub-sorries):
+  (1-pt) `|μ_j − γ(S)·γv| ≤ 4·γ(S)·γv·(9/10)^{?}`  [note: no `∸|v|` shift for 1-pt; the affine
+         base has no cylinder depth — the decay index is `j` itself or `0`; work it out from CoV];
+  (2-pt) `|μ_{jj'} − γ(S)·γv²| ≤ 4·γ(S)·γv·(9/10)^{Nat.dist j j' ∸ |v|}`  [the pair-correlation,
+         mirror `abs_cov_pair_le`].
+Then the same geometric fold as `variance_blockCount_le` gives `≤ (8|v|+80)·n·γv·γ(S)` PLUS a
+`2c·|Σ_j μ_j − nγv γ(S)|` 1-point correction (absent in the full-measure model, where
+`∫ S_n = nγv` EXACTLY; here it is only ≈, up to 1-pt mixing) — bound it by `2nγv·Σ_j(1-pt err)`,
+also `O(n·γv·γ(S))`, absorbed by enlarging the constant if needed (check the `+80` slack).
+**The mixing sub-sorries (1-pt, 2-pt) are step 1b, THE research core.** Route to prove them:
+change-of-variables `y=ψx` turns `μ_{jj'}` into an INTERVAL-base (`J=ψ(S)`) pair-correlation in
+`γ` times a bounded density ratio `ρ=gaussDensity(ψ⁻¹y)/(q·gaussDensity(y))` (elementary,
+`CFAffine` + `gaussDensity` bounds); the content is then interval-base mixing = extend
+`gaussMeasure_cylinder_mixing` (`CFGammaMixing:236`) from a `cfCylinder` base to a subinterval
+`J⊆(0,1)`. If interval-base mixing is big, split it (cylinder-cover of `J` + per-cylinder mixing)
+as its own named sorry. **Do step 1c (the algebra/assembly, given the two mixing sorries) FIRST**
+next lap — it is landable now and further narrows the crux to exactly the two mixing statements.
+
 ## 🟢 2026-08-25 — LANDED: ψ(xA) irrationality (subtlety 1) + Z-I budget atom
 
 - **`exists_xA_L4_psi_irrational`** (axiom-clean): the diagonalisation filler digit
