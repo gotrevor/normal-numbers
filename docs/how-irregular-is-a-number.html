@@ -115,6 +115,7 @@ thead th{
 tbody tr:last-child td{border-bottom:none}
 td.num, td .num{font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:.88em}
 td.name{font-family:var(--sans); font-weight:500; white-space:nowrap}
+.grp{font-family:var(--sans); font-weight:600; font-size:.82rem; background:var(--bg); padding-top:.8rem}
 .axis-tag{font-family:var(--mono); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase}
 .reads{list-style:none; margin:1rem 0 0; padding:0; display:grid; gap:.85rem}
 .reads li{padding-left:1.1rem; border-left:2px solid var(--rule)}
@@ -149,6 +150,19 @@ text{font-family:var(--sans); fill:currentColor}
 .t-arith{fill:var(--arith)}
 .t-digit{fill:var(--digit)}
 .t-open{fill:var(--open)}
+.st{display:inline-block; font-family:var(--mono); font-size:.62rem; letter-spacing:.08em;
+    text-transform:uppercase; padding:.12rem .4rem; border:1px solid currentColor;
+    border-radius:2px; white-space:nowrap; line-height:1.5}
+.st-ml{color:var(--muted)}
+.st-out{color:var(--digit); background:var(--digit-soft)}
+.st-non{color:var(--open); background:var(--open-soft)}
+.mg{font-family:var(--sans); font-weight:600; margin-right:.28rem}
+.mg-y{color:var(--digit)}
+.mg-n{color:var(--open)}
+.mg-q{color:var(--arith)}
+.key{display:flex; flex-wrap:wrap; gap:.5rem 1.4rem; margin:.9rem 0 .2rem; font-size:.84rem;
+     color:var(--muted); align-items:center}
+td.stat{white-space:nowrap}
 .sv-node{fill:var(--paper); stroke:var(--rule); stroke-width:1.4}
 .t-node{font-family:var(--sans); font-size:13px; font-weight:600}
 .sv-edge line{stroke:currentColor; stroke-width:1.4}
@@ -468,6 +482,52 @@ text{font-family:var(--sans); fill:currentColor}
 </tbody>
 </table>
 </div>
+<h2>Status board</h2>
+<p>The diagrams above carry mathematics, and that is all they should carry: an arrow means an implication holds, a crossed link means it fails, a <span class="mono">?</span> means nobody knows. Whether a given edge has been <em>machine-checked</em> is a different question with a different answer for every edge, and it belongs in its own object rather than as a second layer of glyphs on a drawing that is already dense.</p>
+<p>So: one row per claim in the picture, with its mathematical status and its formalization status kept apart. The discipline is that every edge gets a row, including the one-line ones, because a missing row and a hard gap should not look the same.</p>
+<div class="key"><span><span class="mg mg-y">&#10003;</span>proved</span><span><span class="mg mg-n">&#10007;</span>refuted, and the witness is named</span><span><span class="mg mg-q">?</span>open</span><span><span class="st st-ml">mathlib</span> ready to cite</span><span><span class="st st-out">outside mathlib</span> exists, in a repo</span><span><span class="st st-non">not yet</span> the work</span></div>
+<div class="tablewrap full">
+<table>
+<colgroup><col style="width:34%"><col style="width:11%"><col style="width:13%"><col style="width:42%"></colgroup>
+<thead><tr><th>Claim</th><th>Mathematics</th><th>In Lean</th><th>Where, or what it would take</th></tr></thead>
+<tbody>
+<tr><td colspan="4" class="grp"><strong>Arithmetic side</strong></td></tr>
+<tr><td>Every rational is algebraic</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-ml">mathlib</span></td><td><span class="mono">isAlgebraic_ratCast</span></td></tr>
+<tr><td><span class="mono">&#8730;2</span> is irrational</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-ml">mathlib</span></td><td><span class="mono">irrational_sqrt_two</span></td></tr>
+<tr><td>Liouville numbers are transcendental</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-ml">mathlib</span></td><td><span class="mono">Liouville.transcendental</span></td></tr>
+<tr><td><span class="mono">&#955;</span> is a Liouville number</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-ml">mathlib</span></td><td><span class="mono">transcendental_liouvilleNumber</span></td></tr>
+<tr><td>The Liouville set is null, and residual</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-ml">mathlib</span></td><td><span class="mono">Liouville/Measure.lean</span>, <span class="mono">Residual.lean</span></td></tr>
+<tr><td><span class="mono">e</span> is transcendental (Hermite 1873)</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-out">outside mathlib</span></td><td>Lean 4, axiom-clean, in <span class="mono">lean-formalizations</span>. Also a Lean 3 proof claimed on Freek #67</td></tr>
+<tr><td><span class="mono">&#960;</span> is transcendental (Lindemann 1882)</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-out">outside mathlib</span></td><td><span class="mono">transcendental_pi_axiomClean</span>. <strong>Freek #53 is an unclaimed slot</strong></td></tr>
+<tr><td>Algebraic irrationals have exponent 2 (Roth 1955)</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td>Nowhere, as far as a grep of mathlib reaches</td></tr>
+<tr><td colspan="4" class="grp"><strong>Digit side, positive results</strong></td></tr>
+<tr><td>Wall 1949: normal iff the orbit equidistributes</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-out">outside mathlib</span></td><td><span class="mono">normal-numbers/Wall.lean</span></td></tr>
+<tr><td>Stoneham <span class="mono">&#945;&#8322;,&#8323;</span> is normal in base 2</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-out">outside mathlib</span></td><td><span class="mono">isNormal_two_stoneham23</span></td></tr>
+<tr><td>An absolutely normal, CF-normal real exists (Becher&#8211;Yuhjtman 2019)</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-out">outside mathlib</span></td><td><span class="mono">exists_absolutely_normal_cf_normal</span></td></tr>
+<tr><td>Champernowne is normal in base 10 (1933)</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-out">outside mathlib</span></td><td>Sequence level only, in <span class="mono">OldMathematician/ChampernowneNormality</span>. Our <span class="mono">Bridge.lean</span> is the missing upgrade to the real number</td></tr>
+<tr><td>Normal implies irrational</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td>Cheap here: Wall plus the finite orbit of a rational</td></tr>
+<tr><td>Borel 1909: almost every real is absolutely normal</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td>Borel-Cantelli and the strong law are both in mathlib</td></tr>
+<tr><td>The absolutely normal reals are meager</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td><span class="mono">Liouville/Residual.lean</span> is the template</td></tr>
+<tr><td>Normal implies disjunctive, and implies simply normal</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td>Quantifier weakenings of definitions this repo already has</td></tr>
+<tr><td>Disjunctive implies irrational</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td>Bounded subword complexity forces eventual periodicity</td></tr>
+<tr><td>Schnorr random implies absolutely normal</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td>Needs an effective-measure layer mathlib does not have</td></tr>
+<tr><td>Schnorr&#8211;Stimm 1972: normal iff finite-state dimension 1</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td>No formalization found in any prover</td></tr>
+<tr><td colspan="4" class="grp"><strong>Non-edges, each needing a witness</strong></td></tr>
+<tr><td>Simple normality does <em>not</em> give irrationality</td><td class="stat"><span class="mg mg-n">&#10007;</span>refuted</td><td class="stat"><span class="st st-non">not yet</span></td><td><span class="mono">1/3 = 0.010101&#8230;</span> in base 2</td></tr>
+<tr><td>Disjunctive and simply normal imply each other in neither direction</td><td class="stat"><span class="mg mg-n">&#10007;</span>refuted</td><td class="stat"><span class="st st-non">not yet</span></td><td>Two constructions, both routine</td></tr>
+<tr><td>Normal in base 2 does <em>not</em> give base 6</td><td class="stat"><span class="mg mg-n">&#10007;</span>refuted</td><td class="stat"><span class="st st-non">not yet</span></td><td>Stoneham <span class="mono">&#945;&#8322;,&#8323;</span> (Bailey&#8211;Borwein). Machinery is half here in <span class="mono">HotSpot.lean</span>; the negative half is not</td></tr>
+<tr><td>Transcendental does <em>not</em> give normal</td><td class="stat"><span class="mg mg-n">&#10007;</span>refuted</td><td class="stat"><span class="st st-non">not yet</span></td><td><span class="mono">&#955;</span> is normal to no base</td></tr>
+<tr><td>Liouville does <em>not</em> give abnormal</td><td class="stat"><span class="mg mg-n">&#10007;</span>refuted</td><td class="stat"><span class="st st-non">not yet</span></td><td>Bugeaud 2002 built absolutely normal Liouville numbers</td></tr>
+<tr><td>Normal and Kurtz random imply each other in neither direction</td><td class="stat"><span class="mg mg-n">&#10007;</span>refuted</td><td class="stat"><span class="st st-non">not yet</span></td><td>Champernowne is normal and computable</td></tr>
+<tr><td colspan="4" class="grp"><strong>Open, so there is nothing to formalize yet</strong></td></tr>
+<tr><td>Every algebraic irrational is absolutely normal (Borel 1950)</td><td class="stat"><span class="mg mg-q">?</span>open</td><td class="stat"><span class="st st-non">not yet</span></td><td>The conjecture the shaded lens is waiting on</td></tr>
+<tr><td><span class="mono">&#960;</span> is normal in some base</td><td class="stat"><span class="mg mg-q">?</span>open</td><td class="stat"><span class="st st-non">not yet</span></td><td>Not even known to be disjunctive</td></tr>
+<tr><td><span class="mono">&#8730;2</span> is normal in some base</td><td class="stat"><span class="mg mg-q">?</span>open</td><td class="stat"><span class="st st-non">not yet</span></td><td>Same wall, and it is the oldest form of the question</td></tr>
+</tbody>
+</table>
+</div>
+<p>The shape of that column is the whole point: the arithmetic side is mostly ready to cite, the digit side is almost entirely <span class="st st-non">not yet</span>, and the refutations, which are the rows that need an actual construction rather than a one-line proof, are where the work lives.</p>
+
 <h2>A third expansion, and a fourth</h2>
 <p>Base-b normality is not the only digit story a real number has. The continued fraction is a second expansion with its own notion of typical: partial quotients should follow the Gauss-Kuzmin law, their geometric mean should tend to Khinchin's constant, and the denominators should grow at L&#233;vy's rate. Call that CF-normal.</p>
 <p>Neither notion is known to imply the other. Producing a single number that is absolutely normal <em>and</em> CF-normal was open until Becher and Yuhjtman did it in 2019, with an algorithm rather than a measure-theoretic existence argument. That gap is the honest measure of how loosely these instruments are tied together: two reasonable definitions of a random-looking real, and it took a construction to show they can hold at once.</p>

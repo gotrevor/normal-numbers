@@ -96,6 +96,10 @@ pile of the interesting facts, and a reader cannot tell a gap from an omission.
 **The discipline that makes it finite.**  For every ordered pair of notions in the lattice, the
 module says exactly one of three things:
 
+The companion HTML now renders this as a **status board**: one row per claim, with the
+mathematical status and the formalization status in separate columns, because they answer
+different questions and only one of them is a work plan.  The three verdicts are:
+
 1. **proved** - a theorem, however one-line;
 2. **refuted** - a theorem of the form `¬ ∀ x, P x → Q x`, which needs a *witness*, and this is
    where the real work is;
