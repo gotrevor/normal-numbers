@@ -100,6 +100,9 @@ the source of truth for statements and claim status (novelty unswept).
   per-word D_w bridges off the existing `lnTwoOrbit` tracking
 - ⬜ D3 (stretch) Axiom M implication: quadratic irrationals b-disjunctive
   given invariant-set avoidance; real cost is dim(missing-word SFT) < 1
+- ⬜ D4 **Baire slate (unconditional, CHOSEN 2026-08-25)**: absolutely
+  disjunctive reals comeager + normal-in-base-b meager + the separation
+  corollary — full context transfer in `HANDOFF-disjunctive-baire.md`
 
 ## Phase 3 — outward
 
