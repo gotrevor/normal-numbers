@@ -51,7 +51,32 @@ the `exists_cfCylinder_psi_avoid_zbad` NSz shape. A single witness `p ∈ cfCyli
 the s↔n coupling needs (each stage certifies ψ-goodness over its whole window `(|w_{s-1}|,|w_s|]`).
 `hbudget` is the harmonic-band total; feasibility left to caller.
 
-**⚠️ SHARPENED OPEN OBLIGATION (the remaining delicate arithmetic — subtlety 2, s↔n coverage):**
+## 🟢 2026-08-25 — DECISIVE: the SCALE-REGIME OBSTRUCTION is actually resolved (tight discharge)
+
+**Root-cause correction found this lap.** `tendsto_of_scale_coverage` needs EVERY large `n` covered
+(not a cofinal subsequence — `CFOrbitEquidist` is a genuine `Tendsto … atTop`, `hcover` quantifies
+∀ n ≥ n₀). Tracing the threshold arithmetic of `exists_scale_cfCylinder_psi_avoid_zbad_cond` exposed
+that it is CORRECT but LOSSY: it bounds `γ(cfCylinder wz) ≤ 1`, discarding a `φ^{-2|wz|}` factor,
+producing an EXPONENTIAL threshold `N ~ φ^{2|wz|}` — the SAME empty-range obstruction as the old
+post-hoc witness. **The fix:** KEEP the `γ(cfCylinder wz)` factor and cancel it against
+`γ(cfCylinder wx')` (both `~ φ^{-2·depth}`, comparable), via a bounded multiplicative bridge
+`γ(cfCylinder wz) ≤ Cbridge·γ(cfCylinder wx')`.
+
+**`exists_scale_cfCylinder_psi_avoid_zbad_cond_tight`** (`CFScheduleA`, axiom-clean) does exactly
+this: with the bridge hypothesis, the threshold becomes `N ~ |wz| + O(Cbridge·Ssum/δ²)` —
+**POLYNOMIAL in `|wz|`, no exponential**. So the transfer range `n ≲ |wx'| ~ |wz|` is NON-EMPTY.
+This is the real dissolution of the scale-regime obstruction; the harmonic-band worry below is moot
+because a polynomial-threshold single/narrow-band witness now lands inside the transfer range.
+
+**SOLE remaining geometric input:** the bridge constant `Cbridge` (bounded, `~ 2/q`). Concretely
+`γ(cfCylinder wz) ≤ Cbridge·γ(cfCylinder wx')` where `wz` = tightest z-prefix with
+`ψ(cfCylinder wx') ⊆ cfCylinder wz`. Route: `vol(cfCylinder wz) ~ vol(ψ(cfCylinder wx')) =
+q·vol(cfCylinder wx')` (ψ affine, factor q; wz is the minimal z-cylinder ⊇ image so its width is
+within a bounded factor of the image width), then `γ ~ 2log2·vol` on `(0,1)` both ways. This is a
+clean geometry/measure lemma — the NEXT target. Formalizing it + the `exists_tail_cfCylinder_subset_ball`
+determination of `wz` completes the z-selection engine end-to-end.
+
+**⚠️ (SUPERSEDED by the tight discharge above — kept for the record) harmonic-band worry:**
 The band budget `∑_{n∈(L,M]} ∑_{v∈F} 7(8|v|+80)γv/((δ/2)²(n−L))·γ(wz)` carries a HARMONIC factor
 `∑_{n=L+1}^{M} 1/(n−L) = H_{M−L} ~ log(M−L)`. For the geometric window `M ~ |w_s| ~ 2|w_{s-1}|`,
 `M − L` is comparable to `L`, so `H_{M−L} ~ log L` — GROWS with the stage. So a fixed-`δ` single
