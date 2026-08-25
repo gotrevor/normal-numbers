@@ -25,19 +25,18 @@ hull, `ρ=1`, no small-corner navigation). Its whole measure/selection stack pre
 
 Refreshed DIRECTION (CURRENT DIRECTIVE → the cfK-cap graft), STATUS, PENDING_WORK top.
 
-## NEXT (hardest-first) — thread the cap up, then assemble
+## UPDATE (same lap, HEAD `63c8677`): layers 2 + 3 DONE
 
-1. **Layer 2** `exists_uniformly_freq_good_block_steer_cfK` — mirror
-   `exists_uniformly_freq_good_block_steer` (find via grep, was ~:1902 pre-insert,
-   now shifted ~+180 lines) calling layer 1 at `NS = quadScales n₁ m`. cfK bound
-   `e^{κ(n₁+m²)}=e^{κ|u|}` passes straight through (same digit block, |u|=n₁+m²
-   unchanged). `hbound` gains the cfK-mass term at `ntop = (quadScales n₁ m).max' = n₁+m²`
-   (`quadScales_max`). Everything else copies verbatim.
-2. **Layer 3** `exists_uniformly_freq_good_block_steer_len_rel_cfK` — mirror
-   `exists_uniformly_freq_good_block_steer_len_rel` (~:3560 now) calling layer 2;
-   carry cfK through the relative-β length exposure. Check the measure budget
-   `(m+1)·A₁(n₁)+cfKmass < γtar` stays solvable (cfKmass `≤ (log2)⁻¹·ε·|I_wx|`; pick ε
-   small via the rate κ — `exists_rate_gaussMeasure_cfKbadExtSet_le`).
+- ✅ **Layer 2** `exists_uniformly_freq_good_block_steer_cfK` — landed, cfK passes through.
+- ✅ **Layer 3** `exists_uniformly_freq_good_block_steer_len_rel_cfK` — landed. Uses a
+  HALVED regularizer `β = γtar·δ²/(2(S+γwx))` so the freq budget targets `γtar/2` and the
+  caller supplies uniform cfK room `hcfK : ∀ n, γ(cfKbadExtSet wx κ n) ≤ γtar/2`. Exposes
+  `cfK u ≤ e^{κ|u|}` + `|u|=n₁+m²` + `m² ≤ 6(L+Nfib)+2+2⌈4/β⌉⁴` + `Nfib ≲ log`.
+
+The whole cfK-cap block-builder chain is in place. **Next = `schedL4_block_linear`.**
+
+## NEXT (hardest-first) — assemble `schedL4_block_linear`
+
 3. **`schedL4_block_linear`** — fix κ once (`ε := γtar/4`); have `schedStepL4_exists`
    call the layer-3 cfK builder so each block carries `cfK(u_s) ≤ e^{κ|u_s|}`; thread
    through the recursion with `cfK_append_le` (`cfK(wxSeq s) ≤ C₀·e^{(κ+log2)|wxSeq s|}`,
