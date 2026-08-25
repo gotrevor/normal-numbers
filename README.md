@@ -67,6 +67,13 @@ Sequence-level definitions are aligned with
 (Apache 2.0), which proves normality of the base-`b` Champernowne *sequence*;
 target 2 is exactly what upgrades such a result to the *real number*.
 
+## Background
+
+[`docs/irregularity-landscape.md`](docs/irregularity-landscape.md) places normality next to
+irrationality and transcendence, and grades what else on that map is formalizable here (and
+what is a wall).  [`docs/how-irregular-is-a-number.html`](docs/how-irregular-is-a-number.html)
+is the same material with diagrams; open it in a browser.
+
 ## License
 
 Apache 2.0.  Copyright 2026 Trevor Morris.

@@ -1,0 +1,380 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>How Irregular Is a Number?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@500;600&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+:root{
+  --bg:#F3F5F7; --paper:#FFFFFF; --ink:#14181E; --muted:#59616F; --rule:#D7DCE3;
+  --arith:#8A5A0B; --arith-soft:#EFE2C8;
+  --digit:#3B39A6; --digit-soft:#DEDDF4;
+  --open:#A22F35; --open-soft:#F4DEDF;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --serif:"Spectral",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1116; --paper:#161A21; --ink:#E5E9F0; --muted:#98A2B3; --rule:#29303A;
+    --arith:#E0B063; --arith-soft:#3A2E17;
+    --digit:#9C99EF; --digit-soft:#232357;
+    --open:#EA8B87; --open-soft:#412020;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1116; --paper:#161A21; --ink:#E5E9F0; --muted:#98A2B3; --rule:#29303A;
+  --arith:#E0B063; --arith-soft:#3A2E17;
+  --digit:#9C99EF; --digit-soft:#232357;
+  --open:#EA8B87; --open-soft:#412020;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--serif); font-size:17px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+main{
+  display:grid;
+  grid-template-columns:1fr min(46rem,calc(100% - 2.5rem)) 1fr;
+  row-gap:1.15rem;
+  padding:0 0 5rem;
+}
+main > *{grid-column:2}
+main > .full{
+  grid-column:1 / -1; justify-self:center;
+  width:min(64rem, calc(100% - 2.5rem));
+}
+header.head{
+  grid-column:1 / -1; justify-self:center;
+  width:min(46rem, calc(100% - 2.5rem));
+  padding:3.4rem 0 1.6rem; margin-bottom:1.2rem;
+  border-bottom:1px solid var(--rule);
+}
+.eyebrow{
+  font-family:var(--mono); font-size:.72rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); margin:0 0 .9rem;
+}
+h1{
+  font-family:var(--sans); font-weight:600; font-size:clamp(2.1rem,5.2vw,3.1rem);
+  line-height:1.05; letter-spacing:-.02em; margin:0 0 .8rem; text-wrap:balance;
+}
+.standfirst{margin:0; max-width:38rem; font-size:1.12rem; color:var(--muted)}
+h2{
+  font-family:var(--sans); font-weight:600; font-size:1.32rem; letter-spacing:-.01em;
+  margin:2.6rem 0 .2rem; text-wrap:balance;
+}
+h3{font-family:var(--sans); font-weight:600; font-size:1.02rem; margin:1.6rem 0 .1rem}
+p{margin:.55rem 0}
+a{color:var(--digit); text-decoration-thickness:1px; text-underline-offset:2px}
+a:focus-visible{outline:2px solid var(--digit); outline-offset:2px; border-radius:2px}
+strong{font-weight:600}
+em.term{font-style:normal; font-weight:600}
+.mono{font-family:var(--mono); font-size:.92em}
+.dfn{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(15rem,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); margin:1.3rem 0 .4rem;
+}
+.dfn > div{background:var(--paper); padding:1.05rem 1.1rem 1.15rem}
+.chip{
+  display:inline-block; font-family:var(--mono); font-size:.66rem; letter-spacing:.1em;
+  text-transform:uppercase; padding:.2rem .45rem; border:1px solid currentColor;
+  margin-bottom:.6rem;
+}
+.c-arith{color:var(--arith)}
+.c-digit{color:var(--digit)}
+.c-open{color:var(--open)}
+.dfn h4{font-family:var(--sans); font-weight:600; font-size:1.05rem; margin:0 0 .35rem}
+.dfn p{font-size:.95rem; margin:.35rem 0 0}
+.dfn .cost{
+  font-family:var(--mono); font-size:.78rem; color:var(--muted);
+  margin-top:.75rem; padding-top:.6rem; border-top:1px solid var(--rule);
+}
+figure{margin:1.9rem 0 .6rem; padding:0}
+figure svg{display:block; width:100%; height:auto; background:var(--paper); border:1px solid var(--rule)}
+figcaption{
+  font-size:.9rem; color:var(--muted); margin-top:.8rem; max-width:46rem;
+}
+.legend{
+  list-style:none; margin:.9rem 0 0; padding:0;
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(17rem,1fr)); gap:.5rem 1.6rem;
+  font-size:.86rem;
+}
+.legend li{display:flex; gap:.6rem; align-items:flex-start}
+.legend .sw{flex:0 0 auto; width:1.15rem; height:1.15rem; margin-top:.2rem; border:1.5px solid var(--muted)}
+.legend .sw-alg{background:var(--arith-soft); border-color:var(--arith)}
+.legend .sw-norm{background:var(--digit-soft); border-color:var(--digit)}
+.legend .sw-lens{background:var(--open-soft); border-color:var(--open)}
+.legend .sw-liou{background:transparent; border-color:var(--open); border-style:dashed}
+.legend .sw-unk{background:transparent; border-color:var(--muted); border-style:dashed}
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); background:var(--paper); margin:1.3rem 0 .5rem}
+table{border-collapse:collapse; width:100%; min-width:44rem; font-size:.9rem}
+th,td{text-align:left; padding:.62rem .8rem; border-bottom:1px solid var(--rule); vertical-align:top}
+thead th{
+  font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); font-weight:400; background:var(--bg);
+}
+tbody tr:last-child td{border-bottom:none}
+td.num, td .num{font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:.88em}
+td.name{font-family:var(--sans); font-weight:500; white-space:nowrap}
+.axis-tag{font-family:var(--mono); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase}
+.reads{list-style:none; margin:1rem 0 0; padding:0; display:grid; gap:.85rem}
+.reads li{padding-left:1.1rem; border-left:2px solid var(--rule)}
+.reads .why{display:block; font-size:.88rem; color:var(--muted)}
+.callout{
+  border-left:3px solid var(--digit); background:var(--paper);
+  padding:.9rem 1.1rem; margin:1.4rem 0 .5rem; font-size:.97rem;
+}
+.callout p:first-child{margin-top:0}
+.callout p:last-child{margin-bottom:0}
+/* SVG figure styling */
+.sv-frame{fill:none; stroke:var(--rule); stroke-width:1.5}
+.sv-alg{fill:var(--arith-soft); fill-opacity:.75; stroke:var(--arith); stroke-width:1.6}
+.sv-norm{fill:var(--digit-soft); fill-opacity:.62; stroke:var(--digit); stroke-width:1.6}
+.sv-q{fill:var(--paper); stroke:var(--muted); stroke-width:1.3}
+.sv-liou{fill:none; stroke:var(--open); stroke-width:1.6; stroke-dasharray:7 4}
+.sv-lens{fill:var(--open); fill-opacity:.16; stroke:none}
+.sv-dot{fill:currentColor}
+.sv-qmark{fill:var(--paper); stroke:var(--muted); stroke-width:1.2; stroke-dasharray:3 2}
+.sv-axis{stroke:var(--muted); stroke-width:1.4}
+.sv-grid{stroke:var(--rule); stroke-width:1}
+.sv-band{fill:var(--muted); fill-opacity:.13; stroke:var(--muted); stroke-width:1; stroke-dasharray:4 3}
+.sv-box{fill:var(--open); fill-opacity:.1; stroke:var(--open); stroke-width:1.3; stroke-dasharray:5 3}
+text{font-family:var(--sans); fill:currentColor}
+.t-region{font-size:14px; font-weight:600; letter-spacing:.01em}
+.t-sub{font-size:11.5px; fill:var(--muted)}
+.t-pt{font-family:var(--mono); font-size:11.5px}
+.t-pt,.t-sub,.t-note,.t-region{paint-order:stroke fill; stroke:var(--paper); stroke-width:3px; stroke-linejoin:round; stroke-opacity:.9}
+.t-note{font-family:var(--serif); font-style:italic; font-size:12px; fill:var(--muted)}
+.t-q{font-family:var(--sans); font-size:10px; font-weight:600; fill:var(--muted)}
+.t-axis{font-family:var(--mono); font-size:11px; fill:var(--muted)}
+.t-arith{fill:var(--arith)}
+.t-digit{fill:var(--digit)}
+.t-open{fill:var(--open)}
+@media (max-width:40rem){
+  body{font-size:16px}
+  header.head{padding-top:2.4rem}
+}
+</style></head><body>
+<header class="head">
+  <p class="eyebrow">Digits, arithmetic, and what we can actually prove</p>
+  <h1>How Irregular Is a Number?</h1>
+  <p class="standfirst">Irrational, transcendental and normal are three different questions about the same real number, asked with three different instruments. Only the first two are usually answerable.</p>
+</header>
+
+<main>
+
+<h2>Three claims, two subjects</h2>
+<p>The two lines you quoted are a status ledger for one constant: someone has listed what is <em class="term">known</em> about it, and graded the cost of each fact.</p>
+
+<div class="dfn">
+  <div>
+    <span class="chip c-arith">arithmetic</span>
+    <h4>Irrational</h4>
+    <p>Not equal to any <span class="mono">p/q</span>. Equivalently, in every base its expansion fails to be eventually periodic.</p>
+    <p class="cost"><strong>trivial</strong> = it falls out of the construction. For a number built by concatenating digits you can <em>see</em> the aperiodicity; no theorem is invoked.</p>
+  </div>
+  <div>
+    <span class="chip c-arith">arithmetic</span>
+    <h4>Transcendental</h4>
+    <p>Not a root of any nonzero polynomial with integer coefficients. Strictly stronger than irrational: <span class="mono">&#8730;2</span> is irrational but algebraic.</p>
+    <p class="cost"><strong>known</strong> = there is a citation, not an observation. For Champernowne's constant it is Mahler 1937, and it rides on deep Diophantine approximation.</p>
+  </div>
+  <div>
+    <span class="chip c-digit">statistical</span>
+    <h4>Normal</h4>
+    <p>In base <span class="mono">b</span>, every block of <span class="mono">k</span> digits occurs with limiting frequency <span class="mono">b<sup>&#8722;k</sup></span>. Absolutely normal means this holds in every base <span class="mono">b &#8805; 2</span>.</p>
+    <p class="cost">A different subject entirely: not how the number relates to <span class="mono">&#8474;</span>, but how its <em>expansion</em> is distributed. Almost always open.</p>
+  </div>
+</div>
+
+<p>The first two are claims about a number's <strong>relationship to the rationals</strong>. Normality is a claim about the <strong>statistics of one expansion</strong>, and it is base-relative in a way the others are not. That is why they sit on different axes rather than on one ladder.</p>
+
+<h2>The picture</h2>
+
+<figure class="full">
+<svg viewBox="0 0 960 560" role="img" aria-label="Venn diagram of the real line: an algebraic disc containing the rationals, a normal region containing an inner absolutely normal region, a dashed Liouville family straddling the normal boundary, and a shaded lens where algebraic irrationals meet normality that has no known member.">
+  <defs>
+    <clipPath id="algclip"><circle cx="255" cy="300" r="175"/></clipPath>
+  </defs>
+
+  <text class="t-region" x="20" y="32">&#8477;</text>
+  <text class="t-sub" x="42" y="32">the real line</text>
+  <rect class="sv-frame" x="16" y="44" width="928" height="488" rx="12"/>
+
+  <ellipse class="sv-norm" cx="620" cy="290" rx="300" ry="190"/>
+  <ellipse class="sv-norm" cx="700" cy="250" rx="175" ry="115"/>
+  <circle class="sv-alg" cx="255" cy="300" r="175"/>
+  <g clip-path="url(#algclip)"><ellipse class="sv-lens" cx="620" cy="290" rx="300" ry="190"/></g>
+  <ellipse class="sv-liou" cx="720" cy="140" rx="170" ry="58"/>
+  <circle class="sv-q" cx="185" cy="300" r="68"/>
+
+  <text class="t-region t-arith" x="250" y="152" text-anchor="middle">algebraic</text>
+  <text class="t-region" x="185" y="296" text-anchor="middle" style="font-size:19px">&#8474;</text>
+  <text class="t-sub" x="185" y="318" text-anchor="middle">eventually periodic</text>
+  <text class="t-region" x="60" y="496">transcendental</text>
+  <text class="t-sub" x="60" y="516">everything outside the algebraic disc</text>
+  <text class="t-region t-digit" x="770" y="430" text-anchor="middle">normal in some base</text>
+  <text class="t-region t-digit" x="700" y="245" text-anchor="middle">absolutely normal</text>
+  <text class="t-note" x="700" y="268" text-anchor="middle">almost every real number is in here</text>
+  <text class="t-note" x="700" y="285" text-anchor="middle">(Borel 1909), yet named examples stay scarce</text>
+  <text class="t-region t-open" x="845" y="130" text-anchor="middle">Liouville</text>
+
+  <text class="t-pt t-open" x="372" y="286" text-anchor="middle">no known</text>
+  <text class="t-pt t-open" x="372" y="302" text-anchor="middle">member</text>
+
+  <circle class="sv-qmark" cx="356" cy="200" r="8"/><text class="t-q" x="356" y="204" text-anchor="middle">?</text>
+  <text class="t-pt" x="343" y="204" text-anchor="end">&#966;</text>
+  <circle class="sv-qmark" cx="327" cy="250" r="8"/><text class="t-q" x="327" y="254" text-anchor="middle">?</text>
+  <text class="t-pt" x="314" y="254" text-anchor="end">&#8730;2</text>
+  <circle class="sv-qmark" cx="335" cy="350" r="8"/><text class="t-q" x="335" y="354" text-anchor="middle">?</text>
+  <text class="t-pt" x="322" y="354" text-anchor="end">&#8731;2</text>
+
+  <circle class="sv-qmark" cx="408" cy="156" r="8"/><text class="t-q" x="408" y="160" text-anchor="middle">?</text>
+  <text class="t-pt" x="395" y="160" text-anchor="end">&#960;</text>
+  <circle class="sv-qmark" cx="470" cy="126" r="8"/><text class="t-q" x="470" y="130" text-anchor="middle">?</text>
+  <text class="t-pt" x="457" y="130" text-anchor="end">e</text>
+  <circle class="sv-qmark" cx="542" cy="106" r="8"/><text class="t-q" x="542" y="110" text-anchor="middle">?</text>
+  <text class="t-pt" x="529" y="110" text-anchor="end">ln 2</text>
+
+  <circle class="sv-dot" cx="760" cy="105" r="4.5"/>
+  <text class="t-pt" x="748" y="102" text-anchor="end">Liouville's &#955;</text>
+  <text class="t-sub" x="748" y="118" text-anchor="end">normal to no base</text>
+
+  <circle class="sv-dot" cx="720" cy="170" r="4.5"/>
+  <text class="t-pt" x="732" y="167">Bugeaud 2002</text>
+  <text class="t-sub" x="732" y="182">normal Liouville numbers exist</text>
+
+  <circle class="sv-dot" cx="620" cy="320" r="4.5"/>
+  <text class="t-pt" x="632" y="324">Chaitin's &#937;</text>
+  <circle class="sv-dot" cx="640" cy="348" r="4.5"/>
+  <text class="t-pt" x="652" y="352">Becher&#8211;Yuhjtman x*</text>
+
+  <circle class="sv-dot" cx="450" cy="378" r="4.5"/>
+  <text class="t-pt" x="462" y="382">Champernowne C&#8321;&#8320;</text>
+  <circle class="sv-dot" cx="468" cy="415" r="4.5"/>
+  <text class="t-pt" x="480" y="412">Stoneham &#945;&#8322;,&#8323;</text>
+  <text class="t-sub" x="480" y="427">normal base 2, not base 6</text>
+  <circle class="sv-dot" cx="500" cy="455" r="4.5"/>
+  <text class="t-pt" x="512" y="459">Copeland&#8211;Erd&#337;s</text>
+
+  <circle class="sv-dot" cx="340" cy="500" r="4.5"/>
+  <text class="t-pt" x="352" y="504">Thue&#8211;Morse &#964;</text>
+</svg>
+<figcaption>Normality implies irrationality, and nothing else here implies anything else. The shaded lens is the scandal: not one algebraic irrational has ever been shown normal, yet Borel's 1950 conjecture says every one of them belongs there. The dashed family shows the other trap, that being extreme in one sense says nothing about the other, since Liouville numbers can be absolutely normal or normal to no base at all.</figcaption>
+<ul class="legend">
+  <li><span class="sw sw-alg"></span><span><strong>Algebraic</strong>, containing <span class="mono">&#8474;</span>. Outside it, transcendental.</span></li>
+  <li><span class="sw sw-norm"></span><span><strong>Normal</strong>, with absolutely normal nested inside. Normality in base 2 does not give base 6.</span></li>
+  <li><span class="sw sw-lens"></span><span><strong>Conjecturally everything, provably nothing.</strong> Algebraic and normal at once.</span></li>
+  <li><span class="sw sw-liou"></span><span><strong>Liouville numbers</strong>, all transcendental, straddling the normal boundary.</span></li>
+  <li><span class="sw sw-unk"></span><span><strong>?</strong> marks a number whose side of the boundary is unknown. Nobody can prove <span class="mono">&#960;</span> contains infinitely many 7s.</span></li>
+</ul>
+</figure>
+
+<h2>Why the third one is hopeless</h2>
+<p>Irrationality and transcendence each rule out <em>one</em> algebraic relation. Normality asserts an infinite family of statistical constraints, separately in every base, and there is no known mechanism that turns a closed-form definition into control over digit frequencies. So the ledger you are reading is the normal shape of such a ledger: the arithmetic entries are settled, the digit entry is open or was engineered in by construction.</p>
+<p>Two facts make the gap concrete. Borel proved in 1909 that almost every real is absolutely normal, so the property is generic in measure. But the non-normal numbers, despite forming a null set, have full Hausdorff dimension and are <em>topologically</em> generic. Typicality answers differently depending on which notion of typical you pick, which is a warning about the whole enterprise of grading irregularity with one number.</p>
+<h2>Two axes, and they disagree</h2>
+<p>Once you ask <em>how</em> irregular rather than <em>whether</em>, the question splits. One axis measures how well rationals sneak up on the number. The other measures how random its expansion looks. A number can be extreme on either and ordinary on the other.</p>
+
+<figure class="full">
+<svg viewBox="0 0 900 480" role="img" aria-label="Scatter plot with irrationality exponent on the horizontal axis and finite-state dimension on the vertical axis, showing that most famous constants have one coordinate known and the other unknown.">
+  <line class="sv-grid" x1="110" y1="100" x2="800" y2="100"/>
+  <line class="sv-grid" x1="110" y1="245" x2="800" y2="245"/>
+
+  <rect class="sv-band" x="142" y="100" width="36" height="290"/>
+  <rect class="sv-box" x="142" y="100" width="305" height="290"/>
+
+  <line class="sv-axis" x1="110" y1="70" x2="110" y2="390"/>
+  <line class="sv-axis" x1="110" y1="390" x2="800" y2="390"/>
+
+  <text class="t-axis" x="100" y="394" text-anchor="end">0</text>
+  <text class="t-axis" x="100" y="249" text-anchor="end">0.5</text>
+  <text class="t-axis" x="100" y="104" text-anchor="end">1</text>
+  <text class="t-axis" x="160" y="410" text-anchor="middle">2</text>
+  <text class="t-axis" x="360" y="410" text-anchor="middle">5</text>
+  <text class="t-axis" x="540" y="410" text-anchor="middle">10</text>
+  <text class="t-axis" x="720" y="410" text-anchor="middle">&#8734;</text>
+
+  <text class="t-sub" x="36" y="300" transform="rotate(-90 36 300)" text-anchor="middle">digit randomness &#8594; finite-state dimension</text>
+  <text class="t-sub" x="455" y="440" text-anchor="middle">how well rationals approximate it &#8594; irrationality exponent &#956;</text>
+  <text class="t-sub" x="160" y="426" text-anchor="middle">hard to approximate</text>
+  <text class="t-sub" x="720" y="426" text-anchor="middle">approximated absurdly well</text>
+
+  <text class="t-pt" x="160" y="72" text-anchor="middle">&#966;, &#8730;2, &#8731;2, e</text>
+  <text class="t-sub" x="160" y="88" text-anchor="middle">&#956; = 2 exactly</text>
+
+  <text class="t-pt t-open" x="437" y="122" text-anchor="end">&#960; is somewhere in this box</text>
+  <text class="t-sub" x="437" y="138" text-anchor="end">&#956; &#8804; 7.1033 is all we know, and the digits are open</text>
+
+  <circle class="sv-dot" cx="160" cy="390" r="5"/>
+  <text class="t-pt" x="192" y="386">Thue&#8211;Morse &#964;</text>
+
+  <circle class="sv-dot" cx="540" cy="100" r="5"/>
+  <text class="t-pt" x="554" y="96">Champernowne C&#8321;&#8320;</text>
+  <text class="t-sub" x="554" y="112">&#956; = 10, dimension 1: both coordinates pinned</text>
+
+  <circle class="sv-dot" cx="720" cy="390" r="5"/>
+  <text class="t-pt" x="720" y="358" text-anchor="middle">Liouville &#955;</text>
+  <text class="t-sub" x="720" y="374" text-anchor="middle">&#956; = &#8734;, dimension 0</text>
+</svg>
+<figcaption>Finite-state dimension is exactly 1 when the number is normal (Schnorr and Stimm, 1972), so the vertical axis is a real-valued grading of normality rather than a yes or no. Note what the picture is mostly made of: bands and boxes. For nearly every constant worth naming, one coordinate is a theorem and the other is a blank. Thue&#8211;Morse is the rare case with both coordinates known and both extreme. Chaitin's &#937; is the mirror image of &#960;, dimension exactly 1 with no idea where it sits horizontally.</figcaption>
+</figure>
+
+<div class="callout">
+<p>The axes genuinely disagree about what irregular means. Liouville numbers are maximally extreme in approximation, and that extremity comes from being <em>highly structured</em>: a sparse, fast-converging series with almost all digits zero. Meanwhile the golden ratio is the single worst-approximable number in existence and is conjectured to have perfectly random-looking digits. Pick your instrument before you rank anything.</p>
+</div>
+
+<h2>The instruments</h2>
+<p>Every one of these is a way to answer how irregular with something finer than a yes or no.</p>
+
+<h3><span class="axis-tag c-arith">Arithmetic</span> how the number sits relative to <span class="mono">&#8474;</span></h3>
+<div class="tablewrap full">
+<table>
+<colgroup><col style="width:23%"><col style="width:25%"><col style="width:11%"><col style="width:41%"></colgroup>
+<thead><tr><th>Instrument</th><th>What it measures</th><th>Range</th><th>Landmarks</th></tr></thead>
+<tbody>
+<tr><td class="name">Irrationality exponent &#956;</td><td>the largest exponent for which <span class="mono">|x &#8722; p/q| &lt; q<sup>&#8722;&#956;</sup></span> has infinitely many solutions</td><td class="num">1 to &#8734;</td><td><span class="num">1</span> rationals &#183; <span class="num">2</span> almost every real, and every algebraic irrational by Roth 1955 &#183; <span class="num">10</span> Champernowne &#183; <span class="num">&#8804; 7.1033</span> &#960; &#183; <span class="num">&#8734;</span> Liouville, by definition</td></tr>
+<tr><td class="name">Bounded partial quotients</td><td>whether the continued fraction stays tame</td><td class="num">yes / no</td><td>&#966; = [1;1,1,&#8230;] is the worst-approximable real. Badly approximable numbers are null but have dimension 1</td></tr>
+<tr><td class="name">Mahler class</td><td>how transcendental, by how well polynomials of bounded degree and height approximate</td><td class="num">A, S, T, U</td><td><span class="num">A</span> algebraic &#183; <span class="num">S</span> almost every real, plus e &#183; <span class="num">U&#8321;</span> Liouville &#183; <span class="num">T</span> exists but was hard to build (Schmidt 1968)</td></tr>
+<tr><td class="name">Transcendence measure</td><td>how far the number stays from every algebraic number of given degree</td><td class="num">a function</td><td>the quantitative refinement of transcendental, and what a U-number blows up</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3><span class="axis-tag c-digit">Expansion</span> how the digit string behaves</h3>
+<div class="tablewrap full">
+<table>
+<colgroup><col style="width:23%"><col style="width:25%"><col style="width:11%"><col style="width:41%"></colgroup>
+<thead><tr><th>Instrument</th><th>What it measures</th><th>Range</th><th>Landmarks</th></tr></thead>
+<tbody>
+<tr><td class="name">Disjunctive, or rich</td><td>does every finite word appear at least once, frequency ignored</td><td class="num">yes / no</td><td>strictly weaker than normal, and still unknown for &#960;</td></tr>
+<tr><td class="name">Simple normality</td><td>single digits equidistributed, blocks ignored</td><td class="num">yes / no</td><td><span class="num">0.0123456789&#8230;</span> repeating is simply normal and rational, so it is not normal</td></tr>
+<tr><td class="name">Normality in base b, then absolute normality</td><td>every k-block at frequency <span class="mono">b<sup>&#8722;k</sup></span>, then in every base</td><td class="num">nested</td><td>Stoneham &#945;&#8322;,&#8323; is normal base 2 and provably not base 6 &#183; Schmidt 1960 realizes any multiplicatively closed set of bases</td></tr>
+<tr><td class="name">Discrepancy <span class="mono">D<sub>N</sub></span></td><td>the rate at which block frequencies converge, not just that they do</td><td class="num">&#8594; 0</td><td>normal exactly when <span class="mono">D<sub>N</sub> &#8594; 0</span>. The best possible order is <span class="mono">&#8730;(log log N / N)</span>, from the law of the iterated logarithm</td></tr>
+<tr><td class="name">Subword complexity <span class="mono">p(n)</span></td><td>how many distinct blocks of length n actually occur</td><td class="num">O(1) to b<sup>n</sup></td><td>bounded means eventually periodic (Morse and Hedlund) &#183; <span class="num">n+1</span> Sturmian, the least complex aperiodic string &#183; <span class="num">b<sup>n</sup></span> normal &#183; algebraic irrationals force <span class="mono">p(n)/n &#8594; &#8734;</span> (Adamczewski and Bugeaud)</td></tr>
+<tr><td class="name">Finite-state dimension</td><td>how much a finite automaton can compress the string</td><td class="num">0 to 1</td><td><span class="num">1</span> exactly when normal (Schnorr and Stimm 1972) &#183; <span class="num">0</span> for automatic numbers such as Thue&#8211;Morse</td></tr>
+<tr><td class="name">Effective Hausdorff dimension</td><td><span class="mono">lim inf K(x&#8638;n)/n</span>, the Kolmogorov complexity rate</td><td class="num">0 to 1</td><td><span class="num">1</span> for every Martin-L&#246;f random real. Same shape as the line above with automata replaced by Turing machines</td></tr>
+<tr><td class="name">Randomness hierarchy</td><td>which statistical tests the expansion survives</td><td class="num">a ladder</td><td>finite-state (= normal) &#8594; Kurtz &#8594; Schnorr &#8594; computably random &#8594; Martin-L&#246;f (&#937;) &#8594; 2-random. Normality is the bottom rung, which is why it is so weak and still so hard</td></tr>
+<tr><td class="name">Dimension of the frequency class</td><td>how large the set of numbers sharing your digit statistics is</td><td class="num">0 to 1</td><td>Eggleston 1949: the set with frequency vector p has Hausdorff dimension <span class="mono">H(p)/log b</span>, so abnormality is graded by entropy loss</td></tr>
+<tr><td class="name">Continued-fraction statistics</td><td>the same questions asked of the other expansion</td><td class="num">typical / not</td><td>Gauss-Kuzmin frequencies, Khinchin's constant <span class="num">2.6854&#8230;</span>, L&#233;vy's constant <span class="num">3.2758&#8230;</span></td></tr>
+</tbody>
+</table>
+</div>
+<h2>A third expansion, and a fourth</h2>
+<p>Base-b normality is not the only digit story a real number has. The continued fraction is a second expansion with its own notion of typical: partial quotients should follow the Gauss-Kuzmin law, their geometric mean should tend to Khinchin's constant, and the denominators should grow at L&#233;vy's rate. Call that CF-normal.</p>
+<p>Neither notion is known to imply the other. Producing a single number that is absolutely normal <em>and</em> CF-normal was open until Becher and Yuhjtman did it in 2019, with an algorithm rather than a measure-theoretic existence argument. That gap is the honest measure of how loosely these instruments are tied together: two reasonable definitions of a random-looking real, and it took a construction to show they can hold at once.</p>
+
+<h2>Where the diagram is, on the web</h2>
+<p>There is no standard one. The familiar Venn diagrams stop at algebraic and transcendental, because those nest cleanly and normality does not: it cuts across the algebraic boundary, it is base-relative, and its most interesting region is empty of examples while being conjecturally full. Diagrams that would be honest about that are rare, which is why this page draws its own.</p>
+
+<ul class="reads">
+  <li><a href="http://math.iit.edu/~breiniger/teaching/piday15/Rationality.pdf">Irrational, Transcendental, Normal? What do those mean?</a><span class="why">Pi Day slides, IIT. Your exact question at a friendly level, with the examples laid out side by side.</span></li>
+  <li><a href="https://arxiv.org/abs/math/0006089">Greg Martin, Absolutely Abnormal Numbers</a><span class="why">A Monthly article, genuinely readable, that builds an explicit number normal to no base at all. The far corner of the diagram.</span></li>
+  <li><a href="https://www.claymath.org/library/annual_report/ar2006/06report_normalnumbers.pdf">Davar Khoshnevisan, Normal Numbers are Normal</a><span class="why">Clay annual report. Short, and it is the best treatment of the measure versus category tension.</span></li>
+  <li><a href="https://arxiv.org/abs/1204.4104">Normality and Finite-State Dimension of Liouville Numbers</a><span class="why">Where the dashed family in the first figure comes from, and where finite-state dimension earns its keep as a grading.</span></li>
+  <li><a href="https://arxiv.org/abs/1704.03622">Becher and Yuhjtman, On absolutely normal and continued fraction normal numbers</a><span class="why">IMRN 2019. The two-expansion result.</span></li>
+  <li><a href="https://en.wikipedia.org/wiki/Normal_number">Wikipedia: Normal number</a><span class="why">Accurate, and the properties section is a decent index of what is open.</span></li>
+  <li><a href="https://mathmonks.com/transcendental-numbers">The usual algebraic and transcendental Venn</a><span class="why">Representative of what the web actually has. Correct as far as it goes, and it does not go as far as normality.</span></li>
+</ul>
+
+</main>
+</body></html>
