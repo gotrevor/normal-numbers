@@ -49,6 +49,9 @@ header.head{
   padding:3.4rem 0 1.6rem; margin-bottom:1.2rem;
   border-bottom:1px solid var(--rule);
 }
+.colophon{margin:1.1rem 0 0; padding-top:.9rem; border-top:1px solid var(--rule);
+  font-size:.86rem; color:var(--muted); max-width:38rem}
+.colophon .sig{font-family:var(--mono); font-size:.8rem}
 .eyebrow{
   font-family:var(--mono); font-size:.72rem; letter-spacing:.14em;
   text-transform:uppercase; color:var(--muted); margin:0 0 .9rem;
@@ -180,12 +183,13 @@ td.stat{white-space:nowrap}
   <p class="eyebrow">Digits, arithmetic, and what we can actually prove</p>
   <h1>How Irregular Is a Number?</h1>
   <p class="standfirst">Irrational, transcendental and normal are three different questions about the same real number, asked with three different instruments. Only the first two are usually answerable.</p>
+  <p class="colophon">Claude (Claude Code) wrote this page, working under my direction. I would rather say that plainly than have you wonder: the sources are linked, and the formalization claims name the repository and revision they were checked against. <span class="sig">Trevor Morris</span></p>
 </header>
 
 <main>
 
 <h2>Three claims, two subjects</h2>
-<p>The two lines you quoted are a status ledger for one constant: someone has listed what is <em class="term">known</em> about it, and graded the cost of each fact.</p>
+<p>This page started from two lines of a status ledger for a single constant, <span class="mono">irrational: trivial; transcendental: known;</span>, which grade not the strength of each property but the cost of establishing it. Those grades are the way in.</p>
 
 <div class="dfn">
   <div>
@@ -299,7 +303,7 @@ td.stat{white-space:nowrap}
 </figure>
 
 <h2>Why the third one is hopeless</h2>
-<p>Irrationality and transcendence each rule out <em>one</em> algebraic relation. Normality asserts an infinite family of statistical constraints, separately in every base, and there is no known mechanism that turns a closed-form definition into control over digit frequencies. So the ledger you are reading is the normal shape of such a ledger: the arithmetic entries are settled, the digit entry is open or was engineered in by construction.</p>
+<p>Irrationality and transcendence each rule out <em>one</em> algebraic relation. Normality asserts an infinite family of statistical constraints, separately in every base, and there is no known mechanism that turns a closed-form definition into control over digit frequencies. So a ledger like the one above has the shape it does for a reason: the arithmetic entries are settled, the digit entry is open or was engineered in by construction.</p>
 <p>Two facts make the gap concrete. Borel proved in 1909 that almost every real is absolutely normal, so the property is generic in measure. But the non-normal numbers, despite forming a null set, have full Hausdorff dimension and are <em>topologically</em> generic. Typicality answers differently depending on which notion of typical you pick, which is a warning about the whole enterprise of grading irregularity with one number.</p>
 <h2>Two axes, and they disagree</h2>
 <p>Once you ask <em>how</em> irregular rather than <em>whether</em>, the question splits. One axis measures how well rationals sneak up on the number. The other measures how random its expansion looks. A number can be extreme on either and ordinary on the other.</p>
@@ -489,7 +493,7 @@ td.stat{white-space:nowrap}
 <p>The diagrams above carry mathematics, and that is all they should carry: an arrow means an implication holds, a crossed link means it fails, a <span class="mono">?</span> means nobody knows. Whether a given edge has been <em>machine-checked</em> is a different question with a different answer for every edge, and it belongs in its own object rather than as a second layer of glyphs on a drawing that is already dense.</p>
 <p>So: one row per claim in the picture, with its mathematical status and its formalization status kept apart. The discipline is that every edge gets a row, including the one-line ones, because a missing row and a hard gap should not look the same.</p>
 <div class="key"><span><span class="mg mg-y">&#10003;</span>proved</span><span><span class="mg mg-n">&#10007;</span>refuted, and the witness is named</span><span><span class="mg mg-q">?</span>open</span><span><span class="st st-ml">mathlib</span> ready to cite</span><span><span class="st st-out">outside mathlib</span> exists, in a repo</span><span><span class="st st-non">not yet</span> the work</span></div>
-<p style="font-size:.86rem; color:var(--muted); margin-top:.5rem">Every chip that is not <span class="st st-non">not yet</span> links to the source. Mathlib links are pinned to rev <span class="mono">0df444a</span>, the revision these claims were checked against; the others are branch links, so they follow the work. Two of those repos are private, so those links resolve for their owner and nobody else.</p>
+<p style="font-size:.86rem; color:var(--muted); margin-top:.5rem">Every chip that is not <span class="st st-non">not yet</span> links to the source. Mathlib links are pinned to rev <span class="mono">0df444a</span>, the revision these claims were checked against; the others are branch links, so they follow the work. Two of those repositories are private, so five of those links will not resolve for you. They are named rather than hidden because a claim you cannot check should at least say where it lives.</p>
 <div class="tablewrap full">
 <table>
 <colgroup><col style="width:34%"><col style="width:11%"><col style="width:13%"><col style="width:42%"></colgroup>

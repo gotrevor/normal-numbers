@@ -9,6 +9,12 @@ Almost every real number is normal in every base (Borel 1909), yet no
 normal in any base.  This repo formalizes the definitions, the classical
 equivalences, and the two known bridges toward that open problem.
 
+**Illustrated map: [How Irregular Is a Number?](https://claude.ai/code/artifact/b539ebd7-b4cd-4522-9588-8509f2b24e50)** places
+normality next to irrationality and transcendence, works out how the two axes actually relate,
+and ends in a status board of every claim on the map with what is proved and what is
+machine-checked, each linked to its source.  Start there if you want the landscape before the
+Lean.  Source: [`docs/how-irregular-is-a-number.html`](docs/how-irregular-is-a-number.html).
+
 ## Targets
 
 1. **Definitions** — sequence normality, real-number normality via the digit
@@ -69,10 +75,15 @@ target 2 is exactly what upgrades such a result to the *real number*.
 
 ## Background
 
-[`docs/irregularity-landscape.md`](docs/irregularity-landscape.md) places normality next to
-irrationality and transcendence, and grades what else on that map is formalizable here (and
-what is a wall).  [`docs/how-irregular-is-a-number.html`](docs/how-irregular-is-a-number.html)
-is the same material with diagrams; open it in a browser.
+[**How Irregular Is a Number?**](https://claude.ai/code/artifact/b539ebd7-b4cd-4522-9588-8509f2b24e50) is the illustrated
+version: three nested expansion regions crossed with the algebraic/transcendental split, the
+implication lattice from `Irrational` up to 2-randomness, and a per-claim status board.  Its
+source lives here as [`docs/how-irregular-is-a-number.html`](docs/how-irregular-is-a-number.html)
+and opens standalone in a browser.
+
+[`docs/irregularity-landscape.md`](docs/irregularity-landscape.md) is the working companion: the
+same map, graded by what it would cost to formalize each remaining edge in this repo, and which
+ones are walls.
 
 ## License
 
