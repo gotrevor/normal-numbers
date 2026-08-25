@@ -1,5 +1,40 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🎉 2026-08-25 (Tier-2 grind) — B6 TIER 2 LANDED: `exists_cfNormal_and_affine_family_cfNormal` AXIOM-CLEAN
+
+New file `src/NormalNumbers/CFAffineFamily.lean` (sorry-free, build 🟢 8759). Extends the
+single-map measure route to a **countable FAMILY** of affine maps simultaneously:
+
+> `(Q : Set (ℝ×ℝ)) (hQ : Q.Countable) (hqr : ∀ p∈Q, 0<p.1 ∧ 0≤p.2) →`
+> `∃ x∈(0,1), IsCFNormal x ∧ ∀ p∈Q, IsCFNormal (affineMap p.1 p.2 x)`
+
+`#print axioms` = trust triple. Structure:
+- **Crux `volume_notCFNormal_Ici0`**: the non-CF-normal set is Lebesgue-null on all of `[0,∞)`.
+  Proof: `(0,1)`-nullity `volume_notCFNormal_Ioo01` (from `ae_isCFNormal` + `volume ≤ C·γ` on
+  `(0,1)`) + positive integer-shift invariance (`isCFNormal_add_nat`): every bad `w≥0` is a
+  nonneg integer or an integer translate of a bad point in `(0,1)`, so `N∩[0,∞)` is covered by
+  `⋃ₙ (·+n)''(N∩(0,1)) ∪ range(ℕ↪ℝ)`, all null (translate = `affineMap 1 (-n)⁻¹`, reuse
+  `volume_preimage_affineMap`).
+- `gaussMeasure_notCFNormal_affine_Ioo01`: each `{x∈(0,1)|¬IsCFNormal(ψx)}` is γ-null (ψx>0 on
+  the domain lands in `[0,∞)`; pull the null superset back, `γ≤C·vol`).
+- Assembly: `measure_biUnion_null_iff` (Q countable) + `measure_sdiff_null` + `γ(0,1)>0`.
+
+**NEXT ATTACK (hardest-first, to remove the `r≥0` restriction → full Vandehey generality):**
+The `r≥0` hypothesis is exactly what keeps every image `ψ((0,1))=(r,q+r)` inside `[0,∞)` where
+the positive shift applies. To allow `r<0` (negative images) the crux must become
+`volume {y|¬IsCFNormal y} = 0` on ALL of `ℝ`. The negative branch reduces via the UNIVERSAL
+one-step identity `cfDigit w (k+1) = cfDigit (gaussMap w) k` (holds ∀w by `Function.iterate_succ_apply`):
+for `w<0`, `gaussMap w = Int.fract w⁻¹ ∈ [0,1)`, and `cfFreq_tendsto_of_digit_shift` (m=1) gives
+`IsCFNormal (gaussMap w) → IsCFNormal w`, so `N∩(-∞,0) ⊆ gaussMap⁻¹(N∩[0,1))`. The remaining
+obligation is **`gaussMap` nonsingularity on the negatives**: `volume Z=0 → volume (gaussMap⁻¹ Z ∩ Iio 0)=0`.
+On `(-1/k, -1/(k+1))` (k≥1) `gaussMap` is the smooth diffeo `w↦w⁻¹+k`, so it's a countable
+piecewise-affine-in-`w⁻¹` change of variables — provable but ~150 lines. Alternatively note the same
+identity handles `w≥1` uniformly, giving a cleaner single lemma. This is a clean next lap.
+
+**ALSO (Tier-2 stretch, detaches freely):** image-Khinchin — strengthen the witness so `x` is
+additionally Khinchin-typical (the Khinchin-typical set is γ-co-null; intersect one more co-null
+set in the SAME assembly). Cheap given `KhinchinTypical` a.e. infrastructure if present.
+
 ## 🎉 2026-08-25 (measure-route grind) — B6 COMPLETE: `exists_cfNormal_and_affine_cfNormal` is AXIOM-CLEAN
 
 **The crux `ae_orbit_freq` is PROVED** (`CFAeNormal.lean`, sorry-free) — the classic L²→a.e. argument:
