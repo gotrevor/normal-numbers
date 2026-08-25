@@ -108,13 +108,32 @@ this repo's literature: Champernowne (normal, computable, so not Kurtz random), 
 (Liouville and absolutely normal), Stoneham `α₂,₃` (normal base 2, not base 6), Thue-Morse (not
 disjunctive).  Every non-edge in the diagram is a construction someone has already published.
 
-**A finding that fell out of checking this.**  Mathlib at rev `0df444a` has **no declaration that
-`π` or `e` is transcendental**: `Transcendental/Lindemann/` contains only `AnalyticalPart.lean`
-(the estimate `exp_polynomial_approx`), and greps for a `Transcendental ℚ π` or `Transcendental ℚ
-(exp 1)` statement come back empty.  So two of the labelled points on the diagram cannot currently
-be *placed* in Lean at all.  That is exactly the sort of thing the module surfaces and prose does
-not.  ⚠️ Grep tier: check open mathlib PRs before treating it as settled, since Lindemann-Weierstrass
-is a long-running target and `master` is a ref but not the frontier.
+**A finding that fell out of checking this, corrected.**  A first grep suggested nothing anywhere
+proves `π` transcendental.  That was an instrument failure: it searched mathlib only.  What is
+actually true, from mathlib's own scoreboard (`docs/100.yaml` at rev `0df444a`) and this machine:
+
+| Theorem | mathlib | elsewhere |
+|---|---|---|
+| `e` transcendental (Freek #67) | none | claimed in `100.yaml` via external `url:`, Jujian Zhang, **Lean 3** (`jjaassoonn/transcendental`).  We also have a Lean 4 proof |
+| `π` transcendental (Freek #53) | **entry has no `decl` and no `links`: an unclaimed slot** | `transcendental_pi_axiomClean` in `gotrevor/lean-formalizations`, `NumberTheory/Transcendence/PiTranscendental.lean:24` |
+| Hermite-Lindemann (Freek #56) | entry blank | `NumberTheory/Transcendence/HermiteLindemann.lean`, same repo |
+| Lindemann-Weierstrass (`1000.yaml` Q1572474) | a comment pointing at PR #6718, which is **CLOSED** (Zhao Yuyang, last touched 2025-08-17) | - |
+
+So mathlib genuinely lacks both, the closest in-flight attempt is a closed PR, and we proved both
+in Lean 4 on 2026-06-16, axiom-clean, discharging and deleting the `hermite_lindemann` axiom on the
+way (`STATUS.md`, lap 14, `cd5a8ce`, math-axiom count 0).  Background and the proof architecture:
+`knowledge/core/projects/lean-journey/reference/2026-06-16-pi-transcendence-full-lindemann-assembly.md`.
+
+**The consequence worth acting on.**  Freek #53 is an *unclaimed slot on mathlib's own board* and we
+hold an axiom-clean proof of it.  The route is already paved and is not a mathematics PR: append
+`url:` + `authors:` to the `100.yaml` entry, exactly as was done for Goodstein and Kirby-Paris
+(`decisions/mathlib-1000-yaml-claim.md`, fork PR then Trevor fires upstream).  One blocker:
+`lean-formalizations` is **private**, and a claim URL has to resolve.  `lean-gallery` is public, so
+this needs the same publish decision that the Erdős absorptions are waiting on.
+
+⚠️ Evidence tiers: the mathlib absence is `100.yaml`/`1000.yaml` tier, which is the community's own
+tracker rather than a grep.  Our two theorems are `STATUS.md` + `#print axioms` tier as of
+2026-06-19; the repo is mid-bump to v4.33.1, so re-run the axiom sweep before quoting it outward.
 
 ## 5.  Walls, named so nobody re-derives them
 
