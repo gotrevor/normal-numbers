@@ -4971,6 +4971,83 @@ theorem chain_hfreq_of_uniform_blocks (w : ℕ → List ℕ)
       hgeomρ hClit hblktop
     exact hslk
 
+/-- **Filler-tolerant variant of `chain_hfreq_of_uniform_blocks`** (Z-III, L4 single-stream).
+Identical to `chain_hfreq_of_uniform_blocks` but with the WIDER per-block freq slack
+`4√|blk| + 3|v| + n₁` (coefficient `3` not `2` on `|v|`).  This absorbs the ONE diagonalisation
+filler digit appended to each L4 block (to force `ψ(xA)` irrational): appending one digit to a
+freq-good block `u` shifts the length-`|blk|` block count of any `v` by `≤ |v|`
+(`countOccurrences_append_le` + `count v [a] ≤ 1`) and the window expectation by `γv ≤ 1`, so the
+tight `2|v|` slack of `u` at the last index needs `+|v|` more.  The extra `|v|` is a
+`o(|blk|)` constant folded into `chain_slack_littleO`'s `L`-slot (it CANNOT fold into `n₁`: that
+breaks `n₁² ≤ |blk|·√|blk|` for large blocks).  Everything downstream is unchanged (`C = o(|blk|)`
+still telescopes). -/
+theorem chain_hfreq_of_uniform_blocks_snoc (w : ℕ → List ℕ)
+    (hext : ∀ s, ∃ u, u ≠ [] ∧ w (s + 1) = w s ++ u)
+    (hgood : ∀ s, s ≤ (chainApp w s).length ∧ ∃ n₁ : ℕ,
+        n₁ ^ 2 ≤ (chainApp w s).length * Nat.sqrt (chainApp w s).length ∧
+        (∀ k, k ≤ (chainApp w s).length → ∀ v ∈ wordFamily s,
+          |(countOccurrences v ((chainApp w s).take k) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * k|
+              < schedEps s * k
+                + (4 * Nat.sqrt (chainApp w s).length + 3 * v.length + n₁)))
+    (hgeom : ∃ ρ : ℝ, 0 ≤ ρ ∧ ∀ s, ((chainApp w s).length : ℝ) ≤ ρ * (w s).length) :
+    ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
+      ∃ C : ℕ → ℝ, (∀ s, 0 ≤ C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∃ s₀, ∀ s, s₀ ≤ s → ∀ p, p ≤ (chainApp w s).length →
+          |(countOccurrences v ((chainApp w s).take p) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * p| < ε * p + C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∀ s₀, ∃ K, ∀ k, K ≤ k →
+          (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+            < ε * (w (s₀ + k)).length) := by
+  intro v hvne hvpos
+  choose n₁ hn₁sq hn₁good using fun s => (hgood s).2
+  have hblk1 : ∀ s, 1 ≤ (chainApp w s).length :=
+    fun s => List.length_pos_of_ne_nil (chainApp_eq w hext s).2
+  set C : ℕ → ℝ := fun s => 4 * Nat.sqrt (chainApp w s).length + 3 * v.length + n₁ s with hCdef
+  refine ⟨C, fun s => by rw [hCdef]; positivity, ?_, ?_⟩
+  · -- hblock
+    intro ε hε
+    obtain ⟨t₀, ht₀⟩ := mem_wordFamily_eventually v hvne hvpos
+    obtain ⟨Nε, hNε⟩ := exists_nat_gt (1 / ε)
+    refine ⟨max t₀ Nε, fun s hs p hp => ?_⟩
+    have hvfam : v ∈ wordFamily s := ht₀ s (le_trans (le_max_left _ _) hs)
+    have hsEps : schedEps s ≤ ε := by
+      have hsNε : Nε ≤ s := le_trans (le_max_right _ _) hs
+      have hNεs : (Nε : ℝ) ≤ (s : ℝ) := by exact_mod_cast hsNε
+      have h1 : (1 : ℝ) / ε < (s : ℝ) + 1 := lt_of_lt_of_le hNε (by linarith)
+      rw [schedEps, div_le_iff₀ (by positivity : (0 : ℝ) < (s : ℝ) + 1)]
+      rw [div_lt_iff₀ hε] at h1
+      nlinarith [h1]
+    have hb := hn₁good s p hp v hvfam
+    have hp0 : (0 : ℝ) ≤ (p : ℝ) := Nat.cast_nonneg _
+    have hmul : schedEps s * p ≤ ε * p := mul_le_mul_of_nonneg_right hsEps hp0
+    rw [hCdef]
+    calc |(countOccurrences v ((chainApp w s).take p) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * p|
+        < schedEps s * p
+            + (4 * Nat.sqrt (chainApp w s).length + 3 * v.length + n₁ s) := hb
+      _ ≤ ε * p + (4 * Nat.sqrt (chainApp w s).length + 3 * v.length + n₁ s) := by linarith
+  · -- hslack via slack_telescoping
+    obtain ⟨ρ, hρ0, hgeomρ⟩ := hgeom
+    have hvlen1 : 1 ≤ v.length := List.length_pos_of_ne_nil hvne
+    have hblktop : Filter.Tendsto (fun s => ((chainApp w s).length : ℝ)) Filter.atTop Filter.atTop :=
+      tendsto_atTop_mono (fun s => by exact_mod_cast (hgood s).1) tendsto_natCast_atTop_atTop
+    have hClit : (fun s => C s) =o[Filter.atTop]
+        fun s => ((chainApp w s).length : ℝ) := by
+      have := chain_slack_littleO (blk := fun s => (chainApp w s).length) n₁ (3 * v.length)
+        hblk1 (fun s => hn₁sq s) hblktop
+      simpa [hCdef, add_assoc, add_left_comm, add_comm] using this
+    have hslk := slack_telescoping (fun s => ((w s).length : ℝ))
+      (fun s => ((chainApp w s).length : ℝ)) C ((v.length : ℝ) - 1) ρ
+      (by simp; exact_mod_cast hvlen1) hρ0 (by positivity)
+      (fun s => by rw [hCdef]; positivity)
+      (fun s => by positivity)
+      (fun s => by
+        have h := (chainApp_eq w hext s).1
+        rw [h, List.length_append]; push_cast; ring)
+      hgeomρ hClit hblktop
+    exact hslk
+
 /-- x-stream frequency obligation (instantiates `chain_hfreq_of_uniform_blocks`). -/
 theorem schedA_hfreq_x {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
     ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
