@@ -86,6 +86,21 @@ no naturally-occurring number is proven Khinchin-typical.
   anchors frozen — campaign-ready.  NB W3 completing will tick B1 and B4
   below as expedition lemmas.
 
+## Track D — conditional disjunctivity (→ docs/conditional-disjunctivity.md)
+
+Named axioms in the Hypothesis-A pattern, one rung below normality; the doc is
+the source of truth for statements and claim status (novelty unswept).
+
+- ⬜ D0 `Disjunctive.lean`: `IsDisjunctive`, padding lemma,
+  `isDisjunctive_iff_denseOrbit` (topological twin of Wall), `omegaLimit`
+  basics (closed, forward-invariant, dense ⟺ full)
+- ⬜ D1 the 0-1 law: closed forward-invariant `K` with `λ(K) > 0` is
+  everything (b-adic Lebesgue density route)
+- ⬜ D2 conditional headlines for ln 2: Axiom Λ (positive limit mass) and the
+  per-word D_w bridges off the existing `lnTwoOrbit` tracking
+- ⬜ D3 (stretch) Axiom M implication: quadratic irrationals b-disjunctive
+  given invariant-set avoidance; real cost is dim(missing-word SFT) < 1
+
 ## Phase 3 — outward
 
 - 🔨 PR to OldMathematician/ChampernowneNormality: **done and staged** —

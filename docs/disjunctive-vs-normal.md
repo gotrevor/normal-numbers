@@ -186,7 +186,17 @@ two independent reasons to expect it is hard rather than overlooked.
   Confidence it is genuinely open as stated: **75%**, with the residual being that it is folklore
   under vocabulary I did not hit.  ⚠️ Verify against a specialist before investing.
 
-### 4.3  Sharpen Mahler's `m`
+### 4.3  Named conditional axioms (the Hypothesis-A move, extended)
+
+[`conditional-disjunctivity.md`](conditional-disjunctivity.md) names five axioms with elementary
+implications to digit conclusions for specific constants: **Λ** (positive-measure ω-limit ⟹ ln 2
+2-disjunctive, via a 0-1 law for closed forward-invariant sets), the **D_w** family (per-word orbit
+accumulation ⟹ that word recurs in ln 2), **C** (carry rigidity ⟺ `11` recurs in √2), **T**
+(lossless dyadic transfer ⟹ same), and **M** (invariant-set avoidance ⟹ quadratic irrationals
+disjunctive; sharpens Mahler's 1984 Cantor-set question).  Λ, D_w and the §0 dictionary are
+formalizable now; novelty of all five is unswept.
+
+### 4.4  Sharpen Mahler's `m`
 
 `2g^(k+1)` (Berend-Boshernitzan) against the `g^k - 1` lower bound is a real gap, in an area that
 is elementary and entirely unformalized.  Lower value than 4.1, but the cheapest to enter.
