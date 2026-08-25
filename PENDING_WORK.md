@@ -51,7 +51,41 @@ the `exists_cfCylinder_psi_avoid_zbad` NSz shape. A single witness `p ∈ cfCyli
 the s↔n coupling needs (each stage certifies ψ-goodness over its whole window `(|w_{s-1}|,|w_s|]`).
 `hbudget` is the harmonic-band total; feasibility left to caller.
 
-## 🟢 2026-08-25 — DECISIVE: the SCALE-REGIME OBSTRUCTION is actually resolved (tight discharge)
+## 🔴 2026-08-25 — CORRECTION (adversarial re-check): the tight discharge does NOT dissolve the obstruction
+
+**The "DECISIVE" claim in the section below is REFUTED by a careful range/coverage analysis done the
+next lap. The lemmas are all valid (correct conditional statements, axiom-clean, kept); only the
+INTERPRETATION that they resolve the scale-regime obstruction was wrong.** Precise wall:
+
+- Tight-discharge threshold: the witness `p` is z-good at scale `n` only for `n − |wz| > K` where
+  `K = (2/q)·Ssum·Cbridge/((δ/2)²)` (a per-stage constant). So `n > |wz| + K`.
+- Digit-agreement transfer (`notMem_cfBadZone_nil_of_cfDigit_agree` + `exists_tail_cfCylinder_subset_ball`):
+  needs `n + |v| ≤ m`, where `m` = z-digits pinned by `cfCyl wx'`. Since `ψ` is `q`-Lipschitz and
+  `cfCyl wx'` has width `~φ^{-2|wx'|}`, the ψ-image fits a depth-`m` z-cylinder only for `m ≲ |wx'| + O(1)`.
+  So `n ≲ |wx'| − |v|`.
+- Bridge constant: `Cbridge = γ(cfCyl wz)/γ(cfCyl wx') ~ φ^{2(|wx'| − |wz|)}`.
+
+**The irreconcilable triangle:** bounded `Cbridge` ⟺ `|wz| ~ |wx'|` ⟹ threshold `n > |wx'|+K` while
+transfer needs `n ≤ |wx'|−|v|` ⟹ range EMPTY. Conversely a non-empty range needs `|wz| < |wx'|` ⟹
+`Cbridge` exponential ⟹ threshold `K` exponential ⟹ range empty again. And `tendsto_of_scale_coverage`
+needs EVERY large `n` covered; a per-stage band of width `~|wx'_s|` (needed because block lengths, hence
+`|wx'_s|`, grow geometrically leaving gaps) enters `Cbridge` exponentially. So the single-stream
+conditional-at-base-`wz` route hits a density-vs-coverage wall.
+
+**THE ONE SURVIVING ESCAPE (next attack, genuinely open analytic question).** All the trouble is that
+the conditional Chebyshev is based at the z-cylinder `wz` (giving the `γ(cfCyl wz)` factor that won't
+cancel). What is actually needed is a **ψ-pushed, x-cylinder-relative Chebyshev**: a bound
+`γ(cfCyl wx' ∩ ψ⁻¹(cfBadZone [] v n δ)) ≤ O(1/n)·γ(cfCyl wx')` — the bad FRACTION *within the deep
+x-cylinder itself*, local density `O(1/n)`, NO `wz`, NO `Cbridge`. That gives a polynomial threshold
+`n > C` with transfer range `n ≲ |wx'|` non-empty, and every-`n` coverage as `|wx'_s|→∞`. This is a
+Chebyshev for the observable `blockCount_n ∘ ψ` under `γ` conditioned on `cfCyl wx'` — i.e. the Gauss-map
+variance/mixing must survive conjugation by the affine `ψ`. `chebyshev_blockCount_brick` proves exactly
+this shape but for a z-CYLINDER base (via `gaussMeasure_cylinder_mixing`); the open question is whether
+the mixing bound transfers through `ψ` to an x-cylinder base. THIS — not the bridge — is the real crux
+lemma to attack. (If it's false, the single-stream route may be genuinely obstructed and a different
+z-mechanism is needed; test by attempting the ψ-pushed variance bound.)
+
+## 🟡 2026-08-25 — (SUPERSEDED / OVER-CLAIMED, see CORRECTION above) tight discharge
 
 **Root-cause correction found this lap.** `tendsto_of_scale_coverage` needs EVERY large `n` covered
 (not a cofinal subsequence — `CFOrbitEquidist` is a genuine `Tendsto … atTop`, `hcover` quantifies
