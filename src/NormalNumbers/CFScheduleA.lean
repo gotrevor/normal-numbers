@@ -715,6 +715,19 @@ theorem gaussMeasure_interval_inter_preimage_affineMap_le {q : ℝ} (hq : 0 < q)
     hS.inter measurableSet_Ioo
   exact gaussMeasure_preimage_affineMap_le hq r _ hmeas' hsub'
 
+/-- **The ψ-rational set is countable** (brick Z-III: forcing `ψ(xA)` irrational).  For `q>0`,
+`{x : ψ(x) ∈ ℚ} = affineMap q r ⁻¹' (range ℚ)` is countable (ψ injective, preimage of a
+countable set).  So it is `γ`-null and can be avoided in the chain-limit selection — the fix
+for the single-stream gap that `ψ(xA)` need not be irrational for real `q,r` (unlike the
+two-stream route, where `ψ(xA)=zA` is chosen irrational).  `ψ(xA)` irrational is REQUIRED:
+`blockCount_eq_of_cfDigit_agree` needs `ψ(xA)`'s full Gauss orbit in `(0,1)`, which fails for
+rational `ψ(xA)`. -/
+theorem countable_preimage_affineMap_range_rat {q : ℝ} (hq : 0 < q) (r : ℝ) :
+    (affineMap q r ⁻¹' Set.range ((↑) : ℚ → ℝ)).Countable := by
+  have hinj : Function.Injective (affineMap q r) := fun x y h => by
+    simp only [affineMap] at h; exact mul_left_cancel₀ (ne_of_gt hq) (by linarith)
+  exact (Set.countable_range _).preimage hinj
+
 /-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
 finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
 cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every

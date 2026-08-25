@@ -45,9 +45,33 @@ x-only chain (xA is the unique intersection point; ψ(xA) is then fixed, no free
   `exists_xA_L4_orbit_equidist`, ψxA equidist from Z-II, ψxA∈(0,1) from feasibility+interval,
   ψxA irrational from xA irr + q≠0), then EXCISE the two-stream `schedA_block_linear` sorry.
 
-**NEXT probe:** (Z-I) — extend `StepSpecL4` with the z-avoidance conjunct and re-prove
-`schedStepL4_exists` (add the point selection via a measure-existence lemma on the fixed
-block cylinder). Everything else is gated on that record existing.
+**Z-I MEASURE LAYER — DONE (2026-08-29):** the per-stage z-selection engine is built +
+axiom-clean:
+- `exists_irrational_mem_cfCylinder_notMem_of_gaussMeasure_lt` (`07d832d`) — cylinder selector.
+- `gaussMeasure_cfCylinder_inter_preimage_affineMap_le` (`c23d0b5`) — cylinder pullback bound.
+- `exists_cfCylinder_psi_avoid_zbad` (`996ad56`) — the engine: `hbudget` (pulled-back z-bad
+  mass on hull < cylinder mass) ⇒ irrational `p ∈ cfCylinder wx'` with `ψ(p) ∉ cfBadZone[] v n δ`
+  for `v∈F, n∈NSz`. `hbudget` deferred to caller (Chebyshev, `n≳cfK²`).
+- `countable_preimage_affineMap_range_rat` (this lap) — `ψ⁻¹(ℚ)` countable (Z-III fix).
+
+**Two NEWLY-SURFACED design subtleties (flag for altitude lap):**
+1. **`ψ(xA)` need NOT be irrational for real `q,r`** — the PENDING Z-III note "ψxA irrational
+   from xA irr + q≠0" is FALSE (e.g. xA=√2,q=1/√2,r=0 ⇒ ψxA=1∈ℚ). Two-stream got it free
+   (`ψ(xA)=zA`, zA chosen irrational). Single-stream must FORCE it: the chain-limit selection
+   must avoid the countable null set `ψ⁻¹(ℚ)`. But `exists_irrational_mem_iInter_cfCylinder`
+   picks the UNIQUE Cantor-intersection point (no post-hoc freedom) — so a strengthened iInter
+   selector must avoid `ℚ ∪ ψ⁻¹(ℚ)` at the limit. REQUIRED: `ψxA` irrational ⇒ full Gauss orbit
+   in `(0,1)` ⇒ `blockCount_eq_of_cfDigit_agree`'s `horb` holds.
+2. **Z-II `hcover` s↔n coupling** — transferring `p_s`-avoidance to `ψ(xA)` at scale `n` needs
+   `cfCylinder(wx_s) ⊆` an x-ball of radius set by depth `m=n+|v|` (`exists_ball_cfDigit_psi_eq`),
+   i.e. each `n` needs its own large-enough `s` (`exists_tail_cfCylinder_subset_ball`).
+   `tendsto_of_scale_coverage`'s `hcover` must thread this per-`n` `s`-threshold with `δ_s→0`
+   and `n∈NSz_s` cofinality.
+
+**NEXT probe:** either (a) the Chebyshev budget lemma discharging `exists_cfCylinder_psi_avoid_zbad`'s
+`hbudget` for concrete `NSz_s`/`δ_s`, then thread into `StepSpecL4`; or (b) resolve subtlety (1)
+via a strengthened iInter selector avoiding an extra countable set (⇒ `ψxA` irrational directly).
+(b) is more route-decisive.
 
 
 ## 🎯 2026-08-24 REVIEW LAP — CRUX = the cfK-cap graft (bridge + layer 1 DONE)
