@@ -58,6 +58,44 @@ theorem ae_digitCount_tendsto (a : ℕ) (ha : 1 ≤ a) :
   subst hb
   exact ha
 
+/-! ## Foundation bricks for the tail variance bound
+
+`logTailFn K = Σ_{a>K} log a · 1_{cfCylinder [a]}`, so the second moment of
+`logBirkhoffSum K n` expands into TWO-different-cylinder correlations
+`γ(T^{-j}[a] ∩ T^{-j'}[b])`.  These two bricks generalize the single-cylinder
+`gaussMeasureReal_pair_shift` / `abs_cov_pair_le` (`CFBlockFreq.lean`) to two
+distinct cylinders, which is exactly what the log-tail variance sum needs. -/
+
+/-- **Two-set pair invariance**: `γ(T^{-j}A ∩ T^{-(j+m)}B) = γ(A ∩ T^{-m}B)`.
+Generalizes `gaussMeasureReal_pair_shift` to two distinct measurable sets. -/
+theorem gaussMeasureReal_pair_shift₂ (A B : Set ℝ) (hA : MeasurableSet A)
+    (hB : MeasurableSet B) (j m : ℕ) :
+    gaussMeasure.real ((gaussMap^[j]) ⁻¹' A ∩ (gaussMap^[j + m]) ⁻¹' B) =
+      gaussMeasure.real (A ∩ (gaussMap^[m]) ⁻¹' B) := by
+  have hmp := measurePreserving_gaussMap
+  have hmm : MeasurableSet ((gaussMap^[m]) ⁻¹' B) := (measurable_gaussMap.iterate m) hB
+  rw [preimage_iterate_add B j m, ← Set.preimage_inter]
+  exact (hmp.iterate j).measureReal_preimage (hA.inter hmm).nullMeasurableSet
+
+/-- **Aligned two-cylinder mixing** at gap `m ≥ 1`: for singleton digit words
+`[a]`, `[b]`, the correlation `γ([a] ∩ T^{-m}[b])` deviates from `γ([a])·γ([b])`
+by at most `(9/10)^{m-1}·4·|[b]|·γ([a])`.  Direct application of
+`gaussMeasure_cylinder_mixing` with `v = [a]` and the arbitrary-set slot
+`A = cfCylinder [b]`. -/
+theorem abs_cov_two_cyl_le (a b : ℕ) (ha : 1 ≤ a) (m : ℕ) (hm : 1 ≤ m) :
+    |(gaussMeasure (cfCylinder [a] ∩ (gaussMap^[m]) ⁻¹' cfCylinder [b])).toReal -
+        (gaussMeasure (cfCylinder [a])).toReal * (gaussMeasure (cfCylinder [b])).toReal| ≤
+      ((9 : ℝ) / 10) ^ (m - 1) * (4 * (volume (cfCylinder [b])).toReal) *
+        (gaussMeasure (cfCylinder [a])).toReal := by
+  have hposa : ∀ x ∈ [a], 1 ≤ x := by
+    intro x hx; rw [List.mem_singleton] at hx; subst hx; exact ha
+  obtain ⟨g, rfl⟩ := Nat.exists_eq_add_of_le hm
+  have hlen : ([a] : List ℕ).length + g = 1 + g := by simp
+  have hmix := gaussMeasure_cylinder_mixing [a] hposa g
+    (measurableSet_cfCylinder [b]) (cfCylinder_subset_Ioo [b])
+  rw [hlen] at hmix
+  simpa using hmix
+
 /-- **The tail-average crux (disclosed).**  For a fixed cutoff `K`, the
 normalized log-tail Birkhoff sum converges a.e. to the tail integral.  Route:
 L²→a.e. Borel–Cantelli (as in `ae_orbit_freq`) via a variance bound for
