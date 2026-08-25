@@ -4243,6 +4243,142 @@ theorem notMem_cfBadZone_nil_of_notMem_psiCond {z : ℝ} (wz v : List ℕ) (n : 
   obtain ⟨-, -, hdisc⟩ := hbad
   exact hznot ⟨hzwz, hzorb, hdisc⟩
 
+/-! ### ψ-pushed restricted second-moment identities (brick for `variance_blockCount_psi_pushed`)
+
+These mirror `integral_blockCount` / `integral_blockCount_sq` (`CFBlockFreq.lean`) but with the
+observable pushed through the affine map `ψ = affineMap q r` and the integral restricted to a base
+set `S`.  Pure measure theory (NO mixing): they expand the (squared) block count into a (double)
+sum of `γ(S ∩ ψ⁻¹T^{-j}A ∩ ψ⁻¹T^{-j'}A)` pair-correlation masses.  This isolates the analytic
+content (the ψ-conjugated mixing decay of those masses) for the next brick. -/
+
+/-- Indicator precomposed with any map is the indicator of the preimage. -/
+lemma blockIndic_comp (A : Set ℝ) (g : ℝ → ℝ) (x : ℝ) :
+    blockIndic A (g x) = (g ⁻¹' A).indicator (1 : ℝ → ℝ) x := by
+  unfold blockIndic
+  by_cases h : g x ∈ A
+  · simp only [Set.indicator_of_mem h, Set.indicator_of_mem (Set.mem_preimage.mpr h),
+      Pi.one_apply]
+  · simp only [Set.indicator_of_notMem h,
+      Set.indicator_of_notMem (fun hc => h (Set.mem_preimage.mp hc))]
+
+/-- `affineMap q r` is measurable. -/
+lemma measurable_affineMap (q r : ℝ) : Measurable (affineMap q r) := by
+  unfold affineMap; fun_prop
+
+/-- Product of two ψ-shifted indicators = indicator of the intersection of the ψ-pulled preimages. -/
+lemma blockIndic_psi_mul (A : Set ℝ) (q r : ℝ) (j j' : ℕ) (x : ℝ) :
+    blockIndic A (gaussMap^[j] (affineMap q r x)) *
+        blockIndic A (gaussMap^[j'] (affineMap q r x)) =
+      (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A) ∩
+        affineMap q r ⁻¹' ((gaussMap^[j']) ⁻¹' A)).indicator (1 : ℝ → ℝ) x := by
+  have e1 : blockIndic A (gaussMap^[j] (affineMap q r x)) =
+      (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A)).indicator (1 : ℝ → ℝ) x := by
+    rw [show gaussMap^[j] (affineMap q r x) = (gaussMap^[j] ∘ affineMap q r) x from rfl,
+      blockIndic_comp, Set.preimage_comp]
+  have e2 : blockIndic A (gaussMap^[j'] (affineMap q r x)) =
+      (affineMap q r ⁻¹' ((gaussMap^[j']) ⁻¹' A)).indicator (1 : ℝ → ℝ) x := by
+    rw [show gaussMap^[j'] (affineMap q r x) = (gaussMap^[j'] ∘ affineMap q r) x from rfl,
+      blockIndic_comp, Set.preimage_comp]
+  rw [e1, e2, ← Pi.mul_apply, ← Set.inter_indicator_one]
+
+/-- Set-integral of an indicator: `∫_S 1_C dγ = γ(S ∩ C)`. -/
+lemma setIntegral_indicator_one_gaussMeasure {S C : Set ℝ} (hC : MeasurableSet C) :
+    ∫ x in S, C.indicator (1 : ℝ → ℝ) x ∂gaussMeasure = gaussMeasure.real (S ∩ C) := by
+  rw [setIntegral_indicator hC]
+  simp only [Pi.one_apply, setIntegral_const, smul_eq_mul, mul_one]
+
+/-- **Restricted ψ-pushed first moment**: `∫_S (S_n ∘ ψ) dγ = Σ_{j<n} γ(S ∩ ψ⁻¹T^{-j}A)`.
+Mirrors `integral_blockCount`. -/
+theorem integral_blockCount_psi_restricted (q r : ℝ) {S A : Set ℝ}
+    (hA : MeasurableSet A) (n : ℕ) :
+    ∫ x in S, blockCount A n (affineMap q r x) ∂gaussMeasure =
+      ∑ j ∈ Finset.range n,
+        gaussMeasure.real (S ∩ affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A)) := by
+  have hψ := measurable_affineMap q r
+  have hint : ∀ j : ℕ,
+      Integrable (fun x => blockIndic A (gaussMap^[j] (affineMap q r x)))
+        (gaussMeasure.restrict S) := by
+    intro j
+    have hmeas : MeasurableSet (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A)) :=
+      hψ ((measurable_gaussMap.iterate j) hA)
+    have heq : (fun x => blockIndic A (gaussMap^[j] (affineMap q r x)))
+        = (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A)).indicator (1 : ℝ → ℝ) := by
+      funext x
+      rw [show gaussMap^[j] (affineMap q r x) = (gaussMap^[j] ∘ affineMap q r) x from rfl,
+        blockIndic_comp, Set.preimage_comp]
+    rw [heq]
+    exact ((integrable_const (1 : ℝ)).indicator hmeas).mono_measure Measure.restrict_le_self
+  rw [show (fun x => blockCount A n (affineMap q r x))
+      = fun x => ∑ j ∈ Finset.range n, blockIndic A (gaussMap^[j] (affineMap q r x)) from
+    funext (fun x => blockCount_apply A n (affineMap q r x))]
+  rw [integral_finsetSum _ (fun j _ => hint j)]
+  apply Finset.sum_congr rfl
+  intro j _
+  have hmeas : MeasurableSet (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A)) :=
+    hψ ((measurable_gaussMap.iterate j) hA)
+  calc ∫ x in S, blockIndic A (gaussMap^[j] (affineMap q r x)) ∂gaussMeasure
+      = ∫ x in S, (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A)).indicator (1 : ℝ → ℝ) x
+          ∂gaussMeasure := by
+        apply integral_congr_ae
+        filter_upwards with x
+        rw [show gaussMap^[j] (affineMap q r x) = (gaussMap^[j] ∘ affineMap q r) x from rfl,
+          blockIndic_comp, Set.preimage_comp]
+    _ = gaussMeasure.real (S ∩ affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A)) :=
+        setIntegral_indicator_one_gaussMeasure hmeas
+
+/-- **Restricted ψ-pushed second moment**: `∫_S (S_n ∘ ψ)² dγ =
+Σ_{j,j'<n} γ(S ∩ ψ⁻¹T^{-j}A ∩ ψ⁻¹T^{-j'}A)`.  Mirrors `integral_blockCount_sq`. -/
+theorem integral_blockCount_sq_psi_restricted (q r : ℝ) {S A : Set ℝ}
+    (hA : MeasurableSet A) (n : ℕ) :
+    ∫ x in S, blockCount A n (affineMap q r x) ^ 2 ∂gaussMeasure =
+      ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+        gaussMeasure.real (S ∩ (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A) ∩
+          affineMap q r ⁻¹' ((gaussMap^[j']) ⁻¹' A))) := by
+  have hψ := measurable_affineMap q r
+  have hint : ∀ j j' : ℕ,
+      Integrable (fun x => blockIndic A (gaussMap^[j] (affineMap q r x)) *
+          blockIndic A (gaussMap^[j'] (affineMap q r x))) (gaussMeasure.restrict S) := by
+    intro j j'
+    have hmeas : MeasurableSet (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A) ∩
+        affineMap q r ⁻¹' ((gaussMap^[j']) ⁻¹' A)) :=
+      (hψ ((measurable_gaussMap.iterate j) hA)).inter
+        (hψ ((measurable_gaussMap.iterate j') hA))
+    have heq : (fun x => blockIndic A (gaussMap^[j] (affineMap q r x)) *
+        blockIndic A (gaussMap^[j'] (affineMap q r x)))
+        = (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A) ∩
+          affineMap q r ⁻¹' ((gaussMap^[j']) ⁻¹' A)).indicator (1 : ℝ → ℝ) := by
+      funext x; exact blockIndic_psi_mul A q r j j' x
+    rw [heq]
+    exact ((integrable_const (1 : ℝ)).indicator hmeas).mono_measure Measure.restrict_le_self
+  have hsq : (fun x => blockCount A n (affineMap q r x) ^ 2)
+      = fun x => ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+          blockIndic A (gaussMap^[j] (affineMap q r x)) *
+            blockIndic A (gaussMap^[j'] (affineMap q r x)) := by
+    funext x
+    rw [pow_two, blockCount_apply, Finset.sum_mul_sum]
+  rw [hsq,
+    integral_finsetSum _ (fun j _ =>
+      integrable_finsetSum _ (fun j' _ => hint j j'))]
+  apply Finset.sum_congr rfl
+  intro j _
+  rw [integral_finsetSum _ (fun j' _ => hint j j')]
+  apply Finset.sum_congr rfl
+  intro j' _
+  have hmeas : MeasurableSet (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A) ∩
+      affineMap q r ⁻¹' ((gaussMap^[j']) ⁻¹' A)) :=
+    (hψ ((measurable_gaussMap.iterate j) hA)).inter
+      (hψ ((measurable_gaussMap.iterate j') hA))
+  calc ∫ x in S, blockIndic A (gaussMap^[j] (affineMap q r x)) *
+          blockIndic A (gaussMap^[j'] (affineMap q r x)) ∂gaussMeasure
+      = ∫ x in S, (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A) ∩
+          affineMap q r ⁻¹' ((gaussMap^[j']) ⁻¹' A)).indicator (1 : ℝ → ℝ) x ∂gaussMeasure := by
+        apply integral_congr_ae
+        filter_upwards with x
+        exact blockIndic_psi_mul A q r j j' x
+    _ = gaussMeasure.real (S ∩ (affineMap q r ⁻¹' ((gaussMap^[j]) ⁻¹' A) ∩
+          affineMap q r ⁻¹' ((gaussMap^[j']) ⁻¹' A))) :=
+        setIntegral_indicator_one_gaussMeasure hmeas
+
 /-- **The irreducible L² core of the crux (ψ-pushed second-moment / variance estimate).**
 *Disclosed open obligation — one level below `psi_pushed_chebyshev_brick`.*  The `L²` deviation of the
 pushed block count `blockCount n (ψ·)` from its target `n·γv`, integrated over the deep x-cylinder,
