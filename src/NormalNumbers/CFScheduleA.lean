@@ -4221,6 +4221,28 @@ theorem exists_scale_cfCylinder_psi_avoid_zbad_cond_tight {q : ℝ} (hq : 0 < q)
             rw [hγcylRdef, ENNReal.ofReal_toReal (measure_ne_top _ _)])
   exact ⟨p, hpirr, hpcyl, hpnot⟩
 
+/-- **Glue: conditional avoidance ⇒ absolute bad-zone avoidance (inside the pinned z-cylinder).**
+For a full-orbit `z ∈ cfCylinder wz`, avoiding the pinned-prefix conditional bad set
+`{z' ∈ cfCylinder wz : δ ≤ |blockCount(cfCyl v) n z'/n − γv|}` is EQUIVALENT to avoiding the
+absolute bad zone `cfBadZone [] v n δ` — because both encode the SAME absolute-count deviation
+`δ ≤ |blockCount n z/n − γv|`, and `z ∈ cfCylinder wz` (guaranteed for the ψ-image by the pinning
+containment `ψ(cfCylinder wx') ⊆ cfCylinder wz`) supplies the cylinder membership.  This is the
+bridge from the tight conditional selector (`exists_scale_cfCylinder_psi_avoid_zbad_cond_tight`,
+whose bad set is the conditional one, with the small relative measure) to the EXISTING absolute
+digit-agreement transfer (`notMem_cfBadZone_nil_of_cfDigit_agree`, which consumes
+`∉ cfBadZone [] v n δ`).  So the two engines compose: select `p` with the polynomial threshold,
+strip to absolute goodness here, transfer to `ψ(xA)` there. -/
+theorem notMem_cfBadZone_nil_of_notMem_psiCond {z : ℝ} (wz v : List ℕ) (n : ℕ) {δ : ℝ}
+    (hzwz : z ∈ cfCylinder wz) (hzorb : ∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1)
+    (hznot : z ∉ {z' : ℝ | z' ∈ cfCylinder wz ∧
+        (∀ j : ℕ, gaussMap^[j] z' ∈ Set.Ioo (0 : ℝ) 1) ∧
+        δ ≤ |blockCount (cfCylinder v) n z' / n - (gaussMeasure (cfCylinder v)).toReal|}) :
+    z ∉ cfBadZone [] v n δ := by
+  intro hbad
+  rw [cfBadZone, cfCylinder_nil, List.length_nil, Function.iterate_zero, Set.preimage_id] at hbad
+  obtain ⟨-, -, hdisc⟩ := hbad
+  exact hznot ⟨hzwz, hzorb, hdisc⟩
+
 
 /-- **Hull-width reciprocal ≤ `8·cfK²` (resolution input for the self-hull steer).**  For a
 genuine word `w`, `4 / vol(cfCylinder w) ≤ 8·cfK(w)²`: the cylinder width is

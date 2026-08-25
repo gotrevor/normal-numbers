@@ -68,6 +68,13 @@ this: with the bridge hypothesis, the threshold becomes `N ~ |wz| + O(Cbridge·S
 This is the real dissolution of the scale-regime obstruction; the harmonic-band worry below is moot
 because a polynomial-threshold single/narrow-band witness now lands inside the transfer range.
 
+**Also landed (engine glue):** `notMem_cfBadZone_nil_of_notMem_psiCond` (`CFScheduleA`, axiom-clean)
+— for full-orbit `z ∈ cfCylinder wz`, conditional avoidance (my tight selector's bad set) ⇒ absolute
+`∉ cfBadZone [] v n δ` (what the EXISTING digit-agreement transfer `notMem_cfBadZone_nil_of_cfDigit_agree`
+consumes). So the tight conditional selector and the existing absolute transfer now COMPOSE: select
+`p` with polynomial threshold → strip to absolute goodness here → transfer to `ψ(xA)` via digit
+agreement. The z-side is now a chain of composable in-kernel bricks with ONE geometric gap (`Cbridge`).
+
 **SOLE remaining geometric input:** the bridge constant `Cbridge` (bounded, `~ 2/q`). Concretely
 `γ(cfCylinder wz) ≤ Cbridge·γ(cfCylinder wx')` where `wz` = tightest z-prefix with
 `ψ(cfCylinder wx') ⊆ cfCylinder wz`. Route: `vol(cfCylinder wz) ~ vol(ψ(cfCylinder wx')) =
