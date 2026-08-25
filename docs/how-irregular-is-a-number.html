@@ -8,6 +8,7 @@
   --arith:#8A5A0B; --arith-soft:#EFE2C8;
   --digit:#3B39A6; --digit-soft:#DEDDF4;
   --open:#A22F35; --open-soft:#F4DEDF;
+  --comp:#0E6B62; --comp-soft:#D7EBE7;
   --sans:"IBM Plex Sans",system-ui,sans-serif;
   --serif:"Spectral",Georgia,serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
@@ -18,6 +19,7 @@
     --arith:#E0B063; --arith-soft:#3A2E17;
     --digit:#9C99EF; --digit-soft:#232357;
     --open:#EA8B87; --open-soft:#412020;
+    --comp:#5FCBBD; --comp-soft:#11332E;
   }
 }
 :root[data-theme="dark"]{
@@ -25,6 +27,7 @@
   --arith:#E0B063; --arith-soft:#3A2E17;
   --digit:#9C99EF; --digit-soft:#232357;
   --open:#EA8B87; --open-soft:#412020;
+  --comp:#5FCBBD; --comp-soft:#11332E;
 }
 *{box-sizing:border-box}
 body{
@@ -77,6 +80,9 @@ em.term{font-style:normal; font-weight:600}
   background:var(--rule); border:1px solid var(--rule); margin:1.3rem 0 .4rem;
 }
 .dfn > div{background:var(--paper); padding:1.05rem 1.1rem 1.15rem}
+.dfn-4{grid-template-columns:repeat(2,1fr)}
+@media (min-width:62rem){.dfn-4{grid-template-columns:repeat(4,1fr)}}
+@media (max-width:34rem){.dfn-4{grid-template-columns:1fr}}
 .chip{
   display:inline-block; font-family:var(--mono); font-size:.66rem; letter-spacing:.1em;
   text-transform:uppercase; padding:.2rem .45rem; border:1px solid currentColor;
@@ -85,6 +91,7 @@ em.term{font-style:normal; font-weight:600}
 .c-arith{color:var(--arith)}
 .c-digit{color:var(--digit)}
 .c-open{color:var(--open)}
+.c-comp{color:var(--comp)}
 .dfn h4{font-family:var(--sans); font-weight:600; font-size:1.05rem; margin:0 0 .35rem}
 .dfn p{font-size:.95rem; margin:.35rem 0 0}
 .dfn .cost{
@@ -108,6 +115,8 @@ figcaption{
 .legend .sw-lens{background:var(--open-soft); border-color:var(--open)}
 .legend .sw-liou{background:transparent; border-color:var(--open); border-style:dashed}
 .legend .sw-unk{background:transparent; border-color:var(--muted); border-style:dashed}
+.legend .sw-comp{background:var(--comp-soft); border-color:var(--comp)}
+.legend .sw-uncomp{background:transparent; border-color:var(--muted); border-style:dotted}
 .tablewrap{overflow-x:auto; border:1px solid var(--rule); background:var(--paper); margin:1.3rem 0 .5rem}
 table{border-collapse:collapse; width:100%; min-width:44rem; font-size:.9rem}
 th,td{text-align:left; padding:.62rem .8rem; border-bottom:1px solid var(--rule); vertical-align:top}
@@ -142,6 +151,10 @@ td.name{font-family:var(--sans); font-weight:500; white-space:nowrap}
 .sv-grid{stroke:var(--rule); stroke-width:1}
 .sv-band{fill:var(--muted); fill-opacity:.13; stroke:var(--muted); stroke-width:1; stroke-dasharray:4 3}
 .sv-box{fill:var(--open); fill-opacity:.1; stroke:var(--open); stroke-width:1.3; stroke-dasharray:5 3}
+.sv-comp{fill:var(--comp-soft); fill-opacity:.7; stroke:var(--comp); stroke-width:1.7}
+.sv-outer{fill:none; stroke:var(--muted); stroke-width:1.3; stroke-dasharray:6 4}
+.sv-uncomp{fill:var(--muted); fill-opacity:.06; stroke:var(--comp); stroke-width:1.2; stroke-dasharray:6 4}
+.sv-brace{fill:none; stroke:var(--comp); stroke-width:1.3}
 text{font-family:var(--sans); fill:currentColor}
 .t-region{font-size:14px; font-weight:600; letter-spacing:.01em}
 .t-sub{font-size:11.5px; fill:var(--muted)}
@@ -153,6 +166,7 @@ text{font-family:var(--sans); fill:currentColor}
 .t-arith{fill:var(--arith)}
 .t-digit{fill:var(--digit)}
 .t-open{fill:var(--open)}
+.t-comp{fill:var(--comp)}
 .st{display:inline-block; font-family:var(--mono); font-size:.62rem; letter-spacing:.08em;
     text-transform:uppercase; padding:.12rem .4rem; border:1px solid currentColor;
     border-radius:2px; white-space:nowrap; line-height:1.5}
@@ -182,16 +196,16 @@ td.stat{white-space:nowrap}
 <header class="head">
   <p class="eyebrow">Digits, arithmetic, and what we can actually prove</p>
   <h1>How Irregular Is a Number?</h1>
-  <p class="standfirst">Irrational, transcendental and normal are three different questions about the same real number, asked with three different instruments. Only the first two are usually answerable.</p>
+  <p class="standfirst">Irrational, transcendental and normal are three different questions about the same real number, asked with three different instruments. A fourth, whether any algorithm can print its digits, sits underneath all three. Only the first two are usually answerable.</p>
   <p class="colophon">Claude (Claude Code) wrote this page, working under my direction. I would rather say that plainly than have you wonder: the sources are linked, and the formalization claims name the repository and revision they were checked against. <span class="sig">Trevor Morris</span></p>
 </header>
 
 <main>
 
-<h2>Three claims, two subjects</h2>
+<h2>Four claims, three subjects</h2>
 <p>This page started from two lines of a status ledger for a single constant, <span class="mono">irrational: trivial; transcendental: known;</span>, which grade not the strength of each property but the cost of establishing it. Those grades are the way in.</p>
 
-<div class="dfn">
+<div class="dfn dfn-4 full">
   <div>
     <span class="chip c-arith">arithmetic</span>
     <h4>Irrational</h4>
@@ -210,9 +224,15 @@ td.stat{white-space:nowrap}
     <p>In base <span class="mono">b</span>, every block of <span class="mono">k</span> digits occurs with limiting frequency <span class="mono">b<sup>&#8722;k</sup></span>. Absolutely normal means this holds in every base <span class="mono">b &#8805; 2</span>.</p>
     <p class="cost">A different subject entirely: not how the number relates to <span class="mono">&#8474;</span>, but how its <em>expansion</em> is distributed. Almost always open.</p>
   </div>
+  <div>
+    <span class="chip c-comp">computability</span>
+    <h4>Computable</h4>
+    <p>Some algorithm, handed <span class="mono">n</span>, prints the <span class="mono">n</span>th digit. Turing's 1936 definition, and the one that made &#8220;real number&#8221; an object a machine can hold.</p>
+    <p class="cost"><strong>free, and that is the catch.</strong> Naming a number nearly always means describing a procedure, so the answer is yes for every constant on this page except <span class="mono">&#937;</span>, and no for almost every real.</p>
+  </div>
 </div>
 
-<p>The first two are claims about a number's <strong>relationship to the rationals</strong>. Normality is a claim about the <strong>statistics of one expansion</strong>, and it is base-relative in a way the others are not. That is why they sit on different axes rather than on one ladder.</p>
+<p>The first two are claims about a number's <strong>relationship to the rationals</strong>. Normality is a claim about the <strong>statistics of one expansion</strong>, and it is base-relative in a way the others are not. That is why they sit on different axes rather than on one ladder. Computability is a claim about neither: it asks what it costs to <em>produce</em> the number at all. It sits underneath both axes rather than on either, and it is the only one of the four whose answer is almost always yes.</p>
 
 <h2>The picture</h2>
 
@@ -305,6 +325,72 @@ td.stat{white-space:nowrap}
 <h2>Why the third one is hopeless</h2>
 <p>Irrationality and transcendence each rule out <em>one</em> algebraic relation. Normality asserts an infinite family of statistical constraints, separately in every base, and there is no known mechanism that turns a closed-form definition into control over digit frequencies. So a ledger like the one above has the shape it does for a reason: the arithmetic entries are settled, the digit entry is open or was engineered in by construction.</p>
 <p>Two facts make the gap concrete. Borel proved in 1909 that almost every real is absolutely normal, so the property is generic in measure. But the non-normal numbers, despite forming a null set, have full Hausdorff dimension and are <em>topologically</em> generic. Typicality answers differently depending on which notion of typical you pick, which is a warning about the whole enterprise of grading irregularity with one number.</p>
+<h2><span class="axis-tag c-comp">Computability</span> the axis underneath: can anything print it?</h2>
+<p>There is a fourth question, and it is easy to miss precisely because the answer is yes for every number in the diagram above. Is the number <em class="term">computable</em>: is there an algorithm that, handed <span class="mono">n</span>, returns the <span class="mono">n</span>th digit? Turing introduced the reals this way in 1936, and the answer sorts the line in a way neither of the other two axes does.</p>
+
+<figure class="full">
+<svg viewBox="0 0 960 440" role="img" aria-label="Four nested regions: the rationals inside the algebraic numbers inside the computable numbers, all three countable and of measure zero, inside the real line. Chaitin's Omega and almost every real sit outside the computable region.">
+  <rect class="sv-outer" x="20" y="52" width="920" height="352" rx="4"/>
+  <rect class="sv-comp" x="48" y="102" width="600" height="254" rx="4"/>
+  <rect class="sv-alg" x="76" y="148" width="420" height="164" rx="4"/>
+  <rect class="sv-q" x="104" y="192" width="300" height="78" rx="4"/>
+
+  <text class="t-region" x="36" y="80">&#8477;</text>
+  <text class="t-sub" x="58" y="80">the real line: uncountable, measure 1</text>
+
+  <text class="t-region t-comp" x="62" y="128">computable</text>
+  <text class="t-sub" x="152" y="128">an algorithm returns digit n</text>
+
+  <text class="t-region t-arith" x="90" y="174">algebraic</text>
+  <text class="t-sub" x="166" y="174">a root of an integer polynomial</text>
+
+  <text class="t-region" x="118" y="218">&#8474;</text>
+  <text class="t-sub" x="140" y="218">p/q</text>
+
+  <text class="t-pt" x="118" y="250">1/3 &#183; 22/7 &#183; every terminating decimal</text>
+  <text class="t-pt" x="90" y="296">&#8730;2 &#183; &#966; &#183; every root of every integer polynomial</text>
+  <text class="t-pt" x="62" y="330">&#960; &#183; e &#183; ln 2 &#183; Champernowne &#183; Thue&#8211;Morse</text>
+  <text class="t-pt" x="62" y="346">Stoneham &#945;&#8322;,&#8323; &#183; the Becher&#8211;Yuhjtman witness</text>
+
+  <path class="sv-brace" d="M 48 368 L 48 376 L 348 376"/>
+  <path class="sv-brace" d="M 648 368 L 648 376 L 348 376"/>
+  <text class="t-sub t-comp" x="348" y="394" text-anchor="middle">countably many programs, so countably many computable reals: all three regions together have measure 0</text>
+
+  <text class="t-region" x="676" y="132">uncomputable</text>
+  <text class="t-sub" x="676" y="150">no algorithm returns digit n</text>
+  <text class="t-sub" x="676" y="176">Nothing in here is rational and nothing</text>
+  <text class="t-sub" x="676" y="191">in here is algebraic, so <tspan class="t-comp">uncomputable</tspan></text>
+  <text class="t-sub" x="676" y="206"><tspan class="t-comp">implies transcendental</tspan>, hence irrational.</text>
+  <text class="t-sub" x="676" y="221">One way only: &#960; is transcendental</text>
+  <text class="t-sub" x="676" y="236">and computable.</text>
+
+  <circle class="sv-dot t-open" cx="682" cy="272" r="4"/>
+  <text class="t-pt t-open" x="694" y="276">&#937;</text>
+  <text class="t-sub" x="676" y="294">Chaitin's halting probability: left-c.e.,</text>
+  <text class="t-sub" x="676" y="309">so computable from below but not computable.</text>
+  <text class="t-note" x="676" y="338">and almost every real, none of them named</text>
+</svg>
+<ul class="legend">
+  <li><span class="sw sw-comp"></span><span><strong>Computable</strong>. Containing every algebraic number, and every constant on this page but one.</span></li>
+  <li><span class="sw sw-alg"></span><span><strong>Algebraic</strong>, containing <span class="mono">&#8474;</span>, exactly as in the first figure.</span></li>
+  <li><span class="sw sw-uncomp"></span><span><strong>Outside</strong>. Measure 1, and everything in it is transcendental.</span></li>
+</ul>
+<figcaption>The same nesting as the first figure with one region added around the outside of it. <span class="mono">&#8474;</span> inside algebraic is the standard picture; algebraic inside computable is the step that is almost never drawn, and it is the step that carries the only implication linking this axis to the arithmetic one. Note what the boundary of the teal box costs: crossing it outward takes you past everything anyone has ever named, and lands you in a set of measure 1.</figcaption>
+</figure>
+
+<p><strong>So yes: uncomputable implies transcendental</strong>, hence irrational. Every rational is computable, and so is every algebraic number, since you can isolate the roots of its polynomial to any precision you like. Anything uncomputable is therefore outside both. That single edge is the whole of the traffic between this axis and the arithmetic one, and it runs one way: <span class="mono">&#960;</span>, <span class="mono">e</span> and every other transcendental with a name are computable, so the converse fails about as widely as a converse can.</p>
+
+<div class="callout">
+<p><strong>The trap: there is no such thing as an uncomputable integer.</strong> Uncomputability is a property of <em>infinite</em> objects, and every finite object is printed by the program that just prints it. So the axis says nothing about <span class="mono">7</span>, and nothing about <span class="mono">BB(748)</span> either. The busy beaver <em>function</em> is uncomputable (Rad&#243; 1962); each of its values is one particular integer, and one particular integer is computable, trivially.</p>
+<p>What is true is stranger, and it is what the phrase &#8220;uncomputable integer&#8221; is usually reaching for. Stefan O'Rear built a 748-state Turing machine that halts exactly when ZFC is inconsistent, sharpening Yedidia and Aaronson's 7910-state machine. If ZFC is consistent it cannot prove that machine runs forever, so it cannot pin down <span class="mono">BB(748)</span>. A program that prints that integer exists, and no theory we are willing to trust can tell us which program it is. <em>Computable</em> quantifies over algorithms that exist, not over algorithms we can find.</p>
+</div>
+
+<p>Now count. There are countably many programs, so there are countably many computable reals, and all three nested regions above are a measure-zero speck inside a line of measure 1. Every theorem on this page of the form <em>almost every real is</em>&#8202;&#8230; is therefore silent about every number that has ever been named. Borel's 1909 result says absolute normality is generic; it says nothing whatsoever about <span class="mono">&#960;</span>, and that is not a weakness of the proof, it is the shape of the situation.</p>
+
+<p>Which is why making these proofs <em>effective</em> is a real part of the subject's history rather than a footnote. Sierpi&#324;ski constructed an absolutely normal number in 1917 and Turing wrote an algorithm for one around 1937, unpublished until 1992 and with a gap; a genuinely computable example waited for <a href="https://www-2.dc.uba.ar/staff/becher/papers/becherTCS2002.pdf">Becher and Figueira in 2002</a>, and a polynomial-time one for <a href="https://math.berkeley.edu/~slaman/papers/poly.pdf">Becher, Heiber and Slaman in 2013</a>, at just above quadratic time per digit. The Becher&#8211;Yuhjtman witness this page keeps pointing at is of exactly that kind. Its content is not that such a number exists, which measure theory hands you for nothing, but that a program prints it.</p>
+
+<p>And there is a ceiling, which is the fact that earns this axis its section. <strong>No computable real is random in any effective sense at all</strong>, not even the weakest one on the lattice below: if <span class="mono">x</span> is computable then <span class="mono">{x}</span> is a null class an algorithm can close in on, so a computable number is never even Kurtz random. Absolute normality is the top of what a computable number can reach. That is the same fact as the two dimension rows in the instrument table disagreeing about Champernowne's constant, which has finite-state dimension <span class="mono">1</span>, the maximum, and effective Hausdorff dimension <span class="mono">0</span>, the minimum, because <span class="mono">K(x&#8638;n) = O(log n)</span> for anything a program prints. Finite automata see a perfectly random string. A Turing machine sees a short program.</p>
+
 <h2>Two axes, and they disagree</h2>
 <p>Once you ask <em>how</em> irregular rather than <em>whether</em>, the question splits. One axis measures how well rationals sneak up on the number. The other measures how random its expansion looks. A number can be extreme on either and ordinary on the other.</p>
 
@@ -373,6 +459,9 @@ td.stat{white-space:nowrap}
   <text class="t-sub" x="16" y="60" transform="rotate(-90 16 60)" text-anchor="end">stronger</text>
   <line class="sv-grid" x1="24" y1="52" x2="24" y2="500" stroke-dasharray="3 4"/>
 
+  <rect class="sv-uncomp" x="576" y="36" width="410" height="344" rx="4"/>
+  <text class="t-sub t-comp" x="781" y="398" text-anchor="middle">no computable real is in this column, all the way down</text>
+
   <g class="lat">
     <rect class="sv-node" x="600" y="42" width="200" height="42" rx="3"/>
     <text class="t-node" x="700" y="68" text-anchor="middle">2-random</text>
@@ -397,6 +486,8 @@ td.stat{white-space:nowrap}
     <text class="t-node" x="700" y="348" text-anchor="middle">Kurtz random</text>
     <text class="t-sub" x="815" y="347">avoids &#928;&#8304;&#8321; null classes</text>
 
+    <text class="t-sub t-comp" x="300" y="228" text-anchor="middle">a computable real can reach this box,</text>
+    <text class="t-sub t-comp" x="300" y="242" text-anchor="middle">and no higher: Becher&#8211;Figueira 2002</text>
     <rect class="sv-node" x="205" y="252" width="190" height="42" rx="3"/>
     <text class="t-node" x="300" y="278" text-anchor="middle">absolutely normal</text>
 
@@ -447,7 +538,7 @@ td.stat{white-space:nowrap}
 
   <text class="t-sub" x="500" y="262" text-anchor="middle">the only bridge between the columns</text>
 </svg>
-<figcaption>An arrow is an implication; a crossed link is a non-implication in both directions, annotated with the witness that kills it. The right column is nested and strict at every step. The left column is not a chain: disjunctive and simply normal are both weakenings of normality and neither implies the other, and simple normality does not even force irrationality. Chaitin's &#937; sits at Martin-L&#246;f and is not 2-random; the Becher&#8211;Yuhjtman witness is computable, so it is absolutely normal and not random in any effective sense at all.</figcaption>
+<figcaption>An arrow is an implication; a crossed link is a non-implication in both directions, annotated with the witness that kills it. The right column is nested and strict at every step. The left column is not a chain: disjunctive and simply normal are both weakenings of normality and neither implies the other, and simple normality does not even force irrationality. Chaitin's &#937; sits at Martin-L&#246;f and is not 2-random; the Becher&#8211;Yuhjtman witness is computable, so it is absolutely normal and not random in any effective sense at all. The shaded column is the computability axis landing on this picture: every real in it is uncomputable, because a computable real fails even Kurtz randomness. The left column is where the computable numbers live, and absolute normality is the highest box they reach.</figcaption>
 </figure>
 
 <p>Two things fall out of that picture. Every effective notion from Schnorr randomness upward gives you absolute normality for free, so <strong>normality is what survives when you throw away all computability</strong> and keep only the statistics. And the converse fails as badly as it can: Champernowne's constant is normal and computable, so a computable gambler beats it trivially, which is why it is at the bottom of the left column and off the right column entirely.</p>
@@ -489,6 +580,20 @@ td.stat{white-space:nowrap}
 </tbody>
 </table>
 </div>
+<h3><span class="axis-tag c-comp">Computability</span> what it costs to produce the digits at all</h3>
+<div class="tablewrap full">
+<table>
+<colgroup><col style="width:23%"><col style="width:25%"><col style="width:11%"><col style="width:41%"></colgroup>
+<thead><tr><th>Instrument</th><th>What it measures</th><th>Range</th><th>Landmarks</th></tr></thead>
+<tbody>
+<tr><td class="name">Computable or not</td><td>is there an algorithm for the nth digit</td><td class="num">yes / no</td><td>yes for every algebraic number and for <span class="mono">&#960;</span>, <span class="mono">e</span>, Champernowne, Thue&#8211;Morse, Stoneham, the Becher&#8211;Yuhjtman witness &#183; no for <span class="mono">&#937;</span> &#183; no for almost every real, since there are only countably many programs</td></tr>
+<tr><td class="name">Time to the nth digit</td><td>how expensive that algorithm is</td><td class="num">a complexity class</td><td>Champernowne is polynomial time by inspection &#183; an absolutely normal number in just above quadratic time (Becher, Heiber and Slaman 2013), which is the effective content of Borel's theorem</td></tr>
+<tr><td class="name">Left-c.e.</td><td>computable from below: a computable increasing sequence of rationals converges to it, with no rate</td><td class="num">yes / no</td><td><span class="mono">&#937;</span> is left-c.e. and not computable, which is as close to the computable region as a random real gets. Ku&#269;era and Slaman 2001: every left-c.e. Martin-L&#246;f random real <em>is</em> a halting probability</td></tr>
+<tr><td class="name">Turing degree</td><td>which oracle you would need</td><td class="num">the degrees</td><td><span class="num">0</span> for every computable real &#183; <span class="mono">&#937; &#8801;<sub>T</sub> &#8709;&#8242;</span>, exactly the halting problem. Mathlib has the degrees; it does not have reals sitting in them</td></tr>
+<tr><td class="name">Kolmogorov complexity rate</td><td>the same quantity as effective Hausdorff dimension, read as a computability instrument</td><td class="num">0 to 1</td><td><span class="num">0</span> for every computable real whatever its digit statistics, since <span class="mono">K(x&#8638;n) = O(log n)</span>. This is the line the computable numbers cannot cross, and Champernowne straddles it: finite-state dimension 1, effective dimension 0</td></tr>
+</tbody>
+</table>
+</div>
 <h2>Status board</h2>
 <p>The diagrams above carry mathematics, and that is all they should carry: an arrow means an implication holds, a crossed link means it fails, a <span class="mono">?</span> means nobody knows. Whether a given edge has been <em>machine-checked</em> is a different question with a different answer for every edge, and it belongs in its own object rather than as a second layer of glyphs on a drawing that is already dense.</p>
 <p>So: one row per claim in the picture, with its mathematical status and its formalization status kept apart. The discipline is that every edge gets a row, including the one-line ones, because a missing row and a hard gap should not look the same.</p>
@@ -508,6 +613,14 @@ td.stat{white-space:nowrap}
 <tr><td><span class="mono">e</span> is transcendental (Hermite 1873)</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><a class="st st-out" href="https://github.com/gotrevor/lean-formalizations/blob/main/src/LeanFormalizations/NumberTheory/Transcendence/ETranscendental.lean">outside mathlib</a></td><td>Lean 4, axiom-clean, in <span class="mono">lean-formalizations</span>. Also a <a href="https://github.com/jjaassoonn/transcendental/blob/master/src/e_transcendental.lean">Lean 3 proof</a> claimed on Freek #67</td></tr>
 <tr><td><span class="mono">&#960;</span> is transcendental (Lindemann 1882)</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><a class="st st-out" href="https://github.com/gotrevor/lean-formalizations/blob/main/src/LeanFormalizations/NumberTheory/Transcendence/PiTranscendental.lean">outside mathlib</a></td><td><span class="mono">transcendental_pi_axiomClean</span>. <strong>Freek #53 is an unclaimed slot</strong></td></tr>
 <tr><td>Algebraic irrationals have exponent 2 (Roth 1955)</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td>Nowhere, as far as a grep of mathlib reaches</td></tr>
+<tr><td colspan="4" class="grp"><strong>Computability axis</strong></td></tr>
+<tr><td>The halting problem is undecidable</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><a class="st st-ml" href="https://github.com/leanprover-community/mathlib4/blob/0df444a360eaa60ab8c11dca51a86af692955474/Mathlib/Computability/Halting.lean">mathlib</a></td><td><span class="mono">ComputablePred.halting_problem</span></td></tr>
+<tr><td>There are only countably many programs</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><a class="st st-ml" href="https://github.com/leanprover-community/mathlib4/blob/0df444a360eaa60ab8c11dca51a86af692955474/Mathlib/Computability/PartrecCode.lean">mathlib</a></td><td><span class="mono">Nat.Partrec.Code.instDenumerable</span>. Half of &#8220;the computable reals are null&#8221;; the missing half is the map from programs to reals</td></tr>
+<tr><td>Turing degrees form a partial order</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><a class="st st-ml" href="https://github.com/leanprover-community/mathlib4/blob/0df444a360eaa60ab8c11dca51a86af692955474/Mathlib/Computability/TuringDegree.lean">mathlib</a></td><td><span class="mono">TuringDegree</span>, on partial functions <span class="mono">&#8469; &#8594;. &#8469;</span>. Nothing places a real in one</td></tr>
+<tr><td>Every algebraic real is computable, so uncomputable implies transcendental</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td>Blocked on a notion mathlib does not have: <span class="mono">Computable</span> lives on encodable types and <span class="mono">&#8477;</span> is not one, so &#8220;computable real&#8221; has to be built first</td></tr>
+<tr><td>The computable reals are null</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td>Countable implies null is in mathlib. Same blocker: no computable real</td></tr>
+<tr><td>A computable absolutely normal number exists (Becher&#8211;Figueira 2002)</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><span class="st st-non">not yet</span></td><td>Worth being exact: our witness is given by an explicit construction, but <em>computability of it</em> is not part of any formal statement in the repo, so this row is open however suggestive the Lean looks</td></tr>
+<tr><td>No computable real is Kurtz random</td><td class="stat"><span class="mg mg-n">&#10007;</span>refuted</td><td class="stat"><span class="st st-non">not yet</span></td><td>The ceiling in the lattice. Needs the same effective-measure layer as the Schnorr row</td></tr>
 <tr><td colspan="4" class="grp"><strong>Digit side, positive results</strong></td></tr>
 <tr><td>Wall 1949: normal iff the orbit equidistributes</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><a class="st st-out" href="https://github.com/gotrevor/normal-numbers/blob/master/src/NormalNumbers/Wall.lean">outside mathlib</a></td><td><span class="mono">normal-numbers/Wall.lean</span></td></tr>
 <tr><td>Stoneham <span class="mono">&#945;&#8322;,&#8323;</span> is normal in base 2</td><td class="stat"><span class="mg mg-y">&#10003;</span>proved</td><td class="stat"><a class="st st-out" href="https://github.com/gotrevor/normal-numbers/blob/master/src/NormalNumbers/Stoneham.lean">outside mathlib</a></td><td><span class="mono">isNormal_two_stoneham23</span></td></tr>
@@ -550,6 +663,9 @@ td.stat{white-space:nowrap}
   <li><a href="https://arxiv.org/abs/1204.4104">Normality and Finite-State Dimension of Liouville Numbers</a><span class="why">Where the dashed family in the first figure comes from, and where finite-state dimension earns its keep as a grading.</span></li>
   <li><a href="https://arxiv.org/abs/1704.03622">Becher and Yuhjtman, On absolutely normal and continued fraction normal numbers</a><span class="why">IMRN 2019. The two-expansion result.</span></li>
   <li><a href="https://arxiv.org/abs/1203.4126">Jeremy Avigad, Uniform distribution and algorithmic randomness</a><span class="why">Exactly the bridge between the two columns of the lattice, and by someone whose day job is Lean.</span></li>
+  <li><a href="https://doi.org/10.1112/plms/s2-42.1.230">Turing, On Computable Numbers</a><span class="why">1936. Where the computable reals come from, and still the clearest statement of why the definition is about programs rather than about numbers.</span></li>
+  <li><a href="https://www-2.dc.uba.ar/staff/becher/papers/becherTCS2002.pdf">Becher and Figueira, An example of a computable absolutely normal number</a><span class="why">TCS 2002. Sierpi&#324;ski's 1917 construction turned into something a machine can run. The companion is Becher, Heiber and Slaman 2013 for the polynomial-time version.</span></li>
+  <li><a href="https://arxiv.org/abs/1605.04343">Yedidia and Aaronson, A Relatively Small Turing Machine Whose Behavior Is Independent of Set Theory</a><span class="why">The 7910-state machine, later cut to 748 by Stefan O'Rear. The right thing to read before saying &#8220;uncomputable integer&#8221; out loud.</span></li>
   <li><a href="https://www.ams.org/journals/notices/201907/rnoti-p1001.pdf">Downey and Hirschfeldt, Computability and Randomness</a><span class="why">Notices survey. The standard reference for the right-hand column, martingales and all.</span></li>
   <li><a href="https://www.youtube.com/watch?v=5TkIe60y2GI">All the Numbers (Numberphile)</a><span class="why">Matt Parker draws the same crossing by hand at 8:23, and gets the important detail right: the normal circle overlaps algebraic and computable but never touches the rationals.</span></li>
   <li><a href="https://en.wikipedia.org/wiki/Normal_number">Wikipedia: Normal number</a><span class="why">Accurate, and the properties section is a decent index of what is open.</span></li>

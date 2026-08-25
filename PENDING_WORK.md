@@ -7,6 +7,30 @@
 - **`exists_scale_cfCylinder_psi_avoid_zbad`** + **`exists_scale_zgood_wxSeq_L4`**
   (axiom-clean): Chebyshev budget discharge + per-stage z-good witnesses on `wxSeq_L4 s`.
 
+## 🟢 2026-08-25 — LANDED: ψ-conditional z-Chebyshev (the crux analytic lemma)
+
+**`chebyshev_blockCount_brick_psi_conditional`** (`CFWordBridge.lean`, axiom-clean, trust
+triple). This is the "one genuinely-open analytic lemma the z-side rests on" flagged in the
+CRUX FINDING below — now discharged. Statement: for `z ∈ cfCylinder wz` (`L=|wz|`), full-orbit,
+`n>L`, and slack `2L ≤ δ·n`,
+`γ{z ∈ cfCylinder wz : δ ≤ |blockCount(cfCyl v) n z/n − γv|}
+  ≤ 7·(8|v|+80)·γv/((δ/2)²·(n−L))·γ(cfCylinder wz)` — the RELATIVE density `O(1/(n−L))`,
+not the too-weak absolute `O(1/n)`. Proof route (as planned in the handoff): `blockCount_split`
+peels the COMMON pinned-prefix count `C∈[0,L]` (perturbs the frequency by `≤ L/n`) off the
+scale-`n` count, leaving the shifted scale-`(n−L)` count on `gaussMap^[L] z`, bounded by
+`chebyshev_blockCount_brick` at base `wz`; the slack `2L≤δn` makes a scale-`n` `δ`-bad point a
+shifted scale-`(n−L)` `(δ/2)`-bad point (subset + `measure_mono` + `ENNReal.toReal_mono`).
+
+**NEXT (was step 2/3 of the handoff, now unblocked):**
+1. Thread the pinning-stage z-selection into the block builder
+   (`exists_uniformly_freq_good_block_steer_len_rel_cfK`): feed this bound as the z-bad budget
+   over the window `(|w_{s-1}|,|w_s|]`, keeping blocks LINEAR (extra term `O(1/|u|)·γ`, absorbed
+   like the x-freq term). Record `∀ n ∈ (|w_{s-1}|,|w_s|], ψ(witness) z-good at n` in `StepSpecL4`.
+   Interval-scale selector template = `exists_irrational_notMem_xbad_psi_zbad_nil_in_Ioo`.
+2. Z-II coverage via `tendsto_of_scale_coverage`: every large `n` pinned at exactly one stage
+   `s*` (`|w_{s*}|≥n>|w_{s*-1}|`), `δ_{s*}→0`, transfer range `n≲|w_{s*}|` matches ⇒ no gap.
+3. Assemble NEW `exists_interleaved_affine_witness` on the L4 stream + excise the two-stream sorry.
+
 ## 🔴 2026-08-25 — CRUX FINDING: the z-transfer has a SCALE-REGIME OBSTRUCTION (Z-II)
 
 **The post-hoc z-good witness (`exists_scale_zgood_wxSeq_L4`) and the (Z-I) plan below

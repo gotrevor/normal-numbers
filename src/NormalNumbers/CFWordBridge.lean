@@ -136,4 +136,108 @@ theorem blockCount_split {x : ℝ}
     Finset.filter_map, Finset.card_map]
   simp only [Function.comp, addLeftEmbedding_apply]
 
+/-- **ψ-conditional (pinned-prefix) z-Chebyshev.**  Within the cylinder `cfCylinder wz`,
+whose first `L = |wz|` digits are pinned, the mass of full-orbit points `z` whose length-`n`
+block frequency of `cfCylinder v` deviates from `γ(cfCylinder v)` by `≥ δ` is controlled by the
+*relative* density `O(1/(n−L))`, NOT the absolute `O(1/n)`.  Route: `blockCount_split` peels the
+COMMON pinned-prefix count (`C ∈ [0,L]`, contributing `≤ L/n` to the frequency) off the scale-`n`
+count, leaving the shifted scale-`(n−L)` count on `gaussMap^[L] z`, which
+`chebyshev_blockCount_brick` at base `wz` bounds.  The slack `2L ≤ δ·n` guarantees the peeled
+prefix cannot itself explain a `δ`-deviation, so a scale-`n` `δ`-bad point is a scale-`(n−L)`
+`(δ/2)`-bad point on the shifted orbit.  This is the analytic lemma the single-stream z-side
+rests on. -/
+theorem chebyshev_blockCount_brick_psi_conditional
+    (wz v : List ℕ) (hposw : ∀ a ∈ wz, 1 ≤ a) (hposv : ∀ a ∈ v, 1 ≤ a)
+    (n : ℕ) (hLn : wz.length < n) {δ : ℝ} (hδ : 0 < δ)
+    (hslack : 2 * (wz.length : ℝ) ≤ δ * n) :
+    (gaussMeasure {z : ℝ | z ∈ cfCylinder wz ∧
+        (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+        δ ≤ |blockCount (cfCylinder v) n z / n -
+          (gaussMeasure (cfCylinder v)).toReal|}).toReal ≤
+      7 * ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal /
+        ((δ / 2) ^ 2 * (n - wz.length))) * (gaussMeasure (cfCylinder wz)).toReal := by
+  set L := wz.length with hLdef
+  set γv := (gaussMeasure (cfCylinder v)).toReal with hγv
+  have hL0 : 0 < n - L := by omega
+  -- the shifted (scale `n−L`, tol `δ/2`) brick bound at base `wz`
+  have hchel := chebyshev_blockCount_brick wz v hposw hposv (n - L) hL0 (half_pos hδ)
+  rw [← hLdef] at hchel
+  have hmcastT : ((n - L : ℕ) : ℝ) = (n : ℝ) - (L : ℝ) := by exact_mod_cast Nat.cast_sub (le_of_lt hLn)
+  rw [hmcastT] at hchel
+  -- the pinned-prefix bad set is contained in the shifted brick-bad set
+  have hsub : {z : ℝ | z ∈ cfCylinder wz ∧
+      (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+      δ ≤ |blockCount (cfCylinder v) n z / n - γv|} ⊆
+      cfCylinder wz ∩ (gaussMap^[L]) ⁻¹'
+        {x ∈ Set.Ioo (0 : ℝ) 1 |
+          δ / 2 ≤ |blockCount (cfCylinder v) (n - L) x / ((n : ℝ) - (L : ℝ)) - γv|} := by
+    rintro z ⟨hzcyl, hzorb, hzbad⟩
+    refine ⟨hzcyl, hzorb L, ?_⟩
+    -- notation
+    set nn : ℝ := (n : ℝ) with hnn
+    set LL : ℝ := (L : ℝ) with hLL
+    have hnpos : 0 < nn := by rw [hnn]; exact_mod_cast (by omega : 0 < n)
+    have hLL_nonneg : 0 ≤ LL := by rw [hLL]; positivity
+    have hmcast : ((n - L : ℕ) : ℝ) = nn - LL := by rw [hnn, hLL]; exact_mod_cast Nat.cast_sub (le_of_lt hLn)
+    have hmpos : 0 < nn - LL := by rw [← hmcast]; exact_mod_cast hL0
+    set Bn : ℝ := blockCount (cfCylinder v) n z with hBn
+    set Bf : ℝ := blockCount (cfCylinder v) (n - L) (gaussMap^[L] z) with hBf
+    set C : ℝ := (((Finset.range L).filter (fun j => MatchesAt (cfDigit z) v j)).card : ℝ) with hC
+    -- split
+    have hsplit : Bn = C + Bf := blockCount_split hzorb v L n (le_of_lt hLn)
+    -- bounds on the pieces
+    have hC0 : 0 ≤ C := by rw [hC]; exact_mod_cast Nat.zero_le _
+    have hCL : C ≤ LL := by
+      rw [hC, hLL]; exact_mod_cast (Finset.card_filter_le _ _).trans_eq (Finset.card_range L)
+    have hBf0 : 0 ≤ Bf := by
+      rw [hBf, blockCount_apply]
+      exact Finset.sum_nonneg fun k _ => Set.indicator_nonneg (fun _ _ => zero_le_one) _
+    have hBfle : Bf ≤ nn - LL := by
+      rw [hBf, blockCount_apply]
+      calc ∑ k ∈ Finset.range (n - L), blockIndic (cfCylinder v) (gaussMap^[k] (gaussMap^[L] z))
+          ≤ ∑ _k ∈ Finset.range (n - L), (1 : ℝ) := by
+            refine Finset.sum_le_sum fun k _ => ?_
+            unfold blockIndic
+            by_cases h : gaussMap^[k] (gaussMap^[L] z) ∈ cfCylinder v
+            · simp [Set.indicator_of_mem h]
+            · simp [Set.indicator_of_notMem h]
+        _ = ((n - L : ℕ) : ℝ) := by
+            rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+        _ = nn - LL := hmcast
+    -- the peeled prefix perturbs the frequency by at most `LL/nn`
+    set D : ℝ := C / nn - Bf * LL / ((nn - LL) * nn) with hD
+    have hident : Bf / (nn - LL) - γv = (Bn / nn - γv) - D := by
+      rw [hsplit, hD]; field_simp; ring
+    have hDbound : |D| ≤ LL / nn := by
+      have hE0 : 0 ≤ Bf * LL / ((nn - LL) * nn) :=
+        div_nonneg (mul_nonneg hBf0 hLL_nonneg) (mul_nonneg hmpos.le hnpos.le)
+      have hELL : Bf * LL / ((nn - LL) * nn) ≤ LL / nn := by
+        rw [div_le_div_iff₀ (mul_pos hmpos hnpos) hnpos]
+        nlinarith [mul_le_mul_of_nonneg_right hBfle (mul_nonneg hLL_nonneg hnpos.le)]
+      have hCnn0 : 0 ≤ C / nn := div_nonneg hC0 hnpos.le
+      have hCnn : C / nn ≤ LL / nn := by
+        rw [div_le_div_iff₀ hnpos hnpos]; nlinarith [hCL, hnpos.le]
+      rw [hD, abs_le]
+      constructor <;> nlinarith [hE0, hELL, hCnn0, hCnn]
+    -- assemble
+    have hLLnn : LL / nn ≤ δ / 2 := by
+      rw [div_le_div_iff₀ hnpos (by norm_num : (0:ℝ) < 2)]
+      linarith [hslack]
+    rw [hident]
+    calc δ / 2 = δ - δ / 2 := by ring
+      _ ≤ |Bn / nn - γv| - |D| := by
+          have := hzbad
+          rw [hBn, hnn] at this ⊢
+          linarith [hDbound, hLLnn, this]
+      _ ≤ |(Bn / nn - γv) - D| := abs_sub_abs_le_abs_sub _ _
+  calc (gaussMeasure {z : ℝ | z ∈ cfCylinder wz ∧
+          (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+          δ ≤ |blockCount (cfCylinder v) n z / n - γv|}).toReal
+      ≤ (gaussMeasure (cfCylinder wz ∩ (gaussMap^[L]) ⁻¹'
+          {x ∈ Set.Ioo (0 : ℝ) 1 | δ / 2 ≤ |blockCount (cfCylinder v) (n - L) x / ((n : ℝ) - (L : ℝ)) -
+            γv|})).toReal :=
+        ENNReal.toReal_mono (MeasureTheory.measure_ne_top _ _) (MeasureTheory.measure_mono hsub)
+    _ ≤ 7 * ((8 * v.length + 80) * γv / ((δ / 2) ^ 2 * (n - L))) *
+          (gaussMeasure (cfCylinder wz)).toReal := hchel
+
 end NormalNumbers
