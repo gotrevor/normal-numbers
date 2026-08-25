@@ -5315,6 +5315,21 @@ theorem exists_xA_L4_orbit_equidist {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < 
     chain_orbit_equidist_uniform (wxSeq_L4 hq hr) hxext hxAirr hxA01 hxAmem (schedL4_hfreq_x hq hr)
   exact ⟨xA, hxAirr, hxA01, hxAmem, hox⟩
 
+/-- **Per-stage z-good witness on the L4 chain** (Z-I record).  For every stage `s` there is a
+scale threshold `N` such that at every scale `n ≥ N` the stage-`s` cylinder contains an irrational
+point `p` whose ψ-image avoids the absolute-scale z-bad zones `cfBadZone [] v n (schedEps s)` for
+all `v ∈ wordFamily s`.  A direct application of the Chebyshev budget atom
+`exists_scale_cfCylinder_psi_avoid_zbad` to the genuine cylinder `wxSeq_L4 s` (loose hull `[0,1]`);
+NO schedule threading needed since the budget bound is hull-independent.  These witnesses feed the
+Z-II transfer: because `xA ∈ cfCylinder (wxSeq_L4 s)` and the cylinder shrinks, for large `s` the
+cfDigits of `ψ xA` agree with those of `ψ p` up to scale `n`, transferring z-goodness to `xA`. -/
+theorem exists_scale_zgood_wxSeq_L4 {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    ∃ N : ℕ, 1 ≤ N ∧ ∀ n, N ≤ n → ∃ p : ℝ, Irrational p ∧ p ∈ cfCylinder (wxSeq_L4 hq hr s) ∧
+      p ∉ (⋃ v ∈ wordFamily s, affineMap q r ⁻¹' cfBadZone [] v n (schedEps s)) :=
+  exists_scale_cfCylinder_psi_avoid_zbad hq r (wxSeq_L4 hq hr s) (wxSeq_L4_ne hq hr s)
+    (wxSeq_L4_pos hq hr s) ((cfCylinder_subset_Ioo _).trans Set.Ioo_subset_Icc_self)
+    (wordFamily s) (wordFamily_pos s) (schedEps_pos s)
+
 /-- **Per-stage ψ-rational avoidance** (Z-III steering, read off `StepSpecL4`).  The
 diagonalisation filler digit appended at stage `s` makes the stage-`(s+1)` cylinder EXCLUDE
 `enumPsiRat q r s` — the last conjunct of `StepSpecL4`. -/
