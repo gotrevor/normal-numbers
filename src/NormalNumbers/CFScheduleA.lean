@@ -742,6 +742,63 @@ theorem exists_digit_cfCylinder_notMem (wx : List ℕ) (t : ℝ) :
     exact (Set.disjoint_left.1 hdisj) h1 h2
   · exact ⟨1, by norm_num, h1⟩
 
+/-- **ψ(xA) irrationality from chain-limit avoidance** (Z-III assembly core, subtlety 1).  If the
+chain limit `xA` lies in every cylinder `cfCylinder (w s)`, and the chain "diagonalises" against
+`ψ⁻¹(ℚ)` — for every `t` whose image `ψ(t)` is rational there is a stage whose cylinder EXCLUDES
+`t` — then `ψ(xA)` is irrational.  This reduces the single-stream irrationality gap to a schedule
+property: an enumeration of the countable set `ψ⁻¹(ℚ)` (`countable_preimage_affineMap_range_rat`)
+plus `exists_digit_cfCylinder_notMem` (append one excluding filler digit per stage) supplies the
+excluding stage for each `t`.  `ψ(xA)` irrational is REQUIRED for the z-side transfer (a rational
+`ψ(xA)` has a finite CF, so no Gauss-orbit equidistribution). -/
+theorem affineMap_irrational_of_iInter_avoids {q r : ℝ} (w : ℕ → List ℕ) (xA : ℝ)
+    (hxA : ∀ s, xA ∈ cfCylinder (w s))
+    (havoid : ∀ t : ℝ, affineMap q r t ∈ Set.range ((↑) : ℚ → ℝ) → ∃ s, t ∉ cfCylinder (w s)) :
+    Irrational (affineMap q r xA) := by
+  intro hmem
+  obtain ⟨s, hs⟩ := havoid xA hmem
+  exact hs (hxA s)
+
+/-- **cfK bound for a one-digit filler extension** (Z-III steering, rate-bump).  Appending one
+small digit `a ∈ {1,2}` to a genuine block `u` (`|u| ≥ 1`, `cfK u ≤ e^{κ|u|}`) keeps a cfK cap at
+the SLIGHTLY larger rate `κ + log 2`: `cfK (u ++ [a]) ≤ e^{(κ+log 2)·|u++[a]|}`.  Via
+`cfK_append_le` (factor 2), `cfK [a] = a ≤ 2`, and `4 = e^{2·log 2} ≤ e^{κ + log 2·|u| + log 2}`
+for `|u| ≥ 1`, `κ ≥ 0`.  This lets the diagonalisation filler digit (forcing `ψ(xA)` irrational)
+ride through `cfK_wxSeq_L4_le` with a per-block rate the recursion still absorbs. -/
+theorem cfK_snoc_le_exp_ratebump (u : List ℕ) (hune : u ≠ []) (hupos : ∀ c ∈ u, 1 ≤ c)
+    {a : ℕ} (ha1 : 1 ≤ a) (ha2 : a ≤ 2) {κ : ℝ} (hκ : 0 ≤ κ)
+    (hcap : (cfK u : ℝ) ≤ Real.exp (κ * (u.length : ℝ))) :
+    (cfK (u ++ [a]) : ℝ) ≤ Real.exp ((κ + Real.log 2) * ((u ++ [a]).length : ℝ)) := by
+  have hu1 : 1 ≤ u.length := List.length_pos_of_ne_nil hune
+  have hL1 : (1 : ℝ) ≤ (u.length : ℝ) := by exact_mod_cast hu1
+  have hexp0 : (0 : ℝ) ≤ Real.exp (κ * (u.length : ℝ)) := (Real.exp_pos _).le
+  have haR : (a : ℝ) ≤ 2 := by exact_mod_cast ha2
+  have hcaN : cfK [a] = a := rfl
+  have happ : (cfK (u ++ [a]) : ℝ) ≤ 2 * ((cfK u : ℝ) * (a : ℝ)) := by
+    have h := cfK_append_le u [a] hune (by simp) hupos
+      (by intro c hc; rw [List.mem_singleton] at hc; omega)
+    rw [hcaN] at h
+    exact_mod_cast h
+  -- cfK (u++[a]) ≤ 4·exp(κ|u|)
+  have h4 : (cfK (u ++ [a]) : ℝ) ≤ 4 * Real.exp (κ * (u.length : ℝ)) := by
+    have hstep : (cfK u : ℝ) * (a : ℝ) ≤ Real.exp (κ * (u.length : ℝ)) * 2 :=
+      mul_le_mul hcap haR (by positivity) hexp0
+    linarith [happ, hstep]
+  -- 4·exp(κ|u|) ≤ exp((κ+log2)(|u|+1))
+  have hlen : ((u ++ [a]).length : ℝ) = (u.length : ℝ) + 1 := by
+    simp only [List.length_append, List.length_singleton]; push_cast; ring
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have h4exp : (4 : ℝ) = Real.exp (2 * Real.log 2) := by
+    rw [show (2 : ℝ) * Real.log 2 = Real.log 2 + Real.log 2 by ring, Real.exp_add,
+      Real.exp_log (by norm_num)]; norm_num
+  have hkey : (4 : ℝ) * Real.exp (κ * (u.length : ℝ))
+      ≤ Real.exp ((κ + Real.log 2) * ((u.length : ℝ) + 1)) := by
+    rw [h4exp, ← Real.exp_add]
+    apply Real.exp_le_exp.2
+    nlinarith [hκ, hL1, hlog2]
+  calc (cfK (u ++ [a]) : ℝ) ≤ 4 * Real.exp (κ * (u.length : ℝ)) := h4
+    _ ≤ Real.exp ((κ + Real.log 2) * ((u.length : ℝ) + 1)) := hkey
+    _ = Real.exp ((κ + Real.log 2) * ((u ++ [a]).length : ℝ)) := by rw [hlen]
+
 /-- **Steerable-good measure core (B6 crux).**  For a genuine base word `wx`, a
 finite family `F`, tolerance `δ > 0`, and a target subinterval `(c,d) ⊆
 cfCylinder wx` of positive `γ`-measure, beyond a length threshold `N` every
