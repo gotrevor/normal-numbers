@@ -3815,6 +3815,96 @@ theorem gaussMeasure_cfCylinder_toReal_pos (w : List ℕ) (hw : w ≠ [])
   refine lt_of_lt_of_le ?_ hmono
   exact mul_pos (by positivity) hvolpos
 
+/-- **Chebyshev budget discharge (Z-I, single scale).**  For a genuine cylinder `wx'` with
+hull `[a,b]`, family `F`, tolerance `δ > 0`, there is a scale threshold `N` such that for EVERY
+`n ≥ N` there is an irrational `p ∈ cfCylinder wx'` whose ψ-image avoids the absolute-scale
+z-bad zones `cfBadZone [] v n δ` for all `v ∈ F`.  Discharges `exists_cfCylinder_psi_avoid_zbad`'s
+`hbudget` at the singleton `NSz = {n}` from the aggregate Chebyshev bound
+(`gaussMeasure_aggregate_cfBadZone_le`, mass `≤ Ssum/(δ²n)` since `γ(cfCylinder []) ≤ 1`): once
+`n` exceeds `(2/q)·Ssum/(δ²·γ(cfCylinder wx'))`, the pulled-back z-bad mass drops below the fixed
+cylinder mass.  This is the per-stage z-good record `schedStepL4_exists` will attach; the s↔n
+coupling (each stage supplies one arbitrarily-large scale) is handled by the Z-II transfer. -/
+theorem exists_scale_cfCylinder_psi_avoid_zbad {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (wx' : List ℕ) (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c) {a b : ℝ}
+    (hIcc : cfCylinder wx' ⊆ Set.Icc a b) (F : Finset (List ℕ))
+    (hF : ∀ v ∈ F, ∀ c ∈ v, 1 ≤ c) {δ : ℝ} (hδ : 0 < δ) :
+    ∃ N : ℕ, 1 ≤ N ∧ ∀ n, N ≤ n → ∃ p : ℝ, Irrational p ∧ p ∈ cfCylinder wx' ∧
+      p ∉ (⋃ v ∈ F, affineMap q r ⁻¹' cfBadZone [] v n δ) := by
+  set γcylR : ℝ := (gaussMeasure (cfCylinder wx')).toReal with hγcylRdef
+  have hγcylR0 : 0 < γcylR := gaussMeasure_cfCylinder_toReal_pos wx' hne hpos
+  set Ssum : ℝ := ∑ v ∈ F, 7 * (8 * (v.length : ℝ) + 80)
+      * (gaussMeasure (cfCylinder v)).toReal with hSsumdef
+  have hSsum0 : 0 ≤ Ssum := by
+    rw [hSsumdef]; refine Finset.sum_nonneg fun v _ => ?_; positivity
+  set N : ℕ := ⌈(2 / q) * Ssum / (δ ^ 2 * γcylR)⌉₊ + 1 with hNdef
+  refine ⟨N, by omega, fun n hn_ge => ?_⟩
+  have hn : 0 < n := by omega
+  have hnR : (N : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn_ge
+  have hnR0 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn
+  -- the singleton bad set equals the plain `v`-union at scale `n`
+  have hUeq : (⋃ m ∈ ({n} : Finset ℕ), ⋃ v ∈ F, cfBadZone [] v m δ)
+      = ⋃ v ∈ F, cfBadZone [] v n δ := by simp
+  -- aggregate mass bound `≤ Ssum/(δ²n)`
+  have hpos0 : ∀ c ∈ ([] : List ℕ), 1 ≤ c := by simp
+  have h0 := gaussMeasure_aggregate_cfBadZone_le [] hpos0 F hF n hn hδ
+  have hcf1 : (gaussMeasure (cfCylinder ([] : List ℕ))).toReal ≤ 1 :=
+    ENNReal.toReal_mono ENNReal.one_ne_top prob_le_one
+  have hstep : (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n))
+        * (gaussMeasure (cfCylinder ([] : List ℕ))).toReal)
+      ≤ ∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n)) := by
+    refine Finset.sum_le_sum fun v _ => ?_
+    have hterm : 0 ≤ 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n)) := by positivity
+    nlinarith [hterm, hcf1, ENNReal.toReal_nonneg (a := gaussMeasure (cfCylinder ([] : List ℕ)))]
+  have hsumdiv : (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n)))
+      = Ssum / (δ ^ 2 * n) := by
+    rw [hSsumdef, Finset.sum_div]; exact Finset.sum_congr rfl fun v _ => by ring
+  have hagg : (gaussMeasure (⋃ v ∈ F, cfBadZone [] v n δ)).toReal ≤ Ssum / (δ ^ 2 * n) :=
+    le_trans h0 (le_trans hstep (le_of_eq hsumdiv))
+  -- turn into ENNReal bound
+  have hUfin : gaussMeasure (⋃ v ∈ F, cfBadZone [] v n δ) ≠ ⊤ := measure_ne_top _ _
+  have hUle : gaussMeasure (⋃ v ∈ F, cfBadZone [] v n δ)
+      ≤ ENNReal.ofReal (Ssum / (δ ^ 2 * n)) := by
+    rw [← ENNReal.ofReal_toReal hUfin]
+    exact ENNReal.ofReal_le_ofReal hagg
+  -- the key real inequality
+  have hxle : (2 / q) * Ssum / (δ ^ 2 * γcylR) < (n : ℝ) := by
+    have hceil : (2 / q) * Ssum / (δ ^ 2 * γcylR) ≤ (⌈(2 / q) * Ssum / (δ ^ 2 * γcylR)⌉₊ : ℝ) :=
+      Nat.le_ceil _
+    have : ((⌈(2 / q) * Ssum / (δ ^ 2 * γcylR)⌉₊ : ℝ) + 1) ≤ (n : ℝ) := by
+      rw [hNdef] at hnR; push_cast at hnR; linarith
+    linarith
+  have hcross : (2 / q) * Ssum < (n : ℝ) * (δ ^ 2 * γcylR) := by
+    rw [div_lt_iff₀ (by positivity)] at hxle; linarith [hxle]
+  have hreal : (2 / q) * (Ssum / (δ ^ 2 * (n : ℝ))) < γcylR := by
+    rw [mul_div_assoc'] at *
+    rw [div_lt_iff₀ (by positivity : (0 : ℝ) < δ ^ 2 * (n : ℝ))]
+    nlinarith [hcross]
+  -- assemble hbudget at NSz = {n}
+  obtain ⟨p, hpirr, hpcyl, hpnot⟩ :=
+    exists_cfCylinder_psi_avoid_zbad hq r wx' hIcc F ({n} : Finset ℕ) (δ := δ) (by
+      have hqle : (0 : ℝ) ≤ 2 / q := by positivity
+      calc ENNReal.ofReal (2 / q)
+              * gaussMeasure ((⋃ m ∈ ({n} : Finset ℕ), ⋃ v ∈ F, cfBadZone [] v m δ)
+                  ∩ Set.Ioo (q * a + r) (q * b + r))
+          ≤ ENNReal.ofReal (2 / q) * gaussMeasure (⋃ v ∈ F, cfBadZone [] v n δ) := by
+            rw [hUeq]; gcongr; exact Set.inter_subset_left
+        _ ≤ ENNReal.ofReal (2 / q) * ENNReal.ofReal (Ssum / (δ ^ 2 * n)) := by gcongr
+        _ = ENNReal.ofReal ((2 / q) * (Ssum / (δ ^ 2 * n))) :=
+            (ENNReal.ofReal_mul hqle).symm
+        _ < ENNReal.ofReal γcylR := (ENNReal.ofReal_lt_ofReal_iff hγcylR0).2 hreal
+        _ = gaussMeasure (cfCylinder wx') := by
+            rw [hγcylRdef, ENNReal.ofReal_toReal (measure_ne_top _ _)])
+  refine ⟨p, hpirr, hpcyl, fun hpU => hpnot ?_⟩
+  -- convert p ∈ (⋃ v∈F …) to p ∈ (⋃ m∈{n} ⋃ v∈F …)
+  simp only [Set.mem_iUnion] at hpU ⊢
+  obtain ⟨v, hvF, hv⟩ := hpU
+  exact ⟨n, by simp, v, hvF, hv⟩
+
+
 /-- **Hull-width reciprocal ≤ `8·cfK²` (resolution input for the self-hull steer).**  For a
 genuine word `w`, `4 / vol(cfCylinder w) ≤ 8·cfK(w)²`: the cylinder width is
 `≥ 1/(2·cfK²)` (`volume_cfCylinder_ge_inv`).  When the L4 steer targets the cylinder's own
