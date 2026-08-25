@@ -26,13 +26,26 @@ and **`inner_pair_bound`** — the covariance FOLD: `|Σ_{j,j'}(γ.real(T⁻ʲ[K
 ≤ n(γ(A∩B)+γ_aγ_b) + 88n(vol_bγ_a+vol_aγ_b)` (diagonal j=j' via measure-preservation; off-diag folds
 brick 2 via sum_range_dist_le+geom_trunc_sum_le). This is the hard analytic core.
 
+**BRICK 3 DONE (green, axiom-clean):** `variance_truncated_le K M n : |∫(S_n^M)² − (n·μ_M)²| ≤ n·logVarConst K`,
+UNIFORM in M. Assembly landed via hΔ + nested-abs + `inner_pair_bound` + `sum_logMul_gaussMeasure_inter`
+(collapse) + `(summable_logTailC*).sum_le_tsum` partial bounds + final `gcongr`.
+
 **REMAINING (hardest-first, next laps):**
-1. `variance_truncated_le K M n` : `|∫(S_n^M)² − (n·μ_M)²| ≤ n·logVarConst K`. ASSEMBLY (all pieces
-   landed): hΔ (combine the two sub-lemmas into `Σ_{a,b} u_au_b·Σ_{j,j'}(γ.real−γ_aγ_b)`), pull u≥0
-   out of abs (nested `Finset.abs_sum_le_sum_abs`), apply `inner_pair_bound` per (a,b), then bound
-   `Σ_{a,b}u_au_b·(inner RHS)` = `n·[collapse ⇒ Σu_a²γ_a ≤ C₃, plus (logTruncMean)² ≤ C₁²]` +
-   `88n·[2·μ_M·ν_M ≤ 2C₁C₂]` via `sum_le_tsum` partial-bounds. (Original note said 80C₁C₂; actual
-   fold constant is 176 = 8·22, absorbed into logVarConst.)
+1. `variance_logBirkhoffSum_le K n` : `|∫(logBirkhoffSum K n)² − (n·μ)²| ≤ n·logVarConst K` via MCT
+   M→∞. Need `S_n^M := logBirkhoffTrunc K M n ↑ logBirkhoffSum K n` a.e. (pointwise: `logBirkhoffTrunc`
+   is `Σ_{a<M} log(K+1+a)·blockCount[K+1+a] n`, and `logBirkhoffSum K n x = Σ_{i<n} logTailFn K(Tⁱx)`;
+   the truncation ↑ the full via `logTailTerm_tsum_ae_eq` at each `Tⁱx` — but likely cleaner: show
+   `logBirkhoffTrunc K M n = Σ_{i<n} (Σ_{a<M} logTailTerm K a)∘Tⁱ` and `(Σ_{a<M} logTailTerm K a) ↑ logTailFn K`).
+   Then `∫(S_n^M)²↑∫(logBirkhoffSum)²` (MCT: `MeasureTheory.integral_tendsto_of_tendsto_of_monotone`
+   or lintegral+`lintegral_iSup`; limit integrable via the uniform bound `≤(nμ)²+n·logVarConst`), and
+   `logTruncMean K M → ∫ logTailFn K = logTailC1 K = μ` (partial sums → tsum). Pass the bound to the limit.
+   ALT (maybe cleaner, avoids identifying μ): keep the RHS `n·logVarConst K` (M-independent) and only
+   need `∫(S_n^M)² → ∫(logBirkhoffSum)²` and `logTruncMean K M → μ` where `μ = ∫ logTailFn K` (from
+   `integral_logTailFn_eq_of_hasSum`; note `μ = logTailC1 K`).
+2. `chebyshev_logBirkhoffSum` + `ae_tail_average_tendsto` : TRANSCRIBE `chebyshev_blockCount` +
+   `ae_orbit_freq` (`CFAeNormal.lean:81`), `blockCount A p`↦`logBirkhoffSum K p`, `γv`↦`μ`, variance
+   const `(8|v|+80)γv`↦`logVarConst K`. Monotone gap-squeeze OK (`logBirkhoffSum_nonneg`, ↑ in n).
+3. Graft ⇒ image-Khinchin headline; re-`#print axioms` clean.
    OLD note (superseded, kept for context): `|∫(S_n^M)² − (n·μ_M)²| ≤ n·(C₃+80C₁C₂)` UNIFORM in M. Via
    `integral_blockCount_cross` (S_n^M is a finite Σ_{a,b} u_a u_b blockCount·blockCount). Split
    `Σ_{i,j}` diagonal i=j (⇒ `n·Var(f_M) = n·(∫f_M²−μ_M²) ≤ n·∫f_M²`; distinct A_a,A_b DISJOINT so
