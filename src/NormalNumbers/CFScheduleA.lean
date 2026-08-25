@@ -3582,6 +3582,35 @@ theorem four_div_volume_cfCylinder_le (w : List ℕ) (hw : w ≠ [])
         rw [mul_one_div, eq_div_iff (by positivity)]; ring
     _ ≤ 8 * (cfK w : ℝ) ^ 2 * (volume (cfCylinder w)).toReal := this
 
+/-- A cylinder inside a hull `Icc a b` has `toReal`-volume at most the hull width `b−a`. -/
+theorem cfCylinder_volume_toReal_le_width (w : List ℕ) {a b : ℝ}
+    (hab : a ≤ b) (hsub : cfCylinder w ⊆ Set.Icc a b) :
+    (volume (cfCylinder w)).toReal ≤ b - a := by
+  have hmono : volume (cfCylinder w) ≤ volume (Set.Icc a b) := measure_mono hsub
+  rw [Real.volume_Icc] at hmono
+  have h := ENNReal.toReal_mono ENNReal.ofReal_ne_top hmono
+  rwa [ENNReal.toReal_ofReal (by linarith)] at h
+
+/-- **Hull-width resolution bound.**  For a genuine cylinder sitting inside a hull `Icc a b`,
+the width reciprocal `4/(b−a)` is at most `8·cfK(w)²`.  Composes
+`four_div_volume_cfCylinder_le` (`4/vol ≤ 8cfK²`) with `vol ≤ b−a`
+(`cfCylinder_volume_toReal_le_width`).  This is the shape
+`exists_fib_threshold_linear_of_cfK` consumes (`a := 4/(b−a)`), turning the L4 self-hull
+target width into the affine-in-`|w|` Fibonacci resolution once the cfK cap is threaded. -/
+theorem four_div_width_le_cfK (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a)
+    {a b : ℝ} (hab : a < b) (hsub : cfCylinder w ⊆ Set.Icc a b) :
+    4 / (b - a) ≤ 8 * (cfK w : ℝ) ^ 2 := by
+  have hc0 : (0 : ℝ) < (cfK w : ℝ) := by
+    have : (1 : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast one_le_cfK w hpos
+    linarith
+  have hvolpos : 0 < (volume (cfCylinder w)).toReal :=
+    lt_of_lt_of_le (by positivity) (volume_cfCylinder_ge_inv w hw hpos)
+  have hvolw : (volume (cfCylinder w)).toReal ≤ b - a :=
+    cfCylinder_volume_toReal_le_width w hab.le hsub
+  calc 4 / (b - a) ≤ 4 / (volume (cfCylinder w)).toReal := by
+        rw [div_le_div_iff₀ (by linarith) hvolpos]; nlinarith [hvolw]
+    _ ≤ 8 * (cfK w : ℝ) ^ 2 := four_div_volume_cfCylinder_le w hw hpos
+
 /-- **Logarithmic fib threshold (bounded form).**  A resolution threshold `N` with
 `a < fib(n+1)²` for all `n ≥ N`, AND `N ≤ log_φ(√5·√a + 1) + 1` — logarithmic in
 `a`.  Packages `exists_nat_goldenRatio_pow_gt` (log-exponent solvability) with
