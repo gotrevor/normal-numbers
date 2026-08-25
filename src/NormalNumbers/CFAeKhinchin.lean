@@ -96,6 +96,35 @@ theorem abs_cov_two_cyl_le (a b : ℕ) (ha : 1 ≤ a) (m : ℕ) (hm : 1 ≤ m) :
   rw [hlen] at hmix
   simpa using hmix
 
+/-- **Variance-constant summability.**  `Σ_a log(a+1)·|cfCylinder [a+1]|` converges
+— the `volume`-weighted analogue of `summable_gaussKuzmin_log` (`Σ_a
+log(a+1)·γ([a+1])`), by the `volume ≤ 2·log2·γ` domination on `(0,1)`.  This is the
+finite constant `Σ_b log b · |[b]|` that appears in the log-tail correlation bound
+`|Cov(f, f∘Tᵐ)| ≤ (9/10)^{m∸1}·4·(Σ log·γ)·(Σ log·vol)`. -/
+lemma summable_logMul_vol_cfCylinder :
+    Summable (fun a : ℕ => Real.log ((a : ℝ) + 1) * (volume (cfCylinder [a + 1])).toReal) := by
+  have hlog2 : (0 : ℝ) ≤ 2 * Real.log 2 := by
+    have := Real.log_nonneg (by norm_num : (1 : ℝ) ≤ 2); linarith
+  refine Summable.of_nonneg_of_le (fun a => ?_) (fun a => ?_)
+    (summable_gaussKuzmin_log.mul_left (2 * Real.log 2))
+  · have h1 : (0 : ℝ) ≤ Real.log ((a : ℝ) + 1) :=
+      Real.log_nonneg (by have := Nat.cast_nonneg (α := ℝ) a; linarith)
+    positivity
+  · -- `log(a+1)·vol([a+1]) ≤ 2log2 · (γ([a+1])·log(a+1)) = 2log2·logTailG a`
+    have hlogn : (0 : ℝ) ≤ Real.log ((a : ℝ) + 1) :=
+      Real.log_nonneg (by have := Nat.cast_nonneg (α := ℝ) a; linarith)
+    have hdom : (volume (cfCylinder [a + 1])).toReal
+        ≤ 2 * Real.log 2 * (gaussMeasure (cfCylinder [a + 1])).toReal := by
+      have hle := volume_le_ofReal_mul_gaussMeasure (cfCylinder [a + 1])
+        (measurableSet_cfCylinder _) (cfCylinder_subset_Ioo _)
+      have := ENNReal.toReal_mono (by
+        exact ENNReal.mul_ne_top ENNReal.ofReal_ne_top (measure_ne_top _ _)) hle
+      rwa [ENNReal.toReal_mul, ENNReal.toReal_ofReal hlog2] at this
+    calc Real.log ((a : ℝ) + 1) * (volume (cfCylinder [a + 1])).toReal
+        ≤ Real.log ((a : ℝ) + 1) * (2 * Real.log 2 * (gaussMeasure (cfCylinder [a + 1])).toReal) :=
+          mul_le_mul_of_nonneg_left hdom hlogn
+      _ = 2 * Real.log 2 * logTailG a := by unfold logTailG; ring
+
 /-- **The tail-average crux (disclosed).**  For a fixed cutoff `K`, the
 normalized log-tail Birkhoff sum converges a.e. to the tail integral.  Route:
 L²→a.e. Borel–Cantelli (as in `ae_orbit_freq`) via a variance bound for
