@@ -54,6 +54,13 @@ Both are `sorry`-free and depend only on Lean's standard axioms
 table; `JUDGE.md` records the verification history, including the close-out
 `#print axioms` sweep and its red-team test.
 
+Note that the repo is not globally `sorry`-free, and does not claim to be: a second
+expedition is in flight, and `CFScheduleA.schedA_block_linear` is its one open
+obligation.  The results above do not depend on it, and the thing that establishes
+that is the `#print axioms` output, not the absence of the word `sorry` from a file.
+Run the sweep yourself: `lake env lean` on a file that `import NormalNumbers` and
+`#print axioms` the two theorems named above.
+
 As far as a survey of provers, Mathlib, the Lean Zulip and the AFP reaches (August
 2026), this appears to be the first formalization of Becher-Yuhjtman in any prover.
 We did not find the three-way conjunction written down anywhere, but that is not a
