@@ -723,6 +723,225 @@ theorem variance_truncated_le (K M n : ℕ) :
         gcongr
     _ = (n : ℝ) * logVarConst K := by unfold logVarConst; ring
 
+/-! ### Brick 4: the M→∞ MCT limit — `variance_logBirkhoffSum_le`
+
+The truncated variance bound `variance_truncated_le` is uniform in the cutoff `M`.
+We push it to `M → ∞` by monotone convergence, obtaining the genuine variance
+bound for the (unbounded) log-tail Birkhoff sum, with mean `μ = logTailC1 K`. -/
+
+/-- Finite partial sum of the log-tail singleton indicators:
+`Σ_{a<M} log(K+1+a)·1_{[K+1+a]}`.  The one-step integrand whose Birkhoff sum is
+`logBirkhoffTrunc`, and whose `M→∞` limit is `logTailFn K`. -/
+noncomputable def partialTail (K M : ℕ) (y : ℝ) : ℝ :=
+  ∑ a ∈ Finset.range M, Real.log ((K : ℝ) + 1 + a) * blockIndic (cfCylinder [K + 1 + a]) y
+
+lemma partialTail_nonneg (K M : ℕ) (y : ℝ) : 0 ≤ partialTail K M y :=
+  Finset.sum_nonneg fun a _ => mul_nonneg
+    (Real.log_nonneg (by have := Nat.cast_nonneg (α := ℝ) K; have := Nat.cast_nonneg (α := ℝ) a; linarith))
+    (Set.indicator_nonneg (fun _ _ => zero_le_one) y)
+
+lemma partialTail_mono (K : ℕ) (y : ℝ) : Monotone (fun M => partialTail K M y) := by
+  intro M M' hMM'
+  refine Finset.sum_le_sum_of_subset_of_nonneg
+    (fun a ha => Finset.mem_range.mpr (lt_of_lt_of_le (Finset.mem_range.mp ha) hMM')) ?_
+  intro a _ _
+  exact mul_nonneg
+    (Real.log_nonneg (by have := Nat.cast_nonneg (α := ℝ) K; have := Nat.cast_nonneg (α := ℝ) a; linarith))
+    (Set.indicator_nonneg (fun _ _ => zero_le_one) y)
+
+/-- For `y ∈ (0,1)` the partial tail is eventually constant (at most one singleton
+cylinder contains `y`), hence converges to `logTailFn K y`. -/
+lemma partialTail_tendsto (K : ℕ) {y : ℝ} (hy : y ∈ Set.Ioo (0 : ℝ) 1) :
+    Tendsto (fun M => partialTail K M y) atTop (nhds (logTailFn K y)) := by
+  by_cases hd : K < cfDigit y 0
+  · obtain ⟨a₀, ha₀⟩ := Nat.exists_eq_add_of_lt hd
+    refine tendsto_atTop_of_eventually_const (i₀ := a₀ + 1) (fun M hM => ?_)
+    unfold partialTail logTailFn
+    rw [if_pos hd, Finset.sum_eq_single a₀]
+    · have hmem : y ∈ cfCylinder [K + 1 + a₀] :=
+        mem_cfCylinder_singleton.mpr ⟨hy, by omega⟩
+      rw [blockIndic, Set.indicator_of_mem hmem, Pi.one_apply, mul_one]
+      congr 1
+      have hval : ((K : ℝ) + 1 + a₀) = (cfDigit y 0 : ℝ) := by rw [ha₀]; push_cast; ring
+      rw [hval]
+    · intro b _ hb
+      have hnotmem : y ∉ cfCylinder [K + 1 + b] := by
+        intro hmem
+        have h2 := (mem_cfCylinder_singleton.mp hmem).2
+        omega
+      rw [blockIndic, Set.indicator_of_notMem hnotmem, mul_zero]
+    · intro hcon
+      exact absurd (Finset.mem_range.2 (by omega)) hcon
+  · refine tendsto_atTop_of_eventually_const (i₀ := 0) (fun M _ => ?_)
+    unfold partialTail logTailFn
+    rw [if_neg hd]
+    refine Finset.sum_eq_zero (fun a _ => ?_)
+    have hnotmem : y ∉ cfCylinder [K + 1 + a] := by
+      intro hmem
+      have h2 := (mem_cfCylinder_singleton.mp hmem).2
+      omega
+    rw [blockIndic, Set.indicator_of_notMem hnotmem, mul_zero]
+
+/-- `logBirkhoffTrunc` is the Birkhoff sum of `partialTail` over the Gauss orbit. -/
+lemma logBirkhoffTrunc_eq_sum_partialTail (K M n : ℕ) (x : ℝ) :
+    logBirkhoffTrunc K M n x = ∑ i ∈ Finset.range n, partialTail K M (gaussMap^[i] x) := by
+  unfold logBirkhoffTrunc partialTail
+  simp_rw [blockCount_apply, Finset.mul_sum]
+  rw [Finset.sum_comm]
+
+lemma logBirkhoffTrunc_nonneg (K M n : ℕ) (x : ℝ) : 0 ≤ logBirkhoffTrunc K M n x := by
+  rw [logBirkhoffTrunc_eq_sum_partialTail]
+  exact Finset.sum_nonneg (fun i _ => partialTail_nonneg K M _)
+
+lemma logBirkhoffTrunc_mono (K n : ℕ) (x : ℝ) :
+    Monotone (fun M => logBirkhoffTrunc K M n x) := by
+  intro M M' h
+  simp_rw [logBirkhoffTrunc_eq_sum_partialTail]
+  exact Finset.sum_le_sum (fun i _ => partialTail_mono K _ h)
+
+lemma measurable_logBirkhoffTrunc (K M n : ℕ) : Measurable (logBirkhoffTrunc K M n) := by
+  unfold logBirkhoffTrunc
+  exact Finset.measurable_sum _ (fun a _ =>
+    (measurable_blockCount _ (measurableSet_cfCylinder _) n).const_mul _)
+
+/-- For a full-orbit point, `logBirkhoffTrunc K M n x → logBirkhoffSum K n x`. -/
+lemma logBirkhoffTrunc_tendsto (K n : ℕ) {x : ℝ}
+    (hx : ∀ i, gaussMap^[i] x ∈ Set.Ioo (0 : ℝ) 1) :
+    Tendsto (fun M => logBirkhoffTrunc K M n x) atTop (nhds (logBirkhoffSum K n x)) := by
+  simp_rw [logBirkhoffTrunc_eq_sum_partialTail]
+  rw [logBirkhoffSum_apply]
+  exact tendsto_finsetSum _ (fun i _ => partialTail_tendsto K (hx i))
+
+/-- `(logBirkhoffTrunc K M n)²` is integrable (a finite double sum of block-count
+products). -/
+lemma integrable_logBirkhoffTrunc_sq (K M n : ℕ) :
+    Integrable (fun x => (logBirkhoffTrunc K M n x) ^ 2) gaussMeasure := by
+  have hsq : (fun x => (logBirkhoffTrunc K M n x) ^ 2) =
+      fun x => ∑ a ∈ Finset.range M, ∑ b ∈ Finset.range M,
+        Real.log ((K : ℝ) + 1 + a) * Real.log ((K : ℝ) + 1 + b) *
+          (blockCount (cfCylinder [K + 1 + a]) n x * blockCount (cfCylinder [K + 1 + b]) n x) := by
+    funext x
+    rw [logBirkhoffTrunc, pow_two, Finset.sum_mul_sum]
+    apply Finset.sum_congr rfl; intro a _
+    apply Finset.sum_congr rfl; intro b _
+    ring
+  rw [hsq]
+  exact integrable_finsetSum _ (fun a _ => integrable_finsetSum _ (fun b _ =>
+    ((integrable_blockCount_mul (cfCylinder [K + 1 + a]) (cfCylinder [K + 1 + b])
+      (measurableSet_cfCylinder _) (measurableSet_cfCylinder _) n)).const_mul _))
+
+/-- The truncated mean converges to the full log-tail integral constant. -/
+lemma logTruncMean_tendsto (K : ℕ) :
+    Tendsto (fun M => logTruncMean K M) atTop (nhds (logTailC1 K)) :=
+  (summable_logTailC1 K).hasSum.tendsto_sum_nat
+
+/-- **`logTailC1 K = ∫ logTailFn K dγ`** — the variance constant `μ` is the
+genuine mean of the (unbounded) one-step log-tail. -/
+lemma logTailC1_eq_integral (K : ℕ) :
+    logTailC1 K = ∫ x, logTailFn K x ∂gaussMeasure := by
+  rw [integral_logTailFn_eq_of_hasSum K summable_gaussKuzmin_log.hasSum]
+  have hsplit : (∑' n, logTailG n) - ∑ k ∈ Finset.range K, logTailG k
+      = ∑' a : ℕ, logTailG (a + K) := by
+    have h := summable_gaussKuzmin_log.sum_add_tsum_nat_add K
+    linarith [h]
+  rw [hsplit, logTailC1]
+  refine tsum_congr (fun a => ?_)
+  unfold logTailG
+  have h1 : a + K + 1 = K + 1 + a := by omega
+  have h2 : ((a : ℝ) + K) + 1 = (K : ℝ) + 1 + a := by ring
+  rw [h1]
+  push_cast
+  rw [h2]
+  ring
+
+/-- **Brick 4 — the genuine variance bound.**  `|∫(S_n)² − (n·μ)²| ≤ n·logVarConst K`
+with `μ = logTailC1 K = ∫ logTailFn K`, for the unbounded log-tail Birkhoff sum
+`S_n = logBirkhoffSum K n`.  Proof: MCT (`M → ∞`) on `variance_truncated_le`. -/
+theorem variance_logBirkhoffSum_le (K n : ℕ) :
+    |∫ x, (logBirkhoffSum K n x) ^ 2 ∂gaussMeasure - ((n : ℝ) * logTailC1 K) ^ 2|
+      ≤ (n : ℝ) * logVarConst K := by
+  have hlog : ∀ c : ℕ, 0 ≤ Real.log ((K : ℝ) + 1 + c) := fun c =>
+    Real.log_nonneg (by have := Nat.cast_nonneg (α := ℝ) K; have := Nat.cast_nonneg (α := ℝ) c; linarith)
+  -- everywhere-monotone squares
+  have hmonoSq : ∀ x, Monotone (fun M => (logBirkhoffTrunc K M n x) ^ 2) := by
+    intro x M M' h
+    have h1 := logBirkhoffTrunc_mono K n x h
+    have h0 := logBirkhoffTrunc_nonneg K M n x
+    nlinarith [h0, h1]
+  -- a.e. full orbit
+  have haeOrbit : ∀ᵐ x ∂gaussMeasure, ∀ i, gaussMap^[i] x ∈ Set.Ioo (0 : ℝ) 1 := by
+    filter_upwards [ae_irrational, ae_mem_Ioo] with x hirr hx
+    exact fun i => (irrational_orbit x hirr hx i).2
+  -- per-M integral upper bound (uniform)
+  have hboundM : ∀ M, ∫ x, (logBirkhoffTrunc K M n x) ^ 2 ∂gaussMeasure
+      ≤ ((n : ℝ) * logTailC1 K) ^ 2 + (n : ℝ) * logVarConst K := by
+    intro M
+    have hv := (abs_le.mp (variance_truncated_le K M n)).2
+    have hμle : logTruncMean K M ≤ logTailC1 K := by
+      unfold logTruncMean logTailC1
+      exact (summable_logTailC1 K).sum_le_tsum (Finset.range M)
+        (fun i _ => mul_nonneg (hlog i) ENNReal.toReal_nonneg)
+    have hμnn : (0 : ℝ) ≤ logTruncMean K M := by
+      unfold logTruncMean
+      exact Finset.sum_nonneg (fun i _ => mul_nonneg (hlog i) ENNReal.toReal_nonneg)
+    have hnn : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+    have hC1 := logTailC1_nonneg K
+    have hsq : ((n : ℝ) * logTruncMean K M) ^ 2 ≤ ((n : ℝ) * logTailC1 K) ^ 2 := by
+      have hle : (n : ℝ) * logTruncMean K M ≤ (n : ℝ) * logTailC1 K :=
+        mul_le_mul_of_nonneg_left hμle hnn
+      have hge : (0 : ℝ) ≤ (n : ℝ) * logTruncMean K M := mul_nonneg hnn hμnn
+      nlinarith [hle, hge]
+    linarith [hv, hsq]
+  -- lintegral bound on the limit square (⇒ integrability)
+  have hgmono : Monotone (fun M => fun x => ENNReal.ofReal ((logBirkhoffTrunc K M n x) ^ 2)) :=
+    fun M M' h x => ENNReal.ofReal_le_ofReal (hmonoSq x h)
+  have hgmeas : ∀ M, Measurable (fun x => ENNReal.ofReal ((logBirkhoffTrunc K M n x) ^ 2)) :=
+    fun M => ((measurable_logBirkhoffTrunc K M n).pow_const 2).ennreal_ofReal
+  have hsup : ∀ᵐ x ∂gaussMeasure,
+      (⨆ M, ENNReal.ofReal ((logBirkhoffTrunc K M n x) ^ 2))
+        = ENNReal.ofReal ((logBirkhoffSum K n x) ^ 2) := by
+    filter_upwards [haeOrbit] with x hx
+    have htend : Tendsto (fun M => ENNReal.ofReal ((logBirkhoffTrunc K M n x) ^ 2)) atTop
+        (nhds (ENNReal.ofReal ((logBirkhoffSum K n x) ^ 2))) :=
+      (ENNReal.continuous_ofReal.tendsto _).comp ((logBirkhoffTrunc_tendsto K n hx).pow 2)
+    have hmono' : Monotone (fun M => ENNReal.ofReal ((logBirkhoffTrunc K M n x) ^ 2)) :=
+      fun M M' h => ENNReal.ofReal_le_ofReal (hmonoSq x h)
+    exact tendsto_nhds_unique (tendsto_atTop_iSup hmono') htend
+  have hlint : ∫⁻ x, ENNReal.ofReal ((logBirkhoffSum K n x) ^ 2) ∂gaussMeasure
+      ≤ ENNReal.ofReal (((n : ℝ) * logTailC1 K) ^ 2 + (n : ℝ) * logVarConst K) := by
+    rw [← lintegral_congr_ae hsup, lintegral_iSup hgmeas hgmono]
+    refine iSup_le (fun M => ?_)
+    rw [← ofReal_integral_eq_lintegral_ofReal (integrable_logBirkhoffTrunc_sq K M n)
+      (Filter.Eventually.of_forall (fun x => sq_nonneg _))]
+    exact ENNReal.ofReal_le_ofReal (hboundM M)
+  have hFint : Integrable (fun x => (logBirkhoffSum K n x) ^ 2) gaussMeasure := by
+    have hne : ∫⁻ x, ENNReal.ofReal ((logBirkhoffSum K n x) ^ 2) ∂gaussMeasure ≠ (⊤ : ENNReal) := by
+      refine ne_of_lt (lt_of_le_of_lt hlint ?_)
+      exact ENNReal.ofReal_lt_top
+    exact (lintegral_ofReal_ne_top_iff_integrable
+      ((measurable_logBirkhoffSum K n).pow_const 2).aestronglyMeasurable
+      (Filter.Eventually.of_forall (fun x => sq_nonneg _))).mp hne
+  -- MCT: the truncated second moments converge to the full second moment
+  have hMCT : Tendsto (fun M => ∫ x, (logBirkhoffTrunc K M n x) ^ 2 ∂gaussMeasure) atTop
+      (nhds (∫ x, (logBirkhoffSum K n x) ^ 2 ∂gaussMeasure)) := by
+    refine integral_tendsto_of_tendsto_of_monotone
+      (fun M => integrable_logBirkhoffTrunc_sq K M n) hFint
+      (Filter.Eventually.of_forall (fun x => hmonoSq x)) ?_
+    filter_upwards [haeOrbit] with x hx
+    exact (logBirkhoffTrunc_tendsto K n hx).pow 2
+  -- truncated means → μ
+  have hmeanTend : Tendsto (fun M => ((n : ℝ) * logTruncMean K M) ^ 2) atTop
+      (nhds (((n : ℝ) * logTailC1 K) ^ 2)) :=
+    (tendsto_const_nhds.mul (logTruncMean_tendsto K)).pow 2
+  -- pass the uniform bound through the limit
+  have hdiffTend : Tendsto
+      (fun M => |∫ x, (logBirkhoffTrunc K M n x) ^ 2 ∂gaussMeasure
+        - ((n : ℝ) * logTruncMean K M) ^ 2|) atTop
+      (nhds (|∫ x, (logBirkhoffSum K n x) ^ 2 ∂gaussMeasure - ((n : ℝ) * logTailC1 K) ^ 2|)) :=
+    (hMCT.sub hmeanTend).abs
+  exact le_of_tendsto hdiffTend
+    (Filter.Eventually.of_forall (fun M => variance_truncated_le K M n))
+
 /-! ## The g-direct bridges (reduce `ae_khinchinTypical` to the `K=0` tail average)
 
 `g(x) = log(cfDigit x 0)` is `logTailFn 0` a.e. (the first digit is `≥ 1` a.e.),
