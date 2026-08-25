@@ -20,9 +20,16 @@ invariance of CF-normality (`isCFNormal_add_nat`).  Given that, each
 countable union of null sets is null, so the good set is co-null in `(0,1)` and
 meets it.
 
-The restriction `r ≥ 0` keeps every image in `[0,∞)`, where the positive
-integer-shift lemma applies directly; the fully-general `r ∈ ℝ` version needs
-the negative branch (`gaussMap`-nonsingularity), tracked in `PENDING_WORK.md`.
+Two forms are proved.  `exists_cfNormal_and_affine_family_cfNormal` assumes
+`r ≥ 0` (images stay in `[0,∞)`, positive-shift crux `volume_notCFNormal_Ici0`).
+`exists_cfNormal_and_affine_family_cfNormal'` is the FULL Vandehey §7 "Tier 2"
+statement: `q > 0` and `r ∈ ℝ` arbitrary.  The negative half of the crux
+(`volume_notCFNormal_univ`) uses the universal one-step descent
+`cfDigit w (k+1) = cfDigit (gaussMap w) k` (so `w < 0` reduces to `gaussMap w ∈
+[0,1)`) together with `gaussMap`-nonsingularity on the negatives, obtained by
+writing `w ↦ Int.fract w⁻¹` on `Iio 0` as `inv ∘ (Int.fract-preimage)` and hitting
+the null `Int.fract`-preimage with the differentiable-image-of-null lemma
+(`addHaar_image_eq_zero_of_differentiableOn_of_addHaar_eq_zero`).
 -/
 
 namespace NormalNumbers
@@ -150,6 +157,173 @@ lemma gaussMeasure_Ioo01_pos : 0 < gaussMeasure (Set.Ioo (0 : ℝ) 1) := by
   have : Real.log (1 + 0) < Real.log (1 + 1) :=
     Real.log_lt_log (by norm_num) (by norm_num)
   linarith
+
+/-! ## Negative branch — removing the `r ≥ 0` restriction
+
+The image `ψ((0,1)) = (r, q+r)` dips below `0` exactly when `r < 0`.  To cover
+that we upgrade the crux from `[0,∞)` to all of `ℝ`: the non-CF-normal set is
+Lebesgue-null everywhere.  The negative half reduces via the UNIVERSAL one-step
+identity `cfDigit w (k+1) = cfDigit (gaussMap w) k` and the fact that for `w < 0`
+the single Gauss step already lands in `[0,1)`; nonsingularity of `gaussMap` on
+the negatives is handled by writing it as `inv ∘ (translate of Int.fract)` and
+invoking the differentiable-image-of-null lemma. -/
+
+/-- `gaussMap w ∈ [0,1)` for every `w`. -/
+lemma gaussMap_mem_Ico01 (w : ℝ) : gaussMap w ∈ Set.Ico (0 : ℝ) 1 := by
+  unfold gaussMap
+  split_ifs with h
+  · exact ⟨le_refl 0, by norm_num⟩
+  · exact ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+
+/-- **Universal one-step CF-normality descent.**  `IsCFNormal (gaussMap w) →
+IsCFNormal w` for ANY `w`: the digit sequence of `w` is that of `gaussMap w`
+shifted right by one (`cfDigit w (k+1) = cfDigit (gaussMap w) k`), and a
+one-place shift preserves every window-frequency limit. -/
+lemma isCFNormal_of_gaussMap {w : ℝ} (h : IsCFNormal (gaussMap w)) : IsCFNormal w := by
+  intro v hv hpos
+  refine cfFreq_tendsto_of_digit_shift (cfDigit (gaussMap w)) (cfDigit w) 1 ?_ v hv (h v hv hpos)
+  intro k
+  show cfDigit w (k + 1) = cfDigit (gaussMap w) k
+  unfold cfDigit
+  rw [Function.iterate_succ_apply]
+
+/-- The non-CF-normal set is Lebesgue-null inside `[0,1)`. -/
+lemma volume_notCFNormal_Ico01 :
+    volume ({y | ¬ IsCFNormal y} ∩ Set.Ico (0 : ℝ) 1) = 0 := by
+  have hsub : {y | ¬ IsCFNormal y} ∩ Set.Ico (0:ℝ) 1 ⊆
+      ({y | ¬ IsCFNormal y} ∩ Set.Ioo (0:ℝ) 1) ∪ {(0:ℝ)} := by
+    intro x ⟨hxN, hx0, hx1⟩
+    rcases eq_or_lt_of_le hx0 with h | h
+    · exact Or.inr (Set.mem_singleton_iff.mpr h.symm)
+    · exact Or.inl ⟨hxN, h, hx1⟩
+  refine le_antisymm (le_trans (measure_mono hsub) ?_) (zero_le)
+  calc volume (({y | ¬ IsCFNormal y} ∩ Set.Ioo (0:ℝ) 1) ∪ {(0:ℝ)})
+      ≤ volume ({y | ¬ IsCFNormal y} ∩ Set.Ioo (0:ℝ) 1) + volume ({(0:ℝ)}) :=
+        measure_union_le _ _
+    _ = 0 := by rw [volume_notCFNormal_Ioo01, Real.volume_singleton, add_zero]
+
+/-- `Int.fract`-preimage of the `[0,1)`-bad set is Lebesgue-null: it is the
+`ℤ`-translate union of the bad set. -/
+lemma volume_fract_preimage_notCFNormal :
+    volume (Int.fract ⁻¹' ({y | ¬ IsCFNormal y} ∩ Set.Ico (0 : ℝ) 1)) = 0 := by
+  set Z : Set ℝ := {y | ¬ IsCFNormal y} ∩ Set.Ico (0 : ℝ) 1 with hZ
+  have hZsub : Z ⊆ Set.Ico (0 : ℝ) 1 := Set.inter_subset_right
+  have hZ0 : volume Z = 0 := volume_notCFNormal_Ico01
+  -- `Int.fract ⁻¹' Z = ⋃ n : ℤ, (· + n) '' Z`
+  have heq : Int.fract ⁻¹' Z = ⋃ n : ℤ, (fun t => t + (n : ℝ)) '' Z := by
+    ext u
+    simp only [Set.mem_preimage, Set.mem_iUnion, Set.mem_image]
+    constructor
+    · intro hu
+      refine ⟨⌊u⌋, u - (⌊u⌋ : ℝ), ?_, by ring⟩
+      have : Int.fract u = u - (⌊u⌋ : ℝ) := rfl
+      rwa [this] at hu
+    · rintro ⟨n, z, hz, rfl⟩
+      have hzIco : z ∈ Set.Ico (0:ℝ) 1 := hZsub hz
+      rw [Int.fract_add_intCast, Int.fract_eq_self.mpr hzIco]
+      exact hz
+  rw [heq]
+  refine le_antisymm (le_trans (measure_iUnion_le _) ?_) (zero_le)
+  have : ∀ n : ℤ, volume ((fun t => t + (n : ℝ)) '' Z) = 0 := by
+    intro n
+    have himg : (fun t => t + (n : ℝ)) '' Z = affineMap 1 (-(n : ℝ)) ⁻¹' Z := by
+      ext x
+      simp only [Set.mem_image, Set.mem_preimage, affineMap_apply, one_mul]
+      constructor
+      · rintro ⟨t, ht, rfl⟩
+        have : t + (n : ℝ) + -(n : ℝ) = t := by ring
+        rw [this]; exact ht
+      · intro hx; exact ⟨x + -(n : ℝ), hx, by ring⟩
+    rw [himg, volume_preimage_affineMap one_ne_zero (-(n : ℝ)) Z, hZ0, mul_zero]
+  simp only [this, tsum_zero, le_refl]
+
+/-- **The full crux.**  The non-CF-normal set is Lebesgue-null on all of `ℝ`.
+The `[0,∞)` half is `volume_notCFNormal_Ici0`; the `(-∞,0)` half descends one
+Gauss step into `[0,1)` and pulls back through `inv` (differentiable off `0`),
+the image of the null `Int.fract`-preimage set. -/
+lemma volume_notCFNormal_univ : volume {y | ¬ IsCFNormal y} = 0 := by
+  set N : Set ℝ := {y | ¬ IsCFNormal y} with hN
+  set Z : Set ℝ := N ∩ Set.Ico (0 : ℝ) 1 with hZ
+  -- negative half
+  have hIio : volume (N ∩ Set.Iio (0 : ℝ)) = 0 := by
+    -- `N ∩ Iio 0 ⊆ (·⁻¹) '' (Int.fract ⁻¹' Z ∩ Iio 0)`
+    have hsub : N ∩ Set.Iio (0 : ℝ) ⊆ (fun w => w⁻¹) '' (Int.fract ⁻¹' Z ∩ Set.Iio (0 : ℝ)) := by
+      intro w ⟨hwN, hw0⟩
+      have hwne : w ≠ 0 := ne_of_lt hw0
+      -- `gaussMap w = Int.fract w⁻¹` and it is bad
+      have hgbad : ¬ IsCFNormal (gaussMap w) := fun hg => hwN (isCFNormal_of_gaussMap hg)
+      have hgeq : gaussMap w = Int.fract w⁻¹ := by unfold gaussMap; rw [if_neg hwne]
+      have hgZ : Int.fract w⁻¹ ∈ Z := by
+        refine ⟨?_, ?_⟩
+        · rw [← hgeq]; exact hgbad
+        · rw [← hgeq]; exact gaussMap_mem_Ico01 w
+      refine ⟨w⁻¹, ⟨?_, ?_⟩, inv_inv w⟩
+      · exact hgZ
+      · exact Set.mem_Iio.mpr (inv_lt_zero'.mpr hw0)
+    refine le_antisymm (le_trans (measure_mono hsub) ?_) (zero_le)
+    -- image of a null set under `inv` (differentiable on `Iio 0`) is null
+    have hWnull : volume (Int.fract ⁻¹' Z ∩ Set.Iio (0 : ℝ)) = 0 :=
+      measure_inter_null_of_null_left _ volume_fract_preimage_notCFNormal
+    have hdiff : DifferentiableOn ℝ (fun w => w⁻¹) (Int.fract ⁻¹' Z ∩ Set.Iio (0 : ℝ)) := by
+      intro x hx
+      exact (differentiableAt_inv (ne_of_lt hx.2)).differentiableWithinAt
+    exact le_of_eq (addHaar_image_eq_zero_of_differentiableOn_of_addHaar_eq_zero volume hdiff hWnull)
+  -- combine with `[0,∞)`
+  have hcover : N = (N ∩ Set.Ici (0 : ℝ)) ∪ (N ∩ Set.Iio (0 : ℝ)) := by
+    rw [← Set.inter_union_distrib_left, Set.Ici_union_Iio, Set.inter_univ]
+  rw [hcover]
+  refine le_antisymm (le_trans (measure_union_le _ _) ?_) (zero_le)
+  rw [volume_notCFNormal_Ici0, hIio, add_zero]
+
+/-- For any `q > 0` and any real `r`, the set of `x ∈ (0,1)` whose affine image
+is not CF-normal is `γ`-null.  (Full-generality upgrade of
+`gaussMeasure_notCFNormal_affine_Ioo01`, using the `ℝ`-wide null crux.) -/
+lemma gaussMeasure_notCFNormal_affine_Ioo01' {q : ℝ} (hq : 0 < q) (r : ℝ) :
+    gaussMeasure ({x | ¬ IsCFNormal (affineMap q r x)} ∩ Set.Ioo (0 : ℝ) 1) = 0 := by
+  obtain ⟨V, hVsub, hVmeas, hV0⟩ :=
+    MeasureTheory.exists_measurable_superset_of_null volume_notCFNormal_univ
+  have hpreVvol : volume (affineMap q r ⁻¹' V) = 0 := by
+    rw [volume_preimage_affineMap hq.ne' r V, hV0, mul_zero]
+  have hpreVγ : gaussMeasure (affineMap q r ⁻¹' V) = 0 := by
+    have h := gaussMeasure_le_volume (affineMap q r ⁻¹' V) (measurable_affineMap' q r hVmeas)
+    rw [hpreVvol, mul_zero] at h
+    exact le_antisymm h (zero_le)
+  refine le_antisymm (le_trans (measure_mono ?_) (le_of_eq hpreVγ)) (zero_le)
+  intro x hx
+  exact hVsub hx.1
+
+/-- **B6 Tier 2 (full generality) — the affine FAMILY, any real shifts.**  For
+any countable set `Q` of pairs `(q, r)` with `q > 0` (and `r ∈ ℝ` arbitrary),
+there is a single `x ∈ (0,1)` that is CF-normal and whose affine image `q·x + r`
+is CF-normal for EVERY `(q, r) ∈ Q`, simultaneously.  This is the faithful
+statement of Vandehey §7 "Tier 2" (no sign restriction on the shift). -/
+theorem exists_cfNormal_and_affine_family_cfNormal'
+    (Q : Set (ℝ × ℝ)) (hQ : Q.Countable) (hq : ∀ p ∈ Q, 0 < p.1) :
+    ∃ x : ℝ, x ∈ Set.Ioo (0 : ℝ) 1 ∧ IsCFNormal x ∧
+      ∀ p ∈ Q, IsCFNormal (affineMap p.1 p.2 x) := by
+  set A : Set ℝ := {x | ¬ IsCFNormal x} ∩ Set.Ioo (0 : ℝ) 1 with hA
+  set Bad : ∀ _ : ℝ × ℝ, Set ℝ :=
+    fun p => {x | ¬ IsCFNormal (affineMap p.1 p.2 x)} ∩ Set.Ioo (0 : ℝ) 1 with hBad
+  have hA0 : gaussMeasure A = 0 :=
+    le_antisymm (le_trans (measure_mono Set.inter_subset_left)
+      (le_of_eq gaussMeasure_notCFNormal)) (zero_le)
+  have hBad0 : ∀ p ∈ Q, gaussMeasure (Bad p) = 0 :=
+    fun p hp => gaussMeasure_notCFNormal_affine_Ioo01' (hq p hp) p.2
+  have hBadU0 : gaussMeasure (⋃ p ∈ Q, Bad p) = 0 :=
+    (measure_biUnion_null_iff hQ).mpr hBad0
+  set BadAll : Set ℝ := A ∪ ⋃ p ∈ Q, Bad p with hBadAll
+  have hBadAll0 : gaussMeasure BadAll = 0 :=
+    le_antisymm (le_trans (measure_union_le _ _) (by rw [hA0, hBadU0, add_zero])) (zero_le)
+  have hgood : gaussMeasure (Set.Ioo (0 : ℝ) 1 \ BadAll) = gaussMeasure (Set.Ioo (0 : ℝ) 1) :=
+    measure_sdiff_null hBadAll0
+  obtain ⟨x, hxIoo, hxBad⟩ := nonempty_of_measure_ne_zero
+    (by rw [hgood]; exact gaussMeasure_Ioo01_pos.ne')
+  have hxN : IsCFNormal x := by
+    by_contra hxc; exact hxBad (Or.inl ⟨hxc, hxIoo⟩)
+  refine ⟨x, hxIoo, hxN, ?_⟩
+  intro p hp
+  by_contra hxc
+  exact hxBad (Or.inr (Set.mem_biUnion hp ⟨hxc, hxIoo⟩))
 
 /-- **B6 Tier 2 — the affine FAMILY.**  For any countable set `Q` of pairs
 `(q, r)` with `q > 0` and `r ≥ 0`, there is a single `x ∈ (0,1)` that is
