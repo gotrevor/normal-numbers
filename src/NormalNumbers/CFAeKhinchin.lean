@@ -197,6 +197,123 @@ lemma summable_sqLog_gaussMeasure_cfCylinder :
           rw [← Real.rpow_add (by linarith), show (1 : ℝ) / 2 + 3 / 2 = 2 by norm_num, Real.rpow_two]
         rw [hpow]; nlinarith [Nat.cast_nonneg (α := ℝ) k]
 
+/-! ## Two-cylinder second-moment machinery (the log-tail variance decorrelation core)
+
+`logBirkhoffSum K n = Σ_{a>K} log a · blockCount [a] n` (a.e.), so its second moment
+expands into CROSS block-count products `∫ blockCount [a] n · blockCount [b] n`.  These two
+bricks generalize the single-cylinder `integral_blockCount_sq` / `abs_cov_pair_le`
+(`CFBlockFreq.lean`) to two DISTINCT cylinders, which is exactly what the log-tail variance
+needs. -/
+
+/-- Product of two shifted indicators of DISTINCT sets is the indicator of the
+intersection of the two preimages (cross version of `blockIndic_iterate_mul`). -/
+lemma blockIndic_iterate_mul₂ (A B : Set ℝ) (j j' : ℕ) (x : ℝ) :
+    blockIndic A (gaussMap^[j] x) * blockIndic B (gaussMap^[j'] x) =
+      (((gaussMap^[j]) ⁻¹' A) ∩ ((gaussMap^[j']) ⁻¹' B)).indicator (1 : ℝ → ℝ) x := by
+  rw [blockIndic_iterate, blockIndic_iterate]
+  show ((gaussMap^[j]) ⁻¹' A).indicator (1 : ℝ → ℝ) x *
+      ((gaussMap^[j']) ⁻¹' B).indicator (1 : ℝ → ℝ) x = _
+  rw [← Pi.mul_apply, ← Set.inter_indicator_one]
+
+/-- The product of two shifted indicators of distinct sets is integrable. -/
+lemma integrable_blockIndic_iterate_mul₂ (A B : Set ℝ) (hA : MeasurableSet A)
+    (hB : MeasurableSet B) (j j' : ℕ) :
+    Integrable (fun x =>
+      blockIndic A (gaussMap^[j] x) * blockIndic B (gaussMap^[j'] x)) gaussMeasure := by
+  have hmeas : MeasurableSet ((gaussMap^[j]) ⁻¹' A ∩ (gaussMap^[j']) ⁻¹' B) :=
+    ((measurable_gaussMap.iterate j) hA).inter ((measurable_gaussMap.iterate j') hB)
+  have heq : (fun x =>
+      blockIndic A (gaussMap^[j] x) * blockIndic B (gaussMap^[j'] x))
+      = ((gaussMap^[j]) ⁻¹' A ∩ (gaussMap^[j']) ⁻¹' B).indicator (1 : ℝ → ℝ) := by
+    funext x; exact blockIndic_iterate_mul₂ A B j j' x
+  rw [heq]
+  exact (integrable_const (1 : ℝ)).indicator hmeas
+
+/-- **Cross second-moment identity** (brick 1): the product of two block counts
+integrates to the double sum of two-preimage intersection masses.  Generalizes
+`integral_blockCount_sq` (the `A = B` case). -/
+theorem integral_blockCount_cross (A B : Set ℝ) (hA : MeasurableSet A)
+    (hB : MeasurableSet B) (n : ℕ) :
+    ∫ x, blockCount A n x * blockCount B n x ∂gaussMeasure =
+      ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+        gaussMeasure.real ((gaussMap^[j]) ⁻¹' A ∩ (gaussMap^[j']) ⁻¹' B) := by
+  have hprod : (fun x => blockCount A n x * blockCount B n x) =
+      fun x => ∑ j ∈ Finset.range n, ∑ j' ∈ Finset.range n,
+        blockIndic A (gaussMap^[j] x) * blockIndic B (gaussMap^[j'] x) := by
+    funext x
+    rw [blockCount_apply, blockCount_apply, Finset.sum_mul_sum]
+  rw [hprod,
+    integral_finsetSum _ (fun j _ =>
+      integrable_finsetSum _ (fun j' _ => integrable_blockIndic_iterate_mul₂ A B hA hB j j'))]
+  apply Finset.sum_congr rfl
+  intro j _
+  rw [integral_finsetSum _ (fun j' _ => integrable_blockIndic_iterate_mul₂ A B hA hB j j')]
+  apply Finset.sum_congr rfl
+  intro j' _
+  have hmj : MeasurableSet ((gaussMap^[j]) ⁻¹' A) := (measurable_gaussMap.iterate j) hA
+  have hmj' : MeasurableSet ((gaussMap^[j']) ⁻¹' B) := (measurable_gaussMap.iterate j') hB
+  calc ∫ x, blockIndic A (gaussMap^[j] x) * blockIndic B (gaussMap^[j'] x) ∂gaussMeasure
+      = ∫ x, (((gaussMap^[j]) ⁻¹' A) ∩ ((gaussMap^[j']) ⁻¹' B)).indicator
+          (1 : ℝ → ℝ) x ∂gaussMeasure := by
+        apply integral_congr_ae
+        filter_upwards with x
+        exact blockIndic_iterate_mul₂ A B j j' x
+    _ = gaussMeasure.real ((gaussMap^[j]) ⁻¹' A ∩ (gaussMap^[j']) ⁻¹' B) :=
+        integral_indicator_one (hmj.inter hmj')
+
+/-- **General two-cylinder covariance bound** (brick 2): for DISTINCT time indices
+`i ≠ j`, the correlation `γ(T⁻ⁱ[a] ∩ T⁻ʲ[b])` deviates from `γ[a]·γ[b]` by at most
+`4·(9/10)^{dist(i,j)∸1}·(|[b]|·γ[a] + |[a]|·γ[b])`.  Symmetric in `(a,i)↔(b,j)` so it
+covers both `i<j` and `i>j`.  From `gaussMeasureReal_pair_shift₂` (reduce to gap
+`m = dist`) + `abs_cov_two_cyl_le` (aligned gap `m ≥ 1`). -/
+theorem abs_cov_two_cyl_pair_le (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) {i j : ℕ}
+    (hij : i ≠ j) :
+    |gaussMeasure.real ((gaussMap^[i]) ⁻¹' cfCylinder [a] ∩ (gaussMap^[j]) ⁻¹' cfCylinder [b]) -
+        (gaussMeasure (cfCylinder [a])).toReal * (gaussMeasure (cfCylinder [b])).toReal| ≤
+      4 * ((9 : ℝ) / 10) ^ (Nat.dist i j - 1) *
+        ((volume (cfCylinder [b])).toReal * (gaussMeasure (cfCylinder [a])).toReal +
+         (volume (cfCylinder [a])).toReal * (gaussMeasure (cfCylinder [b])).toReal) := by
+  have hb0 : 0 ≤ (volume (cfCylinder [b])).toReal := ENNReal.toReal_nonneg
+  have ha0 : 0 ≤ (volume (cfCylinder [a])).toReal := ENNReal.toReal_nonneg
+  have hga0 : 0 ≤ (gaussMeasure (cfCylinder [a])).toReal := ENNReal.toReal_nonneg
+  have hgb0 : 0 ≤ (gaussMeasure (cfCylinder [b])).toReal := ENNReal.toReal_nonneg
+  have hpow : 0 ≤ ((9 : ℝ) / 10) ^ (Nat.dist i j - 1) := by positivity
+  rcases lt_or_gt_of_ne hij with hlt | hgt
+  · -- i < j, gap m = j - i
+    rw [Nat.dist_eq_sub_of_le hlt.le]
+    have hps := gaussMeasureReal_pair_shift₂ (cfCylinder [a]) (cfCylinder [b])
+      (measurableSet_cfCylinder [a]) (measurableSet_cfCylinder [b]) i (j - i)
+    rw [Nat.add_sub_cancel' hlt.le] at hps
+    rw [hps]
+    have hcov := abs_cov_two_cyl_le a b ha (j - i) (by omega)
+    rw [MeasureTheory.measureReal_def]
+    calc |(gaussMeasure (cfCylinder [a] ∩ (gaussMap^[j - i]) ⁻¹' cfCylinder [b])).toReal -
+            (gaussMeasure (cfCylinder [a])).toReal * (gaussMeasure (cfCylinder [b])).toReal|
+        ≤ ((9 : ℝ) / 10) ^ (j - i - 1) * (4 * (volume (cfCylinder [b])).toReal) *
+            (gaussMeasure (cfCylinder [a])).toReal := hcov
+      _ ≤ 4 * ((9 : ℝ) / 10) ^ (j - i - 1) *
+            ((volume (cfCylinder [b])).toReal * (gaussMeasure (cfCylinder [a])).toReal +
+             (volume (cfCylinder [a])).toReal * (gaussMeasure (cfCylinder [b])).toReal) := by
+          have hpow' : 0 ≤ ((9 : ℝ) / 10) ^ (j - i - 1) := by positivity
+          nlinarith [mul_nonneg ha0 hgb0, mul_nonneg hpow' (mul_nonneg ha0 hgb0)]
+  · -- i > j, gap m = i - j
+    rw [Nat.dist_eq_sub_of_le_right hgt.le, Set.inter_comm]
+    have hps := gaussMeasureReal_pair_shift₂ (cfCylinder [b]) (cfCylinder [a])
+      (measurableSet_cfCylinder [b]) (measurableSet_cfCylinder [a]) j (i - j)
+    rw [Nat.add_sub_cancel' hgt.le] at hps
+    rw [hps]
+    have hcov := abs_cov_two_cyl_le b a hb (i - j) (by omega)
+    rw [MeasureTheory.measureReal_def, mul_comm (gaussMeasure (cfCylinder [a])).toReal]
+    calc |(gaussMeasure (cfCylinder [b] ∩ (gaussMap^[i - j]) ⁻¹' cfCylinder [a])).toReal -
+            (gaussMeasure (cfCylinder [b])).toReal * (gaussMeasure (cfCylinder [a])).toReal|
+        ≤ ((9 : ℝ) / 10) ^ (i - j - 1) * (4 * (volume (cfCylinder [a])).toReal) *
+            (gaussMeasure (cfCylinder [b])).toReal := hcov
+      _ ≤ 4 * ((9 : ℝ) / 10) ^ (i - j - 1) *
+            ((volume (cfCylinder [b])).toReal * (gaussMeasure (cfCylinder [a])).toReal +
+             (volume (cfCylinder [a])).toReal * (gaussMeasure (cfCylinder [b])).toReal) := by
+          have hpow' : 0 ≤ ((9 : ℝ) / 10) ^ (i - j - 1) := by positivity
+          nlinarith [mul_nonneg hb0 hga0, mul_nonneg hpow' (mul_nonneg hb0 hga0)]
+
 /-! ## The g-direct bridges (reduce `ae_khinchinTypical` to the `K=0` tail average)
 
 `g(x) = log(cfDigit x 0)` is `logTailFn 0` a.e. (the first digit is `≥ 1` a.e.),

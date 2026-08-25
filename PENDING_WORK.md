@@ -1,4 +1,46 @@
-# PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
+# PENDING WORK — image-Khinchin's log-tail SLLN (the ONE open crux) + history below
+
+## 🚧 2026-08-25 (review lap #3) — image-Khinchin crux: decorrelation core LANDED, variance→a.e. chain remaining
+
+**The ONE open obligation across the whole repo**: `ae_tail_average_tendsto K`
+(`CFAeKhinchin.lean:343`), `∀ᵐ x ∂γ, logBirkhoffSum K n x / n → ∫ logTailFn K dγ`. Only
+`K=0` consumed (g-direct) ⇒ closes `ae_khinchinTypical` (+sorryAx) ⇒ image-Khinchin headline
+(graft into `exists_cfNormal_and_affine_family_cfNormal'`). A strong law for the UNBOUNDED
+log-digit function under the Gauss measure — L²→a.e. variance route mirroring PROVEN `ae_orbit_freq`.
+
+**Route = FINITE TRUNCATION (Approach B)** — reduces the second moment to Finset algebra + one
+MCT limit, sidestepping fragile nested `integral_tsum`. Notation: `A_a := cfCylinder [K+1+a]`,
+`u_a := log(K+1+a)`, `f_M := Σ_{a<M} logTailTerm K a`, `S_n^M := Σ_{i<n} f_M∘gaussMapⁱ = Σ_{a<M} u_a·blockCount(A_a) n`.
+
+**LANDED this lap (both axiom-clean, `CFAeKhinchin.lean`, green 8760→8746 partial):**
+- `integral_blockCount_cross A B` : `∫ blockCount A n·blockCount B n dγ = Σ_{i,j<n} γ.real(T⁻ⁱA∩T⁻ʲB)`
+  (+ helpers `blockIndic_iterate_mul₂`, `integrable_blockIndic_iterate_mul₂`). Cross of `integral_blockCount_sq`.
+- `abs_cov_two_cyl_pair_le a b (ha) (hb) {i j} (hij:i≠j)` : `|γ.real(T⁻ⁱ[a]∩T⁻ʲ[b]) − γ[a]γ[b]| ≤`
+  `4·(9/10)^{dist(i,j)∸1}·(|[b]|γ[a] + |[a]|γ[b])`. Symmetric bound covers i<j and i>j (each branch
+  reduces via `gaussMeasureReal_pair_shift₂` to an aligned gap, then `abs_cov_two_cyl_le`).
+
+**REMAINING (hardest-first, next laps):**
+1. `variance_truncated_le K M n` : `|∫(S_n^M)² − (n·μ_M)²| ≤ n·(C₃+80C₁C₂)` UNIFORM in M. Via
+   `integral_blockCount_cross` (S_n^M is a finite Σ_{a,b} u_a u_b blockCount·blockCount). Split
+   `Σ_{i,j}` diagonal i=j (⇒ `n·Var(f_M) = n·(∫f_M²−μ_M²) ≤ n·∫f_M²`; distinct A_a,A_b DISJOINT so
+   cross a≠b vanish at m=0, `∫f_M² = Σ_a u_a²γ(A_a) ≤ C₃`) vs off-diag i≠j (bound each via brick 2,
+   fold `Σ_{i≠j}(9/10)^{dist∸1}` with `sum_range_dist_le`+`geom_trunc_sum_le`, `|v|=1`). Constants:
+   `C₁=Σ' u_aγ(A_a)` = tail of `summable_gaussKuzmin_log`; `C₂=Σ' u_a·vol(A_a)` = `summable_logMul_vol_cfCylinder`;
+   `C₃=Σ' u_a²γ(A_a)` = `summable_sqLog_gaussMeasure_cfCylinder`. Finite partial sums ≤ tsum (nonneg, `sum_le_tsum`).
+2. `variance_logBirkhoffSum_le K n` : MCT M→∞. `S_n^M ↑ logBirkhoffSum K n` a.e. — need
+   `logTailFn K (Tⁱx) = Σ'_a u_a 1_{A_a}(Tⁱx)` a.e. (`logTailTerm_tsum_ae_eq` at `Tⁱx`; γ-preserving,
+   finite intersect over i<n), so `f_M∘Tⁱ ↑ logTailFn K∘Tⁱ`, sum over i<n. Then `∫(S_n^M)² ↑ ∫(logBirkhoffSum)²`
+   (MCT, `MeasureTheory.integral_tendsto_of_tendsto_of_monotone` or `lintegral_iSup`), `μ_M→μ`
+   (from `integral_logTailFn` partial sums), pass the uniform bound to the limit.
+3. `chebyshev_logBirkhoffSum` + `ae_tail_average_tendsto` : TRANSCRIBE `chebyshev_blockCount` (Markov on
+   `(S−nμ)²`) + `ae_orbit_freq` (`CFAeNormal.lean:81`), `blockCount A p`↦`logBirkhoffSum K p`, `γv`↦`μ`.
+   Monotone gap-squeeze OK (`logTailFn K ≥ 0` ⇒ `logBirkhoffSum K n` ↑ in n, `logBirkhoffSum_nonneg`).
+4. Graft ⇒ image-Khinchin headline; re-`#print axioms` clean.
+
+**Watch-outs**: (a) diagonal m=0 does NOT obey the `4vol[b]γ[a]` bound (fails at a=b, large a) — MUST
+split it out as the `C₃` term, not fold into brick 2. (b) `gaussMeasure.real` vs `.toReal`: equal by
+`measureReal_def`, bridge with `rw [MeasureTheory.measureReal_def]` (as in `abs_cov_two_cyl_pair_le`).
+(c) MCT needs the limit integrable — the uniform bound gives `∫(logBirkhoffSum)² ≤ (nμ)²+nC < ∞`.
 
 ## 🎉 2026-08-25 (Tier-2 grind) — B6 TIER 2 LANDED: `exists_cfNormal_and_affine_family_cfNormal` AXIOM-CLEAN
 

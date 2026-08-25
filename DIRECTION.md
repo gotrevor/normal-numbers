@@ -4,7 +4,62 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-25 REVIEW LAP #2b — B6 PIVOTS TO THE MEASURE ROUTE; schedule crux REFUTED)
+## CURRENT DIRECTIVE (set 2026-08-25 REVIEW LAP #3 — B6 measure route DONE + EXCEEDED; drive the ONE open crux: image-Khinchin's tail-average SLLN)
+
+- **State (ground truth, real `#print axioms` this lap, HEAD `53e454c`, build 🟢 8760):**
+  ALL of B5′ (10 headlines), B6 single-map `exists_cfNormal_and_affine_cfNormal`, AND
+  B6 Tier-2 full family `exists_cfNormal_and_affine_family_cfNormal'` (any real `r`, `q>0`)
+  are trust-triple `[propext, Classical.choice, Quot.sound]` — **DONE + axiom-clean.**
+  The prior directive (B6 via the measure route) is FULLY DISCHARGED and EXCEEDED
+  (the general affine family + full-`r` generality were bonus). The three remaining
+  `src/` sorries: `CFAeKhinchin.lean:230` (THE live crux, below) and TWO dead/REFUTED
+  schedule sorries (`CFScheduleA.lean:4400`, `:5774`) — directive-FORBIDDEN, leave untouched.
+- **THE ONE OPEN OBLIGATION — `ae_tail_average_tendsto K` (`CFAeKhinchin.lean:226`).**
+  `∀ᵐ x ∂γ, logBirkhoffSum K n x / n → ∫ logTailFn K dγ`. Only `K=0` is consumed (g-direct):
+  it closes `ae_khinchinTypical` (currently `+sorryAx`) ⇒ the **image-Khinchin headline**
+  (witness CF-normal + all affine images CF-normal + Khinchin-typical) via one graft into
+  `exists_cfNormal_and_affine_family_cfNormal'`. This IS the crux: a strong law (a.e. Birkhoff
+  convergence) for the UNBOUNDED log-digit function under the Gauss measure — no ergodic theorem
+  in mathlib, so it goes through an L²→a.e. variance argument, mirroring the PROVEN `ae_orbit_freq`.
+- **MANDATED ROUTE — the L² variance bound `variance_logBirkhoffSum_le K n`, via FINITE
+  TRUNCATION (Approach B — avoids fragile nested `integral_tsum`).** Everything Finset until one
+  MCT limit. Let `A_a := cfCylinder [K+1+a]`, `u_a := log(K+1+a)`, `S_n^M := Σ_{a<M} u_a·blockCount(A_a) n`
+  (finite ⇒ `= Σ_{i<n} f_M∘gaussMapⁱ`, `f_M := Σ_{a<M} logTailTerm K a`). Then:
+  1. `integral_blockCount_cross A B` : `∫ blockCount A n·blockCount B n dγ = Σ_{i,j<n} γ.real(T⁻ⁱA∩T⁻ʲB)`
+     — two-cylinder generalization of the PROVEN `integral_blockCount_sq` (bounded, clean).
+  2. `abs_cov_two_cyl_pair_le a b i j` : `|γ.real(T⁻ⁱ[a]∩T⁻ʲ[b]) − γ[a]γ[b]| ≤ 4·vol[b]·γ[a]·(9/10)^{dist(i,j)∸1}`
+     for `i≠j` — general-`(i,j)` two-cylinder covariance, from PROVEN `gaussMeasureReal_pair_shift₂`
+     (reduce to gap `m=dist`) + PROVEN `abs_cov_two_cyl_le` (aligned gap `m≥1`). Diagonal `i=j`
+     handled separately (below).
+  3. `variance_truncated_le K M n` : `|∫(S_n^M)² − (n·μ_M)²| ≤ n·(C₃ + 80·C₁·C₂)` UNIFORM in M.
+     Split `Σ_{i,j<n}` into i=j (diagonal: `n·Var(f_M) ≤ n·∫f_M² ≤ n·C₃`, using distinct cylinders
+     DISJOINT so cross a≠b vanish) and i≠j (off-diag: fold brick 2 via `sum_range_dist_le`+
+     `geom_trunc_sum_le`, `|v|=1`). Constants: `C₁=Σ' u_aγ(A_a)` (`summable_gaussKuzmin_log` tail),
+     `C₂=Σ' u_a vol(A_a)` (`summable_logMul_vol_cfCylinder`), `C₃=Σ' u_a²γ(A_a)`
+     (`summable_sqLog_gaussMeasure_cfCylinder`) — finite partial sums `≤` tsum (nonneg).
+  4. `variance_logBirkhoffSum_le K n` : `|∫(logBirkhoffSum K n)² − (n·μ)²| ≤ n·(C₃+80C₁C₂)`,
+     from step 3 by MCT: `S_n^M ↑ logBirkhoffSum K n` a.e. (from `logTailTerm_tsum_ae_eq` at each
+     `Tⁱx`, γ-preserving) ⇒ `∫(S_n^M)² ↑ ∫(logBirkhoffSum K n)²`, `μ_M→μ`; pass the bound to the limit.
+  5. `chebyshev_logBirkhoffSum` + `ae_tail_average_tendsto` : TRANSCRIBE `chebyshev_blockCount` +
+     `ae_orbit_freq` (`CFAeNormal.lean:81`) with `blockCount A p` ↦ `logBirkhoffSum K p`, `γv` ↦ `μ`.
+     The monotone gap-squeeze is available because `logTailFn K ≥ 0` ⇒ `logBirkhoffSum K n` ↑ in n.
+  6. **Graft**: intersect `ae_khinchinTypical`'s co-null set into `exists_cfNormal_and_affine_family_cfNormal'`
+     (one more null set in the `BadAll` union) ⇒ image-Khinchin headline; re-`#print axioms` clean.
+- **Hardest-first THIS lap**: bricks 1–2 are the decisive decorrelation machinery (route-decisive:
+  if the two-cylinder pair bound folds to `O(n)` the whole route stands). Land them first; brick 3–4
+  (MCT) and 5 (transcription) follow. A disclosed sub-`sorry` on brick 3/4 is a valid checkpoint.
+- **FORBIDDEN DRIFT:** do NOT touch the dead schedule sorries (`CFScheduleA.lean:4400`,`:5774` — REFUTED,
+  kept as dead code); do NOT re-attempt `variance_blockCount_psi_pushed` (FALSE); do NOT chase an
+  explicit witness. Do NOT try to import/prove a general ergodic theorem — the variance route is
+  self-contained over PROVEN bricks. ADDITIVE ONLY 🧊; re-`#print axioms` after changes (trust triple).
+- **Why:** this is the LAST open obligation in the repo. Closing it upgrades the whole B6 result to
+  the image-Khinchin headline (the campaign-original stretch) and leaves `src/` sorry-free except the
+  two dead schedule stubs. The route reuses the exact machinery already proven for `ae_orbit_freq`;
+  the only genuinely new content is the two-cylinder (vs single-cylinder) covariance, which the landed
+  mixing bricks already supply. Finite truncation sidesteps the one Lean hazard (tsum-integral interchange).
+- Historical directives below are SUPERSEDED.
+
+## SUPERSEDED DIRECTIVE (set 2026-08-25 REVIEW LAP #2b — B6 PIVOTS TO THE MEASURE ROUTE; schedule crux REFUTED)
 
 - **State (ground truth, real `#print axioms` this lap):** build 🟢 8757; both
   B5′ headlines `exists_absolutely_normal_cf_normal` (Tier 1 = Becher–Yuhjtman)
@@ -234,6 +289,16 @@ detail lives in PENDING_WORK.md.
 </details>
 
 ### Directive history
+- 2026-08-25 (review lap #3 → drive image-Khinchin's tail-average SLLN, the ONE open crux): inventory by
+  real `#print axioms` (HEAD 53e454c, build 🟢 8760) confirmed the measure route DONE and EXCEEDED — B6
+  single-map AND the full affine family (`exists_cfNormal_and_affine_family_cfNormal'`, any `r`, `q>0`)
+  are all trust-triple. The only open obligation in the whole repo is `ae_tail_average_tendsto`
+  (`CFAeKhinchin.lean:230`), feeding `ae_khinchinTypical` (+sorryAx) ⇒ the image-Khinchin headline. Set
+  the directive to PROVE it via the L² variance bound `variance_logBirkhoffSum_le`, decomposed into 5
+  bricks under the KEY INSIGHT that a FINITE-truncation formulation (Approach B) reduces the whole
+  second-moment computation to Finset algebra + one MCT limit, sidestepping nested `integral_tsum`.
+  Hardest-first = the two-cylinder covariance bricks (`integral_blockCount_cross`, `abs_cov_two_cyl_pair_le`),
+  which are the route-decisive decorrelation core. No charter trigger fired (additive, self-contained).
 - 2026-08-25 (review lap #2b → B6 PIVOTS TO THE MEASURE ROUTE; schedule crux REFUTED): while
   driving step 1c of the "prove the variance crux" directive, analysis of the pushforward
   structure produced a RIGOROUS COUNTEREXAMPLE to `variance_blockCount_psi_pushed` (v=[1], ψ(cfCyl

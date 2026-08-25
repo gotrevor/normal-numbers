@@ -1,31 +1,29 @@
 # STATUS — normal-numbers 📊
 
-**B5′ COMPLETE + axiom-clean (10 headlines); B6 campaign OPEN — Vandehey §7 affine images, additive. ROUTE PIVOTED (2026-08-25): the schedule crux `variance_blockCount_psi_pushed` is PROVABLY FALSE (counterexample), so B6 pivots to the MEASURE route — the stated theorem is bare existence, trivially true a.e.; new crux = `ae_isCFNormal` (a.e. CF-normality via L²→a.e. from the PROVED `variance_blockCount_le`, Birkhoff-free).** · **Build**: 🟢 green (8757 jobs) · **Updated**: review lap #2b · 2026-08-25 · `59a04e6`+
+**B5′ COMPLETE + axiom-clean (10 headlines); B6 affine-images DONE + EXCEEDED (single-map + FULL affine family, any real `r`, `q>0`, all trust-triple). ONE open obligation left in the whole repo: `ae_tail_average_tendsto` — the log-tail SLLN feeding the image-Khinchin headline (witness CF-normal + all affine images CF-normal + Khinchin-typical).** · **Build**: 🟢 green (8760 jobs) · **Updated**: review lap #3 · 2026-08-25 · `53e454c`+
 
 ## Where it stands
 
-**B5′ is DONE; B6 is the active frontier — single-stream L4 route (the two-stream
-construction was proven infeasible), and the whole z-side has now been narrowed to
-ONE precisely-stated analytic obligation.** The whole B5′ expedition (ten headline
-theorems) is proved and `#print axioms`-clean (trust triple only). The LIVE work is
-the **additive B6 campaign** (Vandehey, Compositio 2017, §7): a real `x` with BOTH
-`x` and its affine image `ψ(x)=q·x+r` CF-normal, for `q>0`. The block-linear crux
-`schedL4_block_linear`, the x-side (`exists_xA_L4_orbit_equidist`), ψ(xA)
-irrationality (`exists_xA_L4_psi_irrational`), and the ENTIRE clean single-stream
-z-selector (`psi_pushed_chebyshev_brick` → `gaussMeasure_aggregate_psi_pushed_le` →
-`exists_scale_cfCylinder_psi_avoid_zbad_poly`, all axiom-clean) are PROVED. **The
-whole clean z-side now reduces to ONE disclosed analytic sorry:
-`variance_blockCount_psi_pushed` (`CFScheduleA.lean:4254`)** — the ψ-pushed L²
-second-moment estimate `∫_{cfCyl wx'} (blockCount n (ψ·) − nγv)² dγ ≤
-(8|v|+80)·n·γv·γ(cfCyl wx')`. This is the genuine research core: affine-invariance of
-CF-normality via ψ-conjugated Gauss-map mixing. **Two `src/` sorries remain:** THE
-crux above, plus the DEAD two-stream `schedA_block_linear` (`:5630`) that B6's
-`sorryAx` currently flows through, excised once the L4 z-selector wires in (reuse,
-not the crux). The crux decomposes (DIRECTION.md CURRENT DIRECTIVE): (1) restricted
-ψ-pushed 2nd-moment identity (routine, mirror `integral_blockCount_sq`), (2)
-ψ-conjugated interval-base mixing via change-of-variables bounded density ratio
-extending `gaussMeasure_cylinder_mixing` (THE hard core), (3) geometric-sum assembly
-mirroring `variance_blockCount_le`.
+**B5′ + all of B6-affine are DONE and axiom-clean; the sole live frontier is the
+image-Khinchin stretch, reduced to ONE strong-law crux.** The B5′ expedition (ten
+headline theorems), the B6 single-map `exists_cfNormal_and_affine_cfNormal`, and the
+B6 Tier-2 **full affine family** `exists_cfNormal_and_affine_family_cfNormal'` (any
+real `r`, `q>0` — the faithful Vandehey §7 statement) are all proved and
+`#print axioms`-clean (trust triple only). B6 was closed via the MEASURE route
+(existence is a.e.-trivial; the false schedule crux is dead code, marked REFUTED).
+**The one remaining open obligation across `src/` is `ae_tail_average_tendsto K`
+(`CFAeKhinchin.lean:343`)**: `∀ᵐ x ∂γ, logBirkhoffSum K n x / n → ∫ logTailFn K dγ`.
+Only `K=0` is consumed (g-direct route) — it closes `ae_khinchinTypical` (currently
+`+sorryAx`) which grafts into the affine family to yield the image-Khinchin headline.
+This is the genuine research core: a **strong law (a.e. Birkhoff convergence) for the
+UNBOUNDED log-digit function** under the Gauss measure — no ergodic theorem in
+mathlib, so it goes through an L²→a.e. variance argument mirroring the PROVEN
+`ae_orbit_freq`. Route (DIRECTION.md CURRENT DIRECTIVE, Approach B / finite
+truncation): (1) `integral_blockCount_cross` two-cylinder 2nd-moment identity
+[LANDED, axiom-clean], (2) `abs_cov_two_cyl_pair_le` general-`(i,j)` two-cylinder
+covariance bound [LANDED, axiom-clean], (3) `variance_truncated_le` uniform-in-M
+variance, (4) MCT limit → `variance_logBirkhoffSum_le`, (5) Chebyshev+Borel–Cantelli+
+monotone squeeze (transcribe `ae_orbit_freq`), (6) graft → image-Khinchin headline.
 
 - **Track A** (base-b normality): Wall, the ln 2 reduction (conditional on the
   correct equidistribution hypothesis), Stoneham — axiom-clean.
@@ -38,6 +36,20 @@ mirroring `variance_blockCount_le`.
   proved MODULO the crux `sorry`; depends on `sorryAx` until the schedule closes.
 
 ## What's happened (newest first)
+
+- 2026-08-25 (review lap #3): **B6-affine DONE + EXCEEDED; direction re-pointed at the
+  ONE open crux (image-Khinchin's log-tail SLLN); decorrelation core landed.** Inventory
+  by real `#print axioms` (HEAD `53e454c`, build 🟢 8760): B5′ (10 headlines), B6 single-map,
+  AND B6 Tier-2 full family `exists_cfNormal_and_affine_family_cfNormal'` (any `r`, `q>0`)
+  all trust-triple — the measure route is not just done but exceeded (general family + full
+  `r`). Confirmed recent laps genuinely narrowed the crux (measure pivot → single-map → full
+  family → image-Khinchin assembly → g-direct reduction to ONE tail-average sorry). Prior
+  directive (measure route) fully discharged ⇒ rewrote CURRENT DIRECTIVE to PROVE
+  `ae_tail_average_tendsto` via the L² variance route, KEY INSIGHT = finite-truncation
+  (Approach B) reduces the second moment to Finset algebra + one MCT limit (sidesteps nested
+  `integral_tsum`). Hardest-first this lap: LANDED the two decisive decorrelation bricks
+  `integral_blockCount_cross` (cross 2nd-moment identity) + `abs_cov_two_cyl_pair_le`
+  (general-`(i,j)` two-cylinder covariance) — both axiom-clean, green. No charter trigger fired.
 
 - 2026-08-25 (review lap #2b): **ROUTE PIVOT — schedule crux is FALSE, B6 goes to the
   measure route.** While driving step 1c of the "prove the variance crux" plan, the
@@ -211,37 +223,37 @@ mirroring `variance_blockCount_le`.
 
 ## Outstanding
 
-### Short-term (mirror PENDING_WORK top — B6 via the MEASURE route, in `CFAeNormal.lean`)
-- ⚠️ **REFUTED / RETIRED** — the schedule crux `variance_blockCount_psi_pushed` is FALSE
-  (`OBSTRUCTION-2026-08-25`); the whole `psi_pushed_*`/`_poly`/two-stream chain is off-path,
-  kept in-src marked REFUTED, NOT to be attacked.
-1. **`ae_isCFNormal` — THE new crux.** `∀ᵐ y ∂gaussMeasure, IsCFNormal y`, via L²→a.e.:
-   `variance_blockCount_le` (`CFBlockFreq:401`) + Chebyshev + Borel–Cantelli on `p=k²` + monotone
-   gap-squeeze ⇒ a.e. `blockCount(cfCyl v) p·/p→γv`; intersect over countable valid `v` + a.e.
-   orbit-in-`(0,1)` ⇒ `isCFNormal_of_orbit_freq` (`CFOrbitFreq:34`). Birkhoff-free.
-2. **`ae_isCFNormal_affine`.** `∀ᵐ x, IsCFNormal(ψx)` via `ψ⁻¹` preserves γ-null
-   (`volume_preimage_affineMap` `CFAffine:94` + γ≈volume bounded density).
-3. **Assemble** `exists_cfNormal_and_affine_cfNormal`: two co-null sets on `(0,1)∩ψ⁻¹(0,1)` meet ⇒
-   witness; plug into the feasible branch (integer-shift reduction for `r∉(-q,1)` already present).
-   First probe: stub 1+2 as `sorry`, prove step-3 assembly + wire in ⇒ B6 reduces to the two a.e. sorries.
+### Short-term (mirror PENDING_WORK top — image-Khinchin's tail-average SLLN, in `CFAeKhinchin.lean`)
+- ✅ **LANDED this lap (bricks 1–2, axiom-clean):** `integral_blockCount_cross` (cross
+  2nd-moment identity), `abs_cov_two_cyl_pair_le` (general two-cylinder covariance bound).
+1. **`variance_truncated_le K M n`** — uniform-in-M variance of `S_n^M = Σ_{a<M} u_a·blockCount[K+1+a] n`:
+   `|∫(S_n^M)² − (n·μ_M)²| ≤ n·(C₃+80C₁C₂)`. Split `Σ_{i,j}` diagonal (i=j: `n·Var(f_M)≤nC₃`,
+   distinct cylinders disjoint) vs off-diag (fold brick 2 via `sum_range_dist_le`+`geom_trunc_sum_le`).
+2. **`variance_logBirkhoffSum_le K n`** — MCT limit M→∞ on step 1 (`S_n^M ↑ logBirkhoffSum K n` a.e.
+   from `logTailTerm_tsum_ae_eq` at each `Tⁱx`; `∫(S_n^M)²↑∫(logBirkhoffSum)²`, `μ_M→μ`).
+3. **`chebyshev_logBirkhoffSum` + `ae_tail_average_tendsto`** — transcribe `chebyshev_blockCount` +
+   `ae_orbit_freq` (`CFAeNormal.lean:81`); monotone gap-squeeze available (`logTailFn K ≥ 0`).
+4. **Graft** `ae_khinchinTypical`'s co-null set into `exists_cfNormal_and_affine_family_cfNormal'`
+   ⇒ image-Khinchin headline; re-`#print axioms` clean.
 
 ### Long-term
-- B6 general family / Tier-2 image-Khinchin stretch (detaches freely; after the
-  single-map crux closes).
+- After image-Khinchin: the campaign's headline set is complete. Possible further stretches
+  (affine images of Khinchin-typical, etc.) detach freely but are not required.
 
 ### To completion
 - B5′ (Track A + Tier 1 + Tier 2): **DONE**, all axiom-clean.
-- B6 single-map (`exists_cfNormal_and_affine_cfNormal`): crux `sorry` open →
-  close via the single-stream L4 route (block-linear crux + x-side DONE; z-side
-  re-integration, 4 items above, remaining).
+- B6 single-map + full affine family: **DONE**, all axiom-clean.
+- image-Khinchin headline: gated on `ae_tail_average_tendsto` (4 items above); bricks 1–2 landed.
 
-## Axiom ledger (fidelity spine — all from real `#print axioms`, 2026-08-25 review lap #2, HEAD `8673338`+)
+## Axiom ledger (fidelity spine — all from real `#print axioms`, 2026-08-25 review lap #3, HEAD `53e454c`+)
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 |---|---|---|---|
 | `exists_absolutely_normal_cf_normal` (**Tier 1 = Becher–Yuhjtman**) | uncond | trust triple | 🟢 DONE (re-verified this lap) |
 | `exists_absolutely_normal_cf_normal_khinchin` (**Tier 2 headline**) | uncond | trust triple | 🟢 DONE (re-verified this lap) |
 | `exists_cfNormal_and_affine_cfNormal` (**B6 affine image**) | uncond (q>0) | trust triple | 🟢 **DONE** (2026-08-25, measure route). Crux `ae_orbit_freq`→`ae_isCFNormal`→`exists_feasible_cfNormal_affine` (`CFAeNormal.lean`, sorry-free) wired into the headline; the false-crux schedule chain is dead code, kept marked REFUTED. |
+| `exists_cfNormal_and_affine_family_cfNormal'` (**B6 Tier-2 full family**) | uncond (any `r`, q>0) | trust triple | 🟢 **DONE** (2026-08-25). Faithful Vandehey §7 Tier-2 statement; `volume_notCFNormal_univ` crux (non-CF-normal null on all ℝ). |
+| `ae_khinchinTypical` / image-Khinchin headline | uncond | `+ sorryAx` | 🟡 OPEN — gated on `ae_tail_average_tendsto` (log-tail SLLN). Decorrelation bricks 1–2 landed axiom-clean this lap; variance→a.e. chain remaining. |
 | `isNormal_iff_equidistributed_orbit` (Wall) | uncond | trust triple | 🟢 DONE |
 | `isNormal_log_two_of_equidistributed` | cond (orbit equidist.) | trust triple | 🟢 DONE (hypothesis is the open conjecture, correctly a hypothesis) |
 | `isNormal_two_stoneham23` (Stoneham) | uncond | trust triple | 🟢 DONE |
@@ -252,11 +264,12 @@ mirroring `variance_blockCount_le`.
 | `summable_gaussKuzmin_logsq` (Tier-2 moment seed) | uncond | trust triple | 🟢 DONE |
 
 Math-axiom count (🟢+🟡+🟠, excluding trust base + native_decide artifacts):
-**0** proven-but-cited axioms across all 10 B5′ headlines (every one 🟢, trust
-triple only). The B6 target carries `sorryAx` — a **disclosed decomposition
-`sorry`**, NOT a cited math axiom — being actively discharged (the interleaved
-schedule). No 🟡/🟠 debt, no 🔴. Trust triple = propext, Classical.choice,
-Quot.sound throughout.
+**0** proven-but-cited axioms across all 10 B5′ headlines AND both B6 affine headlines
+(single-map + full family) — every one 🟢, trust triple only. The only `+sorryAx` is
+`ae_khinchinTypical` (image-Khinchin stretch), a **disclosed decomposition `sorry`**
+(`ae_tail_average_tendsto`), NOT a cited math axiom — being actively discharged (the L²
+variance route; decorrelation bricks landed this lap). No 🟡/🟠 debt on the proven
+headlines, no 🔴. Trust triple = propext, Classical.choice, Quot.sound throughout.
 
 ## Pointers
 DIRECTION.md (CURRENT DIRECTIVE) · ROADMAP.md · KHINCHIN.md (B5′ plan W1–W6) ·
