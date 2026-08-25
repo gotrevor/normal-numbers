@@ -4243,6 +4243,22 @@ theorem notMem_cfBadZone_nil_of_notMem_psiCond {z : ℝ} (wz v : List ℕ) (n : 
   obtain ⟨-, -, hdisc⟩ := hbad
   exact hznot ⟨hzwz, hzorb, hdisc⟩
 
+/-- **The irreducible L² core of the crux (ψ-pushed second-moment / variance estimate).**
+*Disclosed open obligation — one level below `psi_pushed_chebyshev_brick`.*  The `L²` deviation of the
+pushed block count `blockCount n (ψ·)` from its target `n·γv`, integrated over the deep x-cylinder,
+is `O(n)·γ(cfCylinder wx')`.  THIS is where the genuine analytic difficulty lives: expanding the
+square gives a double sum of pair correlations `γ(cfCylinder wx' ∩ ψ⁻¹T^{-k}A ∩ ψ⁻¹T^{-k'}A)`, whose
+decay in `|k−k'|` is the ψ-conjugated Gauss-map mixing (the cylinder-based
+`gaussMeasure_cylinder_mixing` does not directly cover the affine `ψ`).  Everything ELSE — the
+Chebyshev/Markov packaging turning this into the crux brick — is proved below. -/
+theorem variance_blockCount_psi_pushed {q : ℝ} (hq : 0 < q) (r : ℝ) (wx' : List ℕ)
+    (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c) (v : List ℕ) (hv : ∀ a ∈ v, 1 ≤ a) (n : ℕ) :
+    ∫ x in cfCylinder wx', (blockCount (cfCylinder v) n (affineMap q r x)
+        - n * (gaussMeasure (cfCylinder v)).toReal) ^ 2 ∂gaussMeasure
+      ≤ (8 * (v.length : ℝ) + 80) * n * (gaussMeasure (cfCylinder v)).toReal
+        * (gaussMeasure (cfCylinder wx')).toReal := by
+  sorry
+
 /-- **THE B6 z-side CRUX (ψ-pushed, x-cylinder-relative Chebyshev).**  *Disclosed open obligation.*
 Within the DEEP x-cylinder `cfCylinder wx'`, the fraction of points whose affine image `ψx = qx+r`
 has bad `v`-block frequency at scale `n` is `O(1/n)` — a LOCAL density relative to
@@ -4262,18 +4278,108 @@ threshold (the SCALE-REGIME OBSTRUCTION).  The conditional-at-base-`wz` route
 (`chebyshev_blockCount_brick_psi_conditional` and its discharges above) was proved but hits a
 density-vs-coverage wall (bounded bridge `γ(wz)/γ(wx')` ⟺ empty transfer range; see the 2026-08-25
 CORRECTION in PENDING_WORK).  So the ONLY route that closes is this local `O(1/n)` bound.
-
-ATTACK (next laps): extend `gaussMeasure_cylinder_mixing` from cylinder bases to INTERVAL bases
-(any `Ioo` inside `(0,1)`), which morally holds since intervals are cylinder-mixtures; then the
-ψ-image interval `ψ(cfCylinder wx')` is a legal base and the variance/Chebyshev computation goes
-through with the `γ(cfCylinder wx')` normalization built in. -/
+-/
 theorem psi_pushed_chebyshev_brick {q : ℝ} (hq : 0 < q) (r : ℝ) (wx' : List ℕ)
     (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c) (v : List ℕ) (hv : ∀ a ∈ v, 1 ≤ a)
     (n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
     (gaussMeasure (cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ)).toReal
       ≤ 7 * ((8 * (v.length : ℝ) + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n))
         * (gaussMeasure (cfCylinder wx')).toReal := by
-  sorry
+  -- Markov/Chebyshev packaging over the restricted measure, reducing to the L² core above.
+  set γv : ℝ := (gaussMeasure (cfCylinder v)).toReal with hγv
+  set γcylR : ℝ := (gaussMeasure (cfCylinder wx')).toReal with hγcylR
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  set f : ℝ → ℝ := fun x => (blockCount (cfCylinder v) n (affineMap q r x) - n * γv) ^ 2 with hf
+  have haffmeas : Measurable (affineMap q r) :=
+    (by unfold affineMap; fun_prop : Continuous (affineMap q r)).measurable
+  have hbcmeas : Measurable fun x => blockCount (cfCylinder v) n (affineMap q r x) :=
+    (measurable_blockCount (cfCylinder v) (measurableSet_cfCylinder v) n).comp haffmeas
+  have hn0 : (n : ℝ) ≠ 0 := ne_of_gt hnR
+  have hfmeas : Measurable f := by rw [hf]; exact (hbcmeas.sub measurable_const).pow_const 2
+  have hfnn : ∀ x, 0 ≤ f x := fun x => by rw [hf]; positivity
+  -- `f ≤ n²`, hence integrable on the (finite) restricted measure
+  have hfbound : ∀ x, f x ≤ (n : ℝ) ^ 2 := by
+    intro x
+    rw [hf]
+    have h0 : 0 ≤ blockCount (cfCylinder v) n (affineMap q r x) := by
+      rw [blockCount_apply]
+      exact Finset.sum_nonneg fun k _ => Set.indicator_nonneg (fun _ _ => zero_le_one) _
+    have hind1 : ∀ y, blockIndic (cfCylinder v) y ≤ 1 := fun y => by
+      unfold blockIndic
+      by_cases h : y ∈ cfCylinder v
+      · simp [Set.indicator_of_mem h]
+      · simp [Set.indicator_of_notMem h]
+    have h1 : blockCount (cfCylinder v) n (affineMap q r x) ≤ (n : ℝ) := by
+      rw [blockCount_apply]
+      calc ∑ k ∈ Finset.range n, blockIndic (cfCylinder v) (gaussMap^[k] (affineMap q r x))
+          ≤ ∑ _k ∈ Finset.range n, (1 : ℝ) := Finset.sum_le_sum fun k _ => hind1 _
+        _ = (n : ℝ) := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+    have hγv0 : 0 ≤ γv := ENNReal.toReal_nonneg
+    have hγv1 : γv ≤ 1 := ENNReal.toReal_mono ENNReal.one_ne_top prob_le_one
+    have hnγv : 0 ≤ (n : ℝ) * γv := by positivity
+    have hnγvn : (n : ℝ) * γv ≤ (n : ℝ) := by nlinarith [hγv1, hnR.le]
+    nlinarith [h0, h1, hnγv, hnγvn, sq_nonneg (blockCount (cfCylinder v) n (affineMap q r x) - n * γv)]
+  set μ : Measure ℝ := gaussMeasure.restrict (cfCylinder wx') with hμ
+  have hfint : Integrable f μ := by
+    refine Integrable.mono' (integrable_const ((n : ℝ) ^ 2)) hfmeas.aestronglyMeasurable ?_
+    exact Filter.Eventually.of_forall fun x => by
+      rw [Real.norm_eq_abs, abs_of_nonneg (hfnn x)]; exact hfbound x
+  -- the rescaled deviation set and Markov
+  set ε : ℝ := (δ * n) ^ 2 with hε
+  have hεpos : 0 < ε := by rw [hε]; positivity
+  set E : Set ℝ := {x | ε ≤ f x} with hE
+  have hEmeas : MeasurableSet E := measurableSet_le measurable_const hfmeas
+  have hmarkov := mul_meas_ge_le_integral_of_nonneg (μ := μ)
+    (Filter.Eventually.of_forall hfnn) hfint ε
+  -- `∫ f dμ ≤` the L² core
+  have hintle : ∫ x, f x ∂μ ≤ (8 * (v.length : ℝ) + 80) * n * γv * γcylR := by
+    rw [hμ, hf]
+    exact variance_blockCount_psi_pushed hq r wx' hne hpos v hv n
+  -- the bad set is contained in the deviation set
+  have hsub : cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ ⊆ cfCylinder wx' ∩ E := by
+    rintro x ⟨hxc, hxb⟩
+    refine ⟨hxc, ?_⟩
+    rw [Set.mem_preimage, cfBadZone, cfCylinder_nil, List.length_nil, Function.iterate_zero,
+      Set.preimage_id] at hxb
+    obtain ⟨-, -, hdisc⟩ := hxb
+    show ε ≤ f x
+    rw [hε, hf]
+    have hrw : blockCount (cfCylinder v) n (affineMap q r x) / n - γv
+        = (blockCount (cfCylinder v) n (affineMap q r x) - n * γv) / n := by
+      field_simp
+    rw [hrw, abs_div, abs_of_pos hnR, le_div_iff₀ hnR] at hdisc
+    have hthis : (δ * n) ^ 2 ≤ |blockCount (cfCylinder v) n (affineMap q r x) - n * γv| ^ 2 := by
+      rw [sq, sq]; exact mul_self_le_mul_self (by positivity) hdisc
+    rwa [sq_abs] at hthis
+  -- `μ.real E = γ(cfCylinder wx' ∩ E).toReal`
+  have hμreal : μ.real E = (gaussMeasure (cfCylinder wx' ∩ E)).toReal := by
+    rw [hμ, measureReal_def, Measure.restrict_apply hEmeas, Set.inter_comm]
+  -- assemble
+  have hbadle : (gaussMeasure (cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ)).toReal
+      ≤ μ.real E := by
+    rw [hμreal]
+    exact ENNReal.toReal_mono (measure_ne_top _ _) (measure_mono hsub)
+  have hεmul : ε * μ.real E ≤ (8 * (v.length : ℝ) + 80) * n * γv * γcylR :=
+    le_trans hmarkov hintle
+  have hμEnn : 0 ≤ μ.real E := measureReal_nonneg
+  have hfin : (gaussMeasure (cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ)).toReal
+      ≤ (8 * (v.length : ℝ) + 80) * γv / (δ ^ 2 * n) * γcylR := by
+    have hεeq : ε = δ ^ 2 * n ^ 2 := by rw [hε]; ring
+    have hbig : (8 * (v.length : ℝ) + 80) * γv / (δ ^ 2 * n) * γcylR
+        = (8 * (v.length : ℝ) + 80) * n * γv * γcylR / ε := by
+      rw [hεeq]; field_simp
+    rw [hbig]
+    rw [le_div_iff₀ hεpos]
+    calc (gaussMeasure (cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ)).toReal * ε
+        ≤ μ.real E * ε := by nlinarith [hbadle, hεpos.le, hμEnn]
+      _ = ε * μ.real E := by ring
+      _ ≤ (8 * (v.length : ℝ) + 80) * n * γv * γcylR := hεmul
+  -- absorb the factor `7`
+  have hRnn : 0 ≤ (8 * (v.length : ℝ) + 80) * γv / (δ ^ 2 * n) * γcylR := by
+    have : 0 ≤ γcylR := ENNReal.toReal_nonneg
+    have : 0 ≤ γv := ENNReal.toReal_nonneg
+    positivity
+  nlinarith [hfin, hRnn]
 
 /-- **Finite-family aggregate of the ψ-pushed crux.**  Sums `psi_pushed_chebyshev_brick` over the
 finite target family `F`: the pulled-back mass of the whole `F`-union of absolute bad zones inside

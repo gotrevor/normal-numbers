@@ -88,7 +88,20 @@ So the single-stream z-side is now a fully-proved chain DOWN TO one precisely-st
 The messy conditional-at-`wz` lemmas (walled, see CORRECTION) are kept but OFF the critical path; the
 clean path is: `psi_pushed_chebyshev_brick` → `_poly` discharge → absolute transfer → `CFOrbitEquidist`.
 
-**NEXT:** (1) prove `psi_pushed_chebyshev_brick` — attack via interval-base mixing (extend
+**Also landed (Markov wrapper — crux narrowed one level):** `psi_pushed_chebyshev_brick` is now PROVED
+from a deeper sorry **`variance_blockCount_psi_pushed`** (the ψ-pushed L² / second-moment estimate
+`∫_{cfCyl wx'} (blockCount n (ψ·) − nγv)² dγ ≤ O(n)·γ(cfCyl wx')`). The Chebyshev/Markov packaging
+(restricted-measure Markov `mul_meas_ge_le_integral_of_nonneg`, the `f ≤ n²` integrability bound, the
+`(δn)²`-rescale, and the arithmetic cancelling the `γ(cfCyl wx')` factor) is all PROVED. So the crux is
+now the pure L² estimate `variance_blockCount_psi_pushed` — no probabilistic packaging left, just the
+second-moment bound whose content is the ψ-conjugated pair-correlation decay.
+
+**NEXT:** (0) prove `variance_blockCount_psi_pushed` — expand the square into the diagonal
+(`∑_k γ(cfCyl wx' ∩ ψ⁻¹T^{-k}A)`, `O(n)` term) + off-diagonal pair correlations
+(`∑_{k≠k'} [γ(cfCyl wx' ∩ ψ⁻¹T^{-k}A ∩ ψ⁻¹T^{-k'}A) − …]`), and bound the off-diagonal by the
+ψ-conjugated mixing (extend `gaussMeasure_cylinder_mixing` to interval / affine-image bases). This is
+THE irreducible analytic core. (1) prove `psi_pushed_chebyshev_brick` — SUBSUMED, now `= _poly` chain
+down to the L²-core. (See old note:) attack via interval-base mixing (extend
 `gaussMeasure_cylinder_mixing` from `cfCylinder` bases to `Ioo` bases; the ψ-image is an interval).
 (2) In parallel (independent, doesn't need the brick proved): wire `exists_scale_cfCylinder_psi_avoid_zbad_poly`
 + the absolute transfer into `StepSpecL4`/the schedule to deliver `CFOrbitEquidist (ψ xA)`, then the
