@@ -1,5 +1,68 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🟢 2026-08-25 — LANDED: ψ(xA) irrationality (subtlety 1) + Z-I budget atom
+
+- **`exists_xA_L4_psi_irrational`** (axiom-clean): the diagonalisation filler digit
+  (StepSpecL4 rebuild) forces `ψ(xA)` irrational. Subtlety-1 CLEARED.
+- **`exists_scale_cfCylinder_psi_avoid_zbad`** + **`exists_scale_zgood_wxSeq_L4`**
+  (axiom-clean): Chebyshev budget discharge + per-stage z-good witnesses on `wxSeq_L4 s`.
+
+## 🔴 2026-08-25 — CRUX FINDING: the z-transfer has a SCALE-REGIME OBSTRUCTION (Z-II)
+
+**The post-hoc z-good witness (`exists_scale_zgood_wxSeq_L4`) and the (Z-I) plan below
+are in the WRONG SCALE REGIME for the transfer. Precise diagnosis:**
+
+- The z-good threshold on cylinder `wx_s` is `N_s ~ (2/q)·Ssum_s/(δ_s²·γcyl_s)` where
+  `γcyl_s = γ(cfCylinder wx_s) ~ φ^{-2|w_s|}` (SHRINKS exponentially in `|w_s|`). So the
+  witness `p_s` is z-good only at scales `n ≥ N_s ~ φ^{2|w_s|}` (doubly-exp in `|w_s|`).
+- The transfer (`exists_ball_cfDigit_psi_eq` + `exists_tail_cfCylinder_subset_ball` +
+  `blockCount_eq_of_cfDigit_agree`) requires `ψxA` and `ψp_s` to agree on the first
+  `m = n+|v|` CF digits. Agreement holds only when `cfCylinder wx_s ⊆` an x-ball of
+  radius `~φ^{-2m}/q`; since the cylinder width is `~φ^{-2|w_s|}`, this needs
+  `m ≲ |w_s|`, i.e. **transfer range `n ≲ |w_s|`**.
+- `[N_s, |w_s|] = [φ^{2|w_s|}, |w_s|]` is EMPTY. The post-hoc witnesses are unusable.
+
+**ROOT CAUSE (this is the real B6 crux, now sharply located).** Within a deep cylinder
+`cyl_s`, `ψ` pins the first `~|w_s|` z-digits of ALL points to a COMMON value, so for
+`n ≲ |w_s|` the quantity `blockCount(cfCyl v) n (ψx)` is DETERMINED (= its value at
+`ψxA`) — not selectable. z-digit `n` becomes selectable only at the stage `s*` where
+`|w_{s*}|` first exceeds `n` (the "pinning stage"). There the block `u_{s*}` controls
+z-digits in the window `(|w_{s*-1}|, |w_{s*}|]`. The bad-zone density that matters is the
+CONDITIONAL one — density `~1/(free-length) = 1/(n-|w_{s*-1}|)` given the pinned prefix —
+which is small (feasible) ONLY if measured as a cylinder-RELATIVE bad zone
+`cfBadZone w …` (whose `gaussMap^[|w|]` basepoint skips the pinned prefix), NOT the
+ABSOLUTE `cfBadZone [] …`. But `ψ` does not map x-cylinders to z-cylinders, so there is
+no clean `cfBadZone w` for the ψ-image. **The missing ingredient is a ψ-CONDITIONAL
+z-Chebyshev bound: within `cyl_s`, the mass of points whose ψ-image is z-bad at scale
+`n ∈ (|w_{s-1}|,|w_s|]` is `≤ O(1/(n-|w_{s-1}|))·γ(cyl_s)`** (relative, not absolute).
+This is what makes the pinning-stage selection feasible; the absolute aggregate bound
+(`gaussMeasure_aggregate_cfBadZone_le [] …`) is too weak here.
+
+**WHY the two-stream avoided this (and why it was still refuted):** the two-stream gives
+`zA=ψxA` its OWN cylinder chain `wz_s`, so its bad zones are cylinder-relative
+`cfBadZone wz_s` (density `O(1/n)·γ`, feasible) — but coupling `x` and `z` chains under a
+single `ψ` forces super-exponential blocks (`OBSTRUCTION-2026-08-28`). Single-stream
+removes that coupling but reintroduces the absolute-vs-relative gap above.
+
+**NEXT ATTACK (hardest-first, do NOT resurrect two-stream / post-hoc deep-cylinder):**
+1. Establish the ψ-conditional z-Chebyshev: for `x` ranging over `cfCylinder w` with a
+   pinned ψ-prefix of length `L~|w|`, `γ{x∈cfCylinder w : ψx ∈ cfBadZone [] v n δ}
+   ≤ C·(8|v|+80)/(δ²(n-L))·γ(cfCylinder w)` for `n > L`. Likely route: pull back
+   `chebyshev_blockCount_brick` through `ψ` using that `blockCount n (ψx) = (pinned
+   count on [0,L)) + blockCount_{[L,n)}`, and the free part is a genuine conditional
+   variance on the shifted orbit `gaussMap^[L](ψx)`. This is the one genuinely-open
+   analytic lemma the z-side rests on.
+2. Thread the pinning-stage z-selection into the block builder
+   (`exists_uniformly_freq_good_block_steer_len_rel_cfK`): add the window-`(|w_{s-1}|,
+   |w_s|]` z-bad avoidance to its budget (joint selector
+   `exists_irrational_notMem_xbad_psi_zbad_nil_in_Ioo` is the interval-scale template),
+   keeping blocks LINEAR (the extra budget term is `O(1/|u|)·γ`, absorbed like the
+   x-freq term). Record `∀ n ∈ (|w_{s-1}|,|w_s|], ψ(witness) z-good at n` in StepSpecL4.
+3. Then Z-II coverage closes: every large `n` is pinned at exactly one stage `s*` with
+   `|w_{s*}| ≥ n > |w_{s*-1}|`, `δ_{s*}→0`, transfer range `n ≲ |w_{s*}|` MATCHES — no gap.
+
+`exists_scale_zgood_wxSeq_L4` is TRUE but OFF the critical path (kept; not deleted).
+
 ## 🔴 2026-08-29 — STRUCTURAL FINDING: `schedL4_block_linear` DONE, but the L4 z-side is NOT reuse
 
 **`schedL4_block_linear` is PROVED** (commit `030d8fb`, axiom-clean) and the x-side
