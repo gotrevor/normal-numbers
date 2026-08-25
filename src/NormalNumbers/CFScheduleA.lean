@@ -4243,6 +4243,113 @@ theorem notMem_cfBadZone_nil_of_notMem_psiCond {z : ℝ} (wz v : List ℕ) (n : 
   obtain ⟨-, -, hdisc⟩ := hbad
   exact hznot ⟨hzwz, hzorb, hdisc⟩
 
+/-- **THE B6 z-side CRUX (ψ-pushed, x-cylinder-relative Chebyshev).**  *Disclosed open obligation.*
+Within the DEEP x-cylinder `cfCylinder wx'`, the fraction of points whose affine image `ψx = qx+r`
+has bad `v`-block frequency at scale `n` is `O(1/n)` — a LOCAL density relative to
+`γ(cfCylinder wx')`, NOT an absolute mass.  This is the single analytic fact the entire single-stream
+z-side reduces to (see `exists_scale_cfCylinder_psi_avoid_zbad_poly` below), and it is the genuine
+research-level heart of affine-invariance of CF-normality.
+
+WHY IT IS OPEN / HARD: the pushforward `ψ_*(γ|cfCylinder wx')` is an affine image of a RESTRICTED
+Gauss measure — supported on the interval `ψ(cfCylinder wx')`, which is NOT a `z`-cylinder.  The
+mixing engine `gaussMeasure_cylinder_mixing` (KPW-Lemma-6 substitute) that powers
+`chebyshev_blockCount_brick` is intrinsically CYLINDER-based (`tailDensity`/`tChain`/`horizonIntegral`
+on `cfCylinder`); it does not directly apply to an interval base, and the Gauss map's mixing does not
+obviously survive conjugation by the affine `ψ`.  The absolute engine
+(`gaussMeasure_aggregate_cfBadZone_le`, base `[]`) gives only the GLOBAL mass `O(1/n)`, which — being
+compared to the exponentially small `γ(cfCylinder wx') ~ φ^{-2|wx'|}` — forces an exponential scale
+threshold (the SCALE-REGIME OBSTRUCTION).  The conditional-at-base-`wz` route
+(`chebyshev_blockCount_brick_psi_conditional` and its discharges above) was proved but hits a
+density-vs-coverage wall (bounded bridge `γ(wz)/γ(wx')` ⟺ empty transfer range; see the 2026-08-25
+CORRECTION in PENDING_WORK).  So the ONLY route that closes is this local `O(1/n)` bound.
+
+ATTACK (next laps): extend `gaussMeasure_cylinder_mixing` from cylinder bases to INTERVAL bases
+(any `Ioo` inside `(0,1)`), which morally holds since intervals are cylinder-mixtures; then the
+ψ-image interval `ψ(cfCylinder wx')` is a legal base and the variance/Chebyshev computation goes
+through with the `γ(cfCylinder wx')` normalization built in. -/
+theorem psi_pushed_chebyshev_brick {q : ℝ} (hq : 0 < q) (r : ℝ) (wx' : List ℕ)
+    (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c) (v : List ℕ) (hv : ∀ a ∈ v, 1 ≤ a)
+    (n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
+    (gaussMeasure (cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ)).toReal
+      ≤ 7 * ((8 * (v.length : ℝ) + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n))
+        * (gaussMeasure (cfCylinder wx')).toReal := by
+  sorry
+
+/-- **Finite-family aggregate of the ψ-pushed crux.**  Sums `psi_pushed_chebyshev_brick` over the
+finite target family `F`: the pulled-back mass of the whole `F`-union of absolute bad zones inside
+`cfCylinder wx'` is `≤ ∑_{v∈F} O(1/n)·γ(cfCylinder wx')`.  Pure measure algebra over the brick. -/
+theorem gaussMeasure_aggregate_psi_pushed_le {q : ℝ} (hq : 0 < q) (r : ℝ) (wx' : List ℕ)
+    (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
+    (gaussMeasure (cfCylinder wx' ∩ affineMap q r ⁻¹' (⋃ v ∈ F, cfBadZone [] v n δ))).toReal
+      ≤ ∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n))
+          * (gaussMeasure (cfCylinder wx')).toReal := by
+  have hpre : cfCylinder wx' ∩ affineMap q r ⁻¹' (⋃ v ∈ F, cfBadZone [] v n δ)
+      = ⋃ v ∈ F, (cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ) := by
+    rw [Set.preimage_iUnion₂, Set.inter_iUnion₂]
+  rw [hpre]
+  calc (gaussMeasure (⋃ v ∈ F, (cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ))).toReal
+      ≤ (∑ v ∈ F, gaussMeasure (cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ)).toReal := by
+        refine ENNReal.toReal_mono ?_ (measure_biUnion_finset_le F _)
+        exact (ENNReal.sum_lt_top.2 (fun v _ => measure_lt_top _ _)).ne
+    _ = ∑ v ∈ F, (gaussMeasure (cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ)).toReal :=
+        ENNReal.toReal_sum (fun v _ => measure_ne_top _ _)
+    _ ≤ ∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n))
+          * (gaussMeasure (cfCylinder wx')).toReal :=
+        Finset.sum_le_sum fun v hv =>
+          psi_pushed_chebyshev_brick hq r wx' hne hpos v (hF v hv) n hn hδ
+
+/-- **Polynomial-threshold z-good point selection (the CLEAN discharge).**  From the ψ-pushed crux
+`psi_pushed_chebyshev_brick`: for a genuine cylinder `wx'` and family `F`, there is a scale threshold
+`N` — POLYNOMIAL, `N ~ Ssum/δ²`, with NO `2/q` pullback loss and NO exponential — such that for every
+`n ≥ N` there is an irrational `p ∈ cfCylinder wx'` whose ψ-image avoids the absolute z-bad zones
+`cfBadZone [] v n δ` for all `v ∈ F`.  The `γ(cfCylinder wx')` factor in the crux CANCELS against the
+cylinder mass, so the threshold is scale-regime-CORRECT (transfer range `n ≲ |wx'|` non-empty).  This
+composes directly with the existing absolute digit-agreement transfer
+(`notMem_cfBadZone_nil_of_cfDigit_agree`).  Everything downstream is now proved MODULO the one crux
+brick. -/
+theorem exists_scale_cfCylinder_psi_avoid_zbad_poly {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (wx' : List ℕ) (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ c ∈ v, 1 ≤ c) {δ : ℝ} (hδ : 0 < δ) :
+    ∃ N : ℕ, 1 ≤ N ∧ ∀ n, N ≤ n → ∃ p : ℝ, Irrational p ∧ p ∈ cfCylinder wx' ∧
+      p ∉ (⋃ v ∈ F, affineMap q r ⁻¹' cfBadZone [] v n δ) := by
+  set γcylR : ℝ := (gaussMeasure (cfCylinder wx')).toReal with hγcylRdef
+  have hγcylR0 : 0 < γcylR := gaussMeasure_cfCylinder_toReal_pos wx' hne hpos
+  set Ssum : ℝ := ∑ v ∈ F, 7 * (8 * (v.length : ℝ) + 80)
+      * (gaussMeasure (cfCylinder v)).toReal with hSsumdef
+  have hSsum0 : 0 ≤ Ssum := by
+    rw [hSsumdef]; refine Finset.sum_nonneg fun v _ => ?_; positivity
+  set N : ℕ := ⌈Ssum / δ ^ 2⌉₊ + 1 with hNdef
+  refine ⟨N, by omega, fun n hn_ge => ?_⟩
+  have hn : 0 < n := by omega
+  have hnR0 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn
+  -- aggregate mass bound (`γcylR` factor kept)
+  have hagg := gaussMeasure_aggregate_psi_pushed_le hq r wx' hne hpos F hF n hn hδ
+  have hsumdiv : (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n)) * γcylR)
+      = Ssum / (δ ^ 2 * n) * γcylR := by
+    rw [hSsumdef, Finset.sum_div, Finset.sum_mul]; exact Finset.sum_congr rfl fun v _ => by ring
+  rw [hsumdiv] at hagg
+  -- `Ssum/(δ²n) < 1`, so the pulled-back mass is below `γcylR`
+  have hSlt : Ssum / (δ ^ 2 * n) < 1 := by
+    rw [div_lt_one (by positivity)]
+    have hceil : Ssum / δ ^ 2 ≤ (⌈Ssum / δ ^ 2⌉₊ : ℝ) := Nat.le_ceil _
+    have hNn : (⌈Ssum / δ ^ 2⌉₊ : ℝ) < (n : ℝ) := by
+      have : ⌈Ssum / δ ^ 2⌉₊ < n := by omega
+      exact_mod_cast this
+    have hSd : Ssum / δ ^ 2 < (n : ℝ) := lt_of_le_of_lt hceil hNn
+    rw [div_lt_iff₀ (by positivity)] at hSd; nlinarith [hSd]
+  have hstrict : Ssum / (δ ^ 2 * n) * γcylR < γcylR := by nlinarith [hSlt, hγcylR0]
+  -- lift to `<` on the cylinder masses and apply the selector
+  refine exists_irrational_mem_cfCylinder_notMem_of_gaussMeasure_lt wx' _ ?_
+  rw [show (⋃ v ∈ F, affineMap q r ⁻¹' cfBadZone [] v n δ)
+      = affineMap q r ⁻¹' (⋃ v ∈ F, cfBadZone [] v n δ) by rw [Set.preimage_iUnion₂]]
+  rw [← ENNReal.toReal_lt_toReal (measure_ne_top _ _) (measure_ne_top _ _)]
+  calc (gaussMeasure (cfCylinder wx' ∩ affineMap q r ⁻¹' (⋃ v ∈ F, cfBadZone [] v n δ))).toReal
+      ≤ Ssum / (δ ^ 2 * n) * γcylR := hagg
+    _ < γcylR := hstrict
+    _ = (gaussMeasure (cfCylinder wx')).toReal := by rw [hγcylRdef]
+
 
 /-- **Hull-width reciprocal ≤ `8·cfK²` (resolution input for the self-hull steer).**  For a
 genuine word `w`, `4 / vol(cfCylinder w) ≤ 8·cfK(w)²`: the cylinder width is

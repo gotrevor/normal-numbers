@@ -72,7 +72,29 @@ needs EVERY large `n` covered; a per-stage band of width `~|wx'_s|` (needed beca
 `|wx'_s|`, grow geometrically leaving gaps) enters `Cbridge` exponentially. So the single-stream
 conditional-at-base-`wz` route hits a density-vs-coverage wall.
 
-**THE ONE SURVIVING ESCAPE (next attack, genuinely open analytic question).** All the trouble is that
+## 🟢 2026-08-25 — CLEAN REDUCTION: the whole z-side now reduces to ONE disclosed crux brick
+
+**`psi_pushed_chebyshev_brick`** (`CFScheduleA:~4270`, DISCLOSED SORRY — the ψ-pushed, x-cylinder-
+relative Chebyshev; see its docstring for why it is the research-level crux). Everything above it is
+PROVED modulo this one brick:
+- **`gaussMeasure_aggregate_psi_pushed_le`** (axiom-clean given the brick) — finite-family aggregate.
+- **`exists_scale_cfCylinder_psi_avoid_zbad_poly`** (proved from the aggregate) — POLYNOMIAL-threshold
+  z-good point selection: `∃N~Ssum/δ², ∀n≥N, ∃ irrational p∈cfCylinder wx', ψp ∉ cfBadZone [] v n δ ∀v∈F`.
+  The `γ(cfCylinder wx')` factor of the crux CANCELS the cylinder mass — no `2/q` pullback loss, no
+  exponential, so the transfer range `n ≲ |wx'|` is NON-EMPTY (scale-regime-CORRECT). Composes directly
+  with the existing absolute digit-agreement transfer `notMem_cfBadZone_nil_of_cfDigit_agree`.
+
+So the single-stream z-side is now a fully-proved chain DOWN TO one precisely-stated analytic brick.
+The messy conditional-at-`wz` lemmas (walled, see CORRECTION) are kept but OFF the critical path; the
+clean path is: `psi_pushed_chebyshev_brick` → `_poly` discharge → absolute transfer → `CFOrbitEquidist`.
+
+**NEXT:** (1) prove `psi_pushed_chebyshev_brick` — attack via interval-base mixing (extend
+`gaussMeasure_cylinder_mixing` from `cfCylinder` bases to `Ioo` bases; the ψ-image is an interval).
+(2) In parallel (independent, doesn't need the brick proved): wire `exists_scale_cfCylinder_psi_avoid_zbad_poly`
++ the absolute transfer into `StepSpecL4`/the schedule to deliver `CFOrbitEquidist (ψ xA)`, then the
+interleaved witness + excise the two-stream sorry. That wiring can proceed against the disclosed brick.
+
+**THE ONE SURVIVING ESCAPE (now realized as `psi_pushed_chebyshev_brick` above).** All the trouble is that
 the conditional Chebyshev is based at the z-cylinder `wz` (giving the `γ(cfCyl wz)` factor that won't
 cancel). What is actually needed is a **ψ-pushed, x-cylinder-relative Chebyshev**: a bound
 `γ(cfCyl wx' ∩ ψ⁻¹(cfBadZone [] v n δ)) ≤ O(1/n)·γ(cfCyl wx')` — the bad FRACTION *within the deep
