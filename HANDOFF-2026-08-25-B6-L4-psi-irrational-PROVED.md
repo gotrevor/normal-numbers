@@ -30,12 +30,21 @@ machine-checked. The z-side is unblocked.
 
 ## NEXT — DIRECTION steps 2→4 (z-side assembly)
 
-1. **Chebyshev budget + z-bad record (Z-I).** Discharge
-   `exists_cfCylinder_psi_avoid_zbad`'s `hbudget` for concrete `NSz_s`/`δ_s` (via
-   `gaussMeasure_aggregate_cfBadZone_le`, `n ≳ cfK(wx_s)²`); record the per-stage `p_s`
-   avoidance conjunct. Threads the SAME way the filler did (point pick in the fixed
-   cylinder; blocks stay LINEAR). NB: this likely means ANOTHER StepSpecL4 conjunct +
-   the same 3-consumer `, _⟩` ripple — cheap now the pattern is established.
+1. **Chebyshev budget + z-bad record (Z-I).**
+   ✅ **BUDGET ATOM LANDED** — `exists_scale_cfCylinder_psi_avoid_zbad` (axiom-clean):
+   for a cfK-genuine cylinder `wx'`/hull, family `F`, `δ`, gives a threshold `N` s.t.
+   every `n ≥ N` yields an irrational `p ∈ cfCylinder wx'` whose ψ avoids
+   `cfBadZone [] v n δ` (`v∈F`).  Discharges `exists_cfCylinder_psi_avoid_zbad`'s
+   `hbudget` at `NSz={n}` (mass `≤ Ssum/(δ²n)`, `γ(cfCylinder[])≤1`, `n >
+   (2/q)Ssum/(δ²γcyl)`).
+   REMAINING: thread the per-stage z-good record into `StepSpecL4`/`schedStepL4_exists`
+   — pick `p_s` in the ALREADY-FIXED cylinder `S.wx++u` via
+   `exists_scale_cfCylinder_psi_avoid_zbad` at a stage-growing scale `n_s` (with
+   `δ_s = schedEps s`), and record the conjunct `p_s ∈ cfCylinder S'.wx ∧ p_s avoids
+   z-bad at n_s`.  Same 3-consumer `, _⟩` ripple as the filler lap (now routine).
+   NB the cylinder for the z-pick is the FIXED `S.wx++u` (before the filler `[d]`), or
+   equivalently `S'.wx` (subset — avoidance is monotone under cylinder shrink, so
+   picking on `S'.wx` directly is cleanest and needs no re-derivation).
 2. **Z-II transfer engine** ⇒ `CFOrbitEquidist (ψ xA)` via the 6 brick-4a lemmas +
    `tendsto_of_scale_coverage`; the delicate part is the s↔n coupling in `hcover`.
 3. **Z-III assemble** NEW `exists_interleaved_affine_witness` on the L4 stream (consume
