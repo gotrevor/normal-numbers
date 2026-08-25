@@ -1,5 +1,32 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🟢 2026-08-25 (measure-route grind) — LANDED: `CFAeNormal.lean` scaffold, B6 reduced to ONE a.e. crux
+
+New file `src/NormalNumbers/CFAeNormal.lean` (build 🟢 8758). Fully proved, axiom-status modulo the
+one crux sorry:
+- `ae_irrational`, `ae_mem_Ioo` (γ supported on (0,1), rationals null) — DONE.
+- `ae_isCFNormal : ∀ᵐ y ∂γ, IsCFNormal y` — DONE, assembled from the crux `ae_orbit_freq` via
+  `ae_all_iff` over countable `List ℕ` + `isCFNormal_of_irrational_orbit_freq`.
+- `exists_feasible_cfNormal_affine {q}(hq:0<q) r (hr:-q<r∧r<1) : ∃ x, IsCFNormal x ∧ IsCFNormal (ψx)`
+  — **DONE**. Measurability of the CF-normal set is DODGED: `exists_measurable_superset_of_null`
+  gives a measurable null superset `W⊆(0,1)` of `{¬IsCFNormal}∩(0,1)`; `volume_le_ofReal_mul_gaussMeasure`
+  ⇒ `vol W=0`; `volume_preimage_affineMap` ⇒ `vol(ψ⁻¹W)=0`; `gaussMeasure_le_volume` ⇒ `γ(ψ⁻¹W)=0`.
+  Feasible `F=Ioo lo hi` has `γ F>0`; `F⊆(F∩A∩B)∪(F∩Aᶜ)∪(F∩Bᶜ)` with the last two γ-null ⇒ nonempty.
+
+**THE one remaining crux — `ae_orbit_freq` (`CFAeNormal:81`, disclosed sorry):** for genuine `v`,
+`∀ᵐ y ∂γ, blockCount(cfCyl v) p y/p → γv`. Classic L²→a.e.: `chebyshev_blockCount` (already in
+`CFBlockFreq:470`, gives `γ{|S_p/p−γv|≥δ}≤(8|v|+80)γv/(δ²p)`) + Borel–Cantelli
+(`MeasureTheory.ae_eventually_not_mem`) along `p=(k+1)²` (∑1/(k+1)² summable) for each `δ=1/(m+1)`,
+intersect over `m` ⇒ a.e. convergence along squares; then monotone gap-squeeze
+(`p↦blockCount` nondecreasing, `Nat.sqrt`, `k²/(k+1)²→1`).
+
+**NEXT:** (1) prove `ae_orbit_freq`. (2) wire: edit `exists_cfNormal_and_affine_cfNormal`
+(`CFScheduleA:6270`) to consume `exists_feasible_cfNormal_affine` (add `import CFAeNormal` to
+CFScheduleA — no cycle, CFAeNormal doesn't import CFScheduleA), keeping the 3-branch integer-shift
+(re-`obtain ⟨x,hxN,hyN⟩` instead of the interleaved witness); then B6 is sorryAx-free, retire the
+schedule `sorry`s as dead. (3) re-`#print axioms` both B5′ headlines (trust triple) + B6.
+
+
 ## 🚨 2026-08-25 (review lap #2b) — ROUTE PIVOT: schedule crux is FALSE → MEASURE route
 
 **`variance_blockCount_psi_pushed` is PROVABLY FALSE** (`OBSTRUCTION-2026-08-25-variance-psi-pushed-FALSE.md`).
