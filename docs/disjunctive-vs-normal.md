@@ -203,19 +203,23 @@ is elementary and entirely unformalized.  Lower value than 4.1, but the cheapest
 
 ## 5.  Formal-side state
 
-Grep of the pinned mathlib in this repo's `.lake`: zero hits for `disjunctive`, zero for
-`Furstenberg`.  Nothing in §1 is formalized anywhere we know of.  Ranked by
-formalizability-per-payoff:
+The 2026-08-25 pinned-mathlib and Lean Zulip sweeps found no prior
+formalization of this corner.  This repo now supplies the first row and its
+category-theoretic separation consequence; formalization novelty remains
+hedged at that evidence tier.
 
-| candidate | why | tier |
+| candidate | Lean state | tier |
 |---|---|---|
-| absolutely disjunctive numbers are comeager (Calude-Zamfirescu) | mathlib has `residual` / Baire; the statement is small and the proof is a `Dense`+`IsGδ` exercise | low |
-| disjunctive in `b` ⟺ disjunctive in `bᵏ` | the §0 padding argument, self-contained, a natural first lemma of any `Disjunctive` API | low |
-| Mahler 1973 / Berend-Boshernitzan | headline, elementary, no prior art | mid |
-| Furstenberg `×2 ×3` topological rigidity | famous, and the topological version is the tractable half | high |
+| absolutely disjunctive numbers are comeager (Calude-Zamfirescu) | **shipped:** `residual_absolutelyDisjunctive` in `DisjunctiveBaire.lean`; `isMeagre_setOf_isNormal` and `exists_absolutelyDisjunctive_forall_not_isNormal` in `NormalMeager.lean` formalize the stronger "lexicon with no statistics" conclusion | low |
+| disjunctive in `b` ⟺ disjunctive in `bᵏ` | open; the §0 padding argument is self-contained and remains the natural next `Disjunctive` API lemma | low |
+| Mahler 1973 / Berend-Boshernitzan | open; headline, elementary, no prior formalization found | mid |
+| Furstenberg `×2 ×3` topological rigidity | open; famous, and the topological version is the tractable half | high |
 
-Catalog rows for the last three live in the KB under
-`core/projects/formalization-targets/problems/`.
+The proof is pure Baire category.  `orbitLiftOpen` uses interiors of the
+half-open digit cylinders, so b-adic double-expansion endpoints never enter.
+The statements live on all of `ℝ`, since both `IsDisjunctive` and `IsNormal`
+read only the fractional part.  Catalog rows for the last three open targets
+live in the KB under `core/projects/formalization-targets/problems/`.
 
 ## References
 

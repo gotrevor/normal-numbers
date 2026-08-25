@@ -101,6 +101,9 @@ This repo:
 | `IsNormal b x`, `IsNormalSequence b s`, `digit`, `Visits` | `RealDefs.lean`, `SeqDefs.lean` |
 | `Equidistributed` (mathlib has no equidistribution API) | `RealDefs.lean` |
 | `IsAbsolutelyNormal`, `IsCFNormal`, `KhinchinTypical` | `Headline.lean` |
+| `IsDisjunctive`, `AbsolutelyDisjunctive`, disjunctive ⟺ dense orbit | `Disjunctive.lean` |
+| absolutely disjunctive reals are residual; normal-in-base-`b` reals are meagre | `DisjunctiveBaire.lean`, `NormalMeager.lean` |
+| a real disjunctive in every base and normal in no base exists | `exists_absolutelyDisjunctive_forall_not_isNormal` |
 | Wall's theorem, Bailey-Crandall, Stoneham base 2, Pillai, the B5' witness | `Wall.lean`, `LnTwo.lean`, `Stoneham.lean`, `Pillai.lean`, `Headline.lean` |
 
 So mathlib owns the arithmetic axis and this repo owns the expansion axis.  Nothing
@@ -114,8 +117,8 @@ Ordered by (value to this repo) / (cost).
 |---|---|---|---|
 | 1 | `IsNormal b x → Irrational x` | **cheap.**  Wall is already proved, and a rational `x` has a finite forward orbit `{bⁿx mod 1}`, so it cannot be equidistributed.  Pick an interval shorter than the smallest gap and its visit frequency is 0 | **do it.**  It is the only implication in the whole picture and the repo does not have it |
 | 2 | Borel 1909: almost every real is absolutely normal | **moderate.**  Borel-Cantelli and the strong law are both in mathlib, and the repo already carries `∀ᵐ` machinery for the Gauss measure | **do it.**  The most famous statement about normal numbers, and the repo currently proves a witness exists without proving witnesses are typical |
-| 3 | The dual: absolutely normal numbers are meager | **cheap.**  A short Baire-category argument, and mathlib's `Residual` file for Liouville numbers is the template | **do it,** next to 2.  The pair is the measure-versus-category punchline |
-| 4 | The weakenings below normality, **which are not a chain**: `normal b → disjunctive b` and `normal b → simplyNormal b`, with neither weakening implying the other, and `disjunctive b → Irrational` while simple normality does **not** force irrationality (`1/3 = 0.010101… ` in base 2 is simply normal and rational) | **moderate.**  The definitions are quantifier weakenings of what already exists; the work is the four separating witnesses | **do it.**  It is what makes the repo's headline legible: it says what `IsAbsolutelyNormal` is *stronger than*, and the incomparability is the part a reader will get wrong |
+| 3 | The dual: normal-in-base-`b` numbers are meagre (hence absolutely normal numbers are meagre) | **shipped.**  `isMeagre_setOf_isNormal` uses dense open long-zero-run cylinders and Wall's theorem | **proved** in `NormalMeager.lean` |
+| 4 | The weakenings below normality, **which are not a chain**: `normal b → disjunctive b` and `normal b → simplyNormal b`, with neither weakening implying the other, and `disjunctive b → Irrational` while simple normality does **not** force irrationality (`1/3 = 0.010101… ` in base 2 is simply normal and rational) | **partial.**  `IsDisjunctive` and its dense-orbit equivalence are formalized; `exists_absolutelyDisjunctive_forall_not_isNormal` gives the generic separation `disjunctive ⇏ normal`.  The other arrows and witnesses remain | **continue.**  The shipped separation is the first edge; the full not-a-chain diagram is still open |
 | 5 | Stoneham `α₂,₃` is **not** normal base 6 (Bailey-Borwein) | **moderate,** and partly scaffolded already (`HotSpot.lean`, `papers/bailey-misiurewicz-2006-hot-spot.md`) | **do it.**  The single sharpest proof that normality is base-relative, and half of it is already here |
 | 6 | `irrationalityExponent x := sSup {p | LiouvilleWith p x}` plus the easy endpoints (`= ∞` for Liouville, `≥ 2` always) | **cheap** for the definition and the endpoints | **optional.**  Useful only as the anchor for the second axis; the interesting values need Roth or Mahler |
 | 7 | Morse-Hedlund: bounded subword complexity iff eventually periodic | **moderate,** self-contained combinatorics on words | **optional.**  A second irregularity scalar, but it pulls the repo toward word combinatorics |

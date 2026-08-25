@@ -48,3 +48,5 @@ import NormalNumbers.CFAffineFamily
 import NormalNumbers.CFAeKhinchin
 import NormalNumbers.ImageKhinchin
 import NormalNumbers.Disjunctive
+import NormalNumbers.DisjunctiveBaire
+import NormalNumbers.NormalMeager

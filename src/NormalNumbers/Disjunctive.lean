@@ -48,6 +48,11 @@ visits.  As with `IsNormal`, the property only sees `Int.fract x`
 def IsDisjunctive (b : ℕ) (x : ℝ) : Prop :=
   ∀ a c : ℝ, 0 ≤ a → a < c → c ≤ 1 → ∃ n, orbit b x n ∈ Set.Ico a c
 
+/-- A real is **absolutely disjunctive** when it is disjunctive in every
+integer base `b ≥ 2`. -/
+def AbsolutelyDisjunctive (x : ℝ) : Prop :=
+  ∀ b : ℕ, 2 ≤ b → IsDisjunctive b x
+
 /-- The orbit only sees the fractional part, so disjunctivity is a property of
 `Int.fract x`. -/
 theorem isDisjunctive_fract (b : ℕ) (x : ℝ) :

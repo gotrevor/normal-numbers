@@ -91,18 +91,20 @@ no naturally-occurring number is proven Khinchin-typical.
 Named axioms in the Hypothesis-A pattern, one rung below normality; the doc is
 the source of truth for statements and claim status (novelty unswept).
 
-- ⬜ D0 `Disjunctive.lean`: `IsDisjunctive`, padding lemma,
-  `isDisjunctive_iff_denseOrbit` (topological twin of Wall), `omegaLimit`
-  basics (closed, forward-invariant, dense ⟺ full)
+- 🔨 D0 `Disjunctive.lean`: `IsDisjunctive` and
+  `isDisjunctive_iff_denseOrbit` (topological twin of Wall) landed; padding
+  lemma and `omegaLimit` basics (closed, forward-invariant, dense ⟺ full)
+  remain
 - ⬜ D1 the 0-1 law: closed forward-invariant `K` with `λ(K) > 0` is
   everything (b-adic Lebesgue density route)
 - ⬜ D2 conditional headlines for ln 2: Axiom Λ (positive limit mass) and the
   per-word D_w bridges off the existing `lnTwoOrbit` tracking
 - ⬜ D3 (stretch) Axiom M implication: quadratic irrationals b-disjunctive
   given invariant-set avoidance; real cost is dim(missing-word SFT) < 1
-- ⬜ D4 **Baire slate (unconditional, CHOSEN 2026-08-25)**: absolutely
-  disjunctive reals comeager + normal-in-base-b meager + the separation
-  corollary — full context transfer in `HANDOFF-disjunctive-baire.md`
+- ✅ D4 **Baire slate (unconditional, SHIPPED 2026-08-25)**:
+  `residual_absolutelyDisjunctive`, `isMeagre_setOf_isNormal`, and
+  `exists_absolutelyDisjunctive_forall_not_isNormal`; pure Baire category
+  in `DisjunctiveBaire.lean` + `NormalMeager.lean`
 
 ## Phase 3 — outward
 
