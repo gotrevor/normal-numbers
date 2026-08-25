@@ -46,3 +46,4 @@ import NormalNumbers.CFScheduleA
 import NormalNumbers.CFAeNormal
 import NormalNumbers.CFAffineFamily
 import NormalNumbers.CFAeKhinchin
+import NormalNumbers.ImageKhinchin
