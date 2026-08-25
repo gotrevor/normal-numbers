@@ -26,7 +26,7 @@ cylinder membership is digit-defined.
 
 namespace NormalNumbers
 
-open Finset
+open Finset MeasureTheory
 
 /-- On a full orbit, membership of `T^m x` in a cylinder is a digit-window
 match at offset `m`. -/
@@ -239,5 +239,44 @@ theorem chebyshev_blockCount_brick_psi_conditional
         ENNReal.toReal_mono (MeasureTheory.measure_ne_top _ _) (MeasureTheory.measure_mono hsub)
     _ ≤ 7 * ((8 * v.length + 80) * γv / ((δ / 2) ^ 2 * (n - L))) *
           (gaussMeasure (cfCylinder wz)).toReal := hchel
+
+/-- **Finite-family aggregate of the ψ-conditional z-Chebyshev.**  Over a finite family `F`
+of genuine CF words (the finitely many blocks needing good z-frequency at a stage), the union
+of the pinned-prefix absolute-count bad sets has γ-measure at most the finite sum of the
+per-word conditional bounds — density `O(1/(n−L))`, not `O(1/n)`.  This is the pinning-stage
+selection budget: within `cfCylinder wz`, most points have `z`-good absolute block frequency at
+scale `n` for every target word simultaneously.  Mirrors `gaussMeasure_aggregate_cfBadZone_le`
+(the absolute base-`[]` engine) with the relative conditional brick in place of
+`chebyshev_blockCount_brick`. -/
+theorem gaussMeasure_aggregate_psi_cond_le
+    (wz : List ℕ) (hposw : ∀ a ∈ wz, 1 ≤ a)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a)
+    (n : ℕ) (hLn : wz.length < n) {δ : ℝ} (hδ : 0 < δ)
+    (hslack : 2 * (wz.length : ℝ) ≤ δ * n) :
+    (gaussMeasure (⋃ v ∈ F, {z : ℝ | z ∈ cfCylinder wz ∧
+        (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+        δ ≤ |blockCount (cfCylinder v) n z / n -
+          (gaussMeasure (cfCylinder v)).toReal|})).toReal
+      ≤ ∑ v ∈ F, 7 * ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal /
+          ((δ / 2) ^ 2 * (n - wz.length))) * (gaussMeasure (cfCylinder wz)).toReal := by
+  calc (gaussMeasure (⋃ v ∈ F, {z : ℝ | z ∈ cfCylinder wz ∧
+          (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+          δ ≤ |blockCount (cfCylinder v) n z / n -
+            (gaussMeasure (cfCylinder v)).toReal|})).toReal
+      ≤ (∑ v ∈ F, gaussMeasure {z : ℝ | z ∈ cfCylinder wz ∧
+          (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+          δ ≤ |blockCount (cfCylinder v) n z / n -
+            (gaussMeasure (cfCylinder v)).toReal|}).toReal := by
+        refine ENNReal.toReal_mono ?_ (measure_biUnion_finset_le F _)
+        exact (ENNReal.sum_lt_top.2 (fun v _ => measure_lt_top _ _)).ne
+    _ = ∑ v ∈ F, (gaussMeasure {z : ℝ | z ∈ cfCylinder wz ∧
+          (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+          δ ≤ |blockCount (cfCylinder v) n z / n -
+            (gaussMeasure (cfCylinder v)).toReal|}).toReal :=
+        ENNReal.toReal_sum (fun v _ => measure_ne_top _ _)
+    _ ≤ ∑ v ∈ F, 7 * ((8 * v.length + 80) * (gaussMeasure (cfCylinder v)).toReal /
+          ((δ / 2) ^ 2 * (n - wz.length))) * (gaussMeasure (cfCylinder wz)).toReal :=
+        Finset.sum_le_sum fun v hv =>
+          chebyshev_blockCount_brick_psi_conditional wz v hposw (hF v hv) n hLn hδ hslack
 
 end NormalNumbers

@@ -21,7 +21,23 @@ scale-`n` count, leaving the shifted scale-`(n−L)` count on `gaussMap^[L] z`, 
 `chebyshev_blockCount_brick` at base `wz`; the slack `2L≤δn` makes a scale-`n` `δ`-bad point a
 shifted scale-`(n−L)` `(δ/2)`-bad point (subset + `measure_mono` + `ENNReal.toReal_mono`).
 
+**Also landed (aggregate brick):** `gaussMeasure_aggregate_psi_cond_le` (`CFWordBridge`,
+axiom-clean) — the finite-family (`F : Finset (List ℕ)`) union of the pinned-prefix
+absolute-count bad sets is bounded by `∑_{v∈F} 7(8|v|+80)γv/((δ/2)²(n−L))·γ(cfCyl wz)`, the
+`O(1/(n−L))` selection budget. Mirrors `gaussMeasure_aggregate_cfBadZone_le` with the conditional
+brick swapped in for `chebyshev_blockCount_brick`. This is the exact aggregate the pinning-stage
+selector consumes.
+
 **NEXT (was step 2/3 of the handoff, now unblocked):**
+0. **Scale-window aggregate + ψ-pullback.** (a) Sum `gaussMeasure_aggregate_psi_cond_le` over the
+   pinning window `n ∈ (L, N]` (arithmetic: `∑_{n=L+1}^{N} 1/(n−L) = H_{N−L}`, so pick `N` giving
+   total budget `< γ(cfCyl wz)` — but note the log divergence means the window must be handled per
+   the s↔n coupling, one scale per stage, NOT summed to a single N; more likely each stage pins ONE
+   scale-band and the aggregate is over `F` only). (b) Pull the z-set back through `ψ = affineMap q r`
+   to an x-budget, as `exists_cfCylinder_psi_avoid_zbad` does for the absolute base via
+   `gaussMeasure_cfCylinder_inter_preimage_affineMap_le`; the new subtlety is that `ψ(cfCylinder wx)`
+   must land inside `cfCylinder wz` (the pinned z-prefix) — supplied by `exists_tail_cfCylinder_subset_ball`
+   + digit-agreement, so `wz` is determined by `wx` and the ψ-pinning.
 1. Thread the pinning-stage z-selection into the block builder
    (`exists_uniformly_freq_good_block_steer_len_rel_cfK`): feed this bound as the z-bad budget
    over the window `(|w_{s-1}|,|w_s|]`, keeping blocks LINEAR (extra term `O(1/|u|)·γ`, absorbed
