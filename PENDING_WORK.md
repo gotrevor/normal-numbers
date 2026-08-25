@@ -1,5 +1,27 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🚨 2026-08-25 (review lap #2b) — ROUTE PIVOT: schedule crux is FALSE → MEASURE route
+
+**`variance_blockCount_psi_pushed` is PROVABLY FALSE** (`OBSTRUCTION-2026-08-25-variance-psi-pushed-FALSE.md`).
+So the "step 1a/1c" plan in the section immediately below is **DEAD** — do NOT grind it. The restricted
+2nd-moment identities landed in `a92dd8c` are still TRUE and axiom-clean (pure measure theory), but the
+mixing bounds they were meant to feed are FALSE, so the whole `psi_pushed_*` chain is retired.
+
+**NEW PLAN (B6 via the measure argument — `ROUTE-ESCALATION-2026-08-25.md`, DIRECTION.md CURRENT DIRECTIVE):**
+the stated headline is bare existence, trivially true a.e.  Build in a NEW file `src/NormalNumbers/CFAeNormal.lean`:
+1. **`ae_isCFNormal` (THE new crux):** `∀ᵐ y ∂gaussMeasure, IsCFNormal y`, via L²→a.e.:
+   - per-word `v`: `variance_blockCount_le` (`CFBlockFreq:401`) + Chebyshev + Borel–Cantelli on `p=k²`
+     + monotone-squeeze on gaps ⇒ a.e. `blockCount(cfCyl v) p ·/p → γv`;
+   - intersect over countable valid `v` + a.e. orbit-in-`(0,1)` ⇒ `isCFNormal_of_orbit_freq`
+     (`CFOrbitFreq:34`) ⇒ `IsCFNormal y` a.e.
+2. **`ae_isCFNormal_affine`:** `∀ᵐ x, IsCFNormal(ψx)` via `ψ⁻¹` preserves γ-null
+   (`volume_preimage_affineMap` `CFAffine:94` + γ≈volume bounded-density).
+3. **Assemble** `exists_cfNormal_and_affine_cfNormal`: two co-null sets on the feasible interval meet ⇒
+   witness; plug into the feasible branch (integer-shift reduction for `r∉(-q,1)` already present).
+The schedule/explicit-witness chain (`variance_blockCount_psi_pushed`, `psi_pushed_*`, `_poly`,
+two-stream `schedA_block_linear`, `exists_interleaved_affine_witness`) stays in `src` marked REFUTED,
+NOT deleted, NOT to be attacked.
+
 ## 🟢 2026-08-25 (review lap #2) — LANDED: crux step 1a (restricted ψ-pushed 2nd-moment identities)
 
 Committed `a92dd8c` (build green 8757, axiom-clean). In `CFScheduleA.lean` before the crux:
