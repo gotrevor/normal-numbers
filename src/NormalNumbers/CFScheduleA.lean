@@ -2641,6 +2641,66 @@ theorem exists_cfCylinder_psi_avoid_zbad_cond {q : ℝ} (hq : 0 < q) (r : ℝ)
   exact lt_of_le_of_lt
     (gaussMeasure_cfCylinder_inter_preimage_affineMap_le hq r wx' hIcc U hUmeas hUsub) hbudget
 
+/-- **Multi-scale conditional selector (the s↔n coupling interface).**  Like
+`exists_cfCylinder_psi_avoid_zbad_cond` but avoids the pinned-prefix bad sets across a whole
+finite band `NSz` of scales simultaneously — the shape the pinning-stage record needs, since a
+single stage `s` must certify `ψ`-goodness over the entire window `(|w_{s-1}|,|w_s|]` of scales
+it is responsible for.  The `hbudget` is the harmonic-band total `∑_{n∈NSz} ∑_{v∈F} …`; its
+feasibility (the band budget staying below the cylinder mass) is the delicate arithmetic the
+caller discharges.  Proof is the identical pullback plumbing over the double union. -/
+theorem exists_cfCylinder_psi_avoid_zbad_cond_multiscale {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (wx' : List ℕ) {a b : ℝ} (hIcc : cfCylinder wx' ⊆ Set.Icc a b)
+    (wz : List ℕ) (F : Finset (List ℕ)) (NSz : Finset ℕ) {δ : ℝ}
+    (hbudget : ENNReal.ofReal (2 / q)
+        * gaussMeasure ((⋃ n ∈ NSz, ⋃ v ∈ F, {z : ℝ | z ∈ cfCylinder wz ∧
+            (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+            δ ≤ |blockCount (cfCylinder v) n z / n - (gaussMeasure (cfCylinder v)).toReal|})
+            ∩ Set.Ioo (q * a + r) (q * b + r))
+      < gaussMeasure (cfCylinder wx')) :
+    ∃ p : ℝ, Irrational p ∧ p ∈ cfCylinder wx' ∧
+      p ∉ (⋃ n ∈ NSz, ⋃ v ∈ F, affineMap q r ⁻¹' {z : ℝ | z ∈ cfCylinder wz ∧
+        (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+        δ ≤ |blockCount (cfCylinder v) n z / n - (gaussMeasure (cfCylinder v)).toReal|}) := by
+  set U : Set ℝ := ⋃ n ∈ NSz, ⋃ v ∈ F, {z : ℝ | z ∈ cfCylinder wz ∧
+      (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+      δ ≤ |blockCount (cfCylinder v) n z / n - (gaussMeasure (cfCylinder v)).toReal|} with hU
+  have hScondmeas : ∀ (n : ℕ) (v : List ℕ), MeasurableSet {z : ℝ | z ∈ cfCylinder wz ∧
+      (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+      δ ≤ |blockCount (cfCylinder v) n z / n - (gaussMeasure (cfCylinder v)).toReal|} := by
+    intro n v
+    have h1 : MeasurableSet (cfCylinder wz) := measurableSet_cfCylinder wz
+    have h2 : MeasurableSet (⋂ j : ℕ, (gaussMap^[j]) ⁻¹' (Set.Ioo (0 : ℝ) 1)) :=
+      MeasurableSet.iInter fun j => (measurable_gaussMap.iterate j) measurableSet_Ioo
+    have h3 : MeasurableSet {z : ℝ | δ ≤ |blockCount (cfCylinder v) n z / n
+        - (gaussMeasure (cfCylinder v)).toReal|} :=
+      measurableSet_le measurable_const
+        (((measurable_blockCount (cfCylinder v) (measurableSet_cfCylinder v) n).div_const _).sub_const _).abs
+    have heq : {z : ℝ | z ∈ cfCylinder wz ∧
+        (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+        δ ≤ |blockCount (cfCylinder v) n z / n - (gaussMeasure (cfCylinder v)).toReal|}
+        = cfCylinder wz ∩ (⋂ j : ℕ, (gaussMap^[j]) ⁻¹' (Set.Ioo (0 : ℝ) 1))
+          ∩ {z : ℝ | δ ≤ |blockCount (cfCylinder v) n z / n
+              - (gaussMeasure (cfCylinder v)).toReal|} := by
+      ext z
+      simp only [Set.mem_setOf_eq, Set.mem_inter_iff, Set.mem_iInter, Set.mem_preimage]
+      tauto
+    rw [heq]; exact (h1.inter h2).inter h3
+  have hUmeas : MeasurableSet U :=
+    MeasurableSet.biUnion NSz.countable_toSet fun n _ =>
+      Finset.measurableSet_biUnion F fun v _ => hScondmeas n v
+  have hUsub : U ⊆ Set.Ioo (0 : ℝ) 1 := by
+    rw [hU]
+    refine Set.iUnion₂_subset fun n _ => Set.iUnion₂_subset fun v _ z hz => ?_
+    exact cfCylinder_subset_Ioo wz hz.1
+  have hBzeq : (⋃ n ∈ NSz, ⋃ v ∈ F, affineMap q r ⁻¹' {z : ℝ | z ∈ cfCylinder wz ∧
+      (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+      δ ≤ |blockCount (cfCylinder v) n z / n - (gaussMeasure (cfCylinder v)).toReal|})
+      = affineMap q r ⁻¹' U := by rw [hU]; simp only [Set.preimage_iUnion]
+  refine exists_irrational_mem_cfCylinder_notMem_of_gaussMeasure_lt wx' _ ?_
+  rw [hBzeq]
+  exact lt_of_le_of_lt
+    (gaussMeasure_cfCylinder_inter_preimage_affineMap_le hq r wx' hIcc U hUmeas hUsub) hbudget
+
 /-- **Relative regularization kills the block parameter's word-dependence.**  With the
 block parameter `β_rel = γtar·δ²/(S + γwx)`, `S = γwx·Sg` (relative regularizer `+γwx`
 instead of the scaling-breaking absolute `+1`), the quantity `2/β_rel` — which drives the

@@ -44,7 +44,35 @@ pinned-prefix absolute-count bad set for `v ∈ F`. `N` bakes in `n>|wz|`, slack
 `n−|wz| > (2/q)·Ssum/((δ/2)²·γ(cfCylinder wx'))`. The complete pinning-stage z-selection engine is
 now in the kernel; only the SCHEDULE-side wiring remains.
 
-**NEXT (was step 2/3 of the handoff, now unblocked):**
+**Also landed (multi-scale interface):** `exists_cfCylinder_psi_avoid_zbad_cond_multiscale`
+(`CFScheduleA`, axiom-clean) — the `NSz`-band generalization of the conditional selector, matching
+the `exists_cfCylinder_psi_avoid_zbad` NSz shape. A single witness `p ∈ cfCylinder wx'` whose
+ψ-image avoids the pinned-prefix bad sets across an ENTIRE finite band `NSz` of scales — the shape
+the s↔n coupling needs (each stage certifies ψ-goodness over its whole window `(|w_{s-1}|,|w_s|]`).
+`hbudget` is the harmonic-band total; feasibility left to caller.
+
+**⚠️ SHARPENED OPEN OBLIGATION (the remaining delicate arithmetic — subtlety 2, s↔n coverage):**
+The band budget `∑_{n∈(L,M]} ∑_{v∈F} 7(8|v|+80)γv/((δ/2)²(n−L))·γ(wz)` carries a HARMONIC factor
+`∑_{n=L+1}^{M} 1/(n−L) = H_{M−L} ~ log(M−L)`. For the geometric window `M ~ |w_s| ~ 2|w_{s-1}|`,
+`M − L` is comparable to `L`, so `H_{M−L} ~ log L` — GROWS with the stage. So a fixed-`δ` single
+witness canNOT cover a full geometric band with bounded budget: `budget ~ (2/q)Ssum·log L/((δ/2)²γcylR)`
+must stay `< γcylR`, but `γcylR = γ(cfCylinder wx') ~ φ^{-2L}` SHRINKS. **This is the crux of
+subtlety 2 and must be confronted head-on next lap.** Candidate resolutions, in order of promise:
+  (a) **Per-scale δ decay absorbs the harmonic factor is FALSE** (δ_s→0 makes it worse). Instead,
+      **thin the band**: don't cover every n∈(L,M] from one stage — cover a SPARSE subsequence (e.g.
+      n = ⌈L·(1+1/k)⌉) and rely on `blockCount` near-monotonicity / the `|v|`-boundary slack
+      (`blockCount_sub_countOccurrences_bounds`) to interpolate goodness at intermediate n. Budget
+      then sums O(log) TERMS but each O(1/L)·(band width), possibly bounded.
+  (b) **Coverage need not be per-stage-exhaustive.** Re-examine `tendsto_of_scale_coverage`'s actual
+      hypothesis: it may only need goodness along a cofinal sequence of scales n_k→∞ with n_k good,
+      NOT every n. If so, ONE scale per stage (the single-scale `exists_scale_cfCylinder_psi_avoid_zbad_cond`,
+      already landed) suffices and the band/harmonic problem DISSOLVES. **Check this FIRST — it may
+      obviate (a) entirely.** Read `tendsto_of_scale_coverage` + `CFOrbitEquidist` def carefully.
+  (c) If genuinely every-n needed: the γcylR shrink is fought by the fact that Ssum also involves
+      only FIXED-stage words (wordFamily s grows slowly); re-derive whether (2/q)Ssum·logL vs φ^{-2L}
+      is actually violated or if a tighter cylinder-relative Ssum (using γ(cfCyl wz) not 1) saves it.
+
+**THEN (schedule wiring, after the above is settled):**
 1. **Thread `exists_scale_cfCylinder_psi_avoid_zbad_cond` into the block builder / `StepSpecL4`.**
    The analytic + measure spine is DONE; what remains is combining the z-good point pick with the
    x-freq-good block selection in `exists_uniformly_freq_good_block_steer_len_rel_cfK` (interval
