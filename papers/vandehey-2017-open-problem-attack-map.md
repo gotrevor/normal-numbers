@@ -89,6 +89,43 @@ initial states from ~60 steps on).  Raise P(program closes it) above the ~50%
 below.  ⚠️ Two traps recorded there: fixed-precision floats manufacture a false
 "program dead" verdict, and coupled-trajectory equality is the wrong merging test.
 
+🔁 **Second, INDEPENDENT probe, 2026-08-24** (different session, different code, no
+shared results): same GREEN verdict on both crux risks, reached via a PROVED-vs-OPEN
+differential table (2x, 3x, x/2, (x+1)/2 against phi x, x/phi, x+phi, sqrt5 x) rather
+than a KS null.  Two probes agreeing from independent origins is worth more than either.
+Write-up + tool: `experiments/PROBE-ROUTE-A.md`, `experiments/route_a_window.py`.
+Corroborates: conjugate drift measured at 2.354 nats/step against a predicted
+2*Levy = 2.373, real place flat; window survives planted input digits up to 10^15.
+
+🚨 It also found **three corrections to this section that change what the blueprint must
+prove** - none of them a wall, all of them sharpenings:
+
+1. **"Post-emission boundedness should be automatic exactly as in the integer case" is
+   wrong.**  Read against the PDF: Vandehey's finiteness is an INTEGER DESCENT (Lemma 2.1
+   terminates because "we ... subtract at least 1 from one of them ... no coefficients grow
+   in size"), not geometry.  Z[phi] is dense; there is nothing to descend on.  The window
+   lemma needs a genuinely different proof - the integer ancestor helps with the STATEMENT
+   and not at all with the PROOF.
+2. **Drop "compact in PGL2(R)", keep "bounded distortion".**  The raw post-emission state
+   set is unbounded in the PROVED case too (a state straddling 1/c at depth eps has entries
+   ~ sqrt(D/eps)); measured, `2x` climbs the same way phi does.  What is bounded on both
+   sides is distortion: exactly log 4 for every integer control, saturating ~2.5 for every
+   Z[phi] map.  State the lemma for the reduced normal forms, or in terms of distortion.
+3. **Lemma 2.2 does NOT port** - its proof derives bounded burst FROM `M_D` being finite.
+   Replacement, derived and measured across 24 orders of magnitude:
+   `burst <= C_M + log(1+a)/Levy` (integer controls flat at 1.60/1.75; every Z[phi] map
+   tracks 0.843*ln(a)).  Unbounded, so the lemma is genuinely lost - but `int log a dmu`
+   is finite (the same finiteness behind Khinchin's constant), so **Lemma 6.1's
+   `l(n) = c1 n(1+o(1))` survives**; c1 measured 0.965-0.989 vs 0.986-1.013 for controls.
+
+📌 And the merging trap recorded just above is stronger than "wrong test": pathwise
+merging is **provably impossible** here.  Two states coincide iff `M^-1 V M` is integral
+for an integer `V`, which for `M = diag(phi,1)` forces `V` diagonal, i.e. the same input
+prefix; by Serret the same kills exact output-tail coupling.  Confirmed: `2x` merges at
+step 3 with a 1217-digit common tail, phi never in 1200 steps.  So the Saloff-Coste-Zuniga
+citation must be replaced by a distributional statement, never a coupling/synchronising
+word.
+
 ✅ **Lit sweep DONE 2026-08-24** (§6 below).  Fisher–Schmidt ETDS 2014 read in
 full: **no Theorem-3.1 analogue, and its fiber is finite, not continuous** — see
 `papers/fisher-schmidt-2014-approximants-geodesic-flows.md`.  Forward-citation
