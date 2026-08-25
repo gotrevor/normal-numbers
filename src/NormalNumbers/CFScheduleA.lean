@@ -759,12 +759,12 @@ lies in at most one.  Diagonalising this over an enumeration of `ψ⁻¹(ℚ)` (
 the chain limit `xA` away from every ψ-rational point, forcing `ψ(xA)` irrational — the fix for
 the single-stream irrationality gap (subtlety 1, PENDING_WORK). -/
 theorem exists_digit_cfCylinder_notMem (wx : List ℕ) (t : ℝ) :
-    ∃ a : ℕ, 1 ≤ a ∧ t ∉ cfCylinder (wx ++ [a]) := by
+    ∃ a : ℕ, 1 ≤ a ∧ a ≤ 2 ∧ t ∉ cfCylinder (wx ++ [a]) := by
   by_cases h1 : t ∈ cfCylinder (wx ++ [1])
-  · refine ⟨2, by norm_num, fun h2 => ?_⟩
+  · refine ⟨2, by norm_num, by norm_num, fun h2 => ?_⟩
     have hdisj := cfCylinder_disjoint (w := wx ++ [1]) (w' := wx ++ [2]) (by simp) (by simp)
     exact (Set.disjoint_left.1 hdisj) h1 h2
-  · exact ⟨1, by norm_num, h1⟩
+  · exact ⟨1, by norm_num, by norm_num, h1⟩
 
 /-- **ψ(xA) irrationality from chain-limit avoidance** (Z-III assembly core, subtlety 1).  If the
 chain limit `xA` lies in every cylinder `cfCylinder (w s)`, and the chain "diagonalises" against
@@ -4255,21 +4255,22 @@ def StepSpecL4 {q r : ℝ} (S S' : SchedStateL4 q r) (s : ℕ) : Prop :=
     ∃ (a b : ℝ) (n₁ m Nfib : ℕ),
       0 ≤ a ∧ a < b ∧ b ≤ 1 ∧ cfCylinder S.wx ⊆ Set.Icc a b ∧
       S.wx.length ≤ (S'.wx.drop S.wx.length).length ∧
-      (S'.wx.drop S.wx.length).length = n₁ + m ^ 2 ∧
+      (S'.wx.drop S.wx.length).length = n₁ + m ^ 2 + 1 ∧
       n₁ ^ 2 ≤ (S'.wx.drop S.wx.length).length * Nat.sqrt (S'.wx.drop S.wx.length).length ∧
       (∀ k, k ≤ (S'.wx.drop S.wx.length).length → ∀ v ∈ wordFamily s,
         |(countOccurrences v ((S'.wx.drop S.wx.length).take k) : ℝ)
           - (gaussMeasure (cfCylinder v)).toReal * k|
             < schedEps s * k
-              + (4 * Nat.sqrt (S'.wx.drop S.wx.length).length + 2 * v.length + n₁)) ∧
+              + (4 * Nat.sqrt (S'.wx.drop S.wx.length).length + 3 * v.length + n₁)) ∧
       (cfK (S'.wx.drop S.wx.length) : ℝ)
-          ≤ Real.exp (schedKappaL4 * ((S'.wx.drop S.wx.length).length : ℝ)) ∧
+          ≤ Real.exp ((schedKappaL4 + Real.log 2) * ((S'.wx.drop S.wx.length).length : ℝ)) ∧
       m ^ 2 ≤ 6 * (S.wx.length + s + Nfib) + 2 + 2 * (Nat.ceil (2 / ((gaussMeasure
           (Set.Ioo (a + (b - a) / 4) (b - (b - a) / 4))).toReal * schedEps s ^ 2
         / (2 * (∑ v ∈ wordFamily s, 7 * (8 * (v.length : ℝ) + 80)
               * (gaussMeasure (cfCylinder v)).toReal * (gaussMeasure (cfCylinder S.wx)).toReal
           + (gaussMeasure (cfCylinder S.wx)).toReal)))) + 1) ^ 4 ∧
-      (Nfib : ℝ) ≤ Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt (4 / (b - a)) + 1) + 1
+      (Nfib : ℝ) ≤ Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt (4 / (b - a)) + 1) + 1 ∧
+      enumPsiRat q r s ∉ cfCylinder S'.wx
 
 /-- **Every L4 state steps** (single-stream, route B).  Extend `wx` by a
 relative-regularization freq-good block steering into the cylinder's OWN hull (so the block
@@ -4285,28 +4286,94 @@ theorem schedStepL4_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateL4 q 
       (wordFamily s) (wordFamily_pos s) (wordFamily_ne s) (schedEps_pos s)
       ha hab hb hIoo (S.wx.length + s) schedKappaL4
       (schedKappaL4_spec S.wx S.hwxne S.hwxpos a b ha hab hb hIcc)
-  set wx' := S.wx ++ u with hwx'def
-  have hwx'ne : wx' ≠ [] := by rw [hwx'def]; simp [hune]
+  -- diagonalisation filler digit: append one digit steering `xA` off `enumPsiRat q r s`
+  obtain ⟨d, hd1, hd2, hdnotmem⟩ := exists_digit_cfCylinder_notMem (S.wx ++ u) (enumPsiRat q r s)
+  have hcfKblk := cfK_snoc_le_exp_ratebump u hune hupos hd1 hd2 schedKappaL4_pos.le hcfKu
+  set blk := u ++ [d] with hblkdef
+  have hblklen : blk.length = u.length + 1 := by
+    rw [hblkdef, List.length_append, List.length_singleton]
+  have hbne : blk ≠ [] := by rw [hblkdef]; simp
+  have hbpos : ∀ c ∈ blk, 1 ≤ c := by
+    rw [hblkdef]; intro c hc
+    rcases List.mem_append.1 hc with h | h
+    · exact hupos c h
+    · rw [List.mem_singleton] at h; omega
+  set wx' := S.wx ++ blk with hwx'def
+  have hassoc : wx' = (S.wx ++ u) ++ [d] := by rw [hwx'def, hblkdef, List.append_assoc]
+  have hwx'ne : wx' ≠ [] := by rw [hwx'def]; simp [hbne]
   have hwx'pos : ∀ c ∈ wx', 1 ≤ c := fun c hc =>
-    (List.mem_append.1 hc).elim (S.hwxpos c) (hupos c)
+    (List.mem_append.1 hc).elim (S.hwxpos c) (hbpos c)
   have htake : wx'.take S.wx.length = S.wx := by rw [hwx'def, List.take_left]
-  have hdrop : wx'.drop S.wx.length = u := by rw [hwx'def, List.drop_left]
+  have hdrop : wx'.drop S.wx.length = blk := by rw [hwx'def, List.drop_left]
   have hsub : cfCylinder wx' ⊆ cfCylinder S.wx := by
-    rw [hwx'def]; exact cfCylinder_append_subset S.wx u
+    rw [hwx'def]; exact cfCylinder_append_subset S.wx blk
   have hinv' : cfCylinder wx' ⊆ affineMap q r ⁻¹' Set.Ioo S.e S.f :=
     hsub.trans S.hinv
   have hgt : S.wx.length < wx'.length := by
-    rw [hwx'def, List.length_append]
-    have : 0 < u.length := List.length_pos_of_ne_nil hune
-    omega
+    rw [hwx'def, List.length_append]; omega
+  -- filler-tolerant freq bound over the +1 block
+  have hfreqblk : ∀ k, k ≤ blk.length → ∀ v ∈ wordFamily s,
+      |(countOccurrences v (blk.take k) : ℝ) - (gaussMeasure (cfCylinder v)).toReal * k|
+        < schedEps s * k + (4 * Nat.sqrt blk.length + 3 * v.length + n₁) := by
+    intro k hk v hv
+    have hvne : v ≠ [] := wordFamily_ne s v hv
+    have hvlen1 : 1 ≤ v.length := List.length_pos_of_ne_nil hvne
+    have hsqrtle : Nat.sqrt u.length ≤ Nat.sqrt blk.length := Nat.sqrt_le_sqrt (by omega)
+    have hsqrtleR : (Nat.sqrt u.length : ℝ) ≤ (Nat.sqrt blk.length : ℝ) := by exact_mod_cast hsqrtle
+    set γv := (gaussMeasure (cfCylinder v)).toReal with hγvdef
+    have hγv0 : 0 ≤ γv := ENNReal.toReal_nonneg
+    have hγv1 : γv ≤ 1 := ENNReal.toReal_mono ENNReal.one_ne_top prob_le_one
+    have hδ0 : 0 ≤ schedEps s := (schedEps_pos s).le
+    have hvlen1R : (1 : ℝ) ≤ (v.length : ℝ) := by exact_mod_cast hvlen1
+    by_cases hku : k ≤ u.length
+    · have htk : blk.take k = u.take k := by rw [hblkdef]; exact List.take_append_of_le_length hku
+      have hb := hufreq k hku v hv
+      rw [htk]
+      calc |(countOccurrences v (u.take k) : ℝ) - γv * k|
+          < schedEps s * k + (4 * Nat.sqrt u.length + 2 * v.length + n₁) := hb
+        _ ≤ schedEps s * k + (4 * Nat.sqrt blk.length + 3 * v.length + n₁) := by
+            push_cast; linarith [hsqrtleR, hvlen1R]
+    · have hkeq : k = blk.length := by omega
+      subst hkeq
+      rw [List.take_length]
+      have hhi := countOccurrences_append_le hvne u [d]
+      have hlo := add_countOccurrences_le_append hvne u [d]
+      have hcd : countOccurrences v [d] ≤ 1 := by
+        have := countOccurrences_le_length hvne [d]; simpa using this
+      have hcb_ub : countOccurrences v blk ≤ countOccurrences v u + v.length := by
+        rw [hblkdef]; omega
+      have hcb_lb : countOccurrences v u ≤ countOccurrences v blk := by
+        rw [hblkdef]; omega
+      have hcbR_ub : (countOccurrences v blk : ℝ) ≤ (countOccurrences v u : ℝ) + v.length := by
+        exact_mod_cast hcb_ub
+      have hcbR_lb : (countOccurrences v u : ℝ) ≤ (countOccurrences v blk : ℝ) := by
+        exact_mod_cast hcb_lb
+      have hu := hufreq u.length (le_refl _) v hv
+      rw [List.take_length] at hu
+      have habs := abs_lt.1 hu
+      have hblkR : (blk.length : ℝ) = (u.length : ℝ) + 1 := by rw [hblklen]; push_cast; ring
+      have hgvb : γv * (blk.length : ℝ) = γv * (u.length : ℝ) + γv := by rw [hblkR]; ring
+      have hgeps : schedEps s * (blk.length : ℝ) = schedEps s * (u.length : ℝ) + schedEps s := by
+        rw [hblkR]; ring
+      rw [abs_lt]
+      constructor
+      · push_cast at habs ⊢
+        linarith [habs.1, habs.2, hcbR_lb, hcbR_ub, hγv0, hγv1, hsqrtleR, hgvb, hgeps, hvlen1R, hδ0]
+      · push_cast at habs ⊢
+        linarith [habs.1, habs.2, hcbR_lb, hcbR_ub, hγv0, hγv1, hsqrtleR, hgvb, hgeps, hvlen1R, hδ0]
   refine ⟨⟨wx', S.e, S.f, hwx'ne, hwx'pos, S.he0, S.hef, S.hf1, hinv'⟩, htake, hgt, ?_,
-    a, b, n₁, m, Nfib, ha, hab, hb, hIcc, ?_, ?_, ?_, ?_, ?_, hm2, hNf⟩
+    a, b, n₁, m, Nfib, ha, hab, hb, hIcc, ?_, ?_, ?_, ?_, ?_, hm2, hNf, ?_⟩
   · rw [hdrop]; omega
   · rw [hdrop]; omega
-  · rw [hdrop]; exact hlen
-  · rw [hdrop]; exact hn₁sq
-  · rw [hdrop]; exact hufreq
-  · rw [hdrop]; exact hcfKu
+  · rw [hdrop]; omega
+  · rw [hdrop]
+    calc n₁ ^ 2 ≤ u.length * Nat.sqrt u.length := hn₁sq
+      _ ≤ blk.length * Nat.sqrt blk.length :=
+          Nat.mul_le_mul (by omega) (Nat.sqrt_le_sqrt (by omega))
+  · rw [hdrop]; exact hfreqblk
+  · rw [hdrop]; exact hcfKblk
+  · show enumPsiRat q r s ∉ cfCylinder wx'
+    rw [hassoc]; exact hdnotmem
 
 /-- **The single-stream L4 seed.**  Reuse the two-stream feasible seed's x-side data
 (`exists_seedStateA` already places `wx` inside `ψ⁻¹(Ioo e f)`); drop the `wz` stream. -/
@@ -4484,20 +4551,20 @@ affine in `|wx|` — the recursion input to `schedL4_block_linear`. -/
 theorem cfK_wxSeq_L4_le {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
     (cfK (wxSeq_L4 hq hr s) : ℝ)
       ≤ (cfK (wxSeq_L4 hq hr 0) : ℝ)
-        * Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ)) := by
+        * Real.exp ((schedKappaL4 + Real.log 2 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ)) := by
   have hκ : 0 ≤ schedKappaL4 := schedKappaL4_pos.le
   have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
   have hK0 : 0 ≤ schedKappaL4 + Real.log 2 := by linarith
   induction s with
   | zero =>
-    have h1 : (1 : ℝ) ≤ Real.exp ((schedKappaL4 + Real.log 2)
+    have h1 : (1 : ℝ) ≤ Real.exp ((schedKappaL4 + Real.log 2 + Real.log 2)
         * ((wxSeq_L4 hq hr 0).length : ℝ)) :=
       Real.one_le_exp (by positivity)
     exact le_mul_of_one_le_right (by positivity) h1
   | succ s ih =>
     set block := (schedL4 hq hr (s + 1)).wx.drop (schedL4 hq hr s).wx.length with hblockdef
     obtain ⟨htake, _hgt, _hslen, a, b, n₁, m, Nfib, _ha, _hab, _hb, _hIcc,
-      _hword, _hlen, _hn₁sq, _hfreq, hcfKb, _hm2, _hNf⟩ := schedL4_step hq hr s
+      _hword, _hlen, _hn₁sq, _hfreq, hcfKb, _hm2, _hNf, -⟩ := schedL4_step hq hr s
     -- the chain splits `W(s+1) = W s ++ block`
     have hWeq : wxSeq_L4 hq hr (s + 1) = wxSeq_L4 hq hr s ++ block := by
       show (schedL4 hq hr (s + 1)).wx = (schedL4 hq hr s).wx ++ block
@@ -4521,23 +4588,23 @@ theorem cfK_wxSeq_L4_le {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
       rw [← hWeq] at h
       exact_mod_cast h
     -- the per-block cfK cap (from the step); note the drop is defeq to `block`
-    have hcap : (cfK block : ℝ) ≤ Real.exp (schedKappaL4 * (block.length : ℝ)) := hcfKb
+    have hcap : (cfK block : ℝ) ≤ Real.exp ((schedKappaL4 + Real.log 2) * (block.length : ℝ)) := hcfKb
     have hcfK0 : (0 : ℝ) ≤ (cfK (wxSeq_L4 hq hr s) : ℝ) := by positivity
     have hcfKb0 : (0 : ℝ) ≤ (cfK block : ℝ) := by positivity
     -- assemble
     calc (cfK (wxSeq_L4 hq hr (s + 1)) : ℝ)
         ≤ 2 * ((cfK (wxSeq_L4 hq hr s) : ℝ) * (cfK block : ℝ)) := happ
       _ ≤ 2 * (((cfK (wxSeq_L4 hq hr 0) : ℝ)
-            * Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ)))
-          * Real.exp (schedKappaL4 * (block.length : ℝ))) := by
+            * Real.exp ((schedKappaL4 + Real.log 2 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ)))
+          * Real.exp ((schedKappaL4 + Real.log 2) * (block.length : ℝ))) := by
         gcongr
       _ ≤ (cfK (wxSeq_L4 hq hr 0) : ℝ)
-            * Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr (s + 1)).length : ℝ)) := by
+            * Real.exp ((schedKappaL4 + Real.log 2 + Real.log 2) * ((wxSeq_L4 hq hr (s + 1)).length : ℝ)) := by
         rw [hlenadd]
-        rw [show (schedKappaL4 + Real.log 2)
+        rw [show (schedKappaL4 + Real.log 2 + Real.log 2)
               * ((wxSeq_L4 hq hr s).length + (block.length : ℝ))
-            = ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
-              + (schedKappaL4 * (block.length : ℝ) + Real.log 2 * (block.length : ℝ)) by ring,
+            = ((schedKappaL4 + Real.log 2 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
+              + ((schedKappaL4 + Real.log 2) * (block.length : ℝ) + Real.log 2 * (block.length : ℝ)) by ring,
           Real.exp_add, Real.exp_add]
         have hle : (2 : ℝ) ≤ Real.exp (Real.log 2 * (block.length : ℝ)) := by
           have hb1R : (1 : ℝ) ≤ (block.length : ℝ) := by exact_mod_cast hb1
@@ -4545,18 +4612,18 @@ theorem cfK_wxSeq_L4_le {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
             Real.exp_le_exp.2 (by nlinarith [hl2.le, hb1R])
           rwa [mul_one, Real.exp_log (by norm_num)] at hmono
         set P := (cfK (wxSeq_L4 hq hr 0) : ℝ)
-            * Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
-            * Real.exp (schedKappaL4 * (block.length : ℝ)) with hPdef
+            * Real.exp ((schedKappaL4 + Real.log 2 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
+            * Real.exp ((schedKappaL4 + Real.log 2) * (block.length : ℝ)) with hPdef
         have hAX : (0 : ℝ) ≤ P := by rw [hPdef]; positivity
         calc 2 * ((cfK (wxSeq_L4 hq hr 0) : ℝ)
-              * Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
-              * Real.exp (schedKappaL4 * (block.length : ℝ)))
+              * Real.exp ((schedKappaL4 + Real.log 2 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
+              * Real.exp ((schedKappaL4 + Real.log 2) * (block.length : ℝ)))
             = P * 2 := by rw [hPdef]; ring
           _ ≤ P * Real.exp (Real.log 2 * (block.length : ℝ)) :=
               mul_le_mul_of_nonneg_left hle hAX
           _ = (cfK (wxSeq_L4 hq hr 0) : ℝ)
-              * (Real.exp ((schedKappaL4 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
-                * (Real.exp (schedKappaL4 * (block.length : ℝ))
+              * (Real.exp ((schedKappaL4 + Real.log 2 + Real.log 2) * ((wxSeq_L4 hq hr s).length : ℝ))
+                * (Real.exp ((schedKappaL4 + Real.log 2) * (block.length : ℝ))
                   * Real.exp (Real.log 2 * (block.length : ℝ)))) := by rw [hPdef]; ring
 
 /-- **The `logb φ(√5·√a+1)` resolution bound is affine in `ℓ` under a cfK cap.**  Pure
@@ -4719,7 +4786,7 @@ theorem schedL4_block_linear {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r
   -- global constants
   set κ : ℝ := schedKappaL4 with hκdef
   set L2 : ℝ := Real.log 2 with hL2def
-  set κ' : ℝ := (κ + L2) + Real.log (cfK (wxSeq_L4 hq hr 0) : ℝ) with hκ'def
+  set κ' : ℝ := (κ + L2 + L2) + Real.log (cfK (wxSeq_L4 hq hr 0) : ℝ) with hκ'def
   set Cφ : ℝ := Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt 8 + 1) + 1 with hCφdef
   have hlogφ : 0 < Real.log Real.goldenRatio := Real.log_pos Real.one_lt_goldenRatio
   obtain ⟨C16, hC16_0, hC16⟩ := poly_succ_le_two_pow 16
@@ -4738,16 +4805,16 @@ theorem schedL4_block_linear {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r
     linarith
   -- ρ definition
   refine ⟨12 + 12 + (12 * κ' / Real.log Real.goldenRatio + 12 * Cφ)
-      + (4 * 8978 ^ 4 + 11) * C16, ?_, fun s => ?_⟩
+      + (4 * 8978 ^ 4 + 13) * C16, ?_, fun s => ?_⟩
   · have hA : 0 ≤ 12 * κ' / Real.log Real.goldenRatio :=
       div_nonneg (by nlinarith [hκ'0]) hlogφ.le
-    have hB : 0 ≤ (4 * 8978 ^ 4 + 11) * C16 := by positivity
+    have hB : 0 ≤ (4 * 8978 ^ 4 + 13) * C16 := by positivity
     linarith [hCφ0]
   -- per-step body
   show (((schedL4 hq hr (s + 1)).wx.drop (schedL4 hq hr s).wx.length).length : ℝ)
       ≤ _ * ((schedL4 hq hr s).wx.length : ℝ)
   obtain ⟨_htake, _hlt, _hsdrop, a, b, n₁, m, Nfib, ha, hab, hb, hIcc,
-      hlen, hword, hn₁sq, _hfreq, _hcfKb, hm2, hNf⟩ := schedL4_step hq hr s
+      hlen, hword, hn₁sq, _hfreq, _hcfKb, hm2, hNf, -⟩ := schedL4_step hq hr s
   clear _htake _hlt _hsdrop _hfreq _hcfKb
   set blk := (schedL4 hq hr (s + 1)).wx.drop (schedL4 hq hr s).wx.length with hblkdef
   set W : ℕ := (schedL4 hq hr s).wx.length with hWdef
@@ -4838,8 +4905,8 @@ theorem schedL4_block_linear {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r
   -- cast hm2, block-length
   have hm2R : (m : ℝ) ^ 2 ≤ 6 * ((W : ℝ) + (s : ℝ) + (Nfib : ℝ)) + 2
       + 2 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 := by exact_mod_cast hm2
-  have hBlk : blk.length ≤ 2 * m ^ 2 + 7 := block_len_le hword hn₁sq
-  have hBlkR : (blk.length : ℝ) ≤ 2 * (m : ℝ) ^ 2 + 7 := by exact_mod_cast hBlk
+  have hBlk : blk.length ≤ 2 * m ^ 2 + 9 := block_len_le' hword hn₁sq
+  have hBlkR : (blk.length : ℝ) ≤ 2 * (m : ℝ) ^ 2 + 9 := by exact_mod_cast hBlk
   -- Nfib chain
   have hKcap : (cfK (wxSeq_L4 hq hr s) : ℝ) ≤ Real.exp (κ' * (W : ℝ)) := by
     have h := cfK_wxSeq_L4_le hq hr s
@@ -4855,9 +4922,9 @@ theorem schedL4_block_linear {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r
     have hWlen : ((wxSeq_L4 hq hr s).length : ℝ) = (W : ℝ) := by rw [hWdef]; rfl
     rw [hWlen] at h
     calc (cfK (wxSeq_L4 hq hr s) : ℝ)
-        ≤ (cfK (wxSeq_L4 hq hr 0) : ℝ) * Real.exp ((κ + L2) * (W : ℝ)) := h
+        ≤ (cfK (wxSeq_L4 hq hr 0) : ℝ) * Real.exp ((κ + L2 + L2) * (W : ℝ)) := h
       _ ≤ Real.exp (Real.log (cfK (wxSeq_L4 hq hr 0) : ℝ) * (W : ℝ))
-            * Real.exp ((κ + L2) * (W : ℝ)) :=
+            * Real.exp ((κ + L2 + L2) * (W : ℝ)) :=
           mul_le_mul_of_nonneg_right hc0 (Real.exp_pos _).le
       _ = Real.exp (κ' * (W : ℝ)) := by
           rw [← Real.exp_add, hκ'def]; ring_nf
@@ -4877,7 +4944,7 @@ theorem schedL4_block_linear {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r
     exact_mod_cast this
   -- assemble
   have hkey : (blk.length : ℝ) ≤ 12 * (W : ℝ) + 12 * (s : ℝ) + 12 * (Nfib : ℝ)
-      + 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 11 := by linarith [hBlkR, hm2R]
+      + 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 13 := by linarith [hBlkR, hm2R]
   have h12s : 12 * (s : ℝ) ≤ 12 * (W : ℝ) := by linarith [hsW]
   have h12N : 12 * (Nfib : ℝ)
       ≤ (12 * κ' / Real.log Real.goldenRatio + 12 * Cφ) * (W : ℝ) := by
@@ -4888,23 +4955,23 @@ theorem schedL4_block_linear {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r
     linarith [hNfChain, hCabs]
   have hone16 : (1 : ℝ) ≤ ((s : ℝ) + 1) ^ 16 := by
     apply one_le_pow₀; linarith [(Nat.cast_nonneg s : (0:ℝ) ≤ (s:ℝ))]
-  have hstepT : 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 11
-      ≤ (4 * 8978 ^ 4 + 11) * ((s : ℝ) + 1) ^ 16 := by nlinarith [hTle, hone16]
+  have hstepT : 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 13
+      ≤ (4 * 8978 ^ 4 + 13) * ((s : ℝ) + 1) ^ 16 := by nlinarith [hTle, hone16]
   have h16W : ((s : ℝ) + 1) ^ 16 ≤ C16 * (W : ℝ) :=
     le_trans (hC16 s) (mul_le_mul_of_nonneg_left h2sW hC16_0)
-  have h4T : 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 11
-      ≤ (4 * 8978 ^ 4 + 11) * C16 * (W : ℝ) := by
-    calc 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 11
-        ≤ (4 * 8978 ^ 4 + 11) * ((s : ℝ) + 1) ^ 16 := hstepT
-      _ ≤ (4 * 8978 ^ 4 + 11) * (C16 * (W : ℝ)) :=
+  have h4T : 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 13
+      ≤ (4 * 8978 ^ 4 + 13) * C16 * (W : ℝ) := by
+    calc 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 13
+        ≤ (4 * 8978 ^ 4 + 13) * ((s : ℝ) + 1) ^ 16 := hstepT
+      _ ≤ (4 * 8978 ^ 4 + 13) * (C16 * (W : ℝ)) :=
           mul_le_mul_of_nonneg_left h16W (by positivity)
-      _ = (4 * 8978 ^ 4 + 11) * C16 * (W : ℝ) := by ring
+      _ = (4 * 8978 ^ 4 + 13) * C16 * (W : ℝ) := by ring
   calc (blk.length : ℝ)
       ≤ 12 * (W : ℝ) + 12 * (W : ℝ)
         + (12 * κ' / Real.log Real.goldenRatio + 12 * Cφ) * (W : ℝ)
-        + (4 * 8978 ^ 4 + 11) * C16 * (W : ℝ) := by linarith [hkey, h12s, h12N, h4T]
+        + (4 * 8978 ^ 4 + 13) * C16 * (W : ℝ) := by linarith [hkey, h12s, h12N, h4T]
     _ = (12 + 12 + (12 * κ' / Real.log Real.goldenRatio + 12 * Cφ)
-          + (4 * 8978 ^ 4 + 11) * C16) * (W : ℝ) := by ring
+          + (4 * 8978 ^ 4 + 13) * C16) * (W : ℝ) := by ring
 
 /-- **Linear block-length bound** (route-decisive core, DISCLOSED `sorry`).  The
 sharp form of the geometric bound: the steer-block length is bounded by an AFFINE
@@ -5133,10 +5200,10 @@ theorem schedL4_hfreq_x {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
         (∀ ε : ℝ, 0 < ε → ∀ s₀, ∃ K, ∀ k, K ≤ k →
           (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
             < ε * (wxSeq_L4 hq hr (s₀ + k)).length) := by
-  refine chain_hfreq_of_uniform_blocks (wxSeq_L4 hq hr) (wxSeq_L4_ext hq hr)
+  refine chain_hfreq_of_uniform_blocks_snoc (wxSeq_L4 hq hr) (wxSeq_L4_ext hq hr)
     (fun s => ?_) (schedL4_block_linear hq hr)
   obtain ⟨_htake, _hlt, hsdrop, a, b, n₁, m, Nfib, _ha, _hab, _hb, _hIcc,
-      _hlen, _hword, hn₁sq, hfreq, _hcfKb, _hm2, _hNf⟩ := schedL4_step hq hr s
+      _hlen, _hword, hn₁sq, hfreq, _hcfKb, _hm2, _hNf, -⟩ := schedL4_step hq hr s
   exact ⟨hsdrop, n₁, hn₁sq, hfreq⟩
 
 /-- **L4 x-side orbit equidistribution** (single-stream route, REUSE).  The limit
@@ -5157,6 +5224,30 @@ theorem exists_xA_L4_orbit_equidist {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < 
   have hox : CFOrbitEquidist xA :=
     chain_orbit_equidist_uniform (wxSeq_L4 hq hr) hxext hxAirr hxA01 hxAmem (schedL4_hfreq_x hq hr)
   exact ⟨xA, hxAirr, hxA01, hxAmem, hox⟩
+
+/-- **Per-stage ψ-rational avoidance** (Z-III steering, read off `StepSpecL4`).  The
+diagonalisation filler digit appended at stage `s` makes the stage-`(s+1)` cylinder EXCLUDE
+`enumPsiRat q r s` — the last conjunct of `StepSpecL4`. -/
+theorem wxSeq_L4_avoids_enumPsiRat {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    enumPsiRat q r s ∉ cfCylinder (wxSeq_L4 hq hr (s + 1)) := by
+  obtain ⟨-, -, -, a, b, n₁, m, Nfib, -, -, -, -, -, -, -, -, -, -, -, hd⟩ := schedL4_step hq hr s
+  exact hd
+
+/-- **L4 ψ(xA) irrationality** (subtlety 1, the route-decisive z-side prerequisite).  The
+single-stream chain limit `xA` is steered off the countable null set `ψ⁻¹(ℚ)` by the per-stage
+diagonalisation filler (`wxSeq_L4_avoids_enumPsiRat`), so `ψ(xA) = affineMap q r xA` is
+irrational — REQUIRED for the z-side Gauss-orbit equidistribution (a rational `ψ(xA)` has a
+finite CF).  Combines `exists_xA_L4_orbit_equidist` with `affineMap_irrational_of_iInter_avoids`
+via `mem_range_enumPsiRat`. -/
+theorem exists_xA_L4_psi_irrational {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+    ∃ xA : ℝ, Irrational xA ∧ xA ∈ Set.Ioo (0 : ℝ) 1
+      ∧ (∀ s, xA ∈ cfCylinder (wxSeq_L4 hq hr s)) ∧ CFOrbitEquidist xA
+      ∧ Irrational (affineMap q r xA) := by
+  obtain ⟨xA, hxAirr, hxA01, hxAmem, hox⟩ := exists_xA_L4_orbit_equidist hq hr
+  refine ⟨xA, hxAirr, hxA01, hxAmem, hox, ?_⟩
+  refine affineMap_irrational_of_iInter_avoids (wxSeq_L4 hq hr) xA hxAmem (fun t ht => ?_)
+  obtain ⟨k, hk⟩ := mem_range_enumPsiRat hq r ht
+  exact ⟨k + 1, hk ▸ wxSeq_L4_avoids_enumPsiRat hq hr k⟩
 
 /-- **THE B6 CRUX (interleaved-schedule witness), FEASIBLE REGIME.**  For `q > 0`
 and `r ∈ (-q, 1)` — exactly the range in which the feasible set
