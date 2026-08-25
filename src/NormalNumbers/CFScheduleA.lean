@@ -4133,6 +4133,29 @@ theorem wxSeq_L4_ext {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s
     conv_lhs => rw [← List.take_append_drop (schedL4 hq hr s).wx.length (schedL4 hq hr (s + 1)).wx]
     rw [hxtake]
 
+/-- **The L4 word grows at least geometrically**: `2^s ≤ |wxSeq_L4 s|`.  Each step's block
+is at least as long as the accumulated word (`StepSpecL4`'s geometric seed `|wx| ≤ |block|`,
+from `L := |wx|+s`), so `|word (s+1)| ≥ 2·|word s|`.  This is what dominates the polynomial
+per-block bound, making `blk(s) ≤ ρ·word(s)` (the `slack_telescoping` hypothesis) provable. -/
+theorem wxSeq_L4_length_ge {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s : ℕ) :
+    2 ^ s ≤ (wxSeq_L4 hq hr s).length := by
+  induction s with
+  | zero =>
+    rw [pow_zero]
+    exact List.length_pos_of_ne_nil (wxSeq_L4_ne hq hr 0)
+  | succ s ih =>
+    obtain ⟨htake, -, -, a, b, n₁, m, Nfib, -, -, -, -, hword, -⟩ := schedL4_step hq hr s
+    have hsplit : (schedL4 hq hr (s + 1)).wx.length
+        = (schedL4 hq hr s).wx.length
+          + ((schedL4 hq hr (s + 1)).wx.drop (schedL4 hq hr s).wx.length).length := by
+      conv_lhs => rw [← List.take_append_drop (schedL4 hq hr s).wx.length
+        (schedL4 hq hr (s + 1)).wx]
+      rw [List.length_append, htake]
+    have ih' : 2 ^ s ≤ (schedL4 hq hr s).wx.length := ih
+    show 2 ^ (s + 1) ≤ (schedL4 hq hr (s + 1)).wx.length
+    rw [pow_succ]
+    omega
+
 /-- **Block length is at most `2m²+7`** (the `n₁` burn-in is dominated by `m²`).  From
 `|b| = n₁ + m²` and the sublinear-slack witness `n₁² ≤ |b|·√|b|`: either `n₁ ≤ m²`
 (so `|b| ≤ 2m²`), or `m² < n₁`, forcing `|b| < 2n₁` and hence — via `n₁² ≤ |b|·√|b|` —
