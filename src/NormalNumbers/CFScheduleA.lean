@@ -2439,6 +2439,40 @@ theorem gaussMeasure_cfCylinder_inter_preimage_affineMap_le {q : ℝ} (hq : 0 < 
           rw [gaussMeasure_singleton, gaussMeasure_singleton]; simp
   exact le_trans hstep (gaussMeasure_interval_inter_preimage_affineMap_le hq r a b S hS hSsub)
 
+/-- **Per-stage z-good point in the block cylinder** (brick Z-I engine).  Given the pulled-back
+z-bad mass budget on the cylinder's hull is below the cylinder mass, there is an irrational
+point `p ∈ cfCylinder wx'` whose ψ-image avoids EVERY absolute-scale z-bad zone
+`cfBadZone [] v n δ` for `v ∈ F`, `n ∈ NSz`.  Composes the cylinder selector
+(`exists_irrational_mem_cfCylinder_notMem_of_gaussMeasure_lt`) with the cylinder pullback bound
+(`gaussMeasure_cfCylinder_inter_preimage_affineMap_le`).  Cylinder analogue of the interval
+selector `exists_irrational_notMem_xbad_psi_zbad_nil_in_Ioo` — this is the record
+`schedStepL4_exists` must attach to make the z-side transfer (Z-II) reach the chain limit.  The
+`hbudget` hypothesis is discharged by the caller from Chebyshev (`gaussMeasure_aggregate_cfBadZone_le`)
+with `n` cofinally large relative to `cfK(wx')²` (so `γ(z-bad on ψ(hull)) < (q/2)·γ(cfCylinder wx')`). -/
+theorem exists_cfCylinder_psi_avoid_zbad {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (wx' : List ℕ) {a b : ℝ} (hIcc : cfCylinder wx' ⊆ Set.Icc a b)
+    (F : Finset (List ℕ)) {δ : ℝ} (NSz : Finset ℕ)
+    (hbudget : ENNReal.ofReal (2 / q)
+        * gaussMeasure ((⋃ n ∈ NSz, ⋃ v ∈ F, cfBadZone [] v n δ)
+            ∩ Set.Ioo (q * a + r) (q * b + r))
+      < gaussMeasure (cfCylinder wx')) :
+    ∃ p : ℝ, Irrational p ∧ p ∈ cfCylinder wx' ∧
+      p ∉ (⋃ n ∈ NSz, ⋃ v ∈ F, affineMap q r ⁻¹' cfBadZone [] v n δ) := by
+  set U : Set ℝ := ⋃ n ∈ NSz, ⋃ v ∈ F, cfBadZone [] v n δ with hU
+  have hUmeas : MeasurableSet U :=
+    MeasurableSet.biUnion NSz.countable_toSet fun n _ =>
+      Finset.measurableSet_biUnion F fun v _ => measurableSet_cfBadZone [] v n δ
+  have hUsub : U ⊆ Set.Ioo (0 : ℝ) 1 := by
+    rw [hU]
+    refine Set.iUnion₂_subset fun n _ => Set.iUnion₂_subset fun v _ => ?_
+    exact Set.inter_subset_left.trans (cfCylinder_subset_Ioo [])
+  have hBzeq : (⋃ n ∈ NSz, ⋃ v ∈ F, affineMap q r ⁻¹' cfBadZone [] v n δ)
+      = affineMap q r ⁻¹' U := by rw [hU]; simp only [Set.preimage_iUnion]
+  refine exists_irrational_mem_cfCylinder_notMem_of_gaussMeasure_lt wx' _ ?_
+  rw [hBzeq]
+  exact lt_of_le_of_lt
+    (gaussMeasure_cfCylinder_inter_preimage_affineMap_le hq r wx' hIcc U hUmeas hUsub) hbudget
+
 /-- **Relative regularization kills the block parameter's word-dependence.**  With the
 block parameter `β_rel = γtar·δ²/(S + γwx)`, `S = γwx·Sg` (relative regularizer `+γwx`
 instead of the scaling-breaking absolute `+1`), the quantity `2/β_rel` — which drives the
