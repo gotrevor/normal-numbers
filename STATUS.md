@@ -241,7 +241,7 @@ mirroring `variance_blockCount_le`.
 |---|---|---|---|
 | `exists_absolutely_normal_cf_normal` (**Tier 1 = Becher–Yuhjtman**) | uncond | trust triple | 🟢 DONE (re-verified this lap) |
 | `exists_absolutely_normal_cf_normal_khinchin` (**Tier 2 headline**) | uncond | trust triple | 🟢 DONE (re-verified this lap) |
-| `exists_cfNormal_and_affine_cfNormal` (**B6 affine image**, active) | uncond (q>0) | `[propext, sorryAx, Classical.choice, Quot.sound]` | 🔨 `sorry`; NOT a math axiom — disclosed. ROUTE PIVOTED: the schedule crux `variance_blockCount_psi_pushed` is PROVABLY FALSE (counterexample, `OBSTRUCTION-2026-08-25`), so B6 now goes via the MEASURE route (`ROUTE-ESCALATION-2026-08-25`): bare existence is a.e.-trivial, new crux `ae_isCFNormal` (a.e. CF-normality, Birkhoff-free from `variance_blockCount_le`). Schedule chain kept in-src marked REFUTED. |
+| `exists_cfNormal_and_affine_cfNormal` (**B6 affine image**) | uncond (q>0) | trust triple | 🟢 **DONE** (2026-08-25, measure route). Crux `ae_orbit_freq`→`ae_isCFNormal`→`exists_feasible_cfNormal_affine` (`CFAeNormal.lean`, sorry-free) wired into the headline; the false-crux schedule chain is dead code, kept marked REFUTED. |
 | `isNormal_iff_equidistributed_orbit` (Wall) | uncond | trust triple | 🟢 DONE |
 | `isNormal_log_two_of_equidistributed` | cond (orbit equidist.) | trust triple | 🟢 DONE (hypothesis is the open conjecture, correctly a hypothesis) |
 | `isNormal_two_stoneham23` (Stoneham) | uncond | trust triple | 🟢 DONE |

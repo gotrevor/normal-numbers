@@ -82,7 +82,176 @@ theorem ae_orbit_freq (v : List ℕ) (hne : v ≠ []) (hpos : ∀ a ∈ v, 1 ≤
     ∀ᵐ y ∂gaussMeasure,
       Tendsto (fun p => blockCount (cfCylinder v) p y / (p : ℝ)) atTop
         (nhds (gaussMeasure (cfCylinder v)).toReal) := by
-  sorry
+  set A := cfCylinder v with hAdef
+  set γv := (gaussMeasure A).toReal with hγv
+  have hγvnn : 0 ≤ γv := ENNReal.toReal_nonneg
+  -- bad set family (`p = (k+1)²`, `δ = 1/(m+1)`)
+  set E : ℕ → ℕ → Set ℝ := fun m k =>
+    {x | (1 : ℝ) / (m + 1) ≤
+      |blockCount A ((k + 1) ^ 2) x / (((k + 1) ^ 2 : ℕ) : ℝ) - γv|} with hE
+  -- Per-`m` summability of the bad masses, hence Borel–Cantelli.
+  have hfin : ∀ m : ℕ, (∑' k, gaussMeasure (E m k)) ≠ ⊤ := by
+    intro m
+    set δ : ℝ := 1 / (m + 1) with hδ
+    have hδpos : 0 < δ := by rw [hδ]; positivity
+    -- summable real majorant = the Chebyshev RHS `(8|v|+80)γv / (δ² (k+1)²)`
+    set g : ℕ → ℝ := fun k =>
+      (8 * (v.length : ℝ) + 80) * γv / (δ ^ 2 * (((k + 1) ^ 2 : ℕ) : ℝ)) with hg
+    have hgnn : ∀ k, 0 ≤ g k := by intro k; rw [hg]; positivity
+    have hgsum : Summable g := by
+      have hbase : Summable (fun k : ℕ => (1 : ℝ) / ((k : ℝ) + 1) ^ 2) := by
+        have h2 : Summable (fun n : ℕ => (1 : ℝ) / (n : ℝ) ^ 2) :=
+          Real.summable_one_div_nat_pow.mpr (by norm_num : 1 < 2)
+        have := (summable_nat_add_iff 1).mpr h2
+        simpa using this
+      have hδ0 : δ ≠ 0 := hδpos.ne'
+      have heq : g = fun k : ℕ =>
+          ((8 * (v.length : ℝ) + 80) * γv / δ ^ 2) * ((1 : ℝ) / ((k : ℝ) + 1) ^ 2) := by
+        funext k
+        have hk0 : ((k : ℝ) + 1) ≠ 0 := by positivity
+        simp only [hg]; push_cast; field_simp
+      rw [heq]; exact hbase.mul_left _
+    -- each mass `≤ ofReal (g k)` (the set is definitionally Chebyshev's)
+    have hbound : ∀ k, gaussMeasure (E m k) ≤ ENNReal.ofReal (g k) := by
+      intro k
+      have hn : 0 < (k + 1) ^ 2 := by positivity
+      have hcheb := chebyshev_blockCount v hpos ((k + 1) ^ 2) hn hδpos
+      exact (ENNReal.le_ofReal_iff_toReal_le (measure_ne_top _ _) (hgnn k)).mpr hcheb
+    have hle : (∑' k, gaussMeasure (E m k)) ≤ ENNReal.ofReal (∑' k, g k) := by
+      refine (ENNReal.tsum_le_tsum hbound).trans ?_
+      rw [ENNReal.ofReal_tsum_of_nonneg hgnn hgsum]
+    exact ne_top_of_le_ne_top ENNReal.ofReal_ne_top hle
+  -- Borel–Cantelli, intersected over `m`
+  have hae : ∀ᵐ y ∂gaussMeasure, ∀ m : ℕ, ∀ᶠ k in atTop, y ∉ E m k := by
+    rw [MeasureTheory.ae_all_iff]
+    exact fun m => MeasureTheory.ae_eventually_notMem (hfin m)
+  filter_upwards [hae] with y hy
+  -- subsequence convergence along the squares
+  set a : ℕ → ℝ := fun k => blockCount A ((k + 1) ^ 2) y / (((k + 1) ^ 2 : ℕ) : ℝ) with ha
+  have hsub : Tendsto a atTop (nhds γv) := by
+    rw [Metric.tendsto_atTop]
+    intro ε hε
+    obtain ⟨m, hm⟩ := exists_nat_one_div_lt hε
+    obtain ⟨K, hK⟩ := (hy m).exists_forall_of_atTop
+    refine ⟨K, fun k hk => ?_⟩
+    have hnot := hK k hk
+    rw [hE] at hnot
+    simp only [Set.mem_setOf_eq, not_le] at hnot
+    rw [Real.dist_eq]
+    calc |a k - γv|
+        = |blockCount A ((k + 1) ^ 2) y / (((k + 1) ^ 2 : ℕ) : ℝ) - γv| := by
+          simp only [ha]
+      _ < 1 / (m + 1) := hnot
+      _ < ε := hm
+  -- monotonicity / nonnegativity of `p ↦ blockCount A p y`
+  have hmono : ∀ {p q : ℕ}, p ≤ q → blockCount A p y ≤ blockCount A q y := by
+    intro p q hpq
+    simp only [blockCount_apply]
+    have hsub' : Finset.range p ⊆ Finset.range q := fun i hi =>
+      Finset.mem_range.mpr (lt_of_lt_of_le (Finset.mem_range.mp hi) hpq)
+    apply Finset.sum_le_sum_of_subset_of_nonneg hsub'
+    intro i _ _; exact Set.indicator_nonneg (fun _ _ => zero_le_one) _
+  have hnn : ∀ p, 0 ≤ blockCount A p y := by
+    intro p; rw [blockCount_apply]
+    exact Finset.sum_nonneg fun i _ => Set.indicator_nonneg (fun _ _ => zero_le_one) _
+  -- squeeze bounds `Lfun ≤ S_p/p ≤ Ufun` for `p ≥ 1`
+  set Lfun : ℕ → ℝ := fun p =>
+    blockCount A ((Nat.sqrt p) ^ 2) y / ((((Nat.sqrt p) + 1) ^ 2 : ℕ) : ℝ) with hLfun
+  set Ufun : ℕ → ℝ := fun p =>
+    blockCount A ((Nat.sqrt p + 1) ^ 2) y / (((Nat.sqrt p) ^ 2 : ℕ) : ℝ) with hUfun
+  have hsqrt : Tendsto (fun p => Nat.sqrt p) atTop atTop := by
+    rw [tendsto_atTop_atTop]
+    exact fun b => ⟨b ^ 2, fun n hn => Nat.le_sqrt'.mpr hn⟩
+  -- product-form limits of `Lfun`, `Ufun`
+  have hbase : Tendsto (fun k : ℕ => (k : ℝ) / ((k : ℝ) + 1)) atTop (nhds 1) :=
+    tendsto_natCast_div_add_atTop (1 : ℝ)
+  have hrat1 : Tendsto (fun k : ℕ => ((k : ℝ)) ^ 2 / (((k : ℝ)) + 1) ^ 2) atTop (nhds 1) := by
+    have := hbase.pow 2
+    simpa [div_pow] using this
+  have hrat2 : Tendsto (fun k : ℕ => (((k : ℝ)) + 1) ^ 2 / ((k : ℝ)) ^ 2) atTop (nhds 1) := by
+    have hb2 : Tendsto (fun k : ℕ => ((k : ℝ) + 1) / (k : ℝ)) atTop (nhds 1) := by
+      have := hbase.inv₀ (one_ne_zero)
+      simpa [inv_div] using this
+    have := hb2.pow 2
+    simpa [div_pow] using this
+  -- `a (·-1)` and `a` composed with `sqrt` still tend to `γv`
+  have hsub1 : Tendsto (fun p => a (Nat.sqrt p - 1)) atTop (nhds γv) := by
+    have hsub_shift : Tendsto (fun k => a (k - 1)) atTop (nhds γv) :=
+      hsub.comp (tendsto_atTop_atTop.mpr fun b => ⟨b + 1, fun n hn => by omega⟩)
+    exact hsub_shift.comp hsqrt
+  have hsubj : Tendsto (fun p => a (Nat.sqrt p)) atTop (nhds γv) := hsub.comp hsqrt
+  have hLprod : Tendsto (fun p => a (Nat.sqrt p - 1) *
+      (((Nat.sqrt p : ℝ)) ^ 2 / (((Nat.sqrt p : ℝ)) + 1) ^ 2)) atTop (nhds γv) := by
+    have := hsub1.mul (hrat1.comp hsqrt)
+    simpa using this
+  have hUprod : Tendsto (fun p => a (Nat.sqrt p) *
+      ((((Nat.sqrt p : ℝ)) + 1) ^ 2 / ((Nat.sqrt p : ℝ)) ^ 2)) atTop (nhds γv) := by
+    have := hsubj.mul (hrat2.comp hsqrt)
+    simpa using this
+  -- eventually `Lfun = product`, `Ufun = product`
+  have hLeq : ∀ᶠ p in atTop, Lfun p =
+      a (Nat.sqrt p - 1) * (((Nat.sqrt p : ℝ)) ^ 2 / (((Nat.sqrt p : ℝ)) + 1) ^ 2) := by
+    filter_upwards [eventually_ge_atTop 1] with p hp
+    have hj1 : 1 ≤ Nat.sqrt p := Nat.le_sqrt'.mpr (by simpa using hp)
+    have hjr : (0 : ℝ) < (Nat.sqrt p : ℝ) := by exact_mod_cast hj1
+    have h1 : (Nat.sqrt p : ℝ) ≠ 0 := hjr.ne'
+    have h2 : (Nat.sqrt p : ℝ) + 1 ≠ 0 := by positivity
+    simp only [hLfun, ha]
+    rw [show Nat.sqrt p - 1 + 1 = Nat.sqrt p from Nat.sub_add_cancel hj1]
+    push_cast
+    field_simp
+  have hUeq : ∀ᶠ p in atTop, Ufun p =
+      a (Nat.sqrt p) * ((((Nat.sqrt p : ℝ)) + 1) ^ 2 / ((Nat.sqrt p : ℝ)) ^ 2) := by
+    filter_upwards [eventually_ge_atTop 1] with p hp
+    have hj1 : 1 ≤ Nat.sqrt p := Nat.le_sqrt'.mpr (by simpa using hp)
+    have hjr : (0 : ℝ) < (Nat.sqrt p : ℝ) := by exact_mod_cast hj1
+    have h1 : (Nat.sqrt p : ℝ) ≠ 0 := hjr.ne'
+    have h2 : (Nat.sqrt p : ℝ) + 1 ≠ 0 := by positivity
+    simp only [hUfun, ha]
+    push_cast
+    field_simp
+  have hLtend : Tendsto Lfun atTop (nhds γv) := hLprod.congr' (hLeq.mono fun p h => h.symm)
+  have hUtend : Tendsto Ufun atTop (nhds γv) := hUprod.congr' (hUeq.mono fun p h => h.symm)
+  -- the sandwich inequalities
+  have hlow : ∀ᶠ p in atTop, Lfun p ≤ blockCount A p y / (p : ℝ) := by
+    filter_upwards [eventually_ge_atTop 1] with p hp
+    set j := Nat.sqrt p with hj
+    have hj1 : 1 ≤ j := Nat.le_sqrt'.mpr (by simpa using hp)
+    have hj2p : j ^ 2 ≤ p := Nat.sqrt_le' p
+    have hpj1 : p < (j + 1) ^ 2 := Nat.lt_succ_sqrt' p
+    have hpr : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp
+    have hd1 : (0 : ℝ) < (((j + 1) ^ 2 : ℕ) : ℝ) := by positivity
+    simp only [hLfun, ← hj]
+    calc blockCount A (j ^ 2) y / ((((j + 1) ^ 2 : ℕ) : ℝ))
+        ≤ blockCount A p y / ((((j + 1) ^ 2 : ℕ) : ℝ)) := by
+          gcongr
+          exact hmono hj2p
+      _ ≤ blockCount A p y / (p : ℝ) := by
+          rw [div_eq_mul_one_div (blockCount A p y) ((((j + 1) ^ 2 : ℕ) : ℝ)),
+            div_eq_mul_one_div (blockCount A p y) (p : ℝ)]
+          exact mul_le_mul_of_nonneg_left
+            (one_div_le_one_div_of_le hpr (by exact_mod_cast hpj1.le)) (hnn p)
+  have hup : ∀ᶠ p in atTop, blockCount A p y / (p : ℝ) ≤ Ufun p := by
+    filter_upwards [eventually_ge_atTop 1] with p hp
+    set j := Nat.sqrt p with hj
+    have hj1 : 1 ≤ j := Nat.le_sqrt'.mpr (by simpa using hp)
+    have hj2p : j ^ 2 ≤ p := Nat.sqrt_le' p
+    have hpj1 : p < (j + 1) ^ 2 := Nat.lt_succ_sqrt' p
+    have hpr : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp
+    have hjr2 : (0 : ℝ) < (((j ^ 2 : ℕ)) : ℝ) := by
+      have : 0 < j ^ 2 := by positivity
+      exact_mod_cast this
+    simp only [hUfun, ← hj]
+    calc blockCount A p y / (p : ℝ)
+        ≤ blockCount A p y / (((j ^ 2 : ℕ) : ℝ)) := by
+          rw [div_eq_mul_one_div (blockCount A p y) (p : ℝ),
+            div_eq_mul_one_div (blockCount A p y) ((((j ^ 2 : ℕ)) : ℝ))]
+          exact mul_le_mul_of_nonneg_left
+            (one_div_le_one_div_of_le hjr2 (by exact_mod_cast hj2p)) (hnn p)
+      _ ≤ blockCount A ((j + 1) ^ 2) y / (((j ^ 2 : ℕ) : ℝ)) := by
+          gcongr
+          exact hmono hpj1.le
+  exact tendsto_of_tendsto_of_tendsto_of_le_of_le' hLtend hUtend hlow hup
 
 /-! ## a.e. CF-normality -/
 
@@ -108,7 +277,8 @@ set `B = {x : ψ(x) CF-normal}` are both `γ`-co-null on the feasible interval
 `A` is not needed: it is dodged with `exists_measurable_superset_of_null`. -/
 theorem exists_feasible_cfNormal_affine {q : ℝ} (hq : 0 < q) (r : ℝ)
     (hr : -q < r ∧ r < 1) :
-    ∃ x : ℝ, IsCFNormal x ∧ IsCFNormal (affineMap q r x) := by
+    ∃ x : ℝ, x ∈ Set.Ioo (0 : ℝ) 1 ∧ affineMap q r x ∈ Set.Ioo (0 : ℝ) 1 ∧
+      IsCFNormal x ∧ IsCFNormal (affineMap q r x) := by
   obtain ⟨hrL, hrU⟩ := hr
   set ψ := affineMap q r with hψ
   -- the bad set `{¬ IsCFNormal}` is `γ`-null; grab a measurable null superset in `(0,1)`
@@ -191,7 +361,7 @@ theorem exists_feasible_cfNormal_affine {q : ℝ} (hq : 0 < q) (r : ℝ)
           gcongr; exact measure_union_le _ _
       _ = gaussMeasure (F ∩ A ∩ B) := by rw [hFAc, hFBc, add_zero, add_zero]
   have hpos : 0 < gaussMeasure (F ∩ A ∩ B) := lt_of_lt_of_le hFγpos hmono
-  obtain ⟨x, ⟨⟨_, hxA⟩, hxB⟩⟩ := nonempty_of_measure_ne_zero hpos.ne'
-  exact ⟨x, hxA, hxB⟩
+  obtain ⟨x, ⟨⟨hxF, hxA⟩, hxB⟩⟩ := nonempty_of_measure_ne_zero hpos.ne'
+  exact ⟨x, hFsub01 hxF, hFsubψ hxF, hxA, hxB⟩
 
 end NormalNumbers

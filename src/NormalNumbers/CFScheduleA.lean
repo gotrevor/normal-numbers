@@ -7,6 +7,7 @@ import NormalNumbers.CFAffine
 import NormalNumbers.CFOrbitFreq
 import NormalNumbers.CFFreqBlock
 import NormalNumbers.CFChainFreq
+import NormalNumbers.CFAeNormal
 
 /-!
 # B6 / L4–L5 — the affine-image witness (interleaved schedule)
@@ -6270,10 +6271,9 @@ witness via the orbit-frequency interface. -/
 theorem exists_cfNormal_and_affine_cfNormal {q : ℝ} (hq : 0 < q) (r : ℝ) :
     ∃ x : ℝ, IsCFNormal x ∧ IsCFNormal (affineMap q r x) := by
   by_cases hr : -q < r ∧ r < 1
-  · -- feasible regime: `(0,1) ∩ ψ⁻¹(0,1) ≠ ∅`, the interleaved witness applies directly
-    obtain ⟨x, ⟨hx1, hx2, hx3⟩, ⟨hy1, hy2, hy3⟩⟩ := exists_interleaved_affine_witness hq r hr
-    exact ⟨x, isCFNormal_of_irrational_orbit_freq x hx1 hx2 hx3,
-      isCFNormal_of_irrational_orbit_freq (affineMap q r x) hy1 hy2 hy3⟩
+  · -- feasible regime: `(0,1) ∩ ψ⁻¹(0,1) ≠ ∅`, the a.e. measure witness applies directly
+    obtain ⟨x, _, _, hxN, hyN⟩ := exists_feasible_cfNormal_affine hq r hr
+    exact ⟨x, hxN, hyN⟩
   · -- infeasible regime: `¬(-q < r ∧ r < 1)`.  Split on the sign of the shift.
     by_cases hr1 : 1 ≤ r
     · -- `r ≥ 1`: shift the image UP by `n = ⌊r⌋ ≥ 1`.  Take the feasible witness
@@ -6291,14 +6291,11 @@ theorem exists_cfNormal_and_affine_cfNormal {q : ℝ} (hq : 0 < q) (r : ℝ) :
       set r₀ : ℝ := r - (n : ℝ) with hr0_def
       have hr0 : -q < r₀ ∧ r₀ < 1 := by
         rw [hr0_def, hcast]; constructor <;> [linarith; linarith]
-      obtain ⟨x, ⟨hx1, hx2, hx3⟩, ⟨hy1, hy2, hy3⟩⟩ :=
-        exists_interleaved_affine_witness hq r₀ hr0
+      obtain ⟨x, _, hy2, hxN, hy0⟩ := exists_feasible_cfNormal_affine hq r₀ hr0
       -- `affineMap q r x = affineMap q r₀ x + n`
-      have hy0 : IsCFNormal (affineMap q r₀ x) :=
-        isCFNormal_of_irrational_orbit_freq (affineMap q r₀ x) hy1 hy2 hy3
       have heq : affineMap q r x = affineMap q r₀ x + (n : ℝ) := by
         simp only [affineMap_apply, hr0_def]; ring
-      refine ⟨x, isCFNormal_of_irrational_orbit_freq x hx1 hx2 hx3, ?_⟩
+      refine ⟨x, hxN, ?_⟩
       rw [heq]
       exact isCFNormal_add_nat hy2 hn1 hy0
     · -- `r ≤ -q`: shift the DOMAIN up instead.  Choose natural `M ≥ 1` with
@@ -6340,11 +6337,7 @@ theorem exists_cfNormal_and_affine_cfNormal {q : ℝ} (hq : 0 < q) (r : ℝ) :
         · have hhi : (M : ℝ) * q < 1 - r := by
             rw [hU_def] at hMltU; exact (lt_div_iff₀ hq).mp hMltU
           rw [hr1_def]; linarith [hhi, hmc]
-      obtain ⟨x, ⟨hx1, hx2, hx3⟩, ⟨hy1, hy2, hy3⟩⟩ :=
-        exists_interleaved_affine_witness hq r₁ hr1feas
-      have hxN : IsCFNormal x := isCFNormal_of_irrational_orbit_freq x hx1 hx2 hx3
-      have hyN : IsCFNormal (affineMap q r₁ x) :=
-        isCFNormal_of_irrational_orbit_freq (affineMap q r₁ x) hy1 hy2 hy3
+      obtain ⟨x, hx2, _, hxN, hyN⟩ := exists_feasible_cfNormal_affine hq r₁ hr1feas
       refine ⟨x + (nn : ℝ), isCFNormal_add_nat hx2 hnn1 hxN, ?_⟩
       have heq : affineMap q r (x + (nn : ℝ)) = affineMap q r₁ x := by
         simp only [affineMap_apply, hr1_def, hnncast]; ring

@@ -1,5 +1,27 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🎉 2026-08-25 (measure-route grind) — B6 COMPLETE: `exists_cfNormal_and_affine_cfNormal` is AXIOM-CLEAN
+
+**The crux `ae_orbit_freq` is PROVED** (`CFAeNormal.lean`, sorry-free) — the classic L²→a.e. argument:
+`chebyshev_blockCount` bound → Borel–Cantelli (`ae_eventually_notMem`) along `p=(k+1)²`
+(∑1/(k+1)² summable via `summable_nat_add_iff`) per `δ=1/(m+1)`, intersected over `m`
+(`ae_all_iff`) ⇒ a.e. convergence on the squares; then the monotone gap-squeeze
+(`Nat.sqrt`, `Nat.sqrt_le'`/`lt_succ_sqrt'`, product-form limits `k²/(k+1)²→1` via
+`tendsto_natCast_div_add_atTop`, `tendsto_of_tendsto_of_tendsto_of_le_of_le'`).
+
+**Headline WIRED + FLIPPED CLEAN.** `exists_cfNormal_and_affine_cfNormal` (`CFScheduleA:6270`)
+now consumes `exists_feasible_cfNormal_affine` in all three branches (feasible + two integer-shift);
+`CFScheduleA` imports `CFAeNormal` (no cycle). Real `#print axioms` this lap:
+- `exists_cfNormal_and_affine_cfNormal` → `[propext, Classical.choice, Quot.sound]` ✅ **DONE**
+- `exists_absolutely_normal_cf_normal`, `_khinchin` → trust triple (untouched) ✅
+- `ae_isCFNormal` → trust triple ✅
+
+The schedule/two-stream chain (`schedA_block_linear` + 8 other refuted sorries) is now DEAD CODE —
+the headline no longer flows through it. Kept in-src marked REFUTED per directive, NOT deleted.
+**B6 (Vandehey §7 single affine map) is closed.** No open obligation remains on any headline.
+
+---
+
 ## 🟢 2026-08-25 (measure-route grind) — LANDED: `CFAeNormal.lean` scaffold, B6 reduced to ONE a.e. crux
 
 New file `src/NormalNumbers/CFAeNormal.lean` (build 🟢 8758). Fully proved, axiom-status modulo the
