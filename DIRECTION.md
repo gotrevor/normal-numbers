@@ -4,81 +4,81 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-25 REVIEW LAP — B6 L4: CRUX PROVED; RE-INTEGRATE THE Z-SIDE, ψ(xA) IRRATIONALITY FIRST)
+## CURRENT DIRECTIVE (set 2026-08-25 REVIEW LAP #2 — B6: PROVE THE ψ-PUSHED L² VARIANCE CRUX `variance_blockCount_psi_pushed`)
 
 - **State (ground truth, real `#print axioms` this lap):** build 🟢 8757; both
   B5′ headlines `exists_absolutely_normal_cf_normal` (Tier 1 = Becher–Yuhjtman)
   and `exists_absolutely_normal_cf_normal_khinchin` (Tier 2) are trust-triple
-  `[propext, Classical.choice, Quot.sound]` — **DONE**.  The B6 theorem
-  `exists_cfNormal_and_affine_cfNormal` = `+ sorryAx`.  **The SOLE open `src/`
-  sorry is the DEAD two-stream `schedA_block_linear` (`CFScheduleA.lean:4823`)**,
-  excised once L4 lands its OWN `exists_interleaved_affine_witness`.
-- **THE OLD CRUX IS PROVED.**  `schedL4_block_linear` (`|chainApp w s| ≤ K₁|w s|+K₂`,
-  the cfK-cap graft that the last directive mandated) is proved axiom-clean
-  (`030d8fb`).  x-side downstream landed: `schedL4_hfreq_x` (`ebf28fa`),
-  `exists_xA_L4_orbit_equidist` (`c0d188b`).  The Z-I per-stage measure engine is
-  built axiom-clean (`exists_cfCylinder_psi_avoid_zbad` + cylinder pullback bounds).
-- **DIRECTION CORRECTION — the old "z-side = REUSE" (step 4) is REFUTED** (finding
-  `b178653`, 2026-08-29): the cfK-rewired `StepSpecL4`/`schedStepL4_exists` carries
-  **ZERO z-side control** (`grep cfBadZone|affineMap` over `StepSpecL4` = 0).  So
-  the current `wxSeq_L4` makes `x` CF-normal but gives NO control on `ψ(x)`.  The
-  z-side needs schedule **RE-INTEGRATION**, not reuse.  The current
-  `exists_interleaved_affine_witness` still runs on the DEAD two-stream
-  (`wxSeq`/`wzSeq`/`schedA`), which is why B6 still carries `sorryAx`.
-- **THE MANDATED MOVE — re-integrate the z-side into `StepSpecL4`, hardest-first:**
-  1. **ψ(xA) IRRATIONALITY (subtlety 1 — the MOST route-decisive piece; do FIRST).**
-     `ψ(xA)` need NOT be irrational for real `q,r` (e.g. `xA=√2, q=1/√2, r=0 ⇒
-     ψxA=1∈ℚ`), and CF-normality REQUIRES it (a rational ψ(xA) has a finite CF, so no
-     Gauss-orbit equidistribution).  The chain limit `xA=⋂ cfCylinder(wxSeq_L4 s)` is
-     a SINGLE point — no post-hoc freedom — so the SCHEDULE must steer it off the
-     countable null set `ψ⁻¹(ℚ)` (`countable_preimage_affineMap_range_rat`).
-     **Mechanism: append ONE diagonalization filler digit per stage** via
-     `exists_digit_cfCylinder_notMem (S.wx++u) (enum s)`, where
-     `enum : ℕ → ℝ` enumerates `ψ⁻¹(ℚ)` (`Set.Countable.exists_eq_range`, nonempty
-     as `ψ⁻¹(0)∋-r/q`); record the conjunct `enum s ∉ cfCylinder S'.wx`.  Then
-     `xA∈cfCylinder(wxSeq_L4(s+1))` misses `enum s` for every `s` ⇒ `xA∉ψ⁻¹(ℚ)` ⇒
-     `ψ(xA)` irrational.  **KEEP the freq-good block `u` targeting the FULL hull
-     `(a,b)`** — do NOT shrink the block target to exclude `enum s`: that breaks the
-     `¼γwx ≤ γtar` balance (`gaussMeasure_middle_half_hull_ge` needs
-     `cfCylinder S.wx ⊆ Icc a b`), which is the whole point of route B (no
-     small-corner navigation).  The filler digit keeps blocks LINEAR (`+1`); the
-     freq-slack conjunct bumps `n₁ → n₁+1` (stays `o(n)`, downstream-safe: `γv ≤ 1`
-     absorbs the one extra count).  Thread one `_` into the 4 `StepSpecL4` consumers
-     (`schedL4_block_linear`, `schedL4_hfreq_x`, `wxSeq_L4_length_ge`,
-     `cfK_wxSeq_L4_le`).  Deliver `exists_xA_L4_psi_irrational`.
-  2. **Chebyshev budget + z-bad record (Z-I).**  Discharge
-     `exists_cfCylinder_psi_avoid_zbad`'s `hbudget` for concrete `NSz_s`/`δ_s`
-     (via `gaussMeasure_aggregate_cfBadZone_le`, `n ≳ cfK(wx_s)²`); record the
-     per-stage `p_s` avoidance conjunct.  Same threading (point pick in the
-     already-fixed cylinder; blocks stay LINEAR).
-  3. **Z-II transfer engine** ⇒ `CFOrbitEquidist (ψ xA)`: per-stage `p_s` avoidance
-     + `δ_s→0` + `NSz` cofinal, transferred to the limit via the 6 brick-4a lemmas
-     (`exists_ball_cfDigit_psi_eq`, `exists_tail_cfCylinder_subset_ball`,
-     `blockCount_eq_of_cfDigit_agree`, `notMem_cfBadZone_nil_of_cfDigit_agree`, …)
-     + `tendsto_of_scale_coverage`.  The delicate part is the **s↔n coupling** in
-     `hcover` (subtlety 2): each scale `n` needs its own large-enough `s`.
-  4. **Z-III assemble** NEW `exists_interleaved_affine_witness` on the L4 stream
-     (`xA` from `exists_xA_L4_orbit_equidist`; `ψxA` irrational from step 1; `ψxA`
-     equidist from step 3; `ψxA∈(0,1)` from feasibility + interval), then EXCISE the
-     two-stream `schedA_block_linear` `sorry` (`CFScheduleA.lean:4823`).
-- **FORBIDDEN DRIFT:** do NOT grind the two-stream `schedA_block_linear` /
-  `wxSeq`/`wzSeq`/`schedA` directly (dead route, excised when L4 assembles); do NOT
-  SHRINK the block target interval to diagonalize (breaks the γtar balance); do NOT
-  resurrect the HARD digit-cap or `hdom`; do NOT "box stuck"/operator-gate.  Advance
-  the z-side re-integration (step 1 → 2 → 3 → 4) each lap; the smallest next probe is
-  the step-1 diagonalization threading (no measure budget needed).
-- Both B5′ headlines stay proved + axiom-clean; re-`#print axioms` after any
-  schedule work (trust triple, else revert).  ADDITIVE ONLY 🧊.
-- **Why:** the two B5′ headlines are DONE and the L4 block-linear crux is proved, so
-  B6 is the sole remaining target and its route-decisive uncertainty has narrowed to
-  ONE question — can the schedule carry the z-records without breaking linearity?
-  ψ(xA) irrationality is the piece whose failure would kill the single-stream route
-  (no fallback, since two-stream is proven-infeasible), and the digit-append design
-  (NOT target-shrink) is exactly what preserves the γtar balance.  Everything after
-  is transfer-lemma reuse over the s↔n coupling.
-- Historical directives below are SUPERSEDED (their L4 measure bricks + the cfK-cap
-  graft are all DONE; the capped-digit and two-stream fallbacks were
-  refuted/obstructed).
+  `[propext, Classical.choice, Quot.sound]` — **DONE**.  B6
+  `exists_cfNormal_and_affine_cfNormal` = `+ sorryAx`.  **TWO `src/` sorries:**
+  (i) `variance_blockCount_psi_pushed` (`CFScheduleA.lean:4254`) — **THE crux**;
+  (ii) `schedA_block_linear` (`CFScheduleA.lean:5630`) — the DEAD two-stream sorry,
+  which B6's `sorryAx` currently flows through, excised once the L4 z-selector wires in.
+- **THE PRIOR DIRECTIVE'S STEPS 1–3 ARE DONE / COLLAPSED.**  ψ(xA) irrationality is
+  PROVED (`exists_xA_L4_psi_irrational`, handoff `psi-irrational-PROVED`).  The
+  Chebyshev/Markov budget + transfer engine were built axiom-clean and — crucially —
+  the WHOLE clean single-stream z-selector now reduces to ONE analytic obligation:
+  `psi_pushed_chebyshev_brick` → `gaussMeasure_aggregate_psi_pushed_le` →
+  `exists_scale_cfCylinder_psi_avoid_zbad_poly` are all PROVED from the single
+  disclosed sorry `variance_blockCount_psi_pushed`.  (The conditional-at-`wz` route
+  was walled by a density-vs-coverage obstruction, commit `5816044`; the surviving
+  clean route is the x-cylinder-relative / LOCAL-density one, whose base-mass factor
+  `γ(cfCylinder wx')` cancels the cylinder mass → non-empty transfer range.)
+- **THE MANDATED MOVE — prove `variance_blockCount_psi_pushed`, hardest-first.**  It is
+  `∫_{cfCyl wx'} (blockCount(cfCyl v) n (ψ x) − nγv)² dγ ≤ (8|v|+80)·n·γv·γ(cfCyl wx')`
+  (ψ = affineMap q r).  This IS the genuine research core: affine-invariance of
+  CF-normality via ψ-conjugated Gauss-map mixing.  Model the whole proof on
+  `variance_blockCount_le` (`CFBlockFreq.lean:401`).  Decomposition (each a named
+  `src/` sub-sorry as reached — RAISING the src count is progress, not regression):
+  1. **Restricted ψ-pushed 2nd-moment IDENTITY** (routine measure theory, land it first):
+     `∫_{cfCyl wx'} blockCount(A,n)(ψ·)² dγ = ∑_{j,j'<n} γ(cfCyl wx' ∩ ψ⁻¹T^{-j}A ∩ ψ⁻¹T^{-j'}A)`
+     and the 1-point `∫_{cfCyl wx'} blockCount(A,n)(ψ·) dγ = ∑_{j<n} γ(cfCyl wx' ∩ ψ⁻¹T^{-j}A)`.
+     Mirror `integral_blockCount_sq` (`CFBlockFreq.lean:166`): `blockCount²` = double sum of
+     indicator products = indicator of intersection; setIntegral of indicator = γ(base ∩ ·).
+     NO mixing — pure plumbing.  This isolates the pure pair-correlation content.
+  2. **ψ-conjugated interval-base MIXING** (THE hard core, named sub-sorry): the 1-point
+     `γ(cfCyl wx' ∩ ψ⁻¹T^{-j}A) ≈ γ(cfCyl wx')·γ(A)` and 2-point
+     `γ(cfCyl wx' ∩ ψ⁻¹T^{-j}A ∩ ψ⁻¹T^{-j'}A) ≈ γ(cfCyl wx')·γ(A)²`, each with geometric
+     error `≤ 4γv·γ(cfCyl wx')·(9/10)^{dist∸|v|}`.  Route: reduce to INTERVAL-base Gauss
+     mixing by change-of-variables `y=ψx` — the pushforward `ψ_*(γ|cfCyl wx')` has a BOUNDED
+     density ratio `ρ(y)=gaussDensity(ψ⁻¹y)/(q·gaussDensity(y))` w.r.t. `γ` on the interval
+     `J=ψ(cfCyl wx')`, so the affine distortion is elementary (`CFAffine.lean` + `gaussDensity`
+     bounds) and the content is interval-base mixing.  Then EXTEND `gaussMeasure_cylinder_mixing`
+     (`CFGammaMixing.lean:236`, cylinder base, rate `(9/10)^g` via the mixture representation
+     `γ(X)=∫gaussDensityReal·∫_X tailDensity` + horizon factorization) from a `cfCylinder` base
+     to a general subinterval `J⊆(0,1)`.  If interval-base mixing is itself big, decompose it as
+     its OWN named sorry (cylinder-cover of `J` + per-cylinder mixing).  Narrow it, don't expect
+     one-lap closure.
+  3. **Geometric-sum ASSEMBLY** (mirror `variance_blockCount_le`'s tail): fold the 1-point +
+     2-point errors over `j,j'<n` via `sum_range_dist_le` + `geom_trunc_sum_le` to the
+     `(8|v|+80)·n·γv·γ(cfCyl wx')` bound.  (Note the extra 1-point correction term absent in
+     the full-measure model: `∫_{base}S(ψ·) ≠ nγv·γ(base)` EXACTLY, only up to 1-point mixing.)
+- **IN PARALLEL / AFTER (reuse, NOT the crux — needs only the brick STATEMENT):** wire
+  `exists_scale_cfCylinder_psi_avoid_zbad_poly` + the absolute transfer
+  (`notMem_cfBadZone_nil_of_cfDigit_agree`, `exists_tail_cfCylinder_subset_ball`,
+  `blockCount_eq_of_cfDigit_agree`, `tendsto_of_scale_coverage`) into `StepSpecL4`/
+  `schedStepL4_exists` ⇒ `CFOrbitEquidist (ψ xA)`, assemble the NEW L4
+  `exists_interleaved_affine_witness`, EXCISE `schedA_block_linear`.  Feasibility not in
+  doubt (poly threshold ⟹ clean s↔n coverage); it is scaffolding, so it does NOT preempt
+  the crux — do it around/after step 1–3, not instead of them.
+- **FORBIDDEN DRIFT:** do NOT grind the DEAD two-stream `schedA_block_linear` /
+  `wxSeq`/`wzSeq`/`schedA` directly (excised on assembly); do NOT DROP the base-mass factor
+  `γ(cfCyl wx')` from the crux RHS — bounding by the full variance loses it and re-hits the
+  density-vs-coverage wall (`5816044`); do NOT resurrect the conditional-at-`wz` route, the
+  HARD digit-cap, or `hdom`; do NOT "box stuck"/operator-gate.  Each lap advance step 1→2→3;
+  the smallest next probe is landing the restricted 2nd-moment IDENTITY (step 1, no mixing).
+- Both B5′ headlines stay proved + axiom-clean; re-`#print axioms` after any change
+  (trust triple, else revert).  ADDITIVE ONLY 🧊.
+- **Why:** B6 is the sole remaining headline, and every piece of the clean single-stream
+  z-side is proved EXCEPT `variance_blockCount_psi_pushed`.  Its feasibility is the last
+  real route-decisive uncertainty (does Gauss mixing survive affine conjugation? — the
+  mathematical heart of Vandehey §7).  The CoV-to-interval-mixing decomposition cleanly
+  separates the elementary affine distortion (bounded density ratio) from the genuine
+  mixing content, and the base-mass factor is MANDATORY (its loss is what walled every
+  earlier route).  Everything downstream is transfer-lemma reuse.
+- Historical directives below are SUPERSEDED (L4 measure bricks, the cfK-cap graft, ψ(xA)
+  irrationality, and the Chebyshev/transfer engine are all DONE; the capped-digit,
+  two-stream, and conditional-at-`wz` fallbacks were refuted/obstructed).
 
 ## SUPERSEDED DIRECTIVE (2026-08-24 attended — B6 ENDGAME: CAPPED-DIGIT ROUTE, refuted + two-stream obstructed)
 
@@ -254,6 +254,20 @@ detail lives in PENDING_WORK.md.
 </details>
 
 ### Directive history
+- 2026-08-25 (review lap #2 → B6: PROVE ψ-PUSHED L² VARIANCE CRUX): inventory by real
+  `#print axioms` — build green 8757; both B5′ headlines trust-triple = DONE; B6
+  `+sorryAx` via the DEAD two-stream `schedA_block_linear` (`CFScheduleA.lean:5630`).
+  Found prior directive STALE-in-a-good-way: its step 1 (ψ(xA) irrationality) is PROVED
+  and steps 2–3 (Chebyshev budget + transfer) COLLAPSED — the grind narrowed the whole
+  clean single-stream z-selector (`psi_pushed_chebyshev_brick`→`_poly`) to ONE disclosed
+  analytic sorry `variance_blockCount_psi_pushed` (`:4254`). Validated as genuine crux
+  work, not leaf-fixation (last ~10 laps: Markov wrapper proved, conditional-at-`wz` route
+  walled + corrected honestly, clean local-density architecture found). Rewrote CURRENT
+  DIRECTIVE to mandate PROVING the crux, hardest-first, decomposed: (1) restricted ψ-pushed
+  2nd-moment identity (routine, land first), (2) ψ-conjugated interval-base mixing via
+  change-of-variables (bounded density ratio) extending `gaussMeasure_cylinder_mixing` (THE
+  core), (3) geometric-sum assembly mirroring `variance_blockCount_le`. Base-mass factor
+  `γ(cfCyl wx')` MANDATORY (its loss walled every prior route). No charter trigger fired.
 - 2026-08-25 (review lap → B6 L4: CRUX PROVED, RE-INTEGRATE Z-SIDE, ψ(xA) IRRATIONALITY FIRST):
   inventory by real `#print axioms` — build green 8757; both B5′ headlines
   (Becher–Yuhjtman Tier 1 + Khinchin Tier 2) trust-triple = DONE; B6
