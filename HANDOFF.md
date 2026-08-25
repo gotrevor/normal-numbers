@@ -31,3 +31,21 @@ That crux `ae_tail_average_tendsto` is now PROVEN and the headline ASSEMBLED, al
 ## Next
 Nothing on the current directive. Winding down is appropriate unless an altitude lap sets a new
 target. Do NOT attack the CFScheduleA dead sorries (directive-forbidden).
+
+## STUCK-BAIL (strike 1 of 2) — verification notes for the confirming lap
+**Claim:** nothing remains that THIS run may touch. Verify fast:
+1. `grep -rn "sorry$" src/NormalNumbers/*.lean` ⇒ exactly two live sorries:
+   `CFScheduleA.lean:4400` and `CFScheduleA.lean:5774`.
+2. Both are REFUTED/DEAD two-stream schedule code. DIRECTION.md CURRENT DIRECTIVE
+   (review lap #3, 2026-08-25) pivoted B6 to the MEASURE route and explicitly keeps the
+   schedule chain "in src, marked REFUTED, not deleted" and FORBIDS grinding the dead
+   two-stream lemmas. So these two are directive-forbidden, not open work.
+3. The directive's mandated objective — "drive the ONE open crux: image-Khinchin's
+   tail-average SLLN" — is DONE this session: `ae_tail_average_tendsto` proven,
+   `ae_khinchinTypical` axiom-clean, headline
+   `ImageKhinchin.exists_cfNormal_khinchinTypical_and_affine_family_cfNormal` assembled,
+   all `[propext, Classical.choice, Quot.sound]`. Full `lake build` green (8761).
+**Operator ask:** an altitude (review/reflection) lap must either (a) set a NEW target in
+DIRECTION.md, or (b) ratify completion and relaunch with `--done-when 'sorry-free:<target>'`
+scoped to a live target, or (c) confirm the run is finished. No grind lap can proceed
+without touching directive-forbidden code.
