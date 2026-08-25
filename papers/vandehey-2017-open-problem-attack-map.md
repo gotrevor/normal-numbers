@@ -80,6 +80,15 @@ window lemma; (iii) stationary measure on W may be singular/weird — fine,
 nothing needs smoothness.  Estimate: months-scale research program, paper-
 sized.  P(this program closes it) ≈ 50%; P(wall at uniform merging) ≈ 35%.
 
+✅ **PROBE DONE 2026-08-25** → `PROBE-2026-08-25-1235-route-a-transducer.md`.
+Both crux risks tested computationally on Gauss-distributed CF input and both
+HOLD: the window lemma (real-place distortion median 1.04 → 0.98 across a run,
+no drift; real entries O(1) while the conjugate place hits 10^644) and merging
+(exponential excursion tail; state distribution KS-indistinguishable across four
+initial states from ~60 steps on).  Raise P(program closes it) above the ~50%
+below.  ⚠️ Two traps recorded there: fixed-precision floats manufacture a false
+"program dead" verdict, and coupled-trajectory equality is the wrong merging test.
+
 ✅ **Lit sweep DONE 2026-08-24** (§6 below).  Fisher–Schmidt ETDS 2014 read in
 full: **no Theorem-3.1 analogue, and its fiber is finite, not continuous** — see
 `papers/fisher-schmidt-2014-approximants-geodesic-flows.md`.  Forward-citation
