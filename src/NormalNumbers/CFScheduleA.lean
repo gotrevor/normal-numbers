@@ -4156,6 +4156,37 @@ theorem wxSeq_L4_length_ge {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r <
     rw [pow_succ]
     omega
 
+/-- **Every polynomial is dominated by `2^s`**: `∀ k, ∃ C ≥ 0, ∀ s, s^k ≤ C·2^s`.  The
+absorption fact that lets the geometric word growth `2^s ≤ |wx_s|` swallow the polynomial-
+in-stage ceiling term of the `m²` block bound.  Proof: `x^k =o[atTop] exp(log2·x) = 2^x`
+(mathlib), so `x^k ≤ 2^x` past a threshold `N`; below `N` bound `s^k ≤ ⌈N⌉^k` crudely. -/
+theorem exists_const_pow_le_two_pow (k : ℕ) :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ s : ℕ, ((s : ℝ)) ^ k ≤ C * (2 : ℝ) ^ s := by
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hlo : (fun x : ℝ => x ^ k) =o[Filter.atTop] fun x => Real.exp (Real.log 2 * x) :=
+    isLittleO_pow_exp_pos_mul_atTop k hl2
+  rw [Asymptotics.isLittleO_iff] at hlo
+  obtain ⟨N, hN⟩ := Filter.eventually_atTop.1 (hlo (c := 1) (by norm_num))
+  refine ⟨max 1 ((⌈N⌉₊ : ℝ) ^ k), le_trans zero_le_one (le_max_left _ _), fun s => ?_⟩
+  have h2s : (1 : ℝ) ≤ (2 : ℝ) ^ s := one_le_pow₀ (by norm_num)
+  have h2sexp : Real.exp (Real.log 2 * (s : ℝ)) = (2 : ℝ) ^ s := by
+    rw [mul_comm, Real.exp_nat_mul, Real.exp_log (by norm_num)]
+  rcases Nat.lt_or_ge s ⌈N⌉₊ with hs | hs
+  · have hsle : (s : ℝ) ^ k ≤ (⌈N⌉₊ : ℝ) ^ k := by
+      apply pow_le_pow_left₀ (by positivity)
+      exact_mod_cast hs.le
+    calc ((s : ℝ)) ^ k ≤ (⌈N⌉₊ : ℝ) ^ k := hsle
+      _ ≤ max 1 ((⌈N⌉₊ : ℝ) ^ k) := le_max_right _ _
+      _ ≤ max 1 ((⌈N⌉₊ : ℝ) ^ k) * (2 : ℝ) ^ s := by
+          nlinarith [le_max_left (1:ℝ) ((⌈N⌉₊ : ℝ) ^ k), le_max_right (1:ℝ) ((⌈N⌉₊ : ℝ) ^ k), h2s]
+  · have hxN : N ≤ (s : ℝ) := le_trans (Nat.le_ceil N) (by exact_mod_cast hs)
+    have hb := hN (s : ℝ) hxN
+    rw [Real.norm_of_nonneg (by positivity), Real.norm_of_nonneg (Real.exp_pos _).le,
+      one_mul, h2sexp] at hb
+    calc ((s : ℝ)) ^ k ≤ (2 : ℝ) ^ s := hb
+      _ ≤ max 1 ((⌈N⌉₊ : ℝ) ^ k) * (2 : ℝ) ^ s := by
+          nlinarith [le_max_left (1:ℝ) ((⌈N⌉₊ : ℝ) ^ k), h2s]
+
 /-- **Block length is at most `2m²+7`** (the `n₁` burn-in is dominated by `m²`).  From
 `|b| = n₁ + m²` and the sublinear-slack witness `n₁² ≤ |b|·√|b|`: either `n₁ ≤ m²`
 (so `|b| ≤ 2m²`), or `m² < n₁`, forcing `|b| < 2n₁` and hence — via `n₁² ≤ |b|·√|b|` —
