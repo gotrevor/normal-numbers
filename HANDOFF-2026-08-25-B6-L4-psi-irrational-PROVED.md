@@ -37,14 +37,12 @@ machine-checked. The z-side is unblocked.
    `cfBadZone [] v n δ` (`v∈F`).  Discharges `exists_cfCylinder_psi_avoid_zbad`'s
    `hbudget` at `NSz={n}` (mass `≤ Ssum/(δ²n)`, `γ(cfCylinder[])≤1`, `n >
    (2/q)Ssum/(δ²γcyl)`).
-   REMAINING: thread the per-stage z-good record into `StepSpecL4`/`schedStepL4_exists`
-   — pick `p_s` in the ALREADY-FIXED cylinder `S.wx++u` via
-   `exists_scale_cfCylinder_psi_avoid_zbad` at a stage-growing scale `n_s` (with
-   `δ_s = schedEps s`), and record the conjunct `p_s ∈ cfCylinder S'.wx ∧ p_s avoids
-   z-bad at n_s`.  Same 3-consumer `, _⟩` ripple as the filler lap (now routine).
-   NB the cylinder for the z-pick is the FIXED `S.wx++u` (before the filler `[d]`), or
-   equivalently `S'.wx` (subset — avoidance is monotone under cylinder shrink, so
-   picking on `S'.wx` directly is cleanest and needs no re-derivation).
+   ✅ **PER-STAGE RECORD LANDED** — `exists_scale_zgood_wxSeq_L4` (axiom-clean):
+   applies the budget atom to `wxSeq_L4 s` (loose hull `[0,1]`), giving per-stage `N_s`
+   s.t. every `n ≥ N_s` yields `p ∈ cfCylinder (wxSeq_L4 s)` z-good at scale `n`,
+   `δ = schedEps s`.  **NO `StepSpecL4` threading was needed** — the budget bound is
+   hull-independent, so the z-good witnesses are pulled post-hoc (single-stream
+   simplification vs the two-stream directive assumption).  **Z-I is COMPLETE.**
 2. **Z-II transfer engine** ⇒ `CFOrbitEquidist (ψ xA)` via the 6 brick-4a lemmas +
    `tendsto_of_scale_coverage`; the delicate part is the s↔n coupling in `hcover`.
 3. **Z-III assemble** NEW `exists_interleaved_affine_witness` on the L4 stream (consume
