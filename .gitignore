@@ -1,3 +1,8 @@
 /.lake
 /drafts
 papers/*.pdf
+
+# Claude Code local-only memory. Also in the global ignore, but that lives at
+# ~/.config/git/ignore on the HOST and does not reach the treadmill boxes, so a
+# box lap re-adds it (happened at e1aaa69, undoing the untrack at dd3fe3c).
+CLAUDE.local.md
