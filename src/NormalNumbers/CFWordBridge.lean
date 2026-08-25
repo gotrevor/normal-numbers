@@ -103,4 +103,37 @@ theorem blockCount_sub_countOccurrences_bounds {x : ℝ}
   · exact_mod_cast h1
   · exact_mod_cast h2
 
+/-- **Orbit block-count splits at a pinned prefix** (z-transfer conditional core).  For a
+full-orbit real `x` and `L ≤ n`, the length-`n` orbit count of `cfCylinder v` from `x` equals
+the count of `v`-matches in the FIRST `L` digit windows plus the length-`(n−L)` orbit count from
+the SHIFTED orbit `gaussMap^[L] x`.  Pure partition of the window index set `range n = range L ⊎
+[L,n)`.  This is the exact decomposition behind the ψ-conditional z-Chebyshev: within a cylinder
+that pins the first `L` z-digits, the prefix count is COMMON to all points, so the discrepancy at
+scale `n` is driven by the shifted count at scale `n−L` — which `chebyshev_blockCount_brick`
+controls with density `O(1/(n−L))` (relative), not the too-weak absolute `O(1/n)`. -/
+theorem blockCount_split {x : ℝ}
+    (horb : ∀ j : ℕ, gaussMap^[j] x ∈ Set.Ioo (0 : ℝ) 1)
+    (v : List ℕ) (L n : ℕ) (hLn : L ≤ n) :
+    blockCount (cfCylinder v) n x
+      = (((Finset.range L).filter (fun j => MatchesAt (cfDigit x) v j)).card : ℝ)
+        + blockCount (cfCylinder v) (n - L) (gaussMap^[L] x) := by
+  have hx0 : blockCount (cfCylinder v) n x = blockCount (cfCylinder v) n (gaussMap^[0] x) := by
+    rw [Function.iterate_zero_apply]
+  rw [hx0, blockCount_eq_card_matches horb v 0 n, blockCount_eq_card_matches horb v L (n - L)]
+  simp only [Nat.zero_add]
+  have hn : n = L + (n - L) := by omega
+  have hdisj : Disjoint (Finset.range L) ((Finset.range (n - L)).map (addLeftEmbedding L)) := by
+    rw [Finset.disjoint_left]
+    intro a ha hb
+    rw [Finset.mem_range] at ha
+    simp only [Finset.mem_map, Finset.mem_range, addLeftEmbedding_apply] at hb
+    obtain ⟨k, _, rfl⟩ := hb
+    omega
+  rw [← Nat.cast_add]
+  congr 1
+  conv_lhs => rw [hn, Finset.range_add, Finset.filter_union,
+    Finset.card_union_of_disjoint (Finset.disjoint_filter_filter hdisj),
+    Finset.filter_map, Finset.card_map]
+  simp only [Function.comp, addLeftEmbedding_apply]
+
 end NormalNumbers
