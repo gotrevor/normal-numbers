@@ -5,7 +5,7 @@
 The 2026-08-24 review (`HANDOFF-2026-08-24-B6-review-crux.md:43`) pre-registered this exact
 contingency: "if [the schedule primitive is] not [provable], escalate toward escape #3
 (natural-extension / measure argument) — write `ROUTE-ESCALATION-2026-08-25.md`."  Both schedule
-sub-routes are now dead (two-stream = super-exp blocks `OBSTRUCTION-2026-08-28`; single-stream
+sub-routes are now dead (two-stream = super-exp blocks `OBSTRUCTION-2026-08-24`; single-stream
 passive-Chebyshev = false crux, today).  So: **take escape #3.**
 
 ## The stated theorem is trivially true a.e. — prove it by a measure argument

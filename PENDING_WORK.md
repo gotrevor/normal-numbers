@@ -279,7 +279,7 @@ This is what makes the pinning-stage selection feasible; the absolute aggregate 
 **WHY the two-stream avoided this (and why it was still refuted):** the two-stream gives
 `zA=ψxA` its OWN cylinder chain `wz_s`, so its bad zones are cylinder-relative
 `cfBadZone wz_s` (density `O(1/n)·γ`, feasible) — but coupling `x` and `z` chains under a
-single `ψ` forces super-exponential blocks (`OBSTRUCTION-2026-08-28`). Single-stream
+single `ψ` forces super-exponential blocks (`OBSTRUCTION-2026-08-24`). Single-stream
 removes that coupling but reintroduces the absolute-vs-relative gap above.
 
 **NEXT ATTACK (hardest-first, do NOT resurrect two-stream / post-hoc deep-cylinder):**
@@ -464,7 +464,7 @@ The z-transfer machinery (bricks 4a + 5 transfer lemmas) is already complete + a
 ## ✅✅✅ 2026-08-24 REVIEW LAP — PIVOT RATIFIED: RESUME SINGLE-STREAM L4 (the two-stream route is DEAD)
 
 **The "box stuck" was a FALSE STOP.** The two-stream construction is genuinely
-obstructed (super-exponential blocks — `OBSTRUCTION-2026-08-28`, re-verified), but
+obstructed (super-exponential blocks — `OBSTRUCTION-2026-08-24`, re-verified), but
 the fix does not need an operator: the **single-stream L4 route is the ORIGINAL
 design** (`CFScheduleA.lean:24–31` module docstring) and its foundational pullback
 lemma is ALREADY PROVED — `volume_preimage_affineMap` (`CFAffine:94`,
@@ -723,14 +723,14 @@ This lap discharged EVERY open DIRECTION obligation except the crux:
   witness — refuting the asymptotic needs the full Θ(word) construction).
 - **Item 1 (crux `schedA_block_linear` :2537) — OPERATOR-GATED.** DIRECTION's
   ratified digit-capped route is refuted; the two-stream construction is obstructed
-  (measure-budget blowup, `OBSTRUCTION-2026-08-28`); the obstruction doc + DIRECTION
+  (measure-budget blowup, `OBSTRUCTION-2026-08-24`); the obstruction doc + DIRECTION
   both say STOP for attended review, and the only viable route (single-stream
   pivot) needs altitude ratification a grind lap may not give ("do not grind
   substitutes").  → this is the `box stuck` (blocked-on-operator) condition:
   an altitude/attended lap must re-route DIRECTION to the single-stream pivot
   before the crux can advance.
 
-## 🛑🛑🛑 ROUTE-DECISIVE OBSTRUCTION (2026-08-28) — see `OBSTRUCTION-2026-08-28-block-measure-budget.md`
+## 🛑🛑🛑 ROUTE-DECISIVE OBSTRUCTION (2026-08-28) — see `OBSTRUCTION-2026-08-24-block-measure-budget.md`
 
 **The two-stream construction forces SUPER-EXPONENTIAL blocks; `schedA_block_linear`
 is NOT provable as-is.**  Deeper than the cfK issue: the freq-good *measure budget*
@@ -1398,7 +1398,7 @@ Landed (TBrickRefine, axiom-clean `[propext, Classical.choice, Quot.sound]`):
    proving it.
 3. THEN the recursion (`SchedStateA`/`schedStepA`/`schedA`, `L_s = s`) can prove
    `hdom` from the length bounds + `|w_s| ≥ Σ L_j`, and feed
-   `chain_orbit_equidist`. Items 2–5 of `HANDOFF-2026-08-27-2359.md` (limit point,
+   `chain_orbit_equidist`. Items 2–5 of `HANDOFF-2026-08-24-1641.md` (limit point,
    ψ-chain gluing) are unaffected — only the block-length control was missing.
 
 **Provenance:** the "infra not needed / pure wiring" claim in the 2026-08-27
@@ -2754,7 +2754,7 @@ controlling it at the single fixed cutoff `khinchinK j(ε)` suffices. Weaken
 > total-minus-known-part) and hasn't been attempted yet.
 
 > **GRIND LAP (2026-08-24, `42ec6a7`).** ✅ **Gauss-Kuzmin single-digit law
-> PROVED** (step 1 of HANDOFF-2026-08-26-0730.md's Tier-2 NEXT list):
+> PROVED** (step 1 of HANDOFF-2026-08-24-0123.md's Tier-2 NEXT list):
 > `gaussMeasure_digit_cylinder` (`CFCylinder.lean`) — closed form
 > `γ(cfCylinder [a]) = logb 2 (1 + 1/(a(a+2)))` for `a ≥ 1`, matching
 > `khinchinK₀`'s tprod term exactly (`a(a+2)+1 = (a+1)²`), axiom-clean.
@@ -2800,7 +2800,7 @@ controlling it at the single fixed cutoff `khinchinK j(ε)` suffices. Weaken
 
 > **GRIND LAP (2026-08-26, `44fb8bb`).** ✅ **TIER 1 LOCKED** —
 > `exists_absolutely_normal_cf_normal` proved, axiom-clean (`b3bc2c4`; see
-> HANDOFF-2026-08-26-0630.md for the full route). ✅ **Khinchin (Tier 2) seed
+> HANDOFF-2026-08-24-0057.md for the full route). ✅ **Khinchin (Tier 2) seed
 > landed**: `prod_le_cfK` (`CFDigitLaw.lean`, the missing continuant lower
 > bound `∏aᵢ ≤ K(a₁…aₙ)`) + `uSched_log_sum_le` (`CFCorrect.lean`): each
 > appended schedule block's total `log`-digit mass is `≤ goodC·(block
@@ -2846,7 +2846,7 @@ controlling it at the single fixed cutoff `khinchinK j(ε)` suffices. Weaken
 > `windowCount_div_sandwich` → **`windowFreq_tendsto`** (THE double-limit crux,
 > block freq → b^{-L} via ε-in-r squeeze) → **`pillai`** (`∀ r≥1 simple normal at
 > b^r ⇒ IsNormalSequence b (digitOf b y)`; bridge via `countOccurrences_range_map`
-> + `MatchesAt ↔ ofFn-window`). See HANDOFF-2026-08-26-0600.md for the full route
+> + `MatchesAt ↔ ofFn-window`). See HANDOFF-2026-08-24-0052.md for the full route
 > + gotchas.
 >
 > **NEXT = Tier-1 headline conjunction** (`Headline.lean:93`, ONLY classical
@@ -3049,7 +3049,7 @@ controlling it at the single fixed cutoff `khinchinK j(ε)` suffices. Weaken
 statements proved, axiom-clean — `measurePreserving_gaussMap` (B1),
 `volume_inter_preimage_eq_integral`, `cylinder_mixing` (C = 8 log 2,
 ρ = 9/10, geometric — escape valve unused), `gauss_kuzmin` (B4).
-`src/` is sorry-free.  See `HANDOFF-2026-08-23-2040.md`.
+`src/` is sorry-free.  See `HANDOFF-2026-08-23-1749.md`.
 
 **W4 groundwork STARTED (this lap)**: `CFGammaMixing.lean` proves the
 KPW-Lemma-6 substitute — the W4 correlation-decay engine — axiom-clean:

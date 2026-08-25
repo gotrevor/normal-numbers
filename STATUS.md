@@ -102,7 +102,7 @@ mirroring `variance_blockCount_le`.
   single-stream L4; broke a FALSE STOP.** Inventory by real `#print axioms`: build
   green 8757, both B5′ headlines trust-triple, sole `src/` sorry = the B6 crux
   `schedA_block_linear` (`:2537`). The prior grind laps hit a genuine obstruction
-  (two-stream forces super-exponential blocks, `OBSTRUCTION-2026-08-28`) and
+  (two-stream forces super-exponential blocks, `OBSTRUCTION-2026-08-24`) and
   correctly proposed the single-stream pivot, but then declared the crux
   "operator-gated" and stopped — a false stop (no operator on an autonomous run).
   Discovered the single-stream "L4" route is the ORIGINAL module design

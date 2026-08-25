@@ -19,7 +19,7 @@ then recursion/z-coverage/assemble (see below + PENDING_WORK top).
 
 1. **RATIFIED THE PIVOT — broke a false stop.** The prior grind laps hit a
    genuine obstruction (the two-stream construction forces super-exponential
-   blocks — `OBSTRUCTION-2026-08-28`, re-verified sound) and correctly proposed a
+   blocks — `OBSTRUCTION-2026-08-24`, re-verified sound) and correctly proposed a
    single-stream pivot, then "box stuck" awaiting an operator ratification that
    never comes on an autonomous run. As the altitude lap I made the call:
    **resume the single-stream "L4" route** — which is the ORIGINAL module design

@@ -21,7 +21,7 @@ detail lives in PENDING_WORK.md.
   us (need not be `≈nγv`) ⇒ second moment is `Θ(n²)`, not `O(n)`; the base-mass factor cannot
   rescue that.  So `psi_pushed_chebyshev_brick`/`_poly` do NOT establish their conclusions
   (they carry disclosed `sorryAx`).  Both schedule z-routes are dead (two-stream super-exp
-  `OBSTRUCTION-2026-08-28`; single-stream refuted here).  The 2026-08-24 review pre-registered
+  `OBSTRUCTION-2026-08-24`; single-stream refuted here).  The 2026-08-24 review pre-registered
   this: escalate to the measure route (`ROUTE-ESCALATION-2026-08-25.md`).
 - **THE MANDATED MOVE — prove B6 by the MEASURE argument (existence is trivially true a.e.).**
   The frozen headline is bare EXISTENCE (no explicit witness demanded).  The whole obligation
@@ -296,7 +296,7 @@ detail lives in PENDING_WORK.md.
   by real `#print axioms` — build green 8757, both B5′ headlines trust-triple, sole
   `src/` sorry = the B6 crux `schedA_block_linear`. Diagnosed a FALSE STOP: the last
   grind laps hit a genuine, well-analysed obstruction (two-stream forces
-  super-exponential blocks, `OBSTRUCTION-2026-08-28`), correctly proposed the
+  super-exponential blocks, `OBSTRUCTION-2026-08-24`), correctly proposed the
   single-stream pivot, then "box stuck" awaiting an operator ratification that never
   comes on an autonomous run. Discovered the single-stream "L4" route is the ORIGINAL
   module design (`CFScheduleA.lean:24–31`) whose L3 foundation `volume_preimage_affineMap`

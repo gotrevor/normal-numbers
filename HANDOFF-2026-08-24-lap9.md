@@ -1,7 +1,7 @@
 # HANDOFF — Khinchin Tier 2, route C′ FAMILY machinery complete
 
 **Branch/HEAD**: master @ `ed87d7d`, `lake build` green (8750 jobs).
-Supersedes `HANDOFF-2026-08-27-1800.md`.
+Supersedes `HANDOFF-2026-08-24-0316.md`.
 
 ## What landed this run (9 green commits, all axiom-clean `[propext, Classical.choice, Quot.sound]`)
 

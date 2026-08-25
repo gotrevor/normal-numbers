@@ -48,7 +48,7 @@ second moment that is quadratic in `n`.**
 
 This is the SAME wall in a new disguise: passively (by measure/Chebyshev on `cfCyl wx'`) you cannot
 force `ψ(cfCyl wx')` to sit in a frequency-typical region — that requires ACTIVE z-steering, which is
-the two-stream route (proven infeasible: super-exponential blocks, `OBSTRUCTION-2026-08-28`).  The
+the two-stream route (proven infeasible: super-exponential blocks, `OBSTRUCTION-2026-08-24`).  The
 scale regime that bites (`n ≲ |wx'|`) is exactly the regime the digit-agreement transfer needs
 (goodness of `ψp` transfers to `ψxA` only up to the shared-prefix depth `~|wx'|`), so there is no
 "only large `n`" escape.

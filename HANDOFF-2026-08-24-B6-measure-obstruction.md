@@ -7,7 +7,7 @@ Quot.sound]` (`exists_absolutely_normal_cf_normal`,
 
 ## The one thing to read first
 
-`OBSTRUCTION-2026-08-28-block-measure-budget.md` — the session's headline finding.
+`OBSTRUCTION-2026-08-24-block-measure-budget.md` — the session's headline finding.
 **The B6 crux `schedA_block_linear` is NOT provable with the current two-stream
 construction**, and the failure is deeper than cfK: the freq-good *measure budget*
 `n₁ ≳ 1/ρ` blows up because the x-block target relative size

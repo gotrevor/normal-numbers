@@ -44,7 +44,7 @@ crux under `exists_interleaved_affine_witness` → `exists_cfNormal_and_affine_c
     freq-good measure budget `n₁ ≳ 1/ρ` blows up because the x-block target
     relative size `ρ ≈ e^{−2κ|zblock|}` is exponentially small (coupled stream one
     block deeper), so blocks are super-exponential and `hslack` fails
-    independently of length.  Full analysis: `OBSTRUCTION-2026-08-28-block-measure-budget.md`.
+    independently of length.  Full analysis: `OBSTRUCTION-2026-08-24-block-measure-budget.md`.
   - The only viable route — the **single-stream pivot** (select one `x` avoiding
     both x-CF bad zones and the ψ-pullback `ψ⁻¹(cfBadZone_z …)`; target = full
     cylinder, `ρ=1`, blocks linear) — is a *substitute route*, which DIRECTION's
