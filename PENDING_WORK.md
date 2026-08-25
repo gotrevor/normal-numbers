@@ -1,5 +1,55 @@
 # PENDING WORK — B6 campaign (affine images) + B5′ (COMPLETE, below)
 
+## 🔴 2026-08-29 — STRUCTURAL FINDING: `schedL4_block_linear` DONE, but the L4 z-side is NOT reuse
+
+**`schedL4_block_linear` is PROVED** (commit `030d8fb`, axiom-clean) and the x-side
+downstream is landed: `schedL4_hfreq_x` (`ebf28fa`), `exists_xA_L4_orbit_equidist`
+(`c0d188b`). Build 🟢 8757; headline still trust-triple. Sole `src/` sorry = the DEAD
+two-stream `schedA_block_linear`.
+
+**BUT** the block-linear rebuild of `StepSpecL4`/`schedStepL4_exists` (commit `acdcb19`,
+"rewired onto the cfK builder") carries **ZERO z-side control** — `grep cfBadZone|affineMap`
+over `StepSpecL4` = 0 hits. The DIRECTIVE calls the z-side "REUSE", but that assumed the
+EARLIER StepSpecL4 (brick-4b plan, §248 below) which recorded a per-stage `ψ(p_s)`-avoidance.
+The cfK rewire dropped it. **So the current `wxSeq_L4` makes `x` normal but gives NO control
+on `ψ(x)`.** `ψ(xA)` normality (the other half of the interleaved witness) genuinely requires
+the schedule to steer ψ away from z-bad-zones — it cannot be recovered post-hoc from an
+x-only chain (xA is the unique intersection point; ψ(xA) is then fixed, no freedom to pick).
+
+**REFINED REMAINING WORK (two parts, hardest-first):**
+- **(Z-I) Re-integrate z-avoidance into `StepSpecL4` + `schedStepL4_exists`.** Add a conjunct
+  recording a point `p_s ∈ cfCylinder (wx')` with `ψ(p_s)` irrational, full-orbit in (0,1),
+  and `∀ v∈F_s, ∀ n∈NSz_s, ψ(p_s) ∉ cfBadZone [] v n (δ_s)`. The selection is a measure
+  argument on the FIXED cylinder `cfCylinder wx'`: need pulled-back z-bad mass
+  `γ(cfCylinder wx' ∩ ψ⁻¹(⋃_{n∈NSz_s} cfBadZone[] v n δ_s)) < γ(cfCylinder wx')`. Tune
+  `NSz_s` (bounded window) + `δ_s` per s so the Chebyshev budget
+  (`gaussMeasure_aggregate_cfBadZone_le`, pulled back via
+  `gaussMeasure_interval_inter_preimage_affineMap_le`, factor `≤2/q`) stays below the
+  cylinder mass. **This must NOT disturb the LINEAR block length** (the p_s selection is a
+  point pick inside the already-chosen block cylinder, so |block| is unchanged — keep the
+  x-block builder as-is, add an independent point selection after it). Threading the new
+  conjunct breaks 4 `obtain ⟨…⟩` destructurings (schedL4_block_linear, schedL4_hfreq_x,
+  wxSeq_L4_length_ge, cfK_wxSeq_L4_le) — add one `_` to each.
+- **(Z-II) z-transfer engine → `CFOrbitEquidist (ψ xA)`.** From (Z-I)'s per-stage p_s
+  avoidance + `δ_s→0` + `NSz` cofinal, transfer to the limit: for fixed n, take s large so
+  `cfCylinder(wx_{s+1}) ⊆` an x-ball around xA on which ψ agrees with ψxA on the first
+  `m=n+|v|` z-digits (`exists_ball_cfDigit_psi_eq` at x₀=xA, needs ψxA irrational — TRUE:
+  xA irrational, q≠0; `exists_tail_cfCylinder_subset_ball` gives the s-threshold). Then
+  `blockCount_eq_of_cfDigit_agree` ⇒ ψxA shares p_s's block count ⇒
+  `notMem_cfBadZone_nil_of_cfDigit_agree` ⇒ ψxA ∉ cfBadZone[] v n δ_s ⇒
+  `|blockCount(cfCyl v) n ψxA/n − γv| < δ_s`. Feed `tendsto_of_scale_coverage` (f n =
+  blockCount/n, L=γv, S s = NSz_s∩{n large}, hcover from cofinality + s-n coupling). All six
+  transfer lemmas (§252) exist + axiom-clean; the delicate part is the s↔n coupling in
+  `hcover` (each n needs its own large-enough s for the ball inclusion at depth n+|v|).
+- **(Z-III) assemble** NEW `exists_interleaved_affine_witness` (xA from
+  `exists_xA_L4_orbit_equidist`, ψxA equidist from Z-II, ψxA∈(0,1) from feasibility+interval,
+  ψxA irrational from xA irr + q≠0), then EXCISE the two-stream `schedA_block_linear` sorry.
+
+**NEXT probe:** (Z-I) — extend `StepSpecL4` with the z-avoidance conjunct and re-prove
+`schedStepL4_exists` (add the point selection via a measure-existence lemma on the fixed
+block cylinder). Everything else is gated on that record existing.
+
+
 ## 🎯 2026-08-24 REVIEW LAP — CRUX = the cfK-cap graft (bridge + layer 1 DONE)
 
 The block-linear support layer is proved (relative regularization, below). The ONE
