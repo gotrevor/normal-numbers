@@ -4808,6 +4808,26 @@ theorem schedA_hfreq_z {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) 
   chain_hfreq_of_uniform_blocks (wzSeq hq hr) (wzSeq_ext hq hr)
     (fun s => (schedA_step hq hr s).1.2.2) (schedA_block_geom hq hr _ (Or.inr rfl))
 
+/-- **L4 x-stream frequency obligation** (single-stream route).  Instantiates
+`chain_hfreq_of_uniform_blocks` for `wxSeq_L4`, feeding the just-proved geometric
+block bound `schedL4_block_linear` as `hgeom` and reading the depth/`n₁`/freq
+conjuncts off `StepSpecL4`.  This is the x-side input to the HDOM-FREE
+`chain_orbit_equidist_uniform` in the L4 assembly of `exists_interleaved_affine_witness`. -/
+theorem schedL4_hfreq_x {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+    ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
+      ∃ C : ℕ → ℝ, (∀ s, 0 ≤ C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∃ s₀, ∀ s, s₀ ≤ s → ∀ p, p ≤ (chainApp (wxSeq_L4 hq hr) s).length →
+          |(countOccurrences v ((chainApp (wxSeq_L4 hq hr) s).take p) : ℝ)
+            - (gaussMeasure (cfCylinder v)).toReal * p| < ε * p + C s) ∧
+        (∀ ε : ℝ, 0 < ε → ∀ s₀, ∃ K, ∀ k, K ≤ k →
+          (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
+            < ε * (wxSeq_L4 hq hr (s₀ + k)).length) := by
+  refine chain_hfreq_of_uniform_blocks (wxSeq_L4 hq hr) (wxSeq_L4_ext hq hr)
+    (fun s => ?_) (schedL4_block_linear hq hr)
+  obtain ⟨_htake, _hlt, hsdrop, a, b, n₁, m, Nfib, _ha, _hab, _hb, _hIcc,
+      _hlen, _hword, hn₁sq, hfreq, _hcfKb, _hm2, _hNf⟩ := schedL4_step hq hr s
+  exact ⟨hsdrop, n₁, hn₁sq, hfreq⟩
+
 /-- **THE B6 CRUX (interleaved-schedule witness), FEASIBLE REGIME.**  For `q > 0`
 and `r ∈ (-q, 1)` — exactly the range in which the feasible set
 `(0,1) ∩ ψ⁻¹(0,1)` is nonempty — there is a single real `x` such that both `x`
