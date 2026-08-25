@@ -4434,6 +4434,244 @@ theorem exists_fib_threshold_linear_of_cfK {κ : ℝ} (hκ : 0 ≤ κ)
   simp only [Real.logb] at hN2 ⊢
   linarith [hN2, hsub]
 
+
+/-- `(s+1)^k` is dominated by `C·2^s`. -/
+theorem poly_succ_le_two_pow (k : ℕ) :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ s : ℕ, ((s : ℝ) + 1) ^ k ≤ C * (2 : ℝ) ^ s := by
+  obtain ⟨C₀, hC₀0, hC₀⟩ := exists_const_pow_le_two_pow k
+  refine ⟨max 1 (2 ^ k * C₀), le_trans zero_le_one (le_max_left _ _), fun s => ?_⟩
+  have h2s : (1 : ℝ) ≤ (2 : ℝ) ^ s := one_le_pow₀ (by norm_num)
+  rcases Nat.eq_zero_or_pos s with h0 | hpos
+  · subst h0
+    simp only [Nat.cast_zero, zero_add, one_pow, pow_zero, mul_one]
+    exact le_max_left _ _
+  · have hs1 : (1 : ℝ) ≤ (s : ℝ) := by exact_mod_cast hpos
+    have hstep : ((s : ℝ) + 1) ^ k ≤ (2 * (s : ℝ)) ^ k := by
+      apply pow_le_pow_left₀ (by positivity)
+      linarith
+    have hmul : (2 * (s : ℝ)) ^ k = 2 ^ k * (s : ℝ) ^ k := by rw [mul_pow]
+    calc ((s : ℝ) + 1) ^ k ≤ (2 * (s : ℝ)) ^ k := hstep
+      _ = 2 ^ k * (s : ℝ) ^ k := hmul
+      _ ≤ 2 ^ k * (C₀ * (2 : ℝ) ^ s) := by
+          apply mul_le_mul_of_nonneg_left (hC₀ s) (by positivity)
+      _ = (2 ^ k * C₀) * (2 : ℝ) ^ s := by ring
+      _ ≤ max 1 (2 ^ k * C₀) * (2 : ℝ) ^ s := by
+          apply mul_le_mul_of_nonneg_right (le_max_right _ _) (by positivity)
+
+/-- Arithmetic core of the inner-block bound: with `γtar ≥ ¼·γwx` the block parameter
+`2/(γtar·δ²/(2·(Sg·γwx+γwx)))` is `≤ 16(Sg+1)/δ²`, word-independent. -/
+theorem inner_bound {γtar γwx Sg δ : ℝ} (hγwx : 0 < γwx) (htar : (1 / 4) * γwx ≤ γtar)
+    (hSg : 0 ≤ Sg) (hδ : 0 < δ) :
+    2 / (γtar * δ ^ 2 / (2 * (Sg * γwx + γwx))) ≤ 16 * (Sg + 1) / δ ^ 2 := by
+  have hγtar : 0 < γtar := lt_of_lt_of_le (by positivity) htar
+  have hden : (0 : ℝ) < 2 * (Sg * γwx + γwx) := by nlinarith [mul_nonneg hSg hγwx.le, hγwx]
+  have hδ2 : (0 : ℝ) < δ ^ 2 := by positivity
+  rw [div_div_eq_mul_div, div_le_div_iff₀ (by positivity) hδ2]
+  nlinarith [mul_le_mul_of_nonneg_right (show γwx ≤ 4 * γtar by linarith)
+      (show (0 : ℝ) ≤ (Sg + 1) * δ ^ 2 by positivity), mul_nonneg hSg hγwx.le]
+
+set_option maxHeartbeats 1600000 in
+/-- **L4 geometric block-length bound** (route-B crux, now PROVED).  The single-stream
+steer-block length is bounded by a uniform multiple of the accumulated word length,
+`|chainApp (wxSeq_L4) s| ≤ ρ·|wxSeq_L4 s|`.  Assembles the block-linear ingredients: block
+`|b| ≤ 2m²+7` (`block_len_le`), `m²` linear in `|w|+s+Nfib` plus the word-independent
+`⌈2/β_rel⌉⁴` term (`StepSpecL4`), the resolution `Nfib ≲ |w|` (`logb_golden_sqrt_le` +
+`four_div_width_le_cfK` + `cfK_wxSeq_L4_le`), the inner block parameter poly-in-`s`
+(`inner_bound` + `sum_gaussMeasure_wordFamily_le`), all absorbed into the geometric word
+growth `2^s ≤ |w_s|` (`wxSeq_L4_length_ge`, `poly_succ_le_two_pow`). -/
+theorem schedL4_block_linear {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+    ∃ ρ : ℝ, 0 ≤ ρ ∧ ∀ s, ((chainApp (wxSeq_L4 hq hr) s).length : ℝ)
+      ≤ ρ * (wxSeq_L4 hq hr s).length := by
+  -- global constants
+  set κ : ℝ := schedKappaL4 with hκdef
+  set L2 : ℝ := Real.log 2 with hL2def
+  set κ' : ℝ := (κ + L2) + Real.log (cfK (wxSeq_L4 hq hr 0) : ℝ) with hκ'def
+  set Cφ : ℝ := Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt 8 + 1) + 1 with hCφdef
+  have hlogφ : 0 < Real.log Real.goldenRatio := Real.log_pos Real.one_lt_goldenRatio
+  obtain ⟨C16, hC16_0, hC16⟩ := poly_succ_le_two_pow 16
+  have hκ0 : 0 ≤ κ := schedKappaL4_pos.le
+  have hL2_0 : 0 ≤ L2 := Real.log_nonneg (by norm_num)
+  have hcfK0_1 : (1 : ℝ) ≤ (cfK (wxSeq_L4 hq hr 0) : ℝ) := by
+    exact_mod_cast one_le_cfK _ (wxSeq_L4_pos hq hr 0)
+  have hlogcfK0 : 0 ≤ Real.log (cfK (wxSeq_L4 hq hr 0) : ℝ) := Real.log_nonneg hcfK0_1
+  have hκ'0 : 0 ≤ κ' := by rw [hκ'def]; have := hκ0; have := hL2_0; have := hlogcfK0; linarith
+  have hCφ0 : 0 ≤ Cφ := by
+    rw [hCφdef]
+    have h1 : (1 : ℝ) ≤ Real.sqrt 5 * Real.sqrt 8 + 1 := by
+      have : (0 : ℝ) ≤ Real.sqrt 5 * Real.sqrt 8 := by positivity
+      linarith
+    have := Real.logb_nonneg Real.one_lt_goldenRatio h1
+    linarith
+  -- ρ definition
+  refine ⟨12 + 12 + (12 * κ' / Real.log Real.goldenRatio + 12 * Cφ)
+      + (4 * 8978 ^ 4 + 11) * C16, ?_, fun s => ?_⟩
+  · have hA : 0 ≤ 12 * κ' / Real.log Real.goldenRatio :=
+      div_nonneg (by nlinarith [hκ'0]) hlogφ.le
+    have hB : 0 ≤ (4 * 8978 ^ 4 + 11) * C16 := by positivity
+    linarith [hCφ0]
+  -- per-step body
+  show (((schedL4 hq hr (s + 1)).wx.drop (schedL4 hq hr s).wx.length).length : ℝ)
+      ≤ _ * ((schedL4 hq hr s).wx.length : ℝ)
+  obtain ⟨_htake, _hlt, _hsdrop, a, b, n₁, m, Nfib, ha, hab, hb, hIcc,
+      hlen, hword, hn₁sq, _hfreq, _hcfKb, hm2, hNf⟩ := schedL4_step hq hr s
+  clear _htake _hlt _hsdrop _hfreq _hcfKb
+  set blk := (schedL4 hq hr (s + 1)).wx.drop (schedL4 hq hr s).wx.length with hblkdef
+  set W : ℕ := (schedL4 hq hr s).wx.length with hWdef
+  -- measure constants
+  set γwx : ℝ := (gaussMeasure (cfCylinder (schedL4 hq hr s).wx)).toReal with hγwxdef
+  set γtar : ℝ := (gaussMeasure (Set.Ioo (a + (b - a) / 4) (b - (b - a) / 4))).toReal with hγtardef
+  set δ : ℝ := schedEps s with hδdef
+  set Ssum : ℝ := ∑ v ∈ wordFamily s, 7 * (8 * (v.length : ℝ) + 80)
+      * (gaussMeasure (cfCylinder v)).toReal * γwx with hSsumdef
+  set Sg : ℝ := ∑ v ∈ wordFamily s, 7 * (8 * (v.length : ℝ) + 80)
+      * (gaussMeasure (cfCylinder v)).toReal with hSgdef
+  set INNER : ℝ := 2 / (γtar * δ ^ 2 / (2 * (Ssum + γwx))) with hINNERdef
+  -- positivity facts
+  have hγwxpos : 0 < γwx := gaussMeasure_cfCylinder_toReal_pos _
+    (schedL4 hq hr s).hwxne (schedL4 hq hr s).hwxpos
+  have hγtar0 : 0 ≤ γtar := ENNReal.toReal_nonneg
+  have hδpos : 0 < δ := schedEps_pos s
+  have hSg0 : 0 ≤ Sg := by
+    rw [hSgdef]; apply Finset.sum_nonneg; intro v _; positivity
+  have hSsum0 : 0 ≤ Ssum := by
+    rw [hSsumdef]; apply Finset.sum_nonneg; intro v _; positivity
+  have hW1 : (1 : ℝ) ≤ (W : ℝ) := by
+    rw [hWdef]; exact_mod_cast List.length_pos_of_ne_nil (schedL4 hq hr s).hwxne
+  -- htar : ¼γwx ≤ γtar
+  have htar : (1 / 4) * γwx ≤ γtar :=
+    gaussMeasure_middle_half_hull_ge (schedL4 hq hr s).wx ha hab.le hb hIcc
+  -- Ssum = Sg * γwx
+  have hSsumeq : Ssum = Sg * γwx := by
+    rw [hSsumdef, hSgdef, ← Finset.sum_mul]
+  -- INNER ≤ 16(Sg+1)/δ²
+  have hInner1 : INNER ≤ 16 * (Sg + 1) / δ ^ 2 := by
+    rw [hINNERdef, hSsumeq]
+    exact inner_bound hγwxpos htar hSg0 hδpos
+  -- δ = 1/(s+1)
+  have hδval : δ = 1 / ((s : ℝ) + 1) := by rw [hδdef]; simp [schedEps]
+  have hsp0 : (0 : ℝ) < (s : ℝ) + 1 := by positivity
+  have hdiveq : 16 * (Sg + 1) / δ ^ 2 = 16 * (Sg + 1) * ((s : ℝ) + 1) ^ 2 := by
+    rw [hδval]; field_simp
+  -- Sg ≤ 560(s+1)²
+  have hSgbound : Sg ≤ 560 * ((s : ℝ) + 1) ^ 2 := by
+    have hstep : Sg ≤ ∑ v ∈ wordFamily s, 560 * ((s : ℝ) + 1)
+        * (gaussMeasure (cfCylinder v)).toReal := by
+      rw [hSgdef]
+      apply Finset.sum_le_sum
+      intro v hv
+      have hvlen : (v.length : ℝ) ≤ (s : ℝ) := by exact_mod_cast (mem_wordFamily.1 hv).1.2
+      have hγ0 : (0 : ℝ) ≤ (gaussMeasure (cfCylinder v)).toReal := ENNReal.toReal_nonneg
+      have hcoef : 7 * (8 * (v.length : ℝ) + 80) ≤ 560 * ((s : ℝ) + 1) := by
+        nlinarith [hvlen, (Nat.cast_nonneg v.length : (0:ℝ) ≤ (v.length:ℝ))]
+      exact mul_le_mul_of_nonneg_right hcoef hγ0
+    calc Sg ≤ ∑ v ∈ wordFamily s, 560 * ((s : ℝ) + 1)
+            * (gaussMeasure (cfCylinder v)).toReal := hstep
+      _ = 560 * ((s : ℝ) + 1) * ∑ v ∈ wordFamily s, (gaussMeasure (cfCylinder v)).toReal := by
+          rw [← Finset.mul_sum]
+      _ ≤ 560 * ((s : ℝ) + 1) * (s : ℝ) := by
+          gcongr
+          exact sum_gaussMeasure_wordFamily_le s
+      _ ≤ 560 * ((s : ℝ) + 1) ^ 2 := by nlinarith [(Nat.cast_nonneg s : (0:ℝ) ≤ (s:ℝ))]
+  -- freeze the heavy definitions (keep the `with`-equations for explicit unfolds)
+  clear_value INNER Ssum Sg γtar γwx δ
+  -- INNER ≤ 8976(s+1)⁴
+  have hone2 : (1 : ℝ) ≤ ((s : ℝ) + 1) ^ 2 :=
+    one_le_pow₀ (by linarith [(Nat.cast_nonneg s : (0:ℝ) ≤ (s:ℝ))])
+  have hInner_le : INNER ≤ 8976 * ((s : ℝ) + 1) ^ 4 := by
+    have h1 : Sg + 1 ≤ 561 * ((s : ℝ) + 1) ^ 2 := by nlinarith [hSgbound, hone2]
+    calc INNER ≤ 16 * (Sg + 1) / δ ^ 2 := hInner1
+      _ = 16 * (Sg + 1) * ((s : ℝ) + 1) ^ 2 := hdiveq
+      _ ≤ 16 * (561 * ((s : ℝ) + 1) ^ 2) * ((s : ℝ) + 1) ^ 2 := by
+          apply mul_le_mul_of_nonneg_right _ (by positivity)
+          exact mul_le_mul_of_nonneg_left h1 (by norm_num)
+      _ = 8976 * ((s : ℝ) + 1) ^ 4 := by ring
+  -- ceil bound
+  have hI0 : 0 ≤ INNER := by
+    rw [hINNERdef]
+    apply div_nonneg (by norm_num)
+    apply div_nonneg (mul_nonneg hγtar0 (sq_nonneg _))
+    nlinarith [hSsum0, hγwxpos]
+  have hone4 : (1 : ℝ) ≤ ((s : ℝ) + 1) ^ 4 :=
+    one_le_pow₀ (by linarith [(Nat.cast_nonneg s : (0:ℝ) ≤ (s:ℝ))])
+  have hceil : (⌈INNER⌉₊ : ℝ) + 1 ≤ 8978 * ((s : ℝ) + 1) ^ 4 := by
+    have hc := (Nat.ceil_lt_add_one hI0).le
+    nlinarith [hc, hInner_le, hone4]
+  have hbase0 : (0 : ℝ) ≤ (⌈INNER⌉₊ : ℝ) + 1 := by positivity
+  have hTle : ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 ≤ 8978 ^ 4 * ((s : ℝ) + 1) ^ 16 := by
+    calc ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 ≤ (8978 * ((s : ℝ) + 1) ^ 4) ^ 4 :=
+          pow_le_pow_left₀ hbase0 hceil 4
+      _ = 8978 ^ 4 * ((s : ℝ) + 1) ^ 16 := by ring
+  -- cast hm2, block-length
+  have hm2R : (m : ℝ) ^ 2 ≤ 6 * ((W : ℝ) + (s : ℝ) + (Nfib : ℝ)) + 2
+      + 2 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 := by exact_mod_cast hm2
+  have hBlk : blk.length ≤ 2 * m ^ 2 + 7 := block_len_le hword hn₁sq
+  have hBlkR : (blk.length : ℝ) ≤ 2 * (m : ℝ) ^ 2 + 7 := by exact_mod_cast hBlk
+  -- Nfib chain
+  have hKcap : (cfK (wxSeq_L4 hq hr s) : ℝ) ≤ Real.exp (κ' * (W : ℝ)) := by
+    have h := cfK_wxSeq_L4_le hq hr s
+    have hcfK0pos : (0 : ℝ) < (cfK (wxSeq_L4 hq hr 0) : ℝ) := by linarith [hcfK0_1]
+    have hlogle : Real.log (cfK (wxSeq_L4 hq hr 0) : ℝ)
+        ≤ Real.log (cfK (wxSeq_L4 hq hr 0) : ℝ) * (W : ℝ) := by nlinarith [hlogcfK0, hW1]
+    have hc0 : (cfK (wxSeq_L4 hq hr 0) : ℝ)
+        ≤ Real.exp (Real.log (cfK (wxSeq_L4 hq hr 0) : ℝ) * (W : ℝ)) := by
+      calc (cfK (wxSeq_L4 hq hr 0) : ℝ) = Real.exp (Real.log (cfK (wxSeq_L4 hq hr 0) : ℝ)) :=
+            (Real.exp_log hcfK0pos).symm
+        _ ≤ Real.exp (Real.log (cfK (wxSeq_L4 hq hr 0) : ℝ) * (W : ℝ)) :=
+            Real.exp_le_exp.mpr hlogle
+    have hWlen : ((wxSeq_L4 hq hr s).length : ℝ) = (W : ℝ) := by rw [hWdef]; rfl
+    rw [hWlen] at h
+    calc (cfK (wxSeq_L4 hq hr s) : ℝ)
+        ≤ (cfK (wxSeq_L4 hq hr 0) : ℝ) * Real.exp ((κ + L2) * (W : ℝ)) := h
+      _ ≤ Real.exp (Real.log (cfK (wxSeq_L4 hq hr 0) : ℝ) * (W : ℝ))
+            * Real.exp ((κ + L2) * (W : ℝ)) :=
+          mul_le_mul_of_nonneg_right hc0 (Real.exp_pos _).le
+      _ = Real.exp (κ' * (W : ℝ)) := by
+          rw [← Real.exp_add, hκ'def]; ring_nf
+  have ha_bound : (4 / (b - a)) ≤ 8 * (cfK (wxSeq_L4 hq hr s) : ℝ) ^ 2 :=
+    four_div_width_le_cfK (wxSeq_L4 hq hr s) (wxSeq_L4_ne hq hr s) (wxSeq_L4_pos hq hr s) hab hIcc
+  have hlgs := logb_golden_sqrt_le (a := 4 / (b - a)) (κ := κ') (ℓ := (W : ℝ))
+    (K := (cfK (wxSeq_L4 hq hr s) : ℝ)) hκ'0 (by positivity) (by positivity) ha_bound hKcap
+  rw [← hCφdef] at hlgs
+  have hNfChain : (Nfib : ℝ) ≤ κ' / Real.log Real.goldenRatio * (W : ℝ) + Cφ :=
+    le_trans hNf hlgs
+  -- 2^s ≤ W, s ≤ W
+  have h2sW : (2 : ℝ) ^ s ≤ (W : ℝ) := by
+    rw [hWdef]; exact_mod_cast wxSeq_L4_length_ge hq hr s
+  have hsW : (s : ℝ) ≤ (W : ℝ) := by
+    have : s ≤ W := by
+      rw [hWdef]; exact le_trans (Nat.lt_two_pow_self).le (wxSeq_L4_length_ge hq hr s)
+    exact_mod_cast this
+  -- assemble
+  have hkey : (blk.length : ℝ) ≤ 12 * (W : ℝ) + 12 * (s : ℝ) + 12 * (Nfib : ℝ)
+      + 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 11 := by linarith [hBlkR, hm2R]
+  have h12s : 12 * (s : ℝ) ≤ 12 * (W : ℝ) := by linarith [hsW]
+  have h12N : 12 * (Nfib : ℝ)
+      ≤ (12 * κ' / Real.log Real.goldenRatio + 12 * Cφ) * (W : ℝ) := by
+    have hexp : (12 * κ' / Real.log Real.goldenRatio + 12 * Cφ) * (W : ℝ)
+        = 12 * (κ' / Real.log Real.goldenRatio * (W : ℝ)) + 12 * (Cφ * (W : ℝ)) := by ring
+    rw [hexp]
+    have hCabs : Cφ ≤ Cφ * (W : ℝ) := by nlinarith [hCφ0, hW1]
+    linarith [hNfChain, hCabs]
+  have hone16 : (1 : ℝ) ≤ ((s : ℝ) + 1) ^ 16 := by
+    apply one_le_pow₀; linarith [(Nat.cast_nonneg s : (0:ℝ) ≤ (s:ℝ))]
+  have hstepT : 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 11
+      ≤ (4 * 8978 ^ 4 + 11) * ((s : ℝ) + 1) ^ 16 := by nlinarith [hTle, hone16]
+  have h16W : ((s : ℝ) + 1) ^ 16 ≤ C16 * (W : ℝ) :=
+    le_trans (hC16 s) (mul_le_mul_of_nonneg_left h2sW hC16_0)
+  have h4T : 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 11
+      ≤ (4 * 8978 ^ 4 + 11) * C16 * (W : ℝ) := by
+    calc 4 * ((⌈INNER⌉₊ : ℝ) + 1) ^ 4 + 11
+        ≤ (4 * 8978 ^ 4 + 11) * ((s : ℝ) + 1) ^ 16 := hstepT
+      _ ≤ (4 * 8978 ^ 4 + 11) * (C16 * (W : ℝ)) :=
+          mul_le_mul_of_nonneg_left h16W (by positivity)
+      _ = (4 * 8978 ^ 4 + 11) * C16 * (W : ℝ) := by ring
+  calc (blk.length : ℝ)
+      ≤ 12 * (W : ℝ) + 12 * (W : ℝ)
+        + (12 * κ' / Real.log Real.goldenRatio + 12 * Cφ) * (W : ℝ)
+        + (4 * 8978 ^ 4 + 11) * C16 * (W : ℝ) := by linarith [hkey, h12s, h12N, h4T]
+    _ = (12 + 12 + (12 * κ' / Real.log Real.goldenRatio + 12 * Cφ)
+          + (4 * 8978 ^ 4 + 11) * C16) * (W : ℝ) := by ring
+
 /-- **Linear block-length bound** (route-decisive core, DISCLOSED `sorry`).  The
 sharp form of the geometric bound: the steer-block length is bounded by an AFFINE
 function of the accumulated word length, `|chainApp w s| ≤ K₁·|w s| + K₂`.  With
