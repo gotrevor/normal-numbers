@@ -5,7 +5,11 @@ one another, and which of those relationships are formalizable here.  Written 20
 after a status ledger for a constant read `irrational: trivial; transcendental: known;`
 and the natural next question was where normality goes on the same page.*
 
-Companion: `docs/how-irregular-is-a-number.html` (the same material with the diagrams).
+Companion: `docs/how-irregular-is-a-number.html` (the same material with the diagrams, including
+the full digit-side implication lattice from `Irrational` up to 2-randomness).
+Prior art worth knowing: Numberphile's *All the Numbers* draws the same crossing by hand
+(<https://www.youtube.com/watch?v=5TkIe60y2GI>, at 8:23), and gets the key detail right, that the
+normal circle overlaps algebraic and computable but never meets the rationals.
 
 ## 1.  Three claims, two subjects
 
@@ -62,7 +66,7 @@ Ordered by (value to this repo) / (cost).
 | 1 | `IsNormal b x → Irrational x` | **cheap.**  Wall is already proved, and a rational `x` has a finite forward orbit `{bⁿx mod 1}`, so it cannot be equidistributed.  Pick an interval shorter than the smallest gap and its visit frequency is 0 | **do it.**  It is the only implication in the whole picture and the repo does not have it |
 | 2 | Borel 1909: almost every real is absolutely normal | **moderate.**  Borel-Cantelli and the strong law are both in mathlib, and the repo already carries `∀ᵐ` machinery for the Gauss measure | **do it.**  The most famous statement about normal numbers, and the repo currently proves a witness exists without proving witnesses are typical |
 | 3 | The dual: absolutely normal numbers are meager | **cheap.**  A short Baire-category argument, and mathlib's `Residual` file for Liouville numbers is the template | **do it,** next to 2.  The pair is the measure-versus-category punchline |
-| 4 | The weak hierarchy: disjunctive < simply normal < normal base `b` < absolutely normal, with a separating witness at each step | **moderate.**  Definitions are quantifier weakenings of what exists; the work is the counterexamples | **do it.**  It is what makes the repo's headline legible: it says what `IsAbsolutelyNormal` is *stronger than* |
+| 4 | The weakenings below normality, **which are not a chain**: `normal b → disjunctive b` and `normal b → simplyNormal b`, with neither weakening implying the other, and `disjunctive b → Irrational` while simple normality does **not** force irrationality (`1/3 = 0.010101… ` in base 2 is simply normal and rational) | **moderate.**  The definitions are quantifier weakenings of what already exists; the work is the four separating witnesses | **do it.**  It is what makes the repo's headline legible: it says what `IsAbsolutelyNormal` is *stronger than*, and the incomparability is the part a reader will get wrong |
 | 5 | Stoneham `α₂,₃` is **not** normal base 6 (Bailey-Borwein) | **moderate,** and partly scaffolded already (`HotSpot.lean`, `papers/bailey-misiurewicz-2006-hot-spot.md`) | **do it.**  The single sharpest proof that normality is base-relative, and half of it is already here |
 | 6 | `irrationalityExponent x := sSup {p | LiouvilleWith p x}` plus the easy endpoints (`= ∞` for Liouville, `≥ 2` always) | **cheap** for the definition and the endpoints | **optional.**  Useful only as the anchor for the second axis; the interesting values need Roth or Mahler |
 | 7 | Morse-Hedlund: bounded subword complexity iff eventually periodic | **moderate,** self-contained combinatorics on words | **optional.**  A second irregularity scalar, but it pulls the repo toward word combinatorics |
@@ -80,6 +84,38 @@ the module self-auditing: an edge with neither is a gap someone has to name.
 That fences the work cleanly.  The repo keeps proving hard witnesses; `Landscape/` says
 what the witnesses mean.
 
+## 4b.  Yes, state *every* edge, including the trivial ones
+
+The trivial containments are in mathlib already, but they are there as **instances and coercion
+lemmas**, not as edges of this lattice: `isAlgebraic_ratCast` (every rational is algebraic),
+the `ℚ → ℝ` coercion, `Irrational` as `x ∉ Set.range ((↑) : ℚ → ℝ)`, `Liouville.transcendental`,
+`transcendental_liouvilleNumber`, `irrational_sqrt_two`.  Restating each as an edge costs about a
+line, and that is the point: a module where the cheap edges are *missing* is not a diagram, it is a
+pile of the interesting facts, and a reader cannot tell a gap from an omission.
+
+**The discipline that makes it finite.**  For every ordered pair of notions in the lattice, the
+module says exactly one of three things:
+
+1. **proved** - a theorem, however one-line;
+2. **refuted** - a theorem of the form `¬ ∀ x, P x → Q x`, which needs a *witness*, and this is
+   where the real work is;
+3. **open** - a documented `-- open` with the reason and the citation.
+
+Transitivity collapses the quadratic pair count to the covering relations plus the non-edges, so
+the target is finite and small.  The witnesses the refutations need, all of them already named in
+this repo's literature: Champernowne (normal, computable, so not Kurtz random), `1/3` in base 2
+(simply normal, rational), Liouville's `λ` (transcendental, normal to no base), Bugeaud's number
+(Liouville and absolutely normal), Stoneham `α₂,₃` (normal base 2, not base 6), Thue-Morse (not
+disjunctive).  Every non-edge in the diagram is a construction someone has already published.
+
+**A finding that fell out of checking this.**  Mathlib at rev `0df444a` has **no declaration that
+`π` or `e` is transcendental**: `Transcendental/Lindemann/` contains only `AnalyticalPart.lean`
+(the estimate `exp_polynomial_approx`), and greps for a `Transcendental ℚ π` or `Transcendental ℚ
+(exp 1)` statement come back empty.  So two of the labelled points on the diagram cannot currently
+be *placed* in Lean at all.  That is exactly the sort of thing the module surfaces and prose does
+not.  ⚠️ Grep tier: check open mathlib PRs before treating it as settled, since Lindemann-Weierstrass
+is a long-running target and `master` is a ref but not the frontier.
+
 ## 5.  Walls, named so nobody re-derives them
 
 - **Roth 1955** (every algebraic irrational has irrationality exponent 2).  Not in mathlib,
@@ -88,8 +124,15 @@ what the witnesses mean.
   Rides on the Schmidt subspace theorem, which is not in mathlib.
 - **Mahler's A/S/T/U classification.**  The definitions are easy and the only interesting
   theorem (T-numbers exist, Schmidt 1968) is very hard.
-- **Martin-Löf randomness implies absolute normality.**  Needs an effective-measure-theory
-  layer that does not exist in mathlib.  A neighbouring continent, not an extension.
+- **The effective randomness ladder** (Kurtz < Schnorr < computably random < Martin-Löf < 2-random,
+  each strictly stronger).  Schnorr randomness already implies absolute normality, so the ladder
+  sits *above* this repo's subject and reaches it by one bridge.  Formalizing any of it needs an
+  effective-measure-theory layer that mathlib does not have: a neighbouring continent, not an
+  extension.  ⚠️ Normality is **not** a rung on that ladder: it neither implies nor is implied by
+  Kurtz randomness (Champernowne is normal and computable, so no effective notion touches it).
+  The unifying statement, worth knowing even without formalizing it: each rung is *no gambler of
+  this class wins betting on the next digit*, and normality is the finite-memory case
+  (Schnorr-Stimm 1972).
 
 ## 6.  Evidence tiers for the absence claims above
 

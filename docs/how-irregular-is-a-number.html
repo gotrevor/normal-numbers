@@ -149,6 +149,11 @@ text{font-family:var(--sans); fill:currentColor}
 .t-arith{fill:var(--arith)}
 .t-digit{fill:var(--digit)}
 .t-open{fill:var(--open)}
+.sv-node{fill:var(--paper); stroke:var(--rule); stroke-width:1.4}
+.t-node{font-family:var(--sans); font-size:13px; font-weight:600}
+.sv-edge line{stroke:currentColor; stroke-width:1.4}
+.sv-nolink line{stroke:var(--open); stroke-width:1.6; stroke-dasharray:5 3}
+.sv-cross line{stroke:var(--open); stroke-width:2; stroke-linecap:round}
 @media (max-width:40rem){
   body{font-size:16px}
   header.head{padding-top:2.4rem}
@@ -191,81 +196,88 @@ text{font-family:var(--sans); fill:currentColor}
 <h2>The picture</h2>
 
 <figure class="full">
-<svg viewBox="0 0 960 560" role="img" aria-label="Venn diagram of the real line: an algebraic disc containing the rationals, a normal region containing an inner absolutely normal region, a dashed Liouville family straddling the normal boundary, and a shaded lens where algebraic irrationals meet normality that has no known member.">
+<svg viewBox="0 0 960 560" role="img" aria-label="Venn diagram of the real line: an algebraic disc containing the rationals, three nested expansion regions (disjunctive, normal in some base, absolutely normal), a dashed Liouville family crossing all of them, and a shaded lens where algebraic irrationals meet disjunctivity that has no known member.">
   <defs>
-    <clipPath id="algclip"><circle cx="255" cy="300" r="175"/></clipPath>
+    <clipPath id="algclip"><circle cx="310" cy="300" r="180"/></clipPath>
   </defs>
 
   <text class="t-region" x="20" y="32">&#8477;</text>
   <text class="t-sub" x="42" y="32">the real line</text>
   <rect class="sv-frame" x="16" y="44" width="928" height="488" rx="12"/>
 
-  <ellipse class="sv-norm" cx="620" cy="290" rx="300" ry="190"/>
-  <ellipse class="sv-norm" cx="700" cy="250" rx="175" ry="115"/>
-  <circle class="sv-alg" cx="255" cy="300" r="175"/>
-  <g clip-path="url(#algclip)"><ellipse class="sv-lens" cx="620" cy="290" rx="300" ry="190"/></g>
-  <ellipse class="sv-liou" cx="720" cy="140" rx="170" ry="58"/>
-  <circle class="sv-q" cx="185" cy="300" r="68"/>
+  <ellipse class="sv-norm" cx="635" cy="300" rx="290" ry="195"/>
+  <ellipse class="sv-norm" cx="665" cy="300" rx="240" ry="158"/>
+  <ellipse class="sv-norm" cx="760" cy="300" rx="120" ry="84"/>
+  <circle class="sv-alg" cx="310" cy="300" r="180"/>
+  <g clip-path="url(#algclip)"><ellipse class="sv-lens" cx="635" cy="300" rx="290" ry="195"/></g>
+  <ellipse class="sv-liou" cx="745" cy="175" rx="160" ry="78"/>
+  <circle class="sv-q" cx="235" cy="300" r="60"/>
 
-  <text class="t-region t-arith" x="250" y="152" text-anchor="middle">algebraic</text>
-  <text class="t-region" x="185" y="296" text-anchor="middle" style="font-size:19px">&#8474;</text>
-  <text class="t-sub" x="185" y="318" text-anchor="middle">eventually periodic</text>
-  <text class="t-region" x="60" y="496">transcendental</text>
-  <text class="t-sub" x="60" y="516">everything outside the algebraic disc</text>
-  <text class="t-region t-digit" x="770" y="430" text-anchor="middle">normal in some base</text>
-  <text class="t-region t-digit" x="700" y="245" text-anchor="middle">absolutely normal</text>
-  <text class="t-note" x="700" y="268" text-anchor="middle">almost every real number is in here</text>
-  <text class="t-note" x="700" y="285" text-anchor="middle">(Borel 1909), yet named examples stay scarce</text>
-  <text class="t-region t-open" x="845" y="130" text-anchor="middle">Liouville</text>
+  <text class="t-region t-arith" x="300" y="150" text-anchor="middle">algebraic</text>
+  <text class="t-region" x="235" y="296" text-anchor="middle" style="font-size:19px">&#8474;</text>
+  <text class="t-sub" x="235" y="318" text-anchor="middle">eventually periodic</text>
+  <text class="t-region" x="60" y="500">transcendental</text>
+  <text class="t-sub" x="60" y="518">everything outside the algebraic disc</text>
 
-  <text class="t-pt t-open" x="372" y="286" text-anchor="middle">no known</text>
-  <text class="t-pt t-open" x="372" y="302" text-anchor="middle">member</text>
+  <text class="t-region t-digit" x="635" y="472" text-anchor="middle">disjunctive</text>
+  <text class="t-sub" x="635" y="487" text-anchor="middle">every block appears</text>
+  <text class="t-region t-digit" x="610" y="432" text-anchor="middle">normal in some base</text>
+  <text class="t-region t-digit" x="760" y="262" text-anchor="middle">absolutely normal</text>
+  <text class="t-note" x="760" y="284" text-anchor="middle">almost every real number is here</text>
+  <text class="t-note" x="760" y="300" text-anchor="middle">(Borel 1909), examples stay scarce</text>
+  <text class="t-region t-open" x="860" y="145" text-anchor="middle">Liouville</text>
 
-  <circle class="sv-qmark" cx="356" cy="200" r="8"/><text class="t-q" x="356" y="204" text-anchor="middle">?</text>
-  <text class="t-pt" x="343" y="204" text-anchor="end">&#966;</text>
-  <circle class="sv-qmark" cx="327" cy="250" r="8"/><text class="t-q" x="327" y="254" text-anchor="middle">?</text>
-  <text class="t-pt" x="314" y="254" text-anchor="end">&#8730;2</text>
-  <circle class="sv-qmark" cx="335" cy="350" r="8"/><text class="t-q" x="335" y="354" text-anchor="middle">?</text>
-  <text class="t-pt" x="322" y="354" text-anchor="end">&#8731;2</text>
+  <text class="t-pt t-open" x="410" y="296" text-anchor="middle">no known</text>
+  <text class="t-pt t-open" x="410" y="312" text-anchor="middle">member</text>
 
-  <circle class="sv-qmark" cx="408" cy="156" r="8"/><text class="t-q" x="408" y="160" text-anchor="middle">?</text>
-  <text class="t-pt" x="395" y="160" text-anchor="end">&#960;</text>
-  <circle class="sv-qmark" cx="470" cy="126" r="8"/><text class="t-q" x="470" y="130" text-anchor="middle">?</text>
-  <text class="t-pt" x="457" y="130" text-anchor="end">e</text>
-  <circle class="sv-qmark" cx="542" cy="106" r="8"/><text class="t-q" x="542" y="110" text-anchor="middle">?</text>
-  <text class="t-pt" x="529" y="110" text-anchor="end">ln 2</text>
+  <circle class="sv-qmark" cx="362" cy="233" r="8"/><text class="t-q" x="362" y="237" text-anchor="middle">?</text>
+  <text class="t-pt" x="349" y="237" text-anchor="end">&#966;</text>
+  <circle class="sv-qmark" cx="346" cy="317" r="8"/><text class="t-q" x="346" y="321" text-anchor="middle">?</text>
+  <text class="t-pt" x="333" y="321" text-anchor="end">&#8730;2</text>
+  <circle class="sv-qmark" cx="362" cy="367" r="8"/><text class="t-q" x="362" y="371" text-anchor="middle">?</text>
+  <text class="t-pt" x="349" y="371" text-anchor="end">&#8731;2</text>
 
-  <circle class="sv-dot" cx="760" cy="105" r="4.5"/>
-  <text class="t-pt" x="748" y="102" text-anchor="end">Liouville's &#955;</text>
-  <text class="t-sub" x="748" y="118" text-anchor="end">normal to no base</text>
+  <circle class="sv-qmark" cx="469" cy="140" r="8"/><text class="t-q" x="469" y="144" text-anchor="middle">?</text>
+  <text class="t-pt" x="456" y="144" text-anchor="end">&#960;</text>
+  <circle class="sv-qmark" cx="536" cy="117" r="8"/><text class="t-q" x="536" y="121" text-anchor="middle">?</text>
+  <text class="t-pt" x="523" y="121" text-anchor="end">e</text>
+  <circle class="sv-qmark" cx="610" cy="106" r="8"/><text class="t-q" x="610" y="110" text-anchor="middle">?</text>
+  <text class="t-pt" x="597" y="110" text-anchor="end">ln 2</text>
 
-  <circle class="sv-dot" cx="720" cy="170" r="4.5"/>
-  <text class="t-pt" x="732" y="167">Bugeaud 2002</text>
-  <text class="t-sub" x="732" y="182">normal Liouville numbers exist</text>
+  <text class="t-pt" x="745" y="66" text-anchor="middle">Liouville's &#955;</text>
+  <text class="t-sub" x="745" y="81" text-anchor="middle">normal to no base</text>
+  <line x1="745" y1="88" x2="745" y2="101" stroke="currentColor" stroke-width="1"/>
+  <circle class="sv-dot" cx="745" cy="107" r="4.5"/>
 
-  <circle class="sv-dot" cx="620" cy="320" r="4.5"/>
-  <text class="t-pt" x="632" y="324">Chaitin's &#937;</text>
-  <circle class="sv-dot" cx="640" cy="348" r="4.5"/>
-  <text class="t-pt" x="652" y="352">Becher&#8211;Yuhjtman x*</text>
+  <circle class="sv-dot" cx="745" cy="234" r="4.5"/>
+  <text class="t-pt" x="733" y="230" text-anchor="end">Bugeaud 2002</text>
+  <text class="t-sub" x="733" y="245" text-anchor="end">a normal Liouville number</text>
 
-  <circle class="sv-dot" cx="450" cy="378" r="4.5"/>
-  <text class="t-pt" x="462" y="382">Champernowne C&#8321;&#8320;</text>
-  <circle class="sv-dot" cx="468" cy="415" r="4.5"/>
-  <text class="t-pt" x="480" y="412">Stoneham &#945;&#8322;,&#8323;</text>
-  <text class="t-sub" x="480" y="427">normal base 2, not base 6</text>
-  <circle class="sv-dot" cx="500" cy="455" r="4.5"/>
-  <text class="t-pt" x="512" y="459">Copeland&#8211;Erd&#337;s</text>
+  <circle class="sv-dot" cx="690" cy="322" r="4.5"/>
+  <text class="t-pt" x="702" y="326">Chaitin's &#937;</text>
+  <text class="t-sub" x="702" y="338">uncomputable</text>
+  <circle class="sv-dot" cx="700" cy="356" r="4.5"/>
+  <text class="t-pt" x="712" y="360">Becher&#8211;Yuhjtman x*</text>
+  <text class="t-sub" x="712" y="372">computable, an actual algorithm</text>
 
-  <circle class="sv-dot" cx="340" cy="500" r="4.5"/>
-  <text class="t-pt" x="352" y="504">Thue&#8211;Morse &#964;</text>
+  <circle class="sv-dot" cx="505" cy="330" r="4.5"/>
+  <text class="t-pt" x="517" y="326">Champernowne</text>
+  <circle class="sv-dot" cx="505" cy="365" r="4.5"/>
+  <text class="t-pt" x="517" y="361">Stoneham &#945;&#8322;,&#8323;</text>
+  <text class="t-sub" x="517" y="375">normal base 2, not base 6</text>
+  <circle class="sv-dot" cx="505" cy="405" r="4.5"/>
+  <text class="t-pt" x="517" y="409">Copeland&#8211;Erd&#337;s</text>
+
+  <circle class="sv-dot" cx="390" cy="505" r="4.5"/>
+  <text class="t-pt" x="402" y="509">Thue&#8211;Morse &#964;</text>
 </svg>
-<figcaption>Normality implies irrationality, and nothing else here implies anything else. The shaded lens is the scandal: not one algebraic irrational has ever been shown normal, yet Borel's 1950 conjecture says every one of them belongs there. The dashed family shows the other trap, that being extreme in one sense says nothing about the other, since Liouville numbers can be absolutely normal or normal to no base at all.</figcaption>
+<figcaption>The three nested rings are the expansion axis, weakest outermost: disjunctive (every block appears at all), normal in some base, absolutely normal. Normality implies irrationality, and nothing else here implies anything else. The shaded lens is the scandal: not one algebraic irrational has ever been shown normal, yet Borel's 1950 conjecture says every one of them belongs in the innermost ring, and not one is known to reach even the outermost. The dashed family shows the other trap, that being extreme in one sense says nothing about the other, since Liouville numbers can be absolutely normal or normal to no base at all.</figcaption>
 <ul class="legend">
   <li><span class="sw sw-alg"></span><span><strong>Algebraic</strong>, containing <span class="mono">&#8474;</span>. Outside it, transcendental.</span></li>
-  <li><span class="sw sw-norm"></span><span><strong>Normal</strong>, with absolutely normal nested inside. Normality in base 2 does not give base 6.</span></li>
-  <li><span class="sw sw-lens"></span><span><strong>Conjecturally everything, provably nothing.</strong> Algebraic and normal at once.</span></li>
+  <li><span class="sw sw-norm"></span><span><strong>Disjunctive &#8835; normal in some base &#8835; absolutely normal.</strong> Normality in base 2 does not give base 6.</span></li>
+  <li><span class="sw sw-lens"></span><span><strong>Conjecturally everything, provably nothing.</strong> Algebraic and disjunctive at once.</span></li>
   <li><span class="sw sw-liou"></span><span><strong>Liouville numbers</strong>, all transcendental, straddling the normal boundary.</span></li>
-  <li><span class="sw sw-unk"></span><span><strong>?</strong> marks a number whose side of the boundary is unknown. Nobody can prove <span class="mono">&#960;</span> contains infinitely many 7s.</span></li>
+  <li><span class="sw sw-unk"></span><span><strong>?</strong> marks a number whose side of the boundary is unknown. Nobody can prove <span class="mono">&#960;</span> contains infinitely many 7s, so they sit on the <em>outermost</em> ring.</span></li>
 </ul>
 </figure>
 
@@ -323,6 +335,103 @@ text{font-family:var(--sans); fill:currentColor}
 <p>The axes genuinely disagree about what irregular means. Liouville numbers are maximally extreme in approximation, and that extremity comes from being <em>highly structured</em>: a sparse, fast-converging series with almost all digits zero. Meanwhile the golden ratio is the single worst-approximable number in existence and is conjectured to have perfectly random-looking digits. Pick your instrument before you rank anything.</p>
 </div>
 
+<h2>The digit side, all the way up</h2>
+<p>Normality is the bottom of a long ladder, and the ladder has one idea in it: <strong>a sequence is random against an adversary if no gambler of that kind, betting on the next digit at fair odds, can make unbounded money.</strong> Change the class of gambler and you change the notion.</p>
+<p>Normality is the case where the gambler has <em>finite memory</em>. That is Schnorr and Stimm's theorem, 1972: a sequence is normal in base <span class="mono">b</span> exactly when no finite-state gambler wins on it. It sits at the bottom because a finite automaton cannot even count, and it is still open for <span class="mono">&#960;</span> because defeating <em>every</em> finite-state gambler is a statement about all block frequencies at once.</p>
+
+<figure class="full">
+<svg viewBox="0 0 1000 540" role="img" aria-label="Implication lattice for the digit side: the effective randomness ladder from Kurtz up to 2-random on the right, the classical notions from irrational up to absolutely normal on the left, an implication from Schnorr randomness to absolute normality, and two crossed links marking non-implications.">
+  <defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <text class="t-sub" x="300" y="28" text-anchor="middle">classical: what the digits look like</text>
+  <text class="t-sub" x="700" y="28" text-anchor="middle">effective: which tests the digits survive</text>
+  <text class="t-sub" x="16" y="60" transform="rotate(-90 16 60)" text-anchor="end">stronger</text>
+  <line class="sv-grid" x1="24" y1="52" x2="24" y2="500" stroke-dasharray="3 4"/>
+
+  <g class="lat">
+    <rect class="sv-node" x="600" y="42" width="200" height="42" rx="3"/>
+    <text class="t-node" x="700" y="68" text-anchor="middle">2-random</text>
+    <text class="t-sub" x="815" y="60">ML tests relative to &#8709;&#8242;</text>
+    <text class="t-sub" x="815" y="75">C(x&#8638;n) &#8805; n &#8722; O(1) infinitely often</text>
+
+    <rect class="sv-node" x="600" y="112" width="200" height="42" rx="3"/>
+    <text class="t-node" x="700" y="138" text-anchor="middle">Martin-L&#246;f random</text>
+    <text class="t-sub" x="815" y="130">c.e. supermartingales</text>
+    <text class="t-sub" x="815" y="145">K(x&#8638;n) &#8805; n &#8722; O(1)</text>
+
+    <rect class="sv-node" x="600" y="182" width="200" height="42" rx="3"/>
+    <text class="t-node" x="700" y="208" text-anchor="middle">computably random</text>
+    <text class="t-sub" x="815" y="207">computable martingales</text>
+
+    <rect class="sv-node" x="600" y="252" width="200" height="42" rx="3"/>
+    <text class="t-node" x="700" y="278" text-anchor="middle">Schnorr random</text>
+    <text class="t-sub" x="815" y="270">computable martingales</text>
+    <text class="t-sub" x="815" y="285">with a computable win rate</text>
+
+    <rect class="sv-node" x="600" y="322" width="200" height="42" rx="3"/>
+    <text class="t-node" x="700" y="348" text-anchor="middle">Kurtz random</text>
+    <text class="t-sub" x="815" y="347">avoids &#928;&#8304;&#8321; null classes</text>
+
+    <rect class="sv-node" x="205" y="252" width="190" height="42" rx="3"/>
+    <text class="t-node" x="300" y="278" text-anchor="middle">absolutely normal</text>
+
+    <rect class="sv-node" x="205" y="322" width="190" height="42" rx="3"/>
+    <text class="t-node" x="300" y="341" text-anchor="middle">normal in base b</text>
+    <text class="t-sub" x="300" y="356" text-anchor="middle">finite-state gamblers</text>
+
+    <rect class="sv-node" x="80" y="402" width="180" height="42" rx="3"/>
+    <text class="t-node" x="170" y="421" text-anchor="middle">disjunctive</text>
+    <text class="t-sub" x="170" y="436" text-anchor="middle">every block appears</text>
+
+    <rect class="sv-node" x="330" y="402" width="180" height="42" rx="3"/>
+    <text class="t-node" x="420" y="421" text-anchor="middle">simply normal</text>
+    <text class="t-sub" x="420" y="436" text-anchor="middle">single digits at 1/b</text>
+
+    <rect class="sv-node" x="80" y="472" width="180" height="42" rx="3"/>
+    <text class="t-node" x="170" y="498" text-anchor="middle">irrational</text>
+  </g>
+
+  <g class="sv-edge">
+    <line x1="700" y1="84" x2="700" y2="106" marker-end="url(#arw)"/>
+    <line x1="700" y1="154" x2="700" y2="176" marker-end="url(#arw)"/>
+    <line x1="700" y1="224" x2="700" y2="246" marker-end="url(#arw)"/>
+    <line x1="700" y1="294" x2="700" y2="316" marker-end="url(#arw)"/>
+    <line x1="600" y1="273" x2="401" y2="273" marker-end="url(#arw)"/>
+    <line x1="300" y1="294" x2="300" y2="316" marker-end="url(#arw)"/>
+    <line x1="270" y1="364" x2="190" y2="396" marker-end="url(#arw)"/>
+    <line x1="330" y1="364" x2="410" y2="396" marker-end="url(#arw)"/>
+    <line x1="170" y1="444" x2="170" y2="466" marker-end="url(#arw)"/>
+  </g>
+
+  <g class="sv-nolink">
+    <line x1="415" y1="343" x2="480" y2="343"/>
+    <line x1="530" y1="343" x2="595" y2="343"/>
+    <line x1="420" y1="444" x2="420" y2="462"/>
+  </g>
+  <g class="sv-cross">
+    <line x1="497" y1="334" x2="513" y2="352"/>
+    <line x1="513" y1="334" x2="497" y2="352"/>
+    <line x1="412" y1="468" x2="428" y2="484"/>
+    <line x1="428" y1="468" x2="412" y2="484"/>
+  </g>
+
+  <text class="t-sub" x="505" y="372" text-anchor="middle">Champernowne is normal and computable,</text>
+  <text class="t-sub" x="505" y="386" text-anchor="middle">so it is not Kurtz random</text>
+  <text class="t-sub" x="445" y="481">1/3 = 0.010101&#8230; in base 2:</text>
+  <text class="t-sub" x="445" y="495">simply normal and rational</text>
+
+  <text class="t-sub" x="500" y="262" text-anchor="middle">the only bridge between the columns</text>
+</svg>
+<figcaption>An arrow is an implication; a crossed link is a non-implication in both directions, annotated with the witness that kills it. The right column is nested and strict at every step. The left column is not a chain: disjunctive and simply normal are both weakenings of normality and neither implies the other, and simple normality does not even force irrationality. Chaitin's &#937; sits at Martin-L&#246;f and is not 2-random; the Becher&#8211;Yuhjtman witness is computable, so it is absolutely normal and not random in any effective sense at all.</figcaption>
+</figure>
+
+<p>Two things fall out of that picture. Every effective notion from Schnorr randomness upward gives you absolute normality for free, so <strong>normality is what survives when you throw away all computability</strong> and keep only the statistics. And the converse fails as badly as it can: Champernowne's constant is normal and computable, so a computable gambler beats it trivially, which is why it is at the bottom of the left column and off the right column entirely.</p>
+<p>The one caveat worth stating: Schnorr randomness implying absolute normality is the version I would re-derive before quoting it, and where exactly Kurtz randomness sits relative to normality is a question I have checked only to the level of a literature search, not a proof.</p>
+
 <h2>The instruments</h2>
 <p>Every one of these is a way to answer how irregular with something finer than a yes or no.</p>
 
@@ -353,7 +462,7 @@ text{font-family:var(--sans); fill:currentColor}
 <tr><td class="name">Subword complexity <span class="mono">p(n)</span></td><td>how many distinct blocks of length n actually occur</td><td class="num">O(1) to b<sup>n</sup></td><td>bounded means eventually periodic (Morse and Hedlund) &#183; <span class="num">n+1</span> Sturmian, the least complex aperiodic string &#183; <span class="num">b<sup>n</sup></span> normal &#183; algebraic irrationals force <span class="mono">p(n)/n &#8594; &#8734;</span> (Adamczewski and Bugeaud)</td></tr>
 <tr><td class="name">Finite-state dimension</td><td>how much a finite automaton can compress the string</td><td class="num">0 to 1</td><td><span class="num">1</span> exactly when normal (Schnorr and Stimm 1972) &#183; <span class="num">0</span> for automatic numbers such as Thue&#8211;Morse</td></tr>
 <tr><td class="name">Effective Hausdorff dimension</td><td><span class="mono">lim inf K(x&#8638;n)/n</span>, the Kolmogorov complexity rate</td><td class="num">0 to 1</td><td><span class="num">1</span> for every Martin-L&#246;f random real. Same shape as the line above with automata replaced by Turing machines</td></tr>
-<tr><td class="name">Randomness hierarchy</td><td>which statistical tests the expansion survives</td><td class="num">a ladder</td><td>finite-state (= normal) &#8594; Kurtz &#8594; Schnorr &#8594; computably random &#8594; Martin-L&#246;f (&#937;) &#8594; 2-random. Normality is the bottom rung, which is why it is so weak and still so hard</td></tr>
+<tr><td class="name">Randomness hierarchy</td><td>which statistical tests the expansion survives</td><td class="num">a ladder</td><td>Kurtz &#8594; Schnorr &#8594; computably random &#8594; Martin-L&#246;f (&#937;) &#8594; 2-random, each strictly stronger. Normality is <em>not</em> a rung on it: Schnorr randomness implies absolute normality, but normality and Kurtz randomness imply each other in neither direction. See the lattice above</td></tr>
 <tr><td class="name">Dimension of the frequency class</td><td>how large the set of numbers sharing your digit statistics is</td><td class="num">0 to 1</td><td>Eggleston 1949: the set with frequency vector p has Hausdorff dimension <span class="mono">H(p)/log b</span>, so abnormality is graded by entropy loss</td></tr>
 <tr><td class="name">Continued-fraction statistics</td><td>the same questions asked of the other expansion</td><td class="num">typical / not</td><td>Gauss-Kuzmin frequencies, Khinchin's constant <span class="num">2.6854&#8230;</span>, L&#233;vy's constant <span class="num">3.2758&#8230;</span></td></tr>
 </tbody>
@@ -372,6 +481,9 @@ text{font-family:var(--sans); fill:currentColor}
   <li><a href="https://www.claymath.org/library/annual_report/ar2006/06report_normalnumbers.pdf">Davar Khoshnevisan, Normal Numbers are Normal</a><span class="why">Clay annual report. Short, and it is the best treatment of the measure versus category tension.</span></li>
   <li><a href="https://arxiv.org/abs/1204.4104">Normality and Finite-State Dimension of Liouville Numbers</a><span class="why">Where the dashed family in the first figure comes from, and where finite-state dimension earns its keep as a grading.</span></li>
   <li><a href="https://arxiv.org/abs/1704.03622">Becher and Yuhjtman, On absolutely normal and continued fraction normal numbers</a><span class="why">IMRN 2019. The two-expansion result.</span></li>
+  <li><a href="https://arxiv.org/abs/1203.4126">Jeremy Avigad, Uniform distribution and algorithmic randomness</a><span class="why">Exactly the bridge between the two columns of the lattice, and by someone whose day job is Lean.</span></li>
+  <li><a href="https://www.ams.org/journals/notices/201907/rnoti-p1001.pdf">Downey and Hirschfeldt, Computability and Randomness</a><span class="why">Notices survey. The standard reference for the right-hand column, martingales and all.</span></li>
+  <li><a href="https://www.youtube.com/watch?v=5TkIe60y2GI">All the Numbers (Numberphile)</a><span class="why">Matt Parker draws the same crossing by hand at 8:23, and gets the important detail right: the normal circle overlaps algebraic and computable but never touches the rationals.</span></li>
   <li><a href="https://en.wikipedia.org/wiki/Normal_number">Wikipedia: Normal number</a><span class="why">Accurate, and the properties section is a decent index of what is open.</span></li>
   <li><a href="https://mathmonks.com/transcendental-numbers">The usual algebraic and transcendental Venn</a><span class="why">Representative of what the web actually has. Correct as far as it goes, and it does not go as far as normality.</span></li>
 </ul>
