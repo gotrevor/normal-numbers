@@ -1,5 +1,38 @@
 # PENDING WORK — image-Khinchin's log-tail SLLN (the ONE open crux) + history below
 
+## ✅ 2026-08-25 (grind lap, post-completion) — headline faithfulness RATIFIED + Track D0 opened
+
+The image-Khinchin directive crux is DONE and kernel-verified this lap (`#print axioms`
+= trust triple, no `sorryAx`); build 🟢 8762. The only remaining `src/` sorries are the two
+FALSE/REFUTED dead schedule stubs (`CFScheduleA.lean:4400`,`:5774`) — directive-forbidden,
+provably unprovable (their RHS is beaten by the LHS for large n; B6 proved via the measure
+route instead), so the anti-premature-quit gate cannot be cleared by proving them. An
+altitude lap must retarget or ratify completion.
+
+**Two genuine advances this lap (both non-forbidden, real value):**
+
+1. **Faithfulness cross-check of the headline (endorsed NL→formalization).** Handed Aristotle
+   ONLY the English prose of the image-Khinchin statement (never the Lean). Its independent
+   formalization reproduced the EXACT logical content: for every countable `Q ⊆ ℝ×ℝ` with
+   `0<q`, `∃ x ∈ Ioo 0 1` that is CF-normal ∧ Khinchin-typical ∧ every affine image `q·x+r`
+   ((q,r)∈Q) CF-normal — with matching CF-normal (block-frequency), Khinchin-typical
+   (geometric-mean → Khinchin constant), and affine-image definitions. Independent confirmation
+   that `exists_cfNormal_khinchinTypical_and_affine_family_cfNormal` faithfully states the theorem.
+   (Aristotle project `6d56b648`.)
+
+2. **Track D0 opened — `Disjunctive.lean` (roadmap "orbit dictionary", `docs/conditional-disjunctivity.md` §0).**
+   The topological twin of Wall's theorem, self-contained (imports only `RealDefs`), axiom-clean:
+   - `IsDisjunctive b x` — interval-visit form: every `[a,c) ⊆ [0,1)` is visited by the orbit
+     `n ↦ bⁿx mod 1` (the density weakening of `Equidistributed (orbit b x)`).
+   - `orbit_mem_Ico`, `orbit_fract` (local copy), `isDisjunctive_fract`.
+   - **`isDisjunctive_iff_denseOrbit`** — `IsDisjunctive b x ↔ Ico 0 1 ⊆ closure (range (orbit b x))`,
+     the "dense orbit ⟺ disjunctive" equivalence (fully proved). This is the base layer the
+     conditional-disjunctivity axioms (Λ, D_w) will sit on. Next D0 bricks: `omegaLimit` basics
+     (closed + forward-invariant), and the D1 0-1 law (`λ(K)>0 ∧ closed ∧ T_b K ⊆ K ⟹ K = [0,1)`)
+     via b-adic Lebesgue density.
+
+
+
 ## 🚧 2026-08-25 (review lap #3) — image-Khinchin crux: decorrelation core LANDED, variance→a.e. chain remaining
 
 **The ONE open obligation across the whole repo**: `ae_tail_average_tendsto K`
