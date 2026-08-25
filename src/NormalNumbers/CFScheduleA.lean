@@ -4828,6 +4828,25 @@ theorem schedL4_hfreq_x {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
       _hlen, _hword, hn₁sq, hfreq, _hcfKb, _hm2, _hNf⟩ := schedL4_step hq hr s
   exact ⟨hsdrop, n₁, hn₁sq, hfreq⟩
 
+/-- **L4 x-side orbit equidistribution** (single-stream route, REUSE).  The limit
+point `xA ∈ ⋂ₛ cfCylinder (wxSeq_L4 s)` is irrational in `(0,1)` and its Gauss orbit
+equidistributes, via `chain_orbit_equidist_uniform` fed by `schedL4_hfreq_x`.  This is
+the x-half of the L4 assembly of `exists_interleaved_affine_witness`; the ψ-side
+(`CFOrbitEquidist (affineMap q r xA)`) is the remaining z-side scale-coverage obligation. -/
+theorem exists_xA_L4_orbit_equidist {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+    ∃ xA : ℝ, Irrational xA ∧ xA ∈ Set.Ioo (0 : ℝ) 1
+      ∧ (∀ s, xA ∈ cfCylinder (wxSeq_L4 hq hr s)) ∧ CFOrbitEquidist xA := by
+  have hxne := wxSeq_L4_ne hq hr
+  have hxpos := wxSeq_L4_pos hq hr
+  have hxext := wxSeq_L4_ext hq hr
+  obtain ⟨xA, hxAirr, hxAmem⟩ :=
+    exists_irrational_mem_iInter_cfCylinder (wxSeq_L4 hq hr) hxne hxpos hxext
+  have hxA01 : xA ∈ Set.Ioo (0 : ℝ) 1 :=
+    (irrational_mem_Ioo_of_mem_iInter_cfCylinder (wxSeq_L4 hq hr) hxne hxpos hxext hxAmem).2
+  have hox : CFOrbitEquidist xA :=
+    chain_orbit_equidist_uniform (wxSeq_L4 hq hr) hxext hxAirr hxA01 hxAmem (schedL4_hfreq_x hq hr)
+  exact ⟨xA, hxAirr, hxA01, hxAmem, hox⟩
+
 /-- **THE B6 CRUX (interleaved-schedule witness), FEASIBLE REGIME.**  For `q > 0`
 and `r ∈ (-q, 1)` — exactly the range in which the feasible set
 `(0,1) ∩ ψ⁻¹(0,1)` is nonempty — there is a single real `x` such that both `x`
