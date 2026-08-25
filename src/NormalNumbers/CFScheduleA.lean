@@ -3964,6 +3964,104 @@ theorem exists_scale_cfCylinder_psi_avoid_zbad {q : ℝ} (hq : 0 < q) (r : ℝ)
   obtain ⟨v, hvF, hv⟩ := hpU
   exact ⟨n, by simp, v, hvF, hv⟩
 
+/-- **Conditional (pinning-regime) budget discharge (Z-II, single scale).**  The relative-density
+counterpart of `exists_scale_cfCylinder_psi_avoid_zbad`: for a genuine cylinder `wx'` (hull `[a,b]`),
+a genuine pinned z-prefix `wz`, family `F`, tolerance `δ > 0`, there is a scale threshold `N` such
+that for EVERY `n ≥ N` there is an irrational `p ∈ cfCylinder wx'` whose ψ-image avoids the
+pinned-prefix ABSOLUTE-count bad sets `{z ∈ cfCylinder wz : δ ≤ |blockCount(cfCyl v) n z/n − γv|}`
+for all `v ∈ F`.  Discharges `exists_cfCylinder_psi_avoid_zbad_cond`'s `hbudget` from the conditional
+aggregate (`gaussMeasure_aggregate_psi_cond_le`, mass `≤ Ssum/((δ/2)²·(n−|wz|))` since
+`γ(cfCylinder wz) ≤ 1`).  The threshold `N` bakes in `n > |wz|`, the slack `2|wz| ≤ δ·n`, AND
+`n−|wz| > (2/q)·Ssum/((δ/2)²·γ(cfCylinder wx'))`, so the pulled-back conditional z-bad mass drops
+below the fixed cylinder mass — feasible in the pinning regime `n ≲ |wz|` where the absolute
+`exists_scale_cfCylinder_psi_avoid_zbad` is empty. -/
+theorem exists_scale_cfCylinder_psi_avoid_zbad_cond {q : ℝ} (hq : 0 < q) (r : ℝ)
+    (wx' : List ℕ) (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c) {a b : ℝ}
+    (hIcc : cfCylinder wx' ⊆ Set.Icc a b) (wz : List ℕ) (hposw : ∀ c ∈ wz, 1 ≤ c)
+    (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ c ∈ v, 1 ≤ c) {δ : ℝ} (hδ : 0 < δ) :
+    ∃ N : ℕ, 1 ≤ N ∧ ∀ n, N ≤ n → ∃ p : ℝ, Irrational p ∧ p ∈ cfCylinder wx' ∧
+      p ∉ (⋃ v ∈ F, affineMap q r ⁻¹' {z : ℝ | z ∈ cfCylinder wz ∧
+        (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+        δ ≤ |blockCount (cfCylinder v) n z / n - (gaussMeasure (cfCylinder v)).toReal|}) := by
+  set L : ℕ := wz.length with hLdef
+  set γcylR : ℝ := (gaussMeasure (cfCylinder wx')).toReal with hγcylRdef
+  have hγcylR0 : 0 < γcylR := gaussMeasure_cfCylinder_toReal_pos wx' hne hpos
+  set Ssum : ℝ := ∑ v ∈ F, 7 * (8 * (v.length : ℝ) + 80)
+      * (gaussMeasure (cfCylinder v)).toReal with hSsumdef
+  have hSsum0 : 0 ≤ Ssum := by
+    rw [hSsumdef]; refine Finset.sum_nonneg fun v _ => ?_; positivity
+  set budget : ℝ := (2 / q) * Ssum / ((δ / 2) ^ 2 * γcylR) with hbudgetdef
+  set N : ℕ := (L + 1) + ⌈2 * (L : ℝ) / δ⌉₊ + ⌈budget⌉₊ with hNdef
+  refine ⟨N, by omega, fun n hn_ge => ?_⟩
+  have hLn : L < n := by omega
+  have hn : 0 < n := by omega
+  set nL : ℝ := (n : ℝ) - (L : ℝ) with hnLdef
+  have hLnR : (L : ℝ) < n := by exact_mod_cast hLn
+  have hnLpos : 0 < nL := by rw [hnLdef]; linarith
+  -- slack `2L ≤ δn`
+  have hslack : 2 * (L : ℝ) ≤ δ * n := by
+    have h1 : (2 * (L : ℝ) / δ) ≤ (⌈2 * (L : ℝ) / δ⌉₊ : ℝ) := Nat.le_ceil _
+    have h2 : (⌈2 * (L : ℝ) / δ⌉₊ : ℝ) ≤ (n : ℝ) := by
+      have : ⌈2 * (L : ℝ) / δ⌉₊ ≤ n := by omega
+      exact_mod_cast this
+    have h3 : 2 * (L : ℝ) / δ ≤ (n : ℝ) := le_trans h1 h2
+    rw [div_le_iff₀ hδ] at h3; linarith [h3]
+  -- the conditional aggregate mass bound `≤ Ssum/((δ/2)²·nL)`
+  have hγwz1 : (gaussMeasure (cfCylinder wz)).toReal ≤ 1 :=
+    ENNReal.toReal_mono ENNReal.one_ne_top prob_le_one
+  have h0 := gaussMeasure_aggregate_psi_cond_le wz hposw F hF n hLn hδ hslack
+  have hstep : (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / ((δ / 2) ^ 2 * nL))
+        * (gaussMeasure (cfCylinder wz)).toReal)
+      ≤ ∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / ((δ / 2) ^ 2 * nL)) := by
+    refine Finset.sum_le_sum fun v _ => ?_
+    have hterm : 0 ≤ 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / ((δ / 2) ^ 2 * nL)) := by positivity
+    nlinarith [hterm, hγwz1, ENNReal.toReal_nonneg (a := gaussMeasure (cfCylinder wz))]
+  have hsumdiv : (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
+        * (gaussMeasure (cfCylinder v)).toReal / ((δ / 2) ^ 2 * nL)))
+      = Ssum / ((δ / 2) ^ 2 * nL) := by
+    rw [hSsumdef, Finset.sum_div]; exact Finset.sum_congr rfl fun v _ => by ring
+  set U : Set ℝ := ⋃ v ∈ F, {z : ℝ | z ∈ cfCylinder wz ∧
+      (∀ j : ℕ, gaussMap^[j] z ∈ Set.Ioo (0 : ℝ) 1) ∧
+      δ ≤ |blockCount (cfCylinder v) n z / n - (gaussMeasure (cfCylinder v)).toReal|} with hU
+  have hagg : (gaussMeasure U).toReal ≤ Ssum / ((δ / 2) ^ 2 * nL) := by
+    rw [hU]
+    exact le_trans h0 (le_trans hstep (le_of_eq hsumdiv))
+  have hUfin : gaussMeasure U ≠ ⊤ := measure_ne_top _ _
+  have hUle : gaussMeasure U ≤ ENNReal.ofReal (Ssum / ((δ / 2) ^ 2 * nL)) := by
+    rw [← ENNReal.ofReal_toReal hUfin]; exact ENNReal.ofReal_le_ofReal hagg
+  -- the key real inequality `budget < nL`
+  have hxle : budget < nL := by
+    have hceil : budget ≤ (⌈budget⌉₊ : ℝ) := Nat.le_ceil _
+    have hle : (⌈budget⌉₊ : ℝ) < nL := by
+      rw [hnLdef]
+      have : (L : ℝ) + (⌈budget⌉₊ : ℝ) < (n : ℝ) := by
+        have hnat : L + ⌈budget⌉₊ < n := by omega
+        exact_mod_cast hnat
+      linarith
+    linarith
+  have hcross : (2 / q) * Ssum < nL * ((δ / 2) ^ 2 * γcylR) := by
+    rw [hbudgetdef, div_lt_iff₀ (by positivity)] at hxle; linarith [hxle]
+  have hreal : (2 / q) * (Ssum / ((δ / 2) ^ 2 * nL)) < γcylR := by
+    rw [mul_div_assoc']
+    rw [div_lt_iff₀ (by positivity : (0 : ℝ) < (δ / 2) ^ 2 * nL)]
+    nlinarith [hcross]
+  -- assemble the conditional selector
+  obtain ⟨p, hpirr, hpcyl, hpnot⟩ :=
+    exists_cfCylinder_psi_avoid_zbad_cond hq r wx' hIcc wz F n (δ := δ) (by
+      have hqle : (0 : ℝ) ≤ 2 / q := by positivity
+      calc ENNReal.ofReal (2 / q) * gaussMeasure (U ∩ Set.Ioo (q * a + r) (q * b + r))
+          ≤ ENNReal.ofReal (2 / q) * gaussMeasure U := by gcongr; exact Set.inter_subset_left
+        _ ≤ ENNReal.ofReal (2 / q) * ENNReal.ofReal (Ssum / ((δ / 2) ^ 2 * nL)) := by gcongr
+        _ = ENNReal.ofReal ((2 / q) * (Ssum / ((δ / 2) ^ 2 * nL))) :=
+            (ENNReal.ofReal_mul hqle).symm
+        _ < ENNReal.ofReal γcylR := (ENNReal.ofReal_lt_ofReal_iff hγcylR0).2 hreal
+        _ = gaussMeasure (cfCylinder wx') := by
+            rw [hγcylRdef, ENNReal.ofReal_toReal (measure_ne_top _ _)])
+  exact ⟨p, hpirr, hpcyl, hpnot⟩
+
 
 /-- **Hull-width reciprocal ≤ `8·cfK²` (resolution input for the self-hull steer).**  For a
 genuine word `w`, `4 / vol(cfCylinder w) ≤ 8·cfK(w)²`: the cylinder width is

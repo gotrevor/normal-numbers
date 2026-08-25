@@ -36,17 +36,23 @@ irrational `p ∈ cfCylinder wx'` whose ψ-image avoids EVERY pinned-prefix abso
 (`gaussMeasure_cfCylinder_inter_preimage_affineMap_le` + cylinder selector); caller discharges
 `hbudget` from `gaussMeasure_aggregate_psi_cond_le`. This is the pinning-stage selector.
 
+**Also landed (scale-threshold budget discharge):** `exists_scale_cfCylinder_psi_avoid_zbad_cond`
+(`CFScheduleA`, axiom-clean) — the full conditional analog of `exists_scale_cfCylinder_psi_avoid_zbad`.
+For genuine `wx'` (hull `[a,b]`), genuine pinned prefix `wz`, family `F`, `δ>0`, produces a threshold
+`N` such that ∀ `n ≥ N` there is irrational `p ∈ cfCylinder wx'` whose ψ-image avoids every
+pinned-prefix absolute-count bad set for `v ∈ F`. `N` bakes in `n>|wz|`, slack `2|wz|≤δn`, and
+`n−|wz| > (2/q)·Ssum/((δ/2)²·γ(cfCylinder wx'))`. The complete pinning-stage z-selection engine is
+now in the kernel; only the SCHEDULE-side wiring remains.
+
 **NEXT (was step 2/3 of the handoff, now unblocked):**
-0. **Discharge `hbudget` for the concrete pinning-stage cylinder.** Wire
-   `gaussMeasure_aggregate_psi_cond_le` (toReal) → the ENNReal `hbudget` of
-   `exists_cfCylinder_psi_avoid_zbad_cond`, with `wz` the pinned z-prefix of `ψ(cfCylinder wx_s)`
-   (from `exists_tail_cfCylinder_subset_ball` + digit-agreement) and `n` in the pinning window
-   `(|w_{s-1}|,|w_s|]`, `δ_s` with slack `2|wz| ≤ δ_s·n` (holds since `n ≳ |wz|`). Need: convert the
-   toReal aggregate `≤ ∑ 7(8|v|+80)γv/((δ/2)²(n−L))·γ(wz)` to the strict ENNReal budget
-   `(2/q)·γ(U∩hull) < γ(cfCylinder wx')`, using `γ(U∩hull) ≤ γ(U) ≤ (aggregate)` and `n` large
-   enough that the RHS sum `< (q/2)·γ(cfCylinder wx')`. The one subtlety: `wz` depends on `wx_s`
-   (the ψ-image pinned prefix), so `|wz| = L(wx_s)` and the slack/scale bookkeeping must track it.
-1. Thread the pinning-stage z-selection into the block builder
+1. **Thread `exists_scale_cfCylinder_psi_avoid_zbad_cond` into the block builder / `StepSpecL4`.**
+   The analytic + measure spine is DONE; what remains is combining the z-good point pick with the
+   x-freq-good block selection in `exists_uniformly_freq_good_block_steer_len_rel_cfK` (interval
+   template `exists_irrational_notMem_xbad_psi_zbad_nil_in_Ioo`), and recording the per-stage
+   conjunct `∀ n ∈ (|w_{s-1}|,|w_s|], ψ(witness) z-good at n` in `StepSpecL4`. The `wz` for stage `s`
+   is the ψ-image pinned prefix of `cfCylinder wx_s` (`exists_tail_cfCylinder_subset_ball` +
+   digit-agreement gives `ψ(cfCylinder wx_s) ⊆ cfCylinder wz`, so avoiding the `cfCylinder wz`-based
+   conditional bad set is exactly ψ-image z-goodness). Blocks stay LINEAR (budget adds `O(1/|u|)·γ`).
    (`exists_uniformly_freq_good_block_steer_len_rel_cfK`): feed this bound as the z-bad budget
    over the window `(|w_{s-1}|,|w_s|]`, keeping blocks LINEAR (extra term `O(1/|u|)·γ`, absorbed
    like the x-freq term). Record `∀ n ∈ (|w_{s-1}|,|w_s|], ψ(witness) z-good at n` in `StepSpecL4`.
