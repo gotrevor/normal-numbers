@@ -125,6 +125,78 @@ lemma summable_logMul_vol_cfCylinder :
           mul_le_mul_of_nonneg_left hdom hlogn
       _ = 2 * Real.log 2 * logTailG a := by unfold logTailG; ring
 
+/-- Elementary: `(log x)² ≤ 16·√x` for `x ≥ 1` (write `x = s⁴` with `s = √√x`,
+then `log x = 4 log s ≤ 4s` and square). -/
+lemma sq_log_le_sixteen_sqrt {x : ℝ} (hx : 1 ≤ x) : (Real.log x) ^ 2 ≤ 16 * Real.sqrt x := by
+  have hx0 : (0 : ℝ) < x := by linarith
+  set s : ℝ := Real.sqrt (Real.sqrt x) with hs
+  have hs0 : 0 < s := Real.sqrt_pos.2 (Real.sqrt_pos.2 hx0)
+  have hssq : s ^ 2 = Real.sqrt x := by rw [hs, sq, Real.mul_self_sqrt (Real.sqrt_nonneg x)]
+  have hs4 : s ^ 4 = x := by
+    have : (s ^ 2) ^ 2 = x := by
+      rw [hssq, sq, Real.mul_self_sqrt hx0.le]
+    rwa [← pow_mul] at this
+  have hlogx : Real.log x = 4 * Real.log s := by
+    rw [← hs4, Real.log_pow]; push_cast; ring
+  have hlogs : Real.log s ≤ s - 1 := Real.log_le_sub_one_of_pos hs0
+  have hlogxnn : 0 ≤ Real.log x := Real.log_nonneg hx
+  have hbound : Real.log x ≤ 4 * s := by rw [hlogx]; nlinarith [hlogs]
+  calc (Real.log x) ^ 2 ≤ (4 * s) ^ 2 := by
+        apply sq_le_sq'
+        · nlinarith [hlogxnn, hs0]
+        · exact hbound
+    _ = 16 * Real.sqrt x := by rw [mul_pow]; rw [← hssq]; ring
+
+/-- **Second-moment summability.**  `Σ_a (log(a+1))²·γ([a+1])` converges — needed
+for `∫ g² dγ < ∞` where `g(x) = log(cfDigit x 0)` is the full log-digit function
+(the `g`-direct route to a.e. Khinchin; `g ≥ 0`, `∫ g = log K₀`).  Comparison to
+`1/(k+1)^{3/2}` via `(log)² ≤ 16√·` and the Gauss–Kuzmin digit-cylinder mass
+`γ([k+1]) = logb 2(1 + 1/((k+1)(k+3))) ≤ (1/log2)/((k+1)(k+3))`. -/
+lemma summable_sqLog_gaussMeasure_cfCylinder :
+    Summable (fun a : ℕ => (Real.log ((a : ℝ) + 1)) ^ 2 * (gaussMeasure (cfCylinder [a + 1])).toReal) := by
+  have hlog2pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hmaj : Summable (fun k : ℕ => (16 / Real.log 2) * (1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2))) := by
+    have hp : Summable (fun k : ℕ => 1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2)) := by
+      have h := (Real.summable_one_div_nat_rpow (p := (3 : ℝ) / 2)).2 (by norm_num)
+      have h1 := (summable_nat_add_iff 1).2 h
+      refine h1.congr (fun k => by push_cast; ring)
+    exact hp.mul_left _
+  refine Summable.of_nonneg_of_le (fun a => by positivity) (fun k => ?_) hmaj
+  have hk1 : (1 : ℝ) ≤ (k : ℝ) + 1 := by linarith [Nat.cast_nonneg (α := ℝ) k]
+  -- digit-cylinder mass closed form + `log(1+t) ≤ t`
+  have hmass : (gaussMeasure (cfCylinder [k + 1])).toReal
+      ≤ (1 / Real.log 2) * (1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))) := by
+    rw [gaussMeasure_digit_cylinder (k + 1) (by omega),
+      ENNReal.toReal_ofReal (Real.logb_nonneg (by norm_num) (le_add_of_nonneg_right (by positivity)))]
+    rw [Real.logb, div_eq_inv_mul, ← one_div]
+    apply mul_le_mul_of_nonneg_left _ (by positivity)
+    push_cast
+    rw [show ((k : ℝ) + 1 + 2) = (k : ℝ) + 3 from by ring]
+    have := Real.log_le_sub_one_of_pos
+      (show (0 : ℝ) < 1 + 1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)) by positivity)
+    linarith
+  have hsqlog : (Real.log ((k : ℝ) + 1)) ^ 2 ≤ 16 * Real.sqrt ((k : ℝ) + 1) :=
+    sq_log_le_sixteen_sqrt hk1
+  have hsqrtnn : (0 : ℝ) ≤ Real.sqrt ((k : ℝ) + 1) := Real.sqrt_nonneg _
+  have hmassnn : (0 : ℝ) ≤ (gaussMeasure (cfCylinder [k + 1])).toReal := ENNReal.toReal_nonneg
+  -- combine: (log)²·γ ≤ 16√(k+1)·(1/log2)/((k+1)(k+3))
+  calc (Real.log ((k : ℝ) + 1)) ^ 2 * (gaussMeasure (cfCylinder [k + 1])).toReal
+      ≤ (16 * Real.sqrt ((k : ℝ) + 1)) *
+          ((1 / Real.log 2) * (1 / (((k : ℝ) + 1) * ((k : ℝ) + 3)))) := by
+        apply mul_le_mul hsqlog hmass hmassnn (by positivity)
+    _ ≤ (16 / Real.log 2) * (1 / ((k : ℝ) + 1) ^ ((3 : ℝ) / 2)) := by
+        rw [Real.sqrt_eq_rpow]
+        rw [show (16 : ℝ) * ((k : ℝ) + 1) ^ ((1 : ℝ) / 2) *
+              ((1 / Real.log 2) * (1 / (((k : ℝ) + 1) * ((k : ℝ) + 3))))
+            = (16 / Real.log 2) * (((k : ℝ) + 1) ^ ((1 : ℝ) / 2) / (((k : ℝ) + 1) * ((k : ℝ) + 3)))
+            by ring]
+        apply mul_le_mul_of_nonneg_left _ (by positivity)
+        rw [div_le_div_iff₀ (by positivity) (by positivity)]
+        have hpow : ((k : ℝ) + 1) ^ ((1 : ℝ) / 2) * ((k : ℝ) + 1) ^ ((3 : ℝ) / 2)
+            = ((k : ℝ) + 1) ^ 2 := by
+          rw [← Real.rpow_add (by linarith), show (1 : ℝ) / 2 + 3 / 2 = 2 by norm_num, Real.rpow_two]
+        rw [hpow]; nlinarith [Nat.cast_nonneg (α := ℝ) k]
+
 /-- **The tail-average crux (disclosed).**  For a fixed cutoff `K`, the
 normalized log-tail Birkhoff sum converges a.e. to the tail integral.  Route:
 L²→a.e. Borel–Cantelli (as in `ae_orbit_freq`) via a variance bound for
