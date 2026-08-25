@@ -3944,6 +3944,21 @@ theorem exists_kappa_cfKbadExtSet_le_half_middle :
       _ ≤ γtar / 2 := by linarith [hγtar0]
   linarith [hcfKbad2, hkey]
 
+/-- The globally-fixed cfK rate for the L4 schedule (from
+`exists_kappa_cfKbadExtSet_le_half_middle`).  Fixed once so every step's block carries
+`cfK u ≤ exp(schedKappaL4·|u|)` with the SAME rate, which the recursion accumulates via
+`cfK_append_le`. -/
+noncomputable def schedKappaL4 : ℝ := (exists_kappa_cfKbadExtSet_le_half_middle).choose
+
+theorem schedKappaL4_pos : 0 < schedKappaL4 :=
+  (exists_kappa_cfKbadExtSet_le_half_middle).choose_spec.1
+
+theorem schedKappaL4_spec (wx : List ℕ) (hwx : wx ≠ []) (hpos : ∀ a ∈ wx, 1 ≤ a)
+    (c d : ℝ) (hc0 : 0 ≤ c) (hcd : c < d) (hd1 : d ≤ 1) (hhull : cfCylinder wx ⊆ Set.Icc c d)
+    (n : ℕ) : (gaussMeasure (cfKbadExtSet wx schedKappaL4 n)).toReal
+      ≤ (gaussMeasure (Set.Ioo (c + (d - c) / 4) (d - (d - c) / 4))).toReal / 2 :=
+  (exists_kappa_cfKbadExtSet_le_half_middle).choose_spec.2 wx hwx hpos c d hc0 hcd hd1 hhull n
+
 /-- **The single-stream L4 step relation.**  `S'` extends `S`'s word by a strict genuine
 block reaching depth `s`, uniformly prefix-good for `wordFamily s` at tolerance `schedEps s`
 (slack `4√|blk|+2|v|+n₁`, `n₁²≤|blk|·√|blk|`).  Same shape as `StepSpecA`'s x-half — the
@@ -3953,13 +3968,24 @@ hull (`exists_uniformly_freq_good_block_steer_len_rel`), which additionally expo
 LINEAR length bound feeding `schedL4_block_linear` (recorded separately, needs the cfK-cap). -/
 def StepSpecL4 {q r : ℝ} (S S' : SchedStateL4 q r) (s : ℕ) : Prop :=
   S'.wx.take S.wx.length = S.wx ∧ S.wx.length < S'.wx.length ∧
-    s ≤ (S'.wx.drop S.wx.length).length ∧ ∃ n₁ : ℕ,
+    s ≤ (S'.wx.drop S.wx.length).length ∧
+    ∃ (a b : ℝ) (n₁ m Nfib : ℕ),
+      0 ≤ a ∧ a < b ∧ b ≤ 1 ∧ cfCylinder S.wx ⊆ Set.Icc a b ∧
+      (S'.wx.drop S.wx.length).length = n₁ + m ^ 2 ∧
       n₁ ^ 2 ≤ (S'.wx.drop S.wx.length).length * Nat.sqrt (S'.wx.drop S.wx.length).length ∧
       (∀ k, k ≤ (S'.wx.drop S.wx.length).length → ∀ v ∈ wordFamily s,
         |(countOccurrences v ((S'.wx.drop S.wx.length).take k) : ℝ)
           - (gaussMeasure (cfCylinder v)).toReal * k|
             < schedEps s * k
-              + (4 * Nat.sqrt (S'.wx.drop S.wx.length).length + 2 * v.length + n₁))
+              + (4 * Nat.sqrt (S'.wx.drop S.wx.length).length + 2 * v.length + n₁)) ∧
+      (cfK (S'.wx.drop S.wx.length) : ℝ)
+          ≤ Real.exp (schedKappaL4 * ((S'.wx.drop S.wx.length).length : ℝ)) ∧
+      m ^ 2 ≤ 6 * (s + Nfib) + 2 + 2 * (Nat.ceil (2 / ((gaussMeasure
+          (Set.Ioo (a + (b - a) / 4) (b - (b - a) / 4))).toReal * schedEps s ^ 2
+        / (2 * (∑ v ∈ wordFamily s, 7 * (8 * (v.length : ℝ) + 80)
+              * (gaussMeasure (cfCylinder v)).toReal * (gaussMeasure (cfCylinder S.wx)).toReal
+          + (gaussMeasure (cfCylinder S.wx)).toReal)))) + 1) ^ 4 ∧
+      (Nfib : ℝ) ≤ Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt (4 / (b - a)) + 1) + 1
 
 /-- **Every L4 state steps** (single-stream, route B).  Extend `wx` by a
 relative-regularization freq-good block steering into the cylinder's OWN hull (so the block
@@ -3968,12 +3994,13 @@ is LINEAR by the crux resolution), keeping the interval `(e,f)` FIXED — legiti
 NOT nest the interval; `ψ(xA)` is pinned by the cylinder shrinking, not the interval.) -/
 theorem schedStepL4_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateL4 q r) (s : ℕ) :
     ∃ S' : SchedStateL4 q r, StepSpecL4 S S' s := by
-  obtain ⟨a, b, ha, hab, hb, _hIcc, hIoo⟩ :=
+  obtain ⟨a, b, ha, hab, hb, hIcc, hIoo⟩ :=
     exists_Ioo_irrational_subset_cfCylinder S.wx S.hwxne S.hwxpos
-  obtain ⟨u, n₁, m, Nfib, huL, hune, hupos, hsubcd, hn₁sq, hufreq, _hwit, _hlen, _hm2, _hNf⟩ :=
-    exists_uniformly_freq_good_block_steer_len_rel S.wx S.hwxne S.hwxpos
+  obtain ⟨u, n₁, m, Nfib, huL, hune, hupos, hsubcd, hn₁sq, hufreq, _hwit, hcfKu, hlen, hm2, hNf⟩ :=
+    exists_uniformly_freq_good_block_steer_len_rel_cfK S.wx S.hwxne S.hwxpos
       (wordFamily s) (wordFamily_pos s) (wordFamily_ne s) (schedEps_pos s)
-      ha hab hb hIoo s
+      ha hab hb hIoo s schedKappaL4
+      (schedKappaL4_spec S.wx S.hwxne S.hwxpos a b ha hab hb hIcc)
   set wx' := S.wx ++ u with hwx'def
   have hwx'ne : wx' ≠ [] := by rw [hwx'def]; simp [hune]
   have hwx'pos : ∀ c ∈ wx', 1 ≤ c := fun c hc =>
@@ -3988,10 +4015,13 @@ theorem schedStepL4_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateL4 q 
     rw [hwx'def, List.length_append]
     have : 0 < u.length := List.length_pos_of_ne_nil hune
     omega
-  refine ⟨⟨wx', S.e, S.f, hwx'ne, hwx'pos, S.he0, S.hef, S.hf1, hinv'⟩, htake, hgt, ?_, n₁, ?_, ?_⟩
+  refine ⟨⟨wx', S.e, S.f, hwx'ne, hwx'pos, S.he0, S.hef, S.hf1, hinv'⟩, htake, hgt, ?_,
+    a, b, n₁, m, Nfib, ha, hab, hb, hIcc, ?_, ?_, ?_, ?_, hm2, hNf⟩
   · rw [hdrop]; exact huL
+  · rw [hdrop]; exact hlen
   · rw [hdrop]; exact hn₁sq
   · rw [hdrop]; exact hufreq
+  · rw [hdrop]; exact hcfKu
 
 /-- **cfK-controlled resolution is AFFINE in `|w|`** (resolution half of
 `schedA_block_linear`, discharged CONDITIONALLY on the B5′ log-cfK bound).  If the
