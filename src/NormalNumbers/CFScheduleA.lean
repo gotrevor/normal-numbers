@@ -4090,6 +4090,28 @@ theorem wxSeq_L4_ext {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) (s
     conv_lhs => rw [← List.take_append_drop (schedL4 hq hr s).wx.length (schedL4 hq hr (s + 1)).wx]
     rw [hxtake]
 
+/-- **Block length is at most `2m²+7`** (the `n₁` burn-in is dominated by `m²`).  From
+`|b| = n₁ + m²` and the sublinear-slack witness `n₁² ≤ |b|·√|b|`: either `n₁ ≤ m²`
+(so `|b| ≤ 2m²`), or `m² < n₁`, forcing `|b| < 2n₁` and hence — via `n₁² ≤ |b|·√|b|` —
+`n₁ ≤ 7`, so `|b| = n₁+m² ≤ m²+7`.  Either way `|b| ≤ 2m²+7`, i.e. the block length is
+controlled by the tight parameter `m²` alone (word-independent up to the `m²` bound). -/
+theorem block_len_le {b n₁ m : ℕ} (hlen : b = n₁ + m ^ 2)
+    (hsq : n₁ ^ 2 ≤ b * Nat.sqrt b) : b ≤ 2 * m ^ 2 + 7 := by
+  by_cases hnm : n₁ ≤ m ^ 2
+  · omega
+  · push_neg at hnm
+    set t := Nat.sqrt b with htdef
+    have ht2 : t ^ 2 ≤ b := Nat.sqrt_le' b
+    have hb2 : b < 2 * n₁ := by omega
+    have hn1pos : 1 ≤ n₁ := by omega
+    have ht1 : 1 ≤ t := by
+      rcases Nat.eq_zero_or_pos t with h0 | h
+      · exfalso; rw [h0, Nat.mul_zero] at hsq; nlinarith [hsq, hn1pos]
+      · exact h
+    have hlt : n₁ < 2 * t := by nlinarith [hsq, hb2, hn1pos, ht1]
+    have ht3 : t ≤ 3 := by nlinarith [ht2, hb2, hlt, ht1]
+    omega
+
 /-- **Accumulated cfK bound along the L4 chain** (recursion of the per-block cfK cap).
 Each step's block carries `cfK u ≤ exp(schedKappaL4·|u|)` (`StepSpecL4`); the append law
 `cfK_append_le` (factor 2) folds these into a SINGLE exponential in the whole word length,
