@@ -854,45 +854,48 @@ lemma logTailC1_eq_integral (K : ℕ) :
   rw [h2]
   ring
 
-/-- **Brick 4 — the genuine variance bound.**  `|∫(S_n)² − (n·μ)²| ≤ n·logVarConst K`
-with `μ = logTailC1 K = ∫ logTailFn K`, for the unbounded log-tail Birkhoff sum
-`S_n = logBirkhoffSum K n`.  Proof: MCT (`M → ∞`) on `variance_truncated_le`. -/
-theorem variance_logBirkhoffSum_le (K n : ℕ) :
-    |∫ x, (logBirkhoffSum K n x) ^ 2 ∂gaussMeasure - ((n : ℝ) * logTailC1 K) ^ 2|
-      ≤ (n : ℝ) * logVarConst K := by
+/-- Everywhere-monotone truncated squares — the `M→∞` monotone family. -/
+private lemma monotone_logBirkhoffTrunc_sq (K n : ℕ) (x : ℝ) :
+    Monotone (fun M => (logBirkhoffTrunc K M n x) ^ 2) := by
+  intro M M' h
+  have h1 := logBirkhoffTrunc_mono K n x h
+  have h0 := logBirkhoffTrunc_nonneg K M n x
+  nlinarith [h0, h1]
+
+/-- a.e. every Gauss orbit point stays in `(0,1)`. -/
+private lemma ae_orbit_mem_Ioo :
+    ∀ᵐ x ∂gaussMeasure, ∀ i, gaussMap^[i] x ∈ Set.Ioo (0 : ℝ) 1 := by
+  filter_upwards [ae_irrational, ae_mem_Ioo] with x hirr hx
+  exact fun i => (irrational_orbit x hirr hx i).2
+
+/-- Uniform (in `M`) upper bound on the truncated second moment. -/
+private lemma integral_logBirkhoffTrunc_sq_le (K n M : ℕ) :
+    ∫ x, (logBirkhoffTrunc K M n x) ^ 2 ∂gaussMeasure
+      ≤ ((n : ℝ) * logTailC1 K) ^ 2 + (n : ℝ) * logVarConst K := by
   have hlog : ∀ c : ℕ, 0 ≤ Real.log ((K : ℝ) + 1 + c) := fun c =>
     Real.log_nonneg (by have := Nat.cast_nonneg (α := ℝ) K; have := Nat.cast_nonneg (α := ℝ) c; linarith)
-  -- everywhere-monotone squares
-  have hmonoSq : ∀ x, Monotone (fun M => (logBirkhoffTrunc K M n x) ^ 2) := by
-    intro x M M' h
-    have h1 := logBirkhoffTrunc_mono K n x h
-    have h0 := logBirkhoffTrunc_nonneg K M n x
-    nlinarith [h0, h1]
-  -- a.e. full orbit
-  have haeOrbit : ∀ᵐ x ∂gaussMeasure, ∀ i, gaussMap^[i] x ∈ Set.Ioo (0 : ℝ) 1 := by
-    filter_upwards [ae_irrational, ae_mem_Ioo] with x hirr hx
-    exact fun i => (irrational_orbit x hirr hx i).2
-  -- per-M integral upper bound (uniform)
-  have hboundM : ∀ M, ∫ x, (logBirkhoffTrunc K M n x) ^ 2 ∂gaussMeasure
-      ≤ ((n : ℝ) * logTailC1 K) ^ 2 + (n : ℝ) * logVarConst K := by
-    intro M
-    have hv := (abs_le.mp (variance_truncated_le K M n)).2
-    have hμle : logTruncMean K M ≤ logTailC1 K := by
-      unfold logTruncMean logTailC1
-      exact (summable_logTailC1 K).sum_le_tsum (Finset.range M)
-        (fun i _ => mul_nonneg (hlog i) ENNReal.toReal_nonneg)
-    have hμnn : (0 : ℝ) ≤ logTruncMean K M := by
-      unfold logTruncMean
-      exact Finset.sum_nonneg (fun i _ => mul_nonneg (hlog i) ENNReal.toReal_nonneg)
-    have hnn : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
-    have hC1 := logTailC1_nonneg K
-    have hsq : ((n : ℝ) * logTruncMean K M) ^ 2 ≤ ((n : ℝ) * logTailC1 K) ^ 2 := by
-      have hle : (n : ℝ) * logTruncMean K M ≤ (n : ℝ) * logTailC1 K :=
-        mul_le_mul_of_nonneg_left hμle hnn
-      have hge : (0 : ℝ) ≤ (n : ℝ) * logTruncMean K M := mul_nonneg hnn hμnn
-      nlinarith [hle, hge]
-    linarith [hv, hsq]
-  -- lintegral bound on the limit square (⇒ integrability)
+  have hv := (abs_le.mp (variance_truncated_le K M n)).2
+  have hμle : logTruncMean K M ≤ logTailC1 K := by
+    unfold logTruncMean logTailC1
+    exact (summable_logTailC1 K).sum_le_tsum (Finset.range M)
+      (fun i _ => mul_nonneg (hlog i) ENNReal.toReal_nonneg)
+  have hμnn : (0 : ℝ) ≤ logTruncMean K M := by
+    unfold logTruncMean
+    exact Finset.sum_nonneg (fun i _ => mul_nonneg (hlog i) ENNReal.toReal_nonneg)
+  have hnn : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+  have hsq : ((n : ℝ) * logTruncMean K M) ^ 2 ≤ ((n : ℝ) * logTailC1 K) ^ 2 := by
+    have hle : (n : ℝ) * logTruncMean K M ≤ (n : ℝ) * logTailC1 K :=
+      mul_le_mul_of_nonneg_left hμle hnn
+    have hge : (0 : ℝ) ≤ (n : ℝ) * logTruncMean K M := mul_nonneg hnn hμnn
+    nlinarith [hle, hge]
+  linarith [hv, hsq]
+
+/-- **`(logBirkhoffSum K n)²` is integrable** — the monotone `M→∞` limit of the
+truncated squares, whose integrals are uniformly bounded by `variance_truncated_le`,
+so its `lintegral` is finite (`lintegral_iSup`). -/
+lemma integrable_logBirkhoffSum_sq (K n : ℕ) :
+    Integrable (fun x => (logBirkhoffSum K n x) ^ 2) gaussMeasure := by
+  have hmonoSq := monotone_logBirkhoffTrunc_sq K n
   have hgmono : Monotone (fun M => fun x => ENNReal.ofReal ((logBirkhoffTrunc K M n x) ^ 2)) :=
     fun M M' h x => ENNReal.ofReal_le_ofReal (hmonoSq x h)
   have hgmeas : ∀ M, Measurable (fun x => ENNReal.ofReal ((logBirkhoffTrunc K M n x) ^ 2)) :=
@@ -900,7 +903,7 @@ theorem variance_logBirkhoffSum_le (K n : ℕ) :
   have hsup : ∀ᵐ x ∂gaussMeasure,
       (⨆ M, ENNReal.ofReal ((logBirkhoffTrunc K M n x) ^ 2))
         = ENNReal.ofReal ((logBirkhoffSum K n x) ^ 2) := by
-    filter_upwards [haeOrbit] with x hx
+    filter_upwards [ae_orbit_mem_Ioo] with x hx
     have htend : Tendsto (fun M => ENNReal.ofReal ((logBirkhoffTrunc K M n x) ^ 2)) atTop
         (nhds (ENNReal.ofReal ((logBirkhoffSum K n x) ^ 2))) :=
       (ENNReal.continuous_ofReal.tendsto _).comp ((logBirkhoffTrunc_tendsto K n hx).pow 2)
@@ -913,21 +916,26 @@ theorem variance_logBirkhoffSum_le (K n : ℕ) :
     refine iSup_le (fun M => ?_)
     rw [← ofReal_integral_eq_lintegral_ofReal (integrable_logBirkhoffTrunc_sq K M n)
       (Filter.Eventually.of_forall (fun x => sq_nonneg _))]
-    exact ENNReal.ofReal_le_ofReal (hboundM M)
-  have hFint : Integrable (fun x => (logBirkhoffSum K n x) ^ 2) gaussMeasure := by
-    have hne : ∫⁻ x, ENNReal.ofReal ((logBirkhoffSum K n x) ^ 2) ∂gaussMeasure ≠ (⊤ : ENNReal) := by
-      refine ne_of_lt (lt_of_le_of_lt hlint ?_)
-      exact ENNReal.ofReal_lt_top
-    exact (lintegral_ofReal_ne_top_iff_integrable
-      ((measurable_logBirkhoffSum K n).pow_const 2).aestronglyMeasurable
-      (Filter.Eventually.of_forall (fun x => sq_nonneg _))).mp hne
+    exact ENNReal.ofReal_le_ofReal (integral_logBirkhoffTrunc_sq_le K n M)
+  have hne : ∫⁻ x, ENNReal.ofReal ((logBirkhoffSum K n x) ^ 2) ∂gaussMeasure ≠ (⊤ : ENNReal) :=
+    ne_of_lt (lt_of_le_of_lt hlint ENNReal.ofReal_lt_top)
+  exact (lintegral_ofReal_ne_top_iff_integrable
+    ((measurable_logBirkhoffSum K n).pow_const 2).aestronglyMeasurable
+    (Filter.Eventually.of_forall (fun x => sq_nonneg _))).mp hne
+
+/-- **Brick 4 — the genuine variance bound.**  `|∫(S_n)² − (n·μ)²| ≤ n·logVarConst K`
+with `μ = logTailC1 K = ∫ logTailFn K`, for the unbounded log-tail Birkhoff sum
+`S_n = logBirkhoffSum K n`.  Proof: MCT (`M → ∞`) on `variance_truncated_le`. -/
+theorem variance_logBirkhoffSum_le (K n : ℕ) :
+    |∫ x, (logBirkhoffSum K n x) ^ 2 ∂gaussMeasure - ((n : ℝ) * logTailC1 K) ^ 2|
+      ≤ (n : ℝ) * logVarConst K := by
   -- MCT: the truncated second moments converge to the full second moment
   have hMCT : Tendsto (fun M => ∫ x, (logBirkhoffTrunc K M n x) ^ 2 ∂gaussMeasure) atTop
       (nhds (∫ x, (logBirkhoffSum K n x) ^ 2 ∂gaussMeasure)) := by
     refine integral_tendsto_of_tendsto_of_monotone
-      (fun M => integrable_logBirkhoffTrunc_sq K M n) hFint
-      (Filter.Eventually.of_forall (fun x => hmonoSq x)) ?_
-    filter_upwards [haeOrbit] with x hx
+      (fun M => integrable_logBirkhoffTrunc_sq K M n) (integrable_logBirkhoffSum_sq K n)
+      (Filter.Eventually.of_forall (fun x => monotone_logBirkhoffTrunc_sq K n x)) ?_
+    filter_upwards [ae_orbit_mem_Ioo] with x hx
     exact (logBirkhoffTrunc_tendsto K n hx).pow 2
   -- truncated means → μ
   have hmeanTend : Tendsto (fun M => ((n : ℝ) * logTruncMean K M) ^ 2) atTop
@@ -963,16 +971,212 @@ lemma logTailFn_zero_ae_eq :
   unfold logTailFn
   rw [if_pos (by omega)]
 
-/-- **The tail-average crux (disclosed).**  For a fixed cutoff `K`, the
-normalized log-tail Birkhoff sum converges a.e. to the tail integral.  Route:
-L²→a.e. Borel–Cantelli (as in `ae_orbit_freq`) via a variance bound for
-`logBirkhoffSum K` from Gauss mixing, plus the monotone gap-squeeze
-(`logBirkhoffSum K n x` is nondecreasing in `n`, since `logTailFn K ≥ 0`). -/
+/-- **Chebyshev for the log-tail Birkhoff sum.**  `γ{ |S_n/n − μ| ≥ δ } ≤
+logVarConst K / (δ²·n)`, `μ = logTailC1 K`.  Markov on `(S_n − nμ)²` via the
+genuine variance bound `variance_logBirkhoffSum_le`. -/
+theorem chebyshev_logBirkhoffSum (K n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
+    (gaussMeasure {x | δ ≤ |logBirkhoffSum K n x / n - logTailC1 K|}).toReal ≤
+      logVarConst K / (δ ^ 2 * n) := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hSmeas : Measurable (logBirkhoffSum K n) := measurable_logBirkhoffSum K n
+  have hMem : MemLp (logBirkhoffSum K n) 2 gaussMeasure :=
+    (memLp_two_iff_integrable_sq hSmeas.aestronglyMeasurable).2 (integrable_logBirkhoffSum_sq K n)
+  have hEX : ∫ x, logBirkhoffSum K n x ∂gaussMeasure = n * logTailC1 K := by
+    rw [integral_logBirkhoffSum K n, logTailC1_eq_integral]
+  have hVar : ProbabilityTheory.variance (logBirkhoffSum K n) gaussMeasure ≤ n * logVarConst K := by
+    rw [ProbabilityTheory.variance_eq_sub hMem]
+    simp only [Pi.pow_apply]
+    rw [hEX]
+    exact le_trans (le_abs_self _) (variance_logBirkhoffSum_le K n)
+  have hset : {x | δ ≤ |logBirkhoffSum K n x / n - logTailC1 K|}
+      = {x | δ * n ≤ |logBirkhoffSum K n x - ∫ y, logBirkhoffSum K n y ∂gaussMeasure|} := by
+    ext x
+    simp only [Set.mem_setOf_eq, hEX]
+    rw [show logBirkhoffSum K n x / n - logTailC1 K
+        = (logBirkhoffSum K n x - n * logTailC1 K) / n by field_simp,
+      abs_div, abs_of_pos hnR, le_div_iff₀ hnR]
+  have hδn : 0 < δ * n := mul_pos hδ hnR
+  have hcheb := ProbabilityTheory.meas_ge_le_variance_div_sq (μ := gaussMeasure) hMem hδn
+  have hδ0 : δ ≠ 0 := hδ.ne'
+  have hn0 : (n : ℝ) ≠ 0 := hnR.ne'
+  calc (gaussMeasure {x | δ ≤ |logBirkhoffSum K n x / n - logTailC1 K|}).toReal
+      ≤ (ENNReal.ofReal (ProbabilityTheory.variance (logBirkhoffSum K n)
+          gaussMeasure / (δ * n) ^ 2)).toReal := by
+        rw [hset]
+        exact ENNReal.toReal_mono ENNReal.ofReal_ne_top hcheb
+    _ = ProbabilityTheory.variance (logBirkhoffSum K n) gaussMeasure / (δ * n) ^ 2 :=
+        ENNReal.toReal_ofReal (div_nonneg (ProbabilityTheory.variance_nonneg _ _) (by positivity))
+    _ ≤ ((n : ℝ) * logVarConst K) / (δ * n) ^ 2 := by gcongr
+    _ = logVarConst K / (δ ^ 2 * n) := by field_simp
+
+/-- **The tail-average crux.**  For a fixed cutoff `K`, the normalized log-tail
+Birkhoff sum converges a.e. to the tail integral.  Route: L²→a.e. Borel–Cantelli
+(as in `ae_orbit_freq`) via `chebyshev_logBirkhoffSum` along `p = (k+1)²`, plus
+the monotone gap-squeeze (`logBirkhoffSum K n x` is nondecreasing in `n`). -/
 theorem ae_tail_average_tendsto (K : ℕ) :
     ∀ᵐ x ∂gaussMeasure,
       Tendsto (fun n => logBirkhoffSum K n x / (n : ℝ)) atTop
         (nhds (∫ y, logTailFn K y ∂gaussMeasure)) := by
-  sorry
+  rw [← logTailC1_eq_integral]
+  set μ := logTailC1 K with hμdef
+  -- bad set family (`p = (k+1)²`, `δ = 1/(m+1)`)
+  set E : ℕ → ℕ → Set ℝ := fun m k =>
+    {x | (1 : ℝ) / (m + 1) ≤
+      |logBirkhoffSum K ((k + 1) ^ 2) x / (((k + 1) ^ 2 : ℕ) : ℝ) - μ|} with hE
+  have hfin : ∀ m : ℕ, (∑' k, gaussMeasure (E m k)) ≠ ⊤ := by
+    intro m
+    set δ : ℝ := 1 / (m + 1) with hδ
+    have hδpos : 0 < δ := by rw [hδ]; positivity
+    set g : ℕ → ℝ := fun k =>
+      logVarConst K / (δ ^ 2 * (((k + 1) ^ 2 : ℕ) : ℝ)) with hg
+    have hVC : 0 ≤ logVarConst K := by
+      unfold logVarConst
+      have := logTailC1_nonneg K; have := logTailC2_nonneg K; have := logTailC3_nonneg K
+      positivity
+    have hgnn : ∀ k, 0 ≤ g k := by intro k; rw [hg]; positivity
+    have hgsum : Summable g := by
+      have hbase : Summable (fun k : ℕ => (1 : ℝ) / ((k : ℝ) + 1) ^ 2) := by
+        have h2 : Summable (fun n : ℕ => (1 : ℝ) / (n : ℝ) ^ 2) :=
+          Real.summable_one_div_nat_pow.mpr (by norm_num : 1 < 2)
+        have := (summable_nat_add_iff 1).mpr h2
+        simpa using this
+      have hδ0 : δ ≠ 0 := hδpos.ne'
+      have heq : g = fun k : ℕ =>
+          (logVarConst K / δ ^ 2) * ((1 : ℝ) / ((k : ℝ) + 1) ^ 2) := by
+        funext k
+        have hk0 : ((k : ℝ) + 1) ≠ 0 := by positivity
+        simp only [hg]; push_cast; field_simp
+      rw [heq]; exact hbase.mul_left _
+    have hbound : ∀ k, gaussMeasure (E m k) ≤ ENNReal.ofReal (g k) := by
+      intro k
+      have hn : 0 < (k + 1) ^ 2 := by positivity
+      have hcheb := chebyshev_logBirkhoffSum K ((k + 1) ^ 2) hn hδpos
+      exact (ENNReal.le_ofReal_iff_toReal_le (measure_ne_top _ _) (hgnn k)).mpr hcheb
+    have hle : (∑' k, gaussMeasure (E m k)) ≤ ENNReal.ofReal (∑' k, g k) := by
+      refine (ENNReal.tsum_le_tsum hbound).trans ?_
+      rw [ENNReal.ofReal_tsum_of_nonneg hgnn hgsum]
+    exact ne_top_of_le_ne_top ENNReal.ofReal_ne_top hle
+  have hae : ∀ᵐ y ∂gaussMeasure, ∀ m : ℕ, ∀ᶠ k in atTop, y ∉ E m k := by
+    rw [MeasureTheory.ae_all_iff]
+    exact fun m => MeasureTheory.ae_eventually_notMem (hfin m)
+  filter_upwards [hae] with y hy
+  set a : ℕ → ℝ := fun k => logBirkhoffSum K ((k + 1) ^ 2) y / (((k + 1) ^ 2 : ℕ) : ℝ) with ha
+  have hsub : Tendsto a atTop (nhds μ) := by
+    rw [Metric.tendsto_atTop]
+    intro ε hε
+    obtain ⟨m, hm⟩ := exists_nat_one_div_lt hε
+    obtain ⟨Kk, hK⟩ := (hy m).exists_forall_of_atTop
+    refine ⟨Kk, fun k hk => ?_⟩
+    have hnot := hK k hk
+    rw [hE] at hnot
+    simp only [Set.mem_setOf_eq, not_le] at hnot
+    rw [Real.dist_eq]
+    calc |a k - μ|
+        = |logBirkhoffSum K ((k + 1) ^ 2) y / (((k + 1) ^ 2 : ℕ) : ℝ) - μ| := by
+          simp only [ha]
+      _ < 1 / (m + 1) := hnot
+      _ < ε := hm
+  have hmono : ∀ {p q : ℕ}, p ≤ q → logBirkhoffSum K p y ≤ logBirkhoffSum K q y := by
+    intro p q hpq
+    simp only [logBirkhoffSum_apply]
+    have hsub' : Finset.range p ⊆ Finset.range q := fun i hi =>
+      Finset.mem_range.mpr (lt_of_lt_of_le (Finset.mem_range.mp hi) hpq)
+    apply Finset.sum_le_sum_of_subset_of_nonneg hsub'
+    intro i _ _; exact logTailFn_nonneg_pointwise K _
+  have hnn : ∀ p, 0 ≤ logBirkhoffSum K p y := fun p => logBirkhoffSum_nonneg K p y
+  set Lfun : ℕ → ℝ := fun p =>
+    logBirkhoffSum K ((Nat.sqrt p) ^ 2) y / ((((Nat.sqrt p) + 1) ^ 2 : ℕ) : ℝ) with hLfun
+  set Ufun : ℕ → ℝ := fun p =>
+    logBirkhoffSum K ((Nat.sqrt p + 1) ^ 2) y / (((Nat.sqrt p) ^ 2 : ℕ) : ℝ) with hUfun
+  have hsqrt : Tendsto (fun p => Nat.sqrt p) atTop atTop := by
+    rw [tendsto_atTop_atTop]
+    exact fun b => ⟨b ^ 2, fun n hn => Nat.le_sqrt'.mpr hn⟩
+  have hbase : Tendsto (fun k : ℕ => (k : ℝ) / ((k : ℝ) + 1)) atTop (nhds 1) :=
+    tendsto_natCast_div_add_atTop (1 : ℝ)
+  have hrat1 : Tendsto (fun k : ℕ => ((k : ℝ)) ^ 2 / (((k : ℝ)) + 1) ^ 2) atTop (nhds 1) := by
+    have := hbase.pow 2
+    simpa [div_pow] using this
+  have hrat2 : Tendsto (fun k : ℕ => (((k : ℝ)) + 1) ^ 2 / ((k : ℝ)) ^ 2) atTop (nhds 1) := by
+    have hb2 : Tendsto (fun k : ℕ => ((k : ℝ) + 1) / (k : ℝ)) atTop (nhds 1) := by
+      have := hbase.inv₀ (one_ne_zero)
+      simpa [inv_div] using this
+    have := hb2.pow 2
+    simpa [div_pow] using this
+  have hsub1 : Tendsto (fun p => a (Nat.sqrt p - 1)) atTop (nhds μ) := by
+    have hsub_shift : Tendsto (fun k => a (k - 1)) atTop (nhds μ) :=
+      hsub.comp (tendsto_atTop_atTop.mpr fun b => ⟨b + 1, fun n hn => by omega⟩)
+    exact hsub_shift.comp hsqrt
+  have hsubj : Tendsto (fun p => a (Nat.sqrt p)) atTop (nhds μ) := hsub.comp hsqrt
+  have hLprod : Tendsto (fun p => a (Nat.sqrt p - 1) *
+      (((Nat.sqrt p : ℝ)) ^ 2 / (((Nat.sqrt p : ℝ)) + 1) ^ 2)) atTop (nhds μ) := by
+    have := hsub1.mul (hrat1.comp hsqrt)
+    simpa using this
+  have hUprod : Tendsto (fun p => a (Nat.sqrt p) *
+      ((((Nat.sqrt p : ℝ)) + 1) ^ 2 / ((Nat.sqrt p : ℝ)) ^ 2)) atTop (nhds μ) := by
+    have := hsubj.mul (hrat2.comp hsqrt)
+    simpa using this
+  have hLeq : ∀ᶠ p in atTop, Lfun p =
+      a (Nat.sqrt p - 1) * (((Nat.sqrt p : ℝ)) ^ 2 / (((Nat.sqrt p : ℝ)) + 1) ^ 2) := by
+    filter_upwards [eventually_ge_atTop 1] with p hp
+    have hj1 : 1 ≤ Nat.sqrt p := Nat.le_sqrt'.mpr (by simpa using hp)
+    have hjr : (0 : ℝ) < (Nat.sqrt p : ℝ) := by exact_mod_cast hj1
+    have h1 : (Nat.sqrt p : ℝ) ≠ 0 := hjr.ne'
+    have h2 : (Nat.sqrt p : ℝ) + 1 ≠ 0 := by positivity
+    simp only [hLfun, ha]
+    rw [show Nat.sqrt p - 1 + 1 = Nat.sqrt p from Nat.sub_add_cancel hj1]
+    push_cast
+    field_simp
+  have hUeq : ∀ᶠ p in atTop, Ufun p =
+      a (Nat.sqrt p) * ((((Nat.sqrt p : ℝ)) + 1) ^ 2 / ((Nat.sqrt p : ℝ)) ^ 2) := by
+    filter_upwards [eventually_ge_atTop 1] with p hp
+    have hj1 : 1 ≤ Nat.sqrt p := Nat.le_sqrt'.mpr (by simpa using hp)
+    have hjr : (0 : ℝ) < (Nat.sqrt p : ℝ) := by exact_mod_cast hj1
+    have h1 : (Nat.sqrt p : ℝ) ≠ 0 := hjr.ne'
+    have h2 : (Nat.sqrt p : ℝ) + 1 ≠ 0 := by positivity
+    simp only [hUfun, ha]
+    push_cast
+    field_simp
+  have hLtend : Tendsto Lfun atTop (nhds μ) := hLprod.congr' (hLeq.mono fun p h => h.symm)
+  have hUtend : Tendsto Ufun atTop (nhds μ) := hUprod.congr' (hUeq.mono fun p h => h.symm)
+  have hlow : ∀ᶠ p in atTop, Lfun p ≤ logBirkhoffSum K p y / (p : ℝ) := by
+    filter_upwards [eventually_ge_atTop 1] with p hp
+    set j := Nat.sqrt p with hj
+    have hj1 : 1 ≤ j := Nat.le_sqrt'.mpr (by simpa using hp)
+    have hj2p : j ^ 2 ≤ p := Nat.sqrt_le' p
+    have hpj1 : p < (j + 1) ^ 2 := Nat.lt_succ_sqrt' p
+    have hpr : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp
+    have hd1 : (0 : ℝ) < (((j + 1) ^ 2 : ℕ) : ℝ) := by positivity
+    simp only [hLfun, ← hj]
+    calc logBirkhoffSum K (j ^ 2) y / ((((j + 1) ^ 2 : ℕ) : ℝ))
+        ≤ logBirkhoffSum K p y / ((((j + 1) ^ 2 : ℕ) : ℝ)) := by
+          gcongr
+          exact hmono hj2p
+      _ ≤ logBirkhoffSum K p y / (p : ℝ) := by
+          rw [div_eq_mul_one_div (logBirkhoffSum K p y) ((((j + 1) ^ 2 : ℕ) : ℝ)),
+            div_eq_mul_one_div (logBirkhoffSum K p y) (p : ℝ)]
+          exact mul_le_mul_of_nonneg_left
+            (one_div_le_one_div_of_le hpr (by exact_mod_cast hpj1.le)) (hnn p)
+  have hup : ∀ᶠ p in atTop, logBirkhoffSum K p y / (p : ℝ) ≤ Ufun p := by
+    filter_upwards [eventually_ge_atTop 1] with p hp
+    set j := Nat.sqrt p with hj
+    have hj1 : 1 ≤ j := Nat.le_sqrt'.mpr (by simpa using hp)
+    have hj2p : j ^ 2 ≤ p := Nat.sqrt_le' p
+    have hpj1 : p < (j + 1) ^ 2 := Nat.lt_succ_sqrt' p
+    have hpr : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp
+    have hjr2 : (0 : ℝ) < (((j ^ 2 : ℕ)) : ℝ) := by
+      have : 0 < j ^ 2 := by positivity
+      exact_mod_cast this
+    simp only [hUfun, ← hj]
+    calc logBirkhoffSum K p y / (p : ℝ)
+        ≤ logBirkhoffSum K p y / (((j ^ 2 : ℕ) : ℝ)) := by
+          rw [div_eq_mul_one_div (logBirkhoffSum K p y) (p : ℝ),
+            div_eq_mul_one_div (logBirkhoffSum K p y) ((((j ^ 2 : ℕ)) : ℝ))]
+          exact mul_le_mul_of_nonneg_left
+            (one_div_le_one_div_of_le hjr2 (by exact_mod_cast hj2p)) (hnn p)
+      _ ≤ logBirkhoffSum K ((j + 1) ^ 2) y / (((j ^ 2 : ℕ) : ℝ)) := by
+          gcongr
+          exact hmono hpj1.le
+  exact tendsto_of_tendsto_of_tendsto_of_le_of_le' hLtend hUtend hlow hup
 
 /-- **a.e. Khinchin-typicality** (modulo the disclosed tail-average crux at `K=0`).
 `ae_tail_average_tendsto 0` gives the log-average of the CF digits `→ log K₀` a.e.;
