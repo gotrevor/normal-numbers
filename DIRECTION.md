@@ -4,81 +4,61 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-25 REVIEW LAP #2 — B6: PROVE THE ψ-PUSHED L² VARIANCE CRUX `variance_blockCount_psi_pushed`)
+## CURRENT DIRECTIVE (set 2026-08-25 REVIEW LAP #2b — B6 PIVOTS TO THE MEASURE ROUTE; schedule crux REFUTED)
 
 - **State (ground truth, real `#print axioms` this lap):** build 🟢 8757; both
   B5′ headlines `exists_absolutely_normal_cf_normal` (Tier 1 = Becher–Yuhjtman)
   and `exists_absolutely_normal_cf_normal_khinchin` (Tier 2) are trust-triple
   `[propext, Classical.choice, Quot.sound]` — **DONE**.  B6
-  `exists_cfNormal_and_affine_cfNormal` = `+ sorryAx`.  **TWO `src/` sorries:**
-  (i) `variance_blockCount_psi_pushed` (`CFScheduleA.lean:4254`) — **THE crux**;
-  (ii) `schedA_block_linear` (`CFScheduleA.lean:5630`) — the DEAD two-stream sorry,
-  which B6's `sorryAx` currently flows through, excised once the L4 z-selector wires in.
-- **THE PRIOR DIRECTIVE'S STEPS 1–3 ARE DONE / COLLAPSED.**  ψ(xA) irrationality is
-  PROVED (`exists_xA_L4_psi_irrational`, handoff `psi-irrational-PROVED`).  The
-  Chebyshev/Markov budget + transfer engine were built axiom-clean and — crucially —
-  the WHOLE clean single-stream z-selector now reduces to ONE analytic obligation:
-  `psi_pushed_chebyshev_brick` → `gaussMeasure_aggregate_psi_pushed_le` →
-  `exists_scale_cfCylinder_psi_avoid_zbad_poly` are all PROVED from the single
-  disclosed sorry `variance_blockCount_psi_pushed`.  (The conditional-at-`wz` route
-  was walled by a density-vs-coverage obstruction, commit `5816044`; the surviving
-  clean route is the x-cylinder-relative / LOCAL-density one, whose base-mass factor
-  `γ(cfCylinder wx')` cancels the cylinder mass → non-empty transfer range.)
-- **THE MANDATED MOVE — prove `variance_blockCount_psi_pushed`, hardest-first.**  It is
-  `∫_{cfCyl wx'} (blockCount(cfCyl v) n (ψ x) − nγv)² dγ ≤ (8|v|+80)·n·γv·γ(cfCyl wx')`
-  (ψ = affineMap q r).  This IS the genuine research core: affine-invariance of
-  CF-normality via ψ-conjugated Gauss-map mixing.  Model the whole proof on
-  `variance_blockCount_le` (`CFBlockFreq.lean:401`).  Decomposition (each a named
-  `src/` sub-sorry as reached — RAISING the src count is progress, not regression):
-  1. **Restricted ψ-pushed 2nd-moment IDENTITY** (routine measure theory, land it first):
-     `∫_{cfCyl wx'} blockCount(A,n)(ψ·)² dγ = ∑_{j,j'<n} γ(cfCyl wx' ∩ ψ⁻¹T^{-j}A ∩ ψ⁻¹T^{-j'}A)`
-     and the 1-point `∫_{cfCyl wx'} blockCount(A,n)(ψ·) dγ = ∑_{j<n} γ(cfCyl wx' ∩ ψ⁻¹T^{-j}A)`.
-     Mirror `integral_blockCount_sq` (`CFBlockFreq.lean:166`): `blockCount²` = double sum of
-     indicator products = indicator of intersection; setIntegral of indicator = γ(base ∩ ·).
-     NO mixing — pure plumbing.  This isolates the pure pair-correlation content.
-  2. **ψ-conjugated interval-base MIXING** (THE hard core, named sub-sorry): the 1-point
-     `γ(cfCyl wx' ∩ ψ⁻¹T^{-j}A) ≈ γ(cfCyl wx')·γ(A)` and 2-point
-     `γ(cfCyl wx' ∩ ψ⁻¹T^{-j}A ∩ ψ⁻¹T^{-j'}A) ≈ γ(cfCyl wx')·γ(A)²`, each with geometric
-     error `≤ 4γv·γ(cfCyl wx')·(9/10)^{dist∸|v|}`.  Route: reduce to INTERVAL-base Gauss
-     mixing by change-of-variables `y=ψx` — the pushforward `ψ_*(γ|cfCyl wx')` has a BOUNDED
-     density ratio `ρ(y)=gaussDensity(ψ⁻¹y)/(q·gaussDensity(y))` w.r.t. `γ` on the interval
-     `J=ψ(cfCyl wx')`, so the affine distortion is elementary (`CFAffine.lean` + `gaussDensity`
-     bounds) and the content is interval-base mixing.  Then EXTEND `gaussMeasure_cylinder_mixing`
-     (`CFGammaMixing.lean:236`, cylinder base, rate `(9/10)^g` via the mixture representation
-     `γ(X)=∫gaussDensityReal·∫_X tailDensity` + horizon factorization) from a `cfCylinder` base
-     to a general subinterval `J⊆(0,1)`.  If interval-base mixing is itself big, decompose it as
-     its OWN named sorry (cylinder-cover of `J` + per-cylinder mixing).  Narrow it, don't expect
-     one-lap closure.
-  3. **Geometric-sum ASSEMBLY** (mirror `variance_blockCount_le`'s tail): fold the 1-point +
-     2-point errors over `j,j'<n` via `sum_range_dist_le` + `geom_trunc_sum_le` to the
-     `(8|v|+80)·n·γv·γ(cfCyl wx')` bound.  (Note the extra 1-point correction term absent in
-     the full-measure model: `∫_{base}S(ψ·) ≠ nγv·γ(base)` EXACTLY, only up to 1-point mixing.)
-- **IN PARALLEL / AFTER (reuse, NOT the crux — needs only the brick STATEMENT):** wire
-  `exists_scale_cfCylinder_psi_avoid_zbad_poly` + the absolute transfer
-  (`notMem_cfBadZone_nil_of_cfDigit_agree`, `exists_tail_cfCylinder_subset_ball`,
-  `blockCount_eq_of_cfDigit_agree`, `tendsto_of_scale_coverage`) into `StepSpecL4`/
-  `schedStepL4_exists` ⇒ `CFOrbitEquidist (ψ xA)`, assemble the NEW L4
-  `exists_interleaved_affine_witness`, EXCISE `schedA_block_linear`.  Feasibility not in
-  doubt (poly threshold ⟹ clean s↔n coverage); it is scaffolding, so it does NOT preempt
-  the crux — do it around/after step 1–3, not instead of them.
-- **FORBIDDEN DRIFT:** do NOT grind the DEAD two-stream `schedA_block_linear` /
-  `wxSeq`/`wzSeq`/`schedA` directly (excised on assembly); do NOT DROP the base-mass factor
-  `γ(cfCyl wx')` from the crux RHS — bounding by the full variance loses it and re-hits the
-  density-vs-coverage wall (`5816044`); do NOT resurrect the conditional-at-`wz` route, the
-  HARD digit-cap, or `hdom`; do NOT "box stuck"/operator-gate.  Each lap advance step 1→2→3;
-  the smallest next probe is landing the restricted 2nd-moment IDENTITY (step 1, no mixing).
+  `exists_cfNormal_and_affine_cfNormal` = `+ sorryAx`.
+- **🚨 ROUTE-DECISIVE FINDING — the schedule crux `variance_blockCount_psi_pushed`
+  (`CFScheduleA.lean:4254`) is PROVABLY FALSE** (counterexample:
+  `OBSTRUCTION-2026-08-25-variance-psi-pushed-FALSE.md`).  Take `v=[1]`, `wx'` deep with
+  `ψ(cfCyl wx') ⊆ cfCyl [2,…,2]`: the pushed block count is `0` for all `x∈cfCyl wx'` at
+  scales `n≤|wx'|`, so the LHS `= n²γv²γ(cfCyl wx')` beats the RHS `88 n γv γ(cfCyl wx')`
+  once `n>88/γv≈212`.  Structural reason: a deep `cfCyl wx'` is a tiny interval, so
+  `blockCount n(ψ·)` is near-CONSTANT over it for `n≲|wx'|`, at a value the affine map hands
+  us (need not be `≈nγv`) ⇒ second moment is `Θ(n²)`, not `O(n)`; the base-mass factor cannot
+  rescue that.  So `psi_pushed_chebyshev_brick`/`_poly` do NOT establish their conclusions
+  (they carry disclosed `sorryAx`).  Both schedule z-routes are dead (two-stream super-exp
+  `OBSTRUCTION-2026-08-28`; single-stream refuted here).  The 2026-08-24 review pre-registered
+  this: escalate to the measure route (`ROUTE-ESCALATION-2026-08-25.md`).
+- **THE MANDATED MOVE — prove B6 by the MEASURE argument (existence is trivially true a.e.).**
+  The frozen headline is bare EXISTENCE (no explicit witness demanded).  The whole obligation
+  collapses to ONE new core lemma; everything else is elementary measure theory over PROVED
+  ingredients (Birkhoff-FREE — uses `variance_blockCount_le`, NOT any ergodic theorem):
+  1. **`ae_isCFNormal` — THE new crux (a.e. CF-normality).**  `∀ᵐ y ∂gaussMeasure, IsCFNormal y`.
+     Route (classic L²→a.e.): for a FIXED valid word `v`, `variance_blockCount_le`
+     (`CFBlockFreq.lean:401`) + Chebyshev ⇒ `γ{|blockCount(cfCyl v) p ·/p − γv|≥δ} ≤ (8|v|+80)γv/(δ²p)`;
+     along `p=k²` this is summable, Borel–Cantelli ⇒ a.e. convergence on `k²`, fill gaps by
+     monotonicity of `p↦blockCount(cfCyl v) p x` + `(k+1)²/k²→1` squeeze ⇒ a.e.
+     `blockCount(cfCyl v) p ·/p → γv`.  Intersect over the COUNTABLE set of valid `v` + the a.e.
+     orbit-in-`(0,1)` condition (rationals null) ⇒ hypotheses of `isCFNormal_of_orbit_freq`
+     (`CFOrbitFreq.lean:34`) hold a.e. ⇒ `IsCFNormal y` a.e.
+  2. **`ae_isCFNormal_affine`:** `∀ᵐ x, IsCFNormal(ψx)`.  `{x:IsCFNormal(ψx)}=ψ⁻¹{IsCFNormal}`,
+     complement `= ψ⁻¹(null)`; `volume_preimage_affineMap` (`CFAffine.lean:94`, PROVED) ⇒ ψ⁻¹
+     preserves volume-null, and `γ≈volume` on `(0,1)` (bounded density) ⇒ preserves γ-null ⇒ co-null.
+  3. **Assemble `exists_cfNormal_and_affine_cfNormal`:** on the feasible interval `(0,1)∩ψ⁻¹(0,1)`
+     (positive measure when `-q<r<1`) both co-null sets meet ⇒ nonempty witness.  Plug into the
+     SAME feasible branch where `exists_interleaved_affine_witness` sits; the existing integer-shift
+     reduction handles `r∉(-q,1)`.  Then B6 is `sorryAx`-free.
+- **FORBIDDEN DRIFT:** do NOT attempt to prove `variance_blockCount_psi_pushed` or any downstream
+  `psi_pushed_*` / `_poly` / conditional-`wz` lemma — they are FALSE / rest on the false crux; do
+  NOT grind the two-stream `schedA_block_linear` or the schedule `exists_interleaved_affine_witness`
+  (obstructed, explicit-witness route retired); do NOT DELETE them (leave in `src`, mark REFUTED —
+  nothing is deleted); do NOT chase an explicit/constructive witness (not required by the theorem,
+  and obstructed for the affine case).  Do NOT "box stuck": the measure route is doable — drive it.
 - Both B5′ headlines stay proved + axiom-clean; re-`#print axioms` after any change
   (trust triple, else revert).  ADDITIVE ONLY 🧊.
-- **Why:** B6 is the sole remaining headline, and every piece of the clean single-stream
-  z-side is proved EXCEPT `variance_blockCount_psi_pushed`.  Its feasibility is the last
-  real route-decisive uncertainty (does Gauss mixing survive affine conjugation? — the
-  mathematical heart of Vandehey §7).  The CoV-to-interval-mixing decomposition cleanly
-  separates the elementary affine distortion (bounded density ratio) from the genuine
-  mixing content, and the base-mass factor is MANDATORY (its loss is what walled every
-  earlier route).  Everything downstream is transfer-lemma reuse.
-- Historical directives below are SUPERSEDED (L4 measure bricks, the cfK-cap graft, ψ(xA)
-  irrationality, and the Chebyshev/transfer engine are all DONE; the capped-digit,
-  two-stream, and conditional-at-`wz` fallbacks were refuted/obstructed).
+- **Why:** B6's stated theorem is mere existence, which is a.e.-trivial (a.e. `x` is CF-normal and
+  a.e. `x` has `ψx` CF-normal, two co-null sets that must intersect).  The schedule aimed at an
+  EXPLICIT witness — a bonus the theorem never asked for — and its crux is now provably false, so
+  chasing it further is proving a falsehood.  The measure route honestly discharges the stated
+  theorem from the already-proven variance engine with no forbidden import, and its one real lemma
+  (`ae_isCFNormal`) is classical.  This is the fastest path to an axiom-clean B6.
+- Historical directives below are SUPERSEDED (L4 measure bricks, cfK-cap graft, ψ(xA) irrationality,
+  Chebyshev/transfer engine all DONE-but-now-off-path; capped-digit, two-stream, conditional-`wz`,
+  and x-cylinder-relative fallbacks all refuted/obstructed).
 
 ## SUPERSEDED DIRECTIVE (2026-08-24 attended — B6 ENDGAME: CAPPED-DIGIT ROUTE, refuted + two-stream obstructed)
 
@@ -254,6 +234,18 @@ detail lives in PENDING_WORK.md.
 </details>
 
 ### Directive history
+- 2026-08-25 (review lap #2b → B6 PIVOTS TO THE MEASURE ROUTE; schedule crux REFUTED): while
+  driving step 1c of the "prove the variance crux" directive, analysis of the pushforward
+  structure produced a RIGOROUS COUNTEREXAMPLE to `variance_blockCount_psi_pushed` (v=[1], ψ(cfCyl
+  wx')⊆cfCyl[2,…,2] ⇒ pushed count ≡0 at scales n≤|wx'| ⇒ LHS=n²γv²γ(wx') > RHS once n>88/γv). The
+  crux is FALSE, hence `psi_pushed_chebyshev_brick`/`_poly` establish nothing; both schedule z-routes
+  are dead. The 2026-08-24 review pre-registered exactly this escalation to "escape #3 (measure
+  argument)". Wrote `OBSTRUCTION-2026-08-25-variance-psi-pushed-FALSE.md` + `ROUTE-ESCALATION-2026-08-25.md`.
+  Rewrote CURRENT DIRECTIVE to pivot B6 to the MEASURE route: the stated theorem is bare existence,
+  trivially true a.e., so prove `ae_isCFNormal` (a.e. CF-normality via L²→a.e. Borel–Cantelli from
+  the PROVED `variance_blockCount_le`, Birkhoff-free) + ψ⁻¹-preserves-null ⇒ two co-null sets meet ⇒
+  witness. Retires the entire schedule/explicit-witness chain (kept in src, marked REFUTED, not
+  deleted). Charter trigger FIRED (mandated crux false) and handled by pivot, not stop.
 - 2026-08-25 (review lap #2 → B6: PROVE ψ-PUSHED L² VARIANCE CRUX): inventory by real
   `#print axioms` — build green 8757; both B5′ headlines trust-triple = DONE; B6
   `+sorryAx` via the DEAD two-stream `schedA_block_linear` (`CFScheduleA.lean:5630`).

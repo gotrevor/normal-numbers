@@ -4379,14 +4379,17 @@ theorem integral_blockCount_sq_psi_restricted (q r : ℝ) {S A : Set ℝ}
           affineMap q r ⁻¹' ((gaussMap^[j']) ⁻¹' A))) :=
         setIntegral_indicator_one_gaussMeasure hmeas
 
-/-- **The irreducible L² core of the crux (ψ-pushed second-moment / variance estimate).**
-*Disclosed open obligation — one level below `psi_pushed_chebyshev_brick`.*  The `L²` deviation of the
-pushed block count `blockCount n (ψ·)` from its target `n·γv`, integrated over the deep x-cylinder,
-is `O(n)·γ(cfCylinder wx')`.  THIS is where the genuine analytic difficulty lives: expanding the
-square gives a double sum of pair correlations `γ(cfCylinder wx' ∩ ψ⁻¹T^{-k}A ∩ ψ⁻¹T^{-k'}A)`, whose
-decay in `|k−k'|` is the ψ-conjugated Gauss-map mixing (the cylinder-based
-`gaussMeasure_cylinder_mixing` does not directly cover the affine `ψ`).  Everything ELSE — the
-Chebyshev/Markov packaging turning this into the crux brick — is proved below. -/
+/-- ⚠️ **REFUTED — THIS STATEMENT IS FALSE. DO NOT ATTEMPT TO PROVE IT.**
+(`OBSTRUCTION-2026-08-25-variance-psi-pushed-FALSE.md`.)  Counterexample: `v=[1]`, `wx'` deep with
+`ψ(cfCylinder wx') ⊆ cfCylinder [2,…,2]` ⇒ `blockCount (cfCylinder [1]) n (ψ·) ≡ 0` on `cfCylinder wx'`
+for all `n ≤ |wx'|`, so the LHS `= n²γv²·γ(cfCylinder wx')` beats the claimed RHS
+`88·n·γv·γ(cfCylinder wx')` once `n > 88/γv ≈ 212`.  Structural cause: a deep cylinder is a tiny
+interval, so `blockCount n(ψ·)` is near-CONSTANT over it for `n ≲ |wx'|` at a value the affine map
+hands us (not `≈nγv`) ⇒ second moment `Θ(n²)`, which the base-mass factor cannot rescue.  Everything
+derived from it (`psi_pushed_chebyshev_brick`, `_poly`) therefore establishes NOTHING (disclosed
+`sorryAx`).  B6 is proved instead via the MEASURE route (`ROUTE-ESCALATION-2026-08-25.md`,
+`CFAeNormal.lean`): existence is a.e.-trivial.  Kept here (not deleted) as the refuted schedule
+route's residue.  DIRECTION.md CURRENT DIRECTIVE forbids grinding it. -/
 theorem variance_blockCount_psi_pushed {q : ℝ} (hq : 0 < q) (r : ℝ) (wx' : List ℕ)
     (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c) (v : List ℕ) (hv : ∀ a ∈ v, 1 ≤ a) (n : ℕ) :
     ∫ x in cfCylinder wx', (blockCount (cfCylinder v) n (affineMap q r x)
