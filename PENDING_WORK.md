@@ -27,7 +27,34 @@ piecewise change-of-variables: the involution identity `gaussMap⁻¹(Z)∩Iio0 
 ℤ-translate union), inv differentiable off 0, then `addHaar_image_eq_zero_of_differentiableOn_of_addHaar_eq_zero`.
 Axiom-clean (trust triple). Both family forms + single-map B6 + B5′ headlines untouched.
 
-**NEXT ATTACK (Tier-2 stretch, detaches freely):** image-Khinchin — strengthen the witness so `x` is
+**🟢 DECOMPOSED (same grind) — image-Khinchin crux set up in `src/NormalNumbers/CFAeKhinchin.lean`.**
+Target `ae_khinchinTypical : ∀ᵐ x ∂γ, KhinchinTypical x` (the co-null set to intersect into the
+family witness). Reduction NAILED (no general ergodic theorem needed):
+- `khinchinTypical_iff_log_tendsto` ⇒ suffices `(1/n)Σ_{i<n} log a_i → log K₀` a.e.
+- Split at a FIXED cutoff `K`: `Σ log a_i = Σ_{a≤K} log a·#{i<n:a_i=a} + logBirkhoffSum K n x`
+  (tail = `CFLogTail.logBirkhoffSum`, = `Σ_{i<n} log a_i·1[a_i>K]`).
+- **Bounded part** → `Σ_{a≤K} log a·γ([a]) = Σ_{k<K} logTailG k` a.e.: FINITE sum of the singleton
+  frequency limits `ae_digitCount_tendsto a` (= `ae_orbit_freq [a]`). **PROVED** this lap (leaf,
+  axiom-clean).
+- **Tail part** → `∫ logTailFn K dγ` a.e.: the ONE disclosed crux `ae_tail_average_tendsto K`.
+- **Exact cancellation**: bounded-limit + tail-limit = `Σ_{k<K} logTailG k + ∫logTailFn K dγ =
+  log K₀` for ANY fixed K, by `integral_logTailFn_eq_of_hasSum` + `HasSum logTailG (log K₀)`
+  (`gaussKuzmin_logsum_hasSum`). No `K→∞` limiting. Pick e.g. K=0.
+
+**NEXT ATTACK (hardest-first):** prove `ae_tail_average_tendsto K` (`CFAeKhinchin.lean:60`, disclosed
+sorry). This is the L²→a.e. Borel–Cantelli of `ae_orbit_freq` applied to `logBirkhoffSum K` instead
+of `blockCount`. Needs a **variance bound for the log-tail Birkhoff sum**:
+`∫ (logBirkhoffSum K n − n·∫logTailFn K)² dγ ≤ C·n·(…)`. Build it from the SAME Gauss two-point
+mixing behind `variance_blockCount_le` (`CFBlockFreq:401`): `logTailFn K = Σ_{a>K} log a·1_{cfCylinder[a]}`
+so its Birkhoff-sum variance decomposes into the cylinder correlations already controlled. Then
+Chebyshev + Borel–Cantelli on `p=(k+1)²` + the MONOTONE gap-squeeze (`logBirkhoffSum K n x` ↑ in n
+since `logTailFn K ≥ 0`) — same skeleton as `ae_orbit_freq`. mathlib has NO pointwise-Birkhoff /
+maximal-ergodic theorem, so this variance route (not an ergodic-theorem import) is the path.
+Then assemble `ae_khinchinTypical` (the split identity `blockCount(cfCylinder[a]) = digit-count` +
+finite-sum a.e. + the cancellation) and graft one more co-null intersection into
+`exists_cfNormal_and_affine_family_cfNormal'` for the image-Khinchin headline.
+
+**ALT stretch:** image-Khinchin — strengthen the witness so `x` is
 additionally Khinchin-typical (the Khinchin-typical set is γ-co-null; intersect one more co-null
 set in the SAME assembly). Cheap given `KhinchinTypical` a.e. infrastructure if present.
 
