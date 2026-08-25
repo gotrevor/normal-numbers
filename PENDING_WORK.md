@@ -41,7 +41,31 @@ family witness). Reduction NAILED (no general ergodic theorem needed):
   log K₀` for ANY fixed K, by `integral_logTailFn_eq_of_hasSum` + `HasSum logTailG (log K₀)`
   (`gaussKuzmin_logsum_hasSum`). No `K→∞` limiting. Pick e.g. K=0.
 
-**NEXT ATTACK (hardest-first):** prove `ae_tail_average_tendsto K` (`CFAeKhinchin.lean:60`, disclosed
+**ROUTE REORIENTED (cleaner) — g-DIRECT instead of the K-split.** The `logBirkhoffSum`/`logTailFn K`
+tail device was for the FIRST-moment-only engine. For the L²→a.e. route it's simpler to target the
+FULL log-digit `g(x) = log(cfDigit x 0)` directly: `g ≥ 0` (so its Birkhoff sum `S_n^g = Σ_{i<n} log a_i`
+is MONOTONE in n ⇒ gap-squeeze applies), `g ∈ L²` (heavy tail is summable), and `∫ g dγ = log K₀`
+(= `Σ_k logTailG k` via `gaussKuzmin_logsum_hasSum`). Then `khinchinTypical_iff_log_tendsto` closes
+`ae_khinchinTypical` from a.e. `(1/n) S_n^g → log K₀`. No cutoff K, no `ae_tail_average_tendsto`.
+
+BRICKS LANDED (all axiom-clean, serve the g-direct variance bound):
+- `gaussMeasureReal_pair_shift₂`, `abs_cov_two_cyl_le` — two-distinct-cylinder mixing.
+- `summable_logMul_vol_cfCylinder` (Σ log·vol), `summable_sqLog_gaussMeasure_cfCylinder` (Σ (log)²·γ,
+  via `sq_log_le_sixteen_sqrt`) — the finite variance constants + `∫g²<∞` input.
+
+**NEXT ATTACK (hardest-first):** the g-direct variance bound `variance_logDigitSum_le`:
+`|∫ (S_n^g)² dγ − n²(log K₀)²| ≤ C·n`. Route: (i) `∫ g dγ = log K₀` and `∫ g² dγ < ∞` from the
+disjoint-cylinder tsum expansion `g = Σ_a log a·1_{[a]}` (MCT / `integral_tsum` over disjoint
+indicators, weights summable by the two bricks above). (ii) second moment
+`∫(S_n^g)² = Σ_{j,j'<n} Σ_{a,b} log a log b·γ(T^{-j}[a]∩T^{-j'}[b])`, per-gap correlation
+`|Cov(g,g∘Tᵐ)| ≤ (9/10)^{m∸1}·4·(Σ log γ)(Σ log vol)` from `abs_cov_two_cyl_le` + the two summability
+bricks, then fold with `sum_range_dist_le`/`geom_trunc_sum_le` (reuse `variance_blockCount_le`'s
+pattern) ⇒ `≤ C·n`. (iii) Chebyshev + Borel–Cantelli on `p=(k+1)²` + monotone gap-squeeze (as in
+`ae_orbit_freq`) ⇒ `ae_khinchinTypical`. (iv) graft one co-null intersection into
+`exists_cfNormal_and_affine_family_cfNormal'`. The `logBirkhoffSum`-based `ae_tail_average_tendsto`
+sorry in `CFAeKhinchin.lean` is now SUPERSEDED scaffolding — leave it or delete when g-direct lands.
+
+**OLD PLAN (superseded):** prove `ae_tail_average_tendsto K` (`CFAeKhinchin.lean:60`, disclosed
 sorry). This is the L²→a.e. Borel–Cantelli of `ae_orbit_freq` applied to `logBirkhoffSum K` instead
 of `blockCount`. Needs a **variance bound for the log-tail Birkhoff sum**:
 `∫ (logBirkhoffSum K n − n·∫logTailFn K)² dγ ≤ C·n·(…)`. Build it from the SAME Gauss two-point
