@@ -2327,6 +2327,47 @@ theorem gaussMeasure_middle_half_ge {c d : ℝ} (hc : 0 ≤ c) (hcd : c ≤ d) (
     nlinarith [hthis, hl2]
   exact le_trans hstep hlow
 
+/-- `gaussMeasure` has no atoms: every singleton is null (it is `≪ volume`). -/
+theorem gaussMeasure_singleton (x : ℝ) : gaussMeasure {x} = 0 := by
+  have hac : gaussMeasure ≪ MeasureTheory.volume.restrict (Set.Ioo (0 : ℝ) 1) :=
+    MeasureTheory.withDensity_absolutelyContinuous _ _
+  have hac2 : MeasureTheory.volume.restrict (Set.Ioo (0 : ℝ) 1) ≪ MeasureTheory.volume :=
+    MeasureTheory.Measure.restrict_le_self.absolutelyContinuous
+  exact (hac.trans hac2) (by simp [Real.volume_singleton])
+
+/-- **The middle-half of the hull carries a fixed fraction of the cylinder's mass.**
+For a cylinder inside a hull `Icc a b`, `γtar := γ(middle-half of [a,b]) ≥ ¼·γ(cfCylinder w)`.
+Bounds `γ(cfCylinder w) ≤ γ(Ioo a b)` (atomless: `γ(Icc)=γ(Ioo)`) then applies
+`gaussMeasure_middle_half_ge`.  This is the `ratio = 1/4` input that makes
+`two_div_beta_rel_le` collapse the block parameter's word-dependence. -/
+theorem gaussMeasure_middle_half_hull_ge (w : List ℕ) {a b : ℝ}
+    (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1) (hsub : cfCylinder w ⊆ Set.Icc a b) :
+    (1 / 4) * (gaussMeasure (cfCylinder w)).toReal
+      ≤ (gaussMeasure (Set.Ioo (a + (b - a) / 4) (b - (b - a) / 4))).toReal := by
+  -- γ(cfCylinder w) ≤ γ(Icc a b) ≤ γ(Ioo a b)
+  have hIccIoo : gaussMeasure (Set.Icc a b) ≤ gaussMeasure (Set.Ioo a b) := by
+    have hcover : Set.Icc a b ⊆ Set.Ioo a b ∪ ({a} ∪ {b}) := by
+      intro x hx
+      rcases eq_or_lt_of_le hx.1 with h | h
+      · exact Or.inr (Or.inl h.symm)
+      rcases eq_or_lt_of_le hx.2 with h2 | h2
+      · exact Or.inr (Or.inr h2)
+      · exact Or.inl ⟨h, h2⟩
+    calc gaussMeasure (Set.Icc a b)
+        ≤ gaussMeasure (Set.Ioo a b ∪ ({a} ∪ {b})) := measure_mono hcover
+      _ ≤ gaussMeasure (Set.Ioo a b) + gaussMeasure ({a} ∪ {b}) := measure_union_le _ _
+      _ ≤ gaussMeasure (Set.Ioo a b) + (gaussMeasure {a} + gaussMeasure {b}) := by
+          gcongr; exact measure_union_le _ _
+      _ = gaussMeasure (Set.Ioo a b) := by
+          rw [gaussMeasure_singleton, gaussMeasure_singleton]; simp
+  have hle : gaussMeasure (cfCylinder w) ≤ gaussMeasure (Set.Ioo a b) :=
+    (measure_mono hsub).trans hIccIoo
+  have hfin : gaussMeasure (Set.Ioo a b) ≠ ⊤ := measure_ne_top _ _
+  have hleR : (gaussMeasure (cfCylinder w)).toReal ≤ (gaussMeasure (Set.Ioo a b)).toReal :=
+    ENNReal.toReal_mono hfin hle
+  have hmid := gaussMeasure_middle_half_ge ha hab hb
+  linarith [hmid, hleR]
+
 /-- **Relative regularization kills the block parameter's word-dependence.**  With the
 block parameter `β_rel = γtar·δ²/(S + γwx)`, `S = γwx·Sg` (relative regularizer `+γwx`
 instead of the scaling-breaking absolute `+1`), the quantity `2/β_rel` — which drives the
