@@ -44,3 +44,4 @@ import NormalNumbers.CFOrbitFreq
 import NormalNumbers.CFFreqBlock
 import NormalNumbers.CFScheduleA
 import NormalNumbers.CFAeNormal
+import NormalNumbers.CFAffineFamily
