@@ -4041,6 +4041,7 @@ def StepSpecL4 {q r : ℝ} (S S' : SchedStateL4 q r) (s : ℕ) : Prop :=
     s ≤ (S'.wx.drop S.wx.length).length ∧
     ∃ (a b : ℝ) (n₁ m Nfib : ℕ),
       0 ≤ a ∧ a < b ∧ b ≤ 1 ∧ cfCylinder S.wx ⊆ Set.Icc a b ∧
+      S.wx.length ≤ (S'.wx.drop S.wx.length).length ∧
       (S'.wx.drop S.wx.length).length = n₁ + m ^ 2 ∧
       n₁ ^ 2 ≤ (S'.wx.drop S.wx.length).length * Nat.sqrt (S'.wx.drop S.wx.length).length ∧
       (∀ k, k ≤ (S'.wx.drop S.wx.length).length → ∀ v ∈ wordFamily s,
@@ -4050,7 +4051,7 @@ def StepSpecL4 {q r : ℝ} (S S' : SchedStateL4 q r) (s : ℕ) : Prop :=
               + (4 * Nat.sqrt (S'.wx.drop S.wx.length).length + 2 * v.length + n₁)) ∧
       (cfK (S'.wx.drop S.wx.length) : ℝ)
           ≤ Real.exp (schedKappaL4 * ((S'.wx.drop S.wx.length).length : ℝ)) ∧
-      m ^ 2 ≤ 6 * (s + Nfib) + 2 + 2 * (Nat.ceil (2 / ((gaussMeasure
+      m ^ 2 ≤ 6 * (S.wx.length + s + Nfib) + 2 + 2 * (Nat.ceil (2 / ((gaussMeasure
           (Set.Ioo (a + (b - a) / 4) (b - (b - a) / 4))).toReal * schedEps s ^ 2
         / (2 * (∑ v ∈ wordFamily s, 7 * (8 * (v.length : ℝ) + 80)
               * (gaussMeasure (cfCylinder v)).toReal * (gaussMeasure (cfCylinder S.wx)).toReal
@@ -4069,7 +4070,7 @@ theorem schedStepL4_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateL4 q 
   obtain ⟨u, n₁, m, Nfib, huL, hune, hupos, hsubcd, hn₁sq, hufreq, _hwit, hcfKu, hlen, hm2, hNf⟩ :=
     exists_uniformly_freq_good_block_steer_len_rel_cfK S.wx S.hwxne S.hwxpos
       (wordFamily s) (wordFamily_pos s) (wordFamily_ne s) (schedEps_pos s)
-      ha hab hb hIoo s schedKappaL4
+      ha hab hb hIoo (S.wx.length + s) schedKappaL4
       (schedKappaL4_spec S.wx S.hwxne S.hwxpos a b ha hab hb hIcc)
   set wx' := S.wx ++ u with hwx'def
   have hwx'ne : wx' ≠ [] := by rw [hwx'def]; simp [hune]
@@ -4086,8 +4087,9 @@ theorem schedStepL4_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateL4 q 
     have : 0 < u.length := List.length_pos_of_ne_nil hune
     omega
   refine ⟨⟨wx', S.e, S.f, hwx'ne, hwx'pos, S.he0, S.hef, S.hf1, hinv'⟩, htake, hgt, ?_,
-    a, b, n₁, m, Nfib, ha, hab, hb, hIcc, ?_, ?_, ?_, ?_, hm2, hNf⟩
-  · rw [hdrop]; exact huL
+    a, b, n₁, m, Nfib, ha, hab, hb, hIcc, ?_, ?_, ?_, ?_, ?_, hm2, hNf⟩
+  · rw [hdrop]; omega
+  · rw [hdrop]; omega
   · rw [hdrop]; exact hlen
   · rw [hdrop]; exact hn₁sq
   · rw [hdrop]; exact hufreq
@@ -4175,7 +4177,7 @@ theorem cfK_wxSeq_L4_le {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
   | succ s ih =>
     set block := (schedL4 hq hr (s + 1)).wx.drop (schedL4 hq hr s).wx.length with hblockdef
     obtain ⟨htake, _hgt, _hslen, a, b, n₁, m, Nfib, _ha, _hab, _hb, _hIcc,
-      _hlen, _hn₁sq, _hfreq, hcfKb, _hm2, _hNf⟩ := schedL4_step hq hr s
+      _hword, _hlen, _hn₁sq, _hfreq, hcfKb, _hm2, _hNf⟩ := schedL4_step hq hr s
     -- the chain splits `W(s+1) = W s ++ block`
     have hWeq : wxSeq_L4 hq hr (s + 1) = wxSeq_L4 hq hr s ++ block := by
       show (schedL4 hq hr (s + 1)).wx = (schedL4 hq hr s).wx ++ block
