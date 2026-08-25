@@ -1,5 +1,5 @@
 import NormalNumbers.Headline
 import NormalNumbers.CFScheduleA
-#print axioms exists_absolutely_normal_cf_normal
-#print axioms exists_absolutely_normal_cf_normal_khinchin
-#print axioms exists_cfNormal_and_affine_cfNormal
+#print axioms NormalNumbers.exists_absolutely_normal_cf_normal
+#print axioms NormalNumbers.exists_absolutely_normal_cf_normal_khinchin
+#print axioms NormalNumbers.exists_cfNormal_and_affine_cfNormal
