@@ -11,13 +11,14 @@ Prior art worth knowing: Numberphile's *All the Numbers* draws the same crossing
 (<https://www.youtube.com/watch?v=5TkIe60y2GI>, at 8:23), and gets the key detail right, that the
 normal circle overlaps algebraic and computable but never meets the rationals.
 
-## 1.  Three claims, two subjects
+## 1.  Four claims, three subjects
 
 | Claim | Subject | Why the cost differs |
 |---|---|---|
 | irrational | relation to `ℚ` | one algebraic relation ruled out; for a digit-concatenation constant it is visible in the construction, hence *trivial* |
 | transcendental | relation to `ℚ` | still one relation, but a whole family at once; for Champernowne it is Mahler 1937, hence *known*, meaning **cited** rather than **observed** |
 | normal | statistics of one expansion | an infinite family of statistical constraints, separately in every base; nothing turns a closed form into control over digit frequencies |
+| computable | what it costs to *produce* the digits | Turing 1936: is there an algorithm for digit `n`?  Answered yes before it is asked, for every constant anyone names, hence *free* |
 
 The first two are arithmetic.  The third is not, and it is base-relative, so it **crosses**
 the algebraic/transcendental boundary instead of nesting inside it.
@@ -31,6 +32,54 @@ Edges that actually hold:
 - **algebraic ∧ normal: no known member, conjecturally everything.**  Borel (1950)
   conjectured every algebraic irrational is absolutely normal, and not one has ever been
   shown normal in any base.  This is the sharpest fact on the page.
+
+## 1b.  The computability axis, which sits underneath both
+
+Added 2026-08-25.  It was under-weighted in the first pass of this doc and of the HTML page,
+and it deserves its own section because it is the axis that explains the shape of the others.
+
+`x` is **computable** if some algorithm, given `n`, returns the `n`th digit.
+
+- **The one edge to the arithmetic axis: `uncomputable ⇒ transcendental`, hence irrational.**
+  Every rational is computable and every algebraic number is computable (isolate the roots
+  of its minimal polynomial to any precision), so anything uncomputable is outside both.
+  One way only: `π` is transcendental and computable, so the converse fails as widely as
+  a converse can.
+- **There is no such thing as an uncomputable integer.**  Uncomputability is a property of
+  *infinite* objects; every finite object is printed by the program that prints it.  The
+  busy beaver *function* is uncomputable (Radó 1962), but each value `BB(n)` is one
+  particular integer and is therefore computable.  What is true: O'Rear's 748-state machine
+  halts exactly when ZFC is inconsistent (sharpening Yedidia–Aaronson's 7910), so if ZFC is
+  consistent it cannot pin down `BB(748)`.  A program printing that integer exists; no
+  theory we trust can say which one.  *Computable* quantifies over algorithms that exist,
+  not algorithms we can find.
+- **Countably many programs, so countably many computable reals: measure zero.**  Every
+  "almost every real is …" theorem on the page is therefore silent about every number
+  anyone has ever named.  Borel 1909 says nothing whatsoever about `π`, and that is
+  structural, not a weakness of the proof.
+- **The ceiling.**  No computable real is random in *any* effective sense, down to the
+  weakest rung: for computable `x`, `{x}` is a `Π⁰₁` null class, so `x` is not even Kurtz
+  random.  **Absolute normality is the top of what a computable number can reach**, which
+  is the same fact as Champernowne having finite-state dimension `1` (maximal) and
+  effective Hausdorff dimension `0` (minimal), since `K(x↾n) = O(log n)` for anything a
+  program prints.
+- **Effectivizing is the history of the subject.**  Sierpiński 1917 constructed an
+  absolutely normal number; Turing wrote an algorithm around 1937 (unpublished until 1992,
+  with a gap); a genuinely computable example is Becher–Figueira 2002; polynomial time is
+  Becher–Heiber–Slaman 2013.  The B5′ witness here is of exactly that kind: the content is
+  not that such a number exists but that a program prints it.
+
+Formalization status of this axis, at the pinned rev:
+
+| Claim | In Lean |
+|---|---|
+| halting problem undecidable | mathlib, `ComputablePred.halting_problem` |
+| countably many programs | mathlib, `Nat.Partrec.Code.instDenumerable` |
+| Turing degrees as a partial order | mathlib, `TuringDegree` (on `ℕ →. ℕ`, not on reals) |
+| `algebraic ⇒ computable` | **not yet.** `Computable` lives on encodable types and `ℝ` is not one, so "computable real" has to be defined first |
+| computable reals are null | **not yet**, same blocker |
+| a computable absolutely normal number exists | **not yet.**  ⚠️ Be exact here: our witness is an explicit construction, but *computability of it* is not part of any formal statement in this repo, so the row is open however suggestive the Lean looks |
+| no computable real is Kurtz random | **not yet**, needs the same effective-measure layer as the Schnorr row |
 
 ## 2.  Already formalized
 

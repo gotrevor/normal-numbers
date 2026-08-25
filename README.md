@@ -10,7 +10,7 @@ normal in any base.  This repo formalizes the definitions, the classical
 equivalences, and the two known bridges toward that open problem.
 
 **Illustrated map: [How Irregular Is a Number?](https://claude.ai/code/artifact/b539ebd7-b4cd-4522-9588-8509f2b24e50)** places
-normality next to irrationality and transcendence, works out how the two axes actually relate,
+normality next to irrationality, transcendence and computability, works out how the axes relate,
 and ends in a status board of every claim on the map with what is proved and what is
 machine-checked, each linked to its source.  Start there if you want the landscape before the
 Lean.  Source: [`docs/how-irregular-is-a-number.html`](docs/how-irregular-is-a-number.html).
@@ -84,7 +84,9 @@ target 2 is exactly what upgrades such a result to the *real number*.
 
 [**How Irregular Is a Number?**](https://claude.ai/code/artifact/b539ebd7-b4cd-4522-9588-8509f2b24e50) is the illustrated
 version: three nested expansion regions crossed with the algebraic/transcendental split, the
-implication lattice from `Irrational` up to 2-randomness, and a per-claim status board.  Its
+computability axis underneath both (`uncomputable ⇒ transcendental`, and the ceiling that stops
+every computable real at absolute normality), the implication lattice from `Irrational` up to
+2-randomness, and a per-claim status board.  Its
 source lives here as [`docs/how-irregular-is-a-number.html`](docs/how-irregular-is-a-number.html)
 and opens standalone in a browser.
 
