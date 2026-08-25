@@ -4187,6 +4187,38 @@ theorem exists_const_pow_le_two_pow (k : ℕ) :
       _ ≤ max 1 ((⌈N⌉₊ : ℝ) ^ k) * (2 : ℝ) ^ s := by
           nlinarith [le_max_left (1:ℝ) ((⌈N⌉₊ : ℝ) ^ k), h2s]
 
+/-- **Same-length cylinders partition**: `∑_{v∈boundedWords t l} γ(cfCylinder v) ≤ 1`.
+Words of a fixed length `l` have pairwise-disjoint cylinders (`cfCylinder_disjoint`), so
+the measure sum is the measure of their union `≤ γ(univ) = 1`. -/
+theorem sum_gaussMeasure_boundedWords_le_one (t l : ℕ) :
+    ∑ v ∈ boundedWords t l, (gaussMeasure (cfCylinder v)).toReal ≤ 1 := by
+  have hdisj : (↑(boundedWords t l) : Set (List ℕ)).PairwiseDisjoint (fun v => cfCylinder v) :=
+    fun v hv v' hv' hne => cfCylinder_disjoint
+      (by rw [(mem_boundedWords.1 hv).1, (mem_boundedWords.1 hv').1]) hne
+  have hbi := MeasureTheory.measure_biUnion_finset hdisj
+    (fun v (_ : v ∈ boundedWords t l) => measurableSet_cfCylinder v) (μ := gaussMeasure)
+  rw [← ENNReal.toReal_sum (fun v _ => measure_ne_top _ _), ← hbi]
+  have hle1 : gaussMeasure (⋃ v ∈ boundedWords t l, cfCylinder v) ≤ 1 :=
+    (measure_mono (Set.subset_univ _)).trans_eq measure_univ
+  calc (gaussMeasure (⋃ v ∈ boundedWords t l, cfCylinder v)).toReal
+      ≤ (1 : ENNReal).toReal := ENNReal.toReal_mono (by norm_num) hle1
+    _ = 1 := by simp
+
+/-- **The family cylinder-mass sum is at most `s`**: `∑_{v∈wordFamily s} γ(cfCylinder v) ≤ s`.
+`wordFamily s` is the length-disjoint union of `boundedWords s l` over `l ∈ [1,s]`, each of
+mass `≤ 1` (`sum_gaussMeasure_boundedWords_le_one`); there are `s` lengths. -/
+theorem sum_gaussMeasure_wordFamily_le (s : ℕ) :
+    ∑ v ∈ wordFamily s, (gaussMeasure (cfCylinder v)).toReal ≤ (s : ℝ) := by
+  have hdisj : (↑(Finset.Icc 1 s) : Set ℕ).PairwiseDisjoint (boundedWords s) := by
+    intro l _ l' _ hll'
+    refine Finset.disjoint_left.2 (fun v hv hv' => hll' ?_)
+    rw [← (mem_boundedWords.1 hv).1, ← (mem_boundedWords.1 hv').1]
+  rw [wordFamily, Finset.sum_biUnion hdisj]
+  calc ∑ l ∈ Finset.Icc 1 s, ∑ v ∈ boundedWords s l, (gaussMeasure (cfCylinder v)).toReal
+      ≤ ∑ _l ∈ Finset.Icc 1 s, (1 : ℝ) :=
+        Finset.sum_le_sum (fun l _ => sum_gaussMeasure_boundedWords_le_one s l)
+    _ = (s : ℝ) := by rw [Finset.sum_const, Nat.card_Icc]; simp
+
 /-- **Block length is at most `2m²+7`** (the `n₁` burn-in is dominated by `m²`).  From
 `|b| = n₁ + m²` and the sublinear-slack witness `n₁² ≤ |b|·√|b|`: either `n₁ ≤ m²`
 (so `|b| ≤ 2m²`), or `m² < n₁`, forcing `|b| < 2n₁` and hence — via `n₁² ≤ |b|·√|b|` —
