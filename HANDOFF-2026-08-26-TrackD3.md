@@ -117,6 +117,14 @@ API and do not touch the two known-false `CFScheduleA.lean` sorries.
 
 The initial D3 reduction is `166b2f5`, the aligned alphabet/cylinder brick is
 `04f398d`, and the endpoint-safe full finite cover is `ac66b92`.  The final
-Hausdorff-cost theorem, exact wrapper, documentation, and this completion
-receipt are the next green commit.  Full-build and guarded-axiom receipts are
-recorded above.
+Hausdorff-cost theorem, exact wrapper, documentation, and completion receipt
+are commit `775d595`.  Full-build and guarded-axiom receipts are recorded
+above.
+
+`box done` was called after that green commit.  The repo-wide self-stop gate
+warned that it may relaunch because two source sorries remain.  This lap's
+operator objective is a bounded subset and explicitly forbids touching those
+two known-false `CFScheduleA.lean` sorries, so they are not Track D blockers and
+must not be used to reopen the completed objective.  A host configuration that
+requires a repository-wide sorry-free gate is incompatible with this bounded
+assignment; use the scoped done condition for Track D if another lap starts.
