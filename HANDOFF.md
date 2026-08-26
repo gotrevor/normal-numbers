@@ -71,3 +71,11 @@ locally. The next actions are operator-owned external publication: inspect and
 open the prepared sibling PRs, push/publish this repository so the configured
 comparator CI can execute, and post the drafted announcement. Preserve the two
 known-false `CFScheduleA.lean` sorries and all completed headline APIs.
+
+`box done` was called after the independent audit and wrote the lap stop signal,
+but its repo-wide self-stop gate reported that it will relaunch because it counts
+the two known-false `CFScheduleA.lean` sorries. This is a bounded-objective gate
+mismatch: the operator explicitly forbade touching those stubs. Per the gate's
+own guidance, do not reopen the completed publishing-prep work and do not convert
+this into `box stuck`; a future host launch should scope `--done-when` to this
+objective if it needs the repo-wide stop to be terminal.
