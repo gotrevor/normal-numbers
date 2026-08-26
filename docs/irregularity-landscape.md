@@ -101,7 +101,7 @@ This repo:
 | `IsNormal b x`, `IsNormalSequence b s`, `digit`, `Visits` | `RealDefs.lean`, `SeqDefs.lean` |
 | `Equidistributed` (mathlib has no equidistribution API) | `RealDefs.lean` |
 | `IsAbsolutelyNormal`, `IsCFNormal`, `KhinchinTypical` | `Headline.lean` |
-| `IsDisjunctive`, `AbsolutelyDisjunctive`, disjunctive ⟺ dense orbit | `Disjunctive.lean` |
+| `IsDisjunctive`, `AbsolutelyDisjunctive`, `OccursAt`; word occurrence ⟺ dense orbit; positive base-power invariance | `Disjunctive.lean` |
 | absolutely disjunctive reals are residual; normal-in-base-`b` reals are meagre | `DisjunctiveBaire.lean`, `NormalMeager.lean` |
 | a real disjunctive in every base and normal in no base exists | `exists_absolutelyDisjunctive_forall_not_isNormal` |
 | Wall's theorem, Bailey-Crandall, Stoneham base 2, Pillai, the B5' witness | `Wall.lean`, `LnTwo.lean`, `Stoneham.lean`, `Pillai.lean`, `Headline.lean` |

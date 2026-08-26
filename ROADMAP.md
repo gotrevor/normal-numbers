@@ -91,10 +91,11 @@ no naturally-occurring number is proven Khinchin-typical.
 Named axioms in the Hypothesis-A pattern, one rung below normality; the doc is
 the source of truth for statements and claim status (novelty unswept).
 
-- 🔨 D0 `Disjunctive.lean`: `IsDisjunctive` and
-  `isDisjunctive_iff_denseOrbit` (topological twin of Wall) landed; padding
-  lemma and `omegaLimit` basics (closed, forward-invariant, dense ⟺ full)
-  remain
+- 🔨 D0 `Disjunctive.lean`: `OccursAt`,
+  `isDisjunctive_iff_forall_occursAt`, the dense-orbit twin of Wall, and
+  positive base-power invariance (`isDisjunctive_pow_iff`) landed;
+  `omegaLimit` basics remain after choosing the endpoint-identified circle
+  representation (the ambient-ℝ orbit closure is `[0,1]`, not `[0,1)`)
 - ⬜ D1 the 0-1 law: closed forward-invariant `K` with `λ(K) > 0` is
   everything (b-adic Lebesgue density route)
 - ⬜ D2 conditional headlines for ln 2: Axiom Λ (positive limit mass) and the

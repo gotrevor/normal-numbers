@@ -1,4 +1,4 @@
-# Blueprint: Route A -- Vandehey with a compact fiber
+# Blueprint: Route A -- Vandehey with a bounded-distortion fiber
 
 **Target** (Vandehey 2017, Compositio 153, Sec.7 problem 1; open):
 
@@ -35,8 +35,8 @@ mechanism was measured and is present, proof still owed · **open** = real work 
 | | node | replaces | status |
 |---|---|---|---|
 | A1 | transducer identity `Mx = R(w,M) . (U(w,M)(T^|w| x))` | Vandehey Lemma 2.1 + identity (9) | **free** |
-| A2 | window lemma: `U(w,M)` lies in a compact `W` of bounded-distortion maps | "entries `<= D` => finite" | **probe-green** |
-| A2a | burst bound: digits emitted per step uniformly bounded on `W` | Lemma 2.2 | **probe-green** |
+| A2 | window lemma: `U(w,M)` has **bounded distortion** (state the lemma for reduced normal forms, NOT as compactness of the raw state) | "entries `<= D` => finite" | **probe-green**, restated |
+| A2a | burst bound `<= C_M + log(1+a)/Levy` -- **unbounded**, Lemma 2.2 does NOT port | Lemma 2.2 | **corrected**; A7 survives anyway |
 | A2b | positive-cone normalisation | Lemma 2.3 (`[-1;1]`-cancellation) | free |
 | A3 | Doeblin condition for the chain on `W` | Sec.4 sink-SCC transitivity, Lemma 4.1 | **probe-green**, and the wall |
 | A4 | stationary `rho` on `W`, mutually a.c. with the natural measure | Theorem 3.1 | follows from A3 + compactness |
@@ -69,6 +69,44 @@ A3 is needed along **arbitrary CF-normal** input, and CF-normality controls
 fixed-rank cylinder frequencies while excursions are unbounded-rank.  That gap is
 exactly where the attack map put its 35% wall, and no simulation can close it --
 it is what `f_j^±` (A6) exists to squeeze.
+
+## Corrections from the second, INDEPENDENT probe (2026-08-25)
+
+A different session probed Route A with different code and no shared results, reached
+the **same GREEN verdict**, and found three things that change what this blueprint must
+prove.  None is a wall; all are sharpenings.  Source: `experiments/PROBE-ROUTE-A.md`,
+attack map Sec.3.  Two probes agreeing from independent origins is worth more than either.
+
+1. **The integer ancestor helps with the STATEMENT and not at all with the PROOF.**  This
+   blueprint inherited the attack map's "post-emission boundedness should be automatic
+   exactly as in the integer case".  Read against the PDF, Vandehey's finiteness is an
+   **integer descent** (Lemma 2.1 terminates because each step subtracts at least 1 and no
+   coefficient grows), not geometry.  `Z[phi]` is dense; there is nothing to descend on.
+   A2 needs a genuinely different proof.
+2. **Drop "compact in `PGL_2(R)`"; keep "bounded distortion".**  The raw post-emission
+   state set is unbounded **in the proved case too** -- a state straddling `1/c` at depth
+   `eps` has entries `~ sqrt(D/eps)`.  What is bounded on both sides is distortion (exactly
+   `log 4` for integer controls, saturating ~2.5 for `Z[phi]` maps).  State A2 for the
+   reduced normal forms, or directly in terms of distortion.
+3. **Lemma 2.2 does not port**: its proof derives bounded burst FROM `M_D` being finite.
+   Measured replacement across 24 orders of magnitude: `burst <= C_M + log(1+a)/Levy`
+   (integer controls flat at 1.60/1.75; every `Z[phi]` map tracks `0.843*ln a`).  Genuinely
+   unbounded -- but `int log a dmu` is finite (the same finiteness behind Khinchin's
+   constant), so **A7's `l(n) = c1 n(1+o(1))` survives**; `c1` measured 0.965-0.989 against
+   0.986-1.013 for controls.
+
+📌 And the coupled-trajectory note below is stronger than "the wrong test": **pathwise
+merging is provably impossible here.**  Two states coincide iff `M^-1 V M` is integral for
+integer `V`, which for `M = diag(phi,1)` forces `V` diagonal, i.e. the same input prefix;
+by Serret the same kills exact output-tail coupling.  Measured: `2x` merges at step 3 with
+a 1217-digit common tail, `phi` never in 1200 steps.  So the Saloff-Coste-Zuniga citation
+must be replaced by a **distributional** statement -- never a coupling or synchronising word.
+
+⚠️ Consequence for my own retraction in `PROBE-2026-08-25-*-feedback-adversary.md`: the
+control correctly showed my distortion functional was not measuring Vandehey's bound, but
+"claim retracted" under-used the observation.  The `q = 2` agreement was not only an
+artifact -- it is the evidence that A2 must be **restated**.  A control tells you the
+instrument is wrong, not that there is nothing there.
 
 ## The Lemma 3.2 hole, and why A5 is owed either way
 

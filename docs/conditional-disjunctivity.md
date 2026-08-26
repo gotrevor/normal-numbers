@@ -20,12 +20,16 @@ For x ∈ ℝ and the circle map T_b(y) = by mod 1:
 
 - x is **disjunctive in base b** ⟺ the orbit `{bⁿx mod 1}` is **dense** in [0,1).  (Normal ⟺
   equidistributed is Wall's theorem, formalized in this repo; this is its topological twin.)
-- Let **Ω(x)** be the ω-limit set of the orbit (all subsequential limits).  Ω is closed and
-  T_b-forward-invariant (continuity of the circle map).  Since [0,1) is perfect and an orbit is
-  countable, the orbit is dense ⟺ **Ω(x) = [0,1)**.
+- Equivalently, every finite base-b word occurs (`OccursAt`); and for every `k ≥ 1`, x is
+  disjunctive in base b ⟺ x is disjunctive in base bᵏ (`isDisjunctive_pow_iff`).
+- Let **Ω(x)** be the ω-limit set of the orbit (all subsequential limits).  On the
+  endpoint-identified circle, Ω is closed and T_b-forward-invariant, and orbit density is
+  equivalent to **Ω(x) being the full circle**.  With the current ambient-ℝ representatives,
+  a dense orbit has closure `[0,1]`, so `[0,1)` must not be used as the right-hand closed set.
 
-Work item: `IsDisjunctive` + `isDisjunctive_iff_denseOrbit` + `omegaLimit` basics.  Small,
-self-contained, sits beside `Wall.lean`.
+Formalized in `Disjunctive.lean`: the interval, word-occurrence, and dense-orbit formulations,
+plus positive base-power invariance.  The `omegaLimit` basics remain the last item in this tranche,
+after freezing a circle/relative-topology representation.
 
 ## 1.  Axiom Λ (positive limit mass) - ln 2, dynamics-flavored
 
@@ -174,7 +178,7 @@ avoiding class flips from polynomial to exponential and complexity arguments go 
 
 | item | shape | tier |
 |---|---|---|
-| `IsDisjunctive` + padding lemma + `isDisjunctive_iff_denseOrbit` | defs + topology | low |
+| `OccursAt` + word/dense-orbit formulations + positive base-power invariance | **formalized** in `Disjunctive.lean` | done |
 | `omegaLimit`: closed, forward-invariant, dense ⟺ full | topology | low |
 | 0-1 law `measure_pos → omegaLimit = univ` | Lebesgue density | mid |
 | Axiom Λ named + `isDisjunctive_log_two_of_...` assembly | conditional headline | low |

@@ -204,21 +204,21 @@ is elementary and entirely unformalized.  Lower value than 4.1, but the cheapest
 ## 5.  Formal-side state
 
 The 2026-08-25 pinned-mathlib and Lean Zulip sweeps found no prior
-formalization of this corner.  This repo now supplies the first row and its
-category-theoretic separation consequence; formalization novelty remains
+formalization of this corner.  This repo now supplies the first two rows and
+the category-theoretic separation consequence; formalization novelty remains
 hedged at that evidence tier.
 
 | candidate | Lean state | tier |
 |---|---|---|
 | absolutely disjunctive numbers are comeager (Calude-Zamfirescu) | **shipped:** `residual_absolutelyDisjunctive` in `DisjunctiveBaire.lean`; `isMeagre_setOf_isNormal` and `exists_absolutelyDisjunctive_forall_not_isNormal` in `NormalMeager.lean` formalize the stronger "lexicon with no statistics" conclusion | low |
-| disjunctive in `b` ⟺ disjunctive in `bᵏ` | open; the §0 padding argument is self-contained and remains the natural next `Disjunctive` API lemma | low |
+| disjunctive in `b` ⟺ disjunctive in `bᵏ` | **shipped:** `isDisjunctive_pow_iff` in `Disjunctive.lean`, through the `OccursAt`/cylinder bridge and the §0 alignment word | low |
 | Mahler 1973 / Berend-Boshernitzan | open; headline, elementary, no prior formalization found | mid |
 | Furstenberg `×2 ×3` topological rigidity | open; famous, and the topological version is the tractable half | high |
 
 The proof is pure Baire category.  `orbitLiftOpen` uses interiors of the
 half-open digit cylinders, so b-adic double-expansion endpoints never enter.
 The statements live on all of `ℝ`, since both `IsDisjunctive` and `IsNormal`
-read only the fractional part.  Catalog rows for the last three open targets
+read only the fractional part.  Catalog rows for the last two open targets
 live in the KB under `core/projects/formalization-targets/problems/`.
 
 ## References

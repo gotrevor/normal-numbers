@@ -93,54 +93,6 @@ private theorem visitCount_eq_card_matchesAt (b : ℕ) (hb : 2 ≤ b) {x : ℝ}
   intro i _
   exact (matchesAt_iff_orbit_mem b hb hx w hw i).symm
 
-/-! ### Naming a cell by a block: `padWord` -/
-
-/-- The length-`k` digit block whose value is `m`: big-endian digits of
-`m`, zero-padded on the left. -/
-def padWord (b k m : ℕ) : List ℕ :=
-  List.replicate (k - (Nat.digits b m).length) 0 ++ (Nat.digits b m).reverse
-
-theorem length_padWord {b : ℕ} (hb : 2 ≤ b) {k m : ℕ} (hm : m < b ^ k) :
-    (padWord b k m).length = k := by
-  have hlen : (Nat.digits b m).length ≤ k :=
-    (Nat.digits_length_le_iff (by omega) m).mpr hm
-  simp only [padWord, List.length_append, List.length_replicate,
-    List.length_reverse]
-  omega
-
-theorem padWord_digits_lt {b : ℕ} (_hb : 2 ≤ b) (k m : ℕ) :
-    ∀ d ∈ padWord b k m, d < b := by
-  intro d hd
-  rcases List.mem_append.mp hd with h | h
-  · rw [List.eq_of_mem_replicate h]
-    omega
-  · exact Nat.digits_lt_base (by omega) (List.mem_reverse.mp h)
-
-private theorem blockNatVal_replicate_zero_append (b j : ℕ) (v : List ℕ) :
-    blockNatVal b (List.replicate j 0 ++ v) = blockNatVal b v := by
-  induction j with
-  | zero => simp
-  | succ j ih =>
-      rw [List.replicate_succ, List.cons_append]
-      show List.foldl (fun acc d => acc * b + d) 0 _ = _
-      simp only [List.foldl_cons, Nat.zero_mul, Nat.add_zero]
-      exact ih
-
-private theorem foldl_reverse_digits (b : ℕ) (l : List ℕ) :
-    l.reverse.foldl (fun acc d => acc * b + d) 0 = Nat.ofDigits b l := by
-  rw [List.foldl_reverse]
-  induction l with
-  | nil => simp [Nat.ofDigits]
-  | cons d l ih =>
-      rw [List.foldr_cons, Nat.ofDigits_cons, ih]
-      ring
-
-theorem blockNatVal_padWord {b : ℕ} (_hb : 2 ≤ b) (k m : ℕ) :
-    blockNatVal b (padWord b k m) = m := by
-  rw [padWord, blockNatVal_replicate_zero_append]
-  show (Nat.digits b m).reverse.foldl (fun acc d => acc * b + d) 0 = m
-  rw [foldl_reverse_digits, Nat.ofDigits_digits]
-
 /-! ### Wall's theorem -/
 
 /-- **Wall's theorem** (1949): a real number is normal in base `b` iff its

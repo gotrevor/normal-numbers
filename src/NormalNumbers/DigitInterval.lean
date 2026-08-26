@@ -19,6 +19,7 @@ material for Wall's theorem:
 * `blockNatVal`: big-endian base-`b` value of a digit block, with its
   arithmetic (`blockNatVal_cons`, `blockNatVal_lt`, `blockNatVal_eq_sum`,
   `blockNatVal_inj`);
+* `padWord`: the length-`k` base-`b` block naming any value below `b^k`;
 * `mem_Ico_div_pow_iff_floor_eq`: `y ∈ [n/b^k, (n+1)/b^k) ↔ ⌊y·b^k⌋ = n`;
 * `digits_prefix_iff`: for `y ∈ [0,1)`, the first `w.length` digits of `y`
   spell exactly `w` iff `y` lies in the b-adic interval of `w`;
@@ -213,6 +214,54 @@ theorem blockNatVal_inj (b : ℕ) (hb : 1 ≤ b) (w₁ : List ℕ) :
           have hdd : d₁ = d₂ := by rw [← hd₁, ← hd₂, hval]
           have hvv : blockNatVal b w₁ = blockNatVal b w₂ := by rw [← hm₁, ← hm₂, hval]
           rw [hdd, ih w₂ hlen' hw₁ hw₂ hvv]
+
+/-! ### Naming a cell by a block: `padWord` -/
+
+/-- The length-`k` digit block whose value is `m`: big-endian digits of
+`m`, zero-padded on the left. -/
+def padWord (b k m : ℕ) : List ℕ :=
+  List.replicate (k - (Nat.digits b m).length) 0 ++ (Nat.digits b m).reverse
+
+theorem length_padWord {b : ℕ} (hb : 2 ≤ b) {k m : ℕ} (hm : m < b ^ k) :
+    (padWord b k m).length = k := by
+  have hlen : (Nat.digits b m).length ≤ k :=
+    (Nat.digits_length_le_iff (by omega) m).mpr hm
+  simp only [padWord, List.length_append, List.length_replicate,
+    List.length_reverse]
+  omega
+
+theorem padWord_digits_lt {b : ℕ} (_hb : 2 ≤ b) (k m : ℕ) :
+    ∀ d ∈ padWord b k m, d < b := by
+  intro d hd
+  rcases List.mem_append.mp hd with h | h
+  · rw [List.eq_of_mem_replicate h]
+    omega
+  · exact Nat.digits_lt_base (by omega) (List.mem_reverse.mp h)
+
+private theorem blockNatVal_replicate_zero_append (b j : ℕ) (v : List ℕ) :
+    blockNatVal b (List.replicate j 0 ++ v) = blockNatVal b v := by
+  induction j with
+  | zero => simp
+  | succ j ih =>
+      rw [List.replicate_succ, List.cons_append]
+      show List.foldl (fun acc d => acc * b + d) 0 _ = _
+      simp only [List.foldl_cons, Nat.zero_mul, Nat.add_zero]
+      exact ih
+
+private theorem foldl_reverse_digits (b : ℕ) (l : List ℕ) :
+    l.reverse.foldl (fun acc d => acc * b + d) 0 = Nat.ofDigits b l := by
+  rw [List.foldl_reverse]
+  induction l with
+  | nil => simp [Nat.ofDigits]
+  | cons d l ih =>
+      rw [List.foldr_cons, Nat.ofDigits_cons, ih]
+      ring
+
+theorem blockNatVal_padWord {b : ℕ} (_hb : 2 ≤ b) (k m : ℕ) :
+    blockNatVal b (padWord b k m) = m := by
+  rw [padWord, blockNatVal_replicate_zero_append]
+  show (Nat.digits b m).reverse.foldl (fun acc d => acc * b + d) 0 = m
+  rw [foldl_reverse_digits, Nat.ofDigits_digits]
 
 /-! ## Prefix ↔ b-adic interval -/
 
