@@ -131,3 +131,55 @@ the honest end-to-end gate.
 There is no in-scope blocker. The next actions remain operator-owned publication,
 prepared sibling PRs, and announcement. Preserve the bypassed false stubs and all
 completed APIs.
+
+## Second fresh independent completion audit — 2026-08-26
+
+This autonomous lap again reconstructed the Phase 3 publishing-prep result from
+the durable treadmill policy, all active project records, the complete
+comparator-harness guide and its required assets, the relevant Lean source, and
+the sibling `formal-conjectures` correction itself. It made no theorem, proof,
+comparator, workflow, metadata, roadmap, or directive change: the existing
+artifacts already satisfy the operator objective.
+
+Facts-first findings:
+
+- Active prose consistently marks image-Khinchin, Track D, and
+  `IsNormal.isDisjunctive` complete and `ae_tail_average_tendsto` proved. Contrary
+  statements occur only under sections explicitly labeled historical or
+  superseded.
+- Sibling commit `c6126c56` really changes `IsNormalInBase` to all nonempty
+  overlapping blocks and preserves the former digit-frequency predicate as
+  `IsSimplyNormalInBase`. It is contained only by the local
+  `fix/full-normality-definition` branch, whose HEAD is the empty-block test
+  follow-up `5d5832d0`; it is not an upstream merge.
+- The Champernowne contribution remains described as staged and externally
+  unpublished. No sibling repository, PR, remote, or announcement was mutated.
+
+Fresh verification actually run:
+
+- `lake build NormalNumbers Comparator` — passed, 8769 jobs. The only source
+  proof-hole warnings are the forbidden bypassed stubs at
+  `CFScheduleA.lean:4400` and `:5774`; the Challenge has its two intentional
+  headline holes.
+- `lake build Comparator.NormalNumbers.Challenge
+  Comparator.NormalNumbers.Solution` — passed, 8715 jobs.
+- `scripts/comparator-probe` — all five configured statement closures are
+  identical; `scripts/comparator-probe --teeth-test` — the injected missing
+  name drove the check red and the teeth test passed.
+- The exact axiom gate passed for the Wall and conditional ln-two headlines,
+  `ae_tail_average_tendsto`, the image-Khinchin headline,
+  `IsNormal.isDisjunctive`, the exact D3 wrapper, and all three D4 headlines.
+  Every declaration reports exactly `[Classical.choice, Quot.sound, propext]`.
+- JSON/YAML/workflow/artifact assertions passed: exact five-name config and
+  trust-triple whitelist, nanoda enabled, eight faithful Challenge definition
+  bodies, import-only Solution, non-default Comparator target, Lean v4.33.1,
+  all four verifier pins in the cache key, non-vacuous config discovery,
+  comparator invocation, formalization v0.3 fields, top-of-README disclosure,
+  and exactly the two source proof holes above.
+- `git diff --check` passed. The four required verifier executables (`landrun`,
+  `lean4export`, `nanoda_bin`, and `comparator`) are absent locally, so the full
+  landrun + Lean-kernel + nanoda execution remains honestly Linux-CI-only.
+
+There is no in-scope blocker or further local attack. The next actions remain
+operator-owned publication, prepared sibling PRs, and announcement. Preserve
+the two bypassed false stubs and all completed APIs.
