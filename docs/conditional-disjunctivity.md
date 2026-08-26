@@ -200,7 +200,17 @@ avoiding class flips from polynomial to exponential and complexity arguments go 
 | 0-1 law `measure_pos → omegaLimit = univ` | **formalized** via additive-circle ergodicity | done |
 | Axiom Λ named + `isDisjunctive_log_two_of_...` assembly | **formalized** | done |
 | D_w bridge from `lnTwoOrbit` tracking + all-words assembly | **formalized** in `ConditionalDisjunctive.lean` | done |
-| M_b implication (needs dim(SFT) < 1) | fractal dimension | high |
+| M_b implication | **in progress** in `QuadraticDisjunctive.lean`: `QuadraticHypothesisM` and the endpoint-safe dynamical assembly are formalized; `MissingWordSubshiftDimensionBound` remains | high |
+
+The live D3 reduction is noncircular.  `circleMissingWordSubshift b w` is an
+explicit closed forward-invariant avoidance set, and
+`quadratic_irrationals_disjunctive_of_hypothesisM_of_missingWordDimension`
+derives the documented conclusion from `QuadraticHypothesisM b` plus only the
+independent Hausdorff-dimension statement.  The landed cover criterion
+`dimH_lt_one_of_finite_covers` and exponent lemma
+`missingWordExponent_lt_one` reduce the remaining work to constructing the
+aligned b-adic cylinder covers and proving their cardinality bound
+`≤ (b^|w| - 1)^q`; D3 is not yet complete.
 
 ## References (delta over the companion doc)
 

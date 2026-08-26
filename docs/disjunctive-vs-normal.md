@@ -215,6 +215,7 @@ hedged at that evidence tier.
 | disjunctive in `b` ⟺ disjunctive in `bᵏ` | **shipped:** `isDisjunctive_pow_iff` in `Disjunctive.lean`, through the `OccursAt`/cylinder bridge and the §0 alignment word | low |
 | Axiom Λ ⟹ `ln 2` is binary disjunctive | **shipped:** the circle ω-limit dictionary, Haar 0-1 law, `LnTwoHypothesisLambda`, and `isDisjunctive_log_two_of_hypothesisLambda` in `ConditionalDisjunctive.lean` | low-mid |
 | Axiom D_w ⟹ `w` recurs arbitrarily late in binary `ln 2` | **shipped:** `LnTwoHypothesisD`, `frequently_occursAt_log_two_of_hypothesisD`, and the all-words disjunctivity assembly in `ConditionalDisjunctive.lean` | low-mid |
+| Axiom M_b ⟹ every quadratic irrational is `b`-disjunctive | **in progress:** `QuadraticHypothesisM` is a named Prop (not a Lean axiom), the endpoint-safe missing-word subshift and conditional assembly are proved in `QuadraticDisjunctive.lean`; the explicit SFT Hausdorff-dimension bound remains | high |
 | Mahler 1973 / Berend-Boshernitzan | open; headline, elementary, no prior formalization found | mid |
 | Furstenberg `×2 ×3` topological rigidity | open; famous, and the topological version is the tractable half | high |
 
