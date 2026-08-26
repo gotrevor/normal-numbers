@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
+import NormalNumbers.Counting
 import NormalNumbers.DigitInterval
 
 /-!
@@ -197,6 +198,36 @@ theorem isDisjunctive_iff_forall_occursAt (b : ℕ) (hb : 2 ≤ b) (x : ℝ) :
                 linarith [hycell.2, hncell.1]
         _ = (1 / (b : ℝ)) ^ k := hwidth
         _ < ε := hk
+
+/-- Normality implies disjunctivity in every genuine base.  Normality gives
+each nonempty valid word a positive limiting frequency, hence at least one
+actual occurrence; the empty word occurs vacuously. -/
+theorem IsNormal.isDisjunctive {b : ℕ} {x : ℝ} (h : IsNormal b x) (hb : 2 ≤ b) :
+    IsDisjunctive b x := by
+  rw [isDisjunctive_iff_forall_occursAt b hb x]
+  intro w hw
+  by_cases hw0 : w = []
+  · subst w
+    exact ⟨0, by simp [OccursAt]⟩
+  have hfreq := h w hw0 hw
+  have hlimit : 0 < ((b : ℝ) ^ w.length)⁻¹ := by positivity
+  have hpos : ∀ᶠ n in atTop,
+      0 < (countOccurrences w ((List.range n).map (digitOf b (Int.fract x))) : ℝ) / n :=
+    (tendsto_order.1 hfreq).1 0 hlimit
+  obtain ⟨n, hn⟩ := hpos.exists
+  have hcount : 0 < countOccurrences w
+      ((List.range n).map (digitOf b (Int.fract x))) := by
+    by_contra hnot
+    have : countOccurrences w
+        ((List.range n).map (digitOf b (Int.fract x))) = 0 := Nat.eq_zero_of_not_pos hnot
+    simp [this] at hn
+  rw [countOccurrences_range_map] at hcount
+  obtain ⟨i, hi⟩ := Finset.card_pos.mp hcount
+  simp only [Finset.mem_filter] at hi
+  refine ⟨i, ?_⟩
+  intro j hj
+  have hmatch := hi.2.2 j hj
+  simpa [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hj] using hmatch
 
 /-- Taking every `k`-th point of the base-`b` orbit gives the base-`b^k`
 orbit. -/

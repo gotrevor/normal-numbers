@@ -92,7 +92,8 @@ Named axioms in the Hypothesis-A pattern, one rung below normality; the doc is
 the source of truth for statements and claim status (novelty unswept).
 
 - ✅ D0 orbit dictionary complete: `Disjunctive.lean` has `OccursAt`, the
-  word/dense-orbit equivalences, and positive base-power invariance; the
+  word/dense-orbit equivalences, positive base-power invariance, and the
+  unconditional API theorem `IsNormal.isDisjunctive`; the
   endpoint-safe `UnitAddCircle` orbit and closed/forward-invariant/full
   ω-limit equivalence are in `ConditionalDisjunctive.lean`
 - ✅ D1 the 0-1 law: a closed `×b`-forward-invariant circle set with positive

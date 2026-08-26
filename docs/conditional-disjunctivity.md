@@ -20,6 +20,8 @@ For x ∈ ℝ and the circle map T_b(y) = by mod 1:
 
 - x is **disjunctive in base b** ⟺ the orbit `{bⁿx mod 1}` is **dense** in [0,1).  (Normal ⟺
   equidistributed is Wall's theorem, formalized in this repo; this is its topological twin.)
+  In particular, normality implies disjunctivity for every `b ≥ 2`, formalized as
+  `IsNormal.isDisjunctive`.
 - Equivalently, every finite base-b word occurs (`OccursAt`); and for every `k ≥ 1`, x is
   disjunctive in base b ⟺ x is disjunctive in base bᵏ (`isDisjunctive_pow_iff`).
 - Let **Ω(x)** be the ω-limit set of the orbit (all subsequential limits).  On the
@@ -193,7 +195,7 @@ avoiding class flips from polynomial to exponential and complexity arguments go 
 
 | item | shape | tier |
 |---|---|---|
-| `OccursAt` + word/dense-orbit formulations + positive base-power invariance | **formalized** in `Disjunctive.lean` | done |
+| `OccursAt` + word/dense-orbit formulations + normality implication + positive base-power invariance | **formalized** in `Disjunctive.lean` | done |
 | `omegaLimit`: closed, forward-invariant, dense ⟺ full | **formalized** in `ConditionalDisjunctive.lean` | done |
 | 0-1 law `measure_pos → omegaLimit = univ` | **formalized** via additive-circle ergodicity | done |
 | Axiom Λ named + `isDisjunctive_log_two_of_...` assembly | **formalized** | done |

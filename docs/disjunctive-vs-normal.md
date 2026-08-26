@@ -210,6 +210,7 @@ hedged at that evidence tier.
 
 | candidate | Lean state | tier |
 |---|---|---|
+| normal in `b` ⟹ disjunctive in `b` | **shipped:** `IsNormal.isDisjunctive` in `Disjunctive.lean`, extracting an occurrence from each positive limiting block frequency | low |
 | absolutely disjunctive numbers are comeager (Calude-Zamfirescu) | **shipped:** `residual_absolutelyDisjunctive` in `DisjunctiveBaire.lean`; `isMeagre_setOf_isNormal` and `exists_absolutelyDisjunctive_forall_not_isNormal` in `NormalMeager.lean` formalize the stronger "lexicon with no statistics" conclusion | low |
 | disjunctive in `b` ⟺ disjunctive in `bᵏ` | **shipped:** `isDisjunctive_pow_iff` in `Disjunctive.lean`, through the `OccursAt`/cylinder bridge and the §0 alignment word | low |
 | Axiom Λ ⟹ `ln 2` is binary disjunctive | **shipped:** the circle ω-limit dictionary, Haar 0-1 law, `LnTwoHypothesisLambda`, and `isDisjunctive_log_two_of_hypothesisLambda` in `ConditionalDisjunctive.lean` | low-mid |
