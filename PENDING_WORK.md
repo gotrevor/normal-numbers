@@ -1,20 +1,17 @@
 # PENDING WORK — image-Khinchin's log-tail SLLN (the ONE open crux) + history below
 
-## Track D3 operator override — 2026-08-26
+## ✅ Track D3 operator override complete — 2026-08-26
 
-The active boxed objective is D3, overriding the older B6 directive below.
-`QuadraticDisjunctive.lean` now contains the faithful named Prop
-`QuadraticHypothesisM`, the explicit closed forward-invariant missing-word
-subshift, and the full dynamical contradiction conditional on
-`MissingWordSubshiftDimensionBound`.  The Hausdorff finite-cover criterion and
-strict entropy exponent `log(b^L-1)/log(b^L) < 1` are proved, as are the exact
-aligned-prefix cardinality `(b^L-1)^q`, cylinder mesh `b^(-qL)`, and the full
-cover dichotomy forced by the open avoidance cylinder.  Exceptional boundary
-hits are now proved b-adic and covered by zero-diameter singletons.  Next
-evaluate the finite rpow sum, prove its geometric decay for an exponent
-strictly between the landed entropy exponent and `1`, and apply
-`dimH_lt_one_of_finite_covers`.  Do not touch either known-false
-`CFScheduleA.lean` sorry.
+The boxed Track D objective is complete.  `IsNormal.isDisjunctive` was first
+landed separately in `b755fd5`.  `QuadraticDisjunctive.lean` contains the
+faithful named Prop `QuadraticHypothesisM`, the explicit closed
+forward-invariant missing-word subshift, the endpoint-safe cover, and the
+proved Hausdorff-cost decay.  The exact wrapper
+`quadratic_irrationals_disjunctive_of_hypothesisM` consumes only
+`QuadraticHypothesisM b` (besides `b ≥ 2`) and concludes that every quadratic
+irrational is `b`-disjunctive.  Guarded `#print axioms` reports only
+`[propext, Classical.choice, Quot.sound]`; the full build passes at 8766 jobs.
+The two known-false `CFScheduleA.lean` sorries remain untouched as required.
 
 ## ✅ 2026-08-25 (grind lap, post-completion) — headline faithfulness RATIFIED + Track D0 opened
 

@@ -102,14 +102,12 @@ the source of truth for statements and claim status (novelty unswept).
   `Λ ⟹ IsDisjunctive 2 (Real.log 2)`, the named per-word `LnTwoHypothesisD`,
   `D_w ⟹` arbitrarily late occurrences of `w`, and the all-words disjunctivity
   assembly are in `ConditionalDisjunctive.lean`
-- 🔨 D3 (stretch) Axiom M implication: `QuadraticDisjunctive.lean` freezes the
-  faithful named Prop `QuadraticHypothesisM`, proves the dynamical assembly
-  conditional only on `MissingWordSubshiftDimensionBound`, and supplies the
-  finite-cover Hausdorff criterion, strict aligned-block entropy gap, exact
-  `(b^|w|-1)^q` prefix alphabet, and the full endpoint-safe finite cover with
-  closed cylinder mesh and zero-diameter b-adic boundary singletons;
-  remaining real cost is the Hausdorff-cost limit assembly proving
-  dim(missing-word SFT) < 1
+- ✅ D3 (stretch) Axiom M implication: `QuadraticDisjunctive.lean` freezes the
+  faithful named Prop `QuadraticHypothesisM`, proves the independent
+  missing-word subshift dimension bound from an endpoint-safe finite cover,
+  and proves the exact axiom-clean conclusion
+  `quadratic_irrationals_disjunctive_of_hypothesisM`: for every `b ≥ 2`,
+  `M_b` implies every quadratic irrational is `b`-disjunctive
 - ✅ D4 **Baire slate (unconditional, SHIPPED 2026-08-25)**:
   `residual_absolutelyDisjunctive`, `isMeagre_setOf_isNormal`, and
   `exists_absolutelyDisjunctive_forall_not_isNormal`; pure Baire category

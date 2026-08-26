@@ -189,8 +189,8 @@ avoiding class flips from polynomial to exponential and complexity arguments go 
   Mahler-problem literature (M).  "Apparently unstated" is the ceiling until then.
 - **Proof status**: the circle ω-limit dictionary, 0-1 law, Λ implication, and full D_w conditional
   family are formalized in `ConditionalDisjunctive.lean`.  §4 dyadic coupling = sketch, carry
-  bookkeeping unchecked.  M's implication = complete modulo the standard SFT-dimension lemma,
-  which is the real formalization cost.  Everything else in §0 is textbook.
+  bookkeeping unchecked.  M's exact implication, including the missing-word SFT dimension
+  argument, is formalized in `QuadraticDisjunctive.lean`.  Everything else in §0 is textbook.
 - **Lean surface**:
 
 | item | shape | tier |
@@ -200,20 +200,19 @@ avoiding class flips from polynomial to exponential and complexity arguments go 
 | 0-1 law `measure_pos → omegaLimit = univ` | **formalized** via additive-circle ergodicity | done |
 | Axiom Λ named + `isDisjunctive_log_two_of_...` assembly | **formalized** | done |
 | D_w bridge from `lnTwoOrbit` tracking + all-words assembly | **formalized** in `ConditionalDisjunctive.lean` | done |
-| M_b implication | **in progress** in `QuadraticDisjunctive.lean`: `QuadraticHypothesisM` and the endpoint-safe dynamical assembly are formalized; `MissingWordSubshiftDimensionBound` remains | high |
+| M_b implication | **formalized** in `QuadraticDisjunctive.lean`: `QuadraticHypothesisM` is a named Prop, `missingWordSubshiftDimensionBound` proves the independent geometric input, and `quadratic_irrationals_disjunctive_of_hypothesisM` is the exact conclusion | done (high-cost) |
 
-The live D3 reduction is noncircular.  `circleMissingWordSubshift b w` is an
-explicit closed forward-invariant avoidance set, and
+The D3 reduction is noncircular.  `circleMissingWordSubshift b w` is an
+explicit closed forward-invariant avoidance set, and the reusable worker
 `quadratic_irrationals_disjunctive_of_hypothesisM_of_missingWordDimension`
 derives the documented conclusion from `QuadraticHypothesisM b` plus only the
-independent Hausdorff-dimension statement.  The landed cover criterion and
-strict exponent gap now have the exact prefix alphabet/cardinality
-`(b^|w| - 1)^q` and the closed circle-cylinder diameter bound
-`≤ b^(-q|w|)` beneath them.  The open-cylinder endpoint issue is also
-resolved: every exceptional aligned boundary hit is proved to be a b-adic
-grid point, and the full finite cover adds those points as zero-diameter
-singletons.  Only evaluation of the Hausdorff sum and its geometric-cost
-limit remain.  D3 is not yet complete.
+independent Hausdorff-dimension statement.  That statement is now proved by
+an endpoint-safe cover with `(b^|w| - 1)^q` aligned cylinders of diameter at
+most `b^(-q|w|)` plus zero-diameter b-adic boundary singletons.  Choosing an
+exponent strictly between `log(b^|w|-1)/log(b^|w|)` and one makes the total
+Hausdorff cost a geometric sequence with ratio below one.  The exact wrapper
+`quadratic_irrationals_disjunctive_of_hypothesisM` therefore consumes only
+`QuadraticHypothesisM b`; guarded axioms show the standard trust triple.
 
 ## References (delta over the companion doc)
 

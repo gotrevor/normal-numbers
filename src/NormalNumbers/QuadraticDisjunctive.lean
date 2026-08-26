@@ -151,6 +151,17 @@ theorem missingWordExponent_lt_one {b L : ℕ} (hb : 2 ≤ b) (hL : 1 ≤ L) :
     exact_mod_cast hpow
   exact (div_lt_one hlog_pos).2 hlog_lt
 
+/-- The aligned-block entropy exponent is nonnegative. -/
+theorem missingWordExponent_nonneg {b L : ℕ} (hb : 2 ≤ b) (hL : 1 ≤ L) :
+    0 ≤ missingWordExponent b L := by
+  have hpow : 2 ≤ b ^ L := hb.trans (Nat.le_self_pow (by omega) b)
+  have hsub : 1 ≤ b ^ L - 1 := by omega
+  have hnum : 0 ≤ Real.log (b ^ L - 1 : ℕ) :=
+    Real.log_nonneg (by exact_mod_cast hsub)
+  have hden : 0 < Real.log (b ^ L : ℕ) :=
+    Real.log_pos (by exact_mod_cast hpow)
+  exact div_nonneg hnum hden.le
+
 /-! ### The aligned missing-word prefix alphabet
 
 At scale `q * |w|`, the nonexceptional cylinders are indexed by `q`
@@ -514,12 +525,184 @@ theorem circleMissingWordSubshift_subset_iUnion_missingWordCoverSet
     refine ⟨Sum.inr m, ?_⟩
     simpa [missingWordCoverSet] using hm
 
+/-! ### Hausdorff cost of the endpoint-safe cover -/
+
+/-- The `d`-cost of the endpoint-safe cover is bounded by the number of
+aligned prefixes times the `d`-power of the common mesh.  The b-adic grid
+half contributes zero because every one of its cover sets is a singleton. -/
+theorem missingWordCoverCost_le {b : ℕ} (hb : 2 ≤ b)
+    {w : List ℕ} (hw : ∀ a ∈ w, a < b) (d : ℝ≥0) (hd : 0 < d) (q : ℕ) :
+    (∑ i : MissingWordCoverIndex b w hw q,
+        Metric.ediam (missingWordCoverSet i) ^ (d : ℝ)) ≤
+      ((b ^ w.length - 1 : ℕ) : ℝ≥0∞) ^ q *
+        (((b : ℝ≥0∞) ^ (q * w.length))⁻¹ ^ (d : ℝ)) := by
+  change (∑ i : (AlignedMissingWordPrefix b w hw q ⊕
+      Fin (b ^ (q * w.length))),
+      Metric.ediam (missingWordCoverSet i) ^ (d : ℝ)) ≤ _
+  rw [Fintype.sum_sum_type]
+  have hright :
+      (∑ m : Fin (b ^ (q * w.length)),
+        Metric.ediam (missingWordCoverSet (Sum.inr m :
+          MissingWordCoverIndex b w hw q)) ^ (d : ℝ)) = 0 := by
+    simp [missingWordCoverSet, hd]
+  rw [hright, add_zero]
+  calc
+    (∑ p : AlignedMissingWordPrefix b w hw q,
+        Metric.ediam (missingWordCoverSet (Sum.inl p :
+          MissingWordCoverIndex b w hw q)) ^ (d : ℝ)) ≤
+        ∑ _p : AlignedMissingWordPrefix b w hw q,
+          (((b : ℝ≥0∞) ^ (q * w.length))⁻¹ ^ (d : ℝ)) := by
+      apply Finset.sum_le_sum
+      intro p hp
+      exact ENNReal.rpow_le_rpow (ediam_missingWordCoverSet_le hb _) d.2
+    _ = ((b ^ w.length - 1 : ℕ) : ℝ≥0∞) ^ q *
+        (((b : ℝ≥0∞) ^ (q * w.length))⁻¹ ^ (d : ℝ)) := by
+      rw [Finset.sum_const, nsmul_eq_mul,
+        show Finset.univ.card =
+          Fintype.card (AlignedMissingWordPrefix b w hw q) from rfl,
+        card_alignedMissingWordPrefix]
+      simp
+
+/-- Rewrite the cover-cost majorant as the `q`-th power of one fixed
+geometric ratio. -/
+theorem missingWordCoverGeometric_eq (b L q : ℕ) (d : ℝ≥0) :
+    ((b ^ L - 1 : ℕ) : ℝ≥0∞) ^ q *
+        (((b : ℝ≥0∞) ^ (q * L))⁻¹ ^ (d : ℝ)) =
+      (((b ^ L - 1 : ℕ) : ℝ≥0∞) *
+        ((((b : ℝ≥0∞) ^ L)⁻¹) ^ (d : ℝ))) ^ q := by
+  let A : ℝ≥0∞ := ((b ^ L - 1 : ℕ) : ℝ≥0∞)
+  let B : ℝ≥0∞ := (b : ℝ≥0∞) ^ L
+  have hpowB : (B ^ q) ^ (d : ℝ) = (B ^ (d : ℝ)) ^ q := by
+    calc
+      (B ^ q) ^ (d : ℝ) = (B ^ (q : ℝ)) ^ (d : ℝ) := by
+        rw [ENNReal.rpow_natCast]
+      _ = B ^ ((q : ℝ) * (d : ℝ)) := (ENNReal.rpow_mul B _ _).symm
+      _ = B ^ ((d : ℝ) * (q : ℝ)) := by rw [mul_comm]
+      _ = (B ^ (d : ℝ)) ^ (q : ℝ) := ENNReal.rpow_mul B _ _
+      _ = (B ^ (d : ℝ)) ^ q := ENNReal.rpow_natCast _ _
+  change A ^ q * ((((b : ℝ≥0∞) ^ (q * L))⁻¹) ^ (d : ℝ)) =
+    (A * B⁻¹ ^ (d : ℝ)) ^ q
+  rw [show (b : ℝ≥0∞) ^ (q * L) = B ^ q by
+    dsimp [B]
+    rw [mul_comm q L, pow_mul]]
+  rw [ENNReal.inv_rpow, hpowB, ENNReal.inv_pow, ← mul_pow, ENNReal.inv_rpow]
+
+/-- The common b-adic mesh of the aligned covers tends to zero. -/
+theorem missingWordMesh_tendsto {b L : ℕ} (hb : 2 ≤ b) (hL : 1 ≤ L) :
+    Tendsto (fun q : ℕ => ((b : ℝ≥0∞) ^ (q * L))⁻¹) atTop (nhds 0) := by
+  have hpow : 1 < b ^ L :=
+    lt_of_lt_of_le (by omega) (Nat.le_self_pow (by omega) b)
+  have hbase : ((b : ℝ≥0∞) ^ L)⁻¹ < 1 := by
+    rw [ENNReal.inv_lt_one]
+    exact_mod_cast hpow
+  have ht := ENNReal.tendsto_pow_atTop_nhds_zero_of_lt_one hbase
+  convert ht using 1
+  funext q
+  rw [mul_comm q L, pow_mul, ENNReal.inv_pow]
+
+/-- Any exponent strictly above the aligned-block entropy exponent makes the
+one-step cover-cost ratio strictly smaller than one. -/
+theorem missingWordCostRatio_lt_one {b L : ℕ} (hb : 2 ≤ b) (hL : 1 ≤ L)
+    (d : ℝ≥0) (hed : missingWordExponent b L < d) :
+    (((b ^ L - 1 : ℕ) : ℝ≥0∞) *
+      (((b : ℝ≥0∞) ^ L)⁻¹ ^ (d : ℝ))) < 1 := by
+  let e := missingWordExponent b L
+  have hed' : e < (d : ℝ) := by simpa [e] using hed
+  have hpow : 2 ≤ b ^ L := hb.trans (Nat.le_self_pow (by omega) b)
+  have hApos : 0 < ((b ^ L - 1 : ℕ) : ℝ) := by
+    exact_mod_cast (show 0 < b ^ L - 1 by omega)
+  have hBpos : 0 < ((b ^ L : ℕ) : ℝ) := by
+    exact_mod_cast (show 0 < b ^ L by omega)
+  have hlogB : 0 < Real.log (b ^ L : ℕ) :=
+    Real.log_pos (by exact_mod_cast hpow)
+  have hlog : Real.log (b ^ L - 1 : ℕ) <
+      (d : ℝ) * Real.log (b ^ L : ℕ) := by
+    rw [show Real.log (b ^ L - 1 : ℕ) = e * Real.log (b ^ L : ℕ) by
+      dsimp [e, missingWordExponent]
+      field_simp]
+    exact mul_lt_mul_of_pos_right hed' hlogB
+  have hArpow : ((b ^ L - 1 : ℕ) : ℝ) <
+      ((b ^ L : ℕ) : ℝ) ^ (d : ℝ) :=
+    (Real.lt_rpow_iff_log_lt hApos hBpos).2 hlog
+  have hbase_ne_top : ((b : ℝ≥0∞) ^ L)⁻¹ ≠ ⊤ := by
+    apply (ENNReal.inv_ne_top).2
+    simp [show b ≠ 0 by omega]
+  have hrpow_ne_top : (((b : ℝ≥0∞) ^ L)⁻¹ ^ (d : ℝ)) ≠ ⊤ :=
+    ENNReal.rpow_ne_top_of_nonneg d.2 hbase_ne_top
+  have hratio_ne_top : ((b ^ L - 1 : ℕ) : ℝ≥0∞) *
+      (((b : ℝ≥0∞) ^ L)⁻¹ ^ (d : ℝ)) ≠ ⊤ :=
+    ENNReal.mul_ne_top (by simp) hrpow_ne_top
+  apply (ENNReal.toReal_lt_toReal hratio_ne_top (by simp)).mp
+  simp only [ENNReal.toReal_one, ENNReal.toReal_mul, ENNReal.toReal_natCast]
+  rw [← ENNReal.toReal_rpow, ENNReal.toReal_inv, ENNReal.toReal_pow,
+    ENNReal.toReal_natCast]
+  rw [Real.inv_rpow (by positivity : 0 ≤ (b : ℝ) ^ L),
+    mul_inv_lt_iff₀ (Real.rpow_pos_of_pos (by positivity) _)]
+  simpa using hArpow
+
 /-- The genuine geometric obligation in D3: every subshift obtained by
 forbidding one nonempty valid base-`b` word has Hausdorff dimension below one.
-This is the graph-directed self-similar/SFT entropy theorem still to prove. -/
+The theorem immediately below discharges it using the endpoint-safe aligned
+cover. -/
 def MissingWordSubshiftDimensionBound (b : ℕ) : Prop :=
   ∀ w : List ℕ, w ≠ [] → (∀ d ∈ w, d < b) →
     dimH (circleMissingWordSubshift b w) < 1
+
+/-- Every nonempty valid missing-word subshift has Hausdorff dimension below
+one.  Choose an exponent halfway between its strict aligned-block entropy
+exponent and one; the cover cost is then dominated by a geometric sequence. -/
+theorem missingWordSubshiftDimensionBound (b : ℕ) (hb : 2 ≤ b) :
+    MissingWordSubshiftDimensionBound b := by
+  intro w hwne hw
+  have hL : 1 ≤ w.length :=
+    Nat.one_le_iff_ne_zero.2 (by simpa using hwne)
+  let e : ℝ := missingWordExponent b w.length
+  have he0 : 0 ≤ e := missingWordExponent_nonneg hb hL
+  have he1 : e < 1 := missingWordExponent_lt_one hb hL
+  let d : ℝ≥0 := ⟨(e + 1) / 2, by linarith⟩
+  have hdpos : 0 < d := by
+    change 0 < (e + 1) / 2
+    linarith
+  have hdlt : d < 1 := by
+    change (e + 1) / 2 < 1
+    linarith
+  have hed : missingWordExponent b w.length < d := by
+    change e < (e + 1) / 2
+    linarith
+  let ρ : ℝ≥0∞ := ((b ^ w.length - 1 : ℕ) : ℝ≥0∞) *
+    (((b : ℝ≥0∞) ^ w.length)⁻¹ ^ (d : ℝ))
+  have hρ : ρ < 1 := missingWordCostRatio_lt_one hb hL d hed
+  have hcostBound : ∀ q : ℕ,
+      (∑ i : MissingWordCoverIndex b w hw q,
+          Metric.ediam (missingWordCoverSet i) ^ (d : ℝ)) ≤ ρ ^ q := by
+    intro q
+    calc
+      (∑ i : MissingWordCoverIndex b w hw q,
+          Metric.ediam (missingWordCoverSet i) ^ (d : ℝ)) ≤
+          ((b ^ w.length - 1 : ℕ) : ℝ≥0∞) ^ q *
+            (((b : ℝ≥0∞) ^ (q * w.length))⁻¹ ^ (d : ℝ)) :=
+        missingWordCoverCost_le hb hw d hdpos q
+      _ = ρ ^ q := by
+        simpa [ρ] using missingWordCoverGeometric_eq b w.length q d
+  have hcost : Tendsto
+      (fun q => ∑ i : MissingWordCoverIndex b w hw q,
+        Metric.ediam (missingWordCoverSet i) ^ (d : ℝ))
+      atTop (nhds 0) := by
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le'
+      tendsto_const_nhds
+      (ENNReal.tendsto_pow_atTop_nhds_zero_of_lt_one hρ) ?_ ?_
+    · exact Filter.Eventually.of_forall fun q => bot_le
+    · exact Filter.Eventually.of_forall hcostBound
+  exact dimH_lt_one_of_finite_covers
+    (circleMissingWordSubshift b w) d hdlt
+    (fun q => MissingWordCoverIndex b w hw q)
+    (fun q => ((b : ℝ≥0∞) ^ (q * w.length))⁻¹)
+    (missingWordMesh_tendsto hb hL)
+    (fun _ i => missingWordCoverSet i)
+    (Filter.Eventually.of_forall fun q i => ediam_missingWordCoverSet_le hb i)
+    (Filter.Eventually.of_forall fun q =>
+      circleMissingWordSubshift_subset_iUnion_missingWordCoverSet hb hw q)
+    hcost
 
 /-- **Axiom `M_b`**, encoded as a named hypothesis rather than a Lean axiom:
 no quadratic irrational lies in a closed multiply-by-`b`-forward-invariant
@@ -553,5 +736,14 @@ theorem quadratic_irrationals_disjunctive_of_hypothesisM_of_missingWordDimension
     (mapsTo_circleMap_circleMissingWordSubshift b w)
     (mem_circleMissingWordSubshift_of_not_occursAt hb hwvalid havoid)
     (hdim w hwne hwvalid)
+
+/-- **Exact D3 conclusion.**  Axiom `M_b` alone implies that every quadratic
+irrational is disjunctive in base `b`; the independent missing-word subshift
+dimension theorem is discharged internally by the endpoint-safe covers above. -/
+theorem quadratic_irrationals_disjunctive_of_hypothesisM
+    (b : ℕ) (hb : 2 ≤ b) (hM : QuadraticHypothesisM b) :
+    ∀ x : ℝ, IsQuadraticIrrational x → IsDisjunctive b x :=
+  quadratic_irrationals_disjunctive_of_hypothesisM_of_missingWordDimension
+    b hb hM (missingWordSubshiftDimensionBound b hb)
 
 end NormalNumbers

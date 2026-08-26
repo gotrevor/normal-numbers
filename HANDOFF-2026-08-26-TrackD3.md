@@ -44,6 +44,16 @@ Updated 2026-08-26 by the autonomous Track D lap.
      full finite cover by aligned cylinders plus grid singletons, and
      `ediam_missingWordCoverSet_le` proves its mesh bound.  The singletons
      have zero Hausdorff cost, so they do not spoil the entropy exponent.
+5. Discharged the remaining Hausdorff-cost limit and exact D3 wrapper:
+   - `missingWordCoverCost_le` splits the endpoint-safe `Sum` cover, erases
+     the singleton half at positive exponent, and bounds the aligned half;
+   - `missingWordCoverGeometric_eq`, `missingWordMesh_tendsto`, and
+     `missingWordCostRatio_lt_one` turn that bound into a decaying geometric
+     sequence at any exponent above `log(b^L-1)/log(b^L)`;
+   - `missingWordSubshiftDimensionBound` chooses the midpoint exponent below
+     one and proves the independent missing-word Hausdorff-dimension theorem;
+   - `quadratic_irrationals_disjunctive_of_hypothesisM` now proves the exact
+     documented implication from `QuadraticHypothesisM b` alone.
 
 ## Exact verification run
 
@@ -83,42 +93,30 @@ Updated 2026-08-26 by the autonomous Track D lap.
   returned exactly `[propext, Classical.choice, Quot.sound]`.
 - Full `lake build` after the endpoint-safe cover and documentation update —
   passed, 8766 jobs.
+- `lake env lean GuardD3.lean` after the completed Hausdorff-cost proof —
+  passed; guarded `#print axioms` for `IsNormal.isDisjunctive`,
+  `missingWordSubshiftDimensionBound`, and
+  `quadratic_irrationals_disjunctive_of_hypothesisM` each returned exactly
+  `[propext, Classical.choice, Quot.sound]`.
+- Final `lake build` after the exact D3 theorem and aggregator import —
+  passed, 8766 jobs.
 
 ## Current blocker
 
-`MissingWordSubshiftDimensionBound b` is intentionally uninhabited and is the
-only missing premise between `QuadraticHypothesisM b` and the exact documented
-D3 conclusion.  It is not a disguised disjunctivity statement: it explicitly
-says that each closed circle set avoiding one nonempty valid word has
-Hausdorff dimension below one.
-
-The endpoint-safe finite cover itself is now complete.  For `L = |w|`, its
-non-singleton part consists of exactly `(b^L-1)^q` aligned closed cylinders of
-diameter at most `b^(-qL)`; every other set is a singleton.  The only missing
-work is analytic algebra: split the `Fintype` sum over the `Sum` index, simplify
-the singleton contribution to zero, dominate the cylinder contribution by
-`(b^L-1)^q * (b^(-qL))^d`, and prove this tends to zero for a chosen
-`d` strictly between `log(b^L-1)/log(b^L)` and `1`.
+None for the boxed Track D objective.  The named M_b hypothesis remains a
+mathematical hypothesis, as intended; the implication demanded by D3 and its
+independent missing-word geometric input are both proved without `sorry` or
+extra axioms.
 
 ## Next highest-value attack
 
-Define `d = (missingWordExponent b |w| + 1) / 2` as an `NNReal`; prove
-`0 < d < 1` and that the geometric ratio
-`(b^|w|-1) * (b^|w|)^(-d)` is below one by expanding `Real.rpow` through
-`exp/log`.  Split the cover cost with `Fintype.sum_sum_type`, use
-`ediam_singleton` and positive `d` to erase the grid half, rewrite the aligned
-half as bounded by the ratio's `q`-th power, and invoke
-`ENNReal.tendsto_pow_atTop_nhds_zero_of_lt_one`.  Then
-`dimH_lt_one_of_finite_covers` discharges
-`MissingWordSubshiftDimensionBound b`, and the existing assembly should yield
-the exact D3 theorem from `QuadraticHypothesisM b` alone.
-
-Do not touch the two known-false `CFScheduleA.lean` sorries.  Do not mark D3
-complete until `QuadraticHypothesisM b` alone yields every quadratic
-irrational `b`-disjunctive and guarded axioms show only the trust triple.
+The supervisor may choose the next roadmap track.  Preserve the completed D3
+API and do not touch the two known-false `CFScheduleA.lean` sorries.
 
 ## Final checkpoint
 
 The initial D3 reduction is `166b2f5`, the aligned alphabet/cylinder brick is
-`04f398d`, and the endpoint-safe full finite cover is `ac66b92`.  All are green
-commits.  The full-build and guarded-axiom receipts are recorded above.
+`04f398d`, and the endpoint-safe full finite cover is `ac66b92`.  The final
+Hausdorff-cost theorem, exact wrapper, documentation, and this completion
+receipt are the next green commit.  Full-build and guarded-axiom receipts are
+recorded above.
