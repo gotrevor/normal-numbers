@@ -206,11 +206,13 @@ The live D3 reduction is noncircular.  `circleMissingWordSubshift b w` is an
 explicit closed forward-invariant avoidance set, and
 `quadratic_irrationals_disjunctive_of_hypothesisM_of_missingWordDimension`
 derives the documented conclusion from `QuadraticHypothesisM b` plus only the
-independent Hausdorff-dimension statement.  The landed cover criterion
-`dimH_lt_one_of_finite_covers` and exponent lemma
-`missingWordExponent_lt_one` reduce the remaining work to constructing the
-aligned b-adic cylinder covers and proving their cardinality bound
-`≤ (b^|w| - 1)^q`; D3 is not yet complete.
+independent Hausdorff-dimension statement.  The landed cover criterion and
+strict exponent gap now have the exact prefix alphabet/cardinality
+`(b^|w| - 1)^q` and the closed circle-cylinder diameter bound
+`≤ b^(-q|w|)` beneath them.  Because the avoidance set uses an open
+cylinder to remain closed, b-adic boundary orbits must be added as
+zero-diameter singleton covers; that endpoint-safe cover and the final
+geometric-cost limit remain.  D3 is not yet complete.
 
 ## References (delta over the companion doc)
 

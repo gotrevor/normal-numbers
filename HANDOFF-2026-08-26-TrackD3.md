@@ -22,6 +22,15 @@ Updated 2026-08-26 by the autonomous Track D lap.
    - the reusable Hausdorff cover lemma `dimH_lt_one_of_finite_covers`;
    - `missingWordExponent_lt_one`, proving the decisive strict entropy gap
      `log(b^L-1)/log(b^L) < 1` for `b ≥ 2`, `L ≥ 1`.
+3. Landed the next aligned-cover brick, axiom-clean:
+   - `AllowedWordBlock` removes exactly the forbidden block from the
+     `b^|w|`-element one-block alphabet;
+   - `AlignedMissingWordPrefix` has exact cardinality
+     `(b^|w|-1)^q`, and `alignedPrefixWord_block_ne` verifies the flattened
+     digit word avoids `w` in every aligned block;
+   - `circleClosedWordCylinder` and `circleAlignedPrefixCylinder` have the
+     kernel-checked mesh bound `ediam ≤ b^(-q|w|)` via the 1-Lipschitz
+     quotient map `ℝ → ℝ/ℤ`.
 
 ## Exact verification run
 
@@ -40,6 +49,15 @@ Updated 2026-08-26 by the autonomous Track D lap.
   assembly — each returned exactly
   `[propext, Classical.choice, Quot.sound]`.
 - Full `lake build` with the new aggregator import — passed, 8766 jobs.
+- `lake env lean src/NormalNumbers/QuadraticDisjunctive.lean` after the aligned
+  prefix/cardinality/cylinder brick — passed.
+- Guarded `#print axioms` for `card_allowedWordBlock`,
+  `card_alignedMissingWordPrefix`, `alignedPrefixWord_block_ne`,
+  `lipschitzWith_coe_disjunctiveCircle`,
+  `ediam_circleClosedWordCylinder_le`, and
+  `ediam_circleAlignedPrefixCylinder_le` — each returned exactly
+  `[propext, Classical.choice, Quot.sound]`.
+- Full `lake build` after that brick — passed, 8766 jobs.
 
 ## Current blocker
 
@@ -49,23 +67,26 @@ D3 conclusion.  It is not a disguised disjunctivity statement: it explicitly
 says that each closed circle set avoiding one nonempty valid word has
 Hausdorff dimension below one.
 
-The mathematical route is fixed.  For `L = |w|`, group prefixes into `q`
-aligned `L`-blocks.  A sequence missing `w` has at most `(b^L-1)^q` such
-prefixes.  Their b-adic circle cylinders have diameter at most `b^(-qL)`.
-For any exponent strictly between `log(b^L-1)/(L log b)` and `1`, total
-Hausdorff cost tends to zero.  The cover criterion and strict exponent gap are
-already kernel-checked; the remaining work is the explicit cover type,
-cardinality proof, cylinder diameter bound, and limit calculation.
+The mathematical route is fixed.  For `L = |w|`, the nonendpoint part is now
+covered by exactly `(b^L-1)^q` aligned closed cylinders of diameter at most
+`b^(-qL)`.  The remaining subtlety is genuine: `circleMissingWordSubshift`
+avoids an **open** cylinder so it is closed, hence a point whose aligned orbit
+lands exactly on a cylinder boundary is not represented by the naïve
+forbidden-symbol count.  Add the relevant b-adic grid points as singleton
+covers (their `d`-cost is zero), prove the resulting cover, then show the
+geometric non-singleton cost tends to zero for an exponent strictly between
+`log(b^L-1)/(L log b)` and `1`.
 
 ## Next highest-value attack
 
-Define the aligned-block prefix type using `finProdFinEquiv : Fin q × Fin L ≃
-Fin (q*L)`.  Package the one-block alphabet as the subtype of
-`Fin L → Fin b` unequal to the encoded word; its card is `b^L - 1`.  Reindex a
-length-`qL` digit function as `Fin q → (Fin L → Fin b)` to obtain the exact
-cardinality `(b^L-1)^q`.  Then define the corresponding closed b-adic circle
-cylinders, prove coverage and `ediam ≤ b^(-qL)`, and apply
-`dimH_lt_one_of_finite_covers`.
+Prove the endpoint-safe cover dichotomy at scale `q`: every point in
+`circleMissingWordSubshift b w` either has all `q` aligned canonical blocks
+different from `w` (hence belongs to one landed
+`circleAlignedPrefixCylinder`) or one aligned orbit hits the lower boundary
+of the open word cylinder (hence is a b-adic grid point).  Index all grid
+points at depth `qL` by a finite type and cover them by singletons.  Then
+evaluate the finite Hausdorff sum and close its geometric limit before
+applying `dimH_lt_one_of_finite_covers`.
 
 Do not touch the two known-false `CFScheduleA.lean` sorries.  Do not mark D3
 complete until `QuadraticHypothesisM b` alone yields every quadratic

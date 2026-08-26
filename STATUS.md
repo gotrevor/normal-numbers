@@ -5,9 +5,10 @@
 `b755fd5`.  D3 is now 🔨: `QuadraticDisjunctive.lean` freezes Axiom M_b as the
 named Prop `QuadraticHypothesisM`, proves its endpoint-safe dynamical assembly
 conditional on the explicit `MissingWordSubshiftDimensionBound`, and lands the
-finite-cover Hausdorff criterion and strict aligned-block entropy gap.  The
-remaining crux is the concrete missing-word cylinder cover/cardinality/diameter
-bound.  The older B5′/B6 status below is retained as historical campaign state.
+finite-cover Hausdorff criterion, strict aligned-block entropy gap, exact
+`(b^|w|-1)^q` aligned-prefix count, and circle-cylinder mesh bound.  The
+remaining crux is the endpoint-safe cover dichotomy plus its geometric-cost
+limit.  The older B5′/B6 status below is retained as historical campaign state.
 
 **B5′ COMPLETE + axiom-clean (10 headlines); B6 affine-images DONE + EXCEEDED (single-map + FULL affine family, any real `r`, `q>0`, all trust-triple). ONE open obligation left in the whole repo: `ae_tail_average_tendsto` — the log-tail SLLN feeding the image-Khinchin headline (witness CF-normal + all affine images CF-normal + Khinchin-typical).** · **Build**: 🟢 green (8760 jobs) · **Updated**: review lap #3 · 2026-08-25 · `53e454c`+
 

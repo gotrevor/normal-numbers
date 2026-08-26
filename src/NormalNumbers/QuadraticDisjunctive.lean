@@ -151,6 +151,167 @@ theorem missingWordExponent_lt_one {b L : ℕ} (hb : 2 ≤ b) (hL : 1 ≤ L) :
     exact_mod_cast hpow
   exact (div_lt_one hlog_pos).2 hlog_lt
 
+/-! ### The aligned missing-word prefix alphabet
+
+At scale `q * |w|`, the nonexceptional cylinders are indexed by `q`
+successive blocks, each chosen from the `b ^ |w| - 1` blocks other than
+`w`.  Keeping this as a product of one-block subtypes makes the exact
+cardinality a direct `Fintype` calculation; `alignedPrefixWord` flattens an
+index back to the ordinary big-endian digit list used by `blockNatVal`.
+-/
+
+/-- The valid word `w`, regarded as a `Fin w.length → Fin b` digit block. -/
+def wordBlockDigits (b : ℕ) (w : List ℕ) (hw : ∀ d ∈ w, d < b) :
+    Fin w.length → Fin b := fun i =>
+  ⟨w[i], hw w[i] (List.getElem_mem i.isLt)⟩
+
+/-- The one-block alphabet with the single block `w` removed. -/
+def AllowedWordBlock (b : ℕ) (w : List ℕ) (hw : ∀ d ∈ w, d < b) :=
+  {u : Fin w.length → Fin b // u ≠ wordBlockDigits b w hw}
+
+noncomputable instance instFintypeAllowedWordBlock (b : ℕ) (w : List ℕ)
+    (hw : ∀ d ∈ w, d < b) : Fintype (AllowedWordBlock b w hw) :=
+  by
+    classical
+    exact Subtype.fintype _
+
+/-- An aligned length-`q * |w|` prefix all of whose `|w|`-blocks differ
+from `w`. -/
+def AlignedMissingWordPrefix (b : ℕ) (w : List ℕ)
+    (hw : ∀ d ∈ w, d < b) (q : ℕ) :=
+  Fin q → AllowedWordBlock b w hw
+
+noncomputable instance instFintypeAlignedMissingWordPrefix (b : ℕ) (w : List ℕ)
+    (hw : ∀ d ∈ w, d < b) (q : ℕ) :
+    Fintype (AlignedMissingWordPrefix b w hw q) := by
+  unfold AlignedMissingWordPrefix
+  infer_instance
+
+theorem card_allowedWordBlock (b : ℕ) (w : List ℕ)
+    (hw : ∀ d ∈ w, d < b) :
+    Fintype.card (AllowedWordBlock b w hw) = b ^ w.length - 1 := by
+  change Fintype.card {u : Fin w.length → Fin b //
+    u ≠ wordBlockDigits b w hw} = _
+  calc
+    Fintype.card {u : Fin w.length → Fin b //
+        u ≠ wordBlockDigits b w hw} =
+        Fintype.card (Fin w.length → Fin b) - 1 :=
+      Set.card_ne_eq (wordBlockDigits b w hw)
+    _ = b ^ w.length - 1 := by simp
+
+/-- There are exactly `(b^|w| - 1)^q` aligned prefixes avoiding `w` in
+every aligned block. -/
+theorem card_alignedMissingWordPrefix (b : ℕ) (w : List ℕ)
+    (hw : ∀ d ∈ w, d < b) (q : ℕ) :
+    Fintype.card (AlignedMissingWordPrefix b w hw q) =
+      (b ^ w.length - 1) ^ q := by
+  simp [AlignedMissingWordPrefix, card_allowedWordBlock]
+
+/-- Flatten an aligned prefix into its ordinary base-`b` digit word. -/
+def alignedPrefixWord {b : ℕ} {w : List ℕ} {hw : ∀ d ∈ w, d < b} {q : ℕ}
+    (p : AlignedMissingWordPrefix b w hw q) : List ℕ :=
+  List.ofFn fun i : Fin (q * w.length) =>
+    let jk := finProdFinEquiv.symm i
+    ((p jk.1).1 jk.2 : Fin b).val
+
+@[simp] theorem length_alignedPrefixWord {b : ℕ} {w : List ℕ}
+    {hw : ∀ d ∈ w, d < b} {q : ℕ}
+    (p : AlignedMissingWordPrefix b w hw q) :
+    (alignedPrefixWord p).length = q * w.length := by
+  simp [alignedPrefixWord]
+
+theorem alignedPrefixWord_digits_lt {b : ℕ} {w : List ℕ}
+    {hw : ∀ d ∈ w, d < b} {q : ℕ}
+    (p : AlignedMissingWordPrefix b w hw q) :
+    ∀ d ∈ alignedPrefixWord p, d < b := by
+  intro d hd
+  rw [alignedPrefixWord, List.mem_ofFn] at hd
+  obtain ⟨i, rfl⟩ := hd
+  exact ((p (finProdFinEquiv.symm i).1).1 (finProdFinEquiv.symm i).2).isLt
+
+/-- Each aligned block of the flattened prefix really differs from `w`.
+The index is written through `finProdFinEquiv` so this lemma is insensitive
+to arithmetic reassociation of `j * |w| + k`. -/
+theorem alignedPrefixWord_block_ne {b : ℕ} {w : List ℕ}
+    {hw : ∀ d ∈ w, d < b} {q : ℕ}
+    (p : AlignedMissingWordPrefix b w hw q) (j : Fin q) :
+    ∃ k : Fin w.length,
+      (alignedPrefixWord p)[(finProdFinEquiv (j, k)).val] ≠ w[k] := by
+  by_contra h
+  have h : ∀ k : Fin w.length,
+      (alignedPrefixWord p)[(finProdFinEquiv (j, k)).val] = w[k] := by
+    simpa only [not_exists, not_not] using h
+  apply (p j).property
+  funext k
+  apply Fin.ext
+  have hk := h k
+  simp only [alignedPrefixWord, List.getElem_ofFn] at hk
+  let i : Fin (q * w.length) := finProdFinEquiv (j, k)
+  change ((p i.divNat).1 i.modNat).val = w[k] at hk
+  have hinv : finProdFinEquiv.symm (finProdFinEquiv (j, k)) = (j, k) :=
+    Equiv.symm_apply_apply finProdFinEquiv (j, k)
+  have hdiv : i.divNat = j := by
+    unfold i
+    exact congrArg Prod.fst hinv
+  have hmod : i.modNat = k := by
+    unfold i
+    exact congrArg Prod.snd hinv
+  rw [hdiv, hmod] at hk
+  simpa [wordBlockDigits] using hk
+
+/-! ### Closed circle cylinders and their mesh -/
+
+/-- The quotient map `ℝ → ℝ ⧸ ℤ` does not increase distances. -/
+theorem lipschitzWith_coe_disjunctiveCircle :
+    LipschitzWith 1 ((↑) : ℝ → DisjunctiveCircle) := by
+  apply LipschitzWith.mk_one
+  intro x y
+  rw [dist_eq_norm, ← QuotientAddGroup.mk_sub, Real.dist_eq]
+  simpa [abs_sub_comm] using
+    (QuotientAddGroup.norm_mk_le_norm (M := ℝ)
+      (S := AddSubgroup.zmultiples (1 : ℝ)) (m := x - y))
+
+/-- A closed b-adic cylinder on the circle.  Closed endpoints deliberately
+absorb the usual two-expansion ambiguity. -/
+def circleClosedWordCylinder (b : ℕ) (u : List ℕ) : Set DisjunctiveCircle :=
+  ((↑) : ℝ → DisjunctiveCircle) ''
+    Set.Icc ((blockNatVal b u : ℝ) / (b : ℝ) ^ u.length)
+      (((blockNatVal b u : ℝ) + 1) / (b : ℝ) ^ u.length)
+
+theorem ediam_circleClosedWordCylinder_le {b : ℕ} (hb : 1 ≤ b) (u : List ℕ) :
+    Metric.ediam (circleClosedWordCylinder b u) ≤
+      ((b : ℝ≥0∞) ^ u.length)⁻¹ := by
+  let a : ℝ := (blockNatVal b u : ℝ) / (b : ℝ) ^ u.length
+  let c : ℝ := ((blockNatVal b u : ℝ) + 1) / (b : ℝ) ^ u.length
+  have hpow : (0 : ℝ) < (b : ℝ) ^ u.length := by positivity
+  calc
+    Metric.ediam (circleClosedWordCylinder b u) ≤
+        Metric.ediam (Set.Icc a c) := by
+      simpa [circleClosedWordCylinder, a, c] using
+        lipschitzWith_coe_disjunctiveCircle.ediam_image_le (Set.Icc a c)
+    _ = ENNReal.ofReal (c - a) := Real.ediam_Icc a c
+    _ = ((b : ℝ≥0∞) ^ u.length)⁻¹ := by
+      have hca : c - a = ((b : ℝ) ^ u.length)⁻¹ := by
+        dsimp [a, c]
+        field_simp
+        ring
+      rw [hca, ENNReal.ofReal_inv_of_pos hpow]
+      simp [ENNReal.ofReal_pow]
+
+/-- The closed cylinder indexed by an aligned missing-word prefix. -/
+def circleAlignedPrefixCylinder {b : ℕ} {w : List ℕ}
+    {hw : ∀ d ∈ w, d < b} {q : ℕ}
+    (p : AlignedMissingWordPrefix b w hw q) : Set DisjunctiveCircle :=
+  circleClosedWordCylinder b (alignedPrefixWord p)
+
+theorem ediam_circleAlignedPrefixCylinder_le {b : ℕ} (hb : 1 ≤ b)
+    {w : List ℕ} {hw : ∀ d ∈ w, d < b} {q : ℕ}
+    (p : AlignedMissingWordPrefix b w hw q) :
+    Metric.ediam (circleAlignedPrefixCylinder p) ≤
+      ((b : ℝ≥0∞) ^ (q * w.length))⁻¹ := by
+  simpa [circleAlignedPrefixCylinder] using
+    ediam_circleClosedWordCylinder_le hb (alignedPrefixWord p)
+
 /-- The genuine geometric obligation in D3: every subshift obtained by
 forbidding one nonempty valid base-`b` word has Hausdorff dimension below one.
 This is the graph-directed self-similar/SFT entropy theorem still to prove. -/

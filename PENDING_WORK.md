@@ -7,10 +7,12 @@ The active boxed objective is D3, overriding the older B6 directive below.
 `QuadraticHypothesisM`, the explicit closed forward-invariant missing-word
 subshift, and the full dynamical contradiction conditional on
 `MissingWordSubshiftDimensionBound`.  The Hausdorff finite-cover criterion and
-strict entropy exponent `log(b^L-1)/log(b^L) < 1` are proved.  Next, define the
-aligned length-`qL` prefix cover, prove its cardinality is at most
-`(b^L-1)^q`, bound each circle cylinder's `ediam` by `b^(-qL)`, and feed those
-facts to `dimH_lt_one_of_finite_covers`.  Do not touch either known-false
+strict entropy exponent `log(b^L-1)/log(b^L) < 1` are proved, as are the exact
+aligned-prefix cardinality `(b^L-1)^q` and cylinder mesh `b^(-qL)`.  Next prove
+the cover dichotomy forced by the open avoidance cylinder: an aligned prefix
+avoiding `w`, or a b-adic boundary point.  Add the boundary points as
+zero-diameter singleton covers, close the geometric-cost limit, and feed the
+cover to `dimH_lt_one_of_finite_covers`.  Do not touch either known-false
 `CFScheduleA.lean` sorry.
 
 ## ✅ 2026-08-25 (grind lap, post-completion) — headline faithfulness RATIFIED + Track D0 opened

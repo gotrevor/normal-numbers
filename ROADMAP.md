@@ -105,9 +105,10 @@ the source of truth for statements and claim status (novelty unswept).
 - 🔨 D3 (stretch) Axiom M implication: `QuadraticDisjunctive.lean` freezes the
   faithful named Prop `QuadraticHypothesisM`, proves the dynamical assembly
   conditional only on `MissingWordSubshiftDimensionBound`, and supplies the
-  finite-cover Hausdorff criterion plus the strict aligned-block entropy gap;
-  remaining real cost is the explicit finite cylinder cover/cardinality bound
-  proving dim(missing-word SFT) < 1
+  finite-cover Hausdorff criterion, strict aligned-block entropy gap, exact
+  `(b^|w|-1)^q` prefix alphabet, and closed circle-cylinder mesh bound;
+  remaining real cost is the endpoint-safe cover/limit assembly proving
+  dim(missing-word SFT) < 1
 - ✅ D4 **Baire slate (unconditional, SHIPPED 2026-08-25)**:
   `residual_absolutelyDisjunctive`, `isMeagre_setOf_isNormal`, and
   `exists_absolutelyDisjunctive_forall_not_isNormal`; pure Baire category
