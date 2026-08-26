@@ -91,15 +91,15 @@ no naturally-occurring number is proven Khinchin-typical.
 Named axioms in the Hypothesis-A pattern, one rung below normality; the doc is
 the source of truth for statements and claim status (novelty unswept).
 
-- 🔨 D0 `Disjunctive.lean`: `OccursAt`,
-  `isDisjunctive_iff_forall_occursAt`, the dense-orbit twin of Wall, and
-  positive base-power invariance (`isDisjunctive_pow_iff`) landed;
-  `omegaLimit` basics remain after choosing the endpoint-identified circle
-  representation (the ambient-ℝ orbit closure is `[0,1]`, not `[0,1)`)
-- ⬜ D1 the 0-1 law: closed forward-invariant `K` with `λ(K) > 0` is
-  everything (b-adic Lebesgue density route)
-- ⬜ D2 conditional headlines for ln 2: Axiom Λ (positive limit mass) and the
-  per-word D_w bridges off the existing `lnTwoOrbit` tracking
+- ✅ D0 orbit dictionary complete: `Disjunctive.lean` has `OccursAt`, the
+  word/dense-orbit equivalences, and positive base-power invariance; the
+  endpoint-safe `UnitAddCircle` orbit and closed/forward-invariant/full
+  ω-limit equivalence are in `ConditionalDisjunctive.lean`
+- ✅ D1 the 0-1 law: a closed `×b`-forward-invariant circle set with positive
+  Haar measure is everything, via mathlib's `AddCircle.ergodic_nsmul`
+- 🔨 D2 conditional headlines for ln 2: Axiom Λ (positive limit mass) and
+  `Λ ⟹ IsDisjunctive 2 (Real.log 2)` landed in `ConditionalDisjunctive.lean`;
+  the per-word D_w bridges off the existing `lnTwoOrbit` tracking remain
 - ⬜ D3 (stretch) Axiom M implication: quadratic irrationals b-disjunctive
   given invariant-set avoidance; real cost is dim(missing-word SFT) < 1
 - ✅ D4 **Baire slate (unconditional, SHIPPED 2026-08-25)**:

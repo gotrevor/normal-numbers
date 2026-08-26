@@ -28,28 +28,37 @@ For x ∈ ℝ and the circle map T_b(y) = by mod 1:
   a dense orbit has closure `[0,1]`, so `[0,1)` must not be used as the right-hand closed set.
 
 Formalized in `Disjunctive.lean`: the interval, word-occurrence, and dense-orbit formulations,
-plus positive base-power invariance.  The `omegaLimit` basics remain the last item in this tranche,
-after freezing a circle/relative-topology representation.
+plus positive base-power invariance.  `ConditionalDisjunctive.lean` supplies the endpoint-safe
+`UnitAddCircle` orbit and ω-limit, proves it closed and forward-invariant, and proves
+`IsDisjunctive b x ↔ circleOmegaLimit b x = Set.univ`.
 
 ## 1.  Axiom Λ (positive limit mass) - ln 2, dynamics-flavored
 
-**Theorem (0-1 law for closed forward-invariant sets; proof sketch, unformalized).**  If K ⊆ [0,1)
-is closed, T_b K ⊆ K, and λ(K) > 0, then K = [0,1).
+**Theorem (0-1 law for closed forward-invariant sets; formalized).**  On the endpoint-identified
+unit circle, if K is closed, T_b K ⊆ K, b ≥ 2, and Haar measure λ(K) > 0, then K is the full circle.
 
-*Sketch.*  Take a Lebesgue density point of K along the b-adic filtration: a generation-n b-adic
-interval I with λ(K ∩ I) ≥ (1-ε)·b⁻ⁿ.  T_bⁿ maps I affinely onto [0,1), so
+*Elementary proof route.*  Take a Lebesgue density point of K along the b-adic filtration: a
+generation-n b-adic interval I with λ(K ∩ I) ≥ (1-ε)·b⁻ⁿ.  T_bⁿ maps I affinely onto [0,1), so
 λ(T_bⁿ(K ∩ I)) ≥ 1-ε, and forward invariance puts that image inside K.  Hence λ(K) = 1, and a
 closed co-null set has empty open complement.  ∎
 
-**Corollary (ladder collapse).**  λ(Ω(x)) > 0 ⟺ Ω(x) = [0,1) ⟺ x is b-disjunctive.
+*Formal proof route.*  Mathlib already proves that `y ↦ b • y` is ergodic on `AddCircle 1`.
+Ergodicity makes a measurable forward-invariant K almost empty or almost full.  Positive measure
+rules out the first case, and a closed almost-full set is literally full because Haar measure is
+positive on every nonempty open set.  This is theorem
+`closed_forwardInvariant_eq_univ_of_volume_pos`.
+
+**Corollary (ladder collapse; formalized).**  λ(Ω(x)) > 0 ⟺ Ω(x) is the full circle ⟺ x is
+b-disjunctive (`circleOmegaLimit_volume_pos_iff_isDisjunctive`).
 
 > **Axiom Λ.**  The ω-limit set of `{2ⁿ ln 2}` has positive Lebesgue measure.
 >
-> **Λ ⟹ ln 2 is 2-disjunctive.**
+> **Λ ⟹ ln 2 is 2-disjunctive.**  Formalized as `LnTwoHypothesisLambda` and
+> `isDisjunctive_log_two_of_hypothesisLambda`.
 
 Λ is *equivalent* to the conclusion, but the hypothesis reads far weaker: "the limit points are not
-a null set" rather than "the orbit visits everything."  The 0-1 law is the entire content, and it
-is a mathlib-sized target (Lebesgue density is in mathlib).
+a null set" rather than "the orbit visits everything."  The 0-1 law is the entire content; its
+ergodic proof is now machine-checked against the pinned mathlib.
 
 ## 2.  Axiom family D_w (per-word density) - ln 2, exponential-sums-flavored
 
@@ -170,18 +179,19 @@ avoiding class flips from polynomial to exponential and complexity arguments go 
 - **Novelty**: unswept, all five.  Owed before any outward use: Bailey-Crandall descendants
   (Λ, D_w), Bugeaud-Kaneko and the digit-expansion literature (C, T), rigidity surveys and the
   Mahler-problem literature (M).  "Apparently unstated" is the ceiling until then.
-- **Proof status**: 0-1 law = sketch, high confidence, unformalized.  D_w bridge = routine on top
+- **Proof status**: the circle ω-limit dictionary, 0-1 law, and Λ implication are formalized in
+  `ConditionalDisjunctive.lean`.  D_w bridge = routine on top
   of the existing tracking lemma, unformalized.  §4 dyadic coupling = sketch, carry bookkeeping
   unchecked.  M's implication = complete modulo the standard SFT-dimension lemma, which is the
   real formalization cost.  Everything else in §0 is textbook.
-- **Lean surface** (candidate module `Disjunctive.lean`, later `Conditional.lean`):
+- **Lean surface**:
 
 | item | shape | tier |
 |---|---|---|
 | `OccursAt` + word/dense-orbit formulations + positive base-power invariance | **formalized** in `Disjunctive.lean` | done |
-| `omegaLimit`: closed, forward-invariant, dense ⟺ full | topology | low |
-| 0-1 law `measure_pos → omegaLimit = univ` | Lebesgue density | mid |
-| Axiom Λ named + `isDisjunctive_log_two_of_...` assembly | conditional headline | low |
+| `omegaLimit`: closed, forward-invariant, dense ⟺ full | **formalized** in `ConditionalDisjunctive.lean` | done |
+| 0-1 law `measure_pos → omegaLimit = univ` | **formalized** via additive-circle ergodicity | done |
+| Axiom Λ named + `isDisjunctive_log_two_of_...` assembly | **formalized** | done |
 | D_w bridge from `lnTwoOrbit` tracking | conditional family | low-mid |
 | M_b implication (needs dim(SFT) < 1) | fractal dimension | high |
 

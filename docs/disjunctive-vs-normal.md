@@ -193,8 +193,9 @@ implications to digit conclusions for specific constants: **Λ** (positive-measu
 2-disjunctive, via a 0-1 law for closed forward-invariant sets), the **D_w** family (per-word orbit
 accumulation ⟹ that word recurs in ln 2), **C** (carry rigidity ⟺ `11` recurs in √2), **T**
 (lossless dyadic transfer ⟹ same), and **M** (invariant-set avoidance ⟹ quadratic irrationals
-disjunctive; sharpens Mahler's 1984 Cantor-set question).  Λ, D_w and the §0 dictionary are
-formalizable now; novelty of all five is unswept.
+disjunctive; sharpens Mahler's 1984 Cantor-set question).  The §0 circle dictionary and the Λ
+implication are now formalized; D_w remains the next routine bridge.  Novelty of all five is
+unswept.
 
 ### 4.4  Sharpen Mahler's `m`
 
@@ -204,7 +205,7 @@ is elementary and entirely unformalized.  Lower value than 4.1, but the cheapest
 ## 5.  Formal-side state
 
 The 2026-08-25 pinned-mathlib and Lean Zulip sweeps found no prior
-formalization of this corner.  This repo now supplies the first two rows and
+formalization of this corner.  This repo now supplies the first three rows and
 the category-theoretic separation consequence; formalization novelty remains
 hedged at that evidence tier.
 
@@ -212,13 +213,15 @@ hedged at that evidence tier.
 |---|---|---|
 | absolutely disjunctive numbers are comeager (Calude-Zamfirescu) | **shipped:** `residual_absolutelyDisjunctive` in `DisjunctiveBaire.lean`; `isMeagre_setOf_isNormal` and `exists_absolutelyDisjunctive_forall_not_isNormal` in `NormalMeager.lean` formalize the stronger "lexicon with no statistics" conclusion | low |
 | disjunctive in `b` ⟺ disjunctive in `bᵏ` | **shipped:** `isDisjunctive_pow_iff` in `Disjunctive.lean`, through the `OccursAt`/cylinder bridge and the §0 alignment word | low |
+| Axiom Λ ⟹ `ln 2` is binary disjunctive | **shipped:** the circle ω-limit dictionary, Haar 0-1 law, `LnTwoHypothesisLambda`, and `isDisjunctive_log_two_of_hypothesisLambda` in `ConditionalDisjunctive.lean` | low-mid |
 | Mahler 1973 / Berend-Boshernitzan | open; headline, elementary, no prior formalization found | mid |
 | Furstenberg `×2 ×3` topological rigidity | open; famous, and the topological version is the tractable half | high |
 
-The proof is pure Baire category.  `orbitLiftOpen` uses interiors of the
+The category proof is pure Baire theory.  `orbitLiftOpen` uses interiors of the
 half-open digit cylinders, so b-adic double-expansion endpoints never enter.
 The statements live on all of `ℝ`, since both `IsDisjunctive` and `IsNormal`
-read only the fractional part.  Catalog rows for the last two open targets
+read only the fractional part.  The Λ proof instead uses the endpoint-identified
+unit circle and mathlib's `AddCircle.ergodic_nsmul`.  Catalog rows for the last two open targets
 live in the KB under `core/projects/formalization-targets/problems/`.
 
 ## References
