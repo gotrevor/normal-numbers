@@ -128,3 +128,40 @@ two known-false `CFScheduleA.lean` sorries, so they are not Track D blockers and
 must not be used to reopen the completed objective.  A host configuration that
 requires a repository-wide sorry-free gate is incompatible with this bounded
 assignment; use the scoped done condition for Track D if another lap starts.
+
+## Independent completion audit — fresh 2026-08-26 lap
+
+A fresh autonomous lap independently re-read the durable treadmill policy,
+the Track D roadmap and source-of-truth document, the current Track D3 handoff,
+the imported Lean policy, and the relevant reference-corpus notes on named
+Props, axiom hygiene, Hausdorff dimension, and statement guards. It then
+audited the actual declarations rather than relying on the earlier completion
+receipt:
+
+- `QuadraticHypothesisM` faithfully states the documented invariant-set
+  avoidance hypothesis as an ordinary named `Prop`; there is no Lean axiom.
+- `quadratic_irrationals_disjunctive_of_hypothesisM` consumes only `b >= 2`
+  and `QuadraticHypothesisM b`, and its geometric input is discharged by the
+  independent theorem `missingWordSubshiftDimensionBound`.
+- `NormalNumbers.lean` imports `QuadraticDisjunctive`, while
+  `IsNormal.isDisjunctive` remains in the architecturally correct
+  `Disjunctive.lean` module.
+- Neither Track D source file contains a `sorry` or custom axiom declaration.
+
+Fresh verification on the committed sources:
+
+- `lake env lean src/NormalNumbers/Disjunctive.lean` — passed.
+- `lake env lean src/NormalNumbers/QuadraticDisjunctive.lean` — passed.
+- `/Users/gotrevor/personal/bin/lean-axiom-gate . --import NormalNumbers
+  --target NormalNumbers.IsNormal.isDisjunctive
+  --target NormalNumbers.missingWordSubshiftDimensionBound
+  --target NormalNumbers.quadratic_irrationals_disjunctive_of_hypothesisM
+  --exact` — passed; all three targets have exactly the standard trust triple
+  `[Classical.choice, Quot.sound, propext]`.
+- `lake build` — completed successfully, 8766 jobs. Its only `sorry`
+  warnings are the two explicitly forbidden known-false
+  `CFScheduleA.lean` stubs at current lines 4394 and 5770.
+
+There is no remaining in-scope blocker or next Track D attack: both parts of
+the boxed objective are complete and independently reverified. The next lap
+should move only after the operator selects a new roadmap objective.
