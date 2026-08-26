@@ -31,6 +31,19 @@ Updated 2026-08-26 by the autonomous Track D lap.
    - `circleClosedWordCylinder` and `circleAlignedPrefixCylinder` have the
      kernel-checked mesh bound `ediam ≤ b^(-q|w|)` via the 1-Lipschitz
      quotient map `ℝ → ℝ/ℤ`.
+4. Closed the endpoint-safe finite-cover obstruction:
+   - `orbit_eq_wordCylinder_left_of_occursAt_of_not_mem_open` isolates the
+     only way a canonical forbidden block can survive open-cylinder
+     avoidance;
+   - `exists_mem_circleAlignedPrefixCylinder_of_avoids_boundary` covers the
+     nonendpoint branch by the exact aligned alphabet;
+   - `eq_circleBadicGridPoint_of_orbit_eq_wordCylinder_left` proves an
+     exceptional aligned boundary hit is torsion and hence a depth-`q|w|`
+     b-adic grid point;
+   - `circleMissingWordSubshift_subset_iUnion_missingWordCoverSet` gives the
+     full finite cover by aligned cylinders plus grid singletons, and
+     `ediam_missingWordCoverSet_le` proves its mesh bound.  The singletons
+     have zero Hausdorff cost, so they do not spoil the entropy exponent.
 
 ## Exact verification run
 
@@ -58,6 +71,18 @@ Updated 2026-08-26 by the autonomous Track D lap.
   `ediam_circleAlignedPrefixCylinder_le` — each returned exactly
   `[propext, Classical.choice, Quot.sound]`.
 - Full `lake build` after that brick — passed, 8766 jobs.
+- `lake env lean src/NormalNumbers/QuadraticDisjunctive.lean` after the full
+  endpoint-safe cover — passed.
+- `lake build NormalNumbers.QuadraticDisjunctive` — passed, 8716 jobs.
+- Guarded `#print axioms` for
+  `orbit_eq_wordCylinder_left_of_occursAt_of_not_mem_open`,
+  `exists_mem_circleAlignedPrefixCylinder_of_avoids_boundary`,
+  `eq_circleBadicGridPoint_of_orbit_eq_wordCylinder_left`,
+  `ediam_missingWordCoverSet_le`, and
+  `circleMissingWordSubshift_subset_iUnion_missingWordCoverSet` — each
+  returned exactly `[propext, Classical.choice, Quot.sound]`.
+- Full `lake build` after the endpoint-safe cover and documentation update —
+  passed, 8766 jobs.
 
 ## Current blocker
 
@@ -67,26 +92,26 @@ D3 conclusion.  It is not a disguised disjunctivity statement: it explicitly
 says that each closed circle set avoiding one nonempty valid word has
 Hausdorff dimension below one.
 
-The mathematical route is fixed.  For `L = |w|`, the nonendpoint part is now
-covered by exactly `(b^L-1)^q` aligned closed cylinders of diameter at most
-`b^(-qL)`.  The remaining subtlety is genuine: `circleMissingWordSubshift`
-avoids an **open** cylinder so it is closed, hence a point whose aligned orbit
-lands exactly on a cylinder boundary is not represented by the naïve
-forbidden-symbol count.  Add the relevant b-adic grid points as singleton
-covers (their `d`-cost is zero), prove the resulting cover, then show the
-geometric non-singleton cost tends to zero for an exponent strictly between
-`log(b^L-1)/(L log b)` and `1`.
+The endpoint-safe finite cover itself is now complete.  For `L = |w|`, its
+non-singleton part consists of exactly `(b^L-1)^q` aligned closed cylinders of
+diameter at most `b^(-qL)`; every other set is a singleton.  The only missing
+work is analytic algebra: split the `Fintype` sum over the `Sum` index, simplify
+the singleton contribution to zero, dominate the cylinder contribution by
+`(b^L-1)^q * (b^(-qL))^d`, and prove this tends to zero for a chosen
+`d` strictly between `log(b^L-1)/log(b^L)` and `1`.
 
 ## Next highest-value attack
 
-Prove the endpoint-safe cover dichotomy at scale `q`: every point in
-`circleMissingWordSubshift b w` either has all `q` aligned canonical blocks
-different from `w` (hence belongs to one landed
-`circleAlignedPrefixCylinder`) or one aligned orbit hits the lower boundary
-of the open word cylinder (hence is a b-adic grid point).  Index all grid
-points at depth `qL` by a finite type and cover them by singletons.  Then
-evaluate the finite Hausdorff sum and close its geometric limit before
-applying `dimH_lt_one_of_finite_covers`.
+Define `d = (missingWordExponent b |w| + 1) / 2` as an `NNReal`; prove
+`0 < d < 1` and that the geometric ratio
+`(b^|w|-1) * (b^|w|)^(-d)` is below one by expanding `Real.rpow` through
+`exp/log`.  Split the cover cost with `Fintype.sum_sum_type`, use
+`ediam_singleton` and positive `d` to erase the grid half, rewrite the aligned
+half as bounded by the ratio's `q`-th power, and invoke
+`ENNReal.tendsto_pow_atTop_nhds_zero_of_lt_one`.  Then
+`dimH_lt_one_of_finite_covers` discharges
+`MissingWordSubshiftDimensionBound b`, and the existing assembly should yield
+the exact D3 theorem from `QuadraticHypothesisM b` alone.
 
 Do not touch the two known-false `CFScheduleA.lean` sorries.  Do not mark D3
 complete until `QuadraticHypothesisM b` alone yields every quadratic

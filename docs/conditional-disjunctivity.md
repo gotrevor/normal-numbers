@@ -209,10 +209,11 @@ derives the documented conclusion from `QuadraticHypothesisM b` plus only the
 independent Hausdorff-dimension statement.  The landed cover criterion and
 strict exponent gap now have the exact prefix alphabet/cardinality
 `(b^|w| - 1)^q` and the closed circle-cylinder diameter bound
-`≤ b^(-q|w|)` beneath them.  Because the avoidance set uses an open
-cylinder to remain closed, b-adic boundary orbits must be added as
-zero-diameter singleton covers; that endpoint-safe cover and the final
-geometric-cost limit remain.  D3 is not yet complete.
+`≤ b^(-q|w|)` beneath them.  The open-cylinder endpoint issue is also
+resolved: every exceptional aligned boundary hit is proved to be a b-adic
+grid point, and the full finite cover adds those points as zero-diameter
+singletons.  Only evaluation of the Hausdorff sum and its geometric-cost
+limit remain.  D3 is not yet complete.
 
 ## References (delta over the companion doc)
 

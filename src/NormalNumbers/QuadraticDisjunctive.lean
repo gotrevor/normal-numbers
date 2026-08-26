@@ -312,6 +312,208 @@ theorem ediam_circleAlignedPrefixCylinder_le {b : ℕ} (hb : 1 ≤ b)
   simpa [circleAlignedPrefixCylinder] using
     ediam_circleClosedWordCylinder_le hb (alignedPrefixWord p)
 
+/-! ### The nonendpoint part of the cover -/
+
+/-- An occurrence which nevertheless avoids the corresponding open circle
+cylinder must sit at its lower endpoint.  This is the precise source of the
+b-adic singleton exception in the final cover. -/
+theorem orbit_eq_wordCylinder_left_of_occursAt_of_not_mem_open
+    {b : ℕ} (hb : 2 ≤ b) {x : ℝ} {w : List ℕ}
+    (hw : ∀ d ∈ w, d < b) {n : ℕ} (hocc : OccursAt b x w n)
+    (hnot : circleFlow b n (x : DisjunctiveCircle) ∉
+      circleOpenWordCylinder b w) :
+    orbit b x n = (blockNatVal b w : ℝ) / (b : ℝ) ^ w.length := by
+  have hcell := (occursAt_iff_orbit_mem b hb x w hw n).1 hocc
+  apply le_antisymm
+  · by_contra hle
+    have hlo : (blockNatVal b w : ℝ) / (b : ℝ) ^ w.length < orbit b x n :=
+      lt_of_not_ge hle
+    apply hnot
+    refine ⟨orbit b x n, ⟨hlo, hcell.2⟩, ?_⟩
+    simpa [circleOrbit] using (circleOrbit_eq_coe_orbit b x n).symm
+  · exact hcell.1
+
+/-- Away from aligned hits on the lower open-cylinder boundary, a point in
+the missing-word subshift belongs to one of the aligned prefix cylinders.
+The remaining branch will be covered by b-adic grid singletons. -/
+theorem exists_mem_circleAlignedPrefixCylinder_of_avoids_boundary
+    {b : ℕ} (hb : 2 ≤ b) {x : ℝ} {w : List ℕ}
+    (hw : ∀ d ∈ w, d < b) {q : ℕ}
+    (hsub : (x : DisjunctiveCircle) ∈ circleMissingWordSubshift b w)
+    (hboundary : ∀ j : Fin q,
+      orbit b x (j.val * w.length) ≠
+        (blockNatVal b w : ℝ) / (b : ℝ) ^ w.length) :
+    ∃ p : AlignedMissingWordPrefix b w hw q,
+      (x : DisjunctiveCircle) ∈ circleAlignedPrefixCylinder p := by
+  let block (j : Fin q) : Fin w.length → Fin b := fun k =>
+    ⟨digitOf b (Int.fract x) (j.val * w.length + k.val),
+      digitOf_lt b hb (Int.fract x) _⟩
+  have hblock (j : Fin q) : block j ≠ wordBlockDigits b w hw := by
+    intro heq
+    have hocc : OccursAt b x w (j.val * w.length) := by
+      intro k hk
+      let k' : Fin w.length := ⟨k, hk⟩
+      have hval := congrArg (fun f => (f k').val) heq
+      simpa [block, wordBlockDigits, k'] using hval
+    have hlower := orbit_eq_wordCylinder_left_of_occursAt_of_not_mem_open
+      hb hw hocc (hsub (j.val * w.length))
+    exact hboundary j hlower
+  let p : AlignedMissingWordPrefix b w hw q := fun j => ⟨block j, hblock j⟩
+  refine ⟨p, ?_⟩
+  have hdigits : ∀ i (hi : i < (alignedPrefixWord p).length),
+      digitOf b (Int.fract x) i = (alignedPrefixWord p)[i] := by
+    intro i hi
+    let i' : Fin (q * w.length) :=
+      ⟨i, by simpa using hi⟩
+    let jk : Fin q × Fin w.length := finProdFinEquiv.symm i'
+    have hindex : jk.1.val * w.length + jk.2.val = i := by
+      have happly : finProdFinEquiv jk = i' := by
+        exact Equiv.apply_symm_apply finProdFinEquiv i'
+      have hval := congrArg Fin.val happly
+      change jk.2.val + w.length * jk.1.val = i at hval
+      calc
+        jk.1.val * w.length + jk.2.val =
+            jk.2.val + w.length * jk.1.val := by ac_rfl
+        _ = i := hval
+    rw [show (alignedPrefixWord p)[i] =
+        ((p jk.1).1 jk.2).val by
+      simp only [alignedPrefixWord, List.getElem_ofFn]
+      congr 2]
+    simp only [p, block]
+    rw [hindex]
+  have hfract : Int.fract x ∈ Set.Ico (0 : ℝ) 1 :=
+    ⟨Int.fract_nonneg x, Int.fract_lt_one x⟩
+  have hprefix := (digits_prefix_iff b hb (Int.fract x) hfract
+    (alignedPrefixWord p) (alignedPrefixWord_digits_lt p)).1 hdigits
+  refine ⟨Int.fract x, ?_, AddCircle.coe_fract x⟩
+  exact ⟨hprefix.1, hprefix.2.le⟩
+
+/-! ### B-adic boundary singletons and the full finite cover -/
+
+/-- The depth-`qL` b-adic grid point with numerator `m`. -/
+noncomputable def circleBadicGridPoint (b L q : ℕ) (m : Fin (b ^ (q * L))) :
+    DisjunctiveCircle :=
+  (((m.val : ℝ) / (b : ℝ) ^ (q * L) : ℝ) : DisjunctiveCircle)
+
+/-- An aligned hit on the lower endpoint is a b-adic grid point at every
+later aligned depth. -/
+theorem eq_circleBadicGridPoint_of_orbit_eq_wordCylinder_left
+    {b : ℕ} (hb : 2 ≤ b) {x : ℝ} {w : List ℕ} {q : ℕ} (j : Fin q)
+    (horbit : orbit b x (j.val * w.length) =
+      (blockNatVal b w : ℝ) / (b : ℝ) ^ w.length) :
+    ∃ m : Fin (b ^ (q * w.length)),
+      (x : DisjunctiveCircle) = circleBadicGridPoint b w.length q m := by
+  let n := j.val * w.length
+  have hbpos : 0 < b := by omega
+  have hLpow : (0 : ℝ) < (b : ℝ) ^ w.length := by positivity
+  have hendpoint : (b ^ w.length) •
+      (((blockNatVal b w : ℝ) / (b : ℝ) ^ w.length : ℝ) :
+        DisjunctiveCircle) = 0 := by
+    have hreal : ((b ^ w.length : ℕ) : ℝ) *
+        ((blockNatVal b w : ℝ) / (b : ℝ) ^ w.length) =
+        (blockNatVal b w : ℝ) := by
+      push_cast
+      field_simp
+    rw [← AddCircle.coe_nsmul, nsmul_eq_mul, hreal]
+    rw [AddCircle.coe_eq_zero_iff]
+    exact ⟨(blockNatVal b w : ℤ), by simp [zsmul_eq_mul]⟩
+  have horbit_circle : circleFlow b n (x : DisjunctiveCircle) =
+      (((blockNatVal b w : ℝ) / (b : ℝ) ^ w.length : ℝ) :
+        DisjunctiveCircle) := by
+    calc
+      circleFlow b n (x : DisjunctiveCircle) = circleOrbit b x n := rfl
+      _ = (orbit b x n : DisjunctiveCircle) := circleOrbit_eq_coe_orbit b x n
+      _ = (((blockNatVal b w : ℝ) / (b : ℝ) ^ w.length : ℝ) :
+          DisjunctiveCircle) := by
+        simpa [n] using congrArg (fun z : ℝ => (z : DisjunctiveCircle)) horbit
+  have hsmall : (b ^ (n + w.length)) • (x : DisjunctiveCircle) = 0 := by
+    calc
+      (b ^ (n + w.length)) • (x : DisjunctiveCircle) =
+          (b ^ w.length * b ^ n) • (x : DisjunctiveCircle) := by
+            rw [pow_add, mul_comm]
+      _ = (b ^ w.length) • ((b ^ n) • (x : DisjunctiveCircle)) := by
+            rw [smul_smul]
+      _ = (b ^ w.length) • circleFlow b n (x : DisjunctiveCircle) := by
+            rw [circleFlow_apply]
+      _ = (b ^ w.length) •
+          (((blockNatVal b w : ℝ) / (b : ℝ) ^ w.length : ℝ) :
+            DisjunctiveCircle) := by rw [horbit_circle]
+      _ = 0 := hendpoint
+  have hnle : n + w.length ≤ q * w.length := by
+    dsimp [n]
+    have hj : j.val + 1 ≤ q := j.isLt
+    nlinarith
+  have hbig : (b ^ (q * w.length)) • (x : DisjunctiveCircle) = 0 := by
+    have hexp : q * w.length =
+        (q * w.length - (n + w.length)) + (n + w.length) := by omega
+    have hpowe : b ^ (q * w.length) =
+        b ^ (q * w.length - (n + w.length)) * b ^ (n + w.length) := by
+      rw [← pow_add, Nat.sub_add_cancel hnle]
+    calc
+      (b ^ (q * w.length)) • (x : DisjunctiveCircle) =
+          (b ^ (q * w.length - (n + w.length)) *
+            b ^ (n + w.length)) • (x : DisjunctiveCircle) := by
+              rw [hpowe]
+      _ = (b ^ (q * w.length - (n + w.length))) •
+          ((b ^ (n + w.length)) • (x : DisjunctiveCircle)) := by
+            rw [smul_smul]
+      _ = 0 := by rw [hsmall, smul_zero]
+  have hNpos : 0 < b ^ (q * w.length) := pow_pos hbpos _
+  obtain ⟨m, hm, heq⟩ :=
+    (AddCircle.nsmul_eq_zero_iff (p := (1 : ℝ)) hNpos).mp hbig
+  refine ⟨⟨m, hm⟩, ?_⟩
+  simpa [circleBadicGridPoint] using heq.symm
+
+/-- The finite endpoint-safe cover index at aligned depth `q`: ordinary
+missing-word prefixes plus all b-adic grid singletons. -/
+def MissingWordCoverIndex (b : ℕ) (w : List ℕ)
+    (hw : ∀ d ∈ w, d < b) (q : ℕ) :=
+  AlignedMissingWordPrefix b w hw q ⊕ Fin (b ^ (q * w.length))
+
+noncomputable instance instFintypeMissingWordCoverIndex (b : ℕ) (w : List ℕ)
+    (hw : ∀ d ∈ w, d < b) (q : ℕ) :
+    Fintype (MissingWordCoverIndex b w hw q) := by
+  unfold MissingWordCoverIndex
+  infer_instance
+
+/-- The endpoint-safe cover set associated to an index. -/
+def missingWordCoverSet {b : ℕ} {w : List ℕ} {hw : ∀ d ∈ w, d < b} {q : ℕ} :
+    MissingWordCoverIndex b w hw q → Set DisjunctiveCircle
+  | Sum.inl p => circleAlignedPrefixCylinder p
+  | Sum.inr m => {circleBadicGridPoint b w.length q m}
+
+theorem ediam_missingWordCoverSet_le {b : ℕ} (hb : 2 ≤ b)
+    {w : List ℕ} {hw : ∀ d ∈ w, d < b} {q : ℕ}
+    (i : MissingWordCoverIndex b w hw q) :
+    Metric.ediam (missingWordCoverSet i) ≤
+      ((b : ℝ≥0∞) ^ (q * w.length))⁻¹ := by
+  cases i with
+  | inl p => exact ediam_circleAlignedPrefixCylinder_le (by omega) p
+  | inr m => simp [missingWordCoverSet]
+
+/-- At every aligned depth, the ordinary prefix cylinders together with the
+b-adic boundary singletons cover the closed missing-word subshift. -/
+theorem circleMissingWordSubshift_subset_iUnion_missingWordCoverSet
+    {b : ℕ} (hb : 2 ≤ b) {w : List ℕ} (hw : ∀ d ∈ w, d < b) (q : ℕ) :
+    circleMissingWordSubshift b w ⊆
+      ⋃ i : MissingWordCoverIndex b w hw q, missingWordCoverSet i := by
+  intro y hy
+  obtain ⟨x, rfl⟩ := Quotient.exists_rep y
+  by_cases hboundary : ∀ j : Fin q,
+      orbit b x (j.val * w.length) ≠
+        (blockNatVal b w : ℝ) / (b : ℝ) ^ w.length
+  · obtain ⟨p, hp⟩ :=
+      exists_mem_circleAlignedPrefixCylinder_of_avoids_boundary hb hw hy hboundary
+    exact Set.mem_iUnion.2 ⟨Sum.inl p, hp⟩
+  · simp only [not_forall] at hboundary
+    obtain ⟨j, hj⟩ := hboundary
+    push Not at hj
+    obtain ⟨m, hm⟩ :=
+      eq_circleBadicGridPoint_of_orbit_eq_wordCylinder_left hb j hj
+    apply Set.mem_iUnion.2
+    refine ⟨Sum.inr m, ?_⟩
+    simpa [missingWordCoverSet] using hm
+
 /-- The genuine geometric obligation in D3: every subshift obtained by
 forbidding one nonempty valid base-`b` word has Hausdorff dimension below one.
 This is the graph-directed self-similar/SFT entropy theorem still to prove. -/

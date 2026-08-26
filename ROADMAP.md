@@ -106,8 +106,9 @@ the source of truth for statements and claim status (novelty unswept).
   faithful named Prop `QuadraticHypothesisM`, proves the dynamical assembly
   conditional only on `MissingWordSubshiftDimensionBound`, and supplies the
   finite-cover Hausdorff criterion, strict aligned-block entropy gap, exact
-  `(b^|w|-1)^q` prefix alphabet, and closed circle-cylinder mesh bound;
-  remaining real cost is the endpoint-safe cover/limit assembly proving
+  `(b^|w|-1)^q` prefix alphabet, and the full endpoint-safe finite cover with
+  closed cylinder mesh and zero-diameter b-adic boundary singletons;
+  remaining real cost is the Hausdorff-cost limit assembly proving
   dim(missing-word SFT) < 1
 - ✅ D4 **Baire slate (unconditional, SHIPPED 2026-08-25)**:
   `residual_absolutelyDisjunctive`, `isMeagre_setOf_isNormal`, and
