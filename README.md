@@ -55,8 +55,9 @@ table; `JUDGE.md` records the verification history, including the close-out
 `#print axioms` sweep and its red-team test.
 
 Note that the repo is not globally `sorry`-free, and does not claim to be: a second
-expedition is in flight, and `CFScheduleA.schedA_block_linear` is its one open
-obligation.  The results above do not depend on it, and the thing that establishes
+expedition is in flight, and its open obligations live in `CFScheduleA.lean`, each
+disclosed at its declaration.  For the current set, ask the build rather than this
+paragraph.  The results above do not depend on it, and the thing that establishes
 that is the `#print axioms` output, not the absence of the word `sorry` from a file.
 Run the sweep yourself: `lake env lean` on a file that `import NormalNumbers` and
 `#print axioms` the two theorems named above.
