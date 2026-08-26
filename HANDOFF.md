@@ -79,3 +79,55 @@ mismatch: the operator explicitly forbade touching those stubs. Per the gate's
 own guidance, do not reopen the completed publishing-prep work and do not convert
 this into `box stuck`; a future host launch should scope `--done-when` to this
 objective if it needs the repo-wide stop to be terminal.
+
+## Fresh independent completion audit — 2026-08-26
+
+A fresh autonomous lap re-read the durable treadmill policy, active repository
+directives, comparator-harness guide and its required assets, the relevant Lean
+declarations, and sibling correction commit `c6126c56`. It reconstructed the
+harness guarantee from the files rather than relying on the prior receipt.
+
+Concrete advance beyond the earlier checkpoint: a second facts-first prose sweep
+found stale active module docstrings in `CFBlockFreq`, `CFRecursion`, `TBrick`,
+`TBrickRefine`, and `Khinchin`, plus an old B5 plan that still visually resembled
+active work in `ROADMAP.md` and `KHINCHIN.md`. Those are now explicitly completed
+or historical. The pre-existing uncommitted prose corrections in `CFCylinder`,
+`CFDigitLaw`, `CFMixing`, `Khinchin`, and `Pillai` were preserved, audited, and
+included in the same metadata-only checkpoint. No declaration, theorem statement,
+proof body, or `CFScheduleA.lean` line changed.
+
+Fresh verification actually run:
+
+- `lake build NormalNumbers.CFBlockFreq NormalNumbers.CFRecursion
+  NormalNumbers.TBrick NormalNumbers.TBrickRefine NormalNumbers.Khinchin
+  NormalNumbers.CFAeKhinchin Comparator.NormalNumbers.Challenge
+  Comparator.NormalNumbers.Solution` — passed, 8752 jobs; the only Challenge
+  warnings are its two intentional headline holes.
+- `lake build NormalNumbers Comparator` — passed, 8769 jobs; the only source
+  proof-hole warnings are the two forbidden bypassed `CFScheduleA.lean` stubs.
+- `scripts/comparator-probe` — all five configured closures identical.
+- `scripts/comparator-probe --teeth-test` — the injected missing theorem drove
+  the internal check red and the teeth test passed.
+- Exact axiom gate over the Wall and conditional ln-two headlines,
+  `ae_tail_average_tendsto`, the image-Khinchin headline,
+  `IsNormal.isDisjunctive`, the exact D3 wrapper, and all three D4 headlines —
+  passed; every declaration reports exactly
+  `[Classical.choice, Quot.sound, propext]`.
+- Python JSON/YAML/workflow/artifact assertions — passed: exact comparator
+  fields and whitelist, eight real Challenge definition bodies, import-only
+  Solution, non-default Comparator target, Lean v4.33.1, four verifier pins in
+  the cache key, non-vacuous discovery, comparator invocation, formalization
+  v0.3 fields, top-of-README disclosure, and exactly two source `sorry` terms.
+- `git diff --check` — passed.
+
+The sibling audit confirms that `c6126c56` changes `IsNormalInBase` to all
+nonempty overlapping blocks and retains the old digit-frequency notion as
+`IsSimplyNormalInBase`; it is present only on the local
+`fix/full-normality-definition` branch (with `5d5832d0` after it), not an
+upstream merge. The full local landrun + nanoda path remains unavailable because
+the complete pinned verifier binary set is absent; the pinned Linux workflow is
+the honest end-to-end gate.
+
+There is no in-scope blocker. The next actions remain operator-owned publication,
+prepared sibling PRs, and announcement. Preserve the bypassed false stubs and all
+completed APIs.

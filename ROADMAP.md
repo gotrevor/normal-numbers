@@ -69,7 +69,7 @@ no naturally-occurring number is proven Khinchin-typical.
   sweep instrument red-tested; statement integrity clean since the freeze (three
   privacy lifts, nothing else); `/lean-review` over 151 commits, zero 🔴.
   Ledger: `JUDGE.md` close-out section.  Historical plan text follows.
-- 🔨 **B5′ expedition (plan W1–W6 in KHINCHIN.md)**: one witness, absolutely
+- **Historical B5′ expedition plan (completed above; retained for provenance):** one witness, absolutely
   normal + CF-normal + Khinchin-typical, via Becher–Yuhjtman minus efficiency
   (pin notes in `papers/`).  ≈ 5.5–10k lines, ~8–16 laps, ≈ 2–4 weeks;
   Birkhoff-free.  Pre-flight ✅ (W3 route decided: self-contained
@@ -78,7 +78,7 @@ no naturally-occurring number is proven Khinchin-typical.
   10 `CFDigitLaw.lean` statements proved (3 treadmill laps each, same
   day), statements character-frozen throughout, axiom-clean verified by
   judge `#print axioms` sweeps (the standard triple only).
-  **W3 scaffold staged 2026-08-23**: `CFMixing.lean` — Gauss-measure
+  **W3's then-current scaffold state (2026-08-23)**: `CFMixing.lean` — Gauss-measure
   invariance (= flag B1), the conditional-density identity,
   `cylinder_mixing` (cylinder-conditioned quantitative Gauss–Kuzmin–Lévy,
   the expedition core, judge-governed rate escape valve), and

@@ -15,7 +15,7 @@ if `x` is simply normal in base `b^r` for every `r ≥ 1` (single-digit
 frequency `→ 1/b^r`), then `x` is normal in base `b` (every block frequency
 `→ b^{-length}`).
 
-## Proof route (Niven–Zuckerman style, recorded here for the next lap)
+## Proof route (Niven–Zuckerman style)
 
 Fix a block `w` of length `L` in base `b`. For `r ≥ L`, every base-`b` digit
 position `i` decomposes uniquely as `i = q·r + s`, `0 ≤ s < r`. A window
@@ -37,8 +37,8 @@ Summing over the `r-L+1` non-straddling phases and discarding the
 
 `digitOf_pow_eq_blockNatVal`: the digit-correspondence foundation — the
 `q`-th base-`b^r` digit of `x` equals the big-endian value of the `r`
-base-`b` digits of `x` at positions `[r·q, r·q+r)`. Everything above builds
-on this; the full assembly is future work (`PENDING_WORK.md`).
+base-`b` digits of `x` at positions `[r·q, r·q+r)`.  The phase decomposition,
+double-limit assembly, and final theorem `pillai` are all proved below.
 -/
 
 namespace NormalNumbers
@@ -456,12 +456,9 @@ identity Pillai's final assembly divides through by `N` and takes `N → ∞`
 (phase-by-phase, via `phaseWindowFreq_tendsto`) then `r → ∞` (discarding
 the `card_straddling_phases`-many straddling phases).
 
-**Status (disclosed `sorry`, next lap's target)**: this identity plus the
-subsequent `N → ∞, r → ∞` double-limit ε-management are the last
-obligations for Pillai's theorem. The two already-proved ingredients
-(`phaseWindowFreq_tendsto`, `card_straddling_phases`) are exactly what
-this identity needs downstream to make the final assembly go through —
-see the file docstring for the full route. -/
+**Completion status:** this identity is proved and feeds the completed
+`N → ∞, r → ∞` double-limit assembly in `windowFreq_tendsto`, which in turn
+closes `pillai` below. -/
 theorem windowCount_eq_sum_phaseCount (b r L : ℕ) (hr : 1 ≤ r) (hL : 1 ≤ L)
     (y : ℝ) (w : List ℕ) (hwlen : w.length = L) (N : ℕ) :
     ((Finset.range (N + 1)).filter

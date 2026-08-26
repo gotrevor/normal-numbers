@@ -25,8 +25,9 @@ Route (dependency order):
   `∫ S_n² dγ = Σ_{j,j' < n} γ(T^{-j}A ∩ T^{-j'}A)`.
 * `abs_cov_le` — **per-pair covariance bound** from γ-mixing: geometric for
   gap `≥ |v|`, crude for gap `< |v|`.
-* variance bound + Chebyshev (in progress — the remaining double-sum
-  bookkeeping over `abs_cov_le`).
+* `variance_blockCount_le` + `chebyshev_blockCount` — the completed variance
+  bound and Chebyshev estimate, obtained by folding the double sum over
+  `abs_cov_le`.
 
 Since γ is a probability measure and `S_n` is a finite sum of `[0,1]`-valued
 indicators, every integrability side-condition is immediate.

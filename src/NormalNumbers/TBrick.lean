@@ -35,9 +35,9 @@ This file discharges the **d-ary half** of that balance:
   bad zone has measure `≤ C(t,ε,kmin)·|I_w|` with `C(t,ε,kmin) → 0` as
   `kmin → ∞`.  This is the d-ary side of the balance, fully in hand.
 
-Remaining for the balance (next laps): the CF discrepancy side (aggregate
-`chebyshev_blockCount_brick` across CF words via `CFDiscLt`), then combine
-with `half_mass_long_extensions` to get a surviving good extension.
+The downstream CF discrepancy aggregation and its combination with
+`half_mass_long_extensions` are also complete; this file's declarations are
+the d-ary half consumed by that finished refinement chain.
 -/
 
 namespace NormalNumbers

@@ -28,9 +28,10 @@ that point into the data of a refinement:
   avoiding the wide zones makes its own new digit block *good* at every
   block length `k ≥ kmin`.
 
-Remaining for Lemma 13 (next): choose the maximal new order `m'_d`, apply
-Prop 12 (`interval_subset_daryCell_two`) to get the refined cell block and
-ratio, and package everything as a new `TBrick` refining the input.
+The later declarations below choose the maximal new order `m'_d`, apply
+Prop 12 (`interval_subset_daryCell_two`) to obtain the refined cell block and
+ratio, and package the result as a new `TBrick`; Lemma 13's refinement chain
+is complete.
 -/
 
 namespace NormalNumbers

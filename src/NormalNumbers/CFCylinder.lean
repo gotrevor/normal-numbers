@@ -6,11 +6,11 @@ Authors: Trevor Morris
 import NormalNumbers.CFDefs
 
 /-!
-# W1 — the CF cylinder toolkit (scaffold)
+# W1 — the CF cylinder toolkit (complete)
 
 Work package W1 of expedition B5′ (`KHINCHIN.md`): the elementary continuant
-and cylinder-measure algebra of Becher–Yuhjtman §1.1, stated here and left
-`sorry` for the campaign.  NB we prove the Euler gluing identity by list
+and cylinder-measure algebra of Becher–Yuhjtman §1.1.  Every statement listed
+below is proved.  We prove the Euler gluing identity by list
 induction instead of B–Y's `α_{r,s}`/`Ω_{r,s}` subset combinatorics (their
 Prop 2) — same content, far friendlier induction; these are internal
 lemmas, not paper-pinned statements.
@@ -29,8 +29,8 @@ Statement plan (provenance in each docstring):
 * `tailDensity_mem_Icc`, `cylMap_denom_ratio_le` — the `[1/2, 2]` density
   window and the branch-derivative ratio bound (gateway to W3).
 
-Hand-checked anchors (frozen with the statements, per the planted-scaffold
-doctrine): `K(1,2,3) = 10` with `[0;1,2,3] = 7/10`; `K(2) · (K(2) + K()) = 6`
+Hand-checked anchors (retained from statement staging): `K(1,2,3) = 10` with
+`[0;1,2,3] = 7/10`; `K(2) · (K(2) + K()) = 6`
 matches `|I_{[2]}| = |(1/3, 1/2]| = 1/6`; the gluing anchor
 `K(1,2,3,4) = K(1,2)K(3,4) + K(1)K(4) = 39 + 4 = 43`.
 -/

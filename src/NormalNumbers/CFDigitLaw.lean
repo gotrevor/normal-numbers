@@ -6,13 +6,13 @@ Authors: Trevor Morris
 import NormalNumbers.CFCylinder
 
 /-!
-# W2 — digit laws + the Markov length substitute (scaffold)
+# W2 — digit laws + the Markov length substitute (complete)
 
 Work package W2 of expedition B5′ (`KHINCHIN.md`): the single-digit law, the
 relative-order-`n` partition calculus, the Gauss/Lebesgue two-sided
 comparison, and the elementary substitute for B–Y Lemma 5 (Morita/Vallée
 CLT) — `papers/becher-yuhjtman-2019-abs-normal-cf-normal.md`,
-"Efficiency-free substitute".  Stated here and left `sorry` for the campaign.
+"Efficiency-free substitute".  Every statement listed below is proved.
 
 Statement plan (provenance in each docstring):
 * `volume_digit_cylinder` — `|I_{[k]}| = 1/(k(k+1))` (Lebesgue digit law).
@@ -32,8 +32,8 @@ Statement plan (provenance in each docstring):
 * `volume_append_mul_fib_le` — the free deterministic upper bound: every
   relative-order-`n` extension shrinks length by `≥ fib(n+1)²/2`.
 
-Hand-checked anchors (frozen with the statements, per the planted-scaffold
-doctrine): `K(3)·(K(3)+K()) = 12` matches `|I_{[3]}| = |(1/4, 1/3]| = 1/12`;
+Hand-checked anchors (retained from statement staging):
+`K(3)·(K(3)+K()) = 12` matches `|I_{[3]}| = |(1/4, 1/3]| = 1/12`;
 `K(1,2,3) = 10 ≤ 24 = 2·3·4`; `[1,2] ∈ genWords 2` while `[1,0] ∉`
 (digit `0` is the junk marker, `CFDefs.lean` conventions).
 -/

@@ -20,8 +20,9 @@ two facts that feed `cylinder_mixing`:
   single-branch substitution kernel to each piece.
 
 Together with `stepOp_lipschitz` (`CFContraction`), `G_k` is
-`(9/10)ᵏ·Lip(G_0)`-Lipschitz; the remaining input for `cylinder_mixing`
-is the mean pin `∫ G_k dγ = γ(A)` (Gauss invariance).
+`(9/10)ᵏ·Lip(G_0)`-Lipschitz.  The mean pin `∫ G_k dγ = γ(A)` (Gauss
+invariance) and the resulting `cylinder_mixing` theorem are completed in the
+downstream mixing modules.
 -/
 
 namespace NormalNumbers

@@ -114,6 +114,11 @@ algebra, distortion Lemma 3, discrepancy concatenation, Hardy–Wright block
 counting, t-brick bookkeeping — is the repo's established counting culture,
 Birkhoff-free and ergodicity-free, exactly like the Stoneham route.
 
+### Historical expedition plan (all work packages completed 2026-08-24)
+
+The following estimates and staged statuses are retained as campaign provenance;
+they are not active obligations.  The completion record appears below.
+
 Work packages (sizes calibrated against Stoneham = ~1k lines, 2 fable/low
 laps off a fully pinned plan):
 
@@ -121,7 +126,7 @@ laps off a fully pinned plan):
 |----|---------|------|------|
 | W1 ✅ | CF cylinder toolkit: continuant α-algebra (Prop 2), distortion (Lemma 3), lengths, Fibonacci bound, Prop 12 — **complete 2026-08-23**, 3 laps, 12/12 axiom-clean (judge-verified) | ~0.8–1.5k lines | low |
 | W2 ✅ | digit laws + Markov length substitute for Lemma 5 — **complete 2026-08-23**, 3 laps, 10/10 axiom-clean (judge-verified); `CFDigitLaw.lean` | ~0.4–0.8k | low |
-| W3 | **the core**: summable CF correlation decay — route DECIDED, see below; **scaffold staged 2026-08-23** (`CFMixing.lean`, 4 frozen statements incl. the B1 + B4 flags; escape valve on the geometric rate) | ~1.5–3k | **moderate** |
+| W3 ✅ | **the core**: summable CF correlation decay — the 2026-08-23 scaffold and its rate escape valve are historical; the geometric statement was proved | ~1.5–3k | **moderate** |
 | W4 | LD/Chebyshev assembly + b-ary side (Lemmas 8, 9; overlaps Counting/Visits) | ~0.8–1.2k | low |
 | W5 | t-bricks, main lemma (worse constants), schedule, limit x, three correctness proofs, + the Pillai powers-equivalence for "absolutely normal" | ~1.5–2.5k | medium (bookkeeping-dense) |
 | W6 | Khinchin graft: digit caps D_t in the refinement + uniform-integrability bookkeeping, K₀ as tprod | ~0.5–1k | medium (no write-up found, ~90% sound) |
@@ -160,7 +165,7 @@ mixing-LD theorem, both heavy imports, and reading it crystallized a fully
 Bonus: step 2's statement *is* a quantitative Gauss–Kuzmin theorem, so W3
 plants Track B's B4 flag as a lemma of the expedition.
 
-### Staged so far (2026-08-23)
+### Historical staging snapshot (2026-08-23)
 
 - **W1 ✅ COMPLETE** (same day it launched): `CFDefs.lean` (all real bodies)
   + `CFCylinder.lean` — all 12 statements proved in 3 treadmill laps
@@ -177,7 +182,7 @@ plants Track B's B4 flag as a lemma of the expedition.
   `tsum_mul_log_cfK_le` by first-digit peeling + `genConsEquiv`
   reindexing, summability via `log x ≤ 2√x` against the 3/2-p-series.
   Per-lemma record: `archive/handoff/PENDING_WORK-2026-08-23-W2-final.md`.
-- **W3 scaffold LIVE**: `CFMixing.lean` (4 sorry'd frozen statements:
+- **W3 scaffold at that date (subsequently completed)**: `CFMixing.lean` (then 4 sorry'd frozen statements:
   `measurePreserving_gaussMap` = the **B1 flag**; the conditional-density
   identity `|I_w ∩ T^{-|w|}A| = (∫_A h_t)·|I_w|`; `cylinder_mixing` = the
   workhorse — cylinder-conditioned quantitative Gauss–Kuzmin–Lévy with

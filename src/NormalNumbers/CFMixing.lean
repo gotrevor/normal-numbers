@@ -9,13 +9,13 @@ import NormalNumbers.CFInvariance
 import NormalNumbers.CFPin
 
 /-!
-# W3 — Gauss-map mixing (scaffold)
+# W3 — Gauss-map mixing (complete)
 
 Work package W3 of expedition B5′ (`KHINCHIN.md` "W3 route" — the decided
 self-contained route: conditional density → transfer-operator cone →
 Lévy-style ratio contraction).  This is the core of the expedition: the
 statements below are the *only* correlation input the downstream W4
-Chebyshev assembly consumes.  Stated here and left `sorry` for the campaign.
+Chebyshev assembly consumes.  All four statements are proved.
 
 Statement plan (provenance in each docstring):
 * `measurePreserving_gaussMap` — `γ` is `gaussMap`-invariant (plants the
@@ -31,11 +31,10 @@ Statement plan (provenance in each docstring):
   (`h₀ = 1` is in the cone): Gauss's 1812 problem, quantitative form —
   plants the Track B B4 flag.
 
-⚠️ Escape valve (JUDGE.md governs): if the geometric envelope resists and
-only Kuzmin's `e^{-c√k}` rate materializes, do NOT grind — STOP on
-`cylinder_mixing`, write the evidence into HANDOFF, and the judge weakens
-the frozen rate to a summable-error form (which downstream W4 also
-accepts).  A lap does not reshape the statement itself.
+Historical route note: the statement-staging escape valve allowed replacing
+the geometric envelope with a summable-error form if only Kuzmin's
+`e^{-c√k}` rate could be formalized.  It was not needed: `cylinder_mixing`
+proves the staged geometric-rate statement.
 
 Hand-checked anchors (frozen with the statements): `h₀ ≡ 1` (uniform start
 is in the cone); the density window endpoints `h₁(0) = 2`, `h₁(1) = 1/2`

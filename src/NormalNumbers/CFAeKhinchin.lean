@@ -2,7 +2,7 @@ import NormalNumbers.CFAeNormal
 import NormalNumbers.CFLogTail
 
 /-!
-# a.e. Khinchin-typicality (toward the image-Khinchin B6 stretch)
+# a.e. Khinchin-typicality (completed image-Khinchin input)
 
 Goal: `∀ᵐ x ∂gaussMeasure, KhinchinTypical x` — the geometric mean of the CF
 digits tends to Khinchin's constant `K₀` for a.e. `x`.  This completed co-null
@@ -23,13 +23,13 @@ the log-tail Birkhoff sum of `CFLogTail`.  Dividing by `n`:
 * **bounded part** `Σ_{a≤K} log a · (blockCount (cfCylinder [a]) n x / n)` →
   `Σ_{a≤K} log a · γ([a]) = Σ_{k<K} logTailG k` a.e., a FINITE sum of the
   singleton-digit frequency limits `ae_orbit_freq [a]` (already proved).
-* **tail part** `logBirkhoffSum K n x / n → ∫ logTailFn K dγ` a.e. — the one new
-  analytic input (`ae_tail_average_tendsto`).
+* **tail part** `logBirkhoffSum K n x / n → ∫ logTailFn K dγ` a.e. — the new
+  analytic input `ae_tail_average_tendsto`, proved below.
 
 Their limits ADD to `(Σ_{k<K} logTailG k) + ∫ logTailFn K dγ = log K₀` EXACTLY
 (`integral_logTailFn_eq_of_hasSum` with `HasSum logTailG (log K₀)`), for ANY
-fixed `K` — no `K → ∞` limiting needed.  So the whole crux collapses onto the
-single tail-average lemma.
+fixed `K` — no `K → ∞` limiting needed.  Thus the reduction culminates in the
+tail-average lemma proved in this module.
 
 ## Status
 Complete. `ae_digitCount_tendsto`, the log-tail variance and Chebyshev chain,

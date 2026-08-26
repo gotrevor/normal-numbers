@@ -341,10 +341,10 @@ theorem khinchinTypical_iff_log_tendsto (x : ℝ) (hpos : ∀ i, 1 ≤ cfDigit x
     refine hexp.congr (fun n => ?_)
     exact Real.exp_log (hgeomdef n)
 
-/-! ## Step 2 (open): the log-average / frequency assembly — ROUTE SETTLED
+/-! ## Step 2 (complete): the log-average / frequency assembly
 
-The remaining crux: the empirical log-average `(1/n)·Σ_{i<n} log aᵢ →
-log K₀`.  The `liminf ≥ log K₀` direction is free from CF-normality
+The empirical log-average `(1/n)·Σ_{i<n} log aᵢ → log K₀` is proved below.
+The `liminf ≥ log K₀` direction is free from CF-normality
 (`xstar_cf_freq_tendsto` + `xstar_log_digit_avg_truncated_tendsto`); the
 `limsup ≤ log K₀` direction is the genuine content and needs **uniform
 tail control** of the log-digit average (no mass escaping to large digits).
@@ -359,7 +359,7 @@ reaches `0`.  Pattern-frequency data alone provably cannot close it either
 (`KHINCHIN.md` "Both expansions at once" counterexample — density-zero
 large-digit planting preserves all frequencies yet breaks the mean).
 
-**CONFIRMED route** (the step-2 crux, now authorized per `DIRECTION.md`):
+**Completed route** (historical construction note):
 enforce the tail control *in the construction* by adding a Khinchin
 log-concentration **bad zone** to the schedule's union-bound selection
 (`exists_good_avoiding_bad`, `TBrick.lean`), **additively** — a
@@ -552,8 +552,8 @@ theorem xstar_log_tail_uniform {ε : ℝ} (hε : 0 < ε) :
 
 /-- **Target of the Tier-2 assembly** (`Headline.lean`'s obligation via
 `khinchinTypical_iff_log_tendsto`): `xstar`'s empirical CF log-digit average
-tends to `log khinchinK₀`.  PROVED modulo the single schedule-dependent crux
-`xstar_log_tail_uniform`: a `3ε` interchange combining the finite-truncation
+tends to `log khinchinK₀`.  The proof uses the completed schedule-dependent
+bridge `xstar_log_tail_uniform` in a `3ε` interchange combining the finite-truncation
 convergence (`xstar_log_digit_avg_truncated_tendsto`, for each fixed `K`), the
 `K → ∞` limit of the truncated Gauss–Kuzmin target (`gaussKuzmin_logsum_tendsto`),
 and the uniform tail control. -/
@@ -590,15 +590,13 @@ theorem xstar_log_digit_avg_tendsto :
   linarith [htri, h1, h2, h3]
 
 /-- **`xstar` is Khinchin-typical** (the geometric mean of its CF digits →
-`K₀`), modulo the schedule-dependent crux `xstar_log_tail_uniform`.  Converts
-`xstar_log_digit_avg_tendsto` through the elementary reduction
+`K₀`).  The proof consumes the completed schedule-dependent bridge
+`xstar_log_tail_uniform` through `xstar_log_digit_avg_tendsto`, then applies the
+elementary reduction
 `khinchinTypical_iff_log_tendsto` (digit positivity from `one_le_cfDigit` at
 the irrational `xstar ∈ (0,1)`).  This is the Tier-2 conjunct that, together
-with the LOCKED Tier-1 legs, discharges the frozen headline
-`exists_absolutely_normal_cf_normal_khinchin` — the last assembly step is a
-layering refactor (the frozen `KhinchinTypical`/`khinchinK₀` defs live in
-`Headline.lean`, which this module imports; moving them upstream lets
-`Headline.lean` close its `sorry`). -/
+with the locked Tier-1 legs, closes the frozen headline
+`exists_absolutely_normal_cf_normal_khinchin` in `Headline.lean`. -/
 theorem xstar_khinchinTypical : KhinchinTypical xstar := by
   have hpos : ∀ i, 1 ≤ cfDigit xstar i :=
     fun i => one_le_cfDigit xstar xstar_irrational xstar_mem_Ioo i
