@@ -119,6 +119,6 @@ irrational `b`-disjunctive and guarded axioms show only the trust triple.
 
 ## Final checkpoint
 
-The D3 brick, docs, status, and this handoff are committed together in the
-green checkpoint immediately following `b755fd5`; inspect `git log -1` for its
-hash.  The full-build and guarded-axiom receipts are recorded above.
+The initial D3 reduction is `166b2f5`, the aligned alphabet/cylinder brick is
+`04f398d`, and the endpoint-safe full finite cover is `ac66b92`.  All are green
+commits.  The full-build and guarded-axiom receipts are recorded above.
