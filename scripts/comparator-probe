@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Local pre-flight for comparator statement identity (macOS/Linux).
+
+This checks theorem types and the full project-constant closure of those types.
+It does not replay proofs, run nanoda, enforce axioms, or sandbox the build; the
+full comparator gate remains Linux CI-only because landrun needs Landlock.
+
+Usage:
+  scripts/comparator-probe
+  scripts/comparator-probe NormalNumbers
+  scripts/comparator-probe --teeth-test
+"""
+
+import argparse
+import difflib
+import json
+import pathlib
+import subprocess
+import tempfile
+
+REPO = pathlib.Path.cwd()
+
+PROBE = r"""
+import {module}
+open Lean Meta
+
+namespace CmpProbe
+
+def keep (n : Name) : Bool :=
+  let s := n.toString
+  [{prefixes}].any (fun p => s.startsWith p)
+
+partial def constClosure (seen : NameSet) (todo : List Name) : MetaM NameSet := do
+  match todo with
+  | [] => return seen
+  | n :: rest =>
+    if seen.contains n then constClosure seen rest
+    else
+      match (← getEnv).find? n with
+      | none => constClosure (seen.insert n) rest
+      | some ci =>
+        let fromType := ci.type.getUsedConstants.toList
+        let fromVal := ci.value?.map (·.getUsedConstants.toList) |>.getD []
+        let more := (fromType ++ fromVal).filter keep
+        constClosure (seen.insert n) (rest ++ more)
+
+def render (e : Expr) : MetaM String := do
+  let pp ← withOptions (fun o =>
+      (((o.setBool `pp.all true).setBool `pp.universes true).setBool `pp.explicit true).setBool
+        `pp.proofs true)
+    (do return (← ppExpr e).pretty)
+  return s!"hash={{e.hash}} {{pp}}"
+
+def probe (names : List Name) : MetaM Unit := do
+  for n in names do
+    match (← getEnv).find? n with
+    | none => IO.println s!"MISSING THEOREM {{n}}"
+    | some ci =>
+      IO.println s!"THEOREM {{n}}"
+      IO.println s!"  type: {{← render ci.type}}"
+      let seeds := ci.type.getUsedConstants.toList.filter keep
+      let cl ← constClosure NameSet.empty seeds
+      let sorted := (cl.toList.map (fun c => (c.toString, c))).toArray.qsort
+        (fun a b => a.1 < b.1)
+      for c in sorted.map Prod.snd do
+        match (← getEnv).find? c with
+        | none => IO.println s!"  CONST {{c}} :: MISSING"
+        | some cci =>
+          IO.println s!"  CONST {{c}} levels={{cci.levelParams}}"
+          IO.println s!"    type: {{← render cci.type}}"
+          match cci.value? with
+          | some v => IO.println s!"    value: {{← render v}}"
+          | none => IO.println "    value: <none>"
+
+end CmpProbe
+
+#eval CmpProbe.probe [{names}]
+"""
+
+
+def prefixes(names: list[str]) -> list[str]:
+    return sorted({name.split(".", 1)[0] for name in names})
+
+
+def run_module(module: str, names: list[str]) -> tuple[bool, str]:
+    build = subprocess.run(
+        ["lake", "build", module], cwd=REPO,
+        capture_output=True, text=True,
+    )
+    if build.returncode:
+        return False, f"lake build {module} failed:\n{build.stdout}{build.stderr}"
+    source = PROBE.format(
+        module=module,
+        names=", ".join(f"`{name}" for name in names),
+        prefixes=", ".join(f'"{prefix_}"' for prefix_ in prefixes(names)),
+    )
+    with tempfile.NamedTemporaryFile("w", suffix=".lean", dir=REPO, delete=False) as handle:
+        handle.write(source)
+        path = pathlib.Path(handle.name)
+    try:
+        proc = subprocess.run(
+            ["lake", "env", "lean", str(path)], cwd=REPO,
+            capture_output=True, text=True,
+        )
+        return proc.returncode == 0, proc.stdout + proc.stderr
+    finally:
+        path.unlink(missing_ok=True)
+
+
+def compare(config: dict, names: list[str]) -> tuple[bool, str]:
+    ok_c, out_c = run_module(config["challenge_module"], names)
+    ok_s, out_s = run_module(config["solution_module"], names)
+    if not ok_c or not ok_s:
+        return False, (out_c if not ok_c else out_s)[:4000]
+    missing = sorted({
+        line.split(None, 2)[2]
+        for line in (out_c + out_s).splitlines()
+        if line.startswith("MISSING THEOREM")
+    })
+    if missing:
+        return False, "missing theorem name(s): " + ", ".join(missing)
+    if "  CONST " not in out_c:
+        return False, "empty project-constant closure; definition bodies were not compared"
+    if out_c != out_s:
+        diff = difflib.unified_diff(
+            out_c.splitlines(), out_s.splitlines(),
+            fromfile="challenge", tofile="solution", lineterm="",
+        )
+        return False, "statement closure differs:\n" + "\n".join(list(diff)[:80])
+    return True, f"statement closure identical ({len(names)} theorem(s))"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("result", nargs="?")
+    parser.add_argument("--teeth-test", action="store_true")
+    args = parser.parse_args()
+    configs = sorted((REPO / "Comparator").glob("*/config.json"))
+    if args.result:
+        configs = [path for path in configs if path.parent.name == args.result]
+    if not configs:
+        print("no matching Comparator/*/config.json; run from the repository root")
+        return 2
+
+    failed = 0
+    for path in configs:
+        config = json.loads(path.read_text())
+        names = config["theorem_names"]
+        if args.teeth_test:
+            names = names + ["NormalNumbers.__comparator_probe_missing_teeth__"]
+        ok, detail = compare(config, names)
+        label = path.parent.name
+        if args.teeth_test:
+            if not ok and detail.startswith("missing theorem name(s):"):
+                print(f"✅ {label}: missing-name teeth test went red as required")
+            else:
+                print(f"❌ {label}: missing-name teeth test did not fail correctly: {detail}")
+                failed += 1
+        elif ok:
+            print(f"✅ {label}: {detail}")
+        else:
+            print(f"❌ {label}: {detail}")
+            failed += 1
+    if not args.teeth_test:
+        print("CI still runs kernel replay, nanoda, the axiom whitelist, and landrun.")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

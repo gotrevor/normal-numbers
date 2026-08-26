@@ -113,17 +113,28 @@ the source of truth for statements and claim status (novelty unswept).
   `exists_absolutelyDisjunctive_forall_not_isNormal`; pure Baire category
   in `DisjunctiveBaire.lean` + `NormalMeager.lean`
 
-## Phase 3 — outward
+## Phase 3 — outward (publishing-prep pass ✅ complete locally, 2026-08-26)
 
-- 🔨 PR to OldMathematician/ChampernowneNormality: **done and staged** —
+- ✅ PR to OldMathematician/ChampernowneNormality: **done and staged** —
   branch `real-number` on `gotrevor/ChampernowneNormality`
   (`champernowne_real_normal`, axiom-clean on their v4.32.0-rc1 toolchain).
-  **Trevor opens the PR**; Zulip note drafted in `drafts/`.
-- ⬜ formal-conjectures touchpoint: their `IsNormalInBase` is *simple*
-  normality despite the name — worth an upstream flag/fix.
-- ⬜ Comparator harness (`Challenge.lean`/`Solution.lean`, `enable_nanoda: true`)
-  for Wall + the ln 2 reduction; then public + Zulip announcement
-  (**Trevor posts**).
+  This is staged external work, not merged or published; **Trevor opens the PR**.
+  The Zulip note remains drafted in `drafts/`.
+- ✅ formal-conjectures definition correction: PR-ready local work on sibling
+  branch `fix/full-normality-definition`: correction commit `c6126c56` changes
+  `IsNormalInBase` from simple normality to all nonempty overlapping blocks and
+  retains the old notion as `IsSimplyNormalInBase`; branch HEAD `5d5832d0` adds
+  the empty-block boundary test. **Neither is merged upstream**; no sibling
+  repository was mutated by this publishing-prep lap.
+- ✅ Production comparator harness for exact
+  `isNormal_iff_equidistributed_orbit` and exact conditional
+  `isNormal_log_two_of_equidistributed`: Mathlib-only faithful Challenge,
+  import-only Solution, three non-vacuity anchors, exact trust-triple whitelist,
+  `enable_nanoda: true`, pinned Lean v4.33.1 Linux CI, honest
+  `formalization.yaml`, and a local identity probe with a passing missing-name
+  teeth test. Full landrun + nanoda execution remains CI-only.
+- ⬜ Publish the repository and post the Zulip announcement (**Trevor posts**;
+  no PR, push, or announcement was performed by the autonomous lap).
 - ⬜ Long game: normality definitions + Wall toward mathlib.
 
 ## References

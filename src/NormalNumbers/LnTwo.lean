@@ -40,6 +40,10 @@ noncomputable def lnTwoOrbit : ℕ → ℝ
   | 0 => 0
   | n + 1 => Int.fract (2 * lnTwoOrbit n + 1 / (n + 1))
 
+/-- Comparator non-vacuity anchor: the first nonzero surrogate-orbit value is `1/2`. -/
+theorem lnTwoOrbit_two_anchor : lnTwoOrbit 2 = (1 : ℝ) / 2 := by
+  norm_num [lnTwoOrbit, Int.fract]
+
 /-! ### Target 1: the series identity -/
 
 /-- The Mercator series at `x = 1/2`:

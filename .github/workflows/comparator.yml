@@ -1,0 +1,75 @@
+name: Comparator
+
+on:
+  push:
+    branches: [master]
+    paths-ignore: ['**.md']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  comparator:
+    runs-on: ubuntu-24.04
+    env:
+      LEAN4EXPORT_TAG: v4.33.1
+      LANDRUN_REV: 5e9a0d15d6009cdaf27133bf2d59d29e7018cc47
+      NANODA_REV: f58f2f6d535e189a40fcb02ede8eb95f97a92d37
+      COMPARATOR_REV: 68a064109f01c08f47c8edc9f51d6a2bbffaa188
+    steps:
+      - uses: actions/checkout@v7
+      - uses: leanprover/lean-action@v1
+        with:
+          build: false
+
+      - name: Cache pinned verifier binaries
+        id: cache-bins
+        uses: actions/cache@v6
+        with:
+          path: ~/verifier-bin
+          key: verifier-bin-${{ runner.os }}-${{ env.LEAN4EXPORT_TAG }}-${{ env.LANDRUN_REV }}-${{ env.NANODA_REV }}-${{ env.COMPARATOR_REV }}
+
+      - name: Build landrun, lean4export, nanoda, and comparator
+        if: steps.cache-bins.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p ~/verifier-bin ~/verifier-src
+          cd ~/verifier-src
+          git clone https://github.com/Zouuup/landrun.git
+          (cd landrun && git checkout "$LANDRUN_REV" && go build -o ~/verifier-bin/landrun ./cmd/landrun)
+          git clone https://github.com/ammkrn/nanoda_lib.git
+          (cd nanoda_lib && git checkout "$NANODA_REV" && cargo build --release && cp target/release/nanoda_bin ~/verifier-bin/)
+          git clone https://github.com/leanprover/lean4export.git
+          (cd lean4export && git checkout "$LEAN4EXPORT_TAG" && lake build && cp .lake/build/bin/lean4export ~/verifier-bin/)
+          git clone https://github.com/leanprover/comparator.git
+          (cd comparator && git checkout "$COMPARATOR_REV" && lake build comparator && cp .lake/build/bin/comparator ~/verifier-bin/)
+
+      - name: Build project and comparator modules
+        run: |
+          lake exe cache get
+          lake build NormalNumbers
+          lake build Comparator
+
+      - name: Verify every comparator result with Lean and nanoda
+        run: |
+          set -uo pipefail
+          export PATH="$HOME/verifier-bin:$PATH"
+          fail=0
+          shopt -s nullglob
+          configs=(Comparator/*/config.json)
+          if [ ${#configs[@]} -eq 0 ]; then
+            echo "::error::no comparator configs found"; exit 1
+          fi
+          for cfg in "${configs[@]}"; do
+            if ! lake env comparator "$cfg"; then
+              echo "::error::comparator failed for $cfg"
+              fail=1
+            fi
+          done
+          exit $fail

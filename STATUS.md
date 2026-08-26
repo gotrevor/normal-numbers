@@ -1,5 +1,32 @@
 # STATUS — normal-numbers 📊
 
+## Current publishing-prep status (2026-08-26)
+
+- **Core mathematics:** image-Khinchin, Track D (D0--D4), and
+  `IsNormal.isDisjunctive` are complete. `ae_tail_average_tendsto` is proved and
+  axiom-clean; any contrary claim below this section is a historical snapshot.
+- **Comparator:** the production harness for the exact Wall theorem and exact
+  conditional ln-two theorem is present. Challenge and Solution build; all five
+  configured theorem/anchor closures pass the local identity probe; its injected
+  missing-name teeth test goes red as required. Full `NormalNumbers` (8766 jobs)
+  and `Comparator` (8716 jobs) builds pass, and both headlines have exactly the
+  standard trust triple. The full landrun + nanoda gate is configured for Linux
+  CI and is not claimed as locally executed.
+- **External publishing state:** the ChampernowneNormality contribution remains
+  staged on Trevor's fork and unpublished. The formal-conjectures normality
+  definition correction is PR-ready local work on branch
+  `fix/full-normality-definition`: correction commit `c6126c56`, followed by the
+  empty-block test at branch HEAD `5d5832d0`; neither is merged upstream. No PR
+  was opened and no Zulip/public announcement was posted in this lap.
+- **Residual source debt:** exactly two known-false sorries remain in bypassed
+  `CFScheduleA.lean` schedule code. They are not dependencies of the completed
+  headlines and are explicitly out of scope.
+
+## Historical campaign ledger (superseded state snapshots)
+
+Everything below is retained as proof-campaign history. In particular, its claims
+that image-Khinchin or `ae_tail_average_tendsto` are open are no longer active.
+
 **Track D update (2026-08-26):** the unconditional API gap
 `IsNormal.isDisjunctive` is proved, axiom-clean, fully built, and committed as
 `b755fd5`.  D3 is also ✅: `QuadraticDisjunctive.lean` freezes Axiom M_b as the

@@ -52,4 +52,9 @@ def Equidistributed (u : ℕ → ℝ) : Prop :=
 noncomputable def orbit (b : ℕ) (x : ℝ) (n : ℕ) : ℝ :=
   Int.fract (x * (b : ℝ) ^ n)
 
+/-- Comparator non-vacuity anchor: the orbit really is multiplication modulo one. -/
+theorem orbit_two_one_third_anchor :
+    orbit 2 ((1 : ℝ) / 3) 1 = (2 : ℝ) / 3 := by
+  norm_num [orbit, Int.fract]
+
 end NormalNumbers

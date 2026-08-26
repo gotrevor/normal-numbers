@@ -5,9 +5,9 @@ import NormalNumbers.CFLogTail
 # a.e. Khinchin-typicality (toward the image-Khinchin B6 stretch)
 
 Goal: `∀ᵐ x ∂gaussMeasure, KhinchinTypical x` — the geometric mean of the CF
-digits tends to Khinchin's constant `K₀` for a.e. `x`.  This is the missing
-co-null set that, intersected with the affine-family co-null sets
-(`CFAffineFamily.lean`), upgrades the B6 witness to be Khinchin-typical too.
+digits tends to Khinchin's constant `K₀` for a.e. `x`.  This completed co-null
+set, intersected with the affine-family co-null sets (`CFAffineFamily.lean`),
+upgrades the B6 witness to be Khinchin-typical too.
 
 ## The reduction (why this is tractable without a general ergodic theorem)
 
@@ -32,13 +32,10 @@ fixed `K` — no `K → ∞` limiting needed.  So the whole crux collapses onto 
 single tail-average lemma.
 
 ## Status
-`ae_digitCount_tendsto` (bounded-part leaf) is PROVED here.  The tail-average
-lemma `ae_tail_average_tendsto` is the disclosed crux: it is the L²→a.e.
-Borel–Cantelli argument (mirroring `ae_orbit_freq`) applied to `logBirkhoffSum`,
-using a variance bound for the log-tail Birkhoff sum (to be built from the Gauss
-mixing engine — `logTailFn K = Σ_{a>K} log a · 1_{cfCylinder [a]}` decomposes it
-into the same two-point correlations behind `variance_blockCount_le`), plus the
-MONOTONE gap-squeeze available because `logTailFn K ≥ 0`.  See `PENDING_WORK.md`.
+Complete. `ae_digitCount_tendsto`, the log-tail variance and Chebyshev chain,
+`ae_tail_average_tendsto`, and `ae_khinchinTypical` are proved below.  The only
+remaining source sorries are the two known-false, bypassed schedule stubs in
+`CFScheduleA.lean`; neither lies on this proof route.
 -/
 
 namespace NormalNumbers
@@ -1178,7 +1175,7 @@ theorem ae_tail_average_tendsto (K : ℕ) :
           exact hmono hpj1.le
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' hLtend hUtend hlow hup
 
-/-- **a.e. Khinchin-typicality** (modulo the disclosed tail-average crux at `K=0`).
+/-- **a.e. Khinchin-typicality.**
 `ae_tail_average_tendsto 0` gives the log-average of the CF digits `→ log K₀` a.e.;
 `khinchinTypical_iff_log_tendsto` turns that into `KhinchinTypical`.  All the glue
 (digit identity, `∫ logTailFn 0 = log K₀`, first-digit positivity) is discharged. -/

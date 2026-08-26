@@ -4,31 +4,34 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-26 REVIEW LAP — scoped Track D objective complete)
+## CURRENT DIRECTIVE (set 2026-08-26 — Phase 3 publishing-prep pass)
 
-- **Operator scope:** Track D in `ROADMAP.md` and
-  `docs/conditional-disjunctivity.md` overrides the historical B6 directives
-  below.  Both required milestones are complete: `IsNormal.isDisjunctive` is
-  in `Disjunctive.lean`, and the exact D3 theorem
-  `quadratic_irrationals_disjunctive_of_hypothesisM` is in
-  `QuadraticDisjunctive.lean`; both modules are imported by the aggregator.
-- **Fresh review verdict:** the checked theorem shape has not drifted.
-  `QuadraticHypothesisM b` unfolds definitionally to the documented assertion
-  that no quadratic irrational's circle representative belongs to a closed,
-  multiply-by-`b`-forward-invariant set of Hausdorff dimension below one.  It
-  contains no disjunctivity conclusion.  The exact wrapper consumes only
-  `b >= 2` and this named `Prop`; its missing-word dimension input is discharged
-  independently by `missingWordSubshiftDimensionBound` using the endpoint-safe
-  finite covers.
-- **Current verification:** both Track D modules compile; the exact axiom gate
-  reports only `[Classical.choice, Quot.sound, propext]` for
-  `IsNormal.isDisjunctive`, `missingWordSubshiftDimensionBound`, and the exact
-  D3 wrapper; `lake build` succeeds at 8766 jobs.  Neither Track D module has a
-  `sorry` or custom axiom declaration.
-- **Stop condition:** there is no remaining in-scope Track D attack.  Preserve
-  the two known-false `CFScheduleA.lean` sorries and do not start a different
-  roadmap objective without a new operator directive.  This scoped objective
-  qualifies for `box done`.
+- **Operator scope:** complete the Phase 3 publishing-prep pass without pushing,
+  opening PRs, posting announcements, mutating sibling repositories, touching
+  the two known-false `CFScheduleA.lean` sorries, or changing headline theorem
+  statements.
+- **Facts-first state:** image-Khinchin, Track D, and
+  `IsNormal.isDisjunctive` are complete. `ae_tail_average_tendsto` is proved;
+  the older directive below that calls it open is explicitly superseded history.
+  The formal-conjectures definition correction is PR-ready local work at sibling
+  commit `c6126c56`, with its empty-block boundary test follow-up at branch HEAD
+  `5d5832d0`; neither commit is merged upstream. The Champernowne contribution is
+  likewise staged and externally unpublished.
+- **Comparator state:** the exact Wall theorem and exact conditional ln-two
+  theorem are harnessed with a Mathlib-only Challenge containing faithful real
+  definition bodies, an import-only Solution, three semantic anchors, exactly
+  `[propext, Quot.sound, Classical.choice]` permitted, and nanoda enabled. The
+  non-default Comparator library, Lean-v4.33.1 pinned Linux CI, local identity
+  probe, missing-name teeth test, README disclosure, and formalization metadata
+  are present. Challenge/Solution compilation and the five-name identity/teeth
+  gates pass locally; landrun plus nanoda is honestly CI-only.
+- **Completion gate passed locally:** the full NormalNumbers and Comparator
+  builds, five-name statement-identity probe, missing-name teeth test, exact
+  headline axiom gate, config/YAML validation, and independent artifact audit
+  all pass. The pinned landrun + nanoda execution remains configured for Linux
+  CI and was not run locally because the complete pinned verifier binary set is
+  not available offline. Leave a clean committed checkpoint; publication, PRs,
+  and announcements remain operator-owned. No other roadmap objective is in scope.
 
 ## SUPERSEDED DIRECTIVE (set 2026-08-25 REVIEW LAP #3 — B6 measure route DONE + EXCEEDED; drive the ONE open crux: image-Khinchin's tail-average SLLN)
 

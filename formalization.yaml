@@ -1,0 +1,100 @@
+# Self-reported provenance for normal-numbers. Schema v0.3:
+# https://github.com/mathlib-initiative/formalization.yaml
+version: "v0.3"
+
+project:
+  name: "normal-numbers"
+  authors: ["Trevor Morris"]
+  license: "Apache-2.0"
+
+sources:
+  - title: "Normal numbers"
+    authors: ["Donald D. Wall"]
+    id: "https://escholarship.org/uc/item/2192f6c3"
+    type: "thesis"
+    author_contacted: "n/a"
+  - title: "On the random character of fundamental constant expansions"
+    authors: ["David H. Bailey", "Richard E. Crandall"]
+    id: "https://doi.org/10.1080/10586458.2001.10504660"
+    type: "paper"
+    author_contacted: "n/a"
+
+status:
+  scope: >-
+    The comparator harness certifies two completed results: the exact Wall equivalence
+    `NormalNumbers.isNormal_iff_equidistributed_orbit`, and the exact conditional Bailey--Crandall
+    theorem `NormalNumbers.isNormal_log_two_of_equidistributed`. The latter proves that
+    equidistribution of the explicit surrogate orbit implies base-two normality of `log 2`; it does
+    not claim that the still-open equidistribution hypothesis is known. The Mathlib-only challenge
+    gives real bodies for every project definition in either statement, and three exact finite
+    anchors pin overlapping block counts, multiplication modulo one, and the surrogate recurrence.
+    The two source sorries elsewhere in the repository are known-false, bypassed schedule-route
+    stubs in `CFScheduleA.lean`; neither harnessed theorem depends on them.
+  sorry_count: "2 (known-false bypassed schedule stubs; outside both comparator proof closures)"
+  sorry_in_definitions: 0
+  axioms: ["propext", "Quot.sound", "Classical.choice"]
+
+  main_results:
+    - declaration: "NormalNumbers.isNormal_iff_equidistributed_orbit"
+      file: "src/NormalNumbers/Wall.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "Comparator/NormalNumbers/config.json"
+    - declaration: "NormalNumbers.isNormal_log_two_of_equidistributed"
+      file: "src/NormalNumbers/LnTwo.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "Comparator/NormalNumbers/config.json"
+
+automation:
+  methods:
+    - method: "agent"
+      framework: "Claude Code and OpenAI Codex"
+      tool_setup: >-
+        Interactive AI-assisted proof development under Trevor Morris's direction. Headline
+        statements were frozen and human-reviewed; builds and exact `#print axioms` gates checked
+        proofs independently of model assertions.
+      cost:
+        hardware: "local laptop; model access through hosted subscriptions"
+    - method: "autonomous"
+      framework: "custom Lean treadmill"
+      tool_setup: >-
+        Autonomous grind laps with durable directives, build-green checkpoints, exact axiom gates,
+        independent review laps, and a rule against weakening statements or hiding proof debt.
+      cost:
+        hardware: "local laptop; model access through hosted subscriptions"
+  spend_usd: >-
+    Subscription-based usage was not metered per project; no dollar figure was recorded, and none
+    has been reconstructed.
+  notes: >-
+    Claude-family and OpenAI Codex models were used. Exact model/version attribution was not logged
+    consistently across the campaign and is not guessed here. The repository history and handoff
+    ledger record the proof campaign, but elapsed calendar time would overstate active effort.
+
+review:
+  status: "self-assessed"
+  reviewers: ["Trevor Morris"]
+  notes: >-
+    No external peer review has occurred. CI is configured to run leanprover/comparator under the
+    landrun sandbox with exactly propext, Quot.sound, and Classical.choice permitted, and with the
+    independent nanoda kernel enabled. The local statement-identity probe and its missing-name teeth
+    test pass. Full landrun plus nanoda execution is configured for Linux CI and was not run locally
+    in this publishing-prep pass. Comparator proves that the solution establishes the challenge
+    statements; a human must still read the small Challenge.lean definitions and judge their
+    mathematical faithfulness.
+
+alignment:
+  namespace: "NormalNumbers"
+  statements:
+    - source: "Wall 1949: normality in base b iff the multiply-by-b orbit is equidistributed"
+      lean: "NormalNumbers.isNormal_iff_equidistributed_orbit"
+      module: "NormalNumbers.Wall"
+      status: "proved"
+    - source: "Bailey--Crandall 2001: surrogate-orbit equidistribution implies normality of ln 2"
+      lean: "NormalNumbers.isNormal_log_two_of_equidistributed"
+      module: "NormalNumbers.LnTwo"
+      status: "proved (conditional; the hypothesis remains open)"
+
+acknowledgements: >-
+  Mathlib and the Lean FRO; leanprover/comparator, landrun, lean4export, and the nanoda kernel; and
+  the Lean Zulip AI-authored-projects channel where the Challenge/Solution convention was developed.

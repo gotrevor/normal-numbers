@@ -15,3 +15,8 @@ rev = "v4.33.1"
 
 [[lean_lib]]
 name = "NormalNumbers"
+
+[[lean_lib]]
+name = "Comparator"
+srcDir = ".."
+globs = ["Comparator.+"]

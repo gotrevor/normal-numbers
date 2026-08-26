@@ -28,6 +28,11 @@ pass `w ≠ []` (the empty word is a prefix of every tail). -/
 def countOccurrences (w l : List ℕ) : ℕ :=
   l.tails.countP (w.isPrefixOf ·)
 
+/-- Comparator non-vacuity anchor: overlapping occurrences are counted separately. -/
+theorem countOccurrences_overlap_anchor :
+    countOccurrences [0, 0] [0, 0, 0] = 2 := by
+  decide +kernel
+
 /-- Normality of a digit sequence in base `b`: every nonempty block of
 length `k` (entries `< b`, leading zeros allowed) occurs among the first `n`
 terms with frequency tending to `b⁻ᵏ`. -/

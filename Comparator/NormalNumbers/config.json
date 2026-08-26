@@ -1,0 +1,13 @@
+{
+  "challenge_module": "Comparator.NormalNumbers.Challenge",
+  "solution_module": "Comparator.NormalNumbers.Solution",
+  "theorem_names": [
+    "NormalNumbers.countOccurrences_overlap_anchor",
+    "NormalNumbers.orbit_two_one_third_anchor",
+    "NormalNumbers.lnTwoOrbit_two_anchor",
+    "NormalNumbers.isNormal_iff_equidistributed_orbit",
+    "NormalNumbers.isNormal_log_two_of_equidistributed"
+  ],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": true
+}

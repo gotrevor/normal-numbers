@@ -4,6 +4,12 @@ A Lean 4 / [Mathlib](https://github.com/leanprover-community/mathlib4) programme
 on **normal numbers**: numbers whose base-`b` digit expansion contains every
 length-`k` block with asymptotic frequency `b⁻ᵏ`.
 
+> **AI authorship disclosure.** Most Lean code in this repository was produced
+> with Claude Code and OpenAI Codex under Trevor Morris's direction, with frozen
+> headline statements, kernel builds, exact axiom audits, and independent review
+> passes. [`formalization.yaml`](formalization.yaml) records the provenance and
+> remaining limits of that process.
+
 Almost every real number is normal in every base (Borel 1909), yet no
 "naturally occurring" constant (`π`, `e`, `√2`, `ln 2`, …) has ever been proven
 normal in any base.  This repo formalizes the definitions, the classical
@@ -54,13 +60,19 @@ Both are `sorry`-free and depend only on Lean's standard axioms
 table; `JUDGE.md` records the verification history, including the close-out
 `#print axioms` sweep and its red-team test.
 
-Note that the repo is not globally `sorry`-free, and does not claim to be: a second
-expedition is in flight, and its open obligations live in `CFScheduleA.lean`, each
-disclosed at its declaration.  For the current set, ask the build rather than this
-paragraph.  The results above do not depend on it, and the thing that establishes
-that is the `#print axioms` output, not the absence of the word `sorry` from a file.
-Run the sweep yourself: `lake env lean` on a file that `import NormalNumbers` and
-`#print axioms` the two theorems named above.
+The repository is not globally `sorry`-free and does not claim to be. The only two
+source sorries are known-false stubs on a bypassed `CFScheduleA.lean` proof route;
+the B6 affine-image results instead use the completed measure route. Image-Khinchin,
+all of Track D, and `IsNormal.isDisjunctive` are complete and do not depend on those
+stubs. Exact `#print axioms` output—not a raw text count—is the dependency check.
+
+For external verification, [`Comparator/NormalNumbers/Challenge.lean`](Comparator/NormalNumbers/Challenge.lean)
+imports only Mathlib and states the exact Wall and conditional ln-two theorems over
+faithful definition bodies. The import-only solution, exact axiom whitelist, semantic
+anchors, local statement-identity probe, and pinned Linux CI are included. The full
+landrun plus nanoda gate is configured for Linux CI and was not run locally in this
+publishing-prep pass; locally run `scripts/comparator-probe` and
+`scripts/comparator-probe --teeth-test` for the statement-identity pre-flight.
 
 As far as a survey of provers, Mathlib, the Lean Zulip and the AFP reaches (August
 2026), this appears to be the first formalization of Becher-Yuhjtman in any prover.

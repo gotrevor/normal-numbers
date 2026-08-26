@@ -1,4 +1,31 @@
-# PENDING WORK — Track D boxed objective complete; historical campaign ledger below
+# PENDING WORK — Phase 3 publishing-prep complete locally
+
+## ✅ Phase 3 publishing-prep pass — 2026-08-26
+
+The facts-first metadata audit and production comparator harness are complete.
+Active prose now records image-Khinchin, Track D, and
+`IsNormal.isDisjunctive` as complete; `ae_tail_average_tendsto` is proved, and
+the older open-crux material below is explicitly historical. The
+formal-conjectures correction is PR-ready local sibling work (definition fix
+`c6126c56`, empty-block test follow-up `5d5832d0`), not an upstream merge. The
+Champernowne contribution remains staged and externally unpublished.
+
+The exact Wall and conditional ln-two theorems are in a strong-pattern
+comparator harness: Mathlib-only Challenge with faithful real definition
+bodies, import-only Solution, three semantic anchors, exact trust-triple
+whitelist, nanoda enabled, non-default Comparator library, pinned Linux CI,
+and a local identity probe with a missing-name teeth test. Both full builds,
+all five identity closures, the teeth test, exact headline axiom gates, config
+and YAML checks, and the independent artifact audit pass locally. The complete
+pinned landrun/lean4export/comparator binary set is not available offline, so
+the landrun + nanoda end-to-end invocation was not run locally and remains the
+configured CI gate.
+
+No mathematical proof work is pending in this phase. External publication,
+the two prepared PRs, and the Zulip announcement are operator-owned. Preserve
+the two known-false bypassed `CFScheduleA.lean` sorries.
+
+Everything below is retained as historical proof-campaign state.
 
 ## ✅ Track D3 operator override complete — 2026-08-26
 
@@ -47,6 +74,9 @@ altitude lap must retarget or ratify completion.
 
 
 ## 🚧 2026-08-25 (review lap #3) — image-Khinchin crux: decorrelation core LANDED, variance→a.e. chain remaining
+
+> **Historical snapshot, superseded later the same day.** The crux described in
+> this section is proved; see the completion entry above. It is not active work.
 
 **The ONE open obligation across the whole repo**: `ae_tail_average_tendsto K`
 (`CFAeKhinchin.lean:343`), `∀ᵐ x ∂γ, logBirkhoffSum K n x / n → ∫ logTailFn K dγ`. Only
