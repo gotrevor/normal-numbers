@@ -9,8 +9,10 @@ exact theorem `quadratic_irrationals_disjunctive_of_hypothesisM`.  For every
 `b ≥ 2`, `QuadraticHypothesisM b` alone implies that every quadratic
 irrational is `b`-disjunctive.  Guarded axioms for the dimension theorem and
 exact wrapper are the standard trust triple, and the full build is green at
-8766 jobs.  The older B5′/B6 status below is retained as historical campaign
-state.
+8766 jobs.  A fresh review-lap statement probe also checked definitionally that
+`QuadraticHypothesisM` is exactly the closed/forward-invariant/dimension-`< 1`
+avoidance hypothesis and contains no encoded disjunctivity conclusion.  The
+older B5′/B6 status below is retained as historical campaign state.
 
 **B5′ COMPLETE + axiom-clean (10 headlines); B6 affine-images DONE + EXCEEDED (single-map + FULL affine family, any real `r`, `q>0`, all trust-triple). ONE open obligation left in the whole repo: `ae_tail_average_tendsto` — the log-tail SLLN feeding the image-Khinchin headline (witness CF-normal + all affine images CF-normal + Khinchin-typical).** · **Build**: 🟢 green (8760 jobs) · **Updated**: review lap #3 · 2026-08-25 · `53e454c`+
 

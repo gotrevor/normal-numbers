@@ -165,3 +165,49 @@ Fresh verification on the committed sources:
 There is no remaining in-scope blocker or next Track D attack: both parts of
 the boxed objective are complete and independently reverified. The next lap
 should move only after the operator selects a new roadmap objective.
+
+## Direction-review close-out — fresh autonomous lap
+
+This lap reconstructed Track D from the checked declarations and commit
+history rather than relying on the prior completion receipt.  The source audit
+found no statement drift or circularity:
+
+- `IsNormal.isDisjunctive` still has the exact API shape
+  `IsNormal b x -> 2 <= b -> IsDisjunctive b x` and remains in the elementary
+  `Disjunctive.lean` module.
+- `QuadraticHypothesisM` is character-unchanged since its introduction in
+  `166b2f5`.  A Lean `Iff.rfl` probe verified that it unfolds exactly to the
+  endpoint-safe circle rendering of the documented invariant-set avoidance
+  hypothesis; it does not mention `IsDisjunctive`.
+- The final wrapper consumes only `b >= 2` and `QuadraticHypothesisM b`.
+  Its call path delegates to the independently proved
+  `missingWordSubshiftDimensionBound`, whose finite cover consists of
+  `(b^|w|-1)^q` aligned cylinders plus zero-diameter b-adic endpoint
+  singletons.  The possible concern that the circle model weakens the
+  `[0,1)` statement was rejected: the Track D dictionary explicitly adopts
+  the quotient circle to identify the two endpoints, making closedness and
+  the multiply-by-`b` map endpoint-safe.
+
+Fresh verification actually run:
+
+- `lake env lean src/NormalNumbers/Disjunctive.lean` — passed.
+- `lake env lean src/NormalNumbers/QuadraticDisjunctive.lean` — passed.
+- A `lake env lean --stdin` statement-shape probe for the normality API,
+  definitional expansion of `QuadraticHypothesisM`, and exact D3 wrapper —
+  passed.
+- `/Users/gotrevor/personal/bin/lean-axiom-gate . --import NormalNumbers
+  --target NormalNumbers.IsNormal.isDisjunctive
+  --target NormalNumbers.missingWordSubshiftDimensionBound
+  --target NormalNumbers.quadratic_irrationals_disjunctive_of_hypothesisM
+  --exact` — passed; all three targets report exactly
+  `[Classical.choice, Quot.sound, propext]`.
+- `lake build` — passed, 8766 jobs.  Its only `sorry` warnings are the two
+  explicitly forbidden known-false `CFScheduleA.lean` stubs.
+
+The evidence warranted one route correction: `DIRECTION.md` still called an
+older image-Khinchin obligation current even though both that campaign and the
+operator-scoped Track D objective are complete.  The current directive and the
+`PENDING_WORK.md` heading now record the scoped completion; the older campaign
+material remains intact as history.  There is no current blocker and no next
+Track D proof attack.  Preserve the forbidden stubs and wait for a new operator
+objective after this committed green checkpoint.

@@ -1,4 +1,4 @@
-# PENDING WORK — image-Khinchin's log-tail SLLN (the ONE open crux) + history below
+# PENDING WORK — Track D boxed objective complete; historical campaign ledger below
 
 ## ✅ Track D3 operator override complete — 2026-08-26
 

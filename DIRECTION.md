@@ -4,7 +4,33 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-25 REVIEW LAP #3 — B6 measure route DONE + EXCEEDED; drive the ONE open crux: image-Khinchin's tail-average SLLN)
+## CURRENT DIRECTIVE (set 2026-08-26 REVIEW LAP — scoped Track D objective complete)
+
+- **Operator scope:** Track D in `ROADMAP.md` and
+  `docs/conditional-disjunctivity.md` overrides the historical B6 directives
+  below.  Both required milestones are complete: `IsNormal.isDisjunctive` is
+  in `Disjunctive.lean`, and the exact D3 theorem
+  `quadratic_irrationals_disjunctive_of_hypothesisM` is in
+  `QuadraticDisjunctive.lean`; both modules are imported by the aggregator.
+- **Fresh review verdict:** the checked theorem shape has not drifted.
+  `QuadraticHypothesisM b` unfolds definitionally to the documented assertion
+  that no quadratic irrational's circle representative belongs to a closed,
+  multiply-by-`b`-forward-invariant set of Hausdorff dimension below one.  It
+  contains no disjunctivity conclusion.  The exact wrapper consumes only
+  `b >= 2` and this named `Prop`; its missing-word dimension input is discharged
+  independently by `missingWordSubshiftDimensionBound` using the endpoint-safe
+  finite covers.
+- **Current verification:** both Track D modules compile; the exact axiom gate
+  reports only `[Classical.choice, Quot.sound, propext]` for
+  `IsNormal.isDisjunctive`, `missingWordSubshiftDimensionBound`, and the exact
+  D3 wrapper; `lake build` succeeds at 8766 jobs.  Neither Track D module has a
+  `sorry` or custom axiom declaration.
+- **Stop condition:** there is no remaining in-scope Track D attack.  Preserve
+  the two known-false `CFScheduleA.lean` sorries and do not start a different
+  roadmap objective without a new operator directive.  This scoped objective
+  qualifies for `box done`.
+
+## SUPERSEDED DIRECTIVE (set 2026-08-25 REVIEW LAP #3 — B6 measure route DONE + EXCEEDED; drive the ONE open crux: image-Khinchin's tail-average SLLN)
 
 - **State (ground truth, real `#print axioms` this lap, HEAD `53e454c`, build 🟢 8760):**
   ALL of B5′ (10 headlines), B6 single-map `exists_cfNormal_and_affine_cfNormal`, AND
