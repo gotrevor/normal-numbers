@@ -71,8 +71,14 @@ xₙ = {Σ_{k≤n} 2^{n-k}/k}, i.e. the kicked orbit x₀ = 0, xₙ = {2xₙ₋�
 >
 > **D_w ⟹ w occurs infinitely often in the binary expansion of ln 2.**
 
-(Proof: pass to the subsequence, add the o(1) tracking error, land `{2ⁿ ln 2}` in the open cylinder
-infinitely often; a cylinder visit at time n is an occurrence of w at offset n.)
+Formalized as `LnTwoHypothesisD` and
+`frequently_occursAt_log_two_of_hypothesisD`; here `Frequently` along `atTop` says that occurrences
+exist arbitrarily far out.  The proof takes a ball around the cluster point whose doubled radius
+still fits inside the open cylinder.  Cluster-point visits to that ball remain frequent after
+intersection with the eventual bound on the nonnegative tracking error.  The resulting sum stays
+strictly below the cylinder's upper endpoint, hence below 1, so its fractional part does not wrap.
+The half-open-cylinder bridge `occursAt_iff_orbit_mem` then reads off the word.  Quantifying this
+over every valid binary word gives `isDisjunctive_log_two_of_forall_hypothesisD`.
 
 Why this family earns its place: `∀w D_w` ⟺ disjunctivity, but each **single** D_w with |w| ≥ 2 is
 already beyond current knowledge - per Adamczewski-Rampersad, no specific irrational has any known
@@ -179,11 +185,10 @@ avoiding class flips from polynomial to exponential and complexity arguments go 
 - **Novelty**: unswept, all five.  Owed before any outward use: Bailey-Crandall descendants
   (Λ, D_w), Bugeaud-Kaneko and the digit-expansion literature (C, T), rigidity surveys and the
   Mahler-problem literature (M).  "Apparently unstated" is the ceiling until then.
-- **Proof status**: the circle ω-limit dictionary, 0-1 law, and Λ implication are formalized in
-  `ConditionalDisjunctive.lean`.  D_w bridge = routine on top
-  of the existing tracking lemma, unformalized.  §4 dyadic coupling = sketch, carry bookkeeping
-  unchecked.  M's implication = complete modulo the standard SFT-dimension lemma, which is the
-  real formalization cost.  Everything else in §0 is textbook.
+- **Proof status**: the circle ω-limit dictionary, 0-1 law, Λ implication, and full D_w conditional
+  family are formalized in `ConditionalDisjunctive.lean`.  §4 dyadic coupling = sketch, carry
+  bookkeeping unchecked.  M's implication = complete modulo the standard SFT-dimension lemma,
+  which is the real formalization cost.  Everything else in §0 is textbook.
 - **Lean surface**:
 
 | item | shape | tier |
@@ -192,7 +197,7 @@ avoiding class flips from polynomial to exponential and complexity arguments go 
 | `omegaLimit`: closed, forward-invariant, dense ⟺ full | **formalized** in `ConditionalDisjunctive.lean` | done |
 | 0-1 law `measure_pos → omegaLimit = univ` | **formalized** via additive-circle ergodicity | done |
 | Axiom Λ named + `isDisjunctive_log_two_of_...` assembly | **formalized** | done |
-| D_w bridge from `lnTwoOrbit` tracking | conditional family | low-mid |
+| D_w bridge from `lnTwoOrbit` tracking + all-words assembly | **formalized** in `ConditionalDisjunctive.lean` | done |
 | M_b implication (needs dim(SFT) < 1) | fractal dimension | high |
 
 ## References (delta over the companion doc)

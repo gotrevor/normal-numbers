@@ -4,12 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.Disjunctive
+import NormalNumbers.LnTwo
 import Mathlib.Dynamics.Ergodic.AddCircle
 import Mathlib.Dynamics.OmegaLimit
 import Mathlib.Topology.Perfect
 
 /-!
-# Circle ω-limits and the conditional disjunctivity ladder (Track D, D0.5–D1)
+# Circle ω-limits and the conditional disjunctivity ladder (Track D, D0.5–D2)
 
 The real-valued orbit in `Disjunctive.lean` uses canonical representatives in
 `[0,1)`.  Its closure in `ℝ` includes both endpoints, so the correct compact
@@ -22,8 +23,9 @@ Axiom Λ.  The hard measure-theoretic input is mathlib's ergodicity theorem for
 carried into itself by this map is almost full by ergodicity, then literally
 full because Haar measure is positive on nonempty open sets.
 
-The named hypothesis `LnTwoHypothesisLambda` is a `Prop`, not a Lean axiom.
-Its implication to binary disjunctivity is proved at the end of the file.
+The named hypotheses `LnTwoHypothesisLambda` and `LnTwoHypothesisD` are
+`Prop`s, not Lean axioms.  Their implications to binary disjunctivity and
+recurrence of a prescribed binary word are proved at the end of the file.
 -/
 
 namespace NormalNumbers
@@ -241,5 +243,69 @@ def LnTwoHypothesisLambda : Prop :=
 theorem isDisjunctive_log_two_of_hypothesisLambda
     (hΛ : LnTwoHypothesisLambda) : IsDisjunctive 2 (Real.log 2) :=
   isDisjunctive_of_circleOmegaLimit_volume_pos 2 (by omega) (Real.log 2) hΛ
+
+/-! ## The per-word `D_w` hypotheses for `ln 2` -/
+
+/-- The open base-`b` cylinder determined by a finite digit word. -/
+def openWordCylinder (b : ℕ) (w : List ℕ) : Set ℝ :=
+  Set.Ioo ((blockNatVal b w : ℝ) / (b : ℝ) ^ w.length)
+    (((blockNatVal b w : ℝ) + 1) / (b : ℝ) ^ w.length)
+
+/-- **Axiom `D_w` for `ln 2`**, encoded as a named hypothesis rather than a Lean axiom:
+the explicit rational surrogate orbit has a cluster point in the open binary
+cylinder determined by `w`. -/
+def LnTwoHypothesisD (w : List ℕ) : Prop :=
+  ∃ y ∈ openWordCylinder 2 w, MapClusterPt y atTop lnTwoOrbit
+
+/-- Axiom `D_w` makes `w` occur arbitrarily late, hence infinitely often, in
+the canonical binary expansion of `ln 2`. -/
+theorem frequently_occursAt_log_two_of_hypothesisD (w : List ℕ)
+    (hw : ∀ d ∈ w, d < 2) (hD : LnTwoHypothesisD w) :
+    ∃ᶠ n in atTop, OccursAt 2 (Real.log 2) w n := by
+  let a : ℝ := (blockNatVal 2 w : ℝ) / (2 : ℝ) ^ w.length
+  let c : ℝ := ((blockNatVal 2 w : ℝ) + 1) / (2 : ℝ) ^ w.length
+  rcases hD with ⟨y, hy, hycluster⟩
+  change y ∈ Set.Ioo a c at hy
+  have hval : blockNatVal 2 w < 2 ^ w.length := blockNatVal_lt 2 w hw
+  have hpow : (0 : ℝ) < (2 : ℝ) ^ w.length := by positivity
+  have hc1 : c ≤ 1 := by
+    dsimp [c]
+    rw [div_le_one hpow]
+    exact_mod_cast Nat.succ_le_of_lt hval
+  let δ : ℝ := min ((y - a) / 2) ((c - y) / 2)
+  have hδ : 0 < δ := by
+    dsimp [δ]
+    exact lt_min (by linarith [hy.1]) (by linarith [hy.2])
+  have hδa : δ ≤ (y - a) / 2 := min_le_left _ _
+  have hδc : δ ≤ (c - y) / 2 := min_le_right _ _
+  have hnear : ∃ᶠ n in atTop, lnTwoOrbit n ∈ Metric.ball y δ :=
+    hycluster.frequently (Metric.ball_mem_nhds y hδ)
+  have herr : ∀ᶠ n in atTop, 2 ^ n * lnTwoTail n < δ :=
+    (tendsto_order.1 tendsto_pow_mul_lnTwoTail).2 δ hδ
+  refine (hnear.and_eventually herr).mono ?_
+  intro n hn
+  have hsur0 := (lnTwoOrbit_mem_Ico n).1
+  have herr0 := pow_mul_lnTwoTail_nonneg n
+  have hdist := hn.1
+  rw [Metric.mem_ball, Real.dist_eq, abs_lt] at hdist
+  have hsum0 : 0 ≤ lnTwoOrbit n + 2 ^ n * lnTwoTail n := by
+    linarith [hsur0, herr0]
+  have hsumc : lnTwoOrbit n + 2 ^ n * lnTwoTail n < c := by
+    linarith [hdist.2, hn.2, hδc]
+  have hsum1 : lnTwoOrbit n + 2 ^ n * lnTwoTail n < 1 :=
+    lt_of_lt_of_le hsumc hc1
+  apply (occursAt_iff_orbit_mem 2 (by omega) (Real.log 2) w hw n).2
+  change orbit 2 (Real.log 2) n ∈ Set.Ico a c
+  rw [orbit_log_two_eq, Int.fract_eq_self.mpr ⟨hsum0, hsum1⟩]
+  exact ⟨by linarith [hdist.1, herr0, hδa], hsumc⟩
+
+/-- If every valid binary word satisfies its `D_w` hypothesis, then `ln 2` is
+binary disjunctive. -/
+theorem isDisjunctive_log_two_of_forall_hypothesisD
+    (hD : ∀ w : List ℕ, (∀ d ∈ w, d < 2) → LnTwoHypothesisD w) :
+    IsDisjunctive 2 (Real.log 2) := by
+  rw [isDisjunctive_iff_forall_occursAt 2 (by omega) (Real.log 2)]
+  intro w hw
+  exact (frequently_occursAt_log_two_of_hypothesisD w hw (hD w hw)).exists
 
 end NormalNumbers

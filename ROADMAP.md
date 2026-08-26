@@ -97,9 +97,10 @@ the source of truth for statements and claim status (novelty unswept).
   ω-limit equivalence are in `ConditionalDisjunctive.lean`
 - ✅ D1 the 0-1 law: a closed `×b`-forward-invariant circle set with positive
   Haar measure is everything, via mathlib's `AddCircle.ergodic_nsmul`
-- 🔨 D2 conditional headlines for ln 2: Axiom Λ (positive limit mass) and
-  `Λ ⟹ IsDisjunctive 2 (Real.log 2)` landed in `ConditionalDisjunctive.lean`;
-  the per-word D_w bridges off the existing `lnTwoOrbit` tracking remain
+- ✅ D2 conditional headlines for ln 2 complete: Axiom Λ (positive limit mass),
+  `Λ ⟹ IsDisjunctive 2 (Real.log 2)`, the named per-word `LnTwoHypothesisD`,
+  `D_w ⟹` arbitrarily late occurrences of `w`, and the all-words disjunctivity
+  assembly are in `ConditionalDisjunctive.lean`
 - ⬜ D3 (stretch) Axiom M implication: quadratic irrationals b-disjunctive
   given invariant-set avoidance; real cost is dim(missing-word SFT) < 1
 - ✅ D4 **Baire slate (unconditional, SHIPPED 2026-08-25)**:

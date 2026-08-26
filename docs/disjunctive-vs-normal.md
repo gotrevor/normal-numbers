@@ -193,9 +193,8 @@ implications to digit conclusions for specific constants: **Λ** (positive-measu
 2-disjunctive, via a 0-1 law for closed forward-invariant sets), the **D_w** family (per-word orbit
 accumulation ⟹ that word recurs in ln 2), **C** (carry rigidity ⟺ `11` recurs in √2), **T**
 (lossless dyadic transfer ⟹ same), and **M** (invariant-set avoidance ⟹ quadratic irrationals
-disjunctive; sharpens Mahler's 1984 Cantor-set question).  The §0 circle dictionary and the Λ
-implication are now formalized; D_w remains the next routine bridge.  Novelty of all five is
-unswept.
+disjunctive; sharpens Mahler's 1984 Cantor-set question).  The §0 circle dictionary, Λ implication,
+and full D_w conditional family are now formalized.  Novelty of all five is unswept.
 
 ### 4.4  Sharpen Mahler's `m`
 
@@ -214,6 +213,7 @@ hedged at that evidence tier.
 | absolutely disjunctive numbers are comeager (Calude-Zamfirescu) | **shipped:** `residual_absolutelyDisjunctive` in `DisjunctiveBaire.lean`; `isMeagre_setOf_isNormal` and `exists_absolutelyDisjunctive_forall_not_isNormal` in `NormalMeager.lean` formalize the stronger "lexicon with no statistics" conclusion | low |
 | disjunctive in `b` ⟺ disjunctive in `bᵏ` | **shipped:** `isDisjunctive_pow_iff` in `Disjunctive.lean`, through the `OccursAt`/cylinder bridge and the §0 alignment word | low |
 | Axiom Λ ⟹ `ln 2` is binary disjunctive | **shipped:** the circle ω-limit dictionary, Haar 0-1 law, `LnTwoHypothesisLambda`, and `isDisjunctive_log_two_of_hypothesisLambda` in `ConditionalDisjunctive.lean` | low-mid |
+| Axiom D_w ⟹ `w` recurs arbitrarily late in binary `ln 2` | **shipped:** `LnTwoHypothesisD`, `frequently_occursAt_log_two_of_hypothesisD`, and the all-words disjunctivity assembly in `ConditionalDisjunctive.lean` | low-mid |
 | Mahler 1973 / Berend-Boshernitzan | open; headline, elementary, no prior formalization found | mid |
 | Furstenberg `×2 ×3` topological rigidity | open; famous, and the topological version is the tractable half | high |
 
