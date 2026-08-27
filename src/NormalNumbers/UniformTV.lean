@@ -789,23 +789,230 @@ private theorem digitTV_le_periodic_sq (b p : ℕ) (hb : 2 ≤ b) (hp : 0 < p) (
   push_cast
   exact hbase
 
--- ⚠️ RESTORED 2026-08-26.  A treadmill lap DELETED this frozen statement rather
--- than proving it, which satisfied the `sorry-free` done-gate by removing the
--- sorry.  The gate could not fail.  It is restored here as an explicit `sorry`
--- because it is genuine open work, not because parking it is acceptable: it is
--- the ONE remaining item in this module.  Route: the Baire argument sketched in
--- BRIEF-uniform-tv.md, using NormalMeager + DisjunctiveBaire.
+/-! ## Item 3: a Baire witness with a vanishing-`digitTV` schedule
+
+The construction forces, at arbitrarily deep and arbitrarily late digit
+positions `p`, a periodic balanced block of length `b * p * p` right after
+the prefix.  `digitTV_le_periodic_sq` already shows such a block drives
+`digitTV b x (p + b*p*p)` below `2 / (1 + b * p)`.  Requiring this for a
+cofinal set of `p` (for every base `b` and every threshold `K`) is a
+countable intersection of dense open sets, hence residual; intersecting
+further with the (already-proved) residual set of reals normal in no base
+produces the witness. -/
+
+/-- The open cylinder-union forcing, at some depth `p ≥ K`, the next
+`b * p * p` digits to spell the periodic block `0, 1, …, b-1, 0, 1, …`. -/
+private def smallTVOpen (b K : ℕ) : Set ℝ :=
+  ⋃ p : ℕ, ⋃ (_ : K ≤ p), ⋃ (_ : 0 < p), ⋃ z : ℤ,
+    Set.Ioo
+      (((z : ℝ) + (blockNatVal b (periodicPattern b (p * p)) : ℝ)
+          / (b : ℝ) ^ (b * (p * p))) / (b : ℝ) ^ p)
+      (((z : ℝ) + ((blockNatVal b (periodicPattern b (p * p)) : ℝ) + 1)
+          / (b : ℝ) ^ (b * (p * p))) / (b : ℝ) ^ p)
+
+private theorem isOpen_smallTVOpen (b K : ℕ) : IsOpen (smallTVOpen b K) :=
+  isOpen_iUnion fun _ => isOpen_iUnion fun _ => isOpen_iUnion fun _ =>
+    isOpen_iUnion fun _ => isOpen_Ioo
+
+private theorem dense_smallTVOpen (b : ℕ) (hb : 2 ≤ b) (K : ℕ) :
+    Dense (smallTVOpen b K) := by
+  rw [Metric.dense_iff]
+  intro x ε hε
+  have hbR : (1 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  have hq0 : (0 : ℝ) ≤ 1 / (b : ℝ) := by positivity
+  have hq1 : (1 : ℝ) / b < 1 := (div_lt_one (by positivity)).mpr hbR
+  have htend : Tendsto (fun p : ℕ => ((1 : ℝ) / b) ^ p)
+      atTop (nhds 0) := tendsto_pow_atTop_nhds_zero_of_lt_one hq0 hq1
+  have hevent : ∀ᶠ p : ℕ in atTop, ((1 : ℝ) / b) ^ p < ε :=
+    (tendsto_order.1 htend).2 _ hε
+  obtain ⟨p, ⟨hpε, hKp⟩, hp0⟩ :=
+    ((hevent.and (eventually_ge_atTop K)).and (eventually_gt_atTop 0)).exists
+  have hB : (0 : ℝ) < (b : ℝ) ^ p := by positivity
+  have hinv : (1 : ℝ) / (b : ℝ) ^ p < ε := by simpa [one_div_pow] using hpε
+  set R : ℕ := b * (p * p) with hRdef
+  set V : ℕ := blockNatVal b (periodicPattern b (p * p)) with hVdef
+  have hVlt : V < b ^ R := by
+    have := blockNatVal_lt b (periodicPattern b (p * p))
+      (periodicPattern_lt b (p * p) (by omega))
+    rwa [periodicPattern_length] at this
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (show 1 ≤ b by omega)
+  have hpow1 : (1 : ℝ) ≤ (b : ℝ) ^ R := one_le_pow₀ hb1
+  have hδ0 : (0:ℝ) < 1 / (b : ℝ) ^ R := by positivity
+  let z : ℤ := ⌊x * (b : ℝ) ^ p⌋
+  let t : ℝ := (V : ℝ) / (b : ℝ) ^ R + (1 / (b : ℝ) ^ R) / 2
+  let y : ℝ := ((z : ℝ) + t) / (b : ℝ) ^ p
+  have htlo : (V : ℝ) / (b : ℝ) ^ R < t := by dsimp only [t]; linarith
+  have hthi : t < ((V : ℝ) + 1) / (b : ℝ) ^ R := by
+    dsimp only [t]
+    rw [add_div]
+    linarith
+  have ht0 : 0 < t := lt_of_le_of_lt (by positivity) htlo
+  have ht1 : t < 1 := hthi.trans_le (by
+    rw [div_le_one (by positivity : (0:ℝ) < (b:ℝ) ^ R)]
+    exact_mod_cast hVlt)
+  have hfloor_lo : (z : ℝ) ≤ x * (b : ℝ) ^ p := by
+    dsimp only [z]; exact_mod_cast Int.floor_le (x * (b : ℝ) ^ p)
+  have hfloor_hi : x * (b : ℝ) ^ p < (z : ℝ) + 1 := by
+    dsimp only [z]; exact_mod_cast Int.lt_floor_add_one (x * (b : ℝ) ^ p)
+  have hy_mem : y ∈ smallTVOpen b K := by
+    refine Set.mem_iUnion.2 ⟨p, Set.mem_iUnion.2 ⟨hKp, Set.mem_iUnion.2
+      ⟨hp0, Set.mem_iUnion.2 ⟨z, ?_⟩⟩⟩⟩
+    show y ∈ Set.Ioo
+      (((z : ℝ) + (blockNatVal b (periodicPattern b (p * p)) : ℝ)
+          / (b : ℝ) ^ (b * (p * p))) / (b : ℝ) ^ p)
+      (((z : ℝ) + ((blockNatVal b (periodicPattern b (p * p)) : ℝ) + 1)
+          / (b : ℝ) ^ (b * (p * p))) / (b : ℝ) ^ p)
+    rw [← hRdef, ← hVdef]
+    constructor
+    · dsimp only [y]
+      exact div_lt_div_of_pos_right (by linarith) hB
+    · dsimp only [y]
+      exact div_lt_div_of_pos_right (by linarith) hB
+  have hy_lower : x - 1 / (b : ℝ) ^ p < y := by
+    rw [show y = ((z : ℝ) + t) / (b : ℝ) ^ p from rfl, lt_div_iff₀ hB]
+    calc
+      (x - 1 / (b : ℝ) ^ p) * (b : ℝ) ^ p
+          = x * (b : ℝ) ^ p - 1 := by field_simp
+      _ < (z : ℝ) := by linarith
+      _ < (z : ℝ) + t := by linarith
+  have hy_upper : y < x + 1 / (b : ℝ) ^ p := by
+    rw [show y = ((z : ℝ) + t) / (b : ℝ) ^ p from rfl, div_lt_iff₀ hB]
+    calc
+      (z : ℝ) + t < x * (b : ℝ) ^ p + 1 := by linarith
+      _ = (x + 1 / (b : ℝ) ^ p) * (b : ℝ) ^ p := by field_simp
+  refine ⟨y, ?_, hy_mem⟩
+  rw [Metric.mem_ball, Real.dist_eq, abs_lt]
+  constructor <;> linarith
+
+/-- Membership in `smallTVOpen b K` at a nonnegative real produces a depth
+`p ≥ K` whose periodic-tail `digitTV` bound applies. -/
+private theorem exists_digitTV_le_of_mem_smallTVOpen (b K : ℕ) (hb : 2 ≤ b)
+    (x : ℝ) (hx : 0 ≤ x) (hmem : x ∈ smallTVOpen b K) :
+    ∃ p, K ≤ p ∧ digitTV b x (p + b * (p * p)) ≤ 2 / (1 + b * p) := by
+  rcases Set.mem_iUnion.1 hmem with ⟨p, hmem⟩
+  rcases Set.mem_iUnion.1 hmem with ⟨hKp, hmem⟩
+  rcases Set.mem_iUnion.1 hmem with ⟨hp0, hmem⟩
+  rcases Set.mem_iUnion.1 hmem with ⟨z, hmem⟩
+  refine ⟨p, hKp, ?_⟩
+  set R : ℕ := b * (p * p) with hRdef
+  set V : ℕ := blockNatVal b (periodicPattern b (p * p)) with hVdef
+  have hVlt : V < b ^ R := by
+    have := blockNatVal_lt b (periodicPattern b (p * p))
+      (periodicPattern_lt b (p * p) (by omega))
+    rwa [periodicPattern_length] at this
+  have ha0 : (0:ℝ) ≤ (V : ℝ) / (b : ℝ) ^ R := by positivity
+  have hc1 : ((V : ℝ) + 1) / (b : ℝ) ^ R ≤ 1 := by
+    rw [div_le_one (by positivity : (0:ℝ) < (b:ℝ) ^ R)]
+    exact_mod_cast hVlt
+  have horbit := orbit_mem_Ioo_of_mem_lift b hb x
+    ((V : ℝ) / (b : ℝ) ^ R) (((V : ℝ) + 1) / (b : ℝ) ^ R) ha0 hc1 p z hmem
+  set y : ℝ := orbit b x p with hydef
+  have hy01 : y ∈ Set.Ico (0:ℝ) 1 :=
+    ⟨horbit.1.le.trans' ha0, horbit.2.trans_le hc1⟩
+  have hw : ∀ d ∈ periodicPattern b (p * p), d < b :=
+    periodicPattern_lt b (p * p) (by omega)
+  have hlen : (periodicPattern b (p * p)).length = R := by
+    rw [periodicPattern_length, hRdef]
+  have hVal : blockNatVal b (periodicPattern b (p * p)) = V := hVdef.symm
+  have hprefix : (∀ j (h : j < (periodicPattern b (p * p)).length),
+      digitOf b y j = (periodicPattern b (p * p))[j]) := by
+    rw [digits_prefix_iff b hb y hy01 (periodicPattern b (p * p)) hw, hlen, hVal]
+    exact ⟨horbit.1.le, horbit.2⟩
+  have htail : ∀ j < R, digitOf b x (p + j) = j % b := by
+    intro j hj
+    have hj' : j < (periodicPattern b (p * p)).length := by rwa [hlen]
+    have heq := hprefix j hj'
+    rw [← digitOf_orbit b hb x hx p j, ← hydef, heq]
+    exact periodicPattern_getElem b (p * p) j (by rwa [hRdef] at hj)
+  have hp : 0 < p := hp0
+  exact digitTV_le_periodic_sq b p hb hp x htail
+
 /-- **Guardrail.**  Asking only for *some* depth schedule is dodgeable.
-Witness: binary digits independent and fair, forced to `0` on
-`[P j, 2 * P j)` for a rapidly growing `P`.  Such a real fails simple
-normality in base `2` at depth `2 * P j`, while the schedule can be routed
-through the clean stretches `(2 * P (j-1), P j)`, which are multiplicatively
-wide enough to host it. -/
+Witness: forcing, for every base `b` and cofinally many depths `p`, a
+periodic balanced block right after the prefix drives `digitTV` to `0`
+along the schedule `N(b) := p(b) + b·p(b)²`, while a Baire-residual real
+of this shape is never normal in base `2`. -/
 theorem exists_schedule_digitTV_tendsto_not_isNormal :
     ∃ x : ℝ, ∃ N : ℕ → ℕ,
       Tendsto (fun b => (N b : ℝ) / b) atTop atTop ∧
       Tendsto (fun b => digitTV b x (N b)) atTop (nhds 0) ∧
       ¬ IsNormal 2 x := by
-  sorry
+  classical
+  let core : Set ℝ := ⋂ b : ℕ, ⋂ K : ℕ,
+    if 2 ≤ b then smallTVOpen b K else Set.univ
+  have hcore : core ∈ residual ℝ := by
+    dsimp [core]
+    refine countable_iInter_mem.2 fun b => countable_iInter_mem.2 fun K => ?_
+    split_ifs with hb
+    · exact residual_of_dense_open (isOpen_smallTVOpen b K) (dense_smallTVOpen b hb K)
+    · exact Filter.univ_mem
+  let abnormal2 : Set ℝ := {x : ℝ | ¬ IsNormal 2 x}
+  have habnormal2 : abnormal2 ∈ residual ℝ := by
+    have hmeagre := isMeagre_setOf_isNormal 2 (by norm_num)
+    rw [IsMeagre] at hmeagre
+    exact hmeagre
+  have hinter : core ∩ abnormal2 ∈ residual ℝ := Filter.inter_mem hcore habnormal2
+  have hdense : Dense (core ∩ abnormal2) := dense_of_mem_residual hinter
+  obtain ⟨x, hxmem⟩ :=
+    hdense.inter_open_nonempty (Set.Ioo (0:ℝ) 1) isOpen_Ioo ⟨1/2, by norm_num⟩
+  have hxcore := hxmem.2.1
+  have hxabn := hxmem.2.2
+  have hx0 := hxmem.1.1
+  have hx0' : 0 ≤ x := hx0.le
+  have hxb : ∀ b K, 2 ≤ b → x ∈ smallTVOpen b K := by
+    intro b K hb
+    have h1 := Set.mem_iInter.mp hxcore b
+    have h2 := Set.mem_iInter.mp h1 K
+    simpa [hb] using h2
+  choose p hpK hpbound using fun b (hb : 2 ≤ b) =>
+    exists_digitTV_le_of_mem_smallTVOpen b b hb x hx0' (hxb b b hb)
+  let N : ℕ → ℕ := fun b =>
+    if hb : 2 ≤ b then (p b hb) + b * ((p b hb) * (p b hb)) else 0
+  have hNb : ∀ b (hb : 2 ≤ b), N b = (p b hb) + b * ((p b hb) * (p b hb)) := by
+    intro b hb; simp [N, hb]
+  have hpb : ∀ b (hb : 2 ≤ b), b ≤ p b hb := fun b hb => hpK b hb
+  refine ⟨x, N, ?_, ?_, hxabn⟩
+  · refine tendsto_atTop_mono' atTop (Filter.eventually_atTop.2 ⟨2, fun b hb => ?_⟩)
+      (tendsto_natCast_atTop_atTop (R := ℝ))
+    show (b : ℝ) ≤ (N b : ℝ) / b
+    have hRge : b * ((p b hb) * (p b hb)) ≤ N b := by rw [hNb b hb]; omega
+    have hpge : b ≤ p b hb := hpb b hb
+    have hbpos : (0:ℝ) < b := by positivity
+    rw [le_div_iff₀ hbpos]
+    have : (b:ℝ) * b ≤ (N b : ℝ) := by
+      have hbb_pp : b * b ≤ (p b hb) * (p b hb) := Nat.mul_le_mul hpge hpge
+      have hpp_bpp : (p b hb) * (p b hb) ≤ b * ((p b hb) * (p b hb)) :=
+        Nat.le_mul_of_pos_left _ (by omega)
+      have h1 : (b:ℕ) * b ≤ N b := le_trans hbb_pp (le_trans hpp_bpp hRge)
+      exact_mod_cast h1
+    nlinarith [this]
+  · have hsq : ∀ b : ℕ, 2 ≤ b → digitTV b x (N b) ≤ 2 / (b:ℝ)^2 := by
+      intro b hb
+      have hbound := hpbound b hb
+      rw [← hNb b hb] at hbound
+      have hpge : b ≤ p b hb := hpb b hb
+      have hbpos : (0:ℝ) < b := by positivity
+      have hden : (b:ℝ)^2 ≤ 1 + b * (p b hb) := by
+        have : (b:ℝ) * b ≤ (b:ℝ) * (p b hb) := by
+          apply mul_le_mul_of_nonneg_left _ hbpos.le
+          exact_mod_cast hpge
+        nlinarith
+      have h2pos : (0:ℝ) < 1 + b * (p b hb) := by positivity
+      calc digitTV b x (N b) ≤ 2 / (1 + b * (p b hb)) := hbound
+        _ ≤ 2 / (b:ℝ)^2 := by
+          apply div_le_div_of_nonneg_left (by norm_num) (by positivity) hden
+    have hnn : ∀ b : ℕ, 2 ≤ b → (0:ℝ) ≤ digitTV b x (N b) := by
+      intro b _
+      unfold digitTV
+      positivity
+    have hsqtendsto : Tendsto (fun b : ℕ => 2 / (b:ℝ)^2) atTop (nhds 0) := by
+      have hpow : Tendsto (fun b : ℕ => (b:ℝ)^2) atTop atTop :=
+        (tendsto_natCast_atTop_atTop (R := ℝ)).atTop_mul_atTop₀
+          (tendsto_natCast_atTop_atTop (R := ℝ)) |>.congr (by intro b; ring)
+      exact (tendsto_const_nhds (x := (2:ℝ))).div_atTop hpow
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le'
+      tendsto_const_nhds hsqtendsto ?_ ?_
+    · exact Filter.eventually_atTop.2 ⟨2, hnn⟩
+    · exact Filter.eventually_atTop.2 ⟨2, hsq⟩
 
 end NormalNumbers

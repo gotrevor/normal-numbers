@@ -52,3 +52,4 @@ import NormalNumbers.ConditionalDisjunctive
 import NormalNumbers.QuadraticDisjunctive
 import NormalNumbers.DisjunctiveBaire
 import NormalNumbers.NormalMeager
+import NormalNumbers.UniformTV
