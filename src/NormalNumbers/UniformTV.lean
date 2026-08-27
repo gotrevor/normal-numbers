@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import NormalNumbers.Pillai
 import NormalNumbers.Headline
+import NormalNumbers.NormalMeager
 
 /-!
 # Uniform high-base equidistribution
@@ -634,17 +635,128 @@ theorem isAbsolutelyNormal_of_uniformDigitTV (x : ℝ) (h : UniformDigitTV x) :
   have hmono : b ^ B ≤ b ^ r := Nat.pow_le_pow_right (by omega) hr
   exact hLB (b ^ r) (by omega) N hN
 
-/-- **Guardrail.**  Asking only for *some* depth schedule is dodgeable.
-Witness: binary digits independent and fair, forced to `0` on
-`[P j, 2 * P j)` for a rapidly growing `P`.  Such a real fails simple
-normality in base `2` at depth `2 * P j`, while the schedule can be routed
-through the clean stretches `(2 * P (j-1), P j)`, which are multiplicatively
-wide enough to host it. -/
-theorem exists_schedule_digitTV_tendsto_not_isNormal :
-    ∃ x : ℝ, ∃ N : ℕ → ℕ,
-      Tendsto (fun b => (N b : ℝ) / b) atTop atTop ∧
-      Tendsto (fun b => digitTV b x (N b)) atTop (nhds 0) ∧
-      ¬ IsNormal 2 x := by
-  sorry
+/-- The periodic base-`b` block `0, 1, …, b-1, 0, 1, …` of length `b * t`:
+each residue `< b` occurs exactly `t` times, so a real whose digits spell it
+out is exactly balanced on that stretch. -/
+private def periodicPattern (b t : ℕ) : List ℕ := (List.range (b * t)).map (· % b)
+
+private theorem periodicPattern_length (b t : ℕ) :
+    (periodicPattern b t).length = b * t := by
+  simp [periodicPattern]
+
+private theorem periodicPattern_lt (b t : ℕ) (hb : 0 < b) :
+    ∀ d ∈ periodicPattern b t, d < b := by
+  intro d hd
+  simp only [periodicPattern, List.mem_map, List.mem_range] at hd
+  obtain ⟨j, _, rfl⟩ := hd
+  exact Nat.mod_lt j hb
+
+private theorem periodicPattern_getElem (b t j : ℕ) (hj : j < b * t) :
+    (periodicPattern b t)[j]'(by rwa [periodicPattern_length]) = j % b := by
+  simp [periodicPattern, List.getElem_map]
+
+/-- Among the first `b * t` naturals, each residue class `< b` occurs
+exactly `t` times. -/
+private theorem card_residue_range (b t c : ℕ) (hb : 0 < b) (hc : c < b) :
+    ((Finset.range (b * t)).filter (fun j => j % b = c)).card = t := by
+  have heq : (Finset.range (b * t)).filter (fun j => j % b = c)
+      = (Finset.range t).image (fun q => c + b * q) := by
+    ext j
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_image]
+    constructor
+    · rintro ⟨hj, hmod⟩
+      refine ⟨j / b, ?_, ?_⟩
+      · rw [Nat.div_lt_iff_lt_mul hb, mul_comm]; exact hj
+      · have hdm := Nat.div_add_mod j b
+        rw [hmod] at hdm
+        omega
+    · rintro ⟨q, hq, rfl⟩
+      refine ⟨?_, ?_⟩
+      · calc c + b * q < b + b * q := by omega
+          _ ≤ b * t := by nlinarith [hq]
+      · rw [Nat.add_mul_mod_self_left]; exact Nat.mod_eq_of_lt hc
+  rw [heq, Finset.card_image_of_injective _ (fun q q' hqq' => by
+    have hcancel : b * q = b * q' := by omega
+    exact Nat.eq_of_mul_eq_mul_left hb hcancel)]
+  exact Finset.card_range t
+
+/-- If the digits of `x` at positions `[p, p + b * t)` spell out the
+periodic pattern, then at depth `N = p + b * t` the digit histogram is
+exactly the (arbitrary) first-`p`-digit histogram plus `t` at every
+residue — total variation at most `p / N` away from uniform. -/
+private theorem digitTV_le_of_tail_periodic (b p t : ℕ) (hb : 2 ≤ b) (hp : 0 < p) (x : ℝ)
+    (htail : ∀ j < b * t, digitOf b x (p + j) = j % b) :
+    digitTV b x (p + b * t) ≤ (p : ℝ) / (p + b * t) + (b : ℝ) *
+      |(t : ℝ) / (p + b * t) - (b : ℝ)⁻¹| := by
+  set N := p + b * t with hNdef
+  have hNpos : 0 < N := by rw [hNdef]; omega
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hNpos
+  have hocc : ∀ c < b, digitOccCount b x N c
+      = ((Finset.range p).filter (fun i => digitOf b x i = c)).card + t := by
+    intro c hc
+    unfold digitOccCount
+    rw [hNdef, Finset.range_add_eq_union]
+    rw [Finset.filter_union, Finset.card_union_of_disjoint]
+    · congr 1
+      rw [Finset.filter_map, Finset.card_map]
+      simp only [Function.comp, addLeftEmbedding_apply]
+      have hcongr : (Finset.range (b * t)).filter
+          (fun j => digitOf b x (p + j) = c)
+          = (Finset.range (b * t)).filter (fun j => j % b = c) := by
+        apply Finset.filter_congr
+        intro j hj
+        rw [htail j (Finset.mem_range.mp hj)]
+      rw [hcongr]
+      exact card_residue_range b t c (by omega) hc
+    · apply Finset.disjoint_filter_filter
+      rw [Finset.disjoint_left]
+      intro a ha hamap
+      simp only [Finset.mem_map, addLeftEmbedding_apply] at hamap
+      obtain ⟨j, _, rfl⟩ := hamap
+      simp only [Finset.mem_range] at ha
+      omega
+  have hpsum : ∑ c ∈ Finset.range b,
+      ((Finset.range p).filter (fun i => digitOf b x i = c)).card = p := by
+    rw [← Finset.card_eq_sum_card_fiberwise
+      (s := Finset.range p) (t := Finset.range b) (f := fun i => digitOf b x i)
+      (fun i _ => Finset.mem_range.mpr (digitOf_lt b hb x i))]
+    exact Finset.card_range p
+  have hterm : ∀ c < b, |(digitOccCount b x N c : ℝ) / N - (b : ℝ)⁻¹|
+      ≤ (((Finset.range p).filter (fun i => digitOf b x i = c)).card : ℝ) / N
+        + |(t : ℝ) / N - (b : ℝ)⁻¹| := by
+    intro c hc
+    rw [hocc c hc]
+    push_cast
+    have heq : (((Finset.range p).filter (fun i => digitOf b x i = c)).card + t : ℝ) / N
+          - (b : ℝ)⁻¹
+        = (((Finset.range p).filter (fun i => digitOf b x i = c)).card : ℝ) / N
+          + ((t : ℝ) / N - (b : ℝ)⁻¹) := by ring
+    rw [heq]
+    have hAnn : (0:ℝ) ≤ (((Finset.range p).filter (fun i => digitOf b x i = c)).card : ℝ) / N :=
+      by positivity
+    calc |(((Finset.range p).filter (fun i => digitOf b x i = c)).card : ℝ) / N
+          + ((t : ℝ) / N - (b : ℝ)⁻¹)|
+        ≤ |(((Finset.range p).filter (fun i => digitOf b x i = c)).card : ℝ) / N|
+          + |(t : ℝ) / N - (b : ℝ)⁻¹| := abs_add_le _ _
+      _ = (((Finset.range p).filter (fun i => digitOf b x i = c)).card : ℝ) / N
+          + |(t : ℝ) / N - (b : ℝ)⁻¹| := by rw [abs_of_nonneg hAnn]
+  have hsum : ∑ c ∈ Finset.range b, |(digitOccCount b x N c : ℝ) / N - (b : ℝ)⁻¹|
+      ≤ (p : ℝ) / N + (b : ℝ) * |(t : ℝ) / N - (b : ℝ)⁻¹| := by
+    calc ∑ c ∈ Finset.range b, |(digitOccCount b x N c : ℝ) / N - (b : ℝ)⁻¹|
+        ≤ ∑ c ∈ Finset.range b,
+            ((((Finset.range p).filter (fun i => digitOf b x i = c)).card : ℝ) / N
+              + |(t : ℝ) / N - (b : ℝ)⁻¹|) :=
+          Finset.sum_le_sum (fun c hc => hterm c (Finset.mem_range.mp hc))
+      _ = (p : ℝ) / N + (b : ℝ) * |(t : ℝ) / N - (b : ℝ)⁻¹| := by
+          rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul,
+            ← Finset.sum_div, ← Nat.cast_sum, hpsum]
+  unfold digitTV
+  rw [hNdef] at hsum ⊢
+  push_cast at hsum ⊢
+  have h2 : (0:ℝ) < 2 := by norm_num
+  rw [div_le_iff₀ h2]
+  have hnn : (0:ℝ) ≤ (p:ℝ)/((p:ℝ)+(b:ℝ)*(t:ℝ)) + (b:ℝ)*|(t:ℝ)/((p:ℝ)+(b:ℝ)*(t:ℝ)) - (b:ℝ)⁻¹| := by
+    positivity
+  linarith [hsum, hnn]
 
 end NormalNumbers
