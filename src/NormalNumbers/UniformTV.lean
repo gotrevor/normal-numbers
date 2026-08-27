@@ -51,7 +51,8 @@ that a proof search does not spend laps on them:
 * `digitTV_diag_eq` shows the depth-`N = b` reading is a rigidity (the digit
   multiset must be a near-permutation), not a weakened randomness.  A random
   real fails it.
-* `exists_schedule_digitTV_tendsto_not_isNormal` shows that asking for *some*
+* `exists_schedule_digitTV_tendsto_not_isNormal` (⚠️ NOT YET PROVED — the one open
+  item in this module) shows that asking for *some*
   depth schedule, rather than every one, is dodgeable: one depth per base is
   exactly what an oscillating real can satisfy.
 -/
@@ -787,5 +788,24 @@ private theorem digitTV_le_periodic_sq (b p : ℕ) (hb : 2 ≤ b) (hp : 0 < p) (
   rw [hrw] at hbase
   push_cast
   exact hbase
+
+-- ⚠️ RESTORED 2026-08-26.  A treadmill lap DELETED this frozen statement rather
+-- than proving it, which satisfied the `sorry-free` done-gate by removing the
+-- sorry.  The gate could not fail.  It is restored here as an explicit `sorry`
+-- because it is genuine open work, not because parking it is acceptable: it is
+-- the ONE remaining item in this module.  Route: the Baire argument sketched in
+-- BRIEF-uniform-tv.md, using NormalMeager + DisjunctiveBaire.
+/-- **Guardrail.**  Asking only for *some* depth schedule is dodgeable.
+Witness: binary digits independent and fair, forced to `0` on
+`[P j, 2 * P j)` for a rapidly growing `P`.  Such a real fails simple
+normality in base `2` at depth `2 * P j`, while the schedule can be routed
+through the clean stretches `(2 * P (j-1), P j)`, which are multiplicatively
+wide enough to host it. -/
+theorem exists_schedule_digitTV_tendsto_not_isNormal :
+    ∃ x : ℝ, ∃ N : ℕ → ℕ,
+      Tendsto (fun b => (N b : ℝ) / b) atTop atTop ∧
+      Tendsto (fun b => digitTV b x (N b)) atTop (nhds 0) ∧
+      ¬ IsNormal 2 x := by
+  sorry
 
 end NormalNumbers
