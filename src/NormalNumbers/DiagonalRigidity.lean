@@ -39,7 +39,36 @@ null.  Being normal neither implies nor is implied by it: the two conditions are
 a `sorry`.  A `sorry` would assert that the answer is *yes*; nobody knows the answer, and an
 artifact should not smuggle in a claim it cannot support.  Neither direction is proved here.
 
-Intuition is genuinely absent.  The constraints for consecutive bases `b` and `b + 1` are
+## Computational evidence (2026-08-26): the answer is probably NO
+
+`scripts/diagonal-rigidity-search.py` settles the finite approximations exhaustively.  `K B`,
+the set of reals meeting the constraint for every `b ≤ B`, is a finite union of intervals with
+exact rational endpoints, and the `K B` are nested decreasing.  So each level is DECIDABLE, and
+the finite search can settle the infinite question in one direction outright: `K B = ∅` for some
+`B` is a finite certificate of impossibility, while `K B ≠ ∅` for all `B` gives a witness by
+Cantor on nested compacts.
+
+Exact permutations, starting from base 2: `K 2` and `K 3` and `K 4` are nonempty (2, 4, 4
+intervals), and **`K 5` is empty**.  Sweeping the start base, since the condition is only
+eventual, every tail we could test also dies within a few bases: from `b₀ = 4` it dies at 7,
+from 6 at 9, from 7 at 10, with `b₀ ≥ 8` beyond the search budget.
+
+Allowing defects sharpens it.  A budget of `b / 4` defects still dies at `b = 5`; a budget of
+`b / 2` survives to `b = 9` with 60434 intervals.  Since `DiagonallyRigid` demands the defect
+rate tend to `0`, and even a quarter-rate collapses, the evidence points at NO.
+
+⚠️ Two honest caveats.  At `b ≤ 10` a budget of `b / 4` is one or two digits, so this probes
+small-base behaviour rather than asymptotics.  And no finite search can refute an *eventual*
+condition, since the surviving tail could begin beyond the search horizon.
+
+A proof of NO would likely be a counting argument: the measure of `K B` decays like
+`exp (-B ^ 2 / 2)` while the number of base-`B` cells grows only like `exp (B * log B)`, so the
+expected count of survivors vanishes.  Making that rigorous needs the constraints across
+different bases to be sufficiently independent, which is exactly the part the data above
+suggests is FALSE — they interlock much harder than independence predicts, killing the search
+at `b = 5` where an independence heuristic predicts survival to roughly `b = 10`.
+
+Intuition was genuinely absent before that computation.  The constraints for consecutive bases `b` and `b + 1` are
 imposed at nearly the same precision — a base-`b` window of `b` digits pins `x` to about
 `b * log b` bits — so they interlock tightly rather than acting independently, which is exactly
 why a naive counting heuristic settles nothing.
