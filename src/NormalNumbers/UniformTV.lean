@@ -759,4 +759,33 @@ private theorem digitTV_le_of_tail_periodic (b p t : ℕ) (hb : 2 ≤ b) (hp : 0
     positivity
   linarith [hsum, hnn]
 
+/-- Plugging `t = p * p` into `digitTV_le_of_tail_periodic` collapses the
+bound to the clean closed form `2 / (1 + b * p)`. -/
+private theorem digitTV_le_periodic_sq (b p : ℕ) (hb : 2 ≤ b) (hp : 0 < p) (x : ℝ)
+    (htail : ∀ j < b * (p * p), digitOf b x (p + j) = j % b) :
+    digitTV b x (p + b * (p * p)) ≤ 2 / (1 + b * p) := by
+  have hbase := digitTV_le_of_tail_periodic b p (p * p) hb hp x htail
+  have hbR : (0 : ℝ) < b := by exact_mod_cast (show 0 < b by omega)
+  have hpR : (0 : ℝ) < p := by exact_mod_cast hp
+  have hNpos : (0 : ℝ) < (p : ℝ) + (b : ℝ) * ((p : ℝ) * (p : ℝ)) := by positivity
+  have hbpR : (0 : ℝ) < 1 + (b : ℝ) * p := by positivity
+  have hrw : (p : ℝ) / ((p : ℝ) + (b : ℝ) * ((p : ℝ) * (p : ℝ)))
+      + (b : ℝ) * |((p : ℝ) * (p : ℝ)) / ((p : ℝ) + (b : ℝ) * ((p : ℝ) * (p : ℝ))) - (b : ℝ)⁻¹|
+      = 2 / (1 + (b : ℝ) * p) := by
+    have h1 : (p : ℝ) / ((p : ℝ) + (b : ℝ) * ((p : ℝ) * (p : ℝ))) = 1 / (1 + (b : ℝ) * p) := by
+      rw [div_eq_div_iff hNpos.ne' hbpR.ne']; ring
+    have h2 : ((p : ℝ) * (p : ℝ)) / ((p : ℝ) + (b : ℝ) * ((p : ℝ) * (p : ℝ))) - (b : ℝ)⁻¹
+        = -(1 / ((b : ℝ) * (1 + (b : ℝ) * p))) := by
+      have hbne := hbR.ne'
+      have hNne := hNpos.ne'
+      field_simp
+      ring
+    rw [h1, h2, abs_neg, abs_of_nonneg (by positivity)]
+    field_simp
+    ring
+  push_cast at hbase
+  rw [hrw] at hbase
+  push_cast
+  exact hbase
+
 end NormalNumbers
