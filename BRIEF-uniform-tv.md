@@ -55,28 +55,42 @@ and specialise `UniformDigitTV` along the powers `b ^ r` to produce item 1's
 hypothesis.  The only real step is turning "for all bases beyond `B`" into
 "for all exponents beyond `K`", which needs `b ^ r ≥ B` for `r` large.
 
-## Item 3 — `exists_schedule_digitTV_tendsto_not_isNormal` (guardrail)
+## Item 3 — `exists_schedule_digitTV_tendsto_not_isNormal` (the ONLY remaining sorry)
 
-Prefer the **Baire route over the probabilistic route**.  The measure-theoretic
-construction (random digits with forced zero blocks, then Borel-Cantelli) is an
-expedition; the category argument looks like a lap, and the repo already has the
-machinery:
+⚠️ A previous lap DELETED this theorem instead of proving it.  That is now blocked by
+`--require-decls`, and it was never acceptable: **if a frozen statement looks unprovable, say so
+in a handoff.**  Removing it is not a route.
 
-* `NormalMeager.exists_absolutelyDisjunctive_forall_not_isNormal` supplies a real
-  that is normal to no base.
-* `DisjunctiveBaire` has the pattern for open-and-dense orbit conditions
-  (`isOpen_orbitLiftOpen`, `dense_orbitLiftOpen`, `residual_absolutelyDisjunctive`).
+**Route VERIFIED 2026-08-26 (Baire, not measure).**  Do not attempt the probabilistic
+construction (random digits with forced zero blocks + Borel-Cantelli); it is an expedition and
+it is not needed.  Every piece already exists in this repo:
 
-Key observation to exploit: for fixed `b`, `N`, `ε`, the condition
-`digitTV b x N < ε` depends on finitely many digits, so it is open away from the
-`b`-adic rationals; and `∃ N ≥ L * b, digitTV b x N < ε` is dense, because the
-deep digits of a point in any interval are unconstrained.  Intersect over
-`b ≥ B` (countably many) and with the residual nowhere-normal set, then apply
-Baire.  The witness schedule `N` is read off from the `∃ N` witnesses.
+| Need | Use |
+|------|-----|
+| non-normality in every base, for free | `NormalMeager.isMeagre_setOf_isNormal`, and the assembled `exists_absolutelyDisjunctive_forall_not_isNormal` shows the exact assembly idiom |
+| a dense open set is residual | `DisjunctiveBaire.residual_of_dense_open` |
+| countable intersection stays residual | `Filter.countable_iInter_mem` |
+| residual ⇒ a witness exists | `nonempty_of_not_isMeagre (not_isMeagre_of_mem_residual …)` |
 
-If the openness step fights back at the `b`-adic rationals, that is the expected
-friction point; handle it the way `DisjunctiveBaire` handles the analogous
-endpoint issue rather than by weakening the statement.
+Steps:
+
+1. For fixed `b`, `L`, `ε`, show `G b L ε := {x | ∃ N ≥ L * b, digitTV b x N < ε}` contains a
+   **dense open** set, and is residual.
+2. 🚨 **The friction point, and the only real one.**  `digitTV b · N` is locally constant *off*
+   the `b`-adic rationals of level `≤ N`, so `{x | digitTV b x N < ε}` is a finite union of
+   half-open intervals and is **not** open as written.  Do **not** weaken the statement over
+   this.  Build an explicitly open set contained in it — exactly the move
+   `orbitLiftOpen` makes in `DisjunctiveBaire`; copy that pattern rather than inventing one.
+   Density is the easy half: the digits beyond any finite prefix are unconstrained.
+3. Intersect over `b ≥ B` and over a sequence `ε k → 0` (both countable) with the abnormal
+   residual set from `NormalMeager`.  Extract a witness `x`.
+4. Build the schedule: for each `b`, choose the largest `k` with `b ≥ B k` and take that
+   `∃ N` witness; `Nat.find`/`Classical.choice` over the existentials.  This gives one function
+   `N : ℕ → ℕ` with `N b / b → ∞` and `digitTV b x (N b) → 0`, which is the statement.
+5. `¬ IsNormal 2 x` falls straight out of the abnormal set's membership.
+
+Sequencing note: step 2 is where laps will be spent.  Do it first and prove it as its own named
+lemma; steps 3-5 are plumbing once it holds.
 
 ## Anti-goals
 
