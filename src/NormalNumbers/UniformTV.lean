@@ -625,7 +625,14 @@ arbitrarily bad rates as the base grows, so this is a sufficient criterion,
 not a characterisation. -/
 theorem isAbsolutelyNormal_of_uniformDigitTV (x : ℝ) (h : UniformDigitTV x) :
     IsAbsolutelyNormal x := by
-  sorry
+  intro b hb
+  apply isNormal_of_uniform_digitTV_pow b hb x
+  intro ε hε
+  obtain ⟨L, B, hLB⟩ := h ε hε
+  refine ⟨L, B, fun r hr N hN => ?_⟩
+  have hlt : B < b ^ B := Nat.lt_pow_self (by omega)
+  have hmono : b ^ B ≤ b ^ r := Nat.pow_le_pow_right (by omega) hr
+  exact hLB (b ^ r) (by omega) N hN
 
 /-- **Guardrail.**  Asking only for *some* depth schedule is dodgeable.
 Witness: binary digits independent and fair, forced to `0` on
