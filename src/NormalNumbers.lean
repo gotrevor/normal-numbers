@@ -51,6 +51,8 @@ import NormalNumbers.Disjunctive
 import NormalNumbers.ConditionalDisjunctive
 import NormalNumbers.LnTwoFreq
 import NormalNumbers.LnTwoRuns
+import NormalNumbers.DiophantineWall
+import NormalNumbers.KickDynamics
 import NormalNumbers.QuadraticDisjunctive
 import NormalNumbers.DisjunctiveBaire
 import NormalNumbers.NormalMeager

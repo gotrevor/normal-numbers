@@ -121,8 +121,15 @@ the source of truth for statements and claim status (novelty unswept).
   `LnTwoRuns.lean` — run dictionary, τ-floor, and the sorry-free **sliver
   dichotomy** (super-log runs pin the surrogate to the top sliver); frozen
   Diophantine tiers `LnTwoExpSep` (citable, Marcovecchio) and `LnTwoPolySep`
-  (Mahler-class open) with proved run-bound wiring; Tier-1 in-house proof
-  (shifted-Legendre for `log 2`) is the live target
+  (Mahler-class open) with proved run-bound wiring
+- ✅ D7 wall + gates (2026-08-29, → docs/diophantine-wall.md): the wall
+  interface `lnTwoDyadicSep_iff_int` (`DiophantineWall.lean` - the tiers in
+  pure number-theoretic form, consumable with zero repo context; the regime
+  map places collatz-moonshot's `sep_two_three` at the same wall's other
+  door); `KickDynamics.lean` - unconditional gate theorems `kick_floor` /
+  `top_gate` (the sliver is reachable only through measure-`1/n` gates),
+  the frozen node `SliverEscape` (no Diophantine input, probe-supported,
+  ⚠️ costume check owed), and its proved edge `zeroRun_le_of_sliverEscape`
 
 ## Phase 3 — outward (publishing-prep pass ✅ complete locally, 2026-08-26)
 
