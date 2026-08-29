@@ -47,8 +47,13 @@ architecture; the interface theorems make each door consumable with zero repo co
 ## Graph bookkeeping
 
 Nodes: `LnTwoExpSep` 🟡 (citable), `LnTwoPolySep` 🔴 (open), `SliverEscape` 🔵 (new family,
-`KickDynamics.lean` - no Diophantine input, probe-supported, **costume check owed**: is it
-`LnTwoPolySep` in disguise?).  Edges proved 2026-08-29: `lnTwoDyadicSep_iff_int` (the wall
+`KickDynamics.lean` - no Diophantine input, probe-supported).  **Costume check (2026-08-29,
+analytic): `SliverEscape` is NOT `LnTwoPolySep` in disguise.**  A sliver ride certifies only
+`‖2^(n+j)·ln 2‖ ≤ 1/(n+j+1)` at each ride step - log-precision closeness, far above PolySep's
+`n^(−C)` floor - so PolySep does not forbid long rides (no PolySep ⇒ SliverEscape), and a ride
+does not produce PolySep-scale smallness (no SliverEscape-failure ⇒ PolySep-failure).  The two
+constrain different scales: PolySep bounds the *depth* of a single approach, SliverEscape the
+*duration* of coarse closeness.  Both directions genuinely open; the node stands on its own.  Edges proved 2026-08-29: `lnTwoDyadicSep_iff_int` (the wall
 door), `dyadicSep_run_bound` / `run_le_of_expSep` / `run_le_of_polySep` (tiers → runs),
 `zeroRun_le_of_sliverEscape` (sliver node → runs), gates `kick_floor` / `top_gate`
 (unconditional phase-space structure).

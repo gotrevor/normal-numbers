@@ -25,8 +25,8 @@ behind `docs/lnTwo-kick-blueprint.md` §1, proved sorry-free:
   Probe (`experiments/lntwo_runs.py`): observed rides in 4000 steps have
   length ≤ 5.  Odds it is true: high (the in-sliver dynamics
   `δ' = 2δ − κ` is neutral-unstable, so rides need `2⁻ᵏ`-tuned initial
-  data); odds it is provable without Diophantine input: open — ⚠️ the
-  costume check (is this secretly Tier 2?) is OWED before investing.
+  data); odds it is provable without Diophantine input: open.  The costume
+  check passed: it is not a tier in disguise (see the node docstring).
 
 * **The edge** (`zeroRun_le_of_sliverEscape`): `SliverEscape C` caps every
   zero-run of binary `ln 2` at `C·log₂(n+2) + log₂(n+k+1) + 2` — because a
@@ -133,9 +133,11 @@ consecutive steps.  A statement about the explicit rational sequence
 
 Status 2026-08-29: probe-supported (rides ≤ 5 in 4000 steps); the
 in-sliver dynamics `δ' = 2δ − κ` is neutral-unstable around the profile
-`δ = 1/n`, so long rides need exponentially tuned initial data.  ⚠️ Costume
-check OWED: whether this is `LnTwoPolySep` in disguise (cf. the moonshot
-`Compression` lesson) must be probed before serious investment. -/
+`δ = 1/n`, so long rides need exponentially tuned initial data.  Costume
+check PASSED (analytic, see `docs/diophantine-wall.md`): a ride certifies
+only `‖2^(n+j)·ln 2‖ ≤ 1/(n+j+1)` — log-precision, far above
+`LnTwoPolySep`'s floor — so this node constrains *duration* of coarse
+closeness where the tiers constrain *depth*; neither implies the other. -/
 def SliverEscape (C : ℝ) (N₀ : ℕ) : Prop :=
   ∀ n, N₀ ≤ n → ∀ k : ℕ,
     (∀ j, j < k → 1 - 1 / ((n : ℝ) + j + 1) ≤ lnTwoOrbit (n + j)) →

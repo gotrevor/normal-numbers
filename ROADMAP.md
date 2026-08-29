@@ -129,7 +129,8 @@ the source of truth for statements and claim status (novelty unswept).
   door); `KickDynamics.lean` - unconditional gate theorems `kick_floor` /
   `top_gate` (the sliver is reachable only through measure-`1/n` gates),
   the frozen node `SliverEscape` (no Diophantine input, probe-supported,
-  ⚠️ costume check owed), and its proved edge `zeroRun_le_of_sliverEscape`
+  costume check passed - it constrains ride *duration*, the tiers constrain
+  approach *depth*), and its proved edge `zeroRun_le_of_sliverEscape`
 
 ## Phase 3 — outward (publishing-prep pass ✅ complete locally, 2026-08-26)
 
