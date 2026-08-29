@@ -67,6 +67,7 @@ import NormalNumbers.LogTwoSqKicked
 import NormalNumbers.LogTwoSqSeriesProof
 import NormalNumbers.PiBBP
 import NormalNumbers.PiBBPProof
+import NormalNumbers.PiSqBBP
 import NormalNumbers.QuadraticDisjunctive
 import NormalNumbers.DisjunctiveBaire
 import NormalNumbers.NormalMeager
