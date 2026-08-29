@@ -1,5 +1,9 @@
 # HANDOFF 2026-08-29: lane-2 target 5 done (brief complete)
 
+Branch `master`, tree clean, run stopped green (`box done --green` accepted).
+Lap commits: c8a827b (headlines), f42d282 (cap discharge), 2947675
+(PENDING_WORK), 04dcdfd (this doc).
+
 Scoped objective `sorry-free:src/NormalNumbers/LogTwoSqKicked.lean` is MET;
 all five targets of the 2026-08-29 treadmill brief are done.
 
