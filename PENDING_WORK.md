@@ -3618,3 +3618,14 @@ there) and proved the edge from it, mirroring `zeroRun_le_of_sliverEscape` (cons
 tightened +3 → +2). Bonus edge `sliverEscape_of_wide : SliverEscapeWide → SliverEscape`
 records that wide is the stronger node. Frozen `SliverEscape` untouched. Next (per operator
 brief): target 3 Glaisher/Sun congruence.
+
+## 2026-08-29 (lane-2 lap): target 3 `lnTwoNum_modEq_fermatQuotient` closed
+Sorry-free, trust triple `[propext, Classical.choice, Quot.sound]` (LnTwoFermatBridge.lean,
+HEAD 5b7fc49). The Glaisher/Z.-H. Sun Fermat-quotient bridge in the frozen probe shape:
+`lnTwoNum (p−1) ≡ lcmRange (p−1) · fermatQuotient2 p [MOD p]` for odd primes. Proof all in
+`ZMod p`: `C(p−1,k) ≡ (−1)^k` by induction; the exact quotient `C(p,k+1)/p ≡ (−1)^k/(k+1)`
+via `Nat.add_one_mul_choose_eq`; binomial theorem at `x = −2` over ℤ gives the exact
+identity `Σ C(p,k+1)(−2)^{k+1} = 2^p − 2 = 2p·q′`, divide by `p` and cast to get Sun's
+congruence `Σ 2^j/j ≡ −2 q_p(2)`; `Finset.sum_range_reflect` on the surrogate sum plus
+`(p−1−j) ≡ −(j+1)` closes `A_{p−1} ≡ L·q_p(2)`. All three lane-2 targets of the
+2026-08-29 treadmill brief are now DONE.
