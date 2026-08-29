@@ -29,6 +29,19 @@ Already landed host-side before this brief: `lnTwoRun_le_unconditional`
   `#print axioms` both = trust triple. Node discharge stays lane-2 owed.
   Gotcha: linarith does NOT relate `16/X` and `48/X` as multiples of one atom —
   state comparisons as `c·(1/X)` first. Next: target 3 (β = 26 sharpening).
+- **Target 3 DONE** (2026-08-29): `lnTwoExpSep_sharp : ∃ N₀, LnTwoExpSep 9 N₀`
+  proved sorry-free in `LnTwoExpSepSharp.lean`, `#print axioms` = trust triple.
+  β = 26 → **9** (single digit; the draft's β = 8 is provably out of reach
+  while lcm ≤ 4^ℓ — full accounting in the module docstring). Three
+  sharpenings: height `Σ|c_k| ≤ 6^ℓ` (binomial, no `(ℓ+1)` factor), kernel
+  cap `429/2500` (disc −959 < 0, ~0.2% off the true max `3−2√2` — THE
+  unlock: ratio constraint drops from `c > 3.11` to `c > 1.842`), lower
+  bound `(1/50)(6/35)^ℓ` on `[2/5, 3/7]` (quadratic roots exactly at the
+  endpoints; the `6^ℓ` height CANCELS against `(6/35)^ℓ`, zero-case base
+  exactly 35). Index `ℓ = 15n/8 + 1`; eventual inequalities via 8th powers
+  + master `r^n·e^{16√(2n)log(2n)} → 0`; certificates `2⁸·429¹⁵ < 625¹⁵`,
+  `24¹⁵ < 2⁷²`, `35¹⁵ < 2⁸⁰`. PNT-strength lcm would give β ≈ 5 (future).
+  Landed `lnTwoExpSep_holds` untouched.
 
 ## Targets, ranked (work top-down; each is self-contained)
 
