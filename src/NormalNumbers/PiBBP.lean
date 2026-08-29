@@ -271,4 +271,70 @@ theorem pi_top_sliver_of_fRun (hπ : PiBBP) {n k : ℕ} (hn : 1 ≤ n)
   rw [cast16] at hcore
   linarith [hcore]
 
+/-! ### Digit agreement: a hex-digit mismatch is a boundary event -/
+
+/-- The hex digit the BBP surrogate predicts at position `n`: the cell
+index of `piSurrogate n`. -/
+noncomputable def piSurrogateDigit (n : ℕ) : ℕ :=
+  (⌊(16 : ℝ) * piSurrogate n⌋).toNat
+
+/-- **π digit-agreement forcing** (conditional on the BBP series; the
+Lagarias footnote-1 mechanism for π): for `n ≥ 3`, a disagreement between
+the true `n`-th hex digit of π and the BBP-surrogate digit pins the scaled
+surrogate `fract (16 · piSurrogate n)` within `1024/(3(8n+1)²)` of the
+wrap.  As for `ln 2`, the mismatch event is the separation family in a
+density costume — window width `~n⁻²` here, reflecting the quadratic BBP
+kick. -/
+theorem pi_digit_mismatch_boundary (hπ : PiBBP) {n : ℕ} (hn : 3 ≤ n)
+    (hne : digitOf 16 (Int.fract Real.pi) n ≠ piSurrogateDigit n) :
+    1 - 1024 / (3 * (8 * (n : ℝ) + 1) ^ 2)
+      ≤ Int.fract ((16 : ℝ) * piSurrogate n) := by
+  have hn1 : (3 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+  have hτlo : 3 / (16 * ((n : ℝ) + 1) ^ 2) ≤ (16 : ℝ) ^ n * piTail n :=
+    piTail_ge hπ n
+  have hτhi : (16 : ℝ) ^ n * piTail n ≤ 64 / (3 * (8 * (n : ℝ) + 1) ^ 2) :=
+    piTail_le hπ n
+  set u := piSurrogate n with hu_def
+  set τ := (16 : ℝ) ^ n * piTail n with hτ_def
+  have hτ0 : 0 < τ := lt_of_lt_of_le (by positivity) hτlo
+  have hbτ : (16 : ℝ) * τ ≤ 1 := by
+    have h16 : (16 : ℝ) * τ ≤ 1024 / (3 * (8 * (n : ℝ) + 1) ^ 2) := by
+      rw [show (1024 : ℝ) / (3 * (8 * (n : ℝ) + 1) ^ 2)
+          = 16 * (64 / (3 * (8 * (n : ℝ) + 1) ^ 2)) by ring]
+      linarith
+    refine h16.trans ?_
+    rw [div_le_one (by positivity)]
+    nlinarith
+  have hu01 : u ∈ Set.Ico (0 : ℝ) 1 :=
+    ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+  -- the true orbit is the perturbed surrogate
+  have horb : orbit 16 Real.pi n = Int.fract (u + τ) := by
+    simp only [hu_def, hτ_def, piSurrogate, piTail]
+    have h := orbit_eq_fract_add_tail 16 Real.pi (piPartial n) n
+    rwa [cast16] at h
+  -- convert the ℕ digit disagreement to a floor disagreement
+  have hbridge : (digitOf 16 (Int.fract Real.pi) n : ℤ)
+      = ⌊(16 : ℝ) * orbit 16 Real.pi n⌋ := by
+    have h := digitOf_fract_eq_floor_mul_orbit 16 (by norm_num) Real.pi n
+    rwa [cast16] at h
+  have hsur : (piSurrogateDigit n : ℤ) = ⌊(16 : ℝ) * u⌋ := by
+    rw [piSurrogateDigit]
+    exact Int.toNat_of_nonneg (Int.floor_nonneg.mpr
+      (mul_nonneg (by norm_num) (Int.fract_nonneg _)))
+  have hne' : ⌊(16 : ℝ) * u⌋ ≠ ⌊(16 : ℝ) * Int.fract (u + τ)⌋ := by
+    intro heq
+    apply hne
+    have : (digitOf 16 (Int.fract Real.pi) n : ℤ) = (piSurrogateDigit n : ℤ) := by
+      rw [hbridge, hsur, horb, heq]
+    exact_mod_cast this
+  have hcore := fract_mul_top_of_floor_ne (b := 16) (by norm_num)
+    hu01 hτ0 (by exact_mod_cast hbτ) (by exact_mod_cast hne')
+  have hcast : ((16 : ℕ) : ℝ) = (16 : ℝ) := cast16
+  rw [hcast] at hcore
+  have h16τ : (16 : ℝ) * τ ≤ 1024 / (3 * (8 * (n : ℝ) + 1) ^ 2) := by
+    rw [show (1024 : ℝ) / (3 * (8 * (n : ℝ) + 1) ^ 2)
+        = 16 * (64 / (3 * (8 * (n : ℝ) + 1) ^ 2)) by ring]
+    linarith
+  linarith
+
 end NormalNumbers

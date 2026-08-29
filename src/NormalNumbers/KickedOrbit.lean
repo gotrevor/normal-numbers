@@ -328,6 +328,104 @@ theorem top_sliver_of_maxRun_kicked {b : ℕ} (hb : 2 ≤ b) {r : ℕ → ℝ}
   top_sliver_of_maxRun_tail hb (kicked_tail_ge hb n hsum hpos hfloor)
     (kicked_tail_le hb n hsum hpos hcap) hhalf hε h
 
+/-! ### Digit-agreement forcing (the abstract footnote-1 mechanism)
+
+The `ln 2` digit-agreement analysis (`LnTwoDigitAgreement.lean`) is also
+base-agnostic: a disagreement between the base-`b` cell of `u` and of the
+perturbed point `fract (u + τ)` forces the *scaled* point `fract (b·u)`
+within `b·τ` of the wrap — one uniform conclusion covering both the
+straddle case (an integer separates `b·u` from `b·(u+τ)`) and the
+wraparound case (`u ≥ 1 − τ` outright). -/
+
+/-- **Abstract digit-mismatch forcing**: differing base-`b` cells for `u`
+and `fract (u + τ)` (with `0 < τ`, `b·τ ≤ 1`) pin `fract (b·u)` to the
+top window `[1 − b·τ, 1)`.  A digit disagreement is a boundary event. -/
+theorem fract_mul_top_of_floor_ne {b : ℕ} (hb : 2 ≤ b) {u τ : ℝ}
+    (hu : u ∈ Set.Ico (0 : ℝ) 1) (hτ0 : 0 < τ) (hbτ : (b : ℝ) * τ ≤ 1)
+    (hne : ⌊(b : ℝ) * u⌋ ≠ ⌊(b : ℝ) * Int.fract (u + τ)⌋) :
+    1 - (b : ℝ) * τ ≤ Int.fract ((b : ℝ) * u) := by
+  have hbR : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hb0 : (0 : ℝ) < (b : ℝ) := by linarith
+  rcases lt_or_ge (u + τ) 1 with hlt | hge
+  · -- no wraparound: an integer must separate `b·u` from `b·(u+τ)`
+    rw [Int.fract_eq_self.mpr ⟨by linarith [hu.1], hlt⟩] at hne
+    have hmono : ⌊(b : ℝ) * u⌋ ≤ ⌊(b : ℝ) * (u + τ)⌋ :=
+      Int.floor_mono (by nlinarith)
+    have hlt' : ⌊(b : ℝ) * u⌋ < ⌊(b : ℝ) * (u + τ)⌋ := lt_of_le_of_ne hmono hne
+    set m : ℤ := ⌊(b : ℝ) * (u + τ)⌋ with hm
+    have hum : (b : ℝ) * u < (m : ℝ) := by
+      have h1 : (b : ℝ) * u < (⌊(b : ℝ) * u⌋ : ℝ) + 1 := Int.lt_floor_add_one _
+      have h2 : (⌊(b : ℝ) * u⌋ : ℝ) + 1 ≤ (m : ℝ) := by exact_mod_cast hlt'
+      linarith
+    have hml : (m : ℝ) ≤ (b : ℝ) * (u + τ) := Int.floor_le _
+    have hfl : ⌊(b : ℝ) * u⌋ = m - 1 := by
+      rw [Int.floor_eq_iff]
+      constructor
+      · push_cast
+        nlinarith
+      · push_cast
+        linarith
+    have hfr : Int.fract ((b : ℝ) * u) = (b : ℝ) * u - ((m : ℝ) - 1) := by
+      rw [Int.fract, hfl]
+      push_cast
+      ring
+    rw [hfr]
+    nlinarith
+  · -- wraparound: `u ≥ 1 − τ`, so `b·u ∈ [b − b·τ, b)`
+    have hbu : (b : ℝ) - (b : ℝ) * τ ≤ (b : ℝ) * u := by nlinarith
+    have hbu2 : (b : ℝ) * u < (b : ℝ) := by nlinarith [hu.2]
+    have hfl : ⌊(b : ℝ) * u⌋ = (b : ℤ) - 1 := by
+      rw [Int.floor_eq_iff]
+      constructor
+      · push_cast
+        linarith
+      · push_cast
+        linarith
+    have hfr : Int.fract ((b : ℝ) * u) = (b : ℝ) * u - ((b : ℝ) - 1) := by
+      rw [Int.fract, hfl]
+      push_cast
+      ring
+    rw [hfr]
+    linarith
+
+/-- **Single-digit bridge, base `b`**: the `n`-th canonical digit of `x` is
+the cell index of the orbit, `⌊b · orbit⌋`. -/
+theorem digitOf_fract_eq_floor_mul_orbit (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (n : ℕ) :
+    (digitOf b (Int.fract x) n : ℤ) = ⌊(b : ℝ) * orbit b x n⌋ := by
+  set y := Int.fract x with hy_def
+  have hy0 : 0 ≤ y := Int.fract_nonneg x
+  have hy1 : y < 1 := Int.fract_lt_one x
+  have hbR : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hb0 : (0 : ℝ) < (b : ℝ) := by linarith
+  have horb : orbit b x n = Int.fract (y * (b : ℝ) ^ n) := by
+    rw [← orbit_fract b x n]
+    rfl
+  have hkey : (b : ℝ) * Int.fract (y * (b : ℝ) ^ n)
+      = y * (b : ℝ) ^ (n + 1) - ((b * ⌊y * (b : ℝ) ^ n⌋ : ℤ) : ℝ) := by
+    rw [Int.fract]
+    push_cast
+    ring
+  have hfl : ⌊(b : ℝ) * orbit b x n⌋
+      = ⌊y * (b : ℝ) ^ (n + 1)⌋ - b * ⌊y * (b : ℝ) ^ n⌋ := by
+    rw [horb, hkey, Int.floor_sub_intCast]
+  have ho01 := orbit_mem_Ico b x n
+  have hnn : 0 ≤ ⌊(b : ℝ) * orbit b x n⌋ :=
+    Int.floor_nonneg.mpr (by nlinarith [ho01.1])
+  have hltb : ⌊(b : ℝ) * orbit b x n⌋ < (b : ℤ) := by
+    apply Int.floor_lt.mpr
+    push_cast
+    nlinarith [ho01.2]
+  have h0 : 0 ≤ ⌊y * (b : ℝ) ^ (n + 1)⌋ :=
+    Int.floor_nonneg.mpr (by positivity)
+  have hdig : (digitOf b y n : ℤ) = ⌊y * (b : ℝ) ^ (n + 1)⌋ % b := by
+    unfold digitOf
+    push_cast [Int.toNat_of_nonneg h0]
+    rfl
+  rw [hdig, show ⌊y * (b : ℝ) ^ (n + 1)⌋
+      = ⌊(b : ℝ) * orbit b x n⌋ + b * ⌊y * (b : ℝ) ^ n⌋ by omega,
+    Int.add_mul_emod_self_left]
+  exact Int.emod_eq_of_lt hnn hltb
+
 /-- The machine reproduces the frozen ln-2 constants **exactly**:
 `r(m) = 1/m`, `b = 2` gives floor `L/b = 1/(2(n+1))` and sliver
 `A/(b−1) = 1/(n+1)` — the `lnTwoOrbit_top_sliver_of_zeroRun` statement. -/
