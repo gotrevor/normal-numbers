@@ -3607,3 +3607,14 @@ log values reassemble to π; mod-8 fibers (`Nat.divModEquiv` + `HasSum.prod_fibe
 reproduce `bbpTerm` exactly. Scoped objective `sorry-free:src/NormalNumbers/PiBBPProof.lean`
 is MET. Next (per operator brief, if resumed): target 2 `oneRun_le_of_sliverEscape`, then
 target 3 Glaisher/Sun congruence.
+
+## 2026-08-29 (lane-2 lap): twin edge `oneRun_le_of_sliverEscape` closed
+Sorry-free, trust triple (KickDynamicsOneRun.lean). Width-mismatch DECISION: the one-run
+dichotomy only certifies the WIDE sliver `1 − 2/(n+j+1)` (no-wraparound branch gives
+`x ≥ 1 − 1/2ᵏ − τ` with tail bound only `τ ≤ 1/(n+1)`), so the frozen narrow node
+`SliverEscape` cannot serve as hypothesis. Per the draft docstring's mandate, froze the
+wide-sliver variant node `SliverEscapeWide` in KickDynamicsOneRun.lean (provenance docstring
+there) and proved the edge from it, mirroring `zeroRun_le_of_sliverEscape` (constant
+tightened +3 → +2). Bonus edge `sliverEscape_of_wide : SliverEscapeWide → SliverEscape`
+records that wide is the stronger node. Frozen `SliverEscape` untouched. Next (per operator
+brief): target 3 Glaisher/Sun congruence.
