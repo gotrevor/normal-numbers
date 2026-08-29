@@ -169,6 +169,22 @@ the source of truth for statements and claim status (novelty unswept).
   at ratio ≈ 1.1; tail bracket verified for n < 400; zero
   threshold-satisfying runs in range (expected — doubly-exponentially
   rare).  Lagarias guardrail respected: all conclusions forcing-level.
+- 🔨 D10+ (2026-08-29, one-day sprint past this file's row grain): digit
+  agreement (`LnTwoDigitAgreement.lean`), summed-kick machine + π rider
+  (`KickedOrbit.lean`, `PiSqBBP.lean`), R3 prime-window door
+  (`LnTwoPrimeWindow.lean`, `LnTwoFermatBridge.lean`), Tier-1 in-house at
+  β = 9 (`LnTwoExpSepSharp.lean`), lane-2 batch discharges — per-dig detail
+  in the two 2026-08-29 HANDOFF briefs (`## RESULT` sections) and
+  `docs/lnTwo-kick-blueprint.md` §5.
+- ⬜ D-next, the conjecture slate (2026-08-29 evening):
+  **`docs/new-conjectures-2026-08-29.md`** — N1 Wieferich forcing + the
+  `LnTwoQuotientMiss` exclusion node (census probe green: 5 coincidences vs
+  4.11 expected, p < 20000); N2 the Stoneham base-6 readout of `3^a mod 2^c`
+  (identity probe-verified to machine precision) + `PowersOfThreeReadoutDense`;
+  N3 the threshold-kick machine for `e` (all-base dichotomy, rigid A000522
+  numerators, probe green); N4 graded-discrepancy ladder; N5 BLMV flag.
+  Probes: `experiments/lntwo_wieferich_census.py`, `stoneham6_readout.py`,
+  `e_binary_runs.py`.
 
 ## Phase 3 — outward (publishing-prep pass ✅ complete locally, 2026-08-26)
 
