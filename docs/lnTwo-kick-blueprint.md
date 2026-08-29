@@ -82,14 +82,28 @@ never yield u.d.-or-finite — conclusions must stay at the forcing level, as ou
 
 ## 5. Next moves
 
-1. **Tier-1 in-house**: port/finish the shifted-Legendre small-linear-form package for `log 2`
-   (collatz-moonshot `Legendre.lean` has the integer linear form, non-vanishing, and the
-   `(1/5)ⁿ` remainder; the missing piece is packaging into `‖2ⁿ·ln 2‖ ≥ 2^{−βn}` with explicit
-   `β, N₀`) → instantiate `LnTwoExpSep` → an unconditional run-bound theorem for `ln 2`.
-2. **Literature sweep** for §3's owed check.
-3. **Sliver recurrence**: the surrogate-side unconditional statement (kick floor: `x_n < 1/n`
-   forces `x_{n-1} ∈ [1/2 − 1/(2n), 1/2)`, width `1/(2n)`) suggests quantifying how rarely the
-   surrogate can visit the sliver — a possible *unconditional* attack on average-case run
-   structure, i.e. a genuine weakening-lattice rung not passing through Diophantine input.
-4. The other option-4 flavors (mixing/discrepancy hypotheses) remain open as conditional rungs
-   beside `LnTwoHypothesisFreq`.
+*(Rewritten 2026-08-29 after the lit sweep + the D8 lattice dig; the original list is in git.)*
+
+1. ~~Literature sweep~~ ✅ done → `docs/lit-sweep-2026-08-29.md`.
+2. ~~Lattice reformulation (alien R1)~~ ✅ done and **costume-refuted the same day** →
+   `LnTwoLattice.lean`: the coincidence-failure node ⟺ dyadic separation re-coordinatized
+   (`latticeAvoid_of_dyadicSep` / `dyadicSep_of_latticeAvoid`).  ⚠️ Item 3's old phrasing
+   "a genuine weakening-lattice rung not passing through Diophantine input" is hereby
+   retracted for the run-window family — the window position depends on `ln 2` and the
+   avoidance collapses onto `‖2ⁿ·ln 2‖` exactly.
+3. **R2 — the kicked-orbit dichotomy, abstract + π** (now top of the board for novel math):
+   extract the τ-floor/sliver dichotomy as an abstract lemma (orbit `x_{n+1} = b·x_n + kick_n
+   mod 1`, kick floor `≥ c/n`, tail bracket), re-derive the ln-2 case as its instance, then
+   instantiate π's base-16 BBP orbit.  Sweep verdict: kick-floor-as-resource NOT FOUND;
+   Bailey–Borwein 2012 (Stoneham nonnormality) is the converse-direction precedent to cite.
+   🚨 Lagarias guardrail (sweep doc): a magnitude-only kick floor can never conclude
+   u.d.-or-finite — keep every conclusion at the forcing level (run ⟹ ride).
+4. **R3 — the congruence attack surface**: window avoidance for structured `n` via the exact
+   numerator `lnTwoNum` — start at `n = p−1` where `A_{p−1} ≡ unit·q_p(2) (mod p)`
+   (Glaisher / Z.-H. Sun, formulas in the sweep doc).  Low odds, real magnitude; hold as a
+   node, not a campaign.
+5. **Tier-1 discharge** (lane 2, when scheduled): shifted-Legendre package → `LnTwoExpSep`
+   → the unconditional `βn` run bound.  Classical (Rivoal 2008 has the `(μ−1)n` corollary);
+   value is formalization-first plus lighting the tower end-to-end.
+6. The other option-4 flavors (mixing/discrepancy hypotheses) remain open as conditional
+   rungs beside `LnTwoHypothesisFreq`.

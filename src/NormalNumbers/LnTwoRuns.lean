@@ -229,9 +229,10 @@ an effective irrationality measure `μ(ln 2) ≤ 1 + β`.  Marcovecchio 2009
 Alladi–Robinson / shifted-Legendre construction (already partially built in
 `collatz-moonshot`'s `FrontA/Legendre.lean`) reaches `β ≈ 3.63` and is a
 candidate for an in-house proof.  Consequence (`dyadicSep_run_bound`): runs
-at position `n` have length `≤ βn + O(1)` — apparently the first
-quantitative digit statement for `ln 2` beyond irrationality (novelty
-unswept). -/
+at position `n` have length `≤ βn + O(1)` — classical mathematics, in print
+(Rivoal 2008, *On the bits counting function of real numbers*, eq. (1.1);
+swept 2026-08-29, `docs/lit-sweep-2026-08-29.md`); only the formalization
+would be first. -/
 def LnTwoExpSep (β : ℝ) (N₀ : ℕ) : Prop :=
   LnTwoDyadicSep (fun n => (2 : ℝ) ^ (-(β * n))) N₀
 

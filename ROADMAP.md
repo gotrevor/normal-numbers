@@ -128,9 +128,28 @@ the source of truth for statements and claim status (novelty unswept).
   map places collatz-moonshot's `sep_two_three` at the same wall's other
   door); `KickDynamics.lean` - unconditional gate theorems `kick_floor` /
   `top_gate` (the sliver is reachable only through measure-`1/n` gates),
-  the frozen node `SliverEscape` (no Diophantine input, probe-supported,
-  costume check passed - it constrains ride *duration*, the tiers constrain
-  approach *depth*), and its proved edge `zeroRun_le_of_sliverEscape`
+  the frozen node `SliverEscape` (probe-supported, costume check passed -
+  it constrains ride *duration*, the tiers constrain approach *depth*;
+  ⚠️ its former "no Diophantine input" tag is retired per D8), and its
+  proved edge `zeroRun_le_of_sliverEscape`
+- ✅ D8 lattice coordinates + costume verdict (2026-08-29,
+  → `LnTwoLattice.lean`, `docs/lit-sweep-2026-08-29.md`,
+  `docs/alien-review-2026-08-29.md`): the surrogate's exact numerator
+  `lnTwoRes n / lcm(1..n)` (`lnTwoNum_spec`, `lnTwoOrbit_eq_res`);
+  **translation edges** `zeroRun_lattice_window` / `oneRun_lattice_window`
+  (a run pins the numerator in an explicit width-`L/2^k` window) and
+  **unique-candidate certificates** `zeroRun_res_eq_ceil` /
+  `oneRun_res_eq_ceil_sub_one` (`L < 2^k` ⟹ the run event is one integer
+  identity per position); the frozen node `LnTwoLatticeAvoid` with wiring
+  `run_le_of_latticeAvoid`; and the **costume theorems**
+  `latticeAvoid_of_dyadicSep` / `dyadicSep_of_latticeAvoid` proving the
+  node ⟺ dyadic separation at rate `2^(−g n)` — the alien-R1
+  "coincidence-failure hypothesis" is `LnTwoDyadicSep` re-coordinatized,
+  not a new rung (at `g = 2n+2` it is `μ(ln 2) ≤ 3` territory).  Surviving
+  value: the certificate structure + the congruence attack surface on
+  `lnTwoNum` (Fermat-quotient bridge at `n = p−1`, lit-sweep doc).  All 16
+  declarations sorry-free, standard axiom triple (verified 2026-08-29,
+  in-repo v4.33.1 build)
 
 ## Phase 3 — outward (publishing-prep pass ✅ complete locally, 2026-08-26)
 

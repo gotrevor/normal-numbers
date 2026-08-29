@@ -47,7 +47,14 @@ architecture; the interface theorems make each door consumable with zero repo co
 ## Graph bookkeeping
 
 Nodes: `LnTwoExpSep` 🟡 (citable), `LnTwoPolySep` 🔴 (open), `SliverEscape` 🔵 (new family,
-`KickDynamics.lean` - no Diophantine input, probe-supported).  **Costume check (2026-08-29,
+`KickDynamics.lean` - probe-supported; ⚠️ its former "no Diophantine input" tag is retired:
+the 2026-08-29 lattice dig showed the run-window content of the kick family is Diophantine),
+`LnTwoLatticeAvoid` ⚪ (`LnTwoLattice.lean` - **costume-refuted as a new rung the day it was
+frozen**: `latticeAvoid_of_dyadicSep` / `dyadicSep_of_latticeAvoid` prove it ⟺ dyadic
+separation at rate `2^(−g n)`, so at `g = 2n+2` it is `μ(ln 2) ≤ 3` territory; kept for its
+certificate form `zeroRun_res_eq_ceil` - the run event as one integer identity per `n` - and
+the congruence attack surface on the explicit numerator `lnTwoNum`, e.g. the Fermat-quotient
+bridge `A_{p−1} ≡ unit·q_p(2) (mod p)` at `n = p−1`, `docs/lit-sweep-2026-08-29.md`).  **Costume check (2026-08-29,
 analytic): `SliverEscape` is NOT `LnTwoPolySep` in disguise.**  A sliver ride certifies only
 `‖2^(n+j)·ln 2‖ ≤ 1/(n+j+1)` at each ride step - log-precision closeness, far above PolySep's
 `n^(−C)` floor - so PolySep does not forbid long rides (no PolySep ⇒ SliverEscape), and a ride
