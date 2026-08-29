@@ -780,4 +780,17 @@ theorem lnTwoExpSep_sharp : ∃ N₀ : ℕ, LnTwoExpSep 9 N₀ := by
       _ = d * (2 * H) := by ring
       _ ≤ d * (2 : ℝ) ^ (9 * n) := mul_le_mul_of_nonneg_left h2H hd0
 
+
+/-- **The sharp unconditional run cap**: past a threshold, every run of
+zeros or ones in the binary expansion of `ln 2` at position `n` has
+length at most `9·n` — hypothesis-free.  Wiring: `lnTwoExpSep_sharp`
+into `run_le_of_expSep`. -/
+theorem lnTwoRun_le_unconditional_sharp :
+    ∃ N₀ : ℕ, ∀ n k : ℕ, N₀ ≤ n →
+      (OccursAt 2 (Real.log 2) (List.replicate k 0) n ∨
+        OccursAt 2 (Real.log 2) (List.replicate k 1) n) →
+      (k : ℝ) ≤ 9 * n := by
+  obtain ⟨N₀, hsep⟩ := lnTwoExpSep_sharp
+  exact ⟨N₀, fun n k hn hr => run_le_of_expSep hsep hn hr⟩
+
 end NormalNumbers
