@@ -256,12 +256,75 @@ lemma w_block (j r : ℕ) :
     z1_pow8, z2_pow8, cx_pow8, neg_cx_pow8]
   ring
 
+/-- Residue 0: the numerator vanishes identically (also killing `j = 0`
+division by zero). -/
+lemma w_r0 (j : ℕ) : w (j * 8 + 0) = 0 := by
+  rw [w_block, z1, z2]
+  ring
+
+lemma w_r1 (j : ℕ) :
+    w (j * 8 + 1) = 4 * (16⁻¹ : ℂ) ^ j / ((j * 8 + 1 : ℕ) : ℂ) := by
+  rw [w_block, z1, z2]
+  linear_combination ((16⁻¹ : ℂ) ^ j / ((j * 8 + 1 : ℕ) : ℂ) * (-2)) * Complex.I_sq
+
+lemma w_r2 (j : ℕ) : w (j * 8 + 2) = 0 := by
+  rw [w_block, z1, z2]
+  linear_combination ((16⁻¹ : ℂ) ^ j / ((j * 8 + 2 : ℕ) : ℂ) * (-1)) * Complex.I_sq
+    + ((16⁻¹ : ℂ) ^ j / ((j * 8 + 2 : ℕ) : ℂ) * (-4)) * cx_sq
+
+lemma w_r3 (j : ℕ) : w (j * 8 + 3) = 0 := by
+  rw [w_block, z1, z2]
+  linear_combination ((16⁻¹ : ℂ) ^ j / ((j * 8 + 3 : ℕ) : ℂ) * ((1 - I ^ 2) / 2))
+    * Complex.I_sq
+
+lemma w_r4 (j : ℕ) :
+    w (j * 8 + 4) = (-2) * (16⁻¹ : ℂ) ^ j / ((j * 8 + 4 : ℕ) : ℂ) := by
+  rw [w_block, z1, z2]
+  linear_combination ((16⁻¹ : ℂ) ^ j / ((j * 8 + 4 : ℕ) : ℂ) * ((5 - 3 * I ^ 2) / 4))
+      * Complex.I_sq
+    + ((16⁻¹ : ℂ) ^ j / ((j * 8 + 4 : ℕ) : ℂ) * (-4 * ((x : ℝ) : ℂ) ^ 2 - 2)) * cx_sq
+
+lemma w_r5 (j : ℕ) :
+    w (j * 8 + 5) = (-1) * (16⁻¹ : ℂ) ^ j / ((j * 8 + 5 : ℕ) : ℂ) := by
+  rw [w_block, z1, z2]
+  linear_combination ((16⁻¹ : ℂ) ^ j / ((j * 8 + 5 : ℕ) : ℂ)
+    * ((9 - 4 * I ^ 2 - I ^ 4) / 8)) * Complex.I_sq
+
+lemma w_r6 (j : ℕ) :
+    w (j * 8 + 6) = (-1) * (16⁻¹ : ℂ) ^ j / ((j * 8 + 6 : ℕ) : ℂ) := by
+  rw [w_block, z1, z2]
+  linear_combination ((16⁻¹ : ℂ) ^ j / ((j * 8 + 6 : ℕ) : ℂ) * ((9 - 5 * I ^ 4) / 16))
+      * Complex.I_sq
+    + ((16⁻¹ : ℂ) ^ j / ((j * 8 + 6 : ℕ) : ℂ)
+      * (-4 * ((x : ℝ) : ℂ) ^ 4 - 2 * ((x : ℝ) : ℂ) ^ 2 - 1)) * cx_sq
+
+lemma w_r7 (j : ℕ) : w (j * 8 + 7) = 0 := by
+  rw [w_block, z1, z2]
+  linear_combination ((16⁻¹ : ℂ) ^ j / ((j * 8 + 7 : ℕ) : ℂ)
+    * ((1 - I ^ 2) * (I ^ 4 + 14 * I ^ 2 + 1) / 32)) * Complex.I_sq
+
 /-- **Fiber identity**: `∑_{r<8} w (8j + r) = bbpTerm j`. -/
 lemma hasSum_fiber (j : ℕ) :
     HasSum (fun r : Fin 8 => w (j * 8 + (r : ℕ))) ((bbpTerm j : ℝ) : ℂ) := by
   have h := hasSum_fintype (fun r : Fin 8 => w (j * 8 + (r : ℕ)))
   have hsum : ∑ r : Fin 8, w (j * 8 + (r : ℕ)) = ((bbpTerm j : ℝ) : ℂ) := by
-    sorry
+    rw [Fin.sum_univ_eight]
+    simp only [show ((0 : Fin 8) : ℕ) = 0 from rfl, show ((1 : Fin 8) : ℕ) = 1 from rfl,
+      show ((2 : Fin 8) : ℕ) = 2 from rfl, show ((3 : Fin 8) : ℕ) = 3 from rfl,
+      show ((4 : Fin 8) : ℕ) = 4 from rfl, show ((5 : Fin 8) : ℕ) = 5 from rfl,
+      show ((6 : Fin 8) : ℕ) = 6 from rfl, show ((7 : Fin 8) : ℕ) = 7 from rfl]
+    rw [w_r0, w_r1, w_r2, w_r3, w_r4, w_r5, w_r6, w_r7]
+    have hd1 : ((j * 8 + 1 : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+    have hd4 : ((j * 8 + 4 : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+    have hd5 : ((j * 8 + 5 : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+    have hd6 : ((j * 8 + 6 : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+    have h16 : ((16 : ℂ) ^ j) ≠ 0 := pow_ne_zero _ (by norm_num)
+    rw [bbpTerm, bbpKick]
+    push_cast at hd1 hd4 hd5 hd6 ⊢
+    have hpow : ((1 : ℂ) / 16) ^ j * 16 ^ j = 1 := by
+      rw [div_pow, one_pow, div_mul_cancel₀ _ h16]
+    field_simp
+    linear_combination (376 + (j : ℂ) * 1208 + (j : ℂ) ^ 2 * 960) * hpow
   rwa [hsum] at h
 
 end PiBBPProof
