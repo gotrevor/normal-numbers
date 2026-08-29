@@ -4,7 +4,29 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-26 — Phase 3 publishing-prep pass)
+## CURRENT DIRECTIVE (set 2026-08-29 — the conjecture-graph objective)
+
+- **This repo's product is a machine-checked conjecture GRAPH, not a proof queue.**  A unit of
+  progress = one green **node** (a named Prop - working hypothesis, novel axiom candidate, or
+  interface - kernel-elaborated, with provenance docstring, an odds estimate, and a refutation
+  probe under `experiments/`), one green **edge** (a sorry-free, axiom-audited wiring
+  implication), or one **probe-refuted node**.  Each unit ends in a build + `#print axioms`,
+  exactly like a grind lap.  Sink nodes: `IsNormal 2 (Real.log 2)` and its disjunctivity
+  weakenings.  Every lap answers the standing question: *what is the weakest open node on each
+  path to the sink - can we add a weaker node, or an edge, or kill one?*
+- **Do NOT grind known mathematics here** unless it discharges a named node; that work is
+  lane 2 (KB two-lanes doctrine): phase 1 tolerates warnings/`native_decide`/step boosts,
+  distribution prep is a separate later pass.
+- **Graph frontier (2026-08-29):** the ln-two ladder `Equidistributed lnTwoOrbit` →
+  `LnTwoHypothesisFreq w` → `LnTwoHypothesisD w` / `Λ` (`LnTwoFreq.lean`,
+  `ConditionalDisjunctive.lean`) and the run tower `LnTwoExpSep` / `LnTwoPolySep` with proved
+  run-bound edges (`LnTwoRuns.lean`, `docs/lnTwo-kick-blueprint.md`).  Open architecture moves:
+  the shared Diophantine-wall interface (joint with collatz-moonshot), the unconditional
+  sliver-recurrence node family, mixing/discrepancy rungs.
+- Phase-3 publishing state: complete locally; outward actions (PRs, Zulip, announcements)
+  remain operator-owned.  The 2026-08-26 directive below is accurate history.
+
+## SUPERSEDED DIRECTIVE (set 2026-08-26 — Phase 3 publishing-prep pass)
 
 - **Operator scope:** complete the Phase 3 publishing-prep pass without pushing,
   opening PRs, posting announcements, mutating sibling repositories, touching
