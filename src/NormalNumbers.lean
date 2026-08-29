@@ -53,6 +53,7 @@ import NormalNumbers.LnTwoFreq
 import NormalNumbers.LnTwoRuns
 import NormalNumbers.LnTwoLattice
 import NormalNumbers.LnTwoDigitAgreement
+import NormalNumbers.LnTwoPrimeWindow
 import NormalNumbers.DiophantineWall
 import NormalNumbers.KickDynamics
 import NormalNumbers.KickedOrbit
