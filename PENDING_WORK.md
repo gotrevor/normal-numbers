@@ -3647,3 +3647,18 @@ case, `2²⁷ > 96⁴`); the Alladi–Robinson rate 3.63 would need sharp `P_ℓ
 coefficient asymptotics + two-sided remainder, not attempted. Consequence:
 `run_le_of_expSep` now caps every zero/one run of binary `ln 2` at `26n+O(1)`
 unconditionally. Scoped objective `sorry-free:LnTwoExpSepProof.lean` MET.
+
+## 2026-08-29 (lane-2 lap): target 5 `LogTwoSqKicked.lean` DONE (dessert)
+Summed-kick machine instantiated for a second constant, `log² 2` (base 2,
+kicks `r m = 2·H_{m−1}/m`). Probe `experiments/logtwosq_series.py` PASSES
+(identity to 70 digits, exact rationals; cap checked at n=1,2,6,10,50).
+Headlines sorry-free, trust triple, node `LogTwoSqSeries` stays CITED
+(hypothesis-not-axiom): `logTwoSq_top_sliver_of_zeroRun` (sliver
+`1 − 2(1+log(n+1))/(n+1)`; the draft's `6 ≤ n` dropped — `hk` forces
+`H_n > 0`), maxRun twin conditional on `hhalf`, discharged for `n ≥ 56` by
+`logTwoSqCap_le_half` (log x ≤ 2(√x−1) route; numerically true from n=14 —
+lossy but elementary). Machinery: position-dependent cap via mathlib
+`harmonic_le_one_add_log` + antitonicity of `(1+log x)/x` on `[1,∞)`
+(`one_add_log_div_le_of_le`). OWED LATER (per brief, not this run): discharge
+the `LogTwoSqSeries` node in-house (Cauchy product / integrated harmonic
+generating function at `x = 1/2`).
