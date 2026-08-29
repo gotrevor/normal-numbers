@@ -58,6 +58,7 @@ import NormalNumbers.DiophantineWall
 import NormalNumbers.KickDynamics
 import NormalNumbers.KickedOrbit
 import NormalNumbers.PiBBP
+import NormalNumbers.PiBBPProof
 import NormalNumbers.QuadraticDisjunctive
 import NormalNumbers.DisjunctiveBaire
 import NormalNumbers.NormalMeager
