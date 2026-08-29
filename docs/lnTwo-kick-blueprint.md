@@ -105,7 +105,15 @@ never yield u.d.-or-finite — conclusions must stay at the forcing level, as ou
    The `example` re-derives the frozen ln-2 constants EXACTLY (`r(m)=1/m`: floor `1/(2(n+1))`,
    sliver `1/(n+1)`).  Remaining under this item: **discharge `PiBBP`** (the BBP integral
    computation, lane-2), and per-constant instantiations (π², log²2) as their series
-   identities get cited/proved.
+   identities get cited/proved.  **π digit-agreement rider ✅ (2026-08-29 same-day)**:
+   abstract mismatch forcing `fract_mul_top_of_floor_ne` + base-`b` digit bridge
+   `digitOf_fract_eq_floor_mul_orbit` (machine layer) + `pi_digit_mismatch_boundary`
+   (`PiBBP`-conditional, `n ≥ 3`) — a true-vs-BBP hex-digit disagreement pins
+   `fract(16·x_n)` within `1024/(3(8n+1)²)` of the wrap.  Quadratic windows ⇒ the
+   disagreement sum CONVERGES (random model: ~0.58 total, vs ln 2's `2 ln N`).  Probe
+   (`experiments/pi_digit_agreement.py`, 50 000 hex positions, exact): **exactly 1
+   disagreement ever** (n=1, pre-asymptotic), zero window violations — the BBP surrogate
+   tracks every hex digit of π from n=2 on.
 4. ~~Lagarias footnote-1 (true vs surrogate digit agreement)~~ ✅ **mechanism settled 2026-08-29**
    → `LnTwoDigitAgreement.lean` (all five theorems trust-triple, verified 2026-08-29) +
    `experiments/lntwo_digit_agreement.py` (18 disagreements in 200 000 positions, every one in
