@@ -16,6 +16,19 @@ Already landed host-side before this brief: `lnTwoRun_le_unconditional`
   (real log series at 1/2 + `hasSum_sum_range_mul_of_summable_norm` Cauchy square;
   partial fractions + `sum_range_reflect` for the coefficient identity). Sorry-free,
   `#print axioms` = trust triple. Next: target 2 (π² signed-kick probe first).
+- **Target 2 DONE** (2026-08-29): `PiSqBBP.lean` complete, sorry-free. Signed
+  abstract layer (`kicked_tail_abs_le` two-sided cap → `|bⁿ(x−sₙ)| ≤ A/(b−1)`;
+  boundary cores `boundary_of_fract_lt/_ge`; packaged
+  `boundary_of_zeroRun_kickedAbs` / `boundary_of_maxRun_kickedAbs`). π²
+  instance via SHIFTED kick `piSqShiftKick m = 16·piSqKick (m−1)` (folds the
+  j=0 block in, so the kicked series is exactly π²; the draft's
+  `kickedPartial 16 piSqKick` surrogate missed the j=0 term and was restated).
+  `|piSqKick j| ≤ 48/(8j+1)²` for j ≥ 1. Headlines
+  `piSq_boundary_of_zeroRun` + `_maxRun` twin: window `16⁻ᵏ + 52/(8n+1)²`
+  (machine: A = 768/(8n+1)², sliver A/15), conditional on frozen `PiSqBBP`.
+  `#print axioms` both = trust triple. Node discharge stays lane-2 owed.
+  Gotcha: linarith does NOT relate `16/X` and `48/X` as multiples of one atom —
+  state comparisons as `c·(1/X)` first. Next: target 3 (β = 26 sharpening).
 
 ## Targets, ranked (work top-down; each is self-contained)
 
