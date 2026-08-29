@@ -150,6 +150,25 @@ the source of truth for statements and claim status (novelty unswept).
   `lnTwoNum` (Fermat-quotient bridge at `n = p−1`, lit-sweep doc).  All 16
   declarations sorry-free, standard axiom triple (verified 2026-08-29,
   in-repo v4.33.1 build)
+- ✅ D9 the abstract kicked-orbit dichotomy + π (2026-08-29, R2 →
+  `KickedOrbit.lean`, `PiBBP.lean`, probe `experiments/pi_bbp_runs.py`):
+  the τ-floor/sliver mechanism extracted at full generality — any base `b`,
+  any BBP-type decomposition `x = s + tail` with the scaled tail trapped in
+  `[lo, hi]`, `lo > 0` (`top_sliver_of_fract_small` / `_large`, packaged as
+  `top_sliver_of_zeroRun_tail` / `_maxRun_tail`, base-`b` run dictionary
+  included; ln-2 instance re-derived as a sanity `example`).  **π
+  instantiated**: elementary BBP kick bounds `3/(16(j+1)²) ≤ kick_j ≤
+  20/(8j+1)²` (unconditional), tail bracket `piTail_ge`/`piTail_le`, and
+  the headlines `pi_top_sliver_of_zeroRun` / `pi_top_sliver_of_fRun` — a
+  run of hex `0`s or `F`s of π beyond `~2·log₁₆ n` forces the BBP surrogate
+  into the top sliver of width `~64/(3(8n+1)²)` — conditional on exactly
+  one frozen CITED-class node, `PiBBP` (the BBP series, lane-2 discharge
+  owed).  Sweep-hedged novelty: run-forcing sliver direction NOT FOUND in
+  the Bailey–Crandall descendant literature; Bailey–Borwein 2012 is the
+  converse-direction precedent.  Probe: π hex-run records track `log₁₆ n`
+  at ratio ≈ 1.1; tail bracket verified for n < 400; zero
+  threshold-satisfying runs in range (expected — doubly-exponentially
+  rare).  Lagarias guardrail respected: all conclusions forcing-level.
 
 ## Phase 3 — outward (publishing-prep pass ✅ complete locally, 2026-08-26)
 

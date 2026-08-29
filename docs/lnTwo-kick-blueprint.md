@@ -91,13 +91,14 @@ never yield u.d.-or-finite — conclusions must stay at the forcing level, as ou
    "a genuine weakening-lattice rung not passing through Diophantine input" is hereby
    retracted for the run-window family — the window position depends on `ln 2` and the
    avoidance collapses onto `‖2ⁿ·ln 2‖` exactly.
-3. **R2 — the kicked-orbit dichotomy, abstract + π** (now top of the board for novel math):
-   extract the τ-floor/sliver dichotomy as an abstract lemma (orbit `x_{n+1} = b·x_n + kick_n
-   mod 1`, kick floor `≥ c/n`, tail bracket), re-derive the ln-2 case as its instance, then
-   instantiate π's base-16 BBP orbit.  Sweep verdict: kick-floor-as-resource NOT FOUND;
-   Bailey–Borwein 2012 (Stoneham nonnormality) is the converse-direction precedent to cite.
-   🚨 Lagarias guardrail (sweep doc): a magnitude-only kick floor can never conclude
-   u.d.-or-finite — keep every conclusion at the forcing level (run ⟹ ride).
+3. ~~R2 — the kicked-orbit dichotomy, abstract + π~~ ✅ **executed 2026-08-29** (ROADMAP D9):
+   `KickedOrbit.lean` (abstract dichotomy, base-`b` run dictionary, ln-2 sanity instance) +
+   `PiBBP.lean` (elementary kick bounds, tail bracket, and the π headlines
+   `pi_top_sliver_of_zeroRun` / `_fRun` — super-`2log₁₆ n` hex runs of π force top-sliver
+   rides), conditional on the single CITED-class node `PiBBP`.  Probe:
+   `experiments/pi_bbp_runs.py`.  Remaining under this item: **discharge `PiBBP`** (the BBP
+   integral computation, lane-2), and consider the general-BBP-class packaging (Bailey–Crandall
+   Def 4.1 kicks `p(n)/q(n)`) once a second instance wants it.
 4. **R3 — the congruence attack surface**: window avoidance for structured `n` via the exact
    numerator `lnTwoNum` — start at `n = p−1` where `A_{p−1} ≡ unit·q_p(2) (mod p)`
    (Glaisher / Z.-H. Sun, formulas in the sweep doc).  Low odds, real magnitude; hold as a

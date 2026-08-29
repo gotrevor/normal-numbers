@@ -54,6 +54,8 @@ import NormalNumbers.LnTwoRuns
 import NormalNumbers.LnTwoLattice
 import NormalNumbers.DiophantineWall
 import NormalNumbers.KickDynamics
+import NormalNumbers.KickedOrbit
+import NormalNumbers.PiBBP
 import NormalNumbers.QuadraticDisjunctive
 import NormalNumbers.DisjunctiveBaire
 import NormalNumbers.NormalMeager
