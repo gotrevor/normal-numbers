@@ -176,6 +176,35 @@ theorem logTwoSq_top_sliver_of_zeroRun (hs : LogTwoSqSeries) {n k : ℕ}
         norm_num
     _ ≤ Int.fract ((2 : ℝ) ^ n * kickedPartial 2 logTwoSqKick n) := hcore
 
+/-- **Cap decay discharge**: the position-dependent cap is at most `1/2`
+for all `n ≥ 56`, from `log x ≤ 2(√x − 1)` and the quadratic
+`x − 8√x + 4 ≥ 0` for `√x ≥ 4 + √12` (`x ≥ 57` suffices).  (Numerically
+the cap crosses `1/2` already at `n = 14`; this elementary route is
+deliberately lossy.) -/
+lemma logTwoSqCap_le_half {n : ℕ} (hn : 56 ≤ n) :
+    2 * (1 + Real.log ((n : ℝ) + 1)) / ((n : ℝ) + 1) ≤ 1 / 2 := by
+  set x : ℝ := (n : ℝ) + 1 with hx
+  have hx57 : (57 : ℝ) ≤ x := by
+    have : (56 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+    simp only [hx]; linarith
+  have hx0 : (0 : ℝ) < x := by linarith
+  set s : ℝ := Real.sqrt x with hsdef
+  have hs2 : s ^ 2 = x := Real.sq_sqrt hx0.le
+  have hs754 : (754 : ℝ) / 100 ≤ s := by
+    rw [hsdef]
+    rw [show (754 : ℝ) / 100 = Real.sqrt (((754 : ℝ) / 100) ^ 2) from
+      (Real.sqrt_sq (by norm_num)).symm]
+    exact Real.sqrt_le_sqrt (by nlinarith)
+  have hlog : Real.log x ≤ 2 * (s - 1) := by
+    have h1 : Real.log s ≤ s - 1 :=
+      Real.log_le_sub_one_of_pos (by rw [hsdef]; positivity)
+    have h2 : Real.log s = Real.log x / 2 := by
+      rw [hsdef]; exact Real.log_sqrt hx0.le
+    linarith [h2 ▸ h1]
+  have hquad : x - 8 * s + 4 ≥ 0 := by nlinarith [hs754, hs2]
+  rw [div_le_iff₀ hx0]
+  linarith
+
 /-- **Max-run twin**: once the position-dependent cap has decayed to `1/2`
 (`hhalf`; true for all large `n`, see `logTwoSqCap_le_half`), a run of `k`
 ones forces the surrogate into `[1 − A n − 2⁻ᵏ, 1)`, via
