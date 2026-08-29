@@ -127,39 +127,142 @@ lemma norm_z2_lt : ‖z2‖ < 1 := by
     norm_num [Complex.normSq_apply]
   exact lt_of_pow_lt_pow_left₀ 2 (by norm_num) h
 
+lemma neg_cx_pow8 : (-((x : ℝ) : ℂ)) ^ 8 = 16⁻¹ := by
+  rw [show (-((x:ℝ):ℂ)) ^ 8 = ((x:ℝ):ℂ) ^ 8 by ring, cx_pow8]
+
 /-! ### The four logs -/
 
 /-- `exp(-½ log 2) = 1/√2` (real). -/
 lemma exp_neg_half_log_two : Real.exp (-(Real.log 2 / 2)) = x := by
-  sorry
+  have h2 : Real.exp (Real.log 2 / 2) ^ 2 = 2 := by
+    rw [sq, ← Real.exp_add]
+    rw [show Real.log 2 / 2 + Real.log 2 / 2 = Real.log 2 by ring]
+    exact Real.exp_log (by norm_num)
+  have h : Real.exp (Real.log 2 / 2) = Real.sqrt 2 := by
+    conv_rhs => rw [← h2]
+    rw [Real.sqrt_sq (Real.exp_pos _).le]
+  rw [Real.exp_neg, h, x]
+
+lemma sqrt2C_sq : ((Real.sqrt 2 : ℝ) : ℂ) ^ 2 = 2 := by
+  rw [← Complex.ofReal_pow, Real.sq_sqrt (by norm_num : (0:ℝ) ≤ 2)]
+  norm_num
+
+lemma sqrt2C_ne : ((Real.sqrt 2 : ℝ) : ℂ) ≠ 0 := by
+  intro h
+  have h2 := sqrt2C_sq
+  rw [h] at h2
+  norm_num at h2
+
+/-- The exponential landing on `z̄₁ = (1-i)/2 = 1 - z₁`. -/
+lemma exp_eq_z2 :
+    Complex.exp (((-(Real.log 2 / 2)) : ℝ) + ((-(π / 4)) : ℝ) * I) = z2 := by
+  rw [Complex.exp_add, ← Complex.ofReal_exp, exp_neg_half_log_two,
+    Complex.exp_mul_I, ← Complex.ofReal_cos, ← Complex.ofReal_sin,
+    Real.cos_neg, Real.sin_neg, Real.cos_pi_div_four, Real.sin_pi_div_four,
+    x, z2]
+  push_cast
+  field_simp
+  ring
+
+/-- The exponential landing on `z₁ = (1+i)/2 = 1 - z̄₁`. -/
+lemma exp_eq_z1 :
+    Complex.exp (((-(Real.log 2 / 2)) : ℝ) + ((π / 4) : ℝ) * I) = z1 := by
+  rw [Complex.exp_add, ← Complex.ofReal_exp, exp_neg_half_log_two,
+    Complex.exp_mul_I, ← Complex.ofReal_cos, ← Complex.ofReal_sin,
+    Real.cos_pi_div_four, Real.sin_pi_div_four, x, z1]
+  push_cast
+  field_simp
 
 /-- `log(1 - z₁) = -½ log 2 - (π/4) i`. -/
 lemma log_one_sub_z1 :
-    Complex.log (1 - z1) = -(Real.log 2 / 2 : ℝ) - (π / 4 : ℝ) * I := by
-  sorry
+    Complex.log (1 - z1) = ((-(Real.log 2 / 2)) : ℝ) + ((-(π / 4)) : ℝ) * I := by
+  have h1 : 1 - z1 = Complex.exp (((-(Real.log 2 / 2)) : ℝ) + ((-(π / 4)) : ℝ) * I) := by
+    rw [exp_eq_z2, z1, z2]
+    ring
+  have him : ((((-(Real.log 2 / 2)) : ℝ) : ℂ) + (((-(π / 4)) : ℝ) : ℂ) * I).im
+      = -(π / 4) := by
+    simp only [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.ofReal_re,
+      Complex.I_im, Complex.I_re]
+    ring
+  rw [h1, Complex.log_exp (by rw [him]; linarith [Real.pi_pos])
+    (by rw [him]; linarith [Real.pi_pos])]
 
 /-- `log(1 - z̄₁) = -½ log 2 + (π/4) i`. -/
 lemma log_one_sub_z2 :
-    Complex.log (1 - z2) = -(Real.log 2 / 2 : ℝ) + (π / 4 : ℝ) * I := by
-  sorry
+    Complex.log (1 - z2) = ((-(Real.log 2 / 2)) : ℝ) + ((π / 4) : ℝ) * I := by
+  have h1 : 1 - z2 = Complex.exp (((-(Real.log 2 / 2)) : ℝ) + ((π / 4) : ℝ) * I) := by
+    rw [exp_eq_z1, z1, z2]
+    ring
+  have him : ((((-(Real.log 2 / 2)) : ℝ) : ℂ) + (((π / 4) : ℝ)) * I).im
+      = π / 4 := by
+    simp only [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.ofReal_re,
+      Complex.I_im, Complex.I_re]
+    ring
+  rw [h1, Complex.log_exp (by rw [him]; linarith [Real.pi_pos])
+    (by rw [him]; linarith [Real.pi_pos])]
 
 /-- The two real logs combine: `log(1-x) + log(1+x) = -log 2`. -/
 lemma log_one_sub_add_log_one_add :
     Real.log (1 - x) + Real.log (1 + x) = -Real.log 2 := by
-  sorry
+  have hx1 := x_lt_one
+  have hx0 := x_pos
+  rw [← Real.log_mul (by nlinarith) (by nlinarith),
+    show (1 - x) * (1 + x) = 1 - x ^ 2 by ring, x_sq,
+    show (1 : ℝ) - 2⁻¹ = 2⁻¹ by norm_num, Real.log_inv]
 
 /-! ### The master sum -/
 
 /-- **The filtered series sums to π.** -/
 lemma hasSum_w : HasSum w ((π : ℝ) : ℂ) := by
-  sorry
+  have h1 := (Complex.hasSum_taylorSeries_neg_log norm_cx_lt).mul_left (-2)
+  have h2 := (Complex.hasSum_taylorSeries_neg_log norm_neg_cx_lt).mul_left (-2)
+  have h3 := (Complex.hasSum_taylorSeries_neg_log norm_z1_lt).mul_left (2 - 2 * I)
+  have h4 := (Complex.hasSum_taylorSeries_neg_log norm_z2_lt).mul_left (2 + 2 * I)
+  have h := ((h1.add h2).add h3).add h4
+  have hfun : (fun n : ℕ => -2 * (((x : ℝ) : ℂ) ^ n / n) + -2 * ((-((x : ℝ) : ℂ)) ^ n / n)
+      + (2 - 2 * I) * (z1 ^ n / n) + (2 + 2 * I) * (z2 ^ n / n)) = w := by
+    funext n
+    rw [w]
+    ring
+  rw [hfun] at h
+  have hr1 : Complex.log (1 - ((x : ℝ) : ℂ)) = ((Real.log (1 - x) : ℝ) : ℂ) := by
+    rw [show (1 : ℂ) - ((x : ℝ) : ℂ) = (((1 - x : ℝ)) : ℂ) by push_cast; ring,
+      Complex.ofReal_log (by linarith [x_lt_one])]
+  have hr2 : Complex.log (1 - (-((x : ℝ) : ℂ))) = ((Real.log (1 + x) : ℝ) : ℂ) := by
+    rw [show (1 : ℂ) - (-((x : ℝ) : ℂ)) = (((1 + x : ℝ)) : ℂ) by push_cast; ring,
+      Complex.ofReal_log (by linarith [x_pos])]
+  rw [hr1, hr2, log_one_sub_z1, log_one_sub_z2] at h
+  have hL : ((Real.log (1 - x) : ℝ) : ℂ) + ((Real.log (1 + x) : ℝ) : ℂ)
+      = -((Real.log 2 : ℝ) : ℂ) := by
+    rw [← Complex.ofReal_add, log_one_sub_add_log_one_add]
+    push_cast
+    ring
+  have hval : -2 * -((Real.log (1 - x) : ℝ) : ℂ) + -2 * -((Real.log (1 + x) : ℝ) : ℂ)
+      + (2 - 2 * I) * -((((-(Real.log 2 / 2)) : ℝ) : ℂ) + (((-(π / 4)) : ℝ) : ℂ) * I)
+      + (2 + 2 * I) * -((((-(Real.log 2 / 2)) : ℝ) : ℂ) + (((π / 4) : ℝ) : ℂ) * I)
+      = ((π : ℝ) : ℂ) := by
+    push_cast
+    linear_combination (2 : ℂ) * hL - ((π : ℝ) : ℂ) * Complex.I_sq
+  rwa [hval] at h
 
 /-! ### Fiber sums: eight consecutive terms make one BBP term -/
+
+/-- Power-block decomposition of `w` along `n = 8j + r`. -/
+lemma w_block (j r : ℕ) :
+    w (j * 8 + r) = ((16⁻¹ : ℂ) ^ j *
+      ((-2) * ((x : ℝ) : ℂ) ^ r + (-2) * (-((x : ℝ) : ℂ)) ^ r
+        + (2 - 2 * I) * z1 ^ r + (2 + 2 * I) * z2 ^ r)) / ((j * 8 + r : ℕ) : ℂ) := by
+  rw [w, pow_add, pow_add, pow_add, pow_add, pow_mul', pow_mul', pow_mul', pow_mul',
+    z1_pow8, z2_pow8, cx_pow8, neg_cx_pow8]
+  ring
 
 /-- **Fiber identity**: `∑_{r<8} w (8j + r) = bbpTerm j`. -/
 lemma hasSum_fiber (j : ℕ) :
     HasSum (fun r : Fin 8 => w (j * 8 + (r : ℕ))) ((bbpTerm j : ℝ) : ℂ) := by
-  sorry
+  have h := hasSum_fintype (fun r : Fin 8 => w (j * 8 + (r : ℕ)))
+  have hsum : ∑ r : Fin 8, w (j * 8 + (r : ℕ)) = ((bbpTerm j : ℝ) : ℂ) := by
+    sorry
+  rwa [hsum] at h
 
 end PiBBPProof
 
