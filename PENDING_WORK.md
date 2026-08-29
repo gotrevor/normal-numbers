@@ -3598,3 +3598,12 @@ Tools confirmed: `measurePreserving_gaussMap`, `gaussMeasure_univ`=1 (⇒
 > log-zone-avoidance guarantee, choosing `K` via `integral_logTailFn_tendsto`
 > to satisfy `hlog`. This is the remaining mechanical (but nontrivial)
 > plumbing to close `xstar_log_tail_uniform`.
+
+## 2026-08-29 (lane-2 lap): PiBBP discharged
+`piBBP_proved : PiBBP` is sorry-free, trust triple `[propext, Classical.choice, Quot.sound]`
+(HEAD 1e228a2). Route: no integrals — roots-of-unity filter through
+`Complex.hasSum_taylorSeries_neg_log` at 1/√2, −1/√2, (1±i)/2 with weights −2, −2, 2∓2i;
+log values reassemble to π; mod-8 fibers (`Nat.divModEquiv` + `HasSum.prod_fiberwise`)
+reproduce `bbpTerm` exactly. Scoped objective `sorry-free:src/NormalNumbers/PiBBPProof.lean`
+is MET. Next (per operator brief, if resumed): target 2 `oneRun_le_of_sliverEscape`, then
+target 3 Glaisher/Sun congruence.
