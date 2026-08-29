@@ -51,6 +51,7 @@ import NormalNumbers.Disjunctive
 import NormalNumbers.ConditionalDisjunctive
 import NormalNumbers.LnTwoFreq
 import NormalNumbers.LnTwoRuns
+import NormalNumbers.LnTwoExpSepProof
 import NormalNumbers.LnTwoLattice
 import NormalNumbers.LnTwoDigitAgreement
 import NormalNumbers.LnTwoPrimeWindow
