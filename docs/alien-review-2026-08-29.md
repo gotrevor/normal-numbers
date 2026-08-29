@@ -57,3 +57,40 @@ Would I spend the next two weeks here? Yes — allocated: week 1 = Tier-1 discha
 **Confidence:** sliver route relocates rather than escapes the Diophantine wall — 80%. Tier-1 run bound is classical folklore (formalization-first is the only defensible novelty claim) — 90%. Aₙ mod lcm(1..n) crux is wall-class open — 70% (I have not seen the actual decomposition; this is the number the probe should move). Tier-1 discharge as the top-value omitted move — 85%. The τ-floor half being the programme's most likely genuinely-novel content — 60% (sweep-dependent).
 
 End of transmission.
+
+---
+
+# Transmission 2 — re-ranked under the corrected objective (novel proofs only)
+
+Context: the operator corrected the objective the first transmission optimized — for this repo and
+collatz-moonshot the entire point is **novel proofs (new mathematics)**; novel formalization
+carries no weight.  The reviewer re-ranked for probability × magnitude of new mathematics, with
+frozen odds-carrying nodes and probe-refutations as first-class units.  Verbatim follows.
+
+TRANSMISSION 2 — re-ranked under the corrected objective: probability × magnitude of **new mathematics**; formalization-first carries zero weight; a frozen conditional node with honest odds, or a probe-refutation, is a full unit.
+
+## 1. Re-ranked moves
+
+**R1. The lattice-point reformulation of the ride crux — freeze it, because it targets a run bound STRONGER than the citable measure gives.** Napkin, verify before freezing: a k-run at position n means |ln 2 − p/2ⁿ| < 2⁻⁽ⁿ⁺ᵏ⁾, so Marcovecchio (μ ≤ 3.5746) caps k at (μ−1)n ≈ 2.57n. But the surrogate x_n is an **exact rational** with denominator D_n ≈ lcm(1..n) = e^{n+o(n)} (PNT), and a k-run pins x_n into a window of width ~2⁻ᵏ. That window contains **fewer than one integer numerator** once k > n·log₂e ≈ 1.443n. So the sliver route, driven to its arithmetic floor, is aimed at k ≲ 1.44n — *undercutting the irrationality-measure constant* — conditional on ruling out one explicit coincidence per n: "Aₙ lands in a specific width-<1 residue window mod D_n." The move: (a) prove the translation edge (ride of length k ⇒ Aₙ ∈ explicit interval — mechanical from the proved bracket identities); (b) freeze the coincidence-failure Prop with an odds estimate; (c) probe it per-n by exact arithmetic (it is refutable at each n, Collatz-verification-shaped). Even the **conditional** theorem "runs ≤ log₂e·n + O(log n) unless the explicit congruence coincidence occurs" is plausibly new mathematics: it separates what pigeonhole gives from what only arithmetic can give, at a better constant than the measure route. Note this *subsumes* my previous costume-probe: step (a) simultaneously refutes the node's "no Diophantine input" annotation — a unit of progress under your accounting — and then keeps going.
+
+**R2. Generalize the τ-floor/sliver dichotomy to the BBP class — the π move.** The mechanism (kick floor kills the bottom channel; long runs force top-sliver rides) used nothing specific to ln 2 except kick ≥ c/n and the tail bracket. π's hex-digit BBP orbit has a rational-function kick; if the floor transfers, you get "super-logarithmic hex-digit runs of π force top-sliver rides of the BBP surrogate" — a pointwise structure theorem about π's digits, invisible to measure-level instruments, in Bailey–Crandall's own arena, apparently unploughed. Freeze the general kicked-orbit dichotomy lemma (abstract kick sequence, floor hypothesis), instantiate ln 2 as corollary, then attempt π. Technical transfer probability high; novelty sweep-gated; magnitude jumps because the constant is π.
+
+**R3. The Aₙ arithmetic itself — the p-adic door.** If R1's coincidence Prop resists probes, the one classical toolbox with any purchase is the p-adic valuation theory of harmonic-type sums (ν₂(H_n) behavior, Wolstenholme-class congruences): a valuation obstruction forcing Aₙ away from the required residue for infinitely many n would be a genuinely new theorem. Low probability, real magnitude; correctly held as a frozen node with low odds, not a campaign.
+
+**R4. Long-odds slot: the finite-depth instances of Axiom C (carry rigidity, √2).** Your own doc notes each depth-M instance is refutable from computed digits — that is a probe family the graph doctrine licenses. Freeze the M-instances, run the probe. P(anything moves) tiny; magnitude (first recurring block of length ≥ 2 for an explicit algebraic irrational) enormous. One node, one probe, no grinding.
+
+Dropped under the new objective: Tier-1 discharge (folklore ⇒ lane-2 backlog, exactly as your doctrine files it — my prior Rank 1 collapses as you predicted); the discrepancy socket and Banach rung (classical edges, zero new-math weight, keep as opportunistic lane-2); oneRun twin (hygiene).
+
+## 2. Single best shot at new mathematics
+
+**R1's conditional theorem.** Mechanism in one line: *exact rationality of the surrogate converts the run question into a lattice-point question whose pigeonhole threshold (log₂e·n) is strictly better than the irrationality-measure threshold ((μ−1)n) — the gap between 1.44 and 2.57 is territory the measure literature cannot reach and pigeonhole almost reaches.* Freeze first: the translation edge + the coincidence-failure Prop. Probe first: exact-arithmetic check of the coincidence window for n up to the probe budget (expected: empty windows or misses at every n — each miss is evidence, and a single verified "window contains no integer at all" for a range of n would yield unconditional run bounds on that range as a bonus). This is the only place in the current graph where I can name a *specific* inequality between two constants that the literature plausibly does not contain.
+
+## 3. Literature sweep
+
+**Confirmed critical path — and it rises.** Under a novelty-only objective the sweep is not a gate on claims; it is the *measurement instrument for the objective function itself* — every P(novel) below is sweep-conditional. Extend its scope beyond Rivoal/2510.02059/Bugeaud to: Lagarias 2001 (the hypothesis-hardness acid), and the Bailey–Crandall descendant dynamics papers specifically for any prior run/sliver analysis of BBP surrogate orbits (gates R2).
+
+## 4. Ledger updates
+
+Recomputed napkin this transmission, unverified in Lean: the 1.44n-vs-2.57n gap (D_n = e^{n+o(n)}, window arithmetic) — confidence it is real and correctly computed: **75%**. P(translation edge lands formally) 85%; P(the conditional coincidence theorem is new mathematics | sweep clean) **60%**; P(fully unconditional coincidence-ruling is wall-class hard) 70% (unchanged); P(BBP/π transfer works technically) 70%, novel-given-sweep 50%; τ-floor-as-likeliest-novel revised: it is now the *special case* of R2's general lemma, and the general lemma is the right claim-carrier — 60% unchanged but reattached there. Tier-1-is-folklore: 90%, unchanged; its rank collapse is objective-function, not evidence. Everything above taken from the five docs plus frozen statements; still no proofs audited.
+
+End of transmission 2.
