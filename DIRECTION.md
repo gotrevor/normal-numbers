@@ -6,6 +6,12 @@ detail lives in PENDING_WORK.md.
 
 ## CURRENT DIRECTIVE (set 2026-08-29 — the conjecture-graph objective)
 
+- 🎯 **The objective is novel PROOFS — new mathematics.  Novel *formalization* is not the point
+  here, at all** (operator, 2026-08-29: "The entire point is novel *proofs*.  This is different
+  from other lean repos, where formalization *is* the point.").  Same doctrine as
+  collatz-moonshot.  Weigh every candidate move by its probability of producing new mathematics;
+  "first in any prover" carries no weight in prioritization.  Until the architecture points at a
+  novel result, proving existing known math is uninteresting (lane 2 at best).
 - **This repo's product is a machine-checked conjecture GRAPH, not a proof queue.**  A unit of
   progress = one green **node** (a named Prop - working hypothesis, novel axiom candidate, or
   interface - kernel-elaborated, with provenance docstring, an odds estimate, and a refutation
