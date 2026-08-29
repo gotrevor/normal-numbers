@@ -1,5 +1,31 @@
 # Operator brief: unattended lane-2 grind (Fable-low treadmills) 🏃
 
+## RESULT (2026-08-29, run complete — all 5 targets landed) ✅
+
+All five targets discharged in ~75 min of Fable/low laps (`lean-lap-driver`, one
+scoped run per target, planted `sorry` stubs as host-side done-when gates), every
+claim below re-verified HOST-side by `#print axioms` — trust triple
+`[propext, Classical.choice, Quot.sound]`, 2026-08-29.  (1) **PiBBP discharged**:
+`piBBP_proved` (`PiBBPProof.lean`) proves the BBP formula integral-free via the
+roots-of-unity filter over `Complex.hasSum_taylorSeries_neg_log` — every π headline
+is now unconditional at its call site.  (2) **Twin edge** `oneRun_le_of_sliverEscape`
+(`KickDynamicsOneRun.lean`): honest width-mismatch resolution — new wide-sliver node
+`SliverEscapeWide` (provenance docstring) with `sliverEscape_of_wide`, constant `+2`.
+(3) **Fermat-quotient bridge** `lnTwoNum_modEq_fermatQuotient`
+(`LnTwoFermatBridge.lean`): the Glaisher/Sun congruence proved in the probe-frozen
+shape, byte-identical statement.  (4) **Tier-1 discharged**: `lnTwoExpSep_holds`
+(`LnTwoExpSepProof.lean`) — `∃ N₀, LnTwoExpSep 26 N₀`, in-house via the vendored
+shifted-Legendre package (`LegendreShifted/LegendreHeight/LcmUptoGrowth.lean`, both
+honest gaps closed: `|Q|` height + pairing argument); β = 26 is the crude-constant
+rate (Alladi–Robinson ≈ 3.63 needs sharp asymptotics, not attempted) but ANY explicit
+β lights the run tower unconditionally via `run_le_of_expSep`.  (5) **Dessert**:
+`logTwoSq_top_sliver_of_zeroRun` (`LogTwoSqKicked.lean`) — summed-kick machine
+instantiated for log²2 over the new CITED node `LogTwoSqSeries` (probe
+`experiments/logtwosq_series.py`, identity verified to 70 digits, PASSES), with the
+position-dependent cap and `logTwoSqCap_le_half`.  Frozen decls and the two dead
+`CFScheduleA` sorries untouched; build green throughout; nothing hard-blocked, outbox
+empty.  Lane-2 discharge now owed: `LogTwoSqSeries` (the one new CITED node).
+
 **Written 2026-08-29 by Ren at Trevor's direction.  Trevor opening a session on this brief IS
 the launch authorization** ([[agent-operated-treadmills]]: treadmills are agent-operated after
 explicit authorization — this is it).  Trevor is AFK for several hours; operate unassisted.
