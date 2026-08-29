@@ -9,6 +9,14 @@ Batch 1 (`## RESULT` in that file) landed all 5 targets; this batch continues.
 Already landed host-side before this brief: `lnTwoRun_le_unconditional`
 (`LnTwoExpSepProof.lean`) — the hypothesis-free 26n run cap.
 
+## Progress
+
+- **Target 1 DONE** (cb3a0d2, 2026-08-29): `logTwoSqSeries_proved` lands in
+  `LogTwoSqSeriesProof.lean`; frozen node `LogTwoSqSeries` discharged. Route as briefed
+  (real log series at 1/2 + `hasSum_sum_range_mul_of_summable_norm` Cauchy square;
+  partial fractions + `sum_range_reflect` for the coefficient identity). Sorry-free,
+  `#print axioms` = trust triple. Next: target 2 (π² signed-kick probe first).
+
 ## Targets, ranked (work top-down; each is self-contained)
 
 1. **Discharge `LogTwoSqSeries`** (`LogTwoSqKicked.lean:59`, the frozen CITED node) —
