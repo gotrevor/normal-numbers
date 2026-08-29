@@ -51,6 +51,9 @@ import NormalNumbers.Disjunctive
 import NormalNumbers.ConditionalDisjunctive
 import NormalNumbers.LnTwoFreq
 import NormalNumbers.LnTwoRuns
+import NormalNumbers.LegendreShifted
+import NormalNumbers.LcmUptoGrowth
+import NormalNumbers.LegendreHeight
 import NormalNumbers.LnTwoExpSepProof
 import NormalNumbers.LnTwoLattice
 import NormalNumbers.LnTwoDigitAgreement
