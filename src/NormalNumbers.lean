@@ -55,6 +55,7 @@ import NormalNumbers.LegendreShifted
 import NormalNumbers.LcmUptoGrowth
 import NormalNumbers.LegendreHeight
 import NormalNumbers.LnTwoExpSepProof
+import NormalNumbers.LnTwoExpSepSharp
 import NormalNumbers.LnTwoLattice
 import NormalNumbers.LnTwoDigitAgreement
 import NormalNumbers.LnTwoPrimeWindow
