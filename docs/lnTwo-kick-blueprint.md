@@ -126,7 +126,7 @@ never yield u.d.-or-finite — conclusions must stay at the forcing level, as ou
    `Equidistributed lnTwoOrbit` ⇒ density-0 disagreement (the conditional answer).  Remaining
    open here: any *unconditional* density conclusion — blocked by the same wall as everything
    else (per Lagarias's own acid, kick-floor input alone cannot cross forcing → density).
-5. **R3 — the congruence attack surface**: window avoidance for structured `n` via the exact
+5. ~~R3 — the congruence attack surface~~ 🚪 OPENED 2026-08-29 (`LnTwoPrimeWindow.lean` + `experiments/lntwo_fermat_bridge.py`, see D13 in the KB): bridge verified (`A_{p−1} ≡ L_{p−1}·q_p(2) mod p`, 2261 primes, Wieferich 1093/3511 recovered), node `LnTwoPrimeRunBound` frozen, Bertrand covering edge proved — sparse prime-adjacent separation caps runs everywhere.  Original brief: window avoidance for structured `n` via the exact
    numerator `lnTwoNum` — start at `n = p−1` where `A_{p−1} ≡ unit·q_p(2) (mod p)`
    (Glaisher / Z.-H. Sun, formulas in the sweep doc).  Low odds, real magnitude; hold as a
    node, not a campaign.
