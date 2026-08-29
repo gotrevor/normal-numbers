@@ -99,12 +99,24 @@ never yield u.d.-or-finite — conclusions must stay at the forcing level, as ou
    `experiments/pi_bbp_runs.py`.  Remaining under this item: **discharge `PiBBP`** (the BBP
    integral computation, lane-2), and consider the general-BBP-class packaging (Bailey–Crandall
    Def 4.1 kicks `p(n)/q(n)`) once a second instance wants it.
-4. **R3 — the congruence attack surface**: window avoidance for structured `n` via the exact
+4. ~~Lagarias footnote-1 (true vs surrogate digit agreement)~~ ✅ **mechanism settled 2026-08-29**
+   → `LnTwoDigitAgreement.lean` (all five theorems trust-triple, verified 2026-08-29) +
+   `experiments/lntwo_digit_agreement.py` (18 disagreements in 200 000 positions, every one in
+   the predicted window, count tracking `2 ln N`).  Findings: (a) unconditional window forcing —
+   a disagreement at `n` pins `x_n` to `[1/2−1/(n+1), 1/2) ∪ [1−1/(n+1), 1)`; (b) **costume
+   identification** — the mismatch event collapses onto `‖2ⁿ·ln 2‖ < 1/(n+1)` or
+   `‖2ⁿ⁺¹·ln 2‖ < 2/(n+1)`, i.e. footnote 1 for ln 2 is the separation wall in a density
+   costume (same shape as the R1 lattice finding); (c) `LnTwoPolySep C`, `C < 1` ⇒ only
+   **finitely many** disagreements (stronger than the density-one asked); (d)
+   `Equidistributed lnTwoOrbit` ⇒ density-0 disagreement (the conditional answer).  Remaining
+   open here: any *unconditional* density conclusion — blocked by the same wall as everything
+   else (per Lagarias's own acid, kick-floor input alone cannot cross forcing → density).
+5. **R3 — the congruence attack surface**: window avoidance for structured `n` via the exact
    numerator `lnTwoNum` — start at `n = p−1` where `A_{p−1} ≡ unit·q_p(2) (mod p)`
    (Glaisher / Z.-H. Sun, formulas in the sweep doc).  Low odds, real magnitude; hold as a
    node, not a campaign.
-5. **Tier-1 discharge** (lane 2, when scheduled): shifted-Legendre package → `LnTwoExpSep`
+6. **Tier-1 discharge** (lane 2, when scheduled): shifted-Legendre package → `LnTwoExpSep`
    → the unconditional `βn` run bound.  Classical (Rivoal 2008 has the `(μ−1)n` corollary);
    value is formalization-first plus lighting the tower end-to-end.
-6. The other option-4 flavors (mixing/discrepancy hypotheses) remain open as conditional
+7. The other option-4 flavors (mixing/discrepancy hypotheses) remain open as conditional
    rungs beside `LnTwoHypothesisFreq`.
