@@ -112,6 +112,17 @@ the source of truth for statements and claim status (novelty unswept).
   `residual_absolutelyDisjunctive`, `isMeagre_setOf_isNormal`, and
   `exists_absolutelyDisjunctive_forall_not_isNormal`; pure Baire category
   in `DisjunctiveBaire.lean` + `NormalMeager.lean`
+- ✅ D5 recurrence-rate rung (2026-08-29): `LnTwoFreq.lean` — the named
+  hypothesis `LnTwoHypothesisFreq w` (positive lower visit frequency of the
+  surrogate in a compact sub-cylinder), strictly below equidistribution
+  (`hypothesisFreq_of_equidistributed`), yields `w` occurring with positive
+  lower frequency in binary `ln 2`; all wiring sorry-free
+- 🔨 D6 run tower (2026-08-29, → docs/lnTwo-kick-blueprint.md):
+  `LnTwoRuns.lean` — run dictionary, τ-floor, and the sorry-free **sliver
+  dichotomy** (super-log runs pin the surrogate to the top sliver); frozen
+  Diophantine tiers `LnTwoExpSep` (citable, Marcovecchio) and `LnTwoPolySep`
+  (Mahler-class open) with proved run-bound wiring; Tier-1 in-house proof
+  (shifted-Legendre for `log 2`) is the live target
 
 ## Phase 3 — outward (publishing-prep pass ✅ complete locally, 2026-08-26)
 
