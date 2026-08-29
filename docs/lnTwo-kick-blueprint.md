@@ -96,9 +96,16 @@ never yield u.d.-or-finite — conclusions must stay at the forcing level, as ou
    `PiBBP.lean` (elementary kick bounds, tail bracket, and the π headlines
    `pi_top_sliver_of_zeroRun` / `_fRun` — super-`2log₁₆ n` hex runs of π force top-sliver
    rides), conditional on the single CITED-class node `PiBBP`.  Probe:
-   `experiments/pi_bbp_runs.py`.  Remaining under this item: **discharge `PiBBP`** (the BBP
-   integral computation, lane-2), and consider the general-BBP-class packaging (Bailey–Crandall
-   Def 4.1 kicks `p(n)/q(n)`) once a second instance wants it.
+   `experiments/pi_bbp_runs.py`.  The general-BBP-class packaging is now DONE (2026-08-29,
+   same-day follow-up): the **summed-kick machine** in `KickedOrbit.lean`
+   (`kickedPartial`, `kicked_tail_ge`/`_le`, `top_sliver_of_zeroRun_kicked`/`_maxRun_kicked`,
+   trust-triple) — for any `x = Σ_{k≥1} r(k)/bᵏ`, a per-position floor/cap `0 ≤ r(m) ≤ A`
+   (`m > n`), `r(n+1) ≥ L` yields the bracket `[L/b, A/(b−1)]` and both sliver theorems; a
+   Def-4.1 constant reduces to its series identity (CITED node) + elementary `p/q` bounds.
+   The `example` re-derives the frozen ln-2 constants EXACTLY (`r(m)=1/m`: floor `1/(2(n+1))`,
+   sliver `1/(n+1)`).  Remaining under this item: **discharge `PiBBP`** (the BBP integral
+   computation, lane-2), and per-constant instantiations (π², log²2) as their series
+   identities get cited/proved.
 4. ~~Lagarias footnote-1 (true vs surrogate digit agreement)~~ ✅ **mechanism settled 2026-08-29**
    → `LnTwoDigitAgreement.lean` (all five theorems trust-triple, verified 2026-08-29) +
    `experiments/lntwo_digit_agreement.py` (18 disagreements in 200 000 positions, every one in
