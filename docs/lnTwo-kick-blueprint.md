@@ -56,11 +56,13 @@ double each step.  Riding the sliver to depth `2^{-k}` requires hitting a window
 | 1 | `LnTwoExpSep β`: `‖2ⁿ·ln 2‖ ≥ 2^{−βn}` | 🟡 frozen Prop; citable (Marcovecchio 2009, μ ≤ 3.5746 ⇒ β ≈ 2.58); in-house route = shifted-Legendre (Alladi–Robinson β ≈ 3.63, machinery partially built in collatz-moonshot `FrontA/Legendre.lean`) | runs at `n` bounded by `βn` (`run_le_of_expSep`) |
 | 2 | `LnTwoPolySep C`: `‖2ⁿ·ln 2‖ ≥ (n+2)^{−C}` | 🔴 frozen Prop; **Mahler-class open** (family of `‖(3/2)ⁿ‖`); empirically true at `C ≈ 1` | runs at `n` bounded by `C·log₂ n` (`run_le_of_polySep`) |
 
-Novelty status: **unswept**.  Tier 1's consequence (a proved linear run bound for binary
-`ln 2`) is plausibly the first formal digit theorem for `ln 2` beyond irrationality, and I have
-not found the classical statement in run form either — but no literature sweep has been run.
-Owed: sweep Bugeaud (*Distribution modulo one*), the BBP/normality descendants, and Korobov-type
-`‖2ⁿξ‖` results before any claim leaves the repo.
+Novelty status: **the mathematics of Tier 1 is likely classical; the formalization would be
+new (unswept)**.  A first web probe (2026-08-29) surfaced Rivoal, *On the bits counting
+function of real numbers* and arXiv:2510.02059 (*On the b-ary expansion of a real number whose
+irrationality exponent is close to 2*) — the measure ⇒ digit-structure implication is exactly
+that literature's territory, so claim only formalization-first, and only after a real sweep.
+Owed: read those two, plus Bugeaud (*Distribution modulo one*) and the BBP/normality
+descendants, before any claim leaves the repo.
 
 ## 4. Why this is the alien path
 
