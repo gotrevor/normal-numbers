@@ -3629,3 +3629,21 @@ identity `Σ C(p,k+1)(−2)^{k+1} = 2^p − 2 = 2p·q′`, divide by `p` and cas
 congruence `Σ 2^j/j ≡ −2 q_p(2)`; `Finset.sum_range_reflect` on the surrogate sum plus
 `(p−1−j) ≡ −(j+1)` closes `A_{p−1} ≡ L·q_p(2)`. All three lane-2 targets of the
 2026-08-29 treadmill brief are now DONE.
+
+## 2026-08-29 (lane-2 lap): target 4 `lnTwoExpSep_holds` PROVED (β = 26)
+Sorry-free, trust triple `[propext, Classical.choice, Quot.sound]` — Tier-1
+LnTwoExpSep discharged IN-HOUSE via shifted-Legendre linear forms. Route:
+vendored collatz-moonshot FrontA `Legendre.lean`/`Gelfond.lean` (→
+`LegendreShifted.lean`, `LcmUptoGrowth.lean`, provenance headers, same pin);
+closed both honest gaps in `LegendreHeight.lean` — height `|Q| ≤ (ℓ+1)·8^ℓ·lcm ℓ`
+(explicit coeffs `(−1)^k C(ℓ,k)C(ℓ+k,ℓ)`, each ≤ 8^ℓ) and lower bound
+`|P+Q·log2| ≥ lcm ℓ·(1/6)(1/12)^ℓ` (remainder integral on [1/4,1/2]) — then the
+pairing at `ℓ = 4n` in `LnTwoExpSepProof.lean`: `N = P·2ⁿ+Q·p`; nonzero case
+`1 ≤ 1/2 + H·d`, zero case `|Q|d = 2ⁿ|form|` with lcm cancelling. One master
+limit (geometric beats `(4n+1)e^{2√(4n)log(4n)}`) powers all three eventual
+inequalities. β DECISION: draft's 4 raised to 26 per the DRAFT clause — honest
+crude constants give height `≲ 2^{20n}` (nonzero case) and `2^{n−25.34n}` (zero
+case, `2²⁷ > 96⁴`); the Alladi–Robinson rate 3.63 would need sharp `P_ℓ(3)`
+coefficient asymptotics + two-sided remainder, not attempted. Consequence:
+`run_le_of_expSep` now caps every zero/one run of binary `ln 2` at `26n+O(1)`
+unconditionally. Scoped objective `sorry-free:LnTwoExpSepProof.lean` MET.
