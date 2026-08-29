@@ -63,6 +63,7 @@ import NormalNumbers.DiophantineWall
 import NormalNumbers.KickDynamics
 import NormalNumbers.KickDynamicsOneRun
 import NormalNumbers.KickedOrbit
+import NormalNumbers.LogTwoSqKicked
 import NormalNumbers.PiBBP
 import NormalNumbers.PiBBPProof
 import NormalNumbers.QuadraticDisjunctive
