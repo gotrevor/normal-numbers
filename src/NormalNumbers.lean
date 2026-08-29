@@ -64,6 +64,7 @@ import NormalNumbers.KickDynamics
 import NormalNumbers.KickDynamicsOneRun
 import NormalNumbers.KickedOrbit
 import NormalNumbers.LogTwoSqKicked
+import NormalNumbers.LogTwoSqSeriesProof
 import NormalNumbers.PiBBP
 import NormalNumbers.PiBBPProof
 import NormalNumbers.QuadraticDisjunctive
