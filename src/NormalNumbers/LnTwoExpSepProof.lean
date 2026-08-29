@@ -379,4 +379,16 @@ theorem lnTwoExpSep_holds : ∃ N₀ : ℕ, LnTwoExpSep 26 N₀ := by
       _ = d * (2 * H) := by ring
       _ ≤ d * (2 : ℝ) ^ (26 * n) := mul_le_mul_of_nonneg_left h2H hd0
 
+/-- **The unconditional run cap** (the tower, lit): there is a threshold
+`N₀` past which EVERY run of zeros or ones in the binary expansion of
+`ln 2` at position `n` has length at most `26·n` — no hypothesis, no
+node.  Wiring: `lnTwoExpSep_holds` into `run_le_of_expSep`. -/
+theorem lnTwoRun_le_unconditional :
+    ∃ N₀ : ℕ, ∀ n k : ℕ, N₀ ≤ n →
+      (OccursAt 2 (Real.log 2) (List.replicate k 0) n ∨
+        OccursAt 2 (Real.log 2) (List.replicate k 1) n) →
+      (k : ℝ) ≤ 26 * n := by
+  obtain ⟨N₀, hsep⟩ := lnTwoExpSep_holds
+  exact ⟨N₀, fun n k hn hr => run_le_of_expSep hsep hn hr⟩
+
 end NormalNumbers
