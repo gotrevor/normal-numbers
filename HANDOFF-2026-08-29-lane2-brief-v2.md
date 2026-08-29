@@ -9,6 +9,25 @@ Batch 1 (`## RESULT` in that file) landed all 5 targets; this batch continues.
 Already landed host-side before this brief: `lnTwoRun_le_unconditional`
 (`LnTwoExpSepProof.lean`) — the hypothesis-free 26n run cap.
 
+## RESULT (2026-08-29, batch complete — all 3 targets landed) ✅
+
+All three targets discharged in ~40 min of Fable/low laps (one scoped run each), every
+headline re-verified HOST-side by `#print axioms` — trust triple, 2026-08-29.
+(1) **`LogTwoSqSeries` discharged**: `logTwoSqSeries_proved` (`LogTwoSqSeriesProof.lean`)
+via the real log series at 1/2 + summable-norm Cauchy square + partial fractions; both
+log²2 sliver headlines unconditional at call sites.  (2) **Signed-kick machine + π²**
+(`PiSqBBP.lean`): frozen CITED node `PiSqBBP` (compendium Formula 29, probe green to 88
+digits, `experiments/pi_sq_bbp.py`), two-sided tail cap `kicked_tail_abs_le`, boundary
+cores, and both headlines `piSq_boundary_of_zeroRun`/`_maxRun` — a long hex run of π²
+pins the surrogate within `16⁻ᵏ + 52/(8n+1)²` of the wrap point (the lap correctly
+caught that the draft surrogate missed the `j = 0` block and restated via the shifted
+kick).  (3) **Tier-1 sharpened to β = 9**: `lnTwoExpSep_sharp` (`LnTwoExpSepSharp.lean`)
+via `Σ|c_k| ≤ 6^ℓ`, kernel-max remainder cap `429/2500`, exact-root interval lower bound
+`(1/50)(6/35)^ℓ`, ratio `ℓ/n = 15/8`; docstring records why β = 8 is unreachable by this
+method (Chebyshev `4^ℓ` lcm; PNT-strength would give ≈ 5).  Host-side wiring landed both
+unconditional run caps: `lnTwoRun_le_unconditional` (26n, pre-batch) and
+`lnTwoRun_le_unconditional_sharp` (9n).  Lane-2 discharge still owed: `PiSqBBP` (→ batch 3).
+
 ## Progress
 
 - **Target 1 DONE** (cb3a0d2, 2026-08-29): `logTwoSqSeries_proved` lands in
