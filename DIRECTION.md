@@ -18,6 +18,10 @@ detail lives in PENDING_WORK.md.
   rational; small endgame refactor, certificate untouched).
   ➕➕ Then `BRIEF-adder-signed-engine.md` (signed/borrow channels, the engine
   meta-theorem, the musical family as first data-swap instance).
+  ➕➕➕ Then `BRIEF-adder-tower.md` (the C1–C8 tower claims; evidence dossier
+  `EVIDENCE-2026-08-29-tower-formalization.md`).  Additive cargo — nothing in it
+  reopens a frozen statement; a non-collapsing automaton is a FINDING to report
+  in its RESULT, never something to patch quietly.
 
 - 🎯 **The objective is novel PROOFS — new mathematics.  Novel *formalization* is not the point
   here, at all** (operator, 2026-08-29: "The entire point is novel *proofs*.  This is different
