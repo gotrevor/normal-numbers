@@ -86,16 +86,22 @@ theorem berendBoshernitzan_M31_holds : berendBoshernitzan_M31 :=
 
 /-! ## The Adamczewski–Rampersad boundary -/
 
-/-- **The base-2 occurrence boundary** (stated bluntly in
-Adamczewski–Rampersad, *On patterns occurring in binary algebraic
-numbers*, PAMS 136 (2008)): the only blocks known to occur infinitely
-often in the binary expansion of an arbitrary irrational are `0`, `1`,
-`01`, `10` — and that is just non-eventual-periodicity.  For any other
-word and any fixed (even algebraic) irrational, occurrence i.o. is open.
+/-- **The base-2 occurrence boundary**: the only blocks known to occur
+infinitely often in the binary expansion of an arbitrary irrational are
+`0`, `1`, `01`, `10` — and that is just non-eventual-periodicity.  For
+any other word and any fixed (even algebraic) irrational, occurrence
+i.o. is open.
 
-provenance: secondary (`docs/disjunctive-vs-normal.md` §"Waldschmidt",
-citing PAMS 136).  This is the openness frontier that makes each adder
-disjunct individually unprovable by current methods. -/
+Attribution: **classical/folklore, recorded (not proved) in §1 of**
+Adamczewski–Rampersad, *On patterns occurring in binary algebraic
+numbers*, PAMS 136 (2008), 3105–3109, as "the only known result …
+somewhat trivial"; their own theorems are the 7/3-power results.  The
+open frontier framing (any `W ∉ {0,1,01,10}`) is theirs.
+
+provenance: primary (`papers/adamczewski-rampersad-2008-binary-patterns.pdf`
++ companion `.md`; verified against the text 2026-08-30).  This is the
+openness frontier that makes each adder disjunct individually
+unprovable by current methods. -/
 def adamczewskiRampersad_boundary : Prop :=
   ∀ (x : ℝ), Irrational x →
     ∀ w ∈ [[0], [1], [0, 1], [1, 0]],
