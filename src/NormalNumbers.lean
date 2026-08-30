@@ -79,6 +79,7 @@ import NormalNumbers.AdderCarry
 import NormalNumbers.AdderShadow
 import NormalNumbers.AdderCert
 import NormalNumbers.AdderCertToy
+import NormalNumbers.AdderCertSplit
 import NormalNumbers.AdderDescent
 import NormalNumbers.AdderEndgame
 import NormalNumbers.AdderCertMain
