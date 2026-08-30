@@ -1,5 +1,46 @@
 # BRIEF follow-on 3: the tower claims (C1–C8) 🗼
 
+## RESULT (2026-08-30, autonomous session; brief CLOSED) ✅
+
+**All eight claims proved, kernel tier, no non-collapse findings.**  Every
+theorem below audits exactly `[propext, Classical.choice, Quot.sound]`
+(real `#print axioms` output, session scratchpad `axall.lean`).  Engine
+infrastructure landed on the way: `AdderEngineCoreG` (alphabet-generalized
+descent), `AdderBaseG` (base-g signed stack: `gdigit`/`carryTG`/`gpred`
+on the reused radix-independent `ZChannel`, base-b endgame,
+`signed_engine_g` over `σ = x + g·y < g²`, and the single-track
+`signed_engine_g_single` with `Y := 0`, alphabet `g`).
+
+| claim | theorem(s) | module | states (ours) | tier |
+|---|---|---|---|---|
+| C1 | `c1_ternary_digit` | `AdderTowerC1` | 2 ambient, 2 live ×3 certs | kernel `decide` — **B–B 1994 M(3,1)=2, lane-2 CITED, not new** |
+| C2 | `c2_product_block` (+ `c2_clause`, transversal inline) | `AdderTowerC2` | 22 ambient, 5–10 live ×9 certs | kernel `decide`; **novelty under check** (operator sweep pending) |
+| C3 | `c3_ternary_digit_five` | `AdderTowerC3` | 5 ambient, 2–4 live ×3 certs | kernel `decide` — lane-2, B–B orbit |
+| C4 | `c4_disjunction_universal` / `c4_disjunction` (ln 3/27/24/6) | `AdderTowerC45` | 24 ambient, 6 live | kernel `decide` |
+| C5 | `c5_disjunction_universal` / `c5_disjunction` (ln 3/9/162/4/16) | `AdderTowerC45` | 80 ambient, 6 live | kernel `decide`; y = x instance subsumed by C1 (noted, not restated) |
+| C6 | `c6_disjunction_universal` (no named instances in dossier) | `AdderTowerC6` | 480 ambient, 19 live | kernel `decide +kernel`, 8M heartbeats; first signed base-g carry window (channel `(2,−1)`) |
+| C7 | `adder_musical_disjunction(_universal)` | `AdderMusical` | 15360 ambient, 15 live | kernel — proved BEFORE this brief landed; RESULT recorded in `BRIEF-adder-signed-engine.md` |
+| C8 | `adder_c8_disjunction(_universal)` | `AdderTowerC8*` | 75 live, 8 cycles | kernel, 8-chunk split — phase A, certified independently (not via complement involution) |
+
+- **Live-state counts differ from the dossier's figures throughout**
+  (e.g. C1: ours 2 vs dossier 6; C4: 6 vs 72; C6: 19 vs 676) — expected
+  encoding divergence per this brief's coordination note.  **Collapse
+  VERDICTS agree on all certified instances** (two-instrument agreement:
+  `experiments/adder_baseg_emit.py` ↔ the dossier's
+  `mahler_minimal_sets.py`/`base3_*`/`base_g_digit_hunt.py`, and the
+  emitter's C1 output reproduces the hand-built Lean certificates
+  field-for-field).
+- §1.4 transpose note: resolved in `AdderEngineCoreG`'s docstring — the
+  whole Lean pipeline is the backward-deterministic deep→shallow `fstep`
+  orientation, so certified graph = shadowed walk by construction.
+- Python mirror: `adder_baseg_emit.py` (single- and two-track, any g),
+  refusing on C1/C1'/C3' failure, cross-checked against the Lean kernel on
+  every claim (the binding check is the Lean `decide` itself).  The
+  brief's mpmath digit-anchor selftest extension was NOT done (no new
+  named-constant carry conventions were introduced beyond what the kernel
+  re-derives; flag if C-instance anchors are wanted).
+- Out of scope untouched: C9, C10, floors/negatives, novelty sweep.
+
 **Operator-authorized 2026-08-29 (Trevor, attended session).**  Execute AFTER
 `BRIEF-adder-signed-engine.md`.  The complete evidence package is
 `EVIDENCE-2026-08-29-tower-formalization.md` (committed here) — read it in full

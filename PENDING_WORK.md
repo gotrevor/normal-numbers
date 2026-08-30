@@ -1,5 +1,15 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ Tower C1–C8 COMPLETE (2026-08-30, autonomous)
+
+All eight tower claims proved kernel-tier (RESULT table at top of
+`BRIEF-adder-tower.md`; handoff `HANDOFF-2026-08-30-tower-complete.md`).
+Base-g engine: `AdderBaseG.lean` (`signed_engine_g`,
+`signed_engine_g_single`), emitter `experiments/adder_baseg_emit.py`.
+No non-collapse findings; C1/C3 lane-2 cited (B–B 1994), C2 novelty
+under check.  NEXT: `BRIEF-literature-statements.md` (ledger + wire
+`c1_ternary_digit` → B–B M(3,1)=2 edge), then standing mandate.
+
 ## ✅ Adder operator addendum COMPLETE (2026-08-30)
 
 All three briefs discharged, every theorem trust-triple; see
