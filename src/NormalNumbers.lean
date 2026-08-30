@@ -96,4 +96,5 @@ import NormalNumbers.AdderCertMainChunk6
 import NormalNumbers.AdderCertMainChunk7
 import NormalNumbers.AdderCertMainKernelAsm
 import NormalNumbers.AdderMain
+import NormalNumbers.AdderSignedInstance
 import NormalNumbers.LnTwoIrrational
