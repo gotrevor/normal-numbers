@@ -16,6 +16,7 @@ doctrine line, 2026-08-29).  The one commissioned road runs SEPARATELY:
 | Babel blueprint | `docs/babel-blueprint-2026-08-29.md` | `lntwo_hotspot_census.py` | 🔑 KEYSTONE: normality ⟺ pure avoidance currency (strong hot-spot theorem + mass conservation); B-ladder = ALL the sand; census green depths 1-12 |
 | Collapse hunt W1 | `docs/adder-collapse-hunt-2026-08-29.md` | `adder_collapse_hunt.py` | 💥 HIT: six open-word channels reach entropy EXACTLY zero (integer-graph verified) ⟹ candidate theorem: at least one of {00∈ln2, 001∈ln3, 11∈ln6, 001∈ln18, 010∈ln12, 000∈ln54} occurs i.o. |
 | Disjunction factory | `docs/adder-family-2026-08-29.md` | `adder_family_enum.py` | 🌍 UNIVERSALITY (any reals X,Y not both rational; (π,e) free); 7/54 neighbors collapse; 2nd family with 4× smaller certificate; Pythagorean near-miss h=0.0080; Mahler/B-B located as genre ancestor; 🧯 no-singleton negative (factory can't reach one constant, provably) |
+| Base-3 wing 🥔 | `docs/base3-2026-08-29.md` | `base3_digit_hunt.py`, `base3_cantor_beam.py` | 💎 SINGLE-DIGIT theorems: 4-channel collapse (72 live states - digit 0 in ln3, 2 in ln27, 0 in ln24, 2 in ln6); 🏜️ ESCAPE FROM CANTOR: one of ln3, ln9, ln162, ln4, ln16 has ternary digit 1 i.o. (261 states); y=x instance: one of x, 2x, 4x, 5x has ternary digit 1 i.o. for ANY irrational x (⚠️ closest to Mahler/B-B - novelty check owed FIRST here); ⚠️ fresh code path, reimpl debt highest |
 | Transversal ceiling | `docs/transversal-ceiling-2026-08-29.md` | `sparse_pair_blocking.py` | 🧱 Operator asked: can enough clauses entail "some channel disjunctive"?  Exact answer: iff transversal-complete (product cover) - and a blocking pair (x=y=Σ2^(−2^k): NO channel disjunctive, probe-verified w/ control) proves universal clauses can NEVER get there.  Survivor: Product-Block Conjecture (∀ finite F, some channel set collapses ALL F-tuples ⟹ some channel visits all of F i.o., witness drifts upward); blocking pairs = free pre-filters for the classification sweep |
 
 ## The map (memorize this, it orients everything)
@@ -42,11 +43,14 @@ Factory: "not all can fail."  Column: "this one doesn't."  Gap: one visit to one
    free teeth from story 6: bolt the sparse-pair pre-filter onto the enum (tuples blocked
    by every 0*bin(m)0* language provably never collapse) and cross-check engine vs filter
    - two instruments, independent origins.
-1b. **Product-Block hunt** (new, from the transversal-ceiling story): smallest instance
-   F = {00, 11} - find a channel set where ALL 2^|M| word assignments collapse.  A hit
-   proves "for any pair not both rational, some channel sees both 00 and 11 i.o." - the
-   first rung of the graded joint-visit ladder, the strongest occurrence statement no
-   blocking pair forbids.
+1b. **Product-Block hunt** F = {00, 11}: first campaign RAN 2026-08-29 late night
+   (`product_block_hunt.py`): greedy to k=8 on the pool a,b ≤ 3 gives **no block; floor
+   max-assignment h = 0.4057** - the entropy budget of joint 00/11 pathology on this
+   pool (W3 finding).  Notable: the WORST assignments are the alternating ones
+   (0101…), i.e. the complement-self-conjugate classes, not the uniforms.  Next
+   levers: pool to a,b ≤ 5, non-greedy set choice, or per-channel word sets richer
+   than {00,11}.  A hit still proves "some channel sees both 00 and 11 i.o." for any
+   pair not both rational.
 2. ~~**Pythagorean closure**~~ ✅ **CLOSED 2026-08-29 late night**: beam search
    (`pythagorean_closure.py`) found ≥ 8 exact collapses on the musical six - no seventh
    channel needed.  Flagship instance: ln2/`00`, ln3/`11`, ln(3/2)/`100`, ln(4/3)/`11`,
@@ -56,7 +60,10 @@ Factory: "not all can fail."  Column: "this one doesn't."  Gap: one visit to one
    and re-run the OTHER quoted floors non-greedily.
 3. **Three tracks**: (ln 2, ln 3, ln 5), channels `ln(2^a 3^b 5^c)` - does collapse need
    fewer channels per track?  (Entropy 3 bits, quadratically more channels.)
-4. **Other bases**: the same machine in base 3 - ternary disjunctions for the same constants.
+4. ~~**Other bases**~~ ✅ base 3 OPENED 2026-08-29 late night and delivered the wing's
+   two best theorems (see arc table: single-digit 4-channel + escape-from-Cantor).
+   Remaining: minimality (3-channel single-digit? richer pools), base-g sweep, and the
+   ×2×3/Hochman-Shmerkin bridge doc.
 5. **Counting rungs of the B-ladder**: shape a mid-scale counting-separation conjecture
    (how often can `res_n` enter a positioned window) - the frontier of currency 2; also
    T1/PairMiss (≤1 deep event per dyadic window) formal statement + extended census.
