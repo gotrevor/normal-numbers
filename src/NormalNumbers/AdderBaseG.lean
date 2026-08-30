@@ -825,4 +825,61 @@ theorem signed_engine_g (g : ℕ) (hg : 2 ≤ g) (chs : List ZChannel) {S : ℕ}
     rw [digitOf_g_fract g hg, digitOf_g_fract g hg]
     exact (hsplit m hm).2
 
+/-- The base-`g` digits of the real `0` are all `0`. -/
+theorem gdigit_zero (g : ℕ) (m : ℕ) : gdigit g (0 : ℝ) m = 0 := by
+  unfold gdigit
+  simp
+
+/-- **The single-track base-`g` engine**: channels are linear forms in `X`
+alone (`Y := 0`, so the joint input digit is just `x_m < g` and the swept
+alphabet shrinks to `g`).  Channels keep their `ZChannel` shape; since
+`b·0 = 0` the `b`-coefficients are inert and the conclusion reads on
+`a·X`.  Per BRIEF-adder-tower phase B: single-track claims come free —
+"for every irrational X some channel word occurs i.o. base g". -/
+theorem signed_engine_g_single (g : ℕ) (hg : 2 ≤ g) (chs : List ZChannel) {S : ℕ}
+    {live : ℕ → Bool} {rho omega : ℕ → ℕ} {forced : ℕ → Option (ℕ × ℕ)}
+    (hS : S = gfamSize g chs)
+    (hcert : checkCertA (fun σ s' => gfamPred g chs (σ % g) (σ / g) s')
+      g S live rho omega forced = true)
+    (X : ℝ) (hX : Irrational X)
+    (hpos : ∀ ch ∈ chs, 1 ≤ ch.posSum) (hell : ∀ ch ∈ chs, 1 ≤ ch.ell)
+    (hword : ∀ ch ∈ chs, ∀ d ∈ ch.word, d < g) :
+    ∃ ch ∈ chs, ∀ N, ∃ n, N ≤ n ∧ OccursAt g (ch.a * X) ch.word n := by
+  have hg1 : 1 ≤ g := by omega
+  by_contra hcon
+  push Not at hcon
+  have h : ∀ ch ∈ chs, ∃ N, ∀ n, N ≤ n
+      → ¬ OccursAt g (ch.a * X + ch.b * (0:ℝ)) ch.word n := by
+    intro ch hch
+    obtain ⟨N, hN⟩ := hcon ch hch
+    refine ⟨N, fun n hn hocc => hN n hn ?_⟩
+    rw [show ch.a * X + ch.b * (0:ℝ) = ch.a * X from by ring] at hocc
+    exact hocc
+  obtain ⟨N₀, hN₀⟩ := gexists_uniform_no_occurrence g chs X 0 h
+  have hzero : ∀ m, (gdigit g (0 : ℝ) m).toNat = 0 := fun m => by
+    rw [gdigit_zero]; rfl
+  have hσ : ∀ m, (gdigit g X (N₀ + m)).toNat < g :=
+    fun m => gdigit_toNat_lt g hg1 X (N₀ + m)
+  have hst : ∀ m, gfamState g chs X 0 (N₀ + m) < S :=
+    fun m => hS ▸ gfamState_lt g hg1 chs X 0 (N₀ + m) hpos
+  have hstep : ∀ m, HStepA (fun σ s' => gfamPred g chs (σ % g) (σ / g) s')
+      (gfamState g chs X 0 (N₀ + m)) ((gdigit g X (N₀ + m)).toNat)
+      (gfamState g chs X 0 (N₀ + (m + 1))) := by
+    intro m
+    have h₀ := ghstep_gfamState g hg chs X 0 (N₀ + m) hpos hell hword
+      (fun ch hch => hN₀ ch hch (N₀ + m) (by omega))
+    rw [hzero (N₀ + m), Nat.mul_zero, Nat.add_zero] at h₀
+    exact h₀
+  obtain ⟨N, p, hp, hper⟩ := inputA_eventually_periodic
+    (st := fun k => gfamState g chs X 0 (N₀ + k))
+    (σi := fun k => (gdigit g X (N₀ + k)).toNat)
+    hcert hσ hst hstep
+  refine not_irrational_of_periodic_digits_g g hg X (N₀ + N) p hp ?_ hX
+  intro m hm
+  rw [digitOf_g_fract g hg, digitOf_g_fract g hg]
+  have hk := hper (m - N₀) (by omega)
+  rw [show N₀ + (m - N₀ + p) = m + p from by omega,
+    show N₀ + (m - N₀) = m from by omega] at hk
+  exact hk
+
 end NormalNumbers.Adder
