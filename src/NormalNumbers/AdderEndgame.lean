@@ -135,13 +135,16 @@ theorem exists_uniform_no_occurrence (chs : List Channel) (X Y : ℝ)
     · exact h₁ n (le_trans (le_max_left _ _) hn)
     · exact h₂ c hc' n (le_trans (le_max_right _ _) hn)
 
-/-- **The generic engine**: a certified family whose channel words all
-eventually stop occurring contradicts the irrationality of `X`. -/
-theorem no_occurrence_contradiction (chs : List Channel) {S : ℕ}
+/-- **The generic engine, universal form**: a certified family whose channel
+words all eventually stop occurring makes BOTH digit streams eventually
+periodic (the joint input digit is `σ = dX + 2·dY`, so periodicity of `σ`
+splits into periodicity of each coordinate), hence both `X` and `Y`
+rational — contradicting "at least one irrational". -/
+theorem no_occurrence_contradiction_universal (chs : List Channel) {S : ℕ}
     {live : ℕ → Bool} {rho omega : ℕ → ℕ} {forced : ℕ → Option (ℕ × ℕ)}
     (hS : S = famSize chs)
     (hcert : checkCert chs S live rho omega forced = true)
-    (X Y : ℝ) (hX : Irrational X)
+    (X Y : ℝ) (hXY : Irrational X ∨ Irrational Y)
     (hab : ∀ ch ∈ chs, 1 ≤ ch.a + ch.b) (hell : ∀ ch ∈ chs, 1 ≤ ch.ell)
     (hword : ∀ ch ∈ chs, ∀ d ∈ ch.word, d ≤ 1)
     (h : ∀ ch ∈ chs, ∃ N, ∀ n, N ≤ n → ¬ OccursAt 2 (ch.a * X + ch.b * Y) ch.word n) :
@@ -164,17 +167,40 @@ theorem no_occurrence_contradiction (chs : List Channel) {S : ℕ}
     (st := fun k => famState chs X Y (N₀ + k))
     (σi := fun k => (rdigit X (N₀ + k)).toNat + 2 * (rdigit Y (N₀ + k)).toNat)
     hcert hσ hst hstep
-  refine not_irrational_of_periodic_digits X (N₀ + N) p hp ?_ hX
-  intro m hm
-  rw [digitOf_two_fract, digitOf_two_fract]
-  have hk := hper (m - N₀) (by omega)
-  rw [show N₀ + (m - N₀ + p) = m + p from by omega,
-    show N₀ + (m - N₀) = m from by omega] at hk
-  have b₁ := rdigit_toNat_le_one X (m + p)
-  have b₂ := rdigit_toNat_le_one Y (m + p)
-  have b₃ := rdigit_toNat_le_one X m
-  have b₄ := rdigit_toNat_le_one Y m
-  omega
+  have hsplit : ∀ m, N₀ + N ≤ m →
+      (rdigit X (m + p)).toNat = (rdigit X m).toNat ∧
+      (rdigit Y (m + p)).toNat = (rdigit Y m).toNat := by
+    intro m hm
+    have hk := hper (m - N₀) (by omega)
+    rw [show N₀ + (m - N₀ + p) = m + p from by omega,
+      show N₀ + (m - N₀) = m from by omega] at hk
+    have b₁ := rdigit_toNat_le_one X (m + p)
+    have b₂ := rdigit_toNat_le_one Y (m + p)
+    have b₃ := rdigit_toNat_le_one X m
+    have b₄ := rdigit_toNat_le_one Y m
+    omega
+  rcases hXY with hX | hY
+  · refine not_irrational_of_periodic_digits X (N₀ + N) p hp ?_ hX
+    intro m hm
+    rw [digitOf_two_fract, digitOf_two_fract]
+    exact (hsplit m hm).1
+  · refine not_irrational_of_periodic_digits Y (N₀ + N) p hp ?_ hY
+    intro m hm
+    rw [digitOf_two_fract, digitOf_two_fract]
+    exact (hsplit m hm).2
+
+/-- The one-sided engine (irrational `X`), as an instance of the universal
+form. -/
+theorem no_occurrence_contradiction (chs : List Channel) {S : ℕ}
+    {live : ℕ → Bool} {rho omega : ℕ → ℕ} {forced : ℕ → Option (ℕ × ℕ)}
+    (hS : S = famSize chs)
+    (hcert : checkCert chs S live rho omega forced = true)
+    (X Y : ℝ) (hX : Irrational X)
+    (hab : ∀ ch ∈ chs, 1 ≤ ch.a + ch.b) (hell : ∀ ch ∈ chs, 1 ≤ ch.ell)
+    (hword : ∀ ch ∈ chs, ∀ d ∈ ch.word, d ≤ 1)
+    (h : ∀ ch ∈ chs, ∃ N, ∀ n, N ≤ n → ¬ OccursAt 2 (ch.a * X + ch.b * Y) ch.word n) :
+    False :=
+  no_occurrence_contradiction_universal chs hS hcert X Y (Or.inl hX) hab hell hword h
 
 /-- **The toy disjunction, end-to-end** (vacuous 3-channel dry run of the
 whole pipeline): `01` occurs infinitely often in the binary expansion of
