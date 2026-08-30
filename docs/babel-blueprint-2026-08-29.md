@@ -116,6 +116,16 @@ Refutation probe for the wing: transfer-matrix entropies for families of 2-10 ch
 with adversarial word choices; a floor `h(S_F) ≥ c > 0` persisting across all small
 families kills W2 in the small and demotes the wing to W3's quantitative form.
 
+**W1 EXECUTED same night, and it HIT** (`docs/adder-collapse-hunt-2026-08-29.md`): the
+criterion sharpens to h = 0 (zero-entropy sofic forces eventually-periodic streams, and
+irrationality of ln 2 alone finishes); unrestricted words collapse vacuously (the hunt
+mechanically rediscovered the known-recurring-words boundary 0, 1, 01, 10); restricted
+to open words, SIX channels reach entropy zero, verified by exact integer graph check
+(every SCC a simple cycle; 16 survivors, periods 1-2).  Candidate theorem: at least one
+of {00 in ln 2, 001 in ln 3, 11 in ln 6, 001 in ln 18, 010 in ln 12, 000 in ln 54}
+occurs infinitely often - every disjunct individually open.  Owed: independent
+reimplementation, proof write-up, novelty sweep, word-openness audit.
+
 ## The solenoid wing: the engineered informant 🪨
 
 (Second story, restated as architecture.)  The base-6 digits of Stoneham's α₂,₃ read out
