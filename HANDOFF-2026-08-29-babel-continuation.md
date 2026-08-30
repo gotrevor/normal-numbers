@@ -16,6 +16,7 @@ doctrine line, 2026-08-29).  The one commissioned road runs SEPARATELY:
 | Babel blueprint | `docs/babel-blueprint-2026-08-29.md` | `lntwo_hotspot_census.py` | 🔑 KEYSTONE: normality ⟺ pure avoidance currency (strong hot-spot theorem + mass conservation); B-ladder = ALL the sand; census green depths 1-12 |
 | Collapse hunt W1 | `docs/adder-collapse-hunt-2026-08-29.md` | `adder_collapse_hunt.py` | 💥 HIT: six open-word channels reach entropy EXACTLY zero (integer-graph verified) ⟹ candidate theorem: at least one of {00∈ln2, 001∈ln3, 11∈ln6, 001∈ln18, 010∈ln12, 000∈ln54} occurs i.o. |
 | Disjunction factory | `docs/adder-family-2026-08-29.md` | `adder_family_enum.py` | 🌍 UNIVERSALITY (any reals X,Y not both rational; (π,e) free); 7/54 neighbors collapse; 2nd family with 4× smaller certificate; Pythagorean near-miss h=0.0080; Mahler/B-B located as genre ancestor; 🧯 no-singleton negative (factory can't reach one constant, provably) |
+| Transversal ceiling | `docs/transversal-ceiling-2026-08-29.md` | `sparse_pair_blocking.py` | 🧱 Operator asked: can enough clauses entail "some channel disjunctive"?  Exact answer: iff transversal-complete (product cover) - and a blocking pair (x=y=Σ2^(−2^k): NO channel disjunctive, probe-verified w/ control) proves universal clauses can NEVER get there.  Survivor: Product-Block Conjecture (∀ finite F, some channel set collapses ALL F-tuples ⟹ some channel visits all of F i.o., witness drifts upward); blocking pairs = free pre-filters for the classification sweep |
 
 ## The map (memorize this, it orients everything)
 
@@ -37,7 +38,15 @@ Factory: "not all can fail."  Column: "this one doesn't."  Gap: one visit to one
    - all word tuples on the 6-channel sets, channel sets to height ~5, minimal family size
    (is 5 or 4 possible?), collapse threshold vs word length.  Output: the explicit finite
    map of how joint digit pathology can distribute over the log-lattice.  Pure computation
-   + a write-up; `adder_family_enum.py` is the engine (greedy → exhaustive).
+   + a write-up; `adder_family_enum.py` is the engine (greedy → exhaustive).  ⚡ Now with
+   free teeth from story 6: bolt the sparse-pair pre-filter onto the enum (tuples blocked
+   by every 0*bin(m)0* language provably never collapse) and cross-check engine vs filter
+   - two instruments, independent origins.
+1b. **Product-Block hunt** (new, from the transversal-ceiling story): smallest instance
+   F = {00, 11} - find a channel set where ALL 2^|M| word assignments collapse.  A hit
+   proves "for any pair not both rational, some channel sees both 00 and 11 i.o." - the
+   first rung of the graded joint-visit ladder, the strongest occurrence statement no
+   blocking pair forbids.
 2. **Pythagorean closure** 🎵: the borrow family sits at h = 0.0080; try non-greedy word
    assignments and a seventh channel (ln 16/9, ln 32/27).  A collapse gives the musical
    disjunction theorem.
