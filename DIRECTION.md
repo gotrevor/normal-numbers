@@ -16,6 +16,8 @@ detail lives in PENDING_WORK.md.
   ➕ Follow-on authorized 2026-08-29: after the kernel-tier cert swap (or its
   recorded remainder), execute `BRIEF-adder-universal.md` (any X,Y not both
   rational; small endgame refactor, certificate untouched).
+  ➕➕ Then `BRIEF-adder-signed-engine.md` (signed/borrow channels, the engine
+  meta-theorem, the musical family as first data-swap instance).
 
 - 🎯 **The objective is novel PROOFS — new mathematics.  Novel *formalization* is not the point
   here, at all** (operator, 2026-08-29: "The entire point is novel *proofs*.  This is different
