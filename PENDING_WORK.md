@@ -16,7 +16,15 @@ addendum, from `HANDOFF-2026-08-29-adder-foundation.md`.  Landed this lap
    passes **kernel `decide` in ~1s**, `#print axioms` = `[propext]`.
    Module-3 route settled at toy scale.
 
-**Next attack (in order, per the foundation handoff module order):**
+**DONE 2026-08-30 (later same lap):** `AdderDescent.lean` (module 4) and
+`AdderEndgame.lean` (module 5 generic engine) are green.  **`toy_disjunction`
+is proved END-TO-END, kernel tier, trust triple**
+`[propext, Classical.choice, Quot.sound]` — the whole pipeline
+(carry/shadow/certificate/descent/endgame) is validated.  Remaining:
+`AdderCertMain.lean` (73728-state certificate, native_decide phase-1) +
+`AdderMain.lean` (frozen six-fold statement) + RESULT in the brief.
+
+**Historical next-attack notes (now executed):**
 3. `AdderDescent.lean` — from an infinite HStep path with states `< famSize`
    + checked conditions ⇒ eventually periodic state AND input sequences
    (C3' ω-descent kills dead states; ρ non-increasing, finitely many drops;

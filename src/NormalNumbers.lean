@@ -80,4 +80,5 @@ import NormalNumbers.AdderShadow
 import NormalNumbers.AdderCert
 import NormalNumbers.AdderCertToy
 import NormalNumbers.AdderDescent
+import NormalNumbers.AdderEndgame
 import NormalNumbers.LnTwoIrrational
