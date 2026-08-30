@@ -33,6 +33,10 @@ FAMILIES = {
     # constants ln2, ln3, ln(3/2), ln(4/3), ln(9/8), ln6
     "musical": [(1, 0, "00"), (0, 1, "11"), (-1, 1, "100"),
                 (2, -1, "11"), (-3, 2, "00"), (1, 1, "010")],
+    # C8 complemented flagship (BRIEF-adder-tower phase A): same constants
+    # as main (ln2, ln3, ln6, ln18, ln12, ln54), complemented words.
+    "flagshipC": [(1, 0, "11"), (0, 1, "110"), (1, 1, "00"),
+                  (1, 2, "110"), (2, 1, "101"), (1, 3, "111")],
 }
 
 

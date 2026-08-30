@@ -2,7 +2,7 @@
 """Shadowing self-test for the SIGNED adder conventions (pure stdlib).
 
 Anchors adder_signed_emit.py's automaton against the TRUE binary digits of
-the musical constants ln2, ln3, ln(3/2), ln(4/3), ln(9/8), ln6, computed by
+the family instance constants (a·ln2 + b·ln3), computed by
 integer atanh series (no mpmath on this box):
 
   1. digit anchor: ln 2 = 0.10110001011100100001..._2.
@@ -35,13 +35,13 @@ def atanh_inv(q: int, prec: int) -> int:
     return total
 
 
-def main():
+def main(famname="musical"):
     P = PREC + GUARD
     ln2 = 2 * atanh_inv(3, P)            # ln 2 = 2 atanh(1/3)
     ln3 = 2 * (atanh_inv(3, P) + atanh_inv(5, P))  # ln 3 = 2(atanh 1/3 + atanh 1/5)
     # sanity: ln3 - ln2 = ln(3/2) = 2 atanh(1/5) by construction
 
-    channels = FAMILIES["musical"]
+    channels = FAMILIES[famname]
     fam = Family(channels)
     Zs = [a * ln2 + b * ln3 for a, b, _ in channels]
     for z, (a, b, _) in zip(Zs, channels):
@@ -84,10 +84,13 @@ def main():
     print(f"signed carry window + column identity OK over 1..{DEPTH - 1}; "
           f"min carries: {min_carry_seen}")
 
-    # 6. an actual borrow fires
-    assert any(v < 0 for v in min_carry_seen.values()), min_carry_seen
-    print("negative-carry (borrow) positions exercised:",
-          {k: v for k, v in min_carry_seen.items() if v < 0})
+    # 6. an actual borrow fires (signed families only)
+    if any(o > 0 for o in fam.offs):
+        assert any(v < 0 for v in min_carry_seen.values()), min_carry_seen
+        print("negative-carry (borrow) positions exercised:",
+              {k: v for k, v in min_carry_seen.items() if v < 0})
+    else:
+        print("all-nonnegative family: no borrow expected")
 
     # 4+5. shadowing against pred
     def state_at(m: int) -> int:
@@ -127,4 +130,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(sys.argv[1] if len(sys.argv) > 1 else "musical")
