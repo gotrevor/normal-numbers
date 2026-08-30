@@ -58,6 +58,35 @@ combinatorics on words / carry automata literature, not just digits-of-constants
 5. **Word-length ladder**: length-4 words shrink per-channel cuts but sharpen the
    per-disjunct openness; where does the collapse threshold sit as ℓ grows?
 
+## Folklore check, first pass (web sweep-lite, 2026-08-29 night) 🔎
+
+The genre has a named ancestor, and it was already on our own outer-ring map:
+**Mahler 1973** (*Arithmetical properties of the digits of the multiples of an irrational
+number*, Bull. Austral. Math. Soc.): for irrational α and ONE chosen length-k word, some
+multiple mα with `m ≤ g^(2k+1)` contains it infinitely often; **Berend-Boshernitzan 1994**
+(Acta Arith. 66) improved the bound to `2g^(k+1)` and showed `g^k − 1` is a lower bound in
+their problem.  Active descendants exist ("A note on Mahler's theorem II", Thangadurai et
+al.).  Comparison, precisely:
+
+- Mahler/B-B: one irrational, ONE ADVERSARY-CHOSEN word, ~g^k multiples needed (provably).
+- Ours: TWO independent reals, SIX FIXED channels, per-channel different words at the
+  open frontier (length 2-3), and we do not get to choose which word lands.  Neither
+  statement implies the other; the g^k lower bound in their problem supports the genre's
+  non-triviality.
+
+Method sweep: nothing found coupling word-avoidance automata across linear forms via
+carries with zero-entropy certificates (searches on the sofic/carry side returned only
+generic symbolic dynamics).  NOT-FOUND caveats per house discipline: instruments were
+WebSearch only, no MathSciNet/zbMATH; the owed full sweep = forward-citation crawl of
+Berend-Boshernitzan, Waldschmidt's *Words and Transcendence* survey (arXiv:0908.4034 -
+collects exactly this genre), Allouche-Shallit for carry transducers.
+
+Verdicts (calibrated): exact statements in print ~10%; the certificate method in print
+~15%; an expert finding a short HAND proof of the specific six-family (downgrading
+"theorem" to "cute proposition" while the factory/universal schema keep their value)
+~35%; something in the Mahler-descendant literature subsuming the two-variable universal
+version ~15%.
+
 ## Honesty ledger deltas
 
 Everything from the hunt doc still owed (kernel referee, novelty sweep - now aimed at
