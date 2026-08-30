@@ -164,7 +164,12 @@ def main() -> None:
                     continue  # not minimal
                 chans = [Mult(m, d) for m in S_]
                 h = entropy(chans)
-                if np.isnan(h) or h > 1e-3:
+                # GATE FIX (2026-08-29): slow power-iteration convergence made
+                # true zeros read as ~0.015, so a 1e-3 gate silently dropped
+                # real collapses ({1,2}/digit-1 among them - caught by a hand
+                # proof).  The exact check is the referee; the float is only a
+                # cheap prefilter and must be SLACK.
+                if np.isnan(h) or h > 0.05:
                     continue
                 if h == float("-inf"):
                     continue  # empty automaton: vacuous, not a theorem

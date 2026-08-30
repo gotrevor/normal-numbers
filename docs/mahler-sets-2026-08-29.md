@@ -8,28 +8,45 @@ already says that shape (some m ≤ g^(2k+1); B-B 1994: m ≤ 2g^(k+1), lower bo
 g^k − 1 in their adversary-word problem).  This wing maps the EXACT landscape the
 bounds only gesture at.
 
-## Results (base 3, single digits, m ≤ 12) 📋
+## ⚠️ CORRECTED RESULTS (2026-08-29, second run - see "The gate bug" below) 📋
 
-- **Edge digits (0 and 2): minimal size 2, meeting the B-B lower bound.**  Five
-  minimal 2-sets each: {1,5}, {3,5}, {9,5}, {2,10}, {10,6} - and all five reduce to
-  ONE primitive under the two equivalences (m ~ 3m, since ×3 is a ternary shift; and
-  S ~ cS, substituting x → cx):
+- **Every digit has minimal size 2, and {1,2} works for ALL THREE digits**:
 
-  > **For any irrational x: x or 5x contains ternary digit 0 i.o.**  (Mirror: digit 2,
-  > identical list - the complement involution as a cross-check across 87 sets.)
-  > Instance: **π or 5π has ternary digit 0 infinitely often.**
+  > **For any irrational x and EVERY ternary digit d: d occurs i.o. in x or in 2x.**
+  > Instance: for each d, **π or 2π has ternary digit d infinitely often.**
 
-- **The central digit (1, the Cantor digit): minimal size 3** - no 2-set with
-  m ≤ 12; ~100 minimal 3-sets, e.g. {1,2,4}:
+  The digit-1 case has a five-line HAND PROOF (the correction's trigger): for tail
+  digits in {0,2}, the digit of 2x at position n is (2xₙ + c) mod 3 with carry c = 1
+  iff x_{n+1} = 2; both patterns 20 and 02 emit digit 1, so avoiding it forces a
+  constant tail = rational.  {1,5} is also a 2-set for every digit; 133 minimal sets
+  total across the three digits, identical digit-0/2 lists (involution cross-check).
+  B-B's lower bound (g^k − 1 = 2) is met exactly, by every digit - the earlier
+  "edge/interior asymmetry" was ENTIRELY a bug artifact.
 
-  > **For any irrational x: x, 2x, or 4x contains ternary digit 1 i.o.**
-  > Instance: **π, 2π, or 4π has ternary digit 1 infinitely often.**
-  > (Improves the two-track y=x instance {1,2,4,5} of the escape-from-Cantor theorem.)
+- **PRODUCT BLOCK {2, 11}: the joint-visit rung stands.**  All 9 (d₁, d₂) mixed
+  assignments collapse on channels {2, 11} (also {6,11} = 3·{2,11}; none containing
+  m=1), so by the transversal machinery:
 
-- **Structural asymmetry**: edge digits achieve the g^k − 1 lower bound; the middle
-  digit strictly exceeds it (within m ≤ 12; beyond 12 open).  Conjecture shape: in
-  base g, edge digits 0 and g−1 need 2 multiples, interior digits need more - the
-  carry mechanism can't feed on an interior digit from one side.
+  > **For every irrational x: 2x or 11x contains ALL THREE ternary digits i.o.**
+  > Instance: **2π or 11π has every ternary digit infinitely often.**
+
+  On {1,2} the mixed assignments fail in the involution pattern (collapse iff
+  d₁ = d₂ or {d₁,d₂} = {0,2}) - a block needs the right arithmetic, not just any
+  collapsing pair.  Note the contrast: the base-2 two-track {00,11} product-block
+  hunt floored at k = 8, but the single-track ternary digit version closes at TWO
+  channels.
+
+## The gate bug: a float prefilter manufactured false negatives 🔬
+
+First run gated on float h ≤ 1e-3 before the exact check; power iteration converges
+slowly on graphs with many trivial cycles (true zeros read as ~0.015), so real
+collapses - {1,2} included - were silently discarded.  Caught because the operator's
+restricted-class thread led to a hand proof contradicting the probe.  **All positives
+were always exact-checked and stand; every near-zero NEGATIVE from any probe gated at
+1e-3 is suspect until re-run with a slack gate** (this file now gates at 0.05; other
+hunts' floors well above noise - 0.4, 0.87 - are safe).  Instrument lesson for the
+evidence-tier ledger: a cheap prefilter in front of an exact referee inherits NONE of
+the referee's authority - false negatives pool at the filter's noise floor.
 
 ## Relation to the two-track wing 🧵
 

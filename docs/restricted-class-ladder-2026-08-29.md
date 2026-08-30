@@ -16,7 +16,21 @@ that is what powers Adamczewski-Rampersad's SINGLETON 00/11 results in base 2 -
 algebraicity buys at word length 2 what all-irrationals methods provably cannot
 (our universality no-go + B-B's constructions).
 
-## The interpolation conjecture (the story's flagship) 💎
+## ⚡ RESOLVED WITHIN THE HOUR: the middle rung is a THEOREM, unconditionally
+
+While sharpening the flagship conjecture below, a five-line true-carry hand analysis
+proved it outright for ALL irrationals - no algebraicity needed: **for every
+irrational x, x or 2x contains ternary digit 1 i.o.** (both 20 and 02 in a {0,2}-tail
+of x emit digit 1 in 2x; see `mahler-sets-2026-08-29.md`, corrected results - the
+probe's contrary "needs 3" verdict was a float-gate bug, and the hand proof was the
+tripwire that exposed it).  The ladder below stands with its middle rung filled;
+what remains open between us and Mahler's Cantor problem is only the SINGLETON for
+algebraic x - i.e. Mahler's problem itself.  The complexity-graded certificate
+currency (next section) remains this story's live contribution, now aimed at
+singleton-adjacent targets rather than the 2-set.  A refutation-by-proof is progress:
+the conjecture died by becoming a theorem.
+
+## The interpolation conjecture (the story's original flagship, now subsumed) 💎
 
 Ternary digit 1, the Cantor digit, has a named ladder with an empty middle rung:
 
