@@ -82,6 +82,9 @@ import NormalNumbers.AdderCertToy
 import NormalNumbers.AdderCertSplit
 import NormalNumbers.AdderEngineCore
 import NormalNumbers.AdderSigned
+import NormalNumbers.AdderEngineSplit
+import NormalNumbers.AdderMusicalKData
+import NormalNumbers.AdderMusical
 import NormalNumbers.AdderDescent
 import NormalNumbers.AdderEndgame
 import NormalNumbers.AdderCertMain

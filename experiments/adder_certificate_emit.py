@@ -50,14 +50,32 @@ FAMILIES = {
     "main": [(1, 0, "00"), (0, 1, "001"), (1, 1, "11"),
              (1, 2, "001"), (2, 1, "010"), (1, 3, "000")],
     "toy": [(1, 0, "01"), (0, 1, "01"), (1, 1, "10")],
+    # signed channels (BRIEF-adder-signed-engine objective 3): constants
+    # ln2, ln3, ln(3/2), ln(4/3), ln(9/8), ln6 — the musical family.
+    "musical": [(1, 0, "00"), (0, 1, "11"), (-1, 1, "100"),
+                (2, -1, "11"), (-3, 2, "00"), (1, 1, "010")],
 }
+
+
+def _neg(t):
+    return max(-t, 0)
+
+
+def _pos(t):
+    return max(t, 0)
 
 
 class Family:
     def __init__(self, channels):
         self.channels = channels
         self.ells = [len(w) for _, _, w in channels]
-        self.carry_sizes = [max(a + b, 1) for a, b, _ in channels]
+        # signed windows: carry in [-(a-+b-), a++b+-1], Nat-encoded with
+        # offset +(a-+b-); for a,b >= 0 this is exactly the old convention.
+        self.offs = [_neg(a) + _neg(b) for a, b, _ in channels]
+        self.pos_sums = [_pos(a) + _pos(b) for a, b, _ in channels]
+        for a, b, _ in channels:
+            assert _pos(a) + _pos(b) >= 1, (a, b, "need a positive coefficient")
+        self.carry_sizes = [max(p + o, 1) for p, o in zip(self.pos_sums, self.offs)]
         self.win_sizes = [2 ** (e - 1) for e in self.ells]
         self.sizes = [c * w for c, w in zip(self.carry_sizes, self.win_sizes)]
         self.S = int(np.prod(self.sizes))
@@ -79,14 +97,17 @@ class Family:
             s = np.zeros(S, dtype=np.int64)
             illegal = np.zeros(S, dtype=bool)
             mult = 1
-            for (a, b, _), ell, wsz, code, word, n in zip(
+            for (a, b, _), ell, wsz, code, word, n, off, csz in zip(
                     self.channels, self.ells, self.win_sizes, codes,
-                    self.words, self.sizes):
+                    self.words, self.sizes, self.offs, self.carry_sizes):
                 cprime = code // wsz
                 wprime = code % wsz
-                v = a * x + b * y + cprime
+                # v = a*x + b*y + true deeper carry; Python & 1 / >> 1 are
+                # floor-consistent for negatives (match Int.emod/Int.ediv)
+                v = a * x + b * y + (cprime - off)
                 z = v & 1
-                c = v >> 1
+                c = (v >> 1) + off   # re-encode with offset
+                assert (0 <= c).all() and (c < csz).all(), (a, b, "carry out of range")
                 full = z + 2 * wprime          # the ell-bit formed window
                 illegal |= (full == word)      # word occurred: no legal step
                 wnew = full % wsz              # keep ell-1 shallow bits

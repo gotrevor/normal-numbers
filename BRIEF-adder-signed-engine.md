@@ -1,5 +1,40 @@
 # BRIEF follow-on 2: signed channels + the engine meta-theorem 🎵🏗️
 
+## RESULT (2026-08-30, autonomous lap)
+
+**ALL THREE OBJECTIVES COMPLETE**, kernel tier, every named theorem audits
+`[propext, Classical.choice, Quot.sound]` exactly.
+
+* **Objective 1 (signed channels)** — `AdderSigned.lean`: `ZChannel`
+  (`a b : ℤ`, needs one positive coefficient), borrow window
+  `[−(a⁻+b⁻), a⁺+b⁺−1]` proved via `carryTZ_eq_floor_fract`
+  (`T(n) = ⌊a·fract(X·2ⁿ) + b·fract(Y·2ⁿ)⌋` — cleaner than the unsigned
+  case split), offset Nat encoding `c = T + (a⁻+b⁻)`, `Int.emod`/`ediv`
+  step (`%`/`/` on ℤ ARE emod/ediv in this pin), signed shadowing.
+* **Objective 2 (engine meta-theorem)** — `AdderEngineCore.lean` abstracts
+  checker+descent over the predecessor map (`checkCertP`, `HStepP`,
+  `inputP_eventually_periodic`; unsigned pipeline is definitionally the
+  `famPred` instance).  `signed_engine` (`AdderSigned.lean`): certified
+  signed family ⟹ for all X,Y not both rational some channel word occurs
+  i.o.  Flagship restated byte-identically as a data instance
+  (`AdderSignedInstance.lean`): `Channel.toZ` unsigned fibre, kernel
+  certificate transferred with NO recheck
+  (`adder_sixfold_disjunction_universal_via_engine`).
+* **Objective 3 (musical family)** — pure-stdlib emitter
+  `adder_signed_emit.py` (no egress: numpy/scipy/mpmath unavailable;
+  crosscheck mode reproduces the frozen main JSON field-for-field) +
+  `adder_signed_selftest.py` (integer-atanh true bits, 3492 positions,
+  column identity over ℤ, shadowing, and REAL borrows exercised: min
+  carries −1, −1, −3 on the signed channels).  Certificate: 15360 ambient
+  states, **15 live**, 2 period-2 cycles, ω ≤ 9.
+  `adder_musical_disjunction_universal` (any X,Y not both rational:
+  00 in X ∨ 11 in Y ∨ 100 in Y−X ∨ 11 in 2X−Y ∨ 00 in 2Y−3X ∨ 010 in X+Y)
+  + ln-instance `adder_musical_disjunction`
+  (ln 2, ln 3, ln(3/2), ln(4/3), ln(9/8), ln 6) — `AdderMusical.lean`,
+  single `decide +kernel` sweep (~2 min), no chunking needed.
+* Out of scope (unchanged): k-track channels, other bases, word-sets,
+  variety mapping; novelty sweep operator-owned.
+
 **Operator-authorized 2026-08-29 (Trevor, attended session).**  Execute AFTER
 `BRIEF-adder-universal.md`.  Goal: make families **data**, then land the musical
 disjunction as the first data-swap instance.
