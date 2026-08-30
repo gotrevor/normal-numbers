@@ -88,6 +88,17 @@ def main() -> None:
                    "joint_live": live,
                    "channels": [dump(c, 4, 2) for c in c6]})
 
+    # C10: base-5 nine-channel family
+    Ch5, bn5, _ = make_base(5)
+    c10_spec = [(0, 1, 3), (0, 2, 4), (0, 3, 2), (0, 4, 0), (1, 1, 2),
+                (1, 4, 3), (2, 2, 2), (3, 3, 2), (4, 4, 2)]
+    c10 = [Ch5(a, b, d) for a, b, d in c10_spec]
+    ok, live = xzg(bn5, c10)
+    assert ok
+    claims.append({"id": "C10", "base": 5, "track": 2, "verified": ok,
+                   "joint_live": live,
+                   "channels": [dump(c, 5, 2) for c in c10]})
+
     # C7: musical; C8: complemented flagship (base 2, two-track)
     for cid, fam in (
         ("C7", [(1, 0, "00"), (0, 1, "11"), (-1, 1, "100"),

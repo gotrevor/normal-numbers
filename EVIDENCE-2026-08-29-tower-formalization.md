@@ -175,6 +175,13 @@ derive from the brief's base family.  Script: `product_block_hunt.py` self-test.
 **C9 (optional).** Second base-2 channel set and the 7 distance-1 neighbors of the
 flagship - data in `docs/adder-family-2026-08-29.md`; same pipeline, lower priority.
 
+**C10 (optional, largest certificate - do LAST if at all).** Base-5 nine-channel
+single-digit family (two-track; our 540 396 live states): for X, Y not both
+rational, at least one base-5 digit claim holds i.o.: 3 in Y · 4 in 2Y · 2 in 3Y ·
+0 in 4Y · 2 in X+Y · 3 in X+4Y · 2 in 2X+2Y · 2 in 3X+3Y · 2 in 4X+4Y.
+Script: `base_g_digit_hunt.py 5`.  Included for completeness of the base-g ladder;
+its per-channel tables are in the certs JSON.
+
 ### NOT for formalization ⛔
 
 Floors and negatives (product-block k=8 floor 0.4057, base-5 pending, "no other
