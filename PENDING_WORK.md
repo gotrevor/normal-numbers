@@ -1,5 +1,35 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🔨 Adder six-fold disjunction (BRIEF-adder-disjunction) — lap 2026-08-30
+
+Executing `BRIEF-adder-disjunction-formalization.md` per the DIRECTION operator
+addendum, from `HANDOFF-2026-08-29-adder-foundation.md`.  Landed this lap
+(both green, committed on `wip/adder-disjunction`):
+
+1. `AdderShadow.lean` — true state (`winCode`/`chanCode`/`famState`) +
+   **shadowing lemma** (`famState_shadow`, `hstep_famState`, `famState_lt`);
+   bit-list injectivity `bitsVal_inj` turns the formed-window test into
+   `OccursAt`.  Note: `winCode z m k` takes the digit COUNT (channel window
+   = `winCode z m (ell-1)`, formed window = `winCode z m ell`).
+2. `AdderCert.lean` + `AdderCertToy.lean` — generic `checkCert` sweep over
+   `(σ, s')` with C1/C1'/C3' extraction lemmas; toy 16-state certificate
+   passes **kernel `decide` in ~1s**, `#print axioms` = `[propext]`.
+   Module-3 route settled at toy scale.
+
+**Next attack (in order, per the foundation handoff module order):**
+3. `AdderDescent.lean` — from an infinite HStep path with states `< famSize`
+   + checked conditions ⇒ eventually periodic state AND input sequences
+   (C3' ω-descent kills dead states; ρ non-increasing, finitely many drops;
+   beyond last drop steps = `forced`, pigeonhole).  No König needed.
+4. `AdderEndgame.lean` — eventually periodic σ ⇒ periodic `rdigit X` ⇒
+   `2^N(2^p−1)·log 2 ∈ ℤ` ⇒ contradiction with `irrational_log_two`
+   (Legendre route, ALREADY LANDED — do not use lnTwoExpSep, see
+   route-correction in the foundation handoff).  Constants via `Real.log_mul`.
+5. `AdderCertMain.lean` — 73728-state certificate (JSON at
+   `experiments/certs/adder_cert_main.json`), `native_decide` phase-1,
+   kernel stretch.  Then `AdderMain.lean` frozen statement + RESULT in brief.
+
+
 ## ✅ Phase 3 publishing-prep pass — 2026-08-26
 
 The facts-first metadata audit and production comparator harness are complete.
