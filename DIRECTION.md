@@ -6,6 +6,14 @@ detail lives in PENDING_WORK.md.
 
 ## CURRENT DIRECTIVE (set 2026-08-29 — the conjecture-graph objective)
 
+- 🧮 **OPERATOR ADDENDUM (2026-08-29 attended, outranks the rest of this block
+  while open): execute `BRIEF-adder-disjunction-formalization.md`** — the six-fold
+  adder disjunction, a NOVEL candidate theorem in occurrence currency (exactly the
+  new-mathematics objective below; the formalization IS its independent
+  verification).  Start from `HANDOFF-2026-08-29-adder-foundation.md` (foundation
+  landed; endgame route-correction recorded there).  One coherent green checkpoint
+  per lap.  This addendum closes when the brief's RESULT section is written.
+
 - 🎯 **The objective is novel PROOFS — new mathematics.  Novel *formalization* is not the point
   here, at all** (operator, 2026-08-29: "The entire point is novel *proofs*.  This is different
   from other lean repos, where formalization *is* the point.").  Same doctrine as
