@@ -1,5 +1,49 @@
 # BRIEF: formalize the six-fold adder disjunction 🧮🏛️
 
+## RESULT (2026-08-30, autonomous lap)
+
+**PROVED.**  `NormalNumbers.Adder.adder_sixfold_disjunction`
+(`src/NormalNumbers/AdderMain.lean`) — the frozen six-fold statement, with
+`OccursAt` from `Disjunctive.lean` and "i.o." spelled `∀ N, ∃ n, N ≤ n ∧ …`.
+
+* **Axiom audit (phase-1 checkpoint, real `#print axioms`):**
+  `[propext, Classical.choice, Quot.sound,
+  NormalNumbers.Adder.main_cert_ok._native.native_decide.ax_1_1]` — trust
+  triple plus the single disclosed compiler axiom from the main-certificate
+  check (note: per-declaration `_native.native_decide.ax_1_1`, NOT
+  `Lean.ofReduceBool` — this pin names native axioms per site).
+* **Module-3 route:** `native_decide` for the 73728-state main certificate
+  (`AdderCertMain.lean`, ~3 s; omega as a digit-string through `ByteArray`,
+  live as a 75-index list, rho/forced as assoc tables).  The **toy pipeline
+  is kernel tier end-to-end**: `toy_disjunction` (`AdderEndgame.lean`) has
+  axioms exactly `[propext, Classical.choice, Quot.sound]`, certificate by
+  kernel `decide` (~1 s).  A kernel-tier swap for the main certificate
+  (`AdderCertMainKernel.lean`, chunked-Nat tables, `decide +kernel`) is
+  generated and in test at the time of writing — see PENDING_WORK.md for
+  its status; if green it replaces the native axiom and the headline
+  becomes trust-triple.
+* **Modules landed** (all green, committed on `wip/adder-disjunction`):
+  `AdderCarry` (floor carries, column identity), `AdderAutomaton`
+  (backward-deterministic `famPred`/`HStep`), `AdderShadow` (true state +
+  shadowing; `winCode z m k` takes the digit COUNT — window is
+  `winCode z m (ℓ-1)`), `AdderCert` (generic C1/C1'/C3' checker + semantic
+  extraction), `AdderCertToy`, `AdderDescent` (ω-descent, ρ-lock, forced
+  determinism, pigeonhole ⇒ eventually periodic inputs — no König),
+  `AdderEndgame` (equal digit streams ⇒ equal reals; periodic digits ⇒
+  rational; the generic `no_occurrence_contradiction` engine), 
+  `AdderCertMain`, `AdderMain`.
+* **Statement-shape deviations:** none in substance.  "`∃ n ≥ N`" is spelled
+  `∃ n, N ≤ n ∧ …` (definitionally the binder's meaning).  Endgame
+  route-correction honored: irrationality via the already-landed
+  `irrational_log_two` (Legendre route), NOT from `lnTwoExpSep_holds`
+  (that implication is unsound — see HANDOFF-2026-08-29-adder-foundation).
+* **Sanity anchors:** `example : OccursAt 2 (Real.log 2) [0,0] 4` proved
+  from `Real.log_two_gt_d9`/`lt_d9` (ln 2 = 0.10110001…₂ ✓);
+  `famSize mainFamily = 73728 = by decide`; the Python emitter re-verifies
+  C1/C1'/C3' at emit time and the self-test anchors every convention
+  against 3492 true bits of ln 2 / ln 3.
+
+
 **Operator-authorized 2026-08-29 (Trevor, attended session).**  Lane: this is a NOVEL
 candidate theorem (occurrence currency) - the formalization IS the independent
 verification its honesty ledger owes.  DIRECTION.md governs; two-lanes doctrine applies
