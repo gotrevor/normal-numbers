@@ -74,3 +74,6 @@ import NormalNumbers.QuadraticDisjunctive
 import NormalNumbers.DisjunctiveBaire
 import NormalNumbers.NormalMeager
 import NormalNumbers.UniformTV
+import NormalNumbers.AdderAutomaton
+import NormalNumbers.AdderCarry
+import NormalNumbers.LnTwoIrrational
