@@ -6,22 +6,20 @@
 (`src/NormalNumbers/AdderMain.lean`) — the frozen six-fold statement, with
 `OccursAt` from `Disjunctive.lean` and "i.o." spelled `∀ N, ∃ n, N ≤ n ∧ …`.
 
-* **Axiom audit (phase-1 checkpoint, real `#print axioms`):**
-  `[propext, Classical.choice, Quot.sound,
-  NormalNumbers.Adder.main_cert_ok._native.native_decide.ax_1_1]` — trust
-  triple plus the single disclosed compiler axiom from the main-certificate
-  check (note: per-declaration `_native.native_decide.ax_1_1`, NOT
-  `Lean.ofReduceBool` — this pin names native axioms per site).
-* **Module-3 route:** `native_decide` for the 73728-state main certificate
-  (`AdderCertMain.lean`, ~3 s; omega as a digit-string through `ByteArray`,
-  live as a 75-index list, rho/forced as assoc tables).  The **toy pipeline
-  is kernel tier end-to-end**: `toy_disjunction` (`AdderEndgame.lean`) has
-  axioms exactly `[propext, Classical.choice, Quot.sound]`, certificate by
-  kernel `decide` (~1 s).  A kernel-tier swap for the main certificate
-  (`AdderCertMainKernel.lean`, chunked-Nat tables, `decide +kernel`) is
-  generated and in test at the time of writing — see PENDING_WORK.md for
-  its status; if green it replaces the native axiom and the headline
-  becomes trust-triple.
+* **Axiom audit (kernel-tier FINAL, real `#print axioms`, 2026-08-30):**
+  `[propext, Classical.choice, Quot.sound]` — **trust triple exactly**,
+  no compiler axiom anywhere in the headline's dependency cone.
+* **Module-3 route (kernel tier):** the 73728-state main certificate is
+  checked in-kernel — packed-Nat two-level tables in
+  `AdderCertMainKData.lean`, eight range-split sweeps of 9216 states each
+  (`AdderCertMainChunk0..7.lean`, `checkEdgesOn` from `AdderCertSplit.lean`,
+  each `decide +kernel` under `maxHeartbeats 8000000`, ~5 min apiece),
+  assembled with `checkEdgesOn_spec` + an omega case split into
+  `main_cert_ok_kernel` (`AdderCertMainKernelAsm.lean`), which
+  `AdderMain.lean` consumes.  The earlier `native_decide` route
+  (`AdderCertMain.lean`) is retained as a fast cross-check off the
+  headline path.  The toy pipeline (`toy_disjunction`) was the
+  kernel-tier pilot, same trust triple.
 * **Modules landed** (all green, committed on `wip/adder-disjunction`):
   `AdderCarry` (floor carries, column identity), `AdderAutomaton`
   (backward-deterministic `famPred`/`HStep`), `AdderShadow` (true state +

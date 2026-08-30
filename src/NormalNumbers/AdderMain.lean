@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.AdderEndgame
-import NormalNumbers.AdderCertMain
+import NormalNumbers.AdderCertMainKernelAsm
 
 /-!
 # The six-fold adder disjunction (the frozen headline)
@@ -91,7 +91,7 @@ theorem adder_sixfold_disjunction :
     rw [show (54:ℝ) = 2 * 3 ^ 3 from by norm_num, Real.log_mul hlog2 (by norm_num),
       Real.log_pow]
     push_cast; ring
-  refine no_occurrence_contradiction mainFamily (by decide) main_cert_ok
+  refine no_occurrence_contradiction mainFamily (by decide) main_cert_ok_kernel
     (Real.log 2) (Real.log 3) irrational_log_two
     (by decide) (by decide) (by decide) ?_
   intro ch hch

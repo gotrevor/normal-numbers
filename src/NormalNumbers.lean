@@ -83,5 +83,15 @@ import NormalNumbers.AdderCertSplit
 import NormalNumbers.AdderDescent
 import NormalNumbers.AdderEndgame
 import NormalNumbers.AdderCertMain
+import NormalNumbers.AdderCertMainKData
+import NormalNumbers.AdderCertMainChunk0
+import NormalNumbers.AdderCertMainChunk1
+import NormalNumbers.AdderCertMainChunk2
+import NormalNumbers.AdderCertMainChunk3
+import NormalNumbers.AdderCertMainChunk4
+import NormalNumbers.AdderCertMainChunk5
+import NormalNumbers.AdderCertMainChunk6
+import NormalNumbers.AdderCertMainChunk7
+import NormalNumbers.AdderCertMainKernelAsm
 import NormalNumbers.AdderMain
 import NormalNumbers.LnTwoIrrational
