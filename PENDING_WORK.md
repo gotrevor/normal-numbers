@@ -1,5 +1,17 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ Adder operator addendum COMPLETE (2026-08-30)
+
+All three briefs discharged, every theorem trust-triple; see
+`HANDOFF-2026-08-30-adder-briefs-complete.md` and the RESULT sections of
+`BRIEF-adder-disjunction-formalization.md`, `BRIEF-adder-universal.md`,
+`BRIEF-adder-signed-engine.md`.  Headline surface: `adder_sixfold_disjunction`
+(+ universal + engine-instance forms), `signed_engine`,
+`adder_musical_disjunction` (+ universal).  Next attack (pending operator
+authorization / altitude lap): k-track channels, other bases, word-sets —
+listed out-of-scope in the signed brief; otherwise resume the conjecture-graph
+objective (ln-two ladder / run tower / Diophantine-wall interface).
+
 ## 🔨 Adder six-fold disjunction (BRIEF-adder-disjunction) — lap 2026-08-30
 
 Executing `BRIEF-adder-disjunction-formalization.md` per the DIRECTION operator
