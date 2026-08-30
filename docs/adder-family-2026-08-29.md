@@ -87,6 +87,32 @@ Verdicts (calibrated): exact statements in print ~10%; the certificate method in
 ~35%; something in the Mahler-descendant literature subsuming the two-variable universal
 version ~15%.
 
+## Can the factory reach a single constant?  NO - and the negative is sharp 🧯
+
+(Operator question, 2026-08-29 night: "with enough of these families, can we get to
+something concrete?")  Every factory theorem is a positive OR of occurrence atoms;
+entailing one atom needs a singleton clause; a one-channel collapse is a single-track
+avoidance system, which has positive entropy unless several words sit on ONE constant -
+classical Morse-Hedlund, already known.  The ghost-channel escape (extra track pinned
+by word "1" to Z = X+Y, instantiate, strip the false disjunct) buys nothing: the pinned
+subsystem's entropy is at most the unpinned system's, so stripping never produces a
+clause the direct factory misses.  Monotone logic is conserved; cross-constant
+disjunctions are this method's ceiling.
+
+**The meeting point, named precisely:** "w never occurs in c beyond N₀" is "the orbit
+of c never visits the cylinder I_w" - rung zero of the Babel main column's hot-spot
+ladder (the weakest possible visit lower bound).  The factory quarantines the pure
+carry-combinatorics; what remains for a single constant is per-constant arithmetic the
+stationary automaton cannot see - the surrogate's position-dependent kick (1/n is not
+finite-state; non-stationarity is the exact method boundary).  Factory: "not all can
+fail."  Column: "this one doesn't."  Gap: one visit to one interval.
+
+**Concrete things the factory CAN deliver:** the named-constant disjunction theorems
+and their free instances ((π, e), single-irrational multiples); the classification of
+the full collapse locus (an explicit finite map of how joint digit pathology can
+distribute over the log-lattice at short word lengths); minimal-family and
+collapse-threshold constants; the near-miss entropy budgets.
+
 ## Honesty ledger deltas
 
 Everything from the hunt doc still owed (kernel referee, novelty sweep - now aimed at
