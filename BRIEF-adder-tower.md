@@ -57,9 +57,15 @@ corollaries in the dossier's exact form ("for every irrational x …, base g
 explicit") — don't invent a parallel one-real engine.
 
 ### Phase C — claims, dossier order
-1. **C1** ternary {1,2}, three certificates (~6 states each).  Also formalize
-   the dossier's **hand proof for d = 1** as a direct Lean lemma if it's cheap —
-   it's an independent route and a nice self-check against the certificate.
+1. **C1** ternary {1,2}, three certificates (~6 states each).  ⚠️ **KNOWN RESULT
+   (reclassified 2026-08-29, master `c645528`): C1 is Berend–Boshernitzan 1994's
+   own M(3,1) = 2.**  Formalize it as a lane-2 *cited* result — docstring
+   "Berend–Boshernitzan 1994, M(3,1)=2", never headlined as new — and spend the
+   minimum: certificates only, SKIP the hand-proof lemma (it presumably
+   re-derives theirs).  C3 and the {1,5} landscape are at most a variant delta
+   over the same paper — same lane-2 treatment.  The {2,11} product block (C2)
+   is a different statement SHAPE with novelty UNKNOWN pending the subsumption
+   check — keep its priority but say "novelty under check" in its docstring.
 2. **C2** ternary product block {2,11}: NINE certificates (≤36 states) + the
    **transversal lemma** exactly as stated in the dossier (finite contrapositive,
    no compactness).

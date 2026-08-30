@@ -105,6 +105,11 @@ certificate passing.  Regeneration: run the named script (uv shebangs, self-test
 ### Tier 1 - cheapest, hand-provable, do first 🥇
 
 **C1. Ternary digit theorem for {1,2}** (single-track, base 3, m ∈ {1,2}):
+⚠️ **KNOWN RESULT** (found by the formalization session's sweep, 2026-08-29):
+Berend-Boshernitzan 1994 explicitly state M(3,1) = 2 - exactly this theorem.  C1 is
+a REDISCOVERY; formalize it as "B-B 1994, M(3,1)=2" with citation, not as new.  Its
+value as the cheapest kernel target stands; the hand proof below presumably mirrors
+their argument.
 For every irrational x and EVERY d ∈ {0,1,2}: d occurs i.o. in base-3 of x or of 2x.
 Three certificates (both channels avoid the same d); our sizes: 6 states.
 Script: `mahler_minimal_sets.py`.  **Independent hand proof for d = 1** (formalize
@@ -169,6 +174,13 @@ derive from the brief's base family.  Script: `product_block_hunt.py` self-test.
 
 **C9 (optional).** Second base-2 channel set and the 7 distance-1 neighbors of the
 flagship - data in `docs/adder-family-2026-08-29.md`; same pipeline, lower priority.
+
+**C10 (optional, largest certificate - do LAST if at all).** Base-5 nine-channel
+single-digit family (two-track; our 540 396 live states): for X, Y not both
+rational, at least one base-5 digit claim holds i.o.: 3 in Y · 4 in 2Y · 2 in 3Y ·
+0 in 4Y · 2 in X+Y · 3 in X+4Y · 2 in 2X+2Y · 2 in 3X+3Y · 2 in 4X+4Y.
+Script: `base_g_digit_hunt.py 5`.  Included for completeness of the base-g ladder;
+its per-channel tables are in the certs JSON.
 
 ### NOT for formalization ⛔
 

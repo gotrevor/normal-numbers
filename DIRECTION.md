@@ -21,7 +21,20 @@ detail lives in PENDING_WORK.md.
   ➕➕➕ Then `BRIEF-adder-tower.md` (the C1–C8 tower claims; evidence dossier
   `EVIDENCE-2026-08-29-tower-formalization.md`).  Additive cargo — nothing in it
   reopens a frozen statement; a non-collapsing automaton is a FINDING to report
-  in its RESULT, never something to patch quietly.
+  in its RESULT, never something to patch quietly.  ⚠️ C1 reclassified: it is
+  Berend–Boshernitzan 1994 M(3,1)=2 (lane 2, cite, don't headline — see the
+  brief's Phase C note).
+  ➕➕➕➕ Then `BRIEF-literature-statements.md` (formalize the STATEMENTS of
+  adjacent known results from local `papers/`+`docs/`, unproved Prop defs with
+  citations — the novelty-tripwire ledger; good budget-tail filler, may
+  interleave with tower work).
+  🔭 **Standing mandate (operator, 2026-08-29)**: beyond the queued briefs, you
+  may formalize anything else in this repo's orbit that looks tractable — weigh
+  candidates by the novel-proofs doctrine above, and check them against the
+  Literature ledger before claiming novelty.  Statement-only formalization of a
+  known result counts as progress (it is the tripwire that catches
+  wheel-reinvention).  Downloading papers stays off-limits (permission wall);
+  outward actions stay operator-owned.
 
 - 🎯 **The objective is novel PROOFS — new mathematics.  Novel *formalization* is not the point
   here, at all** (operator, 2026-08-29: "The entire point is novel *proofs*.  This is different
