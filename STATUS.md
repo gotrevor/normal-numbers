@@ -1,5 +1,20 @@
 # STATUS — normal-numbers 📊
 
+## Adder wing (2026-08-30)
+
+- **`NormalNumbers.Adder.adder_sixfold_disjunction` is PROVED**
+  (`src/NormalNumbers/AdderMain.lean`, branch `wip/adder-disjunction`): at
+  least one of `00` i.o. in ln 2 / `001` in ln 3 / `11` in ln 6 / `001` in
+  ln 18 / `010` in ln 12 / `000` in ln 54 (binary).  Novel candidate
+  theorem per `BRIEF-adder-disjunction-formalization.md`; RESULT section
+  written there.  Axioms at the phase-1 checkpoint: trust triple + the one
+  per-site `main_cert_ok._native.native_decide.ax_1_1` from the
+  73728-state certificate.  The toy 3-channel pipeline (`toy_disjunction`)
+  is kernel-tier end-to-end with exactly the trust triple.  A kernel-tier
+  swap of the main certificate (chunked-Nat tables, `decide +kernel`) is
+  in progress — see PENDING_WORK.md.
+
+
 ## Current publishing-prep status (2026-08-26)
 
 - **Core mathematics:** image-Khinchin, Track D (D0--D4), and

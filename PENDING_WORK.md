@@ -1,5 +1,65 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ Tower C1–C8 COMPLETE (2026-08-30, autonomous)
+
+All eight tower claims proved kernel-tier (RESULT table at top of
+`BRIEF-adder-tower.md`; handoff `HANDOFF-2026-08-30-tower-complete.md`).
+Base-g engine: `AdderBaseG.lean` (`signed_engine_g`,
+`signed_engine_g_single`), emitter `experiments/adder_baseg_emit.py`.
+No non-collapse findings; C1/C3 lane-2 cited (B–B 1994), C2 novelty
+under check.  NEXT: `BRIEF-literature-statements.md` (ledger + wire
+`c1_ternary_digit` → B–B M(3,1)=2 edge), then standing mandate.
+
+## ✅ Adder operator addendum COMPLETE (2026-08-30)
+
+All three briefs discharged, every theorem trust-triple; see
+`HANDOFF-2026-08-30-adder-briefs-complete.md` and the RESULT sections of
+`BRIEF-adder-disjunction-formalization.md`, `BRIEF-adder-universal.md`,
+`BRIEF-adder-signed-engine.md`.  Headline surface: `adder_sixfold_disjunction`
+(+ universal + engine-instance forms), `signed_engine`,
+`adder_musical_disjunction` (+ universal).  Next attack (pending operator
+authorization / altitude lap): k-track channels, other bases, word-sets —
+listed out-of-scope in the signed brief; otherwise resume the conjecture-graph
+objective (ln-two ladder / run tower / Diophantine-wall interface).
+
+## 🔨 Adder six-fold disjunction (BRIEF-adder-disjunction) — lap 2026-08-30
+
+Executing `BRIEF-adder-disjunction-formalization.md` per the DIRECTION operator
+addendum, from `HANDOFF-2026-08-29-adder-foundation.md`.  Landed this lap
+(both green, committed on `wip/adder-disjunction`):
+
+1. `AdderShadow.lean` — true state (`winCode`/`chanCode`/`famState`) +
+   **shadowing lemma** (`famState_shadow`, `hstep_famState`, `famState_lt`);
+   bit-list injectivity `bitsVal_inj` turns the formed-window test into
+   `OccursAt`.  Note: `winCode z m k` takes the digit COUNT (channel window
+   = `winCode z m (ell-1)`, formed window = `winCode z m ell`).
+2. `AdderCert.lean` + `AdderCertToy.lean` — generic `checkCert` sweep over
+   `(σ, s')` with C1/C1'/C3' extraction lemmas; toy 16-state certificate
+   passes **kernel `decide` in ~1s**, `#print axioms` = `[propext]`.
+   Module-3 route settled at toy scale.
+
+**DONE 2026-08-30 (later same lap):** `AdderDescent.lean` (module 4) and
+`AdderEndgame.lean` (module 5 generic engine) are green.  **`toy_disjunction`
+is proved END-TO-END, kernel tier, trust triple**
+`[propext, Classical.choice, Quot.sound]` — the whole pipeline
+(carry/shadow/certificate/descent/endgame) is validated.  Remaining:
+`AdderCertMain.lean` (73728-state certificate, native_decide phase-1) +
+`AdderMain.lean` (frozen six-fold statement) + RESULT in the brief.
+
+**Historical next-attack notes (now executed):**
+3. `AdderDescent.lean` — from an infinite HStep path with states `< famSize`
+   + checked conditions ⇒ eventually periodic state AND input sequences
+   (C3' ω-descent kills dead states; ρ non-increasing, finitely many drops;
+   beyond last drop steps = `forced`, pigeonhole).  No König needed.
+4. `AdderEndgame.lean` — eventually periodic σ ⇒ periodic `rdigit X` ⇒
+   `2^N(2^p−1)·log 2 ∈ ℤ` ⇒ contradiction with `irrational_log_two`
+   (Legendre route, ALREADY LANDED — do not use lnTwoExpSep, see
+   route-correction in the foundation handoff).  Constants via `Real.log_mul`.
+5. `AdderCertMain.lean` — 73728-state certificate (JSON at
+   `experiments/certs/adder_cert_main.json`), `native_decide` phase-1,
+   kernel stretch.  Then `AdderMain.lean` frozen statement + RESULT in brief.
+
+
 ## ✅ Phase 3 publishing-prep pass — 2026-08-26
 
 The facts-first metadata audit and production comparator harness are complete.

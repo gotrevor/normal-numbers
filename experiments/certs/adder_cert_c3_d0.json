@@ -1,0 +1,1 @@
+{"name": "c3_d0", "g": 3, "single": true, "channels": [{"a": 1, "b": 0, "word": [0]}, {"a": 5, "b": 0, "word": [0]}], "sizes": [1, 5], "ambient": 5, "alphabet": 3, "n_live": 2, "cycles": 2, "periods": [1], "live": [0, 0, 1, 0, 1], "rho": [0, 0, 0, 0, 0], "omega": [0, 1, 0, 2, 0], "forced_sig": [-1, -1, 1, -1, 2], "forced_dst": [-1, -1, 2, -1, 4]}
