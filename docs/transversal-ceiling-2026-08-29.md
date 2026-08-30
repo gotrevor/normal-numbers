@@ -94,6 +94,18 @@ block on the six-channel set, but blocks may live on richer channel sets - preci
 where story #1's exhaustive sweep is already pointed.  Smallest interesting instance:
 F = {00, 11}, hunt for a channel set where all 2^|M| assignments collapse.
 
+## The or-list is six-ways-true, hence maximally uncollapsible 🎭
+
+(From the 2026-08-29 dialogue.)  Collapsing an or-list means refuting disjuncts - but every
+disjunct of the flagship is *believed true* (all six constants are conjecturally normal), so
+the disjunction is the deliverable, not a waypoint toward "this one doesn't".  And the two
+negatives are complementary ceilings: no-singleton caps *monotone logic* (can't isolate a
+constant); the blocking pair caps *universality* (can't reach disjunctivity even of a
+disjunction).  Any genuine disjunctivity path must therefore break both at once:
+non-monotone reasoning AND arithmetic distinguishing ln 2 from Σ2^(−2^k) - i.e. exactly
+the column's non-finite-state 1/n kick.  The factory's ceiling is a quarantine line
+pricing the toll, not a dead end for the program.
+
 ## Status of the operator's proposal, one paragraph 📌
 
 "Enough classes of families" is exactly the right instinct, and §1 says precisely how
