@@ -25,6 +25,26 @@ these six linear forms of any two reals unless both are rational.**  The natural
 constant headlines are its instances.  (This also relocates the novelty sweep:
 combinatorics on words / carry automata literature, not just digits-of-constants.)
 
+## The complement involution: every collapse is a complement PAIR 🪞
+
+(Operator observation, 2026-08-29 dialogue: negation mod 1 complements binary digits -
+the classical "x normal ⟺ −x normal" move.)  Inside the adder automaton this is exact:
+with v = ax + by + c, the map (x, y, c) → (1−x, 1−y, a+b−1−c) satisfies z̄ = 1−z and
+c̄′ = a+b−1−c′, an involution of each channel that complements the emitted digit and
+conjugates the avoid-w tracker to avoid-w̄.  Consequences:
+
+- **Tuple f collapses ⟺ tuple ~f collapses** (bitwise-complement every word).  The
+  factory's census doubles for free; every search over word assignments halves
+  (canonical representatives f ≤ ~f only).
+- **Engine-confirmed** (`product_block_hunt.py` self-test): the complemented flagship
+  {`11`/ln2, `110`/ln3, `00`/ln6, `110`/ln18, `101`/ln12, `111`/ln54} exact-collapses
+  (23 073 live states, periods {1, 2}) - a distance-6 neighbor the Hamming-ball sweep
+  never reached.  Also holds on borrow channels (equal entropies to 4 decimals).
+- Blocking pairs come in mirror pairs too: the sparse pair (0-seas, exposes all-11
+  assignments) and its digit-complement dense pair (1-seas, exposes all-00) - the 00/11
+  symmetry of the machine is perfect; any apparent asymmetry was an artifact of naming
+  only one pair.
+
 ## Census of the family (all exact unless stated) 📋
 
 - **Base family** (the brief's target): ln2/`00`, ln3/`001`, ln6/`11`, ln18/`001`,
