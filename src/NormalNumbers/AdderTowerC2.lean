@@ -152,7 +152,16 @@ theorem c2_clause (X : ℝ) (hX : Irrational X) (d₁ d₂ : ℕ) (h₁ : d₁ <
 /-- **C2 (ternary all-digits product block {2, 11}; novelty under check)**:
 for every irrational `x`, the base-3 expansion of `2x` contains all three
 ternary digits infinitely often, or that of `11x` does.  Transversal lemma
-over the nine clause certificates. -/
+over the nine clause certificates.
+
+Novelty context (citation sweep 2026-08-30, `docs/citation-sweep-2026-08-30.md`):
+the JOINT all-digits form over a LARGE interval is classical — Mahler 1973
+Thm 2 (de Bruijn block through his Thm 1), and B–B 1994's bound gives some
+single `m < 162` realizing all three ternary digits.  B–B's exact
+`M(3,1) = 2` is per-digit (multiplier may depend on the digit).  The content
+here is the collapse to the explicit PAIR `{2, 11}` — not found in the
+bibliography-graph sweep; zbMATH/MathSciNet not yet checked (operator-owned),
+so the status stays "under check". -/
 theorem c2_product_block (X : ℝ) (hX : Irrational X) :
     (∀ d, d < 3 → ∀ N, ∃ n, N ≤ n ∧ OccursAt 3 (2 * X) [d] n) ∨
     (∀ d, d < 3 → ∀ N, ∃ n, N ≤ n ∧ OccursAt 3 (11 * X) [d] n) := by
