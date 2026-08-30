@@ -77,4 +77,6 @@ import NormalNumbers.UniformTV
 import NormalNumbers.AdderAutomaton
 import NormalNumbers.AdderCarry
 import NormalNumbers.AdderShadow
+import NormalNumbers.AdderCert
+import NormalNumbers.AdderCertToy
 import NormalNumbers.LnTwoIrrational
