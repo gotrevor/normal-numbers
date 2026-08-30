@@ -76,4 +76,5 @@ import NormalNumbers.NormalMeager
 import NormalNumbers.UniformTV
 import NormalNumbers.AdderAutomaton
 import NormalNumbers.AdderCarry
+import NormalNumbers.AdderShadow
 import NormalNumbers.LnTwoIrrational
