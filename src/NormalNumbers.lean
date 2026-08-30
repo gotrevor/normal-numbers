@@ -89,6 +89,7 @@ import NormalNumbers.AdderTowerC2
 import NormalNumbers.AdderTowerC3
 import NormalNumbers.AdderTowerC45
 import NormalNumbers.AdderTowerC6
+import NormalNumbers.Literature
 import NormalNumbers.AdderEngineSplit
 import NormalNumbers.AdderMusicalKData
 import NormalNumbers.AdderMusical

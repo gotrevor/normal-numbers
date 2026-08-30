@@ -1,5 +1,38 @@
 # BRIEF follow-on 4: the literature statement layer 📚🪞
 
+## RESULT (2026-08-30, autonomous session; first pass landed) ✅
+
+`src/NormalNumbers/Literature.lean` is live, builds green, and future
+briefs are pointed at it (module docstring).  Statements landed:
+
+| statement | tier | status |
+|---|---|---|
+| `mahler_theoremM` (Mahler 1973, m ≤ g^(2k+1)) | S (`docs/disjunctive-vs-normal.md` §1.1 via Waldschmidt) | unproved def |
+| `berendBoshernitzan_bound` (m ≤ 2g^(k+1)) | S (same + `docs/adder-family-2026-08-29.md`) | unproved def |
+| `berendBoshernitzan_M31` (M(3,1)=2 upper half) | S (`docs/mahler-sets-…` via master `c645528`) | **WIRED**: `…_holds` from tower C1 `c1_ternary_digit` ✅ |
+| `adamczewskiRampersad_boundary` (0/1/01/10 i.o. in every irrational) | S (`docs/disjunctive-vs-normal.md`, PAMS 136) | **WIRED**: `…_holds` proved here (forbidden-switch → eventual constancy → endgame) ✅ |
+| `waldschmidt_conjecture_1_1` (digit occurrence for algebraics; OPEN) | S (arXiv:0908.4034 §1 quoted) | unproved def (conjecture) |
+| `furstenberg_dense_orbit` (×2×3 dense orbits) | S (`docs/disjunctive-vs-normal.md` §1.2) | unproved def |
+| `becherYuhjtman_existence` (Thm 1 minus efficiency) | P (`papers/becher-yuhjtman-…`) | **WIRED**: `…_holds` := `exists_absolutely_normal_cf_normal` ✅ |
+| `baileyMisiurewicz_weak_hot_spot` (Thm 1.1 full iff, limsup form) | P (`papers/bailey-misiurewicz-…`, complete AMS text) | unproved def (repo holds the b-adic corollary of one direction) |
+| `vandehey_matrix_action` (Thm 1.1, det ≠ 0) | P (`papers/vandehey-2017-…`) | unproved def |
+| `vandehey_quadratic_problem` (§7 OP 1; OPEN) + `IsQuadraticIrrational` | P (same) | unproved def |
+| `mendesFrance_simple_normality_problem` (§7 OP 2; OPEN) | P (same) | unproved def |
+
+All three `…_holds` edges audit `[propext, Classical.choice, Quot.sound]`.
+
+**Gaps (never-fabricate rule):** B–B's `g^k − 1` lower bound (quantifier
+structure not pinned by our secondary sources); Scheerer 2017 Thm 2.1
+(Philipp ψ-mixing — needs σ-algebra-level defs, deferred, PDF held);
+Fisher–Schmidt 2014 (skew-product ergodicity — heavy geometric defs,
+deferred, PDF held); B–M strong hot spot (Thms 3.4/3.5 sequence-space
+form, deferred, PDF held).
+
+**Papers worth fetching (operator-owned):** Mahler 1973 (Bull. Austral.
+Math. Soc. 8) and Berend–Boshernitzan 1994 (Acta Arith. 66) — both only
+tier S here; Adamczewski–Rampersad PAMS 136 (2008); Waldschmidt
+arXiv:0908.4034 (survey, pins Conjecture 1.1 and the Mahler chain).
+
 **Operator-authorized 2026-08-29 (Trevor, attended session).**  Execute after
 (or interleaved with) `BRIEF-adder-tower.md` — statement-layer work is cheap and
 makes good budget-tail filler.  Motivation, in the operator's framing: *had we
