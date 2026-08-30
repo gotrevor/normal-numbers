@@ -64,6 +64,18 @@ help and ~mid-teens is plausible).  State cap is the binding constraint - the ba
 minimal Mahler set for digit 7 is a defined, finite computation that today's exact
 checker cannot yet afford.  Named as a target, not attempted.
 
+## ⚠️ Novelty verdict, first casualty (2026-08-29, formalization session's sweep)
+
+**The {1,2}-per-digit theorem is Berend-Boshernitzan 1994's own M(3,1) = 2, stated
+explicitly in their paper.**  The wing's ~25%-in-print calibration paid out on its
+headline claim.  Reclassification: C1 = rediscovery (independent verification of
+B-B by carry automata - a known-answer test the factory passed, and the hand proof
+presumably re-derives theirs); {1,5} and the exhaustive minimal-set landscape =
+at most a variant/completeness delta over their framework; the PRODUCT BLOCK
+{2,11} (joint all-digits realization) is a different statement SHAPE and is under
+subsumption check against the same paper - treat its novelty as UNKNOWN until that
+verdict lands.  Nothing outward quotes this wing before that check completes.
+
 ## Honesty ledger 📋
 
 - 🚨 **Highest folklore risk of the whole tower.**  This is Mahler's own setting with

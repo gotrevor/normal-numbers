@@ -105,6 +105,11 @@ certificate passing.  Regeneration: run the named script (uv shebangs, self-test
 ### Tier 1 - cheapest, hand-provable, do first 🥇
 
 **C1. Ternary digit theorem for {1,2}** (single-track, base 3, m ∈ {1,2}):
+⚠️ **KNOWN RESULT** (found by the formalization session's sweep, 2026-08-29):
+Berend-Boshernitzan 1994 explicitly state M(3,1) = 2 - exactly this theorem.  C1 is
+a REDISCOVERY; formalize it as "B-B 1994, M(3,1)=2" with citation, not as new.  Its
+value as the cheapest kernel target stands; the hand proof below presumably mirrors
+their argument.
 For every irrational x and EVERY d ∈ {0,1,2}: d occurs i.o. in base-3 of x or of 2x.
 Three certificates (both channels avoid the same d); our sizes: 6 states.
 Script: `mahler_minimal_sets.py`.  **Independent hand proof for d = 1** (formalize
