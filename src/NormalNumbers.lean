@@ -85,6 +85,8 @@ import NormalNumbers.AdderEngineCoreG
 import NormalNumbers.AdderSigned
 import NormalNumbers.AdderBaseG
 import NormalNumbers.AdderTowerC1
+import NormalNumbers.AdderTowerC2
+import NormalNumbers.AdderTowerC3
 import NormalNumbers.AdderEngineSplit
 import NormalNumbers.AdderMusicalKData
 import NormalNumbers.AdderMusical

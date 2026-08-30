@@ -1,0 +1,1 @@
+{"name": "c1_d2", "g": 3, "single": true, "channels": [{"a": 1, "b": 0, "word": [2]}, {"a": 2, "b": 0, "word": [2]}], "sizes": [1, 2], "ambient": 2, "alphabet": 3, "n_live": 2, "cycles": 2, "periods": [1], "live": [1, 1], "rho": [1, 0], "omega": [0, 0], "forced_sig": [0, 1], "forced_dst": [0, 1]}
