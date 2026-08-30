@@ -58,11 +58,15 @@ conjugates the avoid-w tracker to avoid-w̄.  Consequences:
   A genuinely different theorem; also the cheapest known formalization target if the
   operator ever wants to swap the brief's family (brief currently freezes the base
   family; the pipeline is identical either way).
-- **Superparticular family (borrow channels): NEAR-MISS, floor h = 0.0080** with
-  greedy words on ln2, ln3, ln(3/2), ln(4/3), ln(9/8), ln6.  Not a collapse; already
-  a W3-currency statement (at most a 0.8%-entropy sliver of positions can carry joint
-  pathology across the musical family 🎵).  Greedy is not exhaustive - a different
-  word assignment or a seventh channel may close it.
+- **Superparticular family (borrow channels): EXACT COLLAPSE 🎵** - the greedy
+  h = 0.0080 "near-miss" was greedy myopia.  Beam search (`pythagorean_closure.py`,
+  beam 300, involution-deduped) found ≥ 8 zero-entropy word assignments on ln2, ln3,
+  ln(3/2), ln(4/3), ln(9/8), ln6; first exact-verified: ln2/`00`, ln3/`11`,
+  ln(3/2)/`100`, ln(4/3)/`11`, ln(9/8)/`00`, ln6/`010` - **9 478 live states, the
+  smallest certificate known** (5× under the flagship).  The musical disjunction
+  theorem: for any reals X, Y not both rational, at least one of these words occurs
+  i.o. in the corresponding interval channel (fifth, fourth, tone).  Plus its
+  complement pair for free.
 
 ## Production axes still unexplored 🏗️
 

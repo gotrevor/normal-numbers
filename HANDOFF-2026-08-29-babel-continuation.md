@@ -47,9 +47,13 @@ Factory: "not all can fail."  Column: "this one doesn't."  Gap: one visit to one
    proves "for any pair not both rational, some channel sees both 00 and 11 i.o." - the
    first rung of the graded joint-visit ladder, the strongest occurrence statement no
    blocking pair forbids.
-2. **Pythagorean closure** 🎵: the borrow family sits at h = 0.0080; try non-greedy word
-   assignments and a seventh channel (ln 16/9, ln 32/27).  A collapse gives the musical
-   disjunction theorem.
+2. ~~**Pythagorean closure**~~ ✅ **CLOSED 2026-08-29 late night**: beam search
+   (`pythagorean_closure.py`) found ≥ 8 exact collapses on the musical six - no seventh
+   channel needed.  Flagship instance: ln2/`00`, ln3/`11`, ln(3/2)/`100`, ln(4/3)/`11`,
+   ln(9/8)/`00`, ln6/`010`, **9 478 live states (smallest certificate known)**.  The
+   h = 0.0080 "near-miss" was greedy myopia - a lesson for every other floor quoted from
+   greedy runs.  Follow-on: enumerate ALL musical collapses (the beam saw only the top),
+   and re-run the OTHER quoted floors non-greedily.
 3. **Three tracks**: (ln 2, ln 3, ln 5), channels `ln(2^a 3^b 5^c)` - does collapse need
    fewer channels per track?  (Entropy 3 bits, quadratically more channels.)
 4. **Other bases**: the same machine in base 3 - ternary disjunctions for the same constants.
