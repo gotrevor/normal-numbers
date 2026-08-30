@@ -57,6 +57,17 @@ checker cannot yet afford.  Named as a target, not attempted.
   asymmetry are the parts most likely to be new.
 - Same single-implementation caveat as the whole base-3 wing (fresh code path);
   self-tests: full-shift entropy, m=1 leaves 1 bit, two-track regression.
-- Negatives are range-limited: "no 2-set for digit 1" means within m ≤ 12.
+- ⚠️ **Negatives are METHOD-RELATIVE, not just range-limited** (operator question,
+  2026-08-29): "no 2-set for digit 1" means no *automaton certificate* with m ≤ 12.
+  Positive entropy means aperiodic avoiding SYMBOLIC paths survive - but the automaton
+  is a carry-superset, so a surviving path need not be realizable by an actual real x.
+  A true lower bound à la B-B needs an adversary CONSTRUCTION (an explicit irrational
+  x with x and mx jointly avoiding digit 1 - B-B's own lower bound is exactly such an
+  engineered, measure-zero construction; typical numbers, being normal, can never
+  witness a lower bound).  Status: minimal-2 for edge digits = theorem; "digit 1
+  needs ≥ 3" = certificate-minimality only, construction owed.  Probe idea: greedy
+  digit-by-digit construction of x with x, 2x avoiding digit 1 (backtracking; if the
+  TRUE constraint system has positive entropy the construction runs forever, and its
+  infinite run is the counterexample candidate to formalize).
 - All collapses exact (integer graph); "minimal" = no proper subset collapses (checked
   by construction: subsets enumerated first).
