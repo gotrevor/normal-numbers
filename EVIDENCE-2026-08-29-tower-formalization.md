@@ -12,6 +12,13 @@ is classical, C4 is elementary, C5 follows immediately from C1, and C8 is a symm
 corollary.  C2's fixed optimal-cardinality set and the genuine two-track families
 remain the credible new-math candidates.
 
+The follow-up cited-by search is recorded in
+`papers/tower-forward-citation-crawl-2026-08-30.md`.  It crawls all eight literature
+seeds through OpenAlex, Semantic Scholar, and COCI, then reads the plausible
+forward-cone descendants.  It found no statement of C2 or a theorem subsuming the
+fixed two-real families, but this remains an evidence-bounded novelty judgment, not
+proof of priority.
+
 **Evidence tier of everything below**: exact integer-graph certificate, ONE Python
 implementation (`experiments/`), self-tested; the base-3/4/5 and single-track code
 paths are fresh (written 2026-08-29).  ⚠️ **Your Lean development is intended as the

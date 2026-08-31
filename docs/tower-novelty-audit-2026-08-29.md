@@ -32,7 +32,7 @@ theorems.**  My present judgment:
   not add a new idea.
 
 Confidence that the surviving exact statements are not already in the inspected
-literature: **70% for C2, 65% for the exact two-track families, and 45% for the
+literature: **75% for C2, 70% for the exact two-track families, and 45% for the
 general carry-automaton presentation as a novel method.**  Those are novelty
 estimates, not correctness estimates.
 
@@ -201,23 +201,25 @@ should be described mathematically as a corollary of that involution.
 
 ## Search boundary and absence claim
 
-The audit read the eight PDFs pinned beside this file.  It also ran:
+The initial eight-paper audit was followed by a complete first-hop cited-by crawl of
+**all eight seeds**, not merely a reading of their bibliographies.  OpenAlex,
+Semantic Scholar, and OpenCitations COCI were queried independently.  Exact-title,
+exact-notation `M(g,k)`, OpenAlex full-text, and zbMATH subject searches were used to
+catch older works that citation graphs might miss.  Every accessible
+theorem-neighborhood hit was read at body level; gated hits were checked against
+full zbMATH reviews or later papers that restate their theorems.
 
-- an OpenAlex forward-citation crawl of Mahler 1973, Alon-Peres 1992, and
-  Berend-Boshernitzan 1994;
-- a Semantic Scholar forward-citation crawl of Berend-Boshernitzan 1994;
-- exact web searches for `2 alpha`/`11 alpha`, ternary digits, fixed multiplier
-  sets, simultaneous digit avoidance, and carry automata.
-
-OpenAlex returned four direct citing works for B-B 1994.  Semantic Scholar returned
-the same substantive papers plus Adamczewski-Bugeaud 2005 and a bibliography-only
-record for Bugeaud's 2012 book.  Every substantive paper in that union was read.
+The full counts, every hit and false positive, theorem summaries, access failures,
+PDF hashes, and the non-recursive boundary are recorded in
+`papers/tower-forward-citation-crawl-2026-08-30.md`.  Twelve additional accessible
+forward-cone papers are pinned beside that ledger.
 
 No inspected source states C2's fixed set or a theorem subsuming the two-real fixed
 linear-form families.  This is an evidence-bounded **“not found”**, not proof of
-priority.  MathSciNet, zbMATH, theses, non-English literature, and papers missed by
-both citation indices remain possible hiding places.  Before an outward priority
-claim, an expert literature check is still owed.
+priority.  Google Scholar was unavailable, MathSciNet has no open cited-by API, and
+gated books, theses, non-English literature, or papers missed by all three indices
+remain possible hiding places.  Before an outward priority claim, an expert
+literature check is still owed.
 
 ## Recommended mathematical presentation
 

@@ -88,6 +88,53 @@ theorem dilogSummable {z : ℂ} (hz : ‖z‖ < 1) :
       nlinarith
     nlinarith [pow_nonneg (norm_nonneg z) (m + 1), h1]
 
+/-- The dilogarithm as the tsum of its defining series (value = `Li₂ z`
+on the open unit disk; `0`-indexed term `z⁰/0² = 0`, so it starts at
+`n = 1`). -/
+noncomputable def Li2 (z : ℂ) : ℂ := ∑' n : ℕ, z ^ n / (n : ℂ) ^ 2
+
+theorem hasSum_Li2 {z : ℂ} (hz : ‖z‖ < 1) :
+    HasSum (fun n : ℕ => z ^ n / (n : ℂ) ^ 2) (Li2 z) :=
+  (dilogSummable hz).hasSum
+
+/-- **Duplication identity for the dilogarithm** (special-value-free):
+`Li₂ z + Li₂ (−z) = ½·Li₂ (z²)`.  Proved purely by the even/odd split of
+the series `∑ (zⁿ + (−z)ⁿ)/n²` — odd terms cancel, even terms `n = 2k`
+give `2·z^{2k}/(2k)² = ½·(z²)ᵏ/k²`.  This is the first step collapsing the
+`hasSum_w2` crux: `−16·Li₂(x) − 16·Li₂(−x) = −8·Li₂(x²) = −8·Li₂(½)`. -/
+theorem dilog_add_neg {z : ℂ} (hz : ‖z‖ < 1) :
+    Li2 z + Li2 (-z) = (1 / 2) * Li2 (z ^ 2) := by
+  have hzn : ‖(-z)‖ < 1 := by rwa [norm_neg]
+  have hz2 : ‖z ^ 2‖ < 1 := by rw [norm_pow]; nlinarith [norm_nonneg z]
+  set f : ℕ → ℂ := fun n => z ^ n / (n : ℂ) ^ 2 + (-z) ^ n / (n : ℂ) ^ 2 with hf
+  have hsum1 : HasSum f (Li2 z + Li2 (-z)) := (hasSum_Li2 hz).add (hasSum_Li2 hzn)
+  have hEven : HasSum (fun k : ℕ => f (2 * k)) ((1 / 2) * Li2 (z ^ 2)) := by
+    have hbase := (hasSum_Li2 hz2).mul_left (1 / 2)
+    have hfun : (fun k : ℕ => f (2 * k))
+        = fun k : ℕ => (1 / 2) * ((z ^ 2) ^ k / (k : ℂ) ^ 2) := by
+      funext k
+      rcases k with _ | m
+      · simp [hf]
+      · have h2k : ((2 * (m + 1) : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+        have hk : (((m : ℕ) + 1 : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+        simp only [hf]
+        rw [Even.neg_pow ⟨m + 1, two_mul (m + 1)⟩, ← pow_mul]
+        push_cast
+        field_simp
+        ring
+    rw [hfun]; exact hbase
+  have hOdd : HasSum (fun k : ℕ => f (2 * k + 1)) 0 := by
+    have : (fun k : ℕ => f (2 * k + 1)) = fun _ => 0 := by
+      funext k
+      simp only [hf]
+      rw [Odd.neg_pow ⟨k, rfl⟩]
+      ring
+    rw [this]
+    exact hasSum_zero
+  have hsum2 : HasSum f ((1 / 2) * Li2 (z ^ 2) + 0) := hEven.even_add_odd hOdd
+  rw [add_zero] at hsum2
+  exact hsum1.unique hsum2
+
 /-! ### Fiber algebra: eight consecutive terms make one Formula-29 term -/
 
 /-- Power-block decomposition of `w2` along `n = 8j + r`.  Every point
@@ -159,19 +206,45 @@ lemma hasSum_fiber2 (j : ℕ) :
 
 /-! ### The analytic crux (single disclosed leaf) -/
 
-/-- **The master dilog identity (frozen crux).**  The filtered series
-sums to π²:
-`−16·Li₂(x) + 16·Li₂(z₁) − 16·Li₂(−x) + 16·Li₂(z̄₁) = π²`.
+/-- **The reduced crux (single disclosed leaf).**  After the duplication
+`dilog_add_neg` folds `−16·Li₂(x) − 16·Li₂(−x)` into `−8·Li₂(½)` and the
+conjugate points pair up, the master identity is exactly this pure
+equation between complex numbers:
+`−8·Li₂(½) + 16·(Li₂ z₁ + Li₂ z̄₁) = π²`.
 
-mathlib has NO dilogarithm, so this cannot yet be discharged from library
-API.  Via the series duplication `Li₂(z)+Li₂(−z)=½Li₂(z²)` (provable, see
-`dilog_add_neg`) and conjugate pairing it reduces to the classical
-special-value combination `−8·Li₂(½)+32·Re Li₂((1+i)/2)=π²`, where
-`Li₂(½)=π²/12−½log²2` and `Re Li₂((1+i)/2)=5π²/96−⅛log²2` (the `log²2`
-terms cancel).  Next attack: formalize `Li₂` and its reflection formula,
-or import the two special values as cited nodes.  Disclosed 2026-08-31. -/
-theorem hasSum_w2 : HasSum w2 (((Real.pi ^ 2 : ℝ)) : ℂ) := by
+This is the classical special-value combination `−8·Li₂(½) +
+32·Re Li₂((1+i)/2) = π²` (`Li₂ z₂ = conj (Li₂ z₁)` since `z₂ = z̄₁`, so
+`Li₂ z₁ + Li₂ z₂ = 2·Re Li₂ z₁`), with `Li₂(½)=π²/12−½log²2` and
+`Re Li₂((1+i)/2)=5π²/96−⅛log²2`.  mathlib has no dilogarithm; both values
+need the reflection functional equation.  Disclosed 2026-08-31. -/
+theorem dilog_special_values :
+    (-8) * Li2 (2⁻¹ : ℂ) + 16 * (Li2 z1 + Li2 z2) = ((Real.pi ^ 2 : ℝ) : ℂ) := by
   sorry
+
+/-- **The master dilog sum.**  The analytic convergence is fully proved
+here (each of the four points lies in the open unit disk, so `w2` is a
+finite combination of convergent dilog series); the value is reduced via
+`dilog_add_neg` to `dilog_special_values`, the sole remaining crux. -/
+theorem hasSum_w2 : HasSum w2 (((Real.pi ^ 2 : ℝ)) : ℂ) := by
+  have h1 := (hasSum_Li2 norm_cx_lt).mul_left (-16)
+  have h2 := (hasSum_Li2 norm_z1_lt).mul_left 16
+  have h3 := (hasSum_Li2 norm_neg_cx_lt).mul_left (-16)
+  have h4 := (hasSum_Li2 norm_z2_lt).mul_left 16
+  have h := ((h1.add h2).add h3).add h4
+  have hfun : (fun n : ℕ => -16 * (((x : ℝ) : ℂ) ^ n / (n : ℂ) ^ 2)
+      + 16 * (z1 ^ n / (n : ℂ) ^ 2) + -16 * ((-((x : ℝ) : ℂ)) ^ n / (n : ℂ) ^ 2)
+      + 16 * (z2 ^ n / (n : ℂ) ^ 2)) = w2 := by
+    funext n; rw [w2]; ring
+  rw [hfun] at h
+  -- reduce the value: −16·Li₂(x) − 16·Li₂(−x) = −8·Li₂(x²) = −8·Li₂(½)
+  have hd := dilog_add_neg (z := ((x : ℝ) : ℂ)) norm_cx_lt
+  rw [cx_sq] at hd
+  have hval : -16 * Li2 ((x : ℝ) : ℂ) + 16 * Li2 z1 + -16 * Li2 (-((x : ℝ) : ℂ))
+      + 16 * Li2 z2 = ((Real.pi ^ 2 : ℝ) : ℂ) := by
+    have := dilog_special_values
+    linear_combination (-16) * hd + this
+  rw [hval] at h
+  exact h
 
 end PiSqBBPProof
 

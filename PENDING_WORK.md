@@ -1,5 +1,42 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🔻 PiSqBBP lane-2 crux NARROWED to one numeric identity (2026-08-31, autonomous)
+
+`src/NormalNumbers/PiSqBBPProof.lean` (branch `wip/pisq-bbp-decomp`).
+Node `piSqBBP_proved : PiSqBBP` (Formula 29, `HasSum piSqTerm π²`) is now
+a fully-structured proof resting on a SINGLE disclosed `sorry`.
+
+**Machine-checked axiom-clean this run:**
+- Degree-2 roots-of-unity filter `w2 n = (−16·xⁿ+16·z₁ⁿ−16·(−x)ⁿ+16·z̄₁ⁿ)/n²`
+  — the SAME four points as `PiBBP` (DFT of the Formula-29 coeff vector
+  is supported on frequencies {0,1,4,7}, real integer weights; verified
+  in `experiments/pi_sq_bbp.py`).
+- `dilogSummable` (dilog series summable on open disk), `w2_block`,
+  `num0..num7` (residue algebra over I²=−1, x²=½), `hasSum_fiber2`
+  (∑_{r<8} w2(8j+r)=piSqTerm j), assembly via `divModEquiv` +
+  `HasSum.prod_fiberwise`.
+- `dilog_add_neg` : `Li₂ z + Li₂(−z) = ½·Li₂(z²)` — pure even/odd series
+  split, NO special functions (axiom-clean).
+- `hasSum_w2` analytic convergence PROVEN; value reduced via
+  `dilog_add_neg` to the crux below.
+
+**The one remaining `sorry` — `dilog_special_values`:**
+`−8·Li₂(½) + 16·(Li₂ z₁ + Li₂ z̄₁) = π²`, i.e. classically
+`−8·Li₂(½) + 32·Re Li₂((1+i)/2) = π²` with `Li₂(½)=π²/12−½log²2`,
+`Re Li₂((1+i)/2)=5π²/96−⅛log²2` (log²2 cancels).  **Obstruction:**
+mathlib has NO dilogarithm (grep `dilog`/`Li₂`/`polylog` empty); both
+values need the reflection functional equation `Li₂ z + Li₂(1−z) =
+π²/6 − log z·log(1−z)`.  **Next attack (ranked):**
+1. Prove the reflection formula for the local `Li2` via term-wise
+   derivative: `d/dz Li₂ z = −log(1−z)/z`, both sides analytic on the
+   disk, integrate.  Needs `HasDerivAt` of a `tsum` (mathlib
+   `Complex.hasSum_taylorSeries…` / `HasDerivAt.tsum`). Then `Li₂(½)`
+   is the self-dual point and `Re Li₂((1+i)/2)` follows from reflection
+   + duplication at `z=(1+i)/2`, `1−z=z̄`.
+2. Failing that, add the two special values as cited nodes (Lewin,
+   *Polylogarithms*, Table) and discharge only the log²2 cancellation.
+
+
 ## ✅ Tower C1–C8 COMPLETE (2026-08-30, autonomous)
 
 All eight tower claims proved kernel-tier (RESULT table at top of
