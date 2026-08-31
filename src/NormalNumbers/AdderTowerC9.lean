@@ -8,7 +8,8 @@ import NormalNumbers.AdderTowerC9Chunk1
 import NormalNumbers.AdderTowerC9Chunk2
 import NormalNumbers.AdderTowerC9Chunk3
 import NormalNumbers.AdderTowerC9Chunk4a
-import NormalNumbers.AdderTowerC9Chunk4b
+import NormalNumbers.AdderTowerC9Chunk4b1
+import NormalNumbers.AdderTowerC9Chunk4b2
 import NormalNumbers.LnTwoIrrational
 
 /-!
