@@ -1,5 +1,25 @@
 # HANDOFF: π² BBP merged; B–M hot-spot cluster verified; frontier walls mapped 🔌
 
+## 🧱 STUCK (strike 1/2) — verify fast, then confirm
+
+**What's blocked:** the repo-wide sorry-free self-stop gate.
+**Why unsatisfiable by this run:** the ONLY 2 remaining `sorry`s in `src/` are
+`src/NormalNumbers/CFScheduleA.lean:4400` (REFUTED-FALSE) and `:5774` (retired
+schedule-route residue) — BOTH explicitly declared **OFF-LIMITS** by the
+operator brief ("OFF-LIMITS: both CFScheduleA.lean sorries … and the two
+Comparator/Challenge.lean statement holes"). This run is forbidden to attack,
+fill, move, or delete them, so the gate can never be cleared here.
+**Verify (30s):** `grep -rn "  sorry$" src/` → exactly those two lines; confirm
+the operator brief lists them off-limits; full `lake build` green (8833 jobs).
+**Everything the run WAS assigned is done** (see session summary below) and all
+other open ledger/frontier nodes are multi-year-walled or open problems.
+**Operator ask:** re-launch scoped (`--done-when 'sorry-free:<target>'`) so the
+host stops on the intended target, OR decide the fate of the two off-limits
+CFScheduleA sorries. If the fresh lap agrees, its own `box stuck` halts the run.
+
+---
+
+
 Overnight autonomous continuation (operator-authorized 2026-08-30, same night).
 Branch `master`, tree clean, full build green (8833 jobs). Continuation of
 `HANDOFF-2026-08-31-pisq-bbp-proved.md`.
