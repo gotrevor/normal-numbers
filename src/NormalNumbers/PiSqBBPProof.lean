@@ -365,13 +365,44 @@ lemma dilogF_const {z w : ℂ} (hz : z ∈ lensL) (hw : w ∈ lensL) : dilogF z 
       simpa using (hasDerivAt_dilogF hx).hasFDerivAt
     simpa using h.fderiv
 
-/-- **The pinned reflection constant (single disclosed leaf).**
-`dilogF (½) = π²/6`, equivalently `2·Li₂(½) + log²(½) = π²/6`.  This is
-the constant value of the (proved-constant) reflection function `F` on
-the lens, obtained by the `z→0⁺` boundary limit: `Li₂ 0 = 0`,
-`Li₂ 1 = π²/6` (Abel's theorem `Real.tendsto_tsum_powerSeries_nhdsWithin_lt`
-+ `hasSum_zeta_two`), `z·log z → 0`.  The whole π² node now rests here.
-Disclosed 2026-08-31. -/
+open Filter Topology in
+/-- `Li₂ 0 = 0`. -/
+lemma Li2_zero : Li2 (0 : ℂ) = 0 := by
+  rw [Li2]
+  have : (fun n : ℕ => (0 : ℂ) ^ n / (n : ℂ) ^ 2) = fun _ => 0 := by
+    funext n; rcases n with _ | m <;> simp
+  rw [this]; exact tsum_zero
+
+open Filter Topology in
+/-- `Li₂ (↑t) → 0` as `t → 0⁺`. -/
+lemma tendsto_Li2_zero :
+    Tendsto (fun t : ℝ => Li2 (t : ℂ)) (𝓝[>] 0) (𝓝 0) := by
+  have hcont : ContinuousAt Li2 0 :=
+    (hasDerivAt_Li2 (by rw [norm_zero]; norm_num)).continuousAt
+  have hofR : Tendsto (fun t : ℝ => ((t : ℂ))) (𝓝[>] 0) (𝓝 0) :=
+    (Complex.continuous_ofReal.tendsto' 0 0 Complex.ofReal_zero).mono_left nhdsWithin_le_nhds
+  have := (hcont.tendsto).comp hofR
+  rwa [Li2_zero] at this
+
+open Filter Topology in
+/-- `Li₂ (↑s) → π²/6` as `s → 1⁻` — Abel's limit theorem applied to the
+`ζ(2)` series. -/
+lemma tendsto_Li2_one :
+    Tendsto (fun s : ℝ => Li2 (s : ℂ)) (𝓝[<] 1) (𝓝 (((Real.pi ^ 2 / 6 : ℝ)) : ℂ)) := by
+  have hps : Tendsto (fun n : ℕ => ∑ i ∈ Finset.range n, (1 / (i : ℝ) ^ 2))
+      atTop (𝓝 (Real.pi ^ 2 / 6)) := hasSum_zeta_two.tendsto_sum_nat
+  have habel := Real.tendsto_tsum_powerSeries_nhdsWithin_lt
+    (f := fun n : ℕ => 1 / (n : ℝ) ^ 2) hps
+  have hcast := (Complex.continuous_ofReal.tendsto (Real.pi ^ 2 / 6)).comp habel
+  refine hcast.congr ?_
+  intro s
+  rw [Function.comp_apply, Complex.ofReal_tsum]
+  rw [Li2]
+  congr 1
+  funext n
+  push_cast
+  ring
+
 theorem dilogF_value : dilogF (2⁻¹ : ℂ) = ((Real.pi ^ 2 / 6 : ℝ) : ℂ) := by
   sorry
 
