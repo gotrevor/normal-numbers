@@ -16,6 +16,25 @@
   standing-mandate candidate: weigh against novel-proofs doctrine +
   check Literature.lean before claiming novelty.
 
+## 🧭 Graph-frontier state audit (2026-08-31, autonomous)
+
+Verified the ln-2 run tower (the `DIRECTION.md` sink-path frontier):
+- Tier-1 `LnTwoExpSep` is **discharged**, `lnTwoRun_le_unconditional_sharp`
+  (**binary `ln 2` runs at `n` ≤ 9n, unconditional**) + `_holds`/`_sharp`
+  all **axiom-clean** (`[propext, Classical.choice, Quot.sound]`, no
+  `sorryAx`) — re-verified in-kernel this lap.
+- **β<9 sharpening is pin-walled** (route named in `LnTwoExpSepSharp`
+  header): needs PNT-strength `lcm(1..ℓ) ≤ e^{(1+ε)ℓ}`, but mathlib
+  v4.33.1 has no PNT — `Chebyshev` tops out at `theta_le_log4_mul_x`
+  (= the `4^ℓ` already used) and `psi_le_const_mul_self` (worse). Recorded
+  in `docs/lnTwo-kick-blueprint.md` §5 item 6. Future β<9 needs PNT ported
+  first (machinery wall).
+- **Weakest genuinely-open nodes on the sink path** remain the
+  equidistribution/disjunctivity hypotheses `LnTwoHypothesisFreq` /
+  `LnTwoHypothesisLambda` / `LnTwoHypothesisD` and `Equidistributed
+  lnTwoOrbit` — these ARE normality/disjunctivity of `log 2` (hard-open);
+  Tier-2 `LnTwoPolySep` is Mahler-class open. No cheap edge available.
+
 
 ## ✅ PiSqBBP lane-2 node FULLY PROVED, axiom-clean (2026-08-31, autonomous)
 

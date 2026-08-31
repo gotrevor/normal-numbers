@@ -130,8 +130,20 @@ never yield u.d.-or-finite — conclusions must stay at the forcing level, as ou
    numerator `lnTwoNum` — start at `n = p−1` where `A_{p−1} ≡ unit·q_p(2) (mod p)`
    (Glaisher / Z.-H. Sun, formulas in the sweep doc).  Low odds, real magnitude; hold as a
    node, not a campaign.
-6. **Tier-1 discharge** (lane 2, when scheduled): shifted-Legendre package → `LnTwoExpSep`
-   → the unconditional `βn` run bound.  Classical (Rivoal 2008 has the `(μ−1)n` corollary);
-   value is formalization-first plus lighting the tower end-to-end.
+6. ~~**Tier-1 discharge**~~ ✅ **done** (`LnTwoExpSepProof.lean` β=26, `LnTwoExpSepSharp.lean`
+   β=9): shifted-Legendre package → `LnTwoExpSep` → the unconditional `βn` run bound
+   `lnTwoRun_le_unconditional{,_sharp}` (**runs of binary `ln 2` at position `n` are ≤ 9n**,
+   both endpoints axiom-clean, `[propext, Classical.choice, Quot.sound]`, re-verified
+   2026-08-31).  Classical (Rivoal 2008 has the `(μ−1)n` corollary); value was
+   lighting the tower end-to-end + the sharp constant.
+   ⛔ **β below 9 is PIN-WALLED (verified 2026-08-31 against the actual v4.33.1 mathlib
+   surface).** The Sharp header names the blocker precisely: β=9's `nonzero` case needs
+   `lcm(1..ℓ) ≤ 4^ℓ` (Chebyshev), and a PNT-strength `lcm ≤ e^{(1+ε)ℓ}` would give β≈5.
+   But this mathlib pin has **no PNT / no usable `ψ(x) ~ x`**: `Mathlib.NumberTheory.Chebyshev`
+   tops out at `theta_le_log4_mul_x` (θ ≤ log4·x — exactly the `4^ℓ` already in `lcmUpto_le`)
+   and `psi_le_const_mul_self` (ψ ≤ (log4+4)·x, *worse*); no `PrimeNumberTheorem` file exists
+   in the pin. So the β≈5 route is a mathlib-porting / multi-year machinery wall, not a lap —
+   the header's β=9 floor claim is now pin-verified, not just asserted. Any future β<9 attack
+   must first land (or import) PNT-strength Chebyshev asymptotics.
 7. The other option-4 flavors (mixing/discrepancy hypotheses) remain open as conditional
    rungs beside `LnTwoHypothesisFreq`.
