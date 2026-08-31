@@ -7,7 +7,8 @@ import NormalNumbers.AdderTowerC9Chunk0
 import NormalNumbers.AdderTowerC9Chunk1
 import NormalNumbers.AdderTowerC9Chunk2
 import NormalNumbers.AdderTowerC9Chunk3
-import NormalNumbers.AdderTowerC9Chunk4
+import NormalNumbers.AdderTowerC9Chunk4a
+import NormalNumbers.AdderTowerC9Chunk4b
 import NormalNumbers.LnTwoIrrational
 
 /-!
@@ -40,11 +41,12 @@ theorem c9_edges_ok :
   have c1 := checkEdgesOnP_spec c9_chunk1
   have c2 := checkEdgesOnP_spec c9_chunk2
   have c3 := checkEdgesOnP_spec c9_chunk3
-  have c4 := checkEdgesOnP_spec c9_chunk4
+  have c4a := checkEdgesOnP_spec c9_chunk4a
+  have c4b := checkEdgesOnP_spec c9_chunk4b
   rcases (by omega : s' < 6144 ∨ (6144 ≤ s' ∧ s' < 12288)
       ∨ (12288 ≤ s' ∧ s' < 18432) ∨ (18432 ≤ s' ∧ s' < 24576)
-      ∨ (24576 ≤ s' ∧ s' < 30720)) with
-    h | h | h | h | h
+      ∨ (24576 ≤ s' ∧ s' < 27648) ∨ (27648 ≤ s' ∧ s' < 30720)) with
+    h | h | h | h | h | h
   · have := c0 s' h
     rwa [Nat.zero_add] at this
   · have := c1 (s' - 6144) (by omega)
@@ -53,8 +55,10 @@ theorem c9_edges_ok :
     rwa [show 12288 + (s' - 12288) = s' from by omega] at this
   · have := c3 (s' - 18432) (by omega)
     rwa [show 18432 + (s' - 18432) = s' from by omega] at this
-  · have := c4 (s' - 24576) (by omega)
+  · have := c4a (s' - 24576) (by omega)
     rwa [show 24576 + (s' - 24576) = s' from by omega] at this
+  · have := c4b (s' - 27648) (by omega)
+    rwa [show 27648 + (s' - 27648) = s' from by omega] at this
 
 /-- The C9 certificate, kernel tier. -/
 theorem c9_cert_ok :
