@@ -16,6 +16,24 @@
   standing-mandate candidate: weigh against novel-proofs doctrine +
   check Literature.lean before claiming novelty.
 
+## ✅ B–M strong hot spot Thm 3.5 DISCHARGED into a verified edge (2026-08-31)
+
+`baileyMisiurewicz_strong_hot_spot_criterion_holds`
+(`src/NormalNumbers/LiteratureBMStrong.lean`) — the freshly-added ledger
+node (Thm 3.5, uniform-`C` block-occurrence ⇒ normality) is now an
+independently machine-checked **edge**, axiom-clean
+(`[propext, Classical.choice, Quot.sound]`, no `sorryAx`). Proof routes the
+block-occurrence hypothesis to the repo's proven `isNormal_of_visit_upper_bound`:
+- `blockOfNat` + `blockNatVal_blockOfNat`/`blockOfNat_lt`/`length_blockOfNat`
+  — the big-endian base-`b` `k`-digit word of `m < bᵏ` (round-trips);
+- `matchesAt_iff_occursAt` + `occursAt_iff_orbit_mem` — block occurrence =
+  b-adic-interval visit; `visitCount_eq_card_matchesAt` packages it;
+- `eventually_visit_bound_of_limsup` — the analytic step: `limsup` bound +
+  the clipped/unclipped gap (`card_filter_matchesAt_le`, `≤ |w|`) + vanishing
+  boundary term `bᵏ|w|/n → 0` ⇒ the eventual visit bound.
+Same "upgrade cite→verify" move as `adamczewskiRampersad_boundary_holds`.
+Ledger `def` + brief RESULT marked WIRED.
+
 ## 🧭 Graph-frontier state audit (2026-08-31, autonomous)
 
 Verified the ln-2 run tower (the `DIRECTION.md` sink-path frontier):

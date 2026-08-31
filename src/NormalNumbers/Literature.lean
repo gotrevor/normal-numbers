@@ -339,7 +339,9 @@ every `y ∈ {0,…,b−1}^ℕ` and every prefix length `m` — then `x` is
 `b`-normal.  (In §4 this is applied to `stoneham23` with `C = 8`.)
 
 provenance: primary (`papers/bailey-misiurewicz-2006-hot-spot.md` §3–4 +
-local PDF). -/
+local PDF).  **WIRED**: `baileyMisiurewicz_strong_hot_spot_criterion_holds`
+(`LiteratureBMStrong.lean`) proves this from the repo's
+`isNormal_of_visit_upper_bound`, axiom-clean — an independent verification. -/
 def baileyMisiurewicz_strong_hot_spot_criterion : Prop :=
   ∀ (b : ℕ), 2 ≤ b → ∀ x : ℝ,
     (∃ C : ℝ, ∀ (y : ℕ → ℕ), (∀ i, y i < b) → ∀ m : ℕ,
