@@ -42,11 +42,13 @@ theorem c9_edges_ok :
   have c2 := checkEdgesOnP_spec c9_chunk2
   have c3 := checkEdgesOnP_spec c9_chunk3
   have c4a := checkEdgesOnP_spec c9_chunk4a
-  have c4b := checkEdgesOnP_spec c9_chunk4b
+  have c4b1 := checkEdgesOnP_spec c9_chunk4b1
+  have c4b2 := checkEdgesOnP_spec c9_chunk4b2
   rcases (by omega : s' < 6144 ∨ (6144 ≤ s' ∧ s' < 12288)
       ∨ (12288 ≤ s' ∧ s' < 18432) ∨ (18432 ≤ s' ∧ s' < 24576)
-      ∨ (24576 ≤ s' ∧ s' < 27648) ∨ (27648 ≤ s' ∧ s' < 30720)) with
-    h | h | h | h | h | h
+      ∨ (24576 ≤ s' ∧ s' < 27648) ∨ (27648 ≤ s' ∧ s' < 29184)
+      ∨ (29184 ≤ s' ∧ s' < 30720)) with
+    h | h | h | h | h | h | h
   · have := c0 s' h
     rwa [Nat.zero_add] at this
   · have := c1 (s' - 6144) (by omega)
@@ -57,8 +59,10 @@ theorem c9_edges_ok :
     rwa [show 18432 + (s' - 18432) = s' from by omega] at this
   · have := c4a (s' - 24576) (by omega)
     rwa [show 24576 + (s' - 24576) = s' from by omega] at this
-  · have := c4b (s' - 27648) (by omega)
+  · have := c4b1 (s' - 27648) (by omega)
     rwa [show 27648 + (s' - 27648) = s' from by omega] at this
+  · have := c4b2 (s' - 29184) (by omega)
+    rwa [show 29184 + (s' - 29184) = s' from by omega] at this
 
 /-- The C9 certificate, kernel tier. -/
 theorem c9_cert_ok :
