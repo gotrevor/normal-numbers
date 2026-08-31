@@ -1,5 +1,80 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ PiSqBBP lane-2 node FULLY PROVED, axiom-clean (2026-08-31, autonomous)
+
+`piSqBBP_proved : PiSqBBP` (Bailey Formula 29, `HasSum piSqTerm π²`) is
+DISCHARGED — `#print axioms` = `[propext, Classical.choice, Quot.sound]`,
+no `sorryAx`.  mathlib had no dilogarithm, so the full theory was built:
+`Li2` + summability, term-wise derivative (`hasDerivAt_Li2'`:
+`Li₂'w=−log(1−w)/w`), duplication (`dilog_add_neg`), the **reflection
+formula** (`dilog_reflection`, via `F'≡0` on the lens `ball 0 1 ∩ ball 1 1`
++ constant pinned by the `t→0⁺` limit using Abel/`hasSum_zeta_two`),
+`dilog_special_values`, and the fiber assembly.  All in
+`src/NormalNumbers/PiSqBBPProof.lean` on branch `wip/pisq-bbp-decomp`.
+The history below records the incremental laps.
+
+## 🔻 (historical) PiSqBBP lane-2 crux narrowing (2026-08-31, autonomous)
+
+`src/NormalNumbers/PiSqBBPProof.lean` (branch `wip/pisq-bbp-decomp`).
+Node `piSqBBP_proved : PiSqBBP` (Formula 29, `HasSum piSqTerm π²`) is now
+a fully-structured proof resting on a SINGLE disclosed `sorry`.
+
+**Machine-checked axiom-clean this run:**
+- Degree-2 roots-of-unity filter `w2 n = (−16·xⁿ+16·z₁ⁿ−16·(−x)ⁿ+16·z̄₁ⁿ)/n²`
+  — the SAME four points as `PiBBP` (DFT of the Formula-29 coeff vector
+  is supported on frequencies {0,1,4,7}, real integer weights; verified
+  in `experiments/pi_sq_bbp.py`).
+- `dilogSummable` (dilog series summable on open disk), `w2_block`,
+  `num0..num7` (residue algebra over I²=−1, x²=½), `hasSum_fiber2`
+  (∑_{r<8} w2(8j+r)=piSqTerm j), assembly via `divModEquiv` +
+  `HasSum.prod_fiberwise`.
+- `dilog_add_neg` : `Li₂ z + Li₂(−z) = ½·Li₂(z²)` — pure even/odd series
+  split, NO special functions (axiom-clean).
+- `hasSum_w2` analytic convergence PROVEN; value reduced via
+  `dilog_add_neg` to the crux below.
+
+**The one remaining `sorry` — `dilog_reflection`** (2026-08-31, further
+narrowed): `Li₂ z + Li₂(1−z) = π²/6 − log z·log(1−z)` for `z, 1−z` both
+in the open unit disk.  **Foundation now built (2026-08-31, axiom-clean):**
+`hasDerivAt_Li2` (term-wise derivative of the `Li2` tsum on any sub-ball,
+via `hasDerivAt_tsum_of_isPreconnected` + geometric bound),
+`tsum_Li2_deriv` (its closed form `−log(1−w)/w` for `w≠0`, via
+`Complex.hasSum_taylorSeries_neg_log`), and `hasDerivAt_Li2'`
+(`HasDerivAt Li2 (−log(1−w)/w) w`), and **`hasDerivAt_dilogRefl`**
+(2026-08-31, axiom-clean): `HasDerivAt (fun w => Li₂ w + Li₂(1−w) +
+log w·log(1−w)) 0 z` on the region `‖z‖<1 ∧ ‖1−z‖<1 ∧ z,1−z ∈ slitPlane`
+— the F'≡0 core.  **Constancy now PROVED (2026-08-31, axiom-clean):**
+`lensL := ball 0 1 ∩ ball 1 1` (= `{‖z‖<1 ∧ ‖1−z‖<1}`) is convex/open and
+`mem_slitPlane_of_mem_lensL` shows `lensL ⊆ slitPlane` (a real point of the
+lens has `0<re<1`), so `hasDerivAt_dilogF` holds on all of `lensL` and
+`dilogF_const` (`IsOpen.is_const_of_fderiv_eq_zero`) gives `F` constant on
+the lens.  `dilog_reflection` is now `dilogF_const z ½` + `dilogF_value`.
+**THE ONE REMAINING `sorry` — `dilogF_value`:** `dilogF(½) = π²/6`
+(equivalently `2·Li₂(½)+log²(½)=π²/6`; and `C=π²/6` IS the whole content —
+target `−8Li₂(½)+16(Li₂z₁+Li₂z₂)=π²` ⟺ `12C−π²=π²`).  **Next attack:**
+`dilogF` is constant on `lensL`, so `dilogF(½) = lim_{t→0⁺} dilogF(t)`
+(t real, `t ∈ lensL` for `0<t<1`; use `dilogF_const` + a `Tendsto` of the
+constant, OR `ContinuousWithinAt`).  `dilogF(t) = Li₂ t + Li₂(1−t) +
+log t·log(1−t)`: `Li₂ t → Li₂ 0 = 0` (Li2 continuous at 0), `Li₂(1−t) →
+π²/6` via **Abel** `Real.tendsto_tsum_powerSeries_nhdsWithin_lt` with
+coeffs `1/n²` and partial sums `→ π²/6` (`hasSum_zeta_two`), and
+`log t·log(1−t) → 0` (`log(1−t) ~ −t`, `t·log t → 0`).  Assemble the three
+limits, uniqueness of limits pins `dilogF(½)=π²/6`.  `dilog_special_values` is PROVEN from `dilog_reflection`
+(reflection at `z=½` self-dual and at `z=z₁` with `1−z₁=z̄₁`, using the
+`PiBBPProof` log values `log z₁=−½log2+(π/4)i`, `log z₂=−½log2−(π/4)i`,
+`log ½=−log2`; all arithmetic machine-checked, `linear_combination` over
+`I²=−1`).  So the ENTIRE π² node now rests on this one functional
+equation.  **Obstruction:** mathlib has NO dilogarithm.  **Next attack:**
+prove `dilog_reflection` for the local `Li2` via term-wise derivative —
+`HasDerivAt Li2 (−log(1−w)/w) w` on the disk (differentiate the `tsum`;
+`Mathlib/Analysis/Calculus/SmoothSeries.lean` `hasDerivAt_tsum` or the
+power-series `HasFPowerSeriesOnBall.hasDerivAt`), then `F z := Li₂ z +
+Li₂(1−z) + log z·log(1−z)` has `F'≡0` on the (connected) slit disk, so
+`F` is constant `= π²/6` (limit `z→0`, `Li₂ 0=0`, `Li₂ 1 = ∑1/n² =
+π²/6` — mathlib `hasSum_zeta_two`/basel).  Fallback: cite the reflection
+formula as a lane-2 node (Lewin, *Polylogarithms* eq. 1.11).
+
+
 ## ✅ Tower C1–C8 COMPLETE (2026-08-30, autonomous)
 
 All eight tower claims proved kernel-tier (RESULT table at top of
