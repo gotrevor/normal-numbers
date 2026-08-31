@@ -329,7 +329,10 @@ has a pointwise hot spot `y` whose length-`m` prefixes occur with density
 a cylinder Besicovitch covering lemma.
 
 provenance: primary (`papers/bailey-misiurewicz-2006-hot-spot.md` §3 +
-local PDF, complete AMS text). -/
+local PDF, complete AMS text).  **Forward direction VERIFIED**:
+`normal_no_seqHotSpot` (`LiteratureBMStrong.lean`) proves normal ⇒ no hot
+spot (axiom-clean); the converse (non-normal ⇒ hot spot) needs weak-*
+compactness + Besicovitch covering, not yet formalized. -/
 def baileyMisiurewicz_strong_hot_spot : Prop :=
   ∀ (b : ℕ), 2 ≤ b → ∀ x : ℝ,
     (IsNormal b x ↔ ¬ ∃ y : ℕ → ℕ, IsSeqHotSpot b x y)

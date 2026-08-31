@@ -15,7 +15,7 @@ briefs are pointed at it (module docstring).  Statements landed:
 | `furstenberg_dense_orbit` (×2×3 dense orbits) | S (`docs/disjunctive-vs-normal.md` §1.2) | unproved def |
 | `becherYuhjtman_existence` (Thm 1 minus efficiency) | P (`papers/becher-yuhjtman-…`) | **WIRED**: `…_holds` := `exists_absolutely_normal_cf_normal` ✅ |
 | `baileyMisiurewicz_weak_hot_spot` (Thm 1.1 full iff, limsup form) | P (`papers/bailey-misiurewicz-…`, complete AMS text) | **WIRED**: `…_holds` proves the full iff (`⟸` visit criterion, `⟹` Wall), axiom-clean ✅ |
-| `baileyMisiurewicz_strong_hot_spot` (Thm 3.4, sequence-space iff, `IsSeqHotSpot`/`bmHotSpotRatio`) | P (`papers/bailey-misiurewicz-…` §3) | unproved def |
+| `baileyMisiurewicz_strong_hot_spot` (Thm 3.4, sequence-space iff, `IsSeqHotSpot`/`bmHotSpotRatio`) | P (`papers/bailey-misiurewicz-…` §3) | **forward verified**: `normal_no_seqHotSpot` (normal⇒no hot spot), axiom-clean; converse needs compactness ◐ |
 | `baileyMisiurewicz_strong_hot_spot_criterion` (Thm 3.5, uniform-`C` sufficient form, §4 `C=8`) | P (same §3–4) | **WIRED**: `…_holds` proved here from `isNormal_of_visit_upper_bound` (`LiteratureBMStrong.lean`), axiom-clean ✅ |
 | `philipp_psi_mixing` (Satz 3 / Scheerer Thm 2.1, exp. ψ-mixing on cylinders, `cfCylinderFrom`) | S (`papers/scheerer-2017-cf-abs-normal.md` §2) | unproved def |
 | `vandehey_matrix_action` (Thm 1.1, det ≠ 0) | P (`papers/vandehey-2017-…`) | unproved def |

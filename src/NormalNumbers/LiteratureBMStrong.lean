@@ -290,4 +290,47 @@ theorem baileyMisiurewicz_weak_hot_spot_holds : baileyMisiurewicz_weak_hot_spot 
       gcongr; linarith [le_abs_self B]
     exact eventually_ratio_le_of_limsup_le (fun n => visitCount_le _ _ _ n) hlt hlim
 
+/-! ## B–M Theorem 3.4, the forward direction (normal ⇒ no hot spot) -/
+
+/-- Under normality, every scaled prefix-visit ratio equals `1`: for a valid
+digit sequence `y` and prefix length `m ≥ 1`, `bmHotSpotRatio b x y m = 1`
+(block frequency `→ b⁻ᵐ`, scaled by `bᵐ`). -/
+theorem bmHotSpotRatio_eq_one_of_normal {b : ℕ} (hb : 2 ≤ b) {x : ℝ}
+    (hn : IsNormal b x) {y : ℕ → ℕ} (hyb : ∀ i, y i < b) {m : ℕ} (hm : 1 ≤ m) :
+    bmHotSpotRatio b x y m = 1 := by
+  have hns : IsNormalSequence b (digitOf b (Int.fract x)) := hn
+  set w : List ℕ := (List.range m).map y with hw
+  have hwlen : w.length = m := by rw [hw, List.length_map, List.length_range]
+  have hwne : w ≠ [] := by
+    intro h; rw [h, List.length_nil] at hwlen; omega
+  have hwd : ∀ d ∈ w, d < b := by
+    intro d hd; rw [hw, List.mem_map] at hd
+    obtain ⟨i, _, rfl⟩ := hd; exact hyb i
+  have htend := hns w hwne hwd
+  rw [bmHotSpotRatio, ← hw]
+  have hbm : ((b : ℝ) ^ m)⁻¹ ≠ 0 := by positivity
+  have hlim1 : Filter.Tendsto
+      (fun n => (b : ℝ) ^ m *
+        (countOccurrences w ((List.range n).map (digitOf b (Int.fract x))) : ℝ) / n)
+      Filter.atTop (nhds 1) := by
+    have h2 := htend.const_mul ((b : ℝ) ^ m)
+    rw [hwlen] at h2
+    have hone : (b : ℝ) ^ m * ((b : ℝ) ^ m)⁻¹ = 1 := by
+      rw [mul_inv_cancel₀ (by positivity)]
+    rw [hone] at h2
+    convert h2 using 2 with n
+    ring
+  rw [hlim1.limsup_eq]
+
+/-- **Bailey–Misiurewicz 2006, Theorem 3.4 — forward direction VERIFIED.**  A
+normal `x` has no sequence-space hot spot: each ratio is `1`, so none diverges.
+(The converse — a non-normal `x` *has* a hot spot — needs weak-* compactness +
+shift ergodicity + a cylinder Besicovitch covering, not yet formalized.) -/
+theorem normal_no_seqHotSpot {b : ℕ} (hb : 2 ≤ b) {x : ℝ} (hn : IsNormal b x) :
+    ¬ ∃ y : ℕ → ℕ, IsSeqHotSpot b x y := by
+  rintro ⟨y, hyb, hyhot⟩
+  obtain ⟨m, hm2, hm1⟩ := ((hyhot 2).and (Filter.eventually_ge_atTop 1)).exists
+  rw [bmHotSpotRatio_eq_one_of_normal hb hn hyb hm1] at hm2
+  linarith
+
 end NormalNumbers.Literature
