@@ -1,6 +1,19 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
-## 🔻 PiSqBBP lane-2 crux NARROWED to one numeric identity (2026-08-31, autonomous)
+## ✅ PiSqBBP lane-2 node FULLY PROVED, axiom-clean (2026-08-31, autonomous)
+
+`piSqBBP_proved : PiSqBBP` (Bailey Formula 29, `HasSum piSqTerm π²`) is
+DISCHARGED — `#print axioms` = `[propext, Classical.choice, Quot.sound]`,
+no `sorryAx`.  mathlib had no dilogarithm, so the full theory was built:
+`Li2` + summability, term-wise derivative (`hasDerivAt_Li2'`:
+`Li₂'w=−log(1−w)/w`), duplication (`dilog_add_neg`), the **reflection
+formula** (`dilog_reflection`, via `F'≡0` on the lens `ball 0 1 ∩ ball 1 1`
++ constant pinned by the `t→0⁺` limit using Abel/`hasSum_zeta_two`),
+`dilog_special_values`, and the fiber assembly.  All in
+`src/NormalNumbers/PiSqBBPProof.lean` on branch `wip/pisq-bbp-decomp`.
+The history below records the incremental laps.
+
+## 🔻 (historical) PiSqBBP lane-2 crux narrowing (2026-08-31, autonomous)
 
 `src/NormalNumbers/PiSqBBPProof.lean` (branch `wip/pisq-bbp-decomp`).
 Node `piSqBBP_proved : PiSqBBP` (Formula 29, `HasSum piSqTerm π²`) is now

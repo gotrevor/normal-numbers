@@ -44,18 +44,25 @@ identity is then the classical dilog special-value combination
 `Li₂(½) = π²/12 − ½log²2` and `Re Li₂((1+i)/2) = 5π²/96 − ⅛log²2`
 (the `log²2` terms cancel: `−8·(−½) + 32·(−⅛) = 0`).
 
-**Obstruction (recorded 2026-08-31):** mathlib has NO dilogarithm — `grep`
-for `dilog`/`Li₂`/`polylog` over `Mathlib/` is empty.  Both special values
-are individually theorems requiring the dilog reflection/inversion
-functional equations, which need the dilog defined as
-`Li₂(z) = −∫₀^z log(1−t)/t dt` plus its derivative theory — a genuine
-project.  This lap DECOMPOSES the node: the summability foundation
-(`dilogSummable`), the four-point series plumbing (`hasSum_w2_of_tsums`),
-the duplication identity (`dilog_add_neg`), and the entire fiber algebra
-are proved in-kernel; `hasSum_w2` is left as a single disclosed `sorry`
-whose content is precisely the two special values above.  Next attack:
-build `Li₂` and its reflection formula, or import the two special values
-as cited nodes and discharge the `log²2` cancellation.
+**STATUS (2026-08-31): FULLY PROVED, axiom-clean.**  mathlib has no
+dilogarithm, so the whole theory was built from scratch here:
+* `Li2 z := ∑' zⁿ/n²` with `dilogSummable`;
+* term-wise derivative `hasDerivAt_Li2` / closed form `hasDerivAt_Li2'`
+  (`Li₂' w = −log(1−w)/w`);
+* the duplication `dilog_add_neg` (even/odd split, no special functions);
+* the **reflection formula** `dilog_reflection`
+  (`Li₂ z + Li₂(1−z) = π²/6 − log z·log(1−z)`), proved by `F' ≡ 0` on the
+  lens `ball 0 1 ∩ ball 1 1` (`hasDerivAt_dilogRefl` + `dilogF_const`)
+  with the constant pinned to `π²/6` by the `t→0⁺` boundary limit
+  (`dilogF_value`: `Li₂ 0 = 0`, `Li₂ 1 = π²/6` via Abel + `hasSum_zeta_two`,
+  `log t·log(1−t) → 0`);
+* `dilog_special_values` (`−8·Li₂(½) + 16·(Li₂ z₁ + Li₂ z̄₁) = π²`) from
+  reflection at `½` and `z₁`;
+* `hasSum_w2` (analytic convergence) + `hasSum_fiber2` (fiber algebra) →
+  `piSqBBP_proved` via `divModEquiv` + `HasSum.prod_fiberwise`.
+
+`#print axioms piSqBBP_proved` = `[propext, Classical.choice, Quot.sound]`
+(no `sorryAx`).
 -/
 
 namespace NormalNumbers
@@ -403,8 +410,93 @@ lemma tendsto_Li2_one :
   push_cast
   ring
 
+open Filter Topology in
+/-- `Real.log t · Real.log (1−t) → 0` as `t → 0⁺`:
+`= (t·log t)·(log(1−t)/t) → 0·(−1)`. -/
+lemma tendsto_reallogprod :
+    Tendsto (fun t : ℝ => Real.log t * Real.log (1 - t)) (𝓝[>] 0) (𝓝 0) := by
+  have h1 : Tendsto (fun t : ℝ => t * Real.log t) (𝓝[>] 0) (𝓝 0) := by
+    have hc := continuous_negMulLog.tendsto (0 : ℝ)
+    rw [negMulLog_zero] at hc
+    simpa [negMulLog] using (hc.mono_left nhdsWithin_le_nhds).neg
+  have inner : HasDerivAt (fun t : ℝ => 1 - t) (-1) 0 := by
+    simpa using (hasDerivAt_id (0 : ℝ)).const_sub 1
+  have outer : HasDerivAt Real.log (1 : ℝ)⁻¹ (1 - (0 : ℝ)) := by
+    rw [sub_zero]; exact Real.hasDerivAt_log (by norm_num)
+  have hd : HasDerivAt (fun t : ℝ => Real.log (1 - t)) (-1) 0 := by
+    have h := outer.comp 0 inner
+    simpa [Function.comp_def] using h
+  have hsub : 𝓝[>] (0 : ℝ) ≤ 𝓝[≠] (0 : ℝ) :=
+    nhdsWithin_mono _ (fun x hx => ne_of_gt hx)
+  have h2 : Tendsto (fun t : ℝ => Real.log (1 - t) / t) (𝓝[>] 0) (𝓝 (-1)) := by
+    refine ((hasDerivAt_iff_tendsto_slope.mp hd).mono_left hsub).congr ?_
+    intro t
+    simp [slope_def_field, Real.log_one]
+  have hprod : Tendsto (fun t : ℝ => t * Real.log t * (Real.log (1 - t) / t))
+      (𝓝[>] 0) (𝓝 0) := by simpa using h1.mul h2
+  refine hprod.congr' ?_
+  filter_upwards [self_mem_nhdsWithin] with t ht
+  have ht0 : t ≠ 0 := ne_of_gt ht
+  field_simp
+
+open Filter Topology in
+/-- `log t · log(1−t) → 0` (complex logs of the real approach) as `t→0⁺`. -/
+lemma tendsto_logprod :
+    Tendsto (fun t : ℝ => Complex.log (t : ℂ) * Complex.log (1 - (t : ℂ))) (𝓝[>] 0) (𝓝 0) := by
+  have hcast : Tendsto (fun t : ℝ => (((Real.log t * Real.log (1 - t) : ℝ)) : ℂ))
+      (𝓝[>] 0) (𝓝 0) := by
+    have := (Complex.continuous_ofReal.tendsto' 0 0 Complex.ofReal_zero).comp tendsto_reallogprod
+    simpa only [Function.comp_def] using this
+  have hlt : ∀ᶠ t in 𝓝[>] (0 : ℝ), t < 1 :=
+    nhdsWithin_le_nhds (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))
+  refine hcast.congr' ?_
+  filter_upwards [self_mem_nhdsWithin, hlt] with t ht ht1
+  have hpos : (0 : ℝ) ≤ t := le_of_lt ht
+  have hpos2 : (0 : ℝ) ≤ 1 - t := by simp only [Set.mem_Ioi] at ht; linarith
+  rw [show (1 : ℂ) - (t : ℂ) = ((1 - t : ℝ) : ℂ) by push_cast; ring,
+    ← Complex.ofReal_log hpos, ← Complex.ofReal_log hpos2, ← Complex.ofReal_mul]
+
+open Filter Topology in
 theorem dilogF_value : dilogF (2⁻¹ : ℂ) = ((Real.pi ^ 2 / 6 : ℝ) : ℂ) := by
-  sorry
+  -- as `t → 0⁺`, `1 − t → 1⁻`
+  have hmap : Tendsto (fun t : ℝ => 1 - t) (𝓝[>] (0 : ℝ)) (𝓝[<] (1 : ℝ)) := by
+    apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
+    · have hc : Continuous (fun t : ℝ => 1 - t) := continuous_const.sub continuous_id
+      simpa using (hc.tendsto (0 : ℝ)).mono_left nhdsWithin_le_nhds
+    · filter_upwards [self_mem_nhdsWithin] with t ht
+      simp only [Set.mem_Iio]; simp only [Set.mem_Ioi] at ht; linarith
+  -- `Li₂(1 − ↑t) → π²/6`
+  have hLi2one : Tendsto (fun t : ℝ => Li2 (1 - (t : ℂ))) (𝓝[>] (0 : ℝ))
+      (𝓝 (((Real.pi ^ 2 / 6 : ℝ)) : ℂ)) := by
+    refine (tendsto_Li2_one.comp hmap).congr ?_
+    intro t
+    simp only [Function.comp_apply]
+    congr 1
+    push_cast; ring
+  -- assemble the three limits: `dilogF ↑t → 0 + π²/6 + 0`
+  have hlim : Tendsto (fun t : ℝ => dilogF (t : ℂ)) (𝓝[>] (0 : ℝ))
+      (𝓝 (((Real.pi ^ 2 / 6 : ℝ)) : ℂ)) := by
+    have h := (tendsto_Li2_zero.add hLi2one).add tendsto_logprod
+    simpa [dilogF] using h
+  -- `dilogF ↑t` is eventually constant `= dilogF ½` (constancy on the lens)
+  have hhalf : (2⁻¹ : ℂ) ∈ lensL := by
+    rw [mem_lensL, show (1 : ℂ) - 2⁻¹ = 2⁻¹ by ring, norm_inv]
+    norm_num [Complex.norm_ofNat]
+  have hlt : ∀ᶠ t in 𝓝[>] (0 : ℝ), t < 1 :=
+    nhdsWithin_le_nhds (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))
+  have hconst : Tendsto (fun t : ℝ => dilogF (t : ℂ)) (𝓝[>] (0 : ℝ))
+      (𝓝 (dilogF (2⁻¹ : ℂ))) := by
+    refine tendsto_const_nhds.congr' ?_
+    filter_upwards [self_mem_nhdsWithin, hlt] with t ht ht1
+    simp only [Set.mem_Ioi] at ht
+    have htL : (t : ℂ) ∈ lensL := by
+      rw [mem_lensL]
+      refine ⟨?_, ?_⟩
+      · rw [Complex.norm_real, Real.norm_eq_abs, abs_of_pos ht]; exact ht1
+      · rw [show (1 : ℂ) - (t : ℂ) = ((1 - t : ℝ) : ℂ) by push_cast; ring,
+          Complex.norm_real, Real.norm_eq_abs, abs_of_pos (by linarith)]; linarith
+    exact (dilogF_const htL hhalf).symm
+  exact tendsto_nhds_unique hconst hlim
 
 /-- **Dilog reflection formula (frozen crux).**  For `z` and `1−z` both
 in the open unit disk,
