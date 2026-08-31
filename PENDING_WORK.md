@@ -20,21 +20,22 @@ a fully-structured proof resting on a SINGLE disclosed `sorry`.
 - `hasSum_w2` analytic convergence PROVEN; value reduced via
   `dilog_add_neg` to the crux below.
 
-**The one remaining `sorry` — `dilog_special_values`:**
-`−8·Li₂(½) + 16·(Li₂ z₁ + Li₂ z̄₁) = π²`, i.e. classically
-`−8·Li₂(½) + 32·Re Li₂((1+i)/2) = π²` with `Li₂(½)=π²/12−½log²2`,
-`Re Li₂((1+i)/2)=5π²/96−⅛log²2` (log²2 cancels).  **Obstruction:**
-mathlib has NO dilogarithm (grep `dilog`/`Li₂`/`polylog` empty); both
-values need the reflection functional equation `Li₂ z + Li₂(1−z) =
-π²/6 − log z·log(1−z)`.  **Next attack (ranked):**
-1. Prove the reflection formula for the local `Li2` via term-wise
-   derivative: `d/dz Li₂ z = −log(1−z)/z`, both sides analytic on the
-   disk, integrate.  Needs `HasDerivAt` of a `tsum` (mathlib
-   `Complex.hasSum_taylorSeries…` / `HasDerivAt.tsum`). Then `Li₂(½)`
-   is the self-dual point and `Re Li₂((1+i)/2)` follows from reflection
-   + duplication at `z=(1+i)/2`, `1−z=z̄`.
-2. Failing that, add the two special values as cited nodes (Lewin,
-   *Polylogarithms*, Table) and discharge only the log²2 cancellation.
+**The one remaining `sorry` — `dilog_reflection`** (2026-08-31, further
+narrowed): `Li₂ z + Li₂(1−z) = π²/6 − log z·log(1−z)` for `z, 1−z` both
+in the open unit disk.  `dilog_special_values` is now PROVEN from it
+(reflection at `z=½` self-dual and at `z=z₁` with `1−z₁=z̄₁`, using the
+`PiBBPProof` log values `log z₁=−½log2+(π/4)i`, `log z₂=−½log2−(π/4)i`,
+`log ½=−log2`; all arithmetic machine-checked, `linear_combination` over
+`I²=−1`).  So the ENTIRE π² node now rests on this one functional
+equation.  **Obstruction:** mathlib has NO dilogarithm.  **Next attack:**
+prove `dilog_reflection` for the local `Li2` via term-wise derivative —
+`HasDerivAt Li2 (−log(1−w)/w) w` on the disk (differentiate the `tsum`;
+`Mathlib/Analysis/Calculus/SmoothSeries.lean` `hasDerivAt_tsum` or the
+power-series `HasFPowerSeriesOnBall.hasDerivAt`), then `F z := Li₂ z +
+Li₂(1−z) + log z·log(1−z)` has `F'≡0` on the (connected) slit disk, so
+`F` is constant `= π²/6` (limit `z→0`, `Li₂ 0=0`, `Li₂ 1 = ∑1/n² =
+π²/6` — mathlib `hasSum_zeta_two`/basel).  Fallback: cite the reflection
+formula as a lane-2 node (Lewin, *Polylogarithms* eq. 1.11).
 
 
 ## ✅ Tower C1–C8 COMPLETE (2026-08-30, autonomous)

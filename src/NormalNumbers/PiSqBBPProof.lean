@@ -206,20 +206,49 @@ lemma hasSum_fiber2 (j : ℕ) :
 
 /-! ### The analytic crux (single disclosed leaf) -/
 
-/-- **The reduced crux (single disclosed leaf).**  After the duplication
-`dilog_add_neg` folds `−16·Li₂(x) − 16·Li₂(−x)` into `−8·Li₂(½)` and the
-conjugate points pair up, the master identity is exactly this pure
-equation between complex numbers:
-`−8·Li₂(½) + 16·(Li₂ z₁ + Li₂ z̄₁) = π²`.
+/-- **Dilog reflection formula (frozen crux).**  For `z` and `1−z` both
+in the open unit disk,
+`Li₂ z + Li₂ (1−z) = π²/6 − log z · log(1−z)`.
 
-This is the classical special-value combination `−8·Li₂(½) +
-32·Re Li₂((1+i)/2) = π²` (`Li₂ z₂ = conj (Li₂ z₁)` since `z₂ = z̄₁`, so
-`Li₂ z₁ + Li₂ z₂ = 2·Re Li₂ z₁`), with `Li₂(½)=π²/12−½log²2` and
-`Re Li₂((1+i)/2)=5π²/96−⅛log²2`.  mathlib has no dilogarithm; both values
-need the reflection functional equation.  Disclosed 2026-08-31. -/
+This is the ONE deep fact the π² BBP node now rests on.  Standard proof:
+the local `Li2` satisfies `Li₂' w = −log(1−w)/w` (term-wise derivative of
+the series), so `F z := Li₂ z + Li₂(1−z) + log z·log(1−z)` has `F' ≡ 0`
+on the disk minus `{0,1}`, hence is constant `= π²/6` (limit `z→0`,
+`Li₂ 0 = 0`, `Li₂ 1 = π²/6`).  Needs `HasDerivAt` of a `tsum`
+(`Mathlib/Analysis/Calculus/SmoothSeries.lean`), connectedness, and the
+`z→0` limit — a multi-lap build.  Disclosed 2026-08-31. -/
+theorem dilog_reflection {z : ℂ} (hz : ‖z‖ < 1) (hz1 : ‖1 - z‖ < 1) :
+    Li2 z + Li2 (1 - z)
+      = ((Real.pi ^ 2 / 6 : ℝ) : ℂ) - Complex.log z * Complex.log (1 - z) := by
+  sorry
+
+/-- The π² special-value combination, DERIVED from `dilog_reflection`
+at `z = ½` (self-dual) and `z = z₁` (`1 − z₁ = z̄₁`), using the log
+values `log z₁ = −½log2 + (π/4)i`, `log z₂ = −½log2 − (π/4)i` (from
+`PiBBPProof`) and `log ½ = −log 2`.  All arithmetic machine-checked. -/
 theorem dilog_special_values :
     (-8) * Li2 (2⁻¹ : ℂ) + 16 * (Li2 z1 + Li2 z2) = ((Real.pi ^ 2 : ℝ) : ℂ) := by
-  sorry
+  have hhalf : ‖(2⁻¹ : ℂ)‖ < 1 := by rw [norm_inv]; norm_num
+  have hh1 : (1 : ℂ) - 2⁻¹ = 2⁻¹ := by ring
+  have r1 := dilog_reflection (z := (2⁻¹ : ℂ)) hhalf (by rw [hh1]; exact hhalf)
+  rw [hh1] at r1
+  have h1z1 : (1 : ℂ) - z1 = z2 := by rw [z1, z2]; ring
+  have r2 := dilog_reflection (z := z1) norm_z1_lt (by rw [h1z1]; exact norm_z2_lt)
+  rw [h1z1] at r2
+  have log_z1 : Complex.log z1
+      = ((-(Real.log 2 / 2) : ℝ) : ℂ) + ((π / 4 : ℝ) : ℂ) * I := by
+    have := log_one_sub_z2; rwa [show (1 : ℂ) - z2 = z1 by rw [z1, z2]; ring] at this
+  have log_z2 : Complex.log z2
+      = ((-(Real.log 2 / 2) : ℝ) : ℂ) + ((-(π / 4) : ℝ) : ℂ) * I := by
+    have := log_one_sub_z1; rwa [show (1 : ℂ) - z1 = z2 by rw [z1, z2]; ring] at this
+  have log_half : Complex.log (2⁻¹ : ℂ) = -((Real.log 2 : ℝ) : ℂ) := by
+    rw [show (2⁻¹ : ℂ) = (((2⁻¹ : ℝ)) : ℂ) by push_cast; ring,
+      ← Complex.ofReal_log (by norm_num), Real.log_inv]
+    push_cast; ring
+  rw [log_half] at r1
+  rw [log_z1, log_z2] at r2
+  push_cast at r1 r2 ⊢
+  linear_combination (-4 : ℂ) * r1 + 16 * r2 + ((Real.pi : ℂ) ^ 2) * Complex.I_sq
 
 /-- **The master dilog sum.**  The analytic convergence is fully proved
 here (each of the four points lies in the open unit disk, so `w2` is a
