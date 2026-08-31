@@ -135,6 +135,83 @@ theorem dilog_add_neg {z : ℂ} (hz : ‖z‖ < 1) :
   rw [add_zero] at hsum2
   exact hsum1.unique hsum2
 
+/-- **Term-wise derivative of the dilogarithm.**  On the open unit disk,
+`Li₂` is differentiable and `Li₂' w = ∑' n, n·wⁿ⁻¹/n²` (the derivative of
+the series, summed term by term).  Proved on the sub-ball `‖·‖ < r`,
+`r = (‖w‖+1)/2 < 1`, where the derivative series has a summable geometric
+bound.  (The closed form `−log(1−w)/w` follows for `w ≠ 0`; see
+`tsum_Li2_deriv`.) -/
+theorem hasDerivAt_Li2 {w : ℂ} (hw : ‖w‖ < 1) :
+    HasDerivAt Li2 (∑' n : ℕ, ((n : ℂ) * w ^ (n - 1)) / (n : ℂ) ^ 2) w := by
+  set r : ℝ := (‖w‖ + 1) / 2 with hr
+  have hw0 : (0 : ℝ) ≤ ‖w‖ := norm_nonneg _
+  have hr0 : 0 < r := by rw [hr]; linarith
+  have hr1 : r < 1 := by rw [hr]; linarith
+  have hwr : ‖w‖ < r := by rw [hr]; linarith
+  set t : Set ℂ := Metric.ball 0 r with ht
+  have htopen : IsOpen t := Metric.isOpen_ball
+  have htconn : IsPreconnected t := (Metric.isConnected_ball (by positivity)).isPreconnected
+  have hwt : w ∈ t := by rw [ht, Metric.mem_ball, dist_zero_right]; exact hwr
+  -- per-term derivative
+  have hg : ∀ (n : ℕ) (y : ℂ), y ∈ t →
+      HasDerivAt (fun z : ℂ => z ^ n / (n : ℂ) ^ 2)
+        (((n : ℂ) * y ^ (n - 1)) / (n : ℂ) ^ 2) y := by
+    intro n y _
+    exact (hasDerivAt_pow n y).div_const _
+  -- summable geometric bound on the derivatives over the ball
+  have hu : Summable (fun n : ℕ => r ^ n * r⁻¹) :=
+    (summable_geometric_of_lt_one hr0.le hr1).mul_right _
+  have hg' : ∀ (n : ℕ) (y : ℂ), y ∈ t →
+      ‖((n : ℂ) * y ^ (n - 1)) / (n : ℂ) ^ 2‖ ≤ r ^ n * r⁻¹ := by
+    intro n y hy
+    rw [ht, Metric.mem_ball, dist_zero_right] at hy
+    rcases n with _ | m
+    · simp; positivity
+    · have hmn : (0 : ℝ) < (m : ℝ) + 1 := by positivity
+      simp only [Nat.add_sub_cancel, norm_div, norm_mul, norm_pow, Complex.norm_natCast]
+      push_cast
+      rw [show ((m : ℝ) + 1) * ‖y‖ ^ m / ((m : ℝ) + 1) ^ 2
+          = ‖y‖ ^ m / ((m : ℝ) + 1) by field_simp]
+      calc ‖y‖ ^ m / ((m : ℝ) + 1) ≤ ‖y‖ ^ m := by
+            rw [div_le_iff₀ hmn]; nlinarith [pow_nonneg (norm_nonneg y) m]
+        _ ≤ r ^ m := pow_le_pow_left₀ (norm_nonneg _) (le_of_lt hy) m
+        _ ≤ r ^ (m + 1) * r⁻¹ := by
+            rw [pow_succ, mul_assoc, mul_inv_cancel₀ hr0.ne', mul_one]
+  -- convergence at the centre
+  have hg0 : Summable (fun n : ℕ => (0 : ℂ) ^ n / (n : ℂ) ^ 2) := by
+    have : (fun n : ℕ => (0 : ℂ) ^ n / (n : ℂ) ^ 2) = fun _ => 0 := by
+      funext n; rcases n with _ | m <;> simp
+    rw [this]; exact summable_zero
+  have h0t : (0 : ℂ) ∈ t := by rw [ht, Metric.mem_ball, dist_zero_right]; simpa using hr0
+  have hderiv := hasDerivAt_tsum_of_isPreconnected hu htopen htconn hg hg' h0t hg0 hwt
+  exact hderiv
+
+/-- The derivative series of `Li₂` has the closed form `−log(1−w)/w`
+(for `w ≠ 0`): term-by-term `n·wⁿ⁻¹/n² = (wⁿ/n)/w`, and
+`∑ wⁿ/n = −log(1−w)` (`Complex.hasSum_taylorSeries_neg_log`). -/
+theorem tsum_Li2_deriv {w : ℂ} (hw : ‖w‖ < 1) (hw0 : w ≠ 0) :
+    (∑' n : ℕ, ((n : ℂ) * w ^ (n - 1)) / (n : ℂ) ^ 2)
+      = -Complex.log (1 - w) / w := by
+  have hts : (fun n : ℕ => ((n : ℂ) * w ^ (n - 1)) / (n : ℂ) ^ 2)
+      = fun n : ℕ => (w ^ n / (n : ℂ)) / w := by
+    funext n
+    rcases n with _ | m
+    · simp
+    · have hm : ((m + 1 : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+      rw [Nat.add_sub_cancel]
+      push_cast
+      field_simp
+      ring
+  rw [hts]
+  exact ((Complex.hasSum_taylorSeries_neg_log hw).div_const w).tsum_eq
+
+/-- **Clean derivative of the dilogarithm**: `Li₂' w = −log(1−w)/w` for
+`0 < ‖w‖ < 1`. -/
+theorem hasDerivAt_Li2' {w : ℂ} (hw : ‖w‖ < 1) (hw0 : w ≠ 0) :
+    HasDerivAt Li2 (-Complex.log (1 - w) / w) w := by
+  rw [← tsum_Li2_deriv hw hw0]
+  exact hasDerivAt_Li2 hw
+
 /-! ### Fiber algebra: eight consecutive terms make one Formula-29 term -/
 
 /-- Power-block decomposition of `w2` along `n = 8j + r`.  Every point

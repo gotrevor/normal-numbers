@@ -22,7 +22,19 @@ a fully-structured proof resting on a SINGLE disclosed `sorry`.
 
 **The one remaining `sorry` — `dilog_reflection`** (2026-08-31, further
 narrowed): `Li₂ z + Li₂(1−z) = π²/6 − log z·log(1−z)` for `z, 1−z` both
-in the open unit disk.  `dilog_special_values` is now PROVEN from it
+in the open unit disk.  **Foundation now built (2026-08-31, axiom-clean):**
+`hasDerivAt_Li2` (term-wise derivative of the `Li2` tsum on any sub-ball,
+via `hasDerivAt_tsum_of_isPreconnected` + geometric bound),
+`tsum_Li2_deriv` (its closed form `−log(1−w)/w` for `w≠0`, via
+`Complex.hasSum_taylorSeries_neg_log`), and `hasDerivAt_Li2'`
+(`HasDerivAt Li2 (−log(1−w)/w) w`).  **Remaining for `dilog_reflection`:**
+define `F z := Li₂ z + Li₂(1−z) + log z·log(1−z)`, show `HasDerivAt F 0 z`
+on the slit disk (chain rule: `d/dz Li₂(1−z) = log z/(1−z)`,
+`d/dz log z·log(1−z) = log(1−z)/z − log z/(1−z)`, sum cancels — needs
+`Complex.hasDerivAt_log` for `z, 1−z ∉ (−∞,0]`), then constancy on the
+connected slit region + the `z→0` limit (`Li₂ 0 = 0`, `Li₂ 1 = π²/6`
+from `hasSum_zeta_two`) pins `F ≡ π²/6`.  Both eval points `½, z₁` sit
+in the region.  `dilog_special_values` is PROVEN from `dilog_reflection`
 (reflection at `z=½` self-dual and at `z=z₁` with `1−z₁=z̄₁`, using the
 `PiBBPProof` log values `log z₁=−½log2+(π/4)i`, `log z₂=−½log2−(π/4)i`,
 `log ½=−log2`; all arithmetic machine-checked, `linear_combination` over
