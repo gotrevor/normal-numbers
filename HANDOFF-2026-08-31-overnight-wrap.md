@@ -47,3 +47,19 @@ Operator morning read. Branch `wip/adder-tower-c9`; **master fast-forwarded to
   out of scope for the C1–C9 briefs).
 
 **Everything the overnight run was assigned is done and axiom-clean.**
+
+## 🧱 STUCK (strike filed) — verification lap: confirm fast (~30s)
+
+**Blocked:** the repo-wide sorry-free self-stop gate.
+**Why unsatisfiable by this run:** the ONLY real `sorry`s in `src/` are
+`CFScheduleA.lean:4400` (REFUTED-FALSE) and `:5774` (retired schedule-route
+residue), BOTH explicitly OFF-LIMITS in the operator brief (also forbids the
+two Comparator/Challenge.lean statement holes). This run may not attack, fill,
+move, or delete them, so the gate can never clear here.
+**Verify:** `grep -rn "^  sorry$" src/` → exactly those two lines; full
+`lake build` green (8842 jobs); all DIRECTION-queued briefs (adder
+disjunction → universal → signed-engine → tower C1–C9) have written RESULT
+sections. Prior identical STUCK: commit `0c94d70`.
+**Operator ask:** relaunch scoped (`--done-when 'sorry-free:<target>'`) so the
+host stops on intent, OR decide the fate of the two off-limits CFScheduleA
+sorries. If this verification lap agrees, its own `box stuck` halts the run.
