@@ -16,6 +16,19 @@
   standing-mandate candidate: weigh against novel-proofs doctrine +
   check Literature.lean before claiming novelty.
 
+## 🔬 Aristotle faithfulness cross-check of the merged headline (2026-08-31, in flight)
+
+Post-merge, re-confirmed `piSqBBP_proved : PiSqBBP` is axiom-clean on master
+(`[propext, Classical.choice, Quot.sound]`, no `sorryAx`). Then submitted the
+**prose** of Bailey Formula 29 (never the Lean) to Aristotle for an independent
+NL→formalization faithfulness check — the "one cross-check that carries value"
+per the doctrine. **Project `7ee16d3a-f125-48f0-9381-d39b95c4ba42`.**
+NEXT LAP: `aristotle show 7ee16d3a…` (or `download`), and check its statement
+is logically equivalent to `PiSqBBP := HasSum piSqTerm (Real.pi^2)` with
+`piSqTerm j = (1/16^j)·(16/(8j+1)² − 16/(8j+2)² − 8/(8j+3)² − 16/(8j+4)²
+− 4/(8j+5)² − 4/(8j+6)² + 2/(8j+7)²)`. Do NOT trust any returned *proof*
+without in-kernel `#print axioms`; the check here is statement equivalence only.
+
 ## ✅ B–M weak hot spot Thm 1.1 (full iff) VERIFIED (2026-08-31)
 
 `baileyMisiurewicz_weak_hot_spot_holds` (`LiteratureBMStrong.lean`) — the
