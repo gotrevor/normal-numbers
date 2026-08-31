@@ -1,5 +1,22 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ Merged + ledger deepened (2026-08-31, autonomous, master)
+
+- `wip/pisq-bbp-decomp` MERGED to master (`3003362`, --no-ff per repo
+  precedent); `piSqBBP_proved` axiom-clean, full build green.
+- Ledger deepening (per DIRECTION mandate, statement-only): three new
+  `Literature.lean` entries — `philipp_psi_mixing` (Philipp Satz 3 /
+  Scheerer Thm 2.1, cylinder form; new `cfCylinderFrom` in CFDefs),
+  `baileyMisiurewicz_strong_hot_spot` (B–M Thm 3.4, via `IsSeqHotSpot`/
+  `bmHotSpotRatio`), `baileyMisiurewicz_strong_hot_spot_criterion`
+  (Thm 3.5 uniform-C form). Commit `b71ed1b`.
+- **Remaining ledger gaps** (never-fabricate): B–B `g^k−1` lower bound
+  (quantifiers unpinned by secondary sources), Fisher–Schmidt 2014
+  skew-product ergodicity (heavy geometric defs, PDF held). Next
+  standing-mandate candidate: weigh against novel-proofs doctrine +
+  check Literature.lean before claiming novelty.
+
+
 ## ✅ PiSqBBP lane-2 node FULLY PROVED, axiom-clean (2026-08-31, autonomous)
 
 `piSqBBP_proved : PiSqBBP` (Bailey Formula 29, `HasSum piSqTerm π²`) is
