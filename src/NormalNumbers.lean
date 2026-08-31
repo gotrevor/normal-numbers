@@ -103,6 +103,13 @@ import NormalNumbers.AdderTowerC8Chunk5
 import NormalNumbers.AdderTowerC8Chunk6
 import NormalNumbers.AdderTowerC8Chunk7
 import NormalNumbers.AdderTowerC8
+import NormalNumbers.AdderTowerC9KData
+import NormalNumbers.AdderTowerC9Chunk0
+import NormalNumbers.AdderTowerC9Chunk1
+import NormalNumbers.AdderTowerC9Chunk2
+import NormalNumbers.AdderTowerC9Chunk3
+import NormalNumbers.AdderTowerC9Chunk4
+import NormalNumbers.AdderTowerC9
 import NormalNumbers.AdderDescent
 import NormalNumbers.AdderEndgame
 import NormalNumbers.AdderCertMain

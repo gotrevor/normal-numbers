@@ -37,6 +37,11 @@ FAMILIES = {
     # as main (ln2, ln3, ln6, ln18, ln12, ln54), complemented words.
     "flagshipC": [(1, 0, "11"), (0, 1, "110"), (1, 1, "00"),
                   (1, 2, "110"), (2, 1, "101"), (1, 3, "111")],
+    # C9 second channel set (adder-family-2026-08-29 census): a genuinely
+    # different two-track base-2 disjunction on ln2, ln3, ln6, ln12, ln24,
+    # ln72 -> coeffs (1,0),(0,1),(1,1),(2,1),(3,1),(3,2); exact collapse.
+    "secondset": [(1, 0, "00"), (0, 1, "001"), (1, 1, "11"),
+                  (2, 1, "00"), (3, 1, "00"), (3, 2, "010")],
 }
 
 
