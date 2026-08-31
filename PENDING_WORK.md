@@ -16,6 +16,17 @@
   standing-mandate candidate: weigh against novel-proofs doctrine +
   check Literature.lean before claiming novelty.
 
+## ✅ B–M weak hot spot Thm 1.1 (full iff) VERIFIED (2026-08-31)
+
+`baileyMisiurewicz_weak_hot_spot_holds` (`LiteratureBMStrong.lean`) — the
+named headline "weak hot spot theorem" (`IsNormal b x ↔ ∃ B, ∀ intervals
+limsup visit-freq ≤ B·length`) is now a fully machine-checked **iff** edge,
+axiom-clean. `⟸`: specialise to b-adic intervals + `isNormal_of_visit_upper_bound`
+(reusing `eventually_ratio_le_of_limsup_le` + `visitCount_le`); `⟹`: Wall's
+`isNormal_iff_equidistributed_orbit` pins each limsup to `d−c` (`B=1`). The
+repo previously held only "the b-adic corollary of one direction"; now the
+whole theorem is independently verified. Ledger def + brief marked WIRED.
+
 ## ✅ B–M strong hot spot Thm 3.5 DISCHARGED into a verified edge (2026-08-31)
 
 `baileyMisiurewicz_strong_hot_spot_criterion_holds`

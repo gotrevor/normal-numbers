@@ -263,7 +263,9 @@ subinterval `[c,d)` of `[0,1)`.  (The repo's proven
 “if” direction; the full iff over all intervals is transcribed here.)
 
 provenance: primary (`papers/bailey-misiurewicz-2006-hot-spot.md` + local
-PDF, complete AMS text). -/
+PDF, complete AMS text).  **WIRED**: `baileyMisiurewicz_weak_hot_spot_holds`
+(`LiteratureBMStrong.lean`) proves the full iff — `⟸` via
+`isNormal_of_visit_upper_bound`, `⟹` via Wall's theorem — axiom-clean. -/
 def baileyMisiurewicz_weak_hot_spot : Prop :=
   ∀ (b : ℕ), 2 ≤ b → ∀ x : ℝ,
     (IsNormal b x ↔

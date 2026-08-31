@@ -232,4 +232,62 @@ theorem baileyMisiurewicz_strong_hot_spot_criterion_holds :
   simp only [hVU]
   exact eventually_visit_bound_of_limsup hbk hlim' hObd (fun n => (hOU n).2)
 
+/-! ## Bailey–Misiurewicz 2006, Theorem 1.1 (the weak hot spot iff) — VERIFIED -/
+
+/-- If a visit count `V n ≤ n` has `limsup (V n / n) ≤ γ`, then eventually
+`V n / n ≤ γ'` for any `γ' > γ` (`V n / n ≤ 1` is bounded above). -/
+theorem eventually_ratio_le_of_limsup_le {V : ℕ → ℕ} {γ γ' : ℝ}
+    (hV : ∀ n, V n ≤ n) (hlt : γ < γ')
+    (hlim : Filter.limsup (fun n => (V n : ℝ) / n) Filter.atTop ≤ γ) :
+    ∀ᶠ n in Filter.atTop, (V n : ℝ) / n ≤ γ' := by
+  have hbdd : Filter.IsBoundedUnder (· ≤ ·) Filter.atTop (fun n => (V n : ℝ) / n) := by
+    refine ⟨1, Filter.eventually_map.2 (Filter.Eventually.of_forall (fun n => ?_))⟩
+    rcases Nat.eq_zero_or_pos n with h0 | h
+    · subst h0; simp
+    · have hnR : (0 : ℝ) < n := by exact_mod_cast h
+      rw [div_le_one hnR]; exact_mod_cast hV n
+  have := Filter.eventually_lt_of_limsup_lt (lt_of_le_of_lt hlim hlt) hbdd
+  filter_upwards [this] with n hn using hn.le
+
+/-- `visitCount` never exceeds the window length. -/
+theorem visitCount_le (u : ℕ → ℝ) (a c : ℝ) (n : ℕ) : visitCount u a c n ≤ n := by
+  rw [visitCount]
+  exact (Finset.card_filter_le _ _).trans_eq (Finset.card_range n)
+
+/-- **Bailey–Misiurewicz 2006, Theorem 1.1 — VERIFIED.**  `x` is `b`-normal iff
+there is a uniform constant `B` bounding every interval's visit frequency by
+`B·(length)`.  Both directions are proven: `⟸` through
+`isNormal_of_visit_upper_bound` (specialising to b-adic intervals), `⟹`
+through Wall's theorem `isNormal_iff_equidistributed_orbit` (a normal orbit's
+visit frequency converges to the interval length, so `B = 1` works). -/
+theorem baileyMisiurewicz_weak_hot_spot_holds : baileyMisiurewicz_weak_hot_spot := by
+  intro b hb x
+  have horb : orbit b (Int.fract x) = orbit b x := funext (orbit_fract b x)
+  constructor
+  · -- normal ⟹ ∃ B (take B = 1): equidistribution pins each limsup to `d − c`.
+    intro hn
+    have heq : Equidistributed (orbit b x) := (isNormal_iff_equidistributed_orbit b hb x).mp hn
+    refine ⟨1, fun c d hc hcd hd => ?_⟩
+    have htend := heq c d hc hcd.le hd
+    rw [horb]
+    rw [htend.limsup_eq]
+    linarith [hcd]
+  · -- ∃ B ⟹ normal: feed the b-adic specialisation to the visit criterion.
+    rintro ⟨B, hB⟩
+    refine isNormal_of_visit_upper_bound b hb x (|B| + 1) ?_
+    intro k m hm
+    have hbk : (0 : ℝ) < (b : ℝ) ^ k := by positivity
+    have hc : (0 : ℝ) ≤ (m : ℝ) / (b : ℝ) ^ k := by positivity
+    have hcd : (m : ℝ) / (b : ℝ) ^ k < ((m : ℝ) + 1) / (b : ℝ) ^ k := by
+      gcongr; linarith
+    have hd : ((m : ℝ) + 1) / (b : ℝ) ^ k ≤ 1 := by
+      rw [div_le_one hbk]; exact_mod_cast Nat.succ_le_of_lt hm
+    have hlim := hB _ _ hc hcd hd
+    have hdc : ((m : ℝ) + 1) / (b : ℝ) ^ k - (m : ℝ) / (b : ℝ) ^ k = 1 / (b : ℝ) ^ k := by
+      rw [div_sub_div_same]; norm_num
+    rw [hdc, mul_one_div] at hlim
+    have hlt : B / (b : ℝ) ^ k < (|B| + 1) / (b : ℝ) ^ k := by
+      gcongr; linarith [le_abs_self B]
+    exact eventually_ratio_le_of_limsup_le (fun n => visitCount_le _ _ _ n) hlt hlim
+
 end NormalNumbers.Literature
