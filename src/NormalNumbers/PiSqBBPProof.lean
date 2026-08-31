@@ -311,21 +311,88 @@ theorem hasDerivAt_dilogRefl {z : ℂ} (hz : ‖z‖ < 1) (hz1 : ‖1 - z‖ < 1
   rw [hV] at hsum
   exact hsum
 
+/-- The reflection function `F w = Li₂ w + Li₂(1−w) + log w·log(1−w)`. -/
+noncomputable def dilogF (w : ℂ) : ℂ :=
+  Li2 w + Li2 (1 - w) + Complex.log w * Complex.log (1 - w)
+
+/-- The reflection lens `{‖z‖<1 ∧ ‖1−z‖<1} = ball 0 1 ∩ ball 1 1` — the
+region where both dilog series converge; convex, open, and (crucially)
+contained in the slit plane. -/
+def lensL : Set ℂ := Metric.ball 0 1 ∩ Metric.ball 1 1
+
+lemma mem_lensL {z : ℂ} : z ∈ lensL ↔ ‖z‖ < 1 ∧ ‖1 - z‖ < 1 := by
+  simp only [lensL, Set.mem_inter_iff, Metric.mem_ball, dist_zero_right, Complex.dist_eq]
+  rw [norm_sub_rev]
+
+lemma lensL_open : IsOpen lensL := Metric.isOpen_ball.inter Metric.isOpen_ball
+
+lemma lensL_convex : Convex ℝ lensL := (convex_ball _ _).inter (convex_ball _ _)
+
+lemma mem_slitPlane_of_mem_lensL {z : ℂ} (hz : z ∈ lensL) : z ∈ Complex.slitPlane := by
+  rw [mem_lensL] at hz
+  by_contra h
+  rw [Complex.slitPlane, Set.mem_ofPred_eq, not_or, not_lt, not_not] at h
+  obtain ⟨hre, him⟩ := h
+  have hz0 : z = ((z.re : ℝ) : ℂ) := by
+    apply Complex.ext <;> simp [him]
+  rw [hz0] at hz
+  obtain ⟨h1, h2⟩ := hz
+  rw [Complex.norm_real, Real.norm_eq_abs] at h1
+  rw [show (1 : ℂ) - ((z.re : ℝ) : ℂ) = ((1 - z.re : ℝ) : ℂ) by push_cast; ring,
+    Complex.norm_real, Real.norm_eq_abs] at h2
+  rw [abs_lt] at h1 h2
+  linarith [h1.1, h1.2, h2.1, h2.2]
+
+lemma one_sub_mem_lensL {z : ℂ} (hz : z ∈ lensL) : (1 - z) ∈ lensL := by
+  rw [mem_lensL] at hz ⊢
+  rw [show (1 : ℂ) - (1 - z) = z by ring, norm_sub_rev] at *
+  exact ⟨hz.2, hz.1⟩
+
+lemma hasDerivAt_dilogF {z : ℂ} (hz : z ∈ lensL) : HasDerivAt dilogF 0 z := by
+  rw [mem_lensL] at hz
+  exact hasDerivAt_dilogRefl hz.1 hz.2 (mem_slitPlane_of_mem_lensL (mem_lensL.mpr hz))
+    (mem_slitPlane_of_mem_lensL (one_sub_mem_lensL (mem_lensL.mpr hz)))
+
+/-- **F is constant on the lens.**  Immediate from `F' ≡ 0`
+(`hasDerivAt_dilogF`) on the open convex (hence preconnected) lens. -/
+lemma dilogF_const {z w : ℂ} (hz : z ∈ lensL) (hw : w ∈ lensL) : dilogF z = dilogF w := by
+  refine IsOpen.is_const_of_fderiv_eq_zero (𝕜 := ℂ) lensL_open
+    (lensL_convex.isPreconnected) ?_ ?_ hz hw
+  · intro x hx
+    exact (hasDerivAt_dilogF hx).differentiableAt.differentiableWithinAt
+  · intro x hx
+    have h : HasFDerivAt dilogF (0 : ℂ →L[ℂ] ℂ) x := by
+      simpa using (hasDerivAt_dilogF hx).hasFDerivAt
+    simpa using h.fderiv
+
+/-- **The pinned reflection constant (single disclosed leaf).**
+`dilogF (½) = π²/6`, equivalently `2·Li₂(½) + log²(½) = π²/6`.  This is
+the constant value of the (proved-constant) reflection function `F` on
+the lens, obtained by the `z→0⁺` boundary limit: `Li₂ 0 = 0`,
+`Li₂ 1 = π²/6` (Abel's theorem `Real.tendsto_tsum_powerSeries_nhdsWithin_lt`
++ `hasSum_zeta_two`), `z·log z → 0`.  The whole π² node now rests here.
+Disclosed 2026-08-31. -/
+theorem dilogF_value : dilogF (2⁻¹ : ℂ) = ((Real.pi ^ 2 / 6 : ℝ) : ℂ) := by
+  sorry
+
 /-- **Dilog reflection formula (frozen crux).**  For `z` and `1−z` both
 in the open unit disk,
 `Li₂ z + Li₂ (1−z) = π²/6 − log z · log(1−z)`.
 
-This is the ONE deep fact the π² BBP node now rests on.  Standard proof:
-the local `Li2` satisfies `Li₂' w = −log(1−w)/w` (term-wise derivative of
-the series), so `F z := Li₂ z + Li₂(1−z) + log z·log(1−z)` has `F' ≡ 0`
-on the disk minus `{0,1}`, hence is constant `= π²/6` (limit `z→0`,
-`Li₂ 0 = 0`, `Li₂ 1 = π²/6`).  Needs `HasDerivAt` of a `tsum`
-(`Mathlib/Analysis/Calculus/SmoothSeries.lean`), connectedness, and the
-`z→0` limit — a multi-lap build.  Disclosed 2026-08-31. -/
+The derivative-cancellation (`hasDerivAt_dilogF`) and constancy on the
+lens (`dilogF_const`) are PROVED; this theorem is now `dilogF_const` at
+`z` versus `½`, closed by `dilogF_value` (the pinned constant `= π²/6`).
+Disclosed 2026-08-31. -/
 theorem dilog_reflection {z : ℂ} (hz : ‖z‖ < 1) (hz1 : ‖1 - z‖ < 1) :
     Li2 z + Li2 (1 - z)
       = ((Real.pi ^ 2 / 6 : ℝ) : ℂ) - Complex.log z * Complex.log (1 - z) := by
-  sorry
+  have hzL : z ∈ lensL := mem_lensL.mpr ⟨hz, hz1⟩
+  have hhalf : (2⁻¹ : ℂ) ∈ lensL := by
+    rw [mem_lensL, show (1 : ℂ) - 2⁻¹ = 2⁻¹ by ring, norm_inv]
+    norm_num [Complex.norm_ofNat]
+  have hconst := dilogF_const hzL hhalf
+  rw [dilogF_value, dilogF] at hconst
+  linear_combination hconst
 
 /-- The π² special-value combination, DERIVED from `dilog_reflection`
 at `z = ½` (self-dual) and `z = z₁` (`1 − z₁ = z̄₁`), using the log

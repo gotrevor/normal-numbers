@@ -30,17 +30,23 @@ via `hasDerivAt_tsum_of_isPreconnected` + geometric bound),
 (`HasDerivAt Li2 (−log(1−w)/w) w`), and **`hasDerivAt_dilogRefl`**
 (2026-08-31, axiom-clean): `HasDerivAt (fun w => Li₂ w + Li₂(1−w) +
 log w·log(1−w)) 0 z` on the region `‖z‖<1 ∧ ‖1−z‖<1 ∧ z,1−z ∈ slitPlane`
-— the F'≡0 core, via chain/product rule + `Complex.hasDerivAt_log` and
-the derivative-cancellation `field_simp; ring`.  **Remaining for
-`dilog_reflection`:** turn `F'≡0` into constancy on the connected region
-`S = {z | ‖z‖<1 ∧ ‖1−z‖<1 ∧ z,1−z ∈ slitPlane}` (`is_const_of_deriv_eq_zero`
-/ `Convex.is_const_of_fderivWithin_eq_zero`; `S` is convex — intersection
-of two open disks and two half-plane-ish slit sets? slitPlane is NOT
-convex, so use `IsPreconnected` + `hasDerivAt`⇒locally const, or restrict
-to the convex sub-region containing ½ and z₁, e.g. `{re>0}∩disks`), then
-pin the constant `= π²/6` by the `z→0⁺` limit along reals (`Li₂ 0=0`,
-`Li₂ 1 = π²/6` from `hasSum_zeta_two`; `z·log z→0`).  Both eval points
-`½` (real, re=½>0) and `z₁=(1+i)/2` (re=½>0) sit in `{re>0}`.  `dilog_special_values` is PROVEN from `dilog_reflection`
+— the F'≡0 core.  **Constancy now PROVED (2026-08-31, axiom-clean):**
+`lensL := ball 0 1 ∩ ball 1 1` (= `{‖z‖<1 ∧ ‖1−z‖<1}`) is convex/open and
+`mem_slitPlane_of_mem_lensL` shows `lensL ⊆ slitPlane` (a real point of the
+lens has `0<re<1`), so `hasDerivAt_dilogF` holds on all of `lensL` and
+`dilogF_const` (`IsOpen.is_const_of_fderiv_eq_zero`) gives `F` constant on
+the lens.  `dilog_reflection` is now `dilogF_const z ½` + `dilogF_value`.
+**THE ONE REMAINING `sorry` — `dilogF_value`:** `dilogF(½) = π²/6`
+(equivalently `2·Li₂(½)+log²(½)=π²/6`; and `C=π²/6` IS the whole content —
+target `−8Li₂(½)+16(Li₂z₁+Li₂z₂)=π²` ⟺ `12C−π²=π²`).  **Next attack:**
+`dilogF` is constant on `lensL`, so `dilogF(½) = lim_{t→0⁺} dilogF(t)`
+(t real, `t ∈ lensL` for `0<t<1`; use `dilogF_const` + a `Tendsto` of the
+constant, OR `ContinuousWithinAt`).  `dilogF(t) = Li₂ t + Li₂(1−t) +
+log t·log(1−t)`: `Li₂ t → Li₂ 0 = 0` (Li2 continuous at 0), `Li₂(1−t) →
+π²/6` via **Abel** `Real.tendsto_tsum_powerSeries_nhdsWithin_lt` with
+coeffs `1/n²` and partial sums `→ π²/6` (`hasSum_zeta_two`), and
+`log t·log(1−t) → 0` (`log(1−t) ~ −t`, `t·log t → 0`).  Assemble the three
+limits, uniqueness of limits pins `dilogF(½)=π²/6`.  `dilog_special_values` is PROVEN from `dilog_reflection`
 (reflection at `z=½` self-dual and at `z=z₁` with `1−z₁=z̄₁`, using the
 `PiBBPProof` log values `log z₁=−½log2+(π/4)i`, `log z₂=−½log2−(π/4)i`,
 `log ½=−log2`; all arithmetic machine-checked, `linear_combination` over
