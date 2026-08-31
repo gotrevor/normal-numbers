@@ -283,6 +283,34 @@ lemma hasSum_fiber2 (j : ℕ) :
 
 /-! ### The analytic crux (single disclosed leaf) -/
 
+/-- **Derivative cancellation for the reflection identity.**  On the
+region where `z`, `1−z` are both in the open unit disk and both in the
+slit plane, the function `F w = Li₂ w + Li₂(1−w) + log w·log(1−w)` has
+zero derivative: `−log(1−z)/z + log z/(1−z) + [log(1−z)/z − log z/(1−z)]
+= 0`.  This is the analytic core of the reflection formula. -/
+theorem hasDerivAt_dilogRefl {z : ℂ} (hz : ‖z‖ < 1) (hz1 : ‖1 - z‖ < 1)
+    (hzs : z ∈ Complex.slitPlane) (hz1s : (1 - z) ∈ Complex.slitPlane) :
+    HasDerivAt (fun w : ℂ => Li2 w + Li2 (1 - w) + Complex.log w * Complex.log (1 - w))
+      0 z := by
+  have hz0 : z ≠ 0 := Complex.slitPlane_ne_zero hzs
+  have hz1_0 : (1 - z) ≠ 0 := Complex.slitPlane_ne_zero hz1s
+  have inner : HasDerivAt (fun w : ℂ => 1 - w) (-1) z := by
+    simpa using (hasDerivAt_id z).const_sub (1 : ℂ)
+  have d1 := hasDerivAt_Li2' hz hz0
+  have d2 := (hasDerivAt_Li2' hz1 hz1_0).comp z inner
+  have dlog1 := Complex.hasDerivAt_log hzs
+  have dlog2 := (Complex.hasDerivAt_log hz1s).comp z inner
+  have d3 := dlog1.mul dlog2
+  have hsum := (d1.add d2).add d3
+  simp only [Function.comp] at hsum
+  have hV : (-Complex.log (1 - z) / z + -Complex.log (1 - (1 - z)) / (1 - z) * -1)
+      + (z⁻¹ * Complex.log (1 - z) + Complex.log z * ((1 - z)⁻¹ * -1)) = 0 := by
+    rw [show (1 : ℂ) - (1 - z) = z by ring]
+    field_simp
+    ring
+  rw [hV] at hsum
+  exact hsum
+
 /-- **Dilog reflection formula (frozen crux).**  For `z` and `1−z` both
 in the open unit disk,
 `Li₂ z + Li₂ (1−z) = π²/6 − log z · log(1−z)`.

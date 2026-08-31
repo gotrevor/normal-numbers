@@ -27,14 +27,20 @@ in the open unit disk.  **Foundation now built (2026-08-31, axiom-clean):**
 via `hasDerivAt_tsum_of_isPreconnected` + geometric bound),
 `tsum_Li2_deriv` (its closed form `−log(1−w)/w` for `w≠0`, via
 `Complex.hasSum_taylorSeries_neg_log`), and `hasDerivAt_Li2'`
-(`HasDerivAt Li2 (−log(1−w)/w) w`).  **Remaining for `dilog_reflection`:**
-define `F z := Li₂ z + Li₂(1−z) + log z·log(1−z)`, show `HasDerivAt F 0 z`
-on the slit disk (chain rule: `d/dz Li₂(1−z) = log z/(1−z)`,
-`d/dz log z·log(1−z) = log(1−z)/z − log z/(1−z)`, sum cancels — needs
-`Complex.hasDerivAt_log` for `z, 1−z ∉ (−∞,0]`), then constancy on the
-connected slit region + the `z→0` limit (`Li₂ 0 = 0`, `Li₂ 1 = π²/6`
-from `hasSum_zeta_two`) pins `F ≡ π²/6`.  Both eval points `½, z₁` sit
-in the region.  `dilog_special_values` is PROVEN from `dilog_reflection`
+(`HasDerivAt Li2 (−log(1−w)/w) w`), and **`hasDerivAt_dilogRefl`**
+(2026-08-31, axiom-clean): `HasDerivAt (fun w => Li₂ w + Li₂(1−w) +
+log w·log(1−w)) 0 z` on the region `‖z‖<1 ∧ ‖1−z‖<1 ∧ z,1−z ∈ slitPlane`
+— the F'≡0 core, via chain/product rule + `Complex.hasDerivAt_log` and
+the derivative-cancellation `field_simp; ring`.  **Remaining for
+`dilog_reflection`:** turn `F'≡0` into constancy on the connected region
+`S = {z | ‖z‖<1 ∧ ‖1−z‖<1 ∧ z,1−z ∈ slitPlane}` (`is_const_of_deriv_eq_zero`
+/ `Convex.is_const_of_fderivWithin_eq_zero`; `S` is convex — intersection
+of two open disks and two half-plane-ish slit sets? slitPlane is NOT
+convex, so use `IsPreconnected` + `hasDerivAt`⇒locally const, or restrict
+to the convex sub-region containing ½ and z₁, e.g. `{re>0}∩disks`), then
+pin the constant `= π²/6` by the `z→0⁺` limit along reals (`Li₂ 0=0`,
+`Li₂ 1 = π²/6` from `hasSum_zeta_two`; `z·log z→0`).  Both eval points
+`½` (real, re=½>0) and `z₁=(1+i)/2` (re=½>0) sit in `{re>0}`.  `dilog_special_values` is PROVEN from `dilog_reflection`
 (reflection at `z=½` self-dual and at `z=z₁` with `1−z₁=z̄₁`, using the
 `PiBBPProof` log values `log z₁=−½log2+(π/4)i`, `log z₂=−½log2−(π/4)i`,
 `log ½=−log2`; all arithmetic machine-checked, `linear_combination` over
