@@ -62,6 +62,13 @@ def cfVal : List ℕ → ℚ
 noncomputable def cfCylinder (w : List ℕ) : Set ℝ :=
   {x ∈ Set.Ioo (0 : ℝ) 1 | ∀ i < w.length, cfDigit x i = w.getD i 0}
 
+/-- The **offset** CF cylinder: reals in `(0,1)` whose CF digits at
+positions `m, m+1, …, m+w.length-1` spell `w`.  `cfCylinderFrom 0 = cfCylinder`.
+Used to name "future" events (digits from index `m` onward) in the
+ψ-mixing statement (`Literature.philipp_psi_mixing`). -/
+noncomputable def cfCylinderFrom (m : ℕ) (w : List ℕ) : Set ℝ :=
+  {x ∈ Set.Ioo (0 : ℝ) 1 | ∀ i < w.length, cfDigit x (m + i) = w.getD i 0}
+
 /-- The Gauss measure `dγ = dx/((1+x) log 2)` on `(0,1)` — the
 `gaussMap`-invariant probability measure. -/
 noncomputable def gaussMeasure : MeasureTheory.Measure ℝ :=

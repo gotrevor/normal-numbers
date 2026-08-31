@@ -272,6 +272,80 @@ def baileyMisiurewicz_weak_hot_spot : Prop :=
           (fun n => (visitCount (orbit b (Int.fract x)) c d n : ℝ) / n)
           Filter.atTop ≤ B * (d - c))
 
+/-! ## Philipp 1967 (exponential ψ-mixing of the CF digits) -/
+
+/-- **Philipp 1967, Satz 3** (= Scheerer 2017 §2, Theorem 2.1): the
+continued-fraction digits are exponentially **ψ-mixing** under the Gauss
+measure.  In the standard cylinder form used to state it, there is a rate
+`ρ < 0.8` such that for every "past" word `u` (constraining digits
+`0 … u.length−1`), every gap `n ≥ 1`, and every "future" word `v`
+(constraining digits from position `u.length + n` onward),
+`|γ(A ∩ B) − γ(A)·γ(B)| ≤ ρⁿ · γ(A)·γ(B)`, where `A = cfCylinder u` and
+`B = cfCylinderFrom (u.length + n) v`.  (Cylinders generate the σ-algebras,
+so the cylinder form is equivalent to the general past/future-σ-algebra
+statement; rate later improved, Iosifescu–Kraaikamp Prop 2.3.7.)
+
+provenance: tier S (`papers/scheerer-2017-cf-abs-normal.md` §2, quoting
+W. Philipp, *Some metrical theorems in number theory*, Pacific J. Math. 20
+(1967), Satz 3; primary PDF not held). -/
+def philipp_psi_mixing : Prop :=
+  ∃ ρ : ℝ, 0 ≤ ρ ∧ ρ < 0.8 ∧
+    ∀ (u v : List ℕ) (n : ℕ), 1 ≤ n →
+      |(gaussMeasure (cfCylinder u ∩ cfCylinderFrom (u.length + n) v)).toReal
+          - (gaussMeasure (cfCylinder u)).toReal
+              * (gaussMeasure (cfCylinderFrom (u.length + n) v)).toReal|
+        ≤ ρ ^ n * (gaussMeasure (cfCylinder u)).toReal
+            * (gaussMeasure (cfCylinderFrom (u.length + n) v)).toReal
+
+/-! ## Bailey–Misiurewicz 2006, §3 (the STRONG hot spot theorem) -/
+
+/-- The scaled block-occurrence ratio behind the strong hot spot theorem:
+`bᵐ · A(x,y,n,m) / n` in the `limsup` over `n`, where `A(x,y,n,m)` counts
+(overlapping) occurrences of the length-`m` prefix of the digit sequence
+`y` among the first `n` base-`b` digits of `x`.  `A` is bounded by `n`, so
+the ratio is bounded by `bᵐ` and its `limsup` is a genuine real. -/
+noncomputable def bmHotSpotRatio (b : ℕ) (x : ℝ) (y : ℕ → ℕ) (m : ℕ) : ℝ :=
+  Filter.limsup
+    (fun n =>
+      ((b : ℝ) ^ m *
+        (countOccurrences ((List.range m).map y)
+          ((List.range n).map (digitOf b (Int.fract x))) : ℝ)) / n)
+    Filter.atTop
+
+/-- `y ∈ {0,…,b−1}^ℕ` is a **(sequence-space) hot spot** for `x`:
+`liminf_m limsup_n bᵐ·A(x,y,n,m)/n = ∞`, i.e. the scaled prefix-visit ratio
+of `bmHotSpotRatio` diverges as the prefix length grows (spelled as: it
+eventually exceeds every bound `M`). -/
+def IsSeqHotSpot (b : ℕ) (x : ℝ) (y : ℕ → ℕ) : Prop :=
+  (∀ i, y i < b) ∧ ∀ M : ℝ, ∀ᶠ m in Filter.atTop, M ≤ bmHotSpotRatio b x y m
+
+/-- **Bailey–Misiurewicz 2006, Theorem 3.4** (*A Strong Hot Spot Theorem*,
+Proc. AMS 134): on the digit sequence space `Σ = {0,…,b−1}^ℕ`, `x` is
+`b`-normal **iff** it has no sequence-space hot spot `y` (a non-normal `x`
+has a pointwise hot spot `y` whose length-`m` prefixes occur with density
+`≫ b⁻ᵐ`).  Proven in the paper via weak-* compactness + shift ergodicity +
+a cylinder Besicovitch covering lemma.
+
+provenance: primary (`papers/bailey-misiurewicz-2006-hot-spot.md` §3 +
+local PDF, complete AMS text). -/
+def baileyMisiurewicz_strong_hot_spot : Prop :=
+  ∀ (b : ℕ), 2 ≤ b → ∀ x : ℝ,
+    (IsNormal b x ↔ ¬ ∃ y : ℕ → ℕ, IsSeqHotSpot b x y)
+
+/-- **Bailey–Misiurewicz 2006, Theorem 3.5** (the sufficient-condition form
+actually used in §4): if the scaled block-occurrence ratio is uniformly
+bounded — a single constant `C` with `limsup_n bᵐ·A(x,y,n,m)/n ≤ C` for
+every `y ∈ {0,…,b−1}^ℕ` and every prefix length `m` — then `x` is
+`b`-normal.  (In §4 this is applied to `stoneham23` with `C = 8`.)
+
+provenance: primary (`papers/bailey-misiurewicz-2006-hot-spot.md` §3–4 +
+local PDF). -/
+def baileyMisiurewicz_strong_hot_spot_criterion : Prop :=
+  ∀ (b : ℕ), 2 ≤ b → ∀ x : ℝ,
+    (∃ C : ℝ, ∀ (y : ℕ → ℕ), (∀ i, y i < b) → ∀ m : ℕ,
+        bmHotSpotRatio b x y m ≤ C) →
+      IsNormal b x
+
 /-! ## Vandehey 2017 (matrix actions preserve CF-normality) -/
 
 /-- **Vandehey 2017, Theorem 1.1** (*Non-trivial matrix actions preserve

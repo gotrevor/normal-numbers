@@ -15,6 +15,9 @@ briefs are pointed at it (module docstring).  Statements landed:
 | `furstenberg_dense_orbit` (×2×3 dense orbits) | S (`docs/disjunctive-vs-normal.md` §1.2) | unproved def |
 | `becherYuhjtman_existence` (Thm 1 minus efficiency) | P (`papers/becher-yuhjtman-…`) | **WIRED**: `…_holds` := `exists_absolutely_normal_cf_normal` ✅ |
 | `baileyMisiurewicz_weak_hot_spot` (Thm 1.1 full iff, limsup form) | P (`papers/bailey-misiurewicz-…`, complete AMS text) | unproved def (repo holds the b-adic corollary of one direction) |
+| `baileyMisiurewicz_strong_hot_spot` (Thm 3.4, sequence-space iff, `IsSeqHotSpot`/`bmHotSpotRatio`) | P (`papers/bailey-misiurewicz-…` §3) | unproved def |
+| `baileyMisiurewicz_strong_hot_spot_criterion` (Thm 3.5, uniform-`C` sufficient form, §4 `C=8`) | P (same §3–4) | unproved def |
+| `philipp_psi_mixing` (Satz 3 / Scheerer Thm 2.1, exp. ψ-mixing on cylinders, `cfCylinderFrom`) | S (`papers/scheerer-2017-cf-abs-normal.md` §2) | unproved def |
 | `vandehey_matrix_action` (Thm 1.1, det ≠ 0) | P (`papers/vandehey-2017-…`) | unproved def |
 | `vandehey_quadratic_problem` (§7 OP 1; OPEN) + `IsQuadraticIrrational` | P (same) | unproved def |
 | `mendesFrance_simple_normality_problem` (§7 OP 2; OPEN) | P (same) | unproved def |
@@ -22,11 +25,17 @@ briefs are pointed at it (module docstring).  Statements landed:
 All three `…_holds` edges audit `[propext, Classical.choice, Quot.sound]`.
 
 **Gaps (never-fabricate rule):** B–B's `g^k − 1` lower bound (quantifier
-structure not pinned by our secondary sources); Scheerer 2017 Thm 2.1
-(Philipp ψ-mixing — needs σ-algebra-level defs, deferred, PDF held);
-Fisher–Schmidt 2014 (skew-product ergodicity — heavy geometric defs,
-deferred, PDF held); B–M strong hot spot (Thms 3.4/3.5 sequence-space
-form, deferred, PDF held).
+structure not pinned by our secondary sources); Fisher–Schmidt 2014
+(skew-product ergodicity — heavy geometric defs, deferred, PDF held).
+
+**Landed 2026-08-31 (autonomous):** Philipp ψ-mixing (Satz 3 / Scheerer
+Thm 2.1) as `philipp_psi_mixing`, stated in the standard cylinder form
+(`cfCylinderFrom` added to `CFDefs.lean` for offset "future" events),
+sidestepping full past/future σ-algebra machinery since cylinders
+generate; B–M strong hot spot Thms 3.4 (`baileyMisiurewicz_strong_hot_spot`,
+sequence-space iff via `IsSeqHotSpot`/`bmHotSpotRatio`) and 3.5
+(`baileyMisiurewicz_strong_hot_spot_criterion`, the uniform-`C` sufficient
+form used in §4 with `C=8`).
 
 **Papers worth fetching (operator-owned):** Mahler 1973 (Bull. Austral.
 Math. Soc. 8) and Berend–Boshernitzan 1994 (Acta Arith. 66) — both only
