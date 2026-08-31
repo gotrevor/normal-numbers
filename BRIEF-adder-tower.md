@@ -11,6 +11,26 @@ on the reused radix-independent `ZChannel`, base-b endgame,
 `signed_engine_g` over `σ = x + g·y < g²`, and the single-track
 `signed_engine_g_single` with `Y := 0`, alphabet `g`).
 
+### C9 ADDENDUM (2026-08-31, overnight autonomous run) ✅
+
+**C9 proved, kernel tier, axiom-clean.**  `adder_c9_disjunction` (ln
+2/3/6/12/24/72 — clauses `00`/`001`/`11`/`00`/`00`/`010`) and its universal
+form `adder_c9_disjunction_universal` both audit exactly `[propext,
+Classical.choice, Quot.sound]` (real `#print axioms`, no `sorryAx`), as does
+the certificate `c9_cert_ok`.  Module `AdderTowerC9` over `AdderTowerC9KData`.
+
+- **30720 ambient states** — largest tower node so far.  The `checkEdgesP`
+  witness could not be kernel-reduced in one `decide +kernel` (OOM), so the
+  edge check is split into 7 contiguous chunks over `[0,30720)`:
+  Chunk0..3 (6144 each), 4a `[24576,27648)`, 4b1 `[27648,29184)`,
+  4b2 `[29184,30720)`; each `c9_chunkN` is a `checkEdgesOnP` cert, reassembled
+  in `c9_edges_ok` by a 7-way `rcases`/omega interval split.
+- **4b2 is the heavy tail** (~2053s solo build; holds the ~700-digit omega
+  numerals for the top range) — required two rounds of splitting to fit under
+  the container memory ceiling (4→4a/4b, then 4b→4b1/4b2).
+- `c9_forced_ok` is a single `decide +kernel` at 8M heartbeats.
+- Full `lake build` green (8842 jobs); merged to master at `aaa58ac`.
+
 | claim | theorem(s) | module | states (ours) | tier |
 |---|---|---|---|---|
 | C1 | `c1_ternary_digit` | `AdderTowerC1` | 2 ambient, 2 live ×3 certs | kernel `decide` — **B–B 1994 M(3,1)=2, lane-2 CITED, not new** |
