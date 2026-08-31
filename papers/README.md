@@ -17,6 +17,15 @@ without re-reading the paper.
 | `vandehey-2017-open-problem-attack-map.md` | *(our analysis, not a source)* | How one would actually attack §7 problem 1: Route A (compact fiber, paper-track) vs Route B (= B6, the witness).  **§6 holds the 2026-08-24 citation crawl** |
 | `fisher-schmidt-2014-approximants-geodesic-flows.md` | Fisher–Schmidt, ETDS 34 (2014) (arXiv:1208.0131) | Vandehey's Remark 4.2 points at it.  Read in full 2026-08-24: **not usable for Route A** |
 | `literature-review.md` | *(our synthesis)* | The route-oriented read across the corpus — what the sources *collectively* say.  The next reflection lap inherits it |
+| `mahler-1973-digits-of-multiples.md` | Mahler, Bull. Austral. Math. Soc. 8 (1973) | Original multiplier theorem.  Theorem 2 already puts every fixed-length word into one multiple |
+| `alon-peres-1992-uniform-dilations.md` | Alon–Peres, GAFA 2 (1992) | Corollary 7.2 and its remark: all digits in one multiple; good multipliers have density one |
+| `berend-boshernitzan-1994-mahler-multiples.md` | Berend–Boshernitzan, Acta Arith. 66 (1994) | The exact classical identification `M(3,1)=2`, hence tower claim C1 |
+| `berend-boshernitzan-1995-complicated-decimal-expansions.md` | Berend–Boshernitzan, Acta Math. Hungar. 66 (1995) | Saturating multiplier sets and why finite sets can only solve a bounded-word-length truncation |
+| `adamczewski-bugeaud-2005-decimal-expansion.md` | Adamczewski–Bugeaud (2005) | Citation-cone survey read; complexity/transcendence, no fixed finite multiplier theorem |
+| `waldschmidt-2009-words-and-transcendence.md` | Waldschmidt (arXiv:0908.4034) | Survey of the word/transcendence neighborhood; no tower subsumption found |
+| `meher-kumar-thangadurai-2017-mahler.md` | Meher–Kumar–Thangadurai, Proc. AMS 145 (2017) | Conditional frequency refinement under source zero-block hypotheses |
+| `thangadurai-tripathi-2025-mahler-ii.md` | Thangadurai–Tripathi, Proc. Indian Acad. Sci. 135 (2025) | Explicit multiplier interval, again conditional on source digit patterns |
+| `../docs/tower-novelty-audit-2026-08-29.md` | *(our synthesis)* | Claim-by-claim correctness and novelty audit for C1–C10 and the flagship |
 
 ## Standing findings (2026-08-24 crawl) — read before re-searching 🕸️
 

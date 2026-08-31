@@ -2,9 +2,15 @@
 
 Audience: the formalization session (worktree, currently grinding
 `BRIEF-adder-disjunction-formalization.md`).  This file is the complete evidence
-package for the night's NEW claims: exact statements, the shared proof architecture,
+package for the night's candidate claims: exact statements, the shared proof architecture,
 per-claim certificate data, and regeneration commands.  Nothing here disturbs the
 frozen brief; treat these as additional cargo for the same family-agnostic pipeline.
+
+**Novelty and proof audit (completed 2026-08-30):**
+`docs/tower-novelty-audit-2026-08-29.md`.  Its decisive reclassification is that C1
+is classical, C4 is elementary, C5 follows immediately from C1, and C8 is a symmetry
+corollary.  C2's fixed optimal-cardinality set and the genuine two-track families
+remain the credible new-math candidates.
 
 **Evidence tier of everything below**: exact integer-graph certificate, ONE Python
 implementation (`experiments/`), self-tested; the base-3/4/5 and single-track code
@@ -33,10 +39,11 @@ Define u_n = frac(g^n X), v_n = frac(g^n Y), w_n = frac(g^n z), and the
 **true carry** T(n) = a·u_n + b·v_n − w_n.
 
 - **T(n) is an integer**: g^n z = a·g^n X + b·g^n Y, subtract floors.
-- **Range**: a·u_n ∈ [min(a,0), max(a,0)) and likewise for b, w_n ∈ [0,1), so
-  T(n) ∈ (a⁻ + b⁻ − 1, a⁺ + b⁺) hence T(n) ∈ [a⁻+b⁻, a⁺+b⁺ − 1] (integers), where
-  a⁻ = min(a,0), a⁺ = max(a,0).  (The probes use the superset [a⁻+b⁻, a⁺+b⁺];
-  either range is sound - the automaton must merely CONTAIN all true carries.)
+- **Range**: with a⁻ = min(a,0) and a⁺ = max(a,0), every true carry lies in the
+  always-sound integer interval [a⁻+b⁻, a⁺+b⁺].  If at least one coefficient is
+  positive, the upper endpoint sharpens to a⁺+b⁺−1.  The sharper endpoint is not
+  valid for arbitrary all-nonpositive coefficients because T(n)=0 can occur.  The
+  probes use the sound superset [a⁻+b⁻, a⁺+b⁺].
 - **Recursion**: with x_n = dig_g(X,n) etc., from g·u_{n−1} = x_n + u_n:
 
       a·x_n + b·y_n + T(n) = g·T(n−1) + z_n,   z_n = dig_g(z, n).
@@ -58,14 +65,19 @@ on symbol at position n maps state-at-n → state-at-(n−1) by the §1.2 recurs
 transition that emits a completed word w_i (or the avoided digit) is deleted.
 
 **Soundness**: if every w_i occurs only finitely often in channel i, choose N beyond
-all last occurrences; then the TRUE sequence σ_n = (T_i(n), kmp_i(n))_{i}, n ≥ N, is
-an infinite deep-ward walk in the automaton (each σ_{n+1} → σ_n is a legal edge).
+all last occurrences.  The carry coordinates are the true T_i(n).  For a word of
+length L, define the KMP coordinate at depth n from the finite deeper window
+z_{n+L−1}, ..., z_{n+1}, read in deep→shallow order; a KMP state depends only on the
+last L−1 input symbols.  These coordinates make σ_n an infinite deep-ward walk in
+the automaton (each σ_{n+1} → σ_n is a legal edge).  Equivalently, construct
+arbitrarily long finite-tail walks and take a finite-state compactness limit.
 
 ### 1.4 The zero-entropy certificate (Lemma C)
 
 **Certificate property**: after iteratively pruning states with no outgoing edge,
-every strongly connected component of the remaining graph is a simple cycle (every
-vertex has exactly one intra-SCC out-edge).  This is a finite, decidable property -
+every strongly connected component of the remaining graph is a simple cycle in the
+**labeled transition multigraph** (every vertex has exactly one intra-SCC labeled
+out-edge, counting parallel edges with different input labels separately).  This is a finite, decidable property -
 in Lean, `decide`-able on the explicit graph (prefer `decide +kernel` per house
 rules).
 
@@ -80,9 +92,10 @@ simple-cycle SCC structure survives edge reversal.
 
 ### 1.5 Aperiodicity closes it (Lemma D)
 
-If σ_n is eventually periodic in n, the input symbols along the walk are eventually
-periodic, i.e. the digit tails of X and Y are eventually periodic, i.e. X and Y are
-BOTH rational.  Contrapositive: X, Y not both rational ⟹ no infinite live walk ⟹
+If σ_n is eventually periodic in n, uniqueness of the recurrent **labeled** edge
+makes the input symbols along the walk eventually periodic.  Thus the digit tails of
+X and Y are eventually periodic, so X and Y are BOTH rational.  Contrapositive:
+X, Y not both rational ⟹ no infinite live walk ⟹
 some w_i occurs i.o. in channel i.  ∎
 
 **Theorem template** (what each certificate licenses):
@@ -123,6 +136,10 @@ hand proof recorded.)
 
 **C2. Ternary all-digits PRODUCT BLOCK {2,11}**:
 For every irrational x: 2x or 11x contains ALL THREE ternary digits i.o.
+Mahler 1973 Theorem 2 and Alon-Peres 1992 Corollary 7.2 already prove that some
+multiplier has all three digits.  The audited novelty is the universal fixed hitting
+set {2,11}.  Its cardinality is optimal: for any singleton {m}, choose an irrational
+digit-avoiding β and set x=β/m.  No inspected source states this fixed pair.
 Evidence = NINE certificates (channels {2,11}, every assignment (d₁,d₂) ∈ {0,1,2}²
 of avoided digits collapses; our sizes ≤ 36 states) + one purely logical lemma:
 
@@ -144,6 +161,11 @@ states, all fixed points): for X, Y not both rational, at least one of -
 digit 0 i.o. in Y · digit 2 i.o. in 3Y · digit 0 i.o. in 3X+Y · digit 2 i.o. in X+Y
 (instances ln 3, ln 27, ln 24, ln 6).  Channels/digits: (0,1)/0, (0,3)/2, (3,1)/0,
 (1,1)/2.  Script: `base3_digit_hunt.py`.
+**Audit disposition:** elementary.  Failure of the first two disjuncts forces Y to
+have an eventually-all-1 ternary tail, hence 2Y is triadic rational.  Put A=X+Y;
+then 3X+Y=3A−2Y has the same tail as 3A.  Failure of the last two disjuncts forces A
+to have an eventually-all-1 tail too, contradicting that A is irrational.  Full
+five-line proof: `docs/tower-novelty-audit-2026-08-29.md`.
 
 **C5. Escape from Cantor** (two-track, base 3; 261 live, fixed points): for X, Y not
 both rational, at least one of Y, 2Y, X+4Y, 2X, 4X has ternary digit 1 i.o.
@@ -151,6 +173,9 @@ Channels: (0,1), (0,2), (1,4), (2,0), (4,0), all avoiding digit 1.  Instances:
 ln 3, ln 9, ln 162, ln 4, ln 16.  y = x instance: for irrational x, one of
 x, 2x, 4x, 5x has ternary digit 1 i.o. (subsumed by C1 - formalize C1 instead;
 C5's value is the two-real form).  Script: `base3_cantor_beam.py`.
+**Audit disposition:** C5 follows from classical C1 and the mixed channel X+4Y is
+unused.  If Y is irrational, apply C1 to Y.  Otherwise X is irrational, so apply C1
+to 2X.  Do not present C5 as an independent new theorem.
 
 **C6. Base-4 positioned-binary family** (two-track, base 4; 676 live): for X, Y not
 both rational, at least one base-4 digit claim holds i.o.: 3 in X · 1 in X+3Y ·
@@ -171,6 +196,9 @@ Note negative coefficients: use the §1.2 general carry range.  Script:
 Either certify directly (recommended - independence) or formalize the complement
 involution ((x,y,c) ↦ (1−x, 1−y, a+b−1−c) conjugates avoid-w to avoid-w̄) and
 derive from the brief's base family.  Script: `product_block_hunt.py` self-test.
+**Audit disposition:** the direct certificate is independent computational evidence,
+but the mathematical statement is a symmetry corollary of the flagship, not a
+separate discovery.
 
 **C9 (optional).** Second base-2 channel set and the 7 distance-1 neighbors of the
 flagship - data in `docs/adder-family-2026-08-29.md`; same pipeline, lower priority.
@@ -213,6 +241,7 @@ carry a known float-gate caveat (`docs/mahler-sets-2026-08-29.md` §gate-bug).
   0, 1, 01, 10 recur for every irrational (transition argument); single digits are
   open in base ≥ 3; 00/11 open for non-algebraic constants.  None of the claims
   above carries a vacuous disjunct.
-- Priority if grinding order is yours to choose: C1 (+hand proof), C2, C3, C4, C5,
-  C6, C7, C8.  C1+C2 together give the headline "2x or 11x is ternary-digit-alive,
-  and every digit lands in x or 2x" pair.
+- Pipeline-validation priority: C1, because it is tiny and classically known.
+  New-math priority: C2 first, then the flagship/C6/C7, with C10 last.  C3 and C9
+  are census variants; C4, C5, and C8 should be derived rather than counted as new
+  targets.
