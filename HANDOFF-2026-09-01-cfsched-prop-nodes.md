@@ -41,6 +41,13 @@ green at every commit (pre-commit hook builds).
    (`experiments/e_binary_runs.py`).  ⚠️ The Davis 1978 reference in the node docstring is
    tier S (from memory, PDF not held) — verify before outward use.
 
+5. **N2 — the Stoneham Rosetta stone** (`StonehamBase6.lean`): `stoneham_base6_readout`,
+   the base-6 orbit of `α₂,₃` reads out `3^a mod 2^c` with an exponentially small error
+   (statement exactly the N2 note's; `readout 10 = 2187` anchored by `decide`).  The node
+   `PowersOfThreeReadoutDense` is deliberately NOT frozen: its window margin must be pinned
+   and the degeneracy probe run first (docstring says what is needed).
+6. **N3 rigidity** `eNum_zmod`/`eNum_mod`: `A(M) ≡ A(M mod p) (mod p)`.
+
 ## Verification (the quantum, run once)
 
 - `lean-sorry src` = 0.
@@ -61,8 +68,9 @@ green at every commit (pre-commit hook builds).
 
 - `src/NormalNumbers/CFScheduleA.lean` (Prop nodes + docstrings), `src/NormalNumbers/CFScheduleARefuted.lean`
   (new), `src/NormalNumbers/AdderTowerDeductions.lean` (new), `src/NormalNumbers/EFactorialKick.lean`
-  (new), `src/NormalNumbers.lean` (three mid-file import lines: after `CFScheduleA`, after
-  `AdderTowerC2`, after `PiBBP` — the box appends at the end, so this merges clean), `formalization.yaml`, `README.md`, `STATUS.md`, `ROADMAP.md`,
+  (new), `src/NormalNumbers/StonehamBase6.lean` (new), `src/NormalNumbers.lean` (four mid-file
+  import lines: after `CFScheduleA`, after `AdderTowerC2`, after `PiBBP`, after `Stoneham` —
+  the box appends at the end, so this merges clean), `formalization.yaml`, `README.md`, `STATUS.md`, `ROADMAP.md`,
   `KHINCHIN.md` (§B6 status line), this handoff.
 - NOT touched: `PENDING_WORK.md`, `BRIEF-adder-tower.md`, `Literature.lean`, `DIRECTION.md`,
   `docs/` (box territory / operator-owned).  Stale name in a docstring left alone to avoid a

@@ -9,6 +9,7 @@ import NormalNumbers.Wall
 import NormalNumbers.LnTwo
 import NormalNumbers.StonehamArith
 import NormalNumbers.Stoneham
+import NormalNumbers.StonehamBase6
 import NormalNumbers.CFDefs
 import NormalNumbers.CFCylinder
 import NormalNumbers.CFDigitLaw

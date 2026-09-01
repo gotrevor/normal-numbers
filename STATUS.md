@@ -31,7 +31,12 @@
   `bᵏ > eSplit b n + 1` pins the rational surrogate `fract (bⁿ·A(M)/M!)` to an explicit
   window of width `< 1/(M+1) + b⁻ᵏ` (`eSurrogate_window_of_zeroRun`/`_of_maxRun`,
   unconditional); the CITED node `EIrrationalityExponentTwo` caps runs at `(1+ε)n`
-  (`eRun_le_of_exponentTwo`).  Trust triple throughout.
+  (`eRun_le_of_exponentTwo`); numerator rigidity `A(M) ≡ A(M mod p)` (`eNum_zmod`).
+  Trust triple throughout.
+- **N2 base-6 Stoneham readout PROVED** (`StonehamBase6.lean`, same day):
+  `stoneham_base6_readout` — the base-6 orbit of `α₂,₃` at position `n` is
+  `(3^a mod 2^c)/2^c` up to a `2^{−Θ(3^{j*+1})}` error (`a = n−(j*+1)`, `c = 3^(j*+1)−n`),
+  so the base-6 digits of `α₂,₃` are a transcript of `3^a mod 2^c`.  Trust triple.
 
 ## Adder wing (2026-08-30)
 

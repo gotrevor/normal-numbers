@@ -197,7 +197,13 @@ the source of truth for statements and claim status (novelty unswept).
     recurrence), tail bracket, moving-sliver cores, the all-base run dichotomy
     `eSurrogate_window_of_zeroRun`/`_of_maxRun` (unconditional, trust triple),
     and the CITED node `EIrrationalityExponentTwo` with its `(1+ε)n` run-cap
-    edge.  Owed: rigidity `A(M) mod p`, `EDerangementMiss`, the class theorem.
+    edge; rigidity `A(M) ≡ A(M mod p)` proved (`eNum_zmod`).  Owed:
+    `EDerangementMiss`, the class theorem.
+  - ✅ N2 readout theorem landed 2026-09-01 (`StonehamBase6.lean`):
+    `stoneham_base6_readout` — for `n ≥ 3`, block `j* = jstar n`, `a = n−(j*+1)`,
+    `c = 3^(j*+1)−n`: `(3^a mod 2^c)/2^c < fract(6ⁿ·α₂,₃) ≤ … + 2·3^(a−1)/2^(3^(j*+2)−n)`
+    (trust triple; `decide` anchor `readout 10 = 2187`).  Owed: freeze
+    `PowersOfThreeReadoutDense` with the window margin pinned + the 6-disjunctivity edge.
 
 ## Phase 3 — outward (publishing-prep pass ✅ complete locally, 2026-08-26)
 
