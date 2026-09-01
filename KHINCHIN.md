@@ -212,7 +212,14 @@ elementary substitutes, so nothing is cited-but-unproved.  Verification detail:
 
 *Speced 2026-08-24, the day after B5′ closed.  Companion analysis:
 `papers/vandehey-2017-open-problem-attack-map.md` (Route B here; Route A =
-the compact-fiber paper-track, parked).  Status: SPEC ONLY — not launched.*
+the compact-fiber paper-track, parked).  Status at spec time: SPEC ONLY.*
+
+*Status update 2026-09-01: B6 is DONE via the MEASURE route
+(`exists_cfNormal_and_affine_cfNormal`, trust triple; `ROUTE-ESCALATION-2026-08-25.md`).
+The interleaved-schedule construction sketched below was abandoned after two
+obstructions and survives in `CFScheduleA.lean` as two named `Prop` nodes,
+`VarianceBlockCountPsiPushed` (refuted, kernel-checked in `CFScheduleARefuted.lean`) and
+`SchedABlockLinear` (open); see `STATUS.md`.*
 
 **Target.**  Vandehey (Compositio 2017) §7 problem 1 asks: x CF-normal, q, r
 quadratic irrationals, q ≠ 0 ⇒ qx + r CF-normal?  Open (lit-swept 2026-08-24,

@@ -60,11 +60,15 @@ Both are `sorry`-free and depend only on Lean's standard axioms
 table; `JUDGE.md` records the verification history, including the close-out
 `#print axioms` sweep and its red-team test.
 
-The repository is not globally `sorry`-free and does not claim to be. The only two
-source sorries are known-false stubs on a bypassed `CFScheduleA.lean` proof route;
-the B6 affine-image results instead use the completed measure route. Image-Khinchin,
-all of Track D, and `IsNormal.isDisjunctive` are complete and do not depend on those
-stubs. Exact `#print axioms` output—not a raw text count—is the dependency check.
+The source tree under `src/` is `sorry`-free (verified 2026-09-01). The abandoned
+interleaved-schedule route in `CFScheduleA.lean` keeps its two undischarged obligations
+as named `Prop` nodes rather than sorried theorems: `VarianceBlockCountPsiPushed` (false —
+refuted in-kernel by `varianceBlockCountPsiPushed_false`, `CFScheduleARefuted.lean`) and
+`SchedABlockLinear` (open, choice-opaque); the route's retired theorems take them as
+explicit hypotheses, and the B6 affine-image results instead use the completed measure
+route. Image-Khinchin, all of Track D, and `IsNormal.isDisjunctive` are complete and do
+not depend on those nodes. Exact `#print axioms` output—not a raw text count—is the
+dependency check.
 
 For external verification, [`Comparator/NormalNumbers/Challenge.lean`](Comparator/NormalNumbers/Challenge.lean)
 imports only Mathlib and states the exact Wall and conditional ln-two theorems over

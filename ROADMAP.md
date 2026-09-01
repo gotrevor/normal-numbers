@@ -69,6 +69,13 @@ no naturally-occurring number is proven Khinchin-typical.
   sweep instrument red-tested; statement integrity clean since the freeze (three
   privacy lifts, nothing else); `/lean-review` over 151 commits, zero 🔴.
   Ledger: `JUDGE.md` close-out section.  Historical plan text follows.
+- ✅ **B6 affine image COMPLETE 2026-08-25 (measure route)** — `exists_cfNormal_and_affine_cfNormal`
+  and the Tier-2 family `exists_cfNormal_and_affine_family_cfNormal'`, trust triple
+  (`CFAeNormal.lean`, `CFAffineFamily.lean`; spec in `KHINCHIN.md` §B6).  The abandoned
+  interleaved-schedule route (`CFScheduleA.lean`) is kept as two named `Prop` nodes since
+  2026-09-01 — `VarianceBlockCountPsiPushed` (refuted in-kernel,
+  `CFScheduleARefuted.lean`) and `SchedABlockLinear` (open, choice-opaque) — with its
+  retired theorems conditional on them; `src/` is sorry-free.
 - **Historical B5′ expedition plan (completed above; retained for provenance):** one witness, absolutely
   normal + CF-normal + Khinchin-typical, via Becher–Yuhjtman minus efficiency
   (pin notes in `papers/`).  ≈ 5.5–10k lines, ~8–16 laps, ≈ 2–4 weeks;

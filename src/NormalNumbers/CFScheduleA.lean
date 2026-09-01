@@ -10,10 +10,32 @@ import NormalNumbers.CFChainFreq
 import NormalNumbers.CFAeNormal
 
 /-!
-# B6 / L4–L5 — the affine-image witness (interleaved schedule)
+# B6 / L4–L5 — the affine-image witness (interleaved schedule) — RETIRED ROUTE
 
 Expedition **B6** (`KHINCHIN.md` §B6), the crux.  Target (single affine map):
 a real `x` with BOTH `x` and its affine image `ψ(x) = q·x + r` CF-normal.
+
+⚠️ **Status (2026-09-01): this module is the ABANDONED schedule route.**  B6 itself
+is PROVED by the measure route (`CFAeNormal.lean` → `exists_cfNormal_and_affine_cfNormal`,
+`ROUTE-ESCALATION-2026-08-25.md`) and depends on nothing here.  The two obligations the
+schedule route could not discharge are encoded as named `Prop` NODES of the conjecture
+graph — `def`s, not theorems — so the module is `sorry`-free, and a `Prop` may be false
+without anything being claimed:
+
+* `VarianceBlockCountPsiPushed` — the single-stream z-side second-moment brick.
+  **REFUTED** (`OBSTRUCTION-2026-08-25-variance-psi-pushed-FALSE.md`; kernel-checked
+  negation `varianceBlockCountPsiPushed_false` in `CFScheduleARefuted.lean`).  Its
+  dependents `psi_pushed_chebyshev_brick` → `gaussMeasure_aggregate_psi_pushed_le` →
+  `exists_scale_cfCylinder_psi_avoid_zbad_poly` take it as a hypothesis and are VACUOUS.
+* `SchedABlockLinear` — the two-stream linear block-length bound.  OPEN: unproved,
+  choice-opaque (see its docstring), and argued false for this construction in
+  `OBSTRUCTION-2026-08-24-block-measure-budget.md`.  Its dependents `schedA_block_geom` →
+  `schedA_hfreq_x`/`_z` → `exists_interleaved_affine_witness` take it as a hypothesis.
+
+Everything else in the module is proved and axiom-clean (trust triple).  Nothing is
+deleted: the construction stays as the obstructed alternate, and its proved substrate
+(L1–L3, the pullback measure, the orbit-frequency interface, the chain-frequency
+telescoping, the cfK-controlled resolution lemmas) is reusable.
 
 **Reduction (proved here).**  By `isCFNormal_of_irrational_orbit_freq`
 (`CFOrbitFreq`), CF-normality of a real reduces to: irrational in `(0,1)` +
@@ -22,7 +44,7 @@ follows from ONE existence statement — `exists_interleaved_affine_witness`: a
 single `x` for which BOTH `x` and `ψ(x)` are irrational in `(0,1)` with
 equidistributing orbits.
 
-**The crux (disclosed `sorry`: `exists_interleaved_affine_witness`).**  This is
+**The crux (`exists_interleaved_affine_witness`, conditional on `SchedABlockLinear`).**  This is
 the interleaved (diagonal) schedule of `PENDING_WORK.md`: build `x` as a limit
 of nested `x`-intervals whose stages ALTERNATE — `x`-stages refine to a good
 `x`-cylinder (fixing `x`'s own CF digits, the B5′ mechanism), `ψ`-stages refine
@@ -1445,7 +1467,7 @@ Combines `gaussMeasure_multiscale_cfBadZone_le` (bad-zone mass) with the package
 then extracts an irrational point via
 `exists_irrational_mem_Ioo_notMem_of_gaussMeasure_lt` with `B' = (bad) ∪ (cfK
 large)`.  This is the selection at the heart of the (resolved) cfK-steer route for
-`schedA_block_linear`. -/
+`SchedABlockLinear`. -/
 theorem exists_irrational_notMem_multiscale_cfBadZone_cfK_in_Ioo
     (wx : List ℕ) (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
     (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ : ℝ} (hδ : 0 < δ) {c d : ℝ}
@@ -3849,7 +3871,7 @@ theorem Ioo_sub_le_volume_cfCylinder (w : List ℕ) (hw : w ≠ [])
     exact absurd hymem.2 (not_le.2 (lt_of_le_of_lt (le_max_left _ _) hy1))
   linarith [hlen]
 
-/-- **Slack is sublinear in the block length** (DISCLOSED `sorry`, dischargeable
+/-- **Slack is sublinear in the block length** (proved 2026-08-24; formerly a disclosed
 leaf).  For a chain whose per-stage slack is `C s = 4√|blk s| + 2|v| + n₁ s` with
 `n₁ s² ≤ |blk s|·√|blk s|` (so `n₁ s ≤ |blk s|^{3/4}`) and `|blk s| ≥ 1`, the slack
 is `o(|blk s|)`.  Pure real-analysis (each term `√blk, const, blk^{3/4}` is
@@ -3906,7 +3928,7 @@ block-length bound needs: a target interval `⊆ cfCylinder w` has width `≳ 1/
 so the resolution length is `Nfib ≈ log_φ(1/width) ≲ log cfK`.  ⇒ the steer block
 resolves in `O(log cfK w)` digits, which is `O(|w|)` ONLY IF `cfK w ≤ e^{O(|w|)}`,
 i.e. the block digits are controlled (the B5′ `cfK u ≤ exp(goodC·n)` mechanism the
-affine steer block currently LACKS — see `schedA_block_linear` docstring). -/
+affine steer block currently LACKS — see `SchedABlockLinear` docstring). -/
 theorem volume_cfCylinder_ge_inv (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a) :
     1 / (2 * (cfK w : ℝ) ^ 2) ≤ (volume (cfCylinder w)).toReal := by
   have hK1 : (1 : ℝ) ≤ (cfK w : ℝ) := by exact_mod_cast one_le_cfK w hpos
@@ -4244,7 +4266,7 @@ theorem notMem_cfBadZone_nil_of_notMem_psiCond {z : ℝ} (wz v : List ℕ) (n : 
   obtain ⟨-, -, hdisc⟩ := hbad
   exact hznot ⟨hzwz, hzorb, hdisc⟩
 
-/-! ### ψ-pushed restricted second-moment identities (brick for `variance_blockCount_psi_pushed`)
+/-! ### ψ-pushed restricted second-moment identities (brick for `VarianceBlockCountPsiPushed`)
 
 These mirror `integral_blockCount` / `integral_blockCount_sq` (`CFBlockFreq.lean`) but with the
 observable pushed through the affine map `ψ = affineMap q r` and the integral restricted to a base
@@ -4380,26 +4402,41 @@ theorem integral_blockCount_sq_psi_restricted (q r : ℝ) {S A : Set ℝ}
           affineMap q r ⁻¹' ((gaussMap^[j']) ⁻¹' A))) :=
         setIntegral_indicator_one_gaussMeasure hmeas
 
-/-- ⚠️ **REFUTED — THIS STATEMENT IS FALSE. DO NOT ATTEMPT TO PROVE IT.**
-(`OBSTRUCTION-2026-08-25-variance-psi-pushed-FALSE.md`.)  Counterexample: `v=[1]`, `wx'` deep with
+/-- ⚠️ **REFUTED — THIS STATEMENT IS FALSE.  Conjecture-graph node, RED (probe-refuted).**
+The ψ-pushed, x-cylinder-relative second-moment bound that the abandoned single-stream
+schedule route rested on, kept VERBATIM as a `Prop` so its dependents can be stated as
+conditionals (re-encoded 2026-09-01 from a disclosed-`sorry` theorem; a `Prop` may be false,
+and this `def` claims nothing).
+
+Counterexample (`OBSTRUCTION-2026-08-25-variance-psi-pushed-FALSE.md`): `v=[1]`, `wx'` deep with
 `ψ(cfCylinder wx') ⊆ cfCylinder [2,…,2]` ⇒ `blockCount (cfCylinder [1]) n (ψ·) ≡ 0` on `cfCylinder wx'`
 for all `n ≤ |wx'|`, so the LHS `= n²γv²·γ(cfCylinder wx')` beats the claimed RHS
 `88·n·γv·γ(cfCylinder wx')` once `n > 88/γv ≈ 212`.  Structural cause: a deep cylinder is a tiny
 interval, so `blockCount n(ψ·)` is near-CONSTANT over it for `n ≲ |wx'|` at a value the affine map
-hands us (not `≈nγv`) ⇒ second moment `Θ(n²)`, which the base-mass factor cannot rescue.  Everything
-derived from it (`psi_pushed_chebyshev_brick`, `_poly`) therefore establishes NOTHING (disclosed
-`sorryAx`).  B6 is proved instead via the MEASURE route (`ROUTE-ESCALATION-2026-08-25.md`,
-`CFAeNormal.lean`): existence is a.e.-trivial.  Kept here (not deleted) as the refuted schedule
-route's residue.  DIRECTION.md CURRENT DIRECTIVE forbids grinding it. -/
-theorem variance_blockCount_psi_pushed {q : ℝ} (hq : 0 < q) (r : ℝ) (wx' : List ℕ)
-    (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c) (v : List ℕ) (hv : ∀ a ∈ v, 1 ≤ a) (n : ℕ) :
+hands us (not `≈nγv`) ⇒ second moment `Θ(n²)`, which the base-mass factor cannot rescue.  The
+failure does not even need the affine map: `q = 1, r = 0, wx' = [2,…,2]` (`m = 1000` twos, `n = m`)
+already breaks it — **kernel-checked** as `varianceBlockCountPsiPushed_false`
+(`CFScheduleARefuted.lean`), which is the probe for this node.
+
+Every theorem taking this node as a hypothesis (`psi_pushed_chebyshev_brick`,
+`gaussMeasure_aggregate_psi_pushed_le`, `exists_scale_cfCylinder_psi_avoid_zbad_poly`) is
+therefore VACUOUS — it establishes nothing.  B6 is proved instead via the MEASURE route
+(`ROUTE-ESCALATION-2026-08-25.md`, `CFAeNormal.lean`): existence is a.e.-trivial.  Kept here
+(not deleted) as the refuted schedule route's residue.  DIRECTION.md forbids grinding it. -/
+def VarianceBlockCountPsiPushed : Prop :=
+  ∀ {q : ℝ}, 0 < q → ∀ (r : ℝ) (wx' : List ℕ), wx' ≠ [] → (∀ c ∈ wx', 1 ≤ c) →
+    ∀ (v : List ℕ), (∀ a ∈ v, 1 ≤ a) → ∀ n : ℕ,
     ∫ x in cfCylinder wx', (blockCount (cfCylinder v) n (affineMap q r x)
         - n * (gaussMeasure (cfCylinder v)).toReal) ^ 2 ∂gaussMeasure
       ≤ (8 * (v.length : ℝ) + 80) * n * (gaussMeasure (cfCylinder v)).toReal
-        * (gaussMeasure (cfCylinder wx')).toReal := by
-  sorry
+        * (gaussMeasure (cfCylinder wx')).toReal
 
-/-- **THE B6 z-side CRUX (ψ-pushed, x-cylinder-relative Chebyshev).**  *Disclosed open obligation.*
+/-- ⚠️ **VACUOUS — conditional on the REFUTED node `VarianceBlockCountPsiPushed`** (the
+hypothesis `h` is false, `varianceBlockCountPsiPushed_false`, so this theorem establishes
+nothing; kept as the abandoned route's residue).  Original docstring follows.
+
+**THE B6 z-side CRUX (ψ-pushed, x-cylinder-relative Chebyshev).**  *Formerly a disclosed open
+obligation; now the hypothesis `h`.*
 Within the DEEP x-cylinder `cfCylinder wx'`, the fraction of points whose affine image `ψx = qx+r`
 has bad `v`-block frequency at scale `n` is `O(1/n)` — a LOCAL density relative to
 `γ(cfCylinder wx')`, NOT an absolute mass.  This is the single analytic fact the entire single-stream
@@ -4419,7 +4456,8 @@ threshold (the SCALE-REGIME OBSTRUCTION).  The conditional-at-base-`wz` route
 density-vs-coverage wall (bounded bridge `γ(wz)/γ(wx')` ⟺ empty transfer range; see the 2026-08-25
 CORRECTION in PENDING_WORK).  So the ONLY route that closes is this local `O(1/n)` bound.
 -/
-theorem psi_pushed_chebyshev_brick {q : ℝ} (hq : 0 < q) (r : ℝ) (wx' : List ℕ)
+theorem psi_pushed_chebyshev_brick (h : VarianceBlockCountPsiPushed) {q : ℝ} (hq : 0 < q)
+    (r : ℝ) (wx' : List ℕ)
     (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c) (v : List ℕ) (hv : ∀ a ∈ v, 1 ≤ a)
     (n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
     (gaussMeasure (cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ)).toReal
@@ -4474,7 +4512,7 @@ theorem psi_pushed_chebyshev_brick {q : ℝ} (hq : 0 < q) (r : ℝ) (wx' : List 
   -- `∫ f dμ ≤` the L² core
   have hintle : ∫ x, f x ∂μ ≤ (8 * (v.length : ℝ) + 80) * n * γv * γcylR := by
     rw [hμ, hf]
-    exact variance_blockCount_psi_pushed hq r wx' hne hpos v hv n
+    exact h hq r wx' hne hpos v hv n
   -- the bad set is contained in the deviation set
   have hsub : cfCylinder wx' ∩ affineMap q r ⁻¹' cfBadZone [] v n δ ⊆ cfCylinder wx' ∩ E := by
     rintro x ⟨hxc, hxb⟩
@@ -4521,10 +4559,12 @@ theorem psi_pushed_chebyshev_brick {q : ℝ} (hq : 0 < q) (r : ℝ) (wx' : List 
     positivity
   nlinarith [hfin, hRnn]
 
-/-- **Finite-family aggregate of the ψ-pushed crux.**  Sums `psi_pushed_chebyshev_brick` over the
+/-- ⚠️ **VACUOUS** (conditional on the refuted node `VarianceBlockCountPsiPushed`).
+**Finite-family aggregate of the ψ-pushed crux.**  Sums `psi_pushed_chebyshev_brick` over the
 finite target family `F`: the pulled-back mass of the whole `F`-union of absolute bad zones inside
 `cfCylinder wx'` is `≤ ∑_{v∈F} O(1/n)·γ(cfCylinder wx')`.  Pure measure algebra over the brick. -/
-theorem gaussMeasure_aggregate_psi_pushed_le {q : ℝ} (hq : 0 < q) (r : ℝ) (wx' : List ℕ)
+theorem gaussMeasure_aggregate_psi_pushed_le (h : VarianceBlockCountPsiPushed) {q : ℝ}
+    (hq : 0 < q) (r : ℝ) (wx' : List ℕ)
     (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c)
     (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (n : ℕ) (hn : 0 < n) {δ : ℝ} (hδ : 0 < δ) :
     (gaussMeasure (cfCylinder wx' ∩ affineMap q r ⁻¹' (⋃ v ∈ F, cfBadZone [] v n δ))).toReal
@@ -4543,9 +4583,10 @@ theorem gaussMeasure_aggregate_psi_pushed_le {q : ℝ} (hq : 0 < q) (r : ℝ) (w
     _ ≤ ∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80) * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n))
           * (gaussMeasure (cfCylinder wx')).toReal :=
         Finset.sum_le_sum fun v hv =>
-          psi_pushed_chebyshev_brick hq r wx' hne hpos v (hF v hv) n hn hδ
+          psi_pushed_chebyshev_brick h hq r wx' hne hpos v (hF v hv) n hn hδ
 
-/-- **Polynomial-threshold z-good point selection (the CLEAN discharge).**  From the ψ-pushed crux
+/-- ⚠️ **VACUOUS** (conditional on the refuted node `VarianceBlockCountPsiPushed`).
+**Polynomial-threshold z-good point selection (the CLEAN discharge).**  From the ψ-pushed crux
 `psi_pushed_chebyshev_brick`: for a genuine cylinder `wx'` and family `F`, there is a scale threshold
 `N` — POLYNOMIAL, `N ~ Ssum/δ²`, with NO `2/q` pullback loss and NO exponential — such that for every
 `n ≥ N` there is an irrational `p ∈ cfCylinder wx'` whose ψ-image avoids the absolute z-bad zones
@@ -4554,7 +4595,8 @@ cylinder mass, so the threshold is scale-regime-CORRECT (transfer range `n ≲ |
 composes directly with the existing absolute digit-agreement transfer
 (`notMem_cfBadZone_nil_of_cfDigit_agree`).  Everything downstream is now proved MODULO the one crux
 brick. -/
-theorem exists_scale_cfCylinder_psi_avoid_zbad_poly {q : ℝ} (hq : 0 < q) (r : ℝ)
+theorem exists_scale_cfCylinder_psi_avoid_zbad_poly (h : VarianceBlockCountPsiPushed) {q : ℝ}
+    (hq : 0 < q) (r : ℝ)
     (wx' : List ℕ) (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c)
     (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ c ∈ v, 1 ≤ c) {δ : ℝ} (hδ : 0 < δ) :
     ∃ N : ℕ, 1 ≤ N ∧ ∀ n, N ≤ n → ∃ p : ℝ, Irrational p ∧ p ∈ cfCylinder wx' ∧
@@ -4570,7 +4612,7 @@ theorem exists_scale_cfCylinder_psi_avoid_zbad_poly {q : ℝ} (hq : 0 < q) (r : 
   have hn : 0 < n := by omega
   have hnR0 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn
   -- aggregate mass bound (`γcylR` factor kept)
-  have hagg := gaussMeasure_aggregate_psi_pushed_le hq r wx' hne hpos F hF n hn hδ
+  have hagg := gaussMeasure_aggregate_psi_pushed_le h hq r wx' hne hpos F hF n hn hδ
   have hsumdiv : (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
         * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n)) * γcylR)
       = Ssum / (δ ^ 2 * n) * γcylR := by
@@ -4653,7 +4695,7 @@ theorem four_div_width_le_cfK (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w
 `fib_sq_gt_of_goldenRatio` (Binet lower bound).  The prerequisite the tight
 steer-block length needs: a target of width `d−c` is resolved with `Nfib ≈
 log_φ(1/(d−c))` digits (not the crude `1/(d−c)`), so `Nfib ≲ |w_s|` when the
-target width is `≳ φ^{−c|w_s|}` — the resolution half of `schedA_block_linear`. -/
+target width is `≳ φ^{−c|w_s|}` — the resolution half of `SchedABlockLinear`. -/
 theorem exists_fib_threshold_log (a : ℝ) :
     ∃ N : ℕ, (∀ n : ℕ, N ≤ n → a < (Nat.fib (n + 1) : ℝ) ^ 2) ∧
       (N : ℝ) ≤ Real.logb Real.goldenRatio (Real.sqrt 5 * Real.sqrt a + 1) + 1 := by
@@ -5457,7 +5499,7 @@ theorem logb_golden_sqrt_le {a κ ℓ K : ℝ} (hκ : 0 ≤ κ) (hℓ : 0 ≤ �
   linarith [hsub]
 
 /-- **cfK-controlled resolution is AFFINE in `|w|`** (resolution half of
-`schedA_block_linear`, discharged CONDITIONALLY on the B5′ log-cfK bound).  If the
+`SchedABlockLinear`, discharged CONDITIONALLY on the B5′ log-cfK bound).  If the
 target-width reciprocal `a = 4/(d−c)` is at most `8·cfK(w)²` AND the word carries the
 log-cfK bound `cfK w ≤ exp(κ·|w|)`, then the Fibonacci resolution threshold `N` (with
 `a < fib(n+1)²` for all `n ≥ N`) is bounded by an AFFINE function of `|w|`:
@@ -5755,31 +5797,52 @@ theorem schedL4_block_linear {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r
     _ = (12 + 12 + (12 * κ' / Real.log Real.goldenRatio + 12 * Cφ)
           + (4 * 8978 ^ 4 + 13) * C16) * (W : ℝ) := by ring
 
-/-- **Linear block-length bound** (route-decisive core, DISCLOSED `sorry`).  The
-sharp form of the geometric bound: the steer-block length is bounded by an AFFINE
-function of the accumulated word length, `|chainApp w s| ≤ K₁·|w s| + K₂`.  With
-the tight block parameter (`exists_uniform_block_param_tight`) the block length is
-`n₁ + m² ≤ 2m²` with `m² ≤ 6(L + Nfib) + 2 + 2⌈2/β⌉⁴` LINEAR in `L = s ≤ |w s|`,
-in the resolution length `Nfib ≈ log_φ(1/(d−c))` (target width `d−c ≳ φ^{−c|w s|}`
-⇒ `Nfib ≲ |w s|`), and in the word-independent `β`-constant (`γtar/γwx = Θ(q)` by
-the Gauss-density ratio bounds, so `⌈2/β⌉` is a per-level constant `≤ |w s|`
-eventually).  The three sub-bounds (tight length exposure through the ψ-step,
-resolution `Nfib ≲ |w|`, word-independent `β`) are `PENDING_WORK.md` item (ii)/(iii)
-— the remaining coupled bookkeeping.  Isolated here as the single genuinely-open
-math obligation the B6 crux rests on. -/
-theorem schedA_block_linear {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
-    (w : ℕ → List ℕ) (hw : w = wxSeq hq hr ∨ w = wzSeq hq hr) :
+/-- **Linear block-length bound** — conjecture-graph node, OPEN (unproved; the abandoned
+two-stream schedule route's decisive core, re-encoded 2026-09-01 from a disclosed-`sorry`
+theorem into a named hypothesis; a `Prop` claims nothing).  The sharp form of the geometric
+bound: the steer-block length is bounded by an AFFINE function of the accumulated word
+length, `|chainApp w s| ≤ K₁·|w s| + K₂`, along both streams of the interleaved schedule
+`schedA`.
+
+**Why it is open, and why it will likely STAY open.**  `schedA` is a `Classical.choose`
+recursion over `schedStepA_exists`, whose specification `StepSpecA` records only LOWER bounds
+on the appended blocks (`s ≤ |blk|`) plus their frequency-goodness — no upper bound at all.
+So this `Prop` is not provable from the spec, and (the choice function being opaque: any
+choice satisfying the spec is consistent with the axioms) not refutable from it either — it
+asks about the actual lengths a `choose` picked.  The MATHEMATICAL content — that the ψ-round
+step `exists_freq_good_extend_affine_steer_uniform` can be made to yield linear blocks — is
+what `OBSTRUCTION-2026-08-24-block-measure-budget.md` argues against: the multiscale selection
+budget forces `n₁ ≳ 1/ρ` at relative target size `ρ ≈ e^{−2κ|zblock|}`, i.e. super-exponential
+blocks (asserted-in-doc tier; no kernel negation is possible here, for the same opacity
+reason).  The single-stream L4 analogue `schedL4_block_linear` IS proved (relative
+regularization), which is why the route moved on.  Odds the `Prop` is true: low (~10%); odds
+it is ever provable as stated: ~0 (choice-opaque).  Refutation probe: none — the schedule is
+noncomputable.
+
+Ingredients the original plan named: with the tight block parameter
+(`exists_uniform_block_param_tight`) the block length is `n₁ + m² ≤ 2m²` with
+`m² ≤ 6(L + Nfib) + 2 + 2⌈2/β⌉⁴` LINEAR in `L = s ≤ |w s|`, in the resolution length
+`Nfib ≈ log_φ(1/(d−c))` (target width `d−c ≳ φ^{−c|w s|}` ⇒ `Nfib ≲ |w s|`), and in the
+word-independent `β`-constant (`γtar/γwx = Θ(q)` by the Gauss-density ratio bounds, so `⌈2/β⌉`
+is a per-level constant `≤ |w s|` eventually).  The three sub-bounds (tight length exposure
+through the ψ-step, resolution `Nfib ≲ |w|`, word-independent `β`) are `PENDING_WORK.md` item
+(ii)/(iii).  Dependents: `schedA_block_geom` → `schedA_hfreq_x`/`_z` →
+`exists_interleaved_affine_witness`, all conditional on this node. -/
+def SchedABlockLinear : Prop :=
+  ∀ {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
+    (w : ℕ → List ℕ), w = wxSeq hq hr ∨ w = wzSeq hq hr →
     ∃ K₁ K₂ : ℝ, 0 ≤ K₁ ∧ 0 ≤ K₂ ∧
-      ∀ s, ((chainApp w s).length : ℝ) ≤ K₁ * (w s).length + K₂ := by
-  sorry
+      ∀ s, ((chainApp w s).length : ℝ) ≤ K₁ * (w s).length + K₂
 
 /-- **Geometric block-length bound** (route-decisive).  `∃ ρ ≥ 0, ∀ s, |chainApp w
-s| ≤ ρ·|w s|`.  Follows from the affine bound `schedA_block_linear` because
-`|w s| ≥ 1` (genuine nonempty chain), so `K₁·|w| + K₂ ≤ (K₁+K₂)·|w|`. -/
-theorem schedA_block_geom {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1)
+s| ≤ ρ·|w s|`.  Conditional on the open node `SchedABlockLinear` (hypothesis `h`): follows
+from the affine bound because `|w s| ≥ 1` (genuine nonempty chain), so
+`K₁·|w| + K₂ ≤ (K₁+K₂)·|w|`. -/
+theorem schedA_block_geom (h : SchedABlockLinear) {q : ℝ} (hq : 0 < q) {r : ℝ}
+    (hr : -q < r ∧ r < 1)
     (w : ℕ → List ℕ) (hw : w = wxSeq hq hr ∨ w = wzSeq hq hr) :
     ∃ ρ : ℝ, 0 ≤ ρ ∧ ∀ s, ((chainApp w s).length : ℝ) ≤ ρ * (w s).length := by
-  obtain ⟨K₁, K₂, hK₁, hK₂, hlin⟩ := schedA_block_linear hq hr w hw
+  obtain ⟨K₁, K₂, hK₁, hK₂, hlin⟩ := h hq hr w hw
   refine ⟨K₁ + K₂, by positivity, fun s => ?_⟩
   have hne : w s ≠ [] := by
     rcases hw with h | h <;> rw [h]
@@ -5942,8 +6005,10 @@ theorem chain_hfreq_of_uniform_blocks_snoc (w : ℕ → List ℕ)
       hgeomρ hClit hblktop
     exact hslk
 
-/-- x-stream frequency obligation (instantiates `chain_hfreq_of_uniform_blocks`). -/
-theorem schedA_hfreq_x {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+/-- x-stream frequency obligation (instantiates `chain_hfreq_of_uniform_blocks`); conditional
+on the open node `SchedABlockLinear`. -/
+theorem schedA_hfreq_x (h : SchedABlockLinear) {q : ℝ} (hq : 0 < q) {r : ℝ}
+    (hr : -q < r ∧ r < 1) :
     ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
       ∃ C : ℕ → ℝ, (∀ s, 0 ≤ C s) ∧
         (∀ ε : ℝ, 0 < ε → ∃ s₀, ∀ s, s₀ ≤ s → ∀ p, p ≤ (chainApp (wxSeq hq hr) s).length →
@@ -5953,10 +6018,12 @@ theorem schedA_hfreq_x {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) 
           (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
             < ε * (wxSeq hq hr (s₀ + k)).length) :=
   chain_hfreq_of_uniform_blocks (wxSeq hq hr) (wxSeq_ext hq hr)
-    (fun s => (schedA_step hq hr s).2.2.2) (schedA_block_geom hq hr _ (Or.inl rfl))
+    (fun s => (schedA_step hq hr s).2.2.2) (schedA_block_geom h hq hr _ (Or.inl rfl))
 
-/-- z-stream frequency obligation (instantiates `chain_hfreq_of_uniform_blocks`). -/
-theorem schedA_hfreq_z {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) :
+/-- z-stream frequency obligation (instantiates `chain_hfreq_of_uniform_blocks`); conditional
+on the open node `SchedABlockLinear`. -/
+theorem schedA_hfreq_z (h : SchedABlockLinear) {q : ℝ} (hq : 0 < q) {r : ℝ}
+    (hr : -q < r ∧ r < 1) :
     ∀ v : List ℕ, v ≠ [] → (∀ a ∈ v, 1 ≤ a) →
       ∃ C : ℕ → ℝ, (∀ s, 0 ≤ C s) ∧
         (∀ ε : ℝ, 0 < ε → ∃ s₀, ∀ s, s₀ ≤ s → ∀ p, p ≤ (chainApp (wzSeq hq hr) s).length →
@@ -5966,7 +6033,7 @@ theorem schedA_hfreq_z {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 1) 
           (∑ i ∈ Finset.range (k + 1), (C (s₀ + i) + ((v.length : ℝ) - 1)))
             < ε * (wzSeq hq hr (s₀ + k)).length) :=
   chain_hfreq_of_uniform_blocks (wzSeq hq hr) (wzSeq_ext hq hr)
-    (fun s => (schedA_step hq hr s).1.2.2) (schedA_block_geom hq hr _ (Or.inr rfl))
+    (fun s => (schedA_step hq hr s).1.2.2) (schedA_block_geom h hq hr _ (Or.inr rfl))
 
 /-- **L4 x-stream frequency obligation** (single-stream route).  Instantiates
 `chain_hfreq_of_uniform_blocks` for `wxSeq_L4`, feeding the just-proved geometric
@@ -6050,9 +6117,11 @@ theorem exists_xA_L4_psi_irrational {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < 
 and `r ∈ (-q, 1)` — exactly the range in which the feasible set
 `(0,1) ∩ ψ⁻¹(0,1)` is nonempty — there is a single real `x` such that both `x`
 and `ψ(x) = q·x + r` are irrational in `(0,1)` with equidistributing Gauss
-orbits.  Disclosed `sorry`: this is the interleaved schedule (module docstring +
-`PENDING_WORK.md`); the metric substrate it consumes (L1–L3, the pullback
-measure, the orbit-frequency interface) is all proved and axiom-clean.
+orbits.  **Conditional on the open node `SchedABlockLinear`** (hypothesis `h`; formerly a
+disclosed `sorry`, re-encoded 2026-09-01): this is the interleaved schedule (module
+docstring + `PENDING_WORK.md`); the metric substrate it consumes (L1–L3, the pullback
+measure, the orbit-frequency interface) is all proved and axiom-clean, and `h` is the
+only assumption.
 
 **Feasibility hypothesis `hr` is MANDATORY** (added 2026-08-24): without it the
 conclusion is outright FALSE — e.g. `(q,r) = (1,5)` makes `x ∈ (0,1) ∧ x+5 ∈
@@ -6061,8 +6130,8 @@ what seeding the two-stream recursion needs.  The unconditional deliverable
 `exists_cfNormal_and_affine_cfNormal` reduces the general `r` to this regime via
 integer-shift invariance of CF-normality (asymptotic; the Gauss orbit ignores
 the integer part). -/
-theorem exists_interleaved_affine_witness {q : ℝ} (hq : 0 < q) (r : ℝ)
-    (hr : -q < r ∧ r < 1) :
+theorem exists_interleaved_affine_witness (h : SchedABlockLinear) {q : ℝ} (hq : 0 < q)
+    (r : ℝ) (hr : -q < r ∧ r < 1) :
     ∃ x : ℝ,
       (Irrational x ∧ x ∈ Set.Ioo (0 : ℝ) 1 ∧ CFOrbitEquidist x) ∧
       (Irrational (affineMap q r x) ∧ affineMap q r x ∈ Set.Ioo (0 : ℝ) 1
@@ -6099,9 +6168,9 @@ theorem exists_interleaved_affine_witness {q : ℝ} (hq : 0 < q) (r : ℝ)
   have hpsi_eq : affineMap q r xA = zA := eq_of_mem_iInter_Icc hdiam hpsiIcc hzAIcc
   -- orbit equidistribution for both streams
   have hox : CFOrbitEquidist xA :=
-    chain_orbit_equidist_uniform (wxSeq hq hr) hxext hxAirr hxA01 hxAmem (schedA_hfreq_x hq hr)
+    chain_orbit_equidist_uniform (wxSeq hq hr) hxext hxAirr hxA01 hxAmem (schedA_hfreq_x h hq hr)
   have hoz : CFOrbitEquidist zA :=
-    chain_orbit_equidist_uniform (wzSeq hq hr) hzext hzAirr hzA01 hzAmem (schedA_hfreq_z hq hr)
+    chain_orbit_equidist_uniform (wzSeq hq hr) hzext hzAirr hzA01 hzAmem (schedA_hfreq_z h hq hr)
   refine ⟨xA, ⟨hxAirr, hxA01, hox⟩, ?_⟩
   rw [hpsi_eq]
   exact ⟨hzAirr, hzA01, hoz⟩

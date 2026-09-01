@@ -1,5 +1,24 @@
 # STATUS — normal-numbers 📊
 
+## CFScheduleA schedule route encoded as Prop nodes (2026-09-01)
+
+- **`src/` is sorry-free.**  The two disclosed `sorry`s of the abandoned interleaved-
+  schedule route (`CFScheduleA.lean`) are re-encoded as named conjecture-graph nodes
+  (`def … : Prop`, statements verbatim), with every dependent taking the node as an
+  explicit hypothesis (Trevor's decision, 2026-09-01):
+  - `VarianceBlockCountPsiPushed` — **RED / refuted.**  Kernel-checked negation
+    `varianceBlockCountPsiPushed_false` (`CFScheduleARefuted.lean`, trust triple): the
+    bound fails already for `ψ = id`, `v = [1]`, `wx' = [2,…,2]` — a cylinder-restricted
+    second moment centred at the global mean is `Θ(n²)`.  Dependents
+    `psi_pushed_chebyshev_brick` → `gaussMeasure_aggregate_psi_pushed_le` →
+    `exists_scale_cfCylinder_psi_avoid_zbad_poly` are vacuous and say so.
+  - `SchedABlockLinear` — **OPEN.**  Choice-opaque (`schedA` is a `Classical.choose`
+    recursion whose spec carries no block upper bound), argued false for this construction
+    in `OBSTRUCTION-2026-08-24-block-measure-budget.md`.  Dependents `schedA_block_geom` →
+    `schedA_hfreq_x`/`_z` → `exists_interleaved_affine_witness`.
+- Every other constant's axiom set is unchanged (before/after `collectAxioms` census over
+  all NormalNumbers modules); all headlines below keep exactly the trust triple.
+
 ## Adder wing (2026-08-30)
 
 - **`NormalNumbers.Adder.adder_sixfold_disjunction` is PROVED**
@@ -33,9 +52,9 @@
   `fix/full-normality-definition`: correction commit `c6126c56`, followed by the
   empty-block test at branch HEAD `5d5832d0`; neither is merged upstream. No PR
   was opened and no Zulip/public announcement was posted in this lap.
-- **Residual source debt:** exactly two known-false sorries remain in bypassed
-  `CFScheduleA.lean` schedule code. They are not dependencies of the completed
-  headlines and are explicitly out of scope.
+- **Residual source debt:** none as of 2026-09-01 — the two former `CFScheduleA.lean`
+  schedule-route sorries are named `Prop` nodes now (section at the top of this file).
+  They were never dependencies of the completed headlines.
 
 ## Historical campaign ledger (superseded state snapshots)
 

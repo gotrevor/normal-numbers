@@ -28,9 +28,14 @@ status:
     not claim that the still-open equidistribution hypothesis is known. The Mathlib-only challenge
     gives real bodies for every project definition in either statement, and three exact finite
     anchors pin overlapping block counts, multiplication modulo one, and the surrogate recurrence.
-    The two source sorries elsewhere in the repository are known-false, bypassed schedule-route
-    stubs in `CFScheduleA.lean`; neither harnessed theorem depends on them.
-  sorry_count: "2 (known-false bypassed schedule stubs; outside both comparator proof closures)"
+    The source tree under `src/` is sorry-free (verified 2026-09-01 by `lean-sorry` and a
+    `collectAxioms` census: no constant depends on `sorryAx`). The abandoned interleaved-schedule
+    route in `CFScheduleA.lean` states its two undischarged obligations as named `Prop` nodes,
+    `VarianceBlockCountPsiPushed` (false; refuted in-kernel by
+    `NormalNumbers.varianceBlockCountPsiPushed_false`, `CFScheduleARefuted.lean`) and
+    `SchedABlockLinear` (open), which its retired theorems take as explicit hypotheses; neither
+    harnessed theorem depends on either node.
+  sorry_count: "0 (the two former schedule-route stubs are now named Prop hypotheses; verified 2026-09-01)"
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
 
