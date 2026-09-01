@@ -17,8 +17,9 @@ This is the theorem behind the whole adder/tower wing (Mahler 1973,
 Theorem M, with `m ≤ g^(2k+1)`; sharpened by Berend–Boshernitzan 1994 to
 `m ≤ 2·g^(k+1)` per our secondary sources — see `Literature.lean`).  The
 bound proved here, `g^(k+1)`, is **half** the cited Berend–Boshernitzan
-constant for every `g ≥ 2` (and their lower bound `gᵏ − 1` shows the
-remaining room is at most the factor `g`).  The ledger edges are wired in
+constant for every `g ≥ 2`, and `MahlerLowerBound.lean` proves that no
+universal bound below `gᵏ − 1` is possible (`mahler_lower_bound`), so the
+remaining room is at most the factor `g`.  The ledger edges are wired in
 `LiteratureMahler.lean`.
 
 ## The proof (self-contained, elementary)

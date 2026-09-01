@@ -61,7 +61,9 @@ sharpening, Acta Arith. 66): Mahler's multiplier bound improves to
 The paper also shows the bound cannot beat `g^k − 1`; that lower bound's
 exact quantifier structure is not pinned by our secondary sources, so per
 the never-fabricate rule it is NOT transcribed (gap recorded in the brief's
-RESULT).
+RESULT).  Our own lower-bound statement — no universal bound below
+`gᵏ − 1`, witnesses `liouvilleNumber g` and `(g−1)ᵏ` — is PROVED as
+`Mahler.mahler_lower_bound` (`MahlerLowerBound.lean`, 2026-09-01).
 
 provenance: secondary (`docs/adder-family-2026-08-29.md` folklore-check
 section; `docs/disjunctive-vs-normal.md` §1.1).

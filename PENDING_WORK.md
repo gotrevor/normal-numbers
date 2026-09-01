@@ -1,5 +1,30 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ MAHLER LOWER BOUND `gᵏ − 1` PROVED — chapter now two-sided (2026-09-01, autonomous)
+
+`Mahler.mahler_lower_bound` (`src/NormalNumbers/MahlerLowerBound.lean`):
+for every `g ≥ 2` and `k`, there are irrational `α` and a `k`-digit block
+`w` such that NO `1 ≤ m ≤ gᵏ − 2` has `w` occurring i.o. in `m·α` (in fact
+`w` occurs at no position `n ≥ (k+2)!`).  Witnesses `α = liouvilleNumber g`
+(mathlib: `liouville_liouvilleNumber` ⇒ irrational), `w = (g−1)ᵏ`.  Trust
+triple.  Paired with `mahler_multiplier`:
+
+    gᵏ − 1 ≤ M(g,k) ≤ g^(k+1)   — both sides machine-checked.
+
+Proof never touches digits: `occursAt_iff_orbit_mem` reduces to
+`{m α gⁿ} < 1 − g⁻ᵏ`; with `j! ≤ n < (j+1)!`, `d = (j+1)! − n ≥ 1`,
+`m α gⁿ = (ℕ) + (m mod g^d)/g^d + T`, `T = m gⁿ·remainder g (j+1) < g^(−k−1)`
+(`LiouvilleNumber.remainder_lt`), and `(m mod g^d)/g^d ≤ 1 − 2g⁻ᵏ` in both
+regimes `d ≥ k` / `d < k`.  Claim hygiene: B–B 1994 are reported to have
+`gᵏ − 1`; we state OUR quantifiers and do not attribute the statement.
+
+Gotchas: `partialSum_eq_rat` casts `g ^ j!` as a ℕ (normalize with
+`push_cast`); `((m / g^d : ℕ) : ℤ)` gets rewritten by `Int.natCast_div`
+under `push_cast` — keep the integer part as a ℕ-cast and use
+`Int.cast_natCast` at the `fract_eq_of_eq_int_add` call; `linarith` treats
+`2 / g^k` and `1 / g^k` as unrelated atoms (bridge with `ring`).
+
+
 ## ✅ FURSTENBERG 1967 dense-orbit theorem WIRED (2026-09-01, autonomous)
 
 `Literature.furstenberg_dense_orbit_holds` (`src/NormalNumbers/LiteratureFurstenberg.lean`):
