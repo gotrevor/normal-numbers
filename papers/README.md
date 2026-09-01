@@ -25,6 +25,19 @@ without re-reading the paper.
 | `waldschmidt-2009-words-and-transcendence.md` | Waldschmidt (arXiv:0908.4034) | Survey of the word/transcendence neighborhood; no tower subsumption found |
 | `meher-kumar-thangadurai-2017-mahler.md` | Meher–Kumar–Thangadurai, Proc. AMS 145 (2017) | Conditional frequency refinement under source zero-block hypotheses |
 | `thangadurai-tripathi-2025-mahler-ii.md` | Thangadurai–Tripathi, Proc. Indian Acad. Sci. 135 (2025) | Explicit multiplier interval, again conditional on source digit patterns |
+| `tower-forward-citation-crawl-2026-08-30.md` | *(our cited-by ledger)* | Three-index forward crawl of all eight tower seeds, including every hit, false positive, body-read verdict, and access gap |
+| `kelly-le-2013-uniform-dilations-higher-dimensions.md` | Kelly–Le, JLMS 88 (2013) | Strongest higher-dimensional Alon–Peres descendant; still chooses from an infinite matrix family |
+| `kra-1999-furstenberg-diophantine.md` | Kra, Proc. AMS 127 (1999) | Only substantive B-B 1995 citer; nonlacunary semigroup density, not a finite hitting set |
+| `hong-zheng-2024-g-decimal-function-fields.md` | Hong–Zheng (2024) | Closest later Mahler analogue, over function fields |
+| `bulinski-fish-2022-unipotent-glasner.md` | Bulinski–Fish, Israel J. Math. 255 (2023) | Polynomial matrices and unipotent group actions |
+| `bulinski-fish-2023-glasner-products.md` | Bulinski–Fish, Math. Z. 303 (2023) | Product Glasner actions, the closest two-track-looking descendant |
+| `dong-2019-density-infinite-subsets-I.md` | Dong, DCDS 39 (2019) | Glasner property for `SL(n,Z)` torus actions |
+| `dong-2019-density-infinite-subsets-II.md` | Dong, Proc. AMS 147 (2019) | Glasner actions on homogeneous spaces and tori |
+| `badea-grivaux-2024-times-p-times-q.md` | Badea–Grivaux, Discrete Analysis (2024) | Times-`p`, times-`q` measure rigidity; Alon–Peres is background only |
+| `rajchert-2025-glasner-prime-matrices.md` | Rajchert, IJNT 21 (2025) | Quantitative polynomial prime-entry matrix actions |
+| `le-liu-wooley-2025-function-field-equidistribution.md` | Le–Liu–Wooley, Adv. Math. 479 (2025) | Function-field equidistribution and Glasner sets |
+| `kra-schmieding-2026-invariant-random-compacts.md` | Kra–Schmieding (arXiv:2605.03993) | Multiplicatively large successful dilations under entropy/invariance hypotheses |
+| `peres-yang-2026-maximal-gaps.md` | Peres–Yang (arXiv:2606.28860) | Almost-everywhere gap laws for growing lacunary dilation families |
 | `../docs/tower-novelty-audit-2026-08-29.md` | *(our synthesis)* | Claim-by-claim correctness and novelty audit for C1–C10 and the flagship |
 
 ## Standing findings (2026-08-24 crawl) — read before re-searching 🕸️
