@@ -18,6 +18,14 @@
     `schedA_hfreq_x`/`_z` → `exists_interleaved_affine_witness`.
 - Every other constant's axiom set is unchanged (before/after `collectAxioms` census over
   all NormalNumbers modules); all headlines below keep exactly the trust triple.
+- **Tower deductions kernel-checked** (`AdderTowerDeductions.lean`, same day): the
+  single-multiplier floor `exists_irrational_mul_omits_digit` (base `b ≥ 3`, any digit,
+  any `m ≠ 0`: some irrational `X` has `m·X` omitting the digit entirely — Cantor-set
+  encoding of `Set ℕ` through `realOfDigits`), hence **C2 is cardinality-optimal**
+  (`no_single_multiplier_all_digits`), **B–B `M(3,1) = 2` lower half**
+  (`Literature.berendBoshernitzan_M31_lower_holds`; with C1 both halves are in-kernel)
+  and `M(g,1) ≥ 2` for all `g ≥ 3`; and **C5 sharpened** (`c5_sharp`: the `X + 4Y`
+  channel is unnecessary — a two-line corollary of C1).  All trust triple.
 
 ## Adder wing (2026-08-30)
 
