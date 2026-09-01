@@ -11,6 +11,36 @@ on the reused radix-independent `ZChannel`, base-b endgame,
 `signed_engine_g` over `σ = x + g·y < g²`, and the single-track
 `signed_engine_g_single` with `Y := 0`, alphabet `g`).
 
+### C10 ADDENDUM (2026-09-01, autonomous run) ✅ — REDUCTION FINDING
+
+**C10 proved, kernel tier, axiom-clean — and it is NOT a large-certificate
+theorem.**  `c10_disjunction_universal` (`AdderTowerC10.lean`; the dossier's
+exact nine-disjunct shape: 3 in Y · 4 in 2Y · 2 in 3Y · 0 in 4Y · 2 in X+Y ·
+3 in X+4Y · 2 in 2X+2Y · 2 in 3X+3Y · 2 in 4X+4Y, base 5) audits exactly
+`[propext, Classical.choice, Quot.sound]` (real `#print axioms`); the two
+certificates `c10y_cert`/`c10z_cert` audit `[propext]`.
+
+- **Audit disposition (same pattern as C5): the family SPLITS.**  If `Y` is
+  irrational, the four `Y`-only channels `(0,1)/3 · (0,2)/4 · (0,3)/2 ·
+  (0,4)/0` collapse alone as a single-track family (24 ambient, 5 live,
+  `c10_y_branch`).  Otherwise `Y = q ∈ ℚ`, `X` irrational, `Z := X+q`
+  irrational, and the diagonal channels `(1,1)/2 · (2,2)/2 · (3,3)/2 ·
+  (4,4)/2` are `Z, 2Z, 3Z, 4Z` all avoiding digit 2 — a single-track family
+  that also collapses (24 ambient, 6 live, `c10_z_branch`).  The mixed
+  channel `(1,4)/3` (`X+4Y`) is **unused**.  So the dossier's 540 396-state
+  certificate certifies a statement two 24-state single-track `M(5,1)`-type
+  claims already imply; do NOT present C10 as an independent nine-channel
+  discovery.  (Its `docs/tower-novelty-audit-2026-08-29.md` "credible new
+  candidate" rating should be downgraded to the C5 disposition.)
+- **Collapse verdict agrees** with the dossier: the full two-track automaton
+  in our encoding (46080 ambient, 18 live, four 2-cycles,
+  `adder_baseg_emit.py c10`, 1.2 s) also collapses; kernel proof went via
+  the reduction instead.  Emitter entries `c10`, `c10y`, `c10z` added.
+- The two single-track sub-claims are themselves base-5 analogues of
+  B–B's `M(3,1)=2` (multipliers `{1,2,3,4}`); novelty of those against
+  Berend–Boshernitzan 1994's general-`g` results is UNCHECKED (paper not
+  held) — lane-2 treatment until the operator's sweep says otherwise.
+
 ### C9 ADDENDUM (2026-08-31, overnight autonomous run) ✅
 
 **C9 proved, kernel tier, axiom-clean.**  `adder_c9_disjunction` (ln
@@ -59,7 +89,7 @@ the certificate `c9_cert_ok`.  Module `AdderTowerC9` over `AdderTowerC9KData`.
   brief's mpmath digit-anchor selftest extension was NOT done (no new
   named-constant carry conventions were introduced beyond what the kernel
   re-derives; flag if C-instance anchors are wanted).
-- Out of scope untouched: C9, C10, floors/negatives, novelty sweep.
+- Out of scope untouched (as of 2026-08-30): C9, C10, floors/negatives, novelty sweep.  C9 landed 2026-08-31, C10 landed 2026-09-01 (addenda above); floors/negatives and the novelty sweep remain operator-owned.
 
 **Operator-authorized 2026-08-29 (Trevor, attended session).**  Execute AFTER
 `BRIEF-adder-signed-engine.md`.  The complete evidence package is

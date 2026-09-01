@@ -21,7 +21,7 @@ The certificate algorithm (prune -> SCC -> simple-cycle check -> forced ->
 rho by condensation height -> C1/C1'/C3' re-verification, REFUSING on
 failure) is verbatim adder_signed_emit.py.
 
-Usage: adder_baseg_emit.py [c3|c2|c1|c4|c5|c6]
+Usage: adder_baseg_emit.py [c3|c2|c1|c4|c5|c6|c10|c10y|c10z]
 """
 
 import json
@@ -54,6 +54,20 @@ FAMILIES = {
     "c6": (4, False, [[(1, 0, [3]), (1, 3, [1]), (1, 4, [3]),
                        (2, -1, [2]), (2, 0, [0]), (2, 2, [0])]],
            ["main"]),
+    # C10: base-5 nine-channel single-digit family (two-track; the
+    # dossier's largest certificate).  46080 ambient in our encoding.
+    "c10": (5, False, [[(0, 1, [3]), (0, 2, [4]), (0, 3, [2]), (0, 4, [0]),
+                        (1, 1, [2]), (1, 4, [3]), (2, 2, [2]), (3, 3, [2]),
+                        (4, 4, [2])]],
+            ["main"]),
+    # C10 REDUCTION (2026-09-01): the Y-only channels collapse alone
+    # (irrational Y), and the diagonal channels collapse alone on
+    # Z = X + Y (rational Y, irrational X) — so C10 follows from two
+    # 24-state single-track certificates; X+4Y is unused.
+    "c10y": (5, True, [[(1, 0, [3]), (2, 0, [4]), (3, 0, [2]), (4, 0, [0])]],
+             ["main"]),
+    "c10z": (5, True, [[(1, 0, [2]), (2, 0, [2]), (3, 0, [2]), (4, 0, [2])]],
+             ["main"]),
 }
 
 

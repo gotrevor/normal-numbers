@@ -1,5 +1,31 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ C10 tower claim PROVED via a REDUCTION FINDING (2026-09-01, autonomous)
+
+`c10_disjunction_universal` (`src/NormalNumbers/AdderTowerC10.lean`) — the
+last named tower claim, in the dossier's exact nine-disjunct base-5 form —
+is proved kernel-tier, trust triple.  NOT by the dossier's 540 396-state
+certificate: the family SPLITS (C5 pattern).  Irrational `Y` ⇒ the four
+`Y`-only channels collapse alone (`c10_y_branch`, 24 ambient / 5 live);
+rational `Y` ⇒ `Z = X+Y` irrational and the diagonal channels `Z,2Z,3Z,4Z`
+avoiding digit 2 collapse alone (`c10_z_branch`, 24 ambient / 6 live).
+`X+4Y` is unused.  Full two-track automaton also collapses in Python
+(46080 ambient, 18 live) — verdict agrees with the dossier.  RESULT in
+`BRIEF-adder-tower.md` (C10 addendum).  Tower brief now fully closed
+(C1–C10).  Open follow-ups: novelty of the two single-track base-5
+sub-claims vs Berend–Boshernitzan 1994 general-`g` (operator sweep).
+
+## ✅ Aristotle faithfulness cross-check of `PiSqBBP` — PASSED (2026-09-01)
+
+Project `7ee16d3a` (prose of Bailey Formula 29 only) returned
+`HasSum (fun j => (1/16^j) * (16/(8j+1)^2 - 16/(8j+2)^2 - 8/(8j+3)^2
+- 16/(8j+4)^2 - 4/(8j+5)^2 - 4/(8j+6)^2 + 2/(8j+7)^2)) (π^2)` — term-for-term
+identical to `piSqTerm`/`PiSqBBP := HasSum piSqTerm (Real.pi^2)`.
+Independent confirmation that `piSqBBP_proved` states the theorem.  (It
+also proved it, via the same dilogarithm-reflection route; the returned
+proof was NOT imported — ours is already axiom-clean in-kernel.)
+
+
 ## ✅ Merged + ledger deepened (2026-08-31, autonomous, master)
 
 - `wip/pisq-bbp-decomp` MERGED to master (`3003362`, --no-ff per repo
