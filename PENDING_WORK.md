@@ -1,36 +1,53 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
-## ✅ MAHLER'S THEOREM M PROVED — with the NEW bound `(g+3)·gᵏ` (2026-09-01, autonomous)
+## ✅ MAHLER'S THEOREM M — bound sharpened to `g^(k+1)` (2026-09-01, autonomous)
 
 `NormalNumbers.Mahler.mahler_multiplier` (`src/NormalNumbers/MahlerMultiplier.lean`):
 for every irrational `α`, base `g ≥ 2`, block `w` of length `k`, some
-`1 ≤ m ≤ (g+3)·gᵏ` has `w` i.o. in `m·α`.  Trust triple, no sorries,
-self-contained (imports only `Disjunctive`).  Proof = Dirichlet (mathlib
-`Real.exists_rat_abs_sub_le_and_den_le`) + the **sweep lemma** (multiples
-`m = ℓq + r` form `q` arithmetic progressions of step `η = qx − p`, one
-per residue class via a modular inverse; they cover every cell once
-`(L−1)|η| ≥ 1/q`) + the **escape lemma** (if `x_n` stays within `1/(q_n D)`
-of rationals with `q_n ≤ Q`, `D ≥ (g+1)Q`, the shadow rationals are forced
-to be `×g` images of each other, so the defect satisfies `ε_{n+1} = g ε_n`
-EXACTLY and blows up).  Numerically pre-checked (`0` violations of the
-covering lemma over 1839 non-good samples).
+`1 ≤ m ≤ g^(k+1)` has `w` i.o. in `m·α`.  Trust triple, no sorries,
+self-contained (imports only `Disjunctive`).  Supersedes the `(g+3)·gᵏ`
+proof of `8afbd05` (which left `g = 2` short of Berend–Boshernitzan).
 
-**Ledger edges wired (`LiteratureMahler.lean`, axiom-clean):**
-- `mahler_theoremM_holds` — Mahler 1973 Thm M (`m ≤ g^(2k+1)`) for ALL
-  `g ≥ 2`, `k ≥ 1` (the `(2,1)` case via `adamczewskiRampersad_boundary_holds`).
-- `berendBoshernitzan_bound_holds_of_three_le` — B–B 1994 `m ≤ 2g^(k+1)`
-  for all `g ≥ 3`.  **Bound comparison:** ours `(g+3)gᵏ` vs cited `2g^(k+1)`:
-  equal at `g = 3`, ours strictly smaller for `g ≥ 4`, ours larger only at
-  `g = 2` (`5·2ᵏ` vs `4·2ᵏ`).  ⚠️ The B–B statement is tier-S (secondary
-  sources, PDF not held) — the "improvement" claim is conditional on that
-  transcription; operator to check against the paper before headlining.
+**The two insights that collapsed the constant** (both recorded in the
+module docstring):
+1. *Two-grid-point sweep* (`sweep_pos` + new `start_in_cell`).  If the
+   progression through the grid point `j/q` just below the cell needs more
+   than `M` multiples to climb into it, then the *next* grid point
+   `(j+1)/q` is already inside the cell together with the start of its
+   own progression.  Guaranteed once `(M+1−2q)|η| ≥ 1 − q/gᵏ`.  This makes
+   the covering lemma **universal**: a bad `x` has
+   `(M+1−2q)|qx−p| < 1 − q/gᵏ` for EVERY reduced `p/q`, `q ≤ gᵏ`,
+   `|qx−p| < g⁻ᵏ` (`defect_bound_of_bad`), not just Dirichlet's.
+2. *Shadow-rational escape* (`orbit_escapes`, rewritten).  With a universal
+   covering lemma there is no need to show two nearby rationals coincide:
+   follow `ρ' = gρ − ⌊g x_n⌋` (denominator divides `ρ.den`); the
+   normalized defect is multiplied by exactly `g` by construction, and at
+   `M = g^(k+1)` the covering bound contracts every quality-`g⁻ᵏ`
+   approximation to quality `g⁻ᵏ/g` (`defect_contracts_of_bad`), so the
+   shadow stays quality-`g⁻ᵏ` forever while its defect grows like `gⁱ`.
 
-**NEXT (open):** close the `g = 2` gap.  The slack is in the covering
-lemma: `q(L−1) > M − 2q` loses one `q` to `⌊M/q⌋` and one to `L − 1`.
-Getting `m ≤ 4·2ᵏ` needs the sweep to work with `L·|η| ≥ 1/q` (use the
-`ℓ = L` point when `r ≤ M mod q`, or a sharper start-point choice), OR a
-base-2-specific dynamics bound.  Also worth trying: push the constant to
-`(g+2)gᵏ` generally (would match B–B at `g = 2`).
+Numerically pre-checked (refined sweep: 5149 samples, 0 violations, min
+slack 1).  The same argument gives `g^(k+1) − 1`; the method's floor is
+`M ≥ 2gᵏ` (needed for `M+1−2q > 0`), and B–B's lower bound `gᵏ − 1` says
+the truth is within a factor `g` of what we have.
+
+**Ledger edges (`LiteratureMahler.lean`, axiom-clean):**
+- `mahler_theoremM_holds` — Mahler 1973 Thm M for ALL `g ≥ 2`, no `(2,1)`
+  special case any more.
+- `berendBoshernitzan_bound_holds : berendBoshernitzan_bound` — B–B 1994
+  `m ≤ 2g^(k+1)` for ALL `g ≥ 2` (the `g = 2` gap is closed).  ⚠️ The
+  transcribed B–B constant is tier-S; "half their constant" is conditional
+  on it — primary-source check requested in `ON-LINE-REQUEST.md`
+  (2026-09-01).
+
+**NEXT (open):** (a) once the B–B PDF is read, decide whether `g^(k+1)`
+is genuinely new (their paper may already contain a bound of this shape;
+never headline before checking); (b) can the factor `g` be attacked? The
+sweep loses `2q` (one from the start-point offset `rη/q`, one from the
+`⌊M/q⌋`-style floor); the escape needs `g|η| < g⁻ᵏ` only for the
+*shadow's* denominator, which shrinks — a denominator-aware contraction
+might reach `M ≈ (g−1)gᵏ + …`.  Low priority vs the ledger's cited-only
+nodes (`furstenberg_dense_orbit` next).
 
 
 ## ✅ C10 tower claim PROVED via a REDUCTION FINDING (2026-09-01, autonomous)

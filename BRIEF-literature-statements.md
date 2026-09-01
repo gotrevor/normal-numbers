@@ -7,8 +7,8 @@ briefs are pointed at it (module docstring).  Statements landed:
 
 | statement | tier | status |
 |---|---|---|
-| `mahler_theoremM` (Mahler 1973, m ≤ g^(2k+1)) | S (`docs/disjunctive-vs-normal.md` §1.1 via Waldschmidt) | **WIRED** (2026-09-01): `…_holds` in `LiteratureMahler.lean` from `Mahler.mahler_multiplier` (`MahlerMultiplier.lean`, NEW bound `(g+3)·gᵏ`, elementary, axiom-clean) ✅ |
-| `berendBoshernitzan_bound` (m ≤ 2g^(k+1)) | S (same + `docs/adder-family-2026-08-29.md`) | **WIRED for g ≥ 3** (2026-09-01): `…_holds_of_three_le` (our `(g+3)gᵏ ≤ 2g^(k+1)` iff `g ≥ 3`; `g = 2` still cited-only) ✅ |
+| `mahler_theoremM` (Mahler 1973, m ≤ g^(2k+1)) | S (`docs/disjunctive-vs-normal.md` §1.1 via Waldschmidt) | **WIRED** (2026-09-01): `…_holds` in `LiteratureMahler.lean` from `Mahler.mahler_multiplier` (`MahlerMultiplier.lean`, NEW bound `g^(k+1)`, elementary, axiom-clean) ✅ |
+| `berendBoshernitzan_bound` (m ≤ 2g^(k+1)) | S (same + `docs/adder-family-2026-08-29.md`) | **WIRED, all g ≥ 2** (2026-09-01): `…_holds` from `mahler_multiplier`'s `g^(k+1)` — half the transcribed B–B constant (transcription tier-S; primary-source check requested in `ON-LINE-REQUEST.md`) ✅ |
 | `berendBoshernitzan_M31` (M(3,1)=2 upper half) | S (`docs/mahler-sets-…` via master `c645528`) | **WIRED**: `…_holds` from tower C1 `c1_ternary_digit` ✅ |
 | `adamczewskiRampersad_boundary` (0/1/01/10 i.o. in every irrational) | S (`docs/disjunctive-vs-normal.md`, PAMS 136) | **WIRED**: `…_holds` proved here (forbidden-switch → eventual constancy → endgame) ✅ |
 | `waldschmidt_conjecture_1_1` (digit occurrence for algebraics; OPEN) | S (arXiv:0908.4034 §1 quoted) | unproved def (conjecture) |

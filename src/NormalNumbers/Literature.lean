@@ -45,8 +45,9 @@ provenance: secondary (`docs/disjunctive-vs-normal.md` §1.1, quoting
 Waldschmidt *Words and Transcendence* §1 [3, Theorem M]; PDF not held).
 **WIRED** (2026-09-01): `mahler_theoremM_holds` (`LiteratureMahler.lean`)
 proves it from `Mahler.mahler_multiplier` (`MahlerMultiplier.lean`), an
-elementary self-contained proof with the sharper bound `m ≤ (g+3)·gᵏ`
-(Dirichlet + arithmetic-progression sweep + `×g` escape); axiom-clean. -/
+elementary self-contained proof with the sharper bound `m ≤ g^(k+1)`
+(Dirichlet + two-grid-point arithmetic-progression sweep + shadow-rational
+`×g` escape); axiom-clean. -/
 def mahler_theoremM : Prop :=
   ∀ (α : ℝ), Irrational α → ∀ (g : ℕ), 2 ≤ g → ∀ (w : List ℕ), w ≠ [] →
     (∀ d ∈ w, d < g) →
@@ -64,10 +65,10 @@ RESULT).
 
 provenance: secondary (`docs/adder-family-2026-08-29.md` folklore-check
 section; `docs/disjunctive-vs-normal.md` §1.1).
-**WIRED for `g ≥ 3`** (2026-09-01): `berendBoshernitzan_bound_holds_of_three_le`
-(`LiteratureMahler.lean`) — our `(g+3)·gᵏ` bound is `≤ 2g^(k+1)` exactly when
-`g ≥ 3` (strictly below it for `g ≥ 4`).  The `g = 2` case (`5·2ᵏ` vs `4·2ᵏ`)
-is still cited-only. -/
+**WIRED** (2026-09-01, all `g ≥ 2`): `berendBoshernitzan_bound_holds`
+(`LiteratureMahler.lean`) — `Mahler.mahler_multiplier` gives `m ≤ g^(k+1)`,
+half this constant, for every base.  (An earlier `(g+3)·gᵏ` proof covered
+only `g ≥ 3`.)  ⚠️ The `2·g^(k+1)` transcription itself is tier-S. -/
 def berendBoshernitzan_bound : Prop :=
   ∀ (α : ℝ), Irrational α → ∀ (g : ℕ), 2 ≤ g → ∀ (w : List ℕ), w ≠ [] →
     (∀ d ∈ w, d < g) →
