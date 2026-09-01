@@ -46,8 +46,10 @@ every such run at `(1 + ε)·n` from some position on — the e-gap is `(1+ε)n`
 
 Odds (from the N3 note): structure theorems new as stated ~75% (no BBP ⇒ no
 Bailey–Crandall-descendant coverage; a sweep of the "binary digits of e" literature is
-owed before any outward claim).  Not done here: the rigidity `A(M) ≡ A(M mod p) (mod p)`,
-the exclusion node `EDerangementMiss`, and the factorial-kick class (`e^{1/q}`, `cosh 1`, …).
+owed before any outward claim).  The rigidity `A(M) ≡ A(M mod p) (mod p)` is proved
+(`eNum_zmod` / `eNum_mod`): the surrogate numerators are periodic modulo every `p`, the
+"rigid arithmetic door" of the N3 note.  Not done here: the exclusion node
+`EDerangementMiss` and the factorial-kick class (`e^{1/q}`, `cosh 1`, …).
 -/
 
 namespace NormalNumbers
@@ -386,5 +388,46 @@ theorem eRun_le_of_exponentTwo {b : ℕ} (hb : 2 ≤ b) (h : EIrrationalityExpon
   refine ⟨n₀, fun n hn k hrun => ?_⟩
   have := hn₀ n hn k hrun
   linarith
+
+/-! ### The rigid numerators: `A(M) mod p` is periodic in `M` -/
+
+/-- **Rigidity of the surrogate numerators** (`ZMod` form): `A(M) ≡ A(M mod p) (mod p)` for
+every modulus `p`.  Induction on `M` through `A(M+1) = (M+1)·A(M) + 1`: when `p ∣ M+1` the
+factor `M+1` vanishes and `A(M+1) ≡ 1 = A(0)`; otherwise `(M+1) mod p = (M mod p) + 1` and
+the recurrence at `M mod p` closes the step. -/
+theorem eNum_zmod (p : ℕ) [NeZero p] (M : ℕ) :
+    (eNum M : ZMod p) = (eNum (M % p) : ZMod p) := by
+  induction M with
+  | zero => simp
+  | succ M ih =>
+    have hrec : (eNum (M + 1) : ZMod p) = ((M + 1 : ℕ) : ZMod p) * (eNum M : ZMod p) + 1 := by
+      rw [eNum_succ]; push_cast; ring
+    rw [hrec, ih]
+    by_cases h : (M + 1) % p = 0
+    · have h0 : ((M + 1 : ℕ) : ZMod p) = 0 :=
+        (ZMod.natCast_eq_zero_iff _ _).2 (Nat.dvd_of_mod_eq_zero h)
+      rw [h, h0]
+      simp [eNum]
+    · have hp : 0 < p := NeZero.pos p
+      have hA : (M + 1) % p = (M % p + 1) % p := by
+        rw [Nat.add_mod M 1 p, Nat.add_mod (M % p) 1 p, Nat.mod_mod]
+      have hmod : (M + 1) % p = M % p + 1 := by
+        rcases Nat.lt_or_ge (M % p + 1) p with hlt' | hge
+        · rw [hA, Nat.mod_eq_of_lt hlt']
+        · exfalso
+          apply h
+          have hlt := Nat.mod_lt M hp
+          have heq : M % p + 1 = p := by omega
+          rw [hA, heq, Nat.mod_self]
+      have hcast : ((M + 1 : ℕ) : ZMod p) = ((M % p + 1 : ℕ) : ZMod p) := by
+        rw [← ZMod.natCast_mod (M + 1) p, hmod]
+      rw [hcast, hmod, eNum_succ]
+      push_cast
+      ring
+
+/-- **Rigidity of the surrogate numerators** (`Nat` form): `A(M) mod p = A(M mod p) mod p`. -/
+theorem eNum_mod (p : ℕ) (hp : 0 < p) (M : ℕ) : eNum M % p = eNum (M % p) % p := by
+  have : NeZero p := ⟨hp.ne'⟩
+  exact (ZMod.natCast_eq_natCast_iff' _ _ _).1 (eNum_zmod p M)
 
 end NormalNumbers
