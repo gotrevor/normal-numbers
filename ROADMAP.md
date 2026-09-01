@@ -192,6 +192,12 @@ the source of truth for statements and claim status (novelty unswept).
   numerators, probe green); N4 graded-discrepancy ladder; N5 BLMV flag.
   Probes: `experiments/lntwo_wieferich_census.py`, `stoneham6_readout.py`,
   `e_binary_runs.py`.
+  - ✅ N3 Lean surface landed 2026-09-01 (`EFactorialKick.lean`): the factorial
+    split `eSplit`, rational surrogate `fract (bⁿ·A(M)/M!)` (`eNum`, A000522
+    recurrence), tail bracket, moving-sliver cores, the all-base run dichotomy
+    `eSurrogate_window_of_zeroRun`/`_of_maxRun` (unconditional, trust triple),
+    and the CITED node `EIrrationalityExponentTwo` with its `(1+ε)n` run-cap
+    edge.  Owed: rigidity `A(M) mod p`, `EDerangementMiss`, the class theorem.
 
 ## Phase 3 — outward (publishing-prep pass ✅ complete locally, 2026-08-26)
 

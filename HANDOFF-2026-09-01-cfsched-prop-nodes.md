@@ -30,6 +30,17 @@ green at every commit (pre-commit hook builds).
    declared in the ledger namespace from this file; `Literature.lean` untouched), `M(g,1) ≥ 2`
    for all `g ≥ 3`; and **C5 sharpened** (`c5_sharp`, no `X + 4Y` channel, two lines from C1).
 
+4. **N3 — `e` enters the kick machine** (`EFactorialKick.lean`, new node family from
+   `docs/new-conjectures-2026-08-29.md` §N3, listed under ROADMAP "D-next"): factorial split
+   `eSplit b n = min{m : bⁿ < (m+1)!}`, rational surrogate `fract (bⁿ·A(M)/M!)` with the rigid
+   numerator `eNum` (A000522 recurrence proved), tail bracket from mathlib's `exp_bound'`,
+   moving-sliver cores (`window_of_fract_small/_large`, generalising `KickedOrbit`'s to
+   `hi < 2`), the ALL-BASE run dichotomy `eSurrogate_window_of_zeroRun`/`_of_maxRun`
+   (unconditional), and the CITED node `EIrrationalityExponentTwo` (`μ(e) = 2`) with the
+   `(1+ε)n` run-cap edge `eRun_le_of_exponentTwo`.  Probe already green
+   (`experiments/e_binary_runs.py`).  ⚠️ The Davis 1978 reference in the node docstring is
+   tier S (from memory, PDF not held) — verify before outward use.
+
 ## Verification (the quantum, run once)
 
 - `lean-sorry src` = 0.
@@ -49,9 +60,9 @@ green at every commit (pre-commit hook builds).
 ## Files touched (for integration)
 
 - `src/NormalNumbers/CFScheduleA.lean` (Prop nodes + docstrings), `src/NormalNumbers/CFScheduleARefuted.lean`
-  (new), `src/NormalNumbers/AdderTowerDeductions.lean` (new), `src/NormalNumbers.lean` (two
-  mid-file import lines: after `CFScheduleA`, after `AdderTowerC2` — the box appends at the
-  end, so this merges clean), `formalization.yaml`, `README.md`, `STATUS.md`, `ROADMAP.md`,
+  (new), `src/NormalNumbers/AdderTowerDeductions.lean` (new), `src/NormalNumbers/EFactorialKick.lean`
+  (new), `src/NormalNumbers.lean` (three mid-file import lines: after `CFScheduleA`, after
+  `AdderTowerC2`, after `PiBBP` — the box appends at the end, so this merges clean), `formalization.yaml`, `README.md`, `STATUS.md`, `ROADMAP.md`,
   `KHINCHIN.md` (§B6 status line), this handoff.
 - NOT touched: `PENDING_WORK.md`, `BRIEF-adder-tower.md`, `Literature.lean`, `DIRECTION.md`,
   `docs/` (box territory / operator-owned).  Stale name in a docstring left alone to avoid a

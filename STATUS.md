@@ -26,6 +26,12 @@
   (`Literature.berendBoshernitzan_M31_lower_holds`; with C1 both halves are in-kernel)
   and `M(g,1) ≥ 2` for all `g ≥ 3`; and **C5 sharpened** (`c5_sharp`: the `X + 4Y`
   channel is unnecessary — a two-line corollary of C1).  All trust triple.
+- **N3 `e` factorial-kick machine landed** (`EFactorialKick.lean`, same day): in every
+  base `b`, a run of `k` zeros / top digits of `e` at position `n` with
+  `bᵏ > eSplit b n + 1` pins the rational surrogate `fract (bⁿ·A(M)/M!)` to an explicit
+  window of width `< 1/(M+1) + b⁻ᵏ` (`eSurrogate_window_of_zeroRun`/`_of_maxRun`,
+  unconditional); the CITED node `EIrrationalityExponentTwo` caps runs at `(1+ε)n`
+  (`eRun_le_of_exponentTwo`).  Trust triple throughout.
 
 ## Adder wing (2026-08-30)
 

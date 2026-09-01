@@ -68,6 +68,7 @@ import NormalNumbers.KickedOrbit
 import NormalNumbers.LogTwoSqKicked
 import NormalNumbers.LogTwoSqSeriesProof
 import NormalNumbers.PiBBP
+import NormalNumbers.EFactorialKick
 import NormalNumbers.PiBBPProof
 import NormalNumbers.PiSqBBP
 import NormalNumbers.PiSqBBPProof
