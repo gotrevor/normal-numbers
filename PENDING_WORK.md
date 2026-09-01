@@ -1,5 +1,38 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ MAHLER'S THEOREM M PROVED — with the NEW bound `(g+3)·gᵏ` (2026-09-01, autonomous)
+
+`NormalNumbers.Mahler.mahler_multiplier` (`src/NormalNumbers/MahlerMultiplier.lean`):
+for every irrational `α`, base `g ≥ 2`, block `w` of length `k`, some
+`1 ≤ m ≤ (g+3)·gᵏ` has `w` i.o. in `m·α`.  Trust triple, no sorries,
+self-contained (imports only `Disjunctive`).  Proof = Dirichlet (mathlib
+`Real.exists_rat_abs_sub_le_and_den_le`) + the **sweep lemma** (multiples
+`m = ℓq + r` form `q` arithmetic progressions of step `η = qx − p`, one
+per residue class via a modular inverse; they cover every cell once
+`(L−1)|η| ≥ 1/q`) + the **escape lemma** (if `x_n` stays within `1/(q_n D)`
+of rationals with `q_n ≤ Q`, `D ≥ (g+1)Q`, the shadow rationals are forced
+to be `×g` images of each other, so the defect satisfies `ε_{n+1} = g ε_n`
+EXACTLY and blows up).  Numerically pre-checked (`0` violations of the
+covering lemma over 1839 non-good samples).
+
+**Ledger edges wired (`LiteratureMahler.lean`, axiom-clean):**
+- `mahler_theoremM_holds` — Mahler 1973 Thm M (`m ≤ g^(2k+1)`) for ALL
+  `g ≥ 2`, `k ≥ 1` (the `(2,1)` case via `adamczewskiRampersad_boundary_holds`).
+- `berendBoshernitzan_bound_holds_of_three_le` — B–B 1994 `m ≤ 2g^(k+1)`
+  for all `g ≥ 3`.  **Bound comparison:** ours `(g+3)gᵏ` vs cited `2g^(k+1)`:
+  equal at `g = 3`, ours strictly smaller for `g ≥ 4`, ours larger only at
+  `g = 2` (`5·2ᵏ` vs `4·2ᵏ`).  ⚠️ The B–B statement is tier-S (secondary
+  sources, PDF not held) — the "improvement" claim is conditional on that
+  transcription; operator to check against the paper before headlining.
+
+**NEXT (open):** close the `g = 2` gap.  The slack is in the covering
+lemma: `q(L−1) > M − 2q` loses one `q` to `⌊M/q⌋` and one to `L − 1`.
+Getting `m ≤ 4·2ᵏ` needs the sweep to work with `L·|η| ≥ 1/q` (use the
+`ℓ = L` point when `r ≤ M mod q`, or a sharper start-point choice), OR a
+base-2-specific dynamics bound.  Also worth trying: push the constant to
+`(g+2)gᵏ` generally (would match B–B at `g = 2`).
+
+
 ## ✅ C10 tower claim PROVED via a REDUCTION FINDING (2026-09-01, autonomous)
 
 `c10_disjunction_universal` (`src/NormalNumbers/AdderTowerC10.lean`) — the
