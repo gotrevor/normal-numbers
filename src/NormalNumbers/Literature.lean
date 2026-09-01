@@ -238,7 +238,12 @@ irrational `x`, the multiplicative orbit `{2^m 3^n x mod 1}` is dense in
 `[0, 1]` (consequence of ×2, ×3 topological rigidity).  The measure
 version (×p ×q conjecture) is famously open.
 
-provenance: secondary (`docs/disjunctive-vs-normal.md` §1.2). -/
+provenance: secondary (`docs/disjunctive-vs-normal.md` §1.2).
+**WIRED** (2026-09-01): `furstenberg_dense_orbit_holds`
+(`LiteratureFurstenberg.lean`) from the ×p×q rigidity theorem in
+`Furstenberg.lean` (Boshernitzan's elementary route as presented in Manners
+arXiv:1305.1514 §4; re-homed from the author's `collatz-moonshot`, same
+mathlib pin); axiom-clean. -/
 def furstenberg_dense_orbit : Prop :=
   ∀ (x : ℝ), Irrational x → ∀ a c : ℝ, 0 ≤ a → a < c → c ≤ 1 →
     ∃ m n : ℕ, Int.fract ((2 : ℝ) ^ m * 3 ^ n * x) ∈ Set.Ico a c

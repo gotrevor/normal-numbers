@@ -92,6 +92,8 @@ import NormalNumbers.AdderTowerC6
 import NormalNumbers.MahlerMultiplier
 import NormalNumbers.Literature
 import NormalNumbers.LiteratureMahler
+import NormalNumbers.Furstenberg
+import NormalNumbers.LiteratureFurstenberg
 import NormalNumbers.AdderEngineSplit
 import NormalNumbers.AdderMusicalKData
 import NormalNumbers.AdderMusical

@@ -1,5 +1,30 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ FURSTENBERG 1967 dense-orbit theorem WIRED (2026-09-01, autonomous)
+
+`Literature.furstenberg_dense_orbit_holds` (`src/NormalNumbers/LiteratureFurstenberg.lean`):
+for irrational `x` and `0 ≤ a < c ≤ 1`, some `{2^m 3^n x} ∈ [a, c)`.  Trust
+triple.  The theorem behind it — ×p×q topological rigidity, `Y` closed and
+`p•`,`q•`-invariant ⇒ finite or `univ` (`Furstenberg.isClosed_invariant_finite_or_univ`,
+`src/NormalNumbers/Furstenberg.lean`, 1200 lines) — is a verbatim re-homing
+(namespace + 4 lint fixes) of the author's `collatz-moonshot`
+`Rigidity/Furstenberg.lean` (commit `4727694`; same mathlib `0df444a3`,
+Lean `v4.33.1`), re-checked by this repo's kernel.  Route: Boshernitzan 1994
+as presented in Manners arXiv:1305.1514 §4 (climb lemma + intersection
+induction).  I had independently reconstructed the reduction (non-lacunarity
+from `log 3 / log 2 ∉ ℚ`, spreading, rational-limit-point spreading with the
+sub-semigroup `{t ≡ 1 mod q}`) before finding the corpus note
+(`2026-08-26-lean-addcircle-rigidity-toolkit.md`) that the crux — forcing
+accumulation at a torsion point — was already done there; porting beat
+re-proving.  Bridge lemmas: `AddCircle.not_isOfFinAddOrder_iff_forall_rat_ne_div`,
+`QuotientAddGroup.isOpenMap_coe`, `Dense.exists_mem_open`,
+`AddCircle.coe_eq_coe_iff_of_mem_Ico`, and the file's own `coe_fract`.
+
+Ledger: `Literature.lean` docstring marked WIRED; brief table row updated.
+Remaining cited-only ledger nodes: see `BRIEF-literature-statements.md`
+(`waldschmidt_conjecture_1_1` is OPEN, not a target).
+
+
 ## ✅ MAHLER'S THEOREM M — bound sharpened to `g^(k+1)` (2026-09-01, autonomous)
 
 `NormalNumbers.Mahler.mahler_multiplier` (`src/NormalNumbers/MahlerMultiplier.lean`):

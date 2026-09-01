@@ -12,7 +12,7 @@ briefs are pointed at it (module docstring).  Statements landed:
 | `berendBoshernitzan_M31` (M(3,1)=2 upper half) | S (`docs/mahler-sets-…` via master `c645528`) | **WIRED**: `…_holds` from tower C1 `c1_ternary_digit` ✅ |
 | `adamczewskiRampersad_boundary` (0/1/01/10 i.o. in every irrational) | S (`docs/disjunctive-vs-normal.md`, PAMS 136) | **WIRED**: `…_holds` proved here (forbidden-switch → eventual constancy → endgame) ✅ |
 | `waldschmidt_conjecture_1_1` (digit occurrence for algebraics; OPEN) | S (arXiv:0908.4034 §1 quoted) | unproved def (conjecture) |
-| `furstenberg_dense_orbit` (×2×3 dense orbits) | S (`docs/disjunctive-vs-normal.md` §1.2) | unproved def |
+| `furstenberg_dense_orbit` (×2×3 dense orbits) | S (`docs/disjunctive-vs-normal.md` §1.2) | **WIRED** (2026-09-01): `…_holds` in `LiteratureFurstenberg.lean` from the ×p×q rigidity theorem `Furstenberg.isClosed_invariant_finite_or_univ` (`Furstenberg.lean`, Boshernitzan/Manners route, re-homed from `collatz-moonshot` at the same pin, axiom-clean) ✅ |
 | `becherYuhjtman_existence` (Thm 1 minus efficiency) | P (`papers/becher-yuhjtman-…`) | **WIRED**: `…_holds` := `exists_absolutely_normal_cf_normal` ✅ |
 | `baileyMisiurewicz_weak_hot_spot` (Thm 1.1 full iff, limsup form) | P (`papers/bailey-misiurewicz-…`, complete AMS text) | **WIRED**: `…_holds` proves the full iff (`⟸` visit criterion, `⟹` Wall), axiom-clean ✅ |
 | `baileyMisiurewicz_strong_hot_spot` (Thm 3.4, sequence-space iff, `IsSeqHotSpot`/`bmHotSpotRatio`) | P (`papers/bailey-misiurewicz-…` §3) | **forward verified**: `normal_no_seqHotSpot` (normal⇒no hot spot), axiom-clean; converse needs compactness ◐ |
