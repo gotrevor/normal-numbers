@@ -1,5 +1,61 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ `M(7,1) = 9` AND `M(g,k) ≤ g^(k+1) − 2g + 3` (PRIME `g`) (2026-09-02, autonomous)
+
+Two upper-side results, both kernel-checked, trust triple.
+
+### `M(7,1) = 9` exact (`MahlerBase7Exact.lean` + `MahlerBase7Cert0..6.lean`)
+
+The blocker recorded last lap ("a single `decide +kernel` over ambient
+`9! = 362880` ran > 45 min without finishing") is **dissolved, not chunked
+around**.  The multiplier is quantified *after* the digit, so for each `w`
+separately it suffices that SOME subset of `{1,…,9}` collapses:
+
+| `w` | multipliers | ambient | live |
+|---|---|---|---|
+| 0, 3, 6 | `1,2,3,4,5,6,8` | `5760` | `12, 18, 12` |
+| 1, 5 | `1,3,4,5,6,9` | `3240` | `27` |
+| 2, 4 | `1,2,3,4,5,6` | `720` | `16` |
+
+Total ambient `25200` vs `7 × 362880` — a **100×** cut
+(`experiments/mahler_subset_hunt_perdigit.py`).  The old uniform-subset hunt
+found nothing under `30000` and was right to; the gain is entirely in letting
+the family depend on `w`.  ⚠️ One certificate PER MODULE: the seven kernel
+`decide`s in one `lean` process exhaust memory (7.4 GB, no termination),
+each alone runs 18 s – 2 min.  ⚠️ Also: a `lake build` killed mid-flight
+leaves ORPHAN `lean` workers holding ~60k fds each; three of them reproduce
+the box's "Too many open files" mystery.  `ps -eo pid,etimes,rss | grep lean`
+and `kill -9` before blaming the environment.
+
+`mahler_M_seven_eq_nine` joins `M(3,1) = 2` (B–B) and `M(5,1) = 6`.  The
+general sandwich gives only `5 ≤ M(7,1) ≤ 49`.
+
+### `M(g,k) ≤ g^(k+1) − 2g + 3` for prime `g` (`MahlerPrimeUpper.lean`)
+
+The `q = 1` exclusion listed as "the cheapest remaining upper-side item" is
+done.  `orbit_run_of_den_one`: a denominator-`1` shadow with defect `< g^(−k)`
+at `x_n` forces `0ᵏ` or `(g−1)ᵏ` at `n` (the only integers in range are `0`
+and `1`, and their cells ARE those blocks), which `MahlerRunBranch` settles at
+`m ≤ gᵏ`.  So the sweep runs with `q ≥ 2`, and
+`defect_contracts_of_bad_two` is tight: `M + 1 − 2q ≥ g(Q − q)` reduces to
+`(q−2)(g−2) ≥ 0`.  **This is the end of what the covering method can give**
+— see the structural finding below for why `q ≥ 3` is not available.
+
+### Next attack, in order
+
+1. **The prime `Θ(g²)` upper side** (the standing crux).  Empirically
+   `M(p,1) = ⌊(p−1)²/4⌋ − δ` with `δ` small: `7→9, 11→25, 17→64` hit it
+   exactly, `19→80` (81), `23→120` (121), `29→192` (196); `5→6` is the
+   outlier above.  The covering method stops at `≈ g²/2` even in the best
+   case, so this needs Farey-hopping (track TWO shadow denominators and hop
+   between neighbouring Farey fractions rather than following one shadow).
+2. **`M(11,1) = 25`?**  The per-digit subset trick is the lever, but subsets
+   of `{1,…,25}` are `2²⁵`; needs a greedy peel (start from the full set,
+   drop the largest multiplier that keeps collapse) rather than enumeration.
+3. **A uniform `B(g)`** for a general prime `Θ(g²)` lower-bound theorem.
+   Probe data in `experiments/mahler_bg_burst_structure.py`.
+4. Composite-`g` run theorem ("predecessor digit coprime to `g`"); B–B Thm 3.2.
+
 ## ✅ THE UNIVERSAL MAHLER CONSTANT IS `≥ 0.840` (was `1/2`); THE POWER FAMILY IS EXACT ON 13 COMPOSITE BASES (2026-09-02, autonomous)
 
 Scanning `mahler_lower_bound_power` over `L ≤ 5`
