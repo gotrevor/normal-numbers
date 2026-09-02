@@ -4,7 +4,47 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-08-29 — the conjecture-graph objective)
+## CURRENT DIRECTIVE (set 2026-09-02 REVIEW LAP — own the Mahler constant `M(g,k)`)
+
+- 🎯 **THE objective: pin the optimal universal Mahler multiplier `M(g,k)`.**
+  This is the one place in the repo currently producing genuinely NEW theorems
+  (the destination below — novel proofs, not novel formalization — is unchanged;
+  this names where to spend the laps).  State of the sandwich, all trust-triple:
+  `t(gᵏ−1) ≤ M(g,k) ≤ g^(k+1)` for every factorization `g = t·c`, `c ≥ 2`
+  (`MahlerLowerBoundGeneral.lean`, `MahlerMultiplier.lean`).  Even bases are
+  already within a factor `2 + o(1)`.
+- 🔨 **Mandated next move — the PRIME-BASE UPPER BOUND.**  For prime `g` the
+  divisor construction gives nothing (`t = 1`), so the gap is still the full
+  factor `g`, and B–B's `M(3,1) = 2 = gᵏ−1` says the LOWER side is already right:
+  the room is all on the upper side.  Attack the binding case of the sweep,
+  `q = 1` (`x` near an integer), where the shadow's quality hypothesis
+  `g|η| < g⁻ᵏ` is what forces `M ≥ g^(k+1) − g + 1`.  A denominator-aware or
+  multi-scale invariant (the orbit visits every scale `d`, and the required
+  multiplier shrinks by `g` at each step) is the named attack.  A disclosed
+  sub-`sorry` in `src/` decomposing that is a valid checkpoint and PROGRESS.
+  Cheap complementary win, take it when the crux stalls: the finite `decide`
+  witness `B = 125` giving `M(10,k) ≥ 8(10ᵏ−1)` (`1.25×` off the upper bound).
+- ⛔ **Forbidden drift**: statement-only ledger rows as a SUBSTITUTE for the crux
+  (they are tail filler, never the lap's advance); `CFScheduleA.lean` (its two
+  residues are being converted to `def … : Prop` on `wip/cfschedulea-prop-nodes`);
+  the repo-wide sorry-free gate (dishonest until that merge); Comparator statement
+  holes; downloading papers; any outward action.
+- 📌 **Claim hygiene, standing**: the B–B constants here are tier-S (secondary
+  sources).  State OUR quantifiers, never attribute; `ON-LINE-REQUEST.md` holds
+  the primary-source ask.  Do not headline "beats Berend–Boshernitzan" until the
+  PDF is read — headline "our construction gives X" instead.
+- ✅ **Closed by this lap**: the 2026-08-29 brief queue (adder disjunction /
+  universal / signed engine / tower C1–C10 / literature statements) — all have
+  RESULT sections written.  Its standing mandate (formalize anything tractable in
+  orbit, weighed by the novel-proofs doctrine) survives as the fallback when the
+  Mahler thread is genuinely exhausted, NOT before.
+
+### Directive history
+- 2026-09-02 (review lap): objective moved from the brief queue to the Mahler
+  constant; crux named as the prime-base upper bound after the composite-base
+  lower bound collapsed the gap from factor `g` to factor `2`.
+
+## SUPERSEDED DIRECTIVE (set 2026-08-29 — the conjecture-graph objective)
 
 - 🧮 **OPERATOR ADDENDUM (2026-08-29 attended, outranks the rest of this block
   while open): execute `BRIEF-adder-disjunction-formalization.md`** — the six-fold
