@@ -42,7 +42,12 @@ digits, some positive integer `m ≤ g^(2k+1)` has `w` occurring infinitely
 often in the base-`g` expansion of `m·α`.
 
 provenance: secondary (`docs/disjunctive-vs-normal.md` §1.1, quoting
-Waldschmidt *Words and Transcendence* §1 [3, Theorem M]; PDF not held). -/
+Waldschmidt *Words and Transcendence* §1 [3, Theorem M]; PDF not held).
+**WIRED** (2026-09-01): `mahler_theoremM_holds` (`LiteratureMahler.lean`)
+proves it from `Mahler.mahler_multiplier` (`MahlerMultiplier.lean`), an
+elementary self-contained proof with the sharper bound `m ≤ g^(k+1)`
+(Dirichlet + two-grid-point arithmetic-progression sweep + shadow-rational
+`×g` escape); axiom-clean. -/
 def mahler_theoremM : Prop :=
   ∀ (α : ℝ), Irrational α → ∀ (g : ℕ), 2 ≤ g → ∀ (w : List ℕ), w ≠ [] →
     (∀ d ∈ w, d < g) →
@@ -56,10 +61,16 @@ sharpening, Acta Arith. 66): Mahler's multiplier bound improves to
 The paper also shows the bound cannot beat `g^k − 1`; that lower bound's
 exact quantifier structure is not pinned by our secondary sources, so per
 the never-fabricate rule it is NOT transcribed (gap recorded in the brief's
-RESULT).
+RESULT).  Our own lower-bound statement — no universal bound below
+`gᵏ − 1`, witnesses `liouvilleNumber g` and `(g−1)ᵏ` — is PROVED as
+`Mahler.mahler_lower_bound` (`MahlerLowerBound.lean`, 2026-09-01).
 
 provenance: secondary (`docs/adder-family-2026-08-29.md` folklore-check
-section; `docs/disjunctive-vs-normal.md` §1.1). -/
+section; `docs/disjunctive-vs-normal.md` §1.1).
+**WIRED** (2026-09-01, all `g ≥ 2`): `berendBoshernitzan_bound_holds`
+(`LiteratureMahler.lean`) — `Mahler.mahler_multiplier` gives `m ≤ g^(k+1)`,
+half this constant, for every base.  (An earlier `(g+3)·gᵏ` proof covered
+only `g ≥ 3`.)  ⚠️ The `2·g^(k+1)` transcription itself is tier-S. -/
 def berendBoshernitzan_bound : Prop :=
   ∀ (α : ℝ), Irrational α → ∀ (g : ℕ), 2 ≤ g → ∀ (w : List ℕ), w ≠ [] →
     (∀ d ∈ w, d < g) →
@@ -229,7 +240,12 @@ irrational `x`, the multiplicative orbit `{2^m 3^n x mod 1}` is dense in
 `[0, 1]` (consequence of ×2, ×3 topological rigidity).  The measure
 version (×p ×q conjecture) is famously open.
 
-provenance: secondary (`docs/disjunctive-vs-normal.md` §1.2). -/
+provenance: secondary (`docs/disjunctive-vs-normal.md` §1.2).
+**WIRED** (2026-09-01): `furstenberg_dense_orbit_holds`
+(`LiteratureFurstenberg.lean`) from the ×p×q rigidity theorem in
+`Furstenberg.lean` (Boshernitzan's elementary route as presented in Manners
+arXiv:1305.1514 §4; re-homed from the author's `collatz-moonshot`, same
+mathlib pin); axiom-clean. -/
 def furstenberg_dense_orbit : Prop :=
   ∀ (x : ℝ), Irrational x → ∀ a c : ℝ, 0 ≤ a → a < c → c ≤ 1 →
     ∃ m n : ℕ, Int.fract ((2 : ℝ) ^ m * 3 ^ n * x) ∈ Set.Ico a c

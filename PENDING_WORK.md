@@ -1,5 +1,131 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ MAHLER LOWER BOUND `gᵏ − 1` PROVED — chapter now two-sided (2026-09-01, autonomous)
+
+`Mahler.mahler_lower_bound` (`src/NormalNumbers/MahlerLowerBound.lean`):
+for every `g ≥ 2` and `k`, there are irrational `α` and a `k`-digit block
+`w` such that NO `1 ≤ m ≤ gᵏ − 2` has `w` occurring i.o. in `m·α` (in fact
+`w` occurs at no position `n ≥ (k+2)!`).  Witnesses `α = liouvilleNumber g`
+(mathlib: `liouville_liouvilleNumber` ⇒ irrational), `w = (g−1)ᵏ`.  Trust
+triple.  Paired with `mahler_multiplier`:
+
+    gᵏ − 1 ≤ M(g,k) ≤ g^(k+1)   — both sides machine-checked.
+
+Proof never touches digits: `occursAt_iff_orbit_mem` reduces to
+`{m α gⁿ} < 1 − g⁻ᵏ`; with `j! ≤ n < (j+1)!`, `d = (j+1)! − n ≥ 1`,
+`m α gⁿ = (ℕ) + (m mod g^d)/g^d + T`, `T = m gⁿ·remainder g (j+1) < g^(−k−1)`
+(`LiouvilleNumber.remainder_lt`), and `(m mod g^d)/g^d ≤ 1 − 2g⁻ᵏ` in both
+regimes `d ≥ k` / `d < k`.  Claim hygiene: B–B 1994 are reported to have
+`gᵏ − 1`; we state OUR quantifiers and do not attribute the statement.
+
+Gotchas: `partialSum_eq_rat` casts `g ^ j!` as a ℕ (normalize with
+`push_cast`); `((m / g^d : ℕ) : ℤ)` gets rewritten by `Int.natCast_div`
+under `push_cast` — keep the integer part as a ℕ-cast and use
+`Int.cast_natCast` at the `fract_eq_of_eq_int_add` call; `linarith` treats
+`2 / g^k` and `1 / g^k` as unrelated atoms (bridge with `ring`).
+
+
+## ✅ FURSTENBERG 1967 dense-orbit theorem WIRED (2026-09-01, autonomous)
+
+`Literature.furstenberg_dense_orbit_holds` (`src/NormalNumbers/LiteratureFurstenberg.lean`):
+for irrational `x` and `0 ≤ a < c ≤ 1`, some `{2^m 3^n x} ∈ [a, c)`.  Trust
+triple.  The theorem behind it — ×p×q topological rigidity, `Y` closed and
+`p•`,`q•`-invariant ⇒ finite or `univ` (`Furstenberg.isClosed_invariant_finite_or_univ`,
+`src/NormalNumbers/Furstenberg.lean`, 1200 lines) — is a verbatim re-homing
+(namespace + 4 lint fixes) of the author's `collatz-moonshot`
+`Rigidity/Furstenberg.lean` (commit `4727694`; same mathlib `0df444a3`,
+Lean `v4.33.1`), re-checked by this repo's kernel.  Route: Boshernitzan 1994
+as presented in Manners arXiv:1305.1514 §4 (climb lemma + intersection
+induction).  I had independently reconstructed the reduction (non-lacunarity
+from `log 3 / log 2 ∉ ℚ`, spreading, rational-limit-point spreading with the
+sub-semigroup `{t ≡ 1 mod q}`) before finding the corpus note
+(`2026-08-26-lean-addcircle-rigidity-toolkit.md`) that the crux — forcing
+accumulation at a torsion point — was already done there; porting beat
+re-proving.  Bridge lemmas: `AddCircle.not_isOfFinAddOrder_iff_forall_rat_ne_div`,
+`QuotientAddGroup.isOpenMap_coe`, `Dense.exists_mem_open`,
+`AddCircle.coe_eq_coe_iff_of_mem_Ico`, and the file's own `coe_fract`.
+
+Ledger: `Literature.lean` docstring marked WIRED; brief table row updated.
+Remaining cited-only ledger nodes: see `BRIEF-literature-statements.md`
+(`waldschmidt_conjecture_1_1` is OPEN, not a target).
+
+
+## ✅ MAHLER'S THEOREM M — bound sharpened to `g^(k+1)` (2026-09-01, autonomous)
+
+`NormalNumbers.Mahler.mahler_multiplier` (`src/NormalNumbers/MahlerMultiplier.lean`):
+for every irrational `α`, base `g ≥ 2`, block `w` of length `k`, some
+`1 ≤ m ≤ g^(k+1)` has `w` i.o. in `m·α`.  Trust triple, no sorries,
+self-contained (imports only `Disjunctive`).  Supersedes the `(g+3)·gᵏ`
+proof of `8afbd05` (which left `g = 2` short of Berend–Boshernitzan).
+
+**The two insights that collapsed the constant** (both recorded in the
+module docstring):
+1. *Two-grid-point sweep* (`sweep_pos` + new `start_in_cell`).  If the
+   progression through the grid point `j/q` just below the cell needs more
+   than `M` multiples to climb into it, then the *next* grid point
+   `(j+1)/q` is already inside the cell together with the start of its
+   own progression.  Guaranteed once `(M+1−2q)|η| ≥ 1 − q/gᵏ`.  This makes
+   the covering lemma **universal**: a bad `x` has
+   `(M+1−2q)|qx−p| < 1 − q/gᵏ` for EVERY reduced `p/q`, `q ≤ gᵏ`,
+   `|qx−p| < g⁻ᵏ` (`defect_bound_of_bad`), not just Dirichlet's.
+2. *Shadow-rational escape* (`orbit_escapes`, rewritten).  With a universal
+   covering lemma there is no need to show two nearby rationals coincide:
+   follow `ρ' = gρ − ⌊g x_n⌋` (denominator divides `ρ.den`); the
+   normalized defect is multiplied by exactly `g` by construction, and at
+   `M = g^(k+1)` the covering bound contracts every quality-`g⁻ᵏ`
+   approximation to quality `g⁻ᵏ/g` (`defect_contracts_of_bad`), so the
+   shadow stays quality-`g⁻ᵏ` forever while its defect grows like `gⁱ`.
+
+Numerically pre-checked (refined sweep: 5149 samples, 0 violations, min
+slack 1).  The same argument gives `g^(k+1) − 1`; the method's floor is
+`M ≥ 2gᵏ` (needed for `M+1−2q > 0`), and B–B's lower bound `gᵏ − 1` says
+the truth is within a factor `g` of what we have.
+
+**Ledger edges (`LiteratureMahler.lean`, axiom-clean):**
+- `mahler_theoremM_holds` — Mahler 1973 Thm M for ALL `g ≥ 2`, no `(2,1)`
+  special case any more.
+- `berendBoshernitzan_bound_holds : berendBoshernitzan_bound` — B–B 1994
+  `m ≤ 2g^(k+1)` for ALL `g ≥ 2` (the `g = 2` gap is closed).  ⚠️ The
+  transcribed B–B constant is tier-S; "half their constant" is conditional
+  on it — primary-source check requested in `ON-LINE-REQUEST.md`
+  (2026-09-01).
+
+**NEXT (open):** (a) once the B–B PDF is read, decide whether `g^(k+1)`
+is genuinely new (their paper may already contain a bound of this shape;
+never headline before checking); (b) can the factor `g` be attacked? The
+sweep loses `2q` (one from the start-point offset `rη/q`, one from the
+`⌊M/q⌋`-style floor); the escape needs `g|η| < g⁻ᵏ` only for the
+*shadow's* denominator, which shrinks — a denominator-aware contraction
+might reach `M ≈ (g−1)gᵏ + …`.  Low priority vs the ledger's cited-only
+nodes (`furstenberg_dense_orbit` next).
+
+
+## ✅ C10 tower claim PROVED via a REDUCTION FINDING (2026-09-01, autonomous)
+
+`c10_disjunction_universal` (`src/NormalNumbers/AdderTowerC10.lean`) — the
+last named tower claim, in the dossier's exact nine-disjunct base-5 form —
+is proved kernel-tier, trust triple.  NOT by the dossier's 540 396-state
+certificate: the family SPLITS (C5 pattern).  Irrational `Y` ⇒ the four
+`Y`-only channels collapse alone (`c10_y_branch`, 24 ambient / 5 live);
+rational `Y` ⇒ `Z = X+Y` irrational and the diagonal channels `Z,2Z,3Z,4Z`
+avoiding digit 2 collapse alone (`c10_z_branch`, 24 ambient / 6 live).
+`X+4Y` is unused.  Full two-track automaton also collapses in Python
+(46080 ambient, 18 live) — verdict agrees with the dossier.  RESULT in
+`BRIEF-adder-tower.md` (C10 addendum).  Tower brief now fully closed
+(C1–C10).  Open follow-ups: novelty of the two single-track base-5
+sub-claims vs Berend–Boshernitzan 1994 general-`g` (operator sweep).
+
+## ✅ Aristotle faithfulness cross-check of `PiSqBBP` — PASSED (2026-09-01)
+
+Project `7ee16d3a` (prose of Bailey Formula 29 only) returned
+`HasSum (fun j => (1/16^j) * (16/(8j+1)^2 - 16/(8j+2)^2 - 8/(8j+3)^2
+- 16/(8j+4)^2 - 4/(8j+5)^2 - 4/(8j+6)^2 + 2/(8j+7)^2)) (π^2)` — term-for-term
+identical to `piSqTerm`/`PiSqBBP := HasSum piSqTerm (Real.pi^2)`.
+Independent confirmation that `piSqBBP_proved` states the theorem.  (It
+also proved it, via the same dilogarithm-reflection route; the returned
+proof was NOT imported — ours is already axiom-clean in-kernel.)
+
+
 ## ✅ Merged + ledger deepened (2026-08-31, autonomous, master)
 
 - `wip/pisq-bbp-decomp` MERGED to master (`3003362`, --no-ff per repo
