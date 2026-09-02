@@ -48,13 +48,26 @@ green at every commit (pre-commit hook builds).
    and the degeneracy probe run first (docstring says what is needed).
 6. **N3 rigidity** `eNum_zmod`/`eNum_mod`: `A(M) ≡ A(M mod p) (mod p)`.
 
+7. **Hygiene**: `CFScheduleA.lean` now builds with zero linter warnings (42 cleared:
+   `push_neg`→`push Not`, `Set.mem_setOf_eq`→`Set.mem_ofPred_eq`, unused binders `_h…`,
+   unused simp args / no-op `push_cast`).  Proof-internal only.
+
+## Commits (branch `wip/cfschedulea-prop-nodes`, on top of `40ff0a2`)
+
+`ed814d8` Prop nodes · `7eb13b5` refutation · `50b7827` tower deductions · `b053496` docs ·
+`3f549b8` EFactorialKick · `033a3cf` numerator rigidity · `bd0b915` StonehamBase6 ·
+`97de3a8` hygiene · (+ this handoff).  Every commit's pre-commit hook ran the full
+`lake build` green (8846 jobs at the end).
+
 ## Verification (the quantum, run once)
 
 - `lean-sorry src` = 0.
-- `collectAxioms` census over all 1726 user-facing NormalNumbers constants, before vs after
-  the Prop-node edit: the ONLY diffs are the nine former-`sorryAx` constants (now trust
-  triple) and the two new Props.  No other constant's axiom set moved.  Script:
-  `AxiomCensus.lean` (session scratch; 15 lines, `collectAxioms` per constant).
+- `collectAxioms` census over every user-facing NormalNumbers constant (1726 before →
+  1796 at the final commit), diffed against the pre-edit baseline: the ONLY changes are
+  (a) the nine former-`sorryAx` constants, now trust triple, and (b) additions — the two
+  Props and the new modules' declarations.  No pre-existing constant's axiom set moved;
+  no constant depends on `sorryAx`.  Script: `AxiomCensus.lean` (session scratch, ~25
+  lines, `collectAxioms` per constant), outputs `axioms-before.txt` / `axioms-final.txt`.
 - `lean-axiom-gate --exact -i NormalNumbers` ✓ on: `exists_absolutely_normal_cf_normal`,
   `…_khinchin`, `exists_cfNormal_and_affine_cfNormal`, `exists_cfNormal_and_affine_family_cfNormal'`
   (census; the gate's shell quoting chokes on the prime), `isNormal_iff_equidistributed_orbit`,
