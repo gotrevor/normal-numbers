@@ -101,6 +101,7 @@ import NormalNumbers.MahlerLowerBoundGeneral
 import NormalNumbers.MahlerRunBranch
 import NormalNumbers.MahlerPrimeUpper
 import NormalNumbers.MahlerPrimeHalf
+import NormalNumbers.MahlerFarey
 import NormalNumbers.MahlerMultiplierStrict
 import NormalNumbers.MahlerLowerBoundBackground
 import NormalNumbers.MahlerPrimeLowerBound
