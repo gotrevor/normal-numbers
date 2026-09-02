@@ -25,3 +25,22 @@ a different B–B paper) — and report:
 
 A PDF dropped at `docs/papers/berend-boshernitzan-1994.pdf` is ideal;
 otherwise a summary of (1)–(3) suffices.
+
+## 2026-09-02 — Berend–Boshernitzan 1994, the LOWER bound (follow-up)
+
+Same paper as the 2026-09-01 request (D. Berend, M. Boshernitzan, *On a result
+of Mahler on the decimal expansion of (nα)*, Acta Arith. 66 (1994) 315–322).
+New, sharper question, because this repo now proves a lower bound that beats the
+`gᵏ − 1` our secondary sources attribute to them:
+
+- We prove `M(g,k) ≥ t·(gᵏ − 1)` for **every** factorization `g = t·c` with
+  `c ≥ 2` (so `(g/2)(gᵏ − 1)` for every even base; `8(10ᵏ − 1)` for base 10 with
+  a finite witness).  Construction: `α = c · Σ g^(−i!)`.
+- **Do B–B state a lower bound of this shape** (base-dependent, `≍ g^(k+1)` for
+  composite `g`), or only `gᵏ − 1`?  Their §/theorem number and exact quantifiers
+  are what we need.
+- Do they state `M(g,k)` exactly for any `(g,k)` beyond `M(3,1) = 2`?  A single
+  exact value for a COMPOSITE base would settle whether our bound is sharp.
+
+Until answered, `MahlerLowerBoundGeneral.lean` states our own quantifiers and
+attributes nothing.

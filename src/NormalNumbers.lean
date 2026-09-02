@@ -97,6 +97,7 @@ import NormalNumbers.MahlerMultiplier
 import NormalNumbers.Literature
 import NormalNumbers.LiteratureMahler
 import NormalNumbers.MahlerLowerBound
+import NormalNumbers.MahlerLowerBoundGeneral
 import NormalNumbers.Furstenberg
 import NormalNumbers.LiteratureFurstenberg
 import NormalNumbers.AdderEngineSplit

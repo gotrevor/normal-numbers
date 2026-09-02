@@ -16,6 +16,13 @@ in `m·α`.  Together with `mahler_multiplier` (`m ≤ g^(k+1)` always works)
 this pins the optimal universal multiplier bound `M(g,k)` to
 `gᵏ − 1 ≤ M(g,k) ≤ g^(k+1)`, both sides machine-checked.
 
+⚠️ **Superseded on the lower side for composite bases**:
+`MahlerLowerBoundGeneral.lean` multiplies the same Liouville number by a
+fixed integer and gets `M(g,k) ≥ t·(gᵏ − 1)` for every factorization
+`g = t·c` with `c ≥ 2` — a factor `t` better than this file, and
+`(g/2)(gᵏ − 1)` for every even base.  This file is the `t = 1` case, kept
+because it is the shortest self-contained statement of the bound.
+
 Berend–Boshernitzan 1994 are reported (secondary sources, see
 `Literature.lean`) to show the bound cannot beat `gᵏ − 1`; the exact
 quantifier structure of their statement is not held, so this file states and

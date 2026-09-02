@@ -1,5 +1,53 @@
 # STATUS — normal-numbers 📊
 
+**A machine-checked conjecture graph around normality/disjunctivity, plus a
+sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
+Mahler multiplier chapter).** · **Build**: 🟢 green (8849 jobs) · **Updated**:
+review lap · 2026-09-02 · `wip/adder-tower-c9`
+
+## Where it stands
+
+Every headline in the repo is proved and audits to the bare trust triple
+`[propext, Classical.choice, Quot.sound]` — there are **no math axioms and no
+`sorry`s in `src/`** other than the two known-false `CFScheduleA.lean` schedule
+residues (off-limits; being converted to named `def … : Prop` nodes on the
+sibling branch `wip/cfschedulea-prop-nodes`).  The live frontier is therefore
+not axiom debt but *new mathematics*: the conjecture graph toward
+`IsNormal 2 (Real.log 2)`, and the Mahler-multiplier chapter, where this repo now
+holds both sides of the bound.  As of this lap the Mahler sandwich is
+`t(gᵏ−1) ≤ M(g,k) ≤ g^(k+1)` for every factorization `g = t·c`, `c ≥ 2` — a
+factor `2 + o(1)` for even bases, against the factor `g` it was yesterday.
+
+## What's happened (newest first)
+
+- **2026-09-02 (review lap)** — **Mahler lower bound sharpened from `gᵏ − 1` to
+  `t·(gᵏ − 1)`** (`MahlerLowerBoundGeneral.lean`).  Own construction:
+  `α = B·liouvilleNumber g` turns the multiplier problem into a digit problem
+  about the multiples of one integer; `B = c` for `g = t·c` stretches the budget
+  by `t`.  Even bases: `M(g,k) ≥ (g/2)(gᵏ−1)`.  Numerically sharp for this `α`.
+  The chapter's open question moves to **prime bases, upper side**.
+- **2026-09-01** — **CFScheduleA schedule route encoded as `Prop` nodes; `src/`
+  sorry-free** (section below): `VarianceBlockCountPsiPushed` refuted in-kernel
+  (`varianceBlockCountPsiPushed_false`), `SchedABlockLinear` open/choice-opaque,
+  every dependent conditional.  Same lap: tower floors (C2 cardinality-optimal,
+  `c5_sharp`, B–B `M(3,1)=2` lower half), N3 `e` factorial-kick machine, N2
+  Stoneham base-6 readout.  Every pre-existing axiom set unchanged (census).
+- **2026-09-01** — Mahler chapter made two-sided: upper bound sharpened
+  `(g+3)gᵏ → g^(k+1)` (universal covering lemma + shadow-rational escape, closing
+  the `g = 2` gap), lower bound `gᵏ − 1` proved from `liouvilleNumber g`.
+  Furstenberg 1967 dense-orbit theorem wired via re-homed ×p×q rigidity.
+- **2026-09-01** — C10 tower claim proved via a *reduction finding* (the family
+  splits; the dossier's 540 396-state certificate is not needed).  Tower brief
+  C1–C10 closed.  `PiSqBBP` Aristotle faithfulness cross-check passed.
+- **2026-08-31** — ledger hotspot edges; π²-BBP proved.
+- **2026-08-30** — `adder_sixfold_disjunction` proved (novel candidate theorem);
+  tower phase A; literature ledger first pass (`Literature.lean`).
+- **2026-08-26** — `IsNormal.isDisjunctive` (unconditional API gap) closed; Track
+  D3 `quadratic_irrationals_disjunctive_of_hypothesisM`; Comparator harness and
+  the Phase-3 publishing-prep pass completed locally.
+- **2026-08-25** — image-Khinchin headline complete (`ae_tail_average_tendsto`
+  proved via the L²-variance/finite-truncation route); B6 affine family exceeded.
+
 ## CFScheduleA schedule route encoded as Prop nodes (2026-09-01)
 
 - **`src/` is sorry-free.**  The two disclosed `sorry`s of the abandoned interleaved-
@@ -38,42 +86,60 @@
   `(3^a mod 2^c)/2^c` up to a `2^{−Θ(3^{j*+1})}` error (`a = n−(j*+1)`, `c = 3^(j*+1)−n`),
   so the base-6 digits of `α₂,₃` are a transcript of `3^a mod 2^c`.  Trust triple.
 
-## Adder wing (2026-08-30)
+## Outstanding
 
-- **`NormalNumbers.Adder.adder_sixfold_disjunction` is PROVED**
-  (`src/NormalNumbers/AdderMain.lean`, branch `wip/adder-disjunction`): at
-  least one of `00` i.o. in ln 2 / `001` in ln 3 / `11` in ln 6 / `001` in
-  ln 18 / `010` in ln 12 / `000` in ln 54 (binary).  Novel candidate
-  theorem per `BRIEF-adder-disjunction-formalization.md`; RESULT section
-  written there.  Axioms at the phase-1 checkpoint: trust triple + the one
-  per-site `main_cert_ok._native.native_decide.ax_1_1` from the
-  73728-state certificate.  The toy 3-channel pipeline (`toy_disjunction`)
-  is kernel-tier end-to-end with exactly the trust triple.  A kernel-tier
-  swap of the main certificate (chunked-Nat tables, `decide +kernel`) is
-  in progress — see PENDING_WORK.md.
+### Short-term (mirrors PENDING_WORK top)
+1. **Prime-base upper bound** — for prime `g` the sandwich is still
+   `gᵏ−1 ≤ M(g,k) ≤ g^(k+1)`, and B–B's `M(3,1)=2` says the lower side is right.
+   The binding case of the sweep is `q = 1`; a denominator-aware contraction is
+   the named attack (`MahlerMultiplier.lean` docstring).
+2. **Base-10 witness `B = 125`** — a finite `decide` check would give
+   `M(10,k) ≥ 8(10ᵏ−1)`, within `1.25×` of the upper bound.
+3. Remaining cited-only ledger nodes (`philipp_psi_mixing`, `vandehey_matrix_action`).
 
+### Long-term
+The conjecture graph toward the sink `IsNormal 2 (Real.log 2)`: the ln-two
+ladder (`LnTwoFreq`, `ConditionalDisjunctive`), the run tower
+(`LnTwoExpSep`/`LnTwoPolySep`), the shared Diophantine-wall interface.
 
-## Current publishing-prep status (2026-08-26)
+### To completion
+No axiom debt to discharge — "completion" here means new nodes/edges, not a
+shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09-01.
 
-- **Core mathematics:** image-Khinchin, Track D (D0--D4), and
-  `IsNormal.isDisjunctive` are complete. `ae_tail_average_tendsto` is proved and
-  axiom-clean; any contrary claim below this section is a historical snapshot.
-- **Comparator:** the production harness for the exact Wall theorem and exact
-  conditional ln-two theorem is present. Challenge and Solution build; all five
-  configured theorem/anchor closures pass the local identity probe; its injected
-  missing-name teeth test goes red as required. Full `NormalNumbers` (8766 jobs)
-  and `Comparator` (8716 jobs) builds pass, and both headlines have exactly the
-  standard trust triple. The full landrun + nanoda gate is configured for Linux
-  CI and is not claimed as locally executed.
-- **External publishing state:** the ChampernowneNormality contribution remains
-  staged on Trevor's fork and unpublished. The formal-conjectures normality
-  definition correction is PR-ready local work on branch
-  `fix/full-normality-definition`: correction commit `c6126c56`, followed by the
-  empty-block test at branch HEAD `5d5832d0`; neither is merged upstream. No PR
-  was opened and no Zulip/public announcement was posted in this lap.
-- **Residual source debt:** none as of 2026-09-01 — the two former `CFScheduleA.lean`
-  schedule-route sorries are named `Prop` nodes now (section at the top of this file).
-  They were never dependencies of the completed headlines.
+## Axiom ledger
+
+Real `#print axioms` output, this lap.  Every headline: trust triple only.
+
+| headline theorem | paper claim | `#print axioms` shows | verdict |
+|---|---|---|---|
+| `exists_absolutely_normal_cf_normal` | Becher–Yuhjtman 2019 Thm 1 (uncond.) | trust triple | 🟢 clean |
+| `exists_absolutely_normal_cf_normal_khinchin` | image-Khinchin (uncond.) | trust triple | 🟢 clean |
+| `isNormal_log_two_of_equidistributed` | conditional ln-two | trust triple | 🟢 clean (hypothesis is a named `Prop`, not an axiom) |
+| `Mahler.mahler_multiplier` | Mahler 1973 Thm M, sharpened | trust triple | 🟢 clean |
+| `Mahler.mahler_lower_bound` / `…_even` | our own lower bounds | trust triple | 🟢 clean |
+| `Literature.mahler_theoremM_holds` | Mahler 1973, all `g` | trust triple | 🟢 clean |
+| `Literature.berendBoshernitzan_bound_holds` | B–B 1994 `2g^(k+1)`, all `g ≥ 2` | trust triple | 🟢 clean |
+| `Literature.furstenberg_dense_orbit_holds` | Furstenberg 1967 | trust triple | 🟢 clean |
+| `varianceBlockCountPsiPushed_false` | refutation of the schedule brick (own) | trust triple | 🟢 clean |
+| `Adder.exists_irrational_mul_omits_digit` / `Adder.c5_sharp` | tower floors (own) | trust triple | 🟢 clean |
+| `stoneham_base6_readout` | N2 base-6 Stoneham readout (own) | trust triple | 🟢 clean |
+| `Literature.berendBoshernitzan_M31_lower_holds` | B–B `M(3,1)=2`, lower half | trust triple | 🟢 clean |
+| `Adder.adder_sixfold_disjunction` | novel candidate | trust triple | 🟢 clean (kernel-tier cert) |
+| `Adder.c10_disjunction_universal` | tower C10 | trust triple | 🟢 clean |
+| `IsNormal.isDisjunctive` | unconditional API gap | trust triple | 🟢 clean |
+| `quadratic_irrationals_disjunctive_of_hypothesisM` | Track D3, conditional | trust triple | 🟢 clean |
+
+Math-axiom count (🟢+🟡+🟠): **0**.  🔴: none.  `src/` carries no `sorry`: the two
+former `CFScheduleA` schedule residues are named `Prop` nodes (section above),
+which no headline depends on.
+
+## Pointers
+
+`ROADMAP.md` · `DIRECTION.md` (binding directive) · newest
+`HANDOFF-2026-09-02-*.md` · `PENDING_WORK.md` (open items + attack paths) ·
+`BRIEF-literature-statements.md` (the novelty tripwire ledger)
+
+---
 
 ## Historical campaign ledger (superseded state snapshots)
 

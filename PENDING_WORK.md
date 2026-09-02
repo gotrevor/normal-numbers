@@ -1,5 +1,67 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ MAHLER LOWER BOUND SHARPENED TO `t·(gᵏ − 1)` — the factor-`g` gap collapses to ~2 (2026-09-02, autonomous)
+
+**The chapter's open question is (mostly) answered, and the answer is on the
+LOWER side.**  `MahlerLowerBoundGeneral.lean`:
+
+| theorem | claim |
+|---|---|
+| `mahler_lower_bound_general` | for any `B ≥ 1`: `M(g,k) ≥ min{ m : m·B contains (g−1)ᵏ in base g }` |
+| `mahler_lower_bound_divisor` | for any factorization `g = t·c`, `c ≥ 2`: **`M(g,k) ≥ t·(gᵏ − 1)`** |
+| `mahler_lower_bound_even` | `g` even: **`M(g,k) ≥ (g/2)(gᵏ − 1)`** |
+
+All trust triple.  Against `mahler_multiplier`'s `M(g,k) ≤ g^(k+1)` the
+two sides are now within a factor `2 + o(1)` for every even base
+(`45 ≤ M(10,1) ≤ 100`, `495 ≤ M(10,2) ≤ 1000`), where the previous state of
+the chapter was `9 ≤ M(10,1) ≤ 100`.  The old `gᵏ − 1` is the `t = 1` case.
+
+**The idea.**  `α = B · liouvilleNumber g` — then `m·α = (m B)·liouvilleNumber g`,
+so every multiplier question collapses to ONE integer `N = m B`.  The base-`g`
+expansion of `N · Σ g^(−i!)` is a copy of the digit string of `N` right-aligned
+at each position `i!`, separated by huge zero gaps, so `(g−1)ᵏ` occurs i.o. in
+`m·α` **iff** `(g−1)ᵏ` occurs as a substring of `m·B`.  The multiplier problem
+becomes a digit problem about the multiples of a single integer.  Formally we
+never touch digits: the arithmetic shadow of "no `k` consecutive `(g−1)`s" is
+`∀ d ≥ k, N % g^d + g^(d−k) + 1 ≤ g^d`, and that is exactly what
+`orbit_liouvilleMul_lt` consumes.
+
+**Why `B = c` (a cofactor of `g`) wins.**  `m = q t + s` ⇒ `m c = q g + s c`
+with `s c ≤ g − c ≤ g − 2`: the *last* digit of `m c` is never `g − 1`, so a run
+must live inside `q = ⌊m/t⌋`, and the smallest integer containing `(g−1)ᵏ` is
+`gᵏ − 1`.  Budget stretched by exactly the factor `t`.
+
+**Numerics (probes, session scratch — 30 lines to re-derive).**  Brute force over
+all `B ≤ 4·10⁵` for `g ≤ 12, k ≤ 2` reproduces `t(gᵏ − 1)` as the optimum in every
+case; an independent exact-integer digit check of `α = 2·liouvilleNumber g`
+confirms the theorem's own window (`m = t(gᵏ−1) − 1` clean at `n ∈ [600,720)`,
+`m = t(gᵏ−1)` occurs at `n = 718`) — the bound is SHARP for this `α`.
+
+**Left open (the new frontier of the chapter):**
+1. **Odd prime bases.**  `t_max(g) = 1` for prime `g`, so for `g ∈ {2,3,5,7,11,…}`
+   the lower bound is still `gᵏ − 1` while the upper is `g^(k+1)` — a factor `g`.
+   B–B's `M(3,1) = 2 = gᵏ − 1` says the LOWER side is right there; so for prime
+   bases the open work is on the UPPER side, and the binding case of the sweep is
+   `q = 1` (see `MahlerMultiplier.lean`).  ⇒ **the prime-base upper bound is the
+   crux now.**
+2. **Beyond the divisor family.**  Brute force finds `B` that beat the best
+   divisor when the low block merely avoids *runs* rather than the digit `g−1`
+   (`g = 10`: `B = 125`, `t = 8` ⇒ `M(10,k) ≥ 8(10ᵏ−1)`, only `1.25×` below the
+   upper bound; `g = 6, k = 2`: `B = 243` ⇒ `187 > 4·35`).  Formalizing the
+   `B = 125` witness needs a finite `decide` check over `d ≤ k+3` — cheap, and it
+   would make base 10 the tightest sandwich in the chapter.
+3. Is `M(g,k) = Θ(g^(k+1))` for composite `g` and `Θ(gᵏ)` for prime `g`?  The
+   heuristic count says a random `B` of length `L` survives to `M ≈ gᵏ ln g`.
+
+**Lean gotchas.**  `maxHeartbeats` is per declaration: the first draft timed out at
+three unrelated lines; splitting the two arithmetic branches of the cell estimate
+into `cell_bound_ge` / `cell_bound_lt` fixed all three.  `omega` refuses `m / t`
+and `m % t` with a *variable* divisor — package the division as
+`∃ q r, m = t*q + r ∧ r < t` and everything downstream is linear.  `positivity`
+cannot prove `0 < g ^ k` in ℕ without `0 < g` in context.  `field_simp` closed the
+`(1 − 1/A − 1/(D·A))·(D·A) = D·A − D − 1` identity on its own; the trailing `ring`
+then errored with "no goals".
+
 ## ✅ MAHLER LOWER BOUND `gᵏ − 1` PROVED — chapter now two-sided (2026-09-01, autonomous)
 
 `Mahler.mahler_lower_bound` (`src/NormalNumbers/MahlerLowerBound.lean`):
