@@ -215,6 +215,38 @@ theorem mahler_multiplier_prime_param (g : ℕ) (hgp : g.Prime) (q₀ M : ℕ) (
   exact defect_contracts_of_bad_ge g k W q₀ M hg hk hW hMcov (orbit g α n)
     (orbit_irrational g hg α hα n) (hbad n hn) ρ hden0 hden hsmall
 
+
+/-- **`M(g,k) ≤ g^(k+1) − (g−1)²` for prime `g` and `k ≥ 2`.**  The threshold
+`q₀ = g` instance of `mahler_multiplier_prime_param`: the small-denominator
+branch costs `(g−1)gᵏ = g^(k+1) − gᵏ`, the covering sweep above the threshold
+costs `g^(k+1) − g(g−2) − 1`, and for `k ≥ 2` the second dominates.  The saving
+over `mahler_multiplier` is `(g−1)² − ...`, i.e. `g² − 2g + 1`; the `k = 1` case
+is much better served by `mahler_multiplier_prime_half`. -/
+theorem mahler_multiplier_prime_gen (g : ℕ) (hgp : g.Prime)
+    (α : ℝ) (hα : Irrational α) (w : List ℕ) (hwd : ∀ d ∈ w, d < g) (hk : 2 ≤ w.length) :
+    ∃ m : ℕ, 1 ≤ m ∧ m ≤ g ^ (w.length + 1) - (g * (g - 2) + 1) ∧
+      ∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * α) w n := by
+  have hg : 2 ≤ g := hgp.two_le
+  have hgk : g ≤ g ^ w.length := Nat.le_self_pow (by omega) g
+  have hg2k : g * g ≤ g ^ w.length := by
+    have : g ^ 2 ≤ g ^ w.length := Nat.pow_le_pow_right (by omega) hk
+    calc g * g = g ^ 2 := by ring
+      _ ≤ g ^ w.length := this
+  have hpow : g ^ (w.length + 1) = g ^ w.length * g := by ring
+  have hmul2 : g ^ w.length * 2 ≤ g ^ w.length * g := Nat.mul_le_mul_left _ hg
+  have hgg : g * (g - 2) + g ≤ g * g := by
+    obtain ⟨j, hj⟩ : ∃ j, g = j + 2 := ⟨g - 2, by omega⟩
+    subst hj
+    have hs : j + 2 - 2 = j := by omega
+    rw [hs]; ring_nf; omega
+  have hpeel : (g - 1) * g ^ w.length + g ^ w.length = g ^ w.length * g := by
+    obtain ⟨j, hj⟩ : ∃ j, g = j + 2 := ⟨g - 2, by omega⟩
+    subst hj
+    have hs : j + 2 - 1 = j + 1 := by omega
+    rw [hs]; ring
+  refine mahler_multiplier_prime_param g hgp g
+    (g ^ (w.length + 1) - (g * (g - 2) + 1)) (by omega) α hα w hwd (by omega) hgk ?_ ?_ <;> omega
+
 /-- **`M(g,1) ≤ g(g+1)/2` for every odd prime `g`.**  Half the `g²` headline of
 `mahler_multiplier`, and the first prime-base upper bound of the right order of
 magnitude: `MahlerPrimeLowerBound.lean` gives `Θ(g²)` from below, and the exact

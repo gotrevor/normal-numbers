@@ -1,5 +1,68 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ THE PRIME-BASE UPPER BOUND, HALVED: `M(g,1) ≤ g(g+1)/2` (2026-09-02, autonomous)
+
+`MahlerPrimeHalf.lean` (new, trust triple).  The chain at a prime base is now
+
+    g^(k+1)                      `mahler_multiplier`
+    g^(k+1) − 2g + 3             `mahler_multiplier_prime`      (q = 1 excluded)
+    g^(k+1) − (g−1)² − ...       `mahler_multiplier_prime_gen`  (k ≥ 2)
+    g(g+1)/2                     `mahler_multiplier_prime_half` (k = 1, g odd)
+
+### The idea: CONVERT small denominators, don't exclude them
+
+The recorded wall was that excluding a shadow denominator `q ≥ 2` is
+unavailable (for `q ≥ 2` the natural modulus `q gᵏ` shares `gᵏ` with
+`⌊gᵏ x⌋`, so `cell_hit_of_coprime` does not apply).  The way past it:
+
+> if `x_n` is within `g^(−k)/q` of `p/q`, then `q x_n` is within `g^(−k)` of an
+> integer — i.e. the orbit of `q·α` has a run of `k` zeros or `k` `(g−1)`s at
+> time `n`.  `MahlerRunBranch` settles that for `q·α` at `m' ≤ gᵏ`, and
+> `m'·(qα) = (m' q)·α`.
+
+So a small denominator costs a multiplier `q gᵏ` (`mahler_multiplier_near_grid`)
+— no exclusion and no coprimality.  With a threshold `q₀`, every orbit point is
+either near a `< q₀` grid (cost `(q₀−1)gᵏ`) or has all shadows of denominator
+`≥ q₀`, where the sweep needs only `M ≥ g^(k+1) − q₀(g−2) − 1`
+(`defect_contracts_of_bad_ge`; tight, `M+1−2q ≥ g(Q−q)` ⟺ `(q−q₀)(g−2) ≥ 0`).
+`mahler_multiplier_prime_param` balances the two.  At `k = 1`,
+`q₀ = (g+1)/2` makes both sides exactly `g(g+1)/2`.
+
+### 📐 WHERE THE REMAINING FACTOR 2 LIVES (the crux, decomposed)
+
+Write `Q = gᵏ` and let `q` be the shadow denominator.  Our two branch costs are
+
+    cost_A(q) = q·Q        (near-grid, via the run branch on qα)
+    cost_B(q) = g(Q − q)   (covering sweep)
+
+and the theorem is `max_q min(cost_A, cost_B)`, maximized at `q = gQ/(Q+g)`
+(`= g/2` at `k = 1`), value `≈ g²/2`.  The TRUTH is `≈ g²/4`, attained by
+`bgLiouville` with `a = 2`: there `b = 2`, `gcd(2, g−1) = 2`, so the shadow is
+`1/((g−1)/2)` and **`q = (g−1)/2`, with `M = q²`** — i.e. the extremal cost is
+`q²`, not `qQ ≈ 2q²`.  So:
+
+* **`cost_A` is loose by ~2 at the extremal `q`** (`qQ` vs `q²`, and `Q ≈ 2q`).
+  The looseness is real, not an artefact: `m' ≤ gᵏ` IS tight for the run branch
+  in isolation (Liouville needs `gᵏ − 1`), so the gain has to come from the
+  *joint* constraint — an `α` that is near the `q`-grid AND whose `qα` is a
+  full Liouville witness is over-determined.  That joint constraint is the
+  crux's remaining content.
+* **`cost_B` is loose too**, and cannot be blamed on `q` alone: at
+  `q = 0.618·g` (where `cost_A = q²` would meet `cost_B`) the balance gives
+  `0.382 g²`, still above `g²/4`.  So a proof of the truth needs BOTH branches
+  sharpened, or a single argument replacing them.
+* Verified NOT the source of the slack: the window `E ∈ [1/(gQ), 1/Q)` for the
+  critical defect is exactly a ratio-`g` window, so the adversary can place `E`
+  at its bottom — `E ≥ 1/(gQ)` is tight.  And the covering constant is tight
+  for a fixed configuration: `M ≈ q·d/E` with `d ≤ 1/q − 1/Q` the (fixed,
+  `w`-determined) distance from the grid point below the cell to the cell.
+
+**Next attack**: the joint constraint.  Formalize "the orbit is within
+`g^(−k)/q` of the `q`-grid infinitely often" and "`qα` has full-strength
+`0ᵏ` runs" and show they cannot both hold at full strength; the target is
+`cost_A(q) ≈ q²`, which with `cost_B` would give `≈ 0.382 g²`, and then the
+matching sharpening of `cost_B`.
+
 ## ✅ `M(7,1) = 9` AND `M(g,k) ≤ g^(k+1) − 2g + 3` (PRIME `g`) (2026-09-02, autonomous)
 
 Two upper-side results, both kernel-checked, trust triple.
