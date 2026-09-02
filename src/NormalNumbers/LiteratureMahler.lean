@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.Literature
 import NormalNumbers.MahlerMultiplier
+import NormalNumbers.MahlerMultiplierStrict
 
 /-!
 # Ledger edges from Mahler's multiplier theorem 📚→✅
@@ -21,6 +22,10 @@ that theorem into the literature ledger:
   follows for every `g ≥ 2`, since `g^(k+1) ≤ 2·g^(k+1)`.  Our constant is
   half theirs; the earlier `(g+3)·gᵏ` proof (commit `8afbd05`) only reached
   `g ≥ 3`.
+* `berendBoshernitzan_strict_holds` — the paper's **open question** (p. 320,
+  *"We do not know whether it is true in general that `M(g,k) < g^(k+1)`"*),
+  stated as `berendBoshernitzan_strict` and discharged by
+  `Mahler.mahler_multiplier_lt` (`MahlerMultiplierStrict.lean`).
 -/
 
 namespace NormalNumbers.Literature
@@ -49,5 +54,22 @@ theorem berendBoshernitzan_bound_holds_of_three_le (α : ℝ) (hα : Irrational 
       ∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * α) w n := by
   obtain ⟨m, hm1, hmM, hio⟩ := Mahler.mahler_multiplier g (by omega) α hα w hwd
   exact ⟨m, hm1, le_trans hmM (by omega), hio⟩
+
+/-- **Berend–Boshernitzan 1994, the open question of p. 320**: is
+`M(g,k) < g^(k+1)` in general?  I.e. for every irrational `α`, base `g ≥ 2`
+and nonempty `g`-block `w`, is there `1 ≤ m < g^(k+1)` with `w` occurring
+infinitely often in `m·α`?  provenance: primary
+(`papers/berend-boshernitzan-1994-mahler-multiples.pdf`, p. 320). -/
+def berendBoshernitzan_strict : Prop :=
+  ∀ (α : ℝ), Irrational α → ∀ (g : ℕ), 2 ≤ g → ∀ (w : List ℕ), w ≠ [] →
+    (∀ d ∈ w, d < g) →
+    ∃ m : ℕ, 1 ≤ m ∧ m < g ^ (w.length + 1) ∧
+      ∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * α) w n
+
+/-- **Wired edge: the open question is answered YES**, from
+`Mahler.mahler_multiplier_lt`. -/
+theorem berendBoshernitzan_strict_holds : berendBoshernitzan_strict := by
+  intro α hα g hg w _ hwd
+  exact Mahler.mahler_multiplier_lt g hg α hα w hwd
 
 end NormalNumbers.Literature

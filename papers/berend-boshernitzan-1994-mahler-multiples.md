@@ -26,3 +26,13 @@ state that equality holds for `g=2,k=1` and `g=3,k=1`.  Therefore
 Tower claim C1 is a rediscovery of this result.  The paper does not state the
 fixed all-digits set `{2,11}`.
 
+
+## §3 lower bounds (added 2026-09-02, full read)
+
+The 2026-08-30 pin stopped at Proposition 3.1.  §3 goes much further:
+**Theorem 3.1** `M(g,k) ≥ a(gᵏ−1)` for any proper divisor `a | g`;
+**Theorem 3.2** `M(g,k) ≥ (1−ε)g^(k+1)` for `k ≥ K(ε)` when `g` is not a prime
+power; **Example 3.1** `M(10,k) ≥ 8(10ᵏ−1)` for `k ≥ 1` (and `9.765(10ᵏ−1)` for
+`k ≥ 7`); **Theorem 3.3** `M(g,1) ≥ (3/2)(g−1)` for odd `g ≥ 5`.  They state
+`M(g,k) < g^(k+1)?` as OPEN.  Full transcription + repo implications →
+`ON-LINE-FINDINGS-2026-09-02-berend-boshernitzan-1994.md`.

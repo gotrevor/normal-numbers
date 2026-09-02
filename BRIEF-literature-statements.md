@@ -8,7 +8,8 @@ briefs are pointed at it (module docstring).  Statements landed:
 | statement | tier | status |
 |---|---|---|
 | `mahler_theoremM` (Mahler 1973, m ≤ g^(2k+1)) | S (`docs/disjunctive-vs-normal.md` §1.1 via Waldschmidt) | **WIRED** (2026-09-01): `…_holds` in `LiteratureMahler.lean` from `Mahler.mahler_multiplier` (`MahlerMultiplier.lean`, NEW bound `g^(k+1)`, elementary, axiom-clean) ✅ |
-| `berendBoshernitzan_bound` (m ≤ 2g^(k+1)) | S (same + `docs/adder-family-2026-08-29.md`) | **WIRED, all g ≥ 2** (2026-09-01): `…_holds` from `mahler_multiplier`'s `g^(k+1)` — half the transcribed B–B constant (transcription tier-S; primary-source check requested in `ON-LINE-REQUEST.md`) ✅ |
+| `berendBoshernitzan_bound` (m ≤ 2g^(k+1)) | **P** since 2026-09-02 (`papers/berend-boshernitzan-1994-…pdf`, Thm 1.1 verbatim: `m < 2g^(k+1)`) | **WIRED, all g ≥ 2** (2026-09-01): `…_holds` from `mahler_multiplier`'s `g^(k+1)` — half their constant (they note `g^(k+1)` in their Case I; the factor 2 is their Case IV cost; our Dirichlet+AP route is a different proof) ✅ |
+| `berendBoshernitzan_strict` (their OPEN question p. 320: `M(g,k) < g^(k+1)`?) | P (same PDF) | **WIRED / ANSWERED** (2026-09-02): `…_holds` from `Mahler.mahler_multiplier_lt` (`MahlerMultiplierStrict.lean`) ✅ |
 | `berendBoshernitzan_M31` (M(3,1)=2 upper half) | S (`docs/mahler-sets-…` via master `c645528`) | **WIRED**: `…_holds` from tower C1 `c1_ternary_digit` ✅ |
 | `adamczewskiRampersad_boundary` (0/1/01/10 i.o. in every irrational) | S (`docs/disjunctive-vs-normal.md`, PAMS 136) | **WIRED**: `…_holds` proved here (forbidden-switch → eventual constancy → endgame) ✅ |
 | `waldschmidt_conjecture_1_1` (digit occurrence for algebraics; OPEN) | S (arXiv:0908.4034 §1 quoted) | unproved def (conjecture) |
@@ -24,9 +25,12 @@ briefs are pointed at it (module docstring).  Statements landed:
 
 All three `…_holds` edges audit `[propext, Classical.choice, Quot.sound]`.
 
-**Gaps (never-fabricate rule):** B–B's `g^k − 1` lower bound (quantifier
-structure not pinned by our secondary sources); Fisher–Schmidt 2014
-(skew-product ergodicity — heavy geometric defs, deferred, PDF held).
+**Gaps (never-fabricate rule):** Fisher–Schmidt 2014 (skew-product
+ergodicity — heavy geometric defs, deferred, PDF held).  B–B §3 (Prop 3.1,
+Thm 3.1, Thm 3.2, Thm 3.3) is now tier P and can be transcribed verbatim from
+`archive/findings/ON-LINE-FINDINGS-2026-09-02-berend-boshernitzan-1994.md`;
+Prop 3.1 / Thm 3.1 / Ex 3.1 are PROVED in `MahlerLowerBound*.lean`
+(formalizations of known theorems, attributed there).
 
 **Landed 2026-08-31 (autonomous):** Philipp ψ-mixing (Satz 3 / Scheerer
 Thm 2.1) as `philipp_psi_mixing`, stated in the standard cylinder form

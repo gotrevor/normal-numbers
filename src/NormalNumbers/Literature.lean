@@ -54,9 +54,11 @@ def mahler_theoremM : Prop :=
     ∃ m : ℕ, 1 ≤ m ∧ m ≤ g ^ (2 * w.length + 1) ∧
       ∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * α) w n
 
-/-- **Berend–Boshernitzan 1994** (*Renewal-type theorems…* / the Mahler
-sharpening, Acta Arith. 66): Mahler's multiplier bound improves to
-`m ≤ 2·g^(k+1)`.
+/-- **Berend–Boshernitzan 1994**, *On a result of Mahler on the decimal
+expansions of (nα)*, Acta Arith. 66 (1994) 315–322, **Theorem 1.1**: Mahler's
+multiplier bound improves to `m < 2·g^(k+1)` (stated here in the weaker
+`≤` form transcribed before the PDF was read; the paper's `<` is implied by
+`mahler_multiplier_lt`).
 
 The paper also shows the bound cannot beat `g^k − 1`; that lower bound's
 exact quantifier structure is not pinned by our secondary sources, so per
@@ -65,8 +67,13 @@ RESULT).  Our own lower-bound statement — no universal bound below
 `gᵏ − 1`, witnesses `liouvilleNumber g` and `(g−1)ᵏ` — is PROVED as
 `Mahler.mahler_lower_bound` (`MahlerLowerBound.lean`, 2026-09-01).
 
-provenance: secondary (`docs/adder-family-2026-08-29.md` folklore-check
-section; `docs/disjunctive-vs-normal.md` §1.1).
+provenance: primary since 2026-09-02 (`papers/berend-boshernitzan-1994-mahler-multiples.pdf`,
+full read recorded in `archive/findings/ON-LINE-FINDINGS-2026-09-02-berend-boshernitzan-1994.md`);
+the paper's §3 lower bounds (Prop 3.1 `gᵏ − 1`, Thm 3.1 `a(gᵏ − 1)` for a
+proper divisor `a ∣ g`, Ex 3.1 `8(10ᵏ − 1)`, Thm 3.3 `(3/2)(g − 1)` for odd
+`g ≥ 5`) are what `MahlerLowerBound*.lean` re-prove.  The paper leaves
+`M(g,k) < g^(k+1)` OPEN (p. 320) — answered by `Mahler.mahler_multiplier_lt`
+(`berendBoshernitzan_strict_holds`, `LiteratureMahler.lean`).
 **WIRED** (2026-09-01, all `g ≥ 2`): `berendBoshernitzan_bound_holds`
 (`LiteratureMahler.lean`) — `Mahler.mahler_multiplier` gives `m ≤ g^(k+1)`,
 half this constant, for every base.  (An earlier `(g+3)·gᵏ` proof covered

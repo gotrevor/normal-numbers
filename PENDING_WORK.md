@@ -1,5 +1,36 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ `M(g,k) < g^(k+1)` — BEREND–BOSHERNITZAN'S OPEN QUESTION ANSWERED; ATTRIBUTIONS FIXED (2026-09-02, autonomous)
+
+The host answered `ON-LINE-REQUEST.md` with the full B–B 1994 paper
+(`archive/findings/ON-LINE-FINDINGS-2026-09-02-berend-boshernitzan-1994.md`;
+the PDF is `papers/berend-boshernitzan-1994-mahler-multiples.pdf`).  Three
+consequences, all acted on this lap:
+
+1. **Their open question (p. 320) is answered.**  *"We do not know whether it
+   is true in general that `M(g,k) < g^(k+1)`."*  Our contraction
+   (`defect_contracts_of_bad`) survives at the budget `g^(k+1) − 1`: if
+   `g|qx − p| ≥ g⁻ᵏ` then `(gQ − 2q)|qx − p| ≥ 1 − 2q/(gQ) ≥ 1 − q/Q`,
+   contradicting the covering lemma.  `Mahler.mahler_multiplier_lt`
+   (`MahlerMultiplierStrict.lean`, trust triple): **some `1 ≤ m < g^(k+1)`**
+   for every irrational `α`, `g ≥ 2`, block `w`.  Ledger:
+   `Literature.berendBoshernitzan_strict` (verbatim question) +
+   `berendBoshernitzan_strict_holds`.  With their Thm 3.2
+   (`M(g,k) ≥ (1 − ε)g^(k+1)`, `g` not a prime power, `k` large) the order
+   `g^(k+1)` is sharp for every non-prime-power base.
+2. **Attribution.**  `mahler_lower_bound_divisor` (`t(gᵏ − 1)`) is B–B
+   **Theorem 3.1** (same witness); `8(10ᵏ − 1)` is their **Example 3.1**.
+   Docstrings of `MahlerLowerBoundGeneral.lean` and `Literature.lean` now
+   say so; the "Renewal-type theorems…" title in the ledger was a
+   misattribution and is fixed.  The lower-side files remain formalizations
+   of known theorems (no Lean formalization known).
+3. **Their Theorem 3.3** (`M(g,1) ≥ (3/2)(g − 1)`, odd `g ≥ 5`, witness
+   `α = 1/2 + Σ g^(−nⱼ)`) is the periodic-background family of the entry
+   below with `c = (g−1)/2`.  Our exact values show it is **tight for
+   `g = 5, 7`** (`6 = 9 − 3`, `9`) and far from tight from `g = 11` on
+   (`25` vs `15`, `35` vs `18`, `192` vs `42`): the `Θ(g²)` prime-base
+   lower bound is not in the paper.
+
 ## ✅ MAHLER RUN BRANCH SETTLED AT `gᵏ`; PRIME-BASE CONJECTURE REFUTED BY EXACT COMPUTATION (2026-09-02, autonomous)
 
 **The prime-base question of the chapter is now answered the OTHER way
@@ -88,6 +119,10 @@ witness is the golden-mean / full shift on digits `{2,3}`, realised by
    are general; only the descent `exists_maximal_zero_run` uses "nonzero").
 4. `B = 125` generalisation (`t·c = g^L`, `s·c` digit-`(g−1)`-free for
    `s < t` ⇒ `M(g,k) ≥ t(gᵏ − 1)`): base 10 → `8(10ᵏ − 1)`, exact at `k = 1`.
+   This is B–B Example 3.1 / the `p^r/g` witness of their Theorem 3.2
+   (`α = (p^r/g)·Σ g^(−nⱼ)`, `g^l < p^r < (1+ε)g^l`) — formalizing Thm 3.2
+   itself (`(1 − ε)g^(k+1)` for non-prime-powers) would close the
+   composite side to `(1−ε)g^(k+1) ≤ M ≤ g^(k+1) − 1`.
 
 **Lean gotchas this lap.**  `Int.add_mul_emod_self_left` wants
 `(a + b*c) % b`, so `add_comm` first.  `one_div_pow` needs explicit args

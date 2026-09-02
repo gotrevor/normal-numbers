@@ -6,7 +6,14 @@ Authors: Trevor Morris
 import NormalNumbers.MahlerLowerBound
 
 /-!
-# The Mahler multiplier bound: the lower side, sharpened to `t·(gᵏ − 1)` 🧮
+# The Mahler multiplier bound: the lower side, `t·(gᵏ − 1)` (B–B 1994, Thm 3.1) 🧮
+
+⚠️ **Attribution (2026-09-02, after the primary source was read).**  The bound
+`M(g,k) ≥ a(gᵏ − 1)` for a proper divisor `a ∣ g` is **Berend–Boshernitzan
+1994, Theorem 3.1** (Acta Arith. 66, p. 318), with the same witness
+`α = (g/a)·Σⱼ g^(−nⱼ)`; `M(10,k) ≥ 8(10ᵏ − 1)` is their **Example 3.1**.
+This file is a formalization of a known theorem, written before the paper
+was available; the exposition below predates the attribution.
 
 `MahlerLowerBound.lean` proves `M(g,k) ≥ gᵏ − 1` (the bound our secondary
 sources attribute to Berend–Boshernitzan 1994) from the Liouville number

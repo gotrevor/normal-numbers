@@ -20,6 +20,11 @@ factor `2 + o(1)` for even bases, against the factor `g` it was yesterday.
 
 ## What's happened (newest first)
 
+- **2026-09-02 (autonomous)** — **`M(g,k) < g^(k+1)`: Berend–Boshernitzan's open
+  question (Acta Arith. 66, p. 320) answered YES** (`MahlerMultiplierStrict.lean`,
+  `Mahler.mahler_multiplier_lt`, ledger `Literature.berendBoshernitzan_strict_holds`,
+  trust triple).  The B–B paper was read in full (host findings, archived): the
+  `t(gᵏ − 1)` lower bound and `B = 125` are their Thm 3.1 / Ex 3.1 — re-attributed.
 - **2026-09-02 (autonomous)** — **Mahler run branch settled at `gᵏ`; prime-base
   conjecture refuted** (`MahlerRunBranch.lean`).  For prime `g`, if `0ᵏ` or `(g−1)ᵏ`
   occurs i.o. in `α` then some `m ≤ gᵏ` has any `k`-block i.o. in `m·α`
@@ -126,6 +131,7 @@ Real `#print axioms` output, this lap.  Every headline: trust triple only.
 | `Mahler.mahler_multiplier` | Mahler 1973 Thm M, sharpened | trust triple | 🟢 clean |
 | `Mahler.mahler_lower_bound` / `…_even` | our own lower bounds | trust triple | 🟢 clean |
 | `Mahler.mahler_multiplier_of_zero_runs` / `…_pred_runs` | run branch at `gᵏ` (prime `g`) | trust triple | 🟢 clean |
+| `Mahler.mahler_multiplier_lt` / `Literature.berendBoshernitzan_strict_holds` | `M(g,k) < g^(k+1)` (B–B open question) | trust triple | 🟢 clean |
 | `Literature.mahler_theoremM_holds` | Mahler 1973, all `g` | trust triple | 🟢 clean |
 | `Literature.berendBoshernitzan_bound_holds` | B–B 1994 `2g^(k+1)`, all `g ≥ 2` | trust triple | 🟢 clean |
 | `Literature.furstenberg_dense_orbit_holds` | Furstenberg 1967 | trust triple | 🟢 clean |
