@@ -1,5 +1,7 @@
 # HANDOFF 2026-09-02 (autonomous): Mahler run branch at `gᵏ`, `M(g,k) < g^(k+1)`, prime conjecture refuted 🧮
 
+
+Branch `wip/adder-tower-c9`, HEAD `398ceea` (+ this hash-stamp commit).  Working tree clean at hand-back; no uncommitted edits.  Budget governor stopped the lap at 04:41 UTC.
 Branch `wip/adder-tower-c9`.  Every commit's pre-commit hook ran the full
 `lake build` green.  `src/` sorry-free; every new theorem audits
 `[propext, Classical.choice, Quot.sound]`.
@@ -41,7 +43,7 @@ PDF at `papers/berend-boshernitzan-1994-mahler-multiples.pdf`).  Acted on:
 
 ## Commits
 
-`e9b6ae2` MahlerRunBranch + numerics · (this) MahlerMultiplierStrict + ledger
+`e9b6ae2` MahlerRunBranch + numerics · `398ceea` MahlerMultiplierStrict + ledger
 edge + attributions + findings archive + this handoff.
 
 ## Next attack (PENDING_WORK.md top, in order)
