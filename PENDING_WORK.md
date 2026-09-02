@@ -1,5 +1,46 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ `M(10,k) ≥ 8(10ᵏ − 1)` VIA A NEW POWER-DIVISOR FAMILY (2026-09-02, autonomous)
+
+The directive's named cheap win, taken at **full generality in `k`** rather
+than as a `k = 1` `decide` (`MahlerLowerBoundPower.lean`, new; trust triple):
+
+| theorem | claim |
+|---|---|
+| `pred_pow_div_mod` | `(gᵏ − 1)/gⁱ % g = g − 1` for `i < k` |
+| **`window_lt_of_digit`** | if ANY digit of `N` in the window `[d−k, d)` is not `g − 1`, then `N % g^d + g^(d−k) + 1 ≤ g^d` — the arithmetic shadow of "the window is not the all-`(g−1)` block", and the reusable core |
+| `power_split`, `avoid_of_power` | `m·c = q·g^L + s·c`, guard block `s·c < g^L` |
+| **`mahler_lower_bound_power`** | `t·c = g^L` with every guard block `s·c` (`s < t`) free of the digit `g−1` ⇒ **`M(g,k) ≥ t(gᵏ − 1)`** |
+| **`mahler_lower_bound_base10`** | `8 · 125 = 10³`, guards `0,125,…,875` have no `9` ⇒ **`M(10,k) ≥ 8(10ᵏ − 1)`** |
+
+`L = 1` recovers `mahler_lower_bound_divisor` (B–B Thm 3.1) exactly; `L > 1`
+admits `t` larger than any proper divisor of `g`.  Base 10, `k = 1`:
+`72 ≤ M(10,1) ≤ 100` (factor `1.39`), against the divisor family's `45` — and
+`72` is the exact adder-machine value, so base 10 joins base 5 in being pinned
+from below by a witness known to be optimal.
+
+## 🔜 `M(7,1) = 9` — CERTIFICATES COMPUTED, LEAN ENCODING PENDING
+
+`experiments/mahler_collapse_cert.py 7 9` produced all seven digit
+certificates for the nine-channel base-7 family (`x, 2x, …, 9x`):
+
+    ambient 362880 (= 9!),  live 12 / 38 / 29 / 26 / 29 / 38 / 12,
+    omega-support ≤ 123,  every surviving component a simple cycle.
+
+So the mathematics is settled and the data is small; what is missing is only
+the Lean side.  A single `decide +kernel` over `362880 × 7 = 2.54M`
+`gfamPred` evaluations (each recursing over 9 channels of `Int` arithmetic) is
+too big for one goal — this needs the **chunked** `checkEdgesOnA` path that
+`AdderTowerC8/C9` already use (`experiments/emit_cert_lean.py` packs the
+tables; `AdderCertSplit.lean` assembles the chunks).  With the lower half
+already proved (`mahler_lower_bound_base7`), that lands `M(7,1) = 9`.
+
+⚠️ Recorded refutation: no subset of `{1,…,9}` with product `≤ 30000`
+collapses at base 7 (`experiments/mahler_subset_hunt.py 7 9 30000`), so the
+ambient cannot be cheaply shrunk the way base 5 could (there
+`{1,2,3,4,6}`, ambient `144`, already collapses — `5x` is redundant).
+
+
 ## ✅ `M(5,1) = 6` — THE MAHLER CONSTANT PINNED EXACTLY AT A PRIME BASE (2026-09-02, autonomous)
 
 Both halves, kernel-checked, trust triple (`MahlerBase5Exact.lean`, new):
