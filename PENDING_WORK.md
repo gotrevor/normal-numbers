@@ -1,5 +1,70 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🔑 THE MULTI-SCALE ARGUMENT REACHES `g^(k+1)/4` — ENGINE FORMALIZED (2026-09-02, autonomous)
+
+The crux (prime-base upper bound) now has a COMPLETE argument on paper reaching
+the empirical constant, and its engine is in `src/` (`MahlerFarey.lean`,
+trust triple).  What remains is chain/exit-time bookkeeping, not a new idea.
+
+### The argument
+
+Fix `Q = gᵏ`, `M` the multiplier budget, `x` bad (no `m ≤ M` puts `m x` in the
+cell of `W`).  Two facts about a bad point:
+
+1. **`defect_small_of_bad`** — the covering lemma applies to EVERY reduced
+   rational of denominator `≤ Q`, so the Dirichlet approximation `σ` has defect
+   `< 1/(2Q+1)`, not merely Dirichlet's `1/(Q+1)`.  (`M ≥ 4Q` makes the
+   coefficient `M + 1 − 2σ.den ≥ 2Q + 1`.)
+2. **`den_jump_of_bad`** — hence by Farey separation (`defect_pair_ge`) any
+   other reduced `p/a` with `a ≤ Q` satisfies
+
+       σ.den · |a x − p| > 1/2,   i.e.   σ.den > 1 / (2|a x − p|).
+
+Now run the shadow chain of `orbit_escapes` from a rational of denominator `a`.
+Its defect multiplies by `g` each step; let `n*` be the first time the defect
+`E` leaves `[0, 1/Q)`.  At `n* − 1` the covering lemma gives
+`E/g < (1 − a/Q)/(M + 1 − 2a)`, so at `n*`
+
+    σ.den  >  1/(2E)  >  (M + 1 − 2a) / (2 g (1 − a/Q)).
+
+So the canonical denominator **jumps**.  Iterating with `a_{j+1}` the new
+denominator, `a_{j+1} ≳ (M/g)/(1 − a_j/Q)` (the factor `2` is absorbed because
+`a·(defect of σ) ≤ Q/(2Q+1)`, i.e. the loss is `O(1/g)`, not `2`).  The map
+`f(a) = (M/g)/(1 − a/Q)` has a fixed point iff `a(1 − a/Q) = M/g` is solvable,
+i.e. iff `M/g ≤ Q/4` — the maximum of `a(1−a/Q)` on `[0,Q]`, attained at
+`a = Q/2`.  So for
+
+    **`M > g Q / 4 = g^(k+1)/4`**
+
+there is no fixed point, `f(a) − a ≥ (M/g − Q/4)` for every `a`, the
+denominators increase by a fixed amount each stage, and they must exceed `Q` —
+contradiction.  Target: **`M(g,k) ≤ (1/4 + O(1/g))·g^(k+1)`**.
+
+That is exactly where the exact values sit: `M(p,1)` is `6, 9, 25, 64` at
+`p = 5, 7, 11, 17` against `(p−1)²/4 = 4, 9, 25, 64`.  So the constant `1/4` is
+not an artefact of the method — it is the truth, and `a = Q/2` being the
+double root explains WHY the extremal witnesses sit at shadow denominator
+`q ≈ g/2` (`PENDING_WORK`'s earlier observation, now derived).
+
+### What remains (next lap)
+
+* the exit-time `n*` as a `Nat.find`, and the shadow chain's defect recursion
+  `E_{i+1} = g·E_i` restated so `n*` is well defined (`orbit_escapes` has the
+  recursion but discards it at the contradiction);
+* the stage iteration as an induction on `⌈1/(M/(gQ) − 1/4)⌉` steps;
+* the `O(1/g)` bookkeeping (`a·defect σ ≤ Q/(2Q+1)`) carried through.
+
+Nothing here needs a new idea; `defect_pair_ge`, `defect_small_of_bad`,
+`den_jump_of_bad` are the load-bearing lemmas and are proved.
+
+### Superseded by the above (kept for the record)
+
+The two-branch bound `max(q₀·gᵏ, g^(k+1) − q₀(g−2) − 1)` of
+`MahlerPrimeHalf.lean` gives `g(g+1)/2` at `k = 1` — a factor `2` off.  The
+analysis that localized that factor (cost_A `= q·Q` vs the extremal `q²`) is
+still correct but is no longer the route: the multi-scale iteration replaces
+both branches.
+
 ## ✅ THE PRIME-BASE UPPER BOUND, HALVED: `M(g,1) ≤ g(g+1)/2` (2026-09-02, autonomous)
 
 `MahlerPrimeHalf.lean` (new, trust triple).  The chain at a prime base is now

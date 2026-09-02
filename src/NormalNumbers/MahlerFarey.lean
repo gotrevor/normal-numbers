@@ -114,4 +114,102 @@ theorem orbit_approx_unique (g : ℕ) (α : ℝ) (n Q : ℕ) (hQ : 1 ≤ Q) (ρ 
     hρ hσ hρd hσd
   exact Rat.eq_iff_mul_eq_mul.2 (by exact_mod_cast h)
 
+/-! ### The denominator-jump engine
+
+The multi-scale argument sketched in `PENDING_WORK.md`.  Fix `Q = gᵏ` and a bad
+`x` (no `m ≤ M` puts `m x` in the cell of `W`).  The covering lemma bounds the
+defect of EVERY reduced rational of denominator `≤ Q` — in particular the
+Dirichlet approximation `σ`, whose defect is therefore not merely `≤ 1/(Q+1)`
+but `< 1/(M + 1 − 2Q)`, which is `O(1/M)` and hence tiny.  Farey separation then
+says any OTHER rational `p/a` with `a ≤ Q` is seen by `σ` at resolution
+`σ.den · |a x − p| ≥ 1 − a · (defect of σ) > 1/2`:
+
+    **a rational that is not the Dirichlet one has its defect bounded BELOW by
+    `1/(2 σ.den)`** — equivalently `σ.den ≥ 1 / (2 |a x − p|)`.
+
+That is the engine.  Applied to the shadow chain of `orbit_escapes` at the
+moment its defect first leaves the window `[0, 1/Q)`, it forces the Dirichlet
+denominator at that time to exceed `(M + 1 − 2a) / (2 g (1 − a/Q))`, i.e. the
+canonical denominator JUMPS.  Iterating, the denominators satisfy
+`a_{j+1} ≳ (M/g) / (1 − a_j/Q)`, whose fixed points `a(1 − a/Q) = M/g` exist
+only when `M ≤ g Q / 4`; above that the denominators increase by at least a
+fixed fraction of `Q` per stage and must exceed `Q`, which is impossible.  The
+target of that iteration is `M(g,k) ≤ (1/4 + O(1/g))·g^(k+1)` — the constant the
+exact values `M(5,1) = 6`, `M(7,1) = 9`, `M(11,1) = 25`, `M(17,1) = 64` sit at.
+The chain/exit-time bookkeeping is the remaining work; this file lands the
+engine. -/
+
+/-- **The Dirichlet approximation of a bad point has a tiny defect.**  For a bad
+`x` the covering lemma applies to every reduced rational of denominator `≤ gᵏ`;
+with `M ≥ 4gᵏ` the coefficient `M + 1 − 2q` is at least `2gᵏ + 1`, so the defect
+is below `1/(2gᵏ+1)` — an `O(1/M)` bound where Dirichlet alone gives only
+`1/(gᵏ+1)`. -/
+theorem defect_small_of_bad (g k W M : ℕ) (hg : 2 ≤ g) (hW : W < g ^ k)
+    (hM : 4 * g ^ k ≤ M) (x : ℝ) (hx : Irrational x)
+    (hbad : ∀ m : ℕ, 1 ≤ m → m ≤ M →
+      Int.fract ((m : ℝ) * x) ∉
+        Set.Ico ((W : ℝ) / (g : ℝ) ^ k) (((W : ℝ) + 1) / (g : ℝ) ^ k))
+    (σ : ℚ) (hσden : σ.den ≤ g ^ k)
+    (hσ : |(σ.den : ℝ) * x - σ.num| < 1 / (g : ℝ) ^ k) :
+    |(σ.den : ℝ) * x - σ.num| < 1 / (2 * (g : ℝ) ^ k + 1) := by
+  have hcop : IsCoprime σ.num (σ.den : ℤ) := by
+    rw [Int.isCoprime_iff_gcd_eq_one]; exact σ.reduced
+  have h := defect_bound_of_bad g k W hg hW M x hx hbad σ.num σ.den σ.pos hσden hcop hσ
+  have hQ0 : (0 : ℝ) < (g : ℝ) ^ k := by
+    have : (0 : ℝ) < g := by exact_mod_cast (by omega : 0 < g)
+    positivity
+  have hQR : ((g ^ k : ℕ) : ℝ) = (g : ℝ) ^ k := by push_cast; ring
+  have hdR : (σ.den : ℝ) ≤ (g : ℝ) ^ k := by rw [← hQR]; exact_mod_cast hσden
+  have hMR : 4 * (g : ℝ) ^ k ≤ M := by
+    have := (Nat.cast_le (α := ℝ)).2 hM
+    rwa [Nat.cast_mul, Nat.cast_ofNat, hQR] at this
+  have hcoef : 2 * (g : ℝ) ^ k + 1 ≤ (M : ℝ) + 1 - 2 * σ.den := by linarith
+  have hrhs : 1 - (σ.den : ℝ) / (g : ℝ) ^ k ≤ 1 := by
+    have : (0 : ℝ) ≤ (σ.den : ℝ) / (g : ℝ) ^ k := by positivity
+    linarith
+  have hpos : (0 : ℝ) < 2 * (g : ℝ) ^ k + 1 := by linarith
+  rw [lt_div_iff₀ hpos]
+  nlinarith [abs_nonneg ((σ.den : ℝ) * x - σ.num)]
+
+/-- **The denominator jump.**  For a bad `x` (with `M ≥ 4gᵏ`), any reduced
+rational `p/a` with `a ≤ gᵏ` that is *not* the given small-defect rational `σ`
+has
+
+    `σ.den · |a x − p| > 1/2`,
+
+i.e. `σ.den > 1 / (2|a x − p|)`.  Farey separation gives
+`σ.den·|ax−p| + a·|σ.den x − σ.num| ≥ 1`, and the second term is at most
+`gᵏ/(2gᵏ+1) < 1/2` by `defect_small_of_bad`. -/
+theorem den_jump_of_bad (g k W M : ℕ) (hg : 2 ≤ g) (hW : W < g ^ k)
+    (hM : 4 * g ^ k ≤ M) (x : ℝ) (hx : Irrational x)
+    (hbad : ∀ m : ℕ, 1 ≤ m → m ≤ M →
+      Int.fract ((m : ℝ) * x) ∉
+        Set.Ico ((W : ℝ) / (g : ℝ) ^ k) (((W : ℝ) + 1) / (g : ℝ) ^ k))
+    (σ : ℚ) (hσden : σ.den ≤ g ^ k)
+    (hσ : |(σ.den : ℝ) * x - σ.num| < 1 / (g : ℝ) ^ k)
+    (p : ℤ) (a : ℕ) (ha : 1 ≤ a) (haQ : a ≤ g ^ k)
+    (hne : p * (σ.den : ℤ) ≠ σ.num * (a : ℤ)) :
+    1 / 2 < (σ.den : ℝ) * |(a : ℝ) * x - p| := by
+  have hQ0 : (0 : ℝ) < (g : ℝ) ^ k := by
+    have : (0 : ℝ) < g := by exact_mod_cast (by omega : 0 < g)
+    positivity
+  have hQR : ((g ^ k : ℕ) : ℝ) = (g : ℝ) ^ k := by push_cast; ring
+  have haR : (a : ℝ) ≤ (g : ℝ) ^ k := by rw [← hQR]; exact_mod_cast haQ
+  have hpair := defect_pair_ge x p σ.num a σ.den ha σ.pos hne
+  have hsmall := defect_small_of_bad g k W M hg hW hM x hx hbad σ hσden hσ
+  have hpos : (0 : ℝ) < 2 * (g : ℝ) ^ k + 1 := by linarith
+  have hprod : (a : ℝ) * |(σ.den : ℝ) * x - σ.num| < 1 / 2 := by
+    have h1 : (a : ℝ) * |(σ.den : ℝ) * x - σ.num|
+        ≤ (g : ℝ) ^ k * |(σ.den : ℝ) * x - σ.num| :=
+      mul_le_mul_of_nonneg_right haR (abs_nonneg _)
+    have h2 : (g : ℝ) ^ k * |(σ.den : ℝ) * x - σ.num|
+        < (g : ℝ) ^ k * (1 / (2 * (g : ℝ) ^ k + 1)) :=
+      mul_lt_mul_of_pos_left hsmall hQ0
+    have h3 : (g : ℝ) ^ k * (1 / (2 * (g : ℝ) ^ k + 1)) < 1 / 2 := by
+      rw [mul_one_div, div_lt_div_iff₀ hpos (by norm_num)]
+      linarith
+    linarith
+  linarith
+
+
 end NormalNumbers.Mahler
