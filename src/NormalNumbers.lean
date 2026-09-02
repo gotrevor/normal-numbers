@@ -100,6 +100,8 @@ import NormalNumbers.MahlerLowerBound
 import NormalNumbers.MahlerLowerBoundGeneral
 import NormalNumbers.MahlerRunBranch
 import NormalNumbers.MahlerMultiplierStrict
+import NormalNumbers.MahlerLowerBoundBackground
+import NormalNumbers.MahlerPrimeLowerBound
 import NormalNumbers.Furstenberg
 import NormalNumbers.LiteratureFurstenberg
 import NormalNumbers.AdderEngineSplit

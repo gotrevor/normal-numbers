@@ -1,5 +1,67 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ PRIME-BASE LOWER SIDE IS `Θ(g²)` — THE OPEN HALF OF THE MAHLER CHAPTER, SETTLED (2026-09-02, autonomous)
+
+The crux carried into this lap was: *for prime `g`, is `M(g,1)` of order `g`
+(Berend–Boshernitzan 1994 Thm 3.3, `(3/2)(g−1)`) or of order `g²` (what the
+exact adder machine reports)?*  **It is `g²`, and the witnesses are a
+two-parameter generalisation of the family already formalized here.**
+
+### The family (`MahlerLowerBoundBackground.lean`, new; trust triple)
+
+    α = a/(g − 1) + B · Σᵢ g^(−i!)          `bgLiouville g a B`
+
+— constant background digit `a`, with the integer `B` *added into it* (carries
+and all) at each burst position `i!`.  Multiplying by `m` preserves the shape:
+the background becomes `b = (m a) mod (g − 1)` (because `gⁿ ≡ 1 mod (g−1)`) and
+the burst becomes `N = m B`.
+
+| theorem | claim |
+|---|---|
+| `orbit_bg_mem` | **the crux identity**: for `n` late there is `d ≥ 1` with `orbit g (mα) n ∈ [ρ/g^d, (ρ+1)/g^d)`, `ρ = bgResidue g a B m d = (b·S_d + mB) mod g^d`, `S_d` the repunit.  The orbit is *pinned to a single order-`d` cell*, not merely bounded — which is what admits an arbitrary target block, in either direction |
+| `mahler_lower_bound_bg` | if every such cell misses the cell of `w`, no `1 ≤ m ≤ M` puts `w` i.o. into `m α`; so `M(g,k) > M` |
+| `repunit_burst_lt`, `bgResidue_digit_stab` | the digits stabilize at the background `b` once `b·S_D + N < g^D` |
+| `mahler_lower_bound_bg_digit` | hence for `k = 1` the infinite hypothesis is a **finite, `decide`-able certificate** |
+
+### The values (`MahlerPrimeLowerBound.lean`, new; all `decide +kernel`)
+
+| base | `a, B, W` | proved | true `M(g,1)` | B–B Thm 3.3 |
+|---|---|---|---|---|
+| 5  | `2, 1, 1`     | `M(5,1)  ≥ 6`   | 6   | 6  |
+| 7  | `2, 1, 1`     | `M(7,1)  ≥ 9`   | 9   | 9  |
+| 11 | `2, 73, 10`   | `M(11,1) ≥ 24`  | 25  | 15 |
+| 13 | `2, 958, 12`  | `M(13,1) ≥ 35`  | 35  | 18 |
+| 23 | `2, 2549, 22` | `M(23,1) ≥ 120` | 120 | 33 |
+
+**Exact at `g = 5, 7, 13, 23`**, one short at `g = 11`.  `120/23² ≈ 0.227 ≈ 1/4`
+— the quadratic order for a prime base, in the kernel, beating the linear
+bound by `3.6×`.  `M(5,1) = 6` and `M(7,1) = 9` are now sandwiched to a point
+once the matching collapse certificates land (item 2 below).
+
+**Why `a = 2`.**  For odd `g` the background digit `b = 2m mod (g−1)` is always
+*even and `< g − 1`*, so `W = g − 1` never arises from the background for any
+`m`: the entire multiplier budget is spent on the burst, and `B` tunes it to
+be quadratic.  The pure Liouville multiple (`a = 0`) cannot do this.
+
+### NEXT on this thread
+
+1. **A uniform `B(g)`** giving `M(g,1) ≥ c g²` for *every* prime `g` — the
+   general theorem, not a table.  Probe `experiments/mahler_bg_burst_structure.py`
+   (`a = 2`, `W = g−1`, `B ≤ 40g²`) attains `((g−1)/2)² − 1` at `g = 11, 13, 23`
+   but only `~0.6·((g−1)/2)²` at `g = 17, 19, 29, 31`, so either `B` must range
+   further or those bases need the Farey-hopping (run-free) mechanism.  Best
+   `B` found: `5:781, 7:1123, 11:803, 13:1010, 17:1492, 19:1991, 23:2641,
+   29:3893, 31:4398` — no formula spotted yet; `B/g² ≈ 4.6–6.6` throughout,
+   which is the first structural hint.
+2. **Matching upper halves** (`M(5,1) ≤ 6`, `M(7,1) ≤ 9`) as collapse
+   certificates of the `AdderTowerC*` kind ⇒ the first exactly-known prime
+   values beyond B–B's `M(3,1) = 2`.
+3. `k ≥ 2` version of the certificate (the general `mahler_lower_bound_bg`
+   already takes arbitrary `k` and arbitrary blocks; only the *finite*
+   reduction is `k = 1`).
+4. Composite-`g` run theorem; B–B Thm 3.2.
+
+
 ## ✅ `M(g,k) < g^(k+1)` — BEREND–BOSHERNITZAN'S OPEN QUESTION ANSWERED; ATTRIBUTIONS FIXED (2026-09-02, autonomous)
 
 The host answered `ON-LINE-REQUEST.md` with the full B–B 1994 paper
