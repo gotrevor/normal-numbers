@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.MahlerRunBranch
+import NormalNumbers.MahlerLowerBound
 
 /-!
 # The prime-base upper bound, sharpened to `g^(k+1) − 2g + 3` 🧮
@@ -32,7 +33,6 @@ available (for `q ≥ 2` the natural modulus `q gᵏ` shares the factor `gᵏ` w
 
 ## Structure
 
-* `blockNatVal_replicate_pred` — the all-`(g−1)` block has value `gᵏ − 1`.
 * `orbit_run_of_den_one` — a rational shadow of denominator `1` and defect
   `< g^(−k)` at `x_n` forces `0ᵏ` or `(g−1)ᵏ` to occur at `n`.
 * `defect_contracts_of_bad_two` — the covering contraction at
@@ -44,26 +44,6 @@ namespace NormalNumbers.Mahler
 
 open NormalNumbers
 
-/-- The all-`(g−1)` block of length `k` has base-`g` value `gᵏ − 1`. -/
-theorem blockNatVal_replicate_pred (g k : ℕ) (hg : 1 ≤ g) :
-    blockNatVal g (List.replicate k (g - 1)) = g ^ k - 1 := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-      rw [List.replicate_succ, blockNatVal_cons, ih, List.length_replicate]
-      have h1 : 1 ≤ g ^ k := Nat.one_le_pow _ _ (by omega)
-      have : (g - 1) * g ^ k + (g ^ k - 1) = g ^ (k + 1) - 1 := by
-        rw [pow_succ]
-        cases g with
-        | zero => omega
-        | succ n => cases n with
-          | zero => simp
-          | succ m =>
-              have : (m + 2 - 1) * (m + 2) ^ k = (m + 2) ^ k * (m + 2) - (m + 2) ^ k := by
-                simp only [Nat.add_sub_cancel]; ring_nf; omega
-              omega
-      exact this
-
 /-- **Denominator `1` means a run.**  If some integer `p` has
 `|x_n − p| < g^(−k)` where `x_n = orbit g α n` and `k ≥ 1`, then the block
 `0ᵏ` or the block `(g−1)ᵏ` occurs in `α` at position `n`. -/
@@ -73,10 +53,11 @@ theorem orbit_run_of_den_one (g k : ℕ) (hg : 2 ≤ g) (hk : 1 ≤ k) (α : ℝ
       OccursAt g α (List.replicate k (g - 1)) n := by
   have hgR : (2 : ℝ) ≤ g := by exact_mod_cast hg
   have hgk : (2 : ℝ) ≤ (g : ℝ) ^ k := by
-    calc (2 : ℝ) = (2 : ℝ) ^ 1 := by norm_num
-      _ ≤ (g : ℝ) ^ k := by
-          apply pow_le_pow_left₀ (by norm_num) hgR |>.trans
-          exact pow_le_pow_right₀ (by linarith) hk
+    have h1 : (2 : ℝ) ≤ (2 : ℝ) ^ k := by
+      calc (2 : ℝ) = (2 : ℝ) ^ 1 := (pow_one 2).symm
+        _ ≤ (2 : ℝ) ^ k := pow_le_pow_right₀ (by norm_num) hk
+    have h2 : (2 : ℝ) ^ k ≤ (g : ℝ) ^ k := pow_le_pow_left₀ (by norm_num) hgR k
+    linarith
   have hgk0 : (0 : ℝ) < (g : ℝ) ^ k := by linarith
   have hinv : 1 / (g : ℝ) ^ k ≤ 1 / 2 := by
     rw [div_le_div_iff₀ hgk0 (by norm_num)]; linarith
@@ -87,7 +68,8 @@ theorem orbit_run_of_den_one (g k : ℕ) (hg : 2 ≤ g) (hk : 1 ≤ k) (α : ℝ
   have hp01 : p = 0 ∨ p = 1 := by
     have h1 : (p : ℝ) < 3 / 2 := by linarith [habs.1, habs.2]
     have h2 : (-1 / 2 : ℝ) < p := by linarith [habs.1, habs.2]
-    have h1' : p < 2 := by exact_mod_cast (by exact_mod_cast h1 : (p : ℝ) < 2)
+    have h1'' : (p : ℝ) < 2 := by linarith
+    have h1' : p < 2 := by exact_mod_cast h1''
     have h2' : (0 : ℤ) ≤ p := by
       by_contra hc
       push Not at hc
@@ -103,9 +85,11 @@ theorem orbit_run_of_den_one (g k : ℕ) (hg : 2 ≤ g) (hk : 1 ≤ k) (α : ℝ
     rw [occursAt_iff_orbit_mem g hg _ _ hwd0 n, List.length_replicate,
       blockNatVal_replicate_zero]
     subst h
-    refine ⟨by simpa using hx0, ?_⟩
-    have : x < 1 / (g : ℝ) ^ k := by push_cast at habs ⊢; linarith [habs.2]
-    simpa using this
+    rw [← hxdef]
+    constructor
+    · simpa using hx0
+    · have hlt : x < 1 / (g : ℝ) ^ k := by push_cast at habs; linarith [habs.2]
+      simpa using hlt
   · right
     rw [occursAt_iff_orbit_mem g hg _ _ hwdp n, List.length_replicate,
       blockNatVal_replicate_pred g k (by omega)]
@@ -113,16 +97,14 @@ theorem orbit_run_of_den_one (g k : ℕ) (hg : 2 ≤ g) (hk : 1 ≤ k) (α : ℝ
     have hone : (1 : ℕ) ≤ g ^ k := Nat.one_le_pow _ _ (by omega)
     have hcast : ((g ^ k - 1 : ℕ) : ℝ) = (g : ℝ) ^ k - 1 := by
       rw [Nat.cast_sub hone]; push_cast; ring
-    rw [hcast]
-    constructor
-    · rw [le_div_iff₀ hgk0]
-      have : (1 : ℝ) - 1 / (g : ℝ) ^ k < x := by push_cast at habs; linarith [habs.1]
-      have h2 : ((g : ℝ) ^ k - 1) = ((1 : ℝ) - 1 / (g : ℝ) ^ k) * (g : ℝ) ^ k := by
-        field_simp
-      rw [h2]
-      exact le_of_lt (by nlinarith)
-    · rw [div_lt_div_iff₀ hgk0 hgk0] at *
-      nlinarith
+    rw [hcast, ← hxdef]
+    have hlow : (1 : ℝ) - 1 / (g : ℝ) ^ k < x := by push_cast at habs; linarith [habs.1]
+    have hmul : (1 : ℝ) - (1 : ℝ) / (g : ℝ) ^ k = ((g : ℝ) ^ k - 1) / (g : ℝ) ^ k := by
+      field_simp
+    have htop : ((g : ℝ) ^ k - 1 + 1) / (g : ℝ) ^ k = 1 := by
+      rw [sub_add_cancel, div_self (ne_of_gt hgk0)]
+    rw [htop]
+    exact ⟨le_of_lt (by rw [← hmul]; exact hlow), hx1⟩
 
 /-- **The covering contraction with `q ≥ 2`.**  If the multiples `m x`,
 `1 ≤ m ≤ g^(k+1) − 2g + 3`, all miss the cell of `W`, then every rational `ρ`
@@ -144,10 +126,11 @@ theorem defect_contracts_of_bad_two (g k W : ℕ) (hg : 2 ≤ g) (hk : 1 ≤ k) 
   have hgR : (2 : ℝ) ≤ g := by exact_mod_cast hg
   have hQ2 : (2 : ℝ) ≤ Q := by
     rw [hQdef]
-    calc (2 : ℝ) = (2 : ℝ) ^ 1 := by norm_num
-      _ ≤ (g : ℝ) ^ k := by
-          apply pow_le_pow_left₀ (by norm_num) hgR |>.trans
-          exact pow_le_pow_right₀ (by linarith) hk
+    have h1 : (2 : ℝ) ≤ (2 : ℝ) ^ k := by
+      calc (2 : ℝ) = (2 : ℝ) ^ 1 := (pow_one 2).symm
+        _ ≤ (2 : ℝ) ^ k := pow_le_pow_right₀ (by norm_num) hk
+    have h2 : (2 : ℝ) ^ k ≤ (g : ℝ) ^ k := pow_le_pow_left₀ (by norm_num) hgR k
+    linarith
   have hQ0 : 0 < Q := by linarith
   -- the natural-number bound casts cleanly
   have hnat : 2 * g ≤ g ^ (k + 1) := by
@@ -167,8 +150,12 @@ theorem defect_contracts_of_bad_two (g k W : ℕ) (hg : 2 ≤ g) (hk : 1 ≤ k) 
   -- `E ≥ 1/(gQ)`
   have hg0 : (0 : ℝ) < g := by linarith
   have hEge : 1 / ((g : ℝ) * Q) ≤ E := by
+    have h1 : 1 ≤ (g : ℝ) * E * Q := by
+      have h2 := mul_le_mul_of_nonneg_right hcon hQ0.le
+      rw [one_div, inv_mul_cancel₀ (ne_of_gt hQ0)] at h2
+      linarith
     rw [div_le_iff₀ (by positivity)]
-    nlinarith
+    nlinarith [h1]
   -- the coefficient dominates `g(Q − q)`
   have hcoef : (g : ℝ) * (Q - ρ.den) ≤ (g : ℝ) * Q - 2 * g + 3 + 1 - 2 * ρ.den := by
     nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ (g : ℝ) - 2)
@@ -205,11 +192,13 @@ theorem mahler_multiplier_prime (g : ℕ) (hgp : g.Prime) (α : ℝ) (hα : Irra
       _ = g ^ 2 := by ring
       _ ≤ g ^ (k + 1) := Nat.pow_le_pow_right (by omega) (by omega)
   have hgkM : g ^ k ≤ M := by
-    have h1 : g ^ k * 2 ≤ g ^ k * g := Nat.mul_le_mul_left _ hg
-    have h2 : g ^ k * g = g ^ (k + 1) := by ring
-    have h3 : 2 * g ≤ g ^ k * 2 + 3 - 3 := by
-      have : g ≤ g ^ k := Nat.le_self_pow (by omega) g
-      omega
+    have hA : g ^ (k + 1) = g ^ k * g := by ring
+    have hgek : g ≤ g ^ k := Nat.le_self_pow (by omega) g
+    have keyZ : (g : ℤ) ^ k * g + 3 ≥ (g : ℤ) ^ k + 2 * g := by
+      have h1 : (g : ℤ) ≤ (g : ℤ) ^ k := by exact_mod_cast hgek
+      have h2 : (2 : ℤ) ≤ g := by exact_mod_cast hg
+      nlinarith
+    have key : g ^ k * g + 3 ≥ g ^ k + 2 * g := by exact_mod_cast keyZ
     omega
   -- Case 1: the run branch at `0ᵏ`
   by_cases hz : ∀ N, ∃ n, N ≤ n ∧ OccursAt g α (List.replicate k 0) n

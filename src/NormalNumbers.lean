@@ -99,6 +99,7 @@ import NormalNumbers.LiteratureMahler
 import NormalNumbers.MahlerLowerBound
 import NormalNumbers.MahlerLowerBoundGeneral
 import NormalNumbers.MahlerRunBranch
+import NormalNumbers.MahlerPrimeUpper
 import NormalNumbers.MahlerMultiplierStrict
 import NormalNumbers.MahlerLowerBoundBackground
 import NormalNumbers.MahlerPrimeLowerBound
