@@ -103,6 +103,14 @@ import NormalNumbers.MahlerMultiplierStrict
 import NormalNumbers.MahlerLowerBoundBackground
 import NormalNumbers.MahlerPrimeLowerBound
 import NormalNumbers.MahlerBase5Exact
+import NormalNumbers.MahlerBase7Cert0
+import NormalNumbers.MahlerBase7Cert1
+import NormalNumbers.MahlerBase7Cert2
+import NormalNumbers.MahlerBase7Cert3
+import NormalNumbers.MahlerBase7Cert4
+import NormalNumbers.MahlerBase7Cert5
+import NormalNumbers.MahlerBase7Cert6
+import NormalNumbers.MahlerBase7Exact
 import NormalNumbers.MahlerLowerBoundPower
 import NormalNumbers.MahlerPowerInstances
 import NormalNumbers.Furstenberg
