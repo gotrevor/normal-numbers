@@ -1,5 +1,104 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ MAHLER RUN BRANCH SETTLED AT `gᵏ`; PRIME-BASE CONJECTURE REFUTED BY EXACT COMPUTATION (2026-09-02, autonomous)
+
+**The prime-base question of the chapter is now answered the OTHER way
+round.**  The previous lap asked whether `M(g,k) = Θ(gᵏ)` for prime `g`
+(upper side weak) or `Θ(g^(k+1))` (lower side weak).  Exact computation
+says the latter, and a new theorem says where the witnesses must live.
+
+### The theorem (`MahlerRunBranch.lean`, new; trust triple, no sorries)
+
+| theorem | claim |
+|---|---|
+| `cell_hit_of_coprime` | `Q·x = A + ε`, `A` a unit mod `Q`, `0 < ε < 1/Q` ⇒ every cell `[W/Q,(W+1)/Q)` is hit by some `{m x}`, `1 ≤ m ≤ Q` |
+| `hit_of_zero_run` / `hit_of_pred_run` | orbit form: `k` zeros (resp. `(g−1)`s) after position `n+k`, pre-run block `⌊gᵏ·orbit n⌋` (resp. `+1`) coprime to `g` ⇒ every `k`-block hit at `n` by some `m ≤ gᵏ` |
+| `exists_maximal_zero_run` | `0ᵏ` i.o. in an irrational ⇒ maximal runs (nonzero predecessor digit) arbitrarily late |
+| **`mahler_multiplier_of_zero_runs`** | **`g` prime, `0ᵏ` occurs i.o. in `α` ⇒ some `m ≤ gᵏ` has any given `k`-block i.o. in `m·α`** |
+| **`mahler_multiplier_of_pred_runs`** | same for `(g−1)ᵏ` (reflection `α ↦ −α`, `occursAt_neg_iff`) |
+
+So for prime `g` the multiplier problem splits into a **run branch**, now
+pinned `gᵏ − 1 ≤ M_run ≤ gᵏ` (the Liouville witnesses of
+`MahlerLowerBound.lean` live there), and a **run-free branch** (no `0ᵏ`,
+no `(g−1)ᵏ` eventually; orbit confined to `[g⁻ᵏ, 1 − g⁻ᵏ]`), which is
+where ALL the remaining room `gᵏ … g^(k+1)` lives.  The proof is four
+lines of arithmetic: `gᵏ·x = A + ε` with `A` invertible mod `gᵏ`, take
+`m ≡ W·A⁻¹`.  (For composite `g` the same theorem holds with "predecessor
+digit coprime to `g`" — that is exactly the hypothesis the divisor-family
+witnesses `B = g/t`, `B = 125` violate.)
+
+### The numerics (exact, `experiments/mahler_exact_M.py`)
+
+An exact single-track adder machine (right-to-left deterministic carries,
+state = `(k−1)`-digit window × carry vector; bug found and fixed on the
+known case base 2 / `11` / channels `{1,2}`), run as an **incremental
+trimmed product** (add one channel, keep only SCCs with `|E| > |V|`),
+gives the least `M` such that channels `1..M` collapse for every block:
+
+    g       2  3  4  5   6  7   8   9  10  11  13   14   15   16  17   18  19   20   21   22  23   24  25   26   27   28  29
+    M(g,1)  1  2  6  6  20  9  28  24  72  25  35  104  126  120  64  272  80  304  224  336 120  414 189  400  375  500 192
+
+    M(2,k) = 1, 3, 7, 17 (k = 1..4)   M(3,k) = 2, 8, 43 (k ≤ 3)   M(5,2) = 48
+
+Cross-checks: B–B `M(3,1) = 2` ✓; divisor family exact for `g = 4, 8, 9`
+(`6 = 2·3`, `28 = 4·7`, `24 = 3·8`) ✓; the `B = 125` witness is EXACT for
+base 10 (`72 = 8·9`) ✓; base 24: `414 = 18·23`, base 26: `400 = 16·25`.
+Per-digit values are in `experiments/mahler_exact_M_k1_g14plus.txt`.
+
+**Odd primes: `M(g,1)` tracks `((g−1)/2)²`** — `9, 25, 36→35, 64, 81→80,
+121→120, 196→192` for `g = 7, 11, 13, 17, 19, 23, 29`.  So `M(g,1) = Θ(g²)`
+for primes; the conjecture "`Θ(gᵏ)` for prime `g`" (last lap's item 3) is
+**refuted**.  The `g^(k+1)` upper bound has the right order for every
+base; the constant is `≈ 1/4` for primes and up to `≈ 0.85` for
+highly composite bases (`18: 272/324`).
+
+**Mechanism of the prime witnesses (run-free, as the theorem demands):**
+the orbit hops between rationals `p/q`, `q < g`, approached from BELOW,
+all of whose multiples avoid the cell (`g = 23`, digit 0: `10/11 = 0.(20)`,
+`11/12 = 0.(21 1)`, `7/10 = 0.(16 2 6 20)`, `1/11 = 0.(2)`).  A hop
+`p/q → p''/q''` is possible when they are Farey neighbours
+(`p q'' − p'' q = 1`) and costs `M ≤ (g − q)·q''`; a closed system needs
+the `×g` cycles mod `q` and mod `q''` to connect the hops.  Maximised at
+`q ≈ q'' ≈ g/2`, giving `≈ (g/2)²`.  For `g = 5, 7` (digit 1) the
+witness is the golden-mean / full shift on digits `{2,3}`, realised by
+`α = c/(g−1) + Σ_{i≥2} g^(−i!)` (`c = 2`): channels `1..5` (`g = 5`) and
+`1..8` (`g = 7`) avoid digit 1 — checked by hand, both EXACT
+(`M(5,1) = 6`, `M(7,1) = 9`).
+
+### NEXT (the crux is now the prime-base LOWER side)
+
+1. **Formal `Θ(g²)` witness for primes, `k = 1`.**  Cheapest first step:
+   `α = 2/(g−1) + Σ_{i≥2} g^(−i!)` (periodic background + Liouville
+   bursts) and digit `W = 1`: for `m ≤ M` the digits of `m·α` are those of
+   `2m/(g−1)` (periodic, digit `2m mod (g−1)`) with `m` added at the
+   burst positions — a finite check per `m`.  Gives `M(5,1) ≥ 6`,
+   `M(7,1) ≥ 9` exactly; find its general value `f(g)` (probe: brute force
+   over background `c/(g−1)` and burst `B`) and prove the family theorem
+   in the shape of `mahler_lower_bound_general` (orbit form
+   `{m·orbit} = {m c/(g−1) + m B g^(−d)}`).  Then the Farey-hopping family
+   for `≈ g²/4` (needs a uniform choice of the two denominators; the data
+   `((g−1)/2)²` suggests `q = (g−1)/2`, `q'' = (g+1)/2`).
+2. **Exact small values as theorems.**  Upper halves (`M(5,1) ≤ 6`,
+   `M(7,1) ≤ 9`) are collapse certificates of the kind the tower wing
+   already checks in-kernel (`AdderTowerC*`); lower halves are the
+   witnesses above.  Would make `M(5,1) = 6` the first exactly-known
+   prime value beyond B–B's `M(3,1) = 2`.
+3. **Composite `g` run theorem**: state `mahler_multiplier_of_zero_runs`
+   with "predecessor digit coprime to `g`" (the orbit-form lemmas already
+   are general; only the descent `exists_maximal_zero_run` uses "nonzero").
+4. `B = 125` generalisation (`t·c = g^L`, `s·c` digit-`(g−1)`-free for
+   `s < t` ⇒ `M(g,k) ≥ t(gᵏ − 1)`): base 10 → `8(10ᵏ − 1)`, exact at `k = 1`.
+
+**Lean gotchas this lap.**  `Int.add_mul_emod_self_left` wants
+`(a + b*c) % b`, so `add_comm` first.  `one_div_pow` needs explicit args
+when used as a term.  `positivity` does not know `0 ≤ orbit g α n`; use
+`(orbit_mem_Ico g α n).1`.  `set j₀ := Nat.find hex` does not rewrite a
+later `Nat.find_spec hex`; ascribe the spec's type with `j₀` instead.
+`Irrational.ne_zero`, `IsCoprime.pow_right`, `IsCoprime.neg_left`,
+`Int.natCast_dvd`, `Nat.Prime.coprime_iff_not_dvd`,
+`Int.isCoprime_iff_gcd_eq_one` all exist under these names.
+
+
 ## ✅ MAHLER LOWER BOUND SHARPENED TO `t·(gᵏ − 1)` — the factor-`g` gap collapses to ~2 (2026-09-02, autonomous)
 
 **The chapter's open question is (mostly) answered, and the answer is on the

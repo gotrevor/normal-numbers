@@ -20,6 +20,14 @@ factor `2 + o(1)` for even bases, against the factor `g` it was yesterday.
 
 ## What's happened (newest first)
 
+- **2026-09-02 (autonomous)** — **Mahler run branch settled at `gᵏ`; prime-base
+  conjecture refuted** (`MahlerRunBranch.lean`).  For prime `g`, if `0ᵏ` or `(g−1)ᵏ`
+  occurs i.o. in `α` then some `m ≤ gᵏ` has any `k`-block i.o. in `m·α`
+  (`mahler_multiplier_of_zero_runs` / `_pred_runs`, trust triple) — the Liouville
+  witnesses' branch is pinned to `[gᵏ − 1, gᵏ]`.  Exact adder-machine computation
+  (`experiments/mahler_exact_M.py`) gives `M(g,1)` for `g ≤ 29`: for odd primes it
+  tracks `((g−1)/2)²`, so `M(g,k) = Θ(g^(k+1))` for primes too and the room is on the
+  LOWER side, in the run-free branch (Farey-hopping orbits).  `PENDING_WORK.md` top.
 - **2026-09-02 (review lap)** — **Mahler lower bound sharpened from `gᵏ − 1` to
   `t·(gᵏ − 1)`** (`MahlerLowerBoundGeneral.lean`).  Own construction:
   `α = B·liouvilleNumber g` turns the multiplier problem into a digit problem
@@ -117,6 +125,7 @@ Real `#print axioms` output, this lap.  Every headline: trust triple only.
 | `isNormal_log_two_of_equidistributed` | conditional ln-two | trust triple | 🟢 clean (hypothesis is a named `Prop`, not an axiom) |
 | `Mahler.mahler_multiplier` | Mahler 1973 Thm M, sharpened | trust triple | 🟢 clean |
 | `Mahler.mahler_lower_bound` / `…_even` | our own lower bounds | trust triple | 🟢 clean |
+| `Mahler.mahler_multiplier_of_zero_runs` / `…_pred_runs` | run branch at `gᵏ` (prime `g`) | trust triple | 🟢 clean |
 | `Literature.mahler_theoremM_holds` | Mahler 1973, all `g` | trust triple | 🟢 clean |
 | `Literature.berendBoshernitzan_bound_holds` | B–B 1994 `2g^(k+1)`, all `g ≥ 2` | trust triple | 🟢 clean |
 | `Literature.furstenberg_dense_orbit_holds` | Furstenberg 1967 | trust triple | 🟢 clean |
