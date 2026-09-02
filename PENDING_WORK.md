@@ -1,5 +1,64 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ THE UNIVERSAL MAHLER CONSTANT IS `≥ 0.840` (was `1/2`); THE POWER FAMILY IS EXACT ON 13 COMPOSITE BASES (2026-09-02, autonomous)
+
+Scanning `mahler_lower_bound_power` over `L ≤ 5`
+(`experiments/mahler_power_family_scan.py`), the best admissible `t`
+**matches the exact adder-machine value of `M(g,1)`** at 13 of the 20
+composite bases `4 ≤ g ≤ 28`: `g = 4, 6, 8, 9, 10, 14, 15, 16, 18, 20, 22,
+24, 26`.  On composite bases this family is apparently not merely a lower
+bound but *the extremal construction*.  (Misses: `21` (180 vs 224), `25`
+(120 vs 189), `27` (234 vs 375), `28` (432 vs 500) — all have `t ∤ g^L` for
+the exact `t = M(g,1)/(g−1)`, or a non-integer such `t`.)
+
+Formalized (`MahlerPowerInstances.lean`, new; trust triple, `decide` guards):
+
+| `g` | `t, c, L` | bound | `k = 1` | `/g²` | divisor family |
+|---|---|---|---|---|---|
+| 18 | `16, 6561, 4`  | `16(18ᵏ−1)` | `272` | **0.840** | `153` |
+| 20 | `16, 25, 2`    | `16(20ᵏ−1)` | `304` | 0.760 | `190` |
+| 22 | `16, 14641, 4` | `16(22ᵏ−1)` | `336` | 0.694 | `242` |
+| 24 | `18, 32, 2`    | `18(24ᵏ−1)` | `414` | 0.719 | `276` |
+| 26 | `16, 28561, 4` | `16(26ᵏ−1)` | `400` | 0.592 | `338` |
+
+**`mahler_universal_constant_ge`**: no multiplier `m ≤ 271` works for a
+certain irrational and a single base-18 digit.  Against
+`mahler_multiplier_lt`'s `M(g,k) < g^(k+1)` this gives
+
+    0.840 · g^(k+1)  ≤  sup_{g,k} M(g,k)  <  g^(k+1),
+
+cutting the room for the universal constant from the even-base divisor
+family's factor `2` to a factor **`1.19`**.
+
+## 📐 STRUCTURAL FINDING: THE COVERING METHOD CANNOT BEAT `g^(k+1) − q(g−2)`
+
+Analysis of `MahlerMultiplier.lean`'s sweep (recorded so the crux is not
+re-attacked blindly).  `defect_bound_of_bad` gives, for a bad `x` and any
+reduced `p/q` with `q ≤ gᵏ`, `0 < |η| < g⁻ᵏ`:
+
+    |η| < (1 − q/gᵏ) / (M + 1 − 2q).
+
+The escape lemma needs `|η| < g^(−k−1)` (so that the `×g` per step keeps the
+shadow inside the quality window `g⁻ᵏ`), i.e.
+
+    **M ≥ g^(k+1) − q(g − 2) − 1**,   binding at the SMALLEST admissible `q`.
+
+* `q = 1` is exactly "the orbit point is within `g⁻ᵏ` of an integer" = a run
+  of `k` zeros or `k` `(g−1)`s, which `mahler_multiplier_of_zero_runs`
+  (`MahlerRunBranch.lean`) already settles with `m ≤ gᵏ`.  So for prime `g`
+  the sweep may start at `q ≥ 2`, giving `M(g,k) ≤ g^(k+1) − 2g + 3` — a real
+  but small (`2g − 4`) improvement, and the surgery on `MahlerMultiplier.lean`
+  is the cheapest remaining upper-side item.
+* Excluding larger `q` is **not** available: the `q = 1` argument works only
+  because `Q = gᵏ` and `A = ⌊gᵏ x⌋` can be a *unit mod `gᵏ`*; for `q ≥ 2` the
+  natural `Q = q gᵏ` has `gcd(A, Q) ≥ gᵏ`, so `cell_hit_of_coprime` does not
+  apply.  And the empirical prime witnesses sit at `q ≈ g/2`, so even a
+  perfect `q`-exclusion would stop at `≈ g²/2`, still a factor 2 above the
+  truth `≈ g²/4`.
+* **Conclusion: the prime `Θ(g²)` UPPER side needs the Farey-hopping analysis,
+  not a sharper covering constant.**  That is the standing crux.
+
+
 ## ✅ `M(10,k) ≥ 8(10ᵏ − 1)` VIA A NEW POWER-DIVISOR FAMILY (2026-09-02, autonomous)
 
 The directive's named cheap win, taken at **full generality in `k`** rather
