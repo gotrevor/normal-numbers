@@ -1,5 +1,40 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ `M(5,1) = 6` — THE MAHLER CONSTANT PINNED EXACTLY AT A PRIME BASE (2026-09-02, autonomous)
+
+Both halves, kernel-checked, trust triple (`MahlerBase5Exact.lean`, new):
+
+* **upper** `m5_mahler_upper`: for every irrational `X` and every base-5 digit
+  `w`, some `1 ≤ m ≤ 6` has `w` i.o. in `m·X`.  Five `decide +kernel`
+  certificates of `signed_engine_g_single` on the six-channel single-track
+  base-5 family `x, 2x, …, 6x` (ambient `6! = 720`; after pruning only `6`–`11`
+  live states, every surviving component a simple cycle).  Emitter +
+  independent re-verification: `experiments/mahler_collapse_cert.py 5 6`
+  (validated against `AdderTowerC1`'s base-3 shape).
+* **lower** `Mahler.mahler_lower_bound_base5` (previous entry).
+* **`mahler_M_five_eq_six`** conjoins them.
+
+This is the **first Mahler constant pinned to a point at a prime base beyond
+Berend–Boshernitzan 1994's `M(3,1) = 2`**.  The general sandwich gives only
+`4 ≤ M(5,1) ≤ 25`.
+
+### NEXT on this thread (in order)
+
+1. **`M(7,1) = 9`.**  Lower half already proved.  Upper half needs channels
+   `1..9`: ambient `9! = 362880`, alphabet 7 ⇒ `2.5M` edge checks — too big for
+   one `decide`, so it needs the **chunked** `checkEdgesOnA` path that
+   `AdderTowerC8/C9` already use (`experiments/emit_cert_lean.py` packs the
+   tables).  ⚠️ `M = 8` genuinely FAILS: at `g = 7, w = 1` the live graph has an
+   SCC of size 2 with intra-out-degree 2 (two cycles) — i.e. a real irrational
+   witness, matching `M(7,1) = 9`.  That refutation is itself the check that the
+   emitter is not over-reporting collapse.
+2. `M(11,1)`, `M(13,1)`: the lower halves are 1 short (24 vs 25) and exact (35);
+   uppers need ambient `11!`/`35!` — out of reach by the naive product, so they
+   need the incremental **trimmed** product (`mahler_exact_M.py`'s SCC trimming)
+   lifted into the certificate emitter before Lean can see them.
+3. A uniform `B(g)` for the general prime `Θ(g²)` lower bound (see below).
+
+
 ## ✅ PRIME-BASE LOWER SIDE IS `Θ(g²)` — THE OPEN HALF OF THE MAHLER CHAPTER, SETTLED (2026-09-02, autonomous)
 
 The crux carried into this lap was: *for prime `g`, is `M(g,1)` of order `g`
