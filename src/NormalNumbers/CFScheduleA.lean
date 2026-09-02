@@ -426,7 +426,7 @@ theorem cfBadZone_nil_shift_mem_cfBadZone
   set γv : ℝ := (gaussMeasure A).toReal with hγ
   -- unpack the base-`[]` bad-zone membership
   simp only [cfBadZone, List.length_nil, Function.iterate_zero, Set.preimage_id,
-    Set.mem_inter_iff, Set.mem_setOf_eq] at hx
+    Set.mem_inter_iff, Set.mem_ofPred_eq] at hx
   obtain ⟨-, hxIoo, hdev⟩ := hx
   -- the two-scale Birkhoff split of the length-`N` count
   have hNsum : d + (N - d) = N := Nat.add_sub_cancel' (le_of_lt hdN)
@@ -495,7 +495,7 @@ theorem cfBadZone_nil_shift_mem_cfBadZone
           linarith [hseam]
   -- repackage into the target bad zone at scale `N−d`
   refine ⟨hxc, ?_⟩
-  simp only [Set.mem_preimage, Set.mem_setOf_eq, ← hd]
+  simp only [Set.mem_preimage, Set.mem_ofPred_eq, ← hd]
   refine ⟨horb, ?_⟩
   have hgoal : δ - (d : ℝ) / (N : ℝ)
       ≤ |blockCount A (N - d) (gaussMap^[d] x) / ((N - d : ℕ) : ℝ) - γv| := by
@@ -624,7 +624,7 @@ theorem gaussMeasure_interval_inter_cfBadZone_nil_le
   set S : Set (List ℕ) := {w ∈ genWords d | cfCylinder w ⊆ Set.Ioo a b} with hSdef
   have hmemS : ∀ w : List ℕ, w ∈ S ↔
       (w.length = d ∧ (∀ a ∈ w, 1 ≤ a)) ∧ cfCylinder w ⊆ Set.Ioo a b := by
-    intro w; rw [hSdef]; simp only [genWords, Set.mem_setOf_eq]
+    intro w; rw [hSdef]; simp only [genWords, Set.mem_ofPred_eq]
   have hScount : S.Countable := Set.Countable.mono (Set.sep_subset _ _)
     (Set.Countable.mono (Set.subset_univ _) Set.countable_univ)
   have hSdisj : S.PairwiseDisjoint (fun w => cfCylinder w) := by
@@ -857,7 +857,7 @@ uncontrolled navigation filler.  This is the route-decisive crux ingredient (the
 interleaved schedule's ψ-stage): the aggregate bad-zone mass is `O(1/n)·γ(I_wx)`
 (`gaussMeasure_aggregate_cfBadZone_le`) while `γ(c,d)` is a fixed positive
 fraction, so for `n` large the good mass FILLS `(c,d)`. -/
-theorem exists_irrational_notMem_cfBadZone_in_Ioo (wx : List ℕ) (hwx : wx ≠ [])
+theorem exists_irrational_notMem_cfBadZone_in_Ioo (wx : List ℕ) (_hwx : wx ≠ [])
     (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
     (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ : ℝ} (hδ : 0 < δ) {c d : ℝ}
     (hpos : 0 < (gaussMeasure (Set.Ioo c d)).toReal) :
@@ -1025,7 +1025,7 @@ freq-good at every prefix scale in `NS`. -/
 theorem exists_irrational_notMem_multiscale_cfBadZone_in_Ioo
     (wx : List ℕ) (hwxpos : ∀ a ∈ wx, 1 ≤ a) (F : Finset (List ℕ))
     (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ : ℝ} (hδ : 0 < δ) {c d : ℝ}
-    (hpos : 0 < (gaussMeasure (Set.Ioo c d)).toReal)
+    (_hpos : 0 < (gaussMeasure (Set.Ioo c d)).toReal)
     (NS : Finset ℕ) {n₁ : ℕ} (hn₁ : 0 < n₁) (hNS : ∀ n ∈ NS, n₁ ≤ n)
     (hbound : (NS.card : ℝ) * ((∑ v ∈ F, 7 * ((8 * v.length + 80)
         * (gaussMeasure (cfCylinder v)).toReal / (δ ^ 2 * n₁))
@@ -1082,7 +1082,7 @@ theorem exists_irrational_notMem_xbad_psi_zbad_in_Ioo {q : ℝ} (hq : 0 < q) (r 
     (wx : List ℕ) (hwxpos : ∀ a ∈ wx, 1 ≤ a)
     (wz : List ℕ) (hwzpos : ∀ a ∈ wz, 1 ≤ a)
     (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) {δ : ℝ} (hδ : 0 < δ)
-    {c d : ℝ} (hpos : 0 < (gaussMeasure (Set.Ioo c d)).toReal)
+    {c d : ℝ} (_hpos : 0 < (gaussMeasure (Set.Ioo c d)).toReal)
     (NSx : Finset ℕ) {n₁x : ℕ} (hn₁x : 0 < n₁x) (hNSx : ∀ n ∈ NSx, n₁x ≤ n)
     (NSz : Finset ℕ) {n₁z : ℕ} (hn₁z : 0 < n₁z) (hNSz : ∀ n ∈ NSz, n₁z ≤ n)
     (hbound : (NSx.card : ℝ) * (∑ v ∈ F, 7 * ((8 * v.length + 80)
@@ -1223,7 +1223,7 @@ theorem blockCount_eq_of_cfDigit_agree {z z' : ℝ}
     apply Finset.filter_congr
     intro j hj
     simp only [Finset.mem_range] at hj
-    simp only [Nat.zero_add, eq_iff_iff]
+    simp only [Nat.zero_add]
     constructor
     · intro hM i hi
       rw [← hagree (j + i) (by omega)]; exact hM i hi
@@ -1254,7 +1254,7 @@ theorem exists_nhds_cfDigit_eq {y : ℝ} (hy : y ∈ Set.Ioo (0 : ℝ) 1)
   have hwgetD : ∀ i, i < m → w.getD i 0 = cfDigit y i := by
     intro i hi
     rw [hwdef, List.getD_eq_getElem _ _ (by simpa [hwlen] using hi)]
-    simp [hwdef]
+    simp
   have hywmem : y ∈ cfCylinder w := by
     refine ⟨hy, fun i hi => ?_⟩
     rw [hwlen] at hi; rw [hwgetD i hi]
@@ -1316,8 +1316,8 @@ Ioo (p-ε) (p+ε)` — cylinder diameters shrink to `0` (`cfCylinder_subset_Icc_
 `volume_cfCylinder_le_fib`).  This is exactly the "refine the `x`-cylinder below the
 `exists_ball_cfDigit_psi_eq` ball" move: after refining, every point of `cfCylinder wx'`
 maps under `ψ` to within the ball, so shares `ψ(p)`'s first `m` z-digits. -/
-theorem exists_cfCylinder_prefix_subset_ball {wx : List ℕ} (hwxne : wx ≠ [])
-    (hwxpos : ∀ a ∈ wx, 1 ≤ a) {p : ℝ} (hp : p ∈ cfCylinder wx) (hpirr : Irrational p)
+theorem exists_cfCylinder_prefix_subset_ball {wx : List ℕ} (_hwxne : wx ≠ [])
+    (_hwxpos : ∀ a ∈ wx, 1 ≤ a) {p : ℝ} (hp : p ∈ cfCylinder wx) (hpirr : Irrational p)
     {ε : ℝ} (hε : 0 < ε) :
     ∃ wx' : List ℕ, wx' ≠ [] ∧ (∀ a ∈ wx', 1 ≤ a) ∧ wx'.take wx.length = wx ∧
       wx.length < wx'.length ∧ p ∈ cfCylinder wx' ∧
@@ -1365,7 +1365,7 @@ theorem exists_cfCylinder_prefix_subset_ball {wx : List ℕ} (hwxne : wx ≠ [])
       nlinarith [hfibge, hKR, hK5R]
     have hmono : 1 / (Nat.fib (wx'.length + 1) : ℝ) ^ 2 ≤ 1 / ((n : ℝ) + 1) :=
       one_div_le_one_div_of_le hnR hfibsq
-    have hlast : 1 / ((n : ℝ) + 1) < ε := by have := hn; push_cast at this; linarith
+    have hlast : 1 / ((n : ℝ) + 1) < ε := by have := hn; linarith
     linarith
   intro z hz
   have hzIcc := hIcc hz
@@ -1425,7 +1425,7 @@ theorem exists_tail_cfCylinder_subset_ball {w : ℕ → List ℕ}
       nlinarith [hfibge, hsNR]
     have hmono : 1 / (Nat.fib ((w s).length + 1) : ℝ) ^ 2 ≤ 1 / ((N : ℝ) + 1) :=
       one_div_le_one_div_of_le hsR hfibsq
-    have hlast : 1 / ((N : ℝ) + 1) < ε := by have := hN; push_cast at this; linarith
+    have hlast : 1 / ((N : ℝ) + 1) < ε := by have := hN; linarith
     linarith
   intro z hz
   have hzIcc := hIcc hz
@@ -2501,7 +2501,7 @@ theorem gaussMeasure_singleton (x : ℝ) : gaussMeasure {x} = 0 := by
     MeasureTheory.withDensity_absolutelyContinuous _ _
   have hac2 : MeasureTheory.volume.restrict (Set.Ioo (0 : ℝ) 1) ≪ MeasureTheory.volume :=
     MeasureTheory.Measure.restrict_le_self.absolutelyContinuous
-  exact (hac.trans hac2) (by simp [Real.volume_singleton])
+  exact (hac.trans hac2) (by simp)
 
 /-- **The middle-half of the hull carries a fixed fraction of the cylinder's mass.**
 For a cylinder inside a hull `Icc a b`, `γtar := γ(middle-half of [a,b]) ≥ ¼·γ(cfCylinder w)`.
@@ -2646,7 +2646,7 @@ theorem exists_cfCylinder_psi_avoid_zbad_cond {q : ℝ} (hq : 0 < q) (r : ℝ)
           ∩ {z : ℝ | δ ≤ |blockCount (cfCylinder v) n z / n
               - (gaussMeasure (cfCylinder v)).toReal|} := by
       ext z
-      simp only [Set.mem_setOf_eq, Set.mem_inter_iff, Set.mem_iInter, Set.mem_preimage]
+      simp only [Set.mem_ofPred_eq, Set.mem_inter_iff, Set.mem_iInter, Set.mem_preimage]
       tauto
     rw [heq]; exact (h1.inter h2).inter h3
   have hUmeas : MeasurableSet U :=
@@ -2705,7 +2705,7 @@ theorem exists_cfCylinder_psi_avoid_zbad_cond_multiscale {q : ℝ} (hq : 0 < q) 
           ∩ {z : ℝ | δ ≤ |blockCount (cfCylinder v) n z / n
               - (gaussMeasure (cfCylinder v)).toReal|} := by
       ext z
-      simp only [Set.mem_setOf_eq, Set.mem_inter_iff, Set.mem_iInter, Set.mem_preimage]
+      simp only [Set.mem_ofPred_eq, Set.mem_inter_iff, Set.mem_iInter, Set.mem_preimage]
       tauto
     rw [heq]; exact (h1.inter h2).inter h3
   have hUmeas : MeasurableSet U :=
@@ -2913,11 +2913,11 @@ theorem exists_uniformly_freq_good_block_steer_len (wx : List ℕ) (hwx : wx ≠
     · have hb := hufreq k hkn₁ hk v hv
       have : δ * k + (4 * (Nat.sqrt k : ℝ) + 2 * v.length)
           ≤ δ * k + (4 * (Nat.sqrt u.length : ℝ) + 2 * v.length + n₁) := by
-        push_cast; nlinarith [hsqle, hn₁nn]
+        nlinarith [hsqle, hn₁nn]
       calc |(countOccurrences v (u.take k) : ℝ) - γv * k|
           < δ * k + (4 * (Nat.sqrt k : ℝ) + 2 * v.length) := hb
         _ ≤ δ * k + (4 * (Nat.sqrt u.length : ℝ) + 2 * v.length + n₁) := this
-    · push_neg at hkn₁
+    · push Not at hkn₁
       have hvne := hFne v hv
       have hcnt : (countOccurrences v (u.take k) : ℝ) ≤ (k : ℝ) := by
         have h1 := countOccurrences_le_length hvne (u.take k)
@@ -3015,7 +3015,7 @@ theorem affine_image_Ioo_subset_Icc {q : ℝ} (hq : 0 < q) (r : ℝ)
   have hxb : (y - r) / q < b := (div_lt_iff₀ hq).mpr (by rw [mul_comm]; linarith)
   refine ⟨?_, ?_⟩
   · by_contra hlt
-    push_neg at hlt          -- y < e
+    push Not at hlt          -- y < e
     obtain ⟨x', hx'irr, hax', hx'x⟩ := exists_irrational_btwn hax
     have hx'b : x' < b := lt_trans hx'x hxb
     have hψmem : affineMap q r x' ∈ cfCylinder wz :=
@@ -3026,7 +3026,7 @@ theorem affine_image_Ioo_subset_Icc {q : ℝ} (hq : 0 < q) (r : ℝ)
       simp only [affineMap]; rw [mul_comm]; linarith
     linarith
   · by_contra hgt
-    push_neg at hgt          -- f < y
+    push Not at hgt          -- f < y
     obtain ⟨x', hx'irr, hx'lo, hx'hi⟩ := exists_irrational_btwn hxb
     have hax' : a < x' := lt_trans hax hx'lo
     have hψmem : affineMap q r x' ∈ cfCylinder wz :=
@@ -3058,7 +3058,7 @@ theorem affine_image_Ioo_subset_Icc_pre {q : ℝ} (hq : 0 < q) (r : ℝ)
   have hxb : (y - r) / q < b := (div_lt_iff₀ hq).mpr (by rw [mul_comm]; linarith)
   refine ⟨?_, ?_⟩
   · by_contra hlt
-    push_neg at hlt          -- y < e
+    push Not at hlt          -- y < e
     obtain ⟨x', hx'irr, hax', hx'x⟩ := exists_irrational_btwn hax
     have hx'b : x' < b := lt_trans hx'x hxb
     have hle : e ≤ affineMap q r x' :=
@@ -3068,7 +3068,7 @@ theorem affine_image_Ioo_subset_Icc_pre {q : ℝ} (hq : 0 < q) (r : ℝ)
       simp only [affineMap]; rw [mul_comm]; linarith
     linarith
   · by_contra hgt
-    push_neg at hgt          -- f < y
+    push Not at hgt          -- f < y
     obtain ⟨x', hx'irr, hx'lo, hx'hi⟩ := exists_irrational_btwn hxb
     have hax' : a < x' := lt_trans hax hx'lo
     have hge : affineMap q r x' ≤ f :=
@@ -3142,8 +3142,8 @@ interval pulls back to overlap `(a,b)` ⇒ place a good `x`-block in the overlap
 The freq-good blocks (`uz`, `ux`) are exposed for the per-stream telescoping. -/
 theorem exists_freq_good_extend_affine {q : ℝ} (hq : 0 < q) (r : ℝ)
     (wx wz : List ℕ) (hwx : wx ≠ []) (hwxpos : ∀ c ∈ wx, 1 ≤ c)
-    (hwz : wz ≠ []) (hwzpos : ∀ c ∈ wz, 1 ≤ c)
-    {e f : ℝ} (he0 : 0 ≤ e) (hef : e < f) (hf1 : f ≤ 1)
+    (_hwz : wz ≠ []) (_hwzpos : ∀ c ∈ wz, 1 ≤ c)
+    {e f : ℝ} (he0 : 0 ≤ e) (_hef : e < f) (hf1 : f ≤ 1)
     (hzint : ∀ x ∈ Set.Ioo e f, Irrational x → x ∈ cfCylinder wz)
     (hinv : cfCylinder wx ⊆ affineMap q r ⁻¹' Set.Ioo e f)
     (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
@@ -3294,7 +3294,7 @@ route-decisive payoff of the steerable-block crack. -/
 theorem exists_freq_good_extend_affine_steer {q : ℝ} (hq : 0 < q) (r : ℝ)
     (wx wz : List ℕ) (hwx : wx ≠ []) (hwxpos : ∀ c ∈ wx, 1 ≤ c)
     (hwz : wz ≠ []) (hwzpos : ∀ c ∈ wz, 1 ≤ c)
-    {e f : ℝ} (he0 : 0 ≤ e) (hef : e < f) (hf1 : f ≤ 1)
+    {e f : ℝ} (he0 : 0 ≤ e) (_hef : e < f) (hf1 : f ≤ 1)
     (hzint : ∀ x ∈ Set.Ioo e f, Irrational x → x ∈ cfCylinder wz)
     (hinv : cfCylinder wx ⊆ affineMap q r ⁻¹' Set.Ioo e f)
     (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
@@ -3418,7 +3418,7 @@ fails) but ARE uniformly prefix-good with sublinear slack. -/
 theorem exists_freq_good_extend_affine_steer_uniform {q : ℝ} (hq : 0 < q) (r : ℝ)
     (wx wz : List ℕ) (hwx : wx ≠ []) (hwxpos : ∀ c ∈ wx, 1 ≤ c)
     (hwz : wz ≠ []) (hwzpos : ∀ c ∈ wz, 1 ≤ c)
-    {e f : ℝ} (he0 : 0 ≤ e) (hef : e < f) (hf1 : f ≤ 1)
+    {e f : ℝ} (he0 : 0 ≤ e) (_hef : e < f) (hf1 : f ≤ 1)
     (hzint : ∀ x ∈ Set.Ioo e f, Irrational x → x ∈ cfCylinder wz)
     (hinv : cfCylinder wx ⊆ affineMap q r ⁻¹' Set.Ioo e f)
     (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ a ∈ v, 1 ≤ a) (hFne : ∀ v ∈ F, v ≠ [])
@@ -3770,13 +3770,13 @@ theorem exists_seedStateA {q : ℝ} (hq : 0 < q) {r : ℝ} (hr : -q < r ∧ r < 
   have he0d : e0 < d := lt_of_le_of_lt hq0Icc.1 hq0cd.2
   have hcf0 : c < f0 := lt_of_lt_of_le hq0cd.1 hq0Icc.2
   have hce0 : c ≤ e0 := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     obtain ⟨y, hyirr, hy1, hy2⟩ := exists_irrational_btwn h
     have hymem : y ∈ cfCylinder wz :=
       hwzUIoo y (Set.mem_Ioo.2 ⟨hy1, lt_trans hy2 hcf0⟩) hyirr
     exact absurd (Set.mem_Ioo.1 (hwzsub hymem)).1 (not_lt.2 hy2.le)
   have hf0d : f0 ≤ d := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     obtain ⟨y, hyirr, hy1, hy2⟩ := exists_irrational_btwn h
     have hymem : y ∈ cfCylinder wz :=
       hwzUIoo y (Set.mem_Ioo.2 ⟨lt_trans he0d hy1, hy2⟩) hyirr
@@ -3856,14 +3856,14 @@ theorem Ioo_sub_le_volume_cfCylinder (w : List ℕ) (hw : w ≠ [])
     f - e ≤ (volume (cfCylinder w)).toReal := by
   obtain ⟨a, c, hac, hlen⟩ := cfCylinder_subset_Icc_length w hw hpos
   have hae : a ≤ e := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     have hlt : e < min a f := lt_min h hef
     obtain ⟨y, hyirr, hy1, hy2⟩ := exists_irrational_btwn hlt
     have hyf : y < f := lt_of_lt_of_le hy2 (min_le_right _ _)
     have hymem := hac (hsub y (Set.mem_Ioo.2 ⟨hy1, hyf⟩) hyirr)
     exact absurd hymem.1 (not_le.2 (lt_of_lt_of_le hy2 (min_le_left _ _)))
   have hfc : f ≤ c := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     have hlt : max c e < f := max_lt h hef
     obtain ⟨y, hyirr, hy1, hy2⟩ := exists_irrational_btwn hlt
     have hey : e < y := lt_of_le_of_lt (le_max_right _ _) hy1
@@ -4161,7 +4161,7 @@ theorem exists_scale_cfCylinder_psi_avoid_zbad_cond_tight {q : ℝ} (hq : 0 < q)
     (wx' : List ℕ) (hne : wx' ≠ []) (hpos : ∀ c ∈ wx', 1 ≤ c) {a b : ℝ}
     (hIcc : cfCylinder wx' ⊆ Set.Icc a b) (wz : List ℕ) (hposw : ∀ c ∈ wz, 1 ≤ c)
     (F : Finset (List ℕ)) (hF : ∀ v ∈ F, ∀ c ∈ v, 1 ≤ c) {δ : ℝ} (hδ : 0 < δ)
-    (Cbridge : ℝ) (hCbridge : 0 ≤ Cbridge)
+    (Cbridge : ℝ) (_hCbridge : 0 ≤ Cbridge)
     (hbridge : (gaussMeasure (cfCylinder wz)).toReal
       ≤ Cbridge * (gaussMeasure (cfCylinder wx')).toReal) :
     ∃ N : ℕ, 1 ≤ N ∧ ∀ n, N ≤ n → ∃ p : ℝ, Irrational p ∧ p ∈ cfCylinder wx' ∧
@@ -4789,7 +4789,6 @@ theorem exists_uniformly_freq_good_block_steer_len_rel (wx : List ℕ) (hwx : wx
     rw [← mul_div_assoc, div_lt_iff₀ hden]
     have hm1R : (0 : ℝ) < (m : ℝ) + 1 := by positivity
     push_cast
-    push_cast at hfrac2
     nlinarith [hfrac2, hm1R, hγwx0, mul_pos hm1R hγwx0]
   have hres : 4 / (d - c) < (Nat.fib (wx.length + (n₁ + m ^ 2) + 1) : ℝ) ^ 2 :=
     hNfib (wx.length + (n₁ + m ^ 2)) (by omega)
@@ -4822,11 +4821,11 @@ theorem exists_uniformly_freq_good_block_steer_len_rel (wx : List ℕ) (hwx : wx
     · have hb := hufreq k hkn₁ hk v hv
       have : δ * k + (4 * (Nat.sqrt k : ℝ) + 2 * v.length)
           ≤ δ * k + (4 * (Nat.sqrt u.length : ℝ) + 2 * v.length + n₁) := by
-        push_cast; nlinarith [hsqle, hn₁nn]
+        nlinarith [hsqle, hn₁nn]
       calc |(countOccurrences v (u.take k) : ℝ) - γv * k|
           < δ * k + (4 * (Nat.sqrt k : ℝ) + 2 * v.length) := hb
         _ ≤ δ * k + (4 * (Nat.sqrt u.length : ℝ) + 2 * v.length + n₁) := this
-    · push_neg at hkn₁
+    · push Not at hkn₁
       have hvne := hFne v hv
       have hcnt : (countOccurrences v (u.take k) : ℝ) ≤ (k : ℝ) := by
         have h1 := countOccurrences_le_length hvne (u.take k)
@@ -4926,7 +4925,6 @@ theorem exists_uniformly_freq_good_block_steer_len_rel_cfK (wx : List ℕ) (hwx 
     rw [← mul_div_assoc, div_lt_iff₀ hden]
     have hm1R : (0 : ℝ) < (m : ℝ) + 1 := by positivity
     push_cast
-    push_cast at hfrac2
     nlinarith [hfrac2, hm1R, hγwx0, mul_pos hm1R hγwx0]
   -- combined budget for layer 2 cfK: freq + cfK mass < γtar
   have hbound : ((m + 1 : ℕ) : ℝ) * (∑ v ∈ F, 7 * ((8 * (v.length : ℝ) + 80)
@@ -4966,11 +4964,11 @@ theorem exists_uniformly_freq_good_block_steer_len_rel_cfK (wx : List ℕ) (hwx 
     · have hb := hufreq k hkn₁ hk v hv
       have : δ * k + (4 * (Nat.sqrt k : ℝ) + 2 * v.length)
           ≤ δ * k + (4 * (Nat.sqrt u.length : ℝ) + 2 * v.length + n₁) := by
-        push_cast; nlinarith [hsqle, hn₁nn]
+        nlinarith [hsqle, hn₁nn]
       calc |(countOccurrences v (u.take k) : ℝ) - γv * k|
           < δ * k + (4 * (Nat.sqrt k : ℝ) + 2 * v.length) := hb
         _ ≤ δ * k + (4 * (Nat.sqrt u.length : ℝ) + 2 * v.length + n₁) := this
-    · push_neg at hkn₁
+    · push Not at hkn₁
       have hvne := hFne v hv
       have hcnt : (countOccurrences v (u.take k) : ℝ) ≤ (k : ℝ) := by
         have h1 := countOccurrences_le_length hvne (u.take k)
@@ -5101,7 +5099,7 @@ relative-regularization freq-good block steering into the cylinder's OWN hull (s
 is LINEAR by the crux resolution), keeping the interval `(e,f)` FIXED — legitimate because
 `cfCylinder (wx++u) ⊆ cfCylinder wx ⊆ ψ⁻¹(Ioo e f)`, so `hinv` is preserved.  (Route B does
 NOT nest the interval; `ψ(xA)` is pinned by the cylinder shrinking, not the interval.) -/
-theorem schedStepL4_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateL4 q r) (s : ℕ) :
+theorem schedStepL4_exists {q : ℝ} (_hq : 0 < q) {r : ℝ} (S : SchedStateL4 q r) (s : ℕ) :
     ∃ S' : SchedStateL4 q r, StepSpecL4 S S' s := by
   obtain ⟨a, b, ha, hab, hb, hIcc, hIoo⟩ :=
     exists_Ioo_irrational_subset_cfCylinder S.wx S.hwxne S.hwxpos
@@ -5156,7 +5154,7 @@ theorem schedStepL4_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateL4 q 
       calc |(countOccurrences v (u.take k) : ℝ) - γv * k|
           < schedEps s * k + (4 * Nat.sqrt u.length + 2 * v.length + n₁) := hb
         _ ≤ schedEps s * k + (4 * Nat.sqrt blk.length + 3 * v.length + n₁) := by
-            push_cast; linarith [hsqrtleR, hvlen1R]
+            linarith [hsqrtleR, hvlen1R]
     · have hkeq : k = blk.length := by omega
       subst hkeq
       rw [List.take_length]
@@ -5181,9 +5179,9 @@ theorem schedStepL4_exists {q : ℝ} (hq : 0 < q) {r : ℝ} (S : SchedStateL4 q 
         rw [hblkR]; ring
       rw [abs_lt]
       constructor
-      · push_cast at habs ⊢
+      ·
         linarith [habs.1, habs.2, hcbR_lb, hcbR_ub, hγv0, hγv1, hsqrtleR, hgvb, hgeps, hvlen1R, hδ0]
-      · push_cast at habs ⊢
+      ·
         linarith [habs.1, habs.2, hcbR_lb, hcbR_ub, hγv0, hγv1, hsqrtleR, hgvb, hgeps, hvlen1R, hδ0]
   refine ⟨⟨wx', S.e, S.f, hwx'ne, hwx'pos, S.he0, S.hef, S.hf1, hinv'⟩, htake, hgt, ?_,
     a, b, n₁, m, Nfib, ha, hab, hb, hIcc, ?_, ?_, ?_, ?_, ?_, hm2, hNf, ?_⟩
@@ -5332,7 +5330,7 @@ theorem block_len_le {b n₁ m : ℕ} (hlen : b = n₁ + m ^ 2)
     (hsq : n₁ ^ 2 ≤ b * Nat.sqrt b) : b ≤ 2 * m ^ 2 + 7 := by
   by_cases hnm : n₁ ≤ m ^ 2
   · omega
-  · push_neg at hnm
+  · push Not at hnm
     set t := Nat.sqrt b with htdef
     have ht2 : t ^ 2 ≤ b := Nat.sqrt_le' b
     have hb2 : b < 2 * n₁ := by omega
@@ -5353,7 +5351,7 @@ theorem block_len_le' {b n₁ m : ℕ} (hlen : b = n₁ + m ^ 2 + 1)
     (hsq : n₁ ^ 2 ≤ b * Nat.sqrt b) : b ≤ 2 * m ^ 2 + 9 := by
   by_cases hnm : n₁ ≤ m ^ 2
   · omega
-  · push_neg at hnm
+  · push Not at hnm
     set t := Nat.sqrt b with htdef
     have ht2 : t ^ 2 ≤ b := Nat.sqrt_le' b
     have hb2 : b ≤ 2 * n₁ := by omega
