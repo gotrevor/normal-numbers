@@ -1,5 +1,50 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🚨 `g^(k+1)/4` IS THE WRONG TARGET FOR `k ≥ 2` — refuted by exact data; first `k = 2` prime lower bounds (2026-09-07, autonomous)
+
+The kickoff's general-`k` objective "`M(g,k) ≤ (1/4 + O(1/g))·g^(k+1)`" is
+**false at `k = 2`** as a constant-`1/4` statement.  Exact values
+(`experiments/mahler_exact_M.py`; `M(7,2)` new this lap,
+`experiments/mahler_exact_M_k2_g7.txt`):
+
+    g          3      5      7
+    M(g,2)     8     48    176        (blocks 00 and 66 at g = 7)
+    /g³      .296   .384   .513       — ABOVE 1/4 and CLIMBING with g
+
+So the `k = 1` constant `1/4` (proved: `MahlerQuarter.lean`) does not persist:
+the drop mechanism found while formalizing (§below — a canonical denominator
+divisible by `g` drops by a factor `g`, which is impossible at `k = 1` and
+available at `k ≥ 2`) is not a proof deficiency, it is where the extra
+multipliers live.  The `k ≥ 2` question is a DIFFERENT constant; guess from
+three points: `M(g,2)/g³ → 1/2`?  (Also `M(3,3) = 43 = 0.53·3⁴`.)
+
+**Lower side started** (`MahlerPrimeLowerBoundBlock.lean`, trust triple):
+`mahler_lower_bound_bg_block` generalizes the digit certificate to blocks
+(stabilized top-`k` digits are all the background digit), and
+
+    mahler_lower_bound_base5_k2 :  M(5,2) ≥ 44    (exact 48)
+    mahler_lower_bound_base7_k2 :  M(7,2) ≥ 103   (exact 176)
+
+⚠️ The background+burst family is EXACT at `k = 1` (`g = 5, 7, 13, 23`) but at
+`(7,2)` caps at `102` against `176`: the `k = 2` extremal orbit has a shape the
+family does not reach (both extremal blocks are RUNS, `00`/`66`, i.e. the orbit
+must stay `≥ 1/49` from every integer under all `m ≤ 175`).  Finding that
+witness family is the lower-side crux for `k ≥ 2`.
+
+### Next (in order)
+1. Lower side, `k = 2`: reverse-engineer the `g = 7` extremal from the
+   adder-machine SCC (`experiments/mahler_exact_M.py` keeps the live states) —
+   what rationals does the escaping orbit shadow?  Prediction from the drop
+   mechanism: denominators `≈ c·g²` divisible by `g`, i.e. `x_n ≈ p/(g·d')` with
+   `d' ≈ c·g`, dropping to `d'` and jumping back.
+2. Upper side, `k = 2`: the engine's per-stage bound with drops allows the
+   canonical denominator to cycle, so it currently gives nothing below
+   `g^(k+1) − g(g−2) − 1` (`mahler_multiplier_prime_gen`).  The missing
+   constraint must be what the run blocks see: the exit-time defect is
+   `≈ 1/(2Q)` and the shadow denominator is `≤ Q/g` after a drop.
+3. `M(11,2)` exact (expensive: `M ≈ 700` channels) — one more point on the
+   ratio curve before conjecturing `1/2`.
+
 ## ✅ THE MULTI-SCALE BOUND LANDED AT `k = 1`: `M(g,1) ≤ (g² + 6g + 1)/4` (2026-09-07, autonomous)
 
 `MahlerQuarter.lean` (new, trust triple).  `mahler_multiplier_quarter`: for every

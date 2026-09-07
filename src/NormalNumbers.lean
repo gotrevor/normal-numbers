@@ -106,6 +106,7 @@ import NormalNumbers.MahlerQuarter
 import NormalNumbers.MahlerMultiplierStrict
 import NormalNumbers.MahlerLowerBoundBackground
 import NormalNumbers.MahlerPrimeLowerBound
+import NormalNumbers.MahlerPrimeLowerBoundBlock
 import NormalNumbers.MahlerBase5Exact
 import NormalNumbers.MahlerBase7Cert0
 import NormalNumbers.MahlerBase7Cert1

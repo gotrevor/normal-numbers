@@ -40,3 +40,16 @@ triple on `mahler_multiplier_quarter`, `mahler_multiplier_prime_half_of_quarter`
 
 The drop case for `k ≥ 2` (`PENDING_WORK.md` §Next).  It is the one open
 obligation on the route to `g^(k+1)/4` in general; everything else is done.
+
+## Second lap (same day) — `k ≥ 2` reframed by data
+
+* Exact `M(7,2) = 176` (`0.513·g³`; `experiments/mahler_exact_M_k2_g7.txt`).
+  With `M(3,2) = 8`, `M(5,2) = 48` the ratio climbs `.30 → .38 → .51`: the
+  `1/4` target is `k = 1` only.  Recorded at `PENDING_WORK.md` §top with the
+  three next moves (extremal-orbit reverse engineering, the drop constraint,
+  `M(11,2)`).
+* `MahlerPrimeLowerBoundBlock.lean`: block certificate wrapper +
+  `M(5,2) ≥ 44`, `M(7,2) ≥ 103` (kernel `decide`, trust triple).
+* Witness search scripts live in the scratchpad only; the Lean-side searcher
+  is 40 lines (`bgResidue` re-implemented, `maxM` over `a, B, W`) — recreate
+  from `MahlerPrimeLowerBoundBlock.lean`'s hypotheses if needed.

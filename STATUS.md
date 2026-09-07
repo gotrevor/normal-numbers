@@ -2,7 +2,7 @@
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter).** · **Build**: 🟢 green (8872 jobs) · **Updated**:
+Mahler multiplier chapter).** · **Build**: 🟢 green (8873 jobs) · **Updated**:
 autonomous lap · 2026-09-07 · `wip/adder-tower-c9`
 
 ## Where it stands
@@ -20,6 +20,14 @@ factor `2 + o(1)` for even bases, against the factor `g` it was yesterday.
 
 ## What's happened (newest first)
 
+- **2026-09-07 (autonomous)** — **`g^(k+1)/4` refuted for `k ≥ 2`; first `k = 2`
+  prime lower bounds.**  Exact `M(7,2) = 176 = 0.51·7³` (new; with `M(3,2) = 8`,
+  `M(5,2) = 48`: ratios `.30 .38 .51`, climbing) — the `k = 1` constant `1/4` does
+  not persist, and the shadow-denominator DROP found in `MahlerQuarter.lean` is
+  where the extra multipliers live.  `MahlerPrimeLowerBoundBlock.lean`
+  (`mahler_lower_bound_bg_block`, trust triple): `M(5,2) ≥ 44`, `M(7,2) ≥ 103`
+  in the kernel.  The background+burst family caps at `102` at `(7,2)`: the
+  `k = 2` extremal orbit (run blocks `00`/`66`) is a new shape to find.
 - **2026-09-07 (autonomous)** — **`M(g,1) ≤ (g² + 6g + 1)/4` for odd primes: the
   multi-scale bound lands at the census constant `1/4`** (`MahlerQuarter.lean`,
   `Mahler.mahler_multiplier_quarter`, trust triple).  The denominator-jump engine
