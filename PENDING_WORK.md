@@ -1,6 +1,60 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
-## 🔑 THE MULTI-SCALE ARGUMENT REACHES `g^(k+1)/4` — ENGINE FORMALIZED (2026-09-02, autonomous)
+## ✅ THE MULTI-SCALE BOUND LANDED AT `k = 1`: `M(g,1) ≤ (g² + 6g + 1)/4` (2026-09-07, autonomous)
+
+`MahlerQuarter.lean` (new, trust triple).  `mahler_multiplier_quarter`: for every
+odd prime `g` some `m ≤ (g² + 6g + 1)/4` has any digit occurring i.o. in `m·α`.
+That is `g²/4 + O(g)` — the constant the census `docs/mahler-exact-values-2026-09-07.md`
+sits at (`M(p,1) ≈ ⌊p/2⌋²`, ratio climbing to `1/4` from below).  Sanity: the
+smallest `M` the method allows (`(g+1)(g+5)/4 − 2`) is above every census value.
+`mahler_multiplier_prime_half_of_quarter` retires the `g(g+1)/2` bound to a
+corollary for `g ≥ 5` (at `g = 3` the quarter bound is `7 > 6`).
+
+### How the bookkeeping actually went (two simplifications, one gap)
+
+1. **No exit-time count, no `⌈1/(M/(gQ) − 1/4)⌉` induction.**  The canonical
+   shadow (denominator `≤ Q`, defect `< 1/(2Q)`) exists at every bad time
+   (`canonical_exists`: Dirichlet, then the covering lemma with `μ = M+1 > 2Q`)
+   and is unique (`orbit_approx_unique`).  A *stage* (`stage_jump`) shows its
+   denominator strictly increases: follow the shadow chain (`shadow_chain`) until
+   the defect first reaches `1/(2Q)` (a `Nat.find`); one step before, covering
+   gives `(μ−2d)E < 1 − d/Q`; at exit the shadow is not canonical, so Farey
+   against the new canonical `τ` gives `τ.den·gE + d·F ≥ 1` with `d·F ≤ d/μ`.
+   Then `τ.den > d` follows from the one-variable **jump condition**
+   `d·μ·g·(Q−d) ≤ (μ−d)(μ−2d)·Q`.  Since denominators are integers `≤ Q`, `Q`
+   stages contradict (`den_grows`, `no_bad_orbit`).
+2. **The `O(1/g)` loss is `d·F ≤ d/μ`, not `1/2`** — `stage_arith`, Step A: from
+   `(μ−2t)FQ < Q−t` and `2QF < 1` get `μF < 1`.  This is what moves the fixed
+   point from `M/g ≤ Q/2` to `M/g ≤ Q/4`.
+3. **The constant.**  At `k = 1` the jump condition is the quadratic
+   `(μ+2)d² − μ(g+3)d + μ² ≥ 0`; at `μ = (g+1)(g+5)/4` its discriminant is exactly
+   `−4μ²` (`jump_condition_k1`: `4(μ+2)·(…) = (2(μ+2)d − μ(g+3))² + 4μ²`), so it
+   holds for every REAL `d` and no case split on `d` is needed.
+
+🚨 **The gap the paper argument glossed — `k ≥ 2` is NOT covered.**  The shadow
+`ρ' = gρ − ⌊g x_n⌋` keeps `ρ.den` only when `g ∤ ρ.den`.  If `g ∣ ρ.den` the
+denominator DROPS by a factor `g` with the defect unchanged, and the jump then
+lands only at `≳ μ/g ≈ Q/4`, not above the previous denominator: the sequence of
+canonical denominators can cycle `Q/2 → Q/4 → …` and the iteration gives no
+contradiction.  At `k = 1` every canonical denominator is `< Q = g`
+(`canonical_den_lt`), hence coprime to a prime `g`, so no drop occurs — that is
+the only place primality and `k = 1` enter.  The general theorem
+`mahler_multiplier_quarter_param` carries the hypothesis
+`hcop : ∀ d, 1 ≤ d → d < gᵏ → Nat.Coprime g d`, which is FALSE for `k ≥ 2`.
+**Reaching `g^(k+1)/4` for `k ≥ 2` needs a new idea** for the drop case (e.g.
+exploit that a drop means `x_{n+1}` is within `~1/M` of a rational of
+denominator `≤ Q/g`, or a potential that survives drops).  Not claimed.
+
+### Next
+
+* `k ≥ 2`: the drop case above.  Candidate: at a drop, `d' = d/g ≤ Q/g` and the
+  defect `E ≲ (1 − d/Q)/μ` is unchanged; the near-grid conversion of
+  `MahlerPrimeHalf` costs `d'·gᵏ` — too much unless `d' ≤ g`.  Look for a
+  second Farey partner instead.
+* Tighten `O(g)`: the integer-only jump condition allows `μ = (g+1)(g+5)/4 − 1`;
+  and `d·F ≤ d/μ` used `d ≤ Q` nowhere, so the constant `6` is not sharp.
+
+## 📜 (superseded by the above) THE MULTI-SCALE ARGUMENT REACHES `g^(k+1)/4` — ENGINE FORMALIZED (2026-09-02, autonomous)
 
 The crux (prime-base upper bound) now has a COMPLETE argument on paper reaching
 the empirical constant, and its engine is in `src/` (`MahlerFarey.lean`,

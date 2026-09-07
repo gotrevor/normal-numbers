@@ -2,8 +2,8 @@
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter).** · **Build**: 🟢 green (8849 jobs) · **Updated**:
-review lap · 2026-09-02 · `wip/adder-tower-c9`
+Mahler multiplier chapter).** · **Build**: 🟢 green (8872 jobs) · **Updated**:
+autonomous lap · 2026-09-07 · `wip/adder-tower-c9`
 
 ## Where it stands
 
@@ -20,6 +20,14 @@ factor `2 + o(1)` for even bases, against the factor `g` it was yesterday.
 
 ## What's happened (newest first)
 
+- **2026-09-07 (autonomous)** — **`M(g,1) ≤ (g² + 6g + 1)/4` for odd primes: the
+  multi-scale bound lands at the census constant `1/4`** (`MahlerQuarter.lean`,
+  `Mahler.mahler_multiplier_quarter`, trust triple).  The denominator-jump engine
+  of `MahlerFarey.lean` iterated: the canonical shadow's denominator strictly
+  increases every stage once `d·μ·g·(Q−d) ≤ (μ−d)(μ−2d)·Q`, which at
+  `μ = (g+1)(g+5)/4` has discriminant `−4μ²`.  Retires `g(g+1)/2` for `g ≥ 5`.
+  ⚠️ Found while formalizing: for `k ≥ 2` the shadow denominator can drop by a
+  factor `g`, so `g^(k+1)/4` at `k ≥ 2` is NOT claimed (`PENDING_WORK.md` top).
 - **2026-09-02 (autonomous)** — **`M(g,k) < g^(k+1)`: Berend–Boshernitzan's open
   question (Acta Arith. 66, p. 320) answered YES** (`MahlerMultiplierStrict.lean`,
   `Mahler.mahler_multiplier_lt`, ledger `Literature.berendBoshernitzan_strict_holds`,
