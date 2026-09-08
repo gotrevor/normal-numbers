@@ -1,0 +1,11 @@
+import Mathlib
+#check @Int.emod_add_ediv
+#check @Int.ediv_add_emod
+#check @Int.add_emod_self
+#check @Int.add_mul_emod_self_left
+#check @Int.add_mul_ediv_left
+#check @Int.emod_emod_of_dvd
+#check @Int.add_emod_right
+#check @Int.emod_add_ediv'
+#check @Int.natCast_div
+#check @Int.ediv_eq_zero_of_lt

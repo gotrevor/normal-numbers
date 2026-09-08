@@ -4,43 +4,76 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-09-08 FRESH-MIND REVIEW LAP — close the factor 3)
+## CURRENT DIRECTIVE (set 2026-09-08 DEEP REFLECTION LAP — the run+jump chain)
 
 - 🎯 **THE objective, unchanged: pin the optimal Mahler multiplier `M(g,k)`.**
-  At `k = 1`, prime base, the sandwich is now
-  `⌊p/2⌋²/3 − 1 ≤ M(p,1) ≤ (p²+6p+1)/4` (`MahlerFamilyII.lean` /
-  `MahlerQuarter.lean`).  **THE one open crux is the factor `3`**: make the
-  uniform prime lower bound `c·p²` with `c` near `1/4`, not `1/12`.
-- 🔨 **Mandated next move — the BACKGROUND CERTIFICATE, free `D`.**  Write
-  `src/NormalNumbers/MahlerBackgroundCert.lean`: generalise `MahlerFamilyI.lean`
-  from the hard-wired `(D = (p+3)/2, b = 2, c₀ = p^(e−2))` to arbitrary
-  `(D, c₀, b)` over `NumCert.Good`, with closure `∃ t, c₀p³ + b ≡ c₀p^t (mod D)`
-  and the two channel keys (A) `b·m < p(p−D)` on `m·c₁ ≡ −1`, (B) `bm mod p < p−D`
-  on `m·c₂ + ⌊bm/p⌋ ≡ −1` as explicit side conditions.  Family I is then the
-  instance `D = (p+3)/2, b = 2`, and every prime gets `M(p,1) ≥ 0.88⌊p/2⌋²` by
-  `decide` (measured: min `0.881` over all primes `17 … 127`,
-  `experiments/mahler_onejunction_scan.py`).  Then attack the **new arithmetic
-  crux**: *for every prime `p` there is `D ∈ (p/3, p/2)` with `−1 ∈ ⟨p⟩ (mod D)`*
-  — for `D = q` prime this is `ord_q(p)` even; try `q ≡ 3 (mod 4)` with `p` a
-  quadratic non-residue.  Detail and the drift algebra in `PENDING_WORK.md` §top.
-- ⛔ **Forbidden drift**: hunting a cleverer *closed-form* background — the review
-  **REFUTED** that route: with a `b = 2` junction the drift `g ≡ −p (mod b)` is
-  always odd, and `D = (p+j)/2` has drift `j`, with `j = 1` degenerate by parity;
-  so `1/3` is exactly the barrier of every `D = (p+j)/2`, and family II's constant
-  is not slack.  Also forbidden as the lap's *advance*: more per-prime
+  At `k = 1`, prime base, the sandwich is `⌊p/2⌋²/3 − 1 ≤ M(p,1) ≤ (p²+6p+1)/4`.
+  **THE one open crux is still the factor `3`** — but this lap MAPPED the whole
+  certificate space and the crux now has a named, compiler-shaped target.
+- 🔨 **Mandated next move — `src/NormalNumbers/MahlerRunJump.lean`, the run+jump
+  chain theorem.**  The unique free skeleton is the descending run of
+  CONSECUTIVE integers `p−b, p−b−1, …, b+1, b` closed by the single jump
+  `b → p−b`.  Every interior vertex is free; the ONLY arithmetic condition is at
+  the bottom.  Prove
+
+      mahler_lower_bound_runjump (p b) (hp : p odd/prime) (hb : 3 ≤ b)
+        (h2b : 2*b < p) (hord : ∃ f, 0 < f ∧ p^f % b = b − 1) :
+          M(p,1) > b*(p − b − 1) − 1
+
+  then the two **unconditional** corollaries, both with `−1 ∈ ⟨p⟩ (mod b)` free
+  because `b ∣ p+1`:
+    * `3 ∣ p+1`  ⟹ `b = (p+1)/3` ⟹ `M(p,1) > 2(p+1)(p−2)/9 − 1`  (`2/9`)
+    * `4 ∣ p+1`  ⟹ `b = (p+1)/4` ⟹ `M(p,1) > (p+1)(3p−5)/16 − 1` (`3/16`)
+    * hence **`M(p,1) > 3p²/16 − O(p)` for every prime `p ≢ 1 (mod 12)`** — 3/4 of
+      primes at 2.25× family II.
+  Model, validation and the full derivation: `PENDING_WORK.md` §Reflection
+  2026-09-08.  `MahlerFareyJunction.lean` is the `b = (p−3)/2` two-background
+  shadow of this theorem — generalise IT, one extra index `j`.
+  Decomposing the chain into disclosed sub-`sorry`s in `src/` is the expected
+  shape of a lap here; do not avoid raising the count.
+- ⛔ **Forbidden drift** (all three REFUTED or CEILINGED this lap, with proofs in
+  `PENDING_WORK.md` §Reflection): (a) hunting new certificate SHAPES — the space
+  is mapped, the run of consecutive integers is the unique free skeleton;
+  (b) orbit-free / identity-closed cycles — refuted (`E = 0` is empty for every
+  prime; the divisibility system forces `D_i = O(1)`, cost linear); (c) the
+  single-background multi-offset frame and per-class 2-cycle theorems — ceiling
+  `1/5`, but NO uniform floor (`p+1 = 2q` collapses it), so dead as a uniform
+  route.  Also forbidden as a lap's advance: further work on
+  `exists_prime_nonresidue` (Linnik-strength; correctly parked as a disclosed
+  `sorry` under a CONDITIONAL theorem — leave it); more per-prime
   `mahler_lower_bound_baseNN` certificates; `CFScheduleA.lean`; the repo-wide
   sorry-free gate; Comparator statement holes; downloading papers; any outward
   action.
+- 🚦 **Route triggers, registered 2026-09-08** (this chapter had none; check them
+  on every review/reflection lap):
+    * **T1** — if `mahler_lower_bound_runjump` is not a proved theorem in `src/`
+      within 6 grind laps of 2026-09-08, ESCALATE: re-cost formalising the
+      general chain against shipping the `b ∣ p+1` corollaries by a bespoke
+      2-or-3-background certificate.
+    * **T2** — if a lap MEASURES the run+jump model failing the census at any
+      prime, or a `(p,b)` counterexample to `M(p,1) ≥ b(p−b−1)` appears,
+      ESCALATE immediately: the model is the foundation of the route.
+    * **T3** — if the unconditional constant is still `1/12` after the run+jump
+      work lands, the honest endpoint is "`3/16` for `p ≢ 1 mod 12` + a clean
+      conditional `1/4`"; say so in STATUS rather than grinding for uniformity.
 - 📌 **Claim hygiene, standing**: Berend–Boshernitzan constants here are tier-S
   secondary sources.  State OUR quantifiers, never attribute; do not headline
-  "beats B–B" until the PDF is read.
-- ✅ **Closed since the last directive**: the GENERAL prime lower bound
-  `M(p,1) ≥ c·p²` (was the crux) — proved with `c = 1/12 − o(1)` for every prime
-  `p ≥ 17` (`mahler_lower_bound_prime_family_II`).  The mandated adder-form move
-  is spent: `bgDigit_one_ne` (Law 2) is proved, and the length-3 burst
-  termination was refuted by measurement; the junction route superseded it.
+  "beats B–B" until the PDF is read.  (B–B Thm 3.3 is `M(g,1) ≥ (3/2)(g−1)`,
+  LINEAR; ours is quadratic — say what each says, do not editorialise.)
+- ✅ **Closed since the last directive**: the free-`D` background certificate
+  (`MahlerBackgroundCert.lean`), the drift algebra and its two keys
+  (`MahlerDriftOne.lean`), the offset 2-cycle and `M(p,1) > p(p−1)/6 − 1` for
+  `p ≡ 7 (mod 12)` (`MahlerTwoJunction.lean`), the two-background Farey
+  certificate (`MahlerFareyJunction.lean`).  The previous mandated move
+  ("prove `∃ D ∈ (p/3,p/2)` with `−1 ∈ ⟨p⟩`") is RETIRED: the run+jump makes the
+  large-`D` arithmetic hypothesis unnecessary for `p ≢ 1 (mod 12)`.
 
 ### Directive history
+- 2026-09-08 (DEEP REFLECTION lap): certificate space MAPPED — orbit-free cycles
+  refuted, single-background frames ceilinged at `1/12` and `1/5`, and the
+  run+jump chain identified as the unique free skeleton (validated on 2512
+  `(p,b)` pairs, exact against the census).  Mandated move = `MahlerRunJump.lean`
+  + the two `b ∣ p+1` corollaries; route triggers T1–T3 registered.
 - 2026-09-08 (fresh-mind review lap): crux narrowed from "a uniform `c·p²`"
   (achieved, `c = 1/12`) to "close the factor `3`"; the drift algebra of the
   junction certificate derived and validated; closed-form backgrounds refuted as

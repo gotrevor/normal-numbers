@@ -5,6 +5,74 @@ the route-oriented read: what the sources COLLECTIVELY say about the open
 strategic questions, not a per-paper summary (those are the sibling `.md`s).
 Keep it current — the next reflection lap inherits THIS read.*
 
+## ⚠️ Two campaigns live in this file
+
+The synthesis below (`## The strategic question` onward) is the **B5′ / normality**
+campaign — Becher–Yuhjtman, Scheerer, image-Khinchin.  That campaign is **CLOSED
+and axiom-clean**; keep the section as the record of how its route was chosen.
+The **live** campaign is the **Mahler-multiplier chapter**, and its route
+synthesis is the section immediately below (added 2026-09-08 reflection lap; it
+was missing, which is why four grind laps re-derived route judgments from
+handoffs instead of from sources).
+
+## Mahler chapter — route synthesis (2026-09-08 reflection lap)
+
+### The strategic question
+
+Pin `M(g,k)` := the least `M` such that for **every** irrational `α` and **every**
+length-`k` base-`g` block `w`, some `1 ≤ m ≤ M` has `w` occurring infinitely often
+in `m·α`.  Upper bounds are covering arguments; lower bounds are explicit
+constructions of one `(α, w)` defeating every `m ≤ M`.
+
+### What the on-disk sources actually give
+
+| claim | source | status in the literature | this repo |
+|---|---|---|---|
+| `M(g,k) < g^(2k+1)` | **Mahler 1973** Thm 1 (`mahler-1973-digits-of-multiples.md`) | proved | `mahler_multiplier`, sharpened |
+| `M(g,k) < 2g^(k+1)` | **B–B 1994** Thm 1.1 (`berend-boshernitzan-1994-mahler-multiples.md`) | proved | `Literature.berendBoshernitzan_bound_holds` |
+| **`M(g,k) < g^(k+1)`?** | **B–B 1994, stated OPEN** | open | ✅ **PROVED** here (`mahler_multiplier_lt`) |
+| `M(g,k) ≥ a(gᵏ−1)`, `a ∣ g` proper | B–B 1994 Thm 3.1 | proved | subsumed by `mahler_lower_bound_smooth` |
+| `M(g,k) ≥ (1−ε)g^(k+1)`, `g` not a prime power, `k ≥ K(ε)` | B–B 1994 Thm 3.2 | proved | `mahler_constant_one_sharp` is stronger (every `k ≥ 1`) |
+| **`M(g,1) ≥ (3/2)(g−1)`, odd `g ≥ 5`** | B–B 1994 Thm 3.3 | proved — **LINEAR** | ✅ this repo has **QUADRATIC** `M(p,1) > (⌊p/2⌋²−2)/3` |
+| explicit-interval refinement under digit hypotheses on `α` | Thangadurai–Tripathi 2025 (`…-mahler-ii.md`) | proved | not used; does not subsume anything here |
+| `M(3,1) = 2` | B–B 1994 p. 318 | proved | `Literature.berendBoshernitzan_M31_lower_holds`; tower C1 was a rediscovery — **cite, never headline** |
+
+**The decisive source-grounded finding**: for PRIME bases the literature's lower
+bound is only linear.  The quadratic prime lower bound, the exact `k = 1` census,
+and the `g^(k+1)/4` upper bound are all campaign-original.  There is no source to
+copy for the lower side — it must be originated, and it has been.
+
+### Where the remaining gap is, and what the sources say about closing it
+
+* `k = 1`, prime `p`: `p²/12 ≤ M(p,1) ≤ p²/4 + O(p)`; census truth `⌊p/2⌋² − O(1)`.
+  **The factor 3 is the crux.**  No source addresses it — B–B stop at linear.
+* `k ≥ 2`, prime `p`: `p^k − 1 ≤ M(p,k) < p^{k+1}`, a factor-`p` gap and the widest
+  in the chapter.  B–B Thm 3.2 covers only non-prime-powers.  Exact `M(7,2) = 176 =
+  0.51·7³` refutes the `k = 1` constant `1/4` persisting.  **Untouched; the natural
+  second target once `k = 1` is settled.**
+* Composite `g`: essentially closed — `mahler_lower_bound_smooth` gives within a
+  factor `2` for every composite `g`, and the universal constant `1` is sharp.
+
+### Feasibility read on the `k = 1` crux (2026-09-08, and this is the part that
+### changed)
+
+The certificate space is now MAPPED (derivations and validation in
+`PENDING_WORK.md` §Reflection 2026-09-08).  Three frames are closed:
+orbit-free cycles (refuted — forced to `O(1)` backgrounds, linear cost),
+closed-form single backgrounds (ceiling **exactly** `1/12`), single-background
+multi-offset cycles (ceiling `1/5`, **no** uniform floor).  The survivor is the
+**run+jump chain** — the run of consecutive integers `p−b … b` closed by
+`b → p−b` — whose sole arithmetic input is `−1 ∈ ⟨p⟩ (mod b)`, free when
+`b ∣ p+1`.  Consequence for the route: `2/9` and `3/16` are reachable
+UNCONDITIONALLY (covering every `p ≢ 1 mod 12`), while pushing to `1/4` for ALL
+primes needs a divisor of some `p^e + 1` near `p/2` — a prime-in-short-interval /
+prescribed-Legendre-symbol statement of Linnik strength with no elementary
+substitute (Burgess-type least-non-residue bounds give size `p^{1/4+ε}`, useless
+because the constant is `b/p`).  **Precedent check: nothing in the corpus proves,
+or attempts, such an unconditional statement.**  So the honest ceiling of the
+unconditional wing is a constant below `1/4`, with `1/4` available conditionally
+on a cleanly stated arithmetic hypothesis.
+
 ## The strategic question
 
 Build ONE explicit real number that is simultaneously **(1) absolutely normal**

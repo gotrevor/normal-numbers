@@ -1,5 +1,124 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🧘 REFLECTION — 2026-09-08 (deep reflection lap, every-9th)
+
+**Ground truth gathered this lap** (not inherited): `lake build` green, 8886 jobs, HEAD `cc51d22`.
+`#print axioms` re-run on every Mahler headline — all trust triple. Exactly ONE `sorry` in
+`src/`: `exists_prime_nonresidue` (`MahlerDriftOne.lean:380`), feeding only the *conditional*
+`mahler_lower_bound_prime_drift_one`. Nothing unconditional depends on it.
+
+### 1. Destination — KEPT, and it is worth it
+
+Pin the Mahler multiplier `M(g,k)`. The repo already answers Berend–Boshernitzan's stated open
+question (`M(g,k) < g^(k+1)`, `mahler_multiplier_lt`), pins the universal constant
+(`sup_g M(g,k)/g^(k+1) = 1`, sharp), and — the part with no analogue in the literature — proves a
+**quadratic** prime lower bound `M(p,1) > (⌊p/2⌋²−2)/3` where B–B Thm 3.3 has only the **linear**
+`M(g,1) ≥ (3/2)(g−1)`. At `k = 1`, prime base, the sandwich is `p²/12 ≤ M(p,1) ≤ p²/4 + O(p)` and
+the census says the truth is `⌊p/2⌋² − {0,1,2,4}`. The crux — the factor 3 — is real and worth
+closing.
+
+### 2. Route — CONTINUE, but the *sub*-route is re-decided
+
+`DIRECTION.md` registers no Mahler-chapter abort trigger (all its registered triggers belong to the
+retired B5′ campaign), so no trigger has fired: **ROUTE VERDICT: CONTINUE.** Triggers for this
+chapter are now registered (below). But the mandated *move* of the last directive — "hunt a free-`D`
+background certificate, then prove `∃D ∈ (p/3,p/2)` with `−1 ∈ ⟨p⟩ (mod D)`" — is retired, because
+this lap settled the structure of the whole certificate space.
+
+### 3. What this lap PROVED (paper) and MEASURED (validated instrument)
+
+**(a) An exact combinatorial model of the lower side.** Backgrounds `D`, `3 ≤ D < p`; a construction
+is a closed walk `… → D_{i−1} → D_i → D_{i+1} → …` with consecutive `D` coprime; junction `D → D'`
+costs `D'(p − D)`; the vertex condition at `D_i` is `−D_{i−1}/D_{i+1} ∈ ⟨p⟩ (mod D_i)`. Then
+`M(p,1) = max over closed walks of min junction cost`. **Measured exact against the census** by
+max-bottleneck-cycle search (`experiments/mahler_bg_cycle_model.py`): equal at `p = 13,19,23,29,31`,
+off by one at `p = 7,11,17`. This is a *far* cheaper instrument than the trimmed-product SCC and it
+localises exactly where arithmetic enters: the vertex condition, nowhere else.
+
+**(b) Orbit-free (identity-closed) cycles are REFUTED — with a proof, not a search.** "Orbit-free"
+means every vertex condition holds at exponent `0`, i.e. `D_{i−1} + D_{i+1} ≡ 0 (mod D_i)`, i.e.
+`D_{i−1} + D_{i+1} = λ_i D_i` with `λ_i ≥ 1` integers. At the maximum `D_j`, `λ_j D_j ≤ 2D_j` so
+`λ_j ≤ 2`, and `λ_j = 2` forces `D_{j±1} = D_j` hence (propagating) all equal, i.e. consecutive
+`gcd > 1`. So `λ_j = 1` and `D_j = D_{j−1} + D_{j+1}`: the divisibility system then pins the `D_i` to
+a *primitive* small tuple (the monodromy `∏[[λ_i,−1],[1,0]]` is parabolic, so the solution space is
+one-dimensional and consecutive coprimality forces the scale to 1), so `D_i = O(1)` and the cost is
+`O(p)`, **linear, never quadratic**. Confirmed by the `E = 0` column of
+`experiments/mahler_bg_cycle_ecap.py`: **empty for every prime `7 … 89`.** The 3-cycle lead
+`(5p+7)/9, (4p+2)/9, (2p+4)/3` of the previous lap is therefore **dead** — its cost `5/27 ≈ 0.185`
+exceeds the general cap `3−2√2 ≈ 0.1716` that the same argument gives, so it could not have been an
+orbit-free cycle; direct check confirms the vertex condition fails at `D₂`.
+
+**(c) The single-background frames are closed off — both floor and ceiling computed.**
+* *Closed-form single background* `D = (p+j)/c` (`c | p+j`, so `p ≡ −j (mod D)` and the scale `k = j`
+  is free): bound `≈ p²/(2cj)`; `j = 1` is degenerate for **every** `c` (`gcd(D, p+1) = gcd(D, 1−j) =
+  D`), so the best admissible pair is `cj = 6`, i.e. **exactly `p²/12` — family II is the ceiling of
+  this whole frame, not a lucky instance.**
+* *Single background, several offsets* `b, b' | p+1`: bound `(b−1)p²/(b + b'b − b')`, maximised over
+  integers at `(b,b') = (2,3)` giving **`1/5`** — the measured ceiling, now derived. But it has **no
+  uniform floor**: when `p + 1 = 2q` with `q` prime the only offsets are `2, q, 2q` and the bound
+  collapses to `O(p)`. **The offset frame is dead as a uniform route.**
+
+**(d) THE FINDING — the run+jump family.** Reading the `E ≤ 1` optima out of the model
+(`experiments/mahler_bg_cycle_ecap.py`, then `mahler_runjump.py`) the winning cycles all have ONE
+shape: the descending run of **consecutive integers** `p−b, p−b−1, …, b+1, b`, closed by the single
+jump `b → p−b`. Every interior vertex is free (`prev = D+1 ≡ 1`, `next = D−1 ≡ −1`, condition
+`p^f ≡ 1`), the vertex `p−b` is free (`f = 1`), and the ONLY arithmetic condition in the whole
+construction sits at the bottom:
+
+> **`M(p,1) ≥ b(p − b − 1)` for every `b` with `3 ≤ b < p/2`, `gcd(b,p) = 1` and `−1 ∈ ⟨p⟩ (mod b)`.**
+
+Validated exhaustively: **2512 `(p,b)` pairs over primes `11 … 397`, ZERO mismatches** — every
+vertex condition holds and the bottleneck is exactly `b(p−b−1)`
+(`experiments/mahler_runjump.py`). With the best `b`, the family reproduces the free-model optimum
+(`p = 37`: `b = 17`, `323`, equal to the unrestricted max) and gives ratio **≥ 0.1983 for every
+prime `11 … 20000`, median `0.2499`**.
+
+**(e) Why this is the route.** `−1 ∈ ⟨p⟩ (mod b)` is FREE whenever `b ∣ p+1` (`p ≡ −1`, `f = 1`).
+So there are unconditional, closed-form, named instances:
+
+| hypothesis | `b` | bound | ratio |
+|---|---|---|---|
+| `3 ∣ p+1` (i.e. `p ≡ 2 mod 3`) | `(p+1)/3` | `2(p+1)(p−2)/9` | **`2/9 ≈ 0.2222`** |
+| `4 ∣ p+1` (i.e. `p ≡ 3 mod 4`) | `(p+1)/4` | `(p+1)(3p−5)/16` | **`3/16 = 0.1875`** |
+| general | largest `b ∣ p+1`, `b < p/2` | `b(p−b−1)` | `(1/ℓ)(1−1/ℓ)` |
+
+Every prime `p ≢ 1 (mod 12)` satisfies one of the first two ⟹ **`M(p,1) > 3p²/16 − O(p)` for 3/4 of
+all primes, unconditional — 2.25× family II's `1/12`.** `p = 11` (`b = 4`) gives `24` against the
+census `25`; `p = 23` (`b = 8`) gives `112` against `120`.
+
+### 4. What a sharp outsider would say we were missing
+
+The four grind laps before this one each invented a *new certificate shape* and each reduced to the
+*same* arithmetic existence statement, with no map of the space. The missing thing was the map: one
+model that (i) reproduces the census exactly, (ii) says where arithmetic can and cannot be avoided.
+With the map in hand the answer is unambiguous — the run of consecutive integers is the unique free
+skeleton, and `b ∣ p+1` is the unique free closure. Everything else in four laps of search was a
+special case or a dead end.
+
+### 5. Faithfulness at altitude
+
+Re-read `MahlerMultiplier.lean`'s statement against Mahler 1973 / B–B 1994 (`papers/*.md`):
+`mahler_multiplier` quantifies `∀ irrational α, ∀ base g ≥ 2, ∀ block w` then `∃ 1 ≤ m ≤ g^(k+1)`
+with `w` occurring **infinitely often** in `m·α` — matches Mahler's Theorem 1 shape with the
+sharpened constant. Lower-bound statements are `∃ α irrational, ∀ m ∈ [1,M], ∃ N, ∀ n ≥ N, ¬OccursAt`
+— the correct dual (finitely many occurrences), and `M(p,1) ≥ M+1` is read off correctly. No
+transcription drift found. Claim hygiene held: B–B constants are still cited as tier-S secondary,
+never attributed.
+
+### KEEP / STOP / NEXT
+
+* **KEEP**: the background–junction frame; one coherent green commit per lap; measuring a
+  construction against the census before formalising it.
+* **STOP**: hunting new certificate *shapes* (the space is mapped); per-class 2-cycle theorems (the
+  offset frame is dead uniformly); any further lap spent on `exists_prime_nonresidue` (Linnik-strength,
+  correctly parked as a disclosed `sorry` under a conditional theorem).
+* **NEXT (highest value, route-decisive)**: `src/NormalNumbers/MahlerRunJump.lean` —
+  `mahler_lower_bound_runjump (p b) (hb : 3 ≤ b) (hlt : 2*b < p) (hord : ∃ f, p^f % b = b−1)`
+  giving `M(p,1) > b(p−b−1) − 1`, then the two named corollaries. The state space is
+  `(j, a)` with `j ≤ p−2b` and `a < D_j = p−b−j` — one index more than
+  `MahlerFareyJunction.lean`, which is exactly its `b = (p−3)/2` two-background shadow.
+
+
 ## 🎯 GRIND LAP 2026-09-08 (Farey junction): the census construction identified — the GENERAL JUNCTION RULE
 
 **Landed** `src/NormalNumbers/MahlerFareyJunction.lean` (wired; build green 8886; trust triple,

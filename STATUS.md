@@ -2,35 +2,56 @@
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter).** · **Build**: 🟢 green (8882 jobs) · **Updated**:
-review lap · 2026-09-08 · `wip/adder-tower-c9` @ `309bc3c`
+Mahler multiplier chapter).** · **Build**: 🟢 green (8886 jobs) · **Updated**:
+DEEP REFLECTION lap · 2026-09-08 · `wip/adder-tower-c9` @ `cc51d22`
 
 ## Where it stands
 
-Every headline in the repo is proved and audits to the bare trust triple
-`[propext, Classical.choice, Quot.sound]` — there are **no math axioms and no
-`sorry`s in `src/`** other than the two known-false `CFScheduleA.lean` schedule
-residues (off-limits; being converted to named `def … : Prop` nodes on the
-sibling branch `wip/cfschedulea-prop-nodes`).  The live frontier is therefore
-not axiom debt but *new mathematics*: the conjecture graph toward
-`IsNormal 2 (Real.log 2)`, and the Mahler-multiplier chapter, where this repo now
-holds both sides of the bound.  The Mahler sandwich is now
-`t(gᵏ−1) ≤ M(g,k) < g^(k+1)` for every `t < g` dividing a power of `g`, and
-the constant `1` on the upper side is SHARP: `sup_g M(g,k)/g^(k+1) = 1`
-(`MahlerLowerBoundSmooth.lean`, trust triple).  The **general prime lower bound is
-now a theorem**: `M(p,1) > (⌊p/2⌋² − 2)/3` for every prime `p ≥ 17`
-(`MahlerFamilyII.lean`, `mahler_lower_bound_prime_family_II`, trust triple), and
-`M(p,1) > ⌊p/2⌋² − 2` when `−1 ∈ ⟨−3⟩ (mod (p+3)/2)` (`MahlerFamilyI.lean`).  With
-`M(p,1) ≤ (p²+6p+1)/4` the prime constant is pinned to a factor `3`, and closing
-that factor is the crux.  The 2026-09-08 review lap identified what the factor
-IS: the **drift** `g = w₀ − p (mod bD)` of the junction certificate.  `g = 1`
-(ratio `1`) is equivalent to `−1 ∈ ⟨p⟩ (mod D)`; with a `b = 2` junction `g` is
-always odd, and the closed-form backgrounds `D = (p+j)/2` have drift `j`, with
-`j = 1` degenerate by parity — so `1/3` is exactly the barrier of every
-closed-form `D`.  A per-prime `D` is not capped: an exhaustive scan of the
-certificate space reaches `≥ 0.881·⌊p/2⌋²` at every prime `17 … 127`.
+Every headline audits to the bare trust triple `[propext, Classical.choice,
+Quot.sound]` (re-run this lap).  `src/` carries **exactly one** `sorry`:
+`exists_prime_nonresidue` (`MahlerDriftOne.lean:380`), a Linnik-strength
+statement feeding only a *conditional* theorem — no unconditional result touches
+it.  (The two former `CFScheduleA` schedule residues are named `def … : Prop`
+nodes, not `sorry`s.)  The live frontier is the **Mahler-multiplier chapter**,
+where this repo holds both sides: `M(g,k) < g^(k+1)` answers Berend–Boshernitzan's
+stated open question, `sup_g M(g,k)/g^(k+1) = 1` is sharp, and at `k = 1`, prime
+base, the sandwich is `p²/12 ≤ M(p,1) ≤ p²/4 + O(p)` against a census truth of
+`⌊p/2⌋² − {0,1,2,4}`.  **The 2026-09-08 reflection lap mapped the entire
+certificate space** and settled where the factor `3` lives: orbit-free cycles are
+refuted (they force `D_i = O(1)`, cost linear); the closed-form single-background
+frame has ceiling *exactly* `1/12` (so family II is optimal in it, not lucky); the
+single-background multi-offset frame has ceiling `1/5` but no uniform floor
+(`p+1 = 2q` collapses it).  What survives is the **run+jump chain**: the
+descending run of consecutive integers `p−b, …, b` closed by the jump `b → p−b`,
+whose only arithmetic condition is `−1 ∈ ⟨p⟩ (mod b)` — free whenever `b ∣ p+1`.
+Validated on 2512 `(p,b)` pairs and exact against the census.  Its two named
+corollaries give **`M(p,1) > 3p²/16 − O(p)` for every prime `p ≢ 1 (mod 12)`**
+(2.25× the current constant); formalising it is the binding directive.
 
 ## What's happened (newest first)
+
+- **2026-09-08 (DEEP REFLECTION LAP)** — **The certificate space is mapped; the
+  run+jump chain is the route.**  Built an exact combinatorial model of the lower
+  side (backgrounds `D`, junction `D → D'` costing `D'(p−D)`, vertex condition
+  `−D_prev/D_next ∈ ⟨p⟩ (mod D)`; `M(p,1) =` max-bottleneck closed walk) and
+  **checked it against the census**: equal at `p = 13,19,23,29,31`, off by one at
+  `7,11,17` (`experiments/mahler_bg_cycle_model.py`).  Three refutations, each
+  with a proof and a measurement: (i) orbit-free cycles are impossible — at the
+  maximum `D_j` the divisibility forces `λ_j = 1`, the monodromy is parabolic, the
+  solution space one-dimensional, so consecutive coprimality pins `D_i = O(1)` and
+  the cost to `O(p)`; the `E = 0` column is empty for every prime `7 … 89`; the
+  previous lap's `5/27` 3-cycle lead is dead (it exceeds the `3−2√2` cap the same
+  argument gives, and its vertex condition fails directly).  (ii) The closed-form
+  single-background frame `D = (p+j)/c` caps at **`p²/12` exactly** (`j = 1` is
+  degenerate for every `c`, so `cj ≥ 6`) — family II is that frame's optimum.
+  (iii) The multi-offset frame caps at `1/5` and has **no** uniform floor.
+  **The finding**: the `E ≤ 1` optima all have one shape — the run of consecutive
+  integers `p−b … b` plus the jump `b → p−b` — every vertex free except the
+  bottom, giving `M(p,1) ≥ b(p−b−1)` whenever `−1 ∈ ⟨p⟩ (mod b)`, `3 ≤ b < p/2`.
+  **2512 `(p,b)` pairs checked, zero mismatches**; ratio `≥ 0.1983` for every prime
+  `11 … 20000`, median `0.2499`.  `b ∣ p+1` makes the condition free, so
+  `b = (p+1)/3` gives `2/9` and `b = (p+1)/4` gives `3/16` — unconditional, and
+  together they cover every prime `p ≢ 1 (mod 12)`.
 
 - **2026-09-08 (REVIEW LAP)** — **The factor `3` is a drift, and it is not
   intrinsic.**  Derived and machine-checked the closed form of the one-junction
@@ -231,7 +252,8 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, this lap.  Every headline: trust triple only.
+Real `#print axioms` output, re-run this lap (2026-09-08 reflection).  Every
+UNCONDITIONAL headline: trust triple only.  The single exception is flagged.
 
 | headline theorem | paper claim | `#print axioms` shows | verdict |
 |---|---|---|---|
@@ -245,6 +267,10 @@ Real `#print axioms` output, this lap.  Every headline: trust triple only.
 | `Mahler.mahler_lower_bound_bg_adder` / `bgDigit_zero_ne` | our own adder-form certificate + the uniform `B ≡ −4 (mod p)` law | trust triple | 🟢 clean |
 | `Adder.FamilyI.mahler_lower_bound_family_I` / `…_prime_family_I` | our own `M(p,1) > ⌊p/2⌋²−2` when `−1 ∈ ⟨p⟩ mod (p+3)/2` | trust triple | 🟢 clean |
 | `Adder.FamilyII.mahler_lower_bound_family_II` / `…_prime_family_II` | our own uniform `M(p,1) > (⌊p/2⌋²−2)/3`, every prime `p ≥ 17` | trust triple | 🟢 clean |
+| `Adder.Background.Two.mahler_lower_bound_two_cycle` / `…_prime_seven_mod_twelve` | our own `M(p,1) > p(p−1)/6 − 1`, every prime `p ≡ 7 (mod 12)` | trust triple | 🟢 clean |
+| `Adder.Background.mahler_lower_bound_drift_one` | our own `M(p,1) ≥ D(p−1)/2 − 1` per drift-one background | trust triple | 🟢 clean |
+| `Adder.Farey.mahler_lower_bound_farey` | our own two-background Farey certificate, `⌊p/2⌋²−2` | trust triple | 🟢 clean |
+| `Adder.Background.mahler_lower_bound_prime_drift_one` | our own `M(p,1) > ≈p²/6`, **conditional** | trust triple **+ `sorryAx`** | 🔴→ correctly conditional: its one hypothesis `exists_prime_nonresidue` (prime `q ∈ (p/3,p/2)` with `(p\|q) = −1`) is Linnik-strength, disclosed, and reaches NO unconditional theorem |
 | `Mahler.mahler_lower_bound_base29` | our own `M(29,1) ≥ 140` | trust triple (`decide +kernel`, no `native_decide`) | 🟢 clean |
 | `Mahler.mahler_multiplier_of_zero_runs` / `…_pred_runs` | run branch at `gᵏ` (prime `g`) | trust triple | 🟢 clean |
 | `Mahler.mahler_multiplier_lt` / `Literature.berendBoshernitzan_strict_holds` | `M(g,k) < g^(k+1)` (B–B open question) | trust triple | 🟢 clean |
@@ -260,15 +286,20 @@ Real `#print axioms` output, this lap.  Every headline: trust triple only.
 | `IsNormal.isDisjunctive` | unconditional API gap | trust triple | 🟢 clean |
 | `quadratic_irrationals_disjunctive_of_hypothesisM` | Track D3, conditional | trust triple | 🟢 clean |
 
-Math-axiom count (🟢+🟡+🟠): **0**.  🔴: none.  `src/` carries no `sorry`: the two
-former `CFScheduleA` schedule residues are named `Prop` nodes (section above),
-which no headline depends on.
+Math-axiom count (🟢+🟡+🟠): **0**.  🔴: none.  `src/` carries exactly ONE
+`sorry` — `exists_prime_nonresidue` — reached only by the CONDITIONAL
+`mahler_lower_bound_prime_drift_one`; every unconditional headline above is
+`sorryAx`-free.  The two former `CFScheduleA` schedule residues are named
+`def … : Prop` nodes, which no headline depends on.
 
 ## Pointers
 
-`ROADMAP.md` · `DIRECTION.md` (binding directive) · newest
-`HANDOFF-2026-09-08-family-II.md` · `PENDING_WORK.md` (open items + attack paths) ·
-`BRIEF-literature-statements.md` (the novelty tripwire ledger)
+`ROADMAP.md` · `DIRECTION.md` (**binding directive** — run+jump chain, triggers
+T1–T3) · newest baton `HANDOFF-2026-09-08-reflection.md` · `PENDING_WORK.md`
+§Reflection 2026-09-08 (the model, the three refutations, the run+jump derivation) ·
+`papers/literature-review.md` §Mahler chapter · `BRIEF-literature-statements.md`
+(the novelty tripwire ledger) · instruments
+`experiments/mahler_bg_cycle_model.py`, `…_ecap.py`, `mahler_runjump.py`
 
 ---
 
