@@ -1,5 +1,61 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🎯 CRUX: Law 2 PROVED, every position is now an affine congruence + carry (2026-09-08, grind lap)
+
+**Landed: `src/NormalNumbers/MahlerBurstCarry.lean` (new, trust triple).**
+
+1. **Carry normalization** (`carryG`, `digit_of_carry`): for ANY integer-coefficient
+   expansion `N = Σ_{j<D} F_j g^j` (negative or oversized `F_j` allowed), digit
+   `i < D` of `N` is `G_i mod g` with `G_0 = F_0`, `G_{j+1} = F_{j+1} + ⌊G_j/g⌋`.
+2. **The family, position by position** (`bgDigit_family`): for odd `g`,
+   `Q = (g−1)/2`, `r = m mod Q`, and a burst written with ANY integer digits
+   `B = Σ e_j g^j`, the adder digit at position `i` is `G_i mod g` with
+   `F_j = 2r + e_j m`.  Since `e_j m = e_j(Qu + r)` and `2Q = g − 1`, every
+   position is an **affine form in `(u, r)` plus a bounded carry**, uniformly
+   in `g`.  This is the tower from the review lap made exact and Lean-checked;
+   there is no more "window form" or `decide` in the way of a uniform proof.
+3. **Law 2 proved** (`bgDigit_one_ne`): `B ≡ −4 (mod g²)` ⟹ position `1` is
+   safe for every `m < Q²` (digits `(−4, 0, ℓ)`: `G_1 = 2r − 2u − [u<r] ∈ (−g, g)`,
+   never `−1` by parity, never `2Q` by size).  With `bgDigit_zero_ne` that is
+   the two-position uniform law the DIRECTIVE asked for.
+
+**Structure now visible in the exact recursion (paper, this lap).**  With signed
+EVEN digits `B = Σ 2e_j g^j` the forms are
+`G_j = (2 + 2e_j) r + (e_{j−1} − e_j) u + ⌊G_{j−1}/g⌋`.  Position `1` admits
+exactly two safe continuations of `e_0 = −2`: `e_1 = −2` (the `g`-adic ideal
+`B = 2/Q`, all positions safe for ALL `m` but never terminating) and `e_1 = 0`
+(Law 2), which is **self-similar**: `B = g²ℓ − 4` reduces to the same problem
+for `ℓ` with the twist `−[u > r]`, so iterating `−4, 0, −4, 0, …` only
+postpones the top.  The top digit is the whole difficulty: a positive top
+`ℓ_K` with `ℓ_K ≢ −4 (mod g)` gives a form with `u`-coefficient `−ℓ_K/2` and
+`r`-coefficient `2 + ℓ_K`, whose zero line crosses the box unless `ℓ_K` scales
+with `Q` (then `⌊G/g⌋` is itself affine — the "floors break affinity" wall).
+
+**Measured this lap (`experiments/mahler_burst_len_scan.py`,
+`mahler_signed_digit_tower.py`).**
+- Bursts of ≤ 3 base-`p` digits (exact DFS, frontier cap 20000): `M/Q²` =
+  `.94 .69 .67 .98 .50 .63 .36 .42 .36 .41 .31 .57 .33` at `p = 13 … 61`.
+  ≥ `0.30` throughout but drifting DOWN with `p`; ≤ 2 digits: `.20` at `p = 61`.
+  ⚠️ The DIRECTIVE's "terminate at length 3" route is probably capped — the
+  extremal length grows (`2 … 6`).
+- Fixed small signed digits `(e_0, e_1[, e_2])` with `|e| ≤ 6`: best min `c`
+  over `p ≤ 60` is `0.058`, decaying like `1/p`.  Confirms: the top digit must
+  scale with `Q`.  Digits from `{small} ∪ {±Q + small, ±2Q + small}` at
+  length 2, target `c = 0.3`: no pattern common to all primes `11 … 47`.
+
+**Next attack, in order.**
+1. **Work the exact recursion at the top with `ℓ_K = αQ + β`.**  Now that
+   `bgDigit_family` is a theorem, a uniform certificate is a finite list of
+   affine-form case analyses (`omega` after `ediv_small`-style floor
+   evaluations).  Find, by computer, a top digit of the form `αQ + β` (small
+   rational `α`, allowing a parity-of-`u` split) with a length-3 or -4 signed
+   tower that holds `c ≥ 1/8` on all primes `7 … 200`; then transcribe.
+2. If no such closed form exists, the **generalized junction certificate**
+   (`experiments/mahler_junction_cert.py`) — the census extremal mixes shadows of
+   denominators `Q−1 … Q+2`; the burst family is the single-shadow special case.
+3. A uniform bound weaker than quadratic is NOT the goal; do not settle for
+   `M(p,1) ≥ c·p` (already known from the per-prime table).
+
 ## 🎯 CRUX: the prime lower side reformulated — `B ≡ −4 (mod p)` PROVED uniform (2026-09-08, review lap)
 
 The DIRECTIVE crux is a **general** prime lower bound `M(p,1) ≥ c·p²`.  This lap

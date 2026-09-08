@@ -111,6 +111,7 @@ import NormalNumbers.MahlerLowerBoundBackground
 import NormalNumbers.MahlerPrimeLowerBound
 import NormalNumbers.MahlerLowerBoundPeriod2
 import NormalNumbers.MahlerBurstDigit
+import NormalNumbers.MahlerBurstCarry
 import NormalNumbers.MahlerPrimeLowerBoundBlock
 import NormalNumbers.MahlerBase5Exact
 import NormalNumbers.MahlerBase7Cert0
