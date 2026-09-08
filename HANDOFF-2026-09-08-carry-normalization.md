@@ -1,6 +1,6 @@
 # HANDOFF 2026-09-08 — every burst position is an affine congruence; Law 2 proved 🧮
 
-**Branch** `wip/adder-tower-c9` · **Build** 🟢 green (8879 jobs) · trust triple on
+**Branch** `wip/adder-tower-c9` · **HEAD** `8495330` (last Lean change `7f62321`) · **Build** 🟢 green (8879 jobs) · working tree clean (only the three untracked HOST files and `scratch/`, which is disposable) · trust triple on
 all new theorems.  Untracked HOST files (`docs/mahler-universal-constant-is-one-2026-09-07.md`,
 `experiments/mahler_delta_star*.py`) left alone.  `DIRECTION.md` CURRENT DIRECTIVE
 (2026-09-08 review lap) still governs; this lap executed its first mandated move.
