@@ -51,6 +51,20 @@ a general prime needs longer bursts or automaton mixing.  Banked: `M(59,1) ≥
 840 = ⌊59/2⌋² − 1` (`mahler_lower_bound_base59`), the first data point beyond
 the census, consistent with Finding 2's `⌊p/2⌋² − {0,1,4}`.
 
+**Period-2 backgrounds (lap 5).**  The `p = 19` extremal automaton (digit
+`0`/`18`, scratch `scc19.py`) shadows `9/10 = 1/(Q+1)` — a PERIOD-2 background
+`(17,1)` whose multiples `(2r−1, p−2r)` never contain `p − 1` — with a 4-digit
+excursion word.  The `1/(Q+1)` burst family (background `2(p−1)/(p²−1)`, burst
+`B` in base `p²`) is exact at `19` (`80`) and matches `1/Q` at `11, 13, 17`.
+Formalized with NO new engine (`MahlerLowerBoundPeriod2.lean`): a period-2
+background is a single-digit background in base `g²`, and `digitOf_pow_digitAt`
+(Pillai) transports "digit `W` in base `g`" to "a base-`g²` digit with a half
+equal to `W`".  `mahler_lower_bound_bg2_digit` is the general certificate;
+`mahler_lower_bound_base19 : M(19,1) ≥ 80` (exact).  So the prime table is now
+exact at `5, 7, 13, 19, 23, 31` and one short at `11, 17`; `59 ≥ 840`.
+The general prime witness thus needs at least the pair of backgrounds
+`1/Q`, `1/(Q+1)` — which is precisely the two-shadow mixing of (a).
+
 **Next attack.**  (a) Two-shadow mixing as a PROVABLE family: `α` whose
 orbit alternates blocks of `r/Q` and `r'/(Q+1)` expansions; the transition
 digit sums need the affine principle with both residues.  Instrument first:

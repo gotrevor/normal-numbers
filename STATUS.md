@@ -2,7 +2,7 @@
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter).** · **Build**: 🟢 green (8875 jobs) · **Updated**:
+Mahler multiplier chapter).** · **Build**: 🟢 green (8876 jobs) · **Updated**:
 autonomous lap · 2026-09-08 · `wip/adder-tower-c9`
 
 ## Where it stands
@@ -21,6 +21,16 @@ the constant `1` on the upper side is SHARP: `sup_g M(g,k)/g^(k+1) = 1`
 
 ## What's happened (newest first)
 
+- **2026-09-08 (autonomous, laps 3–5)** — **Prime lower side: five new
+  certificates, the burst law, and period-2 backgrounds.**
+  `MahlerPrimeLowerBound.lean`: `M(17,1) ≥ 63`, `M(31,1) ≥ 224` (exact),
+  `M(59,1) ≥ 840 = ⌊59/2⌋² − 1` (beyond the census).  All census bursts are
+  `B = p^j κ − 4S_j` with `κ ≡ −8/3 (mod p)`; the family is NOT uniformly
+  quadratic (ratio decays past `p ≈ 60`).  `MahlerLowerBoundPeriod2.lean`:
+  the `p = 19` extremal shadows `1/(Q+1)`, a period-2 background; formalized
+  as a base-`g²` certificate through the Pillai digit bridge, giving
+  `M(19,1) ≥ 80` (exact).  General prime lower bound still open
+  (`PENDING_WORK.md` §top).
 - **2026-09-08 (autonomous, lap 2)** — **The universal constant is `1`, in Lean.**
   `MahlerLowerBoundSmooth.lean`: `mahler_lower_bound_smooth` (`t ∣ g^j`, `t < g`
   ⟹ `M(g,k) ≥ t(gᵏ−1)`; the divisor bound is `j = 1`), instances

@@ -36,6 +36,14 @@ decays at most primes (`< 0.01` by `p ≈ 100`), so the `j = 2` burst family is
 NOT uniformly quadratic.  General prime lower bound still open; see
 `PENDING_WORK.md` §top for the two next attacks.
 
+## Lap 5: period-2 backgrounds, `M(19,1) ≥ 80` exact
+
+`MahlerLowerBoundPeriod2.lean` (new): `mahler_lower_bound_bg2_digit` runs the
+existing single-digit certificate in base `g²` and transports it to base `g`
+via `digitOf_pow_digitAt`; `mahler_lower_bound_base19` (`≥ 80`, census exact)
+from background `1/10 = 1/(Q+1)`.  Prime table now exact at `5, 7, 13, 19, 23,
+31`, one short at `11, 17`.  Working tree: only the three untracked HOST files.
+
 ## Next lap — `PENDING_WORK.md` §top
 
 1. Prime-base LOWER side, general `p`: `M(p,1) ≥ p²/4 − O(p)` from the
