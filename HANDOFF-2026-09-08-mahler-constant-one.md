@@ -20,7 +20,15 @@ The kickoff's `g^(k+1)/4` objective: `k = 1` done last run (`MahlerQuarter`),
 2026-09-07 doc closed the universal-constant question numerically; this lap
 put it in the kernel.
 
-## Next lap — `PENDING_WORK.md` §top "What remains"
+## Lap 3 (same run): prime lower side dissected
+
+`MahlerPrimeLowerBound.lean` gains `M(17,1) ≥ 63`, `M(31,1) ≥ 224` (exact).
+All census bursts are `B = p^j κ − 4 S_j`; the last digit is `2(u − r)`, the
+middle digits `p − 2r − 1`, and only the top `κ` is prime-specific — there is
+no uniform `κ` (fails at `p = 19, 29` for every `κ < p²`).  Full analysis,
+refuted sub-approaches and the two next attacks are in `PENDING_WORK.md` §top.
+
+## Next lap — `PENDING_WORK.md` §top
 
 1. Prime-base LOWER side, general `p`: `M(p,1) ≥ p²/4 − O(p)` from the
    census witnesses (`a ≠ 0` background family) — the missing half of the

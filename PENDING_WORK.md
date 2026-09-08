@@ -1,5 +1,52 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🔬 PRIME LOWER SIDE: the burst family's structure, and why it is not uniform (2026-09-08, autonomous, lap 3)
+
+Target: a general prime lower bound `M(p,1) ≥ p²/4 − O(p)` (the missing half
+of the DIRECTIVE crux; upper side `(p²+6p+1)/4` is proved).  This lap
+reverse-engineered the census witnesses (`experiments/mahler_bg_burst_structure.py`
+and scratch scans over `B < p³`, then over `B = p²κ − 4p − 4`, `κ < p²`).
+
+**Structure (all `a = 2`, target `W = p − 1`, `Q = (p−1)/2`, `m = uQ + r`).**
+Every extremal burst has the shape
+
+    B = p^j·κ − 4·S_j          (S_j = 1 + p + ⋯ + p^(j−1)),   i.e. B ≡ −4 (mod p),
+
+and the digit sums of `X = 2r·S_D + m·B` are then FORCED:
+position 0 is `2(u − r)` (mod `p`), positions `1 … j−1` are `p − 2r − 1`
+(or `0` when `r = 0`), and the top is `2r·S + κ·m − 2u − [r ≥ 1]`.
+The affine principle behind it: a digit sum of the form `2(u − r) + c`
+(`c` even, `O(1)`) avoids `p − 1` on the whole box `u, r < Q` except at
+`u − r = Q − c/2`, i.e. `m ≈ Q²`; any form with `u`-coefficient `≥ 3` or odd
+`c` fails at `m = O(p)`.  Requiring the top digit to be affine in `(u, r)`
+with small `u`-coefficient forces `κ ≡ −4 (mod p)` again — the recursion
+`κ = pκ' − 4` just increases `j` — so the top `κ` must be a genuine integer
+`≥ 1` whose multiples `κ·m` are added into the `2r` background, and its
+`u`-coefficient `Qκ ≈ pκ/2` sweeps residues.  There is no uniform `κ`:
+
+    p     11   13   17   23   31   | 19, 29 (κ < p²)
+    κ      1    6   88    5  142   | best 55/81, 69/196 — family fails
+    M ≥   24   35   63  120  224   | census 25 35 64 120 224
+
+New certificates this lap (`MahlerPrimeLowerBound.lean`, trust triple):
+`mahler_lower_bound_base17` (`≥ 63`), `mahler_lower_bound_base31` (`≥ 224`,
+exact).  Exact SCC at `p = 13` (`scratch scc_prime.py`): the live automaton
+shadows `1/6, 5/6, 5/8, 6/7, 3/5` — denominators `Q−1 … Q+2` — and mixes them;
+at `p = 19, 29` the extremal orbit is presumably such a mixture, not a burst.
+
+**Refuted sub-approaches (do not retry):** `B = 2S_j` and all `B ≤ 2p+1`
+(linear, junction digit `2r + u`); `B = (p^j K' + 1)/Q` (pushes `u` to the
+bottom digit but leaves `2rS + κm − u` on top, same obstruction);
+one-parameter recursions `κ = pλ − c` for `c ≠ 2`.
+
+**Next attack.**  (a) Two-shadow mixing as a PROVABLE family: `α` whose
+orbit alternates blocks of `r/Q` and `r'/(Q+1)` expansions; the transition
+digit sums need the affine principle with both residues.  Instrument first:
+extract the `p = 19` SCC cycles and their rationals.  (b) Weaker but uniform:
+any `M(p,1) ≥ c·p²` for a fixed `c > 0` would already settle "prime bases are
+quadratic"; try `Q' ≈ p/4` backgrounds (`a = 4`) where the box is
+`u, r < Q'` and the failure `u − r = Q'` sits at `m ≈ Q'² = p²/16`.
+
 ## ✅ THE UNIVERSAL CONSTANT IS `1` — `sup_g M(g,k)/g^(k+1) = 1`, in Lean (2026-09-08, autonomous, lap 2)
 
 `MahlerLowerBoundSmooth.lean` (new, trust triple, `#print axioms` checked on

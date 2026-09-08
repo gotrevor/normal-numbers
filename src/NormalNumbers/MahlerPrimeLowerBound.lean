@@ -24,7 +24,17 @@ certificates below are checked in the kernel:
 | 7  | `2, 1, 1`     | `M(7,1)  ≥ 9`   | 9   | 9  |
 | 11 | `2, 73, 10`   | `M(11,1) ≥ 24`  | 25  | 15 |
 | 13 | `2, 958, 12`  | `M(13,1) ≥ 35`  | 35  | 18 |
+| 17 | `2, 25360, 16` | `M(17,1) ≥ 63` | 64  | 24 |
 | 23 | `2, 2549, 22` | `M(23,1) ≥ 120` | 120 | 33 |
+| 31 | `2, 136334, 30` | `M(31,1) ≥ 224` | 224 | 45 |
+
+The bursts share one shape: `B = p^j·κ − 4·(1 + p + ⋯ + p^(j−1))`, i.e.
+`B ≡ −4 (mod p)`, so that the last digit of `m·B` plus the background `2r`
+(`m = uQ + r`, `Q = (p−1)/2`) is `2(u − r) mod p`, which avoids `p − 1`
+below `m = Q²`; the middle digits are `p − 2r − 1`; only the top `κ`
+(`1, 6, 88, 5, 142` at `p = 11, 13, 17, 23, 31`) is tuned per prime.  So the
+family is exact at `5, 7, 13, 23, 31` and one short at `11, 17`.  See
+`PENDING_WORK.md` for why no uniform `κ` exists in this family.
 
 ("true `M(g,1)`" is the exact adder-machine value of
 `experiments/mahler_exact_M.py`; it is *not* used in any proof.)  So the family
@@ -85,12 +95,28 @@ theorem mahler_lower_bound_base13 :
   mahler_bg_witness 13 2 958 34 12 5 5 (by norm_num) (by norm_num) (by norm_num) (by norm_num)
     (by norm_num) (by decide +kernel) (by decide +kernel) (by decide +kernel)
 
+/-- **`M(17,1) ≥ 63`** (true value `64 = Q²`), against B–B Thm 3.3's `24`.
+Burst `25360 = 17²·88 − 4·17 − 4`. -/
+theorem mahler_lower_bound_base17 :
+    ∃ α : ℝ, Irrational α ∧ ∀ m : ℕ, 1 ≤ m → m ≤ 62 →
+      ∃ N, ∀ n, N ≤ n → ¬ OccursAt 17 ((m : ℝ) * α) [16] n :=
+  mahler_bg_witness 17 2 25360 62 16 6 6 (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (by norm_num) (by decide +kernel) (by decide +kernel) (by decide +kernel)
+
 /-- **`M(23,1) ≥ 120`** — exact, against B–B Thm 3.3's `33`.  `120/23² ≈ 0.227`:
 the quadratic order for a prime base, in the kernel. -/
 theorem mahler_lower_bound_base23 :
     ∃ α : ℝ, Irrational α ∧ ∀ m : ℕ, 1 ≤ m → m ≤ 119 →
       ∃ N, ∀ n, N ≤ n → ¬ OccursAt 23 ((m : ℝ) * α) [22] n :=
   mahler_bg_witness 23 2 2549 119 22 5 5 (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (by norm_num) (by decide +kernel) (by decide +kernel) (by decide +kernel)
+
+/-- **`M(31,1) ≥ 224`** — exact, against B–B Thm 3.3's `45`.  `224/31² ≈ 0.233`.
+Burst `136334 = 31²·142 − 4·31 − 4`. -/
+theorem mahler_lower_bound_base31 :
+    ∃ α : ℝ, Irrational α ∧ ∀ m : ℕ, 1 ≤ m → m ≤ 223 →
+      ∃ N, ∀ n, N ≤ n → ¬ OccursAt 31 ((m : ℝ) * α) [30] n :=
+  mahler_bg_witness 31 2 136334 223 30 6 6 (by norm_num) (by norm_num) (by norm_num) (by norm_num)
     (by norm_num) (by decide +kernel) (by decide +kernel) (by decide +kernel)
 
 end NormalNumbers.Mahler
