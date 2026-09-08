@@ -118,6 +118,7 @@ import NormalNumbers.MahlerFamilyII
 import NormalNumbers.MahlerBackgroundCert
 import NormalNumbers.MahlerDriftOne
 import NormalNumbers.MahlerTwoJunction
+import NormalNumbers.MahlerFareyJunction
 import NormalNumbers.MahlerPrimeLowerBoundBlock
 import NormalNumbers.MahlerBase5Exact
 import NormalNumbers.MahlerBase7Cert0

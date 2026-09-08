@@ -1,5 +1,73 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🎯 GRIND LAP 2026-09-08 (Farey junction): the census construction identified — the GENERAL JUNCTION RULE
+
+**Landed** `src/NormalNumbers/MahlerFareyJunction.lean` (wired; build green 8886; trust triple,
+no sorry): `mahler_lower_bound_farey' (p k s) (hk : 3 ≤ k) (hp : p + 1 = 2k) (hs : 1 ≤ s)
+(hpow : p^s % (k+1) = k)`: `M(p,1) > k² − 2k − 1 = ⌊p/2⌋² − 2` for every odd `p = 2k−1 ≥ 5`
+(no primality); instances `M(19,1) ≥ 79`, `M(23,1) ≥ 119`, `M(31,1) ≥ 223` (census `80, 120, 224`).
+
+⚠️ **Honest status: this bound and hypothesis coincide with family I's**
+(`mahler_lower_bound_family_I`, `⌊p/2⌋² − 2` when `−1 ∈ ⟨p⟩ (mod (p+3)/2)`).  The review lap's
+"family I has drift 3, ratio 1/3" was wrong about the theorem actually in the repo: the
+**factor 3 is family II's** (the unconditional one).  Family I's near state `N₀ = 1/D + 2/(pD)`
+is exactly `1/D₁ + 1/(pD₁D₂)` with `D₁ = (p+1)/2` — family I was a two-background certificate
+in disguise.  What is new is the *structure*, which generalises (below), and the weaker
+hypotheses (`p ≥ 5`, any `s ≥ 1`).
+
+### What the lap established (source: the exact SCC of `experiments/mahler_exact_M.py`,
+dumped as shadow intervals at `p = 11, 13, 17, 19`; scratch `scc_dump.py`)
+
+1. **The census optimum is a CYCLE OF BACKGROUNDS near `p/2`.**  `p = 19`: `D ∈ {10, 11}`;
+   `p = 13`: `{5, 6, 7, 8}`; `p = 11`: `{4, 5, 6, 7}`; `p = 17`: `{7, 8, 9, 10}`.  Every state is
+   an exact `a/D` or a pre-junction `a/D + 1/(pDD')`; there are NO offsets `b/(pD)`.
+2. **General junction rule** (derived, verified on the dumps).  For coprime `D, D' < p` the
+   forward junction `D → D'` leaves from `a ≡ −1/(pD') (mod D)` (state `a/D + 1/(pDD')`) and
+   lands EXACTLY on `a' ≡ 1/D (mod D')`, with digit `d = (paD' + 1 − a'D)/(DD')`.  Its
+   channel cost is sharp: first failure at `m = D'(p − D)`.  Far states are free (`D < p`).
+3. **Orbit condition** at a background `D` with cycle-neighbours `D_prev → D → D_next`:
+   `p^e ≡ −D_prev/D_next (mod D)` for some `e ≥ 0`.  A 2-cycle `{D, D'}` needs `−1 ∈ ⟨p⟩`
+   at both ends unless `p ≡ −1` there; the AP chain `D−1 → D → D+1` (and back) is FREE at
+   every interior vertex (`−(D−1)/(D+1) ≡ 1`).
+4. **The chain theorem (paper, not yet Lean):** backgrounds `k, k+1, …, k+t` up and back
+   down, `k = (p+1)/2`.  Bottom turnaround free (`p ≡ −1 (mod k)`); the ONLY condition is
+   `−1 ∈ ⟨p⟩ (mod k + t)` at the top.  Costs: up `k² − (j+1)²`, down `k² − 2k − j² − 2j`;
+   so **`M(p,1) > k² − 2k − t² = ⌊p/2⌋² − 1 − t²`**.  `E = p·lcm(k, …, k+t)`, `σ = 1`.
+   Measured (`scratch tdist.py`): the least `t` (either direction) is `≤ 4` for 90 % of
+   primes and `≤ 24` for every prime `< 20000`; `t = 1` (family I) covers 23 %.
+5. **Refuted: an orbit-free cycle with `D_i = (p + r_i)/2`.**  Proof: the vertex condition
+   as a rational identity is `(−r_i)^{e_i}(r_{i+1} − r_i) = r_i − r_{i−1}`; a cycle needs a
+   sign flip (turnaround), which forces `(−r)^e = −1`, i.e. `r = 1`; negative `r` are traps
+   (all `(−r)^e > 0`); so at most one turnaround exists and no cycle closes.  Exhaustive
+   search `|r| ≤ 31`, steps `≤ 30`, length `≤ 6`: none (`scratch rcycle.py`).
+6. **Closed-form 2-cycles (the handoff's item 1) are SETTLED as a per-class tool, not the
+   route:** the exact periodic cover (`scratch cover.py, refine.py, mincover.py`) shows the
+   family `b, b' ≤ 12`, `k ≤ 8b` covers every `p ≢ 1 (mod 12)` with modulus `13440`
+   (24 triples, greedy), but the uniform floor is **`1/16`** (thin 2-adic classes such as
+   `p ≡ 2549 (mod 13440)`, a genuine infinite family even with `b, b' ≤ 24`, `k ≤ 16b`),
+   below family II's `1/12`; the ceiling of any drift-one 2-cycle is `1/5` (`(2,3,5)`).
+   Do not write the 140 class theorems.
+7. **New lead (running when the lap ended):** identity-closed 3-cycles with RATIONAL
+   backgrounds `D_i = (a_i p + b_i)/c_i` exist once CRT-consistency is imposed, e.g.
+   `D = (5p+7)/9, (4p+2)/9, (2p+4)/3` for `p ≡ 4 (mod 9)`, cost `min x_{i+1}(1−x_i) = 5/27
+   ≈ 0.185` — UNCONDITIONAL (no orbit condition) and above `1/12`.  Unverified: needs the
+   literal `NumCert.Good` check (`scratch farey_cert.py` pattern, generalised to several
+   backgrounds), coprimality of consecutive `D_i`, digits `< p − 1`.  Search script
+   `scratch multibg2.py A C B L num den`.
+
+### Next attack, in order
+
+1. **Verify the 3-cycle lead numerically** (`Good` checker with several backgrounds, walk
+   closure by explicit orbit).  If real: enumerate identity cycles per residue class of `p`
+   (mod `lcm` of the `c_i`) and find a covering family — that would make **`M(p,1) ≥ c p²`
+   with `c ≈ 0.18` UNCONDITIONAL for every prime**, retiring the factor 3 outright.
+2. **The chain theorem in Lean** (`MahlerFareyJunction.lean` generalised to `k … k+t`):
+   states `(j, a)`, `E = p·lcm`, cost bookkeeping per item 4.  Turns the crux into
+   "`∃ t ≤ T` with `−1 ∈ ⟨p⟩ (mod (p+1)/2 + t)`" — far weaker than `exists_prime_nonresidue`
+   (composite `D` allowed, interval above `p/2`), constant `1/4 − t²/p²`.
+3. Retire `mahler_lower_bound_prime_drift_one`'s route once 1 or 2 lands.
+
+
 ## 🎯 GRIND LAP 2026-09-08 (drift one): BOTH KEYS PROVED FROM THE ARITHMETIC — the crux is now a bare existence
 
 **Landed** `src/NormalNumbers/MahlerDriftOne.lean` (wired; build green 8884; trust
