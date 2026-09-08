@@ -1,5 +1,71 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🔨 GRIND 2026-09-08 (post-reflection): `MahlerRunJump.lean` started — crux decomposed into 4 named sub-`sorry`s
+
+**Landed** `src/NormalNumbers/MahlerRunJump.lean` (wired into `NormalNumbers.lean`; build green
+8887 jobs).  The directive's run+jump chain, set up as a direct `EscapeCert` instance.
+
+### Design decision (recorded so it is not re-litigated)
+
+**It does NOT go through `NumCert`.**  A numerator certificate needs ONE common denominator `E`
+for all states; with `Θ(p)` backgrounds `E = p·lcm(b … p−b)` and the junction perturbations
+`1/(pDD')` become enormous multiples of `1/E`, breaking `NumCert.Good`'s `δ < (p−1)σ` slack
+budget (checked on paper: `σ` would have to be `≈ E/(p²b²)`, and then the `res` condition caps
+`M` below the target).  Instead `EscapeCert` is instantiated directly with **rational intervals of
+per-background width** `wid i = 1/(p · Dh i · Dn i)` — exactly the scale that absorbs the
+perturbation.  A single global width does NOT work (checked: the carry condition at the junction
+of the largest background then fails whenever `b ≲ p/13`).
+
+### What is in the file
+
+* `Dh b i = b + i` (backgrounds, `Dh 0 = b`, `Dh L = p − b` with `p = 2b + L`);
+  `nx L i = if i = 0 then L else i − 1` (the closing jump `0 ↦ L`); `Dn b L i = Dh b (nx L i)`.
+* `Data` = the four per-junction functions `al` (departure), `cj` (injection source),
+  `ap` (landing), `dj` (junction digit); `Hyp` = their ranges plus TWO arithmetic facts:
+  `inj : cj i * p % Dh i = al i` and the single **exact-landing identity**
+  `key : p · al i · Dn i + 1 = ap i · Dh i + dj i · (Dh i · Dn i)`.
+  Reducing `key` mod `Dh i` gives the departure condition `p·al·Dn ≡ −1`; mod `Dn i` it gives the
+  landing condition `ap·Dh ≡ 1`.  One identity, both conditions — this is the packaging that makes
+  the general chain tractable.
+* States `Fin ((L+1)·p + (L+1))`: far `(i,a) ↦ i·p + a`, junction `J i ↦ (L+1)·p + i`; `s.1 / p`
+  decodes the kind (`≤ L` far, `= L+1` junction).  Indices whose residue exceeds the background are
+  harmless aliases — every definition reduces `rs s % Dh`.  Decoding lemmas `far_val`, `ix_far`,
+  `rs_far`, `jn_val`, `ix_jn`, `rs_jn`, `state_cases` all proved.
+* **PROVED**: `dig_lt` (digits legal) and `intervals` (`0 ≤ lo ≤ hi ≤ 1`, both state kinds; the
+  junction case needs `d·dn ≤ b²(p·dn − 1)`, which holds because `b² ≥ 9` and `p·dn ≥ 21`).
+
+### The 4 open sub-`sorry`s, with the paper proof of each
+
+1. **`edges`** — `lo s ≤ (dig s + lo s')/p` and `(dig s + hi s')/p ≤ hi s`.  Three edge types:
+   *far* `F_i(a) → F_i(pa mod Dh)`: exact on the left (`δ = 0`), and `w/p ≤ w` on the right.
+   *injection* `F_i(cj i) → J_i`: left gap `1/(p²·Dh·Dn) ≥ 0`; right needs
+   `1/(p²·Dh·Dn) ≤ wid i · (p−1)/p`, i.e. `p(p−1)·Dh·Dn ≥ p²·Dh·Dn/…` — true since
+   `wid i = 1/(p·Dh i·Dn i)`.  *junction* `J_i → F_{nx i}(ap i)`: EXACT by `key`, right needs
+   `wid (nx i)/p ≤ wid (nx i)/p` — equality by construction of `hip` at junction states.
+2. **`carries`** — `⌊m·lo⌋ ≤ m·lo` (free) and `{m·lo} + m·w ≤ 1`.  Far: worst
+   `{} = (Dh−1)/Dh`, so `m ≤ p·Dn` suffices.  Junction: `{m·lo} = (p·Dn·(m·al mod Dh) + m)/(p·Dh·Dn)`
+   provided `m < p·Dn` (no overflow), and then `m ≤ p·Dn/(1 + v·p·Dh·Dn)` with
+   `v·p·Dh·Dn = Dh·Dn/(p·Dh(nx)·Dn(nx)) ≤ (5/3)/p`.  Both hold for `M < b(b+L−1) < p·b ≤ p·Dn`.
+3. **`recursion`** — `⌊m·lo s⌋ = (m·dig s + ⌊m·lo s'⌋)/p`.  Follows from
+   `m·dig s + ⌊m·lo s'⌋ = x + p·⌊m·lo s⌋` with `x = ⌊p·{m·lo s} + m·ε⌋` and `0 ≤ x < p`, where
+   `ε = dig s + lo s' − p·lo s ≥ 0` is the per-edge gap.
+4. **`block`** — the SAME `x`, with `x < p − 1`.  **This is where `M` comes from, and it is the
+   one line of real content**: far edges have `ε = 0` and `p(ma mod Dh) < (p−1)Dh` because
+   `Dh < p` (free); junction edges have `ε = 0` and reduce to
+   `p·Dn·(m·al mod Dh) + m < (p−1)·Dh·Dn`, which follows from `m ≤ M` and
+   `m·al mod Dh ≤ Dh − 1` by the exact identity
+   `p·Dn·(Dh−1) + Dn·(p−Dh) = Dh·Dn·(p−1)` — i.e. **`M < Dn·(p − Dh)` is exactly the junction
+   cost**; injection edges give the same with `p·Dn(p−Dh)`, `p` times weaker.
+   `min_i Dn i·(p − Dh i) = b·(p − b − 1) = b(b+L−1)`, attained at both ends of the run.
+
+### Next actions
+1. `edges` (structural, three cases; needs `far`/`jn` decoding of `nxt`).
+2. `block` + `recursion` together via a shared `chDigit`-style lemma, mirroring
+   `NumCert.chDigit_eq`.
+3. `carries`.
+4. Then `Data` existence: `al i = p⁻¹ mod Dh i` for `i ≥ 1` (with `ap = 1`, `dj = (p·al−1)/Dh`),
+   and for `i = 0` the closing jump; then the corollaries `b = (p+1)/3`, `b = (p+1)/4`.
+
 ## 🧘 REFLECTION — 2026-09-08 (deep reflection lap, every-9th)
 
 **Ground truth gathered this lap** (not inherited): `lake build` green, 8886 jobs, HEAD `cc51d22`.
