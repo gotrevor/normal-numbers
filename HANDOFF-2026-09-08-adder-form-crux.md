@@ -1,7 +1,7 @@
 # HANDOFF 2026-09-08 — the prime lower side is now a long addition 🧮
 
-**Branch** `wip/adder-tower-c9` · **Build** 🟢 green (8878 jobs) · every headline
-on the trust triple.  Working tree clean apart from three untracked HOST files
+**Branch** `wip/adder-tower-c9` · **HEAD** `169525d` · **Build** 🟢 green (8878 jobs,
+pre-commit gate passed) · every headline on the trust triple.  Working tree clean apart from three untracked HOST files
 (`docs/mahler-universal-constant-is-one-2026-09-07.md`,
 `experiments/mahler_delta_star*.py`) — not mine, leave them.
 
