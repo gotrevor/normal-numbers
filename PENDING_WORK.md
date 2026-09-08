@@ -34,6 +34,38 @@ has `gcd(D, p+1) > 1`, which kills drift one (`c₂ = −2/(p+1)` needs `p+1` a 
 this is the SAME degeneracy as `D = (p+1)/2`.  So `t = 1` never works; `t ≥ 2` is
 forced, and `D | p^t + 1` for `t ≥ 2` has no closed-form divisor in `(p/3, p/2)`.
 
+
+### Lap 2 (2026-09-08, drift one, continued): the crux is now CLASSICAL
+
+* **Refuted: drift `−1`.**  `c₂ = −b/(p−1)` lands on `c₂` itself (closure free for
+  every prime), but its trigger `w₀ = p − 1` sits INSIDE the bad zone at `v = 0`, so
+  `keyB` fails at channel `(p−1)/2` for every `D` (`scratchpad neg.py`; `Keys` max
+  `= (p−1)/2` at `p = 71, 101, 127`).  The sign of the drift is not symmetric: `+1`
+  starts just past the zone, `−1` inside it.  Do not retry.
+* **Landed in Lean:** `pow_half_mod_of_not_isSquare` (Euler's criterion in `ℕ`),
+  `background_of_nonresidue`: a prime `q ∈ (p/3, p/2)`, `q ∤ p+1`, `p` a non-residue
+  mod `q`, is a drift-one background with `t = q/2`.  `exists_drift_one_background` is
+  now PROVED from **`exists_prime_nonresidue`** (the only `sorry`: primes `p ≥ 73`)
+  plus explicit witnesses `61 → 23`, `67 → 23`, `71 → D = 29, t = 7` (`71` is the
+  one prime `< 6000` with no non-residue prime in `(p/3, p/2)`; `--qnr` mode of
+  `experiments/mahler_drift_one_probe.py`).
+* Chain of the conditional headline `mahler_lower_bound_prime_drift_one`:
+  `exists_prime_nonresidue ⟹ exists_drift_one_background ⟹ DriftOne ⟹ Keys` —
+  everything past the first arrow is trust-triple.
+* **Why the sorry is a wall (source-grounded):** by reciprocity `(p/q) = −1` is a
+  condition on `q` modulo `4p`, and the interval `(p/3, p/2)` is SHORTER than the
+  modulus; even one such prime is Linnik-strength.  The elementary substitutes
+  (Burgess/Vinogradov least non-residue) give a non-residue prime of size `p^{1/4+ε}`,
+  useless here because the constant is `D/p`.  A composite `D = q₁q₂` with both
+  `v₂(ord_{qᵢ}(p))` equal moves the problem to primes near `√p` with a Legendre
+  condition — same wall.  Mathlib has none of this analytic machinery.
+* Next: either (a) accept the classical sorry as the frontier and improve the
+  CONSTANT of the conditional theorem (the best `D` is `> 0.4p` for `p ≥ 200`, i.e.
+  `p²/5`, and the `D > p/2` regime of keyA would give `≈ p²/4`), or (b) look for a
+  closure not needing `−1 ∈ ⟨p⟩`: the offset graph `b → b'` iff `−b'/b ∈ ⟨p⟩ (mod D)`
+  (drift one needs `b ∣ p+1`) — a 2-cycle `{2, 4}` needs `−2 ∈ ⟨p⟩` and `4 ∣ p+1`,
+  `{2, 3}` needs `−3/2 ∈ ⟨p⟩` and `3 ∣ p+1`; more targets per `p`, same type.
+
 ## Next attack, in order
 
 1. **[crux] `exists_drift_one_background`.**  Sufficient: a prime `q ∈ (p/3, p/2)`,

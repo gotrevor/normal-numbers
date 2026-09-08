@@ -24,3 +24,14 @@ for p in primerange(17,N):
 worst.sort()
 print("fail (p/3,p/2):",fails3)
 print("worst D/p:",worst[:8])
+
+# --qnr : the classical form (`exists_prime_nonresidue`): a prime q in (p/3, p/2),
+# q not dividing p+1, with p a quadratic non-residue mod q.  Fails only at p = 71 below 6000.
+if len(sys.argv) > 2 and sys.argv[2] == '--qnr':
+    def legendre(a, q): return pow(a, (q - 1) // 2, q)
+    fails = []
+    for p in primerange(73, N):
+        if not any(legendre(p, q) == q - 1 and (p + 1) % q
+                   for q in primerange(p // 3 + 1, (p + 1) // 2)):
+            fails.append(p)
+    print("qnr fails:", fails)

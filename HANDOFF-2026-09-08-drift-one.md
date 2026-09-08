@@ -19,6 +19,14 @@ landed on 2026-09-07 (`MahlerQuarter.lean`), so this lap executed the directive'
 * `mahler_lower_bound_prime_drift_one`: `M(p,1) ≳ p²/6` for every prime `p ≥ 61`,
   conditional on the crux.
 
+## Lap 2 additions
+
+`exists_drift_one_background` is now proved from the classical `exists_prime_nonresidue`
+(prime `q ∈ (p/3, p/2)`, `q ∤ p+1`, `p` a non-residue mod `q`, for `p ≥ 73`) via Euler's
+criterion (`background_of_nonresidue`, trust triple) plus hand witnesses at `61, 67, 71`.
+Drift `−1` REFUTED (keyB dies at channel `(p−1)/2`).  The single `sorry` in the repo's
+new work is `exists_prime_nonresidue`, `MahlerDriftOne.lean`.
+
 ## The crux (disclosed `sorry`, `MahlerDriftOne.lean`)
 
 `exists_drift_one_background`: every prime `p ≥ 61` has odd `D ∈ (p/3, p/2)`,

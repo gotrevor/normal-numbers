@@ -342,17 +342,63 @@ theorem mahler_lower_bound_base101_drift_one :
 
 /-! ### The arithmetic crux -/
 
+/-! ### The classical form of the crux -/
+
+/-- Euler's criterion, in the form the certificate needs: a non-square `a` modulo an
+odd prime `q` has `a^(q/2) ≡ −1 (mod q)`. -/
+theorem pow_half_mod_of_not_isSquare (q a : ℕ) (hq : q.Prime) (hq2 : 2 < q)
+    (ha : ¬ IsSquare (a : ZMod q)) : a ^ (q / 2) % q = q - 1 := by
+  have := Fact.mk hq
+  have ha0 : (a : ZMod q) ≠ 0 := by
+    intro h; exact ha ⟨0, by rw [h]; ring⟩
+  rcases ZMod.pow_div_two_eq_neg_one_or_one q ha0 with h1 | h1
+  · exact absurd ((ZMod.euler_criterion q ha0).2 h1) ha
+  · have h2 : ((a ^ (q / 2) : ℕ) : ZMod q) = ((q - 1 : ℕ) : ZMod q) := by
+      rw [Nat.cast_pow, h1, Nat.cast_sub (by omega), ZMod.natCast_self, Nat.cast_one, zero_sub]
+    rw [ZMod.natCast_eq_natCast_iff'] at h2
+    rw [h2, Nat.mod_eq_of_lt (by omega)]
+
+/-- A prime background `q` with `p` a quadratic non-residue is a drift-one background
+(`t = q/2`). -/
+theorem background_of_nonresidue (p q : ℕ) (hq : q.Prime) (hq2 : 2 < q)
+    (h3 : p < 3 * q) (h2 : 2 * q < p) (hdvd : ¬ q ∣ p + 1) (hsq : ¬ IsSquare (p : ZMod q)) :
+    q % 2 = 1 ∧ p < 3 * q ∧ 2 * q < p ∧ Nat.Coprime q (p + 1) ∧
+      ∃ t, 0 < t ∧ p ^ t % q = q - 1 := by
+  refine ⟨?_, h3, h2, (Nat.Prime.coprime_iff_not_dvd hq).2 hdvd, q / 2, by omega,
+    pow_half_mod_of_not_isSquare q p hq hq2 hsq⟩
+  rcases hq.eq_two_or_odd with h | h <;> omega
+
+/-- **The arithmetic crux, classical form.**  Every prime `p ≥ 73` has a prime
+`q ∈ (p/3, p/2)`, `q ∤ p + 1`, with `p` a quadratic non-residue modulo `q`.
+Measured true for every prime `73 ≤ p < 6000` (`experiments/mahler_drift_one_probe.py
+--qnr`); it FAILS at `p = 71` (whose drift-one background `29` has `71` a residue
+with `ord_29(71) = 14`), which is why `71` is handled by hand below.  By quadratic
+reciprocity this is a prime in a short interval with a prescribed Legendre symbol —
+unconditionally a Linnik-strength statement; not in mathlib.  Disclosed `sorry`. -/
+theorem exists_prime_nonresidue (p : ℕ) (hp : p.Prime) (h73 : 73 ≤ p) :
+    ∃ q, q.Prime ∧ p < 3 * q ∧ 2 * q < p ∧ ¬ q ∣ p + 1 ∧ ¬ IsSquare (p : ZMod q) := by
+  sorry
+
 /-- **The arithmetic crux behind a uniform constant above `1/12`.**  Every prime
 `p ≥ 61` has an odd background `D ∈ (p/3, p/2)`, coprime to `p + 1`, with
 `−1 ∈ ⟨p⟩ (mod D)`.  Measured true for every prime `61 ≤ p < 4000`
 (`experiments/mahler_drift_one_probe.py`); it FAILS at `p = 23` (best `D = 5`) and
-`p = 59` (best `D = 19`), which is why the threshold is `61`.  For prime `D = q`
-the condition is "`ord_q(p)` even"; the open point is an unconditional short-interval
-existence.  Disclosed `sorry`. -/
+`p = 59` (best `D = 19`), which is why the threshold is `61`.  Reduced to the classical
+`exists_prime_nonresidue` (the only `sorry`), plus explicit witnesses at `61, 67, 71`. -/
 theorem exists_drift_one_background (p : ℕ) (hp : p.Prime) (h61 : 61 ≤ p) :
     ∃ D, D % 2 = 1 ∧ p < 3 * D ∧ 2 * D < p ∧ Nat.Coprime D (p + 1) ∧
       ∃ t, 0 < t ∧ p ^ t % D = D - 1 := by
-  sorry
+  rcases Nat.lt_or_ge p 73 with h | h
+  · have hcases : p = 61 ∨ p = 67 ∨ p = 71 := by
+      interval_cases p <;> first | (norm_num at hp; done) | simp
+    rcases hcases with rfl | rfl | rfl
+    · exact ⟨23, background_of_nonresidue 61 23 (by norm_num) (by norm_num) (by norm_num)
+        (by norm_num) (by norm_num) (by decide)⟩
+    · exact ⟨23, background_of_nonresidue 67 23 (by norm_num) (by norm_num) (by norm_num)
+        (by norm_num) (by norm_num) (by decide)⟩
+    · exact ⟨29, by norm_num, by norm_num, by norm_num, by norm_num, 7, by norm_num, by decide⟩
+  · obtain ⟨q, hq, h3, h2, hdvd, hsq⟩ := exists_prime_nonresidue p hp h
+    exact ⟨q, background_of_nonresidue p q hq (by omega) h3 h2 hdvd hsq⟩
 
 /-- Any background as in `exists_drift_one_background` yields a `DriftOne` instance. -/
 theorem driftOne_of_background (p D t : ℕ) (hp : p.Prime) (hodd : p % 2 = 1)
