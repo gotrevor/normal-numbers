@@ -5,6 +5,8 @@ reports every prime p ≢ 1 (mod 12) below N with no closed-form (b, b', k) cert
 Result 2026-09-08: none below 2000 (worst ratio 0.40); p ≡ 1 (mod 12) is never covered
 (only b = 2 divides p+1 when (p+1)/2 is prime).
 """
+import sys
+from math import gcd
 def primerange(a,b):
     for x in range(a,b):
         if x>1 and all(x%d for d in range(2,int(x**0.5)+1)): yield x
