@@ -77,6 +77,13 @@ corollaries give **`M(p,1) > 3p²/16 − O(p)` for every prime `p ≢ 1 (mod 12)
   (`p ≥ 11`).  Against the exact census the bound is EXACT at `(p,b) = (13,5)`,
   `(23,10)`, `(31,14)` (`M = 35, 120, 224`), and never exceeds `M(p,1)` at any
   admissible pair `p ≤ 31`.  All trust triple, no `sorry`.
+  **T3 endpoint (stated per the directive)**: the UNCONDITIONAL constant is `3/16`
+  for `p ≢ 1 (mod 12)` and `1/12` (family II) for `p ≡ 1 (mod 12)`; the clean
+  CONDITIONAL `1/4` is `mahler_lower_bound_runjump_near_half` (`p = 2b + j`,
+  `−1 ∈ ⟨p⟩ (mod b)` ⟹ `M(p,1) > (p−j)(p+j−2)/4 − 1`), whose hypothesis is
+  measured to hold with `j ≤ 33` at every prime `p < 2000`
+  (`experiments/mahler_runjump_admissible.py`).  Removing the hypothesis is an
+  Artin-type short-interval statement, not grind work.
 
 - **2026-09-08 (grind lap 2)** — **The uniform prime lower bound.**
   `MahlerNumCert.lean` (generic numerator-certificate layer over
