@@ -43,8 +43,74 @@ with `Q` (then `⌊G/g⌋` is itself affine — the "floors break affinity" wall
   scale with `Q`.  Digits from `{small} ∪ {±Q + small, ±2Q + small}` at
   length 2, target `c = 0.3`: no pattern common to all primes `11 … 47`.
 
-**Next attack, in order.**
-1. **Work the exact recursion at the top with `ℓ_K = αQ + β`.**  Now that
+**⛔ Refuted later the same lap (do not retry; scripts in `scratch/` were not kept,
+the evaluators are `experiments/mahler_signed_digit_tower.py` and the `finish`
+of `mahler_burst_tower.py`).**
+- **Three digits with a small top** (`B = t p² + d₁ p + (p−4)`, `t ≤ 12`, every
+  `d₁`): at target `c = 1/8` the solution set thins to `0` by `p = 97`
+  (`89, 88, 75, … , 3, 3, 0, 1, 3, 2, 1` hits at `p = 11 … 109`).  The extremal
+  tops `4, 5, 9` are real but the middle digit has no closed form and the
+  family dies.  Burst LENGTH must grow with `p`.
+- **The `u`-killing family** `B = (2 + p^K(Qt + λ₀))/Q`, `t = 2λ₀ S_L`, which
+  makes every position above `K` a condition on `r` alone: `λ₀ ≡ −2 (mod Q)` is
+  FORCED because `p ≡ 1 (mod Q)` (so `−2p^{−K} ≡ −2`), the junk at level `K` is
+  `⌊(Q−2)m/Q⌋ ≈ m`, and `M ≈ 3Q` (measured `p ≤ 67`).  This is the handoff's
+  `λ ≡ −2 (mod Q)` seen from the other side.
+- **Repunit quotients** `B = t S_{kQ}/Q` (so `QB = t S_{kQ}` has constant digits
+  and the `u`-part of `X = r(2S+B) + u(QB)` is trivial): fails at `m = Q + 1`,
+  `M = Q` exactly, because `B = S_j/Q`'s own digits are those of `−1/Q²`.
+- **Two-shadow cycles** `1/Q ↗ 1/(Q−1) ↘ 1/Q` with bursts `B ≤ 3`: `M ≤ 2Q`.
+
+**Structural fact found (paper, worth a Lean statement later).**  A junction
+`ρ → ρ + δ` with `0 < δ < 1/M` (a "tiny ascent") is safe for EVERY `m ≤ M`
+with denominators `< p`: `m·δ < 1` adds at most a carry, and every `j/D` with
+`D < p` has all digits `≤ p − 2`.  In particular `1/Q → 1/(Q−1)` is safe up to
+`M = Q(Q−1) − 1` — full strength, one-line proof.  But shadows live in
+`[0, 1 − 1/p)` and there are finitely many with denominator `< p`, so an
+infinite bad orbit cannot ascend forever; a tiny DESCENT is fatal at every
+`m ≡ 0 (mod D)` (`m·ρ` integral, borrow yields `(p−1)(p−1)…`).  Hence **bursts
+(integer parts `⌊m·(ρ' − ρ + B)⌋ ≠ 0`) are intrinsic to any bad orbit** — the
+top-digit problem is not an artifact of the burst family.
+
+**🎯 FOUND (same lap, later): a ONE-JUNCTION uniform construction reaching
+`M = ⌊p/2⌋² − 2` — family I.**  Background `1/D` with `D = (p+3)/2 = Q+2`
+(so `p ≡ −3 (mod D)` and the digit dynamics is `c ↦ −3c`), a single junction
+digit `1` at the tail `T₀ = 1/D + 2/(pD) = (p+2)/(pD)`, landing exactly on the
+periodic tail `(D−1)/D`.  Exact check (`experiments/mahler_family_I_check.py`,
+the `max_M` of `mahler_junction_cert.py`): `M = Q² − 2` at EVERY prime
+`17 ≤ p ≤ 199` where the cycle closes, i.e. where `−1 ∈ ⟨−3⟩ ⊂ (ℤ/D)^×`
+(then the periodic dynamics brings `(D−1)/D` back to `1/D` for free, so ONE
+ascent per cycle suffices — this is the trick the burst family lacks).  That is
+`58 %` of primes below `2000`.  The "mirror" junction `(D−3 → 3, J = p−2)` is
+the same orbit one step later.  Why `Q² − 2` exactly: the depth-1 tail
+`T₋₁ = c₋₁/D + 2/(p²D)` (`c₋₁ = (−3)⁻¹ mod D`) fails first at the `m ≡ 3 (mod D)`
+with `m ≥ Q² − Q/2`, and `Q² ≡ 4 (mod D)` puts that at `m = Q² − 1`.
+The construction is a **finite escape certificate** (`AdderEscapeCert.lean`):
+far states `[c/D, c/D + 2/(p³D)]` for `c` in the orbit (carry pinning needs
+only `m ≤ p³/2`), two exact near states `T₋₁, T₀`, junction edge `T₀ → (D−1)/D`
+with digit `1`; the far edges are non-`HiMax` so `Mixing` holds.  A uniform
+Lean theorem `M(p,1) ≥ ⌊p/2⌋² − 2` for every prime with `−1 ∈ ⟨−3⟩ (mod (p+3)/2)`
+is therefore a symbolic `EscapeCert.Valid` proof: (i) far-state digits are safe
+because `D < p`; (ii) three explicit inequalities in `m mod D`, `⌊m/D⌋` for
+`m ≤ Q² − 2`.
+
+**Second strong junction, `D = Q`: the wrap** `(Q−1)/Q → 1/Q`, digit `p−2`
+(`T₀ = (Q−1)/Q + 2/(Qp)`, an ascent by `2/Q` through `1`): `M = Q² − 1` at every
+prime `29 … 73`.  But `p ≡ 1 (mod Q)`, the dynamics is trivial, and the RETURN
+`1/Q → (Q−1)/Q` is the burst problem again: best two-digit return decays
+(`.92 .94 .97 .67 .98 .35 .99 .36 .49 .36 .47 .30 1.00 .23 .20 .19 .23 .22` at
+`p = 11 … 79`).  Generic `+2` ascents `c → c+2` on `D = Q` are `O(Q)`.
+No closed one-junction cycle exists at any `D ∈ [Q−4, Q+6]` for
+`p = 29, 37, 53, 61, 67, 71, 73` (`experiments/mahler_closed_cycle_scan.py`).
+
+**Next attack, in order (revised after family I).**
+0. **Formalize family I** as a symbolic `EscapeCert` and prove `Valid` uniformly:
+   `M(p,1) ≥ ⌊p/2⌋² − 2` for all primes with `−1 ∈ ⟨−3⟩ (mod (p+3)/2)`.  This is
+   the first uniform-in-`p` quadratic lower bound and matches the census to
+   within `2`.  Then hunt the closing cycle for the other primes: a junction
+   from the coset of `−1` back to the coset of `1` (`k = 2, 3` digits, or a
+   detour through `D = Q` / `D = Q+1` states via tiny ascents).
+1. (superseded unless 0 stalls) Work the exact burst recursion at the top with `ℓ_K = αQ + β`.  Now that
    `bgDigit_family` is a theorem, a uniform certificate is a finite list of
    affine-form case analyses (`omega` after `ediv_small`-style floor
    evaluations).  Find, by computer, a top digit of the form `αQ + β` (small

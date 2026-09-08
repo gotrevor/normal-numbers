@@ -25,7 +25,22 @@ all new theorems.  Untracked HOST files (`docs/mahler-universal-constant-is-one-
   signed digits give `c ~ 1/p`.  The top digit must scale with `Q`; the
   DIRECTIVE's "terminate at length 3" is probably capped.
 
-## Next lap — start here
+## 🎯 Found late in the lap — family I (detail in `PENDING_WORK.md` §top)
+
+Background `1/D`, `D = (p+3)/2`, ONE junction digit, `M = ⌊p/2⌋² − 2` at every
+prime `17 … 199` where `−1 ∈ ⟨−3⟩ (mod D)` (58 % of primes).  It is a finite
+escape certificate (`AdderEscapeCert.lean`) whose validity is three explicit
+inequalities in `m mod D` — the first genuinely uniform quadratic construction.
+
+## Next lap — start here (revised)
+
+Formalize family I: build `EscapeCert p` symbolically (far states
+`[c/D, c/D + 2/(p³D)]`, near states `T₋₁, T₀`, junction edge digit `1`) and
+prove `Valid` for all such primes; `escape_mahler_lower_bound` then gives
+`M(p,1) ≥ ⌊p/2⌋² − 2`.  Then close the cycle for the remaining primes.  The old
+pointer below is superseded unless this stalls.
+
+## Old pointer
 
 Search for a top digit `ℓ_K = αQ + β` (small rational `α`, parity-of-`u`
 split allowed) with a short signed tower holding `c ≥ 1/8` on all primes
