@@ -1,5 +1,91 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🎯 CRUX: the prime lower side reformulated — `B ≡ −4 (mod p)` PROVED uniform (2026-09-08, review lap)
+
+The DIRECTIVE crux is a **general** prime lower bound `M(p,1) ≥ c·p²`.  This lap
+reformulated the family, extracted two uniform laws (one now a Lean theorem),
+refuted the closed forms they suggest, and settled the route question with data.
+
+**The reformulation (this is the working frame from now on).**  For the family
+`α = 2/(p−1) + B·Σ p^(−i!)`, target digit `W = p−1`, `Q = (p−1)/2`, write
+`m = uQ + r`, `r = m mod Q`.  The background digit of `m·α` is `2r`, and the
+certificate condition is *exactly*
+
+    for all k ≥ 1:  { r/Q + m·B / p^k }  <  1 − 1/p                         (★)
+
+equivalently: the **p-adic** integer `Z_m = mB − r/Q` has no base-`p` digit
+equal to `p−1`.  `−r/Q` is the constant string `2r 2r 2r …`, so (★) is a school
+long addition: constant background `+` burst, one condition per digit position.
+Formalized this lap as `MahlerBurstDigit.lean` (`bgCarry`, `bgDigit`,
+`bgResidue_div_eq_bgDigit`, `mahler_lower_bound_bg_adder`) — the window form
+`hdig` over distances `d` and the adder form over positions `i` are the same
+statement, and `hstab` is no longer needed (the carry dies when the burst runs
+out).  **This is the form in which a uniform-in-`p` proof is possible;** the
+window form re-derives the whole addition for each `d`.
+
+**Law 1 (position 0), PROVED uniformly: `B ≡ −4 (mod p)`.**  Then
+`2r + mB ≡ 2r − 4m ≡ 2(u − r) (mod p)`, and `2(u−r) ≡ −1 (mod p)` forces
+`p ∣ 2(u−r)+1`, an odd number of size `≤ 2Q−1 = p−2`.  So position `0` is
+**safe for every `m < Q²`** — and `Q² = ⌊p/2⌋²` is exactly the census value.
+Lean: `bgDigit_zero_ne` (trust triple).  Empirical confirmation: the lowest
+base-`p` digit of the extremal burst is `p−4` at **every** prime `7 … 59`
+(exact digit-DFS, `experiments/mahler_burst_tower.py`).
+
+**Law 2 (position 1): `λ ≡ −2 (mod p)`, where `QB = p·λ + 2`.**  The
+position-1 failure locus is an arithmetic progression in `r`,
+`u ≡ 2r(1 + λ⁻¹) − c₁λ⁻¹ (mod p)` with `c₁ = [u ≥ r]`; the difference is
+`d = 2(1+λ⁻¹)`, and `λ ≡ −2` makes `d = 1` while the carry shifts the constant
+by `Q`, so every failure sits at `u = r + Q + 1 > Q`.  Confirmed exactly: the
+best `B` at `p = 7, 11, 13, 17, 19, 23` has `λ mod p = p−2` in every case.
+This **explains and refines the previously recorded `κ ≡ −8/3 (mod p)` law**
+(same law, different normalization: `κ = 2ℓ` at level 2, see below).
+
+**The tower, and why there is no closed form.**  Integrality forces
+`λ ≡ −2 (mod Q)` too, hence `λ = pQℓ − 2`, and then
+`I = λu + ⌊λr/Q⌋ = pℓm − (2u + 1 + [2r>Q])`: the level-2 integer is `ℓm − 1`.
+So each base-`p` digit of `B` is a new parameter pinned `mod p` by that level's
+condition — a genuine recursion, not a formula.  Level 2 gives coefficient
+`2 + 4/ℓ`, safe iff `≡ ±1 (mod p)`, i.e. `ℓ ≡ −4` or `ℓ ≡ −4/3 (mod p)`.
+Beyond level 2 the floors `⌊λr/Q⌋` break affinity: the third digit of the
+extremal `B` is `5, 2, 4, 17, 16` at `p = 13, 17, 23, 31, 59` — no pattern.
+
+**⛔ REFUTED this lap (do not retry).**  The closed forms the two laws suggest,
+`B = p²−4` (`ℓ=1`) and `B = p²(p−4)−4` (`ℓ = p−4`), and the whole shape
+`B = p^K(p−c) − 4`: all only `Θ(p)`, killed by the higher digits of `I`
+(measured `M` for `B = p²−4`: `13, 3, 22, 5, 31, 40, 9, …` at `p = 11 … 37`).
+
+**✅ ROUTE SETTLED: the single-burst family IS uniformly quadratic.**  Exact
+digit-DFS (build `B` low digit first; digit `i` of `mB` depends only on
+`B mod p^(i+1)`, so pruning is exact) gives, for `M/Q²`:
+
+    p    7    11   13   17   19   23   29   31   37   41   43   47   53   59
+    M/Q² .78  .92  .94  .97  .58  .98  .71  .99  .61  .44  .52  .44  .44 1.00
+
+never below `0.43` — i.e. `M(p,1) ≥ 0.43·⌊p/2⌋² ≈ p²/9.3` on all data.  The
+obstruction to the theorem is **a formula for `B`, not existence**.  (Lengths:
+the extremal `B` needs `2 … 6` base-`p` digits, non-monotone in `p`.)
+
+**New certificate this lap**: `mahler_lower_bound_base29` — `M(29,1) ≥ 140`
+(`B = 3273893`, adder form, `decide +kernel`), first use of the new engine.
+
+**Next attack, in order.**
+1. **Prove Law 2 in Lean** (`bgDigit_one_ne`): position `1` is safe for all
+   `m < Q²` whenever `QB ≡ 2 (mod p²)` and `λ ≡ −2 (mod p)`.  Combined with
+   `bgDigit_zero_ne` that is a *two-position* uniform theorem; with a burst of
+   **exactly three** base-`p` digits the tower terminates and positions `≥ 3`
+   are the `bgDigit_of_lt` tail — i.e. a genuine uniform `M(p,1) ≥ c·p²`.
+   The open question is which `c` a 3-digit burst can reach: measure it
+   (`mahler_burst_tower.py` restricted to length 3) before writing Lean.
+2. The **generalized junction model** (`experiments/mahler_junction_cert.py`)
+   if (1) caps out: background = ANY rational `c/D` with `D < p` (only `D < p`
+   is needed — `D ∤ p−1` is fine), certificate `(D, c₀, c_k, junction word)`.
+   Sound (never exceeds the census; attains it exactly at `p = 13`).
+   ⚠️ Two traps found: `Δ = T₀ − c₀/D` must be `> 0` (approach the background
+   from ABOVE — from below, every `m` with `D ∣ m c` is fatal at deep levels);
+   and using two DIFFERENT backgrounds is UNSOUND unless the *return* junction
+   is certified too (that bug produced `M` values above the census).
+
+
 ## 🔬 PRIME LOWER SIDE: the burst family's structure, and why it is not uniform (2026-09-08, autonomous, lap 3)
 
 Target: a general prime lower bound `M(p,1) ≥ p²/4 − O(p)` (the missing half

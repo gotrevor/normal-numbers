@@ -4,45 +4,55 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-09-02 REVIEW LAP — own the Mahler constant `M(g,k)`)
+## CURRENT DIRECTIVE (set 2026-09-08 REVIEW LAP — the prime lower side, in adder form)
 
-- 🎯 **THE objective: pin the optimal universal Mahler multiplier `M(g,k)`.**
-  This is the one place in the repo currently producing genuinely NEW theorems
-  (the destination below — novel proofs, not novel formalization — is unchanged;
-  this names where to spend the laps).  State of the sandwich, all trust-triple:
-  `t(gᵏ−1) ≤ M(g,k) ≤ g^(k+1)` for every factorization `g = t·c`, `c ≥ 2`
-  (`MahlerLowerBoundGeneral.lean`, `MahlerMultiplier.lean`).  Even bases are
-  already within a factor `2 + o(1)`.
-- 🔨 **Mandated next move — the PRIME-BASE UPPER BOUND.**  For prime `g` the
-  divisor construction gives nothing (`t = 1`), so the gap is still the full
-  factor `g`, and B–B's `M(3,1) = 2 = gᵏ−1` says the LOWER side is already right:
-  the room is all on the upper side.  Attack the binding case of the sweep,
-  `q = 1` (`x` near an integer), where the shadow's quality hypothesis
-  `g|η| < g⁻ᵏ` is what forces `M ≥ g^(k+1) − g + 1`.  A denominator-aware or
-  multi-scale invariant (the orbit visits every scale `d`, and the required
-  multiplier shrinks by `g` at each step) is the named attack.  A disclosed
-  sub-`sorry` in `src/` decomposing that is a valid checkpoint and PROGRESS.
-  Cheap complementary win, take it when the crux stalls: the finite `decide`
-  witness `B = 125` giving `M(10,k) ≥ 8(10ᵏ−1)` (`1.25×` off the upper bound).
-- ⛔ **Forbidden drift**: statement-only ledger rows as a SUBSTITUTE for the crux
-  (they are tail filler, never the lap's advance); `CFScheduleA.lean` (its two
-  residues are being converted to `def … : Prop` on `wip/cfschedulea-prop-nodes`);
-  the repo-wide sorry-free gate (dishonest until that merge); Comparator statement
+- 🎯 **THE objective, unchanged: pin the optimal Mahler multiplier `M(g,k)`.**
+  The upper side is done at `k = 1` (`MahlerQuarter.lean`,
+  `M(p,1) ≤ (p²+6p+1)/4`); the universal-constant wing is closed
+  (`sup_g M(g,k)/g^(k+1) = 1`, `MahlerLowerBoundSmooth.lean`).  **The one open
+  crux is the GENERAL prime lower bound `M(p,1) ≥ c·p²`** — a statement true for
+  every prime `p`, not another per-prime certificate.
+- 🔨 **Mandated next move — close the tower at level 2, in the adder form.**
+  `MahlerBurstDigit.lean` is now the working frame: the certificate is one
+  condition per base-`p` digit position of `m·B` added to the background `2r`.
+  Two uniform laws are in hand — `B ≡ −4 (mod p)` (position `0`, **proved**:
+  `bgDigit_zero_ne`, safe for every `m < ⌊p/2⌋²`) and `λ ≡ −2 (mod p)` for
+  `QB = pλ + 2` (position `1`, derived + confirmed at six primes).  Next:
+  **prove position `1` uniformly (`bgDigit_one_ne`), then make the tower
+  TERMINATE with a three-digit burst** so positions `≥ 3` fall to the
+  `bgDigit_of_lt` tail.  That is a genuine uniform `M(p,1) ≥ c·p²`.  Measure
+  the reachable `c` for length-3 bursts (`experiments/mahler_burst_tower.py`)
+  before writing the Lean.  Fallback if length 3 caps out: the generalized
+  junction certificate (`experiments/mahler_junction_cert.py`, background = any
+  `c/D` with `D < p`) — its two soundness traps are recorded in PENDING_WORK.
+- ⛔ **Forbidden drift**: more per-prime `mahler_lower_bound_baseNN`
+  certificates as the lap's *advance* (one is fine as engine validation, they
+  are tail filler otherwise — the crux is the uniform statement); closed-form
+  bursts of the shape `B = p^K(p−c) − 4` (**refuted this lap, only `Θ(p)`**);
+  `CFScheduleA.lean`; the repo-wide sorry-free gate; Comparator statement
   holes; downloading papers; any outward action.
-- 📌 **Claim hygiene, standing**: the B–B constants here are tier-S (secondary
-  sources).  State OUR quantifiers, never attribute; `ON-LINE-REQUEST.md` holds
-  the primary-source ask.  Do not headline "beats Berend–Boshernitzan" until the
-  PDF is read — headline "our construction gives X" instead.
-- ✅ **Closed by this lap**: the 2026-08-29 brief queue (adder disjunction /
-  universal / signed engine / tower C1–C10 / literature statements) — all have
-  RESULT sections written.  Its standing mandate (formalize anything tractable in
-  orbit, weighed by the novel-proofs doctrine) survives as the fallback when the
-  Mahler thread is genuinely exhausted, NOT before.
+- 📌 **Claim hygiene, standing**: Berend–Boshernitzan constants here are tier-S
+  secondary sources.  State OUR quantifiers, never attribute; do not headline
+  "beats B–B" until the PDF is read.
+- ✅ **Closed by this lap**: the 2026-09-07 kickoff's "finish the multi-scale
+  bound to `g^(k+1)/4`" — the `k = 1` upper side is proved and the general-`k`
+  constant `1/4` was refuted by exact data at `k = 2`; that kickoff is spent.
 
 ### Directive history
+- 2026-09-08 (review lap): crux sharpened from "prime-base upper bound" (done)
+  to the GENERAL prime lower bound, and the mandated frame set to the adder
+  form; two uniform laws banked, closed-form bursts refuted.
 - 2026-09-02 (review lap): objective moved from the brief queue to the Mahler
   constant; crux named as the prime-base upper bound after the composite-base
   lower bound collapsed the gap from factor `g` to factor `2`.
+
+## SUPERSEDED DIRECTIVE (set 2026-09-02 — own the Mahler constant, upper side)
+
+- Superseded 2026-09-08: its mandated move (the prime-base UPPER bound at
+  `q = 1`, multi-scale) was completed in `MahlerQuarter.lean`
+  (`mahler_multiplier_quarter`), retiring `mahler_multiplier_prime_half`.  Its
+  "cheap complementary win" (`M(10,k) ≥ 8(10ᵏ−1)`) is subsumed by
+  `mahler_lower_bound_smooth`.
 
 ## SUPERSEDED DIRECTIVE (set 2026-08-29 — the conjecture-graph objective)
 

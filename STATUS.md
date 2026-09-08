@@ -2,8 +2,8 @@
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter).** · **Build**: 🟢 green (8877 jobs) · **Updated**:
-autonomous lap · 2026-09-08 · `wip/adder-tower-c9`
+Mahler multiplier chapter).** · **Build**: 🟢 green (8878 jobs) · **Updated**:
+review lap · 2026-09-08 · `wip/adder-tower-c9`
 
 ## Where it stands
 
@@ -17,10 +17,31 @@ not axiom debt but *new mathematics*: the conjecture graph toward
 holds both sides of the bound.  The Mahler sandwich is now
 `t(gᵏ−1) ≤ M(g,k) < g^(k+1)` for every `t < g` dividing a power of `g`, and
 the constant `1` on the upper side is SHARP: `sup_g M(g,k)/g^(k+1) = 1`
-(`MahlerLowerBoundSmooth.lean`, trust triple).
+(`MahlerLowerBoundSmooth.lean`, trust triple).  The single open crux is the
+**general** prime lower bound `M(p,1) ≥ c·p²` — true for every prime, not one
+more per-prime certificate; the 2026-09-08 review lap moved the work into the
+adder form (`MahlerBurstDigit.lean`) and proved the first uniform law of the
+extremal family, `B ≡ −4 (mod p)`.
 
 ## What's happened (newest first)
 
+- **2026-09-08 (REVIEW LAP)** — **The prime lower side reformulated as a long
+  addition; the first uniform law proved.**  `MahlerBurstDigit.lean` (new,
+  trust triple): the `k = 1` background certificate in **adder form** — carry
+  `bgCarry` and emitted digit `bgDigit` for "constant background `b` plus burst
+  `N`", with `bgResidue_div_eq_bgDigit` identifying the window digit at distance
+  `d = i+1` with the digit emitted at position `i`, and
+  `mahler_lower_bound_bg_adder` restating the bound with one condition per digit
+  position (and no `hstab` — the carry dies when the burst runs out).  On top of
+  it, the **first uniform-in-`p` brick**: `bgDigit_zero_ne`, for odd `g ≥ 5` and
+  any burst with `B ≡ −4 (mod g)`, position `0` misses the target `g−1` for
+  *every* `m < ⌊g/2⌋²` — because the digit sum is `2(u−r) (mod g)` and
+  `2(u−r) ≡ −1` forces `u − r ≡ Q`.  `B ≡ −4 (mod p)` is the law satisfied by
+  the extremal burst at every prime `7 … 59` (exact digit-DFS).  Route settled
+  by data: the burst family holds `M/⌊p/2⌋² ≥ 0.43` up to `p = 59`, so it *is*
+  uniformly quadratic — the gap is a formula, not existence.  Closed-form bursts
+  `B = p^K(p−c) − 4` REFUTED (only `Θ(p)`).  Engine validated end-to-end by
+  `mahler_lower_bound_base29` (`M(29,1) ≥ 140`, `decide +kernel`).
 - **2026-09-08 (autonomous, lap 6)** — **The escape engine is a theorem.**
   `AdderEscapeCert.lean`: a decidable automaton certificate (tail intervals,
   per-channel carries, block-free channel digits) plus a witness pair of closed
@@ -155,13 +176,19 @@ the constant `1` on the upper side is SHARP: `sup_g M(g,k)/g^(k+1) = 1`
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-1. **Prime-base upper bound** — for prime `g` the sandwich is still
-   `gᵏ−1 ≤ M(g,k) ≤ g^(k+1)`, and B–B's `M(3,1)=2` says the lower side is right.
-   The binding case of the sweep is `q = 1`; a denominator-aware contraction is
-   the named attack (`MahlerMultiplier.lean` docstring).
-2. **Base-10 witness `B = 125`** — a finite `decide` check would give
-   `M(10,k) ≥ 8(10ᵏ−1)`, within `1.25×` of the upper bound.
-3. Remaining cited-only ledger nodes (`philipp_psi_mixing`, `vandehey_matrix_action`).
+1. **THE CRUX — general prime lower bound `M(p,1) ≥ c·p²`** (uniform in `p`, not
+   another per-prime certificate).  Frame: the adder form
+   (`MahlerBurstDigit.lean`).  Position `0` is done uniformly
+   (`bgDigit_zero_ne`, needs only `B ≡ −4 (mod p)`, safe for all `m < ⌊p/2⌋²`).
+   Next: position `1` (`λ ≡ −2 (mod p)` for `QB = pλ+2`, derived and confirmed
+   at six primes), then a **three-digit burst** so the tower terminates and the
+   higher positions fall to `bgDigit_of_lt`.
+2. Fallback if length-3 bursts cap out: the generalized junction certificate
+   (background = any `c/D` with `D < p`; `experiments/mahler_junction_cert.py`),
+   two soundness traps recorded in `PENDING_WORK.md` §top.
+3. `k ≥ 2` lower side via the escape engine (`AdderEscapeCert.lean`): the
+   `(7,2)` instance `M(7,2) ≥ 176`.
+4. Remaining cited-only ledger nodes (`philipp_psi_mixing`, `vandehey_matrix_action`).
 
 ### Long-term
 The conjecture graph toward the sink `IsNormal 2 (Real.log 2)`: the ln-two
@@ -183,6 +210,10 @@ Real `#print axioms` output, this lap.  Every headline: trust triple only.
 | `isNormal_log_two_of_equidistributed` | conditional ln-two | trust triple | 🟢 clean (hypothesis is a named `Prop`, not an axiom) |
 | `Mahler.mahler_multiplier` | Mahler 1973 Thm M, sharpened | trust triple | 🟢 clean |
 | `Mahler.mahler_lower_bound` / `…_even` | our own lower bounds | trust triple | 🟢 clean |
+| `Mahler.mahler_multiplier_quarter` | our own `M(p,1) ≤ (p²+6p+1)/4`, odd prime | trust triple | 🟢 clean |
+| `Mahler.mahler_lower_bound_smooth` / `mahler_constant_one_sharp` | our own `sup_g M(g,k)/g^(k+1) = 1` | trust triple | 🟢 clean |
+| `Mahler.mahler_lower_bound_bg_adder` / `bgDigit_zero_ne` | our own adder-form certificate + the uniform `B ≡ −4 (mod p)` law | trust triple | 🟢 clean |
+| `Mahler.mahler_lower_bound_base29` | our own `M(29,1) ≥ 140` | trust triple (`decide +kernel`, no `native_decide`) | 🟢 clean |
 | `Mahler.mahler_multiplier_of_zero_runs` / `…_pred_runs` | run branch at `gᵏ` (prime `g`) | trust triple | 🟢 clean |
 | `Mahler.mahler_multiplier_lt` / `Literature.berendBoshernitzan_strict_holds` | `M(g,k) < g^(k+1)` (B–B open question) | trust triple | 🟢 clean |
 | `Literature.mahler_theoremM_holds` | Mahler 1973, all `g` | trust triple | 🟢 clean |
