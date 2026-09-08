@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import NormalNumbers.AdderEscapeCert
+import NormalNumbers.MahlerNumCert
 
 /-!
 # Family I: a uniform quadratic lower bound `M(p,1) > ⌊p/2⌋² − 2` 🧮
@@ -48,22 +48,23 @@ open NormalNumbers NormalNumbers.Mahler
 def D (p : ℕ) : ℕ := (p - 1) / 2 + 2
 /-- The common denominator of all tail intervals, `p³D`. -/
 def E (p : ℕ) : ℕ := p ^ 3 * D p
-/-- `c₋₁ = p^(2k−1) mod D`, the residue one step before the junction. -/
-def cm1 (p k : ℕ) : ℕ := p ^ (2 * k - 1) % D p
-/-- `c₋₂ = p^(2k−2) mod D`, the residue two steps before the junction. -/
-def cm2 (p k : ℕ) : ℕ := p ^ (2 * k - 2) % D p
+/-- `c₋₁ = p^(e−1) mod D`, the residue one step before the junction (`p^e ≡ 1`). -/
+def cm1 (p e : ℕ) : ℕ := p ^ (e - 1) % D p
+/-- `c₋₂ = p^(e−2) mod D`, the residue two steps before the junction. -/
+def cm2 (p e : ℕ) : ℕ := p ^ (e - 2) % D p
 
 theorem D_pos (p : ℕ) : 0 < D p := by unfold D; omega
 
-/-- The standing hypotheses: `p` odd, `p ≥ 17`, `p^k ≡ −1 (mod D)`. -/
-structure Hyp (p k : ℕ) : Prop where
+/-- The base hypotheses: `p` odd, `p ≥ 17`, `p^e ≡ 1 (mod D)` with `e ≥ 2`. -/
+structure Hyp (p e : ℕ) : Prop where
   odd : p % 2 = 1
   ge : 17 ≤ p
-  pow : p ^ k % D p = D p - 1
+  pow1 : p ^ e % D p = 1
+  two_le_e : 2 ≤ e
 
 namespace Hyp
 
-variable {p k : ℕ} (h : Hyp p k)
+variable {p e : ℕ} (h : Hyp p e)
 include h
 
 /-- The parameterization `p = 2n + 1`, `D = n + 2`, `n ≥ 8`. -/
@@ -75,49 +76,66 @@ theorem two_le : 2 ≤ p := by have := h.ge; omega
 theorem D_lt_p : D p < p := by obtain ⟨n, hn, rfl, hD⟩ := h.params; omega
 theorem E_pos : 0 < E p := by unfold E; have := h.p_pos; have := D_pos p; positivity
 
+/-- `c₋₁ · p ≡ 1 (mod D)`. -/
+theorem cm1_mul : cm1 p e * p % D p = 1 := by
+  have he := h.two_le_e
+  unfold cm1
+  rw [Nat.mul_mod, Nat.mod_mod, ← Nat.mul_mod, ← pow_succ, show e - 1 + 1 = e by omega]
+  exact h.pow1
+
+/-- `c₋₂ · p ≡ c₋₁ (mod D)`. -/
+theorem cm2_mul : cm2 p e * p % D p = cm1 p e := by
+  have he := h.two_le_e
+  unfold cm1 cm2
+  rw [Nat.mul_mod, Nat.mod_mod, ← Nat.mul_mod, ← pow_succ, show e - 2 + 1 = e - 1 by omega]
+
+theorem cm1_lt : cm1 p e < D p := Nat.mod_lt _ (D_pos p)
+theorem cm2_lt : cm2 p e < D p := Nat.mod_lt _ (D_pos p)
+
+/-- Powers of `p` mod `D` are periodic with period `e`. -/
+theorem pow_add_e (j : ℕ) : p ^ (j + e) % D p = p ^ j % D p := by
+  rw [pow_add, Nat.mul_mod, h.pow1, mul_one, Nat.mod_mod]
+
+theorem pow_add_mul_e (j t : ℕ) : p ^ (j + t * e) % D p = p ^ j % D p := by
+  induction t with
+  | zero => simp
+  | succ t ih => rw [Nat.succ_mul, ← add_assoc, h.pow_add_e, ih]
+
+end Hyp
+
+/-- The family-I hypotheses: `p` odd, `p ≥ 17`, `p^k ≡ −1 (mod D)`. -/
+structure HypI (p k : ℕ) : Prop where
+  odd : p % 2 = 1
+  ge : 17 ≤ p
+  pow : p ^ k % D p = D p - 1
+
+namespace HypI
+
+variable {p k : ℕ} (h : HypI p k)
+include h
+
 theorem k_pos : 0 < k := by
   rcases Nat.eq_zero_or_pos k with hk | hk
   · exfalso
     have hpow := h.pow
-    obtain ⟨n, hn, rfl, hD⟩ := h.params
+    have : p = 2 * ((p - 1) / 2) + 1 := by have := h.odd; omega
+    have hD : D p = (p - 1) / 2 + 2 := rfl
     rw [hk, pow_zero, hD, Nat.mod_eq_of_lt (by omega)] at hpow
-    omega
+    have := h.ge; omega
   · exact hk
 
-/-- `p^(2k) ≡ 1 (mod D)`. -/
-theorem pow_two_k : p ^ (2 * k) % D p = 1 := by
+/-- `p^(2k) ≡ 1 (mod D)`: the base hypotheses with `e = 2k`. -/
+theorem toHyp : Hyp p (2 * k) := by
+  have hk := h.k_pos
+  refine ⟨h.odd, h.ge, ?_, by omega⟩
   have hpow := h.pow
-  obtain ⟨n, hn, rfl, hD⟩ := h.params
+  obtain ⟨n, hn, rfl, hD⟩ : ∃ n, 8 ≤ n ∧ p = 2 * n + 1 ∧ D p = n + 2 :=
+    ⟨(p - 1) / 2, by have := h.odd; have := h.ge; omega, by have := h.odd; omega, rfl⟩
   rw [hD] at hpow ⊢
   rw [pow_mul', Nat.pow_mod, hpow, show n + 2 - 1 = n + 1 by omega,
     show (n + 1) ^ 2 = (n + 2) * n + 1 by ring, Nat.mul_add_mod, Nat.mod_eq_of_lt (by omega)]
 
-/-- `c₋₁ · p ≡ 1 (mod D)`. -/
-theorem cm1_mul : cm1 p k * p % D p = 1 := by
-  have hk := h.k_pos
-  unfold cm1
-  rw [Nat.mul_mod, Nat.mod_mod, ← Nat.mul_mod, ← pow_succ, show 2 * k - 1 + 1 = 2 * k by omega]
-  exact h.pow_two_k
-
-/-- `c₋₂ · p ≡ c₋₁ (mod D)`. -/
-theorem cm2_mul : cm2 p k * p % D p = cm1 p k := by
-  have hk := h.k_pos
-  unfold cm1 cm2
-  rw [Nat.mul_mod, Nat.mod_mod, ← Nat.mul_mod, ← pow_succ, show 2 * k - 2 + 1 = 2 * k - 1 by omega]
-
-theorem cm1_lt : cm1 p k < D p := Nat.mod_lt _ (D_pos p)
-theorem cm2_lt : cm2 p k < D p := Nat.mod_lt _ (D_pos p)
-
-/-- Powers of `p` mod `D` are periodic with period `2k`. -/
-theorem pow_add_two_k (j : ℕ) : p ^ (j + 2 * k) % D p = p ^ j % D p := by
-  rw [pow_add, Nat.mul_mod, h.pow_two_k, mul_one, Nat.mod_mod]
-
-theorem pow_add_mul_two_k (j t : ℕ) : p ^ (j + t * (2 * k)) % D p = p ^ j % D p := by
-  induction t with
-  | zero => simp
-  | succ t ih => rw [Nat.succ_mul, ← add_assoc, h.pow_add_two_k, ih]
-
-end Hyp
+end HypI
 
 /-! ### The four digit conditions, as statements about `(m · num) mod p³D` -/
 
@@ -135,7 +153,7 @@ theorem quot_le (n m : ℕ) (hn : 8 ≤ n) (hm : m ≤ n ^ 2 - 2) : m / (n + 2) 
 
 section keys
 
-variable {p k : ℕ} (h : Hyp p k)
+variable {p e : ℕ} (h : Hyp p e)
 include h
 
 /-- **Far states.**  `(m·c·p³) mod p³D = p³·((mc) mod D) ≤ p³(D−1)`, and
@@ -159,15 +177,15 @@ theorem key_far (c m : ℕ) (hc : c < D p) :
 /-- **The junction edge** `F_{c₋₂} → N₋₁` carries the extra `2pm`; needs
 `2m < p²`. -/
 theorem key_junction (m : ℕ) (hm : 2 * m < p ^ 2) :
-    p * (m * (cm2 p k * p ^ 3) % E p) + m * (2 * p) < (p - 1) * E p := by
+    p * (m * (cm2 p e * p ^ 3) % E p) + m * (2 * p) < (p - 1) * E p := by
   unfold E
-  rw [show m * (cm2 p k * p ^ 3) = p ^ 3 * (m * cm2 p k) by ring, Nat.mul_mod_mul_left]
-  have hr : m * cm2 p k % D p ≤ D p - 1 := Nat.le_sub_one_of_lt (Nat.mod_lt _ (D_pos p))
+  rw [show m * (cm2 p e * p ^ 3) = p ^ 3 * (m * cm2 p e) by ring, Nat.mul_mod_mul_left]
+  have hr : m * cm2 p e % D p ≤ D p - 1 := Nat.le_sub_one_of_lt (Nat.mod_lt _ (D_pos p))
   obtain ⟨n, hn, rfl, hD⟩ := h.params
   rw [hD] at hr ⊢
   rw [show 2 * n + 1 - 1 = 2 * n by omega]
   have hp3 : 0 < (2 * n + 1) ^ 3 := by positivity
-  calc (2 * n + 1) * ((2 * n + 1) ^ 3 * (m * cm2 (2 * n + 1) k % (n + 2))) + m * (2 * (2 * n + 1))
+  calc (2 * n + 1) * ((2 * n + 1) ^ 3 * (m * cm2 (2 * n + 1) e % (n + 2))) + m * (2 * (2 * n + 1))
       ≤ (2 * n + 1) * ((2 * n + 1) ^ 3 * (n + 1)) + m * (2 * (2 * n + 1)) := by gcongr; omega
     _ < 2 * n * ((2 * n + 1) ^ 3 * (n + 2)) := by nlinarith
 
@@ -229,12 +247,12 @@ theorem key_n0 (m : ℕ) (hm : m ≤ ((p - 1) / 2) ^ 2 - 2) :
 below `Dn` are `m ≡ 3 (mod D)` with `⌊m/D⌋ = n − 2`, i.e. `m = n² − 1`;
 `m ≤ n² − 2` excludes them. -/
 theorem key_nm1 (m : ℕ) (hm : m ≤ ((p - 1) / 2) ^ 2 - 2) :
-    p * (m * ((cm1 p k * p ^ 2 + 2) * p) % E p) < (p - 1) * E p := by
+    p * (m * ((cm1 p e * p ^ 2 + 2) * p) % E p) < (p - 1) * E p := by
   have hc1 := h.cm1_mul
   have hclt := h.cm1_lt
   unfold E
   obtain ⟨n, hn, rfl, hD⟩ := h.params
-  set c := cm1 (2 * n + 1) k with hc
+  set c := cm1 (2 * n + 1) e with hc
   clear_value c
   rw [hD, show (2 * n + 1 - 1) / 2 = n by omega] at *
   rw [show 2 * n + 1 - 1 = 2 * n by omega]
@@ -316,7 +334,7 @@ end keys
 
 section cert
 
-variable (p k : ℕ)
+variable (p e : ℕ)
 
 /-- The far state `F_{c mod D}`. -/
 def far (c : ℕ) : Fin (D p + 2) := ⟨c % D p, by have := Nat.mod_lt c (D_pos p); omega⟩
@@ -328,64 +346,64 @@ def n0 : Fin (D p + 2) := ⟨D p + 1, by omega⟩
 /-- Tail numerators over the common denominator `E = p³D`. -/
 def num (s : Fin (D p + 2)) : ℕ :=
   if s.1 < D p then s.1 * p ^ 3
-  else if s.1 = D p then (cm1 p k * p ^ 2 + 2) * p
+  else if s.1 = D p then (cm1 p e * p ^ 2 + 2) * p
   else (p + 2) * p ^ 2
 
 /-- The emitted digits. -/
 def dig (s : Fin (D p + 2)) : ℕ :=
   if s.1 < D p then s.1 * p / D p
-  else if s.1 = D p then cm1 p k * p / D p
+  else if s.1 = D p then cm1 p e * p / D p
   else 1
 
 /-- Successors: the far cycle, the junction `F_{c₋₂} → N₋₁ → N₀ → F_{D−1}`. -/
 def nxt (s : Fin (D p + 2)) : List (Fin (D p + 2)) :=
   if s.1 < D p then
-    (if s.1 = cm2 p k then [far p (s.1 * p), nm1 p] else [far p (s.1 * p)])
+    (if s.1 = cm2 p e then [far p (s.1 * p), nm1 p] else [far p (s.1 * p)])
   else if s.1 = D p then [n0 p] else [far p (D p - 1)]
 
-/-- The family-I escape certificate. -/
-def cert : EscapeCert p where
+/-- The family-I numerator certificate (slack `4/E`). -/
+def cert : NumCert p where
   n := D p + 2
-  a := dig p k
-  next := nxt p k
-  lo := fun s => (num p k s : ℚ) / E p
-  hi := fun s => ((num p k s : ℚ) + 4) / E p
-  c := fun s m => m * num p k s / E p
+  num := num p e
+  dig := dig p e
+  nxt := nxt p e
+  E := E p
+  σ := 4
 
 theorem far_mod (c : ℕ) : far p (c % D p) = far p c := by
   unfold far; exact Fin.ext (Nat.mod_mod _ _)
 
 theorem far_val (c : ℕ) : (far p c).1 = c % D p := rfl
 
-theorem num_far (c : ℕ) : num p k (far p c) = (c % D p) * p ^ 3 := by
+theorem num_far (c : ℕ) : num p e (far p c) = (c % D p) * p ^ 3 := by
   simp [num, far_val, Nat.mod_lt _ (D_pos p)]
 
-theorem dig_far (c : ℕ) : dig p k (far p c) = (c % D p) * p / D p := by
+theorem dig_far (c : ℕ) : dig p e (far p c) = (c % D p) * p / D p := by
   simp [dig, far_val, Nat.mod_lt _ (D_pos p)]
 
-theorem num_nm1 : num p k (nm1 p) = (cm1 p k * p ^ 2 + 2) * p := by
+theorem num_nm1 : num p e (nm1 p) = (cm1 p e * p ^ 2 + 2) * p := by
   unfold num nm1; simp
 
-theorem dig_nm1 : dig p k (nm1 p) = cm1 p k * p / D p := by
+theorem dig_nm1 : dig p e (nm1 p) = cm1 p e * p / D p := by
   unfold dig nm1; simp
 
-theorem num_n0 : num p k (n0 p) = (p + 2) * p ^ 2 := by
+theorem num_n0 : num p e (n0 p) = (p + 2) * p ^ 2 := by
   unfold num n0; simp
 
-theorem dig_n0 : dig p k (n0 p) = 1 := by
+theorem dig_n0 : dig p e (n0 p) = 1 := by
   unfold dig n0; simp
 
 theorem nxt_far (c : ℕ) :
-    nxt p k (far p c) = if c % D p = cm2 p k then [far p (c % D p * p), nm1 p]
+    nxt p e (far p c) = if c % D p = cm2 p e then [far p (c % D p * p), nm1 p]
       else [far p (c % D p * p)] := by
   simp [nxt, far_val, Nat.mod_lt _ (D_pos p)]
   split_ifs <;> simp_all
 
-theorem nxt_nm1 : nxt p k (nm1 p) = [n0 p] := by unfold nxt nm1; simp
-theorem nxt_n0 : nxt p k (n0 p) = [far p (D p - 1)] := by unfold nxt n0; simp
+theorem nxt_nm1 : nxt p e (nm1 p) = [n0 p] := by unfold nxt nm1; simp
+theorem nxt_n0 : nxt p e (n0 p) = [far p (D p - 1)] := by unfold nxt n0; simp
 
 /-- The far cycle edge is always present. -/
-theorem far_mul_mem (c : ℕ) : far p (c * p) ∈ nxt p k (far p c) := by
+theorem far_mul_mem (c : ℕ) : far p (c * p) ∈ nxt p e (far p c) := by
   rw [nxt_far]
   have : far p (c % D p * p) = far p (c * p) := by
     unfold far; apply Fin.ext; simp [Nat.mul_mod]
@@ -403,9 +421,9 @@ theorem state_cases (s : Fin (D p + 2)) :
     · right; exact Fin.ext (by unfold n0; simp; omega)
 
 /-- The four edge types. -/
-theorem mem_nxt {s s' : Fin (D p + 2)} (hs' : s' ∈ nxt p k s) :
+theorem mem_nxt {s s' : Fin (D p + 2)} (hs' : s' ∈ nxt p e s) :
     (∃ c, c < D p ∧ s = far p c ∧ s' = far p (c * p)) ∨
-    (s = far p (cm2 p k) ∧ s' = nm1 p) ∨
+    (s = far p (cm2 p e) ∧ s' = nm1 p) ∨
     (s = nm1 p ∧ s' = n0 p) ∨ (s = n0 p ∧ s' = far p (D p - 1)) := by
   rcases state_cases p s with ⟨c, hc, rfl⟩ | rfl | rfl
   · rw [nxt_far, Nat.mod_eq_of_lt hc] at hs'
@@ -427,10 +445,10 @@ end cert
 
 section edges
 
-variable {p k : ℕ} (h : Hyp p k)
+variable {p e : ℕ} (h : Hyp p e)
 include h
 
-theorem dig_lt (s : Fin (D p + 2)) : dig p k s < p := by
+theorem dig_lt (s : Fin (D p + 2)) : dig p e s < p := by
   have hD := D_pos p
   have hp := h.two_le
   rcases state_cases p s with ⟨c, hc, rfl⟩ | rfl | rfl
@@ -441,7 +459,7 @@ theorem dig_lt (s : Fin (D p + 2)) : dig p k s < p := by
   · rw [dig_n0]; omega
 
 /-- `⌊(D−1)p/D⌋ = p − 2` and `⌊(D−3)p/D⌋ = p − 6`. -/
-theorem dig_top : dig p k (far p (D p - 1)) = p - 2 := by
+theorem dig_top : dig p e (far p (D p - 1)) = p - 2 := by
   rw [dig_far]
   obtain ⟨n, hn, rfl, hD⟩ := h.params
   rw [hD, show n + 2 - 1 = n + 1 by omega, Nat.mod_eq_of_lt (by omega),
@@ -450,7 +468,7 @@ theorem dig_top : dig p k (far p (D p - 1)) = p - 2 := by
   rw [show 2 * (t + 1) - 1 = 2 * t + 1 by omega]
   apply Nat.div_eq_of_lt_le <;> nlinarith
 
-theorem dig_p : dig p k (far p p) = p - 6 := by
+theorem dig_p : dig p e (far p p) = p - 6 := by
   rw [dig_far]
   obtain ⟨n, hn, rfl, hD⟩ := h.params
   have hmod : (2 * n + 1) % (n + 2) = n - 1 := by
@@ -460,7 +478,7 @@ theorem dig_p : dig p k (far p p) = p - 6 := by
   rw [show t + 8 - 1 = t + 7 by omega, show 2 * (t + 8) + 1 - 6 = 2 * t + 11 by omega]
   apply Nat.div_eq_of_lt_le <;> nlinarith
 
-theorem dig_le (s : Fin (D p + 2)) : dig p k s ≤ p - 2 := by
+theorem dig_le (s : Fin (D p + 2)) : dig p e s ≤ p - 2 := by
   have hD := D_pos p
   have hp := h.two_le
   have hDp := h.D_lt_p
@@ -479,7 +497,7 @@ theorem dig_le (s : Fin (D p + 2)) : dig p k s ≤ p - 2 := by
   · rw [dig_nm1]; exact key _ h.cm1_lt
   · rw [dig_n0]; have := h.ge; omega
 
-theorem num_add_four_le (s : Fin (D p + 2)) : num p k s + 4 ≤ E p := by
+theorem num_add_four_le (s : Fin (D p + 2)) : num p e s + 4 ≤ E p := by
   have hD := D_pos p
   have hc := h.cm1_lt
   unfold E
@@ -493,7 +511,7 @@ theorem num_add_four_le (s : Fin (D p + 2)) : num p k s + 4 ≤ E p := by
   · rw [num_nm1]
     obtain ⟨n, hn, rfl, hD⟩ := h.params
     rw [hD] at hc ⊢
-    have : (cm1 (2 * n + 1) k + 1) * (2 * n + 1) ^ 3 ≤ (n + 2) * (2 * n + 1) ^ 3 :=
+    have : (cm1 (2 * n + 1) e + 1) * (2 * n + 1) ^ 3 ≤ (n + 2) * (2 * n + 1) ^ 3 :=
       Nat.mul_le_mul_right _ hc
     have hP : 2 * (2 * n + 1) + 4 ≤ (2 * n + 1) ^ 3 := by
       have h17 : 289 ≤ (2 * n + 1) ^ 2 := by nlinarith
@@ -507,12 +525,12 @@ theorem num_add_four_le (s : Fin (D p + 2)) : num p k s + 4 ≤ E p := by
 
 /-- Every edge satisfies `dig s · E + num s' = p · num s + δ` with `δ ≤ 2p`,
 and the digit condition `p·((m·num s) mod E) + mδ < (p−1)E` for `m ≤ n² − 2`. -/
-theorem edge_data {s s' : Fin (D p + 2)} (hs' : s' ∈ nxt p k s) :
-    ∃ δ, δ ≤ 2 * p ∧ dig p k s * E p + num p k s' = p * num p k s + δ ∧
+theorem edge_data {s s' : Fin (D p + 2)} (hs' : s' ∈ nxt p e s) :
+    ∃ δ, δ ≤ 2 * p ∧ dig p e s * E p + num p e s' = p * num p e s + δ ∧
       ∀ m, m ≤ ((p - 1) / 2) ^ 2 - 2 →
-        p * (m * num p k s % E p) + m * δ < (p - 1) * E p := by
+        p * (m * num p e s % E p) + m * δ < (p - 1) * E p := by
   have hD := D_pos p
-  rcases mem_nxt p k hs' with ⟨c, hc, rfl, rfl⟩ | ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+  rcases mem_nxt p e hs' with ⟨c, hc, rfl, rfl⟩ | ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
   · -- far → far
     refine ⟨0, by omega, ?_, ?_⟩
     · rw [dig_far, num_far, num_far, Nat.mod_eq_of_lt hc]
@@ -530,12 +548,12 @@ theorem edge_data {s s' : Fin (D p + 2)} (hs' : s' ∈ nxt p k s) :
     refine ⟨2 * p, le_rfl, ?_, ?_⟩
     · rw [dig_far, num_far, num_nm1, Nat.mod_eq_of_lt hc2]
       unfold E
-      have hdm := Nat.div_add_mod (cm2 p k * p) (D p)
+      have hdm := Nat.div_add_mod (cm2 p e * p) (D p)
       rw [hmul] at hdm
-      calc cm2 p k * p / D p * (p ^ 3 * D p) + (cm1 p k * p ^ 2 + 2) * p
-          = p ^ 3 * (D p * (cm2 p k * p / D p) + cm1 p k) + 2 * p := by ring
-        _ = p ^ 3 * (cm2 p k * p) + 2 * p := by rw [hdm]
-        _ = p * (cm2 p k * p ^ 3) + 2 * p := by ring
+      calc cm2 p e * p / D p * (p ^ 3 * D p) + (cm1 p e * p ^ 2 + 2) * p
+          = p ^ 3 * (D p * (cm2 p e * p / D p) + cm1 p e) + 2 * p := by ring
+        _ = p ^ 3 * (cm2 p e * p) + 2 * p := by rw [hdm]
+        _ = p * (cm2 p e * p ^ 3) + 2 * p := by ring
     · intro m hm
       rw [num_far, Nat.mod_eq_of_lt hc2]
       apply key_junction h
@@ -549,12 +567,12 @@ theorem edge_data {s s' : Fin (D p + 2)} (hs' : s' ∈ nxt p k s) :
     refine ⟨0, by omega, ?_, ?_⟩
     · rw [dig_nm1, num_nm1, num_n0]
       unfold E
-      have hdm := Nat.div_add_mod (cm1 p k * p) (D p)
+      have hdm := Nat.div_add_mod (cm1 p e * p) (D p)
       rw [hmul] at hdm
-      calc cm1 p k * p / D p * (p ^ 3 * D p) + (p + 2) * p ^ 2
-          = p ^ 3 * (D p * (cm1 p k * p / D p) + 1) + 2 * p ^ 2 := by ring
-        _ = p ^ 3 * (cm1 p k * p) + 2 * p ^ 2 := by rw [hdm]
-        _ = p * ((cm1 p k * p ^ 2 + 2) * p) + 0 := by ring
+      calc cm1 p e * p / D p * (p ^ 3 * D p) + (p + 2) * p ^ 2
+          = p ^ 3 * (D p * (cm1 p e * p / D p) + 1) + 2 * p ^ 2 := by ring
+        _ = p ^ 3 * (cm1 p e * p) + 2 * p ^ 2 := by rw [hdm]
+        _ = p * ((cm1 p e * p ^ 2 + 2) * p) + 0 := by ring
     · intro m hm
       rw [num_nm1, mul_zero, add_zero]
       exact key_nm1 h m hm
@@ -570,7 +588,7 @@ theorem edge_data {s s' : Fin (D p + 2)} (hs' : s' ∈ nxt p k s) :
 
 /-- The per-state bound with `δ = 0` (every state has an outgoing edge). -/
 theorem key_state (s : Fin (D p + 2)) (m : ℕ) (hm : m ≤ ((p - 1) / 2) ^ 2 - 2) :
-    p * (m * num p k s % E p) < (p - 1) * E p := by
+    p * (m * num p e s % E p) < (p - 1) * E p := by
   have hD := D_pos p
   rcases state_cases p s with ⟨c, hc, rfl⟩ | rfl | rfl
   · rw [num_far, Nat.mod_eq_of_lt hc]; exact key_far h c m hc
@@ -588,7 +606,7 @@ theorem four_m_le (m : ℕ) (hm : m ≤ ((p - 1) / 2) ^ 2 - 2) : 4 * m < p ^ 2 *
 
 /-- The residue plus `4m` stays below `E`: carry pinning with slack. -/
 theorem res_add_lt (s : Fin (D p + 2)) (m : ℕ) (hm : m ≤ ((p - 1) / 2) ^ 2 - 2) :
-    m * num p k s % E p + 4 * m < E p := by
+    m * num p e s % E p + 4 * m < E p := by
   have hk := key_state h s m hm
   have h4 := four_m_le h m hm
   have hp := h.p_pos
@@ -596,7 +614,7 @@ theorem res_add_lt (s : Fin (D p + 2)) (m : ℕ) (hm : m ≤ ((p - 1) / 2) ^ 2 -
   -- `p·r + 4pm < (p−1)E + pE/p·... `: multiply through by `p`
   by_contra hcon
   push Not at hcon
-  have : p * E p ≤ p * (m * num p k s % E p + 4 * m) := Nat.mul_le_mul_left _ hcon
+  have : p * E p ≤ p * (m * num p e s % E p + 4 * m) := Nat.mul_le_mul_left _ hcon
   have h5 : p * (4 * m) < E p := by rw [hE]; nlinarith
   have h6 : (p - 1) * E p + E p = p * E p := by
     rcases Nat.exists_eq_add_of_le hp with ⟨t, ht⟩; rw [ht]; simp; ring
@@ -608,130 +626,26 @@ end edges
 
 section valid
 
-variable {p k : ℕ} (h : Hyp p k)
+variable {p e : ℕ} (h : Hyp p e)
 include h
 
-theorem valid_digits : ∀ s, (cert p k).a s < p := fun s => dig_lt h s
+/-- **The family-I certificate is good** for `M = n² − 2`. -/
+theorem good : (cert p e).Good (((p - 1) / 2) ^ 2 - 2) where
+  E_pos := h.E_pos
+  σ_pos := by show 0 < 4; norm_num
+  dig_lt := fun s => dig_lt h s
+  num_le := fun s => num_add_four_le h s
+  edge := fun s s' hs' => by
+    obtain ⟨δ, hδ, hV, hk⟩ := edge_data h hs'
+    exact ⟨δ, by have := h.ge; show δ + 4 < 4 * p; omega, hV, hk⟩
+  res := fun s m hm => res_add_lt h s m hm
 
-theorem valid_intervals : ∀ s, 0 ≤ (cert p k).lo s ∧ (cert p k).lo s ≤ (cert p k).hi s ∧
-    (cert p k).hi s ≤ 1 := by
-  intro s
-  have hE : (0 : ℚ) < E p := by exact_mod_cast h.E_pos
-  simp only [cert]
-  refine ⟨by positivity, ?_, ?_⟩
-  · gcongr; linarith
-  · rw [div_le_one hE]
-    have := num_add_four_le h s
-    exact_mod_cast this
+theorem valid : (cert p e).toCert.Valid (((p - 1) / 2) ^ 2 - 2) [p - 1] :=
+  NumCert.valid h.two_le (good h)
 
-theorem valid_edges : ∀ s, ∀ s' ∈ (cert p k).next s,
-    (cert p k).lo s ≤ ((cert p k).a s + (cert p k).lo s') / p ∧
-    ((cert p k).a s + (cert p k).hi s') / p ≤ (cert p k).hi s := by
-  intro s s' hs'
-  obtain ⟨δ, hδ, hV, _⟩ := edge_data h hs'
-  have hE : (0 : ℚ) < E p := by exact_mod_cast h.E_pos
-  have hp : (0 : ℚ) < p := by exact_mod_cast h.p_pos
-  have hp2 : (2 : ℚ) ≤ p := by exact_mod_cast h.two_le
-  have hVQ : (dig p k s : ℚ) * E p + num p k s' = p * num p k s + δ := by exact_mod_cast hV
-  have hδQ : (δ : ℚ) ≤ 2 * p := by exact_mod_cast hδ
-  simp only [cert]
-  have h1 : (dig p k s : ℚ) + (num p k s' : ℚ) / E p = ((p : ℚ) * num p k s + δ) / E p := by
-    rw [← hVQ]; field_simp
-  have h2 : (dig p k s : ℚ) + ((num p k s' : ℚ) + 4) / E p = ((p : ℚ) * num p k s + δ + 4) / E p := by
-    rw [← hVQ]; field_simp; ring
-  constructor
-  · rw [le_div_iff₀ hp, h1, div_mul_eq_mul_div, div_le_div_iff_of_pos_right hE]
-    have : (0 : ℚ) ≤ δ := by positivity
-    nlinarith
-  · rw [div_le_iff₀ hp, h2, div_mul_eq_mul_div, div_le_div_iff_of_pos_right hE]
-    nlinarith
-
-/-- No edge is `hi`-extremal: the slack `4/E` is never exhausted (`δ ≤ 2p < 4p − 4`). -/
-theorem not_hiMax_of_edge {s s' : Fin (D p + 2)} (hs' : s' ∈ nxt p k s) :
-    ¬ (cert p k).HiMax s s' := by
-  intro hmax
-  obtain ⟨δ, hδ, hV, _⟩ := edge_data h hs'
-  have hE : (0 : ℚ) < E p := by exact_mod_cast h.E_pos
-  have hp : (0 : ℚ) < p := by exact_mod_cast h.p_pos
-  have hp17 : (17 : ℚ) ≤ p := by exact_mod_cast h.ge
-  have hVQ : (dig p k s : ℚ) * E p + num p k s' = p * num p k s + δ := by exact_mod_cast hV
-  have hδQ : (δ : ℚ) ≤ 2 * p := by exact_mod_cast hδ
-  have h2 : (dig p k s : ℚ) + ((num p k s' : ℚ) + 4) / E p = ((p : ℚ) * num p k s + δ + 4) / E p := by
-    rw [← hVQ]; field_simp; ring
-  unfold EscapeCert.HiMax at hmax
-  simp only [cert] at hmax
-  rw [h2, div_div, div_eq_div_iff (by positivity) (by positivity)] at hmax
-  nlinarith [mul_pos hE (by linarith : (0 : ℚ) < p - 2)]
-
-theorem valid_carry : ∀ m, m ≤ ((p - 1) / 2) ^ 2 - 2 → ∀ s,
-    ((cert p k).c s m : ℚ) ≤ m * (cert p k).lo s ∧
-    m * (cert p k).hi s ≤ (cert p k).c s m + 1 := by
-  intro m hm s
-  have hE : (0 : ℚ) < E p := by exact_mod_cast h.E_pos
-  have hEn := h.E_pos
-  have hres := res_add_lt h s m hm
-  have hdm := Nat.div_add_mod (m * num p k s) (E p)
-  simp only [cert]
-  constructor
-  · calc ((m * num p k s / E p : ℕ) : ℚ) ≤ ((m * num p k s : ℕ) : ℚ) / (E p : ℚ) := Nat.cast_div_le
-      _ = m * ((num p k s : ℚ) / E p) := by push_cast; ring
-  · have hN : m * (num p k s + 4) ≤ (m * num p k s / E p + 1) * E p := by nlinarith
-    rw [mul_div_assoc', div_le_iff₀ hE]
-    exact_mod_cast hN
-
-/-- The channel digit on an edge, as a single quotient. -/
-theorem chDigit_eq {s s' : Fin (D p + 2)} (hs' : s' ∈ nxt p k s) (m : ℕ)
-    (hm : m ≤ ((p - 1) / 2) ^ 2 - 2) :
-    ∃ x, x < p - 1 ∧
-      m * dig p k s + m * num p k s' / E p = x + p * (m * num p k s / E p) ∧
-      (cert p k).chDigit m s s' = x := by
-  obtain ⟨δ, hδ, hV, hkey⟩ := edge_data h hs'
-  have hEn := h.E_pos
-  have hp := h.p_pos
-  have hdm := Nat.div_add_mod (m * num p k s) (E p)
-  have hk := hkey m hm
-  set c := m * num p k s / E p with hc
-  set r := m * num p k s % E p with hr
-  have hsplit : m * (dig p k s * E p + num p k s') = (p * r + m * δ) + (p * c) * E p := by
-    rw [hV]
-    calc m * (p * num p k s + δ) = p * (m * num p k s) + m * δ := by ring
-      _ = p * (E p * c + r) + m * δ := by rw [hdm]
-      _ = (p * r + m * δ) + (p * c) * E p := by ring
-  have hX : m * dig p k s + m * num p k s' / E p = (p * r + m * δ) / E p + p * c := by
-    rw [← Nat.mul_add_div hEn, show E p * (m * dig p k s) + m * num p k s'
-      = m * (dig p k s * E p + num p k s') by ring, hsplit, Nat.add_mul_div_right _ _ hEn]
-  have hx : (p * r + m * δ) / E p < p - 1 := by
-    rw [Nat.div_lt_iff_lt_mul hEn]; exact hk
-  refine ⟨(p * r + m * δ) / E p, hx, hX, ?_⟩
-  unfold EscapeCert.chDigit
-  simp only [cert]
-  rw [hX, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt (by omega)]
-
-theorem valid_recursion : ∀ m, m ≤ ((p - 1) / 2) ^ 2 - 2 → ∀ s, ∀ s' ∈ (cert p k).next s,
-    (cert p k).c s m = (m * (cert p k).a s + (cert p k).c s' m) / p := by
-  intro m hm s s' hs'
-  obtain ⟨x, hx, hX, _⟩ := chDigit_eq h hs' m hm
-  have hp := h.p_pos
-  simp only [cert]
-  rw [hX, Nat.add_mul_div_left _ _ hp, Nat.div_eq_of_lt (show x < p by omega), zero_add]
-
-theorem valid_block : ∀ m, 1 ≤ m → m ≤ ((p - 1) / 2) ^ 2 - 2 →
-    ∀ σ : Fin ([p - 1].length + 1) → Fin (cert p k).n,
-    (∀ i : Fin [p - 1].length, σ i.succ ∈ (cert p k).next (σ i.castSucc)) →
-    List.ofFn (fun i : Fin [p - 1].length =>
-      (cert p k).chDigit m (σ i.castSucc) (σ i.succ)) ≠ [p - 1] := by
-  intro m _ hm σ hσ
-  have hedge : σ 1 ∈ nxt p k (σ 0) := hσ 0
-  obtain ⟨x, hx, _, hch⟩ := chDigit_eq h hedge m hm
-  simp only [List.length_singleton, List.ofFn_succ, List.ofFn_zero, ne_eq, List.cons.injEq,
-    and_true]
-  show ¬ (cert p k).chDigit m (σ 0) (σ 1) = p - 1
-  rw [hch]; omega
-
-/-- **Validity of the family-I certificate** for `M = n² − 2`. -/
-theorem valid : (cert p k).Valid (((p - 1) / 2) ^ 2 - 2) [p - 1] :=
-  ⟨valid_digits h, valid_intervals h, valid_edges h, valid_carry h, valid_recursion h,
-    valid_block h⟩
+theorem not_hiMax_of_edge {s s' : Fin (D p + 2)} (hs' : s' ∈ nxt p e s) :
+    ¬ (cert p e).toCert.HiMax s s' :=
+  NumCert.not_hiMax_of_edge h.two_le (good h) hs'
 
 end valid
 
@@ -740,7 +654,7 @@ end valid
 /-- The junction walk: `F_{c₋₂} → N₋₁ → N₀ → F_{p^k} → F_{p^(k+1)} → ⋯`, closing after
 `3k + 1` steps. -/
 def walkA (p k : ℕ) (i : ℕ) : Fin (D p + 2) :=
-  if i = 0 then far p (cm2 p k) else if i = 1 then nm1 p else if i = 2 then n0 p
+  if i = 0 then far p (cm2 p (2 * k)) else if i = 1 then nm1 p else if i = 2 then n0 p
   else far p (p ^ (k + (i - 3)))
 
 /-- The pure far cycle from `F_{c₋₂}`, period `2k`. -/
@@ -748,35 +662,9 @@ def walkB (p k : ℕ) (i : ℕ) : Fin (D p + 2) := far p (p ^ (2 * k - 2 + i))
 
 section walks
 
-variable {p k : ℕ} (h : Hyp p k)
+variable {p k : ℕ} (h : HypI p k)
 
-/-- Periodic extension of a closed sequence is a closed walk. -/
-theorem isClosedWalk_periodic {g : ℕ} {C : EscapeCert g} (A : ℕ → Fin C.n) (ℓ : ℕ)
-    (hℓ : 0 < ℓ) (s₀ : Fin C.n) (h0 : A 0 = s₀)
-    (hstep : ∀ i, i + 1 < ℓ → A (i + 1) ∈ C.next (A i)) (hclose : s₀ ∈ C.next (A (ℓ - 1)))
-    (L N : ℕ) (hL : L = N * ℓ) (hN : 0 < N) (hL0 : 0 < L) :
-    C.IsClosedWalk L s₀ hL0 (fun i : Fin L => A (i.1 % ℓ)) := by
-  refine ⟨by simp [h0], ?_, ?_⟩
-  · intro j hj
-    simp only
-    have hmd := Nat.mod_add_div j.1 ℓ
-    have hlt := Nat.mod_lt j.1 hℓ
-    rcases Nat.lt_or_ge (j.1 % ℓ + 1) ℓ with hin | hout
-    · rw [show j.1 + 1 = (j.1 % ℓ + 1) + ℓ * (j.1 / ℓ) by omega, Nat.add_mul_mod_self_left,
-        Nat.mod_eq_of_lt hin]
-      exact hstep _ hin
-    · have he : j.1 % ℓ = ℓ - 1 := by omega
-      rw [show j.1 + 1 = ℓ * (j.1 / ℓ + 1) by rw [Nat.mul_add, mul_one]; omega,
-        Nat.mul_mod_right, h0, he]
-      exact hclose
-  · simp only
-    have h1 : ℓ * (N - 1) = N * ℓ - ℓ := by rw [Nat.mul_sub_one, mul_comm]
-    have h2 : ℓ ≤ N * ℓ := Nat.le_mul_of_pos_left _ hN
-    rw [show L - 1 = (ℓ - 1) + ℓ * (N - 1) by omega, Nat.add_mul_mod_self_left,
-      Nat.mod_eq_of_lt (by omega)]
-    exact hclose
-
-theorem walkA_zero : walkA p k 0 = far p (cm2 p k) := by simp [walkA]
+theorem walkA_zero : walkA p k 0 = far p (cm2 p (2 * k)) := by simp [walkA]
 theorem walkA_one : walkA p k 1 = nm1 p := by simp [walkA]
 theorem walkA_two : walkA p k 2 = n0 p := by simp [walkA]
 theorem walkA_ge {p k : ℕ} (i : ℕ) (hi : 3 ≤ i) : walkA p k i = far p (p ^ (k + (i - 3))) := by
@@ -790,15 +678,16 @@ theorem far_pow_k : far p (p ^ k) = far p (D p - 1) := by
   have := D_pos p
   apply Fin.ext; rw [far_val, far_val, h.pow, Nat.mod_eq_of_lt (by omega)]
 
-theorem far_cm2 : far p (cm2 p k) = far p (p ^ (2 * k - 2)) := by
+omit h in
+theorem far_cm2 : far p (cm2 p (2 * k)) = far p (p ^ (2 * k - 2)) := by
   unfold cm2; exact far_mod p _
 
 theorem walkA_closed :
-    walkA p k 0 = far p (cm2 p k) ∧
-    (∀ i, i + 1 < 3 * k + 1 → walkA p k (i + 1) ∈ nxt p k (walkA p k i)) ∧
-    far p (cm2 p k) ∈ nxt p k (walkA p k (3 * k + 1 - 1)) := by
+    walkA p k 0 = far p (cm2 p (2 * k)) ∧
+    (∀ i, i + 1 < 3 * k + 1 → walkA p k (i + 1) ∈ nxt p (2 * k) (walkA p k i)) ∧
+    far p (cm2 p (2 * k)) ∈ nxt p (2 * k) (walkA p k (3 * k + 1 - 1)) := by
   have hk := h.k_pos
-  have hc2 := h.cm2_lt
+  have hc2 := h.toHyp.cm2_lt
   refine ⟨walkA_zero, ?_, ?_⟩
   · intro i hi
     rcases i with _ | _ | _ | i
@@ -809,65 +698,65 @@ theorem walkA_closed :
       rw [e]; simp
     · rw [walkA_ge (i + 3) (by omega), walkA_ge (i + 3 + 1) (by omega),
         show i + 3 + 1 - 3 = (i + 3 - 3) + 1 by omega, ← add_assoc, far_pow_succ]
-      exact far_mul_mem p k _
+      exact far_mul_mem p (2 * k) _
   · rw [show 3 * k + 1 - 1 = 3 * k by omega, walkA_ge (3 * k) (by omega)]
-    have : far p (cm2 p k) = far p (p ^ (k + (3 * k - 3)) * p) := by
-      rw [far_cm2 h, ← pow_succ]
+    have : far p (cm2 p (2 * k)) = far p (p ^ (k + (3 * k - 3)) * p) := by
+      rw [far_cm2 (p := p) (k := k), ← pow_succ]
       apply Fin.ext
       rw [far_val, far_val, show k + (3 * k - 3) + 1 = (2 * k - 2) + 2 * k by omega,
-        h.pow_add_two_k]
-    rw [this]; exact far_mul_mem p k _
+        h.toHyp.pow_add_e]
+    rw [this]; exact far_mul_mem p (2 * k) _
 
 theorem walkB_closed (L : ℕ) (hL : L = (3 * k + 1) * (2 * k)) :
-    walkB p k 0 = far p (cm2 p k) ∧
-    (∀ i, walkB p k (i + 1) ∈ nxt p k (walkB p k i)) ∧
-    far p (cm2 p k) ∈ nxt p k (walkB p k (L - 1)) := by
+    walkB p k 0 = far p (cm2 p (2 * k)) ∧
+    (∀ i, walkB p k (i + 1) ∈ nxt p (2 * k) (walkB p k i)) ∧
+    far p (cm2 p (2 * k)) ∈ nxt p (2 * k) (walkB p k (L - 1)) := by
   have hk := h.k_pos
   refine ⟨?_, ?_, ?_⟩
-  · unfold walkB; rw [add_zero, far_cm2 h]
-  · intro i; unfold walkB; rw [← add_assoc, far_pow_succ]; exact far_mul_mem p k _
+  · unfold walkB; rw [add_zero, far_cm2 (p := p) (k := k)]
+  · intro i; unfold walkB; rw [← add_assoc, far_pow_succ]; exact far_mul_mem p (2 * k) _
   · unfold walkB
     have hL1 : 1 ≤ L := by rw [hL]; nlinarith
-    have : far p (cm2 p k) = far p (p ^ (2 * k - 2 + (L - 1)) * p) := by
-      rw [far_cm2 h, ← pow_succ]
+    have : far p (cm2 p (2 * k)) = far p (p ^ (2 * k - 2 + (L - 1)) * p) := by
+      rw [far_cm2 (p := p) (k := k), ← pow_succ]
       apply Fin.ext
       rw [far_val, far_val, show 2 * k - 2 + (L - 1) + 1 = (2 * k - 2) + (3 * k + 1) * (2 * k) by omega,
-        h.pow_add_mul_two_k]
-    rw [this]; exact far_mul_mem p k _
+        h.toHyp.pow_add_mul_e]
+    rw [this]; exact far_mul_mem p (2 * k) _
 
 /-- The witness pair: `u` = the junction walk repeated `2k` times, `v` = the far cycle. -/
 theorem witness (L : ℕ) (hL : L = (3 * k + 1) * (2 * k)) (hL0 : 0 < L) :
-    (cert p k).WitnessPair L (fun i : Fin L => walkA p k (i.1 % (3 * k + 1)))
-      (fun i : Fin L => walkB p k i.1) hL0 (far p (cm2 p k)) := by
+    (cert p (2 * k)).toCert.WitnessPair L (fun i : Fin L => walkA p k (i.1 % (3 * k + 1)))
+      (fun i : Fin L => walkB p k i.1) hL0 (far p (cm2 p (2 * k))) := by
   have hk := h.k_pos
   have hp := h.ge
   have hL8 : 8 ≤ L := by rw [hL]; nlinarith
   obtain ⟨hA0, hAstep, hAclose⟩ := walkA_closed h
   obtain ⟨hB0, hBstep, hBclose⟩ := walkB_closed h L hL
   refine ⟨?_, ⟨hB0, fun j _ => hBstep j.1, hBclose⟩, ?_, ?_, ?_, ?_, ?_⟩
-  · exact isClosedWalk_periodic (C := cert p k) (walkA p k) (3 * k + 1) (by omega) _ hA0 hAstep
+  · exact EscapeCert.isClosedWalk_periodic (C := (cert p (2 * k)).toCert) (walkA p k) (3 * k + 1) (by omega) _ hA0 hAstep
       hAclose L (2 * k) (by rw [hL, mul_comm]) (by omega) hL0
   · refine ⟨⟨0, by omega⟩, ?_⟩
-    show dig p k (walkA p k (0 % (3 * k + 1))) ≠ p - 1
-    have := dig_le h (walkA p k (0 % (3 * k + 1))); omega
+    show dig p (2 * k) (walkA p k (0 % (3 * k + 1))) ≠ p - 1
+    have := dig_le h.toHyp (walkA p k (0 % (3 * k + 1))); omega
   · refine ⟨⟨0, by omega⟩, ?_⟩
-    show dig p k (walkB p k 0) ≠ p - 1
-    have := dig_le h (walkB p k 0); omega
+    show dig p (2 * k) (walkB p k 0) ≠ p - 1
+    have := dig_le h.toHyp (walkB p k 0); omega
   · refine ⟨⟨2, by omega⟩, show 2 + 1 < L by omega, ?_⟩
     simp only [Nat.mod_eq_of_lt (show 2 < 3 * k + 1 by omega),
       Nat.mod_eq_of_lt (show 2 + 1 < 3 * k + 1 by omega)]
-    exact not_hiMax_of_edge h (hAstep 2 (by omega))
+    exact not_hiMax_of_edge h.toHyp (hAstep 2 (by omega))
   · refine ⟨⟨0, by omega⟩, show 0 + 1 < L by omega, ?_⟩
-    exact not_hiMax_of_edge h (hBstep 0)
+    exact not_hiMax_of_edge h.toHyp (hBstep 0)
   · refine ⟨⟨3, by omega⟩, ?_⟩
-    simp only [cert, Nat.mod_eq_of_lt (show 3 < 3 * k + 1 by omega)]
+    simp only [NumCert.toCert, cert, Nat.mod_eq_of_lt (show 3 < 3 * k + 1 by omega)]
     rw [walkA_ge 3 le_rfl]
     have e : far p (p ^ (k + (3 - 3))) = far p (D p - 1) := far_pow_k h
-    rw [e, dig_top h]
+    rw [e, dig_top h.toHyp]
     have hv : walkB p k 3 = far p p := by
       unfold walkB; apply Fin.ext
-      rw [far_val, far_val, show 2 * k - 2 + 3 = 1 + 2 * k by omega, h.pow_add_two_k, pow_one]
-    rw [hv, dig_p h]; omega
+      rw [far_val, far_val, show 2 * k - 2 + 3 = 1 + 2 * k by omega, h.toHyp.pow_add_e, pow_one]
+    rw [hv, dig_p h.toHyp]; omega
 
 end walks
 
@@ -879,13 +768,13 @@ or not) and every `k` with `p^k ≡ −1 (mod (p+3)/2)`, there is an irrational
 in `m·α`.  The certificate is the one-junction cycle over the background
 `1/D`, `D = (p+3)/2`; the value `⌊p/2⌋² − 2` matches the exact census to
 within `2` at every such prime (`docs/mahler-exact-values-2026-09-07.md`). -/
-theorem mahler_lower_bound_family_I (p k : ℕ) (h : Hyp p k) :
+theorem mahler_lower_bound_family_I (p k : ℕ) (h : HypI p k) :
     ∃ α : ℝ, Irrational α ∧ ∀ m : ℕ, 1 ≤ m → m ≤ ((p - 1) / 2) ^ 2 - 2 →
       ∃ N, ∀ n, N ≤ n → ¬ OccursAt p ((m : ℝ) * α) [p - 1] n := by
   have hk := h.k_pos
   have hL0 : 0 < (3 * k + 1) * (2 * k) := by positivity
-  exact (cert p k).escape_mahler_lower_bound h.two_le _ [p - 1] (valid h) _ _ _ hL0 _
-    (witness h _ rfl hL0)
+  exact (cert p (2 * k)).toCert.escape_mahler_lower_bound h.toHyp.two_le _ [p - 1] (valid h.toHyp)
+    _ _ _ hL0 _ (witness h _ rfl hL0)
 
 /-- The prime-facing form: for a prime `p ≥ 17` with `−1 ∈ ⟨p⟩ (mod (p+3)/2)`,
 `M(p,1) ≥ ⌊p/2⌋² − 1`. -/

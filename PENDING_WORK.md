@@ -1,5 +1,47 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🎯 CRUX CLOSED: `M(p,1) > (⌊p/2⌋² − 2)/3` for EVERY prime `p ≥ 17` (2026-09-08, grind lap 2)
+
+**Landed (trust triple, no sorry):**
+* `src/NormalNumbers/MahlerNumCert.lean` — generic **numerator certificate** layer:
+  an `EscapeCert` with tails `[num/E, (num+σ)/E]`, carries `⌊m·num/E⌋`; `NumCert.Good`
+  (integer data: `dig < p`, `num + σ ≤ E`, per-edge `dig·E + num' = p·num + δ` with
+  `δ + σ < σp` and `p·((m·num) mod E) + mδ < (p−1)E`, per-state `(m·num) mod E + σm < E`)
+  ⟹ `Valid M [p−1]`; no edge is `hi`-extremal (`not_hiMax_of_edge`);
+  `EscapeCert.isClosedWalk_periodic`.
+* `MahlerFamilyI.lean` refactored onto it; base hypothesis is now `Hyp p e`
+  (`p` odd `≥ 17`, `p^e ≡ 1 (mod D)`, `e ≥ 2`) and the `−1` condition (`HypI`) is
+  only on the family-I walk.
+* **`MahlerFamilyII.lean`** — the two-junction cycle `1 →(1,2) −1 ⇝ 3c₋₂ →(3,6) −3 ⇝ c₋₂`:
+  junction 2 is the family-I junction scaled by 3 (`T₀' = 3/D + 6/(pD)`, digit `5`,
+  `δ = 6p`, slack `8/E`), so its digit conditions are the family-I keys at channel `3m`
+  (`res_nm1'`).  `mahler_lower_bound_family_II (h : Hyp p e) (he : 3 ≤ e)`: bound
+  `(n² − 2)/3`, `n = ⌊p/2⌋`.  **`mahler_lower_bound_prime_family_II (hp : p.Prime)
+  (h17 : 17 ≤ p)`**: `e = 3·φ(D)` by Euler — the uniform `M(p,1) ≥ p²/12 − O(p)` on all
+  primes `≥ 17`, no per-prime input.  Instance `M(29,1) ≥ 65` (family I does not apply
+  at 29).
+* Measured (`experiments/mahler_two_junction_scan.py`): the exact two-junction bottleneck
+  over `1/D` at the uncovered primes is `0.33 … 0.68 · Q²`, always with the `(3,6)` edge;
+  so `1/3` is the natural constant of this construction, not an artifact of the `3m` reuse.
+
+**State of the Mahler crux.**  Upper: `M(p,1) ≤ (p²+6p+1)/4` (`MahlerQuarter.lean`).
+Lower, uniform: `M(p,1) ≥ ⌊p/2⌋²/3 − 1` all primes `≥ 17`; `≥ ⌊p/2⌋² − 1` when
+`−1 ∈ ⟨−3⟩ (mod (p+3)/2)` (29 % of primes).  Census says `M(p,1) = ⌊p/2⌋² − {0,1,4}`.
+The gap on the general prime is the factor `3`.
+
+**Next attack (closing the factor 3 on the complementary primes), in order.**
+0. A junction from the coset of `−1` back to the coset of `1` with bottleneck `≈ Q²`
+   rather than `Q²/3`: scan `(c, j)` pairs with `c ∈ −⟨−3⟩` and `(cp + j) mod D ∈ ⟨−3⟩`
+   for the max safe `M` (generalize `mahler_two_junction_scan.py` to report the best
+   return edge per prime, not just the bottleneck).  The scan's non-`(3,6)` winners
+   (`(17,3)` at 59: `0.665`; `(3,3)` at 67: `0.675`; `(11,4)` at 73: `0.514`) suggest
+   `j = 3, 4` junctions from other residues reach `2/3·Q²`; find the uniform pattern.
+1. Different backgrounds `1/D'` for the complementary primes (a `D'` with `−1 ∈ ⟨p⟩`
+   mod `D'`): the one-junction template gives `Q² − O(Q)` whenever the orbit closes;
+   the family-I file is written so only `num`/`dig`/keys/walks change.
+2. `M(p,1) ≥ ⌊p/2⌋² − 4` exactly on all primes is the census-matching target; the
+   engine (`NumCert.Good`) needs nothing new for it.
+
 ## 🎯 CRUX: family I is a THEOREM — `M(p,1) > ⌊p/2⌋² − 2` uniformly (2026-09-08, grind lap)
 
 **Landed: `src/NormalNumbers/MahlerFamilyI.lean` (new, trust triple, no sorry).**

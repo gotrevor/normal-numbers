@@ -2,8 +2,8 @@
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter).** · **Build**: 🟢 green (8878 jobs) · **Updated**:
-review lap · 2026-09-08 · `wip/adder-tower-c9`
+Mahler multiplier chapter).** · **Build**: 🟢 green (8882 jobs) · **Updated**:
+grind lap · 2026-09-08 · `wip/adder-tower-c9`
 
 ## Where it stands
 
@@ -17,13 +17,22 @@ not axiom debt but *new mathematics*: the conjecture graph toward
 holds both sides of the bound.  The Mahler sandwich is now
 `t(gᵏ−1) ≤ M(g,k) < g^(k+1)` for every `t < g` dividing a power of `g`, and
 the constant `1` on the upper side is SHARP: `sup_g M(g,k)/g^(k+1) = 1`
-(`MahlerLowerBoundSmooth.lean`, trust triple).  The single open crux is the
-**general** prime lower bound `M(p,1) ≥ c·p²` — true for every prime, not one
-more per-prime certificate; the 2026-09-08 review lap moved the work into the
-adder form (`MahlerBurstDigit.lean`) and proved the first uniform law of the
-extremal family, `B ≡ −4 (mod p)`.
+(`MahlerLowerBoundSmooth.lean`, trust triple).  The **general prime lower bound is
+now a theorem**: `M(p,1) > (⌊p/2⌋² − 2)/3` for every prime `p ≥ 17`
+(`MahlerFamilyII.lean`, `mahler_lower_bound_prime_family_II`, trust triple), and
+`M(p,1) > ⌊p/2⌋² − 2` when `−1 ∈ ⟨−3⟩ (mod (p+3)/2)` (`MahlerFamilyI.lean`).  With
+`M(p,1) ≤ (p²+6p+1)/4` the prime constant is pinned to a factor `3`; the open
+work is closing that factor on the complementary primes.
 
 ## What's happened (newest first)
+
+- **2026-09-08 (grind lap 2)** — **The uniform prime lower bound.**
+  `MahlerNumCert.lean` (generic numerator-certificate layer over
+  `AdderEscapeCert`), `MahlerFamilyI.lean` (one junction over `1/D`,
+  `D = (p+3)/2`: `M(p,1) > ⌊p/2⌋² − 2` when `p^k ≡ −1 (mod D)`; instances
+  `M(41,1) ≥ 399`, `M(199,1) ≥ 9799`), `MahlerFamilyII.lean` (second junction =
+  the first scaled by `3`: `M(p,1) > (⌊p/2⌋² − 2)/3` for **every** prime `p ≥ 17`,
+  via Euler `e = 3φ(D)`).  All trust triple, no `sorry`.
 
 - **2026-09-08 (REVIEW LAP)** — **The prime lower side reformulated as a long
   addition; the first uniform law proved.**  `MahlerBurstDigit.lean` (new,
@@ -295,6 +304,14 @@ monotone squeeze (transcribe `ae_orbit_freq`), (6) graft → image-Khinchin head
   proved MODULO the crux `sorry`; depends on `sorryAx` until the schedule closes.
 
 ## What's happened (newest first)
+
+- **2026-09-08 (grind lap 2)** — **The uniform prime lower bound.**
+  `MahlerNumCert.lean` (generic numerator-certificate layer over
+  `AdderEscapeCert`), `MahlerFamilyI.lean` (one junction over `1/D`,
+  `D = (p+3)/2`: `M(p,1) > ⌊p/2⌋² − 2` when `p^k ≡ −1 (mod D)`; instances
+  `M(41,1) ≥ 399`, `M(199,1) ≥ 9799`), `MahlerFamilyII.lean` (second junction =
+  the first scaled by `3`: `M(p,1) > (⌊p/2⌋² − 2)/3` for **every** prime `p ≥ 17`,
+  via Euler `e = 3φ(D)`).  All trust triple, no `sorry`.
 
 - 2026-08-25 (review lap #3): **B6-affine DONE + EXCEEDED; direction re-pointed at the
   ONE open crux (image-Khinchin's log-tail SLLN); decorrelation core landed.** Inventory
