@@ -65,6 +65,25 @@ exact at `5, 7, 13, 19, 23, 31` and one short at `11, 17`; `59 ≥ 840`.
 The general prime witness thus needs at least the pair of backgrounds
 `1/Q`, `1/(Q+1)` — which is precisely the two-shadow mixing of (a).
 
+**Escape engine COMPLETE as a general theorem (lap 6).**
+`AdderEscapeCert.lean`: `EscapeCert g` (states, digits, successor lists,
+rational tail intervals `[lo, hi]`, per-channel carries), `Valid C M w`
+(decidable), and `escape_mahler_lower_bound`: a valid certificate plus a
+`WitnessPair` (two equal-length closed walks from a common state, each with a
+digit `≠ g−1` and an internal non-`hi`-extremal edge, differing in a digit)
+gives an irrational `α` with block `w` NEVER occurring in `m·α` for
+`1 ≤ m ≤ M`.  Bricks: `tail_mem` (closed intervals, limit of the
+`g^(−k)`-approximations), `tail_lt_hi` (strictness from one non-extremal
+later edge — this is what excludes the rational endpoints where `m·x` is an
+integer), `carry_eq`, `digit_mul_eq`, `not_occursAt_of_path`, mixing by
+`Set ℕ` and irrationality by cardinality.  Trust triple.
+**Next brick**: the `(7,2)` instance — generate the 10-state certificate
+(`experiments/mahler_scc_cycles.py 7 2 175 00`), intervals as the SCC's
+least/greatest fixed points (rationals), carries per channel, a witness pair
+from the cycles `15·15` and `5412`; `decide +kernel` on `Valid` and
+`WitnessPair`.  The same engine gives EXACT `k = 1` values at `p = 11, 17`
+(where bursts are one short) — and at any prime, from its SCC.
+
 **Next attack.**  (a) Two-shadow mixing as a PROVABLE family: `α` whose
 orbit alternates blocks of `r/Q` and `r'/(Q+1)` expansions; the transition
 digit sums need the affine principle with both residues.  Instrument first:

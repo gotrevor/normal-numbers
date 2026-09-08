@@ -2,7 +2,7 @@
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter).** · **Build**: 🟢 green (8876 jobs) · **Updated**:
+Mahler multiplier chapter).** · **Build**: 🟢 green (8877 jobs) · **Updated**:
 autonomous lap · 2026-09-08 · `wip/adder-tower-c9`
 
 ## Where it stands
@@ -21,6 +21,12 @@ the constant `1` on the upper side is SHARP: `sup_g M(g,k)/g^(k+1) = 1`
 
 ## What's happened (newest first)
 
+- **2026-09-08 (autonomous, lap 6)** — **The escape engine is a theorem.**
+  `AdderEscapeCert.lean`: a decidable automaton certificate (tail intervals,
+  per-channel carries, block-free channel digits) plus a witness pair of closed
+  walks gives an irrational `α` with the block never occurring in `m·α`,
+  `1 ≤ m ≤ M` (`escape_mahler_lower_bound`, trust triple).  Next brick: the
+  `(7,2)` instance `M(7,2) ≥ 176`, and exact `k = 1` values at `11, 17`.
 - **2026-09-08 (autonomous, laps 3–5)** — **Prime lower side: five new
   certificates, the burst law, and period-2 backgrounds.**
   `MahlerPrimeLowerBound.lean`: `M(17,1) ≥ 63`, `M(31,1) ≥ 224` (exact),

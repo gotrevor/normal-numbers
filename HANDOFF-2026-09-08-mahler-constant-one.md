@@ -44,6 +44,13 @@ via `digitOf_pow_digitAt`; `mahler_lower_bound_base19` (`≥ 80`, census exact)
 from background `1/10 = 1/(Q+1)`.  Prime table now exact at `5, 7, 13, 19, 23,
 31`, one short at `11, 17`.  Working tree: only the three untracked HOST files.
 
+## Lap 6: the escape engine is a theorem
+
+`AdderEscapeCert.lean` (new, trust triple): `escape_mahler_lower_bound` — a
+decidable automaton certificate (`Valid`) + `WitnessPair` ⟹ Mahler lower
+bound, block never occurring.  Next brick is the `(7,2)` instance, see
+`PENDING_WORK.md` §top.
+
 ## Next lap — `PENDING_WORK.md` §top
 
 1. Prime-base LOWER side, general `p`: `M(p,1) ≥ p²/4 − O(p)` from the
