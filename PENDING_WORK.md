@@ -1,5 +1,94 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🎯 REVIEW LAP 2026-09-08 (fresh-mind): the factor `3` is a DRIFT, and it is NOT intrinsic
+
+**What the review established (all numbers from `experiments/mahler_onejunction_scan.py`,
+which checks `NumCert.Good` literally — `full=True` column).**
+
+### 1. The one-junction certificate, in closed form
+
+Every `MahlerFamilyI`-shaped certificate is fixed by `(D, K, L, σ, c₀, b)`:
+
+    E = p^(K+L)·D,  far state F_c: num = c·p^(K+L)  (c in the ⟨p⟩-orbit of c₀ mod D)
+    near chain t = 0..K−1: num = (c₀p^(t+1) mod D)·p^(K+L) + b·p^(t+L)
+    jump F_{c₀} → near(0) with δ = b·p^L        (needs δ + σ < σp)
+    landing near(K−1) → F_{(c₀p^(K+1) + b) mod D}
+
+Far states are FREE (only `D < p` and `σm < p^(K+L)`), so validity is exactly the
+near chain.  Writing `c₂ = c₀p² mod D` and `bm = pv + w` (`w = bm mod p`), the two
+binding conditions of the family-I shape (`K=2, L=1`) are
+
+    (A)   m·c₁ ≡ −1 (mod D)              ⟹  b·m < p·(p−D)          [state N₋₁]
+    (B)   m·c₂ + v ≡ −1 (mod D)          ⟹  w < p − D              [state N₀]
+
+and (B) linearises: the trigger is `w ≡ w₀ + g·v (mod bD)` with
+
+    **w₀ = −b·c₂⁻¹ (mod bD),   g = w₀ − p (mod bD)**  — the DRIFT.
+
+The bad zone for `w` is `[p−D, p)`, of length `D`; the safe zone has length `(b−1)D`.
+So the run is `≈ (b−1)D/|g|` and
+
+    **M ≈ min( p(p−D)/b ,  p(b−1)D/(b|g|) ),   optimal at D = pg/(g+b−1),
+      giving  M/⌊p/2⌋² ≈ 4(b−1)/(b(g+b−1)).**
+
+Verified against the exhaustive scan: **every winner at every prime `17 ≤ p ≤ 127`
+has drift `g = 1`**, and `M` matches `min(A,B)` to within `D`.
+
+### 2. What the drift says about families I and II
+
+* `g = 1` ⟺ `c₂ ≡ −b/(p+1) (mod D)`, and then the junction maps `orbit(c₂) → orbit(−c₂)`.
+  Closing the cycle therefore forces **`−1 ∈ ⟨p⟩ (mod D)`** — exactly family I's
+  hypothesis, now seen as *equivalent* to "drift 1", not as an artifact of `D = (p+3)/2`.
+* A junction scaled by `k` (family II's second junction, `k = 3`) has its conditions at
+  channel `km`, so `M` is divided by `k`, and closure needs `−k ∈ ⟨p⟩ (mod D)`.
+* `g ≡ −p (mod b)`.  With `b = 2` the drift is **always odd**.
+* The closed-form backgrounds `D = (p+j)/2` have `p ≡ −j (mod D)`, hence drift `j`,
+  automatically — `j` odd.  `j = 1` (`D = (p+1)/2`) is **degenerate**: `w₀ = −2c₂⁻¹`
+  is even while `p` is odd, so `g = w₀ − p = 1` is unreachable; the best odd `g` there is
+  `3`.  `j = 3` is `D = (p+3)/2`, drift `3`, ratio `1/3`.
+
+  ⛔ **REFUTED this lap: `1/3` is exactly the barrier of any closed-form `D = (p+j)/2`
+  background with a `b = 2` junction.**  Family II's constant is not slack — it is the
+  parity of the drift.  Do not look for a cleverer scaling `k`, and do not retry
+  `D = (p+1)/2` with `b = 2`; `b = 3` at `D = (p+1)/2` reaches drift `2` (ratio `2/3`)
+  but its closure `−c₂ + 3 ≡ ±c₂` forces `D | 9`.
+
+### 3. What is NOT capped: free `D`
+
+The exhaustive scan over `(D, K, L, σ, c₀, b)` gives, per prime, `M/⌊p/2⌋²` =
+
+    p   17    19    23    29    31    37    41    43    47    53    59    61
+        .969  .975  .983  .913  .991  .941  .995  .995  .996  .960  .902  .966
+    p   67    71    73    79    83    89    97   101   103   107   109   113   127
+        .936  .881  .944  .999  .883  .999  .999  .980  .999  .886  .981  .999  .968
+
+**minimum `0.881`** — always `K=2, L=1, σ=4`, `b ∈ {2,3}`, `D` between `p/3` and `p/2`,
+drift `1`.  So the factor `3` is an artifact of insisting on a *closed-form* background:
+a per-prime `D` already reaches `0.88·⌊p/2⌋²`.
+
+## Next attack, in order
+
+0. **[Lean, the deliverable] `MahlerBackgroundCert.lean`** — generalise
+   `MahlerFamilyI.lean` from `(D = (p+3)/2, b = 2, c₀ = p^(e−2))` to arbitrary
+   `(D, c₀, b)` with hypotheses
+   `p` odd, `D < p`, `p^e ≡ 1 (mod D)`, closure `∃ t, c₀p³ + b ≡ c₀p^t (mod D)`,
+   and the two channel keys (A), (B) as explicit arithmetic side conditions.
+   Family I is the instance `D = (p+3)/2, b = 2`; family II's `1/3` becomes the
+   instance `b = 2, g = 3` at the same `D`.  Then every prime gets its own
+   `M(p,1) ≥ 0.88⌊p/2⌋²` by `decide` on the hypotheses.
+1. **[the new arithmetic crux] uniform drift 1.**  A uniform `M(p,1) ≥ c·p²` with
+   `c > 1/12` needs: *for every prime `p` there is `D` with `p/3 < D < p/2`,
+   `−1 ∈ ⟨p⟩ (mod D)` and the non-degeneracy `gcd(c₂, bD) = 1`.*  For `D = q` prime
+   this is `ord_q(p)` **even**, density `17/24` (Hasse), so heuristically many `q`
+   work; the open point is an unconditional existence in a short interval.  Weaker
+   sufficient forms worth trying first: `q ≡ 3 (mod 4)` prime with `p` a quadratic
+   non-residue mod `q`; or `D | p^t + 1` with `p/3 < D < p/2`.
+2. **[fallback, unconditional]** drift `2` needs `b` odd (`g ≡ −p mod b`), i.e. `b = 3`
+   with `3 | p+2`; ratio `2/3` at `D ≈ p/2`, closure `p^t ≡ −2 (mod D)`.  Measure the
+   coverage of `{D = (p+j)/2, j ≤ 9} × {k ≤ 3}` before writing Lean.
+3. `M(p,1) ≥ ⌊p/2⌋² − 4` exactly on all primes is the census-matching target; the
+   engine (`NumCert.Good`) needs nothing new for it.
+
 ## 🎯 CRUX CLOSED: `M(p,1) > (⌊p/2⌋² − 2)/3` for EVERY prime `p ≥ 17` (2026-09-08, grind lap 2)
 
 **Landed (trust triple, no sorry):**

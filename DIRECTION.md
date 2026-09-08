@@ -4,47 +4,60 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-09-08 REVIEW LAP — the prime lower side, in adder form)
+## CURRENT DIRECTIVE (set 2026-09-08 FRESH-MIND REVIEW LAP — close the factor 3)
 
 - 🎯 **THE objective, unchanged: pin the optimal Mahler multiplier `M(g,k)`.**
-  The upper side is done at `k = 1` (`MahlerQuarter.lean`,
-  `M(p,1) ≤ (p²+6p+1)/4`); the universal-constant wing is closed
-  (`sup_g M(g,k)/g^(k+1) = 1`, `MahlerLowerBoundSmooth.lean`).  **The one open
-  crux is the GENERAL prime lower bound `M(p,1) ≥ c·p²`** — a statement true for
-  every prime `p`, not another per-prime certificate.
-- 🔨 **Mandated next move — close the tower at level 2, in the adder form.**
-  `MahlerBurstDigit.lean` is now the working frame: the certificate is one
-  condition per base-`p` digit position of `m·B` added to the background `2r`.
-  Two uniform laws are in hand — `B ≡ −4 (mod p)` (position `0`, **proved**:
-  `bgDigit_zero_ne`, safe for every `m < ⌊p/2⌋²`) and `λ ≡ −2 (mod p)` for
-  `QB = pλ + 2` (position `1`, derived + confirmed at six primes).  Next:
-  **prove position `1` uniformly (`bgDigit_one_ne`), then make the tower
-  TERMINATE with a three-digit burst** so positions `≥ 3` fall to the
-  `bgDigit_of_lt` tail.  That is a genuine uniform `M(p,1) ≥ c·p²`.  Measure
-  the reachable `c` for length-3 bursts (`experiments/mahler_burst_tower.py`)
-  before writing the Lean.  Fallback if length 3 caps out: the generalized
-  junction certificate (`experiments/mahler_junction_cert.py`, background = any
-  `c/D` with `D < p`) — its two soundness traps are recorded in PENDING_WORK.
-- ⛔ **Forbidden drift**: more per-prime `mahler_lower_bound_baseNN`
-  certificates as the lap's *advance* (one is fine as engine validation, they
-  are tail filler otherwise — the crux is the uniform statement); closed-form
-  bursts of the shape `B = p^K(p−c) − 4` (**refuted this lap, only `Θ(p)`**);
-  `CFScheduleA.lean`; the repo-wide sorry-free gate; Comparator statement
-  holes; downloading papers; any outward action.
+  At `k = 1`, prime base, the sandwich is now
+  `⌊p/2⌋²/3 − 1 ≤ M(p,1) ≤ (p²+6p+1)/4` (`MahlerFamilyII.lean` /
+  `MahlerQuarter.lean`).  **THE one open crux is the factor `3`**: make the
+  uniform prime lower bound `c·p²` with `c` near `1/4`, not `1/12`.
+- 🔨 **Mandated next move — the BACKGROUND CERTIFICATE, free `D`.**  Write
+  `src/NormalNumbers/MahlerBackgroundCert.lean`: generalise `MahlerFamilyI.lean`
+  from the hard-wired `(D = (p+3)/2, b = 2, c₀ = p^(e−2))` to arbitrary
+  `(D, c₀, b)` over `NumCert.Good`, with closure `∃ t, c₀p³ + b ≡ c₀p^t (mod D)`
+  and the two channel keys (A) `b·m < p(p−D)` on `m·c₁ ≡ −1`, (B) `bm mod p < p−D`
+  on `m·c₂ + ⌊bm/p⌋ ≡ −1` as explicit side conditions.  Family I is then the
+  instance `D = (p+3)/2, b = 2`, and every prime gets `M(p,1) ≥ 0.88⌊p/2⌋²` by
+  `decide` (measured: min `0.881` over all primes `17 … 127`,
+  `experiments/mahler_onejunction_scan.py`).  Then attack the **new arithmetic
+  crux**: *for every prime `p` there is `D ∈ (p/3, p/2)` with `−1 ∈ ⟨p⟩ (mod D)`*
+  — for `D = q` prime this is `ord_q(p)` even; try `q ≡ 3 (mod 4)` with `p` a
+  quadratic non-residue.  Detail and the drift algebra in `PENDING_WORK.md` §top.
+- ⛔ **Forbidden drift**: hunting a cleverer *closed-form* background — the review
+  **REFUTED** that route: with a `b = 2` junction the drift `g ≡ −p (mod b)` is
+  always odd, and `D = (p+j)/2` has drift `j`, with `j = 1` degenerate by parity;
+  so `1/3` is exactly the barrier of every `D = (p+j)/2`, and family II's constant
+  is not slack.  Also forbidden as the lap's *advance*: more per-prime
+  `mahler_lower_bound_baseNN` certificates; `CFScheduleA.lean`; the repo-wide
+  sorry-free gate; Comparator statement holes; downloading papers; any outward
+  action.
 - 📌 **Claim hygiene, standing**: Berend–Boshernitzan constants here are tier-S
   secondary sources.  State OUR quantifiers, never attribute; do not headline
   "beats B–B" until the PDF is read.
-- ✅ **Closed by this lap**: the 2026-09-07 kickoff's "finish the multi-scale
-  bound to `g^(k+1)/4`" — the `k = 1` upper side is proved and the general-`k`
-  constant `1/4` was refuted by exact data at `k = 2`; that kickoff is spent.
+- ✅ **Closed since the last directive**: the GENERAL prime lower bound
+  `M(p,1) ≥ c·p²` (was the crux) — proved with `c = 1/12 − o(1)` for every prime
+  `p ≥ 17` (`mahler_lower_bound_prime_family_II`).  The mandated adder-form move
+  is spent: `bgDigit_one_ne` (Law 2) is proved, and the length-3 burst
+  termination was refuted by measurement; the junction route superseded it.
 
 ### Directive history
+- 2026-09-08 (fresh-mind review lap): crux narrowed from "a uniform `c·p²`"
+  (achieved, `c = 1/12`) to "close the factor `3`"; the drift algebra of the
+  junction certificate derived and validated; closed-form backgrounds refuted as
+  a route; mandated move = the free-`D` background certificate in Lean.
 - 2026-09-08 (review lap): crux sharpened from "prime-base upper bound" (done)
   to the GENERAL prime lower bound, and the mandated frame set to the adder
   form; two uniform laws banked, closed-form bursts refuted.
 - 2026-09-02 (review lap): objective moved from the brief queue to the Mahler
   constant; crux named as the prime-base upper bound after the composite-base
   lower bound collapsed the gap from factor `g` to factor `2`.
+
+## SUPERSEDED DIRECTIVE (set 2026-09-08 review lap — the prime lower side, adder form)
+
+- Superseded 2026-09-08 (fresh-mind review): its crux (the GENERAL prime lower
+  bound `M(p,1) ≥ c·p²`) is proved with `c = 1/12`; its mandated adder-form move
+  (`bgDigit_one_ne` + a terminating three-digit burst) is half done and half
+  refuted, and was overtaken by the junction certificates of `MahlerFamilyI/II`.
 
 ## SUPERSEDED DIRECTIVE (set 2026-09-02 — own the Mahler constant, upper side)
 

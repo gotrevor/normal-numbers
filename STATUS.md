@@ -3,7 +3,7 @@
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter).** · **Build**: 🟢 green (8882 jobs) · **Updated**:
-grind lap · 2026-09-08 · `wip/adder-tower-c9`
+review lap · 2026-09-08 · `wip/adder-tower-c9` @ `309bc3c`
 
 ## Where it stands
 
@@ -21,10 +21,29 @@ the constant `1` on the upper side is SHARP: `sup_g M(g,k)/g^(k+1) = 1`
 now a theorem**: `M(p,1) > (⌊p/2⌋² − 2)/3` for every prime `p ≥ 17`
 (`MahlerFamilyII.lean`, `mahler_lower_bound_prime_family_II`, trust triple), and
 `M(p,1) > ⌊p/2⌋² − 2` when `−1 ∈ ⟨−3⟩ (mod (p+3)/2)` (`MahlerFamilyI.lean`).  With
-`M(p,1) ≤ (p²+6p+1)/4` the prime constant is pinned to a factor `3`; the open
-work is closing that factor on the complementary primes.
+`M(p,1) ≤ (p²+6p+1)/4` the prime constant is pinned to a factor `3`, and closing
+that factor is the crux.  The 2026-09-08 review lap identified what the factor
+IS: the **drift** `g = w₀ − p (mod bD)` of the junction certificate.  `g = 1`
+(ratio `1`) is equivalent to `−1 ∈ ⟨p⟩ (mod D)`; with a `b = 2` junction `g` is
+always odd, and the closed-form backgrounds `D = (p+j)/2` have drift `j`, with
+`j = 1` degenerate by parity — so `1/3` is exactly the barrier of every
+closed-form `D`.  A per-prime `D` is not capped: an exhaustive scan of the
+certificate space reaches `≥ 0.881·⌊p/2⌋²` at every prime `17 … 127`.
 
 ## What's happened (newest first)
+
+- **2026-09-08 (REVIEW LAP)** — **The factor `3` is a drift, and it is not
+  intrinsic.**  Derived and machine-checked the closed form of the one-junction
+  certificate: `M ≈ min(p(p−D)/b, p(b−1)D/(b|g|))` with drift
+  `g = −b·c₂⁻¹ − p (mod bD)`; drift `1` ⟺ `−1 ∈ ⟨p⟩ (mod D)` (family I's
+  hypothesis, now *equivalent* to optimality rather than an artifact of
+  `D = (p+3)/2`); a junction scaled by `k` divides `M` by `k` and needs
+  `−k ∈ ⟨p⟩ (mod D)` (family II, `k = 3`).  **Refuted**: any closed-form
+  background `D = (p+j)/2` caps at `1/3`, since `g ≡ −p (mod b)` is odd for
+  `b = 2` and `j = 1` is degenerate.  **Measured** (`mahler_onejunction_scan.py`,
+  literal `NumCert.Good` check): with a per-prime `D`, `M/⌊p/2⌋² ≥ 0.881` at
+  every prime `17 … 127`.  Next: `MahlerBackgroundCert.lean` (family I with free
+  `D, c₀, b`), then the arithmetic crux "∃ `D ∈ (p/3,p/2)` with `−1 ∈ ⟨p⟩`".
 
 - **2026-09-08 (grind lap 2)** — **The uniform prime lower bound.**
   `MahlerNumCert.lean` (generic numerator-certificate layer over
@@ -185,19 +204,21 @@ work is closing that factor on the complementary primes.
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-1. **THE CRUX — general prime lower bound `M(p,1) ≥ c·p²`** (uniform in `p`, not
-   another per-prime certificate).  Frame: the adder form
-   (`MahlerBurstDigit.lean`).  Position `0` is done uniformly
-   (`bgDigit_zero_ne`, needs only `B ≡ −4 (mod p)`, safe for all `m < ⌊p/2⌋²`).
-   Next: position `1` (`λ ≡ −2 (mod p)` for `QB = pλ+2`, derived and confirmed
-   at six primes), then a **three-digit burst** so the tower terminates and the
-   higher positions fall to `bgDigit_of_lt`.
-2. Fallback if length-3 bursts cap out: the generalized junction certificate
-   (background = any `c/D` with `D < p`; `experiments/mahler_junction_cert.py`),
-   two soundness traps recorded in `PENDING_WORK.md` §top.
-3. `k ≥ 2` lower side via the escape engine (`AdderEscapeCert.lean`): the
+1. **THE CRUX — close the factor `3`** in
+   `⌊p/2⌋²/3 − 1 ≤ M(p,1) ≤ (p²+6p+1)/4`.  Mandated move:
+   `MahlerBackgroundCert.lean` — `MahlerFamilyI.lean` with free `(D, c₀, b)` over
+   `NumCert.Good`, closure `∃ t, c₀p³ + b ≡ c₀p^t (mod D)`, channel keys
+   (A) `bm < p(p−D)` and (B) `bm mod p < p−D`.  Gives `≥ 0.88⌊p/2⌋²` per prime
+   by `decide`; family I and family II's `1/3` are both instances.
+2. **The arithmetic crux behind a uniform constant near `1/4`**: for every prime
+   `p`, some `D ∈ (p/3, p/2)` with `−1 ∈ ⟨p⟩ (mod D)` and `gcd(c₂, bD) = 1`.
+   For prime `D = q` this is `ord_q(p)` even (density `17/24`); sufficient form
+   to try first: `q ≡ 3 (mod 4)` with `p` a quadratic non-residue mod `q`.
+3. Unconditional fallback beating `1/3`: drift `2` needs `b` odd (`g ≡ −p mod b`),
+   i.e. `b = 3` with `3 | p+2`, ratio `2/3`, closure `p^t ≡ −2 (mod D)`.
+4. `k ≥ 2` lower side via the escape engine (`AdderEscapeCert.lean`): the
    `(7,2)` instance `M(7,2) ≥ 176`.
-4. Remaining cited-only ledger nodes (`philipp_psi_mixing`, `vandehey_matrix_action`).
+5. Remaining cited-only ledger nodes (`philipp_psi_mixing`, `vandehey_matrix_action`).
 
 ### Long-term
 The conjecture graph toward the sink `IsNormal 2 (Real.log 2)`: the ln-two
@@ -222,6 +243,8 @@ Real `#print axioms` output, this lap.  Every headline: trust triple only.
 | `Mahler.mahler_multiplier_quarter` | our own `M(p,1) ≤ (p²+6p+1)/4`, odd prime | trust triple | 🟢 clean |
 | `Mahler.mahler_lower_bound_smooth` / `mahler_constant_one_sharp` | our own `sup_g M(g,k)/g^(k+1) = 1` | trust triple | 🟢 clean |
 | `Mahler.mahler_lower_bound_bg_adder` / `bgDigit_zero_ne` | our own adder-form certificate + the uniform `B ≡ −4 (mod p)` law | trust triple | 🟢 clean |
+| `Adder.FamilyI.mahler_lower_bound_family_I` / `…_prime_family_I` | our own `M(p,1) > ⌊p/2⌋²−2` when `−1 ∈ ⟨p⟩ mod (p+3)/2` | trust triple | 🟢 clean |
+| `Adder.FamilyII.mahler_lower_bound_family_II` / `…_prime_family_II` | our own uniform `M(p,1) > (⌊p/2⌋²−2)/3`, every prime `p ≥ 17` | trust triple | 🟢 clean |
 | `Mahler.mahler_lower_bound_base29` | our own `M(29,1) ≥ 140` | trust triple (`decide +kernel`, no `native_decide`) | 🟢 clean |
 | `Mahler.mahler_multiplier_of_zero_runs` / `…_pred_runs` | run branch at `gᵏ` (prime `g`) | trust triple | 🟢 clean |
 | `Mahler.mahler_multiplier_lt` / `Literature.berendBoshernitzan_strict_holds` | `M(g,k) < g^(k+1)` (B–B open question) | trust triple | 🟢 clean |
@@ -244,7 +267,7 @@ which no headline depends on.
 ## Pointers
 
 `ROADMAP.md` · `DIRECTION.md` (binding directive) · newest
-`HANDOFF-2026-09-02-*.md` · `PENDING_WORK.md` (open items + attack paths) ·
+`HANDOFF-2026-09-08-family-II.md` · `PENDING_WORK.md` (open items + attack paths) ·
 `BRIEF-literature-statements.md` (the novelty tripwire ledger)
 
 ---
