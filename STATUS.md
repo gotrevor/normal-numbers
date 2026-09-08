@@ -2,7 +2,7 @@
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter).** · **Build**: 🟢 green (8886 jobs) · **Updated**:
+Mahler multiplier chapter).** · **Build**: 🟢 green (8874 jobs) · **Updated**:
 autonomous lap · 2026-09-07 · `wip/adder-tower-c9`
 
 ## Where it stands
