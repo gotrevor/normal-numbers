@@ -68,14 +68,25 @@ a per-prime `D` already reaches `0.88·⌊p/2⌋²`.
 
 ## Next attack, in order
 
-0. **[Lean, the deliverable] `MahlerBackgroundCert.lean`** — generalise
-   `MahlerFamilyI.lean` from `(D = (p+3)/2, b = 2, c₀ = p^(e−2))` to arbitrary
-   `(D, c₀, b)` with hypotheses
-   `p` odd, `D < p`, `p^e ≡ 1 (mod D)`, closure `∃ t, c₀p³ + b ≡ c₀p^t (mod D)`,
-   and the two channel keys (A), (B) as explicit arithmetic side conditions.
-   Family I is the instance `D = (p+3)/2, b = 2`; family II's `1/3` becomes the
-   instance `b = 2, g = 3` at the same `D`.  Then every prime gets its own
-   `M(p,1) ≥ 0.88⌊p/2⌋²` by `decide` on the hypotheses.
+0. ✅ **DONE (2026-09-08 grind lap): `src/NormalNumbers/MahlerBackgroundCert.lean`.**
+   `mahler_lower_bound_background (p D c₀ b M e j) (h : Hyp p D b)
+   (K : Keys p D c₀ b M) (C : Closure p D c₀ b e j)` — the family-I junction over
+   an ARBITRARY background `1/D`, junction source `c₀` and offset `b`, slack
+   `σ = 2b`.  `Hyp` is `3 ≤ p`, `0 < D`, `0 < b`, `b + D < p`; `Keys` is
+   `keyA : p²·(m·c₁ mod D) + m·b < (p−1)pD`, `keyB : m(c₂p+b) mod pD < (p−1)D`
+   (both `∀ m ≤ M`), plus `keyJ : bM + p²D < p³` and `keyR : 2bM < p²D`;
+   `Closure` is `2 ≤ D`, `0 < e`, `j < e`, `p^e ≡ 1 (mod D)`,
+   `(c₂p+b) ≡ c₀p^j (mod D)`, `c₀p^j ≢ c₀p³ (mod D)`.  Trust triple.
+   Instances: **`M(29,1) ≥ 180`** (`D=11, c₀=9, b=3, e=10, j=7`; family II gave
+   `65`, `⌊29/2⌋² = 196`) and **`M(71,1) ≥ 1080`** (`D=41, c₀=4, b=2, e=40,
+   j=22`; family II gave `408`, `⌊71/2⌋² = 1225` — the worst ratio `0.881` of the
+   whole scan).  Far states are proved free (`key_far`, `res_far`), so the two
+   sharp keys are the ONLY per-instance input; `dig_far_ne` (strict monotonicity
+   of `c ↦ ⌊cp/D⌋` for `D < p`) gives the walk separation at position `3`.
+   *Remaining on this item*: a `Hyp`+`Keys`+`Closure`-producing lemma that turns
+   family I's `D = (p+3)/2, b = 2` into an instance (so family I is literally a
+   corollary), and the general `M ≥ min(p(p−D), p(b−1)D/g)/b` bound proved from
+   the drift rather than checked per prime.
 1. **[the new arithmetic crux] uniform drift 1.**  A uniform `M(p,1) ≥ c·p²` with
    `c > 1/12` needs: *for every prime `p` there is `D` with `p/3 < D < p/2`,
    `−1 ∈ ⟨p⟩ (mod D)` and the non-degeneracy `gcd(c₂, bD) = 1`.*  For `D = q` prime
