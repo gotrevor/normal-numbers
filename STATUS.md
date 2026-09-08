@@ -2,7 +2,7 @@
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter).** · **Build**: 🟢 green (8873 jobs) · **Updated**:
+Mahler multiplier chapter).** · **Build**: 🟢 green (8886 jobs) · **Updated**:
 autonomous lap · 2026-09-07 · `wip/adder-tower-c9`
 
 ## Where it stands
@@ -20,6 +20,16 @@ factor `2 + o(1)` for even bases, against the factor `g` it was yesterday.
 
 ## What's happened (newest first)
 
+- **2026-09-08 (autonomous)** — **The `(7,2)` extremal orbit dissected; escape
+  engine started.**  The instrument's SCC for block `00` is three cycles
+  (`1/4`, `4/5`, and `0.(541251512)₇`); their mixing escapes all `m ≤ 175`
+  exactly (numeric, 3000 digits), and the period-9 point IS the exact witness
+  (`176` is the first `m` that hits).  Its shadow denominators `5,5,5,28,4,4,35,5,5`
+  are the drop mechanism verbatim, with `MahlerFarey`'s jump estimate tight.
+  No burst family reaches it (sign structure of carries), so the exact lower
+  side at `k ≥ 2` needs the automaton: `AdderEscape.lean` lands the true-carry
+  recursion and the digit formula for `m·x` (trust triple).  Plan in
+  `PENDING_WORK.md` §top.
 - **2026-09-07 (autonomous)** — **`g^(k+1)/4` refuted for `k ≥ 2`; first `k = 2`
   prime lower bounds.**  Exact `M(7,2) = 176 = 0.51·7³` (new; with `M(3,2) = 8`,
   `M(5,2) = 48`: ratios `.30 .38 .51`, climbing) — the `k = 1` constant `1/4` does

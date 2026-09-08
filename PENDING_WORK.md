@@ -1,5 +1,61 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🔬 THE `(7,2)` EXTREMAL ORBIT, DISSECTED — and the escape engine started (2026-09-08, autonomous)
+
+`experiments/mahler_scc_cycles.py 7 2 175 00` pulls the surviving SCC of the
+adder machine (10 states) and its simple cycles; `mahler_scc_mix_test.py`
+random-walks it and checks all `m ≤ 175` exactly on a 3000-digit prefix.
+
+* **The language.**  Three cycles, as digit words: `15` (the point `1/4`,
+  `0.(15)₇`; and `3/4 = 0.(51)₇`), `5412` (`4/5 = 0.(5412)₇`), and
+  `541251512`.  Any mixing of them escapes `00` for every `m ≤ 175` — the
+  numeric check passed on 3000 digits, so the instrument's `M(7,2) = 176` is
+  sound and a genuine irrational witness exists (aperiodic mixing).
+* **The anatomy = the drop mechanism verbatim.**  On the period-9 point
+  `x = 0.(541251512)₇` the canonical shadow denominators are
+  `5,5,5,28,4,4,35,5,5`: the orbit hovers at `4/5` and `3/4` and moves between
+  them through `28 = 7·4` and `35 = 7·5` — a jump to `g·d'` followed by a DROP
+  to `d'`.  Both jump estimates of `MahlerFarey` are tight there
+  (`1/(7E) = 28`, `35` exactly).  And `176` is the first `m` with `00` in
+  `m·x`: the periodic point is itself the exact witness.
+* **What the sign structure does.**  At tails near `1/4` the true carry of
+  `4·α` depends on which side of `1/4` the tail lies; the automaton's carries
+  force "below" (`4α = 0.666…`, not `1.000…`), and every junction in the
+  language respects that (`…5151512…` `<` `…5151515…`).  This is what a
+  background+burst family cannot express — hence its cap at `102`
+  (`mahler_lower_bound_base7_k2`), and the periodic-background variant
+  (`P/(7⁹−1) + B·L`) also fails for every `B ≤ 3000` under the sharp
+  extended-window condition.  The exact lower side at `k ≥ 2` needs the
+  automaton itself.
+* **Why covering + Farey cannot give the `k ≥ 2` upper side.**  With drops the
+  engine's stage inequality is `μ ≲ Q·d''` for the post-drop denominator
+  `d'' ≤ g − 1` — the trivial bound.  The real constraint is digit-level: after
+  a drop to `d''`, multiples `m ≡ 0 (mod d'')` sit at integers from a fixed
+  side (runs of `6`s or `0`s — sign!), the others at `r/d''` minus a small
+  amount whose borrow pattern must avoid the block.  The `k = 2` constant is a
+  renormalization of that structure.  Open; not this lap's tool.
+
+**Escape engine, first bricks** (`AdderEscape.lean`, trust triple):
+`carry g x m i = ⌊m·{gⁱx}⌋`, `carry_recursion`
+(`carry i = (m·aᵢ + carry (i+1)) / g`), `digitOf_mul` (`i`-th digit of `m·x`
+is `(m·aᵢ + carry (i+1)) % g`).  So an automaton run that agrees with the
+TRUE carries reads the digits of `m·x` exactly.
+
+### Next bricks (the plan)
+1. `realOfDigits` from an infinite path of a certificate automaton (states,
+   digit-labelled edges, per-channel carries), `ProperDigits` automatic when
+   no state emits `g−1` forever.
+2. **Tail intervals**: per state `s` rationals `lo_s ≤ hi_s` with
+   `lo_s ≤ (a + lo_{s'})/g` and `(a + hi_{s'})/g ≤ hi_s` on every edge; then
+   every tail from `s` lies in `[lo_s, hi_s]` (telescoping + limit).
+3. **Carry soundness**: `m·lo_s ≥ c_s(m)` and `m·hi_s < c_s(m) + 1` pins the
+   true carry to the certificate's; with `digitOf_mul` the channel digits are
+   the certificate's, so the word never occurs.
+4. Irrationality by cardinality (a branching state gives `2^ℵ₀` paths,
+   injective into `ℝ`; `exists_setReal_irrational` is the template).
+5. Instance: `M(7,2) ≥ 176` from the 10-state SCC (`decide +kernel` on
+   175 carry components per state).
+
 ## 🚨 `g^(k+1)/4` IS THE WRONG TARGET FOR `k ≥ 2` — refuted by exact data; first `k = 2` prime lower bounds (2026-09-07, autonomous)
 
 The kickoff's general-`k` objective "`M(g,k) ≤ (1/4 + O(1/g))·g^(k+1)`" is

@@ -53,3 +53,17 @@ obligation on the route to `g^(k+1)/4` in general; everything else is done.
 * Witness search scripts live in the scratchpad only; the Lean-side searcher
   is 40 lines (`bgResidue` re-implemented, `maxM` over `a, B, W`) — recreate
   from `MahlerPrimeLowerBoundBlock.lean`'s hypotheses if needed.
+
+## Third lap (2026-09-08) — the `(7,2)` witness anatomy; escape engine started
+
+* The SCC language for `(7,2)`, block `00`: cycles `15`, `5412`, `541251512`;
+  mixing verified exactly on 3000 digits for all `m ≤ 175`.  The period-9 point
+  is the exact witness; its canonical denominators `5,5,5,28,4,4,35,5,5` show
+  the jump-then-drop mechanism with `MahlerFarey`'s estimates tight.
+* Burst families cannot reach `176` (carry sign structure); the periodic
+  background variant fails for all `B ≤ 3000` even with the sharp condition.
+* `AdderEscape.lean`: `carry`, `carry_recursion`, `digitOf_mul` — the
+  arithmetic core of an escape meta-theorem.  Five-step plan in
+  `PENDING_WORK.md` §top; step 2 (tail intervals) is next.
+* Instruments saved: `experiments/mahler_scc_cycles.py`,
+  `mahler_scc_mix_test.py`, `mahler_bg_block_search.py`.
