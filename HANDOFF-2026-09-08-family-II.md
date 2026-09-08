@@ -1,6 +1,6 @@
 # HANDOFF 2026-09-08 — the uniform prime lower bound is a theorem 🧮
 
-**Branch** `wip/adder-tower-c9` · **HEAD** this commit · **Build** 🟢 green (8882 jobs) · trust
+**Branch** `wip/adder-tower-c9` · **HEAD** `6bce341` · **Build** 🟢 green (8882 jobs) · trust
 triple on every new theorem · no `sorry` in the new files.  Untracked HOST files and `scratch/`
 left alone.  `DIRECTION.md` CURRENT DIRECTIVE (2026-09-08 review lap) governs: its crux
 ("the GENERAL prime lower bound `M(p,1) ≥ c·p²`") is now proved with `c = 1/12 − o(1)`.
