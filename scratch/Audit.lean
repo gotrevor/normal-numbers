@@ -1,5 +1,0 @@
-import NormalNumbers.MahlerDriftOne
-#print axioms NormalNumbers.Adder.Background.mahler_lower_bound_drift_one
-#print axioms NormalNumbers.Adder.Background.mahler_lower_bound_prime_drift_one
-#print axioms NormalNumbers.Adder.Background.exists_drift_one_background
-#print axioms NormalNumbers.Adder.Background.exists_prime_nonresidue

@@ -1,4 +1,0 @@
-import NormalNumbers.MahlerBackgroundCert
-#print axioms NormalNumbers.Adder.Background.mahler_lower_bound_background
-#print axioms NormalNumbers.Adder.Background.mahler_lower_bound_base29_background
-#print axioms NormalNumbers.Adder.Background.mahler_lower_bound_base71_background

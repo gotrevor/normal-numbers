@@ -6,3 +6,6 @@ papers/*.pdf
 # ~/.config/git/ignore on the HOST and does not reach the treadmill boxes, so a
 # box lap re-adds it (happened at e1aaa69, undoing the untrack at dd3fe3c).
 CLAUDE.local.md
+
+# Session scratch (probe scripts get promoted to experiments/ when they matter)
+/scratch
