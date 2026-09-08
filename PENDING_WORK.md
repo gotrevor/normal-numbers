@@ -1,5 +1,51 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ THE UNIVERSAL CONSTANT IS `1` — `sup_g M(g,k)/g^(k+1) = 1`, in Lean (2026-09-08, autonomous, lap 2)
+
+`MahlerLowerBoundSmooth.lean` (new, trust triple, `#print axioms` checked on
+all four headlines).  The host doc `docs/mahler-universal-constant-is-one-2026-09-07.md`
+found numerically that the `a = 0` burst family with `B = c`, `t·c = g^j`,
+`t < g` gives `M(g,1) ≥ (g−1)t`; this lap proves it for every `k`:
+
+    mahler_lower_bound_smooth :  t ∣ g^j, t < g  ⟹  M(g,k) ≥ t·(gᵏ − 1)
+
+The arithmetic is two lemmas.  `digit_le_of_smooth`: with `t c = g^j`, every
+digit `i < j` of `r·c` (ANY `r`) is `≤ g − 2`, because
+`⌊r c/gⁱ⌋ mod g = ⌊v g/t⌋` with `v = (r g^(j−i−1)) mod t ≤ t − 1`, and
+`(t−1)g < (g−1)t ⟺ t < g`.  `avoid_of_split`: if `N = e + q g^j` with all
+low digits of `e` `≤ g − 2` and `q ≤ gᵏ − 2`, the `k`-digit window at any
+position `d − k` is `≤ gᵏ − 2` (below `j` it contains a digit of `e`; at or
+above `j` it is a window of `q`).  Then `mahler_lower_bound_general` does the
+rest, exactly as the divisor bound (`j = 1`).
+
+Instances (`decide` on `625 ∣ 630⁴`, `26244 ∣ 26250⁸`):
+`M(630,1) ≥ 393125 = 0.9905·630²`, `M(26250,1) ≥ 688878756 = 0.99973·26250²`.
+
+Sharpness (`mahler_constant_one_sharp`): for every `k ≥ 1`, `ε > 0`, `L`,
+some `g ≥ L` has `M(g,k) ≥ (1 − ε) g^(k+1)`.  Proof: Dirichlet
+(`Real.exists_int_int_abs_mul_sub_le` on `log 3/log 2`) gives `2^a`, `3^b`
+within a factor `e^δ`; `g = 2^a 3^b L`, `t = min(2^a,3^b)² L` has `t ∣ g²`,
+`t < g` (`2^a ≠ 3^b` by parity), `t ≥ (1−δ)g`; and
+`t(gᵏ−1) ≥ (1−δ)²g^(k+1) ≥ (1−2δ)g^(k+1)` once `δ g ≥ 1`.  The scale factor
+`L` is what makes the base arbitrarily large at a fixed ratio.
+
+Against `mahler_multiplier_lt` (`M(g,k) < g^(k+1)`): the constant `1` cannot
+be lowered, for any `k`.  The "sharp universal constant" wing is closed.
+
+### What remains on the Mahler thread (in order of value)
+1. **Prime bases** (the DIRECTIVE's crux): `M(p,1) ≤ (p²+6p+1)/4` is proved
+   (`MahlerQuarter.lean`), census says `M(p,1) ≈ ⌊p/2⌋²`; lower side at primes
+   is `MahlerPrimeLowerBound` (exact at `5, 7, 13, 23`).  Open: a general
+   prime lower bound `M(p,1) ≥ p²/4 − O(p)`.  The census witnesses (`a ≠ 0`
+   background) are the family; what is missing is the general `t`-like
+   parameter.  Conjecture from the data: `a = (p−1)/2` background,
+   `B = (p+1)/2`-type burst — check `experiments/mahler_exact_M.py` witnesses.
+2. **`k ≥ 2` lower side** via the escape engine (`AdderEscape.lean`, plan in
+   the section below): `M(7,2) ≥ 176`.
+3. The rate `1 − M(g,1)/g²` for composite `g` (Størmer-type); and the bases
+   `21, 27, 28, 32` where the burst family is beaten — the construction is
+   unidentified.
+
 ## 🔬 THE `(7,2)` EXTREMAL ORBIT, DISSECTED — and the escape engine started (2026-09-08, autonomous)
 
 `experiments/mahler_scc_cycles.py 7 2 175 00` pulls the surviving SCC of the

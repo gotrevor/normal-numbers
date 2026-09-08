@@ -2,8 +2,8 @@
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter).** · **Build**: 🟢 green (8874 jobs) · **Updated**:
-autonomous lap · 2026-09-07 · `wip/adder-tower-c9`
+Mahler multiplier chapter).** · **Build**: 🟢 green (8875 jobs) · **Updated**:
+autonomous lap · 2026-09-08 · `wip/adder-tower-c9`
 
 ## Where it stands
 
@@ -14,12 +14,23 @@ residues (off-limits; being converted to named `def … : Prop` nodes on the
 sibling branch `wip/cfschedulea-prop-nodes`).  The live frontier is therefore
 not axiom debt but *new mathematics*: the conjecture graph toward
 `IsNormal 2 (Real.log 2)`, and the Mahler-multiplier chapter, where this repo now
-holds both sides of the bound.  As of this lap the Mahler sandwich is
-`t(gᵏ−1) ≤ M(g,k) ≤ g^(k+1)` for every factorization `g = t·c`, `c ≥ 2` — a
-factor `2 + o(1)` for even bases, against the factor `g` it was yesterday.
+holds both sides of the bound.  The Mahler sandwich is now
+`t(gᵏ−1) ≤ M(g,k) < g^(k+1)` for every `t < g` dividing a power of `g`, and
+the constant `1` on the upper side is SHARP: `sup_g M(g,k)/g^(k+1) = 1`
+(`MahlerLowerBoundSmooth.lean`, trust triple).
 
 ## What's happened (newest first)
 
+- **2026-09-08 (autonomous, lap 2)** — **The universal constant is `1`, in Lean.**
+  `MahlerLowerBoundSmooth.lean`: `mahler_lower_bound_smooth` (`t ∣ g^j`, `t < g`
+  ⟹ `M(g,k) ≥ t(gᵏ−1)`; the divisor bound is `j = 1`), instances
+  `M(630,1) ≥ 393125` (`0.9905·630²`) and `M(26250,1) ≥ 688878756`
+  (`0.99973·26250²`), and `mahler_constant_one_sharp`: for every `k ≥ 1`,
+  `ε > 0`, `L`, some base `g ≥ L` has `M(g,k) ≥ (1−ε)g^(k+1)` (Dirichlet on
+  `log 3/log 2`, `g = 2^a3^b L`, `t = min(2^a,3^b)²L`).  With
+  `mahler_multiplier_lt` this closes the "sharp universal constant" wing:
+  `sup_g M(g,k)/g^(k+1) = 1`, not attained.  Formalizes the host's
+  `docs/mahler-universal-constant-is-one-2026-09-07.md` (its lower side).
 - **2026-09-08 (autonomous)** — **The `(7,2)` extremal orbit dissected; escape
   engine started.**  The instrument's SCC for block `00` is three cycles
   (`1/4`, `4/5`, and `0.(541251512)₇`); their mixing escapes all `m ≤ 175`
