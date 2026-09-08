@@ -1,6 +1,6 @@
 # HANDOFF 2026-09-08 — the background certificate: family I over any `1/D` 🧮
 
-**Branch** `wip/adder-tower-c9` · **Build** 🟢 green (8883 jobs) · trust triple on every new
+**Branch** `wip/adder-tower-c9` · **HEAD** `d1e90e7` · **Build** 🟢 green (8883 jobs) · trust triple on every new
 theorem · no `sorry` in the new file.  `DIRECTION.md` CURRENT DIRECTIVE (2026-09-08 fresh-mind
 review lap) governs; this lap executed its mandated move.
 
