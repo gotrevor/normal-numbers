@@ -66,6 +66,18 @@ corollaries give **`M(p,1) > 3p²/16 − O(p)` for every prime `p ≢ 1 (mod 12)
   every prime `17 … 127`.  Next: `MahlerBackgroundCert.lean` (family I with free
   `D, c₀, b`), then the arithmetic crux "∃ `D ∈ (p/3,p/2)` with `−1 ∈ ⟨p⟩`".
 
+- **2026-09-08 (grind laps 2–3, post-reflection)** — **THE RUN+JUMP CHAIN THEOREM.**
+  `MahlerRunJump.lean` (the certificate: `Θ(p)` backgrounds `b, b+1, …, p−b`, valid
+  for every `M < b(p−b−1)`, via one generic two-denominator edge lemma) and
+  `MahlerRunJumpWalk.lean` (the data from `p^f ≡ −1 (mod b)` and `T = 2φ((p−b)!)`,
+  the two closed walks, the theorem).  **`mahler_lower_bound_runjump`: for every
+  prime `p`, every `3 ≤ b < p/2` with `−1 ∈ ⟨p⟩ (mod b)`, `M(p,1) > b(p−b−1) − 1`.**
+  Corollaries: `3 ∣ p+1` ⟹ `M(p,1) > 2(p+1)(p−2)/9 − 1`; `4 ∣ p+1` ⟹
+  `M(p,1) > (p+1)(3p−5)/16 − 1`; so **`3/16 · p²` for every prime `p ≢ 1 (mod 12)`**
+  (`p ≥ 11`).  Against the exact census the bound is EXACT at `(p,b) = (13,5)`,
+  `(23,10)`, `(31,14)` (`M = 35, 120, 224`), and never exceeds `M(p,1)` at any
+  admissible pair `p ≤ 31`.  All trust triple, no `sorry`.
+
 - **2026-09-08 (grind lap 2)** — **The uniform prime lower bound.**
   `MahlerNumCert.lean` (generic numerator-certificate layer over
   `AdderEscapeCert`), `MahlerFamilyI.lean` (one junction over `1/D`,
@@ -269,6 +281,7 @@ UNCONDITIONAL headline: trust triple only.  The single exception is flagged.
 | `Adder.FamilyII.mahler_lower_bound_family_II` / `…_prime_family_II` | our own uniform `M(p,1) > (⌊p/2⌋²−2)/3`, every prime `p ≥ 17` | trust triple | 🟢 clean |
 | `Adder.Background.Two.mahler_lower_bound_two_cycle` / `…_prime_seven_mod_twelve` | our own `M(p,1) > p(p−1)/6 − 1`, every prime `p ≡ 7 (mod 12)` | trust triple | 🟢 clean |
 | `Adder.Background.mahler_lower_bound_drift_one` | our own `M(p,1) ≥ D(p−1)/2 − 1` per drift-one background | trust triple | 🟢 clean |
+| `Adder.RunJump.mahler_lower_bound_runjump` / `…_three` / `…_four` | our own run+jump chain: `M(p,1) > b(p−b−1)−1` for `−1 ∈ ⟨p⟩ (mod b)`; `2/9` and `3/16` for `3 ∣ p+1`, `4 ∣ p+1` | trust triple | 🟢 clean |
 | `Adder.Farey.mahler_lower_bound_farey` | our own two-background Farey certificate, `⌊p/2⌋²−2` | trust triple | 🟢 clean |
 | `Adder.Background.mahler_lower_bound_prime_drift_one` | our own `M(p,1) > ≈p²/6`, **conditional** | trust triple **+ `sorryAx`** | 🔴→ correctly conditional: its one hypothesis `exists_prime_nonresidue` (prime `q ∈ (p/3,p/2)` with `(p\|q) = −1`) is Linnik-strength, disclosed, and reaches NO unconditional theorem |
 | `Mahler.mahler_lower_bound_base29` | our own `M(29,1) ≥ 140` | trust triple (`decide +kernel`, no `native_decide`) | 🟢 clean |

@@ -1,4 +1,49 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
+## ✅ GRIND 2026-09-08 (lap 3): `mahler_lower_bound_runjump` PROVED — the directive's mandated move is DONE
+
+`src/NormalNumbers/MahlerRunJumpWalk.lean` (new, sorry-free, `#print axioms` clean, build 8888 jobs):
+
+* **`key_of_congr`** — the departure congruence mod `Dh`, the landing congruence mod `Dn`, and
+  `Coprime Dh Dn` give the exact identity `key` with the forced digit.  So the data needs only
+  congruences, never an explicit `dj`.
+* **The data** (`mk`): `al i = p^{T−1} mod Dh i`, `cj i = p^{2T−2} mod Dh i`, `ap i = 1` along the run;
+  at the jump `al 0 = p^{3f−2} mod b` (`p^f ≡ −1` ⟹ `p²·al 0 ≡ −1`), `cj 0 = p^{3f−3+T} mod b`,
+  `ap 0 = p^{T−1} mod (b+L)` (works because `p ≡ b (mod b+L)`).  `T` is abstract in `Arith`
+  (`p^T ≡ 1 mod every Dh j`, `T ≥ 1`); the theorem takes `T = 2φ((p−b)!)`.  The two ZMod
+  computations (`mk_dep` at `i = 0`, `mk_land` at `i = 0`) are the only arithmetic; the run is
+  `Nat.div_add_mod` + `linear_combination`.
+* **The walks**: walk A = block `L` (`F_L(p^{T−1}) … F_L(p^{2T−2}), J_L`), middle blocks
+  `j = L−1 … 1` (`F_j(1) … F_j(p^{2T−2}), J_j`, each of length `2T`), block `0`
+  (`F_0(1) … F_0(p^{t₀}), J_0`, `t₀ = 3f−3+T`); period `PA = T+1 + (L−1)·2T + t₀+2`.  Positions are
+  decoded by a three-case formula (`pos_cases`), no lists.  Walk B = the far cycle in background `L`
+  (period `T`).  Common start `F_L(p^{T−1})`; digits differ at the start of block `0`
+  (`dig F_0(1) = ⌊p/b⌋ ≥ 2` vs `dig F_L(1) = 1`); every far→far edge is non-`hi`-extremal
+  (`not_hiMax_far`: the width shrinks by `p`).
+* **Theorem + corollaries**: `mahler_lower_bound_runjump`, `…_of_dvd` (`f = 1`), `…_three` (`2/9`),
+  `…_four` (`3/16`), anchors `base13` (`M ≥ 35`, exact) and `base31` (`M ≥ 224`, exact).
+
+**Census cross-check (T2 tripwire)**: every admissible `(p, b)`, `p ≤ 31`, gives `b(p−b−1) ≤ M(p,1)`;
+exact at `(13,5) → 35`, `(23,10) → 120`, `(31,14) → 224`.  So the run+jump chain is OPTIMAL at
+`p = 13, 23, 31` — the census value is attained by a certificate we can now name.
+
+### Lean gotchas this lap
+* `subst h` with `h : n = T` (both local variables) eliminated `T`, breaking every later `T`; use
+  `rw [h]` when the right-hand variable must survive.
+* `rw [← ap_run …]` (rewriting `1` backwards) hits EVERY `1`, including `L − 1`; rewrite the
+  hypothesis forwards instead.
+* `Nat.div_add_mod` is `k * (n / k) + n % k`; `omega` needs `Nat.div_add_mod'` when the goal has
+  `n / k * k`.
+* `subst` on `p = 3 * c + 2` inside a corollary makes every hypothesis about `p` concrete — then
+  `omega` handles the `−1 mod b` residues directly.
+
+### Next (altitude lap decides; T1 is satisfied within 2 grind laps)
+* The uniform constant is now `3/16` for `p ≢ 1 (mod 12)` and still `1/12` for `p ≡ 1 (mod 12)`
+  (trigger **T3**).  For `p ≡ 1 (mod 12)`: `−1 ∈ ⟨p⟩ (mod b)` for a large `b` is the remaining
+  arithmetic; e.g. `b ∣ p^2 + 1` (`f = 2`), `b = (p²+1)/2` is too big, but any divisor `b` of `p²+1`
+  in `(p/3, p/2)` works — worth a census of which primes `p ≡ 1 (mod 12)` have one.
+* The three EXACT hits suggest the run+jump chain with the best admissible `b` is the true
+  optimum whenever `M(p,1) = ⌊p/2⌋² − 1` or `− 4`; check against the census at `p = 13, 19, 23, 29, 31`.
+
 
 ## ✅ GRIND 2026-09-08 (lap 2): `MahlerRunJump.valid` PROVED — the certificate is sorry-free
 

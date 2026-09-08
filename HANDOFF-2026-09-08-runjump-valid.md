@@ -1,30 +1,29 @@
-# Handoff: `MahlerRunJump.valid` proved — the run+jump certificate is sorry-free
+# Handoff: the run+jump chain theorem is PROVED (`mahler_lower_bound_runjump`)
 
-**Date**: 2026-09-08 · **Branch**: `wip/adder-tower-c9` · build green **8887 jobs**
-· `#print axioms RunJump.valid` = `[propext, Classical.choice, Quot.sound]`.
+**Date**: 2026-09-08 · **Branch**: `wip/adder-tower-c9` · build green **8888 jobs**
+· `#print axioms` of `mahler_lower_bound_runjump`, `…_three`, `…_four`, `…_base31_runjump`
+= `[propext, Classical.choice, Quot.sound]`.  No `sorry` in either file.
 
 ## 🎯 Directive — READ `DIRECTION.md` §CURRENT DIRECTIVE FIRST (it outranks this baton)
 
-Objective: pin `M(p,1)`; mandated move = `src/NormalNumbers/MahlerRunJump.lean`, then the two
-`b ∣ p+1` corollaries.  (The 09-07 kickoff's `g²/4` objective already landed on 09-07 — see
-`PENDING_WORK.md` §"THE MULTI-SCALE BOUND LANDED AT `k = 1`"; the kickoff is stale on that point.)
+Its mandated move (`MahlerRunJump.lean` + the two `b ∣ p+1` corollaries) is **DONE** within
+two grind laps (trigger T1 satisfied).  Trigger **T3** now applies: the unconditional constant is
+`3/16` for `p ≢ 1 (mod 12)` and `1/12` for `p ≡ 1 (mod 12)`.  The next ALTITUDE lap decides what
+follows; do not invent a new route in a grind lap.
 
-## ✅ This lap
+## ✅ What landed (two laps)
+* `src/NormalNumbers/MahlerRunJump.lean` — the certificate, valid for every `M < b(p−b−1)`.
+* `src/NormalNumbers/MahlerRunJumpWalk.lean` — data from `p^f ≡ −1 (mod b)`, walks, theorem:
+  **prime `p`, `3 ≤ b < p/2`, `−1 ∈ ⟨p⟩ (mod b)` ⟹ `M(p,1) > b(p−b−1) − 1`**; corollaries
+  `2/9` (`3 ∣ p+1`) and `3/16` (`4 ∣ p+1`), anchors `M(13,1) ≥ 35`, `M(31,1) ≥ 224` (both EXACT).
+* Census cross-check passes at every admissible pair `p ≤ 31`; exact at `(13,5)`, `(23,10)`, `(31,14)`.
+Full account + gotchas: `PENDING_WORK.md` §GRIND 2026-09-08 (laps 2, 3).
 
-All four sub-`sorry`s of the last handoff (`edges`, `carries`, `recursion`, `block`) are PROVED,
-by ONE mechanism: the generic two-denominator edge lemma (`gen_*`) + three edge-type instances
-(`edge_data`) + the carry inequality (`carry_data`).  The whole content is `cost_ge`
-(`M < Dn i·(p − Dh i)`, minimum `b(p−b−1)` at both ends of the run) and `jmod` (the junction residue).
-Full account + six Lean gotchas: `PENDING_WORK.md` §GRIND 2026-09-08 (lap 2).
-
-## 🎬 Next actions, in order
-1. `Data` existence from `p` prime, `3 ≤ b`, `2b < p`, `−1 ∈ ⟨p⟩ (mod b)`: `al i = p⁻¹ mod Dh i`,
-   `ap i = 1`, `dj i = (p·al i − 1)/Dh i` for `i ≥ 1`; the closing jump at `i = 0` uses `hord`.
-2. The closed walk through every junction with mixing (template `MahlerFareyJunction.lean`).
-3. `mahler_lower_bound_runjump : M(p,1) > b(p−b−1) − 1`, then `b = (p+1)/3` (`2/9`) and
-   `b = (p+1)/4` (`3/16`).
+## 🎬 If a grind lap runs before the altitude lap
+* `p ≡ 1 (mod 12)`: census which primes have a divisor `b ∈ (p/3, p/2)` of `p² + 1` (then `f = 2`
+  and `mahler_lower_bound_runjump` applies with `b(p−b−1) ≥ 2p²/9`); this is a Python probe, not Lean.
+* Otherwise idle-correct: nothing in `src/` is open on this route.
 
 ## 📁 Key files
-- `DIRECTION.md` §CURRENT DIRECTIVE (binding) · `PENDING_WORK.md` §GRIND 2026-09-08 (lap 2)
-- `src/NormalNumbers/MahlerRunJump.lean` (sorry-free certificate; theorem still to state)
-- `src/NormalNumbers/MahlerFareyJunction.lean` (walk template)
+- `DIRECTION.md` §CURRENT DIRECTIVE · `PENDING_WORK.md` §GRIND 2026-09-08 (lap 3) · `STATUS.md` (updated)
+- `src/NormalNumbers/MahlerRunJump.lean`, `src/NormalNumbers/MahlerRunJumpWalk.lean`
