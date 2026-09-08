@@ -785,4 +785,21 @@ theorem mahler_lower_bound_base31_runjump :
       ∃ N, ∀ n, N ≤ n → ¬ OccursAt 31 ((m : ℝ) * α) [30] n :=
   mahler_lower_bound_runjump 31 14 3 (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
 
+/-- **The conditional `1/4`** (directive trigger T3): if some `b` within `j` of `p/2`
+(`p = 2b + j`) has `−1 ∈ ⟨p⟩ (mod b)`, then `M(p,1) > (p−j)(p+j−2)/4 − 1`.
+Measured (`experiments/mahler_runjump_admissible.py`): for every prime `p < 2000` the
+best admissible `b` has `j ≤ 33` (`j = 33` only at `p = 853`), so the constant is `1/4 − O(1/p)` there. -/
+theorem mahler_lower_bound_runjump_near_half (p b j f : ℕ) (hp : p.Prime) (hb : 3 ≤ b)
+    (hj : 1 ≤ j) (hpj : p = 2 * b + j) (hf : 1 ≤ f) (hpow : p ^ f % b = b - 1) :
+    ∃ α : ℝ, Irrational α ∧ ∀ m : ℕ, 1 ≤ m → m ≤ (p - j) * (p + j - 2) / 4 - 1 →
+      ∃ N, ∀ n, N ≤ n → ¬ OccursAt p ((m : ℝ) * α) [p - 1] n := by
+  have e : b * (p - b - 1) = (p - j) * (p + j - 2) / 4 := by
+    subst hpj
+    rw [show 2 * b + j - b - 1 = b + j - 1 by omega, show 2 * b + j - j = 2 * b by omega,
+      show 2 * b + j + j - 2 = 2 * (b + j - 1) by omega,
+      show 2 * b * (2 * (b + j - 1)) = (b * (b + j - 1)) * 4 by ring,
+      Nat.mul_div_cancel _ (by norm_num)]
+  rw [← e]
+  exact mahler_lower_bound_runjump p b f hp hb (by omega) hf hpow
+
 end NormalNumbers.Adder.RunJump

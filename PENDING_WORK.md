@@ -1,4 +1,22 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
+## 📏 MEASURED 2026-09-08 (lap 4): the run+jump theorem alone reaches `1/4 − O(1/p)` at EVERY prime `< 2000`
+
+`experiments/mahler_runjump_admissible.py`: for each prime `p < 2000`, the best `b` with
+`3 ≤ b < p/2` and `−1 ∈ ⟨p⟩ (mod b)` (the hypothesis of the PROVED `mahler_lower_bound_runjump`).
+* The gap `j = p − 2b` of the best admissible `b` is **at most 33** (`p = 853`), typically `≤ 9`;
+  so `b(p−b−1)/p² ≥ 0.2416` for every prime `p ≥ 61`, `0.2497` near `p = 2000` — **including every
+  `p ≡ 1 (mod 12)`** (the class the `b ∣ p+1` corollaries miss).  The route's T3 dichotomy
+  (`3/16` vs `1/12`) was too pessimistic: the theorem's own hypothesis is nearly always satisfiable
+  near `p/2`.
+* Against the census: deficits `1, 0, 1, 3, 0, 5, 0` at `p = 11 … 31` — exact at `13, 23, 31`.
+* **Landed**: `mahler_lower_bound_runjump_near_half` — `p = 2b + j`, `−1 ∈ ⟨p⟩ (mod b)` ⟹
+  `M(p,1) > (p−j)(p+j−2)/4 − 1`.  This IS trigger T3's "clean conditional `1/4`", as a theorem.
+* **Open arithmetic (for the altitude lap)**: prove that some `b ∈ (p/2 − C, p/2)` is admissible.
+  `b = (p−j)/2` is admissible iff `−1 ∈ ⟨j⟩ (mod (p−j)/2)` (since `p ≡ j`).  `j = 1` never
+  (`⟨1⟩`), `j = 3` iff `−1 ∈ ⟨3⟩ mod (p−3)/2` (= family-I's hypothesis).  A uniform proof needs
+  a small odd `j` with `−1 ∈ ⟨j⟩ (mod (p−j)/2)` — a character-sum / Artin-type question; NOT a
+  grind-lap target.  The unconditional floor stays `3/16` (`p ≢ 1 mod 12`) / `1/12`.
+
 ## ✅ GRIND 2026-09-08 (lap 3): `mahler_lower_bound_runjump` PROVED — the directive's mandated move is DONE
 
 `src/NormalNumbers/MahlerRunJumpWalk.lean` (new, sorry-free, `#print axioms` clean, build 8888 jobs):

@@ -19,6 +19,11 @@ follows; do not invent a new route in a grind lap.
 * Census cross-check passes at every admissible pair `p ≤ 31`; exact at `(13,5)`, `(23,10)`, `(31,14)`.
 Full account + gotchas: `PENDING_WORK.md` §GRIND 2026-09-08 (laps 2, 3).
 
+## 📏 Lap 4 measurement (see `PENDING_WORK.md` §MEASURED 2026-09-08)
+The theorem's hypothesis is satisfiable within `j ≤ 33` of `p/2` at EVERY prime `< 2000`, so the
+proved bound is `1/4 − O(1/p)` there, `p ≡ 1 (mod 12)` included; `…_near_half` states it.  The
+uniform-`1/4` question is now purely arithmetic: an admissible `b` near `p/2`.
+
 ## 🎬 If a grind lap runs before the altitude lap
 * `p ≡ 1 (mod 12)`: census which primes have a divisor `b ∈ (p/3, p/2)` of `p² + 1` (then `f = 2`
   and `mahler_lower_bound_runjump` applies with `b(p−b−1) ≥ 2p²/9`); this is a Python probe, not Lean.
