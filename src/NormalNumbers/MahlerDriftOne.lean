@@ -438,4 +438,178 @@ theorem mahler_lower_bound_prime_drift_one (p : ℕ) (hp : p.Prime) (h61 : 61 �
   have : p / 3 + 1 ≤ D := by omega
   exact driftBound_mono p this
 
+/-! ### General offset `b`: the keys from the two channel bounds -/
+
+/-- Drift-one hypotheses for a junction of offset `b`: `b ∣ p + 1`, `gcd(b, D) = 1`,
+`c₂(p+1) ≡ −b (mod D)`. -/
+structure DriftOneB (p D c₀ b : ℕ) : Prop where
+  hp : 3 ≤ p
+  hD3 : 3 ≤ D
+  hb : 2 ≤ b
+  hbD : b + D < p
+  hbp : b ∣ p + 1
+  hcop : Nat.Coprime b D
+  hc₂ : (c₂ p D c₀ * (p + 1) + b) % D = 0
+
+namespace DriftOneB
+
+variable {p D c₀ b : ℕ} (h : DriftOneB p D c₀ b)
+include h
+
+theorem toHyp : Hyp p D b where
+  hp := h.hp
+  hD := by have := h.hD3; omega
+  hb := by have := h.hb; omega
+  hbD := h.hbD
+
+theorem D_pos : 0 < D := by have := h.hD3; omega
+
+/-- **KeyA** from `bm < p(p − D)`. -/
+theorem keyA (m : ℕ) (hm : b * m < p * (p - D)) :
+    p ^ 2 * (m * c₁ p D c₀ % D) + m * b < (p - 1) * (p * D) := by
+  have hR : m * c₁ p D c₀ % D + 1 ≤ D := Nat.mod_lt _ h.D_pos
+  have h1 : p ^ 2 * (m * c₁ p D c₀ % D) + p ^ 2 ≤ p ^ 2 * D := by
+    have := Nat.mul_le_mul_left (p ^ 2) hR; linarith
+  have hDp : D < p := by have := h.hbD; have := h.hb; omega
+  have hp := h.hp
+  have e3 : p * D ≤ p * p := Nat.mul_le_mul_left p hDp.le
+  have e : (p - 1) * (p * D) + p * D = p ^ 2 * D := by
+    rw [Nat.sub_one_mul, Nat.sub_add_cancel (Nat.le_mul_of_pos_left _ (by omega))]; ring
+  have e2 : p * (p - D) + p * D = p ^ 2 := by
+    rw [Nat.mul_sub, Nat.sub_add_cancel e3]; ring
+  have e4 : m * b = b * m := by ring
+  omega
+
+/-- The residue of `N₀` at channel `m`, split as `w + p·r` with `bm = pv + w`. -/
+theorem n0_res (m : ℕ) :
+    m * (c₂ p D c₀ * p + b) % (p * D)
+      = p * ((m * c₂ p D c₀ + b * m / p) % D) + b * m % p := by
+  have hp : 0 < p := by have := h.hp; omega
+  set v := b * m / p with hv
+  set w := b * m % p with hw
+  have hvw : b * m = p * v + w := (Nat.div_add_mod (b * m) p).symm
+  have hwp : w < p := Nat.mod_lt _ hp
+  set A := m * c₂ p D c₀ + v with hA
+  set r := A % D with hr
+  set q := A / D with hq
+  have hAqr : A = D * q + r := (Nat.div_add_mod A D).symm
+  have hrD : r + 1 ≤ D := Nat.mod_lt _ h.D_pos
+  have hpr : p * r + p ≤ p * D := by
+    have := Nat.mul_le_mul_left p hrD; linarith
+  have hnum : m * (c₂ p D c₀ * p + b) = (p * r + w) + (p * D) * q := by
+    have e1 : m * (c₂ p D c₀ * p + b) = p * (m * c₂ p D c₀) + b * m := by ring
+    rw [e1, hvw, show p * (m * c₂ p D c₀) + (p * v + w) = p * A + w by rw [hA]; ring,
+      hAqr]
+    ring
+  rw [hnum, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt (by omega)]
+
+/-- **KeyB** from `bm + D < (b−1)pD`.  The only channels violating keyB satisfy
+`bm = (p+1)(v+1) − Dg` with `b ∣ g`, hence `g ≥ b` and `bm ≥ (b−1)pD − D`. -/
+theorem keyB (m : ℕ) (hm : b * m + D < (b - 1) * p * D) :
+    m * (c₂ p D c₀ * p + b) % (p * D) < (p - 1) * D := by
+  have hp := h.hp
+  have hD3 := h.hD3
+  have hb := h.hb
+  have hDp : D < p := by have := h.hbD; omega
+  rw [h.n0_res m]
+  set v := b * m / p with hv
+  set w := b * m % p with hw
+  have hvw : b * m = p * v + w := (Nat.div_add_mod (b * m) p).symm
+  have hwp : w < p := Nat.mod_lt _ (by omega)
+  set c := c₂ p D c₀ with hc
+  set r := (m * c + v) % D with hr
+  have hrD : r + 1 ≤ D := Nat.mod_lt _ h.D_pos
+  have e : (p - 1) * D + D = p * D := by
+    rw [Nat.sub_one_mul, Nat.sub_add_cancel (Nat.le_mul_of_pos_left _ (by omega))]
+  by_contra hcon
+  push Not at hcon
+  have hr' : r = D - 1 := by
+    by_contra hne
+    have hr2 : r + 2 ≤ D := by omega
+    have := Nat.mul_le_mul_left p hr2
+    have e2 : p * (r + 2) = p * r + 2 * p := by ring
+    omega
+  have hpr : p * r + p = p * D := by
+    have e1 : p * (r + 1) = p * D := by rw [show r + 1 = D by omega]
+    linarith
+  have hwD : p ≤ w + D := by omega
+  have hdiv : D ∣ m * c + v + 1 := by
+    have : (m * c + v) % D + 1 = D := by omega
+    have h1 := Nat.div_add_mod (m * c + v) D
+    refine ⟨(m * c + v) / D + 1, ?_⟩
+    rw [Nat.mul_succ]; omega
+  have hc2 : D ∣ c * (p + 1) + b := Nat.dvd_of_mod_eq_zero h.hc₂
+  obtain ⟨ℓ, hℓ⟩ := hdiv
+  obtain ⟨k, hk⟩ := hc2
+  -- `v + p + 1 − w = D·g` in `ℤ`
+  have hZ : ((v : ℤ) + p + 1 - w) = D * (ℓ * (p + 1) - m * k) := by
+    have hℓZ : ((m : ℤ) * c + v + 1) = D * ℓ := by exact_mod_cast hℓ
+    have hkZ : ((c : ℤ) * (p + 1) + b) = D * k := by exact_mod_cast hk
+    have hvwZ : (b : ℤ) * m = p * v + w := by exact_mod_cast hvw
+    linear_combination (p + 1 : ℤ) * hℓZ - (m : ℤ) * hkZ + hvwZ
+  set g : ℤ := ℓ * (p + 1) - m * k with hg
+  have hDZ : (0 : ℤ) < D := by exact_mod_cast h.D_pos
+  have hwZ : (w : ℤ) < p := by exact_mod_cast hwp
+  have hwDZ : (p : ℤ) ≤ w + D := by exact_mod_cast hwD
+  have hlo : (2 : ℤ) ≤ D * g := by rw [← hZ]; linarith
+  have hg0 : 0 ≤ g := by
+    by_contra hng; push Not at hng
+    have : D * g < 0 := by nlinarith
+    linarith
+  obtain ⟨gN, hgN⟩ := Int.eq_ofNat_of_zero_le hg0
+  -- `b·m + D·gN = (p+1)(v+1)` in `ℕ`, hence `b ∣ D·gN`, hence `b ∣ gN`
+  have hbm : b * m + D * gN = (p + 1) * (v + 1) := by
+    have : ((b : ℤ) * m + D * gN) = (p + 1) * (v + 1) := by
+      rw [← hgN]
+      have hvwZ : (b : ℤ) * m = p * v + w := by exact_mod_cast hvw
+      linear_combination hvwZ - hZ
+    exact_mod_cast this
+  have hbdvd : b ∣ D * gN := by
+    have h1 : b ∣ (p + 1) * (v + 1) := Dvd.dvd.mul_right h.hbp _
+    rw [← hbm] at h1
+    exact (Nat.dvd_add_right (dvd_mul_right b m)).mp h1
+  have hbg : b ∣ gN := Nat.Coprime.dvd_of_dvd_mul_left h.hcop hbdvd
+  have hgpos : 0 < gN := by
+    by_contra h0; push Not at h0
+    have : gN = 0 := by omega
+    rw [this] at hgN; rw [hgN] at hlo; simp at hlo
+  have hgb : b ≤ gN := Nat.le_of_dvd hgpos hbg
+  have hv1 : D * gN ≤ v + 1 + D := by
+    have : (D : ℤ) * gN ≤ v + 1 + D := by rw [← hgN, ← hZ]; linarith
+    exact_mod_cast this
+  have h1 : p * (D * gN) ≤ p * (v + 1 + D) := Nat.mul_le_mul_left p hv1
+  have h2 : p * D * b ≤ p * D * gN := Nat.mul_le_mul_left _ hgb
+  have e3 : (b - 1) * p * D + p * D = p * D * b := by
+    rw [show (b - 1) * p * D = (b - 1) * (p * D) by ring, Nat.sub_one_mul,
+      Nat.sub_add_cancel (Nat.le_mul_of_pos_left _ (by omega))]
+    ring
+  -- assemble: `bm = (p+1)(v+1) − D gN ≥ pD(gN − 1) − D ≥ pD(b−1) − D`
+  nlinarith
+
+theorem keys (M : ℕ) (hM0 : 0 < M) (hMA : b * M < p * (p - D))
+    (hMB : b * M + D < (b - 1) * p * D) : Keys p D c₀ b M where
+  posM := hM0
+  keyA := fun m hm => h.keyA m (lt_of_le_of_lt (Nat.mul_le_mul_left b hm) hMA)
+  keyB := fun m hm => h.keyB m (by have := Nat.mul_le_mul_left b hm; omega)
+  keyJ := by
+    have hp := h.hp
+    have hDp : D < p := by have := h.hbD; have := h.hb; omega
+    have e3 : p * D ≤ p * p := Nat.mul_le_mul_left p hDp.le
+    have e2 : p * (p - D) + p * D = p ^ 2 := by
+      rw [Nat.mul_sub, Nat.sub_add_cancel e3]; ring
+    have e4 : p ^ 2 + p ^ 2 * D ≤ p ^ 3 + p * D := by nlinarith
+    omega
+  keyR := by
+    have hp := h.hp
+    have hD := h.hD3
+    have hDp : D < p := by have := h.hbD; have := h.hb; omega
+    have e3 : p * D ≤ p * p := Nat.mul_le_mul_left p hDp.le
+    have e2 : p * (p - D) + p * D = p ^ 2 := by
+      rw [Nat.mul_sub, Nat.sub_add_cancel e3]; ring
+    have e5 : 2 * p ^ 2 ≤ p ^ 2 * D := by nlinarith
+    have e6 : 2 * b * M = 2 * (b * M) := by ring
+    omega
+
+end DriftOneB
+
 end NormalNumbers.Adder.Background
