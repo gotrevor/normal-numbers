@@ -28,6 +28,14 @@ middle digits `p − 2r − 1`, and only the top `κ` is prime-specific — ther
 no uniform `κ` (fails at `p = 19, 29` for every `κ < p²`).  Full analysis,
 refuted sub-approaches and the two next attacks are in `PENDING_WORK.md` §top.
 
+## Lap 4: the `κ ≡ −8/3 (mod p)` law; `M(59,1) ≥ 840` beyond the census
+
+The tuned top always satisfies `κ ≡ −8/3 (mod p)`; with `λ` tuned it is exact
+at `59` too (`mahler_lower_bound_base59`, `840 = ⌊59/2⌋² − 1`), but the ratio
+decays at most primes (`< 0.01` by `p ≈ 100`), so the `j = 2` burst family is
+NOT uniformly quadratic.  General prime lower bound still open; see
+`PENDING_WORK.md` §top for the two next attacks.
+
 ## Next lap — `PENDING_WORK.md` §top
 
 1. Prime-base LOWER side, general `p`: `M(p,1) ≥ p²/4 − O(p)` from the

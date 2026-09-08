@@ -39,6 +39,18 @@ at `p = 19, 29` the extremal orbit is presumably such a mixture, not a burst.
 bottom digit but leaves `2rS + κm − u` on top, same obstruction);
 one-parameter recursions `κ = pλ − c` for `c ≠ 2`.
 
+**The `κ` law (lap 4).**  At every prime where the family is exact,
+`κ ≡ −8/3 (mod p)`, i.e. `κ₀ = (p−8)/3` or `(2p−8)/3` plus `λp`: it makes the
+position-`j` digit sum `c(u + r) − [r≥1]` with `c ≡ −2/3` invertible, which
+cannot be `≡ −1` for `u + r < p`.  The next position carries the floors
+`⌊κ₀ m/p⌋`, and there the law is not enough: scanning `λ ≤ 5` for
+`11 ≤ p ≤ 257` the ratio `m*/p²` is `≈ 0.2` only at `11, 13, 23, 31, 59`
+(`λ = 0, 0, 0, 4, 4`) and decays to `< 0.01` elsewhere (scratch `law.py`).
+So the `j = 2` burst family is NOT uniformly quadratic — the exact witness at
+a general prime needs longer bursts or automaton mixing.  Banked: `M(59,1) ≥
+840 = ⌊59/2⌋² − 1` (`mahler_lower_bound_base59`), the first data point beyond
+the census, consistent with Finding 2's `⌊p/2⌋² − {0,1,4}`.
+
 **Next attack.**  (a) Two-shadow mixing as a PROVABLE family: `α` whose
 orbit alternates blocks of `r/Q` and `r'/(Q+1)` expansions; the transition
 digit sums need the affine principle with both residues.  Instrument first:

@@ -27,13 +27,15 @@ certificates below are checked in the kernel:
 | 17 | `2, 25360, 16` | `M(17,1) ≥ 63` | 64  | 24 |
 | 23 | `2, 2549, 22` | `M(23,1) ≥ 120` | 120 | 33 |
 | 31 | `2, 136334, 30` | `M(31,1) ≥ 224` | 224 | 45 |
+| 59 | `2, 880453, 58` | `M(59,1) ≥ 840` | ?   | 87 |
 
 The bursts share one shape: `B = p^j·κ − 4·(1 + p + ⋯ + p^(j−1))`, i.e.
 `B ≡ −4 (mod p)`, so that the last digit of `m·B` plus the background `2r`
 (`m = uQ + r`, `Q = (p−1)/2`) is `2(u − r) mod p`, which avoids `p − 1`
 below `m = Q²`; the middle digits are `p − 2r − 1`; only the top `κ`
-(`1, 6, 88, 5, 142` at `p = 11, 13, 17, 23, 31`) is tuned per prime.  So the
-family is exact at `5, 7, 13, 23, 31` and one short at `11, 17`.  See
+(`1, 6, 88, 5, 142, 253` at `p = 11, 13, 17, 23, 31, 59`) is tuned per prime,
+and always `κ ≡ −8/3 (mod p)`.  So the family is exact at `5, 7, 13, 23, 31`
+and one short at `11, 17`; `p = 59` is beyond the census (`⌊59/2⌋² = 841`).  See
 `PENDING_WORK.md` for why no uniform `κ` exists in this family.
 
 ("true `M(g,1)`" is the exact adder-machine value of
@@ -117,6 +119,15 @@ theorem mahler_lower_bound_base31 :
     ∃ α : ℝ, Irrational α ∧ ∀ m : ℕ, 1 ≤ m → m ≤ 223 →
       ∃ N, ∀ n, N ≤ n → ¬ OccursAt 31 ((m : ℝ) * α) [30] n :=
   mahler_bg_witness 31 2 136334 223 30 6 6 (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (by norm_num) (by decide +kernel) (by decide +kernel) (by decide +kernel)
+
+/-- **`M(59,1) ≥ 840 = ⌊59/2⌋² − 1`** — beyond the census (`g ≤ 32`), against
+B–B Thm 3.3's `87`.  `840/59² ≈ 0.241`.  Burst `880453 = 59²·253 − 4·59 − 4`,
+`253 = 17 + 4·59`, `17 ≡ −8/3 (mod 59)`. -/
+theorem mahler_lower_bound_base59 :
+    ∃ α : ℝ, Irrational α ∧ ∀ m : ℕ, 1 ≤ m → m ≤ 839 →
+      ∃ N, ∀ n, N ≤ n → ¬ OccursAt 59 ((m : ℝ) * α) [58] n :=
+  mahler_bg_witness 59 2 880453 839 58 6 6 (by norm_num) (by norm_num) (by norm_num) (by norm_num)
     (by norm_num) (by decide +kernel) (by decide +kernel) (by decide +kernel)
 
 end NormalNumbers.Mahler
