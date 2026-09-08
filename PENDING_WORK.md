@@ -1,5 +1,62 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ GRIND 2026-09-08 (lap 2): `MahlerRunJump.valid` PROVED — the certificate is sorry-free
+
+`src/NormalNumbers/MahlerRunJump.lean` is now **sorry-free**; `RunJump.valid : (cert D).Valid M [p-1]`
+for every `M < b(b+L−1) = b(p−b−1)`, `#print axioms` = `[propext, Classical.choice, Quot.sound]`.
+Build green 8887 jobs.
+
+### How the four sub-sorries fell (one mechanism, not four)
+
+**The generic two-denominator edge** (`section generic`, `gen_lo/gen_hi/gen_carry_lo/gen_carry_hi/
+gen_x/gen_rec/gen_block`).  Every edge `s → s'` has `lo s = N/E`, `lo s' = N'/E'` with LOCAL
+denominators, carries `⌊mN/E⌋`, and the exact integer identity
+
+    d·E·E' + N'·E = p·N·E' + δ        (δ ≥ 0)
+
+— the per-edge form of `NumCert.Good.edge`.  From it: `edges` (both sides), `recursion` and `block`
+follow via `gen_x`: `m·d + ⌊mN'/E'⌋ = ⌊(p·(mN mod E)·E' + mδ)/(EE')⌋ + p·⌊mN/E⌋`, and the block
+inequality is `p·(mN mod E)·E' + mδ + EE' < p·EE'` (stated without `p−1` so `omega` handles it).
+The carry inequality is `(mN mod E) + m·w·E ≤ E`.
+
+**Local data** (`En`, `Nn`, `wd`): far `(i,r)`: `E = Dh i`, `N = r`, `w = wid i`; junction `J i`:
+`E = p·Dh·Dn`, `N = al·p·Dn + 1`, `w = wid(nx i)/p`.  `lop_eq/hip_eq/cc_eq` show these are
+definitionally the certificate's `lo/hi/c`.
+
+**The three edge types** (`edge_data`, via `nxt_cases`):
+* far→far: `δ = 0`, identity = `Nat.div_add_mod`; block ⇐ `Dh < p`.
+* injection far→`J i`: `δ = Dh i`, identity from `inj` (`Dh·q + al = cj·p`) times `Dh·p·Dn`;
+  width ⇐ `p·Dh'Dn' + Dh·Dn ≤ p²·Dh'Dn'`; block ⇐ `m + Dn·Dh < p·Dn` (×p, the `p`-times-weaker cost).
+* junction `J i`→far: `δ = 0`, identity = `key` times `p·Dn` (EXACT); block ⇐ `jmod` +
+  `m + Dn·Dh < p·Dn`.
+
+**The one line of content** is `cost_ge`: `b(b+L−1) + Dn i·Dh i ≤ p·Dn i` for all `i ≤ L`, i.e.
+`M < Dn i·(p − Dh i)` — with `p − Dh i = b+L−i` and `Dn i = b+i−1` the product is
+`b(b+L−1) + (i−1)(L−i) ≥ b(b+L−1)`, equality at `i = 1` and `i = L`; the jump `i = 0` costs `(b+L)²`.
+`jmod` is the junction residue `m(al·p·Dn+1) mod (p·Dh·Dn) = p·Dn·(m·al mod Dh) + m` for `m < p·Dn`.
+
+### Lean gotchas this lap
+* `linear_combination` over ℕ works but has no negation: flip the hypothesis (`h.symm`) instead of
+  negating the coefficient.
+* `nlinarith` TIMES OUT (200k heartbeats) on goals that are linear in the monomials once the
+  product hints are supplied — `linarith` proves them instantly (it treats monomials as atoms).
+* Under `include hb hp`, lemmas that don't use them still get them auto-included; `omit hb hp in`
+  each one, or call sites break with "expected `3 ≤ b`".
+* `field_simp` closes cast-identities itself; end with `try ring`, not `ring`.
+* `positivity` cannot see through `set` variables — supply `mul_pos`/`div_pos` by hand.
+* `set i := rs s` does NOT fold `rs s` produced by LATER rewrites — `rw [← hi]` after them.
+
+### Next (in order) — the theorem itself
+1. **`Data` existence**: for `i ≥ 1`, `al i = p⁻¹ mod Dh i` (needs `gcd(p, Dh i) = 1`: `p` prime,
+   `Dh i < p`), `ap i = 1`, `dj i = (p·al i − 1)/Dh i`; check `key` reduces to `p·al ≡ 1 (mod Dh)`.
+   `cj i = al i · p⁻¹ mod Dh i`.  For `i = 0` the closing jump: `al 0` with `p·al 0·(b+L) ≡ −1 (mod b)`,
+   i.e. `p·al 0·L ≡ −1`, from `−1 ∈ ⟨p⟩ (mod b)` — this is where `hord` enters.
+2. **The walk**: a closed walk through all junctions, each far cycle traversed to its injection
+   source (`p^(φ(D)−2)` steps, Euler), with mixing (a non-`hi`-extremal edge).  Template:
+   `MahlerFareyJunction.lean`'s walk + `EscapeCert.isClosedWalk_periodic`.
+3. **`mahler_lower_bound_runjump`** and the two `b ∣ p+1` corollaries (`2/9`, `3/16`).
+
+
 ## 🔨 GRIND 2026-09-08 (post-reflection): `MahlerRunJump.lean` started — crux decomposed into 4 named sub-`sorry`s
 
 **Landed** `src/NormalNumbers/MahlerRunJump.lean` (wired into `NormalNumbers.lean`; build green
