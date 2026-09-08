@@ -1,5 +1,57 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🎯 GRIND LAP 2026-09-08 (drift one): BOTH KEYS PROVED FROM THE ARITHMETIC — the crux is now a bare existence
+
+**Landed** `src/NormalNumbers/MahlerDriftOne.lean` (wired; build green 8884; trust
+triple on everything except the one disclosed `sorry`):
+
+* **`mahler_lower_bound_drift_one (p D c₀ t) (h : DriftOne p D c₀ t)`**:
+  `M(p,1) ≥ D(p−1)/2 − 1` (`driftBound p D`) whenever `p` odd, `D` odd `≥ 3`,
+  `2D < p`, `c₂(p+1) ≡ −2 (mod D)` (drift one) and `p^t ≡ −1 (mod D)`.  **No
+  per-channel `decide`**: `keyB` is proved for every `m < D(p−1)/2` by the parity
+  argument (the only bad channel would be `2m = (p+1)(v+1) − D`, odd), `keyA` is
+  automatic for `2D < p`, closure from `p^t ≡ −1` with `e = 4t`, `j = t+2`, and
+  `hne` from `D ∤ 2`.  Measured: `Keys` fail EXACTLY at `m = D(p−1)/2`, so the bound
+  is sharp for this certificate (`scratchpad keys.py`, primes `< 400`).
+* `exists_c₀`: a drift-one source exists iff `gcd(D, p(p+1)) = 1`
+  (`c₀ = (D−2)(p²(p+1))⁻¹`).
+* Instances with no scan input: **`M(127,1) ≥ 3843`** (`0.968·⌊p/2⌋²`, `D = 61`),
+  **`M(101,1) ≥ 2450`** (`0.980`, `D = 49`).
+* **`mahler_lower_bound_prime_drift_one (hp : p.Prime) (h61 : 61 ≤ p)`**:
+  `M(p,1) > (⌊p/3⌋+1)(p−1)/2 − 1 ≈ p²/6` — conditional on the ONE disclosed sorry
+  `exists_drift_one_background`.
+
+**The crux, now exactly stated** (`exists_drift_one_background`): *every prime
+`p ≥ 61` has an odd `D` with `p/3 < D < p/2`, `gcd(D, p+1) = 1`, `−1 ∈ ⟨p⟩ (mod D)`.*
+`experiments/mahler_drift_one_probe.py`: true for every prime `61 ≤ p < 4000`;
+FALSE at `p = 23` (best `D = 5`) and `p = 59` (best `D = 19`) — hence the threshold.
+Worst `D/p` for `p ≥ 61` in range is `0.373` (`p = 83`); for `p ≥ 200` the best `D`
+is always above `0.4p`, so the true constant this route delivers is near `1/4`, but
+the provable interval is what the sorry says.
+
+**Refuted this lap (do not retry):** structural `D` from `D | p+1` — every such `D`
+has `gcd(D, p+1) > 1`, which kills drift one (`c₂ = −2/(p+1)` needs `p+1` a unit);
+this is the SAME degeneracy as `D = (p+1)/2`.  So `t = 1` never works; `t ≥ 2` is
+forced, and `D | p^t + 1` for `t ≥ 2` has no closed-form divisor in `(p/3, p/2)`.
+
+## Next attack, in order
+
+1. **[crux] `exists_drift_one_background`.**  Sufficient: a prime `q ∈ (p/3, p/2)`,
+   `q ≡ 3 (mod 4)`, `(p/q) = −1` (then `p^((q−1)/2) ≡ −1`, and `q ∤ p+1`
+   automatically since `q < p/2`, `q ≠ (p+1)/3`… check `3q = p+1` separately).
+   Unconditionally this is a prime in a short interval with a Legendre condition —
+   Linnik-strength for the analytic route.  Cheaper: allow COMPOSITE `D` and use
+   the CRT: `−1 ∈ ⟨p⟩ (mod q₁q₂)` iff both orders have the same 2-adic valuation…
+   the density of good `D` is positive, so a **Brun–Titchmarsh-free counting
+   argument on `D ∈ (p/3, p/2)`** (count `D` with `ord_D(p)` even via characters
+   of order 2 in `(ℤ/D)^×`) may be within reach: this is the thread to open next.
+   Fallback that needs NO new theorem: extend the threshold check by `decide` on a
+   finite range and state the theorem for `61 ≤ p ≤ N`.
+2. Family I as a corollary of `mahler_lower_bound_drift_one`: `D = (p+3)/2` is
+   NOT `< p/2`, so family I is the `D > p/2` regime (keyA binding) — a second
+   `DriftOne'` with the `keyA` residue argument gives `M ≥ p(p−D)/2 − O(p)` there.
+3. Census-matching `M(p,1) ≥ ⌊p/2⌋² − 4` on all primes (needs `D ≈ p/2` exactly).
+
 ## 🎯 REVIEW LAP 2026-09-08 (fresh-mind): the factor `3` is a DRIFT, and it is NOT intrinsic
 
 **What the review established (all numbers from `experiments/mahler_onejunction_scan.py`,

@@ -116,6 +116,7 @@ import NormalNumbers.MahlerNumCert
 import NormalNumbers.MahlerFamilyI
 import NormalNumbers.MahlerFamilyII
 import NormalNumbers.MahlerBackgroundCert
+import NormalNumbers.MahlerDriftOne
 import NormalNumbers.MahlerPrimeLowerBoundBlock
 import NormalNumbers.MahlerBase5Exact
 import NormalNumbers.MahlerBase7Cert0
