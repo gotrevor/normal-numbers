@@ -1,6 +1,6 @@
 # Handoff: the Farey junction — the census construction is a cycle of backgrounds
 
-**Date**: 2026-09-08 · **Branch**: `wip/adder-tower-c9` · build green 8886 jobs, trust triple
+**Date**: 2026-09-08 · **Branch**: `wip/adder-tower-c9` · **HEAD**: `b9d4fb8` · build green 8886 jobs, trust triple
 (untracked host files `docs/mahler-universal-constant-is-one-2026-09-07.md`,
 `experiments/mahler_delta_star*.py`, `scratch/` are not mine; leave them).
 
