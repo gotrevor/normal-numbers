@@ -1,5 +1,55 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## 🎯 CRUX: family I is a THEOREM — `M(p,1) > ⌊p/2⌋² − 2` uniformly (2026-09-08, grind lap)
+
+**Landed: `src/NormalNumbers/MahlerFamilyI.lean` (new, trust triple, no sorry).**
+
+* `mahler_lower_bound_family_I (p k) (h : Hyp p k)`: for every odd `p ≥ 17`
+  (**primality is not used**) and every `k` with `p^k ≡ −1 (mod D)`,
+  `D = (p+3)/2`, there is an irrational `α` with no digit `p−1` in `m·α` for
+  all `1 ≤ m ≤ ⌊p/2⌋² − 2`.  That is `M(p,1) ≥ ⌊p/2⌋² − 1`, matching the exact
+  census to within `1`–`2` at every such prime.  `mahler_lower_bound_prime_family_I`
+  is the prime-facing form with hypothesis `∃ k, p^k % ((p+3)/2) = (p+3)/2 − 1`.
+* Instances by `decide` on the hypothesis: `M(41,1) ≥ 399` (new) and
+  `M(199,1) ≥ 9799` (`199⁵⁰ ≡ −1 mod 101`).
+* The certificate: states `Fin (D+2)` = all far residues `F_c` (tail
+  `[c/D, c/D + 4/(p³D)]`, digit `⌊cp/D⌋`) + `N₋₁` + `N₀`; ONE junction edge
+  `F_{c₋₂} → N₋₁` with `c₋₂ = p^(2k−2) mod D`.  Every interval has the same
+  slack `4/E`, `E = p³D`, so `lo = num/E`, `hi = (num+4)/E`, carries are
+  `⌊m·num/E⌋`, and every edge satisfies `dig·E + num' = p·num + δ`,
+  `δ ∈ {0, 2p}` (`edge_data`).  Validity reduces to four residue
+  inequalities `p·((m·num) mod E) + mδ < (p−1)E`:
+  `key_far` (all `m`, needs only `D < p`), `key_junction` (`2m < p²`),
+  `key_n0` (`m ≠ Dn`, via `m = Du + r` and a two-case `ℤ`-mod computation),
+  `key_nm1` (the sharp one: fails iff `m ≡ 3 (mod D)` and `⌊m/D⌋ = n − 2`,
+  i.e. `m = n² − 1` — hence `n² − 2`).  No edge is `hi`-extremal, so mixing
+  is free; the witness pair is the junction walk (period `3k+1`, repeated
+  `2k` times) against the far cycle (period `2k`), differing at position 3
+  (`p − 2` vs `p − 6`).
+* `experiments/mahler_family_I_cert_check.py` evaluates exactly this
+  certificate; valid at `n² − 2` and failing at `n² − 1` on `N₋₁ → N₀` for
+  all 33 odd `p ≤ 259` with the hypothesis.
+
+**What is still open — the general prime lower bound.**  Family I covers the
+primes with `−1 ∈ ⟨−3⟩ ⊂ (ℤ/D)^×` (29 % of primes below 2000).  For the rest
+the far cycle from `1` never reaches `D − 1`, so the `N₀ → F_{D−1}` landing
+is off-orbit and a second junction is needed to return.  Next attack, in order:
+0. **Two-junction closure for the remaining primes.**  In the orbit graph of
+   `c ↦ −3c` the cosets of `⟨−3⟩` are the components; family I is the
+   junction `T₀ = 1/D + 2/(pD)`, digit `1`, landing on `−1`.  Search
+   (`experiments/mahler_junction_cert.py`, generalized to two junctions) for a
+   junction from the coset of `−1` back to the coset of `1`, or a junction
+   `c → c'` within a coset that lands on the coset of `1` — the certificate
+   engine already handles any finite set of near states.  Target `c ≥ 1/4 − ε`
+   uniformly; anything `≥ 1/8` uniform on ALL primes is the headline.
+1. Alternatively a different background denominator `D' ∈ {Q, Q+1, Q+3, …}`
+   whose dynamics `c ↦ (p mod D')c` has `−1` in the orbit of `1` for the
+   complementary primes; then the same one-junction template
+   (`MahlerFamilyI.lean` is written so that only `num`, `dig`, the keys and
+   the walks change).
+2. Upper side is done (`MahlerQuarter.lean`).  Nothing else on the Mahler
+   crux is cheaper than 0/1.
+
 ## 🎯 CRUX: Law 2 PROVED, every position is now an affine congruence + carry (2026-09-08, grind lap)
 
 **Landed: `src/NormalNumbers/MahlerBurstCarry.lean` (new, trust triple).**
