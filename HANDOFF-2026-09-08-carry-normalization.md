@@ -28,7 +28,7 @@ all new theorems.  Untracked HOST files (`docs/mahler-universal-constant-is-one-
 ## 🎯 Found late in the lap — family I (detail in `PENDING_WORK.md` §top)
 
 Background `1/D`, `D = (p+3)/2`, ONE junction digit, `M = ⌊p/2⌋² − 2` at every
-prime `17 … 199` where `−1 ∈ ⟨−3⟩ (mod D)` (58 % of primes).  It is a finite
+prime `17 … 199` where `−1 ∈ ⟨−3⟩ (mod D)` (29 % of primes below 2000).  It is a finite
 escape certificate (`AdderEscapeCert.lean`) whose validity is three explicit
 inequalities in `m mod D` — the first genuinely uniform quadratic construction.
 

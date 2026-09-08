@@ -81,7 +81,7 @@ the `max_M` of `mahler_junction_cert.py`): `M = Q² − 2` at EVERY prime
 `17 ≤ p ≤ 199` where the cycle closes, i.e. where `−1 ∈ ⟨−3⟩ ⊂ (ℤ/D)^×`
 (then the periodic dynamics brings `(D−1)/D` back to `1/D` for free, so ONE
 ascent per cycle suffices — this is the trick the burst family lacks).  That is
-`58 %` of primes below `2000`.  The "mirror" junction `(D−3 → 3, J = p−2)` is
+`29 %` of primes below `2000` (`88` of `299`).  The "mirror" junction `(D−3 → 3, J = p−2)` is
 the same orbit one step later.  Why `Q² − 2` exactly: the depth-1 tail
 `T₋₁ = c₋₁/D + 2/(p²D)` (`c₋₁ = (−3)⁻¹ mod D`) fails first at the `m ≡ 3 (mod D)`
 with `m ≥ Q² − Q/2`, and `Q² ≡ 4 (mod D)` puts that at `m = Q² − 1`.
