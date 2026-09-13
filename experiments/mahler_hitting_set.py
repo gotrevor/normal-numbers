@@ -12,12 +12,21 @@ trimmed; a branching SCC = uncountably many escaping irrationals).  S is a per-b
 iff every W is hit.  The DISJUNCTIVE variant (one m in S serving all blocks of a given alpha) is
 the stronger condition: for every choice (W_m)_{m in S} the product of channel(m, W_m) collapses.
 
+Layered search (default for the per-block variant): hitting is monotone in S, so the blocks hit by
+S include every block hit by an (|S|-1)-subset; a layer caches, per subset, the bitmask of blocks it
+hits, and the product automaton runs only on (S, W) with W hit by NO proper subset.  Scaling: c*S
+hits iff S hits (alpha -> alpha/c), so a non-primitive S copies the mask of S/gcd.  Known-answer
+controls (the naive search, 2026-09-13): 151 hitting pairs at (2,2) below 60, 35 hitting triples
+at (4,1) below 60, 162 pairs at (3,1) below 40.
+
 Usage:
-  mahler_hitting_set.py G K MMAX [SMAX] [--all]        minimal per-block hitting size over S subset [1..MMAX]
-  mahler_hitting_set.py G K MMAX --disjunctive [SMAX]  same for the disjunctive variant
-  mahler_hitting_set.py --selftest                     S(3,1)=2 with {1,2} and {2,11} among the pairs
+  mahler_hitting_set.py G K MMAX [SMAX]                minimal per-block hitting size over S subset [1..MMAX] (layered)
+  mahler_hitting_set.py G K MMAX [SMAX] --naive [--all] the same by brute force (every subset, every block)
+  mahler_hitting_set.py G K MMAX --disjunctive [SMAX]  the disjunctive variant (brute force)
+  mahler_hitting_set.py --selftest                     S(3,1)=2 with {1,2} and {2,11} among the pairs; layered == naive
 """
 import sys, os, time
+from math import gcd
 from itertools import product, combinations
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from mahler_exact_M import channel_graph, prod_graph, nontrivial_scc_trim
@@ -53,6 +62,37 @@ def is_disjunctive_hitting(g, k, S):
                for choice in product(blocks, repeat=len(S)))
 
 
+def minimal_hitting_layered(g, k, mmax, smax=5):
+    """Least s with a per-block hitting s-subset of [1..mmax], and all such subsets; layered cache."""
+    blocks = list(product(range(g), repeat=k)); full = (1 << len(blocks)) - 1
+    prev = {}
+    for s in range(1, smax + 1):
+        t0 = time.time(); prods = 0; cur = {}; found = []
+        for T in combinations(range(1, mmax + 1), s):
+            d = gcd(*T)
+            if d > 1:
+                mask = cur[tuple(t // d for t in T)]          # lex-earlier, already computed
+            else:
+                mask = 0
+                for T2 in combinations(T, s - 1):
+                    mask |= prev.get(T2, 0)
+                for i, W in enumerate(blocks):
+                    if not (mask >> i) & 1:
+                        prods += 1
+                        if hits_block(g, k, T, W):
+                            mask |= 1 << i
+            cur[T] = mask
+            if mask == full:
+                found.append(T)
+        print(f"g={g} k={k} per-block size {s} over [1..{mmax}]: {len(found)} hitting set(s)"
+              f"{': ' + str(found[:12]) if found else ''} [{prods} products of {len(cur) * len(blocks)}, "
+              f"{time.time() - t0:.1f}s]", flush=True)
+        if found:
+            return s, found
+        prev = cur
+    return None, []
+
+
 def minimal_hitting(g, k, mmax, smax=4, disjunctive=False, all_sets=False):
     test = is_disjunctive_hitting if disjunctive else is_hitting
     for s in range(1, smax + 1):
@@ -76,10 +116,17 @@ if __name__ == "__main__":
         s, found = minimal_hitting(3, 1, 12, smax=2, all_sets=True)
         assert s == 2 and (1, 2) in found and (2, 11) in found, found
         assert not is_hitting(3, 1, (1,)) and is_hitting(2, 1, (1,))
-        print("selftest: S(3,1)=2 per-block, {1,2} and {2,11} hit; {1} does not; S(2,1)=1")
+        s2, found2 = minimal_hitting_layered(3, 1, 12, smax=2)
+        assert (s2, found2) == (s, found), (found2, found)
+        s3, found3 = minimal_hitting_layered(2, 2, 20, smax=2)
+        assert s3 == 2 and found3 == minimal_hitting(2, 2, 20, smax=2, all_sets=True)[1], found3
+        print("selftest: S(3,1)=2 per-block, {1,2} and {2,11} hit; {1} does not; S(2,1)=1; layered == naive at (3,1) and (2,2)")
     else:
         g, k, mmax = int(args[0]), int(args[1]), int(args[2])
         disj = "--disjunctive" in args
         rest = [a for a in args[3:] if not a.startswith("--")]
         smax = int(rest[0]) if rest else 4
-        minimal_hitting(g, k, mmax, smax=smax, disjunctive=disj, all_sets="--all" in args)
+        if disj or "--naive" in args:
+            minimal_hitting(g, k, mmax, smax=smax, disjunctive=disj, all_sets="--all" in args)
+        else:
+            minimal_hitting_layered(g, k, mmax, smax=smax)
