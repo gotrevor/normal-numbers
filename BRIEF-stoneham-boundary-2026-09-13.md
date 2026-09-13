@@ -2,6 +2,8 @@
 
 Attended brief by Ren / Astra, 2026-09-13.  This is AI-written mathematical guidance, not a published novelty claim.
 
+**Completed:** Fable/low proved the full frozen endpoint in lap 1 at `f1f9749`.  The attended judge rebuilt the module, checked all six transitive axiom sets, and compared all six frozen signatures exactly with `b007c35`.  This brief is the archived run specification, not an outstanding task.  See JUDGE's 2026-09-13 close-out entry.
+
 ## Scope and authority
 
 Prove the six frozen declarations in `src/NormalNumbers/StonehamBoundary.lean`.  The endpoint is `isDisjunctive_six_stoneham23`, with the stronger arbitrary-late interval theorem immediately above it.  The old Mahler campaign is not this run's task.  This brief and the dated operator override in DIRECTION take precedence over old HANDOFF objectives.

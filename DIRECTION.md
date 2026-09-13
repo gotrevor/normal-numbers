@@ -2,6 +2,12 @@
 
 ## Attended operator override: 2026-09-13 Stoneham boundary run
 
+**COMPLETE:** the endpoint and all frozen dependencies were proved at `f1f9749`
+and independently checked by the attended judge.  The run stopped after lap 1.
+There is no remaining task in this bounded campaign and no authorization to
+resume the archived Mahler directive automatically.  A new run needs a new
+attended objective.  Original scope follows for provenance.
+
 For the bounded run specified in `BRIEF-stoneham-boundary-2026-09-13.md`, prove
 the frozen declarations in `src/NormalNumbers/StonehamBoundary.lean`.
 Endpoint: `isDisjunctive_six_stoneham23`, via arbitrary-late interval visits.

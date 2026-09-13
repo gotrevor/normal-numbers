@@ -6,7 +6,8 @@ import NormalNumbers.StonehamBoundaryLemmas
 # Fixed-boundary-offset proof of base-6 Stoneham disjunctivity
 
 Attended statement freeze: Ren / Astra, 2026-09-13.
-These are proof obligations, not claims of completed formalization.
+All six frozen statements proved by Fable/low at f1f9749 and independently
+checked by the attended judge on 2026-09-13.  Literature novelty is unclaimed.
 See BRIEF-stoneham-boundary-2026-09-13.md for the full elementary route.
 
 The headline says every real subinterval is visited arbitrarily late.  It

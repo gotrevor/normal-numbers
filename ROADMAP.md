@@ -36,13 +36,27 @@ proved and axiom-clean.  Remaining Track-A work is outward (Phase 3), not proof.
   no character sums — a partial cycle is a subset of a full cycle, and the
   hot-spot lemma needs only upper visit bounds.
 
+- ✅ **Base-6 Stoneham disjunctivity** (`StonehamBoundary.lean`), 2026-09-13:
+  `isDisjunctive_six_stoneham23`, with the stronger arbitrary-late interval
+  theorem `stoneham_base6_interval_recurrence`.  Fix the distance to a block
+  boundary; the permutation `k ↦ 3^k-k mod 2^r` supplies a fine readout grid,
+  and a uniform one-cell error bound transfers it to the true orbit.  This
+  gives every finite base-6 word infinitely often, not normality or a result
+  about log 2.  Close prior method: Hertling 1995, §6; no novelty claim.
+  Completed by a one-lap Fable/low run and independently checked by the judge.
+
 ## Moonshot map (from the 2026-08-22 literature sweep)
 
 Bailey–Crandall 2002 Thm 4.8 / Cor 4.9 covers `Σ 1/(cⁿ·b^(dⁿ))` for coprime
-`b,c` with `d > √c` (so `Σ 1/(3ⁿ·2^(4ⁿ))` is NOT new).  Genuinely open
-neighbors: `Σ 1/(9ⁿ·2^(2ⁿ))` (`d < √c`, incomplete-exponential-sum wall),
-`Σ 1/(3ⁿ·2^(n²))` (polynomial exponents; also not covered by their
-nonnormality theorem), and their Artin-prime conjecture `Σ 1/(p·2^p)`.
+`b,c` with `d > √c` (so `Σ 1/(3ⁿ·2^(4ⁿ))` is NOT new).
+**Literature correction, 2026-09-13:** `Σ 1/(9ⁿ·2^(2ⁿ))` is already covered by
+Vandehey, *Differencing Methods for Korobov-type exponential sums*,
+[2016 preprint, Theorem 7.4](https://arxiv.org/abs/1606.07911), published 2019:
+take `c_k = 9^k`, `m_k = 2^k`; its growth ratio is `exp(O(k/log k) - k log 2) -> 0`.
+The earlier open label confused the limit of the 2002 theorem with the later
+literature frontier.  The polynomial-exponent neighbor `Σ 1/(3ⁿ·2^(n²))`
+is not covered by that criterion (its current open status needs a separate
+literature audit), and the Artin-prime conjecture is `Σ 1/(p·2^p)`.
 Realistic new-math play: formalize the Stoneham mechanism *parametrically*
 and squeeze the hypotheses (e.g. Thm 4.8's monotonicity condition (ii)).
 

@@ -1,5 +1,23 @@
 # STATUS — normal-numbers 📊
 
+## Attended update, 2026-09-13: Stoneham base-6 disjunctivity proved
+
+Every finite base-6 word occurs arbitrarily late in `stoneham23`:
+`stoneham_base6_interval_recurrence` and `isDisjunctive_six_stoneham23`, in
+`StonehamBoundary.lean`.  The fixed-boundary congruence route is complete at
+`f1f9749`; frozen statements unchanged, host build and transitive dependency
+checks passed.  Fable/low finished in lap 1; the bounded campaign is stopped.
+No literature novelty claim, no normality claim in base 6, and no ln-2 result.
+
+The parallel theta investigation produced an exact low-precision seed
+permutation and a counterexample to inferring short-block cancellation from
+such information; `experiments/theta_seed_precision.py` is its exact probe.
+ROADMAP also corrects the old open label for `sum 1/(9^k 2^(2^k))` using
+Vandehey's later normality theorem.  No second normality campaign was launched.
+
+The September 8 snapshot below is historical; its prospective run+jump work
+was subsequently completed, as recorded in the dated entries and handoff.
+
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter).** · **Build**: 🟢 green (8886 jobs) · **Updated**:

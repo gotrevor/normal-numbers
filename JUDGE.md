@@ -362,3 +362,19 @@ file and works the checklist.  Laps never edit this file above the Ledger.
   bare-`rm` PreToolUse guard (false positive), so it is Trevor's to run or the
   hook's to fix.  28 `HANDOFF-*.md` batons sit in the repo root with drifted
   future dates — archive before publishing.
+
+- 2026-09-13 · **STONEHAM BOUNDARY CLOSE-OUT**, attended Ren / Astra.
+  Judged through `d6875fd`, proof commit `f1f9749`, scaffold `b007c35`.
+  `stoneham23` visits every base-6 interval arbitrarily late and is therefore
+  base-6 disjunctive.  All six frozen theorem headers compared byte-for-byte
+  with the scaffold: identical.  Only the frozen module, its new elementary
+  helper module, and dated HANDOFF changed during the worker run; no existing
+  definitions or other mathematics changed.  Host rebuilt
+  `NormalNumbers.StonehamBoundary`; `lean-axiom-gate --exact` on all six
+  declarations returned only `Classical.choice`, `Quot.sound`, `propext`.
+  Reviewed the grid lift, exponent periodicity, natural-subtraction bounds,
+  whole-cell margin, and arbitrary-late quantifiers.  No silent restrictions
+  or unresolved transitive assumptions.  Fable/low completed in one lap;
+  supervisor result `normal-numbers-20260913-140820-669000` is complete.
+  Verdict: **ratified**.  Not a normality theorem or a result about log 2;
+  exact literature priority unestablished (Hertling 1995 is a close predecessor).
