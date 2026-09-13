@@ -130,8 +130,8 @@ additions are the **fixed-`k` companion** (`sup_g M(g,k)/g^(k+1) = 1` at every `
 State it that way outward: *"a fixed-`k` companion to B–B Thm 3.2, same construction"* — never as
 a new discovery that the constant is sharp.  (Neither of the two doc sections that report this
 result, here and `PENDING_WORK.md` §"THE UNIVERSAL CONSTANT IS 1", cited Thm 3.2 when written; the
-Literature ledger carries B–B's Thm 1.1 and `M(3,1) = 2` but not yet Thm 3.2 — a statement-only
-ledger entry `berendBoshernitzan_thm32` is the owed tripwire.)
+Literature ledger carries B–B's Thm 1.1, `M(3,1) = 2` and, since 2026-09-13, the statement-only
+`berendBoshernitzan_thm32`.)
 
 ## What this changes
 

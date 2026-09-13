@@ -102,6 +102,31 @@ certificates) independently verifies Berend–Boshernitzan's `M(3,1) = 2`. -/
 theorem berendBoshernitzan_M31_holds : berendBoshernitzan_M31 :=
   fun x hx d hd => Adder.c1_ternary_digit x hx d hd
 
+/-- **Berend–Boshernitzan 1994, Theorem 3.2** (p. 319; transcribed verbatim
+in `archive/findings/ON-LINE-FINDINGS-2026-09-02-berend-boshernitzan-1994.md`
+§3): if `g` is not a prime power, then for every `ε > 0` there is `K = K(ε)`
+with `M(g,k) ≥ (1 − ε)·g^(k+1)` for all `k ≥ K`.  Unfolded through the
+definition of `M(g,k)` (the least multiplier bound that works for every
+irrational and every `k`-block): for each `k ≥ K` some irrational `α` and
+some `k`-block `w` defeat every multiplier `m < (1 − ε)·g^(k+1)`.
+
+Their construction — a prime `p ∣ g` and `l, r` with `g^l < p^r < (1+ε)g^l`,
+then `α = (p^r/g)·Σ g^(−n_j)` — is the same "smooth divisor just above a
+power of `g`" mechanism as `Mahler.mahler_constant_one_sharp`
+(`MahlerLowerBoundSmooth.lean`).  Our result is the **fixed-`k` companion**
+(`sup_g M(g,k)/g^(k+1) = 1` at every `k`, base growing), not a new sharpness
+discovery: `docs/mahler-universal-constant-is-one-2026-09-07.md` "Prior art".
+Statement-only, NOT wired: the paper's theorem is the `k → ∞` limit at a
+fixed base, which this repo has not proved.
+
+provenance: tier P (`papers/berend-boshernitzan-1994-mahler-multiples.pdf`). -/
+def berendBoshernitzan_thm32 : Prop :=
+  ∀ (g : ℕ), 2 ≤ g → ¬ IsPrimePow g →
+    ∀ ε : ℝ, 0 < ε → ∃ K : ℕ, ∀ k, K ≤ k →
+      ∃ (α : ℝ), Irrational α ∧ ∃ (w : List ℕ), w.length = k ∧ (∀ d ∈ w, d < g) ∧
+        ∀ m : ℕ, 1 ≤ m → (m : ℝ) < (1 - ε) * (g : ℝ) ^ (k + 1) →
+          ¬ (∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * α) w n)
+
 /-! ## The Adamczewski–Rampersad boundary -/
 
 /-- **The base-2 occurrence boundary**: the only blocks known to occur
