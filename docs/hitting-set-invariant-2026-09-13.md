@@ -61,8 +61,9 @@ automaton verdict).
 For `α = Σ_j B_j g^(−n_j)` with growing gaps, the digits of `m·α` are the digit strings of the
 integers `m·B_j` padded by zeros, so a block `W ≠ 0^k` occurs finitely often in `m·α` iff `W` is
 eventually absent from `0^(k−1)·digits_g(m B_j)·0^(k−1)`.  Hence **if some `W ≠ 0^k` is avoided by
-all of `m·B`, `m ∈ S`, for infinitely many `B`, then `S` is not a hitting set** (B–B 94 §3 is
-`B_j = 1`).  Sound relative to the automaton: on every set the probe visits with `--check`, each
+all of `m·B`, `m ∈ S`, for a single `B ≥ 1`, then `S` is not a hitting set** (take `B_j = B`; the
+growing gaps make `α` irrational; B–B 94 §3 is `B = 1`).  An earlier draft asked for infinitely
+many `B` - one suffices, so "defeated" below means "has an avoider `≤ 4096`".  Sound relative to the automaton: on every set the probe visits with `--check`, each
 `(S, W)` the sparse family defeats is also "not hit" by the automaton (no assertion fired).
 Counting avoiders `B ≤ 4096`:
 
@@ -75,10 +76,21 @@ Counting avoiders `B ≤ 4096`:
 | (5,1) quads ≤ 30 | 25819 | 22962; **2857 undefeated**, e.g. `{1,2,3,4}`, `{1,2,4,8}` | `{4,7,12,28}`: 1 avoider |
 
 So the lower bounds `S(4,1) ≥ 3`, `S(2,3) ≥ 4`, `S(2,4) ≥ 5`, `S(3,2) ≥ 5` each reduce, within the
-searched multipliers, to a statement about **digit-avoiding common multiples**; the base-5 bound
-does not - `{1,2,3,4}` has no sparse adversary below 4096 (plausibly none: the four multiples of
-any `B` seem to cover every nonzero base-5 digit), and its escaping irrational is a dense one only
-the automaton exhibits.
+searched multipliers, to a statement about **digit-avoiding common multiples**.  The base-5 bound
+does not, and the reason is a lemma:
+
+**Lemma (prime base, `k = 1`; proved 2026-09-13).**  Let `p` be prime and write `m'` for the
+`p`-free part of `m`.  If `{m' mod p : m ∈ S} = (ℤ/p)^×`, then `S` has no sparse adversary.
+*Proof.*  The last nonzero base-`p` digit of `m·B` is `m'·B' mod p`, and `B'` is a unit, so the
+last nonzero digits of `{m·B : m ∈ S}` run over every nonzero residue for every `B`. ∎
+Check: the 2857 quads `≤ 30` with no avoider `≤ 4096` are **exactly** the 2857 residue-covering
+quads (both inclusions, computed).  **Conjecture (converse).**  If the `p`-free residues of `S`
+miss a nonzero class, `S` has a sparse adversary.  Evidence: every non-covering quad `≤ 30` at base
+5 (22962 sets) and 391 of 391 random non-covering 5-sets `≤ 40` at base 7 have an avoider `≤ 4096`.
+**Consequence if true: `S(p,1) ≥ p − 1` for every prime `p`** (a set of `p − 2` elements misses a
+class).  Tight at `p = 2, 3`; not at `p = 5`, where `S(5,1) = 5`: the residue-covering 4-sets are
+defeated only by dense adversaries the automaton exhibits.  So the sparse method's reach at prime
+base, `k = 1`, is *exactly* the residue criterion, conjecturally.
 
 ## Prior art (literature sweep 2026-09-13; [R] = read in the source)
 
@@ -121,5 +133,15 @@ the automaton exhibits.
    the right object is the set of ratio-sets that hit, and its structure (which rationals `q`
    make `{1, q}` hit at `(2,2)`?) is the first thing to characterize.
 
-The caps are search limits, not theorems; the `S(4,1) = 3` pair of nodes above is the one
-statement whose lower bound has an elementary shape and whose data is complete enough to freeze.
+The caps are search limits, not theorems.  The graph as of 17:55–18:40:
+- **N1 (wiring, provable now)**: for finite `S`, base `g`, block `W ≠ 0^k`: an avoider `B` for
+  `(S, W)` implies `S` is not a per-block hitting set for `(g, k)`.  Elementary; the Lean work is
+  the digits of `Σ_j B g^(−n_j)` and irrationality from growing gaps.
+- **N2 (frozen Prop, open)**: `∀ m₁ < m₂` coprime, `∃ B ≥ 1, d ∈ {1,2,3}` with `d ∉ digits₄(m₁B) ∪
+  digits₄(m₂B)`.  Probe: all 1101 primitive pairs `≤ 60` with `B ≤ 4096`.  With N1 and the
+  automaton verdict on `{1,10,14}` this is `S(4,1) = 3`.
+- **N3 (lemma, proved)**: the prime-base residue obstruction above.
+- **N4 (frozen Prop, open)**: its converse; gives `S(p,1) ≥ p − 1`.
+
+N1 is the one to formalize; N2/N4 need an idea (a construction of `B` from `S`), and no table will
+supply it.
