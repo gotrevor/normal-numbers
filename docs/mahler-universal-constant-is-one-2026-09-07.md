@@ -111,10 +111,33 @@ at `g = 21, 27, 28, 32` where the true value is larger.  Only the **lower
 bound** is claimed, and only on the digit-model of the burst family that
 `mahler_universal_screen.py` validates against the exact algorithm.
 
+## Prior art — this is the mechanism of Berend–Boshernitzan Theorem 3.2 (attribution, 2026-09-13) 📚
+
+`ON-LINE-FINDINGS-2026-09-02-berend-boshernitzan-1994.md` §3 transcribes, verbatim from the paper
+(p. 319):
+
+> **Theorem 3.2.**  If `g` is not a prime power, then for every `ε > 0` there exists `K = K(ε)`
+> with `M(g,k) ≥ (1 − ε)g^(k+1)` for `k ≥ K`.
+
+Their proof picks a prime `p ∣ g`, uses irrationality of `log p / log g` to choose `l, r` with
+`g^l < p^r < (1+ε)g^l`, and takes `α = (p^r/g)·Σ g^(−n_j)` — the same "smooth divisor just
+above a power of `g`" mechanism as the `δ*(g)` closed form above and as `mahler_lower_bound_smooth`
+/ `mahler_constant_one_sharp` (`MahlerLowerBoundSmooth.lean`, which picks `2^a ≈ 3^b`).  So the
+statement "the constant `1` in `M(g,k) < g^(k+1)` cannot be lowered" was **already Berend–
+Boshernitzan's at every fixed non-prime-power base in the `k → ∞` limit**; this note's only
+additions are the **fixed-`k` companion** (`sup_g M(g,k)/g^(k+1) = 1` at every `k`, including
+`k = 1`, by letting the base grow), the explicit `δ*(g)` record ladder, and the Lean certificate.
+State it that way outward: *"a fixed-`k` companion to B–B Thm 3.2, same construction"* — never as
+a new discovery that the constant is sharp.  (Neither of the two doc sections that report this
+result, here and `PENDING_WORK.md` §"THE UNIVERSAL CONSTANT IS 1", cited Thm 3.2 when written; the
+Literature ledger carries B–B's Thm 1.1 and `M(3,1) = 2` but not yet Thm 3.2 — a statement-only
+ledger entry `berendBoshernitzan_thm32` is the owed tripwire.)
+
 ## What this changes
 
 - 🛑 The hunt for a universal constant `c < 1` is **over**; do not spend
-  treadmill laps on it.
+  treadmill laps on it.  (It was over in 1994 for non-prime-power bases — see the attribution
+  section above.)
 - 📌 The residual question is the *rate*: `1 − M(g,1)/g²` as a function of `g`.
   By the ladder it is governed by how well `g`'s prime support approximates `1`
   multiplicatively — a Størmer / linear-forms-in-logarithms question, and a
