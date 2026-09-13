@@ -89,8 +89,19 @@ miss a nonzero class, `S` has a sparse adversary.  Evidence: every non-covering 
 5 (22962 sets) and 391 of 391 random non-covering 5-sets `≤ 40` at base 7 have an avoider `≤ 4096`.
 **Consequence if true: `S(p,1) ≥ p − 1` for every prime `p`** (a set of `p − 2` elements misses a
 class).  Tight at `p = 2, 3`; not at `p = 5`, where `S(5,1) = 5`: the residue-covering 4-sets are
-defeated only by dense adversaries the automaton exhibits.  So the sparse method's reach at prime
-base, `k = 1`, is *exactly* the residue criterion, conjecturally.
+defeated only by dense adversaries the automaton exhibits.
+
+**Kill test (19:35): the converse is FALSE as stated.**  Take base 5 and `S` = every `m ≤ 30`
+whose 5-free residue is not 4 (23 elements, one missing class): no `B ≤ 10^6` avoids the forced
+digit `4·B' mod 5` in every `m·B` (independent code paths agree below 4096), and the random-`B`
+heuristic `BMAX·(4/5)^(|S|·digits) ≈ 10^6·10^(−20)` says none exists at all.  Same at base 7
+(all `m ≤ 40` with residue `≠ 3`, 33 elements) and base 3 (30 elements).  The residue criterion
+is only *necessary* for a sparse adversary; sufficiency fails once `|S|` is large.  What survives
+is the version the bound needs, **N4′: every `S` with `|S| ≤ p − 2` has a sparse adversary**
+(true for all triples `≤ 30` at base 5 - subsets of defeated quads - and 391 random 5-sets `≤ 40`
+at base 7).  The random-`B` heuristic for `|S| = p − 2` dies at roughly 20 base-`p` digits per
+element, so beyond that N4′ needs a *structured* `B`; a probe on random small sets of large
+elements is in `scratchpad/n4_edge_test.py` (results in the KB leaf §7.19).
 
 ## Prior art (literature sweep 2026-09-13; [R] = read in the source)
 
@@ -149,6 +160,6 @@ The caps are search limits, not theorems.  The graph as of 17:55–18:40:
   digits₄(m₂B)`.  Probe: all 1101 primitive pairs `≤ 60` with `B ≤ 4096`.  With N1 and the
   automaton verdict on `{1,10,14}` this is `S(4,1) = 3`.
 - **N3 (lemma, proved)**: the prime-base residue obstruction above.
-- **N4 (frozen Prop, open)**: its converse; gives `S(p,1) ≥ p − 1`.
+- **N4′ (frozen Prop, open)**: the converse for `|S| ≤ p − 2` (the unrestricted converse is false, see the kill test); gives `S(p,1) ≥ p − 1`.
 
 N1 is done; N2/N4 need an idea (a construction of `B` from `S`), and no table will supply it.
