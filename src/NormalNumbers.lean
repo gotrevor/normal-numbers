@@ -97,6 +97,7 @@ import NormalNumbers.AdderTowerC45
 import NormalNumbers.AdderTowerC6
 import NormalNumbers.MahlerMultiplier
 import NormalNumbers.Literature
+import NormalNumbers.SparseAdversary
 import NormalNumbers.LiteratureMahler
 import NormalNumbers.MahlerLowerBound
 import NormalNumbers.MahlerLowerBoundGeneral
