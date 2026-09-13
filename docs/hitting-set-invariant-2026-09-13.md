@@ -134,14 +134,21 @@ base, `k = 1`, is *exactly* the residue criterion, conjecturally.
    make `{1, q}` hit at `(2,2)`?) is the first thing to characterize.
 
 The caps are search limits, not theorems.  The graph as of 17:55–18:40:
-- **N1 (wiring, provable now)**: for finite `S`, base `g`, block `W ≠ 0^k`: an avoider `B` for
-  `(S, W)` implies `S` is not a per-block hitting set for `(g, k)`.  Elementary; the Lean work is
-  the digits of `Σ_j B g^(−n_j)` and irrationality from growing gaps.
+- **N1 (wiring) - GREEN 2026-09-13 19:00** (`src/NormalNumbers/SparseAdversary.lean`, one
+  Fable lap, 16 min, commit `2cffd31`): `not_isHittingSet_of_avoider` - for finite `S`, base
+  `g ≥ 2`, a block `w` of length `k ≥ 1` with a nonzero digit, and one `B ≥ 1` with
+  `¬ (w <:+: paddedDigits g k (m * B))` for every `m ∈ S`, `¬ IsHittingSet g k S`.  Adversary
+  `α = B · LiouvilleNumber.remainder g k₀`, block boundaries at factorials, digits recovered through
+  `Bridge.digitOf_realOfDigits` from partial sums at block boundaries (no tsum rearrangement).
+  Corollaries by kernel `decide`: `pair_one_eleven_not_hitting : ¬ IsHittingSet 4 1 {1, 11}`
+  (`B = 62`, `w = [1]`) and `triple_one_three_five_not_hitting : ¬ IsHittingSet 2 3 {1, 3, 5}`
+  (`B = 1`, `w = [1,1,1]`).  All three on the standard triple (`lean-green --axioms`, host, 19:05).
+  So every "not hitting" claim in the tables above that the sparse probe defeats is now one
+  `decide` away from a theorem; the automaton's dense adversaries are not yet wired.
 - **N2 (frozen Prop, open)**: `∀ m₁ < m₂` coprime, `∃ B ≥ 1, d ∈ {1,2,3}` with `d ∉ digits₄(m₁B) ∪
   digits₄(m₂B)`.  Probe: all 1101 primitive pairs `≤ 60` with `B ≤ 4096`.  With N1 and the
   automaton verdict on `{1,10,14}` this is `S(4,1) = 3`.
 - **N3 (lemma, proved)**: the prime-base residue obstruction above.
 - **N4 (frozen Prop, open)**: its converse; gives `S(p,1) ≥ p − 1`.
 
-N1 is the one to formalize; N2/N4 need an idea (a construction of `B` from `S`), and no table will
-supply it.
+N1 is done; N2/N4 need an idea (a construction of `B` from `S`), and no table will supply it.
