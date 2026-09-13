@@ -49,3 +49,13 @@ not a novelty claim (cf. Hertling 1995 Thm 8), nothing about log 2.
 
 Not committed by this lap (host-owned / not mine): `ROADMAP.md` modification,
 `experiments/theta_seed_precision.py`.
+
+## Checkpoint (final, 2026-09-13)
+
+* Branch: master.  HEAD: f1f9749 (`git log --oneline -1`).  Working tree: only host-owned
+  `ROADMAP.md` edit and untracked `experiments/theta_seed_precision.py` remain uncommitted.
+* Stop signalled twice via `box done` / `box done --green`; host verifies green and halts.
+* Exact next steps: none in scope.  Host-side follow-ups only: fold the result into
+  STATUS/ROADMAP (host-owned), and optionally decide whether to keep
+  `StonehamBoundaryLemmas.lean` importing all of `Mathlib` or trim to the modules used
+  (`Mathlib.Data.Int.ModEq`, `Mathlib.Tactic`) — cosmetic, no proof impact.
