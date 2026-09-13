@@ -6,6 +6,15 @@ digit `W < g` and maximised.  The repo previously held only
 `experiments/mahler_exact_M_k1_g14plus.txt` (`g = 14 … 29`); this run adds
 `g = 2 … 13` and `g = 31`, and puts the whole table in one place.
 
+> [!WARNING]
+> **Finding 3's headline is SUPERSEDED (flagged 2026-09-13).**  It reports the universal-constant
+> record as `g = 18` at `0.840` and frames "is `sup_g M(g,1)/g² < 1`?" as open.  It is **not** open:
+> the treadmill of 2026-09-07/08 proved the constant is **1** (`MahlerLowerBoundSmooth.lean`,
+> `mahler_lower_bound_smooth` + `mahler_constant_one_sharp`; write-up in
+> `docs/mahler-universal-constant-is-one-2026-09-07.md`).  The bg+burst screen independently
+> reached `g = 68 → 0.927` before being stopped, which is what a sup of 1 looks like.
+> The **census table and Findings 1 and 2 below stand as written.**
+
 ## The census
 
 | `g` | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
