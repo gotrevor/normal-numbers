@@ -29,8 +29,12 @@ multiplier never suffices once `g^k ≥ 3` (take `α = β/m` with `β` avoiding 
 nontrivial SCC (a lone cycle is one eventually periodic digit string, i.e. a rational, and is
 trimmed; a branching SCC is uncountably many escaping irrationals).  Disjunctive: every
 assignment `m ↦ w_m` must collapse.  Selftest: `S(3,1) = 2`, `{1,2}` and `{2,11}` both hit, `{1}`
-does not, `S(2,1) = 1`.  Reach: products of ≤ 4 channels with multipliers ≤ 60 in seconds; five
-channels at `k = 4` are already too large for the naive product.
+does not, `S(2,1) = 1`.  Reach (measured 17:20, the earlier "five channels too large" line was
+never measured and was wrong): the trimmed products are tiny - ≤ 160 states for five multipliers
+≤ 13 at `(2,4)`, ≤ 170 for `{11,23,41,59}` at `(2,3)` - and take milliseconds; the cost is the
+number of subsets `C(mmax, s)`, never the product.  `minimal_hitting_layered` adds subset
+monotonicity (a set inherits every block a proper subset hits; `c·S ≡ S` by scaling) and
+reproduces the naive controls; the naive short-circuit search stays faster for the top layer.
 
 ## Data (exact, 2026-09-13; "unique" means unique among sets within the searched range)
 
@@ -39,18 +43,42 @@ channels at `k = 4` are already too large for the naive product.
 | (2,1) | 1 | `{1}` | 1 | `{1}` | – |
 | (3,1) | 2 | 162 pairs ≤ 40, incl. `{1,2}` (B–B) and `{2,11}` (tower C2) | 2 | **`{2,11}` unique ≤ 20**; `{1,2}` is per-block only | pairs ≤ 40 / ≤ 20 |
 | (4,1) | 3 | `{1,10,14}` (unique ≤ 40); **35 triples ≤ 60**, e.g. `{2,5,7}`, `{1,10,56}`, `{3,30,42}` | > 3 | – | sizes ≤ 3, ≤ 60 |
-| (5,1) | > 4 | – | – | – | sizes ≤ 4, ≤ 30 |
-| (6,1), (7,1) | > 3 | – | – | – | sizes ≤ 3, ≤ 40 |
+| (5,1) | **5** | 2008 sets ≤ 30, e.g. `{1,2,3,4,6}`, `{1,2,3,4,8}`, `{1,2,3,6,14}` | – | – | sizes ≤ 5, ≤ 30 |
+| (6,1), (7,1) | > 5 | – | – | – | sizes ≤ 5, ≤ 30 |
 | (2,2) | 2 | `{1,3}` (unique ≤ 40); **151 pairs ≤ 60**, e.g. `{1,6}`, `{1,11}`, `{1,12}`, `{2,3}` | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
 | (2,3) | 4 | `{1,3,5,7}` unique ≤ 40 | > 4 (`{1,3,5,7}` fails) | – | sizes ≤ 4, ≤ 40 |
-| (2,4) | ? | **`{1,3,…,15}` does NOT hit** (nor any 7-subset of it) | – | – | that family only |
-| (3,2) | > 4 | – | – | – | sizes ≤ 4, ≤ 20 |
+| (2,4) | > 6 | **`{1,3,…,15}` does NOT hit** (nor any 7-subset of it); no set of size ≤ 6 below 20 | – | – | sizes ≤ 6, ≤ 20 |
+| (3,2) | **6** | 42 sets ≤ 20, e.g. `{1,2,4,5,7,8}`, `{1,4,5,6,7,8}` | – | – | sizes ≤ 6, ≤ 20 |
 
-The tempting conjecture `S(2,k) = 2^(k−1)` via the odd multipliers below `2^k` is **refuted at
-`k = 4`**; the two small cases were coincidences, or the minimal sets at `k = 4` involve larger
-multipliers.  `S(2,4)` is beyond the naive instrument (five channels, multipliers in the twenties);
-a smarter search (incremental products with early collapse, or a BDD over carries) is the next
-tooling step before more data.
+Read along rows: `S(g,1) = 1, 2, 3, 5, >5, >5` for `g = 2..7`; `S(2,k) = 1, 2, 4, >6` for
+`k = 1..4`; `S(3,k) = 2, 6`.  The tempting conjecture `S(2,k) = 2^(k−1)` via the odd multipliers
+below `2^k` is **refuted at `k = 4`** (no 6-set below 20 hits).  Every ">" is a search cap on the
+multipliers, never a theorem; every exact value's upper half is exact (a hitting set is a finite
+automaton verdict).
+
+## Sparse adversaries: an elementary lower-bound route (`experiments/mahler_sparse_adversary.py`)
+
+For `α = Σ_j B_j g^(−n_j)` with growing gaps, the digits of `m·α` are the digit strings of the
+integers `m·B_j` padded by zeros, so a block `W ≠ 0^k` occurs finitely often in `m·α` iff `W` is
+eventually absent from `0^(k−1)·digits_g(m B_j)·0^(k−1)`.  Hence **if some `W ≠ 0^k` is avoided by
+all of `m·B`, `m ∈ S`, for infinitely many `B`, then `S` is not a hitting set** (B–B 94 §3 is
+`B_j = 1`).  Sound relative to the automaton: on every set the probe visits with `--check`, each
+`(S, W)` the sparse family defeats is also "not hit" by the automaton (no assertion fired).
+Counting avoiders `B ≤ 4096`:
+
+| case | primitive sets | defeated by a sparse family | thinnest |
+|---|---|---|---|
+| (4,1) pairs ≤ 60 | 1101 | **all** | `{30,49}`: 11 avoiders of digit 1 |
+| (2,3) triples ≤ 40 | 8410 | **all** | `{21,35,39}`: 23 avoiders of `111` |
+| (2,4) quads ≤ 20 | 4619 | **all** | `{1,9,13,15}`: 492 avoiders of `1111` |
+| (3,2) quads ≤ 20 | 4619 | **all** | `{1,11,14,17}`: 81 avoiders of `22` |
+| (5,1) quads ≤ 30 | 25819 | 22962; **2857 undefeated**, e.g. `{1,2,3,4}`, `{1,2,4,8}` | `{4,7,12,28}`: 1 avoider |
+
+So the lower bounds `S(4,1) ≥ 3`, `S(2,3) ≥ 4`, `S(2,4) ≥ 5`, `S(3,2) ≥ 5` each reduce, within the
+searched multipliers, to a statement about **digit-avoiding common multiples**; the base-5 bound
+does not - `{1,2,3,4}` has no sparse adversary below 4096 (plausibly none: the four multiples of
+any `B` seem to cover every nonzero base-5 digit), and its escaping irrational is a dense one only
+the automaton exhibits.
 
 ## Prior art (literature sweep 2026-09-13; [R] = read in the source)
 
@@ -75,9 +103,13 @@ tooling step before more data.
 
 ## What would be a theorem here
 
-1. **Any exact value beyond the table with a proof**, e.g. `S(4,1) = 3` needs a lower bound: an
-   adversary `α` defeating every pair `{1, q}` of rationals - the automaton's escaping SCC for a
-   given pair is a *construction* of such `α`; the theorem is the uniform argument over all `q`.
+1. **Any exact value beyond the table with a proof**, e.g. `S(4,1) = 3`.  Upper half: the
+   automaton verdict on `{1,10,14}` (a finite computation, certifiable the AdderTower way).  Lower
+   half, via the sparse route: **for every pair `m₁ < m₂` there is a digit `d ∈ {1,2,3}` and
+   infinitely many `B` with `d ∉ digits₄(m₁B) ∪ digits₄(m₂B)`** - true for all 1101 primitive pairs
+   ≤ 60 with `B ≤ 4096`; the theorem is the uniform argument in `(m₁, m₂)`.  The wiring
+   ("block-sparse `α` is irrational and defeats `S`") is elementary and formalizable on its own.
+   Recommended freeze candidate (Fable, 17:45): two nodes, the digit-avoidance lemma and the wiring.
 2. **Growth**: is `S(g,k)` bounded in `k` for fixed `g`?  B–B 95 Cor 3.3 says the all-lengths
    answer is "no finite set", which suggests `S(g,k) → ∞`; a proof would be new.  A single
    quantitative lower bound `S(g,k) ≥ f(k)` with `f → ∞` is the first real target.
@@ -89,5 +121,5 @@ tooling step before more data.
    the right object is the set of ratio-sets that hit, and its structure (which rationals `q`
    make `{1, q}` hit at `(2,2)`?) is the first thing to characterize.
 
-Not a lap target yet: freeze a statement only after the smarter instrument confirms the small
-values are stable under larger multipliers (the `≤ 40` caps are search limits, not theorems).
+The caps are search limits, not theorems; the `S(4,1) = 3` pair of nodes above is the one
+statement whose lower bound has an elementary shape and whose data is complete enough to freeze.
