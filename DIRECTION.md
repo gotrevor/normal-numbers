@@ -1,5 +1,15 @@
 # DIRECTION — normal-numbers 🧭
 
+## Attended operator override: 2026-09-13 Stoneham boundary run
+
+For the bounded run specified in `BRIEF-stoneham-boundary-2026-09-13.md`, prove
+the frozen declarations in `src/NormalNumbers/StonehamBoundary.lean`.
+Endpoint: `isDisjunctive_six_stoneham23`, via arbitrary-late interval visits.
+This override supersedes the old Mahler CURRENT DIRECTIVE and old HANDOFF
+objectives for this run only.  No other route or statement changes are authorized.
+The brief defines the disjoint worker footprint, proof, stop conditions, and
+claim limits.  Grind laps read but do not edit this override or the brief.
+
 Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
