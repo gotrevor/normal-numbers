@@ -68,6 +68,19 @@ FAMILIES = {
              ["main"]),
     "c10z": (5, True, [[(1, 0, [2]), (2, 0, [2]), (3, 0, [2]), (4, 0, [2])]],
              ["main"]),
+    # Hitting-set upper bounds (docs/hitting-set-invariant-2026-09-13.md, 2026-09-13): the
+    # per-block family "every m in S avoids the same block w" must collapse for every w.
+    # h41: {1,10,14} at (4,1) => S(4,1) <= 3.   h51: {1,2,3,4,6} at (5,1) => S(5,1) <= 5.
+    # h22: {1,3} at (2,2) => S(2,2) <= 2.        h23: {1,3,5,7} at (2,3) => S(2,3) <= 4.
+    "h41": (4, True, [[(1, 0, [d]), (10, 0, [d]), (14, 0, [d])] for d in range(4)],
+            [f"d{d}" for d in range(4)]),
+    "h51": (5, True, [[(m, 0, [d]) for m in (1, 2, 3, 4, 6)] for d in range(5)],
+            [f"d{d}" for d in range(5)]),
+    "h22": (2, True, [[(1, 0, [a, b]), (3, 0, [a, b])] for a in range(2) for b in range(2)],
+            [f"w{a}{b}" for a in range(2) for b in range(2)]),
+    "h23": (2, True, [[(m, 0, [a, b, c]) for m in (1, 3, 5, 7)]
+                      for a in range(2) for b in range(2) for c in range(2)],
+            [f"w{a}{b}{c}" for a in range(2) for b in range(2) for c in range(2)]),
 }
 
 
