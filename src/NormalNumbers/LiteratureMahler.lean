@@ -72,4 +72,13 @@ theorem berendBoshernitzan_strict_holds : berendBoshernitzan_strict := by
   intro α hα g hg w _ hwd
   exact Mahler.mahler_multiplier_lt g hg α hα w hwd
 
+/-- **Wired edge: Bugeaud's Theorem 8.11** from `Mahler.mahler_multiplier_lt`
+(`m < g^(k+1) ≤ g^(k+1) + g^k − 1`). -/
+theorem bugeaud_thm_8_11_holds : bugeaud_thm_8_11 := by
+  intro α hα g hg w _ hwd
+  obtain ⟨m, hm1, hmM, hio⟩ := Mahler.mahler_multiplier_lt g hg α hα w hwd
+  refine ⟨m, hm1, ?_, hio⟩
+  have : 1 ≤ g ^ w.length := Nat.one_le_pow _ _ (by omega)
+  omega
+
 end NormalNumbers.Literature

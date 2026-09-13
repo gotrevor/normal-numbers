@@ -127,6 +127,40 @@ def berendBoshernitzan_thm32 : Prop :=
         ∀ m : ℕ, 1 ≤ m → (m : ℝ) < (1 - ε) * (g : ℝ) ^ (k + 1) →
           ¬ (∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * α) w n)
 
+/-- **Bugeaud 2012, Theorem 8.11** (*Distribution modulo one and Diophantine
+approximation*, Cambridge Tracts 193, §8.6): `M(b,n) ≤ b^(n+1) + b^n − 1` - every
+irrational `α`, base `g ≥ 2` and `k`-block `w` admit a multiplier
+`m ≤ g^(k+1) + g^k − 1` with `w` occurring infinitely often in `m·α`.  Sits between
+Berend–Boshernitzan 1994 (`2·g^(k+1)`) and this repo's `g^(k+1) − 1`
+(`Mahler.mahler_multiplier_lt`), which discharges it
+(`bugeaud_thm_8_11_holds`, `LiteratureMahler.lean`).
+
+provenance: tier S (literature sweep 2026-09-13; §8.6 read by the sweep, PDF not held). -/
+def bugeaud_thm_8_11 : Prop :=
+  ∀ (α : ℝ), Irrational α → ∀ (g : ℕ), 2 ≤ g → ∀ (w : List ℕ), w ≠ [] →
+    (∀ d ∈ w, d < g) →
+    ∃ m : ℕ, 1 ≤ m ∧ m ≤ g ^ (w.length + 1) + g ^ w.length - 1 ∧
+      ∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * α) w n
+
+/-- A finite **hitting set** for `(g, k)` (this repo's notion, 2026-09-13,
+`docs/hitting-set-invariant-2026-09-13.md`): every irrational and every `k`-block
+have some `m ∈ S` with the block occurring infinitely often in `m·α`.
+`{1..M(g,k)}` is one; the least cardinality is the invariant `S(g,k)`. -/
+def IsHittingSet (g k : ℕ) (S : Finset ℕ) : Prop :=
+  ∀ (α : ℝ), Irrational α → ∀ (w : List ℕ), w.length = k → (∀ d ∈ w, d < g) →
+    ∃ m ∈ S, 1 ≤ m ∧ ∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * α) w n
+
+/-- **Berend–Boshernitzan 1995, Corollary 3.3** (*Numbers with complicated decimal
+expansions*, Acta Math. Hungar. 66, 113–126): there is no finite `M_g`-set - no
+finite multiplier set hits every block of **every** length.  In the repo's terms:
+for every base and every finite `S`, some length `k ≥ 1` has `S` fail to be a
+hitting set.  Contrast the fixed-`k` invariant, which is finite.  Statement-only.
+
+provenance: tier S (literature sweep 2026-09-13, Cor 3.3 read by the sweep in the
+source; PDF not held). -/
+def berendBoshernitzan95_no_finite_Mg_set : Prop :=
+  ∀ (g : ℕ), 2 ≤ g → ∀ (S : Finset ℕ), ∃ k : ℕ, 1 ≤ k ∧ ¬ IsHittingSet g k S
+
 /-! ## The Adamczewski–Rampersad boundary -/
 
 /-- **The base-2 occurrence boundary**: the only blocks known to occur
