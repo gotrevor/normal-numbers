@@ -46,7 +46,7 @@ reproduces the naive controls; the naive short-circuit search stays faster for t
 | (5,1) | **5** | 2008 sets ≤ 30, e.g. `{1,2,3,4,6}`, `{1,2,3,4,8}`, `{1,2,3,6,14}` | – | – | sizes ≤ 5, ≤ 30 |
 | (6,1), (7,1) | > 5 | – | – | – | sizes ≤ 5, ≤ 30 |
 | (2,2) | 2 | `{1,3}` (unique ≤ 40); **151 pairs ≤ 60**, e.g. `{1,6}`, `{1,11}`, `{1,12}`, `{2,3}` | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
-| (2,3) | 4 | `{1,3,5,7}` unique ≤ 40 | > 4 (`{1,3,5,7}` fails) | – | sizes ≤ 4, ≤ 40 |
+| (2,3) | 4 | `{1,3,5,7}` unique ≤ 40; **928 sets ≤ 60**, e.g. `{1,3,5,14}`, `{1,3,7,10}`, `{1,3,10,14}` (in ratios `{1,3,5,14}` is new, not a scaling) | > 4 (`{1,3,5,7}` fails) | – | sizes ≤ 4, ≤ 60 (naive, 2 h 38 min) |
 | (2,4) | > 6 | **`{1,3,…,15}` does NOT hit** (nor any 7-subset of it); no set of size ≤ 6 below 20 | – | – | sizes ≤ 6, ≤ 20 |
 | (3,2) | **6** | 42 sets ≤ 20, e.g. `{1,2,4,5,7,8}`, `{1,4,5,6,7,8}` | – | – | sizes ≤ 6, ≤ 20 |
 
