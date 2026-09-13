@@ -38,10 +38,10 @@ channels at `k = 4` are already too large for the naive product.
 |---|---|---|---|---|---|
 | (2,1) | 1 | `{1}` | 1 | `{1}` | – |
 | (3,1) | 2 | 162 pairs ≤ 40, incl. `{1,2}` (B–B) and `{2,11}` (tower C2) | 2 | **`{2,11}` unique ≤ 20**; `{1,2}` is per-block only | pairs ≤ 40 / ≤ 20 |
-| (4,1) | 3 | **`{1,10,14}` unique ≤ 40** | > 3 | – | sizes ≤ 3, ≤ 40 (≤ 60 running) |
+| (4,1) | 3 | `{1,10,14}` (unique ≤ 40); **35 triples ≤ 60**, e.g. `{2,5,7}`, `{1,10,56}`, `{3,30,42}` | > 3 | – | sizes ≤ 3, ≤ 60 |
 | (5,1) | > 4 | – | – | – | sizes ≤ 4, ≤ 30 |
 | (6,1), (7,1) | > 3 | – | – | – | sizes ≤ 3, ≤ 40 |
-| (2,2) | 2 | `{1,3}` unique ≤ 40 | 3 | `{1,3,5}` | ≤ 40 / ≤ 30 |
+| (2,2) | 2 | `{1,3}` (unique ≤ 40); **151 pairs ≤ 60**, e.g. `{1,6}`, `{1,11}`, `{1,12}`, `{2,3}` | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
 | (2,3) | 4 | `{1,3,5,7}` unique ≤ 40 | > 4 (`{1,3,5,7}` fails) | – | sizes ≤ 4, ≤ 40 |
 | (2,4) | ? | **`{1,3,…,15}` does NOT hit** (nor any 7-subset of it) | – | – | that family only |
 | (3,2) | > 4 | – | – | – | sizes ≤ 4, ≤ 20 |
@@ -83,8 +83,11 @@ tooling step before more data.
    quantitative lower bound `S(g,k) ≥ f(k)` with `f → ∞` is the first real target.
 3. **Per-block vs disjunctive**: `{1,2}` vs `{2,11}` at `(3,1)` shows they differ; is `S* ≤ S + c`,
    or can they diverge?
-4. **Structure of minimal sets**: `{1,10,14}` at base 4, `{2,11}` at base 3 - what makes a set
-   minimal?  The scaling remark says to look at the rational ratios (`{1, 10, 14}`, `{1, 11/2}`).
+4. **Structure of minimal sets**: the "uniqueness" of `{1,10,14}` and `{1,3}` was a search-cap
+   artifact - with multipliers `≤ 60` there are 35 hitting triples at base 4 and 151 hitting
+   pairs at `(2,2)`; in ratio terms `{1, 5/2, 7/2}`, `{1, 10, 56}`, `{1, 6}`, `{1, 11}`, ... - so
+   the right object is the set of ratio-sets that hit, and its structure (which rationals `q`
+   make `{1, q}` hit at `(2,2)`?) is the first thing to characterize.
 
 Not a lap target yet: freeze a statement only after the smarter instrument confirms the small
 values are stable under larger multipliers (the `≤ 40` caps are search limits, not theorems).
