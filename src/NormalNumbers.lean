@@ -215,6 +215,7 @@ import NormalNumbers.G4EntropyE1Down
 import NormalNumbers.G4EntropyMultiplierSpread
 import NormalNumbers.G4EntropyBandTrunc
 import NormalNumbers.G4EntropyMTower
+import NormalNumbers.G4EntropyMTowerBig
 import NormalNumbers.G4ScheduleHarmonic
 import NormalNumbers.G4ScheduleBudget
 import NormalNumbers.G4ScheduleWitness

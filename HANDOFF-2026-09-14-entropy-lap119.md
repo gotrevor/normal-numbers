@@ -94,3 +94,31 @@ mis-stated cousin.
 * Don't put a proof of `b₀ < X'` inside the *statement* of a theorem about `jointLaw`; take it
   as an explicit hypothesis `hb`.  Proof irrelevance makes it interchangeable with
   `b₀_lt_of_Xlo_le …` at the use site, and the embedded `show` costs an `isDefEq` timeout.
+
+---
+
+## Continuation (same lap): `hbig` and `hfar` at `(K, j)` are DONE
+
+`src/NormalNumbers/G4EntropyMTowerBig.lean` — build 🟢 **9005 jobs**, sorry-free, every endpoint
+`[propext, Classical.choice, Quot.sound]`.
+
+```
+X_le_Xm, two_mul_P₀_le_Xm, gridDm_le_Xm, J_mul_gridDm_le_Xm, sample_nonempty_m
+K_le_two_pow_mm, P₀_le_two_pow_m, Xm_cast, Ym_cast
+natLog_Ym, natLog_Rm
+dyadic_factor_le_m     the ORIGINAL proof verbatim — `mm − mm₁ = m₂ K` by definition
+sample_term_le_m       4·2^{mm} + 2 + K ≤ 100·2^{mm}
+log_Mx_div_le_m        ≤ 101, a CONSTANT — the A0 ceiling is never approached
+hbig_holds_m           ✅
+farC_le_m              ≤ logP₀Nat K + mm K j + 10
+hfar_holds_m           ✅  (closed by `four_mul_le_four_pow_N_m`)
+```
+
+The audit's prediction held exactly: the dyadic Chebyshev factor is the *only* place the march
+could have hurt `hbig`, and it does not move at all.
+
+**Remaining for `entropy_E1_march`**: the small-prime side — a marched `R_pow_two_Mc_le`
+(`Rm^{2·Mcm} ≤ 2^{10·2^{mm}}`, from `Mcm_le_two_pow_m₂` by the same two lines), `inv_card_le_m`,
+`term_a_le_m`/`term_d_le_m`, `main_term_le_m` (the `hm₁` equality becomes `≥`), then
+`smallPrime_term_le_m` and the `entropy_gt_of_budget` assembly (template:
+`G4EntropyE0Down.entropy_E0_down`, lines 595–739).

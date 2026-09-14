@@ -52,8 +52,13 @@ All trust-triple clean except `entropy_E1_tile`, which is honestly gated on the 
 
 1. **`Sched.entropy_E1_march`** (the leaf).  Port the cone to `(K, j)`, mirroring
    `G4EntropyE0Down`/`G4EntropyE1Down`'s verbatim-copy-plus-substitution:
-   * `hbig_holds_m` — three inputs, all unchanged or monotone (see the table).
-   * `hfar_holds_m` — `farC_le` with `m ↦ mm K j`, then `four_mul_le_four_pow_N_m`.
+   * ✅ **DONE** (`G4EntropyMTowerBig.lean`): `hbig_holds_m` — and `dyadic_factor_le_m` is the
+     original *verbatim*, exactly as the audit predicted, because `mm − mm₁ = m₂ K` by definition
+     of the march.  Supporting: `X_le_Xm`, `two_mul_P₀_le_Xm`, `gridDm_le_Xm`,
+     `J_mul_gridDm_le_Xm`, `sample_nonempty_m`, `K_le_two_pow_mm`, `P₀_le_two_pow_m`,
+     `natLog_Ym`, `natLog_Rm`, `sample_term_le_m`, `log_Mx_div_le_m` (`≤ 101`, a constant —
+     the A0 ceiling is never approached).
+   * ✅ **DONE**: `hfar_holds_m`, via `farC_le_m` and `four_mul_le_four_pow_N_m`.
    * the five `smallPrimeBound` terms — `Mcm_le_two_pow_m₂` in place of `Mc_le_two_pow_m₂`;
      `R_pow_two_Mc_le` becomes `Rm^{2Mcm} ≤ 2^{10·2^{mm}}` by the same two-line argument.
    * `hm₁`'s equality becomes `1000·K·r ≤ (1/8)^K·mm₁ K j` (only improves).
