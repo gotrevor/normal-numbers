@@ -43,8 +43,20 @@ The chain as built: `FinLaw.gibbs` → `H₂_le_sum_H₂_map` (joint injectivity
 `blkAt_injective`) → `sum_block_deficit_le` → `abs_prob_singleton_sub_le` (Hellinger) →
 `abs_avg_sub_le` (AM-GM) → `abs_avg_block_prob_sub_le` → `entropy_E1`.
 
+### ✅ PROVED (entropy lap 24) — the faithfulness rendering
+
+`G4EntropyRender.lean`: `blkAt_blockVal_min` (the dictionary for *every* block index, the last
+overlapping one included), `blockFreq_eq_count`, `blockFreq_eq_digits`, and
+`tendsto_wordCount_primeLambertFour` — the headline stated purely as a digit-pattern count of
+`G₄`, no `FinLaw` anywhere in it.  Item 1 below is therefore DONE; the remaining thread is the
+*word-list* rendering (`OccursAt`) and the general-`x` version.
+
 **Still open in this thread (next):**
-1. **The faithfulness rendering.**  `blockFreq` is *defined* through `FinLaw.map`; prove
+0. **Word-list rendering.**  `blockVal (fract x) p ℓ = (w : ℕ)` still encodes the word as a
+   number.  Prove `blockVal = wordVal L ↔ the ℓ digits at p spell L` (converse of
+   `blockVal_eq_of_occursAt`) and restate the headline over `OccursAt 2 x w`, the very
+   predicate `isDisjunctive_two` uses.
+1. ~~**The faithfulness rendering.**~~ (done, lap 24)  `blockFreq` is *defined* through `FinLaw.map`; prove
    `blockFreq_eq_count` — it equals `#{(n,α,j) : the ℓ-block …} / (|P_K|·H_K·(m_K/ℓ+1))` —
    from `map_empirical_p`, and `blockFreq_eq_digits` — that block `j` IS the ℓ binary digits
    of `G₄` at `2·kIdx(n,α) + jℓ` — from `blkAt_blockVal` + `ZSample_eq_blockVal`.  Until those
