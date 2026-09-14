@@ -485,4 +485,50 @@ theorem card_multi_atom_le (i : ℕ) (α : (gridAt i).Atom) :
   refine Nat.mul_le_mul_right _ ?_
   exact le_trans (Finset.card_filter_le _ _) (le_of_eq (Finset.card_univ))
 
+/-! ### The multiplier dwarfs the atom count -/
+
+/-- **`|Atom|² ≤ gridUmax`.**  `B = K²(K+N)+1 ≥ (K²+1)²` at `N = 100K²`, so
+`gridUmax ≥ B^K ≥ (K²+1)^{2K}`. -/
+lemma card_Atom_sq_le_gridUmax (i : ℕ) :
+    (KK i ^ 2 + 1) ^ (2 * KK i) ≤ gridUmax (KK i) (N (KK i)) := by
+  have hK : 160000 ≤ KK i := KK_ge i
+  have hB : (KK i ^ 2 + 1) ^ 2 ≤ gridB (KK i) (N (KK i)) := by
+    unfold gridB N
+    nlinarith [hK]
+  have h1 : gridB (KK i) (N (KK i)) ^ KK i ≤ gridUmax (KK i) (N (KK i)) :=
+    pow_le_gridUmax (K := KK i) (N := N (KK i)) (by omega)
+  have hpow : ((KK i ^ 2 + 1) ^ 2) ^ KK i ≤ gridB (KK i) (N (KK i)) ^ KK i :=
+    Nat.pow_le_pow_left hB _
+  rw [← pow_mul] at hpow
+  omega
+
+/-- **The multiplier dwarfs the atom count**: `|Atom|² ≤ d_α` for every atom.  This is what
+makes the window multiplicity negligible: two atoms collide on a `≈ 1/d_α` fraction of the
+sample, and there are only `|Atom|` atoms. -/
+theorem card_Atom_sq_le_d (i : ℕ) (α : (gridAt i).Atom) :
+    (Fintype.card (gridAt i).Atom) ^ 2 ≤ (gridAt i).d α := by
+  have hsq : (Fintype.card (gridAt i).Atom) ^ 2 = (KK i ^ 2 + 1) ^ (2 * KK i) := by
+    rw [card_Atom_gridAt i, ← pow_mul]
+    ring_nf
+  have hU := card_Atom_sq_le_gridUmax i
+  have hQ : gridUmax (KK i) (N (KK i)) ≤ gridQ (KK i) (N (KK i)) := by
+    have := gridQ_gt (KK i) (N (KK i))
+    omega
+  have hd : (gridAt i).d α = 1 + gridQ (KK i) (N (KK i))
+      * (gridD₀ (KK i) (N (KK i)) + gridU (gridB (KK i) (N (KK i))) α) := rfl
+  have hD₀ : 1 ≤ gridD₀ (KK i) (N (KK i)) :=
+    one_le_gridD₀ (by have := KK_ge i; omega)
+  have hmul : gridQ (KK i) (N (KK i))
+      ≤ gridQ (KK i) (N (KK i))
+        * (gridD₀ (KK i) (N (KK i)) + gridU (gridB (KK i) (N (KK i))) α) :=
+    Nat.le_mul_of_pos_right _ (by omega)
+  calc (Fintype.card (gridAt i).Atom) ^ 2 = (KK i ^ 2 + 1) ^ (2 * KK i) := hsq
+    _ ≤ gridUmax (KK i) (N (KK i)) := hU
+    _ ≤ gridQ (KK i) (N (KK i)) := hQ
+    _ ≤ gridQ (KK i) (N (KK i))
+        * (gridD₀ (KK i) (N (KK i)) + gridU (gridB (KK i) (N (KK i))) α) := hmul
+    _ ≤ 1 + gridQ (KK i) (N (KK i))
+        * (gridD₀ (KK i) (N (KK i)) + gridU (gridB (KK i) (N (KK i))) α) := Nat.le_add_left _ 1
+    _ = (gridAt i).d α := hd.symm
+
 end NormalNumbers.G4.Sched
