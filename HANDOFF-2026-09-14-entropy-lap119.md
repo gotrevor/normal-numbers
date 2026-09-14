@@ -1,6 +1,7 @@
 # HANDOFF — review lap 119: the scale gap is an ARTIFACT; the two-dimensional ladder
 
-**Branch** `wip/g4-entropy`.  `lake build` 🟢 **9004 jobs**.  One new module,
+**Branch** `wip/g4-entropy`.  **HEAD** `eefb7c8` (lap-end; `e0a56ef` was the review commit).
+Working tree **clean**.  `lake build` 🟢 **9005 jobs**.  One new module,
 `src/NormalNumbers/G4EntropyMTower.lean`, with **one** named `sorry` leaf
 (`Sched.entropy_E1_march`) on the active decomposition; the carried leaf
 `Sched.card_bandTtr_ge` is untouched.  No `axiom` introduced.  Every new sorry-free endpoint
@@ -122,3 +123,56 @@ could have hurt `hbig`, and it does not move at all.
 `term_a_le_m`/`term_d_le_m`, `main_term_le_m` (the `hm₁` equality becomes `≥`), then
 `smallPrime_term_le_m` and the `entropy_gt_of_budget` assembly (template:
 `G4EntropyE0Down.entropy_E0_down`, lines 595–739).
+
+
+---
+
+## Lap end — state and the next lap's first move
+
+**Branch** `wip/g4-entropy` · **HEAD** `eefb7c8` · tree clean · `lake build` 🟢 **9005 jobs**.
+Two commits this lap:
+
+* `e0a56ef` — the review: the scale gap is an artifact; `G4EntropyMTower.lean`.
+* `eefb7c8` — `hbig_holds_m` and `hfar_holds_m`; `G4EntropyMTowerBig.lean`.
+
+**Open `sorry`s in `src/` (expedition):** two.
+* `Sched.entropy_E1_march` (`G4EntropyMTower.lean:296`) — the active decomposition's leaf.
+* `Sched.card_bandTtr_ge` (`G4EntropyBandTrunc.lean:100`) — the carried leaf from the previous
+  session, plan unchanged.
+
+(`MahlerDriftOne.exists_prime_nonresidue` and `PrimeLambertOscillation.phaseOscillation` are
+other campaigns' and are on the forbidden-drift list.)
+
+### Next lap — first move, concretely
+
+Finish `entropy_E1_march`'s **third** input, the small-prime side, in a new
+`G4EntropyMTowerBudget.lean`.  Template: `G4ScheduleBudget.lean` lines 103–420 and
+`G4EntropyE0Down.lean` lines 380–595.  In order:
+
+1. `R_pow_two_Mc_le_m : (Rm K j : ℝ)^{2·Mcm K j} ≤ 2^{10·2^{mm K j}}` — copy
+   `R_pow_two_Mc_le`, feeding `Mcm_le_two_pow_m₂` (already proved) in place of
+   `Mc_le_two_pow_m₂`, and `2^{mm} = 2^{mm₁}·2^{m₂}` in place of `2^m = 2^{m₁}·2^{m₂}`.
+2. `inv_card_le_m : 1/|apSample (Xm K j) P₀ b₀| ≤ 2P₀/Xm K j` — copy `inv_card_le`.
+3. `main_term_le_m` — the only place `m₁`'s closed form is used as an *equality* (`hm₁`,
+   `G4ScheduleBudget.lean:241`): replace `(1/8)^K · m₁ K = 1000·(K·r)` by
+   `1000·(K·r) ≤ (1/8)^K · mm₁ K j` (`m₁ K ≤ mm₁ K j` by definition), which only improves the
+   bound.
+4. `term_a_le_m`, `term_b_le_m`, `term_c_le_m`, `term_d_le_m`, then `smallPrime_term_le_m`
+   via `budget_terms_le`.  The exponent budget to re-check is
+   `2Kr + 4·Mcm + 3 + 12·2^{mm} + 6 ≤ 50·2^{mm}` — same shape as E0-down's, with `Mc ↦ Mcm`.
+5. The assembly `entropy_E0_march` / `entropy_E1_march`: copy `entropy_E0_down`
+   (`G4EntropyE0Down.lean:595–739`) substituting `R K ↦ Rm K j`, `Y K ↦ Ym K j`,
+   `Mc K ↦ Mcm K j`, `X' ↦ X'` with `Xlom K j ≤ X' ≤ Xm K j`, and the three `*_m` inputs.
+   Then the E1 step exactly as `G4EntropyE1Down.lean` does it from `entropy_E0_down`.
+
+When that lands, `entropy_E1_tile` becomes axiom-clean and the scale gap is closed
+unconditionally; the next targets are then `card_bandTtr_ge`, `density_antitone`, and `fullPos'`
+(see `PENDING_WORK.md`'s ACTIVE section, items 2–4).
+
+### Do not re-derive
+
+`DIRECTION.md`'s CURRENT DIRECTIVE (review lap 119) forbids re-litigating the scale gap / the
+head obstruction, and forbids adopting "every cutoff beyond an `X^{−1/2}` fraction of its band
+is good" as the headline.  `certified_granule_exceeds_previous_scale`,
+`ScheduleWitness.X_lt_X_step`, `X_lt_Xlo_step` and `Xhi_succ_lt_Xlo_step` remain true but are
+statements about the **one-dimensional** ladder only.
