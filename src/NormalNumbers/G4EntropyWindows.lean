@@ -379,4 +379,45 @@ lemma activeIdx_kIdx (G : GridParams) {X n : ℕ} (hn : n ∈ apSample X G.P₀ 
   rw [← hk]
   exact (Finset.mem_filter.1 hn).2
 
+open Classical in
+/-- **The shared indices below `M` number at most `M/P₀ + 1`.** -/
+theorem card_shared_le (G : GridParams) {α β : G.Atom} (hαβ : α ≠ β) (M : ℕ) :
+    (((Finset.range M).filter (fun k => ActiveIdx G α k ∧ ActiveIdx G β k)).card)
+      ≤ M / G.P₀ + 1 := by
+  classical
+  have hP₀ : 0 < G.P₀ := G.P₀_pos
+  have hcard : (((Finset.range M).filter
+      (fun k => ActiveIdx G α k ∧ ActiveIdx G β k)).card)
+      ≤ (Finset.range (M / G.P₀ + 1)).card := by
+    refine Finset.card_le_card_of_injOn (fun k => k / G.P₀) ?_ ?_
+    · intro k hk
+      simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range] at hk
+      have h1 : k < M := hk.1
+      have h2 : k / G.P₀ ≤ M / G.P₀ := Nat.div_le_div_right (le_of_lt h1)
+      simp only [Finset.coe_range, Set.mem_Iio]
+      omega
+    · intro k hk k' hk' heq
+      simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range] at hk hk'
+      simp only at heq
+      by_contra hne
+      rcases Nat.lt_or_ge k k' with hlt | hge
+      · have hsh := shared_idx_apart G hαβ (le_of_lt hlt) hk'.2.1 hk'.2.2 hk.2.1 hk.2.2
+        rcases hsh with h | h
+        · omega
+        · have : k / G.P₀ + 1 ≤ k' / G.P₀ := by
+            have hle : k + G.P₀ ≤ k' := by omega
+            calc k / G.P₀ + 1 = (k + G.P₀) / G.P₀ := by rw [Nat.add_div_right _ hP₀]
+              _ ≤ k' / G.P₀ := Nat.div_le_div_right hle
+          omega
+      · have hgt : k' < k := by omega
+        have hsh := shared_idx_apart G hαβ (le_of_lt hgt) hk.2.1 hk.2.2 hk'.2.1 hk'.2.2
+        rcases hsh with h | h
+        · omega
+        · have : k' / G.P₀ + 1 ≤ k / G.P₀ := by
+            have hle : k' + G.P₀ ≤ k := by omega
+            calc k' / G.P₀ + 1 = (k' + G.P₀) / G.P₀ := by rw [Nat.add_div_right _ hP₀]
+              _ ≤ k / G.P₀ := Nat.div_le_div_right hle
+          omega
+  simpa using hcard
+
 end NormalNumbers.G4.Sched
