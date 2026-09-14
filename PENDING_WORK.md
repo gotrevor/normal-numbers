@@ -1,5 +1,84 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## G5 — 2026-09-14 (lap 1, grind) — the interface EXISTS: `w_c = ω + ∑_p c_p (v_p − 1)`, transport exact, junk AP-mean proved
+
+### Proved this lap (axiom-clean, `lake build` 8938 jobs green)
+
+`src/NormalNumbers/G4WeightInterface.lean` (new)
+* `valWeight c m = ∑_p c_p v_p(m)` (completely additive, `valWeight_mul`), `omegaW c m = ∑_{p∣m} c_p`,
+  `excess c = valWeight − omegaW = ∑_{p∣m} c_p (v_p(m) − 1)`, **`weightW c = ω + excess c`**,
+  `weightLambert b c = ∑_n w_c(n)/bⁿ`, and the ℕ-valued `weightN c` with `weightW_eq_cast`
+  (the digits are integers — needed by the orbit identity `bᵏx = ℤ + tail`).
+* **Instances**: `weightW_zero : weightW 0 = omegaR` (so `weightLambert_zero :
+  weightLambert b 0 = primeLambertAtBase b`, literally) and `weightW_one : weightW 1 = Ω`
+  (`weightLambert_one : weightLambert b 1 = ∑ Ω(n)/bⁿ`).
+* **Exact transport** `excess_mul : excess(dm) = excess(d) + excess(m) + ∑_{p∣d, p∣m} c_p`,
+  `weightW_mul : w(dm) = w(m) + w(d) − ∑_{p∣d,p∣m}(1 − c_p)`, periodic modulo `rad d`
+  (`overlapW_congr`).  So `G4Transport` ports with `corrB` replaced by `overlap − overlapW`.
+* Growth/summability: `excess_le : excess c ≤ C(Ω − ω)`, `two_pow_cardFactors_le : 2^Ω(m) ≤ m`,
+  `summable_weightW_div_pow` for `b ≥ 2` and `c_p ≤ C`.
+
+`src/NormalNumbers/G4WeightJunk.lean` (new)
+* **The split on the progression modulus** `P₀`: `excess_eq_frozen_add_junk` —
+  `excess = frozenExcess + junk`, with `frozenExcess c P₀ m = ∑_{p∣P₀} c_p (min(v_p(m), v_p(P₀)) − 1)`
+  a function of `m mod P₀` (**`frozenExcess_congr`**, so it goes into the translate `γ`) and
+  `junk c P₀ m = ∑_p c_p (v_p(m) − E'_p)₊`, `E'_p = max(v_p(P₀), 1)`.
+* **One-congruence counting** `card_filter_pow_dvd_le`:
+  `#{n ∈ apSample X P₀ b₀ : p^{E'_p+u} ∣ n+ρ} ≤ X/(P₀ p^{E'_p+u−v_p(P₀)}) + 1`
+  (the condition cuts the progression to one class mod `P₀ p^{…}`: `gcd(p^a, P₀) = p^j`, `j ≤ v_p(P₀)`,
+  cancel, count a residue class in `[0, X/P₀]`).
+* **`sum_junk_le`** — the sample sum of the junk at any shift `ρ ≥ 1`:
+  `∑_{n∈P} junk(n+ρ) ≤ C·((X/P₀)(∑_{p∣P₀} 1/(p−1) + 1) + (√(X+ρ)+1)·log₂(X+ρ))`,
+  with `sum_inv_pred_le_harmonic : ∑_{p∈S} 1/(p−1) ≤ H_{|S|}` and `H_n ≤ 1 + log n`, so against
+  `|P| ≥ X/(2P₀)` the mean is `≤ 2C(log ω(P₀) + 2) + 2C P₀(√(X+ρ)+1) log₂(X+ρ)/X`.
+
+### STRUCTURAL FINDING — the directive's "decisive probe" (C2 with valuations) is NOT needed
+
+The CURRENT DIRECTIVE names `G4LocalContraction.norm_localSum_le` as the decisive case, with
+the local model to be changed from the indicator `1_{p∣m}` to residues mod `p^T`.  In the
+formulation above that step does not exist: the frame's small-prime vector `S` stays the
+`ω_sm`-vector (`Sval` over `smallPrimes R P₀`), so `PropC` (§4C, C1–C3, the CRT input, the
+Fourier box) is **untouched**; the whole difference `w_c − ω = excess c` is linear in the
+statistic and rides `PropD` (§4D) as one more averaged remainder, exactly like the very-large
+primes.  So the honest decisive case is the **junk AP-mean**, and it is now proved
+(`sum_junk_le`).  (One could alternatively fold the valuations into the Fourier model — C2 with
+multiplicities and junk classes is a triangle-inequality corollary of the present C2, the gain
+becomes `4(1−1/p)D` — but that is strictly more work for nothing: the junk needs no
+cancellation, only smallness.)  W-T1 therefore does not fire; the interface survives.
+
+**Why exactly this class** (isolated, not yet a theorem): for an additive `w = ∑_p g_p(v_p)`,
+the exact transport identity (`w(dm) − w(m) − w(d)` periodic mod `rad d`) holds iff every
+`g_p` is affine on `v ≥ 1`, i.e. `g_p(v) = a_p + c_p(v − 1)`; and the Fourier control is proved
+for the indicator model, i.e. `a_p = 1`.  Hence `weightW c` is the largest class the present
+proof reaches without re-doing §4C.  Coefficients must be natural numbers (integer digits).
+
+### Budget check (paper, to be formalised in the schedule port)
+
+Retained-layer junk: `≤ rowL1 · max_ρ E[junk(n+ρ)] ≤ ((2/b)^K/(b−1)) · 2C(log ω(P₀) + 2 + o(1))`
+against `δ·εη = δ 2^{−K/4}/(8K)`: needs `(b/2)^K 2^{−K/4} ≳ CK log(logP₀Nat)`, i.e. `C ≤ 2^{K/10}`
+say — put `C ≤ K` into `Hyp`.  Far-tail excess (`j > J`): `excess ≤ C(Ω−ω)`, whose AP-mean at
+shift `ρ_j ≤ j·Dm` is `≤ C(log₂ P₀ + 2 log ω(P₀) + 4) + C·2P₀(√(X+jDm)+1)log₂(X+jDm)/X`; the
+first is of the size of `farC`, the second is `≤ (j+1)²·(tiny)` with `tiny = 4P₀ log₂X/√X`, and
+`∑_{j>J} b^{−j}(j+1)² ≤ 4(2/b)^{J+1}/(1−2/b)`.  Both fit the existing `farBound` shape after
+widening `C₀`.
+
+### Next actions (in order; every step green + committed)
+
+1. **Weight-generic frame** (`G4Wiring`): add `w : ℕ → ℝ` and `x : ℝ` to `Frame`, `Ffull` with
+   `w`, `image` over `orbitClosureOf bse x`; `gridFrame` sets `w := omegaR, x := primeLambertAtBase`
+   so every existing theorem is unchanged.  `finite_contradiction`, `isDisjunctive_of_frames`
+   generalised to `SeparatingFrameExistsW bb x` with the old one its instance.
+2. **Transport** (`G4Transport`): `tailBW`, `tailIntW` via `weightN`, `corrW = overlap − overlapW`,
+   `dilatedTailW_eq`, `propA_of_progression` for `w_c`.
+3. **Remainder** (`G4Remainder`/`G4FarTail`): `Ffull_w = Ffull_ω + excessPart`; retained excess =
+   frozen (into `γ_w`) + junk (`sum_junk_le`); far excess via `excess ≤ C(Ω−ω)` and the same
+   split at `c = 1`.  New `PropD` bound = old + `C·junkBound`.
+4. **Schedule** (`SchedB`): `Hyp` gains `C ≤ K`; `hbig`/`hfar` gain the junk terms; assemble
+   `isDisjunctive_weight : 3 ≤ b → (∀ p, c p ≤ C) → C ≤ ? → IsDisjunctive b (weightLambert b c)`;
+   instances `isDisjunctive_base'` (must equal `isDisjunctive_base`'s statement) and
+   `isDisjunctive_Omega`.
+5. The series identity `∑_n Ω(n)/bⁿ = ∑_{p,a} 1/(b^{pᵃ}−1)` (W-T2 if rearrangement resists).
+
 ## G5 — 2026-09-14 (review lap 16) — base two REFUTED at the design level; new campaign = the weight interface
 
 ### Proved this lap (axiom-clean, `lake build` 8935 jobs green, HEAD `4991939`)

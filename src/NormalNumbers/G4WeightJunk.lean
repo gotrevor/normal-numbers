@@ -57,23 +57,23 @@ lemma frozenDepth_of_mem {P₀ p : ℕ} (h : p ∈ P₀.primeFactors) :
   omega
 
 /-- The junk: `∑_{p ∣ m} c_p (v_p(m) − E'_p)₊`. -/
-noncomputable def junk (c : ℕ → ℝ) (P₀ m : ℕ) : ℝ :=
-  ∑ p ∈ m.primeFactors, c p * ((m.factorization p - frozenDepth P₀ p : ℕ) : ℝ)
+noncomputable def junk (c : ℕ → ℕ) (P₀ m : ℕ) : ℝ :=
+  ∑ p ∈ m.primeFactors, (c p : ℝ) * ((m.factorization p - frozenDepth P₀ p : ℕ) : ℝ)
 
 /-- The frozen excess: `∑_{p ∣ P₀} c_p (min(v_p(m), v_p(P₀)) − 1)₊`. -/
-noncomputable def frozenExcess (c : ℕ → ℝ) (P₀ m : ℕ) : ℝ :=
-  ∑ p ∈ P₀.primeFactors, c p * ((min (m.factorization p) (P₀.factorization p) - 1 : ℕ) : ℝ)
+noncomputable def frozenExcess (c : ℕ → ℕ) (P₀ m : ℕ) : ℝ :=
+  ∑ p ∈ P₀.primeFactors, (c p : ℝ) * ((min (m.factorization p) (P₀.factorization p) - 1 : ℕ) : ℝ)
 
 /-- **The exact split** `excess = frozen + junk`. -/
-theorem excess_eq_frozen_add_junk (c : ℕ → ℝ) {P₀ : ℕ} (hP₀ : P₀ ≠ 0) {m : ℕ} (hm : m ≠ 0) :
+theorem excess_eq_frozen_add_junk (c : ℕ → ℕ) {P₀ : ℕ} (hP₀ : P₀ ≠ 0) {m : ℕ} (hm : m ≠ 0) :
     excess c m = frozenExcess c P₀ m + junk c P₀ m := by
   classical
   rw [excess_eq]
   -- the pointwise identity on `m.primeFactors`
   have hpt : ∀ p ∈ m.primeFactors,
-      c p * ((m.factorization p : ℝ) - 1)
-        = c p * ((min (m.factorization p) (frozenDepth P₀ p) - 1 : ℕ) : ℝ)
-          + c p * ((m.factorization p - frozenDepth P₀ p : ℕ) : ℝ) := by
+      (c p : ℝ) * ((m.factorization p : ℝ) - 1)
+        = (c p : ℝ) * ((min (m.factorization p) (frozenDepth P₀ p) - 1 : ℕ) : ℝ)
+          + (c p : ℝ) * ((m.factorization p - frozenDepth P₀ p : ℕ) : ℝ) := by
     intro p hp
     have h1 : 1 ≤ m.factorization p :=
       ((Nat.mem_primeFactors.1 hp).1.dvd_iff_one_le_factorization hm).1
@@ -93,17 +93,17 @@ theorem excess_eq_frozen_add_junk (c : ℕ → ℝ) {P₀ : ℕ} (hP₀ : P₀ �
   have hzero : ∀ {n p : ℕ}, p ∉ n.primeFactors → n.factorization p = 0 := fun {n p} h =>
     Finsupp.notMem_support_iff.1 (by rwa [Nat.support_factorization])
   have hA : ∑ p ∈ m.primeFactors,
-      c p * ((min (m.factorization p) (frozenDepth P₀ p) - 1 : ℕ) : ℝ)
+      (c p : ℝ) * ((min (m.factorization p) (frozenDepth P₀ p) - 1 : ℕ) : ℝ)
       = ∑ p ∈ m.primeFactors ∪ P₀.primeFactors,
-          c p * ((min (m.factorization p) (frozenDepth P₀ p) - 1 : ℕ) : ℝ) := by
+          (c p : ℝ) * ((min (m.factorization p) (frozenDepth P₀ p) - 1 : ℕ) : ℝ) := by
     refine Finset.sum_subset Finset.subset_union_left fun p _ hpm => ?_
     rw [hzero hpm]; simp
   have hB : ∑ p ∈ P₀.primeFactors,
-      c p * ((min (m.factorization p) (P₀.factorization p) - 1 : ℕ) : ℝ)
+      (c p : ℝ) * ((min (m.factorization p) (P₀.factorization p) - 1 : ℕ) : ℝ)
       = ∑ p ∈ m.primeFactors ∪ P₀.primeFactors,
-          c p * ((min (m.factorization p) (frozenDepth P₀ p) - 1 : ℕ) : ℝ) := by
+          (c p : ℝ) * ((min (m.factorization p) (frozenDepth P₀ p) - 1 : ℕ) : ℝ) := by
     rw [← Finset.sum_subset Finset.subset_union_right (f := fun p =>
-      c p * ((min (m.factorization p) (frozenDepth P₀ p) - 1 : ℕ) : ℝ))]
+      (c p : ℝ) * ((min (m.factorization p) (frozenDepth P₀ p) - 1 : ℕ) : ℝ))]
     · exact Finset.sum_congr rfl fun p hp => by rw [frozenDepth_of_mem hp]
     · intro p _ hpP
       have h0 := hzero hpP
@@ -135,7 +135,7 @@ lemma min_factorization_congr {P₀ m m' p : ℕ} (hp : p.Prime) (hm : m ≠ 0) 
 
 /-- **The frozen excess is constant on the progression**: if `n ≡ n' (mod P₀)` then
 `frozenExcess c P₀ (n + ρ) = frozenExcess c P₀ (n' + ρ)`. -/
-theorem frozenExcess_congr (c : ℕ → ℝ) {P₀ n n' ρ : ℕ} (h : n % P₀ = n' % P₀)
+theorem frozenExcess_congr (c : ℕ → ℕ) {P₀ n n' ρ : ℕ} (h : n % P₀ = n' % P₀)
     (hn : n + ρ ≠ 0) (hn' : n' + ρ ≠ 0) :
     frozenExcess c P₀ (n + ρ) = frozenExcess c P₀ (n' + ρ) := by
   unfold frozenExcess
@@ -145,9 +145,9 @@ theorem frozenExcess_congr (c : ℕ → ℝ) {P₀ n n' ρ : ℕ} (h : n % P₀ 
 /-! ### The junk as a sum of prime-power indicators -/
 
 /-- `junk c P₀ m = ∑_{p ≤ N} ∑_{1 ≤ u ≤ N} c_p · 1[p^{E'_p+u} ∣ m]` for `0 < m ≤ N`. -/
-lemma junk_eq_sum_ind (c : ℕ → ℝ) (P₀ : ℕ) {m N : ℕ} (hm : m ≠ 0) (hmN : m ≤ N) :
+lemma junk_eq_sum_ind (c : ℕ → ℕ) (P₀ : ℕ) {m N : ℕ} (hm : m ≠ 0) (hmN : m ≤ N) :
     junk c P₀ m = ∑ p ∈ (N + 1).primesBelow, ∑ u ∈ Icc 1 N,
-      c p * (if p ^ (frozenDepth P₀ p + u) ∣ m then 1 else 0) := by
+      (c p : ℝ) * (if p ^ (frozenDepth P₀ p + u) ∣ m then 1 else 0) := by
   classical
   unfold junk
   -- extend the outer sum from `m.primeFactors` to `(N+1).primesBelow`
@@ -352,14 +352,14 @@ lemma junkCount_eq_zero {X P₀ b₀ ρ p u : ℕ} (hρ : 1 ≤ ρ)
   omega
 
 /-- The junk sum over the sample as a sum of counts over prime powers. -/
-lemma sum_junk_eq_sum_junkCount (c : ℕ → ℝ) {X P₀ b₀ ρ : ℕ} (hρ : 1 ≤ ρ) :
+lemma sum_junk_eq_sum_junkCount (c : ℕ → ℕ) {X P₀ b₀ ρ : ℕ} (hρ : 1 ≤ ρ) :
     ∑ n ∈ apSample X P₀ b₀, junk c P₀ (n + ρ)
       = ∑ pu ∈ (X + ρ + 1).primesBelow ×ˢ Icc 1 (X + ρ),
-          c pu.1 * junkCount X P₀ b₀ ρ pu.1 pu.2 := by
+          (c pu.1 : ℝ) * junkCount X P₀ b₀ ρ pu.1 pu.2 := by
   classical
   have h1 : ∀ n ∈ apSample X P₀ b₀, junk c P₀ (n + ρ)
       = ∑ pu ∈ (X + ρ + 1).primesBelow ×ˢ Icc 1 (X + ρ),
-          c pu.1 * (if pu.1 ^ (frozenDepth P₀ pu.1 + pu.2) ∣ n + ρ then 1 else 0) := by
+          (c pu.1 : ℝ) * (if pu.1 ^ (frozenDepth P₀ pu.1 + pu.2) ∣ n + ρ then 1 else 0) := by
     intro n hn
     have hnX : n < X := Finset.mem_range.1 (Finset.mem_filter.1 hn).1
     rw [junk_eq_sum_ind c P₀ (N := X + ρ) (by omega) (by omega), Finset.sum_product]
@@ -424,7 +424,7 @@ lemma main_term_le {p : ℕ} (hp : p.Prime) (P₀ : ℕ) (hP₀ : P₀ ≠ 0) :
 /-- **The sample sum of the junk.**  For `P = {n < X : n ≡ b₀ (P₀)}` and any shift `ρ ≥ 1`,
 
   `∑_{n∈P} junk(n+ρ) ≤ C·( (X/P₀)·(∑_{p∣P₀} 1/(p−1) + 1) + (√(X+ρ)+1)·log₂(X+ρ) )`. -/
-theorem sum_junk_le (c : ℕ → ℝ) {C : ℝ} (hc : ∀ p, 0 ≤ c p) (hC : ∀ p, c p ≤ C)
+theorem sum_junk_le (c : ℕ → ℕ) {C : ℝ} (hC : ∀ p, (c p : ℝ) ≤ C)
     {X P₀ b₀ ρ : ℕ} (hP₀ : 0 < P₀) (hρ : 1 ≤ ρ) :
     ∑ n ∈ apSample X P₀ b₀, junk c P₀ (n + ρ)
       ≤ C * ((X : ℝ) / P₀ * (∑ p ∈ P₀.primeFactors, 1 / ((p : ℝ) - 1) + 1)
@@ -434,12 +434,12 @@ theorem sum_junk_le (c : ℕ → ℝ) {C : ℝ} (hc : ∀ p, 0 ≤ c p) (hC : �
   set pb := (N + 1).primesBelow with hpb
   set A := (pb ×ˢ Icc 1 N).filter
     (fun pu : ℕ × ℕ => pu.1 ^ (frozenDepth P₀ pu.1 + pu.2) ≤ N) with hA
-  have hC0 : 0 ≤ C := (hc 0).trans (hC 0)
+  have hC0 : 0 ≤ C := (by positivity : (0:ℝ) ≤ c 0).trans (hC 0)
   have hP₀r : (0 : ℝ) < P₀ := by exact_mod_cast hP₀
   rw [sum_junk_eq_sum_junkCount c hρ]
   -- restrict to `A`: outside it the count vanishes
-  have hres : ∑ pu ∈ pb ×ˢ Icc 1 N, c pu.1 * junkCount X P₀ b₀ ρ pu.1 pu.2
-      = ∑ pu ∈ A, c pu.1 * junkCount X P₀ b₀ ρ pu.1 pu.2 := by
+  have hres : ∑ pu ∈ pb ×ˢ Icc 1 N, (c pu.1 : ℝ) * junkCount X P₀ b₀ ρ pu.1 pu.2
+      = ∑ pu ∈ A, (c pu.1 : ℝ) * junkCount X P₀ b₀ ρ pu.1 pu.2 := by
     rw [hA, Finset.sum_filter]
     refine Finset.sum_congr rfl fun pu _ => ?_
     split_ifs with h
@@ -447,7 +447,7 @@ theorem sum_junk_le (c : ℕ → ℝ) {C : ℝ} (hc : ∀ p, 0 ≤ c p) (hC : �
     · rw [junkCount_eq_zero hρ (by omega), mul_zero]
   rw [hres]
   -- term-by-term bound on `A`
-  have hterm : ∀ pu ∈ A, c pu.1 * junkCount X P₀ b₀ ρ pu.1 pu.2
+  have hterm : ∀ pu ∈ A, (c pu.1 : ℝ) * junkCount X P₀ b₀ ρ pu.1 pu.2
       ≤ C * (1 / ((pu.1 : ℝ) ^ (frozenDepth P₀ pu.1 + pu.2 - P₀.factorization pu.1)) * ((X : ℝ) / P₀)
           + 1) := by
     intro pu hpu
@@ -462,7 +462,7 @@ theorem sum_junk_le (c : ℕ → ℝ) {C : ℝ} (hc : ∀ p, 0 ≤ c p) (hC : �
       unfold junkCount
       refine hcount.trans (le_of_eq ?_)
       field_simp
-    calc c pu.1 * junkCount X P₀ b₀ ρ pu.1 pu.2
+    calc (c pu.1 : ℝ) * junkCount X P₀ b₀ ρ pu.1 pu.2
         ≤ C * junkCount X P₀ b₀ ρ pu.1 pu.2 :=
           mul_le_mul_of_nonneg_right (hC _) (junkCount_nonneg _ _ _ _ _ _)
       _ ≤ _ := mul_le_mul_of_nonneg_left hcount' hC0
