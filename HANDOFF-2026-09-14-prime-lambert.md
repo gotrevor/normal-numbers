@@ -17,6 +17,9 @@ Root module / lakefile untouched (host-owned).
 - `PrimeLambertGeometry` (checkpoint 2): hexagon/tensor cancellation in `ℤ[ℤ×ℤ]`, six-atom
   form, dilation, coprime transform to `TConfig`, `exists_tconfig_cancelling`.  Axiom-clean.
 
+- `PrimeLambertHexagonCounterexample` (checkpoint 3, addendum): `not_meanRetention_seven`,
+  axiom-clean, full complex inequality with `c = 2cos(2π/7)` identified.
+
 ## Open
 
 The analytic chain (draft §5) is entirely open; `PhaseOscillation` is its endpoint Prop.

@@ -61,7 +61,23 @@ quantifiers, and a wiring `→ PhaseOscillation`.
 
 ## Refutations recorded
 
-None yet formalized.  The draft's own negative control (the eight-for-four `B₂` seed with
+**Hexagon mean retention is false on `ℤ/7ℤ`** (`PrimeLambertHexagonCounterexample`,
+attended addendum 2026-09-14).  `MeanRetention q` says every unimodular `f : ZMod q → ℂ` has
+`|𝔼 f|^6 ≤ Re H(f)` for the cyclic hexagon correlation `H`.  `not_meanRetention_seven` is
+proved on the bare trust triple: witness `f(x) = ζ^{e_x}`, `ζ = e^{2πi/7}`,
+`e = (0,5,3,6,5,5,4)`; residue counts `(133,0,42,63,63,42,0)` and `(13,8,7,3,3,7,8)` by kernel
+`decide`; `343 H = 112 − 63c − 21c²`, `|S|² = 2 + 5c + 4c²` with `c = 2cos(2π/7)` proved to
+satisfy `c³ + c² − 2c − 1 = 0` and `c > 6/5` (from `2π/7 < π/3`).  The full complex
+inequality is formalized, not only its real-algebra certificate.  Scope: this is the cyclic
+toy average; it does not refute `H(f) ≥ 0` (the witness has `H > 0`), and the `C₁₉` negative-`H`
+witness of the audit is not formalized.
+
+Separately, a paper countermodel (iid base-four bits, concentration; see
+`normal-numbers-disjunctivity-frontier-2026-09-14.md`) shows the growing affine signed
+oscillation alone does not imply disjunctivity.  That probabilistic theorem is **not**
+formalized here; it is recorded only for scope.
+
+The draft's own negative control (the eight-for-four `B₂` seed with
 directions `a=(2,2), b=(1,7)` has two atoms with first coordinate `5` and different shifts,
 so the coprime transform assigns incompatible congruences) is a candidate for an exact
 `decide`-checked Prop in the geometry module.
