@@ -212,6 +212,55 @@ primitive pairs in `[100, 500]` at `(4,1)`, 40 at `(2,3)`, and 12 random triples
 function: `{1,3,5,7}`, `{1,10,14}`, `{2,5,7}` hit, `{1,3,5}`, `{1,11}` do not.  So N5 survives the
 one place the table could not see.
 
+## Pairs at base 4: the lower bound N2 as an integer statement (22:21)
+
+N2 says every pair `{m₁, m₂}` fails at base 4, i.e. `S(4,1) ≥ 3`.  Channel reduction lets us assume
+`4 ∤ m_i` and `gcd(m₁, m₂) = 1`.
+
+**Clean truncation.**  For `{1, m}`: if `t ∈ (0,1)` and `t/m` are purely periodic with periods
+dividing `L`, then `B := ⌊(t/m)·4^L⌋` has `m·B = ⌊t·4^L⌋` exactly, because
+`m·frac((t/m)4^L) − frac(t·4^L) = t − t = 0`.  For a pair, `m_i·B = ⌊m_i r 4^L⌋ − ⌊m_i r⌋`, exact
+when `r < 1/max m_i`.  So a hole-free periodic orbit with a landing strip (the Mahler family) is
+the sparse adversary (N1) with a block `B`; the two families in the "Holes" section are one.
+
+**The crux.**  `{1, m}` fails at digit `d` if (★) some `B ≥ 1` has `d ∉ digits(B) ∪ digits(mB)`;
+`{m₁, m₂}` fails if (★★) some `B` has `d ∉ digits(m₁B) ∪ digits(m₂B)`.  The automaton verdict is
+stronger in principle (any escape), but every pair tested falls to (★★).  Checked (scratch
+`star_test.py`, 1 s): (★) for every `m < 4^6` with `4 ∤ m`, least `B ≤ 1045` (at `m = 2174`; the
+least `B` is 1 for 940 of the 3072 values, 3 for 478, 2 for 420); (★★) for 400 random coprime pairs
+in `[2, 2000]`, least `B ≤ 3238`.
+
+**Explicit families (proved).**
+- `B = 1`: `d ∉ digits(m)` (Berend–Boshernitzan).
+- `B = 4^k − 1` with `4^k > m`: `mB = (m−1)·4^k + (4^k − m)`, whose digits are those of `m − 1` and
+  their 3-complements; `d ∈ {1,2}` works iff `m − 1` uses only the digits 0 and 3.
+- `B = 4^k − 2 = 3…32` with `4^k > 2m` (avoids 1): `4^k − 2m = (4^k − 1) − (2m − 1)` is the digit-wise
+  complement of `2m − 1`, so `d = 1` works iff `1 ∉ digits(m − 1)` and `2 ∉ digits(2m − 1)`.  Example
+  `m = 43`: `m − 1 = 222₄`, `2m − 1 = 1111₄`, `B = 254`, `mB = 2222222₄`.
+- Repunit: if `m | 4^k − 1`, `B = (4^k − 1)/m` (the repetend of `1/m`) gives `mB = 3…3`, so
+  `d ∈ {1, 2}` works iff the repetend avoids `d`.  Example `m = 33`: `1/33 = 0.(00133)`, `B = 31`.
+- Digit 3 with `B` over the digits `{1, 2}`: for odd `m` and every carry `c`, one of `b ∈ {1,2}` has
+  `(mb + c) mod 4 ≠ 3` (`c ≡ 0, 2`: `b = 2`; `c ≡ 1, 3`: `b = 1`), so an infinite 3-free path always
+  exists 4-adically; the finite obstruction is the final carry `⌊mB/4^j⌋ ∈ [m/4, m)`, whose digits
+  must avoid 3.  Up to `m = 63` every digit-3 avoider found has digits in `{1,2}` and is `≤ 22`.
+
+**What a proof of (★) needs.**  `#{B < 4^N : B, mB ∈ K_d} = 4^N Σ_t F̂_K(t) F̂_K(−mt)` with main term
+`(9/4)^N`; the pointwise bound `|F̂_K(s)| ≤ (3/4)^N/3` for `s ≠ 0` (one factor `|φ(1/4)| = 1/3`) does
+not control the `L¹` mass of the other factor, so one needs the Erdős–Mauduit–Sárközy / Maynard
+missing-digit Fourier machinery with a dilation `t ↦ mt` in place of an arithmetic progression.
+Geometrically: `K_d ∩ (m₁/m₂)·K_d` (an automatic set) has positive dimension.  That is the shape of
+the theorem; it is not proved here.
+
+**Literature (22:45, abstracts and reviews; notes in `papers/lit-cantor-dilate-intersections-2026-09-13.md`).**
+Positivity of `dim(K_d ∩ λK_d)` for all rational `λ` is not a theorem or a stated conjecture, and it
+fails at base 3: with `λ = 2` the intersection is countable for every `d` (doubling sends the digits
+`{0,1}` to `{0,2}` without carries), which is the pair `{1,2}` hitting every ternary digit.  So N2 is
+a base-`g ≥ 4` statement and, as far as we found, unstudied.  The upper side is known:
+Jiang–Li–Li–Wu (arXiv 2607.19813, July 2026) show `dim((γK + α) ∩ K) < dim K` for rational `γ`
+coprime to the base iff `γ ∉ ±b^ℤ`; Abram–Lagarias (J. Fractal Geom. 2014, arXiv 1308.3133) treat
+the 3-adic integer version with an automaton and `dim = log₃(Perron eigenvalue)`.  The
+translate literature (Davis–Hu 1995, Kenyon–Peres 1991, Deng–He–Wen 2008) never treats `λ`.
+
 ## Prior art (literature sweep 2026-09-13; [R] = read in the source)
 
 - The fixed-`k` cardinality appears **nowhere** (either variant): forward citation cones of Mahler
