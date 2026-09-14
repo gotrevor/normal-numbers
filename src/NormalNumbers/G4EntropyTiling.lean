@@ -524,4 +524,36 @@ theorem tendsto_occursCountT_primeLambertFour (v : List ℕ) (hlen : 0 < v.lengt
   refine Finset.filter_congr fun n _ => ?_
   exact blockVal_eq_wordVal_iff (y := primeLambertAtBase 4) hv
 
+/-! ### The capacity limit: `ℓ = o(m_K/δ_K)` is exactly the controlled range -/
+
+/-- **The tiled capacity limit.**  Words, reals and deficits may all vary with the scale: a
+deficit `δ_K` controls every word length with `ℓ_K·δ_K/m_K → 0`, i.e. exactly
+`ℓ_K = o(m_K/δ_K)`.  There is no second obstruction — unlike
+`tendsto_blockFreq_of_capacity`, whose hypothesis carries the spurious `ℓ²/m_K`.
+
+Instantiating at `δ_K = K^{1/2−ε}` (were `entropy_E1` ever improved to that) gives control of
+every `ℓ_K = o(K^{1/2+ε})`; at the implemented `δ_K = 50√K` it gives `o(√K)`. -/
+theorem tendsto_blockFreqT_of_capacity (x : ℕ → ℝ) (ℓ : ℕ → ℕ) (δ : ℕ → ℝ)
+    (hpos : ∀ᶠ i in atTop, 0 < ℓ i) (hle : ∀ᶠ i in atTop, ℓ i ≤ kk i)
+    (hδ : ∀ᶠ i in atTop, 0 < δ i)
+    (hdef : ∀ᶠ i in atTop, ((kk i : ℝ) - δ i) * (Fintype.card (gridAt i).Atom : ℝ)
+      ≤ (jointLawAt i (x i)).H₂)
+    (hcap : Tendsto (fun i => (ℓ i : ℝ) * δ i / (kk i : ℝ)) atTop (nhds 0))
+    (w : ∀ i, Fin (2 ^ ℓ i)) :
+    Tendsto (fun i => blockFreqT i (ℓ i) (x i) (w i) - 1 / (2 : ℝ) ^ (ℓ i)) atTop (nhds 0) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hinner : Tendsto (fun i => Real.log 2 * (ℓ i : ℝ) * δ i / (kk i : ℝ)) atTop (nhds 0) := by
+    have h := hcap.const_mul (Real.log 2)
+    simp only [mul_zero] at h
+    refine h.congr fun i => ?_
+    field_simp
+  have hsq : Tendsto (fun i => 2 * Real.sqrt (Real.log 2 * (ℓ i : ℝ) * δ i / (kk i : ℝ)))
+      atTop (nhds 0) := by
+    have h := hinner.sqrt
+    simpa using h.const_mul (2 : ℝ)
+  refine squeeze_zero_norm' ?_ hsq
+  filter_upwards [hpos, hle, hδ, hdef] with i hp hl hd hdf
+  simpa [Real.norm_eq_abs] using
+    abs_blockFreqT_sub_le_of_deficit i (ℓ i) hp hl (x i) (w i) hd hdf
+
 end NormalNumbers.G4.Sched

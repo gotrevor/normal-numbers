@@ -108,11 +108,23 @@ disjoint blocks), `blockFreqT`, `abs_blockFreqT_sub_le_of_deficit`
 (`≤ 2√(200 log 2·ℓ/√K)`) and `tendsto_blockFreqT_growing`.  The controlled range is exactly
 `ℓ = o(m_K/δ_K)`; for the implemented schedule `δ_K = 50√K` and `m_K = K/4` give `o(√K)`.
 
-**Next:** the only remaining lever on the word length is `entropy_E1`'s deficit itself.
-Two bounded probes, in order: (a) state `δ_K = K^{1/2−ε} ⇒ ℓ = o(K^{1/2+ε})` as an explicit
-corollary of `abs_blockFreqT_sub_le_of_deficit` (free, records the target); (b) inspect where
-the `50√K` in `entropy_E1` comes from (grid resolution vs. counting slack) and record whether
-any of it is improvable without touching the barrier modules.
+**✅ (a) done (lap 32):** `tendsto_blockFreqT_of_capacity` — deficits, words and reals all
+free to vary, single hypothesis `ℓ_K δ_K/m_K → 0`.  `δ_K = K^{1/2−ε} ⇒ ℓ = o(K^{1/2+ε})` is
+an instantiation.
+
+**✅ (b) traced (lap 32), see `HANDOFF-2026-09-14-entropy-lap32.md`:**
+`entropy_E1`'s `50√K` ← `entropy_cover_bound`'s floor `(92√K+51)/(K log 2)` ← `Lg = rDim(log 2
++ 23√K)` ← `log_det_one_add_tensorGram_le'` ← `√(K μ₂ + K(K−1) μ₁²)` with `μ₂ ≤ 520`.  The
+`√K` is a **CLT-scale fluctuation** of `log Λ_j = ∑_i log λ_{j_i}`, not accounting slack; the
+one loose step (`log(1+Λ) ≤ log 2 + |log Λ|`, wasteful for `Λ ≪ 1`) does not move the order,
+because the log-spectrum is centred (`μ₁ → 0`) so ~half the tensor eigenvalues exceed 1.
+**Verdict: `δ_K ≍ √K` is a wall of the spectral/cover route as built**; beating it needs
+cancellation across `j`, not a better constant.
+
+**Next:** bounded probe — `∑_j log(1+Λ_j) ≤ s^K log 2 + ∑_j (log Λ_j)^+`, then the exact
+`∑_j (log Λ_j)^+` at `K = 1, 2` and small `s`, to see whether the *constant* moves.  If the
+order does not move (expected), record `δ_K ≍ √K` as a route wall and close §5's quantitative
+thread.
 
 ### Decomposition — hardest first, and the order to build
 
