@@ -7,6 +7,45 @@
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
 
+## 🔭 LIVE (laps 61–63) — the granularity wall, and what it closes
+
+Laps 61–63 settled the question the lap-60 handoff left open ("is `realOfDigits 2 enumDigits`
+normal?") at the level of *routes*: every argument that reads the sampled digits in position
+order as a concatenation of **certified** granules is now refuted, with a theorem.
+
+```
+G4EntropyGoodAtoms.lean   (lap 61)
+  FinLaw.coordDeficit / sum_coordDeficit_le / card_badCoords_le   Markov on per-coordinate deficits
+  coordAvg, abs_coordAvg_sub_le      ONE atom's own window statistics, certified
+  card_good_ge                       ≥ (1−ρ)|A| atoms are good ONE AT A TIME, price √(δ/ρ)
+  Sched.card_goodAtoms_primeLambertFour_ge
+
+G4EntropyGranule.lean     (lap 62)
+  card_PK_ge, total_scale_le
+  granule_exceeds_previous_scale     |Atom_i|·|P_i|·m_i  <  |P_{i+1}|
+
+G4EntropyMixture.lean     (lap 63)
+  FinLaw.mix, H₂_mix_le              H₂(mix) ≤ σH₁+(1−σ)H₂+1  (extra bit = binEntropy σ)
+  H₂_empirical_window_restrict_ge    a sub-collection of SAMPLE TIMES costs (δ+1)/σ
+  capture_bound_vacuous
+  Sched.certified_granule_exceeds_previous_scale
+```
+
+**The argument.**  (61) The deficit certifies individual atoms, so the granule is not limited by
+the atom count — lap 54's `chunks_insufficient` was not the real obstruction.  (63) Restricting
+the *sample times* costs `(δ+1)/σ` exactly as restricting coordinates costs `δ/ρ`, so a granule
+whose capture bound is not vacuous reads `≳ |P_K|` digits.  (62) That minimum at scale `i+1`
+already exceeds `|Atom_i|·|P_{K_i}|·m_i`, scale `i`'s entire output — because
+`X(K) = 2^{100·2^{m(K)}}` with `m(K) ≥ K³`, a doubly exponential jump per scale.
+
+**So the first granule of every new scale wipes out the history and prefix frequencies cannot
+converge.**  The disjunctivity endpoints of laps 56–60 stay the strongest infinite objects the
+mechanism supports.
+
+**Where the mechanism could still be changed**: `X(K)` is fixed by `G4ScheduleFar`'s far-tail
+control, not by the entropy argument.  A ladder with polynomially-growing `X` would move the
+wall.  That is a question about the *schedule*, and is the first honest pivot point.
+
 ## 🔭 LIVE (laps 56–57) — the strictly increasing enumeration, at the disjunctivity level
 
 `chunks_insufficient` (lap 54) refutes E-T8's upgrade at the **normality** level.  At the
