@@ -21,8 +21,28 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (8930 jobs) ·
-**Updated**: G4B lap 14 · 2026-09-14 · `wip/g4-disjunctivity` @ `20c43d8`
+· **Build**: 🟢 green (8935 jobs) ·
+**Updated**: review lap 16 · 2026-09-14 · `wip/g4-disjunctivity` @ `4991939`
+
+## 2026-09-14 (review lap 16): the headline's corollaries — IRRATIONALITY — and base two RETIRED
+
+`IsDisjunctive.irrational` (`DisjunctiveCorollaries.lean`): a rational `a/q` has
+`q·orbit b x n ∈ ℤ`, so its orbit misses `[1/(2|q|), 1/|q|)`.  Hence, axiom-clean and
+unconditional, **`G4.irrational_primeSum : 3 ≤ b → Irrational (∑' p : Nat.Primes, 1/(bᵖ−1))`**
+— an independent, machine-checked proof of the `b ≥ 3` half of the prime-Lambert
+irrationality family (Tao–Teräväinen arXiv 2512.01739 Thm 1.3 is the base-two case), by a
+different route, and strictly stronger for those bases.  Also `IsDisjunctive.exists_ge` (every
+interval is hit *arbitrarily late* — cut it into `N+1` pieces, the hitting times are distinct)
+and hence `every_word_occurs_base_late`: every finite base-`b` word occurs infinitely often.
+
+**Base two is RETIRED, not deferred.**  Lap 13 refuted the parameter choice (`rowL1 2 K = 1`);
+this lap refutes the design family: killing a layer costs one tensor coordinate, and any
+nonzero integer array with vanishing line sums in `K` directions has `L¹ ≥ 2^K`, so
+`rowL1 ≥ 2^K b^{−K}/(b−1) ≥ 1` at `b = 2` for *every* such design — the cost of killing a
+layer exactly cancels its gain.  And no re-tuning of `Y` escapes: the medium range needs
+`Y ≲ √X` while a non-cancelling far range needs `Y ≥ X^{1−o(1)}`.  The only repair is signed
+cancellation for `p > Y` — the deep two-point correlation input the brief forbids inheriting.
+New campaign (G5): make the arithmetic input an interface, instances `ω` and `Ω`.
 
 ## 🏁 2026-09-14 (lap 14): G4B PROVED — `IsDisjunctive b (primeLambertAtBase b)` for every `b ≥ 3`
 
@@ -71,40 +91,34 @@ the dependency cone.  The whole brief §4–§5 candidate argument is machine-ch
 
 ## Where it stands
 
-**Live campaign: G4 disjunctivity** (attended kickoff
-`KICKOFF-2026-09-14-g4-disjunctivity.md`, branch `wip/g4-disjunctivity`).  The target is
-that `G₄ = ∑_p 1/(4ᵖ−1) = ∑_n ω(n)/4ⁿ` is disjunctive in base four, hence in base two — a
-**candidate** argument Lean is testing, not a known theorem.  The frozen endpoint is pinned
-(`PrimeLambertFour.lean`), including the previously-unproved series identity
-`primeSumAtBase 4 = primeLambertFour`.
+**The attended campaign is CLOSED.**  `G₄ = ∑_p 1/(4ᵖ−1) = ∑_n ω(n)/4ⁿ` is disjunctive in
+base four and in base two (`G4.isDisjunctive_four`, `isDisjunctive_two`), and the whole brief
+§4–§5 argument generalises: `G4.isDisjunctive_base : 3 ≤ b → IsDisjunctive b
+(primeLambertAtBase b)` for every integer `b ≥ 3` (brief §7 follow-on item 1).  Every one of
+those prints `[propext, Classical.choice, Quot.sound]`; `src/` contains **no `axiom`
+declaration at all**, and no G4/G4B file carries a `sorry`.  As of review lap 16 the digit
+theorem also yields its number-theoretic corollaries: `irrational_primeSum` (`∑_p 1/(bᵖ−1)`
+is irrational for `b ≥ 3`) and `every_word_occurs_base_late` (every word, arbitrarily late).
 
-**Brief §4 is CLOSED.**  All five named inputs are machine-checked theorems about ONE
-concrete frame `gridFrame` — `gridFrame_propA`, `gridFrame_propC`, `Frame.propJackson`
-(no side conditions, every frame), `gridFrame_propD_of_bounds` (two real inequalities),
-`gridFrame_propB_of_bound` (one real inequality) — and the finite separating-test
-contradiction `Frame.finite_contradiction` wires them to `isDisjunctive_four_of_frames`.
-Nothing in the G4 wing carries a `sorry` or an axiom; every G4 headline prints the trust
-triple.  The whole residual content of the campaign is now brief **§5**: produce a
-`ScheduleWitness ℓ w` (`G4ScheduleWitness.lean`) — a finite bundle of explicit real
-inequalities in explicit parameters — for every omitted base-four cylinder.
-`separatingFrameExists_of_witness` turns that into the headline.
+**Base two (the number `∑_p 1/(2ᵖ−1)` itself) is refuted on this route and retired** — see the
+lap-16 entry above and `DIRECTION.md`.  It remains a theorem of Tao–Teräväinen, not of this
+repo; `PrimeLambertOscillation.phaseOscillation` is the honestly-disclosed hole of the old
+base-two attempt and is not a prerequisite for anything proved here.
 
-The 2026-09-14 deep reflection lap re-derived all five §5 inequalities from the **Lean**
-definitions (not from handoff prose) and they close, with two corrections: the recorded
-`lam = 1` makes `hbudget` FALSE (`smallPrimeBound`'s `(2e/lam)^{Mc}` factor blows up unless
-`lam > 2e`; use `lam = 13/2`, `Mc = ⌈10⁴TL⌉`), and the recorded `N ≈ 10K log K` makes `hfar`
-FALSE (`farC` contains `log log X`, so the retained depth must be the brief's
-`J = ⌈3 log₂ L⌉`).  It also found the structural fact no document states: `K` is squeezed
-**two-sidedly**, `0.58 log log L ≲ K ≲ log L/(2 log log L)`, the lower edge coming from the
-medium-prime `8^{−K/2}√(log Mc)` term — that, not the budget, is why `K` may not be frozen.
+**Live campaign G5** (`DIRECTION.md` CURRENT DIRECTIVE, *past* the attended brief's finish
+line — first thing to re-authorise when Trevor returns): replace the arithmetic input `ω` by
+a named interface and prove the theorem for a class of additive weights, with two instances —
+`ω` (re-deriving `isDisjunctive_base`) and `Ω`, giving the new constant
+`∑_{q = pᵃ} 1/(b^q − 1)`.  The decisive case is C2 (`G4LocalContraction.norm_localSum_le`),
+whose local model is `ω`'s indicator `1_{p∣m}` and must become the valuation `v_p(m)`.
 
-The **Mahler-multiplier chapter** (previous campaign, complete): `M(g,k) < g^(k+1)` answers
+**The Mahler-multiplier chapter** (previous campaign, complete): `M(g,k) < g^(k+1)` answers
 Berend–Boshernitzan's stated open question, `sup_g M(g,k)/g^(k+1) = 1` is sharp, and at
 `k = 1`, prime base, the sandwich is `p²/12 ≤ M(p,1) ≤ p²/4 + O(p)`.  `src/` carries exactly
-TWO `sorry`s: `exists_prime_nonresidue` (`MahlerDriftOne.lean`, Linnik-strength, feeding only
-a *conditional* theorem) and `phaseOscillation` (`PrimeLambertOscillation.lean`, the old
-irrationality endpoint, which the G4 kickoff explicitly rules out as a prerequisite).  No
-unconditional headline touches either, and no G4 file has a `sorry`.
+TWO `sorry`s, both off every unconditional headline and both deep-analytic:
+`exists_prime_nonresidue` (`MahlerDriftOne.lean`; a prime `q ∈ (p/3,p/2)` with `(p|q) = −1` —
+a character sum over primes in an interval shorter than the reciprocity modulus, i.e.
+Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lean`).
 
 ## What's happened (newest first)
 
@@ -380,20 +394,18 @@ unconditional headline touches either, and no G4 file has a `sorry`.
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-Brief §4 is closed; every item below is brief **§5**, the schedule.
-1. **`hB`** — the `X`-free witness inequality, new `G4ScheduleB.lean`.  Sufficient
-   hypothesis derived on the reflection lap: `K ≥ 33856·ℓ²·16^ℓ`.  No primes, no `X`, no
-   progression: provable today.
-2. **`gridParams_of_KN`** — an explicit `GridParams` from `(K, N)` with `B = sJ+1`,
-   `U ≥ max gridU`, `Q = U!` (`Nat.dvd_factorial`), `D₀ ≥ max gridV`, plus `Dm`, `Mx` and an
-   explicit **`log P₀` bound** (`T² log(J·Q·D₀)` dominates; `L^{0.07+o(1)}`).  Gates 3–5.
-3. **`card_apSample`** lower bound `(X:ℝ)/P₀ − 1 ≤ card` — gates `hne`, `hbig`, `hfar`,
-   `hbudget`.
-4. **`hfar`**, then **`hbig`** (mind the two-sided `K` window), then **`hbudget`**
-   (`schedule_budget` + the four `smallPrimeBound` error terms, `lam = 13/2`, `lam' = e`).
-5. Assemble `Nonempty (ScheduleWitness ℓ w)` eventually in `X`; then
-   `separatingFrameExists_of_witness` gives the headline.
-6. Legacy (not this campaign): cited-only ledger nodes (`philipp_psi_mixing`,
+Campaign **G5**, in order:
+1. **The decisive probe in Lean**: generalise C2 (`G4LocalContraction.norm_localSum_le`) from
+   an indicator model to a valuation model — default class `v_p = 0` (mass `≥ 1/2`), active
+   classes `v_p = 1` (mass `(1/p)(1−1/p)`, phase `xᵢ`), junk `v_p ≥ 2` of mass `≤ k/p²`.
+   Paper check: `∑_p k/p² = O(T) = L^{0.02+o(1)}` against a gain `L^{1−o(1)}` — closes.
+2. The weight interface itself (`w(n) ≤ log₂ n`, `w(dm) = w(d)+w(m) −` defect), then
+   `G4Transport`, `G4Remainder`/`G4FarTail`/`G4MediumPrimes`, then `G4SmallPrimeVector`.
+3. The `Ω` series identity `∑_n Ω(n)/bⁿ = ∑_{q prime power} 1/(b^q − 1)`.
+4. Second target if the port stalls twice: **effective** disjunctivity — the schedule is
+   explicit and the samples are `n < X`, so a first-occurrence bound `N(b, ℓ)` is already
+   inside the proof; extracting it means `homit : ∀ m` ⇝ `∀ m ≤ M₀` through `G4Wiring`.
+5. Legacy (not this campaign): cited-only ledger nodes (`philipp_psi_mixing`,
    `vandehey_matrix_action`); `k ≥ 2` Mahler lower side via the escape engine.
 
 ### Long-term
@@ -407,8 +419,8 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, re-run this lap (2026-09-14 DEEP REFLECTION, HEAD `87eed18`,
-build 🟢 8888 jobs).  Every UNCONDITIONAL headline: trust triple only; the single exception is
+Real `#print axioms` output, re-run this lap (2026-09-14 review lap 16, HEAD `4991939`,
+build 🟢 8935 jobs).  Every UNCONDITIONAL headline: trust triple only; the single exception is
 flagged.  G4 rows come first.  Nothing in the G4 wing has a `sorry` or an axiom — its debt is
 carried honestly as the named unproved `Prop`s `SeparatingFrameExists` / the
 `ScheduleWitness` hypothesis, which is exactly what makes `isDisjunctive_four_of_witness`
@@ -418,6 +430,12 @@ real inequalities that live in the witness.
 
 | headline theorem | paper claim | `#print axioms` shows | verdict |
 |---|---|---|---|
+| `G4.isDisjunctive_base` | **`3 ≤ b → IsDisjunctive b (∑_n ω(n)/bⁿ)`** — UNCONDITIONAL, the campaign endpoint generalised (brief §7.1) | trust triple | 🟢 clean — no `sorry`, no `native_decide`, no local axiom in the cone |
+| `G4.isDisjunctive_four` / `isDisjunctive_two` | **G₄ disjunctive in base 4 and base 2** — UNCONDITIONAL, the attended frozen endpoint | trust triple | 🟢 clean |
+| `G4.isDisjunctive_primeSum` / `every_word_occurs_base` / `isDisjunctive_root` | prime-sum form, every finite word, root bases (uncond.) | trust triple | 🟢 clean |
+| `G4.irrational_primeSum` | **`3 ≤ b → Irrational (∑' p, 1/(bᵖ−1))`** (uncond.) — the `b ≥ 3` half of the Tao–Teräväinen family, independent route | trust triple | 🟢 clean (lap 16) |
+| `G4.every_word_occurs_base_late` / `every_binary_word_occurs_late` | every word occurs *arbitrarily late*, hence infinitely often (uncond.) | trust triple | 🟢 clean (lap 16) |
+| `IsDisjunctive.irrational` / `IsDisjunctive.exists_ge` | disjunctive ⇒ irrational; every interval hit arbitrarily late (uncond., any base) | trust triple | 🟢 clean (lap 16) |
 | `G4.isDisjunctive_four_of_witness` | G4 disjunctive base 4 — **CONDITIONAL** on a `ScheduleWitness` for every omitted cylinder (= brief §5) | trust triple | 🟢 clean; the hypothesis IS the residual candidate content — never report as the endpoint |
 | `G4.separatingFrameExists_of_witness` | §5 witness ⇒ `SeparatingFrameExists` (uncond.) | trust triple | 🟢 clean — the audit surface: one frame, all five props |
 | `G4.isDisjunctive_four_of_frames` / `…_two_of_frames` | base 4 / base 2 — CONDITIONAL on `SeparatingFrameExists` | trust triple | 🟢 clean, conditional |

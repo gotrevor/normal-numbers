@@ -1,5 +1,67 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## G5 — 2026-09-14 (review lap 16) — base two REFUTED at the design level; new campaign = the weight interface
+
+### Proved this lap (axiom-clean, `lake build` 8935 jobs green, HEAD `4991939`)
+
+* `NormalNumbers.IsDisjunctive.irrational` — disjunctive ⇒ irrational, **any** base.
+  `x = a/q` makes `q·orbit b x n` an integer for every `n`, so the orbit misses
+  `[1/(2|q|), 1/|q|)`, an interval disjunctivity must hit.
+* `NormalNumbers.IsDisjunctive.exists_ge` — every target interval is hit **arbitrarily late**:
+  cut `[a,c)` into `N+1` disjoint pieces, each is hit, the hitting times are distinct (the
+  pieces are disjoint), so one of them is `≥ N`.  Word form `exists_occursAt_ge`.
+* Instances: `G4.irrational_primeSum : 3 ≤ b → Irrational (∑' p : Nat.Primes, 1/(bᵖ−1))`,
+  `irrational_primeLambertAtBase`, `irrational_primeLambertFour`,
+  `every_word_occurs_base_late`, `every_binary_word_occurs_late`.
+  This is an independent machine-checked proof of the `b ≥ 3` half of the prime-Lambert
+  irrationality family (Tao–Teräväinen arXiv 2512.01739 Thm 1.3 is the base-two case).
+
+### REFUTED this lap: base two, for the whole design family (not just our parameters)
+
+Lap 13 showed `rowL1 2 K = 1` for **our** array `A = D_s^{⊗K}`.  The sharper statement:
+
+1. `rowL1 = (∑_α |A_{aα}|) · ∑_{j>K} b^{−j}`.  A tensor coordinate kills exactly one layer
+   (the shift is `ρ_{αj} = j·d_α − t_α`, affine in the atom digits, so `α_i` drops out of
+   layer `j` iff `j·D_i = T_i` — one `j` per coordinate).  Hence to leave the survivors at
+   `j > K` one must kill layers `1..K`, i.e. have vanishing line sums in `K` directions.
+2. **Lower bound (formalisable, and the next proof item):** a nonzero integer array on a
+   `K`-dimensional grid whose line sums vanish in every direction has `L¹ ≥ 2^K`.  Induction:
+   each slice has vanishing line sums in the other `K−1` directions, at least two slices are
+   nonzero (their sum is zero), each has `L¹ ≥ 2^{K−1}`.
+3. So `rowL1 ≥ 2^K·b^{−K}/(b−1)`, which at `b = 2` is `≥ 1` for **every** design in the
+   family: the factor 2 cost of killing a layer exactly cancels the factor `b^{−1}` gain.
+4. And no choice of the cutoff `Y` escapes.  The medium range's pair-counting error is
+   `π(Y)²·rowL1²/|P|`, so it needs `Y ≲ √X`; a far range handled by *non-negativity*
+   (pointwise or on average) costs `rowL1 · ∑_{p>Y} 1/p ≍ rowL1 · log(log Mx/log Y)`, which is
+   `≳ rowL1·log 2` unless `Y ≥ X^{1−o(1)}`.  At `b ≥ 3` the vise is harmless because `rowL1`
+   decays in `K`; at `b = 2` it is closed.
+5. The only repair is **signed** cancellation in `p > Y`, i.e. an asymptotic for the shifted
+   correlations `E_n[1[P⁺(n+u) > Y]·1[P⁺(n+v) > Y]] = ρ² + o(rowL2/rowL1²)` uniform in the
+   shift pair — a Bombieri–Vinogradov / Titchmarsh-divisor-strength input, and precisely the
+   "deep two-point correlation theorem" the brief forbids inheriting.  **Struck from the
+   stretch list; base two belongs to Tao–Teräväinen.**
+
+### New campaign G5 — the arithmetic input becomes an interface
+
+Objective, attack order and triggers: `DIRECTION.md` CURRENT DIRECTIVE.  In brief —
+`IsDisjunctive b (∑_n w(n)/bⁿ)` for `b ≥ 3` and every additive weight `w` in a named
+interface, instantiated at `w = ω` (must re-derive `isDisjunctive_base`) and at `w = Ω`
+(new: `∑_{q = pᵃ} 1/(b^q − 1)`).  `ω` is load-bearing in five places; four need only
+`w(n) ≤ log₂ n` and the multiplicative defect.  **Decisive case: C2**
+(`G4LocalContraction.norm_localSum_le`), whose model is the indicator `1_{p∣m}` and must
+become `v_p(m)`: keep the `v_p = 1` classes (mass `(1/p)(1−1/p)`, phase exactly `xᵢ`), absorb
+`v_p ≥ 2` as junk of mass `≤ k/p²`; `∑_p k/p² = O(T) = L^{0.02+o(1)}` loses to the gain
+`θ₀L = L^{1−o(1)}`.
+
+### Note on the two legacy `src/` sorries (unchanged, both correctly disclosed)
+
+* `MahlerDriftOne.exists_prime_nonresidue` — needs cancellation in `∑_{q ∈ (p/3,p/2)} χ_p(q)`
+  over primes with `q ≍ p`, i.e. Burgess + Vinogradov (Karatsuba); not Linnik-repairable,
+  reaches only a CONDITIONAL theorem.
+* `PrimeLambertOscillation.phaseOscillation` — the old base-two irrationality route, now
+  superseded in the literature and refuted *on this repo's route* by the item above.
+
+
 ## G4B — 2026-09-14 (lap 14) — CAMPAIGN CLOSED: `isDisjunctive_base` proved for every `b ≥ 3`
 
 `NormalNumbers.G4.isDisjunctive_base : 3 ≤ b → IsDisjunctive b (primeLambertAtBase b)`

@@ -20,66 +20,100 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-09-14 FRESH-MIND REVIEW LAP — campaign **G4B: the base-`b` theorem**)
+## CURRENT DIRECTIVE (set 2026-09-14 FRESH-MIND REVIEW LAP — campaign **G5: the method, not the constant**)
 
-**G4 (base four) is CLOSED and kernel-verified this lap.**  `lake build` 8930 jobs green;
-`NormalNumbers.G4.isDisjunctive_four`, `isDisjunctive_two`, `G4DisjunctiveFour_holds`,
-`G4DisjunctiveTwo_holds`, `every_binary_word_occurs`, `primeSumAtBase_four` all print
-`[propext, Classical.choice, Quot.sound]`; `src/` contains **no `axiom` declaration at all**;
-the endpoint definitions (`IsDisjunctive`, `orbit`, `omegaR`, `primeLambertAtBase`,
-`primeSumAtBase`, `OccursAt`) were re-read against the brief and are faithful.  The old
-directive's objective is met; these are its successor orders.
+**G4 and G4B are CLOSED and re-verified this lap** (`lake build` 8935 jobs green;
+`isDisjunctive_base`, `isDisjunctive_four`, `isDisjunctive_two`, `isDisjunctive_primeSum`,
+`every_word_occurs_base`, `isDisjunctive_root` all print `[propext, Classical.choice,
+Quot.sound]`; no `axiom` anywhere in `src/`).  Laps 14 and 15 spent themselves re-verifying
+that and filing `box stuck` strikes — **that loop is now closed by order: no lap may file a
+third strike, and no lap may re-run the whole audit as its deliverable.**  This lap already
+added the headline's two missing corollaries (`IsDisjunctive.irrational`,
+`IsDisjunctive.exists_ge` / `exists_occursAt_ge`, and the G4 instances — notably
+`irrational_primeSum : 3 ≤ b → Irrational (∑' p, 1/(bᵖ−1))`).  These are its successor orders.
 
-- 🎯 **THE objective: `IsDisjunctive b (primeLambertAtBase b)` for every integer `b ≥ 3`**
-  — brief §7.1, "keeping the number's dependence on `b` explicit".  `b = 4` must survive
-  as a definitional instance: `isDisjunctive_four` stays in `src/`, stays axiom-clean, and
-  is re-derived from the general theorem, never deleted or weakened.
-- 🔨 **Mandated next move — generalize the base bottom-up, one green module at a time,
-  starting with the `X`-free real analysis of `G4ScheduleB.lean`** (`log_four_pow_sub_one_le`
-  → `log_pow_sub_one_le`, `deficit_dominates`, `gridB_bound`), keeping the `b = 4` corollaries
-  as specializations so the build stays green at every step.  Then, in order:
-  1. `G4Covering` / `G4GridTube` — cylinders and blocks in base `b`.
-  2. `Frame` gains fields `b`/`hb : 2 ≤ b`; `Ffull` uses `b^{-j}`; fix `G4Remainder`,
-     `G4Transport`, `G4Wiring`.  (The abstract analytic core — `G4Jackson`,
-     `G4SeparatingTest`, `G4Tensor`, `G4Spectral`, `G4Ellipsoid`, `G4DetMonotone`,
-     `G4Covering`'s geometry, `G4TubeVolume` — contains **no** `4` and generalizes for free.)
-  3. Row masses in `b`: `∑_{j>K} b^{-j} = b^{-K}/(b−1)`, `∑_{j>K} b^{-2j} = b^{-2K}/(b²−1)`,
-     so `∑|c| = (2/b)^K/(b−1)`, `∑c² = (2/b²)^K/(b²−1)` (`G4RowMass`, `G4MediumPrimes`,
-     `G4SmallPrimeVector`, `G4FarTail`).
-  4. Frequency separation seed `θ₀(b) = b^{-4}(2/b²)^K` (`G4FreqSep`).
-  5. The §5 schedule in `(b, ℓ)`.
-- 🧨 **REFUTED this lap, and the reason the objective says `b ≥ 3` and not `b ≥ 2`:**
-  the very-large-prime range is bounded **pointwise** by `(log Mx / log Y) · ∑_{α,j>K}|c_{αj}|`
-  = `(log Mx/log Y)·(2/b)^K/(b−1)`, and `hbig` needs that `≤ δbig·ε·η < 1`.  At `b = 2` the
-  row `L¹` mass is **exactly `2^K·2^{-K}/1 = 1`** — no decay in `K` at all — so `hbig` is
-  FALSE at `b = 2` for every choice of `η`, `ε`, `K`, `X`.  (`η` cannot be raised to
-  compensate: `ε η < 1` always.)  The decay needs `2/b < 1`, and against `η = e^{-Θ(√K)}`
-  it needs `(2/b)^K = e^{-Θ(K)}`, i.e. `b ≥ 3` (at `b = 3` the mass is `(2/3)^K/2`).
-  **Do not spend a lap trying `b = 2` through this route.**  A repair would need signed
-  cancellation in the `p > Y` range, not a pointwise bound — registered as a stretch target
-  in `PENDING_WORK.md`, not as the objective.
-- ⛔ **Forbidden drift**: redefining `primeLambert` (it is and stays the base-two series) or
-  `IsDisjunctive`; deleting, weakening or un-proving `isDisjunctive_four` / `isDisjunctive_two`
-  / `primeSumAtBase_four`; a trusted axiom for ANY candidate lemma; `native_decide` in a
-  headline cone; bounding the zonotope by a coordinatewise box or the ball by its cube;
-  freezing `K` and sending `X → ∞`; `lam = 1`, `N ≈ 10K log K` (both REFUTED — see history);
-  `Adder*`, `CF*`, `Mahler*`, `LnTwo*` and the two sibling worktrees; `PrimeLambertOscillation`;
-  the G2 two-point correlation theorem; multiplicity / entropy / ordinary-normality / novelty
-  questions; and "generalize by copying the files with `4 ↦ b` textually" — the `b = 4`
-  theorem must be an *instance*, not a sibling.
+- 🎯 **THE objective: make the arithmetic input an INTERFACE and prove the theorem for a
+  class of additive weights** — not one more constant by copying files.  Endpoint:
+  `IsDisjunctive b (∑_n w(n)/bⁿ)` for every `b ≥ 3` and every weight `w` in a named `Prop`
+  interface, with **two** instances: `w = ω` (which must re-derive `isDisjunctive_base`
+  verbatim as an instance) and `w = Ω`, giving the new theorem
+  `IsDisjunctive b (∑_{q = pᵃ} 1/(b^q − 1))`.  Rationale: one instance is a constant, two
+  instances plus an interface is a method — and the interface is the honest answer to
+  "which properties of ω is this proof actually using?".
+- 🔨 **Mandated next move — the DECISIVE PROBE first, before any port.**  `ω` is load-bearing
+  in exactly five places (audited this lap: `PrimeLambertDefs/Tail`, `G4Transport`,
+  `G4Remainder`, `G4FarTail`, `G4LocalContraction`+`G4SmallPrimeVector`).  Four of them use
+  only `w(n) ≤ log₂ n` and `w(dm) = w(d) + w(m) − (common-prime defect)`, and generalise.
+  **The decisive case is C2 (`G4LocalContraction.norm_localSum_le`)**: its local model is
+  "`p` residues, `k` active roots carrying phase `xᵢ`, default class of probability ≥ 1/2" —
+  which is `ω`'s *indicator* `1_{p∣m}`.  For `Ω` the local variable is the valuation `v_p(m)`,
+  so the model becomes residues mod `p^T`: keep the `v_p = 1` classes (mass `(1/p)(1−1/p)`,
+  phase exactly `xᵢ`) and absorb `v_p ≥ 2` as junk of mass `≤ k/p²`.  Paper check done this
+  lap: `∑_p k/p² = O(k) = O(T) = L^{0.02+o(1)}` against a gain `θ₀ L = L^{1−o(1)}`, so the
+  budget still closes — but **that is the step that must be proved in Lean before the port is
+  committed to**.  If C2 cannot be generalised, the campaign falls back to a direct `Ω`
+  instantiation with its own local lemma, NOT to an interface.
+  Then, bottom-up and green at every step (the successful `b`-port is the template):
+  1. the weight interface + `w(n) ≤ log₂ n` / defect lemmas (`PrimeLambertDefs`, `Tail`);
+  2. the transport identity in `G4Transport` (for completely additive `w` the gcd defect
+     vanishes — `Ω` is *easier* here than `ω`);
+  3. `G4Remainder` / `G4FarTail` / `G4MediumPrimes` (medium-range second moment: `E[v_p] =
+     1/(p−1)` replaces `1/p`);
+  4. C2 and `G4SmallPrimeVector`;
+  5. the series identity `∑_n Ω(n)/bⁿ = ∑_{q prime power} 1/(b^q − 1)`.
+- 🥈 **Second target (on-headline, no new arithmetic), start it if the port stalls twice:
+  EFFECTIVE disjunctivity.**  The schedule is explicit, the samples are `n < X`, so the
+  proof already contains a first-occurrence bound: every base-`b` word of length `ℓ` occurs
+  below an explicit `N(b, ℓ)`.  Extracting it means replacing `homit : ∀ m` by `∀ m ≤ M₀`
+  through `G4Wiring`/`G4Covering`; keep the existing statements green beside it.
+- 🧨 **RETIRED, not deferred: base two.**  Lap 13 refuted the parameter choice (`rowL1 2 K =
+  1`).  This lap refutes the whole *design family*, which is why the stretch target is struck
+  rather than postponed:
+    * the row mass is `(∑_α|A_{aα}|)·∑_{j>K} b^{−j}`; killing layer `j` costs one tensor
+      coordinate, and **any** nonzero integer array whose line sums vanish in `K` directions
+      has `L¹ ≥ 2^K` (induction: ≥ 2 nonzero slices, each `≥ 2^{K−1}`).  So
+      `rowL1 ≥ 2^K·b^{−K}/(b−1)`, which at `b = 2` is `≥ 1` for **every** such design —
+      the cost of killing a layer exactly cancels its gain;
+    * and no re-tuning escapes: the medium range needs `Y ≲ √X` (its pair-counting error is
+      `π(Y)²·rowL1²/|P|`), while a *non-cancelling* far range needs `∑_{p>Y} 1/p` small,
+      i.e. `Y ≥ X^{1−o(1)}`.  The vise is closed at `b = 2` and open for `b ≥ 3` only because
+      `rowL1` decays there.
+    * The only repair is **signed** cancellation for `p > Y`, i.e. the shifted correlations of
+      `1[P⁺(m) > Y]` — that is exactly the deep two-point correlation input the brief forbids
+      inheriting.  Base two therefore stays with Tao–Teräväinen (arXiv 2512.01739).
+- ⛔ **Forbidden drift**: redefining `primeLambert` / `IsDisjunctive`; deleting, weakening or
+  un-proving `isDisjunctive_four` / `isDisjunctive_two` / `isDisjunctive_base` /
+  `primeSumAtBase_four`; a trusted axiom for ANY candidate lemma; `native_decide` in a
+  headline cone; a THIRD `box stuck` strike, or a lap whose deliverable is re-running the
+  audit; base two through the pointwise far range; bounding the zonotope by a coordinatewise
+  box; freezing `K` and sending `X → ∞`; `lam = 1`, `N ≈ 10K log K` (REFUTED); `Adder*`,
+  `CF*`, `Mahler*`, `LnTwo*` and the two sibling worktrees; `PrimeLambertOscillation`
+  (its `phaseOscillation` sorry is the base-two wall above — honestly disclosed, not this
+  campaign's work); the multiplicity/entropy/ordinary-normality/novelty questions; and
+  "generalize by copying the files with `ω ↦ Ω` textually" — `ω` must stay an *instance*.
 - 🚦 **Route triggers**:
-    * **G-T1, G-T2, G-T4** — retired with the base-four campaign (all satisfied).
-    * **B-T1 (fired 2026-09-14, resolved by restriction)** — `b = 2` fails at the row `L¹`
-      mass.  Objective restricted to `b ≥ 3`.  If a later lap finds a *second* step that
-      needs `b ≥ 4`, that is a NEW firing: record the inequality and restrict again rather
-      than weakening a `Prop`.
-    * **B-T2** — if the port has not produced a green `b`-parameterized `Frame` within
-      **8 grind laps**, re-cost: keep `Frame` at base four and instead prove the general
-      theorem by a *second* frame constructor, rather than continuing to thread `b`.
-    * **B-T3** — a *mathematical* mismatch between a `b`-general object and a `Prop` is an
+    * **G-T1…G-T4, B-T1…B-T3** — retired with G4 and G4B.
+    * **W-T1** — if C2 (`norm_localSum_le`) resists generalisation to valuations for **2 grind
+      laps**, drop the interface and instantiate `Ω` directly with its own local lemma.
+    * **W-T2** — if the `Ω` series identity `∑_n Ω(n)/bⁿ = ∑_{p,a} 1/(b^{pᵃ}−1)` needs a
+      rearrangement mathlib does not support, state it as the one named `Prop` and keep
+      going; do NOT axiomatise it.
+    * **W-T3** — a *mathematical* mismatch between the interface and either instance is an
       ESCALATION (`ROUTE-ESCALATION-<date>.md`), never a `Prop` edit.
+    * **W-T4 (scope honesty)** — this campaign is past the attended brief's finish line
+      (brief §7 queue item 1 is closed).  If Trevor returns, the interface/`Ω` objective is
+      the first thing to re-authorise; a grind lap may not silently promote it to "the
+      headline".  `STATUS.md` must keep saying which results are the attended endpoint.
 
 ### Directive history
+- 2026-09-14 (fresh-mind review lap, after G4B lap 15): **G4B verified CLOSED**; the two
+  preceding laps were pure re-verification + `box stuck` strikes, so the directive is
+  re-pointed rather than re-affirmed.  Added this lap: `IsDisjunctive.irrational` and
+  `IsDisjunctive.exists_ge` with the G4 instances (`irrational_primeSum`,
+  `every_word_occurs_base_late`).  Base two **RETIRED** with an architecture-level
+  refutation (any vanishing-line-sum integer design has `L¹ ≥ 2^K`, so `rowL1 ≥ 1` at
+  `b = 2`; and the medium/far vise closes for every `Y`).  New objective: the additive-weight
+  INTERFACE with `ω` and `Ω` as instances; decisive case named as C2 with valuations.
 - 2026-09-14 (fresh-mind review lap, after G4 lap 12): **G4 base-four verified CLOSED** —
   build green, all headlines on the trust triple, endpoint definitions re-audited against the
   brief.  Objective ADVANCED to brief §7.1, the base-`b` theorem for `b ≥ 3`.  Decisive probe
