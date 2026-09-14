@@ -213,6 +213,18 @@ noncomputable def sampleAvg {q : ℤ} (C : Chain q) (N : ℕ) (g : ℝ → ℂ) 
 noncomputable def rSampleAvg {q : ℤ} (C : Chain q) (N : ℕ) (g : ℝ → ℝ) : ℝ :=
   ravg (C.D N).P (fun n => g (smallSum C N n))
 
+/-- `X_p` is `p`-periodic, so `S_N` is periodic modulo the CRT modulus: the independent
+model is the average of `S_N` over one full period. -/
+lemma smallSum_add_modulus {q : ℤ} (C : Chain q) (N : ℕ) (n : ℤ) (t : ℤ) :
+    smallSum C N (n + t * modulus C N) = smallSum C N n := by
+  unfold smallSum classSum
+  refine Finset.sum_congr rfl (fun p hp => ?_)
+  apply primePart_congr
+  rw [show n + t * modulus C N - n = t * modulus C N by ring]
+  refine Dvd.dvd.mul_left ?_ t
+  unfold modulus
+  exact_mod_cast Finset.dvd_prod_of_mem _ hp
+
 /-- `SmallPrimeDecay` is the statement `‖sampleAvg e(q·)‖ → 0`. -/
 lemma smallPrimeDecay_iff {q : ℤ} (C : Chain q) :
     SmallPrimeDecay C ↔

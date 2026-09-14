@@ -23,8 +23,9 @@ No novelty claim.  Headline `irrational_primeLambert` is **sorry-gated**; see "S
 | `PrimeLambertLarge` | unconditional pointwise bound `\|X_p(n)\| ≤ ‖c‖₁ 2^{−K}` (`abs_primePart_le`), `primePart_eq_zero`, class bound by the count of active primes (`abs_classSum_le_card`), Prop `LargePrimeCountSmall`, `largePrimeNegligible_of_count` | proved, axiom-clean; the count Prop open |
 | `PrimeLambertOscillation` | `e`, `ProgressionFamily`, `phaseAverage`, `PhaseOscillation` (draft eq. (5)), `norm_phaseAverage_eq_one`, `irrational_of_phaseOscillation` | proved, axiom-clean; `phaseOscillation` is the single disclosed `sorry` |
 
-Build: `lake build NormalNumbers.PrimeLambertOscillation` (targeted; the root module is
-host-owned and does not import these yet).
+Build: `lake build NormalNumbers.PrimeLambertMoments NormalNumbers.PrimeLambertLarge
+NormalNumbers.PrimeLambertHexagonNegative` (targeted; the root module is host-owned and does
+not import these yet).
 
 ## The exact arithmetic (all proved)
 
