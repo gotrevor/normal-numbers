@@ -23,6 +23,28 @@ coordinate separately.
 **`PropJackson` ✅** · `PropB` open (inputs proved, assembly is the remaining §4 work) ·
 §5 schedule open.  `isDisjunctive_four_of_frames` still CONDITIONAL on `SeparatingFrameExists`.
 
+### Lap 8b — B assembly landed at the abstract level (`G4TubeVolume.lean`, `d39c41d`)
+
+`Frame.volume_tube_le`: whenever `orbitClosure ⊆ ⋃_{c ∈ Bs} π[c, c+h]` with `h ≤ η`,
+
+    vol(tube(image, εη)) ≤ ∑_{G ∈ goodSets} (#Bs)^H · η^{|G|} · vol([A_G, I_G]·[−1,1]^{H+G}),
+
+`goodSets = {G ⊆ Fin r : (1−ε) r ≤ |G|}`.  Steps (ii)–(iv) of the plan are done abstractly:
+`tube_subset_pieces` (Markov in `dAv`, nearest image point by compactness, real lifts),
+`volume_piece_le` (marginal projection is measure preserving, `volume_image_torusProj_le`,
+translation invariance, `addHaar_smul`).  Trust triple.
+
+**Left for `gridFrame_propB`** (bookkeeping, no new mathematics):
+1. `vol(pieceCube G) ≤ exp(½ r(log 2 + 23√K)) (√(2πe(H+|G|)/|G|))^{|G|}` for the grid's `AR`:
+   `volume_augmented_image_le (ARsub G)` + `det_one_add_submatrix_mul_transpose_le` with
+   `e = Subtype.val` + `AR * ARᵀ = reindex (tensorGram)` (`Amat` is `kronPow` reindexed by
+   `rowEquiv`/`atomEquiv`; `Matrix.det_reindex_self`) + `log_det_one_add_tensorGram_le'`.
+   Needs `0 < |G|`, i.e. `ε < 1` and `r ≥ 1`.
+2. The dyadic cylinder: from `0 ≤ a < c ≤ 1` produce `ℓ, w` with `[w/4^ℓ, (w+1)/4^ℓ) ⊆ [a, c)`,
+   then `orbitClosure_subset_cylinders` at `M` with `4^{−ℓM} ≤ η`; `Bs = image cylLeft (admissible)`,
+   `#Bs ≤ (4^ℓ − 1)^M`.
+3. `#goodSets ≤ 2^r`, and the §5 arithmetic (exponent check above).
+
 ### B exponent check (paper, this lap — record it)
 
 With `vol(tube) ≤ 2^r (B−1)^{MH} η^g e^{½r(log 2+23√K)} (√(2πe(H+g)/g))^g`, `η = 2^{−K/4}`,
