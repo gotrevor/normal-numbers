@@ -119,6 +119,8 @@ k_\alpha(n)+h
 
 has distribution tending to the uniform law on \(\{0,1\}^\ell\).
 
+These are zero-based shift indices.  The corresponding one-based starting digit position is \(k_\alpha(n)+h+1\).
+
 To prove this, subadditivity first gives \(\sum_\alpha\operatorname{Ent}_2(Z_\alpha)\ge mH-O(H\sqrt K)\).  For each residue of the starting offset modulo \(\ell\), partition each \(m\)-block into disjoint \(\ell\)-blocks and at most \(2\ell\) boundary bits.  Subadditivity again bounds the sum of the \(\ell\)-block entropy deficits by \(O(H\sqrt K+H\ell)\).  Sum the \(\ell\) partitions and divide by the \(H(m-\ell+1)\) sampled blocks.  Their mean entropy deficit is \(O_\ell(K^{-1/2})\).  Pinsker's inequality and Cauchy-Schwarz make their averaged total-variation distance from uniform \(O_\ell(K^{-1/4})\), proving the claim.
 
 For the elementary base-4 construction the corresponding binary positions are \(2k_\alpha(n)+h\).  This is a structured sparse averaging theorem, **not** ordinary binary normality.

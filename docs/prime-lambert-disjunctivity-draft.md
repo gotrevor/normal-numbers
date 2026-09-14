@@ -19,6 +19,8 @@ Write \(e(t)=\exp(2\pi i t)\), \(\mathbb T=\mathbb R/\mathbb Z\), and use natura
 
 ## 1. What replaces the failed single-tail extractor
 
+Companion results: the [fixed-base extension](prime-lambert-disjunctivity-fixed-base.md) removes the deep correlation input for every fixed base at least three, including an elementary candidate binary-disjunctivity proof for the base-four prime Lambert number.  The [affine-entropy follow-up](prime-lambert-affine-entropy-draft.md) gives quantitative entropy and word frequencies on the structured sparse samples, while identifying the remaining ordinary-normality gap.
+
 A scalar signed combination can fill the circle even if every original radix tail avoids an interval.  The proposed replacement retains almost as many independent difference coordinates as input coordinates.  Its image of a missing-word set occupies very little volume at a usable resolution.
 
 The arithmetic rough error is small in **average coordinate distance**, not simultaneously in every coordinate.  The covering estimate and smoothing test use precisely that metric.  The small-prime calculation controls all Fourier characters needed by that one test; it does not assume independence between the actual small and rough prime factors.
