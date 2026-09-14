@@ -1,6 +1,29 @@
 # PENDING_WORK
 
-## ⚔️ THE CRUX — brief §6 `T_E` (entropy review lap 8, 2026-09-14)
+## ✅ RESOLVED — brief §6 `T_E` is **REFUTED** (entropy lap 8, 2026-09-14)
+
+`NormalNumbers.G4.Sched.not_T_E : ¬ T_E`, axiom-clean, `HANDOFF-2026-09-14-entropy-lap8.md`.
+The witness is `maskedReal G₄` — `G₄`'s digits at the sampled positions, `0` elsewhere — which
+has *literally the same joint law at every scale* (so it satisfies `entropy_E0`/`entropy_E1`
+verbatim) and at most a quarter `1`s.  The plan below was executed as written.
+
+**The frontier moves to brief §6's POSITIVE branch.**  Open items, hardest first:
+
+1. `T_S`, `T_mix` — state over the same family, refute with the same witness
+   (`jointLawAt_maskedReal`).  Cheap; completes the §6 column.
+2. **Which extra arithmetic input reads a positive-density set of positions?**  The
+   obstruction is now explicit and quantitative: `d_α ∣ kIdx` (`kIdx_spec`) plus `kIdx ≠ 0`
+   confine scale-`K` positions to multiples of `2 d_α` with `d_α ≥ 1 + Q_K D₀_K`, so ONE grid
+   can never exceed density `H_K m_K/(2 d_min)`.  Any repair must vary `t_α` (equivalently
+   `b₀`) across a family of admissible samplers covering a positive fraction of the residues
+   mod `2 d_α` — and the brief warns that an output translation `θ − γ` does NOT grant
+   arbitrary input residues.  Name the property, prove the implication, compute `w_{K,ℓ}`.
+3. Brief §5's (S): still open, still a leaf — worth stating as *what entropy controls*, not as
+   a step toward normality.
+
+---
+
+## (executed) THE CRUX — brief §6 `T_E` (entropy review lap 8, 2026-09-14)
 
 **Read the entropy CURRENT DIRECTIVE in `DIRECTION.md` first; it outranks any handoff.**
 §2/§3/§4 are closed (`entropy_E0`, `entropy_E1`, axiom-clean).  §5's (S) is a LEAF and is

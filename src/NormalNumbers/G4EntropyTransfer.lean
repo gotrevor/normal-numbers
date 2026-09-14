@@ -7,6 +7,7 @@ import NormalNumbers.G4EntropyPositions
 import NormalNumbers.G4EntropyRate
 import NormalNumbers.Bridge
 import NormalNumbers.Counting
+import NormalNumbers.CFConcat
 
 /-!
 # Entropy expedition §6: the transfer targets, and the refutation of `T_E`
@@ -338,6 +339,157 @@ theorem card_isSampled_le (L : ℕ) :
     rw [Nat.le_div_iff_mul_le (by omega)]
     omega
   omega
+
+
+/-! ### The witness: `G₄` masked to the sampled positions -/
+
+/-- The digits of `x` at every sampled position, and `0` everywhere else. -/
+noncomputable def maskedDigits (x : ℝ) (j : ℕ) : ℕ :=
+  if IsSampled j then digitOf 2 (Int.fract x) j else 0
+
+lemma maskedDigits_lt (x : ℝ) (j : ℕ) : maskedDigits x j < 2 := by
+  unfold maskedDigits
+  split
+  · exact Nat.mod_lt _ (by omega)
+  · omega
+
+/-- Since the sampled positions have density `≤ 1/4`, arbitrarily late positions are unsampled. -/
+theorem exists_not_isSampled (M : ℕ) : ∃ j, M ≤ j ∧ ¬ IsSampled j := by
+  by_contra hcon
+  push_neg at hcon
+  set L := 2 * M + 8 with hL
+  have hsub : Finset.Ico M L ⊆ (Finset.range L).filter IsSampled := by
+    intro j hj
+    rw [Finset.mem_Ico] at hj
+    exact Finset.mem_filter.2 ⟨Finset.mem_range.2 hj.2, hcon j hj.1⟩
+  have h1 : L - M ≤ ((Finset.range L).filter IsSampled).card := by
+    have := Finset.card_le_card hsub
+    simpa [Nat.card_Ico] using this
+  have h2 := card_isSampled_le L
+  have h3 : L / 4 ≤ M + 2 := by
+    rw [Nat.div_le_iff_le_mul_add_pred (by omega)]
+    omega
+  omega
+
+theorem properDigits_maskedDigits (x : ℝ) : ProperDigits 2 (maskedDigits x) := by
+  intro M
+  obtain ⟨j, hj, hns⟩ := exists_not_isSampled M
+  refine ⟨j, hj, ?_⟩
+  unfold maskedDigits
+  rw [if_neg hns]
+  omega
+
+/-- **The counterexample**: `G₄`'s digits at the sampled positions, zeros elsewhere. -/
+noncomputable def maskedReal (x : ℝ) : ℝ := realOfDigits 2 (maskedDigits x)
+
+lemma maskedReal_mem_Ico (x : ℝ) : maskedReal x ∈ Set.Ico (0 : ℝ) 1 :=
+  realOfDigits_mem_Ico 2 (by norm_num) _ (maskedDigits_lt x) (properDigits_maskedDigits x)
+
+lemma fract_maskedReal (x : ℝ) : Int.fract (maskedReal x) = maskedReal x := by
+  have h := maskedReal_mem_Ico x
+  rw [Set.mem_Ico] at h
+  exact Int.fract_eq_self.2 h
+
+lemma digitOf_maskedReal (x : ℝ) :
+    digitOf 2 (Int.fract (maskedReal x)) = maskedDigits x := by
+  rw [fract_maskedReal]
+  exact digitOf_realOfDigits 2 (by norm_num) _ (maskedDigits_lt x) (properDigits_maskedDigits x)
+
+/-- **The masked number has literally the same joint law at every scale.** -/
+theorem jointLawAt_maskedReal (i : ℕ) (x : ℝ) :
+    jointLawAt i (maskedReal x) = jointLawAt i x := by
+  refine jointLaw_congr (gridAt i) (b₀_lt_X_at i) (kk i) ?_
+  intro j hj
+  have hs : IsSampled j := ⟨i, hj⟩
+  rw [digitOf_maskedReal]
+  unfold maskedDigits
+  rw [if_pos hs]
+
+/-- Hence it satisfies exactly the same entropy hypothesis. -/
+theorem E0_maskedReal {x : ℝ} (hx : E0 x) : E0 (maskedReal x) := by
+  unfold E0 at hx ⊢
+  simpa only [jointLawAt_maskedReal] using hx
+
+/-! ### The masked number is not normal -/
+
+/-- Occurrences of a single digit are counted by the positions carrying it. -/
+lemma countOcc_one_le {s : ℕ → ℕ} {P : ℕ → Prop} [DecidablePred P]
+    (hs : ∀ j, s j = 1 → P j) (n : ℕ) :
+    countOccurrences [1] ((List.range n).map s) ≤ ((Finset.range n).filter P).card := by
+  induction n with
+  | zero => simp [countOccurrences_nil]
+  | succ n ih =>
+    have hsingle : countOccurrences [1] [s n] = if s n = 1 then 1 else 0 := by
+      rw [countOccurrences_cons, countOccurrences_nil]
+      by_cases h : s n = 1 <;> simp [h, List.isPrefixOf] <;> omega
+    have hstep : countOccurrences [1] ((List.range n).map s ++ [s n])
+        ≤ countOccurrences [1] ((List.range n).map s) + countOccurrences [1] [s n] := by
+      have h := countOccurrences_append_le (w := [1]) (by simp) ((List.range n).map s) [s n]
+      simpa using h
+    rw [List.range_succ, List.map_append, List.map_cons, List.map_nil]
+    rw [Finset.range_add_one, Finset.filter_insert]
+    by_cases hP : P n
+    · rw [if_pos hP, Finset.card_insert_of_notMem (by simp)]
+      have h1 : countOccurrences [1] [s n] ≤ 1 := by rw [hsingle]; split <;> omega
+      omega
+    · have hsn : s n ≠ 1 := fun h => hP (hs n h)
+      rw [if_neg hP]
+      have h0 : countOccurrences [1] [s n] = 0 := by rw [hsingle, if_neg hsn]
+      omega
+
+/-- **The masked number is not binary normal**: fewer than a quarter of its digits are `1`. -/
+theorem not_isNormal_maskedReal (x : ℝ) : ¬ IsNormal 2 (maskedReal x) := by
+  intro hN
+  have hw : ([1] : List ℕ) ≠ [] := by simp
+  have hd : ∀ d ∈ ([1] : List ℕ), d < 2 := by intro d hd; simp at hd; omega
+  have h := hN [1] hw hd
+  have hle : ∀ n : ℕ,
+      (countOccurrences [1] ((List.range n).map (digitOf 2 (Int.fract (maskedReal x)))) : ℝ) / n
+        ≤ 1 / 4 := by
+    intro n
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · simp
+    have hcount : countOccurrences [1] ((List.range n).map (digitOf 2 (Int.fract (maskedReal x))))
+        ≤ ((Finset.range n).filter IsSampled).card := by
+      refine countOcc_one_le (fun j hj => ?_) n
+      by_contra hns
+      rw [digitOf_maskedReal] at hj
+      unfold maskedDigits at hj
+      rw [if_neg hns] at hj
+      omega
+    have hc2 : countOccurrences [1] ((List.range n).map (digitOf 2 (Int.fract (maskedReal x))))
+        ≤ n / 4 := le_trans hcount (card_isSampled_le n)
+    have hnR : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn
+    rw [div_le_div_iff₀ hnR (by norm_num)]
+    have h4 : 4 * (n / 4) ≤ n := Nat.mul_div_le n 4
+    have : (4 : ℝ) * (countOccurrences [1]
+        ((List.range n).map (digitOf 2 (Int.fract (maskedReal x)))) : ℝ) ≤ (n : ℝ) := by
+      have hc3 : 4 * countOccurrences [1]
+          ((List.range n).map (digitOf 2 (Int.fract (maskedReal x)))) ≤ n := by
+        have := Nat.mul_le_mul_left 4 hc2
+        omega
+      exact_mod_cast hc3
+    linarith
+  have hlim := le_of_tendsto h (Filter.Eventually.of_forall hle)
+  norm_num at hlim
+
+/-! ### The refutation -/
+
+/-- **`T_E` is FALSE** (brief §6, the primary transfer target).
+
+`maskedReal G₄` keeps exactly the digits of `G₄` that some admissible scale samples and zeroes
+every other digit.  By `jointLawAt_maskedReal` it has the *same joint quantized sample law at
+every scale*, hence satisfies `E0` (indeed `entropy_E0` and `entropy_E1` verbatim); by
+`card_isSampled_le` at most a quarter of its digits can be `1`, so it is not normal in base two.
+
+No statement about this arithmetic sample alone can imply ordinary normality: the sample reads
+a set of digit positions of density `≤ 1/4`. -/
+theorem not_T_E : ¬ T_E := by
+  intro hT
+  have hy := maskedReal_mem_Ico (primeLambertAtBase 4)
+  rw [Set.mem_Ico] at hy
+  exact not_isNormal_maskedReal _
+    (hT (maskedReal (primeLambertAtBase 4)) hy.1 hy.2 (E0_maskedReal E0_primeLambertFour))
 
 
 end NormalNumbers.G4.Sched
