@@ -259,4 +259,21 @@ theorem gridFrame_propC_four (G : GridParams) (X : ℕ)
   gridFrame_propC 4 (by norm_num) G X hne sm γ hη hε hs hsP hR1 hR (by positivity)
     (fun q hq hqD => sum_sq_distZ_coeff_ge hN hq hqD) hM hlam' hlam
 
+/-- **`PropC` in base `bb`, seed discharged**: `θ₀ = freqSeed bb K = bb^{−4}(2/bb²)^K`, under
+`1 + ⌈log_bb(2^K D)⌉ ≤ N` (`sum_sq_distZ_coeff_ge_gen`).  `gridFrame_propC_four` is the
+`bb = 4` case up to `freqSeed_four`. -/
+theorem gridFrame_propC_gen (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ) (γ : Torus G.rDim)
+    {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) {D : ℕ}
+    (hs : ∀ p ∈ sm, p.Prime) (hsP : ∀ p ∈ sm, ¬ p ∣ G.P₀)
+    {R : ℕ} (hR1 : 1 ≤ R) (hR : ∀ p ∈ sm, p ≤ R)
+    (hN : 1 + Nat.clog bb (2 ^ G.K * D) ≤ G.N)
+    {M : ℕ} (hM : 1 ≤ M) {lam' lam : ℝ} (hlam' : 1 ≤ lam') (hlam : 0 < lam) :
+    (gridFrame bb hbb G X hne sm γ hη hε D).PropC
+      (smallPrimeBound sm (Fintype.card G.Idx) R M (apSample X G.P₀ G.b₀).card lam' lam
+        (freqSeed bb G.K)) :=
+  gridFrame_propC bb hbb G X hne sm γ hη hε hs hsP hR1 hR
+    (freqSeed_nonneg (by exact_mod_cast hbb) G.K)
+    (fun q hq hqD => sum_sq_distZ_coeff_ge_gen hbb hN hq hqD) hM hlam' hlam
+
 end NormalNumbers.G4

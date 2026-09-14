@@ -96,14 +96,23 @@ so `b ≥ 3` again, and `N = Θ(log_b(K·L))` as before.
    discharges it from `sum_sq_distZ_coeff_ge`).  `ScheduleWitness` is still the base-four
    §5 object; `ScheduleWitness.propD` bridges its draft-constant fields.  `isDisjunctive_four`
    unchanged, axiom-clean.
-5. **NEXT** `G4FreqSep` in base `b`: `freqDepth b K w = K + 1 + Nat.clog b |w|`, window
-   `[b^{−(K+2)}, b^{−(K+1)}]`, `distZ ≥ b^{−(K+2)}`, so `θ₀(b) = b^{−4}(2/b²)^K`.  The
-   deliverable is `sum_sq_distZ_coeff_ge_gen (bb) (hbb) : 1 + Nat.clog bb (2^K D) ≤ N → … →
-   bb^{−4}(2/bb²)^K ≤ ∑ distZ(coeffAL bb q i)²`, which plugs into `gridFrame_propC`'s `hsep`.
-6. `G4Schedule*` — the schedule in `(b, ℓ)`: a `ScheduleWitnessB bb ℓ w` with the general
-   closed forms (`rowL1 bb`, `rowL2 bb`, `farBound bb`, `θ₀(bb)`), then
-   `separatingFrameExists_of_witnessB`, `isDisjunctive_base`, with `b = 4` recovering
-   `isDisjunctive_four`.
+5. ✅ **DONE (lap 14)** `G4FreqSep` in base `b`: `freqDepthB b K w = K + 1 + Nat.clog b |w|`,
+   `pow_clog_le_gen`, `mem_window_freqDepthB` (window `[b^{−(K+2)}, b^{−(K+1)}]`),
+   `le_distZ_freqDepthB`, `freqDepthB_le`, `freqSeed b K = b^{−4}(2/b²)^K` with
+   `freqSeed_four`, and `sum_sq_distZ_freqDepthB_ge : freqSeed b K ≤ ∑_α distZ(w_α b^{−j_α})²`.
+   On the atom/layer set: `sum_sq_distZ_coeff_ge_gen` (`G4SmallPrimeVector`), and
+   `gridFrame_propC_gen` (`G4Frame`) — PropC in base `bb` with `θ₀ = freqSeed bb K`, under
+   `1 + Nat.clog bb (2^K D) ≤ N`.  **All five §4 inputs are now discharged on `gridFrame bb`
+   for every `bb ≥ 2`**: A (`gridFrame_propA`), B (`gridFrame_propB_of_bound`, one real
+   inequality), C (`gridFrame_propC_gen`), D (`gridFrame_propD_of_bounds`, two real
+   inequalities), Jackson (`Frame.propJackson`).
+6. **NEXT** `G4Schedule*` — the schedule in `(b, ℓ)`.  First the interface: a
+   `ScheduleWitnessB bb ℓ w` (fields as `ScheduleWitness` but with `rowL1 bb`, `rowL2 bb`,
+   `farBound bb`, `freqSeed bb`, `Nat.clog bb`, cylinders `w < bb^ℓ`) and
+   `separatingFrameExists_of_witnessB : (∀ ℓ w, … → Nonempty (ScheduleWitnessB bb ℓ w)) →
+   SeparatingFrameExists bb`, hence `isDisjunctive_of_witnessB`.  Then the five inequalities
+   in `(bb, ℓ)`: `hB` (already general, `G4ScheduleB.gridB_bound`), `hfar`, `hbig`, `hbudget`
+   with the `(2/bb)^K` masses — these need `bb ≥ 3` (`hbig`), the B-T1 restriction.
 
 ### Stretch target (NOT the objective): repair base two
 

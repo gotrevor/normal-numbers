@@ -141,6 +141,39 @@ theorem sum_sq_distZ_coeff_ge {N D : ℕ} (hN : 1 + Nat.clog 4 (2 ^ K * D) ≤ N
         Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
           (fun i _ _ => by positivity)
 
+/-- **Frequency separation on the atom/layer index set, in base `bb`**: if
+`N ≥ 1 + ⌈log_bb(2^K D)⌉` then for `0 ≠ q`, `‖q‖∞ ≤ D`,
+`∑_i dist(x_i, ℤ)² ≥ freqSeed bb K = bb^{−4}(2/bb²)^K`. -/
+theorem sum_sq_distZ_coeff_ge_gen {bb : ℕ} (hbb : 2 ≤ bb) {N D : ℕ}
+    (hN : 1 + Nat.clog bb (2 ^ K * D) ≤ N)
+    {q : (Fin K → Fin s) → ℤ} (hq : q ≠ 0) (hqD : ∀ a, |q a| ≤ (D : ℤ)) :
+    freqSeed bb K ≤ ∑ i : AtomLayer K s N, distZ (coeffAL bb q i) ^ 2 := by
+  classical
+  refine (sum_sq_distZ_freqDepthB_ge hbb K s hq).trans ?_
+  have hdepth : ∀ α : Fin K → Fin (s + 1),
+      freqDepthB bb K ((kronPow K (diffZ s)).vecMul q α) - (K + 1) < N := by
+    intro α
+    have := freqDepthB_le bb K s D hqD α
+    omega
+  let φ : (Fin K → Fin (s + 1)) → AtomLayer K s N :=
+    fun α => (α, ⟨freqDepthB bb K ((kronPow K (diffZ s)).vecMul q α) - (K + 1), hdepth α⟩)
+  have hφ : Function.Injective φ := fun α β h => congrArg Prod.fst h
+  have hlayer : ∀ α, layer K (φ α).2 = freqDepthB bb K ((kronPow K (diffZ s)).vecMul q α) := by
+    intro α
+    simp only [φ, layer]
+    have := lt_freqDepthB bb K ((kronPow K (diffZ s)).vecMul q α)
+    omega
+  calc ∑ α, distZ (((kronPow K (diffZ s)).vecMul q α : ℤ) /
+          (bb : ℝ) ^ freqDepthB bb K ((kronPow K (diffZ s)).vecMul q α)) ^ 2
+      = ∑ α, distZ (coeffAL bb q (φ α)) ^ 2 := by
+        refine Finset.sum_congr rfl fun α _ => ?_
+        rw [coeffAL, hlayer]
+    _ = ∑ i ∈ Finset.univ.image φ, distZ (coeffAL bb q i) ^ 2 := by
+        rw [Finset.sum_image (fun α _ β _ h => hφ h)]
+    _ ≤ ∑ i, distZ (coeffAL bb q i) ^ 2 :=
+        Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
+          (fun i _ _ => by positivity)
+
 /-! ### Good primes from global distinctness -/
 
 /-- A prime not dividing any nonzero shift difference, with injective shifts, is good. -/

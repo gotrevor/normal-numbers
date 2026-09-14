@@ -234,4 +234,138 @@ theorem sum_sq_distZ_freqDepth_ge (K s : ℕ) {q : (Fin K → Fin s) → ℤ} (h
         intro c _ _
         exact sq_nonneg _
 
+/-! ### The same in any integer base `b ≥ 2` (campaign G4B) -/
+
+/-- `b ^ ⌈log_b n⌉ ≤ b n` for `n ≥ 1`, `b ≥ 2`. -/
+lemma pow_clog_le_gen {b : ℕ} (hb : 2 ≤ b) (n : ℕ) (hn : 1 ≤ n) :
+    b ^ Nat.clog b n ≤ b * n := by
+  rcases eq_or_lt_of_le hn with h | h
+  · simp [← h]; omega
+  · have hlt := Nat.pow_pred_clog_lt_self (b := b) (by omega) h
+    have hm : 1 ≤ Nat.clog b n := Nat.clog_pos (by omega) h
+    calc b ^ Nat.clog b n = b ^ (Nat.clog b n - 1) * b := by
+          rw [← pow_succ]; congr 1; omega
+      _ ≤ n * b := Nat.mul_le_mul_right b (le_of_lt hlt)
+      _ = b * n := by ring
+
+/-- The layer assigned to a nonzero frequency coefficient in base `b`:
+`j = K + 1 + ⌈log_b |w|⌉`.  `freqDepth K w = freqDepthB 4 K w` definitionally. -/
+def freqDepthB (b K : ℕ) (w : ℤ) : ℕ := K + 1 + Nat.clog b w.natAbs
+
+lemma freqDepthB_four (K : ℕ) (w : ℤ) : freqDepthB 4 K w = freqDepth K w := rfl
+
+lemma lt_freqDepthB (b K : ℕ) (w : ℤ) : K < freqDepthB b K w := by
+  unfold freqDepthB; omega
+
+/-- The window: `|w| b^{-j}` lies between `b^{-(K+2)}` and `b^{-(K+1)}`. -/
+lemma mem_window_freqDepthB {b : ℕ} (hb : 2 ≤ b) (K : ℕ) {w : ℤ} (hw : w ≠ 0) :
+    1 / (b : ℝ) ^ (K + 2) ≤ |(w : ℝ) / (b : ℝ) ^ freqDepthB b K w| ∧
+      |(w : ℝ) / (b : ℝ) ^ freqDepthB b K w| ≤ 1 / (b : ℝ) ^ (K + 1) := by
+  have hn : 1 ≤ w.natAbs := Int.natAbs_pos.2 hw
+  have hbr : (0 : ℝ) < b := by exact_mod_cast (show 0 < b by omega)
+  set m := Nat.clog b w.natAbs with hm
+  have hup : (w.natAbs : ℝ) ≤ (b : ℝ) ^ m := by
+    exact_mod_cast Nat.le_pow_clog (by omega) w.natAbs
+  have hlo : (b : ℝ) ^ m ≤ b * w.natAbs := by exact_mod_cast pow_clog_le_gen hb w.natAbs hn
+  have habs : |(w : ℝ)| = (w.natAbs : ℝ) := by
+    rw [← Int.cast_abs, ← Int.natCast_natAbs]
+    norm_num
+  have hpow : (0 : ℝ) < (b : ℝ) ^ freqDepthB b K w := by positivity
+  have hsplit : (b : ℝ) ^ freqDepthB b K w = (b : ℝ) ^ (K + 1) * (b : ℝ) ^ m := by
+    rw [freqDepthB, ← pow_add]
+  rw [abs_div, habs, abs_of_pos hpow, hsplit]
+  constructor
+  · rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    calc (1 : ℝ) * ((b : ℝ) ^ (K + 1) * (b : ℝ) ^ m) = (b : ℝ) ^ m * (b : ℝ) ^ (K + 1) := by ring
+      _ ≤ ((b : ℝ) * w.natAbs) * (b : ℝ) ^ (K + 1) := by
+          exact mul_le_mul_of_nonneg_right hlo (by positivity)
+      _ = (w.natAbs : ℝ) * (b : ℝ) ^ (K + 2) := by rw [pow_succ]; ring
+  · rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    calc (w.natAbs : ℝ) * (b : ℝ) ^ (K + 1) ≤ (b : ℝ) ^ m * (b : ℝ) ^ (K + 1) := by
+          exact mul_le_mul_of_nonneg_right hup (by positivity)
+      _ = 1 * ((b : ℝ) ^ (K + 1) * (b : ℝ) ^ m) := by ring
+
+/-- **The single-coefficient separation in base `b`**: the assigned layer keeps `w b^{-j}` at
+distance `≥ b^{-(K+2)}` from `ℤ`. -/
+theorem le_distZ_freqDepthB {b : ℕ} (hb : 2 ≤ b) (K : ℕ) {w : ℤ} (hw : w ≠ 0) :
+    1 / (b : ℝ) ^ (K + 2) ≤ distZ ((w : ℝ) / (b : ℝ) ^ freqDepthB b K w) := by
+  obtain ⟨h1, h2⟩ := mem_window_freqDepthB hb K hw
+  have hbr : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  refine le_distZ ?_ h1 (h2.trans ?_)
+  · rw [div_le_div_iff₀ (by positivity) (by norm_num)]
+    have : (b : ℝ) ^ 1 ≤ (b : ℝ) ^ (K + 2) := by
+      apply pow_le_pow_right₀ (by linarith); omega
+    nlinarith
+  · rw [div_le_div_iff₀ (by positivity) (by norm_num)]
+    have : (b : ℝ) ^ 1 ≤ (b : ℝ) ^ (K + 1) := by
+      apply pow_le_pow_right₀ (by linarith); omega
+    nlinarith
+
+/-- **Uniform admissibility of the layer choice on the whole Fourier box, base `b`**: the
+assigned depth never exceeds `K + 1 + ⌈log_b(2^K D)⌉`. -/
+theorem freqDepthB_le (b K s D : ℕ) {q : (Fin K → Fin s) → ℤ} (hq : ∀ a, |q a| ≤ (D : ℤ))
+    (c : Fin K → Fin (s + 1)) :
+    freqDepthB b K ((kronPow K (diffZ s)).vecMul q c) ≤ K + 1 + Nat.clog b (2 ^ K * D) := by
+  unfold freqDepthB
+  exact Nat.add_le_add_left
+    (Nat.clog_mono_right _ (natAbs_vecMul_kronPow_diffZ_le K s D hq c)) _
+
+/-- The base-`b` frequency-separation seed `θ₀(b) = b^{-4} (2/b²)^K`. -/
+noncomputable def freqSeed (b : ℝ) (K : ℕ) : ℝ := 1 / b ^ 4 * (2 / b ^ 2) ^ K
+
+lemma freqSeed_four (K : ℕ) : freqSeed 4 K = 1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K := by
+  unfold freqSeed; norm_num
+
+lemma freqSeed_nonneg {b : ℝ} (hb : 2 ≤ b) (K : ℕ) : 0 ≤ freqSeed b K := by
+  unfold freqSeed
+  have : 0 < b := by linarith
+  positivity
+
+/-- **The frequency-separation bound in base `b`.**  For every nonzero integer frequency `q`,
+the layer choice `j_α = K + 1 + ⌈log_b|w_α|⌉` applied to `w = q ᵥ* D_s^{⊗K}` gives
+
+  `∑_α dist(w_α b^{-j_α}, ℤ)² ≥ b^{-4} · (2/b²)^K = freqSeed b K`.
+
+`(1/b²)^K` is the square of the window scale `b^{-(K+2)}`, `2^K` the minimum weight of the
+tensor code.  Note the seed *grows* as `b` shrinks. -/
+theorem sum_sq_distZ_freqDepthB_ge {b : ℕ} (hb : 2 ≤ b) (K s : ℕ) {q : (Fin K → Fin s) → ℤ}
+    (hq : q ≠ 0) :
+    freqSeed b K
+      ≤ ∑ c : Fin K → Fin (s + 1),
+          distZ (((kronPow K (diffZ s)).vecMul q c : ℤ) /
+            (b : ℝ) ^ freqDepthB b K ((kronPow K (diffZ s)).vecMul q c)) ^ 2 := by
+  classical
+  have hbr : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hbpos : (0 : ℝ) < b := by linarith
+  set w := (kronPow K (diffZ s)).vecMul q with hwdef
+  set F : Finset (Fin K → Fin (s + 1)) := univ.filter (fun c => w c ≠ 0) with hF
+  have hcard : 2 ^ K ≤ F.card := minWeight_kronPow_diffZ K s q hq
+  have hterm : ∀ c ∈ F,
+      (1 / (b : ℝ) ^ (K + 2)) ^ 2 ≤ distZ ((w c : ℝ) / (b : ℝ) ^ freqDepthB b K (w c)) ^ 2 := by
+    intro c hc
+    have hne : w c ≠ 0 := by rw [hF] at hc; exact (Finset.mem_filter.1 hc).2
+    have h1 := le_distZ_freqDepthB hb K hne
+    have h0 : (0 : ℝ) ≤ 1 / (b : ℝ) ^ (K + 2) := by positivity
+    gcongr
+  have harith : freqSeed b K = (2 : ℝ) ^ K * (1 / (b : ℝ) ^ (K + 2)) ^ 2 := by
+    unfold freqSeed
+    have h1 : ((b : ℝ) ^ (K + 2)) ^ 2 = ((b : ℝ) ^ 2) ^ K * (b : ℝ) ^ 4 := by
+      rw [← pow_mul, ← pow_mul, ← pow_add]; congr 1; ring
+    rw [div_pow (2 : ℝ), div_pow (1 : ℝ), one_pow, h1]
+    have h2 : ((b : ℝ) ^ 2) ^ K ≠ 0 := by positivity
+    have h3 : (b : ℝ) ^ 4 ≠ 0 := by positivity
+    field_simp
+  calc freqSeed b K = (2 : ℝ) ^ K * (1 / (b : ℝ) ^ (K + 2)) ^ 2 := harith
+    _ ≤ (F.card : ℝ) * (1 / (b : ℝ) ^ (K + 2)) ^ 2 := by
+        refine mul_le_mul_of_nonneg_right ?_ (by positivity)
+        exact_mod_cast hcard
+    _ = ∑ _c ∈ F, (1 / (b : ℝ) ^ (K + 2)) ^ 2 := by rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ ∑ c ∈ F, distZ ((w c : ℝ) / (b : ℝ) ^ freqDepthB b K (w c)) ^ 2 :=
+        Finset.sum_le_sum hterm
+    _ ≤ ∑ c : Fin K → Fin (s + 1),
+          distZ ((w c : ℝ) / (b : ℝ) ^ freqDepthB b K (w c)) ^ 2 := by
+        refine Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ F) ?_
+        intro c _ _
+        exact sq_nonneg _
+
 end NormalNumbers.G4
