@@ -47,14 +47,17 @@ and the centering shift `K log(s+1)/s ≥ 0` only helps (`(log Λ_j)^+ ≥ (X̃_
 
 Constants are generous (`1/300000` against an upper constant `12`); the order is the content.
 
+## §6 (same lap): the two-sidedness, stated where the cover consumes it
+
+- `tensorGram_cover_constant_ge` — `entropy_cover_bound` consumes `hLg : Lg ≤ (K²)^K(log2+23√K)`;
+  **any** bound of the constant shape `Lg ≤ (K²)^K · C` forces `C ≥ √K/300000`.  The growing
+  term in that hypothesis is not an artifact of how it was proved.
+- `log_det_normalized_two_sided` — for `K ≥ 5`,
+  `1/300000 ≤ log det/((K²)^K √K) ≤ log2/√K + 12`.
+- `tendsto_log_det_div_atTop` — `log det/(K²)^K → ∞`.
+
 ## Next bounded test
 
-Two candidates, both new:
-
-1. **Propagate.**  State the `Θ`-form corollary where `entropy_E1` consumes the bound — i.e.
-   an explicit "the cover floor cannot be improved below `c√K`" statement in the cover module's
-   own vocabulary — so the ceiling `ℓ = o(√K)` of `tendsto_blockFreqT_of_capacity` is visibly
-   two-sided.  This needs reading `entropy_cover_bound`'s exact shape (`G4EntropyCover`).
-2. **Sharpen the constants** (optional, low value): the `4096` in `quad_log_le_sqrt` and the
+1. **Sharpen the constants** (optional, low value): the `4096` in `quad_log_le_sqrt` and the
    `520` in `sum_sq_log_lam_le'` are both ~100× lossy; the true `c` is `≈ 0.2` not `3·10^{-6}`.
    Not worth a lap unless a downstream statement needs a numeric constant.

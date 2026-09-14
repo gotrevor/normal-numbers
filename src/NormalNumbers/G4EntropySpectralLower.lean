@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.G4Tensor
+import NormalNumbers.G4EntropySpectral
 
 /-!
 # The `√K` in the cover bound is real: a matching lower bound
@@ -575,5 +576,70 @@ theorem log_det_one_add_tensorGram_sq_ge {K : ℕ} (hK : 5 ≤ K) :
   have h := log_det_one_add_tensorGram_ge (s := K ^ 2) (K := K) hs (by omega)
   push_cast at h
   exact h
+
+/-! ### §6  What the two-sided bound says about the cover hypothesis -/
+
+/-- **The `√K` in `entropy_cover_bound`'s hypothesis is unavoidable.**  `entropy_cover_bound`
+consumes `hLg : Lg ≤ (K²)^K (log 2 + 23√K)`.  Any bound of the *constant* shape
+`Lg ≤ (K²)^K · C` forces `C ≥ √K/300000`: the per-eigenvalue log-budget genuinely grows. -/
+theorem tensorGram_cover_constant_ge {K : ℕ} (hK : 5 ≤ K) {C : ℝ}
+    (h : Real.log (1 + tensorGram K (K ^ 2)).det ≤ ((K : ℝ) ^ 2) ^ K * C) :
+    Real.sqrt K / 300000 ≤ C := by
+  have hlow := log_det_one_add_tensorGram_sq_ge hK
+  have hpow : (0 : ℝ) < ((K : ℝ) ^ 2) ^ K := by
+    have : (0 : ℝ) < (K : ℝ) := by
+      have : (5 : ℝ) ≤ K := by exact_mod_cast hK
+      linarith
+    positivity
+  have hcomb : ((K : ℝ) ^ 2) ^ K * (Real.sqrt K / 300000) ≤ ((K : ℝ) ^ 2) ^ K * C := by
+    calc ((K : ℝ) ^ 2) ^ K * (Real.sqrt K / 300000)
+        = ((K : ℝ) ^ 2) ^ K * Real.sqrt K / 300000 := by ring
+      _ ≤ Real.log (1 + tensorGram K (K ^ 2)).det := hlow
+      _ ≤ ((K : ℝ) ^ 2) ^ K * C := h
+  exact le_of_mul_le_mul_left hcomb hpow
+
+/-- **The normalized log-determinant is `Θ(√K)`**, two-sided, for `K ≥ 5`:
+
+    `1/300000 ≤ log det (1 + T_{K²}^{⊗K}) / ((K²)^K √K) ≤ log 2/√K + 12`.
+
+The upper half is `log_det_one_add_tensorGram_le_twelve`, the lower half this module. -/
+theorem log_det_normalized_two_sided {K : ℕ} (hK : 5 ≤ K) :
+    (1 : ℝ) / 300000
+        ≤ Real.log (1 + tensorGram K (K ^ 2)).det / (((K : ℝ) ^ 2) ^ K * Real.sqrt K)
+      ∧ Real.log (1 + tensorGram K (K ^ 2)).det / (((K : ℝ) ^ 2) ^ K * Real.sqrt K)
+        ≤ Real.log 2 / Real.sqrt K + 12 := by
+  have hK' : (5 : ℝ) ≤ K := by exact_mod_cast hK
+  have hKpos : (0 : ℝ) < (K : ℝ) := by linarith
+  have hpow : (0 : ℝ) < ((K : ℝ) ^ 2) ^ K := by positivity
+  have hsq : (0 : ℝ) < Real.sqrt K := Real.sqrt_pos.mpr hKpos
+  have hden : (0 : ℝ) < ((K : ℝ) ^ 2) ^ K * Real.sqrt K := by positivity
+  constructor
+  · rw [le_div_iff₀ hden]
+    have := log_det_one_add_tensorGram_sq_ge hK
+    linarith [this]
+  · rw [div_le_iff₀ hden]
+    have hup := log_det_one_add_tensorGram_le_twelve (K := K) (by omega)
+    have hrw : (Real.log 2 / Real.sqrt K + 12) * (((K : ℝ) ^ 2) ^ K * Real.sqrt K)
+        = ((K : ℝ) ^ 2) ^ K * (Real.log 2 + 12 * Real.sqrt K) := by
+      field_simp
+    rw [hrw]
+    exact hup
+
+/-- The per-eigenvalue log-budget diverges: `log det (1 + T_{K²}^{⊗K}) / (K²)^K → ∞`. -/
+theorem tendsto_log_det_div_atTop :
+    Filter.Tendsto
+      (fun K : ℕ => Real.log (1 + tensorGram K (K ^ 2)).det / ((K : ℝ) ^ 2) ^ K)
+      Filter.atTop Filter.atTop := by
+  have hsqrt : Filter.Tendsto (fun K : ℕ => Real.sqrt K / 300000) Filter.atTop Filter.atTop := by
+    have h1 : Filter.Tendsto (fun K : ℕ => (K : ℝ)) Filter.atTop Filter.atTop :=
+      tendsto_natCast_atTop_atTop
+    exact (Real.tendsto_sqrt_atTop.comp h1).atTop_div_const (by norm_num)
+  refine Filter.tendsto_atTop_mono' _ ?_ hsqrt
+  filter_upwards [Filter.eventually_ge_atTop 5] with K hK
+  have hK' : (5 : ℝ) ≤ K := by exact_mod_cast hK
+  have hpow : (0 : ℝ) < ((K : ℝ) ^ 2) ^ K := by positivity
+  rw [le_div_iff₀ hpow]
+  have := log_det_one_add_tensorGram_sq_ge hK
+  linarith [this]
 
 end NormalNumbers.G4
