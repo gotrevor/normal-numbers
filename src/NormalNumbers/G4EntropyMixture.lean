@@ -300,4 +300,22 @@ theorem certified_granule_exceeds_previous_scale (i ℓ : ℕ) (hℓ : 0 < ℓ)
     linarith
   exact lt_trans (granule_exceeds_previous_scale i) hSm
 
+/-- **The wall does not depend on the entropy quality.**  `certified_granule_exceeds_previous_scale`
+is stated for *every* `δ ≥ 0`; here it is at `δ = 0`, i.e. for a sample of *exactly maximal*
+entropy.  Even then the minimum certified granule at scale `i+1` — forced by the one bit the
+mixture bound charges for splitting the sample times — already exceeds everything scale `i`
+produced.
+
+So no improvement of `entropy_E1`'s deficit `50√K`, however drastic, can break the wall: the
+obstruction is the scale ladder's growth `X(K) = 2^{100·2^{m(K)}}`, not the quality of the
+entropy estimate. -/
+theorem wall_at_zero_deficit (i ℓ : ℕ) (hℓ : 0 < ℓ) (S : Finset ℕ) (hSne : S.Nonempty)
+    (hS : S ⊆ PK (i + 1))
+    (hnonvac : 2 * Real.sqrt (Real.log 2 * (ℓ : ℝ)
+        * ((0 + 1) / ((S.card : ℝ) / ((PK (i + 1)).card : ℝ)))
+        / ((kk (i + 1) : ℝ) - ℓ + 1)) < 1) (hℓm : ℓ ≤ kk (i + 1)) :
+    (Fintype.card (gridAt i).Atom : ℝ) * ((PK i).card : ℝ) * (kk i : ℝ)
+      < (S.card : ℝ) * (kk (i + 1) : ℝ) :=
+  certified_granule_exceeds_previous_scale i ℓ hℓ S hSne hS (δ := 0) le_rfl hnonvac hℓm
+
 end NormalNumbers.G4.Sched
