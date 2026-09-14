@@ -36,7 +36,25 @@ No sieve theorem enters anywhere.
 `(2e)^M R^{M}`: `X^{−1+o(1)}` under the §5 schedule `R = X^{1/(20M)}`.  **C3 is now entirely
 elementary.**
 
-### C3 remaining: ONE lemma, `CRTInput`
+### ⬆️ UPDATE (same lap): `CRTInput` PROVED — C3 is now input-complete
+
+`src/NormalNumbers/G4CRTInput.lean` (sorry-free, trust-triple axioms):
+* `PeriodicMod h p` (`h n = h (n % p)`), `PeriodicMod.of_dvd`, `periodicMod_prod`.
+* `sum_range_mul_eq_mul_sum` — two-modulus CRT: `∑_{b<mn} f b · g b = (∑_{i<m} f i)(∑_{j<n} g j)`
+  (bijection `b ↦ (b%m, b%n)` on `range (mn)`, `Nat.chineseRemainder` for surjectivity,
+  `Nat.modEq_and_modEq_iff_modEq_mul` for injectivity).
+* `resMean_prod` — residue mean of a product over pairwise-coprime moduli = product of the means.
+* `norm_sampleAvg_sub_resMean_le` — equidistributed sample (each class mod `Q` within `δ` of
+  `|P|/Q`) ⟹ `‖avg h − resMean h Q‖ ≤ Qδ/|P|` for bounded `Q`-periodic `h`.
+* `abs_card_filter_modEq_sub_le` — `|#{n<X : n ≡ c (m)} − X/m| ≤ 1` (`Nat.count_modEq_card`);
+  `apSample_filter_eq` — a class mod `Q` inside the AP sample is ONE class mod `P₀Q`;
+  `abs_card_filter_apSample_sub_le` — the AP sample is equidistributed mod coprime `Q`, `δ = 2`.
+* **`crt_input`** — `‖avg_{apSample X P₀ a} ∏_T h_i − ∏_T resMean(h_i, p_i)‖ ≤ 2Q/|sample|`.
+
+Both hypotheses of `norm_sampleAvg_prod_sub_prod_le'` are instances (`h_i = g_i − 1` and
+`h_i = 1[active]`, means `μ_i − 1` and `π_i`), so **§4C's transfer C3 has no open input**.
+
+### C3 remaining before this update: ONE lemma, `CRTInput` (now PROVED above)
 For pairwise-coprime moduli `p ∈ T` (all coprime to the progression modulus `P₀`), functions
 `h_p : ℕ → ℂ` periodic mod `p` with `‖h_p‖ ≤ 1`, and the sample `{n ≤ X : n ≡ a (mod P₀)}`:
 

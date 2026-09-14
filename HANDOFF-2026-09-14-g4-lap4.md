@@ -4,7 +4,7 @@ Branch `wip/g4-disjunctivity`.  Working tree clean apart from the host's untrack
 `CHECK-g4-route-deviations.md` (not swept in, per lap 3).  Not pushed.  `DIRECTION.md` unchanged
 (grind lap); `PENDING_WORK.md` §"GRIND 2026-09-14 (G4 lap 4)" carries the mathematics.
 
-Build: `lake build NormalNumbers.G4TransferMoment` green (8713 jobs); every declaration below
+Build: `lake build NormalNumbers.G4TransferMoment NormalNumbers.G4CRTInput` green (8714 jobs); every declaration below
 prints `[propext, Classical.choice, Quot.sound]`.  No `sorry` in any G4 file.
 
 ## Advance on the crux (C3)
@@ -27,16 +27,21 @@ moment is the exact product `∏_p(1 + e^λ π_p)`.
 
 The lap-3 skeleton (`G4Transfer.norm_sampleAvg_prod_sub_prod_le`) stays proved but is superseded.
 
+## Same lap, second commit: `CRTInput` PROVED
+
+`src/NormalNumbers/G4CRTInput.lean` — `crt_input`: over the AP sample `{n < X : n % P₀ = a}`,
+the average of a product of bounded functions periodic mod pairwise-coprime `p_i` (coprime to
+`P₀`) is within `2(∏p_i)/|sample|` of the product of residue means.  Ingredients: two-modulus CRT
+sum factorisation, induction to `resMean_prod`, exact residue-class counts via
+`Nat.count_modEq_card`, and the AP sample's class mod `Q` collapsing to one class mod `P₀Q`.
+Both hypotheses of `norm_sampleAvg_prod_sub_prod_le'` are instances.  **C3 has no open input.**
+
 ## Open, in priority order
 
-1. **`CRTInput`** — the single remaining C3 lemma: for pairwise-coprime `p ∈ T`, `h_p` periodic
-   mod `p`, `‖h_p‖ ≤ 1`, sample `{n ≤ X : n ≡ a mod P₀}`, the sample average of `∏_T h_p` is within
-   `2QP₀/X` of `∏_T(mean of h_p)`.  Elementary; `ZMod.chineseRemainder`.  Both `hsmall` and `hcrt`
-   are instances.
-2. **Instantiate `PropC`**: `g_p(n) = e(θ_p(n))`, `Act n` = good primes with `n` in an active
+1. **Instantiate `PropC`**: `g_p(n) = e(θ_p(n))`, `Act n` = good primes with `n` in an active
    class, `π_p = k/p`, `c_p = 2π_p`, contraction `‖μ_p‖ ≤ 1 − c'8^{−K}/p` from
    `G4LocalContraction`, and the harmonic sum over good primes.  Then **C4** (`Λδ₃ < 1`).
-3. B assembly to `PropB` (labour), then A, D, and the §5 schedule module.
+2. B assembly to `PropB` (labour), then A, D, and the §5 schedule module.
 
 Nothing refuted this lap.  Route trigger G-T1 (C3 as a decomposed `Prop` stack within 5 laps) is
 satisfied ahead of schedule: C3 is now one named elementary lemma.
