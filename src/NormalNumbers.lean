@@ -257,3 +257,4 @@ import NormalNumbers.G4EntropyPosition
 import NormalNumbers.G4EntropyJoint
 import NormalNumbers.G4EntropyJointSched
 import NormalNumbers.G4EntropyWall
+import NormalNumbers.G4EntropyJointPos

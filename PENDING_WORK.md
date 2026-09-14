@@ -124,6 +124,42 @@ Per **E-T7** this lap does not pick its own next target; the next altitude lap s
    `blockVal_eq_wordVal_iff` are already general enough; the only new step is unpacking `packFin`
    into the `t` component events.
 
+### 🔨 IN FLIGHT (lap 40) — the objective's *stated* endpoint: independent per-window offsets
+
+`DIRECTION.md`'s 🎯 asks for a position `p_s` **per window** (`2·kIdx(n,α_s)+p_s`).  Rung 3
+(lap 38) delivered only the *common* aligned position `jℓ`.  Lap 40 closes that gap abstractly
+and at the schedule; the digit rendering is the remaining step.
+
+**The mechanism (no new information theory): change the window, not the ledger.**
+`G4EntropyJointPos.lean`:
+
+```
+cutCoord / cutTuple / outCoord / cut_out_injective / cutFam
+H₂_cutTuple_ge     L.H₂ − |A|(m−D) ≤ H₂(L.map (cutTuple m D ρ))     -- per-coordinate offsets
+blkAt_cutCoord     blkAt D ℓ j (cutCoord m D a z) = posAt m ℓ (a+jℓ) z
+shiftOf / shiftOf_blk / patPos
+abs_avg_patPos_prob_opt
+    |avg_{b,j} Pr[pattern at (pp s + jℓ)_s] − 2^{−ℓt}| ≤ 2√(log2·ℓΔ/(|B|·D))
+Sched.ppMax / posPatFreq / abs_posPatFreq_sub_le_of_deficit
+    ≤ 2√(2 log2·ℓtδ/(m_K − max pp))
+```
+
+The key point: cutting each window to its **own** `D`-bit sub-window costs exactly `|A|(m−D)`
+bits, so an `m`-window deficit `Δ` becomes a `D`-window deficit of the **same** `Δ` — the
+offsets are free and the only price is the shortened window `D ≤ m_K − max pp`.  `pp = 0`,
+`D = m` recovers `abs_avg_patCoord_prob_opt` verbatim.
+
+**Remaining (lap 41):** `abs_posPatFreq_sub_le_primeLambertFour` (`δ = 50√K`, `2(max pp + ℓ) ≤
+m_K` ⟹ `≤ 2√(800 log2·ℓt/√K)`), `tendsto_posPatFreq_primeLambertFour`, the count/digit
+rendering (`posAt_blockVal` at `pp s + jℓ`, needs `pp s + (j+1)ℓ ≤ m_K`, which the cut gives),
+and the endpoint `tendsto_occursCountJointPos_primeLambertFour`.
+
+**Recorded narrowing (do not re-derive):** the *uniform* average over ALL position vectors
+`(p_1,…,p_t) ∈ [0,m−ℓ]^t` is **not** reachable by this ledger — a jointly injective family of
+`(m/ℓ)^t` pattern coordinates per block would have to carry `tℓ(m/ℓ)^t` bits against the `tm`
+the block's windows hold.  What IS reachable is one common aligned shift `j` on top of an
+arbitrary offset vector, which is the `patPos` family above.
+
 ### ✅ BOUNDED SECONDARY DONE (lap 39) — `G4EntropyWall.lean`, sorry-free, trust triple
 
 The wall is measured, and the reflection's estimate was **conservative**: the schedule's
