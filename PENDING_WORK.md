@@ -3,7 +3,82 @@
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
 > section; do **not** append to the bottom.
 
-## 🎯 ACTIVE (entropy review lap 51, 2026-09-14) — an explicit NORMAL NUMBER from `G₄`'s sampled digits
+## 🎯 ACTIVE (entropy **review lap 119**, 2026-09-14) — the two-dimensional `(K, j)` ladder
+
+**Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
+
+### The course correction
+
+Laps 61–118 diagnosed the blocker to `IsNormal 2 fullReal` as the **head of each band** — cutoffs
+below the certificate floor `Xlo (KK i)` — and `G4EntropyScaleGap` proved no rung covers it
+(`Xhi K k₄ + 1 < Xlo (K+4)`, tower-separated).  The truncated-scale work (laps up to `bbeb413`)
+then pushed the bad fraction of each band from `K^{−1/2}` down to `X^{−1/2}`, and the handoff
+concluded normality was blocked on this mechanism.
+
+**It is not.**  The audit this lap of every `m`/`m₁`-sensitive hypothesis in `entropy_E0`'s cone
+shows the gap is an **artifact of pinning `m` to `K`**:
+
+| declaration | how `m₁`/`m` enters | under `m₁ → m₁ + j` |
+|---|---|---|
+| `dyadic_factor_le` | only through `m − m₁ = m₂` | **unchanged** |
+| `sample_term_le`, `log_Mx_div_le` | `K ≤ 2^m`, `Y²P₀·4 ≤ X`, `Mx ≤ 2X = 2Y^{100}` | improve / constant `≤ 101` |
+| `m₁_ge_cube`, `twentyone_sq_le_m`, `logP₀Nat_le_two_pow_m`, `two_mul_P₀_le_X`, `gridDm_le_X`, `J_mul_gridDm_le_X` | lower bounds on `m` | improve |
+| budget main term (`hm₁`) | `(1/8)^K·m₁ = 1000·K·r`, used as a lower bound | improves |
+| **`Mc_le_two_pow_m₂`** | `Mc = 10⁵·T·m₁ ≤ 2^{8K²}` | ⚠️ real ceiling, `j ≲ 2^{8K²}/(10⁵TK)` |
+| **`four_mul_le_four_pow_N`** | `4K(logP₀Nat + m + 2J + 13) ≤ 2^{200K²}` | ⚠️ real ceiling, `j ≲ 2^{200K²}/(4K)` |
+
+Both ceilings clear `jstar K = m (K+4) − m K − 1` with a factor-`K/log K` margin.  And raising
+`m₁` by one **squares `Y`**, so `Xlom K (j+1) = Y_{j+1}^{50} = Y_j^{100} = Xm K j`: contiguous
+tiling, no gap.  **A0's NO does not apply** — A0 raised `X` with `Y, R, Mc` fixed (so
+`log Mx / log Y` broke its `Y^{2^{3K/4}}` ceiling); the march raises all of them together.
+
+### Proved this lap — `G4EntropyMTower.lean`
+
+```
+mm₁, mm, Rm, Ym, Xm, Xlom, Mcm            the marched scales;  j = 0 is the old schedule
+Xlom_succ          Xlom K (j+1) = Xm K j                 THE TILING IDENTITY
+jstar K            = m (K+4) − m K − 1
+Xm_jstar           Xm K (jstar K) = Xlo (K+4)            reaches the next rung EXACTLY
+Mcm_le_two_pow_m₂  Mcm K j ≤ 2^{m₂ K}   for j ≤ jstar K  (binding: 6K²+31K+81 ≤ 8K²)
+four_mul_le_four_pow_N_m                 the hfar ℕ inequality on the whole march
+exists_tile        ∀ X' ∈ [Xlo K, Xlo (K+4)], ∃ j ≤ jstar K, Xlom K j ≤ X' ≤ Xm K j
+entropy_E1_march_zero   the j = 0 instance IS `entropy_E1_down`   ← definitions line up
+entropy_E1_tile    E1 at EVERY outer scale in [Xlo K, Xlo (K+4)]  ← THE GAP CLOSED
+```
+
+All trust-triple clean except `entropy_E1_tile`, which is honestly gated on the one named leaf.
+
+### Open, in order
+
+1. **`Sched.entropy_E1_march`** (the leaf).  Port the cone to `(K, j)`, mirroring
+   `G4EntropyE0Down`/`G4EntropyE1Down`'s verbatim-copy-plus-substitution:
+   * `hbig_holds_m` — three inputs, all unchanged or monotone (see the table).
+   * `hfar_holds_m` — `farC_le` with `m ↦ mm K j`, then `four_mul_le_four_pow_N_m`.
+   * the five `smallPrimeBound` terms — `Mcm_le_two_pow_m₂` in place of `Mc_le_two_pow_m₂`;
+     `R_pow_two_Mc_le` becomes `Rm^{2Mcm} ≤ 2^{10·2^{mm}}` by the same two-line argument.
+   * `hm₁`'s equality becomes `1000·K·r ≤ (1/8)^K·mm₁ K j` (only improves).
+   Then `entropy_E0_m`, `entropy_E1_m`, and the downward run to `Xlom K j`.
+2. **`Sched.card_bandTtr_ge`** (carried leaf, `G4EntropyBandTrunc`).  `4·Dm·bandLo i + 4P₀ ≤
+   Xlo (KK i)` via `gridDm_le_Xlo`, `two_mul_exp_le_Xlo`, `logP₀Nat_le_two_pow_m`, `Xlo_cast`.
+3. **`density_antitone`** — `d_K·|Atom_K|·kk_K/P₀ K ≥ d_{K+4}·|Atom_{K+4}|·kk_{K+4}/P₀ (K+4)`.
+   Ladder: `log P₀ ≈ K^{20K+17}` against `log d ≈ W log W ≈ K^{7K+4}(7K+4)log K`.  This is what
+   pays for the head the level switch skips: the skipped head's certified deviation mass is
+   `≤ 4ε·Xlo(K+4)·c_{K+4}`, a `4ε·density_{K+4}/density_K` fraction of the level-`K` history.
+4. **`fullPos'` and the endpoint** — level `K` for `n ∈ [Xlo K, Xlo (K+4)·d_K/d_{K+4}]`, then
+   level `K+4`; prefix control inside a level from (1)+(2); the switch from (3).  Then
+   `IsNormalSequence 2` + `Bridge.isNormal_realOfDigits`.
+
+### Still-true, now non-binding
+
+`certified_granule_exceeds_previous_scale`, `ScheduleWitness.X_lt_X_step`,
+`ScheduleWitness.X_lt_Xlo_step`, `Sched.Xhi_succ_lt_Xlo_step` are all statements about the
+**one-dimensional** ladder (rungs `K, K+4, …` with `m` pinned to `K`).  They remain correct and
+should not be re-derived or re-litigated; they simply do not bound the `(K, j)` ladder.  The
+refuted sub-approaches recorded below (skip the head, certified annuli, pad the history, raise
+the previous rung's reach) were all refuted *against the one-dimensional ladder* for the same
+reason — none of them is the `m`-march.
+
+## 🗂️ SUPERSEDED ACTIVE (entropy review lap 51, 2026-09-14) — an explicit NORMAL NUMBER from `G₄`'s sampled digits
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
 

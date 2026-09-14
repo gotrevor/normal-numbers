@@ -80,7 +80,94 @@ here.  The "forbidden drift" list of the G5 directive still applies except for
 its ban on "the multiplicity/entropy/ordinary-normality questions", which this
 expedition explicitly lifts.
 
-## CURRENT DIRECTIVE — entropy expedition (set 2026-09-14, FRESH-MIND REVIEW lap 51)
+## CURRENT DIRECTIVE — entropy expedition (set 2026-09-14, FRESH-MIND REVIEW lap 119)
+
+*Altitude-lap section, inside the ACTIVE override's scope.  It OUTRANKS every HANDOFF.  The
+19:06 operator override's own stop condition ("A and B both have verdicts and A's endpoint is
+proved or its obstruction is named") is DISCHARGED — A0 = NO (`ScheduleWitness.X_lt_X_step`),
+B = NO (`not_dense_of_any_residue`), A's obstruction named (`ScheduleWitness.X_lt_Xlo_step`).
+So this lap owes the successor objective.*
+
+**State.**  Build 🟢 9003 jobs, one named `sorry` in `src/` (`Sched.card_bandTtr_ge`).
+`fullReal` = `G₄`'s digits along the strictly increasing, schedule-only `fullPos`, with correct
+word frequencies **along the band ends** (`tendsto_fullRead_freq`).  What blocks
+`IsNormal 2 fullReal` is the **head of each band**: cutoffs below the certificate floor
+`Xlo (KK i)`, which no rung covers (`G4EntropyScaleGap`).
+
+**The finding that sets this directive — the scale gap is an ARTIFACT of tying `m` to `K`.**
+The ladder rungs are `K, K+4, K+8, …` with `m K = m₁ K + 8K²`, `m₁ K = 1000·8^K·K^{2K+1}`,
+`Y = 2^{2^m}`, `X = Y^100`, `Xlo = Y^50`.  Consecutive rungs are a tower apart *because the
+formula for `m` was pinned to `K`* — but `m₁` is the small-prime cutoff exponent and the E0 cone
+constrains it **only from below**.  Raising `m₁` by 1 at fixed `K` (keeping `m₂ = 8K²`) squares
+`Y`, so
+
+> **`Xlo(K, j+1) = Y_{j+1}^{50} = Y_j^{100} = X(K, j)`** — the certified outer-scale windows
+> `[Y^{50}, Y^{100}]` **TILE contiguously**, with no gap at all.
+
+Source audit of every `m`/`m₁`-sensitive hypothesis in `entropy_E0`'s cone (this lap):
+
+| declaration | how `m₁`/`m` enters | under `m₁ → m₁ + j` |
+|---|---|---|
+| `Sched.dyadic_factor_le` | only through `m − m₁ = m₂` | **unchanged** ✅ |
+| `Sched.sample_term_le` | needs `K ≤ 2^m`, `Y²P₀·4 ≤ X` | improves ✅ |
+| `Sched.log_Mx_div_le` | `Mx ≤ 2X = 2Y^{100}` ⇒ `≤ 101` | **constant** ✅ (A0's ceiling is `Y^{2^{3K/4}}`, so `X = Y^{100}` never approaches it) |
+| `Sched.m₁_ge_cube`, `twentyone_sq_le_m`, `logP₀Nat_le_two_pow_m`, `two_mul_P₀_le_X`, `gridDm_le_X`, `J_mul_gridDm_le_X` | lower bounds on `m` | improve ✅ |
+| `G4ScheduleBudget` main term (`hm₁`) | `(1/8)^K·m₁ = 1000·K·r` used as a **lower** bound | improves ✅ (rewrite `=` as `≥`) |
+| **`Sched.Mc_le_two_pow_m₂`** | `Mc = 10⁵·T·m₁ ≤ 2^{m₂} = 2^{8K²}` | ⚠️ genuine **upper** bound: `j ≲ 2^{8K²}/(10⁵·T·K)` |
+| **`Sched.four_mul_le_four_pow_N`** (`hfar`) | `4K(logP₀Nat + m + 2J + 13) ≤ 4^{N} = 2^{200K²}` | ⚠️ genuine **upper** bound: `j ≲ 2^{200K²}/(4K)` |
+
+Both ceilings are astronomically above what the ladder needs.  To chain rung `K` to rung `K+4`
+the march must reach `j⋆ K := m (K+4) − m K − 1`, at which `X(K, j⋆) = Xlo (K+4)` **exactly**.
+On the ladder `m (K+4) ≤ (K+4)^{3K+16} ≤ 2^{3K²+28K+64}` and `T K ≤ K^{3K+3} ≤ 2^{3K²+3K}`, so
+the binding constraint `10⁵·T K·m (K+4) ≤ 2^{8K²}` reads `6K² + 31K + 81 ≤ 8K²` — true for every
+`K ≥ 100` with a factor-`K/log K` margin.  **A0's NO does not apply**: A0 raised `X` with
+`Y, R, Mc` FIXED; this raises all of them together, keeping `X = Y^{100}`.
+
+- 🎯 **THE objective (unchanged destination, now unblocked): `IsNormal 2` of a strictly
+  increasing, schedule-only read off `G₄`'s binary digits.**  Endpoint:
+  > `IsNormalSequence 2 (fun j => digitOf 2 (Int.fract G₄) (fullPos' j))` with `fullPos'`
+  > `StrictMono` and schedule-defined, hence `IsNormal 2 fullReal'`.
+- 🔨 **Mandated next move — the two-dimensional ladder, in this order.**
+    1. **`G4EntropyMTower.lean` — the marched scales and the tiling.**  `mm K j := m K + j`,
+       `mm₁ K j := m₁ K + j`, `Rm/Ym/Xm/Xlom/Mcm`, `jstar K := m (K+4) − m K − 1`.  Prove NOW
+       (pure ℕ/ladder arithmetic): `Xlom_succ : Xlom K (j+1) = Xm K j`, `Xm_jstar : Xm K (jstar K)
+       = Xlo (K+4)`, `Mcm_le_two_pow_m₂` and `four_mul_le_four_pow_N_m` for `j ≤ jstar K`.  Leave
+       `hbig_holds_m`, `hfar_holds_m`, `hbudget_holds_m`, `entropy_E0_m`, `entropy_E1_m` as named
+       `sorry` leaves.  **The decisive probe is the two ⚠️ ceilings — settle them in-kernel first.**
+    2. **Port the cone to `(K, j)`** — mirror `G4EntropyE0Down`/`G4EntropyE1Down` (verbatim copy
+       + substitution, the precedent that worked twice): `hbig_holds_m` (the three inputs are
+       unchanged/monotone), `hfar_holds_m`, the five `smallPrimeBound` terms, then `entropy_E0_m`
+       and `entropy_E1_m`, and finally `entropy_E1_down_m` at every `X' ∈ [Xlom K j, Xm K j]`.
+    3. **The tiling theorem** — `∀ X' ∈ [Xlo K, Xlo (K+4)], ∃ j ≤ jstar K, Xlom K j ≤ X' ≤ Xm K j`,
+       hence **E1 at EVERY outer scale above `Xlo K`**.  This retires `G4EntropyScaleGap`'s
+       obstruction (keep the module; recover its statement as the *old* ladder's property).
+    4. **The read** — `fullPos'` reads level `K`'s sampled windows for `n ∈ [Xlo K, N_K]` with
+       `N_K := Xlo (K+4)·d_K/d_{K+4}`, then switches to level `K+4`.  Prefix control inside a
+       level is now complete (step 3 + `G4EntropyBandTrunc`).  The switch needs the one new
+       estimate **`density_antitone`**: `d_K·|Atom_K|·kk_K/P₀ K ≥ d_{K+4}·|Atom_{K+4}|·kk_{K+4}/P₀ (K+4)`
+       (`log P₀ ≈ K^{20K+17}` against `log d ≈ K^{7K+4}·log`), which makes the skipped head's
+       certified deviation mass `≤ 4ε·Xlo(K+4)·c_{K+4}` a `4ε·density_{K+4}/density_K` fraction of
+       the level-`K` history.
+- 📌 **On-path leaf, keep it**: `Sched.card_bandTtr_ge` (the one open `sorry`) — the truncated
+  band law is exactly the per-level prefix machinery step 4 consumes.  Close it when the tower
+  work stalls, not instead of it.
+- ⛔ **Forbidden drift**: re-deriving or re-litigating the scale gap / the head obstruction (it is
+  now diagnosed — the fix is the `m`-march, not another audit of the *old* ladder); adopting "every
+  cutoff beyond an `X^{−1/2}` fraction of its band is good" as the headline (it is a fallback, not
+  the target); adding joint-ladder rungs or sharpening constants; editing any pre-expedition
+  G4/G5 file; `Adder*`, `CF*`, `Mahler*`, `LnTwo*`, `Stoneham*`, `PrimeLambertOscillation`;
+  a trusted axiom for any candidate lemma; appending to the BOTTOM of `PENDING_WORK.md`; and
+  **claiming anything about the normality of `G₄` itself**.
+- 🚦 **Route triggers**:
+    * **E-T10 (new, route-decisive)** — if either ⚠️ ceiling turns out to bind *below* `jstar K`,
+      or a fourth `m₁`-upper-bound is found in the cone, the tiling fails: write
+      `ROUTE-ESCALATION-<date>.md` naming the estimate, and fall back to the 📌 fallback headline.
+      Nothing else in this directive survives that.
+    * **E-T3** (kept) — two laps stalled on one assertion ⇒ decompose it in `PENDING_WORK.md`.
+    * **E-T7** (kept) — a lap that MEETS the 🎯 objective says so and does not pick its own next
+      target; the next altitude lap sets one.
+
+## SUPERSEDED DIRECTIVE — entropy expedition (set 2026-09-14, FRESH-MIND REVIEW lap 51)
 
 *Altitude-lap section, inside the ACTIVE override's scope.  It OUTRANKS every HANDOFF.
 The G5 CURRENT DIRECTIVE further below is dormant for this run.  Background reasoning:
@@ -168,6 +255,11 @@ block-concatenation normality proof consumes.
   the lap-23 objective was met at lap 31 and laps 32–36 ran objective-less.  Normality of `G₄`
   recorded as CLOSED on this mechanism by theorem and quantitatively.  New objective: the
   JOINT (`t`-wise) sampled-word frequency theorem — the sampled windows decorrelate.
+- 2026-09-14 (review lap 119): the operator override is discharged (A0 NO, B NO, A's obstruction
+  named).  **Course correction**: the scale gap that blocks `IsNormal 2 fullReal` is an artifact of
+  pinning `m` to `K`; `m₁` is bounded only from below in the E0 cone, and marching it squares `Y`
+  so the certified windows `[Y^{50}, Y^{100}]` tile with NO gap.  New objective: the
+  two-dimensional `(K, j)` ladder, `G4EntropyMTower.lean`, then the tiling theorem and the read.
 - 2026-09-14 (review lap 51): lap-37 objective MET (laps 38–47) and its boundary proved (48);
   richness line opened (49–50).  E-T7 fires.  New objective: **an explicit normal number read
   off `G₄`'s digits along the arithmetic sample** — the expedition's first infinite object,

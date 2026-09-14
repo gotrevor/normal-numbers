@@ -21,8 +21,50 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (8995 jobs) ·
-**Updated**: entropy lap 117 · 2026-09-14 · `wip/g4-entropy`
+· **Build**: 🟢 green (9004 jobs) ·
+**Updated**: entropy **review lap 119** · 2026-09-14 · `wip/g4-entropy`
+
+## 🧭 2026-09-14 (entropy **review lap 119**): the scale gap is an ARTIFACT — the two-dimensional ladder
+
+**Build** 🟢 9004 jobs · one named `sorry` in `src/` on the active decomposition
+(`Sched.entropy_E1_march`), plus the one carried leaf `Sched.card_bandTtr_ge` · every new
+sorry-free endpoint `[propext, Classical.choice, Quot.sound]`.
+
+What blocked `IsNormal 2 fullReal` was the **head of each band**: position cutoffs below the
+certificate floor `Xlo (KK i)`, which `G4EntropyScaleGap` showed no rung of the ladder covers
+(`Xhi K k₄ + 1 < Xlo (K+4)`, a tower separation).  This lap's source audit of every `m`/`m₁`
+-sensitive hypothesis in `entropy_E0`'s cone found that **the gap is an artifact of pinning `m`
+to `K`**, not a property of the entropy method:
+
+> `m₁` is the small-prime cutoff exponent (`R = 2^{2^{m₁}}`), and the cone constrains it **only
+> from below** — except for two ceilings with astronomical slack.  Raising `m₁` by one at fixed
+> `K` (keeping `m₂ = 8K²`, so `dyadic_factor_le` is literally unchanged) **squares `Y`**, hence
+> `Xlom K (j+1) = Y_{j+1}^{50} = Y_j^{100} = Xm K j`: the certified windows `[Y^{50}, Y^{100}]`
+> **tile contiguously**.
+
+`G4EntropyMTower.lean` (new) carries the arithmetic spine, all of it proved:
+
+```
+mm₁ K j = m₁ K + j,  mm K j = m K + j,  Rm/Ym/Xm/Xlom/Mcm       the marched scales
+Xlom_succ              Xlom K (j+1) = Xm K j          THE TILING IDENTITY
+jstar K = m (K+4) − m K − 1
+Xm_jstar               Xm K (jstar K) = Xlo (K+4)     the march reaches the next rung EXACTLY
+Mcm_le_two_pow_m₂      Mc ≤ 2^{m₂} on the whole march   (binding: 6K² + 31K + 81 ≤ 8K²)
+four_mul_le_four_pow_N_m   the `hfar` ℕ inequality on the whole march
+exists_tile            every X' ∈ [Xlo K, Xlo (K+4)] lies in one certified window
+entropy_E1_march_zero  the j = 0 instance IS `entropy_E1_down`  (definitions line up)
+entropy_E1_tile        E1 at EVERY outer scale in [Xlo K, Xlo (K+4)] — the gap closed
+```
+
+`entropy_E1_tile` is gated on the single named leaf **`entropy_E1_march`** (the E1 chain at the
+marched parameters), whose port is the same "verbatim copy + substitution" shape
+`G4EntropyE0Down`/`G4EntropyE1Down` already ran twice for `X'`.  Why A0's NO does **not** apply:
+A0 raised `X` with `Y, R, Mc` fixed, so `log Mx / log Y` grew past its ceiling `Y^{2^{3K/4}}`;
+the march raises all of them together, keeping `X = Y^{100}` and that ratio pinned at `≤ 101`.
+
+Consequence for the wall: `certified_granule_exceeds_previous_scale` and
+`ScheduleWitness.X_lt_Xlo_step` stay true — they are statements about the **one-dimensional**
+ladder — but they no longer bound what this mechanism can prove.
 
 ## 🧭 2026-09-14 (entropy laps 93–117): `Q ∣ P₀`, and a **schedule-only** strictly increasing read
 
@@ -651,8 +693,20 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-Campaign **entropy expedition** (ACTIVE) — `DIRECTION.md` CURRENT DIRECTIVE, reflection lap 37,
-the three rungs of the **joint (`t`-wise) sampled-word frequency theorem**:
+Campaign **entropy expedition** (ACTIVE) — `DIRECTION.md` CURRENT DIRECTIVE, **review lap 119**,
+the two-dimensional `(K, j)` ladder toward `IsNormal 2 fullReal'`:
+1. **`Sched.entropy_E1_march`** (the one open leaf of `G4EntropyMTower`) — port `hbig_holds`
+   (inputs unchanged/monotone), `hfar_holds` (use `four_mul_le_four_pow_N_m`) and the five
+   `smallPrimeBound` terms (use `Mcm_le_two_pow_m₂`) to the marched parameters `(K, j)`.
+2. **`Sched.card_bandTtr_ge`** — the carried leaf: `4·Dm·bandLo i + 4P₀ ≤ Xlo (KK i)` from
+   `gridDm_le_Xlo`, `two_mul_exp_le_Xlo`, `Xlo_cast`.
+3. **The read** — `fullPos'`: level `K` for `n ∈ [Xlo K, Xlo (K+4)·d_K/d_{K+4}]`, then level
+   `K+4`.  Needs one new estimate, **`density_antitone`**
+   (`d_K|Atom_K|kk_K/P₀ K ≥ d_{K+4}|Atom_{K+4}|kk_{K+4}/P₀ (K+4)`), which pays for the head the
+   switch skips.
+4. Then `IsNormalSequence 2` + `isNormal_realOfDigits` — the objective.
+
+Superseded short-term list (lap 37's three rungs — all MET, kept for provenance):
 1. **`G4EntropyOcc.lean`** — the counting bridge, **and the decisive probe**: `occCount s v n`
    (`#{p < n : s spells v at p}`), the bridge to `countOccurrences v ((List.range n).map s)` with
    seam `≤ |v|−1`, and interval-split additivity.  If the `tails.countP` shape resists, trigger
@@ -695,8 +749,11 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, re-run this lap (2026-09-14 entropy **review lap 51**, HEAD
-`497d50a`, build 🟢 8979 jobs).  **Math-axiom count in the entropy wing: 0** — every headline
+Real `#print axioms` output, re-run this lap (2026-09-14 entropy **review lap 119**, HEAD
+`05c6472`+, build 🟢 9004 jobs).  **New this lap** (`G4EntropyMTower`): `Xlom_succ`, `Xm_jstar`,
+`Mcm_le_two_pow_m₂`, `four_mul_le_four_pow_N_m`, `exists_tile`, `entropy_E1_march_zero` all print
+the trust triple; `entropy_E1_tile` prints `[propext, sorryAx, Classical.choice, Quot.sound]` —
+honestly gated on the single named leaf `entropy_E1_march`, which is the active decomposition.  **Math-axiom count in the entropy wing: 0** — every headline
 below prints exactly the trust triple `[propext, Classical.choice, Quot.sound]`, with no
 `native_decide` artifact and no local `axiom` anywhere in `src/`.  The two open `sorry`s in the
 repo (`MahlerDriftOne.exists_prime_nonresidue`, `PrimeLambertOscillation.phaseOscillation`)
