@@ -54,15 +54,23 @@ G4EntropyBandPrefix bandPre, preLaw, abs_posAvg_preLaw_le, winCount_mid_bounds,
 > `K^{−1/4}` fraction of each band is a good cutoff.
 
 `G₄`'s binary digits, read along a **strictly increasing** schedule-defined position sequence,
-have the correct frequency of every finite binary word along all but a vanishing fraction of the
-prefix lengths.  The missing fraction is exactly what the wall forbids.
+have the correct frequency of every finite binary word at every cutoff except an initial portion
+of each band, and that portion is a vanishing *fraction of its band*.
+
+⚠️ **Not a density-one statement, and deliberately not stated as one.**  The bad portion of band
+`i` has length `≈ θ_i·m_i`, while *everything before band `i`* has length `bT i ≤ 4|bandS i|`,
+which is far smaller.  So at a cutoff inside the bad portion, the bad cutoffs below it are most
+of them: the bad set has lower density `0` and upper density `1`.  That is the wall
+(`certified_granule_exceeds_previous_scale`) seen from the cutoff side — and it is exactly why
+this is not normality.
 
 **Where this sits.**  The repo previously had *either* normality along a non-injective position
 map (`isNormal_realOfDigits_samplePos`, lap 52) *or* a strictly increasing map carrying only
 disjunctivity (`isDisjunctive_enumReal`, laps 56–60).  This is strictly between, and new.
 
-**Open next.**  (a) Formalize the density-zero statement for the bad cutoffs (needs the
-extension from `bT i + a·m_i` to arbitrary `N`, plus a counting argument).  (b) The only way past
+**Open next.**  (a) `abs_freq_sub_freq_mid` (lap 89) lifts every mid-band estimate to arbitrary
+cutoffs `N`, at cost `1/a`; what is *not* available — and is provably not — is a density-one
+good set (see the ⚠️ above).  (b) The only way past
 the wall is a schedule with `X(K)` growing polynomially rather than as `2^{2^{K³}}`; `X` is fixed
 by `G4ScheduleFar`'s far-tail control, so that is a question about the *schedule*, not about the
 entropy argument.

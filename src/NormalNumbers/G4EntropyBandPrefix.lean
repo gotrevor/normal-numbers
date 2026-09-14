@@ -14,8 +14,12 @@ sub-collection `bandPre i a` of sample times, of relative size `a/|P_K|`, and a 
 restriction costs `(δ+1)/σ`.  So a prefix is certified as soon as `a ≫ |P_K|·δ/m_K`, i.e. as
 soon as it is more than a `≈ K^{−1/2}` fraction of the band.
 
-That is what turns the band cutoffs into a **density-one** set of cutoffs: only the first
-`O(K^{−1/2})` fraction of each band is uncontrolled, and that fraction vanishes with the scale.
+So the good cutoffs are everything except an initial portion of each band whose length is a
+vanishing *fraction* of that band.  **That is not a density-one set**: the bad portion of band
+`i` has length `≈ θ_i·m_i` while everything before band `i` has length `bT i ≤ 4|bandS i|`, which
+is far smaller — so at a cutoff sitting inside the bad portion, the bad cutoffs below it are
+*most* of them.  The bad set has lower density `0` and upper density `1`.  This is the same wall
+as `certified_granule_exceeds_previous_scale`, seen from the cutoff side.
 -/
 
 open Finset Filter
@@ -639,8 +643,7 @@ frequency of `v` in the digits read so far is within
 
     `2√(2 log 2·|v|·(δ+1)|P_K|/(a·m_K)) + 2(|v| + 4|bandS i|/a)/m_K`
 
-of `2^{−|v|}`.  Both terms vanish once `a` exceeds a `K^{−1/2}`-ish fraction of the band, which
-is what makes the good cutoffs a density-one set. -/
+of `2^{−|v|}`.  Both terms vanish once `a` exceeds a `K^{−1/2}`-ish fraction of the band. -/
 theorem abs_midRead_freq_sub_le (v : List ℕ) (hlen : 0 < v.length)
     (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) (i a : ℕ) (ha : 0 < a)
     (haS : a ≤ (bandS i).card) (h2l : 2 * v.length ≤ kk i) :
@@ -881,8 +884,9 @@ set_option maxHeartbeats 1000000 in
 depth `t_i = |bandS i|/a_i` is `o(√K)` and `o(m_K)`, the frequency of `v` at the cutoffs
 `bT i + a_i·m_i` tends to `2^{−|v|}`.
 
-`tendsto_midRead_freq` is the case `t_i = 1/c`; taking `t_i = K^{1/4}` shows that all but an
-initial `K^{−1/4}` fraction of each band is a good cutoff. -/
+`tendsto_midRead_freq` is the case `t_i = 1/c`; taking `t_i = K^{1/4}` shows every cutoff beyond
+an initial `K^{−1/4}` *fraction of the band* is good.  (Not a density statement: the bad initial
+portion of band `i` still dwarfs every cutoff below it.) -/
 theorem tendsto_midRead_freq_of_depth (v : List ℕ) (hlen : 0 < v.length)
     (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) (aa : ℕ → ℕ)
     (h1 : ∀ i, 0 < aa i) (h2 : ∀ i, aa i ≤ (bandS i).card)
