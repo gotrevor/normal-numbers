@@ -20,57 +20,77 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-09-14 FRESH-MIND REVIEW LAP #2 — G4 disjunctivity)
+## CURRENT DIRECTIVE (set 2026-09-14 DEEP REFLECTION LAP — G4 §5, the schedule)
 
 - 🎯 **THE objective, unchanged: `IsDisjunctive 4 primeLambertFour` unconditionally**
-  (base two follows by `isDisjunctive_two_of_four`).  Concretely: discharge
-  `SeparatingFrameExists` in `src/NormalNumbers/G4Wiring.lean`.  `isDisjunctive_four_of_frames`
-  is CONDITIONAL and must never be reported as the endpoint.
-- 🔨 **Mandated next move — CLOSE A NAMED INPUT.  Build the concrete frame and prove
-  `PropA` and `PropC` as theorems about it.**  New module `src/NormalNumbers/G4Frame.lean`:
-  a `gridFrame : GridParams → … → Frame` (atoms `≃ Fin H` via `Fintype.equivFin`, rows
-  `(Fin K → Fin s) ≃ Fin r`, `A := kronPow K (diffZ s)` reindexed, `d := mult`, `t := offset`,
-  `P := apSample X P₀ b₀`, `θ := transportTheta 0`, `S := Sval sm shiftAL` reindexed), then
-  `theorem gridFrame_propA` via `propA_of_progression` + `exists_mult_mul`, and
-  `theorem gridFrame_propC` via `norm_sampleAvg_torusChar_Sval_le` + `goodPrime_of_not_dvd_P₀`
-  + `two_mul_card_le_of_not_dvd` + the `G4Mertens` harmonic mass.
-  **Why this and not more inputs**: after five laps every one of `PropA`…`PropJackson` is still
-  a hypothesis, and the interface between the abstract `Frame` and the concrete grid /
-  progression / small-prime vector has never been compiled.  That untested seam is now the most
-  uncertain route-decisive step, and it *gates* D (whose statement is about the frame's own `S`
-  and `Ffull`).  Discharging one named `Prop` outright is worth more than a sixth lap of inputs.
+  (base two by `isDisjunctive_two_of_four`).  Brief §4 is **CLOSED**: all five named inputs
+  are machine-checked theorems about the one concrete `gridFrame` (`gridFrame_propA`,
+  `gridFrame_propC`, `Frame.propJackson`, `gridFrame_propD_of_bounds`,
+  `gridFrame_propB_of_bound`).  The entire residue is **§5**: produce a
+  `ScheduleWitness ℓ w` (`G4ScheduleWitness.lean`) for every omitted base-four cylinder.
+  `isDisjunctive_four_of_witness` / `…_of_frames` are CONDITIONAL and are never the endpoint.
+- 🔨 **Mandated next move — prove `hB`, the `X`-free half of the witness, as a standalone
+  real-analysis theorem** in a new `src/NormalNumbers/G4ScheduleB.lean`:
+
+      ((4^ℓ−1)^M)^H · η^g · e^{Lg/2} · (√(2πe/g)·√(H+g))^g ≤ (1/8)/2^r
+      for η = 2^{−K/4}, Lg = r(log2 + 23√K), r = K^{2K}, H = (K²+1)^K,
+      (1−1/K)r ≤ g ≤ r, K ≤ 8ℓM ≤ K + 8ℓ.
+
+  **Sufficient hypothesis, derived on the reflection lap: `K ≥ 33856·ℓ²·16^ℓ`.**  Route:
+  take `Real.log`; use `H ≤ e^{1/K}r`, `(H+g)/g ≤ 2.72` (`K ≥ 4`),
+  `M·log(4^ℓ−1) ≤ (K/4)log2 + 2ℓ log2 − K·4^{−ℓ}/(8ℓ)` (from `log(1−x) ≤ −x`), and close on
+  `K/(8ℓ4^ℓ) ≥ 11.5√K + 1.78ℓ + 4.36`.  **Why this first**: it is the only one of the five
+  witness inequalities with no `X`, no primes and no progression, so it needs no new
+  construction; the brief calls the §4B geometry "a central formalization target, not
+  routine bookkeeping"; and it is the only one whose failure would be a *geometry* failure
+  rather than bookkeeping.
 - **Then, in this order** (do not reorder without an altitude lap):
-  1. **D** — the three-range remainder, `PropD`.  Zero laps so far and the brief flags the trap
-     ("the pointwise very-large-prime argument does not handle all primes above `R`; that
-     substitution loses the proof").  Keep `p ≤ R`, `R < p ≤ Y`, `p > Y` and the infinite far
-     tail separate, and preserve the signed cancellation in the medium range.
-  2. **Jackson** — `PropJackson`.  Product kernel, one-coordinate first moment `O(1/D)`; the
-     average metric makes the error dimension-free (`κ = O(1/(εηD))`, so `D = O(η⁻¹)`).
-  3. **B assembly** — `PropB` from the four proved inputs (Markov + torus marginals + finite
-     unions).  Labour, not risk; steps in `HANDOFF-2026-09-14-g4-lap2.md`.
-  4. **§5 schedule** — the single simultaneous limit producing the frames.
-- ⛔ **Forbidden drift**: adding yet more *inputs* to B or C before a named `Prop` is closed;
-  weakening any of `PropA`…`PropJackson` to make an instantiation typecheck; re-proving the
-  base-two reduction; `PrimeLambertOscillation.lean`; the G2 two-point correlation theorem;
-  multiplicity / entropy / ordinary-normality / historical-novelty questions; `Adder*`, `CF*`,
-  `Mahler*`, `LnTwo*` and the two sibling worktrees; bounding the zonotope by a coordinatewise
-  box; bounding the ball by its enclosing cube; freezing `K` then sending `X → ∞`; and
-  introducing a trusted axiom for ANY candidate lemma.
+  1. `gridParams_of_KN` — an explicit `GridParams` from `(K, N)` with `B = sJ+1`,
+     `U ≥ max gridU`, **`Q = U!`** (`Nat.dvd_factorial`; no `lcm` needed), `D₀ ≥ max gridV`,
+     plus `Dm ≥ every d_α`, `Mx`, and an explicit **`log P₀` bound**.  Gates 2–4.
+  2. `card_apSample` lower bound (`(X:ℝ)/P₀ − 1 ≤ card`), which gates `hne`, `hbig`, `hfar`,
+     `hbudget`.
+  3. `hfar`, then `hbig`.  4. `hbudget` (via `schedule_budget` + the four `smallPrimeBound`
+     error terms).  5. Assemble `Nonempty (ScheduleWitness ℓ w)` eventually in `X`.
+- ⛔ **Forbidden drift**: any new §4 machinery (§4 is closed — that is drift, not progress);
+  `lam = 1` and `N ≈ 10K log K` (**both REFUTED on the reflection lap: they make `hbudget`
+  and `hfar` FALSE** — use `lam = 13/2`, `lam' = e`, `Mc = ⌈10⁴·T·L⌉`, and the brief's
+  `J = ⌈3 log₂ L⌉`); lowering `K` below `≈ 0.6 log log L` (breaks `hbig` — see the two-sided
+  window, `PENDING_WORK.md` §Reflection 2026-09-14 §4); freezing `K` and sending `X → ∞`;
+  weakening any `Prop` or the `ScheduleWitness` fields to make an instantiation typecheck;
+  re-proving the base-two reduction; `PrimeLambertOscillation.lean`; the G2 two-point
+  correlation theorem; multiplicity / entropy / ordinary-normality / novelty questions;
+  `Adder*`, `CF*`, `Mahler*`, `LnTwo*` and the two sibling worktrees; bounding the zonotope
+  by a coordinatewise box or the ball by its cube; and a trusted axiom for ANY candidate
+  lemma.
 - 🚦 **Route triggers**:
-    * **G-T1 — RETIRED 2026-09-14 (satisfied).**  C3 is proved: `G4CRTInput.crt_input` plus the
-      assembly `G4TransferMoment.norm_sampleAvg_prod_ee_le`; no sieve theorem entered the route.
-    * **G-T2** — if a lap MEASURES a counterexample to an exact §4A transport identity, or to
-      `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`, ESCALATE immediately.
-    * **G-T3** — if, once A–D are discharged, the §5 schedule cannot close every budget
-      simultaneously, the honest endpoint is `isDisjunctive_four_of_frames` plus a named list of
-      what is missing; say so in STATUS rather than grinding for unconditionality.
-    * **G-T4 (new)** — if the concrete frame cannot instantiate `Frame` without editing
-      `G4Wiring`, record the exact mismatch first.  A *bookkeeping* mismatch (index order,
-      a missing side condition, `γ` unused) is fixed by one deliberate `G4Wiring` commit that
-      states what changed and re-checks `finite_contradiction`.  A *mathematical* mismatch (the
-      concrete object does not satisfy the Prop as stated) is an ESCALATION, not a Prop edit.
+    * **G-T1 — RETIRED 2026-09-14 (satisfied).**  C3 is proved (`G4CRTInput.crt_input` +
+      `G4TransferMoment.norm_sampleAvg_prod_ee_le`); no sieve theorem entered the route.
+    * **G-T2** — if a lap MEASURES a counterexample to an exact §4A transport identity, or
+      to `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`, ESCALATE immediately.
+    * **G-T3 (live, re-checked 2026-09-14 — NOT fired)** — A–D are discharged, so this is
+      now the operative trigger: if a lap shows the five `ScheduleWitness` inequalities
+      cannot hold simultaneously, the honest endpoint is `isDisjunctive_four_of_witness`
+      plus the named gap; say so in STATUS rather than grinding.  The reflection lap
+      re-derived all five from the Lean definitions and they close — so a failure report
+      must exhibit the *inequality* that fails, not a stalled proof.
+    * **G-T4** — did not fire (the seam compiled in lap 6).  Retained: a *mathematical*
+      mismatch between a concrete object and a `Prop` is an ESCALATION, never a `Prop` edit.
+    * **G-T5 (new)** — if a §5 inequality resists for **6 grind laps**, re-cost the
+      schedule: `K = ⌊log log L⌋` was verified this lap to sit inside the two-sided window
+      with polynomial-in-`log L` margin on both edges, and would replace the delicate
+      `schedule_budget` balance with crude bounds.  Switching requires re-proving every
+      budget, so it is an altitude-lap call.
 
 ### Directive history
+- 2026-09-14 (DEEP REFLECTION lap, after G4 lap 9b): direction KEPT, **ROUTE VERDICT =
+  CONTINUE** (no trigger fired; G-T3 now live and re-checked against the Lean definitions).
+  Mandated move moved from "§4 inputs" (ALL FIVE now closed) to **§5, starting with the
+  `X`-free `hB` inequality** with the derived hypothesis `K ≥ 33856 ℓ² 16^ℓ`.  Two recorded
+  §5 parameter values REFUTED (`lam = 1` makes `hbudget` false; `N ≈ 10K log K` makes `hfar`
+  false).  New structural finding: `K` is squeezed two-sidedly, `0.58 log log L ≲ K ≲
+  log L/(2 log log L)`, the lower edge coming from the medium primes — that, not the budget,
+  is why `K` may not be frozen.  Trigger G-T5 registered.
 - 2026-09-14 (fresh-mind review lap #2): direction KEPT, mandated move CHANGED from "decompose
   §4C" (done — C3 proved via `crt_input`, G-T1 retired) to **instantiate the frame and discharge
   `PropA`/`PropC` outright**.  Diagnosis: five laps of inputs, zero named `Prop` closed, and the

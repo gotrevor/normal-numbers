@@ -10,10 +10,74 @@ Keep it current — the next reflection lap inherits THIS read.*
 The synthesis below (`## The strategic question` onward) is the **B5′ / normality**
 campaign — Becher–Yuhjtman, Scheerer, image-Khinchin.  That campaign is **CLOSED
 and axiom-clean**; keep the section as the record of how its route was chosen.
-The **live** campaign is the **Mahler-multiplier chapter**, and its route
-synthesis is the section immediately below (added 2026-09-08 reflection lap; it
-was missing, which is why four grind laps re-derived route judgments from
-handoffs instead of from sources).
+The **live** campaign since 2026-09-14 is **G4 disjunctivity**; its route synthesis is the
+section immediately below (added 2026-09-14 reflection lap; it was missing, which is why
+nine grind laps judged the route from handoffs instead of from sources).  The
+Mahler-multiplier chapter that follows it is COMPLETE and kept for provenance.
+
+## G4 disjunctivity chapter — route synthesis (2026-09-14 DEEP REFLECTION lap)
+
+*This section was MISSING until 2026-09-14, which is why nine grind laps judged the route
+from handoffs rather than sources.  The `papers/` corpus contains **no** source on the
+prime-Lambert constants; the route's only external anchors are the campaign brief's own
+citations plus what a web sweep turns up.  Stated plainly so the next lap does not mistake
+"nothing on disk" for "nothing exists".*
+
+### The strategic question
+
+Is `G₄ = ∑_{p prime} 1/(4ᵖ−1) = ∑_{n≥1} ω(n)/4ⁿ` **disjunctive** in base four (every finite
+base-four word occurs), hence in base two?  Disjunctivity is strictly stronger than
+irrationality: an irrational expansion may omit finite words.
+
+### What the sources actually give
+
+| claim | source | status | this repo |
+|---|---|---|---|
+| **irrationality** of the base-two prime-Lambert constant, with the remark that any integer base `≥ 2` may replace `2` | **Tao–Teräväinen**, arXiv 2512.01739, Thm 1.3 + following remarks (per the campaign brief §1; PDF **not on disk**) | proved | *not inherited* — the G4 route deliberately avoids their two-point correlation input |
+| `L_{b,r}` (a **power**-Lambert constant, `PowerLambert.powerLambert_full_theorem`) is `b`-disjunctive and `b`-nonnormal, Lean-verified, hypotheses `2 ≤ b`, `2 ≤ r` | `github.com/CaptainSude/generalized-Lambert-disjunctivity-and-nonnormality` (web sweep, 2026-09-14) | proved (Lean) | **different constant** — its index set is the sparse/lacunary `r`-power set, whose congruence structure forces words directly.  Ours is indexed by the **primes**, where `ω(n) ≍ log log n` is far more rigid and no congruence argument reaches it. |
+| divisor-Lambert `∑_{n≥1} 1/(bⁿ−1) = ∑ d(m)/bᵐ` (Erdős) | classical | irrationality proved | not this constant; `d(m)` is wildly varying, `ω(m)` is not |
+
+**Decisive source-grounded finding**: there is no source to copy.  The nearby Lean
+precedent (`L_{b,r}`) and the nearby analytic precedent (Tao–Teräväinen irrationality) are
+both about *easier or weaker* statements.  The prime-indexed disjunctivity must be
+originated, and this campaign is originating it.  The brief itself is explicit that the
+argument is a **candidate**, model-generated, never externally validated — Lean is the
+validator, and the campaign must never report the conditional wiring theorem as the
+endpoint.
+
+### Feasibility read (2026-09-14, and this is the part that changed)
+
+After ten laps the picture is no longer "an unproved analytic program".  Every named input
+of brief §4 — exact affine Lambert transport (A), the zonotope/spectral tube volume (B),
+uniform joint small-prime Fourier control (C), the three-range remainders and far tail (D),
+and product-Fejér smoothing (E) — is a **machine-checked theorem about one concrete frame**,
+`#print axioms`-clean.  The residue is brief §5 alone: a finite list of explicit real
+inequalities (`ScheduleWitness`).
+
+The reflection lap re-derived all five from the Lean definitions.  They close, and the
+*shape* of the remaining risk changed accordingly: it is no longer "is the mathematics
+right?" but "do the constants close simultaneously?", which is checkable.  Two recorded
+parameter values were refuted this lap (`lam = 1` ⇒ `hbudget` false; `N ≈ 10K log K` ⇒
+`hfar` false), and a two-sided window on `K` was found —
+`0.58 log log L ≲ K ≲ log L/(2 log log L)` — whose **lower** edge (the medium-prime
+`8^{−K/2}√(log Mc)` term) is the real reason the brief forbids freezing `K`.
+
+### What is still missing from the on-disk corpus
+
+1. **Tao–Teräväinen arXiv 2512.01739** — cited by the brief for the irrationality baseline
+   and for "any integer base ≥ 2".  Not on disk; worth an `ON-LINE-REQUEST` if a novelty
+   claim is ever contemplated.  It is *not* a prerequisite for the proof.
+2. Any literature on disjunctivity of prime-indexed lacunary series.  The web sweep found
+   none; absence of evidence, recorded as such.
+3. A source for the entropy consequence (`Ent₂(Z) ≥ mH − O(H√K)`) in the expansion ladder.
+   That ladder rung is explicitly *not* ordinary normality and must never be reported as it.
+
+### Claim hygiene, standing
+
+No novelty claim.  The brief's own assessment ("90% confidence this warrants a focused
+campaign; that is **not** a probability that the candidate is correct or historically new")
+is the ceiling on what may be said.  State OUR quantifiers, never attribute; no publishing,
+no outreach.
 
 ## Mahler chapter — route synthesis (2026-09-08 reflection lap)
 

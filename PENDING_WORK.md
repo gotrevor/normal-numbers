@@ -1,5 +1,159 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## Reflection — 2026-09-14 (DEEP REFLECTION LAP, after G4 lap 9b) 🧘
+
+**Read this lap**: the brief §§4–5 verbatim, `G4Wiring.lean`, `G4ScheduleWitness.lean`,
+`G4Frame.lean` (`smallPrimeBound`), `G4FarTail.lean` (`farC`, `farAvg_le`),
+`G4MediumPrimes.lean` (`bigAvg_le'`), `G4Progression.lean` (`P₀`), `G4Schedule.lean`,
+`G4Tensor.lean` (`log_det_one_add_tensorGram_le'`), `PrimeLambertFour.lean`, `DIRECTION.md`,
+`CHECK-g4-route-deviations.md`, handoffs lap 7–9b, `papers/literature-review.md`, and a
+fresh `lake build` + `#print axioms` sweep.  Every §5 number below was **re-derived here**,
+not copied from a handoff.
+
+### 1. Destination — UNCHANGED and now genuinely in reach
+
+`IsDisjunctive 4 primeLambertFour` (⇒ base two by `isDisjunctive_two_of_four`), for the
+constant pinned by the proved identity `primeSumAtBase 4 = primeLambertFour`
+(`∑_p 1/(4ᵖ−1) = ∑_n ω(n)/4ⁿ`).  Faithfulness re-audited against the brief: the frozen
+endpoint, `IsDisjunctive`, and the `orbit`/word dictionary all say what the brief says.
+
+Ten laps in, **all five named inputs of brief §4 are machine-checked theorems about ONE
+concrete frame** (`gridFrame`): `gridFrame_propA`, `gridFrame_propC`, `Frame.propJackson`
+(no side conditions), `gridFrame_propD_of_bounds` (2 real inequalities),
+`gridFrame_propB_of_bound` (1 real inequality).  The entire residual content of the campaign
+is the `ScheduleWitness` structure — a finite bundle of explicit real inequalities in
+explicit parameters.  There is **no unproved mathematics left outside §5's arithmetic**.
+Nothing in the G4 wing carries a `sorry` or an axiom; every headline is `[propext,
+Classical.choice, Quot.sound]`.
+
+### 2. ROUTE VERDICT: **CONTINUE** — no registered trigger has fired
+
+* **G-T1** — retired 2026-09-14 (C3 proved; no sieve theorem in the route).  Still true.
+* **G-T2** (a measured counterexample to §4A transport or to the frequency-separation
+  seed) — has not fired; both are proved theorems.
+* **G-T3** (A–D discharged but §5 cannot close every budget simultaneously) — **now live,
+  and it has NOT fired.**  A–D *are* discharged, so this lap's job was to test §5 directly.
+  I re-derived all five inequalities from the Lean statements (§3 below): they close, with
+  two corrections to the recorded parameter values.
+* **G-T4** (concrete frame cannot instantiate `Frame`) — did not fire; the seam compiled in
+  lap 6 with no `G4Wiring` edit.
+* False-summit tells: neither is present.  Laps 6–9 each *closed a named `Prop`* (A, C, D,
+  Jackson, B), so "the crux is almost cracked" has not recurred without a target closing.
+  My finishability estimate has **risen**, not declined.
+
+### 3. Two CORRECTIONS to the lap-9b paper check — both would have sent grind laps at FALSE inequalities
+
+Lap 9b's addendum recorded a §5 parameter set and declared "everything closes on paper".
+Re-deriving it from the *Lean* definitions (not the prose) finds two errors:
+
+**(a) `lam = 1` makes `hbudget` UNSATISFIABLE.**  `smallPrimeBound`'s third error term is
+`2·(2e/lam)^{Mc}·∏_{p∈sm}(1 + e^{lam}·T/p) ≤ 2·exp(Mc·log(2e/lam) + e^{lam}·T·L)`.  At
+`lam = 1` the first factor is `exp(+Mc·log(2e)) = exp(+1.69·Mc)`, so the term is
+`exp(+Θ(TL)) → ∞`; `Λ·δ₃ < 1` is then impossible at any `Mc`.  The term is small only for
+`lam > 2e`, and needs `C > e^{lam}/log(lam/(2e))` in `Mc ≍ C·T·L`.  That function is
+minimised near `lam ≈ 6.4` at `≈ 3690`.  **Use `lam = 6.4` (or `13/2`), `lam' = e`,
+`C = 10⁴`** — then term (c) `= exp(−Θ(TL))`, term (b) `= exp(−(C−2e)TL)`, and terms (a),(d)
+are `≈ 4^{Mc}·X^{1/10}·P₀/X = exp(−0.9 log X)`.  (`C ≥ 10⁴` agrees with
+`CHECK-g4-route-deviations.md` §3.)
+
+**(b) `N ≈ 10 K log K` is NOT enough for the far tail.**  `farC G X Dm =
+log((X+Dm)/|P|) + log(log(X+Dm)+1)`, whose **second** term is `≈ log log X = L` — lap 9b
+counted only the first (`≈ log P₀ = L^{0.07+o(1)}`).  The far bound is
+`2^K·4^{−(K+N)}·(farC + 2(K+N) + 2)/3 / log 2`, so `hfar` needs
+`4^{−N} ≲ εη/(2^K·L)`, i.e. **`N ≳ 0.63K + log₄(K·L) = Θ(log L)`**.  At
+`N = 10K log K ≈ (log L)/10` the bound is `2^K·L^{0.86} → ∞`, not `o(εη)`.
+The brief's own schedule already gets this right — `J = ⌈3 log₂ L⌉`, i.e.
+`N = J − K ≈ 4.33 log L` — and so does `farAvg_le`'s docstring (`O(2^K L^{−6}(L+log P₀))`).
+**Keep the brief's `J`; discard the lap-9b `N`.**
+
+### 4. NEW structural finding — the §5 schedule has a TWO-SIDED window on `K`, and the lower edge is why `K` may not be frozen
+
+No document in the repo or the brief states the lower edge; it is the mechanism behind the
+brief's flat prohibition "do not freeze `K` and then send `X → ∞`".
+
+* **Upper edge (stated, `schedule_budget`/C4).**  `Λ·δ₃ = (2D+1)^r·exp(−c·8^{−K}·L) < 1`
+  forces `r·K·8^K = K^{2K+1}8^K ≪ L`, so `K ≲ log L/(2 log log L)`.
+* **Lower edge (NEW).**  C's finite-sample errors force `R = X^{1/(20Mc)}` with
+  `Mc ≍ C·T·L`, hence `log Mc ≥ log L`.  D's medium range then pays
+  `bigAvg ≥ 0.52·8^{−K/2}√(log(Mc/5))`, which must beat `εη = 2^{−K/4}/K`:
+
+      K · 2^{−1.25K} · √(log Mc) ≤ δbig      ⟹   2^{1.25K} ≳ K√(log L)
+      ⟹  **K ≳ 0.58 log log L**.
+
+  With `K` frozen this is `const·√(log L) → ∞` and **`hbig` fails outright** — that is
+  exactly what "freezing `K` destroys the rough-error estimates" means.  It is a
+  *medium-prime* obstruction, not a budget one.
+* Both edges hold for the brief's `K = ⌊log L/(100 log log L)⌋` (`0.0087 log L/log log L`
+  vs `1.5 log log L` at the lower edge — fine, but only once `log L > 173 (log log L)²`).
+  Verified this lap that `K = ⌊log log L⌋` also sits inside the window with
+  polynomial-in-`log L` margin on both sides; **not** adopting it, because
+  `schedule_budget` is already proved for `scheduleK` and a replacement must re-prove
+  every budget.  Recorded so that no future lap "simplifies" `K` downward and silently
+  breaks `hbig`.
+
+### 5. Independent re-derivation of the whole witness (record; supersedes lap 9b's)
+
+Schedule: `L = log log X`, `K = scheduleK L`, `s = K²`, `r = K^{2K}`, `H = (K²+1)^K`,
+`J = K + N = ⌈3 log₂ L⌉`, `η = 2^{−K/4}`, `ε = 1/K`, `M_cyl = ⌈K/(8ℓ)⌉`,
+`D = ⌈(16K·2^{K/4})²⌉`, `T = #Idx = H·N`, `Mc = ⌈10⁴·T·L⌉`, `lam' = e`, `lam = 13/2`,
+`R = X^{1/(20Mc)}`, `Y = X^{1/100}`, `B = s·J + 1`, `U ≥ max gridU`, `Q = U!`
+(divisibility by every `m ≤ U` is `Nat.dvd_factorial` — no `lcm` needed), `D₀ ≥ max gridV`.
+Budget split `δ₁ = δbig = δfar = 1/8`, `2κ ≤ 1/8`, `Λδ₃ ≤ 1/8`, total `5/8 < 1`.
+
+* `log P₀ = log Mprod + log freezeQ ≤ 2H·log d + (2T + T²·log(J·Q·D₀))`; the `T² log(QD₀)`
+  term dominates, giving `L^{0.07+o(1)}` — matches the brief's "`log P ≤ L^{0.07+o(1)}`".
+  `Q = U!` (`log Q ≈ U log U`, `U ≈ K²B^K = L^{0.03+o(1)}`) is comfortably inside.
+* **B**: with `H ≤ e^{1/K} r`, `g ≥ (1−1/K) r`, `(H+g)/g ≤ 2.72` (`K ≥ 4`), and
+  `M_cyl·log(4^ℓ−1) ≤ (K/4)log2 + 2ℓ log2 − K·4^{−ℓ}/(8ℓ)`, the exponent per unit `r` is
+  `≤ 0.396 + 1.78ℓ − K4^{−ℓ}/(8ℓ) + 0.347 + 11.5√K + 1.919 + log 2`, so **`hB` holds as
+  soon as `K/(8ℓ4^ℓ) ≥ 11.5√K + 1.78ℓ + 4.36`, for which `K ≥ 33856·ℓ²·16^ℓ` suffices**.
+  Everything here is elementary and `X`-free.
+* **C**: `∑_{p∈sm} 1/p ≥ log log R − ∑_{p|P₀} 1/p − O(1) = L − O(log L)`, so
+  `δ₃ ≈ exp(−4·4^{−4}8^{−K}L)`; `Λ = (2D+1)^r = exp(O(rK))`; `schedule_budget` closes it.
+  Error terms as in §3(a).
+* **D-big**: `0.52·8^{−K/2}√(log(Mc/5)) + 100·2^{−K}/3 ≤ δbig εη` — the lower edge of §4.
+* **D-far**: `2^K 4^{−J}(farC + 2J + 2)/3/log2 ≤ δfar εη` with `farC ≈ L` — needs the
+  brief's `J`, §3(b).
+* **Jackson**: `2κ = 2K2^{K/4}/√(D+1) ≤ 1/8` at `D = ⌈(16K2^{K/4})²⌉`.
+
+### 6. What to KEEP doing
+
+* Hardest-first on §5, in the order that gates the most: the `X`-free inequality **`hB`**
+  first (self-contained, the brief's "central formalization target"), then the `GridParams`
+  constructor with an explicit `log P₀` bound, then `hfar`, `hbig`, `hbudget`.
+* Re-deriving every §5 number from the **Lean statement**, never from a handoff docstring.
+  Both errors in §3 came from prose that was never checked against the definition.
+* One frame, all five props (`separatingFrameExists_of_witness` is the audit surface).
+
+### 7. What to STOP doing
+
+* **Stop trusting recorded "paper checks" as settled.**  Lap 9b's addendum is now known to
+  contain two false claims; treat every remaining §5 claim as unverified until a lap
+  re-derives it from the Lean definition or the compiler accepts it.
+* Stop adding new §4 machinery.  §4 is closed; anything new there is drift.
+* Stop citing `N ≈ 10K log K` or `lam = 1` anywhere.
+
+### 8. Single highest-value next target
+
+**`hB` as a standalone real-analysis theorem** (new module `G4ScheduleB.lean`):
+
+    theorem gridB_bound (ℓ K M g r H : ℕ) (hℓ : 1 ≤ ℓ)
+        (hK : 33856 * ℓ^2 * 16^ℓ ≤ K) (hr : r = K^(2*K)) (hH : H = (K^2+1)^K)
+        (hM : K ≤ 8 * ℓ * M) (hMle : 8*ℓ*M ≤ K + 8*ℓ)
+        (hg : (1 - 1/(K:ℝ)) * r ≤ g) (hgle : g ≤ r) :
+      ((4^ℓ - 1 : ℕ) : ℝ)^(M*H) * (2:ℝ)^(-(K:ℝ)*g/4) * Real.exp (r*(Real.log 2 + 23*Real.sqrt K)/2)
+        * (Real.sqrt (2*Real.pi*Real.exp 1/g) * Real.sqrt (H+g))^g ≤ (1/8) / 2^r
+
+Why this one: it is the only one of the five that involves **no** `X`, no primes and no
+progression, so it can be proved today without the `GridParams` constructor; it is the
+piece the brief singles out as "a central formalization target, not routine bookkeeping";
+and it is the only §5 inequality whose failure would be a *geometry* failure rather than a
+bookkeeping failure.  Decompose it as: (i) the scalar exponent inequality after `Real.log`,
+(ii) `H/r ≤ e^{1/K}` and `(H+g)/g ≤ 2.72`, (iii)
+`M log(4^ℓ−1) ≤ (K/4)log2 + 2ℓ log2 − K4^{−ℓ}/(8ℓ)` from `log(1−x) ≤ −x`, (iv) the final
+`√K` comparison.
+
+
 ## ✅ GRIND 2026-09-14 (G4 lap 9b): `ScheduleWitness` — the exact residual obligation (`69e3ebf`)
 
 `G4ScheduleWitness.lean`: `separatingFrameExists_of_witness` and `isDisjunctive_four_of_witness`

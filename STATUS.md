@@ -20,46 +20,70 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and, since 2026-09-14, the live G4 disjunctivity
-campaign.** · **Build**: 🟢 green (8730 jobs) · **Updated**: fresh-mind review
-lap #2 · 2026-09-14 · `wip/g4-disjunctivity` @ `d48280b`
+campaign, whose brief §4 is now CLOSED.** · **Build**: 🟢 green (8888 jobs) ·
+**Updated**: DEEP REFLECTION lap · 2026-09-14 · `wip/g4-disjunctivity` @ `87eed18`
 
 ## Where it stands
 
 **Live campaign: G4 disjunctivity** (attended kickoff
-`KICKOFF-2026-09-14-g4-disjunctivity.md`, branch `wip/g4-disjunctivity`).  The
-target is that `G₄ = ∑_p 1/(4ᵖ−1) = ∑_n ω(n)/4ⁿ` is disjunctive in base four,
-hence in base two — a **candidate** argument Lean is testing, not a known
-theorem.  Frozen endpoint pinned (`PrimeLambertFour.lean`), including the
-previously-unproved series identity `∑_p 1/(4ᵖ−1) = primeLambertFour` for every
-base `b ≥ 2`.  The dependency graph is named `Prop`s on concrete objects
-(`G4Wiring.lean`: `PropA`…`PropD`, `PropJackson`), the finite separating-test
-contradiction **E** is proved (`Frame.finite_contradiction`), and the headline
-`isDisjunctive_four_of_frames` is CONDITIONAL on `SeparatingFrameExists`.
-Crux **B** (geometry) has every input proved — spectrum of `D_sD_sᵀ`, the
-tensor bound `log det(1+T_{K²}^{⊗K}) ≤ r(log2+23√K)`, the ellipsoid volume
-bound, one tube piece, torus projection, and the cylinder covering of an orbit
-closure omitting a word — leaving only the assembly.  Crux **C** (uniform joint
-small-prime Fourier control), the half the brief itself leaves unproved, is now
-input-complete: its arithmetic seed `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`, the
-even-moment/CRT transfer C3 (`crt_input` + `norm_sampleAvg_prod_ee_le` — **no sieve
-theorem enters the route**), and the concrete instantiation
-`norm_sampleAvg_torusChar_Sval_le` are all proved, as are the §2 grid, the §3
-compatible progression, and the exact §4A transport identity.  **What has NOT
-happened in five laps is closing a single named input**: `PropA`…`PropJackson` are
-all still hypotheses, and the seam between the abstract `Frame` and the concrete
-grid/progression/small-prime vector has never been compiled.  That seam is the
-mandated next move; `PropD` (three ranges, zero laps, and the brief's flagged trap)
-is next after it.
+`KICKOFF-2026-09-14-g4-disjunctivity.md`, branch `wip/g4-disjunctivity`).  The target is
+that `G₄ = ∑_p 1/(4ᵖ−1) = ∑_n ω(n)/4ⁿ` is disjunctive in base four, hence in base two — a
+**candidate** argument Lean is testing, not a known theorem.  The frozen endpoint is pinned
+(`PrimeLambertFour.lean`), including the previously-unproved series identity
+`primeSumAtBase 4 = primeLambertFour`.
 
-The **Mahler-multiplier chapter** (previous campaign, complete): `M(g,k) < g^(k+1)`
-answers Berend–Boshernitzan's stated open question, `sup_g M(g,k)/g^(k+1) = 1` is
-sharp, and at `k = 1`, prime base, the sandwich is `p²/12 ≤ M(p,1) ≤ p²/4 + O(p)`
-with `mahler_lower_bound_runjump` and `…_near_half` landed.  `src/` carries exactly
-one `sorry`, `exists_prime_nonresidue` (`MahlerDriftOne.lean`), a Linnik-strength
-statement feeding only a *conditional* theorem; no unconditional result touches it,
-and no G4 file has a `sorry`.
+**Brief §4 is CLOSED.**  All five named inputs are machine-checked theorems about ONE
+concrete frame `gridFrame` — `gridFrame_propA`, `gridFrame_propC`, `Frame.propJackson`
+(no side conditions, every frame), `gridFrame_propD_of_bounds` (two real inequalities),
+`gridFrame_propB_of_bound` (one real inequality) — and the finite separating-test
+contradiction `Frame.finite_contradiction` wires them to `isDisjunctive_four_of_frames`.
+Nothing in the G4 wing carries a `sorry` or an axiom; every G4 headline prints the trust
+triple.  The whole residual content of the campaign is now brief **§5**: produce a
+`ScheduleWitness ℓ w` (`G4ScheduleWitness.lean`) — a finite bundle of explicit real
+inequalities in explicit parameters — for every omitted base-four cylinder.
+`separatingFrameExists_of_witness` turns that into the headline.
+
+The 2026-09-14 deep reflection lap re-derived all five §5 inequalities from the **Lean**
+definitions (not from handoff prose) and they close, with two corrections: the recorded
+`lam = 1` makes `hbudget` FALSE (`smallPrimeBound`'s `(2e/lam)^{Mc}` factor blows up unless
+`lam > 2e`; use `lam = 13/2`, `Mc = ⌈10⁴TL⌉`), and the recorded `N ≈ 10K log K` makes `hfar`
+FALSE (`farC` contains `log log X`, so the retained depth must be the brief's
+`J = ⌈3 log₂ L⌉`).  It also found the structural fact no document states: `K` is squeezed
+**two-sidedly**, `0.58 log log L ≲ K ≲ log L/(2 log log L)`, the lower edge coming from the
+medium-prime `8^{−K/2}√(log Mc)` term — that, not the budget, is why `K` may not be frozen.
+
+The **Mahler-multiplier chapter** (previous campaign, complete): `M(g,k) < g^(k+1)` answers
+Berend–Boshernitzan's stated open question, `sup_g M(g,k)/g^(k+1) = 1` is sharp, and at
+`k = 1`, prime base, the sandwich is `p²/12 ≤ M(p,1) ≤ p²/4 + O(p)`.  `src/` carries exactly
+TWO `sorry`s: `exists_prime_nonresidue` (`MahlerDriftOne.lean`, Linnik-strength, feeding only
+a *conditional* theorem) and `phaseOscillation` (`PrimeLambertOscillation.lean`, the old
+irrationality endpoint, which the G4 kickoff explicitly rules out as a prerequisite).  No
+unconditional headline touches either, and no G4 file has a `sorry`.
 
 ## What's happened (newest first)
+
+- **2026-09-14 (DEEP REFLECTION LAP, after G4 lap 9b)** — **ROUTE VERDICT: CONTINUE;
+  brief §4 CLOSED; two recorded §5 parameter values REFUTED.**  Inventory: `lake build`
+  green (8888 jobs), zero `sorry`s and zero axioms anywhere in the G4 wing, every G4
+  headline on the trust triple, and **all five named §4 inputs now proved about the one
+  concrete `gridFrame`**.  Trigger check: G-T1 stays retired, G-T2 and G-T4 did not fire,
+  **G-T3 is now live and did NOT fire** — this lap re-derived every `ScheduleWitness`
+  inequality from the Lean definitions and they close.  Two corrections to lap 9b's recorded
+  paper check, each of which would have sent grind laps at a FALSE inequality:
+  (a) `lam = 1` makes `smallPrimeBound`'s third error term `exp(+Θ(TL))`, so `hbudget` is
+  unsatisfiable — `lam` must exceed `2e`; `lam = 13/2`, `lam' = e`, `Mc = ⌈10⁴·T·L⌉` works
+  (`C > e^{lam}/log(lam/2e)`, minimised `≈ 3690` at `lam ≈ 6.4`).  (b) `N ≈ 10K log K` makes
+  `hfar` false — `farC = log((X+Dm)/|P|) + log(log(X+Dm)+1)` has a `log log X = L` term that
+  lap 9b dropped, so the retained depth must be the brief's `J = ⌈3 log₂ L⌉`.  New structural
+  finding: the §5 schedule squeezes `K` from **both** sides —
+  `0.58 log log L ≲ K ≲ log L/(2 log log L)` — the lower edge coming from D's medium range
+  (`0.52·8^{−K/2}√(log Mc)` vs `εη`, with `log Mc ≥ log L` forced by C's `R = X^{1/(20Mc)}`).
+  With `K` frozen that term diverges, which is precisely the mechanism behind the brief's
+  "do not freeze `K`" prohibition.  Mandated next move: **`hB`**, the `X`-free witness
+  inequality, with the derived sufficient hypothesis `K ≥ 33856·ℓ²·16^ℓ`.  Trigger G-T5
+  registered (re-cost `K = ⌊log log L⌋` if a §5 inequality resists 6 laps).  Also corrected a
+  stale STATUS claim: `src/` has TWO disclosed `sorry`s, not one (`phaseOscillation` in the
+  old irrationality file was uncounted).
 
 - **2026-09-14 (FRESH-MIND REVIEW LAP #2, after G4 lap 5)** — **Direction KEPT,
   mandated move CHANGED: stop producing inputs, close a named `Prop`.**  Inventory:
@@ -310,19 +334,20 @@ and no G4 file has a `sorry`.
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-1. **THE SEAM — `G4Frame.lean`**: instantiate `Frame` from `GridParams` and discharge
-   `PropA` and `PropC` as theorems.  Every ingredient is proved; what is untested is
-   whether the abstract `Prop`s and the concrete objects meet.  This gates D.
-2. **D** (`PropD`, three-range remainders, §4D) — zero laps so far, and the brief's
-   own warning lives here: keep `p ≤ R`, `R < p ≤ Y`, `p > Y` and the infinite far
-   tail separate; preserve the signed cancellation in the medium range.
-3. **Jackson** (`PropJackson`) — product kernel, one-coordinate first moment `O(1/D)`;
-   the average metric makes the smoothing error dimension-free.
-4. **B assembly to `PropB`** (labour, not risk — all inputs proved): Markov on the
-   average metric, cylinder covering of `Cᴴ`, `2^r` good-coordinate sets, torus
-   marginal, then the `η^{(1−ε)r−d'H}exp(O(H+r√K))` arithmetic.  Then the §5
-   parameter schedule in its own module.
-5. Legacy: remaining cited-only ledger nodes (`philipp_psi_mixing`,
+Brief §4 is closed; every item below is brief **§5**, the schedule.
+1. **`hB`** — the `X`-free witness inequality, new `G4ScheduleB.lean`.  Sufficient
+   hypothesis derived on the reflection lap: `K ≥ 33856·ℓ²·16^ℓ`.  No primes, no `X`, no
+   progression: provable today.
+2. **`gridParams_of_KN`** — an explicit `GridParams` from `(K, N)` with `B = sJ+1`,
+   `U ≥ max gridU`, `Q = U!` (`Nat.dvd_factorial`), `D₀ ≥ max gridV`, plus `Dm`, `Mx` and an
+   explicit **`log P₀` bound** (`T² log(J·Q·D₀)` dominates; `L^{0.07+o(1)}`).  Gates 3–5.
+3. **`card_apSample`** lower bound `(X:ℝ)/P₀ − 1 ≤ card` — gates `hne`, `hbig`, `hfar`,
+   `hbudget`.
+4. **`hfar`**, then **`hbig`** (mind the two-sided `K` window), then **`hbudget`**
+   (`schedule_budget` + the four `smallPrimeBound` error terms, `lam = 13/2`, `lam' = e`).
+5. Assemble `Nonempty (ScheduleWitness ℓ w)` eventually in `X`; then
+   `separatingFrameExists_of_witness` gives the headline.
+6. Legacy (not this campaign): cited-only ledger nodes (`philipp_psi_mixing`,
    `vandehey_matrix_action`); `k ≥ 2` Mahler lower side via the escape engine.
 
 ### Long-term
@@ -336,25 +361,31 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, re-run this lap (2026-09-14 review).  Every
-UNCONDITIONAL headline: trust triple only.  The single exception is flagged.
-G4 rows come first; nothing in the G4 wing has a `sorry` or an axiom — its debt is
-carried honestly as named unproved `Prop`s (`PropA`…`PropD`, `PropJackson`,
-`SeparatingFrameExists`), which is what makes `isDisjunctive_four_of_frames`
-conditional.
+Real `#print axioms` output, re-run this lap (2026-09-14 DEEP REFLECTION, HEAD `87eed18`,
+build 🟢 8888 jobs).  Every UNCONDITIONAL headline: trust triple only; the single exception is
+flagged.  G4 rows come first.  Nothing in the G4 wing has a `sorry` or an axiom — its debt is
+carried honestly as the named unproved `Prop`s `SeparatingFrameExists` / the
+`ScheduleWitness` hypothesis, which is exactly what makes `isDisjunctive_four_of_witness`
+conditional.  **Brief §4 is closed**: all five of `PropA`, `PropB`, `PropC`, `PropD`,
+`PropJackson` are now *theorems* about the concrete `gridFrame`, two of them modulo named
+real inequalities that live in the witness.
 
 | headline theorem | paper claim | `#print axioms` shows | verdict |
 |---|---|---|---|
-| `G4.isDisjunctive_four_of_frames` / `…_two_of_frames` | G4 disjunctive base 4 / base 2 — **CONDITIONAL** on the candidate `SeparatingFrameExists` | trust triple | 🟢 clean, but the hypothesis IS the unproved candidate: never report as the endpoint |
-| `G4.Frame.finite_contradiction` | §4E finite separating test, conditional on A–D + Jackson | trust triple | 🟢 clean |
-| `PrimeLambert.primeSumAtBase_four` | `∑_p 1/(4ᵖ−1) = ∑_n ω(n)/4ⁿ` (uncond.) | trust triple | 🟢 clean |
-| `G4.Frame.propA_of_progression` | §4A exact affine transport ⇒ `PropA` for any residue-freezing frame (uncond.) | trust triple | 🟢 clean |
-| `G4.norm_sampleAvg_torusChar_Sval_le` | §4C for the concrete small-prime vector, uniform on the box (uncond.) | trust triple | 🟢 clean |
-| `G4.GridParams.exists_mult_mul` | §3 the compatible progression freezes every multiplier residue (uncond.) | trust triple | 🟢 clean |
-| `G4.sum_sq_distZ_freqDepth_ge` | §4C seed `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}` (uncond.) | trust triple | 🟢 clean |
-| `G4.minWeight_kronPow` / `minWeight_tensorDiff` | product-code minimum distance; `‖supp(Aᵀq)‖₀ ≥ 2^K` (uncond.) | trust triple | 🟢 clean |
+| `G4.isDisjunctive_four_of_witness` | G4 disjunctive base 4 — **CONDITIONAL** on a `ScheduleWitness` for every omitted cylinder (= brief §5) | trust triple | 🟢 clean; the hypothesis IS the residual candidate content — never report as the endpoint |
+| `G4.separatingFrameExists_of_witness` | §5 witness ⇒ `SeparatingFrameExists` (uncond.) | trust triple | 🟢 clean — the audit surface: one frame, all five props |
+| `G4.isDisjunctive_four_of_frames` / `…_two_of_frames` | base 4 / base 2 — CONDITIONAL on `SeparatingFrameExists` | trust triple | 🟢 clean, conditional |
+| `G4.Frame.finite_contradiction` | §4E finite separating test from A–D + Jackson (uncond.) | trust triple | 🟢 clean |
+| `G4.gridFrame_propA` | **§4A** exact affine Lambert transport on the concrete grid (uncond.) | trust triple | 🟢 clean — input CLOSED |
+| `G4.gridFrame_propC` | **§4C** uniform joint small-prime Fourier control, whole box (uncond.) | trust triple | 🟢 clean — input CLOSED, closed-form `smallPrimeBound` |
+| `G4.Frame.propJackson` | **§4E** product-Fejér smoothing, `κ = 1/(res√(D+1))`, `Λ = (2D+1)^r`, EVERY frame (uncond.) | trust triple | 🟢 clean — input CLOSED, no side conditions |
+| `G4.gridFrame_propD_of_bounds` | **§4D** three ranges + far tail ⇒ `PropD` (uncond., given `hbig`, `hfar`) | trust triple | 🟢 clean — input CLOSED modulo two §5 inequalities |
+| `G4.gridFrame_propB_of_bound` | **§4B** zonotope tube volume ⇒ `PropB` (uncond., given `hB`) | trust triple | 🟢 clean — input CLOSED modulo one §5 inequality |
+| `G4.bigAvg_le'` / `G4.farAvg_le` | §4D medium (`Y`-split, signed L²) and far-tail closed forms (uncond.) | trust triple | 🟢 clean — the brief's §4D tripwire honoured |
 | `G4.log_det_one_add_tensorGram_le'` | §4B spectral `log det(1+T_{K²}^{⊗K}) ≤ r(log2+23√K)` (uncond.) | trust triple | 🟢 clean |
-| `G4.volume_tubePiece_le` / `orbitClosure_subset_cylinders` | §4B one tube piece; cylinder covering of an omitting orbit closure (uncond.) | trust triple | 🟢 clean |
+| `G4.schedule_budget` | §5 C4: `C·K^{2K+1}8^K < c·L` eventually (uncond.) | trust triple | 🟢 clean |
+| `PrimeLambert.primeSumAtBase_four` | `∑_p 1/(4ᵖ−1) = ∑_n ω(n)/4ⁿ` (uncond.) | trust triple | 🟢 clean — the endpoint's identity |
+| `PrimeLambert.isDisjunctive_two_of_four` | base-four ⇒ base-two dictionary (uncond.) | trust triple | 🟢 clean |
 | `exists_absolutely_normal_cf_normal` | Becher–Yuhjtman 2019 Thm 1 (uncond.) | trust triple | 🟢 clean |
 | `exists_absolutely_normal_cf_normal_khinchin` | image-Khinchin (uncond.) | trust triple | 🟢 clean |
 | `isNormal_log_two_of_equidistributed` | conditional ln-two | trust triple | 🟢 clean (hypothesis is a named `Prop`, not an axiom) |
@@ -385,20 +416,32 @@ conditional.
 | `IsNormal.isDisjunctive` | unconditional API gap | trust triple | 🟢 clean |
 | `quadratic_irrationals_disjunctive_of_hypothesisM` | Track D3, conditional | trust triple | 🟢 clean |
 
-Math-axiom count (🟢+🟡+🟠): **0**.  🔴: none.  `src/` carries exactly ONE
-`sorry` — `exists_prime_nonresidue` — reached only by the CONDITIONAL
-`mahler_lower_bound_prime_drift_one`; every unconditional headline above is
-`sorryAx`-free.  The two former `CFScheduleA` schedule residues are named
-`def … : Prop` nodes, which no headline depends on.
+Math-axiom count (🟢+🟡+🟠): **0**.  🔴: none.  `src/` carries exactly TWO disclosed
+`sorry`s (a stale earlier count said one): `exists_prime_nonresidue`
+(`MahlerDriftOne.lean`, Linnik-strength, reached only by the CONDITIONAL
+`mahler_lower_bound_prime_drift_one`) and `phaseOscillation`
+(`PrimeLambertOscillation.lean`, the OLD irrationality endpoint, which the G4 kickoff
+explicitly excludes as a prerequisite and which no G4 declaration imports).  Every
+unconditional headline above is `sorryAx`-free, and **no G4 file has a `sorry`**.  The two
+former `CFScheduleA` schedule residues are named `def … : Prop` nodes, which no headline
+depends on.
+
+**Honest reading of the G4 row set**: the ledger is axiom-clean, but that certifies the
+*proofs*, not the endpoint.  G4 is not done: `isDisjunctive_four_of_witness` rests on the
+`ScheduleWitness` hypothesis, which is brief §5 and is unproved.  What changed at this lap
+is that the hypothesis is now a finite list of **explicit real inequalities in explicit
+parameters** rather than any unproved mathematics — and those inequalities were re-derived
+from the Lean definitions this lap and do close.
 
 ## Pointers
 
-`DIRECTION.md` (**binding directive** — G4, triggers G-T1…G-T3) ·
+`DIRECTION.md` (**binding directive** — G4 §5, triggers G-T2…G-T5) ·
 `KICKOFF-2026-09-14-g4-disjunctivity.md` + the brief at
 `~/personal/claude/knowledge/core/projects/normal-numbers-g4-disjunctivity-fable-handoff-2026-09-14.md` ·
-newest baton `HANDOFF-2026-09-14-g4-lap3.md` (and `…-g4-lap2.md`, `…-g4.md`) ·
-`PENDING_WORK.md` §G4 · `CHECK-g4-route-deviations.md` (host's independent route checks) ·
-`ROADMAP.md` · `papers/literature-review.md` §Mahler chapter ·
+newest baton: `ls HANDOFF-2026-09-14-g4-lap*.md | sort -t p -k2 -n | tail -1` ·
+`PENDING_WORK.md` §Reflection 2026-09-14 (the §5 re-derivation, the two refuted parameter
+values, the two-sided `K` window) · `CHECK-g4-route-deviations.md` (host's independent route
+checks) · `ROADMAP.md` · `papers/literature-review.md` §G4 chapter ·
 `BRIEF-literature-statements.md` (the novelty tripwire ledger)
 
 ---
