@@ -38,13 +38,28 @@ The arithmetic this settles, and why E-T8 is *not* a bookkeeping follow-up:
 * So E-T8 on this mechanism needs `K^{−1/2} ≪ ρ ≪ K^{−2}`: **impossible**.  Chunking by
   coordinates cannot replace repetition here.
 
-**Next bounded test for whoever takes E-T8**: either (a) formalize this obstruction as a theorem
-in the shape of lap 48's `no_pointwise_bound_from_deficit` — the growth half is a concrete
-lemma, `blen (i+1) ≥ c·(KK i)²·blen i`, provable from `card_Atom_gridAt`; or (b) find a
-mechanism that supplies many disjoint good chunks *without* shrinking relative size — the only
-visible candidate is splitting the **sample times** `P_K` rather than the atoms, which needs a
-restriction lemma for the empirical law over `n` (not proved, and `H₂` of a one-point empirical
-law is `0`, so the naive analogue is false).
+**Lap 54 formalized the obstruction** (`G4EntropySubsample.lean`): `card_Atom_growth`
+(`(K²+1)⁴·|Atom_i| ≤ |Atom_{i+1}|`) and **`chunks_insufficient`**:
+
+> `kk i / (50·√(KK i))  <  |Atom_{i+1}| / |Atom_i|`
+
+left = the most disjoint chunks one scale can certify (`m/δ`), right ≤ the block-length growth
+that repetition-free assembly must cover.  Never enough.
+
+**Route (b) is closed too, and for a better reason than the atom count.**  The barrier `ρ ≫ δ/m`
+is *dimension-independent*: truncating each window to its top `s` bits is the same subadditivity
+argument as `H₂_restrictCoords_ge` (`lowTuple`'s dual), so a chunk cut by atoms **and** by window
+length has per-coordinate deficit `δ|A|/|G|` on `s` bits and is certifiable exactly when
+`ρ = (|G|/|A|)·(s/m) ≫ δ/m`.  In one line: **a chunk is certifiable only if its digit count
+exceeds the collection's total entropy deficit** — so the minimal certifiable granule at scale
+`i+1` is `≈ δ_{i+1}·W_{i+1}` digits, already larger than scale `i`'s entire block `m_i·W_i`.
+Splitting the sample times `P_K` instead of the atoms does not escape this (and the naive
+analogue is false anyway: `H₂` of a one-point empirical law is `0`).
+
+**Therefore E-T8 needs a different construction, not a different chunking.**  What is NOT
+excluded: any mechanism that lowers the deficit `δ` below `m/K²` at some scale, or one that
+produces good blocks of *comparable* length at many scales.  Neither is visible in the current
+schedule.
 
 ### What is now settled (do not re-attack)
 

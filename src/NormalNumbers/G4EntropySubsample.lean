@@ -171,3 +171,77 @@ theorem abs_posAvg_restrict_sub_le {A : Type*} [Fintype A] [DecidableEq A] {m �
   exact abs_posAvg_sub_le hℓ hℓm _ w hδ' hdef'
 
 end NormalNumbers.G4Entropy
+
+/-! ### The quantitative obstruction to `E-T8` -/
+
+namespace NormalNumbers.G4.Sched
+
+open NormalNumbers NormalNumbers.G4Entropy NormalNumbers.PrimeLambert
+
+/-- **The atom count grows by at least `(K²+1)⁴` per scale.**  `KK (i+1) = KK i + 4`, and
+`|Atom_i| = (K_i² + 1)^{K_i}`. -/
+lemma card_Atom_growth (i : ℕ) :
+    (KK i ^ 2 + 1) ^ 4 * Fintype.card (gridAt i).Atom
+      ≤ Fintype.card (gridAt (i + 1)).Atom := by
+  rw [card_Atom_gridAt, card_Atom_gridAt]
+  have hKK : KK (i + 1) = KK i + 4 := by unfold KK kk; omega
+  rw [hKK]
+  have hbase : KK i ^ 2 + 1 ≤ (KK i + 4) ^ 2 + 1 := by nlinarith [Nat.zero_le (KK i)]
+  calc (KK i ^ 2 + 1) ^ 4 * (KK i ^ 2 + 1) ^ KK i
+      = (KK i ^ 2 + 1) ^ (KK i + 4) := by rw [← pow_add]; ring_nf
+    _ ≤ ((KK i + 4) ^ 2 + 1) ^ (KK i + 4) := Nat.pow_le_pow_left hbase _
+
+/-- **`E-T8` is out of reach on this mechanism, quantitatively.**
+
+`abs_posAvg_restrict_sub_le` certifies a sub-collection of relative size `ρ` only while its
+digit count exceeds the collection's total entropy deficit, i.e. while `ρ ≫ δ/m`; with the
+implemented `δ = 50√K`, `m = K/4` this caps the number of disjoint certifiable chunks at one
+scale by `m/δ = √K/200` — the left-hand side below.
+
+Replacing `rep`-repetition by fresh chunks needs at least as many chunks as the block length
+grows between consecutive scales, and the atom count alone grows by `(K²+1)⁴` — the right-hand
+side.  The inequality is the obstruction: **there are never enough certifiable chunks.**
+
+This refutes the chunking *route* to a strictly increasing `samplePos`; it is not a proof that
+no such sequence exists. -/
+theorem chunks_insufficient (i : ℕ) :
+    (kk i : ℝ) / (50 * Real.sqrt (KK i))
+      < ((Fintype.card (gridAt (i + 1)).Atom : ℝ) / (Fintype.card (gridAt i).Atom : ℝ)) := by
+  have hK : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+  have hkk : (40000 : ℝ) ≤ (kk i : ℝ) := by
+    have : (40000 : ℕ) ≤ kk i := by unfold kk; omega
+    exact_mod_cast this
+  have hA : (0 : ℝ) < (Fintype.card (gridAt i).Atom : ℝ) := by
+    have : 0 < Fintype.card (gridAt i).Atom := Fintype.card_pos
+    exact_mod_cast this
+  -- the right-hand side is at least `(K² + 1)⁴`
+  have hgrow : ((KK i ^ 2 + 1 : ℕ) : ℝ) ^ 4
+      ≤ (Fintype.card (gridAt (i + 1)).Atom : ℝ) / (Fintype.card (gridAt i).Atom : ℝ) := by
+    rw [le_div_iff₀ hA]
+    have h := card_Atom_growth i
+    have hR : (((KK i ^ 2 + 1) ^ 4 * Fintype.card (gridAt i).Atom : ℕ) : ℝ)
+        ≤ (Fintype.card (gridAt (i + 1)).Atom : ℝ) := by exact_mod_cast h
+    push_cast at hR ⊢
+    linarith
+  -- the left-hand side is at most `kk i`
+  have hsqrt : (400 : ℝ) ≤ Real.sqrt (KK i) := by
+    have : Real.sqrt (160000 : ℝ) ≤ Real.sqrt (KK i) := Real.sqrt_le_sqrt hK
+    have h400 : Real.sqrt (160000 : ℝ) = 400 := by
+      rw [show (160000 : ℝ) = 400 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]
+    linarith [h400 ▸ this]
+  have hlhs : (kk i : ℝ) / (50 * Real.sqrt (KK i)) ≤ (kk i : ℝ) := by
+    rw [div_le_iff₀ (by linarith)]
+    nlinarith
+  -- and `(K² + 1)⁴ > kk i`
+  have hbig : (kk i : ℝ) < ((KK i ^ 2 + 1 : ℕ) : ℝ) ^ 4 := by
+    have hKk : (KK i : ℝ) = 4 * (kk i : ℝ) := by unfold KK; push_cast; ring
+    have hcast : ((KK i ^ 2 + 1 : ℕ) : ℝ) = (KK i : ℝ) ^ 2 + 1 := by push_cast; ring
+    rw [hcast, hKk]
+    set t : ℝ := (4 * (kk i : ℝ)) ^ 2 + 1 with ht
+    have ht1 : (1 : ℝ) ≤ t := by rw [ht]; nlinarith
+    have htk : (kk i : ℝ) < t := by rw [ht]; nlinarith
+    have hpow : t ≤ t ^ 4 := le_self_pow₀ ht1 (by norm_num)
+    linarith
+  linarith
+
+end NormalNumbers.G4.Sched
