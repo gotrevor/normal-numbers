@@ -241,3 +241,4 @@ import NormalNumbers.G4EntropyControl
 import NormalNumbers.G4EntropyDensityOne
 import NormalNumbers.G4EntropyStable
 import NormalNumbers.G4EntropyShift
+import NormalNumbers.G4EntropyDiagonal
