@@ -110,4 +110,109 @@ theorem exists_good_atom (i : ℕ) :
     rw [atomDeficit]; ring
   rwa [hrw] at h
 
+
+/-! ### The good atom's frequency limit -/
+
+open Classical in
+/-- The chosen good atom at scale `i`.  Word- and length-free. -/
+noncomputable def goodAtom (i : ℕ) : (gridAt i).Atom := (exists_good_atom i).choose
+
+lemma goodAtom_spec (i : ℕ) : ∀ ℓ : ℕ, 0 < ℓ → ℓ ≤ kk i → ∀ w : Fin (2 ^ ℓ),
+    |coordAvg (kk i) ℓ (jointLawAt i (primeLambertAtBase 4)) (goodAtom i) w - 1 / (2 : ℝ) ^ ℓ|
+      ≤ 2 * Real.sqrt (Real.log 2 * (ℓ : ℝ) * atomDeficit i / ((kk i : ℝ) - ℓ + 1)) :=
+  (exists_good_atom i).choose_spec
+
+/-- **The good atom's capture bound in the `1/√K` form.**  `m_K − ℓ + 1 ≥ m_K/2` and
+`√K·√K = 4m_K`, so the deficit `100√K` becomes `800 log 2·ℓ/√K`. -/
+theorem abs_coordAvg_goodAtom_le (i ℓ : ℕ) (hℓ : 0 < ℓ) (hℓm : 2 * ℓ ≤ kk i)
+    (w : Fin (2 ^ ℓ)) :
+    |coordAvg (kk i) ℓ (jointLawAt i (primeLambertAtBase 4)) (goodAtom i) w - 1 / (2 : ℝ) ^ ℓ|
+      ≤ 2 * Real.sqrt (800 * Real.log 2 * (ℓ : ℝ) / Real.sqrt (KK i)) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hKpos : (0 : ℝ) < (KK i : ℝ) := by
+    have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+    linarith
+  have hS0 : 0 < Real.sqrt ((KK i : ℕ) : ℝ) := Real.sqrt_pos.2 hKpos
+  refine (goodAtom_spec i ℓ hℓ (by omega) w).trans ?_
+  have hℓR : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  have hhalf : (kk i : ℝ) / 2 ≤ (kk i : ℝ) - ℓ + 1 := by
+    have : (2 : ℝ) * ℓ ≤ (kk i : ℝ) := by exact_mod_cast hℓm
+    linarith
+  have hden : (0 : ℝ) < (kk i : ℝ) - ℓ + 1 := by
+    have : (2 : ℝ) * ℓ ≤ (kk i : ℝ) := by exact_mod_cast hℓm
+    linarith
+  have hkk4 : (KK i : ℝ) = 4 * (kk i : ℝ) := by unfold KK; push_cast; ring
+  have hsq : Real.sqrt ((KK i : ℕ) : ℝ) * Real.sqrt ((KK i : ℕ) : ℝ) = 4 * (kk i : ℝ) := by
+    rw [Real.mul_self_sqrt hKpos.le, hkk4]
+  have hstep : Real.log 2 * (ℓ : ℝ) * atomDeficit i / ((kk i : ℝ) - ℓ + 1)
+      ≤ 800 * Real.log 2 * (ℓ : ℝ) / Real.sqrt (KK i) := by
+    rw [atomDeficit, div_le_div_iff₀ hden hS0]
+    have hkey : Real.log 2 * (ℓ : ℝ) * (100 * Real.sqrt (KK i)) * Real.sqrt ((KK i : ℕ) : ℝ)
+        = 400 * Real.log 2 * (ℓ : ℝ) * (kk i : ℝ) := by
+      linear_combination (100 * Real.log 2 * (ℓ : ℝ)) * hsq
+    rw [hkey]
+    nlinarith [mul_le_mul_of_nonneg_left hhalf
+      (by positivity : (0:ℝ) ≤ 800 * Real.log 2 * (ℓ : ℝ))]
+  have hpos1 : (0 : ℝ) ≤ Real.log 2 * (ℓ : ℝ) * atomDeficit i / ((kk i : ℝ) - ℓ + 1) := by
+    rw [atomDeficit]
+    positivity
+  exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hstep) (by norm_num)
+
+open Classical in
+/-- **The endpoint of the single-atom line.**  For every finite binary word `v`, the proportion
+of pairs `(n, p)` — sample time and window position, at the *one* schedule-chosen atom
+`goodAtom i` — at which `v` occurs in `G₄`'s binary digits at `2·kIdx(n, goodAtom i) + p` tends
+to `2^{−|v|}`.
+
+`tendsto_occursCountP_primeLambertFour` is the same statement averaged over **all** atoms.  The
+atom here is chosen once per scale, before any word is named. -/
+theorem tendsto_goodAtom_occursCount (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
+    Tendsto (fun i =>
+      (∑ p : Fin (kk i - v.length + 1),
+          (((PK i).filter fun n =>
+            OccursAt 2 (primeLambertAtBase 4) v
+              (2 * kIdx (gridAt i) n (goodAtom i) + (p : ℕ))).card : ℝ))
+        / (((PK i).card : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ)))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+  classical
+  set w : ∀ i : ℕ, Fin (2 ^ v.length) := fun _ => ⟨wordVal v, wordVal_lt hv⟩ with hw
+  -- the capture bound tends to zero
+  have hgrow : Tendsto (fun i => (v.length : ℝ) / Real.sqrt (KK i)) atTop (nhds 0) := by
+    have hsqrt : Tendsto (fun i => Real.sqrt (KK i)) atTop atTop :=
+      Real.tendsto_sqrt_atTop.comp tendsto_KK_atTop
+    exact hsqrt.const_div_atTop _
+  have hinner : Tendsto (fun i => 800 * Real.log 2 * (v.length : ℝ) / Real.sqrt (KK i))
+      atTop (nhds 0) := by
+    have h := hgrow.const_mul (800 * Real.log 2)
+    simp only [mul_zero] at h
+    refine h.congr fun i => ?_
+    rw [mul_div_assoc]
+  have hsq : Tendsto (fun i => 2 * Real.sqrt (800 * Real.log 2 * (v.length : ℝ)
+      / Real.sqrt (KK i))) atTop (nhds 0) := by
+    have := hinner.sqrt
+    simpa using this.const_mul (2 : ℝ)
+  have hzero : Tendsto (fun i =>
+      coordAvg (kk i) v.length (jointLawAt i (primeLambertAtBase 4)) (goodAtom i) (w i)
+        - 1 / (2 : ℝ) ^ v.length) atTop (nhds 0) := by
+    refine squeeze_zero_norm' ?_ hsq
+    filter_upwards [eventually_ge_atTop (2 * v.length)] with i hi
+    have hle : 2 * v.length ≤ kk i := by unfold kk; omega
+    simpa [Real.norm_eq_abs] using abs_coordAvg_goodAtom_le i v.length hlen hle (w i)
+  have hmain : Tendsto (fun i =>
+      coordAvg (kk i) v.length (jointLawAt i (primeLambertAtBase 4)) (goodAtom i) (w i))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+    have hlim : Tendsto (fun _ : ℕ => (1 : ℝ) / (2 : ℝ) ^ v.length) atTop
+        (nhds (1 / (2 : ℝ) ^ v.length)) := tendsto_const_nhds
+    simpa using hzero.add hlim
+  refine hmain.congr' ?_
+  filter_upwards [eventually_ge_atTop v.length] with i hi
+  have hle : v.length ≤ kk i := by unfold kk; omega
+  rw [coordAvg_eq_digits i v.length hle _ (goodAtom i) (w i)]
+  congr 1
+  refine Finset.sum_congr rfl fun p _ => ?_
+  congr 2
+  refine Finset.filter_congr fun n _ => ?_
+  exact blockVal_eq_wordVal_iff (y := primeLambertAtBase 4) hv
+
 end NormalNumbers.G4.Sched
