@@ -261,3 +261,4 @@ import NormalNumbers.G4EntropyJointPos
 import NormalNumbers.G4EntropyJointUniform
 import NormalNumbers.G4EntropyJointFree
 import NormalNumbers.G4EntropyPointwise
+import NormalNumbers.G4EntropyJointRich
