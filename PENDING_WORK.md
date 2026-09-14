@@ -1,5 +1,54 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ GRIND 2026-09-14 (G4 lap 5): the §2 grid PROVED (A's arithmetic seed); §4C instantiated on the concrete small-prime vector
+
+**Advance on the crux.**  §4C was closed abstractly in lap 4 for arbitrary phase sums of shifted
+`ω`; what stood between it and `PropC` was the concrete object.  This lap builds it.
+
+`src/NormalNumbers/G4Grid.lean` (sorry-free, trust triple) — draft §2 verbatim:
+* `gridU`, `gridV`, `proj B j α = j·u − v = ∑ᵢ (j − (i+1)) αᵢ B^{i+1}`.
+* `balanced_digits_eq_zero` — base-`B` digits with `|digit| < B` are unique.  Only `|digit| < B`
+  is needed, not the draft's `B > 2sJ+1` (bottom digit is divisible by `B`, peel).
+* **`sum_kronPow_diffZ_mul_eq_zero`** — for `j = i₀+1 ≤ K`, every row of `A = D_s^{⊗K}` kills
+  any function of `proj B j`: **the first `K` layers cancel exactly**, for any `ω`.  (General
+  form `sum_kronPow_mul_eq_zero`: Kronecker power of a row-sum-zero matrix annihilates any
+  function ignoring one coordinate; proof via `Fin.insertNthEquiv`.)
+* `proj_injective` (`K < j`, `s·j < B`), `gridU_injective` (`s < B`).
+* `mult d = 1 + Q(D₀ + u)`, `offset t = Q v`, `shiftG ρ = j d − t` (draft (2.3));
+  `coprime_mult` (needs only: `Q` divisible by every `m ≤ U ≥ max u`, `1 < Q`, `s < B`);
+  **`shiftG_injective`** — the surviving shifts `K < j, j' ≤ J < Q` are globally distinct;
+  `add_shiftG_eq` — `n = t + d k ⇒ n + ρ_j = d (k + j)`, the transport input.
+
+`src/NormalNumbers/G4SmallPrimeVector.lean` (sorry-free, trust triple):
+* `AtomLayer K s N = atoms × Fin N`, `layer K jj = K+1+jj`, `shiftAL`, `coeffAL q (α,jj) = w_α/4^j`
+  with `w = q ᵥ* A`; `Sval sm ρ n a = ∑_α A_{aα} ∑_jj ω_{sm}(n + ρ(α,jj))/4^{layer jj}`.
+* **`torusChar_Sval`** — `∏_a e(q_a S_a(n)) = e(totalPhase sm ρ (coeffAL q) n)`: the concrete
+  character IS a phase sum of shifted `ω_{sm}`.
+* **`sum_sq_distZ_coeff_ge`** — `∑_i dist(x_i,ℤ)² ≥ 4^{−4}8^{−K}` for `0 ≠ q`, `‖q‖∞ ≤ D`, once
+  `N ≥ 1 + ⌈log₄(2^K D)⌉` (every frequency-depth layer retained; `freqDepth_le`).
+* `goodPrime_of_not_dvd` — injective shifts + `p ∤ (ρ_i − ρ_{i'})` ⇒ `GoodPrime ρ p`;
+  `shiftAL_injective`.
+* **`norm_sampleAvg_torusChar_Sval_le`** — §4C for the concrete vector, uniformly on the box:
+  `‖avg ∏_a e(q_a S_a n)‖ ≤ exp(−4·4^{−4}8^{−K} ∑_{p∈sm} 1/p) + (the four lap-4 errors)`.
+
+**What now separates this from `Frame.PropC`** (all bookkeeping, no new mathematics):
+(a) the reindexing `(Fin K → Fin s) ≃ Fin r` to the wiring's `Torus r`; (b) `hgood` from
+`goodPrime_of_not_dvd` once the progression modulus `P₀` is built to contain every prime
+dividing a nonzero shift difference (§3); (c) the harmonic sum `∑_{p∈sm} 1/p ≥ L − O(log L)`
+— needs an elementary lower Mertens bound `∑_{p≤R} 1/p ≥ log log R − 1` (NOT in mathlib;
+route: `∏_{p≤R}(1−1/p)^{−1} ≥ ∑_{n≤R} 1/n ≥ log R` and `−log(1−1/p) ≤ 1/p + 1/p²`), and the
+excluded primes `p ∣ P₀` cost `≤ ∑_{k≤ω(P₀)} 1/(k+1) ≤ log ω(P₀) + 1 = O(log L)` (trivial);
+(d) C4 numerics: `M = 10⁴·|ι|·L`, `λ = λ' = 8` against `Λ = (2D+1)^r`, via `schedule_budget`.
+
+**Also needed for D and noted here (not yet Lean)**: the far tail `j > J` needs the sample mean
+`𝔼 ω(n+ρ) ≪ L` — an UPPER Mertens bound `∑_{p≤z} 1/p ≤ log log z + O(1)`, also not in mathlib;
+route: `primorial_le_four_pow` ⇒ `#{p ∈ (y,2y]} ≤ 2y log 4 / log y`, dyadic blocks.  The crude
+`∑_{p≤z} 1/p ≤ log z` is NOT enough (`2^K 4^{−J} log X ≫ η`).
+
+Next attack: the transport identity (fixed-base §1 / draft (4.1)) from `omegaR_mul_eq` +
+`add_shiftG_eq`: `∑_{j≥1} 4^{−j} ω(n+ρ_{α,j}) = T₄(k_α) + ω(d_α)/3 − E_α`, `T₄(k) − 4^k G₄ ∈ ℤ`,
+giving `PropA` for the grid frame.  Then the §3 progression `P₀`.
+
 ## ✅ GRIND 2026-09-14 (G4 lap 4): C3core (the sample exponential moment / Shiu) is NOT NEEDED — C3 reduced to CRT counting alone
 
 `src/NormalNumbers/G4TransferMoment.lean` (new, sorry-free, all headlines `[propext, Classical.choice, Quot.sound]`).
