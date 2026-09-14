@@ -27,6 +27,31 @@ against `m_K H_K` total bits.  **Not a normality claim**: the sampled positions 
 zero (laps 9–22).  It *is* strictly stronger than `isDisjunctive_two` on this system, and it is
 the load-bearing input any future positive branch would need.
 
+### ✅ PROVED (entropy lap 23) — `Sched.tendsto_blockFreq_primeLambertFour`
+
+```
+blockFreq i ℓ x w                                          (G4EntropyFreq.lean)
+  = avg over (α, j) of ((jointLawAt i x).map (blkCoord (kk i) ℓ (α,j))).prob {w}
+
+tendsto_blockFreq_primeLambertFour (ℓ) (0 < ℓ) (w : Fin (2^ℓ)) :
+  Tendsto (fun i => blockFreq i ℓ (primeLambertAtBase 4) w) atTop (nhds (1/2^ℓ))
+```
+axiom-clean, plus the quantitative `abs_blockFreq_sub_le`:
+`|blockFreq i ℓ G₄ w − 2^{−ℓ}| ≤ log 2·(ℓ + 50√K)/(t·(m_K/ℓ+1)) + t/2` for every `t > 0`.
+
+The chain as built: `FinLaw.gibbs` → `H₂_le_sum_H₂_map` (joint injectivity from
+`blkAt_injective`) → `sum_block_deficit_le` → `abs_prob_singleton_sub_le` (Hellinger) →
+`abs_avg_sub_le` (AM-GM) → `abs_avg_block_prob_sub_le` → `entropy_E1`.
+
+**Still open in this thread (next):**
+1. **The faithfulness rendering.**  `blockFreq` is *defined* through `FinLaw.map`; prove
+   `blockFreq_eq_count` — it equals `#{(n,α,j) : the ℓ-block …} / (|P_K|·H_K·(m_K/ℓ+1))` —
+   from `map_empirical_p`, and `blockFreq_eq_digits` — that block `j` IS the ℓ binary digits
+   of `G₄` at `2·kIdx(n,α) + jℓ` — from `blkAt_blockVal` + `ZSample_eq_blockVal`.  Until those
+   land, the headline is honest but its *meaning* rests on definitional unfolding rather than
+   on a stated dictionary.
+2. Optional: the same for every `x`, not just `G₄` (the abstract theorem already is).
+
 ### Decomposition — hardest first, and the order to build
 
 1. **`G4EntropyGibbs.lean` — Gibbs + generalized subadditivity.**  The workhorse; reused three
