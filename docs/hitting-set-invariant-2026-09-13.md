@@ -50,7 +50,7 @@ reproduces the naive controls; the naive short-circuit search stays faster for t
 | (10,1) | > 9 | – | – | – | sizes ≤ 9, ≤ 20 (cap probably binding) |
 | (2,2) | 2 | **3 channel-distinct pairs ≤ 60**: `{1,3}`, `{1,11}`, `{3,5}` (151 naive, with 2-multiples and scalings) | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
 | (2,3) | 4 | **2 channel-distinct 4-sets ≤ 60**: `{1,3,5,7}`, `{1,5,7,11}` (the naive 928 are these with elements doubled: `{1,3,5,14}` is `{1,3,5,7}`, channel 14 = channel 7 shifted) | > 4 (`{1,3,5,7}` fails) | – | sizes ≤ 4, ≤ 60 (naive, 2 h 38 min) |
-| (2,4) | > 8 (≤ 20) | **`{1,3,…,15}` does NOT hit** (nor any 7-subset of it); no set of size ≤ 8 below 20 (size 8: 1937 s). The cap may bind (base 6's minimal sets reach 23 under a cap of 24), so the value is open; N5 gives `≥ 8` | – | – | sizes ≤ 8, ≤ 20 |
+| (2,4) | **9** (within ≤ 40) | **`{1,3,5,7,9,11,13,15,17}`, the first nine odd numbers, is the only channel-distinct 9-set ≤ 40** (930 s); `{1,3,…,15}` does NOT hit, nor any 8-set ≤ 40 (196 s; 1297 sparse survivors, all fail at `0000`). Size 8 at cap 60 running; N5 gives `≥ 8` | – | – | sizes ≤ 9, ≤ 40 |
 | (3,2) | **6** | **1 channel-distinct set ≤ 20**: `{1,2,4,5,7,8}` (42 naive; `{1,4,5,6,7,8}` is it with `6 = 3·2`) | – | – | sizes ≤ 6, ≤ 20 |
 
 Read along rows: `S(g,1) = 1, 2, 3, 5, 7, >6, >8, >8, >9` for `g = 2..10`; `S(2,k) = 1, 2, 4, >7`
@@ -178,7 +178,7 @@ for a hole made of *random* depth-`n` cylinders the survivor set has entropy
 
 > **N5.**  `S(g,k) ≥ (g−1)·g^(k−1)`.
 
-Data: `(g−1)g^(k−1)` is `1, 2, 4, 8` at base 2 (table: `1, 2, 4, ≥ 9 within ≤ 20`), `2, 6` at base
+Data: `(g−1)g^(k−1)` is `1, 2, 4, 8` at base 2 (table: `1, 2, 4, 9 within ≤ 40`, so strict at `k = 4` unless an 8-set between 40 and 60 hits), `2, 6` at base
 3 (`2, 6`), `3` at base 4 (`3`), `4, 5, 6, 7, 8, 9` at bases 5–10 (`5, 7, 7, ≥ 9, ≥ 9, ≥ 10`).
 Never violated; tight at bases 2–4 for the exact entries; a strict lower bound from base 5 on.
 ⚠️ The count is a heuristic with a known failure mode: a single interval hole next to the fixed
