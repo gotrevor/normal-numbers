@@ -823,4 +823,22 @@ theorem isSampled_bandPos (j : ℕ) : IsSampled (bandPos j) := by
   rw [heq]
   exact mem_sampledPos_of (gridAt i) (bnth_mem_PK i (r / kk i)) (goodAtom i) hmod
 
+/-! ### Faithfulness: the statements are not vacuous -/
+
+/-- The band read is a genuine injection of read indices into digit positions. -/
+theorem bandPos_injective : Function.Injective bandPos := bandPos_strictMono.injective
+
+/-- The cutoffs are cofinal, so `tendsto_bandRead_freq` is a statement about arbitrarily long
+prefixes. -/
+theorem tendsto_bT_atTop : Tendsto (fun i => (bT i : ℝ)) atTop atTop := by
+  refine tendsto_atTop_mono (fun i => ?_) tendsto_natCast_atTop_atTop
+  have : i ≤ bT i := self_le_bT i
+  exact_mod_cast this
+
+/-- The read positions themselves are cofinal. -/
+theorem tendsto_bandPos_atTop : Tendsto (fun j => (bandPos j : ℝ)) atTop atTop := by
+  refine tendsto_atTop_mono (fun j => ?_) tendsto_natCast_atTop_atTop
+  have : j ≤ bandPos j := bandPos_strictMono.le_apply
+  exact_mod_cast this
+
 end NormalNumbers.G4.Sched
