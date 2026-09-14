@@ -89,26 +89,32 @@ theorem coordAvg_eq_digits (i ℓ : ℕ) (hℓm : ℓ ≤ kk i) (x : ℝ) (α : 
 /-- The scale-`i` per-window deficit at `ρ = 1/2`: `entropy_E1`'s `50√K`, doubled. -/
 noncomputable def atomDeficit (i : ℕ) : ℝ := 100 * Real.sqrt (KK i)
 
+lemma atomDeficit_pos (i : ℕ) : 0 < atomDeficit i := by
+  have hKpos : (0 : ℝ) < (KK i : ℝ) := by
+    have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+    linarith
+  have := Real.sqrt_pos.2 hKpos
+  rw [atomDeficit]
+  linarith
+
 open Classical in
-/-- **At every scale one atom is good for every word of every length.**  `exists_good_coord` at
-`ρ = 1/2`, fed `entropy_E1`'s deficit. -/
+/-- **At every scale one atom carries all but `100√K` of its own `m_K` bits.**
+`exists_good_coord_deficit` at `ρ = 1/2`, fed `entropy_E1`'s deficit. -/
 theorem exists_good_atom (i : ℕ) :
-    ∃ α : (gridAt i).Atom, ∀ ℓ : ℕ, 0 < ℓ → ℓ ≤ kk i → ∀ w : Fin (2 ^ ℓ),
-      |coordAvg (kk i) ℓ (jointLawAt i (primeLambertAtBase 4)) α w - 1 / (2 : ℝ) ^ ℓ|
-        ≤ 2 * Real.sqrt (Real.log 2 * (ℓ : ℝ) * atomDeficit i / ((kk i : ℝ) - ℓ + 1)) := by
+    ∃ α : (gridAt i).Atom,
+      FinLaw.coordDeficit (jointLawAt i (primeLambertAtBase 4)) α ≤ atomDeficit i := by
   have hKpos : (0 : ℝ) < (KK i : ℝ) := by
     have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
     linarith
   have hδ : (0 : ℝ) < 50 * Real.sqrt (KK i) := by
     have := Real.sqrt_pos.2 hKpos
     linarith
-  obtain ⟨α, hα⟩ := exists_good_coord (jointLawAt i (primeLambertAtBase 4)) hδ
+  obtain ⟨α, hα⟩ := exists_good_coord_deficit (jointLawAt i (primeLambertAtBase 4)) hδ
     (by norm_num : (0:ℝ) < 1/2) (by norm_num : (1/2:ℝ) < 1) (deficit_primeLambertFour i)
-  refine ⟨α, fun ℓ hℓ hℓm w => ?_⟩
-  have h := hα ℓ hℓ hℓm w
+  refine ⟨α, ?_⟩
   have hrw : 50 * Real.sqrt (KK i) / (1 / 2 : ℝ) = atomDeficit i := by
     rw [atomDeficit]; ring
-  rwa [hrw] at h
+  rwa [hrw] at hα
 
 
 /-! ### The good atom's frequency limit -/
@@ -117,10 +123,16 @@ open Classical in
 /-- The chosen good atom at scale `i`.  Word- and length-free. -/
 noncomputable def goodAtom (i : ℕ) : (gridAt i).Atom := (exists_good_atom i).choose
 
+lemma goodAtom_deficit (i : ℕ) :
+    FinLaw.coordDeficit (jointLawAt i (primeLambertAtBase 4)) (goodAtom i) ≤ atomDeficit i :=
+  (exists_good_atom i).choose_spec
+
+/-- The good atom's capture bound, for every word of every length. -/
 lemma goodAtom_spec (i : ℕ) : ∀ ℓ : ℕ, 0 < ℓ → ℓ ≤ kk i → ∀ w : Fin (2 ^ ℓ),
     |coordAvg (kk i) ℓ (jointLawAt i (primeLambertAtBase 4)) (goodAtom i) w - 1 / (2 : ℝ) ^ ℓ|
       ≤ 2 * Real.sqrt (Real.log 2 * (ℓ : ℝ) * atomDeficit i / ((kk i : ℝ) - ℓ + 1)) :=
-  (exists_good_atom i).choose_spec
+  fun ℓ hℓ hℓm w =>
+    abs_coordAvg_sub_le hℓ hℓm _ (goodAtom i) w (atomDeficit_pos i) (goodAtom_deficit i)
 
 /-- **The good atom's capture bound in the `1/√K` form.**  `m_K − ℓ + 1 ≥ m_K/2` and
 `√K·√K = 4m_K`, so the deficit `100√K` becomes `800 log 2·ℓ/√K`. -/
