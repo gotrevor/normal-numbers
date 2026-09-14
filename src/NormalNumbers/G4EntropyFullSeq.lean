@@ -108,4 +108,138 @@ lemma bandLo_le_fnth (i a : ℕ) : bandLo i ≤ fnth i a :=
 lemma fnth_add_lt_bandTop (i a : ℕ) {p : ℕ} (hp : p < kk i) : fnth i a + p < bandTop i :=
   winStarts_add_lt_bandTop i (fnth_mem i a) hp
 
+/-! ### The schedule-only position map -/
+
+/-- The number of digits band `i` contributes to the schedule-only read. -/
+noncomputable def fL (i : ℕ) : ℕ := (winStarts i).card * kk i
+
+lemma fL_pos (i : ℕ) : 0 < fL i :=
+  Nat.mul_pos (card_winStarts_pos i) (by unfold kk; omega)
+
+/-- The cutoff after the first `i` bands. -/
+noncomputable def fT : ℕ → ℕ
+  | 0 => 0
+  | (i + 1) => fT i + fL i
+
+lemma fT_lt_succ (i : ℕ) : fT i < fT (i + 1) := by
+  have := fL_pos i
+  show fT i < fT i + fL i
+  omega
+
+lemma fT_mono : Monotone fT := monotone_nat_of_le_succ fun i => (fT_lt_succ i).le
+
+lemma self_le_fT (i : ℕ) : i ≤ fT i := by
+  induction i with
+  | zero => simp [fT]
+  | succ i ih => have := fT_lt_succ i; omega
+
+/-- The band a read index belongs to. -/
+noncomputable def fgrp (j : ℕ) : ℕ := Nat.findGreatest (fun m => fT m ≤ j) j
+
+lemma fgrp_eq {i j : ℕ} (h1 : fT i ≤ j) (h2 : j < fT (i + 1)) : fgrp j = i := by
+  classical
+  have hij : i ≤ j := le_trans (self_le_fT i) h1
+  have hle : i ≤ fgrp j := Nat.le_findGreatest hij h1
+  by_contra hne
+  have hlt : i < fgrp j := lt_of_le_of_ne hle (Ne.symm hne)
+  have hspec : fT (fgrp j) ≤ j := Nat.findGreatest_spec (P := fun m => fT m ≤ j) hij h1
+  have : fT (i + 1) ≤ fT (fgrp j) := fT_mono (by omega)
+  omega
+
+lemma fT_fgrp_le (j : ℕ) : fT (fgrp j) ≤ j := by
+  classical
+  exact Nat.findGreatest_spec (P := fun m => fT m ≤ j) (Nat.zero_le j) (by simp [fT])
+
+lemma lt_fT_fgrp_succ (j : ℕ) : j < fT (fgrp j + 1) := by
+  classical
+  by_contra hcon
+  push_neg at hcon
+  have h1 : fgrp j + 1 ≤ j := le_trans (self_le_fT (fgrp j + 1)) hcon
+  have h2 : fgrp j + 1 ≤ fgrp j := Nat.le_findGreatest h1 hcon
+  omega
+
+/-- **The schedule-only position map.**  Bands in order; inside a band, the distinct window
+starts in order; inside a window, the `m_i` consecutive positions.  No reference to `G₄`. -/
+noncomputable def fullPos (j : ℕ) : ℕ :=
+  fnth (fgrp j) ((j - fT (fgrp j)) / kk (fgrp j)) + (j - fT (fgrp j)) % kk (fgrp j)
+
+lemma fullPos_eq {i j : ℕ} (h1 : fT i ≤ j) (h2 : j < fT (i + 1)) :
+    fullPos j = fnth i ((j - fT i) / kk i) + (j - fT i) % kk i := by
+  rw [fullPos, fgrp_eq h1 h2]
+
+/-- **The schedule-only read is a genuine subsequence.** -/
+theorem fullPos_strictMono : StrictMono fullPos := by
+  refine strictMono_nat_of_lt_succ fun j => ?_
+  set i := fgrp j with hi
+  have h1 : fT i ≤ j := fT_fgrp_le j
+  have h2 : j < fT (i + 1) := lt_fT_fgrp_succ j
+  have hfT : fT (i + 1) = fT i + fL i := rfl
+  set r : ℕ := j - fT i with hr
+  have hrlt : r < fL i := by omega
+  have hkk : 0 < kk i := by unfold kk; omega
+  set a : ℕ := r / kk i with ha
+  set p : ℕ := r % kk i with hp
+  have hpk : p < kk i := Nat.mod_lt _ hkk
+  have hra : r = a * kk i + p := (Nat.div_add_mod' r (kk i)).symm
+  have hacard : a < (winStarts i).card := by
+    by_contra hcon
+    push_neg at hcon
+    have : (winStarts i).card * kk i ≤ a * kk i := Nat.mul_le_mul_right _ hcon
+    rw [fL] at hrlt
+    omega
+  have hj : fullPos j = fnth i a + p := fullPos_eq h1 h2
+  rcases Nat.lt_or_ge (p + 1) (kk i) with hcase | hcase
+  · have hr1 : j + 1 - fT i = r + 1 := by omega
+    have hlt1 : j + 1 < fT (i + 1) := by
+      rw [hfT, fL]
+      have : (a + 1) * kk i ≤ (winStarts i).card * kk i := Nat.mul_le_mul_right _ hacard
+      have hexp : (a + 1) * kk i = a * kk i + kk i := by ring
+      omega
+    have hdiv : (r + 1) / kk i = a := by
+      rw [hra]
+      have hc : a * kk i + p + 1 = kk i * a + (p + 1) := by ring
+      rw [hc, Nat.mul_add_div hkk, Nat.div_eq_of_lt hcase]
+      omega
+    have hmod : (r + 1) % kk i = p + 1 := by
+      rw [hra]
+      have hc : a * kk i + p + 1 = kk i * a + (p + 1) := by ring
+      rw [hc, Nat.mul_add_mod, Nat.mod_eq_of_lt hcase]
+    have := fullPos_eq (i := i) (j := j + 1) (by omega) hlt1
+    rw [this, hr1, hdiv, hmod, hj]
+    omega
+  · have hpk1 : p + 1 = kk i := by omega
+    rcases Nat.lt_or_ge (a + 1) (winStarts i).card with hcase2 | hcase2
+    · have hr1 : j + 1 - fT i = r + 1 := by omega
+      have hreq : r + 1 = (a + 1) * kk i := by
+        have : (a + 1) * kk i = a * kk i + kk i := by ring
+        omega
+      have hlt1 : j + 1 < fT (i + 1) := by
+        rw [hfT, fL]
+        have : (a + 1) * kk i < (winStarts i).card * kk i :=
+          Nat.mul_lt_mul_of_lt_of_le hcase2 (le_refl _) hkk
+        omega
+      have hdiv : (r + 1) / kk i = a + 1 := by rw [hreq, Nat.mul_div_cancel _ hkk]
+      have hmod : (r + 1) % kk i = 0 := by rw [hreq, Nat.mul_mod_left]
+      have heq := fullPos_eq (i := i) (j := j + 1) (by omega) hlt1
+      rw [heq, hr1, hdiv, hmod, hj]
+      have hgap := fnth_gap (i := i) (a := a) (b := a + 1) (by omega) hcase2
+      omega
+    · have hacard' : a + 1 = (winStarts i).card := by omega
+      have hreq : r + 1 = fL i := by
+        rw [fL, ← hacard']
+        have : (a + 1) * kk i = a * kk i + kk i := by ring
+        omega
+      have hj1 : j + 1 = fT (i + 1) := by rw [hfT]; omega
+      have hlt2 : fT (i + 1) ≤ j + 1 := by omega
+      have hlt3 : j + 1 < fT (i + 1 + 1) := by
+        have := fT_lt_succ (i + 1)
+        omega
+      have heq := fullPos_eq (i := i + 1) (j := j + 1) hlt2 hlt3
+      have hzero : j + 1 - fT (i + 1) = 0 := by omega
+      rw [heq, hzero, Nat.zero_div, Nat.zero_mod, hj]
+      have hup : bandLo (i + 1) ≤ fnth (i + 1) 0 := bandLo_le_fnth (i + 1) 0
+      have hlo : bandLo (i + 1) = bandTop i := rfl
+      have hdown : fnth i a + p < bandTop i := fnth_add_lt_bandTop i a hpk
+      omega
+
 end NormalNumbers.G4.Sched
