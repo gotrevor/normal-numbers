@@ -173,4 +173,170 @@ theorem blkAt_blockVal (y : ℝ) (p m ℓ j : ℕ) (h : (j + 1) * ℓ ≤ m) :
     omega
   rw [hdiv, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt (blockVal_lt _ _ _)]
 
+
+/-! ### The joint coordinate family and the deficit budget -/
+
+/-- The `(α, j)` coordinate of a joint sample vector: the `j`-th `ℓ`-block of the window read
+at atom `α`. -/
+def blkCoord {A : Type*} (m ℓ : ℕ) (i : A × Fin (m / ℓ + 1)) (z : A → Fin (2 ^ m)) :
+    Fin (2 ^ ℓ) :=
+  blkAt m ℓ (i.2 : ℕ) (z i.1)
+
+/-- The joint block coordinates determine the joint sample vector. -/
+theorem blkCoord_injective {A : Type*} {m ℓ : ℕ} (hℓ : 0 < ℓ) :
+    Function.Injective
+      (fun z : A → Fin (2 ^ m) => fun i : A × Fin (m / ℓ + 1) => blkCoord m ℓ i z) := by
+  intro z z' h
+  funext α
+  refine blkAt_injective (m := m) (ℓ := ℓ) hℓ ?_
+  funext j
+  exact congrFun h (α, j)
+
+/-- Every block marginal has entropy at most `ℓ`, its alphabet being `2^ℓ` values. -/
+lemma H₂_le_of_block {ℓ : ℕ} (M : FinLaw (Fin (2 ^ ℓ))) : M.H₂ ≤ (ℓ : ℝ) := by
+  have hpos : 0 < Fintype.card (Fin (2 ^ ℓ)) := by
+    simp only [Fintype.card_fin]; positivity
+  refine (M.H₂_le_logb_card hpos).trans_eq ?_
+  simp only [Fintype.card_fin]
+  rw [show ((2 ^ ℓ : ℕ) : ℝ) = (2 : ℝ) ^ ℓ by push_cast; ring]
+  rw [Real.logb_pow, Real.logb_self_eq_one (by norm_num : (1 : ℝ) < 2), mul_one]
+
+/-- **The deficit budget.**  A joint entropy within `Δ` of the maximum `m·|A|` leaves the block
+marginals with a total entropy deficit of at most `|A|·ℓ + Δ`.
+
+The `|A|·ℓ` slack is the price of the overlapping last block, which is what lets the statement
+hold with no divisibility assumption between `ℓ` and `m`. -/
+theorem sum_block_deficit_le {A : Type*} [Fintype A] [DecidableEq A] {m ℓ : ℕ} (hℓ : 0 < ℓ)
+    (L : FinLaw (A → Fin (2 ^ m))) {Δ : ℝ}
+    (hΔ : (m : ℝ) * (Fintype.card A : ℝ) - Δ ≤ L.H₂) :
+    ∑ i : A × Fin (m / ℓ + 1), ((ℓ : ℝ) - (L.map (blkCoord m ℓ i)).H₂)
+      ≤ (Fintype.card A : ℝ) * (ℓ : ℝ) + Δ := by
+  classical
+  have hsub := L.H₂_le_sum_H₂_map (fun i : A × Fin (m / ℓ + 1) => blkCoord m ℓ i)
+    (blkCoord_injective hℓ)
+  have hcard : (Fintype.card (A × Fin (m / ℓ + 1)) : ℝ)
+      = (Fintype.card A : ℝ) * ((m / ℓ : ℕ) + 1 : ℕ) := by
+    simp [Fintype.card_prod]
+  have hexp : ∑ i : A × Fin (m / ℓ + 1), ((ℓ : ℝ) - (L.map (blkCoord m ℓ i)).H₂)
+      = (Fintype.card (A × Fin (m / ℓ + 1)) : ℝ) * (ℓ : ℝ)
+        - ∑ i : A × Fin (m / ℓ + 1), (L.map (blkCoord m ℓ i)).H₂ := by
+    rw [Finset.sum_sub_distrib, Finset.sum_const, nsmul_eq_mul, Finset.card_univ]
+  -- `(r+1)·ℓ ≤ m + ℓ`
+  have hrl : ((m / ℓ : ℕ) + 1 : ℕ) * (ℓ : ℝ) ≤ (m : ℝ) + (ℓ : ℝ) := by
+    have hnat : (m / ℓ) * ℓ ≤ m := Nat.div_mul_le_self m ℓ
+    have : ((m / ℓ * ℓ : ℕ) : ℝ) ≤ (m : ℝ) := by exact_mod_cast hnat
+    push_cast at this ⊢
+    nlinarith [this]
+  have hA0 : (0 : ℝ) ≤ (Fintype.card A : ℝ) := by positivity
+  rw [hexp, hcard]
+  have hmul : (Fintype.card A : ℝ) * ((m / ℓ : ℕ) + 1 : ℕ) * (ℓ : ℝ)
+      ≤ (Fintype.card A : ℝ) * ((m : ℝ) + (ℓ : ℝ)) := by
+    rw [mul_assoc]
+    exact mul_le_mul_of_nonneg_left hrl hA0
+  nlinarith [hsub, hΔ, hmul]
+
+/-! ### One coordinate: an entropy deficit bounds every word's bias -/
+
+/-- **A near-maximal block entropy pins every word's probability.**  For a law on the `ℓ`-bit
+alphabet, each single word's probability is within `√(2 log 2 · deficit)` of `2^{−ℓ}`. -/
+theorem abs_prob_singleton_sub_le {ℓ : ℕ} (hℓ : 0 < ℓ) (M : FinLaw (Fin (2 ^ ℓ)))
+    (w : Fin (2 ^ ℓ)) :
+    |M.prob {w} - 1 / (2 : ℝ) ^ ℓ| ≤ Real.sqrt (2 * Real.log 2 * ((ℓ : ℝ) - M.H₂)) := by
+  classical
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hcard : Fintype.card (Fin (2 ^ ℓ)) = 2 ^ ℓ := Fintype.card_fin _
+  have h2 : 2 ≤ 2 ^ ℓ := by
+    calc 2 = 2 ^ 1 := by norm_num
+      _ ≤ 2 ^ ℓ := Nat.pow_le_pow_right (by norm_num) hℓ
+  have hBc : ({w} : Finset (Fin (2 ^ ℓ)))ᶜ.Nonempty := by
+    rw [← Finset.card_pos, Finset.card_compl, Finset.card_singleton, hcard]
+    omega
+  have hkey := sq_prob_sub_le_logb_card_sub_H₂ M (Finset.singleton_nonempty w) hBc
+  rw [Finset.card_singleton, hcard] at hkey
+  have hlogb : Real.logb 2 ((2 ^ ℓ : ℕ) : ℝ) = (ℓ : ℝ) := by
+    rw [show ((2 ^ ℓ : ℕ) : ℝ) = (2 : ℝ) ^ ℓ by push_cast; ring]
+    rw [Real.logb_pow, Real.logb_self_eq_one (by norm_num : (1 : ℝ) < 2), mul_one]
+  rw [hlogb] at hkey
+  have hu : ((1 : ℕ) : ℝ) / ((2 ^ ℓ : ℕ) : ℝ) = 1 / (2 : ℝ) ^ ℓ := by push_cast; ring
+  rw [hu] at hkey
+  set D : ℝ := (ℓ : ℝ) - M.H₂ with hD
+  have hsq : (M.prob {w} - 1 / (2 : ℝ) ^ ℓ) ^ 2 ≤ 2 * Real.log 2 * D := by
+    rw [div_le_iff₀ (by positivity)] at hkey
+    nlinarith [hkey, hlog2]
+  calc |M.prob {w} - 1 / (2 : ℝ) ^ ℓ|
+      = Real.sqrt ((M.prob {w} - 1 / (2 : ℝ) ^ ℓ) ^ 2) := (Real.sqrt_sq_eq_abs _).symm
+    _ ≤ Real.sqrt (2 * Real.log 2 * D) := Real.sqrt_le_sqrt hsq
+
+/-! ### Averaging the square roots -/
+
+/-- **√-averaging by AM-GM.**  If each `|g i − u|` is at most `√(e i)` and the `e i` sum to at
+most `S`, then the average of the `g i` is within `S/(2tN) + t/2` of `u`, for every `t > 0`.
+Taking `t` small and then `S/N` small is how the limit is extracted. -/
+theorem abs_avg_sub_le {ι : Type*} [Fintype ι] (hι : 0 < Fintype.card ι) (g e : ι → ℝ)
+    (u S t : ℝ) (he : ∀ i, 0 ≤ e i) (hg : ∀ i, |g i - u| ≤ Real.sqrt (e i))
+    (hS : ∑ i, e i ≤ S) (ht : 0 < t) :
+    |(∑ i, g i) / (Fintype.card ι : ℝ) - u| ≤ S / (2 * t * (Fintype.card ι : ℝ)) + t / 2 := by
+  have hN : (0 : ℝ) < (Fintype.card ι : ℝ) := by exact_mod_cast hι
+  -- pointwise AM-GM
+  have hstep : ∀ i, |g i - u| ≤ e i / (2 * t) + t / 2 := by
+    intro i
+    refine (hg i).trans ?_
+    have hrhs : e i / (2 * t) + t / 2 = (e i + t ^ 2) / (2 * t) := by
+      field_simp
+    rw [hrhs, le_div_iff₀ (by positivity : (0 : ℝ) < 2 * t)]
+    nlinarith [sq_nonneg (Real.sqrt (e i) - t), Real.sq_sqrt (he i)]
+  have hrw : (∑ i, g i) / (Fintype.card ι : ℝ) - u
+      = (∑ i, (g i - u)) / (Fintype.card ι : ℝ) := by
+    rw [Finset.sum_sub_distrib, Finset.sum_const, nsmul_eq_mul, Finset.card_univ]
+    field_simp
+  rw [hrw, abs_div, abs_of_pos hN]
+  have habs : |∑ i, (g i - u)| ≤ ∑ i, |g i - u| := Finset.abs_sum_le_sum_abs _ _
+  have hsum : ∑ i, |g i - u| ≤ (∑ i, e i) / (2 * t) + (Fintype.card ι : ℝ) * (t / 2) := by
+    have := Finset.sum_le_sum (fun i (_ : i ∈ Finset.univ) => hstep i)
+    calc ∑ i, |g i - u| ≤ ∑ i, (e i / (2 * t) + t / 2) := this
+      _ = (∑ i, e i) / (2 * t) + (Fintype.card ι : ℝ) * (t / 2) := by
+          rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul, Finset.card_univ,
+            ← Finset.sum_div]
+  rw [div_le_iff₀ hN]
+  have hSt : (∑ i, e i) / (2 * t) ≤ S / (2 * t) := by
+    apply div_le_div_of_nonneg_right hS (by positivity)
+  have hfin : (S / (2 * t * (Fintype.card ι : ℝ)) + t / 2) * (Fintype.card ι : ℝ)
+      = S / (2 * t) + (Fintype.card ι : ℝ) * (t / 2) := by
+    field_simp
+  rw [hfin]
+  linarith [habs, hsum, hSt]
+
+/-! ### The pushforward of an empirical law is empirical -/
+
+open Classical in
+/-- Pushing an empirical law forward re-samples the composite statistic: the mass of `ω'` is the
+sample density of `{i : g (f i) = ω'}`. -/
+lemma map_empirical_p {ι Ω Ω' : Type*} [Fintype Ω] [Fintype Ω'] [DecidableEq Ω']
+    {S : Finset ι} (hS : S.Nonempty) (f : ι → Ω) (g : Ω → Ω') (ω' : Ω') :
+    ((empirical S hS f).map g).p ω'
+      = ((S.filter fun i => g (f i) = ω').card : ℝ) / S.card := by
+  classical
+  rw [FinLaw.map_p]
+  simp only [empirical_p]
+  rw [← Finset.sum_div]
+  congr 1
+  have hmaps : ∀ i ∈ S.filter (fun i => g (f i) = ω'),
+      f i ∈ Finset.univ.filter (fun ω => g ω = ω') := by
+    intro i hi
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+    exact (Finset.mem_filter.1 hi).2
+  have hfib := Finset.card_eq_sum_card_fiberwise hmaps
+  rw [hfib]
+  push_cast
+  refine Finset.sum_congr rfl fun ω hω => ?_
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hω
+  have hfe : (S.filter fun i => g (f i) = ω').filter (fun a => f a = ω)
+      = S.filter fun i => f i = ω := by
+    ext i
+    simp only [Finset.mem_filter]
+    constructor
+    · rintro ⟨⟨h1, -⟩, h2⟩; exact ⟨h1, h2⟩
+    · rintro ⟨h1, h2⟩; exact ⟨⟨h1, by rw [h2]; exact hω⟩, h2⟩
+  rw [hfe]
+
 end NormalNumbers.G4Entropy
