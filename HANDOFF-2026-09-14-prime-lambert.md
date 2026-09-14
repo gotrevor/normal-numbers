@@ -20,7 +20,16 @@ Root module / lakefile untouched (host-owned).
 - `PrimeLambertHexagonCounterexample` (checkpoint 3, addendum): `not_meanRetention_seven`,
   axiom-clean, full complex inequality with `c = 2cos(2π/7)` identified.
 
+- `PrimeLambertAnalytic` (checkpoint 4): exact prime-by-prime split of the finite tail, the
+  four analytic Props, proved wiring `ChainExists → PhaseOscillation → Irrational primeLambert`.
+
 ## Open
 
-The analytic chain (draft §5) is entirely open; `PhaseOscillation` is its endpoint Prop.
-Next: geometry module (hexagon tensor, transform), then split §5 into exact sub-Props.
+`ChainExists` = `TailTruncation ∧ LargePrimeNegligible ∧ BadPrimeFrozen ∧ SmallPrimeDecay` for
+every `q ≠ 0`.  The single `sorry` remains `phaseOscillation` in `PrimeLambertOscillation`.
+Next attack, in order of exactness: (1) `BadPrimeFrozen` from a residue-freezing hypothesis
+on the sample (exact: `p ∣ n + r ↔ p ∣ n' + r` when `p ∣ n − n'`); (2) `TailTruncation` from
+`ω(m) ≤ log₂ m` and the geometric tail; (3) `LargePrimeNegligible` from the count of prime
+factors above `R`; (4) decompose `SmallPrimeDecay` into independent-model decay, CRT moment
+comparison, and even-moment transfer Props.  Geometry still lacking: distinct first
+coordinates for `B ≥ 7`, the mass `6^{K/3}`, surviving squared mass at `K+1`.

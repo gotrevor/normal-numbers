@@ -16,6 +16,7 @@ No novelty claim.  Headline `irrational_primeLambert` is **sorry-gated**; see "S
 | `PrimeLambertDefs` | `primeLambert`, summability, `tailT k = 2^k G − tailInt k`, `rational_tail_int`; exact transport `ω(dm) + overlap d m = ω m + ω d`, `dilatedTail_eq`, exact periodicity `transportCorr_congr` | proved, axiom-clean |
 | `PrimeLambertConfig` | transported configurations `TConfig = (ℕ×ℤ) →₀ ℤ`, `CancelsAt c j` (pushforward along `j·d − s` vanishes), `phaseSum c K n`, **Theorem A** `phaseSum_sub_int` | proved, axiom-clean |
 | `PrimeLambertGeometry` | group ring `ℤ[ℤ×ℤ]`, `Cancels`, `edge`, `hexagon` (cancels at its triple; six-atom form `hexagon_eq_six`), `dilate`, `hexTensor r B` cancels at all `1..6r` (`hexTensor_cancels`), coprime transform `toConfig` preserving cancellation (`cancelsAt_toConfig`), positivity, pairwise coprimality (`transform_coprime`), assembly `exists_tconfig_cancelling` | proved, axiom-clean |
+| `PrimeLambertAnalytic` | finite tail `truncPhase`, per-prime parts `primePart`, exact additive split `truncPhase_split` (bad/small/large), the four analytic Props `TailTruncation`, `LargePrimeNegligible`, `BadPrimeFrozen`, `SmallPrimeDecay`, proved wiring `phaseOscillation_of_chain`, `ChainExists → Irrational primeLambert` (`irrational_of_chainExists`) | wiring proved, axiom-clean; the four Props open |
 | `PrimeLambertOscillation` | `e`, `ProgressionFamily`, `phaseAverage`, `PhaseOscillation` (draft eq. (5)), `norm_phaseAverage_eq_one`, `irrational_of_phaseOscillation` | proved, axiom-clean; `phaseOscillation` is the single disclosed `sorry` |
 
 Build: `lake build NormalNumbers.PrimeLambertOscillation` (targeted; the root module is
@@ -37,6 +38,23 @@ host-owned and does not import these yet).
 5. Wiring: `PhaseOscillation → Irrational primeLambert`.
 
 ## Status of the analytic chain (open)
+
+`ChainExists` (in `PrimeLambertAnalytic`) is the exact remaining obligation, split into four
+named Props on a `Chain q` (configurations `c N` cancelling at `1..K N`, progression samples,
+sieve data `J, bad, small, large` with primality/disjointness/cover fields):
+
+| Prop | draft | content |
+|---|---|---|
+| `TailTruncation` | (20) | `sup_{n∈P_N} \|F − F_J\| ≤ ε_N → 0` |
+| `LargePrimeNegligible` | (19) | `sup_{n∈P_N} \|∑_{p large} X_p\| ≤ ε_N → 0` |
+| `BadPrimeFrozen` | §5.2 | `∑_{p bad} X_p` constant on `P_N` (exact, no bound) |
+| `SmallPrimeDecay` | §5.3–5.4 | `‖𝔼_{P_N} e(q ∑_{p small} X_p)‖ → 0` |
+
+`phaseOscillation_of_chain` proves that these four imply `PhaseOscillation` (Lipschitz bound
+`‖e(x)−1‖ ≤ 4π\|x\|`, unimodular constant factor for the frozen class).  `SmallPrimeDecay` is
+the deep step; its intended proof (independent model, variance `V → ∞`, CRT moment comparison
+to order `M`, even-moment Taylor transfer) is not yet decomposed into Lean Props.
+
 
 `PhaseOscillation` asserts: for each `q ≠ 0` there exist `c N`, `K N`, frozen progression
 samples `P N`, with `c N` cancelling at `1..K N`, and `‖𝔼_{n∈P N} e(q F_N(n))‖ → 0`.
