@@ -1,5 +1,36 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ ALTITUDE + GRIND 2026-09-14 (G4 lap 6): `PropA` and `PropC` DISCHARGED; §4D reduced to two named averages
+
+**Review finding.**  Five laps of *inputs*, zero named `Prop` closed, and the abstract-`Frame` ↔
+concrete-object seam never compiled.  `DIRECTION.md` rewritten accordingly (G-T1 retired as
+satisfied — C3 is proved via `crt_input` + `norm_sampleAvg_prod_ee_le`; G-T4 registered).
+
+**The seam holds.**  `G4Frame.lean`: `gridFrame` + `gridFrame_propA` + `gridFrame_propC`.  `θ` is
+the transport translate by `rfl`; `card_roots_shiftPhase_le` (roots of `shiftPhase ρ x p` do not
+depend on `x` at all) is what makes §4C uniform over the whole Fourier box, giving the
+frequency-free `smallPrimeBound`.
+
+**§4D.**  `G4Remainder.lean` + `G4RowMass.lean`.  The first `K` layers cancel for ANY weight
+(`sum_kronPow_mul_shiftG_eq_zero`); `Ffull n = (Sval n + bigBlock n + farPart n) mod 1` exactly
+(`gridFrame_Ffull_decomp`), with `γ = frozenGamma G` absorbing the primes dividing `P₀`; hence
+`gridFrame_propD` reduces `PropD` to `bigAvg` and `farAvg`.  Row masses proved exactly:
+`∑_α A_{aα} = 0` (the signed cancellation), `∑_α |A_{aα}| = ∑_α A_{aα}² = 2^K`, with the layer
+budgets `4^{−K}/3` and `16^{−K}/15`.
+
+### Next attack (ordered)
+
+1. **`bigAvg`, split at `Y = X^{1/100}` — the tripwire.**  `p > Y` pointwise via
+   `abs_blockSum_le` with `C = 100`; `R < p ≤ Y` by the L² two-congruence count, whose main
+   terms cancel by `sum_kronPow_diffZ_eq_zero`.  A single pointwise bound over all `p > R`
+   typechecks and is WRONG (brief §4D).
+2. **`farAvg`** via the AP-mean of `ω`.  Elementary route found this lap, no Mertens needed:
+   `2^{ω(m)} ≤ d(m)`, Jensen-for-log by hand (`log x ≤ log c + x/c − 1` at `c = E[d]`), and
+   `∑_{m<N} d(m) ≤ N(log N + 1)`.  Gives `E[ω(n+ρ)] = O(L + log P₀)` and
+   `E|farPart| = O(2^K L^{−5}) = o(η)`.
+3. `PropJackson`; then the B assembly; then §5.
+
+
 ## ✅ GRIND 2026-09-14 (G4 lap 5): the §2 grid PROVED (A's arithmetic seed); §4C instantiated on the concrete small-prime vector
 
 **Advance on the crux.**  §4C was closed abstractly in lap 4 for arbitrary phase sums of shifted
