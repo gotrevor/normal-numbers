@@ -1,7 +1,9 @@
 # HANDOFF 2026-09-14 — G4 disjunctivity, lap 7 (`bigAvg` discharged to closed form)
 
-Branch `wip/g4-disjunctivity`.  Prior HEAD `ef58e7c` (this lap's first commit); this file is in
-the second.  Not pushed.  Build line: `lake build NormalNumbers.G4MediumPrimes` — green; the
+Branch `wip/g4-disjunctivity`, HEAD `0000771` (after this handoff commit, one more).  Working
+tree clean.  Not pushed.  Commits this lap: `ef58e7c` (medium L² + very-large pointwise),
+`5e64c6e` (dyadic Chebyshev harmonic mass, `bigAvg_le'`), `0000771` (`G4FarTail`, `farAvg_le`,
+`gridFrame_propD_of_bounds`).  Build line: `lake build NormalNumbers.G4MediumPrimes NormalNumbers.G4FarTail` — green; the
 pre-commit `lake build` (8888 jobs) is green.  Every headline prints
 `[propext, Classical.choice, Quot.sound]`.
 
@@ -58,3 +60,26 @@ unnecessary** — growth in the shift is logarithmic and `4^{−j}` absorbs it.
    `m ≤ X + j d`, giving `∑_{j>j_rem} 4^{−j} log(jd+X)` tiny.  So the split is `J < j ≤ j_rem`
    (AP mean) and `j > j_rem` (pointwise log).  Define `j_rem` in the module, not in §5.
 2. `PropJackson`, B assembly, §5 schedule.
+
+## Final state of this lap (read this first next lap)
+
+**§4D is closed as mathematics.**  `gridFrame_propD_of_bounds` (`G4FarTail.lean`) yields
+`PropD (δbig + δfar)` from two real inequalities:
+
+    √(4(1+log⌊log₂Y⌋−log⌊log₂R⌋)·8^{−K}/15 + 2Y²(2^{−K}/3)²/|P|) + (log Mx/log Y)·2^{−K}/3 ≤ δbig·εη
+    2^K·4^{−(K+N)}·((farC + 2(K+N) + 2)/3 + 2/9)/log 2                                   ≤ δfar·εη
+
+with `farC = log((X+Dm)/|P|) + log(log(X+Dm)+1)`, `Dm ≥ every d_α`, `Mx ≥ every n + ρ_i` on the
+sample, `2 ≤ R ≤ Y`.  These are §5's job.
+
+**Dependency map**: `PropA` ✅ · `PropC` ✅ · `PropD` ✅ (modulo the two §5 inequalities) ·
+`PropB` open (all inputs proved; assembly = Markov + torus marginals + finite unions, steps in
+`HANDOFF-2026-09-14-g4-lap2.md`) · `PropJackson` open (zero laps) · §5 schedule open.
+Nothing refuted.  `isDisjunctive_four_of_frames` is CONDITIONAL on `SeparatingFrameExists`.
+
+**Next lap, per `DIRECTION.md` ordering**: (1) `PropJackson` — product Jackson kernel on
+`Torus r`, one-coordinate first moment `O(1/D)`, the average metric makes `κ = O(1/(εηD))`
+dimension-free; (2) the B assembly; (3) the §5 module instantiating the two §4D inequalities
+(`R = X^{1/(20M)}`, `Y = X^{1/100}`, `Mx = X + (K+N)·Dm`, `|P| ≥ X/P₀ − 1`, draft (3.2) sizes for
+`P₀`, `Dm`), with `η = 2^{−K/4}`; the paper check in `PENDING_WORK.md` (lap 7) says both close
+because `∑_{R<p≤Y}1/p = O(log M)` — the `R` cutoff is load-bearing for D.
