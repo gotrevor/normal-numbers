@@ -21,8 +21,56 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (8983 jobs) ·
-**Updated**: entropy lap 55 · 2026-09-14 · `wip/g4-entropy`
+· **Build**: 🟢 green (8993 jobs) ·
+**Updated**: entropy lap 90 · 2026-09-14 · `wip/g4-entropy`
+
+## 🧭 2026-09-14 (entropy laps 61–90): the granularity **wall**, and the band read that saturates it
+
+**Build** 🟢 8993 jobs · every new module sorry-free · every endpoint
+`[propext, Classical.choice, Quot.sound]`.
+
+### The wall — normality is closed on this mechanism, with a theorem
+
+`NormalNumbers.G4.Sched.certified_granule_exceeds_previous_scale`
+(`G4EntropyMixture.lean`, built on `G4EntropyGranule.granule_exceeds_previous_scale`):
+
+> Any sub-collection of scale `i+1`'s sample times whose derived capture bound is **not vacuous**
+> already reads more digits than scale `i` produced in total:
+> `|Atom_i|·|P_{K_i}|·m_i < |S|·m_{i+1}`.
+
+So every construction that reads the sampled digits in position order as a concatenation of
+*certified* granules has its history wiped out at each new scale — prefix frequencies cannot
+converge.  The cause is `X(K) = 2^{100·2^{m(K)}}` with `m(K) ≥ K³`, not the atom count, so this
+subsumes lap 54's `chunks_insufficient` and is immune to every refinement of the chunking
+(including the per-atom certification `card_good_ge` of lap 61, which shrinks the granule to a
+single atom).
+
+Supporting: `FinLaw.H₂_mix_le` (mixing costs one bit) and
+`H₂_empirical_window_restrict_ge` (restricting the **sample times** costs `(δ+1)/σ`, the dual of
+`H₂_restrictCoords_ge`).
+
+### The band read — the strongest object the wall leaves standing
+
+`G4EntropyBandSeq.lean`, `G4EntropyBandPrefix.lean`:
+
+* `bandPos : ℕ → ℕ`, **`bandPos_strictMono`** — a genuine strictly increasing sequence of digit
+  positions (`isSampled_bandPos`: all of them sampled, hence density zero).
+* **`tendsto_bandRead_freq`** — for every finite binary word `v`,
+  `winCount (bandDig G₄) v (bT (i+1)) / bT (i+1) → 2^{−|v|}`.
+* `tendsto_midRead_freq`, `abs_midRead_freq_sub_le(′)`, `tendsto_midRead_freq_of_depth` — the
+  same limit at every cutoff beyond an initial, relatively vanishing portion of each band.
+* `bandReal`, `isDisjunctive_bandReal`, `irrational_bandReal`.
+
+Ingredients: `exists_good_atom`/`tendsto_goodAtom_occursCount` (**one** atom per scale carries
+every word at its correct density — the average over `(K²+1)^K` atoms is not needed),
+`window_gap_same_atom` (one atom's windows are pairwise disjoint, with a full window's margin),
+`band_gap` (the scales can be read in ordered bands), `abs_posAvg_bandLaw_le` (the band
+restriction keeps the certification).
+
+⚠️ **Not a density-one statement.**  The bad initial portion of band `i` dwarfs every cutoff
+below it, so the bad set has lower density `0` and upper density `1`.  That is the wall seen
+from the cutoff side, and is exactly why this is not normality.  Nothing here is a claim about
+the normality of `G₄`.
 
 ## 🧭 2026-09-14 (entropy laps 52–55): the lap-51 objective is **PROVED**, and its named successor E-T8 is **refuted as a route**
 
