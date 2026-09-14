@@ -163,6 +163,24 @@ over a set `S`; the one-interval theory does not transfer, and the symbolic desc
 holes is exactly the product automaton.  So the literature supplies the right *frame* and the
 qualitative reading, not a theorem for N5.
 
+*Full read of Glendinning–Sidorov (22:20, sub-agent; notes in
+`papers/glendinning-sidorov-2015-doubling-map-asymmetrical-holes.md`):* the deep machinery
+(extremal pairs, the substitutions `ρ_r`, balanced words, the `0.175092` threshold from
+period-doubling, Thm 2.13 / Cor 3.9) is welded to a single hole straddling the discontinuity
+`1/2` and does not transfer to `⋃_m H(m,w)`.  What transfers is the shallow layer, Lemma 1.1(ii):
+positive dimension is shown by exhibiting a positive-entropy SFT inside the survivor set.  For
+holes with rational endpoints, which every `H(m,w)` has, the survivor set is sofic, so "`S` hits
+`w`" is equivalent to zero entropy, to zero Hausdorff dimension, and to only finitely many
+periodic survivors; that is precisely what the trimmed product automaton decides, so the two
+pictures are one.  Two negatives worth keeping: (a) `J(S,w) = ⋂_m M_m^(−1)(X_w)` is an
+intersection of pullbacks of the `w`-free SFT under `t ↦ mt`, all `×g`-invariant, so no
+transversality theorem applies and the obstruction to N5 is channel correlation; (b) a bound of
+the form "N intervals each shorter than c/N gives positive dimension" is false: unavoidable sets
+of `n`-words of size `≈ 2^n/n` (Mykkeltveit 1972, cited from memory in the notes, not opened)
+give cylinder holes of measure `≈ 1/n` with empty survivor set.  So N5, if true, is a statement
+about the multiplier structure of the holes, not about their measure.  Closest paper: Allaart–Kong
+arXiv 2411.03516 §8 (`kx mod 1` with `k−1` equal holes at the discontinuities), not our geometry.
+
 Both adversary families in this repo are one object in this picture: an **`H`-free periodic orbit
 plus a landing strip**.  The sparse adversary hugs the fixed point `0` and makes the excursion
 `B·g^(−J), B·g^(−J+1), …` (the digits of `mB`); Mahler's `a/(g−1) + Σ c·g^(−i!)` hugs the fixed

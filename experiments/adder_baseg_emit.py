@@ -76,6 +76,8 @@ FAMILIES = {
             [f"d{d}" for d in range(4)]),
     "h51": (5, True, [[(m, 0, [d]) for m in (1, 2, 3, 4, 6)] for d in range(5)],
             [f"d{d}" for d in range(5)]),
+    "h71": (7, True, [[(m, 0, [d]) for m in (1, 2, 3, 4, 5, 6, 13)] for d in range(7)],
+            [f"d{d}" for d in range(7)]),
     "h22": (2, True, [[(1, 0, [a, b]), (3, 0, [a, b])] for a in range(2) for b in range(2)],
             [f"w{a}{b}" for a in range(2) for b in range(2)]),
     "h23": (2, True, [[(m, 0, [a, b, c]) for m in (1, 3, 5, 7)]
