@@ -643,4 +643,161 @@ theorem bigAvg_le (G : GridParams) (X R Y : ℕ) (hne : (apSample X G.P₀ G.b�
           refine avg_le_of_forall_le _ _ hC fun ν _ => ?_
           exact abs_blockSum_omegaVL_le G hY hMx1 (hMx n hn) _
 
+/-! ### The harmonic mass of the medium primes: dyadic Chebyshev -/
+
+/-- The dyadic block `(2^k, 2^{k+1}]` of primes. -/
+def dyadicPrimes (k : ℕ) : Finset ℕ := (2 ^ (k + 1) + 1).primesBelow.filter (fun p => 2 ^ k < p)
+
+lemma mem_dyadicPrimes {k p : ℕ} : p ∈ dyadicPrimes k ↔ p.Prime ∧ 2 ^ k < p ∧ p ≤ 2 ^ (k + 1) := by
+  unfold dyadicPrimes
+  rw [Finset.mem_filter, Nat.mem_primesBelow]
+  constructor
+  · rintro ⟨⟨h1, h2⟩, h3⟩; exact ⟨h2, h3, by omega⟩
+  · rintro ⟨h1, h2, h3⟩; exact ⟨⟨by omega, h1⟩, h2⟩
+
+/-- **Chebyshev, dyadically**: `k · #{primes in (2^k, 2^{k+1}]} ≤ 2^{k+2}`, from
+`primorial n ≤ 4^n`. -/
+lemma card_dyadicPrimes_mul_le (k : ℕ) : (dyadicPrimes k).card * k ≤ 2 ^ (k + 2) := by
+  have hsub : dyadicPrimes k ⊆ Nat.primesLE (2 ^ (k + 1)) := fun p hp => by
+    rw [Nat.mem_primesLE]
+    exact ⟨(mem_dyadicPrimes.1 hp).2.2, (mem_dyadicPrimes.1 hp).1⟩
+  have hprod : ∏ p ∈ dyadicPrimes k, p ≤ 4 ^ (2 ^ (k + 1)) := by
+    calc ∏ p ∈ dyadicPrimes k, p ≤ ∏ p ∈ Nat.primesLE (2 ^ (k + 1)), p :=
+          Finset.prod_le_prod_of_subset_of_one_le' hsub
+            (fun p hp _ => (Nat.prime_of_mem_primesLE hp).one_lt.le)
+      _ = primorial (2 ^ (k + 1)) := (primorial_eq_prod_primesLE _).symm
+      _ ≤ 4 ^ (2 ^ (k + 1)) := primorial_le_four_pow _
+  have hpow : (2 ^ k) ^ (dyadicPrimes k).card ≤ ∏ p ∈ dyadicPrimes k, p := by
+    rw [← Finset.prod_const]
+    exact Finset.prod_le_prod' fun p hp => (mem_dyadicPrimes.1 hp).2.1.le
+  have h : 2 ^ (k * (dyadicPrimes k).card) ≤ 2 ^ (2 ^ (k + 2)) := by
+    calc 2 ^ (k * (dyadicPrimes k).card) = (2 ^ k) ^ (dyadicPrimes k).card := by rw [pow_mul]
+      _ ≤ 4 ^ (2 ^ (k + 1)) := hpow.trans hprod
+      _ = 2 ^ (2 ^ (k + 2)) := by
+          rw [show (4 : ℕ) = 2 ^ 2 by norm_num, ← pow_mul, pow_succ (2 : ℕ) (k + 1)]
+          ring_nf
+  have := (Nat.pow_le_pow_iff_right (by norm_num : 1 < 2)).1 h
+  linarith [Nat.mul_comm k (dyadicPrimes k).card]
+
+/-- `∑_{p ∈ (2^k, 2^{k+1}]} 1/p ≤ 4/k`. -/
+lemma sum_inv_dyadicPrimes_le {k : ℕ} (hk : 1 ≤ k) :
+    ∑ p ∈ dyadicPrimes k, (p : ℝ)⁻¹ ≤ 4 / k := by
+  have hkr : (0 : ℝ) < k := by exact_mod_cast hk
+  have hc : ((dyadicPrimes k).card : ℝ) * k ≤ 2 ^ (k + 2) := by
+    exact_mod_cast card_dyadicPrimes_mul_le k
+  have h2 : (0 : ℝ) < 2 ^ k := by positivity
+  calc ∑ p ∈ dyadicPrimes k, (p : ℝ)⁻¹
+      ≤ ∑ p ∈ dyadicPrimes k, ((2 : ℝ) ^ k)⁻¹ := by
+        refine Finset.sum_le_sum fun p hp => ?_
+        have : (2 : ℝ) ^ k ≤ p := by exact_mod_cast (mem_dyadicPrimes.1 hp).2.1.le
+        exact inv_anti₀ h2 this
+    _ = ((dyadicPrimes k).card : ℝ) / 2 ^ k := by
+        rw [Finset.sum_const, nsmul_eq_mul, div_eq_mul_inv]
+    _ ≤ 4 / k := by
+        rw [div_le_div_iff₀ h2 hkr]
+        calc ((dyadicPrimes k).card : ℝ) * k ≤ 2 ^ (k + 2) := hc
+          _ = 4 * 2 ^ k := by ring
+
+/-- `∑_{a ≤ k ≤ b} 1/k ≤ 1 + log b − log a` for `1 ≤ a ≤ b`. -/
+lemma sum_Icc_inv_le {a b : ℕ} (ha : 1 ≤ a) (hab : a ≤ b) :
+    ∑ k ∈ Finset.Icc a b, (k : ℝ)⁻¹ ≤ 1 + Real.log b - Real.log a := by
+  induction b, hab using Nat.le_induction with
+  | base =>
+    rw [Finset.Icc_self, Finset.sum_singleton]
+    have : (1 : ℝ) ≤ a := by exact_mod_cast ha
+    have := inv_le_one_of_one_le₀ this
+    linarith
+  | succ b hab ih =>
+    rw [Finset.sum_Icc_succ_top (by omega)]
+    have hb : (0 : ℝ) < b := by exact_mod_cast (show 0 < b by omega)
+    have hstep : ((b + 1 : ℕ) : ℝ)⁻¹ ≤ Real.log (b + 1 : ℕ) - Real.log b := by
+      push_cast
+      rw [← Real.log_div (by positivity) hb.ne']
+      have := Real.one_sub_inv_le_log_of_pos (show (0 : ℝ) < (b + 1) / b by positivity)
+      rw [inv_div, show (1 : ℝ) - b / (b + 1) = ((b : ℝ) + 1)⁻¹ by field_simp; ring] at this
+      exact this
+    linarith
+
+/-- **The harmonic mass of the primes in `(R, Y]`**: for `2 ≤ R ≤ Y`,
+`∑_{R < p ≤ Y} 1/p ≤ 4 (1 + log (⌊log₂ Y⌋ / ⌊log₂ R⌋))`.  Dyadic Chebyshev; the constant is
+irrelevant to the schedule, so no lower Mertens is needed. -/
+theorem sum_inv_primes_Ioc_le {R Y : ℕ} (hR : 2 ≤ R) (hRY : R ≤ Y) :
+    ∑ p ∈ (Y + 1).primesBelow.filter (fun p => R < p), (p : ℝ)⁻¹
+      ≤ 4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R)) := by
+  set a := Nat.log 2 R with ha
+  set b := Nat.log 2 Y with hb
+  have ha1 : 1 ≤ a := Nat.log_pos (by norm_num) hR
+  have hab : a ≤ b := Nat.log_mono_right hRY
+  set T := (Y + 1).primesBelow.filter (fun p => R < p) with hT
+  have hmaps : ∀ p ∈ T, Nat.log 2 (p - 1) ∈ Finset.Icc a b := by
+    intro p hp
+    rw [hT, Finset.mem_filter, Nat.mem_primesBelow] at hp
+    rw [Finset.mem_Icc]
+    constructor
+    · exact Nat.log_mono_right (by omega)
+    · exact Nat.log_mono_right (by omega)
+  have hfib : ∀ k ∈ Finset.Icc a b, T.filter (fun p => Nat.log 2 (p - 1) = k) ⊆ dyadicPrimes k := by
+    intro k _ p hp
+    rw [Finset.mem_filter, hT, Finset.mem_filter, Nat.mem_primesBelow] at hp
+    obtain ⟨⟨⟨_, hprime⟩, hRp⟩, hk⟩ := hp
+    have hp1 : p - 1 ≠ 0 := by have := hprime.two_le; omega
+    have h1 := Nat.pow_log_le_self 2 hp1
+    have h2 := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) (p - 1)
+    rw [hk] at h1 h2
+    rw [mem_dyadicPrimes]
+    exact ⟨hprime, by omega, by omega⟩
+  calc ∑ p ∈ T, (p : ℝ)⁻¹
+      = ∑ k ∈ Finset.Icc a b, ∑ p ∈ T with Nat.log 2 (p - 1) = k, (p : ℝ)⁻¹ :=
+        (Finset.sum_fiberwise_of_maps_to hmaps _).symm
+    _ ≤ ∑ k ∈ Finset.Icc a b, ∑ p ∈ dyadicPrimes k, (p : ℝ)⁻¹ := by
+        refine Finset.sum_le_sum fun k hk => ?_
+        exact Finset.sum_le_sum_of_subset_of_nonneg (hfib k hk) fun p _ _ => by positivity
+    _ ≤ ∑ k ∈ Finset.Icc a b, 4 / (k : ℝ) := by
+        refine Finset.sum_le_sum fun k hk => ?_
+        exact sum_inv_dyadicPrimes_le (by have := (Finset.mem_Icc.1 hk).1; omega)
+    _ = 4 * ∑ k ∈ Finset.Icc a b, (k : ℝ)⁻¹ := by
+        rw [Finset.mul_sum]
+        refine Finset.sum_congr rfl fun k _ => ?_
+        rw [div_eq_mul_inv]
+    _ ≤ 4 * (1 + Real.log b - Real.log a) := by
+        have := sum_Icc_inv_le ha1 hab
+        linarith
+
+/-- The medium primes' harmonic mass. -/
+theorem sum_inv_medPrimes_le {R Y P₀ : ℕ} (hR : 2 ≤ R) (hRY : R ≤ Y) :
+    ∑ p ∈ medPrimes R Y P₀, (p : ℝ)⁻¹
+      ≤ 4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R)) := by
+  refine le_trans ?_ (sum_inv_primes_Ioc_le hR hRY)
+  refine Finset.sum_le_sum_of_subset_of_nonneg ?_ fun p _ _ => by positivity
+  intro p hp
+  rw [mem_medPrimes] at hp
+  rw [Finset.mem_filter, Nat.mem_primesBelow]
+  exact ⟨⟨by omega, hp.1⟩, hp.2.1⟩
+
+/-- **`bigAvg` in closed form.**  For `2 ≤ R ≤ Y`, `1 < Y`, and `Mx ≥ 1` bounding every retained
+argument on the sample,
+
+  `bigAvg ≤ √( 4(1 + log⌊log₂Y⌋ − log⌊log₂R⌋) · 8^{−K}/15 + 2Y²(2^{−K}/3)²/|P| )
+             + (log Mx / log Y) · 2^{−K}/3`.
+
+With the §5 schedule (`R = X^{1/(20M)}`, `Y = X^{1/100}`, `Mx ≤ 3X`) the first term is
+`O(8^{−K/2} √(log M))` and the second `O(2^{−K})`, both `o(η)`. -/
+theorem bigAvg_le' (G : GridParams) (X R Y : ℕ) (hne : (apSample X G.P₀ G.b₀).Nonempty)
+    (hK : 0 < G.K) (hR : 2 ≤ R) (hRY : R ≤ Y) {Mx : ℝ} (hMx1 : 1 ≤ Mx)
+    (hMx : ∀ n ∈ apSample X G.P₀ G.b₀, ∀ i : G.Idx,
+      ((n + shiftAL G.B G.Q G.D₀ i : ℕ) : ℝ) ≤ Mx) :
+    bigAvg G X R
+      ≤ Real.sqrt (4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R))
+            * ((1 / 8 : ℝ) ^ G.K / 15)
+          + 2 * (Y : ℝ) ^ 2 * ((1 / 2 : ℝ) ^ G.K / 3) ^ 2 / (apSample X G.P₀ G.b₀).card)
+        + (Real.log Mx / Real.log Y) * (1 / 2 : ℝ) ^ G.K / 3 := by
+  have hY : 1 < Y := by omega
+  refine (bigAvg_le G X R Y hne hK hRY hY hMx1 hMx).trans ?_
+  gcongr
+  unfold medBudget
+  have hc : (0 : ℝ) ≤ (apSample X G.P₀ G.b₀).card := by positivity
+  have hcard : ((medPrimes R Y G.P₀).card : ℝ) ≤ Y := by exact_mod_cast card_medPrimes_le R Y G.P₀
+  have h1 := sum_inv_medPrimes_le (P₀ := G.P₀) hR hRY
+  gcongr
+
 end NormalNumbers.G4

@@ -1,5 +1,45 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ GRIND 2026-09-14 (G4 lap 7): `bigAvg` DISCHARGED to closed form — the `Y`-split, tripwire honoured
+
+`src/NormalNumbers/G4MediumPrimes.lean` (trust triple on every headline).  `CHECK §4`'s tripwire
+is honoured: the medium range `R < p ≤ Y` is an **L²** two-congruence estimate preserving the
+signed cancellation; only `p > Y` is pointwise.
+
+* **`sum_sq_block_le`** (abstract): sample equidistributed (deviation 2) mod the good moduli,
+  pairwise-coprime primes `S`, shifts separated mod each `p ∈ S`, `∑ c_i = 0` ⇒
+  `∑_n (∑_{p∈S}∑_i c_i 1[p∣n+ρ_i])² ≤ |P|(∑_{p∈S}1/p)(∑c_i²) + 2|S|²(∑|c_i|)²`.
+  Off-diagonal `p ≠ p'` main terms carry `(∑c)² = 0`; diagonal cross terms `i ≠ i'` vanish
+  exactly by separation, which on the grid is `goodPrime_of_not_dvd_P₀` (no size hypothesis on
+  the shifts needed).
+* **`sum_sq_blockSum_med_le`**, **`sampleAvg_abs_blockSum_med_le`**: on the concrete grid the
+  first moment of the medium block is `≤ √medBudget`, `medBudget = (∑_{med}1/p)8^{−K}/15 +
+  2|med|²(2^{−K}/3)²/|P|`.
+* **`abs_blockSum_omegaVL_le`**: `p > Y` block `≤ (log Mx/log Y)·2^{−K}/3` pointwise
+  (`ω_{>Y}(m) ≤ log m/log Y`, `card_filter_gt_mul_log_le`).
+* **`sum_inv_primes_Ioc_le`**: dyadic Chebyshev from `primorial_le_four_pow`:
+  `∑_{R<p≤Y} 1/p ≤ 4(1 + log⌊log₂Y⌋ − log⌊log₂R⌋)` for `2 ≤ R ≤ Y`.  Constant irrelevant, so no
+  lower Mertens and no Mertens' first theorem enter.
+* **`bigAvg_le'`** — closed form:
+  `bigAvg ≤ √(4(1+log⌊log₂Y⌋−log⌊log₂R⌋)·8^{−K}/15 + 2Y²(2^{−K}/3)²/|P|) + (log Mx/log Y)2^{−K}/3`.
+  Under §5 (`R = X^{1/(20M)}`, `Y = X^{1/100}`, `Mx ≤ 3X`) this is `O(8^{−K/2}√log M) + O(2^{−K})`.
+
+**Schedule check done on paper this lap (record it):** `η = 2^{−K/4}` and `2^K = L^{o(1)}` but
+`2^K ≫ (log L)^C` because `K log 2 = Θ(log L / log log L) ≫ log log L`; so `8^{−K/2}√log M = o(η)`
+requires exactly that `log log Y − log log R = log(M/5)` is a *log of a polylog*, which the
+`R = X^{1/(20M)}` cutoff delivers.  Had the medium diagonal been `∑_{p≤Y} 1/p ≈ L` instead, the
+term would be `8^{−K/2}√L ≫ η` and the route would FAIL — the small-prime cutoff `R` is
+load-bearing for D, not only for C.
+
+### Next attack (ordered)
+
+1. **`farAvg`** via the AP-mean of `ω`: `2^{ω(m)} ≤ d(m)`, hand-rolled Jensen
+   (`log x ≤ log c + x/c − 1` at `c = E[d]`), `∑_{m<N} d(m) ≤ N(log N + 1)`; gives
+   `E[ω(n+ρ)] = O(L + log P₀)` and `E|farPart| = O(2^K 4^{−J} L)`.  Then `gridFrame_propD` is
+   fully discharged given the §5 sizes.
+2. `PropJackson`; then the B assembly; then the §5 schedule module (instantiate `bigAvg_le'`
+   with `R, Y, Mx` and check `< δ·εη`).
+
 ## ✅ ALTITUDE + GRIND 2026-09-14 (G4 lap 6): `PropA` and `PropC` DISCHARGED; §4D reduced to two named averages
 
 **Review finding.**  Five laps of *inputs*, zero named `Prop` closed, and the abstract-`Frame` ↔
