@@ -251,3 +251,4 @@ import NormalNumbers.G4EntropyFreq
 import NormalNumbers.G4EntropyRender
 import NormalNumbers.G4EntropyTiling
 import NormalNumbers.G4EntropySpectral
+import NormalNumbers.G4EntropySpectralLower
