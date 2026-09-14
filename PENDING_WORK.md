@@ -23,6 +23,66 @@ the headline, `fullReal`).
 fixed sampled data alone (`certified_granule_exceeds_previous_scale`, a size comparison — see its
 ⚠️ scope note), but is open for arithmetic extensions such as `entropy_E0_down`.
 
+## 🔭 LIVE (2026-09-14, post-wrap) — the **scale gap**, and E1 downward
+
+**Build** 🟢 9001 jobs · both new modules sorry-free · endpoints
+`[propext, Classical.choice, Quot.sound]`.
+
+### What the crux is, now that E0/E1 run downward
+
+A band-`i` window start is `2·kIdx(n,α)`, increasing in `n`, so a **position cutoff inside band
+`i` selects the truncated sample `n ≤ X'`** — a mid-band prefix of the read *is* a sample at a
+smaller outer scale.  `entropy_E0_down` (last session) and now `entropy_E1_down` certify exactly
+that, for every `X' ∈ [Xlo K, X K]`, `Xlo K = √(X K)`.  So **prefix control inside a band is not
+the obstruction**.
+
+The obstruction is the **head**: cutoffs with `X' < Xlo K_i`.  `G4EntropyScaleGap` proves the
+previous rung cannot cover it either:
+
+```
+Sched.Xhi K k₄ := 2^2^(m K + 3k₄) + X K      A0's ceiling: every witness at rung K has W.X ≤ Xhi
+Sched.Xhi_succ_lt_Xlo_step                    Xhi K k₄ + 1 < Xlo (K+4)
+Sched.ScaleGap / Sched.scaleGap               the gap is inhabited
+ScheduleWitness.X_lt_Xlo_step                 no rung-K witness reaches rung K+4's FLOOR
+```
+
+So the outer scales in `(Xhi (K−4), Xlo K)` are certified by **no rung of the ladder**, and the
+head of band `i` lives entirely inside that interval.  The separation is by a tower
+(`m₁(K+4) ≥ 4096·m₁ K`), so no constant, no deficit improvement and no change of residue class
+(objective B) bridges it.
+
+### Attempts refuted this lap (record, so they are not retried)
+
+* *Skip the head* (start band `i` at `Xlo K_i`): the read chunk `[Xlo, X']` is then only an
+  `(X'−Xlo)/X'` fraction of the certified `[0, X']`, so the error is `≈ 2ε·Xlo/(X'−Xlo)`, which
+  blows up exactly where the chunk first dominates the history.  Same gap, relocated.
+* *Certified annuli* (differences of two certified truncations): same computation, same gap.
+* *Pad the history* (all `P₀` residue classes at rung `K−4`, longer windows, more atoms): every
+  such gain is polynomial in `K` or bounded by `P₀`, against a tower separation.
+* *Raise rung `K−4`'s reach*: that is objective A0, verdict NO (`G4EntropyXCeiling`).
+
+The one mechanism in the repo that *does* solve a prefix problem of this shape is
+`BlockConcat.rep` (repetition, `G4EntropyConcat`) — and repetition is exactly what forfeits
+strict monotonicity of the read.  That is the honest statement of the tension.
+
+### What the downward chain buys, and the next rung
+
+`abs_midRead_freq_sub_le`'s error at `a` windows into band `i` pays the restriction price
+`(δ+1)|P_K|/a`, so it is vacuous below an `≈ K^{−1/2}` fraction of the band.  With
+`entropy_E1_down` the mid-band prefix carries **its own** certificate and the price disappears:
+the bad initial fraction drops from `K^{−1/2}` to `X^{−1/2}`.
+
+**Next rung (open):** port the consumers of `entropy_E1` at a truncated scale —
+`G4EntropyGoodAtoms.atomDeficit`/`card_good_ge`, then `abs_posAvg_preLaw_le`, then a truncated
+`abs_midRead_freq_sub_le`.  The statement to aim at:
+
+> for every cutoff `a` with `Xlo K_i ≤ X'(a)`, the read frequency at `bT i + a·m_i` is within
+> `O(K^{−1/4})` of `2^{−|v|}` — no `|P_K|/a` term.
+
+Caveat flagged by last session and still open: the cutoff truncates **per atom**
+(`X'_α = t_α + d_α c/2`), not at one `X'`.  Do (i) bounded-factor comparison of the per-atom
+truncations first; only if that fails, (ii) restate `entropy_E1_down` for a truncation vector.
+
 ## 🔭 LIVE (laps 93–101) — `Q ∣ P₀`: the sampled windows are pairwise disjoint
 
 A structural discovery, and the route to an **x-free** (schedule-only) band read.
