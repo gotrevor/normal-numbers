@@ -124,7 +124,7 @@ Per **E-T7** this lap does not pick its own next target; the next altitude lap s
    `blockVal_eq_wordVal_iff` are already general enough; the only new step is unpacking `packFin`
    into the `t` component events.
 
-### 🔨 IN FLIGHT (lap 40) — the objective's *stated* endpoint: independent per-window offsets
+### ✅ DONE (laps 40–41) — the objective's *stated* endpoint: independent per-window offsets
 
 `DIRECTION.md`'s 🎯 asks for a position `p_s` **per window** (`2·kIdx(n,α_s)+p_s`).  Rung 3
 (lap 38) delivered only the *common* aligned position `jℓ`.  Lap 40 closes that gap abstractly
@@ -149,10 +149,19 @@ bits, so an `m`-window deficit `Δ` becomes a `D`-window deficit of the **same**
 offsets are free and the only price is the shortened window `D ≤ m_K − max pp`.  `pp = 0`,
 `D = m` recovers `abs_avg_patCoord_prob_opt` verbatim.
 
-**Remaining (lap 41):** `abs_posPatFreq_sub_le_primeLambertFour` (`δ = 50√K`, `2(max pp + ℓ) ≤
-m_K` ⟹ `≤ 2√(800 log2·ℓt/√K)`), `tendsto_posPatFreq_primeLambertFour`, the count/digit
-rendering (`posAt_blockVal` at `pp s + jℓ`, needs `pp s + (j+1)ℓ ≤ m_K`, which the cut gives),
-and the endpoint `tendsto_occursCountJointPos_primeLambertFour`.
+**Lap 41 closed the rendering**: `abs_posPatFreq_sub_le_primeLambertFour`
+(`≤ 2√(800 log2·ℓt/√K)` whenever `2(max pp + ℓ) ≤ m_K`),
+`tendsto_posPatFreq_primeLambertFour`, `patPos_eq_pack_iff`, `posPatFreq_eq_count`,
+`posPatFreq_eq_digits`, and **the endpoint**
+
+```
+tendsto_occursCountJointPos_primeLambertFour :
+  #{(n,b,j) : ∀ s < t, OccursAt 2 G₄ (v s) (2·kIdx(n, blkSched b s) + pp s + jℓ)}
+    / (|P_K|·nblk_K·⌊(m_K − max pp)/ℓ⌋)   →   2^{−ℓt}
+```
+
+— a position `p_s = pp s + jℓ` **per window**, chosen freely.  `pp = 0` is
+`tendsto_occursCountJoint_primeLambertFour`.  The `DIRECTION` 🎯 is now met **as stated**.
 
 **Recorded narrowing (do not re-derive):** the *uniform* average over ALL position vectors
 `(p_1,…,p_t) ∈ [0,m−ℓ]^t` is **not** reachable by this ledger — a jointly injective family of

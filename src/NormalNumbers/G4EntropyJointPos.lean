@@ -364,4 +364,233 @@ theorem abs_posPatFreq_sub_le_of_deficit (i ℓ t : ℕ) (hℓ : 0 < ℓ) (ht : 
     rw [hcf]; positivity
   exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hstep) (by norm_num)
 
+/-- **The capacity bound at independent offsets, for `G₄`.**  `entropy_E1` supplies
+`δ = 50√K` and `m_K = K/4`, so whenever `2(max pp + ℓ) ≤ m_K`
+
+    `|posPatFreq i ℓ t pp G₄ w − 2^{−ℓt}| ≤ 2√(800 log 2 · ℓ t/√K)`
+
+— the aligned bound `abs_patFreq_sub_le_primeLambertFour` with the constant doubled, which is
+the whole price of the `t` independent offsets. -/
+theorem abs_posPatFreq_sub_le_primeLambertFour (i ℓ t : ℕ) (hℓ : 0 < ℓ) (ht : 0 < t)
+    (pp : Fin t → ℕ) (hfit : 2 * (ppMax pp + ℓ) ≤ kk i)
+    (hcard : 2 * t ≤ Fintype.card (gridAt i).Atom) (w : Fin (2 ^ (ℓ * t))) :
+    |posPatFreq i ℓ t pp (primeLambertAtBase 4) w - 1 / (2 : ℝ) ^ (ℓ * t)|
+      ≤ 2 * Real.sqrt (800 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) / Real.sqrt (KK i)) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hKpos : (0 : ℝ) < (KK i : ℝ) := by
+    have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+    linarith
+  have hS0 : 0 < Real.sqrt ((KK i : ℕ) : ℝ) := Real.sqrt_pos.2 hKpos
+  have hδ : (0 : ℝ) < 50 * Real.sqrt (KK i) := by positivity
+  have hE1 := entropy_E1 (K := KK i) (k₄ := kk i) rfl (KK_ge i)
+  have hcardA : (Fintype.card (gridAt i).Atom : ℝ) = (((KK i ^ 2 + 1) ^ KK i : ℕ) : ℝ) := by
+    rw [card_Atom_gridAt i]
+  have hdef : ((kk i : ℝ) - 50 * Real.sqrt (KK i)) * (Fintype.card (gridAt i).Atom : ℝ)
+      ≤ (jointLawAt i (primeLambertAtBase 4)).H₂ := by
+    rw [hcardA, sub_mul]
+    exact hE1.le
+  refine (abs_posPatFreq_sub_le_of_deficit i ℓ t hℓ ht pp hfit hcard _ w hδ hdef).trans ?_
+  have hℓR : (0 : ℝ) ≤ (ℓ : ℝ) := Nat.cast_nonneg _
+  have htR : (0 : ℝ) ≤ (t : ℝ) := Nat.cast_nonneg _
+  have hRle : 2 * ppMax pp ≤ kk i := by omega
+  have hRR : (2 : ℝ) * ((ppMax pp : ℕ) : ℝ) ≤ (kk i : ℝ) := by exact_mod_cast hRle
+  have hk0 : (0 : ℝ) < (kk i : ℝ) := by
+    have : 0 < kk i := by unfold kk; omega
+    exact_mod_cast this
+  have hR0 : (0 : ℝ) ≤ ((ppMax pp : ℕ) : ℝ) := Nat.cast_nonneg _
+  have hden : (0 : ℝ) < (kk i : ℝ) - ((ppMax pp : ℕ) : ℝ) := by linarith
+  have hsq : Real.sqrt ((KK i : ℕ) : ℝ) * Real.sqrt ((KK i : ℕ) : ℝ) = 4 * (kk i : ℝ) := by
+    rw [Real.mul_self_sqrt hKpos.le]
+    unfold KK; push_cast; ring
+  have hstep : 2 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * (50 * Real.sqrt (KK i))
+      / ((kk i : ℝ) - ((ppMax pp : ℕ) : ℝ))
+      ≤ 800 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) / Real.sqrt (KK i) := by
+    rw [div_le_div_iff₀ hden hS0]
+    have hLHS : 2 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * (50 * Real.sqrt (KK i))
+        * Real.sqrt ((KK i : ℕ) : ℝ)
+        = 400 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * (kk i : ℝ) := by
+      linear_combination (100 * Real.log 2 * (ℓ : ℝ) * (t : ℝ)) * hsq
+    have hC : (0 : ℝ) ≤ 400 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) := by positivity
+    have hmul := mul_le_mul_of_nonneg_left hRR hC
+    rw [hLHS]
+    nlinarith [hmul]
+  have hpos1 : (0 : ℝ) ≤ 2 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * (50 * Real.sqrt (KK i))
+      / ((kk i : ℝ) - ((ppMax pp : ℕ) : ℝ)) := by positivity
+  exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hstep) (by norm_num)
+
+/-- **The frequency theorem at independent offsets.**  For fixed `ℓ`, `t` and offset vector
+`pp`, every pattern's frequency tends to `2^{−ℓt}`. -/
+theorem tendsto_posPatFreq_primeLambertFour (ℓ t : ℕ) (hℓ : 0 < ℓ) (ht : 0 < t)
+    (pp : Fin t → ℕ) (w : ∀ i, Fin (2 ^ (ℓ * t))) :
+    Tendsto (fun i => posPatFreq i ℓ t pp (primeLambertAtBase 4) (w i) - 1 / (2 : ℝ) ^ (ℓ * t))
+      atTop (nhds 0) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hinner : Tendsto (fun i => 800 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) / Real.sqrt (KK i))
+      atTop (nhds 0) := by
+    have hsqrt : Tendsto (fun i => Real.sqrt (KK i)) atTop atTop :=
+      Real.tendsto_sqrt_atTop.comp tendsto_KK_atTop
+    exact hsqrt.const_div_atTop _
+  have hsq : Tendsto (fun i => 2 * Real.sqrt (800 * Real.log 2 * (ℓ : ℝ) * (t : ℝ)
+      / Real.sqrt (KK i))) atTop (nhds 0) := by
+    have := hinner.sqrt
+    simpa using this.const_mul (2 : ℝ)
+  refine squeeze_zero_norm' ?_ hsq
+  filter_upwards [eventually_ge_atTop (2 * (ppMax pp + ℓ)), eventually_ge_atTop (2 * t)]
+    with i h1 h2
+  have hfit : 2 * (ppMax pp + ℓ) ≤ kk i := by unfold kk; omega
+  have hcard : 2 * t ≤ Fintype.card (gridAt i).Atom := by
+    have := KK_le_card_Atom i
+    have hKi : i ≤ KK i := by unfold KK kk; omega
+    omega
+  simpa [Real.norm_eq_abs] using
+    abs_posPatFreq_sub_le_primeLambertFour i ℓ t hℓ ht pp hfit hcard (w i)
+
+/-! ### The digit rendering at independent offsets -/
+
+/-- Unpacking the position-vector pattern coordinate into its `t` component blocks. -/
+lemma patPos_eq_pack_iff {A B : Type*} [Fintype A] [DecidableEq A] [Fintype B] [DecidableEq B]
+    (m ℓ t D : ℕ) (pp : Fin t → ℕ) (blk : B → Fin t → A) (c : B × Fin (D / ℓ))
+    (z : A → Fin (2 ^ m)) (u : Fin t → Fin (2 ^ ℓ)) :
+    patPos m ℓ t D pp blk c z = packFin t ℓ u
+      ↔ ∀ s : Fin t, posAt m ℓ (pp s + (c.2 : ℕ) * ℓ) (z (blk c.1 s)) = u s := by
+  constructor
+  · intro h s
+    exact congrFun ((packFin t ℓ).injective h) s
+  · intro h
+    exact congrArg (packFin t ℓ) (funext h)
+
+open Classical in
+/-- **The count rendering.** -/
+theorem posPatFreq_eq_count (i ℓ t : ℕ) (pp : Fin t → ℕ) (x : ℝ) (w : Fin (2 ^ (ℓ * t))) :
+    posPatFreq i ℓ t pp x w
+      = (∑ c : Fin (nblk i t) × Fin ((kk i - ppMax pp) / ℓ),
+            (((PK i).filter fun n =>
+              patPos (kk i) ℓ t (kk i - ppMax pp) pp (blkSched i t) c
+                (ZVec (gridAt i) (kk i) x n) = w).card : ℝ))
+        / (((PK i).card : ℝ)
+            * (Fintype.card (Fin (nblk i t) × Fin ((kk i - ppMax pp) / ℓ)) : ℝ)) := by
+  classical
+  have hp : ∀ c : Fin (nblk i t) × Fin ((kk i - ppMax pp) / ℓ),
+      ((jointLawAt i x).map
+          (patPos (kk i) ℓ t (kk i - ppMax pp) pp (blkSched i t) c)).prob {w}
+        = (((PK i).filter fun n =>
+              patPos (kk i) ℓ t (kk i - ppMax pp) pp (blkSched i t) c
+                (ZVec (gridAt i) (kk i) x n) = w).card : ℝ)
+          / ((PK i).card : ℝ) := by
+    intro c
+    rw [FinLaw.prob, Finset.sum_singleton]
+    exact map_empirical_p (apSample_nonempty (gridAt i) (b₀_lt_X_at i)) _ _ w
+  have hsum : (∑ c : Fin (nblk i t) × Fin ((kk i - ppMax pp) / ℓ),
+        ((jointLawAt i x).map
+          (patPos (kk i) ℓ t (kk i - ppMax pp) pp (blkSched i t) c)).prob {w})
+      = (∑ c : Fin (nblk i t) × Fin ((kk i - ppMax pp) / ℓ),
+          (((PK i).filter fun n =>
+            patPos (kk i) ℓ t (kk i - ppMax pp) pp (blkSched i t) c
+              (ZVec (gridAt i) (kk i) x n) = w).card : ℝ))
+        / ((PK i).card : ℝ) := by
+    rw [Finset.sum_div]
+    exact Finset.sum_congr rfl fun c _ => hp c
+  rw [posPatFreq, hsum, div_div]
+
+open Classical in
+/-- **The digit rendering.**  The event is: for every `s < t`, the `ℓ` binary digits of `x`
+beginning at position `2·kIdx(n, blkSched b s) + pp s + jℓ` spell the `s`-th component word —
+one offset `pp s` per window, chosen freely. -/
+theorem posPatFreq_eq_digits (i ℓ t : ℕ) (hℓ : 0 < ℓ) (pp : Fin t → ℕ)
+    (hfit : ppMax pp ≤ kk i) (x : ℝ) (u : Fin t → Fin (2 ^ ℓ)) :
+    posPatFreq i ℓ t pp x (packFin t ℓ u)
+      = (∑ c : Fin (nblk i t) × Fin ((kk i - ppMax pp) / ℓ),
+            (((PK i).filter fun n => ∀ s : Fin t,
+              blockVal (Int.fract x)
+                (2 * kIdx (gridAt i) n (blkSched i t c.1 s) + (pp s + (c.2 : ℕ) * ℓ)) ℓ
+                  = (u s : ℕ)).card : ℝ))
+        / (((PK i).card : ℝ)
+            * (Fintype.card (Fin (nblk i t) × Fin ((kk i - ppMax pp) / ℓ)) : ℝ)) := by
+  classical
+  rw [posPatFreq_eq_count i ℓ t pp x (packFin t ℓ u)]
+  congr 1
+  refine Finset.sum_congr rfl fun c _ => ?_
+  congr 2
+  have hblkfit : ((c.2 : ℕ) + 1) * ℓ ≤ kk i - ppMax pp := by
+    have h1 : (c.2 : ℕ) < (kk i - ppMax pp) / ℓ := c.2.isLt
+    have h2 : ((kk i - ppMax pp) / ℓ) * ℓ ≤ kk i - ppMax pp := Nat.div_mul_le_self _ _
+    have h3 : ((c.2 : ℕ) + 1) * ℓ ≤ ((kk i - ppMax pp) / ℓ) * ℓ :=
+      Nat.mul_le_mul_right ℓ (by omega)
+    omega
+  refine Finset.filter_congr fun n _ => ?_
+  rw [patPos_eq_pack_iff]
+  have hfitp : ∀ s : Fin t, (pp s + (c.2 : ℕ) * ℓ) + ℓ ≤ kk i := by
+    intro s
+    have h4 := le_ppMax pp s
+    have h5 : ((c.2 : ℕ) + 1) * ℓ = (c.2 : ℕ) * ℓ + ℓ := by ring
+    omega
+  have hZ : ∀ s : Fin t, ZVec (gridAt i) (kk i) x n (blkSched i t c.1 s)
+      = ⟨blockVal (Int.fract x) (2 * kIdx (gridAt i) n (blkSched i t c.1 s)) (kk i),
+          blockVal_lt _ _ _⟩ :=
+    fun s => Fin.ext (ZSample_eq_blockVal (gridAt i) (kk i) x n (blkSched i t c.1 s))
+  constructor
+  · intro h s
+    have hs := h s
+    rw [hZ s, posAt_blockVal _ _ _ _ _ (hfitp s)] at hs
+    exact congrArg Fin.val hs
+  · intro h s
+    rw [hZ s, posAt_blockVal _ _ _ _ _ (hfitp s)]
+    exact Fin.ext (h s)
+
+open Classical in
+/-- **THE ENDPOINT, at independent per-window offsets.**  For every `t`, every `ℓ`, every offset
+vector `pp`, and any binary words `v₀,…,v_{t−1}` of length `ℓ`, the proportion of triples
+`(n, b, j)` at which, *simultaneously for every `s < t`*, the word `v s` occurs in the binary
+expansion of `G₄` at position `2·kIdx(n, blkSched b s) + pp s + jℓ`, tends to `2^{−ℓt}`.
+
+This is the objective's statement verbatim: a position `p_s = pp s + jℓ` **per window**, chosen
+freely, not the single common aligned position of
+`tendsto_occursCountJoint_primeLambertFour` (which is the case `pp = 0`).
+
+It is a statement about the *sampled* positions only, and is **not** a normality claim. -/
+theorem tendsto_occursCountJointPos_primeLambertFour (t ℓ : ℕ) (ht : 0 < t) (hℓ : 0 < ℓ)
+    (pp : Fin t → ℕ) (v : Fin t → List ℕ) (hlen : ∀ s, (v s).length = ℓ)
+    (hv : ∀ s : Fin t, ∀ j, ∀ h : j < (v s).length, (v s)[j] < 2) :
+    Tendsto (fun i =>
+      (∑ c : Fin (nblk i t) × Fin ((kk i - ppMax pp) / ℓ),
+          (((PK i).filter fun n => ∀ s : Fin t,
+            OccursAt 2 (primeLambertAtBase 4) (v s)
+              (2 * kIdx (gridAt i) n (blkSched i t c.1 s)
+                + (pp s + (c.2 : ℕ) * ℓ))).card : ℝ))
+        / (((PK i).card : ℝ)
+            * (Fintype.card (Fin (nblk i t) × Fin ((kk i - ppMax pp) / ℓ)) : ℝ)))
+      atTop (nhds (1 / (2 : ℝ) ^ (ℓ * t))) := by
+  classical
+  set u : Fin t → Fin (2 ^ ℓ) := fun s =>
+    ⟨wordVal (v s), by
+      have := wordVal_lt (hv s)
+      rw [hlen s] at this
+      exact this⟩ with hu
+  have hmain : Tendsto
+      (fun i => posPatFreq i ℓ t pp (primeLambertAtBase 4) (packFin t ℓ u))
+      atTop (nhds (1 / (2 : ℝ) ^ (ℓ * t))) := by
+    have := tendsto_posPatFreq_primeLambertFour ℓ t hℓ ht pp (fun _ => packFin t ℓ u)
+    have hlim : Tendsto (fun _ : ℕ => (1 : ℝ) / (2 : ℝ) ^ (ℓ * t)) atTop
+        (nhds (1 / (2 : ℝ) ^ (ℓ * t))) := tendsto_const_nhds
+    simpa using this.add hlim
+  refine hmain.congr' ?_
+  filter_upwards [eventually_ge_atTop (ppMax pp)] with i hi
+  have hfit : ppMax pp ≤ kk i := by unfold kk; omega
+  rw [posPatFreq_eq_digits i ℓ t hℓ pp hfit _ u]
+  congr 1
+  refine Finset.sum_congr rfl fun c _ => ?_
+  congr 2
+  refine Finset.filter_congr fun n _ => ?_
+  constructor
+  · intro h s
+    have hb := blockVal_eq_wordVal_iff (y := primeLambertAtBase 4)
+      (p := 2 * kIdx (gridAt i) n (blkSched i t c.1 s) + (pp s + (c.2 : ℕ) * ℓ)) (hv s)
+    rw [hlen s] at hb
+    exact hb.1 (h s)
+  · intro h s
+    have hb := blockVal_eq_wordVal_iff (y := primeLambertAtBase 4)
+      (p := 2 * kIdx (gridAt i) n (blkSched i t c.1 s) + (pp s + (c.2 : ℕ) * ℓ)) (hv s)
+    rw [hlen s] at hb
+    exact hb.2 (h s)
+
 end NormalNumbers.G4.Sched
