@@ -53,10 +53,18 @@ exists_cover                 positions < L are covered by finitely many scales
 card_filter_isSampled_le     #{q < L : IsSampled q} ≤ L/4
 ```
 
-The union's density is at most `¼` (each scale ≤ `⅛(2/K⁶)^K ≤ ⅛·2^{−K}`, summed geometrically),
-so the subsequence omits at least three quarters of `G₄`'s digits.  Open next: whether
-`realOfDigits 2 enumDigits` is *normal* — lap 54 refutes the chunking route; nothing says it is
-impossible.
+The union's density is at most `¼` (each scale ≤ `⅛(2/K⁶)^K ≤ ⅛·2^{−K}`, summed geometrically).
+**Lap 60 sharpened this to density ZERO** (`card_tail_le`, `tendsto_density_isSampled`): each
+`sampledPosAt i` is a *finite* set, so the head scales contribute a constant, and the tail beyond
+`I` at most a `2^{−I}/8` fraction — hence `#{q < L : IsSampled q}/L → 0`.  **`sampleEnum` skips
+almost every digit of `G₄`.**
+
+Open next: whether `realOfDigits 2 enumDigits` is *normal*.  Lap 54 refutes the chunking route;
+`enumDigits` is not a block concatenation so that argument does not transfer directly, but the
+same prefix problem reappears — `|S_i|` explodes with `i` and the enumeration order is forced, so
+repetition (rung 3's fix) is unavailable.  A frequency estimate is further blocked because the
+enumeration interleaves windows from different scales, so a word may straddle two scales'
+windows.
 
 ## ✅ OBJECTIVE MET (lap 52) — and the E-T8 successor's arithmetic
 
