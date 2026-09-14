@@ -22,12 +22,19 @@ for an arbitrary nonempty `E` — δ₂ is `PropD`, δ₃ is `PropC`, and the κ
 frame's own and do not depend on `E`.  Choosing `E = E_K(ℬ)` leaves `vol(tube (E_K ℬ) res)`
 as the single unproved quantity.
 
+Lap 3 proved **(G)** in `G4EntropyCover.lean`: `volume_tube_le_joint` gives
+`vol(tube (E 𝓑) res) ≤ ∑_{G good} |𝓑|·η^{|G|}·vol(pieceCube G)` — the cover factor is
+**linear in the number of joint boxes**, not `(#Bs)^H`.  The old product statement is
+recovered as `volume_tube_le_of_joint`.
+
 **Remaining inputs, hardest first:**
 
-1. **(G), brief §3B** — `μ(thickening ρ_K (E_K ℬ)) ≤ |ℬ|·η^{(1−ε)r_K}·exp(C₀(H_K+r_K√K))`,
-   with `|ℬ|` the number of *joint* boxes.  Reuse `G4TubeVolume`/`G4GridTube`/`G4Ellipsoid`/
-   `G4Tensor`; the current cover carries a `Bs.card ^ H` product factor that must NOT survive.
-   Replacing `ℬ` by the product of its coordinate projections erases the entropy saving.
+1. **§3A — the exact transported sample.**  `Frame.capture_le` needs `∀ n ∈ Good, Ffull n ∈ E`
+   with `E = imageOfSet fr (boxUnion fr 𝓑 η)`, i.e. the *particular* atom vector
+   `x α = u^{G4}_{K,α}(n)` rather than mere membership in the whole orbit-closure image
+   (`gridFrame_propA`).  Expose the identity inside `coe_sum_dilatedTailB` /
+   `propA_of_progression` by ADDING a lemma; do not change the old endpoint.
+   With that, `ZSample = v` ⟹ `u α ∈ box(v α)` ⟹ `Ffull n ∈ E 𝓑` for `𝓑` = the centres of ℬ.
 2. **`a_K/ρ_K → 0`** — recover the average transport error from the actual remainder bounds
    (`G4Remainder`, `G4FarTail`), not the old fixed 1/8 allowances.
 3. **Jackson at the entropy degree** — `G4Jackson` must approximate the `1/ρ_K`-Lipschitz,

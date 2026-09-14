@@ -91,3 +91,31 @@ hypotheses `G4Wiring` already supplies for the disjunctivity endpoint.
 
 `lake build` green, 8941 jobs.  `src/` gains three sorry-free modules; no existing declaration
 was modified.  `G4ScheduleAssembly.isDisjunctive_four` / `isDisjunctive_two` untouched.
+
+---
+
+# Lap 2 + lap 3 addendum
+
+**Lap 2** (`e0fa0d5`): `G4EntropyJackson.lean` — Fejér smoothing for an arbitrary continuous,
+`[0,1]`-valued, `dAv`-Lipschitz test (`jackson_of_dAvLipschitz`, `jackson_of_clipTest`), with
+`κ = 1/(ρ√(D+1))` and `Λ = (2D+1)^r` **independent of the set `E`**; `Frame.propJackson`
+recovered as `propJackson_of_general`.  `G4EntropyFrame.lean` — `capture_inequality_torus` and
+`Frame.capture_le`: (C) on the torus in the average metric, every input from existing machinery.
+
+**Lap 3**: `G4EntropyCover.lean` — **(G)**.  `jointBox`/`boxUnion`/`imageOfSet`,
+`tube_subset_pieces_joint`, and `volume_tube_le_joint`:
+
+  `vol(tube (E 𝓑) res) ≤ ∑_{G, |G| ≥ (1−ε)r} |𝓑| · η^{|G|} · vol([A_G,I_G]·cube)`.
+
+The cover factor is `|𝓑|` — the number of **joint** boxes — where the old product cover paid
+`(#Bs)^H`.  `volume_tube_le_of_joint` recovers the old statement as the instance `𝓑 = Bs^H`
+(via `tube_mono`), so nothing the product cover proved is lost.  The mechanism is unchanged:
+Markov in `dAv` picks the good coordinate set, the determinant/ellipsoid bound handles the
+piece cube; only the indexing of the cover changed.
+
+So (C) and (G) are both proved, with exactly the shape the information-set lemma consumes:
+`N` joint boxes cost `N` in the cover and carry mass `≥ δ/(2−δ)` when `N ≤ 2^{(1−δ/2)mH}`.
+
+**Next (lap 4): §3A, the exact transported sample** — the last structural gap.  `capture_le`
+needs `Ffull n ∈ E 𝓑` for the particular atom vector `u^{G4}_{K,α}(n)`, not just membership in
+the orbit-closure image that `gridFrame_propA` provides.
