@@ -641,4 +641,108 @@ theorem overhang_le_real (i : ℕ) :
   refine le_trans ?_ hcard
   exact_mod_cast overhang_le i
 
+/-! ### Each band dwarfs everything before it -/
+
+open Classical in
+/-- Distinct sample times give distinct window starts at any fixed atom, so the band has at
+least `|bandT i|` distinct starts. -/
+theorem card_bandT_le_winStarts (i : ℕ) : (bandT i).card ≤ (winStarts i).card := by
+  classical
+  refine Finset.card_le_card_of_injOn (fun n => 2 * kIdx (gridAt i) n (Classical.arbitrary _))
+    ?_ ?_
+  · intro n hn
+    exact (mem_winStarts i).2 ⟨n, hn, Classical.arbitrary _, rfl⟩
+  · intro n hn n' hn' heq
+    simp only at heq
+    by_contra hne
+    have hkk : 0 < kk i := by unfold kk; omega
+    rcases Nat.lt_or_ge n n' with hlt | hge
+    · have := window_gap_same_atom i (Classical.arbitrary _)
+        (bandT_subset i hn) (bandT_subset i hn') hlt
+      omega
+    · have hgt : n' < n := by omega
+      have := window_gap_same_atom i (Classical.arbitrary _)
+        (bandT_subset i hn') (bandT_subset i hn) hgt
+      omega
+
+open Classical in
+/-- The band has at most `|bandT i|·|Atom|` distinct starts. -/
+theorem card_winStarts_le (i : ℕ) :
+    (winStarts i).card ≤ (bandT i).card * Fintype.card (gridAt i).Atom := by
+  classical
+  rw [winStarts_eq_image]
+  refine le_trans Finset.card_image_le ?_
+  rw [bandPairs, Finset.card_product, Finset.card_univ]
+
+set_option maxHeartbeats 1000000 in
+/-- **Each band dwarfs the previous one**, with the next window length as the factor. -/
+theorem fL_step (j : ℕ) : (kk (j + 1) : ℝ) * (fL j : ℝ) ≤ 2 * (fL (j + 1) : ℝ) := by
+  have hA : (1 : ℝ) ≤ (Fintype.card (gridAt j).Atom : ℝ) := by
+    have : 0 < Fintype.card (gridAt j).Atom := Fintype.card_pos
+    exact_mod_cast this
+  have hPj : (0 : ℝ) ≤ ((PK j).card : ℝ) := Nat.cast_nonneg _
+  have hkkj : (0 : ℝ) ≤ (kk j : ℝ) := Nat.cast_nonneg _
+  have hband : ((bandT j).card : ℝ) ≤ ((PK j).card : ℝ) := by
+    exact_mod_cast Finset.card_le_card (bandT_subset j)
+  have hws : ((winStarts j).card : ℝ)
+      ≤ ((bandT j).card : ℝ) * (Fintype.card (gridAt j).Atom : ℝ) := by
+    have h := card_winStarts_le j
+    exact_mod_cast h
+  have hbl : (fL j : ℝ) = ((winStarts j).card : ℝ) * (kk j : ℝ) := by
+    show ((((winStarts j).card * kk j : ℕ)) : ℝ) = _
+    push_cast; ring
+  have h1 : (fL j : ℝ)
+      ≤ (Fintype.card (gridAt j).Atom : ℝ) * ((PK j).card : ℝ) * (kk j : ℝ) := by
+    rw [hbl]
+    have hstep : ((winStarts j).card : ℝ)
+        ≤ (Fintype.card (gridAt j).Atom : ℝ) * ((PK j).card : ℝ) := by
+      nlinarith [hws, hband, hA, hPj]
+    exact mul_le_mul_of_nonneg_right hstep hkkj
+  have h2 := granule_exceeds_previous_scale j
+  have h3 : ((PK (j + 1)).card : ℝ) ≤ 2 * ((bandT (j + 1)).card : ℝ) := card_bandT_ge' (j + 1)
+  have h3' : ((bandT (j + 1)).card : ℝ) ≤ ((winStarts (j + 1)).card : ℝ) := by
+    have := card_bandT_le_winStarts (j + 1)
+    exact_mod_cast this
+  have hkk1 : (0 : ℝ) ≤ (kk (j + 1) : ℝ) := Nat.cast_nonneg _
+  have h4 : (fL (j + 1) : ℝ) = ((winStarts (j + 1)).card : ℝ) * (kk (j + 1) : ℝ) := by
+    show ((((winStarts (j + 1)).card * kk (j + 1) : ℕ)) : ℝ) = _
+    push_cast; ring
+  rw [h4]
+  nlinarith [h1, h2, h3, h3', hkk1]
+
+lemma kk_ge_real' (i : ℕ) : (40000 : ℝ) ≤ (kk i : ℝ) := by
+  have : (40000 : ℕ) ≤ kk i := by unfold kk; omega
+  exact_mod_cast this
+
+/-- **The history is a `4/m_i` fraction of band `i`.** -/
+theorem fT_kk_le (i : ℕ) : (fT i : ℝ) * (kk i : ℝ) ≤ 4 * (fL i : ℝ) := by
+  induction i with
+  | zero =>
+      have h0 : ((fT 0 : ℕ) : ℝ) = 0 := by norm_num [fT]
+      rw [h0]
+      have : (0 : ℝ) ≤ (fL 0 : ℝ) := Nat.cast_nonneg _
+      linarith
+  | succ i ih =>
+      have hstep := fL_step i
+      have hbT : (fT (i + 1) : ℝ) = (fT i : ℝ) + (fL i : ℝ) := by
+        show ((fT i + fL i : ℕ) : ℝ) = _
+        push_cast; ring
+      have hkki := kk_ge_real' i
+      have hkki1 := kk_ge_real' (i + 1)
+      have hTnn : (0 : ℝ) ≤ (fT i : ℝ) := Nat.cast_nonneg _
+      have hLnn : (0 : ℝ) ≤ (fL i : ℝ) := Nat.cast_nonneg _
+      have hTm : (fT i : ℝ) * (kk (i + 1) : ℝ) * (kk i : ℝ) ≤ 8 * (fL (i + 1) : ℝ) := by
+        have h1 : (fT i : ℝ) * (kk (i + 1) : ℝ) * (kk i : ℝ)
+            = ((fT i : ℝ) * (kk i : ℝ)) * (kk (i + 1) : ℝ) := by ring
+        rw [h1]
+        calc ((fT i : ℝ) * (kk i : ℝ)) * (kk (i + 1) : ℝ)
+            ≤ (4 * (fL i : ℝ)) * (kk (i + 1) : ℝ) :=
+              mul_le_mul_of_nonneg_right ih (by linarith)
+          _ = 4 * ((kk (i + 1) : ℝ) * (fL i : ℝ)) := by ring
+          _ ≤ 4 * (2 * (fL (i + 1) : ℝ)) := by linarith
+          _ = 8 * (fL (i + 1) : ℝ) := by ring
+      rw [hbT]
+      have hLnn1 : (0 : ℝ) ≤ (fL (i + 1) : ℝ) := Nat.cast_nonneg _
+      nlinarith [hTm, hstep, hkki, hkki1, hLnn1]
+
 end NormalNumbers.G4.Sched
