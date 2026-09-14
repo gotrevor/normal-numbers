@@ -49,6 +49,19 @@ excluded primes `p ∣ P₀` cost `≤ ∑_{k≤ω(P₀)} 1/(k+1) ≤ log ω(P�
   `≤ log|T| + 1` (`Finset.induction_on_max`: the max of `k` distinct integers `≥ 2` is `≥ k+1`).
   The excluded primes `p ∣ P₀` therefore cost `≤ log ω(P₀) + 1 = O(log L)`.
 
+### ⬆️ UPDATE (same lap, fourth commit): the exact transport identity and `PropA` — `G4Transport.lean`
+
+* `tailB b k = ∑_{j≥1} ω(k+j)b^{−j}`, **`tailB_eq`**: `tailB b k = b^k G_b − tailIntB b k` (integer);
+  `corrB b d k` (the periodic correction `E`), `corrB_congr` (depends on `k` mod `rad d`);
+  **`dilatedTailB_eq`**: `∑_{j≥1} b^{−j} ω(d(k+j)) = T_b(k) + ω(d)/(b−1) − E_{d,b}(k)` — fixed-base
+  §1 verbatim, any `b ≥ 2`.  Trigger G-T2's transport identity is PROVED, not refuted.
+* `coe_tailB_four`: `T₄(k) ≡ orbit 4 G₄ k (mod 1)`; `Frame.transportTheta c` = the translate
+  `θ_ν = ∑_α A_{να}(ω(d_α)/3 − E_α(c_α))`.
+* **`Frame.propA_of_progression`** — for ANY wiring frame whose sample points are
+  `t_α + d_α k_α` with `k_α ≡ c_α` mod every prime of `d_α`, and `θ = transportTheta c`,
+  `PropA` holds.  So A is reduced to the §3 progression construction (draft §3), which is the
+  same object C needs (the modulus `P₀` freezing multiplier residues and shift-difference primes).
+
 **Also needed for D and noted here (not yet Lean)**: the far tail `j > J` needs the sample mean
 `𝔼 ω(n+ρ) ≪ L` — an UPPER Mertens bound `∑_{p≤z} 1/p ≤ log log z + O(1)`, also not in mathlib;
 route: `primorial_le_four_pow` ⇒ `#{p ∈ (y,2y]} ≤ 2y log 4 / log y`, dyadic blocks.  The crude
