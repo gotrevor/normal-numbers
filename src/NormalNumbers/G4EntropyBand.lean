@@ -367,4 +367,110 @@ theorem card_bandS_ge' (i : ℕ) : ((PK i).card : ℝ) ≤ 2 * ((bandS i).card :
     linarith
   · exact card_bandS_ge j
 
+/-! ### An `n`-only band threshold: *every* atom's window above the floor
+
+`bandS` is defined by a condition on `2·kIdx(n, goodAtom i)`, which is atom-dependent.  For a
+schedule-only read of the *whole* sample the threshold must be a condition on `n` alone — and it
+can be, because `kIdx(n,α) ≥ n/d_α − 1 ≥ n/Dm − 1` for every atom.
+-/
+
+open Classical in
+/-- The band-`i` sample times for the *whole* sample: those whose windows, **at every atom**,
+open at or above the previous scale's ceiling. -/
+noncomputable def bandT (i : ℕ) : Finset ℕ :=
+  (PK i).filter (fun n => gridDm (KK i) (N (KK i)) * (bandLo i + 1) ≤ n)
+
+lemma bandT_subset (i : ℕ) : bandT i ⊆ PK i := Finset.filter_subset _ _
+
+/-- **The `n`-threshold does put every atom's window above the floor.** -/
+theorem bandLo_le_pos_of_mem_bandT (i : ℕ) {n : ℕ} (hn : n ∈ bandT i) (α : (gridAt i).Atom) :
+    bandLo i ≤ 2 * kIdx (gridAt i) n α := by
+  classical
+  have hmem : gridDm (KK i) (N (KK i)) * (bandLo i + 1) ≤ n := (Finset.mem_filter.1 hn).2
+  have hnPK : n ∈ PK i := (Finset.mem_filter.1 hn).1
+  obtain ⟨hk, -⟩ := kIdx_spec (gridAt i) (X := X (KK i)) hnPK α
+  have hd : (gridAt i).d α ≤ gridDm (KK i) (N (KK i)) :=
+    gridOf.d_le (K := KK i) (N := N (KK i)) (hK := KK_one_le i) α
+  have hdpos : 0 < (gridAt i).d α := (gridAt i).d_pos α
+  have ht : (gridAt i).t α < (gridAt i).d α := (gridAt i).t_lt_d α
+  -- `n = t + d·k < d·(k+1)`, and `n ≥ Dm·(bandLo+1) ≥ d·(bandLo+1)`
+  have hchain : gridDm (KK i) (N (KK i)) * (bandLo i + 1)
+      ≤ (gridAt i).d α * (kIdx (gridAt i) n α + 1) := by
+    have hexp : (gridAt i).d α * (kIdx (gridAt i) n α + 1)
+        = (gridAt i).d α * kIdx (gridAt i) n α + (gridAt i).d α := by ring
+    omega
+  have hmono : gridDm (KK i) (N (KK i)) * (bandLo i + 1)
+      ≥ (gridAt i).d α * (bandLo i + 1) :=
+    Nat.mul_le_mul_right _ hd
+  have hkey : (gridAt i).d α * (bandLo i + 1)
+      ≤ (gridAt i).d α * (kIdx (gridAt i) n α + 1) := by omega
+  have hle : bandLo i + 1 ≤ kIdx (gridAt i) n α + 1 :=
+    Nat.le_of_mul_le_mul_left hkey hdpos
+  omega
+
+open Classical in
+/-- **The `n`-threshold also keeps at least half of the sample.**  Same count as
+`card_bandS_ge`: a dropped `n` is below `3·gridDm·X(K_i)`, and `band_gap_strong` makes that a
+quarter of the range. -/
+theorem card_bandT_ge (i : ℕ) : ((PK (i + 1)).card : ℝ) ≤ 2 * ((bandT (i + 1)).card : ℝ) := by
+  classical
+  set j := i + 1 with hj
+  set Dm : ℕ := gridDm (KK j) (N (KK j)) with hDm
+  set M : ℕ := 3 * Dm * X (KK i) with hM
+  have hdrop : (PK j).filter (fun n => ¬ Dm * (bandLo j + 1) ≤ n)
+      ⊆ (PK j).filter (fun n => n < M) := by
+    intro n hn
+    rw [Finset.mem_filter] at hn ⊢
+    refine ⟨hn.1, ?_⟩
+    have hlt : n < Dm * (bandLo j + 1) := by have := hn.2; omega
+    have hbl : bandLo j = bandTop i := rfl
+    have hbt : bandTop i = 2 * X (KK i) + kk i := rfl
+    have hkk := kk_succ_le_X i
+    have hmono : Dm * (bandLo j + 1) ≤ Dm * (3 * X (KK i)) := by
+      refine Nat.mul_le_mul_left _ ?_
+      rw [hbl, hbt]
+      omega
+    have hMeq : Dm * (3 * X (KK i)) = M := by rw [hM]; ring
+    omega
+  have hPpos : (0 : ℝ) < ((gridAt j).P₀ : ℝ) := by
+    have := (gridAt j).P₀_pos
+    exact_mod_cast this
+  have hcount : (((PK j).filter (fun n => n < M)).card : ℝ)
+      ≤ (M : ℝ) / ((gridAt j).P₀ : ℝ) + 1 := by
+    have h := card_filter_lt_apSample_le (X (KK j)) (gridAt j).P₀ (gridAt j).b₀ M
+      (gridAt j).P₀_pos
+    have hR : ((((PK j).filter (fun n => n < M)).card : ℕ) : ℝ)
+        ≤ ((M / (gridAt j).P₀ + 1 : ℕ) : ℝ) := by exact_mod_cast h
+    refine hR.trans ?_
+    push_cast
+    have : ((M / (gridAt j).P₀ : ℕ) : ℝ) ≤ (M : ℝ) / ((gridAt j).P₀ : ℝ) := Nat.cast_div_le
+    linarith
+  have hbig : (X (KK j) : ℝ) / (2 * ((gridAt j).P₀ : ℝ)) ≤ ((PK j).card : ℝ) :=
+    card_apSample_ge_half (X (KK j)) (gridAt j).P₀ (gridAt j).b₀ (gridAt j).P₀_pos
+      (gridAt j).b₀_lt_P₀ (two_mul_P₀_le_X (show 100 ≤ KK j by have := KK_ge j; omega))
+  have hgate : (12 : ℝ) * (Dm : ℝ) * (X (KK i) : ℝ) + 4 * ((gridAt j).P₀ : ℝ)
+      ≤ (X (KK j) : ℝ) := band_gap_strong i
+  have hMR : (M : ℝ) = 3 * (Dm : ℝ) * (X (KK i) : ℝ) := by rw [hM]; push_cast; ring
+  have hhalf : 2 * ((M : ℝ) / ((gridAt j).P₀ : ℝ) + 1) ≤ ((PK j).card : ℝ) := by
+    refine le_trans ?_ hbig
+    rw [le_div_iff₀ (by positivity : (0:ℝ) < 2 * ((gridAt j).P₀ : ℝ))]
+    have hexp : 2 * ((M : ℝ) / ((gridAt j).P₀ : ℝ) + 1) * (2 * ((gridAt j).P₀ : ℝ))
+        = 4 * (M : ℝ) + 4 * ((gridAt j).P₀ : ℝ) := by
+      field_simp
+      ring
+    rw [hexp, hMR]
+    linarith [hgate]
+  have hsplit : ((PK j).card : ℝ)
+      = ((bandT j).card : ℝ)
+        + (((PK j).filter (fun n => ¬ Dm * (bandLo j + 1) ≤ n)).card : ℝ) := by
+    have h := Finset.card_filter_add_card_filter_not
+      (s := PK j) (p := fun n => Dm * (bandLo j + 1) ≤ n)
+    have hb : bandT j = (PK j).filter (fun n => Dm * (bandLo j + 1) ≤ n) := rfl
+    rw [hb]
+    exact_mod_cast h.symm
+  have hdropR : ((((PK j).filter (fun n => ¬ Dm * (bandLo j + 1) ≤ n)).card : ℕ) : ℝ)
+      ≤ (((PK j).filter (fun n => n < M)).card : ℝ) := by
+    exact_mod_cast Finset.card_le_card hdrop
+  linarith
+
 end NormalNumbers.G4.Sched
