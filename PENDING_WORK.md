@@ -1,5 +1,52 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ GRIND 2026-09-14 (G4 lap 4): C3core (the sample exponential moment / Shiu) is NOT NEEDED — C3 reduced to CRT counting alone
+
+`src/NormalNumbers/G4TransferMoment.lean` (new, sorry-free, all headlines `[propext, Classical.choice, Quot.sound]`).
+
+**The structural insight.**  Lap 3's skeleton expanded `∏_p g_p` around the independent means
+`μ_p`; every subset term is then a genuine fluctuation and the `|T| > M` tail can only be paid by
+an exponential moment `avg_n ∏_p(1+lam‖g_p−μ_p‖)` **over the sample** — a Shiu-type sieve theorem
+(the named input `B`, "C3core").  Expand around `1` instead:
+`∏_{p∈s} g_p(n) = ∑_{T⊆s} ∏_{p∈T}(g_p(n)−1)`, and the term of `T` vanishes unless every `p ∈ T`
+is *active* at `n` (`g_p(n) ≠ 1`, i.e. `n` in one of the `k` active classes mod `p`).  So the tail
+is supported on `{V(n) > M}`, `V(n)` = number of active primes, and there the truncated sum is
+`∑_{m≤M} C(V,m)2^m ≤ (2eV/M)^M` — **a degree-`M` polynomial in `V(n)`**.  `V^M` is a sum over
+`M`-tuples of primes of indicator products on moduli `≤ R^M`, hence CRT-transferable to the
+independent model, where the exponential moment `𝔼 e^{λV} = ∏_p(1+(e^λ−1)π_p)` is an exact product.
+No sieve theorem enters anywhere.
+
+* `norm_truncation_le` — pointwise: `‖∏_s g − ∑_{|T|≤M}∏_T(g−1)‖ ≤ 2(2e|A|/M)^M` (`A` the active
+  set, `M ≥ 1`).  The `(1+2θ)^V ≤ e^M` trick with `θ = M/(2V)` avoids all factorials.
+* `sampleAvg_card_pow_le` — moment transfer: `avg_n V(n)^M ≤ ∑_{D⊆s}|D|^M∏_Dπ_p + |s|^M ε'`,
+  given the CRT input `avg_n 1[D ⊆ Act n] ≤ ∏_D π_p + ε'` for nonempty `D`, `|D| ≤ M`.
+* `sum_card_pow_mul_prod_le` — `∑_{D⊆s}|D|^M∏_Dπ_p ≤ (M/λ)^M ∏_p(1+e^λπ_p)` (via
+  `k^M ≤ (M/λ)^M e^{λk}`, from `(λk)^M/M! ≤ e^{λk}` and `M! ≤ M^M`).
+* **`norm_sampleAvg_prod_sub_prod_le'`** — the assembled skeleton:
+
+      ‖avg ∏_s g − ∏_s μ‖ ≤ N_M ε + λ'^{−M}∏_p(1+λ'c_p) + 2(2e/λ)^M ∏_p(1+e^λπ_p) + 2(2e/M)^M|s|^M ε'
+
+  with `‖μ_p−1‖ ≤ c_p`, `‖g_p‖ ≤ 1`, `g_p = 1` off the active set.
+
+**Budget check (paper).**  In the application `π_p = k/p`, `c_p = 2π_p`, `μ := ∑_p π_p ≍ kL`,
+`M = Cμ`.  Term 2: `≤ exp(−M log λ' + 2λ'μ) = exp(−M(log λ' − 2λ'/C))`.  Term 3:
+`≤ 2 exp(−M log(λ/2e) + e^λ μ) = 2 exp(−M(log(λ/2e) − e^λ/C))`.  With `λ = 8`, `λ' = 8`,
+`C ≥ 10^4` both are `exp(−Θ(M))`, and `M ≍ kL ≫ L·8^{−K}` so they sit far below the main term
+`exp(−cL8^{−K})`.  Terms 1 and 4 are the two CRT errors, `ε, ε' ≲ 2^M P R^M/X`, times at most
+`(2e)^M R^{M}`: `X^{−1+o(1)}` under the §5 schedule `R = X^{1/(20M)}`.  **C3 is now entirely
+elementary.**
+
+### C3 remaining: ONE lemma, `CRTInput`
+For pairwise-coprime moduli `p ∈ T` (all coprime to the progression modulus `P₀`), functions
+`h_p : ℕ → ℂ` periodic mod `p` with `‖h_p‖ ≤ 1`, and the sample `{n ≤ X : n ≡ a (mod P₀)}`:
+
+    ‖avg_n ∏_{p∈T} h_p(n) − ∏_{p∈T} (p⁻¹∑_{b<p} h_p(b))‖ ≤ Q·P₀/X · 2   (Q = ∏_T p, once Q P₀ ≤ X).
+
+Both `hsmall` (`h_p = g_p − 1`, mean `μ_p − 1`) and `hcrt` (`h_p = 1[active]`, mean `π_p`) are
+instances.  Proof: each residue class mod `Q` receives `N/Q + O(1)` sample points; CRT
+(`ZMod.chineseRemainder` / `Nat.ModEq`) factorizes the mod-`Q` average.  Next lap's target.
+Then C4 (`Λδ₃ < 1`) and the instantiation `PropC` from `G4LocalContraction` + this file.
+
 ## 🧭 REVIEW 2026-09-14 (G4 lap 3): crux moved B → C; §4C's arithmetic seed PROVED; C decomposed
 
 **Course correction.**  Laps 1–2 both spent themselves on §4B.  §4B is now *input-complete*
