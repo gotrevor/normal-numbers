@@ -7722,3 +7722,39 @@ choice of `m₁`.
 **Size ladder (ℕ, `K ≥ 100`)**: `N ≤ K³`, `J ≤ K⁴`, `B ≤ K⁷`, `U ≤ K^{7K+3}`, `W ≤ K^{7K+4}`,
 `H ≤ K^{3K}`, `T ≤ K^{3K+3}`, `logP₀Nat ≤ K^{20K+17}`, `m₁ ≤ K^{3K+3}`, `Mc ≤ K^{6K+9}`;
 and `K^{cK} ≤ 2^{cK²}`, `4^N = 2^{200K²} ≥ K^{40K}`.
+
+## Entropy expedition — the 18:20 RE-TARGET override, both verdicts in (2026-09-14)
+
+**A0 — verdict NO, obstruction proved.**  `G4EntropyXCeiling.lean`.  `X` enters the whole E0
+cone through exactly one field of `gridFrame` (`P := apSample X G.P₀ G.b₀`); everything else —
+`θ, γ, S, A, d, t, η, ε, D`, hence `goodSets`, `pieceCube`, `res`, the cover sum, and E0's target
+`M = k₄(K²+1)^K` — is literally `X`-free.  Of the five `X`-sensitive terms three are monotone,
+`hfar`'s `log log X` is a never-binding ceiling (`X ≲ 2^{2^{2^{200K²}}}`), and
+**`hbig`'s `(log Mx / log Y)` binds** (`hMx` forces `Mx ≥ X − P₀`).
+`ScheduleWitness.X_lt_X_step` : any witness at the implemented allowances has `X < Sched.X (K+4)`.
+Raising `Y` with `X` does not rescue it: `hbig`'s dyadic summand allows `m − m₁ ≲ 2^{5K/2}`,
+one rung costs `m₁(K+4) − m₁(K) ≥ 4095·1000·8^K·K^{2K+1}`.  Ladder jump = SMALL-prime budget;
+fixed-`K` headroom = MEDIUM-prime dyadic factor.  Incommensurable.
+
+**A — stopped** per the override (A0 = NO ⟹ name the obstruction and stop).
+
+**B — verdict NO, refutation proved.**  `G4EntropyResidueProbe.lean`.  The per-declaration audit
+is *all-YES on the estimates* (two structural re-basings — `kIdx → kIdxOf`, `θ`'s offset — and no
+constant moves; only `kIdx_pos`, a non-vacuity lemma, fails off `b₀`).  But the payoff fails:
+`exists_kIdxOf_eq` shows `d_α ∣ kIdxOf G b n α` in EVERY class (it needs only `d_α² ∣ P₀`), so
+`Sched.not_dense_of_any_residue` — the union over ANY finset of classes misses more than half of
+every prefix `L ≥ 2·dmin i`.  Class-side companion of `G4EntropyFamily.not_dense_of_scale`.
+
+**The named gap, for the record**: it is not an estimate.  It is `d_α² ∣ P₀` — exactly what
+`PropA` consumes to make the transport exact.  Exactness and density are in direct tension; the
+sample must freeze the multiplier residues to transport, and freezing them confines the read to
+`⋃_α (2 d_α ℕ + [0, m_K))`, of density `≤ 2^{−(i+3)}`.  Neither moving `X` (A0) nor moving the
+class (B) trades that.
+
+**Next attack, for `fullReal` as a number in its own right** (Trevor's call in DIRECTION):
+1. ✅ `Sched.tendsto_density_fullPos` (`G4EntropyFullDensity.lean`) — the read visits a
+   density-zero set, stated about `fullPos` itself.  (Wrap next-step 2.)
+2. ⏳ Port the mid-band refinements (`abs_midRead_freq_sub_le`, `tendsto_midRead_freq_of_depth`,
+   `abs_freq_sub_freq_mid`, stated for `bandPos`) to `fullPos`, carrying the multiplicity term
+   through `overhang_frac_le`.  (Wrap next-step 1.)  This is the only remaining on-path work the
+   wall permits; `IsNormal 2 fullReal` itself is blocked by `wall_at_zero_deficit` plus A0.
