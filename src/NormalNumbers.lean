@@ -244,3 +244,5 @@ import NormalNumbers.G4EntropyShift
 import NormalNumbers.G4EntropyDiagonal
 import NormalNumbers.G4EntropyPrecision
 import NormalNumbers.G4EntropyLevels
+import NormalNumbers.G4EntropyGibbs
+import NormalNumbers.G4EntropyPinsker
