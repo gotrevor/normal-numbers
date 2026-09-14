@@ -160,6 +160,44 @@ theorem card_filter_le_of_multipliers' (D : Finset ℕ) (F : Finset ι) (G : ι 
           (Nat.mul_le_mul_left 2 (hdmD d hd)) (by omega))
     _ = D.card * ((L / (2 * dm)) * m) := by rw [Finset.sum_const, smul_eq_mul]
 
+/-! ### Every admissible multiplier at a scale, not just the implemented ones
+
+`d_α = 1 + Q·(D₀ + u_α)` with `u_α ≤ U` (`GridParams.hU`).  So the multipliers of *every* grid
+sharing the scale parameters `(Q, D₀, U)` lie in one explicit set of at most `U+1` values —
+the choice of atoms, of `B`'s digits, of the frozen residue, of everything else, cannot move
+them off that progression.  Combined with `card_filter_le_of_multipliers'` this bounds the
+positions read by the whole admissible family at a scale, with no reference to the family. -/
+
+/-- The only values a multiplier can take at scale parameters `(Q, D₀, U)`. -/
+def multSet (Q D₀ U : ℕ) : Finset ℕ := (Finset.range (U + 1)).image (fun u => 1 + Q * (D₀ + u))
+
+lemma card_multSet_le (Q D₀ U : ℕ) : (multSet Q D₀ U).card ≤ U + 1 :=
+  le_trans Finset.card_image_le (by simp [multSet])
+
+lemma d_mem_multSet (G : GridParams) (α : G.Atom) : G.d α ∈ multSet G.Q G.D₀ G.U :=
+  Finset.mem_image.2 ⟨gridU G.B α, Finset.mem_range.2 (by have := G.hU α; omega), rfl⟩
+
+lemma le_of_mem_multSet {Q D₀ U d : ℕ} (hd : d ∈ multSet Q D₀ U) : 1 + Q * D₀ ≤ d := by
+  obtain ⟨u, -, rfl⟩ := Finset.mem_image.1 hd
+  have : Q * D₀ ≤ Q * (D₀ + u) := Nat.mul_le_mul_left _ (by omega)
+  omega
+
+/-- **The scale bound.**  The positions read below `L` by *any* family of grids with the scale
+parameters `(Q, D₀, U)` number at most `(U+1)·m·⌊L/(2(1+Q D₀))⌋`. -/
+theorem card_filter_le_of_scale (F : Finset ι) (G : ι → GridParams)
+    (U' : ℕ → Prop) [DecidablePred U'] {X m L Q D₀ U : ℕ}
+    (hT : ∀ ν ∈ F, ∃ α β : (G ν).Atom, (G ν).t α ≠ (G ν).t β)
+    (hQ : ∀ ν ∈ F, (G ν).Q = Q) (hD₀ : ∀ ν ∈ F, (G ν).D₀ = D₀) (hU : ∀ ν ∈ F, (G ν).U = U)
+    (hcov : ∀ j, j < L → U' j → ∃ ν ∈ F, j ∈ sampledPos (G ν) X m) :
+    ((Finset.range L).filter U').card ≤ (U + 1) * ((L / (2 * (1 + Q * D₀))) * m) := by
+  have hmem : ∀ ν ∈ F, ∀ α : (G ν).Atom, (G ν).d α ∈ multSet Q D₀ U := by
+    intro ν hν α
+    have := d_mem_multSet (G ν) α
+    rwa [hQ ν hν, hD₀ ν hν, hU ν hν] at this
+  refine le_trans (card_filter_le_of_multipliers' (multSet Q D₀ U) F G U'
+    (by omega) hT hmem (fun d hd => le_of_mem_multSet hd) hcov) ?_
+  exact Nat.mul_le_mul_right _ (card_multSet_le Q D₀ U)
+
 end NormalNumbers.G4Entropy
 
 namespace NormalNumbers.G4.Sched
@@ -283,5 +321,74 @@ theorem not_readsHalf_of_common_multipliers (i : ℕ) (F : Finset ι) (G : ι �
     ¬ ReadsHalf i F G U L := by
   intro h
   exact not_dense_of_common_multipliers i F G U hL h.nonconstant hD h.covered h.dense
+
+/-! ### The whole admissible family at a scale is still too sparse
+
+`not_dense_of_common_multipliers` covers translates of the implemented grid.  The multiplier
+progression `d_α = 1 + Q(D₀ + u_α)`, `u_α ≤ U` bounds *every* grid with the schedule's scale
+parameters, so the same conclusion holds for the entire admissible family at scale `i` — the
+union of everything the machinery at that scale can read still misses more than half of every
+prefix. -/
+
+lemma two_le_gridUmax {K N : ℕ} (hK : 1 ≤ K) : 2 ≤ gridUmax K N := by
+  have h1 : 2 ≤ gridB K N := by unfold gridB; nlinarith [Nat.one_le_iff_ne_zero.2 (by omega : K ≠ 0)]
+  have h2 : gridB K N ^ 1 ≤ gridB K N ^ K := Nat.pow_le_pow_right (by omega) hK
+  have h3 : gridB K N ^ K ≤ gridUmax K N := pow_le_gridUmax hK
+  simp only [pow_one] at h2
+  omega
+
+/-- **No admissible sampler family at scale `i` reads half the positions.**
+
+Every grid with the schedule's scale parameters `(Q_K, D₀_K, U_K)` has all its multipliers in
+`multSet`, of size `≤ U+1`, each at least `dmin i = 1 + Q D₀`.  Since `4(U+1)m_K ≤ 1 + Q D₀`
+(because `Q ≥ U` and `D₀ = K U`, so `Q D₀ ≥ K U²`, against `(U+1)K`), the family reads at most
+`L/8` of every prefix `[0,L)`.
+
+This closes the brief's §6 positive branch for the *averaging* direction in full: no family of
+admissible samplers at a fixed scale — of any size, with any frozen residues, any atoms, any
+translations — can supply the density-`≥ 1/2` input the locality barrier demands. -/
+theorem not_dense_of_scale (i : ℕ) (F : Finset ι) (G : ι → GridParams)
+    (U' : ℕ → Prop) [DecidablePred U'] {L : ℕ} (hL : 0 < L)
+    (hT : ∀ ν ∈ F, ∃ α β : (G ν).Atom, (G ν).t α ≠ (G ν).t β)
+    (hQ : ∀ ν ∈ F, (G ν).Q = gridQ (KK i) (N (KK i)))
+    (hD₀ : ∀ ν ∈ F, (G ν).D₀ = gridD₀ (KK i) (N (KK i)))
+    (hU : ∀ ν ∈ F, (G ν).U = gridUmax (KK i) (N (KK i)))
+    (hcov : ∀ j, j < L → U' j → ∃ ν ∈ F, j ∈ sampledPos (G ν) (X (KK i)) (kk i)) :
+    ¬ (L ≤ 2 * ((Finset.range L).filter U').card) := by
+  intro hdense
+  set K := KK i with hK
+  set U := gridUmax K (N K) with hU0
+  set Q := gridQ K (N K) with hQ0
+  set m := kk i with hm
+  set q := L / (2 * (1 + Q * gridD₀ K (N K))) with hq
+  have hcard := card_filter_le_of_scale F G U' hT hQ hD₀ hU hcov
+  rw [← hq] at hcard
+  -- the parameter inequality `4(U+1)m ≤ 1 + Q D₀`
+  have hK1 : 1 ≤ K := KK_one_le i
+  have hU2 : 2 ≤ U := two_le_gridUmax hK1
+  have hQU : U ≤ Q := by
+    have := gridQ_gt K (N K)
+    omega
+  have hD₀eq : gridD₀ K (N K) = K * U := rfl
+  have hKm : K = 4 * m := by rw [hK, hm]; unfold KK; ring
+  have hparam : 4 * ((U + 1) * m) ≤ 1 + Q * gridD₀ K (N K) := by
+    have h1 : (U + 1) * K ≤ U * U * K := by
+      have : U + 1 ≤ U * U := by nlinarith
+      exact Nat.mul_le_mul_right _ this
+    have h2 : U * U * K ≤ Q * (K * U) := by
+      have : U * (K * U) ≤ Q * (K * U) := Nat.mul_le_mul_right _ hQU
+      calc U * U * K = U * (K * U) := by ring
+        _ ≤ Q * (K * U) := this
+    rw [hD₀eq]
+    have h3 : 4 * ((U + 1) * m) = (U + 1) * K := by rw [hKm]; ring
+    omega
+  -- the counting chain
+  have hqL : 2 * (1 + Q * gridD₀ K (N K)) * q ≤ L := Nat.mul_div_le L _
+  have h8 : 8 * ((U + 1) * (q * m)) ≤ L := by
+    calc 8 * ((U + 1) * (q * m)) = (4 * ((U + 1) * m)) * (2 * q) := by ring
+      _ ≤ (1 + Q * gridD₀ K (N K)) * (2 * q) := Nat.mul_le_mul_right _ hparam
+      _ = 2 * (1 + Q * gridD₀ K (N K)) * q := by ring
+      _ ≤ L := hqL
+  omega
 
 end NormalNumbers.G4.Sched
