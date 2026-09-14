@@ -233,3 +233,4 @@ import NormalNumbers.G4EntropyBudget
 import NormalNumbers.G4EntropyRate
 import NormalNumbers.G4EntropyLocality
 import NormalNumbers.G4EntropyPositions
+import NormalNumbers.G4EntropyTransfer
