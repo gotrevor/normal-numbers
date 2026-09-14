@@ -40,6 +40,15 @@ route: `∏_{p≤R}(1−1/p)^{−1} ≥ ∑_{n≤R} 1/n ≥ log R` and `−log(1
 excluded primes `p ∣ P₀` cost `≤ ∑_{k≤ω(P₀)} 1/(k+1) ≤ log ω(P₀) + 1 = O(log L)` (trivial);
 (d) C4 numerics: `M = 10⁴·|ι|·L`, `λ = λ' = 8` against `Λ = (2D+1)^r`, via `schedule_budget`.
 
+### ⬆️ UPDATE (same lap, third commit): both harmonic-mass inputs PROVED — `G4Mertens.lean`
+
+* **`log_log_le_sum_inv_primesBelow`** — lower Mertens, `log log N ≤ ∑_{p<N} 1/p + 1` (`N ≥ 2`),
+  via mathlib's finite Euler product over `N`-smooth numbers, `log N ≤ H(N−1)`,
+  `−log(1−1/p) ≤ 1/(p−1)`, and the telescoping `∑ 1/(n(n−1)) ≤ 1`.  (c) above is now supplied.
+* **`sum_inv_le_log_card_add_one`** — any finset of integers `≥ 2` has harmonic mass
+  `≤ log|T| + 1` (`Finset.induction_on_max`: the max of `k` distinct integers `≥ 2` is `≥ k+1`).
+  The excluded primes `p ∣ P₀` therefore cost `≤ log ω(P₀) + 1 = O(log L)`.
+
 **Also needed for D and noted here (not yet Lean)**: the far tail `j > J` needs the sample mean
 `𝔼 ω(n+ρ) ≪ L` — an UPPER Mertens bound `∑_{p≤z} 1/p ≤ log log z + O(1)`, also not in mathlib;
 route: `primorial_le_four_pow` ⇒ `#{p ∈ (y,2y]} ≤ 2y log 4 / log y`, dyadic blocks.  The crude
