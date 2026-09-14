@@ -54,33 +54,44 @@ because each factor is; then the existing Hellinger/Pinsker step on `tℓ` bits.
    degradation here and re-state with the true `t`-dependence; do not retreat to `t = 1`.)
 3. **The schedule instance + digit rendering** of rung 2 → `tendsto_occursCountJoint_…`.
 
-### 🔨 IN FLIGHT (lap 37) — rung 2, `G4EntropyJoint.lean`
+### ✅ RUNG 2 DONE (lap 37) — `G4EntropyJoint.lean`, sorry-free, trust triple
 
-Skeleton committed compiling with three named `sorry` leaves.  **The probe answered: the deficit
-is NOT multiplied by `t`.**  Bits ledger, with `blk : B → Fin t → A` injective:
+**E-T6 does not fire, and the answer is better than the directive guessed: the deficit is NOT
+multiplied by `t`.**  With `blk : B → Fin t → A` injective the bits ledger closes exactly:
 
 ```
 H₂ L ≤ ∑_{b,j} H₂(patCoord b j) + ∑_b H₂(patRem b) + ∑_{α ∉ im blk} H₂(z α)
      ≤ ∑_{b,j} H₂(patCoord b j) + |B|·t·(m%ℓ) + (|A| − t|B|)·m
-m|A| − Δ ≤ H₂ L    and    ⌊m/ℓ⌋·ℓ + m%ℓ = m
-⟹  ∑_{b,j} (ℓt − H₂(patCoord b j)) ≤ Δ          -- the SAME Δ, zero slack
+m|A| − Δ ≤ H₂ L,   ⌊m/ℓ⌋·ℓ + m%ℓ = m
+⟹  sum_patCoord_deficit_le :  ∑_{b,j} (ℓt − H₂(patCoord b j)) ≤ Δ      -- the SAME Δ, zero slack
+⟹  abs_avg_patCoord_prob_opt : |avg_{b,j} Pr[pattern = w] − 2^{−ℓt}|
+                                  ≤ 2√(log 2 · ℓ · Δ / (|B|·m))
 ```
 
-so the averaged bound is the `t = 1` one with `ℓ ↦ tℓ`: `2√(log 2 · tℓδ/m)`.  E-T6 does **not**
-fire.
+With `Δ = δ|A|` and `|B| ≈ |A|/t` the bound is `2√(log 2 · tℓδ/m)` — the `t = 1` bound with
+`ℓ ↦ tℓ`, i.e. pinning `t` words at once costs exactly the `t` extra words' worth of bits and
+nothing more.  Declarations: `packFin`, `patCoord`, `patRem`, `leftCoord`, `jointFam`,
+`jointFam_injective`, `H₂_map_patRem_le`, `H₂_map_leftCoord_le`, `FinLaw.H₂_map_const_le`,
+`sum_patCoord_deficit_le`, `abs_avg_patCoord_prob_le`, `abs_avg_patCoord_prob_opt`.
 
-Open leaves, in order:
-1. `jointFam_injective` — `packFin` injective on each family, then `tile_injective` per covered
-   atom; uncovered atoms read directly through `leftCoord`'s `else` branch.
-2. `sum_patCoord_deficit_le` — `FinLaw.H₂_le_sum_H₂_map` over the sum-type index, then the three
-   bits bounds: `H₂_le_of_block` at `ℓt` for `patCoord`; subadditivity over `s : Fin t` plus
-   `H₂_map_rem_le` for `patRem`; `H₂_map_const_le` / `H₂_le_of_block` at `m` for `leftCoord`.
-   The count `|im blk| = t|B|` is `Finset.card_image_of_injective`.
-3. `abs_avg_patCoord_prob_le` — verbatim `abs_avg_block_prob_tile_le` with `A ↦ B`, `ℓ ↦ ℓt`,
-   `sum_block_deficit_tile_le ↦ sum_patCoord_deficit_le`.
+### 🔨 NEXT — rung 3: the schedule instance and the digit rendering
 
-Then rung 3: the schedule instance (`blk` from `Fintype.equivFin` and `b*t+s`) and the digit
-rendering (`posAt_blockVal` is already general enough).
+1. **The blocking at the schedule.**  `blkAt_sched i t : Fin (Fintype.card (gridAt i).Atom / t)
+   → Fin t → (gridAt i).Atom := fun b s => (Fintype.equivFin _).symm ⟨b*t+s, _⟩`; injectivity from
+   uniqueness of division (`Nat.add_mul_div_right`/`omega`), the bound `b*t+s < card` from
+   `b < card/t`, `s < t`.  Also need `m ≤ ℓ*t` — at the schedule `m_K = kk i`, so this holds once
+   `ℓ*t ≥ kk i`; note the hypothesis is only used by `leftCoord`'s cast, so a **weaker** variant
+   `leftCoord` into `Fin (2^(max m (ℓ*t)))` would drop it.  ⚠️ decide this before instantiating:
+   for fixed `t` and `ℓ` the hypothesis `m ≤ ℓ·t` FAILS at the schedule (`m_K = K/4 → ∞`).
+   **Fix**: change `leftCoord`'s codomain to `Fin (2^(ℓ*t + m))` (or drop the uncovered atoms by
+   requiring `t ∣ card Atom`).  Cheapest is to let all three families land in
+   `Fin (2^(ℓ*t + m))` — `patCoord`/`patRem` cast up, `leftCoord` casts `z α` up — and the bits
+   bounds are unchanged.
+2. `Sched.patFreq i ℓ t x w` and `abs_patFreq_sub_le_of_deficit` / `…_primeLambertFour`.
+3. Digit rendering + `tendsto_occursCountJoint_primeLambertFour`: the pattern event is
+   `∀ s < t, OccursAt 2 G₄ (v s) (2·kIdx(n, blk b s) + jℓ)` — `posAt_blockVal` and
+   `blockVal_eq_wordVal_iff` are already general enough; the only new step is unpacking `packFin`
+   into the `t` component events.
 
 ### Bounded secondary (only on an E-T3 stall) — measure the wall
 
