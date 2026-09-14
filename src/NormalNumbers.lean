@@ -212,6 +212,7 @@ import NormalNumbers.G4EntropyFullDensity
 import NormalNumbers.G4EntropyE0Down
 import NormalNumbers.G4EntropyScaleGap
 import NormalNumbers.G4EntropyE1Down
+import NormalNumbers.G4EntropyMultiplierSpread
 import NormalNumbers.G4ScheduleHarmonic
 import NormalNumbers.G4ScheduleBudget
 import NormalNumbers.G4ScheduleWitness

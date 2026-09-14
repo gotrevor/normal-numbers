@@ -72,9 +72,12 @@ third side.)
    Target statement: for every cutoff `a` whose truncation satisfies `Xlo K_i ≤ X'(a)`, the read
    frequency at `bT i + a·m_i` is within `O(K^{−1/4})` of `2^{−|v|}` — **with no `|P_K|/a`
    term**.  That drops the bad initial fraction of each band from `K^{−1/2}` to `X^{−1/2}`.
-2. **The per-atom caveat** (open since last session): the cutoff truncates per atom
-   (`X'_α = t_α + d_α c/2`), not at one `X'`.  Try (i) bounded-factor comparison of the per-atom
-   truncations; only if that fails, (ii) restate `entropy_E1_down` for a truncation vector.
+2. **The per-atom caveat — CLOSED this lap** (`G4EntropyMultiplierSpread.lean`).  Route (i),
+   with the factor `1 + 1/K`: the grid takes `d_α = 1 + Q(D₀ + u_α)`, `D₀ = K·U`, `u_α ≤ U`, so
+   `gridOf.mul_d_le_mul_d : K·d_α ≤ (K+1)·d_β` for every pair of atoms, and
+   `G4Entropy.kIdx_cross : 2·kIdx(n,β) ≤ c → K·(2·kIdx(n,α)) ≤ (K+1)(c+4)`.  The truncation
+   vector is sandwiched between two plain outer scales of ratio `(K+1)/K + O(1/c)`; the sandwich
+   costs a relative `≈ 1/K`.  Route (ii) is not needed.
 3. Port the mid-band refinements from `bandPos` to `fullPos` (wrap next-step 1), carrying the
    multiplicity term through `overhang_frac_le`.
 4. `IsNormal 2 fullReal` remains blocked by §1's head.  Do not spend laps re-deriving that;

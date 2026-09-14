@@ -79,9 +79,21 @@ the bad initial fraction drops from `K^{−1/2}` to `X^{−1/2}`.
 > for every cutoff `a` with `Xlo K_i ≤ X'(a)`, the read frequency at `bT i + a·m_i` is within
 > `O(K^{−1/4})` of `2^{−|v|}` — no `|P_K|/a` term.
 
-Caveat flagged by last session and still open: the cutoff truncates **per atom**
-(`X'_α = t_α + d_α c/2`), not at one `X'`.  Do (i) bounded-factor comparison of the per-atom
-truncations first; only if that fails, (ii) restate `entropy_E1_down` for a truncation vector.
+**The per-atom caveat is CLOSED — route (i), with the factor `1 + 1/K`**
+(`G4EntropyMultiplierSpread.lean`).  The schedule grid takes `d_α = 1 + Q(D₀ + u_α)` with
+`D₀ = K·U` and `0 ≤ u_α ≤ U`, so the atom-dependent part is a `1/K` perturbation:
+
+```
+gridOf.d_ge, gridOf.d_le'
+gridOf.mul_d_le_mul_d        K · d_α ≤ (K+1) · d_β   for EVERY pair of atoms
+G4Entropy.mul_kIdx_le, two_mul_le_of_two_kIdx_le
+G4Entropy.kIdx_cross         2·kIdx(n,β) ≤ c  →  K·(2·kIdx(n,α)) ≤ (K+1)(c+4)
+```
+
+So the atom-indexed truncation a position cutoff induces is sandwiched between two plain outer
+scales of ratio `(K+1)/K + O(1/c)`; the sandwich costs a relative `≈ 1/K`, negligible against
+the `O(K^{−1/4})` errors the capture inequality already carries.  Route (ii) (restating
+`entropy_E1_down` for a truncation vector) is **not needed**.
 
 ## 🔭 LIVE (laps 93–101) — `Q ∣ P₀`: the sampled windows are pairwise disjoint
 
