@@ -875,6 +875,41 @@ theorem pairCount_eq (i : ℕ) (x : ℝ) (v : List ℕ) :
 
 
 
+/-! ### Non-vacuity -/
+
+open Classical in
+/-- **Every position the schedule-only read visits is a sampled position.**  So by
+`tendsto_density_isSampled` the read skips almost every digit of `G₄`: `fullReal` is built from
+a density-zero set of `G₄`'s digits and is in no sense `G₄`. -/
+theorem isSampled_fullPos (j : ℕ) : IsSampled (fullPos j) := by
+  classical
+  set i := fgrp j with hi
+  have h1 : fT i ≤ j := fT_fgrp_le j
+  have h2 : j < fT (i + 1) := lt_fT_fgrp_succ j
+  have hbT : fT (i + 1) = fT i + fL i := rfl
+  have hkk : 0 < kk i := by unfold kk; omega
+  set r : ℕ := j - fT i with hr
+  have hrlt : r < fL i := by omega
+  have hacard : r / kk i < (winStarts i).card := by
+    by_contra hcon
+    push_neg at hcon
+    have hmul : (winStarts i).card * kk i ≤ r / kk i * kk i := Nat.mul_le_mul_right _ hcon
+    have hdm := Nat.div_add_mod' r (kk i)
+    rw [fL] at hrlt
+    omega
+  have hmod : r % kk i < kk i := Nat.mod_lt _ hkk
+  have heq : fullPos j = fnth i (r / kk i) + r % kk i := fullPos_eq h1 h2
+  obtain ⟨n, hn, α, hstart⟩ := (mem_winStarts i).1 (fnth_mem i (r / kk i))
+  refine ⟨i, ?_⟩
+  rw [heq, hstart]
+  exact mem_sampledPos_of (gridAt i) (bandT_subset i hn) α hmod
+
+/-- The cutoffs are cofinal, so `tendsto_fullRead_freq` speaks about arbitrarily long prefixes. -/
+theorem tendsto_fT_atTop : Tendsto (fun i => (fT i : ℝ)) atTop atTop := by
+  refine tendsto_atTop_mono (fun i => ?_) tendsto_natCast_atTop_atTop
+  have : i ≤ fT i := self_le_fT i
+  exact_mod_cast this
+
 end NormalNumbers.G4.Sched
 
 /-! ### The read-versus-certified error, as pure real arithmetic
