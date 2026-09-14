@@ -55,14 +55,32 @@ Chaining these: for one good prime `p`, `‖avg‖ ≤ 1 − 4·4^{−4}·8^{−
 primes `≤ exp(−c·8^{−K}·∑_{p≤R}p⁻¹) = exp(−c·8^{−K}(L−o(L)))` — the brief's
 `exp(−cL8^{−K})`, **in the independent model**.
 
+`src/NormalNumbers/G4Transfer.lean` (§4C, **the C3 skeleton — proved in full**)
+* `prod_sub_expansion` — `∏_{p∈s}g_p = ∑_{T⊆s}(∏_T f_p)(∏_{s∖T}μ_p)`, `f_p = g_p − μ_p`.
+* **`mul_pow_sum_powerset_card_gt_le`** — Chernoff subset tail:
+  `lam^M ∑_{|T|>M}∏_T c_p ≤ ∏_{p∈s}(1+lam c_p)`.  This is what makes `2^{|s|}` subsets summable.
+* **`norm_sampleAvg_prod_sub_prod_le`** —
+  `‖avg_n ∏_{p∈s}g_p(n) − ∏_{p∈s}μ_p‖ ≤ N_M·ε + B/lam^M`, given (i) `‖avg_n ∏_{p∈T}f_p‖ ≤ ε`
+  for nonempty `T` of size `≤ M`, and (ii) `avg_n ∏_{p∈s}(1+lam‖f_p(n)‖) ≤ B`.
+* **`norm_sampleAvg_prod_le_exp`** — composed with C2:
+  `‖avg_n ∏ g_p‖ ≤ exp(−c∑_{p∈s}w_p⁻¹) + N_M ε + B/lam^M`, the shape `PropC δ₃` needs.
+
+**C3 is therefore no longer "not automatic independence": it is two named quantitative inputs.**
+
 ## Open, in priority order (mirrors `DIRECTION.md`)
 
-1. **C3 — THE CRUX.**  Transfer the independent-model product bound to the actual progression:
-   with `f_p(n) = e(θ_p(n)) − 𝔼e(θ_p)`, expand `𝔼_{n∈P∩[1,X]} ∏_p(𝔼e(θ_p)+f_p(n))` to even
-   degree `M`, CRT-count the residue tuples on modulus `P·∏_{p∈T}p ≤ P·R^M`, and sum the
-   finite-sample errors `P R^{2m}/X`.  `R = X^{1/(20M)}` makes `PR^M = X^{o(1)}`.  State it as a
-   named `Prop` in `src/` first, then decompose.  Trigger **G-T1**: 5 grind laps.
-2. **C4** — `Λδ₃ < 1` with `Λ = (2D+1)^r = exp(O(rK))`, uniformly on the box.
+1. **C3a — `ε`, the CRT input, and the immediate next target.**  For nonempty `T` with
+   `|T| ≤ M`, `∏_{p∈T}f_p(n)` depends only on `n mod ∏_{p∈T}p ≤ R^M = X^{1/20}`, so CRT +
+   equidistribution of `P∩[1,X]` gives `𝔼 = 0 + O(P R^M/X)`.  With `N_M ≤ (|s|+1)^M ≤ R^M` the
+   error is `P R^{2M}/X` — **exactly the brief's schematic `P R^{2m}/X`**, which independently
+   confirms the reading.  Elementary counting.
+2. **C3core — `B`, the exponential moment.**  `avg_n ∏_{p∈s}(1+lam‖f_p(n)‖)`.  Pointwise
+   `≤ (1+2lam)^{V(n)}exp(2 lam k ∑_p p⁻¹)` with `V(n)` the number of active primes,
+   `𝔼V ≍ kL`, so `B = exp(O_{lam}(kL))` and `lam^{−M}` beats it exactly when `M ≍ C k L` —
+   **the brief's `M ≍ C T L` is calibrated for precisely this.**  A Shiu-type bound closes it;
+   ⚠️ try first whether the *moment* `𝔼V^m` (`m ≤ M`, itself CRT-computable) can replace the
+   exponential one, which would make all of C3 elementary.
+3. **C4** — `Λδ₃ < 1` with `Λ = (2D+1)^r = exp(O(rK))`, uniformly on the box.
 3. **B assembly to `PropB`** — the five steps in `PENDING_WORK.md` §G4; all inputs proved.
    Use `G4FreqSep.diffZ` + `cast_vecMul_kronPow_diffZ` as the ℤ↔ℝ bridge for `Frame.A`.
 4. **A** (§4A transport) and **D** (§4D remainders); then the §5 schedule module.

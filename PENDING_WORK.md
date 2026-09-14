@@ -50,6 +50,46 @@ With `s=K²`, `H=(s+1)^K`, `r=s^K`, `η=2^{−K/4}`, `L=log log X`, `K=⌊log L/
 So the parameter schedule is self-consistent on all four of the brief's essential comparisons.
 **The risk is C3, not the budget.**
 
+### ⬆️ UPDATE (same lap, after the decomposition): C1, C2 and **the C3 skeleton** are PROVED
+
+`src/NormalNumbers/G4LocalContraction.lean`
+* **C1** `eight_mul_distZ_sq_le_one_sub_cos` : `1 − cos2πx ≥ 8·dist(x,ℤ)²`.
+* **C2** `norm_localSum_le` / `norm_localSum_le'` / `norm_localAvg_le_of_sum_sq`.
+* `prod_one_sub_le_exp_neg_sum`, `prod_contraction_le_exp` : `∏(1−c/p) ≤ exp(−c∑p⁻¹)`.
+
+`src/NormalNumbers/G4Transfer.lean` — **the C3 skeleton, proved in full**:
+* `prod_sub_expansion` : `∏_{p∈s} g_p = ∑_{T⊆s}(∏_T f_p)(∏_{s∖T}μ_p)`, `f_p = g_p − μ_p`.
+* **`mul_pow_sum_powerset_card_gt_le`** — the Chernoff subset tail
+  `lam^M·∑_{|T|>M}∏_T c_p ≤ ∏_{p∈s}(1+lam·c_p)` for `lam ≥ 1`, `c ≥ 0`.  This is what makes the
+  `2^{|s|}` subsets summable at all: the tail is paid by ONE exponential moment, not termwise.
+* **`norm_sampleAvg_prod_sub_prod_le`** —
+  `‖avg_n ∏_{p∈s}g_p(n) − ∏_{p∈s}μ_p‖ ≤ N_M·ε + B/lam^M`, given
+  (i) `‖avg_n ∏_{p∈T}f_p(n)‖ ≤ ε` for all nonempty `T ⊆ s` with `|T| ≤ M`, and
+  (ii) `avg_n ∏_{p∈s}(1+lam‖f_p(n)‖) ≤ B`.
+* **`norm_sampleAvg_prod_le_exp`** — composed with C2:
+  `‖avg_n ∏ g_p‖ ≤ exp(−c∑_{p∈s}w_p⁻¹) + N_M ε + B/lam^M`.  With `c = 4·4^{−4}·8^{−K}`,
+  `w_p = p`, `∑_{p≤R}p⁻¹ = L−o(L)` this is `exp(−cL8^{−K}) + errors` — **the shape `PropC δ₃`
+  needs**.
+
+**So C3 is no longer "not automatic independence" — it is TWO named quantitative inputs:**
+
+* **C3a** = `ε`.  For nonempty `T` with `|T| ≤ M`, `∏_{p∈T}f_p(n)` depends only on
+  `n mod ∏_{p∈T}p`, and `∏_{p∈T}p ≤ R^M = X^{1/20}`, so CRT + equidistribution of `P∩[1,X]`
+  gives `𝔼 = ∏_{p∈T}𝔼f_p + O(P R^M/X) = 0 + O(P R^M/X)`.  Since `N_M ≤ (|s|+1)^M ≤ R^M`, the
+  first error term is `P R^{2M}/X` — **exactly the brief's "bounded schematically by
+  `P R^{2m}/X` for `m ≤ M`"**, which confirms the reading.  Elementary counting; do this next.
+* **C3core** = `B`.  `avg_n ∏_{p∈s}(1+lam‖f_p(n)‖)`.  In the G4 application `f_p(n)` is `O(k/p)`
+  unless `n` lies in one of the `k = H(J−K)` active classes mod `p`, so pointwise
+  `∏_p(1+lam‖f_p‖) ≤ (1+2lam)^{V(n)}·exp(2 lam k ∑_p p⁻¹)` with `V(n)` = number of active
+  primes, `V(n) ≤ ∑_{α,j}ω_{≤R}(n+ρ_{α,j})` and `𝔼V ≍ kL`.  So `B = exp(O_{lam}(kL))` and
+  `lam^{−M} = exp(−M log lam)` beats it exactly when `M ≍ C k L` with `C` large — **the brief's
+  `M ≍ C T L` is calibrated for precisely this**, which is independent confirmation of the
+  schedule.  Bounding `𝔼(1+2lam)^{V(n)}` over the progression is a Shiu-type exponential moment
+  for `ω` — a PROVEN, project-scale theorem, not an open conjecture.
+  ⚠️ Alternative worth trying first, to avoid Shiu entirely: `𝔼 V^m` for `m ≤ M` is itself
+  CRT-computable (modulus `R^M ≤ X^{1/20}`), so a *moment* tail may replace the exponential one.
+  That would make all of C3 elementary.  **Test this before importing Shiu.**
+
 ### §4C decomposed — the next attacks, hardest-first
 
 Write `S_ν(n) = ∑_α A_{να} ∑_{K<j≤J} 4^{−j} ω_{≤R}(n + ρ_{α,j})`, so with `w = Aᵀq`
