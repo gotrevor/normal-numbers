@@ -85,3 +85,33 @@ class counts).  No sieve theorem enters the route at any point.
 `M ≍ C·kL`, `C ≥ 10⁴`, against a main term `exp(−cL8^{−K})`.  That comparison has been done on
 paper only.  It is the natural place for the eliminated exponential moment to reappear as a
 hidden constant, so it wants a Lean-side or hand check before `PropC` is called discharged.
+
+## 4. ⚠️ TRIPWIRE — `bigAvg` bundles the two prime ranges (`d9773ca`, `G4Remainder.lean`)
+
+`gridFrame_propD` reduces `PropD` to two hypotheses:
+
+    hbig : bigAvg G X R ≤ δbig * (ε * η)
+    hfar : farAvg G X   ≤ δfar * (ε * η)
+
+`bigAvg` is defined over **all** primes `p > R` with `p ∤ P₀`, and its own docstring states it
+covers "§4D's medium (`R < p ≤ Y`, signed two-congruence counting) and very-large (`p > Y`,
+pointwise) ranges together."
+
+**The reduction is sound.**  It is agnostic about how `bigAvg` gets bounded, and bundling is a
+legitimate way to state the remaining obligation.
+
+**The tripwire is the discharge of `hbig`.**  The brief §4D says, emphatically:
+
+> The pointwise very-large-prime argument **does not handle all primes above R**; that
+> substitution loses the proof.
+
+So `hbig` must be proved by splitting at `Y = X^{1/100}`:
+* `R < p ≤ Y` — L² estimate via elementary two-congruence counting, **preserving the signed
+  cancellation**, giving `O(8^{−K/2}√(log M))`;
+* `p > Y` — pointwise, using `ω_{>Y}(n+ρ) ≤ log(3X)/log Y = O(1)`, giving `O(2^{−K})`.
+
+A single pointwise bound applied to all of `bigAvg` **typechecks and is wrong**.  If a future
+commit discharges `hbig` without a `Y`-split, that is the defect — check for it first.
+
+Good sign already present: `PropD` is stated in the **average** coordinate metric (`dAv`), which
+is the normalisation that avoids multiplying the error by `r`, exactly as §4D requires.
