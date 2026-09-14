@@ -510,5 +510,140 @@ lemma abs_dev_prefix (L : ℕ → ℕ) (d : ℕ → ℕ → ℕ) (hL : ∀ i, 0 
   rw [hdiff] at htri
   linarith
 
+/-! ### The assembly -/
+
+/-- **Rung 3.**  If the blocks' cyclic window frequencies converge to `c` and the block lengths
+tend to infinity, the concatenated sequence has window frequency `c`. -/
+theorem tendsto_winCount_seq (L : ℕ → ℕ) (d : ℕ → ℕ → ℕ) (hL : ∀ i, 0 < L i) (v : List ℕ)
+    {c : ℝ} (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
+    (hcyc : Tendsto (fun i => (cyc L d v i : ℝ) / (L i : ℝ)) atTop (nhds c))
+    (hLinf : Tendsto (fun i => (L i : ℝ)) atTop atTop) :
+    Tendsto (fun N => (winCount (seq L d) v N : ℝ) / (N : ℝ)) atTop (nhds c) := by
+  classical
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  set γ := ε / 12 with hγdef
+  have hγpos : (0 : ℝ) < γ := by rw [hγdef]; positivity
+  have h8 : (0 : ℝ) < ε / 8 := by positivity
+  -- (a) the blocks are eventually `γ`-good
+  have hgood : ∀ᶠ j in atTop,
+      |(cyc L d v j : ℝ) - c * (L j : ℝ)| + (v.length : ℝ) ≤ γ * (L j : ℝ) := by
+    obtain ⟨J, hJ⟩ := Metric.tendsto_atTop.1 hcyc (γ / 2) (by positivity)
+    have h2 : ∀ᶠ j in atTop, (v.length : ℝ) ≤ γ / 2 * (L j : ℝ) :=
+      (Filter.Tendsto.const_mul_atTop (by positivity : (0:ℝ) < γ / 2) hLinf).eventually_ge_atTop _
+    filter_upwards [eventually_ge_atTop J, h2] with j hj hj2
+    have hLj : (0 : ℝ) < (L j : ℝ) := by exact_mod_cast hL j
+    have hj1 : |(cyc L d v j : ℝ) / (L j : ℝ) - c| < γ / 2 := by
+      have := hJ j hj
+      rwa [Real.dist_eq] at this
+    have hkey : |(cyc L d v j : ℝ) - c * (L j : ℝ)|
+        = |(cyc L d v j : ℝ) / (L j : ℝ) - c| * (L j : ℝ) := by
+      have hre : (cyc L d v j : ℝ) / (L j : ℝ) - c
+          = ((cyc L d v j : ℝ) - c * (L j : ℝ)) / (L j : ℝ) := by
+        field_simp
+      rw [hre, abs_div, abs_of_pos hLj]
+      field_simp
+    rw [hkey]
+    nlinarith
+  obtain ⟨M₀, hM₀⟩ := eventually_atTop.1 hgood
+  -- (b) a scale index whose reciprocal is small
+  obtain ⟨M₁, hM₁⟩ := exists_nat_gt (8 / ε)
+  have hM₁' : 1 ≤ ((M₁ : ℝ) + 1) * (ε / 8) := by
+    have hlt : (8 : ℝ) / ε < (M₁ : ℝ) + 1 := by linarith
+    have hmul := mul_lt_mul_of_pos_right hlt h8
+    have hid : (8 : ℝ) / ε * (ε / 8) = 1 := by field_simp
+    rw [hid] at hmul
+    linarith
+  set M := max (max M₀ M₁) 1 with hMdef
+  have hM1 : 1 ≤ M := le_max_right _ _
+  have hMM₀ : M₀ ≤ M := le_trans (le_max_left _ _) (le_max_left _ _)
+  have hMM₁ : M₁ ≤ M := le_trans (le_max_right _ _) (le_max_left _ _)
+  have hγM : ∀ j, M ≤ j →
+      |(cyc L d v j : ℝ) - c * (L j : ℝ)| + (v.length : ℝ) ≤ γ * (L j : ℝ) :=
+    fun j hj => hM₀ j (le_trans hMM₀ hj)
+  have hMrecip : 1 ≤ ((M : ℝ) + 1) * (ε / 8) := by
+    have : ((M₁ : ℝ) + 1) ≤ ((M : ℝ) + 1) := by
+      have : (M₁ : ℝ) ≤ (M : ℝ) := by exact_mod_cast hMM₁
+      linarith
+    nlinarith
+  -- (c) a threshold beyond which the frozen constants are negligible
+  have hdivbound : ∀ (a : ℝ) (K : ℕ), 8 * a / ε < (K : ℝ) → ∀ N : ℕ, K ≤ N →
+      a ≤ (N : ℝ) * (ε / 8) := by
+    intro a K hKa N hN
+    have hNK : (K : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+    have hlt : 8 * a / ε < (N : ℝ) := lt_of_lt_of_le hKa hNK
+    have hmul := mul_lt_mul_of_pos_right hlt h8
+    have hid : 8 * a / ε * (ε / 8) = a := by field_simp
+    rw [hid] at hmul
+    linarith
+  obtain ⟨K₁, hK₁⟩ := exists_nat_gt (8 * (Tacc L M : ℝ) / ε)
+  obtain ⟨K₂, hK₂⟩ := exists_nat_gt (8 * (v.length : ℝ) / ε)
+  refine ⟨max (max (Tacc L M) K₁) (max K₂ 1), fun N hN => ?_⟩
+  have hNT : Tacc L M ≤ N := le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hN
+  have hNK₁ : K₁ ≤ N := le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) hN
+  have hNK₂ : K₂ ≤ N := le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) hN
+  have hN1 : 1 ≤ N := le_trans (le_trans (le_max_right _ _) (le_max_right _ _)) hN
+  have hNpos : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN1
+  have hTMb : (Tacc L M : ℝ) ≤ (N : ℝ) * (ε / 8) := hdivbound _ K₁ hK₁ N hNK₁
+  have hlenb : (v.length : ℝ) ≤ (N : ℝ) * (ε / 8) := hdivbound _ K₂ hK₂ N hNK₂
+  -- locate the group
+  set m := grp L N with hm
+  obtain ⟨hm1, hm2⟩ := grp_spec L hL N
+  rw [← hm] at hm1 hm2
+  have hMm : M ≤ m := by rw [hm]; exact le_grp L hL hNT
+  have hm1' : 1 ≤ m := le_trans hM1 hMm
+  -- the block at scale `m` is short compared with `N`
+  have hLmN : ((M : ℝ) + 1) * (L m : ℝ) ≤ (N : ℝ) := by
+    have h1 : (M + 1) * L m ≤ N := by
+      refine le_trans (Nat.mul_le_mul_right _ (by omega)) (le_trans (L_le_Tacc L hL hm1') hm1)
+    exact_mod_cast h1
+  have hLmnn : (0 : ℝ) ≤ (L m : ℝ) := Nat.cast_nonneg _
+  have hLmle : (L m : ℝ) ≤ (N : ℝ) := by nlinarith [Nat.cast_nonneg (α := ℝ) M]
+  have hLmb : (L m : ℝ) ≤ (N : ℝ) * (ε / 8) := by nlinarith
+  -- the deviation bound
+  have hdevb := abs_dev_prefix L d hL v hc0 hc1 hγM hMm hm1 hm2
+  have hTmN : (Tacc L m : ℝ) ≤ (N : ℝ) := by exact_mod_cast hm1
+  have hγ0 : (0 : ℝ) ≤ γ := hγpos.le
+  have hfinal : |dev L d v c N| ≤ (N : ℝ) * (5 * ε / 8) := by
+    have hcL : c * (L m : ℝ) ≤ (N : ℝ) * (ε / 8) := by nlinarith
+    have hstep : γ * ((N : ℝ) + (L m : ℝ)) ≤ 2 * γ * (N : ℝ) := by nlinarith
+    have hγT : γ * (Tacc L m : ℝ) ≤ γ * (N : ℝ) := by nlinarith
+    have hγval : γ = ε / 12 := hγdef
+    nlinarith
+  rw [Real.dist_eq]
+  have hrw : (winCount (seq L d) v N : ℝ) / (N : ℝ) - c = dev L d v c N / (N : ℝ) := by
+    unfold dev
+    field_simp
+  rw [hrw, abs_div, abs_of_pos hNpos, div_lt_iff₀ hNpos]
+  nlinarith
+
+/-- **The concatenated sequence is normal.** -/
+theorem isNormalSequence_seq {b : ℕ} (hb : 2 ≤ b) (L : ℕ → ℕ) (d : ℕ → ℕ → ℕ)
+    (hL : ∀ i, 0 < L i) (hd : ∀ i j, d i j < b)
+    (hLinf : Tendsto (fun i => (L i : ℝ)) atTop atTop)
+    (hcyc : ∀ v : List ℕ, v ≠ [] → (∀ x ∈ v, x < b) →
+      Tendsto (fun i => (cyc L d v i : ℝ) / (L i : ℝ)) atTop (nhds (((b : ℝ) ^ v.length)⁻¹))) :
+    IsNormalSequence b (seq L d) := by
+  refine isNormalSequence_of_tendsto_winCount (fun v hv hvb => ?_)
+  have hbR : (1 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  have hpow : (1 : ℝ) ≤ (b : ℝ) ^ v.length := one_le_pow₀ hbR.le
+  have hc0 : (0 : ℝ) ≤ ((b : ℝ) ^ v.length)⁻¹ := by positivity
+  have hc1 : ((b : ℝ) ^ v.length)⁻¹ ≤ 1 := by
+    rw [inv_le_one₀ (by linarith)]
+    exact hpow
+  exact tendsto_winCount_seq L d hL v hc0 hc1 (hcyc v hv hvb) hLinf
+
+/-- **The concatenated sequence defines a normal real.**  This is rung 3's endpoint: a sequence
+of finite blocks whose window frequencies converge produces ONE number that is normal. -/
+theorem isNormal_realOfDigits_seq {b : ℕ} (hb : 2 ≤ b) (L : ℕ → ℕ) (d : ℕ → ℕ → ℕ)
+    (hL : ∀ i, 0 < L i) (hd : ∀ i j, d i j < b)
+    (hLinf : Tendsto (fun i => (L i : ℝ)) atTop atTop)
+    (hcyc : ∀ v : List ℕ, v ≠ [] → (∀ x ∈ v, x < b) →
+      Tendsto (fun i => (cyc L d v i : ℝ) / (L i : ℝ)) atTop (nhds (((b : ℝ) ^ v.length)⁻¹))) :
+    IsNormal b (realOfDigits b (seq L d)) := by
+  have hns := isNormalSequence_seq hb L d hL hd hLinf hcyc
+  exact isNormal_realOfDigits b hb _ (fun j => seq_lt L d hd j)
+    (properDigits_of_isNormalSequence hb hns) hns
+
 end BlockConcat
 end NormalNumbers

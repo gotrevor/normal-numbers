@@ -150,4 +150,42 @@ theorem card_filter_periodic {P : ℕ → Prop} [DecidablePred P] {L : ℕ}
     rw [hrw, ih, hcard]
     ring
 
+/-- A normal sequence never sticks at `b − 1`: the word `[0]` has positive frequency. -/
+theorem properDigits_of_isNormalSequence {b : ℕ} (hb : 2 ≤ b) {s : ℕ → ℕ}
+    (hn : IsNormalSequence b s) : ProperDigits b s := by
+  classical
+  intro N
+  by_contra hcon
+  push_neg at hcon
+  have hlim := hn [0] (by simp) (by intro x hx; simp only [List.mem_singleton] at hx; omega)
+  have hbound : ∀ n, countOccurrences [0] ((List.range n).map s) ≤ N := by
+    intro n
+    rw [countOccurrences_range_map]
+    refine le_trans (Finset.card_le_card (t := Finset.range N) ?_) (by simp)
+    intro i hi
+    simp only [Finset.mem_filter, Finset.mem_range] at hi ⊢
+    by_contra hiN
+    have hNi : N ≤ i := by omega
+    have h0 : s (i + 0) = ([0] : List ℕ).getD 0 0 := hi.2.2 0 (by simp)
+    simp only [List.getD_cons_zero, Nat.add_zero] at h0
+    rw [hcon i hNi] at h0
+    omega
+  have hzero : Tendsto
+      (fun n : ℕ => (countOccurrences [0] ((List.range n).map s) : ℝ) / n) atTop (nhds 0) := by
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds
+      (tendsto_const_div_atTop_nhds_zero_nat (N : ℝ)) (fun n => ?_) (fun n => ?_)
+    · positivity
+    · dsimp only
+      rcases Nat.eq_zero_or_pos n with hn0 | hn0
+      · subst hn0; simp
+      have : (0 : ℝ) < n := by exact_mod_cast hn0
+      gcongr
+      exact_mod_cast hbound n
+  have huniq := tendsto_nhds_unique hlim hzero
+  have hbR : (1 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  simp only [List.length_singleton, pow_one] at huniq
+  have : (0 : ℝ) < ((b : ℝ))⁻¹ := by positivity
+  rw [huniq] at this
+  exact lt_irrefl _ this
+
 end NormalNumbers

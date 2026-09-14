@@ -48,25 +48,45 @@ block-concatenation argument consumes.  So:
   `|cntIco (Tacc m) (Tacc m + r·L m) − r·cyc m| ≤ |v|`.
   The only error in a whole group is its right edge, once.
 
-## 3. The next bounded test (lap 52)
+### Rung 3 is COMPLETE (same lap)
 
-Finish rung 3, in this order — all in `G4EntropyConcat.lean`:
+```
+cntIco_partial   a prefix of a group = q whole copies + a partial one
+abs_dev_group    |dev(T(m+1)) − dev(T m)| ≤ γ·(T(m+1) − T m) for a γ-good block
+abs_dev_Tacc     |dev(T m)| ≤ T M + γ·T m for every m ≥ M   (induction over groups)
+abs_dev_prefix   |dev N| ≤ T M + γ·T m + (γ(N + L m) + c·L m + |v|)
+tendsto_winCount_seq       cyc i/L i → c and L i → ∞  ⟹  winCount(seq) v N / N → c
+isNormalSequence_seq       ⟹ IsNormalSequence b (seq L d)
+isNormal_realOfDigits_seq  ⟹ IsNormal b (realOfDigits b (seq L d))
+```
+plus `properDigits_of_isNormalSequence` in `G4EntropyOcc.lean` (a normal sequence never sticks
+at `b−1`, because the word `[0]` has positive frequency).  All three endpoints print
+`[propext, Classical.choice, Quot.sound]`.
 
-1. `cntIco_partial`: for `Tacc m ≤ N < Tacc (m+1)` and `q := (N − Tacc m)/L m`,
-   `cntIco (Tacc m) N ≤ (q+1)·cyc m + |v|` and `q·cyc m ≤ cntIco (Tacc m) N + |v|`
-   (monotonicity of `cntIco` plus `cntIco_group` at `q` and `q+1`; `q+1 ≤ rep m` because
-   `N < Tacc (m+1)`).
-2. The real-valued deviation `D N := winCount (seq) v N − c·N` with `c := (2^{|v|})⁻¹`:
-   * group step `|D (Tacc (m+1))| ≤ |D (Tacc m)| + γ·(Tacc (m+1) − Tacc m)` whenever
-     `|cyc j − c·L j| + |v| ≤ γ·L j` for `j ≥ M`;
-   * induction ⟹ `|D (Tacc m)| ≤ Tacc M + γ·Tacc m` for `m ≥ M`;
-   * prefix ⟹ `|D N| ≤ Tacc M + 3γ·N + N/(M+1) + |v|` for `N ≥ Tacc M`
-     (using `L m ≤ Tacc m/(m+1)` from `mul_L_succ_le`).
-3. `tendsto_winCount_seq` and `isNormalSequence_seq`.
+**So the abstract half of the objective is done**: any family of finite blocks whose window
+frequencies converge, with lengths `→ ∞`, yields one normal real.  No hypothesis on how fast
+`L` grows — repetition absorbs that.
 
-Then rung 2 (`G4EntropyBlockWord.lean`): the `(n, α, p)` enumeration of the scale-`i` sample,
-`L i = |P_i|·|Atom_i|·m_i`, and `cyc i / L i → 2^{−|v|}` out of
-`tendsto_occursCountP_primeLambertFour`.
+## 3. The next bounded test (lap 52) — rung 2, the only remaining piece
+
+`G4EntropyBlockWord.lean` must supply exactly the two hypotheses of `isNormal_realOfDigits_seq`
+for `b = 2`:
+
+* `L i := (PK i).card * Fintype.card (gridAt i).Atom * kk i` (all `x`-independent naturals;
+  `0 < L i` needs `PK i ≠ ∅`, recorded in lap 1, and `0 < kk i`).  `L i → ∞` is immediate from
+  `kk i = K i / 4 → ∞`.
+* `d i j :=` the `j`-th digit of the scale-`i` block: decode `j` as `((a·|Atom| + α)·kk i + p)`,
+  with `a` indexing `PK i` (via `Finset.orderIsoOfFin` or `.sort`) and `α` indexing the atom
+  Fintype, and return `digitOf 2 (Int.fract G₄) (2·kIdx (gridAt i) n_a α + p)`.
+* `cyc L d v i / L i → 2^{−|v|}`: `cyc` counts **cyclically** in one period, i.e. over all
+  `(a, α, p)` including the `|v|−1` wrap positions per `(a,α)` window; the linear count over
+  fitting `p` is exactly the numerator of `tendsto_occursCountP_primeLambertFour` (a Fubini
+  re-index of its `∑_{c : Atom × Fin (kk i − ℓ + 1)}`), and the two differ by `≤ (|v|−1)` per
+  window, i.e. a `(|v|−1)/kk i → 0` fraction.  Its denominator is `|P_i|·|Atom_i|·(kk i − ℓ + 1)`
+  against `L i = |P_i|·|Atom_i|·kk i`, another `→ 1` factor.
+
+Then the headline is `isNormal_realOfDigits_seq` applied to that `(L, d)`, plus a statement
+naming `samplePos` explicitly.
 
 ## Claim limits
 
