@@ -50,6 +50,7 @@ import NormalNumbers.CFAffineFamily
 import NormalNumbers.CFAeKhinchin
 import NormalNumbers.ImageKhinchin
 import NormalNumbers.Disjunctive
+import NormalNumbers.DisjunctiveCorollaries
 import NormalNumbers.ConditionalDisjunctive
 import NormalNumbers.LnTwoFreq
 import NormalNumbers.LnTwoRuns
@@ -186,6 +187,7 @@ import NormalNumbers.G4Frame
 import NormalNumbers.G4FreqSep
 import NormalNumbers.G4Grid
 import NormalNumbers.G4GridTube
+import NormalNumbers.G4Irrational
 import NormalNumbers.G4Jackson
 import NormalNumbers.G4LocalContraction
 import NormalNumbers.G4MediumPrimes
