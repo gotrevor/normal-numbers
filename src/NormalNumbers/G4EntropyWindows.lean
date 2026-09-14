@@ -420,4 +420,34 @@ theorem card_shared_le (G : GridParams) {α β : G.Atom} (hαβ : α ≠ β) (M 
           omega
   simpa using hcard
 
+open Classical in
+/-- **How many scale-`i` sample times give an `α`-window that some *other* atom `β` also
+produces**: at most `X/P₀ + 1`, against the `|P_K| ≈ X/P₀` times `α` has in total — so a pair of
+atoms collides on a vanishing fraction, `≈ 1/|P_K|`, of the sample. -/
+theorem card_collide_pair_le (i : ℕ) {α β : (gridAt i).Atom} (hαβ : α ≠ β) :
+    (((PK i).filter (fun n => ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card)
+      ≤ X (KK i) / (gridAt i).P₀ + 1 := by
+  classical
+  refine le_trans ?_ (card_shared_le (gridAt i) hαβ (X (KK i)))
+  refine Finset.card_le_card_of_injOn (fun n => kIdx (gridAt i) n α) ?_ ?_
+  · intro n hn
+    simp only [Finset.coe_filter, Set.mem_setOf_eq] at hn ⊢
+    refine ⟨Finset.mem_range.2 ?_, activeIdx_kIdx (gridAt i) hn.1 α, hn.2⟩
+    have hnX : n < X (KK i) := Finset.mem_range.1 (Finset.mem_filter.1 hn.1).1
+    have hle : kIdx (gridAt i) n α ≤ n :=
+      le_trans (Nat.div_le_self _ _) (Nat.sub_le _ _)
+    omega
+  · intro n hn n' hn' heq
+    simp only [Finset.coe_filter, Set.mem_setOf_eq] at hn hn'
+    simp only at heq
+    by_contra hne
+    rcases Nat.lt_or_ge n n' with hlt | hge
+    · have := window_gap_same_atom i α hn.1 hn'.1 hlt
+      have hkk : 0 < kk i := by unfold kk; omega
+      omega
+    · have hgt : n' < n := by omega
+      have := window_gap_same_atom i α hn'.1 hn.1 hgt
+      have hkk : 0 < kk i := by unfold kk; omega
+      omega
+
 end NormalNumbers.G4.Sched
