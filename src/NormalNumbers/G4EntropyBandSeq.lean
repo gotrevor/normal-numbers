@@ -208,4 +208,88 @@ theorem bandPos_strictMono : StrictMono bandPos := by
       have hdown : bpos i a + p < bandTop i := bpos_add_lt_bandTop i a hpk
       omega
 
+/-! ### The digits read, and the window dictionary -/
+
+/-- The digit sequence read along `bandPos`. -/
+noncomputable def bandDig (x : ℝ) (j : ℕ) : ℕ := digitOf 2 (Int.fract x) (bandPos j)
+
+lemma bandDig_lt (x : ℝ) (j : ℕ) : bandDig x j < 2 := Nat.mod_lt _ (by omega)
+
+/-- Inside band `i`, the `a`-th window occupies the read indices
+`bT i + a·m_i + q`, `q < m_i`, at digit positions `bpos i a + q`. -/
+lemma bandPos_window (i a q : ℕ) (ha : a < (bandS i).card) (hq : q < kk i) :
+    bandPos (bT i + a * kk i + q) = bpos i a + q := by
+  have hkk : 0 < kk i := kk_pos' i
+  have hlt : a * kk i + q < bL i := by
+    rw [bL]
+    have : (a + 1) * kk i ≤ (bandS i).card * kk i := Nat.mul_le_mul_right _ ha
+    have hexp : (a + 1) * kk i = a * kk i + kk i := by ring
+    omega
+  have h1 : bT i ≤ bT i + a * kk i + q := by omega
+  have h2 : bT i + a * kk i + q < bT (i + 1) := by
+    show bT i + a * kk i + q < bT i + bL i
+    omega
+  have hsub : bT i + a * kk i + q - bT i = a * kk i + q := by omega
+  have hdiv : (a * kk i + q) / kk i = a := by
+    have hc : a * kk i + q = kk i * a + q := by ring
+    rw [hc, Nat.mul_add_div hkk, Nat.div_eq_of_lt hq]
+    omega
+  have hmod : (a * kk i + q) % kk i = q := by
+    have hc : a * kk i + q = kk i * a + q := by ring
+    rw [hc, Nat.mul_add_mod, Nat.mod_eq_of_lt hq]
+  rw [bandPos_eq h1 h2, hsub, hdiv, hmod]
+
+/-- **The dictionary**: a window of `v` fitting inside one band window is exactly an occurrence
+of `v` in `x` at the corresponding digit position. -/
+lemma matchesAt_bandDig_iff (x : ℝ) (i a q : ℕ) (v : List ℕ) (ha : a < (bandS i).card)
+    (hq : q + v.length ≤ kk i) :
+    MatchesAt (bandDig x) v (bT i + a * kk i + q) ↔ OccursAt 2 x v (bpos i a + q) := by
+  have hkey : ∀ t < v.length,
+      bandDig x (bT i + a * kk i + q + t) = digitOf 2 (Int.fract x) (bpos i a + q + t) := by
+    intro t ht
+    have hqt : q + t < kk i := by omega
+    have hrw : bT i + a * kk i + q + t = bT i + a * kk i + (q + t) := by ring
+    rw [bandDig, hrw, bandPos_window i a (q + t) ha hqt]
+    ring_nf
+  constructor
+  · intro h t ht
+    have h' := h t ht
+    rw [hkey t ht] at h'
+    rw [h']
+    exact (List.getD_eq_getElem v 0 ht)
+  · intro h t ht
+    show bandDig x (bT i + a * kk i + q + t) = _
+    rw [hkey t ht, h t ht]
+    exact (List.getD_eq_getElem v 0 ht).symm
+
+/-- Summing over the band's enumeration is summing over the band. -/
+lemma sum_range_bnth {β : Type*} [AddCommMonoid β] (i : ℕ) (g : ℕ → β) :
+    ∑ a ∈ Finset.range (bandS i).card, g (bnth i a) = ∑ n ∈ bandS i, g n := by
+  classical
+  rw [← Fin.sum_univ_eq_sum_range (fun a => g (bnth i a))]
+  have hstep : ∀ a : Fin (bandS i).card,
+      g (bnth i (a : ℕ)) = g ((bandS i).orderEmbOfFin rfl a) := by
+    intro a
+    have hfin : (⟨(a : ℕ) % (bandS i).card, Nat.mod_lt _ (card_bandS_pos i)⟩ :
+        Fin (bandS i).card) = a := by
+      apply Fin.ext
+      exact Nat.mod_eq_of_lt a.isLt
+    rw [bnth, hfin]
+  rw [Finset.sum_congr rfl fun a _ => hstep a]
+  rw [← Finset.sum_attach (bandS i) g]
+  refine Fintype.sum_bijective (fun a : Fin (bandS i).card =>
+    (⟨(bandS i).orderEmbOfFin rfl a, Finset.orderEmbOfFin_mem _ _ _⟩ : (bandS i : Finset ℕ)))
+    ?_ _ _ (fun a => rfl)
+  constructor
+  · intro a b hab
+    have : ((bandS i).orderEmbOfFin rfl a : ℕ) = (bandS i).orderEmbOfFin rfl b := by
+      exact congrArg Subtype.val hab
+    exact (bandS i).orderEmbOfFin rfl |>.injective (by exact_mod_cast this)
+  · rintro ⟨n, hn⟩
+    have hrange : n ∈ Set.range ((bandS i).orderEmbOfFin (rfl : (bandS i).card = _)) := by
+      rw [Finset.range_orderEmbOfFin]
+      exact hn
+    obtain ⟨a, ha⟩ := hrange
+    exact ⟨a, Subtype.ext ha⟩
+
 end NormalNumbers.G4.Sched
