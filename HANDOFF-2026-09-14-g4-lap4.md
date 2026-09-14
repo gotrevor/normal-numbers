@@ -4,7 +4,7 @@ Branch `wip/g4-disjunctivity`.  Working tree clean apart from the host's untrack
 `CHECK-g4-route-deviations.md` (not swept in, per lap 3).  Not pushed.  `DIRECTION.md` unchanged
 (grind lap); `PENDING_WORK.md` §"GRIND 2026-09-14 (G4 lap 4)" carries the mathematics.
 
-Build: `lake build NormalNumbers.G4TransferMoment NormalNumbers.G4CRTInput NormalNumbers.G4FourierControl` green (8715 jobs); every declaration below
+Build: `lake build NormalNumbers.G4TransferMoment NormalNumbers.G4CRTInput NormalNumbers.G4FourierControl NormalNumbers.G4PhaseDecomp` green (8716 jobs); every declaration below
 prints `[propext, Classical.choice, Quot.sound]`.  No `sorry` in any G4 file.
 
 ## Advance on the crux (C3)
@@ -44,6 +44,16 @@ sample average of `∏_p ee(θ_p n)` over the AP segment is at most `exp(−∑_
 explicit errors (two CRT, `R^M/|sample|`; two model tails, `exp(−Θ(M))`).  C1, C2, C3 are all
 inside it.  What remains for `PropC` is the identification of `torusChar q (S n)` with such a
 product for the concrete `S` — Frame instantiation work.
+
+## Same lap, fourth commit: the phase decomposition
+
+`src/NormalNumbers/G4PhaseDecomp.lean` — `norm_sampleAvg_ee_phase_le`: for `Φ(n) = ∑_i x_i
+ω_s(n+ρ_i)` (which is `q·S(n)`), `‖avg ee(Φ n)‖ ≤ exp(−∑_{p good} 4θ₀/p) + errors` with
+`θ₀ ≤ ∑_i dist(x_i,ℤ)²`; good primes are those with the roots `−ρ_i mod p` distinct, and
+`sum_sq_ofShifts_eq` shows they see every coefficient separately.  §4C is complete for phase sums
+of shifted `ω`; what separates it from `PropC` is (a) writing the concrete `S` as such a `Φ`,
+(b) `θ₀ = 4^{−4}8^{−K}` via `G4FreqSep`, (c) the good-prime harmonic sum, (d) C4.  (c), (d) are
+the §5 schedule module.
 
 ## Open, in priority order
 

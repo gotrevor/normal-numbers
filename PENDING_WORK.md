@@ -76,6 +76,31 @@ for the concrete `S`, with `θ_p` the `LocalPhase` built from the roots `−ρ_{
 needs the roots distinct mod `p` so every `(α,j)` contributes its own phase — the "good prime"
 condition), and the harmonic sum `∑_{p∈s} 1/p`.  That is the Frame instantiation (§5 module).
 
+### ⬆️ UPDATE (same lap, fourth commit): the phase decomposition — §4C for phase sums of shifted `ω`
+
+`src/NormalNumbers/G4PhaseDecomp.lean` (sorry-free, trust-triple axioms):
+* `ee_add`, `ee_sum`; `omegaOn s m = #{p ∈ s : p ∣ m}`; `totalPhase s ρ x n = ∑_i x_i ω_s(n+ρ_i)`
+  (this IS `q·S(n)` with `ι = {(α,j) : K<j≤J}`, `ρ = ρ_{α,j}`, `x = w_α 4^{−j}`);
+  `localPhase p ρ x n = ∑_i x_i 1[p ∣ n+ρ_i]`; **`ee_phase_eq_prod`** — `ee(Φ n) = ∏_{p∈s} ee(θ_p n)`.
+* `root p ρ i = −ρ_i mod p`, `dvd_add_iff_mod_eq_root`.
+* `LocalPhase.ofShifts` — the induced local data (roots = image of `root`, phase = sum of the
+  coefficients landing there); `theta_ofShifts` — its `θ` is `localPhase`; `shiftPhase` (trivial
+  off the good-prime condition `0 < p ∧ 2|ι| ≤ p`).
+* **`sum_sq_ofShifts_eq`** — for a good prime (`root p ρ` injective), `∑_{roots} dist(x_b)² =
+  ∑_i dist(x_i)²`: the frequency-separation quantity of `G4FreqSep` is exactly what C2 sees.
+* **`norm_sampleAvg_ee_phase_le`** — `‖avg ee(Φ n)‖ ≤ exp(−∑_{p good} 4θ₀/p) + (four errors)` for
+  any `θ₀ ≤ ∑_i dist(x_i,ℤ)²`.
+
+**Status of C.**  C1, C2, C3 proved; C assembled for arbitrary phase sums of shifted `ω`.  To reach
+`PropC` verbatim one needs only: (a) the concrete `Frame.S` written as `totalPhase` per `q`
+(`torusChar q (S n) = ee(∑_ν q_ν S_ν n)` and `∑_ν q_ν S_ν = totalPhase` with `w = Aᵀq` — pure
+algebra on the definition of `S`), (b) `θ₀ = 4^{−4}8^{−K}` from `sum_sq_distZ_freqDepth_ge` (note
+that lemma bounds `∑_α dist(w_α4^{−j_α})²`, a SUB-sum of `∑_{α,j} dist(w_α 4^{−j})²`, so it is a
+valid `θ₀`), (c) `∑_{p ≤ R good, p ∤ P₀} 1/p ≥ L − o(L)` (Mertens, minus the excluded primes and
+the bad primes — the bad primes are those dividing some `ρ_{α,j} − ρ_{α',j'} ≠ 0`, at most
+`|ι|² log(3X)/log p`... their harmonic mass is the §5 `O(log L)`), and (d) **C4**: the budget.
+(c) and (d) are the §5 schedule module.
+
 ### C3 remaining before these updates: ONE lemma, `CRTInput` (now PROVED above)
 For pairwise-coprime moduli `p ∈ T` (all coprime to the progression modulus `P₀`), functions
 `h_p : ℕ → ℂ` periodic mod `p` with `‖h_p‖ ≤ 1`, and the sample `{n ≤ X : n ≡ a (mod P₀)}`:
