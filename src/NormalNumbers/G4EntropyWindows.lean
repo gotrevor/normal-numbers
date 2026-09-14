@@ -531,4 +531,85 @@ theorem card_Atom_sq_le_d (i : ℕ) (α : (gridAt i).Atom) :
         * (gridD₀ (KK i) (N (KK i)) + gridU (gridB (KK i) (N (KK i))) α) := Nat.le_add_left _ 1
     _ = (gridAt i).d α := hd.symm
 
+/-! ### The multiplicity fraction -/
+
+open Classical in
+/-- **The collision fraction at one atom is `≤ 2/|Atom| + 2|Atom|/|P_K|`.**  Both terms vanish:
+`|Atom| → ∞`, and `|P_K| ≈ X/(2P₀)` dwarfs `|Atom|²`. -/
+theorem card_multi_atom_le_real (i : ℕ) (α : (gridAt i).Atom) :
+    (((PK i).filter (fun n =>
+        ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card : ℝ)
+      ≤ 2 * ((PK i).card : ℝ) / (Fintype.card (gridAt i).Atom : ℝ)
+        + 2 * (Fintype.card (gridAt i).Atom : ℝ) := by
+  classical
+  set A : ℕ := Fintype.card (gridAt i).Atom with hA
+  have hApos : 0 < A := Fintype.card_pos
+  have hApos' : (0 : ℝ) < (A : ℝ) := by exact_mod_cast hApos
+  have hP₀ : 0 < (gridAt i).P₀ := (gridAt i).P₀_pos
+  have hd : A ^ 2 ≤ (gridAt i).d α := card_Atom_sq_le_d i α
+  -- the nat bound
+  have hnat := card_multi_atom_le i α
+  -- `(X/d + 1)/P₀ + 1 ≤ X/(A²·P₀) + 2`
+  have hstep : (X (KK i) / (gridAt i).d α + 1) / (gridAt i).P₀ + 1
+      ≤ X (KK i) / (A ^ 2 * (gridAt i).P₀) + 2 := by
+    have h1 : X (KK i) / (gridAt i).d α ≤ X (KK i) / A ^ 2 :=
+      Nat.div_le_div_left hd (by positivity)
+    have h2 : (X (KK i) / (gridAt i).d α + 1) / (gridAt i).P₀
+        ≤ (X (KK i) / A ^ 2) / (gridAt i).P₀ + 1 := by
+      have := Nat.div_le_div_right (c := (gridAt i).P₀) (Nat.add_le_add_right h1 1)
+      have hsplit : (X (KK i) / A ^ 2 + 1) / (gridAt i).P₀
+          ≤ (X (KK i) / A ^ 2) / (gridAt i).P₀ + 1 := by
+        have hdm := Nat.div_add_mod' (X (KK i) / A ^ 2 + 1) (gridAt i).P₀
+        have hdm2 := Nat.div_add_mod' (X (KK i) / A ^ 2) (gridAt i).P₀
+        have hle : (X (KK i) / A ^ 2) / (gridAt i).P₀
+            ≤ (X (KK i) / A ^ 2 + 1) / (gridAt i).P₀ :=
+          Nat.div_le_div_right (by omega)
+        by_contra hcon
+        push_neg at hcon
+        have hge : (X (KK i) / A ^ 2) / (gridAt i).P₀ + 2
+            ≤ (X (KK i) / A ^ 2 + 1) / (gridAt i).P₀ := by omega
+        have hmul : ((X (KK i) / A ^ 2) / (gridAt i).P₀ + 2) * (gridAt i).P₀
+            ≤ (X (KK i) / A ^ 2 + 1) := by
+          refine le_trans (Nat.mul_le_mul_right _ hge) ?_
+          exact Nat.div_mul_le_self _ _
+        have hmod : (X (KK i) / A ^ 2) % (gridAt i).P₀ < (gridAt i).P₀ := Nat.mod_lt _ hP₀
+        nlinarith [hdm2, hmul, hmod, hP₀]
+      omega
+    have h3 : (X (KK i) / A ^ 2) / (gridAt i).P₀ = X (KK i) / (A ^ 2 * (gridAt i).P₀) :=
+      Nat.div_div_eq_div_mul _ _ _
+    omega
+  -- assemble in `ℝ`
+  have hX : (X (KK i) : ℝ) / (2 * ((gridAt i).P₀ : ℝ)) ≤ ((PK i).card : ℝ) :=
+    card_apSample_ge_half (X (KK i)) (gridAt i).P₀ (gridAt i).b₀ (gridAt i).P₀_pos
+      (gridAt i).b₀_lt_P₀ (two_mul_P₀_le_X (show 100 ≤ KK i by have := KK_ge i; omega))
+  have hP₀R : (0 : ℝ) < ((gridAt i).P₀ : ℝ) := by exact_mod_cast hP₀
+  have hdivR : ((X (KK i) / (A ^ 2 * (gridAt i).P₀) : ℕ) : ℝ)
+      ≤ (X (KK i) : ℝ) / ((A : ℝ) ^ 2 * ((gridAt i).P₀ : ℝ)) := by
+    refine le_trans Nat.cast_div_le ?_
+    push_cast
+    exact le_rfl
+  have hXle : (X (KK i) : ℝ) / ((A : ℝ) ^ 2 * ((gridAt i).P₀ : ℝ))
+      ≤ 2 * ((PK i).card : ℝ) / (A : ℝ) ^ 2 := by
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    have h := hX
+    rw [div_le_iff₀ (by positivity)] at h
+    nlinarith [h, hP₀R, hApos']
+  have hnatR : ((((PK i).filter (fun n =>
+      ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card : ℕ) : ℝ)
+      ≤ (A : ℝ) * (((X (KK i) / (A ^ 2 * (gridAt i).P₀) + 2 : ℕ)) : ℝ) := by
+    have h := le_trans hnat (Nat.mul_le_mul_left A hstep)
+    exact_mod_cast h
+  refine hnatR.trans ?_
+  have hcast2 : (((X (KK i) / (A ^ 2 * (gridAt i).P₀) + 2 : ℕ)) : ℝ)
+      ≤ (X (KK i) : ℝ) / ((A : ℝ) ^ 2 * ((gridAt i).P₀ : ℝ)) + 2 := by
+    push_cast
+    linarith [hdivR]
+  refine le_trans (mul_le_mul_of_nonneg_left hcast2 (le_of_lt hApos')) ?_
+  calc (A : ℝ) * ((X (KK i) : ℝ) / ((A : ℝ) ^ 2 * ((gridAt i).P₀ : ℝ)) + 2)
+      ≤ (A : ℝ) * (2 * ((PK i).card : ℝ) / (A : ℝ) ^ 2 + 2) := by
+        refine mul_le_mul_of_nonneg_left ?_ (le_of_lt hApos')
+        linarith [hXle]
+    _ = 2 * ((PK i).card : ℝ) / (A : ℝ) + 2 * (A : ℝ) := by
+        field_simp
+
 end NormalNumbers.G4.Sched
