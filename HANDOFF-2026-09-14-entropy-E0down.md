@@ -1,7 +1,12 @@
-# HANDOFF — the new route: **E0 downward**, skeleton landed with three named leaves
+# HANDOFF — the new route: **E0 downward**, PROVED
 
 **Branch** `wip/g4-entropy`.  `lake build` 🟢 **8999 jobs**.  New module
-`src/NormalNumbers/G4EntropyE0Down.lean` — assembly complete, **three** disclosed `sorry` leaves.
+`src/NormalNumbers/G4EntropyE0Down.lean` — **sorry-free**;
+`entropy_E0_down` prints `[propext, Classical.choice, Quot.sound]`.
+
+> **`Sched.entropy_E0_down`** — for every `K = 4k₄ ≥ 33856` and every outer scale `X'` with
+> `Xlo K = Y K^50 ≤ X' ≤ X K`, the joint quantized sample of `G₄` at scale `K` truncated to `X'`
+> still carries at least a fifth of the maximal entropy: `(1/5)·k₄·(K²+1)^K < H₂(Z^{G4}_{K,X'})`.
 
 ## The insight
 
@@ -60,11 +65,14 @@ Each is the `X'`-version of an existing `X K` lemma whose `X` dependence runs th
    Landed as `sample_term_le_down` + `log_Mx_div_le_down`, then `hbig_holds`'s proof verbatim.
    Note the A0 obstruction term `log Mx/log Y` is handled by pure monotonicity here — downward
    it costs nothing.
-3. ⏳ **`smallPrime_term_le_down` — the last leaf.**  Only `term_a_le` and `term_d_le` see `Psz`; both need
+3. ✅ **`smallPrime_term_le_down` — DONE.**  Only `term_a_le` and `term_d_le` see `Psz`; both need
    `R^{Mc}·Λ·(stuff) ≤ X'/(4P₀)`.  The `X K` proofs go through `R^{2Mc} ≤ X^{1/10}` and
    `2^{2Kr+4Mc+O(1)} ≤ X^{1/2}`; against `Xlo = X^{1/2}` those become `X^{1/5}` and `X^{1/4}`,
    still true with room (`Mc ≤ K^{6K+9}` against `2^{8K²}` in the exponent of `Y`).
-   The other three terms (`main_term_le`, `term_b_le`, `term_c_le`) are `X`-free.
+   The other three terms (`main_term_le`, `term_b_le`, `term_c_le`) are `X`-free and reused
+   verbatim.  Landed as `inv_card_le_down` + `two_pow_div_le_down` (`100 → 50`) +
+   `term_a_le_down`/`term_d_le_down`; the exponent budget has room to spare,
+   `2Kr + 4Mc + 3 + 12·2^m + 6 ≤ 19·2^m ≤ 50·2^m`.
 
 ## Then: prefix control for `fullPos`
 

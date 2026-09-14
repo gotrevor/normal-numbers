@@ -33,16 +33,17 @@ for `fullPos` therefore asks for E0 at all `X' ≤ X K`, which is what this modu
 `fT_kk_le` already suffices.  The two regimes overlap by a factor `≫ 1` because
 `X/(dmin·kk) ≫ √X`.
 
-One leaf remains open (`sorry`): `smallPrime_term_le_down`, the `X'`-version of
-`G4EntropyBudget.smallPrime_term_le`.  Only its `term_a_le`/`term_d_le` pieces see
-`Psz = |apSample X' P₀ b₀|`; the other three terms are `X`-free.
+**The module is complete: `entropy_E0_down` is sorry-free.**  The three `X'`-sensitive inputs:
 
-**Done**:
 * `hfar_holds_down`, via `farC_le_down` (`farC G X' Dm ≤ logP₀Nat K + m K + 10` for every
   `Xlo K ≤ X' ≤ X K`), `two_mul_exp_le_Xlo`, `gridDm_le_Xlo`.
 * `hbig_holds_down`, via `sample_term_le_down` (the `X K` proof's exponent count `96 → 46`:
   `Y²·P₀·4·2^K ≤ 2^{50·2^m} ≤ X'` because `K ≤ 2^m`) and `log_Mx_div_le_down` (monotone from
   `log_Mx_div_le`, since `X' ≤ X K` — the A0 obstruction term *improves* downward).
+* `smallPrime_term_le_down`, via `inv_card_le_down` (`1/|P'| ≤ 2P₀/2^{50·2^m}`),
+  `two_pow_div_le_down` (`100 → 50`) and `term_a_le_down`/`term_d_le_down`.  The exponent
+  budget has room to spare: `2Kr + 4Mc + 3 + 12·2^m + 6 ≤ 19·2^m ≤ 50·2^m`.
+  `main_term_le`, `term_b_le`, `term_c_le` are `X`-free and are reused verbatim.
 
 The assembly `entropy_E0_down` is complete and consumes exactly those three.
 -/
@@ -441,6 +442,139 @@ theorem hfar_holds_down {K X' : ℕ} (hK : 100 ≤ K) (hlo : Xlo K ≤ X') (hhi 
         linarith
     _ = (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ K) := by field_simp; ring
 
+/-- `1/|P'| ≤ 2P₀/2^{50·2^m}` for any `X' ≥ Xlo K`. -/
+lemma inv_card_le_down {K X' : ℕ} (hK : 100 ≤ K) (hlo : Xlo K ≤ X') :
+    1 / ((apSample X' (gridOf K (N K) (by omega)).P₀
+        (gridOf K (N K) (by omega)).b₀).card : ℝ)
+      ≤ 2 * (gridOf K (N K) (by omega)).P₀ / (2 : ℝ) ^ (50 * 2 ^ m K) := by
+  set G := gridOf K (N K) (by omega : 1 ≤ K)
+  have hP₀ : (0 : ℝ) < G.P₀ := by exact_mod_cast G.P₀_pos
+  have hX'pos : 0 < X' := by have := Xlo_pos K; omega
+  have hXr : (0 : ℝ) < X' := by exact_mod_cast hX'pos
+  have hXlo' : (2 : ℝ) ^ (50 * 2 ^ m K) ≤ (X' : ℝ) := by
+    rw [← Xlo_cast K]; exact_mod_cast hlo
+  have hcard := card_apSample_ge_half X' G.P₀ G.b₀ G.P₀_pos G.b₀_lt_P₀
+    (le_trans (two_mul_P₀_le_Xlo hK) hlo)
+  have hcard0 : (0 : ℝ) < (apSample X' G.P₀ G.b₀).card := by
+    have : (0 : ℝ) < (X' : ℝ) / (2 * G.P₀) := by positivity
+    linarith
+  have step : 1 / ((apSample X' G.P₀ G.b₀).card : ℝ) ≤ 2 * G.P₀ / (X' : ℝ) := by
+    rw [div_le_div_iff₀ hcard0 hXr]
+    have := hcard
+    rw [div_le_iff₀ (by positivity)] at this
+    linarith
+  refine step.trans ?_
+  gcongr
+
+/-- `2^{e₁}/2^{50·2^m} ≤ 1/64` whenever `e₁ + 6 ≤ 50·2^m`. -/
+lemma two_pow_div_le_down {e₁ : ℕ} (K : ℕ) (h : e₁ + 6 ≤ 50 * 2 ^ m K) :
+    (2 : ℝ) ^ e₁ / (2 : ℝ) ^ (50 * 2 ^ m K) ≤ 1 / 64 := by
+  rw [div_le_div_iff₀ (show (0:ℝ) < 2 ^ (50 * 2 ^ m K) by positivity)
+    (show (0:ℝ) < 64 by norm_num)]
+  calc (2 : ℝ) ^ e₁ * 64 = (2 : ℝ) ^ (e₁ + 6) := by rw [pow_add]; norm_num
+    _ ≤ (2 : ℝ) ^ (50 * 2 ^ m K) := pow_le_pow_right₀ (by norm_num) h
+    _ = _ := (one_mul _).symm
+
+/-- (a): the residue-transfer term. -/
+lemma term_a_le_down {K X' : ℕ} (hK : 100 ≤ K) (hlo : Xlo K ≤ X') :
+    (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
+      * ((((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).powerset.filter
+            (fun T' => T'.Nonempty ∧ T'.card ≤ Mc K)).card : ℝ)
+          * (2 ^ Mc K * (2 * (R K : ℝ) ^ Mc K
+              / ((apSample X' (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card : ℝ))))
+      ≤ 1 / 64 := by
+  have hcardN := card_small_subsets_le (smallPrimes (R K) (gridOf K (N K) (by omega)).P₀) (Mc K)
+  have hsmN := card_smallPrimes_le (R K) (gridOf K (N K) (by omega)).P₀
+  have hR2 := R_ge_two K
+  have hcard : ((((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).powerset.filter
+      (fun T' => T'.Nonempty ∧ T'.card ≤ Mc K)).card : ℕ) : ℝ) ≤ Mc K * (2 * (R K : ℝ)) ^ Mc K := by
+    have : ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).powerset.filter
+        (fun T' => T'.Nonempty ∧ T'.card ≤ Mc K)).card ≤ Mc K * (2 * R K) ^ Mc K := by
+      refine hcardN.trans ?_
+      apply Nat.mul_le_mul_left
+      apply Nat.pow_le_pow_left
+      omega
+    exact_mod_cast this
+  have hinv := inv_card_le_down hK hlo
+  have hMc : (Mc K : ℝ) ≤ 2 ^ Mc K := by exact_mod_cast (Nat.lt_two_pow_self).le
+  have hR2Mc := R_pow_two_Mc_le hK
+  have hP₀ := P₀_le_two_pow hK
+  have hP₀0 : (0 : ℝ) ≤ (gridOf K (N K) (by omega)).P₀ := by positivity
+  set Λ := (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K)) with hΛ
+  set Psz := ((apSample X' (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card : ℝ)
+  set c := ((((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).powerset.filter
+      (fun T' => T'.Nonempty ∧ T'.card ≤ Mc K)).card : ℕ) : ℝ)
+  have hΛ0 : 0 ≤ Λ := by positivity
+  have hRr : (0 : ℝ) ≤ R K := by positivity
+  calc Λ * (c * (2 ^ Mc K * (2 * (R K : ℝ) ^ Mc K / Psz)))
+      = Λ * c * 2 ^ Mc K * 2 * (R K : ℝ) ^ Mc K * (1 / Psz) := by ring
+    _ ≤ Λ * (Mc K * (2 * (R K : ℝ)) ^ Mc K) * 2 ^ Mc K * 2 * (R K : ℝ) ^ Mc K
+          * (2 * (gridOf K (N K) (by omega)).P₀ / (2 : ℝ) ^ (50 * 2 ^ m K)) := by gcongr
+    _ = Λ * Mc K * 2 ^ Mc K * 2 ^ Mc K * 4 * (R K : ℝ) ^ (2 * Mc K) * (gridOf K (N K) (by omega)).P₀ / (2 : ℝ) ^ (50 * 2 ^ m K) := by
+        rw [mul_pow, pow_mul (R K : ℝ) 2 (Mc K), sq]; ring
+    _ ≤ Λ * 2 ^ Mc K * 2 ^ Mc K * 2 ^ Mc K * 4 * (2 : ℝ) ^ (10 * 2 ^ m K)
+          * (2 : ℝ) ^ (2 * 2 ^ m K) / (2 : ℝ) ^ (50 * 2 ^ m K) := by
+        gcongr
+    _ = (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K) + Mc K + Mc K + Mc K + 2 + 10 * 2 ^ m K + 2 * 2 ^ m K)
+          / (2 : ℝ) ^ (50 * 2 ^ m K) := by
+        rw [hΛ, show (4 : ℝ) = 2 ^ 2 by norm_num, ← pow_add, ← pow_add, ← pow_add, ← pow_add,
+          ← pow_add, ← pow_add]
+    _ ≤ 1 / 64 := by
+        apply two_pow_div_le_down
+        obtain ⟨h1, h2, h3⟩ := sizes_le_two_pow_m hK
+        omega
+
+lemma term_d_le_down {K X' : ℕ} (hK : 100 ≤ K) (hlo : Xlo K ≤ X') :
+    (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
+      * (2 * (2 * Real.exp 1 / Mc K) ^ Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ^ Mc K
+          * (2 * (R K : ℝ) ^ Mc K / ((apSample X' (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card : ℝ)))
+      ≤ 1 / 64 := by
+  have hsmN := card_smallPrimes_le (R K) (gridOf K (N K) (by omega)).P₀
+  have hR2 := R_ge_two K
+  have hMc1 : (1 : ℝ) ≤ Mc K := by exact_mod_cast Mc_pos (K := K) (by omega)
+  have he := exp_one_le
+  -- `(2e/Mc)^{Mc}·|sm|^{Mc} ≤ (16R)^{Mc}`
+  have hbase : 2 * Real.exp 1 / Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ≤ 16 * R K := by
+    have hsm : ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ≤ 2 * R K := by
+      have : (smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card ≤ 2 * R K := by omega
+      exact_mod_cast this
+    have hsm0 : (0 : ℝ) ≤ (smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card := by positivity
+    have h1 : 2 * Real.exp 1 / Mc K ≤ 2 * Real.exp 1 := by
+      rw [div_le_iff₀ (by linarith)]
+      nlinarith [Real.exp_pos 1]
+    have h2 : 2 * Real.exp 1 / Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ)
+        ≤ 2 * Real.exp 1 * (2 * R K) := by
+      apply mul_le_mul h1 hsm hsm0 (by positivity)
+    nlinarith [Real.exp_pos 1]
+  have hpow : (2 * Real.exp 1 / Mc K) ^ Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ^ Mc K
+      ≤ (2 : ℝ) ^ (4 * Mc K) * (R K : ℝ) ^ Mc K := by
+    rw [← mul_pow, pow_mul, show (2 : ℝ) ^ 4 = 16 by norm_num, ← mul_pow]
+    exact pow_le_pow_left₀ (by positivity) hbase _
+  have hinv := inv_card_le_down hK hlo
+  have hR2Mc := R_pow_two_Mc_le hK
+  have hP₀ := P₀_le_two_pow hK
+  set Λ := (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K)) with hΛ
+  set Psz := ((apSample X' (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card : ℝ)
+  set q := (2 * Real.exp 1 / Mc K) ^ Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ^ Mc K with hq
+  have hq0 : 0 ≤ q := by positivity
+  calc Λ * (2 * (2 * Real.exp 1 / Mc K) ^ Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ^ Mc K
+          * (2 * (R K : ℝ) ^ Mc K / Psz))
+      = Λ * q * 2 * 2 * (R K : ℝ) ^ Mc K * (1 / Psz) := by rw [hq]; ring
+    _ ≤ Λ * ((2 : ℝ) ^ (4 * Mc K) * (R K : ℝ) ^ Mc K) * 2 * 2 * (R K : ℝ) ^ Mc K
+          * (2 * (gridOf K (N K) (by omega)).P₀ / (2 : ℝ) ^ (50 * 2 ^ m K)) := by gcongr
+    _ = Λ * (2 : ℝ) ^ (4 * Mc K) * 8 * (R K : ℝ) ^ (2 * Mc K) * (gridOf K (N K) (by omega)).P₀ / (2 : ℝ) ^ (50 * 2 ^ m K) := by
+        rw [pow_mul (R K : ℝ) 2 (Mc K), sq]; ring
+    _ ≤ Λ * (2 : ℝ) ^ (4 * Mc K) * 8 * (2 : ℝ) ^ (10 * 2 ^ m K) * (2 : ℝ) ^ (2 * 2 ^ m K)
+          / (2 : ℝ) ^ (50 * 2 ^ m K) := by
+        gcongr
+    _ = (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K) + 4 * Mc K + 3 + 10 * 2 ^ m K + 2 * 2 ^ m K)
+          / (2 : ℝ) ^ (50 * 2 ^ m K) := by
+        rw [hΛ, show (8 : ℝ) = 2 ^ 3 by norm_num, ← pow_add, ← pow_add, ← pow_add, ← pow_add]
+    _ ≤ 1 / 64 := by
+        apply two_pow_div_le_down
+        obtain ⟨h1, h2, h3⟩ := sizes_le_two_pow_m hK
+        omega
+
 /-- **Leaf 3** — `G4EntropyBudget.smallPrime_term_le`, at any `X'` with `Xlo K ≤ X' ≤ X K`. -/
 theorem smallPrime_term_le_down {K k₄ X' : ℕ} (hK4 : K = 4 * k₄) (hK : 100 ≤ K)
     (hlo : Xlo K ≤ X') (hhi : X' ≤ X K) :
@@ -450,7 +584,11 @@ theorem smallPrime_term_le_down {K k₄ X' : ℕ} (hK4 : K = 4 * k₄) (hK : 100
           (apSample X' (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card
           (Real.exp 1) (13 / 2) (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K)
       ≤ 3 * Real.exp (-4) + 1 / 32 := by
-  sorry
+  have hk : 25 ≤ k₄ := by omega
+  unfold smallPrimeBound
+  exact budget_terms_le (Lambda_le hK4 hk) (by positivity) (by positivity) (by positivity)
+    (by positivity) (by positivity) (by positivity) (main_term_le hK) (term_a_le_down hK hlo)
+    (term_b_le hK) (term_c_le hK) (term_d_le_down hK hlo)
 
 /-! ### The assembly -/
 
