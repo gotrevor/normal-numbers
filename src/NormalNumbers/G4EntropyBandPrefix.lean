@@ -213,4 +213,109 @@ theorem posAvg_preLaw_eq_digits (i a ℓ : ℕ) (ha : 0 < a) (haS : a ≤ (bandS
   rw [hZ n, posAt_blockVal _ _ _ _ _ hfit]
   exact ⟨fun h => congrArg Fin.val h, fun h => Fin.ext h⟩
 
+/-! ### The read count at a mid-band cutoff -/
+
+open Classical in
+/-- The number of fitting in-window occurrences of `v` in the first `a` windows of band `i`. -/
+noncomputable def preGood (i a : ℕ) (x : ℝ) (v : List ℕ) : ℕ :=
+  ∑ j ∈ Finset.range a,
+    ((Finset.range (kk i - v.length + 1)).filter
+      (fun q => OccursAt 2 x v (bpos i j + q))).card
+
+open Classical in
+/-- `preGood` re-summed over the prefix's sample times. -/
+theorem preGood_eq (i a : ℕ) (haS : a ≤ (bandS i).card) (x : ℝ) (v : List ℕ) :
+    preGood i a x v
+      = ∑ q ∈ Finset.range (kk i - v.length + 1),
+          ((bandPre i a).filter fun n =>
+            OccursAt 2 x v (2 * kIdx (gridAt i) n (goodAtom i) + q)).card := by
+  classical
+  unfold preGood
+  simp only [Finset.card_filter]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun q _ => ?_
+  rw [bandPre, Finset.sum_image]
+  · rfl
+  · intro j hj k hk hjk
+    rcases Nat.lt_trichotomy j k with h | h | h
+    · exact absurd hjk (by
+        have := bnth_lt_bnth h (lt_of_lt_of_le (Finset.mem_range.1 hk) haS)
+        omega)
+    · exact h
+    · exact absurd hjk (by
+        have := bnth_lt_bnth h (lt_of_lt_of_le (Finset.mem_range.1 hj) haS)
+        omega)
+
+open Classical in
+/-- **The mid-band read count.**  Reading `a` of band `i`'s windows contributes `preGood`
+occurrences, up to one word length per window. -/
+theorem pre_winCount_bounds (x : ℝ) (i a : ℕ) (haS : a ≤ (bandS i).card) (v : List ℕ)
+    (hv : 0 < v.length) (hvm : v.length ≤ kk i) :
+    preGood i a x v
+        ≤ ((Finset.Ico (bT i) (bT i + a * kk i)).filter (MatchesAt (bandDig x) v)).card ∧
+      ((Finset.Ico (bT i) (bT i + a * kk i)).filter (MatchesAt (bandDig x) v)).card
+        ≤ preGood i a x v + a * v.length := by
+  classical
+  have hsplit : ((Finset.Ico (bT i) (bT i + a * kk i)).filter (MatchesAt (bandDig x) v)).card
+      = ∑ j ∈ Finset.range a,
+          ((Finset.range (kk i)).filter
+            (fun q => MatchesAt (bandDig x) v (bT i + (j * kk i + q)))).card := by
+    rw [card_Ico_shift _ (bT i) (a * kk i), card_filter_range_mul]
+  rw [hsplit]
+  have hper : ∀ j ∈ Finset.range a,
+      ((Finset.range (kk i - v.length + 1)).filter
+          (fun q => OccursAt 2 x v (bpos i j + q))).card
+        ≤ ((Finset.range (kk i)).filter
+          (fun q => MatchesAt (bandDig x) v (bT i + (j * kk i + q)))).card ∧
+      ((Finset.range (kk i)).filter
+          (fun q => MatchesAt (bandDig x) v (bT i + (j * kk i + q)))).card
+        ≤ ((Finset.range (kk i - v.length + 1)).filter
+          (fun q => OccursAt 2 x v (bpos i j + q))).card + v.length := by
+    intro j hj
+    have hj' : j < (bandS i).card := lt_of_lt_of_le (Finset.mem_range.1 hj) haS
+    have hcongr : ((Finset.range (kk i - v.length + 1)).filter
+        (fun q => MatchesAt (bandDig x) v (bT i + (j * kk i + q)))).card
+        = ((Finset.range (kk i - v.length + 1)).filter
+          (fun q => OccursAt 2 x v (bpos i j + q))).card := by
+      congr 1
+      refine Finset.filter_congr fun q hq => ?_
+      have hqfit : q + v.length ≤ kk i := by
+        have := Finset.mem_range.1 hq
+        omega
+      have hassoc : bT i + (j * kk i + q) = bT i + j * kk i + q := by ring
+      rw [hassoc]
+      simpa using matchesAt_bandDig_iff x i j q v hj' hqfit
+    have h := card_filter_fit
+      (fun q => MatchesAt (bandDig x) v (bT i + (j * kk i + q))) (m := kk i)
+      (ℓ := v.length) hv hvm
+    rw [hcongr] at h
+    exact h
+  constructor
+  · exact Finset.sum_le_sum fun j hj => (hper j hj).1
+  · calc ∑ j ∈ Finset.range a,
+          ((Finset.range (kk i)).filter
+            (fun q => MatchesAt (bandDig x) v (bT i + (j * kk i + q)))).card
+        ≤ ∑ j ∈ Finset.range a,
+            (((Finset.range (kk i - v.length + 1)).filter
+              (fun q => OccursAt 2 x v (bpos i j + q))).card + v.length) :=
+          Finset.sum_le_sum fun j hj => (hper j hj).2
+      _ = preGood i a x v + a * v.length := by
+          rw [Finset.sum_add_distrib, preGood]
+          simp [mul_comm]
+
+open Classical in
+/-- The full read count at a mid-band cutoff. -/
+theorem winCount_mid_bounds (x : ℝ) (i a : ℕ) (haS : a ≤ (bandS i).card) (v : List ℕ)
+    (hv : 0 < v.length) (hvm : v.length ≤ kk i) :
+    preGood i a x v ≤ winCount (bandDig x) v (bT i + a * kk i) ∧
+      winCount (bandDig x) v (bT i + a * kk i) ≤ preGood i a x v + bT i + a * v.length := by
+  classical
+  have hle : bT i ≤ bT i + a * kk i := by omega
+  have hsplit := winCount_split (bandDig x) v hle
+  obtain ⟨h1, h2⟩ := pre_winCount_bounds x i a haS v hv hvm
+  have hhist : winCount (bandDig x) v (bT i) ≤ bT i := winCount_le _ _ _
+  generalize hc : a * v.length = c at h2 ⊢
+  rw [hsplit]
+  omega
+
 end NormalNumbers.G4.Sched
