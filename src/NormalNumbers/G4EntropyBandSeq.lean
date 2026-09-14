@@ -383,4 +383,71 @@ theorem band_winCount_bounds (x : ℝ) (i : ℕ) (v : List ℕ) (hv : 0 < v.leng
           rw [Finset.sum_add_distrib, bandGood]
           simp [mul_comm]
 
+/-! ### Telescoping, and the domination of the last band -/
+
+open Classical in
+lemma winCount_bT (x : ℝ) (v : List ℕ) (n : ℕ) :
+    winCount (bandDig x) v (bT n)
+      = ∑ j ∈ Finset.range n,
+          ((Finset.Ico (bT j) (bT (j + 1))).filter (MatchesAt (bandDig x) v)).card := by
+  classical
+  induction n with
+  | zero => simp [bT, winCount_zero]
+  | succ n ih =>
+      rw [Finset.sum_range_succ, ← ih,
+        winCount_split (bandDig x) v (bT_mono (Nat.le_succ n))]
+
+set_option maxHeartbeats 1000000 in
+/-- **Each band dwarfs the previous one.**  `granule_exceeds_previous_scale` applied to the
+band, which keeps at least half the sample. -/
+theorem bL_step (j : ℕ) : 20000 * (bL j : ℝ) ≤ (bL (j + 1) : ℝ) := by
+  have hA : (1 : ℝ) ≤ (Fintype.card (gridAt j).Atom : ℝ) := by
+    have : 0 < Fintype.card (gridAt j).Atom := Fintype.card_pos
+    exact_mod_cast this
+  have hPj : (0 : ℝ) ≤ ((PK j).card : ℝ) := Nat.cast_nonneg _
+  have hkkj : (0 : ℝ) ≤ (kk j : ℝ) := Nat.cast_nonneg _
+  have hband : ((bandS j).card : ℝ) ≤ ((PK j).card : ℝ) := by
+    exact_mod_cast Finset.card_le_card (bandS_subset j)
+  -- `bL j ≤ |Atom_j|·|P_j|·m_j`
+  have hb : ((bandS j).card : ℝ)
+      ≤ (Fintype.card (gridAt j).Atom : ℝ) * ((PK j).card : ℝ) := by
+    nlinarith [hband, hA, hPj]
+  have h1 : (bL j : ℝ) ≤ (Fintype.card (gridAt j).Atom : ℝ) * ((PK j).card : ℝ) * (kk j : ℝ) := by
+    have hbl : (bL j : ℝ) = ((bandS j).card : ℝ) * (kk j : ℝ) := by
+      show ((((bandS j).card * kk j : ℕ)) : ℝ) = _
+      push_cast; ring
+    rw [hbl]
+    exact mul_le_mul_of_nonneg_right hb hkkj
+  have h2 := granule_exceeds_previous_scale j
+  have h3 : ((PK (j + 1)).card : ℝ) ≤ 2 * ((bandS (j + 1)).card : ℝ) := card_bandS_ge' (j + 1)
+  have hkk1 : (40000 : ℝ) ≤ (kk (j + 1) : ℝ) := by
+    have : (40000 : ℕ) ≤ kk (j + 1) := by unfold kk; omega
+    exact_mod_cast this
+  have hS1 : (0 : ℝ) ≤ ((bandS (j + 1)).card : ℝ) := Nat.cast_nonneg _
+  have h4 : (bL (j + 1) : ℝ) = ((bandS (j + 1)).card : ℝ) * (kk (j + 1) : ℝ) := by
+    show ((((bandS (j + 1)).card * kk (j + 1) : ℕ)) : ℝ) = _
+    push_cast; ring
+  rw [h4]
+  nlinarith [h1, h2, h3, hkk1, hS1]
+
+/-- Everything before band `i` is at most a `10⁻⁴` fraction of band `i`. -/
+theorem bT_le_bL (i : ℕ) : 10000 * (bT i : ℝ) ≤ (bL i : ℝ) := by
+  induction i with
+  | zero =>
+      have h0 : ((bT 0 : ℕ) : ℝ) = 0 := by norm_num [bT]
+      rw [h0]
+      have : (0 : ℝ) ≤ (bL 0 : ℝ) := Nat.cast_nonneg _
+      linarith
+  | succ i ih =>
+      have hstep := bL_step i
+      have hbT : (bT (i + 1) : ℝ) = (bT i : ℝ) + (bL i : ℝ) := by
+        show ((bT i + bL i : ℕ) : ℝ) = _
+        push_cast; ring
+      rw [hbT]
+      nlinarith [ih, hstep]
+
+lemma bL_pos_real (i : ℕ) : (0 : ℝ) < (bL i : ℝ) := by
+  have := bL_pos i
+  exact_mod_cast this
+
 end NormalNumbers.G4.Sched
