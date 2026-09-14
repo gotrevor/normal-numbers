@@ -45,7 +45,7 @@ reproduces the naive controls; the naive short-circuit search stays faster for t
 | (4,1) | 3 | **2 channel-distinct triples ≤ 60**: `{1,10,14}`, `{2,5,7}` (the naive 35 are these with 4-multiples and scalings, e.g. `{3,30,42} = 3·{1,10,14}`) | > 3 | – | sizes ≤ 3, ≤ 60 |
 | (5,1) | **5** | **272 channel-distinct sets ≤ 30** (2008 naive), e.g. `{1,2,3,4,6}`, `{1,2,3,4,8}`, `{1,2,3,6,14}` | – | – | sizes ≤ 5, ≤ 30 |
 | (6,1) | **7** | **2 channel-distinct sets ≤ 24**: `{1,8,11,14,16,20,23}`, `{3,7,10,13,14,17,20}` (the other two naive ones carry `6·1`, `6·3`); no 6-set ≤ 24 | – | – | sizes ≤ 7, ≤ 24 |
-| (7,1) | **7** | **3 channel-distinct 7-sets ≤ 24**: `{1,2,3,4,5,6,13}`, `{1,3,4,5,6,9,13}`, `{1,3,4,5,6,9,18}`; `{1,…,6,8}` does NOT hit (digits 1 and 5 escape); `{1..9}∖{7}` hits | – | – | sizes ≤ 7, ≤ 24 |
+| (7,1) | **7** | **3 channel-distinct 7-sets ≤ 24**: `{1,2,3,4,5,6,13}` (**theorem** `hitting_7_1_seven`, `HittingSetBase7.lean`, chunked kernel decide, verified 23:16), `{1,3,4,5,6,9,13}`, `{1,3,4,5,6,9,18}`; `{1,…,6,8}` does NOT hit (digits 1 and 5 escape); `{1..8}` and `{1..6}` fail as theorems (`not_hitting_7_1_eight`, `not_hitting_7_1_six`) | – | – | sizes ≤ 7, ≤ 24 |
 | (8,1), (9,1) | > 8 | – | – | – | sizes ≤ 8, ≤ 20 (cap probably binding) |
 | (10,1) | > 9 | – | – | – | sizes ≤ 9, ≤ 20 (cap probably binding) |
 | (2,2) | 2 | **3 channel-distinct pairs ≤ 60**: `{1,3}`, `{1,11}`, `{3,5}` (151 naive, with 2-multiples and scalings) | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
