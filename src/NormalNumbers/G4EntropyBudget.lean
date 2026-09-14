@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.G4ScheduleB
+import NormalNumbers.G4ScheduleAssembly
 import NormalNumbers.G4EntropyE0
 
 /-!
@@ -294,5 +295,190 @@ theorem entropy_cover_sum_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : �
         have hδnn : (0 : ℝ) ≤ δ₁ / 2 ^ G.rDim := by positivity
         exact mul_le_mul_of_nonneg_right hc hδnn
     _ = δ₁ := by field_simp
+
+/-! ### E0 for the implemented base-four schedule -/
+
+namespace Sched
+
+open NormalNumbers.G4Entropy NormalNumbers.PrimeLambert
+
+/-- `b₀ < X`: the sample `P_K` is nonempty at the schedule's outer scale. -/
+lemma b₀_lt_X {K : ℕ} (hK : 100 ≤ K) : (gridOf K (N K) (by omega)).b₀ < X K := by
+  have h1 := (gridOf K (N K) (by omega : 1 ≤ K)).b₀_lt_P₀
+  have h2 := two_mul_P₀_le_X hK
+  omega
+
+/-- The five `smallPrimeBound` terms bounded individually, rather than only in the sum
+`< 1` that `budget_assembly` needs.  The entropy budget must beat `δ/(2−δ)`, not `1`. -/
+lemma budget_terms_le {Λ Λ' t0 ta tb tc td : ℝ} (hΛ : Λ ≤ Λ') (hΛ0 : 0 ≤ Λ)
+    (h0' : 0 ≤ t0) (ha' : 0 ≤ ta) (hb' : 0 ≤ tb) (hc' : 0 ≤ tc) (hd' : 0 ≤ td)
+    (h0 : Λ' * t0 ≤ Real.exp (-4)) (ha : Λ' * ta ≤ 1 / 64) (hb : Λ' * tb ≤ Real.exp (-4))
+    (hc : Λ' * tc ≤ Real.exp (-4)) (hd : Λ' * td ≤ 1 / 64) :
+    Λ * (t0 + (ta + tb + tc + td)) ≤ 3 * Real.exp (-4) + 1 / 32 := by
+  have hsum : Λ * (t0 + (ta + tb + tc + td))
+      ≤ Λ' * t0 + Λ' * ta + Λ' * tb + Λ' * tc + Λ' * td := by
+    have he : Λ * (t0 + (ta + tb + tc + td))
+        = Λ * t0 + Λ * ta + Λ * tb + Λ * tc + Λ * td := by ring
+    rw [he]; gcongr
+  linarith
+
+/-- **`Λ·δ₃ ≤ 3e^{−4} + 1/32 < 0.107`.** -/
+lemma smallPrime_term_le {K k₄ : ℕ} (hK4 : K = 4 * k₄) (hK : 100 ≤ K) :
+    (((2 * Dj K k₄ + 1) ^ ((K ^ 2) ^ K) : ℕ) : ℝ)
+      * smallPrimeBound (smallPrimes (R K) (gridOf K (N K) (by omega)).P₀)
+          (T K) (R K) (Mc K)
+          (apSample (X K) (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card
+          (Real.exp 1) (13 / 2) (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K)
+      ≤ 3 * Real.exp (-4) + 1 / 32 := by
+  have hk : 25 ≤ k₄ := by omega
+  unfold smallPrimeBound
+  exact budget_terms_le (Lambda_le hK4 hk) (by positivity) (by positivity) (by positivity)
+    (by positivity) (by positivity) (by positivity) (main_term_le hK) (term_a_le hK)
+    (term_b_le hK) (term_c_le hK) (term_d_le hK)
+
+/-- **E0 for the implemented base-four schedule, unconditionally.**  For every `K = 4k₄` with
+`K ≥ 33856`, the joint quantized sample of `G₄ = ∑_p 1/(4^p−1)` at scale `K`, read as `k₄`-bit
+binary windows at the base-four orbit positions, carries at least a *fifth* of the maximal
+entropy `m_K·H_K`:
+
+    `(1/5)·k₄·(K²+1)^K  <  H₂(Z^{G4}_K)`.
+
+The four terms of the budget: the cover term is `≤ 1/8` (`entropy_cover_bound`), `δ₂ = 1/4`
+(`hbig_holds`, `hfar_holds`), the Jackson term is `≤ 1/8` (`jackson_term_le`) and
+`Λδ₃ ≤ 3e^{−4}+1/32` (`smallPrime_term_le`); their sum is `< 0.607 < 2/3 = δ/(2−δ)` at
+`δ = 4/5`.  The allowances `δbig, δfar, κ` are the disjunctivity argument's fixed `1/8`s, which
+is why `δ` cannot yet be taken small; driving `δ ↓ C/√K` (which `entropy_cover_bound` already
+permits) is what E1 needs. -/
+theorem entropy_E0 {K k₄ : ℕ} (hK4 : K = 4 * k₄) (hK : 33856 ≤ K) :
+    (1 / 5 : ℝ) * ((k₄ : ℝ) * (((K ^ 2 + 1) ^ K : ℕ) : ℝ))
+      < (NormalNumbers.G4Entropy.jointLaw (gridOf K (N K) (by omega))
+          (b₀_lt_X (show 100 ≤ K by omega)) k₄ (primeLambertAtBase 4)).H₂ := by
+  have hK100 : 100 ≤ K := by omega
+  have hK1 : 1 ≤ K := by omega
+  have hk : 25 ≤ k₄ := by omega
+  have hKr : (100 : ℝ) ≤ (K : ℝ) := by exact_mod_cast hK100
+  set G := gridOf K (N K) hK1 with hGdef
+  set hX := b₀_lt_X (show 100 ≤ K by omega) with hXdef
+  set η : ℝ := (1 / 2 : ℝ) ^ k₄ with hηdef
+  have hη : (0 : ℝ) < η := by rw [hηdef]; positivity
+  set ε : ℝ := 1 / (K : ℝ) with hεdef
+  have hε : (0 : ℝ) < ε := by rw [hεdef]; positivity
+  set hne := NormalNumbers.G4Entropy.apSample_nonempty G hX with hnedef
+  set fr := gridFrame 4 (by norm_num) G (X K) hne (smallPrimes (R K) G.P₀)
+    (frozenGamma 4 G) hη hε (Dj K k₄) with hfrdef
+  -- real lifts of `θ` and `γ`
+  choose θr hθr using fun ν => QuotientAddGroup.mk_surjective (fr.θ ν)
+  choose γr hγr using fun ν => QuotientAddGroup.mk_surjective (fr.γ ν)
+  set M : ℝ := (k₄ : ℝ) * (((K ^ 2 + 1) ^ K : ℕ) : ℝ) with hMdef
+  have hMpos : (0 : ℝ) < M := by
+    rw [hMdef]
+    have : (0 : ℝ) < (k₄ : ℝ) := by exact_mod_cast (show 0 < k₄ by omega)
+    have h2 : (0 : ℝ) < (((K ^ 2 + 1) ^ K : ℕ) : ℝ) := by
+      have : 0 < (K ^ 2 + 1) ^ K := Nat.pow_pos (by positivity)
+      exact_mod_cast this
+    positivity
+  -- ### the four terms
+  -- (1) the cover term
+  have hcover : (2 : ℝ) ^ ((1 - (4 / 5 : ℝ) / 2) * M)
+      * (∑ G' ∈ fr.goodSets, η ^ G'.card * (volume (fr.pieceCube G')).toReal) ≤ 1 / 8 := by
+    refine entropy_cover_sum_le 4 (by norm_num) G (X K) hne _ _ hη hε (Dj K k₄)
+      (Lg := (((K ^ 2) ^ K : ℕ) : ℝ) * (Real.log 2 + 23 * Real.sqrt K))
+      (by rw [hεdef, div_lt_one (by linarith)]; linarith)
+      (Nat.one_le_pow _ _ (show 0 < K ^ 2 by positivity)) ?_ (by positivity) (by norm_num) ?_
+    · have h := log_det_one_add_tensorGram_le' (K := K) hK1
+      show Real.log (1 + tensorGram G.K G.s).det
+        ≤ (((K ^ 2) ^ K : ℕ) : ℝ) * (Real.log 2 + 23 * Real.sqrt K)
+      push_cast
+      exact h
+    · intro g hglo hghi
+      have := entropy_cover_bound (K := K) (m := k₄) (g := g) (η := η)
+        (Lg := (((K ^ 2) ^ K : ℕ) : ℝ) * (Real.log 2 + 23 * Real.sqrt K)) (δ := 4 / 5)
+        hK ?_ (by norm_num) (by norm_num) ?_ hη ?_ le_rfl ?_ ?_
+      · exact this
+      · rw [hK4]; push_cast; ring_nf; rfl
+      · -- `92√K + 46 ≤ (4/5)·K·log 2`
+        have hs : (184 : ℝ) * Real.sqrt K ≤ (K : ℝ) := by
+          have h1 : (184 : ℝ) ≤ Real.sqrt K := by
+            have h : Real.sqrt (33856 : ℝ) ≤ Real.sqrt K :=
+              Real.sqrt_le_sqrt (by exact_mod_cast hK)
+            have he : Real.sqrt (33856 : ℝ) = 184 := by
+              rw [show (33856 : ℝ) = 184 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]
+            linarith [he ▸ h]
+          have h2 : Real.sqrt K * Real.sqrt K = (K : ℝ) := Real.mul_self_sqrt (by positivity)
+          nlinarith [Real.sqrt_nonneg (K : ℝ)]
+        have hKb : (33856 : ℝ) ≤ (K : ℝ) := by exact_mod_cast hK
+        have hl2 : (0.6931 : ℝ) ≤ Real.log 2 := by linarith [Real.log_two_gt_d9]
+        nlinarith [hs, hKb, hl2]
+      · rw [hηdef, ← pow_mul, hK4, mul_comm]
+      · exact hglo
+      · exact hghi
+  -- (2) the Jackson term
+  have hjack : 2 * (1 / (fr.res * Real.sqrt ((Dj K k₄ : ℕ) + 1))) ≤ 1 / 8 := by
+    have h := Sched.jackson_term_le (K := K) (k₄ := k₄) hK1
+    have hres : fr.res = (1 / (K : ℝ)) * (1 / 2 : ℝ) ^ k₄ := by
+      rw [hfrdef]; rfl
+    rw [hres]
+    exact h
+  -- (3) `PropD`
+  have hD : fr.PropD ((1 / 8 : ℝ) + (1 / 8 : ℝ)) := by
+    refine gridFrame_propD_of_bounds 4 (by norm_num) G (X K) (R K) (Y K) hne
+      (show 0 < K from hK1) (R_ge_two K) (R_le_Y K)
+      (Mx := ((X K + J K * gridDm K (N K) : ℕ) : ℝ)) ?_ ?_
+      (Dm := gridDm K (N K)) (gridOf.d_le hK1) hη hε (Dj K k₄) ?_ ?_
+    · have : 1 ≤ X K := Nat.one_le_two_pow
+      exact_mod_cast le_add_right this
+    · exact fun n hn i => by exact_mod_cast gridOf.add_shiftAL_le hK1 hn i
+    · have h := hbig_holds hK4 hK100
+      simp only [Nat.cast_ofNat, rowL1_four, rowL2_four, hεdef, hηdef,
+        show G.K = K from rfl, show G.P₀ = (gridOf K (N K) hK1).P₀ from rfl,
+        show G.b₀ = (gridOf K (N K) hK1).b₀ from rfl]
+      ring_nf
+      ring_nf at h
+      linarith
+    · have h := hfar_holds hK100
+      simp only [Nat.cast_ofNat, farBound_four, hεdef, hηdef,
+        show G.K = K from rfl, show G.N = N K from rfl,
+        show G.P₀ = (gridOf K (N K) hK1).P₀ from rfl,
+        show G.b₀ = (gridOf K (N K) hK1).b₀ from rfl]
+      have hkK : (1 / 2 : ℝ) ^ K ≤ (1 / 2 : ℝ) ^ k₄ :=
+        pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
+      have hKpos : (0 : ℝ) < K := by linarith
+      calc _ ≤ (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ K) := h
+        _ ≤ (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by gcongr
+  -- (4) `PropC` and the small-prime term
+  set δ₃ : ℝ := smallPrimeBound (smallPrimes (R K) G.P₀) (Fintype.card G.Idx) (R K) (Mc K)
+    (apSample (X K) G.P₀ G.b₀).card (Real.exp 1) (13 / 2)
+    (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ G.K) with hδ₃def
+  have hC : fr.PropC δ₃ :=
+    gridFrame_propC_four G (X K) hne _ _ hη hε (R := R K)
+      (fun p hp => (mem_smallPrimes.1 hp).1) (fun p hp => (mem_smallPrimes.1 hp).2.2)
+      (by have := R_ge_two K; omega) (fun p hp => (mem_smallPrimes.1 hp).2.1)
+      (by
+        show 1 + Nat.clog 4 (2 ^ K * Dj K k₄) ≤ N K
+        have h := (Nat.clog_le_iff_le_pow (by norm_num)).2 (two_pow_mul_Dj_le hK4 hK100)
+        have hN : 1 ≤ N K := N_pos hK1
+        omega)
+      (Mc_pos hK1) (Real.one_le_exp zero_le_one) (by norm_num)
+  have hδ₃nn : (0 : ℝ) ≤ δ₃ :=
+    smallPrimeBound_nonneg _ _ _ _ _ (by positivity) (by norm_num)
+  have hsmall : (((2 * Dj K k₄ + 1) ^ G.rDim : ℕ) : ℝ) * δ₃ ≤ 3 * Real.exp (-4) + 1 / 32 := by
+    have h := smallPrime_term_le hK4 hK100
+    have hcard : Fintype.card G.Idx = T K := gridOf.card_Idx hK1
+    rw [hδ₃def, hcard]
+    exact h
+  -- ### E0
+  have hmη : ((2 : ℝ)⁻¹) ^ k₄ ≤ η := by rw [hηdef]; norm_num
+  have hmain := NormalNumbers.G4Entropy.entropy_gt_of_budget G (X K) hX (by norm_num)
+    (smallPrimes (R K) G.P₀) (frozenGamma 4 G) hη hε (Dj K k₄) k₄ θr γr hθr hγr hmη
+    (δ := 4 / 5) (M := M) (by norm_num) (by norm_num) hMpos hD hC hδ₃nn ?_
+  · have he : (1 : ℝ) - 4 / 5 = 1 / 5 := by norm_num
+    rw [he] at hmain
+    exact hmain
+  · have he4 := Sched.exp_neg_four_le
+    have hR : (4 / 5 : ℝ) / (2 - 4 / 5) = 2 / 3 := by norm_num
+    rw [hR]
+    linarith [hcover, hjack, hsmall]
+
+end Sched
 
 end NormalNumbers.G4
