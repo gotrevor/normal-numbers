@@ -6447,3 +6447,31 @@ lossy but elementary). Machinery: position-dependent cap via mathlib
 (`one_add_log_div_le_of_le`). OWED LATER (per brief, not this run): discharge
 the `LogTwoSqSeries` node in-house (Cauchy product / integrated harmonic
 generating function at `x = 1/2`).
+
+## G4 lap 11 — the §5 schedule, made explicit (design record, 2026-09-14)
+
+**Structural decision.** `ScheduleWitness ℓ w` is a bundle of inequalities at ONE `X`.  For
+each omitted word `ℓ` we may choose `K` first and then `X` — `K = 4·8464·ℓ²·16^ℓ` (so `hB`
+holds by `gridParams_hB`, `8ℓM = K`, `2ℓM = K/4`), then `N = 100K²`, then
+`m₁ = 100·8^K·K^{2K+1}`, `R = 2^{2^{m₁}}`, `Mc = 3·10⁴·T·m₁`, `Y = 2^{2^m}`, `X = Y^{100}`,
+`m = m₁ + 8K²`.  This is NOT "freezing `K` and sending `X → ∞`": `K → ∞` with `ℓ`, and `X`
+is a finite function of `K`.  `K` sits at the upper edge of the two-sided window
+(`log L ≈ 2K log K`), the lower edge `K ≳ 0.58 log log L ≈ log(2K log K)` is trivial.  No
+`scheduleK`/floor asymptotics are needed; `schedule_budget` is superseded by the explicit
+choice of `m₁`.
+
+**Two crude bounds that FAIL (recorded so nobody retries them).**
+* `∑_{p∈sm} 1/p ≤ log R + 1` (from `sum_inv_le_log_card_add_one`) is too weak for the
+  `hbudget` error terms (b),(c): `Mc` would have to exceed `T·log R = T·2^{m₁}`, and then
+  `hbig`'s `log(log Y/log R) ≈ log Mc ≈ 2^{m₁}` destroys `hbig`.  Must use the dyadic
+  Chebyshev `sum_inv_primes_Ioc_le` (constant 4): `∑ ≤ 4(1 + m₁ log 2) + 1/2`.  With constant
+  4 the brief's `Mc = 10⁴TL` becomes `Mc = 3·10⁴·T·m₁` (`lam = 13/2`, `e^{lam} ≤ e^7 ≤ 1097`,
+  `log(4e/13) ≤ −0.163`).
+* `ω(P₀) ≤ P₀` for the excluded-prime harmonic mass is too weak (`log P₀ ≫ m₁`); use
+  `2^{ω(P₀)} ≤ P₀` (`two_pow_omega_le_card_divisors`), giving `log ω(P₀) ≤ log(2 log P₀)`.
+* `card{T' ⊆ sm : |T'| ≤ Mc} ≤ 2^{|sm|}` is too weak for term (a) (`2^R ≫ X`); use
+  `≤ Mc·R^{Mc}` via `powerset_card_disjiUnion` + `choose ≤ n^k`.
+
+**Size ladder (ℕ, `K ≥ 100`)**: `N ≤ K³`, `J ≤ K⁴`, `B ≤ K⁷`, `U ≤ K^{7K+3}`, `W ≤ K^{7K+4}`,
+`H ≤ K^{3K}`, `T ≤ K^{3K+3}`, `logP₀Nat ≤ K^{20K+17}`, `m₁ ≤ K^{3K+3}`, `Mc ≤ K^{6K+9}`;
+and `K^{cK} ≤ 2^{cK²}`, `4^N = 2^{200K²} ≥ K^{40K}`.
