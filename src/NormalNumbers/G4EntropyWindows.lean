@@ -422,20 +422,23 @@ theorem card_shared_le (G : GridParams) {α β : G.Atom} (hαβ : α ≠ β) (M 
 
 open Classical in
 /-- **How many scale-`i` sample times give an `α`-window that some *other* atom `β` also
-produces**: at most `X/P₀ + 1`, against the `|P_K| ≈ X/P₀` times `α` has in total — so a pair of
-atoms collides on a vanishing fraction, `≈ 1/|P_K|`, of the sample. -/
+produces**: at most `(X/d_α + 1)/P₀ + 1`.  The orbit indices of `α` only reach `X/d_α`, and the
+multiplier `d_α ≥ 1 + Q·D₀` is enormous — so against the `|P_K| ≈ X/(2P₀)` sample times `α` has
+in total, a pair of atoms collides on a `≈ 1/d_α` fraction. -/
 theorem card_collide_pair_le (i : ℕ) {α β : (gridAt i).Atom} (hαβ : α ≠ β) :
     (((PK i).filter (fun n => ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card)
-      ≤ X (KK i) / (gridAt i).P₀ + 1 := by
+      ≤ (X (KK i) / (gridAt i).d α + 1) / (gridAt i).P₀ + 1 := by
   classical
-  refine le_trans ?_ (card_shared_le (gridAt i) hαβ (X (KK i)))
+  refine le_trans ?_ (card_shared_le (gridAt i) hαβ (X (KK i) / (gridAt i).d α + 1))
   refine Finset.card_le_card_of_injOn (fun n => kIdx (gridAt i) n α) ?_ ?_
   · intro n hn
     simp only [Finset.coe_filter, Set.mem_setOf_eq] at hn ⊢
     refine ⟨Finset.mem_range.2 ?_, activeIdx_kIdx (gridAt i) hn.1 α, hn.2⟩
     have hnX : n < X (KK i) := Finset.mem_range.1 (Finset.mem_filter.1 hn.1).1
-    have hle : kIdx (gridAt i) n α ≤ n :=
-      le_trans (Nat.div_le_self _ _) (Nat.sub_le _ _)
+    have hle : kIdx (gridAt i) n α ≤ n / (gridAt i).d α :=
+      Nat.div_le_div_right (Nat.sub_le _ _)
+    have hmono : n / (gridAt i).d α ≤ X (KK i) / (gridAt i).d α :=
+      Nat.div_le_div_right (le_of_lt hnX)
     omega
   · intro n hn n' hn' heq
     simp only [Finset.coe_filter, Set.mem_setOf_eq] at hn hn'
@@ -449,5 +452,37 @@ theorem card_collide_pair_le (i : ℕ) {α β : (gridAt i).Atom} (hαβ : α ≠
       have := window_gap_same_atom i α hn'.1 hn.1 hgt
       have hkk : 0 < kk i := by unfold kk; omega
       omega
+
+open Classical in
+/-- **The total collision count at one atom.**  Summing `card_collide_pair_le` over the other
+atoms: the sample times whose `α`-window is shared with *some* other atom number at most
+`|Atom|·((X/d_α + 1)/P₀ + 1)`. -/
+theorem card_multi_atom_le (i : ℕ) (α : (gridAt i).Atom) :
+    (((PK i).filter (fun n =>
+        ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card)
+      ≤ Fintype.card (gridAt i).Atom
+        * ((X (KK i) / (gridAt i).d α + 1) / (gridAt i).P₀ + 1) := by
+  classical
+  have hsub : (PK i).filter (fun n =>
+        ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))
+      ⊆ (Finset.univ.filter (fun β : (gridAt i).Atom => β ≠ α)).biUnion
+          (fun β => (PK i).filter (fun n => ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))) := by
+    intro n hn
+    rw [Finset.mem_filter] at hn
+    obtain ⟨β, hβ, hact⟩ := hn.2
+    exact Finset.mem_biUnion.2 ⟨β, Finset.mem_filter.2 ⟨Finset.mem_univ _, hβ⟩,
+      Finset.mem_filter.2 ⟨hn.1, hact⟩⟩
+  refine le_trans (Finset.card_le_card hsub) ?_
+  refine le_trans (Finset.card_biUnion_le) ?_
+  have hterm : ∀ β ∈ Finset.univ.filter (fun β : (gridAt i).Atom => β ≠ α),
+      ((PK i).filter (fun n => ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card
+        ≤ (X (KK i) / (gridAt i).d α + 1) / (gridAt i).P₀ + 1 := by
+    intro β hβ
+    have hne : α ≠ β := fun h => (Finset.mem_filter.1 hβ).2 h.symm
+    exact card_collide_pair_le i hne
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [Finset.sum_const, smul_eq_mul]
+  refine Nat.mul_le_mul_right _ ?_
+  exact le_trans (Finset.card_filter_le _ _) (le_of_eq (Finset.card_univ))
 
 end NormalNumbers.G4.Sched
