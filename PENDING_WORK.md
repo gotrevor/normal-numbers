@@ -19,8 +19,9 @@ Modules: `G4EntropyWindows` (`Q_dvd_P₀`, `windows_eq_or_disjoint`, the multipl
 the headline, `fullReal`).
 
 **Open next**: port laps 84–89 (mid-band cutoffs and arbitrary cutoffs) from `bandPos` to
-`fullPos`; transfer the lap-90 density-zero non-vacuity.  Normality itself stays closed by
-`certified_granule_exceeds_previous_scale`.
+`fullPos`; transfer the lap-90 density-zero non-vacuity.  Normality is not *deducible* from the
+fixed sampled data alone (`certified_granule_exceeds_previous_scale`, a size comparison — see its
+⚠️ scope note), but is open for arithmetic extensions such as `entropy_E0_down`.
 
 ## 🔭 LIVE (laps 93–101) — `Q ∣ P₀`: the sampled windows are pairwise disjoint
 
@@ -80,11 +81,14 @@ G4EntropyMixture.certified_granule_exceeds_previous_scale
 > Any sub-collection of scale `i+1`'s sample times whose derived capture bound is **not vacuous**
 > already reads more digits than scale `i` produced in total.
 
-So every construction that reads the sampled digits in position order as a concatenation of
-certified granules has its history wiped out at each new scale: **prefix frequencies cannot
-converge, i.e. normality is unreachable** — independently of how the granule is cut (by atoms,
-by sample times, or both).  The cause is `X(K) = 2^{100·2^{m(K)}}` with `m(K) ≥ K³`, not the
-atom count: lap 54's `chunks_insufficient` was the weaker statement.
+So **no prefix bound can be assembled from per-scale certificates**: the first certified granule
+of scale `i+1` outweighs everything scale `i` produced, independently of how the granule is cut
+(by atoms, by sample times, or both).  ⚠️ **Scope (attended review 2026-09-14):** this is a *size
+comparison*, not a proof that prefix frequencies diverge.  Normality is closed here only for
+*deduction from the fixed sampled data alone*; arithmetic extensions that control the head of
+band `i+1` — e.g. `entropy_E0_down`, which certifies truncated outer scales — are untouched.  The
+cause is `X(K) = 2^{100·2^{m(K)}}` with `m(K) ≥ K³`, not the atom count: lap 54's
+`chunks_insufficient` was the weaker statement.
 
 ### Part II — the band read (laps 64–88)
 
@@ -116,8 +120,9 @@ of each band, and that portion is a vanishing *fraction of its band*.
 `i` has length `≈ θ_i·m_i`, while *everything before band `i`* has length `bT i ≤ 4|bandS i|`,
 which is far smaller.  So at a cutoff inside the bad portion, the bad cutoffs below it are most
 of them: the bad set has lower density `0` and upper density `1`.  That is the wall
-(`certified_granule_exceeds_previous_scale`) seen from the cutoff side — and it is exactly why
-this is not normality.
+(`certified_granule_exceeds_previous_scale` — a size comparison, ⚠️ see its scope note) seen from
+the cutoff side: it is why the *sampled data alone* does not give normality.  Controlling the head
+of band `i+1` by a truncated-scale certificate (`entropy_E0_down`) is not excluded.
 
 **Where this sits.**  The repo previously had *either* normality along a non-injective position
 map (`isNormal_realOfDigits_samplePos`, lap 52) *or* a strictly increasing map carrying only

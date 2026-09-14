@@ -48,8 +48,9 @@ position set rather than the `(n,α)` pairs costs an `8/|Atom|` fraction), and
 `read_freq_error_bound` (the assembly done over opaque reals, after three attempts died on
 `whnf` timeouts over the closed terms).
 
-Still not normality, and for the proved reason: the limit over *all* prefix lengths is what
-`certified_granule_exceeds_previous_scale` forbids.
+Still not normality: the limit over *all* prefix lengths cannot be assembled by concatenating
+per-scale certificates, which is what `certified_granule_exceeds_previous_scale` rules out (a
+size comparison — see its ⚠️ scope note; it is not a proof that prefix frequencies diverge).
 
 ## 🧭 2026-09-14 (entropy laps 61–90): the granularity **wall**, and the band read that saturates it
 
@@ -65,9 +66,11 @@ Still not normality, and for the proved reason: the limit over *all* prefix leng
 > already reads more digits than scale `i` produced in total:
 > `|Atom_i|·|P_{K_i}|·m_i < |S|·m_{i+1}`.
 
-So every construction that reads the sampled digits in position order as a concatenation of
-*certified* granules has its history wiped out at each new scale — prefix frequencies cannot
-converge.  The cause is `X(K) = 2^{100·2^{m(K)}}` with `m(K) ≥ K³`, not the atom count, so this
+So no prefix bound can be **assembled** from a concatenation of per-scale certificates: the
+first certified granule of scale `i+1` outweighs everything scale `i` produced.  ⚠️ This is a
+**size comparison**, not a proof that prefix frequencies diverge (attended review 2026-09-14);
+"closed on this mechanism" = closed for deduction from the fixed sampled data alone, not for
+every arithmetic extension.  The cause is `X(K) = 2^{100·2^{m(K)}}` with `m(K) ≥ K³`, so this
 subsumes lap 54's `chunks_insufficient` and is immune to every refinement of the chunking
 (including the per-atom certification `card_good_ge` of lap 61, which shrinks the granule to a
 single atom).

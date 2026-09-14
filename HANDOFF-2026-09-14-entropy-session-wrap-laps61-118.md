@@ -7,8 +7,10 @@ pre-expedition G4/G5 file edited.  Every endpoint prints
 
 ## The session in three lines
 
-1. **A wall**: normality is unreachable for *any* read of `G₄`'s sampled digits built from
-   certified granules — and the wall does not depend on the entropy quality at all.
+1. **A wall**: no prefix bound can be *assembled* from per-scale certificates — a certified
+   granule at scale `i+1` already exceeds scale `i`'s whole output, at every `δ ≥ 0`.  (Scope
+   correction, attended review 2026-09-14: this is a **size comparison**, not a proof that
+   prefix frequencies fail to converge.)
 2. **A discovery**: `Q ∣ P₀`, so every two sampled windows coincide or are disjoint.
 3. **A headline**: `G₄`'s digits along a **schedule-only, strictly increasing** position map
    carry every binary word at its correct frequency — the strongest form the wall permits.
@@ -27,6 +29,13 @@ G4EntropyMixture     FinLaw.H₂_mix_le, H₂_empirical_window_restrict_ge,
 
 Cause: `X(K) = 2^{100·2^{m(K)}}`, `m(K) ≥ K³` — the ladder's growth, not the estimate.  Subsumes
 lap 54's `chunks_insufficient`, whose atom-count mechanism lap 61 showed was not the obstruction.
+
+⚠️ **Scope (attended review, 2026-09-14).**  These are size comparisons between a certificate's
+non-vacuity threshold and the previous scale's output.  They do **not** show that any particular
+read has divergent prefix frequencies.  "Normality is closed on this mechanism" means *closed for
+deduction from the fixed sampled data alone* — a prefix bound cannot be built by concatenating
+per-scale certificates — and **not** closed for every arithmetic extension.  In particular
+`entropy_E0_down` (certified *truncated* outer scales) is outside the wall's reach.
 
 ## Part II — the `G₄`-dependent band read (laps 64–91)
 

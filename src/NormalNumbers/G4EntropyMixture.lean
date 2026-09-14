@@ -249,10 +249,15 @@ capture inequality fed the restricted deficit `(δ+1)/σ` of `H₂_empirical_win
 `σ = |S|/|P|` — is **not vacuous**.  Then the digits `S` reads, `|S|·m_{i+1}`, already exceed
 `|Atom_i|·|P_{K_i}|·m_i`: every atom, every sample time and every digit of scale `i`.
 
-So a construction reading sampled digits in position order as a concatenation of certified
-granules cannot have converging prefix frequencies: the first granule of the next scale wipes
-out the history.  This is the theorem form of lap 62's reading, and it is independent of how
-the granule is cut — by atoms, by sample times, or by both. -/
+⚠️ **Scope (attended review, 2026-09-14).**  This is a **size comparison** — between a
+certificate's non-vacuity threshold at scale `i+1` and the total digit output of scale `i` —
+and nothing more.  It does **not** prove that prefix frequencies fail to converge, for any
+construction.  What it does rule out is a *deduction*: from the fixed sampled data alone, the
+certified granules of scale `i+1` carry no information about the digits scale `i` already read,
+so a prefix bound cannot be assembled by concatenating per-scale certificates.  Any arithmetic
+extension that controls the head of band `i+1` by other means (e.g. `entropy_E0_down`, which
+certifies *truncated* outer scales) is untouched by this theorem.  It is independent of how the
+granule is cut — by atoms, by sample times, or by both. -/
 theorem certified_granule_exceeds_previous_scale (i ℓ : ℕ) (hℓ : 0 < ℓ)
     (S : Finset ℕ) (hSne : S.Nonempty) (hS : S ⊆ PK (i + 1)) {δ : ℝ} (hδ : 0 ≤ δ)
     (hnonvac : 2 * Real.sqrt (Real.log 2 * (ℓ : ℝ)
