@@ -109,4 +109,108 @@ theorem H₂_preLaw_ge (i a : ℕ) (ha : 0 < a) (haS : a ≤ (bandS i).card) :
   rw [H₂_preLaw]
   exact hrest
 
+/-! ### The prefix's capture bound -/
+
+set_option maxHeartbeats 1000000 in
+/-- **A certified prefix.**  After `a` of band `i`'s windows the word frequencies are within
+`2√(2 log 2·ℓ·(δ+1)|P_K|/(a·m_K))` of `2^{−ℓ}`. -/
+theorem abs_posAvg_preLaw_le (i a ℓ : ℕ) (ha : 0 < a) (haS : a ≤ (bandS i).card)
+    (hℓ : 0 < ℓ) (hℓm : 2 * ℓ ≤ kk i) (w : Fin (2 ^ ℓ)) :
+    |posAvg (kk i) ℓ (preLaw i a ha (primeLambertAtBase 4)) w - 1 / (2 : ℝ) ^ ℓ|
+      ≤ 2 * Real.sqrt (2 * Real.log 2 * (ℓ : ℝ)
+          * ((atomDeficit i + 1) * ((PK i).card : ℝ)) / ((a : ℝ) * (kk i : ℝ))) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hapos : (0 : ℝ) < (a : ℝ) := by exact_mod_cast ha
+  have hPpos : (0 : ℝ) < ((PK i).card : ℝ) := by exact_mod_cast PK_card_pos i
+  have hkkpos : (0 : ℝ) < (kk i : ℝ) := by
+    have := kk_pos' i; exact_mod_cast this
+  have hδ : (0 : ℝ) < (atomDeficit i + 1) * ((PK i).card : ℝ) / (a : ℝ) := by
+    have := atomDeficit_pos i
+    positivity
+  have hdef : ((kk i : ℝ) - (atomDeficit i + 1) * ((PK i).card : ℝ) / (a : ℝ))
+      * (Fintype.card Unit : ℝ) ≤ (preLaw i a ha (primeLambertAtBase 4)).H₂ := by
+    simp only [Fintype.card_unit, Nat.cast_one, mul_one]
+    exact H₂_preLaw_ge i a ha haS
+  have hmain := abs_posAvg_sub_le hℓ (by omega) (preLaw i a ha (primeLambertAtBase 4)) w hδ hdef
+  refine hmain.trans ?_
+  have hℓR : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  have hhalf : (kk i : ℝ) / 2 ≤ (kk i : ℝ) - ℓ + 1 := by
+    have : (2 : ℝ) * ℓ ≤ (kk i : ℝ) := by exact_mod_cast hℓm
+    linarith
+  have hden : (0 : ℝ) < (kk i : ℝ) - ℓ + 1 := by
+    have : (2 : ℝ) * ℓ ≤ (kk i : ℝ) := by exact_mod_cast hℓm
+    linarith
+  have hstep : Real.log 2 * (ℓ : ℝ) * ((atomDeficit i + 1) * ((PK i).card : ℝ) / (a : ℝ))
+      / ((kk i : ℝ) - ℓ + 1)
+      ≤ 2 * Real.log 2 * (ℓ : ℝ) * ((atomDeficit i + 1) * ((PK i).card : ℝ))
+          / ((a : ℝ) * (kk i : ℝ)) := by
+    rw [div_le_div_iff₀ hden (by positivity)]
+    have hd0 : (0 : ℝ) < atomDeficit i + 1 := by
+      have := atomDeficit_pos i; linarith
+    have hc : (0 : ℝ) ≤ Real.log 2 * (ℓ : ℝ) * ((atomDeficit i + 1) * ((PK i).card : ℝ)) := by
+      positivity
+    have hexp : Real.log 2 * (ℓ : ℝ) * ((atomDeficit i + 1) * ((PK i).card : ℝ) / (a : ℝ))
+        * ((a : ℝ) * (kk i : ℝ))
+        = (Real.log 2 * (ℓ : ℝ) * ((atomDeficit i + 1) * ((PK i).card : ℝ))) * (kk i : ℝ) := by
+      field_simp
+    rw [hexp]
+    nlinarith [hc, hhalf, hkkpos]
+  have hpos1 : (0 : ℝ) ≤ Real.log 2 * (ℓ : ℝ)
+      * ((atomDeficit i + 1) * ((PK i).card : ℝ) / (a : ℝ)) / ((kk i : ℝ) - ℓ + 1) := by
+    have := hδ.le
+    positivity
+  exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hstep) (by norm_num)
+
+/-! ### The prefix count -/
+
+open Classical in
+/-- **The prefix's count rendering.** -/
+theorem posAvg_preLaw_eq_count (i a ℓ : ℕ) (ha : 0 < a) (haS : a ≤ (bandS i).card) (x : ℝ)
+    (w : Fin (2 ^ ℓ)) :
+    posAvg (kk i) ℓ (preLaw i a ha x) w
+      = (∑ p : Fin (kk i - ℓ + 1),
+            (((bandPre i a).filter fun n =>
+              posAt (kk i) ℓ (p : ℕ) (ZVec (gridAt i) (kk i) x n (goodAtom i)) = w).card : ℝ))
+        / ((a : ℝ) * ((kk i - ℓ + 1 : ℕ) : ℝ)) := by
+  classical
+  have hp : ∀ p : Fin (kk i - ℓ + 1),
+      ((preLaw i a ha x).map
+          (fun z : Unit → Fin (2 ^ kk i) => posAt (kk i) ℓ (p : ℕ) (z default))).prob {w}
+        = (((bandPre i a).filter fun n =>
+              posAt (kk i) ℓ (p : ℕ) (ZVec (gridAt i) (kk i) x n (goodAtom i)) = w).card : ℝ)
+          / ((bandPre i a).card : ℝ) := by
+    intro p
+    rw [preLaw, FinLaw.prob, Finset.sum_singleton]
+    exact map_empirical_p (bandPre_nonempty i a ha) _ _ w
+  rw [posAvg, Fintype.sum_prod_type]
+  simp only [Fintype.card_unit, Nat.cast_one, one_mul, Finset.univ_unique,
+    Finset.sum_singleton, hp]
+  rw [← Finset.sum_div, div_div, card_bandPre i a haS]
+
+open Classical in
+/-- **The prefix's digit rendering.** -/
+theorem posAvg_preLaw_eq_digits (i a ℓ : ℕ) (ha : 0 < a) (haS : a ≤ (bandS i).card)
+    (hℓm : ℓ ≤ kk i) (x : ℝ) (w : Fin (2 ^ ℓ)) :
+    posAvg (kk i) ℓ (preLaw i a ha x) w
+      = (∑ p : Fin (kk i - ℓ + 1),
+            (((bandPre i a).filter fun n =>
+              blockVal (Int.fract x) (2 * kIdx (gridAt i) n (goodAtom i) + (p : ℕ)) ℓ
+                = (w : ℕ)).card : ℝ))
+        / ((a : ℝ) * ((kk i - ℓ + 1 : ℕ) : ℝ)) := by
+  classical
+  rw [posAvg_preLaw_eq_count i a ℓ ha haS x w]
+  congr 1
+  refine Finset.sum_congr rfl fun p _ => ?_
+  congr 2
+  have hZ : ∀ n : ℕ, ZVec (gridAt i) (kk i) x n (goodAtom i)
+      = ⟨blockVal (Int.fract x) (2 * kIdx (gridAt i) n (goodAtom i)) (kk i),
+        blockVal_lt _ _ _⟩ :=
+    fun n => Fin.ext (ZSample_eq_blockVal (gridAt i) (kk i) x n (goodAtom i))
+  have hfit : (p : ℕ) + ℓ ≤ kk i := by
+    have := p.isLt
+    omega
+  refine Finset.filter_congr fun n _ => ?_
+  rw [hZ n, posAt_blockVal _ _ _ _ _ hfit]
+  exact ⟨fun h => congrArg Fin.val h, fun h => Fin.ext h⟩
+
 end NormalNumbers.G4.Sched
