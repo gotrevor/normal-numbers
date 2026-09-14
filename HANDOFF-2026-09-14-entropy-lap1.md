@@ -119,3 +119,25 @@ So (C) and (G) are both proved, with exactly the shape the information-set lemma
 **Next (lap 4): §3A, the exact transported sample** — the last structural gap.  `capture_le`
 needs `Ffull n ∈ E 𝓑` for the particular atom vector `u^{G4}_{K,α}(n)`, not just membership in
 the orbit-closure image that `gridFrame_propA` provides.
+
+---
+
+# Lap 4 addendum — §3A, and the three pieces compose
+
+`G4EntropyTransport.lean` (new, sorry-free):
+
+* **`Ffull_eq_of_progression`** — the exact transported sample, as an *equation*:
+  `Ffull n = mulVecT A (α ↦ orbit bse G_bse (k α)) + θ − γ`.  The witness was already inside
+  `propA_of_progression`; the `∃` was throwing it away.  `G4Transport.lean`/`G4Frame.lean` are
+  untouched and `propA_of_Ffull_eq` recovers `PropA` from the equation.
+* `uSample_eq_orbit` — the entropy sample *is* the base-four orbit point at the frozen index.
+* `orbit_mem_dyadicArc` — `ZSample = j` pins it to the **closed** arc `[j2^{-m}, (j+1)2^{-m}]`.
+* **`gridFrame_Ffull_mem_boxUnion`** — the bridge: quantized sample selects a centre in `𝓑`
+  ⟹ `Ffull n ∈ imageOfSet (boxUnion 𝓑 2^{-m})`.  That is verbatim the hypothesis
+  `∀ n ∈ Good, Ffull n ∈ E` of `Frame.capture_le`, for the `E` whose tube volume
+  `volume_tube_le_joint` bounds by `|𝓑|`.
+
+So the three structural pieces of the expedition — (C), (G), §3A — are proved and they compose.
+What is left for E0 is arithmetic: choose `ℬ` = the information set, and check the numerical
+budget `δ/(2−δ) > |ℬ|·∑_G η^{|G|}vol(pieceCube G) + δ₂ + 2κ + Λδ₃` against the implemented
+schedule with `|ℬ| ≤ 2^{(1−δ/2)m_K H_K}`.

@@ -27,14 +27,19 @@ Lap 3 proved **(G)** in `G4EntropyCover.lean`: `volume_tube_le_joint` gives
 **linear in the number of joint boxes**, not `(#Bs)^H`.  The old product statement is
 recovered as `volume_tube_le_of_joint`.
 
-**Remaining inputs, hardest first:**
+Lap 4 proved **§3A** in `G4EntropyTransport.lean`: `Ffull_eq_of_progression` exposes the exact
+transported vector as an EQUATION (`PropA` recovered via `propA_of_Ffull_eq`), and
+`gridFrame_Ffull_mem_boxUnion` closes the chain §3A ⟹ §3B: the quantized sample of `n` selecting
+a centre in `𝓑` puts `Ffull n` in `imageOfSet (boxUnion 𝓑 2^{-m})`, which is exactly the
+hypothesis of `Frame.capture_le` for the set whose tube `volume_tube_le_joint` bounds by `|𝓑|`.
 
-1. **§3A — the exact transported sample.**  `Frame.capture_le` needs `∀ n ∈ Good, Ffull n ∈ E`
-   with `E = imageOfSet fr (boxUnion fr 𝓑 η)`, i.e. the *particular* atom vector
-   `x α = u^{G4}_{K,α}(n)` rather than mere membership in the whole orbit-closure image
-   (`gridFrame_propA`).  Expose the identity inside `coe_sum_dilatedTailB` /
-   `propA_of_progression` by ADDING a lemma; do not change the old endpoint.
-   With that, `ZSample = v` ⟹ `u α ∈ box(v α)` ⟹ `Ffull n ∈ E 𝓑` for `𝓑` = the centres of ℬ.
+**(C), (G) and §3A are all proved.  What remains is arithmetic bookkeeping, not structure:**
+
+1. **Assemble E0** — combine `Frame.capture_le` (with `Good` = the sample points whose joint
+   vector lies in the information set), `volume_tube_le_joint`, and
+   `FinLaw.prob_infoSet_ge`/`card_infoSet_le`.  The contradiction needs
+   `δ/(2−δ) > |ℬ|·(∑_G η^{|G|}·vol(pieceCube G)) + δ₂ + 2κ + Λδ₃` with
+   `|ℬ| ≤ 2^{(1−δ/2)m_K H_K}`.
 2. **`a_K/ρ_K → 0`** — recover the average transport error from the actual remainder bounds
    (`G4Remainder`, `G4FarTail`), not the old fixed 1/8 allowances.
 3. **Jackson at the entropy degree** — `G4Jackson` must approximate the `1/ρ_K`-Lipschitz,
