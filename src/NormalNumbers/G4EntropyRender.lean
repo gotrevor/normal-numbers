@@ -184,3 +184,127 @@ theorem tendsto_wordCount_primeLambertFour (ℓ : ℕ) (hℓ : 0 < ℓ) (w : Fin
   exact blockFreq_eq_digits i ℓ hℓm (primeLambertAtBase 4) w
 
 end NormalNumbers.G4.Sched
+
+/-! ### The word-list rendering: the counted event is `OccursAt`
+
+`blockVal … = (w : ℕ)` still encodes the word as a *number*.  Here it is turned into the
+literal digit predicate `OccursAt 2 x w` — the very predicate `isDisjunctive_two` uses — so the
+comparison between this theorem and disjunctivity is mechanical rather than interpretive.
+-/
+
+namespace NormalNumbers.G4Entropy
+
+/-- The value of a finite binary word, most significant digit first. -/
+def seqVal (d : ℕ → ℕ) (m : ℕ) : ℕ := ∑ i ∈ Finset.range m, d i * 2 ^ (m - 1 - i)
+
+lemma seqVal_succ (d : ℕ → ℕ) (m : ℕ) : seqVal d (m + 1) = 2 * seqVal d m + d m := by
+  unfold seqVal
+  simp only [Nat.add_sub_cancel, Finset.sum_range_succ, Nat.sub_self, pow_zero, mul_one]
+  rw [Finset.mul_sum]
+  congr 1
+  refine Finset.sum_congr rfl fun i hi => ?_
+  have hi' : i < m := Finset.mem_range.1 hi
+  have he : m - i = (m - 1 - i) + 1 := by omega
+  rw [he, pow_succ]
+  ring
+
+lemma blockVal_eq_seqVal (y : ℝ) (p m : ℕ) :
+    blockVal y p m = seqVal (fun i => digitOf 2 y (p + i)) m := rfl
+
+/-- A binary word of length `m` has value `< 2^m`. -/
+lemma seqVal_lt {d : ℕ → ℕ} : ∀ {m : ℕ}, (∀ i < m, d i < 2) → seqVal d m < 2 ^ m := by
+  intro m
+  induction m with
+  | zero => intro _; simp [seqVal]
+  | succ m ih =>
+    intro h
+    have hb := ih fun i hi => h i (by omega)
+    have hd := h m (by omega)
+    rw [seqVal_succ, pow_succ]
+    omega
+
+/-- **Uniqueness of the binary encoding.**  Two binary digit strings of the same length with
+the same value agree digit by digit. -/
+lemma seqVal_inj {d e : ℕ → ℕ} : ∀ {m : ℕ}, (∀ i < m, d i < 2) → (∀ i < m, e i < 2) →
+    seqVal d m = seqVal e m → ∀ i < m, d i = e i := by
+  intro m
+  induction m with
+  | zero => intro _ _ _ i hi; omega
+  | succ m ih =>
+    intro hd he h i hi
+    rw [seqVal_succ, seqVal_succ] at h
+    have hdm := hd m (by omega)
+    have hem := he m (by omega)
+    have hb : seqVal d m = seqVal e m := by omega
+    have hlast : d m = e m := by omega
+    rcases Nat.lt_or_ge i m with hlt | hge
+    · exact ih (fun j hj => hd j (by omega)) (fun j hj => he j (by omega)) hb i hlt
+    · have : i = m := by omega
+      subst this; exact hlast
+
+/-- The numeric value of a word given as a list. -/
+def wordVal (w : List ℕ) : ℕ := seqVal (fun i => w.getD i 0) w.length
+
+lemma wordVal_lt {w : List ℕ} (hw : ∀ i, ∀ h : i < w.length, w[i] < 2) :
+    wordVal w < 2 ^ w.length := by
+  refine seqVal_lt fun i hi => ?_
+  rw [List.getD_eq_getElem w 0 hi]
+  exact hw i hi
+
+/-- **The word-list dictionary.**  The length-`|w|` binary window of `y` at `p` has value
+`wordVal w` exactly when the word `w` occurs at position `p`. -/
+theorem blockVal_eq_wordVal_iff {y : ℝ} {p : ℕ} {w : List ℕ}
+    (hw : ∀ i, ∀ h : i < w.length, w[i] < 2) :
+    blockVal (Int.fract y) p w.length = wordVal w ↔ OccursAt 2 y w p := by
+  have hdig : ∀ i, digitOf 2 (Int.fract y) (p + i) < 2 := fun i => Nat.mod_lt _ (by omega)
+  constructor
+  · intro h j hj
+    have hkey := seqVal_inj (d := fun i => digitOf 2 (Int.fract y) (p + i))
+      (e := fun i => w.getD i 0)
+      (m := w.length) (fun i _ => hdig i)
+      (fun i hi => by rw [List.getD_eq_getElem w 0 hi]; exact hw i hi)
+      (by rw [← blockVal_eq_seqVal]; exact h) j hj
+    rw [hkey, List.getD_eq_getElem w 0 hj]
+  · intro h
+    rw [blockVal_eq_seqVal, wordVal]
+    refine Finset.sum_congr rfl fun i hi => ?_
+    have hi' : i < w.length := Finset.mem_range.1 hi
+    simp only
+    rw [h i hi', List.getD_eq_getElem w 0 hi']
+
+end NormalNumbers.G4Entropy
+
+namespace NormalNumbers.G4.Sched
+
+open NormalNumbers NormalNumbers.G4Entropy NormalNumbers.PrimeLambert
+
+open Classical in
+/-- **The headline over `OccursAt`.**  For every finite binary word `w`, the proportion of
+triples `(n, α, j)` at which `w` **occurs** in the binary expansion of `G₄` — at digit position
+`2·kIdx(n,α) + min (j|w|) (m_K − |w|)` — tends to `2^{−|w|}`.
+
+`OccursAt 2 · w ·` is exactly the predicate behind `isDisjunctive_two`, so the comparison is
+now mechanical: disjunctivity gives *some* occurrence, this gives the *correct frequency* of
+occurrences on the sampled system.  It is still **not** a normality statement — the positions
+counted here have density zero. -/
+theorem tendsto_occursCount_primeLambertFour (w : List ℕ) (hlen : 0 < w.length)
+    (hw : ∀ i, ∀ h : i < w.length, w[i] < 2) :
+    Tendsto (fun i =>
+      (∑ c : (gridAt i).Atom × Fin (rBlocks i w.length),
+          (((PK i).filter fun n =>
+            OccursAt 2 (primeLambertAtBase 4) w
+              (2 * kIdx (gridAt i) n c.1
+                + min ((c.2 : ℕ) * w.length) (kk i - w.length))).card : ℝ))
+        / (((PK i).card : ℝ)
+            * (Fintype.card ((gridAt i).Atom × Fin (rBlocks i w.length)) : ℝ)))
+      atTop (nhds (1 / (2 : ℝ) ^ w.length)) := by
+  classical
+  have hmain := tendsto_wordCount_primeLambertFour w.length hlen ⟨wordVal w, wordVal_lt hw⟩
+  refine hmain.congr fun i => ?_
+  congr 1
+  refine Finset.sum_congr rfl fun c _ => ?_
+  congr 2
+  refine Finset.filter_congr fun n _ => ?_
+  exact blockVal_eq_wordVal_iff (y := primeLambertAtBase 4) hw
+
+end NormalNumbers.G4.Sched

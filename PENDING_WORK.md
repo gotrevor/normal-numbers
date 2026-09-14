@@ -52,10 +52,15 @@ overlapping one included), `blockFreq_eq_count`, `blockFreq_eq_digits`, and
 *word-list* rendering (`OccursAt`) and the general-`x` version.
 
 **Still open in this thread (next):**
-0. **Word-list rendering.**  `blockVal (fract x) p ℓ = (w : ℕ)` still encodes the word as a
-   number.  Prove `blockVal = wordVal L ↔ the ℓ digits at p spell L` (converse of
-   `blockVal_eq_of_occursAt`) and restate the headline over `OccursAt 2 x w`, the very
-   predicate `isDisjunctive_two` uses.
+0. ~~**Word-list rendering.**~~ (done, lap 25) — `seqVal`/`wordVal`, `seqVal_inj` (uniqueness
+   of the binary encoding), `blockVal_eq_wordVal_iff`, and
+   `tendsto_occursCount_primeLambertFour`: the headline counts exactly the triples at which
+   `OccursAt 2 G₄ w` holds, the same predicate `isDisjunctive_two` uses.
+0'. **Next:** the general-`x` version of `abs_blockFreq_sub_le` / the limit, under an
+   `E0`-type hypothesis (`abs_avg_block_prob_sub_le` is already abstract; only the deficit
+   supply is `G₄`-specific).  Then: is the frequency statement *uniform* in `ℓ` — i.e. can
+   `ℓ = ℓ(K)` grow, and at what rate does `O(√(ℓ/√K))` still vanish?  That is the quantitative
+   edge of what entropy controls here (route trigger E-T5 territory, recorded not hidden).
 1. ~~**The faithfulness rendering.**~~ (done, lap 24)  `blockFreq` is *defined* through `FinLaw.map`; prove
    `blockFreq_eq_count` — it equals `#{(n,α,j) : the ℓ-block …} / (|P_K|·H_K·(m_K/ℓ+1))` —
    from `map_empirical_p`, and `blockFreq_eq_digits` — that block `j` IS the ℓ binary digits
