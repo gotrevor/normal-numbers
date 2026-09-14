@@ -15,38 +15,66 @@ such information; `experiments/theta_seed_precision.py` is its exact probe.
 ROADMAP also corrects the old open label for `sum 1/(9^k 2^(2^k))` using
 Vandehey's later normality theorem.  No second normality campaign was launched.
 
-The September 8 snapshot below is historical; its prospective run+jump work
-was subsequently completed, as recorded in the dated entries and handoff.
+The September 8 and 13 snapshots below are historical; the live campaign is G4.
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter).** · **Build**: 🟢 green (8886 jobs) · **Updated**:
-DEEP REFLECTION lap · 2026-09-08 · `wip/adder-tower-c9` @ `cc51d22`
+Mahler multiplier chapter) — and, since 2026-09-14, the live G4 disjunctivity
+campaign.** · **Build**: 🟢 green (8888 jobs) · **Updated**: fresh-mind review
+lap · 2026-09-14 · `wip/g4-disjunctivity` @ `97b2d1e`
 
 ## Where it stands
 
-Every headline audits to the bare trust triple `[propext, Classical.choice,
-Quot.sound]` (re-run this lap).  `src/` carries **exactly one** `sorry`:
-`exists_prime_nonresidue` (`MahlerDriftOne.lean:380`), a Linnik-strength
-statement feeding only a *conditional* theorem — no unconditional result touches
-it.  (The two former `CFScheduleA` schedule residues are named `def … : Prop`
-nodes, not `sorry`s.)  The live frontier is the **Mahler-multiplier chapter**,
-where this repo holds both sides: `M(g,k) < g^(k+1)` answers Berend–Boshernitzan's
-stated open question, `sup_g M(g,k)/g^(k+1) = 1` is sharp, and at `k = 1`, prime
-base, the sandwich is `p²/12 ≤ M(p,1) ≤ p²/4 + O(p)` against a census truth of
-`⌊p/2⌋² − {0,1,2,4}`.  **The 2026-09-08 reflection lap mapped the entire
-certificate space** and settled where the factor `3` lives: orbit-free cycles are
-refuted (they force `D_i = O(1)`, cost linear); the closed-form single-background
-frame has ceiling *exactly* `1/12` (so family II is optimal in it, not lucky); the
-single-background multi-offset frame has ceiling `1/5` but no uniform floor
-(`p+1 = 2q` collapses it).  What survives is the **run+jump chain**: the
-descending run of consecutive integers `p−b, …, b` closed by the jump `b → p−b`,
-whose only arithmetic condition is `−1 ∈ ⟨p⟩ (mod b)` — free whenever `b ∣ p+1`.
-Validated on 2512 `(p,b)` pairs and exact against the census.  Its two named
-corollaries give **`M(p,1) > 3p²/16 − O(p)` for every prime `p ≢ 1 (mod 12)`**
-(2.25× the current constant); formalising it is the binding directive.
+**Live campaign: G4 disjunctivity** (attended kickoff
+`KICKOFF-2026-09-14-g4-disjunctivity.md`, branch `wip/g4-disjunctivity`).  The
+target is that `G₄ = ∑_p 1/(4ᵖ−1) = ∑_n ω(n)/4ⁿ` is disjunctive in base four,
+hence in base two — a **candidate** argument Lean is testing, not a known
+theorem.  Frozen endpoint pinned (`PrimeLambertFour.lean`), including the
+previously-unproved series identity `∑_p 1/(4ᵖ−1) = primeLambertFour` for every
+base `b ≥ 2`.  The dependency graph is named `Prop`s on concrete objects
+(`G4Wiring.lean`: `PropA`…`PropD`, `PropJackson`), the finite separating-test
+contradiction **E** is proved (`Frame.finite_contradiction`), and the headline
+`isDisjunctive_four_of_frames` is CONDITIONAL on `SeparatingFrameExists`.
+Crux **B** (geometry) has every input proved — spectrum of `D_sD_sᵀ`, the
+tensor bound `log det(1+T_{K²}^{⊗K}) ≤ r(log2+23√K)`, the ellipsoid volume
+bound, one tube piece, torus projection, and the cylinder covering of an orbit
+closure omitting a word — leaving only the assembly.  Crux **C** (uniform joint
+small-prime Fourier control), which the brief itself leaves unproved, now has its
+arithmetic seed: `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`
+(`G4FreqSep.sum_sq_distZ_freqDepth_ge`), on top of the product-code minimum
+distance theorem `minWeight_kronPow`.  **The open crux is C3**, the even-moment/CRT
+transfer from the independent residue model to the actual progression.
+
+The **Mahler-multiplier chapter** (previous campaign, complete): `M(g,k) < g^(k+1)`
+answers Berend–Boshernitzan's stated open question, `sup_g M(g,k)/g^(k+1) = 1` is
+sharp, and at `k = 1`, prime base, the sandwich is `p²/12 ≤ M(p,1) ≤ p²/4 + O(p)`
+with `mahler_lower_bound_runjump` and `…_near_half` landed.  `src/` carries exactly
+one `sorry`, `exists_prime_nonresidue` (`MahlerDriftOne.lean`), a Linnik-strength
+statement feeding only a *conditional* theorem; no unconditional result touches it,
+and no G4 file has a `sorry`.
 
 ## What's happened (newest first)
+
+- **2026-09-14 (FRESH-MIND REVIEW LAP, G4 lap 3)** — **Course-correction: the crux
+  moved from B to C, and C's arithmetic seed is proved.**  Laps 1–2 put all their
+  effort into §4B; a crux-neglect check showed §4C — the half the brief itself says
+  is unproved ("the growing-array moment and exponential-moment bounds still need
+  proofs"; "the transfer from the independent residue model to the actual progression
+  is not automatic independence") — had received zero laps.  This lap attacked it.
+  Proved, unconditionally and `#print axioms`-clean: `minWeight_kronPow`, the
+  **minimum distance of a product code** (`M` of minimum weight `d` ⟹ `M^{⊗K}` of
+  minimum weight `d^K`); `minWeight_diff` (`D_s` has minimum weight 2, via telescoping
+  row sums plus injectivity from `det T_s = s+1`); hence `minWeight_tensorDiff`
+  (`‖supp(Aᵀq)‖₀ ≥ 2^K`); the column-mass bound `‖Aᵀq‖∞ ≤ 2^K‖q‖∞`; the layer choice
+  `freqDepth K w = K+1+⌈log₄|w|⌉` with its window
+  `4^{−(K+2)} ≤ |w|4^{−j} ≤ 4^{−(K+1)}`, its retention `j > K`, and its uniform
+  admissibility `j_α ≤ K+1+⌈log₄(2^K D)⌉` over the whole Fourier box; and the §4C
+  seed **`∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`**.  The two powers are structurally
+  distinct — `16^{−K}` is the squared window scale, `2^K` the code distance — so
+  weakening the support bound to `2` would destroy the `8^{−K}` that §5 needs against
+  `rK`.  Also checked on paper (not yet in Lean) that the §5 schedule is self-consistent
+  on all four of the brief's essential comparisons, so the parameter budget is not the
+  risk; C3 is.  `DIRECTION.md` CURRENT DIRECTIVE rewritten to G4 with triggers G-T1…G-T3.
 
 - **2026-09-08 (DEEP REFLECTION LAP)** — **The certificate space is mapped; the
   run+jump chain is the route.**  Built an exact combinatorial model of the lower
@@ -262,21 +290,20 @@ corollaries give **`M(p,1) > 3p²/16 − O(p)` for every prime `p ≢ 1 (mod 12)
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-1. **THE CRUX — close the factor `3`** in
-   `⌊p/2⌋²/3 − 1 ≤ M(p,1) ≤ (p²+6p+1)/4`.  Mandated move:
-   `MahlerBackgroundCert.lean` — `MahlerFamilyI.lean` with free `(D, c₀, b)` over
-   `NumCert.Good`, closure `∃ t, c₀p³ + b ≡ c₀p^t (mod D)`, channel keys
-   (A) `bm < p(p−D)` and (B) `bm mod p < p−D`.  Gives `≥ 0.88⌊p/2⌋²` per prime
-   by `decide`; family I and family II's `1/3` are both instances.
-2. **The arithmetic crux behind a uniform constant near `1/4`**: for every prime
-   `p`, some `D ∈ (p/3, p/2)` with `−1 ∈ ⟨p⟩ (mod D)` and `gcd(c₂, bD) = 1`.
-   For prime `D = q` this is `ord_q(p)` even (density `17/24`); sufficient form
-   to try first: `q ≡ 3 (mod 4)` with `p` a quadratic non-residue mod `q`.
-3. Unconditional fallback beating `1/3`: drift `2` needs `b` odd (`g ≡ −p mod b`),
-   i.e. `b = 3` with `3 | p+2`, ratio `2/3`, closure `p^t ≡ −2 (mod D)`.
-4. `k ≥ 2` lower side via the escape engine (`AdderEscapeCert.lean`): the
-   `(7,2)` instance `M(7,2) ≥ 176`.
-5. Remaining cited-only ledger nodes (`philipp_psi_mixing`, `vandehey_matrix_action`).
+1. **THE CRUX — §4C's C3**: the even-moment / CRT transfer from the independent
+   residue model to the actual arithmetic progression.  Decompose into named `Prop`s
+   in `src/` and attack; its failure is the only thing that kills the G4 route.
+2. §4C's remaining leaves: C1 (reduce coefficients mod one *before* moment
+   comparison), C2 (good-prime default-class contraction `exp(−cL8^{−K})` in the
+   independent model), C4 (the `exp(O(rK))` ℓ¹ budget dominated by the decay,
+   uniformly over the box — never one limit per frequency).
+3. **B assembly to `PropB`** (labour, not risk — all inputs proved): Markov on the
+   average metric, cylinder covering of `Cᴴ`, `2^r` good-coordinate sets, torus
+   marginal, then the `η^{(1−ε)r−d'H}exp(O(H+r√K))` arithmetic.
+4. **A** (exact affine Lambert transport, §4A) and **D** (three-range remainders,
+   §4D); then the §5 parameter schedule in its own module.
+5. Legacy: remaining cited-only ledger nodes (`philipp_psi_mixing`,
+   `vandehey_matrix_action`); `k ≥ 2` Mahler lower side via the escape engine.
 
 ### Long-term
 The conjecture graph toward the sink `IsNormal 2 (Real.log 2)`: the ln-two
@@ -289,11 +316,22 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, re-run this lap (2026-09-08 reflection).  Every
+Real `#print axioms` output, re-run this lap (2026-09-14 review).  Every
 UNCONDITIONAL headline: trust triple only.  The single exception is flagged.
+G4 rows come first; nothing in the G4 wing has a `sorry` or an axiom — its debt is
+carried honestly as named unproved `Prop`s (`PropA`…`PropD`, `PropJackson`,
+`SeparatingFrameExists`), which is what makes `isDisjunctive_four_of_frames`
+conditional.
 
 | headline theorem | paper claim | `#print axioms` shows | verdict |
 |---|---|---|---|
+| `G4.isDisjunctive_four_of_frames` / `…_two_of_frames` | G4 disjunctive base 4 / base 2 — **CONDITIONAL** on the candidate `SeparatingFrameExists` | trust triple | 🟢 clean, but the hypothesis IS the unproved candidate: never report as the endpoint |
+| `G4.Frame.finite_contradiction` | §4E finite separating test, conditional on A–D + Jackson | trust triple | 🟢 clean |
+| `PrimeLambert.primeSumAtBase_four` | `∑_p 1/(4ᵖ−1) = ∑_n ω(n)/4ⁿ` (uncond.) | trust triple | 🟢 clean |
+| `G4.sum_sq_distZ_freqDepth_ge` | §4C seed `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}` (uncond.) | trust triple | 🟢 clean |
+| `G4.minWeight_kronPow` / `minWeight_tensorDiff` | product-code minimum distance; `‖supp(Aᵀq)‖₀ ≥ 2^K` (uncond.) | trust triple | 🟢 clean |
+| `G4.log_det_one_add_tensorGram_le'` | §4B spectral `log det(1+T_{K²}^{⊗K}) ≤ r(log2+23√K)` (uncond.) | trust triple | 🟢 clean |
+| `G4.volume_tubePiece_le` / `orbitClosure_subset_cylinders` | §4B one tube piece; cylinder covering of an omitting orbit closure (uncond.) | trust triple | 🟢 clean |
 | `exists_absolutely_normal_cf_normal` | Becher–Yuhjtman 2019 Thm 1 (uncond.) | trust triple | 🟢 clean |
 | `exists_absolutely_normal_cf_normal_khinchin` | image-Khinchin (uncond.) | trust triple | 🟢 clean |
 | `isNormal_log_two_of_equidistributed` | conditional ln-two | trust triple | 🟢 clean (hypothesis is a named `Prop`, not an axiom) |
@@ -332,12 +370,13 @@ Math-axiom count (🟢+🟡+🟠): **0**.  🔴: none.  `src/` carries exactly O
 
 ## Pointers
 
-`ROADMAP.md` · `DIRECTION.md` (**binding directive** — run+jump chain, triggers
-T1–T3) · newest baton `HANDOFF-2026-09-08-reflection.md` · `PENDING_WORK.md`
-§Reflection 2026-09-08 (the model, the three refutations, the run+jump derivation) ·
-`papers/literature-review.md` §Mahler chapter · `BRIEF-literature-statements.md`
-(the novelty tripwire ledger) · instruments
-`experiments/mahler_bg_cycle_model.py`, `…_ecap.py`, `mahler_runjump.py`
+`DIRECTION.md` (**binding directive** — G4, triggers G-T1…G-T3) ·
+`KICKOFF-2026-09-14-g4-disjunctivity.md` + the brief at
+`~/personal/claude/knowledge/core/projects/normal-numbers-g4-disjunctivity-fable-handoff-2026-09-14.md` ·
+newest baton `HANDOFF-2026-09-14-g4-lap3.md` (and `…-g4-lap2.md`, `…-g4.md`) ·
+`PENDING_WORK.md` §G4 · `CHECK-g4-route-deviations.md` (host's independent route checks) ·
+`ROADMAP.md` · `papers/literature-review.md` §Mahler chapter ·
+`BRIEF-literature-statements.md` (the novelty tripwire ledger)
 
 ---
 

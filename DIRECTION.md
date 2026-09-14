@@ -20,7 +20,86 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-09-08 DEEP REFLECTION LAP — the run+jump chain)
+## CURRENT DIRECTIVE (set 2026-09-14 FRESH-MIND REVIEW LAP — G4 disjunctivity)
+
+- 🎯 **THE objective: `IsDisjunctive 4 primeLambertFour` unconditionally** (base two
+  follows by the already-proved `isDisjunctive_two_of_four`).  Concretely: discharge
+  `SeparatingFrameExists` in `src/NormalNumbers/G4Wiring.lean`.  The finite separating
+  test (**E**) is PROVED (`Frame.finite_contradiction`); the frozen endpoint and the
+  series identity `∑_p 1/(4ᵖ−1) = primeLambertFour` are PROVED.  The debt is
+  `PropA`–`PropD`, `PropJackson`, and the §5 schedule that produces the frames.
+  This is a **candidate** proof: `isDisjunctive_four_of_frames` is CONDITIONAL and must
+  never be reported as the endpoint.
+- 🔨 **Mandated next move — C, the uniform joint small-prime Fourier control (§4C).**
+  It is the half the brief itself leaves unproved ("the growing-array moment and
+  exponential-moment bounds still need proofs"; "the transfer from the independent
+  residue model to the actual progression is not automatic independence"), and it had
+  received ZERO laps while laps 1–2 went to B.  Its arithmetic seed is now proved
+  (`G4FreqSep.sum_sq_distZ_freqDepth_ge`: `∑_α dist(w_α 4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`,
+  with `G4MinWeight.minWeight_kronPow` — product-code minimum distance — underneath).
+  Decompose §4C into named `Prop`s **in `src/`** and attack them hardest-first:
+    * **C3 (the crux)** — even-moment/CRT transfer from the independent residue model to
+      the actual progression.  Its failure kills the route; nothing else in C does.
+    * C1 — reduce every coefficient mod one into `[−1/2,1/2]` *before* moment comparison.
+    * C2 — good-prime default-class contraction `exp(−cL8^{−K})` in the independent model.
+    * C4 — the `exp(O(rK))` ℓ¹ coefficient budget is dominated by the decay (one uniform
+      estimate over the whole box, never a separate limit per `q`).
+  Raising the `src/` sorry count by naming these is the expected shape of a lap here.
+- **Secondary, only when C is genuinely stuck for a lap: the B assembly to `PropB`.**
+  Every input is proved (`log_det_one_add_tensorGram_le'`, `volume_tubePiece_le`,
+  `volume_image_torusProj_le`, `orbitClosure_subset_cylinders`); what is left is Markov +
+  torus marginals + finite unions — labour, not risk.  Steps are in
+  `HANDOFF-2026-09-14-g4-lap2.md`.
+- ⛔ **Forbidden drift**: re-proving the base-two reduction; routing through
+  `PrimeLambertOscillation.lean`; the G2 two-point correlation theorem; multiplicity,
+  entropy, ordinary-normality or historical-novelty questions; `Adder*`, `CF*`, `Mahler*`,
+  `LnTwo*` and the two sibling worktrees; bounding the zonotope by a coordinatewise box;
+  bounding the ball by its enclosing cube (loses `exp(Θ(g log g))`); freezing `K` and then
+  sending `X → ∞`; and introducing a trusted axiom for ANY candidate lemma.
+- 🚦 **Route triggers, registered 2026-09-14**:
+    * **G-T1** — if C3 is neither proved nor a named, decomposed `Prop` stack in `src/`
+      within 5 grind laps, ESCALATE: re-cost §4C against shipping a clean conditional
+      headline with C3 as its single named hypothesis.
+    * **G-T2** — if a lap MEASURES a counterexample to an exact §4A transport identity, or
+      to `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`, ESCALATE immediately: those are the
+      foundation of both halves.
+    * **G-T3** — if, once A–D are in `Prop` form, the §5 schedule cannot close every budget
+      simultaneously, the honest endpoint is `isDisjunctive_four_of_frames` plus a named
+      list of what is missing; say so in STATUS rather than grinding for unconditionality.
+- ✅ **Checked this lap (paper arithmetic, not yet Lean)**: with `s=K²`, `H=(s+1)^K`,
+  `r=s^K`, `η=2^{−K/4}`, one has `H/r=(1+1/K²)^K → 1`, so the tube exponent is
+  `−((1−ε)−d'H/r)·r·(K log2)/4 + O(r√K) → −∞`; and `L·8^{−K}=L^{1−o(1)}` dominates
+  `rK=L^{0.02+o(1)}`.  The §5 schedule is self-consistent on the brief's four essential
+  comparisons.  So the budget is not the risk — C3 is.
+
+### Directive history
+- 2026-09-14 (fresh-mind review lap): objective switched from the COMPLETE Mahler chain to
+  the attended G4 disjunctivity campaign; crux named as **§4C's independent-model →
+  progression transfer (C3)**, not B (whose inputs are all proved); §4C's arithmetic seed
+  proved this lap; triggers G-T1…G-T3 registered.
+- 2026-09-08 (DEEP REFLECTION lap): certificate space MAPPED — orbit-free cycles
+  refuted, single-background frames ceilinged at `1/12` and `1/5`, and the
+  run+jump chain identified as the unique free skeleton (validated on 2512
+  `(p,b)` pairs, exact against the census).  Mandated move = `MahlerRunJump.lean`
+  + the two `b ∣ p+1` corollaries; route triggers T1–T3 registered.
+- 2026-09-08 (fresh-mind review lap): crux narrowed from "a uniform `c·p²`"
+  (achieved, `c = 1/12`) to "close the factor `3`"; the drift algebra of the
+  junction certificate derived and validated; closed-form backgrounds refuted as
+  a route; mandated move = the free-`D` background certificate in Lean.
+- 2026-09-08 (review lap): crux sharpened from "prime-base upper bound" (done)
+  to the GENERAL prime lower bound, and the mandated frame set to the adder
+  form; two uniform laws banked, closed-form bursts refuted.
+- 2026-09-02 (review lap): objective moved from the brief queue to the Mahler
+  constant; crux named as the prime-base upper bound after the composite-base
+  lower bound collapsed the gap from factor `g` to factor `2`.
+
+
+## SUPERSEDED DIRECTIVE (set 2026-09-08 DEEP REFLECTION LAP — the Mahler run+jump chain)
+
+- Superseded 2026-09-14 (fresh-mind review lap): its mandated move
+  (`mahler_lower_bound_runjump`) was PROVED, and the attended 2026-09-13 override above
+  records that campaign complete; the live attended objective is the 2026-09-14 G4
+  kickoff.  Retained for provenance and for its trigger record.
 
 - 🎯 **THE objective, unchanged: pin the optimal Mahler multiplier `M(g,k)`.**
   At `k = 1`, prime base, the sandwich is `⌊p/2⌋²/3 − 1 ≤ M(p,1) ≤ (p²+6p+1)/4`.
@@ -83,23 +162,6 @@ detail lives in PENDING_WORK.md.
   certificate (`MahlerFareyJunction.lean`).  The previous mandated move
   ("prove `∃ D ∈ (p/3,p/2)` with `−1 ∈ ⟨p⟩`") is RETIRED: the run+jump makes the
   large-`D` arithmetic hypothesis unnecessary for `p ≢ 1 (mod 12)`.
-
-### Directive history
-- 2026-09-08 (DEEP REFLECTION lap): certificate space MAPPED — orbit-free cycles
-  refuted, single-background frames ceilinged at `1/12` and `1/5`, and the
-  run+jump chain identified as the unique free skeleton (validated on 2512
-  `(p,b)` pairs, exact against the census).  Mandated move = `MahlerRunJump.lean`
-  + the two `b ∣ p+1` corollaries; route triggers T1–T3 registered.
-- 2026-09-08 (fresh-mind review lap): crux narrowed from "a uniform `c·p²`"
-  (achieved, `c = 1/12`) to "close the factor `3`"; the drift algebra of the
-  junction certificate derived and validated; closed-form backgrounds refuted as
-  a route; mandated move = the free-`D` background certificate in Lean.
-- 2026-09-08 (review lap): crux sharpened from "prime-base upper bound" (done)
-  to the GENERAL prime lower bound, and the mandated frame set to the adder
-  form; two uniform laws banked, closed-form bursts refuted.
-- 2026-09-02 (review lap): objective moved from the brief queue to the Mahler
-  constant; crux named as the prime-base upper bound after the composite-base
-  lower bound collapsed the gap from factor `g` to factor `2`.
 
 ## SUPERSEDED DIRECTIVE (set 2026-09-08 review lap — the prime lower side, adder form)
 

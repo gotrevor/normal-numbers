@@ -1,4 +1,101 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
+
+## 🧭 REVIEW 2026-09-14 (G4 lap 3): crux moved B → C; §4C's arithmetic seed PROVED; C decomposed
+
+**Course correction.**  Laps 1–2 both spent themselves on §4B.  §4B is now *input-complete*
+(spectral bound, ellipsoid volume, tube piece, torus projection, cylinder covering, det
+monotonicity) and what remains there is assembly: Markov + marginals + finite unions.  §4C —
+the half the brief itself leaves unproved ("the growing-array moment and exponential-moment
+bounds still need proofs"; "the transfer from the independent residue model to the actual
+progression is not automatic independence") — had received **zero** laps.  It is now the
+mandated target (`DIRECTION.md` CURRENT DIRECTIVE, 2026-09-14).
+
+### Proved this lap (unconditional, `#print axioms` = trust triple)
+
+`src/NormalNumbers/G4MinWeight.lean`
+* `wt` / `MinWeight`; `two_le_wt_of_sum_eq_zero`.
+* **`minWeight_kronPow`** — minimum distance of a product code: `MinWeight M d` ⟹
+  `MinWeight (M^{⊗K}) (d^K)`.  Induction peeling one tensor coordinate
+  (`wt_cons`, `vecMul_kronPow_cons`); the row/column argument, not a dimension count.
+* **`minWeight_diff`** — `D_s` has minimum weight `2`: rows telescope (`sum_diff_row`) so the
+  image has zero total sum, and `D_sD_sᵀ = T_s` with `det T_s = s+1 ≠ 0` gives injectivity.
+* **`minWeight_tensorDiff`** / `minWeight_kronPow_diffZ` (ℤ form): `‖supp(Aᵀq)‖₀ ≥ 2^K`.
+* `colSum_diff_le`, `abs_vecMul_kronPow_le`, **`abs_vecMul_tensorDiff_le`**: `‖Aᵀq‖∞ ≤ 2^K‖q‖∞`.
+
+`src/NormalNumbers/G4FreqSep.lean`
+* `distZ`, `le_distZ` (no need to identify `round x`: either it is `0`, or the distance is `≥ ½`).
+* **`freqDepth K w = K + 1 + ⌈log₄|w|⌉`**, `lt_freqDepth` (`j > K`, a *retained* layer),
+  `mem_window_freqDepth` (`4^{−(K+2)} ≤ |w|4^{−j} ≤ 4^{−(K+1)}`), `le_distZ_freqDepth`.
+* **`freqDepth_le`** — uniform `j_α ≤ K+1+⌈log₄(2^K D)⌉` over the whole box `‖q‖∞ ≤ D`
+  (the brief's "`j_α < J` uniformly").
+* **`sum_sq_distZ_freqDepth_ge`** — `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}·8^{−K}` for every
+  nonzero integer `q`.  Stronger than the brief's double-sum form, which it implies (the
+  omitted `j ≠ j_α` terms are nonnegative and `K < j_α`).
+
+**Why the constant is structural.**  `16^{−K}` is the *square of the window scale* `4^{−(K+2)}`;
+`2^K` is the *code distance* of `D_s^{⊗K}`.  Weakening the support bound from `2^K` to `2`
+(which a naive "the image is nonzero" argument gives) would leave `16^{−K}`, and `L·16^{−K}`
+does **not** dominate `rK` with room to spare in the §5 schedule the way `L·8^{−K}` does.  Both
+inputs are load-bearing.
+
+### Checked on paper this lap (NOT yet Lean) — the §5 budget is not the risk
+
+With `s=K²`, `H=(s+1)^K`, `r=s^K`, `η=2^{−K/4}`, `L=log log X`, `K=⌊log L/(100 log log L)⌋`:
+* `H/r = (1+1/K²)^K → 1`, so `r/H → 1` as §5 asserts; `log r = 2K log K = (0.02+o(1))log L`.
+* Tube exponent `−((1−ε) − d'·H/r)·r·(K log2)/4 + O(r√K) → −∞` whenever `1−ε−d' > 0`, because
+  `rK ≫ r√K`.  The covering count needs `log(1/δ)/log(1/η) ≤ d'/d`, and choosing `M` minimal with
+  `4^{−ℓM} ≤ η` gives ratio `≤ 1 + ℓ log4/((K/4)log2) → 1`; fine for any `d' > d` once `K` is large.
+* `8^{−K} = L^{−o(1)}`, so `L·8^{−K} = L^{1−o(1)}` dominates `rK = L^{0.02+o(1)}`, i.e. the decay
+  beats the `exp(O(rK))` ℓ¹ budget.
+So the parameter schedule is self-consistent on all four of the brief's essential comparisons.
+**The risk is C3, not the budget.**
+
+### §4C decomposed — the next attacks, hardest-first
+
+Write `S_ν(n) = ∑_α A_{να} ∑_{K<j≤J} 4^{−j} ω_{≤R}(n + ρ_{α,j})`, so with `w = Aᵀq`
+
+    q·S(n) = ∑_{p ≤ R} θ_p(n),   θ_p(n) = ∑_{α, K<j≤J} w_α 4^{−j} · 1[p ∣ n + ρ_{α,j}],
+
+and `θ_p(n)` depends only on `n mod p`.  Hence `e(q·S(n)) = ∏_{p≤R} e(θ_p(n))` — a product of
+functions of `n` in distinct prime moduli.  The four named obligations:
+
+* **C1 — phase-to-distance (elementary, do first, it is the input to C2).**
+  `1 − cos(2πx) ≥ 8 · distZ(x)²` for every real `x`.  Proof: `1−cos2πx = 2sin²(πx)` and
+  `|sin πx| = sin(π·distZ x) ≥ 2·distZ x` by Jordan (`Real.mul_le_sin`, already used in
+  `G4Spectral`).  This is the "reduce mod one **before** moment comparison" step of the brief:
+  `distZ` is exactly the reduced representative, and nothing downstream sees `w_α4^{−j}` again.
+* **C2 — one good prime contracts.**  If `p` is prime, `x : ι → ℝ` a family indexed by the
+  active roots with `card ι ≤ p` and the roots distinct mod `p` (so exactly one root fires per
+  nondefault class and the default class has probability `≥ 1/2`), then
+  `|p⁻¹ ∑_{a mod p} e(θ_p(a))| ≤ 1 − (8/p)·∑_i distZ(x i)²`.
+  Combined with `sum_sq_distZ_freqDepth_ge`: `≤ 1 − 8·4^{−4}·8^{−K}/p`.
+  Then `∏_{p∈𝒫}(1 − c·8^{−K}/p) ≤ exp(−c·8^{−K}·∑_{p∈𝒫}p^{−1})`, and `∑_{p≤R}p^{−1} = L − o(L)`
+  once the excluded primes' harmonic mass `O(log L)` is removed.  **Independent model only.**
+* **C3 — THE CRUX: transfer from the independent model to the progression.**  The brief:
+  "The transfer from the independent residue model to the actual progression is not automatic
+  independence.  Expand moments to even degree `M`, count residue classes by CRT, and sum the
+  finite-sample errors, bounded schematically by `P R^{2m}/X` for `m ≤ M`."  Concretely, with
+  `f_p(n) = e(θ_p(n)) − 𝔼e(θ_p)`, bound `|𝔼_{n∈P∩[1,X]} ∏_p (𝔼e(θ_p) + f_p(n))| ` by expanding
+  and controlling `𝔼_{n} ∏_{p∈T} f_p(n)` for `|T| ≤ M` via CRT counting on the modulus
+  `P·∏_{p∈T}p ≤ P·R^M`, with `R = X^{1/(20M)}` making `P R^{M} = X^{o(1)}`.
+  **This is the only obligation in C whose failure would force a redesign.  Attack it first
+  as a named `Prop` in `src/`, then decompose.**  Trigger **G-T1**: 5 grind laps.
+* **C4 — the budget is uniform.**  `Λ = (2D+1)^r = exp(O(rK))` and `δ₃ = exp(−cL8^{−K})`;
+  show `Λδ₃ < 1` under §5.  Never "for each fixed `q`, let `X → ∞`" — one estimate, uniform on
+  the whole box.
+
+### §4B assembly to `PropB` — secondary (labour, not risk); all inputs proved
+
+1. Choose a cylinder `[w/4^ℓ,(w+1)/4^ℓ) ⊆ [a,c)` strictly inside the omitted interval.
+2. `orbitClosure_subset_cylinders` ⟹ `C^H ⊆ ⋃_{b} ∏_h π(cyl b_h)`, `(B−1)^{MH}` products, each a
+   cube of side `4^{−ℓM} ≤ η`.
+3. Markov on `dAv`: `dAv(y,z) ≤ 2εη` ⟹ `#{ν : dist > η} ≤ 2εr`, so `∃ G`, `|G| ≥ (1−2ε)r`,
+   `y_G ∈ c_G + η[A_G,I_g]([−1,1]^{H+g})` after absorbing the cylinder cube; `≤ 2^r` sets `G`.
+4. Torus marginal: `vol_{𝕋^r}(π_G^{-1}(B)) = vol_{𝕋^G}(B) ≤ vol_{ℝ^g}(·)`
+   (`volume_image_torusProj_le`), then `volume_tubePiece_le` and `addHaar_smul` for `η^g`.
+5. Arithmetic as verified above.  Note `Frame.A` is over `ℤ` while `tensorDiff` is over `ℝ`;
+   `G4FreqSep.diffZ` + `cast_vecMul_kronPow_diffZ` is now the bridge to use.
+
 ## 📏 MEASURED 2026-09-08 (lap 4): the run+jump theorem alone reaches `1/4 − O(1/p)` at EVERY prime `< 2000`
 
 `experiments/mahler_runjump_admissible.py`: for each prime `p < 2000`, the best `b` with
