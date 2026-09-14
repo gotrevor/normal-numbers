@@ -124,7 +124,31 @@ Per **E-T7** this lap does not pick its own next target; the next altitude lap s
    `blockVal_eq_wordVal_iff` are already general enough; the only new step is unpacking `packFin`
    into the `t` component events.
 
-### Bounded secondary (only on an E-T3 stall) — measure the wall
+### ✅ BOUNDED SECONDARY DONE (lap 39) — `G4EntropyWall.lean`, sorry-free, trust triple
+
+The wall is measured, and the reflection's estimate was **conservative**: the schedule's
+`N = 100K²` makes `B = K²(K+N)+1` **quartic**, not cubic (`quartic_le_gridB : 100K⁴ ≤ B`), so
+
+```
+density_le_pow      8·(B²)^K·#{sampled positions of scale i below L} ≤ (K²+1)^K·L    (ℕ)
+density_le_pow_real #{…}/L ≤ ⅛·(2/K⁶)^K                                              (ℝ)
+```
+
+— against the density **one** `qForces_normal_iff_density_one` demands.  (The estimate in
+`REFLECTION-2026-09-14-entropy.md` was `½(3/K⁴)^K`, from `cube_le_gridB`.)  Read as a window
+length:
+
+```
+levelBudget_of_le_superpow    (∀ i, mm i ≤ K^{4K}·m_K) → LevelBudget mm
+window_needed_ge              density > 1/4 at any L ⟹ ∃ i, K^{4K}·m_K < mm i
+not_qForces_normal_at_superpow
+```
+
+i.e. a level function must read `K^{4K}` times the implemented window `m_K` before the counting
+argument can even *fail* — and failing it is only necessary, not sufficient.  This supersedes
+`not_qForces_normal_at_pow` (which spent only `B^K ≥ K^{3K}`).
+
+### 🗄️ (superseded) original scoping of the bounded secondary
 
 `Sched.density_le_pow` : sampled density `≤ ½(2(K²+1)/B²)^K ≤ ½(3/K⁴)^K`, and
 `Sched.window_needed_ge` : any level function reading density `≥ 1/2` needs `mm i ≥ K^{4K}·m_K`.
