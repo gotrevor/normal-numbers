@@ -1,5 +1,38 @@
 # DIRECTION — normal-numbers 🧭
 
+## Attended operator override: 2026-09-14 entropy expedition (ACTIVE)
+
+**This override is the active objective.**  It supersedes the CURRENT DIRECTIVE
+below (campaign G5) and every older override/HANDOFF objective for this run.
+Grind laps read but do not edit this override or the brief.  Altitude laps
+(review/reflection) may append to the CURRENT DIRECTIVE section *within* this
+expedition's scope; they may not re-point the run to G5, Ω, another base,
+Mahler, ln 2, or any other familiar theorem (brief §7).
+
+Specification: `BRIEF-entropy-expedition-2026-09-14.md` (repo copy of the
+attended brief).  Staging decisions and the lap-1 checkpoint:
+`KICKOFF-2026-09-14-entropy-expedition.md`.
+
+Objective in one line: for **x = G4 in binary**, via the base-four schedule,
+(1) freeze the exact arithmetic sample `Z^x_K` (brief §2), (2) prove the finite
+capture inequality (C) and the joint-box cover bound (G) (§3), (3) close or
+refute the entropy targets E0/E1 against the *implemented* schedule (§4),
+(4) state exactly which sampled frequencies entropy controls (§5), and
+(5) prove or explicitly refute the transfer **T_E** (primary), with T_S and
+T_mix as diagnostic probes (§6).  A precise counterexample satisfying the exact
+premise is a successful outcome.
+
+Preserve, by name and statement: `G4.isDisjunctive_four`, `G4.isDisjunctive_two`,
+`G4.isDisjunctive_base`, `PrimeLambert.primeSumAtBase_eq_primeLambertAtBase`,
+and the meanings of `primeLambert`, `primeLambertFour`, `IsDisjunctive`,
+`IsNormal`.  Keep all existing G4 and G5 work; the G5 modules
+(`G4WeightInterface`, `G4WeightJunk`, weight-generic `Frame`) are read-only
+here.  The "forbidden drift" list of the G5 directive still applies except for
+its ban on "the multiplicity/entropy/ordinary-normality questions", which this
+expedition explicitly lifts.
+
+# DIRECTION — normal-numbers 🧭
+
 ## Attended operator override: 2026-09-13 Stoneham boundary run
 
 **COMPLETE:** the endpoint and all frozen dependencies were proved at `f1f9749`
