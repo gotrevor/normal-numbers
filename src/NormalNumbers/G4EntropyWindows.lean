@@ -164,4 +164,47 @@ theorem window_gap_same_time (i : ℕ) {n : ℕ} (hn : n ∈ PK i) (α β : (gri
     exact Nat.le_of_dvd (by omega) hdvd
   omega
 
+/-! ### The cross-atom, cross-time case, reduced to one congruence -/
+
+/-- `kIdx_mod_Q` in `ZMod Q`. -/
+lemma kIdx_cast_Q (G : GridParams) {X n : ℕ} (hn : n ∈ apSample X G.P₀ G.b₀) (α : G.Atom) :
+    ((kIdx G n α : ℕ) : ZMod G.Q) = (n : ZMod G.Q) := by
+  have h : (kIdx G n α : ℕ) ≡ n [MOD G.Q] := kIdx_mod_Q G hn α
+  exact (ZMod.natCast_eq_natCast_iff _ _ _).2 h
+
+/-- **The remaining collision case is governed by a single congruence.**  Two windows at
+different sample times and arbitrary atoms are disjoint as soon as `n − n'` avoids, modulo `Q`,
+the `2·m_K` residues `±g` with `g < m_K`.
+
+`kIdx_mod_Q` makes every orbit index congruent to its sample time mod `Q`, so a collision forces
+`n − n' ≡ ±(index gap)` with the gap below `m_K`.  This is the exact arithmetic input a
+*schedule-only* band read would need — a statement about the multiples of `P₀` modulo `Q`, with
+no reference to `G₄`. -/
+theorem windows_disjoint_of_mod (i : ℕ) {n n' : ℕ} (hn : n ∈ PK i) (hn' : n' ∈ PK i)
+    (α β : (gridAt i).Atom)
+    (hsep : ∀ g : ℕ, g < kk i →
+      ((n : ZMod (gridAt i).Q) - (n' : ZMod (gridAt i).Q) ≠ (g : ZMod (gridAt i).Q)) ∧
+      ((n' : ZMod (gridAt i).Q) - (n : ZMod (gridAt i).Q) ≠ (g : ZMod (gridAt i).Q))) :
+    2 * kIdx (gridAt i) n α + kk i ≤ 2 * kIdx (gridAt i) n' β ∨
+      2 * kIdx (gridAt i) n' β + kk i ≤ 2 * kIdx (gridAt i) n α := by
+  classical
+  set k : ℕ := kIdx (gridAt i) n α with hk
+  set k' : ℕ := kIdx (gridAt i) n' β with hk'
+  have hkn := kIdx_cast_Q (gridAt i) hn α
+  have hk'n := kIdx_cast_Q (gridAt i) hn' β
+  by_contra hcon
+  push_neg at hcon
+  obtain ⟨hA, hB⟩ := hcon
+  rcases Nat.le_total k' k with hkk | hkk
+  · have hgap : k - k' < kk i := by omega
+    have hcast : ((k - k' : ℕ) : ZMod (gridAt i).Q)
+        = (n : ZMod (gridAt i).Q) - (n' : ZMod (gridAt i).Q) := by
+      rw [Nat.cast_sub hkk, hkn, hk'n]
+    exact (hsep (k - k') hgap).1 hcast.symm
+  · have hgap : k' - k < kk i := by omega
+    have hcast : ((k' - k : ℕ) : ZMod (gridAt i).Q)
+        = (n' : ZMod (gridAt i).Q) - (n : ZMod (gridAt i).Q) := by
+      rw [Nat.cast_sub hkk, hk'n, hkn]
+    exact (hsep (k' - k) hgap).2 hcast.symm
+
 end NormalNumbers.G4.Sched
