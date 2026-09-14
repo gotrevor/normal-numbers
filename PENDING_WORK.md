@@ -1,5 +1,65 @@
 # PENDING_WORK
 
+## ⚔️ THE CRUX — brief §6 `T_E` (entropy review lap 8, 2026-09-14)
+
+**Read the entropy CURRENT DIRECTIVE in `DIRECTION.md` first; it outranks any handoff.**
+§2/§3/§4 are closed (`entropy_E0`, `entropy_E1`, axiom-clean).  §5's (S) is a LEAF and is
+deprioritized.  The route-decisive blocker is the transfer
+
+  `T_E : ∀ x ∈ [0,1), E0 for Z^x_K → IsNormal 2 x`.
+
+### The lap-8 insight: the sample is DIGIT-LOCAL, so `T_E` is a DENSITY statement
+
+`ZSample_eq_blockVal` : `Z^x_{K,α}(n) = blockVal (fract x) (2·kIdx G n α) m_K` — the `m_K`-bit
+binary window of `x` at position `2k`.  So `Z^x_K`, `jointLaw`, and `H₂` depend on `x` ONLY
+through the digits of `x` on the sampled position set
+
+  `S_K := {2·kIdx G n α + h : n ∈ P_K, α ∈ Atom, h < m_K}`,   `S := ⋃_{K admissible} S_K`.
+
+Hence if `y` copies `G₄`'s digits on `S` and is `0` off `S`, then `E0(y) ↔ E0(G₄)`, and
+`E0(G₄)` is **proved** (`entropy_E1` + `H₂_jointLaw_le_mul` pin the ratio in
+`[1 − 200/√K, 1]`).  So
+
+  `T_E ⟹ IsNormal 2 y ⟹ (density of 1s in y) → 1/2 ⟹ lower density of S ≥ 1/2.`
+
+### Why `S` is sparse (the arithmetic that has to be formalized)
+
+1. `kIdx_spec` **already proves `d_α ∣ kIdx G n α`** (the frozen multiplier residue).
+2. `kIdx G n α = 0` would force `n = t_α`; but `n ≡ b₀ (mod P₀)` with `n, b₀ < P₀` gives
+   `n = b₀`, so `b₀ = t_α`; then for every `β`, `t_α ≡ t_β (mod d_β²)` with both
+   `< d_β²` (`t_γ = Q·gridV γ ≤ Q·D₀ < d_β`), so `gridV` is constant — false, since
+   `gridV 0 = 0` and `gridV e₀ = B ≠ 0`.  **So `kIdx ≥ d_α`.**
+3. Therefore every sampled position is `2·(c·d_α) + h` with `c ≥ 1`, `h < m_K`, so
+   `|S_K ∩ [0,L)| ≤ Σ_α m_K·⌊L/(2 d_α)⌋ ≤ H_K·m_K·L / (2·d_min(K))`,
+   `d_min(K) = 1 + Q_K·D₀_K`, `Q_K = (gridUmax + K + N + 2)!`.
+   `Q_K ≥ 2^{gridUmax} ≥ 2^{B^K}` dwarfs `H_K m_K = (K²+1)^K·K/4`, so each scale contributes
+   density `≤ 2^{-K}`; and the terms with `2 d_min(K) > L` vanish identically, so the union
+   over all admissible `K` is a FINITE sum at each `L`.  Upper density of `S` is `≪ 1/4`.
+4. Witness: `y := realOfDigits 2 (fun j => if j ∈ S then digitOf 2 (fract G₄) j else 0)`,
+   proper (infinitely many `0`s), `y ∈ [0,1)` (`realOfDigits_mem_Ico`),
+   `digitOf 2 y = s` (`digitOf_realOfDigits`).  The count of `1`s below `L` is
+   `≤ |S ∩ [0,L)| ≤ L/4`, so the frequency cannot tend to `1/2`.
+
+The SAME witness refutes `T_S` and `T_mix` (identical laws), so brief §6's whole transfer
+column falls together.
+
+### Files (one writer each)
+
+| file | content | status |
+|---|---|---|
+| `G4EntropyLocality.lean` | `blockVal_congr`, `ZSample_congr`, `ZVec_congr`, `jointLaw_congr`, `H₂_congr` | lap 8 |
+| `G4EntropyPositions.lean` | `kIdx_pos`, `kIdx_ge_d`, `sampledPos`, the `⌊L/2d⌋` count, `dmin` bound | lap 8 |
+| `G4EntropyTransfer.lean` | `E0`/`T_E`/`T_S`/`T_mix` `Prop`s, `E0_primeLambertFour`, masked witness, `not_T_E` | lap 8+ |
+
+### After `not_T_E` (do NOT drift to §5 as a consolation)
+
+The expedition's real output becomes: *which additional arithmetic input closes the gap?*
+Brief §6 positive branch item 1 — average over a proved family of admissible samplers
+(translated grids / varied frozen residues) so the sampled positions stop having density zero.
+Name that property independently of normality and prove the implication it supplies.
+
+---
+
 ## Entropy expedition (2026-09-14, branch `wip/g4-entropy`) — ACTIVE
 
 Lap 1 done (`HANDOFF-2026-09-14-entropy-lap1.md`).  Proved sorry-free: the information-set

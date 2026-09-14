@@ -21,8 +21,36 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (8935 jobs) ·
-**Updated**: review lap 16 · 2026-09-14 · `wip/g4-disjunctivity` @ `4991939`
+· **Build**: 🟢 green (8948 jobs) ·
+**Updated**: entropy review lap 8 · 2026-09-14 · `wip/g4-entropy` @ `79f2470`
+
+## 🔬 2026-09-14 (entropy expedition, laps 1–7): the SAMPLE-ENTROPY theorems E0 and E1
+
+The live campaign is the attended **entropy expedition** (`BRIEF-entropy-expedition-2026-09-14.md`,
+`DIRECTION.md` override + entropy CURRENT DIRECTIVE), branch `wip/g4-entropy`.  Fix `x = G₄` and
+read its *binary* digits through the implemented base-four schedule.  Ten new `G4Entropy*`
+modules, all `sorry`-free, no new axioms, no pre-expedition file edited:
+
+```
+Sched.entropy_E0 : K = 4k₄ → 33856 ≤ K → (1/5)·k₄·(K²+1)^K < (jointLaw …).H₂
+Sched.entropy_E1 : K = 4k₄ → 160000 ≤ K → k₄·(K²+1)^K − 50·√K·(K²+1)^K < (jointLaw …).H₂
+```
+
+`jointLaw` is the law of the **whole vector** `Z^x_K = (⌊2^{m_K}{4^{k_{K,α}(n)}x}⌋)_{α}` under
+*one* uniform `n ∈ P_K`; `m_K = K/4`, `H_K = (K²+1)^K`.  E1 is the brief's quantitative target
+with `C = 50`, and dividing by `m_K H_K` gives `H₂/(m_K H_K) ≥ 1 − 200/√K → 1`, the qualitative
+E0.  Both print the trust triple.  The mechanism: an *entropy* deficit replaces the covering
+deficit of an omitted word (E0 has no omitted word), and the four schedule allowances were
+re-closed exponentially small (`hbig_small`, `hfar_small`, `jackson_term_small`,
+`smallPrime_term_tiny`, new Jackson degree `DjE = (16K²2^{m_K})²`).
+
+**This is not normality and does not claim it.**  It is an unconditional statement about the
+quantized arithmetic sample.  The bridge to ordinary digit frequencies is brief §6's transfer
+`T_E`, and settling it is the whole objective of the next laps — see the entropy CURRENT
+DIRECTIVE.  Review lap 8's finding: the sample is **digit-local** (`ZSample_eq_blockVal`), so
+`T_E` forces the sampled position set `S = ⋃_K S_K` to have lower density ≥ 1/2, while
+`kIdx_spec`'s `d_α ∣ kIdx` confines `S_K` to multiples of `2d_α` with `d_α ≥ 1 + Q_K·D₀_K`
+and `Q_K = (U+K+N+2)!`.  That points hard at `T_E` being **false**, with an explicit witness.
 
 ## 2026-09-14 (review lap 16): the headline's corollaries — IRRATIONALITY — and base two RETIRED
 
@@ -100,6 +128,14 @@ declaration at all**, and no G4/G4B file carries a `sorry`.  As of review lap 16
 theorem also yields its number-theoretic corollaries: `irrational_primeSum` (`∑_p 1/(bᵖ−1)`
 is irrational for `b ≥ 3`) and `every_word_occurs_base_late` (every word, arbitrarily late).
 
+**Live campaign: the attended ENTROPY EXPEDITION** (branch `wip/g4-entropy`; it supersedes
+G5 for this run).  Brief §2–§4 are closed — `Sched.entropy_E0` / `Sched.entropy_E1` are
+unconditional, axiom-clean theorems about the joint quantized sample of G₄ (section above).
+The one statement whose truth value is still open is the §6 transfer `T_E`
+(*`E0` for `Z^x_K` ⟹ `IsNormal 2 x`, for every `x`*), and review lap 8 identified the attack:
+the sample is digit-local, so `T_E` would force the sampled positions to have density ≥ 1/2,
+which the `d_α ∣ kIdx` structure appears to forbid.
+
 **Base two (the number `∑_p 1/(2ᵖ−1)` itself) is refuted on this route and retired** — see the
 lap-16 entry above and `DIRECTION.md`.  It remains a theorem of Tao–Teräväinen, not of this
 repo; `PrimeLambertOscillation.phaseOscillation` is the honestly-disclosed hole of the old
@@ -122,6 +158,13 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 
 ## What's happened (newest first)
 
+- **2026-09-14 (entropy review lap 8)** — inventory: build 🟢 8948 jobs, `entropy_E0`,
+  `entropy_E1`, `isDisjunctive_four/two/base`, `primeSumAtBase_eq_primeLambertAtBase` all on the
+  trust triple; `src/` holds exactly two `sorry`s, both off-campaign and disclosed.  No
+  repetition across laps 1–7 (each closed a different brief section), but **crux-neglect did
+  apply**: §6 `T_E` was untouched while §4 closed.  Direction REVISED — §5 (S) deprioritized,
+  `T_E` promoted to THE objective, with a concrete decomposition (digit-locality lemma →
+  sampled-position density → masked witness) written into the entropy CURRENT DIRECTIVE.
 - **2026-09-14 (DEEP REFLECTION LAP, after G4 lap 9b)** — **ROUTE VERDICT: CONTINUE;
   brief §4 CLOSED; two recorded §5 parameter values REFUTED.**  Inventory: `lake build`
   green (8888 jobs), zero `sorry`s and zero axioms anywhere in the G4 wing, every G4
@@ -394,7 +437,18 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-Campaign **G5**, in order:
+Campaign **entropy expedition** (ACTIVE), in order:
+1. **`G4EntropyLocality.lean`** — digits agreeing on the window `[2k, 2k+m)` give the same
+   `blockVal`, hence the same `ZVec`/`jointLaw`/`H₂`.  Mechanical, load-bearing.
+2. **`G4EntropyPositions.lean`** — `0 < kIdx` (else `b₀ = t_α` forces `gridV` constant, false),
+   hence `kIdx ≥ d_α ≥ 1 + Q·D₀`; count `|S_K ∩ [0,L)| ≤ H_K m_K L / (2(1+Q_K D₀_K))`.
+3. **`G4EntropyTransfer.lean`** — `E0` as a limit `Prop`, `E0 G4` from `entropy_E1`, the
+   `T_E`/`T_S`/`T_mix` `Prop`s, the masked witness via `realOfDigits`, and `not_T_E`.
+4. Then (and only then) brief §5's (S): `H₂` subadditivity + a checked entropy-to-TV
+   inequality.  And the §6 positive branch: which extra arithmetic property (translated-grid
+   averaging) defeats the witness.
+
+Campaign **G5** (dormant for this run), in order:
 1. **The decisive probe in Lean**: generalise C2 (`G4LocalContraction.norm_localSum_le`) from
    an indicator model to a valuation model — default class `v_p = 0` (mass `≥ 1/2`), active
    classes `v_p = 1` (mass `(1/p)(1−1/p)`, phase `xᵢ`), junk `v_p ≥ 2` of mass `≤ k/p²`.
@@ -430,6 +484,8 @@ real inequalities that live in the witness.
 
 | headline theorem | paper claim | `#print axioms` shows | verdict |
 |---|---|---|---|
+| `G4.Sched.entropy_E0` | **sample entropy `H₂(Z^{G₄}_K) > (1/5)m_K H_K`** for every admissible `K ≥ 33856` — UNCONDITIONAL, about the quantized sample only (brief §4 E0) | trust triple | 🟢 clean (entropy lap 6) — NOT a normality claim |
+| `G4.Sched.entropy_E1` | **`H₂ ≥ m_K H_K − 50√K·H_K`** for `K ≥ 160000` — UNCONDITIONAL (brief §4 E1, `C = 50`) | trust triple | 🟢 clean (entropy lap 7) — implies E0's ratio `≥ 1 − 200/√K` |
 | `G4.isDisjunctive_base` | **`3 ≤ b → IsDisjunctive b (∑_n ω(n)/bⁿ)`** — UNCONDITIONAL, the campaign endpoint generalised (brief §7.1) | trust triple | 🟢 clean — no `sorry`, no `native_decide`, no local axiom in the cone |
 | `G4.isDisjunctive_four` / `isDisjunctive_two` | **G₄ disjunctive in base 4 and base 2** — UNCONDITIONAL, the attended frozen endpoint | trust triple | 🟢 clean |
 | `G4.isDisjunctive_primeSum` / `every_word_occurs_base` / `isDisjunctive_root` | prime-sum form, every finite word, root bases (uncond.) | trust triple | 🟢 clean |

@@ -31,6 +31,61 @@ here.  The "forbidden drift" list of the G5 directive still applies except for
 its ban on "the multiplicity/entropy/ordinary-normality questions", which this
 expedition explicitly lifts.
 
+## CURRENT DIRECTIVE — entropy expedition (set 2026-09-14, review lap 8)
+
+*Altitude-lap section, inside the ACTIVE override's scope.  It OUTRANKS every HANDOFF.
+The G5 CURRENT DIRECTIVE further below is dormant for this run.*
+
+**State of the expedition.** Brief §2, §3A/B/C, §4 are CLOSED: `Sched.entropy_E0` and
+`Sched.entropy_E1` are unconditional, `#print axioms`-clean theorems about the *implemented*
+base-four schedule (laps 6–7).  Build green, 8948 jobs; `isDisjunctive_four/two/base` and
+`primeSumAtBase_eq_primeLambertAtBase` unchanged and clean.  **The only statement whose truth
+value is still in doubt is brief §6's transfer `T_E`** — and the brief names it the primary
+target.  §5's (S) is a tractable leaf that presupposes the bridge; it is NOT the next move.
+
+- 🎯 **THE objective: settle `T_E` — prove it or refute it with a witness meeting its exact
+  premise.**  Endpoint this lap: the named `Prop`s `T_E`, `T_S`, `T_mix` over the frozen
+  family, plus `not_T_E` (or a proof).
+- 🔨 **Mandated next move — the digit-locality refutation, in this order.**  The sample is
+  *digit-local*: `ZSample_eq_blockVal` makes `Z^x_{K,α}(n)` the `m_K`-bit window of `x` at
+  position `2·kIdx`, so `E0(x)` depends on `x` only through its digits on the sampled set
+  `S = ⋃_K S_K`.  Therefore `T_E` forces normality of the number that copies `G4` on `S` and
+  is `0` off `S`, hence forces `S` to have lower density ≥ 1/2.  `S` does not:
+    1. `G4EntropyLocality.lean` — digits agreeing on `[2k, 2k+m)` give the same `blockVal`,
+       hence the same `ZVec`, `jointLaw`, `H₂`.  (Mechanical; do it first.)
+    2. `G4EntropyPositions.lean` — **`kIdx_spec` already gives `d_α ∣ kIdx`**.  Add
+       `0 < kIdx` (if `kIdx = 0` then `b₀ = t_α`, forcing `gridV` constant, false at the
+       atom `e₀` since `gridV e₀ = B ≠ 0`), hence `kIdx ≥ d_α ≥ 1 + Q·D₀`.  Count:
+       `|S_K ∩ [0,L)| ≤ H_K·m_K·L/(2(1+Q_K D₀_K))`, with `Q_K = (U+K+N+2)!` astronomically
+       above `H_K m_K`.  Only scales with `2 d_min(K) ≤ L` can contribute, so the union over
+       all admissible `K` is a FINITE sum at each `L`.
+    3. `G4EntropyTransfer.lean` — `E0` as a genuine limit `Prop` (and `E0 G4` from
+       `entropy_E1` + `H₂_jointLaw_le_mul`), the masked witness through
+       `realOfDigits`/`digitOf_realOfDigits`/`ProperDigits`, and `not_T_E`.  The same witness
+       kills `T_S` and `T_mix`.
+- 📌 **Why this and not §5.**  (S) is a consequence of E0 that changes nothing about the
+  bridge; the bridge is the route-decisive blocker.  If `T_E` is false, the expedition's real
+  output is *which* extra arithmetic input is needed (brief §6 positive branch: averaging over
+  translated grids so the sampled positions stop having density zero) — and that reframing is
+  worth more than any amount of §5 polish.
+- ⛔ **Forbidden drift**: starting §5 (S)/subadditivity/Pinsker before `T_E` is settled;
+  re-proving or "tidying" `entropy_E0`/`entropy_E1`; editing any pre-expedition G4/G5 file
+  (add lemmas, recover old endpoints as instances); `Adder*`, `CF*`, `Mahler*`, `LnTwo*`,
+  `Stoneham*`, `PrimeLambertOscillation`; a trusted axiom for any candidate lemma; and
+  claiming anything about the normality of `G₄`.
+- 🚦 **Route triggers**:
+    * **E-T1** — if the density count fails (some scale can put positions of density ≥ 1/2
+      below `L`), that is a *mathematical* surprise: write `ROUTE-ESCALATION-<date>.md`, do not
+      patch the definition of the sample.
+    * **E-T2** — if `not_T_E` lands, the next objective is the §6 positive branch: name the
+      additional property (translated-grid averaging) that defeats this witness, and prove the
+      implication it supplies.  Do NOT drift to §5 as a consolation.
+    * **E-T3** — two laps stalled on one assertion ⇒ decompose it in `PENDING_WORK.md`.
+
+### Directive history
+- 2026-09-14 (review lap 8): entropy expedition — §4 closed; pivot to §6 `T_E` via digit
+  locality + sampled-position density; §5 explicitly deprioritized.
+
 # DIRECTION — normal-numbers 🧭
 
 ## Attended operator override: 2026-09-13 Stoneham boundary run
