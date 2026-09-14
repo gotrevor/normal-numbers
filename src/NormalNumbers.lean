@@ -197,6 +197,7 @@ import NormalNumbers.G4PhaseDecomp
 import NormalNumbers.G4Progression
 import NormalNumbers.G4Remainder
 import NormalNumbers.G4RowMass
+import NormalNumbers.G4RowMassOptimal
 import NormalNumbers.G4Schedule
 import NormalNumbers.G4ScheduleB
 import NormalNumbers.G4ScheduleGrid
