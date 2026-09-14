@@ -216,18 +216,16 @@ lemma Lambda_le {K k₄ : ℕ} (hK4 : K = 4 * k₄) (hk : 25 ≤ k₄) :
 
 section terms
 
-variable {K k₄ : ℕ} (hK4 : K = 4 * k₄) (hK : 100 ≤ K)
-
-local notation "G" => gridOf K (N K) (by omega : 1 ≤ K)
+variable {K : ℕ}
 
 /-- main: `Λ·exp(−4θ₀∑1/p) ≤ e^{−4}`. -/
-lemma main_term_le :
+lemma main_term_le (hK : 100 ≤ K) :
     (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
-      * Real.exp (-∑ p ∈ smallPrimes (R K) (G).P₀, 4 * (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K) / p)
+      * Real.exp (-∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, 4 * (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K) / p)
       ≤ Real.exp (-4) := by
   have hS := sum_inv_smallPrimes_ge hK
-  set Sg := ∑ p ∈ smallPrimes (R K) (G).P₀, (p : ℝ)⁻¹ with hSgdef
-  have hsum : ∑ p ∈ smallPrimes (R K) (G).P₀, 4 * (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K) / p
+  set Sg := ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (p : ℝ)⁻¹ with hSgdef
+  have hsum : ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, 4 * (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K) / p
       = (1 / 8 : ℝ) ^ K / 64 * Sg := by
     rw [hSgdef, Finset.mul_sum]
     apply Finset.sum_congr rfl
@@ -271,7 +269,267 @@ lemma main_term_le :
         apply Real.exp_le_exp.2
         nlinarith
 
+/-- The common tail of terms (a) and (d): `2^{e₁}/2^{100·2^m} ≤ 1/64` whenever `e₁ + 6 ≤ 100·2^m`. -/
+lemma two_pow_div_le {e₁ : ℕ} (K : ℕ) (h : e₁ + 6 ≤ 100 * 2 ^ m K) :
+    (2 : ℝ) ^ e₁ / (2 : ℝ) ^ (100 * 2 ^ m K) ≤ 1 / 64 := by
+  rw [div_le_div_iff₀ (by positivity) (by norm_num)]
+  calc (2 : ℝ) ^ e₁ * 64 = (2 : ℝ) ^ (e₁ + 6) := by rw [pow_add]; norm_num
+    _ ≤ (2 : ℝ) ^ (100 * 2 ^ m K) := pow_le_pow_right₀ (by norm_num) h
+    _ = _ := (one_mul _).symm
+
+lemma sizes_le_two_pow_m (hK : 100 ≤ K) :
+    K * (K ^ 2) ^ K ≤ 2 ^ m K ∧ Mc K ≤ 2 ^ m K ∧ 8 ≤ 2 ^ m K := by
+  refine ⟨Kr_le_two_pow_m hK, Mc_le_two_pow_m hK, ?_⟩
+  have h3 : 3 ≤ K ^ 3 := by
+    calc 3 ≤ K := by omega
+      _ ≤ K ^ 3 := Nat.le_self_pow (by norm_num) K
+  have := m₁_ge_cube (K := K) (by omega)
+  have := m₁_le_m K
+  calc 8 = 2 ^ 3 := by norm_num
+    _ ≤ 2 ^ m K := Nat.pow_le_pow_right (by norm_num) (by omega)
+
+/-- (a): the residue-transfer term. -/
+lemma term_a_le (hK : 100 ≤ K) :
+    (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
+      * ((((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).powerset.filter
+            (fun T' => T'.Nonempty ∧ T'.card ≤ Mc K)).card : ℝ)
+          * (2 ^ Mc K * (2 * (R K : ℝ) ^ Mc K
+              / ((apSample (X K) (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card : ℝ))))
+      ≤ 1 / 64 := by
+  have hcardN := card_small_subsets_le (smallPrimes (R K) (gridOf K (N K) (by omega)).P₀) (Mc K)
+  have hsmN := card_smallPrimes_le (R K) (gridOf K (N K) (by omega)).P₀
+  have hR2 := R_ge_two K
+  have hcard : ((((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).powerset.filter
+      (fun T' => T'.Nonempty ∧ T'.card ≤ Mc K)).card : ℕ) : ℝ) ≤ Mc K * (2 * (R K : ℝ)) ^ Mc K := by
+    have : ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).powerset.filter
+        (fun T' => T'.Nonempty ∧ T'.card ≤ Mc K)).card ≤ Mc K * (2 * R K) ^ Mc K := by
+      refine hcardN.trans ?_
+      apply Nat.mul_le_mul_left
+      apply Nat.pow_le_pow_left
+      omega
+    exact_mod_cast this
+  have hinv := inv_card_le hK
+  have hMc : (Mc K : ℝ) ≤ 2 ^ Mc K := by exact_mod_cast (Nat.lt_two_pow_self).le
+  have hR2Mc := R_pow_two_Mc_le hK
+  have hP₀ := P₀_le_two_pow hK
+  have hX : (X K : ℝ) = (2 : ℝ) ^ (100 * 2 ^ m K) := by unfold X; push_cast; rfl
+  have hXpos : (0 : ℝ) < X K := by rw [hX]; positivity
+  have hP₀0 : (0 : ℝ) ≤ (gridOf K (N K) (by omega)).P₀ := by positivity
+  set Λ := (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K)) with hΛ
+  set Psz := ((apSample (X K) (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card : ℝ)
+  set c := ((((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).powerset.filter
+      (fun T' => T'.Nonempty ∧ T'.card ≤ Mc K)).card : ℕ) : ℝ)
+  have hΛ0 : 0 ≤ Λ := by positivity
+  have hRr : (0 : ℝ) ≤ R K := by positivity
+  calc Λ * (c * (2 ^ Mc K * (2 * (R K : ℝ) ^ Mc K / Psz)))
+      = Λ * c * 2 ^ Mc K * 2 * (R K : ℝ) ^ Mc K * (1 / Psz) := by ring
+    _ ≤ Λ * (Mc K * (2 * (R K : ℝ)) ^ Mc K) * 2 ^ Mc K * 2 * (R K : ℝ) ^ Mc K
+          * (2 * (gridOf K (N K) (by omega)).P₀ / X K) := by gcongr
+    _ = Λ * Mc K * 2 ^ Mc K * 2 ^ Mc K * 4 * (R K : ℝ) ^ (2 * Mc K) * (gridOf K (N K) (by omega)).P₀ / X K := by
+        rw [mul_pow, pow_mul (R K : ℝ) 2 (Mc K), sq]; ring
+    _ ≤ Λ * 2 ^ Mc K * 2 ^ Mc K * 2 ^ Mc K * 4 * (2 : ℝ) ^ (10 * 2 ^ m K)
+          * (2 : ℝ) ^ (2 * 2 ^ m K) / (2 : ℝ) ^ (100 * 2 ^ m K) := by
+        rw [hX]; gcongr
+    _ = (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K) + Mc K + Mc K + Mc K + 2 + 10 * 2 ^ m K + 2 * 2 ^ m K)
+          / (2 : ℝ) ^ (100 * 2 ^ m K) := by
+        rw [hΛ, show (4 : ℝ) = 2 ^ 2 by norm_num, ← pow_add, ← pow_add, ← pow_add, ← pow_add,
+          ← pow_add, ← pow_add]
+    _ ≤ 1 / 64 := by
+        apply two_pow_div_le
+        obtain ⟨h1, h2, h3⟩ := sizes_le_two_pow_m hK
+        omega
+
+/-- (d): the moment-tail term. -/
+lemma term_d_le (hK : 100 ≤ K) :
+    (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
+      * (2 * (2 * Real.exp 1 / Mc K) ^ Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ^ Mc K
+          * (2 * (R K : ℝ) ^ Mc K / ((apSample (X K) (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card : ℝ)))
+      ≤ 1 / 64 := by
+  have hsmN := card_smallPrimes_le (R K) (gridOf K (N K) (by omega)).P₀
+  have hR2 := R_ge_two K
+  have hMc1 : (1 : ℝ) ≤ Mc K := by exact_mod_cast Mc_pos (K := K) (by omega)
+  have he := exp_one_le
+  -- `(2e/Mc)^{Mc}·|sm|^{Mc} ≤ (16R)^{Mc}`
+  have hbase : 2 * Real.exp 1 / Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ≤ 16 * R K := by
+    have hsm : ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ≤ 2 * R K := by
+      have : (smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card ≤ 2 * R K := by omega
+      exact_mod_cast this
+    have hsm0 : (0 : ℝ) ≤ (smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card := by positivity
+    have h1 : 2 * Real.exp 1 / Mc K ≤ 2 * Real.exp 1 := by
+      rw [div_le_iff₀ (by linarith)]
+      nlinarith [Real.exp_pos 1]
+    have h2 : 2 * Real.exp 1 / Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ)
+        ≤ 2 * Real.exp 1 * (2 * R K) := by
+      apply mul_le_mul h1 hsm hsm0 (by positivity)
+    nlinarith [Real.exp_pos 1]
+  have hpow : (2 * Real.exp 1 / Mc K) ^ Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ^ Mc K
+      ≤ (2 : ℝ) ^ (4 * Mc K) * (R K : ℝ) ^ Mc K := by
+    rw [← mul_pow, pow_mul, show (2 : ℝ) ^ 4 = 16 by norm_num, ← mul_pow]
+    exact pow_le_pow_left₀ (by positivity) hbase _
+  have hinv := inv_card_le hK
+  have hR2Mc := R_pow_two_Mc_le hK
+  have hP₀ := P₀_le_two_pow hK
+  have hX : (X K : ℝ) = (2 : ℝ) ^ (100 * 2 ^ m K) := by unfold X; push_cast; rfl
+  have hXpos : (0 : ℝ) < X K := by rw [hX]; positivity
+  set Λ := (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K)) with hΛ
+  set Psz := ((apSample (X K) (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card : ℝ)
+  set q := (2 * Real.exp 1 / Mc K) ^ Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ^ Mc K with hq
+  have hq0 : 0 ≤ q := by positivity
+  calc Λ * (2 * (2 * Real.exp 1 / Mc K) ^ Mc K * ((smallPrimes (R K) (gridOf K (N K) (by omega)).P₀).card : ℝ) ^ Mc K
+          * (2 * (R K : ℝ) ^ Mc K / Psz))
+      = Λ * q * 2 * 2 * (R K : ℝ) ^ Mc K * (1 / Psz) := by rw [hq]; ring
+    _ ≤ Λ * ((2 : ℝ) ^ (4 * Mc K) * (R K : ℝ) ^ Mc K) * 2 * 2 * (R K : ℝ) ^ Mc K
+          * (2 * (gridOf K (N K) (by omega)).P₀ / X K) := by gcongr
+    _ = Λ * (2 : ℝ) ^ (4 * Mc K) * 8 * (R K : ℝ) ^ (2 * Mc K) * (gridOf K (N K) (by omega)).P₀ / X K := by
+        rw [pow_mul (R K : ℝ) 2 (Mc K), sq]; ring
+    _ ≤ Λ * (2 : ℝ) ^ (4 * Mc K) * 8 * (2 : ℝ) ^ (10 * 2 ^ m K) * (2 : ℝ) ^ (2 * 2 ^ m K)
+          / (2 : ℝ) ^ (100 * 2 ^ m K) := by
+        rw [hX]; gcongr
+    _ = (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K) + 4 * Mc K + 3 + 10 * 2 ^ m K + 2 * 2 ^ m K)
+          / (2 : ℝ) ^ (100 * 2 ^ m K) := by
+        rw [hΛ, show (8 : ℝ) = 2 ^ 3 by norm_num, ← pow_add, ← pow_add, ← pow_add, ← pow_add]
+    _ ≤ 1 / 64 := by
+        apply two_pow_div_le
+        obtain ⟨h1, h2, h3⟩ := sizes_le_two_pow_m hK
+        omega
+
+/-- The harmonic sum in the product form used by terms (b),(c):
+`∏_{p∈sm}(1 + c·(a/p)) ≤ exp(c·a·∑ 1/p)`. -/
+lemma prod_le_exp_mul_sum (s : Finset ℕ) (c a : ℝ) (hc : 0 ≤ c) (ha : 0 ≤ a) :
+    ∏ p ∈ s, (1 + c * (a / p)) ≤ Real.exp (c * a * ∑ p ∈ s, (p : ℝ)⁻¹) := by
+  have := prod_one_add_le_exp_sum s (fun p => c * (a / p)) (fun p _ => by positivity)
+  refine this.trans (le_of_eq ?_)
+  congr 1
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro p _
+  rw [div_eq_mul_inv]; ring
+
+/-- (b): the Laplace-`lam'` term. -/
+lemma term_b_le (hK : 100 ≤ K) :
+    (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
+      * ((∏ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (1 + Real.exp 1 * (2 * (T K : ℝ) / p)))
+          / Real.exp 1 ^ Mc K)
+      ≤ Real.exp (-4) := by
+  have hS := sum_inv_smallPrimes_le hK
+  have hprod := prod_le_exp_mul_sum (smallPrimes (R K) (gridOf K (N K) (by omega)).P₀) (Real.exp 1) (2 * (T K : ℝ))
+    (Real.exp_pos 1).le (by positivity)
+  have he := exp_one_le
+  have hT1 : (1 : ℝ) ≤ T K := by exact_mod_cast T_pos (K := K) (by omega)
+  have hm1 : (1 : ℝ) ≤ m₁ K := by
+    have h1 : 1 ≤ K ^ 3 := Nat.one_le_pow _ _ (by omega)
+    exact_mod_cast h1.trans (m₁_ge_cube (K := K) (by omega))
+  have hKr := Kr_le_T_mul_m₁ (K := K) (by omega)
+  have hKrr : (K * (K ^ 2) ^ K : ℝ) ≤ T K * m₁ K := by exact_mod_cast hKr
+  have hMc : (Mc K : ℝ) = 100000 * T K * m₁ K := by unfold Mc; push_cast; ring
+  have h2 := two_pow_le_exp (2 * (K * (K ^ 2) ^ K))
+  have hcast : ((2 * (K * (K ^ 2) ^ K) : ℕ) : ℝ) = 2 * (K * (K ^ 2) ^ K) := by push_cast; ring
+  rw [hcast] at h2
+  have hS0 : 0 ≤ ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (p : ℝ)⁻¹ :=
+    Finset.sum_nonneg (fun p _ => by positivity)
+  have hexpo : Real.exp 1 * (2 * (T K : ℝ)) * ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (p : ℝ)⁻¹
+      ≤ 44 * (T K * m₁ K) := by
+    have : Real.exp 1 * (2 * (T K : ℝ)) * ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (p : ℝ)⁻¹
+        ≤ Real.exp 1 * (2 * (T K : ℝ)) * (3 * m₁ K + 5) := by gcongr
+    have hT0 : (0 : ℝ) ≤ T K := by linarith
+    nlinarith [Real.exp_pos 1, mul_le_mul_of_nonneg_left he hT0]
+  rw [Real.exp_one_pow, div_eq_mul_inv, ← Real.exp_neg]
+  calc (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
+        * ((∏ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (1 + Real.exp 1 * (2 * (T K : ℝ) / p)))
+          * Real.exp (-(Mc K : ℝ)))
+      ≤ Real.exp (2 * (K * (K ^ 2) ^ K))
+        * (Real.exp (Real.exp 1 * (2 * (T K : ℝ)) * ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (p : ℝ)⁻¹)
+          * Real.exp (-(Mc K : ℝ))) := by gcongr
+    _ = Real.exp (2 * (K * (K ^ 2) ^ K)
+        + Real.exp 1 * (2 * (T K : ℝ)) * ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (p : ℝ)⁻¹ - Mc K) := by
+        rw [← Real.exp_add, ← Real.exp_add]; ring_nf
+    _ ≤ Real.exp (-4) := by
+        apply Real.exp_le_exp.2
+        rw [hMc]
+        nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ T K) (by linarith : (0:ℝ) ≤ m₁ K),
+          mul_le_mul hT1 hm1 (by norm_num) (by linarith)]
+
+/-- (c): the Laplace-`lam` term at `lam = 13/2`. -/
+lemma term_c_le (hK : 100 ≤ K) :
+    (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
+      * (2 * (2 * Real.exp 1 / (13 / 2)) ^ Mc K
+          * ∏ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (1 + Real.exp (13 / 2) * ((T K : ℝ) / p)))
+      ≤ Real.exp (-4) := by
+  have hS := sum_inv_smallPrimes_le hK
+  have hprod := prod_le_exp_mul_sum (smallPrimes (R K) (gridOf K (N K) (by omega)).P₀) (Real.exp (13 / 2)) (T K : ℝ)
+    (Real.exp_pos _).le (by positivity)
+  have he := exp_thirteen_half_le
+  have hT1 : (1 : ℝ) ≤ T K := by exact_mod_cast T_pos (K := K) (by omega)
+  have hm1 : (1 : ℝ) ≤ m₁ K := by
+    have h1 : 1 ≤ K ^ 3 := Nat.one_le_pow _ _ (by omega)
+    exact_mod_cast h1.trans (m₁_ge_cube (K := K) (by omega))
+  have hKr := Kr_le_T_mul_m₁ (K := K) (by omega)
+  have hKrr : (K * (K ^ 2) ^ K : ℝ) ≤ T K * m₁ K := by exact_mod_cast hKr
+  have hMc : (Mc K : ℝ) = 100000 * T K * m₁ K := by unfold Mc; push_cast; ring
+  have h2 := two_pow_le_exp (2 * (K * (K ^ 2) ^ K))
+  have hcast : ((2 * (K * (K ^ 2) ^ K) : ℕ) : ℝ) = 2 * (K * (K ^ 2) ^ K) := by push_cast; ring
+  rw [hcast] at h2
+  have hS0 : 0 ≤ ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (p : ℝ)⁻¹ :=
+    Finset.sum_nonneg (fun p _ => by positivity)
+  have hexpo : Real.exp (13 / 2) * (T K : ℝ) * ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (p : ℝ)⁻¹
+      ≤ 8800 * (T K * m₁ K) := by
+    have : Real.exp (13 / 2) * (T K : ℝ) * ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (p : ℝ)⁻¹
+        ≤ Real.exp (13 / 2) * (T K : ℝ) * (3 * m₁ K + 5) := by gcongr
+    have hT0 : (0 : ℝ) ≤ T K := by linarith
+    nlinarith [Real.exp_pos (13 / 2 : ℝ), mul_le_mul_of_nonneg_left he hT0]
+  have hlam : (2 * Real.exp 1 / (13 / 2)) ^ Mc K ≤ Real.exp (-(Mc K : ℝ) / 7) :=
+    (pow_le_pow_left₀ (by positivity) four_e_div_thirteen_le _).trans (six_sevenths_pow_le _)
+  have h2e : (2 : ℝ) ≤ Real.exp 1 := two_le_exp_one
+  calc (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
+        * (2 * (2 * Real.exp 1 / (13 / 2)) ^ Mc K
+          * ∏ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (1 + Real.exp (13 / 2) * ((T K : ℝ) / p)))
+      ≤ Real.exp (2 * (K * (K ^ 2) ^ K))
+        * (Real.exp 1 * Real.exp (-(Mc K : ℝ) / 7)
+          * Real.exp (Real.exp (13 / 2) * (T K : ℝ) * ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (p : ℝ)⁻¹)) := by
+        gcongr
+    _ = Real.exp (2 * (K * (K ^ 2) ^ K) + 1 - Mc K / 7
+        + Real.exp (13 / 2) * (T K : ℝ) * ∑ p ∈ smallPrimes (R K) (gridOf K (N K) (by omega)).P₀, (p : ℝ)⁻¹) := by
+        rw [← Real.exp_add, ← Real.exp_add, ← Real.exp_add]; ring_nf
+    _ ≤ Real.exp (-4) := by
+        apply Real.exp_le_exp.2
+        rw [hMc]
+        nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ T K) (by linarith : (0:ℝ) ≤ m₁ K),
+          mul_le_mul hT1 hm1 (by norm_num) (by linarith)]
+
 end terms
+
+/-! ### The budget -/
+
+/-- The pure arithmetic of the budget: five bounded terms and a bounded Jackson term. -/
+lemma budget_assembly {Λ Λ' t0 ta tb tc td A : ℝ} (hΛ : Λ ≤ Λ') (_hΛ0 : 0 ≤ Λ)
+    (h0' : 0 ≤ t0) (ha' : 0 ≤ ta) (hb' : 0 ≤ tb) (hc' : 0 ≤ tc) (hd' : 0 ≤ td)
+    (h0 : Λ' * t0 ≤ Real.exp (-4)) (ha : Λ' * ta ≤ 1 / 64) (hb : Λ' * tb ≤ Real.exp (-4))
+    (hc : Λ' * tc ≤ Real.exp (-4)) (hd : Λ' * td ≤ 1 / 64) (hJ : A ≤ 1 / 8) :
+    (1 / 8 : ℝ) + ((1 / 8 : ℝ) + (1 / 8 : ℝ)) + A + Λ * (t0 + (ta + tb + tc + td)) < 1 := by
+  have he4 := exp_neg_four_le
+  have hsum : Λ * (t0 + (ta + tb + tc + td)) ≤ Λ' * t0 + Λ' * ta + Λ' * tb + Λ' * tc + Λ' * td := by
+    have : Λ * (t0 + (ta + tb + tc + td)) = Λ * t0 + Λ * ta + Λ * tb + Λ * tc + Λ * td := by ring
+    rw [this]
+    gcongr
+  linarith
+
+/-- **The `hbudget` field of `ScheduleWitness`**, with `δ₁ = δbig = δfar = 1/8`, `ε = 1/K`,
+`η = 2^{−k₄}`, `D = Dj K k₄`, `lam' = e`, `lam = 13/2`. -/
+theorem hbudget_holds {K k₄ : ℕ} (hK4 : K = 4 * k₄) (hK : 100 ≤ K) :
+    (1 / 8 : ℝ) + ((1 / 8 : ℝ) + (1 / 8 : ℝ))
+      + 2 * (1 / ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄ * Real.sqrt ((Dj K k₄ : ℕ) + 1)))
+      + (((2 * Dj K k₄ + 1) ^ ((K ^ 2) ^ K) : ℕ) : ℝ)
+        * smallPrimeBound (smallPrimes (R K) (gridOf K (N K) (by omega)).P₀)
+            (T K) (R K) (Mc K)
+            (apSample (X K) (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card
+            (Real.exp 1) (13 / 2) (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K) < 1 := by
+  have hk : 25 ≤ k₄ := by omega
+  have hJ := jackson_term_le (K := K) (k₄ := k₄) (by omega)
+  have hΛ := Lambda_le hK4 hk
+  unfold smallPrimeBound
+  exact budget_assembly hΛ (by positivity) (by positivity) (by positivity) (by positivity)
+    (by positivity) (by positivity) (main_term_le hK) (term_a_le hK) (term_b_le hK)
+    (term_c_le hK) (term_d_le hK) hJ
 
 end Sched
 
