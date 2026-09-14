@@ -61,11 +61,17 @@ so `b ≥ 3` again, and `N = Θ(log_b(K·L))` as before.
 
 ### Attack order (mirrors `DIRECTION.md`)
 
-1. `G4ScheduleB.lean` in `b` — `log_pow_sub_one_le`, `deficit_dominates`, `gridB_bound`;
-   keep the `b = 4` statements as corollaries.  *(Started this lap.)*
-2. `G4Covering` / `G4GridTube` — cylinders/blocks in base `b`.
-3. `Frame` gains `b`, `hb : 2 ≤ b`; `Ffull` uses `b^{−j}`; `G4Remainder`, `G4Transport`,
-   `G4Wiring` follow.
+1. ✅ **DONE (lap 13)** `G4ScheduleB.lean` in `b` — `log_pow_sub_one_le`,
+   `deficit_dominates`, `gridB_bound` all base-general; `gridParams_hB` is the `b = 4`
+   instance and recovers `K ≥ 33856 ℓ² 16^ℓ` exactly.
+2. ✅ **DONE (lap 13)** `G4Covering.lean` — `block`, `block_lt`, `orbit_eq_block_add`,
+   `orbit_expansion`, `block_ne_of_omit`, `orbit_mem_cyl`, `orbitClosure_subset_cylinders`
+   all take the base `bb` with only `0 < bb`.  `cylLeft`/`cyl`/`admissible` were already
+   base-free.  `G4GridTube.exists_cover_of_omit` is the `b = 4` call site.
+3. **NEXT** `Frame` gains `b`, `hb : 2 ≤ b`; `Ffull` uses `b^{−j}`; `G4Remainder`,
+   `G4Transport`, `G4Wiring` follow.  `G4GridTube` (`exists_cover_of_omit`,
+   `gridFrame_propB_of_bound`) generalizes with them, since its `4`s are all the
+   `primeLambertFour` orbit and the cylinder scale.
 4. `G4RowMass`, `G4MediumPrimes`, `G4SmallPrimeVector`, `G4FarTail` — the table above.
 5. `G4FreqSep` — `θ₀(b) = b^{−4}(2/b²)^K`; `freqDepth` uses `Nat.clog b`.
 6. `G4Schedule*` — the schedule in `(b, ℓ)`; `isDisjunctive_base`, with `b = 4` recovering
