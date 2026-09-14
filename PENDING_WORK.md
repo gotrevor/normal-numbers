@@ -7,6 +7,66 @@
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
 
+## 🔭 LIVE (laps 61–88) — the wall, and the band read that saturates it
+
+**The arc in one line.**  Laps 61–63 proved a wall that closes normality on this mechanism;
+laps 64–88 then built the strongest object the wall leaves standing and proved it correct.
+
+### Part I — the wall (laps 61–63)
+
+```
+G4EntropyGoodAtoms.card_good_ge          ≥ (1−ρ)|A| atoms are good ONE AT A TIME
+G4EntropyGranule.granule_exceeds_previous_scale   |Atom_i|·|P_i|·m_i < |P_{i+1}|
+G4EntropyMixture.FinLaw.H₂_mix_le        H₂(mix) ≤ σH₁+(1−σ)H₂+1
+G4EntropyMixture.H₂_empirical_window_restrict_ge  sample-time restriction costs (δ+1)/σ
+G4EntropyMixture.certified_granule_exceeds_previous_scale
+```
+
+> Any sub-collection of scale `i+1`'s sample times whose derived capture bound is **not vacuous**
+> already reads more digits than scale `i` produced in total.
+
+So every construction that reads the sampled digits in position order as a concatenation of
+certified granules has its history wiped out at each new scale: **prefix frequencies cannot
+converge, i.e. normality is unreachable** — independently of how the granule is cut (by atoms,
+by sample times, or both).  The cause is `X(K) = 2^{100·2^{m(K)}}` with `m(K) ≥ K³`, not the
+atom count: lap 54's `chunks_insufficient` was the weaker statement.
+
+### Part II — the band read (laps 64–88)
+
+```
+G4EntropyAtomFreq   exists_good_atom, goodAtom, tendsto_goodAtom_occursCount
+                    ONE atom per scale carries every word at its correct density
+G4EntropyWindows    window_gap_same_atom — one atom's windows are pairwise disjoint
+G4EntropyBand       band_gap(_strong), bandS, card_bandS_ge' — ordered bands, half the sample kept
+G4EntropyBandFreq   bandLaw, abs_posAvg_bandLaw_le, tendsto_band_occursCount — still certified
+G4EntropyBandSeq    bandPos (STRICTLY MONOTONE), bandDig, bT, bandGood,
+                    tendsto_bandRead_freq, bandReal, isDisjunctive_bandReal, irrational_bandReal
+G4EntropyBandPrefix bandPre, preLaw, abs_posAvg_preLaw_le, winCount_mid_bounds,
+                    tendsto_midRead_freq, abs_midRead_freq_sub_le(′),
+                    tendsto_midRead_freq_of_depth
+```
+
+> **`tendsto_bandRead_freq`** — for every finite binary word `v`,
+> `winCount (bandDig G₄) v (bT (i+1)) / bT (i+1) → 2^{−|v|}`, with `bandPos` strictly monotone.
+>
+> **`tendsto_midRead_freq_of_depth`** — the same limit at **any** cutoff sequence
+> `bT i + a_i·m_i` whose relative depth `t_i = |bandS i|/a_i` is `o(√K)`: all but an initial
+> `K^{−1/4}` fraction of each band is a good cutoff.
+
+`G₄`'s binary digits, read along a **strictly increasing** schedule-defined position sequence,
+have the correct frequency of every finite binary word along all but a vanishing fraction of the
+prefix lengths.  The missing fraction is exactly what the wall forbids.
+
+**Where this sits.**  The repo previously had *either* normality along a non-injective position
+map (`isNormal_realOfDigits_samplePos`, lap 52) *or* a strictly increasing map carrying only
+disjunctivity (`isDisjunctive_enumReal`, laps 56–60).  This is strictly between, and new.
+
+**Open next.**  (a) Formalize the density-zero statement for the bad cutoffs (needs the
+extension from `bT i + a·m_i` to arbitrary `N`, plus a counting argument).  (b) The only way past
+the wall is a schedule with `X(K)` growing polynomially rather than as `2^{2^{K³}}`; `X` is fixed
+by `G4ScheduleFar`'s far-tail control, so that is a question about the *schedule*, not about the
+entropy argument.
+
 ## 🔭 LIVE (laps 61–63) — the granularity wall, and what it closes
 
 Laps 61–63 settled the question the lap-60 handoff left open ("is `realOfDigits 2 enumDigits`
