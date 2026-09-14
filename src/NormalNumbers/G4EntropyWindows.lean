@@ -207,4 +207,111 @@ theorem windows_disjoint_of_mod (i : ℕ) {n n' : ℕ} (hn : n ∈ PK i) (hn' : 
       rw [Nat.cast_sub hkk, hk'n, hkn]
     exact (hsep (k' - k) hgap).2 hcast.symm
 
+/-! ### `Q ∣ P₀`, and full window disjointness
+
+The shifts satisfy `ρ_{α,j} ≡ j (mod Q)` (`shiftG_eq`), so two *different* atoms at the *same*
+layer have shifts congruent mod `Q` — and `freezeQ` contains their distance as a factor.  Hence
+`Q ∣ freezeQ ∣ P₀`, every sample time is congruent mod `Q`, and therefore **all** orbit indices
+of **all** atoms at **all** sample times are congruent mod `Q`.  Since `Q ≫ m_K`, two sampled
+windows either coincide or are disjoint.
+-/
+
+/-- `ρ_{α,j} ≡ ρ_{β,j} (mod Q)`: the shift only sees the layer, mod `Q`. -/
+lemma rho_modEq (G : GridParams) (α β : G.Atom) (jj : Fin G.N) :
+    G.ρ (α, jj) ≡ G.ρ (β, jj) [MOD G.Q] := by
+  have hj : 1 ≤ layer G.K jj := by
+    have := lt_layer G.K jj
+    omega
+  have h1 := shiftG_eq G.B G.Q G.D₀ α (G.hD α) hj
+  have h2 := shiftG_eq G.B G.Q G.D₀ β (G.hD β) hj
+  rw [Nat.modEq_iff_dvd]
+  refine ⟨(proj G.B (layer G.K jj) β : ℤ) - (proj G.B (layer G.K jj) α : ℤ), ?_⟩
+  show ((G.ρ (β, jj) : ℕ) : ℤ) - ((G.ρ (α, jj) : ℕ) : ℤ) = _
+  have e1 : ((G.ρ (α, jj) : ℕ) : ℤ) = (layer G.K jj : ℤ)
+      + G.Q * ((layer G.K jj : ℤ) * G.D₀ + proj G.B (layer G.K jj) α) := h1
+  have e2 : ((G.ρ (β, jj) : ℕ) : ℤ) = (layer G.K jj : ℤ)
+      + G.Q * ((layer G.K jj : ℤ) * G.D₀ + proj G.B (layer G.K jj) β) := h2
+  rw [e1, e2]
+  ring
+
+/-- **`Q ∣ freezeQ`**: `freezeQ` contains the distance between two distinct atoms' shifts at one
+layer, and `Q` divides that distance. -/
+theorem Q_dvd_freezeQ (G : GridParams) (h2 : 2 ≤ Fintype.card G.Atom) (hN : 0 < G.N) :
+    G.Q ∣ G.freezeQ := by
+  classical
+  obtain ⟨α, β, hαβ⟩ := Fintype.exists_pair_of_one_lt_card
+    (show 1 < Fintype.card G.Atom by omega)
+  refine dvd_trans ?_ (G.dist_dvd_freezeQ (i := (α, ⟨0, hN⟩)) (i' := (β, ⟨0, hN⟩)) ?_)
+  · have hmod := rho_modEq G α β ⟨0, hN⟩
+    rcases Nat.le_total (G.ρ (α, ⟨0, hN⟩)) (G.ρ (β, ⟨0, hN⟩)) with h | h
+    · rw [Nat.dist_eq_sub_of_le h]
+      exact (Nat.modEq_iff_dvd' h).1 hmod
+    · rw [Nat.dist_eq_sub_of_le_right h]
+      exact (Nat.modEq_iff_dvd' h).1 hmod.symm
+  · intro hcon
+    exact hαβ (congrArg Prod.fst hcon)
+
+/-- **`Q ∣ P₀`.** -/
+theorem Q_dvd_P₀ (G : GridParams) (h2 : 2 ≤ Fintype.card G.Atom) (hN : 0 < G.N) :
+    G.Q ∣ G.P₀ :=
+  dvd_trans (Q_dvd_freezeQ G h2 hN) G.freezeQ_dvd_P₀
+
+/-- **All orbit indices, at all atoms and all sample times, are congruent mod `Q`.** -/
+theorem kIdx_congr_Q (G : GridParams) (h2 : 2 ≤ Fintype.card G.Atom) (hN : 0 < G.N)
+    {X n n' : ℕ} (hn : n ∈ apSample X G.P₀ G.b₀) (hn' : n' ∈ apSample X G.P₀ G.b₀)
+    (α β : G.Atom) : kIdx G n α ≡ kIdx G n' β [MOD G.Q] := by
+  have h1 : kIdx G n α % G.Q = n % G.Q := kIdx_mod_Q G hn α
+  have h2' : kIdx G n' β % G.Q = n' % G.Q := kIdx_mod_Q G hn' β
+  have hb : n % G.P₀ = G.b₀ := (Finset.mem_filter.1 hn).2
+  have hb' : n' % G.P₀ = G.b₀ := (Finset.mem_filter.1 hn').2
+  have hnn : n ≡ n' [MOD G.P₀] := by
+    unfold Nat.ModEq
+    rw [hb, hb']
+  have : n ≡ n' [MOD G.Q] := hnn.of_dvd (Q_dvd_P₀ G h2 hN)
+  show kIdx G n α % G.Q = kIdx G n' β % G.Q
+  rw [h1, h2']
+  exact this
+
+lemma two_le_card_Atom (i : ℕ) : 2 ≤ Fintype.card (gridAt i).Atom := by
+  rw [card_Atom_gridAt]
+  have hK : 160000 ≤ KK i := KK_ge i
+  have h1 : 2 ≤ KK i ^ 2 + 1 := by nlinarith
+  calc 2 ≤ KK i ^ 2 + 1 := h1
+    _ = (KK i ^ 2 + 1) ^ 1 := (pow_one _).symm
+    _ ≤ (KK i ^ 2 + 1) ^ KK i := Nat.pow_le_pow_right (by omega) (by omega)
+
+lemma N_pos_gridAt (i : ℕ) : 0 < (gridAt i).N := by
+  show 0 < N (KK i)
+  have := KK_ge i
+  unfold N
+  nlinarith
+
+/-- **Every two sampled windows either coincide or are disjoint.**  This is the full
+disjointness the same-atom (lap 65) and same-time (lap 93) cases only approximated: `Q ∣ P₀`
+makes *all* orbit indices congruent mod `Q`, and `Q > m_K`. -/
+theorem windows_eq_or_disjoint (i : ℕ) {n n' : ℕ} (hn : n ∈ PK i) (hn' : n' ∈ PK i)
+    (α β : (gridAt i).Atom) :
+    kIdx (gridAt i) n α = kIdx (gridAt i) n' β ∨
+      2 * kIdx (gridAt i) n α + kk i ≤ 2 * kIdx (gridAt i) n' β ∨
+      2 * kIdx (gridAt i) n' β + kk i ≤ 2 * kIdx (gridAt i) n α := by
+  have hcong := kIdx_congr_Q (gridAt i) (two_le_card_Atom i) (N_pos_gridAt i) hn hn' α β
+  have hQ : kk i < (gridAt i).Q := by
+    have hgt : gridUmax (KK i) (N (KK i)) + KK i + N (KK i) + 2
+        ≤ gridQ (KK i) (N (KK i)) := gridQ_gt _ _
+    have hQeq : (gridAt i).Q = gridQ (KK i) (N (KK i)) := rfl
+    have hkkK : kk i ≤ KK i := by unfold KK; omega
+    omega
+  rcases Nat.lt_trichotomy (kIdx (gridAt i) n α) (kIdx (gridAt i) n' β) with h | h | h
+  · right; left
+    have hdvd : (gridAt i).Q ∣ kIdx (gridAt i) n' β - kIdx (gridAt i) n α :=
+      (Nat.modEq_iff_dvd' (le_of_lt h)).1 hcong
+    have := Nat.le_of_dvd (by omega) hdvd
+    omega
+  · exact Or.inl h
+  · right; right
+    have hdvd : (gridAt i).Q ∣ kIdx (gridAt i) n α - kIdx (gridAt i) n' β :=
+      (Nat.modEq_iff_dvd' (le_of_lt h)).1 hcong.symm
+    have := Nat.le_of_dvd (by omega) hdvd
+    omega
+
 end NormalNumbers.G4.Sched
