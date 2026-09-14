@@ -54,11 +54,13 @@ Each is the `X'`-version of an existing `X K` lemma whose `X` dependence runs th
    Landed as `farC_le_down` (+ `two_mul_exp_le_Xlo`, `gridDm_le_Xlo`), then `hfar_holds`'s own
    proof verbatim.  Confirms the design: the `X` dependence really was only through
    `card_apSample_ge_half` and monotone `log`s.
-2. **`hbig_holds_down`**.  `log Mx'/log Y ≤ 101` by `hhi` (monotone, `log_Mx_div_le` verbatim).
+2. ✅ **`hbig_holds_down` — DONE.**  `log Mx'/log Y ≤ 101` by `hhi` (monotone, `log_Mx_div_le` verbatim).
    The finite-sample term needs `|P'| ≥ Y^{50}/(2P₀)`; the `X K` proof wanted
    `Y²P₀/X ≤ 2^{−96·2^m}`, here `Y²P₀/Xlo ≤ 2^{−46·2^m}` — the same computation with `96 → 46`.
-   The dyadic term is `X`-free.
-3. **`smallPrime_term_le_down`**.  Only `term_a_le` and `term_d_le` see `Psz`; both need
+   Landed as `sample_term_le_down` + `log_Mx_div_le_down`, then `hbig_holds`'s proof verbatim.
+   Note the A0 obstruction term `log Mx/log Y` is handled by pure monotonicity here — downward
+   it costs nothing.
+3. ⏳ **`smallPrime_term_le_down` — the last leaf.**  Only `term_a_le` and `term_d_le` see `Psz`; both need
    `R^{Mc}·Λ·(stuff) ≤ X'/(4P₀)`.  The `X K` proofs go through `R^{2Mc} ≤ X^{1/10}` and
    `2^{2Kr+4Mc+O(1)} ≤ X^{1/2}`; against `Xlo = X^{1/2}` those become `X^{1/5}` and `X^{1/4}`,
    still true with room (`Mc ≤ K^{6K+9}` against `2^{8K²}` in the exponent of `Y`).

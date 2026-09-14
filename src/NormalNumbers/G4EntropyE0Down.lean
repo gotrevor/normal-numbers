@@ -33,14 +33,16 @@ for `fullPos` therefore asks for E0 at all `X' ≤ X K`, which is what this modu
 `fT_kk_le` already suffices.  The two regimes overlap by a factor `≫ 1` because
 `X/(dmin·kk) ≫ √X`.
 
-Two leaves remain open (`sorry`), each the `X'`-version of an existing `X K` lemma whose proof
-goes through `card_apSample_ge_half`:
+One leaf remains open (`sorry`): `smallPrime_term_le_down`, the `X'`-version of
+`G4EntropyBudget.smallPrime_term_le`.  Only its `term_a_le`/`term_d_le` pieces see
+`Psz = |apSample X' P₀ b₀|`; the other three terms are `X`-free.
 
-* `hbig_holds_down`   — `G4ScheduleBig.hbig_holds` at `X'`
-* `smallPrime_term_le_down` — `G4EntropyBudget.smallPrime_term_le` at `X'`
-
-**Done**: `hfar_holds_down`, via `farC_le_down` (`farC G X' Dm ≤ logP₀Nat K + m K + 10` for
-every `Xlo K ≤ X' ≤ X K`) together with `two_mul_exp_le_Xlo` and `gridDm_le_Xlo`.
+**Done**:
+* `hfar_holds_down`, via `farC_le_down` (`farC G X' Dm ≤ logP₀Nat K + m K + 10` for every
+  `Xlo K ≤ X' ≤ X K`), `two_mul_exp_le_Xlo`, `gridDm_le_Xlo`.
+* `hbig_holds_down`, via `sample_term_le_down` (the `X K` proof's exponent count `96 → 46`:
+  `Y²·P₀·4·2^K ≤ 2^{50·2^m} ≤ X'` because `K ≤ 2^m`) and `log_Mx_div_le_down` (monotone from
+  `log_Mx_div_le`, since `X' ≤ X K` — the A0 obstruction term *improves* downward).
 
 The assembly `entropy_E0_down` is complete and consumes exactly those three.
 -/
@@ -102,6 +104,86 @@ the `X'` version has `≥ Y^{50}/(2P₀)` instead, and every comparison in those
 far exceeding a factor `Y^{50}`.  `Mx' = X' + J·Dm ≤ X K + J·Dm`, so the `log Mx/log Y` summand
 and `farC`'s `log log` term only improve. -/
 
+/-- `Xlo K = 2^{50·2^m}` as a real. -/
+lemma Xlo_cast (K : ℕ) : ((Xlo K : ℕ) : ℝ) = (2 : ℝ) ^ (50 * 2 ^ m K) := by
+  unfold Xlo Y; push_cast; rw [← pow_mul]; ring_nf
+
+/-- The finite-sample term of `hbig`, at any `X' ≥ Xlo K`: the `X K` proof's `96 → 46`. -/
+lemma sample_term_le_down {K X' : ℕ} (hK : 100 ≤ K) (hlo : Xlo K ≤ X') :
+    2 * (Y K : ℝ) ^ 2 * ((1 / 2 : ℝ) ^ K / 3) ^ 2
+        / ((apSample X' (gridOf K (N K) (by omega)).P₀
+            (gridOf K (N K) (by omega)).b₀).card : ℝ)
+      ≤ (1 / 8 : ℝ) ^ K := by
+  set G := gridOf K (N K) (by omega : 1 ≤ K) with hG
+  have hP₀ : (0 : ℝ) < G.P₀ := by exact_mod_cast G.P₀_pos
+  have hX'pos : 0 < X' := by have := Xlo_pos K; omega
+  have hXr : (0 : ℝ) < X' := by exact_mod_cast hX'pos
+  have hXlo' : (2 : ℝ) ^ (50 * 2 ^ m K) ≤ (X' : ℝ) := by
+    rw [← Xlo_cast K]; exact_mod_cast hlo
+  have hcard := card_apSample_ge_half X' G.P₀ G.b₀ G.P₀_pos G.b₀_lt_P₀
+    (le_trans (two_mul_P₀_le_Xlo hK) hlo)
+  have hcard0 : (0 : ℝ) < (apSample X' G.P₀ G.b₀).card := by
+    have : (0 : ℝ) < (X' : ℝ) / (2 * G.P₀) := by positivity
+    linarith
+  have hP₀2 := P₀_le_two_pow hK
+  have hY : (Y K : ℝ) ^ 2 = (2 : ℝ) ^ (2 * 2 ^ m K) := by
+    unfold Y; push_cast; rw [← pow_mul]; ring_nf
+  have hkey : (Y K : ℝ) ^ 2 * G.P₀ * 4 ≤ (X' : ℝ) * (1 / 2 : ℝ) ^ K := by
+    have hpow : (2 : ℝ) ^ (2 * 2 ^ m K) * (2 : ℝ) ^ (2 * 2 ^ m K) * 4 * (2 : ℝ) ^ K
+        ≤ (2 : ℝ) ^ (50 * 2 ^ m K) := by
+      rw [show (4 : ℝ) = 2 ^ 2 by norm_num, ← pow_add, ← pow_add, ← pow_add]
+      apply pow_le_pow_right₀ (by norm_num)
+      have h1 : K ≤ 2 ^ m K := by
+        calc K ≤ K ^ 3 := Nat.le_self_pow (by norm_num) K
+          _ ≤ m₁ K := m₁_ge_cube (by omega)
+          _ ≤ m K := m₁_le_m K
+          _ ≤ 2 ^ m K := (Nat.lt_two_pow_self).le
+      have h2 : 2 ≤ 2 ^ m K := by
+        calc 2 ≤ K := by omega
+          _ ≤ 2 ^ m K := h1
+      omega
+    have hη : (1 / 2 : ℝ) ^ K = 1 / (2 : ℝ) ^ K := by rw [one_div_pow]
+    rw [hY, hη, mul_one_div, le_div_iff₀ (by positivity)]
+    calc (2 : ℝ) ^ (2 * 2 ^ m K) * G.P₀ * 4 * 2 ^ K
+        ≤ (2 : ℝ) ^ (2 * 2 ^ m K) * (2 : ℝ) ^ (2 * 2 ^ m K) * 4 * 2 ^ K := by gcongr
+      _ ≤ (2 : ℝ) ^ (50 * 2 ^ m K) := hpow
+      _ ≤ (X' : ℝ) := hXlo'
+  have h8 : (1 / 8 : ℝ) ^ K = (1 / 2 : ℝ) ^ K * ((1 / 2 : ℝ) ^ K) ^ 2 := by
+    rw [show (1 / 8 : ℝ) = (1 / 2) ^ 3 by norm_num, ← pow_mul]
+    ring
+  rw [div_le_iff₀ hcard0, h8]
+  have hη2 : (0 : ℝ) ≤ ((1 / 2 : ℝ) ^ K) ^ 2 := by positivity
+  calc 2 * (Y K : ℝ) ^ 2 * ((1 / 2 : ℝ) ^ K / 3) ^ 2
+      = ((1 / 2 : ℝ) ^ K) ^ 2 * (2 / 9 * (Y K : ℝ) ^ 2) := by ring
+    _ ≤ ((1 / 2 : ℝ) ^ K) ^ 2 * ((1 / 2 : ℝ) ^ K * ((X' : ℝ) / (2 * G.P₀))) := by
+        apply mul_le_mul_of_nonneg_left _ hη2
+        have hY2 : (Y K : ℝ) ^ 2 ≤ (1 / 2 : ℝ) ^ K * ((X' : ℝ) / (2 * G.P₀)) / 2 := by
+          rw [le_div_iff₀ (by norm_num : (0 : ℝ) < 2), mul_div_assoc', le_div_iff₀ (by positivity)]
+          nlinarith [hkey]
+        nlinarith [sq_nonneg (Y K : ℝ), hY2]
+    _ ≤ ((1 / 2 : ℝ) ^ K) ^ 2 * ((1 / 2 : ℝ) ^ K * (apSample X' G.P₀ G.b₀).card) := by
+        gcongr
+    _ = (1 / 2 : ℝ) ^ K * ((1 / 2 : ℝ) ^ K) ^ 2 * (apSample X' G.P₀ G.b₀).card := by ring
+
+/-- `log Mx' / log Y ≤ 101` for `Mx' = X' + J·Dm`, `X' ≤ X K`: monotone from `log_Mx_div_le`. -/
+lemma log_Mx_div_le_down {K X' : ℕ} (hK : 100 ≤ K) (hlo : Xlo K ≤ X') (hhi : X' ≤ X K) :
+    Real.log ((X' + J K * gridDm K (N K) : ℕ) : ℝ) / Real.log (Y K) ≤ 101 := by
+  refine le_trans ?_ (log_Mx_div_le hK)
+  have hY0 : 0 < Real.log (Y K) := by
+    apply Real.log_pos
+    have : (2 : ℝ) ≤ (Y K : ℝ) := by
+      unfold Y; push_cast
+      calc (2 : ℝ) = 2 ^ 1 := (pow_one 2).symm
+        _ ≤ 2 ^ (2 ^ m K) := pow_le_pow_right₀ (by norm_num) Nat.one_le_two_pow
+    linarith
+  have hX'pos : 0 < X' := by have := Xlo_pos K; omega
+  refine div_le_div_of_nonneg_right ?_ hY0.le
+  refine Real.log_le_log ?_ ?_
+  · have : (0 : ℝ) < (X' : ℝ) := by exact_mod_cast hX'pos
+    push_cast
+    positivity
+  · exact_mod_cast Nat.add_le_add_right hhi _
+
 /-- **Leaf 1** — `G4ScheduleBig.hbig_holds`, at any `X'` with `Xlo K ≤ X' ≤ X K`. -/
 theorem hbig_holds_down {K k₄ X' : ℕ} (hK4 : K = 4 * k₄) (hK : 100 ≤ K)
     (hlo : Xlo K ≤ X') (hhi : X' ≤ X K) :
@@ -112,7 +194,81 @@ theorem hbig_holds_down {K k₄ X' : ℕ} (hK4 : K = 4 * k₄) (hK : 100 ≤ K)
               (gridOf K (N K) (by omega)).b₀).card : ℝ))
       + (Real.log ((X' + J K * gridDm K (N K) : ℕ) : ℝ) / Real.log (Y K)) * (1 / 2 : ℝ) ^ K / 3
       ≤ (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
-  sorry
+  have hk : 25 ≤ k₄ := by omega
+  have hKr : (100 : ℝ) ≤ K := by exact_mod_cast hK
+  have hKpos : (0 : ℝ) < K := by linarith
+  obtain ⟨hb1, hb2⟩ := k₄_bounds hk
+  have hb1r : (512 : ℝ) * k₄ ^ 2 ≤ 2 ^ (5 * k₄) := by exact_mod_cast hb1
+  have hb2r : (2176 : ℝ) * k₄ ≤ 2 ^ (3 * k₄) := by exact_mod_cast hb2
+  have hKk : (K : ℝ) = 4 * k₄ := by rw [hK4]; push_cast; ring
+  set a : ℝ := (1 / 2 : ℝ) ^ k₄ with ha
+  have ha0 : 0 < a := by positivity
+  have ha1 : a ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+  have h8K : (1 / 8 : ℝ) ^ K = a ^ 12 := by
+    rw [ha, ← pow_mul, hK4, show (1 / 8 : ℝ) = (1 / 2) ^ 3 by norm_num, ← pow_mul]; ring_nf
+  have h2K : (1 / 2 : ℝ) ^ K = a ^ 4 := by rw [ha, ← pow_mul, hK4]; ring_nf
+  -- the square root
+  have hs1 := dyadic_factor_le K
+  have hs2 := sample_term_le_down hK hlo
+  have hsq : Real.sqrt (4 * (1 + Real.log (Nat.log 2 (Y K)) - Real.log (Nat.log 2 (R K)))
+          * ((1 / 8 : ℝ) ^ K / 15)
+        + 2 * (Y K : ℝ) ^ 2 * ((1 / 2 : ℝ) ^ K / 3) ^ 2
+          / ((apSample X' (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card : ℝ))
+      ≤ 2 * K * a ^ 6 := by
+    rw [Real.sqrt_le_iff]
+    refine ⟨by positivity, ?_⟩
+    have hfac : 4 * (1 + Real.log (Nat.log 2 (Y K)) - Real.log (Nat.log 2 (R K)))
+          * ((1 / 8 : ℝ) ^ K / 15) ≤ 2 * (K : ℝ) ^ 2 * (1 / 8 : ℝ) ^ K := by
+      have h8 : (0 : ℝ) ≤ (1 / 8 : ℝ) ^ K := by positivity
+      have : 4 * (1 + Real.log (Nat.log 2 (Y K)) - Real.log (Nat.log 2 (R K))) ≤ 30 * (K : ℝ) ^ 2 := by
+        nlinarith
+      nlinarith
+    have h8 : (0 : ℝ) ≤ (1 / 8 : ℝ) ^ K := by positivity
+    have hK1 : (1 : ℝ) ≤ (K : ℝ) ^ 2 := by nlinarith
+    calc 4 * (1 + Real.log (Nat.log 2 (Y K)) - Real.log (Nat.log 2 (R K)))
+          * ((1 / 8 : ℝ) ^ K / 15)
+        + 2 * (Y K : ℝ) ^ 2 * ((1 / 2 : ℝ) ^ K / 3) ^ 2
+          / ((apSample X' (gridOf K (N K) (by omega)).P₀ (gridOf K (N K) (by omega)).b₀).card : ℝ)
+        ≤ 2 * (K : ℝ) ^ 2 * (1 / 8 : ℝ) ^ K + (1 / 8 : ℝ) ^ K := add_le_add hfac hs2
+      _ ≤ 4 * (K : ℝ) ^ 2 * (1 / 8 : ℝ) ^ K := by nlinarith
+      _ = (2 * K * a ^ 6) ^ 2 := by rw [h8K]; ring
+  -- the third term
+  have ht3 : (Real.log ((X' + J K * gridDm K (N K) : ℕ) : ℝ) / Real.log (Y K)) * (1 / 2 : ℝ) ^ K / 3
+      ≤ 34 * a ^ 4 := by
+    have := log_Mx_div_le_down hK hlo hhi
+    have hl : 0 ≤ Real.log ((X' + J K * gridDm K (N K) : ℕ) : ℝ) / Real.log (Y K) := by
+      apply div_nonneg
+      · apply Real.log_nonneg
+        have hX'p : 0 < X' := by have := Xlo_pos K; omega
+        have hX1 : (1 : ℝ) ≤ (X' : ℝ) := by exact_mod_cast hX'p
+        push_cast
+        have := (Nat.cast_nonneg (J K) : (0 : ℝ) ≤ _)
+        have := (Nat.cast_nonneg (gridDm K (N K)) : (0 : ℝ) ≤ _)
+        nlinarith
+      · apply Real.log_nonneg; unfold Y; push_cast; exact one_le_pow₀ (by norm_num)
+    rw [h2K]
+    have ha4 : 0 ≤ a ^ 4 := by positivity
+    nlinarith
+  -- close: `2K a⁶ ≤ (1/16)(1/K) a` and `34 a⁴ ≤ (1/16)(1/K) a`
+  have hc1 : 2 * K * a ^ 6 ≤ (1 / 16 : ℝ) * ((1 / K : ℝ) * a) := by
+    have : (32 : ℝ) * K ^ 2 * a ^ 5 ≤ 1 := by
+      have e : a ^ 5 = 1 / (2 : ℝ) ^ (5 * k₄) := by rw [ha, ← pow_mul, one_div_pow, mul_comm]
+      rw [e, mul_one_div, div_le_one (by positivity), hKk]
+      nlinarith
+    rw [show (1 / 16 : ℝ) * ((1 / K : ℝ) * a) = a / (16 * K) by field_simp]
+    rw [le_div_iff₀ (by positivity)]
+    nlinarith [ha0]
+  have hc2 : 34 * a ^ 4 ≤ (1 / 16 : ℝ) * ((1 / K : ℝ) * a) := by
+    have : (544 : ℝ) * K * a ^ 3 ≤ 1 := by
+      have e : a ^ 3 = 1 / (2 : ℝ) ^ (3 * k₄) := by rw [ha, ← pow_mul, one_div_pow, mul_comm]
+      rw [e, mul_one_div, div_le_one (by positivity), hKk]
+      nlinarith
+    rw [show (1 / 16 : ℝ) * ((1 / K : ℝ) * a) = a / (16 * K) by field_simp]
+    rw [le_div_iff₀ (by positivity)]
+    nlinarith [ha0]
+  calc _ ≤ 2 * K * a ^ 6 + 34 * a ^ 4 := add_le_add hsq ht3
+    _ ≤ (1 / 16 : ℝ) * ((1 / K : ℝ) * a) + (1 / 16 : ℝ) * ((1 / K : ℝ) * a) := add_le_add hc1 hc2
+    _ = (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by rw [ha]; ring
 
 /-- `2·exp(logP₀Nat K) ≤ Xlo K`. -/
 lemma two_mul_exp_le_Xlo {K : ℕ} (hK : 100 ≤ K) :
