@@ -236,6 +236,53 @@ theorem card_good_ge {A : Type*} [Fintype A] [DecidableEq A] {m ℓ : ℕ}
     nlinarith [hBle]
   linarith
 
+open Classical in
+/-- **One atom, good for every word of every length at once.**  The per-coordinate deficit does
+not mention `ℓ` or `w`, so a single coordinate outside `badCoords L (δ/ρ)` carries the capture
+bound for **all** word lengths and all words simultaneously.  Such a coordinate exists as soon
+as `ρ < 1`.
+
+This is the selection tool: it picks a single window family — one atom's windows across the
+sample times — whose own statistics are near-uniform, with no reference to which word is being
+counted. -/
+theorem exists_good_coord {A : Type*} [Fintype A] [DecidableEq A] [Nonempty A] {m : ℕ}
+    (L : FinLaw (A → Fin (2 ^ m))) {δ ρ : ℝ} (hδ : 0 < δ) (hρ0 : 0 < ρ) (hρ1 : ρ < 1)
+    (hdef : ((m : ℝ) - δ) * (Fintype.card A : ℝ) ≤ L.H₂) :
+    ∃ α : A, ∀ ℓ : ℕ, 0 < ℓ → ℓ ≤ m → ∀ w : Fin (2 ^ ℓ),
+      |coordAvg m ℓ L α w - 1 / (2 : ℝ) ^ ℓ|
+        ≤ 2 * Real.sqrt (Real.log 2 * (ℓ : ℝ) * (δ / ρ) / ((m : ℝ) - ℓ + 1)) := by
+  classical
+  set δ' : ℝ := δ / ρ with hδ'def
+  have hδ' : 0 < δ' := by rw [hδ'def]; positivity
+  have hcardB : ((FinLaw.badCoords L δ').card : ℝ) * δ' ≤ δ * (Fintype.card A : ℝ) :=
+    FinLaw.card_badCoords_le L hδ' hdef
+  have hBle : ((FinLaw.badCoords L δ').card : ℝ) ≤ ρ * (Fintype.card A : ℝ) := by
+    rw [hδ'def] at hcardB
+    have h1 : ((FinLaw.badCoords L δ').card : ℝ) * (δ / ρ) * ρ
+        ≤ δ * (Fintype.card A : ℝ) * ρ := mul_le_mul_of_nonneg_right hcardB hρ0.le
+    have h2 : ((FinLaw.badCoords L δ').card : ℝ) * (δ / ρ) * ρ
+        = ((FinLaw.badCoords L δ').card : ℝ) * δ := by field_simp
+    rw [h2] at h1
+    have h3 : ((FinLaw.badCoords L δ').card : ℝ) * δ
+        ≤ (ρ * (Fintype.card A : ℝ)) * δ := by nlinarith [h1]
+    exact le_of_mul_le_mul_right h3 hδ
+  have hApos : (0 : ℝ) < (Fintype.card A : ℝ) := by
+    have : 0 < Fintype.card A := Fintype.card_pos
+    exact_mod_cast this
+  have hlt : ((FinLaw.badCoords L δ').card : ℝ) < (Fintype.card A : ℝ) := by
+    nlinarith [hBle, hApos]
+  have hne : (FinLaw.badCoords L δ')ᶜ.Nonempty := by
+    rw [← Finset.card_pos, Finset.card_compl]
+    have : (FinLaw.badCoords L δ').card < Fintype.card A := by exact_mod_cast hlt
+    omega
+  obtain ⟨α, hα⟩ := hne
+  refine ⟨α, fun ℓ hℓ hℓm w => ?_⟩
+  have hnot : ¬ (δ' < FinLaw.coordDeficit L α) := by
+    intro hcon
+    exact (Finset.mem_compl.1 hα) (Finset.mem_filter.2 ⟨Finset.mem_univ _, hcon⟩)
+  exact abs_coordAvg_sub_le hℓ hℓm L α w hδ' (not_lt.1 hnot)
+
+
 end NormalNumbers.G4Entropy
 
 /-! ### The scale-`i` instance
