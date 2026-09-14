@@ -35,7 +35,16 @@ only the §5 sizes) + `farAvg` (open) · `PropB` open (all inputs proved, assemb
 · `PropJackson` open · §5 schedule open.  Nothing refuted.
 `isDisjunctive_four_of_frames` remains CONDITIONAL on `SeparatingFrameExists`.
 
-## Resume here
+## Lap 7b addendum — `farAvg` DISCHARGED (`G4FarTail.lean`)
+
+`farAvg_le`: `farAvg ≤ 2^K 4^{−J}((farC + 2J + 2)/3 + 2/9)/log 2` with
+`farC = log((X+Dm)/|P|) + log(log(X+Dm)+1)`; via `sum_omegaR_add_le` (AP-mean of `ω` from
+`2^ω ≤ d`, Jensen by hand, `∑ d(m) ≤ N(log N+1)`).  **The remote-cutoff plan below was
+unnecessary** — growth in the shift is logarithmic and `4^{−j}` absorbs it.
+`gridFrame_propD_of_bounds` gives `PropD` from the two closed forms.  §4D is DONE modulo the
+§5 parameter inequalities.  Next: `PropJackson`, then the B assembly, then §5.
+
+## Resume here (superseded by the addendum above for item 1)
 
 1. **`farAvg`** (`G4Remainder.farAvg`): `|farPart n a| ≤ 2^K · ∑_{j>J} ω(n+ρ_{α,j})/4^j`;
    bound `E_n ω(n+ρ)` on the AP by `log(E d)/log 2` via `2^ω ≤ d` and Jensen-by-hand, and

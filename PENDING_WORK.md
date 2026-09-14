@@ -1,5 +1,31 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ GRIND 2026-09-14 (G4 lap 7b): `farAvg` DISCHARGED to closed form — §4D is two real inequalities
+
+`src/NormalNumbers/G4FarTail.lean` (trust triple on every headline).  Entirely elementary; no
+Mertens, no Hardy–Ramanujan, and **no remote cutoff** — the earlier handoff worry was wrong: the
+AP-mean bound grows only logarithmically in the shift, so `4^{−j}` kills it.
+
+* `two_pow_omega_le_card_divisors` (`2^ω ≤ d`), `sum_card_divisors_le`
+  (`∑_{m<N} d(m) ≤ N(log N+1)`), `sum_log_le_card_mul_log_avg` (Jensen for `log` by hand).
+* **`sum_omegaR_add_le`** — on any `P ⊆ range X`, `∑_{n∈P} ω(n+ρ) ≤ |P| log((X+ρ)(log(X+ρ)+1)/|P|)/log 2`.
+* **`sum_omegaR_shiftG_le`** — at layer `j`: `≤ |P|(C₀ + 2j)/log 2`, `C₀ = farC G X Dm =
+  log((X+Dm)/|P|) + log(log(X+Dm)+1)`, `Dm ≥ every d_α`.
+* `hasSum_farBound`, **`sum_abs_farPart_le`**, **`farAvg_le`**:
+  `farAvg ≤ 2^K 4^{−J} ((C₀ + 2J + 2)/3 + 2/9)/log 2`, `J = K+N`.
+* **`gridFrame_propD_of_bounds`** — `PropD (δbig + δfar)` from the two closed forms
+  (`bigAvg_le'` and `farAvg_le`) each `≤ δ·εη`.  **§4D is now two real inequalities in the
+  schedule parameters** (`R, Y, Mx, Dm, |P|, K, N, ε, η`).
+
+### Next attack (ordered)
+
+1. **`PropJackson`** (product Jackson kernel, one-coordinate first moment `O(1/D)`; average
+   metric ⇒ `κ = O(1/(εηD))`).  Zero laps so far.
+2. **B assembly** (Markov + torus marginals + finite unions; steps in lap-2 handoff).
+3. **§5 schedule module**: instantiate `bigAvg_le'`/`farAvg_le` with `R = X^{1/(20M)}`,
+   `Y = X^{1/100}`, `Mx = X + J·Dm`, `|P| ≥ X/P₀ − 1`, and the size bounds on `P₀`, `Dm`
+   (draft (3.2)), and check both `< δ·εη` with `η = 2^{−K/4}`.
+
 ## ✅ GRIND 2026-09-14 (G4 lap 7): `bigAvg` DISCHARGED to closed form — the `Y`-split, tripwire honoured
 
 `src/NormalNumbers/G4MediumPrimes.lean` (trust triple on every headline).  `CHECK §4`'s tripwire
