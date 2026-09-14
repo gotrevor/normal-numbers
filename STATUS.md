@@ -20,8 +20,8 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and, since 2026-09-14, the live G4 disjunctivity
-campaign.** · **Build**: 🟢 green (8888 jobs) · **Updated**: fresh-mind review
-lap · 2026-09-14 · `wip/g4-disjunctivity` @ `97b2d1e`
+campaign.** · **Build**: 🟢 green (8730 jobs) · **Updated**: fresh-mind review
+lap #2 · 2026-09-14 · `wip/g4-disjunctivity` @ `d48280b`
 
 ## Where it stands
 
@@ -39,11 +39,17 @@ Crux **B** (geometry) has every input proved — spectrum of `D_sD_sᵀ`, the
 tensor bound `log det(1+T_{K²}^{⊗K}) ≤ r(log2+23√K)`, the ellipsoid volume
 bound, one tube piece, torus projection, and the cylinder covering of an orbit
 closure omitting a word — leaving only the assembly.  Crux **C** (uniform joint
-small-prime Fourier control), which the brief itself leaves unproved, now has its
-arithmetic seed: `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`
-(`G4FreqSep.sum_sq_distZ_freqDepth_ge`), on top of the product-code minimum
-distance theorem `minWeight_kronPow`.  **The open crux is C3**, the even-moment/CRT
-transfer from the independent residue model to the actual progression.
+small-prime Fourier control), the half the brief itself leaves unproved, is now
+input-complete: its arithmetic seed `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`, the
+even-moment/CRT transfer C3 (`crt_input` + `norm_sampleAvg_prod_ee_le` — **no sieve
+theorem enters the route**), and the concrete instantiation
+`norm_sampleAvg_torusChar_Sval_le` are all proved, as are the §2 grid, the §3
+compatible progression, and the exact §4A transport identity.  **What has NOT
+happened in five laps is closing a single named input**: `PropA`…`PropJackson` are
+all still hypotheses, and the seam between the abstract `Frame` and the concrete
+grid/progression/small-prime vector has never been compiled.  That seam is the
+mandated next move; `PropD` (three ranges, zero laps, and the brief's flagged trap)
+is next after it.
 
 The **Mahler-multiplier chapter** (previous campaign, complete): `M(g,k) < g^(k+1)`
 answers Berend–Boshernitzan's stated open question, `sup_g M(g,k)/g^(k+1) = 1` is
@@ -54,6 +60,20 @@ statement feeding only a *conditional* theorem; no unconditional result touches 
 and no G4 file has a `sorry`.
 
 ## What's happened (newest first)
+
+- **2026-09-14 (FRESH-MIND REVIEW LAP #2, after G4 lap 5)** — **Direction KEPT,
+  mandated move CHANGED: stop producing inputs, close a named `Prop`.**  Inventory:
+  zero `sorry`s and zero axioms in the whole G4 wing, every headline on the trust
+  triple — and zero of `PropA`…`PropJackson` discharged after five laps.  Trigger
+  **G-T1 retired as satisfied** (C3 is proved: `G4CRTInput.crt_input` plus the
+  assembly `G4TransferMoment.norm_sampleAvg_prod_ee_le`; lap 3 eliminated the
+  Shiu-type exponential moment entirely by a degree-`M` polynomial bound, so the
+  route carries no external sieve dependency).  G-T2/G-T3 have not fired.  New
+  trigger **G-T4** covers the abstract-frame ↔ concrete-object seam: a bookkeeping
+  mismatch is fixed by one deliberate `G4Wiring` commit; a *mathematical* mismatch
+  is an escalation, never a `Prop` edit.  Mandated: `G4Frame.lean` with
+  `gridFrame` and the theorems `gridFrame_propA`, `gridFrame_propC`; then **D**,
+  Jackson, B assembly, §5 schedule, in that order.
 
 - **2026-09-14 (FRESH-MIND REVIEW LAP, G4 lap 3)** — **Course-correction: the crux
   moved from B to C, and C's arithmetic seed is proved.**  Laps 1–2 put all their
@@ -290,18 +310,18 @@ and no G4 file has a `sorry`.
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-1. **THE CRUX — §4C's C3**: the even-moment / CRT transfer from the independent
-   residue model to the actual arithmetic progression.  Decompose into named `Prop`s
-   in `src/` and attack; its failure is the only thing that kills the G4 route.
-2. §4C's remaining leaves: C1 (reduce coefficients mod one *before* moment
-   comparison), C2 (good-prime default-class contraction `exp(−cL8^{−K})` in the
-   independent model), C4 (the `exp(O(rK))` ℓ¹ budget dominated by the decay,
-   uniformly over the box — never one limit per frequency).
-3. **B assembly to `PropB`** (labour, not risk — all inputs proved): Markov on the
+1. **THE SEAM — `G4Frame.lean`**: instantiate `Frame` from `GridParams` and discharge
+   `PropA` and `PropC` as theorems.  Every ingredient is proved; what is untested is
+   whether the abstract `Prop`s and the concrete objects meet.  This gates D.
+2. **D** (`PropD`, three-range remainders, §4D) — zero laps so far, and the brief's
+   own warning lives here: keep `p ≤ R`, `R < p ≤ Y`, `p > Y` and the infinite far
+   tail separate; preserve the signed cancellation in the medium range.
+3. **Jackson** (`PropJackson`) — product kernel, one-coordinate first moment `O(1/D)`;
+   the average metric makes the smoothing error dimension-free.
+4. **B assembly to `PropB`** (labour, not risk — all inputs proved): Markov on the
    average metric, cylinder covering of `Cᴴ`, `2^r` good-coordinate sets, torus
-   marginal, then the `η^{(1−ε)r−d'H}exp(O(H+r√K))` arithmetic.
-4. **A** (exact affine Lambert transport, §4A) and **D** (three-range remainders,
-   §4D); then the §5 parameter schedule in its own module.
+   marginal, then the `η^{(1−ε)r−d'H}exp(O(H+r√K))` arithmetic.  Then the §5
+   parameter schedule in its own module.
 5. Legacy: remaining cited-only ledger nodes (`philipp_psi_mixing`,
    `vandehey_matrix_action`); `k ≥ 2` Mahler lower side via the escape engine.
 
@@ -328,6 +348,9 @@ conditional.
 | `G4.isDisjunctive_four_of_frames` / `…_two_of_frames` | G4 disjunctive base 4 / base 2 — **CONDITIONAL** on the candidate `SeparatingFrameExists` | trust triple | 🟢 clean, but the hypothesis IS the unproved candidate: never report as the endpoint |
 | `G4.Frame.finite_contradiction` | §4E finite separating test, conditional on A–D + Jackson | trust triple | 🟢 clean |
 | `PrimeLambert.primeSumAtBase_four` | `∑_p 1/(4ᵖ−1) = ∑_n ω(n)/4ⁿ` (uncond.) | trust triple | 🟢 clean |
+| `G4.Frame.propA_of_progression` | §4A exact affine transport ⇒ `PropA` for any residue-freezing frame (uncond.) | trust triple | 🟢 clean |
+| `G4.norm_sampleAvg_torusChar_Sval_le` | §4C for the concrete small-prime vector, uniform on the box (uncond.) | trust triple | 🟢 clean |
+| `G4.GridParams.exists_mult_mul` | §3 the compatible progression freezes every multiplier residue (uncond.) | trust triple | 🟢 clean |
 | `G4.sum_sq_distZ_freqDepth_ge` | §4C seed `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}` (uncond.) | trust triple | 🟢 clean |
 | `G4.minWeight_kronPow` / `minWeight_tensorDiff` | product-code minimum distance; `‖supp(Aᵀq)‖₀ ≥ 2^K` (uncond.) | trust triple | 🟢 clean |
 | `G4.log_det_one_add_tensorGram_le'` | §4B spectral `log det(1+T_{K²}^{⊗K}) ≤ r(log2+23√K)` (uncond.) | trust triple | 🟢 clean |

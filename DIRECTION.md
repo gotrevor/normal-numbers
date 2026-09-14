@@ -20,59 +20,62 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-09-14 FRESH-MIND REVIEW LAP — G4 disjunctivity)
+## CURRENT DIRECTIVE (set 2026-09-14 FRESH-MIND REVIEW LAP #2 — G4 disjunctivity)
 
-- 🎯 **THE objective: `IsDisjunctive 4 primeLambertFour` unconditionally** (base two
-  follows by the already-proved `isDisjunctive_two_of_four`).  Concretely: discharge
-  `SeparatingFrameExists` in `src/NormalNumbers/G4Wiring.lean`.  The finite separating
-  test (**E**) is PROVED (`Frame.finite_contradiction`); the frozen endpoint and the
-  series identity `∑_p 1/(4ᵖ−1) = primeLambertFour` are PROVED.  The debt is
-  `PropA`–`PropD`, `PropJackson`, and the §5 schedule that produces the frames.
-  This is a **candidate** proof: `isDisjunctive_four_of_frames` is CONDITIONAL and must
-  never be reported as the endpoint.
-- 🔨 **Mandated next move — C, the uniform joint small-prime Fourier control (§4C).**
-  It is the half the brief itself leaves unproved ("the growing-array moment and
-  exponential-moment bounds still need proofs"; "the transfer from the independent
-  residue model to the actual progression is not automatic independence"), and it had
-  received ZERO laps while laps 1–2 went to B.  Its arithmetic seed is now proved
-  (`G4FreqSep.sum_sq_distZ_freqDepth_ge`: `∑_α dist(w_α 4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`,
-  with `G4MinWeight.minWeight_kronPow` — product-code minimum distance — underneath).
-  Decompose §4C into named `Prop`s **in `src/`** and attack them hardest-first:
-    * **C3 (the crux)** — even-moment/CRT transfer from the independent residue model to
-      the actual progression.  Its failure kills the route; nothing else in C does.
-    * C1 — reduce every coefficient mod one into `[−1/2,1/2]` *before* moment comparison.
-    * C2 — good-prime default-class contraction `exp(−cL8^{−K})` in the independent model.
-    * C4 — the `exp(O(rK))` ℓ¹ coefficient budget is dominated by the decay (one uniform
-      estimate over the whole box, never a separate limit per `q`).
-  Raising the `src/` sorry count by naming these is the expected shape of a lap here.
-- **Secondary, only when C is genuinely stuck for a lap: the B assembly to `PropB`.**
-  Every input is proved (`log_det_one_add_tensorGram_le'`, `volume_tubePiece_le`,
-  `volume_image_torusProj_le`, `orbitClosure_subset_cylinders`); what is left is Markov +
-  torus marginals + finite unions — labour, not risk.  Steps are in
-  `HANDOFF-2026-09-14-g4-lap2.md`.
-- ⛔ **Forbidden drift**: re-proving the base-two reduction; routing through
-  `PrimeLambertOscillation.lean`; the G2 two-point correlation theorem; multiplicity,
-  entropy, ordinary-normality or historical-novelty questions; `Adder*`, `CF*`, `Mahler*`,
-  `LnTwo*` and the two sibling worktrees; bounding the zonotope by a coordinatewise box;
-  bounding the ball by its enclosing cube (loses `exp(Θ(g log g))`); freezing `K` and then
-  sending `X → ∞`; and introducing a trusted axiom for ANY candidate lemma.
-- 🚦 **Route triggers, registered 2026-09-14**:
-    * **G-T1** — if C3 is neither proved nor a named, decomposed `Prop` stack in `src/`
-      within 5 grind laps, ESCALATE: re-cost §4C against shipping a clean conditional
-      headline with C3 as its single named hypothesis.
-    * **G-T2** — if a lap MEASURES a counterexample to an exact §4A transport identity, or
-      to `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`, ESCALATE immediately: those are the
-      foundation of both halves.
-    * **G-T3** — if, once A–D are in `Prop` form, the §5 schedule cannot close every budget
-      simultaneously, the honest endpoint is `isDisjunctive_four_of_frames` plus a named
-      list of what is missing; say so in STATUS rather than grinding for unconditionality.
-- ✅ **Checked this lap (paper arithmetic, not yet Lean)**: with `s=K²`, `H=(s+1)^K`,
-  `r=s^K`, `η=2^{−K/4}`, one has `H/r=(1+1/K²)^K → 1`, so the tube exponent is
-  `−((1−ε)−d'H/r)·r·(K log2)/4 + O(r√K) → −∞`; and `L·8^{−K}=L^{1−o(1)}` dominates
-  `rK=L^{0.02+o(1)}`.  The §5 schedule is self-consistent on the brief's four essential
-  comparisons.  So the budget is not the risk — C3 is.
+- 🎯 **THE objective, unchanged: `IsDisjunctive 4 primeLambertFour` unconditionally**
+  (base two follows by `isDisjunctive_two_of_four`).  Concretely: discharge
+  `SeparatingFrameExists` in `src/NormalNumbers/G4Wiring.lean`.  `isDisjunctive_four_of_frames`
+  is CONDITIONAL and must never be reported as the endpoint.
+- 🔨 **Mandated next move — CLOSE A NAMED INPUT.  Build the concrete frame and prove
+  `PropA` and `PropC` as theorems about it.**  New module `src/NormalNumbers/G4Frame.lean`:
+  a `gridFrame : GridParams → … → Frame` (atoms `≃ Fin H` via `Fintype.equivFin`, rows
+  `(Fin K → Fin s) ≃ Fin r`, `A := kronPow K (diffZ s)` reindexed, `d := mult`, `t := offset`,
+  `P := apSample X P₀ b₀`, `θ := transportTheta 0`, `S := Sval sm shiftAL` reindexed), then
+  `theorem gridFrame_propA` via `propA_of_progression` + `exists_mult_mul`, and
+  `theorem gridFrame_propC` via `norm_sampleAvg_torusChar_Sval_le` + `goodPrime_of_not_dvd_P₀`
+  + `two_mul_card_le_of_not_dvd` + the `G4Mertens` harmonic mass.
+  **Why this and not more inputs**: after five laps every one of `PropA`…`PropJackson` is still
+  a hypothesis, and the interface between the abstract `Frame` and the concrete grid /
+  progression / small-prime vector has never been compiled.  That untested seam is now the most
+  uncertain route-decisive step, and it *gates* D (whose statement is about the frame's own `S`
+  and `Ffull`).  Discharging one named `Prop` outright is worth more than a sixth lap of inputs.
+- **Then, in this order** (do not reorder without an altitude lap):
+  1. **D** — the three-range remainder, `PropD`.  Zero laps so far and the brief flags the trap
+     ("the pointwise very-large-prime argument does not handle all primes above `R`; that
+     substitution loses the proof").  Keep `p ≤ R`, `R < p ≤ Y`, `p > Y` and the infinite far
+     tail separate, and preserve the signed cancellation in the medium range.
+  2. **Jackson** — `PropJackson`.  Product kernel, one-coordinate first moment `O(1/D)`; the
+     average metric makes the error dimension-free (`κ = O(1/(εηD))`, so `D = O(η⁻¹)`).
+  3. **B assembly** — `PropB` from the four proved inputs (Markov + torus marginals + finite
+     unions).  Labour, not risk; steps in `HANDOFF-2026-09-14-g4-lap2.md`.
+  4. **§5 schedule** — the single simultaneous limit producing the frames.
+- ⛔ **Forbidden drift**: adding yet more *inputs* to B or C before a named `Prop` is closed;
+  weakening any of `PropA`…`PropJackson` to make an instantiation typecheck; re-proving the
+  base-two reduction; `PrimeLambertOscillation.lean`; the G2 two-point correlation theorem;
+  multiplicity / entropy / ordinary-normality / historical-novelty questions; `Adder*`, `CF*`,
+  `Mahler*`, `LnTwo*` and the two sibling worktrees; bounding the zonotope by a coordinatewise
+  box; bounding the ball by its enclosing cube; freezing `K` then sending `X → ∞`; and
+  introducing a trusted axiom for ANY candidate lemma.
+- 🚦 **Route triggers**:
+    * **G-T1 — RETIRED 2026-09-14 (satisfied).**  C3 is proved: `G4CRTInput.crt_input` plus the
+      assembly `G4TransferMoment.norm_sampleAvg_prod_ee_le`; no sieve theorem entered the route.
+    * **G-T2** — if a lap MEASURES a counterexample to an exact §4A transport identity, or to
+      `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`, ESCALATE immediately.
+    * **G-T3** — if, once A–D are discharged, the §5 schedule cannot close every budget
+      simultaneously, the honest endpoint is `isDisjunctive_four_of_frames` plus a named list of
+      what is missing; say so in STATUS rather than grinding for unconditionality.
+    * **G-T4 (new)** — if the concrete frame cannot instantiate `Frame` without editing
+      `G4Wiring`, record the exact mismatch first.  A *bookkeeping* mismatch (index order,
+      a missing side condition, `γ` unused) is fixed by one deliberate `G4Wiring` commit that
+      states what changed and re-checks `finite_contradiction`.  A *mathematical* mismatch (the
+      concrete object does not satisfy the Prop as stated) is an ESCALATION, not a Prop edit.
 
 ### Directive history
+- 2026-09-14 (fresh-mind review lap #2): direction KEPT, mandated move CHANGED from "decompose
+  §4C" (done — C3 proved via `crt_input`, G-T1 retired) to **instantiate the frame and discharge
+  `PropA`/`PropC` outright**.  Diagnosis: five laps of inputs, zero named `Prop` closed, and the
+  abstract-frame ↔ concrete-object seam never compiled.  D promoted to next-after; trigger G-T4
+  registered for the seam.
 - 2026-09-14 (fresh-mind review lap): objective switched from the COMPLETE Mahler chain to
   the attended G4 disjunctivity campaign; crux named as **§4C's independent-model →
   progression transfer (C3)**, not B (whose inputs are all proved); §4C's arithmetic seed
