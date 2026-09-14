@@ -551,4 +551,122 @@ theorem tendsto_blockFreq_primeLambertFour' (ℓ : ℕ) (hℓ : 0 < ℓ) (w : Fi
       (nhds (1 / (2 : ℝ) ^ ℓ)) :=
   tendsto_blockFreq_of_E0 E0_primeLambertFour ℓ hℓ w
 
+/-! ### The capacity of the sample: deficit against controllable word length
+
+Laps 26–27 gave two special cases of one inequality.  Here it is in general: an entropy
+deficit of `δ` bits per window (`H₂ ≥ (m_K − δ)·H_K`) controls every word of length `ℓ` to
+within
+
+    `√(2 log 2 · ℓ(ℓ + δ)/m_K)`.
+
+Two regimes: with `δ ≤ ℓ` the cost is the *sampling* cost `√(ℓ²/m_K)`, and with `δ ≥ ℓ` the
+*deficit* cost `√(ℓδ/m_K)`.  So improving `entropy_E1`'s deficit from `50√K` to `δ(K)` would
+extend the controlled word length from `o(√K)` to `o(min(√m_K, m_K/δ))` — the `√K` ceiling of
+lap 26 is exactly the point where the two regimes cross, **not** an artifact of the averaging.
+-/
+
+/-- **The capacity inequality.**  `δ` bits of entropy deficit per window control every word of
+length `ℓ` to within `√(2 log 2 · ℓ(ℓ+δ)/m_K)`, uniformly in the word and in `x`. -/
+theorem abs_blockFreq_sub_le_of_deficit (i ℓ : ℕ) (hℓ : 0 < ℓ) (x : ℝ) (w : Fin (2 ^ ℓ))
+    {δ : ℝ} (hδ : 0 ≤ δ)
+    (hdef : ((kk i : ℝ) - δ) * (Fintype.card (gridAt i).Atom : ℝ) ≤ (jointLawAt i x).H₂) :
+    |blockFreq i ℓ x w - 1 / (2 : ℝ) ^ ℓ|
+      ≤ Real.sqrt (2 * Real.log 2 * (ℓ : ℝ) * ((ℓ : ℝ) + δ) / (kk i : ℝ)) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlpos : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  have hk0 : (0 : ℝ) < (kk i : ℝ) := by
+    have : 0 < kk i := by unfold kk; omega
+    exact_mod_cast this
+  have hC0 : (0 : ℝ) < (Fintype.card (gridAt i).Atom : ℝ) := by
+    rw [card_Atom_gridAt]
+    have : 0 < (KK i ^ 2 + 1) ^ KK i := Nat.pow_pos (by omega)
+    exact_mod_cast this
+  set D : ℝ := (((kk i / ℓ : ℕ) + 1 : ℕ) : ℝ) with hD
+  have hD0 : 0 < D := by rw [hD]; positivity
+  have hmD : (kk i : ℝ) < (ℓ : ℝ) * D := by
+    have hnat : kk i < (kk i / ℓ + 1) * ℓ := by
+      have h1 := Nat.div_add_mod (kk i) ℓ
+      have h2 : kk i % ℓ < ℓ := Nat.mod_lt _ hℓ
+      have h3 : (kk i / ℓ + 1) * ℓ = ℓ * (kk i / ℓ) + ℓ := by ring
+      omega
+    have : (kk i : ℝ) < D * (ℓ : ℝ) := by rw [hD]; exact_mod_cast hnat
+    linarith
+  -- the deficit ratio
+  have hratio : defRatio i x ≤ δ / (kk i : ℝ) := by
+    have hmax : maxH i = (kk i : ℝ) * (Fintype.card (gridAt i).Atom : ℝ) := by
+      rw [maxH, card_Atom_gridAt]
+    have hkey : 1 - δ / (kk i : ℝ)
+        ≤ (jointLawAt i x).H₂ / ((kk i : ℝ) * (Fintype.card (gridAt i).Atom : ℝ)) := by
+      rw [le_div_iff₀ (by positivity)]
+      have hexp : (1 - δ / (kk i : ℝ)) * ((kk i : ℝ) * (Fintype.card (gridAt i).Atom : ℝ))
+          = ((kk i : ℝ) - δ) * (Fintype.card (gridAt i).Atom : ℝ) := by
+        field_simp
+      rw [hexp]
+      exact hdef
+    rw [defRatio, hmax]
+    linarith
+  -- the optimized parameter
+  set A : ℝ := Real.log 2 * (ℓ : ℝ) * ((ℓ : ℝ) + δ) / (kk i : ℝ) with hA
+  have hApos : 0 < A := by rw [hA]; positivity
+  set t : ℝ := Real.sqrt (2 * A) with htdef
+  have ht : 0 < t := Real.sqrt_pos.2 (by linarith)
+  have ht2 : t * t = 2 * A := Real.mul_self_sqrt (by linarith)
+  have hb := abs_blockFreq_sub_le_defRatio i ℓ hℓ x w ht
+  rw [← hD] at hb
+  -- both error terms against `A / t`
+  have hterm1 : Real.log 2 * (ℓ : ℝ) / (t * D) ≤ Real.log 2 * (ℓ : ℝ) * (ℓ : ℝ)
+      / ((kk i : ℝ) * t) := by
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    have key1 : (0 : ℝ) ≤ (Real.log 2 * (ℓ : ℝ) * t) * ((ℓ : ℝ) * D - (kk i : ℝ)) :=
+      mul_nonneg (by positivity) (by linarith)
+    nlinarith [key1]
+  have hterm2 : Real.log 2 * (ℓ : ℝ) * defRatio i x / t
+      ≤ Real.log 2 * (ℓ : ℝ) * δ / ((kk i : ℝ) * t) := by
+    rw [div_le_div_iff₀ ht (by positivity)]
+    have hmr : (kk i : ℝ) * defRatio i x ≤ δ := by
+      have := mul_le_mul_of_nonneg_left hratio hk0.le
+      rwa [mul_div_cancel₀ _ hk0.ne'] at this
+    have key2 : (0 : ℝ) ≤ (Real.log 2 * (ℓ : ℝ) * t) * (δ - (kk i : ℝ) * defRatio i x) :=
+      mul_nonneg (by positivity) (by linarith)
+    nlinarith [key2]
+  have hsum : Real.log 2 * (ℓ : ℝ) * (ℓ : ℝ) / ((kk i : ℝ) * t)
+      + Real.log 2 * (ℓ : ℝ) * δ / ((kk i : ℝ) * t) = A / t := by
+    rw [hA]
+    field_simp
+  have hopt : A / t + t / 2 = t := by
+    have hA2 : A = t * t / 2 := by linarith [ht2]
+    rw [hA2]
+    field_simp
+    norm_num
+  have hfin : |blockFreq i ℓ x w - 1 / (2 : ℝ) ^ ℓ| ≤ t := by linarith
+  have hval : t = Real.sqrt (2 * Real.log 2 * (ℓ : ℝ) * ((ℓ : ℝ) + δ) / (kk i : ℝ)) := by
+    rw [htdef, hA]
+    congr 1
+    field_simp
+  rw [← hval]
+  exact hfin
+
+/-- **The capacity limit.**  Along any family of scales, word lengths `ℓ(K)` and deficits
+`δ(K)` with `ℓ(ℓ+δ)/m_K → 0` have their word frequencies pinned — the words and the reals may
+both vary with the scale. -/
+theorem tendsto_blockFreq_of_capacity (x : ℕ → ℝ) (ℓ : ℕ → ℕ) (δ : ℕ → ℝ)
+    (hpos : ∀ i, 0 < ℓ i) (hδ : ∀ i, 0 ≤ δ i)
+    (hdef : ∀ i, ((kk i : ℝ) - δ i) * (Fintype.card (gridAt i).Atom : ℝ)
+      ≤ (jointLawAt i (x i)).H₂)
+    (hcap : Tendsto (fun i => (ℓ i : ℝ) * ((ℓ i : ℝ) + δ i) / (kk i : ℝ)) atTop (nhds 0))
+    (w : ∀ i, Fin (2 ^ ℓ i)) :
+    Tendsto (fun i => blockFreq i (ℓ i) (x i) (w i) - 1 / (2 : ℝ) ^ (ℓ i)) atTop (nhds 0) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hinner : Tendsto (fun i => 2 * Real.log 2 * (ℓ i : ℝ) * ((ℓ i : ℝ) + δ i) / (kk i : ℝ))
+      atTop (nhds 0) := by
+    have h := hcap.const_mul (2 * Real.log 2)
+    simp only [mul_zero] at h
+    refine h.congr fun i => ?_
+    ring
+  have hsq : Tendsto (fun i => Real.sqrt (2 * Real.log 2 * (ℓ i : ℝ) * ((ℓ i : ℝ) + δ i)
+      / (kk i : ℝ))) atTop (nhds 0) := by simpa using hinner.sqrt
+  refine squeeze_zero_norm (fun i => ?_) hsq
+  simpa [Real.norm_eq_abs] using
+    abs_blockFreq_sub_le_of_deficit i (ℓ i) (hpos i) (x i) (w i) (hδ i) (hdef i)
+
 end NormalNumbers.G4.Sched

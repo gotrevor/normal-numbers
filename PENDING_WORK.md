@@ -69,7 +69,15 @@ overlapping one included), `blockFreq_eq_count`, `blockFreq_eq_digits`, and
    (`tendsto_blockFreq_primeLambertFour'` via `E0_primeLambertFour`).  So §5's positive answer
    is a theorem about the *sampling scheme*, not about `G₄`.
 
-0''. **Next:** is the frequency statement *uniform* in `ℓ` — i.e. can
+0'''. ~~**The capacity trade-off.**~~ (done, lap 28) — `abs_blockFreq_sub_le_of_deficit`:
+   a per-window deficit of `δ` bits controls every word of length `ℓ` to within
+   `√(2 log 2 · ℓ(ℓ+δ)/m_K)`, uniformly in `w` and in `x`; `tendsto_blockFreq_of_capacity`
+   is the limit form (words, reals and deficits all free to vary with the scale).  Reading:
+   `√(ℓ²/m)` is the *sampling* cost and `√(ℓδ/m)` the *deficit* cost; lap 26's `o(√K)`
+   ceiling is exactly where they cross, so it is NOT an artifact of the averaging step —
+   improving `entropy_E1`'s `δ = 50√K` would extend control to `o(min(√m_K, m_K/δ))`.
+
+0''. **Superseded:** is the frequency statement *uniform* in `ℓ` — i.e. can
    `ℓ = ℓ(K)` grow, and at what rate does `O(√(ℓ/√K))` still vanish?  That is the quantitative
    edge of what entropy controls here (route trigger E-T5 territory, recorded not hidden).
 1. ~~**The faithfulness rendering.**~~ (done, lap 24)  `blockFreq` is *defined* through `FinLaw.map`; prove
