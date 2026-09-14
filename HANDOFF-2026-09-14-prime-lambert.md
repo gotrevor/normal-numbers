@@ -14,6 +14,9 @@ Root module / lakefile untouched (host-owned).
   `irrational_of_phaseOscillation` (all `[propext, Classical.choice, Quot.sound]`).
   `phaseOscillation` = the one disclosed `sorry`; `irrational_primeLambert` depends on it.
 
+- `PrimeLambertGeometry` (checkpoint 2): hexagon/tensor cancellation in `ℤ[ℤ×ℤ]`, six-atom
+  form, dilation, coprime transform to `TConfig`, `exists_tconfig_cancelling`.  Axiom-clean.
+
 ## Open
 
 The analytic chain (draft §5) is entirely open; `PhaseOscillation` is its endpoint Prop.

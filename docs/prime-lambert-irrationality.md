@@ -15,6 +15,7 @@ No novelty claim.  Headline `irrational_primeLambert` is **sorry-gated**; see "S
 |---|---|---|
 | `PrimeLambertDefs` | `primeLambert`, summability, `tailT k = 2^k G − tailInt k`, `rational_tail_int`; exact transport `ω(dm) + overlap d m = ω m + ω d`, `dilatedTail_eq`, exact periodicity `transportCorr_congr` | proved, axiom-clean |
 | `PrimeLambertConfig` | transported configurations `TConfig = (ℕ×ℤ) →₀ ℤ`, `CancelsAt c j` (pushforward along `j·d − s` vanishes), `phaseSum c K n`, **Theorem A** `phaseSum_sub_int` | proved, axiom-clean |
+| `PrimeLambertGeometry` | group ring `ℤ[ℤ×ℤ]`, `Cancels`, `edge`, `hexagon` (cancels at its triple; six-atom form `hexagon_eq_six`), `dilate`, `hexTensor r B` cancels at all `1..6r` (`hexTensor_cancels`), coprime transform `toConfig` preserving cancellation (`cancelsAt_toConfig`), positivity, pairwise coprimality (`transform_coprime`), assembly `exists_tconfig_cancelling` | proved, axiom-clean |
 | `PrimeLambertOscillation` | `e`, `ProgressionFamily`, `phaseAverage`, `PhaseOscillation` (draft eq. (5)), `norm_phaseAverage_eq_one`, `irrational_of_phaseOscillation` | proved, axiom-clean; `phaseOscillation` is the single disclosed `sorry` |
 
 Build: `lake build NormalNumbers.PrimeLambertOscillation` (targeted; the root module is
@@ -51,9 +52,12 @@ progressions.  Nothing in it is proved yet.  The intended discharge (draft §5.1
 - even-moment Taylor transfer;
 - large-prime pointwise bound `O(M H 2^{-K}) → 0` and binary tail `O(H 2^{-J} log N) → 0`.
 
-Next lap: (a) `PrimeLambertGeometry` — hexagon/tensor cancellation in `AddMonoidAlgebra ℤ (ℤ×ℤ)`
-and the transform to a `TConfig` (bounded, exact); (b) state the analytic sub-Props above as
-separate `def … : Prop` with explicit quantifiers, and a wiring `→ PhaseOscillation`.
+Geometry (a) is done: `exists_tconfig_cancelling r B Q` produces, for every `r`, scale `B`
+and `Q ≥ 0`, a `TConfig` cancelling at all sites `1..6r` with positive multipliers.  Not yet
+formalized from the geometry: distinctness of the `6^{2r}` first coordinates for `B ≥ 7`
+(balanced-base uniqueness), the `ℓ¹`-mass `H = 6^{K/3}`, and the surviving squared mass at
+site `K+1`.  Next: (b) state the analytic sub-Props as separate `def … : Prop` with explicit
+quantifiers, and a wiring `→ PhaseOscillation`.
 
 ## Refutations recorded
 
