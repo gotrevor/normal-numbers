@@ -8,7 +8,21 @@ its binary dictionary (`G4EntropySample.ZSample_eq_blockVal`, `kIdx_spec`), and 
 capture inequality (C) with its bounded-Lipschitz bump
 (`G4EntropyCapture.capture_inequality`, `abs_sampleAvg_sub_integral_le`, `bump_sub_le`).
 
-**The crux is now the two inputs of (C) that are not yet proved for the implemented schedule:**
+Lap 2 added `G4EntropyJackson.lean` (Fejér smoothing for an ARBITRARY bounded `dAv`-Lipschitz
+test, budgets independent of the test; `Frame.propJackson` recovered as
+`propJackson_of_general`) and `G4EntropyFrame.lean` (`capture_inequality_torus`,
+`Frame.capture_le`: (C) on the torus with every input supplied by existing machinery).
+
+**After lap 2 the ONLY remaining obligation between the implemented schedule and E0 is the
+cover bound (G).**  `Frame.capture_le` reads
+
+    |Good|/|P| ≤ vol(tube E res) + δ₂ + 2/(res√(D+1)) + (2D+1)^r·δ₃
+
+for an arbitrary nonempty `E` — δ₂ is `PropD`, δ₃ is `PropC`, and the κ/Λ budgets are the
+frame's own and do not depend on `E`.  Choosing `E = E_K(ℬ)` leaves `vol(tube (E_K ℬ) res)`
+as the single unproved quantity.
+
+**Remaining inputs, hardest first:**
 
 1. **(G), brief §3B** — `μ(thickening ρ_K (E_K ℬ)) ≤ |ℬ|·η^{(1−ε)r_K}·exp(C₀(H_K+r_K√K))`,
    with `|ℬ|` the number of *joint* boxes.  Reuse `G4TubeVolume`/`G4GridTube`/`G4Ellipsoid`/

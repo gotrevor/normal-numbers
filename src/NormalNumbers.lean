@@ -224,3 +224,5 @@ import NormalNumbers.G4Wiring
 import NormalNumbers.G4EntropyInfo
 import NormalNumbers.G4EntropySample
 import NormalNumbers.G4EntropyCapture
+import NormalNumbers.G4EntropyJackson
+import NormalNumbers.G4EntropyFrame
