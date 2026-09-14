@@ -139,8 +139,20 @@ So `S(g,k)` is a question about open dynamical systems (`×g` with a hole that i
 intervals), where there is a literature: Urbański 1986 (dimension of the survivor set of `×g` with
 an interval hole), Glendinning–Sidorov 2015 (the doubling map with a hole `(a,b)`: the survivor set
 is uncountable iff the hole is short enough, thresholds at Thue–Morse-type points),
-Bunimovich–Yurchenko 2011 (holes containing short periodic orbits leak *slowest*).  None of it has
-been read for this yet; it is the next literature pass.
+Bunimovich–Yurchenko 2011 (holes containing short periodic orbits leak *slowest*).
+
+*Literature pass (21:55, abstracts only, arXiv 1302.2486 and 0811.4438):* Glendinning–Sidorov
+characterize completely, for the doubling map with **one** hole `(a,b)`, when the survivor set
+is nonempty / infinite / uncountable of dimension zero / of positive dimension, and prove that
+positive dimension holds whenever `b − a < ¼·∏_{n≥1}(1 − 2^(−2^n)) ≈ 0.175092`, sharp.
+Bunimovich–Yurchenko: among holes of equal measure in a strongly chaotic map, the escape is
+fastest through the hole whose minimal-period periodic point has the *largest* period - so a hole
+containing a fixed point leaks slowest, which is the qualitative reason the constant blocks `d^k`
+(whose holes `H(1, d^k)` contain the fixed point `d/(g−1)`) are the binding blocks in every row.
+Neither result covers a hole that is a union of `m` equally spaced intervals, let alone the union
+over a set `S`; the one-interval theory does not transfer, and the symbolic description of our
+holes is exactly the product automaton.  So the literature supplies the right *frame* and the
+qualitative reading, not a theorem for N5.
 
 Both adversary families in this repo are one object in this picture: an **`H`-free periodic orbit
 plus a landing strip**.  The sparse adversary hugs the fixed point `0` and makes the excursion
