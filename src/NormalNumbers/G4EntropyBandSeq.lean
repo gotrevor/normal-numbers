@@ -532,4 +532,193 @@ theorem bandGood_eq (i : ℕ) (x : ℝ) (v : List ℕ) :
   exact sum_range_bnth i
     (fun n => if OccursAt 2 x v (2 * kIdx (gridAt i) n (goodAtom i) + q) then 1 else 0)
 
+/-! ### The read count at the band cutoffs -/
+
+open Classical in
+/-- The read count at cutoff `bT (i+1)` is band `i`'s in-window count, up to the history and one
+word length per window. -/
+theorem winCount_bT_bounds (x : ℝ) (i : ℕ) (v : List ℕ) (hv : 0 < v.length)
+    (hvm : v.length ≤ kk i) :
+    bandGood i x v ≤ winCount (bandDig x) v (bT (i + 1)) ∧
+      winCount (bandDig x) v (bT (i + 1))
+        ≤ bandGood i x v + bT i + (bandS i).card * v.length := by
+  classical
+  have hsplit := winCount_split (bandDig x) v (bT_mono (Nat.le_succ i))
+  simp only [Nat.succ_eq_add_one] at hsplit
+  obtain ⟨h1, h2⟩ := band_winCount_bounds x i v hv hvm
+  have hhist : winCount (bandDig x) v (bT i) ≤ bT i := winCount_le _ _ _
+  generalize hc : (bandS i).card * v.length = c at h2 ⊢
+  rw [hsplit]
+  omega
+
+/-! ### The frequency limit along the band cutoffs -/
+
+lemma tendsto_const_div_kk (c : ℝ) :
+    Tendsto (fun i => c / (kk i : ℝ)) atTop (nhds 0) :=
+  tendsto_kk_atTop.const_div_atTop c
+
+open Classical in
+/-- **The headline of the band line.**  For every finite binary word `v`, the frequency of `v`
+in the first `bT (i+1)` digits read along the strictly increasing position map `bandPos` tends
+to `2^{−|v|}`.
+
+The digits are `G₄`'s, read at a strictly increasing sequence of positions defined from the
+schedule and the good atoms; the cutoffs `bT (i+1)` are the ends of the scale bands.  By
+`certified_granule_exceeds_previous_scale` the limit over *all* prefix lengths — normality — is
+not available on this mechanism; this is the strongest form that is. -/
+theorem tendsto_bandRead_freq (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
+    Tendsto (fun i =>
+        (winCount (bandDig (primeLambertAtBase 4)) v (bT (i + 1)) : ℝ) / (bT (i + 1) : ℝ))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+  classical
+  have hScard : ∀ i, (0 : ℝ) < ((bandS i).card : ℝ) := fun i => by
+    have := card_bandS_pos i
+    exact_mod_cast this
+  have hkkpos : ∀ i, (0 : ℝ) < (kk i : ℝ) := fun i => by
+    have := kk_pos' i
+    exact_mod_cast this
+  have hBpos : ∀ i, (0 : ℝ) < ((bT (i + 1) : ℕ) : ℝ) := fun i => by
+    have : 0 < bT (i + 1) := lt_of_le_of_lt (Nat.zero_le _) (bT_lt_succ i)
+    exact_mod_cast this
+  have hBeq : ∀ i, ((bT (i + 1) : ℕ) : ℝ)
+      = (bT i : ℝ) + ((bandS i).card : ℝ) * (kk i : ℝ) := by
+    intro i
+    show ((bT i + bL i : ℕ) : ℝ) = _
+    rw [bL]
+    push_cast
+    ring
+  have hT4 : ∀ i, (bT i : ℝ) ≤ 4 * ((bandS i).card : ℝ) := by
+    intro i
+    have h := bT_kk_le i
+    have hbl : (bL i : ℝ) = ((bandS i).card : ℝ) * (kk i : ℝ) := by
+      show ((((bandS i).card * kk i : ℕ)) : ℝ) = _
+      push_cast; ring
+    rw [hbl] at h
+    nlinarith [hkkpos i, hScard i]
+  -- the band's own ratio
+  have hrlim : Tendsto (fun i => (bandGood i (primeLambertAtBase 4) v : ℝ)
+      / (((bandS i).card : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ)))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+    refine (tendsto_band_occursCount v hlen hv).congr fun i => ?_
+    rw [bandGood_eq i (primeLambertAtBase 4) v]
+    congr 1
+    push_cast
+    rw [← Fin.sum_univ_eq_sum_range (fun q =>
+      (((bandS i).filter fun n =>
+        OccursAt 2 (primeLambertAtBase 4) v
+          (2 * kIdx (gridAt i) n (goodAtom i) + q)).card : ℝ))]
+  -- the denominator correction
+  have hcast : ∀ i, v.length ≤ kk i →
+      ((kk i - v.length + 1 : ℕ) : ℝ) = (kk i : ℝ) - (v.length : ℝ) + 1 := by
+    intro i hi
+    have h1 : (kk i - v.length + 1 : ℕ) = kk i + 1 - v.length := by omega
+    rw [h1, Nat.cast_sub (by omega)]
+    push_cast
+    ring
+  have hulim : Tendsto (fun i => (((bandS i).card : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ))
+      / ((bT (i + 1) : ℕ) : ℝ)) atTop (nhds 1) := by
+    have hsq : Tendsto (fun i => (((bandS i).card : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ))
+        / ((bT (i + 1) : ℕ) : ℝ) - 1) atTop (nhds 0) := by
+      refine squeeze_zero_norm' ?_ (tendsto_const_div_kk ((v.length : ℝ) + 4))
+      filter_upwards [eventually_ge_atTop v.length] with i hi
+      have hli : v.length ≤ kk i := by unfold kk; omega
+      have hSc := hScard i
+      have hk := hkkpos i
+      have hB := hBpos i
+      have hTnn : (0 : ℝ) ≤ (bT i : ℝ) := Nat.cast_nonneg _
+      rw [Real.norm_eq_abs, hcast i hli, hBeq i, abs_le]
+      set S : ℝ := ((bandS i).card : ℝ) with hS
+      set K : ℝ := (kk i : ℝ) with hK
+      set T : ℝ := (bT i : ℝ) with hT
+      set L : ℝ := (v.length : ℝ) with hL
+      have hSpos : 0 < S := hSc
+      have hKpos : 0 < K := hk
+      have hTnn' : 0 ≤ T := hTnn
+      have hT4' : T ≤ 4 * S := hT4 i
+      have hLnn : (0 : ℝ) ≤ L := Nat.cast_nonneg _
+      have hden : (0 : ℝ) < T + S * K := by nlinarith
+      have hSK : S ≤ (T + S * K) / K := by
+        rw [le_div_iff₀ hKpos]
+        nlinarith
+      set D : ℝ := (L + 4) / K with hD
+      have hmul : (L + 4) * S ≤ D * (T + S * K) := by
+        have h2 : (L + 4) * S ≤ (L + 4) * ((T + S * K) / K) :=
+          mul_le_mul_of_nonneg_left hSK (by linarith)
+        have h3 : (L + 4) * ((T + S * K) / K) = D * (T + S * K) := by
+          rw [hD]; field_simp
+        linarith [h3 ▸ h2]
+      have hkeyL : 1 - D ≤ S * (K - L + 1) / (T + S * K) := by
+        rw [le_div_iff₀ hden]
+        nlinarith [hmul, hT4']
+      have hkeyR : S * (K - L + 1) / (T + S * K) ≤ 1 + D := by
+        rw [div_le_iff₀ hden]
+        nlinarith [hmul, hSpos, hLnn, hTnn']
+      constructor
+      · linarith [hkeyL]
+      · linarith [hkeyR]
+    have := hsq.add (tendsto_const_nhds (x := (1 : ℝ)) (f := atTop))
+    rw [zero_add] at this
+    exact this.congr fun i => by ring
+  have hABlim : Tendsto (fun i => (bandGood i (primeLambertAtBase 4) v : ℝ)
+      / ((bT (i + 1) : ℕ) : ℝ)) atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+    have h := hrlim.mul hulim
+    rw [mul_one] at h
+    refine h.congr fun i => ?_
+    have hSc := (hScard i).ne'
+    have hk := (hkkpos i).ne'
+    have hB := (hBpos i).ne'
+    have hfit : ((kk i - v.length + 1 : ℕ) : ℝ) ≠ 0 := by
+      have : 0 < kk i - v.length + 1 := by omega
+      have : (0 : ℝ) < ((kk i - v.length + 1 : ℕ) : ℝ) := by exact_mod_cast this
+      exact this.ne'
+    field_simp
+  -- the seam error
+  have hdlim : Tendsto (fun i =>
+      (winCount (bandDig (primeLambertAtBase 4)) v (bT (i + 1)) : ℝ) / ((bT (i + 1) : ℕ) : ℝ)
+        - (bandGood i (primeLambertAtBase 4) v : ℝ) / ((bT (i + 1) : ℕ) : ℝ))
+      atTop (nhds 0) := by
+    refine squeeze_zero_norm' ?_ (tendsto_const_div_kk ((v.length : ℝ) + 4))
+    filter_upwards [eventually_ge_atTop v.length] with i hi
+    have hli : v.length ≤ kk i := by unfold kk; omega
+    have hSc := hScard i
+    have hk := hkkpos i
+    have hB := hBpos i
+    have hTnn : (0 : ℝ) ≤ (bT i : ℝ) := Nat.cast_nonneg _
+    obtain ⟨hlo, hhi⟩ := winCount_bT_bounds (primeLambertAtBase 4) i v hlen hli
+    have hlowR : (bandGood i (primeLambertAtBase 4) v : ℝ)
+        ≤ (winCount (bandDig (primeLambertAtBase 4)) v (bT (i + 1)) : ℝ) := by
+      exact_mod_cast hlo
+    have hhighR : (winCount (bandDig (primeLambertAtBase 4)) v (bT (i + 1)) : ℝ)
+        ≤ (bandGood i (primeLambertAtBase 4) v : ℝ) + (bT i : ℝ)
+          + ((bandS i).card : ℝ) * (v.length : ℝ) := by
+      have : ((bandGood i (primeLambertAtBase 4) v + bT i
+          + (bandS i).card * v.length : ℕ) : ℝ)
+          = (bandGood i (primeLambertAtBase 4) v : ℝ) + (bT i : ℝ)
+            + ((bandS i).card : ℝ) * (v.length : ℝ) := by push_cast; ring
+      rw [← this]
+      exact_mod_cast hhi
+    have hBge : ((bandS i).card : ℝ) * (kk i : ℝ) ≤ ((bT (i + 1) : ℕ) : ℝ) := by
+      rw [hBeq i]
+      linarith
+    rw [Real.norm_eq_abs, div_sub_div_same, abs_le]
+    constructor
+    · rw [neg_le, ← neg_div, neg_sub]
+      have hnn : (0 : ℝ) ≤ ((v.length : ℝ) + 4) / (kk i : ℝ) := by positivity
+      have hle : (bandGood i (primeLambertAtBase 4) v : ℝ)
+          - (winCount (bandDig (primeLambertAtBase 4)) v (bT (i + 1)) : ℝ) ≤ 0 := by linarith
+      have : ((bandGood i (primeLambertAtBase 4) v : ℝ)
+          - (winCount (bandDig (primeLambertAtBase 4)) v (bT (i + 1)) : ℝ))
+          / ((bT (i + 1) : ℕ) : ℝ) ≤ 0 := div_nonpos_of_nonpos_of_nonneg hle hB.le
+      linarith
+    · rw [div_le_div_iff₀ hB hk]
+      have hWA : (winCount (bandDig (primeLambertAtBase 4)) v (bT (i + 1)) : ℝ)
+          - (bandGood i (primeLambertAtBase 4) v : ℝ)
+          ≤ 4 * ((bandS i).card : ℝ) + ((bandS i).card : ℝ) * (v.length : ℝ) := by
+        linarith [hT4 i]
+      nlinarith [hWA, hBge, hSc, hk]
+  have hfin := hdlim.add hABlim
+  rw [zero_add] at hfin
+  exact hfin.congr fun i => by ring
+
 end NormalNumbers.G4.Sched
