@@ -61,12 +61,12 @@ end Frame
 
 open GridParams
 
-variable (G : GridParams) (X : ℕ) (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ)
-  (γ : Torus G.rDim) {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ)
+variable (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ) (hne : (apSample X G.P₀ G.b₀).Nonempty)
+  (sm : Finset ℕ) (γ : Torus G.rDim) {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ)
 
 /-- The real matrix of the concrete frame is the reindexed `tensorDiff`. -/
 lemma gridFrame_AR :
-    (gridFrame G X hne sm γ hη hε D).AR
+    (gridFrame bb hbb G X hne sm γ hη hε D).AR
       = (tensorDiff G.K G.s).submatrix G.rowEquiv.symm G.atomEquiv.symm := by
   ext ν α
   rw [Frame.AR, Matrix.map_apply]
@@ -77,14 +77,14 @@ lemma gridFrame_AR :
 
 /-- **Piece-cube bound on the grid.**  With `Lg ≥ log det(1 + T_s^{⊗K})`,
 `vol([A_G, I_G]·cube) ≤ exp(Lg/2) · (√(2πe/|G|) · √(H + |G|))^{|G|}`. -/
-theorem gridFrame_volume_pieceCube_le (Gs : Finset (Fin (gridFrame G X hne sm γ hη hε D).r))
+theorem gridFrame_volume_pieceCube_le (Gs : Finset (Fin (gridFrame bb hbb G X hne sm γ hη hε D).r))
     (hG : 0 < Gs.card) {Lg : ℝ} (hlog : Real.log (1 + tensorGram G.K G.s).det ≤ Lg) :
-    (volume ((gridFrame G X hne sm γ hη hε D).pieceCube Gs)).toReal
+    (volume ((gridFrame bb hbb G X hne sm γ hη hε D).pieceCube Gs)).toReal
       ≤ Real.exp (Lg / 2)
         * (Real.sqrt (2 * Real.pi * Real.exp 1 / Gs.card)
             * Real.sqrt (G.hDim + Gs.card)) ^ Gs.card := by
-  have h1 := (gridFrame G X hne sm γ hη hε D).volume_pieceCube_le_of_reindex (tensorDiff G.K G.s)
-    G.rowEquiv.symm G.atomEquiv.symm (gridFrame_AR G X hne sm γ hη hε D) Gs hG
+  have h1 := (gridFrame bb hbb G X hne sm γ hη hε D).volume_pieceCube_le_of_reindex (tensorDiff G.K G.s)
+    G.rowEquiv.symm G.atomEquiv.symm (gridFrame_AR bb hbb G X hne sm γ hη hε D) Gs hG
   rw [tensorDiff_mul_transpose, gridFrame_H] at h1
   refine h1.trans ?_
   gcongr
@@ -96,55 +96,59 @@ theorem gridFrame_volume_pieceCube_le (Gs : Finset (Fin (gridFrame G X hne sm γ
         rw [Real.sqrt_eq_rpow, Real.rpow_def_of_pos hpos]; ring_nf
     _ ≤ _ := by gcongr
 
-/-! ### The base-four cylinder inside an omitted interval, and the cylinder cover -/
+/-! ### The base-`bb` cylinder inside an omitted interval, and the cylinder cover -/
 
-/-- Every interval `[a, c) ⊆ [0, 1]` of positive length contains a base-four cylinder
-`[w/4^ℓ, (w+1)/4^ℓ)`. -/
+include hbb in
+/-- Every interval `[a, c) ⊆ [0, 1]` of positive length contains a base-`bb` cylinder
+`[w/bb^ℓ, (w+1)/bb^ℓ)`, for any `bb ≥ 2`. -/
 lemma exists_cylinder_subset {a c : ℝ} (ha : 0 ≤ a) (hac : a < c) (hc : c ≤ 1) :
-    ∃ ℓ w : ℕ, w < 4 ^ ℓ ∧
-      Set.Ico ((w : ℝ) / 4 ^ ℓ) (((w : ℝ) + 1) / 4 ^ ℓ) ⊆ Set.Ico a c := by
-  -- choose `ℓ` with `2 / 4^ℓ ≤ c − a`
-  obtain ⟨ℓ, hℓ⟩ : ∃ ℓ : ℕ, 2 / (c - a) ≤ (4 : ℝ) ^ ℓ := by
-    obtain ⟨ℓ, hℓ⟩ := pow_unbounded_of_one_lt (2 / (c - a)) (by norm_num : (1 : ℝ) < 4)
+    ∃ ℓ w : ℕ, w < bb ^ ℓ ∧
+      Set.Ico ((w : ℝ) / (bb : ℝ) ^ ℓ) (((w : ℝ) + 1) / (bb : ℝ) ^ ℓ) ⊆ Set.Ico a c := by
+  have hb1 : (1 : ℝ) < bb := by exact_mod_cast (show 1 < bb by omega)
+  -- choose `ℓ` with `2 / bb^ℓ ≤ c − a`
+  obtain ⟨ℓ, hℓ⟩ : ∃ ℓ : ℕ, 2 / (c - a) ≤ (bb : ℝ) ^ ℓ := by
+    obtain ⟨ℓ, hℓ⟩ := pow_unbounded_of_one_lt (2 / (c - a)) hb1
     exact ⟨ℓ, hℓ.le⟩
   have hca : 0 < c - a := by linarith
-  have h4 : (0 : ℝ) < 4 ^ ℓ := by positivity
-  have hgap : 2 / (4 : ℝ) ^ ℓ ≤ c - a := by
+  have h4 : (0 : ℝ) < (bb : ℝ) ^ ℓ := by positivity
+  have hgap : 2 / (bb : ℝ) ^ ℓ ≤ c - a := by
     rw [div_le_iff₀ h4]; rw [div_le_iff₀ hca] at hℓ; linarith
-  refine ⟨ℓ, ⌈a * 4 ^ ℓ⌉₊, ?_, ?_⟩
-  · have h1 : (⌈a * 4 ^ ℓ⌉₊ : ℝ) < a * 4 ^ ℓ + 1 := Nat.ceil_lt_add_one (by positivity)
-    have h2 : a * 4 ^ ℓ + 2 ≤ 4 ^ ℓ := by
-      have : (c - a) * 4 ^ ℓ ≤ 1 * 4 ^ ℓ := by gcongr; linarith
+  refine ⟨ℓ, ⌈a * (bb : ℝ) ^ ℓ⌉₊, ?_, ?_⟩
+  · have h1 : (⌈a * (bb : ℝ) ^ ℓ⌉₊ : ℝ) < a * (bb : ℝ) ^ ℓ + 1 :=
+      Nat.ceil_lt_add_one (by positivity)
+    have h2 : a * (bb : ℝ) ^ ℓ + 2 ≤ (bb : ℝ) ^ ℓ := by
+      have : (c - a) * (bb : ℝ) ^ ℓ ≤ 1 * (bb : ℝ) ^ ℓ := by gcongr; linarith
       rw [div_le_iff₀ h4] at hgap; nlinarith
-    exact_mod_cast (show (⌈a * 4 ^ ℓ⌉₊ : ℝ) < 4 ^ ℓ by linarith)
+    exact_mod_cast (show (⌈a * (bb : ℝ) ^ ℓ⌉₊ : ℝ) < (bb : ℝ) ^ ℓ by linarith)
   · intro x hx
     obtain ⟨hx1, hx2⟩ := hx
-    have h1 : a * 4 ^ ℓ ≤ ⌈a * 4 ^ ℓ⌉₊ := Nat.le_ceil _
-    have h3 : (⌈a * 4 ^ ℓ⌉₊ : ℝ) < a * 4 ^ ℓ + 1 := Nat.ceil_lt_add_one (by positivity)
+    have h1 : a * (bb : ℝ) ^ ℓ ≤ ⌈a * (bb : ℝ) ^ ℓ⌉₊ := Nat.le_ceil _
+    have h3 : (⌈a * (bb : ℝ) ^ ℓ⌉₊ : ℝ) < a * (bb : ℝ) ^ ℓ + 1 :=
+      Nat.ceil_lt_add_one (by positivity)
     constructor
     · rw [div_le_iff₀ h4] at hx1; nlinarith
     · rw [lt_div_iff₀ h4] at hx2
       rw [div_le_iff₀ h4] at hgap
       nlinarith
 
-/-- The cylinder cover of `orbitClosure` in the form `volume_tube_le` consumes: if the orbit
-omits `[w/4^ℓ, (w+1)/4^ℓ)`, the closure is covered by at most `(4^ℓ − 1)^M` closed intervals
-of length `4^{−ℓM}`. -/
-lemma exists_cover_of_omit {ℓ w : ℕ} (hw : w < 4 ^ ℓ)
-    (homit : ∀ m, orbit 4 primeLambertFour m ∉
-      Set.Ico ((w : ℝ) / 4 ^ ℓ) (((w : ℝ) + 1) / 4 ^ ℓ)) (M : ℕ) :
-    ∃ Bs : Finset ℝ, Bs.card ≤ (4 ^ ℓ - 1) ^ M ∧
-      orbitClosure 4 ⊆ ⋃ c ∈ Bs, ((↑) : ℝ → UnitAddCircle) ''
-        Set.Icc c (c + 1 / ((4 : ℝ) ^ ℓ) ^ M) := by
-  refine ⟨(admissible (4 ^ ℓ) M ⟨w, hw⟩).image (cylLeft (4 ^ ℓ) M), ?_, ?_⟩
+include hbb in
+/-- The cylinder cover of `orbitClosure bb` in the form `volume_tube_le` consumes: if the orbit
+of `primeLambertAtBase bb` omits `[w/bb^ℓ, (w+1)/bb^ℓ)`, the closure is covered by at most
+`(bb^ℓ − 1)^M` closed intervals of length `bb^{−ℓM}`. -/
+lemma exists_cover_of_omit {ℓ w : ℕ} (hw : w < bb ^ ℓ)
+    (homit : ∀ m, orbit bb (primeLambertAtBase bb) m ∉
+      Set.Ico ((w : ℝ) / (bb : ℝ) ^ ℓ) (((w : ℝ) + 1) / (bb : ℝ) ^ ℓ)) (M : ℕ) :
+    ∃ Bs : Finset ℝ, Bs.card ≤ (bb ^ ℓ - 1) ^ M ∧
+      orbitClosure bb ⊆ ⋃ c ∈ Bs, ((↑) : ℝ → UnitAddCircle) ''
+        Set.Icc c (c + 1 / ((bb : ℝ) ^ ℓ) ^ M) := by
+  refine ⟨(admissible (bb ^ ℓ) M ⟨w, hw⟩).image (cylLeft (bb ^ ℓ) M), ?_, ?_⟩
   · exact Finset.card_image_le.trans (card_admissible _ _ _).le
   · intro x hx
     unfold orbitClosure at hx
-    have := orbitClosure_subset_cylinders (bb := 4) (by norm_num) hw
-      (by simpa [primeLambertFour] using homit) M hx
+    have := orbitClosure_subset_cylinders (bb := bb) (by omega) hw homit M hx
     rw [Set.mem_iUnion₂] at this ⊢
     obtain ⟨b, hb, hxb⟩ := this
-    refine ⟨cylLeft (4 ^ ℓ) M b, Finset.mem_image_of_mem _ hb, ?_⟩
+    refine ⟨cylLeft (bb ^ ℓ) M b, Finset.mem_image_of_mem _ hb, ?_⟩
     unfold cyl at hxb
     push_cast at hxb
     exact hxb
@@ -154,33 +158,33 @@ lemma card_goodSets_le (fr : Frame) : fr.goodSets.card ≤ 2 ^ fr.r := by
   calc _ ≤ ((univ : Finset (Fin fr.r)).powerset).card := Finset.card_filter_le _ _
     _ = 2 ^ fr.r := by rw [Finset.card_powerset, Finset.card_univ, Fintype.card_fin]
 
-/-- **`PropB` on the grid from one real inequality.**  Suppose the orbit omits
-`[w/4^ℓ, (w+1)/4^ℓ)`, `4^{−ℓM} ≤ η`, `ε < 1`, `Lg ≥ log det(1 + T_s^{⊗K})`, and for every
-`g` with `(1−ε) r ≤ g ≤ r`
+/-- **`PropB` on the grid from one real inequality, in base `bb`.**  Suppose the orbit of
+`primeLambertAtBase bb` omits `[w/bb^ℓ, (w+1)/bb^ℓ)`, `bb^{−ℓM} ≤ η`, `ε < 1`,
+`Lg ≥ log det(1 + T_s^{⊗K})`, and for every `g` with `(1−ε) r ≤ g ≤ r`
 
-    ((4^ℓ−1)^M)^H · η^g · exp(Lg/2) · (√(2πe/g) · √(H+g))^g ≤ δ₁ / 2^r.
+    ((bb^ℓ−1)^M)^H · η^g · exp(Lg/2) · (√(2πe/g) · √(H+g))^g ≤ δ₁ / 2^r.
 
 Then `PropB δ₁`. -/
-theorem gridFrame_propB_of_bound {ℓ w : ℕ} (hw : w < 4 ^ ℓ)
-    (homit : ∀ m, orbit 4 primeLambertFour m ∉
-      Set.Ico ((w : ℝ) / 4 ^ ℓ) (((w : ℝ) + 1) / 4 ^ ℓ))
-    (M : ℕ) (hM : 1 / ((4 : ℝ) ^ ℓ) ^ M ≤ η) (hε1 : ε < 1) (hr : 1 ≤ G.rDim)
+theorem gridFrame_propB_of_bound {ℓ w : ℕ} (hw : w < bb ^ ℓ)
+    (homit : ∀ m, orbit bb (primeLambertAtBase bb) m ∉
+      Set.Ico ((w : ℝ) / (bb : ℝ) ^ ℓ) (((w : ℝ) + 1) / (bb : ℝ) ^ ℓ))
+    (M : ℕ) (hM : 1 / ((bb : ℝ) ^ ℓ) ^ M ≤ η) (hε1 : ε < 1) (hr : 1 ≤ G.rDim)
     {Lg : ℝ} (hlog : Real.log (1 + tensorGram G.K G.s).det ≤ Lg)
     {δ₁ : ℝ} (hδ : 0 ≤ δ₁)
     (hbound : ∀ g : ℕ, (1 - ε) * G.rDim ≤ g → g ≤ G.rDim →
-      (((4 ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ G.hDim * η ^ g * Real.exp (Lg / 2)
+      (((bb ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ G.hDim * η ^ g * Real.exp (Lg / 2)
         * (Real.sqrt (2 * Real.pi * Real.exp 1 / g) * Real.sqrt (G.hDim + g)) ^ g
         ≤ δ₁ / 2 ^ G.rDim) :
-    (gridFrame G X hne sm γ hη hε D).PropB δ₁ := by
-  obtain ⟨Bs, hBs, hcov⟩ := exists_cover_of_omit hw homit M
+    (gridFrame bb hbb G X hne sm γ hη hε D).PropB δ₁ := by
+  obtain ⟨Bs, hBs, hcov⟩ := exists_cover_of_omit bb hbb hw homit M
   -- real lifts of θ and γ
-  choose θr hθr using fun ν => QuotientAddGroup.mk_surjective ((gridFrame G X hne sm γ hη hε D).θ ν)
-  choose γr hγr using fun ν => QuotientAddGroup.mk_surjective ((gridFrame G X hne sm γ hη hε D).γ ν)
+  choose θr hθr using fun ν => QuotientAddGroup.mk_surjective ((gridFrame bb hbb G X hne sm γ hη hε D).θ ν)
+  choose γr hγr using fun ν => QuotientAddGroup.mk_surjective ((gridFrame bb hbb G X hne sm γ hη hε D).γ ν)
   unfold Frame.PropB
-  refine ((gridFrame G X hne sm γ hη hε D).volume_tube_le θr γr hθr hγr hM Bs hcov).trans ?_
-  have hterm : ∀ Gs ∈ (gridFrame G X hne sm γ hη hε D).goodSets,
-      (Bs.card : ℝ) ^ (gridFrame G X hne sm γ hη hε D).H * η ^ Gs.card
-        * (volume ((gridFrame G X hne sm γ hη hε D).pieceCube Gs)).toReal ≤ δ₁ / 2 ^ G.rDim := by
+  refine ((gridFrame bb hbb G X hne sm γ hη hε D).volume_tube_le θr γr hθr hγr hM Bs hcov).trans ?_
+  have hterm : ∀ Gs ∈ (gridFrame bb hbb G X hne sm γ hη hε D).goodSets,
+      (Bs.card : ℝ) ^ (gridFrame bb hbb G X hne sm γ hη hε D).H * η ^ Gs.card
+        * (volume ((gridFrame bb hbb G X hne sm γ hη hε D).pieceCube Gs)).toReal ≤ δ₁ / 2 ^ G.rDim := by
     intro Gs hGs
     unfold Frame.goodSets at hGs
     rw [Finset.mem_filter] at hGs
@@ -192,28 +196,28 @@ theorem gridFrame_propB_of_bound {ℓ w : ℕ} (hw : w < 4 ^ ℓ)
       have hr' : (1 : ℝ) ≤ G.rDim := by exact_mod_cast hr
       have : (0 : ℝ) < (1 - ε) * G.rDim := mul_pos (by linarith) (by linarith)
       exact_mod_cast (lt_of_lt_of_le this hge)
-    have hpc := gridFrame_volume_pieceCube_le G X hne sm γ hη hε D Gs hpos hlog
+    have hpc := gridFrame_volume_pieceCube_le bb hbb G X hne sm γ hη hε D Gs hpos hlog
     refine le_trans ?_ (hbound Gs.card hge hle)
     rw [gridFrame_H]
-    have h1 : (Bs.card : ℝ) ^ G.hDim ≤ (((4 ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ G.hDim := by
-      have : (Bs.card : ℝ) ≤ (((4 ^ ℓ - 1) ^ M : ℕ) : ℝ) := by exact_mod_cast hBs
+    have h1 : (Bs.card : ℝ) ^ G.hDim ≤ (((bb ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ G.hDim := by
+      have : (Bs.card : ℝ) ≤ (((bb ^ ℓ - 1) ^ M : ℕ) : ℝ) := by exact_mod_cast hBs
       exact pow_le_pow_left₀ (by positivity) this _
     calc (Bs.card : ℝ) ^ G.hDim * η ^ Gs.card
-          * (volume ((gridFrame G X hne sm γ hη hε D).pieceCube Gs)).toReal
-        ≤ (((4 ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ G.hDim * η ^ Gs.card
+          * (volume ((gridFrame bb hbb G X hne sm γ hη hε D).pieceCube Gs)).toReal
+        ≤ (((bb ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ G.hDim * η ^ Gs.card
           * (Real.exp (Lg / 2) * (Real.sqrt (2 * Real.pi * Real.exp 1 / Gs.card)
               * Real.sqrt (G.hDim + Gs.card)) ^ Gs.card) := by
           gcongr
       _ = _ := by ring
-  calc ∑ Gs ∈ (gridFrame G X hne sm γ hη hε D).goodSets,
-        (Bs.card : ℝ) ^ (gridFrame G X hne sm γ hη hε D).H * η ^ Gs.card
-          * (volume ((gridFrame G X hne sm γ hη hε D).pieceCube Gs)).toReal
-      ≤ ∑ _Gs ∈ (gridFrame G X hne sm γ hη hε D).goodSets, δ₁ / 2 ^ G.rDim :=
+  calc ∑ Gs ∈ (gridFrame bb hbb G X hne sm γ hη hε D).goodSets,
+        (Bs.card : ℝ) ^ (gridFrame bb hbb G X hne sm γ hη hε D).H * η ^ Gs.card
+          * (volume ((gridFrame bb hbb G X hne sm γ hη hε D).pieceCube Gs)).toReal
+      ≤ ∑ _Gs ∈ (gridFrame bb hbb G X hne sm γ hη hε D).goodSets, δ₁ / 2 ^ G.rDim :=
         Finset.sum_le_sum hterm
-    _ = ((gridFrame G X hne sm γ hη hε D).goodSets.card : ℝ) * (δ₁ / 2 ^ G.rDim) := by
+    _ = ((gridFrame bb hbb G X hne sm γ hη hε D).goodSets.card : ℝ) * (δ₁ / 2 ^ G.rDim) := by
         rw [Finset.sum_const, nsmul_eq_mul]
     _ ≤ (2 ^ G.rDim : ℝ) * (δ₁ / 2 ^ G.rDim) := by
-        have hc : ((gridFrame G X hne sm γ hη hε D).goodSets.card : ℝ) ≤ 2 ^ G.rDim := by
+        have hc : ((gridFrame bb hbb G X hne sm γ hη hε D).goodSets.card : ℝ) ≤ 2 ^ G.rDim := by
           exact_mod_cast card_goodSets_le _
         exact mul_le_mul_of_nonneg_right hc (by positivity)
     _ = δ₁ := by field_simp

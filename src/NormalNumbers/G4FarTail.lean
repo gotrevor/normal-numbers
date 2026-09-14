@@ -18,8 +18,10 @@ which we take entirely elementary — no Mertens, no Hardy–Ramanujan:
 * **`sum_omegaR_add_le`** — the assembly: on any `P ⊆ range X`,
   `∑_{n∈P} ω(n+ρ) ≤ |P| · log( (X+ρ)(log(X+ρ)+1)/|P| ) / log 2`.
 
-Growth in the shift `ρ` is only logarithmic, so summing against `4^{−j}` over `j > J` needs no
-remote cutoff.
+Growth in the shift `ρ` is only logarithmic, so summing against `b^{−j}` over `j > J` needs no
+remote cutoff.  The whole module is base-general (`bb ≥ 2`): the geometric closed form is
+`farBound b J C = b^{−J}((C + 2J + 2)/(b−1) + 2/(b−1)²)`, and `farBound_four` recovers the
+draft's `(C+2J+2)/3 + 2/9`.
 -/
 
 open Finset Real
@@ -180,22 +182,24 @@ theorem sum_omegaR_add_le {X : ℕ} (P : Finset ℕ) (hP : P ⊆ Finset.range X)
 
 /-! ### The far tail on the grid -/
 
-/-- The far layers `j = J + i + 1` of one atom, on a sample point, are summable. -/
-lemma summable_far (G : GridParams) {X n : ℕ} (hn : n ∈ apSample X G.P₀ G.b₀) (α : G.Atom) :
+/-- The far layers `j = J + i + 1` of one atom, on a sample point, are summable (any base
+`bb ≥ 2`). -/
+lemma summable_far (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) {X n : ℕ}
+    (hn : n ∈ apSample X G.P₀ G.b₀) (α : G.Atom) :
     Summable (fun i : ℕ => omegaR (n + shiftG G.B G.Q G.D₀ α (G.K + G.N + i + 1))
-      / (4 : ℝ) ^ (G.K + G.N + i + 1)) := by
+      / (bb : ℝ) ^ (G.K + G.N + i + 1)) := by
   obtain ⟨k, hk1, -⟩ := G.exists_mult_mul hn α
   have hsum : Summable
-      (fun j : ℕ => omegaR (n + shiftG G.B G.Q G.D₀ α (j + 1)) / (4 : ℝ) ^ (j + 1)) := by
-    refine (summable_dilatedTailB (b := 4) (by norm_num) (G.d α) k (G.d_pos α).ne').congr
+      (fun j : ℕ => omegaR (n + shiftG G.B G.Q G.D₀ α (j + 1)) / (bb : ℝ) ^ (j + 1)) := by
+    refine (summable_dilatedTailB (b := bb) hbb (G.d α) k (G.d_pos α).ne').congr
       (fun j => ?_)
     rw [hk1]
-    show omegaR (G.d α * (k + j + 1)) / (4 : ℝ) ^ (j + 1)
+    show omegaR (G.d α * (k + j + 1)) / (bb : ℝ) ^ (j + 1)
       = omegaR (offset G.B G.Q α + mult G.B G.Q G.D₀ α * k
-          + shiftG G.B G.Q G.D₀ α (j + 1)) / (4 : ℝ) ^ (j + 1)
+          + shiftG G.B G.Q G.D₀ α (j + 1)) / (bb : ℝ) ^ (j + 1)
     rw [add_shiftG_eq G.B G.Q G.D₀ α (G.hD α) (by omega)]
-    show omegaR (G.d α * (k + j + 1)) / (4 : ℝ) ^ (j + 1)
-      = omegaR (G.d α * (k + (j + 1))) / (4 : ℝ) ^ (j + 1)
+    show omegaR (G.d α * (k + j + 1)) / (bb : ℝ) ^ (j + 1)
+      = omegaR (G.d α * (k + (j + 1))) / (bb : ℝ) ^ (j + 1)
     rw [show k + j + 1 = k + (j + 1) by omega]
   refine ((summable_nat_add_iff (G.K + G.N)).2 hsum).congr (fun i => ?_)
   rw [show i + (G.K + G.N) + 1 = G.K + G.N + i + 1 by omega]
@@ -273,41 +277,70 @@ theorem sum_omegaR_shiftG_le (G : GridParams) (X : ℕ) (hne : (apSample X G.P�
   rw [mul_div_assoc]
   exact mul_le_mul_of_nonneg_left (div_le_div_of_nonneg_right hlogq hlog2.le) hc.le
 
-/-- The far bound series `(C + 2(J+i+1)) · 4^{−(J+i+1)}`, summed explicitly. -/
-lemma hasSum_farBound (C : ℝ) (J : ℕ) :
-    HasSum (fun i : ℕ => (C + 2 * ((J : ℝ) + i + 1)) * (1 / 4 : ℝ) ^ (J + i + 1))
-      ((1 / 4 : ℝ) ^ J * ((C + 2 * J + 2) / 3 + 2 / 9)) := by
-  have h1 := hasSum_geometric_of_lt_one (r := (1 / 4 : ℝ)) (by norm_num) (by norm_num)
-  have h2 := hasSum_coe_mul_geometric_of_norm_lt_one (𝕜 := ℝ) (r := (1 / 4 : ℝ))
-    (by rw [Real.norm_eq_abs, abs_of_pos (by norm_num)]; norm_num)
-  have h := ((h1.mul_left ((C + 2 * J + 2) * (1 / 4 : ℝ))).add
-    (h2.mul_left (2 * (1 / 4 : ℝ)))).mul_left ((1 / 4 : ℝ) ^ J)
-  have hfun : (fun i : ℕ => (C + 2 * ((J : ℝ) + i + 1)) * (1 / 4 : ℝ) ^ (J + i + 1))
-      = fun i : ℕ => (1 / 4 : ℝ) ^ J * ((C + 2 * J + 2) * (1 / 4 : ℝ) * (1 / 4 : ℝ) ^ i
-          + 2 * (1 / 4 : ℝ) * ((i : ℝ) * (1 / 4 : ℝ) ^ i)) := by
+/-- The closed form of the far bound series in base `b`:
+`∑_i (C + 2(J+i+1)) b^{−(J+i+1)} = b^{−J} ((C + 2J + 2)/(b−1) + 2/(b−1)²)`. -/
+noncomputable def farBound (b : ℝ) (J : ℕ) (C : ℝ) : ℝ :=
+  (1 / b) ^ J * ((C + 2 * J + 2) / (b - 1) + 2 / (b - 1) ^ 2)
+
+lemma farBound_four (J : ℕ) (C : ℝ) :
+    farBound 4 J C = (1 / 4 : ℝ) ^ J * ((C + 2 * J + 2) / 3 + 2 / 9) := by
+  unfold farBound; norm_num
+
+lemma farBound_nonneg {b : ℝ} (hb : 2 ≤ b) (J : ℕ) {C : ℝ} (hC : 0 ≤ C) :
+    0 ≤ farBound b J C := by
+  unfold farBound
+  have : 0 < b - 1 := by linarith
+  have : 0 < 1 / b := by positivity
+  positivity
+
+/-- The far bound series `(C + 2(J+i+1)) · b^{−(J+i+1)}`, summed explicitly, in any real base
+`b ≥ 2`. -/
+lemma hasSum_farBound {b : ℝ} (hb : 2 ≤ b) (C : ℝ) (J : ℕ) :
+    HasSum (fun i : ℕ => (C + 2 * ((J : ℝ) + i + 1)) * (1 / b) ^ (J + i + 1))
+      (farBound b J C) := by
+  have hbpos : (0 : ℝ) < b := by linarith
+  have hr0 : (0 : ℝ) ≤ 1 / b := by positivity
+  have hr1 : (1 / b : ℝ) < 1 := by rw [div_lt_one hbpos]; linarith
+  have h1 := hasSum_geometric_of_lt_one hr0 hr1
+  have h2 := hasSum_coe_mul_geometric_of_norm_lt_one (𝕜 := ℝ) (r := (1 / b : ℝ))
+    (by rw [Real.norm_eq_abs, abs_of_nonneg hr0]; exact hr1)
+  have h := ((h1.mul_left ((C + 2 * J + 2) * (1 / b))).add
+    (h2.mul_left (2 * (1 / b)))).mul_left ((1 / b) ^ J)
+  have hfun : (fun i : ℕ => (C + 2 * ((J : ℝ) + i + 1)) * (1 / b) ^ (J + i + 1))
+      = fun i : ℕ => (1 / b) ^ J * ((C + 2 * J + 2) * (1 / b) * (1 / b) ^ i
+          + 2 * (1 / b) * ((i : ℝ) * (1 / b) ^ i)) := by
     funext i; ring
-  rw [hfun, show (1 / 4 : ℝ) ^ J * ((C + 2 * J + 2) / 3 + 2 / 9)
-      = (1 / 4 : ℝ) ^ J * ((C + 2 * J + 2) * (1 / 4 : ℝ) * (1 - 1 / 4 : ℝ)⁻¹
-          + 2 * (1 / 4 : ℝ) * ((1 / 4 : ℝ) / (1 - 1 / 4) ^ 2)) by norm_num; ring]
+  rw [hfun]
+  have hb1 : b - 1 ≠ 0 := by linarith
+  have hb0 : b ≠ 0 := hbpos.ne'
+  have hclosed : farBound b J C
+      = (1 / b) ^ J * ((C + 2 * J + 2) * (1 / b) * (1 - 1 / b)⁻¹
+          + 2 * (1 / b) * ((1 / b) / (1 - 1 / b) ^ 2)) := by
+    unfold farBound
+    congr 1
+    field_simp
+  rw [hclosed]
   exact h
 
 /-- **The far tail of one row, summed over the sample.** -/
-theorem sum_abs_farPart_le (G : GridParams) (X : ℕ) (hne : (apSample X G.P₀ G.b₀).Nonempty)
+theorem sum_abs_farPart_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty)
     {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) (a : Fin G.K → Fin G.s) :
-    ∑ n ∈ apSample X G.P₀ G.b₀, |farPart G n a|
+    ∑ n ∈ apSample X G.P₀ G.b₀, |farPart bb G n a|
       ≤ (apSample X G.P₀ G.b₀).card * ((2 : ℝ) ^ G.K / Real.log 2
-          * ((1 / 4 : ℝ) ^ (G.K + G.N) * ((farC G X Dm + 2 * (G.K + G.N : ℕ) + 2) / 3 + 2 / 9))) := by
+          * farBound bb (G.K + G.N) (farC G X Dm)) := by
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
   set P := apSample X G.P₀ G.b₀ with hP
   set J := G.K + G.N with hJ
   set C := farC G X Dm with hC
   have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
   set f : G.Atom → ℕ → ℕ → ℝ := fun α n i =>
-    omegaR (n + shiftG G.B G.Q G.D₀ α (J + i + 1)) / (4 : ℝ) ^ (J + i + 1) with hf
+    omegaR (n + shiftG G.B G.Q G.D₀ α (J + i + 1)) / (bb : ℝ) ^ (J + i + 1) with hf
   have hf0 : ∀ α n i, 0 ≤ f α n i := fun α n i => by
     simp only [hf]; exact div_nonneg (omegaR_nonneg _) (by positivity)
-  have hfs : ∀ α, ∀ n ∈ P, Summable (f α n) := fun α n hn => summable_far G hn α
+  have hfs : ∀ α, ∀ n ∈ P, Summable (f α n) := fun α n hn => summable_far bb hbb G hn α
   -- pointwise: `|farPart n a| ≤ ∑_α |A_{aα}| ∑'_i f α n i`
-  have hpt : ∀ n ∈ P, |farPart G n a|
+  have hpt : ∀ n ∈ P, |farPart bb G n a|
       ≤ ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, f α n i := by
     intro n _
     unfold farPart
@@ -315,24 +348,25 @@ theorem sum_abs_farPart_le (G : GridParams) (X : ℕ) (hne : (apSample X G.P₀ 
     rw [abs_mul, abs_of_nonneg (tsum_nonneg fun i => hf0 α n i)]
   -- the layer bound
   have hlayer : ∀ α i, ∑ n ∈ P, f α n i
-      ≤ P.card * ((C + 2 * ((J : ℝ) + i + 1)) * (1 / 4 : ℝ) ^ (J + i + 1)) / Real.log 2 := by
+      ≤ P.card * ((C + 2 * ((J : ℝ) + i + 1)) * (1 / (bb : ℝ)) ^ (J + i + 1)) / Real.log 2 := by
     intro α i
     simp only [hf]
     rw [← Finset.sum_div]
     have := sum_omegaR_shiftG_le G X hne hDm α (j := J + i + 1) (by omega)
-    rw [div_le_iff₀ (by positivity : (0 : ℝ) < (4 : ℝ) ^ (J + i + 1))]
+    have hbpos : (0 : ℝ) < bb := by linarith
+    rw [div_le_iff₀ (by positivity : (0 : ℝ) < (bb : ℝ) ^ (J + i + 1))]
     refine this.trans (le_of_eq ?_)
     rw [one_div_pow, ← hP, ← hC]
     field_simp
     push_cast
     ring
-  have hbound := hasSum_farBound C J
+  have hbound := hasSum_farBound hbr C J
   have hbound_sum : HasSum (fun i : ℕ => P.card * ((C + 2 * ((J : ℝ) + i + 1))
-      * (1 / 4 : ℝ) ^ (J + i + 1)) / Real.log 2)
-      (P.card * ((1 / 4 : ℝ) ^ J * ((C + 2 * J + 2) / 3 + 2 / 9)) / Real.log 2) := by
+      * (1 / (bb : ℝ)) ^ (J + i + 1)) / Real.log 2)
+      (P.card * farBound bb J C / Real.log 2) := by
     have := (hbound.mul_left (P.card : ℝ)).div_const (Real.log 2)
     exact this
-  calc ∑ n ∈ P, |farPart G n a|
+  calc ∑ n ∈ P, |farPart bb G n a|
       ≤ ∑ n ∈ P, ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, f α n i :=
         Finset.sum_le_sum hpt
     _ = ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, ∑ n ∈ P, f α n i := by
@@ -340,7 +374,7 @@ theorem sum_abs_farPart_le (G : GridParams) (X : ℕ) (hne : (apSample X G.P₀ 
         refine Finset.sum_congr rfl fun α _ => ?_
         rw [← Finset.mul_sum, Summable.tsum_finsetSum (hfs α)]
     _ ≤ ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)|
-          * (P.card * ((1 / 4 : ℝ) ^ J * ((C + 2 * J + 2) / 3 + 2 / 9)) / Real.log 2) := by
+          * (P.card * farBound bb J C / Real.log 2) := by
         refine Finset.sum_le_sum fun α _ => mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
         rw [← hbound_sum.tsum_eq]
         refine Summable.tsum_le_tsum (hlayer α) ?_ hbound_sum.summable
@@ -365,42 +399,41 @@ lemma farC_nonneg (G : GridParams) (X : ℕ) (hne : (apSample X G.P₀ G.b₀).N
   have h3 : 0 ≤ Real.log (Real.log ((X + Dm : ℕ) : ℝ) + 1) := Real.log_nonneg (by linarith)
   linarith
 
-/-- **`farAvg`, in closed form (brief §4D, the infinite far tail).**  With `Dm ≥ every d_α`
-and `C₀ = farC G X Dm = log((X+Dm)/|P|) + log(log(X+Dm)+1)`,
+/-- **`farAvg`, in closed form, in base `bb` (brief §4D, the infinite far tail).**  With
+`Dm ≥ every d_α` and `C₀ = farC G X Dm = log((X+Dm)/|P|) + log(log(X+Dm)+1)`,
 
-  `farAvg ≤ 2^K · 4^{−J} · ((C₀ + 2J + 2)/3 + 2/9) / log 2`,   `J = K + N`.
+  `farAvg ≤ 2^K · farBound bb J C₀ / log 2`,   `J = K + N`,
+  `farBound b J C = b^{−J} ((C + 2J + 2)/(b−1) + 2/(b−1)²)`.
 
-Under §5 this is `O(2^K L^{−6} (L + log P₀))`, which is `o(η)`. -/
-theorem farAvg_le (G : GridParams) (X : ℕ) (hne : (apSample X G.P₀ G.b₀).Nonempty)
-    {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) :
-    farAvg G X ≤ (2 : ℝ) ^ G.K / Real.log 2
-      * ((1 / 4 : ℝ) ^ (G.K + G.N) * ((farC G X Dm + 2 * (G.K + G.N : ℕ) + 2) / 3 + 2 / 9)) := by
+Under §5 this is `O((2/b)^K b^{−N} (L + log P₀))`, which is `o(η)` for `b ≥ 3`. -/
+theorem farAvg_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) :
+    farAvg bb G X ≤ (2 : ℝ) ^ G.K / Real.log 2 * farBound bb (G.K + G.N) (farC G X Dm) := by
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
   set P := apSample X G.P₀ G.b₀ with hP
-  set Bd : ℝ := (2 : ℝ) ^ G.K / Real.log 2
-      * ((1 / 4 : ℝ) ^ (G.K + G.N) * ((farC G X Dm + 2 * (G.K + G.N : ℕ) + 2) / 3 + 2 / 9))
-    with hBd
+  set Bd : ℝ := (2 : ℝ) ^ G.K / Real.log 2 * farBound bb (G.K + G.N) (farC G X Dm) with hBd
   have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
   have hC := farC_nonneg G X hne Dm
   have hBd0 : 0 ≤ Bd := by
     rw [hBd]
     have h1 : 0 ≤ (2 : ℝ) ^ G.K / Real.log 2 := by positivity
-    have h2 : 0 ≤ (1 / 4 : ℝ) ^ (G.K + G.N) := by positivity
-    have h3 : 0 ≤ (farC G X Dm + 2 * (G.K + G.N : ℕ) + 2) / 3 + 2 / 9 := by positivity
+    have h2 := farBound_nonneg hbr (G.K + G.N) hC
     positivity
-  have hrow : ∀ ν : Fin G.rDim, (P.card : ℝ)⁻¹ * ∑ n ∈ P, |farPart G n (G.rowEquiv.symm ν)| ≤ Bd := by
+  have hrow : ∀ ν : Fin G.rDim,
+      (P.card : ℝ)⁻¹ * ∑ n ∈ P, |farPart bb G n (G.rowEquiv.symm ν)| ≤ Bd := by
     intro ν
     have hc : (0 : ℝ) < P.card := by exact_mod_cast hne.card_pos
-    have := sum_abs_farPart_le G X hne hDm (G.rowEquiv.symm ν)
+    have := sum_abs_farPart_le bb hbb G X hne hDm (G.rowEquiv.symm ν)
     rw [← hP] at this
-    calc (P.card : ℝ)⁻¹ * ∑ n ∈ P, |farPart G n (G.rowEquiv.symm ν)|
+    calc (P.card : ℝ)⁻¹ * ∑ n ∈ P, |farPart bb G n (G.rowEquiv.symm ν)|
         ≤ (P.card : ℝ)⁻¹ * (P.card * Bd) := mul_le_mul_of_nonneg_left this (by positivity)
       _ = Bd := by field_simp
   unfold farAvg
   rw [← hP]
   have hswap : (P.card : ℝ)⁻¹ * ∑ n ∈ P, (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-        |farPart G n (G.rowEquiv.symm ν)|
+        |farPart bb G n (G.rowEquiv.symm ν)|
       = (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, (P.card : ℝ)⁻¹ * ∑ n ∈ P,
-        |farPart G n (G.rowEquiv.symm ν)| := by
+        |farPart bb G n (G.rowEquiv.symm ν)| := by
     simp_rw [Finset.mul_sum]
     rw [Finset.sum_comm]
     refine Finset.sum_congr rfl fun ν _ => Finset.sum_congr rfl fun n _ => ?_
@@ -412,26 +445,25 @@ theorem farAvg_le (G : GridParams) (X : ℕ) (hne : (apSample X G.P₀ G.b₀).N
 
 /-! ### `PropD` from the two closed forms -/
 
-/-- **`PropD` from the two closed-form remainder bounds.**  §4D is now reduced to two real
-inequalities in the parameters alone: the medium/very-large bound `bigAvg_le'` and the far-tail
-bound `farAvg_le`, each at most its share of `ε η`. -/
-theorem gridFrame_propD_of_bounds (G : GridParams) (X R Y : ℕ)
+/-- **`PropD` from the two closed-form remainder bounds, in base `bb`.**  §4D is now reduced to
+two real inequalities in the parameters alone: the medium/very-large bound `bigAvg_le'` and the
+far-tail bound `farAvg_le`, each at most its share of `ε η`. -/
+theorem gridFrame_propD_of_bounds (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X R Y : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (hK : 0 < G.K) (hR : 2 ≤ R) (hRY : R ≤ Y)
     {Mx : ℝ} (hMx1 : 1 ≤ Mx)
     (hMx : ∀ n ∈ apSample X G.P₀ G.b₀, ∀ i : G.Idx,
       ((n + shiftAL G.B G.Q G.D₀ i : ℕ) : ℝ) ≤ Mx)
     {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) {δbig δfar : ℝ}
-    (hbig : Real.sqrt (4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R))
-            * ((1 / 8 : ℝ) ^ G.K / 15)
-          + 2 * (Y : ℝ) ^ 2 * ((1 / 2 : ℝ) ^ G.K / 3) ^ 2 / (apSample X G.P₀ G.b₀).card)
-        + (Real.log Mx / Real.log Y) * (1 / 2 : ℝ) ^ G.K / 3 ≤ δbig * (ε * η))
-    (hfar : (2 : ℝ) ^ G.K / Real.log 2
-      * ((1 / 4 : ℝ) ^ (G.K + G.N) * ((farC G X Dm + 2 * (G.K + G.N : ℕ) + 2) / 3 + 2 / 9))
+    (hbig : Real.sqrt (4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R)) * rowL2 bb G.K
+          + 2 * (Y : ℝ) ^ 2 * (rowL1 bb G.K) ^ 2 / (apSample X G.P₀ G.b₀).card)
+        + (Real.log Mx / Real.log Y) * rowL1 bb G.K ≤ δbig * (ε * η))
+    (hfar : (2 : ℝ) ^ G.K / Real.log 2 * farBound bb (G.K + G.N) (farC G X Dm)
         ≤ δfar * (ε * η)) :
-    (gridFrame G X hne (smallPrimes R G.P₀) (frozenGamma G) hη hε D).PropD (δbig + δfar) :=
-  gridFrame_propD G X hne R hη hε D
-    ((bigAvg_le' G X R Y hne hK hR hRY hMx1 hMx).trans hbig)
-    ((farAvg_le G X hne hDm).trans hfar)
+    (gridFrame bb hbb G X hne (smallPrimes R G.P₀) (frozenGamma bb G) hη hε D).PropD
+      (δbig + δfar) :=
+  gridFrame_propD bb hbb G X hne R hη hε D
+    ((bigAvg_le' bb hbb G X R Y hne hK hR hRY hMx1 hMx).trans hbig)
+    ((farAvg_le bb hbb G X hne hDm).trans hfar)
 
 end NormalNumbers.G4

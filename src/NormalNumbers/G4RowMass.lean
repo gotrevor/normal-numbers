@@ -20,9 +20,9 @@ and for `M = D_s`, whose rows are `+1` at `castSucc` and `−1` at `succ`:
 * `∑_c |D_s(a,c)| = 2`, hence **`sum_abs_kronPow_diffZ`**: `∑_α |A_{aα}| = 2^K`;
 * `∑_c D_s(a,c)² = 2`, hence **`sum_sq_kronPow_diffZ`**: `∑_α A_{aα}² = 2^K`.
 
-Combined with `∑_{j>K} 4^{−j} = 4^{−K}/3` and `∑_{j>K} 16^{−j} = 16^{−K}/15` these give the
-draft's row budgets `∑_{α,j>K} |c_{αj}| = 2^{−K}/3` and `∑_{α,j>K} c_{αj}² = 8^{−K}/15`
-(`sum_abs_coeff_le`, `sum_sq_coeff_le`).
+Combined with `∑_{j>K} b^{−j} ≤ b^{−K}/(b−1)` and `∑_{j>K} b^{−2j} ≤ b^{−2K}/(b²−1)` these give
+the row budgets `rowL1 b K = (2/b)^K/(b−1)` and `rowL2 b K = (2/b²)^K/(b²−1)`; at `b = 4` the
+draft's `2^{−K}/3` and `8^{−K}/15` (`rowL1_four`, `rowL2_four`).
 -/
 
 open Finset Matrix
@@ -187,45 +187,89 @@ lemma sum_layer_inv_sq_le (K N : ℕ) :
   exact (sum_layer_inv_sq_gen (q := (4 : ℝ)) (by norm_num) K N).trans
     (le_of_eq (by norm_num))
 
+/-! ### The row masses as named constants -/
+
+/-- The row `L¹` mass of the retained layers in base `b`: `∑_{α,j>K}|c_{αj}| ≤ (2/b)^K/(b−1)`.
+This is the quantity that refutes base two: at `b = 2` it is identically `1`. -/
+noncomputable def rowL1 (b : ℝ) (K : ℕ) : ℝ := (2 / b) ^ K / (b - 1)
+
+/-- The row `L²` mass of the retained layers in base `b`: `∑_{α,j>K} c_{αj}² ≤ (2/b²)^K/(b²−1)`. -/
+noncomputable def rowL2 (b : ℝ) (K : ℕ) : ℝ := (2 / b ^ 2) ^ K / (b ^ 2 - 1)
+
+lemma rowL1_four (K : ℕ) : rowL1 4 K = (1 / 2 : ℝ) ^ K / 3 := by
+  unfold rowL1; norm_num
+
+lemma rowL2_four (K : ℕ) : rowL2 4 K = (1 / 8 : ℝ) ^ K / 15 := by
+  unfold rowL2; norm_num
+
+lemma rowL1_nonneg {b : ℝ} (hb : 2 ≤ b) (K : ℕ) : 0 ≤ rowL1 b K := by
+  unfold rowL1
+  have : 0 < b - 1 := by linarith
+  have : 0 < 2 / b := by positivity
+  positivity
+
+lemma rowL2_nonneg {b : ℝ} (hb : 2 ≤ b) (K : ℕ) : 0 ≤ rowL2 b K := by
+  unfold rowL2
+  have : 0 < b ^ 2 - 1 := by nlinarith
+  have : 0 < 2 / b ^ 2 := by positivity
+  positivity
+
+/-- `2^K · b^{−K}/(b−1) = rowL1 b K`. -/
+lemma two_pow_mul_layer_eq_rowL1 {b : ℝ} (hb : 2 ≤ b) (K : ℕ) :
+    (2 : ℝ) ^ K * ((1 / b) ^ K / (b - 1)) = rowL1 b K := by
+  unfold rowL1
+  rw [← mul_div_assoc, ← mul_pow]
+  congr 2
+  field_simp
+
+/-- `2^K · b^{−2K}/(b²−1) = rowL2 b K`. -/
+lemma two_pow_mul_layer_sq_eq_rowL2 {b : ℝ} (hb : 2 ≤ b) (K : ℕ) :
+    (2 : ℝ) ^ K * ((1 / b ^ 2) ^ K / (b ^ 2 - 1)) = rowL2 b K := by
+  unfold rowL2
+  rw [← mul_div_assoc, ← mul_pow]
+  congr 2
+  field_simp
+
 /-! ### The pointwise ℓ¹ bound on a layer block -/
 
-/-- **The row ℓ¹ budget.**  If the weight is bounded by `C` on every retained argument, the whole
-layer block is at most `C·2^{−K}/3`.  This is the §4D bound for the very-large primes `p > Y`,
-where `C = O(1)` because an argument below `3X` has `O(1)` prime factors above `X^{1/100}`.  It
-is *not* valid for all primes above `R`: that substitution is exactly what the brief forbids. -/
-theorem abs_blockSum_le (G : GridParams) {w : ℕ → ℝ} {C : ℝ} (hC : 0 ≤ C)
-    (n : ℕ) (a : Fin G.K → Fin G.s)
+/-- **The row ℓ¹ budget, in base `bb`.**  If the weight is bounded by `C` on every retained
+argument, the whole layer block is at most `C · rowL1 bb K = C·(2/bb)^K/(bb−1)`.  This is the
+§4D bound for the very-large primes `p > Y`, where `C = O(1)` because an argument below `3X`
+has `O(1)` prime factors above `X^{1/100}`.  It is *not* valid for all primes above `R`: that
+substitution is exactly what the brief forbids.  And it is exactly the bound that fails to
+decay at `bb = 2`. -/
+theorem abs_blockSum_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) {w : ℕ → ℝ} {C : ℝ}
+    (hC : 0 ≤ C) (n : ℕ) (a : Fin G.K → Fin G.s)
     (hw : ∀ α : G.Atom, ∀ jj : Fin G.N, |w (n + shiftAL G.B G.Q G.D₀ (α, jj))| ≤ C) :
-    |blockSum G w n a| ≤ C * (1 / 2 : ℝ) ^ G.K / 3 := by
+    |blockSum bb G w n a| ≤ C * rowL1 bb G.K := by
   classical
-  have hlayer := sum_layer_inv_le G.K G.N
-  calc |blockSum G w n a|
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
+  have hbpos : (0 : ℝ) < bb := by linarith
+  have hlayer := sum_layer_inv_gen hbr G.K G.N
+  calc |blockSum bb G w n a|
       ≤ ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) *
-          ∑ jj : Fin G.N, w (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (4 : ℝ) ^ layer G.K jj| :=
+          ∑ jj : Fin G.N, w (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (bb : ℝ) ^ layer G.K jj| :=
         Finset.abs_sum_le_sum_abs _ _
     _ ≤ ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| *
-          (C * ((1 / 4 : ℝ) ^ G.K / 3)) := by
+          (C * ((1 / bb : ℝ) ^ G.K / (bb - 1))) := by
         refine Finset.sum_le_sum fun α _ => ?_
         rw [abs_mul]
         refine mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
-        calc |∑ jj : Fin G.N, w (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (4 : ℝ) ^ layer G.K jj|
-            ≤ ∑ jj : Fin G.N, |w (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (4 : ℝ) ^ layer G.K jj| :=
+        calc |∑ jj : Fin G.N, w (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (bb : ℝ) ^ layer G.K jj|
+            ≤ ∑ jj : Fin G.N, |w (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (bb : ℝ) ^ layer G.K jj| :=
               Finset.abs_sum_le_sum_abs _ _
-          _ ≤ ∑ jj : Fin G.N, C * ((1 : ℝ) / (4 : ℝ) ^ layer G.K jj) := by
+          _ ≤ ∑ jj : Fin G.N, C * ((1 : ℝ) / (bb : ℝ) ^ layer G.K jj) := by
               refine Finset.sum_le_sum fun jj _ => ?_
-              rw [abs_div, abs_of_pos (by positivity : (0:ℝ) < (4:ℝ) ^ layer G.K jj),
+              rw [abs_div, abs_of_pos (by positivity : (0:ℝ) < (bb:ℝ) ^ layer G.K jj),
                 mul_one_div]
               gcongr
               exact hw α jj
-          _ = C * ∑ jj : Fin G.N, (1 : ℝ) / (4 : ℝ) ^ layer G.K jj := by rw [Finset.mul_sum]
-          _ ≤ C * ((1 / 4 : ℝ) ^ G.K / 3) := mul_le_mul_of_nonneg_left hlayer hC
+          _ = C * ∑ jj : Fin G.N, (1 : ℝ) / (bb : ℝ) ^ layer G.K jj := by rw [Finset.mul_sum]
+          _ ≤ C * ((1 / bb : ℝ) ^ G.K / (bb - 1)) := mul_le_mul_of_nonneg_left hlayer hC
     _ = (∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)|) *
-          (C * ((1 / 4 : ℝ) ^ G.K / 3)) := by rw [Finset.sum_mul]
-    _ = (2 : ℝ) ^ G.K * (C * ((1 / 4 : ℝ) ^ G.K / 3)) := by rw [sum_abs_kronPow_diffZ]
-    _ = C * (1 / 2 : ℝ) ^ G.K / 3 := by
-        have h2 : (0 : ℝ) < (2 : ℝ) ^ G.K := by positivity
-        rw [div_pow, div_pow, one_pow,
-          show ((4 : ℝ) ^ G.K) = (2 : ℝ) ^ G.K * (2 : ℝ) ^ G.K by rw [← mul_pow]; norm_num]
-        field_simp
+          (C * ((1 / bb : ℝ) ^ G.K / (bb - 1))) := by rw [Finset.sum_mul]
+    _ = (2 : ℝ) ^ G.K * (C * ((1 / bb : ℝ) ^ G.K / (bb - 1))) := by rw [sum_abs_kronPow_diffZ]
+    _ = C * rowL1 bb G.K := by
+        rw [← two_pow_mul_layer_eq_rowL1 hbr]; ring
 
 end NormalNumbers.G4

@@ -74,11 +74,11 @@ open GridParams in
 kept in the vector `S`, `γ` the frozen-prime translate, `η` the resolution, `ε` the tube
 fraction and `D` the Jackson degree; those four are parameters because neither `PropA` nor
 `PropC` constrains them. -/
-noncomputable def gridFrame (G : GridParams) (X : ℕ)
+noncomputable def gridFrame (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ) (γ : Torus G.rDim)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) : Frame where
-  bse := 4
-  hbse := by norm_num
+  bse := bb
+  hbse := hbb
   K := G.K
   J := G.K + G.N
   r := G.rDim
@@ -90,11 +90,11 @@ noncomputable def gridFrame (G : GridParams) (X : ℕ)
   P := apSample X G.P₀ G.b₀
   hP := hne
   θ := fun ν => ((∑ α : Fin G.hDim, (G.Amat ν α : ℝ) *
-    (omegaR (G.d (G.atomEquiv.symm α)) / (((4 : ℕ) : ℝ) - 1)
-      - corrB 4 (G.d (G.atomEquiv.symm α)) 0) : ℝ) :
+    (omegaR (G.d (G.atomEquiv.symm α)) / ((bb : ℝ) - 1)
+      - corrB bb (G.d (G.atomEquiv.symm α)) 0) : ℝ) :
       UnitAddCircle)
   γ := γ
-  S := fun n ν => ((Sval sm (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν) : ℝ) :
+  S := fun n ν => ((Sval bb sm (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν) : ℝ) :
     UnitAddCircle)
   η := η
   hη := hη
@@ -102,24 +102,24 @@ noncomputable def gridFrame (G : GridParams) (X : ℕ)
   hε := hε
   D := D
 
-@[simp] lemma gridFrame_r (G : GridParams) (X : ℕ) (hne) (sm : Finset ℕ) (γ : Torus G.rDim)
+@[simp] lemma gridFrame_r (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ) (hne) (sm : Finset ℕ) (γ : Torus G.rDim)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) :
-    (gridFrame G X hne sm γ hη hε D).r = G.rDim := rfl
+    (gridFrame bb hbb G X hne sm γ hη hε D).r = G.rDim := rfl
 
-@[simp] lemma gridFrame_H (G : GridParams) (X : ℕ) (hne) (sm : Finset ℕ) (γ : Torus G.rDim)
+@[simp] lemma gridFrame_H (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ) (hne) (sm : Finset ℕ) (γ : Torus G.rDim)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) :
-    (gridFrame G X hne sm γ hη hε D).H = G.hDim := rfl
+    (gridFrame bb hbb G X hne sm γ hη hε D).H = G.hDim := rfl
 
 /-! ### `PropA`, discharged -/
 
 /-- **`PropA` for the concrete frame.**  The progression `n ≡ b₀ (P₀)` writes every sample point
 as `t_α + d_α k_α` with `d_α ∣ k_α`, so every multiplier residue is frozen at `0`; the transport
 translate of `c = 0` is the frame's `θ` by construction.  Draft (4.3). -/
-theorem gridFrame_propA (G : GridParams) (X : ℕ)
+theorem gridFrame_propA (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ) (γ : Torus G.rDim)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) :
-    (gridFrame G X hne sm γ hη hε D).PropA := by
-  set fr := gridFrame G X hne sm γ hη hε D with hfr
+    (gridFrame bb hbb G X hne sm γ hη hε D).PropA := by
+  set fr := gridFrame bb hbb G X hne sm γ hη hε D with hfr
   refine fr.propA_of_progression 0 (fun α => (G.d_pos _).ne') rfl ?_
   intro n hn
   choose k hk1 hk2 using fun α : Fin fr.H => G.exists_mult_mul hn (G.atomEquiv.symm α)
@@ -145,15 +145,15 @@ lemma card_roots_shiftPhase_le {ι : Type*} [Fintype ι] [DecidableEq ι] (ρ : 
   exact_mod_cast this
 
 /-- The character of the concrete frame's small-prime vector, reindexed onto the grid rows. -/
-lemma torusChar_gridFrame_S (G : GridParams) (X : ℕ)
+lemma torusChar_gridFrame_S (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ) (γ : Torus G.rDim)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) (q : Fin G.rDim → ℤ) (n : ℕ) :
-    torusChar q ((gridFrame G X hne sm γ hη hε D).S n)
+    torusChar q ((gridFrame bb hbb G X hne sm γ hη hε D).S n)
       = ∏ a : Fin G.K → Fin G.s, fourier (q (G.rowEquiv a))
-          (((Sval sm (shiftAL G.B G.Q G.D₀ (N := G.N)) n a : ℝ) : UnitAddCircle)) := by
+          (((Sval bb sm (shiftAL G.B G.Q G.D₀ (N := G.N)) n a : ℝ) : UnitAddCircle)) := by
   unfold torusChar
   rw [← Equiv.prod_comp G.rowEquiv
-    (fun ν => fourier (q ν) ((gridFrame G X hne sm γ hη hε D).S n ν))]
+    (fun ν => fourier (q ν) ((gridFrame bb hbb G X hne sm γ hη hε D).S n ν))]
   exact Finset.prod_congr rfl fun a _ => by simp [gridFrame]
 
 /-- The explicit uniform §4C bound: the good-prime contraction plus the four transfer errors,
@@ -168,25 +168,28 @@ noncomputable def smallPrimeBound (sm : Finset ℕ) (T R M Psz : ℕ) (lam' lam 
         + 2 * (2 * Real.exp 1 / M) ^ M * (sm.card : ℝ) ^ M
             * (2 * (R : ℝ) ^ M / Psz)))
 
-/-- **`PropC` for the concrete frame** (draft (8.1), brief §4C).  The second of the five named
-inputs, discharged outright: uniformly over every nonzero frequency in the box `‖q‖∞ ≤ D`, the
-sample average of the character of the small-prime vector is at most `smallPrimeBound`, whose
-main term is the good-prime contraction `exp(−4·4^{−4}8^{−K} ∑_{p ∈ sm} 1/p)`.
+/-- **`PropC` for the concrete frame, in base `bb`** (draft (8.1), brief §4C).  The second of
+the five named inputs, discharged outright modulo the frequency-separation seed: uniformly
+over every nonzero frequency in the box `‖q‖∞ ≤ D`, the sample average of the character of the
+small-prime vector is at most `smallPrimeBound`, whose main term is the good-prime contraction
+`exp(−4θ₀ ∑_{p ∈ sm} 1/p)`.
 
 The small primes `sm` must be prime, at most `R`, and prime to the progression modulus `P₀`;
 being prime to `P₀` is exactly what makes them good for the shifts
-(`goodPrime_of_not_dvd_P₀`) and larger than `2T` (`two_mul_card_le_of_not_dvd`).  The retained
-depth must reach every frequency-depth layer of the box, `1 + ⌈log₄(2^K D)⌉ ≤ N`. -/
-theorem gridFrame_propC (G : GridParams) (X : ℕ)
+(`goodPrime_of_not_dvd_P₀`) and larger than `2T` (`two_mul_card_le_of_not_dvd`).  The seed
+`hsep` says the retained depth reaches every frequency-depth layer of the box; base four
+supplies it from `1 + ⌈log₄(2^K D)⌉ ≤ N` (`gridFrame_propC_four`). -/
+theorem gridFrame_propC (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ) (γ : Torus G.rDim)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) {D : ℕ}
     (hs : ∀ p ∈ sm, p.Prime) (hsP : ∀ p ∈ sm, ¬ p ∣ G.P₀)
     {R : ℕ} (hR1 : 1 ≤ R) (hR : ∀ p ∈ sm, p ≤ R)
-    (hN : 1 + Nat.clog 4 (2 ^ G.K * D) ≤ G.N)
+    {θ₀ : ℝ} (hθ0 : 0 ≤ θ₀)
+    (hsep : ∀ q : (Fin G.K → Fin G.s) → ℤ, q ≠ 0 → (∀ a, |q a| ≤ (D : ℤ)) →
+      θ₀ ≤ ∑ i : G.Idx, distZ (coeffAL bb q i) ^ 2)
     {M : ℕ} (hM : 1 ≤ M) {lam' lam : ℝ} (hlam' : 1 ≤ lam') (hlam : 0 < lam) :
-    (gridFrame G X hne sm γ hη hε D).PropC
-      (smallPrimeBound sm (Fintype.card G.Idx) R M (apSample X G.P₀ G.b₀).card lam' lam
-        (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ G.K)) := by
+    (gridFrame bb hbb G X hne sm γ hη hε D).PropC
+      (smallPrimeBound sm (Fintype.card G.Idx) R M (apSample X G.P₀ G.b₀).card lam' lam θ₀) := by
   classical
   intro q hq hq0
   set ρ := shiftAL G.B G.Q G.D₀ (N := G.N) with hρ
@@ -205,40 +208,55 @@ theorem gridFrame_propC (G : GridParams) (X : ℕ)
   have hk : ∀ p ∈ sm, 2 * Fintype.card G.Idx ≤ p := fun p hp =>
     G.two_mul_card_le_of_not_dvd (hs p hp) (hsP p hp)
   -- §4C for the concrete vector
-  have key := norm_sampleAvg_torusChar_Sval_le X G.P₀ G.b₀ G.P₀_pos G.b₀_lt_P₀ hne sm hs hsP'
-    hR1 hR ρ hk hgood (D := D) hN hq'0 hq'D hM hlam' hlam
+  have key := norm_sampleAvg_torusChar_Sval_le bb X G.P₀ G.b₀ G.P₀_pos G.b₀_lt_P₀ hne sm hs hsP'
+    hR1 hR ρ hk hgood hθ0 (hsep q' hq'0 hq'D) hM hlam' hlam
   -- the two sample averages agree termwise
-  have hsame : sampleAvg (gridFrame G X hne sm γ hη hε D).P
-      (gridFrame G X hne sm γ hη hε D).S (torusChar q)
-      = sampleAvg (apSample X G.P₀ G.b₀) (fun n a => ((Sval sm ρ n a : ℝ) : UnitAddCircle))
+  have hsame : sampleAvg (gridFrame bb hbb G X hne sm γ hη hε D).P
+      (gridFrame bb hbb G X hne sm γ hη hε D).S (torusChar q)
+      = sampleAvg (apSample X G.P₀ G.b₀) (fun n a => ((Sval bb sm ρ n a : ℝ) : UnitAddCircle))
           (fun y => ∏ a, fourier (q' a) (y a)) := by
     unfold sampleAvg
     congr 1
-    exact Finset.sum_congr rfl fun n _ => torusChar_gridFrame_S G X hne sm γ hη hε D q n
+    exact Finset.sum_congr rfl fun n _ => torusChar_gridFrame_S bb hbb G X hne sm γ hη hε D q n
   rw [hsame]
   refine key.trans ?_
   -- replace the root counts by the uniform bound `T`
   unfold smallPrimeBound
   have hp0 : ∀ p ∈ sm, (0 : ℝ) < p := fun p hp => by exact_mod_cast (hs p hp).pos
-  have hprod1 : (∏ p ∈ sm, (1 + lam' * (2 * ((shiftPhase ρ (coeffAL q') p).roots.card : ℝ) / p)))
+  have hprod1 : (∏ p ∈ sm, (1 + lam' * (2 * ((shiftPhase ρ (coeffAL bb q') p).roots.card : ℝ) / p)))
       ≤ ∏ p ∈ sm, (1 + lam' * (2 * (Fintype.card G.Idx : ℝ) / p)) := by
     refine Finset.prod_le_prod (fun p hp => ?_) (fun p hp => ?_)
     · have := hp0 p hp
       positivity
     · have hpp := hp0 p hp
-      have := card_roots_shiftPhase_le ρ (coeffAL q') p
+      have := card_roots_shiftPhase_le ρ (coeffAL bb q') p
       have hlam'0 : (0 : ℝ) ≤ lam' := by linarith
       gcongr
-  have hprod2 : (∏ p ∈ sm, (1 + Real.exp lam * (((shiftPhase ρ (coeffAL q') p).roots.card : ℝ) / p)))
+  have hprod2 : (∏ p ∈ sm, (1 + Real.exp lam * (((shiftPhase ρ (coeffAL bb q') p).roots.card : ℝ) / p)))
       ≤ ∏ p ∈ sm, (1 + Real.exp lam * ((Fintype.card G.Idx : ℝ) / p)) := by
     refine Finset.prod_le_prod (fun p hp => ?_) (fun p hp => ?_)
     · have := hp0 p hp
       positivity
     · have hpp := hp0 p hp
-      have := card_roots_shiftPhase_le ρ (coeffAL q') p
+      have := card_roots_shiftPhase_le ρ (coeffAL bb q') p
       gcongr
   have hlam'pos : (0 : ℝ) < lam' ^ M := by positivity
   have hc : (0 : ℝ) ≤ 2 * (2 * Real.exp 1 / lam) ^ M := by positivity
   gcongr
+
+/-- **`PropC` in base four**: the seed `θ₀ = 4^{−4}8^{−K}` from `sum_sq_distZ_coeff_ge`, under
+`1 + ⌈log₄(2^K D)⌉ ≤ N`. -/
+theorem gridFrame_propC_four (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ) (γ : Torus G.rDim)
+    {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) {D : ℕ}
+    (hs : ∀ p ∈ sm, p.Prime) (hsP : ∀ p ∈ sm, ¬ p ∣ G.P₀)
+    {R : ℕ} (hR1 : 1 ≤ R) (hR : ∀ p ∈ sm, p ≤ R)
+    (hN : 1 + Nat.clog 4 (2 ^ G.K * D) ≤ G.N)
+    {M : ℕ} (hM : 1 ≤ M) {lam' lam : ℝ} (hlam' : 1 ≤ lam') (hlam : 0 < lam) :
+    (gridFrame 4 (by norm_num) G X hne sm γ hη hε D).PropC
+      (smallPrimeBound sm (Fintype.card G.Idx) R M (apSample X G.P₀ G.b₀).card lam' lam
+        (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ G.K)) :=
+  gridFrame_propC 4 (by norm_num) G X hne sm γ hη hε hs hsP hR1 hR (by positivity)
+    (fun q hq hqD => sum_sq_distZ_coeff_ge hN hq hqD) hM hlam' hlam
 
 end NormalNumbers.G4

@@ -365,27 +365,27 @@ theorem omegaBig_split {R Y P₀ m : ℕ} (hRY : R ≤ Y) (hm : m ≠ 0) :
 
 /-! ### The block as an indicator sum -/
 
-/-- The row coefficients `c_{(α,jj)} = A_{aα} / 4^{layer jj}`. -/
-noncomputable def rowCoeff (G : GridParams) (a : Fin G.K → Fin G.s) (i : G.Idx) : ℝ :=
-  ((kronPow G.K (diffZ G.s) a i.1 : ℤ) : ℝ) / (4 : ℝ) ^ layer G.K i.2
+/-- The row coefficients `c_{(α,jj)} = A_{aα} / bb^{layer jj}`. -/
+noncomputable def rowCoeff (bb : ℕ) (G : GridParams) (a : Fin G.K → Fin G.s) (i : G.Idx) : ℝ :=
+  ((kronPow G.K (diffZ G.s) a i.1 : ℤ) : ℝ) / (bb : ℝ) ^ layer G.K i.2
 
 lemma omegaOn_eq_sum_ind (S : Finset ℕ) (m : ℕ) : (omegaOn S m : ℝ) = ∑ p ∈ S, ind p m := by
   unfold omegaOn ind
   rw [Finset.natCast_card_filter]
 
-/-- `blockSum G ω_S n a = ∑_{p∈S} ∑_i c_i 1[p ∣ n + ρ_i]`. -/
-lemma blockSum_omegaOn_eq (G : GridParams) (S : Finset ℕ) (n : ℕ) (a : Fin G.K → Fin G.s) :
-    blockSum G (fun m => (omegaOn S m : ℝ)) n a
-      = ∑ p ∈ S, ∑ i : G.Idx, rowCoeff G a i * ind p (n + shiftAL G.B G.Q G.D₀ i) := by
-  have hL : blockSum G (fun m => (omegaOn S m : ℝ)) n a
-      = ∑ i : G.Idx, rowCoeff G a i * (omegaOn S (n + shiftAL G.B G.Q G.D₀ i) : ℝ) := by
+/-- `blockSum bb G ω_S n a = ∑_{p∈S} ∑_i c_i 1[p ∣ n + ρ_i]`. -/
+lemma blockSum_omegaOn_eq (bb : ℕ) (G : GridParams) (S : Finset ℕ) (n : ℕ) (a : Fin G.K → Fin G.s) :
+    blockSum bb G (fun m => (omegaOn S m : ℝ)) n a
+      = ∑ p ∈ S, ∑ i : G.Idx, rowCoeff bb G a i * ind p (n + shiftAL G.B G.Q G.D₀ i) := by
+  have hL : blockSum bb G (fun m => (omegaOn S m : ℝ)) n a
+      = ∑ i : G.Idx, rowCoeff bb G a i * (omegaOn S (n + shiftAL G.B G.Q G.D₀ i) : ℝ) := by
     rw [Fintype.sum_prod_type]
     refine Finset.sum_congr rfl fun α _ => ?_
     rw [Finset.mul_sum]
     refine Finset.sum_congr rfl fun jj _ => ?_
     show ((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) *
-        ((omegaOn S (n + shiftAL G.B G.Q G.D₀ (α, jj)) : ℝ) / (4 : ℝ) ^ layer G.K jj)
-      = ((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) / (4 : ℝ) ^ layer G.K jj
+        ((omegaOn S (n + shiftAL G.B G.Q G.D₀ (α, jj)) : ℝ) / (bb : ℝ) ^ layer G.K jj)
+      = ((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) / (bb : ℝ) ^ layer G.K jj
         * (omegaOn S (n + shiftAL G.B G.Q G.D₀ (α, jj)) : ℝ)
     ring
   rw [hL, Finset.sum_comm]
@@ -394,52 +394,52 @@ lemma blockSum_omegaOn_eq (G : GridParams) (S : Finset ℕ) (n : ℕ) (a : Fin G
 
 /-! ### The row budgets -/
 
-lemma sum_rowCoeff_eq_zero (G : GridParams) (hK : 0 < G.K) (a : Fin G.K → Fin G.s) :
-    ∑ i : G.Idx, rowCoeff G a i = 0 := by
+lemma sum_rowCoeff_eq_zero (bb : ℕ) (G : GridParams) (hK : 0 < G.K) (a : Fin G.K → Fin G.s) :
+    ∑ i : G.Idx, rowCoeff bb G a i = 0 := by
   unfold rowCoeff
   rw [Fintype.sum_prod_type]
   have h : ∑ α : G.Atom, ∑ jj : Fin G.N,
-      ((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) / (4 : ℝ) ^ layer G.K jj
+      ((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) / (bb : ℝ) ^ layer G.K jj
       = (∑ α : G.Atom, ((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ))
-          * ∑ jj : Fin G.N, (1 : ℝ) / (4 : ℝ) ^ layer G.K jj := by
+          * ∑ jj : Fin G.N, (1 : ℝ) / (bb : ℝ) ^ layer G.K jj := by
     rw [Finset.sum_mul_sum]
     refine Finset.sum_congr rfl fun α _ => Finset.sum_congr rfl fun jj _ => ?_
     ring
   rw [h, sum_kronPow_diffZ_eq_zero hK, zero_mul]
 
-lemma sum_sq_rowCoeff_le (G : GridParams) (a : Fin G.K → Fin G.s) :
-    ∑ i : G.Idx, rowCoeff G a i ^ 2 ≤ (1 / 8 : ℝ) ^ G.K / 15 := by
+lemma sum_sq_rowCoeff_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (a : Fin G.K → Fin G.s) :
+    ∑ i : G.Idx, rowCoeff bb G a i ^ 2 ≤ rowL2 bb G.K := by
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
   unfold rowCoeff
   rw [Fintype.sum_prod_type]
   have h : ∀ α : G.Atom, ∀ jj : Fin G.N,
-      (((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) / (4 : ℝ) ^ layer G.K jj) ^ 2
-        = ((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) ^ 2 * ((1 : ℝ) / (4 : ℝ) ^ layer G.K jj) ^ 2 := by
+      (((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) / (bb : ℝ) ^ layer G.K jj) ^ 2
+        = ((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) ^ 2 * ((1 : ℝ) / (bb : ℝ) ^ layer G.K jj) ^ 2 := by
     intro α jj; ring
   simp_rw [h]
   rw [← Finset.sum_mul_sum, sum_sq_kronPow_diffZ]
-  calc (2 : ℝ) ^ G.K * ∑ jj : Fin G.N, ((1 : ℝ) / (4 : ℝ) ^ layer G.K jj) ^ 2
-      ≤ (2 : ℝ) ^ G.K * ((1 / 16 : ℝ) ^ G.K / 15) :=
-        mul_le_mul_of_nonneg_left (sum_layer_inv_sq_le G.K G.N) (by positivity)
-    _ = (1 / 8 : ℝ) ^ G.K / 15 := by
-        rw [← mul_div_assoc, ← mul_pow]; norm_num
+  calc (2 : ℝ) ^ G.K * ∑ jj : Fin G.N, ((1 : ℝ) / (bb : ℝ) ^ layer G.K jj) ^ 2
+      ≤ (2 : ℝ) ^ G.K * ((1 / (bb : ℝ) ^ 2) ^ G.K / ((bb : ℝ) ^ 2 - 1)) :=
+        mul_le_mul_of_nonneg_left (sum_layer_inv_sq_gen hbr G.K G.N) (by positivity)
+    _ = rowL2 bb G.K := two_pow_mul_layer_sq_eq_rowL2 hbr G.K
 
-lemma sum_abs_rowCoeff_le (G : GridParams) (a : Fin G.K → Fin G.s) :
-    ∑ i : G.Idx, |rowCoeff G a i| ≤ (1 / 2 : ℝ) ^ G.K / 3 := by
+lemma sum_abs_rowCoeff_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (a : Fin G.K → Fin G.s) :
+    ∑ i : G.Idx, |rowCoeff bb G a i| ≤ rowL1 bb G.K := by
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
   unfold rowCoeff
   rw [Fintype.sum_prod_type]
   have h : ∀ α : G.Atom, ∀ jj : Fin G.N,
-      |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) / (4 : ℝ) ^ layer G.K jj|
-        = |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ((1 : ℝ) / (4 : ℝ) ^ layer G.K jj) := by
+      |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) / (bb : ℝ) ^ layer G.K jj|
+        = |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ((1 : ℝ) / (bb : ℝ) ^ layer G.K jj) := by
     intro α jj
-    rw [abs_div, abs_of_pos (by positivity : (0 : ℝ) < (4 : ℝ) ^ layer G.K jj)]
+    rw [abs_div, abs_of_pos (by positivity : (0 : ℝ) < (bb : ℝ) ^ layer G.K jj)]
     ring
   simp_rw [h]
   rw [← Finset.sum_mul_sum, sum_abs_kronPow_diffZ]
-  calc (2 : ℝ) ^ G.K * ∑ jj : Fin G.N, ((1 : ℝ) / (4 : ℝ) ^ layer G.K jj)
-      ≤ (2 : ℝ) ^ G.K * ((1 / 4 : ℝ) ^ G.K / 3) :=
-        mul_le_mul_of_nonneg_left (sum_layer_inv_le G.K G.N) (by positivity)
-    _ = (1 / 2 : ℝ) ^ G.K / 3 := by
-        rw [← mul_div_assoc, ← mul_pow]; norm_num
+  calc (2 : ℝ) ^ G.K * ∑ jj : Fin G.N, ((1 : ℝ) / (bb : ℝ) ^ layer G.K jj)
+      ≤ (2 : ℝ) ^ G.K * ((1 / (bb : ℝ)) ^ G.K / ((bb : ℝ) - 1)) :=
+        mul_le_mul_of_nonneg_left (sum_layer_inv_gen hbr G.K G.N) (by positivity)
+    _ = rowL1 bb G.K := two_pow_mul_layer_eq_rowL1 hbr G.K
 
 /-! ### Separation and equidistribution on the concrete progression -/
 
@@ -461,17 +461,17 @@ lemma apSample_equidistributed (G : GridParams) (X : ℕ) :
     (Finset.mem_range.2 hr)
 
 /-- **The medium-prime second moment on the concrete grid.** -/
-theorem sum_sq_blockSum_med_le (G : GridParams) (X R Y : ℕ) (hK : 0 < G.K)
-    (a : Fin G.K → Fin G.s) :
+theorem sum_sq_blockSum_med_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X R Y : ℕ)
+    (hK : 0 < G.K) (a : Fin G.K → Fin G.s) :
     ∑ n ∈ apSample X G.P₀ G.b₀,
-        blockSum G (fun m => (omegaOn (medPrimes R Y G.P₀) m : ℝ)) n a ^ 2
+        blockSum bb G (fun m => (omegaOn (medPrimes R Y G.P₀) m : ℝ)) n a ^ 2
       ≤ (apSample X G.P₀ G.b₀).card * (∑ p ∈ medPrimes R Y G.P₀, (p : ℝ)⁻¹)
-          * ((1 / 8 : ℝ) ^ G.K / 15)
-        + 2 * ((medPrimes R Y G.P₀).card : ℝ) ^ 2 * ((1 / 2 : ℝ) ^ G.K / 3) ^ 2 := by
+          * rowL2 bb G.K
+        + 2 * ((medPrimes R Y G.P₀).card : ℝ) ^ 2 * (rowL1 bb G.K) ^ 2 := by
   simp_rw [blockSum_omegaOn_eq]
-  have hmain := sum_sq_block_le (apSample X G.P₀ G.b₀) (medPrimes R Y G.P₀) (rowCoeff G a)
+  have hmain := sum_sq_block_le (apSample X G.P₀ G.b₀) (medPrimes R Y G.P₀) (rowCoeff bb G a)
     (shiftAL G.B G.Q G.D₀) (fun q => 0 < q ∧ q.Coprime G.P₀)
-    (sum_rowCoeff_eq_zero G hK a)
+    (sum_rowCoeff_eq_zero bb G hK a)
     (fun p hp => (medPrimes_prime hp).pos)
     (fun p hp p' hp' hne => (Nat.coprime_primes (medPrimes_prime hp) (medPrimes_prime hp')).2 hne)
     (fun p hp => ⟨(medPrimes_prime hp).pos,
@@ -483,9 +483,9 @@ theorem sum_sq_blockSum_med_le (G : GridParams) (X R Y : ℕ) (hK : 0 < G.K)
       (G.goodPrime_of_not_dvd_P₀ (medPrimes_prime hp) (medPrimes_not_dvd hp)))
     (apSample_equidistributed G X)
   refine hmain.trans ?_
-  have h1 := sum_sq_rowCoeff_le G a
-  have h2 := sum_abs_rowCoeff_le G a
-  have h2' : 0 ≤ ∑ i : G.Idx, |rowCoeff G a i| := Finset.sum_nonneg fun i _ => abs_nonneg _
+  have h1 := sum_sq_rowCoeff_le bb hbb G a
+  have h2 := sum_abs_rowCoeff_le bb hbb G a
+  have h2' : 0 ≤ ∑ i : G.Idx, |rowCoeff bb G a i| := Finset.sum_nonneg fun i _ => abs_nonneg _
   have hinv : 0 ≤ ∑ p ∈ medPrimes R Y G.P₀, (p : ℝ)⁻¹ := Finset.sum_nonneg fun p _ => by positivity
   gcongr
 
@@ -517,16 +517,18 @@ lemma omegaVL_le {Y P₀ m : ℕ} (hY : 1 < Y) (hm : 0 < m) :
   exact card_filter_gt_mul_log_le (by omega) hm _ (Finset.filter_subset _ _)
     (fun p hp => (Finset.mem_filter.1 hp).2.2)
 
-/-- **The very-large-prime block, pointwise.**  If every retained argument is at most `Mx`, the
-`p > Y` block of any row is at most `(log Mx / log Y) · 2^{−K}/3`. -/
-theorem abs_blockSum_omegaVL_le (G : GridParams) {Y : ℕ} (hY : 1 < Y) {Mx : ℝ} (hMx1 : 1 ≤ Mx)
+/-- **The very-large-prime block, pointwise, in base `bb`.**  If every retained argument is at
+most `Mx`, the `p > Y` block of any row is at most `(log Mx / log Y) · rowL1 bb K`.  This is the
+term that pins the campaign to `bb ≥ 3`: `rowL1 2 K = 1`. -/
+theorem abs_blockSum_omegaVL_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) {Y : ℕ} (hY : 1 < Y)
+    {Mx : ℝ} (hMx1 : 1 ≤ Mx)
     {n : ℕ} (hMx : ∀ i : G.Idx, ((n + shiftAL G.B G.Q G.D₀ i : ℕ) : ℝ) ≤ Mx)
     (a : Fin G.K → Fin G.s) :
-    |blockSum G (fun m => (omegaVL Y G.P₀ m : ℝ)) n a|
-      ≤ (Real.log Mx / Real.log Y) * (1 / 2 : ℝ) ^ G.K / 3 := by
+    |blockSum bb G (fun m => (omegaVL Y G.P₀ m : ℝ)) n a|
+      ≤ (Real.log Mx / Real.log Y) * rowL1 bb G.K := by
   have hlog : 0 < Real.log Y := Real.log_pos (by exact_mod_cast hY)
   have hC : 0 ≤ Real.log Mx / Real.log Y := div_nonneg (Real.log_nonneg hMx1) hlog.le
-  refine abs_blockSum_le G hC n a fun α jj => ?_
+  refine abs_blockSum_le bb hbb G hC n a fun α jj => ?_
   rw [abs_of_nonneg (by positivity)]
   have hpos : 0 < n + shiftAL G.B G.Q G.D₀ (α, jj) := by have := shiftAL_pos G (α, jj); omega
   refine (omegaVL_le hY hpos).trans ?_
@@ -546,34 +548,37 @@ lemma avg_le_of_forall_le {ι : Type*} (s : Finset ι) (f : ι → ℝ) {b : ℝ
     _ = b := by rw [Finset.sum_const, nsmul_eq_mul]; field_simp
 
 /-- The medium-prime budget of one row, before the square root:
-`(∑_{R<p≤Y, p∤P₀} 1/p) · 8^{−K}/15 + 2 |med|² (2^{−K}/3)² / |P|`. -/
-noncomputable def medBudget (G : GridParams) (X R Y : ℕ) : ℝ :=
-  (∑ p ∈ medPrimes R Y G.P₀, (p : ℝ)⁻¹) * ((1 / 8 : ℝ) ^ G.K / 15)
-    + 2 * ((medPrimes R Y G.P₀).card : ℝ) ^ 2 * ((1 / 2 : ℝ) ^ G.K / 3) ^ 2
+`(∑_{R<p≤Y, p∤P₀} 1/p) · rowL2 bb K + 2 |med|² (rowL1 bb K)² / |P|`. -/
+noncomputable def medBudget (bb : ℕ) (G : GridParams) (X R Y : ℕ) : ℝ :=
+  (∑ p ∈ medPrimes R Y G.P₀, (p : ℝ)⁻¹) * rowL2 bb G.K
+    + 2 * ((medPrimes R Y G.P₀).card : ℝ) ^ 2 * (rowL1 bb G.K) ^ 2
         / (apSample X G.P₀ G.b₀).card
 
-lemma medBudget_nonneg (G : GridParams) (X R Y : ℕ) : 0 ≤ medBudget G X R Y := by
+lemma medBudget_nonneg (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X R Y : ℕ) :
+    0 ≤ medBudget bb G X R Y := by
   unfold medBudget
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
   have : 0 ≤ ∑ p ∈ medPrimes R Y G.P₀, (p : ℝ)⁻¹ := Finset.sum_nonneg fun p _ => by positivity
+  have := rowL2_nonneg hbr G.K
   positivity
 
 /-- **The medium-prime first moment**: the sample mean of `|block_{R<p≤Y}|` is at most
 `√(medBudget)`. -/
-theorem sampleAvg_abs_blockSum_med_le (G : GridParams) (X R Y : ℕ)
+theorem sampleAvg_abs_blockSum_med_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X R Y : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (hK : 0 < G.K) (a : Fin G.K → Fin G.s) :
     ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
-        |blockSum G (fun m => (omegaOn (medPrimes R Y G.P₀) m : ℝ)) n a|
-      ≤ Real.sqrt (medBudget G X R Y) := by
+        |blockSum bb G (fun m => (omegaOn (medPrimes R Y G.P₀) m : ℝ)) n a|
+      ≤ Real.sqrt (medBudget bb G X R Y) := by
   refine (sampleAvg_abs_le_sqrt _ _).trans (Real.sqrt_le_sqrt ?_)
   have hc : (0 : ℝ) < (apSample X G.P₀ G.b₀).card := by exact_mod_cast hne.card_pos
-  have h := sum_sq_blockSum_med_le G X R Y hK a
+  have h := sum_sq_blockSum_med_le bb hbb G X R Y hK a
   unfold medBudget
   calc ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
-        blockSum G (fun m => (omegaOn (medPrimes R Y G.P₀) m : ℝ)) n a ^ 2
+        blockSum bb G (fun m => (omegaOn (medPrimes R Y G.P₀) m : ℝ)) n a ^ 2
       ≤ ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ *
           ((apSample X G.P₀ G.b₀).card * (∑ p ∈ medPrimes R Y G.P₀, (p : ℝ)⁻¹)
-              * ((1 / 8 : ℝ) ^ G.K / 15)
-            + 2 * ((medPrimes R Y G.P₀).card : ℝ) ^ 2 * ((1 / 2 : ℝ) ^ G.K / 3) ^ 2) :=
+              * rowL2 bb G.K
+            + 2 * ((medPrimes R Y G.P₀).card : ℝ) ^ 2 * (rowL1 bb G.K) ^ 2) :=
         mul_le_mul_of_nonneg_left h (by positivity)
     _ = _ := by field_simp
 
@@ -581,26 +586,28 @@ theorem sampleAvg_abs_blockSum_med_le (G : GridParams) (X R Y : ℕ)
 medium-range L² bound `√(medBudget)` plus the very-large-range pointwise bound
 `(log Mx / log Y) · 2^{−K}/3`, where `Mx` bounds every retained argument `n + ρ_i` on the
 sample.  No pointwise bound is applied to the medium range. -/
-theorem bigAvg_le (G : GridParams) (X R Y : ℕ) (hne : (apSample X G.P₀ G.b₀).Nonempty)
+theorem bigAvg_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X R Y : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty)
     (hK : 0 < G.K) (hRY : R ≤ Y) (hY : 1 < Y) {Mx : ℝ} (hMx1 : 1 ≤ Mx)
     (hMx : ∀ n ∈ apSample X G.P₀ G.b₀, ∀ i : G.Idx,
       ((n + shiftAL G.B G.Q G.D₀ i : ℕ) : ℝ) ≤ Mx) :
-    bigAvg G X R
-      ≤ Real.sqrt (medBudget G X R Y) + (Real.log Mx / Real.log Y) * (1 / 2 : ℝ) ^ G.K / 3 := by
+    bigAvg bb G X R
+      ≤ Real.sqrt (medBudget bb G X R Y) + (Real.log Mx / Real.log Y) * rowL1 bb G.K := by
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
   set P := apSample X G.P₀ G.b₀ with hP
   set wmed : ℕ → ℝ := fun m => (omegaOn (medPrimes R Y G.P₀) m : ℝ) with hwmed
   set wvl : ℕ → ℝ := fun m => (omegaVL Y G.P₀ m : ℝ) with hwvl
   have hlog : 0 < Real.log Y := Real.log_pos (by exact_mod_cast hY)
-  have hC : 0 ≤ (Real.log Mx / Real.log Y) * (1 / 2 : ℝ) ^ G.K / 3 := by
-    have := Real.log_nonneg hMx1; positivity
+  have hC : 0 ≤ (Real.log Mx / Real.log Y) * rowL1 bb G.K := by
+    have := Real.log_nonneg hMx1; have := rowL1_nonneg hbr G.K; positivity
   have hsplit : ∀ n ∈ P, ∀ ν : Fin G.rDim,
-      |blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
-        ≤ |blockSum G wmed n (G.rowEquiv.symm ν)| + |blockSum G wvl n (G.rowEquiv.symm ν)| := by
+      |blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+        ≤ |blockSum bb G wmed n (G.rowEquiv.symm ν)| + |blockSum bb G wvl n (G.rowEquiv.symm ν)| := by
     intro n _ ν
-    have h : blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
-        = blockSum G wmed n (G.rowEquiv.symm ν) + blockSum G wvl n (G.rowEquiv.symm ν) := by
+    have h : blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
+        = blockSum bb G wmed n (G.rowEquiv.symm ν) + blockSum bb G wvl n (G.rowEquiv.symm ν) := by
       rw [← blockSum_add]
-      refine blockSum_congr G _ fun α jj => ?_
+      refine blockSum_congr bb G _ fun α jj => ?_
       have hpos := shiftAL_pos G (α, jj)
       simp only [hwmed, hwvl]
       rw [omegaBig_split hRY (by omega)]
@@ -609,25 +616,25 @@ theorem bigAvg_le (G : GridParams) (X R Y : ℕ) (hne : (apSample X G.P₀ G.b�
   unfold bigAvg
   rw [← hP]
   calc (P.card : ℝ)⁻¹ * ∑ n ∈ P, (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-        |blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+        |blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
       ≤ (P.card : ℝ)⁻¹ * ∑ n ∈ P, (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-          (|blockSum G wmed n (G.rowEquiv.symm ν)| + |blockSum G wvl n (G.rowEquiv.symm ν)|) :=
+          (|blockSum bb G wmed n (G.rowEquiv.symm ν)| + |blockSum bb G wvl n (G.rowEquiv.symm ν)|) :=
         mul_le_mul_of_nonneg_left (Finset.sum_le_sum fun n hn =>
           mul_le_mul_of_nonneg_left (Finset.sum_le_sum fun ν _ => hsplit n hn ν) (by positivity))
           (by positivity)
     _ = (P.card : ℝ)⁻¹ * ∑ n ∈ P, (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-            |blockSum G wmed n (G.rowEquiv.symm ν)|
+            |blockSum bb G wmed n (G.rowEquiv.symm ν)|
         + (P.card : ℝ)⁻¹ * ∑ n ∈ P, (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-            |blockSum G wvl n (G.rowEquiv.symm ν)| := by
+            |blockSum bb G wvl n (G.rowEquiv.symm ν)| := by
         simp_rw [Finset.sum_add_distrib, mul_add]
         rw [Finset.sum_add_distrib, mul_add]
-    _ ≤ Real.sqrt (medBudget G X R Y)
-        + (Real.log Mx / Real.log Y) * (1 / 2 : ℝ) ^ G.K / 3 := by
+    _ ≤ Real.sqrt (medBudget bb G X R Y)
+        + (Real.log Mx / Real.log Y) * rowL1 bb G.K := by
         refine add_le_add ?_ ?_
         · have hswap : (P.card : ℝ)⁻¹ * ∑ n ∈ P, (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-                |blockSum G wmed n (G.rowEquiv.symm ν)|
+                |blockSum bb G wmed n (G.rowEquiv.symm ν)|
               = (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, (P.card : ℝ)⁻¹ * ∑ n ∈ P,
-                |blockSum G wmed n (G.rowEquiv.symm ν)| := by
+                |blockSum bb G wmed n (G.rowEquiv.symm ν)| := by
             simp_rw [Finset.mul_sum]
             rw [Finset.sum_comm]
             refine Finset.sum_congr rfl fun ν _ => Finset.sum_congr rfl fun n _ => ?_
@@ -636,12 +643,12 @@ theorem bigAvg_le (G : GridParams) (X R Y : ℕ) (hne : (apSample X G.P₀ G.b�
           have hr : ((Finset.univ : Finset (Fin G.rDim)).card : ℝ) = G.rDim := by simp
           rw [← hr]
           refine avg_le_of_forall_le _ _ (Real.sqrt_nonneg _) fun ν _ => ?_
-          exact sampleAvg_abs_blockSum_med_le G X R Y hne hK _
+          exact sampleAvg_abs_blockSum_med_le bb hbb G X R Y hne hK _
         · refine avg_le_of_forall_le _ _ hC fun n hn => ?_
           have hr : ((Finset.univ : Finset (Fin G.rDim)).card : ℝ) = G.rDim := by simp
           rw [← hr]
           refine avg_le_of_forall_le _ _ hC fun ν _ => ?_
-          exact abs_blockSum_omegaVL_le G hY hMx1 (hMx n hn) _
+          exact abs_blockSum_omegaVL_le bb hbb G hY hMx1 (hMx n hn) _
 
 /-! ### The harmonic mass of the medium primes: dyadic Chebyshev -/
 
@@ -774,30 +781,34 @@ theorem sum_inv_medPrimes_le {R Y P₀ : ℕ} (hR : 2 ≤ R) (hRY : R ≤ Y) :
   rw [Finset.mem_filter, Nat.mem_primesBelow]
   exact ⟨⟨by omega, hp.1⟩, hp.2.1⟩
 
-/-- **`bigAvg` in closed form.**  For `2 ≤ R ≤ Y`, `1 < Y`, and `Mx ≥ 1` bounding every retained
-argument on the sample,
+/-- **`bigAvg` in closed form, in base `bb`.**  For `2 ≤ R ≤ Y`, `1 < Y`, and `Mx ≥ 1`
+bounding every retained argument on the sample,
 
-  `bigAvg ≤ √( 4(1 + log⌊log₂Y⌋ − log⌊log₂R⌋) · 8^{−K}/15 + 2Y²(2^{−K}/3)²/|P| )
-             + (log Mx / log Y) · 2^{−K}/3`.
+  `bigAvg ≤ √( 4(1 + log⌊log₂Y⌋ − log⌊log₂R⌋) · rowL2 bb K + 2Y²(rowL1 bb K)²/|P| )
+             + (log Mx / log Y) · rowL1 bb K`.
 
+At `bb = 4` this is the draft's `8^{−K}/15`, `2^{−K}/3` form (`rowL1_four`, `rowL2_four`).
 With the §5 schedule (`R = X^{1/(20M)}`, `Y = X^{1/100}`, `Mx ≤ 3X`) the first term is
-`O(8^{−K/2} √(log M))` and the second `O(2^{−K})`, both `o(η)`. -/
-theorem bigAvg_le' (G : GridParams) (X R Y : ℕ) (hne : (apSample X G.P₀ G.b₀).Nonempty)
+`O(√(rowL2 · log M))` and the second `O(rowL1)`, both `o(η)` — for `bb ≥ 3`. -/
+theorem bigAvg_le' (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X R Y : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty)
     (hK : 0 < G.K) (hR : 2 ≤ R) (hRY : R ≤ Y) {Mx : ℝ} (hMx1 : 1 ≤ Mx)
     (hMx : ∀ n ∈ apSample X G.P₀ G.b₀, ∀ i : G.Idx,
       ((n + shiftAL G.B G.Q G.D₀ i : ℕ) : ℝ) ≤ Mx) :
-    bigAvg G X R
-      ≤ Real.sqrt (4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R))
-            * ((1 / 8 : ℝ) ^ G.K / 15)
-          + 2 * (Y : ℝ) ^ 2 * ((1 / 2 : ℝ) ^ G.K / 3) ^ 2 / (apSample X G.P₀ G.b₀).card)
-        + (Real.log Mx / Real.log Y) * (1 / 2 : ℝ) ^ G.K / 3 := by
+    bigAvg bb G X R
+      ≤ Real.sqrt (4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R)) * rowL2 bb G.K
+          + 2 * (Y : ℝ) ^ 2 * (rowL1 bb G.K) ^ 2 / (apSample X G.P₀ G.b₀).card)
+        + (Real.log Mx / Real.log Y) * rowL1 bb G.K := by
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
   have hY : 1 < Y := by omega
-  refine (bigAvg_le G X R Y hne hK hRY hY hMx1 hMx).trans ?_
+  refine (bigAvg_le bb hbb G X R Y hne hK hRY hY hMx1 hMx).trans ?_
   gcongr
   unfold medBudget
   have hc : (0 : ℝ) ≤ (apSample X G.P₀ G.b₀).card := by positivity
   have hcard : ((medPrimes R Y G.P₀).card : ℝ) ≤ Y := by exact_mod_cast card_medPrimes_le R Y G.P₀
   have h1 := sum_inv_medPrimes_le (P₀ := G.P₀) hR hRY
+  have h2 := rowL2_nonneg hbr G.K
+  have h3 := rowL1_nonneg hbr G.K
   gcongr
 
 end NormalNumbers.G4

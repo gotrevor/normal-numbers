@@ -100,6 +100,21 @@ lemma smallPrimeBound_nonneg (sm : Finset ℕ) (T R M Psz : ℕ) {lam' lam θ₀
   unfold smallPrimeBound
   positivity
 
+/-- The base-four instance of the general `PropD` closed form: the witness's `hbig`/`hfar`
+fields are stated with the draft's constants `2^{−K}/3`, `8^{−K}/15`, `(C+2J+2)/3 + 2/9`,
+which are `rowL1 4 K`, `rowL2 4 K`, `farBound 4 J C`. -/
+theorem ScheduleWitness.propD {ℓ w : ℕ} (W : ScheduleWitness ℓ w) :
+    (gridFrame 4 (by norm_num) W.G W.X W.hne (smallPrimes W.R W.G.P₀) (frozenGamma 4 W.G)
+      W.hη W.hε W.D).PropD (W.δbig + W.δfar) := by
+  refine gridFrame_propD_of_bounds 4 (by norm_num) W.G W.X W.R W.Y W.hne W.hK W.hR W.hRY
+    W.hMx1 W.hMx W.hDm W.hη W.hε W.D ?_ ?_
+  · have h := W.hbig
+    simp only [Nat.cast_ofNat, rowL1_four, rowL2_four]
+    linarith
+  · have h := W.hfar
+    simp only [Nat.cast_ofNat, farBound_four]
+    exact h
+
 /-- **The residual obligation of the whole campaign.**  A schedule witness for every omitted
 base-four cylinder gives `SeparatingFrameExists`, hence the headline. -/
 theorem separatingFrameExists_of_witness
@@ -109,22 +124,23 @@ theorem separatingFrameExists_of_witness
       Nonempty (ScheduleWitness ℓ w)) :
     SeparatingFrameExists 4 := by
   intro a c ha hac hc hno
-  obtain ⟨ℓ, w, hw4, hsub⟩ := exists_cylinder_subset ha hac hc
+  obtain ⟨ℓ, w, hw4, hsub⟩ := exists_cylinder_subset 4 (by norm_num) ha hac hc
   have hno' : ∀ n, orbit 4 primeLambertFour n ∉ Set.Ico a c := hno
-  have homit : ∀ m, orbit 4 primeLambertFour m ∉
-      Set.Ico ((w : ℝ) / 4 ^ ℓ) (((w : ℝ) + 1) / 4 ^ ℓ) := fun m h => hno' m (hsub h)
-  obtain ⟨W⟩ := hw ℓ w hw4 homit
-  refine ⟨gridFrame W.G W.X W.hne (smallPrimes W.R W.G.P₀) (frozenGamma W.G) W.hη W.hε W.D,
+  have homit : ∀ m, orbit 4 (primeLambertAtBase 4) m ∉
+      Set.Ico ((w : ℝ) / ((4 : ℕ) : ℝ) ^ ℓ) (((w : ℝ) + 1) / ((4 : ℕ) : ℝ) ^ ℓ) :=
+    fun m h => hno' m (hsub h)
+  obtain ⟨W⟩ := hw ℓ w hw4 (by simpa [primeLambertFour] using homit)
+  refine ⟨gridFrame 4 (by norm_num) W.G W.X W.hne (smallPrimes W.R W.G.P₀) (frozenGamma 4 W.G)
+      W.hη W.hε W.D,
     W.δ₁, W.δbig + W.δfar, _, _, _,
-    gridFrame_propA _ _ _ _ _ _ _ _,
-    gridFrame_propB_of_bound W.G W.X W.hne _ _ W.hη W.hε W.D hw4 homit W.M W.hM W.hε1 W.hr
-      W.hlog W.hδ₁ W.hB,
-    gridFrame_propC W.G W.X W.hne _ _ W.hη W.hε (R := W.R)
+    gridFrame_propA _ _ _ _ _ _ _ _ _ _,
+    gridFrame_propB_of_bound 4 (by norm_num) W.G W.X W.hne _ _ W.hη W.hε W.D hw4 homit W.M
+      W.hM W.hε1 W.hr W.hlog W.hδ₁ W.hB,
+    gridFrame_propC_four W.G W.X W.hne _ _ W.hη W.hε (R := W.R)
       (fun p hp => (mem_smallPrimes.1 hp).1) (fun p hp => (mem_smallPrimes.1 hp).2.2)
       (by have := W.hR; omega) (fun p hp => (mem_smallPrimes.1 hp).2.1) W.hN W.hMc W.hlam'
       W.hlam,
-    gridFrame_propD_of_bounds W.G W.X W.R W.Y W.hne W.hK W.hR W.hRY W.hMx1 W.hMx W.hDm
-      W.hη W.hε W.D W.hbig W.hfar,
+    W.propD,
     Frame.propJackson _,
     smallPrimeBound_nonneg _ _ _ _ _ (by linarith [W.hlam']) W.hlam, ?_⟩
   exact W.hbudget

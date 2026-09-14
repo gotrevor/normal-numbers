@@ -12,7 +12,7 @@ import NormalNumbers.G4Wiring
 
 Draft §7–§8.  The small-prime vector of the grid frame is
 
-  `Sval sm ρ n a = ∑_α A_{aα} ∑_{K<j≤J} 4^{−j} ω_{sm}(n + ρ_{α,j})`,     `A = D_s^{⊗K}`,
+  `Sval bb sm ρ n a = ∑_α A_{aα} ∑_{K<j≤J} bb^{−j} ω_{sm}(n + ρ_{α,j})`,     `A = D_s^{⊗K}`,
 
 read modulo one.  For a frequency `q`, the character `∏_a e(q_a · S_a(n))` is `e(Φ(n))` with
 `Φ = totalPhase sm ρ x`, `x_{α,j} = w_α 4^{−j}`, `w = q ᵥ* A` (`torusChar_Sval`).  So
@@ -57,21 +57,23 @@ abbrev AtomLayer (K s N : ℕ) := (Fin K → Fin (s + 1)) × Fin N
 /-- The shift of the pair `(α, jj)`: `ρ_{α, K+1+jj}`. -/
 def shiftAL (B Q D₀ : ℕ) {N : ℕ} (i : AtomLayer K s N) : ℕ := shiftG B Q D₀ i.1 (layer K i.2)
 
-/-- The phase coefficients of the frequency `q`: `x_{α,j} = w_α / 4^j`, `w = q ᵥ* D_s^{⊗K}`. -/
-noncomputable def coeffAL {N : ℕ} (q : (Fin K → Fin s) → ℤ) (i : AtomLayer K s N) : ℝ :=
-  ((kronPow K (diffZ s)).vecMul q i.1 : ℤ) / (4 : ℝ) ^ layer K i.2
+/-- The phase coefficients of the frequency `q` in base `bb`: `x_{α,j} = w_α / bb^j`,
+`w = q ᵥ* D_s^{⊗K}`. -/
+noncomputable def coeffAL (bb : ℕ) {N : ℕ} (q : (Fin K → Fin s) → ℤ) (i : AtomLayer K s N) : ℝ :=
+  ((kronPow K (diffZ s)).vecMul q i.1 : ℤ) / (bb : ℝ) ^ layer K i.2
 
-/-- The real small-prime vector: `S_a(n) = ∑_α A_{aα} ∑_{jj} ω_{sm}(n + ρ(α,jj)) / 4^{layer jj}`. -/
-noncomputable def Sval (sm : Finset ℕ) {N : ℕ} (ρ : AtomLayer K s N → ℕ) (n : ℕ)
+/-- The real small-prime vector in base `bb`:
+`S_a(n) = ∑_α A_{aα} ∑_{jj} ω_{sm}(n + ρ(α,jj)) / bb^{layer jj}`. -/
+noncomputable def Sval (bb : ℕ) (sm : Finset ℕ) {N : ℕ} (ρ : AtomLayer K s N → ℕ) (n : ℕ)
     (a : Fin K → Fin s) : ℝ :=
   ∑ α, ((kronPow K (diffZ s) a α : ℤ) : ℝ) *
-    ∑ jj : Fin N, (omegaOn sm (n + ρ (α, jj)) : ℝ) / (4 : ℝ) ^ layer K jj
+    ∑ jj : Fin N, (omegaOn sm (n + ρ (α, jj)) : ℝ) / (bb : ℝ) ^ layer K jj
 
 /-- `q · S(n) = Φ(n)`: the frequency pairing of the small-prime vector is the total phase of
-the coefficients `coeffAL q`. -/
-lemma sum_mul_Sval (sm : Finset ℕ) {N : ℕ} (ρ : AtomLayer K s N → ℕ) (q : (Fin K → Fin s) → ℤ)
-    (n : ℕ) :
-    ∑ a, (q a : ℝ) * Sval sm ρ n a = totalPhase sm ρ (coeffAL q) n := by
+the coefficients `coeffAL bb q`.  Base-free algebra. -/
+lemma sum_mul_Sval (bb : ℕ) (sm : Finset ℕ) {N : ℕ} (ρ : AtomLayer K s N → ℕ)
+    (q : (Fin K → Fin s) → ℤ) (n : ℕ) :
+    ∑ a, (q a : ℝ) * Sval bb sm ρ n a = totalPhase sm ρ (coeffAL bb q) n := by
   unfold Sval totalPhase coeffAL
   simp only [Finset.mul_sum, Fintype.sum_prod_type]
   rw [Finset.sum_comm]
@@ -93,21 +95,23 @@ lemma fourier_unitAddCircle (m : ℤ) (x : ℝ) :
   ring
 
 /-- **The character identity**: `∏_a e(q_a S_a(n)) = e(Φ(n))`. -/
-theorem torusChar_Sval (sm : Finset ℕ) {N : ℕ} (ρ : AtomLayer K s N → ℕ)
+theorem torusChar_Sval (bb : ℕ) (sm : Finset ℕ) {N : ℕ} (ρ : AtomLayer K s N → ℕ)
     (q : (Fin K → Fin s) → ℤ) (n : ℕ) :
-    ∏ a, fourier (q a) ((Sval sm ρ n a : ℝ) : UnitAddCircle)
-      = ee (totalPhase sm ρ (coeffAL q) n) := by
+    ∏ a, fourier (q a) ((Sval bb sm ρ n a : ℝ) : UnitAddCircle)
+      = ee (totalPhase sm ρ (coeffAL bb q) n) := by
   rw [← sum_mul_Sval, ee_sum]
   exact Finset.prod_congr rfl fun a _ => fourier_unitAddCircle _ _
 
 /-! ### The uniform lower bound on the phase energy -/
 
-/-- **Frequency separation on the atom/layer index set**: if `J − K = N ≥ 1 + ⌈log₄(2^K D)⌉`
-(so every frequency-depth layer is retained) then for `0 ≠ q`, `‖q‖∞ ≤ D`,
-`∑_i dist(x_i, ℤ)² ≥ 4^{−4} 8^{−K}`. -/
+/-- **Frequency separation on the atom/layer index set, base four**: if
+`J − K = N ≥ 1 + ⌈log₄(2^K D)⌉` (so every frequency-depth layer is retained) then for `0 ≠ q`,
+`‖q‖∞ ≤ D`, `∑_i dist(x_i, ℤ)² ≥ 4^{−4} 8^{−K}`.  The base-`b` seed `θ₀(b) = b^{−4}(2/b²)^K`
+is the `G4FreqSep` port (campaign G4B step 5); everything downstream takes the seed as a
+hypothesis `hsep`, so only this lemma is pinned. -/
 theorem sum_sq_distZ_coeff_ge {N D : ℕ} (hN : 1 + Nat.clog 4 (2 ^ K * D) ≤ N)
     {q : (Fin K → Fin s) → ℤ} (hq : q ≠ 0) (hqD : ∀ a, |q a| ≤ (D : ℤ)) :
-    1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K ≤ ∑ i : AtomLayer K s N, distZ (coeffAL q i) ^ 2 := by
+    1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K ≤ ∑ i : AtomLayer K s N, distZ (coeffAL 4 q i) ^ 2 := by
   classical
   refine (sum_sq_distZ_freqDepth_ge K s hq).trans ?_
   -- the depth of atom `α` as a layer index
@@ -126,12 +130,14 @@ theorem sum_sq_distZ_coeff_ge {N D : ℕ} (hN : 1 + Nat.clog 4 (2 ^ K * D) ≤ N
     omega
   calc ∑ α, distZ (((kronPow K (diffZ s)).vecMul q α : ℤ) /
           (4 : ℝ) ^ freqDepth K ((kronPow K (diffZ s)).vecMul q α)) ^ 2
-      = ∑ α, distZ (coeffAL q (φ α)) ^ 2 := by
+      = ∑ α, distZ (coeffAL 4 q (φ α)) ^ 2 := by
         refine Finset.sum_congr rfl fun α _ => ?_
         rw [coeffAL, hlayer]
-    _ = ∑ i ∈ Finset.univ.image φ, distZ (coeffAL q i) ^ 2 := by
+        push_cast
+        rfl
+    _ = ∑ i ∈ Finset.univ.image φ, distZ (coeffAL 4 q i) ^ 2 := by
         rw [Finset.sum_image (fun α _ β _ h => hφ h)]
-    _ ≤ ∑ i, distZ (coeffAL q i) ^ 2 :=
+    _ ≤ ∑ i, distZ (coeffAL 4 q i) ^ 2 :=
         Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
           (fun i _ _ => by positivity)
 
@@ -174,46 +180,43 @@ theorem shiftAL_injective (B Q D₀ J : ℕ) (hB : s * J < B) (hJQ : J < Q)
 /-! ### §4C for the concrete small-prime vector -/
 
 open Classical in
-/-- **Uniform joint small-prime Fourier control for the grid's small-prime vector.**  With
-`ρ = shiftAL`, `θ₀ = 4^{−4}8^{−K}`, and every prime of `sm` good, the sample average of the
+/-- **Uniform joint small-prime Fourier control for the grid's small-prime vector, in base
+`bb`.**  With `ρ = shiftAL`, a frequency-separation seed `θ₀ ≤ ∑_i dist(x_i, ℤ)²` for the
+coefficients `coeffAL bb q` (`hsep`), and every prime of `sm` good, the sample average of the
 character `q` of `S` is at most `exp(−4θ₀ ∑_{p∈sm} 1/p)` plus the four §4C errors, uniformly
-for `0 ≠ q` in the box `‖q‖∞ ≤ D`. -/
-theorem norm_sampleAvg_torusChar_Sval_le (X P₀ a : ℕ) (hP₀ : 0 < P₀)
+for `0 ≠ q` in the box `‖q‖∞ ≤ D`.  Base four: `θ₀ = 4^{−4}8^{−K}` by
+`sum_sq_distZ_coeff_ge`. -/
+theorem norm_sampleAvg_torusChar_Sval_le (bb : ℕ) (X P₀ a : ℕ) (hP₀ : 0 < P₀)
     (ha : a < P₀) (hne : (apSample X P₀ a).Nonempty)
     (sm : Finset ℕ) (hs : ∀ p ∈ sm, p.Prime) (hsP : ∀ p ∈ sm, p.Coprime P₀)
     {R : ℕ} (hR1 : 1 ≤ R) (hR : ∀ p ∈ sm, p ≤ R)
     {N : ℕ} (ρ : AtomLayer K s N → ℕ) (hk : ∀ p ∈ sm, 2 * Fintype.card (AtomLayer K s N) ≤ p)
     (hgood : ∀ p ∈ sm, GoodPrime ρ p)
-    {D : ℕ} (hN : 1 + Nat.clog 4 (2 ^ K * D) ≤ N)
-    {q : (Fin K → Fin s) → ℤ} (hq : q ≠ 0) (hqD : ∀ a, |q a| ≤ (D : ℤ))
+    {q : (Fin K → Fin s) → ℤ} {θ₀ : ℝ} (hθ0 : 0 ≤ θ₀)
+    (hsep : θ₀ ≤ ∑ i : AtomLayer K s N, distZ (coeffAL bb q i) ^ 2)
     {M : ℕ} (hM : 1 ≤ M) {lam' lam : ℝ} (hlam' : 1 ≤ lam') (hlam : 0 < lam) :
-    ‖sampleAvg (apSample X P₀ a) (fun n a => ((Sval sm ρ n a : ℝ) : UnitAddCircle))
+    ‖sampleAvg (apSample X P₀ a) (fun n a => ((Sval bb sm ρ n a : ℝ) : UnitAddCircle))
         (fun y => ∏ a, fourier (q a) (y a))‖
-      ≤ Real.exp (-∑ p ∈ sm, 4 * (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K) / p)
+      ≤ Real.exp (-∑ p ∈ sm, 4 * θ₀ / p)
         + ((sm.powerset.filter (fun T => T.Nonempty ∧ T.card ≤ M)).card
             * (2 ^ M * (2 * (R : ℝ) ^ M / (apSample X P₀ a).card))
-          + (∏ p ∈ sm, (1 + lam' * (2 * (shiftPhase ρ (coeffAL q) p).roots.card / p))) / lam' ^ M
+          + (∏ p ∈ sm, (1 + lam' * (2 * (shiftPhase ρ (coeffAL bb q) p).roots.card / p)))
+              / lam' ^ M
           + 2 * (2 * Real.exp 1 / lam) ^ M
-              * ∏ p ∈ sm, (1 + Real.exp lam * ((shiftPhase ρ (coeffAL q) p).roots.card / p))
+              * ∏ p ∈ sm, (1 + Real.exp lam * ((shiftPhase ρ (coeffAL bb q) p).roots.card / p))
           + 2 * (2 * Real.exp 1 / M) ^ M * (sm.card : ℝ) ^ M
               * (2 * (R : ℝ) ^ M / (apSample X P₀ a).card)) := by
-  have hfun : (fun n => (fun y : (Fin K → Fin s) → UnitAddCircle => ∏ a, fourier (q a) (y a))
-      ((fun n a => ((Sval sm ρ n a : ℝ) : UnitAddCircle)) n))
-      = fun n => ee (totalPhase sm ρ (coeffAL q) n) := by
-    funext n
-    exact torusChar_Sval sm ρ q n
-  have hθ0 : (0 : ℝ) ≤ 1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K := by positivity
-  have h := norm_sampleAvg_ee_phase_le X P₀ a hP₀ ha hne sm hs hsP hR1 hR ρ (coeffAL q) hk hθ0
-    (sum_sq_distZ_coeff_ge hN hq hqD) hM hlam' hlam
-  have hgood' : ∀ p ∈ sm, (if GoodPrime ρ p then 1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K else 0)
-      = 1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ K := fun p hp => if_pos (hgood p hp)
+  have h := norm_sampleAvg_ee_phase_le X P₀ a hP₀ ha hne sm hs hsP hR1 hR ρ (coeffAL bb q) hk hθ0
+    hsep hM hlam' hlam
+  have hgood' : ∀ p ∈ sm, (if GoodPrime ρ p then θ₀ else 0) = θ₀ :=
+    fun p hp => if_pos (hgood p hp)
   rw [Finset.sum_congr rfl (fun p hp => by rw [hgood' p hp])] at h
   unfold sampleAvg at h ⊢
   simp only [id] at h
   rw [show (∑ n ∈ apSample X P₀ a, ∏ a, fourier (q a)
-      ((fun n a => ((Sval sm ρ n a : ℝ) : UnitAddCircle)) n a))
-      = ∑ n ∈ apSample X P₀ a, ee (totalPhase sm ρ (coeffAL q) n) from
-    Finset.sum_congr rfl fun n _ => torusChar_Sval sm ρ q n]
+      ((fun n a => ((Sval bb sm ρ n a : ℝ) : UnitAddCircle)) n a))
+      = ∑ n ∈ apSample X P₀ a, ee (totalPhase sm ρ (coeffAL bb q) n) from
+    Finset.sum_congr rfl fun n _ => torusChar_Sval bb sm ρ q n]
   exact h
 
 end NormalNumbers.G4

@@ -75,66 +75,66 @@ variable (fr : Frame)
 and before subtracting `γ`. -/
 noncomputable def tailFrom (n : ℕ) (ν : Fin fr.r) : ℝ :=
   ∑ α, (fr.A ν α : ℝ) *
-    ∑' i : ℕ, omegaR (n + fr.shift α (fr.K + i + 1)) / (4 : ℝ) ^ (fr.K + i + 1)
+    ∑' i : ℕ, omegaR (n + fr.shift α (fr.K + i + 1)) / (fr.bse : ℝ) ^ (fr.K + i + 1)
 
 /-- Summability of one atom's full layer series, on a progression point. -/
 lemma summable_layer {n : ℕ} {α : Fin fr.H} {k : ℕ} (hd : fr.d α ≠ 0)
     (hnk : n = fr.t α + fr.d α * k) :
-    Summable (fun j : ℕ => omegaR (n + fr.shift α (j + 1)) / (4 : ℝ) ^ (j + 1)) := by
-  refine (summable_dilatedTailB (b := 4) (by norm_num) (fr.d α) k hd).congr (fun j => ?_)
+    Summable (fun j : ℕ => omegaR (n + fr.shift α (j + 1)) / (fr.bse : ℝ) ^ (j + 1)) := by
+  refine (summable_dilatedTailB (b := fr.bse) fr.hbse (fr.d α) k hd).congr (fun j => ?_)
   rw [hnk, fr.add_shift_eq α k j]
-  norm_num
 
 end Frame
 
 /-- **Only the retained layers survive.**  On the concrete frame, the layers `j ≤ K` of the exact
 transported vector are annihilated by every row of `A = D_s^{⊗K}`, so `Ffull` is the retained
 tail translated by `γ`. -/
-theorem gridFrame_Ffull_eq (G : GridParams) (X : ℕ)
+theorem gridFrame_Ffull_eq (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ) (γ : Torus G.rDim)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) {n : ℕ} (hn : n ∈ apSample X G.P₀ G.b₀)
     (ν : Fin G.rDim) :
-    (gridFrame G X hne sm γ hη hε D).Ffull n ν
-      = ((((gridFrame G X hne sm γ hη hε D).tailFrom n ν : ℝ)) : UnitAddCircle) - γ ν := by
+    (gridFrame bb hbb G X hne sm γ hη hε D).Ffull n ν
+      = ((((gridFrame bb hbb G X hne sm γ hη hε D).tailFrom n ν : ℝ)) : UnitAddCircle) - γ ν := by
   classical
-  set fr := gridFrame G X hne sm γ hη hε D with hfr
+  set fr := gridFrame bb hbb G X hne sm γ hη hε D with hfr
   choose k hk1 hk2 using fun α : Fin fr.H => G.exists_mult_mul hn (G.atomEquiv.symm α)
   have hd : ∀ α : Fin fr.H, fr.d α ≠ 0 := fun α => (G.d_pos _).ne'
   have hsum : ∀ α : Fin fr.H,
-      Summable (fun j : ℕ => omegaR (n + fr.shift α (j + 1)) / (4 : ℝ) ^ (j + 1)) :=
+      Summable (fun j : ℕ => omegaR (n + fr.shift α (j + 1)) / (bb : ℝ) ^ (j + 1)) :=
     fun α => fr.summable_layer (hd α) (hk1 α)
   -- split each atom's series at layer `K`
   have hsplit : ∀ α : Fin fr.H,
-      (∑' j : ℕ, omegaR (n + fr.shift α (j + 1)) / (4 : ℝ) ^ (j + 1))
-        = (∑ j ∈ Finset.range fr.K, omegaR (n + fr.shift α (j + 1)) / (4 : ℝ) ^ (j + 1))
-          + ∑' i : ℕ, omegaR (n + fr.shift α (fr.K + i + 1)) / (4 : ℝ) ^ (fr.K + i + 1) := by
+      (∑' j : ℕ, omegaR (n + fr.shift α (j + 1)) / (bb : ℝ) ^ (j + 1))
+        = (∑ j ∈ Finset.range fr.K, omegaR (n + fr.shift α (j + 1)) / (bb : ℝ) ^ (j + 1))
+          + ∑' i : ℕ, omegaR (n + fr.shift α (fr.K + i + 1)) / (bb : ℝ) ^ (fr.K + i + 1) := by
     intro α
     rw [← (hsum α).sum_add_tsum_nat_add fr.K]
     congr 1
     exact tsum_congr fun i => by rw [show i + fr.K = fr.K + i from Nat.add_comm _ _]
   have hzero : (∑ α : Fin fr.H, (fr.A ν α : ℝ) *
-      ∑ j ∈ Finset.range fr.K, omegaR (n + fr.shift α (j + 1)) / (4 : ℝ) ^ (j + 1)) = 0 := by
+      ∑ j ∈ Finset.range fr.K, omegaR (n + fr.shift α (j + 1)) / (bb : ℝ) ^ (j + 1)) = 0 := by
     simp_rw [Finset.mul_sum]
     rw [Finset.sum_comm]
     refine Finset.sum_eq_zero fun j hj => ?_
     have hjK : j < G.K := Finset.mem_range.1 hj
     have := sum_kronPow_mul_shiftG_eq_zero (R := ℝ) G.B G.Q G.D₀ G.hD ⟨j, hjK⟩
-      (fun x => omegaR x.toNat / (4 : ℝ) ^ (j + 1)) (G.rowEquiv.symm ν) (n : ℤ)
+      (fun x => omegaR x.toNat / (bb : ℝ) ^ (j + 1)) (G.rowEquiv.symm ν) (n : ℤ)
     rw [← Equiv.sum_comp G.atomEquiv.symm
       (fun α' : G.Atom => ((kronPow G.K (diffZ G.s) (G.rowEquiv.symm ν) α' : ℤ) : ℝ) *
-        (omegaR (((n : ℤ) + (shiftG G.B G.Q G.D₀ α' (j + 1) : ℕ)).toNat) / (4 : ℝ) ^ (j + 1)))]
+        (omegaR (((n : ℤ) + (shiftG G.B G.Q G.D₀ α' (j + 1) : ℕ)).toNat) / (bb : ℝ) ^ (j + 1)))]
       at this
     refine Eq.trans ?_ this
     refine Finset.sum_congr rfl fun α _ => ?_
     congr 2
   have hreal : (∑ α : Fin fr.H, (fr.A ν α : ℝ) *
-        ∑' j : ℕ, omegaR (n + fr.shift α (j + 1)) / (4 : ℝ) ^ (j + 1))
+        ∑' j : ℕ, omegaR (n + fr.shift α (j + 1)) / (bb : ℝ) ^ (j + 1))
       = fr.tailFrom n ν := by
-    unfold Frame.tailFrom
+    show _ = ∑ α : Fin fr.H, (fr.A ν α : ℝ) *
+      ∑' i : ℕ, omegaR (n + fr.shift α (fr.K + i + 1)) / (bb : ℝ) ^ (fr.K + i + 1)
     simp_rw [hsplit, mul_add]
     rw [Finset.sum_add_distrib, hzero, zero_add]
   show (((∑ α : Fin fr.H, (fr.A ν α : ℝ) *
-      ∑' j : ℕ, omegaR (n + fr.shift α (j + 1)) / (4 : ℝ) ^ (j + 1)) : ℝ) : UnitAddCircle)
+      ∑' j : ℕ, omegaR (n + fr.shift α (j + 1)) / (bb : ℝ) ^ (j + 1)) : ℝ) : UnitAddCircle)
       - fr.γ ν = ((fr.tailFrom n ν : ℝ) : UnitAddCircle) - γ ν
   rw [hreal]
   rfl
@@ -227,17 +227,17 @@ lemma omegaR_split (R : ℕ) {P₀ m : ℕ} (hP₀ : P₀ ≠ 0) (hm : m ≠ 0) 
 /-! ### Layer blocks, and the three-way split of the retained tail -/
 
 /-- One retained layer-block of the grid, with an arbitrary arithmetic weight `w`:
-`∑_α A_{aα} ∑_{K < j ≤ J} w(n + ρ_{α,j}) 4^{−j}`.  `Sval` is the case `w = ω_{sm}`. -/
-noncomputable def blockSum (G : GridParams) (w : ℕ → ℝ) (n : ℕ) (a : Fin G.K → Fin G.s) : ℝ :=
+`∑_α A_{aα} ∑_{K < j ≤ J} w(n + ρ_{α,j}) bb^{−j}`.  `Sval` is the case `w = ω_{sm}`. -/
+noncomputable def blockSum (bb : ℕ) (G : GridParams) (w : ℕ → ℝ) (n : ℕ) (a : Fin G.K → Fin G.s) : ℝ :=
   ∑ α : G.Atom, ((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) *
-    ∑ jj : Fin G.N, w (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (4 : ℝ) ^ layer G.K jj
+    ∑ jj : Fin G.N, w (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (bb : ℝ) ^ layer G.K jj
 
-lemma Sval_eq_blockSum (G : GridParams) (sm : Finset ℕ) (n : ℕ) (a : Fin G.K → Fin G.s) :
-    Sval sm (shiftAL G.B G.Q G.D₀ (N := G.N)) n a
-      = blockSum G (fun m => (omegaOn sm m : ℝ)) n a := rfl
+lemma Sval_eq_blockSum (bb : ℕ) (G : GridParams) (sm : Finset ℕ) (n : ℕ) (a : Fin G.K → Fin G.s) :
+    Sval bb sm (shiftAL G.B G.Q G.D₀ (N := G.N)) n a
+      = blockSum bb G (fun m => (omegaOn sm m : ℝ)) n a := rfl
 
-lemma blockSum_add (G : GridParams) (w₁ w₂ : ℕ → ℝ) (n : ℕ) (a : Fin G.K → Fin G.s) :
-    blockSum G (fun m => w₁ m + w₂ m) n a = blockSum G w₁ n a + blockSum G w₂ n a := by
+lemma blockSum_add (bb : ℕ) (G : GridParams) (w₁ w₂ : ℕ → ℝ) (n : ℕ) (a : Fin G.K → Fin G.s) :
+    blockSum bb G (fun m => w₁ m + w₂ m) n a = blockSum bb G w₁ n a + blockSum bb G w₂ n a := by
   unfold blockSum
   rw [← Finset.sum_add_distrib]
   refine Finset.sum_congr rfl fun α _ => ?_
@@ -245,68 +245,68 @@ lemma blockSum_add (G : GridParams) (w₁ w₂ : ℕ → ℝ) (n : ℕ) (a : Fin
   refine congrArg _ (Finset.sum_congr rfl fun jj _ => ?_)
   ring
 
-lemma blockSum_congr (G : GridParams) {w₁ w₂ : ℕ → ℝ} {n m : ℕ} (a : Fin G.K → Fin G.s)
+lemma blockSum_congr (bb : ℕ) (G : GridParams) {w₁ w₂ : ℕ → ℝ} {n m : ℕ} (a : Fin G.K → Fin G.s)
     (h : ∀ α : G.Atom, ∀ jj : Fin G.N,
       w₁ (n + shiftAL G.B G.Q G.D₀ (α, jj)) = w₂ (m + shiftAL G.B G.Q G.D₀ (α, jj))) :
-    blockSum G w₁ n a = blockSum G w₂ m a := by
+    blockSum bb G w₁ n a = blockSum bb G w₂ m a := by
   unfold blockSum
   exact Finset.sum_congr rfl fun α _ =>
     congrArg _ (Finset.sum_congr rfl fun jj _ => by rw [h α jj])
 
 /-- The infinite far tail: the layers `j > J = K + N`. -/
-noncomputable def farPart (G : GridParams) (n : ℕ) (a : Fin G.K → Fin G.s) : ℝ :=
+noncomputable def farPart (bb : ℕ) (G : GridParams) (n : ℕ) (a : Fin G.K → Fin G.s) : ℝ :=
   ∑ α : G.Atom, ((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ) *
     ∑' i : ℕ, omegaR (n + shiftG G.B G.Q G.D₀ α (G.K + G.N + i + 1))
-      / (4 : ℝ) ^ (G.K + G.N + i + 1)
+      / (bb : ℝ) ^ (G.K + G.N + i + 1)
 
 /-- **Retained layers = the `J`-truncation plus the far tail.** -/
-theorem tailFrom_split (G : GridParams) (X : ℕ)
+theorem tailFrom_split (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ) (γ : Torus G.rDim)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) {n : ℕ} (hn : n ∈ apSample X G.P₀ G.b₀)
     (ν : Fin G.rDim) :
-    (gridFrame G X hne sm γ hη hε D).tailFrom n ν
-      = blockSum G omegaR n (G.rowEquiv.symm ν) + farPart G n (G.rowEquiv.symm ν) := by
+    (gridFrame bb hbb G X hne sm γ hη hε D).tailFrom n ν
+      = blockSum bb G omegaR n (G.rowEquiv.symm ν) + farPart bb G n (G.rowEquiv.symm ν) := by
   classical
   have hd : ∀ α : G.Atom, G.d α ≠ 0 := fun α => (G.d_pos α).ne'
   have hsum : ∀ α : G.Atom, Summable
-      (fun j : ℕ => omegaR (n + shiftG G.B G.Q G.D₀ α (j + 1)) / (4 : ℝ) ^ (j + 1)) := by
+      (fun j : ℕ => omegaR (n + shiftG G.B G.Q G.D₀ α (j + 1)) / (bb : ℝ) ^ (j + 1)) := by
     intro α
     obtain ⟨k, hk1, -⟩ := G.exists_mult_mul hn α
-    refine (summable_dilatedTailB (b := 4) (by norm_num) (G.d α) k (hd α)).congr (fun j => ?_)
+    refine (summable_dilatedTailB (b := bb) hbb (G.d α) k (hd α)).congr (fun j => ?_)
     rw [hk1]
-    show omegaR (G.d α * (k + j + 1)) / (4 : ℝ) ^ (j + 1)
+    show omegaR (G.d α * (k + j + 1)) / (bb : ℝ) ^ (j + 1)
       = omegaR (offset G.B G.Q α + mult G.B G.Q G.D₀ α * k
-          + shiftG G.B G.Q G.D₀ α (j + 1)) / (4 : ℝ) ^ (j + 1)
+          + shiftG G.B G.Q G.D₀ α (j + 1)) / (bb : ℝ) ^ (j + 1)
     rw [add_shiftG_eq G.B G.Q G.D₀ α (G.hD α) (by omega)]
-    show omegaR (G.d α * (k + j + 1)) / (4 : ℝ) ^ (j + 1)
-      = omegaR (G.d α * (k + (j + 1))) / (4 : ℝ) ^ (j + 1)
+    show omegaR (G.d α * (k + j + 1)) / (bb : ℝ) ^ (j + 1)
+      = omegaR (G.d α * (k + (j + 1))) / (bb : ℝ) ^ (j + 1)
     rw [show k + j + 1 = k + (j + 1) by omega]
   have hsplit : ∀ α : G.Atom,
-      (∑' i : ℕ, omegaR (n + shiftG G.B G.Q G.D₀ α (G.K + i + 1)) / (4 : ℝ) ^ (G.K + i + 1))
-        = (∑ jj : Fin G.N, omegaR (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (4 : ℝ) ^ layer G.K jj)
+      (∑' i : ℕ, omegaR (n + shiftG G.B G.Q G.D₀ α (G.K + i + 1)) / (bb : ℝ) ^ (G.K + i + 1))
+        = (∑ jj : Fin G.N, omegaR (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (bb : ℝ) ^ layer G.K jj)
           + ∑' i : ℕ, omegaR (n + shiftG G.B G.Q G.D₀ α (G.K + G.N + i + 1))
-              / (4 : ℝ) ^ (G.K + G.N + i + 1) := by
+              / (bb : ℝ) ^ (G.K + G.N + i + 1) := by
     intro α
     have hs' : Summable (fun i : ℕ =>
-        omegaR (n + shiftG G.B G.Q G.D₀ α (G.K + i + 1)) / (4 : ℝ) ^ (G.K + i + 1)) := by
+        omegaR (n + shiftG G.B G.Q G.D₀ α (G.K + i + 1)) / (bb : ℝ) ^ (G.K + i + 1)) := by
       refine ((summable_nat_add_iff G.K).2 (hsum α)).congr (fun i => ?_)
       rw [show i + G.K = G.K + i from Nat.add_comm _ _]
     rw [← hs'.sum_add_tsum_nat_add G.N]
     congr 1
-    · rw [show (∑ jj : Fin G.N, omegaR (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (4 : ℝ) ^ layer G.K jj)
+    · rw [show (∑ jj : Fin G.N, omegaR (n + shiftAL G.B G.Q G.D₀ (α, jj)) / (bb : ℝ) ^ layer G.K jj)
           = ∑ jj : Fin G.N, omegaR (n + shiftG G.B G.Q G.D₀ α (G.K + 1 + (jj : ℕ)))
-              / (4 : ℝ) ^ (G.K + 1 + (jj : ℕ)) from rfl,
+              / (bb : ℝ) ^ (G.K + 1 + (jj : ℕ)) from rfl,
         Fin.sum_univ_eq_sum_range (fun i => omegaR (n + shiftG G.B G.Q G.D₀ α (G.K + 1 + i))
-          / (4 : ℝ) ^ (G.K + 1 + i)) G.N]
+          / (bb : ℝ) ^ (G.K + 1 + i)) G.N]
       exact Finset.sum_congr rfl fun i _ => by rw [show G.K + i + 1 = G.K + 1 + i by omega]
     · exact tsum_congr fun i => by rw [show G.K + (i + G.N) + 1 = G.K + G.N + i + 1 by omega]
   show (∑ α : Fin G.hDim,
       ((kronPow G.K (diffZ G.s) (G.rowEquiv.symm ν) (G.atomEquiv.symm α) : ℤ) : ℝ) *
       ∑' i : ℕ, omegaR (n + shiftG G.B G.Q G.D₀ (G.atomEquiv.symm α) (G.K + i + 1))
-        / (4 : ℝ) ^ (G.K + i + 1)) = _
+        / (bb : ℝ) ^ (G.K + i + 1)) = _
   rw [Equiv.sum_comp G.atomEquiv.symm (fun α : G.Atom =>
     ((kronPow G.K (diffZ G.s) (G.rowEquiv.symm ν) α : ℤ) : ℝ) *
-      ∑' i : ℕ, omegaR (n + shiftG G.B G.Q G.D₀ α (G.K + i + 1)) / (4 : ℝ) ^ (G.K + i + 1))]
+      ∑' i : ℕ, omegaR (n + shiftG G.B G.Q G.D₀ α (G.K + i + 1)) / (bb : ℝ) ^ (G.K + i + 1))]
   unfold blockSum farPart
   rw [← Finset.sum_add_distrib]
   exact Finset.sum_congr rfl fun α _ => by rw [hsplit α, mul_add]
@@ -341,18 +341,18 @@ lemma omegaOn_primeFactors_congr {P₀ n m ρ : ℕ} (h : n % P₀ = m % P₀) :
 
 /-- The frozen translate `γ`: the contribution of the primes dividing `P₀`, evaluated at the
 progression's residue `b₀`.  On the sample it is exactly the frozen part of `Ffull`. -/
-noncomputable def frozenTranslate (G : GridParams) (ν : Fin G.rDim) : ℝ :=
-  blockSum G (fun m => (omegaOn G.P₀.primeFactors m : ℝ)) G.b₀ (G.rowEquiv.symm ν)
+noncomputable def frozenTranslate (bb : ℕ) (G : GridParams) (ν : Fin G.rDim) : ℝ :=
+  blockSum bb G (fun m => (omegaOn G.P₀.primeFactors m : ℝ)) G.b₀ (G.rowEquiv.symm ν)
 
 /-- The frozen translate as a point of the torus. -/
-noncomputable def frozenGamma (G : GridParams) : Torus G.rDim :=
-  fun ν => ((frozenTranslate G ν : ℝ) : UnitAddCircle)
+noncomputable def frozenGamma (bb : ℕ) (G : GridParams) : Torus G.rDim :=
+  fun ν => ((frozenTranslate bb G ν : ℝ) : UnitAddCircle)
 
-lemma blockSum_frozen_eq (G : GridParams) {X n : ℕ} (hn : n ∈ apSample X G.P₀ G.b₀)
+lemma blockSum_frozen_eq (bb : ℕ) (G : GridParams) {X n : ℕ} (hn : n ∈ apSample X G.P₀ G.b₀)
     (a : Fin G.K → Fin G.s) :
-    blockSum G (fun m => (omegaOn G.P₀.primeFactors m : ℝ)) n a
-      = blockSum G (fun m => (omegaOn G.P₀.primeFactors m : ℝ)) G.b₀ a := by
-  refine blockSum_congr G a fun α jj => ?_
+    blockSum bb G (fun m => (omegaOn G.P₀.primeFactors m : ℝ)) n a
+      = blockSum bb G (fun m => (omegaOn G.P₀.primeFactors m : ℝ)) G.b₀ a := by
+  refine blockSum_congr bb G a fun α jj => ?_
   have h1 : n % G.P₀ = G.b₀ := (Finset.mem_filter.1 hn).2
   have h2 : G.b₀ % G.P₀ = G.b₀ := Nat.mod_eq_of_lt G.b₀_lt_P₀
   have h3 : omegaOn G.P₀.primeFactors (n + shiftAL G.B G.Q G.D₀ (α, jj))
@@ -365,13 +365,13 @@ lemma blockSum_frozen_eq (G : GridParams) {X n : ℕ} (hn : n ∈ apSample X G.P
 /-- **The exact remainder decomposition.**  On the sample, the transported vector is the
 small-prime vector plus the large-prime block plus the far tail, translated by the frozen
 constant — every term named and exact. -/
-theorem blockSum_omegaR_split (G : GridParams) (R : ℕ) (n : ℕ) (a : Fin G.K → Fin G.s) :
-    blockSum G omegaR n a
-      = blockSum G (fun m => (omegaOn G.P₀.primeFactors m : ℝ)) n a
-        + Sval (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n a
-        + blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n a := by
+theorem blockSum_omegaR_split (bb : ℕ) (G : GridParams) (R : ℕ) (n : ℕ) (a : Fin G.K → Fin G.s) :
+    blockSum bb G omegaR n a
+      = blockSum bb G (fun m => (omegaOn G.P₀.primeFactors m : ℝ)) n a
+        + Sval bb (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n a
+        + blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n a := by
   rw [Sval_eq_blockSum, ← blockSum_add, ← blockSum_add]
-  refine blockSum_congr G a fun α jj => ?_
+  refine blockSum_congr bb G a fun α jj => ?_
   exact omegaR_split R G.P₀_pos.ne' (by have := shiftAL_pos G (α, jj); omega)
 
 /-- Distance on the unit circle is at most the real distance. -/
@@ -384,23 +384,23 @@ lemma dist_coe_le' (x y : ℝ) :
 `P₀` and `γ` the frozen translate, the exact transported vector is the small-prime vector plus
 exactly two named remainders: the large-prime block (`p > R`, `p ∤ P₀`, layers `K < j ≤ J`) and
 the infinite far tail (layers `j > J`). -/
-theorem gridFrame_Ffull_decomp (G : GridParams) (X : ℕ)
+theorem gridFrame_Ffull_decomp (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (R : ℕ)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) {n : ℕ} (hn : n ∈ apSample X G.P₀ G.b₀)
     (ν : Fin G.rDim) :
-    (gridFrame G X hne (smallPrimes R G.P₀) (frozenGamma G) hη hε D).Ffull n ν
-      = (((Sval (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν)
-          + blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
-          + farPart G n (G.rowEquiv.symm ν) : ℝ)) : UnitAddCircle) := by
-  rw [gridFrame_Ffull_eq G X hne _ _ hη hε D hn ν,
-    tailFrom_split G X hne _ _ hη hε D hn ν,
-    blockSum_omegaR_split G R n (G.rowEquiv.symm ν),
-    blockSum_frozen_eq G hn (G.rowEquiv.symm ν)]
-  show (((frozenTranslate G ν
-      + Sval (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν)
-      + blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
-      + farPart G n (G.rowEquiv.symm ν) : ℝ)) : UnitAddCircle)
-      - ((frozenTranslate G ν : ℝ) : UnitAddCircle) = _
+    (gridFrame bb hbb G X hne (smallPrimes R G.P₀) (frozenGamma bb G) hη hε D).Ffull n ν
+      = (((Sval bb (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν)
+          + blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
+          + farPart bb G n (G.rowEquiv.symm ν) : ℝ)) : UnitAddCircle) := by
+  rw [gridFrame_Ffull_eq bb hbb G X hne _ _ hη hε D hn ν,
+    tailFrom_split bb hbb G X hne _ _ hη hε D hn ν,
+    blockSum_omegaR_split bb G R n (G.rowEquiv.symm ν),
+    blockSum_frozen_eq bb G hn (G.rowEquiv.symm ν)]
+  show (((frozenTranslate bb G ν
+      + Sval bb (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν)
+      + blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
+      + farPart bb G n (G.rowEquiv.symm ν) : ℝ)) : UnitAddCircle)
+      - ((frozenTranslate bb G ν : ℝ) : UnitAddCircle) = _
   rw [← QuotientAddGroup.mk_sub]
   congr 1
   ring
@@ -410,16 +410,16 @@ theorem gridFrame_Ffull_decomp (G : GridParams) (X : ℕ)
 /-- The sample average of the average coordinate size of the **large-prime block**: primes
 `p > R` with `p ∤ P₀`, in the retained layers `K < j ≤ J`.  §4D's medium (`R < p ≤ Y`, signed
 two-congruence counting) and very-large (`p > Y`, pointwise) ranges together. -/
-noncomputable def bigAvg (G : GridParams) (X R : ℕ) : ℝ :=
+noncomputable def bigAvg (bb : ℕ) (G : GridParams) (X R : ℕ) : ℝ :=
   ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
     (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-      |blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+      |blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
 
 /-- The sample average of the average coordinate size of the **infinite far tail**: layers
 `j > J`. -/
-noncomputable def farAvg (G : GridParams) (X : ℕ) : ℝ :=
+noncomputable def farAvg (bb : ℕ) (G : GridParams) (X : ℕ) : ℝ :=
   ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
-    (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, |farPart G n (G.rowEquiv.symm ν)|
+    (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, |farPart bb G n (G.rowEquiv.symm ν)|
 
 /-- **`PropD` reduces to exactly two arithmetic estimates.**  With `γ` the frozen translate, the
 only gap between the small-prime vector and the exact transported vector is the large-prime
@@ -428,43 +428,43 @@ block plus the far tail; if each has small sample average in the *average* coord
 
 This is the whole content of brief §4D as a Lean statement: the frozen primes are gone (into
 `γ`), the small primes are gone (into `S`), and what remains is `bigAvg` and `farAvg`. -/
-theorem gridFrame_propD (G : GridParams) (X : ℕ)
+theorem gridFrame_propD (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (R : ℕ)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) {δbig δfar : ℝ}
-    (hbig : bigAvg G X R ≤ δbig * (ε * η)) (hfar : farAvg G X ≤ δfar * (ε * η)) :
-    (gridFrame G X hne (smallPrimes R G.P₀) (frozenGamma G) hη hε D).PropD (δbig + δfar) := by
+    (hbig : bigAvg bb G X R ≤ δbig * (ε * η)) (hfar : farAvg bb G X ≤ δfar * (ε * η)) :
+    (gridFrame bb hbb G X hne (smallPrimes R G.P₀) (frozenGamma bb G) hη hε D).PropD (δbig + δfar) := by
   classical
-  set fr := gridFrame G X hne (smallPrimes R G.P₀) (frozenGamma G) hη hε D with hfr
+  set fr := gridFrame bb hbb G X hne (smallPrimes R G.P₀) (frozenGamma bb G) hη hε D with hfr
   have hcard : (0 : ℝ) ≤ ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ := by positivity
   have hstep : ∀ n ∈ apSample X G.P₀ G.b₀, dAv (fr.S n) (fr.Ffull n)
       ≤ (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-            |blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
-        + (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, |farPart G n (G.rowEquiv.symm ν)| := by
+            |blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+        + (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, |farPart bb G n (G.rowEquiv.symm ν)| := by
     intro n hn
     have hpt : ∀ ν : Fin G.rDim, dist (fr.S n ν) (fr.Ffull n ν)
-        ≤ |blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
-          + |farPart G n (G.rowEquiv.symm ν)| := by
+        ≤ |blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+          + |farPart bb G n (G.rowEquiv.symm ν)| := by
       intro ν
-      rw [gridFrame_Ffull_decomp G X hne R hη hε D hn ν]
+      rw [gridFrame_Ffull_decomp bb hbb G X hne R hη hε D hn ν]
       refine (dist_coe_le' _ _).trans ?_
-      have : Sval (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν)
-          - (Sval (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν)
-            + blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
-            + farPart G n (G.rowEquiv.symm ν))
-          = -(blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
-              + farPart G n (G.rowEquiv.symm ν)) := by ring
+      have : Sval bb (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν)
+          - (Sval bb (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν)
+            + blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
+            + farPart bb G n (G.rowEquiv.symm ν))
+          = -(blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
+              + farPart bb G n (G.rowEquiv.symm ν)) := by ring
       rw [this, abs_neg]
       exact abs_add_le _ _
     calc dAv (fr.S n) (fr.Ffull n)
         = (∑ ν : Fin G.rDim, dist (fr.S n ν) (fr.Ffull n ν)) / (G.rDim : ℝ) := rfl
       _ ≤ (∑ ν : Fin G.rDim,
-            (|blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
-              + |farPart G n (G.rowEquiv.symm ν)|)) / (G.rDim : ℝ) := by
+            (|blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+              + |farPart bb G n (G.rowEquiv.symm ν)|)) / (G.rDim : ℝ) := by
             gcongr with ν
             exact hpt ν
       _ = (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-            |blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
-          + (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, |farPart G n (G.rowEquiv.symm ν)| := by
+            |blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+          + (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, |farPart bb G n (G.rowEquiv.symm ν)| := by
             rw [Finset.sum_add_distrib]
             ring
   show ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
@@ -475,10 +475,10 @@ theorem gridFrame_propD (G : GridParams) (X : ℕ)
         dAv (fr.S n) (fr.Ffull n)
       ≤ ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
           ((G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-              |blockSum G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
-            + (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, |farPart G n (G.rowEquiv.symm ν)|) :=
+              |blockSum bb G (fun m => (omegaBig R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+            + (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, |farPart bb G n (G.rowEquiv.symm ν)|) :=
         mul_le_mul_of_nonneg_left (Finset.sum_le_sum hstep) hcard
-    _ = bigAvg G X R + farAvg G X := by
+    _ = bigAvg bb G X R + farAvg bb G X := by
         unfold bigAvg farAvg
         rw [Finset.sum_add_distrib]
         ring
