@@ -346,3 +346,294 @@ theorem abs_uniPosFreq_sub_le {m ℓ t P : ℕ} (hℓ : 0 < ℓ) (ht : 0 < t) (h
         le_of_eq (by rw [← hkey, ← hP1]; ring)
 
 end NormalNumbers.G4Entropy
+
+namespace NormalNumbers.G4Entropy
+
+variable {A B : Type*} [Fintype A] [DecidableEq A] [Fintype B] [DecidableEq B]
+
+/-- Unpacking the unaligned pattern coordinate into its `t` component blocks. -/
+lemma pvPat_eq_pack_iff (m ℓ t : ℕ) (blk : B → Fin t → A) (b : B) (pv : Fin t → ℕ)
+    (z : A → Fin (2 ^ m)) (u : Fin t → Fin (2 ^ ℓ)) :
+    pvPat m ℓ t blk b pv z = packFin t ℓ u
+      ↔ ∀ s : Fin t, posAt m ℓ (pv s) (z (blk b s)) = u s := by
+  constructor
+  · intro h s
+    exact congrFun ((packFin t ℓ).injective h) s
+  · intro h
+    exact congrArg (packFin t ℓ) (funext h)
+
+end NormalNumbers.G4Entropy
+
+namespace NormalNumbers.G4.Sched
+
+open NormalNumbers NormalNumbers.G4Entropy NormalNumbers.PrimeLambert
+
+/-! ### The schedule instance: every vector of *unrestricted* sampled positions -/
+
+/-- **The free sampled-pattern frequency**: averaged over the blocks and over *all* vectors of
+positions in `[0, m_K − ℓ + 1)^t` — every position at which an `ℓ`-window fits inside the
+sampled window, with no alignment condition. -/
+noncomputable def freeFreq (i ℓ t : ℕ) (x : ℝ) (w : Fin (2 ^ (ℓ * t))) : ℝ :=
+  uniPosFreq (kk i) ℓ t (kk i - ℓ + 1) (blkSched i t) (jointLawAt i x) w
+
+/-- **The free capacity inequality.** -/
+theorem abs_freeFreq_sub_le_of_deficit (i ℓ t : ℕ) (hℓ : 0 < ℓ) (ht : 0 < t)
+    (hfit : 2 * ℓ ≤ kk i) (hcard : 2 * t ≤ Fintype.card (gridAt i).Atom)
+    (x : ℝ) (w : Fin (2 ^ (ℓ * t))) {δ : ℝ} (hδ : 0 < δ)
+    (hdef : ((kk i : ℝ) - δ) * (Fintype.card (gridAt i).Atom : ℝ) ≤ (jointLawAt i x).H₂) :
+    |freeFreq i ℓ t x w - 1 / (2 : ℝ) ^ (ℓ * t)|
+      ≤ 2 * (t : ℝ) * Real.sqrt (8 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * δ / (kk i : ℝ)) := by
+  classical
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hC : 0 < Fintype.card (gridAt i).Atom := by omega
+  have hnb : 0 < nblk i t := nblk_pos ht (by omega)
+  haveI : Nonempty (Fin (nblk i t)) := Fin.pos_iff_nonempty.1 hnb
+  have hk0 : 0 < kk i := by omega
+  have hℓP : ℓ ≤ kk i - ℓ + 1 := by omega
+  have hPm : (kk i - ℓ + 1) + ℓ ≤ kk i + 1 := by omega
+  have hCR : (0 : ℝ) < (Fintype.card (gridAt i).Atom : ℝ) := by exact_mod_cast hC
+  have hΔ0 : (0 : ℝ) < δ * (Fintype.card (gridAt i).Atom : ℝ) := by positivity
+  have hΔ : (kk i : ℝ) * (Fintype.card (gridAt i).Atom : ℝ)
+      - δ * (Fintype.card (gridAt i).Atom : ℝ) ≤ (jointLawAt i x).H₂ := by
+    rw [← sub_mul]; exact hdef
+  have hmain := abs_uniPosFreq_sub_le (A := (gridAt i).Atom) (B := Fin (nblk i t))
+    (m := kk i) (ℓ := ℓ) (t := t) (P := kk i - ℓ + 1) hℓ ht hℓP hPm (blkSched i t)
+    (blkSched_injective i t) (jointLawAt i x) w hΔ0 hΔ
+  rw [freeFreq]
+  refine hmain.trans ?_
+  have hcf : (Fintype.card (Fin (nblk i t)) : ℝ) = ((nblk i t : ℕ) : ℝ) := by
+    rw [Fintype.card_fin]
+  have hbR : (0 : ℝ) < ((nblk i t : ℕ) : ℝ) := by exact_mod_cast hnb
+  have htR : (0 : ℝ) < (t : ℝ) := by exact_mod_cast ht
+  have hℓR : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  have hkR : (0 : ℝ) < (kk i : ℝ) := by exact_mod_cast hk0
+  have hPpos : 0 < kk i - ℓ + 1 := by omega
+  have hPR : (0 : ℝ) < ((kk i - ℓ + 1 : ℕ) : ℝ) := by exact_mod_cast hPpos
+  have hlb : (Fintype.card (gridAt i).Atom : ℝ) ≤ 2 * (t : ℝ) * ((nblk i t : ℕ) : ℝ) := by
+    have hnat : Fintype.card (gridAt i).Atom ≤ 2 * t * nblk i t := by
+      have h1 : t * nblk i t + Fintype.card (gridAt i).Atom % t
+          = Fintype.card (gridAt i).Atom := by
+        rw [nblk]; exact Nat.div_add_mod _ _
+      have h2 : Fintype.card (gridAt i).Atom % t < t := Nat.mod_lt _ ht
+      have h4 : t ≤ t * nblk i t := Nat.le_mul_of_pos_right t hnb
+      have h5 : 2 * t * nblk i t = 2 * (t * nblk i t) := by ring
+      omega
+    exact_mod_cast hnat
+  have hPlb : (kk i : ℝ) ≤ 2 * ((kk i - ℓ + 1 : ℕ) : ℝ) := by
+    have : kk i ≤ 2 * (kk i - ℓ + 1) := by omega
+    exact_mod_cast this
+  have hstep : 2 * Real.log 2 * (ℓ : ℝ) * (δ * (Fintype.card (gridAt i).Atom : ℝ))
+      / ((Fintype.card (Fin (nblk i t)) : ℝ) * ((kk i - ℓ + 1 : ℕ) : ℝ))
+      ≤ 8 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * δ / (kk i : ℝ) := by
+    rw [hcf, div_le_div_iff₀ (by positivity) hkR]
+    have h1 : 2 * Real.log 2 * (ℓ : ℝ) * (δ * (Fintype.card (gridAt i).Atom : ℝ))
+        ≤ 2 * Real.log 2 * (ℓ : ℝ) * (δ * (2 * (t : ℝ) * ((nblk i t : ℕ) : ℝ))) := by
+      have h := mul_le_mul_of_nonneg_left hlb hδ.le
+      exact mul_le_mul_of_nonneg_left h (by positivity)
+    have h2 : 2 * Real.log 2 * (ℓ : ℝ) * (δ * (Fintype.card (gridAt i).Atom : ℝ))
+          * (kk i : ℝ)
+        ≤ 2 * Real.log 2 * (ℓ : ℝ) * (δ * (2 * (t : ℝ) * ((nblk i t : ℕ) : ℝ)))
+            * (2 * ((kk i - ℓ + 1 : ℕ) : ℝ)) :=
+      mul_le_mul h1 hPlb hkR.le (by positivity)
+    calc 2 * Real.log 2 * (ℓ : ℝ) * (δ * (Fintype.card (gridAt i).Atom : ℝ)) * (kk i : ℝ)
+        ≤ 2 * Real.log 2 * (ℓ : ℝ) * (δ * (2 * (t : ℝ) * ((nblk i t : ℕ) : ℝ)))
+            * (2 * ((kk i - ℓ + 1 : ℕ) : ℝ)) := h2
+      _ = 8 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * δ
+            * (((nblk i t : ℕ) : ℝ) * ((kk i - ℓ + 1 : ℕ) : ℝ)) := by ring
+  exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hstep) (by positivity)
+
+/-- **The free capacity bound for `G₄`.** -/
+theorem abs_freeFreq_sub_le_primeLambertFour (i ℓ t : ℕ) (hℓ : 0 < ℓ) (ht : 0 < t)
+    (hfit : 2 * ℓ ≤ kk i) (hcard : 2 * t ≤ Fintype.card (gridAt i).Atom)
+    (w : Fin (2 ^ (ℓ * t))) :
+    |freeFreq i ℓ t (primeLambertAtBase 4) w - 1 / (2 : ℝ) ^ (ℓ * t)|
+      ≤ 2 * (t : ℝ) * Real.sqrt (1600 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) / Real.sqrt (KK i)) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hKpos : (0 : ℝ) < (KK i : ℝ) := by
+    have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+    linarith
+  have hS0 : 0 < Real.sqrt ((KK i : ℕ) : ℝ) := Real.sqrt_pos.2 hKpos
+  have hδ : (0 : ℝ) < 50 * Real.sqrt (KK i) := by positivity
+  have hE1 := entropy_E1 (K := KK i) (k₄ := kk i) rfl (KK_ge i)
+  have hcardA : (Fintype.card (gridAt i).Atom : ℝ) = (((KK i ^ 2 + 1) ^ KK i : ℕ) : ℝ) := by
+    rw [card_Atom_gridAt i]
+  have hdef : ((kk i : ℝ) - 50 * Real.sqrt (KK i)) * (Fintype.card (gridAt i).Atom : ℝ)
+      ≤ (jointLawAt i (primeLambertAtBase 4)).H₂ := by
+    rw [hcardA, sub_mul]
+    exact hE1.le
+  refine (abs_freeFreq_sub_le_of_deficit i ℓ t hℓ ht hfit hcard _ w hδ hdef).trans ?_
+  have hk0 : (0 : ℝ) < (kk i : ℝ) := by
+    have : 0 < kk i := by unfold kk; omega
+    exact_mod_cast this
+  have hsq : Real.sqrt ((KK i : ℕ) : ℝ) * Real.sqrt ((KK i : ℕ) : ℝ) = 4 * (kk i : ℝ) := by
+    rw [Real.mul_self_sqrt hKpos.le]
+    unfold KK; push_cast; ring
+  have hstep : 8 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * (50 * Real.sqrt (KK i)) / (kk i : ℝ)
+      ≤ 1600 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) / Real.sqrt (KK i) := by
+    rw [div_le_div_iff₀ hk0 hS0]
+    have hid : 8 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * (50 * Real.sqrt (KK i))
+        * Real.sqrt ((KK i : ℕ) : ℝ)
+        = 1600 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * (kk i : ℝ) := by
+      linear_combination (400 * Real.log 2 * (ℓ : ℝ) * (t : ℝ)) * hsq
+    rw [hid]
+  exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hstep) (by positivity)
+
+/-- **The free frequency theorem.** -/
+theorem tendsto_freeFreq_primeLambertFour (ℓ t : ℕ) (hℓ : 0 < ℓ) (ht : 0 < t)
+    (w : ∀ i, Fin (2 ^ (ℓ * t))) :
+    Tendsto (fun i => freeFreq i ℓ t (primeLambertAtBase 4) (w i) - 1 / (2 : ℝ) ^ (ℓ * t))
+      atTop (nhds 0) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hinner : Tendsto (fun i => 1600 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) / Real.sqrt (KK i))
+      atTop (nhds 0) := by
+    have hsqrt : Tendsto (fun i => Real.sqrt (KK i)) atTop atTop :=
+      Real.tendsto_sqrt_atTop.comp tendsto_KK_atTop
+    exact hsqrt.const_div_atTop _
+  have hsq : Tendsto (fun i => 2 * (t : ℝ) * Real.sqrt (1600 * Real.log 2 * (ℓ : ℝ) * (t : ℝ)
+      / Real.sqrt (KK i))) atTop (nhds 0) := by
+    have := hinner.sqrt
+    simpa using this.const_mul (2 * (t : ℝ))
+  refine squeeze_zero_norm' ?_ hsq
+  filter_upwards [eventually_ge_atTop (2 * ℓ), eventually_ge_atTop (2 * t)] with i h1 h2
+  have hfit : 2 * ℓ ≤ kk i := by unfold kk; omega
+  have hcard : 2 * t ≤ Fintype.card (gridAt i).Atom := by
+    have := KK_le_card_Atom i
+    have hKi : i ≤ KK i := by unfold KK kk; omega
+    omega
+  simpa [Real.norm_eq_abs] using
+    abs_freeFreq_sub_le_primeLambertFour i ℓ t hℓ ht hfit hcard (w i)
+
+/-! ### The digit rendering at unrestricted positions -/
+
+open Classical in
+/-- **The count rendering.** -/
+theorem freeFreq_eq_count (i ℓ t : ℕ) (x : ℝ) (w : Fin (2 ^ (ℓ * t))) :
+    freeFreq i ℓ t x w
+      = (∑ b : Fin (nblk i t), ∑ pv : Fin t → Fin (kk i - ℓ + 1),
+            (((PK i).filter fun n =>
+              pvPat (kk i) ℓ t (blkSched i t) b (fun s => ((pv s : ℕ)))
+                (ZVec (gridAt i) (kk i) x n) = w).card : ℝ))
+        / (((PK i).card : ℝ)
+            * ((Fintype.card (Fin (nblk i t)) : ℝ) * ((kk i - ℓ + 1 : ℕ) : ℝ) ^ t)) := by
+  classical
+  have hp : ∀ (b : Fin (nblk i t)) (pv : Fin t → Fin (kk i - ℓ + 1)),
+      ((jointLawAt i x).map
+          (pvPat (kk i) ℓ t (blkSched i t) b (fun s => ((pv s : ℕ))))).prob {w}
+        = (((PK i).filter fun n =>
+              pvPat (kk i) ℓ t (blkSched i t) b (fun s => ((pv s : ℕ)))
+                (ZVec (gridAt i) (kk i) x n) = w).card : ℝ)
+          / ((PK i).card : ℝ) := by
+    intro b pv
+    rw [FinLaw.prob, Finset.sum_singleton]
+    exact map_empirical_p (apSample_nonempty (gridAt i) (b₀_lt_X_at i)) _ _ w
+  have hsum : (∑ b : Fin (nblk i t), ∑ pv : Fin t → Fin (kk i - ℓ + 1),
+        ((jointLawAt i x).map
+          (pvPat (kk i) ℓ t (blkSched i t) b (fun s => ((pv s : ℕ))))).prob {w})
+      = (∑ b : Fin (nblk i t), ∑ pv : Fin t → Fin (kk i - ℓ + 1),
+            (((PK i).filter fun n =>
+              pvPat (kk i) ℓ t (blkSched i t) b (fun s => ((pv s : ℕ)))
+                (ZVec (gridAt i) (kk i) x n) = w).card : ℝ)) / ((PK i).card : ℝ) := by
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun b _ => ?_
+    rw [Finset.sum_div]
+    exact Finset.sum_congr rfl fun pv _ => hp b pv
+  rw [freeFreq, uniPosFreq, hsum, div_div]
+
+open Classical in
+/-- **The digit rendering.**  The event is: for every `s < t`, the `ℓ` binary digits of `x`
+beginning at position `2·kIdx(n, blkSched b s) + pv s` spell the `s`-th component word — each
+window's position chosen **freely and independently, with no alignment**, and the average taken
+over all `(m_K − ℓ + 1)^t` such choices. -/
+theorem freeFreq_eq_digits (i ℓ t : ℕ) (hℓ : 0 < ℓ) (hfit : ℓ ≤ kk i) (x : ℝ)
+    (u : Fin t → Fin (2 ^ ℓ)) :
+    freeFreq i ℓ t x (packFin t ℓ u)
+      = (∑ b : Fin (nblk i t), ∑ pv : Fin t → Fin (kk i - ℓ + 1),
+            (((PK i).filter fun n => ∀ s : Fin t,
+              blockVal (Int.fract x)
+                (2 * kIdx (gridAt i) n (blkSched i t b s) + (pv s : ℕ)) ℓ
+                  = (u s : ℕ)).card : ℝ))
+        / (((PK i).card : ℝ)
+            * ((Fintype.card (Fin (nblk i t)) : ℝ) * ((kk i - ℓ + 1 : ℕ) : ℝ) ^ t)) := by
+  classical
+  rw [freeFreq_eq_count i ℓ t x (packFin t ℓ u)]
+  congr 1
+  refine Finset.sum_congr rfl fun b _ => ?_
+  refine Finset.sum_congr rfl fun pv _ => ?_
+  congr 2
+  have hfitp : ∀ s : Fin t, (pv s : ℕ) + ℓ ≤ kk i := by
+    intro s
+    have := (pv s).isLt
+    omega
+  refine Finset.filter_congr fun n _ => ?_
+  rw [pvPat_eq_pack_iff]
+  have hZ : ∀ s : Fin t, ZVec (gridAt i) (kk i) x n (blkSched i t b s)
+      = ⟨blockVal (Int.fract x) (2 * kIdx (gridAt i) n (blkSched i t b s)) (kk i),
+          blockVal_lt _ _ _⟩ :=
+    fun s => Fin.ext (ZSample_eq_blockVal (gridAt i) (kk i) x n (blkSched i t b s))
+  constructor
+  · intro h s
+    have hs := h s
+    rw [hZ s, posAt_blockVal _ _ _ _ _ (hfitp s)] at hs
+    exact congrArg Fin.val hs
+  · intro h s
+    rw [hZ s, posAt_blockVal _ _ _ _ _ (hfitp s)]
+    exact Fin.ext (h s)
+
+open Classical in
+/-- **THE ENDPOINT, over every vector of unrestricted sampled positions.**  For every `t`, every
+`ℓ`, and any binary words `v₀,…,v_{t−1}` of length `ℓ`, the proportion of triples `(n, b, pv)` —
+`pv` ranging over **all** vectors of positions in `[0, m_K − ℓ + 1)^t`, with no alignment
+condition whatsoever — at which, simultaneously for every `s < t`, the word `v s` occurs in the
+binary expansion of `G₄` at position `2·kIdx(n, blkSched b s) + pv s`, tends to `2^{−ℓt}`.
+
+This is the strongest form of the decorrelation statement this arithmetic supports: it drops
+both the common-diagonal restriction of `tendsto_occursCountJoint_primeLambertFour` and the
+`ℓ`-grid alignment of `tendsto_occursCountJointUniform_primeLambertFour`.
+
+It is a statement about the *sampled* positions only, and is **not** a normality claim. -/
+theorem tendsto_occursCountJointFree_primeLambertFour (t ℓ : ℕ) (ht : 0 < t) (hℓ : 0 < ℓ)
+    (v : Fin t → List ℕ) (hlen : ∀ s, (v s).length = ℓ)
+    (hv : ∀ s : Fin t, ∀ j, ∀ h : j < (v s).length, (v s)[j] < 2) :
+    Tendsto (fun i =>
+      (∑ b : Fin (nblk i t), ∑ pv : Fin t → Fin (kk i - ℓ + 1),
+          (((PK i).filter fun n => ∀ s : Fin t,
+            OccursAt 2 (primeLambertAtBase 4) (v s)
+              (2 * kIdx (gridAt i) n (blkSched i t b s) + (pv s : ℕ))).card : ℝ))
+        / (((PK i).card : ℝ)
+            * ((Fintype.card (Fin (nblk i t)) : ℝ) * ((kk i - ℓ + 1 : ℕ) : ℝ) ^ t)))
+      atTop (nhds (1 / (2 : ℝ) ^ (ℓ * t))) := by
+  classical
+  set u : Fin t → Fin (2 ^ ℓ) := fun s =>
+    ⟨wordVal (v s), by
+      have := wordVal_lt (hv s)
+      rw [hlen s] at this
+      exact this⟩ with hu
+  have hmain : Tendsto
+      (fun i => freeFreq i ℓ t (primeLambertAtBase 4) (packFin t ℓ u))
+      atTop (nhds (1 / (2 : ℝ) ^ (ℓ * t))) := by
+    have := tendsto_freeFreq_primeLambertFour ℓ t hℓ ht (fun _ => packFin t ℓ u)
+    have hlim : Tendsto (fun _ : ℕ => (1 : ℝ) / (2 : ℝ) ^ (ℓ * t)) atTop
+        (nhds (1 / (2 : ℝ) ^ (ℓ * t))) := tendsto_const_nhds
+    simpa using this.add hlim
+  refine hmain.congr' ?_
+  filter_upwards [eventually_ge_atTop ℓ] with i hi
+  have hfit : ℓ ≤ kk i := by unfold kk; omega
+  rw [freeFreq_eq_digits i ℓ t hℓ hfit _ u]
+  congr 1
+  refine Finset.sum_congr rfl fun b _ => ?_
+  refine Finset.sum_congr rfl fun pv _ => ?_
+  congr 2
+  refine Finset.filter_congr fun n _ => ?_
+  constructor
+  · intro h s
+    have hb := blockVal_eq_wordVal_iff (y := primeLambertAtBase 4)
+      (p := 2 * kIdx (gridAt i) n (blkSched i t b s) + (pv s : ℕ)) (hv s)
+    rw [hlen s] at hb
+    exact hb.1 (h s)
+  · intro h s
+    have hb := blockVal_eq_wordVal_iff (y := primeLambertAtBase 4)
+      (p := 2 * kIdx (gridAt i) n (blkSched i t b s) + (pv s : ℕ)) (hv s)
+    rw [hlen s] at hb
+    exact hb.2 (h s)
+
+end NormalNumbers.G4.Sched
