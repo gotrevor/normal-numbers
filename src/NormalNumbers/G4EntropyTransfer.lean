@@ -63,6 +63,8 @@ noncomputable def sampledPosAt (i : ℕ) : Finset ℕ :=
 /-- A digit position read by *some* admissible scale. -/
 def IsSampled (j : ℕ) : Prop := ∃ i, j ∈ sampledPosAt i
 
+noncomputable instance : DecidablePred IsSampled := Classical.decPred _
+
 /-- The joint quantized sample law at family index `i`. -/
 noncomputable def jointLawAt (i : ℕ) (x : ℝ) :
     FinLaw ((gridAt i).Atom → Fin (2 ^ kk i)) :=
@@ -155,5 +157,187 @@ theorem E0_primeLambertFour : E0 (primeLambertAtBase 4) := by
     simpa using (tendsto_const_nhds (x := (1 : ℝ)) (f := atTop)).sub tendsto_deficit
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le hlo tendsto_const_nhds
     (fun i => one_sub_le_ratio i) (fun i => ratio_le_one i _)
+
+
+/-! ### The sampled positions have density at most `1/4`
+
+The count of `G4EntropyPositions` is `|S_K ∩ [0,L)| ≤ H_K·m_K·⌊L/(2 d_min)⌋`, and for the
+implemented schedule `d_min = 1 + Q·D₀` with `Q ≥ U ≥ B^K` and `D₀ = K·U`, so
+`2 d_min ≥ K·B^{2K}` — which beats `2^{i+3}·H_K·m_K` with room to spare.  Scales with
+`2 d_min > L` contribute nothing, so at each `L` only the indices `i < L` matter and the
+geometric series closes the sum at `L/4`. -/
+
+/-- `d_min` at family index `i`: a lower bound for every multiplier `d_α`. -/
+def dmin (i : ℕ) : ℕ := 1 + gridQ (KK i) (N (KK i)) * gridD₀ (KK i) (N (KK i))
+
+lemma dmin_le_d (i : ℕ) (α : (gridAt i).Atom) : dmin i ≤ (gridAt i).d α :=
+  gridOf_dmin_le (KK_one_le i) α
+
+/-- The top term of `gridSum`. -/
+lemma pow_le_gridSum {K : ℕ} (B : ℕ) (hK : 1 ≤ K) : B ^ K ≤ gridSum K B := by
+  have hmem : (⟨K - 1, by omega⟩ : Fin K) ∈ (Finset.univ : Finset (Fin K)) := Finset.mem_univ _
+  have := Finset.single_le_sum (f := fun i : Fin K => B ^ ((i : ℕ) + 1))
+    (fun i _ => Nat.zero_le _) hmem
+  simpa [gridSum, show K - 1 + 1 = K by omega] using this
+
+lemma pow_le_gridUmax {K N : ℕ} (hK : 1 ≤ K) : gridB K N ^ K ≤ gridUmax K N := by
+  have h1 : gridB K N ^ K ≤ gridSum K (gridB K N) := pow_le_gridSum _ hK
+  have h2 : 1 ≤ K ^ 2 := Nat.one_le_pow _ _ (by omega)
+  calc gridB K N ^ K ≤ gridSum K (gridB K N) := h1
+    _ = 1 * gridSum K (gridB K N) := (one_mul _).symm
+    _ ≤ K ^ 2 * gridSum K (gridB K N) := Nat.mul_le_mul_right _ h2
+    _ = gridUmax K N := rfl
+
+lemma one_le_gridD₀ {K N : ℕ} (hK : 1 ≤ K) : 1 ≤ gridD₀ K N := by
+  have h1 : 1 ≤ gridB K N ^ K := Nat.one_le_pow _ _ (by unfold gridB; omega)
+  have h2 : gridB K N ^ K ≤ gridUmax K N := pow_le_gridUmax hK
+  unfold gridD₀
+  have : 1 * 1 ≤ K * gridUmax K N := Nat.mul_le_mul hK (le_trans h1 h2)
+  omega
+
+lemma two_mul_succ_le_gridB_sq {K N : ℕ} (hK : 2 ≤ K) : 2 * (K ^ 2 + 1) ≤ gridB K N ^ 2 := by
+  have hcube : K ^ 3 ≤ gridB K N := by
+    have h : K ^ 2 * K ≤ K ^ 2 * (K + N) := Nat.mul_le_mul_left _ (Nat.le_add_right _ _)
+    have hc : K ^ 3 = K ^ 2 * K := by ring
+    unfold gridB
+    omega
+  have h2 : (K ^ 3) ^ 2 ≤ gridB K N ^ 2 := Nat.pow_le_pow_left hcube 2
+  have hK2 : 4 ≤ K ^ 2 := by simpa using Nat.pow_le_pow_left hK 2
+  have h3 : 2 * (K ^ 2 + 1) ≤ (K ^ 3) ^ 2 := by
+    have ht : (K ^ 3) ^ 2 = K ^ 2 * (K ^ 2 * K ^ 2) := by ring
+    rw [ht]
+    nlinarith [hK2]
+  omega
+
+/-- **The decisive size inequality**: `2^{i+3}·H_K·m_K ≤ 2 d_min`.  `Q·D₀ ≥ K·B^{2K}` while
+the left side is at most `(2(K²+1))^K·K`, and `2(K²+1) ≤ B²`. -/
+theorem key_size (i : ℕ) :
+    2 ^ (i + 3) * ((KK i ^ 2 + 1) ^ KK i * kk i) ≤ 2 * dmin i := by
+  set K := KK i with hK
+  set k := kk i with hk
+  have hkK : k ≤ K := by rw [hK, hk]; unfold KK; omega
+  have hik : i + 3 ≤ k := by rw [hk]; unfold kk; omega
+  have hK2 : 2 ≤ K := by have := KK_ge i; omega
+  have hK1 : 1 ≤ K := by omega
+  -- left side
+  have hL1 : 2 ^ (i + 3) ≤ 2 ^ K := Nat.pow_le_pow_right (by omega) (by omega)
+  have hL : 2 ^ (i + 3) * ((K ^ 2 + 1) ^ K * k) ≤ (2 * (K ^ 2 + 1)) ^ K * K := by
+    calc 2 ^ (i + 3) * ((K ^ 2 + 1) ^ K * k)
+        ≤ 2 ^ K * ((K ^ 2 + 1) ^ K * K) := Nat.mul_le_mul hL1 (Nat.mul_le_mul_left _ hkK)
+      _ = (2 * (K ^ 2 + 1)) ^ K * K := by rw [mul_pow]; ring
+  -- right side
+  have hU : gridB K (N K) ^ K ≤ gridUmax K (N K) := pow_le_gridUmax hK1
+  have hQ : gridUmax K (N K) ≤ gridQ K (N K) := by
+    have := gridQ_gt K (N K); omega
+  have hR : (gridB K (N K) ^ 2) ^ K * K
+      ≤ gridQ K (N K) * gridD₀ K (N K) := by
+    have hD : gridD₀ K (N K) = K * gridUmax K (N K) := rfl
+    have h1 : gridB K (N K) ^ K * (K * gridB K (N K) ^ K)
+        ≤ gridUmax K (N K) * (K * gridUmax K (N K)) :=
+      Nat.mul_le_mul hU (Nat.mul_le_mul_left _ hU)
+    have h2 : (gridB K (N K) ^ 2) ^ K * K
+        = gridB K (N K) ^ K * (K * gridB K (N K) ^ K) := by
+      rw [← pow_mul, mul_comm 2 K, pow_mul]
+      ring
+    rw [h2, hD]
+    exact le_trans h1 (Nat.mul_le_mul_right _ hQ)
+  have hB : 2 * (K ^ 2 + 1) ≤ gridB K (N K) ^ 2 := two_mul_succ_le_gridB_sq hK2
+  have hBK : (2 * (K ^ 2 + 1)) ^ K ≤ (gridB K (N K) ^ 2) ^ K := Nat.pow_le_pow_left hB K
+  calc 2 ^ (i + 3) * ((K ^ 2 + 1) ^ K * k)
+      ≤ (2 * (K ^ 2 + 1)) ^ K * K := hL
+    _ ≤ (gridB K (N K) ^ 2) ^ K * K := Nat.mul_le_mul_right _ hBK
+    _ ≤ gridQ K (N K) * gridD₀ K (N K) := hR
+    _ ≤ 2 * dmin i := by unfold dmin; rw [← hK]; omega
+
+/-- `a·⌊L/(a·b)⌋ ≤ ⌊L/b⌋`. -/
+lemma mul_div_mul_le (a b L : ℕ) : a * (L / (a * b)) ≤ L / b := by
+  rcases Nat.eq_zero_or_pos b with rfl | hb
+  · simp
+  refine (Nat.le_div_iff_mul_le hb).2 ?_
+  calc a * (L / (a * b)) * b = (L / (a * b)) * (a * b) := by ring
+    _ ≤ L := Nat.div_mul_le_self _ _
+
+/-- **Scale `i` contributes at most `L/2^{i+3}` positions below `L`.** -/
+theorem card_sampledPosAt_lt_le (i L : ℕ) :
+    ((sampledPosAt i).filter (fun j => j < L)).card ≤ L / 2 ^ (i + 3) := by
+  have hApos : 0 < (KK i ^ 2 + 1) ^ KK i * kk i :=
+    Nat.mul_pos (pow_pos (by omega) _) (by unfold kk; omega)
+  have h2pos : 0 < 2 ^ (i + 3) := pow_pos (by omega) _
+  have hkey : (KK i ^ 2 + 1) ^ KK i * kk i * 2 ^ (i + 3) ≤ 2 * dmin i := by
+    have hk := key_size i
+    calc (KK i ^ 2 + 1) ^ KK i * kk i * 2 ^ (i + 3)
+        = 2 ^ (i + 3) * ((KK i ^ 2 + 1) ^ KK i * kk i) := by ring
+      _ ≤ 2 * dmin i := hk
+  have hdiv : L / (2 * dmin i) ≤ L / ((KK i ^ 2 + 1) ^ KK i * kk i * 2 ^ (i + 3)) :=
+    Nat.div_le_div_left hkey (Nat.mul_pos hApos h2pos)
+  have hcount : ((sampledPosAt i).filter (fun j => j < L)).card
+      ≤ (KK i ^ 2 + 1) ^ KK i * kk i * (L / (2 * dmin i)) :=
+    card_sampledPos_gridOf_le (KK_one_le i) (X (KK i)) (kk i) L
+  calc ((sampledPosAt i).filter (fun j => j < L)).card
+      ≤ (KK i ^ 2 + 1) ^ KK i * kk i * (L / (2 * dmin i)) := hcount
+    _ ≤ (KK i ^ 2 + 1) ^ KK i * kk i
+          * (L / ((KK i ^ 2 + 1) ^ KK i * kk i * 2 ^ (i + 3))) := Nat.mul_le_mul_left _ hdiv
+    _ ≤ L / 2 ^ (i + 3) := mul_div_mul_le _ _ _
+
+/-- Scale `i` never puts a position below `2 d_min(i)`, and `i < 2 d_min(i)`. -/
+theorem le_of_mem_sampledPosAt {i j : ℕ} (hj : j ∈ sampledPosAt i) : i < j := by
+  obtain ⟨n, hn, α, h, hh, rfl⟩ := (mem_sampledPos (gridAt i)).1 hj
+  have hd : (gridAt i).d α ≤ kIdx (gridAt i) n α :=
+    kIdx_ge_d (gridAt i) (gridOf_t_nonconstant (KK_one_le i)) hn α
+  have hdm : dmin i ≤ (gridAt i).d α := dmin_le_d i α
+  have hiQ : i ≤ gridQ (KK i) (N (KK i)) := by
+    have h1 := gridQ_gt (KK i) (N (KK i))
+    have h2 : i ≤ KK i := by unfold KK kk; omega
+    omega
+  have hD1 : 1 ≤ gridD₀ (KK i) (N (KK i)) := one_le_gridD₀ (KK_one_le i)
+  have hiD : i ≤ gridQ (KK i) (N (KK i)) * gridD₀ (KK i) (N (KK i)) :=
+    le_trans hiQ (Nat.le_mul_of_pos_right _ hD1)
+  have : i < dmin i := by unfold dmin; omega
+  omega
+
+/-- The finite geometric bound `∑_{i<M} ⌊A/2^i⌋ ≤ 2A`. -/
+lemma sum_div_two_pow_le : ∀ (M A : ℕ), ∑ i ∈ Finset.range M, A / 2 ^ i ≤ 2 * A := by
+  intro M
+  induction M with
+  | zero => intro A; simp
+  | succ M ih =>
+    intro A
+    rw [Finset.sum_range_succ']
+    have hstep : ∀ i ∈ Finset.range M, A / 2 ^ (i + 1) = (A / 2) / 2 ^ i := by
+      intro i _
+      rw [Nat.div_div_eq_div_mul, pow_succ]
+      ring_nf
+    rw [Finset.sum_congr rfl hstep]
+    have h1 := ih (A / 2)
+    have h2 : 2 * (A / 2) ≤ A := Nat.mul_div_le A 2
+    simp only [pow_zero, Nat.div_one]
+    omega
+
+/-- **The sampled positions have density at most `1/4`.**  This is the statement `T_E` would
+have to contradict. -/
+theorem card_isSampled_le (L : ℕ) :
+    ((Finset.range L).filter IsSampled).card ≤ L / 4 := by
+  have hsub : (Finset.range L).filter IsSampled
+      ⊆ (Finset.range L).biUnion (fun i => (sampledPosAt i).filter (fun j => j < L)) := by
+    intro j hj
+    rw [Finset.mem_filter, Finset.mem_range] at hj
+    obtain ⟨hjL, i, hji⟩ := hj
+    refine Finset.mem_biUnion.2 ⟨i, Finset.mem_range.2 ?_, Finset.mem_filter.2 ⟨hji, hjL⟩⟩
+    exact lt_trans (le_of_mem_sampledPosAt hji) hjL
+  refine le_trans (Finset.card_le_card hsub) ?_
+  refine le_trans Finset.card_biUnion_le ?_
+  refine le_trans (Finset.sum_le_sum fun i _ => card_sampledPosAt_lt_le i L) ?_
+  have hrw : ∀ i ∈ Finset.range L, L / 2 ^ (i + 3) = (L / 8) / 2 ^ i := by
+    intro i _
+    rw [Nat.div_div_eq_div_mul, pow_add]
+    ring_nf
+  rw [Finset.sum_congr rfl hrw]
+  have h := sum_div_two_pow_le L (L / 8)
+  have h8 : 8 * (L / 8) ≤ L := Nat.mul_div_le L 8
+  have h4 : 2 * (L / 8) ≤ L / 4 := by
+    rw [Nat.le_div_iff_mul_le (by omega)]
+    omega
+  omega
+
 
 end NormalNumbers.G4.Sched
