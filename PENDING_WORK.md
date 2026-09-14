@@ -56,6 +56,12 @@ overlapping one included), `blockFreq_eq_count`, `blockFreq_eq_digits`, and
    of the binary encoding), `blockVal_eq_wordVal_iff`, and
    `tendsto_occursCount_primeLambertFour`: the headline counts exactly the triples at which
    `OccursAt 2 G₄ w` holds, the same predicate `isDisjunctive_two` uses.
+0''. ~~**The quantitative edge.**~~ (done, lap 26) — `abs_blockFreq_sub_le_sqrt`:
+   `|blockFreq i ℓ G₄ w − 2^{−ℓ}| ≤ √(8 log 2 (ℓ²/K + 50ℓ/√K))`, uniform in `w`; and
+   `tendsto_blockFreq_growing`: the frequency is pinned for **every** word length
+   `ℓ(K) = o(√K)`, with the words allowed to change with `K`.  E-T5 rate: the sample
+   controls words up to length `o(√K)` inside windows of `m_K = K/4` bits.
+
 0'. **Next:** the general-`x` version of `abs_blockFreq_sub_le` / the limit, under an
    `E0`-type hypothesis (`abs_avg_block_prob_sub_le` is already abstract; only the deficit
    supply is `G₄`-specific).  Then: is the frequency statement *uniform* in `ℓ` — i.e. can

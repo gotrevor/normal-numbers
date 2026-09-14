@@ -308,3 +308,122 @@ theorem tendsto_occursCount_primeLambertFour (w : List ℕ) (hlen : 0 < w.length
   exact blockVal_eq_wordVal_iff (y := primeLambertAtBase 4) hw
 
 end NormalNumbers.G4.Sched
+
+namespace NormalNumbers.G4.Sched
+
+open NormalNumbers NormalNumbers.G4Entropy NormalNumbers.PrimeLambert
+
+/-! ### The quantitative edge: how fast may the word length grow?
+
+`abs_blockFreq_sub_le` carries a free parameter `t`; optimizing it turns the bound into a
+single closed form, and that form says exactly how long a word the sample controls.  With
+`m_K/ℓ + 1 ≥ K/(4ℓ)` the bound is
+
+    `|blockFreq − 2^{−ℓ}| ≤ √(8 log 2 · (ℓ²/K + 50ℓ/√K))`,
+
+so the frequency statement survives **every** word length `ℓ = ℓ(K) = o(√K)`, uniformly in the
+word.  This is the route-trigger E-T5 quantity, recorded rather than hidden: the sample sees
+words of length up to `o(√K)` out of the `m_K = K/4` bits of a window.
+-/
+
+lemma rBlocks_lb (i ℓ : ℕ) (hℓ : 0 < ℓ) :
+    (KK i : ℝ) / (4 * (ℓ : ℝ)) ≤ (((kk i / ℓ : ℕ) + 1 : ℕ) : ℝ) := by
+  have hlpos : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  have hnat : kk i < (kk i / ℓ + 1) * ℓ := by
+    have h1 := Nat.div_add_mod (kk i) ℓ
+    have h2 : kk i % ℓ < ℓ := Nat.mod_lt _ hℓ
+    have h3 : (kk i / ℓ + 1) * ℓ = ℓ * (kk i / ℓ) + ℓ := by ring
+    omega
+  have hR : (kk i : ℝ) < (((kk i / ℓ : ℕ) + 1 : ℕ) : ℝ) * (ℓ : ℝ) := by exact_mod_cast hnat
+  have hkk4 : (KK i : ℝ) = 4 * (kk i : ℝ) := by unfold KK; push_cast; ring
+  rw [hkk4, div_le_iff₀ (by positivity)]
+  linarith
+
+/-- **The optimized bound.**  Choosing `t` optimally in `abs_blockFreq_sub_le`:
+
+    `|blockFreq i ℓ G₄ w − 2^{−ℓ}| ≤ √(8 log 2 · (ℓ²/K + 50ℓ/√K))`,
+
+uniformly in the word `w`. -/
+theorem abs_blockFreq_sub_le_sqrt (i ℓ : ℕ) (hℓ : 0 < ℓ) (w : Fin (2 ^ ℓ)) :
+    |blockFreq i ℓ (primeLambertAtBase 4) w - 1 / (2 : ℝ) ^ ℓ|
+      ≤ Real.sqrt (8 * Real.log 2
+          * ((ℓ : ℝ) ^ 2 / (KK i : ℝ) + 50 * (ℓ : ℝ) / Real.sqrt (KK i))) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlpos : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  have hKpos : (0 : ℝ) < (KK i : ℝ) := by
+    have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+    linarith
+  set S : ℝ := Real.sqrt ((KK i : ℕ) : ℝ) with hSdef
+  have hS0 : 0 < S := Real.sqrt_pos.2 hKpos
+  have hKS : (KK i : ℝ) = S * S := (Real.mul_self_sqrt hKpos.le).symm
+  set A : ℝ := 4 * Real.log 2 * (ℓ : ℝ) * ((ℓ : ℝ) + 50 * S) / (KK i : ℝ) with hA
+  have hApos : 0 < A := by rw [hA]; positivity
+  set t : ℝ := Real.sqrt (2 * A) with htdef
+  have ht : 0 < t := Real.sqrt_pos.2 (by linarith)
+  have ht2 : t * t = 2 * A := Real.mul_self_sqrt (by linarith)
+  have h1 := abs_blockFreq_sub_le i ℓ hℓ w ht
+  rw [← hSdef] at h1
+  -- the `t`-term
+  have hnum : (0 : ℝ) ≤ Real.log 2 * ((ℓ : ℝ) + 50 * S) := by nlinarith
+  have hDpos : (0 : ℝ) < (KK i : ℝ) / (4 * (ℓ : ℝ)) := by positivity
+  have hstep : Real.log 2 * ((ℓ : ℝ) + 50 * S) / (t * (((kk i / ℓ : ℕ) + 1 : ℕ) : ℝ))
+      ≤ A / t := by
+    have hmono : t * ((KK i : ℝ) / (4 * (ℓ : ℝ))) ≤ t * (((kk i / ℓ : ℕ) + 1 : ℕ) : ℝ) :=
+      mul_le_mul_of_nonneg_left (rBlocks_lb i ℓ hℓ) ht.le
+    calc Real.log 2 * ((ℓ : ℝ) + 50 * S) / (t * (((kk i / ℓ : ℕ) + 1 : ℕ) : ℝ))
+        ≤ Real.log 2 * ((ℓ : ℝ) + 50 * S) / (t * ((KK i : ℝ) / (4 * (ℓ : ℝ)))) :=
+          div_le_div_of_nonneg_left hnum (by positivity) hmono
+      _ = A / t := by rw [hA]; field_simp
+  have hopt : A / t + t / 2 = t := by
+    have hA2 : A = t * t / 2 := by linarith [ht2]
+    rw [hA2]
+    field_simp
+    norm_num
+  have harg : 8 * Real.log 2 * ((ℓ : ℝ) ^ 2 / (KK i : ℝ) + 50 * (ℓ : ℝ) / S) = 2 * A := by
+    rw [hA]
+    rw [show ((ℓ : ℝ) ^ 2 / (KK i : ℝ)) = (ℓ : ℝ) ^ 2 / (S * S) by rw [← hKS]]
+    field_simp
+    nlinarith [hKS, hS0]
+  have hval : t = Real.sqrt (8 * Real.log 2
+      * ((ℓ : ℝ) ^ 2 / (KK i : ℝ) + 50 * (ℓ : ℝ) / S)) := by
+    rw [harg, htdef]
+  have hfin : |blockFreq i ℓ (primeLambertAtBase 4) w - 1 / (2 : ℝ) ^ ℓ| ≤ t := by
+    linarith [h1, hstep, hopt]
+  rw [← hval]
+  exact hfin
+
+/-- **The frequency theorem with a growing word length.**  Any word length `ℓ(K) = o(√K)` —
+the words themselves may change with `K` — still has its frequency pinned at `2^{−ℓ}`.
+
+This is the sharp form of what the entropy of this sample controls: words up to length
+`o(√K)` inside windows of length `m_K = K/4`. -/
+theorem tendsto_blockFreq_growing (ℓ : ℕ → ℕ) (hpos : ∀ i, 0 < ℓ i)
+    (hgrow : Tendsto (fun i => (ℓ i : ℝ) / Real.sqrt (KK i)) atTop (nhds 0))
+    (w : ∀ i, Fin (2 ^ ℓ i)) :
+    Tendsto (fun i => blockFreq i (ℓ i) (primeLambertAtBase 4) (w i) - 1 / (2 : ℝ) ^ (ℓ i))
+      atTop (nhds 0) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hKpos : ∀ i, (0 : ℝ) < (KK i : ℝ) := fun i => by
+    have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+    linarith
+  have hratio : ∀ i, (ℓ i : ℝ) ^ 2 / (KK i : ℝ) + 50 * (ℓ i : ℝ) / Real.sqrt (KK i)
+      = ((ℓ i : ℝ) / Real.sqrt (KK i)) ^ 2 + 50 * ((ℓ i : ℝ) / Real.sqrt (KK i)) := by
+    intro i
+    set S : ℝ := Real.sqrt ((KK i : ℕ) : ℝ) with hSdef
+    have hS0 : 0 < S := Real.sqrt_pos.2 (hKpos i)
+    have hKS : (KK i : ℝ) = S * S := (Real.mul_self_sqrt (hKpos i).le).symm
+    rw [hKS]
+    field_simp
+  have hinner : Tendsto (fun i => 8 * Real.log 2
+      * ((ℓ i : ℝ) ^ 2 / (KK i : ℝ) + 50 * (ℓ i : ℝ) / Real.sqrt (KK i))) atTop (nhds 0) := by
+    have h := ((hgrow.pow 2).add (hgrow.const_mul 50)).const_mul (8 * Real.log 2)
+    simp only [mul_zero, add_zero, zero_pow, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true] at h
+    refine h.congr fun i => ?_
+    rw [hratio i]
+  have hsq : Tendsto (fun i => Real.sqrt (8 * Real.log 2
+      * ((ℓ i : ℝ) ^ 2 / (KK i : ℝ) + 50 * (ℓ i : ℝ) / Real.sqrt (KK i)))) atTop (nhds 0) := by
+    simpa using hinner.sqrt
+  refine squeeze_zero_norm (fun i => ?_) hsq
+  simpa [Real.norm_eq_abs] using abs_blockFreq_sub_le_sqrt i (ℓ i) (hpos i) (w i)
+
+end NormalNumbers.G4.Sched
