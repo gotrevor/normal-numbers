@@ -40,6 +40,14 @@ residues `c`, same constants?  YES/NO per declaration.  All-YES means the union 
 density one and (by `qForces_normal_iff_density_one`) a hypothesis on it forces normality of `G₄`
 itself; a NO names the surviving arithmetic gap.
 
+**Addendum 19:55 EDT (attended):** A0 = NO, B = NO, both in-kernel - discharged.  Objective
+A is REOPENED via review lap 119's two-dimensional `(K, j)` ladder (`G4EntropyMTower`): the
+head gap tiles with no hole once `m₁` marches at fixed `K`.  Execute
+`HANDOFF-2026-09-14-entropy-lap119.md` "Next lap - in order" exactly: (1) `entropy_E1_march`,
+(2) `card_bandTtr_ge`, (3) `density_antitone`, (4) `fullPos'` + `IsNormalSequence 2` /
+`IsNormal 2`.  Stop when the endpoint is proved axiom-clean, or when a leaf has an exact,
+named obstruction (a theorem, not a handoff sentence).  Objective B is closed; do not revisit.
+
 Do not add joint-ladder rungs or sharpen constants.  Commit a compiling skeleton with named
 `sorry` leaves before any hard step.  Hygiene from the wrap applies (abstract helper lemmas
 against the astronomically large closed terms; no `simp` on `gridDm`/`X`/`gridQ`; background
