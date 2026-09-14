@@ -60,3 +60,43 @@ atom is pinned.
    digits.  If so, `coordAvg` is exactly the word frequency in that interval, and the
    enumeration restricted to good atoms reads a concatenation of *individually good* blocks —
    the classical input to a normality proof.
+
+---
+
+# Lap 62 (same session) — the granularity wall
+
+`src/NormalNumbers/G4EntropyGranule.lean`, sorry-free, `lake build` 🟢 **8986 jobs**,
+all endpoints `[propext, Classical.choice, Quot.sound]`.
+
+```
+m₁_lt_m₁_add_four, m_lt_m_add_four, KK_succ, two_pow_m_step   2^{m(K+4)} ≥ 2·2^{m(K)}
+card_PK_le            |P_{K_i}| ≤ X(K_i)
+card_Atom_le_two_pow  |Atom_i| ≤ 2^{K³+K}
+total_scale_le        |Atom_i|·|P_i|·m_i ≤ 2^{K³+2K+100·2^{m(K)}}
+card_PK_ge            |P_{K_i}| ≥ 2^{98·2^{m(K)}}/2        (X = 2^{100·2^m}, P₀ ≤ 2^{2·2^m})
+granule_exceeds_previous_scale
+      |Atom_i| · |P_{K_i}| · m_i  <  |P_{K_{i+1}}|
+```
+
+**What it says.**  `card_good_ge` (lap 61) shrinks the certifiable granule from "a chunk of the
+scale" to "one atom"; restricting instead in the sample-time direction inflates the deficit by
+`1/σ` the same way, so a certified granule must still average over `≳ |P_K|/m_K` sample times
+and therefore reads at least `≈ |P_K|` digits.  `granule_exceeds_previous_scale` shows that this
+**minimum** at scale `i+1` already exceeds scale `i`'s **entire** output.
+
+**Why this is stronger than `chunks_insufficient`.**  Lap 54 used the atom-count growth
+`(K²+1)⁴`.  That is not where the wall is: `X(K) = 2^{100·2^{m(K)}}` with `m(K) ≥ K³`, so the
+*sample-time* count jumps doubly exponentially between consecutive scales while the atoms
+contribute only `2^{K³+K}`.  The wall is therefore immune to every refinement of the chunking —
+including the per-atom certification lap 61 just proved — and closes the whole
+"concatenation of certified granules in position order" family of routes to normality of a
+subsequence real.
+
+**What it does not say.**  Nothing about the existence of a normal number read off `G₄`'s
+digits; it is an obstruction to this schedule's granularity, of the same kind as lap 54's.
+
+**Next bounded test.**  Formalize the sample-time restriction cost itself
+(`H₂(L|S) ≥ m − (δ+1)/σ` for `S ⊆ P_K` of relative size `σ`) — the conditional-entropy
+counterpart of `H₂_restrictCoords_ge`, which is what makes "granule ≥ |P_K| digits" a theorem
+rather than the reading of one.  Ingredients: `H₂` of a mixture is within `1` bit of the convex
+combination of the parts' entropies.
