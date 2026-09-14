@@ -20,6 +20,7 @@ No novelty claim.  Headline `irrational_primeLambert` is **sorry-gated**; see "S
 | `PrimeLambertTail` | `badPrimeFrozen_of_residue` (exact freezing ⇒ `BadPrimeFrozen`), `phaseSum_sub_truncPhase` (`F − F_J = phaseSum c J n`), `ω(m) ≤ log₂ m`, `ω(dm) ≤ ω d + ω m`, exact tail bound `abs_truncation_error_le`: `\|F − F_J\| ≤ ∑_a \|c a\|(ω d_a + log₂(k_a+1) + J + 1)/2^J`, `tailTruncation_of_bound` | proved, axiom-clean |
 | `PrimeLambertHexagonNegative` | `HexNonneg q`, `HexNonnegOfLargeMean q`; eighth-root witness on `ℤ/19ℤ` with `6859·H = 469 − 450√2 < 0`, `\|𝔼 f\| = (7+3√2)/19 > 1/2`; `not_hexNonneg_nineteen`, `not_hexNonnegOfLargeMean_nineteen`, `not_meanRetention_nineteen` | proved, axiom-clean (refutations) |
 | `PrimeLambertMoments` | sharp Taylor bound `‖e^{it} − ∑_{k<M}(it)^k/k!‖ ≤ \|t\|^M/M!` (`norm_expRem_le'`), even-moment average bound `norm_avg_e_sub_taylor_le`; independent CRT model `indepAvg` (uniform residue mod `∏_{p small} p`), sample average `sampleAvg`; Props `IndepCharDecay`, `MomentComparison`, `IndepMomentSmall`; **proved transfer** `smallPrimeDecay_of_moments` (even `M_N`), `MomentChain → SmallPrimeDecay` | transfer proved, axiom-clean; the three Props open |
+| `PrimeLambertLarge` | unconditional pointwise bound `\|X_p(n)\| ≤ ‖c‖₁ 2^{−K}` (`abs_primePart_le`), `primePart_eq_zero`, class bound by the count of active primes (`abs_classSum_le_card`), Prop `LargePrimeCountSmall`, `largePrimeNegligible_of_count` | proved, axiom-clean; the count Prop open |
 | `PrimeLambertOscillation` | `e`, `ProgressionFamily`, `phaseAverage`, `PhaseOscillation` (draft eq. (5)), `norm_phaseAverage_eq_one`, `irrational_of_phaseOscillation` | proved, axiom-clean; `phaseOscillation` is the single disclosed `sorry` |
 
 Build: `lake build NormalNumbers.PrimeLambertOscillation` (targeted; the root module is
@@ -57,7 +58,11 @@ Discharged reductions (`PrimeLambertTail`): `BadPrimeFrozen` holds whenever the 
 frozen modulo every bad prime (`badPrimeFrozen_of_residue`); `TailTruncation` holds whenever
 the exact bound `∑_a |c a|(ω d_a + log₂(k_a+1) + J + 1)/2^J` tends to zero on the sample
 (`tailTruncation_of_bound`) — for the hexagon parameters this is `O(H(log N + log d)/2^J)`,
-draft (20).
+draft (20).  `LargePrimeNegligible` holds whenever the number of large primes dividing some
+finite-tail argument, times `‖c‖₁ 2^{−K}`, is uniformly `o(1)` on the sample
+(`LargePrimeCountSmall`, `largePrimeNegligible_of_count`, `PrimeLambertLarge`); the pointwise
+bound `|X_p(n)| ≤ ‖c‖₁ 2^{−K}` needs no distinct-root hypothesis.  The draft's arithmetic input
+(each argument `≤ 3N` has `≤ log(3N)/log R` prime factors above `R`) is the open remainder.
 
 `phaseOscillation_of_chain` proves that these four imply `PhaseOscillation` (Lipschitz bound
 `‖e(x)−1‖ ≤ 4π\|x\|`, unimodular constant factor for the frozen class).  `SmallPrimeDecay` is
