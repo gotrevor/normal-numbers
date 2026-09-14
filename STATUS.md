@@ -22,7 +22,21 @@ sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
 · **Build**: 🟢 green (8930 jobs) ·
-**Updated**: G4 review lap 13 · 2026-09-14 · `wip/g4-disjunctivity` @ `c5d847b`
+**Updated**: G4B lap 14 · 2026-09-14 · `wip/g4-disjunctivity` @ `20c43d8`
+
+## 🏁 2026-09-14 (lap 14): G4B PROVED — `IsDisjunctive b (primeLambertAtBase b)` for every `b ≥ 3`
+
+`NormalNumbers.G4.isDisjunctive_base` (`G4SchedBAssembly.lean`): for every integer `b ≥ 3`,
+`∑_n ω(n)/bⁿ = ∑_p 1/(bᵖ−1)` (`isDisjunctive_primeSum`) is disjunctive in base `b`; every
+finite base-`b` word occurs (`every_word_occurs_base`); and `∑ ω(n)/(cᵏ)ⁿ` is disjunctive in
+base `c` for `cᵏ ≥ 3` (`isDisjunctive_root`).  `#print axioms = [propext, Classical.choice,
+Quot.sound]`, no `sorry`, no `native_decide`.  The base-four theorem is re-derived as the
+instance `isDisjunctive_four'`.  The whole §4 layer is base-general (`gridFrame bb`, the
+named masses `rowL1 b K = (2/b)^K/(b−1)`, `rowL2`, `farBound`, the seed
+`freqSeed b K = b^{−4}(2/b²)^K`), and the §5 schedule `SchedB` runs in `(b, K)` under
+`3 ≤ b`, `2b² ≤ K`, `K ≥ 100`, with `hbig`/`hfar` settled at the worst case `b = 3`.
+Base two stays refuted on this route (`rowL1 2 K = 1`).  Handoff:
+`HANDOFF-2026-09-14-g4-lap14.md`.
 
 ## 2026-09-14 (review lap 13): G4 base-four INDEPENDENTLY VERIFIED; campaign advances to base `b ≥ 3`
 

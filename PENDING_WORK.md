@@ -1,5 +1,35 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## G4B — 2026-09-14 (lap 14) — CAMPAIGN CLOSED: `isDisjunctive_base` proved for every `b ≥ 3`
+
+`NormalNumbers.G4.isDisjunctive_base : 3 ≤ b → IsDisjunctive b (primeLambertAtBase b)`
+(`G4SchedBAssembly.lean`), `#print axioms = [propext, Classical.choice, Quot.sound]`.
+Corollaries: `isDisjunctive_primeSum` (`∑_p 1/(bᵖ−1)` form), `every_word_occurs_base`,
+`isDisjunctive_root` (base `c` for `∑ ω(n)/(cᵏ)ⁿ`, `cᵏ ≥ 3`), `isDisjunctive_four'` (the
+`b = 4` instance; the original `isDisjunctive_four` / `isDisjunctive_two` are untouched).
+
+What was proved this lap, bottom-up (all committed green, HEAD `20c43d8`+):
+1. The concrete grid layer in any base `bb ≥ 2` (`97179b1`): `Sval bb`, `blockSum bb`,
+   `farPart bb`, `rowCoeff bb`, `gridFrame bb hbb`; named masses `rowL1/rowL2/farBound`;
+   PropA/B/C/D closed forms in `bb`.
+2. The frequency-separation seed in any base (`56e4808`): `freqDepthB`, `freqSeed b K =
+   b^{−4}(2/b²)^K`, `sum_sq_distZ_freqDepthB_ge`, `gridFrame_propC_gen`.
+3. `ScheduleWitnessB bb ℓ w`, `isDisjunctive_of_witnessB` (`3aef25c`).
+4. The §5 schedule in `(b, K)`: `SchedB` (`G4SchedBParams`, `G4SchedBBudget`,
+   `G4SchedBAssembly`) with `m₁ b K = 1000·b^{2K+4}·K^{2K+1}` so that
+   `θ₀·m₁ = 1000·2^K·Kr`; ladder under `Hyp b K = (3 ≤ b, 2b² ≤ K, 100 ≤ K)`;
+   `k₄ = 8464 ℓ² b^{2ℓ+2}`, `M = ⌈K log 2/(4ℓ log b)⌉`; `hbig`/`hfar` at the worst case
+   `b = 3` (`rowL1 ≤ (2/3)^K/2 ≤ η²/2`, `rowL2 ≤ (2/9)^K/8 ≤ η⁸/8`, `farBound b ≤ farBound 3`).
+
+Design note (deliberate): the base-four `Sched` modules are kept verbatim and `SchedB` is a
+parallel, base-general schedule (`m₁` differs, so the old numeric schedule is not literally
+the `b = 4` instance of the new one).  The *theorem* `isDisjunctive_four'` IS an instance of
+the general theorem, which is what `DIRECTION.md` requires; `isDisjunctive_four` stays as the
+independent base-four proof.  Retiring `G4Schedule{Far,Big,Harmonic,Budget,Assembly}` in favour
+of `SchedB` would be a docs/cleanup lap, not mathematics.
+
+Nothing open on G4B.  Base two remains REFUTED on this route (`rowL1 2 K = 1`, see below).
+
 ## G4B — 2026-09-14 (review lap 13) — the base-`b` theorem, and why `b = 2` is refuted
 
 ### Verification of the closed base-four campaign (re-done from scratch this lap)

@@ -524,4 +524,21 @@ theorem isDisjunctive_base {b : ℕ} (hb : 3 ≤ b) : IsDisjunctive b (primeLamb
 theorem isDisjunctive_four' : IsDisjunctive 4 primeLambertFour :=
   isDisjunctive_base (by norm_num)
 
+/-- **In the prime-sum form: `∑_{p prime} 1/(bᵖ − 1)` is disjunctive in base `b` for every
+`b ≥ 3`** (`primeSumAtBase_eq_primeLambertAtBase`). -/
+theorem isDisjunctive_primeSum {b : ℕ} (hb : 3 ≤ b) : IsDisjunctive b (primeSumAtBase b) := by
+  rw [primeSumAtBase_eq_primeLambertAtBase (by omega)]
+  exact isDisjunctive_base hb
+
+/-- **Every finite base-`b` word occurs in the base-`b` expansion of `∑_n ω(n)/bⁿ`**, `b ≥ 3`. -/
+theorem every_word_occurs_base {b : ℕ} (hb : 3 ≤ b) (w : List ℕ) (hw : ∀ d ∈ w, d < b) :
+    ∃ n, OccursAt b (primeLambertAtBase b) w n :=
+  (isDisjunctive_iff_forall_occursAt b (by omega) _).1 (isDisjunctive_base hb) w hw
+
+/-- **Root bases**: `∑_n ω(n)/(cᵏ)ⁿ` is disjunctive in base `c` whenever `c ≥ 2`, `k ≥ 1` and
+`cᵏ ≥ 3` — e.g. `∑ ω(n)/8ⁿ` and `∑ ω(n)/16ⁿ` in base two, `∑ ω(n)/9ⁿ` in base three. -/
+theorem isDisjunctive_root {c k : ℕ} (hc : 2 ≤ c) (hk : 1 ≤ k) (h3 : 3 ≤ c ^ k) :
+    IsDisjunctive c (primeLambertAtBase (c ^ k)) :=
+  (isDisjunctive_pow_iff c k hc hk _).2 (isDisjunctive_base h3)
+
 end NormalNumbers.G4
