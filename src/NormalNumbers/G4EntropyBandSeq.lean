@@ -794,4 +794,33 @@ theorem isDisjunctive_bandReal : IsDisjunctive 2 bandReal := by
 theorem irrational_bandReal : Irrational bandReal :=
   isDisjunctive_bandReal.irrational
 
+/-! ### Non-vacuity: the band read sees only sampled positions -/
+
+/-- **Every position the band read visits is a sampled position.**  Hence, by
+`tendsto_density_isSampled`, `bandPos` skips almost every digit of `G₄`: `bandReal` is built
+from a density-zero set of `G₄`'s digits and is in no sense `G₄` itself. -/
+theorem isSampled_bandPos (j : ℕ) : IsSampled (bandPos j) := by
+  classical
+  set i := bgrp j with hi
+  have h1 : bT i ≤ j := bT_bgrp_le j
+  have h2 : j < bT (i + 1) := lt_bT_bgrp_succ j
+  have hbT : bT (i + 1) = bT i + bL i := rfl
+  have hkk : 0 < kk i := kk_pos' i
+  set r : ℕ := j - bT i with hr
+  have hrlt : r < bL i := by omega
+  have hacard : r / kk i < (bandS i).card := by
+    by_contra hcon
+    push_neg at hcon
+    have h := Nat.div_mul_le_self r (kk i)
+    have hmul : (bandS i).card * kk i ≤ r / kk i * kk i := Nat.mul_le_mul_right _ hcon
+    rw [bL] at hrlt
+    have hdm := Nat.div_add_mod' r (kk i)
+    omega
+  have hmod : r % kk i < kk i := Nat.mod_lt _ hkk
+  have heq : bandPos j = 2 * kIdx (gridAt i) (bnth i (r / kk i)) (goodAtom i) + r % kk i := by
+    rw [bandPos_eq h1 h2, bpos]
+  refine ⟨i, ?_⟩
+  rw [heq]
+  exact mem_sampledPos_of (gridAt i) (bnth_mem_PK i (r / kk i)) (goodAtom i) hmod
+
 end NormalNumbers.G4.Sched
