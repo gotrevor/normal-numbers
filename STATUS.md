@@ -44,6 +44,13 @@ deficit of an omitted word (E0 has no omitted word), and the four schedule allow
 re-closed exponentially small (`hbig_small`, `hfar_small`, `jackson_term_small`,
 `smallPrime_term_tiny`, new Jackson degree `DjE = (16K²2^{m_K})²`).
 
+**Lap 8 settled the bridge: `T_E` is FALSE** (`NormalNumbers.G4.Sched.not_T_E`, axiom-clean).
+The sample is digit-local and reads a set of digit positions of density `≤ 1/4`, so the witness
+`maskedReal G₄` (G₄'s digits at the sampled positions, `0` elsewhere) satisfies `entropy_E0`
+and `entropy_E1` verbatim yet is not normal.  `E0` also became a genuine limit for `G₄`
+(`E0_primeLambertFour`).  The frontier is now brief §6's positive branch: which arithmetic
+input reads a *positive-density* set of positions.
+
 **This is not normality and does not claim it.**  It is an unconditional statement about the
 quantized arithmetic sample.  The bridge to ordinary digit frequencies is brief §6's transfer
 `T_E`, and settling it is the whole objective of the next laps — see the entropy CURRENT

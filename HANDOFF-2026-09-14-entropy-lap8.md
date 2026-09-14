@@ -1,6 +1,7 @@
 # HANDOFF — entropy expedition, lap 8 (2026-09-14, Opus review+grind)
 
-**Branch** `wip/g4-entropy`.  `lake build` green, 8951 jobs.  Three new modules, all
+**Branch** `wip/g4-entropy`.  **HEAD** `9561ae6` (this doc was committed at the previous
+commit `9561ae6`; working tree clean).  `lake build` green, 8951 jobs.  Three new modules, all
 **sorry-free**, no new axioms, no pre-expedition file edited.
 
 Spec: `BRIEF-entropy-expedition-2026-09-14.md`; the binding orders are the **entropy CURRENT
