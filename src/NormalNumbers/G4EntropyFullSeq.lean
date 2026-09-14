@@ -871,6 +871,8 @@ theorem pairCount_eq (i : ℕ) (x : ℝ) (v : List ℕ) :
 
 
 
+
+
 end NormalNumbers.G4.Sched
 
 /-! ### The read-versus-certified error, as pure real arithmetic
@@ -1163,5 +1165,50 @@ theorem abs_fullRead_sub_bandRatio_le (v : List ℕ) (hlen : 0 < v.length) (i : 
     hWlo hWhi hSP hPS hPr hrnn hr1 hAB hovA
 
 
+
+lemma sixteen_le_card_Atom (i : ℕ) : 16 ≤ Fintype.card (gridAt i).Atom := by
+  rw [card_Atom_gridAt]
+  have hK : 160000 ≤ KK i := KK_ge i
+  have hb : 16 ≤ KK i ^ 2 + 1 := by nlinarith
+  calc 16 ≤ KK i ^ 2 + 1 := hb
+    _ = (KK i ^ 2 + 1) ^ 1 := (pow_one _).symm
+    _ ≤ (KK i ^ 2 + 1) ^ KK i := Nat.pow_le_pow_right (by omega) (by omega)
+
+/-- **The headline of the schedule-only line.**  For every finite binary word `v`, the frequency
+of `v` in the first `fT (i+1)` digits of `G₄` read along the **schedule-only**, strictly
+increasing position map `fullPos` tends to `2^{−|v|}`.
+
+Unlike `tendsto_bandRead_freq`, nothing in `fullPos`'s definition refers to `G₄`: the map is
+built from the base-four schedule alone (the band thresholds and the distinct window starts).
+This is the lap-51 objective's x-freeness and `E-T8`'s strict monotonicity at once, and by
+`certified_granule_exceeds_previous_scale` it is the strongest form available. -/
+theorem tendsto_fullRead_freq (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
+    Tendsto (fun i =>
+        (winCount (fullDig (primeLambertAtBase 4)) v (fT (i + 1)) : ℝ)
+          / ((fT (i + 1) : ℕ) : ℝ))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+  classical
+  have hband : Tendsto (fun i => bandRatio i (primeLambertAtBase 4) v) atTop
+      (nhds (1 / (2 : ℝ) ^ v.length)) := tendsto_bandT_occursCount v hlen hv
+  have hAtom : Tendsto (fun i => 16 / (Fintype.card (gridAt i).Atom : ℝ)) atTop (nhds 0) :=
+    tendsto_card_Atom_atTop.const_div_atTop 16
+  have hkkt : Tendsto (fun i => ((v.length : ℝ) + 4) / (kk i : ℝ)) atTop (nhds 0) :=
+    tendsto_const_div_kk _
+  have herr : Tendsto (fun i => 16 / (Fintype.card (gridAt i).Atom : ℝ)
+      + ((v.length : ℝ) + 4) / (kk i : ℝ)) atTop (nhds 0) := by
+    have := hAtom.add hkkt
+    simpa using this
+  have hdiff : Tendsto (fun i =>
+      (winCount (fullDig (primeLambertAtBase 4)) v (fT (i + 1)) : ℝ) / ((fT (i + 1) : ℕ) : ℝ)
+        - bandRatio i (primeLambertAtBase 4) v) atTop (nhds 0) := by
+    refine squeeze_zero_norm' ?_ herr
+    filter_upwards [eventually_ge_atTop v.length] with i hi
+    have hli : v.length ≤ kk i := by unfold kk; omega
+    simpa [Real.norm_eq_abs] using
+      abs_fullRead_sub_bandRatio_le v hlen i hli (sixteen_le_card_Atom i)
+  have := hdiff.add hband
+  rw [zero_add] at this
+  exact this.congr fun i => by ring
 
 end NormalNumbers.G4.Sched
