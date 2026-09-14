@@ -21,8 +21,35 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (8993 jobs) ·
-**Updated**: entropy lap 90 · 2026-09-14 · `wip/g4-entropy`
+· **Build**: 🟢 green (8995 jobs) ·
+**Updated**: entropy lap 117 · 2026-09-14 · `wip/g4-entropy`
+
+## 🧭 2026-09-14 (entropy laps 93–117): `Q ∣ P₀`, and a **schedule-only** strictly increasing read
+
+**Build** 🟢 8995 jobs · sorry-free · every endpoint `[propext, Classical.choice, Quot.sound]`.
+
+> **`Sched.tendsto_fullRead_freq`** — for every finite binary word `v`,
+> `winCount (fullDig G₄) v (fT (i+1)) / fT (i+1) → 2^{−|v|}`, with
+> **`Sched.fullPos_strictMono`**; `fullPos` is defined from the **base-four schedule alone**.
+
+The lap-51 objective's *x-freeness* and `E-T8`'s *strict monotonicity* at once.  Packaged as
+`fullReal`, `isDisjunctive_fullReal`, `irrational_fullReal`.
+
+**The enabling discovery** (`G4EntropyWindows`, lap 95): `shiftG_eq` makes two different atoms'
+shifts congruent mod `Q` at the same layer, and `freezeQ` contains their distance — so
+**`Q ∣ P₀`**, every orbit index of every atom at every sample time is congruent mod `Q`, and
+`Q = (U+K+N+2)!` dwarfs `m_K`.  Hence **`windows_eq_or_disjoint`**: any two sampled windows
+coincide or are disjoint.  The read can then take the *whole* sample's windows in a band.
+
+Supporting: `bandT` (an `n`-only band threshold, so the restriction is a pure sample-time
+restriction), `H₂_bandTLaw_ge`/`abs_posAvg_bandTLaw_le` (the restricted *joint* law stays
+certified), the multiplicity bridge (`shared_idx_apart` … `overhang_frac_le`: reading the
+position set rather than the `(n,α)` pairs costs an `8/|Atom|` fraction), and
+`read_freq_error_bound` (the assembly done over opaque reals, after three attempts died on
+`whnf` timeouts over the closed terms).
+
+Still not normality, and for the proved reason: the limit over *all* prefix lengths is what
+`certified_granule_exceeds_previous_scale` forbids.
 
 ## 🧭 2026-09-14 (entropy laps 61–90): the granularity **wall**, and the band read that saturates it
 

@@ -7,6 +7,21 @@
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
 
+## ✅ DONE (laps 93–117) — the schedule-only strictly increasing read
+
+`Sched.tendsto_fullRead_freq` + `Sched.fullPos_strictMono` + `fullReal`: **`G₄`'s digits along a
+strictly increasing position map defined from the schedule alone, carrying every binary word at
+its correct frequency along the band cutoffs.**  See `HANDOFF-2026-09-14-entropy-lap117.md`.
+
+Modules: `G4EntropyWindows` (`Q_dvd_P₀`, `windows_eq_or_disjoint`, the multiplicity toolkit),
+`G4EntropyBand` (`bandT`), `G4EntropyBandFull` (the certified joint band law),
+`G4EntropyFullSeq` (`winStarts`, `fullPos`, the count bridge, `read_freq_error_bound`,
+the headline, `fullReal`).
+
+**Open next**: port laps 84–89 (mid-band cutoffs and arbitrary cutoffs) from `bandPos` to
+`fullPos`; transfer the lap-90 density-zero non-vacuity.  Normality itself stays closed by
+`certified_granule_exceeds_previous_scale`.
+
 ## 🔭 LIVE (laps 93–101) — `Q ∣ P₀`: the sampled windows are pairwise disjoint
 
 A structural discovery, and the route to an **x-free** (schedule-only) band read.
