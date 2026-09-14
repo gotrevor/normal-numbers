@@ -126,4 +126,116 @@ theorem gridFrame_propA (G : GridParams) (X : ℕ)
   have : p ∣ k α := hpd.trans (hk2 α)
   simpa [Nat.ModEq] using (Nat.mod_eq_zero_of_dvd this)
 
+/-! ### `PropC`: the reindexed character, and the uniform box bound -/
+
+/-- The number of roots of a `shiftPhase` never exceeds the number of shifts — and in particular
+does not depend on the coefficients, so the §4C error terms are uniform over the Fourier box. -/
+lemma card_roots_shiftPhase_le {ι : Type*} [Fintype ι] [DecidableEq ι] (ρ : ι → ℕ) (x : ι → ℝ)
+    (p : ℕ) : ((shiftPhase ρ x p).roots.card : ℝ) ≤ Fintype.card ι := by
+  have : (shiftPhase ρ x p).roots.card ≤ Fintype.card ι := by
+    unfold shiftPhase
+    split_ifs with h
+    · have := Finset.card_image_le (s := (Finset.univ : Finset ι)) (f := root p ρ)
+      rw [Finset.card_univ] at this
+      exact this
+    · simp [LocalPhase.trivial]
+  exact_mod_cast this
+
+/-- The character of the concrete frame's small-prime vector, reindexed onto the grid rows. -/
+lemma torusChar_gridFrame_S (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ) (γ : Torus G.rDim)
+    {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) (q : Fin G.rDim → ℤ) (n : ℕ) :
+    torusChar q ((gridFrame G X hne sm γ hη hε D).S n)
+      = ∏ a : Fin G.K → Fin G.s, fourier (q (G.rowEquiv a))
+          (((Sval sm (shiftAL G.B G.Q G.D₀ (N := G.N)) n a : ℝ) : UnitAddCircle)) := by
+  unfold torusChar
+  rw [← Equiv.prod_comp G.rowEquiv
+    (fun ν => fourier (q ν) ((gridFrame G X hne sm γ hη hε D).S n ν))]
+  exact Finset.prod_congr rfl fun a _ => by simp [gridFrame]
+
+/-- The explicit uniform §4C bound: the good-prime contraction plus the four transfer errors,
+with every occurrence of the root count replaced by the uniform `T = |ι| = (s+1)^K N`.  Nothing
+here depends on the frequency `q`, which is what makes `PropC` a bound on the whole box. -/
+noncomputable def smallPrimeBound (sm : Finset ℕ) (T R M Psz : ℕ) (lam' lam θ₀ : ℝ) : ℝ :=
+  Real.exp (-∑ p ∈ sm, 4 * θ₀ / p)
+    + (((sm.powerset.filter (fun T' => T'.Nonempty ∧ T'.card ≤ M)).card
+          * (2 ^ M * (2 * (R : ℝ) ^ M / Psz))
+        + (∏ p ∈ sm, (1 + lam' * (2 * (T : ℝ) / p))) / lam' ^ M
+        + 2 * (2 * Real.exp 1 / lam) ^ M * ∏ p ∈ sm, (1 + Real.exp lam * ((T : ℝ) / p))
+        + 2 * (2 * Real.exp 1 / M) ^ M * (sm.card : ℝ) ^ M
+            * (2 * (R : ℝ) ^ M / Psz)))
+
+/-- **`PropC` for the concrete frame** (draft (8.1), brief §4C).  The second of the five named
+inputs, discharged outright: uniformly over every nonzero frequency in the box `‖q‖∞ ≤ D`, the
+sample average of the character of the small-prime vector is at most `smallPrimeBound`, whose
+main term is the good-prime contraction `exp(−4·4^{−4}8^{−K} ∑_{p ∈ sm} 1/p)`.
+
+The small primes `sm` must be prime, at most `R`, and prime to the progression modulus `P₀`;
+being prime to `P₀` is exactly what makes them good for the shifts
+(`goodPrime_of_not_dvd_P₀`) and larger than `2T` (`two_mul_card_le_of_not_dvd`).  The retained
+depth must reach every frequency-depth layer of the box, `1 + ⌈log₄(2^K D)⌉ ≤ N`. -/
+theorem gridFrame_propC (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ) (γ : Torus G.rDim)
+    {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) {D : ℕ}
+    (hs : ∀ p ∈ sm, p.Prime) (hsP : ∀ p ∈ sm, ¬ p ∣ G.P₀)
+    {R : ℕ} (hR1 : 1 ≤ R) (hR : ∀ p ∈ sm, p ≤ R)
+    (hN : 1 + Nat.clog 4 (2 ^ G.K * D) ≤ G.N)
+    {M : ℕ} (hM : 1 ≤ M) {lam' lam : ℝ} (hlam' : 1 ≤ lam') (hlam : 0 < lam) :
+    (gridFrame G X hne sm γ hη hε D).PropC
+      (smallPrimeBound sm (Fintype.card G.Idx) R M (apSample X G.P₀ G.b₀).card lam' lam
+        (1 / (4 : ℝ) ^ 4 * (1 / 8 : ℝ) ^ G.K)) := by
+  classical
+  intro q hq hq0
+  set ρ := shiftAL G.B G.Q G.D₀ (N := G.N) with hρ
+  set q' : (Fin G.K → Fin G.s) → ℤ := fun a => q (G.rowEquiv a) with hq'
+  -- the frequency is nonzero after reindexing
+  have hq'0 : q' ≠ 0 := by
+    intro h
+    refine hq0 (funext fun ν => ?_)
+    obtain ⟨a, rfl⟩ := G.rowEquiv.surjective ν
+    exact congrFun h a
+  have hq'D : ∀ a, |q' a| ≤ (D : ℤ) := fun a => (mem_fourierBox.1 hq) _
+  -- the small primes are coprime to `P₀`, good, and larger than `2T`
+  have hsP' : ∀ p ∈ sm, Nat.Coprime p G.P₀ := fun p hp =>
+    ((hs p hp).coprime_iff_not_dvd).2 (hsP p hp)
+  have hgood : ∀ p ∈ sm, GoodPrime ρ p := fun p hp => G.goodPrime_of_not_dvd_P₀ (hs p hp) (hsP p hp)
+  have hk : ∀ p ∈ sm, 2 * Fintype.card G.Idx ≤ p := fun p hp =>
+    G.two_mul_card_le_of_not_dvd (hs p hp) (hsP p hp)
+  -- §4C for the concrete vector
+  have key := norm_sampleAvg_torusChar_Sval_le X G.P₀ G.b₀ G.P₀_pos G.b₀_lt_P₀ hne sm hs hsP'
+    hR1 hR ρ hk hgood (D := D) hN hq'0 hq'D hM hlam' hlam
+  -- the two sample averages agree termwise
+  have hsame : sampleAvg (gridFrame G X hne sm γ hη hε D).P
+      (gridFrame G X hne sm γ hη hε D).S (torusChar q)
+      = sampleAvg (apSample X G.P₀ G.b₀) (fun n a => ((Sval sm ρ n a : ℝ) : UnitAddCircle))
+          (fun y => ∏ a, fourier (q' a) (y a)) := by
+    unfold sampleAvg
+    congr 1
+    exact Finset.sum_congr rfl fun n _ => torusChar_gridFrame_S G X hne sm γ hη hε D q n
+  rw [hsame]
+  refine key.trans ?_
+  -- replace the root counts by the uniform bound `T`
+  unfold smallPrimeBound
+  have hp0 : ∀ p ∈ sm, (0 : ℝ) < p := fun p hp => by exact_mod_cast (hs p hp).pos
+  have hprod1 : (∏ p ∈ sm, (1 + lam' * (2 * ((shiftPhase ρ (coeffAL q') p).roots.card : ℝ) / p)))
+      ≤ ∏ p ∈ sm, (1 + lam' * (2 * (Fintype.card G.Idx : ℝ) / p)) := by
+    refine Finset.prod_le_prod (fun p hp => ?_) (fun p hp => ?_)
+    · have := hp0 p hp
+      positivity
+    · have hpp := hp0 p hp
+      have := card_roots_shiftPhase_le ρ (coeffAL q') p
+      have hlam'0 : (0 : ℝ) ≤ lam' := by linarith
+      gcongr
+  have hprod2 : (∏ p ∈ sm, (1 + Real.exp lam * (((shiftPhase ρ (coeffAL q') p).roots.card : ℝ) / p)))
+      ≤ ∏ p ∈ sm, (1 + Real.exp lam * ((Fintype.card G.Idx : ℝ) / p)) := by
+    refine Finset.prod_le_prod (fun p hp => ?_) (fun p hp => ?_)
+    · have := hp0 p hp
+      positivity
+    · have hpp := hp0 p hp
+      have := card_roots_shiftPhase_le ρ (coeffAL q') p
+      gcongr
+  have hlam'pos : (0 : ℝ) < lam' ^ M := by positivity
+  have hc : (0 : ℝ) ≤ 2 * (2 * Real.exp 1 / lam) ^ M := by positivity
+  gcongr
+
 end NormalNumbers.G4
