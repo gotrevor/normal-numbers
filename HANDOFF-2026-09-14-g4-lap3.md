@@ -1,14 +1,19 @@
-# HANDOFF 2026-09-14 — G4 disjunctivity, lap 3 (review lap: crux moved B → C; C1, C2 proved)
+# HANDOFF 2026-09-14 — G4 disjunctivity, lap 3 (review lap: crux moved B → C; C1, C2 and the C3 skeleton proved)
 
-Branch `wip/g4-disjunctivity`, working tree clean, not pushed (host pushes).
+Branch `wip/g4-disjunctivity`, HEAD `1aa56cb`, working tree clean apart from the host's own
+untracked `CHECK-g4-route-deviations.md` (deliberately left uncommitted — the host session is
+editing it live; do not sweep it in).  Not pushed (host pushes).
 **`DIRECTION.md`'s CURRENT DIRECTIVE is now the G4 campaign** — this lap was an altitude lap
 and rewrote it (the old Mahler run+jump directive was stale and is filed as SUPERSEDED).  Grind
 laps READ and OBEY it and do not edit it.  `STATUS.md` refreshed; `PENDING_WORK.md` §G4 carries
 the full attack path.
 
-Build: `lake build NormalNumbers.G4LocalContraction NormalNumbers.G4Wiring
-NormalNumbers.G4TubePiece NormalNumbers.G4TorusProjection NormalNumbers.G4Covering`.
+Build: `lake build NormalNumbers.G4Transfer NormalNumbers.G4Wiring NormalNumbers.G4TubePiece
+NormalNumbers.G4TorusProjection NormalNumbers.G4Covering` (full repo build green, 8888 jobs).
 No `sorry` in any G4 file; every declaration below prints `[propext, Classical.choice, Quot.sound]`.
+
+Commits this lap: `97b2d1e` (frequency separation), `c9f7ba6` (review docs: DIRECTION/STATUS/
+PENDING_WORK), `1f10de9` (C1, C2), `1aa56cb` (the C3 skeleton).
 
 ## Why the direction changed
 
