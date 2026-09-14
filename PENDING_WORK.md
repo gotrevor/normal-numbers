@@ -3,6 +3,87 @@
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
 > section; do **not** append to the bottom.
 
+## 🎯 ACTIVE (entropy review lap 51, 2026-09-14) — an explicit NORMAL NUMBER from `G₄`'s sampled digits
+
+**Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
+
+### What is now settled (do not re-attack)
+
+* Frequencies **averaged over positions**: complete.  `tendsto_occursCountP_primeLambertFour`
+  (`t = 1`, all positions), `tendsto_occursCountJointUniform_…` (lap 45, aligned `t`-vectors),
+  `tendsto_occursCountJointFree_…` (lap 47, **all** vectors in `[0,m_K−ℓ+1)^t`, no alignment).
+* Frequencies **pointwise** (a fixed position vector): **refuted**, `no_pointwise_bound_from_deficit`
+  (lap 48).  The averaging is necessary; it is not an artefact of the estimates.
+* **Richness** per block: `joint_richness_primeLambertFour` (laps 49–50), half the blocks,
+  `≥ 2^{t m_K − 200t√K}` joint values.
+* Normality of `G₄` on this mechanism: **closed** (lap 37 reflection; quantified lap 39).
+  The three escapes (varied frozen residue, shifted real `2^σ x`, more scales) are each closed by
+  something already proved — do not re-derive them.
+
+### The target
+
+Every endpoint above is a statistic *at scale `i`, with `i → ∞`*: a sequence of finite statements.
+The objective is the expedition's **first infinite object**.
+
+> **`samplePos : ℕ → ℕ`**, defined from the schedule alone (no reference to `x`), every value a
+> sampled position, with
+> `IsNormalSequence 2 (fun j => digitOf 2 (Int.fract (primeLambertAtBase 4)) (samplePos j))`
+> and hence `IsNormal 2 (realOfDigits 2 …)`.
+
+**Not a claim about `G₄`.**  The new real is built *from* `G₄`'s digits; `G₄`'s own normality stays
+closed on this mechanism.  Say so in every module docstring.
+
+### The three rungs
+
+**Rung 1 — `G4EntropyOcc.lean`, the counting bridge.  THE DECISIVE PROBE; do it first.**
+`IsNormalSequence` is phrased through `countOccurrences v ((List.range n).map s)` =
+`((List.range n).map s).tails.countP (v.isPrefixOf ·)`.  Everything downstream wants the
+arithmetic shape `occCount s v n := #{p < n : ∀ q < |v|, s (p+q) = v[q]}` instead.  Needed:
+* `occCount_eq_countOccurrences` up to a seam `≤ |v|−1` (windows that start below `n` but run past
+  it are counted by `occCount` and not by `countOccurrences`);
+* `occCount` additivity over a split `n = a + b` with the same seam;
+* the `ℕ→ℝ` versions with the seam as an explicit additive constant, so `CFChainFreq`'s
+  `countOccurrences_append_addslack₂` shape can be mirrored.
+If the `tails.countP` shape resists ⇒ **trigger E-T9**: record the exact obstruction here and
+restate rungs 2–3 in list-of-blocks form (`CFChainFreq`'s lemmas already work on lists, so this is
+a change of shape, not of plan).
+
+**Rung 2 — `G4EntropyBlockWord.lean`, one scale as one block.**
+Enumerate the scale-`i` sample in a fixed order: `(n, α, p) ∈ P_i × Atom_i × [0, m_i)` ↦ digit of
+`G₄` at `2·kIdx(gridAt i) n α + p`.  Block length `L_i := |P_i|·|Atom_i|·m_i` (all three factors are
+`x`-independent naturals; `P_i ≠ ∅` was recorded in lap 1).  Endpoint:
+`occCount (block i) v / L_i → 2^{−|v|}`, straight out of `tendsto_occursCountP_primeLambertFour`
+whose denominator is `|P_i|·|Atom_i|·(m_i − ℓ + 1)`.  Two corrections, both `O(ℓ/m_i) → 0`:
+the `(m_i−ℓ+1)/m_i` normalisation and one seam per `(n,α)` block.
+
+**Rung 3 — `G4EntropyNormalReal.lean`, the assembly.**
+`T_0 = 0`; `r_m` any natural with `r_m·L_{i_m} ≥ (m+1)·(T_{m−1} + L_{i_{m+1}})`;
+`T_m = T_{m−1} + r_m·L_{i_m}`; `samplePos` walks group `m` = `r_m` copies of block `i_m`.
+Three estimates for a prefix of length `N` landing in group `m` after `q` whole copies and a
+partial copy of length `s < L_{i_m}`:
+1. the past `T_{m−1}` contributes error `≤ T_{m−1}/N ≤ 1/m`;
+2. the `q` whole copies contribute the block's own error `ε_{i_m}(v) → 0` plus `q` seams;
+3. the partial copy contributes `≤ s/N ≤ L_{i_m}/T_{m−1} ≤ 1/m`.
+Then `ProperDigits` (infinitely many `0`s — from the frequency of `v = [0]`) and
+`Bridge.isNormal_realOfDigits`.
+**Why repetition**: `L_{i+1} ≫ ∑_{j≤i} L_j` because `|P_i|` explodes with `i`, so prefixes of a
+fresh block can never be made negligible without repeating the earlier ones.
+
+### Afterwards, not before (trigger E-T8)
+
+A strictly increasing `samplePos` — a genuine *subsequence* of `G₄`'s binary digits — needs the
+frequency theorem for the empirical law on a **subset** `S ⊆ P_K`.  The cost is exactly
+`deficit(μ_S) ≤ (Δ+1)/ρ` for `ρ = |S|/|P_K|` (concavity: `H(μ) ≤ ρH(μ_S)+(1−ρ)H(μ_{S^c})+h(ρ)`),
+affordable while `ρ ≫ K^{−1/2}` since the frequency error is `O(√(Δ/(|A|m)))`.  That is the next
+target once the headline lands; it is an upgrade, not a prerequisite.
+
+### Bounded secondary, only on an E-T3 stall
+
+**Measure the wall**: `Sched.density_le_pow` (`≤ ½(3/K⁴)^K`) and `Sched.window_needed_ge`
+(density `≥ 1/2` needs `mm i ≥ K^{4K}·m_K`).  A negative result's value is its constant.
+
+---
+
 ## 🎯 ACTIVE (entropy DEEP REFLECTION lap 37, 2026-09-14) — the JOINT (`t`-wise) sampled-word frequency theorem
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.  Full reasoning:

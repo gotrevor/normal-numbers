@@ -21,8 +21,33 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (8970 jobs) ·
-**Updated**: entropy DEEP REFLECTION lap 37 · 2026-09-14 · `wip/g4-entropy` @ `1fe35d7`
+· **Build**: 🟢 green (8979 jobs) ·
+**Updated**: entropy review lap 51 · 2026-09-14 · `wip/g4-entropy` @ `497d50a`
+
+## 🧭 2026-09-14 (entropy review lap 51): the frequency ladder is COMPLETE and BOUNDED; new objective = an explicit NORMAL NUMBER from `G₄`'s sampled digits
+
+**Where it stands.**  The lap-37 objective — the joint (`t`-wise) sampled-word frequency theorem —
+was met and then pushed to its boundary.  Laps 38–45 built it; lap 47
+(`tendsto_occursCountJointFree_primeLambertFour`) freed the positions to *every* vector in
+`[0, m_K−ℓ+1)^t` with no alignment, at `≤ 2t√(1600 log2 · ℓt/√K)`; lap 48
+(`no_pointwise_bound_from_deficit`) proved the averaging is **necessary** — a law with a deficit of
+one bit per window still has a probability-zero pattern at a fixed position vector, so no `o(1)`
+pointwise bound can follow from the deficit premise.  Laps 49–50 opened a second, non-frequency
+line: per-block joint **richness** (`joint_richness_primeLambertFour` — for at least half the
+blocks the `t` sampled windows take `≥ 2^{t·m_K − 200t√K}` distinct joint values, shortfall rate
+`800/√K → 0`).  Build 🟢 8979 jobs; every headline prints the trust triple.
+
+**What this review changed.**  Every endpoint of laps 31–50 is a statistic *at scale `i`, with
+`i → ∞`* — a sequence of finite statements, never one infinite object.  The repo already owns both
+pieces that close that gap: `Bridge.isNormal_realOfDigits` and the `countOccurrences` concatenation
+calculus (`CFChainFreq.countOccurrences_append_addslack₂` — additive seam, no shortness
+requirement), while `tendsto_occursCountP_primeLambertFour` supplies exactly the block frequency a
+concatenation argument consumes.  So the new objective is the expedition's **first infinite
+object**: an `x`-independent map `samplePos : ℕ → ℕ`, built from the schedule alone, with
+`IsNormalSequence 2 (fun j => digitOf 2 (Int.fract G₄) (samplePos j))` — hence a normal real read
+off `G₄`'s binary digits along an arithmetic schedule.  Strictly stronger than every `i → ∞`
+statement (those are its input) and stated in the vocabulary `isDisjunctive_two`/`IsNormal` use.
+**It is not a claim about the normality of `G₄`**, which stays closed on this mechanism (lap 37).
 
 ## 🧭 2026-09-14 (entropy DEEP REFLECTION lap 37): normality on this mechanism is CLOSED — and MEASURED
 
@@ -519,15 +544,21 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 ### Short-term (mirrors PENDING_WORK top)
 Campaign **entropy expedition** (ACTIVE) — `DIRECTION.md` CURRENT DIRECTIVE, reflection lap 37,
 the three rungs of the **joint (`t`-wise) sampled-word frequency theorem**:
-1. **`G4EntropyPosition.lean`** — render lap 36's `abs_posAvg_sub_le` at the schedule: `posFreq`,
-   `abs_posFreq_sub_le_of_deficit`, the `E0`/`entropy_E1` instances, the general-`p` form of
-   `blkAt_blockVal_min`, endpoint `tendsto_occursCountP_primeLambertFour` (every binary word at
-   frequency `2^{−|w|}` among **all** positions of the sampled windows).  `t = 1` of the objective.
-2. **`G4EntropyJoint.lean`** — the abstract `t`-wise capacity bound: `t`-blocks of atoms, the
-   per-block pattern coordinate, joint injectivity, `∑_blocks (tℓ − H₂) ≤ t·Δ`, averaged bound.
-   **Uncertain step, probe first**: deficit additivity at `t ≥ 2` (trigger E-T6).
-3. The schedule instance + digit rendering → `tendsto_occursCountJoint_…`.
-4. Bounded secondary, only on an E-T3 stall: **measure the wall** — `Sched.density_le_pow`
+1. **`G4EntropyOcc.lean`** — the counting bridge, **and the decisive probe**: `occCount s v n`
+   (`#{p < n : s spells v at p}`), the bridge to `countOccurrences v ((List.range n).map s)` with
+   seam `≤ |v|−1`, and interval-split additivity.  If the `tails.countP` shape resists, trigger
+   **E-T9**: restate rungs 2–3 in list-of-blocks form.
+2. **`G4EntropyBlockWord.lean`** — render scale `i` as one block: the `(n, α, p)` enumeration of
+   the sample, length `|P_i|·|Atom_i|·m_i`, and `occCount → 2^{−|v|}` out of
+   `tendsto_occursCountP_primeLambertFour` (the `(m−ℓ+1)/m` and seam corrections vanish, `m_i → ∞`).
+3. **`G4EntropyNormalReal.lean`** — the assembly: the `(scale, repetition)` recursion with
+   `r_m·|y_m| ≥ (m+1)(T_{m−1}+|y_{m+1}|)`, `samplePos`, `IsNormalSequence 2`, `ProperDigits`, and
+   `isNormal_realOfDigits`.  Repetition defeats the prefix problem; `|y_{m+1}| ≫ ∑_{j≤m}|y_j|` is
+   unavoidable because `|P_i|` explodes with `i`.
+4. Upgrade after the headline (trigger **E-T8**), not before: a strictly increasing `samplePos` —
+   a genuine *subsequence* of `G₄`'s digits — via restricting the empirical law to `S ⊆ P_K` of
+   relative size `ρ` at deficit cost `Δ/ρ` (affordable for `ρ ≫ K^{−1/2}`).
+5. Bounded secondary, only on an E-T3 stall: **measure the wall** — `Sched.density_le_pow`
    (`≤ ½(3/K⁴)^K`) and `Sched.window_needed_ge` (density `≥ 1/2` needs `mm ≥ K^{4K}·m_K`).
 
 Campaign **G5** (dormant for this run), in order:
@@ -555,8 +586,8 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, re-run this lap (2026-09-14 entropy **DEEP REFLECTION lap 37**, HEAD
-`1fe35d7`, build 🟢 8970 jobs).  **Math-axiom count in the entropy wing: 0** — every headline
+Real `#print axioms` output, re-run this lap (2026-09-14 entropy **review lap 51**, HEAD
+`497d50a`, build 🟢 8979 jobs).  **Math-axiom count in the entropy wing: 0** — every headline
 below prints exactly the trust triple `[propext, Classical.choice, Quot.sound]`, with no
 `native_decide` artifact and no local `axiom` anywhere in `src/`.  The two open `sorry`s in the
 repo (`MahlerDriftOne.exists_prime_nonresidue`, `PrimeLambertOscillation.phaseOscillation`)
@@ -579,7 +610,11 @@ real inequalities that live in the witness.
 | `G4.Sched.not_qForces_normal_at_pow` | **no quantized sampler on this schedule forces normality**, at any level up to `B^K ≥ K^{3K}` (uncond.) | trust triple | 🟢 clean (lap 22) |
 | `G4Entropy.entropy_rate_not_control_bit` | entropy rate `→ 1` does not pin a **fixed-offset** bit (uncond.) | trust triple | 🟢 clean (lap 15) — ⚠️ read lap 23's correction: it says nothing about the **offset-averaged** frequency, which entropy *does* control and which is now the objective |
 | `G4.Sched.tendsto_occursCountT_primeLambertFour` | **every finite binary word `v` occurs at frequency `2^{−|v|}`** among the aligned `|v|`-blocks of `G₄`'s sampled windows, over `OccursAt 2 · v ·` (uncond.) | trust triple | 🟢 clean (lap 31) — §5's positive answer, on real digits; **not** a normality claim (sampled positions have density zero) |
-| `G4Entropy.abs_posAvg_sub_le` | the same capacity bound over **all** `m−ℓ+1` window positions, not one aligned tiling: `≤ 2√(log2·ℓδ/(m−ℓ+1))` (uncond., abstract `FinLaw`) | trust triple | 🟢 clean (lap 36) — **not yet rendered at the schedule**; rung 1 of the live objective |
+| `G4.Sched.tendsto_occursCountP_primeLambertFour` | **every finite binary word at frequency `2^{−|v|}` among ALL positions `(n,α,p)` of the sampled windows** (uncond.) | trust triple | 🟢 clean (lap 36 abstract / rendered) — the INPUT to the live normal-number objective |
+| `G4.Sched.tendsto_occursCountJointFree_primeLambertFour` | **`t` sampled windows decorrelate**: every pattern `(w₁,…,w_t)` at frequency `2^{−tℓ}`, over all position vectors in `[0,m_K−ℓ+1)^t`, no alignment (uncond.) | trust triple | 🟢 clean (lap 47) — the strongest frequency statement this arithmetic supports |
+| `G4Entropy.no_pointwise_bound_from_deficit` | the averaging in the line above is **necessary**: a one-bit-per-window deficit still admits a probability-zero pattern at a fixed position vector (uncond.) | trust triple | 🟢 clean (lap 48) — the boundary, a refutation |
+| `G4.Sched.joint_richness_primeLambertFour` | for at least half the blocks the `t` sampled windows of `G₄` take `≥ 2^{t·m_K − 200t√K}` distinct joint values; shortfall rate `800/√K → 0` (uncond.) | trust triple | 🟢 clean (laps 49–50) — per-block, no averaging over positions |
+| `G4Entropy.abs_posAvg_sub_le` | the same capacity bound over **all** `m−ℓ+1` window positions, not one aligned tiling: `≤ 2√(log2·ℓδ/(m−ℓ+1))` (uncond., abstract `FinLaw`) | trust triple | 🟢 clean (lap 36), rendered at the schedule in lap 36's `G4EntropyPosition` |
 | `G4.log_det_normalized_two_sided` | `1/300000 ≤ log det(1+T_{K²}^{⊗K})/((K²)^K√K) ≤ log2/√K + 12` for `K ≥ 5` (uncond.) | trust triple | 🟢 clean (lap 34) — the `√K` deficit is **structural**, so `ℓ = o(√K)` is a property of the object |
 | `G4.Sched.not_T_E_of_density_lt_one` | `T_E` refuted again from density `< 1` alone, at a single `c` (uncond.) | trust triple | 🟢 clean (lap 18) |
 | `G4Entropy.tendsto_density_compl_zero` | a satisfiable digit-local hypothesis forces normality only if its read set has density **one** (uncond.) | trust triple | 🟢 clean (lap 18) — the barrier at full strength |

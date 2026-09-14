@@ -31,65 +31,81 @@ here.  The "forbidden drift" list of the G5 directive still applies except for
 its ban on "the multiplicity/entropy/ordinary-normality questions", which this
 expedition explicitly lifts.
 
-## CURRENT DIRECTIVE — entropy expedition (set 2026-09-14, DEEP REFLECTION lap 37)
+## CURRENT DIRECTIVE — entropy expedition (set 2026-09-14, FRESH-MIND REVIEW lap 51)
 
 *Altitude-lap section, inside the ACTIVE override's scope.  It OUTRANKS every HANDOFF.
-The G5 CURRENT DIRECTIVE further below is dormant for this run.  Full reasoning:
-`REFLECTION-2026-09-14-entropy.md`.*
+The G5 CURRENT DIRECTIVE further below is dormant for this run.  Background reasoning:
+`REFLECTION-2026-09-14-entropy.md` (lap 37) — still accurate, not superseded.*
 
-**State.**  The lap-23 objective was **MET at lap 31** (`tendsto_occursCountT_primeLambertFour`)
-and laps 32–36 then ran five laps with no live objective.  Brief §8 is satisfied: `entropy_E0`,
-`entropy_E1` unconditional and axiom-clean; `T_E`/`T_S`/`T_mix` refuted with witnesses meeting
-their exact premises; §5 answered positively and rendered on digits.  Build 🟢 8970 jobs.
+**State.**  The lap-37 objective (the JOINT `t`-wise sampled-word frequency theorem) was **MET**:
+laps 38–45 built it, lap 47 freed the positions (`tendsto_occursCountJointFree_primeLambertFour`,
+all vectors in `[0,m_K−ℓ+1)^t`), and lap 48 proved that endpoint is the boundary
+(`no_pointwise_bound_from_deficit`: no *fixed*-position bound follows from the deficit).  Laps
+49–50 opened and rendered a second line (per-block joint richness).  Build 🟢 8979 jobs, `src/`
+carries no expedition `sorry`, every headline `[propext, Classical.choice, Quot.sound]`.
+So **E-T7 fires**: this lap owes the successor objective.
 
-**The finding that sets this directive.**  Binary normality of `G₄` is **closed on this
-mechanism, by theorem and quantitatively** — `qForces_normal_iff_density_one` (density **one**
-required) against `sum_weight_le` (every admissible family, every scale, reads `≤ 1/8`), with the
-gap measured by `key_size`'s own slack: sampled density `≤ ½(3/K⁴)^K`, while `entropy_cover_bound`
-pins the window at exactly `m_K = K/4`.  Three escapes (varied frozen residue, shifted real
-`2^σ x`, more scales) are each closed by something already proved — see the reflection §1; do not
-re-derive them.  So the remaining value is **the strongest TRUE statement about `G₄`'s digits that
-this arithmetic supports**, and the joint law has so far been used only through its marginals.
+**The finding that sets this directive.**  Every endpoint of laps 31–50 is a *statistic of the
+sample at scale `i`, with `i → ∞`* — a sequence of finite statements, never one infinite object.
+But the repo already owns the two pieces that turn such a sequence into a number:
+`Bridge.isNormal_realOfDigits` (`IsNormalSequence b s → IsNormal b (realOfDigits b s)`) and the
+`countOccurrences` concatenation calculus of `CFChainFreq`/`CFConcat`/`BaryConcat`
+(`countOccurrences_append_addslack₂` — additive seam, **no** shortness requirement).  And
+`tendsto_occursCountP_primeLambertFour` already delivers, verbatim, the frequency of an arbitrary
+binary word over **all** triples `(n, α, p)` of the scale-`i` sample.  That is exactly the input a
+block-concatenation normality proof consumes.
 
-- 🎯 **THE objective: the JOINT (`t`-wise) sampled-word frequency theorem for `G₄`** — the
-  sampled windows are asymptotically **independent** and uniform.  Endpoint: for every `t`, every
-  partition of the atoms into `t`-blocks, and all binary words `w₁,…,w_t` of length `ℓ`, the
-  frequency over `(n, block, positions)` of *"`G₄`'s block at `2·kIdx(n,α_s)+p_s` spells `w_s`,
-  simultaneously for every `s ≤ t`"* tends to `2^{−tℓ}`.  Strictly stronger than every `t = 1`
-  result; the first statement that consumes `entropy_E1`'s **joint** hypothesis as a joint
-  hypothesis.
-- 🔨 **Mandated next move — three rungs, in this order** (all new, all in scope):
-    1. `G4EntropyPosition.lean` — **render lap 36 at the schedule**: `posFreq i ℓ x w :=
-       posAvg (kk i) ℓ (jointLawAt i x) w`, `abs_posFreq_sub_le_of_deficit` (the deficit
-       hypothesis is *verbatim* `abs_blockFreqT_sub_le_of_deficit`'s), the `E0`/`entropy_E1`
-       instances, the general-`p` form of `G4EntropyRender.blkAt_blockVal_min`, and the endpoint
-       `tendsto_occursCountP_primeLambertFour` — every finite binary word at frequency `2^{−|w|}`
-       among **all** positions of the sampled windows.  This is `t = 1` of the objective and the
-       currently dangling thread.
-    2. `G4EntropyJoint.lean` — the abstract `t`-wise capacity bound: block the atoms into
-       `t`-blocks, the per-block pattern coordinate (product of the `t` per-window tiling
-       coordinates), its joint injectivity, `∑_blocks (tℓ − H₂(pattern)) ≤ t·Δ` via
-       `FinLaw.H₂_le_sum_H₂_map`, then the averaged bound through the existing
-       Hellinger/Pinsker step.  **The one uncertain step is the deficit additivity at `t ≥ 2`** —
-       probe it first and record the answer either way.
-    3. The schedule instance and digit rendering of rung 2 → `tendsto_occursCountJoint_…`.
-- 📌 **Bounded secondary target, only on an E-T3 stall: MEASURE THE WALL.**
-  `Sched.density_le_pow` (`≤ ½(3/K⁴)^K`) and `Sched.window_needed_ge` (density `≥ 1/2` needs
-  `mm i ≥ K^{4K}·m_K`) — both are `key_size` re-proved with its own slack kept.  A negative
-  result's value is its constant.
-- ⛔ **Forbidden drift**: any further barrier/characterization variant; re-proving or "tidying"
-  `entropy_E0`/`entropy_E1` or any lap 8–36 module; re-deriving the three closed escapes;
-  editing any pre-expedition G4/G5 file (add lemmas, recover old endpoints as instances);
-  `Adder*`, `CF*`, `Mahler*`, `LnTwo*`, `Stoneham*`, `PrimeLambertOscillation`; a trusted axiom
-  for any candidate lemma; appending to the BOTTOM of `PENDING_WORK.md` (493 KB — write in its
-  ACTIVE top section only); and claiming anything about the normality of `G₄`.
+- 🎯 **THE objective: an explicit NORMAL NUMBER read off `G₄`'s binary digits along the
+  arithmetic sample.**  Endpoint, in the repo's own normality vocabulary:
+  > there is a map `samplePos : ℕ → ℕ` **defined from the schedule alone** (no reference to `x`),
+  > with every `samplePos j` a sampled position, such that
+  > `IsNormalSequence 2 (fun j => digitOf 2 (Int.fract G₄) (samplePos j))`, hence
+  > `IsNormal 2 (realOfDigits 2 …)`.
+
+  Why this and not another frequency variant: it is the **first infinite object** the expedition
+  produces, it is strictly stronger than every `i → ∞` statement (those are its input), it is
+  stated in the language `isDisjunctive_two` and `IsNormal` are stated in, and it is a genuinely
+  new theorem about `∑_p 1/(4^p−1)` — *an explicitly specified, `x`-independent position sequence
+  along which `G₄`'s digits are normal*.  Disjunctivity says every word occurs once; this says the
+  digits read along an arithmetic schedule are normal.
+- 🔨 **Mandated next move — three rungs, in this order.**
+    1. `G4EntropyOcc.lean` — **the counting bridge, and probe it FIRST**: window counting for a
+       digit sequence (`occCount s v n := #{p < n : s spells v at p}`), the bridge
+       `countOccurrences v ((List.range n).map s) = occCount s v n − (seam ≤ |v|−1)`, and
+       additivity over an interval split with the same seam.  Everything downstream is stated in
+       `occCount`, NOT in list surgery.  **This is the decisive probe**: if `countOccurrences`'s
+       `tails.countP` shape resists the bridge, the whole plan restates in list-of-blocks form and
+       rung 2 changes shape — so settle it before building anything on it.
+    2. `G4EntropyBlockWord.lean` — render one scale as a block: the enumeration
+       `(n, α, p) ↦ 2·kIdx(n,α)+p` of the scale-`i` sample in a fixed order, its length
+       `|P_i|·|Atom_i|·m_i`, and `occCount (block i) v / length → 2^{−|v|}` **out of
+       `tendsto_occursCountP_primeLambertFour`** (the `(kk i − ℓ + 1)/kk i` and seam corrections
+       both vanish because `m_i = K_i/4 → ∞`).
+    3. `G4EntropyNormalReal.lean` — the assembly: the recursion `T_0 = 0`,
+       `r_m := ` (anything with `r_m·|y_m| ≥ (m+1)·(T_{m−1} + |y_{m+1}|)`), `T_m = T_{m−1}+r_m|y_m|`;
+       `samplePos`; `IsNormalSequence 2`; `ProperDigits` (from the frequency of `[0]`); and
+       `isNormal_realOfDigits`.  Repetition is what defeats the prefix problem — `|y_{m+1}| ≫
+       ∑_{j≤m}|y_j|` is unavoidable, since `|P_i|` explodes with `i`.
+- 📌 **Bounded secondary target, only on an E-T3 stall**: unchanged — `Sched.density_le_pow`
+  (`≤ ½(3/K⁴)^K`) and `Sched.window_needed_ge`.  A negative result's value is its constant.
+- ⛔ **Forbidden drift**: any further frequency/barrier/characterization variant for its own sake;
+  re-proving or "tidying" `entropy_E0`/`entropy_E1` or any lap 8–50 module; re-deriving the three
+  closed escapes (reflection §1); editing any pre-expedition G4/G5 file (add lemmas, recover old
+  endpoints as instances); `Adder*`, `CF*` (read-only — **reuse** `CFChainFreq`'s lemmas, never
+  edit them), `Mahler*`, `LnTwo*`, `Stoneham*`, `PrimeLambertOscillation`; a trusted axiom for any
+  candidate lemma; appending to the BOTTOM of `PENDING_WORK.md` (write in its ACTIVE top section
+  only); and **claiming anything about the normality of `G₄` itself** — the new real is built from
+  `G₄`'s digits and is *not* `G₄`; say so in the module docstring of every rung.
 - 🚦 **Route triggers**:
-    * **E-T6** — if the per-block pattern coordinate does **not** keep the deficit additive
-      (rung 2's uncertain step), record the exact degradation in `PENDING_WORK.md`'s ACTIVE
-      section and re-state the theorem with the true `t`-dependence; do NOT retreat to `t = 1`,
-      which is already proved.
-    * **E-T7** — a lap that MEETS the 🎯 objective says so in its handoff and **does not pick its
-      own next target**; the next altitude lap sets one.  (Laps 32–36 are why this exists.)
+    * **E-T8** — the repetition in rung 3 makes `samplePos` non-injective.  A strictly increasing
+      `samplePos` (a genuine *subsequence* of `G₄`'s digits) is an **upgrade**, reachable by
+      restricting the empirical law to a subset `S ⊆ P_K` of relative size `ρ` at deficit cost
+      `Δ/ρ` (affordable for `ρ ≫ K^{−1/2}`).  Do **not** block the headline on it; record it as the
+      next target once the headline lands.
+    * **E-T9** — if rung 1's bridge fails, say so in `PENDING_WORK.md`'s ACTIVE section with the
+      exact obstruction and restate rungs 2–3 in list form; do not abandon the objective.
+    * **E-T7** (kept) — a lap that MEETS the 🎯 objective says so and does **not** pick its own
+      next target; the next altitude lap sets one.
     * **E-T3** (kept) — two laps stalled on one assertion ⇒ decompose it in `PENDING_WORK.md`.
 
 ### Directive history
@@ -103,7 +119,11 @@ this arithmetic supports**, and the joint law has so far been used only through 
   the lap-23 objective was met at lap 31 and laps 32–36 ran objective-less.  Normality of `G₄`
   recorded as CLOSED on this mechanism by theorem and quantitatively.  New objective: the
   JOINT (`t`-wise) sampled-word frequency theorem — the sampled windows decorrelate.
-
+- 2026-09-14 (review lap 51): lap-37 objective MET (laps 38–47) and its boundary proved (48);
+  richness line opened (49–50).  E-T7 fires.  New objective: **an explicit normal number read
+  off `G₄`'s digits along the arithmetic sample** — the expedition's first infinite object,
+  assembled from `tendsto_occursCountP_primeLambertFour` + the `countOccurrences` concatenation
+  calculus + `isNormal_realOfDigits`.
 
 # DIRECTION — normal-numbers 🧭
 
