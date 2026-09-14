@@ -868,4 +868,121 @@ theorem pairCount_eq (i : ℕ) (x : ℝ) (v : List ℕ) :
       (f := fun p n => if OccursAt 2 x v (2 * kIdx (gridAt i) n α + p) then 1 else 0))]
   exact Finset.sum_comm
 
+
 end NormalNumbers.G4.Sched
+
+/-! ### The read-versus-certified error, as pure real arithmetic
+
+Isolating the bookkeeping from the schedule keeps the elaborator away from the (astronomically
+large) closed terms.  `W` is the read count, `N` the read length, `S` the distinct-window count,
+`P` the pair count, `A`/`B` the numbers of distinct windows and of pairs, `F = m − ℓ + 1`,
+`T` the history, `r` the certified frequency and `Q` the atom count.
+-/
+
+namespace NormalNumbers.G4Entropy
+
+set_option maxHeartbeats 2000000 in
+/-- **The read frequency tracks the certified one**, with error `16/Q + (ℓ+4)/m`. -/
+theorem read_freq_error_bound {W N S P T A B F m ℓ r Q : ℝ}
+    (hApos : 0 < A) (hFpos : 0 < F) (hmpos : 0 < m) (hQpos : 0 < Q) (hQ16 : 16 ≤ Q)
+    (hTnn : 0 ≤ T) (hℓnn : 0 ≤ ℓ) (hWnn : 0 ≤ W)
+    (hFm : F ≤ m) (hFeq : F = m - ℓ + 1)
+    (hNeq : N = T + A * m) (hT4 : T ≤ 4 * A)
+    (hWlo : S ≤ W) (hWhi : W ≤ S + T + A * ℓ)
+    (hSP : S ≤ P) (hPS : P ≤ S + (B - A) * F)
+    (hPr : P = r * (B * F)) (hrnn : 0 ≤ r) (hr1 : r ≤ 1)
+    (hAB : A ≤ B) (hovA : B - A ≤ 16 / Q * A) :
+    |W / N - r| ≤ 16 / Q + (ℓ + 4) / m := by
+  have hBpos : (0 : ℝ) < B := lt_of_lt_of_le hApos hAB
+  have hNpos : 0 < N := by rw [hNeq]; nlinarith
+  have hNge : A * m ≤ N := by rw [hNeq]; linarith
+  have hNle : N ≤ A * (m + 4) := by rw [hNeq]; nlinarith
+  have hQnn : (0 : ℝ) ≤ 16 / Q := by positivity
+  have hmnn : (0 : ℝ) ≤ (ℓ + 4) / m := by positivity
+  -- upper bound
+  have hupper : W / N ≤ r + 16 / Q + (ℓ + 4) / m := by
+    have hnum : W ≤ r * (B * F) + T + A * ℓ := by rw [← hPr]; linarith
+    have hnumnn : (0 : ℝ) ≤ r * (B * F) + T + A * ℓ := by
+      have h1 : (0 : ℝ) ≤ r * (B * F) := mul_nonneg hrnn (mul_nonneg hBpos.le hFpos.le)
+      have h2 : (0 : ℝ) ≤ A * ℓ := mul_nonneg hApos.le hℓnn
+      linarith
+    have hstep : W / N ≤ (r * (B * F) + T + A * ℓ) / (A * m) := by
+      have h1 : W / N ≤ (r * (B * F) + T + A * ℓ) / N := by gcongr
+      refine h1.trans ?_
+      exact div_le_div_of_nonneg_left hnumnn (by positivity) hNge
+    refine hstep.trans ?_
+    rw [div_le_iff₀ (by positivity)]
+    have hBF : r * (B * F) ≤ r * (B * m) := by
+      have hrB : (0 : ℝ) ≤ r * B := mul_nonneg hrnn hBpos.le
+      calc r * (B * F) = (r * B) * F := by ring
+        _ ≤ (r * B) * m := mul_le_mul_of_nonneg_left hFm hrB
+        _ = r * (B * m) := by ring
+    have hBA : r * (B * m) ≤ (r + 16 / Q) * (A * m) := by
+      have h1 : r * B ≤ (r + 16 / Q) * A := by
+        have h3 : r * (B - A) ≤ 16 / Q * A := by nlinarith [hovA, hr1, hrnn, hAB]
+        nlinarith [h3]
+      nlinarith [h1, hmpos]
+    have hTA : T + A * ℓ ≤ (ℓ + 4) / m * (A * m) := by
+      have hexp : (ℓ + 4) / m * (A * m) = (ℓ + 4) * A := by field_simp
+      rw [hexp]
+      nlinarith [hT4, hApos, hℓnn]
+    nlinarith [hBF, hBA, hTA]
+  -- lower bound
+  have hlower : r - 16 / Q - (ℓ + 4) / m ≤ W / N := by
+    rcases le_or_gt (r - 16 / Q) 0 with hneg | hpos
+    · have hnn : (0 : ℝ) ≤ W / N := by positivity
+      linarith
+    · have hnum : r * (B * F) - (B - A) * F ≤ W := by rw [← hPr]; linarith
+      have hnumnn : (0 : ℝ) ≤ r * (B * F) - (B - A) * F := by
+        have h1 : (B - A) * F ≤ 16 / Q * (A * F) := by
+          have hmul := mul_le_mul_of_nonneg_right hovA hFpos.le
+          calc (B - A) * F ≤ (16 / Q * A) * F := hmul
+            _ = 16 / Q * (A * F) := by ring
+        have hBA0 : (0 : ℝ) ≤ (B - A) * F := mul_nonneg (by linarith) hFpos.le
+        have hneg : -((B - A) * F) ≤ (B - A) * F * (r - 1) := by nlinarith [hBA0, hr1, hrnn]
+        have hexp : r * (B * F) - (B - A) * F - (r - 16 / Q) * (A * F)
+            = (B - A) * F * (r - 1) + 16 / Q * (A * F) := by ring
+        have hpos2 : (0 : ℝ) ≤ (r - 16 / Q) * (A * F) :=
+          mul_nonneg hpos.le (mul_nonneg hApos.le hFpos.le)
+        linarith [hexp, hneg, h1, hpos2]
+      have hstep : (r * (B * F) - (B - A) * F) / (A * (m + 4)) ≤ W / N := by
+        have h1 : (r * (B * F) - (B - A) * F) / N ≤ W / N := by gcongr
+        refine le_trans ?_ h1
+        exact div_le_div_of_nonneg_left hnumnn hNpos hNle
+      refine le_trans ?_ hstep
+      rw [le_div_iff₀ (by positivity)]
+      have hkey : (r - 16 / Q) * (A * F) ≤ r * (B * F) - (B - A) * F := by
+        have h1 : (B - A) * F ≤ 16 / Q * (A * F) := by
+          have hmul := mul_le_mul_of_nonneg_right hovA hFpos.le
+          calc (B - A) * F ≤ (16 / Q * A) * F := hmul
+            _ = 16 / Q * (A * F) := by ring
+        have hBA0 : (0 : ℝ) ≤ (B - A) * F := mul_nonneg (by linarith) hFpos.le
+        have hneg : -((B - A) * F) ≤ (B - A) * F * (r - 1) := by nlinarith [hBA0, hr1, hrnn]
+        have hexp : r * (B * F) - (B - A) * F - (r - 16 / Q) * (A * F)
+            = (B - A) * F * (r - 1) + 16 / Q * (A * F) := by ring
+        linarith [hexp, hneg, h1]
+      refine le_trans ?_ hkey
+      have hfac : (r - 16 / Q - (ℓ + 4) / m) * (A * (m + 4))
+          ≤ (r - 16 / Q) * (A * F) := by
+        have hFdiff : (m + 4) - F = ℓ + 3 := by rw [hFeq]; ring
+        have hrle : r - 16 / Q ≤ 1 := by linarith
+        have hgap : (r - 16 / Q) * (m + 4) - (r - 16 / Q) * F = (r - 16 / Q) * (ℓ + 3) := by
+          rw [← mul_sub, hFdiff]
+        have hbound : (r - 16 / Q) * (ℓ + 3) ≤ (ℓ + 4) / m * (m + 4) := by
+          have h1 : (r - 16 / Q) * (ℓ + 3) ≤ ℓ + 3 := by nlinarith [hpos, hrle, hℓnn]
+          have h2 : (ℓ + 3) ≤ (ℓ + 4) / m * (m + 4) := by
+            have hexp : (ℓ + 4) / m * (m + 4) = (ℓ + 4) * (m + 4) / m := by ring
+            rw [hexp, le_div_iff₀ hmpos]
+            nlinarith [hmpos, hℓnn]
+          linarith
+        have hexpand : (r - 16 / Q - (ℓ + 4) / m) * (A * (m + 4))
+            = ((r - 16 / Q) * (m + 4) - (ℓ + 4) / m * (m + 4)) * A := by ring
+        have hexpand2 : (r - 16 / Q) * (A * F) = ((r - 16 / Q) * F) * A := by ring
+        rw [hexpand, hexpand2]
+        refine mul_le_mul_of_nonneg_right ?_ hApos.le
+        linarith [hgap, hbound]
+      linarith [hfac]
+  rw [abs_le]
+  exact ⟨by linarith, by linarith⟩
+
+end NormalNumbers.G4Entropy
