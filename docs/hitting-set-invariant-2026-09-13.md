@@ -167,9 +167,11 @@ story, not a derivation; the blocks that bind are the constant ones `d^k`, whose
 fixed point and leak slowest, which is exactly the Bunimovich–Yurchenko direction.
 
 Where N5 is most exposed: every lower half in the table is capped at multipliers `≤ 60`, which is
-where sparse adversaries are cheap.  The probe `experiments`-side (scratch `n5_large_probe.py`):
-random pairs in `[100, 500]` at `(4,1)` and `(2,3)`, random triples in `[40, 120]` at `(2,3)` - N5
-says none hits.
+where sparse adversaries are cheap.  Probe (21:35, seeded scratch `n5_large_probe.py`): 40 random
+primitive pairs in `[100, 500]` at `(4,1)`, 40 at `(2,3)`, and 12 random triples in `[40, 120]` at
+`(2,3)` - **none hits** (39 s in all; the trimmed products stay small).  Controls through the same
+function: `{1,3,5,7}`, `{1,10,14}`, `{2,5,7}` hit, `{1,3,5}`, `{1,11}` do not.  So N5 survives the
+one place the table could not see.
 
 ## Prior art (literature sweep 2026-09-13; [R] = read in the source)
 
