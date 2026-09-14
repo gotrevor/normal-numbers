@@ -23,13 +23,14 @@ Root module / lakefile untouched (host-owned).
 - `PrimeLambertAnalytic` (checkpoint 4): exact prime-by-prime split of the finite tail, the
   four analytic Props, proved wiring `ChainExists → PhaseOscillation → Irrational primeLambert`.
 
+- `PrimeLambertTail` (checkpoint 5): `BadPrimeFrozen` from residue freezing; exact truncation
+  bound `abs_truncation_error_le` and `tailTruncation_of_bound`.  Axiom-clean.
+
 ## Open
 
 `ChainExists` = `TailTruncation ∧ LargePrimeNegligible ∧ BadPrimeFrozen ∧ SmallPrimeDecay` for
 every `q ≠ 0`.  The single `sorry` remains `phaseOscillation` in `PrimeLambertOscillation`.
-Next attack, in order of exactness: (1) `BadPrimeFrozen` from a residue-freezing hypothesis
-on the sample (exact: `p ∣ n + r ↔ p ∣ n' + r` when `p ∣ n − n'`); (2) `TailTruncation` from
-`ω(m) ≤ log₂ m` and the geometric tail; (3) `LargePrimeNegligible` from the count of prime
+(1) and (2) done in `PrimeLambertTail`.  Next: (3) `LargePrimeNegligible` from the count of prime
 factors above `R`; (4) decompose `SmallPrimeDecay` into independent-model decay, CRT moment
 comparison, and even-moment transfer Props.  Geometry still lacking: distinct first
 coordinates for `B ≥ 7`, the mass `6^{K/3}`, surviving squared mass at `K+1`.

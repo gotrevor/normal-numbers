@@ -17,6 +17,7 @@ No novelty claim.  Headline `irrational_primeLambert` is **sorry-gated**; see "S
 | `PrimeLambertConfig` | transported configurations `TConfig = (ℕ×ℤ) →₀ ℤ`, `CancelsAt c j` (pushforward along `j·d − s` vanishes), `phaseSum c K n`, **Theorem A** `phaseSum_sub_int` | proved, axiom-clean |
 | `PrimeLambertGeometry` | group ring `ℤ[ℤ×ℤ]`, `Cancels`, `edge`, `hexagon` (cancels at its triple; six-atom form `hexagon_eq_six`), `dilate`, `hexTensor r B` cancels at all `1..6r` (`hexTensor_cancels`), coprime transform `toConfig` preserving cancellation (`cancelsAt_toConfig`), positivity, pairwise coprimality (`transform_coprime`), assembly `exists_tconfig_cancelling` | proved, axiom-clean |
 | `PrimeLambertAnalytic` | finite tail `truncPhase`, per-prime parts `primePart`, exact additive split `truncPhase_split` (bad/small/large), the four analytic Props `TailTruncation`, `LargePrimeNegligible`, `BadPrimeFrozen`, `SmallPrimeDecay`, proved wiring `phaseOscillation_of_chain`, `ChainExists → Irrational primeLambert` (`irrational_of_chainExists`) | wiring proved, axiom-clean; the four Props open |
+| `PrimeLambertTail` | `badPrimeFrozen_of_residue` (exact freezing ⇒ `BadPrimeFrozen`), `phaseSum_sub_truncPhase` (`F − F_J = phaseSum c J n`), `ω(m) ≤ log₂ m`, `ω(dm) ≤ ω d + ω m`, exact tail bound `abs_truncation_error_le`: `\|F − F_J\| ≤ ∑_a \|c a\|(ω d_a + log₂(k_a+1) + J + 1)/2^J`, `tailTruncation_of_bound` | proved, axiom-clean |
 | `PrimeLambertOscillation` | `e`, `ProgressionFamily`, `phaseAverage`, `PhaseOscillation` (draft eq. (5)), `norm_phaseAverage_eq_one`, `irrational_of_phaseOscillation` | proved, axiom-clean; `phaseOscillation` is the single disclosed `sorry` |
 
 Build: `lake build NormalNumbers.PrimeLambertOscillation` (targeted; the root module is
@@ -49,6 +50,12 @@ sieve data `J, bad, small, large` with primality/disjointness/cover fields):
 | `LargePrimeNegligible` | (19) | `sup_{n∈P_N} \|∑_{p large} X_p\| ≤ ε_N → 0` |
 | `BadPrimeFrozen` | §5.2 | `∑_{p bad} X_p` constant on `P_N` (exact, no bound) |
 | `SmallPrimeDecay` | §5.3–5.4 | `‖𝔼_{P_N} e(q ∑_{p small} X_p)‖ → 0` |
+
+Discharged reductions (`PrimeLambertTail`): `BadPrimeFrozen` holds whenever the sample is
+frozen modulo every bad prime (`badPrimeFrozen_of_residue`); `TailTruncation` holds whenever
+the exact bound `∑_a |c a|(ω d_a + log₂(k_a+1) + J + 1)/2^J` tends to zero on the sample
+(`tailTruncation_of_bound`) — for the hexagon parameters this is `O(H(log N + log d)/2^J)`,
+draft (20).
 
 `phaseOscillation_of_chain` proves that these four imply `PhaseOscillation` (Lipschitz bound
 `‖e(x)−1‖ ≤ 4π\|x\|`, unimodular constant factor for the frozen class).  `SmallPrimeDecay` is
