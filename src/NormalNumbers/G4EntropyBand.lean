@@ -354,4 +354,17 @@ theorem card_bandS_ge (i : ℕ) : ((PK (i + 1)).card : ℝ) ≤ 2 * ((bandS (i +
     exact_mod_cast Finset.card_le_card hdrop
   linarith
 
+open Classical in
+/-- The band keeps at least half the sample, at every scale (at `i = 0` it keeps all of it). -/
+theorem card_bandS_ge' (i : ℕ) : ((PK i).card : ℝ) ≤ 2 * ((bandS i).card : ℝ) := by
+  classical
+  rcases i with _ | j
+  · have hb : bandS 0 = PK 0 := by
+      refine Finset.filter_true_of_mem fun n _ => ?_
+      simp [bandLo]
+    rw [hb]
+    have : (0 : ℝ) ≤ ((PK 0).card : ℝ) := by positivity
+    linarith
+  · exact card_bandS_ge j
+
 end NormalNumbers.G4.Sched

@@ -106,4 +106,108 @@ lemma H₂_bandLaw (i : ℕ) (x : ℝ) :
   rw [← hH, ← hmap]
   rfl
 
+/-! ### The band law is still certified -/
+
+open Classical in
+/-- **The band-restricted good atom keeps its deficit up to a factor 2 (plus a bit).**  The
+restriction costs `(δ+1)/σ` and `σ ≥ 1/2`. -/
+theorem H₂_bandLaw_ge (i : ℕ) :
+    (kk i : ℝ) - 2 * (atomDeficit i + 1) ≤ (bandLaw i (primeLambertAtBase 4)).H₂ := by
+  classical
+  set f : ℕ → Fin (2 ^ kk i) :=
+    fun n => ZVec (gridAt i) (kk i) (primeLambertAtBase 4) n (goodAtom i) with hf
+  -- the full law has the good atom's deficit
+  have hfull : ((kk i : ℝ) - atomDeficit i) ≤ (empirical (PK i) (PK_nonempty i) f).H₂ := by
+    have hmap := map_coord_jointLawAt i (primeLambertAtBase 4) (goodAtom i)
+    have hd := goodAtom_deficit i
+    rw [FinLaw.coordDeficit] at hd
+    rw [hmap] at hd
+    linarith
+  -- restriction
+  have hrest := H₂_empirical_window_restrict_ge (m := kk i) (PK_nonempty i) (bandS_nonempty i)
+    (bandS_subset i) f (δ := atomDeficit i) hfull
+  -- σ ≥ 1/2
+  have hPpos : (0 : ℝ) < ((PK i).card : ℝ) := by exact_mod_cast PK_card_pos i
+  have hSpos : (0 : ℝ) < ((bandS i).card : ℝ) := by
+    have := Finset.card_pos.2 (bandS_nonempty i)
+    exact_mod_cast this
+  have hσ : (1 : ℝ) / 2 ≤ ((bandS i).card : ℝ) / ((PK i).card : ℝ) := by
+    rw [div_le_div_iff₀ (by norm_num) hPpos]
+    linarith [card_bandS_ge' i]
+  have hδpos : (0 : ℝ) < atomDeficit i + 1 := by
+    have := atomDeficit_pos i
+    linarith
+  have hcost : (atomDeficit i + 1) / (((bandS i).card : ℝ) / ((PK i).card : ℝ))
+      ≤ 2 * (atomDeficit i + 1) := by
+    rw [div_le_iff₀ (by positivity)]
+    have h2 : (1 : ℝ) ≤ 2 * (((bandS i).card : ℝ) / ((PK i).card : ℝ)) := by linarith
+    nlinarith [hδpos, h2]
+  rw [H₂_bandLaw]
+  linarith
+
+set_option maxHeartbeats 1000000 in
+/-- **The band law's capture bound.**  Every binary word of length `ℓ` has, among the band's
+windows and all their positions, frequency within `2√(2000 log 2·ℓ/√K)` of `2^{−ℓ}`. -/
+theorem abs_posAvg_bandLaw_le (i ℓ : ℕ) (hℓ : 0 < ℓ) (hℓm : 2 * ℓ ≤ kk i)
+    (w : Fin (2 ^ ℓ)) :
+    |posAvg (kk i) ℓ (bandLaw i (primeLambertAtBase 4)) w - 1 / (2 : ℝ) ^ ℓ|
+      ≤ 2 * Real.sqrt (2000 * Real.log 2 * (ℓ : ℝ) / Real.sqrt (KK i)) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hKpos : (0 : ℝ) < (KK i : ℝ) := by
+    have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+    linarith
+  have hS0 : 0 < Real.sqrt ((KK i : ℕ) : ℝ) := Real.sqrt_pos.2 hKpos
+  have hS400 : (400 : ℝ) ≤ Real.sqrt ((KK i : ℕ) : ℝ) := by
+    have h : (160000 : ℝ) ≤ ((KK i : ℕ) : ℝ) := by exact_mod_cast KK_ge i
+    have h2 : Real.sqrt (160000 : ℝ) ≤ Real.sqrt ((KK i : ℕ) : ℝ) := Real.sqrt_le_sqrt h
+    have h400 : Real.sqrt (160000 : ℝ) = 400 := by
+      rw [show (160000 : ℝ) = 400 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]
+    linarith [h400 ▸ h2]
+  have hδ : (0 : ℝ) < 2 * (atomDeficit i + 1) := by
+    have := atomDeficit_pos i; linarith
+  have hdef : ((kk i : ℝ) - 2 * (atomDeficit i + 1)) * (Fintype.card Unit : ℝ)
+      ≤ (bandLaw i (primeLambertAtBase 4)).H₂ := by
+    simp only [Fintype.card_unit, Nat.cast_one, mul_one]
+    exact H₂_bandLaw_ge i
+  have hmain := abs_posAvg_sub_le hℓ (by omega) (bandLaw i (primeLambertAtBase 4)) w hδ hdef
+  refine hmain.trans ?_
+  have hℓR : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  have hhalf : (kk i : ℝ) / 2 ≤ (kk i : ℝ) - ℓ + 1 := by
+    have : (2 : ℝ) * ℓ ≤ (kk i : ℝ) := by exact_mod_cast hℓm
+    linarith
+  have hden : (0 : ℝ) < (kk i : ℝ) - ℓ + 1 := by
+    have : (2 : ℝ) * ℓ ≤ (kk i : ℝ) := by exact_mod_cast hℓm
+    linarith
+  have hkk4 : (KK i : ℝ) = 4 * (kk i : ℝ) := by unfold KK; push_cast; ring
+  have hsq : Real.sqrt ((KK i : ℕ) : ℝ) * Real.sqrt ((KK i : ℕ) : ℝ) = 4 * (kk i : ℝ) := by
+    rw [Real.mul_self_sqrt hKpos.le, hkk4]
+  -- `2(100√K + 1) ≤ 201√K`
+  have hdle : 2 * (atomDeficit i + 1) ≤ 201 * Real.sqrt ((KK i : ℕ) : ℝ) := by
+    rw [atomDeficit]
+    linarith [hS400]
+  have hstep : Real.log 2 * (ℓ : ℝ) * (2 * (atomDeficit i + 1)) / ((kk i : ℝ) - ℓ + 1)
+      ≤ 2000 * Real.log 2 * (ℓ : ℝ) / Real.sqrt (KK i) := by
+    rw [div_le_div_iff₀ hden hS0]
+    have hnum : Real.log 2 * (ℓ : ℝ) * (2 * (atomDeficit i + 1)) * Real.sqrt ((KK i : ℕ) : ℝ)
+        ≤ Real.log 2 * (ℓ : ℝ) * (201 * Real.sqrt ((KK i : ℕ) : ℝ))
+            * Real.sqrt ((KK i : ℕ) : ℝ) := by
+      have hc : (0 : ℝ) ≤ Real.log 2 * (ℓ : ℝ) * Real.sqrt ((KK i : ℕ) : ℝ) := by positivity
+      nlinarith [hdle, hc]
+    have hrw : Real.log 2 * (ℓ : ℝ) * (201 * Real.sqrt ((KK i : ℕ) : ℝ))
+        * Real.sqrt ((KK i : ℕ) : ℝ) = 804 * Real.log 2 * (ℓ : ℝ) * (kk i : ℝ) := by
+      linear_combination (201 * Real.log 2 * (ℓ : ℝ)) * hsq
+    have hfin : 804 * Real.log 2 * (ℓ : ℝ) * (kk i : ℝ)
+        ≤ 2000 * Real.log 2 * (ℓ : ℝ) * ((kk i : ℝ) - ℓ + 1) := by
+      have hc : (0 : ℝ) ≤ Real.log 2 * (ℓ : ℝ) * (kk i : ℝ) := by positivity
+      have hstep2 := mul_le_mul_of_nonneg_left hhalf
+        (by positivity : (0:ℝ) ≤ 2000 * Real.log 2 * (ℓ : ℝ))
+      linarith [hc, hstep2]
+    rw [hrw] at hnum
+    linarith [hnum, hfin]
+  have hpos1 : (0 : ℝ) ≤ Real.log 2 * (ℓ : ℝ) * (2 * (atomDeficit i + 1))
+      / ((kk i : ℝ) - ℓ + 1) := by
+    have : (0:ℝ) ≤ 2 * (atomDeficit i + 1) := hδ.le
+    positivity
+  exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hstep) (by norm_num)
+
 end NormalNumbers.G4.Sched
