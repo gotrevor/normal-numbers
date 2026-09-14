@@ -362,6 +362,218 @@ def posEquiv (m ℓ : ℕ) (hℓ : 0 < ℓ) (hℓm : ℓ ≤ m) :
     simp only
     rw [Nat.mod_add_div']
 
+/-! ### §4  Averaging the offset classes: every position of the window -/
+
+namespace FinLaw
+variable {Ω Ω' Ω'' : Type*} [Fintype Ω] [Fintype Ω'] [Fintype Ω'']
+
+lemma prob_singleton_map [DecidableEq Ω'] (L : FinLaw Ω) (f : Ω → Ω') (w : Ω') :
+    (L.map f).prob {w} = ∑ ω ∈ Finset.univ.filter (fun ω => f ω = w), L.p ω := by
+  rw [FinLaw.prob, Finset.sum_singleton, FinLaw.map_p]
+
+/-- `prob` of a singleton only sees the composite, so two-step pushforwards collapse. -/
+lemma prob_singleton_map_map [DecidableEq Ω'] [DecidableEq Ω''] (L : FinLaw Ω) (g : Ω → Ω')
+    (h : Ω' → Ω'') (w : Ω'') :
+    ((L.map g).map h).prob {w} = (L.map (fun ω => h (g ω))).prob {w} := by
+  classical
+  rw [prob_singleton_map, prob_singleton_map]
+  have hmaps : ∀ ω ∈ Finset.univ.filter (fun ω => h (g ω) = w), g ω ∈
+      Finset.univ.filter (fun v => h v = w) := by
+    intro ω hω
+    rw [Finset.mem_filter] at hω ⊢
+    exact ⟨Finset.mem_univ _, hω.2⟩
+  rw [← Finset.sum_fiberwise_of_maps_to hmaps L.p]
+  refine Finset.sum_congr rfl fun v hv => ?_
+  rw [Finset.mem_filter] at hv
+  rw [FinLaw.map_p]
+  refine Finset.sum_congr ?_ (fun _ _ => rfl)
+  ext ω
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+  constructor
+  · rintro rfl; exact ⟨hv.2, rfl⟩
+  · rintro ⟨_, h2⟩; exact h2
+
+end FinLaw
+
+/-- The average, over all coordinates `α` and **all** window positions `p` admitting a full
+`ℓ`-block, of the probability that the block at `p` spells `w`. -/
+noncomputable def posAvg {A : Type*} [Fintype A] [DecidableEq A] (m ℓ : ℕ)
+    (L : FinLaw (A → Fin (2 ^ m))) (w : Fin (2 ^ ℓ)) : ℝ :=
+  (∑ c : A × Fin (m - ℓ + 1), (L.map (fun z => posAt m ℓ (c.2 : ℕ) (z c.1))).prob {w})
+    / ((Fintype.card A : ℝ) * ((m - ℓ + 1 : ℕ) : ℝ))
+
+/-- The offset classes' block probabilities are exactly the positions' block probabilities. -/
+theorem sum_offset_eq_sum_pos {A : Type*} [Fintype A] [DecidableEq A] {m ℓ : ℕ} (hℓ : 0 < ℓ)
+    (hℓm : ℓ ≤ m) (L : FinLaw (A → Fin (2 ^ m))) (w : Fin (2 ^ ℓ)) :
+    ∑ r : Fin ℓ, ∑ c : A × Fin ((m - (r : ℕ)) / ℓ),
+        ((L.map (lowTuple m (r : ℕ))).map (fullCoord (m - (r : ℕ)) ℓ c)).prob {w}
+      = ∑ c : A × Fin (m - ℓ + 1), (L.map (fun z => posAt m ℓ (c.2 : ℕ) (z c.1))).prob {w} := by
+  classical
+  have hterm : ∀ (r : Fin ℓ) (α : A) (j : Fin ((m - (r : ℕ)) / ℓ)),
+      ((L.map (lowTuple m (r : ℕ))).map (fullCoord (m - (r : ℕ)) ℓ (α, j))).prob {w}
+        = (L.map (fun z => posAt m ℓ ((r : ℕ) + (j : ℕ) * ℓ) (z α))).prob {w} := by
+    intro r α j
+    rw [FinLaw.prob_singleton_map_map]
+    have hb : (r : ℕ) + (j : ℕ) * ℓ + ℓ ≤ m := by
+      have h1 : ((j : ℕ) + 1) * ℓ ≤ m - (r : ℕ) := (Nat.le_div_iff_mul_le hℓ).1 j.isLt
+      have h2 : ((j : ℕ) + 1) * ℓ = (j : ℕ) * ℓ + ℓ := by ring
+      have := r.isLt
+      omega
+    have hfun : (fun z : A → Fin (2 ^ m) =>
+        fullCoord (m - (r : ℕ)) ℓ (α, j) (lowTuple m (r : ℕ) z))
+        = (fun z : A → Fin (2 ^ m) => posAt m ℓ ((r : ℕ) + (j : ℕ) * ℓ) (z α)) :=
+      funext fun z => fullCoord_lowTuple_eq hb α j rfl z
+    rw [hfun]
+  calc ∑ r : Fin ℓ, ∑ c : A × Fin ((m - (r : ℕ)) / ℓ),
+        ((L.map (lowTuple m (r : ℕ))).map (fullCoord (m - (r : ℕ)) ℓ c)).prob {w}
+      = ∑ r : Fin ℓ, ∑ α : A, ∑ j : Fin ((m - (r : ℕ)) / ℓ),
+          (L.map (fun z => posAt m ℓ ((r : ℕ) + (j : ℕ) * ℓ) (z α))).prob {w} := by
+        refine Finset.sum_congr rfl fun r _ => ?_
+        rw [Fintype.sum_prod_type]
+        exact Finset.sum_congr rfl fun α _ => Finset.sum_congr rfl fun j _ => hterm r α j
+    _ = ∑ α : A, ∑ r : Fin ℓ, ∑ j : Fin ((m - (r : ℕ)) / ℓ),
+          (L.map (fun z => posAt m ℓ ((r : ℕ) + (j : ℕ) * ℓ) (z α))).prob {w} :=
+        Finset.sum_comm
+    _ = ∑ α : A, ∑ q : (r : Fin ℓ) × Fin ((m - (r : ℕ)) / ℓ),
+          (L.map (fun z => posAt m ℓ ((q.1 : ℕ) + (q.2 : ℕ) * ℓ) (z α))).prob {w} := by
+        refine Finset.sum_congr rfl fun α _ => ?_
+        rw [Finset.sum_sigma', Finset.univ_sigma_univ]
+    _ = ∑ α : A, ∑ p : Fin (m - ℓ + 1),
+          (L.map (fun z => posAt m ℓ (p : ℕ) (z α))).prob {w} := by
+        refine Finset.sum_congr rfl fun α _ => ?_
+        exact Fintype.sum_equiv (posEquiv m ℓ hℓ hℓm) _ _ (fun q => by rfl)
+    _ = ∑ c : A × Fin (m - ℓ + 1), (L.map (fun z => posAt m ℓ (c.2 : ℕ) (z c.1))).prob {w} := by
+        rw [Fintype.sum_prod_type]
+
+/-- **Every position of the window.**  A deficit of `δ` bits per coordinate controls the
+frequency of every `ℓ`-block word over **all** `m − ℓ + 1` positions of the window — not just
+one aligned tiling — to within `2√(log 2 · ℓδ/(m − ℓ + 1))`.
+
+This is the shape normality is built from: a word counted at every position, averaged. -/
+theorem abs_posAvg_sub_le {A : Type*} [Fintype A] [DecidableEq A] [Nonempty A] {m ℓ : ℕ}
+    (hℓ : 0 < ℓ) (hℓm : ℓ ≤ m) (L : FinLaw (A → Fin (2 ^ m))) (w : Fin (2 ^ ℓ))
+    {δ : ℝ} (hδ : 0 < δ) (hdef : ((m : ℝ) - δ) * (Fintype.card A : ℝ) ≤ L.H₂) :
+    |posAvg m ℓ L w - 1 / (2 : ℝ) ^ ℓ|
+      ≤ 2 * Real.sqrt (Real.log 2 * (ℓ : ℝ) * δ / ((m : ℝ) - ℓ + 1)) := by
+  classical
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hℓR : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  have hmℓ : (1 : ℝ) ≤ (m : ℝ) - ℓ + 1 := by
+    have : (ℓ : ℝ) ≤ (m : ℝ) := by exact_mod_cast hℓm
+    linarith
+  have hCA : (0 : ℝ) < (Fintype.card A : ℝ) := by
+    have : 0 < Fintype.card A := Fintype.card_pos
+    exact_mod_cast this
+  set cc : ℝ := 1 / (2 : ℝ) ^ ℓ with hcc
+  set B : ℝ := 2 * Real.sqrt (Real.log 2 * (ℓ : ℝ) * δ / ((m : ℝ) - ℓ + 1)) with hB
+  have hB0 : 0 ≤ B := by rw [hB]; positivity
+  -- per offset class
+  set S : Fin ℓ → ℝ := fun r => ∑ c : A × Fin ((m - (r : ℕ)) / ℓ),
+      ((L.map (lowTuple m (r : ℕ))).map (fullCoord (m - (r : ℕ)) ℓ c)).prob {w} with hS
+  set N : Fin ℓ → ℝ := fun r => (Fintype.card (A × Fin ((m - (r : ℕ)) / ℓ)) : ℝ) with hN
+  have hNval : ∀ r : Fin ℓ, N r = (Fintype.card A : ℝ) * (((m - (r : ℕ)) / ℓ : ℕ) : ℝ) := by
+    intro r
+    rw [hN]
+    simp only [Fintype.card_prod, Fintype.card_fin]
+    push_cast
+    ring
+  have hN0 : ∀ r : Fin ℓ, 0 ≤ N r := by
+    intro r; rw [hNval r]; positivity
+  have hclaim : ∀ r : Fin ℓ, |S r - cc * N r| ≤ B * N r := by
+    intro r
+    rcases le_or_gt ((r : ℕ) + ℓ) m with hcase | hcase
+    · -- a full block exists at this offset
+      have hone : 1 ≤ (m - (r : ℕ)) / ℓ := (Nat.one_le_div_iff hℓ).2 (by omega)
+      have hNpos : 0 < N r := by
+        rw [hNval r]
+        have : (1 : ℝ) ≤ (((m - (r : ℕ)) / ℓ : ℕ) : ℝ) := by exact_mod_cast hone
+        nlinarith
+      have hoff := abs_avg_block_prob_offset_le (A := A) (m := m) (ℓ := ℓ) (r := (r : ℕ))
+        hℓ (by omega) L w hδ hdef
+      have hBr : 2 * Real.sqrt (Real.log 2 * (ℓ : ℝ) * δ / ((m : ℝ) - (r : ℕ))) ≤ B := by
+        rw [hB]
+        have hrle : ((r : ℕ) : ℝ) ≤ (ℓ : ℝ) - 1 := by
+          have := r.isLt
+          have : ((r : ℕ) : ℝ) < (ℓ : ℝ) := by exact_mod_cast r.isLt
+          have h2 : ((r : ℕ) : ℝ) + 1 ≤ (ℓ : ℝ) := by
+            have : (r : ℕ) + 1 ≤ ℓ := r.isLt
+            exact_mod_cast this
+          linarith
+        have hden : (m : ℝ) - ℓ + 1 ≤ (m : ℝ) - (r : ℕ) := by linarith
+        have hd0 : (0 : ℝ) < (m : ℝ) - ℓ + 1 := by linarith
+        have : Real.log 2 * (ℓ : ℝ) * δ / ((m : ℝ) - (r : ℕ))
+            ≤ Real.log 2 * (ℓ : ℝ) * δ / ((m : ℝ) - ℓ + 1) := by
+          apply div_le_div_of_nonneg_left (by positivity) hd0 hden
+        have := Real.sqrt_le_sqrt this
+        linarith
+      have hSN : |S r / N r - cc| ≤ B := le_trans hoff hBr
+      have h1 : S r - cc * N r = N r * (S r / N r - cc) := by
+        field_simp
+      have hkey : |S r - cc * N r| = N r * |S r / N r - cc| := by
+        rw [h1, abs_mul, abs_of_nonneg hNpos.le]
+      rw [hkey]
+      calc N r * |S r / N r - cc| ≤ N r * B := by
+            exact mul_le_mul_of_nonneg_left hSN hNpos.le
+        _ = B * N r := by ring
+    · -- no full block at this offset: both sides vanish
+      have hzero : (m - (r : ℕ)) / ℓ = 0 := Nat.div_eq_of_lt (by omega)
+      have hN0' : N r = 0 := by
+        rw [hNval r, hzero]
+        norm_num
+      have hS0 : S r = 0 := by
+        rw [hS]
+        refine Finset.sum_eq_zero fun c _ => ?_
+        have hemp : IsEmpty (Fin ((m - (r : ℕ)) / ℓ)) := by rw [hzero]; infer_instance
+        exact hemp.elim c.2
+      rw [hS0, hN0']
+      norm_num
+  -- the offset classes exhaust the positions
+  have hcard : ∑ r : Fin ℓ, (((m - (r : ℕ)) / ℓ : ℕ) : ℝ) = ((m - ℓ + 1 : ℕ) : ℝ) := by
+    have h := Fintype.card_congr (posEquiv m ℓ hℓ hℓm)
+    rw [Fintype.card_sigma, Fintype.card_fin] at h
+    have : ∑ r : Fin ℓ, Fintype.card (Fin ((m - (r : ℕ)) / ℓ)) = m - ℓ + 1 := by
+      simpa using h
+    calc ∑ r : Fin ℓ, (((m - (r : ℕ)) / ℓ : ℕ) : ℝ)
+        = ((∑ r : Fin ℓ, ((m - (r : ℕ)) / ℓ) : ℕ) : ℝ) := by push_cast; ring
+      _ = ((m - ℓ + 1 : ℕ) : ℝ) := by
+          congr 1
+          simpa using this
+  have hNsum : ∑ r : Fin ℓ, N r = (Fintype.card A : ℝ) * ((m - ℓ + 1 : ℕ) : ℝ) := by
+    simp_rw [hNval]
+    rw [← Finset.mul_sum, hcard]
+  have hSsum : ∑ r : Fin ℓ, S r
+      = ∑ c : A × Fin (m - ℓ + 1), (L.map (fun z => posAt m ℓ (c.2 : ℕ) (z c.1))).prob {w} :=
+    sum_offset_eq_sum_pos hℓ hℓm L w
+  -- assemble
+  have hsum : |(∑ r : Fin ℓ, S r) - cc * ∑ r : Fin ℓ, N r| ≤ B * ∑ r : Fin ℓ, N r := by
+    have h1 : |(∑ r : Fin ℓ, S r) - cc * ∑ r : Fin ℓ, N r| ≤ ∑ r : Fin ℓ, |S r - cc * N r| := by
+      rw [Finset.mul_sum, ← Finset.sum_sub_distrib]
+      exact Finset.abs_sum_le_sum_abs _ _
+    have h2 : ∑ r : Fin ℓ, |S r - cc * N r| ≤ ∑ r : Fin ℓ, B * N r :=
+      Finset.sum_le_sum fun r _ => hclaim r
+    rw [← Finset.mul_sum] at h2
+    linarith
+  have hDpos : (0 : ℝ) < (Fintype.card A : ℝ) * ((m - ℓ + 1 : ℕ) : ℝ) := by
+    have : (1 : ℝ) ≤ ((m - ℓ + 1 : ℕ) : ℝ) := by
+      have : 1 ≤ m - ℓ + 1 := by omega
+      exact_mod_cast this
+    nlinarith
+  have hsum' : |(∑ r : Fin ℓ, S r)
+      - cc * ((Fintype.card A : ℝ) * ((m - ℓ + 1 : ℕ) : ℝ))|
+      ≤ B * ((Fintype.card A : ℝ) * ((m - ℓ + 1 : ℕ) : ℝ)) := by
+    rw [← hNsum]
+    exact hsum
+  simp only [posAvg]
+  rw [← hSsum]
+  have hdiv : (∑ r : Fin ℓ, S r) / ((Fintype.card A : ℝ) * ((m - ℓ + 1 : ℕ) : ℝ)) - cc
+      = ((∑ r : Fin ℓ, S r) - cc * ((Fintype.card A : ℝ) * ((m - ℓ + 1 : ℕ) : ℝ)))
+        / ((Fintype.card A : ℝ) * ((m - ℓ + 1 : ℕ) : ℝ)) := by
+    field_simp
+  rw [hdiv, abs_div, abs_of_pos hDpos, div_le_iff₀ hDpos]
+  exact hsum'
+
 end NormalNumbers.G4Entropy
+
+
 
 
