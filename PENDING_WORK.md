@@ -40,8 +40,23 @@ irrational_enumReal        Irrational (realOfDigits 2 enumDigits)
 ```
 
 **An explicit irrational, disjunctive real read off a genuine strictly increasing subsequence of
-`G₄`'s binary digits.**  Open next: whether this real is *normal* — lap 54 says not by the
-chunking route; nothing yet says it is impossible.
+`G₄`'s binary digits.**
+
+**Lap 59 — non-vacuity, which was a real gap.**  `density_le_pow_real` bounds each scale's own
+density, but the headline reads the **union over all scales**, which nothing controlled: if that
+union were cofinite, `sampleEnum` would be the identity and `isDisjunctive_enumReal` a
+restatement of `isDisjunctive_two`.  Now closed:
+
+```
+isSampledPos_iff_isSampled   the new predicate is the repo's IsSampled
+exists_cover                 positions < L are covered by finitely many scales
+card_filter_isSampled_le     #{q < L : IsSampled q} ≤ L/4
+```
+
+The union's density is at most `¼` (each scale ≤ `⅛(2/K⁶)^K ≤ ⅛·2^{−K}`, summed geometrically),
+so the subsequence omits at least three quarters of `G₄`'s digits.  Open next: whether
+`realOfDigits 2 enumDigits` is *normal* — lap 54 refutes the chunking route; nothing says it is
+impossible.
 
 ## ✅ OBJECTIVE MET (lap 52) — and the E-T8 successor's arithmetic
 

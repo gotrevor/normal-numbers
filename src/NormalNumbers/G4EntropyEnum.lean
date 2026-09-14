@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.G4EntropyBlockWord
+import NormalNumbers.G4EntropyWall
 
 /-!
 # Entropy expedition — the strictly increasing sampled-position enumeration
@@ -199,5 +200,86 @@ theorem isDisjunctive_enumReal : IsDisjunctive 2 (realOfDigits 2 enumDigits) := 
 /-- Hence the real read off the subsequence is irrational. -/
 theorem irrational_enumReal : Irrational (realOfDigits 2 enumDigits) :=
   isDisjunctive_enumReal.irrational
+
+/-! ### Non-vacuity: the sampled set is sparse, so `sampleEnum` is far from the identity -/
+
+/-- `IsSampledPos` is the repo's `IsSampled`: a position read by *some* scale. -/
+lemma isSampledPos_iff_isSampled (q : ℕ) : IsSampledPos q ↔ IsSampled q := by
+  constructor
+  · rintro ⟨i, n, hn, α, p, hp, rfl⟩
+    exact ⟨i, (mem_sampledPos (gridAt i)).2 ⟨n, hn, α, p, hp, rfl⟩⟩
+  · rintro ⟨i, hi⟩
+    obtain ⟨n, hn, α, p, hp, hq⟩ := (mem_sampledPos (gridAt i)).1 hi
+    exact ⟨i, n, hn, α, p, hp, hq⟩
+
+open Classical in
+/-- Every position below `L` that some scale samples is sampled by one of finitely many scales. -/
+lemma exists_cover (L : ℕ) : ∃ I : ℕ,
+    ((Finset.range L).filter IsSampled)
+      ⊆ (Finset.range (I + 1)).biUnion (fun i => (sampledPosAt i).filter (fun j => j < L)) := by
+  classical
+  set S := (Finset.range L).filter IsSampled with hS
+  have hwit : ∀ q ∈ S, ∃ i, q ∈ sampledPosAt i := by
+    intro q hq
+    exact (Finset.mem_filter.1 hq).2
+  refine ⟨S.sup (fun q => if h : ∃ i, q ∈ sampledPosAt i then h.choose else 0), fun q hq => ?_⟩
+  have hex : ∃ i, q ∈ sampledPosAt i := hwit q hq
+  have hmem : q ∈ sampledPosAt hex.choose := hex.choose_spec
+  refine Finset.mem_biUnion.2 ⟨hex.choose, ?_, ?_⟩
+  · refine Finset.mem_range.2 (Nat.lt_succ_of_le ?_)
+    have hle := Finset.le_sup (f := fun q =>
+      if h : ∃ i, q ∈ sampledPosAt i then h.choose else 0) hq
+    rwa [dif_pos hex] at hle
+  · exact Finset.mem_filter.2 ⟨hmem, (Finset.mem_range.1 (Finset.mem_filter.1 hq).1)⟩
+
+open Classical in
+/-- **The sampled set has density at most ¼.**  Every scale's own density is at most
+`⅛(2/K⁶)^K ≤ ⅛·2^{−K}` (`density_le_pow_real`), and those sum over all scales to at most `¼`.
+
+So `sampleEnum` is *not* the identity and `isDisjunctive_enumReal` is not a restatement of
+`isDisjunctive_two`: the subsequence omits at least three quarters of the digits. -/
+theorem card_filter_isSampled_le (L : ℕ) :
+    (((Finset.range L).filter IsSampled).card : ℝ) ≤ (L : ℝ) / 4 := by
+  classical
+  obtain ⟨I, hI⟩ := exists_cover L
+  have hcard : ((Finset.range L).filter IsSampled).card
+      ≤ ∑ i ∈ Finset.range (I + 1), ((sampledPosAt i).filter (fun j => j < L)).card :=
+    le_trans (Finset.card_le_card hI) (Finset.card_biUnion_le)
+  have hcardR : (((Finset.range L).filter IsSampled).card : ℝ)
+      ≤ ∑ i ∈ Finset.range (I + 1),
+          (((sampledPosAt i).filter (fun j => j < L)).card : ℝ) := by
+    exact_mod_cast hcard
+  have hterm : ∀ i ∈ Finset.range (I + 1),
+      (((sampledPosAt i).filter (fun j => j < L)).card : ℝ)
+        ≤ (1 / 8 : ℝ) * (1 / 2 : ℝ) ^ i * (L : ℝ) := by
+    intro i _
+    refine (density_le_pow_real i L).trans ?_
+    have hK1 : (1 : ℕ) ≤ KK i := KK_one_le i
+    have hKR : (2 : ℝ) ≤ (KK i : ℝ) := by
+      have : (160000 : ℕ) ≤ KK i := KK_ge i
+      have h2 : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast this
+      linarith
+    have hsmall : (2 : ℝ) / (KK i : ℝ) ^ 6 ≤ 1 / 2 := by
+      rw [div_le_div_iff₀ (by positivity) (by norm_num)]
+      nlinarith [pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 2) hKR 6]
+    have hnn : (0 : ℝ) ≤ 2 / (KK i : ℝ) ^ 6 := by positivity
+    have hpow : (2 / (KK i : ℝ) ^ 6) ^ KK i ≤ (1 / 2 : ℝ) ^ KK i :=
+      pow_le_pow_left₀ hnn hsmall _
+    have hmono : (1 / 2 : ℝ) ^ KK i ≤ (1 / 2 : ℝ) ^ i := by
+      refine pow_le_pow_of_le_one (by norm_num) (by norm_num) ?_
+      have : i ≤ KK i := by unfold KK kk; omega
+      exact this
+    have hL : (0 : ℝ) ≤ (L : ℝ) := by positivity
+    have : (2 / (KK i : ℝ) ^ 6) ^ KK i ≤ (1 / 2 : ℝ) ^ i := hpow.trans hmono
+    nlinarith [this, hL]
+  refine le_trans hcardR (le_trans (Finset.sum_le_sum hterm) ?_)
+  have hgeom : ∑ i ∈ Finset.range (I + 1), (1 / 2 : ℝ) ^ i ≤ 2 := sum_geometric_two_le _
+  have hL : (0 : ℝ) ≤ (L : ℝ) := by positivity
+  calc ∑ i ∈ Finset.range (I + 1), (1 / 8 : ℝ) * (1 / 2 : ℝ) ^ i * (L : ℝ)
+      = (1 / 8 : ℝ) * (L : ℝ) * ∑ i ∈ Finset.range (I + 1), (1 / 2 : ℝ) ^ i := by
+        rw [Finset.mul_sum]; exact Finset.sum_congr rfl fun i _ => by ring
+    _ ≤ (1 / 8 : ℝ) * (L : ℝ) * 2 := by
+        refine mul_le_mul_of_nonneg_left hgeom (by positivity)
+    _ = (L : ℝ) / 4 := by ring
 
 end NormalNumbers.G4.Sched
