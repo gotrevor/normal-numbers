@@ -22,9 +22,9 @@ Open items, hardest first:
    `G4SeparatingTest` bounded-Lipschitz bump functional is not block-local (two reals with the
    same sampled blocks at every scale, different bump values).  That is what an entropy
    statement would have to be about instead of `E0`.
-2. **`∃ z ∈ [0,1), IsNormal 2 z`** — discharges the hypothesis of
-   `exists_digitLocal_forces_normal_iff` and makes the characterization unconditional.
-   Champernowne base 2; long but self-contained.
+2. ~~`∃ z ∈ [0,1), IsNormal 2 z`~~ — **done, lap 18**: the repo's `isNormal_two_stoneham23`
+   supplies it (`exists_isNormal_mem_Ico`), so `forces_normal_iff_density_one` is
+   unconditional.
 3. A sampler not built from a frozen CRT modulus (session-wrap item 2).  Still open as
    mathematics, but lap 16–17 raise its bar from `density ≥ 1/2` to `density → 1`, which no
    arithmetic sampler of this shape can meet.
