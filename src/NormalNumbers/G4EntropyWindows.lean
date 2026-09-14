@@ -117,4 +117,51 @@ theorem window_gap_same_atom (i : ℕ) (α : (gridAt i).Atom) {n n' : ℕ}
     le_of_mul_le_mul_left hgap hd
   omega
 
+/-! ### Cross-atom windows at the *same* sample time -/
+
+/-- `d_α ≡ 1 (mod Q)`. -/
+lemma d_mod_Q (G : GridParams) (α : G.Atom) : G.d α % G.Q = 1 :=
+  mult_mod_Q G.B G.Q G.D₀ G.hQ α
+
+/-- `t_α ≡ 0 (mod Q)`. -/
+lemma t_mod_Q (G : GridParams) (α : G.Atom) : G.t α % G.Q = 0 := by
+  show offset G.B G.Q α % G.Q = 0
+  unfold offset
+  exact Nat.mul_mod_right _ _
+
+/-- **Every atom's orbit index is congruent to the sample time modulo `Q`.**  `t_α ≡ 0` and
+`d_α ≡ 1` mod `Q`, so `n = t_α + d_α·k` gives `k ≡ n`. -/
+lemma kIdx_mod_Q (G : GridParams) {X n : ℕ} (hn : n ∈ apSample X G.P₀ G.b₀) (α : G.Atom) :
+    kIdx G n α % G.Q = n % G.Q := by
+  obtain ⟨hk, -⟩ := kIdx_spec G hn α
+  have hd := d_mod_Q G α
+  have ht := t_mod_Q G α
+  conv_rhs => rw [hk]
+  rw [Nat.add_mod, ht, Nat.mul_mod, hd, one_mul, Nat.mod_mod_of_dvd _ dvd_rfl]
+  simp
+
+/-- **At one sample time, distinct orbit indices are `Q` apart.**  So the windows of two
+different atoms at the *same* sample time either coincide or are disjoint with an enormous
+margin: any cross-atom collision must involve two *different* sample times. -/
+theorem window_gap_same_time (i : ℕ) {n : ℕ} (hn : n ∈ PK i) (α β : (gridAt i).Atom)
+    (hne : kIdx (gridAt i) n α < kIdx (gridAt i) n β) :
+    2 * kIdx (gridAt i) n α + kk i ≤ 2 * kIdx (gridAt i) n β := by
+  have hα := kIdx_mod_Q (gridAt i) hn α
+  have hβ := kIdx_mod_Q (gridAt i) hn β
+  have hQ : kk i < (gridAt i).Q := by
+    have hgt : gridUmax (KK i) (N (KK i)) + KK i + N (KK i) + 2
+        ≤ gridQ (KK i) (N (KK i)) := gridQ_gt _ _
+    have hQeq : (gridAt i).Q = gridQ (KK i) (N (KK i)) := rfl
+    have hkkK : kk i ≤ KK i := by unfold KK; omega
+    omega
+  have hgap : (gridAt i).Q ≤ kIdx (gridAt i) n β - kIdx (gridAt i) n α := by
+    have hmod : kIdx (gridAt i) n α % (gridAt i).Q = kIdx (gridAt i) n β % (gridAt i).Q := by
+      rw [hα, hβ]
+    have hQpos : 0 < (gridAt i).Q := by have := G4.GridParams.hQ (gridAt i); omega
+    have hdvd : (gridAt i).Q ∣ kIdx (gridAt i) n β - kIdx (gridAt i) n α := by
+      have : kIdx (gridAt i) n α ≡ kIdx (gridAt i) n β [MOD (gridAt i).Q] := hmod
+      exact (Nat.modEq_iff_dvd' (le_of_lt hne)).1 this
+    exact Nat.le_of_dvd (by omega) hdvd
+  omega
+
 end NormalNumbers.G4.Sched
