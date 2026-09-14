@@ -4,13 +4,23 @@ Brief §8 is satisfied and the expedition's own wrap (`HANDOFF-2026-09-14-entrop
 records the state: E0/E1 proved, T_E refuted, `qForces_normal_iff_density_one`, the density wall,
 `windows_eq_or_disjoint`, and the headline `tendsto_fullRead_freq` - `fullReal` (G₄'s digits along
 the schedule-only strictly increasing `fullPos`) has correct word frequencies **along the band
-ends `fT (i+1)`**.  What blocks `IsNormal 2 fullReal` is `wall_at_zero_deficit`: the uncontrolled
-head of band `i+1` dwarfs all of band `i`, because `X(K)` is **pinned** by the schedule.  Trevor's
+ends `fT (i+1)`**.  What blocks the **proof** of `IsNormal 2 fullReal` is `wall_at_zero_deficit`:
+the current certificate does not control the head of band `i+1`, which dwarfs all of band `i`,
+because `X(K)` is **pinned** by the schedule.  ⚠️ **Scope correction (attended review by
+Astra, 2026-09-14):** `certified_granule_exceeds_previous_scale` is a size comparison between a
+certificate's non-vacuity threshold and the previous scale's output.  It does NOT prove that
+prefix frequencies fail to converge, and "normality closed on this mechanism" means *closed for
+deduction from the fixed sampled data alone*, not for every arithmetic extension.  **Lap 1
+hygiene commit, before anything else:** rewrite the docstring of
+`certified_granule_exceeds_previous_scale`, the wrap's "Part I - the wall" sentence, and the
+matching `PENDING_WORK.md`/`STATUS.md` lines to that exact scope.  Trevor's
 call (2026-09-14): `fullReal` is worth finishing as a new normal number, novelty or not.  The
 attended review is `~/personal/claude/knowledge/core/projects/normal-numbers-entropy-review-2026-09-14.md`
-(read-only in the box).  Objectives, in order:
+(read-only in the box).  Objectives, in order - **B, then A0, then A** (Trevor's order; B is the one that adds
+arithmetic information about the UNSAMPLED digits, which the mask counterexample can change,
+and is therefore the objective that can still bear on normality of G₄ itself):
 
-**A0 - the decisive probe (first, ONE lap, answer in HANDOFF prose before any proof):** does the
+**A0 - the second probe (ONE lap, after B, answer in HANDOFF prose before any proof):** does the
 E0 chain hold for every `X ≥ Sched.X K` at fixed `K`?  List every hypothesis in the cone of
 `entropy_E0` (`G4ScheduleFar`, `G4ScheduleBig`, `G4ScheduleBudget`, `G4Remainder`, `G4FarTail`,
 `G4MediumPrimes`, `G4SmallPrimeVector`, `G4EntropyBudget`) that bounds `X` **from above** or ties
@@ -24,7 +34,7 @@ which is itself a sample `P_K(θX')` once E0 holds for all `X`.  Endpoint: `IsNo
 (a new module `G4EntropyConcat.lean`; keep `fullReal` and its theorems untouched).  If A0 = NO:
 record the exact obstruction as a named `Prop` and STOP objective A.
 
-**B - the residue probe (ONE lap, read-only, after A0):** the sample fixes ONE class `G.b₀ mod
+**B - the residue probe (FIRST, ONE lap, read-only):** the sample fixes ONE class `G.b₀ mod
 G.P₀`.  For every estimate in the E0 cone, does it hold for **every** class with frozen multiplier
 residues `c`, same constants?  YES/NO per declaration.  All-YES means the union over classes reads
 density one and (by `qForces_normal_iff_density_one`) a hypothesis on it forces normality of `G₄`
