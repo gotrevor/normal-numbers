@@ -135,46 +135,57 @@ lemma geom_range_le {r : ℝ} (hr0 : 0 ≤ r) (hr : r < 1) (N : ℕ) :
   gcongr
   linarith
 
-/-- `∑_{K < j ≤ J} 4^{−j} ≤ 4^{−K}/3`. -/
-lemma sum_layer_inv_le (K N : ℕ) :
-    ∑ jj : Fin N, (1 : ℝ) / (4 : ℝ) ^ layer K jj ≤ (1 / 4 : ℝ) ^ K / 3 := by
-  have hterm : ∀ jj : Fin N, (1 : ℝ) / (4 : ℝ) ^ layer K jj
-      = (1 / 4 : ℝ) ^ K * ((1 / 4 : ℝ) * (1 / 4 : ℝ) ^ (jj : ℕ)) := by
+/-- **The retained-layer geometric sums, in any real base `q ≥ 2`.**  `∑_{K < j ≤ J} q^{−j} ≤
+q^{−K}/(q−1)`.  This is the shape that decides which integer bases the argument survives: the
+row `L¹` mass carries a factor `2^K` against it, giving `(2/q)^K/(q−1)` — bounded away from `0`
+only for `q ≥ 3`. -/
+lemma sum_layer_inv_gen {q : ℝ} (hq : 2 ≤ q) (K N : ℕ) :
+    ∑ jj : Fin N, (1 : ℝ) / q ^ layer K jj ≤ (1 / q) ^ K / (q - 1) := by
+  have hqpos : (0 : ℝ) < q := by linarith
+  have hinv0 : (0 : ℝ) ≤ 1 / q := by positivity
+  have hinv1 : (1 : ℝ) / q < 1 := by rw [div_lt_one hqpos]; linarith
+  have hterm : ∀ jj : Fin N, (1 : ℝ) / q ^ layer K jj
+      = (1 / q) ^ K * ((1 / q) * (1 / q) ^ (jj : ℕ)) := by
     intro jj
     rw [← _root_.one_div_pow]
     unfold layer
     rw [pow_add, pow_add, pow_one]
     ring
   rw [Finset.sum_congr rfl (fun jj _ => hterm jj), ← Finset.mul_sum,
-    Fin.sum_univ_eq_sum_range (fun i => (1 / 4 : ℝ) * (1 / 4 : ℝ) ^ i) N, ← Finset.mul_sum]
-  have h := geom_range_le (r := (1 / 4 : ℝ)) (by norm_num) (by norm_num) N
-  have h4 : (0 : ℝ) < (1 / 4 : ℝ) ^ K := by positivity
+    Fin.sum_univ_eq_sum_range (fun i => (1 / q) * (1 / q) ^ i) N, ← Finset.mul_sum]
+  have h := geom_range_le (r := (1 / q)) hinv0 hinv1 N
+  have hK0 : (0 : ℝ) < (1 / q) ^ K := by positivity
   rw [div_eq_mul_inv]
-  refine mul_le_mul_of_nonneg_left ?_ h4.le
-  calc (1 / 4 : ℝ) * ∑ i ∈ Finset.range N, (1 / 4 : ℝ) ^ i
-      ≤ (1 / 4 : ℝ) * (1 - 1 / 4 : ℝ)⁻¹ := by linarith
-    _ = (3 : ℝ)⁻¹ := by norm_num
+  refine mul_le_mul_of_nonneg_left ?_ hK0.le
+  calc (1 / q) * ∑ i ∈ Finset.range N, (1 / q) ^ i
+      ≤ (1 / q) * (1 - 1 / q)⁻¹ := mul_le_mul_of_nonneg_left h hinv0
+    _ = (q - 1)⁻¹ := by
+        have h1 : q ≠ 0 := by linarith
+        have h2 : q - 1 ≠ 0 := by linarith
+        field_simp
 
-/-- `∑_{K < j ≤ J} 16^{−j} ≤ 16^{−K}/15`. -/
+/-- The squared version: `∑_{K < j ≤ J} q^{−2j} ≤ q^{−2K}/(q²−1)`. -/
+lemma sum_layer_inv_sq_gen {q : ℝ} (hq : 2 ≤ q) (K N : ℕ) :
+    ∑ jj : Fin N, ((1 : ℝ) / q ^ layer K jj) ^ 2 ≤ (1 / q ^ 2) ^ K / (q ^ 2 - 1) := by
+  have hqpos : (0 : ℝ) < q := by linarith
+  have hq2 : (2 : ℝ) ≤ q ^ 2 := by nlinarith
+  have hterm : ∀ jj : Fin N, ((1 : ℝ) / q ^ layer K jj) ^ 2
+      = (1 : ℝ) / (q ^ 2) ^ layer K jj := by
+    intro jj
+    rw [div_pow, one_pow, ← pow_mul, mul_comm (layer K jj) 2, pow_mul]
+  rw [Finset.sum_congr rfl (fun jj _ => hterm jj)]
+  exact sum_layer_inv_gen hq2 K N
+
+/-- `∑_{K < j ≤ J} 4^{−j} ≤ 4^{−K}/3` — the `q = 4` instance. -/
+lemma sum_layer_inv_le (K N : ℕ) :
+    ∑ jj : Fin N, (1 : ℝ) / (4 : ℝ) ^ layer K jj ≤ (1 / 4 : ℝ) ^ K / 3 := by
+  exact (sum_layer_inv_gen (q := (4 : ℝ)) (by norm_num) K N).trans (le_of_eq (by norm_num))
+
+/-- `∑_{K < j ≤ J} 16^{−j} ≤ 16^{−K}/15` — the `q = 4` instance of the squared sum. -/
 lemma sum_layer_inv_sq_le (K N : ℕ) :
     ∑ jj : Fin N, ((1 : ℝ) / (4 : ℝ) ^ layer K jj) ^ 2 ≤ (1 / 16 : ℝ) ^ K / 15 := by
-  have hterm : ∀ jj : Fin N, ((1 : ℝ) / (4 : ℝ) ^ layer K jj) ^ 2
-      = (1 / 16 : ℝ) ^ K * ((1 / 16 : ℝ) * (1 / 16 : ℝ) ^ (jj : ℕ)) := by
-    intro jj
-    rw [div_pow, one_pow, ← pow_mul, mul_comm (layer K jj) 2, pow_mul, ← _root_.one_div_pow,
-      show ((4 : ℝ) ^ 2) = 16 by norm_num]
-    unfold layer
-    rw [pow_add, pow_add, pow_one]
-    ring
-  rw [Finset.sum_congr rfl (fun jj _ => hterm jj), ← Finset.mul_sum,
-    Fin.sum_univ_eq_sum_range (fun i => (1 / 16 : ℝ) * (1 / 16 : ℝ) ^ i) N, ← Finset.mul_sum]
-  have h := geom_range_le (r := (1 / 16 : ℝ)) (by norm_num) (by norm_num) N
-  have h16 : (0 : ℝ) < (1 / 16 : ℝ) ^ K := by positivity
-  rw [div_eq_mul_inv]
-  refine mul_le_mul_of_nonneg_left ?_ h16.le
-  calc (1 / 16 : ℝ) * ∑ i ∈ Finset.range N, (1 / 16 : ℝ) ^ i
-      ≤ (1 / 16 : ℝ) * (1 - 1 / 16 : ℝ)⁻¹ := by linarith
-    _ = (15 : ℝ)⁻¹ := by norm_num
+  exact (sum_layer_inv_sq_gen (q := (4 : ℝ)) (by norm_num) K N).trans
+    (le_of_eq (by norm_num))
 
 /-! ### The pointwise ℓ¹ bound on a layer block -/
 
