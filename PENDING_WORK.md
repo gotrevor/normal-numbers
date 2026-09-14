@@ -7,6 +7,34 @@
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
 
+## 🔭 LIVE (laps 56–57) — the strictly increasing enumeration, at the disjunctivity level
+
+`chunks_insufficient` (lap 54) refutes E-T8's upgrade at the **normality** level.  At the
+**disjunctivity** level it is reachable and is now proved — `src/NormalNumbers/G4EntropyEnum.lean`:
+
+```
+IsSampledPos q            ∃ i n α p, n ∈ P_i ∧ p < m_i ∧ q = 2·kIdx(n,α) + p
+infinite_isSampledPos     (one window at scale i already spans kk i = 40000+i positions)
+sampleEnum j = Nat.nth IsSampledPos j          x-free, schedule-only
+sampleEnum_strictMono     a GENUINE subsequence of G₄'s digit positions
+sampleEnum_run            consecutive sampled positions are ADJACENT in the enumeration
+exists_occursAt_sampled   every binary word occurs in some sampled window (goodCount > 0)
+occurs_along_sampleEnum   ⟹ every finite binary word occurs in G₄'s digits along sampleEnum
+```
+
+**The structural point** that makes this work where normality fails: nothing can sit strictly
+between `q` and `q+1`, so a word occupying a run of positions *inside one window* survives the
+increasing enumeration as a contiguous block.  No block-frequency control is needed — only
+occurrence — so the `ρ ≫ δ/m` barrier never enters.
+
+**Next bounded test**: upgrade `occurs_along_sampleEnum` to *infinitely many* occurrences of each
+word.  That gives `ProperDigits` (from the word `[0]`) and hence, through `digitOf_realOfDigits`,
+`IsDisjunctive 2 (realOfDigits 2 (fun j => digitOf 2 (fract G₄) (sampleEnum j)))` — a disjunctive
+real read off a genuine *subsequence* of `G₄`'s digits.  The missing ingredient is that the set of
+positions `q` carrying an occurrence is unbounded; the counting at one scale gives
+`≈ 2^{−ℓ}|P_i||Atom_i|(m_i−ℓ+1)` occurrence triples, so the natural route is a multiplicity bound
+on `(n,α) ↦ kIdx(n,α)`.
+
 ## ✅ OBJECTIVE MET (lap 52) — and the E-T8 successor's arithmetic
 
 The lap-51 objective is **proved**, in `src/NormalNumbers/G4EntropyBlockWord.lean`:
