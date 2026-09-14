@@ -21,7 +21,18 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and, since 2026-09-14, the live G4 disjunctivity
 campaign, whose brief §4 is now CLOSED.** · **Build**: 🟢 green (8888 jobs) ·
-**Updated**: DEEP REFLECTION lap · 2026-09-14 · `wip/g4-disjunctivity` @ `87eed18`
+**Updated**: G4 lap 12 · 2026-09-14 · `wip/g4-disjunctivity` @ `b937072`
+
+## 🏁 2026-09-14: G4 disjunctivity PROVED (base four and base two), axiom-clean
+
+`NormalNumbers.G4.isDisjunctive_four : IsDisjunctive 4 primeLambertFour` and
+`isDisjunctive_two : IsDisjunctive 2 primeLambertFour` (`G4ScheduleAssembly.lean`), for the
+constant `primeLambertFour = ∑' n, ω(n)/4ⁿ = ∑_p 1/(4ᵖ−1)` (`primeSumAtBase_four`).
+Corollaries `every_binary_word_occurs`, `every_quaternary_word_occurs`.  Every one prints
+`[propext, Classical.choice, Quot.sound]`; no `sorry`, no `native_decide`, no local axiom in
+the dependency cone.  The whole brief §4–§5 candidate argument is machine-checked.  Handoff:
+`HANDOFF-2026-09-14-g4-lap12.md`.
+
 
 ## Where it stands
 

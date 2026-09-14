@@ -1,5 +1,11 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## G4 lap 12 — 2026-09-14 — CAMPAIGN CLOSED: headline proved
+
+`isDisjunctive_four`, `isDisjunctive_two` (`G4ScheduleAssembly.lean`) on the trust triple.
+The §5 schedule of lap 11 instantiated without change.  Nothing open on G4.  Follow-on
+queue (brief §7) untouched: base `b ≥ 3`, affine entropy, ordinary-frequency transfer.
+
 ## Reflection — 2026-09-14 (DEEP REFLECTION LAP, after G4 lap 9b) 🧘
 
 **Read this lap**: the brief §§4–5 verbatim, `G4Wiring.lean`, `G4ScheduleWitness.lean`,
