@@ -10,10 +10,69 @@ Keep it current — the next reflection lap inherits THIS read.*
 The synthesis below (`## The strategic question` onward) is the **B5′ / normality**
 campaign — Becher–Yuhjtman, Scheerer, image-Khinchin.  That campaign is **CLOSED
 and axiom-clean**; keep the section as the record of how its route was chosen.
-The **live** campaign since 2026-09-14 is **G4 disjunctivity**; its route synthesis is the
+The **live** campaign since 2026-09-14 is the **entropy expedition** (its chapter is the section
+immediately below; the G4 disjunctivity chapter that follows it is CLOSED).  Its route synthesis is the
 section immediately below (added 2026-09-14 reflection lap; it was missing, which is why
 nine grind laps judged the route from handoffs instead of from sources).  The
 Mahler-multiplier chapter that follows it is COMPLETE and kept for provenance.
+
+## Entropy expedition chapter — route synthesis (2026-09-14 DEEP REFLECTION lap 37)
+
+*Added lap 37.  The `papers/` corpus contains **no** source on the prime-Lambert constants and none
+on arithmetic-sample entropy for normality; the route's external anchors are the campaign brief's
+own citations plus what a web sweep turned up in the disjunctivity chapter below.  Stated plainly so
+the next lap does not mistake "nothing on disk" for "nothing exists".*
+
+### The strategic question this chapter answered
+
+Does the completed G4 arithmetic mechanism, which proves disjunctivity, also deliver **frequencies**
+— and can a sample-entropy statement be transferred to ordinary binary normality of
+`G₄ = ∑_p 1/(4^p−1)`?
+
+### What was settled, and by what
+
+| claim | status in this repo | note |
+|---|---|---|
+| sample entropy `H₂(Z^{G₄}_K) ≥ m_K H_K − 50√K H_K` | **proved**, uncond., axiom-clean (`entropy_E1`) | the brief's E1 with `C = 50`, `K₀ = 160000` |
+| word frequency `2^{−ℓ}` at the sampled positions | **proved** (`tendsto_occursCountT_primeLambertFour`) | over `OccursAt 2 · v ·`, the predicate `isDisjunctive_two` uses |
+| `T_E` (sample entropy ⟹ normality) | **REFUTED** with a witness meeting the exact premise (`not_T_E`) | `maskedReal G₄` satisfies `entropy_E0`/`E1` verbatim and is not normal |
+| the positive branch | **closed as a characterization** — a quantized/digit-local sampler forces normality **iff** it reads a density-one set of positions | `qForces_normal_iff_density_one`, `tendsto_density_compl_zero` |
+| any admissible family of grids, any set of scales | reads density `≤ 1/8` (`sum_weight_le`) | so no repair inside the grid class |
+
+**Decisive finding of lap 37**: normality of `G₄` is closed **on this mechanism**, and the closure is
+quantitative, not rhetorical — sampled density `≤ ½(3/K⁴)^K` against a window pinned at `m_K = K/4`
+by `entropy_cover_bound`; a factor `≈ K^{4K}`.  The structural cause is a single `GridParams` field,
+`hQdvd : ∀ m ≤ U, m ∣ Q`, forcing `Q ≥ lcm(1,…,U)` with `U ≥ B^K`.  This is a statement about the
+*frozen-residue mechanism*, **not** an impossibility theorem about `G₄`; a different arithmetic
+mechanism is not excluded by anything proved here, and no such claim may be made.
+
+### Precedent check (what is originated vs inherited)
+
+* The finite-probability layer (Gibbs, generalized subadditivity, a Hellinger-route Pinsker bound)
+  is classical and was re-proved from scratch for `FinLaw` because mathlib's information theory does
+  not cover the finite `H₂` with the zero-mass convention in the shape needed.  **Not** novel.
+* The digit-locality barrier (a hypothesis reading density `< 1` cannot force normality) is, as a
+  *principle*, folklore — masking off the unread positions is the obvious witness.  Its **density-one**
+  sharpening (two fillings, parity inside `Sᶜ` to keep the expansion proper) was originated here.
+* The arithmetic sample-entropy theorem for a prime-indexed Lambert series has **no precedent found**.
+  Absence of evidence, recorded as such; the web sweep in the disjunctivity chapter found only the
+  easier power-Lambert Lean development and the Tao–Teräväinen irrationality result.
+
+### What is still missing from the on-disk corpus
+
+1. **Tao–Teräväinen arXiv 2512.01739** — still not on disk; still not a prerequisite.
+2. Any source on **sample-entropy criteria for normality along sparse position sets**.  If one exists
+   it would be the natural place to check whether the density-one characterization is known; worth an
+   `ON-LINE-REQUEST` before any novelty claim is ever contemplated.  None is contemplated.
+3. A source on the **joint/decorrelation** statement now being targeted (`t`-wise sampled-word
+   frequencies).  Not needed to prove it; needed only to say anything about novelty, which we do not.
+
+### Claim hygiene, standing
+
+Unchanged and binding: no novelty claim, no outreach, state OUR quantifiers, never attribute.
+"Normality earns its name only when ordinary frequencies for every fixed word have actually been
+proved" (brief §8) — they have not been, and this chapter's negative is about a *method*, not about
+the number.
 
 ## G4 disjunctivity chapter — route synthesis (2026-09-14 DEEP REFLECTION lap)
 

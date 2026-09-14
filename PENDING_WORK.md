@@ -1,6 +1,70 @@
 # PENDING_WORK
 
-## 🎯 ACTIVE (entropy review lap 23, 2026-09-14) — the sampled-word FREQUENCY theorem for `G₄`
+> ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
+> section; do **not** append to the bottom.
+
+## 🎯 ACTIVE (entropy DEEP REFLECTION lap 37, 2026-09-14) — the JOINT (`t`-wise) sampled-word frequency theorem
+
+**Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.  Full reasoning:
+`REFLECTION-2026-09-14-entropy.md`.**
+
+### Where the campaign stands
+
+Brief §2–§6 are all closed.  `entropy_E0`/`entropy_E1` unconditional and axiom-clean;
+`T_E`/`T_S`/`T_mix` refuted with witnesses meeting their exact premises; §5 answered positively and
+rendered on real digits (`tendsto_occursCountT_primeLambertFour`).  **Normality of `G₄` is closed on
+this mechanism, by theorem and quantitatively**: `qForces_normal_iff_density_one` needs density
+**one**, `sum_weight_le` gives every admissible family over every scale `≤ 1/8`, the sampled density
+is `≤ ½(3/K⁴)^K` (from `key_size`'s own slack `Q·D₀ ≥ K·B^{2K}` vs `H_K m_K ≤ (2(K²+1))^K K`), and
+`entropy_cover_bound` pins the window at exactly `m_K = K/4`.  Gap `≈ K^{4K}`.  Cause:
+`GridParams.hQdvd` ⟹ `Q ≥ lcm(1,…,U)`, `U ≥ B^K`.
+
+**Do not re-derive these three closed escapes** (reflection §1): varying the frozen residue
+(`b₀ ≡ t_α + d_α σ_α mod d_α²` gives a family of size `√Mprod` against gaps `2P₀/d_α`, `P₀ ≥ Mprod`);
+shifting the real `x ↦ 2^σ x` (transported point becomes `2^σ F_K(n) + (1−2^σ)(θ−γ)`, needing Fourier
+degree `2^σ D_j`; equivalently a longer window, closed by `not_qForces_normal_of_levels`); more
+scales (`sum_weight_le` sums over all `(K,N)`).
+
+### The target
+
+`entropy_E1` bounds the law of the **whole vector** `Z^{G₄}_K = (Z_α)_{α∈Atom}` under one uniform
+`n ∈ P_K`.  Every result so far projects it to one coordinate.  Used jointly it says the sampled
+windows **decorrelate**:
+
+> for every `t`, every partition of `Atom` into `t`-blocks, and all binary words `w₁,…,w_t` of
+> length `ℓ`, the frequency over `(n, block, positions)` of *"`G₄`'s block at `2·kIdx(n,α_s)+p_s`
+> spells `w_s`, simultaneously for every `s ≤ t`"* tends to `2^{−tℓ}`.
+
+Mechanism: partition `A` into `⌊|A|/t⌋` blocks of size `t`; `FinLaw.H₂_le_sum_H₂_map` over the
+block-indexed coordinate family gives average deficit `≤ t·δ` per block; the per-block pattern
+coordinate is the product of the `t` per-window tiling coordinates (`fullCoord`/`posAt`), injective
+because each factor is; then the existing Hellinger/Pinsker step on `tℓ` bits.
+
+### The three rungs (in order)
+
+1. **`G4EntropyPosition.lean` — render lap 36 at the schedule.**  `posFreq i ℓ x w :=
+   posAvg (kk i) ℓ (jointLawAt i x) w`; `abs_posFreq_sub_le_of_deficit` (the deficit hypothesis is
+   *verbatim* `abs_blockFreqT_sub_le_of_deficit`'s, and `abs_posAvg_sub_le` is already the abstract
+   form of the proof); the `E0` and `entropy_E1` instances; the general-`p` form of
+   `G4EntropyRender.blkAt_blockVal_min` (same proof with `(j+1)*ℓ ↦ p + ℓ`); endpoint
+   `tendsto_occursCountP_primeLambertFour`.  This is `t = 1` of the target and the thread lap 36 left
+   dangling.
+2. **`G4EntropyJoint.lean` — the abstract `t`-wise capacity bound.**  Probe the uncertain step FIRST:
+   does `∑_blocks (tℓ − H₂(pattern coord)) ≤ t·Δ` hold?  (Trigger **E-T6**: if not, record the exact
+   degradation here and re-state with the true `t`-dependence; do not retreat to `t = 1`.)
+3. **The schedule instance + digit rendering** of rung 2 → `tendsto_occursCountJoint_…`.
+
+### Bounded secondary (only on an E-T3 stall) — measure the wall
+
+`Sched.density_le_pow` : sampled density `≤ ½(2(K²+1)/B²)^K ≤ ½(3/K⁴)^K`, and
+`Sched.window_needed_ge` : any level function reading density `≥ 1/2` needs `mm i ≥ K^{4K}·m_K`.
+Both are `key_size` re-proved keeping its own slack (`hcube : K³ ≤ gridB K N`).
+
+---
+
+## 📚 ARCHIVE — ACTIVE section of entropy review lap 23 (objective MET at lap 31)
+
+## 🎯 (entropy review lap 23, 2026-09-14) — the sampled-word FREQUENCY theorem for `G₄`
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
 

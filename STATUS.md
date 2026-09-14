@@ -21,8 +21,34 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (8961 jobs) ·
-**Updated**: entropy review lap 23 · 2026-09-14 · `wip/g4-entropy` @ `c673775`
+· **Build**: 🟢 green (8970 jobs) ·
+**Updated**: entropy DEEP REFLECTION lap 37 · 2026-09-14 · `wip/g4-entropy` @ `1fe35d7`
+
+## 🧭 2026-09-14 (entropy DEEP REFLECTION lap 37): normality on this mechanism is CLOSED — and MEASURED
+
+**Where it stands.**  Brief §8 is satisfied and the expedition's negative is now *quantitative*.
+`entropy_E0`/`entropy_E1` are unconditional, axiom-clean theorems about the implemented base-four
+schedule; `T_E`/`T_S`/`T_mix` are refuted with witnesses meeting their exact premises; §5's positive
+answer is proved and rendered on real digits (`tendsto_occursCountT_primeLambertFour`, over the very
+`OccursAt 2 · v ·` predicate `isDisjunctive_two` uses); and laps 34–36 added the matching spectral
+lower bound (the `√K` deficit is a property of the object) and the all-positions capacity bound.
+
+**Binary normality of `G₄` is closed on this mechanism, by theorem.**  `qForces_normal_iff_density_one`
+requires a read set of density **one**; `G4EntropyScales.sum_weight_le` gives **every** admissible
+family of grids over **every** set of scales a read set of density `≤ 1/8`.  The gap is not a
+constant: `key_size`'s own proof yields `Q·D₀ ≥ K·B^{2K}` against `H_K·m_K ≤ (2(K²+1))^K·K`, so the
+sampled density is `≤ ½(3/K⁴)^K`, while `entropy_cover_bound` pins the window at exactly `m_K = K/4`
+(it needs both `m ≤ K/4` and `η⁴ ≤ 2^{−K}`).  Reading density `≥ 1/2` would take a window `≈ K^{4K}`
+times longer.  The structural cause is one `GridParams` field — `hQdvd : ∀ m ≤ U, m ∣ Q`, so
+`Q ≥ lcm(1,…,U)` with `U ≥ B^K`.  Three escapes (varying the frozen residue, shifting the real
+`x ↦ 2^σ x`, using more scales) are each closed by something already proved; see
+`REFLECTION-2026-09-14-entropy.md` §1 so they are not re-derived.
+
+**The new objective** (`DIRECTION.md` CURRENT DIRECTIVE, reflection lap 37): the **joint (`t`-wise)
+sampled-word frequency theorem** — `entropy_E1` bounds the law of the *whole vector*, and every
+result so far has projected it to one coordinate.  Used jointly it says the sampled windows of `G₄`
+are asymptotically **independent** and uniform: for all words `w₁,…,w_t` of length `ℓ`, the frequency
+of *"`G₄`'s block at `2·kIdx(n,α_s)+p_s` spells `w_s` simultaneously"* tends to `2^{−tℓ}`.
 
 ## 🧭 2026-09-14 (entropy review lap 23): §6 CLOSED as a characterization; §5's negative CORRECTED
 
@@ -157,12 +183,16 @@ theorem also yields its number-theoretic corollaries: `irrational_primeSum` (`�
 is irrational for `b ≥ 3`) and `every_word_occurs_base_late` (every word, arbitrarily late).
 
 **Live campaign: the attended ENTROPY EXPEDITION** (branch `wip/g4-entropy`; it supersedes
-G5 for this run).  Brief §2–§4 are closed — `Sched.entropy_E0` / `Sched.entropy_E1` are
-unconditional, axiom-clean theorems about the joint quantized sample of G₄ (section above).
-The one statement whose truth value is still open is the §6 transfer `T_E`
-(*`E0` for `Z^x_K` ⟹ `IsNormal 2 x`, for every `x`*), and review lap 8 identified the attack:
-the sample is digit-local, so `T_E` would force the sampled positions to have density ≥ 1/2,
-which the `d_α ∣ kIdx` structure appears to forbid.
+G5 for this run).  Brief §2–§6 are **all closed** as of lap 36: `Sched.entropy_E0` /
+`Sched.entropy_E1` are unconditional, axiom-clean theorems about the joint quantized sample of
+G₄; the §6 transfers `T_E`/`T_S`/`T_mix` are **refuted** with witnesses meeting their exact
+premises, and the positive branch is closed as a *characterization* — a quantized/digit-local
+sampler forces normality **iff** it reads a density-one set of positions, which no admissible
+family over any set of scales does (`sum_weight_le`).  §5's positive answer is proved and
+rendered on real digits.  **Normality of `G₄` is therefore closed on this mechanism, by theorem
+and quantitatively** (lap 37: density `≤ ½(3/K⁴)^K` against a required window `≈ K^{4K}·m_K`).
+The live objective is now the **joint (`t`-wise)** sampled-word frequency theorem — the first
+statement that consumes `entropy_E1`'s joint hypothesis as a joint hypothesis.
 
 **Base two (the number `∑_p 1/(2ᵖ−1)` itself) is refuted on this route and retired** — see the
 lap-16 entry above and `DIRECTION.md`.  It remains a theorem of Tao–Teräväinen, not of this
@@ -186,6 +216,28 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 
 ## What's happened (newest first)
 
+- **2026-09-14 (entropy DEEP REFLECTION lap 37)** — **ROUTE VERDICT: CONTINUE** (no registered
+  trigger fired; E-T3/E-T4/E-T5 all checked against the laplog and git history).  Inventory from
+  ground truth: `lake build` 🟢 **8970 jobs**, every headline re-`#print axioms`-ed to the trust
+  triple, no local `axiom` in `src/`, two off-campaign `sorry`s.  **Governance defect found and
+  fixed**: the lap-23 objective was met at lap 31 and laps 32–36 then ran five laps with no live
+  objective — new trigger **E-T7** forbids a lap that meets the 🎯 from picking its own next
+  target.  **Mathematical finding**: normality of `G₄` on this mechanism is closed *and measured*
+  — density `≤ ½(3/K⁴)^K` from `key_size`'s own slack, window pinned at `m_K = K/4` by
+  `entropy_cover_bound`, gap `≈ K^{4K}`; the structural cause is `GridParams.hQdvd`
+  (`Q ≥ lcm(1,…,U)`, `U ≥ B^K`).  Three escapes re-costed and each closed by an existing theorem.
+  New objective set: the **joint (`t`-wise) sampled-word frequency theorem**, in three rungs
+  (`REFLECTION-2026-09-14-entropy.md`, `DIRECTION.md`).
+- **2026-09-14 (entropy laps 34–36)** — the `√K` wall proved **two-sided**
+  (`log_det_normalized_two_sided`: `1/300000 ≤ log det(1+T_{K²}^{⊗K})/((K²)^K√K) ≤ log2/√K + 12`),
+  so the `ℓ = o(√K)` word-length ceiling is a property of the object, not of the estimate; and the
+  capacity bound extended from one aligned tiling to **all window positions**
+  (`abs_posAvg_sub_le`, loss-free via `H₂_lowTuple_ge` + `posEquiv`).
+- **2026-09-14 (entropy laps 24–33)** — §5 answered positively and rendered on digits:
+  `tendsto_occursCountT_primeLambertFour` (every binary word at frequency `2^{−|w|}` among the
+  aligned blocks of `G₄`'s sampled windows), `tendsto_blockFreq_of_E0` (the scheme, not `G₄`,
+  supplies the implication), the disjoint tiling with zero slack, and the deficit traced to
+  `log det(1+T^{⊗K})`.
 - **2026-09-14 (entropy review lap 8)** — inventory: build 🟢 8948 jobs, `entropy_E0`,
   `entropy_E1`, `isDisjunctive_four/two/base`, `primeSumAtBase_eq_primeLambertAtBase` all on the
   trust triple; `src/` holds exactly two `sorry`s, both off-campaign and disclosed.  No
@@ -465,16 +517,18 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-Campaign **entropy expedition** (ACTIVE), in order:
-1. **`G4EntropyLocality.lean`** — digits agreeing on the window `[2k, 2k+m)` give the same
-   `blockVal`, hence the same `ZVec`/`jointLaw`/`H₂`.  Mechanical, load-bearing.
-2. **`G4EntropyPositions.lean`** — `0 < kIdx` (else `b₀ = t_α` forces `gridV` constant, false),
-   hence `kIdx ≥ d_α ≥ 1 + Q·D₀`; count `|S_K ∩ [0,L)| ≤ H_K m_K L / (2(1+Q_K D₀_K))`.
-3. **`G4EntropyTransfer.lean`** — `E0` as a limit `Prop`, `E0 G4` from `entropy_E1`, the
-   `T_E`/`T_S`/`T_mix` `Prop`s, the masked witness via `realOfDigits`, and `not_T_E`.
-4. Then (and only then) brief §5's (S): `H₂` subadditivity + a checked entropy-to-TV
-   inequality.  And the §6 positive branch: which extra arithmetic property (translated-grid
-   averaging) defeats the witness.
+Campaign **entropy expedition** (ACTIVE) — `DIRECTION.md` CURRENT DIRECTIVE, reflection lap 37,
+the three rungs of the **joint (`t`-wise) sampled-word frequency theorem**:
+1. **`G4EntropyPosition.lean`** — render lap 36's `abs_posAvg_sub_le` at the schedule: `posFreq`,
+   `abs_posFreq_sub_le_of_deficit`, the `E0`/`entropy_E1` instances, the general-`p` form of
+   `blkAt_blockVal_min`, endpoint `tendsto_occursCountP_primeLambertFour` (every binary word at
+   frequency `2^{−|w|}` among **all** positions of the sampled windows).  `t = 1` of the objective.
+2. **`G4EntropyJoint.lean`** — the abstract `t`-wise capacity bound: `t`-blocks of atoms, the
+   per-block pattern coordinate, joint injectivity, `∑_blocks (tℓ − H₂) ≤ t·Δ`, averaged bound.
+   **Uncertain step, probe first**: deficit additivity at `t ≥ 2` (trigger E-T6).
+3. The schedule instance + digit rendering → `tendsto_occursCountJoint_…`.
+4. Bounded secondary, only on an E-T3 stall: **measure the wall** — `Sched.density_le_pow`
+   (`≤ ½(3/K⁴)^K`) and `Sched.window_needed_ge` (density `≥ 1/2` needs `mm ≥ K^{4K}·m_K`).
 
 Campaign **G5** (dormant for this run), in order:
 1. **The decisive probe in Lean**: generalise C2 (`G4LocalContraction.norm_localSum_le`) from
@@ -501,8 +555,8 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, re-run this lap (2026-09-14 entropy **review lap 23**, HEAD
-`c673775`, build 🟢 8961 jobs).  **Math-axiom count in the entropy wing: 0** — every headline
+Real `#print axioms` output, re-run this lap (2026-09-14 entropy **DEEP REFLECTION lap 37**, HEAD
+`1fe35d7`, build 🟢 8970 jobs).  **Math-axiom count in the entropy wing: 0** — every headline
 below prints exactly the trust triple `[propext, Classical.choice, Quot.sound]`, with no
 `native_decide` artifact and no local `axiom` anywhere in `src/`.  The two open `sorry`s in the
 repo (`MahlerDriftOne.exists_prime_nonresidue`, `PrimeLambertOscillation.phaseOscillation`)
@@ -524,6 +578,11 @@ real inequalities that live in the witness.
 | `G4Entropy.qForces_normal_iff_density_one` | same for an arbitrary family of times + quantization levels `⌊2^{mᵢ}{2^{rᵢ}x}⌋` (uncond.) | trust triple | 🟢 clean (lap 20) |
 | `G4.Sched.not_qForces_normal_at_pow` | **no quantized sampler on this schedule forces normality**, at any level up to `B^K ≥ K^{3K}` (uncond.) | trust triple | 🟢 clean (lap 22) |
 | `G4Entropy.entropy_rate_not_control_bit` | entropy rate `→ 1` does not pin a **fixed-offset** bit (uncond.) | trust triple | 🟢 clean (lap 15) — ⚠️ read lap 23's correction: it says nothing about the **offset-averaged** frequency, which entropy *does* control and which is now the objective |
+| `G4.Sched.tendsto_occursCountT_primeLambertFour` | **every finite binary word `v` occurs at frequency `2^{−|v|}`** among the aligned `|v|`-blocks of `G₄`'s sampled windows, over `OccursAt 2 · v ·` (uncond.) | trust triple | 🟢 clean (lap 31) — §5's positive answer, on real digits; **not** a normality claim (sampled positions have density zero) |
+| `G4Entropy.abs_posAvg_sub_le` | the same capacity bound over **all** `m−ℓ+1` window positions, not one aligned tiling: `≤ 2√(log2·ℓδ/(m−ℓ+1))` (uncond., abstract `FinLaw`) | trust triple | 🟢 clean (lap 36) — **not yet rendered at the schedule**; rung 1 of the live objective |
+| `G4.log_det_normalized_two_sided` | `1/300000 ≤ log det(1+T_{K²}^{⊗K})/((K²)^K√K) ≤ log2/√K + 12` for `K ≥ 5` (uncond.) | trust triple | 🟢 clean (lap 34) — the `√K` deficit is **structural**, so `ℓ = o(√K)` is a property of the object |
+| `G4.Sched.not_T_E_of_density_lt_one` | `T_E` refuted again from density `< 1` alone, at a single `c` (uncond.) | trust triple | 🟢 clean (lap 18) |
+| `G4Entropy.tendsto_density_compl_zero` | a satisfiable digit-local hypothesis forces normality only if its read set has density **one** (uncond.) | trust triple | 🟢 clean (lap 18) — the barrier at full strength |
 | `G4.isDisjunctive_base` | **`3 ≤ b → IsDisjunctive b (∑_n ω(n)/bⁿ)`** — UNCONDITIONAL, the campaign endpoint generalised (brief §7.1) | trust triple | 🟢 clean — no `sorry`, no `native_decide`, no local axiom in the cone |
 | `G4.isDisjunctive_four` / `isDisjunctive_two` | **G₄ disjunctive in base 4 and base 2** — UNCONDITIONAL, the attended frozen endpoint | trust triple | 🟢 clean |
 | `G4.isDisjunctive_primeSum` / `every_word_occurs_base` / `isDisjunctive_root` | prime-sum form, every finite word, root bases (uncond.) | trust triple | 🟢 clean |

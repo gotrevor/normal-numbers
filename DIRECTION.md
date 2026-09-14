@@ -31,64 +31,65 @@ here.  The "forbidden drift" list of the G5 directive still applies except for
 its ban on "the multiplicity/entropy/ordinary-normality questions", which this
 expedition explicitly lifts.
 
-## CURRENT DIRECTIVE — entropy expedition (set 2026-09-14, review lap 23)
+## CURRENT DIRECTIVE — entropy expedition (set 2026-09-14, DEEP REFLECTION lap 37)
 
 *Altitude-lap section, inside the ACTIVE override's scope.  It OUTRANKS every HANDOFF.
-The G5 CURRENT DIRECTIVE further below is dormant for this run.*
+The G5 CURRENT DIRECTIVE further below is dormant for this run.  Full reasoning:
+`REFLECTION-2026-09-14-entropy.md`.*
 
-**State.**  §2/§3/§4 closed: `entropy_E0`, `entropy_E1` are unconditional, `#print axioms`-clean
-theorems about the *implemented* base-four schedule.  §6's `T_E`/`T_S`/`T_mix` are REFUTED
-(laps 8–9) and the positive branch is closed as a **characterization** (laps 16–22): a
-quantized/digit-local sampler forces normality iff it reads a density-one set of digit
-positions, and this schedule reads at most `1/4` at any budgeted level.  Build green, 8961 jobs.
+**State.**  The lap-23 objective was **MET at lap 31** (`tendsto_occursCountT_primeLambertFour`)
+and laps 32–36 then ran five laps with no live objective.  Brief §8 is satisfied: `entropy_E0`,
+`entropy_E1` unconditional and axiom-clean; `T_E`/`T_S`/`T_mix` refuted with witnesses meeting
+their exact premises; §5 answered positively and rendered on digits.  Build 🟢 8970 jobs.
 
-**The review-lap finding that changes the plan.**  Lap 15 recorded §5 as answered *negatively* —
-"entropy rate → 1 controls no sampled frequency, at any word length".  What is actually proved
-(`entropy_rate_not_control_bit`) is that it controls no frequency **at a fixed offset inside the
-window**: the uniform law on the leading-bit-zero half has rate `(m−1)/m` and kills the leading
-bit.  That is **not** the quantity normality is built from.  Normality counts a word's
-occurrences **averaged over the offsets**, and in lap 15's own witness the averaged 1-frequency
-is `(m−1)/(2m) → 1/2`.  Entropy *does* control the averaged frequency — by subadditivity over
-the block coordinates plus a Pinsker-type bound.  So §5's real answer is POSITIVE and UNPROVED.
+**The finding that sets this directive.**  Binary normality of `G₄` is **closed on this
+mechanism, by theorem and quantitatively** — `qForces_normal_iff_density_one` (density **one**
+required) against `sum_weight_le` (every admissible family, every scale, reads `≤ 1/8`), with the
+gap measured by `key_size`'s own slack: sampled density `≤ ½(3/K⁴)^K`, while `entropy_cover_bound`
+pins the window at exactly `m_K = K/4`.  Three escapes (varied frozen residue, shifted real
+`2^σ x`, more scales) are each closed by something already proved — see the reflection §1; do not
+re-derive them.  So the remaining value is **the strongest TRUE statement about `G₄`'s digits that
+this arithmetic supports**, and the joint law has so far been used only through its marginals.
 
-- 🎯 **THE objective: turn `entropy_E1` into a frequency theorem about `G₄`'s binary digits.**
-  Endpoint: for every fixed binary word `w` of length `ℓ`,
-
-      (1/|P_K|)·(1/(|Atom_K|·r_K))·#{(n,α,j) : the ℓ-block of G₄ at 2·kIdx(n,α)+jℓ is w} → 2^{−ℓ}
-
-  — every word occurs with its correct frequency among the `ℓ`-aligned blocks of the sampled
-  windows.  Strictly stronger than `isDisjunctive_two` on this system, and the load-bearing
-  input any future positive branch needs.
-- 🔨 **Mandated next move — the chain, in this order** (all new, all in scope):
-    1. `G4EntropyGibbs.lean` — **Gibbs' inequality** for `FinLaw` (`H₂ L ≤ −∑ p·log₂ q` for any
-       sub-probability `q` dominating `supp L`), pushforward laws, and the **generalized
-       subadditivity** `H₂ L ≤ ∑_i H₂ (L.map (f i))` for any coordinate family whose combined
-       map is injective.  Reused three times downstream.
-    2. `G4EntropyPinsker.lean` — the **Hellinger route, no calculus**: `log s ≤ 2(√s−1)` gives
-       `KL₂(p‖u) ≥ (p−u)²/(2 ln 2)`; the two-point Gibbs bound gives
-       `KL₂(L{w} ‖ 2^{−ℓ}) ≤ ℓ − H₂ L`.
-    3. `G4EntropyWord.lean` — the `ℓ`-block coordinates of `blockVal`, their injectivity,
-       `∑_i ε_i ≤ Δ_K`, √-averaging by AM-GM (`√x ≤ (x/t+t)/2`, not a Cauchy–Schwarz lemma
-       name), and assembly against `entropy_E1` (`Δ_K = 50√K·H_K`, `r_K = ⌊m_K/ℓ⌋`, deviation
-       `O(√(ℓ/√K))`).
-- 📌 **Why this and not more barrier work.**  The barrier is complete and every remaining
-  quantized freedom is closed (lap 22).  This is the only in-scope statement that is at once
-  (a) new mathematics about `∑_p 1/(4^p−1)`, (b) unproved, and (c) load-bearing.  It also
-  repairs a recorded over-claim, which is what a review lap is for.
-- ⛔ **Forbidden drift**: re-proving or "tidying" `entropy_E0`/`entropy_E1` or any lap 8–22
-  module; further barrier/characterization variants; editing any pre-expedition G4/G5 file (add
-  lemmas, recover old endpoints as instances); `Adder*`, `CF*`, `Mahler*`, `LnTwo*`,
-  `Stoneham*`, `PrimeLambertOscillation`; a trusted axiom for any candidate lemma; and claiming
-  anything about the normality of `G₄` — this theorem is about sampled positions only, and
-  those have density zero (laps 9–22).
+- 🎯 **THE objective: the JOINT (`t`-wise) sampled-word frequency theorem for `G₄`** — the
+  sampled windows are asymptotically **independent** and uniform.  Endpoint: for every `t`, every
+  partition of the atoms into `t`-blocks, and all binary words `w₁,…,w_t` of length `ℓ`, the
+  frequency over `(n, block, positions)` of *"`G₄`'s block at `2·kIdx(n,α_s)+p_s` spells `w_s`,
+  simultaneously for every `s ≤ t`"* tends to `2^{−tℓ}`.  Strictly stronger than every `t = 1`
+  result; the first statement that consumes `entropy_E1`'s **joint** hypothesis as a joint
+  hypothesis.
+- 🔨 **Mandated next move — three rungs, in this order** (all new, all in scope):
+    1. `G4EntropyPosition.lean` — **render lap 36 at the schedule**: `posFreq i ℓ x w :=
+       posAvg (kk i) ℓ (jointLawAt i x) w`, `abs_posFreq_sub_le_of_deficit` (the deficit
+       hypothesis is *verbatim* `abs_blockFreqT_sub_le_of_deficit`'s), the `E0`/`entropy_E1`
+       instances, the general-`p` form of `G4EntropyRender.blkAt_blockVal_min`, and the endpoint
+       `tendsto_occursCountP_primeLambertFour` — every finite binary word at frequency `2^{−|w|}`
+       among **all** positions of the sampled windows.  This is `t = 1` of the objective and the
+       currently dangling thread.
+    2. `G4EntropyJoint.lean` — the abstract `t`-wise capacity bound: block the atoms into
+       `t`-blocks, the per-block pattern coordinate (product of the `t` per-window tiling
+       coordinates), its joint injectivity, `∑_blocks (tℓ − H₂(pattern)) ≤ t·Δ` via
+       `FinLaw.H₂_le_sum_H₂_map`, then the averaged bound through the existing
+       Hellinger/Pinsker step.  **The one uncertain step is the deficit additivity at `t ≥ 2`** —
+       probe it first and record the answer either way.
+    3. The schedule instance and digit rendering of rung 2 → `tendsto_occursCountJoint_…`.
+- 📌 **Bounded secondary target, only on an E-T3 stall: MEASURE THE WALL.**
+  `Sched.density_le_pow` (`≤ ½(3/K⁴)^K`) and `Sched.window_needed_ge` (density `≥ 1/2` needs
+  `mm i ≥ K^{4K}·m_K`) — both are `key_size` re-proved with its own slack kept.  A negative
+  result's value is its constant.
+- ⛔ **Forbidden drift**: any further barrier/characterization variant; re-proving or "tidying"
+  `entropy_E0`/`entropy_E1` or any lap 8–36 module; re-deriving the three closed escapes;
+  editing any pre-expedition G4/G5 file (add lemmas, recover old endpoints as instances);
+  `Adder*`, `CF*`, `Mahler*`, `LnTwo*`, `Stoneham*`, `PrimeLambertOscillation`; a trusted axiom
+  for any candidate lemma; appending to the BOTTOM of `PENDING_WORK.md` (493 KB — write in its
+  ACTIVE top section only); and claiming anything about the normality of `G₄`.
 - 🚦 **Route triggers**:
-    * **E-T4** — if generalized subadditivity cannot be met by the `ℓ`-block coordinates
-      (injectivity fails, or the empirical law resists), decompose in `PENDING_WORK.md` and
-      state the obstruction; do NOT retreat to a "fixed-offset" frequency statement, which lap
-      15 already refuted.
-    * **E-T5** — if the assembly needs a smaller deficit than `entropy_E1` delivers, that is a
-      *quantitative* surprise: record the exact rate required; do not silently let `ℓ` grow
-      with `K` to hide it.
+    * **E-T6** — if the per-block pattern coordinate does **not** keep the deficit additive
+      (rung 2's uncertain step), record the exact degradation in `PENDING_WORK.md`'s ACTIVE
+      section and re-state the theorem with the true `t`-dependence; do NOT retreat to `t = 1`,
+      which is already proved.
+    * **E-T7** — a lap that MEETS the 🎯 objective says so in its handoff and **does not pick its
+      own next target**; the next altitude lap sets one.  (Laps 32–36 are why this exists.)
     * **E-T3** (kept) — two laps stalled on one assertion ⇒ decompose it in `PENDING_WORK.md`.
 
 ### Directive history
@@ -98,6 +99,10 @@ the block coordinates plus a Pinsker-type bound.  So §5's real answer is POSITI
   negative found to be about *fixed-offset* frequencies only; the averaged frequency IS
   controlled by entropy.  New objective: the sampled-word frequency theorem for `G₄`, via
   Gibbs + generalized subadditivity + a Hellinger-route Pinsker bound.
+- 2026-09-14 (DEEP REFLECTION lap 37): ROUTE VERDICT **CONTINUE** (no trigger fired), but
+  the lap-23 objective was met at lap 31 and laps 32–36 ran objective-less.  Normality of `G₄`
+  recorded as CLOSED on this mechanism by theorem and quantitatively.  New objective: the
+  JOINT (`t`-wise) sampled-word frequency theorem — the sampled windows decorrelate.
 
 
 # DIRECTION — normal-numbers 🧭
