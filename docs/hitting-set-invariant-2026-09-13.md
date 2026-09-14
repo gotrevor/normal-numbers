@@ -41,17 +41,17 @@ reproduces the naive controls; the naive short-circuit search stays faster for t
 | `(g,k)` | `S(g,k)` | minimal sets found | `S*(g,k)` | disjunctive sets | searched |
 |---|---|---|---|---|---|
 | (2,1) | 1 | `{1}` | 1 | `{1}` | – |
-| (3,1) | 2 | 162 pairs ≤ 40, incl. `{1,2}` (B–B) and `{2,11}` (tower C2) | 2 | **`{2,11}` unique ≤ 20**; `{1,2}` is per-block only | pairs ≤ 40 / ≤ 20 |
-| (4,1) | 3 | `{1,10,14}` (unique ≤ 40); **35 triples ≤ 60**, e.g. `{2,5,7}`, `{1,10,56}`, `{3,30,42}` | > 3 | – | sizes ≤ 3, ≤ 60 |
-| (5,1) | **5** | 2008 sets ≤ 30, e.g. `{1,2,3,4,6}`, `{1,2,3,4,8}`, `{1,2,3,6,14}` | – | – | sizes ≤ 5, ≤ 30 |
-| (6,1) | **7** | 4 sets ≤ 24: `{1,8,11,14,16,20,23}`, `{3,7,10,13,14,17,20}`, `{6,8,11,14,16,20,23}`, `{7,10,13,14,17,18,20}`; no 6-set ≤ 24 | – | – | sizes ≤ 7, ≤ 24 |
-| (7,1) | **7 or 8** | `{1,2,3,4,5,6,8,9}` (= `{1..M(7,1)}` minus the base); no 7-subset of `{1..9}` hits; `{1,…,6,8}` does NOT hit (digits 1 and 5 escape) | – | – | sizes ≤ 6, ≤ 24; all 7- and 8-subsets of `{1..9}` |
+| (3,1) | 2 | **12 channel-distinct pairs ≤ 40** (162 naive), incl. `{1,2}` (B–B) and `{2,11}` (tower C2) | 2 | **`{2,11}` unique ≤ 20**; `{1,2}` is per-block only | pairs ≤ 40 / ≤ 20 |
+| (4,1) | 3 | **2 channel-distinct triples ≤ 60**: `{1,10,14}`, `{2,5,7}` (the naive 35 are these with 4-multiples and scalings, e.g. `{3,30,42} = 3·{1,10,14}`) | > 3 | – | sizes ≤ 3, ≤ 60 |
+| (5,1) | **5** | **272 channel-distinct sets ≤ 30** (2008 naive), e.g. `{1,2,3,4,6}`, `{1,2,3,4,8}`, `{1,2,3,6,14}` | – | – | sizes ≤ 5, ≤ 30 |
+| (6,1) | **7** | **2 channel-distinct sets ≤ 24**: `{1,8,11,14,16,20,23}`, `{3,7,10,13,14,17,20}` (the other two naive ones carry `6·1`, `6·3`); no 6-set ≤ 24 | – | – | sizes ≤ 7, ≤ 24 |
+| (7,1) | **7** | **3 channel-distinct 7-sets ≤ 24**: `{1,2,3,4,5,6,13}`, `{1,3,4,5,6,9,13}`, `{1,3,4,5,6,9,18}`; `{1,…,6,8}` does NOT hit (digits 1 and 5 escape); `{1..9}∖{7}` hits | – | – | sizes ≤ 7, ≤ 24 |
 | (8,1), (9,1) | > 8 | – | – | – | sizes ≤ 8, ≤ 20 (cap probably binding) |
 | (10,1) | > 9 | – | – | – | sizes ≤ 9, ≤ 20 (cap probably binding) |
-| (2,2) | 2 | `{1,3}` (unique ≤ 40); **151 pairs ≤ 60**, e.g. `{1,6}`, `{1,11}`, `{1,12}`, `{2,3}` | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
-| (2,3) | 4 | `{1,3,5,7}` unique ≤ 40; **928 sets ≤ 60**, e.g. `{1,3,5,14}`, `{1,3,7,10}`, `{1,3,10,14}` (in ratios `{1,3,5,14}` is new, not a scaling) | > 4 (`{1,3,5,7}` fails) | – | sizes ≤ 4, ≤ 60 (naive, 2 h 38 min) |
+| (2,2) | 2 | **3 channel-distinct pairs ≤ 60**: `{1,3}`, `{1,11}`, `{3,5}` (151 naive, with 2-multiples and scalings) | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
+| (2,3) | 4 | **2 channel-distinct 4-sets ≤ 60**: `{1,3,5,7}`, `{1,5,7,11}` (the naive 928 are these with elements doubled: `{1,3,5,14}` is `{1,3,5,7}`, channel 14 = channel 7 shifted) | > 4 (`{1,3,5,7}` fails) | – | sizes ≤ 4, ≤ 60 (naive, 2 h 38 min) |
 | (2,4) | > 8 (≤ 20) | **`{1,3,…,15}` does NOT hit** (nor any 7-subset of it); no set of size ≤ 8 below 20 (size 8: 1937 s). The cap may bind (base 6's minimal sets reach 23 under a cap of 24), so the value is open; N5 gives `≥ 8` | – | – | sizes ≤ 8, ≤ 20 |
-| (3,2) | **6** | 42 sets ≤ 20, e.g. `{1,2,4,5,7,8}`, `{1,4,5,6,7,8}` | – | – | sizes ≤ 6, ≤ 20 |
+| (3,2) | **6** | **1 channel-distinct set ≤ 20**: `{1,2,4,5,7,8}` (42 naive; `{1,4,5,6,7,8}` is it with `6 = 3·2`) | – | – | sizes ≤ 6, ≤ 20 |
 
 Read along rows: `S(g,1) = 1, 2, 3, 5, 7, >6, >8, >8, >9` for `g = 2..10`; `S(2,k) = 1, 2, 4, >7`
 for `k = 1..4`; `S(3,k) = 2, 6`.  The tempting conjecture that the odd multipliers below `2^k`
@@ -66,6 +66,14 @@ adversary we have (sparse, background+burst, local lemma) is limited to multipli
 multipliers, never a theorem; every exact value's upper half is exact (a hitting set is a finite
 automaton verdict).
 
+**Recount (21:50, `experiments/hitting_set_search.py`).**  "Channel-distinct" means elements not
+divisible by `g` (channel `g·m` is channel `m` shifted) and `gcd = 1` (`c·S` hits iff `S` does);
+the naive counts above in parentheses include those redundancies.  The earlier "unique ≤ 40"
+entries were early-exit runs (`mahler_hitting_set.py` stops at the first set unless `--all`),
+not counts, and are withdrawn.  The new instrument also prefilters with sparse-adversary
+bitmasks (`B ≤ 2^15`) and runs the automaton on the survivors, constant blocks first; the
+(7,1) size-7 run took 88 s where the naive one would have taken hours.
+
 ### Initial segments and the base channel (21:10)
 
 Channel `g` is channel `1` shifted one place (`gα` and `α` have the same digit sequence), so any
@@ -74,8 +82,9 @@ hitting set may be taken with `g ∤ m`; in particular `{1..M(g,1)}` minus `g` h
 Base 5's `{1,2,3,4,6}` is exactly this, and at base 7 the two 8-subsets of `{1..9}` that hit
 are `{1..9}∖{7}` and `{1..9}∖{1}` - the same channel set - while no 7-subset of `{1..9}`
 hits.  The guess that the base-5 pattern `{1..p−1, p+1}` hits at every prime is **false at
-`p = 7`**: `{1,…,6,8}` leaves digits 1 and 5 unhit.  So `S(7,1) ∈ {7, 8}`; the size-7 search
-below 24 has not been run (`C(24,7) ≈ 3.5·10^5` products).  For `S(11,1)` the same argument gives
+`p = 7`**: `{1,…,6,8}` leaves digits 1 and 5 unhit.  The size-7 search below 24 (21:50, new instrument) found three 7-sets, so **`S(7,1) = 7`**:
+`{1,2,3,4,5,6,13}`, `{1,3,4,5,6,9,13}`, `{1,3,4,5,6,9,18}` - again `{1..p−1}` plus one element,
+but `13 ≡ 6 (mod 7)`, not `p+1`; and at base 5 the extra element `6 ≡ 1`.  For `S(11,1)` the same argument gives
 `≤ 24`, surely far from tight.
 
 ## Sparse adversaries: an elementary lower-bound route (`experiments/mahler_sparse_adversary.py`)
@@ -170,7 +179,7 @@ for a hole made of *random* depth-`n` cylinders the survivor set has entropy
 > **N5.**  `S(g,k) ≥ (g−1)·g^(k−1)`.
 
 Data: `(g−1)g^(k−1)` is `1, 2, 4, 8` at base 2 (table: `1, 2, 4, ≥ 9 within ≤ 20`), `2, 6` at base
-3 (`2, 6`), `3` at base 4 (`3`), `4, 5, 6, 7, 8, 9` at bases 5–10 (`5, 7, 7–8, ≥ 9, ≥ 9, ≥ 10`).
+3 (`2, 6`), `3` at base 4 (`3`), `4, 5, 6, 7, 8, 9` at bases 5–10 (`5, 7, 7, ≥ 9, ≥ 9, ≥ 10`).
 Never violated; tight at bases 2–4 for the exact entries; a strict lower bound from base 5 on.
 ⚠️ The count is a heuristic with a known failure mode: a single interval hole next to the fixed
 point `0` (Glendinning–Sidorov) beats mean-field, and inside our own family the block `01` at
