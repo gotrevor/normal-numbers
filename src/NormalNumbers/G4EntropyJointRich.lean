@@ -258,3 +258,163 @@ theorem joint_richness {m t : ℕ} (ht : 0 < t) {η : ℝ} (hη : 0 < η)
   exact card_support_tupleOf_ge blk L b (hb (Finset.mem_univ b))
 
 end NormalNumbers.G4Entropy
+
+namespace NormalNumbers.G4Entropy
+
+/-! ### The support of an empirical pushforward is its image -/
+
+open Classical in
+lemma suppOf_map_empirical {ι Ω Ω' : Type*} [Fintype Ω] [Fintype Ω'] [DecidableEq Ω']
+    {S : Finset ι} (hS : S.Nonempty) (f : ι → Ω) (g : Ω → Ω') :
+    suppOf ((empirical S hS f).map g) = S.image (fun i => g (f i)) := by
+  classical
+  have hSc : (0 : ℝ) < (S.card : ℝ) := by
+    have := Finset.card_pos.2 hS
+    exact_mod_cast this
+  ext v
+  rw [suppOf, Finset.mem_filter, map_empirical_p]
+  constructor
+  · rintro ⟨-, hne⟩
+    have hpos : (S.filter fun i => g (f i) = v).Nonempty := by
+      rw [← Finset.card_pos]
+      by_contra h
+      push_neg at h
+      have h0 : (S.filter fun i => g (f i) = v).card = 0 := by omega
+      rw [h0] at hne
+      simp at hne
+    obtain ⟨i, hi⟩ := hpos
+    rw [Finset.mem_filter] at hi
+    exact Finset.mem_image.2 ⟨i, hi.1, hi.2⟩
+  · intro hv
+    obtain ⟨i, hiS, hgi⟩ := Finset.mem_image.1 hv
+    refine ⟨Finset.mem_univ _, ?_⟩
+    have hmem : i ∈ S.filter fun j => g (f j) = v := Finset.mem_filter.2 ⟨hiS, hgi⟩
+    have hcpos : (0 : ℝ) < ((S.filter fun j => g (f j) = v).card : ℝ) := by
+      have := Finset.card_pos.2 ⟨i, hmem⟩
+      exact_mod_cast this
+    positivity
+
+end NormalNumbers.G4Entropy
+
+namespace NormalNumbers.G4.Sched
+
+open NormalNumbers NormalNumbers.G4Entropy NormalNumbers.PrimeLambert
+
+/-! ### The schedule instance: joint richness of `G₄`'s sampled windows -/
+
+open Classical in
+/-- The set of distinct `t`-tuples of `m_K`-bit blocks of `x` seen at block `b`'s sampled
+positions, as `n` ranges over `P_K`. -/
+noncomputable def jointValues (i t : ℕ) (x : ℝ) (b : Fin (nblk i t)) :
+    Finset (Fin t → Fin (2 ^ kk i)) :=
+  (PK i).image (fun n => tupleOf (kk i) t (blkSched i t) b (ZVec (gridAt i) (kk i) x n))
+
+open Classical in
+lemma suppOf_map_tupleOf (i t : ℕ) (x : ℝ) (b : Fin (nblk i t)) :
+    suppOf ((jointLawAt i x).map (tupleOf (kk i) t (blkSched i t) b))
+      = jointValues i t x b := by
+  classical
+  rw [jointValues, jointLawAt, jointLaw]
+  exact suppOf_map_empirical (apSample_nonempty (gridAt i) (b₀_lt_X_at i)) _ _
+
+open Classical in
+/-- **The digit rendering of the joint value set.**  `jointValues` is the set of distinct
+vectors of `m_K`-bit binary blocks of `x` read at the positions
+`(2·kIdx(n, blkSched b s))_{s<t}`. -/
+theorem jointValues_eq_digits (i t : ℕ) (x : ℝ) (b : Fin (nblk i t)) :
+    jointValues i t x b
+      = (PK i).image (fun n => fun s : Fin t =>
+          (⟨blockVal (Int.fract x) (2 * kIdx (gridAt i) n (blkSched i t b s)) (kk i),
+            blockVal_lt _ _ _⟩ : Fin (2 ^ kk i))) := by
+  classical
+  rw [jointValues]
+  refine Finset.image_congr fun n _ => ?_
+  funext s
+  exact Fin.ext (ZSample_eq_blockVal (gridAt i) (kk i) x n (blkSched i t b s))
+
+/-- **Joint richness for `G₄`.**  For at least half the blocks, the `t` sampled windows take at
+least `2^{t·m_K − 200t√K}` distinct joint values.
+
+There is **no averaging over positions** here — this is a statement about each of `≥ half` the
+blocks separately — so it is outside the reach of the lap-48 obstruction
+(`no_pointwise_bound_from_deficit`), which only forbids pointwise control of *frequencies*. -/
+theorem joint_richness_primeLambertFour (i t : ℕ) (ht : 0 < t)
+    (hcard : 2 * t ≤ Fintype.card (gridAt i).Atom) :
+    ∃ Poor : Finset (Fin (nblk i t)),
+      2 * Poor.card ≤ nblk i t ∧
+      ∀ b ∉ Poor,
+        (2 : ℝ) ^ ((t : ℝ) * (kk i : ℝ) - 200 * (t : ℝ) * Real.sqrt (KK i))
+          ≤ ((jointValues i t (primeLambertAtBase 4) b).card : ℝ) := by
+  classical
+  have hKpos : (0 : ℝ) < (KK i : ℝ) := by
+    have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+    linarith
+  have hS0 : 0 < Real.sqrt ((KK i : ℕ) : ℝ) := Real.sqrt_pos.2 hKpos
+  have htR : (0 : ℝ) < (t : ℝ) := by exact_mod_cast ht
+  have hC : 0 < Fintype.card (gridAt i).Atom := by omega
+  have hnb : 0 < nblk i t := nblk_pos ht (by omega)
+  have hCR : (0 : ℝ) < (Fintype.card (gridAt i).Atom : ℝ) := by exact_mod_cast hC
+  set η : ℝ := 200 * (t : ℝ) * Real.sqrt (KK i) with hη
+  have hη0 : 0 < η := by rw [hη]; positivity
+  -- the deficit hypothesis
+  have hE1 := entropy_E1 (K := KK i) (k₄ := kk i) rfl (KK_ge i)
+  have hcardA : (Fintype.card (gridAt i).Atom : ℝ) = (((KK i ^ 2 + 1) ^ KK i : ℕ) : ℝ) := by
+    rw [card_Atom_gridAt i]
+  have hΔ : (kk i : ℝ) * (Fintype.card (gridAt i).Atom : ℝ)
+      - (50 * Real.sqrt (KK i)) * (Fintype.card (gridAt i).Atom : ℝ)
+      ≤ (jointLawAt i (primeLambertAtBase 4)).H₂ := by
+    rw [hcardA]
+    exact hE1.le
+  obtain ⟨hpoor, hrich⟩ := joint_richness (A := (gridAt i).Atom) (B := Fin (nblk i t))
+    (m := kk i) (t := t) ht hη0 (blkSched i t) (blkSched_injective i t)
+    (jointLawAt i (primeLambertAtBase 4)) hΔ
+  refine ⟨poorBlocks (kk i) t (blkSched i t) (jointLawAt i (primeLambertAtBase 4)) η, ?_, ?_⟩
+  · -- at most half the blocks are poor
+    have hlb : (Fintype.card (gridAt i).Atom : ℝ) ≤ 2 * (t : ℝ) * ((nblk i t : ℕ) : ℝ) := by
+      have hnat : Fintype.card (gridAt i).Atom ≤ 2 * t * nblk i t := by
+        have h1 : t * nblk i t + Fintype.card (gridAt i).Atom % t
+            = Fintype.card (gridAt i).Atom := by
+          rw [nblk]; exact Nat.div_add_mod _ _
+        have h2 : Fintype.card (gridAt i).Atom % t < t := Nat.mod_lt _ ht
+        have h4 : t ≤ t * nblk i t := Nat.le_mul_of_pos_right t hnb
+        have h5 : 2 * t * nblk i t = 2 * (t * nblk i t) := by ring
+        omega
+      exact_mod_cast hnat
+    have hchain : ((poorBlocks (kk i) t (blkSched i t)
+        (jointLawAt i (primeLambertAtBase 4)) η).card : ℝ) * η
+        ≤ (50 * Real.sqrt (KK i)) * (2 * (t : ℝ) * ((nblk i t : ℕ) : ℝ)) := by
+      refine hpoor.trans ?_
+      exact mul_le_mul_of_nonneg_left hlb (by positivity)
+    have hfin : 2 * ((poorBlocks (kk i) t (blkSched i t)
+        (jointLawAt i (primeLambertAtBase 4)) η).card : ℝ) ≤ ((nblk i t : ℕ) : ℝ) := by
+      rw [hη] at hchain
+      nlinarith [hchain, hS0, htR]
+    exact_mod_cast hfin
+  · intro b hb
+    rw [← suppOf_map_tupleOf]
+    exact hrich b hb
+
+/-- **The richness rate tends to `1`**: the shortfall `200√K` is `o(m_K)`. -/
+theorem tendsto_richness_shortfall :
+    Filter.Tendsto (fun i => 200 * Real.sqrt (KK i) / (kk i : ℝ)) Filter.atTop (nhds 0) := by
+  have hval : ∀ i : ℕ, 200 * Real.sqrt (KK i) / (kk i : ℝ)
+      = 800 / Real.sqrt (KK i) := by
+    intro i
+    have hKpos : (0 : ℝ) < (KK i : ℝ) := by
+      have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+      linarith
+    have hS0 : 0 < Real.sqrt ((KK i : ℕ) : ℝ) := Real.sqrt_pos.2 hKpos
+    have hk0 : (0 : ℝ) < (kk i : ℝ) := by
+      have : 0 < kk i := by unfold kk; omega
+      exact_mod_cast this
+    have hsq : Real.sqrt ((KK i : ℕ) : ℝ) * Real.sqrt ((KK i : ℕ) : ℝ) = 4 * (kk i : ℝ) := by
+      rw [Real.mul_self_sqrt hKpos.le]
+      unfold KK; push_cast; ring
+    field_simp
+    nlinarith [hsq]
+  rw [Filter.tendsto_congr hval]
+  have hsqrt : Filter.Tendsto (fun i => Real.sqrt (KK i)) Filter.atTop Filter.atTop :=
+    Real.tendsto_sqrt_atTop.comp tendsto_KK_atTop
+  exact hsqrt.const_div_atTop _
+
+end NormalNumbers.G4.Sched
