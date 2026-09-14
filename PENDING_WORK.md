@@ -62,6 +62,23 @@ excluded primes `p ∣ P₀` cost `≤ ∑_{k≤ω(P₀)} 1/(k+1) ≤ log ω(P�
   `PropA` holds.  So A is reduced to the §3 progression construction (draft §3), which is the
   same object C needs (the modulus `P₀` freezing multiplier residues and shift-difference primes).
 
+### ⬆️ UPDATE (same lap, fifth commit): the §3 progression — `G4Progression.lean`
+
+`GridParams` bundles `K, s, B, Q, D₀, N, U` with the five `G4Grid` side conditions.  From it:
+`Mprod = ∏ d_α²`, the CRT residue `b₀ < Mprod` (`Nat.chineseRemainderOfFinset`, coprimality
+from `coprime_mult`), `freezeQ = ∏_{p≤2T} p · ∏_{i≠i'} |ρ_i − ρ_{i'}|`, and `P₀ = Mprod·freezeQ`.
+* **`exists_mult_mul`** — on `apSample X P₀ b₀` every `n = t_α + d_α k` with `d_α ∣ k`: this IS
+  the hypothesis of `Frame.propA_of_progression` (with `c = 0`).  Uses `t_α < d_α` (from
+  `d ≡ 1`, `t ≡ 0 (mod Q)`), so `n % d_α² = t_α` without any sign worry.
+* **`two_mul_card_le_of_not_dvd`**, **`goodPrime_of_not_dvd_P₀`** — a prime `p ∤ P₀` exceeds
+  `2T` and is good: these are the hypotheses `hk`, `hgood` of `norm_sampleAvg_torusChar_Sval_le`
+  for `sm = {p ≤ R prime : p ∤ P₀}`, and `hsP` is `Nat.Coprime` from `p ∤ P₀`.
+
+**So A and C are both input-complete on ONE concrete object.**  Remaining for A: build the
+wiring `Frame` from `GridParams` (reindex `Atom ≃ Fin H`, `Fin K → Fin s ≃ Fin r`) — pure
+plumbing.  Remaining for C: the same reindexing plus the C4 numerics.  Draft (3.2)'s size bound
+`log P₀ = o(L)` is the §5 module's.
+
 **Also needed for D and noted here (not yet Lean)**: the far tail `j > J` needs the sample mean
 `𝔼 ω(n+ρ) ≪ L` — an UPPER Mertens bound `∑_{p≤z} 1/p ≤ log log z + O(1)`, also not in mathlib;
 route: `primorial_le_four_pow` ⇒ `#{p ∈ (y,2y]} ≤ 2y log 4 / log y`, dyadic blocks.  The crude
