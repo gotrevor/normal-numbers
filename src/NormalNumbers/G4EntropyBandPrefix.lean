@@ -925,4 +925,105 @@ theorem tendsto_midRead_freq_of_depth (v : List ℕ) (hlen : 0 < v.length)
   rw [zero_add] at this
   exact this.congr fun i => by ring
 
+/-! ### Arbitrary cutoffs -/
+
+set_option maxHeartbeats 1000000 in
+/-- **Moving to an arbitrary cutoff costs `1/a`.**  Between two consecutive window boundaries the
+frequency moves by at most one window's worth. -/
+theorem abs_freq_sub_freq_mid (v : List ℕ) (i N : ℕ) (h1 : bT i ≤ N)
+    (ha : 0 < (N - bT i) / kk i) :
+    |(winCount (bandDig (primeLambertAtBase 4)) v N : ℝ) / (N : ℝ)
+        - (winCount (bandDig (primeLambertAtBase 4)) v (bT i + (N - bT i) / kk i * kk i) : ℝ)
+          / ((bT i + (N - bT i) / kk i * kk i : ℕ) : ℝ)|
+      ≤ 1 / (((N - bT i) / kk i : ℕ) : ℝ) := by
+  classical
+  set x := primeLambertAtBase 4 with hx
+  set a : ℕ := (N - bT i) / kk i with hadef
+  set M : ℕ := bT i + a * kk i with hM
+  have hkk : 0 < kk i := kk_pos' i
+  have hMN : M ≤ N := by
+    have hle := Nat.div_mul_le_self (N - bT i) (kk i)
+    rw [hM, hadef]
+    omega
+  have hNM : N - M < kk i := by
+    have hdm := Nat.div_add_mod' (N - bT i) (kk i)
+    have hmod : (N - bT i) % kk i < kk i := Nat.mod_lt _ hkk
+    rw [hM, hadef]
+    omega
+  have hMpos : 0 < M := by
+    have : 0 < a * kk i := Nat.mul_pos ha hkk
+    rw [hM]; omega
+  have hMR : (0 : ℝ) < (M : ℝ) := by exact_mod_cast hMpos
+  have hNR : (0 : ℝ) < (N : ℝ) := by
+    have : 0 < N := lt_of_lt_of_le hMpos hMN
+    exact_mod_cast this
+  have hMNR : (M : ℝ) ≤ (N : ℝ) := by exact_mod_cast hMN
+  have haR : (0 : ℝ) < (a : ℝ) := by exact_mod_cast ha
+  have hkkR : (0 : ℝ) < (kk i : ℝ) := by exact_mod_cast hkk
+  have hMge : (a : ℝ) * (kk i : ℝ) ≤ (M : ℝ) := by
+    rw [hM]
+    have : (0 : ℝ) ≤ (bT i : ℝ) := Nat.cast_nonneg _
+    push_cast
+    linarith
+  -- the two counts
+  have hsplit := winCount_split (bandDig x) v hMN
+  have hW1 : (winCount (bandDig x) v M : ℝ) ≤ (winCount (bandDig x) v N : ℝ) := by
+    have : winCount (bandDig x) v M ≤ winCount (bandDig x) v N := by omega
+    exact_mod_cast this
+  have hW2 : (winCount (bandDig x) v N : ℝ)
+      ≤ (winCount (bandDig x) v M : ℝ) + ((N : ℝ) - (M : ℝ)) := by
+    have hcard : ((Finset.Ico M N).filter (MatchesAt (bandDig x) v)).card ≤ N - M := by
+      refine le_trans (Finset.card_filter_le _ _) ?_
+      rw [Nat.card_Ico]
+    have hnat : winCount (bandDig x) v N ≤ winCount (bandDig x) v M + (N - M) := by omega
+    have : (winCount (bandDig x) v N : ℝ)
+        ≤ ((winCount (bandDig x) v M + (N - M) : ℕ) : ℝ) := by exact_mod_cast hnat
+    have hcast : ((winCount (bandDig x) v M + (N - M) : ℕ) : ℝ)
+        = (winCount (bandDig x) v M : ℝ) + ((N : ℝ) - (M : ℝ)) := by
+      push_cast [Nat.cast_sub hMN]
+      ring
+    linarith [hcast ▸ this]
+  have hWM : (winCount (bandDig x) v M : ℝ) ≤ (M : ℝ) := by
+    have := winCount_le (bandDig x) v M
+    exact_mod_cast this
+  have hWMnn : (0 : ℝ) ≤ (winCount (bandDig x) v M : ℝ) := Nat.cast_nonneg _
+  have hgap : (N : ℝ) - (M : ℝ) ≤ (kk i : ℝ) := by
+    have : ((N - M : ℕ) : ℝ) ≤ (kk i : ℝ) := by exact_mod_cast le_of_lt hNM
+    rw [Nat.cast_sub hMN] at this
+    linarith
+  have hratio : ((N : ℝ) - (M : ℝ)) / (M : ℝ) ≤ 1 / (a : ℝ) := by
+    rw [div_le_div_iff₀ hMR haR]
+    nlinarith [hgap, hMge, haR, hkkR]
+  rw [abs_le]
+  constructor
+  · rw [neg_le, neg_sub]
+    have h1' : (winCount (bandDig x) v M : ℝ) / (M : ℝ)
+        - (winCount (bandDig x) v N : ℝ) / (N : ℝ)
+        ≤ (winCount (bandDig x) v M : ℝ) / (M : ℝ)
+          - (winCount (bandDig x) v M : ℝ) / (N : ℝ) := by
+      have : (winCount (bandDig x) v M : ℝ) / (N : ℝ)
+          ≤ (winCount (bandDig x) v N : ℝ) / (N : ℝ) := by gcongr
+      linarith
+    have h2' : (winCount (bandDig x) v M : ℝ) / (M : ℝ)
+        - (winCount (bandDig x) v M : ℝ) / (N : ℝ)
+        ≤ ((N : ℝ) - (M : ℝ)) / (M : ℝ) := by
+      rw [div_sub_div _ _ hMR.ne' hNR.ne', div_le_div_iff₀ (by positivity) hMR]
+      nlinarith [mul_le_mul_of_nonneg_right (hWM.trans hMNR)
+        (mul_nonneg hMR.le (sub_nonneg.2 hMNR))]
+    linarith [h1', h2', hratio]
+  · have h3 : (winCount (bandDig x) v N : ℝ) / (N : ℝ)
+        ≤ ((winCount (bandDig x) v M : ℝ) + ((N : ℝ) - (M : ℝ))) / (N : ℝ) := by gcongr
+    have h4 : ((winCount (bandDig x) v M : ℝ) + ((N : ℝ) - (M : ℝ))) / (N : ℝ)
+        ≤ (winCount (bandDig x) v M : ℝ) / (M : ℝ) + ((N : ℝ) - (M : ℝ)) / (M : ℝ) := by
+      rw [div_le_iff₀ hNR]
+      have hA : (winCount (bandDig x) v M : ℝ) / (M : ℝ) * (N : ℝ)
+          ≥ (winCount (bandDig x) v M : ℝ) := by
+        rw [ge_iff_le, div_mul_eq_mul_div, le_div_iff₀ hMR]
+        nlinarith [hWMnn, hMNR, hMR]
+      have hB : ((N : ℝ) - (M : ℝ)) / (M : ℝ) * (N : ℝ) ≥ (N : ℝ) - (M : ℝ) := by
+        rw [ge_iff_le, div_mul_eq_mul_div, le_div_iff₀ hMR]
+        nlinarith [hMNR, hMR, hgap, hkkR]
+      linarith
+    linarith [h3, h4, hratio]
+
 end NormalNumbers.G4.Sched
