@@ -73,22 +73,41 @@ def patCoord (m ℓ t : ℕ) (blk : B → Fin t → A) (c : B × Fin (m / ℓ))
     (z : A → Fin (2 ^ m)) : Fin (2 ^ (ℓ * t)) :=
   packFin t ℓ (fun s => fullCoord m ℓ (blk c.1 s, c.2) z)
 
+/-- The common codomain cast for the pattern-sized coordinates. -/
+def upPat (m ℓ t : ℕ) : Fin (2 ^ (ℓ * t)) → Fin (2 ^ (ℓ * t + m)) :=
+  Fin.castLE (Nat.pow_le_pow_right (by norm_num) (Nat.le_add_right _ _))
+
+/-- The common codomain cast for a raw window value. -/
+def upLeft (m ℓ t : ℕ) : Fin (2 ^ m) → Fin (2 ^ (ℓ * t + m)) :=
+  Fin.castLE (Nat.pow_le_pow_right (by norm_num) (Nat.le_add_left _ _))
+
+theorem upPat_injective (m ℓ t : ℕ) : Function.Injective (upPat m ℓ t) :=
+  Fin.castLE_injective _
+
+theorem upLeft_injective (m ℓ t : ℕ) : Function.Injective (upLeft m ℓ t) :=
+  Fin.castLE_injective _
+
 /-- The block remainder coordinate: the `t` window remainders, packed. -/
 def patRem (m ℓ t : ℕ) (hℓ : 0 < ℓ) (blk : B → Fin t → A) (b : B)
     (z : A → Fin (2 ^ m)) : Fin (2 ^ (ℓ * t)) :=
   packFin t ℓ (fun s => remCoord m ℓ hℓ (z (blk b s)))
 
-/-- The coordinate of an atom the blocking misses; covered atoms get a constant. -/
-noncomputable def leftCoord (m ℓ t : ℕ) (hm : m ≤ ℓ * t) (blk : B → Fin t → A) (α : A)
-    (z : A → Fin (2 ^ m)) : Fin (2 ^ (ℓ * t)) :=
+/-- The coordinate of an atom the blocking misses; covered atoms get a constant.
+
+All three families land in `Fin (2 ^ (ℓ * t + m))`, which is what removes the hypothesis
+`m ≤ ℓ * t` of the first draft — a hypothesis that *fails* at the base-four schedule, where
+`m_K = K/4 → ∞` while `ℓ` and `t` are fixed. -/
+noncomputable def leftCoord (m ℓ t : ℕ) (blk : B → Fin t → A) (α : A)
+    (z : A → Fin (2 ^ m)) : Fin (2 ^ (ℓ * t + m)) :=
   open Classical in
   if (∃ p : B × Fin t, blk p.1 p.2 = α) then ⟨0, Nat.pow_pos (by norm_num)⟩
-  else Fin.castLE (Nat.pow_le_pow_right (by norm_num) hm) (z α)
+  else upLeft m ℓ t (z α)
 
 /-- The three families, as one indexed family of coordinate maps. -/
-noncomputable def jointFam (m ℓ t : ℕ) (hℓ : 0 < ℓ) (hm : m ≤ ℓ * t) (blk : B → Fin t → A) :
-    ((B × Fin (m / ℓ)) ⊕ B ⊕ A) → (A → Fin (2 ^ m)) → Fin (2 ^ (ℓ * t)) :=
-  Sum.elim (patCoord m ℓ t blk) (Sum.elim (patRem m ℓ t hℓ blk) (leftCoord m ℓ t hm blk))
+noncomputable def jointFam (m ℓ t : ℕ) (hℓ : 0 < ℓ) (blk : B → Fin t → A) :
+    ((B × Fin (m / ℓ)) ⊕ B ⊕ A) → (A → Fin (2 ^ m)) → Fin (2 ^ (ℓ * t + m)) :=
+  Sum.elim (fun c z => upPat m ℓ t (patCoord m ℓ t blk c z))
+    (Sum.elim (fun b z => upPat m ℓ t (patRem m ℓ t hℓ blk b z)) (leftCoord m ℓ t blk))
 
 /-! ### The three bits bounds -/
 
@@ -143,32 +162,32 @@ theorem H₂_map_patRem_le {m ℓ t : ℕ} (hℓ : 0 < ℓ) (blk : B → Fin t �
   ring
 
 /-- An atom the blocking covers contributes nothing; one it misses contributes at most `m`. -/
-theorem H₂_map_leftCoord_le {m ℓ t : ℕ} (hm : m ≤ ℓ * t) (blk : B → Fin t → A)
+theorem H₂_map_leftCoord_le {m ℓ t : ℕ} (blk : B → Fin t → A)
     (L : FinLaw (A → Fin (2 ^ m))) (α : A) :
-    (L.map (leftCoord m ℓ t hm blk α)).H₂
+    (L.map (leftCoord m ℓ t blk α)).H₂
       ≤ (if (∃ p : B × Fin t, blk p.1 p.2 = α) then (0 : ℝ) else (m : ℝ)) := by
   classical
   by_cases hcov : ∃ p : B × Fin t, blk p.1 p.2 = α
   · rw [if_pos hcov]
-    have hfun : leftCoord m ℓ t hm blk α
-        = fun _ : A → Fin (2 ^ m) => (⟨0, Nat.pow_pos (by norm_num)⟩ : Fin (2 ^ (ℓ * t))) := by
+    have hfun : leftCoord m ℓ t blk α
+        = fun _ : A → Fin (2 ^ m) => (⟨0, Nat.pow_pos (by norm_num)⟩ :
+            Fin (2 ^ (ℓ * t + m))) := by
       funext z; simp only [leftCoord]; rw [if_pos hcov]
     rw [hfun]
     exact FinLaw.H₂_map_const_le L _
   · rw [if_neg hcov]
-    have heq : (L.map (leftCoord m ℓ t hm blk α)).H₂
+    have heq : (L.map (leftCoord m ℓ t blk α)).H₂
         = (L.map (fun z : A → Fin (2 ^ m) => z α)).H₂ := by
-      refine FinLaw.H₂_map_congr_comp L _ (Fin.castLE_injective
-        (Nat.pow_le_pow_right (by norm_num) hm)) _ (fun z => ?_)
+      refine FinLaw.H₂_map_congr_comp L _ (upLeft_injective m ℓ t) _ (fun z => ?_)
       simp only [leftCoord]; rw [if_neg hcov]
     rw [heq]
     exact H₂_le_of_block _
 
 /-- The three families together determine the sample vector. -/
-theorem jointFam_injective {m ℓ t : ℕ} (hℓ : 0 < ℓ) (hm : m ≤ ℓ * t)
+theorem jointFam_injective {m ℓ t : ℕ} (hℓ : 0 < ℓ)
     (blk : B → Fin t → A) :
     Function.Injective (fun z : A → Fin (2 ^ m) =>
-      fun i : (B × Fin (m / ℓ)) ⊕ B ⊕ A => jointFam m ℓ t hℓ hm blk i z) := by
+      fun i : (B × Fin (m / ℓ)) ⊕ B ⊕ A => jointFam m ℓ t hℓ blk i z) := by
   classical
   intro z z' h
   funext α
@@ -177,33 +196,44 @@ theorem jointFam_injective {m ℓ t : ℕ} (hℓ : 0 < ℓ) (hm : m ≤ ℓ * t)
     refine tile_injective hℓ (fun j hj => ?_) ?_
     · have hc := congrFun h (Sum.inl (p.1, (⟨j, hj⟩ : Fin (m / ℓ))))
       simp only [jointFam, Sum.elim_inl] at hc
-      have hf := congrFun ((packFin t ℓ).injective hc) p.2
+      have hf := congrFun ((packFin t ℓ).injective (upPat_injective m ℓ t hc)) p.2
       exact hf
     · have hc := congrFun h (Sum.inr (Sum.inl p.1))
       simp only [jointFam, Sum.elim_inr, Sum.elim_inl] at hc
-      exact congrFun ((packFin t ℓ).injective hc) p.2
+      exact congrFun ((packFin t ℓ).injective (upPat_injective m ℓ t hc)) p.2
   · have hc := congrFun h (Sum.inr (Sum.inr α))
     simp only [jointFam, Sum.elim_inr, leftCoord] at hc
     simp only [if_neg hcov] at hc
-    exact Fin.castLE_injective _ hc
+    exact upLeft_injective m ℓ t hc
 
 /-- **The `t`-wise deficit budget, with zero slack.**  A total deficit of `Δ` bits on the joint
 law leaves a total deficit of at most `Δ` on the `|B|·⌊m/ℓ⌋` pattern coordinates — the *same*
 `Δ`, not `tΔ`. -/
-theorem sum_patCoord_deficit_le {m ℓ t : ℕ} (hℓ : 0 < ℓ) (hm : m ≤ ℓ * t)
+theorem sum_patCoord_deficit_le {m ℓ t : ℕ} (hℓ : 0 < ℓ)
     (blk : B → Fin t → A) (hblk : Function.Injective (fun p : B × Fin t => blk p.1 p.2))
     (L : FinLaw (A → Fin (2 ^ m))) {Δ : ℝ}
     (hΔ : (m : ℝ) * (Fintype.card A : ℝ) - Δ ≤ L.H₂) :
     ∑ c : B × Fin (m / ℓ), ((ℓ * t : ℕ) - (L.map (patCoord m ℓ t blk c)).H₂ : ℝ) ≤ Δ := by
   classical
-  have hsub := L.H₂_le_sum_H₂_map (jointFam m ℓ t hℓ hm blk) (jointFam_injective hℓ hm blk)
-  have hsplit : ∑ i : (B × Fin (m / ℓ)) ⊕ B ⊕ A, (L.map (jointFam m ℓ t hℓ hm blk i)).H₂
-      = (∑ c : B × Fin (m / ℓ), (L.map (patCoord m ℓ t blk c)).H₂)
-        + ((∑ b : B, (L.map (patRem m ℓ t hℓ blk b)).H₂)
-          + ∑ α : A, (L.map (leftCoord m ℓ t hm blk α)).H₂) := by
+  have hsub := L.H₂_le_sum_H₂_map (jointFam m ℓ t hℓ blk) (jointFam_injective hℓ blk)
+  have hup : ∀ c : B × Fin (m / ℓ),
+      (L.map (fun z : A → Fin (2 ^ m) => upPat m ℓ t (patCoord m ℓ t blk c z))).H₂
+        = (L.map (patCoord m ℓ t blk c)).H₂ :=
+    fun c => FinLaw.H₂_map_congr_comp L _ (upPat_injective m ℓ t) _ (fun _ => rfl)
+  have hupr : ∀ b : B,
+      (L.map (fun z : A → Fin (2 ^ m) => upPat m ℓ t (patRem m ℓ t hℓ blk b z))).H₂
+        = (L.map (patRem m ℓ t hℓ blk b)).H₂ :=
+    fun b => FinLaw.H₂_map_congr_comp L _ (upPat_injective m ℓ t) _ (fun _ => rfl)
+  have hsplit : ∑ i : (B × Fin (m / ℓ)) ⊕ B ⊕ A, (L.map (jointFam m ℓ t hℓ blk i)).H₂
+      = (∑ c : B × Fin (m / ℓ),
+            (L.map (fun z : A → Fin (2 ^ m) => upPat m ℓ t (patCoord m ℓ t blk c z))).H₂)
+        + ((∑ b : B,
+              (L.map (fun z : A → Fin (2 ^ m) => upPat m ℓ t (patRem m ℓ t hℓ blk b z))).H₂)
+          + ∑ α : A, (L.map (leftCoord m ℓ t blk α)).H₂) := by
     rw [Fintype.sum_sum_type, Fintype.sum_sum_type]
     rfl
-  rw [hsplit] at hsub
+  rw [hsplit, Finset.sum_congr rfl (fun c _ => hup c),
+    Finset.sum_congr rfl (fun b _ => hupr b)] at hsub
   -- the uncovered atoms
   set U : Finset A := Finset.univ.filter (fun α => ¬ ∃ p : B × Fin t, blk p.1 p.2 = α) with hU
   have hcovimg : (Finset.univ.filter (fun α : A => ∃ p : B × Fin t, blk p.1 p.2 = α))
@@ -225,10 +255,10 @@ theorem sum_patCoord_deficit_le {m ℓ t : ℕ} (hℓ : 0 < ℓ) (hm : m ≤ ℓ
           Finset.sum_le_sum fun b _ => H₂_map_patRem_le hℓ blk L b
       _ = (Fintype.card B : ℝ) * (((m % ℓ : ℕ) : ℝ) * (t : ℝ)) := by
           rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
-  have hleft : ∑ α : A, (L.map (leftCoord m ℓ t hm blk α)).H₂ ≤ (U.card : ℝ) * (m : ℝ) := by
-    calc ∑ α : A, (L.map (leftCoord m ℓ t hm blk α)).H₂
+  have hleft : ∑ α : A, (L.map (leftCoord m ℓ t blk α)).H₂ ≤ (U.card : ℝ) * (m : ℝ) := by
+    calc ∑ α : A, (L.map (leftCoord m ℓ t blk α)).H₂
         ≤ ∑ α : A, (if (∃ p : B × Fin t, blk p.1 p.2 = α) then (0 : ℝ) else (m : ℝ)) :=
-          Finset.sum_le_sum fun α _ => H₂_map_leftCoord_le hm blk L α
+          Finset.sum_le_sum fun α _ => H₂_map_leftCoord_le blk L α
       _ = (U.card : ℝ) * (m : ℝ) := by
           rw [Finset.sum_ite, Finset.sum_const_zero, zero_add, Finset.sum_const, nsmul_eq_mul]
   -- the constant sum
@@ -262,7 +292,7 @@ theorem sum_patCoord_deficit_le {m ℓ t : ℕ} (hℓ : 0 < ℓ) (hm : m ≤ ℓ
 /-- **The averaged `t`-wise bound.**  Every pattern's average probability is within
 `(2 log2 Δ)/(2 s N) + s/2` of `2^{−ℓt}`, for every `s > 0`. -/
 theorem abs_avg_patCoord_prob_le {m ℓ t : ℕ} (hℓ : 0 < ℓ) (hℓm : ℓ ≤ m) (ht : 0 < t)
-    (hm : m ≤ ℓ * t) [Nonempty B]
+    [Nonempty B]
     (blk : B → Fin t → A) (hblk : Function.Injective (fun p : B × Fin t => blk p.1 p.2))
     (L : FinLaw (A → Fin (2 ^ m))) (w : Fin (2 ^ (ℓ * t))) {Δ s : ℝ}
     (hΔ : (m : ℝ) * (Fintype.card A : ℝ) - Δ ≤ L.H₂) (hs : 0 < s) :
@@ -283,7 +313,7 @@ theorem abs_avg_patCoord_prob_le {m ℓ t : ℕ} (hℓ : 0 < ℓ) (hℓm : ℓ �
     nlinarith [hlog2, h]
   · intro c
     exact abs_prob_singleton_sub_le (ℓ := ℓ * t) (Nat.mul_pos hℓ ht) _ w
-  · have hsum := sum_patCoord_deficit_le hℓ hm blk hblk L hΔ
+  · have hsum := sum_patCoord_deficit_le hℓ blk hblk L hΔ
     rw [← Finset.mul_sum]
     nlinarith [hlog2, hsum]
 
@@ -296,7 +326,7 @@ With `Δ = δ·|A|` and a blocking of `|B| ≈ |A|/t` blocks this is `2√(log 2
 `t = 1` bound `abs_avg_block_prob_tile_opt` with `ℓ ↦ tℓ`, which is exactly the price of pinning
 `t` words at once rather than one. -/
 theorem abs_avg_patCoord_prob_opt {m ℓ t : ℕ} (hℓ : 0 < ℓ) (hℓm : ℓ ≤ m) (ht : 0 < t)
-    (hm : m ≤ ℓ * t) [Nonempty B]
+    [Nonempty B]
     (blk : B → Fin t → A) (hblk : Function.Injective (fun p : B × Fin t => blk p.1 p.2))
     (L : FinLaw (A → Fin (2 ^ m))) (w : Fin (2 ^ (ℓ * t))) {Δ : ℝ} (hΔ0 : 0 < Δ)
     (hΔ : (m : ℝ) * (Fintype.card A : ℝ) - Δ ≤ L.H₂) :
@@ -324,7 +354,7 @@ theorem abs_avg_patCoord_prob_opt {m ℓ t : ℕ} (hℓ : 0 < ℓ) (hℓm : ℓ 
   set s : ℝ := Real.sqrt (2 * Aa) with hsdef
   have hs : 0 < s := Real.sqrt_pos.2 (by linarith)
   have hs2 : s * s = 2 * Aa := Real.mul_self_sqrt (by linarith)
-  have hmain := abs_avg_patCoord_prob_le hℓ hℓm ht hm blk hblk L w hΔ hs
+  have hmain := abs_avg_patCoord_prob_le hℓ hℓm ht blk hblk L w hΔ hs
   rw [hN] at hmain
   have hstep : (2 * Real.log 2 * Δ)
       / (2 * s * ((Fintype.card B : ℝ) * ((m / ℓ : ℕ) : ℝ))) ≤ Aa / s := by

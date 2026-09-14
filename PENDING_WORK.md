@@ -74,7 +74,38 @@ nothing more.  Declarations: `packFin`, `patCoord`, `patRem`, `leftCoord`, `join
 `jointFam_injective`, `H₂_map_patRem_le`, `H₂_map_leftCoord_le`, `FinLaw.H₂_map_const_le`,
 `sum_patCoord_deficit_le`, `abs_avg_patCoord_prob_le`, `abs_avg_patCoord_prob_opt`.
 
-### 🔨 NEXT — rung 3: the schedule instance and the digit rendering
+### ✅ RUNG 3 DONE (lap 38) — `G4EntropyJointSched.lean`, sorry-free, trust triple
+
+**The 🎯 objective of the lap-37 directive is MET.**  Endpoint
+`Sched.tendsto_occursCountJoint_primeLambertFour`: for every `t`, every `ℓ`, and any `t` binary
+words `v₀,…,v_{t−1}` of length `ℓ`,
+
+```
+#{(n,b,j) ∈ P_K × Fin(nblk) × Fin(m_K/ℓ) : ∀ s < t,
+    OccursAt 2 G₄ (v s) (2·kIdx(n, blkSched b s) + jℓ)} / (|P_K|·nblk·⌊m_K/ℓ⌋)  →  2^{−ℓt}
+```
+
+i.e. the `t` sampled windows of a block **decorrelate**.  `t = 1` is
+`tendsto_occursCountT_primeLambertFour`.  Chain: `blkSched` / `blkSched_injective` (enumerate the
+atoms, cut into consecutive `t`-blocks; injective by uniqueness of division) → `patFreq` →
+`abs_patFreq_sub_le_of_deficit` (`≤ 2√(2 log2·ℓtδ/m_K)`; the factor 2 pays for
+`nblk = ⌊|A|/t⌋ ≥ |A|/(2t)`) → `abs_patFreq_sub_le_primeLambertFour`
+(`≤ 2√(400 log2·ℓt/√K)` at `entropy_E1`'s `δ = 50√K`) → `tendsto_patFreq_primeLambertFour` →
+`patCoord_eq_pack_iff` / `patFreq_eq_count` / `patFreq_eq_digits` → the endpoint.
+
+**Design correction applied** (as scoped): `leftCoord`'s hypothesis `m ≤ ℓ*t` is gone.  All three
+families of `jointFam` now land in `Fin (2 ^ (ℓ*t + m))` via `upPat` / `upLeft`
+(`Fin.castLE`, injective), so `sum_patCoord_deficit_le`, `abs_avg_patCoord_prob_le` and
+`abs_avg_patCoord_prob_opt` no longer carry `hm` — necessary, since at the schedule `m_K = K/4 →
+∞` with `ℓ, t` fixed.  All bits bounds unchanged.
+
+Build 🟢 8973 jobs; `#print axioms` on the endpoint, `abs_patFreq_sub_le_primeLambertFour`,
+`sum_patCoord_deficit_le`, `entropy_E0`/`entropy_E1`, `isDisjunctive_four/two/base`,
+`primeSumAtBase_eq_primeLambertAtBase`: trust triple only.
+
+Per **E-T7** this lap does not pick its own next target; the next altitude lap sets one.
+
+### 🗄️ (superseded) rung 3 scoping notes
 
 1. **The blocking at the schedule.**  `blkAt_sched i t : Fin (Fintype.card (gridAt i).Atom / t)
    → Fin t → (gridAt i).Atom := fun b s => (Fintype.equivFin _).symm ⟨b*t+s, _⟩`; injectivity from
