@@ -269,3 +269,4 @@ import NormalNumbers.G4EntropySubsample
 import NormalNumbers.G4EntropyEnum
 import NormalNumbers.G4EntropyGoodAtoms
 import NormalNumbers.G4EntropyGranule
+import NormalNumbers.G4EntropyMixture
