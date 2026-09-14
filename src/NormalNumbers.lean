@@ -267,3 +267,4 @@ import NormalNumbers.G4EntropyConcat
 import NormalNumbers.G4EntropyBlockWord
 import NormalNumbers.G4EntropySubsample
 import NormalNumbers.G4EntropyEnum
+import NormalNumbers.G4EntropyGoodAtoms
