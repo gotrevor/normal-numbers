@@ -1,5 +1,22 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ GRIND 2026-09-14 (G4 lap 9): `PropB` DISCHARGED on the grid modulo one real inequality
+
+`G4TubeVolume.lean` + `G4GridTube.lean` (trust triple).  **`gridFrame_propB_of_bound`**:
+for the concrete frame, if the orbit omits `[w/4^ℓ,(w+1)/4^ℓ)`, `4^{−ℓM} ≤ η`, `ε < 1`, `r ≥ 1`,
+`Lg ≥ log det(1 + T_s^{⊗K})`, `0 ≤ δ₁`, and
+
+    ∀ g, (1−ε) r ≤ g ≤ r →  ((4^ℓ−1)^M)^H · η^g · e^{Lg/2} · (√(2πe/g)·√(H+g))^g ≤ δ₁ / 2^r,
+
+then `PropB δ₁`.  Inputs: `Frame.volume_tube_le` (Markov in `dAv` + marginal projection +
+torus projection + `addHaar_smul`), `Frame.volume_pieceCube_le_of_reindex` (ellipsoid +
+det monotonicity through the `rowEquiv`/`atomEquiv` reindexing), `exists_cylinder_subset`,
+`exists_cover_of_omit`, `card_goodSets_le`.
+
+**All of §4 is now discharged modulo §5 arithmetic**: A ✅, C ✅, Jackson ✅ (no side
+conditions), D = two inequalities, B = one inequality.  Next: the §5 schedule module (see
+`HANDOFF-2026-09-14-g4-lap9.md`).
+
 ## ✅ GRIND 2026-09-14 (G4 lap 8): `PropJackson` DISCHARGED for every frame
 
 `src/NormalNumbers/G4Jackson.lean` (trust triple on `Frame.propJackson`).  Zero laps → closed in
