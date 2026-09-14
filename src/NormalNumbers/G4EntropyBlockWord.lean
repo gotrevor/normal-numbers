@@ -278,4 +278,189 @@ theorem cyc_bounds (x : ℝ) (i : ℕ) (v : List ℕ) (hv : 0 < v.length) (hvm :
           rw [Finset.sum_add_distrib]
           simp [mul_comm]
 
+/-! ### The block frequency limit -/
+
+lemma tendsto_kk_atTop : Tendsto (fun i => (kk i : ℝ)) atTop atTop := by
+  have : ∀ i : ℕ, (i : ℝ) ≤ (kk i : ℝ) := by
+    intro i
+    have : i ≤ kk i := by unfold kk; omega
+    exact_mod_cast this
+  exact tendsto_atTop_mono this tendsto_natCast_atTop_atTop
+
+lemma tendsto_blen_atTop : Tendsto (fun i => (blen i : ℝ)) atTop atTop := by
+  refine tendsto_atTop_mono (fun i => ?_) tendsto_kk_atTop
+  have : kk i ≤ blen i := by
+    have := nwin_pos i
+    calc kk i = 1 * kk i := (one_mul _).symm
+      _ ≤ nwin i * kk i := Nat.mul_le_mul_right _ this
+  exact_mod_cast this
+
+open Classical in
+/-- **Rung 2's endpoint.**  The cyclic window frequency of the scale-`i` block of `G₄`'s sampled
+digits tends to `2^{−|v|}` for every finite binary word `v`.  This is exactly the hypothesis
+`isNormal_realOfDigits_seq` consumes. -/
+theorem tendsto_cyc_div_blen (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
+    Tendsto (fun i => (cyc blen (bdig (primeLambertAtBase 4)) v i : ℝ) / (blen i : ℝ))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+  classical
+  -- the sampled frequency, with the denominator regrouped as `nwin i * (m − ℓ + 1)`
+  have hgood : Tendsto (fun i => (goodCount i (primeLambertAtBase 4) v : ℝ)
+      / ((nwin i : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ))) atTop
+      (nhds (1 / (2 : ℝ) ^ v.length)) := by
+    refine (tendsto_occursCountP_primeLambertFour v hlen hv).congr fun i => ?_
+    unfold goodCount nwin
+    push_cast
+    ring_nf
+  -- the position-window correction
+  have hratio : Tendsto (fun i => ((kk i - v.length + 1 : ℕ) : ℝ) / (kk i : ℝ))
+      atTop (nhds 1) := by
+    have hsmall : Tendsto (fun i => ((v.length : ℝ) - 1) / (kk i : ℝ)) atTop (nhds 0) :=
+      tendsto_const_nhds.div_atTop tendsto_kk_atTop
+    have hcomb := (tendsto_const_nhds (x := (1 : ℝ)) (f := atTop)).sub hsmall
+    rw [sub_zero] at hcomb
+    refine hcomb.congr' ?_
+    filter_upwards [eventually_ge_atTop v.length] with i hi
+    have hle : v.length ≤ kk i := by unfold kk; omega
+    have hkpos : (0 : ℝ) < (kk i : ℝ) := by
+      have := kk_pos i; exact_mod_cast this
+    have hcast : ((kk i - v.length + 1 : ℕ) : ℝ) = (kk i : ℝ) - (v.length : ℝ) + 1 := by
+      have h1 : (kk i - v.length + 1 : ℕ) = kk i + 1 - v.length := by omega
+      rw [h1, Nat.cast_sub (by omega)]
+      push_cast; ring
+    rw [hcast]
+    field_simp
+    ring
+  have hmain : Tendsto (fun i => (goodCount i (primeLambertAtBase 4) v : ℝ) / (blen i : ℝ))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+    have hprod := hgood.mul hratio
+    rw [mul_one] at hprod
+    refine hprod.congr' ?_
+    filter_upwards [eventually_ge_atTop v.length] with i hi
+    have hle : v.length ≤ kk i := by unfold kk; omega
+    have hkpos : (0 : ℝ) < (kk i : ℝ) := by
+      have := kk_pos i; exact_mod_cast this
+    have hwpos : (0 : ℝ) < (nwin i : ℝ) := by
+      have := nwin_pos i; exact_mod_cast this
+    have hmpos : (0 : ℝ) < ((kk i - v.length + 1 : ℕ) : ℝ) := by
+      have h0 : 0 < kk i - v.length + 1 := by omega
+      exact_mod_cast h0
+    have hblen : (blen i : ℝ) = (nwin i : ℝ) * (kk i : ℝ) := by
+      unfold blen; push_cast; ring
+    rw [hblen]
+    field_simp
+  -- the seam: at most one `|v|` per sampled window
+  have hseam : Tendsto (fun i => (cyc blen (bdig (primeLambertAtBase 4)) v i : ℝ) / (blen i : ℝ)
+      - (goodCount i (primeLambertAtBase 4) v : ℝ) / (blen i : ℝ)) atTop (nhds 0) := by
+    have hz : Tendsto (fun i => (v.length : ℝ) / (kk i : ℝ)) atTop (nhds 0) :=
+      tendsto_const_nhds.div_atTop tendsto_kk_atTop
+    refine squeeze_zero_norm' ?_ hz
+    filter_upwards [eventually_ge_atTop v.length] with i hi
+    have hle : v.length ≤ kk i := by unfold kk; omega
+    have hkpos : (0 : ℝ) < (kk i : ℝ) := by
+      have := kk_pos i; exact_mod_cast this
+    have hwpos : (0 : ℝ) < (nwin i : ℝ) := by
+      have := nwin_pos i; exact_mod_cast this
+    have hblen : (blen i : ℝ) = (nwin i : ℝ) * (kk i : ℝ) := by
+      unfold blen; push_cast; ring
+    have hbpos : (0 : ℝ) < (blen i : ℝ) := by rw [hblen]; positivity
+    obtain ⟨h1, h2⟩ := cyc_bounds (primeLambertAtBase 4) i v hlen hle
+    have h1R : (goodCount i (primeLambertAtBase 4) v : ℝ)
+        ≤ (cyc blen (bdig (primeLambertAtBase 4)) v i : ℝ) := by exact_mod_cast h1
+    have h2R : (cyc blen (bdig (primeLambertAtBase 4)) v i : ℝ)
+        ≤ (goodCount i (primeLambertAtBase 4) v : ℝ) + (nwin i : ℝ) * (v.length : ℝ) := by
+      exact_mod_cast h2
+    rw [Real.norm_eq_abs, div_sub_div_same, abs_div, abs_of_pos hbpos,
+      abs_of_nonneg (by linarith : (0 : ℝ) ≤ (cyc blen (bdig (primeLambertAtBase 4)) v i : ℝ)
+        - (goodCount i (primeLambertAtBase 4) v : ℝ)),
+      div_le_div_iff₀ hbpos hkpos, hblen]
+    nlinarith [hwpos, hkpos]
+  have hsum := hseam.add hmain
+  rw [zero_add] at hsum
+  refine hsum.congr fun i => ?_
+  ring
+
+/-! ### The normal real -/
+
+/-- The digit sequence of the assembled real: `G₄`'s digits read along the sampled positions,
+block after block, each block repeated. -/
+noncomputable def sampleDigits (x : ℝ) : ℕ → ℕ := seq blen (bdig x)
+
+/-- **The headline of rung 2+3.**  `G₄`'s binary digits, read along the arithmetic sample of
+the base-four schedule and assembled block-by-block with repetitions, form a **normal
+sequence**.
+
+This is NOT a claim about the normality of `G₄`: the digits are `G₄`'s, the sequence they are
+assembled into is a different object. -/
+theorem isNormalSequence_sampleDigits :
+    IsNormalSequence 2 (sampleDigits (primeLambertAtBase 4)) := by
+  refine isNormalSequence_seq (le_refl 2) blen (bdig (primeLambertAtBase 4))
+    blen_pos (fun i j => bdig_lt _ i j) tendsto_blen_atTop ?_
+  intro v hv hvb
+  have hlen : 0 < v.length := List.length_pos_iff.2 hv
+  have hv2 : ∀ j, ∀ h : j < v.length, v[j] < 2 := fun j h => hvb _ (List.getElem_mem h)
+  simpa [one_div] using tendsto_cyc_div_blen v hlen hv2
+
+/-- **The normal real.**  `realOfDigits 2` of the sampled digit sequence is normal in base 2. -/
+theorem isNormal_sampleReal :
+    IsNormal 2 (realOfDigits 2 (sampleDigits (primeLambertAtBase 4))) := by
+  refine isNormal_realOfDigits_seq (le_refl 2) blen (bdig (primeLambertAtBase 4))
+    blen_pos (fun i j => bdig_lt _ i j) tendsto_blen_atTop ?_
+  intro v hv hvb
+  have hlen : 0 < v.length := List.length_pos_iff.2 hv
+  have hv2 : ∀ j, ∀ h : j < v.length, v[j] < 2 := fun j h => hvb _ (List.getElem_mem h)
+  simpa [one_div] using tendsto_cyc_div_blen v hlen hv2
+
+/-! ### The position map, free of `x` -/
+
+/-- **The sampled position sequence**, defined from the base-four schedule alone — it does not
+mention `G₄` or any other real.  `samplePos j` is the digit position whose digit sits at index
+`j` of the assembled sequence. -/
+noncomputable def samplePos (j : ℕ) : ℕ :=
+  samplePosIn (grp blen j) ((j - Tacc blen (grp blen j)) % blen (grp blen j))
+
+/-- The assembled sequence *is* `x`'s digits read along `samplePos`. -/
+lemma sampleDigits_eq (x : ℝ) (j : ℕ) :
+    sampleDigits x j = digitOf 2 (Int.fract x) (samplePos j) := rfl
+
+lemma nthP_mem (i a : ℕ) : nthP i a ∈ PK i := by
+  unfold nthP
+  exact Finset.coe_mem _
+
+/-- Every value of `samplePos` is a genuine sampled position of the schedule: the `p`-th digit
+of the `m_i`-bit window opened at `2·kIdx(n,α)` for a sample time `n ∈ P_i` and an atom `α`. -/
+theorem samplePos_spec (j : ℕ) :
+    ∃ i n α p, n ∈ PK i ∧ p < kk i ∧
+      samplePos j = 2 * kIdx (gridAt i) n α + p := by
+  set i := grp blen j with hi
+  set r := (j - Tacc blen (grp blen j)) % blen (grp blen j) with hr
+  refine ⟨i, nthP i (r / kk i / Fintype.card (gridAt i).Atom),
+    nthA i (r / kk i % Fintype.card (gridAt i).Atom), r % kk i,
+    nthP_mem _ _, Nat.mod_lt _ (kk_pos i), ?_⟩
+  unfold samplePos samplePosIn wpos
+  rfl
+
+/-- **The headline, in the position language.**  There is an `x`-independent sequence of sampled
+digit positions along which `G₄`'s binary digits form a normal sequence. -/
+theorem isNormalSequence_digits_along_samplePos :
+    IsNormalSequence 2
+      (fun j => digitOf 2 (Int.fract (primeLambertAtBase 4)) (samplePos j)) := by
+  have hfun : (fun j => digitOf 2 (Int.fract (primeLambertAtBase 4)) (samplePos j))
+      = sampleDigits (primeLambertAtBase 4) := by
+    funext j
+    exact (sampleDigits_eq _ j).symm
+  rw [hfun]
+  exact isNormalSequence_sampleDigits
+
+/-- **The normal real, in the position language.** -/
+theorem isNormal_realOfDigits_samplePos :
+    IsNormal 2 (realOfDigits 2
+      (fun j => digitOf 2 (Int.fract (primeLambertAtBase 4)) (samplePos j))) := by
+  have hfun : (fun j => digitOf 2 (Int.fract (primeLambertAtBase 4)) (samplePos j))
+      = sampleDigits (primeLambertAtBase 4) := by
+    funext j
+    exact (sampleDigits_eq _ j).symm
+  rw [hfun]
+  exact isNormal_sampleReal
+
 end NormalNumbers.G4.Sched
