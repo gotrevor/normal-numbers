@@ -206,6 +206,7 @@ import NormalNumbers.G4ScheduleGrid
 import NormalNumbers.G4ScheduleParams
 import NormalNumbers.G4ScheduleFar
 import NormalNumbers.G4ScheduleBig
+import NormalNumbers.G4EntropyXCeiling
 import NormalNumbers.G4ScheduleHarmonic
 import NormalNumbers.G4ScheduleBudget
 import NormalNumbers.G4ScheduleWitness
