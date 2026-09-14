@@ -80,13 +80,29 @@ so `b ≥ 3` again, and `N = Θ(log_b(K·L))` as before.
    is its `b = 4` instance.  `gridFrame` sets `bse := 4`, so the whole concrete grid layer
    (`G4Remainder`, `G4RowMass`, `G4MediumPrimes`, `G4FarTail`, `G4Schedule*`) is untouched
    and still green.
-4. **NEXT** the concrete grid layer in `b`: `GridParams` gains the base, `Sval`/`rowCoeff`/
-   `blockSum` use `b^{−layer}`, and the row masses become `(2/b)^K/(b−1)` and
-   `(2/b²)^K/(b²−1)` (`G4RowMass.sum_layer_inv_le`, `sum_layer_inv_sq_le` are the standalone
-   geometric sums to do first).
-4. `G4RowMass`, `G4MediumPrimes`, `G4SmallPrimeVector`, `G4FarTail` — the table above.
-5. `G4FreqSep` — `θ₀(b) = b^{−4}(2/b²)^K`; `freqDepth` uses `Nat.clog b`.
-6. `G4Schedule*` — the schedule in `(b, ℓ)`; `isDisjunctive_base`, with `b = 4` recovering
+4. ✅ **DONE (lap 14, `97179b1`)** the concrete grid layer in any base `bb ≥ 2`.  The base is
+   an explicit argument (not a `GridParams` field): `coeffAL bb`, `Sval bb`, `blockSum bb G`,
+   `farPart bb G`, `rowCoeff bb G`, `frozenGamma bb G`, `bigAvg bb`, `farAvg bb`,
+   `gridFrame bb hbb G …`.  Named masses `rowL1 b K = (2/b)^K/(b−1)`,
+   `rowL2 b K = (2/b²)^K/(b²−1)`, `farBound b J C = b^{−J}((C+2J+2)/(b−1) + 2/(b−1)²)`
+   with `rowL1_four`/`rowL2_four`/`farBound_four` the draft constants.  Closed forms in `bb`:
+   `abs_blockSum_le` (`C·rowL1`), `sum_abs_rowCoeff_le`, `sum_sq_rowCoeff_le`,
+   `sum_sq_blockSum_med_le`, `abs_blockSum_omegaVL_le` (`(log Mx/log Y)·rowL1 bb K` — the
+   `b = 2` killer, now visible as a named constant), `bigAvg_le'`, `hasSum_farBound`
+   (any real `b ≥ 2`), `farAvg_le`, `gridFrame_propD_of_bounds`, `exists_cylinder_subset`,
+   `exists_cover_of_omit`, `gridFrame_propB_of_bound` (for `orbit bb (primeLambertAtBase bb)`),
+   `gridFrame_propA`, `gridFrame_propC` (the frequency-separation seed `θ₀` is a hypothesis
+   `hsep : ∀ q ≠ 0, ‖q‖∞ ≤ D → θ₀ ≤ ∑ distZ(coeffAL bb q i)²`; `gridFrame_propC_four`
+   discharges it from `sum_sq_distZ_coeff_ge`).  `ScheduleWitness` is still the base-four
+   §5 object; `ScheduleWitness.propD` bridges its draft-constant fields.  `isDisjunctive_four`
+   unchanged, axiom-clean.
+5. **NEXT** `G4FreqSep` in base `b`: `freqDepth b K w = K + 1 + Nat.clog b |w|`, window
+   `[b^{−(K+2)}, b^{−(K+1)}]`, `distZ ≥ b^{−(K+2)}`, so `θ₀(b) = b^{−4}(2/b²)^K`.  The
+   deliverable is `sum_sq_distZ_coeff_ge_gen (bb) (hbb) : 1 + Nat.clog bb (2^K D) ≤ N → … →
+   bb^{−4}(2/bb²)^K ≤ ∑ distZ(coeffAL bb q i)²`, which plugs into `gridFrame_propC`'s `hsep`.
+6. `G4Schedule*` — the schedule in `(b, ℓ)`: a `ScheduleWitnessB bb ℓ w` with the general
+   closed forms (`rowL1 bb`, `rowL2 bb`, `farBound bb`, `θ₀(bb)`), then
+   `separatingFrameExists_of_witnessB`, `isDisjunctive_base`, with `b = 4` recovering
    `isDisjunctive_four`.
 
 ### Stretch target (NOT the objective): repair base two
