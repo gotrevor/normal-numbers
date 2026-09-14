@@ -106,7 +106,7 @@ variable (fr : Frame)
 
 lemma image_eq_image : fr.image
     = (fun x : Fin fr.H → UnitAddCircle => mulVecT fr.A x + fr.θ - fr.γ) ''
-        (Set.pi Set.univ fun _ => orbitClosure fr.bse) := by
+        (Set.pi Set.univ fun _ => orbitClosureOf fr.bse fr.x) := by
   ext y
   simp only [image, Set.mem_ofPred_eq, Set.mem_image, Set.mem_pi, Set.mem_univ, true_implies]
   constructor
@@ -175,7 +175,7 @@ lemma coe_zsmul_real (n : ℤ) (x : ℝ) :
 theorem tube_subset_pieces (θr γr : Fin fr.r → ℝ)
     (hθ : ∀ ν, (θr ν : UnitAddCircle) = fr.θ ν) (hγ : ∀ ν, (γr ν : UnitAddCircle) = fr.γ ν)
     {h : ℝ} (hhη : h ≤ fr.η) (Bs : Finset ℝ)
-    (hcov : orbitClosure fr.bse ⊆ ⋃ c ∈ Bs, ((↑) : ℝ → UnitAddCircle) '' Set.Icc c (c + h)) :
+    (hcov : orbitClosureOf fr.bse fr.x ⊆ ⋃ c ∈ Bs, ((↑) : ℝ → UnitAddCircle) '' Set.Icc c (c + h)) :
     tube fr.image fr.res ⊆
       ⋃ G ∈ fr.goodSets, ⋃ b ∈ Fintype.piFinset (fun _ : Fin fr.H => Bs),
         fr.piece θr γr G b := by
@@ -302,7 +302,7 @@ with `h ≤ η`, then
 theorem volume_tube_le (θr γr : Fin fr.r → ℝ)
     (hθ : ∀ ν, (θr ν : UnitAddCircle) = fr.θ ν) (hγ : ∀ ν, (γr ν : UnitAddCircle) = fr.γ ν)
     {h : ℝ} (hhη : h ≤ fr.η) (Bs : Finset ℝ)
-    (hcov : orbitClosure fr.bse ⊆ ⋃ c ∈ Bs, ((↑) : ℝ → UnitAddCircle) '' Set.Icc c (c + h)) :
+    (hcov : orbitClosureOf fr.bse fr.x ⊆ ⋃ c ∈ Bs, ((↑) : ℝ → UnitAddCircle) '' Set.Icc c (c + h)) :
     (volume (tube fr.image fr.res)).toReal ≤
       ∑ G ∈ fr.goodSets, (Bs.card : ℝ) ^ fr.H * fr.η ^ G.card * (volume (fr.pieceCube G)).toReal := by
   have hη := fr.hη

@@ -231,7 +231,8 @@ lemma coe_sum_dilatedTailB (c k : Fin fr.H → ℕ) (hd : ∀ α, fr.d α ≠ 0)
 /-- **`PropA` for a frame with frozen multiplier residues** (draft (4.3)).  If every sample
 point is `t_α + d_α k_α` with `k_α ≡ c_α` modulo every prime of `d_α`, and `θ` is the transport
 translate of `c`, then `Ffull n ∈ image`. -/
-theorem propA_of_progression (c : Fin fr.H → ℕ) (hd : ∀ α, fr.d α ≠ 0)
+theorem propA_of_progression (hw : fr.w = omegaR) (hx : fr.x = primeLambertAtBase fr.bse)
+    (c : Fin fr.H → ℕ) (hd : ∀ α, fr.d α ≠ 0)
     (hθ : fr.θ = fr.transportTheta c)
     (hP : ∀ n ∈ fr.P, ∃ k : Fin fr.H → ℕ, (∀ α, n = fr.t α + fr.d α * k α) ∧
       ∀ α, ∀ p ∈ (fr.d α).primeFactors, k α ≡ c α [MOD p]) :
@@ -239,9 +240,10 @@ theorem propA_of_progression (c : Fin fr.H → ℕ) (hd : ∀ α, fr.d α ≠ 0)
   intro n hn
   obtain ⟨k, hnk, hk⟩ := hP n hn
   refine ⟨fun α => ((orbit fr.bse (primeLambertAtBase fr.bse) (k α) : ℝ) : UnitAddCircle),
-    fun α => subset_closure (Set.mem_range_self _), ?_⟩
+    fun α => by rw [hx]; exact subset_closure (Set.mem_range_self _), ?_⟩
   funext ν
   unfold Ffull
+  rw [hw]
   have hsum : (∑ α, (fr.A ν α : ℝ)
         * ∑' j : ℕ, omegaR (n + fr.shift α (j + 1)) / (fr.bse : ℝ) ^ (j + 1))
       = ∑ α, (fr.A ν α : ℝ) * dilatedTailB fr.bse (fr.d α) (k α) :=

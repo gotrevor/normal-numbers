@@ -79,6 +79,8 @@ noncomputable def gridFrame (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : �
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) : Frame where
   bse := bb
   hbse := hbb
+  w := omegaR
+  x := primeLambertAtBase bb
   K := G.K
   J := G.K + G.N
   r := G.rDim
@@ -120,7 +122,7 @@ theorem gridFrame_propA (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) :
     (gridFrame bb hbb G X hne sm γ hη hε D).PropA := by
   set fr := gridFrame bb hbb G X hne sm γ hη hε D with hfr
-  refine fr.propA_of_progression 0 (fun α => (G.d_pos _).ne') rfl ?_
+  refine fr.propA_of_progression rfl rfl 0 (fun α => (G.d_pos _).ne') rfl ?_
   intro n hn
   choose k hk1 hk2 using fun α : Fin fr.H => G.exists_mult_mul hn (G.atomEquiv.symm α)
   refine ⟨k, hk1, ?_⟩
