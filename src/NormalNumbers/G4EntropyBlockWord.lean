@@ -111,4 +111,171 @@ noncomputable def bdig (x : ℝ) (i j : ℕ) : ℕ := digitOf 2 (Int.fract x) (s
 
 lemma bdig_lt (x : ℝ) (i j : ℕ) : bdig x i j < 2 := Nat.mod_lt _ (by omega)
 
+/-! ### The dictionary: a window of the block is a window of `x` at a sampled position -/
+
+/-- Inside the `w`-th sampled window, a window of `v` that fits is exactly an occurrence of `v`
+in `x` at the corresponding sampled digit position. -/
+lemma matchesAt_per_blen_iff (x : ℝ) (i w p : ℕ) (v : List ℕ)
+    (hw : w < nwin i) (hp : p + v.length ≤ kk i) :
+    MatchesAt (per blen (bdig x) i) v (w * kk i + p) ↔ OccursAt 2 x v (wpos i w + p) := by
+  have hm := kk_pos i
+  have hkey : ∀ j < v.length,
+      per blen (bdig x) i (w * kk i + p + j) = digitOf 2 (Int.fract x) (wpos i w + p + j) := by
+    intro j hj
+    have hlt : p + j < kk i := by omega
+    have hmod : (w * kk i + p + j) % blen i = w * kk i + p + j := by
+      refine Nat.mod_eq_of_lt ?_
+      have : w * kk i + p + j < w * kk i + kk i := by omega
+      refine lt_of_lt_of_le this ?_
+      have : w + 1 ≤ nwin i := hw
+      calc w * kk i + kk i = (w + 1) * kk i := by ring
+        _ ≤ nwin i * kk i := Nat.mul_le_mul_right _ this
+        _ = blen i := rfl
+    have hcomm : w * kk i + p + j = kk i * w + (p + j) := by ring
+    have hdiv : (w * kk i + p + j) / kk i = w := by
+      rw [hcomm, Nat.mul_add_div hm, Nat.div_eq_of_lt hlt, Nat.add_zero]
+    have hmd : (w * kk i + p + j) % kk i = p + j := by
+      rw [hcomm, Nat.mul_add_mod, Nat.mod_eq_of_lt hlt]
+    unfold per bdig samplePosIn
+    rw [hmod, hdiv, hmd]
+    congr 1
+    omega
+  constructor
+  · intro h j hj
+    have h' := h j hj
+    rw [hkey j hj] at h'
+    rw [h']
+    exact (List.getD_eq_getElem v 0 hj)
+  · intro h j hj
+    rw [hkey j hj, h j hj]
+    exact (List.getD_eq_getElem v 0 hj).symm
+
+/-! ### The cyclic count against the sampled occurrence count -/
+
+open Classical in
+/-- The numerator of `tendsto_occursCountP_primeLambertFour`: the number of triples `(n, α, p)`
+with `p` a window position admitting a full copy of `v`, at which `v` occurs in `x`. -/
+noncomputable def goodCount (i : ℕ) (x : ℝ) (v : List ℕ) : ℕ :=
+  ∑ c : (gridAt i).Atom × Fin (kk i - v.length + 1),
+    ((PK i).filter fun n => OccursAt 2 x v (2 * kIdx (gridAt i) n c.1 + (c.2 : ℕ))).card
+
+/-- Counting on `[0, m)` versus on the fitting positions `[0, m − ℓ + 1)`: the two differ by at
+most `ℓ`. -/
+lemma card_filter_fit (Q : ℕ → Prop) [DecidablePred Q] {m ℓ : ℕ} (hℓ : 0 < ℓ) (hℓm : ℓ ≤ m) :
+    ((Finset.range (m - ℓ + 1)).filter Q).card ≤ ((Finset.range m).filter Q).card ∧
+      ((Finset.range m).filter Q).card ≤ ((Finset.range (m - ℓ + 1)).filter Q).card + ℓ := by
+  classical
+  have hle : m - ℓ + 1 ≤ m := by omega
+  have hsplit : ((Finset.range m).filter Q).card
+      = ((Finset.range (m - ℓ + 1)).filter Q).card
+        + ((Finset.Ico (m - ℓ + 1) m).filter Q).card := by
+    rw [Finset.range_eq_Ico, Finset.range_eq_Ico,
+      ← Finset.Ico_union_Ico_eq_Ico (Nat.zero_le (m - ℓ + 1)) hle, Finset.filter_union]
+    refine (Finset.card_union_of_disjoint ?_)
+    exact Finset.disjoint_filter_filter (Finset.Ico_disjoint_Ico_consecutive 0 _ _)
+  have hedge : ((Finset.Ico (m - ℓ + 1) m).filter Q).card ≤ ℓ := by
+    refine le_trans (Finset.card_filter_le _ _) ?_
+    rw [Nat.card_Ico]
+    omega
+  omega
+
+/-- The cyclic count of the scale-`i` block, split into its `nwin i` sampled windows. -/
+lemma cyc_eq_sum (x : ℝ) (i : ℕ) (v : List ℕ) :
+    cyc blen (bdig x) v i
+      = ∑ w ∈ Finset.range (nwin i),
+          ((Finset.range (kk i)).filter
+            (fun p => MatchesAt (per blen (bdig x) i) v (w * kk i + p))).card := by
+  classical
+  unfold cyc winCount
+  have : blen i = nwin i * kk i := rfl
+  rw [this]
+  exact card_filter_range_mul _ _
+
+open Classical in
+/-- The per-window sampled count, summed over the windows, is exactly `goodCount`. -/
+lemma sum_fit_eq_goodCount (x : ℝ) (i : ℕ) (v : List ℕ) :
+    ∑ w ∈ Finset.range (nwin i),
+        ((Finset.range (kk i - v.length + 1)).filter
+          (fun p => OccursAt 2 x v (wpos i w + p))).card
+      = goodCount i x v := by
+  classical
+  set A := Fintype.card (gridAt i).Atom with hA
+  set ℓ := v.length with hℓ
+  have hnwin : nwin i = (PK i).card * A := rfl
+  rw [hnwin, sum_range_mul]
+  have hstep : ∀ a ∈ Finset.range (PK i).card,
+      ∑ e ∈ Finset.range A,
+        ((Finset.range (kk i - ℓ + 1)).filter
+          (fun p => OccursAt 2 x v (wpos i (a * A + e) + p))).card
+      = ∑ α : (gridAt i).Atom,
+          ((Finset.range (kk i - ℓ + 1)).filter
+            (fun p => OccursAt 2 x v (2 * kIdx (gridAt i) (nthP i a) α + p))).card := by
+    intro a _
+    rw [← sum_range_nthA i (fun α =>
+      ((Finset.range (kk i - ℓ + 1)).filter
+        (fun p => OccursAt 2 x v (2 * kIdx (gridAt i) (nthP i a) α + p))).card)]
+    refine Finset.sum_congr rfl fun e he => ?_
+    rw [wpos_mk i a e (Finset.mem_range.1 he)]
+  rw [Finset.sum_congr rfl hstep]
+  rw [sum_range_nthP i (fun n => ∑ α : (gridAt i).Atom,
+    ((Finset.range (kk i - ℓ + 1)).filter
+      (fun p => OccursAt 2 x v (2 * kIdx (gridAt i) n α + p))).card)]
+  -- now reorder `∑ n ∑ α ∑ p` into `∑ (α, p) ∑ n`
+  unfold goodCount
+  rw [Fintype.sum_prod_type]
+  simp only [Finset.card_filter]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun α _ => ?_
+  rw [Finset.sum_comm, ← Fin.sum_univ_eq_sum_range (fun p =>
+    ∑ n ∈ PK i, if OccursAt 2 x v (2 * kIdx (gridAt i) n α + p) then 1 else 0)]
+
+open Classical in
+/-- **Rung 2's counting endpoint.**  The cyclic window count of the scale-`i` block is the
+sampled occurrence count of `v`, up to one `|v|` per sampled window. -/
+theorem cyc_bounds (x : ℝ) (i : ℕ) (v : List ℕ) (hv : 0 < v.length) (hvm : v.length ≤ kk i) :
+    goodCount i x v ≤ cyc blen (bdig x) v i ∧
+      cyc blen (bdig x) v i ≤ goodCount i x v + nwin i * v.length := by
+  classical
+  set ℓ := v.length with hℓ
+  have hbound : ∀ w ∈ Finset.range (nwin i),
+      ((Finset.range (kk i - ℓ + 1)).filter
+          (fun p => OccursAt 2 x v (wpos i w + p))).card
+        ≤ ((Finset.range (kk i)).filter
+          (fun p => MatchesAt (per blen (bdig x) i) v (w * kk i + p))).card
+      ∧ ((Finset.range (kk i)).filter
+          (fun p => MatchesAt (per blen (bdig x) i) v (w * kk i + p))).card
+        ≤ ((Finset.range (kk i - ℓ + 1)).filter
+          (fun p => OccursAt 2 x v (wpos i w + p))).card + ℓ := by
+    intro w hw
+    have hwlt := Finset.mem_range.1 hw
+    have hcongr : ((Finset.range (kk i - ℓ + 1)).filter
+        (fun p => MatchesAt (per blen (bdig x) i) v (w * kk i + p))).card
+        = ((Finset.range (kk i - ℓ + 1)).filter
+          (fun p => OccursAt 2 x v (wpos i w + p))).card := by
+      congr 1
+      refine Finset.filter_congr fun p hp => ?_
+      have hple : p + ℓ ≤ kk i := by
+        have := Finset.mem_range.1 hp
+        omega
+      simpa using matchesAt_per_blen_iff x i w p v hwlt hple
+    have := card_filter_fit (fun p => MatchesAt (per blen (bdig x) i) v (w * kk i + p))
+      (m := kk i) (ℓ := ℓ) hv hvm
+    rw [hcongr] at this
+    exact this
+  rw [cyc_eq_sum x i v, ← sum_fit_eq_goodCount x i v]
+  constructor
+  · exact Finset.sum_le_sum fun w hw => (hbound w hw).1
+  · calc ∑ w ∈ Finset.range (nwin i),
+          ((Finset.range (kk i)).filter
+            (fun p => MatchesAt (per blen (bdig x) i) v (w * kk i + p))).card
+        ≤ ∑ w ∈ Finset.range (nwin i),
+            (((Finset.range (kk i - ℓ + 1)).filter
+              (fun p => OccursAt 2 x v (wpos i w + p))).card + ℓ) :=
+          Finset.sum_le_sum fun w hw => (hbound w hw).2
+      _ = (∑ w ∈ Finset.range (nwin i),
+            ((Finset.range (kk i - ℓ + 1)).filter
+              (fun p => OccursAt 2 x v (wpos i w + p))).card) + nwin i * ℓ := by
+          rw [Finset.sum_add_distrib]
+          simp [mul_comm]
+
 end NormalNumbers.G4.Sched
