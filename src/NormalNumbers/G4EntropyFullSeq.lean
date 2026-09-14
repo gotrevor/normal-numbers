@@ -326,4 +326,99 @@ lemma sum_range_fnth {β : Type*} [AddCommMonoid β] (i : ℕ) (g : ℕ → β) 
     obtain ⟨a, ha⟩ := hrange
     exact ⟨a, Subtype.ext ha⟩
 
+/-! ### The read count over a band -/
+
+open Classical in
+/-- The number of fitting in-window occurrences of `v` in band `i`'s distinct windows. -/
+noncomputable def fullGood (i : ℕ) (x : ℝ) (v : List ℕ) : ℕ :=
+  ∑ a ∈ Finset.range (winStarts i).card,
+    ((Finset.range (kk i - v.length + 1)).filter
+      (fun q => OccursAt 2 x v (fnth i a + q))).card
+
+open Classical in
+/-- `fullGood` re-summed over the band's window starts. -/
+theorem fullGood_eq (i : ℕ) (x : ℝ) (v : List ℕ) :
+    fullGood i x v
+      = ∑ q ∈ winStarts i,
+          ((Finset.range (kk i - v.length + 1)).filter
+            (fun p => OccursAt 2 x v (q + p))).card :=
+  sum_range_fnth i (fun q =>
+    ((Finset.range (kk i - v.length + 1)).filter (fun p => OccursAt 2 x v (q + p))).card)
+
+set_option maxHeartbeats 2000000 in
+open Classical in
+/-- **The band's contribution to the schedule-only read count**, up to one word length per
+window. -/
+theorem full_band_winCount_bounds (x : ℝ) (i : ℕ) (v : List ℕ) (hv : 0 < v.length)
+    (hvm : v.length ≤ kk i) :
+    fullGood i x v
+        ≤ ((Finset.Ico (fT i) (fT (i + 1))).filter (MatchesAt (fullDig x) v)).card ∧
+      ((Finset.Ico (fT i) (fT (i + 1))).filter (MatchesAt (fullDig x) v)).card
+        ≤ fullGood i x v + (winStarts i).card * v.length := by
+  classical
+  have hbT : fT (i + 1) = fT i + fL i := rfl
+  have hsplit : ((Finset.Ico (fT i) (fT (i + 1))).filter (MatchesAt (fullDig x) v)).card
+      = ∑ a ∈ Finset.range (winStarts i).card,
+          ((Finset.range (kk i)).filter
+            (fun q => MatchesAt (fullDig x) v (fT i + (a * kk i + q)))).card := by
+    rw [hbT, card_Ico_shift _ (fT i) (fL i), fL, card_filter_range_mul]
+  rw [hsplit]
+  have hper : ∀ a ∈ Finset.range (winStarts i).card,
+      ((Finset.range (kk i - v.length + 1)).filter
+          (fun q => OccursAt 2 x v (fnth i a + q))).card
+        ≤ ((Finset.range (kk i)).filter
+          (fun q => MatchesAt (fullDig x) v (fT i + (a * kk i + q)))).card ∧
+      ((Finset.range (kk i)).filter
+          (fun q => MatchesAt (fullDig x) v (fT i + (a * kk i + q)))).card
+        ≤ ((Finset.range (kk i - v.length + 1)).filter
+          (fun q => OccursAt 2 x v (fnth i a + q))).card + v.length := by
+    intro a ha
+    have ha' : a < (winStarts i).card := Finset.mem_range.1 ha
+    have hcongr : ((Finset.range (kk i - v.length + 1)).filter
+        (fun q => MatchesAt (fullDig x) v (fT i + (a * kk i + q)))).card
+        = ((Finset.range (kk i - v.length + 1)).filter
+          (fun q => OccursAt 2 x v (fnth i a + q))).card := by
+      congr 1
+      refine Finset.filter_congr fun q hq => ?_
+      have hqfit : q + v.length ≤ kk i := by
+        have := Finset.mem_range.1 hq
+        omega
+      have hassoc : fT i + (a * kk i + q) = fT i + a * kk i + q := by ring
+      rw [hassoc]
+      simpa using matchesAt_fullDig_iff x i a q v ha' hqfit
+    have h := card_filter_fit
+      (fun q => MatchesAt (fullDig x) v (fT i + (a * kk i + q))) (m := kk i)
+      (ℓ := v.length) hv hvm
+    rw [hcongr] at h
+    exact h
+  constructor
+  · exact Finset.sum_le_sum fun a ha => (hper a ha).1
+  · calc ∑ a ∈ Finset.range (winStarts i).card,
+          ((Finset.range (kk i)).filter
+            (fun q => MatchesAt (fullDig x) v (fT i + (a * kk i + q)))).card
+        ≤ ∑ a ∈ Finset.range (winStarts i).card,
+            (((Finset.range (kk i - v.length + 1)).filter
+              (fun q => OccursAt 2 x v (fnth i a + q))).card + v.length) :=
+          Finset.sum_le_sum fun a ha => (hper a ha).2
+      _ = fullGood i x v + (winStarts i).card * v.length := by
+          rw [Finset.sum_add_distrib, fullGood]
+          simp [mul_comm]
+
+set_option maxHeartbeats 1000000 in
+open Classical in
+/-- The full read count at the band cutoffs. -/
+theorem full_winCount_bounds (x : ℝ) (i : ℕ) (v : List ℕ) (hv : 0 < v.length)
+    (hvm : v.length ≤ kk i) :
+    fullGood i x v ≤ winCount (fullDig x) v (fT (i + 1)) ∧
+      winCount (fullDig x) v (fT (i + 1))
+        ≤ fullGood i x v + fT i + (winStarts i).card * v.length := by
+  classical
+  have hsplit := winCount_split (fullDig x) v (fT_mono (Nat.le_succ i))
+  simp only [Nat.succ_eq_add_one] at hsplit
+  obtain ⟨h1, h2⟩ := full_band_winCount_bounds x i v hv hvm
+  have hhist : winCount (fullDig x) v (fT i) ≤ fT i := winCount_le _ _ _
+  generalize hc : (winStarts i).card * v.length = c at h2 ⊢
+  rw [hsplit]
+  omega
+
 end NormalNumbers.G4.Sched
