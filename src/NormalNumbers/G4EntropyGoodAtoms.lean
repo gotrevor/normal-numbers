@@ -143,6 +143,43 @@ theorem abs_coordAvg_sub_le {A : Type*} [Fintype A] [DecidableEq A] {m ℓ : ℕ
     linarith
   exact abs_posAvg_sub_le hℓ hℓm (soloLaw L α) w hδ' hdef
 
+/-- **`coordAvg` refines `posAvg`**: the repo's already-controlled average over all coordinates
+and all positions is the mean of the individual coordinates' averages. -/
+theorem posAvg_eq_sum_coordAvg {A : Type*} [Fintype A] [DecidableEq A] [Nonempty A] (m ℓ : ℕ)
+    (L : FinLaw (A → Fin (2 ^ m))) (w : Fin (2 ^ ℓ)) :
+    posAvg m ℓ L w = (∑ α : A, coordAvg m ℓ L α w) / (Fintype.card A : ℝ) := by
+  classical
+  have hA : (0 : ℝ) < (Fintype.card A : ℝ) := by
+    have : 0 < Fintype.card A := Fintype.card_pos
+    exact_mod_cast this
+  have hm : (0 : ℝ) < ((m - ℓ + 1 : ℕ) : ℝ) := by
+    have : 0 < m - ℓ + 1 := by omega
+    exact_mod_cast this
+  have hterm : ∀ α : A, coordAvg m ℓ L α w
+      = (∑ p : Fin (m - ℓ + 1),
+          (L.map (fun z : A → Fin (2 ^ m) => posAt m ℓ (p : ℕ) (z α))).prob {w})
+        / ((m - ℓ + 1 : ℕ) : ℝ) := by
+    intro α
+    rw [coordAvg, posAvg]
+    have hnum : ∀ c : Unit × Fin (m - ℓ + 1),
+        ((soloLaw L α).map (fun z : Unit → Fin (2 ^ m) => posAt m ℓ (c.2 : ℕ) (z c.1))).prob {w}
+          = (L.map (fun z : A → Fin (2 ^ m) => posAt m ℓ (c.2 : ℕ) (z α))).prob {w} := by
+      intro c
+      rw [soloLaw, FinLaw.prob_singleton_map_map]
+    rw [Fintype.sum_prod_type]
+    simp only [Fintype.card_unit, Nat.cast_one, one_mul, Finset.univ_unique,
+      Finset.sum_singleton, Nat.cast_add, Nat.cast_one]
+    congr 1
+    exact Finset.sum_congr rfl fun p _ => hnum (PUnit.unit, p)
+  have hsum : ∑ α : A, coordAvg m ℓ L α w
+      = (∑ α : A, ∑ p : Fin (m - ℓ + 1),
+          (L.map (fun z : A → Fin (2 ^ m) => posAt m ℓ (p : ℕ) (z α))).prob {w})
+        / ((m - ℓ + 1 : ℕ) : ℝ) := by
+    rw [Finset.sum_div]
+    exact Finset.sum_congr rfl fun α _ => hterm α
+  rw [posAvg, hsum, Fintype.sum_prod_type]
+  field_simp
+
 open Classical in
 /-- **All but a `ρ`-fraction of the coordinates are individually good.**  This is the dual of
 `abs_posAvg_restrict_sub_le`: rather than paying `√(1/ρ)` for an arbitrary sub-collection, one
