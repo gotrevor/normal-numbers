@@ -275,3 +275,4 @@ import NormalNumbers.G4EntropyAtomFreq
 import NormalNumbers.G4EntropyBand
 import NormalNumbers.G4EntropyBandFreq
 import NormalNumbers.G4EntropyBandSeq
+import NormalNumbers.G4EntropyBandPrefix
