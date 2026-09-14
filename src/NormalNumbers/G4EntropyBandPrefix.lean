@@ -631,4 +631,178 @@ theorem tendsto_midRead_freq (v : List ℕ) (hlen : 0 < v.length)
   rw [zero_add] at hfin
   exact hfin.congr fun i => by ring
 
+/-! ### The pointwise mid-band bound -/
+
+set_option maxHeartbeats 1000000 in
+/-- **The explicit error at any mid-band cutoff.**  After `a` of band `i`'s windows the
+frequency of `v` in the digits read so far is within
+
+    `2√(2 log 2·|v|·(δ+1)|P_K|/(a·m_K)) + 2(|v| + 4|bandS i|/a)/m_K`
+
+of `2^{−|v|}`.  Both terms vanish once `a` exceeds a `K^{−1/2}`-ish fraction of the band, which
+is what makes the good cutoffs a density-one set. -/
+theorem abs_midRead_freq_sub_le (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) (i a : ℕ) (ha : 0 < a)
+    (haS : a ≤ (bandS i).card) (h2l : 2 * v.length ≤ kk i) :
+    |(winCount (bandDig (primeLambertAtBase 4)) v (bT i + a * kk i) : ℝ)
+        / ((bT i + a * kk i : ℕ) : ℝ) - 1 / (2 : ℝ) ^ v.length|
+      ≤ 2 * Real.sqrt (2 * Real.log 2 * (v.length : ℝ)
+            * ((atomDeficit i + 1) * ((PK i).card : ℝ)) / ((a : ℝ) * (kk i : ℝ)))
+        + 2 * ((v.length : ℝ) + 4 * ((bandS i).card : ℝ) / (a : ℝ)) / (kk i : ℝ) := by
+  classical
+  set x := primeLambertAtBase 4 with hx
+  set L : ℝ := (v.length : ℝ) with hL
+  set A : ℝ := (a : ℝ) with hA
+  set K : ℝ := (kk i : ℝ) with hK
+  set T : ℝ := (bT i : ℝ) with hT
+  set S : ℝ := ((bandS i).card : ℝ) with hS
+  have hApos : (0 : ℝ) < A := by rw [hA]; exact_mod_cast ha
+  have hKpos : (0 : ℝ) < K := by
+    rw [hK]; have := kk_pos' i; exact_mod_cast this
+  have hTnn : (0 : ℝ) ≤ T := Nat.cast_nonneg _
+  have hL1 : (1 : ℝ) ≤ L := by rw [hL]; exact_mod_cast hlen
+  have hli : v.length ≤ kk i := by omega
+  have hNeq : ((bT i + a * kk i : ℕ) : ℝ) = T + A * K := by rw [hT, hA, hK]; push_cast; ring
+  have hNpos : (0 : ℝ) < T + A * K := by nlinarith
+  have hFeq : ((kk i - v.length + 1 : ℕ) : ℝ) = K - L + 1 := by
+    have h1 : (kk i - v.length + 1 : ℕ) = kk i + 1 - v.length := by omega
+    rw [h1, Nat.cast_sub (by omega)]
+    rw [hK, hL]
+    push_cast
+    ring
+  have hFpos : (0 : ℝ) < K - L + 1 := by
+    have : (2 : ℝ) * L ≤ K := by rw [hK, hL]; exact_mod_cast h2l
+    linarith
+  -- the certified prefix
+  have hε : |(preGood i a x v : ℝ) / (A * (K - L + 1)) - 1 / (2 : ℝ) ^ v.length|
+      ≤ 2 * Real.sqrt (2 * Real.log 2 * L * ((atomDeficit i + 1) * ((PK i).card : ℝ))
+          / (A * K)) := by
+    have hmain := abs_posAvg_preLaw_le i a v.length ha haS hlen h2l ⟨wordVal v, wordVal_lt hv⟩
+    have hren : posAvg (kk i) v.length (preLaw i a ha x) ⟨wordVal v, wordVal_lt hv⟩
+        = (preGood i a x v : ℝ) / (A * (K - L + 1)) := by
+      rw [posAvg_preLaw_eq_digits i a v.length ha haS hli x ⟨wordVal v, wordVal_lt hv⟩, hFeq]
+      congr 1
+      rw [preGood_eq i a haS x v]
+      push_cast
+      rw [← Fin.sum_univ_eq_sum_range (fun q =>
+        ((((bandPre i a).filter fun n =>
+          OccursAt 2 x v (2 * kIdx (gridAt i) n (goodAtom i) + q)).card : ℕ) : ℝ))]
+      refine Finset.sum_congr rfl fun p _ => ?_
+      congr 2
+      refine Finset.filter_congr fun n _ => ?_
+      exact blockVal_eq_wordVal_iff (y := x) hv
+    rw [hren] at hmain
+    exact hmain
+  -- the history bound
+  have hT4 : T ≤ 4 * S := by
+    have h := bT_kk_le i
+    have hbl : (bL i : ℝ) = S * K := by
+      rw [hS, hK]
+      show ((((bandS i).card * kk i : ℕ)) : ℝ) = _
+      push_cast; ring
+    rw [hbl, ← hT, ← hK] at h
+    nlinarith [hKpos]
+  have hTAK : T / (A * K) ≤ 4 * S / A / K := by
+    rw [div_le_div_iff₀ (by positivity) hKpos, div_mul_eq_mul_div, le_div_iff₀ hApos]
+    nlinarith [mul_le_mul_of_nonneg_right hT4 (le_of_lt (mul_pos hKpos hApos))]
+  -- the denominator correction `1 − ρ`
+  have hρle : A * (K - L + 1) ≤ T + A * K := by nlinarith [hApos, hL1, hTnn]
+  have hρgap : T + A * K - A * (K - L + 1) ≤ T + A * L := by nlinarith [hApos]
+  have hcorr : (T + A * L) / (T + A * K) ≤ (L + 4 * S / A) / K := by
+    have h1 : (T + A * L) / (T + A * K) ≤ (T + A * L) / (A * K) := by
+      refine div_le_div_of_nonneg_left (by nlinarith [hApos, hL1, hTnn]) (by positivity) ?_
+      nlinarith
+    have h2 : (T + A * L) / (A * K) = T / (A * K) + L / K := by
+      field_simp
+    have h4 : (L + 4 * S / A) / K = L / K + 4 * S / A / K := by
+      field_simp
+    rw [h2] at h1
+    rw [h4]
+    linarith [h1, hTAK]
+  -- the seam
+  obtain ⟨hlo, hhi⟩ := winCount_mid_bounds x i a haS v hlen hli
+  have hlowR : (preGood i a x v : ℝ) ≤ (winCount (bandDig x) v (bT i + a * kk i) : ℝ) := by
+    exact_mod_cast hlo
+  have hhighR : (winCount (bandDig x) v (bT i + a * kk i) : ℝ)
+      ≤ (preGood i a x v : ℝ) + T + A * L := by
+    have heq : ((preGood i a x v + bT i + a * v.length : ℕ) : ℝ)
+        = (preGood i a x v : ℝ) + T + A * L := by rw [hT, hA, hL]; push_cast; ring
+    rw [← heq]
+    exact_mod_cast hhi
+  -- assemble
+  have hsmall : (1 : ℝ) / (2 : ℝ) ^ v.length ≤ 1 := by
+    rw [div_le_one (by positivity)]
+    exact one_le_pow₀ (by norm_num)
+  have hPnn : (0 : ℝ) ≤ (preGood i a x v : ℝ) := Nat.cast_nonneg _
+  set E : ℝ := 2 * Real.sqrt (2 * Real.log 2 * L * ((atomDeficit i + 1) * ((PK i).card : ℝ))
+      / (A * K)) with hE
+  set G : ℝ := (L + 4 * S / A) / K with hG
+  have hGnn : (0 : ℝ) ≤ G := by
+    rw [hG]
+    have hSnn : (0 : ℝ) ≤ S := Nat.cast_nonneg _
+    positivity
+  -- `|P/N − 2^{−L}| ≤ E + G`
+  have hstep1 : |(preGood i a x v : ℝ) / (T + A * K) - 1 / (2 : ℝ) ^ v.length| ≤ E + G := by
+    have hrho : (preGood i a x v : ℝ) / (T + A * K)
+        = ((preGood i a x v : ℝ) / (A * (K - L + 1))) * (A * (K - L + 1) / (T + A * K)) := by
+      field_simp
+    have hrho1 : A * (K - L + 1) / (T + A * K) ≤ 1 := by
+      rw [div_le_one hNpos]; exact hρle
+    have hrho0 : (0 : ℝ) ≤ A * (K - L + 1) / (T + A * K) := by positivity
+    have hgap : 1 - A * (K - L + 1) / (T + A * K) ≤ G := by
+      rw [sub_le_iff_le_add, ← sub_le_iff_le_add', ← hG] at *
+      have hstep : (T + A * K - A * (K - L + 1)) / (T + A * K)
+          ≤ (T + A * L) / (T + A * K) := by
+        gcongr
+        linarith [hρgap]
+      have : (T + A * K - A * (K - L + 1)) / (T + A * K) ≤ G := le_trans hstep hcorr
+      have hid : (T + A * K - A * (K - L + 1)) / (T + A * K)
+          = 1 - A * (K - L + 1) / (T + A * K) := by field_simp
+      linarith [hid ▸ this]
+    set ρ : ℝ := A * (K - L + 1) / (T + A * K) with hρ
+    set Q : ℝ := (preGood i a x v : ℝ) / (A * (K - L + 1)) with hQ
+    have hQb : |Q - 1 / (2 : ℝ) ^ v.length| ≤ E := hε
+    rw [hrho]
+    have hexp : Q * ρ - 1 / (2 : ℝ) ^ v.length
+        = ρ * (Q - 1 / (2 : ℝ) ^ v.length) - (1 - ρ) * (1 / (2 : ℝ) ^ v.length) := by ring
+    rw [hexp]
+    have h1 : |ρ * (Q - 1 / (2 : ℝ) ^ v.length)| ≤ E := by
+      rw [abs_mul, abs_of_nonneg hrho0]
+      nlinarith [hQb, hrho1, hrho0, abs_nonneg (Q - 1 / (2 : ℝ) ^ v.length)]
+    have h2 : |(1 - ρ) * (1 / (2 : ℝ) ^ v.length)| ≤ G := by
+      rw [abs_mul, abs_of_nonneg (by linarith : (0:ℝ) ≤ 1 - ρ),
+        abs_of_nonneg (by positivity : (0:ℝ) ≤ 1 / (2:ℝ) ^ v.length)]
+      nlinarith [hgap, hsmall, hGnn]
+    calc |ρ * (Q - 1 / (2 : ℝ) ^ v.length) - (1 - ρ) * (1 / (2 : ℝ) ^ v.length)|
+        ≤ |ρ * (Q - 1 / (2 : ℝ) ^ v.length)| + |(1 - ρ) * (1 / (2 : ℝ) ^ v.length)| :=
+          abs_sub _ _
+      _ ≤ E + G := by linarith
+  -- `|W/N − P/N| ≤ G`
+  have hstep2 : |(winCount (bandDig x) v (bT i + a * kk i) : ℝ) / (T + A * K)
+      - (preGood i a x v : ℝ) / (T + A * K)| ≤ G := by
+    rw [div_sub_div_same, abs_le]
+    constructor
+    · rw [neg_le, ← neg_div, neg_sub]
+      have hle : (preGood i a x v : ℝ)
+          - (winCount (bandDig x) v (bT i + a * kk i) : ℝ) ≤ 0 := by linarith
+      have := div_nonpos_of_nonpos_of_nonneg hle hNpos.le
+      linarith
+    · have hWA : (winCount (bandDig x) v (bT i + a * kk i) : ℝ)
+          - (preGood i a x v : ℝ) ≤ T + A * L := by linarith
+      calc ((winCount (bandDig x) v (bT i + a * kk i) : ℝ) - (preGood i a x v : ℝ))
+            / (T + A * K)
+          ≤ (T + A * L) / (T + A * K) := by gcongr
+        _ ≤ G := hcorr
+  rw [hNeq]
+  calc |(winCount (bandDig x) v (bT i + a * kk i) : ℝ) / (T + A * K)
+      - 1 / (2 : ℝ) ^ v.length|
+      ≤ |(winCount (bandDig x) v (bT i + a * kk i) : ℝ) / (T + A * K)
+          - (preGood i a x v : ℝ) / (T + A * K)|
+        + |(preGood i a x v : ℝ) / (T + A * K) - 1 / (2 : ℝ) ^ v.length| := by
+        have := abs_sub_le ((winCount (bandDig x) v (bT i + a * kk i) : ℝ) / (T + A * K))
+          ((preGood i a x v : ℝ) / (T + A * K)) (1 / (2 : ℝ) ^ v.length)
+        linarith
+    _ ≤ G + (E + G) := by linarith [hstep1, hstep2]
+    _ = E + 2 * (L + 4 * S / A) / K := by rw [hG]; ring
+
 end NormalNumbers.G4.Sched
