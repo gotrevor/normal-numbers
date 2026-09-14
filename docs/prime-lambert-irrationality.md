@@ -19,6 +19,7 @@ No novelty claim.  Headline `irrational_primeLambert` is **sorry-gated**; see "S
 | `PrimeLambertAnalytic` | finite tail `truncPhase`, per-prime parts `primePart`, exact additive split `truncPhase_split` (bad/small/large), the four analytic Props `TailTruncation`, `LargePrimeNegligible`, `BadPrimeFrozen`, `SmallPrimeDecay`, proved wiring `phaseOscillation_of_chain`, `ChainExists → Irrational primeLambert` (`irrational_of_chainExists`) | wiring proved, axiom-clean; the four Props open |
 | `PrimeLambertTail` | `badPrimeFrozen_of_residue` (exact freezing ⇒ `BadPrimeFrozen`), `phaseSum_sub_truncPhase` (`F − F_J = phaseSum c J n`), `ω(m) ≤ log₂ m`, `ω(dm) ≤ ω d + ω m`, exact tail bound `abs_truncation_error_le`: `\|F − F_J\| ≤ ∑_a \|c a\|(ω d_a + log₂(k_a+1) + J + 1)/2^J`, `tailTruncation_of_bound` | proved, axiom-clean |
 | `PrimeLambertHexagonNegative` | `HexNonneg q`, `HexNonnegOfLargeMean q`; eighth-root witness on `ℤ/19ℤ` with `6859·H = 469 − 450√2 < 0`, `\|𝔼 f\| = (7+3√2)/19 > 1/2`; `not_hexNonneg_nineteen`, `not_hexNonnegOfLargeMean_nineteen`, `not_meanRetention_nineteen` | proved, axiom-clean (refutations) |
+| `PrimeLambertMoments` | sharp Taylor bound `‖e^{it} − ∑_{k<M}(it)^k/k!‖ ≤ \|t\|^M/M!` (`norm_expRem_le'`), even-moment average bound `norm_avg_e_sub_taylor_le`; independent CRT model `indepAvg` (uniform residue mod `∏_{p small} p`), sample average `sampleAvg`; Props `IndepCharDecay`, `MomentComparison`, `IndepMomentSmall`; **proved transfer** `smallPrimeDecay_of_moments` (even `M_N`), `MomentChain → SmallPrimeDecay` | transfer proved, axiom-clean; the three Props open |
 | `PrimeLambertOscillation` | `e`, `ProgressionFamily`, `phaseAverage`, `PhaseOscillation` (draft eq. (5)), `norm_phaseAverage_eq_one`, `irrational_of_phaseOscillation` | proved, axiom-clean; `phaseOscillation` is the single disclosed `sorry` |
 
 Build: `lake build NormalNumbers.PrimeLambertOscillation` (targeted; the root module is
@@ -60,8 +61,31 @@ draft (20).
 
 `phaseOscillation_of_chain` proves that these four imply `PhaseOscillation` (Lipschitz bound
 `‖e(x)−1‖ ≤ 4π\|x\|`, unimodular constant factor for the frozen class).  `SmallPrimeDecay` is
-the deep step; its intended proof (independent model, variance `V → ∞`, CRT moment comparison
-to order `M`, even-moment Taylor transfer) is not yet decomposed into Lean Props.
+the deep step.  `PrimeLambertMoments` decomposes it exactly (draft §5.3–5.4).  The independent
+model is *defined* as `S_N` at a uniform residue `r mod ∏_{p small} p`
+(`indepAvg C N g = (1/∏p) ∑_{r<∏p} g(S_N(r))`); CRT independence of the local variables is a
+theorem about this model, not a modelling assumption.  With an even moment cutoff `M_N`:
+
+| Prop | draft | content |
+|---|---|---|
+| `IndepCharDecay C` | (13),(15) | `‖indepAvg e(q·)‖ → 0` (draft: `≤ exp(−c_q V_N)`, `V_N ≍ H4^{−K}L → ∞`) |
+| `MomentComparison C M` | (16) | `∀ k ≤ M_N, \|sampleAvg x^k − indepAvg x^k\| ≤ δ_N → 0` (draft: `N^{−9/10+o(1)}`) |
+| `IndepMomentSmall C M` | (17) | `(2π\|q\|)^{M_N}/M_N! · indepAvg x^{M_N} → 0` (draft: `≤ 2exp(C_qV_N − M_N)`) |
+
+**Proved** (`smallPrimeDecay_of_moments`): these three, for even `M_N`, imply
+`SmallPrimeDecay C`.  Pointwise, with `T = (2π|q|)^M/M!`,
+
+    ‖𝔼_P e(qS)‖ ≤ ‖𝔼' e(qS')‖ + 2e^{2π|q|} δ + 2T·𝔼' S'^M,
+
+from the sharp Taylor remainder `‖e^{it} − ∑_{k<M}(it)^k/k!‖ ≤ |t|^M/M!` (proved by induction
+via the integral form of the remainder, `norm_expRem_le'`) applied on both averages; evenness
+turns the remainder majorant `|S|^M` into the moment `S^M`, which `MomentComparison` controls
+and `IndepMomentSmall` kills.  The Taylor coefficients sum to at most `e^{2π|q|}`.  This is the
+centred even-moment step of the draft, machine-checked; what remains open is exactly the sieve
+input: `IndepCharDecay` (local characteristic-function product, variance growth),
+`MomentComparison` (periodicity of `k`-fold products with period `≤ R^k`, AP error
+`O(AR^k/N)`, CRT identification of the uniform average), and `IndepMomentSmall` (two-sided mgf
+(14) plus `M_N ≫ V_N`).
 
 
 `PhaseOscillation` asserts: for each `q ≠ 0` there exist `c N`, `K N`, frozen progression
