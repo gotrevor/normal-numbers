@@ -235,3 +235,4 @@ import NormalNumbers.G4EntropyLocality
 import NormalNumbers.G4EntropyPositions
 import NormalNumbers.G4EntropyTransfer
 import NormalNumbers.G4EntropyBarrier
+import NormalNumbers.G4EntropyFamily
