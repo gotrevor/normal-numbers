@@ -254,3 +254,4 @@ import NormalNumbers.G4EntropySpectral
 import NormalNumbers.G4EntropySpectralLower
 import NormalNumbers.G4EntropyOffset
 import NormalNumbers.G4EntropyPosition
+import NormalNumbers.G4EntropyJoint

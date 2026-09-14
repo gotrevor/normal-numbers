@@ -54,6 +54,34 @@ because each factor is; then the existing Hellinger/Pinsker step on `tℓ` bits.
    degradation here and re-state with the true `t`-dependence; do not retreat to `t = 1`.)
 3. **The schedule instance + digit rendering** of rung 2 → `tendsto_occursCountJoint_…`.
 
+### 🔨 IN FLIGHT (lap 37) — rung 2, `G4EntropyJoint.lean`
+
+Skeleton committed compiling with three named `sorry` leaves.  **The probe answered: the deficit
+is NOT multiplied by `t`.**  Bits ledger, with `blk : B → Fin t → A` injective:
+
+```
+H₂ L ≤ ∑_{b,j} H₂(patCoord b j) + ∑_b H₂(patRem b) + ∑_{α ∉ im blk} H₂(z α)
+     ≤ ∑_{b,j} H₂(patCoord b j) + |B|·t·(m%ℓ) + (|A| − t|B|)·m
+m|A| − Δ ≤ H₂ L    and    ⌊m/ℓ⌋·ℓ + m%ℓ = m
+⟹  ∑_{b,j} (ℓt − H₂(patCoord b j)) ≤ Δ          -- the SAME Δ, zero slack
+```
+
+so the averaged bound is the `t = 1` one with `ℓ ↦ tℓ`: `2√(log 2 · tℓδ/m)`.  E-T6 does **not**
+fire.
+
+Open leaves, in order:
+1. `jointFam_injective` — `packFin` injective on each family, then `tile_injective` per covered
+   atom; uncovered atoms read directly through `leftCoord`'s `else` branch.
+2. `sum_patCoord_deficit_le` — `FinLaw.H₂_le_sum_H₂_map` over the sum-type index, then the three
+   bits bounds: `H₂_le_of_block` at `ℓt` for `patCoord`; subadditivity over `s : Fin t` plus
+   `H₂_map_rem_le` for `patRem`; `H₂_map_const_le` / `H₂_le_of_block` at `m` for `leftCoord`.
+   The count `|im blk| = t|B|` is `Finset.card_image_of_injective`.
+3. `abs_avg_patCoord_prob_le` — verbatim `abs_avg_block_prob_tile_le` with `A ↦ B`, `ℓ ↦ ℓt`,
+   `sum_block_deficit_tile_le ↦ sum_patCoord_deficit_le`.
+
+Then rung 3: the schedule instance (`blk` from `Fintype.equivFin` and `b*t+s`) and the digit
+rendering (`posAt_blockVal` is already general enough).
+
 ### Bounded secondary (only on an E-T3 stall) — measure the wall
 
 `Sched.density_le_pow` : sampled density `≤ ½(2(K²+1)/B²)^K ≤ ½(3/K⁴)^K`, and
