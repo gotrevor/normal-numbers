@@ -450,4 +450,86 @@ lemma bL_pos_real (i : ℕ) : (0 : ℝ) < (bL i : ℝ) := by
   have := bL_pos i
   exact_mod_cast this
 
+set_option maxHeartbeats 1000000 in
+/-- The sharper step: the growth factor is the next window length, not a constant. -/
+theorem bL_step' (j : ℕ) : (kk (j + 1) : ℝ) * (bL j : ℝ) ≤ 2 * (bL (j + 1) : ℝ) := by
+  have hA : (1 : ℝ) ≤ (Fintype.card (gridAt j).Atom : ℝ) := by
+    have : 0 < Fintype.card (gridAt j).Atom := Fintype.card_pos
+    exact_mod_cast this
+  have hPj : (0 : ℝ) ≤ ((PK j).card : ℝ) := Nat.cast_nonneg _
+  have hkkj : (0 : ℝ) ≤ (kk j : ℝ) := Nat.cast_nonneg _
+  have hband : ((bandS j).card : ℝ) ≤ ((PK j).card : ℝ) := by
+    exact_mod_cast Finset.card_le_card (bandS_subset j)
+  have hb : ((bandS j).card : ℝ)
+      ≤ (Fintype.card (gridAt j).Atom : ℝ) * ((PK j).card : ℝ) := by
+    nlinarith [hband, hA, hPj]
+  have hbl : (bL j : ℝ) = ((bandS j).card : ℝ) * (kk j : ℝ) := by
+    show ((((bandS j).card * kk j : ℕ)) : ℝ) = _
+    push_cast; ring
+  have h1 : (bL j : ℝ) ≤ (Fintype.card (gridAt j).Atom : ℝ) * ((PK j).card : ℝ) * (kk j : ℝ) := by
+    rw [hbl]
+    exact mul_le_mul_of_nonneg_right hb hkkj
+  have h2 := granule_exceeds_previous_scale j
+  have h3 : ((PK (j + 1)).card : ℝ) ≤ 2 * ((bandS (j + 1)).card : ℝ) := card_bandS_ge' (j + 1)
+  have hkk1 : (0 : ℝ) ≤ (kk (j + 1) : ℝ) := Nat.cast_nonneg _
+  have h4 : (bL (j + 1) : ℝ) = ((bandS (j + 1)).card : ℝ) * (kk (j + 1) : ℝ) := by
+    show ((((bandS (j + 1)).card * kk (j + 1) : ℕ)) : ℝ) = _
+    push_cast; ring
+  rw [h4]
+  nlinarith [h1, h2, h3, hkk1]
+
+lemma kk_ge_real (i : ℕ) : (40000 : ℝ) ≤ (kk i : ℝ) := by
+  have : (40000 : ℕ) ≤ kk i := by unfold kk; omega
+  exact_mod_cast this
+
+/-- **The history is a `4/m_i` fraction of band `i`.**  The bound improves with the scale, which
+is what makes the seam corrections vanish. -/
+theorem bT_kk_le (i : ℕ) : (bT i : ℝ) * (kk i : ℝ) ≤ 4 * (bL i : ℝ) := by
+  induction i with
+  | zero =>
+      have h0 : ((bT 0 : ℕ) : ℝ) = 0 := by norm_num [bT]
+      rw [h0]
+      have : (0 : ℝ) ≤ (bL 0 : ℝ) := Nat.cast_nonneg _
+      linarith
+  | succ i ih =>
+      have hstep := bL_step' i
+      have hbT : (bT (i + 1) : ℝ) = (bT i : ℝ) + (bL i : ℝ) := by
+        show ((bT i + bL i : ℕ) : ℝ) = _
+        push_cast; ring
+      have hkki := kk_ge_real i
+      have hkki1 := kk_ge_real (i + 1)
+      have hTnn : (0 : ℝ) ≤ (bT i : ℝ) := Nat.cast_nonneg _
+      have hLnn : (0 : ℝ) ≤ (bL i : ℝ) := Nat.cast_nonneg _
+      -- `bT i · m_{i+1} ≤ (4 bL i/m_i)·m_{i+1} ≤ 8 bL_{i+1}/m_i`
+      have hTm : (bT i : ℝ) * (kk (i + 1) : ℝ) * (kk i : ℝ)
+          ≤ 8 * (bL (i + 1) : ℝ) := by
+        have h1 : (bT i : ℝ) * (kk (i + 1) : ℝ) * (kk i : ℝ)
+            = ((bT i : ℝ) * (kk i : ℝ)) * (kk (i + 1) : ℝ) := by ring
+        rw [h1]
+        calc ((bT i : ℝ) * (kk i : ℝ)) * (kk (i + 1) : ℝ)
+            ≤ (4 * (bL i : ℝ)) * (kk (i + 1) : ℝ) :=
+              mul_le_mul_of_nonneg_right ih (by linarith)
+          _ = 4 * ((kk (i + 1) : ℝ) * (bL i : ℝ)) := by ring
+          _ ≤ 4 * (2 * (bL (i + 1) : ℝ)) := by linarith
+          _ = 8 * (bL (i + 1) : ℝ) := by ring
+      rw [hbT]
+      have hLnn1 : (0 : ℝ) ≤ (bL (i + 1) : ℝ) := Nat.cast_nonneg _
+      nlinarith [hTm, hstep, hkki, hkki1, hLnn1]
+
+open Classical in
+/-- `bandGood` re-summed over the band's sample times: the numerator of
+`tendsto_band_occursCount`. -/
+theorem bandGood_eq (i : ℕ) (x : ℝ) (v : List ℕ) :
+    bandGood i x v
+      = ∑ q ∈ Finset.range (kk i - v.length + 1),
+          ((bandS i).filter fun n =>
+            OccursAt 2 x v (2 * kIdx (gridAt i) n (goodAtom i) + q)).card := by
+  classical
+  unfold bandGood
+  simp only [Finset.card_filter]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun q _ => ?_
+  exact sum_range_bnth i
+    (fun n => if OccursAt 2 x v (2 * kIdx (gridAt i) n (goodAtom i) + q) then 1 else 0)
+
 end NormalNumbers.G4.Sched
