@@ -231,4 +231,193 @@ theorem sum_block_deficit_tile_le {A : Type*} [Fintype A] [DecidableEq A] {m ℓ
       = (Fintype.card A : ℝ) * (m : ℝ) := by rw [htile]
   nlinarith [hsub, hΔ, hrem, hmul]
 
+/-! ### The averaged word probability, with the tiling budget -/
+
+/-- `⌊m/ℓ⌋ ≥ m/(2ℓ)` for `0 < ℓ ≤ m`: the number of disjoint blocks is within a factor two of
+the ideal `m/ℓ`. -/
+lemma two_mul_div_le {m ℓ : ℕ} (hℓ : 0 < ℓ) (hℓm : ℓ ≤ m) :
+    (m : ℝ) ≤ 2 * ((m / ℓ : ℕ) : ℝ) * (ℓ : ℝ) := by
+  have hr1 : 1 ≤ m / ℓ := Nat.one_le_div_iff hℓ |>.2 hℓm
+  have hnat : m < (m / ℓ + 1) * ℓ := by
+    have h1 := Nat.div_add_mod m ℓ
+    have h2 : m % ℓ < ℓ := Nat.mod_lt _ hℓ
+    have h3 : (m / ℓ + 1) * ℓ = ℓ * (m / ℓ) + ℓ := by ring
+    omega
+  have hnat2 : m < 2 * (m / ℓ) * ℓ := by nlinarith [hnat, hr1]
+  exact_mod_cast hnat2.le
+
+/-- **Abstract form, tiled.**  A joint entropy within `Δ` of the maximum forces the `ℓ`-block
+word probabilities, averaged over the coordinates and the `⌊m/ℓ⌋` *disjoint* block positions,
+to within `2 log 2 · Δ/(2tN) + t/2` of `2^{−ℓ}`.  Compare
+`abs_avg_block_prob_sub_le`, whose numerator carries an extra `|A|·ℓ`. -/
+theorem abs_avg_block_prob_tile_le {A : Type*} [Fintype A] [DecidableEq A] [Nonempty A]
+    {m ℓ : ℕ} (hℓ : 0 < ℓ) (hℓm : ℓ ≤ m) (L : FinLaw (A → Fin (2 ^ m))) (w : Fin (2 ^ ℓ))
+    {Δ t : ℝ} (hΔ : (m : ℝ) * (Fintype.card A : ℝ) - Δ ≤ L.H₂) (ht : 0 < t) :
+    |(∑ c : A × Fin (m / ℓ), (L.map (fullCoord m ℓ c)).prob {w})
+        / (Fintype.card (A × Fin (m / ℓ)) : ℝ) - 1 / (2 : ℝ) ^ ℓ|
+      ≤ (2 * Real.log 2 * Δ) / (2 * t * (Fintype.card (A × Fin (m / ℓ)) : ℝ)) + t / 2 := by
+  classical
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hr1 : 1 ≤ m / ℓ := Nat.one_le_div_iff hℓ |>.2 hℓm
+  haveI : Nonempty (Fin (m / ℓ)) := Fin.pos_iff_nonempty.1 (by omega)
+  have hι : 0 < Fintype.card (A × Fin (m / ℓ)) := Fintype.card_pos
+  refine abs_avg_sub_le hι
+    (fun c => (L.map (fullCoord m ℓ c)).prob {w})
+    (fun c => 2 * Real.log 2 * ((ℓ : ℝ) - (L.map (fullCoord m ℓ c)).H₂))
+    (1 / (2 : ℝ) ^ ℓ) (2 * Real.log 2 * Δ) t ?_ ?_ ?_ ht
+  · intro c
+    have h := H₂_le_of_block (L.map (fullCoord m ℓ c))
+    nlinarith [hlog2, h]
+  · intro c
+    exact abs_prob_singleton_sub_le hℓ _ w
+  · have hsum := sum_block_deficit_tile_le (A := A) (ℓ := ℓ) hℓ L hΔ
+    rw [← Finset.mul_sum]
+    nlinarith [hlog2, hsum]
+
 end NormalNumbers.G4Entropy
+
+namespace NormalNumbers.G4.Sched
+
+open NormalNumbers NormalNumbers.G4Entropy NormalNumbers.PrimeLambert
+
+/-! ### The tiled sampled frequency of a word -/
+
+/-- **The frequency of `w` among the `⌊m_K/ℓ⌋ disjoint` `ℓ`-blocks of the scale-`i` sampled
+windows.**  Same as `blockFreq` but over a genuine tiling: no block position is counted twice. -/
+noncomputable def blockFreqT (i ℓ : ℕ) (x : ℝ) (w : Fin (2 ^ ℓ)) : ℝ :=
+  (∑ c : (gridAt i).Atom × Fin (kk i / ℓ),
+      ((jointLawAt i x).map (fullCoord (kk i) ℓ c)).prob {w})
+    / (Fintype.card ((gridAt i).Atom × Fin (kk i / ℓ)) : ℝ)
+
+/-- **The capacity inequality, without the sampling floor.**  A per-window deficit of `δ` bits
+controls every word of length `ℓ ≤ m_K` to within `2√(log 2 · ℓδ/m_K)`, uniformly in the word
+and in `x`.  Unlike `abs_blockFreq_sub_le_of_deficit` there is **no** `√(ℓ²/m_K)` term: at
+`δ → 0` the bound goes to `0`, as it must. -/
+theorem abs_blockFreqT_sub_le_of_deficit (i ℓ : ℕ) (hℓ : 0 < ℓ) (hℓm : ℓ ≤ kk i) (x : ℝ)
+    (w : Fin (2 ^ ℓ)) {δ : ℝ} (hδ : 0 < δ)
+    (hdef : ((kk i : ℝ) - δ) * (Fintype.card (gridAt i).Atom : ℝ) ≤ (jointLawAt i x).H₂) :
+    |blockFreqT i ℓ x w - 1 / (2 : ℝ) ^ ℓ|
+      ≤ 2 * Real.sqrt (Real.log 2 * (ℓ : ℝ) * δ / (kk i : ℝ)) := by
+  classical
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlpos : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  have hk0 : (0 : ℝ) < (kk i : ℝ) := by
+    have : 0 < kk i := by unfold kk; omega
+    exact_mod_cast this
+  have hC0 : (0 : ℝ) < (Fintype.card (gridAt i).Atom : ℝ) := by
+    rw [card_Atom_gridAt]
+    have : 0 < (KK i ^ 2 + 1) ^ KK i := Nat.pow_pos (by omega)
+    exact_mod_cast this
+  have hr1 : 1 ≤ kk i / ℓ := Nat.one_le_div_iff hℓ |>.2 hℓm
+  haveI : Nonempty (Fin (kk i / ℓ)) := Fin.pos_iff_nonempty.1 (by omega)
+  have hN : (Fintype.card ((gridAt i).Atom × Fin (kk i / ℓ)) : ℝ)
+      = (Fintype.card (gridAt i).Atom : ℝ) * ((kk i / ℓ : ℕ) : ℝ) := by
+    rw [Fintype.card_prod, Fintype.card_fin]
+    push_cast
+    ring
+  have hrpos : (0 : ℝ) < ((kk i / ℓ : ℕ) : ℝ) := by exact_mod_cast hr1
+  have hΔ : (kk i : ℝ) * (Fintype.card (gridAt i).Atom : ℝ)
+      - δ * (Fintype.card (gridAt i).Atom : ℝ) ≤ (jointLawAt i x).H₂ := by
+    have : ((kk i : ℝ) - δ) * (Fintype.card (gridAt i).Atom : ℝ)
+        = (kk i : ℝ) * (Fintype.card (gridAt i).Atom : ℝ)
+          - δ * (Fintype.card (gridAt i).Atom : ℝ) := by ring
+    linarith [hdef, this.symm.le, this.le]
+  -- the optimized parameter
+  set A : ℝ := 2 * Real.log 2 * (ℓ : ℝ) * δ / (kk i : ℝ) with hA
+  have hApos : 0 < A := by rw [hA]; positivity
+  set t : ℝ := Real.sqrt (2 * A) with htdef
+  have ht : 0 < t := Real.sqrt_pos.2 (by linarith)
+  have ht2 : t * t = 2 * A := Real.mul_self_sqrt (by linarith)
+  have hmain := abs_avg_block_prob_tile_le (A := (gridAt i).Atom) (m := kk i) (ℓ := ℓ)
+    hℓ hℓm (jointLawAt i x) w hΔ ht
+  rw [hN] at hmain
+  -- the error term against `A / t`
+  have hstep : (2 * Real.log 2 * (δ * (Fintype.card (gridAt i).Atom : ℝ)))
+      / (2 * t * ((Fintype.card (gridAt i).Atom : ℝ) * ((kk i / ℓ : ℕ) : ℝ))) ≤ A / t := by
+    rw [hA, div_le_div_iff₀ (by positivity) ht]
+    have hcount := two_mul_div_le (m := kk i) (ℓ := ℓ) hℓ hℓm
+    have key : (0 : ℝ) ≤ (Real.log 2 * δ * (Fintype.card (gridAt i).Atom : ℝ) * t)
+        * (2 * ((kk i / ℓ : ℕ) : ℝ) * (ℓ : ℝ) - (kk i : ℝ)) :=
+      mul_nonneg (by positivity) (by linarith)
+    have hne : (kk i : ℝ) ≠ 0 := hk0.ne'
+    field_simp
+    nlinarith [key, hC0, hrpos, ht, hlog2, hδ]
+  have hopt : A / t + t / 2 = t := by
+    have hA2 : A = t * t / 2 := by linarith [ht2]
+    rw [hA2]
+    field_simp
+    norm_num
+  have hfin : |blockFreqT i ℓ x w - 1 / (2 : ℝ) ^ ℓ| ≤ t := by
+    rw [blockFreqT, hN]
+    linarith [hmain, hstep, hopt]
+  have hval : t = 2 * Real.sqrt (Real.log 2 * (ℓ : ℝ) * δ / (kk i : ℝ)) := by
+    rw [htdef, hA]
+    rw [show 2 * (2 * Real.log 2 * (ℓ : ℝ) * δ / (kk i : ℝ))
+        = 2 ^ 2 * (Real.log 2 * (ℓ : ℝ) * δ / (kk i : ℝ)) by ring]
+    rw [Real.sqrt_mul (by positivity), Real.sqrt_sq (by norm_num : (0:ℝ) ≤ 2)]
+  rw [← hval]
+  exact hfin
+
+/-! ### `G₄`: the ceiling is the deficit's, and nothing else's -/
+
+/-- **The tiled capacity bound at the implemented schedule.**  `entropy_E1` supplies
+`δ = 50√K`, and `m_K = K/4`, so
+
+    `|blockFreqT i ℓ G₄ w − 2^{−ℓ}| ≤ 2√(200 log 2 · ℓ/√K)`   for every `ℓ ≤ m_K`. -/
+theorem abs_blockFreqT_sub_le_primeLambertFour (i ℓ : ℕ) (hℓ : 0 < ℓ) (hℓm : ℓ ≤ kk i)
+    (w : Fin (2 ^ ℓ)) :
+    |blockFreqT i ℓ (primeLambertAtBase 4) w - 1 / (2 : ℝ) ^ ℓ|
+      ≤ 2 * Real.sqrt (200 * Real.log 2 * (ℓ : ℝ) / Real.sqrt (KK i)) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hKpos : (0 : ℝ) < (KK i : ℝ) := by
+    have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+    linarith
+  have hS0 : 0 < Real.sqrt ((KK i : ℕ) : ℝ) := Real.sqrt_pos.2 hKpos
+  have hδ : (0 : ℝ) < 50 * Real.sqrt (KK i) := by positivity
+  have hE1 := entropy_E1 (K := KK i) (k₄ := kk i) rfl (KK_ge i)
+  have hcard : (Fintype.card (gridAt i).Atom : ℝ) = (((KK i ^ 2 + 1) ^ KK i : ℕ) : ℝ) := by
+    rw [card_Atom_gridAt i]
+  have hdef : ((kk i : ℝ) - 50 * Real.sqrt (KK i)) * (Fintype.card (gridAt i).Atom : ℝ)
+      ≤ (jointLawAt i (primeLambertAtBase 4)).H₂ := by
+    rw [hcard, sub_mul]
+    exact hE1.le
+  refine (abs_blockFreqT_sub_le_of_deficit i ℓ hℓ hℓm _ w hδ hdef).trans ?_
+  have harg : Real.log 2 * (ℓ : ℝ) * (50 * Real.sqrt (KK i)) / (kk i : ℝ)
+      = 200 * Real.log 2 * (ℓ : ℝ) / Real.sqrt (KK i) := by
+    have hkk4 : (KK i : ℝ) = 4 * (kk i : ℝ) := by unfold KK; push_cast; ring
+    have hKS : (KK i : ℝ) = Real.sqrt ((KK i : ℕ) : ℝ) * Real.sqrt ((KK i : ℕ) : ℝ) :=
+      (Real.mul_self_sqrt hKpos.le).symm
+    have hk0 : (0 : ℝ) < (kk i : ℝ) := by linarith
+    rw [div_eq_div_iff hk0.ne' hS0.ne']
+    have hsq : Real.sqrt ((KK i : ℕ) : ℝ) * Real.sqrt ((KK i : ℕ) : ℝ) = 4 * (kk i : ℝ) := by
+      rw [← hKS, hkk4]
+    linear_combination (50 * Real.log 2 * (ℓ : ℝ)) * hsq
+  rw [harg]
+
+/-- **The tiled frequency theorem with a growing word length.**  For `G₄`, every word length
+`ℓ(K) = o(√K)` is controlled — the words may vary with the scale.  Same ceiling as lap 26's
+`tendsto_blockFreq_growing`, but now attributable **entirely** to `entropy_E1`'s deficit
+`δ = 50√K`: with a deficit `δ_K` the bound reads `2√(log 2 · ℓδ_K/m_K)`, so the controlled
+range is exactly `ℓ = o(m_K/δ_K)`. -/
+theorem tendsto_blockFreqT_growing (ℓ : ℕ → ℕ) (hpos : ∀ i, 0 < ℓ i)
+    (hle : ∀ i, ℓ i ≤ kk i)
+    (hgrow : Tendsto (fun i => (ℓ i : ℝ) / Real.sqrt (KK i)) atTop (nhds 0))
+    (w : ∀ i, Fin (2 ^ ℓ i)) :
+    Tendsto (fun i => blockFreqT i (ℓ i) (primeLambertAtBase 4) (w i) - 1 / (2 : ℝ) ^ (ℓ i))
+      atTop (nhds 0) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hinner : Tendsto (fun i => 200 * Real.log 2 * (ℓ i : ℝ) / Real.sqrt (KK i))
+      atTop (nhds 0) := by
+    have h := hgrow.const_mul (200 * Real.log 2)
+    simp only [mul_zero] at h
+    refine h.congr fun i => ?_
+    rw [mul_div_assoc]
+  have hsq : Tendsto (fun i => 2 * Real.sqrt (200 * Real.log 2 * (ℓ i : ℝ)
+      / Real.sqrt (KK i))) atTop (nhds 0) := by
+    have := hinner.sqrt
+    simpa using this.const_mul (2 : ℝ)
+  refine squeeze_zero_norm (fun i => ?_) hsq
+  simpa [Real.norm_eq_abs] using
+    abs_blockFreqT_sub_le_primeLambertFour i (ℓ i) (hpos i) (hle i) (w i)
+
+end NormalNumbers.G4.Sched

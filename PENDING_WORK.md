@@ -102,9 +102,17 @@ capacity inequality should read `≈ √(log 2 · ℓδ/m_K)` and the controlled
 `ℓ = o(m_K/δ)` with **no** other ceiling.  (At `δ = 0` the bound then correctly gives an exact
 frequency, which the lap-28 form did not.)
 
-**Next (finish the chain):** average over `A × Fin (m/ℓ)` with `sum_block_deficit_tile_le`
-in place of `sum_block_deficit_le` — `blockFreqT`, `abs_blockFreqT_sub_le_of_deficit`,
-and the `G₄` instance; then restate the `o(√K)` ceiling as `o(K/δ_K)`.
+**✅ chain finished (lap 30):** `abs_avg_block_prob_tile_le` (averaging over the `⌊m/ℓ⌋`
+disjoint blocks), `blockFreqT`, `abs_blockFreqT_sub_le_of_deficit`
+(`≤ 2√(log 2·ℓδ/m_K)`, **no** deficit-free floor), `abs_blockFreqT_sub_le_primeLambertFour`
+(`≤ 2√(200 log 2·ℓ/√K)`) and `tendsto_blockFreqT_growing`.  The controlled range is exactly
+`ℓ = o(m_K/δ_K)`; for the implemented schedule `δ_K = 50√K` and `m_K = K/4` give `o(√K)`.
+
+**Next:** the only remaining lever on the word length is `entropy_E1`'s deficit itself.
+Two bounded probes, in order: (a) state `δ_K = K^{1/2−ε} ⇒ ℓ = o(K^{1/2+ε})` as an explicit
+corollary of `abs_blockFreqT_sub_le_of_deficit` (free, records the target); (b) inspect where
+the `50√K` in `entropy_E1` comes from (grid resolution vs. counting slack) and record whether
+any of it is improvable without touching the barrier modules.
 
 ### Decomposition — hardest first, and the order to build
 
