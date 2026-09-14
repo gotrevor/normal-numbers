@@ -101,6 +101,20 @@ the bad primes — the bad primes are those dividing some `ρ_{α,j} − ρ_{α'
 `|ι|² log(3X)/log p`... their harmonic mass is the §5 `O(log L)`), and (d) **C4**: the budget.
 (c) and (d) are the §5 schedule module.
 
+### ⬆️ UPDATE (same lap, fifth commit): C4 — the budget is dominated (`G4Schedule.lean`)
+
+`src/NormalNumbers/G4Schedule.lean` (sorry-free, trust-triple axioms): `scheduleK L =
+⌊log L/(100 log log L)⌋`; `scheduleK_log_bound` — for `log L ≥ 1000`, `K ≥ 1`:
+`(2K+1) log K + K log 8 ≤ (log L)/10`; **`schedule_budget`** — for every fixed `C, c > 0`,
+eventually `C·K^{2K+1}·8^K < c·L`, i.e. `exp(C·r·K)·exp(−c·L·8^{−K}) < 1` with `r = K^{2K}`.
+This is C4 in the abstract: the `exp(O(rK))` ℓ¹ budget against the `exp(−cL8^{−K})` decay, one
+simultaneous limit in `L`.  Wiring it to `Λ = (2D+1)^r` (`D = O(2^{K/4})`, so `log Λ = O(rK)`)
+and to `δ₃` from `norm_sampleAvg_ee_phase_le` is the Frame-instantiation step.
+
+**§4C is now closed at the abstract level: C1, C2, C3, C4 all proved.**  What remains for
+`PropC` is purely the concrete Frame: the `S`-as-`totalPhase` identity, `θ₀` from `G4FreqSep`,
+and the good-prime harmonic sum.
+
 ### C3 remaining before these updates: ONE lemma, `CRTInput` (now PROVED above)
 For pairwise-coprime moduli `p ∈ T` (all coprime to the progression modulus `P₀`), functions
 `h_p : ℕ → ℂ` periodic mod `p` with `‖h_p‖ ≤ 1`, and the sample `{n ≤ X : n ≡ a (mod P₀)}`:

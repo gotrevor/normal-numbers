@@ -4,7 +4,7 @@ Branch `wip/g4-disjunctivity`.  Working tree clean apart from the host's untrack
 `CHECK-g4-route-deviations.md` (not swept in, per lap 3).  Not pushed.  `DIRECTION.md` unchanged
 (grind lap); `PENDING_WORK.md` §"GRIND 2026-09-14 (G4 lap 4)" carries the mathematics.
 
-Build: `lake build NormalNumbers.G4TransferMoment NormalNumbers.G4CRTInput NormalNumbers.G4FourierControl NormalNumbers.G4PhaseDecomp` green (8716 jobs); every declaration below
+Build: `lake build NormalNumbers.G4TransferMoment NormalNumbers.G4CRTInput NormalNumbers.G4FourierControl NormalNumbers.G4PhaseDecomp NormalNumbers.G4Schedule` green; every declaration below
 prints `[propext, Classical.choice, Quot.sound]`.  No `sorry` in any G4 file.
 
 ## Advance on the crux (C3)
@@ -54,6 +54,13 @@ product for the concrete `S` — Frame instantiation work.
 of shifted `ω`; what separates it from `PropC` is (a) writing the concrete `S` as such a `Φ`,
 (b) `θ₀ = 4^{−4}8^{−K}` via `G4FreqSep`, (c) the good-prime harmonic sum, (d) C4.  (c), (d) are
 the §5 schedule module.
+
+## Same lap, fifth commit: C4
+
+`src/NormalNumbers/G4Schedule.lean` — `schedule_budget`: with `K = ⌊log L/(100 log log L)⌋`,
+for every fixed `C, c > 0` eventually `C·K^{2K+1}·8^K < c·L`, i.e. the `exp(O(rK))` Fourier
+budget is dominated by `exp(−cL8^{−K})`.  **C1–C4 are all proved abstractly; §4C is closed at
+that level.**
 
 ## Open, in priority order
 
