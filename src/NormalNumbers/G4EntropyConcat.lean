@@ -281,5 +281,234 @@ lemma cntIco_group (L : ℕ → ℕ) (d : ℕ → ℕ → ℕ) (hL : ∀ i, 0 < 
   · rw [hbij]; omega
   · rw [← hbij]; omega
 
+/-- **A prefix of a group**: after `q` whole copies of block `m` and a partial copy. -/
+lemma cntIco_partial (L : ℕ → ℕ) (d : ℕ → ℕ → ℕ) (hL : ∀ i, 0 < L i) (v : List ℕ)
+    {m N : ℕ} (h1 : Tacc L m ≤ N) (h2 : N < Tacc L (m + 1)) :
+    cntIco L d v (Tacc L m) N
+        ≤ ((N - Tacc L m) / L m + 1) * cyc L d v m + v.length
+      ∧ ((N - Tacc L m) / L m) * cyc L d v m
+        ≤ cntIco L d v (Tacc L m) N + v.length := by
+  set A := Tacc L m with hA
+  set q := (N - A) / L m with hq
+  have hLm := hL m
+  have hdm := Nat.div_add_mod (N - A) (L m)
+  rw [← hq] at hdm
+  have hmod := Nat.mod_lt (N - A) hLm
+  have hcomm : L m * q = q * L m := by rw [hq]; ring
+  have hqp1 : (q + 1) * L m = q * L m + L m := by ring
+  have hq1 : q * L m ≤ N - A := by omega
+  have hq2 : N - A < (q + 1) * L m := by omega
+  have hNA : N - A < rep L m * L m := by rw [Tacc_succ] at h2; omega
+  have hqlt : q < rep L m := by
+    by_contra hcon
+    have hcon' : rep L m ≤ q := by omega
+    have : rep L m * L m ≤ q * L m := Nat.mul_le_mul hcon' (le_refl (L m))
+    omega
+  refine ⟨?_, ?_⟩
+  · have hstep : cntIco L d v A N ≤ cntIco L d v A (A + (q + 1) * L m) :=
+      cntIco_mono L d v (by omega)
+    exact le_trans hstep (cntIco_group L d hL v (r := q + 1) (by omega)).1
+  · have hstep : cntIco L d v A (A + q * L m) ≤ cntIco L d v A N :=
+      cntIco_mono L d v (by omega)
+    exact le_trans (cntIco_group L d hL v (r := q) (by omega)).2
+      (Nat.add_le_add_right hstep _)
+
+/-- The group index of a position, characterised. -/
+lemma grp_spec (L : ℕ → ℕ) (hL : ∀ i, 0 < L i) (j : ℕ) :
+    Tacc L (grp L j) ≤ j ∧ j < Tacc L (grp L j + 1) := by
+  classical
+  have h0 : Tacc L 0 ≤ j := by simp [Tacc]
+  have hlo : Tacc L (grp L j) ≤ j := by
+    have h := Nat.findGreatest_spec (P := fun m => Tacc L m ≤ j) (Nat.zero_le j) h0
+    exact h
+  refine ⟨hlo, ?_⟩
+  by_contra hcon
+  have hcon' : Tacc L (grp L j + 1) ≤ j := by omega
+  have hle : grp L j + 1 ≤ j := le_trans (self_le_Tacc L hL _) hcon'
+  exact Nat.findGreatest_is_greatest (P := fun m => Tacc L m ≤ j) (Nat.lt_succ_self _) hle hcon'
+
+lemma le_grp (L : ℕ → ℕ) (hL : ∀ i, 0 < L i) {M j : ℕ} (h : Tacc L M ≤ j) : M ≤ grp L j :=
+  Nat.le_findGreatest (le_trans (self_le_Tacc L hL M) h) h
+
+/-- `L m ≤ Tacc m` for `m ≥ 1`. -/
+lemma L_le_Tacc (L : ℕ → ℕ) (hL : ∀ i, 0 < L i) {m : ℕ} (hm : 1 ≤ m) :
+    (m + 1) * L m ≤ Tacc L m := by
+  obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
+  exact mul_L_succ_le L hL k
+
+/-! ### The deviation estimate -/
+
+/-- The deviation of the prefix window count from the ideal `c·N`. -/
+noncomputable def dev (L : ℕ → ℕ) (d : ℕ → ℕ → ℕ) (v : List ℕ) (c : ℝ) (N : ℕ) : ℝ :=
+  (winCount (seq L d) v N : ℝ) - c * N
+
+lemma abs_dev_le_self (L : ℕ → ℕ) (d : ℕ → ℕ → ℕ) (v : List ℕ) {c : ℝ}
+    (hc0 : 0 ≤ c) (hc1 : c ≤ 1) (N : ℕ) : |dev L d v c N| ≤ (N : ℝ) := by
+  have h1 : (winCount (seq L d) v N : ℝ) ≤ (N : ℝ) := by exact_mod_cast winCount_le _ _ _
+  have h2 : (0 : ℝ) ≤ (winCount (seq L d) v N : ℝ) := Nat.cast_nonneg _
+  have hN : (0 : ℝ) ≤ (N : ℝ) := Nat.cast_nonneg _
+  have h3 : (0 : ℝ) ≤ c * N := mul_nonneg hc0 hN
+  have h4 : c * (N : ℝ) ≤ (N : ℝ) := by nlinarith
+  unfold dev
+  rw [abs_le]
+  constructor <;> linarith
+
+/-- **One group's contribution.**  If block `m` is `γ`-good then group `m` moves the deviation
+by at most `γ` times the group's length. -/
+lemma abs_dev_group (L : ℕ → ℕ) (d : ℕ → ℕ → ℕ) (hL : ∀ i, 0 < L i) (v : List ℕ)
+    {c γ : ℝ} {m : ℕ}
+    (hγ : |(cyc L d v m : ℝ) - c * L m| + (v.length : ℝ) ≤ γ * L m) :
+    |dev L d v c (Tacc L (m + 1)) - dev L d v c (Tacc L m)|
+      ≤ γ * ((Tacc L (m + 1) : ℝ) - (Tacc L m : ℝ)) := by
+  have hTsucc : Tacc L (m + 1) = Tacc L m + rep L m * L m := Tacc_succ L m
+  have hsplit : winCount (seq L d) v (Tacc L (m + 1))
+      = winCount (seq L d) v (Tacc L m) + cntIco L d v (Tacc L m) (Tacc L (m + 1)) :=
+    winCount_seq_split L d v (Tacc_mono L hL (Nat.le_succ m))
+  obtain ⟨hg1, hg2⟩ := cntIco_group L d hL v (m := m) (r := rep L m) le_rfl
+  rw [← hTsucc] at hg1 hg2
+  have hrep1 : (1 : ℝ) ≤ (rep L m : ℝ) := by exact_mod_cast rep_pos L m
+  have hLm0 : (0 : ℝ) ≤ (L m : ℝ) := Nat.cast_nonneg _
+  -- real shorthands
+  have hXC : |(cntIco L d v (Tacc L m) (Tacc L (m + 1)) : ℝ)
+        - (rep L m : ℝ) * (cyc L d v m : ℝ)| ≤ (v.length : ℝ) := by
+    rw [abs_le]
+    constructor
+    · have : ((rep L m * cyc L d v m : ℕ) : ℝ)
+          ≤ ((cntIco L d v (Tacc L m) (Tacc L (m + 1)) + v.length : ℕ) : ℝ) := by
+        exact_mod_cast hg2
+      push_cast at this
+      linarith
+    · have : ((cntIco L d v (Tacc L m) (Tacc L (m + 1)) : ℕ) : ℝ)
+          ≤ ((rep L m * cyc L d v m + v.length : ℕ) : ℝ) := by
+        exact_mod_cast hg1
+      push_cast at this
+      linarith
+  have hdiff : dev L d v c (Tacc L (m + 1)) - dev L d v c (Tacc L m)
+      = ((cntIco L d v (Tacc L m) (Tacc L (m + 1)) : ℝ)
+          - (rep L m : ℝ) * (cyc L d v m : ℝ))
+        + (rep L m : ℝ) * ((cyc L d v m : ℝ) - c * (L m : ℝ)) := by
+    unfold dev
+    rw [hsplit]
+    have : ((Tacc L (m + 1) : ℕ) : ℝ) = (Tacc L m : ℝ) + (rep L m : ℝ) * (L m : ℝ) := by
+      rw [hTsucc]; push_cast; ring
+    rw [this]
+    push_cast
+    ring
+  have hlen : ((Tacc L (m + 1) : ℝ) - (Tacc L m : ℝ)) = (rep L m : ℝ) * (L m : ℝ) := by
+    rw [hTsucc]; push_cast; ring
+  rw [hdiff, hlen]
+  refine le_trans (abs_add_le _ _) ?_
+  rw [abs_mul, abs_of_nonneg (by positivity : (0:ℝ) ≤ (rep L m : ℝ))]
+  have hstep : (rep L m : ℝ) * |(cyc L d v m : ℝ) - c * (L m : ℝ)| + (v.length : ℝ)
+      ≤ (rep L m : ℝ) * (γ * (L m : ℝ)) := by
+    have h1 : (v.length : ℝ) ≤ (rep L m : ℝ) * (v.length : ℝ) := by
+      nlinarith [Nat.cast_nonneg (α := ℝ) v.length]
+    nlinarith [abs_nonneg ((cyc L d v m : ℝ) - c * (L m : ℝ))]
+  calc |(cntIco L d v (Tacc L m) (Tacc L (m + 1)) : ℝ) - (rep L m : ℝ) * (cyc L d v m : ℝ)|
+        + (rep L m : ℝ) * |(cyc L d v m : ℝ) - c * (L m : ℝ)|
+      ≤ (v.length : ℝ) + (rep L m : ℝ) * |(cyc L d v m : ℝ) - c * (L m : ℝ)| := by linarith
+    _ ≤ (rep L m : ℝ) * (γ * (L m : ℝ)) := by linarith
+    _ = γ * ((rep L m : ℝ) * (L m : ℝ)) := by ring
+
+/-- **The accumulated deviation.**  From scale `M` on, the relative deviation at a group
+boundary is at most `Tacc M` (a constant) plus `γ` times the length. -/
+lemma abs_dev_Tacc (L : ℕ → ℕ) (d : ℕ → ℕ → ℕ) (hL : ∀ i, 0 < L i) (v : List ℕ)
+    {c γ : ℝ} (hc0 : 0 ≤ c) (hc1 : c ≤ 1) {M : ℕ}
+    (hγ : ∀ j, M ≤ j → |(cyc L d v j : ℝ) - c * (L j : ℝ)| + (v.length : ℝ) ≤ γ * (L j : ℝ)) :
+    ∀ m, M ≤ m → |dev L d v c (Tacc L m)| ≤ (Tacc L M : ℝ) + γ * (Tacc L m : ℝ) := by
+  have hγ0 : 0 ≤ γ := by
+    have h := hγ M le_rfl
+    have hLM : (0 : ℝ) < (L M : ℝ) := by exact_mod_cast hL M
+    nlinarith [abs_nonneg ((cyc L d v M : ℝ) - c * (L M : ℝ)),
+      Nat.cast_nonneg (α := ℝ) v.length]
+  intro m hm
+  induction m, hm using Nat.le_induction with
+  | base =>
+    have h := abs_dev_le_self L d v hc0 hc1 (Tacc L M)
+    nlinarith [Nat.cast_nonneg (α := ℝ) (Tacc L M)]
+  | succ m hm ih =>
+    have hstep := abs_dev_group L d hL v (hγ m hm)
+    have htri := abs_sub_abs_le_abs_sub (dev L d v c (Tacc L (m + 1))) (dev L d v c (Tacc L m))
+    linarith
+
+/-- **A prefix inside group `m`.**  The deviation at any `N` is the deviation at the group
+boundary plus a partial-group term that is `γ·N` up to the length of one block. -/
+lemma abs_dev_prefix (L : ℕ → ℕ) (d : ℕ → ℕ → ℕ) (hL : ∀ i, 0 < L i) (v : List ℕ)
+    {c γ : ℝ} (hc0 : 0 ≤ c) (hc1 : c ≤ 1) {M N m : ℕ}
+    (hγ : ∀ j, M ≤ j → |(cyc L d v j : ℝ) - c * (L j : ℝ)| + (v.length : ℝ) ≤ γ * (L j : ℝ))
+    (hm : M ≤ m) (h1 : Tacc L m ≤ N) (h2 : N < Tacc L (m + 1)) :
+    |dev L d v c N| ≤ (Tacc L M : ℝ) + γ * (Tacc L m : ℝ)
+      + (γ * ((N : ℝ) + (L m : ℝ)) + c * (L m : ℝ) + (v.length : ℝ)) := by
+  classical
+  have hγ0 : 0 ≤ γ := by
+    have h := hγ M le_rfl
+    have hLM : (0 : ℝ) < (L M : ℝ) := by exact_mod_cast hL M
+    nlinarith [abs_nonneg ((cyc L d v M : ℝ) - c * (L M : ℝ)),
+      Nat.cast_nonneg (α := ℝ) v.length]
+  set A := Tacc L m with hA
+  set q := (N - A) / L m with hq
+  obtain ⟨hp1, hp2⟩ := cntIco_partial L d hL v (m := m) h1 h2
+  rw [← hA, ← hq] at hp1 hp2
+  have hLm := hL m
+  have hdm := Nat.div_add_mod (N - A) (L m)
+  rw [← hq] at hdm
+  have hmod := Nat.mod_lt (N - A) hLm
+  have hcomm : L m * q = q * L m := by ring
+  have hqp1 : (q + 1) * L m = q * L m + L m := by ring
+  have hq1 : q * L m ≤ N - A := by omega
+  have hq2 : N - A < (q + 1) * L m := by omega
+  -- real versions
+  have hDcast : ((N - A : ℕ) : ℝ) = (N : ℝ) - (A : ℝ) := by
+    rw [Nat.cast_sub h1]
+  have hq1R : (q : ℝ) * (L m : ℝ) ≤ (N : ℝ) - (A : ℝ) := by
+    have : ((q * L m : ℕ) : ℝ) ≤ ((N - A : ℕ) : ℝ) := by exact_mod_cast hq1
+    rw [hDcast] at this; push_cast at this; linarith
+  have hq2R : (N : ℝ) - (A : ℝ) ≤ ((q : ℝ) + 1) * (L m : ℝ) := by
+    have : ((N - A : ℕ) : ℝ) ≤ (((q + 1) * L m : ℕ) : ℝ) := by exact_mod_cast hq2.le
+    rw [hDcast] at this; push_cast at this; linarith
+  have hp1R : (cntIco L d v A N : ℝ) ≤ ((q : ℝ) + 1) * (cyc L d v m : ℝ) + (v.length : ℝ) := by
+    have : ((cntIco L d v A N : ℕ) : ℝ) ≤ (((q + 1) * cyc L d v m + v.length : ℕ) : ℝ) := by
+      exact_mod_cast hp1
+    push_cast at this; linarith
+  have hp2R : (q : ℝ) * (cyc L d v m : ℝ) ≤ (cntIco L d v A N : ℝ) + (v.length : ℝ) := by
+    have : ((q * cyc L d v m : ℕ) : ℝ) ≤ ((cntIco L d v A N + v.length : ℕ) : ℝ) := by
+      exact_mod_cast hp2
+    push_cast at this; linarith
+  have hgood : |(cyc L d v m : ℝ) - c * (L m : ℝ)| ≤ γ * (L m : ℝ) := by
+    have := hγ m hm
+    have := Nat.cast_nonneg (α := ℝ) v.length
+    linarith [hγ m hm, Nat.cast_nonneg (α := ℝ) v.length]
+  have habs := abs_le.1 hgood
+  have hqnn : (0 : ℝ) ≤ (q : ℝ) := Nat.cast_nonneg _
+  have hLmR : (0 : ℝ) ≤ (L m : ℝ) := Nat.cast_nonneg _
+  -- the partial-group deviation
+  have hpart : |(cntIco L d v A N : ℝ) - c * ((N : ℝ) - (A : ℝ))|
+      ≤ γ * ((N : ℝ) + (L m : ℝ)) + c * (L m : ℝ) + (v.length : ℝ) := by
+    have hANle : (A : ℝ) ≤ (N : ℝ) := by exact_mod_cast h1
+    have hupper : (cntIco L d v A N : ℝ) - c * ((N : ℝ) - (A : ℝ))
+        ≤ γ * ((N : ℝ) + (L m : ℝ)) + c * (L m : ℝ) + (v.length : ℝ) := by
+      have hsize : ((q : ℝ) + 1) * (L m : ℝ) ≤ (N : ℝ) + (L m : ℝ) := by nlinarith
+      nlinarith [habs.1, habs.2]
+    have hlower : c * ((N : ℝ) - (A : ℝ)) - (cntIco L d v A N : ℝ)
+        ≤ γ * ((N : ℝ) + (L m : ℝ)) + c * (L m : ℝ) + (v.length : ℝ) := by
+      have hsize : (q : ℝ) * (L m : ℝ) ≤ (N : ℝ) + (L m : ℝ) := by nlinarith
+      nlinarith [habs.1, habs.2]
+    rw [abs_le]
+    exact ⟨by linarith, by linarith⟩
+  -- assemble
+  have hsplit : winCount (seq L d) v N = winCount (seq L d) v A + cntIco L d v A N :=
+    winCount_seq_split L d v h1
+  have hdiff : dev L d v c N - dev L d v c A
+      = (cntIco L d v A N : ℝ) - c * ((N : ℝ) - (A : ℝ)) := by
+    unfold dev
+    rw [hsplit]
+    push_cast
+    ring
+  have hbase := abs_dev_Tacc L d hL v hc0 hc1 hγ m hm
+  rw [← hA] at hbase
+  have htri := abs_sub_abs_le_abs_sub (dev L d v c N) (dev L d v c A)
+  rw [hdiff] at htri
+  linarith
+
 end BlockConcat
 end NormalNumbers
