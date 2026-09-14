@@ -873,6 +873,8 @@ theorem pairCount_eq (i : ℕ) (x : ℝ) (v : List ℕ) :
 
 
 
+
+
 end NormalNumbers.G4.Sched
 
 /-! ### The read-versus-certified error, as pure real arithmetic
@@ -1210,5 +1212,80 @@ theorem tendsto_fullRead_freq (v : List ℕ) (hlen : 0 < v.length)
   have := hdiff.add hband
   rw [zero_add] at this
   exact this.congr fun i => by ring
+
+/-! ### The schedule-only real -/
+
+open Classical in
+/-- Every finite binary word occurs somewhere in the schedule-only read. -/
+theorem exists_matchesAt_fullDig (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
+    ∃ t, MatchesAt (fullDig (primeLambertAtBase 4)) v t := by
+  classical
+  have hlim := tendsto_fullRead_freq v hlen hv
+  have hpos : (0 : ℝ) < 1 / (2 : ℝ) ^ v.length := by positivity
+  obtain ⟨i, hi⟩ := (hlim.eventually (eventually_gt_nhds hpos)).exists
+  have hBpos : (0 : ℝ) < ((fT (i + 1) : ℕ) : ℝ) := by
+    have : 0 < fT (i + 1) := lt_of_le_of_lt (Nat.zero_le _) (fT_lt_succ i)
+    exact_mod_cast this
+  have hWpos : (0 : ℝ) < (winCount (fullDig (primeLambertAtBase 4)) v (fT (i + 1)) : ℝ) := by
+    by_contra hcon
+    push_neg at hcon
+    have : (winCount (fullDig (primeLambertAtBase 4)) v (fT (i + 1)) : ℝ)
+        / ((fT (i + 1) : ℕ) : ℝ) ≤ 0 := div_nonpos_of_nonpos_of_nonneg hcon hBpos.le
+    linarith
+  have hW : 0 < winCount (fullDig (primeLambertAtBase 4)) v (fT (i + 1)) := by
+    exact_mod_cast hWpos
+  obtain ⟨t, ht⟩ := Finset.card_pos.1 hW
+  exact ⟨t, (Finset.mem_filter.1 ht).2⟩
+
+/-- The schedule-only read never sticks at `1`. -/
+theorem properDigits_fullDig : ProperDigits 2 (fullDig (primeLambertAtBase 4)) := by
+  intro N
+  have hbin : ∀ j, ∀ h : j < (List.replicate (N + 1) 0).length,
+      (List.replicate (N + 1) 0)[j] < 2 := by
+    intro j hj
+    rw [List.getElem_replicate]
+    omega
+  obtain ⟨t, ht⟩ := exists_matchesAt_fullDig (List.replicate (N + 1) 0) (by simp) hbin
+  refine ⟨t + N, by omega, ?_⟩
+  have hN : N < (List.replicate (N + 1) 0).length := by simp
+  have h := ht N hN
+  rw [List.getD_eq_getElem _ 0 hN, List.getElem_replicate] at h
+  have h0 : fullDig (primeLambertAtBase 4) (t + N) = 0 := h
+  rw [h0]
+  omega
+
+/-- **The schedule-only real**: `G₄`'s digits at the strictly increasing, schedule-defined
+positions `fullPos`, summed in base two. -/
+noncomputable def fullReal : ℝ := realOfDigits 2 (fullDig (primeLambertAtBase 4))
+
+/-- Every finite binary word occurs in `fullReal`. -/
+theorem isDisjunctive_fullReal : IsDisjunctive 2 fullReal := by
+  have hmem := realOfDigits_mem_Ico 2 (le_refl 2) (fullDig (primeLambertAtBase 4))
+    (fullDig_lt _) properDigits_fullDig
+  rw [Set.mem_Ico] at hmem
+  have hfract : Int.fract fullReal = fullReal := Int.fract_eq_self.mpr hmem
+  have hdig : digitOf 2 fullReal = fullDig (primeLambertAtBase 4) :=
+    digitOf_realOfDigits 2 (le_refl 2) _ (fullDig_lt _) properDigits_fullDig
+  rw [isDisjunctive_iff_forall_occursAt 2 (le_refl 2)]
+  intro w hw
+  by_cases hw0 : w = []
+  · subst hw0
+    exact ⟨0, fun j hj => absurd hj (by simp)⟩
+  · have hlen : 0 < w.length := List.length_pos_iff.2 hw0
+    have hbin : ∀ j, ∀ h : j < w.length, w[j] < 2 :=
+      fun j hj => hw _ (List.getElem_mem hj)
+    obtain ⟨t, ht⟩ := exists_matchesAt_fullDig w hlen hbin
+    refine ⟨t, fun j hj => ?_⟩
+    rw [hfract, hdig]
+    have h : fullDig (primeLambertAtBase 4) (t + j) = w.getD j 0 := ht j hj
+    rw [h]
+    exact List.getD_eq_getElem _ 0 hj
+
+theorem irrational_fullReal : Irrational fullReal :=
+  isDisjunctive_fullReal.irrational
+
+/-- The schedule-only read is a genuine injection of read indices into digit positions. -/
+theorem fullPos_injective : Function.Injective fullPos := fullPos_strictMono.injective
 
 end NormalNumbers.G4.Sched
