@@ -15,9 +15,9 @@ progression modulus satisfies
 
   `log P₀ ≤ logP₀Nat K := (2H + T²)(3W² + J) + (2T+1)²`          (`log_gridP₀Bound_le`).
 
-The remaining schedule scales are `m₁ = 100·8^K·K^{2K+1}` (the small-prime cutoff is
+The remaining schedule scales are `m₁ = 1000·8^K·K^{2K+1}` (the small-prime cutoff is
 `R = 2^{2^{m₁}}`), `m₂ = 8K²`, `m = m₁ + m₂` (`Y = 2^{2^m}`, `X = Y^{100}`) and the moment
-order `Mc = 3·10⁴·T·m₁`.
+order `Mc = 10⁵·T·m₁`.
 
 Everything is compared on the **ladder** `K^{cK+d}` (for `K ≥ 100`): `N ≤ K³`, `J ≤ K⁴`,
 `B ≤ K⁷`, `U ≤ K^{7K+3}`, `W ≤ K^{7K+4}`, `H ≤ K^{3K}`, `T ≤ K^{3K+3}`,
@@ -45,14 +45,16 @@ def H (K : ℕ) : ℕ := gridH K
 def T (K : ℕ) : ℕ := gridT K (N K)
 /-- The ℕ bound for `log P₀`. -/
 def logP₀Nat (K : ℕ) : ℕ := (2 * H K + T K ^ 2) * (3 * W K ^ 2 + J K) + (2 * T K + 1) ^ 2
-/-- `m₁ = 100·8^K·K^{2K+1}`: `log₂ log₂ R`. -/
-def m₁ (K : ℕ) : ℕ := 100 * 8 ^ K * K ^ (2 * K + 1)
+/-- `m₁ = 1000·8^K·K^{2K+1}`: `log₂ log₂ R`.  The constant `1000` is what the main
+budget term needs against `Λ ≤ 4^{rK}`: `m₁ log 2 ≥ 64·8^K(2rK + 4) + O(K²)`. -/
+def m₁ (K : ℕ) : ℕ := 1000 * 8 ^ K * K ^ (2 * K + 1)
 /-- `m₂ = 8K²`: `log₂(log Y / log R)`. -/
 def m₂ (K : ℕ) : ℕ := 8 * K ^ 2
 /-- `m = m₁ + m₂`: `log₂ log₂ Y`. -/
 def m (K : ℕ) : ℕ := m₁ K + m₂ K
-/-- The moment order `Mc = 3·10⁴·T·m₁`. -/
-def Mc (K : ℕ) : ℕ := 30000 * T K * m₁ K
+/-- The moment order `Mc = 10⁵·T·m₁`.  The constant is forced by the §4C error term (c):
+`e^{13/2}·T·(3m₁+5) + 2rK ≤ Mc/7` with the dyadic (constant-4) upper Mertens bound. -/
+def Mc (K : ℕ) : ℕ := 100000 * T K * m₁ K
 
 lemma N_pos {K : ℕ} (hK : 1 ≤ K) : 0 < N K := by unfold N; positivity
 
@@ -195,14 +197,14 @@ lemma logP₀Nat_le {K : ℕ} (hK : 100 ≤ K) : logP₀Nat K ≤ K ^ (20 * K + 
 
 lemma m₁_le {K : ℕ} (hK : 100 ≤ K) : m₁ K ≤ K ^ (3 * K + 3) := by
   unfold m₁
-  have h1 : 100 ≤ K ^ 2 := by nlinarith
+  have h1 : 1000 ≤ K ^ 2 := by nlinarith
   have h2 : 8 ^ K ≤ K ^ K := Nat.pow_le_pow_left (by omega) K
-  calc 100 * 8 ^ K * K ^ (2 * K + 1) ≤ K ^ 2 * K ^ K * K ^ (2 * K + 1) := by gcongr
+  calc 1000 * 8 ^ K * K ^ (2 * K + 1) ≤ K ^ 2 * K ^ K * K ^ (2 * K + 1) := by gcongr
     _ = K ^ (3 * K + 3) := by rw [← pow_add, ← pow_add]; ring_nf
 
 lemma m₁_ge (K : ℕ) : 8 ^ K * K ^ (2 * K + 1) ≤ m₁ K := by
   unfold m₁
-  have : 8 ^ K * K ^ (2 * K + 1) ≤ 100 * (8 ^ K * K ^ (2 * K + 1)) :=
+  have : 8 ^ K * K ^ (2 * K + 1) ≤ 1000 * (8 ^ K * K ^ (2 * K + 1)) :=
     Nat.le_mul_of_pos_left _ (by norm_num)
   linarith [this]
 
@@ -220,10 +222,10 @@ lemma m_le {K : ℕ} (hK : 100 ≤ K) : m K ≤ K ^ (3 * K + 4) := by
 
 lemma Mc_le {K : ℕ} (hK : 100 ≤ K) : Mc K ≤ K ^ (6 * K + 9) := by
   unfold Mc
-  have h1 : 30000 ≤ K ^ 3 := by
-    calc 30000 ≤ 100 ^ 3 := by norm_num
+  have h1 : 100000 ≤ K ^ 3 := by
+    calc 100000 ≤ 100 ^ 3 := by norm_num
       _ ≤ K ^ 3 := Nat.pow_le_pow_left hK 3
-  calc 30000 * T K * m₁ K ≤ K ^ 3 * K ^ (3 * K + 3) * K ^ (3 * K + 3) := by
+  calc 100000 * T K * m₁ K ≤ K ^ 3 * K ^ (3 * K + 3) * K ^ (3 * K + 3) := by
         gcongr
         · exact T_le hK
         · exact m₁_le hK
