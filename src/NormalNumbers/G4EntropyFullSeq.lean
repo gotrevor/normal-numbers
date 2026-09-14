@@ -745,4 +745,92 @@ theorem fT_kk_le (i : ℕ) : (fT i : ℝ) * (kk i : ℝ) ≤ 4 * (fL i : ℝ) :=
       have hLnn1 : (0 : ℝ) ≤ (fL (i + 1) : ℝ) := Nat.cast_nonneg _
       nlinarith [hTm, hstep, hkki, hkki1, hLnn1]
 
+/-! ### The overhang fraction vanishes -/
+
+set_option maxHeartbeats 1000000 in
+/-- **`|Atom|² ≤ |P_K|`.**  `|Atom| ≤ 2^{K³+K}` while `|P_K| ≥ 2^{98·2^{m(K)}}/2` and
+`m(K) ≥ K³`. -/
+theorem card_Atom_sq_le_PK (i : ℕ) :
+    (Fintype.card (gridAt i).Atom : ℝ) ^ 2 ≤ ((PK i).card : ℝ) := by
+  have hA : (Fintype.card (gridAt i).Atom : ℝ) ≤ (2 : ℝ) ^ (KK i ^ 3 + KK i) := by
+    have h := card_Atom_le_two_pow i
+    have : ((Fintype.card (gridAt i).Atom : ℕ) : ℝ) ≤ ((2 ^ (KK i ^ 3 + KK i) : ℕ) : ℝ) := by
+      exact_mod_cast h
+    push_cast at this
+    exact this
+  have hP := card_PK_ge i
+  have hAnn : (0 : ℝ) ≤ (Fintype.card (gridAt i).Atom : ℝ) := Nat.cast_nonneg _
+  have hsq : (Fintype.card (gridAt i).Atom : ℝ) ^ 2
+      ≤ ((2 : ℝ) ^ (KK i ^ 3 + KK i)) ^ 2 := by
+    exact pow_le_pow_left₀ hAnn hA 2
+  have hexp : ((2 : ℝ) ^ (KK i ^ 3 + KK i)) ^ 2 = (2 : ℝ) ^ (2 * (KK i ^ 3 + KK i)) := by
+    rw [← pow_mul]
+    ring_nf
+  -- the exponent gap
+  have hcube : KK i ^ 3 ≤ m (KK i) := by
+    have h1 := m₁_ge_cube (show 1 ≤ KK i by have := KK_ge i; omega)
+    unfold m
+    omega
+  have hlt : m (KK i) < 2 ^ m (KK i) := Nat.lt_two_pow_self
+  have hKcube : KK i ≤ KK i ^ 3 := Nat.le_self_pow (by norm_num) _
+  have hgap : 2 * (KK i ^ 3 + KK i) + 1 ≤ 98 * 2 ^ m (KK i) := by omega
+  have hmono : (2 : ℝ) ^ (2 * (KK i ^ 3 + KK i)) * 2 ≤ (2 : ℝ) ^ (98 * 2 ^ m (KK i)) := by
+    have h2 : (2 : ℝ) ^ (2 * (KK i ^ 3 + KK i)) * 2
+        = (2 : ℝ) ^ (2 * (KK i ^ 3 + KK i) + 1) := (pow_succ 2 _).symm
+    rw [h2]
+    exact pow_le_pow_right₀ (by norm_num) hgap
+  have hhalf : (2 : ℝ) ^ (2 * (KK i ^ 3 + KK i)) ≤ (2 : ℝ) ^ (98 * 2 ^ m (KK i)) / 2 := by
+    rw [le_div_iff₀ (by norm_num)]
+    exact hmono
+  calc (Fintype.card (gridAt i).Atom : ℝ) ^ 2
+      ≤ (2 : ℝ) ^ (2 * (KK i ^ 3 + KK i)) := by rw [← hexp]; exact hsq
+    _ ≤ (2 : ℝ) ^ (98 * 2 ^ m (KK i)) / 2 := hhalf
+    _ ≤ ((PK i).card : ℝ) := hP
+
+/-- `|Atom_i| → ∞`. -/
+theorem tendsto_card_Atom_atTop :
+    Tendsto (fun i => (Fintype.card (gridAt i).Atom : ℝ)) atTop atTop := by
+  refine tendsto_atTop_mono (fun i => ?_) tendsto_natCast_atTop_atTop
+  have h1 : i ≤ KK i := by unfold KK kk; omega
+  have h2 : KK i ≤ Fintype.card (gridAt i).Atom := by
+    rw [card_Atom_gridAt]
+    have hb : KK i ≤ KK i ^ 2 + 1 := by nlinarith [KK_ge i]
+    calc KK i ≤ KK i ^ 2 + 1 := hb
+      _ = (KK i ^ 2 + 1) ^ 1 := (pow_one _).symm
+      _ ≤ (KK i ^ 2 + 1) ^ KK i := Nat.pow_le_pow_right (by omega) (by have := KK_ge i; omega)
+  have : i ≤ Fintype.card (gridAt i).Atom := le_trans h1 h2
+  exact_mod_cast this
+
+/-- **The overhang fraction vanishes**: `ov_i / |bandPairs i| ≤ 8/|Atom_i| → 0`. -/
+theorem overhang_frac_le (i : ℕ) :
+    (((bandPairs i).card - (winStarts i).card : ℕ) : ℝ)
+      ≤ 8 / (Fintype.card (gridAt i).Atom : ℝ) * ((bandPairs i).card : ℝ) := by
+  have hApos : (0 : ℝ) < (Fintype.card (gridAt i).Atom : ℝ) := by
+    have : 0 < Fintype.card (gridAt i).Atom := Fintype.card_pos
+    exact_mod_cast this
+  have hov := overhang_le_real i
+  have hPsq := card_Atom_sq_le_PK i
+  have hB : ((bandPairs i).card : ℝ)
+      = ((bandT i).card : ℝ) * (Fintype.card (gridAt i).Atom : ℝ) := by
+    have hnat : (bandPairs i).card = (bandT i).card * Fintype.card (gridAt i).Atom := by
+      rw [bandPairs, Finset.card_product, Finset.card_univ]
+    rw [hnat]
+    push_cast
+    ring
+  have hT : ((PK i).card : ℝ) ≤ 2 * ((bandT i).card : ℝ) := card_bandT_ge' i
+  have hTnn : (0 : ℝ) ≤ ((bandT i).card : ℝ) := Nat.cast_nonneg _
+  have hPnn : (0 : ℝ) ≤ ((PK i).card : ℝ) := Nat.cast_nonneg _
+  rw [hB]
+  -- `ov ≤ 2|PK| + 2|Atom|² ≤ 4|bandT| + 2|PK| ≤ 8|bandT|`
+  have hstep : (((bandPairs i).card - (winStarts i).card : ℕ) : ℝ)
+      ≤ 8 * ((bandT i).card : ℝ) := by
+    have h1 : 2 * (Fintype.card (gridAt i).Atom : ℝ) ^ 2 ≤ 2 * ((PK i).card : ℝ) := by
+      linarith [hPsq]
+    linarith [hov, h1, hT]
+  have hfrac : 8 * ((bandT i).card : ℝ)
+      = 8 / (Fintype.card (gridAt i).Atom : ℝ)
+        * (((bandT i).card : ℝ) * (Fintype.card (gridAt i).Atom : ℝ)) := by
+    field_simp
+  linarith [hstep, hfrac]
+
 end NormalNumbers.G4.Sched
