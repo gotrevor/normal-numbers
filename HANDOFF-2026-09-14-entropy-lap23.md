@@ -1,6 +1,8 @@
 # HANDOFF — entropy review lap 23 (2026-09-14, Opus)
 
-**Branch** `wip/g4-entropy`.  `lake build` green, **8965 jobs**.  Four new modules, all
+**Branch** `wip/g4-entropy`.  **HEAD** `3e284a3` (five commits this lap: `33dc377` altitude,
+then `7626bc5`, `7efe929`, `93f7f7a`, `3e284a3`).  Working tree clean.
+`lake build` green, **8965 jobs**.  Four new modules, all
 sorry-free and `#print axioms`-clean (trust triple).  No pre-expedition file edited.
 `isDisjunctive_four/two/base` and `primeSumAtBase_eq_primeLambertAtBase` re-checked clean.
 
@@ -64,3 +66,16 @@ literally these same block frequencies, and is not normal.
   FIRST, then `rw [hKS]` only hits the bare cast.
 - `field_simp` frequently closes the goal outright; a trailing `ring` then errors with
   "No goals to be solved".
+
+## Lap-close state (2026-09-14, budget reached)
+
+Working tree clean at `3e284a3`; nothing uncommitted.  The only `sorry`s anywhere in `src/` are
+`PrimeLambertOscillation.phaseOscillation` and `MahlerDriftOne.exists_prime_nonresidue`, both
+from other campaigns and both on this expedition's forbidden-drift list — untouched.
+
+`DIRECTION.md`'s CURRENT DIRECTIVE (review lap 23) is the binding objective and its step 3 is
+now DONE; the next grind lap should start at `PENDING_WORK.md`'s item 1, the faithfulness
+rendering (`blockFreq_eq_count`, `blockFreq_eq_digits`).  That is a genuine obligation, not
+polish: the headline currently reads correctly only through definitional unfolding of
+`FinLaw.map` and `empirical`, and the brief (§8) asks the final arithmetic statement to be
+tested against a literal rendering of the sample law.
