@@ -50,7 +50,7 @@ reproduces the naive controls; the naive short-circuit search stays faster for t
 | (10,1) | > 9 | – | – | – | sizes ≤ 9, ≤ 20 (cap probably binding) |
 | (2,2) | 2 | `{1,3}` (unique ≤ 40); **151 pairs ≤ 60**, e.g. `{1,6}`, `{1,11}`, `{1,12}`, `{2,3}` | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
 | (2,3) | 4 | `{1,3,5,7}` unique ≤ 40; **928 sets ≤ 60**, e.g. `{1,3,5,14}`, `{1,3,7,10}`, `{1,3,10,14}` (in ratios `{1,3,5,14}` is new, not a scaling) | > 4 (`{1,3,5,7}` fails) | – | sizes ≤ 4, ≤ 60 (naive, 2 h 38 min) |
-| (2,4) | > 7 | **`{1,3,…,15}` does NOT hit** (nor any 7-subset of it); no set of size ≤ 7 below 20, so the *value* `2^(k−1) = 8` is still possible | – | – | sizes ≤ 7, ≤ 20 (size 8 running) |
+| (2,4) | > 8 (≤ 20) | **`{1,3,…,15}` does NOT hit** (nor any 7-subset of it); no set of size ≤ 8 below 20 (size 8: 1937 s). The cap may bind (base 6's minimal sets reach 23 under a cap of 24), so the value is open; N5 gives `≥ 8` | – | – | sizes ≤ 8, ≤ 20 |
 | (3,2) | **6** | 42 sets ≤ 20, e.g. `{1,2,4,5,7,8}`, `{1,4,5,6,7,8}` | – | – | sizes ≤ 6, ≤ 20 |
 
 Read along rows: `S(g,1) = 1, 2, 3, 5, 7, >6, >8, >8, >9` for `g = 2..10`; `S(2,k) = 1, 2, 4, >7`
@@ -124,6 +124,52 @@ is the version the bound needs, **N4′: every `S` with `|S| ≤ p − 2` has a 
 at base 7).  The random-`B` heuristic for `|S| = p − 2` dies at roughly 20 base-`p` digits per
 element, so beyond that N4′ needs a *structured* `B`; a probe on random small sets of large
 elements is in `scratchpad/n4_edge_test.py` (results in the KB leaf §7.19).
+
+## Holes: the dynamical reformulation, and conjecture N5 (21:30)
+
+Write `T t = g·t mod 1` and, for a multiplier `m` and a `k`-block `w`,
+`H(m,w) = { t ∈ [0,1) : the first k digits of frac(m·t) are w }` - `m` intervals of length
+`g^(−k)/m`, equally spaced.  Since the digit of `mα` at position `n+1` is the first digit of
+`frac(m·Tⁿα)`, **`w` occurs infinitely often in `mα` iff the `T`-orbit of `α` enters `H(m,w)`
+infinitely often**, and
+
+> `S` hits `w`  ⟺  the survivor set `{ t : Tⁿ t ∉ ⋃_{m∈S} H(m,w) for all n ≥ 0 }` contains no irrational.
+
+So `S(g,k)` is a question about open dynamical systems (`×g` with a hole that is a finite union of
+intervals), where there is a literature: Urbański 1986 (dimension of the survivor set of `×g` with
+an interval hole), Glendinning–Sidorov 2015 (the doubling map with a hole `(a,b)`: the survivor set
+is uncountable iff the hole is short enough, thresholds at Thue–Morse-type points),
+Bunimovich–Yurchenko 2011 (holes containing short periodic orbits leak *slowest*).  None of it has
+been read for this yet; it is the next literature pass.
+
+Both adversary families in this repo are one object in this picture: an **`H`-free periodic orbit
+plus a landing strip**.  The sparse adversary hugs the fixed point `0` and makes the excursion
+`B·g^(−J), B·g^(−J+1), …` (the digits of `mB`); Mahler's `a/(g−1) + Σ c·g^(−i!)` hugs the fixed
+point `a/(g−1)` and makes the excursion `a/(g−1) + c·g^(−i)`, `i = J, …, 1`, which returns *exactly*
+to the fixed point.  Any `H`-free periodic orbit `P/(g^ℓ−1)` with an `H`-free excursion gives an
+irrational escape; the residue lemma says which fixed point (`0`) has no landing strip at a prime
+base when the residues cover.
+
+**Mean-field count.**  `s` holes of measure `g^(−k)` each remove at most `s·g^(−k)` of the circle;
+for a hole made of *random* depth-`n` cylinders the survivor set has entropy
+`≈ log g + log(1 − μ)`, positive iff the complement `1 − μ` exceeds `1/g`, i.e. iff
+`s < (g−1)·g^(k−1)`.  Hence
+
+> **N5.**  `S(g,k) ≥ (g−1)·g^(k−1)`.
+
+Data: `(g−1)g^(k−1)` is `1, 2, 4, 8` at base 2 (table: `1, 2, 4, ≥ 9 within ≤ 20`), `2, 6` at base
+3 (`2, 6`), `3` at base 4 (`3`), `4, 5, 6, 7, 8, 9` at bases 5–10 (`5, 7, 7–8, ≥ 9, ≥ 9, ≥ 10`).
+Never violated; tight at bases 2–4 for the exact entries; a strict lower bound from base 5 on.
+⚠️ The count is a heuristic with a known failure mode: a single interval hole next to the fixed
+point `0` (Glendinning–Sidorov) beats mean-field, and inside our own family the block `01` at
+base 2 is hit by `{1}` alone although its hole has measure `1/4`.  So N5 is a pattern with a
+story, not a derivation; the blocks that bind are the constant ones `d^k`, whose holes contain a
+fixed point and leak slowest, which is exactly the Bunimovich–Yurchenko direction.
+
+Where N5 is most exposed: every lower half in the table is capped at multipliers `≤ 60`, which is
+where sparse adversaries are cheap.  The probe `experiments`-side (scratch `n5_large_probe.py`):
+random pairs in `[100, 500]` at `(4,1)` and `(2,3)`, random triples in `[40, 120]` at `(2,3)` - N5
+says none hits.
 
 ## Prior art (literature sweep 2026-09-13; [R] = read in the source)
 
