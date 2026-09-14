@@ -209,6 +209,7 @@ import NormalNumbers.G4ScheduleBig
 import NormalNumbers.G4EntropyXCeiling
 import NormalNumbers.G4EntropyResidueProbe
 import NormalNumbers.G4EntropyFullDensity
+import NormalNumbers.G4EntropyE0Down
 import NormalNumbers.G4ScheduleHarmonic
 import NormalNumbers.G4ScheduleBudget
 import NormalNumbers.G4ScheduleWitness
