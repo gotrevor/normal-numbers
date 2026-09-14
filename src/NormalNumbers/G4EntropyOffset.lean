@@ -292,4 +292,76 @@ theorem abs_avg_block_prob_offset_le {A : Type*} [Fintype A] [DecidableEq A] [No
     (L.map (lowTuple m r)) w hδ hdef'
   rwa [hcast] at h
 
+/-! ### §2  Every position of the window, not just one tiling -/
+
+/-- The `ℓ`-block of an `m`-bit window starting at position `p` (positions counted from the top,
+zero-based). -/
+def posAt (m ℓ p : ℕ) (z : Fin (2 ^ m)) : Fin (2 ^ ℓ) :=
+  ⟨(z : ℕ) / 2 ^ (m - p - ℓ) % 2 ^ ℓ, Nat.mod_lt _ (by positivity)⟩
+
+@[simp] lemma posAt_val (m ℓ p : ℕ) (z : Fin (2 ^ m)) :
+    ((posAt m ℓ p z : Fin (2 ^ ℓ)) : ℕ) = (z : ℕ) / 2 ^ (m - p - ℓ) % 2 ^ ℓ := rfl
+
+/-- Truncating below the window of interest changes nothing: `(z % 2^a)/2^b % 2^c = z/2^b % 2^c`
+whenever `b + c ≤ a`. -/
+lemma mod_div_mod_eq {z a b c : ℕ} (h : b + c ≤ a) :
+    (z % 2 ^ a) / 2 ^ b % 2 ^ c = z / 2 ^ b % 2 ^ c := by
+  have hdvd : (2 : ℕ) ^ (b + c) ∣ 2 ^ a := pow_dvd_pow 2 h
+  have key : ∀ y : ℕ, y / 2 ^ b % 2 ^ c = y % 2 ^ (b + c) / 2 ^ b := by
+    intro y
+    rw [pow_add, Nat.mod_mul_right_div_self]
+  rw [key, key, Nat.mod_mod_of_dvd _ hdvd]
+
+/-- **The offset-`r` block of the truncated window is the position-`(r + jℓ)` block of the
+original.** -/
+theorem fullCoord_lowTuple_eq {A : Type*} {m ℓ r j : ℕ} (hp : r + j * ℓ + ℓ ≤ m)
+    (α : A) (jj : Fin ((m - r) / ℓ)) (hjj : (jj : ℕ) = j) (z : A → Fin (2 ^ m)) :
+    fullCoord (m - r) ℓ (α, jj) (lowTuple m r z) = posAt m ℓ (r + j * ℓ) (z α) := by
+  refine Fin.ext ?_
+  rw [fullCoord, blkAt_val, posAt_val]
+  simp only [lowTuple, lowCoord]
+  have he : m - r - (j + 1) * ℓ = m - (r + j * ℓ) - ℓ := by
+    have : (j + 1) * ℓ = j * ℓ + ℓ := by ring
+    omega
+  rw [hjj, he]
+  refine mod_div_mod_eq ?_
+  omega
+
+/-! ### §3  The offset classes tile the positions -/
+
+/-- `(r, j) ↦ r + jℓ` matches the offset classes with the window positions admitting a full
+`ℓ`-block: `r = p % ℓ`, `j = p / ℓ`. -/
+def posEquiv (m ℓ : ℕ) (hℓ : 0 < ℓ) (hℓm : ℓ ≤ m) :
+    ((r : Fin ℓ) × Fin ((m - (r : ℕ)) / ℓ)) ≃ Fin (m - ℓ + 1) where
+  toFun q := ⟨(q.1 : ℕ) + (q.2 : ℕ) * ℓ, by
+    have hj := q.2.isLt
+    have h1 : ((q.2 : ℕ) + 1) * ℓ ≤ m - (q.1 : ℕ) :=
+      (Nat.le_div_iff_mul_le hℓ).1 hj
+    have hr := q.1.isLt
+    have : ((q.2 : ℕ) + 1) * ℓ = (q.2 : ℕ) * ℓ + ℓ := by ring
+    omega⟩
+  invFun p := ⟨⟨(p : ℕ) % ℓ, Nat.mod_lt _ hℓ⟩, ⟨(p : ℕ) / ℓ, by
+    have hp := p.isLt
+    have hdm := Nat.div_add_mod (p : ℕ) ℓ
+    have hstep : ((p : ℕ) / ℓ + 1) * ℓ ≤ m - (p : ℕ) % ℓ := by
+      have h3 : ((p : ℕ) / ℓ + 1) * ℓ = ℓ * ((p : ℕ) / ℓ) + ℓ := by ring
+      omega
+    exact Nat.lt_of_succ_le ((Nat.le_div_iff_mul_le hℓ).2 hstep)⟩⟩
+  left_inv := by
+    rintro ⟨⟨r, hr⟩, ⟨j, hj⟩⟩
+    have h1 : (r + j * ℓ) % ℓ = r := by
+      rw [Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hr]
+    have h2 : (r + j * ℓ) / ℓ = j := by
+      rw [Nat.add_mul_div_right _ _ hℓ, Nat.div_eq_of_lt hr, Nat.zero_add]
+    refine Sigma.ext (Fin.ext h1) ?_
+    rw [Fin.heq_ext_iff (by simp only [Fin.val_mk]; rw [h1])]
+    exact h2
+  right_inv := by
+    intro p
+    refine Fin.ext ?_
+    simp only
+    rw [Nat.mod_add_div']
+
 end NormalNumbers.G4Entropy
+
+
