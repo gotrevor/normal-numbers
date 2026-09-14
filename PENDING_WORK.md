@@ -27,13 +27,21 @@ between `q` and `q+1`, so a word occupying a run of positions *inside one window
 increasing enumeration as a contiguous block.  No block-frequency control is needed — only
 occurrence — so the `ρ ≫ δ/m` barrier never enters.
 
-**Next bounded test**: upgrade `occurs_along_sampleEnum` to *infinitely many* occurrences of each
-word.  That gives `ProperDigits` (from the word `[0]`) and hence, through `digitOf_realOfDigits`,
-`IsDisjunctive 2 (realOfDigits 2 (fun j => digitOf 2 (fract G₄) (sampleEnum j)))` — a disjunctive
-real read off a genuine *subsequence* of `G₄`'s digits.  The missing ingredient is that the set of
-positions `q` carrying an occurrence is unbounded; the counting at one scale gives
-`≈ 2^{−ℓ}|P_i||Atom_i|(m_i−ℓ+1)` occurrence triples, so the natural route is a multiplicity bound
-on `(n,α) ↦ kIdx(n,α)`.
+**Lap 58 closed the follow-up** — and the "unbounded occurrence positions" detour was not
+needed.  `ProperDigits` comes from applying `occurs_along_sampleEnum` to the word
+`List.replicate (N+1) 0`: a match at `t` puts a `0` at subsequence index `t + N ≥ N`, which is
+exactly `ProperDigits`' requirement.  Hence:
+
+```
+enumDigits j = digitOf 2 (fract G₄) (sampleEnum j)
+properDigits_enumDigits    ProperDigits 2 enumDigits
+isDisjunctive_enumReal     IsDisjunctive 2 (realOfDigits 2 enumDigits)
+irrational_enumReal        Irrational (realOfDigits 2 enumDigits)
+```
+
+**An explicit irrational, disjunctive real read off a genuine strictly increasing subsequence of
+`G₄`'s binary digits.**  Open next: whether this real is *normal* — lap 54 says not by the
+chunking route; nothing yet says it is impossible.
 
 ## ✅ OBJECTIVE MET (lap 52) — and the E-T8 successor's arithmetic
 

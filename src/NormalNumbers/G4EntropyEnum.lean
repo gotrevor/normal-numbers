@@ -139,4 +139,65 @@ theorem occurs_along_sampleEnum (v : List ℕ) (hlen : 0 < v.length)
   rw [hocc j hj]
   exact (List.getD_eq_getElem v 0 hj).symm
 
+/-! ### The disjunctive real read off the subsequence -/
+
+open Classical in
+/-- The digit sequence of `G₄` along the strictly increasing enumeration. -/
+noncomputable def enumDigits (j : ℕ) : ℕ :=
+  digitOf 2 (Int.fract (primeLambertAtBase 4)) (sampleEnum j)
+
+lemma enumDigits_lt (j : ℕ) : enumDigits j < 2 := Nat.mod_lt _ (by omega)
+
+/-- **The subsequence never sticks at `1`.**  Apply `occurs_along_sampleEnum` to the word
+`1^N ++ [0]`: the match puts a `0` at index `≥ N`. -/
+theorem properDigits_enumDigits : ProperDigits 2 enumDigits := by
+  intro N
+  have hlenv : (List.replicate (N + 1) 0).length = N + 1 := by simp
+  have hbin : ∀ j, ∀ h : j < (List.replicate (N + 1) 0).length,
+      (List.replicate (N + 1) 0)[j] < 2 := by
+    intro j hj
+    rw [List.getElem_replicate]
+    omega
+  obtain ⟨t, ht⟩ := occurs_along_sampleEnum (List.replicate (N + 1) 0) (by omega) hbin
+  refine ⟨t + N, by omega, ?_⟩
+  have hN : N < (List.replicate (N + 1) 0).length := by omega
+  have h := ht N hN
+  rw [List.getD_eq_getElem _ 0 hN, List.getElem_replicate] at h
+  have h0 : enumDigits (t + N) = 0 := h
+  rw [h0]
+  omega
+
+/-- **The disjunctive real.**  `G₄`'s binary digits, read along the strictly increasing,
+schedule-defined enumeration of ALL sampled positions, sum to a real in which **every** finite
+binary word occurs.
+
+Unlike `isNormal_realOfDigits_samplePos`, the position map here is a genuine *subsequence*:
+`sampleEnum` is `StrictMono` and every value is a sampled position.  Still not a claim about
+`G₄`. -/
+theorem isDisjunctive_enumReal : IsDisjunctive 2 (realOfDigits 2 enumDigits) := by
+  have hmem := realOfDigits_mem_Ico 2 (le_refl 2) enumDigits enumDigits_lt properDigits_enumDigits
+  rw [Set.mem_Ico] at hmem
+  have hfract : Int.fract (realOfDigits 2 enumDigits) = realOfDigits 2 enumDigits :=
+    Int.fract_eq_self.mpr hmem
+  have hdig : digitOf 2 (realOfDigits 2 enumDigits) = enumDigits :=
+    digitOf_realOfDigits 2 (le_refl 2) enumDigits enumDigits_lt properDigits_enumDigits
+  rw [isDisjunctive_iff_forall_occursAt 2 (le_refl 2)]
+  intro w hw
+  by_cases hw0 : w = []
+  · subst hw0
+    exact ⟨0, fun j hj => absurd hj (by simp)⟩
+  · have hlen : 0 < w.length := List.length_pos_iff.2 hw0
+    have hbin : ∀ j, ∀ h : j < w.length, w[j] < 2 :=
+      fun j hj => hw _ (List.getElem_mem hj)
+    obtain ⟨t, ht⟩ := occurs_along_sampleEnum w hlen hbin
+    refine ⟨t, fun j hj => ?_⟩
+    rw [hfract, hdig]
+    have h : enumDigits (t + j) = w.getD j 0 := ht j hj
+    rw [h]
+    exact List.getD_eq_getElem _ 0 hj
+
+/-- Hence the real read off the subsequence is irrational. -/
+theorem irrational_enumReal : Irrational (realOfDigits 2 enumDigits) :=
+  isDisjunctive_enumReal.irrational
+
 end NormalNumbers.G4.Sched
