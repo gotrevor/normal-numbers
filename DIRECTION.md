@@ -1,3 +1,42 @@
+## Attended operator override: 2026-09-14 18:20 EDT RE-TARGET (ACTIVE, supersedes the 10:52 override)
+
+Brief §8 is satisfied and the expedition's own wrap (`HANDOFF-2026-09-14-entropy-session-wrap-laps61-118.md`)
+records the state: E0/E1 proved, T_E refuted, `qForces_normal_iff_density_one`, the density wall,
+`windows_eq_or_disjoint`, and the headline `tendsto_fullRead_freq` - `fullReal` (G₄'s digits along
+the schedule-only strictly increasing `fullPos`) has correct word frequencies **along the band
+ends `fT (i+1)`**.  What blocks `IsNormal 2 fullReal` is `wall_at_zero_deficit`: the uncontrolled
+head of band `i+1` dwarfs all of band `i`, because `X(K)` is **pinned** by the schedule.  Trevor's
+call (2026-09-14): `fullReal` is worth finishing as a new normal number, novelty or not.  The
+attended review is `~/personal/claude/knowledge/core/projects/normal-numbers-entropy-review-2026-09-14.md`
+(read-only in the box).  Objectives, in order:
+
+**A0 - the decisive probe (first, ONE lap, answer in HANDOFF prose before any proof):** does the
+E0 chain hold for every `X ≥ Sched.X K` at fixed `K`?  List every hypothesis in the cone of
+`entropy_E0` (`G4ScheduleFar`, `G4ScheduleBig`, `G4ScheduleBudget`, `G4Remainder`, `G4FarTail`,
+`G4MediumPrimes`, `G4SmallPrimeVector`, `G4EntropyBudget`) that bounds `X` **from above** or ties
+`Y`/`R` to `X` in a way that fails for larger `X`.  For each: declaration name, the inequality,
+and whether it is monotone in `X`.  Verdict YES (all monotone) / NO (name the estimate).
+
+**A - build (if A0 = YES):** generalize `entropy_E0` to `∀ X ≥ X K` (old theorem recovered as an
+instance), then redefine the band read with an inductively chosen `X'_i ≫` (head of band `i+1`)
+so every prefix is controlled: prefix control via `H(Z) ≤ H(Z|1_S)+1` on the first-`θ` sub-sample,
+which is itself a sample `P_K(θX')` once E0 holds for all `X`.  Endpoint: `IsNormal 2 fullReal'`
+(a new module `G4EntropyConcat.lean`; keep `fullReal` and its theorems untouched).  If A0 = NO:
+record the exact obstruction as a named `Prop` and STOP objective A.
+
+**B - the residue probe (ONE lap, read-only, after A0):** the sample fixes ONE class `G.b₀ mod
+G.P₀`.  For every estimate in the E0 cone, does it hold for **every** class with frozen multiplier
+residues `c`, same constants?  YES/NO per declaration.  All-YES means the union over classes reads
+density one and (by `qForces_normal_iff_density_one`) a hypothesis on it forces normality of `G₄`
+itself; a NO names the surviving arithmetic gap.
+
+Do not add joint-ladder rungs or sharpen constants.  Commit a compiling skeleton with named
+`sorry` leaves before any hard step.  Hygiene from the wrap applies (abstract helper lemmas
+against the astronomically large closed terms; no `simp` on `gridDm`/`X`/`gridQ`; background
+`lake build`).  Preserved declarations and the forbidden-drift list of the 10:52 override still
+apply.  Stop when A and B both have verdicts and A's endpoint is proved or its obstruction is
+named.
+
 # DIRECTION — normal-numbers 🧭
 
 ## Attended operator override: 2026-09-14 entropy expedition (ACTIVE)
