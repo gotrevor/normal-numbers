@@ -204,6 +204,7 @@ import NormalNumbers.G4ScheduleBig
 import NormalNumbers.G4ScheduleHarmonic
 import NormalNumbers.G4ScheduleBudget
 import NormalNumbers.G4ScheduleWitness
+import NormalNumbers.G4ScheduleAssembly
 import NormalNumbers.G4SeparatingTest
 import NormalNumbers.G4SmallPrimeVector
 import NormalNumbers.G4Spectral
