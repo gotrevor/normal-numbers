@@ -13,22 +13,30 @@ parameters — the `hB` field of `ScheduleWitness`.  This file proves it.
 
 It is the only one of the five witness inequalities that mentions **no** outer scale `X`, no
 primes and no progression: it is a statement about `K`, the omitted word's length `ℓ`, the
-cylinder depth `M`, and the good-coordinate count `g` alone.  Writing `s = K²`, `r = s^K`,
+cylinder depth `M`, and the good-coordinate count `g` alone.
+
+**This file is proved for a general integer base `b ≥ 2`** (campaign G4B, brief §7.1); the
+base-four statement `gridParams_hB` used by `G4ScheduleAssembly` is the `b = 4` instance, with
+its hypothesis `K ≥ 33856 ℓ² 16^ℓ` recovered *exactly*.  Writing `s = K²`, `r = s^K`,
 `H = (s+1)^K`, `η ≤ 2^{−K/4}`, `Lg ≤ r(log 2 + 23√K)` and `(1−1/K)r ≤ g ≤ r`:
 
-    ((4^ℓ−1)^M)^H · η^g · e^{Lg/2} · (√(2πe/g)·√(H+g))^g  ≤  (1/8)/2^r
+    ((b^ℓ−1)^M)^H · η^g · e^{Lg/2} · (√(2πe/g)·√(H+g))^g  ≤  (1/8)/2^r
 
-as soon as `K ≥ 33856·ℓ²·16^ℓ = (184·ℓ·4^ℓ)²`.
+whenever `M = ⌈(K log 2)/(4ℓ log b)⌉` and `K ≥ (92·ℓ·b^ℓ·⌈log₂ b⌉)²`.
 
 The mechanism, on the logarithmic scale and per unit of `r`: the cylinder count contributes
-`+(K/4)log 2` (because `4^{ℓM} ≈ η^{−1}`) but is **short** by `K·4^{−ℓ}/(8ℓ)`, since
-`log(4^ℓ−1) = 2ℓ log 2 − Θ(4^{−ℓ})` — that deficit is the whole content of "an omitted word
+`+(K/4)log 2` (because `b^{ℓM} ≈ η^{−1}`) but is **short** by `M·b^{−ℓ} ≈ K log2·b^{−ℓ}/(4ℓ log b)`,
+since `log(b^ℓ−1) = ℓ log b − Θ(b^{−ℓ})` — that deficit is the whole content of "an omitted word
 forces covering exponent `d < 1`".  Against it stand the `ε`-fraction of bad coordinates
 (`(log 2)/4`), the shape constant (`log 6`), the `2^r` union over good coordinate sets
 (`log 2`) and, dominantly, the spectral term `11.5√K`.  The deficit beats them once
-`√K ≥ 184·ℓ·4^ℓ`, which is why `K → ∞` is needed and why the bound is uniform in nothing
+`√K ≥ 92·ℓ·b^ℓ·log₂ b`, which is why `K → ∞` is needed and why the bound is uniform in nothing
 else.  Bounding the zonotope by a coordinatewise box would delete the deficit, which is
 exactly the brief's prohibition.
+
+Note that the deficit *grows* as `b` shrinks (`b^{−ℓ}` against `4^{−ℓ}`), so `hB` is the
+**easiest** of the five inequalities at small base; the obstruction that forces `b ≥ 3` lives
+in `hbig`, not here (`PENDING_WORK.md` §G4B).
 -/
 
 open Real Finset
@@ -36,33 +44,28 @@ open scoped BigOperators
 
 namespace NormalNumbers.G4
 
-/-- `log(4^ℓ − 1) ≤ 2ℓ log 2 − 4^{−ℓ}`: the covering-exponent deficit of an omitted word. -/
-lemma log_four_pow_sub_one_le {ℓ : ℕ} (hℓ : 1 ≤ ℓ) :
-    Real.log ((4 : ℝ) ^ ℓ - 1) ≤ 2 * ℓ * Real.log 2 - (1 / 4 : ℝ) ^ ℓ := by
-  have h4 : (4 : ℝ) ≤ (4 : ℝ) ^ ℓ := by
-    calc (4 : ℝ) = 4 ^ 1 := by norm_num
-      _ ≤ 4 ^ ℓ := pow_le_pow_right₀ (by norm_num) hℓ
-  have hpos : (0 : ℝ) < (4 : ℝ) ^ ℓ := by positivity
-  have hq : (0 : ℝ) < 1 - (1 / 4 : ℝ) ^ ℓ := by
-    have : (1 / 4 : ℝ) ^ ℓ ≤ 1 / 4 := by
-      calc (1 / 4 : ℝ) ^ ℓ ≤ (1 / 4 : ℝ) ^ 1 := pow_le_pow_of_le_one (by norm_num) (by norm_num) hℓ
-        _ = 1 / 4 := by norm_num
-    linarith
-  have hfac : (4 : ℝ) ^ ℓ - 1 = (4 : ℝ) ^ ℓ * (1 - (1 / 4 : ℝ) ^ ℓ) := by
-    have : (1 / 4 : ℝ) ^ ℓ = ((4 : ℝ) ^ ℓ)⁻¹ := by
-      rw [one_div, inv_pow]
-    rw [this]
-    field_simp
-  rw [hfac, Real.log_mul (by positivity) (ne_of_gt hq), Real.log_pow]
-  have h1 : Real.log (1 - (1 / 4 : ℝ) ^ ℓ) ≤ -(1 / 4 : ℝ) ^ ℓ := by
-    have := Real.log_le_sub_one_of_pos hq
-    linarith
-  have h2 : Real.log 4 = 2 * Real.log 2 := by
-    rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow]
-    push_cast; ring
-  rw [h2]
-  have : (ℓ : ℝ) * (2 * Real.log 2) = 2 * ℓ * Real.log 2 := by ring
-  linarith [this]
+/-- `log(b^ℓ − 1) ≤ ℓ·log b − b^{−ℓ}`: the covering-exponent deficit of an omitted word, in
+any base `b ≥ 2`.  (At `b = 4` this is `2ℓ log 2 − 4^{−ℓ}`.) -/
+lemma log_pow_sub_one_le {bb ℓ : ℕ} (hbb : 2 ≤ bb) (hℓ : 1 ≤ ℓ) :
+    Real.log ((bb : ℝ) ^ ℓ - 1) ≤ ℓ * Real.log bb - (1 / (bb : ℝ)) ^ ℓ := by
+  have hb2 : (2 : ℝ) ≤ (bb : ℝ) := by exact_mod_cast hbb
+  have hbpos : (0 : ℝ) < (bb : ℝ) := by linarith
+  have hinv1 : (1 : ℝ) / (bb : ℝ) ≤ 1 / 2 :=
+    one_div_le_one_div_of_le (by norm_num) hb2
+  have hinv0 : (0 : ℝ) ≤ 1 / (bb : ℝ) := by positivity
+  have hq : (1 / (bb : ℝ)) ^ ℓ ≤ 1 / 2 := by
+    calc (1 / (bb : ℝ)) ^ ℓ ≤ (1 / (bb : ℝ)) ^ 1 :=
+          pow_le_pow_of_le_one hinv0 (by linarith) hℓ
+      _ = 1 / (bb : ℝ) := pow_one _
+      _ ≤ 1 / 2 := hinv1
+  have hq0 : (0 : ℝ) < 1 - (1 / (bb : ℝ)) ^ ℓ := by linarith
+  have hfac : (bb : ℝ) ^ ℓ - 1 = (bb : ℝ) ^ ℓ * (1 - (1 / (bb : ℝ)) ^ ℓ) := by
+    have h : (1 / (bb : ℝ)) ^ ℓ = ((bb : ℝ) ^ ℓ)⁻¹ := by rw [one_div, inv_pow]
+    rw [h]; field_simp
+  rw [hfac, Real.log_mul (by positivity) (ne_of_gt hq0), Real.log_pow]
+  have h1 : Real.log (1 - (1 / (bb : ℝ)) ^ ℓ) ≤ -(1 / (bb : ℝ)) ^ ℓ := by
+    have := Real.log_le_sub_one_of_pos hq0; linarith
+  linarith
 
 /-- `H = (K²+1)^K ≤ e^{1/K} · K^{2K} = e^{1/K} r`. -/
 lemma hDim_le_exp_mul_rDim {K : ℕ} (hK : 1 ≤ K) :
@@ -136,45 +139,88 @@ lemma shape_factor_le {K r H gr : ℝ} (hK : 100 ≤ K) (hr : 0 < r) (hH0 : 0 �
         Real.sqrt_le_sqrt hkey
     _ = 7 := by rw [show (49 : ℝ) = 7 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]
 
-/-- **The deficit dominates.**  `K ≥ (184·ℓ·4^ℓ)²` makes the omitted word's covering deficit
-`K·4^{−ℓ}/(8ℓ)` beat the spectral term `11.5√K` and every absolute constant. -/
-lemma deficit_dominates {ℓ K : ℕ} (hℓ : 1 ≤ ℓ) (hK : 33856 * ℓ ^ 2 * 16 ^ ℓ ≤ K) :
-    (11.5 : ℝ) * Real.sqrt K + 2.8 * ℓ + 5.66 ≤ (K : ℝ) / (8 * ℓ) * (1 / 4 : ℝ) ^ ℓ := by
-  have hℓ0 : (1 : ℝ) ≤ ℓ := by exact_mod_cast hℓ
-  have hℓpos : (0 : ℝ) < ℓ := by linarith
-  have h4 : (4 : ℝ) ≤ (4 : ℝ) ^ ℓ := by
-    calc (4 : ℝ) = 4 ^ 1 := by norm_num
-      _ ≤ 4 ^ ℓ := pow_le_pow_right₀ (by norm_num) hℓ
-  set c : ℝ := (ℓ : ℝ) * 4 ^ ℓ with hc
-  have hc4 : (4 : ℝ) ≤ c := by rw [hc]; nlinarith
+/-- **The deficit dominates**, in any base `b ≥ 2`.  With `c = ℓ·b^ℓ·log₂ b`, the covering
+deficit per unit of `r` is `K/(4c)`, and `K ≥ (92c)²` makes it beat the spectral term
+`11.5√K` together with every absolute constant.  The hypothesis is stated with
+`κ = ⌈log₂ b⌉ = Nat.clog 2 b` so that it lives in `ℕ`; at `b = 4`, `κ = 2` and it reads
+`K ≥ 8464·ℓ²·16^ℓ·4 = 33856·ℓ²·16^ℓ`, exactly the base-four hypothesis. -/
+lemma deficit_dominates {bb ℓ K : ℕ} (hbb : 2 ≤ bb) (hℓ : 1 ≤ ℓ)
+    (hK : 8464 * ℓ ^ 2 * bb ^ (2 * ℓ) * Nat.clog 2 bb ^ 2 ≤ K) :
+    (11.5 : ℝ) * Real.sqrt K + (100 / 99) * ((ℓ : ℝ) * Real.log bb) + 5.66
+      ≤ (K : ℝ) * Real.log 2 / (4 * ℓ * Real.log bb) * (1 / (bb : ℝ)) ^ ℓ := by
+  have hb2 : (2 : ℝ) ≤ (bb : ℝ) := by exact_mod_cast hbb
+  have hbpos : (0 : ℝ) < (bb : ℝ) := by linarith
+  have hℓ0 : (1 : ℝ) ≤ (ℓ : ℝ) := by exact_mod_cast hℓ
+  have hlog2pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlog2le : Real.log 2 ≤ 0.6932 := by linarith [Real.log_two_lt_d9]
+  have hlogb2 : Real.log 2 ≤ Real.log bb := Real.log_le_log (by norm_num) hb2
+  have hlogbpos : (0 : ℝ) < Real.log bb := lt_of_lt_of_le hlog2pos hlogb2
+  set κ : ℕ := Nat.clog 2 bb with hκdef
+  have hκ1 : 1 ≤ κ := Nat.clog_pos (by norm_num) hbb
+  have hbκ : (bb : ℝ) ≤ 2 ^ κ := by
+    have : bb ≤ 2 ^ κ := Nat.le_pow_clog (by norm_num) bb
+    exact_mod_cast this
+  -- `log b / log 2 ≤ κ`
+  have hratio : Real.log bb ≤ (κ : ℝ) * Real.log 2 := by
+    have h := Real.log_le_log (by positivity) hbκ
+    rwa [Real.log_pow] at h
+  -- the two comparison constants
+  set c : ℝ := (ℓ : ℝ) * (bb : ℝ) ^ ℓ * (Real.log bb / Real.log 2) with hcdef
+  set cN : ℝ := (ℓ : ℝ) * (bb : ℝ) ^ ℓ * (κ : ℝ) with hcNdef
+  have hbℓ2 : (2 : ℝ) ≤ (bb : ℝ) ^ ℓ := by
+    calc (2 : ℝ) ≤ (bb : ℝ) := hb2
+      _ = (bb : ℝ) ^ 1 := (pow_one _).symm
+      _ ≤ (bb : ℝ) ^ ℓ := pow_le_pow_right₀ (by linarith) hℓ
+  have hbℓpos : (0 : ℝ) < (bb : ℝ) ^ ℓ := by positivity
+  have hcle : c ≤ cN := by
+    rw [hcdef, hcNdef]
+    have hdiv : Real.log bb / Real.log 2 ≤ (κ : ℝ) := by
+      rw [div_le_iff₀ hlog2pos]; linarith
+    have : (0 : ℝ) ≤ (ℓ : ℝ) * (bb : ℝ) ^ ℓ := by positivity
+    nlinarith [hdiv, this]
+  have hd1 : (1 : ℝ) ≤ Real.log bb / Real.log 2 := by
+    rw [le_div_iff₀ hlog2pos]; linarith
+  have hc2 : (2 : ℝ) ≤ c := by
+    rw [hcdef]
+    have hA : (2 : ℝ) ≤ (ℓ : ℝ) * (bb : ℝ) ^ ℓ := by nlinarith [hℓ0, hbℓ2]
+    nlinarith [hA, hd1]
   have hcpos : (0 : ℝ) < c := by linarith
-  have hcast : ((184 * c) ^ 2 : ℝ) ≤ (K : ℝ) := by
-    have h16 : ((16 : ℝ)) ^ ℓ = (4 : ℝ) ^ ℓ * (4 : ℝ) ^ ℓ := by rw [← mul_pow]; norm_num
-    have hmain : ((33856 * ℓ ^ 2 * 16 ^ ℓ : ℕ) : ℝ) ≤ (K : ℝ) := by exact_mod_cast hK
-    calc ((184 * c) ^ 2 : ℝ) = 33856 * (ℓ : ℝ) ^ 2 * ((4 : ℝ) ^ ℓ * (4 : ℝ) ^ ℓ) := by
-          rw [hc]; ring
-      _ = ((33856 * ℓ ^ 2 * 16 ^ ℓ : ℕ) : ℝ) := by push_cast [h16]; ring
-      _ ≤ (K : ℝ) := hmain
-  set u : ℝ := Real.sqrt K with hu
+  -- `√K ≥ 92 cN ≥ 92 c`
+  have hKcast : (92 * cN) ^ 2 ≤ (K : ℝ) := by
+    have hnat : ((8464 * ℓ ^ 2 * bb ^ (2 * ℓ) * κ ^ 2 : ℕ) : ℝ) ≤ (K : ℝ) := by
+      exact_mod_cast hK
+    have hsplit : ((bb : ℝ) ^ (2 * ℓ)) = ((bb : ℝ) ^ ℓ) ^ 2 := by
+      rw [← pow_mul]; ring_nf
+    calc (92 * cN) ^ 2 = 8464 * (ℓ : ℝ) ^ 2 * ((bb : ℝ) ^ ℓ) ^ 2 * (κ : ℝ) ^ 2 := by
+          rw [hcNdef]; ring
+      _ = ((8464 * ℓ ^ 2 * bb ^ (2 * ℓ) * κ ^ 2 : ℕ) : ℝ) := by push_cast [hsplit]; ring
+      _ ≤ (K : ℝ) := hnat
+  set u : ℝ := Real.sqrt K with hudef
   have hu0 : 0 ≤ u := Real.sqrt_nonneg _
   have husq : u ^ 2 = (K : ℝ) := Real.sq_sqrt (by positivity)
-  have hu184 : 184 * c ≤ u := by
-    rw [hu]
-    calc 184 * c = Real.sqrt ((184 * c) ^ 2) := by rw [Real.sqrt_sq (by positivity)]
-      _ ≤ Real.sqrt K := Real.sqrt_le_sqrt hcast
-  have hinv : (1 / 4 : ℝ) ^ ℓ = 1 / (4 : ℝ) ^ ℓ := by rw [one_div, inv_pow, one_div]
-  have h4ne : ((4 : ℝ) ^ ℓ) ≠ 0 := by positivity
-  have hℓne : (ℓ : ℝ) ≠ 0 := ne_of_gt hℓpos
-  have hgoal : (K : ℝ) / (8 * ℓ) * (1 / 4 : ℝ) ^ ℓ = (K : ℝ) / (8 * c) := by
-    rw [hinv, hc]; field_simp
-  have hlc : (ℓ : ℝ) ≤ c := by rw [hc]; nlinarith
-  have hu2 : 184 * c * u ≤ u ^ 2 := by nlinarith [hu184, hu0]
-  have huc : 184 * c * c ≤ u * c := mul_le_mul_of_nonneg_right hu184 hcpos.le
-  have h1 : 22.4 * (ℓ : ℝ) * c ≤ 22.4 * c * c := by nlinarith [hlc, hcpos]
-  have h2 : 45.28 * c ≤ 11.32 * c * c := by nlinarith [hc4, hcpos]
-  rw [hgoal, ← husq, le_div_iff₀ (by positivity)]
-  nlinarith [hu2, huc, h1, h2, hcpos, hu0, mul_pos hcpos hcpos]
-
+  have hcNpos : (0 : ℝ) < cN := by linarith [hcle, hcpos]
+  have hu92 : 92 * c ≤ u := by
+    have h1 : 92 * cN ≤ u := by
+      rw [hudef]
+      calc 92 * cN = Real.sqrt ((92 * cN) ^ 2) := by rw [Real.sqrt_sq (by positivity)]
+        _ ≤ Real.sqrt K := Real.sqrt_le_sqrt hKcast
+    nlinarith [hcle, h1]
+  -- the right-hand side is `K / (4c)`
+  have hRHS : (K : ℝ) * Real.log 2 / (4 * ℓ * Real.log bb) * (1 / (bb : ℝ)) ^ ℓ
+      = (K : ℝ) / (4 * c) := by
+    rw [hcdef, div_pow, one_pow]
+    field_simp
+  rw [hRHS, ← husq, le_div_iff₀ (by positivity)]
+  -- `ℓ log b ≤ c log 2`
+  have hℓlog : (ℓ : ℝ) * Real.log bb ≤ c * Real.log 2 := by
+    have hceq : c * Real.log 2 = (ℓ : ℝ) * (bb : ℝ) ^ ℓ * Real.log bb := by
+      rw [hcdef]; field_simp
+    rw [hceq]
+    nlinarith [mul_nonneg (mul_nonneg (by linarith : (0:ℝ) ≤ (ℓ : ℝ)) hlogbpos.le)
+      (by linarith : (0:ℝ) ≤ (bb : ℝ) ^ ℓ - 1)]
+  have hℓlog' : (100 / 99 : ℝ) * ((ℓ : ℝ) * Real.log bb) ≤ 0.7003 * c := by
+    nlinarith [hℓlog, hlog2le, hcpos]
+  nlinarith [hu92, hc2, hu0, hcpos, hℓlog', mul_pos hcpos hcpos]
 
 /-- `log 7 ≤ 2`. -/
 lemma log_seven_le_two : Real.log 7 ≤ 2 := by
@@ -187,40 +233,52 @@ lemma log_seven_le_two : Real.log 7 ≤ 2 := by
 
 set_option maxHeartbeats 1600000 in
 /-- **The `B` inequality of the §5 schedule** (the `hB` field of `ScheduleWitness`, with
-`δ₁ = 1/8`).  With `s = K²`, `r = s^K`, `H = (s+1)^K`, a cylinder depth `M ≈ K/(8ℓ)`, a
-resolution `η ≤ 2^{−K/4}` (as `η⁴ ≤ 2^{−K}`), the spectral bound `Lg ≤ r(log 2 + 23√K)` and
-`(1−1/K)r ≤ g ≤ r`, the tube volume bound is below `(1/8)/2^r` — hence `PropB (1/8)` through
-`gridFrame_propB_of_bound` — as soon as
+`δ₁ = 1/8`), **in any integer base `b ≥ 2`**.  With `s = K²`, `r = s^K`, `H = (s+1)^K`, a
+cylinder depth `M = ⌈(K log 2)/(4ℓ log b)⌉`, a resolution `η ≤ 2^{−K/4}` (as `η⁴ ≤ 2^{−K}`),
+the spectral bound `Lg ≤ r(log 2 + 23√K)` and `(1−1/K)r ≤ g ≤ r`, the tube volume bound is
+below `(1/8)/2^r` — hence `PropB (1/8)` through `gridFrame_propB_of_bound` — as soon as
 
-    K ≥ 33856·ℓ²·16^ℓ = (184·ℓ·4^ℓ)².
+    K ≥ 8464·ℓ²·b^{2ℓ}·⌈log₂ b⌉² = (92·ℓ·b^ℓ·⌈log₂ b⌉)².
 
-The omitted word enters only through `log(4^ℓ−1) = 2ℓ log 2 − Θ(4^{−ℓ})`; that deficit,
+The omitted word enters only through `log(b^ℓ−1) = ℓ log b − Θ(b^{−ℓ})`; that deficit,
 multiplied by `H ≥ r`, is what defeats the spectral term `11.5 r√K`. -/
-theorem gridB_bound {ℓ K M g : ℕ} {η Lg : ℝ}
-    (hℓ : 1 ≤ ℓ) (hK : 33856 * ℓ ^ 2 * 16 ^ ℓ ≤ K)
-    (hMlo : K ≤ 8 * ℓ * M) (hMhi : 8 * ℓ * M ≤ K + 8 * ℓ)
+theorem gridB_bound {bb ℓ K M g : ℕ} {η Lg : ℝ}
+    (hbb : 2 ≤ bb) (hℓ : 1 ≤ ℓ)
+    (hK : 8464 * ℓ ^ 2 * bb ^ (2 * ℓ) * Nat.clog 2 bb ^ 2 ≤ K)
+    (hMlo : (K : ℝ) / 4 * Real.log 2 ≤ (M : ℝ) * ℓ * Real.log bb)
+    (hMhi : (M : ℝ) * ℓ * Real.log bb ≤ (K : ℝ) / 4 * Real.log 2 + ℓ * Real.log bb)
     (hη0 : 0 < η) (hη : η ^ 4 ≤ (1 / 2 : ℝ) ^ K)
     (hLg : Lg ≤ (((K ^ 2) ^ K : ℕ) : ℝ) * (Real.log 2 + 23 * Real.sqrt K))
     (hglo : (1 - 1 / (K : ℝ)) * (((K ^ 2) ^ K : ℕ) : ℝ) ≤ (g : ℝ))
     (hghi : g ≤ (K ^ 2) ^ K) :
-    (((4 ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ ((K ^ 2 + 1) ^ K) * η ^ g * Real.exp (Lg / 2)
+    (((bb ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ ((K ^ 2 + 1) ^ K) * η ^ g * Real.exp (Lg / 2)
         * (Real.sqrt (2 * Real.pi * Real.exp 1 / g)
             * Real.sqrt ((((K ^ 2 + 1) ^ K : ℕ) : ℝ) + g)) ^ g
       ≤ (1 / 8 : ℝ) / 2 ^ ((K ^ 2) ^ K) := by
   -- ### sizes
   have hℓ0 : (1 : ℝ) ≤ ℓ := by exact_mod_cast hℓ
   have hℓpos : (0 : ℝ) < ℓ := by linarith
-  have hKnat : 541696 ≤ K := by
+  have hb2 : (2 : ℝ) ≤ (bb : ℝ) := by exact_mod_cast hbb
+  have hbpos : (0 : ℝ) < (bb : ℝ) := by linarith
+  have hlog2pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlog2le : Real.log 2 ≤ 0.6932 := by linarith [Real.log_two_lt_d9]
+  have hlogb2 : Real.log 2 ≤ Real.log bb := Real.log_le_log (by norm_num) hb2
+  have hlogbpos : (0 : ℝ) < Real.log bb := lt_of_lt_of_le hlog2pos hlogb2
+  have hKnat : 33856 ≤ K := by
     have h1 : 1 ≤ ℓ ^ 2 := Nat.one_le_pow _ _ (by omega)
-    have h2 : 16 ≤ 16 ^ ℓ := by
-      calc (16 : ℕ) = 16 ^ 1 := by norm_num
-        _ ≤ 16 ^ ℓ := Nat.pow_le_pow_right (by norm_num) hℓ
-    calc 541696 = 33856 * 1 * 16 := by norm_num
-      _ ≤ 33856 * ℓ ^ 2 * 16 ^ ℓ := Nat.mul_le_mul (Nat.mul_le_mul_left _ h1) h2
+    have h2 : 4 ≤ bb ^ (2 * ℓ) := by
+      calc (4 : ℕ) = 2 ^ 2 := by norm_num
+        _ ≤ bb ^ 2 := Nat.pow_le_pow_left hbb 2
+        _ ≤ bb ^ (2 * ℓ) := Nat.pow_le_pow_right (by omega) (by omega)
+    have h3 : 1 ≤ Nat.clog 2 bb ^ 2 :=
+      Nat.one_le_pow _ _ (Nat.clog_pos (by norm_num) hbb)
+    calc (33856 : ℕ) = 8464 * 1 * 4 * 1 := by norm_num
+      _ ≤ 8464 * ℓ ^ 2 * bb ^ (2 * ℓ) * Nat.clog 2 bb ^ 2 :=
+          Nat.mul_le_mul (Nat.mul_le_mul (Nat.mul_le_mul_left _ h1) h2) h3
       _ ≤ K := hK
   have hK1 : 1 ≤ K := by omega
   have hK100 : (100 : ℝ) ≤ (K : ℝ) := by
-    have : (541696 : ℝ) ≤ (K : ℝ) := by exact_mod_cast hKnat
+    have : (33856 : ℝ) ≤ (K : ℝ) := by exact_mod_cast hKnat
     linarith
   have hK0 : (0 : ℝ) < (K : ℝ) := by linarith
   set r : ℝ := (((K ^ 2) ^ K : ℕ) : ℝ) with hrdef
@@ -240,19 +298,18 @@ theorem gridB_bound {ℓ K M g : ℕ} {η Lg : ℝ}
   have hgpos : (0 : ℝ) < (g : ℝ) := by
     have hinv0 : 1 / (K : ℝ) ≤ 1 / 100 := one_div_le_one_div_of_le (by norm_num) hK100
     nlinarith [hglo, hr0]
-  -- ### the base `b = 4^ℓ − 1`
-  have h1le : 1 ≤ 4 ^ ℓ := Nat.one_le_pow _ _ (by norm_num)
-  set b : ℝ := (4 : ℝ) ^ ℓ - 1 with hbdef
-  clear_value b
-  have h4ge : (4 : ℝ) ≤ (4 : ℝ) ^ ℓ := by
-    calc (4 : ℝ) = 4 ^ 1 := by norm_num
-      _ ≤ 4 ^ ℓ := pow_le_pow_right₀ (by norm_num) hℓ
-  have hbpos : (0 : ℝ) < b := by rw [hbdef]; linarith
-  have hbcast : (((4 ^ ℓ - 1 : ℕ)) : ℝ) = b := by
-    rw [hbdef, Nat.cast_sub h1le]; push_cast; ring
+  -- ### the base `bp = bb^ℓ − 1`
+  have h1le : 1 ≤ bb ^ ℓ := Nat.one_le_pow _ _ (by omega)
+  set bp : ℝ := (bb : ℝ) ^ ℓ - 1 with hbpdef
+  clear_value bp
+  have hbℓ2 : (2 : ℝ) ≤ (bb : ℝ) ^ ℓ := by
+    calc (2 : ℝ) ≤ (bb : ℝ) := hb2
+      _ = (bb : ℝ) ^ 1 := (pow_one _).symm
+      _ ≤ (bb : ℝ) ^ ℓ := pow_le_pow_right₀ (by linarith) hℓ
+  have hbppos : (0 : ℝ) < bp := by rw [hbpdef]; linarith
+  have hbcast : (((bb ^ ℓ - 1 : ℕ)) : ℝ) = bp := by
+    rw [hbpdef, Nat.cast_sub h1le]; push_cast; ring
   -- ### numeric constants
-  have hlog2pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
-  have hlog2le : Real.log 2 ≤ 0.6932 := by linarith [Real.log_two_lt_d9]
   have hlog7 : Real.log 7 ≤ 2 := log_seven_le_two
   have hlog7nn : (0 : ℝ) ≤ Real.log 7 := Real.log_nonneg (by norm_num)
   have hlog8 : Real.log 8 = 3 * Real.log 2 := by
@@ -271,47 +328,39 @@ theorem gridB_bound {ℓ K M g : ℕ} {η Lg : ℝ}
       have hdiv : E * (1 / (K : ℝ)) * (K : ℝ) = E := by field_simp
       nlinarith [hmulK, hdiv]
     nlinarith [h1, hEle, hK0]
-  -- ### the three factor bounds
-  have hlogb : Real.log b ≤ 2 * (ℓ : ℝ) * Real.log 2 - (1 / 4 : ℝ) ^ ℓ := by
-    rw [hbdef]; exact log_four_pow_sub_one_le hℓ
+  -- ### the deficit
   have hMnn : (0 : ℝ) ≤ (M : ℝ) := Nat.cast_nonneg M
-  have hM2 : 2 * (ℓ : ℝ) * (M : ℝ) ≤ (K : ℝ) / 4 + 2 * ℓ := by
-    have h : ((8 * ℓ * M : ℕ) : ℝ) ≤ ((K + 8 * ℓ : ℕ) : ℝ) := by exact_mod_cast hMhi
-    push_cast at h; linarith
-  have hM1 : (K : ℝ) / (8 * ℓ) ≤ (M : ℝ) := by
-    have h : ((K : ℕ) : ℝ) ≤ ((8 * ℓ * M : ℕ) : ℝ) := by exact_mod_cast hMlo
-    push_cast at h
-    rw [div_le_iff₀ (by positivity)]; linarith
-  set dfc : ℝ := (K : ℝ) / (8 * ℓ) * (1 / 4 : ℝ) ^ ℓ with hdfc
+  have hinvℓnn : (0 : ℝ) ≤ (1 / (bb : ℝ)) ^ ℓ := by positivity
+  set dfc : ℝ := (M : ℝ) * (1 / (bb : ℝ)) ^ ℓ with hdfcdef
+  have hdfcnn : (0 : ℝ) ≤ dfc := by rw [hdfcdef]; positivity
+  have hM1 : (K : ℝ) * Real.log 2 / (4 * ℓ * Real.log bb) ≤ (M : ℝ) := by
+    rw [div_le_iff₀ (by positivity)]
+    nlinarith [hMlo]
+  have hdef : (11.5 : ℝ) * Real.sqrt K + (100 / 99) * ((ℓ : ℝ) * Real.log bb) + 5.66 ≤ dfc := by
+    refine le_trans (deficit_dominates hbb hℓ hK) ?_
+    rw [hdfcdef]
+    exact mul_le_mul_of_nonneg_right hM1 hinvℓnn
   clear_value dfc
-  have hdef := deficit_dominates hℓ hK
+  -- ### the weight `Wt = (K/4)log 2 + ℓ log b`
+  set Wt : ℝ := (K : ℝ) / 4 * Real.log 2 + ℓ * Real.log bb with hWtdef
+  have hWtnn : (0 : ℝ) ≤ Wt := by rw [hWtdef]; positivity
+  have hlogbp : Real.log bp ≤ (ℓ : ℝ) * Real.log bb - (1 / (bb : ℝ)) ^ ℓ := by
+    rw [hbpdef]; exact log_pow_sub_one_le hbb hℓ
   -- T1
-  have hT1 : H * ((M : ℝ) * Real.log b)
-      ≤ r * (E * (((K : ℝ) / 4 + 2 * ℓ) * Real.log 2) - dfc) := by
-    have s1 : (M : ℝ) * Real.log b
-        ≤ (2 * (ℓ : ℝ) * (M : ℝ)) * Real.log 2 - (M : ℝ) * (1 / 4 : ℝ) ^ ℓ := by
-      have h := mul_le_mul_of_nonneg_left hlogb hMnn
-      have e : (M : ℝ) * (2 * (ℓ : ℝ) * Real.log 2 - (1 / 4 : ℝ) ^ ℓ)
-          = (2 * (ℓ : ℝ) * (M : ℝ)) * Real.log 2 - (M : ℝ) * (1 / 4 : ℝ) ^ ℓ := by ring
-      linarith only [h, e]
+  have hT1 : H * ((M : ℝ) * Real.log bp) ≤ r * (E * Wt - dfc) := by
+    have s1 : (M : ℝ) * Real.log bp
+        ≤ ((M : ℝ) * (ℓ : ℝ) * Real.log bb) - (M : ℝ) * (1 / (bb : ℝ)) ^ ℓ := by
+      have h := mul_le_mul_of_nonneg_left hlogbp hMnn
+      nlinarith [h]
     have s2 := mul_le_mul_of_nonneg_left s1 hH0
-    have s2' : H * ((2 * (ℓ : ℝ) * (M : ℝ)) * Real.log 2 - (M : ℝ) * (1 / 4 : ℝ) ^ ℓ)
-        = H * ((2 * (ℓ : ℝ) * (M : ℝ)) * Real.log 2) - H * ((M : ℝ) * (1 / 4 : ℝ) ^ ℓ) := by
-      ring
-    have s3 : H * ((2 * (ℓ : ℝ) * (M : ℝ)) * Real.log 2)
-        ≤ (E * r) * (((K : ℝ) / 4 + 2 * ℓ) * Real.log 2) := by
-      refine mul_le_mul hHr (mul_le_mul_of_nonneg_right hM2 hlog2pos.le) ?_ ?_
+    have s3 : H * ((M : ℝ) * (ℓ : ℝ) * Real.log bb) ≤ (E * r) * Wt := by
+      refine mul_le_mul hHr hMhi ?_ ?_
       · positivity
       · exact mul_nonneg hEpos.le hr0.le
-    have s4 : r * dfc ≤ H * ((M : ℝ) * (1 / 4 : ℝ) ^ ℓ) := by
-      have e1 : r * dfc = (r * ((K : ℝ) / (8 * ℓ))) * (1 / 4 : ℝ) ^ ℓ := by rw [hdfc]; ring
-      have e2 : H * ((M : ℝ) * (1 / 4 : ℝ) ^ ℓ) = (H * (M : ℝ)) * (1 / 4 : ℝ) ^ ℓ := by ring
-      rw [e1, e2]
-      refine mul_le_mul_of_nonneg_right ?_ (by positivity)
-      exact mul_le_mul hrH hM1 (by positivity) hH0
-    have e3 : r * (E * (((K : ℝ) / 4 + 2 * ℓ) * Real.log 2) - dfc)
-        = (E * r) * (((K : ℝ) / 4 + 2 * ℓ) * Real.log 2) - r * dfc := by ring
-    rw [e3]; linarith [s2, s2', s3, s4]
+    have s4 : r * dfc ≤ H * ((M : ℝ) * (1 / (bb : ℝ)) ^ ℓ) := by
+      rw [hdfcdef]
+      exact mul_le_mul_of_nonneg_right hrH (by positivity)
+    nlinarith [s2, s3, s4]
   -- T2
   have hlogη : Real.log η ≤ -((K : ℝ) / 4) * Real.log 2 := by
     have hlp : Real.log (η ^ 4) ≤ Real.log ((1 / 2 : ℝ) ^ K) :=
@@ -342,30 +391,25 @@ theorem gridB_bound {ℓ K M g : ℕ} {η Lg : ℝ}
   have hlog8r : Real.log 8 ≤ r * (3 * Real.log 2) := by
     rw [hlog8]; nlinarith [hr1, hlog2pos]
   -- ### the bracket is nonpositive
-  set BR : ℝ := E * (((K : ℝ) / 4 + 2 * ℓ) * Real.log 2) - dfc
+  set BR : ℝ := E * Wt - dfc
       + (-((K : ℝ) / 4) * Real.log 2 + Real.log 2 / 4)
       + (Real.log 2 + 23 * Real.sqrt K) / 2 + 2 + 3 * Real.log 2 + Real.log 2 with hBR
   have hbracket : BR ≤ 0 := by
-    have hE2ℓ : E * (2 * (ℓ : ℝ) * Real.log 2) ≤ 2.8 * ℓ := by
-      have h1 : (0 : ℝ) ≤ 2 * (ℓ : ℝ) * Real.log 2 :=
-        mul_nonneg (by linarith) hlog2pos.le
-      have h2 : E * (2 * (ℓ : ℝ) * Real.log 2) ≤ (100 / 99 : ℝ) * (2 * (ℓ : ℝ) * Real.log 2) :=
-        mul_le_mul_of_nonneg_right hEle h1
-      have h3 : (2 * (ℓ : ℝ)) * Real.log 2 ≤ (2 * (ℓ : ℝ)) * 0.6932 :=
-        mul_le_mul_of_nonneg_left hlog2le (by linarith)
-      nlinarith [h2, h3, hℓ0]
-    have hsplit : E * (((K : ℝ) / 4 + 2 * ℓ) * Real.log 2)
+    have hℓlognn : (0 : ℝ) ≤ (ℓ : ℝ) * Real.log bb := by positivity
+    have hEℓ : E * ((ℓ : ℝ) * Real.log bb) ≤ (100 / 99 : ℝ) * ((ℓ : ℝ) * Real.log bb) :=
+      mul_le_mul_of_nonneg_right hEle hℓlognn
+    have hsplit : E * Wt
         = (E - 1) * ((K : ℝ) / 4) * Real.log 2 + ((K : ℝ) / 4) * Real.log 2
-          + E * (2 * (ℓ : ℝ) * Real.log 2) := by ring
+          + E * ((ℓ : ℝ) * Real.log bb) := by rw [hWtdef]; ring
     have hEK : (E - 1) * ((K : ℝ) / 4) * Real.log 2 ≤ Real.log 2 / 2 := by
       nlinarith [hEK1, hlog2pos, hE1, hK0]
     have hsk : (0 : ℝ) ≤ Real.sqrt K := Real.sqrt_nonneg _
     rw [hBR, hsplit]
-    nlinarith [hEK, hE2ℓ, hdef, hlog2le, hlog2pos, hsk]
+    linarith [hEK, hEℓ, hdef, hlog2le, hlog2pos, hsk]
   -- ### the exponent
-  have hfinal : H * ((M : ℝ) * Real.log b) + (g : ℝ) * Real.log η + Lg / 2
+  have hfinal : H * ((M : ℝ) * Real.log bp) + (g : ℝ) * Real.log η + Lg / 2
       + (g : ℝ) * Real.log 7 ≤ -(Real.log 8) - r * Real.log 2 := by
-    have hexpand : r * (E * (((K : ℝ) / 4 + 2 * ℓ) * Real.log 2) - dfc)
+    have hexpand : r * (E * Wt - dfc)
         + r * (-((K : ℝ) / 4) * Real.log 2 + Real.log 2 / 4)
         + r * ((Real.log 2 + 23 * Real.sqrt K) / 2) + r * 2
         + r * (3 * Real.log 2) + r * Real.log 2 = r * BR := by rw [hBR]; ring
@@ -374,20 +418,21 @@ theorem gridB_bound {ℓ K M g : ℕ} {η Lg : ℝ}
   -- ### assemble
   have hSnn : (0 : ℝ) ≤ Real.sqrt (2 * Real.pi * Real.exp 1 / g) * Real.sqrt (H + g) :=
     mul_nonneg (Real.sqrt_nonneg _) (Real.sqrt_nonneg _)
-  have hHrE : H ≤ Real.exp (1 / (K : ℝ)) * r := by rw [hHdef, hrdef]; exact hDim_le_exp_mul_rDim hK1
+  have hHrE : H ≤ Real.exp (1 / (K : ℝ)) * r := by
+    rw [hHdef, hrdef]; exact hDim_le_exp_mul_rDim hK1
   have hS : Real.sqrt (2 * Real.pi * Real.exp 1 / g) * Real.sqrt (H + g) ≤ 7 :=
     shape_factor_le hK100 hr0 hH0 hHrE hglo
-  have hA : (((4 ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ ((K ^ 2 + 1) ^ K)
-      = Real.exp (H * ((M : ℝ) * Real.log b)) := by
-    have hcast : (((4 ^ ℓ - 1) ^ M : ℕ) : ℝ) = b ^ M := by rw [Nat.cast_pow, hbcast]
-    rw [hcast, ← Real.exp_log (pow_pos (pow_pos hbpos M) ((K ^ 2 + 1) ^ K))]
+  have hA : (((bb ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ ((K ^ 2 + 1) ^ K)
+      = Real.exp (H * ((M : ℝ) * Real.log bp)) := by
+    have hcast : (((bb ^ ℓ - 1) ^ M : ℕ) : ℝ) = bp ^ M := by rw [Nat.cast_pow, hbcast]
+    rw [hcast, ← Real.exp_log (pow_pos (pow_pos hbppos M) ((K ^ 2 + 1) ^ K))]
     congr 1
     rw [Real.log_pow, Real.log_pow, hHdef]
   have hηeq : η ^ g = Real.exp ((g : ℝ) * Real.log η) := by
     rw [← Real.log_pow, Real.exp_log (pow_pos hη0 g)]
   have h7eq : (7 : ℝ) ^ g = Real.exp ((g : ℝ) * Real.log 7) := by
     rw [← Real.log_pow, Real.exp_log (pow_pos (by norm_num : (0 : ℝ) < 7) g)]
-  have hpre : (0 : ℝ) ≤ (((4 ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ ((K ^ 2 + 1) ^ K) * η ^ g
+  have hpre : (0 : ℝ) ≤ (((bb ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ ((K ^ 2 + 1) ^ K) * η ^ g
       * Real.exp (Lg / 2) :=
     mul_nonneg (mul_nonneg (pow_nonneg (Nat.cast_nonneg _) _) (pow_nonneg hη0.le _))
       (Real.exp_pos _).le
@@ -395,11 +440,11 @@ theorem gridB_bound {ℓ K M g : ℕ} {η Lg : ℝ}
     rw [Real.exp_sub, Real.exp_neg, Real.exp_log (by norm_num : (0 : ℝ) < 8), hrdef,
       Real.exp_nat_mul, Real.exp_log (by norm_num : (0 : ℝ) < 2)]
     norm_num
-  calc (((4 ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ ((K ^ 2 + 1) ^ K) * η ^ g * Real.exp (Lg / 2)
+  calc (((bb ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ ((K ^ 2 + 1) ^ K) * η ^ g * Real.exp (Lg / 2)
         * (Real.sqrt (2 * Real.pi * Real.exp 1 / g) * Real.sqrt (H + g)) ^ g
-      ≤ (((4 ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ ((K ^ 2 + 1) ^ K) * η ^ g * Real.exp (Lg / 2)
+      ≤ (((bb ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ ((K ^ 2 + 1) ^ K) * η ^ g * Real.exp (Lg / 2)
           * (7 : ℝ) ^ g := mul_le_mul_of_nonneg_left (pow_le_pow_left₀ hSnn hS g) hpre
-    _ = Real.exp (H * ((M : ℝ) * Real.log b) + (g : ℝ) * Real.log η + Lg / 2
+    _ = Real.exp (H * ((M : ℝ) * Real.log bp) + (g : ℝ) * Real.log η + Lg / 2
           + (g : ℝ) * Real.log 7) := by
         rw [hA, hηeq, h7eq, ← Real.exp_add, ← Real.exp_add, ← Real.exp_add]
     _ ≤ Real.exp (-(Real.log 8) - r * Real.log 2) := Real.exp_le_exp.mpr hfinal
@@ -407,7 +452,10 @@ theorem gridB_bound {ℓ K M g : ℕ} {η Lg : ℝ}
 
 
 /-- **The `hB` field of `ScheduleWitness`, discharged** for any `GridParams` with `s = K²`,
-`δ₁ = 1/8` and `ε = 1/K`.  Feeding this to `gridFrame_propB_of_bound` gives `PropB (1/8)`. -/
+`δ₁ = 1/8` and `ε = 1/K`.  This is the **`b = 4` instance** of `gridB_bound`: `⌈log₂ 4⌉ = 2`
+turns the general hypothesis `K ≥ 8464 ℓ² b^{2ℓ} ⌈log₂ b⌉²` into `K ≥ 33856 ℓ² 16^ℓ`, and
+`M ℓ log 4 = 2ℓM log 2` turns `M = ⌈(K log 2)/(4ℓ log 4)⌉` into `K ≤ 8ℓM ≤ K + 8ℓ`.
+Feeding this to `gridFrame_propB_of_bound` gives `PropB (1/8)`. -/
 theorem gridParams_hB {G : GridParams} {ℓ M : ℕ} {η Lg : ℝ}
     (hs : G.s = G.K ^ 2) (hℓ : 1 ≤ ℓ) (hK : 33856 * ℓ ^ 2 * 16 ^ ℓ ≤ G.K)
     (hMlo : G.K ≤ 8 * ℓ * M) (hMhi : 8 * ℓ * M ≤ G.K + 8 * ℓ)
@@ -422,7 +470,26 @@ theorem gridParams_hB {G : GridParams} {ℓ M : ℕ} {η Lg : ℝ}
   have hH : G.hDim = (G.K ^ 2 + 1) ^ G.K := by rw [GridParams.hDim, hs]
   rw [hr] at hLg hglo hghi
   rw [hr, hH]
-  exact gridB_bound hℓ hK hMlo hMhi hη0 hη hLg hglo hghi
+  -- the base-four translation of the two `M` hypotheses
+  have hlog4 : Real.log (4 : ℕ) = 2 * Real.log 2 := by
+    rw [show ((4 : ℕ) : ℝ) = 2 ^ 2 by norm_num, Real.log_pow]; push_cast; ring
+  have hMlo' : (G.K : ℝ) / 4 * Real.log 2 ≤ (M : ℝ) * ℓ * Real.log (4 : ℕ) := by
+    have h : ((G.K : ℕ) : ℝ) ≤ ((8 * ℓ * M : ℕ) : ℝ) := by exact_mod_cast hMlo
+    push_cast at h
+    rw [hlog4]; nlinarith [h, Real.log_pos (show (1:ℝ) < 2 by norm_num)]
+  have hMhi' : (M : ℝ) * ℓ * Real.log (4 : ℕ)
+      ≤ (G.K : ℝ) / 4 * Real.log 2 + ℓ * Real.log (4 : ℕ) := by
+    have h : ((8 * ℓ * M : ℕ) : ℝ) ≤ ((G.K + 8 * ℓ : ℕ) : ℝ) := by exact_mod_cast hMhi
+    push_cast at h
+    rw [hlog4]; nlinarith [h, Real.log_pos (show (1:ℝ) < 2 by norm_num)]
+  have hK' : 8464 * ℓ ^ 2 * 4 ^ (2 * ℓ) * Nat.clog 2 4 ^ 2 ≤ G.K := by
+    have hc : Nat.clog 2 4 = 2 := by norm_num [Nat.clog]
+    have h16 : (4 : ℕ) ^ (2 * ℓ) = 16 ^ ℓ := by
+      rw [pow_mul]; norm_num
+    rw [hc, h16]
+    calc 8464 * ℓ ^ 2 * 16 ^ ℓ * 2 ^ 2 = 33856 * ℓ ^ 2 * 16 ^ ℓ := by ring
+      _ ≤ G.K := hK
+  exact gridB_bound (bb := 4) (by norm_num) hℓ hK' hMlo' hMhi' hη0 hη hLg hglo hghi
 
 
 end NormalNumbers.G4

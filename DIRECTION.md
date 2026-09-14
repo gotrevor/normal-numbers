@@ -20,69 +20,74 @@ Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
 
-## CURRENT DIRECTIVE (set 2026-09-14 DEEP REFLECTION LAP — G4 §5, the schedule)
+## CURRENT DIRECTIVE (set 2026-09-14 FRESH-MIND REVIEW LAP — campaign **G4B: the base-`b` theorem**)
 
-- 🎯 **THE objective, unchanged: `IsDisjunctive 4 primeLambertFour` unconditionally**
-  (base two by `isDisjunctive_two_of_four`).  Brief §4 is **CLOSED**: all five named inputs
-  are machine-checked theorems about the one concrete `gridFrame` (`gridFrame_propA`,
-  `gridFrame_propC`, `Frame.propJackson`, `gridFrame_propD_of_bounds`,
-  `gridFrame_propB_of_bound`).  The entire residue is **§5**: produce a
-  `ScheduleWitness ℓ w` (`G4ScheduleWitness.lean`) for every omitted base-four cylinder.
-  `isDisjunctive_four_of_witness` / `…_of_frames` are CONDITIONAL and are never the endpoint.
-- 🔨 **Mandated next move — prove `hB`, the `X`-free half of the witness, as a standalone
-  real-analysis theorem** in a new `src/NormalNumbers/G4ScheduleB.lean`:
+**G4 (base four) is CLOSED and kernel-verified this lap.**  `lake build` 8930 jobs green;
+`NormalNumbers.G4.isDisjunctive_four`, `isDisjunctive_two`, `G4DisjunctiveFour_holds`,
+`G4DisjunctiveTwo_holds`, `every_binary_word_occurs`, `primeSumAtBase_four` all print
+`[propext, Classical.choice, Quot.sound]`; `src/` contains **no `axiom` declaration at all**;
+the endpoint definitions (`IsDisjunctive`, `orbit`, `omegaR`, `primeLambertAtBase`,
+`primeSumAtBase`, `OccursAt`) were re-read against the brief and are faithful.  The old
+directive's objective is met; these are its successor orders.
 
-      ((4^ℓ−1)^M)^H · η^g · e^{Lg/2} · (√(2πe/g)·√(H+g))^g ≤ (1/8)/2^r
-      for η = 2^{−K/4}, Lg = r(log2 + 23√K), r = K^{2K}, H = (K²+1)^K,
-      (1−1/K)r ≤ g ≤ r, K ≤ 8ℓM ≤ K + 8ℓ.
-
-  **Sufficient hypothesis, derived on the reflection lap: `K ≥ 33856·ℓ²·16^ℓ`.**  Route:
-  take `Real.log`; use `H ≤ e^{1/K}r`, `(H+g)/g ≤ 2.72` (`K ≥ 4`),
-  `M·log(4^ℓ−1) ≤ (K/4)log2 + 2ℓ log2 − K·4^{−ℓ}/(8ℓ)` (from `log(1−x) ≤ −x`), and close on
-  `K/(8ℓ4^ℓ) ≥ 11.5√K + 1.78ℓ + 4.36`.  **Why this first**: it is the only one of the five
-  witness inequalities with no `X`, no primes and no progression, so it needs no new
-  construction; the brief calls the §4B geometry "a central formalization target, not
-  routine bookkeeping"; and it is the only one whose failure would be a *geometry* failure
-  rather than bookkeeping.
-- **Then, in this order** (do not reorder without an altitude lap):
-  1. `gridParams_of_KN` — an explicit `GridParams` from `(K, N)` with `B = sJ+1`,
-     `U ≥ max gridU`, **`Q = U!`** (`Nat.dvd_factorial`; no `lcm` needed), `D₀ ≥ max gridV`,
-     plus `Dm ≥ every d_α`, `Mx`, and an explicit **`log P₀` bound**.  Gates 2–4.
-  2. `card_apSample` lower bound (`(X:ℝ)/P₀ − 1 ≤ card`), which gates `hne`, `hbig`, `hfar`,
-     `hbudget`.
-  3. `hfar`, then `hbig`.  4. `hbudget` (via `schedule_budget` + the four `smallPrimeBound`
-     error terms).  5. Assemble `Nonempty (ScheduleWitness ℓ w)` eventually in `X`.
-- ⛔ **Forbidden drift**: any new §4 machinery (§4 is closed — that is drift, not progress);
-  `lam = 1` and `N ≈ 10K log K` (**both REFUTED on the reflection lap: they make `hbudget`
-  and `hfar` FALSE** — use `lam = 13/2`, `lam' = e`, `Mc = ⌈10⁴·T·L⌉`, and the brief's
-  `J = ⌈3 log₂ L⌉`); lowering `K` below `≈ 0.6 log log L` (breaks `hbig` — see the two-sided
-  window, `PENDING_WORK.md` §Reflection 2026-09-14 §4); freezing `K` and sending `X → ∞`;
-  weakening any `Prop` or the `ScheduleWitness` fields to make an instantiation typecheck;
-  re-proving the base-two reduction; `PrimeLambertOscillation.lean`; the G2 two-point
-  correlation theorem; multiplicity / entropy / ordinary-normality / novelty questions;
-  `Adder*`, `CF*`, `Mahler*`, `LnTwo*` and the two sibling worktrees; bounding the zonotope
-  by a coordinatewise box or the ball by its cube; and a trusted axiom for ANY candidate
-  lemma.
+- 🎯 **THE objective: `IsDisjunctive b (primeLambertAtBase b)` for every integer `b ≥ 3`**
+  — brief §7.1, "keeping the number's dependence on `b` explicit".  `b = 4` must survive
+  as a definitional instance: `isDisjunctive_four` stays in `src/`, stays axiom-clean, and
+  is re-derived from the general theorem, never deleted or weakened.
+- 🔨 **Mandated next move — generalize the base bottom-up, one green module at a time,
+  starting with the `X`-free real analysis of `G4ScheduleB.lean`** (`log_four_pow_sub_one_le`
+  → `log_pow_sub_one_le`, `deficit_dominates`, `gridB_bound`), keeping the `b = 4` corollaries
+  as specializations so the build stays green at every step.  Then, in order:
+  1. `G4Covering` / `G4GridTube` — cylinders and blocks in base `b`.
+  2. `Frame` gains fields `b`/`hb : 2 ≤ b`; `Ffull` uses `b^{-j}`; fix `G4Remainder`,
+     `G4Transport`, `G4Wiring`.  (The abstract analytic core — `G4Jackson`,
+     `G4SeparatingTest`, `G4Tensor`, `G4Spectral`, `G4Ellipsoid`, `G4DetMonotone`,
+     `G4Covering`'s geometry, `G4TubeVolume` — contains **no** `4` and generalizes for free.)
+  3. Row masses in `b`: `∑_{j>K} b^{-j} = b^{-K}/(b−1)`, `∑_{j>K} b^{-2j} = b^{-2K}/(b²−1)`,
+     so `∑|c| = (2/b)^K/(b−1)`, `∑c² = (2/b²)^K/(b²−1)` (`G4RowMass`, `G4MediumPrimes`,
+     `G4SmallPrimeVector`, `G4FarTail`).
+  4. Frequency separation seed `θ₀(b) = b^{-4}(2/b²)^K` (`G4FreqSep`).
+  5. The §5 schedule in `(b, ℓ)`.
+- 🧨 **REFUTED this lap, and the reason the objective says `b ≥ 3` and not `b ≥ 2`:**
+  the very-large-prime range is bounded **pointwise** by `(log Mx / log Y) · ∑_{α,j>K}|c_{αj}|`
+  = `(log Mx/log Y)·(2/b)^K/(b−1)`, and `hbig` needs that `≤ δbig·ε·η < 1`.  At `b = 2` the
+  row `L¹` mass is **exactly `2^K·2^{-K}/1 = 1`** — no decay in `K` at all — so `hbig` is
+  FALSE at `b = 2` for every choice of `η`, `ε`, `K`, `X`.  (`η` cannot be raised to
+  compensate: `ε η < 1` always.)  The decay needs `2/b < 1`, and against `η = e^{-Θ(√K)}`
+  it needs `(2/b)^K = e^{-Θ(K)}`, i.e. `b ≥ 3` (at `b = 3` the mass is `(2/3)^K/2`).
+  **Do not spend a lap trying `b = 2` through this route.**  A repair would need signed
+  cancellation in the `p > Y` range, not a pointwise bound — registered as a stretch target
+  in `PENDING_WORK.md`, not as the objective.
+- ⛔ **Forbidden drift**: redefining `primeLambert` (it is and stays the base-two series) or
+  `IsDisjunctive`; deleting, weakening or un-proving `isDisjunctive_four` / `isDisjunctive_two`
+  / `primeSumAtBase_four`; a trusted axiom for ANY candidate lemma; `native_decide` in a
+  headline cone; bounding the zonotope by a coordinatewise box or the ball by its cube;
+  freezing `K` and sending `X → ∞`; `lam = 1`, `N ≈ 10K log K` (both REFUTED — see history);
+  `Adder*`, `CF*`, `Mahler*`, `LnTwo*` and the two sibling worktrees; `PrimeLambertOscillation`;
+  the G2 two-point correlation theorem; multiplicity / entropy / ordinary-normality / novelty
+  questions; and "generalize by copying the files with `4 ↦ b` textually" — the `b = 4`
+  theorem must be an *instance*, not a sibling.
 - 🚦 **Route triggers**:
-    * **G-T1 — RETIRED 2026-09-14 (satisfied).**  C3 is proved (`G4CRTInput.crt_input` +
-      `G4TransferMoment.norm_sampleAvg_prod_ee_le`); no sieve theorem entered the route.
-    * **G-T2** — if a lap MEASURES a counterexample to an exact §4A transport identity, or
-      to `∑_α dist(w_α4^{−j_α},ℤ)² ≥ 4^{−4}8^{−K}`, ESCALATE immediately.
-    * **G-T3 (live, re-checked 2026-09-14 — NOT fired)** — A–D are discharged, so this is
-      now the operative trigger: if a lap shows the five `ScheduleWitness` inequalities
-      cannot hold simultaneously, the honest endpoint is `isDisjunctive_four_of_witness`
-      plus the named gap; say so in STATUS rather than grinding.  The reflection lap
-      re-derived all five from the Lean definitions and they close — so a failure report
-      must exhibit the *inequality* that fails, not a stalled proof.
-    * **G-T4** — did not fire (the seam compiled in lap 6).  Retained: a *mathematical*
-      mismatch between a concrete object and a `Prop` is an ESCALATION, never a `Prop` edit.
-    * **G-T5 (new)** — if a §5 inequality resists for **6 grind laps**, re-cost the
-      schedule: `K = ⌊log log L⌋` was verified this lap to sit inside the two-sided window
-      with polynomial-in-`log L` margin on both edges, and would replace the delicate
-      `schedule_budget` balance with crude bounds.  Switching requires re-proving every
-      budget, so it is an altitude-lap call.
+    * **G-T1, G-T2, G-T4** — retired with the base-four campaign (all satisfied).
+    * **B-T1 (fired 2026-09-14, resolved by restriction)** — `b = 2` fails at the row `L¹`
+      mass.  Objective restricted to `b ≥ 3`.  If a later lap finds a *second* step that
+      needs `b ≥ 4`, that is a NEW firing: record the inequality and restrict again rather
+      than weakening a `Prop`.
+    * **B-T2** — if the port has not produced a green `b`-parameterized `Frame` within
+      **8 grind laps**, re-cost: keep `Frame` at base four and instead prove the general
+      theorem by a *second* frame constructor, rather than continuing to thread `b`.
+    * **B-T3** — a *mathematical* mismatch between a `b`-general object and a `Prop` is an
+      ESCALATION (`ROUTE-ESCALATION-<date>.md`), never a `Prop` edit.
 
 ### Directive history
+- 2026-09-14 (fresh-mind review lap, after G4 lap 12): **G4 base-four verified CLOSED** —
+  build green, all headlines on the trust triple, endpoint definitions re-audited against the
+  brief.  Objective ADVANCED to brief §7.1, the base-`b` theorem for `b ≥ 3`.  Decisive probe
+  run before any code: the five `ScheduleWitness` inequalities re-derived symbolically in `b`.
+  `hB` gets *easier* (deficit `K log2·b^{-ℓ}/(4ℓ log b)`), `θ₀(b) = b^{-4}(2/b²)^K` gets
+  *larger*, but `hbig`'s very-large-prime term is `(2/b)^K/(b−1)` — **REFUTED at `b = 2`**
+  (mass ≡ 1, no `η` repairs it), which is exactly why the brief says `b ≥ 3`.  Triggers
+  B-T1 (fired, resolved by restriction), B-T2, B-T3 registered.
 - 2026-09-14 (DEEP REFLECTION lap, after G4 lap 9b): direction KEPT, **ROUTE VERDICT =
   CONTINUE** (no trigger fired; G-T3 now live and re-checked against the Lean definitions).
   Mandated move moved from "§4 inputs" (ALL FIVE now closed) to **§5, starting with the

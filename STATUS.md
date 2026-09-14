@@ -19,9 +19,30 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 
 **A machine-checked conjecture graph around normality/disjunctivity, plus a
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
-Mahler multiplier chapter) — and, since 2026-09-14, the live G4 disjunctivity
-campaign, whose brief §4 is now CLOSED.** · **Build**: 🟢 green (8888 jobs) ·
-**Updated**: G4 lap 12 · 2026-09-14 · `wip/g4-disjunctivity` @ `b937072`
+Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
+kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
+· **Build**: 🟢 green (8930 jobs) ·
+**Updated**: G4 review lap 13 · 2026-09-14 · `wip/g4-disjunctivity` @ `c5d847b`
+
+## 2026-09-14 (review lap 13): G4 base-four INDEPENDENTLY VERIFIED; campaign advances to base `b ≥ 3`
+
+Re-ran the whole audit from scratch: `lake build` 8930 jobs green; `isDisjunctive_four`,
+`isDisjunctive_two`, `G4DisjunctiveFour_holds`, `G4DisjunctiveTwo_holds`,
+`every_binary_word_occurs`, `primeSumAtBase_four`, `summable_omegaR_div_pow` each print
+`[propext, Classical.choice, Quot.sound]`; `grep` finds **no `axiom` declaration anywhere in
+`src/`**; and the endpoint's *definitions* (`IsDisjunctive`, `orbit`, `omegaR`,
+`primeLambertAtBase`, `primeSumAtBase`, `OccursAt`) were re-read line-by-line against the
+brief's frozen statement and are faithful.  Since the kernel guarantees the proof given the
+definitions, and the definitions match the brief, **the base-four result stands**.
+
+New campaign **G4B** (brief §7.1): `IsDisjunctive b (primeLambertAtBase b)` for every `b ≥ 3`.
+Decisive symbolic probe run before any code — the five `ScheduleWitness` inequalities
+re-derived in `b`.  `hB` gets easier (deficit `K log2·b^{−ℓ}/(4ℓ log b)`, vs `K·4^{−ℓ}/(8ℓ)`
+at `b = 4`); `θ₀(b) = b^{−4}(2/b²)^K` gets larger; but `hbig`'s very-large-prime term is
+`(log Mx/log Y)·(2/b)^K/(b−1)`, which at **`b = 2` is identically `1`** — so `hbig` is FALSE
+at base two for every `η, ε, K, X`.  That is a genuine refutation of the base-two route (not
+a stalled proof) and it explains the brief's own `b ≥ 3`.  Details: `DIRECTION.md` CURRENT
+DIRECTIVE, `PENDING_WORK.md` §G4B.
 
 ## 🏁 2026-09-14: G4 disjunctivity PROVED (base four and base two), axiom-clean
 

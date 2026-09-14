@@ -1,5 +1,96 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## G4B — 2026-09-14 (review lap 13) — the base-`b` theorem, and why `b = 2` is refuted
+
+### Verification of the closed base-four campaign (re-done from scratch this lap)
+
+`lake build` 8930 jobs green.  `#print axioms` = `[propext, Classical.choice, Quot.sound]`
+for `G4.isDisjunctive_four`, `G4.isDisjunctive_two`, `G4.G4DisjunctiveFour_holds`,
+`G4.G4DisjunctiveTwo_holds`, `G4.every_binary_word_occurs`,
+`PrimeLambert.primeSumAtBase_four`, `PrimeLambert.summable_omegaR_div_pow`.
+`grep -rn '^ *axiom ' src/` → **nothing**: the repo contains no local axiom at all.
+Definitional audit against the brief's frozen statement: `IsDisjunctive b x = ∀ a c, 0 ≤ a →
+a < c → c ≤ 1 → ∃ n, orbit b x n ∈ Ico a c` ✓, `orbit b x n = Int.fract (x·bⁿ)` ✓,
+`omegaR n = ArithmeticFunction.cardDistinctFactors n` ✓, `primeLambertAtBase b = ∑' n, ω(n)/bⁿ`
+✓, `primeSumAtBase b = ∑' p : Nat.Primes, 1/(bᵖ−1)` ✓, `OccursAt` via `digitOf` ✓.
+Because the kernel guarantees the proof *given* the definitions, and the definitions are
+faithful, the base-four theorem stands.
+
+### The `b`-dependence of the five `ScheduleWitness` inequalities (symbolic re-derivation)
+
+Write `A = D_s^{⊗K}`, so every row has `2^K` entries `±1` and `∑_α|A_{aα}| = ∑_α A_{aα}² = 2^K`
+(`G4RowMass.sum_abs_kronPow_diffZ`, `sum_sq_kronPow_diffZ`).  Retained layers are `K < j ≤ J`.
+Replacing the base-four weight `4^{−j}` by `b^{−j}`:
+
+| quantity | base four (in `src/`) | general `b` | `b = 2` | `b = 3` |
+|---|---|---|---|---|
+| `∑_{j>K} b^{−j}` | `4^{−K}/3` | `b^{−K}/(b−1)` | `2^{−K}` | `3^{−K}/2` |
+| `∑_{j>K} b^{−2j}` | `16^{−K}/15` | `b^{−2K}/(b²−1)` | `4^{−K}/3` | `9^{−K}/8` |
+| row `L¹` `∑_{α,j}|c|` | `(1/2)^K/3` | `(2/b)^K/(b−1)` | **`1`** | `(2/3)^K/2` |
+| row `L²` `∑_{α,j}c²` | `(1/8)^K/15` | `(2/b²)^K/(b²−1)` | `2^{−K}/3` | `(2/9)^K/8` |
+| freq. seed `θ₀` | `4^{−4}8^{−K}` | `b^{−4}(2/b²)^K` | `2^{−4}2^{−K}` | `3^{−4}(2/9)^K` |
+| `hB` deficit per `M` | `4^{−ℓ}` | `b^{−ℓ}` | `2^{−ℓ}` | `3^{−ℓ}` |
+
+**hB (the `X`-free geometry) gets EASIER as `b` shrinks.**  With `η = e^{−λ}` and
+`M = ⌈λ/(ℓ log b)⌉` (the minimum allowed by `hM : b^{−ℓM} ≤ η`), `log(b^ℓ−1) ≤ ℓ log b − b^{−ℓ}`
+gives a deficit `M·b^{−ℓ} ≈ λ b^{−ℓ}/(ℓ log b)` against the `b`-independent costs
+`(log 2)/4 + log 6 + log 2 + 11.5√K`.  So `hB` needs `λ ≳ 11.5·√K·ℓ·b^ℓ·log b`; at `b = 4`,
+`λ = (K log 2)/4` and `K ≥ 33856 ℓ²16^ℓ` is the recorded sufficient hypothesis, matching
+`√K ≥ 184ℓ4^ℓ`.  General `b`: `√K ≥ Θ(ℓ b^ℓ log b)`.
+
+**θ₀ gets LARGER as `b` shrinks** (`(2/b²)^K` vs `(2/16)^K`), so `hbudget`'s contraction
+`exp(−4θ₀∑_{p∈sm}1/p)` is *better* at small `b`.
+
+**hbig is where `b` bites, and it REFUTES `b = 2`.**  `hbig`'s last term is the
+very-large-prime (`p > Y`) contribution, bounded **pointwise** in `G4MediumPrimes.
+abs_blockSum_omegaVL_le` by `(log Mx / log Y) · ∑_{α,j>K}|c_{αj}|`, i.e. by
+`(log Mx/log Y)·(2/b)^K/(b−1)`, and `hbig` requires it `≤ δbig·(ε·η)`.  Since `ε < 1`,
+`η < 1`, `δbig ≤ 1` and `log Mx/log Y ≥ 1`, a NECESSARY condition is `(2/b)^K/(b−1) < 1`.
+
+* **`b = 2`: the row `L¹` mass is exactly `2^K·2^{−K}/1 = 1`, independent of `K`.**  `hbig`
+  is then unsatisfiable for every `η, ε, K, X, Y, R`.  Raising `η` cannot help (`εη < 1`),
+  and lowering it is worse.  **`b = 2` is refuted on this route**, which is precisely why the
+  brief's §7.1 says `b ≥ 3`.  Downstream: `gridFrame_propD_of_bounds` is the implication that
+  fails; the weakest repair actually justified is to demand `2/b < 1` strictly, i.e. `b ≥ 3`.
+* **`b ≥ 3` closes**: the mass is `(2/b)^K/(b−1) = e^{−Θ(K)}` and must beat
+  `εη = e^{−Θ(√K)}/K`, which holds for `K` large in terms of `ℓ` — the same regime `hB`
+  already forces.
+
+**hfar** scales as `2^K b^{−(K+N)}(farC + 2(K+N) + 2)/(b−1)`; the same `(2/b)^K` factor appears,
+so `b ≥ 3` again, and `N = Θ(log_b(K·L))` as before.
+
+### Attack order (mirrors `DIRECTION.md`)
+
+1. `G4ScheduleB.lean` in `b` — `log_pow_sub_one_le`, `deficit_dominates`, `gridB_bound`;
+   keep the `b = 4` statements as corollaries.  *(Started this lap.)*
+2. `G4Covering` / `G4GridTube` — cylinders/blocks in base `b`.
+3. `Frame` gains `b`, `hb : 2 ≤ b`; `Ffull` uses `b^{−j}`; `G4Remainder`, `G4Transport`,
+   `G4Wiring` follow.
+4. `G4RowMass`, `G4MediumPrimes`, `G4SmallPrimeVector`, `G4FarTail` — the table above.
+5. `G4FreqSep` — `θ₀(b) = b^{−4}(2/b²)^K`; `freqDepth` uses `Nat.clog b`.
+6. `G4Schedule*` — the schedule in `(b, ℓ)`; `isDisjunctive_base`, with `b = 4` recovering
+   `isDisjunctive_four`.
+
+### Stretch target (NOT the objective): repair base two
+
+`b = 2` would give `IsDisjunctive 2 primeLambert` — strictly stronger than the
+Tao–Teräväinen irrationality of `∑_p 1/(2^p−1)` (arXiv 2512.01739 Thm 1.3), and it would
+retire this repo's `phaseOscillation` gate honestly.  The single obstruction is that the
+`p > Y` range is handled **pointwise**.  A repair must give that range signed cancellation
+(as the medium range `R < p ≤ Y` already has via `sum_rowCoeff_eq_zero`), replacing the row
+`L¹` mass by something like the row `L²` mass `(2/b²)^K/(b²−1)`, which at `b = 2` is
+`2^{−K}/3` and *does* decay.  Only attempt this after `b ≥ 3` lands.
+
+### Still open elsewhere in `src/` (off this campaign, unchanged)
+
+* `MahlerDriftOne.exists_prime_nonresidue` — a prime `q ∈ (p/3, p/2)` with `(p|q) = −1`.
+  The interval is *shorter than the modulus* `4p` of the reciprocity classes, so this is
+  strictly beyond Linnik; genuinely out of reach, correctly disclosed.
+* `PrimeLambertOscillation.phaseOscillation` — the old base-two irrationality route.
+  Superseded in the literature by Tao–Teräväinen; the disjunctivity stretch target above is
+  the only route in this repo that would retire it.
+
+
 ## G4 lap 12 — 2026-09-14 — CAMPAIGN CLOSED: headline proved
 
 `isDisjunctive_four`, `isDisjunctive_two` (`G4ScheduleAssembly.lean`) on the trust triple.
