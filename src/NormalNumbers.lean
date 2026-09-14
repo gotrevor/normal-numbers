@@ -246,3 +246,4 @@ import NormalNumbers.G4EntropyPrecision
 import NormalNumbers.G4EntropyLevels
 import NormalNumbers.G4EntropyGibbs
 import NormalNumbers.G4EntropyPinsker
+import NormalNumbers.G4EntropyWord
