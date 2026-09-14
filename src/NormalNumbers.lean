@@ -221,3 +221,5 @@ import NormalNumbers.G4Transport
 import NormalNumbers.G4TubePiece
 import NormalNumbers.G4TubeVolume
 import NormalNumbers.G4Wiring
+import NormalNumbers.G4EntropyInfo
+import NormalNumbers.G4EntropySample
