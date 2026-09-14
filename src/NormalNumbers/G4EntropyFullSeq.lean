@@ -242,4 +242,88 @@ theorem fullPos_strictMono : StrictMono fullPos := by
       have hdown : fnth i a + p < bandTop i := fnth_add_lt_bandTop i a hpk
       omega
 
+/-! ### The digits read, and the window dictionary -/
+
+/-- The digit sequence read along `fullPos`. -/
+noncomputable def fullDig (x : ℝ) (j : ℕ) : ℕ := digitOf 2 (Int.fract x) (fullPos j)
+
+lemma fullDig_lt (x : ℝ) (j : ℕ) : fullDig x j < 2 := Nat.mod_lt _ (by omega)
+
+/-- Inside band `i`, the `a`-th window occupies the read indices `fT i + a·m_i + q`. -/
+lemma fullPos_window (i a q : ℕ) (ha : a < (winStarts i).card) (hq : q < kk i) :
+    fullPos (fT i + a * kk i + q) = fnth i a + q := by
+  have hkk : 0 < kk i := by unfold kk; omega
+  have hlt : a * kk i + q < fL i := by
+    rw [fL]
+    have : (a + 1) * kk i ≤ (winStarts i).card * kk i := Nat.mul_le_mul_right _ ha
+    have hexp : (a + 1) * kk i = a * kk i + kk i := by ring
+    omega
+  have h1 : fT i ≤ fT i + a * kk i + q := by omega
+  have h2 : fT i + a * kk i + q < fT (i + 1) := by
+    show fT i + a * kk i + q < fT i + fL i
+    omega
+  have hsub : fT i + a * kk i + q - fT i = a * kk i + q := by omega
+  have hdiv : (a * kk i + q) / kk i = a := by
+    have hc : a * kk i + q = kk i * a + q := by ring
+    rw [hc, Nat.mul_add_div hkk, Nat.div_eq_of_lt hq]
+    omega
+  have hmod : (a * kk i + q) % kk i = q := by
+    have hc : a * kk i + q = kk i * a + q := by ring
+    rw [hc, Nat.mul_add_mod, Nat.mod_eq_of_lt hq]
+  rw [fullPos_eq h1 h2, hsub, hdiv, hmod]
+
+/-- **The dictionary**: a window of `v` fitting inside one band window is an occurrence of `v`
+in `x` at the corresponding digit position. -/
+lemma matchesAt_fullDig_iff (x : ℝ) (i a q : ℕ) (v : List ℕ) (ha : a < (winStarts i).card)
+    (hq : q + v.length ≤ kk i) :
+    MatchesAt (fullDig x) v (fT i + a * kk i + q) ↔ OccursAt 2 x v (fnth i a + q) := by
+  have hkey : ∀ t < v.length,
+      fullDig x (fT i + a * kk i + q + t) = digitOf 2 (Int.fract x) (fnth i a + q + t) := by
+    intro t ht
+    have hqt : q + t < kk i := by omega
+    have hrw : fT i + a * kk i + q + t = fT i + a * kk i + (q + t) := by ring
+    rw [fullDig, hrw, fullPos_window i a (q + t) ha hqt]
+    ring_nf
+  constructor
+  · intro h t ht
+    have h' := h t ht
+    rw [hkey t ht] at h'
+    rw [h']
+    exact (List.getD_eq_getElem v 0 ht)
+  · intro h t ht
+    show fullDig x (fT i + a * kk i + q + t) = _
+    rw [hkey t ht, h t ht]
+    exact (List.getD_eq_getElem v 0 ht).symm
+
+set_option maxHeartbeats 1000000 in
+/-- Summing over the band's window-start enumeration is summing over the starts. -/
+lemma sum_range_fnth {β : Type*} [AddCommMonoid β] (i : ℕ) (g : ℕ → β) :
+    ∑ a ∈ Finset.range (winStarts i).card, g (fnth i a) = ∑ q ∈ winStarts i, g q := by
+  classical
+  rw [← Fin.sum_univ_eq_sum_range (fun a => g (fnth i a))]
+  have hstep : ∀ a : Fin (winStarts i).card,
+      g (fnth i (a : ℕ)) = g ((winStarts i).orderEmbOfFin rfl a) := by
+    intro a
+    have hfin : (⟨(a : ℕ) % (winStarts i).card, Nat.mod_lt _ (card_winStarts_pos i)⟩ :
+        Fin (winStarts i).card) = a := by
+      apply Fin.ext
+      exact Nat.mod_eq_of_lt a.isLt
+    rw [fnth, hfin]
+  rw [Finset.sum_congr rfl fun a _ => hstep a]
+  rw [← Finset.sum_attach (winStarts i) g]
+  refine Fintype.sum_bijective (fun a : Fin (winStarts i).card =>
+    (⟨(winStarts i).orderEmbOfFin rfl a, Finset.orderEmbOfFin_mem _ _ _⟩ :
+      (winStarts i : Finset ℕ))) ?_ _ _ (fun a => rfl)
+  constructor
+  · intro a b hab
+    have : ((winStarts i).orderEmbOfFin rfl a : ℕ) = (winStarts i).orderEmbOfFin rfl b :=
+      congrArg Subtype.val hab
+    exact (winStarts i).orderEmbOfFin rfl |>.injective (by exact_mod_cast this)
+  · rintro ⟨q, hq⟩
+    have hrange : q ∈ Set.range ((winStarts i).orderEmbOfFin (rfl : (winStarts i).card = _)) := by
+      rw [Finset.range_orderEmbOfFin]
+      exact hq
+    obtain ⟨a, ha⟩ := hrange
+    exact ⟨a, Subtype.ext ha⟩
+
 end NormalNumbers.G4.Sched
