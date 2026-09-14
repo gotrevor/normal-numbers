@@ -374,4 +374,142 @@ lemma sineVec_self_pos {s : ℕ} (j : Fin s) : 0 < sineVec s j ⬝ᵥ sineVec s 
   positivity
 
 
+/-! ### Log moments of the one-dimensional spectrum
+
+`λ_j = 4 sin²(θ_j/2) ≥ 4 ((j+1)/(s+1))²` (Jordan), so `|log λ_j| ≤ log 4 + 2 log((s+1)/(j+1))`,
+and `∑_j log²((s+1)/(j+1)) ≤ 32 (s+1)` via `log² y ≤ 16 √y` and `∑_{m ≤ s} m^{-1/2} ≤ 2√s`.
+Hence `∑_j log² λ_j ≤ 520 s`: the second log-moment of the spectrum is `O(s)`, which is what makes
+the tensor-power bound `O(r√K)` rather than `O(rK)`. -/
+
+lemma lam_eq_four_mul_sin_sq {s : ℕ} (j : Fin s) :
+    lam s j = 4 * Real.sin (angle s j / 2) ^ 2 := by
+  unfold lam
+  have := Real.cos_two_mul_eq_one_sub (angle s j / 2)
+  rw [show 2 * (angle s j / 2) = angle s j by ring] at this
+  rw [this]; ring
+
+/-- Jordan's inequality gives the lower bound `λ_j ≥ 4 ((j+1)/(s+1))²`. -/
+lemma lam_ge {s : ℕ} (j : Fin s) : 4 * (((j : ℝ) + 1) / ((s : ℝ) + 1)) ^ 2 ≤ lam s j := by
+  rw [lam_eq_four_mul_sin_sq]
+  have h0 : 0 ≤ angle s j / 2 := by linarith [angle_pos j]
+  have hle : angle s j / 2 ≤ π / 2 := by linarith [angle_lt_pi j]
+  have hj := Real.mul_le_sin h0 hle
+  have : 2 / π * (angle s j / 2) = ((j : ℝ) + 1) / ((s : ℝ) + 1) := by
+    unfold angle; field_simp
+  rw [this] at hj
+  have hnn : 0 ≤ ((j : ℝ) + 1) / ((s : ℝ) + 1) := by positivity
+  have := pow_le_pow_left₀ hnn hj 2
+  linarith
+
+lemma one_le_ratio {s : ℕ} (j : Fin s) : 1 ≤ ((s : ℝ) + 1) / ((j : ℝ) + 1) := by
+  rw [le_div_iff₀ (by positivity)]
+  have := j.isLt
+  have : ((j : ℕ) : ℝ) + 1 ≤ (s : ℝ) := by exact_mod_cast this
+  linarith
+
+lemma log_lam_le {s : ℕ} (j : Fin s) : Real.log (lam s j) ≤ Real.log 4 :=
+  Real.log_le_log (lam_pos j) (lam_le_four j)
+
+lemma log_lam_ge {s : ℕ} (j : Fin s) :
+    Real.log 4 - 2 * Real.log (((s : ℝ) + 1) / ((j : ℝ) + 1)) ≤ Real.log (lam s j) := by
+  have h := Real.log_le_log (by positivity) (lam_ge j)
+  rw [Real.log_mul (by norm_num) (by positivity), Real.log_pow,
+    Real.log_div (by positivity) (by positivity)] at h
+  rw [Real.log_div (by positivity) (by positivity)]
+  push_cast at h
+  linarith
+
+lemma sq_log_lam_le {s : ℕ} (j : Fin s) :
+    Real.log (lam s j) ^ 2
+      ≤ 2 * Real.log 4 ^ 2 + 8 * Real.log (((s : ℝ) + 1) / ((j : ℝ) + 1)) ^ 2 := by
+  have ha : 0 ≤ Real.log 4 := Real.log_nonneg (by norm_num)
+  have hb : 0 ≤ Real.log (((s : ℝ) + 1) / ((j : ℝ) + 1)) := Real.log_nonneg (one_le_ratio j)
+  have h1 := log_lam_le j
+  have h2 := log_lam_ge j
+  set a := Real.log 4
+  set b := Real.log (((s : ℝ) + 1) / ((j : ℝ) + 1))
+  set x := Real.log (lam s j)
+  have hx1 : x ≤ a + 2 * b := by linarith
+  have hx2 : -(a + 2 * b) ≤ x := by linarith
+  nlinarith [mul_nonneg (sub_nonneg.mpr hx1) (sub_nonneg.mpr hx2), sq_nonneg (a - 2 * b)]
+
+/-- `log² y ≤ 16 √y` for `y ≥ 1` (via `log y = 4 log y^{1/4} ≤ 4 y^{1/4}`). -/
+lemma sq_log_le_sixteen_sqrt {y : ℝ} (hy : 1 ≤ y) : Real.log y ^ 2 ≤ 16 * Real.sqrt y := by
+  have h0 : 0 ≤ y := by linarith
+  have h1 : Real.log y = 4 * Real.log (Real.sqrt (Real.sqrt y)) := by
+    rw [Real.log_sqrt (Real.sqrt_nonneg _), Real.log_sqrt h0]; ring
+  have hq : 1 ≤ Real.sqrt (Real.sqrt y) := by
+    have : 1 ≤ Real.sqrt y := (Real.le_sqrt zero_le_one h0).mpr (by rw [one_pow]; exact hy)
+    exact (Real.le_sqrt zero_le_one (Real.sqrt_nonneg _)).mpr (by rw [one_pow]; exact this)
+  have h2 : Real.log (Real.sqrt (Real.sqrt y)) ≤ Real.sqrt (Real.sqrt y) := by
+    have := Real.log_le_sub_one_of_pos (x := Real.sqrt (Real.sqrt y)) (by linarith)
+    linarith
+  have h3 : 0 ≤ Real.log (Real.sqrt (Real.sqrt y)) := Real.log_nonneg hq
+  have h4 : Real.log (Real.sqrt (Real.sqrt y)) ^ 2 ≤ Real.sqrt (Real.sqrt y) ^ 2 :=
+    pow_le_pow_left₀ h3 h2 2
+  rw [Real.sq_sqrt (Real.sqrt_nonneg y)] at h4
+  rw [h1, mul_pow]
+  linarith
+
+/-- `∑_{m=1}^{s} m^{-1/2} ≤ 2 √s`. -/
+lemma sum_inv_sqrt_le (s : ℕ) :
+    ∑ k ∈ Finset.range s, 1 / Real.sqrt ((k : ℝ) + 1) ≤ 2 * Real.sqrt s := by
+  induction s with
+  | zero => simp
+  | succ n ih =>
+    rw [Finset.sum_range_succ]
+    have key : 1 / Real.sqrt ((n : ℝ) + 1) ≤ 2 * Real.sqrt ((n : ℝ) + 1) - 2 * Real.sqrt n := by
+      have hp : 0 < Real.sqrt ((n : ℝ) + 1) := Real.sqrt_pos.mpr (by positivity)
+      have hsq : Real.sqrt (n : ℝ) ^ 2 = n := Real.sq_sqrt (by positivity)
+      have hsq1 : Real.sqrt ((n : ℝ) + 1) ^ 2 = n + 1 := Real.sq_sqrt (by positivity)
+      rw [div_le_iff₀ hp]
+      nlinarith [sq_nonneg (Real.sqrt ((n : ℝ) + 1) - Real.sqrt n), Real.sqrt_nonneg (n : ℝ)]
+    push_cast
+    linarith
+
+lemma sum_sq_log_ratio_le (s : ℕ) :
+    ∑ j : Fin s, Real.log (((s : ℝ) + 1) / ((j : ℝ) + 1)) ^ 2 ≤ 32 * ((s : ℝ) + 1) := by
+  calc ∑ j : Fin s, Real.log (((s : ℝ) + 1) / ((j : ℝ) + 1)) ^ 2
+      ≤ ∑ j : Fin s, 16 * Real.sqrt (((s : ℝ) + 1) / ((j : ℝ) + 1)) :=
+        Finset.sum_le_sum fun j _ => sq_log_le_sixteen_sqrt (one_le_ratio j)
+    _ = 16 * Real.sqrt ((s : ℝ) + 1) * ∑ k ∈ Finset.range s, 1 / Real.sqrt ((k : ℝ) + 1) := by
+        rw [Finset.mul_sum, Finset.sum_range]
+        refine Finset.sum_congr rfl fun j _ => ?_
+        rw [Real.sqrt_div (by positivity)]; ring
+    _ ≤ 16 * Real.sqrt ((s : ℝ) + 1) * (2 * Real.sqrt s) := by
+        gcongr; exact sum_inv_sqrt_le s
+    _ ≤ 32 * ((s : ℝ) + 1) := by
+        have := Real.sqrt_le_sqrt (show (s : ℝ) ≤ s + 1 by linarith)
+        have h1 := Real.sq_sqrt (show (0 : ℝ) ≤ s + 1 by positivity)
+        nlinarith [Real.sqrt_nonneg (s : ℝ), Real.sqrt_nonneg ((s : ℝ) + 1)]
+
+/-- Second log-moment of the spectrum: `∑_j log² λ_j ≤ 2 s log² 4 + 256 (s+1)`. -/
+theorem sum_sq_log_lam_le (s : ℕ) :
+    ∑ j : Fin s, Real.log (lam s j) ^ 2 ≤ 2 * s * Real.log 4 ^ 2 + 256 * ((s : ℝ) + 1) := by
+  calc ∑ j : Fin s, Real.log (lam s j) ^ 2
+      ≤ ∑ j : Fin s, (2 * Real.log 4 ^ 2 + 8 * Real.log (((s : ℝ) + 1) / ((j : ℝ) + 1)) ^ 2) :=
+        Finset.sum_le_sum fun j _ => sq_log_lam_le j
+    _ = 2 * s * Real.log 4 ^ 2
+          + 8 * ∑ j : Fin s, Real.log (((s : ℝ) + 1) / ((j : ℝ) + 1)) ^ 2 := by
+        rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_univ,
+          Fintype.card_fin, nsmul_eq_mul, Finset.mul_sum]
+        ring
+    _ ≤ _ := by linarith [sum_sq_log_ratio_le s]
+
+lemma log_four_lt_two : Real.log 4 < 2 := by
+  rw [Real.log_lt_iff_lt_exp (by norm_num), show (2 : ℝ) = 1 + 1 by norm_num, Real.exp_add]
+  have := Real.exp_one_gt_d9
+  nlinarith
+
+/-- Clean form: `∑_j log² λ_j ≤ 520 s` for `s ≥ 1`. -/
+theorem sum_sq_log_lam_le' {s : ℕ} (hs : 1 ≤ s) :
+    ∑ j : Fin s, Real.log (lam s j) ^ 2 ≤ 520 * s := by
+  have h4 := log_four_lt_two
+  have := sum_sq_log_lam_le s
+  have hs' : (1 : ℝ) ≤ s := by exact_mod_cast hs
+  have hl : 0 ≤ Real.log 4 := Real.log_nonneg (by norm_num)
+  have hsq : Real.log 4 ^ 2 ≤ 4 := by nlinarith
+  nlinarith [mul_le_mul_of_nonneg_left hsq (by positivity : (0 : ℝ) ≤ 2 * s)]
+
+
 end NormalNumbers.G4
