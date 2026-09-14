@@ -1,49 +1,56 @@
-# HANDOFF 2026-09-14 — G4 disjunctivity, lap 2 (crux B: spectral half PROVED)
+# HANDOFF 2026-09-14 — G4 disjunctivity, lap 2 (crux B: all inputs proved; assembly next)
 
-HEAD `d0e4a44` on `wip/g4-disjunctivity`.  Lap 1 handoff: `HANDOFF-2026-09-14-g4.md` (still
-accurate for `PrimeLambertFour`, `G4SeparatingTest`, `G4Wiring`).  Build:
-`lake build NormalNumbers.G4Wiring NormalNumbers.G4Tensor NormalNumbers.G4DetMonotone`.
-DIRECTION.md: attended override records the prior campaign COMPLETE; the 2026-09-14 G4 kickoff
-is the attended objective.  All headline declarations below print
-`[propext, Classical.choice, Quot.sound]`.
+HEAD `58da5c8` on `wip/g4-disjunctivity`.  Working tree clean.  Not pushed (host pushes).
+Lap 1 handoff: `HANDOFF-2026-09-14-g4.md` (still accurate for `PrimeLambertFour`,
+`G4SeparatingTest`, `G4Wiring`).  DIRECTION.md: attended override records the prior campaign
+COMPLETE; the 2026-09-14 G4 kickoff is the attended objective — do not edit DIRECTION.md.
+Build: `lake build NormalNumbers.G4Wiring NormalNumbers.G4TubePiece
+NormalNumbers.G4TorusProjection NormalNumbers.G4Covering`.  Every headline declaration below
+prints `[propext, Classical.choice, Quot.sound]`; no sorries in any G4 file.
 
-## Proved this lap (crux B, the spectral content of §4B)
+## Proved this lap (crux B, §4B) — commits `8569081` … `58da5c8`
 
-* `G4Spectral.lean` — **log moments of the 1-D spectrum**: `lam_ge` (Jordan:
-  `λ_j ≥ 4((j+1)/(s+1))²`), `log_lam_le/ge`, `sq_log_le_sixteen_sqrt` (`log² y ≤ 16√y`),
-  `sum_inv_sqrt_le` (`∑_{m≤s} m^{-1/2} ≤ 2√s`), `sum_sq_log_ratio_le`,
-  **`sum_sq_log_lam_le' : ∑_j log² λ_j ≤ 520 s`** (`s ≥ 1`).
-* `G4Tensor.lean` (new) — `det_of_orthogonal_eigenbasis` (`det M = ∏ μ` from an orthogonal
-  non-null eigenbasis), `tensorGram K s = T_s^{⊗K}` on `Fin K → Fin s`, product sine eigenvectors
-  `tensorVec` with `tensorGram_mulVec_tensorVec`, `tensorVec_orthogonal`, `tensorVec_self_pos`,
-  **`det_one_add_tensorGram : det(1 + T^{⊗K}) = ∏_j (1 + ∏ᵢ λ_{jᵢ})`**, `prod_lam = s+1`,
-  `sum_log_lam = log(s+1)`, exact tensor moments `sum_pi_linear`, `sum_pi_sq`
-  (`s²∑X² = K s^{K+1} L₂ + K(K−1) s^K L₁²`), `log_one_add_le_log_two_add_abs_log`,
-  `sum_abs_le_sqrt_card_mul_sum_sq` (Cauchy–Schwarz), the general bound
-  `log_det_one_add_tensorGram_le` (`≤ s^K (log 2 + √(Kμ₂ + K(K−1)μ₁²))`), and
-  **`log_det_one_add_tensorGram_le' : log det(1 + T_{K²}^{⊗K}) ≤ (K²)^K (log 2 + 23√K)`**
-  for `K ≥ 1`.  This is the draft's `O(r√K)`; the mean-zero cancellation `μ₁ = log(s+1)/s` is
-  exactly what beats Hadamard's `O(rK)`.
-* `G4DetMonotone.lean` (new) — `det_le_det_add_vecMulVec_self` (matrix determinant lemma,
-  `N ≻ 0 ⟹ det N ≤ det(N + uuᵀ)`), `det_le_det_add_sum_vecMulVec`,
-  `transpose_mul_self_eq_sum_vecMulVec`, and
-  **`det_one_add_submatrix_mul_transpose_le : det(1 + A_G A_Gᵀ) ≤ det(1 + AAᵀ)`** for
-  `A_G = A.submatrix e id`, `e` injective — the "principal row restriction" bound §4B asks for.
+* `G4Spectral.lean` — log moments: `lam_ge` (Jordan), `sq_log_le_sixteen_sqrt`,
+  `sum_inv_sqrt_le`, **`sum_sq_log_lam_le' : ∑_j log² λ_j ≤ 520 s`**.
+* `G4Tensor.lean` — `det_of_orthogonal_eigenbasis`; `tensorGram K s = T_s^{⊗K}`, product sine
+  eigenvectors, **`det_one_add_tensorGram`**; `prod_lam = s+1`, `sum_log_lam`; exact tensor
+  moments `sum_pi_linear`, `sum_pi_sq`; **`log_det_one_add_tensorGram_le'`:
+  `log det(1 + T_{K²}^{⊗K}) ≤ (K²)^K (log 2 + 23√K)`** (`K ≥ 1`).  Also `diff s` (`D_s`),
+  `diff_mul_transpose : D Dᵀ = gram`, `tensorDiff K s = D^{⊗K}`, **`tensorDiff_mul_transpose`**.
+* `G4DetMonotone.lean` — matrix determinant lemma (inequality form), finite iteration,
+  **`det_one_add_submatrix_mul_transpose_le : det(1 + A_G A_Gᵀ) ≤ det(1 + AAᵀ)`**.
+* `G4Ellipsoid.lean` — **`volume_eball_le`** (Gaussian comparison, `vol(ball_R) ≤ (√(2πe/g)R)^g`,
+  no Gamma), contraction `dotProduct_mulVec_self_le`, `sqrtGram = CFC.sqrt(LLᵀ)`,
+  `image_subset_sqrtGram_image`, **`volume_image_le`**, `closedBall_subset_eball`.
+* `G4TubePiece.lean` — `augmented A = fromCols A 1`, `LLᵀ = 1 + AAᵀ`,
+  **`volume_tubePiece_le`**: for `A = D_{K²}^{⊗K}`, injective `e : Fin g → (Fin K → Fin K²)`,
+  `vol([A_G, I_g] '' cube) ≤ exp(½ r(log 2 + 23√K)) · (√(2πe (H+g)/g))^g`.  (Draft (5.3).)
+* `G4TorusProjection.lean` — `torusProj`, `measurePreserving_torusProj` (from `(0,1]^g`),
+  `preimage_image_torusProj`, **`volume_image_torusProj_le : vol(π''S) ≤ vol S`** (S measurable
+  with measurable image, e.g. compact).
+* `G4Covering.lean` — `orbit_add`, `block`, `orbit_expansion`, `block_ne_of_omit`,
+  `admissible`/`card_admissible = (B−1)^M`, **`orbitClosure_subset_cylinders`**: an orbit
+  omitting `[w/4^ℓ,(w+1)/4^ℓ)` has closure covered by the admissible closed cylinders of
+  length `4^{−ℓM}`.  (Draft (4.4) in finite form.)
 
-Nothing refuted.  No axioms, no sorries in any G4 file.
+Nothing refuted.  Route decisions recorded in file docstrings: ellipsoid instead of zonotope;
+Gaussian comparison instead of `ω_g` (the sup-cube bound for the ball would lose
+`exp(O(g log H))` and break the budget — do not use it).
 
-## Still open on B (geometry, not spectrum)
+## Open
 
-1. Identify `A = D_s^{⊗K}` as a concrete `Matrix (Fin K → Fin s) (Fin K → Fin (s+1)) ℝ` and
-   prove `A * Aᵀ = tensorGram K s` (`Fintype.prod_sum`, same pattern as `tensorVec_dotProduct`).
-2. Ellipsoid volume: the side-`η` box in `ℝ^{H+g}` lies in the ball of radius `η√(H+g)`; image
-   under `L = [A_G, I_g]` has volume `ω_g (η√(H+g))^g √det(I + A_G A_Gᵀ)` (via
-   `MeasureTheory.Measure.addHaar_image_linearMap` and `LL^T = I + A_G A_Gᵀ`).  Combine with
-   `det_one_add_submatrix_mul_transpose_le` + `log_det_one_add_tensorGram_le'`.
-3. Torus projection `vol_𝕋(π S) ≤ vol(S)`, covering of `C^H` by cylinders (`d' < 1`), and the
-   union over good coordinate sets `G` (`≤ 2^r`) to reach `PropB δ₁` in `G4Wiring`.
+`PropA`–`PropD`, `PropJackson`, the §5 schedule, and the **B assembly** to `PropB`:
+1. Choose the cylinder `[w/4^ℓ,(w+1)/4^ℓ) ⊆ [a,c)` strictly inside the omitted interval.
+2. `C^H ⊆ ⋃_{b : Fin H → admissible} ∏ π(cyl b)`; each product cylinder is
+   `center + [−h,h]^H`, `h = ½·4^{−ℓM}`, choose `M` with `4^{−ℓM} ≤ η`.
+3. `y ∈ tube ⟹ ∃ G, |G| ≥ (1−ε)r, y_G ∈ π_g(c_G + η[A_G,I_g] cube)`; count `≤ 2^r` sets `G`;
+   projection `𝕋^r → 𝕋^G` preserves measure of `B × 𝕋^{Gᶜ}`.
+4. Sum: `vol(tube) ≤ 2^r (B−1)^{MH} η^g exp(½ r(log2+23√K)) (√(2πe(H+g)/g))^g` with `η^g` from
+   `addHaar_smul`; then the arithmetic at `η = 2^{−K/4}`, `s = K²`, `r/H → 1`, `d < d' < 1`,
+   `ε` small (`G4Wiring.PropB`).  Note `A` in `Frame` is over `ℤ`; `tensorDiff` is over `ℝ` —
+   identify via `Matrix.map`.
 
 ## Next attacks (in order)
 
-B-geometry items 1–3 above; then Jackson (`PropJackson`: product Fejér² kernel, first moment
-`O(1/D)` in `dAv`, ℓ¹ budget `(2D+1)^r`); then A (transport) and D (remainders); C last.
+B assembly (above) → Jackson (`PropJackson`: product Fejér² kernel, first moment `O(1/D)` in
+`dAv`, ℓ¹ budget `(2D+1)^r`) → A (transport) → D (remainders) → C.
