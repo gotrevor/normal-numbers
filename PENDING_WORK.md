@@ -121,10 +121,15 @@ because the log-spectrum is centred (`μ₁ → 0`) so ~half the tensor eigenval
 **Verdict: `δ_K ≍ √K` is a wall of the spectral/cover route as built**; beating it needs
 cancellation across `j`, not a better constant.
 
-**Next:** bounded probe — `∑_j log(1+Λ_j) ≤ s^K log 2 + ∑_j (log Λ_j)^+`, then the exact
-`∑_j (log Λ_j)^+` at `K = 1, 2` and small `s`, to see whether the *constant* moves.  If the
-order does not move (expected), record `δ_K ≍ √K` as a route wall and close §5's quantitative
-thread.
+**✅ probe executed (lap 33)** — `G4EntropySpectral.lean`:
+`log_one_add_le_log_two_add_posPart`, `sum_log_tensorLam` (exact first moment
+`K s^{K−1} log(s+1)`), `log_det_one_add_tensorGram_le_pos`, and
+**`log_det_one_add_tensorGram_le_twelve`**: at `s = K²`, `K ≥ 4`,
+`log det(1+T^{⊗K}) ≤ (K²)^K(log 2 + 12√K)` against the `23√K` in use.  The constant nearly
+halves (cover floor `92√K → 48√K`, so `entropy_E1` could run at `δ ≈ 25√K`); the **order does
+not move**, because the gain is exactly the `1/2` of `(x)^+ = (|x|+x)/2` plus a mean term of
+size `O(log K/K)`.  **`δ_K ≍ √K` is a wall of the spectral/cover route as built**; §5's
+quantitative thread is closed.
 
 ### Decomposition — hardest first, and the order to build
 
