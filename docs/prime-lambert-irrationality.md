@@ -18,6 +18,7 @@ No novelty claim.  Headline `irrational_primeLambert` is **sorry-gated**; see "S
 | `PrimeLambertGeometry` | group ring `ℤ[ℤ×ℤ]`, `Cancels`, `edge`, `hexagon` (cancels at its triple; six-atom form `hexagon_eq_six`), `dilate`, `hexTensor r B` cancels at all `1..6r` (`hexTensor_cancels`), coprime transform `toConfig` preserving cancellation (`cancelsAt_toConfig`), positivity, pairwise coprimality (`transform_coprime`), assembly `exists_tconfig_cancelling` | proved, axiom-clean |
 | `PrimeLambertAnalytic` | finite tail `truncPhase`, per-prime parts `primePart`, exact additive split `truncPhase_split` (bad/small/large), the four analytic Props `TailTruncation`, `LargePrimeNegligible`, `BadPrimeFrozen`, `SmallPrimeDecay`, proved wiring `phaseOscillation_of_chain`, `ChainExists → Irrational primeLambert` (`irrational_of_chainExists`) | wiring proved, axiom-clean; the four Props open |
 | `PrimeLambertTail` | `badPrimeFrozen_of_residue` (exact freezing ⇒ `BadPrimeFrozen`), `phaseSum_sub_truncPhase` (`F − F_J = phaseSum c J n`), `ω(m) ≤ log₂ m`, `ω(dm) ≤ ω d + ω m`, exact tail bound `abs_truncation_error_le`: `\|F − F_J\| ≤ ∑_a \|c a\|(ω d_a + log₂(k_a+1) + J + 1)/2^J`, `tailTruncation_of_bound` | proved, axiom-clean |
+| `PrimeLambertHexagonNegative` | `HexNonneg q`, `HexNonnegOfLargeMean q`; eighth-root witness on `ℤ/19ℤ` with `6859·H = 469 − 450√2 < 0`, `\|𝔼 f\| = (7+3√2)/19 > 1/2`; `not_hexNonneg_nineteen`, `not_hexNonnegOfLargeMean_nineteen`, `not_meanRetention_nineteen` | proved, axiom-clean (refutations) |
 | `PrimeLambertOscillation` | `e`, `ProgressionFamily`, `phaseAverage`, `PhaseOscillation` (draft eq. (5)), `norm_phaseAverage_eq_one`, `irrational_of_phaseOscillation` | proved, axiom-clean; `phaseOscillation` is the single disclosed `sorry` |
 
 Build: `lake build NormalNumbers.PrimeLambertOscillation` (targeted; the root module is
@@ -94,8 +95,23 @@ proved on the bare trust triple: witness `f(x) = ζ^{e_x}`, `ζ = e^{2πi/7}`,
 `decide`; `343 H = 112 − 63c − 21c²`, `|S|² = 2 + 5c + 4c²` with `c = 2cos(2π/7)` proved to
 satisfy `c³ + c² − 2c − 1 = 0` and `c > 6/5` (from `2π/7 < π/3`).  The full complex
 inequality is formalized, not only its real-algebra certificate.  Scope: this is the cyclic
-toy average; it does not refute `H(f) ≥ 0` (the witness has `H > 0`), and the `C₁₉` negative-`H`
-witness of the audit is not formalized.
+toy average; this witness has `H > 0`, so by itself it does not refute `H(f) ≥ 0`.
+
+**Hexagon nonnegativity is false on `ℤ/19ℤ`, even with mean `> 1/2`**
+(`PrimeLambertHexagonNegative`, addendum 00:39 UTC).  `HexNonneg q` says every unimodular
+`f : ZMod q → ℂ` has `Re H(f) ≥ 0`; `HexNonnegOfLargeMean q` adds the hypothesis
+`|𝔼 f| > 1/2`.  Witness `f(x) = η^{e_x}`, `η = e^{2πi/8} = (1+i)√2/2` (identified exactly via
+`cos(π/4) = sin(π/4) = √2/2`), `e = (0,2,4,3,3,2,1,2,4,0,2,2,4,0,2,3,2,1,1)`.  Hexagon residue
+counts mod 8 `(1561,450,753,900,1092,900,753,450)` (6859 triples, kernel `decide`, ~30 s) and
+exponent multiplicities `(3,3,7,3,3)` give `6859·H(f) = 469 − 450√2 < 0` (certificate
+`469² < 2·450²`) and `∑ f = i(7+3√2)`, so `|𝔼 f| = (7+3√2)/19 > 1/2`.  Proved:
+`not_hexNonneg_nineteen`, `not_hexNonnegOfLargeMean_nineteen`, `not_meanRetention_nineteen`
+(bare trust triple).  Consequence: no universally positive lower bound `H ≥ φ(|𝔼 f|)` can hold,
+and taking `|H|` or `H²` does not repair it: the addendum's IVT corollary (recorded here, not
+formalized) centres the phases at `π/2` and interpolates `f_t = e^{it(θ−π/2)}`, `0 ≤ t ≤ 1`;
+the mean `(7 + 6cos(tπ/4) + 6cos(tπ/2))/19 ≥ (7+3√2)/19 > 1/2` throughout, while the real
+continuous `H(f_t)` runs from `1` to a negative value, so some interpolant has `H = 0` with
+mean `> 1/2`.
 
 Separately, a paper countermodel (iid base-four bits, concentration; see
 `normal-numbers-disjunctivity-frontier-2026-09-14.md`) shows the growing affine signed
