@@ -154,4 +154,111 @@ theorem isDisjunctive_four_of_witness
     IsDisjunctive 4 primeLambertFour :=
   isDisjunctive_four_of_frames (separatingFrameExists_of_witness hw)
 
+/-! ### The same interface in any base `bb ≥ 2` (campaign G4B) -/
+
+/-- **What §5 must supply in base `bb`** for the omitted cylinder `[w/bb^ℓ, (w+1)/bb^ℓ)`.
+Identical to `ScheduleWitness` with the draft's base-four constants replaced by the named
+closed forms `rowL1 bb`, `rowL2 bb`, `farBound bb`, `freqSeed bb`, `Nat.clog bb`. -/
+structure ScheduleWitnessB (bb ℓ w : ℕ) where
+  /-- grid parameters -/
+  G : GridParams
+  hK : 0 < G.K
+  hr : 1 ≤ G.rDim
+  /-- outer scale -/
+  X : ℕ
+  hne : (apSample X G.P₀ G.b₀).Nonempty
+  /-- resolution and tube fraction -/
+  η : ℝ
+  hη : 0 < η
+  ε : ℝ
+  hε : 0 < ε
+  hε1 : ε < 1
+  /-- cylinder depth for B -/
+  M : ℕ
+  hM : 1 / ((bb : ℝ) ^ ℓ) ^ M ≤ η
+  /-- spectral bound -/
+  Lg : ℝ
+  hlog : Real.log (1 + tensorGram G.K G.s).det ≤ Lg
+  /-- **B** -/
+  δ₁ : ℝ
+  hδ₁ : 0 ≤ δ₁
+  hB : ∀ g : ℕ, (1 - ε) * G.rDim ≤ g → g ≤ G.rDim →
+    (((bb ^ ℓ - 1) ^ M : ℕ) : ℝ) ^ G.hDim * η ^ g * Real.exp (Lg / 2)
+      * (Real.sqrt (2 * Real.pi * Real.exp 1 / g) * Real.sqrt (G.hDim + g)) ^ g
+      ≤ δ₁ / 2 ^ G.rDim
+  /-- small-prime cutoff and the medium cutoff -/
+  R : ℕ
+  hR : 2 ≤ R
+  Y : ℕ
+  hRY : R ≤ Y
+  /-- Jackson degree -/
+  D : ℕ
+  hN : 1 + Nat.clog bb (2 ^ G.K * D) ≤ G.N
+  /-- **C** moment order and Laplace parameters -/
+  Mc : ℕ
+  hMc : 1 ≤ Mc
+  lam' : ℝ
+  hlam' : 1 ≤ lam'
+  lam : ℝ
+  hlam : 0 < lam
+  /-- **D** size bounds -/
+  Mx : ℝ
+  hMx1 : 1 ≤ Mx
+  hMx : ∀ n ∈ apSample X G.P₀ G.b₀, ∀ i : G.Idx,
+    ((n + shiftAL G.B G.Q G.D₀ i : ℕ) : ℝ) ≤ Mx
+  Dm : ℕ
+  hDm : ∀ α, G.d α ≤ Dm
+  δbig : ℝ
+  δfar : ℝ
+  hbig : Real.sqrt (4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R)) * rowL2 bb G.K
+        + 2 * (Y : ℝ) ^ 2 * (rowL1 bb G.K) ^ 2 / (apSample X G.P₀ G.b₀).card)
+      + (Real.log Mx / Real.log Y) * rowL1 bb G.K ≤ δbig * (ε * η)
+  hfar : (2 : ℝ) ^ G.K / Real.log 2 * farBound bb (G.K + G.N) (farC G X Dm) ≤ δfar * (ε * η)
+  /-- **the closed budget** `δ₁ + δ₂ + 2κ + Λ δ₃ < 1` -/
+  hbudget : δ₁ + (δbig + δfar) + 2 * (1 / (ε * η * Real.sqrt (D + 1)))
+    + (((2 * D + 1) ^ G.rDim : ℕ) : ℝ)
+      * smallPrimeBound (smallPrimes R G.P₀) (Fintype.card G.Idx) R Mc
+          (apSample X G.P₀ G.b₀).card lam' lam (freqSeed bb G.K) < 1
+
+/-- **The residual obligation in base `bb`.**  A schedule witness for every omitted base-`bb`
+cylinder gives `SeparatingFrameExists bb`. -/
+theorem separatingFrameExists_of_witnessB (bb : ℕ) (hbb : 2 ≤ bb)
+    (hw : ∀ ℓ w : ℕ, w < bb ^ ℓ →
+      (∀ m, orbit bb (primeLambertAtBase bb) m ∉
+        Set.Ico ((w : ℝ) / (bb : ℝ) ^ ℓ) (((w : ℝ) + 1) / (bb : ℝ) ^ ℓ)) →
+      Nonempty (ScheduleWitnessB bb ℓ w)) :
+    SeparatingFrameExists bb := by
+  intro a c ha hac hc hno
+  obtain ⟨ℓ, w, hwℓ, hsub⟩ := exists_cylinder_subset bb hbb ha hac hc
+  have homit : ∀ m, orbit bb (primeLambertAtBase bb) m ∉
+      Set.Ico ((w : ℝ) / (bb : ℝ) ^ ℓ) (((w : ℝ) + 1) / (bb : ℝ) ^ ℓ) :=
+    fun m h => hno m (hsub h)
+  obtain ⟨W⟩ := hw ℓ w hwℓ homit
+  refine ⟨gridFrame bb hbb W.G W.X W.hne (smallPrimes W.R W.G.P₀) (frozenGamma bb W.G)
+      W.hη W.hε W.D,
+    W.δ₁, W.δbig + W.δfar, _, _, _,
+    gridFrame_propA _ _ _ _ _ _ _ _ _ _,
+    gridFrame_propB_of_bound bb hbb W.G W.X W.hne _ _ W.hη W.hε W.D hwℓ homit W.M
+      W.hM W.hε1 W.hr W.hlog W.hδ₁ W.hB,
+    gridFrame_propC_gen bb hbb W.G W.X W.hne _ _ W.hη W.hε (R := W.R)
+      (fun p hp => (mem_smallPrimes.1 hp).1) (fun p hp => (mem_smallPrimes.1 hp).2.2)
+      (by have := W.hR; omega) (fun p hp => (mem_smallPrimes.1 hp).2.1) W.hN W.hMc W.hlam'
+      W.hlam,
+    gridFrame_propD_of_bounds bb hbb W.G W.X W.R W.Y W.hne W.hK W.hR W.hRY W.hMx1 W.hMx W.hDm
+      W.hη W.hε W.D W.hbig W.hfar,
+    Frame.propJackson _,
+    smallPrimeBound_nonneg _ _ _ _ _ (by linarith [W.hlam']) W.hlam, ?_⟩
+  exact W.hbudget
+
+/-- **The conditional headline in base `bb`**: a schedule witness for every omitted cylinder
+gives `IsDisjunctive bb (primeLambertAtBase bb)`.  The §5 schedule must supply the witness;
+its `hbig` field forces `bb ≥ 3` (`rowL1 2 K = 1`). -/
+theorem isDisjunctive_of_witnessB (bb : ℕ) (hbb : 2 ≤ bb)
+    (hw : ∀ ℓ w : ℕ, w < bb ^ ℓ →
+      (∀ m, orbit bb (primeLambertAtBase bb) m ∉
+        Set.Ico ((w : ℝ) / (bb : ℝ) ^ ℓ) (((w : ℝ) + 1) / (bb : ℝ) ^ ℓ)) →
+      Nonempty (ScheduleWitnessB bb ℓ w)) :
+    IsDisjunctive bb (primeLambertAtBase bb) :=
+  isDisjunctive_of_frames (separatingFrameExists_of_witnessB bb hbb hw)
+
 end NormalNumbers.G4
