@@ -1,5 +1,48 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ GRIND 2026-09-14 (G4 lap 8): `PropJackson` DISCHARGED for every frame
+
+`src/NormalNumbers/G4Jackson.lean` (trust triple on `Frame.propJackson`).  Zero laps → closed in
+one, because the average metric makes the smoothing error dimension-free exactly as the brief
+says: `|f(y+w) − f(y)| ≤ dAv(y+w,y)/ρ = r⁻¹∑_ν ‖w_ν‖/ρ`, and the product kernel integrates each
+coordinate separately.
+
+* **`Frame.propJackson : fr.PropJackson (1/(res·√(D+1))) ((2D+1)^r)`.**
+* Fejér kernel `F_D = ‖∑_{k≤D} e(kt)‖²/(D+1)`; the only analytic inputs are `F_D ≤ D+1` and
+  `‖t‖·‖∑_{k≤D} e(kt)‖ ≤ 1/2` (geometric sum + Jordan, reusing
+  `eight_mul_distZ_sq_le_one_sub_cos`).  The first moment comes from the *pointwise* split
+  `‖t‖F_D ≤ aF_D + 1/(4(D+1)a)` at `a = 1/(2√(D+1))` — no interval integral, no closed form for
+  `1 − |m|/(D+1)` (coefficients are fibre counts; only `0 ≤ c_m ≤ 1`, `c_0 = 1`, `c_{−m} = c_m`
+  are used).
+* The trig polynomial is `∫ f(y+w)P(w)dw` written out via translation invariance of Haar on
+  `Torus r` (`integral_add_left_eq_self`) and `χ_q(z−y) = χ_q(z)χ_{−q}(y)`.
+* Rate is `κ = O(1/(εη√D))`, weaker than the draft's `O(1/(εηD))`; harmless — `D` polynomial
+  in `1/(εη)` keeps `Λ = (2D+1)^r = exp(O(rK))`, which is what `schedule_budget` (C4) absorbs.
+
+**Dependency map now**: `PropA` ✅ · `PropC` ✅ · `PropD` ✅ (two §5 inequalities) ·
+**`PropJackson` ✅** · `PropB` open (inputs proved, assembly is the remaining §4 work) ·
+§5 schedule open.  `isDisjunctive_four_of_frames` still CONDITIONAL on `SeparatingFrameExists`.
+
+### B exponent check (paper, this lap — record it)
+
+With `vol(tube) ≤ 2^r (B−1)^{MH} η^g e^{½r(log 2+23√K)} (√(2πe(H+g)/g))^g`, `η = 2^{−K/4}`,
+`4^{ℓM} ≈ η^{−1}`, `g ≥ (1−ε)r`, `r/H ≥ 1 − 1/K`: the base-2 exponent is
+`(K/4)(dH − g) + O(r√K)`, negative iff `√K (1 − d − ε − 1/K) ≳ 70`, `d = log_B(B−1)`.  Closes
+in the single limit `K → ∞` for each fixed omitted word (`ℓ` fixed, `d < 1` fixed).  The
+`O(r√K)` spectral term is what forces `K ≫ (1−d)^{−2}`; nothing else competes.
+
+### Next attack (ordered)
+
+1. **B assembly** → `gridFrame_propB`: (i) pick a cylinder `[w/4^ℓ,(w+1)/4^ℓ) ⊆ [a,c)`;
+   (ii) `orbitClosure_subset_cylinders` at `M` with `4^{−ℓM} ≤ η`; (iii) Markov in `dAv`:
+   `y ∈ tube ⟹ ∃ G, |G| ≥ (1−ε)r, y_G ∈ π(c_G + η[A_G,I_g]cube)`; (iv) union over `G` (`≤ 2^r`)
+   and over cylinder choices (`(B−1)^{MH}`), `volume_tubePiece_le`, `volume_image_torusProj_le`,
+   `addHaar_smul` for `η^g`.  Note `image` uses `mulVecT` over `ℤ`-matrices on the torus,
+   `tensorDiff` is over `ℝ`; the seam is `Matrix.map` + the lift `ℝ^H → 𝕋^H`.
+2. **§5 schedule module**: instantiate `bigAvg_le'`, `farAvg_le`, the B bound, and
+   `propJackson` at `η = 2^{−K/4}`, `ε = 1/K`, `D = ⌈(4K 2^{K/4})²⌉`, and close
+   `δ₁ + δ₂ + 2κ + Λδ₃ < 1` via `schedule_budget`.
+
 ## ✅ GRIND 2026-09-14 (G4 lap 7b): `farAvg` DISCHARGED to closed form — §4D is two real inequalities
 
 `src/NormalNumbers/G4FarTail.lean` (trust triple on every headline).  Entirely elementary; no
