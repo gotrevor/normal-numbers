@@ -7,6 +7,45 @@
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
 
+## ✅ OBJECTIVE MET (lap 52) — and the E-T8 successor's arithmetic
+
+The lap-51 objective is **proved**, in `src/NormalNumbers/G4EntropyBlockWord.lean`:
+`samplePos` (schedule-only, `samplePos_spec` shows every value is a sampled position),
+`isNormalSequence_digits_along_samplePos`, `isNormal_realOfDigits_samplePos`.  All
+`[propext, Classical.choice, Quot.sound]`.  E-T7 fires: the next altitude lap sets the successor.
+
+### E-T8 (strictly increasing `samplePos`) — the affirmative tool is proved, the arithmetic is tight
+
+Lap 52 also proved the tool the directive named, in `src/NormalNumbers/G4EntropySubsample.lean`:
+
+* `FinLaw.H₂_restrictCoords_ge` — restricting a window law to a subset `G` of coordinates costs
+  at most `m` bits per dropped coordinate, so the **total** deficit `δ·|A|` survives: the
+  restricted law's per-coordinate deficit is `δ/ρ`, `ρ = |G|/|A|`.
+* `abs_posAvg_restrict_sub_le` — hence a sub-collection's word frequency obeys the capacity
+  bound with `δ ↦ δ/ρ`.  **The cost of restriction is `√(1/ρ)`, not `1/ρ`.**
+
+The arithmetic this settles, and why E-T8 is *not* a bookkeeping follow-up:
+
+* Repetition (`rep m` copies of block `m`) is what makes `samplePos` non-injective.  It can only
+  be removed by supplying, at each scale, `c` **disjoint** good chunks in place of the `rep`
+  copies — then each chunk uses fresh windows.
+* A chunk of relative size `ρ = 1/c` has error `≈ 2√(log 2 · ℓ · δ/(ρ·m))`.  With the implemented
+  `δ = 50√K`, `m = K/4` this vanishes only for `ρ ≫ 200ℓ/√K`, i.e. **`c = O(√K)` chunks per
+  scale** — exactly the directive's `ρ ≫ K^{−1/2}`.
+* But the prefix condition needs the first chunk of scale `i+1` to be dominated by everything
+  before it: `ρ_{i+1}·L_{i+1} ≪ ∑_{j≤i} L_j ≈ L_i`, i.e. `ρ_{i+1} ≪ L_i/L_{i+1}`.  And
+  `L_{i+1}/L_i ≥ |Atom_{i+1}|/|Atom_i| = ((K+1)²+1)^{K+1}/(K²+1)^K ≈ e²K²`.
+* So E-T8 on this mechanism needs `K^{−1/2} ≪ ρ ≪ K^{−2}`: **impossible**.  Chunking by
+  coordinates cannot replace repetition here.
+
+**Next bounded test for whoever takes E-T8**: either (a) formalize this obstruction as a theorem
+in the shape of lap 48's `no_pointwise_bound_from_deficit` — the growth half is a concrete
+lemma, `blen (i+1) ≥ c·(KK i)²·blen i`, provable from `card_Atom_gridAt`; or (b) find a
+mechanism that supplies many disjoint good chunks *without* shrinking relative size — the only
+visible candidate is splitting the **sample times** `P_K` rather than the atoms, which needs a
+restriction lemma for the empirical law over `n` (not proved, and `H₂` of a one-point empirical
+law is `0`, so the naive analogue is false).
+
 ### What is now settled (do not re-attack)
 
 * Frequencies **averaged over positions**: complete.  `tendsto_occursCountP_primeLambertFour`

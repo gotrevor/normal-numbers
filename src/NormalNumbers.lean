@@ -265,3 +265,4 @@ import NormalNumbers.G4EntropyJointRich
 import NormalNumbers.G4EntropyOcc
 import NormalNumbers.G4EntropyConcat
 import NormalNumbers.G4EntropyBlockWord
+import NormalNumbers.G4EntropySubsample
