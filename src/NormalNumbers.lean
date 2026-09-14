@@ -230,3 +230,4 @@ import NormalNumbers.G4EntropyCover
 import NormalNumbers.G4EntropyTransport
 import NormalNumbers.G4EntropyE0
 import NormalNumbers.G4EntropyBudget
+import NormalNumbers.G4EntropyRate

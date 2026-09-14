@@ -81,7 +81,7 @@ covering deficit of an omitted word replaced by the entropy deficit `δ`. -/
 theorem entropy_cover_bound {K m g : ℕ} {η Lg δ : ℝ}
     (hK : 33856 ≤ K) (hm : (m : ℝ) ≤ (K : ℝ) / 4)
     (hδ0 : 0 ≤ δ) (hδ1 : δ ≤ 1)
-    (hδK : 92 * Real.sqrt K + 46 ≤ δ * K * Real.log 2)
+    (hδK : 92 * Real.sqrt K + 51 ≤ δ * K * Real.log 2)
     (hη0 : 0 < η) (hη : η ^ 4 ≤ (1 / 2 : ℝ) ^ K)
     (hLg : Lg ≤ (((K ^ 2) ^ K : ℕ) : ℝ) * (Real.log 2 + 23 * Real.sqrt K))
     (hglo : (1 - 1 / (K : ℝ)) * (((K ^ 2) ^ K : ℕ) : ℝ) ≤ (g : ℝ))
@@ -89,7 +89,7 @@ theorem entropy_cover_bound {K m g : ℕ} {η Lg δ : ℝ}
     (2 : ℝ) ^ ((1 - δ / 2) * ((m : ℝ) * (((K ^ 2 + 1) ^ K : ℕ) : ℝ))) * η ^ g * Real.exp (Lg / 2)
         * (Real.sqrt (2 * Real.pi * Real.exp 1 / g)
             * Real.sqrt ((((K ^ 2 + 1) ^ K : ℕ) : ℝ) + g)) ^ g
-      ≤ (1 / 8 : ℝ) / 2 ^ ((K ^ 2) ^ K) := by
+      ≤ (1 / 8 : ℝ) / 2 ^ (K + (K ^ 2) ^ K) := by
   -- ### sizes
   have hK1 : 1 ≤ K := by omega
   have hK100 : (100 : ℝ) ≤ (K : ℝ) := by
@@ -190,8 +190,8 @@ theorem entropy_cover_bound {K m g : ℕ} {η Lg δ : ℝ}
   -- ### the bracket is `≤ −4 log 2`
   have hbracket : Real.log 2 * ((K : ℝ) / 4 - δ * K / 8 + 1 / 2)
       + Real.log 2 * (-((K : ℝ) / 4) + 1 / 4)
-      + (Real.log 2 + 23 * Real.sqrt K) / 2 + 2 ≤ -(4 * Real.log 2) := by
-    have hδ8 : 11.5 * Real.sqrt K + 5.75 ≤ δ * K * Real.log 2 / 8 := by linarith
+      + (Real.log 2 + 23 * Real.sqrt K) / 2 + 2 ≤ -(5 * Real.log 2) := by
+    have hδ8 : 11.5 * Real.sqrt K + 6.375 ≤ δ * K * Real.log 2 / 8 := by linarith
     have hsimp : Real.log 2 * ((K : ℝ) / 4 - δ * K / 8 + 1 / 2)
         + Real.log 2 * (-((K : ℝ) / 4) + 1 / 4)
         = -(δ * K * Real.log 2 / 8) + (3 / 4) * Real.log 2 := by ring
@@ -199,19 +199,30 @@ theorem entropy_cover_bound {K m g : ℕ} {η Lg δ : ℝ}
     linarith
   -- ### the exponent
   have hfinal : (1 - δ / 2) * ((m : ℝ) * H) * Real.log 2 + (g : ℝ) * Real.log η + Lg / 2
-      + (g : ℝ) * Real.log 7 ≤ -(Real.log 8) - r * Real.log 2 := by
+      + (g : ℝ) * Real.log 7 ≤ -(Real.log 8) - ((K : ℝ) + r) * Real.log 2 := by
     set BR : ℝ := Real.log 2 * ((K : ℝ) / 4 - δ * K / 8 + 1 / 2)
       + Real.log 2 * (-((K : ℝ) / 4) + 1 / 4)
       + (Real.log 2 + 23 * Real.sqrt K) / 2 + 2 with hBRdef
+    have hKr : (K : ℝ) ≤ r := by
+      rw [hrdef]
+      have : K ≤ (K ^ 2) ^ K := by
+        calc K = K ^ 1 := (pow_one K).symm
+          _ ≤ (K ^ 2) ^ 1 := Nat.pow_le_pow_left (Nat.le_self_pow (by norm_num) K) 1
+          _ ≤ (K ^ 2) ^ K := Nat.pow_le_pow_right (by positivity) hK1
+      exact_mod_cast this
     have hexpand : r * Real.log 2 * ((K : ℝ) / 4 - δ * K / 8 + 1 / 2)
         + r * Real.log 2 * (-((K : ℝ) / 4) + 1 / 4)
         + r * ((Real.log 2 + 23 * Real.sqrt K) / 2) + r * 2 = r * BR := by
       rw [hBRdef]; ring
-    have hrBR : r * BR ≤ r * (-(4 * Real.log 2)) :=
+    have hrBR : r * BR ≤ r * (-(5 * Real.log 2)) :=
       mul_le_mul_of_nonneg_left hbracket hr0.le
-    have hle : r * (-(4 * Real.log 2)) ≤ -(r * (3 * Real.log 2)) - r * Real.log 2 := by
-      have : r * (-(4 * Real.log 2)) = -(r * (3 * Real.log 2)) - r * Real.log 2 := by ring
-      linarith
+    have hKlog : (K : ℝ) * Real.log 2 ≤ r * Real.log 2 :=
+      mul_le_mul_of_nonneg_right hKr hlog2pos.le
+    have hle : r * (-(5 * Real.log 2))
+        = -(r * (3 * Real.log 2)) - r * Real.log 2 - r * Real.log 2 := by ring
+    have hgoal : -(Real.log 8) - ((K : ℝ) + r) * Real.log 2
+        = -(Real.log 8) - (K : ℝ) * Real.log 2 - r * Real.log 2 := by ring
+    rw [hgoal]
     linarith [hT1, hT2, hT3, hT4, hlog8r]
   -- ### assemble
   have hSnn : (0 : ℝ) ≤ Real.sqrt (2 * Real.pi * Real.exp 1 / g) * Real.sqrt (H + g) :=
@@ -229,8 +240,10 @@ theorem entropy_cover_bound {K m g : ℕ} {η Lg δ : ℝ}
   have hpre : (0 : ℝ) ≤ (2 : ℝ) ^ ((1 - δ / 2) * ((m : ℝ) * H)) * η ^ g * Real.exp (Lg / 2) :=
     mul_nonneg (mul_nonneg (Real.rpow_nonneg (by norm_num) _) (pow_nonneg hη0.le _))
       (Real.exp_pos _).le
-  have hRHS : Real.exp (-(Real.log 8) - r * Real.log 2) = (1 / 8 : ℝ) / 2 ^ ((K ^ 2) ^ K) := by
-    rw [Real.exp_sub, Real.exp_neg, Real.exp_log (by norm_num : (0 : ℝ) < 8), hrdef,
+  have hRHS : Real.exp (-(Real.log 8) - ((K : ℝ) + r) * Real.log 2)
+      = (1 / 8 : ℝ) / 2 ^ (K + (K ^ 2) ^ K) := by
+    have hc : ((K : ℝ) + r) = ((K + (K ^ 2) ^ K : ℕ) : ℝ) := by rw [hrdef]; push_cast; ring
+    rw [Real.exp_sub, Real.exp_neg, Real.exp_log (by norm_num : (0 : ℝ) < 8), hc,
       Real.exp_nat_mul, Real.exp_log (by norm_num : (0 : ℝ) < 2)]
     norm_num
   calc (2 : ℝ) ^ ((1 - δ / 2) * ((m : ℝ) * H)) * η ^ g * Real.exp (Lg / 2)
@@ -240,8 +253,8 @@ theorem entropy_cover_bound {K m g : ℕ} {η Lg δ : ℝ}
     _ = Real.exp ((1 - δ / 2) * ((m : ℝ) * H) * Real.log 2 + (g : ℝ) * Real.log η + Lg / 2
           + (g : ℝ) * Real.log 7) := by
         rw [hA, hηeq, h7eq, ← Real.exp_add, ← Real.exp_add, ← Real.exp_add]
-    _ ≤ Real.exp (-(Real.log 8) - r * Real.log 2) := Real.exp_le_exp.mpr hfinal
-    _ = (1 / 8 : ℝ) / 2 ^ ((K ^ 2) ^ K) := hRHS
+    _ ≤ Real.exp (-(Real.log 8) - ((K : ℝ) + r) * Real.log 2) := Real.exp_le_exp.mpr hfinal
+    _ = (1 / 8 : ℝ) / 2 ^ (K + (K ^ 2) ^ K) := hRHS
 
 /-- **The cover term, summed over good coordinate sets.**  A general prefactor `Pf ≥ 0` in place
 of the disjunctivity argument's cylinder count: if `Pf·η^g·e^{Lg/2}·(shape)^g ≤ δ₁/2^r` for every
@@ -380,11 +393,12 @@ theorem entropy_E0 {K k₄ : ℕ} (hK4 : K = 4 * k₄) (hK : 33856 ≤ K) :
   -- ### the four terms
   -- (1) the cover term
   have hcover : (2 : ℝ) ^ ((1 - (4 / 5 : ℝ) / 2) * M)
-      * (∑ G' ∈ fr.goodSets, η ^ G'.card * (volume (fr.pieceCube G')).toReal) ≤ 1 / 8 := by
+      * (∑ G' ∈ fr.goodSets, η ^ G'.card * (volume (fr.pieceCube G')).toReal)
+      ≤ (1 / 8 : ℝ) / 2 ^ K := by
     refine entropy_cover_sum_le 4 (by norm_num) G (X K) hne _ _ hη hε (Dj K k₄)
       (Lg := (((K ^ 2) ^ K : ℕ) : ℝ) * (Real.log 2 + 23 * Real.sqrt K))
       (by rw [hεdef, div_lt_one (by linarith)]; linarith)
-      (Nat.one_le_pow _ _ (show 0 < K ^ 2 by positivity)) ?_ (by positivity) (by norm_num) ?_
+      (Nat.one_le_pow _ _ (show 0 < K ^ 2 by positivity)) ?_ (by positivity) (by positivity) ?_
     · have h := log_det_one_add_tensorGram_le' (K := K) hK1
       show Real.log (1 + tensorGram G.K G.s).det
         ≤ (((K ^ 2) ^ K : ℕ) : ℝ) * (Real.log 2 + 23 * Real.sqrt K)
@@ -394,7 +408,10 @@ theorem entropy_E0 {K k₄ : ℕ} (hK4 : K = 4 * k₄) (hK : 33856 ≤ K) :
       have := entropy_cover_bound (K := K) (m := k₄) (g := g) (η := η)
         (Lg := (((K ^ 2) ^ K : ℕ) : ℝ) * (Real.log 2 + 23 * Real.sqrt K)) (δ := 4 / 5)
         hK ?_ (by norm_num) (by norm_num) ?_ hη ?_ le_rfl ?_ ?_
-      · exact this
+      · refine this.trans_eq ?_
+        show (1 / 8 : ℝ) / 2 ^ (K + (K ^ 2) ^ K) = (1 / 8 : ℝ) / 2 ^ K / 2 ^ G.rDim
+        rw [show G.rDim = (K ^ 2) ^ K from rfl, pow_add]
+        field_simp
       · rw [hK4]; push_cast; ring_nf; rfl
       · -- `92√K + 46 ≤ (4/5)·K·log 2`
         have hs : (184 : ℝ) * Real.sqrt K ≤ (K : ℝ) := by
@@ -476,6 +493,10 @@ theorem entropy_E0 {K k₄ : ℕ} (hK4 : K = 4 * k₄) (hK : 33856 ≤ K) :
     exact hmain
   · have he4 := Sched.exp_neg_four_le
     have hR : (4 / 5 : ℝ) / (2 - 4 / 5) = 2 / 3 := by norm_num
+    have hc8 : (1 / 8 : ℝ) / 2 ^ K ≤ 1 / 8 := by
+      have : (1 : ℝ) ≤ 2 ^ K := one_le_pow₀ (by norm_num)
+      rw [div_le_iff₀ (by positivity)]
+      nlinarith
     rw [hR]
     linarith [hcover, hjack, hsmall]
 
