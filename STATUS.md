@@ -21,8 +21,29 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (8948 jobs) ·
-**Updated**: entropy review lap 8 · 2026-09-14 · `wip/g4-entropy` @ `79f2470`
+· **Build**: 🟢 green (8961 jobs) ·
+**Updated**: entropy review lap 23 · 2026-09-14 · `wip/g4-entropy` @ `c673775`
+
+## 🧭 2026-09-14 (entropy review lap 23): §6 CLOSED as a characterization; §5's negative CORRECTED
+
+**Where it stands.**  The entropy expedition's brief-§8 outcome is met and then some.  `entropy_E0`
+and `entropy_E1` are unconditional, axiom-clean theorems about the *implemented* base-four
+schedule.  Brief §6's transfers `T_E`, `T_S`, `T_mix` are **refuted** with witnesses meeting their
+exact premises (laps 8–9), and its positive branch is now **closed as a characterization**
+(laps 16–22): a quantized or digit-local sampler forces normality **iff** it reads a density-one
+set of digit positions — and this schedule reads at most `1/4` of every prefix at any budgeted
+quantization level, because the freezing modulus `Q_K·D₀_K` dwarfs the alphabet.  A single
+*unquantized* orbit value would suffice (lap 19); the sample determines none (lap 21).
+
+**The finding of this review lap.**  Lap 15 recorded §5 as answered *negatively* — "entropy rate
+`→ 1` controls no sampled frequency at any word length".  What `entropy_rate_not_control_bit`
+actually proves is that it controls no frequency **at a fixed offset inside the window** (uniform
+on the leading-bit-zero half has rate `(m−1)/m` and kills the leading bit).  Normality counts a
+word's occurrences **averaged over the offsets**, and on lap 15's own witness that averaged
+1-frequency is `(m−1)/(2m) → 1/2`.  Entropy *does* control the averaged frequency.  §5's real
+answer is therefore **positive and unproved**, and it is the new objective: turn `entropy_E1` into
+a genuine frequency theorem about `G₄`'s binary digits at the sampled positions
+(`DIRECTION.md` CURRENT DIRECTIVE, review lap 23).
 
 ## 🔬 2026-09-14 (entropy expedition, laps 1–7): the SAMPLE-ENTROPY theorems E0 and E1
 
@@ -480,8 +501,13 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, re-run this lap (2026-09-14 review lap 16, HEAD `4991939`,
-build 🟢 8935 jobs).  Every UNCONDITIONAL headline: trust triple only; the single exception is
+Real `#print axioms` output, re-run this lap (2026-09-14 entropy **review lap 23**, HEAD
+`c673775`, build 🟢 8961 jobs).  **Math-axiom count in the entropy wing: 0** — every headline
+below prints exactly the trust triple `[propext, Classical.choice, Quot.sound]`, with no
+`native_decide` artifact and no local `axiom` anywhere in `src/`.  The two open `sorry`s in the
+repo (`MahlerDriftOne.exists_prime_nonresidue`, `PrimeLambertOscillation.phaseOscillation`)
+belong to other campaigns and are on this expedition's forbidden-drift list; they do not
+appear in any cone below.  Every UNCONDITIONAL headline: trust triple only; the single exception is
 flagged.  G4 rows come first.  Nothing in the G4 wing has a `sorry` or an axiom — its debt is
 carried honestly as the named unproved `Prop`s `SeparatingFrameExists` / the
 `ScheduleWitness` hypothesis, which is exactly what makes `isDisjunctive_four_of_witness`
@@ -493,6 +519,11 @@ real inequalities that live in the witness.
 |---|---|---|---|
 | `G4.Sched.entropy_E0` | **sample entropy `H₂(Z^{G₄}_K) > (1/5)m_K H_K`** for every admissible `K ≥ 33856` — UNCONDITIONAL, about the quantized sample only (brief §4 E0) | trust triple | 🟢 clean (entropy lap 6) — NOT a normality claim |
 | `G4.Sched.entropy_E1` | **`H₂ ≥ m_K H_K − 50√K·H_K`** for `K ≥ 160000` — UNCONDITIONAL (brief §4 E1, `C = 50`) | trust triple | 🟢 clean (entropy lap 7) — implies E0's ratio `≥ 1 − 200/√K` |
+| `G4.Sched.not_T_E` | **brief §6's transfer `T_E` is FALSE** — `maskedReal G₄` has the same joint law at every scale and is not normal (uncond.) | trust triple | 🟢 clean (entropy lap 8) |
+| `G4Entropy.forces_normal_iff_density_one` | **a digit-local hypothesis forces normality iff its read set has density one** (uncond.) | trust triple | 🟢 clean (laps 16–18) |
+| `G4Entropy.qForces_normal_iff_density_one` | same for an arbitrary family of times + quantization levels `⌊2^{mᵢ}{2^{rᵢ}x}⌋` (uncond.) | trust triple | 🟢 clean (lap 20) |
+| `G4.Sched.not_qForces_normal_at_pow` | **no quantized sampler on this schedule forces normality**, at any level up to `B^K ≥ K^{3K}` (uncond.) | trust triple | 🟢 clean (lap 22) |
+| `G4Entropy.entropy_rate_not_control_bit` | entropy rate `→ 1` does not pin a **fixed-offset** bit (uncond.) | trust triple | 🟢 clean (lap 15) — ⚠️ read lap 23's correction: it says nothing about the **offset-averaged** frequency, which entropy *does* control and which is now the objective |
 | `G4.isDisjunctive_base` | **`3 ≤ b → IsDisjunctive b (∑_n ω(n)/bⁿ)`** — UNCONDITIONAL, the campaign endpoint generalised (brief §7.1) | trust triple | 🟢 clean — no `sorry`, no `native_decide`, no local axiom in the cone |
 | `G4.isDisjunctive_four` / `isDisjunctive_two` | **G₄ disjunctive in base 4 and base 2** — UNCONDITIONAL, the attended frozen endpoint | trust triple | 🟢 clean |
 | `G4.isDisjunctive_primeSum` / `every_word_occurs_base` / `isDisjunctive_root` | prime-sum form, every finite word, root bases (uncond.) | trust triple | 🟢 clean |

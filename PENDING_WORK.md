@@ -1,5 +1,69 @@
 # PENDING_WORK
 
+## 🎯 ACTIVE (entropy review lap 23, 2026-09-14) — the sampled-word FREQUENCY theorem for `G₄`
+
+**Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
+
+### The correction that opened this
+
+Lap 15 filed §5 as answered negatively.  Its theorem
+`entropy_rate_not_control_bit : 1 ≤ m → ∃ L : FinLaw (Fin (2^m)), L.H₂ = m − 1 ∧
+L.prob (highHalf m) = 0` is true, but `highHalf m` is the event **"the leading bit of the window
+is 1"** — a *fixed offset*.  Normality is built from the frequency of a word **averaged over the
+offsets** inside the window, and on lap 15's own witness (uniform on the leading-bit-zero half)
+that averaged 1-frequency is `(m−1)/(2m) → 1/2`, i.e. correct.  Entropy controls the averaged
+frequency; only the fixed-offset one is free.  So §5's real answer is POSITIVE.
+
+### The target
+
+For a fixed word length `ℓ`, put `r = ⌊m_K/ℓ⌋` and let `N_K(w)` count the triples
+`(n, α, j)` with `n ∈ P_K`, `α ∈ Atom_K`, `j < r` such that the `ℓ` binary digits of `G₄` at
+positions `2·kIdx(n,α) + jℓ, …, +jℓ+ℓ−1` spell `w`.  Then
+
+    N_K(w) / (|P_K|·|Atom_K|·r)  →  2^{−ℓ}   as K → ∞ along the admissible scales.
+
+Quantitatively the deviation is `O(√(ℓ·√K⁻¹))`, from `entropy_E1`'s deficit `Δ_K = 50√K·H_K`
+against `m_K H_K` total bits.  **Not a normality claim**: the sampled positions have density
+zero (laps 9–22).  It *is* strictly stronger than `isDisjunctive_two` on this system, and it is
+the load-bearing input any future positive branch would need.
+
+### Decomposition — hardest first, and the order to build
+
+1. **`G4EntropyGibbs.lean` — Gibbs + generalized subadditivity.**  The workhorse; reused three
+   times.
+   - `FinLaw.map (f : Ω → Ω') : FinLaw Ω'` — the pushforward, `p' ω' = ∑_{f ω = ω'} p ω`.
+   - `gibbs : (∀ ω, 0 ≤ q ω) → (∑ ω, q ω ≤ 1) → (∀ ω, 0 < L.p ω → 0 < q ω) →
+      L.H₂ ≤ −∑ ω, L.p ω * logb 2 (q ω)`.
+     Proof: `∑ p·log(q/p) ≤ ∑ p·(q/p − 1) = ∑ q − 1 ≤ 0` via `Real.log_le_sub_one_of_pos`.
+   - `H₂_le_sum_H₂_map : Function.Injective (fun ω i => f i ω) → L.H₂ ≤ ∑ i, (L.map (f i)).H₂`.
+     Proof: Gibbs at `q ω = ∏ i, (L.map (f i)).p (f i ω)`; `∑_ω q ω ≤ ∑_{v} ∏ (L.map (f i)).p (v i)
+     = ∏_i 1 = 1` by injectivity + `Finset.prod_univ_sum`.
+   - ⚠️ the injectivity hypothesis is what makes this true; `E-T4` fires if the `ℓ`-block
+     coordinates cannot meet it.
+2. **`G4EntropyPinsker.lean` — the Hellinger route (no calculus).**
+   - `key : 0 ≤ a → 0 < b → 2a − 2√a√b ≤ a·log a − a·log b`
+     (at `a > 0` it is `log √(b/a) ≤ √(b/a) − 1` doubled; at `a = 0` both sides are `0`).
+   - hence `klb p u ≥ (√p−√u)² + (√(1−p)−√(1−u))² ≥ (p−u)²/2` (nats), i.e.
+     **`KL₂(p‖u) ≥ (p−u)²/(2 log 2)`** — a factor 4 weaker than Pinsker and entirely sufficient.
+   - two-point Gibbs (`q = p/|E| on E, (1−p)/|Eᶜ| off`) gives
+     `KL₂(L B ‖ |B|/|Ω|) ≤ logb 2 |Ω| − L.H₂`.
+3. **`G4EntropyWord.lean` — the block coordinates and the assembly.**
+   - `blockCoord ℓ j : Fin (2^m) → Fin (2^ℓ)` extracting the `j`-th aligned `ℓ`-block, plus the
+     remainder coordinate; injectivity of the combined map.
+   - bridge to digits: `blockVal y (p + jℓ) ℓ` via `blockVal_succ` / `blockVal`'s definition.
+   - `∑_{(α,j)} ε_{α,j} ≤ Δ_K` from (1) + `entropy_E1`; then
+     `|freq(w) − 2^{−ℓ}| ≤ (1/(rH))·∑ √(2 log 2 · ε) ≤ √(2 log 2 · Δ_K/(rH))` by AM-GM
+     (`√x ≤ (x/t + t)/2`, optimise `t`), **not** by hunting a Cauchy–Schwarz lemma name.
+   - final `Filter.Tendsto` along the admissible scales.
+
+### Not to do
+
+Re-proving or tidying `entropy_E0`/`entropy_E1`; more barrier/characterization variants (closed
+at lap 22); any pre-expedition G4/G5 file; a trusted axiom for any of the above; retreating to a
+fixed-offset frequency statement (lap 15 already refuted that one).
+
+---
+
 ## ✅ CLOSED — brief §6 is a CHARACTERIZATION, not a bound (entropy laps 16–17, 2026-09-14)
 
 Lap 16 (`G4EntropyDensityOne.lean`) sharpened the locality barrier from *density ≥ 1/2* to
