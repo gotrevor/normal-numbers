@@ -1,5 +1,40 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
+## ✅ GRIND 2026-09-14 (G4 lap 9b): `ScheduleWitness` — the exact residual obligation (`69e3ebf`)
+
+`G4ScheduleWitness.lean`: `separatingFrameExists_of_witness` and `isDisjunctive_four_of_witness`
+(trust triple).  **Everything in brief §4 is machine-checked on the concrete frame.**  The whole
+remaining content is: for every omitted cylinder `[w/4^ℓ,(w+1)/4^ℓ)`, produce a
+`ScheduleWitness ℓ w` — grid parameters + scales + the five real inequalities `hB`, `hbig`,
+`hfar`, `hbudget` (with `δ₃ = smallPrimeBound …`) and the side conditions.
+
+### Paper feasibility of the full witness (this lap — record it; one NEW constraint found)
+
+Schedule: `L = log log X`, `K = ⌊log L/(100 log log L)⌋`, `s = K²`, `r = K^{2K}`, `H = (K²+1)^K`,
+`η = 2^{−K/4}`, `ε = 1/K`, `M_cyl = ⌈K/(8ℓ)⌉`, `D = ⌈(8K·2^{K/4})²⌉`, `Mc ≈ C·T·L` with
+`T = #Idx = H·N`, `lam' = e`, `lam = 1`, `R = X^{1/(20 Mc)}`, `Y = X^{1/100}`,
+`B ≈ s(K+N)+1`, `U ≈ s·B^K`, `Q = lcm(1..U) ≈ e^U`, so `log P₀ ≈ H·2 log(QU) ≈ K^{5K} N^K`.
+* **B**: exponent `(K/4)(dH − g) + O(r√K) < 0` once `√K(1−d−1/K−1/K) ≳ 70`. ✓
+* **C** (`Λδ₃`): `exp(−c8^{−K}(L − log(20Mc) − ∑_{p∣P₀}1/p))·(2D+1)^r → 0` by `schedule_budget`;
+  `∑_{p∣P₀}1/p ≲ log log log P₀ = O(log K)`; the moment terms are `exp(2eTL − Mc)`,
+  `(2e)^{Mc} exp(eTL)`, `R^{2Mc}/|P| = X^{1/10}P₀/X` — all fine with `Mc ≈ 3eTL` and
+  `log P₀ ≪ log X`. ✓
+* **D-big**: `8^{−K/2}√(log(Mc/5)) = 8^{−K/2}√(log L + O(K log K))` vs `εη = 2^{−K/4}/K`: needs
+  `2^{5K/4} ≫ K√log L`, true since `K log 2 ≫ log log L`. ✓  (`Y²4^{−K}P₀/X`, `100·2^{−K}` fine.)
+* **D-far — NEW CONSTRAINT**: `farC ≈ log P₀ + L ≈ K^{5K} N^K`, and the far bound is
+  `2^K 4^{−(K+N)} farC`.  The brief's only condition on `N` is `1 + ⌈log₄(2^K D)⌉ ≤ N` (from C),
+  which gives `4^{−N} ≈ 2^{−3K/2}` — **NOT enough**: `2^{−2.5K}·K^{5K} ≫ εη`.  Fix: take
+  `N = ⌈10 K log K⌉`; then `4^{−N} = K^{−13.9K}` beats `K^{5K}N^K = K^{6K+o(K)}`.  `N` enters
+  nowhere else harmfully (`T = HN` only shifts `Mc`; `B, U, P₀` grow polynomially in `N`).
+  So the retained depth is forced by the **far tail's dependence on `log P₀`**, not by C.
+* **Jackson**: `2κ = 2K 2^{K/4}/√(D+1) ≤ 1/4` at the `D` above. ✓
+
+Conclusion: the witness exists on paper with `N ≈ 10K log K`; the Lean proof is a multi-lap
+asymptotic-inequality job.  Attack order: (1) a `GridParams` constructor from `(K, N)` with
+`B, U, Q, D₀` explicit and size bounds `log P₀ ≤ K^{5K}N^K·C`; (2) `hfar` (needs (1) + the
+`N` choice); (3) `hbig`; (4) `hbudget` from `schedule_budget` + the `smallPrimeBound` terms;
+(5) `hB` (pure real inequality in `K, ℓ, d`).
+
 ## ✅ GRIND 2026-09-14 (G4 lap 9): `PropB` DISCHARGED on the grid modulo one real inequality
 
 `G4TubeVolume.lean` + `G4GridTube.lean` (trust triple).  **`gridFrame_propB_of_bound`**:

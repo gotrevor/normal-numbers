@@ -42,3 +42,13 @@ the existing constructors), the `gridFrame`, and verify:
 4. Jackson: `2κ = 2/(εη√(D+1))` small ⇐ `D ≥ (8K 2^{K/4})²`.
 Budget: `δ₁ + δ₂ + 2κ + Λδ₃ < 1`.  Trigger **G-T3** applies if the limit cannot close all four
 simultaneously: then the honest endpoint is the conditional theorem plus the named gap.
+
+## Addendum (lap 9b) — `ScheduleWitness` and the full paper check
+
+`G4ScheduleWitness.lean` (`69e3ebf`): `separatingFrameExists_of_witness`,
+`isDisjunctive_four_of_witness`.  The candidate proof is now exactly "produce a
+`ScheduleWitness ℓ w` for every omitted cylinder".  Paper check of all five inequalities is in
+`PENDING_WORK.md` (lap 9b).  **One constraint the brief does not state**: the far tail carries
+`farC ≈ log P₀ ≈ K^{5K}N^K`, so the retained depth must be `N ≈ 10 K log K`, not merely
+`1 + ⌈log₄(2^K D)⌉`.  With that choice everything closes on paper.  Resume at attack step (1):
+an explicit `GridParams` constructor from `(K, N)` with a `log P₀` bound.
