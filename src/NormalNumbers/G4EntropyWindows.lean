@@ -314,4 +314,69 @@ theorem windows_eq_or_disjoint (i : ℕ) {n n' : ℕ} (hn : n ∈ PK i) (hn' : n
     have := Nat.le_of_dvd (by omega) hdvd
     omega
 
+/-! ### Window multiplicity: two atoms share at most a `P₀`-sparse set of orbit indices
+
+A window position `2k` can be produced by more than one atom only if the *same* `k` solves the
+progression condition for both.  Two such `k` differ by a multiple of `P₀`: the conditions give
+`P₀ ∣ d_α·(k − k')` and `P₀ ∣ d_β·(k − k')`, and `d_α`, `d_β` are coprime (`coprime_d`), so
+`P₀ ∣ k − k'`.  So for each pair of atoms the shared indices are a single arithmetic progression
+of modulus `P₀` — astronomically sparser than the `X/d` indices each atom uses.
+-/
+
+/-- `k` is *active* for `α` when the sample time it forces lies in the progression. -/
+def ActiveIdx (G : GridParams) (α : G.Atom) (k : ℕ) : Prop :=
+  (G.t α + G.d α * k) % G.P₀ = G.b₀
+
+/-- **Two atoms' shared orbit indices are `P₀` apart.** -/
+theorem shared_idx_apart (G : GridParams) {α β : G.Atom} (hαβ : α ≠ β) {k k' : ℕ}
+    (hk : k' ≤ k) (h1 : ActiveIdx G α k) (h2 : ActiveIdx G β k)
+    (h1' : ActiveIdx G α k') (h2' : ActiveIdx G β k') :
+    k = k' ∨ G.P₀ ≤ k - k' := by
+  classical
+  set g : ℕ := k - k' with hg
+  have hdα : G.P₀ ∣ G.d α * g := by
+    have hmod : (G.t α + G.d α * k') ≡ (G.t α + G.d α * k) [MOD G.P₀] := by
+      unfold Nat.ModEq
+      rw [h1', h1]
+    have hle : G.t α + G.d α * k' ≤ G.t α + G.d α * k := by
+      have : G.d α * k' ≤ G.d α * k := Nat.mul_le_mul_left _ hk
+      omega
+    have hdvd := (Nat.modEq_iff_dvd' hle).1 hmod
+    have heq : G.t α + G.d α * k - (G.t α + G.d α * k')
+        = G.d α * g := by
+      rw [hg, Nat.mul_sub]
+      have : G.d α * k' ≤ G.d α * k := Nat.mul_le_mul_left _ hk
+      omega
+    rwa [heq] at hdvd
+  have hdβ : G.P₀ ∣ G.d β * g := by
+    have hmod : (G.t β + G.d β * k') ≡ (G.t β + G.d β * k) [MOD G.P₀] := by
+      unfold Nat.ModEq
+      rw [h2', h2]
+    have hle : G.t β + G.d β * k' ≤ G.t β + G.d β * k := by
+      have : G.d β * k' ≤ G.d β * k := Nat.mul_le_mul_left _ hk
+      omega
+    have hdvd := (Nat.modEq_iff_dvd' hle).1 hmod
+    have heq : G.t β + G.d β * k - (G.t β + G.d β * k')
+        = G.d β * g := by
+      rw [hg, Nat.mul_sub]
+      have : G.d β * k' ≤ G.d β * k := Nat.mul_le_mul_left _ hk
+      omega
+    rwa [heq] at hdvd
+  have hgcd : G.P₀ ∣ Nat.gcd (G.d α * g) (G.d β * g) := Nat.dvd_gcd hdα hdβ
+  have hrw : Nat.gcd (G.d α * g) (G.d β * g) = g := by
+    rw [Nat.gcd_mul_right, (G.coprime_d hαβ : Nat.gcd (G.d α) (G.d β) = 1), one_mul]
+  rw [hrw] at hgcd
+  rcases Nat.eq_zero_or_pos g with h0 | hpos
+  · left; omega
+  · right
+    exact Nat.le_of_dvd hpos hgcd
+
+/-- Every sample time of the progression makes its own orbit index active. -/
+lemma activeIdx_kIdx (G : GridParams) {X n : ℕ} (hn : n ∈ apSample X G.P₀ G.b₀) (α : G.Atom) :
+    ActiveIdx G α (kIdx G n α) := by
+  obtain ⟨hk, -⟩ := kIdx_spec G hn α
+  show (G.t α + G.d α * kIdx G n α) % G.P₀ = G.b₀
+  rw [← hk]
+  exact (Finset.mem_filter.1 hn).2
+
 end NormalNumbers.G4.Sched
