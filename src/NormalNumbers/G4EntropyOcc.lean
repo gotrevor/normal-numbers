@@ -188,4 +188,30 @@ theorem properDigits_of_isNormalSequence {b : ℕ} (hb : 2 ≤ b) {s : ℕ → �
   rw [huniq] at this
   exact lt_irrefl _ this
 
+/-! ### Splitting a range into equal blocks -/
+
+/-- `[0, P·A)` is `P` consecutive blocks of length `A`. -/
+lemma sum_range_mul {β : Type*} [AddCommMonoid β] (g : ℕ → β) (P A : ℕ) :
+    ∑ w ∈ Finset.range (P * A), g w
+      = ∑ a ∈ Finset.range P, ∑ e ∈ Finset.range A, g (a * A + e) := by
+  induction P with
+  | zero => simp
+  | succ P ih =>
+    have hsplit : (P + 1) * A = P * A + A := by ring
+    rw [Finset.sum_range_succ, ← ih, hsplit]
+    rw [Finset.range_eq_Ico,
+      ← Finset.sum_Ico_consecutive g (Nat.zero_le (P * A)) (Nat.le_add_right (P * A) A),
+      ← Finset.range_eq_Ico]
+    congr 1
+    rw [Finset.sum_Ico_eq_sum_range]
+    simp
+
+/-- The same split for a count. -/
+lemma card_filter_range_mul {Q : ℕ → Prop} [DecidablePred Q] (P A : ℕ) :
+    ((Finset.range (P * A)).filter Q).card
+      = ∑ a ∈ Finset.range P, ((Finset.range A).filter (fun e => Q (a * A + e))).card := by
+  classical
+  simp only [Finset.card_filter]
+  rw [sum_range_mul (fun w => if Q w then 1 else 0) P A]
+
 end NormalNumbers
