@@ -833,4 +833,39 @@ theorem overhang_frac_le (i : ℕ) :
     field_simp
   linarith [hstep, hfrac]
 
+/-! ### The pair count is the sum over pairs of the window count -/
+
+open Classical in
+/-- The `(n, α, p)` count of `tendsto_bandT_occursCount`, re-summed over the band pairs. -/
+theorem pairCount_eq (i : ℕ) (x : ℝ) (v : List ℕ) :
+    ∑ c : (gridAt i).Atom × Fin (kk i - v.length + 1),
+        ((bandT i).filter fun n =>
+          OccursAt 2 x v (2 * kIdx (gridAt i) n c.1 + (c.2 : ℕ))).card
+      = ∑ z ∈ bandPairs i, winOcc i x v (2 * kIdx (gridAt i) z.1 z.2) := by
+  classical
+  have hL : ∑ c : (gridAt i).Atom × Fin (kk i - v.length + 1),
+        ((bandT i).filter fun n =>
+          OccursAt 2 x v (2 * kIdx (gridAt i) n c.1 + (c.2 : ℕ))).card
+      = ∑ α : (gridAt i).Atom, ∑ p ∈ Finset.range (kk i - v.length + 1),
+          ∑ n ∈ bandT i,
+            (if OccursAt 2 x v (2 * kIdx (gridAt i) n α + p) then 1 else 0) := by
+    rw [Fintype.sum_prod_type]
+    refine Finset.sum_congr rfl fun α _ => ?_
+    rw [← Fin.sum_univ_eq_sum_range (fun p =>
+      ∑ n ∈ bandT i, (if OccursAt 2 x v (2 * kIdx (gridAt i) n α + p) then 1 else 0))]
+    refine Finset.sum_congr rfl fun p _ => ?_
+    rw [Finset.card_filter]
+  have hR : ∑ z ∈ bandPairs i, winOcc i x v (2 * kIdx (gridAt i) z.1 z.2)
+      = ∑ n ∈ bandT i, ∑ α : (gridAt i).Atom,
+          ∑ p ∈ Finset.range (kk i - v.length + 1),
+            (if OccursAt 2 x v (2 * kIdx (gridAt i) n α + p) then 1 else 0) := by
+    rw [bandPairs, Finset.sum_product]
+    refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun α _ => ?_
+    rw [winOcc, Finset.card_filter]
+  rw [hL, hR]
+  rw [Finset.sum_congr rfl (fun (α : (gridAt i).Atom) _ =>
+    Finset.sum_comm (s := Finset.range (kk i - v.length + 1)) (t := bandT i)
+      (f := fun p n => if OccursAt 2 x v (2 * kIdx (gridAt i) n α + p) then 1 else 0))]
+  exact Finset.sum_comm
+
 end NormalNumbers.G4.Sched
