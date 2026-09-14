@@ -35,12 +35,10 @@ This module supplies the arithmetic spine of that march:
 * the covering lemma `exists_tile`, and the endpoint `entropy_E1_tile` — `entropy_E1_down`'s
   conclusion at **every** outer scale in `[Xlo K, Xlo (K+4)]`, i.e. the scale gap closed.
 
-Everything above is proved here.  The single open leaf is `entropy_E1_march`: the E1 chain at
-the marched parameters `(K, j)`.  Its `j = 0` instance is `entropy_E1_down`, and that instance
-is discharged here (`entropy_E1_march_zero`) as a check that the marched definitions line up.
-The remaining work is the port of `hbig_holds` (unchanged/monotone inputs), `hfar_holds` and the
-five `smallPrimeBound` terms to `(K, j)` — the same "verbatim copy + substitution" shape that
-`G4EntropyE0Down` and `G4EntropyE1Down` already ran twice for `X'`.
+Everything above is proved here.  The E1 chain at the marched parameters `(K, j)` —
+`entropy_E1_march` — and the endpoint `entropy_E1_tile` live downstream in
+`G4EntropyMTowerAssembly`, because their proof needs the three ported inputs of
+`G4EntropyMTowerBig`, `G4EntropyMTowerBudget` and `G4EntropyMTowerDown`.
 
 Nothing here claims anything about the normality of `G₄` itself.
 -/
@@ -275,56 +273,6 @@ theorem exists_tile {K : ℕ} (hK : 100 ≤ K) {X' : ℕ}
     (by rw [Xm_jstar (show 1 ≤ K by omega)]; exact hhi)
 
 /-! ### The endpoint: E1 at every outer scale up to the next rung's floor -/
-
-set_option maxHeartbeats 1000000 in
-/-- **THE OPEN LEAF.**  The E1 chain at the *marched* parameters `(K, j)`: the schedule with
-`m₁ ↦ m₁ K + j`, `m ↦ m K + j`, `Mc ↦ Mcm K j`, and outer scale `Xm K j`, run downward to
-`Xlom K j` exactly as `entropy_E1_down` runs the `j = 0` schedule down to `Xlo K`.
-
-The port is the same shape `G4EntropyE0Down`/`G4EntropyE1Down` already ran for `X'`:
-
-* `hbig_holds` — `dyadic_factor_le` is **unchanged** (it depends only on `mm - mm₁ = m₂ K`);
-  `sample_term_le` and `log_Mx_div_le` only improve (`Xm = Ym^{100}` keeps `log Mx / log Y ≤ 101`,
-  so the A0 ceiling `Y^{2^{3K/4}}` of `G4EntropyXCeiling` is never approached);
-* `hfar_holds` — `four_mul_le_four_pow_N_m` (proved above) replaces `four_mul_le_four_pow_N`;
-* the five `smallPrimeBound` terms — `Mcm_le_two_pow_m₂` (proved above) replaces
-  `Mc_le_two_pow_m₂`, and the main budget term's `hm₁` equality becomes the inequality
-  `1000·K·r ≤ (1/8)^K·mm₁ K j`, which only improves.
-
-No other hypothesis in `entropy_E0`'s cone bounds `m₁` from above (source audit,
-`DIRECTION.md` CURRENT DIRECTIVE, review lap 119). -/
-theorem entropy_E1_march {K k₄ j X' : ℕ} (hK4 : K = 4 * k₄) (hK : 160000 ≤ K)
-    (hj : j ≤ jstar K) (hlo : Xlom K j ≤ X') (hhi : X' ≤ Xm K j)
-    (hb : (gridOf K (N K) (show 1 ≤ K by omega)).b₀ < X') :
-    (k₄ : ℝ) * (((K ^ 2 + 1) ^ K : ℕ) : ℝ)
-        - 50 * Real.sqrt K * (((K ^ 2 + 1) ^ K : ℕ) : ℝ)
-      < (jointLaw (gridOf K (N K) (show 1 ≤ K by omega)) hb k₄ (primeLambertAtBase 4)).H₂ := by
-  sorry
-
-set_option maxHeartbeats 1000000 in
-/-- The `j = 0` instance of `entropy_E1_march` **is** `entropy_E1_down` — a check that the
-marched definitions line up with the implemented schedule. -/
-theorem entropy_E1_march_zero {K k₄ X' : ℕ} (hK4 : K = 4 * k₄) (hK : 160000 ≤ K)
-    (hlo : Xlom K 0 ≤ X') (hhi : X' ≤ Xm K 0)
-    (hb : (gridOf K (N K) (show 1 ≤ K by omega)).b₀ < X') :
-    (k₄ : ℝ) * (((K ^ 2 + 1) ^ K : ℕ) : ℝ)
-        - 50 * Real.sqrt K * (((K ^ 2 + 1) ^ K : ℕ) : ℝ)
-      < (jointLaw (gridOf K (N K) (show 1 ≤ K by omega)) hb k₄ (primeLambertAtBase 4)).H₂ :=
-  entropy_E1_down hK4 hK (by rw [← Xlom_zero]; exact hlo) (by rw [← Xm_zero]; exact hhi)
-
-set_option maxHeartbeats 1000000 in
-/-- **THE ENDPOINT — the scale gap closed.**  `entropy_E1_down`'s conclusion at **every** outer
-scale in `[Xlo K, Xlo (K+4)]`: the two rungs' certified ranges now meet.  Contrast
-`G4EntropyScaleGap.ScheduleWitness.X_lt_Xlo_step`, which shows the *one-dimensional* ladder's
-rung `K` reaches only `Xhi K k₄ < Xlo (K+4)`. -/
-theorem entropy_E1_tile {K k₄ X' : ℕ} (hK4 : K = 4 * k₄) (hK : 160000 ≤ K)
-    (hlo : Xlo K ≤ X') (hhi : X' ≤ Xlo (K + 4))
-    (hb : (gridOf K (N K) (show 1 ≤ K by omega)).b₀ < X') :
-    (k₄ : ℝ) * (((K ^ 2 + 1) ^ K : ℕ) : ℝ)
-        - 50 * Real.sqrt K * (((K ^ 2 + 1) ^ K : ℕ) : ℝ)
-      < (jointLaw (gridOf K (N K) (show 1 ≤ K by omega)) hb k₄ (primeLambertAtBase 4)).H₂ := by
-  obtain ⟨j, hj, hj1, hj2⟩ := exists_tile (show 100 ≤ K by omega) hlo hhi
-  exact entropy_E1_march hK4 hK hj hj1 hj2 hb
 
 end Sched
 

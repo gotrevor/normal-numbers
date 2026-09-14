@@ -219,6 +219,7 @@ import NormalNumbers.G4EntropyMTowerBig
 import NormalNumbers.G4EntropyMTowerHarmonic
 import NormalNumbers.G4EntropyMTowerBudget
 import NormalNumbers.G4EntropyMTowerDown
+import NormalNumbers.G4EntropyMTowerAssembly
 import NormalNumbers.G4ScheduleHarmonic
 import NormalNumbers.G4ScheduleBudget
 import NormalNumbers.G4ScheduleWitness
