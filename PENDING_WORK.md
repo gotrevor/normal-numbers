@@ -62,9 +62,14 @@ overlapping one included), `blockFreq_eq_count`, `blockFreq_eq_digits`, and
    `ℓ(K) = o(√K)`, with the words allowed to change with `K`.  E-T5 rate: the sample
    controls words up to length `o(√K)` inside windows of `m_K = K/4` bits.
 
-0'. **Next:** the general-`x` version of `abs_blockFreq_sub_le` / the limit, under an
-   `E0`-type hypothesis (`abs_avg_block_prob_sub_le` is already abstract; only the deficit
-   supply is `G₄`-specific).  Then: is the frequency statement *uniform* in `ℓ` — i.e. can
+0'. ~~**The general-`x` version.**~~ (done, lap 27) — `defRatio`,
+   `abs_blockFreq_sub_le_defRatio` (`≤ log2·ℓ/(t·D) + log2·ℓ·defRatio/t + t/2` for every
+   `t > 0`) and `tendsto_blockFreq_of_E0`: **`E0 x` alone** pins every word's sampled
+   frequency, for every real `x`.  `G₄` is now an instance
+   (`tendsto_blockFreq_primeLambertFour'` via `E0_primeLambertFour`).  So §5's positive answer
+   is a theorem about the *sampling scheme*, not about `G₄`.
+
+0''. **Next:** is the frequency statement *uniform* in `ℓ` — i.e. can
    `ℓ = ℓ(K)` grow, and at what rate does `O(√(ℓ/√K))` still vanish?  That is the quantitative
    edge of what entropy controls here (route trigger E-T5 territory, recorded not hidden).
 1. ~~**The faithfulness rendering.**~~ (done, lap 24)  `blockFreq` is *defined* through `FinLaw.map`; prove

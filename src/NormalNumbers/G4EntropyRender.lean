@@ -427,3 +427,128 @@ theorem tendsto_blockFreq_growing (ℓ : ℕ → ℕ) (hpos : ∀ i, 0 < ℓ i)
   simpa [Real.norm_eq_abs] using abs_blockFreq_sub_le_sqrt i (ℓ i) (hpos i) (w i)
 
 end NormalNumbers.G4.Sched
+
+namespace NormalNumbers.G4.Sched
+
+open NormalNumbers NormalNumbers.G4Entropy NormalNumbers.PrimeLambert
+
+/-! ### The general-`x` form: `E0` alone forces the sampled word frequencies
+
+`abs_avg_block_prob_sub_le` is abstract; only the *supply* of the entropy deficit was
+`G₄`-specific (`entropy_E1`).  Feeding it the deficit that the hypothesis `E0 x` provides —
+`Δ_i = (1 − H₂/maxH)·m_K·H_K` — gives the frequency theorem for **every** `x` with an
+asymptotically maximal sample entropy.  `G₄` is then one instance, via `E0_primeLambertFour`.
+-/
+
+/-- The relative entropy deficit of `x` at scale `i`. -/
+noncomputable def defRatio (i : ℕ) (x : ℝ) : ℝ := 1 - (jointLawAt i x).H₂ / maxH i
+
+lemma defRatio_nonneg (i : ℕ) (x : ℝ) : 0 ≤ defRatio i x := by
+  have := ratio_le_one i x
+  unfold defRatio
+  linarith
+
+/-- **The quantitative bound from the deficit alone.**  For every `t > 0`,
+
+    `|blockFreq i ℓ x w − 2^{−ℓ}| ≤ log 2·ℓ/(t·(m_K/ℓ+1)) + log 2·ℓ·defRatio/t + t/2`. -/
+theorem abs_blockFreq_sub_le_defRatio (i ℓ : ℕ) (hℓ : 0 < ℓ) (x : ℝ) (w : Fin (2 ^ ℓ))
+    {t : ℝ} (ht : 0 < t) :
+    |blockFreq i ℓ x w - 1 / (2 : ℝ) ^ ℓ|
+      ≤ Real.log 2 * (ℓ : ℝ) / (t * (((kk i / ℓ : ℕ) + 1 : ℕ) : ℝ))
+        + Real.log 2 * (ℓ : ℝ) * defRatio i x / t + t / 2 := by
+  classical
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlpos : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  set C : ℝ := (Fintype.card (gridAt i).Atom : ℝ) with hC
+  have hC0 : 0 < C := by
+    rw [hC, card_Atom_gridAt]
+    have : 0 < (KK i ^ 2 + 1) ^ KK i := Nat.pow_pos (by omega)
+    exact_mod_cast this
+  set D : ℝ := (((kk i / ℓ : ℕ) + 1 : ℕ) : ℝ) with hD
+  have hD0 : 0 < D := by rw [hD]; positivity
+  have hmax : maxH i = (kk i : ℝ) * C := by
+    rw [maxH, hC, card_Atom_gridAt]
+  set Δ : ℝ := (kk i : ℝ) * C - (jointLawAt i x).H₂ with hΔdef
+  have hΔ : (kk i : ℝ) * C - Δ ≤ (jointLawAt i x).H₂ := by rw [hΔdef]; linarith
+  have hmain := abs_avg_block_prob_sub_le (A := (gridAt i).Atom) (m := kk i) (ℓ := ℓ)
+    hℓ (jointLawAt i x) w hΔ ht
+  have hprod : (Fintype.card ((gridAt i).Atom × Fin (kk i / ℓ + 1)) : ℝ) = C * D := by
+    rw [Fintype.card_prod, hC, hD]
+    push_cast
+    simp
+  rw [hprod] at hmain
+  have hbf : blockFreq i ℓ x w
+      = (∑ c : (gridAt i).Atom × Fin (kk i / ℓ + 1),
+          ((jointLawAt i x).map (blkCoord (kk i) ℓ c)).prob {w}) / (C * D) := by
+    rw [blockFreq, hprod]
+  rw [hbf]
+  refine hmain.trans ?_
+  -- rewrite the deficit through `defRatio` and bound `m/D` by `ℓ`
+  have hk0 : (0 : ℝ) < (kk i : ℝ) := by
+    have : 0 < kk i := by unfold kk; omega
+    exact_mod_cast this
+  have hΔeq : Δ = defRatio i x * ((kk i : ℝ) * C) := by
+    have hne : ((kk i : ℝ) * C) ≠ 0 := by positivity
+    rw [defRatio, hmax, sub_mul, one_mul, div_mul_cancel₀ _ hne, hΔdef]
+  have hmD : (kk i : ℝ) ≤ (ℓ : ℝ) * D := by
+    have hnat : kk i < (kk i / ℓ + 1) * ℓ := by
+      have h1 := Nat.div_add_mod (kk i) ℓ
+      have h2 : kk i % ℓ < ℓ := Nat.mod_lt _ hℓ
+      have h3 : (kk i / ℓ + 1) * ℓ = ℓ * (kk i / ℓ) + ℓ := by ring
+      omega
+    have : (kk i : ℝ) < D * (ℓ : ℝ) := by rw [hD]; exact_mod_cast hnat
+    linarith
+  have hsplit : 2 * Real.log 2 * (C * (ℓ : ℝ) + Δ) / (2 * t * (C * D))
+      = Real.log 2 * (ℓ : ℝ) / (t * D) + Real.log 2 * Δ / (t * C * D) := by
+    field_simp
+  rw [hsplit]
+  have hterm : Real.log 2 * Δ / (t * C * D) ≤ Real.log 2 * (ℓ : ℝ) * defRatio i x / t := by
+    rw [hΔeq]
+    rw [div_le_div_iff₀ (by positivity) ht]
+    have hd0 := defRatio_nonneg i x
+    have hsub : (0 : ℝ) ≤ (ℓ : ℝ) * D - (kk i : ℝ) := by linarith
+    have key : (0 : ℝ) ≤ (Real.log 2 * defRatio i x * C * t) * ((ℓ : ℝ) * D - (kk i : ℝ)) :=
+      mul_nonneg (mul_nonneg (mul_nonneg (mul_nonneg hlog2.le hd0) hC0.le) ht.le) hsub
+    nlinarith [key]
+  linarith
+
+/-- **The frequency theorem for every `x` with maximal sample entropy.**  `E0 x` alone — the
+sample entropy being asymptotically maximal — pins every fixed word's frequency among the
+`ℓ`-aligned blocks of the sampled windows.  `G₄` is the instance supplied by
+`E0_primeLambertFour`. -/
+theorem tendsto_blockFreq_of_E0 {x : ℝ} (hx : E0 x) (ℓ : ℕ) (hℓ : 0 < ℓ) (w : Fin (2 ^ ℓ)) :
+    Tendsto (fun i => blockFreq i ℓ x w) atTop (nhds (1 / (2 : ℝ) ^ ℓ)) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlpos : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  rw [Metric.tendsto_atTop]
+  intro η hη
+  -- the two vanishing terms, at `t = η`
+  have hDtop : Tendsto (fun i => η * (((kk i / ℓ : ℕ) + 1 : ℕ) : ℝ)) atTop atTop := by
+    refine Filter.Tendsto.const_mul_atTop hη ?_
+    refine tendsto_atTop_mono (fun i => rBlocks_lb i ℓ hℓ) ?_
+    exact tendsto_KK_atTop.atTop_div_const (by positivity)
+  have h1 : Tendsto (fun i => Real.log 2 * (ℓ : ℝ)
+      / (η * (((kk i / ℓ : ℕ) + 1 : ℕ) : ℝ))) atTop (nhds 0) := hDtop.const_div_atTop _
+  have h2 : Tendsto (fun i => Real.log 2 * (ℓ : ℝ) * defRatio i x / η) atTop (nhds 0) := by
+    have hd : Tendsto (fun i => defRatio i x) atTop (nhds 0) := by
+      unfold defRatio
+      simpa using (tendsto_const_nhds (x := (1 : ℝ)) (f := atTop (α := ℕ))).sub hx
+    simpa using ((hd.const_mul (Real.log 2 * (ℓ : ℝ))).div_const η)
+  have hsum := h1.add h2
+  rw [Metric.tendsto_atTop] at hsum
+  obtain ⟨N, hN⟩ := hsum (η / 2) (by linarith)
+  refine ⟨N, fun i hi => ?_⟩
+  have hb := abs_blockFreq_sub_le_defRatio i ℓ hℓ x w hη
+  have hs := hN i hi
+  simp only [Real.dist_eq, add_zero, sub_zero] at hs
+  have hs' := lt_of_abs_lt hs
+  rw [Real.dist_eq]
+  linarith
+
+/-- `G₄` as an instance: the sampled word frequencies follow from `E0` alone. -/
+theorem tendsto_blockFreq_primeLambertFour' (ℓ : ℕ) (hℓ : 0 < ℓ) (w : Fin (2 ^ ℓ)) :
+    Tendsto (fun i => blockFreq i ℓ (primeLambertAtBase 4) w) atTop
+      (nhds (1 / (2 : ℝ) ^ ℓ)) :=
+  tendsto_blockFreq_of_E0 E0_primeLambertFour ℓ hℓ w
+
+end NormalNumbers.G4.Sched
