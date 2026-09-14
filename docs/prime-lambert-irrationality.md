@@ -9,6 +9,12 @@ Bounded campaign (brief 2026-09-14).  Target constant
 This is a formalization of the candidate *elementary* compressed-cancellation argument.
 No novelty claim.  Headline `irrational_primeLambert` is **sorry-gated**; see "Status".
 
+The [complete paper proof draft](prime-lambert-proof-draft.md) preserves the geometry,
+parameter choices, and analytic argument, not just the formal conditional statements.
+The [single-coordinate mass obstruction](prime-lambert-isolator-obstruction.md) records
+a separate internally audited paper theorem: isolating one radix tail after K exact
+cancellations requires integer coefficient mass at least 2^K.  It is not yet formalized.
+
 ## Modules (owned footprint)
 
 | module | content | status |
@@ -20,7 +26,7 @@ No novelty claim.  Headline `irrational_primeLambert` is **sorry-gated**; see "S
 | `PrimeLambertTail` | `badPrimeFrozen_of_residue` (exact freezing ⇒ `BadPrimeFrozen`), `phaseSum_sub_truncPhase` (`F − F_J = phaseSum c J n`), `ω(m) ≤ log₂ m`, `ω(dm) ≤ ω d + ω m`, exact tail bound `abs_truncation_error_le`: `\|F − F_J\| ≤ ∑_a \|c a\|(ω d_a + log₂(k_a+1) + J + 1)/2^J`, `tailTruncation_of_bound` | proved, axiom-clean |
 | `PrimeLambertHexagonNegative` | `HexNonneg q`, `HexNonnegOfLargeMean q`; eighth-root witness on `ℤ/19ℤ` with `6859·H = 469 − 450√2 < 0`, `\|𝔼 f\| = (7+3√2)/19 > 1/2`; `not_hexNonneg_nineteen`, `not_hexNonnegOfLargeMean_nineteen`, `not_meanRetention_nineteen` | proved, axiom-clean (refutations) |
 | `PrimeLambertMoments` | sharp Taylor bound `‖e^{it} − ∑_{k<M}(it)^k/k!‖ ≤ \|t\|^M/M!` (`norm_expRem_le'`), even-moment average bound `norm_avg_e_sub_taylor_le`; independent CRT model `indepAvg` (uniform residue mod `∏_{p small} p`), sample average `sampleAvg`; Props `IndepCharDecay`, `MomentComparison`, `IndepMomentSmall`; **proved transfer** `smallPrimeDecay_of_moments` (even `M_N`), `MomentChain → SmallPrimeDecay` | transfer proved, axiom-clean; the three Props open |
-| `PrimeLambertLarge` | unconditional pointwise bound `\|X_p(n)\| ≤ ‖c‖₁ 2^{−K}` (`abs_primePart_le`), `primePart_eq_zero`, class bound by the count of active primes (`abs_classSum_le_card`), Prop `LargePrimeCountSmall`, `largePrimeNegligible_of_count` | proved, axiom-clean; the count Prop open |
+| `PrimeLambertLarge` | unconditional `\|X_p(n)\| ≤ ‖c‖₁ 2^{−K}`, exact weighted per-argument count bound `abs_classSum_le_argumentPrimes`, Prop `LargePrimeArgumentCountSmall`, `largePrimeNegligible_of_argumentCount`; the coarser union-count bound is retained separately | inequalities and conditional transfer proved; quantitative divisor and parameter bounds open |
 | `PrimeLambertOscillation` | `e`, `ProgressionFamily`, `phaseAverage`, `PhaseOscillation` (draft eq. (5)), `norm_phaseAverage_eq_one`, `irrational_of_phaseOscillation` | proved, axiom-clean; `phaseOscillation` is the single disclosed `sorry` |
 
 Build: `lake build NormalNumbers.PrimeLambertMoments NormalNumbers.PrimeLambertLarge
@@ -58,12 +64,19 @@ sieve data `J, bad, small, large` with primality/disjointness/cover fields):
 Discharged reductions (`PrimeLambertTail`): `BadPrimeFrozen` holds whenever the sample is
 frozen modulo every bad prime (`badPrimeFrozen_of_residue`); `TailTruncation` holds whenever
 the exact bound `∑_a |c a|(ω d_a + log₂(k_a+1) + J + 1)/2^J` tends to zero on the sample
-(`tailTruncation_of_bound`) — for the hexagon parameters this is `O(H(log N + log d)/2^J)`,
+(`tailTruncation_of_bound`), for the hexagon parameters this is `O(H(log N + log d + J)/2^J)`,
 draft (20).  `LargePrimeNegligible` holds whenever the number of large primes dividing some
 finite-tail argument, times `‖c‖₁ 2^{−K}`, is uniformly `o(1)` on the sample
 (`LargePrimeCountSmall`, `largePrimeNegligible_of_count`, `PrimeLambertLarge`); the pointwise
-bound `|X_p(n)| ≤ ‖c‖₁ 2^{−K}` needs no distinct-root hypothesis.  The draft's arithmetic input
-(each argument `≤ 3N` has `≤ log(3N)/log R` prime factors above `R`) is the open remainder.
+bound `|X_p(n)| ≤ ‖c‖₁ 2^{−K}` needs no distinct-root hypothesis.  This union-of-active-primes
+criterion is a valid but overly strong sufficient condition, not the intended draft (19)
+bound.  Substituting the union count `H(J−K) log(3N)/log R` loses an extra factor `H(J−K)`.
+The required estimate (`abs_classSum_le_argumentPrimes`) counts primes separately for each argument, before summing its
+coefficient weight: if every argument has at most B primes from the class, the bound is
+`B ‖c‖₁ 2^{−K}`.  `LargePrimeArgumentCountSmall` states that per-argument bound together
+with its weighted decay, and `largePrimeNegligible_of_argumentCount` proves the transfer.
+In the draft, `B = log(3N)/log R = O(M)` gives the needed decay.  The divisor count and
+its concrete asymptotic ledger still need to be supplied to this conditional theorem.
 
 `phaseOscillation_of_chain` proves that these four imply `PhaseOscillation` (Lipschitz bound
 `‖e(x)−1‖ ≤ 4π\|x\|`, unimodular constant factor for the frozen class).  `SmallPrimeDecay` is
@@ -112,8 +125,9 @@ Geometry (a) is done: `exists_tconfig_cancelling r B Q` produces, for every `r`,
 and `Q ≥ 0`, a `TConfig` cancelling at all sites `1..6r` with positive multipliers.  Not yet
 formalized from the geometry: distinctness of the `6^{2r}` first coordinates for `B ≥ 7`
 (balanced-base uniqueness), the `ℓ¹`-mass `H = 6^{K/3}`, and the surviving squared mass at
-site `K+1`.  Next: (b) state the analytic sub-Props as separate `def … : Prop` with explicit
-quantifiers, and a wiring `→ PhaseOscillation`.
+site `K+1`.  The analytic sub-Props and their conditional wiring have been stated and
+proved as recorded above.  Their quantitative number-theoretic hypotheses and the
+complete parameterized construction are the remaining work.
 
 ## Refutations recorded
 
@@ -123,7 +137,7 @@ attended addendum 2026-09-14).  `MeanRetention q` says every unimodular `f : ZMo
 proved on the bare trust triple: witness `f(x) = ζ^{e_x}`, `ζ = e^{2πi/7}`,
 `e = (0,5,3,6,5,5,4)`; residue counts `(133,0,42,63,63,42,0)` and `(13,8,7,3,3,7,8)` by kernel
 `decide`; `343 H = 112 − 63c − 21c²`, `|S|² = 2 + 5c + 4c²` with `c = 2cos(2π/7)` proved to
-satisfy `c³ + c² − 2c − 1 = 0` and `c > 6/5` (from `2π/7 < π/3`).  The full complex
+satisfy `c³ + c² − 2c − 1 = 0` and `c > 6/5`.  The full complex
 inequality is formalized, not only its real-algebra certificate.  Scope: this is the cyclic
 toy average; this witness has `H > 0`, so by itself it does not refute `H(f) ≥ 0`.
 

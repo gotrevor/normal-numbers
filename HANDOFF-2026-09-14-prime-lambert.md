@@ -36,14 +36,15 @@ transform), `PrimeLambertOscillation` (`PhaseOscillation → Irrational primeLam
 ## Open
 
 Exactly one `sorry`: `phaseOscillation` (`PrimeLambertOscillation.lean`); the headline
-`irrational_primeLambert` is sorry-gated and is NOT a proved theorem.  It is equivalent to
-`ChainExists`, whose remaining unreduced content is exactly five Props with explicit
-quantifiers (none is an opaque "good" hypothesis):
+`irrational_primeLambert` is sorry-gated and is NOT a proved theorem.  `ChainExists` is
+a sufficient route to `PhaseOscillation`; no converse equivalence has been established.
+The remaining analytic work includes the following explicit obligations, as well as
+constructing the samples, geometry, and parameter bounds:
 
 | Prop | module | what remains |
 |---|---|---|
 | `TailTruncation` | Tail | parameter arithmetic `H(log N + log d + J)/2^J → 0` |
-| `LargePrimeCountSmall` | Large | `#{p > R : p ∣ n + jd_a − s_a} ≤ H(J−K) log(3N)/log R` |
+| `LargePrimeArgumentCountSmall` | Large | each individual argument has `≤ log(3N)/log R` large prime factors; sum these counts with the original weights, obtaining `O(M ‖c‖₁ 2^{−K})` |
 | `IndepCharDecay` | Moments | local char.-function product `≤ exp(−c_q V_N)`, `V_N → ∞` |
 | `MomentComparison` | Moments | `k`-fold products periodic with period `≤ R^k`, AP error `O(AR^k/N)`, CRT factorization of `indepAvg` |
 | `IndepMomentSmall` | Moments | two-sided mgf (14) + `M_N ≫ V_N` |
@@ -53,6 +54,16 @@ Plus construction of the `Chain` itself (hexagon tensor `TConfig` from
 `K ~ (6/5) log log log N`, `J = ⌈2 log₂ log N⌉`, `M ~ (log log N)^{1/12}` even, `R = N^{1/(20M)}`.
 Geometry still lacking: distinct first coordinates for `B ≥ 7`, mass `6^{K/3}`, surviving
 squared mass at site `K+1` (needed for `V_N → ∞`).
+
+Host review: the original `LargePrimeCountSmall` union-of-active-primes bound is true
+but too coarse for these parameters.  Applying the displayed union count would introduce
+an extra `H(J−K)`.  It must not be mistaken for the paper's per-argument weighted count.
+The host follow-up adds `abs_classSum_le_argumentPrimes` and
+`largePrimeNegligible_of_argumentCount`, so the correct weighted estimate is preserved
+in Lean, not merely explained in this warning.
+The full paper proof and the later single-coordinate mass obstruction are now archived
+in `docs/prime-lambert-proof-draft.md` and `docs/prime-lambert-isolator-obstruction.md`.
+The latter is a paper theorem, not yet a Lean theorem.
 
 ## Next attacks (if the campaign is extended)
 
