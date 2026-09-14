@@ -163,11 +163,39 @@ tendsto_occursCountJointPos_primeLambertFour :
 — a position `p_s = pp s + jℓ` **per window**, chosen freely.  `pp = 0` is
 `tendsto_occursCountJoint_primeLambertFour`.  The `DIRECTION` 🎯 is now met **as stated**.
 
-**Recorded narrowing (do not re-derive):** the *uniform* average over ALL position vectors
-`(p_1,…,p_t) ∈ [0,m−ℓ]^t` is **not** reachable by this ledger — a jointly injective family of
-`(m/ℓ)^t` pattern coordinates per block would have to carry `tℓ(m/ℓ)^t` bits against the `tm`
-the block's windows hold.  What IS reachable is one common aligned shift `j` on top of an
-arbitrary offset vector, which is the `patPos` family above.
+**⚠️ The lap-40 narrowing is RETRACTED (lap 42).**  It said the *uniform* average over all
+position vectors was unreachable, because a jointly injective family of `(m/ℓ)^t` pattern
+coordinates per block would carry `tℓ(m/ℓ)^t` bits against the `tm` its windows hold.  True —
+but **no such single family is needed**.  Decompose `jj ∈ [0,J)^t` (`J = ⌊m/ℓ⌋`) uniquely as
+`jj = d + j·1` with `min d = 0`.  Each *diagonal* `d` is exactly what `abs_avg_patPos_prob_opt`
+controls, at `pp s = d s·ℓ` and cut length `D_d = m − (max d)ℓ`, so the diagonal's unnormalized
+contribution is
+
+```
+(J − max d)·2√(log2·Δ/(|B|(J − max d)))  ≤  2√(log2·Δ·J/|B|)      uniformly in d
+```
+
+and there are `≤ t·J^{t−1}` diagonals, giving
+
+```
+|uniform average − 2^{−ℓt}|  ≤  (t J^{t−1}/J^t)·2√(log2·Δ·J/|B|)  =  2t√(log2·ℓΔ/(|B|·m))
+```
+
+— **the aligned bound times `t`**.  The blow-up of the individual diagonal bounds as
+`max d → J` is exactly cancelled by those diagonals' weight.
+
+### 🔨 IN FLIGHT (lap 42) — `G4EntropyJointUniform.lean`
+
+Landed: `jjPat`, `patPos_eq_jjPat`, `uniPatFreq`, `diagSet`, and the statement of the two
+combinatorial leaves.  **Open (disclosed `sorry`, in `src/`):**
+
+- `card_diagSet_le : (diagSet t J).card ≤ t * J^(t−1)` — `diagSet ⊆ ⋃_s {d | d s = 0}`,
+  each fibre injecting into `Fin (t−1) → Fin J` via `Fin.succAbove`.
+- `sum_diag_decomp` — the reindexing `jj ↦ (jj − min jj, min jj)`; a `Finset.sum_nbij'`
+  between `univ : Finset (Fin t → Fin J)` and the pairs `(d, j)` with `d ∈ diagSet`,
+  `j < J − max d`.
+
+Then assemble `abs_uniPatFreq_sub_le`, the schedule instance, and the digit rendering.
 
 ### ✅ BOUNDED SECONDARY DONE (lap 39) — `G4EntropyWall.lean`, sorry-free, trust triple
 
