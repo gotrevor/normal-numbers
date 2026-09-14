@@ -141,3 +141,30 @@ So the three structural pieces of the expedition — (C), (G), §3A — are prov
 What is left for E0 is arithmetic: choose `ℬ` = the information set, and check the numerical
 budget `δ/(2−δ) > |ℬ|·∑_G η^{|G|}vol(pieceCube G) + δ₂ + 2κ + Λδ₃` against the implemented
 schedule with `|ℬ| ≤ 2^{(1−δ/2)m_K H_K}`.
+
+---
+
+# Lap 5 addendum — E0 assembled
+
+`G4EntropyInfo.prob_empirical` (new): the mass an empirical law gives a set of atoms is the
+sample density of its preimage — the identity that turns the information set into a sub-sample.
+
+`G4EntropyE0.lean` (new, sorry-free): **`entropy_gt_of_budget`**.  Assume the entropy deficit
+`H₂(Z) ≤ (1−δ)M`.  Then:
+
+1. `prob_infoSet_ge` / `card_infoSet_le` give a collection `ℬ` of `≤ 2^{(1−δ/2)M}` joint values
+   of sample density `≥ δ/(2−δ)` (`prob_empirical` converts mass to density);
+2. `gridFrame_Ffull_mem_boxUnion` (§3A) puts every point of the corresponding sub-sample `Good`
+   into `E = imageOfSet (boxUnion 𝓑 2^{-m})`, `𝓑` = the centres of `ℬ`;
+3. `Frame.capture_le` (C) bounds that density by `vol(tube E res) + δ₂ + 2κ + Λδ₃`;
+4. `volume_tube_le_joint` (G) bounds the volume by `|𝓑|·∑_G η^{|G|}vol(pieceCube G)`
+   and `|𝓑| ≤ |ℬ| ≤ 2^{(1−δ/2)M}`.
+
+So the deficit contradicts the single numeric hypothesis
+
+    2^{(1−δ/2)M}·(∑_{G good} η^{|G|}vol(pieceCube G)) + δ₂ + 2κ + Λδ₃ < δ/(2−δ),
+
+giving `(1−δ)M < H₂`.  **E0 has no remaining structural obligation**; what is left is to
+discharge that inequality at `M = m_K H_K` against `G4ScheduleParams`.  Note the target
+`δ/(2−δ)` *shrinks* with `δ`, which is the real difficulty of brief §4 and the reason the
+proposed `D_K = (16K²2^{m_K})²` needs justification rather than assumption.

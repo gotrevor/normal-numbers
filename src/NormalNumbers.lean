@@ -228,3 +228,4 @@ import NormalNumbers.G4EntropyJackson
 import NormalNumbers.G4EntropyFrame
 import NormalNumbers.G4EntropyCover
 import NormalNumbers.G4EntropyTransport
+import NormalNumbers.G4EntropyE0

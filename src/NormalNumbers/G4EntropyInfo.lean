@@ -246,6 +246,31 @@ lemma empirical_p {ι Ω : Type*} [Fintype Ω] {S : Finset ι} (hS : S.Nonempty)
     (ω : Ω) :
     (empirical S hS f).p ω = ((S.filter fun i => f i = ω).card : ℝ) / S.card := rfl
 
+/-- **The mass of a set of atoms under an empirical law** is the sample density of its
+preimage.  This is the identity that lets the information set be turned into a sub-sample. -/
+theorem prob_empirical {ι Ω : Type*} [Fintype Ω] {S : Finset ι} (hS : S.Nonempty)
+    (f : ι → Ω) (B : Finset Ω) [DecidablePred fun i => f i ∈ B] :
+    (empirical S hS f).prob B = ((S.filter fun i => f i ∈ B).card : ℝ) / S.card := by
+  classical
+  rw [Finset.filter_congr_decidable S (fun i => f i ∈ B) _]
+  rw [FinLaw.prob]
+  simp only [empirical_p]
+  rw [← Finset.sum_div]
+  congr 1
+  have := Finset.card_eq_sum_card_fiberwise (f := f) (s := S.filter fun i => f i ∈ B) (t := B)
+    (fun i hi => (Finset.mem_filter.1 hi).2)
+  rw [this]
+  push_cast
+  refine Finset.sum_congr rfl fun ω hω => ?_
+  have hfib : ((S.filter fun i => f i ∈ B).filter fun a => f a = ω)
+      = S.filter fun i => f i = ω := by
+    ext i
+    simp only [Finset.mem_filter]
+    constructor
+    · rintro ⟨⟨h1, -⟩, h2⟩; exact ⟨h1, h2⟩
+    · rintro ⟨h1, h2⟩; exact ⟨⟨h1, h2 ▸ hω⟩, h2⟩
+  rw [hfib]
+
 open Classical in
 /-- The empirical law is supported on the image, so its entropy is at most `log₂ |S|`. -/
 theorem H₂_empirical_le {ι Ω : Type*} [Fintype Ω] {S : Finset ι} (hS : S.Nonempty)

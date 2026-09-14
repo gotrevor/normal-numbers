@@ -33,13 +33,23 @@ transported vector as an EQUATION (`PropA` recovered via `propA_of_Ffull_eq`), a
 a centre in `𝓑` puts `Ffull n` in `imageOfSet (boxUnion 𝓑 2^{-m})`, which is exactly the
 hypothesis of `Frame.capture_le` for the set whose tube `volume_tube_le_joint` bounds by `|𝓑|`.
 
-**(C), (G) and §3A are all proved.  What remains is arithmetic bookkeeping, not structure:**
+Lap 5 assembled **E0** as `G4EntropyE0.entropy_gt_of_budget`: whenever
 
-1. **Assemble E0** — combine `Frame.capture_le` (with `Good` = the sample points whose joint
-   vector lies in the information set), `volume_tube_le_joint`, and
-   `FinLaw.prob_infoSet_ge`/`card_infoSet_le`.  The contradiction needs
-   `δ/(2−δ) > |ℬ|·(∑_G η^{|G|}·vol(pieceCube G)) + δ₂ + 2κ + Λδ₃` with
-   `|ℬ| ≤ 2^{(1−δ/2)m_K H_K}`.
+    2^{(1−δ/2)M}·(∑_{G good} η^{|G|}·vol(pieceCube G)) + δ₂ + 2κ + Λδ₃  <  δ/(2−δ)
+
+holds (with `PropC δ₃`, `PropD δ₂`, `2^{-m} ≤ η`, `0<δ<1`, `0<M`), then
+`(1−δ)·M < H₂(jointLaw)`.  **E0 now has NO remaining structural obligation** — it is a single
+numeric inequality about the implemented schedule.
+
+**What remains, hardest first:**
+
+1. **Discharge the E0 budget at `M = m_K H_K`, `δ = δ_K`** against `G4ScheduleParams`.  The
+   left side is the old tube/determinant budget with the entropy factor `2^{(1−δ/2)m_K H_K}`
+   replacing `(#Bs)^{H_K}`; the right side is `δ/(2−δ)`, which for `δ → 0` is `≈ δ/2`, so the
+   budget must beat a *shrinking* target — that is the real content of brief §4 and the place
+   where the proposed `D_K = (16K²2^{m_K})²` and `κ_K ≤ 1/(16K)` must be justified.
+   Note `∑_G η^{|G|}vol(pieceCube G)` is exactly what `G4GridTube`/`G4Ellipsoid`/`G4Tensor`
+   already bound for the disjunctivity endpoint; only the prefactor changed.
 2. **`a_K/ρ_K → 0`** — recover the average transport error from the actual remainder bounds
    (`G4Remainder`, `G4FarTail`), not the old fixed 1/8 allowances.
 3. **Jackson at the entropy degree** — `G4Jackson` must approximate the `1/ρ_K`-Lipschitz,
