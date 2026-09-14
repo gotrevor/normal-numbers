@@ -805,4 +805,124 @@ theorem abs_midRead_freq_sub_le (v : List ℕ) (hlen : 0 < v.length)
     _ ≤ G + (E + G) := by linarith [hstep1, hstep2]
     _ = E + 2 * (L + 4 * S / A) / K := by rw [hG]; ring
 
+/-! ### Any cutoff sequence beyond a vanishing fraction of each band -/
+
+set_option maxHeartbeats 1000000 in
+/-- The error at a mid-band cutoff, in terms of the relative depth `t = |bandS i|/a`. -/
+theorem abs_midRead_freq_sub_le' (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) (i a : ℕ) (ha : 0 < a)
+    (haS : a ≤ (bandS i).card) (h2l : 2 * v.length ≤ kk i) :
+    |(winCount (bandDig (primeLambertAtBase 4)) v (bT i + a * kk i) : ℝ)
+        / ((bT i + a * kk i : ℕ) : ℝ) - 1 / (2 : ℝ) ^ v.length|
+      ≤ 2 * Real.sqrt (1616 * Real.log 2 * (v.length : ℝ)
+            * (((bandS i).card : ℝ) / (a : ℝ) / Real.sqrt (KK i)))
+        + 2 * (v.length : ℝ) / (kk i : ℝ)
+        + 8 * (((bandS i).card : ℝ) / (a : ℝ) / (kk i : ℝ)) := by
+  have hApos : (0 : ℝ) < (a : ℝ) := by exact_mod_cast ha
+  have hKpos : (0 : ℝ) < (kk i : ℝ) := by
+    have := kk_pos' i; exact_mod_cast this
+  have hSnn : (0 : ℝ) ≤ ((bandS i).card : ℝ) := Nat.cast_nonneg _
+  have hKKpos : (0 : ℝ) < (KK i : ℝ) := by
+    have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+    linarith
+  have hS0 : 0 < Real.sqrt ((KK i : ℕ) : ℝ) := Real.sqrt_pos.2 hKKpos
+  have hS400 : (400 : ℝ) ≤ Real.sqrt ((KK i : ℕ) : ℝ) := by
+    have h : (160000 : ℝ) ≤ ((KK i : ℕ) : ℝ) := by exact_mod_cast KK_ge i
+    have h2 : Real.sqrt (160000 : ℝ) ≤ Real.sqrt ((KK i : ℕ) : ℝ) := Real.sqrt_le_sqrt h
+    have h400 : Real.sqrt (160000 : ℝ) = 400 := by
+      rw [show (160000 : ℝ) = 400 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]
+    linarith [h400 ▸ h2]
+  have hkk4 : (KK i : ℝ) = 4 * (kk i : ℝ) := by unfold KK; push_cast; ring
+  have hsq : Real.sqrt ((KK i : ℕ) : ℝ) * Real.sqrt ((KK i : ℕ) : ℝ) = 4 * (kk i : ℝ) := by
+    rw [Real.mul_self_sqrt hKKpos.le, hkk4]
+  have hdle : atomDeficit i + 1 ≤ 101 * Real.sqrt ((KK i : ℕ) : ℝ) := by
+    rw [atomDeficit]; linarith [hS400]
+  have hP : ((PK i).card : ℝ) ≤ 2 * ((bandS i).card : ℝ) := card_bandS_ge' i
+  have hmain := abs_midRead_freq_sub_le v hlen hv i a ha haS h2l
+  refine hmain.trans ?_
+  have hdpos : (0 : ℝ) < atomDeficit i + 1 := by
+    have := atomDeficit_pos i; linarith
+  -- the sqrt argument
+  have harg : 2 * Real.log 2 * (v.length : ℝ) * ((atomDeficit i + 1) * ((PK i).card : ℝ))
+      / ((a : ℝ) * (kk i : ℝ))
+      ≤ 1616 * Real.log 2 * (v.length : ℝ)
+          * (((bandS i).card : ℝ) / (a : ℝ) / Real.sqrt (KK i)) := by
+    have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+    have hLnn : (0 : ℝ) ≤ (v.length : ℝ) := Nat.cast_nonneg _
+    rw [div_le_iff₀ (by positivity)]
+    have hnum : (atomDeficit i + 1) * ((PK i).card : ℝ)
+        ≤ 202 * Real.sqrt ((KK i : ℕ) : ℝ) * ((bandS i).card : ℝ) := by
+      nlinarith [hdle, hP, hSnn, hS0, hdpos]
+    have hrhs : 1616 * Real.log 2 * (v.length : ℝ)
+        * (((bandS i).card : ℝ) / (a : ℝ) / Real.sqrt (KK i)) * ((a : ℝ) * (kk i : ℝ))
+        = 404 * Real.log 2 * (v.length : ℝ) * ((bandS i).card : ℝ)
+            * Real.sqrt ((KK i : ℕ) : ℝ) := by
+      rw [show (kk i : ℝ) = Real.sqrt ((KK i : ℕ) : ℝ) * Real.sqrt ((KK i : ℕ) : ℝ) / 4 by
+        rw [hsq]; ring]
+      have hne : Real.sqrt ((KK i : ℕ) : ℝ) ≠ 0 := hS0.ne'
+      have hane : (a : ℝ) ≠ 0 := hApos.ne'
+      field_simp
+      ring
+    rw [hrhs]
+    nlinarith [mul_le_mul_of_nonneg_left hnum
+      (by positivity : (0:ℝ) ≤ 2 * Real.log 2 * (v.length : ℝ))]
+  have hsqrtle := Real.sqrt_le_sqrt harg
+  -- the linear terms
+  have hlin : 2 * ((v.length : ℝ) + 4 * ((bandS i).card : ℝ) / (a : ℝ)) / (kk i : ℝ)
+      = 2 * (v.length : ℝ) / (kk i : ℝ)
+        + 8 * (((bandS i).card : ℝ) / (a : ℝ) / (kk i : ℝ)) := by
+    field_simp
+    ring
+  rw [hlin]
+  linarith [mul_le_mul_of_nonneg_left hsqrtle (by norm_num : (0:ℝ) ≤ 2)]
+
+set_option maxHeartbeats 1000000 in
+/-- **Any cutoff sequence beyond a vanishing fraction of each band works.**  If the relative
+depth `t_i = |bandS i|/a_i` is `o(√K)` and `o(m_K)`, the frequency of `v` at the cutoffs
+`bT i + a_i·m_i` tends to `2^{−|v|}`.
+
+`tendsto_midRead_freq` is the case `t_i = 1/c`; taking `t_i = K^{1/4}` shows that all but an
+initial `K^{−1/4}` fraction of each band is a good cutoff. -/
+theorem tendsto_midRead_freq_of_depth (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) (aa : ℕ → ℕ)
+    (h1 : ∀ i, 0 < aa i) (h2 : ∀ i, aa i ≤ (bandS i).card)
+    (h3 : Tendsto (fun i => ((bandS i).card : ℝ) / (aa i : ℝ) / Real.sqrt (KK i))
+      atTop (nhds 0))
+    (h4 : Tendsto (fun i => ((bandS i).card : ℝ) / (aa i : ℝ) / (kk i : ℝ)) atTop (nhds 0)) :
+    Tendsto (fun i =>
+        (winCount (bandDig (primeLambertAtBase 4)) v (bT i + aa i * kk i) : ℝ)
+          / ((bT i + aa i * kk i : ℕ) : ℝ))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+  have hbound : Tendsto (fun i => 2 * Real.sqrt (1616 * Real.log 2 * (v.length : ℝ)
+        * (((bandS i).card : ℝ) / (aa i : ℝ) / Real.sqrt (KK i)))
+      + 2 * (v.length : ℝ) / (kk i : ℝ)
+      + 8 * (((bandS i).card : ℝ) / (aa i : ℝ) / (kk i : ℝ))) atTop (nhds 0) := by
+    have hA : Tendsto (fun i => 2 * Real.sqrt (1616 * Real.log 2 * (v.length : ℝ)
+        * (((bandS i).card : ℝ) / (aa i : ℝ) / Real.sqrt (KK i)))) atTop (nhds 0) := by
+      have h := h3.const_mul (1616 * Real.log 2 * (v.length : ℝ))
+      simp only [mul_zero] at h
+      have h' := h.sqrt
+      simp only [Real.sqrt_zero] at h'
+      have h'' := h'.const_mul (2 : ℝ)
+      simpa using h''
+    have hB : Tendsto (fun i => 2 * (v.length : ℝ) / (kk i : ℝ)) atTop (nhds 0) :=
+      tendsto_const_div_kk _
+    have hC : Tendsto (fun i => 8 * (((bandS i).card : ℝ) / (aa i : ℝ) / (kk i : ℝ)))
+        atTop (nhds 0) := by
+      have := h4.const_mul (8 : ℝ)
+      simpa using this
+    have := (hA.add hB).add hC
+    simpa using this
+  have hzero : Tendsto (fun i =>
+      (winCount (bandDig (primeLambertAtBase 4)) v (bT i + aa i * kk i) : ℝ)
+        / ((bT i + aa i * kk i : ℕ) : ℝ) - 1 / (2 : ℝ) ^ v.length) atTop (nhds 0) := by
+    refine squeeze_zero_norm' ?_ hbound
+    filter_upwards [eventually_ge_atTop (2 * v.length)] with i hi
+    have hli : 2 * v.length ≤ kk i := by unfold kk; omega
+    simpa [Real.norm_eq_abs] using
+      abs_midRead_freq_sub_le' v hlen hv i (aa i) (h1 i) (h2 i) hli
+  have := hzero.add (tendsto_const_nhds (x := (1 : ℝ) / (2 : ℝ) ^ v.length) (f := atTop))
+  rw [zero_add] at this
+  exact this.congr fun i => by ring
+
 end NormalNumbers.G4.Sched
