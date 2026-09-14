@@ -421,4 +421,118 @@ theorem full_winCount_bounds (x : ℝ) (i : ℕ) (v : List ℕ) (hv : 0 < v.leng
   rw [hsplit]
   omega
 
+/-! ### From distinct windows to `(n, α)` pairs: the multiplicity bridge -/
+
+open Classical in
+/-- The window-occurrence count of one window start. -/
+noncomputable def winOcc (i : ℕ) (x : ℝ) (v : List ℕ) (q : ℕ) : ℕ :=
+  ((Finset.range (kk i - v.length + 1)).filter (fun p => OccursAt 2 x v (q + p))).card
+
+lemma winOcc_le (i : ℕ) (x : ℝ) (v : List ℕ) (q : ℕ) :
+    winOcc i x v q ≤ kk i - v.length + 1 := by
+  classical
+  refine le_trans (Finset.card_filter_le _ _) ?_
+  simp [winOcc]
+
+open Classical in
+/-- The band's `(n, α)` pairs. -/
+noncomputable def bandPairs (i : ℕ) : Finset (ℕ × (gridAt i).Atom) :=
+  (bandT i) ×ˢ (Finset.univ : Finset (gridAt i).Atom)
+
+open Classical in
+lemma winStarts_eq_image (i : ℕ) :
+    winStarts i = (bandPairs i).image (fun z => 2 * kIdx (gridAt i) z.1 z.2) := rfl
+
+open Classical in
+/-- **The pair sum is the multiplicity-weighted start sum.** -/
+theorem sum_pairs_eq (i : ℕ) (x : ℝ) (v : List ℕ) :
+    ∑ z ∈ bandPairs i, winOcc i x v (2 * kIdx (gridAt i) z.1 z.2)
+      = ∑ q ∈ winStarts i,
+          ((bandPairs i).filter (fun z => 2 * kIdx (gridAt i) z.1 z.2 = q)).card
+            * winOcc i x v q := by
+  classical
+  rw [winStarts_eq_image]
+  have hfib := Finset.sum_fiberwise_of_maps_to
+    (s := bandPairs i) (t := (bandPairs i).image (fun z => 2 * kIdx (gridAt i) z.1 z.2))
+    (g := fun z => 2 * kIdx (gridAt i) z.1 z.2)
+    (fun z hz => Finset.mem_image_of_mem _ hz)
+    (fun z => winOcc i x v (2 * kIdx (gridAt i) z.1 z.2))
+  rw [← hfib]
+  refine Finset.sum_congr rfl fun q hq => ?_
+  have hcongr : ∀ z ∈ (bandPairs i).filter (fun z => 2 * kIdx (gridAt i) z.1 z.2 = q),
+      winOcc i x v (2 * kIdx (gridAt i) z.1 z.2) = winOcc i x v q := by
+    intro z hz
+    rw [(Finset.mem_filter.1 hz).2]
+  rw [Finset.sum_congr rfl hcongr, Finset.sum_const, smul_eq_mul]
+
+open Classical in
+/-- Each fiber is nonempty, so the excess `|pairs| − |starts|` is the total multiplicity
+overhang. -/
+theorem card_bandPairs_sub (i : ℕ) :
+    (winStarts i).card ≤ (bandPairs i).card := by
+  classical
+  rw [winStarts_eq_image]
+  exact Finset.card_image_le
+
+open Classical in
+/-- **The pair sum exceeds the start sum by at most the overhang, times the window length.** -/
+theorem sum_pairs_sub_le (i : ℕ) (x : ℝ) (v : List ℕ) :
+    ∑ q ∈ winStarts i, winOcc i x v q ≤ ∑ z ∈ bandPairs i,
+        winOcc i x v (2 * kIdx (gridAt i) z.1 z.2) ∧
+      ∑ z ∈ bandPairs i, winOcc i x v (2 * kIdx (gridAt i) z.1 z.2)
+        ≤ ∑ q ∈ winStarts i, winOcc i x v q
+          + ((bandPairs i).card - (winStarts i).card) * (kk i - v.length + 1) := by
+  classical
+  rw [sum_pairs_eq i x v]
+  have hfib : ∀ q ∈ winStarts i,
+      1 ≤ ((bandPairs i).filter (fun z => 2 * kIdx (gridAt i) z.1 z.2 = q)).card := by
+    intro q hq
+    rw [winStarts_eq_image, Finset.mem_image] at hq
+    obtain ⟨z, hz, hzq⟩ := hq
+    exact Finset.card_pos.2 ⟨z, Finset.mem_filter.2 ⟨hz, hzq⟩⟩
+  have hsumfib : ∑ q ∈ winStarts i,
+      ((bandPairs i).filter (fun z => 2 * kIdx (gridAt i) z.1 z.2 = q)).card
+      = (bandPairs i).card := by
+    rw [winStarts_eq_image]
+    exact (Finset.card_eq_sum_card_fiberwise
+      (fun z hz => Finset.mem_image_of_mem _ hz)).symm
+  constructor
+  · refine Finset.sum_le_sum fun q hq => ?_
+    have hc := hfib q hq
+    exact Nat.le_mul_of_pos_left _ (by omega)
+  · have hterm : ∀ q ∈ winStarts i,
+        ((bandPairs i).filter (fun z => 2 * kIdx (gridAt i) z.1 z.2 = q)).card
+            * winOcc i x v q
+          ≤ winOcc i x v q
+            + (((bandPairs i).filter (fun z => 2 * kIdx (gridAt i) z.1 z.2 = q)).card - 1)
+              * (kk i - v.length + 1) := by
+      intro q hq
+      have h1 := hfib q hq
+      have h2 := winOcc_le i x v q
+      set c := ((bandPairs i).filter (fun z => 2 * kIdx (gridAt i) z.1 z.2 = q)).card with hc
+      have hc1 : c - 1 + 1 = c := by omega
+      calc c * winOcc i x v q = ((c - 1) + 1) * winOcc i x v q := by rw [hc1]
+        _ = winOcc i x v q + (c - 1) * winOcc i x v q := by ring
+        _ ≤ winOcc i x v q + (c - 1) * (kk i - v.length + 1) := by
+            exact Nat.add_le_add_left (Nat.mul_le_mul_left _ h2) _
+    refine le_trans (Finset.sum_le_sum hterm) ?_
+    rw [Finset.sum_add_distrib, ← Finset.sum_mul]
+    refine Nat.add_le_add_left (Nat.mul_le_mul_right _ ?_) _
+    have hsub : ∑ q ∈ winStarts i,
+        (((bandPairs i).filter (fun z => 2 * kIdx (gridAt i) z.1 z.2 = q)).card - 1)
+        ≤ (bandPairs i).card - (winStarts i).card := by
+      have hle : ∑ q ∈ winStarts i, 1 ≤ ∑ q ∈ winStarts i,
+          ((bandPairs i).filter (fun z => 2 * kIdx (gridAt i) z.1 z.2 = q)).card :=
+        Finset.sum_le_sum hfib
+      have hcards : ∑ q ∈ winStarts i, (1 : ℕ) = (winStarts i).card := by simp
+      have hsplit : ∑ q ∈ winStarts i,
+          (((bandPairs i).filter (fun z => 2 * kIdx (gridAt i) z.1 z.2 = q)).card - 1)
+          = (∑ q ∈ winStarts i,
+              ((bandPairs i).filter (fun z => 2 * kIdx (gridAt i) z.1 z.2 = q)).card)
+            - ∑ q ∈ winStarts i, 1 := by
+        rw [← Finset.sum_tsub_distrib]
+        exact fun q hq => hfib q hq
+      rw [hsplit, hsumfib, hcards]
+    exact hsub
+
 end NormalNumbers.G4.Sched
