@@ -64,7 +64,7 @@ widening `C₀`.
 
 ### Next actions (in order; every step green + committed)
 
-1. **Weight-generic frame** (`G4Wiring`): add `w : ℕ → ℝ` and `x : ℝ` to `Frame`, `Ffull` with
+1. ✅ DONE (`f9c2f62`). **Weight-generic frame** (`G4Wiring`): add `w : ℕ → ℝ` and `x : ℝ` to `Frame`, `Ffull` with
    `w`, `image` over `orbitClosureOf bse x`; `gridFrame` sets `w := omegaR, x := primeLambertAtBase`
    so every existing theorem is unchanged.  `finite_contradiction`, `isDisjunctive_of_frames`
    generalised to `SeparatingFrameExistsW bb x` with the old one its instance.
