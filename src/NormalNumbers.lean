@@ -273,3 +273,4 @@ import NormalNumbers.G4EntropyMixture
 import NormalNumbers.G4EntropyWindows
 import NormalNumbers.G4EntropyAtomFreq
 import NormalNumbers.G4EntropyBand
+import NormalNumbers.G4EntropyBandFreq
