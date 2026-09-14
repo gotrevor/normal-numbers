@@ -663,3 +663,92 @@ theorem not_dense_of_scalePairs (S : Finset (ℕ × ℕ)) (mm XX : ℕ × ℕ �
   linarith
 
 end NormalNumbers.G4Entropy
+
+/-! ## The obstruction is intrinsic to freezing
+
+Every negative result above traces to one comparison: the multipliers satisfy
+`d_α ≥ 1 + Q·D₀` while the sample's alphabet has size `H_K·m_K = (K²+1)^K·m`.  A sampler with
+any hope of reading a positive fraction of the digit positions would need its *period* `2 d_min`
+to be comparable to its *alphabet* `H·m` — say `2 d_min ≤ C·H·m` for a fixed `C`.
+
+That is impossible.  `GridParams` forces `Q ≥ U` and `D₀ = K·U` (the freezing modulus must beat
+every `u_α`), and `U ≥ B^K ≥ K^{3K}`, so `2 d_min ≥ 2K·K^{6K}` while `C·H·m ≤ K^{3K+2}` once
+`C ≤ K`.  The gap is `K^{3K}`, not a constant: **no admissible scale is readable**, and the
+sparsity of the sample is a consequence of the freezing construction itself, not of any choice
+made inside it.
+-/
+
+namespace NormalNumbers.G4Entropy
+
+open NormalNumbers NormalNumbers.G4 Finset
+
+lemma cube_le_gridB (K N : ℕ) : K ^ 3 ≤ gridB K N := by
+  unfold gridB
+  have : K ^ 2 * K ≤ K ^ 2 * (K + N) := Nat.mul_le_mul_left _ (by omega)
+  calc K ^ 3 = K ^ 2 * K := by ring
+    _ ≤ K ^ 2 * (K + N) := this
+    _ ≤ K ^ 2 * (K + N) + 1 := by omega
+
+/-- **No admissible scale is readable.**  For every constant `C` and every scale `K ≥ max(C,4)`,
+the sample's period `2 d_min` exceeds `C` times its alphabet `H_K·m`, whatever the layer count
+`N` and whatever the block length `m ≤ K`. -/
+theorem not_readable_scale {C K N m : ℕ} (hK : 4 ≤ K) (hCK : C ≤ K) (hm : m ≤ K) :
+    C * ((K ^ 2 + 1) ^ K * m) < 2 * scaleDmin K N := by
+  have hK1 : 1 ≤ K := by omega
+  have hK2 : 2 ≤ K := by omega
+  set U := gridUmax K N with hU
+  -- lower bound on the period
+  have hBU : gridB K N ^ K ≤ U := NormalNumbers.G4.Sched.pow_le_gridUmax hK1
+  have hcube : (K ^ 3) ^ K ≤ gridB K N ^ K := Nat.pow_le_pow_left (cube_le_gridB K N) K
+  have hKU : K ^ (3 * K) ≤ U := by
+    calc K ^ (3 * K) = (K ^ 3) ^ K := by rw [← pow_mul]
+      _ ≤ gridB K N ^ K := hcube
+      _ ≤ U := hBU
+  have hQU : U ≤ gridQ K N := by have := gridQ_gt K N; omega
+  have hD₀ : gridD₀ K N = K * U := rfl
+  have hper : K * (U * U) ≤ scaleDmin K N := by
+    unfold scaleDmin
+    rw [hD₀]
+    have h : U * (K * U) ≤ gridQ K N * (K * U) := Nat.mul_le_mul_right _ hQU
+    calc K * (U * U) = U * (K * U) := by ring
+      _ ≤ gridQ K N * (K * U) := h
+      _ ≤ 1 + gridQ K N * (K * U) := by omega
+  have hUU : K ^ (6 * K) ≤ U * U := by
+    have : K ^ (3 * K) * K ^ (3 * K) ≤ U * U := Nat.mul_le_mul hKU hKU
+    calc K ^ (6 * K) = K ^ (3 * K) * K ^ (3 * K) := by rw [← pow_add]; ring_nf
+      _ ≤ U * U := this
+  have hlow : K ^ (6 * K + 1) ≤ scaleDmin K N := by
+    refine le_trans ?_ hper
+    calc K ^ (6 * K + 1) = K * K ^ (6 * K) := by rw [pow_succ]; ring
+      _ ≤ K * (U * U) := Nat.mul_le_mul_left _ hUU
+  -- upper bound on the alphabet
+  have halph : C * ((K ^ 2 + 1) ^ K * m) ≤ K ^ (3 * K + 2) := by
+    have h1 : (K ^ 2 + 1) ^ K ≤ (2 * K ^ 2) ^ K := by
+      refine Nat.pow_le_pow_left ?_ K
+      nlinarith [Nat.one_le_pow 2 K (by omega : 0 < K)]
+    have h2 : (2 * K ^ 2) ^ K = 2 ^ K * K ^ (2 * K) := by
+      rw [mul_pow, ← pow_mul]
+    have h3 : (2 : ℕ) ^ K ≤ K ^ K := Nat.pow_le_pow_left hK2 K
+    have h4 : (K ^ 2 + 1) ^ K ≤ K ^ (3 * K) := by
+      calc (K ^ 2 + 1) ^ K ≤ (2 * K ^ 2) ^ K := h1
+        _ = 2 ^ K * K ^ (2 * K) := h2
+        _ ≤ K ^ K * K ^ (2 * K) := Nat.mul_le_mul_right _ h3
+        _ = K ^ (3 * K) := by rw [← pow_add]; ring_nf
+    calc C * ((K ^ 2 + 1) ^ K * m) ≤ K * (K ^ (3 * K) * K) :=
+          Nat.mul_le_mul hCK (Nat.mul_le_mul h4 hm)
+      _ = K ^ (3 * K + 2) := by ring
+  have hmono : K ^ (3 * K + 2) ≤ K ^ (6 * K + 1) :=
+    Nat.pow_le_pow_right hK1 (by omega)
+  have hpos : 0 < K ^ (6 * K + 1) := pow_pos (by omega) _
+  omega
+
+/-- The readable-scale property, named for the record: a scale whose sampling *period* is
+comparable to its alphabet.  `not_readable_scale` says it is empty for `K ≥ max(C,4)`. -/
+def ReadableScale (C K N m : ℕ) : Prop := 2 * scaleDmin K N ≤ C * ((K ^ 2 + 1) ^ K * m)
+
+theorem not_readableScale {C K N m : ℕ} (hK : 4 ≤ K) (hCK : C ≤ K) (hm : m ≤ K) :
+    ¬ ReadableScale C K N m := by
+  intro h
+  exact absurd h (not_le.2 (not_readable_scale hK hCK hm))
+
+end NormalNumbers.G4Entropy
