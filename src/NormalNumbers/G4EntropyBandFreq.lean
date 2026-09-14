@@ -210,4 +210,106 @@ theorem abs_posAvg_bandLaw_le (i ℓ : ℕ) (hℓ : 0 < ℓ) (hℓm : 2 * ℓ �
     positivity
   exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hstep) (by norm_num)
 
+/-! ### The band count, and its limit -/
+
+open Classical in
+/-- **The band's count rendering.** -/
+theorem posAvg_bandLaw_eq_count (i ℓ : ℕ) (x : ℝ) (w : Fin (2 ^ ℓ)) :
+    posAvg (kk i) ℓ (bandLaw i x) w
+      = (∑ p : Fin (kk i - ℓ + 1),
+            (((bandS i).filter fun n =>
+              posAt (kk i) ℓ (p : ℕ) (ZVec (gridAt i) (kk i) x n (goodAtom i)) = w).card : ℝ))
+        / (((bandS i).card : ℝ) * ((kk i - ℓ + 1 : ℕ) : ℝ)) := by
+  classical
+  have hp : ∀ p : Fin (kk i - ℓ + 1),
+      ((bandLaw i x).map
+          (fun z : Unit → Fin (2 ^ kk i) => posAt (kk i) ℓ (p : ℕ) (z default))).prob {w}
+        = (((bandS i).filter fun n =>
+              posAt (kk i) ℓ (p : ℕ) (ZVec (gridAt i) (kk i) x n (goodAtom i)) = w).card : ℝ)
+          / ((bandS i).card : ℝ) := by
+    intro p
+    rw [bandLaw, FinLaw.prob, Finset.sum_singleton]
+    exact map_empirical_p (bandS_nonempty i) _ _ w
+  rw [posAvg, Fintype.sum_prod_type]
+  simp only [Fintype.card_unit, Nat.cast_one, one_mul, Finset.univ_unique,
+    Finset.sum_singleton, hp]
+  rw [← Finset.sum_div, div_div]
+
+open Classical in
+/-- **The band's digit rendering.** -/
+theorem posAvg_bandLaw_eq_digits (i ℓ : ℕ) (hℓm : ℓ ≤ kk i) (x : ℝ) (w : Fin (2 ^ ℓ)) :
+    posAvg (kk i) ℓ (bandLaw i x) w
+      = (∑ p : Fin (kk i - ℓ + 1),
+            (((bandS i).filter fun n =>
+              blockVal (Int.fract x) (2 * kIdx (gridAt i) n (goodAtom i) + (p : ℕ)) ℓ
+                = (w : ℕ)).card : ℝ))
+        / (((bandS i).card : ℝ) * ((kk i - ℓ + 1 : ℕ) : ℝ)) := by
+  classical
+  rw [posAvg_bandLaw_eq_count i ℓ x w]
+  congr 1
+  refine Finset.sum_congr rfl fun p _ => ?_
+  congr 2
+  have hZ : ∀ n : ℕ, ZVec (gridAt i) (kk i) x n (goodAtom i)
+      = ⟨blockVal (Int.fract x) (2 * kIdx (gridAt i) n (goodAtom i)) (kk i),
+        blockVal_lt _ _ _⟩ :=
+    fun n => Fin.ext (ZSample_eq_blockVal (gridAt i) (kk i) x n (goodAtom i))
+  have hfit : (p : ℕ) + ℓ ≤ kk i := by
+    have := p.isLt
+    omega
+  refine Finset.filter_congr fun n _ => ?_
+  rw [hZ n, posAt_blockVal _ _ _ _ _ hfit]
+  exact ⟨fun h => congrArg Fin.val h, fun h => Fin.ext h⟩
+
+open Classical in
+/-- **The band's frequency limit.**  For every finite binary word `v`, the proportion of pairs
+`(n, p)` with `n` a band-`i` sample time at the good atom and `p` a window position, at which
+`v` occurs in `G₄`'s digits at `2·kIdx(n, goodAtom i) + p`, tends to `2^{−|v|}`. -/
+theorem tendsto_band_occursCount (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
+    Tendsto (fun i =>
+      (∑ p : Fin (kk i - v.length + 1),
+          (((bandS i).filter fun n =>
+            OccursAt 2 (primeLambertAtBase 4) v
+              (2 * kIdx (gridAt i) n (goodAtom i) + (p : ℕ))).card : ℝ))
+        / (((bandS i).card : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ)))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+  classical
+  set w : ∀ i : ℕ, Fin (2 ^ v.length) := fun _ => ⟨wordVal v, wordVal_lt hv⟩ with hw
+  have hgrow : Tendsto (fun i => (v.length : ℝ) / Real.sqrt (KK i)) atTop (nhds 0) := by
+    have hsqrt : Tendsto (fun i => Real.sqrt (KK i)) atTop atTop :=
+      Real.tendsto_sqrt_atTop.comp tendsto_KK_atTop
+    exact hsqrt.const_div_atTop _
+  have hinner : Tendsto (fun i => 2000 * Real.log 2 * (v.length : ℝ) / Real.sqrt (KK i))
+      atTop (nhds 0) := by
+    have h := hgrow.const_mul (2000 * Real.log 2)
+    simp only [mul_zero] at h
+    refine h.congr fun i => ?_
+    rw [mul_div_assoc]
+  have hsq : Tendsto (fun i => 2 * Real.sqrt (2000 * Real.log 2 * (v.length : ℝ)
+      / Real.sqrt (KK i))) atTop (nhds 0) := by
+    have := hinner.sqrt
+    simpa using this.const_mul (2 : ℝ)
+  have hzero : Tendsto (fun i =>
+      posAvg (kk i) v.length (bandLaw i (primeLambertAtBase 4)) (w i)
+        - 1 / (2 : ℝ) ^ v.length) atTop (nhds 0) := by
+    refine squeeze_zero_norm' ?_ hsq
+    filter_upwards [eventually_ge_atTop (2 * v.length)] with i hi
+    have hle : 2 * v.length ≤ kk i := by unfold kk; omega
+    simpa [Real.norm_eq_abs] using abs_posAvg_bandLaw_le i v.length hlen hle (w i)
+  have hmain : Tendsto (fun i =>
+      posAvg (kk i) v.length (bandLaw i (primeLambertAtBase 4)) (w i))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+    have hlim : Tendsto (fun _ : ℕ => (1 : ℝ) / (2 : ℝ) ^ v.length) atTop
+        (nhds (1 / (2 : ℝ) ^ v.length)) := tendsto_const_nhds
+    simpa using hzero.add hlim
+  refine hmain.congr' ?_
+  filter_upwards [eventually_ge_atTop v.length] with i hi
+  have hle : v.length ≤ kk i := by unfold kk; omega
+  rw [posAvg_bandLaw_eq_digits i v.length hle _ (w i)]
+  congr 1
+  refine Finset.sum_congr rfl fun p _ => ?_
+  congr 2
+  refine Finset.filter_congr fun n _ => ?_
+  exact blockVal_eq_wordVal_iff (y := primeLambertAtBase 4) hv
+
 end NormalNumbers.G4.Sched
