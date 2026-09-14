@@ -1,5 +1,36 @@
 # PENDING_WORK
 
+## ✅ CLOSED — brief §6 is a CHARACTERIZATION, not a bound (entropy laps 16–17, 2026-09-14)
+
+Lap 16 (`G4EntropyDensityOne.lean`) sharpened the locality barrier from *density ≥ 1/2* to
+*density = 1*: comparing the zero filling of the unread positions with the parity filling (a `1`
+at the even-indexed positions of `Sᶜ`) forces both ones-densities to be exactly `1/2`, so `Sᶜ`
+has density `0`.  `exists_nonnormal_of_digitLocal_of_lt_one` therefore refutes at **any** `c < 1`.
+
+Lap 17 (`G4EntropyStable.lean`) showed the threshold is attained: normality is invariant under
+density-zero digit changes (`isNormal_congr_of_density_zero`), so at density one normality is
+itself digit-local.  `exists_digitLocal_forces_normal_iff` states the characterization (modulo
+the existence of a binary normal number in `[0,1)`, carried as a hypothesis).
+
+**Consequence for the campaign.**  Inside digit-locality there is no repair to look for: a
+sampler would have to read all but a density-zero set of the digits of `G₄`, at which point its
+hypothesis *is* normality.  The open room is outside digit-locality only.
+
+Open items, hardest first:
+
+1. **Name the non-digit-local room.**  State `IsBlockLocal` and prove the `G4Jackson` /
+   `G4SeparatingTest` bounded-Lipschitz bump functional is not block-local (two reals with the
+   same sampled blocks at every scale, different bump values).  That is what an entropy
+   statement would have to be about instead of `E0`.
+2. **`∃ z ∈ [0,1), IsNormal 2 z`** — discharges the hypothesis of
+   `exists_digitLocal_forces_normal_iff` and makes the characterization unconditional.
+   Champernowne base 2; long but self-contained.
+3. A sampler not built from a frozen CRT modulus (session-wrap item 2).  Still open as
+   mathematics, but lap 16–17 raise its bar from `density ≥ 1/2` to `density → 1`, which no
+   arithmetic sampler of this shape can meet.
+
+---
+
 ## ✅ RESOLVED — brief §6 `T_E` is **REFUTED** (entropy lap 8, 2026-09-14)
 
 `NormalNumbers.G4.Sched.not_T_E : ¬ T_E`, axiom-clean, `HANDOFF-2026-09-14-entropy-lap8.md`.
