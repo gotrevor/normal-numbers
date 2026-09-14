@@ -47,11 +47,13 @@ noticed the change, which confirms the A0 audit from the other side.
 Each is the `X'`-version of an existing `X K` lemma whose `X` dependence runs through
 `card_apSample_ge_half : X/(2P₀) ≤ |apSample X P₀ b₀|`.
 
-1. **`hfar_holds_down`** (easiest).  `farC G X' Dm = log((X'+Dm)/|P'|) + log(log(X'+Dm)+1)`.
+1. ✅ **`hfar_holds_down` — DONE.**  `farC G X' Dm = log((X'+Dm)/|P'|) + log(log(X'+Dm)+1)`.
    With `2P₀ ≤ Xlo K ≤ X'`, the first term is `≤ log(4P₀)` exactly as in `farC_le`; the second
    is `≤ log(log(2 X K)+1) ≤ m K + 8`, monotone, so `farC_le`'s bound
    `farC ≤ logP₀Nat K + m + 10` holds verbatim.  Then `four_mul_le_four_pow_N` finishes.
-   → generalize `farC_le` to `2P₀ ≤ X' ≤ X K` and re-run `hfar_holds`.
+   Landed as `farC_le_down` (+ `two_mul_exp_le_Xlo`, `gridDm_le_Xlo`), then `hfar_holds`'s own
+   proof verbatim.  Confirms the design: the `X` dependence really was only through
+   `card_apSample_ge_half` and monotone `log`s.
 2. **`hbig_holds_down`**.  `log Mx'/log Y ≤ 101` by `hhi` (monotone, `log_Mx_div_le` verbatim).
    The finite-sample term needs `|P'| ≥ Y^{50}/(2P₀)`; the `X K` proof wanted
    `Y²P₀/X ≤ 2^{−96·2^m}`, here `Y²P₀/Xlo ≤ 2^{−46·2^m}` — the same computation with `96 → 46`.
