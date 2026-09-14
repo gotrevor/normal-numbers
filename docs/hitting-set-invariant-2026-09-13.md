@@ -44,15 +44,25 @@ reproduces the naive controls; the naive short-circuit search stays faster for t
 | (3,1) | 2 | 162 pairs ≤ 40, incl. `{1,2}` (B–B) and `{2,11}` (tower C2) | 2 | **`{2,11}` unique ≤ 20**; `{1,2}` is per-block only | pairs ≤ 40 / ≤ 20 |
 | (4,1) | 3 | `{1,10,14}` (unique ≤ 40); **35 triples ≤ 60**, e.g. `{2,5,7}`, `{1,10,56}`, `{3,30,42}` | > 3 | – | sizes ≤ 3, ≤ 60 |
 | (5,1) | **5** | 2008 sets ≤ 30, e.g. `{1,2,3,4,6}`, `{1,2,3,4,8}`, `{1,2,3,6,14}` | – | – | sizes ≤ 5, ≤ 30 |
-| (6,1), (7,1) | > 5 | – | – | – | sizes ≤ 5, ≤ 30 |
+| (6,1) | **7** | 4 sets ≤ 24: `{1,8,11,14,16,20,23}`, `{3,7,10,13,14,17,20}`, `{6,8,11,14,16,20,23}`, `{7,10,13,14,17,18,20}`; no 6-set ≤ 24 | – | – | sizes ≤ 7, ≤ 24 |
+| (7,1) | > 6 | – | – | – | sizes ≤ 6, ≤ 24 |
+| (8,1), (9,1) | > 8 | – | – | – | sizes ≤ 8, ≤ 20 (cap probably binding) |
+| (10,1) | > 9 | – | – | – | sizes ≤ 9, ≤ 20 (cap probably binding) |
 | (2,2) | 2 | `{1,3}` (unique ≤ 40); **151 pairs ≤ 60**, e.g. `{1,6}`, `{1,11}`, `{1,12}`, `{2,3}` | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
 | (2,3) | 4 | `{1,3,5,7}` unique ≤ 40; **928 sets ≤ 60**, e.g. `{1,3,5,14}`, `{1,3,7,10}`, `{1,3,10,14}` (in ratios `{1,3,5,14}` is new, not a scaling) | > 4 (`{1,3,5,7}` fails) | – | sizes ≤ 4, ≤ 60 (naive, 2 h 38 min) |
-| (2,4) | > 6 | **`{1,3,…,15}` does NOT hit** (nor any 7-subset of it); no set of size ≤ 6 below 20 | – | – | sizes ≤ 6, ≤ 20 |
+| (2,4) | > 7 | **`{1,3,…,15}` does NOT hit** (nor any 7-subset of it); no set of size ≤ 7 below 20, so the *value* `2^(k−1) = 8` is still possible | – | – | sizes ≤ 7, ≤ 20 (size 8 running) |
 | (3,2) | **6** | 42 sets ≤ 20, e.g. `{1,2,4,5,7,8}`, `{1,4,5,6,7,8}` | – | – | sizes ≤ 6, ≤ 20 |
 
-Read along rows: `S(g,1) = 1, 2, 3, 5, >5, >5` for `g = 2..7`; `S(2,k) = 1, 2, 4, >6` for
-`k = 1..4`; `S(3,k) = 2, 6`.  The tempting conjecture `S(2,k) = 2^(k−1)` via the odd multipliers
-below `2^k` is **refuted at `k = 4`** (no 6-set below 20 hits).  Every ">" is a search cap on the
+Read along rows: `S(g,1) = 1, 2, 3, 5, 7, >6, >8, >8, >9` for `g = 2..10`; `S(2,k) = 1, 2, 4, >7`
+for `k = 1..4`; `S(3,k) = 2, 6`.  The tempting conjecture that the odd multipliers below `2^k`
+realise `S(2,k) = 2^(k−1)` is **refuted at `k = 4`**, but the value `8` is not.  `S(6,1) = 7` is
+the first value above `g`; base 8 (a prime power) is already `> 8`, so no "prime power vs two
+primes" reading.  **Growth heuristic (Fable, 19:50)**: each multiplier deletes about a fraction
+`g^(−k)` of the product automaton's edges and branching survives until a constant fraction is
+gone, so `S(g,k) ≍ g^k` - the order of Mahler's `g^(k+1)`; every entry above is consistent.
+Whether `S(g,k)` is even unbounded in `k` is open: B–B 95 Cor 3.3 does not settle it, and every
+adversary we have (sparse, background+burst, local lemma) is limited to multipliers with about
+`g^k` digits - the analysis is in the KB leaf `moonshot-review-2026-09-13.md` §7.20.  Every ">" is a search cap on the
 multipliers, never a theorem; every exact value's upper half is exact (a hitting set is a finite
 automaton verdict).
 
@@ -145,6 +155,15 @@ elements is in `scratchpad/n4_edge_test.py` (results in the KB leaf §7.19).
    make `{1, q}` hit at `(2,2)`?) is the first thing to characterize.
 
 The caps are search limits, not theorems.  The graph as of 17:55–18:40:
+- **U1–U4, L1, mono - GREEN 2026-09-13 20:43** (`src/NormalNumbers/HittingSetBounds.lean`, one
+  Fable lap, 60 min, commit `15945c8`, every certificate a kernel `decide`, the 26880-state
+  family chunked through `checkEdgesOnA_of_chunks`): `hitting_4_1_three : IsHittingSet 4 1
+  {1,10,14}` (**`S(4,1) ≤ 3`**), `hitting_5_1_five : IsHittingSet 5 1 {1,2,3,4,6}` (**`S(5,1) ≤ 5`**),
+  `hitting_2_2_two : IsHittingSet 2 2 {1,3}` (**`S(2,2) ≤ 2`**), `hitting_2_3_four : IsHittingSet
+  2 3 {1,3,5,7}` (**`S(2,3) ≤ 4`**), `IsHittingSet.mono`, and `not_hitting_5_1_four`,
+  `not_hitting_5_1_five` from `Mahler.mahler_lower_bound_base5`.  All seven on the standard
+  triple (`#print axioms`, host, 20:58).  So at `(5,1)` both halves of the base-5 story are
+  theorems: `{1,2,3,4}` fails, `{1,2,3,4,6}` works, `M(5,1) = 6` while `S(5,1) ≤ 5`.
 - **N1 (wiring) - GREEN 2026-09-13 19:00** (`src/NormalNumbers/SparseAdversary.lean`, one
   Fable lap, 16 min, commit `2cffd31`): `not_isHittingSet_of_avoider` - for finite `S`, base
   `g ≥ 2`, a block `w` of length `k ≥ 1` with a nonzero digit, and one `B ≥ 1` with
@@ -162,4 +181,7 @@ The caps are search limits, not theorems.  The graph as of 17:55–18:40:
 - **N3 (lemma, proved)**: the prime-base residue obstruction above.
 - **N4′ (frozen Prop, open)**: the converse for `|S| ≤ p − 2` (the unrestricted converse is false, see the kill test); gives `S(p,1) ≥ p − 1`.
 
-N1 is done; N2/N4 need an idea (a construction of `B` from `S`), and no table will supply it.
+N1 and the four upper bounds are done.  Every exact value in the table now has its upper half
+as a theorem except `S(3,1)` (B–B, `AdderTowerC1`/`C2` already) and `S(6,1)` (seven channels,
+`1·8·11·14·16·20·23 ≈ 8·10^7` ambient states - beyond kernel `decide` without a reduction).  The
+lower halves `S(g,k) ≥ s` remain the open nodes N2/N4′, and no table will supply them.
