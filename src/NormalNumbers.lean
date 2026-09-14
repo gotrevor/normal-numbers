@@ -237,3 +237,4 @@ import NormalNumbers.G4EntropyTransfer
 import NormalNumbers.G4EntropyBarrier
 import NormalNumbers.G4EntropyFamily
 import NormalNumbers.G4EntropyScales
+import NormalNumbers.G4EntropyControl
