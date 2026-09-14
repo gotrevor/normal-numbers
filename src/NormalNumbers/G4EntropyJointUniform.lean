@@ -32,8 +32,13 @@ zero), so the average over all `J^t` vectors deviates by at most
 — the aligned bound of `abs_avg_patCoord_prob_opt`, times `t`.  The blow-up of the individual
 diagonal bounds as `max d → J` is exactly cancelled by those diagonals' small weight.
 
-Status: the statement and the two combinatorial steps are laid out; the decomposition
-`sum_diag_decomp` and the diagonal count `card_diag_le` are the open leaves.
+Status: **proved**.  `abs_uniPatFreq_sub_le` assembles the decomposition `sum_diag_decomp`, the
+per-diagonal bound `abs_diagAgg_sum_sub_le` (an instance of `abs_avg_patPos_prob_opt`) and the
+diagonal count `card_diagSet_le` into
+
+    `|uniPatFreq − 2^{−ℓt}| ≤ 2t√(log 2 · Δ / (|B|·J))`,
+
+valid whenever `Jℓ ≤ m` — the aligned bound of `abs_avg_patCoord_prob_opt` times `t`.
 -/
 
 open Finset Filter
@@ -243,5 +248,210 @@ theorem sum_diag_decomp {t J : ℕ} (ht : 0 < t) (g : (Fin t → ℕ) → ℝ) :
     congr 1
     funext s
     rw [hshval k hk s]
+
+/-! ### Assembling the uniform bound -/
+
+/-- `a·√(X/a) = √(aX)`. -/
+lemma mul_sqrt_div_self {a X : ℝ} (ha : 0 < a) (hX : 0 ≤ X) :
+    a * Real.sqrt (X / a) = Real.sqrt (a * X) := by
+  have h : a * Real.sqrt (X / a) = Real.sqrt (a ^ 2) * Real.sqrt (X / a) := by
+    rw [Real.sqrt_sq ha.le]
+  rw [h, ← Real.sqrt_mul (by positivity)]
+  congr 1
+  field_simp
+
+/-- The per-diagonal aggregate: the pattern mass summed over the blocks. -/
+noncomputable def diagAgg (m ℓ t : ℕ) (blk : B → Fin t → A)
+    (L : FinLaw (A → Fin (2 ^ m))) (w : Fin (2 ^ (ℓ * t))) (jj : Fin t → ℕ) : ℝ :=
+  ∑ b : B, (L.map (jjPat m ℓ t blk b jj)).prob {w}
+
+lemma sup_coe_lt {t J : ℕ} (hJ : 0 < J) (d : Fin t → Fin J) :
+    (Finset.univ.sup fun s => ((d s : ℕ))) < J :=
+  (Finset.sup_lt_iff hJ).2 fun s _ => (d s).isLt
+
+/-- **The bound along one diagonal.**  The `J − max d` index vectors `d + j·1` are exactly the
+aligned indices of `abs_avg_patPos_prob_opt` at the offset vector `pp s = d s·ℓ` and cut length
+`D = (J − max d)·ℓ`, so their unnormalized total deviates from `|B|(J − max d)2^{−ℓt}` by at
+most `2√(|B|(J − max d)·log 2·Δ) ≤ 2√(|B|J·log 2·Δ)`. -/
+theorem abs_diagAgg_sum_sub_le {m ℓ t J : ℕ} (hℓ : 0 < ℓ) (ht : 0 < t) (hJ : 0 < J)
+    (hJm : J * ℓ ≤ m) [Nonempty B] (d : Fin t → Fin J)
+    (blk : B → Fin t → A) (hblk : Function.Injective (fun p : B × Fin t => blk p.1 p.2))
+    (L : FinLaw (A → Fin (2 ^ m))) (w : Fin (2 ^ (ℓ * t))) {Δ : ℝ} (hΔ0 : 0 < Δ)
+    (hΔ : (m : ℝ) * (Fintype.card A : ℝ) - Δ ≤ L.H₂) :
+    |(∑ j ∈ Finset.range (J - (Finset.univ.sup fun s => ((d s : ℕ)))),
+        diagAgg m ℓ t blk L w (fun s => (d s : ℕ) + j))
+       - (Fintype.card B : ℝ) * ((J - (Finset.univ.sup fun s => ((d s : ℕ))) : ℕ) : ℝ)
+           / (2 : ℝ) ^ (ℓ * t)|
+      ≤ 2 * ((Fintype.card B : ℝ) * (J : ℝ))
+          * Real.sqrt (Real.log 2 * Δ / ((Fintype.card B : ℝ) * (J : ℝ))) := by
+  classical
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hcB : (0 : ℝ) < (Fintype.card B : ℝ) := by
+    exact_mod_cast Fintype.card_pos (α := B)
+  have hSJ : (Finset.univ.sup fun s => ((d s : ℕ))) < J := sup_coe_lt hJ d
+  set S := (Finset.univ.sup fun s => ((d s : ℕ))) with hSdef
+  set R := J - S with hRdef
+  have hR0 : 0 < R := by omega
+  have hRJ : R ≤ J := by omega
+  have hdS : ∀ s, (d s : ℕ) ≤ S := fun s =>
+    Finset.le_sup (f := fun s => ((d s : ℕ))) (Finset.mem_univ s)
+  have hDl : R * ℓ / ℓ = R := Nat.mul_div_cancel _ hℓ
+  have hℓD : ℓ ≤ R * ℓ := by
+    have : 1 * ℓ ≤ R * ℓ := Nat.mul_le_mul_right ℓ hR0
+    simpa using this
+  have hDm : R * ℓ ≤ m := le_trans (Nat.mul_le_mul_right ℓ hRJ) hJm
+  have hppD : ∀ s, (d s : ℕ) * ℓ + R * ℓ ≤ m := by
+    intro s
+    have h1 : ((d s : ℕ) + R) * ℓ ≤ J * ℓ := Nat.mul_le_mul_right ℓ (by have := hdS s; omega)
+    have h2 : ((d s : ℕ) + R) * ℓ = (d s : ℕ) * ℓ + R * ℓ := add_mul _ _ _
+    omega
+  have key := abs_avg_patPos_prob_opt (A := A) (B := B) (m := m) (ℓ := ℓ) (t := t) (D := R * ℓ)
+    hℓ hℓD ht hDm (fun s => (d s : ℕ) * ℓ) hppD blk hblk L w hΔ0 hΔ
+  -- rewrite the sum over `B × Fin ((R*ℓ)/ℓ)` as `∑_{j < R} diagAgg`
+  have hstep : ∀ b : B,
+      (∑ j : Fin (R * ℓ / ℓ),
+          (L.map (patPos m ℓ t (R * ℓ) (fun s => (d s : ℕ) * ℓ) blk (b, j))).prob {w})
+        = ∑ j ∈ Finset.range R,
+            (L.map (jjPat m ℓ t blk b (fun s => (d s : ℕ) + j))).prob {w} := by
+    intro b
+    have h1 : ∀ j : Fin (R * ℓ / ℓ),
+        (L.map (patPos m ℓ t (R * ℓ) (fun s => (d s : ℕ) * ℓ) blk (b, j))).prob {w}
+          = (fun k : ℕ => (L.map (jjPat m ℓ t blk b (fun s => (d s : ℕ) + k))).prob {w})
+              ((j : ℕ)) := by
+      intro j
+      have hf : patPos m ℓ t (R * ℓ) (fun s => (d s : ℕ) * ℓ) blk (b, j)
+          = jjPat m ℓ t blk b (fun s => (d s : ℕ) + (j : ℕ)) :=
+        funext fun z =>
+          patPos_eq_jjPat m ℓ t (R * ℓ) (fun s => ((d s : ℕ))) blk (b, j) z
+      rw [hf]
+    rw [Finset.sum_congr rfl (fun j _ => h1 j),
+      Fin.sum_univ_eq_sum_range
+        (fun k : ℕ => (L.map (jjPat m ℓ t blk b (fun s => (d s : ℕ) + k))).prob {w}),
+      hDl]
+  have hsum : (∑ c : B × Fin (R * ℓ / ℓ),
+        (L.map (patPos m ℓ t (R * ℓ) (fun s => (d s : ℕ) * ℓ) blk c)).prob {w})
+      = ∑ j ∈ Finset.range R, diagAgg m ℓ t blk L w (fun s => (d s : ℕ) + j) := by
+    rw [Fintype.sum_prod_type]
+    simp only [hstep, diagAgg]
+    exact Finset.sum_comm
+  have hcard : (Fintype.card (B × Fin (R * ℓ / ℓ)) : ℝ) = (Fintype.card B : ℝ) * (R : ℝ) := by
+    simp [hDl]
+  rw [hsum, hcard] at key
+  -- clear the denominator
+  set T := ∑ j ∈ Finset.range R, diagAgg m ℓ t blk L w (fun s => (d s : ℕ) + j) with hT
+  have hcR : (0 : ℝ) < (Fintype.card B : ℝ) * (R : ℝ) := by
+    have : (0 : ℝ) < (R : ℝ) := by exact_mod_cast hR0
+    positivity
+  have hid : T - (Fintype.card B : ℝ) * (R : ℝ) / (2 : ℝ) ^ (ℓ * t)
+      = ((Fintype.card B : ℝ) * (R : ℝ))
+          * (T / ((Fintype.card B : ℝ) * (R : ℝ)) - 1 / (2 : ℝ) ^ (ℓ * t)) := by
+    field_simp
+  rw [hid, abs_mul, abs_of_pos hcR]
+  refine le_trans (mul_le_mul_of_nonneg_left key hcR.le) ?_
+  -- arithmetic: `|B|R · 2√(log2·ℓΔ/(|B|·Rℓ)) = 2√(|B|R·log2·Δ) ≤ 2√(|B|J·log2·Δ)`
+  have hXe : Real.log 2 * (ℓ : ℝ) * Δ / ((Fintype.card B : ℝ) * ((R * ℓ : ℕ) : ℝ))
+      = (Real.log 2 * Δ) / ((Fintype.card B : ℝ) * (R : ℝ)) := by
+    have hℓR : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+    push_cast
+    field_simp
+  rw [hXe]
+  have hX0 : (0 : ℝ) ≤ Real.log 2 * Δ := by positivity
+  have e1 : (Fintype.card B : ℝ) * (R : ℝ)
+      * (2 * Real.sqrt (Real.log 2 * Δ / ((Fintype.card B : ℝ) * (R : ℝ))))
+      = 2 * Real.sqrt (((Fintype.card B : ℝ) * (R : ℝ)) * (Real.log 2 * Δ)) := by
+    rw [← mul_sqrt_div_self hcR hX0]; ring
+  have hcJ : (0 : ℝ) < (Fintype.card B : ℝ) * (J : ℝ) := by
+    have : (0 : ℝ) < (J : ℝ) := by exact_mod_cast hJ
+    positivity
+  have e2 : 2 * ((Fintype.card B : ℝ) * (J : ℝ))
+      * Real.sqrt (Real.log 2 * Δ / ((Fintype.card B : ℝ) * (J : ℝ)))
+      = 2 * Real.sqrt (((Fintype.card B : ℝ) * (J : ℝ)) * (Real.log 2 * Δ)) := by
+    rw [← mul_sqrt_div_self hcJ hX0]; ring
+  rw [e1, e2]
+  have hmono : ((Fintype.card B : ℝ) * (R : ℝ)) * (Real.log 2 * Δ)
+      ≤ ((Fintype.card B : ℝ) * (J : ℝ)) * (Real.log 2 * Δ) := by
+    have hRJR : (R : ℝ) ≤ (J : ℝ) := by exact_mod_cast hRJ
+    have := mul_le_mul_of_nonneg_left hRJR hcB.le
+    exact mul_le_mul_of_nonneg_right this hX0
+  exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hmono) (by norm_num)
+
+/-- **The uniform `t`-wise bound.**  Averaged over *all* vectors of aligned positions in
+`[0,J)^t`, the `ℓt`-bit pattern frequency deviates from `2^{−ℓt}` by at most `t` times the
+aligned bound. -/
+theorem abs_uniPatFreq_sub_le {m ℓ t J : ℕ} (hℓ : 0 < ℓ) (ht : 0 < t) (hJ : 0 < J)
+    (hJm : J * ℓ ≤ m) [Nonempty B]
+    (blk : B → Fin t → A) (hblk : Function.Injective (fun p : B × Fin t => blk p.1 p.2))
+    (L : FinLaw (A → Fin (2 ^ m))) (w : Fin (2 ^ (ℓ * t))) {Δ : ℝ} (hΔ0 : 0 < Δ)
+    (hΔ : (m : ℝ) * (Fintype.card A : ℝ) - Δ ≤ L.H₂) :
+    |uniPatFreq m ℓ t J blk L w - 1 / (2 : ℝ) ^ (ℓ * t)|
+      ≤ 2 * (t : ℝ) * Real.sqrt (Real.log 2 * Δ / ((Fintype.card B : ℝ) * (J : ℝ))) := by
+  classical
+  have hcB : (0 : ℝ) < (Fintype.card B : ℝ) := by
+    exact_mod_cast Fintype.card_pos (α := B)
+  have hJR : (0 : ℝ) < (J : ℝ) := by exact_mod_cast hJ
+  have hden : (0 : ℝ) < (Fintype.card B : ℝ) * (J : ℝ) ^ t := by positivity
+  set C := 2 * ((Fintype.card B : ℝ) * (J : ℝ))
+      * Real.sqrt (Real.log 2 * Δ / ((Fintype.card B : ℝ) * (J : ℝ))) with hC
+  have hC0 : 0 ≤ C := by
+    rw [hC]; positivity
+  -- the numerator, decomposed over the diagonals
+  have hN : (∑ b : B, ∑ jj : Fin t → Fin J,
+        (L.map (jjPat m ℓ t blk b (fun s => ((jj s : ℕ))))).prob {w})
+      = ∑ d ∈ diagSet t J,
+          ∑ j ∈ Finset.range (J - (Finset.univ.sup fun s => ((d s : ℕ)))),
+            diagAgg m ℓ t blk L w (fun s => (d s : ℕ) + j) := by
+    rw [Finset.sum_comm]
+    exact sum_diag_decomp ht (diagAgg m ℓ t blk L w)
+  -- the diagonals' lengths total `J^t`
+  have hcount : ∑ d ∈ diagSet t J,
+      ((J - (Finset.univ.sup fun s => ((d s : ℕ))) : ℕ) : ℝ) = (J : ℝ) ^ t := by
+    have h := sum_diag_decomp (t := t) (J := J) ht (fun _ => (1 : ℝ))
+    simp only [Finset.sum_const, nsmul_eq_mul, mul_one, Finset.card_univ,
+      Fintype.card_fun, Fintype.card_fin, Finset.card_range] at h
+    rw [← h]
+    push_cast
+    ring
+  -- the deviation of the numerator
+  have hdev : |(∑ b : B, ∑ jj : Fin t → Fin J,
+        (L.map (jjPat m ℓ t blk b (fun s => ((jj s : ℕ))))).prob {w})
+      - (Fintype.card B : ℝ) * (J : ℝ) ^ t / (2 : ℝ) ^ (ℓ * t)|
+      ≤ ((diagSet t J).card : ℝ) * C := by
+    have hsplit : (Fintype.card B : ℝ) * (J : ℝ) ^ t / (2 : ℝ) ^ (ℓ * t)
+        = ∑ d ∈ diagSet t J, (Fintype.card B : ℝ)
+            * ((J - (Finset.univ.sup fun s => ((d s : ℕ))) : ℕ) : ℝ) / (2 : ℝ) ^ (ℓ * t) := by
+      rw [← hcount, Finset.mul_sum, Finset.sum_div]
+    rw [hN, hsplit, ← Finset.sum_sub_distrib]
+    refine le_trans (Finset.abs_sum_le_sum_abs _ _) ?_
+    refine le_trans (Finset.sum_le_sum (fun d _ =>
+      abs_diagAgg_sum_sub_le hℓ ht hJ hJm d blk hblk L w hΔ0 hΔ)) ?_
+    rw [Finset.sum_const, nsmul_eq_mul]
+  -- divide
+  have huni : uniPatFreq m ℓ t J blk L w - 1 / (2 : ℝ) ^ (ℓ * t)
+      = ((∑ b : B, ∑ jj : Fin t → Fin J,
+            (L.map (jjPat m ℓ t blk b (fun s => ((jj s : ℕ))))).prob {w})
+          - (Fintype.card B : ℝ) * (J : ℝ) ^ t / (2 : ℝ) ^ (ℓ * t))
+        / ((Fintype.card B : ℝ) * (J : ℝ) ^ t) := by
+    rw [uniPatFreq]
+    field_simp
+  rw [huni, abs_div, abs_of_pos hden]
+  rw [div_le_iff₀ hden]
+  refine le_trans hdev ?_
+  have hcardle : ((diagSet t J).card : ℝ) ≤ (t : ℝ) * (J : ℝ) ^ (t - 1) := by
+    have := card_diagSet_le t J
+    exact_mod_cast this
+  have hstep1 : ((diagSet t J).card : ℝ) * C ≤ ((t : ℝ) * (J : ℝ) ^ (t - 1)) * C :=
+    mul_le_mul_of_nonneg_right hcardle hC0
+  refine le_trans hstep1 ?_
+  -- `t·J^{t−1}·2|B|J·√(…) = (2t√(…))·(|B|J^t)`
+  have hJt : (J : ℝ) ^ (t - 1) * (J : ℝ) = (J : ℝ) ^ t := by
+    obtain ⟨n, rfl⟩ : ∃ n, t = n + 1 := ⟨t - 1, by omega⟩
+    simp [pow_succ]
+  rw [hC]
+  have : ((t : ℝ) * (J : ℝ) ^ (t - 1))
+      * (2 * ((Fintype.card B : ℝ) * (J : ℝ))
+          * Real.sqrt (Real.log 2 * Δ / ((Fintype.card B : ℝ) * (J : ℝ))))
+      = 2 * (t : ℝ) * Real.sqrt (Real.log 2 * Δ / ((Fintype.card B : ℝ) * (J : ℝ)))
+          * ((Fintype.card B : ℝ) * ((J : ℝ) ^ (t - 1) * (J : ℝ))) := by ring
+  rw [this, hJt]
 
 end NormalNumbers.G4Entropy
