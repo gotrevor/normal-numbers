@@ -45,7 +45,7 @@ reproduces the naive controls; the naive short-circuit search stays faster for t
 | (4,1) | 3 | `{1,10,14}` (unique ≤ 40); **35 triples ≤ 60**, e.g. `{2,5,7}`, `{1,10,56}`, `{3,30,42}` | > 3 | – | sizes ≤ 3, ≤ 60 |
 | (5,1) | **5** | 2008 sets ≤ 30, e.g. `{1,2,3,4,6}`, `{1,2,3,4,8}`, `{1,2,3,6,14}` | – | – | sizes ≤ 5, ≤ 30 |
 | (6,1) | **7** | 4 sets ≤ 24: `{1,8,11,14,16,20,23}`, `{3,7,10,13,14,17,20}`, `{6,8,11,14,16,20,23}`, `{7,10,13,14,17,18,20}`; no 6-set ≤ 24 | – | – | sizes ≤ 7, ≤ 24 |
-| (7,1) | > 6 | – | – | – | sizes ≤ 6, ≤ 24 |
+| (7,1) | **7 or 8** | `{1,2,3,4,5,6,8,9}` (= `{1..M(7,1)}` minus the base); no 7-subset of `{1..9}` hits; `{1,…,6,8}` does NOT hit (digits 1 and 5 escape) | – | – | sizes ≤ 6, ≤ 24; all 7- and 8-subsets of `{1..9}` |
 | (8,1), (9,1) | > 8 | – | – | – | sizes ≤ 8, ≤ 20 (cap probably binding) |
 | (10,1) | > 9 | – | – | – | sizes ≤ 9, ≤ 20 (cap probably binding) |
 | (2,2) | 2 | `{1,3}` (unique ≤ 40); **151 pairs ≤ 60**, e.g. `{1,6}`, `{1,11}`, `{1,12}`, `{2,3}` | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
@@ -65,6 +65,18 @@ adversary we have (sparse, background+burst, local lemma) is limited to multipli
 `g^k` digits - the analysis is in the KB leaf `moonshot-review-2026-09-13.md` §7.20.  Every ">" is a search cap on the
 multipliers, never a theorem; every exact value's upper half is exact (a hitting set is a finite
 automaton verdict).
+
+### Initial segments and the base channel (21:10)
+
+Channel `g` is channel `1` shifted one place (`gα` and `α` have the same digit sequence), so any
+hitting set may be taken with `g ∤ m`; in particular `{1..M(g,1)}` minus `g` hits, which gives
+`S(g,1) ≤ M(g,1) − 1` (the exact `M(g,1)` for prime `g` is in `src/NormalNumbers/MahlerPrimeLowerBound.lean`).
+Base 5's `{1,2,3,4,6}` is exactly this, and at base 7 the two 8-subsets of `{1..9}` that hit
+are `{1..9}∖{7}` and `{1..9}∖{1}` - the same channel set - while no 7-subset of `{1..9}`
+hits.  The guess that the base-5 pattern `{1..p−1, p+1}` hits at every prime is **false at
+`p = 7`**: `{1,…,6,8}` leaves digits 1 and 5 unhit.  So `S(7,1) ∈ {7, 8}`; the size-7 search
+below 24 has not been run (`C(24,7) ≈ 3.5·10^5` products).  For `S(11,1)` the same argument gives
+`≤ 24`, surely far from tight.
 
 ## Sparse adversaries: an elementary lower-bound route (`experiments/mahler_sparse_adversary.py`)
 
