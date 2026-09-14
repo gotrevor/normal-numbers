@@ -21,8 +21,39 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (8979 jobs) ·
-**Updated**: entropy review lap 51 · 2026-09-14 · `wip/g4-entropy` @ `497d50a`
+· **Build**: 🟢 green (8983 jobs) ·
+**Updated**: entropy lap 55 · 2026-09-14 · `wip/g4-entropy`
+
+## 🧭 2026-09-14 (entropy laps 52–55): the lap-51 objective is **PROVED**, and its named successor E-T8 is **refuted as a route**
+
+**The headline** (`src/NormalNumbers/G4EntropyBlockWord.lean`, all
+`[propext, Classical.choice, Quot.sound]`):
+
+* `samplePos : ℕ → ℕ` — defined from the base-four schedule alone; no real appears in its body.
+* `samplePos_spec` — every value is a genuine sampled position `2·kIdx(n,α) + p`, `n ∈ P_i`,
+  `p < m_i`.
+* **`isNormalSequence_digits_along_samplePos`** —
+  `IsNormalSequence 2 (fun j => digitOf 2 (Int.fract G₄) (samplePos j))`.
+* `isNormal_realOfDigits_samplePos`, `isDisjunctive_sampleReal`, `irrational_sampleReal`.
+
+Route: rung 1 `G4EntropyOcc` (window counting), rung 2 `G4EntropyBlockWord`
+(`cyc_bounds`, `tendsto_cyc_div_blen`: the scale-`i` block's cyclic window frequency → `2^{−|v|}`,
+out of `tendsto_occursCountP_primeLambertFour`), rung 3 `G4EntropyConcat` (a normal real from any
+family of finite blocks with converging window frequencies — **no growth hypothesis**).
+
+**This is not a claim about the normality of `G₄`.**  The number is built *from* `G₄`'s digits
+along a density-zero position sequence and is not `G₄`; `G₄`'s own normality stays closed on this
+mechanism (lap 37).
+
+**E-T8** (upgrade `samplePos` to strictly increasing — a genuine subsequence) is **refuted as a
+route**, in `src/NormalNumbers/G4EntropySubsample.lean`:
+`FinLaw.H₂_restrictCoords_ge` and `abs_posAvg_restrict_sub_le` show a sub-collection of relative
+size `ρ` costs `√(1/ρ)`, certifiable only while `ρ ≫ δ/m`; `card_Atom_growth` and
+**`chunks_insufficient`** (`kk i/(50√(KK i)) < |Atom_{i+1}|/|Atom_i|`) show a scale never admits
+as many certifiable chunks as the block-length growth demands.  The barrier is
+dimension-independent (window truncation is `lowTuple`'s dual), so chunking the sample times
+instead of the atoms does not escape it.  It refutes the route, not the existence of such a
+sequence.
 
 ## 🧭 2026-09-14 (entropy review lap 51): the frequency ladder is COMPLETE and BOUNDED; new objective = an explicit NORMAL NUMBER from `G₄`'s sampled digits
 

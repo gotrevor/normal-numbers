@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.G4EntropyPosition
 import NormalNumbers.G4EntropyConcat
+import NormalNumbers.DisjunctiveCorollaries
 
 /-!
 # Entropy expedition — rendering one scale as one block (rung 2)
@@ -462,5 +463,21 @@ theorem isNormal_realOfDigits_samplePos :
     exact (sampleDigits_eq _ j).symm
   rw [hfun]
   exact isNormal_sampleReal
+
+/-! ### The headline in the repo's audited vocabulary -/
+
+/-- The assembled real is **disjunctive** in base 2: every finite binary word occurs in it.
+(Through the audited `IsNormal.isDisjunctive`, which is the predicate `isDisjunctive_two` is
+stated in.) -/
+theorem isDisjunctive_sampleReal :
+    IsDisjunctive 2 (realOfDigits 2
+      (fun j => digitOf 2 (Int.fract (primeLambertAtBase 4)) (samplePos j))) :=
+  isNormal_realOfDigits_samplePos.isDisjunctive (le_refl 2)
+
+/-- Hence the assembled real is irrational. -/
+theorem irrational_sampleReal :
+    Irrational (realOfDigits 2
+      (fun j => digitOf 2 (Int.fract (primeLambertAtBase 4)) (samplePos j))) :=
+  isDisjunctive_sampleReal.irrational
 
 end NormalNumbers.G4.Sched
