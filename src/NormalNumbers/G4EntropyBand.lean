@@ -378,7 +378,7 @@ open Classical in
 /-- The band-`i` sample times for the *whole* sample: those whose windows, **at every atom**,
 open at or above the previous scale's ceiling. -/
 noncomputable def bandT (i : ℕ) : Finset ℕ :=
-  (PK i).filter (fun n => gridDm (KK i) (N (KK i)) * (bandLo i + 1) ≤ n)
+  (PK i).filter (fun n => gridDm (KK i) (N (KK i)) * bandLo i ≤ n)
 
 lemma bandT_subset (i : ℕ) : bandT i ⊆ PK i := Finset.filter_subset _ _
 
@@ -386,27 +386,27 @@ lemma bandT_subset (i : ℕ) : bandT i ⊆ PK i := Finset.filter_subset _ _
 theorem bandLo_le_pos_of_mem_bandT (i : ℕ) {n : ℕ} (hn : n ∈ bandT i) (α : (gridAt i).Atom) :
     bandLo i ≤ 2 * kIdx (gridAt i) n α := by
   classical
-  have hmem : gridDm (KK i) (N (KK i)) * (bandLo i + 1) ≤ n := (Finset.mem_filter.1 hn).2
+  have hmem : gridDm (KK i) (N (KK i)) * bandLo i ≤ n := (Finset.mem_filter.1 hn).2
   have hnPK : n ∈ PK i := (Finset.mem_filter.1 hn).1
   obtain ⟨hk, -⟩ := kIdx_spec (gridAt i) (X := X (KK i)) hnPK α
   have hd : (gridAt i).d α ≤ gridDm (KK i) (N (KK i)) :=
     gridOf.d_le (K := KK i) (N := N (KK i)) (hK := KK_one_le i) α
   have hdpos : 0 < (gridAt i).d α := (gridAt i).d_pos α
   have ht : (gridAt i).t α < (gridAt i).d α := (gridAt i).t_lt_d α
-  -- `n = t + d·k < d·(k+1)`, and `n ≥ Dm·(bandLo+1) ≥ d·(bandLo+1)`
-  have hchain : gridDm (KK i) (N (KK i)) * (bandLo i + 1)
-      ≤ (gridAt i).d α * (kIdx (gridAt i) n α + 1) := by
+  -- `d·bandLo ≤ Dm·bandLo ≤ n = t + d·k < d·(k+1)`
+  have hmono : (gridAt i).d α * bandLo i ≤ gridDm (KK i) (N (KK i)) * bandLo i :=
+    Nat.mul_le_mul_right _ hd
+  have h1 : (gridAt i).d α * bandLo i ≤ n := le_trans hmono hmem
+  have h2 : n < (gridAt i).d α * (kIdx (gridAt i) n α + 1) := by
     have hexp : (gridAt i).d α * (kIdx (gridAt i) n α + 1)
         = (gridAt i).d α * kIdx (gridAt i) n α + (gridAt i).d α := by ring
     omega
-  have hmono : gridDm (KK i) (N (KK i)) * (bandLo i + 1)
-      ≥ (gridAt i).d α * (bandLo i + 1) :=
-    Nat.mul_le_mul_right _ hd
-  have hkey : (gridAt i).d α * (bandLo i + 1)
-      ≤ (gridAt i).d α * (kIdx (gridAt i) n α + 1) := by omega
-  have hle : bandLo i + 1 ≤ kIdx (gridAt i) n α + 1 :=
-    Nat.le_of_mul_le_mul_left hkey hdpos
+  have hstrict : (gridAt i).d α * bandLo i
+      < (gridAt i).d α * (kIdx (gridAt i) n α + 1) := by omega
+  have hlt : bandLo i < kIdx (gridAt i) n α + 1 :=
+    lt_of_mul_lt_mul_left hstrict (Nat.zero_le _)
   omega
+
 
 open Classical in
 /-- **The `n`-threshold also keeps at least half of the sample.**  Same count as
@@ -417,16 +417,16 @@ theorem card_bandT_ge (i : ℕ) : ((PK (i + 1)).card : ℝ) ≤ 2 * ((bandT (i +
   set j := i + 1 with hj
   set Dm : ℕ := gridDm (KK j) (N (KK j)) with hDm
   set M : ℕ := 3 * Dm * X (KK i) with hM
-  have hdrop : (PK j).filter (fun n => ¬ Dm * (bandLo j + 1) ≤ n)
+  have hdrop : (PK j).filter (fun n => ¬ Dm * bandLo j ≤ n)
       ⊆ (PK j).filter (fun n => n < M) := by
     intro n hn
     rw [Finset.mem_filter] at hn ⊢
     refine ⟨hn.1, ?_⟩
-    have hlt : n < Dm * (bandLo j + 1) := by have := hn.2; omega
+    have hlt : n < Dm * bandLo j := by have := hn.2; omega
     have hbl : bandLo j = bandTop i := rfl
     have hbt : bandTop i = 2 * X (KK i) + kk i := rfl
     have hkk := kk_succ_le_X i
-    have hmono : Dm * (bandLo j + 1) ≤ Dm * (3 * X (KK i)) := by
+    have hmono : Dm * bandLo j ≤ Dm * (3 * X (KK i)) := by
       refine Nat.mul_le_mul_left _ ?_
       rw [hbl, hbt]
       omega
@@ -462,15 +462,46 @@ theorem card_bandT_ge (i : ℕ) : ((PK (i + 1)).card : ℝ) ≤ 2 * ((bandT (i +
     linarith [hgate]
   have hsplit : ((PK j).card : ℝ)
       = ((bandT j).card : ℝ)
-        + (((PK j).filter (fun n => ¬ Dm * (bandLo j + 1) ≤ n)).card : ℝ) := by
+        + (((PK j).filter (fun n => ¬ Dm * bandLo j ≤ n)).card : ℝ) := by
     have h := Finset.card_filter_add_card_filter_not
-      (s := PK j) (p := fun n => Dm * (bandLo j + 1) ≤ n)
-    have hb : bandT j = (PK j).filter (fun n => Dm * (bandLo j + 1) ≤ n) := rfl
+      (s := PK j) (p := fun n => Dm * bandLo j ≤ n)
+    have hb : bandT j = (PK j).filter (fun n => Dm * bandLo j ≤ n) := rfl
     rw [hb]
     exact_mod_cast h.symm
-  have hdropR : ((((PK j).filter (fun n => ¬ Dm * (bandLo j + 1) ≤ n)).card : ℕ) : ℝ)
+  have hdropR : ((((PK j).filter (fun n => ¬ Dm * bandLo j ≤ n)).card : ℕ) : ℝ)
       ≤ (((PK j).filter (fun n => n < M)).card : ℝ) := by
     exact_mod_cast Finset.card_le_card hdrop
   linarith
+
+open Classical in
+/-- At scale `0` the floor is `0`, so nothing is dropped. -/
+lemma bandT_zero : bandT 0 = PK 0 := by
+  classical
+  refine Finset.filter_true_of_mem fun n _ => ?_
+  show gridDm (KK 0) (N (KK 0)) * bandLo 0 ≤ n
+  rw [show bandLo 0 = 0 from rfl, Nat.mul_zero]
+  exact Nat.zero_le n
+
+open Classical in
+/-- The band-`i` sample is nonempty at every scale. -/
+lemma bandT_nonempty (i : ℕ) : (bandT i).Nonempty := by
+  classical
+  rcases i with _ | j
+  · rw [bandT_zero]; exact PK_nonempty 0
+  · rw [← Finset.card_pos]
+    have h := card_bandT_ge j
+    have hP : (0 : ℝ) < ((PK (j + 1)).card : ℝ) := by exact_mod_cast PK_card_pos (j + 1)
+    have : (0 : ℝ) < ((bandT (j + 1)).card : ℝ) := by linarith
+    exact_mod_cast this
+
+open Classical in
+/-- The uniform half-bound, at every scale. -/
+theorem card_bandT_ge' (i : ℕ) : ((PK i).card : ℝ) ≤ 2 * ((bandT i).card : ℝ) := by
+  classical
+  rcases i with _ | j
+  · rw [bandT_zero]
+    have : (0 : ℝ) ≤ ((PK 0).card : ℝ) := Nat.cast_nonneg _
+    linarith
+  · exact card_bandT_ge j
 
 end NormalNumbers.G4.Sched
