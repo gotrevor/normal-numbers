@@ -95,6 +95,71 @@ theorem card_grid_family_ge (F : Finset ι) (G : ι → GridParams) (U : ℕ →
   refine le_trans (card_sampledPos_lt_le' (G ν) (hT ν hν) X m L hdm (hd ν hν)) ?_
   exact Nat.mul_le_mul_right _ (Nat.mul_le_mul_right _ (hA ν hν))
 
+/-! ### Families with common multipliers cannot help at all
+
+The count above is indexed by the *family*; but the sampled positions of a grid depend on the
+grid only through its multiplier map `α ↦ d_α`.  Translating the grid — varying the frozen
+residue `b₀`, hence every offset `t_α` — moves the sample point `n`, and it moves `kIdx`, but
+`d_α ∣ kIdx` holds for **every** admissible `n`, so every sampled position stays in
+`2 d_α ℕ + [0,m)`.  A family of grids sharing one multiplier set therefore has a union of
+sampled positions no denser than a single member's, no matter how many members it has. -/
+
+/-- The positions `2·(d·c) + h` with `1 ≤ c ≤ L/(2d)` and `h < m` — everything a grid with
+multiplier `d` can read below `L`. -/
+noncomputable def periodCol (d m L : ℕ) : Finset ℕ :=
+  ((Finset.Icc 1 (L / (2 * d))) ×ˢ Finset.range m).image (fun z => 2 * (d * z.1) + z.2)
+
+lemma card_periodCol_le (d m L : ℕ) : (periodCol d m L).card ≤ (L / (2 * d)) * m := by
+  refine le_trans Finset.card_image_le ?_
+  simp [periodCol, Finset.card_product, Nat.card_Icc]
+
+lemma mem_periodCol {d m L c h : ℕ} (hd : 0 < d) (hc : 1 ≤ c) (hh : h < m)
+    (hL : 2 * (d * c) + h < L) : 2 * (d * c) + h ∈ periodCol d m L := by
+  refine Finset.mem_image.2 ⟨(c, h), ?_, rfl⟩
+  refine Finset.mem_product.2 ⟨Finset.mem_Icc.2 ⟨hc, ?_⟩, Finset.mem_range.2 hh⟩
+  refine (Nat.le_div_iff_mul_le (by omega)).2 ?_
+  calc c * (2 * d) = 2 * (d * c) := by ring
+    _ ≤ 2 * (d * c) + h := Nat.le_add_right _ _
+    _ ≤ L := le_of_lt hL
+
+/-- **The multiplier bound.**  Whatever the family, if every member's multipliers lie in one
+finite set `D`, the positions the family reads below `L` number at most `Σ_{d ∈ D} m·L/(2d)` —
+a quantity with no `|F|` in it. -/
+theorem card_filter_le_of_multipliers (D : Finset ℕ) (F : Finset ι) (G : ι → GridParams)
+    (U : ℕ → Prop) [DecidablePred U] {X m L : ℕ}
+    (hT : ∀ ν ∈ F, ∃ α β : (G ν).Atom, (G ν).t α ≠ (G ν).t β)
+    (hD : ∀ ν ∈ F, ∀ α : (G ν).Atom, (G ν).d α ∈ D)
+    (hcov : ∀ j, j < L → U j → ∃ ν ∈ F, j ∈ sampledPos (G ν) X m) :
+    ((Finset.range L).filter U).card ≤ ∑ d ∈ D, (L / (2 * d)) * m := by
+  classical
+  have hsub : (Finset.range L).filter U ⊆ D.biUnion (fun d => periodCol d m L) := by
+    intro j hj
+    rw [Finset.mem_filter, Finset.mem_range] at hj
+    obtain ⟨ν, hν, hjν⟩ := hcov j hj.1 hj.2
+    obtain ⟨n, hn, α, h, hh, rfl⟩ := (mem_sampledPos (G ν)).1 hjν
+    obtain ⟨c, hc1, hc⟩ := exists_kIdx_eq (G ν) (hT ν hν) hn α
+    refine Finset.mem_biUnion.2 ⟨(G ν).d α, hD ν hν α, ?_⟩
+    rw [hc] at hj ⊢
+    exact mem_periodCol ((G ν).d_pos α) hc1 hh hj.1
+  refine le_trans (Finset.card_le_card hsub) ?_
+  refine le_trans Finset.card_biUnion_le ?_
+  exact Finset.sum_le_sum fun d _ => card_periodCol_le d m L
+
+/-- The same with a uniform multiplier lower bound: `|F|` has disappeared. -/
+theorem card_filter_le_of_multipliers' (D : Finset ℕ) (F : Finset ι) (G : ι → GridParams)
+    (U : ℕ → Prop) [DecidablePred U] {X m L dm : ℕ} (hdm : 0 < dm)
+    (hT : ∀ ν ∈ F, ∃ α β : (G ν).Atom, (G ν).t α ≠ (G ν).t β)
+    (hD : ∀ ν ∈ F, ∀ α : (G ν).Atom, (G ν).d α ∈ D)
+    (hdmD : ∀ d ∈ D, dm ≤ d)
+    (hcov : ∀ j, j < L → U j → ∃ ν ∈ F, j ∈ sampledPos (G ν) X m) :
+    ((Finset.range L).filter U).card ≤ D.card * ((L / (2 * dm)) * m) := by
+  refine le_trans (card_filter_le_of_multipliers D F G U hT hD hcov) ?_
+  calc ∑ d ∈ D, (L / (2 * d)) * m ≤ ∑ _d ∈ D, (L / (2 * dm)) * m := by
+        refine Finset.sum_le_sum fun d hd => ?_
+        exact Nat.mul_le_mul_right _ (Nat.div_le_div_left
+          (Nat.mul_le_mul_left 2 (hdmD d hd)) (by omega))
+    _ = D.card * ((L / (2 * dm)) * m) := by rw [Finset.sum_const, smul_eq_mul]
+
 end NormalNumbers.G4Entropy
 
 namespace NormalNumbers.G4.Sched
@@ -154,5 +219,69 @@ theorem card_family_ge_two_pow (i : ℕ) (F : Finset ι) (G : ι → GridParams)
   have h3 : 2 ^ (i + 2) * ((KK i ^ 2 + 1) ^ KK i * kk i)
       ≤ F.card * ((KK i ^ 2 + 1) ^ KK i * kk i) := Nat.le_of_mul_le_mul_right hchain (by omega)
   exact Nat.le_of_mul_le_mul_right (by rw [mul_comm] at h3 ⊢; exact h3) hHm
+
+/-! ### Translated grids are refuted as a repair -/
+
+/-- The multipliers of the implemented grid at scale `i`. -/
+noncomputable def multipliers (i : ℕ) : Finset ℕ :=
+  Finset.image (gridAt i).d (Finset.univ : Finset (gridAt i).Atom)
+
+lemma card_multipliers_le (i : ℕ) : (multipliers i).card ≤ (KK i ^ 2 + 1) ^ KK i := by
+  refine le_trans Finset.card_image_le ?_
+  rw [Finset.card_univ, card_Atom_gridAt]
+
+lemma dmin_le_of_mem_multipliers {i d : ℕ} (hd : d ∈ multipliers i) : dmin i ≤ d := by
+  obtain ⟨α, -, rfl⟩ := Finset.mem_image.1 hd
+  exact dmin_le_d i α
+
+/-- **Translating the grid cannot help, at any family size.**
+
+If every grid in the family `F` has the *same multipliers* as the implemented grid at scale `i`
+— which is exactly what varying the frozen residue `b₀`, or translating the grid, produces —
+then the family's sampled positions cover less than half of every prefix `[0,L)`, however many
+members `F` has.
+
+The reason is structural, not quantitative: `d_α ∣ kIdx` holds for every admissible sample
+point, so each member reads only positions in `2 d_α ℕ + [0, m_K)`, and that set does not depend
+on `b₀` at all.  A union of copies of one set is that set. -/
+theorem not_dense_of_common_multipliers (i : ℕ) (F : Finset ι) (G : ι → GridParams)
+    (U : ℕ → Prop) [DecidablePred U] {L : ℕ} (hL : 0 < L)
+    (hT : ∀ ν ∈ F, ∃ α β : (G ν).Atom, (G ν).t α ≠ (G ν).t β)
+    (hD : ∀ ν ∈ F, ∀ α : (G ν).Atom, (G ν).d α ∈ multipliers i)
+    (hcov : ∀ j, j < L → U j → ∃ ν ∈ F, j ∈ sampledPos (G ν) (X (KK i)) (kk i)) :
+    ¬ (L ≤ 2 * ((Finset.range L).filter U).card) := by
+  intro hdense
+  set H := (KK i ^ 2 + 1) ^ KK i with hH
+  set m := kk i with hm
+  set q := L / (2 * dmin i) with hq
+  have hbase := card_filter_le_of_multipliers' (multipliers i) F G U (dmin_pos i) hT hD
+    (fun d hd => dmin_le_of_mem_multipliers hd) hcov
+  have hcard : ((Finset.range L).filter U).card ≤ H * m * q := by
+    refine le_trans hbase ?_
+    calc (multipliers i).card * (q * m) ≤ H * (q * m) :=
+          Nat.mul_le_mul_right _ (card_multipliers_le i)
+      _ = H * m * q := by ring
+  -- `key_size`: `8·(H·m) ≤ 2^(i+3)·(H·m) ≤ 2·dmin`
+  have hkey : 8 * (H * m) ≤ 2 * dmin i := by
+    refine le_trans ?_ (key_size i)
+    exact Nat.mul_le_mul_right _ (by
+      have : (2 : ℕ) ^ 3 ≤ 2 ^ (i + 3) := Nat.pow_le_pow_right (by omega) (by omega)
+      simpa using this)
+  have hqle : 2 * dmin i * q = 2 * dmin i * (L / (2 * dmin i)) := rfl
+  have hqL : 2 * dmin i * q ≤ L := Nat.mul_div_le L (2 * dmin i)
+  have h8 : 8 * (H * m * q) ≤ L := by
+    calc 8 * (H * m * q) = (8 * (H * m)) * q := by ring
+      _ ≤ (2 * dmin i) * q := Nat.mul_le_mul_right _ hkey
+      _ ≤ L := hqL
+  omega
+
+/-- The same conclusion phrased against the named property: an admissible family whose
+multipliers are the implemented ones never `ReadsHalf`. -/
+theorem not_readsHalf_of_common_multipliers (i : ℕ) (F : Finset ι) (G : ι → GridParams)
+    (U : ℕ → Prop) [DecidablePred U] {L : ℕ} (hL : 0 < L)
+    (hD : ∀ ν ∈ F, ∀ α : (G ν).Atom, (G ν).d α ∈ multipliers i) :
+    ¬ ReadsHalf i F G U L := by
+  intro h
+  exact not_dense_of_common_multipliers i F G U hL h.nonconstant hD h.covered h.dense
 
 end NormalNumbers.G4.Sched

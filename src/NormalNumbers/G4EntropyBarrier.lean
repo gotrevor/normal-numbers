@@ -64,16 +64,20 @@ noncomputable def maskReal (x : ℝ) : ℝ := realOfDigits 2 (maskDigits S x)
 
 variable {S}
 
-/-- A position set of density `< 1` misses arbitrarily late positions. -/
-lemma exists_not_mem_of_density {c : ℝ} (hc : c < 1)
-    (hdens : ∀ L : ℕ, (((Finset.range L).filter S).card : ℝ) ≤ c * L) (M : ℕ) :
+/-- A position set of eventual density `< 1` misses arbitrarily late positions. -/
+lemma exists_not_mem_of_density_eventually {c : ℝ} (hc : c < 1) {L₀ : ℕ}
+    (hdens : ∀ L : ℕ, L₀ ≤ L → (((Finset.range L).filter S).card : ℝ) ≤ c * L) (M : ℕ) :
     ∃ j, M ≤ j ∧ ¬ S j := by
   by_contra hcon
   push_neg at hcon
   obtain ⟨N, hN⟩ := exists_nat_gt ((M : ℝ) / (1 - c))
-  set L := max M N with hLdef
-  have hLM : M ≤ L := le_max_left _ _
-  have hLN : (M : ℝ) / (1 - c) < L := lt_of_lt_of_le hN (by exact_mod_cast le_max_right M N)
+  set L := max (max M N) L₀ with hLdef
+  have hLM : M ≤ L := le_trans (le_max_left _ _) (le_max_left _ _)
+  have hL₀ : L₀ ≤ L := le_max_right _ _
+  have hLN : (M : ℝ) / (1 - c) < L := by
+    refine lt_of_lt_of_le hN ?_
+    have : N ≤ L := le_trans (le_max_right M N) (le_max_left _ _)
+    exact_mod_cast this
   have hsub : Finset.Ico M L ⊆ (Finset.range L).filter S := by
     intro j hj
     rw [Finset.mem_Ico] at hj
@@ -84,107 +88,138 @@ lemma exists_not_mem_of_density {c : ℝ} (hc : c < 1)
   have h1R : (L : ℝ) - M ≤ ((Finset.range L).filter S).card := by
     have : ((L - M : ℕ) : ℝ) ≤ ((Finset.range L).filter S).card := by exact_mod_cast h1
     rwa [Nat.cast_sub hLM] at this
-  have h2 := hdens L
+  have h2 := hdens L hL₀
   have hpos : (0 : ℝ) < 1 - c := by linarith
   have : (M : ℝ) / (1 - c) ≥ L := by
     rw [ge_iff_le, le_div_iff₀ hpos]
     nlinarith
   linarith
 
+/-- A position set of density `< 1` misses arbitrarily late positions. -/
+lemma exists_not_mem_of_density {c : ℝ} (hc : c < 1)
+    (hdens : ∀ L : ℕ, (((Finset.range L).filter S).card : ℝ) ≤ c * L) (M : ℕ) :
+    ∃ j, M ≤ j ∧ ¬ S j :=
+  exists_not_mem_of_density_eventually hc (L₀ := 0) (fun L _ => hdens L) M
+
 /-- The mask is a proper binary digit sequence. -/
-lemma properDigits_maskDigits {c : ℝ} (hc : c < 1)
-    (hdens : ∀ L : ℕ, (((Finset.range L).filter S).card : ℝ) ≤ c * L) (x : ℝ) :
+lemma properDigits_maskDigits (hmiss : ∀ M : ℕ, ∃ j, M ≤ j ∧ ¬ S j) (x : ℝ) :
     ProperDigits 2 (maskDigits S x) := by
   intro M
-  obtain ⟨j, hj, hns⟩ := exists_not_mem_of_density hc hdens M
+  obtain ⟨j, hj, hns⟩ := hmiss M
   refine ⟨j, hj, ?_⟩
   unfold maskDigits
   rw [if_neg hns]
   omega
 
-lemma maskReal_mem_Ico {c : ℝ} (hc : c < 1)
-    (hdens : ∀ L : ℕ, (((Finset.range L).filter S).card : ℝ) ≤ c * L) (x : ℝ) :
+lemma maskReal_mem_Ico (hmiss : ∀ M : ℕ, ∃ j, M ≤ j ∧ ¬ S j) (x : ℝ) :
     maskReal S x ∈ Set.Ico (0 : ℝ) 1 :=
   realOfDigits_mem_Ico 2 (by norm_num) _ (maskDigits_lt S x)
-    (properDigits_maskDigits hc hdens x)
+    (properDigits_maskDigits hmiss x)
 
-lemma digitOf_maskReal {c : ℝ} (hc : c < 1)
-    (hdens : ∀ L : ℕ, (((Finset.range L).filter S).card : ℝ) ≤ c * L) (x : ℝ) :
+lemma digitOf_maskReal (hmiss : ∀ M : ℕ, ∃ j, M ≤ j ∧ ¬ S j) (x : ℝ) :
     digitOf 2 (Int.fract (maskReal S x)) = maskDigits S x := by
-  have h := maskReal_mem_Ico hc hdens x
+  have h := maskReal_mem_Ico hmiss x
   rw [Set.mem_Ico] at h
   rw [Int.fract_eq_self.2 h]
   exact digitOf_realOfDigits 2 (by norm_num) _ (maskDigits_lt S x)
-    (properDigits_maskDigits hc hdens x)
+    (properDigits_maskDigits hmiss x)
 
 /-- The mask keeps every digit the set `S` reads. -/
-lemma digitOf_maskReal_of_mem {c : ℝ} (hc : c < 1)
-    (hdens : ∀ L : ℕ, (((Finset.range L).filter S).card : ℝ) ≤ c * L) (x : ℝ) {j : ℕ}
+lemma digitOf_maskReal_of_mem (hmiss : ∀ M : ℕ, ∃ j, M ≤ j ∧ ¬ S j) (x : ℝ) {j : ℕ}
     (hj : S j) :
     digitOf 2 (Int.fract (maskReal S x)) j = digitOf 2 (Int.fract x) j := by
-  rw [digitOf_maskReal hc hdens x]
+  rw [digitOf_maskReal hmiss x]
   unfold maskDigits
   rw [if_pos hj]
 
-/-! ### The barrier -/
+/-! ### The barrier
 
-/-- The masked real is not binary normal when `S` has upper density `c < 1/2`: its digit `1`
-occurs with frequency at most `c`. -/
-theorem not_isNormal_maskReal {c : ℝ} (hc : c < 1 / 2)
-    (hdens : ∀ L : ℕ, (((Finset.range L).filter S).card : ℝ) ≤ c * L) (x : ℝ) :
+The density bound is only needed for large `L`: finitely many positions cannot change a digit
+frequency.  Stating it that way makes the necessary condition on any repair a statement about
+*arbitrarily large* prefixes, i.e. genuine upper density `≥ 1/2`. -/
+
+/-- The masked real is not binary normal when `S` has eventual upper density `c < 1/2`: its
+digit `1` occurs with frequency at most `c`. -/
+theorem not_isNormal_maskReal_eventually {c : ℝ} (hc : c < 1 / 2) (hc0 : 0 ≤ c) {L₀ : ℕ}
+    (hdens : ∀ L : ℕ, L₀ ≤ L → (((Finset.range L).filter S).card : ℝ) ≤ c * L) (x : ℝ) :
     ¬ IsNormal 2 (maskReal S x) := by
   intro hN
-  have hc1 : c < 1 := by linarith
-  have hc0 : 0 ≤ c := by
-    have h1 := hdens 1
-    have h0 : (0 : ℝ) ≤ (((Finset.range 1).filter S).card : ℝ) := Nat.cast_nonneg _
-    have := le_trans h0 h1
-    simpa using this
+  have hmiss := exists_not_mem_of_density_eventually (S := S) (by linarith : c < 1) hdens
   have h := hN [1] (by simp) (fun d hd => by simp at hd; omega)
-  have hle : ∀ n : ℕ,
+  have hle : ∀ n : ℕ, L₀ ≤ n →
       (countOccurrences [1] ((List.range n).map (digitOf 2 (Int.fract (maskReal S x)))) : ℝ) / n
         ≤ c := by
-    intro n
-    rcases Nat.eq_zero_or_pos n with rfl | hn
+    intro n hn
+    rcases Nat.eq_zero_or_pos n with rfl | hpos
     · simpa using hc0
     have hcount : countOccurrences [1]
         ((List.range n).map (digitOf 2 (Int.fract (maskReal S x))))
           ≤ ((Finset.range n).filter S).card := by
       refine NormalNumbers.G4.Sched.countOcc_one_le (fun j hj => ?_) n
       by_contra hns
-      rw [digitOf_maskReal hc1 hdens] at hj
+      rw [digitOf_maskReal hmiss] at hj
       unfold maskDigits at hj
       rw [if_neg hns] at hj
       omega
-    have hnR : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn
+    have hnR : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hpos
     rw [div_le_iff₀ hnR]
     have h1 : (countOccurrences [1]
         ((List.range n).map (digitOf 2 (Int.fract (maskReal S x)))) : ℝ)
           ≤ (((Finset.range n).filter S).card : ℝ) := by exact_mod_cast hcount
-    exact h1.trans (hdens n)
-  have hlim := le_of_tendsto h (Filter.Eventually.of_forall hle)
+    exact h1.trans (hdens n hn)
+  have hev : ∀ᶠ n in atTop,
+      (countOccurrences [1] ((List.range n).map (digitOf 2 (Int.fract (maskReal S x)))) : ℝ) / n
+        ≤ c := by
+    filter_upwards [eventually_ge_atTop L₀] with n hn using hle n hn
+  have hlim := le_of_tendsto h hev
   norm_num at hlim
   linarith
 
 /-- **The locality barrier.**  A property that depends on a real only through its binary digits
-at the positions of a set `S` of upper density `c < 1/2` can never imply normality: if it holds
-anywhere, it holds at a nonnormal point of `[0,1)`. -/
+at the positions of a set `S` of eventual upper density `c < 1/2` can never imply normality: if
+it holds anywhere, it holds at a nonnormal point of `[0,1)`. -/
+theorem exists_nonnormal_of_digitLocal_eventually {c : ℝ} (hc : c < 1 / 2) (hc0 : 0 ≤ c)
+    {L₀ : ℕ} (hdens : ∀ L : ℕ, L₀ ≤ L → (((Finset.range L).filter S).card : ℝ) ≤ c * L)
+    {P : ℝ → Prop}
+    (hloc : ∀ x y : ℝ, (∀ j, S j → digitOf 2 (Int.fract x) j = digitOf 2 (Int.fract y) j) →
+      P x → P y)
+    {x : ℝ} (hx : P x) :
+    ∃ y : ℝ, 0 ≤ y ∧ y < 1 ∧ P y ∧ ¬ IsNormal 2 y := by
+  have hmiss := exists_not_mem_of_density_eventually (S := S) (by linarith : c < 1) hdens
+  have hmem := maskReal_mem_Ico hmiss x
+  rw [Set.mem_Ico] at hmem
+  refine ⟨maskReal S x, hmem.1, hmem.2, ?_,
+    not_isNormal_maskReal_eventually hc hc0 hdens x⟩
+  exact hloc x _ (fun j hj => (digitOf_maskReal_of_mem hmiss x hj).symm) hx
+
+/-- Nonnegativity of a density bound is automatic. -/
+lemma nonneg_of_density {c : ℝ}
+    (hdens : ∀ L : ℕ, (((Finset.range L).filter S).card : ℝ) ≤ c * L) : 0 ≤ c := by
+  have h1 := hdens 1
+  have h0 : (0 : ℝ) ≤ (((Finset.range 1).filter S).card : ℝ) := Nat.cast_nonneg _
+  have := le_trans h0 h1
+  simpa using this
+
+theorem not_isNormal_maskReal {c : ℝ} (hc : c < 1 / 2)
+    (hdens : ∀ L : ℕ, (((Finset.range L).filter S).card : ℝ) ≤ c * L) (x : ℝ) :
+    ¬ IsNormal 2 (maskReal S x) :=
+  not_isNormal_maskReal_eventually hc (nonneg_of_density hdens) (L₀ := 0)
+    (fun L _ => hdens L) x
+
+/-- **The locality barrier**, with the density bound at every `L`. -/
 theorem exists_nonnormal_of_digitLocal {c : ℝ} (hc : c < 1 / 2)
     (hdens : ∀ L : ℕ, (((Finset.range L).filter S).card : ℝ) ≤ c * L)
     {P : ℝ → Prop}
     (hloc : ∀ x y : ℝ, (∀ j, S j → digitOf 2 (Int.fract x) j = digitOf 2 (Int.fract y) j) →
       P x → P y)
     {x : ℝ} (hx : P x) :
-    ∃ y : ℝ, 0 ≤ y ∧ y < 1 ∧ P y ∧ ¬ IsNormal 2 y := by
-  have hc1 : c < 1 := by linarith
-  have hmem := maskReal_mem_Ico hc1 hdens x
-  rw [Set.mem_Ico] at hmem
-  refine ⟨maskReal S x, hmem.1, hmem.2, ?_, not_isNormal_maskReal hc hdens x⟩
-  exact hloc x _ (fun j hj => (digitOf_maskReal_of_mem hc1 hdens x hj).symm) hx
+    ∃ y : ℝ, 0 ≤ y ∧ y < 1 ∧ P y ∧ ¬ IsNormal 2 y :=
+  exists_nonnormal_of_digitLocal_eventually hc (nonneg_of_density hdens) (L₀ := 0)
+    (fun L _ => hdens L) hloc hx
 
-/-- **The contrapositive**, as the brief's §6 positive branch needs it: if an `S`-local
-hypothesis that is satisfiable does force normality, then `S` reads at least half of all digit
-positions — for every `c < 1/2` some prefix `[0,L)` contains more than `c·L` of them. -/
+/-- **The contrapositive**, as the brief's §6 positive branch needs it: if a satisfiable
+`S`-local hypothesis does force normality, then `S` reads at least half of all digit positions
+— for every `c < 1/2` some prefix `[0,L)` contains more than `c·L` of them. -/
 theorem half_le_density_of_forces_normal
     {P : ℝ → Prop}
     (hloc : ∀ x y : ℝ, (∀ j, S j → digitOf 2 (Int.fract x) j = digitOf 2 (Int.fract y) j) →
@@ -196,6 +231,23 @@ theorem half_le_density_of_forces_normal
   by_contra hcon
   push_neg at hcon
   obtain ⟨y, hy0, hy1, hPy, hny⟩ := exists_nonnormal_of_digitLocal hc hcon hloc hx
+  exact hny (hT y hy0 hy1 hPy)
+
+/-- **The necessary condition, sharp form**: a satisfiable `S`-local hypothesis forces normality
+only if `S` has upper density `≥ 1/2` — for every `c < 1/2` there are *arbitrarily large* `L`
+with more than `c·L` positions of `S` below `L`. -/
+theorem upper_density_half_of_forces_normal
+    {P : ℝ → Prop}
+    (hloc : ∀ x y : ℝ, (∀ j, S j → digitOf 2 (Int.fract x) j = digitOf 2 (Int.fract y) j) →
+      P x → P y)
+    {x : ℝ} (hx : P x)
+    (hT : ∀ y : ℝ, 0 ≤ y → y < 1 → P y → IsNormal 2 y)
+    {c : ℝ} (hc : c < 1 / 2) (hc0 : 0 ≤ c) (L₀ : ℕ) :
+    ∃ L : ℕ, L₀ ≤ L ∧ c * L < (((Finset.range L).filter S).card : ℝ) := by
+  by_contra hcon
+  push_neg at hcon
+  obtain ⟨y, hy0, hy1, hPy, hny⟩ :=
+    exists_nonnormal_of_digitLocal_eventually hc hc0 (fun L hL => hcon L hL) hloc hx
   exact hny (hT y hy0 hy1 hPy)
 
 /-- **Vacuity**: if a satisfiable-or-not `S`-local hypothesis does imply normality on `[0,1)`,
