@@ -455,3 +455,306 @@ theorem abs_uniPatFreq_sub_le {m ℓ t J : ℕ} (hℓ : 0 < ℓ) (ht : 0 < t) (h
   rw [this, hJt]
 
 end NormalNumbers.G4Entropy
+
+namespace NormalNumbers.G4Entropy
+
+variable {A B : Type*} [Fintype A] [DecidableEq A] [Fintype B] [DecidableEq B]
+
+/-- Unpacking the uniform pattern coordinate into its `t` component blocks. -/
+lemma jjPat_eq_pack_iff (m ℓ t : ℕ) (blk : B → Fin t → A) (b : B) (jj : Fin t → ℕ)
+    (z : A → Fin (2 ^ m)) (u : Fin t → Fin (2 ^ ℓ)) :
+    jjPat m ℓ t blk b jj z = packFin t ℓ u
+      ↔ ∀ s : Fin t, posAt m ℓ (jj s * ℓ) (z (blk b s)) = u s := by
+  constructor
+  · intro h s
+    exact congrFun ((packFin t ℓ).injective h) s
+  · intro h
+    exact congrArg (packFin t ℓ) (funext h)
+
+end NormalNumbers.G4Entropy
+
+namespace NormalNumbers.G4.Sched
+
+open NormalNumbers NormalNumbers.G4Entropy NormalNumbers.PrimeLambert
+
+/-! ### The schedule instance: every vector of sampled positions, averaged -/
+
+/-- **The uniform sampled-pattern frequency**: averaged over the blocks and over *all* vectors
+of aligned positions in `[0, ⌊m_K/ℓ⌋)^t`, each window's position chosen independently. -/
+noncomputable def uniFreq (i ℓ t : ℕ) (x : ℝ) (w : Fin (2 ^ (ℓ * t))) : ℝ :=
+  uniPatFreq (kk i) ℓ t (kk i / ℓ) (blkSched i t) (jointLawAt i x) w
+
+lemma kk_le_two_mul_div_mul (i ℓ : ℕ) (hℓ : 0 < ℓ) (hfit : 2 * ℓ ≤ kk i) :
+    kk i ≤ 2 * (kk i / ℓ * ℓ) := by
+  obtain ⟨X, hX⟩ : ∃ X, kk i / ℓ * ℓ = X := ⟨_, rfl⟩
+  have h1 : X + kk i % ℓ = kk i := by rw [← hX]; exact Nat.div_add_mod' _ _
+  have h2 : kk i % ℓ < ℓ := Nat.mod_lt _ hℓ
+  omega
+
+/-- **The uniform capacity inequality.**  A per-window deficit of `δ` bits controls every
+`ℓt`-bit pattern read at *every* vector of aligned sampled positions, averaged, to within
+`2t√(4 log 2 · ℓ t δ / m_K)` — the aligned bound with the constant doubled and one factor `t`,
+the whole price of letting each window choose its own position. -/
+theorem abs_uniFreq_sub_le_of_deficit (i ℓ t : ℕ) (hℓ : 0 < ℓ) (ht : 0 < t)
+    (hfit : 2 * ℓ ≤ kk i) (hcard : 2 * t ≤ Fintype.card (gridAt i).Atom)
+    (x : ℝ) (w : Fin (2 ^ (ℓ * t))) {δ : ℝ} (hδ : 0 < δ)
+    (hdef : ((kk i : ℝ) - δ) * (Fintype.card (gridAt i).Atom : ℝ) ≤ (jointLawAt i x).H₂) :
+    |uniFreq i ℓ t x w - 1 / (2 : ℝ) ^ (ℓ * t)|
+      ≤ 2 * (t : ℝ) * Real.sqrt (4 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * δ / (kk i : ℝ)) := by
+  classical
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hC : 0 < Fintype.card (gridAt i).Atom := by omega
+  have hnb : 0 < nblk i t := nblk_pos ht (by omega)
+  haveI : Nonempty (Fin (nblk i t)) := Fin.pos_iff_nonempty.1 hnb
+  have hk0 : 0 < kk i := by omega
+  have hJ : 0 < kk i / ℓ := Nat.div_pos (by omega) hℓ
+  have hJm : (kk i / ℓ) * ℓ ≤ kk i := Nat.div_mul_le_self _ _
+  have hCR : (0 : ℝ) < (Fintype.card (gridAt i).Atom : ℝ) := by exact_mod_cast hC
+  have hΔ0 : (0 : ℝ) < δ * (Fintype.card (gridAt i).Atom : ℝ) := by positivity
+  have hΔ : (kk i : ℝ) * (Fintype.card (gridAt i).Atom : ℝ)
+      - δ * (Fintype.card (gridAt i).Atom : ℝ) ≤ (jointLawAt i x).H₂ := by
+    rw [← sub_mul]; exact hdef
+  have hmain := abs_uniPatFreq_sub_le (A := (gridAt i).Atom) (B := Fin (nblk i t))
+    (m := kk i) (ℓ := ℓ) (t := t) (J := kk i / ℓ) hℓ ht hJ hJm (blkSched i t)
+    (blkSched_injective i t) (jointLawAt i x) w hΔ0 hΔ
+  rw [uniFreq]
+  refine hmain.trans ?_
+  have hcf : (Fintype.card (Fin (nblk i t)) : ℝ) = ((nblk i t : ℕ) : ℝ) := by
+    rw [Fintype.card_fin]
+  have hbR : (0 : ℝ) < ((nblk i t : ℕ) : ℝ) := by exact_mod_cast hnb
+  have htR : (0 : ℝ) < (t : ℝ) := by exact_mod_cast ht
+  have hℓR : (0 : ℝ) < (ℓ : ℝ) := by exact_mod_cast hℓ
+  have hJR : (0 : ℝ) < ((kk i / ℓ : ℕ) : ℝ) := by exact_mod_cast hJ
+  have hkR : (0 : ℝ) < (kk i : ℝ) := by exact_mod_cast hk0
+  have hlb : (Fintype.card (gridAt i).Atom : ℝ) ≤ 2 * (t : ℝ) * ((nblk i t : ℕ) : ℝ) := by
+    have hnat : Fintype.card (gridAt i).Atom ≤ 2 * t * nblk i t := by
+      have h1 : t * nblk i t + Fintype.card (gridAt i).Atom % t
+          = Fintype.card (gridAt i).Atom := by
+        rw [nblk]; exact Nat.div_add_mod _ _
+      have h2 : Fintype.card (gridAt i).Atom % t < t := Nat.mod_lt _ ht
+      have h4 : t ≤ t * nblk i t := Nat.le_mul_of_pos_right t hnb
+      have h5 : 2 * t * nblk i t = 2 * (t * nblk i t) := by ring
+      omega
+    exact_mod_cast hnat
+  have hkkle : (kk i : ℝ) ≤ 2 * (((kk i / ℓ : ℕ) : ℝ) * (ℓ : ℝ)) := by
+    have := kk_le_two_mul_div_mul i ℓ hℓ hfit
+    exact_mod_cast this
+  have hstep : Real.log 2 * (δ * (Fintype.card (gridAt i).Atom : ℝ))
+      / ((Fintype.card (Fin (nblk i t)) : ℝ) * ((kk i / ℓ : ℕ) : ℝ))
+      ≤ 4 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * δ / (kk i : ℝ) := by
+    rw [hcf, div_le_div_iff₀ (by positivity) hkR]
+    have h1 : Real.log 2 * (δ * (Fintype.card (gridAt i).Atom : ℝ))
+        ≤ Real.log 2 * (δ * (2 * (t : ℝ) * ((nblk i t : ℕ) : ℝ))) := by
+      have := mul_le_mul_of_nonneg_left hlb hδ.le
+      exact mul_le_mul_of_nonneg_left this hlog2.le
+    have h2 : Real.log 2 * (δ * (Fintype.card (gridAt i).Atom : ℝ)) * (kk i : ℝ)
+        ≤ Real.log 2 * (δ * (2 * (t : ℝ) * ((nblk i t : ℕ) : ℝ)))
+            * (2 * (((kk i / ℓ : ℕ) : ℝ) * (ℓ : ℝ))) :=
+      mul_le_mul h1 hkkle hkR.le (by positivity)
+    calc Real.log 2 * (δ * (Fintype.card (gridAt i).Atom : ℝ)) * (kk i : ℝ)
+        ≤ Real.log 2 * (δ * (2 * (t : ℝ) * ((nblk i t : ℕ) : ℝ)))
+            * (2 * (((kk i / ℓ : ℕ) : ℝ) * (ℓ : ℝ))) := h2
+      _ = 4 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * δ
+            * (((nblk i t : ℕ) : ℝ) * ((kk i / ℓ : ℕ) : ℝ)) := by ring
+  have hnn : (0 : ℝ) ≤ 2 * (t : ℝ) := by positivity
+  exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hstep) hnn
+
+/-- **The uniform capacity bound for `G₄`.**  `entropy_E1` supplies `δ = 50√K`, `m_K = K/4`. -/
+theorem abs_uniFreq_sub_le_primeLambertFour (i ℓ t : ℕ) (hℓ : 0 < ℓ) (ht : 0 < t)
+    (hfit : 2 * ℓ ≤ kk i) (hcard : 2 * t ≤ Fintype.card (gridAt i).Atom)
+    (w : Fin (2 ^ (ℓ * t))) :
+    |uniFreq i ℓ t (primeLambertAtBase 4) w - 1 / (2 : ℝ) ^ (ℓ * t)|
+      ≤ 2 * (t : ℝ) * Real.sqrt (800 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) / Real.sqrt (KK i)) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hKpos : (0 : ℝ) < (KK i : ℝ) := by
+    have : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+    linarith
+  have hS0 : 0 < Real.sqrt ((KK i : ℕ) : ℝ) := Real.sqrt_pos.2 hKpos
+  have hδ : (0 : ℝ) < 50 * Real.sqrt (KK i) := by positivity
+  have hE1 := entropy_E1 (K := KK i) (k₄ := kk i) rfl (KK_ge i)
+  have hcardA : (Fintype.card (gridAt i).Atom : ℝ) = (((KK i ^ 2 + 1) ^ KK i : ℕ) : ℝ) := by
+    rw [card_Atom_gridAt i]
+  have hdef : ((kk i : ℝ) - 50 * Real.sqrt (KK i)) * (Fintype.card (gridAt i).Atom : ℝ)
+      ≤ (jointLawAt i (primeLambertAtBase 4)).H₂ := by
+    rw [hcardA, sub_mul]
+    exact hE1.le
+  refine (abs_uniFreq_sub_le_of_deficit i ℓ t hℓ ht hfit hcard _ w hδ hdef).trans ?_
+  have hk0 : (0 : ℝ) < (kk i : ℝ) := by
+    have : 0 < kk i := by unfold kk; omega
+    exact_mod_cast this
+  have hsq : Real.sqrt ((KK i : ℕ) : ℝ) * Real.sqrt ((KK i : ℕ) : ℝ) = 4 * (kk i : ℝ) := by
+    rw [Real.mul_self_sqrt hKpos.le]
+    unfold KK; push_cast; ring
+  have hstep : 4 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * (50 * Real.sqrt (KK i)) / (kk i : ℝ)
+      ≤ 800 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) / Real.sqrt (KK i) := by
+    rw [div_le_div_iff₀ hk0 hS0]
+    have hid : 4 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * (50 * Real.sqrt (KK i))
+        * Real.sqrt ((KK i : ℕ) : ℝ)
+        = 800 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) * (kk i : ℝ) := by
+      linear_combination (200 * Real.log 2 * (ℓ : ℝ) * (t : ℝ)) * hsq
+    rw [hid]
+  have hnn : (0 : ℝ) ≤ 2 * (t : ℝ) := by positivity
+  exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hstep) hnn
+
+/-- **The uniform frequency theorem.** -/
+theorem tendsto_uniFreq_primeLambertFour (ℓ t : ℕ) (hℓ : 0 < ℓ) (ht : 0 < t)
+    (w : ∀ i, Fin (2 ^ (ℓ * t))) :
+    Tendsto (fun i => uniFreq i ℓ t (primeLambertAtBase 4) (w i) - 1 / (2 : ℝ) ^ (ℓ * t))
+      atTop (nhds 0) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hinner : Tendsto (fun i => 800 * Real.log 2 * (ℓ : ℝ) * (t : ℝ) / Real.sqrt (KK i))
+      atTop (nhds 0) := by
+    have hsqrt : Tendsto (fun i => Real.sqrt (KK i)) atTop atTop :=
+      Real.tendsto_sqrt_atTop.comp tendsto_KK_atTop
+    exact hsqrt.const_div_atTop _
+  have hsq : Tendsto (fun i => 2 * (t : ℝ) * Real.sqrt (800 * Real.log 2 * (ℓ : ℝ) * (t : ℝ)
+      / Real.sqrt (KK i))) atTop (nhds 0) := by
+    have := hinner.sqrt
+    simpa using this.const_mul (2 * (t : ℝ))
+  refine squeeze_zero_norm' ?_ hsq
+  filter_upwards [eventually_ge_atTop (2 * ℓ), eventually_ge_atTop (2 * t)] with i h1 h2
+  have hfit : 2 * ℓ ≤ kk i := by unfold kk; omega
+  have hcard : 2 * t ≤ Fintype.card (gridAt i).Atom := by
+    have := KK_le_card_Atom i
+    have hKi : i ≤ KK i := by unfold KK kk; omega
+    omega
+  simpa [Real.norm_eq_abs] using
+    abs_uniFreq_sub_le_primeLambertFour i ℓ t hℓ ht hfit hcard (w i)
+
+/-! ### The digit rendering, at every vector of sampled positions -/
+
+open Classical in
+/-- **The count rendering.** -/
+theorem uniFreq_eq_count (i ℓ t : ℕ) (x : ℝ) (w : Fin (2 ^ (ℓ * t))) :
+    uniFreq i ℓ t x w
+      = (∑ b : Fin (nblk i t), ∑ jj : Fin t → Fin (kk i / ℓ),
+            (((PK i).filter fun n =>
+              jjPat (kk i) ℓ t (blkSched i t) b (fun s => ((jj s : ℕ)))
+                (ZVec (gridAt i) (kk i) x n) = w).card : ℝ))
+        / (((PK i).card : ℝ)
+            * ((Fintype.card (Fin (nblk i t)) : ℝ) * ((kk i / ℓ : ℕ) : ℝ) ^ t)) := by
+  classical
+  have hp : ∀ (b : Fin (nblk i t)) (jj : Fin t → Fin (kk i / ℓ)),
+      ((jointLawAt i x).map
+          (jjPat (kk i) ℓ t (blkSched i t) b (fun s => ((jj s : ℕ))))).prob {w}
+        = (((PK i).filter fun n =>
+              jjPat (kk i) ℓ t (blkSched i t) b (fun s => ((jj s : ℕ)))
+                (ZVec (gridAt i) (kk i) x n) = w).card : ℝ)
+          / ((PK i).card : ℝ) := by
+    intro b jj
+    rw [FinLaw.prob, Finset.sum_singleton]
+    exact map_empirical_p (apSample_nonempty (gridAt i) (b₀_lt_X_at i)) _ _ w
+  have hsum : (∑ b : Fin (nblk i t), ∑ jj : Fin t → Fin (kk i / ℓ),
+        ((jointLawAt i x).map
+          (jjPat (kk i) ℓ t (blkSched i t) b (fun s => ((jj s : ℕ))))).prob {w})
+      = (∑ b : Fin (nblk i t), ∑ jj : Fin t → Fin (kk i / ℓ),
+            (((PK i).filter fun n =>
+              jjPat (kk i) ℓ t (blkSched i t) b (fun s => ((jj s : ℕ)))
+                (ZVec (gridAt i) (kk i) x n) = w).card : ℝ)) / ((PK i).card : ℝ) := by
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun b _ => ?_
+    rw [Finset.sum_div]
+    exact Finset.sum_congr rfl fun jj _ => hp b jj
+  rw [uniFreq, uniPatFreq, hsum, div_div]
+
+open Classical in
+/-- **The digit rendering.**  The event is: for every `s < t`, the `ℓ` binary digits of `x`
+beginning at position `2·kIdx(n, blkSched b s) + (jj s)·ℓ` spell the `s`-th component word —
+each window's aligned position `jj s` chosen **freely and independently**, and the average taken
+over all `J^t` such choices. -/
+theorem uniFreq_eq_digits (i ℓ t : ℕ) (hℓ : 0 < ℓ) (x : ℝ) (u : Fin t → Fin (2 ^ ℓ)) :
+    uniFreq i ℓ t x (packFin t ℓ u)
+      = (∑ b : Fin (nblk i t), ∑ jj : Fin t → Fin (kk i / ℓ),
+            (((PK i).filter fun n => ∀ s : Fin t,
+              blockVal (Int.fract x)
+                (2 * kIdx (gridAt i) n (blkSched i t b s) + (jj s : ℕ) * ℓ) ℓ
+                  = (u s : ℕ)).card : ℝ))
+        / (((PK i).card : ℝ)
+            * ((Fintype.card (Fin (nblk i t)) : ℝ) * ((kk i / ℓ : ℕ) : ℝ) ^ t)) := by
+  classical
+  rw [uniFreq_eq_count i ℓ t x (packFin t ℓ u)]
+  congr 1
+  refine Finset.sum_congr rfl fun b _ => ?_
+  refine Finset.sum_congr rfl fun jj _ => ?_
+  congr 2
+  have hfitp : ∀ s : Fin t, (jj s : ℕ) * ℓ + ℓ ≤ kk i := by
+    intro s
+    have h1 : ((jj s : ℕ) + 1) * ℓ ≤ (kk i / ℓ) * ℓ :=
+      Nat.mul_le_mul_right ℓ (by have := (jj s).isLt; omega)
+    have h2 : (kk i / ℓ) * ℓ ≤ kk i := Nat.div_mul_le_self _ _
+    have h3 : ((jj s : ℕ) + 1) * ℓ = (jj s : ℕ) * ℓ + ℓ := by ring
+    omega
+  refine Finset.filter_congr fun n _ => ?_
+  rw [jjPat_eq_pack_iff]
+  have hZ : ∀ s : Fin t, ZVec (gridAt i) (kk i) x n (blkSched i t b s)
+      = ⟨blockVal (Int.fract x) (2 * kIdx (gridAt i) n (blkSched i t b s)) (kk i),
+          blockVal_lt _ _ _⟩ :=
+    fun s => Fin.ext (ZSample_eq_blockVal (gridAt i) (kk i) x n (blkSched i t b s))
+  constructor
+  · intro h s
+    have hs := h s
+    rw [hZ s, posAt_blockVal _ _ _ _ _ (hfitp s)] at hs
+    exact congrArg Fin.val hs
+  · intro h s
+    rw [hZ s, posAt_blockVal _ _ _ _ _ (hfitp s)]
+    exact Fin.ext (h s)
+
+open Classical in
+/-- **THE ENDPOINT, uniformly over every vector of sampled positions.**  For every `t`, every
+`ℓ`, and any binary words `v₀,…,v_{t−1}` of length `ℓ`, the proportion of triples
+`(n, b, jj)` — `jj` ranging over **all** vectors of aligned positions in `[0,⌊m_K/ℓ⌋)^t` — at
+which, simultaneously for every `s < t`, the word `v s` occurs in the binary expansion of `G₄`
+at position `2·kIdx(n, blkSched b s) + (jj s)·ℓ`, tends to `2^{−ℓt}`.
+
+This is the strongest form of the decorrelation statement this arithmetic supports: the `t`
+windows are asymptotically independent and uniform *jointly over all independent choices of the
+`t` positions*, not merely along the common aligned diagonal
+(`tendsto_occursCountJoint_primeLambertFour`) or at one fixed offset vector
+(`tendsto_occursCountJointPos_primeLambertFour`).
+
+It is a statement about the *sampled* positions only, and is **not** a normality claim. -/
+theorem tendsto_occursCountJointUniform_primeLambertFour (t ℓ : ℕ) (ht : 0 < t) (hℓ : 0 < ℓ)
+    (v : Fin t → List ℕ) (hlen : ∀ s, (v s).length = ℓ)
+    (hv : ∀ s : Fin t, ∀ j, ∀ h : j < (v s).length, (v s)[j] < 2) :
+    Tendsto (fun i =>
+      (∑ b : Fin (nblk i t), ∑ jj : Fin t → Fin (kk i / ℓ),
+          (((PK i).filter fun n => ∀ s : Fin t,
+            OccursAt 2 (primeLambertAtBase 4) (v s)
+              (2 * kIdx (gridAt i) n (blkSched i t b s) + (jj s : ℕ) * ℓ)).card : ℝ))
+        / (((PK i).card : ℝ)
+            * ((Fintype.card (Fin (nblk i t)) : ℝ) * ((kk i / ℓ : ℕ) : ℝ) ^ t)))
+      atTop (nhds (1 / (2 : ℝ) ^ (ℓ * t))) := by
+  classical
+  set u : Fin t → Fin (2 ^ ℓ) := fun s =>
+    ⟨wordVal (v s), by
+      have := wordVal_lt (hv s)
+      rw [hlen s] at this
+      exact this⟩ with hu
+  have hmain : Tendsto
+      (fun i => uniFreq i ℓ t (primeLambertAtBase 4) (packFin t ℓ u))
+      atTop (nhds (1 / (2 : ℝ) ^ (ℓ * t))) := by
+    have := tendsto_uniFreq_primeLambertFour ℓ t hℓ ht (fun _ => packFin t ℓ u)
+    have hlim : Tendsto (fun _ : ℕ => (1 : ℝ) / (2 : ℝ) ^ (ℓ * t)) atTop
+        (nhds (1 / (2 : ℝ) ^ (ℓ * t))) := tendsto_const_nhds
+    simpa using this.add hlim
+  refine hmain.congr' ?_
+  filter_upwards with i
+  rw [uniFreq_eq_digits i ℓ t hℓ _ u]
+  congr 1
+  refine Finset.sum_congr rfl fun b _ => ?_
+  refine Finset.sum_congr rfl fun jj _ => ?_
+  congr 2
+  refine Finset.filter_congr fun n _ => ?_
+  constructor
+  · intro h s
+    have hb := blockVal_eq_wordVal_iff (y := primeLambertAtBase 4)
+      (p := 2 * kIdx (gridAt i) n (blkSched i t b s) + (jj s : ℕ) * ℓ) (hv s)
+    rw [hlen s] at hb
+    exact hb.1 (h s)
+  · intro h s
+    have hb := blockVal_eq_wordVal_iff (y := primeLambertAtBase 4)
+      (p := 2 * kIdx (gridAt i) n (blkSched i t b s) + (jj s : ℕ) * ℓ) (hv s)
+    rw [hlen s] at hb
+    exact hb.2 (h s)
+
+end NormalNumbers.G4.Sched
