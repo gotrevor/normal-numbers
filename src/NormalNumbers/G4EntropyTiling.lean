@@ -399,8 +399,8 @@ theorem abs_blockFreqT_sub_le_primeLambertFour (i ℓ : ℕ) (hℓ : 0 < ℓ) (h
 `tendsto_blockFreq_growing`, but now attributable **entirely** to `entropy_E1`'s deficit
 `δ = 50√K`: with a deficit `δ_K` the bound reads `2√(log 2 · ℓδ_K/m_K)`, so the controlled
 range is exactly `ℓ = o(m_K/δ_K)`. -/
-theorem tendsto_blockFreqT_growing (ℓ : ℕ → ℕ) (hpos : ∀ i, 0 < ℓ i)
-    (hle : ∀ i, ℓ i ≤ kk i)
+theorem tendsto_blockFreqT_growing (ℓ : ℕ → ℕ) (hpos : ∀ᶠ i in atTop, 0 < ℓ i)
+    (hle : ∀ᶠ i in atTop, ℓ i ≤ kk i)
     (hgrow : Tendsto (fun i => (ℓ i : ℝ) / Real.sqrt (KK i)) atTop (nhds 0))
     (w : ∀ i, Fin (2 ^ ℓ i)) :
     Tendsto (fun i => blockFreqT i (ℓ i) (primeLambertAtBase 4) (w i) - 1 / (2 : ℝ) ^ (ℓ i))
@@ -416,8 +416,112 @@ theorem tendsto_blockFreqT_growing (ℓ : ℕ → ℕ) (hpos : ∀ i, 0 < ℓ i)
       / Real.sqrt (KK i))) atTop (nhds 0) := by
     have := hinner.sqrt
     simpa using this.const_mul (2 : ℝ)
-  refine squeeze_zero_norm (fun i => ?_) hsq
+  refine squeeze_zero_norm' ?_ hsq
+  filter_upwards [hpos, hle] with i hp hl
   simpa [Real.norm_eq_abs] using
-    abs_blockFreqT_sub_le_primeLambertFour i (ℓ i) (hpos i) (hle i) (w i)
+    abs_blockFreqT_sub_le_primeLambertFour i (ℓ i) hp hl (w i)
+
+/-! ### The faithfulness rendering of the tiled frequency
+
+The tiled blocks are *aligned*: for `j < m_K/ℓ` one has `(j+1)ℓ ≤ m_K`, so `blkAt_blockVal`
+applies directly and the `j`-th block is the `ℓ`-window at `p + jℓ` — no `min` correction, as
+`blockFreq` needed for its overlapping last coordinate.
+-/
+
+open Classical in
+/-- **The count rendering.**  `blockFreqT` is the density, among the
+`|P_K|·|Atom_K|·⌊m_K/ℓ⌋` triples `(n, α, j)`, of those whose `j`-th tiled block is `w`. -/
+theorem blockFreqT_eq_count (i ℓ : ℕ) (x : ℝ) (w : Fin (2 ^ ℓ)) :
+    blockFreqT i ℓ x w
+      = (∑ c : (gridAt i).Atom × Fin (kk i / ℓ),
+            (((PK i).filter fun n =>
+              blkAt (kk i) ℓ (c.2 : ℕ) (ZVec (gridAt i) (kk i) x n c.1) = w).card : ℝ))
+        / (((PK i).card : ℝ)
+            * (Fintype.card ((gridAt i).Atom × Fin (kk i / ℓ)) : ℝ)) := by
+  classical
+  have hp : ∀ c : (gridAt i).Atom × Fin (kk i / ℓ),
+      ((jointLawAt i x).map (fullCoord (kk i) ℓ c)).prob {w}
+        = (((PK i).filter fun n =>
+              blkAt (kk i) ℓ (c.2 : ℕ) (ZVec (gridAt i) (kk i) x n c.1) = w).card : ℝ)
+          / ((PK i).card : ℝ) := by
+    intro c
+    rw [FinLaw.prob, Finset.sum_singleton]
+    exact map_empirical_p (apSample_nonempty (gridAt i) (b₀_lt_X_at i)) _ _ w
+  have hsum : (∑ c : (gridAt i).Atom × Fin (kk i / ℓ),
+        ((jointLawAt i x).map (fullCoord (kk i) ℓ c)).prob {w})
+      = (∑ c : (gridAt i).Atom × Fin (kk i / ℓ),
+          (((PK i).filter fun n =>
+            blkAt (kk i) ℓ (c.2 : ℕ) (ZVec (gridAt i) (kk i) x n c.1) = w).card : ℝ))
+        / ((PK i).card : ℝ) := by
+    rw [Finset.sum_div]
+    exact Finset.sum_congr rfl fun c _ => hp c
+  rw [blockFreqT, hsum, div_div]
+
+open Classical in
+/-- **The digit rendering.**  The event is: the `ℓ` binary digits of `x` beginning at position
+`2·kIdx(n,α) + jℓ` spell `w`.  Exactly aligned — the blocks tile the window. -/
+theorem blockFreqT_eq_digits (i ℓ : ℕ) (hℓ : 0 < ℓ) (x : ℝ) (w : Fin (2 ^ ℓ)) :
+    blockFreqT i ℓ x w
+      = (∑ c : (gridAt i).Atom × Fin (kk i / ℓ),
+            (((PK i).filter fun n =>
+              blockVal (Int.fract x) (2 * kIdx (gridAt i) n c.1 + (c.2 : ℕ) * ℓ) ℓ
+                = (w : ℕ)).card : ℝ))
+        / (((PK i).card : ℝ)
+            * (Fintype.card ((gridAt i).Atom × Fin (kk i / ℓ)) : ℝ)) := by
+  classical
+  rw [blockFreqT_eq_count i ℓ x w]
+  congr 1
+  refine Finset.sum_congr rfl fun c _ => ?_
+  congr 2
+  have hZ : ∀ n : ℕ, ZVec (gridAt i) (kk i) x n c.1
+      = ⟨blockVal (Int.fract x) (2 * kIdx (gridAt i) n c.1) (kk i), blockVal_lt _ _ _⟩ :=
+    fun n => Fin.ext (ZSample_eq_blockVal (gridAt i) (kk i) x n c.1)
+  have halign : ((c.2 : ℕ) + 1) * ℓ ≤ kk i := by
+    have h1 : (c.2 : ℕ) < kk i / ℓ := c.2.isLt
+    have h2 : (kk i / ℓ) * ℓ ≤ kk i := Nat.div_mul_le_self _ _
+    have h3 : ((c.2 : ℕ) + 1) * ℓ ≤ (kk i / ℓ) * ℓ := Nat.mul_le_mul_right ℓ (by omega)
+    omega
+  refine Finset.filter_congr fun n _ => ?_
+  rw [hZ n, blkAt_blockVal _ _ _ _ _ halign]
+  exact ⟨fun h => congrArg Fin.val h, fun h => Fin.ext h⟩
+
+open Classical in
+/-- **The tiled headline over `OccursAt`.**  For every finite binary word `w` and every word
+length `ℓ(K) = o(√K)`, the proportion of triples `(n, α, j)` at which `w` occurs in the binary
+expansion of `G₄` at position `2·kIdx(n,α) + j|w|` tends to `2^{−|w|}`. -/
+theorem tendsto_occursCountT_primeLambertFour (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ i, ∀ h : i < v.length, v[i] < 2) :
+    Tendsto (fun i =>
+      (∑ c : (gridAt i).Atom × Fin (kk i / v.length),
+          (((PK i).filter fun n =>
+            OccursAt 2 (primeLambertAtBase 4) v
+              (2 * kIdx (gridAt i) n c.1 + (c.2 : ℕ) * v.length)).card : ℝ))
+        / (((PK i).card : ℝ)
+            * (Fintype.card ((gridAt i).Atom × Fin (kk i / v.length)) : ℝ)))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+  classical
+  have hmain : Tendsto (fun i => blockFreqT i v.length (primeLambertAtBase 4)
+      ⟨wordVal v, wordVal_lt hv⟩) atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+    have hgrow : Tendsto (fun i => (v.length : ℝ) / Real.sqrt (KK i)) atTop (nhds 0) := by
+      have hsqrt : Tendsto (fun i => Real.sqrt (KK i)) atTop atTop :=
+        Real.tendsto_sqrt_atTop.comp tendsto_KK_atTop
+      exact hsqrt.const_div_atTop _
+    have hle : ∀ᶠ i in atTop, v.length ≤ kk i := by
+      filter_upwards [eventually_ge_atTop v.length] with i hi
+      unfold kk
+      omega
+    have := tendsto_blockFreqT_growing (fun _ => v.length)
+      (Filter.Eventually.of_forall fun _ => hlen) hle hgrow
+      (fun _ => ⟨wordVal v, wordVal_lt hv⟩)
+    have hlim : Tendsto (fun _ : ℕ => (1 : ℝ) / (2 : ℝ) ^ v.length) atTop
+        (nhds (1 / (2 : ℝ) ^ v.length)) := tendsto_const_nhds
+    simpa using this.add hlim
+  refine hmain.congr fun i => ?_
+  rw [blockFreqT_eq_digits i v.length hlen]
+  congr 1
+  refine Finset.sum_congr rfl fun c _ => ?_
+  congr 2
+  refine Finset.filter_congr fun n _ => ?_
+  exact blockVal_eq_wordVal_iff (y := primeLambertAtBase 4) hv
 
 end NormalNumbers.G4.Sched
