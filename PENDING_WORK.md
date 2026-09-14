@@ -7,6 +7,46 @@
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
 
+## 🔭 LIVE (laps 93–101) — `Q ∣ P₀`: the sampled windows are pairwise disjoint
+
+A structural discovery, and the route to an **x-free** (schedule-only) band read.
+
+```
+G4EntropyWindows.lean
+  kIdx_mod_Q, kIdx_cast_Q      every orbit index ≡ its sample time (mod Q)
+  rho_modEq                    ρ_{α,j} ≡ j (mod Q)   [shiftG_eq]
+  Q_dvd_freezeQ, Q_dvd_P₀      **Q ∣ P₀**
+  kIdx_congr_Q                 ALL orbit indices, all atoms, all times, ≡ (mod Q)
+  windows_eq_or_disjoint       **every two sampled windows coincide or are disjoint**
+  ActiveIdx, shared_idx_apart  two atoms' shared indices are P₀ apart (coprime_d)
+  card_shared_le, card_collide_pair_le, card_multi_atom_le
+  card_Atom_sq_le_d            |Atom|² ≤ d_α  (B ≥ (K²+1)², gridUmax ≥ B^K ≤ Q ≤ d)
+  card_multi_atom_le_real      collision fraction ≤ 2/|Atom| + 2|Atom|/|P_K| → 0
+```
+
+**Why `Q ∣ P₀`.**  `freezeQ` contains, as a factor, the distance between the shifts of two
+*different* atoms at the *same* layer; `shiftG_eq` makes those shifts congruent mod `Q`, so `Q`
+divides that distance.  Hence every sample time is congruent mod `Q`, hence so is every orbit
+index of every atom — and `Q = (U+K+N+2)!` dwarfs `m_K`.
+
+**What it unlocks.**  The `bandPos` read of laps 76–89 needs one *good* atom per scale, which
+depends on `G₄`'s entropy data, so the map is explicit but not schedule-only.  With full
+disjointness the read can instead take the **whole** sampled position set of a band — a
+schedule-only object.  Two obstacles, both now removed:
+* the band floor must be an `n`-only condition (else the restriction is not a sample-time
+  restriction and the entropy machinery does not apply) — achievable since
+  `kIdx(n,α) ≥ n/D₀ − 1`, so a threshold on `n` alone puts *every* atom's window above the floor;
+* reading the position *set* counts each window once while the entropy statistic counts each
+  `(n,α)` pair once — the difference is the window multiplicity, now bounded by
+  `card_multi_atom_le_real`.
+
+**Remaining for the x-free upgrade** (the natural next objective): the assembly — an `n`-only
+band threshold, the increasing enumeration of a band's distinct window starts, the count bridge
+against `posFreq` (using the multiplicity bound), and the cutoff limit.  This is a re-run of
+laps 69–89 with "one good atom" replaced by "the whole sample", and would give a
+**schedule-only, strictly increasing** position map with the correct word frequencies — the
+lap-51 objective's x-freeness and E-T8's strict monotonicity at once.
+
 ## 🔭 LIVE (laps 61–88) — the wall, and the band read that saturates it
 
 **The arc in one line.**  Laps 61–63 proved a wall that closes normality on this mechanism;
