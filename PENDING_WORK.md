@@ -184,18 +184,23 @@ and there are `≤ t·J^{t−1}` diagonals, giving
 — **the aligned bound times `t`**.  The blow-up of the individual diagonal bounds as
 `max d → J` is exactly cancelled by those diagonals' weight.
 
-### 🔨 IN FLIGHT (lap 42) — `G4EntropyJointUniform.lean`
+### 🔨 IN FLIGHT (laps 42–43) — `G4EntropyJointUniform.lean`
 
-Landed: `jjPat`, `patPos_eq_jjPat`, `uniPatFreq`, `diagSet`, and the statement of the two
-combinatorial leaves.  **Open (disclosed `sorry`, in `src/`):**
+Landed lap 42: `jjPat`, `patPos_eq_jjPat`, `uniPatFreq`, `diagSet`.
+**Landed lap 43, both leaves now PROVED (module sorry-free):**
 
 - `card_diagSet_le : (diagSet t J).card ≤ t * J^(t−1)` — `diagSet ⊆ ⋃_s {d | d s = 0}`,
-  each fibre injecting into `Fin (t−1) → Fin J` via `Fin.succAbove`.
-- `sum_diag_decomp` — the reindexing `jj ↦ (jj − min jj, min jj)`; a `Finset.sum_nbij'`
-  between `univ : Finset (Fin t → Fin J)` and the pairs `(d, j)` with `d ∈ diagSet`,
-  `j < J − max d`.
+  each fibre injecting into `Fin (t−1) → Fin J` by `Fin.succAbove`.
+- `minv` / `minv_le` / `exists_minv_eq` / `diagOf` / `diagOf_mem` / `diagOf_add_minv` /
+  `minv_lt` / `minv_add_sup_lt` / `minv_shift`, and
+  `sum_diag_decomp (ht : 0 < t)` — the reindexing `jj ↦ (jj − min jj, min jj)`, via
+  `Finset.sum_fiberwise_of_maps_to` over `diagOf` and then `Finset.sum_nbij'` on each fibre.
+  The inverse `k ↦ (d + k)` is made total by the clamp `((d s) + k) % J` (`J = 0` handled
+  separately: both sides are empty).
 
-Then assemble `abs_uniPatFreq_sub_le`, the schedule instance, and the digit rendering.
+**Remaining:** `abs_uniPatFreq_sub_le` (assemble: `sum_diag_decomp` + `patPos_eq_jjPat` +
+`abs_avg_patPos_prob_opt` per diagonal + `card_diagSet_le`), then the schedule instance and the
+digit rendering to `tendsto_occursCountJointUniform_primeLambertFour`.
 
 ### ✅ BOUNDED SECONDARY DONE (lap 39) — `G4EntropyWall.lean`, sorry-free, trust triple
 

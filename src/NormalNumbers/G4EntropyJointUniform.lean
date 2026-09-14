@@ -71,18 +71,177 @@ noncomputable def diagSet (t J : ℕ) : Finset (Fin t → Fin J) :=
   open Classical in
   Finset.univ.filter (fun d => ∃ s, (d s : ℕ) = 0)
 
-/-- **Open leaf (combinatorics).**  At most `t·J^{t−1}` index vectors have a zero coordinate. -/
+/-- At most `t·J^{t−1}` index vectors have a zero coordinate. -/
 theorem card_diagSet_le (t J : ℕ) : (diagSet t J).card ≤ t * J ^ (t - 1) := by
-  sorry
+  classical
+  rcases Nat.eq_zero_or_pos t with rfl | ht
+  · have : diagSet 0 J = ∅ := by
+      rw [diagSet]
+      refine Finset.eq_empty_of_forall_notMem fun d hd => ?_
+      rw [Finset.mem_filter] at hd
+      exact hd.2.elim fun s _ => s.elim0
+    simp [this]
+  obtain ⟨n, rfl⟩ : ∃ n, t = n + 1 := ⟨t - 1, by omega⟩
+  have hsub : diagSet (n + 1) J ⊆ Finset.univ.biUnion
+      (fun s : Fin (n + 1) =>
+        Finset.univ.filter (fun d : Fin (n + 1) → Fin J => (d s : ℕ) = 0)) := by
+    intro d hd
+    rw [diagSet, Finset.mem_filter] at hd
+    obtain ⟨s, hs⟩ := hd.2
+    exact Finset.mem_biUnion.2 ⟨s, Finset.mem_univ _,
+      Finset.mem_filter.2 ⟨Finset.mem_univ _, hs⟩⟩
+  refine le_trans (Finset.card_le_card hsub) (le_trans Finset.card_biUnion_le ?_)
+  have hfib : ∀ s : Fin (n + 1),
+      (Finset.univ.filter (fun d : Fin (n + 1) → Fin J => (d s : ℕ) = 0)).card ≤ J ^ n := by
+    intro s
+    have hinj : Set.InjOn (fun d : Fin (n + 1) → Fin J => fun i : Fin n => d (s.succAbove i))
+        ↑(Finset.univ.filter (fun d : Fin (n + 1) → Fin J => (d s : ℕ) = 0)) := by
+      intro a ha b hb hab
+      simp only [Finset.coe_filter, Set.mem_setOf_eq] at ha hb
+      funext i
+      rcases eq_or_ne i s with rfl | hne
+      · exact Fin.ext (by rw [ha.2, hb.2])
+      · obtain ⟨k, rfl⟩ := Fin.exists_succAbove_eq hne
+        exact congrFun hab k
+    refine le_trans (Finset.card_le_card_of_injOn _ (fun _ _ => Finset.mem_univ _) hinj) ?_
+    simp
+  calc ∑ s : Fin (n + 1),
+        (Finset.univ.filter (fun d : Fin (n + 1) → Fin J => (d s : ℕ) = 0)).card
+      ≤ ∑ _s : Fin (n + 1), J ^ n := Finset.sum_le_sum fun s _ => hfib s
+    _ = (n + 1) * J ^ n := by
+        rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+    _ = (n + 1) * J ^ (n + 1 - 1) := by norm_num
 
-/-- **Open leaf (combinatorics).**  Every index vector is uniquely `d + j·1` with `d` a diagonal
-and `j < J − max d`.  This is the reindexing that turns the uniform average into a weighted sum
-of the per-diagonal averages `abs_avg_patPos_prob_opt` controls. -/
-theorem sum_diag_decomp {t J : ℕ} (g : (Fin t → ℕ) → ℝ) :
+/-! ### The minimum coordinate, and the diagonal of an index vector -/
+
+lemma univNE {t : ℕ} (ht : 0 < t) : (Finset.univ : Finset (Fin t)).Nonempty :=
+  ⟨⟨0, ht⟩, Finset.mem_univ _⟩
+
+/-- The least coordinate of an index vector. -/
+noncomputable def minv {t J : ℕ} (ht : 0 < t) (jj : Fin t → Fin J) : ℕ :=
+  (Finset.univ : Finset (Fin t)).inf' (univNE ht) (fun s => (jj s : ℕ))
+
+lemma minv_le {t J : ℕ} (ht : 0 < t) (jj : Fin t → Fin J) (s : Fin t) :
+    minv ht jj ≤ (jj s : ℕ) :=
+  Finset.inf'_le _ (Finset.mem_univ s)
+
+lemma exists_minv_eq {t J : ℕ} (ht : 0 < t) (jj : Fin t → Fin J) :
+    ∃ s, (jj s : ℕ) = minv ht jj := by
+  obtain ⟨s, _, hs⟩ := Finset.exists_mem_eq_inf' (univNE ht) (fun s => ((jj s : ℕ)))
+  exact ⟨s, hs.symm⟩
+
+/-- The diagonal of an index vector: translate it down so its least coordinate is `0`. -/
+noncomputable def diagOf {t J : ℕ} (ht : 0 < t) (jj : Fin t → Fin J) : Fin t → Fin J :=
+  fun s => ⟨(jj s : ℕ) - minv ht jj, lt_of_le_of_lt (Nat.sub_le _ _) (jj s).isLt⟩
+
+lemma diagOf_mem {t J : ℕ} (ht : 0 < t) (jj : Fin t → Fin J) :
+    diagOf ht jj ∈ diagSet t J := by
+  classical
+  rw [diagSet, Finset.mem_filter]
+  obtain ⟨s, hs⟩ := exists_minv_eq ht jj
+  exact ⟨Finset.mem_univ _, ⟨s, by simp only [diagOf]; omega⟩⟩
+
+lemma diagOf_add_minv {t J : ℕ} (ht : 0 < t) (jj : Fin t → Fin J) (s : Fin t) :
+    ((diagOf ht jj s : ℕ)) + minv ht jj = (jj s : ℕ) := by
+  have := minv_le ht jj s
+  simp only [diagOf]
+  omega
+
+lemma minv_lt {t J : ℕ} (ht : 0 < t) (jj : Fin t → Fin J) : minv ht jj < J :=
+  lt_of_le_of_lt (minv_le ht jj ⟨0, ht⟩) (jj ⟨0, ht⟩).isLt
+
+lemma minv_add_sup_lt {t J : ℕ} (ht : 0 < t) (jj : Fin t → Fin J) :
+    minv ht jj + (Finset.univ.sup fun s => ((diagOf ht jj s : ℕ))) < J := by
+  have hlt := minv_lt ht jj
+  have hpos : 0 < J - minv ht jj := by omega
+  have hbound : (Finset.univ.sup fun s => ((diagOf ht jj s : ℕ))) < J - minv ht jj :=
+    (Finset.sup_lt_iff hpos).2 fun s _ => by
+      have h1 := diagOf_add_minv ht jj s
+      have h2 := (jj s).isLt
+      omega
+  omega
+
+/-- On a diagonal the least coordinate is `0`, so translating by `k` gives least coordinate
+`k`. -/
+lemma minv_shift {t J : ℕ} (ht : 0 < t) {d : Fin t → Fin J} (hd : d ∈ diagSet t J)
+    {k : ℕ} (e : Fin t → Fin J) (he : ∀ s, (e s : ℕ) = (d s : ℕ) + k) :
+    minv ht e = k := by
+  classical
+  rw [diagSet, Finset.mem_filter] at hd
+  obtain ⟨s₀, hs₀⟩ := hd.2
+  refine le_antisymm ?_ ?_
+  · have h1 : minv ht e ≤ (e s₀ : ℕ) := minv_le ht e s₀
+    rw [he s₀, hs₀] at h1
+    omega
+  · simp only [minv]
+    refine Finset.le_inf' (univNE ht) _ fun s _ => ?_
+    rw [he s]
+    omega
+
+/-- **The reindexing.**  Every index vector is uniquely `d + j·1` with `d` a diagonal and
+`j < J − max d`.  This is what turns the uniform average into a weighted sum of the
+per-diagonal averages `abs_avg_patPos_prob_opt` controls. -/
+theorem sum_diag_decomp {t J : ℕ} (ht : 0 < t) (g : (Fin t → ℕ) → ℝ) :
     ∑ jj : Fin t → Fin J, g (fun s => (jj s : ℕ))
       = ∑ d ∈ diagSet t J,
           ∑ j ∈ Finset.range (J - (Finset.univ.sup fun s => (d s : ℕ))),
             g (fun s => (d s : ℕ) + j) := by
-  sorry
+  classical
+  rcases Nat.eq_zero_or_pos J with rfl | hJ
+  · haveI : IsEmpty (Fin t → Fin 0) := ⟨fun f => (f ⟨0, ht⟩).elim0⟩
+    have hd : diagSet t 0 = ∅ := by
+      refine Finset.eq_empty_of_forall_notMem fun d _ => ?_
+      exact (d ⟨0, ht⟩).elim0
+    rw [hd]
+    simp
+  rw [← Finset.sum_fiberwise_of_maps_to (g := fun jj => diagOf ht jj)
+    (fun jj _ => diagOf_mem ht jj) (fun jj => g (fun s => (jj s : ℕ)))]
+  refine Finset.sum_congr rfl fun d hd => ?_
+  set S := (Finset.univ.sup fun s => ((d s : ℕ))) with hS
+  -- the clamped translate, total on `ℕ` and correct on the range
+  set sh : ℕ → Fin t → Fin J := fun k s => ⟨((d s : ℕ) + k) % J, Nat.mod_lt _ hJ⟩ with hsh
+  have hdle : ∀ s, (d s : ℕ) ≤ S := fun s =>
+    Finset.le_sup (f := fun s => ((d s : ℕ))) (Finset.mem_univ s)
+  have hshval : ∀ k ∈ Finset.range (J - S), ∀ s, ((sh k s : Fin J) : ℕ) = (d s : ℕ) + k := by
+    intro k hk s
+    rw [Finset.mem_range] at hk
+    have := hdle s
+    simp only [hsh]
+    rw [Nat.mod_eq_of_lt (by omega)]
+  refine (Finset.sum_nbij' (i := fun k => sh k) (j := fun jj => minv ht jj) ?_ ?_ ?_ ?_ ?_).symm
+  · -- `sh k` lands in the fibre of `d`
+    intro k hk
+    rw [Finset.mem_filter]
+    refine ⟨Finset.mem_univ _, ?_⟩
+    have hmin : minv ht (sh k) = k := minv_shift ht hd (sh k) (hshval k hk)
+    funext s
+    refine Fin.ext ?_
+    simp only [diagOf, hmin]
+    rw [hshval k hk s]
+    omega
+  · -- the minimum of a vector in the fibre is in range
+    intro jj hjj
+    rw [Finset.mem_filter] at hjj
+    rw [Finset.mem_range, hS, ← hjj.2]
+    have := minv_add_sup_lt ht jj
+    omega
+  · -- left inverse
+    intro k hk
+    exact minv_shift ht hd (sh k) (hshval k hk)
+  · -- right inverse
+    intro jj hjj
+    rw [Finset.mem_filter] at hjj
+    funext s
+    refine Fin.ext ?_
+    have h1 := diagOf_add_minv ht jj s
+    have h2 := (jj s).isLt
+    simp only [hsh, ← hjj.2]
+    rw [Nat.mod_eq_of_lt (by omega)]
+    omega
+  · -- the summands agree
+    intro k hk
+    congr 1
+    funext s
+    rw [hshval k hk s]
 
 end NormalNumbers.G4Entropy
