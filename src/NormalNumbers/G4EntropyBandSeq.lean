@@ -721,4 +721,77 @@ theorem tendsto_bandRead_freq (v : List ℕ) (hlen : 0 < v.length)
   rw [zero_add] at hfin
   exact hfin.congr fun i => by ring
 
+/-! ### The real read along the band sequence -/
+
+open Classical in
+/-- Every finite binary word occurs somewhere in the band read: its frequency is positive. -/
+theorem exists_matchesAt_bandDig (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
+    ∃ t, MatchesAt (bandDig (primeLambertAtBase 4)) v t := by
+  classical
+  have hlim := tendsto_bandRead_freq v hlen hv
+  have hpos : (0 : ℝ) < 1 / (2 : ℝ) ^ v.length := by positivity
+  obtain ⟨i, hi⟩ := (hlim.eventually (eventually_gt_nhds hpos)).exists
+  have hBpos : (0 : ℝ) < ((bT (i + 1) : ℕ) : ℝ) := by
+    have : 0 < bT (i + 1) := lt_of_le_of_lt (Nat.zero_le _) (bT_lt_succ i)
+    exact_mod_cast this
+  have hWpos : (0 : ℝ) < (winCount (bandDig (primeLambertAtBase 4)) v (bT (i + 1)) : ℝ) := by
+    by_contra hcon
+    push_neg at hcon
+    have : (winCount (bandDig (primeLambertAtBase 4)) v (bT (i + 1)) : ℝ)
+        / ((bT (i + 1) : ℕ) : ℝ) ≤ 0 := div_nonpos_of_nonpos_of_nonneg hcon hBpos.le
+    linarith
+  have hW : 0 < winCount (bandDig (primeLambertAtBase 4)) v (bT (i + 1)) := by
+    exact_mod_cast hWpos
+  obtain ⟨t, ht⟩ := Finset.card_pos.1 hW
+  exact ⟨t, (Finset.mem_filter.1 ht).2⟩
+
+/-- The band read never sticks at `1`. -/
+theorem properDigits_bandDig : ProperDigits 2 (bandDig (primeLambertAtBase 4)) := by
+  intro N
+  have hlenv : (List.replicate (N + 1) 0).length = N + 1 := by simp
+  have hbin : ∀ j, ∀ h : j < (List.replicate (N + 1) 0).length,
+      (List.replicate (N + 1) 0)[j] < 2 := by
+    intro j hj
+    rw [List.getElem_replicate]
+    omega
+  obtain ⟨t, ht⟩ := exists_matchesAt_bandDig (List.replicate (N + 1) 0) (by omega) hbin
+  refine ⟨t + N, by omega, ?_⟩
+  have hN : N < (List.replicate (N + 1) 0).length := by omega
+  have h := ht N hN
+  rw [List.getD_eq_getElem _ 0 hN, List.getElem_replicate] at h
+  have h0 : bandDig (primeLambertAtBase 4) (t + N) = 0 := h
+  rw [h0]
+  omega
+
+/-- **The real read along the band sequence**: `G₄`'s digits at the strictly increasing
+positions `bandPos`, summed in base two. -/
+noncomputable def bandReal : ℝ := realOfDigits 2 (bandDig (primeLambertAtBase 4))
+
+/-- Every finite binary word occurs in `bandReal`. -/
+theorem isDisjunctive_bandReal : IsDisjunctive 2 bandReal := by
+  have hmem := realOfDigits_mem_Ico 2 (le_refl 2) (bandDig (primeLambertAtBase 4))
+    (bandDig_lt _) properDigits_bandDig
+  rw [Set.mem_Ico] at hmem
+  have hfract : Int.fract bandReal = bandReal := Int.fract_eq_self.mpr hmem
+  have hdig : digitOf 2 bandReal = bandDig (primeLambertAtBase 4) :=
+    digitOf_realOfDigits 2 (le_refl 2) _ (bandDig_lt _) properDigits_bandDig
+  rw [isDisjunctive_iff_forall_occursAt 2 (le_refl 2)]
+  intro w hw
+  by_cases hw0 : w = []
+  · subst hw0
+    exact ⟨0, fun j hj => absurd hj (by simp)⟩
+  · have hlen : 0 < w.length := List.length_pos_iff.2 hw0
+    have hbin : ∀ j, ∀ h : j < w.length, w[j] < 2 :=
+      fun j hj => hw _ (List.getElem_mem hj)
+    obtain ⟨t, ht⟩ := exists_matchesAt_bandDig w hlen hbin
+    refine ⟨t, fun j hj => ?_⟩
+    rw [hfract, hdig]
+    have h : bandDig (primeLambertAtBase 4) (t + j) = w.getD j 0 := ht j hj
+    rw [h]
+    exact List.getD_eq_getElem _ 0 hj
+
+theorem irrational_bandReal : Irrational bandReal :=
+  isDisjunctive_bandReal.irrational
+
 end NormalNumbers.G4.Sched
