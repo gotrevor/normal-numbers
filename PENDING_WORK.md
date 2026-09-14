@@ -88,6 +88,24 @@ overlapping one included), `blockFreq_eq_count`, `blockFreq_eq_digits`, and
    on a stated dictionary.
 2. Optional: the same for every `x`, not just `G₄` (the abstract theorem already is).
 
+### 🔧 IN FLIGHT (lap 29) — the disjoint tiling, removing the `ℓ²/m` floor
+
+`G4EntropyTiling.lean` (green, axiom-clean): `remCoord` (the low `m % ℓ` bits), `tileCoord`
+(the `m/ℓ` disjoint blocks **plus** the remainder), `tile_injective`/`tileCoord_injective`,
+`H₂_map_rem_le` (`≤ m % ℓ` bits) and **`sum_block_deficit_tile_le`**: with the window tiled
+exactly, the full blocks carry a total deficit `≤ Δ` — **zero slack**, against
+`sum_block_deficit_le`'s `|A|·ℓ + Δ`.
+
+*Correction to the lap-28 handoff:* the `√(ℓ²/m)` term is NOT a sampling limit.  It came
+entirely from the overlapping last coordinate.  With the tiling it disappears, so the
+capacity inequality should read `≈ √(log 2 · ℓδ/m_K)` and the controlled range is
+`ℓ = o(m_K/δ)` with **no** other ceiling.  (At `δ = 0` the bound then correctly gives an exact
+frequency, which the lap-28 form did not.)
+
+**Next (finish the chain):** average over `A × Fin (m/ℓ)` with `sum_block_deficit_tile_le`
+in place of `sum_block_deficit_le` — `blockFreqT`, `abs_blockFreqT_sub_le_of_deficit`,
+and the `G₄` instance; then restate the `o(√K)` ceiling as `o(K/δ_K)`.
+
 ### Decomposition — hardest first, and the order to build
 
 1. **`G4EntropyGibbs.lean` — Gibbs + generalized subadditivity.**  The workhorse; reused three
