@@ -54,7 +54,29 @@ elementary.**
 Both hypotheses of `norm_sampleAvg_prod_sub_prod_le'` are instances (`h_i = g_i − 1` and
 `h_i = 1[active]`, means `μ_i − 1` and `π_i`), so **§4C's transfer C3 has no open input**.
 
-### C3 remaining before this update: ONE lemma, `CRTInput` (now PROVED above)
+### ⬆️ UPDATE (same lap, third commit): §4C ASSEMBLED ABSTRACTLY — `norm_sampleAvg_prod_ee_le`
+
+`src/NormalNumbers/G4FourierControl.lean` (sorry-free, trust-triple axioms):
+* `crt_input_two` — `crt_input` for fluctuations bounded by `2` (error picks up `2^{|T|}`).
+* `LocalPhase p` — active roots `⊆ range p`, phases `x`, good-prime condition `2k ≤ p`;
+  `θ`, `Active`, `periodicMod_ee_theta`, `periodicMod_indicator`, `ee_theta_eq_one_of_not_active`.
+* `resMean_ee_theta` — `μ_p = p⁻¹((p−k) + ∑_{roots} ee x_b)`, the C2 local average;
+  **`norm_resMean_ee_theta_le`** — `‖μ_p‖ ≤ 1 − 4θ/p` for `θ ≤ ∑_{roots} dist(x_b,ℤ)²` (C1+C2);
+  `norm_resMean_ee_theta_sub_one_le` — `‖μ_p − 1‖ ≤ 2k/p`; `resMean_indicator` — mean `k/p`.
+* **`norm_sampleAvg_prod_ee_le`** — for good primes `s` (prime, coprime to `P₀`, `≤ R`) with local
+  data and lower bounds `θ_p`:
+
+      ‖avg_{n<X, n≡a(P₀)} ∏_{p∈s} ee(θ_p n)‖ ≤ exp(−∑_p 4θ_p/p)
+          + N_M · 2^M · 2R^M/|P|  +  λ'^{−M} ∏_p(1+2λ'k_p/p)
+          + 2(2e/λ)^M ∏_p(1+e^λ k_p/p)  +  2(2e/M)^M |s|^M · 2R^M/|P|.
+
+**What separates this from `PropC`**: only the identification `torusChar q (S n) = ∏_p ee(θ_p n)`
+for the concrete `S`, with `θ_p` the `LocalPhase` built from the roots `−ρ_{α,j} mod p` and phases
+`w_α 4^{−j}`, plus `θ_p := 4^{−4}8^{−K}`-type lower bounds from `sum_sq_distZ_freqDepth_ge` (which
+needs the roots distinct mod `p` so every `(α,j)` contributes its own phase — the "good prime"
+condition), and the harmonic sum `∑_{p∈s} 1/p`.  That is the Frame instantiation (§5 module).
+
+### C3 remaining before these updates: ONE lemma, `CRTInput` (now PROVED above)
 For pairwise-coprime moduli `p ∈ T` (all coprime to the progression modulus `P₀`), functions
 `h_p : ℕ → ℂ` periodic mod `p` with `‖h_p‖ ≤ 1`, and the sample `{n ≤ X : n ≡ a (mod P₀)}`:
 
