@@ -304,4 +304,106 @@ theorem sum_quad_log_lam_le {s : ℕ} (hs : 1 ≤ s) :
       _ = 8192 * ((s : ℝ) + 1) := by ring
   nlinarith [hsum, hratio, hs']
 
+/-! ### §4  The Khintchine lower bound for a centered product weight -/
+
+set_option maxHeartbeats 800000 in
+/-- **The fourth-moment lower bound.**  For a centered one-site weight `ℓ` whose second moment
+is bounded below by `c s` and above by `U s`, and whose fourth moment is at most `M s`,
+the `K`-fold sums `X_j = ∑_i ℓ(j_i)` satisfy
+
+    `∑_j |X_j| ≥ c √(c/(M + 3U²)) · s^K · √K`.
+
+The `√K` is produced by the `3K(K−1)(∑ℓ²)²` term of `sum_pi_quad`: the fourth moment is only
+`O(K²)` times the square of the second, so the ratio `(∑X²)³/(∑X⁴)` is of order `K`. -/
+theorem sum_abs_pi_ge {s : ℕ} (hs : 1 ≤ s) (ℓ : Fin s → ℝ) (h1 : ∑ k, ℓ k = 0) {K : ℕ}
+    (hK : 1 ≤ K) {c U M : ℝ} (hc : 0 < c) (hU : 0 ≤ U) (hM : 0 < M)
+    (hlow : c * s ≤ ∑ k, ℓ k ^ 2) (hup : ∑ k, ℓ k ^ 2 ≤ U * s)
+    (h4 : ∑ k, ℓ k ^ 4 ≤ M * s) :
+    c * Real.sqrt (c / (M + 3 * U ^ 2)) * (s : ℝ) ^ K * Real.sqrt K
+      ≤ ∑ j : Fin K → Fin s, |∑ i, ℓ (j i)| := by
+  have hs' : (0 : ℝ) < s := by exact_mod_cast hs
+  have hK' : (1 : ℝ) ≤ K := by exact_mod_cast hK
+  set P : ℝ := M + 3 * U ^ 2 with hP
+  have hPpos : 0 < P := by positivity
+  set X : (Fin K → Fin s) → ℝ := fun j => ∑ i, ℓ (j i) with hX
+  set B : ℝ := ∑ j, X j ^ 2 with hBdef
+  set C : ℝ := ∑ j, X j ^ 4 with hCdef
+  have hspow : (0 : ℝ) < (s : ℝ) ^ K := by positivity
+  have hexp1 : (s : ℝ) ^ (K + 1) = (s : ℝ) ^ K * s := by ring
+  have hs2 : (0 : ℝ) < (s : ℝ) ^ 2 := by positivity
+  -- second moment from below
+  have hB : c * K * (s : ℝ) ^ K ≤ B := by
+    have h := sum_pi_sq ℓ K
+    rw [h1] at h
+    have h' : (s : ℝ) ^ 2 * B = K * (s : ℝ) ^ (K + 1) * ∑ k, ℓ k ^ 2 := by
+      simpa [hBdef, hX] using h
+    have hmul : K * (s : ℝ) ^ (K + 1) * (c * s) ≤ K * (s : ℝ) ^ (K + 1) * ∑ k, ℓ k ^ 2 :=
+      mul_le_mul_of_nonneg_left hlow (by positivity)
+    rw [← h', hexp1] at hmul
+    refine le_of_mul_le_mul_left ?_ hs2
+    linarith
+  -- fourth moment from above
+  have hC : C ≤ (K : ℝ) ^ 2 * P * (s : ℝ) ^ K := by
+    have h := sum_pi_quad hs ℓ h1 K
+    have hsq : (∑ k, ℓ k ^ 2) ^ 2 ≤ (U * s) ^ 2 :=
+      pow_le_pow_left₀ (Finset.sum_nonneg fun k _ => sq_nonneg _) hup 2
+    have hsq0 : (0 : ℝ) ≤ (U * s) ^ 2 := sq_nonneg _
+    have hstep : (s : ℝ) ^ 2 * C
+        ≤ K * (s : ℝ) ^ (K + 1) * (M * s) + 3 * K * K * (s : ℝ) ^ K * (U * s) ^ 2 := by
+      rw [show (s : ℝ) ^ 2 * C = (s : ℝ) ^ 2 * ∑ j : Fin K → Fin s, (∑ i, ℓ (j i)) ^ 4 by
+        rw [hCdef, hX], h]
+      have ha : K * (s : ℝ) ^ (K + 1) * (∑ k, ℓ k ^ 4)
+          ≤ K * (s : ℝ) ^ (K + 1) * (M * s) :=
+        mul_le_mul_of_nonneg_left h4 (by positivity)
+      have hk1 : (0 : ℝ) ≤ 3 * (K : ℝ) * (K - 1) * (s : ℝ) ^ K := by
+        have : (0 : ℝ) ≤ (K : ℝ) - 1 := by linarith
+        positivity
+      have hkk : 3 * (K : ℝ) * (K - 1) * (s : ℝ) ^ K ≤ 3 * (K : ℝ) * K * (s : ℝ) ^ K := by
+        nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ 3 * (K : ℝ)) hspow.le]
+      have hb : 3 * (K : ℝ) * (K - 1) * (s : ℝ) ^ K * (∑ k, ℓ k ^ 2) ^ 2
+          ≤ 3 * K * K * (s : ℝ) ^ K * (U * s) ^ 2 :=
+        le_trans (mul_le_mul_of_nonneg_left hsq hk1) (mul_le_mul_of_nonneg_right hkk hsq0)
+      linarith
+    refine le_of_mul_le_mul_left (hstep.trans ?_) hs2
+    rw [hexp1]
+    have hKK : (K : ℝ) ≤ (K : ℝ) ^ 2 := by nlinarith
+    have hMt : 0 ≤ M * ((s : ℝ) ^ K * s ^ 2) := by positivity
+    have key : (K : ℝ) * (M * ((s : ℝ) ^ K * s ^ 2))
+        ≤ (K : ℝ) ^ 2 * (M * ((s : ℝ) ^ K * s ^ 2)) := mul_le_mul_of_nonneg_right hKK hMt
+    have hPe : (s : ℝ) ^ 2 * ((K : ℝ) ^ 2 * P * (s : ℝ) ^ K)
+        = (K : ℝ) ^ 2 * (M * ((s : ℝ) ^ K * s ^ 2))
+          + (K : ℝ) ^ 2 * (3 * U ^ 2) * ((s : ℝ) ^ K * s ^ 2) := by rw [hP]; ring
+    rw [hPe]
+    nlinarith [key]
+  have hKpos : (0 : ℝ) < (K : ℝ) := by linarith
+  have hBpos : 0 < B := lt_of_lt_of_le (mul_pos (mul_pos hc hKpos) hspow) hB
+  have hCpos : 0 < C := by
+    by_contra hcon
+    push_neg at hcon
+    have hcube : B ^ 3 ≤ (∑ j, |X j|) ^ 2 * C := sum_sq_cube_le X
+    have hb3 : B ^ 3 ≤ 0 := by nlinarith [sq_nonneg (∑ j, |X j|)]
+    nlinarith [pow_pos hBpos 3]
+  -- Paley–Zygmund
+  have hPZ : B * Real.sqrt (B / C) ≤ ∑ j, |X j| := sum_abs_ge_sq_mul_sqrt X
+  have hratio : c / ((K : ℝ) * P) ≤ B / C := by
+    rw [div_le_div_iff₀ (mul_pos hKpos hPpos) hCpos]
+    calc c * C ≤ c * ((K : ℝ) ^ 2 * P * (s : ℝ) ^ K) := mul_le_mul_of_nonneg_left hC hc.le
+      _ = ((K : ℝ) * P) * (c * K * (s : ℝ) ^ K) := by ring
+      _ ≤ ((K : ℝ) * P) * B := mul_le_mul_of_nonneg_left hB (mul_pos hKpos hPpos).le
+      _ = B * ((K : ℝ) * P) := by ring
+  have hmono : (c * K * (s : ℝ) ^ K) * Real.sqrt (c / ((K : ℝ) * P)) ≤ B * Real.sqrt (B / C) := by
+    have h1' : Real.sqrt (c / ((K : ℝ) * P)) ≤ Real.sqrt (B / C) := Real.sqrt_le_sqrt hratio
+    have h2' : (0 : ℝ) ≤ Real.sqrt (c / ((K : ℝ) * P)) := Real.sqrt_nonneg _
+    exact mul_le_mul hB h1' h2' hBpos.le
+  refine le_trans (le_of_eq ?_) (le_trans hmono hPZ)
+  -- `c K s^K √(c/(KP)) = c √(c/P) s^K √K`
+  have hsK : Real.sqrt K * Real.sqrt K = (K : ℝ) := Real.mul_self_sqrt (by linarith)
+  have hsKpos : 0 < Real.sqrt K := Real.sqrt_pos.mpr hKpos
+  have hsplit : Real.sqrt (c / ((K : ℝ) * P)) = Real.sqrt (c / P) / Real.sqrt K := by
+    rw [show c / ((K : ℝ) * P) = (c / P) / K by field_simp,
+      Real.sqrt_div (by positivity)]
+  rw [hsplit]
+  field_simp
+  nlinarith [hsK, hsKpos]
+
 end NormalNumbers.G4
