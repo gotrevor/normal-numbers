@@ -406,4 +406,174 @@ theorem sum_abs_pi_ge {s : ℕ} (hs : 1 ≤ s) (ℓ : Fin s → ℝ) (h1 : ∑ k
   field_simp
   nlinarith [hsK, hsKpos]
 
+/-! ### §5  Assembly: the determinant lower bound -/
+
+/-- The centered one-site log-spectrum `log λ_k − (log(s+1))/s`; its sum vanishes exactly. -/
+noncomputable def logLamC (s : ℕ) (k : Fin s) : ℝ :=
+  Real.log (lam s k) - Real.log ((s : ℝ) + 1) / s
+
+theorem sum_logLamC {s : ℕ} (hs : 1 ≤ s) : ∑ k, logLamC s k = 0 := by
+  have hs' : (0 : ℝ) < s := by exact_mod_cast hs
+  unfold logLamC
+  rw [Finset.sum_sub_distrib, sum_log_lam, Finset.sum_const, Finset.card_univ,
+    Fintype.card_fin, nsmul_eq_mul]
+  field_simp
+  ring
+
+theorem mu_nonneg {s : ℕ} (hs : 1 ≤ s) : 0 ≤ Real.log ((s : ℝ) + 1) / s := by
+  have hs' : (0 : ℝ) < s := by exact_mod_cast hs
+  have : (0 : ℝ) ≤ Real.log ((s : ℝ) + 1) := Real.log_nonneg (by linarith)
+  positivity
+
+/-- For `s ≥ 25` the centering shift is at most `(log 2)/2`. -/
+theorem mu_le {s : ℕ} (hs : 25 ≤ s) : Real.log ((s : ℝ) + 1) / s ≤ Real.log 2 / 2 := by
+  have hs' : (25 : ℝ) ≤ s := by exact_mod_cast hs
+  have hspos : (0 : ℝ) < s := by linarith
+  set u := Real.sqrt ((s : ℝ) + 1) with hu
+  have hu2 : u ^ 2 = (s : ℝ) + 1 := Real.sq_sqrt (by linarith)
+  have hu5 : 5 ≤ u := by
+    have : Real.sqrt 25 ≤ u := Real.sqrt_le_sqrt (by linarith)
+    rwa [show (25 : ℝ) = 5 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)] at this
+  have hlog : Real.log ((s : ℝ) + 1) ≤ 2 * u - 2 := by
+    have h1 : Real.log u ≤ u - 1 := Real.log_le_sub_one_of_pos (by linarith)
+    have h2 : Real.log ((s : ℝ) + 1) = 2 * Real.log u := by
+      rw [hu, Real.log_sqrt (by linarith)]; ring
+    linarith
+  have hl2 : (0.6931471803 : ℝ) < Real.log 2 := Real.log_two_gt_d9
+  rw [div_le_div_iff₀ hspos (by norm_num)]
+  nlinarith [hu5, hu2, hl2]
+
+/-- **The matching lower bound.**  For every `s ≥ 25` and `K ≥ 1`,
+
+    `log det (1 + T_s^{⊗K}) ≥ s^K √K / 300000`.
+
+Together with `log_det_one_add_tensorGram_le'` (`≤ s^K(log 2 + 23√K)` at `s = K²`) this pins
+the order of the quantity `entropy_E1`'s deficit is built from: it is `Θ(s^K √K)`.  There is
+no cancellation across `j` in `∑_j log(1 + Λ_j)` to be exploited. -/
+theorem log_det_one_add_tensorGram_ge {s K : ℕ} (hs : 25 ≤ s) (hK : 1 ≤ K) :
+    (s : ℝ) ^ K * Real.sqrt K / 300000 ≤ Real.log (1 + tensorGram K s).det := by
+  have hs1 : 1 ≤ s := by omega
+  have hs' : (25 : ℝ) ≤ s := by exact_mod_cast hs
+  have hspos : (0 : ℝ) < s := by linarith
+  set μ : ℝ := Real.log ((s : ℝ) + 1) / s with hμ
+  have hμ0 : 0 ≤ μ := mu_nonneg hs1
+  have hμ2 : μ ≤ Real.log 2 / 2 := mu_le hs
+  have hl2 : (0.6931471803 : ℝ) < Real.log 2 := Real.log_two_gt_d9
+  have hl2' : Real.log 2 < 0.6931471808 := Real.log_two_lt_d9
+  have hμ1 : μ ≤ 1 := by linarith
+  set ℓ : Fin s → ℝ := logLamC s with hℓ
+  have hcent : ∑ k, ℓ k = 0 := sum_logLamC hs1
+  -- the centered moments
+  have hS2 : ∑ k, ℓ k ^ 2 = (∑ k : Fin s, Real.log (lam s k) ^ 2) - s * μ ^ 2 := by
+    have hexp : ∀ k : Fin s, ℓ k ^ 2 = Real.log (lam s k) ^ 2
+        - 2 * μ * Real.log (lam s k) + μ ^ 2 := by
+      intro k; simp only [hℓ, logLamC, ← hμ]; ring
+    simp_rw [hexp]
+    rw [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum, sum_log_lam,
+      Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    have : 2 * μ * Real.log ((s : ℝ) + 1) = 2 * (s * μ ^ 2) := by
+      rw [hμ]; field_simp
+    linarith
+  have hlow : (0.12 : ℝ) * s ≤ ∑ k, ℓ k ^ 2 := by
+    have h1 := sum_sq_log_lam_ge s
+    have h2 : (s : ℝ) * μ ^ 2 ≤ (s : ℝ) * (Real.log 2 / 2) ^ 2 := by
+      have : μ ^ 2 ≤ (Real.log 2 / 2) ^ 2 := by nlinarith
+      nlinarith [hspos]
+    have hL : (0.48 : ℝ) ≤ Real.log 2 ^ 2 := by nlinarith [hl2]
+    have h3 : (0.12 : ℝ) * s ≤ Real.log 2 ^ 2 * ((s : ℝ) / 2) - (s : ℝ) * (Real.log 2 / 2) ^ 2 := by
+      nlinarith [mul_nonneg (sub_nonneg.mpr hL) hspos.le]
+    rw [hS2]
+    linarith
+  have hup : ∑ k, ℓ k ^ 2 ≤ 520 * (s : ℝ) := by
+    rw [hS2]
+    have := sum_sq_log_lam_le' hs1
+    linarith [mul_nonneg hspos.le (sq_nonneg μ)]
+  have h4 : ∑ k, ℓ k ^ 4 ≤ 33554440 * (s : ℝ) := by
+    have hterm : ∀ k : Fin s, ℓ k ^ 4 ≤ 8 * Real.log (lam s k) ^ 4 + 8 := by
+      intro k
+      have hx : ℓ k = Real.log (lam s k) - μ := by simp only [hℓ, logLamC, ← hμ]
+      rw [hx]
+      set x := Real.log (lam s k)
+      have hμ4 : μ ^ 4 ≤ 1 := pow_le_one₀ hμ0 hμ1
+      nlinarith [sq_nonneg (x - μ), sq_nonneg (x + μ), sq_nonneg x, sq_nonneg μ,
+        sq_nonneg (x ^ 2 - μ ^ 2), sq_nonneg (x * μ)]
+    calc ∑ k, ℓ k ^ 4 ≤ ∑ k : Fin s, (8 * Real.log (lam s k) ^ 4 + 8) :=
+          Finset.sum_le_sum fun k _ => hterm k
+      _ = 8 * (∑ k : Fin s, Real.log (lam s k) ^ 4) + 8 * s := by
+          rw [Finset.sum_add_distrib, ← Finset.mul_sum, Finset.sum_const, Finset.card_univ,
+            Fintype.card_fin, nsmul_eq_mul]
+          ring
+      _ ≤ 8 * (4194304 * (s : ℝ)) + 8 * s := by
+          have := sum_quad_log_lam_le hs1
+          linarith
+      _ ≤ 33554440 * (s : ℝ) := by linarith
+  -- the Khintchine bound for the centered weight
+  have hkhin := sum_abs_pi_ge hs1 ℓ hcent hK (c := 0.12) (U := 520) (M := 33554440)
+    (by norm_num) (by norm_num) (by norm_num) hlow hup h4
+  -- the constant
+  have hconst : (1 : ℝ) / 150000 ≤ 0.12 * Real.sqrt (0.12 / (33554440 + 3 * 520 ^ 2)) := by
+    have hsq : (1 : ℝ) / 18000 ≤ Real.sqrt (0.12 / (33554440 + 3 * 520 ^ 2)) := by
+      have h1 : ((1 : ℝ) / 18000) ^ 2 ≤ 0.12 / (33554440 + 3 * 520 ^ 2) := by norm_num
+      have h2 := Real.sqrt_le_sqrt h1
+      rwa [Real.sqrt_sq (by norm_num)] at h2
+    linarith
+  -- from the sum of absolute values to the determinant
+  have hzero : ∑ j : Fin K → Fin s, ∑ i, ℓ (j i) = 0 := by
+    have h := sum_pi_linear ℓ K
+    rw [hcent, mul_zero] at h
+    exact (mul_eq_zero.mp h).resolve_left hspos.ne'
+  have hmax : ∑ j : Fin K → Fin s, max (∑ i, ℓ (j i)) 0
+      = (1 / 2) * ∑ j : Fin K → Fin s, |∑ i, ℓ (j i)| := by
+    have e : ∀ j : Fin K → Fin s, max (∑ i, ℓ (j i)) 0
+        = (1 / 2) * (|∑ i, ℓ (j i)| + ∑ i, ℓ (j i)) := by
+      intro j
+      rcases le_or_gt 0 (∑ i, ℓ (j i)) with h | h
+      · rw [max_eq_left h, abs_of_nonneg h]; ring
+      · rw [max_eq_right h.le, abs_of_neg h]; ring
+    simp_rw [e]
+    rw [← Finset.mul_sum, Finset.sum_add_distrib, hzero]
+    ring
+  have hdet : ∑ j : Fin K → Fin s, max (∑ i, ℓ (j i)) 0
+      ≤ Real.log (1 + tensorGram K s).det := by
+    rw [det_one_add_tensorGram,
+      Real.log_prod (fun j _ => by linarith [tensorLam_pos (K := K) (s := s) j])]
+    refine Finset.sum_le_sum fun j _ => ?_
+    refine le_trans ?_ (posPart_le_log_one_add (tensorLam_pos j))
+    refine max_le_max ?_ (le_refl 0)
+    rw [log_tensorLam]
+    have : ∑ i, ℓ (j i) = (∑ i, Real.log (lam s (j i))) - K * μ := by
+      simp only [hℓ, logLamC, ← hμ]
+      rw [Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+        nsmul_eq_mul]
+    rw [this]
+    have : (0 : ℝ) ≤ K * μ := by positivity
+    linarith
+  -- combine
+  rw [hmax] at hdet
+  refine le_trans ?_ hdet
+  have hspowK : (0 : ℝ) < (s : ℝ) ^ K := by positivity
+  have hsqK : (0 : ℝ) ≤ Real.sqrt K := Real.sqrt_nonneg _
+  have hstep : (1 : ℝ) / 150000 * (s : ℝ) ^ K * Real.sqrt K
+      ≤ 0.12 * Real.sqrt (0.12 / (33554440 + 3 * 520 ^ 2)) * (s : ℝ) ^ K * Real.sqrt K := by
+    have := mul_le_mul_of_nonneg_right
+      (mul_le_mul_of_nonneg_right hconst hspowK.le) hsqK
+    linarith
+  have := le_trans hstep hkhin
+  linarith
+
+/-- **The `√K` in the cover bound is of the right order.**  At `s = K²`, for `K ≥ 5`:
+
+    `(K²)^K √K / 300000 ≤ log det (1 + T_{K²}^{⊗K}) ≤ (K²)^K (log 2 + 12 √K)`
+
+(the upper bound being `log_det_one_add_tensorGram_le_twelve`).  Hence `entropy_E1`'s deficit
+`δ_K ≍ √K` is a property of the object, not of the estimate: no refinement of the spectral
+route can push the expedition's word-length ceiling `ℓ = o(√K)` any further. -/
+theorem log_det_one_add_tensorGram_sq_ge {K : ℕ} (hK : 5 ≤ K) :
+    ((K : ℝ) ^ 2) ^ K * Real.sqrt K / 300000
+      ≤ Real.log (1 + tensorGram K (K ^ 2)).det := by
+  have hs : 25 ≤ K ^ 2 := by nlinarith [hK]
+  have h := log_det_one_add_tensorGram_ge (s := K ^ 2) (K := K) hs (by omega)
+  push_cast at h
+  exact h
+
 end NormalNumbers.G4
