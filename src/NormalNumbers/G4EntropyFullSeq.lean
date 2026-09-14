@@ -535,4 +535,110 @@ theorem sum_pairs_sub_le (i : ℕ) (x : ℝ) (v : List ℕ) :
       rw [hsplit, hsumfib, hcards]
     exact hsub
 
+/-! ### The overhang is a vanishing fraction -/
+
+open Classical in
+/-- The band pairs whose window is shared with another atom. -/
+noncomputable def badPairs (i : ℕ) : Finset (ℕ × (gridAt i).Atom) :=
+  (bandPairs i).filter (fun z => ∃ β, β ≠ z.2 ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) z.1 z.2))
+
+open Classical in
+/-- **The multiplicity overhang is at most the number of shared pairs.**  Off `badPairs` the
+window-start map is injective. -/
+theorem overhang_le (i : ℕ) :
+    (bandPairs i).card - (winStarts i).card ≤ (badPairs i).card := by
+  classical
+  have hinj : ((bandPairs i) \ (badPairs i)).card ≤ (winStarts i).card := by
+    refine Finset.card_le_card_of_injOn (fun z => 2 * kIdx (gridAt i) z.1 z.2) ?_ ?_
+    · intro z hz
+      simp only [Finset.coe_sdiff, Set.mem_diff] at hz
+      have hz1 : z ∈ bandPairs i := hz.1
+      exact (mem_winStarts i).2 ⟨z.1, (Finset.mem_product.1 hz1).1, z.2, rfl⟩
+    · intro z hz z' hz' heq
+      simp only [Finset.coe_sdiff, Set.mem_diff, Finset.mem_coe] at hz hz'
+      simp only at heq
+      by_cases hat : z.2 = z'.2
+      · -- same atom: `n ↦ kIdx` is injective
+        have hz1 : z.1 ∈ bandT i := (Finset.mem_product.1 hz.1).1
+        have hz1' : z'.1 ∈ bandT i := (Finset.mem_product.1 hz'.1).1
+        have hkk : 0 < kk i := by unfold kk; omega
+        have heq' : 2 * kIdx (gridAt i) z.1 z.2 = 2 * kIdx (gridAt i) z'.1 z.2 := by
+          rw [heq, ← hat]
+        have hn : z.1 = z'.1 := by
+          by_contra hne
+          rcases Nat.lt_or_ge z.1 z'.1 with hlt | hge
+          · have hg := window_gap_same_atom i z.2 (bandT_subset i hz1) (bandT_subset i hz1') hlt
+            omega
+          · have hgt : z'.1 < z.1 := by omega
+            have hg := window_gap_same_atom i z.2 (bandT_subset i hz1') (bandT_subset i hz1) hgt
+            omega
+        exact Prod.ext hn hat
+      · -- different atoms: `z` would be bad
+        exfalso
+        refine hz.2 ?_
+        refine Finset.mem_filter.2 ⟨hz.1, z'.2, fun h => hat h.symm, ?_⟩
+        have hkeq : kIdx (gridAt i) z.1 z.2 = kIdx (gridAt i) z'.1 z'.2 := by omega
+        rw [hkeq]
+        exact activeIdx_kIdx (gridAt i) (bandT_subset i (Finset.mem_product.1 hz'.1).1) z'.2
+  have hsub : (bandPairs i).card ≤ ((bandPairs i) \ (badPairs i)).card + (badPairs i).card := by
+    have hb : badPairs i ⊆ bandPairs i := Finset.filter_subset _ _
+    have := Finset.card_sdiff_add_card_eq_card hb
+    omega
+  omega
+
+open Classical in
+/-- **The overhang, quantitatively**: at most `2|P_K| + 2|Atom|²`. -/
+theorem overhang_le_real (i : ℕ) :
+    (((bandPairs i).card - (winStarts i).card : ℕ) : ℝ)
+      ≤ 2 * ((PK i).card : ℝ) + 2 * (Fintype.card (gridAt i).Atom : ℝ) ^ 2 := by
+  classical
+  have hcard : ((badPairs i).card : ℝ)
+      ≤ 2 * ((PK i).card : ℝ) + 2 * (Fintype.card (gridAt i).Atom : ℝ) ^ 2 := by
+    have hsplit : (badPairs i).card
+        ≤ ∑ α : (gridAt i).Atom,
+            ((PK i).filter (fun n =>
+              ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card := by
+      classical
+      have hsub : badPairs i ⊆ (Finset.univ : Finset (gridAt i).Atom).biUnion
+          (fun α => ((PK i).filter (fun n =>
+            ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).image
+              (fun n => (n, α))) := by
+        intro z hz
+        rw [badPairs, Finset.mem_filter] at hz
+        obtain ⟨hz1, hz2⟩ := hz
+        refine Finset.mem_biUnion.2 ⟨z.2, Finset.mem_univ _, ?_⟩
+        refine Finset.mem_image.2 ⟨z.1, ?_, rfl⟩
+        exact Finset.mem_filter.2 ⟨bandT_subset i (Finset.mem_product.1 hz1).1, hz2⟩
+      refine le_trans (Finset.card_le_card hsub) ?_
+      refine le_trans (Finset.card_biUnion_le) ?_
+      exact Finset.sum_le_sum fun α _ => Finset.card_image_le
+    have hterm : ∀ α : (gridAt i).Atom,
+        (((PK i).filter (fun n =>
+          ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card : ℝ)
+          ≤ 2 * ((PK i).card : ℝ) / (Fintype.card (gridAt i).Atom : ℝ)
+            + 2 * (Fintype.card (gridAt i).Atom : ℝ) := fun α => card_multi_atom_le_real i α
+    have hApos : (0 : ℝ) < (Fintype.card (gridAt i).Atom : ℝ) := by
+      have : 0 < Fintype.card (gridAt i).Atom := Fintype.card_pos
+      exact_mod_cast this
+    have hsum : ((badPairs i).card : ℝ)
+        ≤ ∑ _α : (gridAt i).Atom, (2 * ((PK i).card : ℝ)
+            / (Fintype.card (gridAt i).Atom : ℝ)
+            + 2 * (Fintype.card (gridAt i).Atom : ℝ)) := by
+      have hsplitR : ((badPairs i).card : ℝ)
+          ≤ ∑ α : (gridAt i).Atom,
+              ((((PK i).filter (fun n =>
+                ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card : ℕ) : ℝ) := by
+        exact_mod_cast hsplit
+      exact le_trans hsplitR (Finset.sum_le_sum fun α _ => hterm α)
+    rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul] at hsum
+    have hexp : (Fintype.card (gridAt i).Atom : ℝ)
+        * (2 * ((PK i).card : ℝ) / (Fintype.card (gridAt i).Atom : ℝ)
+          + 2 * (Fintype.card (gridAt i).Atom : ℝ))
+        = 2 * ((PK i).card : ℝ) + 2 * (Fintype.card (gridAt i).Atom : ℝ) ^ 2 := by
+      field_simp
+    rw [hexp] at hsum
+    exact hsum
+  refine le_trans ?_ hcard
+  exact_mod_cast overhang_le i
+
 end NormalNumbers.G4.Sched
