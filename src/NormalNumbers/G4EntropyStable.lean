@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.G4EntropyDensityOne
+import NormalNumbers.Stoneham
 
 /-!
 # Normality is stable under density-zero digit changes — the barrier is sharp
@@ -214,6 +215,22 @@ theorem exists_digitLocal_forces_normal_iff {S : ℕ → Prop} [DecidablePred S]
     exact ⟨fun x => IsNormal 2 x,
       isNormal_local_of_density_one (tendsto_compl_zero_of_density_one hdens),
       ⟨z, hzn⟩, fun y _ _ hy => hy⟩
+
+/-- The hypothesis of `exists_digitLocal_forces_normal_iff` is discharged by Stoneham's
+number `α₂,₃`, proved binary normal in `Stoneham.lean`. -/
+theorem exists_isNormal_mem_Ico : ∃ z : ℝ, 0 ≤ z ∧ z < 1 ∧ IsNormal 2 z :=
+  ⟨stoneham23, stoneham23_mem_Ico.1, stoneham23_mem_Ico.2, isNormal_two_stoneham23⟩
+
+/-- **The characterization, unconditionally.**  The position sets `S` for which some satisfiable
+`S`-local hypothesis implies binary normality are exactly the sets of density one. -/
+theorem forces_normal_iff_density_one {S : ℕ → Prop} [DecidablePred S] :
+    (∃ P : ℝ → Prop,
+        (∀ x y : ℝ, (∀ j, S j → digitOf 2 (Int.fract x) j = digitOf 2 (Int.fract y) j) →
+          P x → P y)
+        ∧ (∃ x : ℝ, P x)
+        ∧ (∀ y : ℝ, 0 ≤ y → y < 1 → P y → IsNormal 2 y))
+      ↔ Tendsto (fun L => ((((Finset.range L).filter S).card : ℝ)) / L) atTop (nhds 1) :=
+  exists_digitLocal_forces_normal_iff exists_isNormal_mem_Ico
 
 end NormalNumbers.G4Entropy
 
