@@ -148,16 +148,21 @@ lemma coe_pow_mul_eq_coe_orbit (b : ℕ) (x : ℝ) (k : ℕ) :
   rw [Int.fract, mul_comm]
   rw [AddCircle.coe_sub, coe_int_eq_zero, sub_zero]
 
-/-- The tail `T_4(k)` equals the orbit point modulo one. -/
-lemma coe_tailB_four (k : ℕ) :
-    ((tailB 4 k : ℝ) : UnitAddCircle) = ((orbit 4 primeLambertFour k : ℝ) : UnitAddCircle) := by
-  rw [tailB_eq (by norm_num) k, QuotientAddGroup.mk_sub, ← primeLambertFour,
-    coe_pow_mul_eq_coe_orbit]
-  have : ((tailIntB 4 k : ℝ) : UnitAddCircle) = 0 := by
-    have := coe_int_eq_zero (tailIntB 4 k : ℤ)
+/-- The tail `T_b(k)` equals the orbit point modulo one, in any base `b ≥ 2`. -/
+lemma coe_tailB {bb : ℕ} (hb : 2 ≤ bb) (k : ℕ) :
+    ((tailB bb k : ℝ) : UnitAddCircle)
+      = ((orbit bb (primeLambertAtBase bb) k : ℝ) : UnitAddCircle) := by
+  rw [tailB_eq hb k, QuotientAddGroup.mk_sub, coe_pow_mul_eq_coe_orbit]
+  have : ((tailIntB bb k : ℝ) : UnitAddCircle) = 0 := by
+    have := coe_int_eq_zero (tailIntB bb k : ℤ)
     push_cast at this
     exact this
   rw [this, sub_zero]
+
+/-- The base-four instance. -/
+lemma coe_tailB_four (k : ℕ) :
+    ((tailB 4 k : ℝ) : UnitAddCircle) = ((orbit 4 primeLambertFour k : ℝ) : UnitAddCircle) :=
+  coe_tailB (by norm_num) k
 
 /-! ### `PropA` for a frame whose progression freezes the multiplier residues -/
 
@@ -177,17 +182,17 @@ lemma add_shift_eq (α : Fin fr.H) (k j : ℕ) :
 
 /-- The inner tail of `Ffull` at atom `α` is the dilated tail. -/
 lemma tsum_eq_dilatedTailB (α : Fin fr.H) (k : ℕ) :
-    ∑' j : ℕ, omegaR (fr.t α + fr.d α * k + fr.shift α (j + 1)) / (4 : ℝ) ^ (j + 1)
-      = dilatedTailB 4 (fr.d α) k := by
+    ∑' j : ℕ, omegaR (fr.t α + fr.d α * k + fr.shift α (j + 1)) / (fr.bse : ℝ) ^ (j + 1)
+      = dilatedTailB fr.bse (fr.d α) k := by
   unfold dilatedTailB
   refine tsum_congr fun j => ?_
   rw [fr.add_shift_eq α k j]
-  norm_cast
 
-/-- The transport translate `θ_ν = ∑_α A_{να} (ω(d_α)/3 − E_{d_α,4}(c_α))` built from frozen
+/-- The transport translate `θ_ν = ∑_α A_{να} (ω(d_α)/(b−1) − E_{d_α,b}(c_α))` built from frozen
 residues `c`. -/
 noncomputable def transportTheta (c : Fin fr.H → ℕ) : Torus fr.r :=
-  fun ν => (((∑ α, (fr.A ν α : ℝ) * (omegaR (fr.d α) / 3 - corrB 4 (fr.d α) (c α)) : ℝ) :
+  fun ν => (((∑ α, (fr.A ν α : ℝ)
+      * (omegaR (fr.d α) / ((fr.bse : ℝ) - 1) - corrB fr.bse (fr.d α) (c α)) : ℝ) :
     UnitAddCircle))
 
 /-- The coercion `ℝ → ℝ/ℤ` commutes with finite sums. -/
@@ -201,15 +206,16 @@ lemma coe_finset_sum {ι : Type*} (T : Finset ι) (f : ι → ℝ) :
 /-- The exact transported vector on the progression, before subtracting `γ`. -/
 lemma coe_sum_dilatedTailB (c k : Fin fr.H → ℕ) (hd : ∀ α, fr.d α ≠ 0)
     (hk : ∀ α, ∀ p ∈ (fr.d α).primeFactors, k α ≡ c α [MOD p]) (ν : Fin fr.r) :
-    ((∑ α, (fr.A ν α : ℝ) * dilatedTailB 4 (fr.d α) (k α) : ℝ) : UnitAddCircle)
-      = mulVecT fr.A (fun α => ((orbit 4 primeLambertFour (k α) : ℝ) : UnitAddCircle)) ν
+    ((∑ α, (fr.A ν α : ℝ) * dilatedTailB fr.bse (fr.d α) (k α) : ℝ) : UnitAddCircle)
+      = mulVecT fr.A
+          (fun α => ((orbit fr.bse (primeLambertAtBase fr.bse) (k α) : ℝ) : UnitAddCircle)) ν
         + fr.transportTheta c ν := by
-  have hterm : ∀ α, (fr.A ν α : ℝ) * dilatedTailB 4 (fr.d α) (k α)
-      = (fr.A ν α : ℝ) * tailB 4 (k α)
-        + (fr.A ν α : ℝ) * (omegaR (fr.d α) / 3 - corrB 4 (fr.d α) (c α)) := by
+  have hterm : ∀ α, (fr.A ν α : ℝ) * dilatedTailB fr.bse (fr.d α) (k α)
+      = (fr.A ν α : ℝ) * tailB fr.bse (k α)
+        + (fr.A ν α : ℝ)
+            * (omegaR (fr.d α) / ((fr.bse : ℝ) - 1) - corrB fr.bse (fr.d α) (c α)) := by
     intro α
-    rw [dilatedTailB_eq (by norm_num) _ _ (hd α), corrB_congr (fr.d α) (k α) (c α) (hk α)]
-    norm_num
+    rw [dilatedTailB_eq fr.hbse _ _ (hd α), corrB_congr (fr.d α) (k α) (c α) (hk α)]
     ring
   simp_rw [hterm]
   rw [Finset.sum_add_distrib, QuotientAddGroup.mk_add]
@@ -218,9 +224,9 @@ lemma coe_sum_dilatedTailB (c k : Fin fr.H → ℕ) (hd : ∀ α, fr.d α ≠ 0)
   unfold mulVecT
   rw [coe_finset_sum]
   refine Finset.sum_congr rfl fun α _ => ?_
-  show (((fr.A ν α : ℝ) * tailB 4 (k α) : ℝ) : UnitAddCircle)
-    = fr.A ν α • ((orbit 4 primeLambertFour (k α) : ℝ) : UnitAddCircle)
-  rw [← coe_tailB_four, ← zsmul_eq_mul, AddCircle.coe_zsmul]
+  show (((fr.A ν α : ℝ) * tailB fr.bse (k α) : ℝ) : UnitAddCircle)
+    = fr.A ν α • ((orbit fr.bse (primeLambertAtBase fr.bse) (k α) : ℝ) : UnitAddCircle)
+  rw [← coe_tailB fr.hbse, ← zsmul_eq_mul, AddCircle.coe_zsmul]
 
 /-- **`PropA` for a frame with frozen multiplier residues** (draft (4.3)).  If every sample
 point is `t_α + d_α k_α` with `k_α ≡ c_α` modulo every prime of `d_α`, and `θ` is the transport
@@ -232,12 +238,13 @@ theorem propA_of_progression (c : Fin fr.H → ℕ) (hd : ∀ α, fr.d α ≠ 0)
     fr.PropA := by
   intro n hn
   obtain ⟨k, hnk, hk⟩ := hP n hn
-  refine ⟨fun α => ((orbit 4 primeLambertFour (k α) : ℝ) : UnitAddCircle),
+  refine ⟨fun α => ((orbit fr.bse (primeLambertAtBase fr.bse) (k α) : ℝ) : UnitAddCircle),
     fun α => subset_closure (Set.mem_range_self _), ?_⟩
   funext ν
   unfold Ffull
-  have hsum : (∑ α, (fr.A ν α : ℝ) * ∑' j : ℕ, omegaR (n + fr.shift α (j + 1)) / (4 : ℝ) ^ (j + 1))
-      = ∑ α, (fr.A ν α : ℝ) * dilatedTailB 4 (fr.d α) (k α) :=
+  have hsum : (∑ α, (fr.A ν α : ℝ)
+        * ∑' j : ℕ, omegaR (n + fr.shift α (j + 1)) / (fr.bse : ℝ) ^ (j + 1))
+      = ∑ α, (fr.A ν α : ℝ) * dilatedTailB fr.bse (fr.d α) (k α) :=
     Finset.sum_congr rfl fun α _ => by rw [hnk α, fr.tsum_eq_dilatedTailB]
   rw [hsum, fr.coe_sum_dilatedTailB c k hd hk ν, hθ]
   simp only [Pi.add_apply, Pi.sub_apply]

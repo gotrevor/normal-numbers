@@ -134,14 +134,14 @@ lemma exists_cover_of_omit {ℓ w : ℕ} (hw : w < 4 ^ ℓ)
     (homit : ∀ m, orbit 4 primeLambertFour m ∉
       Set.Ico ((w : ℝ) / 4 ^ ℓ) (((w : ℝ) + 1) / 4 ^ ℓ)) (M : ℕ) :
     ∃ Bs : Finset ℝ, Bs.card ≤ (4 ^ ℓ - 1) ^ M ∧
-      orbitClosure ⊆ ⋃ c ∈ Bs, ((↑) : ℝ → UnitAddCircle) ''
+      orbitClosure 4 ⊆ ⋃ c ∈ Bs, ((↑) : ℝ → UnitAddCircle) ''
         Set.Icc c (c + 1 / ((4 : ℝ) ^ ℓ) ^ M) := by
   refine ⟨(admissible (4 ^ ℓ) M ⟨w, hw⟩).image (cylLeft (4 ^ ℓ) M), ?_, ?_⟩
   · exact Finset.card_image_le.trans (card_admissible _ _ _).le
   · intro x hx
     unfold orbitClosure at hx
     have := orbitClosure_subset_cylinders (bb := 4) (by norm_num) hw
-      (by simpa using homit) M hx
+      (by simpa [primeLambertFour] using homit) M hx
     rw [Set.mem_iUnion₂] at this ⊢
     obtain ⟨b, hb, hxb⟩ := this
     refine ⟨cylLeft (4 ^ ℓ) M b, Finset.mem_image_of_mem _ hb, ?_⟩

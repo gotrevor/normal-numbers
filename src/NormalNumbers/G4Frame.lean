@@ -77,6 +77,8 @@ fraction and `D` the Jackson degree; those four are parameters because neither `
 noncomputable def gridFrame (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (sm : Finset ℕ) (γ : Torus G.rDim)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) : Frame where
+  bse := 4
+  hbse := by norm_num
   K := G.K
   J := G.K + G.N
   r := G.rDim
@@ -88,7 +90,8 @@ noncomputable def gridFrame (G : GridParams) (X : ℕ)
   P := apSample X G.P₀ G.b₀
   hP := hne
   θ := fun ν => ((∑ α : Fin G.hDim, (G.Amat ν α : ℝ) *
-    (omegaR (G.d (G.atomEquiv.symm α)) / 3 - corrB 4 (G.d (G.atomEquiv.symm α)) 0) : ℝ) :
+    (omegaR (G.d (G.atomEquiv.symm α)) / (((4 : ℕ) : ℝ) - 1)
+      - corrB 4 (G.d (G.atomEquiv.symm α)) 0) : ℝ) :
       UnitAddCircle)
   γ := γ
   S := fun n ν => ((Sval sm (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν) : ℝ) :

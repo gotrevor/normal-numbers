@@ -68,10 +68,22 @@ so `b ≥ 3` again, and `N = Θ(log_b(K·L))` as before.
    `orbit_expansion`, `block_ne_of_omit`, `orbit_mem_cyl`, `orbitClosure_subset_cylinders`
    all take the base `bb` with only `0 < bb`.  `cylLeft`/`cyl`/`admissible` were already
    base-free.  `G4GridTube.exists_cover_of_omit` is the `b = 4` call site.
-3. **NEXT** `Frame` gains `b`, `hb : 2 ≤ b`; `Ffull` uses `b^{−j}`; `G4Remainder`,
-   `G4Transport`, `G4Wiring` follow.  `G4GridTube` (`exists_cover_of_omit`,
-   `gridFrame_propB_of_bound`) generalizes with them, since its `4`s are all the
-   `primeLambertFour` orbit and the cylinder scale.
+3. ✅ **DONE (lap 13)** the abstract `Frame` layer is base-general.  `Frame` carries
+   `bse : ℕ` and `hbse : 2 ≤ bse`; `Ffull n ν = (∑_α A_{να} ∑_{j≥1} ω(n+ρ_{α,j})/bse^j) − γ_ν`;
+   `orbitClosure bb = closure {orbit bb (primeLambertAtBase bb) n}` and `Frame.image` uses
+   `orbitClosure fr.bse`; `G4Transport`'s transport identity is now stated at `fr.bse`
+   (`coe_tailB`, `transportTheta` with `ω(d_α)/(b−1)`, `coe_sum_dilatedTailB`,
+   `propA_of_progression`) — the base-`b` tail machinery `tailB/tailIntB/corrB/dilatedTailB`
+   was ALREADY general, only the `Frame` face was pinned at 4.  `SeparatingFrameExists bb`
+   and `isDisjunctive_of_frames : SeparatingFrameExists bb → IsDisjunctive bb
+   (primeLambertAtBase bb)` are the general conditional headline; `isDisjunctive_four_of_frames`
+   is its `b = 4` instance.  `gridFrame` sets `bse := 4`, so the whole concrete grid layer
+   (`G4Remainder`, `G4RowMass`, `G4MediumPrimes`, `G4FarTail`, `G4Schedule*`) is untouched
+   and still green.
+4. **NEXT** the concrete grid layer in `b`: `GridParams` gains the base, `Sval`/`rowCoeff`/
+   `blockSum` use `b^{−layer}`, and the row masses become `(2/b)^K/(b−1)` and
+   `(2/b²)^K/(b²−1)` (`G4RowMass.sum_layer_inv_le`, `sum_layer_inv_sq_le` are the standalone
+   geometric sums to do first).
 4. `G4RowMass`, `G4MediumPrimes`, `G4SmallPrimeVector`, `G4FarTail` — the table above.
 5. `G4FreqSep` — `θ₀(b) = b^{−4}(2/b²)^K`; `freqDepth` uses `Nat.clog b`.
 6. `G4Schedule*` — the schedule in `(b, ℓ)`; `isDisjunctive_base`, with `b = 4` recovering

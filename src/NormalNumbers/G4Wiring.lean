@@ -251,11 +251,12 @@ theorem one_sub_tube_le_integral_clipTest {r : ℕ} {E : Set (Torus r)} (hE : E.
 
 /-! ### The arithmetic objects -/
 
-/-- The closure of the multiply-by-four orbit of `G₄` in the circle. -/
-noncomputable def orbitClosure : Set UnitAddCircle :=
-  closure (Set.range fun n : ℕ => ((orbit 4 primeLambertFour n : ℝ) : UnitAddCircle))
+/-- The closure of the multiply-by-`b` orbit of `∑ ω(n)/bⁿ` in the circle.  At `b = 4` this is
+the base-four orbit closure of `G₄` (`primeLambertFour = primeLambertAtBase 4` by definition). -/
+noncomputable def orbitClosure (bb : ℕ) : Set UnitAddCircle :=
+  closure (Set.range fun n : ℕ => ((orbit bb (primeLambertAtBase bb) n : ℝ) : UnitAddCircle))
 
-lemma orbitClosure_nonempty : orbitClosure.Nonempty :=
+lemma orbitClosure_nonempty (bb : ℕ) : (orbitClosure bb).Nonempty :=
   (Set.range_nonempty _).closure
 
 /-- An integer matrix acting on a torus vector: `(A x)_ν = ∑_α A_{να} • x_α`. -/
@@ -265,6 +266,9 @@ noncomputable def mulVecT {r H : ℕ} (A : Matrix (Fin r) (Fin H) ℤ) (x : Fin 
 
 /-- One outer scale's worth of data for the candidate proof.  See the module docstring. -/
 structure Frame where
+  /-- the integer base `b ≥ 2` of the constant `∑ ω(n)/bⁿ` under test -/
+  bse : ℕ
+  hbse : 2 ≤ bse
   /-- number of cancelled layers -/
   K : ℕ
   /-- truncation depth of the retained layers -/
@@ -307,18 +311,19 @@ def shift (α : Fin fr.H) (j : ℕ) : ℕ := j * fr.d α - fr.t α
 
 /-- The image set `E = A(Cᴴ) + θ − γ` of draft §9. -/
 def image : Set (Torus fr.r) :=
-  {y | ∃ x : Fin fr.H → UnitAddCircle, (∀ α, x α ∈ orbitClosure) ∧
+  {y | ∃ x : Fin fr.H → UnitAddCircle, (∀ α, x α ∈ orbitClosure fr.bse) ∧
     y = mulVecT fr.A x + fr.θ - fr.γ}
 
 lemma image_nonempty : fr.image.Nonempty := by
-  obtain ⟨c, hc⟩ := orbitClosure_nonempty
+  obtain ⟨c, hc⟩ := orbitClosure_nonempty fr.bse
   exact ⟨_, fun _ => c, fun _ => hc, rfl⟩
 
-/-- The exact transported vector `(A · (∑_{j ≥ 1} 4⁻ʲ ω(n + ρ_{α,j}))_α) − γ` (draft (4.2)–(4.3),
-base four), read modulo one. -/
+/-- The exact transported vector `(A · (∑_{j ≥ 1} b⁻ʲ ω(n + ρ_{α,j}))_α) − γ` (draft (4.2)–(4.3)),
+read modulo one. -/
 noncomputable def Ffull (n : ℕ) : Torus fr.r :=
   fun ν =>
-    (((∑ α, (fr.A ν α : ℝ) * ∑' j : ℕ, omegaR (n + fr.shift α (j + 1)) / (4 : ℝ) ^ (j + 1) : ℝ) :
+    (((∑ α, (fr.A ν α : ℝ)
+        * ∑' j : ℕ, omegaR (n + fr.shift α (j + 1)) / (fr.bse : ℝ) ^ (j + 1) : ℝ) :
         UnitAddCircle)) - fr.γ ν
 
 /-- The resolution of the test: `εη`. -/
@@ -402,25 +407,31 @@ end Frame
 yields one frame whose inputs A–D and Jackson smoothing hold with a closed budget.  The
 parameter schedule of brief §5 is what is supposed to produce it; the omitted interval enters
 through `orbitClosure` inside `PropB` (the dimension deficit of draft (4.4)). -/
-def SeparatingFrameExists : Prop :=
+def SeparatingFrameExists (bb : ℕ) : Prop :=
   ∀ a c : ℝ, 0 ≤ a → a < c → c ≤ 1 →
-    (∀ n, orbit 4 primeLambertFour n ∉ Set.Ico a c) →
+    (∀ n, orbit bb (primeLambertAtBase bb) n ∉ Set.Ico a c) →
     ∃ (fr : Frame) (δ₁ δ₂ δ₃ κ Λ : ℝ),
       fr.PropA ∧ fr.PropB δ₁ ∧ fr.PropC δ₃ ∧ fr.PropD δ₂ ∧ fr.PropJackson κ Λ ∧
       0 ≤ δ₃ ∧ δ₁ + δ₂ + 2 * κ + Λ * δ₃ < 1
 
 /-- **Conditional headline (base four).**  Not the endpoint: `SeparatingFrameExists` is the
 unproved candidate content. -/
-theorem isDisjunctive_four_of_frames (h : SeparatingFrameExists) :
-    IsDisjunctive 4 primeLambertFour := by
+theorem isDisjunctive_of_frames {bb : ℕ} (h : SeparatingFrameExists bb) :
+    IsDisjunctive bb (primeLambertAtBase bb) := by
   intro a c ha hac hc
   by_contra hno
   push Not at hno
   obtain ⟨fr, δ₁, δ₂, δ₃, κ, Λ, hA, hB, hC, hD, hJ, hδ₃, hbud⟩ := h a c ha hac hc hno
   exact fr.finite_contradiction hA hB hC hD hJ hδ₃ hbud
 
+/-- **Conditional headline at base four** — the `b = 4` instance of `isDisjunctive_of_frames`
+(`primeLambertFour = primeLambertAtBase 4` by definition). -/
+theorem isDisjunctive_four_of_frames (h : SeparatingFrameExists 4) :
+    IsDisjunctive 4 primeLambertFour :=
+  isDisjunctive_of_frames h
+
 /-- **Conditional headline (base two).** -/
-theorem isDisjunctive_two_of_frames (h : SeparatingFrameExists) :
+theorem isDisjunctive_two_of_frames (h : SeparatingFrameExists 4) :
     IsDisjunctive 2 primeLambertFour :=
   isDisjunctive_two_of_four (isDisjunctive_four_of_frames h)
 

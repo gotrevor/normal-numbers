@@ -107,11 +107,12 @@ theorem separatingFrameExists_of_witness
       (∀ m, orbit 4 primeLambertFour m ∉
         Set.Ico ((w : ℝ) / 4 ^ ℓ) (((w : ℝ) + 1) / 4 ^ ℓ)) →
       Nonempty (ScheduleWitness ℓ w)) :
-    SeparatingFrameExists := by
+    SeparatingFrameExists 4 := by
   intro a c ha hac hc hno
   obtain ⟨ℓ, w, hw4, hsub⟩ := exists_cylinder_subset ha hac hc
+  have hno' : ∀ n, orbit 4 primeLambertFour n ∉ Set.Ico a c := hno
   have homit : ∀ m, orbit 4 primeLambertFour m ∉
-      Set.Ico ((w : ℝ) / 4 ^ ℓ) (((w : ℝ) + 1) / 4 ^ ℓ) := fun m h => hno m (hsub h)
+      Set.Ico ((w : ℝ) / 4 ^ ℓ) (((w : ℝ) + 1) / 4 ^ ℓ) := fun m h => hno' m (hsub h)
   obtain ⟨W⟩ := hw ℓ w hw4 homit
   refine ⟨gridFrame W.G W.X W.hne (smallPrimes W.R W.G.P₀) (frozenGamma W.G) W.hη W.hε W.D,
     W.δ₁, W.δbig + W.δfar, _, _, _,
