@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.G4EntropyBandFreq
+import NormalNumbers.G4EntropyBlockWord
 
 /-!
 # Entropy expedition — the band sequence, and its strictly increasing position map
@@ -291,5 +292,95 @@ lemma sum_range_bnth {β : Type*} [AddCommMonoid β] (i : ℕ) (g : ℕ → β) 
       exact hn
     obtain ⟨a, ha⟩ := hrange
     exact ⟨a, Subtype.ext ha⟩
+
+/-! ### The per-band count -/
+
+open Classical in
+/-- The number of fitting in-window occurrences of `v` in band `i`. -/
+noncomputable def bandGood (i : ℕ) (x : ℝ) (v : List ℕ) : ℕ :=
+  ∑ a ∈ Finset.range (bandS i).card,
+    ((Finset.range (kk i - v.length + 1)).filter
+      (fun q => OccursAt 2 x v (bpos i a + q))).card
+
+open Classical in
+/-- Translating a block of read indices to `[0, bL i)`. -/
+lemma card_Ico_shift (Q : ℕ → Prop) [DecidablePred Q] (b len : ℕ) :
+    ((Finset.Ico b (b + len)).filter Q).card
+      = ((Finset.range len).filter (fun r => Q (b + r))).card := by
+  classical
+  refine Finset.card_nbij (fun p => p - b) ?_ ?_ ?_
+  · intro p hp
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_Ico] at hp
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range]
+    refine ⟨by omega, ?_⟩
+    have : b + (p - b) = p := by omega
+    rw [this]
+    exact hp.2
+  · intro p hp q hq hpq
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_Ico] at hp hq
+    simp only at hpq
+    omega
+  · intro r hr
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range] at hr
+    refine ⟨b + r, ?_, by simp⟩
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_Ico]
+    exact ⟨by omega, hr.2⟩
+
+open Classical in
+/-- **The band's contribution to the read count**, up to one word length per window. -/
+theorem band_winCount_bounds (x : ℝ) (i : ℕ) (v : List ℕ) (hv : 0 < v.length)
+    (hvm : v.length ≤ kk i) :
+    bandGood i x v
+        ≤ ((Finset.Ico (bT i) (bT (i + 1))).filter (MatchesAt (bandDig x) v)).card ∧
+      ((Finset.Ico (bT i) (bT (i + 1))).filter (MatchesAt (bandDig x) v)).card
+        ≤ bandGood i x v + (bandS i).card * v.length := by
+  classical
+  have hbT : bT (i + 1) = bT i + bL i := rfl
+  have hsplit : ((Finset.Ico (bT i) (bT (i + 1))).filter (MatchesAt (bandDig x) v)).card
+      = ∑ a ∈ Finset.range (bandS i).card,
+          ((Finset.range (kk i)).filter
+            (fun q => MatchesAt (bandDig x) v (bT i + (a * kk i + q)))).card := by
+    rw [hbT, card_Ico_shift _ (bT i) (bL i), bL, card_filter_range_mul]
+  rw [hsplit]
+  have hper : ∀ a ∈ Finset.range (bandS i).card,
+      ((Finset.range (kk i - v.length + 1)).filter
+          (fun q => OccursAt 2 x v (bpos i a + q))).card
+        ≤ ((Finset.range (kk i)).filter
+          (fun q => MatchesAt (bandDig x) v (bT i + (a * kk i + q)))).card ∧
+      ((Finset.range (kk i)).filter
+          (fun q => MatchesAt (bandDig x) v (bT i + (a * kk i + q)))).card
+        ≤ ((Finset.range (kk i - v.length + 1)).filter
+          (fun q => OccursAt 2 x v (bpos i a + q))).card + v.length := by
+    intro a ha
+    have ha' : a < (bandS i).card := Finset.mem_range.1 ha
+    have hcongr : ((Finset.range (kk i - v.length + 1)).filter
+        (fun q => MatchesAt (bandDig x) v (bT i + (a * kk i + q)))).card
+        = ((Finset.range (kk i - v.length + 1)).filter
+          (fun q => OccursAt 2 x v (bpos i a + q))).card := by
+      congr 1
+      refine Finset.filter_congr fun q hq => ?_
+      have hqfit : q + v.length ≤ kk i := by
+        have := Finset.mem_range.1 hq
+        omega
+      have hassoc : bT i + (a * kk i + q) = bT i + a * kk i + q := by ring
+      rw [hassoc]
+      simpa using matchesAt_bandDig_iff x i a q v ha' hqfit
+    have h := card_filter_fit
+      (fun q => MatchesAt (bandDig x) v (bT i + (a * kk i + q))) (m := kk i)
+      (ℓ := v.length) hv hvm
+    rw [hcongr] at h
+    exact h
+  constructor
+  · exact Finset.sum_le_sum fun a ha => (hper a ha).1
+  · calc ∑ a ∈ Finset.range (bandS i).card,
+          ((Finset.range (kk i)).filter
+            (fun q => MatchesAt (bandDig x) v (bT i + (a * kk i + q)))).card
+        ≤ ∑ a ∈ Finset.range (bandS i).card,
+            (((Finset.range (kk i - v.length + 1)).filter
+              (fun q => OccursAt 2 x v (bpos i a + q))).card + v.length) :=
+          Finset.sum_le_sum fun a ha => (hper a ha).2
+      _ = bandGood i x v + (bandS i).card * v.length := by
+          rw [Finset.sum_add_distrib, bandGood]
+          simp [mul_comm]
 
 end NormalNumbers.G4.Sched
