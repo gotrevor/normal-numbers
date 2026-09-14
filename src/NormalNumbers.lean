@@ -223,3 +223,4 @@ import NormalNumbers.G4TubeVolume
 import NormalNumbers.G4Wiring
 import NormalNumbers.G4EntropyInfo
 import NormalNumbers.G4EntropySample
+import NormalNumbers.G4EntropyCapture

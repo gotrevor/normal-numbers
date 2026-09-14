@@ -1,3 +1,29 @@
+# PENDING_WORK
+
+## Entropy expedition (2026-09-14, branch `wip/g4-entropy`) — ACTIVE
+
+Lap 1 done (`HANDOFF-2026-09-14-entropy-lap1.md`).  Proved sorry-free: the information-set
+lemma (`G4EntropyInfo.prob_infoSet_ge` + `card_infoSet_le`), the frozen arithmetic sample and
+its binary dictionary (`G4EntropySample.ZSample_eq_blockVal`, `kIdx_spec`), and the abstract
+capture inequality (C) with its bounded-Lipschitz bump
+(`G4EntropyCapture.capture_inequality`, `abs_sampleAvg_sub_integral_le`, `bump_sub_le`).
+
+**The crux is now the two inputs of (C) that are not yet proved for the implemented schedule:**
+
+1. **(G), brief §3B** — `μ(thickening ρ_K (E_K ℬ)) ≤ |ℬ|·η^{(1−ε)r_K}·exp(C₀(H_K+r_K√K))`,
+   with `|ℬ|` the number of *joint* boxes.  Reuse `G4TubeVolume`/`G4GridTube`/`G4Ellipsoid`/
+   `G4Tensor`; the current cover carries a `Bs.card ^ H` product factor that must NOT survive.
+   Replacing `ℬ` by the product of its coordinate projections erases the entropy saving.
+2. **`a_K/ρ_K → 0`** — recover the average transport error from the actual remainder bounds
+   (`G4Remainder`, `G4FarTail`), not the old fixed 1/8 allowances.
+3. **Jackson at the entropy degree** — `G4Jackson` must approximate the `1/ρ_K`-Lipschitz,
+   `[0,1]`-valued `bump` to within `κ_K ≤ 1/(16K)` at `D_K = (16K²2^{m_K})²`, and the arithmetic
+   budget must still accept that degree (an obligation, not a given — brief §4).
+
+Then E0/E1 by combining (C), (G) and the information-set lemma; then §5 (S); then §6 T_E.
+
+---
+
 # PENDING WORK — Phase 3 publishing-prep complete locally
 
 ## G5 — 2026-09-14 (lap 1, grind) — the interface EXISTS: `w_c = ω + ∑_p c_p (v_p − 1)`, transport exact, junk AP-mean proved
