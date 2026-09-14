@@ -1,6 +1,6 @@
 # HANDOFF 2026-09-14 — G4 disjunctivity, lap 9 (Jackson + B discharged; only §5 remains)
 
-Branch `wip/g4-disjunctivity`, HEAD `7c157ce` (+ this handoff commit).  Not pushed.  Pre-commit
+Branch `wip/g4-disjunctivity`, HEAD `b7c12f4` (final state of lap 9; tree clean).  Not pushed.  Pre-commit
 `lake build` (8888 jobs) green on every commit.  Every headline below prints
 `[propext, Classical.choice, Quot.sound]`.
 
