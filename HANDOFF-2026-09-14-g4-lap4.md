@@ -1,7 +1,17 @@
-# HANDOFF 2026-09-14 — G4 disjunctivity, lap 4 (C3core eliminated: C3 is CRT counting only)
+# HANDOFF 2026-09-14 — G4 disjunctivity, lap 4 (§4C CLOSED at the abstract level: C1–C4 proved)
 
-Branch `wip/g4-disjunctivity`.  Working tree clean apart from the host's untracked
-`CHECK-g4-route-deviations.md` (not swept in, per lap 3).  Not pushed.  `DIRECTION.md` unchanged
+Branch `wip/g4-disjunctivity`, HEAD `46a04f9`.  Working tree clean apart from the host's
+untracked `CHECK-g4-route-deviations.md` (not swept in, per lap 3).  Not pushed.
+Commits this lap: `7ea8696` (transfer via CRT-only inputs, C3core eliminated), `c00bc38`
+(`crt_input`), `f9d5005` (§4C assembled: `norm_sampleAvg_prod_ee_le`), `52efca9` (phase
+decomposition: `norm_sampleAvg_ee_phase_le`), `46a04f9` (C4: `schedule_budget`).
+New files: `G4TransferMoment`, `G4CRTInput`, `G4FourierControl`, `G4PhaseDecomp`, `G4Schedule`
+(all under `src/NormalNumbers/`), sorry-free, every headline `[propext, Classical.choice,
+Quot.sound]`.  `DIRECTION.md` unchanged (grind lap).  Route trigger G-T1 satisfied.
+
+**Resume here**: the directive's mandated C is done abstractly; take its secondary item, the B
+assembly to `PropB` (five steps in `PENDING_WORK.md` §G4, all inputs proved), or the concrete
+`PropC` instantiation listed under Open below.  `DIRECTION.md` unchanged
 (grind lap); `PENDING_WORK.md` §"GRIND 2026-09-14 (G4 lap 4)" carries the mathematics.
 
 Build: `lake build NormalNumbers.G4TransferMoment NormalNumbers.G4CRTInput NormalNumbers.G4FourierControl NormalNumbers.G4PhaseDecomp NormalNumbers.G4Schedule` green; every declaration below
