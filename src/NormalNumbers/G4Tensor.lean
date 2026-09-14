@@ -297,4 +297,34 @@ theorem log_det_one_add_tensorGram_le' {K : ℕ} (hK : 1 ≤ K) :
         rw [Real.sqrt_mul (by norm_num), Real.sqrt_sq (by norm_num)]
 
 
+/-! ### The difference matrix `D_s` and `A = D_s^{⊗K}` with `A Aᵀ = T_s^{⊗K}` -/
+
+/-- The `s × (s+1)` adjacent-difference matrix: row `a` is `e_a − e_{a+1}`. -/
+def diff (s : ℕ) : Matrix (Fin s) (Fin (s + 1)) ℝ :=
+  fun a => Pi.single a.castSucc (1 : ℝ) - Pi.single a.succ 1
+
+lemma diff_dotProduct_diff (s : ℕ) (a b : Fin s) : diff s a ⬝ᵥ diff s b = gram s a b := by
+  simp only [diff, dotProduct_sub, dotProduct_single, Pi.sub_apply, Pi.single_apply, mul_one,
+    gram, Fin.ext_iff, Fin.val_castSucc, Fin.val_succ]
+  split_ifs <;> norm_num <;> omega
+
+theorem diff_mul_transpose (s : ℕ) : diff s * (diff s)ᵀ = gram s := by
+  ext a b
+  rw [Matrix.mul_apply]
+  exact diff_dotProduct_diff s a b
+
+/-- `A = D_s^{⊗K}`, indexed by `(Fin K → Fin s) × (Fin K → Fin (s+1))`. -/
+def tensorDiff (K s : ℕ) : Matrix (Fin K → Fin s) (Fin K → Fin (s + 1)) ℝ :=
+  fun a c => ∏ i, diff s (a i) (c i)
+
+theorem tensorDiff_mul_transpose (K s : ℕ) :
+    tensorDiff K s * (tensorDiff K s)ᵀ = tensorGram K s := by
+  ext a b
+  simp only [Matrix.mul_apply, transpose_apply, tensorDiff, tensorGram]
+  simp_rw [← Finset.prod_mul_distrib]
+  rw [← Fintype.prod_sum (fun i c => diff s (a i) c * diff s (b i) c)]
+  refine Finset.prod_congr rfl fun i _ => ?_
+  exact diff_dotProduct_diff s (a i) (b i)
+
+
 end NormalNumbers.G4
