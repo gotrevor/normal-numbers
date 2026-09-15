@@ -1691,4 +1691,59 @@ theorem grouped_union_le' {ι : Type*} [Fintype ι] [DecidableEq ι] {κ : Type*
   rw [hexp] at hbase
   linarith
 
+/-! ### R's open item 2: confinement for an arbitrary invariant
+
+`Sched.balanced_union_le` bounds the sampler count by `(2dmax+1)^{2|skel|}` because two balanced
+layers force `MDF`, and `MDF` is pinned by its values on `skel`.  Nothing in the confinement uses
+`MDF` itself: **any** invariant `Inv` that is determined by its values on a small set `Sdet`
+confines a family the same way, at `(2dmax+1)^{2|Sdet|}`.  So replacing the tensor matrix
+`D_s^{⊗K}` by another matrix `A` costs only a determining set for `A`'s own balance relations —
+no new confinement proof.  This is the general statement. -/
+
+open NormalNumbers.G4Confine in
+/-- **Confinement from any determined invariant.**  A family of samplers whose multiplier and
+offset vectors satisfy an invariant pinned by its values on `Sdet` reads, below `L`, at most
+`(2dmax+1)^{2|Sdet|}·(L m H dmax/(2 dmin^H) + H m)` positions. -/
+theorem union_le_of_determining {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {κ : Type*} [DecidableEq κ]
+    (Inv : (ι → ℤ) → Prop) (Sdet : Finset ι)
+    (hdet : ∀ f g : ι → ℤ, Inv f → Inv g → (∀ β ∈ Sdet, f β = g β) → f = g)
+    (𝓕 : Finset κ) (d t : κ → ι → ℕ) (P : κ → Finset ℕ)
+    {dmin dmax m L : ℕ} (hdmin : 0 < dmin)
+    (hinj : Set.InjOn (fun ν => ((fun α => (d ν α : ℤ)), (fun α => (t ν α : ℤ)))) 𝓕)
+    (hI : ∀ ν ∈ 𝓕, Inv (fun α => (d ν α : ℤ)) ∧ Inv (fun α => (t ν α : ℤ)))
+    (hd : ∀ ν ∈ 𝓕, ∀ α, dmin ≤ d ν α ∧ d ν α ≤ dmax)
+    (ht : ∀ ν ∈ 𝓕, ∀ α, t ν α ≤ dmax)
+    (hcop : ∀ ν ∈ 𝓕, ∀ α β, α ≠ β → Nat.Coprime (d ν α) (d ν β))
+    (hP : ∀ ν ∈ 𝓕, ∀ n ∈ P ν, ∀ α, n % d ν α = t ν α)
+    (U : ℕ → Prop) [DecidablePred U]
+    (hcov : ∀ j, j < L → U j → ∃ ν ∈ 𝓕, ∃ n ∈ P ν, ∃ α, ∃ h < m,
+      j = 2 * physIdx (d ν α) (t ν α) n + h) :
+    (((Finset.range L).filter U).card : ℝ) ≤
+      ((2 * dmax + 1 : ℕ) : ℝ) ^ (2 * Sdet.card)
+        * ((L : ℝ) * m * Fintype.card ι * dmax / (2 * (dmin : ℝ) ^ Fintype.card ι)
+          + Fintype.card ι * m) := by
+  classical
+  have hcardF : 𝓕.card ≤ (2 * dmax + 1) ^ (2 * Sdet.card) := by
+    set 𝓕' := 𝓕.image (fun ν => ((fun α => (d ν α : ℤ)), (fun α => (t ν α : ℤ)))) with h𝓕'
+    have hc : 𝓕.card = 𝓕'.card := (Finset.card_image_of_injOn hinj).symm
+    rw [hc]
+    refine RowBalance.card_pairs_le_of_determining Inv Sdet hdet 𝓕' ?_ ?_
+    · intro p hp
+      obtain ⟨ν, hν, rfl⟩ := Finset.mem_image.1 hp
+      exact hI ν hν
+    · intro p hp α
+      obtain ⟨ν, hν, rfl⟩ := Finset.mem_image.1 hp
+      refine ⟨?_, ?_⟩
+      · show |((d ν α : ℕ) : ℤ)| ≤ (dmax : ℤ)
+        rw [Nat.abs_cast]; exact_mod_cast (hd ν hν α).2
+      · show |((t ν α : ℕ) : ℤ)| ≤ (dmax : ℤ)
+        rw [Nat.abs_cast]; exact_mod_cast ht ν hν α
+  have hU := union_card_le (ι := ι) 𝓕 d t P hdmin hd hcop hP U hcov
+  have hF' : (𝓕.card : ℝ) ≤ ((2 * dmax + 1 : ℕ) : ℝ) ^ (2 * Sdet.card) := by
+    exact_mod_cast hcardF
+  have hpos : (0 : ℝ) ≤ (L : ℝ) * m * Fintype.card ι * dmax / (2 * (dmin : ℝ) ^ Fintype.card ι)
+      + Fintype.card ι * m := by positivity
+  exact le_trans hU (mul_le_mul_of_nonneg_right hF' hpos)
+
 end NormalNumbers.G4.RowVariance
