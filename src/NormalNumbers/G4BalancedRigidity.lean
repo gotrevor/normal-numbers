@@ -533,6 +533,65 @@ theorem one_balanced_layer_insufficient (hK : 0 < K) (hs : 0 < s) (j : ℕ) :
   rw [hzero]
   exact balanced_const ⟨0, hK⟩ 0
 
+
+/-! ### The arithmetic core of the error budget (E)
+
+`DESIGN-2026-09-15-deformation.md` §3 prices the released layers of `T(K′)` by the row
+coefficient second moment `Σ_{α, j>K′} c_{α,j}² = 2^K Σ_{j>K′} 16^{-j}`, against the capture
+requirement `≪ η² = 2^{-K/2}`, and reads off the threshold `K′ > 3K/8`.  The *variance* step
+(`≪ (Σ c²) log M + exp(−βL)`, draft (6.4)–(6.5)) stays an external estimate carried by
+`G4TransferMoment`/`G4ScheduleBudget` — but the two arithmetic steps around it are proved here,
+so what remains external is exactly the one probabilistic inequality and nothing else. -/
+
+namespace Budget
+
+/-- The released-layer coefficient sum is exactly `16^{-K′}/15`. -/
+theorem released_coeff_sum (K' : ℕ) :
+    ∑' i : ℕ, ((1 : ℝ) / 16) ^ (K' + 1 + i) = ((1 : ℝ) / 16) ^ K' / 15 := by
+  have hr : |(1 : ℝ) / 16| < 1 := by rw [abs_of_nonneg (by norm_num)]; norm_num
+  have : ∑' i : ℕ, ((1 : ℝ) / 16) ^ (K' + 1 + i)
+      = ((1 : ℝ) / 16) ^ (K' + 1) * ∑' i : ℕ, ((1 : ℝ) / 16) ^ i := by
+    rw [← tsum_mul_left]
+    exact tsum_congr fun i => by rw [pow_add]
+  rw [this, tsum_geometric_of_lt_one (by norm_num) (by norm_num), pow_succ]
+  rw [show (1 : ℝ) - 1 / 16 = 15 / 16 by norm_num]
+  field_simp
+
+/-- **The threshold is real.**  If `K′` is below `3K/8` (by the margin the `1/15` and the floor
+in `K/2` cost), the released second moment `2^K · 16^{-K′}/15` already exceeds the whole capture
+budget `2^{-K/2}`.  This is (E)'s conclusion `K′ > 3K/8`, in the contrapositive. -/
+theorem released_budget_exceeded {K K' : ℕ} (h : 8 * K' + 8 ≤ 3 * K) :
+    ((1 : ℝ) / 2) ^ (K / 2) < (2 : ℝ) ^ K * (((1 : ℝ) / 16) ^ K' / 15) := by
+  have hexp : 4 * K' + 4 ≤ K + K / 2 := by
+    have h2 : K - 1 ≤ 2 * (K / 2) := by omega
+    omega
+  have hnat : 15 * 2 ^ (4 * K') < 2 ^ (K + K / 2) := by
+    calc 15 * 2 ^ (4 * K') < 16 * 2 ^ (4 * K') := by
+          have : 0 < 2 ^ (4 * K') := Nat.two_pow_pos _
+          omega
+      _ = 2 ^ (4 * K' + 4) := by rw [pow_add]; ring
+      _ ≤ 2 ^ (K + K / 2) := Nat.pow_le_pow_right (by norm_num) hexp
+  have hR : (15 : ℝ) * 2 ^ (4 * K') < 2 ^ (K + K / 2) := by exact_mod_cast hnat
+  have h16 : ((1 : ℝ) / 16) ^ K' = 1 / 2 ^ (4 * K') := by
+    rw [show (16 : ℝ) = 2 ^ 4 by norm_num, div_pow, one_pow, ← pow_mul]
+  have h2' : ((1 : ℝ) / 2) ^ (K / 2) = 1 / 2 ^ (K / 2) := by rw [div_pow, one_pow]
+  rw [h16, h2']
+  rw [div_lt_iff₀ (by positivity), show (2 : ℝ) ^ K * (1 / 2 ^ (4 * K') / 15)
+      = 2 ^ K / (15 * 2 ^ (4 * K')) from by ring, div_mul_eq_mul_div,
+    lt_div_iff₀ (by positivity)]
+  calc (1 : ℝ) * (15 * 2 ^ (4 * K')) = 15 * 2 ^ (4 * K') := by ring
+    _ < 2 ^ (K + K / 2) := hR
+    _ = 2 ^ K * 2 ^ (K / 2) := by rw [pow_add]
+  
+/-- The layer count the schedule's own `K` forces: `K′ ≥ 2` whenever `K ≥ 8`.  Two cancelled —
+hence balanced — layers is exactly the hypothesis of `Sched.balanced_union_le`. -/
+theorem two_layers_of_budget {K K' : ℕ} (hK : 8 ≤ K)
+    (h : ¬ ((1 : ℝ) / 2) ^ (K / 2) < (2 : ℝ) ^ K * (((1 : ℝ) / 16) ^ K' / 15)) : 2 ≤ K' := by
+  by_contra hlt
+  exact h (released_budget_exceeded (by omega))
+
+end Budget
+
 /-! ### The `K = 3`, `s = 2` counterexample to "balanced ⇒ ignores a coordinate" -/
 
 /-- `[α₀ = 1 ∧ α₁ = 2] + [α₀ = 2 ∧ α₂ = 2]` on `(Fin 3 → Fin 3)`. -/

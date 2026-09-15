@@ -104,8 +104,14 @@ recorded as the exact threshold, not as a load-bearing step.
 
 Not covered by `balanced_union_le`, and therefore the honest frontier:
 
-* a sampler whose error budget tolerates `K′ ≤ 1` cancelled layers (contradicts (E) as drafted —
-  (E) remains a documented external estimate, not a Lean theorem);
+* a sampler whose error budget tolerates `K′ ≤ 1` cancelled layers.  (E) is no longer external in
+  full: `Budget.released_coeff_sum` proves the coefficient sum `Σ_{j>K′} 16^{-j} = 16^{-K′}/15`
+  exactly, `Budget.released_budget_exceeded` proves the threshold (if `8K′ + 8 ≤ 3K` the released
+  second moment `2^K·16^{-K′}/15` already exceeds the whole capture budget `2^{-K/2}`), and
+  `Budget.two_layers_of_budget` closes the loop: at `K ≥ 8` a sampler inside the budget has
+  `K′ ≥ 2`, which is exactly the hypothesis of `Sched.balanced_union_le`.  What stays external is
+  now *one* inequality — the rough-prime variance bound `≪ (Σc²) log M + exp(−βL)`, draft
+  (6.4)–(6.5), carried by `G4TransferMoment`/`G4ScheduleBudget` — and nothing else;
 * a different matrix `A` in place of `D_s^{⊗K}`, whose rows are not unit cubes;
 * giving up the single-`n` joint sample (all `H` atoms read from one `n`), which is what makes
   the L1 confinement `≤ m Σd_α/(2D)` available at all.
