@@ -1805,4 +1805,136 @@ theorem balanced_of_cube_ignores {K s : ℕ} {ρ : (Fin K → Fin (s + 1)) → �
   exact sum_alt_toggle_zero i (fun T => if ρ (corner c T) = v then 1 else 0)
     (fun T => by rw [hi T])
 
+/-! ### The `K ≥ 4` counterexample family: a pointer function
+
+R's refutation of "row-balanced ⇒ ignores a coordinate" rested on one witness at `K = 3, s = 2`,
+found by search.  The cube-local criterion turns it into an explicit family for every `K ≥ 4`:
+the **pointer function**
+
+    ptrFun α  =  α (α 0)                   (coordinate `0` names the coordinate to read)
+
+depends on *all* `K` coordinates, but on any single unit cube `α 0` takes only the two values
+`c 0` and `c 0 + 1`, so `ptrFun` reads at most the three coordinates `0`, `c 0`, `c 0 + 1` there.
+With `K ≥ 4` a fourth coordinate is always free, so every cube ignores one and `ptrFun` is
+row-balanced.  Together with `ex` at `K = 3`, the rigidity threshold `K ≤ 2` of
+`ignores_coord_of_balanced_two` is exact at **every** `K ≥ 3`. -/
+
+/-- Reading a value of `Fin (s+1)` as a coordinate index. -/
+def ptr {K s : ℕ} (hK : 0 < K) (a : Fin (s + 1)) : Fin K :=
+  if h : (a : ℕ) < K then ⟨a, h⟩ else ⟨0, hK⟩
+
+lemma ptr_lt {K s : ℕ} (hK : 0 < K) (a : Fin (s + 1)) (h : (a : ℕ) < K) :
+    ptr (s := s) hK a = ⟨a, h⟩ := by
+  simp [ptr, h]
+
+/-- The pointer function: coordinate `0` names the coordinate whose value is returned. -/
+def ptrFun {K s : ℕ} (hK : 0 < K) (α : Fin K → Fin (s + 1)) : ℤ :=
+  ((α (ptr hK (α ⟨0, hK⟩)) : ℕ) : ℤ)
+
+/-- **The family is row-balanced for every `K ≥ 4`.** -/
+theorem ptrFun_balanced {K s : ℕ} (hK0 : 0 < K) (hK : 4 ≤ K) :
+    Balanced (ptrFun (s := s) hK0) := by
+  classical
+  refine balanced_of_cube_ignores (fun c => ?_)
+  -- the three coordinates any corner of this cube can read
+  set i₀ : Fin K := ⟨0, hK0⟩ with hi₀
+  set a₁ : Fin K := ptr (s := s) hK0 ((c i₀).castSucc) with ha₁
+  set a₂ : Fin K := ptr (s := s) hK0 ((c i₀).succ) with ha₂
+  obtain ⟨i, hi⟩ : ∃ i : Fin K, i ≠ i₀ ∧ i ≠ a₁ ∧ i ≠ a₂ := by
+    by_contra hall
+    push_neg at hall
+    have hsub : (Finset.univ : Finset (Fin K)) ⊆ {i₀, a₁, a₂} := by
+      intro x _
+      have := hall x
+      by_cases h1 : x = i₀
+      · simp [h1]
+      · by_cases h2 : x = a₁
+        · simp [h2]
+        · simp [this h1 h2]
+    have h1 : (Finset.univ : Finset (Fin K)).card ≤ ({i₀, a₁, a₂} : Finset (Fin K)).card :=
+      Finset.card_le_card hsub
+    have h2 : ({i₀, a₁, a₂} : Finset (Fin K)).card ≤ 3 := by
+      refine le_trans (Finset.card_insert_le _ _) ?_
+      have := Finset.card_insert_le a₁ ({a₂} : Finset (Fin K))
+      simp only [Finset.card_singleton] at this
+      omega
+    rw [Finset.card_univ, Fintype.card_fin] at h1
+    omega
+  obtain ⟨hne0, hne1, hne2⟩ := hi
+  refine ⟨i, fun T => ?_⟩
+  -- the corner agrees off `i`, and `i` is none of the readable coordinates
+  have hoff : ∀ j : Fin K, j ≠ i → corner c (toggle i T) j = corner c T j := by
+    intro j hj
+    have hmem : j ∈ toggle i T ↔ j ∈ T := by
+      simp only [toggle]
+      split_ifs with hiT
+      · simp [Finset.mem_erase, hj]
+      · simp [Finset.mem_insert, hj]
+    unfold corner
+    by_cases hjT : j ∈ T
+    · rw [if_pos (hmem.2 hjT), if_pos hjT]
+    · rw [if_neg (fun h => hjT (hmem.1 h)), if_neg hjT]
+  have h0 : corner c (toggle i T) i₀ = corner c T i₀ := hoff i₀ (Ne.symm hne0)
+  unfold ptrFun
+  rw [h0]
+  -- the read coordinate is `a₁` or `a₂`, neither of which is `i`
+  have hread : ptr (s := s) hK0 (corner c T i₀) ≠ i := by
+    unfold corner
+    split_ifs
+    · rw [← ha₂]; exact Ne.symm hne2
+    · rw [← ha₁]; exact Ne.symm hne1
+  rw [hoff _ hread]
+
+/-- **The family ignores no coordinate.**  Whenever the value alphabet is wide enough to name
+every coordinate (`K ≤ s + 1`), each coordinate genuinely moves `ptrFun`. -/
+theorem ptrFun_not_ignoring {K s : ℕ} (hK0 : 0 < K) (hK2 : 2 ≤ K) (hKs : K ≤ s + 1) :
+    ∀ j : Fin K, ∃ (α : Fin K → Fin (s + 1)) (b : Fin (s + 1)),
+      ptrFun hK0 (Function.update α j b) ≠ ptrFun hK0 α := by
+  classical
+  have hs1 : 1 < s + 1 := by omega
+  set i₀ : Fin K := ⟨0, hK0⟩ with hi₀
+  set i₁ : Fin K := ⟨1, by omega⟩ with hi₁
+  set z : Fin (s + 1) := ⟨0, by omega⟩ with hz
+  set o : Fin (s + 1) := ⟨1, hs1⟩ with ho
+  have hne : i₁ ≠ i₀ := by
+    rw [hi₁, hi₀, Ne, Fin.mk.injEq]; omega
+  have hptr0 : ptr (s := s) hK0 z = i₀ := by
+    apply Fin.ext; simp [ptr, hz, hi₀, hK0]
+  have hptr1 : ptr (s := s) hK0 o = i₁ := by
+    apply Fin.ext
+    have : (1 : ℕ) < K := by omega
+    simp [ptr, ho, hi₁, this]
+  intro j
+  by_cases hj : j = i₀
+  · subst hj
+    set α : Fin K → Fin (s + 1) := fun x => if x = i₁ then o else z with hα
+    refine ⟨α, o, ?_⟩
+    have hαi₁ : α i₁ = o := by simp [hα]
+    have hαi₀ : α i₀ = z := by simp [hα, Ne.symm hne]
+    have e1 : ptrFun hK0 (Function.update α i₀ o) = 1 := by
+      unfold ptrFun
+      rw [Function.update_self, hptr1, Function.update_of_ne hne, hαi₁]
+      simp [ho]
+    have e2 : ptrFun hK0 α = 0 := by
+      unfold ptrFun
+      rw [hαi₀, hptr0, hαi₀]
+      simp [hz]
+    rw [e1, e2]; norm_num
+  · set jv : Fin (s + 1) := ⟨(j : ℕ), lt_of_lt_of_le j.isLt hKs⟩ with hjv
+    set α : Fin K → Fin (s + 1) := fun x => if x = i₀ then jv else z with hα
+    refine ⟨α, o, ?_⟩
+    have hptrj : ptr (s := s) hK0 jv = j := by
+      apply Fin.ext; simp [ptr, hjv, j.isLt]
+    have hαi₀ : α i₀ = jv := by simp [hα]
+    have hαj : α j = z := by simp [hα, hj]
+    have e1 : ptrFun hK0 (Function.update α j o) = 1 := by
+      unfold ptrFun
+      rw [Function.update_of_ne (Ne.symm hj), hαi₀, hptrj, Function.update_self]
+      simp [ho]
+    have e2 : ptrFun hK0 α = 0 := by
+      unfold ptrFun
+      rw [hαi₀, hptrj, hαj]
+      simp [hz]
+    rw [e1, e2]; norm_num
+
 end NormalNumbers.G4.RowVariance
