@@ -1,4 +1,5 @@
 import NormalNumbers.BlockRigidity
+import NormalNumbers.PowerBaseStatement
 import NormalNumbers.PowerBaseReal
 import NormalNumbers.PowerBaseBlock
 import NormalNumbers.PowerBaseLimit
