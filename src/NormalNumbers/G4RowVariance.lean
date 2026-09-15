@@ -989,4 +989,86 @@ theorem roughRowVarianceLower_of_released {K L : ℕ} {sm : ℕ → ℝ} {v : �
       = (v / 2) * ((2 : ℝ) ^ K * ((1 / 16 : ℝ) ^ K' * (1 - (1 / 16 : ℝ) ^ L) / 15)) := by ring
     _ ≤ sm K' := this
 
+/-! ### (E) in arithmetic terms: the two inputs feed the reduction directly
+
+`released_row_lower` asks for per-term non-degeneracy `v` and near-orthogonality `ε` of the
+row's terms.  At the real object the terms are the rough-prime fluctuations `fluct S ρ_i`, and
+those two hypotheses are exactly `rough_variance_lower` and `cross_shift_corr_le`.  The only
+genuinely arithmetic content left is the **gap-divisor count** `g`: how much of `Σ_{p ∣ Δ} 4/p`
+can survive when `Δ = ρ_i − ρ_j` ranges over the row's shift gaps.  Since every `p ∈ S` is rough
+(`p > T`), `g ≤ 4 (log|Δ|/log T)/T`, which beats `v 2^{-K}` for the schedule's parameters. -/
+
+/-- The rough-prime fluctuation at shift `r`: `Σ_{p ∈ S} (1[p ∣ n + r] − 1/p)`. -/
+noncomputable def fluct (S : Finset ℕ) (r : ℤ) (n : ℕ) : ℝ :=
+  ∑ p ∈ S, ((if (p : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0) - 1 / p)
+
+/-- Splitting the three-case table of `cross_shift_corr_le` into the gap-divisor part and a
+uniform `Σ 3/p²` remainder. -/
+lemma table_le_split (S : Finset ℕ) (Δ : ℤ) :
+    (∑ p ∈ S, (if (p : ℤ) ∣ Δ then 4 * (1 / (p : ℝ)) else 3 * (1 / (p : ℝ)) ^ 2))
+      ≤ (∑ p ∈ S.filter (fun p : ℕ => (p : ℤ) ∣ Δ), 4 * (1 / (p : ℝ)))
+        + ∑ p ∈ S, 3 * (1 / (p : ℝ)) ^ 2 := by
+  classical
+  rw [← Finset.sum_filter_add_sum_filter_not S (fun p : ℕ => (p : ℤ) ∣ Δ)]
+  have h1 : ∑ p ∈ S.filter (fun p : ℕ => (p : ℤ) ∣ Δ),
+      (if (p : ℤ) ∣ Δ then 4 * (1 / (p : ℝ)) else 3 * (1 / (p : ℝ)) ^ 2)
+      = ∑ p ∈ S.filter (fun p : ℕ => (p : ℤ) ∣ Δ), 4 * (1 / (p : ℝ)) :=
+    Finset.sum_congr rfl fun p hp => by
+      rw [if_pos (Finset.mem_filter.1 hp).2]
+  have h2 : ∑ p ∈ S.filter (fun p : ℕ => ¬ (p : ℤ) ∣ Δ),
+      (if (p : ℤ) ∣ Δ then 4 * (1 / (p : ℝ)) else 3 * (1 / (p : ℝ)) ^ 2)
+      = ∑ p ∈ S.filter (fun p : ℕ => ¬ (p : ℤ) ∣ Δ), 3 * (1 / (p : ℝ)) ^ 2 :=
+    Finset.sum_congr rfl fun p hp => by
+      rw [if_neg (Finset.mem_filter.1 hp).2]
+  rw [h1, h2]
+  have h3 : ∑ p ∈ S.filter (fun p : ℕ => ¬ (p : ℤ) ∣ Δ), 3 * (1 / (p : ℝ)) ^ 2
+      ≤ ∑ p ∈ S, 3 * (1 / (p : ℝ)) ^ 2 :=
+    Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+      (fun p _ _ => by positivity)
+  linarith
+
+/-- **(E), discharged.**  Given the schedule's sample (a CRT progression), a set `S` of rough
+primes, released-layer weights of the standard shape, and a gap-divisor budget `g` beating
+`v · 2^{-K}`, the row second moment satisfies `Budget.RoughRowVarianceLower` — the one hypothesis
+`budget_forces_two_layers` consumes.  No unproved statement remains between the arithmetic of
+`ω` along the progression and the deformation verdict. -/
+theorem roughRowVarianceLower_arith {K L Q c0 N : ℕ} (hQ : 0 < Q) (hN : 0 < N)
+    (S : Finset ℕ) (hpos : ∀ p ∈ S, 0 < p)
+    (hQcop : ∀ p ∈ S, Nat.Coprime Q p)
+    (hcop : ∀ p ∈ S, ∀ q ∈ S, p ≠ q → Nat.Coprime p q)
+    (ρ : ℕ → Fin (2 ^ K) × Fin L → ℤ) (w : ℕ → Fin (2 ^ K) × Fin L → ℝ)
+    (hw : ∀ K' i, |w K' i| = (1 / 4 : ℝ) ^ (K' + 1 + (i.2 : ℕ)))
+    {v g ε : ℝ} (hvnn : 0 ≤ v) (hεnn : 0 ≤ ε)
+    (hv : v ≤ (∑ p ∈ S, ((1 : ℝ) / p - ((1 : ℝ) / p) ^ 2)) - 3 * (1 / (N : ℝ)) * (S.card : ℝ) ^ 2)
+    (hgap : ∀ K' : ℕ, ∀ i j, i ≠ j →
+      (∑ p ∈ S.filter (fun p : ℕ => (p : ℤ) ∣ (ρ K' i - ρ K' j)), 4 * (1 / (p : ℝ))) ≤ g)
+    (hε : g + (∑ p ∈ S, 3 * (1 / (p : ℝ)) ^ 2) + 3 * (S.card : ℝ) ^ 2 / N ≤ ε)
+    (hsmall : ε * (5 * ((2 : ℝ) ^ K) / 3) ≤ v / 2) :
+    Budget.RoughRowVarianceLower
+      (fun K' => avg ((Finset.range N).image (fun k => c0 + Q * k))
+        (fun n => (∑ i, w K' i * fluct S (ρ K' i) n) ^ 2))
+      ((v / 2) * (1 - (1 / 16 : ℝ) ^ L)) K := by
+  classical
+  refine roughRowVarianceLower_of_released (L := L) (fun K' => ?_)
+  have hcard : ((Fintype.card (Fin (2 ^ K)) : ℕ) : ℝ) = (2 : ℝ) ^ K := by
+    rw [Fintype.card_fin]; push_cast; ring
+  have hmain := released_row_lower (m := 2 ^ K) (L := L) (K' := K')
+    ((Finset.range N).image (fun k => c0 + Q * k))
+    (fun i => fluct S (ρ K' i)) (w K') (hw K') hεnn hvnn ?_ ?_ ?_
+  · rw [show ((2 ^ K : ℕ) : ℝ) = (2 : ℝ) ^ K from by push_cast; ring] at hmain
+    exact hmain
+  · -- per-term non-degeneracy
+    intro i
+    refine le_trans hv ?_
+    exact rough_variance_lower hQ hN (ρ K' i) S hpos hQcop hcop
+  · -- near-orthogonality
+    intro i j hij
+    refine le_trans (cross_shift_corr_le hQ hN (ρ K' i) (ρ K' j) S hpos hQcop hcop) ?_
+    have hsplit := table_le_split S (ρ K' i - ρ K' j)
+    have := hgap K' i j hij
+    linarith
+  · -- the near-orthogonality scale
+    rw [show ((2 ^ K : ℕ) : ℝ) = (2 : ℝ) ^ K from by push_cast; ring]
+    exact hsmall
+
 end NormalNumbers.G4.RowVariance
