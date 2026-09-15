@@ -106,6 +106,33 @@ lemma eighteen_X_le_wTop (i : ℕ) : 18 * X (KK i) ≤ wTop i := by
   calc 18 * X (KK i) ≤ 2 ^ 5 * X (KK i) := Nat.mul_le_mul_right _ h18
     _ ≤ wTop i := hmain
 
+/-- **The tile tops grow super-quadratically.**  `wTop (i+1)` dwarfs `wTop i²` by the factor
+that carries `|Atom|·kk` — exponents `100·2^{m_{i+1}}` against `50·2^{m_{i+2}} ≥ 6400·2^{m_{i+1}}`.
+-/
+lemma wTop_growth (i : ℕ) :
+    2 ^ (KK i ^ 3 + 2 * KK i + 1) * wTop i * wTop i ≤ wTop (i + 1) := by
+  have hstep1 := m_step_seven (i + 1)
+  have hstep0 := m_step_seven i
+  have hcube : KK i ^ 3 ≤ m (KK i) := by
+    have h1 := m₁_ge_cube (show 1 ≤ KK i by have := KK_ge i; omega)
+    unfold m
+    omega
+  have hKcube : KK i ≤ KK i ^ 3 := Nat.le_self_pow (by norm_num) _
+  have hlt1 : m (KK (i + 1)) < 2 ^ m (KK (i + 1)) := Nat.lt_two_pow_self
+  have hone : (1 : ℕ) ≤ 2 ^ m (KK (i + 1)) := Nat.one_le_two_pow
+  have h128 : (2 : ℕ) ^ 7 * 2 ^ m (KK (i + 1)) ≤ 2 ^ m (KK (i + 1 + 1)) := by
+    rw [← pow_add]
+    exact Nat.pow_le_pow_right (by norm_num) (by omega)
+  have h27 : (2 : ℕ) ^ 7 = 128 := by norm_num
+  have hw1 : wTop i = 2 ^ (50 * 2 ^ m (KK (i + 1))) := by
+    show (2 ^ (2 ^ m (KK (i + 1)))) ^ 50 = _
+    rw [← pow_mul]; ring_nf
+  have hw2 : wTop (i + 1) = 2 ^ (50 * 2 ^ m (KK (i + 1 + 1))) := by
+    show (2 ^ (2 ^ m (KK (i + 1 + 1)))) ^ 50 = _
+    rw [← pow_mul]; ring_nf
+  rw [hw1, hw2, ← pow_add, ← pow_add]
+  exact Nat.pow_le_pow_right (by norm_num) (by omega)
+
 /-- **The gate holds at the band's own top**, with room to spare. -/
 theorem wgate_wTop (i : ℕ) : 4 * wFloor i + 4 * (gridAt i).P₀ ≤ wTop i := by
   have hDm : gridDm (KK i) (N (KK i)) ≤ Xlo (KK i) := gridDm_le_Xlo (KK_hundred i)
@@ -445,5 +472,118 @@ theorem windows_eq_or_disjoint_at (i X' : ℕ) {n n' : ℕ} (hn : n ∈ PKtr i X
     omega
 
 lemma bandW_nonempty (i : ℕ) : (bandW i).Nonempty := bandWtr_nonempty (wgate_wTop i)
+
+/-! ### The wide band's granularity wall -/
+
+lemma card_PKtr_le (i X' : ℕ) : (PKtr i X').card ≤ X' := by
+  have : PKtr i X' ⊆ Finset.range X' := by
+    intro n hn
+    rw [PKtr, apSample, Finset.mem_filter] at hn
+    exact hn.1
+  simpa using Finset.card_le_card this
+
+/-- **The granularity wall for the wide bands.**  Everything band `i` produces — every atom,
+every sample time, every digit of every window — is smaller than the number of sample times of
+band `i+1`.  Same statement as `granule_exceeds_previous_scale`, at the tile tops. -/
+theorem granuleW_exceeds_previous_scale (i : ℕ) :
+    (Fintype.card (gridAt i).Atom : ℝ) * ((PKtr i (wTop i)).card : ℝ) * (kk i : ℝ)
+      < ((PKtr (i + 1) (wTop (i + 1))).card : ℝ) := by
+  have hP₀pos : 0 < (gridAt (i + 1)).P₀ := (gridAt (i + 1)).P₀_pos
+  have h2P : 2 * (gridAt (i + 1)).P₀ ≤ wTop i := by
+    have h := two_mul_P₀_le_Xlo (KK_hundred (i + 1))
+    rw [wTop_eq]
+    exact h
+  -- the numerator, in ℕ
+  have hAtom : Fintype.card (gridAt i).Atom ≤ 2 ^ (KK i ^ 3 + KK i) := card_Atom_le_two_pow i
+  have hkk : kk i ≤ 2 ^ (KK i) := by
+    have h1 : kk i ≤ KK i := by unfold KK; omega
+    have h2 : KK i < 2 ^ KK i := Nat.lt_two_pow_self
+    omega
+  have hcard : (PKtr i (wTop i)).card ≤ wTop i := card_PKtr_le i (wTop i)
+  have hnum : Fintype.card (gridAt i).Atom * (PKtr i (wTop i)).card * kk i
+      * (2 * (gridAt (i + 1)).P₀) < wTop (i + 1) := by
+    have hstep : Fintype.card (gridAt i).Atom * (PKtr i (wTop i)).card * kk i
+        * (2 * (gridAt (i + 1)).P₀)
+        ≤ 2 ^ (KK i ^ 3 + KK i) * wTop i * 2 ^ (KK i) * wTop i := by
+      refine Nat.mul_le_mul (Nat.mul_le_mul (Nat.mul_le_mul hAtom hcard) hkk) h2P
+    have hgrow := wTop_growth i
+    have hexp : 2 ^ (KK i ^ 3 + KK i) * wTop i * 2 ^ (KK i) * wTop i
+        = 2 ^ (KK i ^ 3 + 2 * KK i) * wTop i * wTop i := by
+      rw [show KK i ^ 3 + 2 * KK i = (KK i ^ 3 + KK i) + KK i by ring, pow_add]
+      ring
+    have hdouble : 2 ^ (KK i ^ 3 + 2 * KK i + 1) * wTop i * wTop i
+        = 2 * (2 ^ (KK i ^ 3 + 2 * KK i) * wTop i * wTop i) := by
+      rw [pow_succ]; ring
+    have hTpos : 0 < wTop i := by
+      have := Xlo_pos (KK (i + 1))
+      rw [wTop_eq]; exact this
+    have hprod : 0 < 2 ^ (KK i ^ 3 + 2 * KK i) * wTop i * wTop i := by positivity
+    omega
+  -- the denominator
+  have hbig : (wTop (i + 1) : ℝ) / (2 * ((gridAt (i + 1)).P₀ : ℝ))
+      ≤ ((PKtr (i + 1) (wTop (i + 1))).card : ℝ) :=
+    card_apSample_ge_half (wTop (i + 1)) (gridAt (i + 1)).P₀ (gridAt (i + 1)).b₀ hP₀pos
+      (gridAt (i + 1)).b₀_lt_P₀ (two_P₀_le_of_wgate (wgate_wTop (i + 1)))
+  have hP₀R : (0 : ℝ) < ((gridAt (i + 1)).P₀ : ℝ) := by exact_mod_cast hP₀pos
+  refine lt_of_lt_of_le ?_ hbig
+  rw [lt_div_iff₀ (by linarith)]
+  have hnumR : ((Fintype.card (gridAt i).Atom * (PKtr i (wTop i)).card * kk i
+      * (2 * (gridAt (i + 1)).P₀) : ℕ) : ℝ) < ((wTop (i + 1) : ℕ) : ℝ) := by
+    exact_mod_cast hnum
+  push_cast at hnumR
+  linarith
+
+/-! ### Same-atom window gaps at a truncated scale -/
+
+lemma P₀_le_sub_of_mem_at (i X' : ℕ) {n n' : ℕ} (hn : n ∈ PKtr i X') (hn' : n' ∈ PKtr i X')
+    (hlt : n < n') : (gridAt i).P₀ ≤ n' - n := by
+  have h1 : n % (gridAt i).P₀ = (gridAt i).b₀ := (Finset.mem_filter.1 hn).2
+  have h2 : n' % (gridAt i).P₀ = (gridAt i).b₀ := (Finset.mem_filter.1 hn').2
+  have hdvd : (gridAt i).P₀ ∣ n' - n := by
+    have : n ≡ n' [MOD (gridAt i).P₀] := by
+      unfold Nat.ModEq
+      rw [h1, h2]
+    exact (Nat.modEq_iff_dvd' (le_of_lt hlt)).1 this
+  exact Nat.le_of_dvd (by omega) hdvd
+
+/-- `window_gap_same_atom` at a truncated scale. -/
+theorem window_gap_same_atom_at (i X' : ℕ) (α : (gridAt i).Atom) {n n' : ℕ}
+    (hn : n ∈ PKtr i X') (hn' : n' ∈ PKtr i X') (hlt : n < n') :
+    2 * kIdx (gridAt i) n α + kk i ≤ 2 * kIdx (gridAt i) n' α := by
+  have hd : 0 < (gridAt i).d α := (gridAt i).d_pos α
+  obtain ⟨hk, -⟩ := kIdx_spec (gridAt i) (X := X') hn α
+  obtain ⟨hk', -⟩ := kIdx_spec (gridAt i) (X := X') hn' α
+  have hkle : kIdx (gridAt i) n α ≤ kIdx (gridAt i) n' α := by
+    by_contra hcon
+    push_neg at hcon
+    have hmul : (gridAt i).d α * kIdx (gridAt i) n' α
+        < (gridAt i).d α * kIdx (gridAt i) n α := (Nat.mul_lt_mul_left hd).mpr hcon
+    omega
+  have hsub : (gridAt i).d α * (kIdx (gridAt i) n' α - kIdx (gridAt i) n α) = n' - n := by
+    rw [Nat.mul_sub]
+    omega
+  have hP₀ := P₀_le_sub_of_mem_at i X' hn hn' hlt
+  have hMprod : (gridAt i).d α ^ 2 ≤ (gridAt i).Mprod :=
+    Nat.le_of_dvd (gridAt i).Mprod_pos ((gridAt i).sq_d_dvd_Mprod α)
+  have hP₀ge : (gridAt i).d α * (gridAt i).freezeQ ≤ (gridAt i).P₀ := by
+    have h1 : (gridAt i).d α * (gridAt i).freezeQ
+        ≤ (gridAt i).d α ^ 2 * (gridAt i).freezeQ := by
+      have hsq : (gridAt i).d α ≤ (gridAt i).d α ^ 2 := Nat.le_self_pow (by norm_num) _
+      exact Nat.mul_le_mul_right _ hsq
+    calc (gridAt i).d α * (gridAt i).freezeQ
+        ≤ (gridAt i).d α ^ 2 * (gridAt i).freezeQ := h1
+      _ ≤ (gridAt i).Mprod * (gridAt i).freezeQ := Nat.mul_le_mul_right _ hMprod
+      _ = (gridAt i).P₀ := rfl
+  have hfq : kk i < (gridAt i).freezeQ :=
+    lt_of_le_of_lt (kk_le_card_Idx i) (card_Idx_lt_freezeQ (gridAt i) (card_Idx_gridAt_pos i))
+  have hgap : (gridAt i).d α * kk i
+      ≤ (gridAt i).d α * (kIdx (gridAt i) n' α - kIdx (gridAt i) n α) := by
+    rw [hsub]
+    refine le_trans ?_ hP₀
+    refine le_trans ?_ hP₀ge
+    exact Nat.mul_le_mul_left _ (le_of_lt hfq)
+  have hgap' : kk i ≤ kIdx (gridAt i) n' α - kIdx (gridAt i) n α :=
+    le_of_mul_le_mul_left hgap hd
+  omega
 
 end NormalNumbers.G4.Sched
