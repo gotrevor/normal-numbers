@@ -607,6 +607,30 @@ theorem two_layers_of_budget {K K' : ℕ} (hK : 8 ≤ K)
   by_contra hlt
   exact h (released_budget_exceeded (by omega))
 
+/-- **The one external ingredient, named.**  For the deformation to be *obstructed* one needs a
+LOWER bound on the rough-prime row second moment — the released layers must genuinely fluctuate,
+not merely be permitted to.  `RoughRowVarianceLower sm c K` says the row second moment `sm K'` is
+at least a constant multiple of the coefficient square sum `2^K · 16^{-K′}/15`
+(`released_coeff_sum` computes that sum exactly).
+
+This is the *entire* residue of DESIGN §3's estimate (E): an anti-concentration statement about
+`ω` along the sample, draft (6.4)–(6.5), carried informally by `G4TransferMoment` /
+`G4ScheduleBudget`.  It is deliberately a hypothesis and not an axiom — `budget_forces_two_layers`
+below is the only place the verdict uses it, so discharging this one `Prop` discharges (E). -/
+def RoughRowVarianceLower (sm : ℕ → ℝ) (c : ℝ) (K : ℕ) : Prop :=
+  ∀ K', c * ((2 : ℝ) ^ K * (((1 : ℝ) / 16) ^ K' / 15)) ≤ sm K'
+
+/-- **(E), assembled.**  Given the named variance lower bound, a sampler whose row error fits the
+capture budget `c · 2^{-K/2}` must cancel at least two layers — exactly the hypothesis of
+`Sched.balanced_union_le`.  Everything here except `RoughRowVarianceLower` is proved. -/
+theorem budget_forces_two_layers {sm : ℕ → ℝ} {c : ℝ} (hc : 0 < c) {K : ℕ} (hK : 8 ≤ K)
+    (hvar : RoughRowVarianceLower sm c K) {K' : ℕ}
+    (hcap : sm K' ≤ c * ((1 : ℝ) / 2) ^ (K / 2)) : 2 ≤ K' := by
+  by_contra hlt
+  have h1 := released_budget_exceeded (K := K) (K' := K') (by omega)
+  have h2 := hvar K'
+  nlinarith
+
 end Budget
 
 /-! ### The `K = 3`, `s = 2` counterexample to "balanced ⇒ ignores a coordinate" -/

@@ -110,8 +110,14 @@ Not covered by `balanced_union_le`, and therefore the honest frontier:
   second moment `2^K·16^{-K′}/15` already exceeds the whole capture budget `2^{-K/2}`), and
   `Budget.two_layers_of_budget` closes the loop: at `K ≥ 8` a sampler inside the budget has
   `K′ ≥ 2`, which is exactly the hypothesis of `Sched.balanced_union_le`.  What stays external is
-  now *one* inequality — the rough-prime variance bound `≪ (Σc²) log M + exp(−βL)`, draft
-  (6.4)–(6.5), carried by `G4TransferMoment`/`G4ScheduleBudget` — and nothing else;
+  now *one* inequality, and it is a **named Lean `Prop`** rather than prose:
+  `Budget.RoughRowVarianceLower sm c K` — the row second moment `sm K′` is at least a constant
+  multiple of the coefficient square sum `2^K·16^{-K′}/15`.  Note the direction: obstructing the
+  deformation needs a variance *lower* bound (the released layers must genuinely fluctuate), an
+  anti-concentration statement about `ω` along the sample — draft (6.4)–(6.5), carried by
+  `G4TransferMoment`/`G4ScheduleBudget`.  `Budget.budget_forces_two_layers` is the only place the
+  verdict consumes it, and everything else in that implication is proved, so **discharging this
+  one `Prop` discharges (E)**.  It is deliberately a hypothesis, not an axiom;
 * a different matrix `A` in place of `D_s^{⊗K}`, whose rows are not unit cubes — **but the
   counting mechanism is now matrix-agnostic**: `card_pairs_le_of_determining` proves the
   `(2M+1)^{2|S|}` bound for *any* invariant `Inv` determined by a finite set `S`, with
