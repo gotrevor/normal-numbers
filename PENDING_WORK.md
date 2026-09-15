@@ -3,7 +3,36 @@
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
 > section; do **not** append to the bottom.
 
-## 🎯 ACTIVE (entropy **lap 128**, 2026-09-15) — 🏁 THE BASE-`2^k` UPGRADE IS **PROVED**
+## 🎯 ACTIVE (after-the-extraction **lap 129**, 2026-09-15) — L1 ✅, L2 ✅, F next (design lap)
+
+**Objective: `DIRECTION.md`'s ACTIVE "AFTER THE EXTRACTION" override** (L1, L2, then F with
+W on slack).  Grind laps do not edit DIRECTION or the brief.
+
+| item | module | status |
+|---|---|---|
+| L1 `G4Confine.recentring`, `recentring_anchor` (17 vs 15) | `G4ResidualConfinement` | ✅ clean (anchor: no axioms) |
+| L1 `G4Confine.physIdx_of_pinned` — `k_α = (a−t_α)/d_α + (D/d_α) q` | same | ✅ |
+| L1 `G4Confine.density_bound` — count `≤ L·m(Σd_α)/(2D) + |ι|·m`, hypothesis only `n ≡ t_α (mod d_α)` | same | ✅ |
+| L1 `Sched.confinement_at_scale`, `Sched.density_coeff_le` — coefficient `≤ kk·|ι|/(2·dmin^(|ι|−1))`, `|ι| = (K²+1)^K` | same | ✅ |
+| L1 prose: `not_dense_of_any_residue` scoped to its re-centred sampler | `G4EntropyResidueProbe` docstrings, wrap footnote | ✅ |
+| L2 `Rigidity.const_of_update_invariant`, `offset_rigidity`, `physIdx_translate`, `grid_cancel` | `G4OffsetRigidity` | ✅ clean |
+
+**Numbers for L1 at `i = 0`**: `K = 160000`, `|ι| = (2.56·10¹⁰+1)^160000 > 10^1665000`,
+`dmin > 10^6`, so the density coefficient is `< 10^(−10^1665000)`.  The fixed grid at one scale
+reads a set of upper density essentially zero, *whatever* the multiplier residues and frozen
+classes do — CRT alone pins `n mod D`.
+
+### Next: F, the design lap
+`DESIGN-2026-09-15-deformation.md` — choose ONE deformation (L1+L2 force: vary the
+multipliers, replace exact coordinatewise cancellation, or control its error) and discharge the
+brief's four preconditions on paper with numbers before any Lean.  Then frozen `Prop`
+interfaces, transport identity + error term first.
+
+### Open, nothing on the critical path
+* `src/` carries exactly the **two** pre-expedition off-path `sorry`s
+  (`PrimeLambertOscillation.phaseOscillation`, `MahlerDriftOne.exists_drift_one_background`).
+
+## 🗄️ SUPERSEDED (entropy **lap 128**, 2026-09-15) — 🏁 THE BASE-`2^k` UPGRADE IS **PROVED**
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE (lap 126 close) first; it outranks any handoff.  Its
 🎯 is now MET — by the successor route of lap 127's E-T13 escalation, not by its own steps 3–4
