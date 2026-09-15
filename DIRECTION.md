@@ -38,7 +38,7 @@ never replace, the arithmetic estimate.  Success = a better sampling mechanism w
 arithmetic estimate, OR a proved limitation of the tested deformation.  Neither is "normality of
 G₄".  Another sparse extraction is a return to the completed task: refuse it.
 
-**W — WITHDRAWN (Trevor, 2026-09-14 23:2x: "Not much of a write-up is warranted.  The Lean
+**W — WITHDRAWN (Trevor, 2026-09-14 ~23:30: "Not much of a write-up is warranted.  The Lean
 will speak for itself.")**  At most: make sure the module docstring of `G4EntropyWSqueeze` /
 `G4EntropyWStatement` states `fullRealW`'s definition and claim limits in one paragraph
 (density-zero read set; not normality of `G₄`; positions astronomically large).  No `docs/` essay.
