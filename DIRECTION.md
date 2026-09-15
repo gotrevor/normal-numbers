@@ -63,7 +63,7 @@ cancellation is only useful if the transport identity + error term (§3) survive
 price that on paper before any claim.  This is a question about the tensor matrix, not about
 `G₄`; neither outcome is "normality of `G₄`".  Stop when R has a kernel verdict, else the cap.
 
-**Addendum 2026-09-15 01:10 EDT (attended, Ren, hourly check): R ✅** - counterexample
+**Addendum 2026-09-15 01:04 EDT (attended, Ren, hourly check): R ✅** - counterexample
 `ex_not_ignoring` (row-balanced does NOT force ignoring a coordinate) AND the broader confinement
 `Sched.balanced_union_le`; the grouped/decoupled third escape closed at the schedule
 (`G4GroupedVerdict`).  Review lap 166's self-assigned **objective S is authorized ONLY as its
