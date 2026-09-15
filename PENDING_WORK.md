@@ -66,6 +66,31 @@ G4EntropyWTrunc      startsOf, sum_pairs_eq_gen, card_startsOf_le, sum_pairs_sub
 
 All trust-triple clean.  Route trigger **E-T11 did NOT fire**: the bracket exists in-kernel.
 
+### Lap 124 — **`head_frac_tiny` is PROVED**; the active crux has no open leaf
+
+```
+G4GridP0Lower      gridQ_le_dist      same-layer shifts differ by a nonzero multiple of Q
+                   distProd_ge, P₀_ge_pow      P₀ ≥ Q^{T(H−1)}          THE LOWER BOUND
+                   P₀_le_pow_gridQ             P₀ ≤ Q^{7T²}
+                   gridSum/gridB/gridUmax/gridQ_mono, gridDm_le_gridQ_sq,
+                   two_gridT_succ_le_gridQ, gridH_le_gridUmax, mul_self_pred_le_factorial
+                   exponent_growth             T'(H'−1) ≥ 7T² + 3
+                   P₀_growth   256·(K+4)²·Dm(K+4)·H(K+4)·P₀ K ≤ P₀ (K+4)
+G4EntropyWHead     gridOf_congr, gridAt_succ_eq, head_growth, sq_succ_le_two_pow,
+                   head_junk_le_Xlo, head_slack, head_core
+                   head_frac_tiny   ✅ no longer a sorry
+```
+
+The handoff's guessed route (`Mprod ≥ gridQ^{2|Atom|}`) does **not** work: `log Mprod(K+4) ≈
+K^{6K}` loses to `log P₀(K) ≈ K^{8K}`, and the primorial fallback (`2^{2T'}`) loses too.  What
+works is that `freezeQ` counts **pairs**: its shift-difference product has `T(H−1)` factors that
+are each a nonzero multiple of `Q`, and `T(K+4)² ≥ K^{16}·T(K)²`.  Recorded so the dead route is
+not retried.
+
+**Remaining on the headline:** `DIRECTION` item 4 — the squeeze and the endpoint
+(`IsNormalSequence 2 (fullDigW …)` → `IsNormal 2 fullRealW`), per lap 123's "Next lap" item 2.
+`exists_matchesAt_fullDigW` still needs a wide non-vacuity witness.
+
 ### Landed since (grind laps, 2026-09-15)
 
 ```
