@@ -618,12 +618,10 @@ theorem overhangW_le (i : ℕ) :
   omega
 
 open Classical in
-/-- **The overhangW, quantitatively**: at most `2|P_K| + 2|Atom|²`. -/
-theorem overhangW_le_real (i : ℕ) :
-    (((bandWPairs i).card - (winStartsW i).card : ℕ) : ℝ)
-      ≤ 2 * ((PKtr i (wTop i)).card : ℝ) + 2 * (Fintype.card (gridAt i).Atom : ℝ) ^ 2 := by
-  classical
-  have hcard : ((badWPairs i).card : ℝ)
+/-- **The shared pairs are few**: at most `2|P_K| + 2|Atom|²`.  Every multiplicity overhang of a
+sub-collection of `bandWPairs i` is bounded by this (`G4EntropyWTrunc.overhang_gen_le`). -/
+theorem card_badWPairs_le_real (i : ℕ) :
+    ((badWPairs i).card : ℝ)
       ≤ 2 * ((PKtr i (wTop i)).card : ℝ) + 2 * (Fintype.card (gridAt i).Atom : ℝ) ^ 2 := by
     have hsplit : (badWPairs i).card
         ≤ ∑ α : (gridAt i).Atom,
@@ -669,7 +667,13 @@ theorem overhangW_le_real (i : ℕ) :
       field_simp
     rw [hexp] at hsum
     exact hsum
-  refine le_trans ?_ hcard
+
+open Classical in
+/-- **The overhangW, quantitatively**: at most `2|P_K| + 2|Atom|²`. -/
+theorem overhangW_le_real (i : ℕ) :
+    (((bandWPairs i).card - (winStartsW i).card : ℕ) : ℝ)
+      ≤ 2 * ((PKtr i (wTop i)).card : ℝ) + 2 * (Fintype.card (gridAt i).Atom : ℝ) ^ 2 := by
+  refine le_trans ?_ (card_badWPairs_le_real i)
   exact_mod_cast overhangW_le i
 
 /-! ### Each band dwarfs everything before it -/

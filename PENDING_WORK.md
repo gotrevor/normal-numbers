@@ -52,7 +52,17 @@ G4EntropyWPrefix     fnthW_surj/_mono'/_le_iff, startsLe, aLe, idxLe, idxLe_eq_r
                      startsLe_eq_image   THE READ-INDEX ↔ POSITION-THRESHOLD BRIDGE
                      fullGoodWPre, fullGoodWPre_eq,
                      fullW_band_prefix_winCount_bounds, fullW_prefix_winCount_bounds
+G4EntropyFullSeqW    card_badWPairs_le_real   (extracted from overhangW_le_real, no change)
+G4EntropyWTrunc      startsOf, sum_pairs_eq_gen, card_startsOf_le, sum_pairs_sub_le_gen,
+                     overhang_gen_le, overhang_gen_le_real   the multiplicity bridge GENERIC in
+                                                             the pair collection T ⊆ bandWPairs i
+                     pairsLe, startsOf_pairsLe,
+                     prod_cutLo_subset_pairsLe, pairsLe_subset_prod_cutHi   THE PRODUCT FLANKS
 ```
+
+**Next**: the certified count at a truncated scale — the generic `posAvg_bandWLaw_eq_digits` at
+`X'` (the `bandWLawTop` proofs are already `X'`-generic in content), then the sandwich
+`Σ_{cutLo flank} ≤ Σ_{pairsLe} ≤ Σ_{cutHi flank}` and the read-ratio bound at a mid-band cutoff.
 
 All trust-triple clean.  Route trigger **E-T11 did NOT fire**: the bracket exists in-kernel.
 
