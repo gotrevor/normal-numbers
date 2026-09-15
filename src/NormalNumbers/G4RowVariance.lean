@@ -1324,4 +1324,48 @@ theorem two_layers_of_dyadic {K L T Q c0 N k : ℕ} (hT : 4 ≤ T) (hQ : 0 < Q) 
   exact Budget.budget_forces_two_layers hc hK
     (roughRowVarianceLower_dyadic hT hQ hN S hge hle hQcop hcop ρ w hw hΔ hTA hmA hNA) hcap
 
+/-! ### The capstone: cancellation ⇒ the density bound
+
+`two_layers_of_dyadic` delivers `K′ ≥ 2` — at least two of the sampler's layers are *cancelled*.
+Cancellation of layer `j` is, by DESIGN §4's definition, exactly row-balance of
+`layer j d t`, so two cancelled layers is verbatim the hypothesis of `Sched.balanced_union_le`.
+The composite below records the whole implication in one statement. -/
+
+/-- The sampler cancels its first `K′` layers. -/
+def LayersCancelled {K s : ℕ} (d t : (Fin K → Fin (s + 1)) → ℤ) (K' : ℕ) : Prop :=
+  ∀ j, 1 ≤ j → j ≤ K' → RowBalance.Balanced (RowBalance.layer j d t)
+
+/-- Two cancelled layers, named. -/
+lemma two_balanced_of_cancelled {K s K' : ℕ} {d t : (Fin K → Fin (s + 1)) → ℤ}
+    (h : LayersCancelled d t K') (hK' : 2 ≤ K') :
+    ∃ j j' : ℕ, j ≠ j' ∧ RowBalance.Balanced (RowBalance.layer j d t) ∧
+      RowBalance.Balanced (RowBalance.layer j' d t) :=
+  ⟨1, 2, by norm_num, h 1 le_rfl (by omega), h 2 (by omega) hK'⟩
+
+open NormalNumbers.G4.Sched NormalNumbers.G4Confine in
+/-- **The verdict, from cancellation.**  Every sampler in the family cancels at least two layers
+(the conclusion of `two_layers_of_dyadic`); then the union of the windows it reads below `L` has
+upper density `≤ dmin^{−H/2}`. -/
+theorem cancelled_union_le (i : ℕ)
+    {κ : Type*} [DecidableEq κ] (𝓕 : Finset κ)
+    (d t : κ → (gridAt i).Atom → ℕ) (P : κ → Finset ℕ)
+    (hinj : Set.InjOn (fun ν => ((fun α => (d ν α : ℤ)), (fun α => (t ν α : ℤ)))) 𝓕)
+    (K' : κ → ℕ) (hK' : ∀ ν ∈ 𝓕, 2 ≤ K' ν)
+    (hcancel : ∀ ν ∈ 𝓕,
+      LayersCancelled (fun α => (d ν α : ℤ)) (fun α => (t ν α : ℤ)) (K' ν))
+    (hd : ∀ ν ∈ 𝓕, ∀ α, dmin i ≤ d ν α ∧ d ν α ≤ dmax i)
+    (ht : ∀ ν ∈ 𝓕, ∀ α, t ν α ≤ dmax i)
+    (hcop : ∀ ν ∈ 𝓕, ∀ α β, α ≠ β → Nat.Coprime (d ν α) (d ν β))
+    (hP : ∀ ν ∈ 𝓕, ∀ n ∈ P ν, ∀ α, n % d ν α = t ν α)
+    (U : ℕ → Prop) [DecidablePred U] {L : ℕ}
+    (hcov : ∀ j, j < L → U j → ∃ ν ∈ 𝓕, ∃ n ∈ P ν, ∃ α, ∃ h < kk i,
+      j = 2 * physIdx (d ν α) (t ν α) n + h) :
+    (((Finset.range L).filter U).card : ℝ) ≤
+      (L : ℝ) / (dmin i : ℝ) ^ ((KK i ^ 2 + 1) ^ KK i / 2)
+        + ((2 * dmax i + 1 : ℕ) : ℝ) ^ (2 * (KK i * (KK i ^ 2 + 1) ^ (KK i - 1)))
+            * (((KK i ^ 2 + 1) ^ KK i : ℕ) * kk i) :=
+  balanced_union_le i 𝓕 d t P hinj
+    (fun ν hν => two_balanced_of_cancelled (hcancel ν hν) (hK' ν hν))
+    hd ht hcop hP U hcov
+
 end NormalNumbers.G4.RowVariance
