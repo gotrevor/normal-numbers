@@ -1625,4 +1625,70 @@ theorem scales_satisfiable (K k Q : ℕ) :
     _ = 1 / 4 := hval
     _ ≤ ((1 : ℝ) - 3 * (S.card : ℝ) ^ 2 / N) / 2 := by linarith
 
+/-! ### The grouped-sample criterion, made exact
+
+`Grouped.grouped_union_card_le` prices a joint sample broken into `G` groups of minimum size `w`
+by the coefficient `G·|𝓕|·m·H·dmax / (2 dmin^w)`.  The design's informal criterion was
+"`w ≳ 2 log H / log dmin`"; the exact statement is below, with no logarithms: the coefficient
+drops to `dmin^{−w/2}` — the same shape `Sched.balanced_union_le` achieves at `w = H` — as soon as
+
+    |𝓕| · m · H² · dmax  ≤  2 · dmin^{w − w/2}.
+
+Taking logarithms recovers `w/2 ≥ (2 log H + log(|𝓕| m dmax))/log dmin`. -/
+
+/-- The grouped density coefficient drops to `dmin^{−w/2}` under the exact size condition. -/
+theorem grouped_coeff_le {dmin dmax m H G w F L : ℕ} (hdmin : 0 < dmin) (hGH : G ≤ H)
+    (hbig : F * m * H ^ 2 * dmax ≤ 2 * dmin ^ (w - w / 2)) :
+    (G : ℝ) * ((F : ℝ) * ((L : ℝ) * m * H * dmax / (2 * (dmin : ℝ) ^ w)))
+      ≤ (L : ℝ) / (dmin : ℝ) ^ (w / 2) := by
+  have hd0 : (0 : ℝ) < (dmin : ℝ) := by exact_mod_cast hdmin
+  have hsplit : (dmin : ℝ) ^ w = (dmin : ℝ) ^ (w / 2) * (dmin : ℝ) ^ (w - w / 2) := by
+    rw [← pow_add]; congr 1; omega
+  have hL0 : (0 : ℝ) ≤ (L : ℝ) := Nat.cast_nonneg L
+  have hGr : (G : ℝ) ≤ (H : ℝ) := by exact_mod_cast hGH
+  have hbigr : (F : ℝ) * m * (H : ℝ) ^ 2 * dmax ≤ 2 * (dmin : ℝ) ^ (w - w / 2) := by
+    exact_mod_cast hbig
+  have hstep : (G : ℝ) * ((F : ℝ) * m * (H : ℝ) * dmax) ≤ 2 * (dmin : ℝ) ^ (w - w / 2) := by
+    have hnn : (0 : ℝ) ≤ (F : ℝ) * m * (H : ℝ) * dmax := by positivity
+    calc (G : ℝ) * ((F : ℝ) * m * (H : ℝ) * dmax)
+        ≤ (H : ℝ) * ((F : ℝ) * m * (H : ℝ) * dmax) := mul_le_mul_of_nonneg_right hGr hnn
+      _ = (F : ℝ) * m * (H : ℝ) ^ 2 * dmax := by ring
+      _ ≤ 2 * (dmin : ℝ) ^ (w - w / 2) := hbigr
+  have hlhs : (G : ℝ) * ((F : ℝ) * ((L : ℝ) * m * H * dmax / (2 * (dmin : ℝ) ^ w)))
+      = ((L : ℝ) * ((G : ℝ) * ((F : ℝ) * m * (H : ℝ) * dmax))) / (2 * (dmin : ℝ) ^ w) := by
+    field_simp
+  rw [hlhs, div_le_div_iff₀ (by positivity) (by positivity), hsplit]
+  have hp0 : (0 : ℝ) < (dmin : ℝ) ^ (w / 2) := by positivity
+  nlinarith [mul_nonneg hL0 hp0.le, mul_le_mul_of_nonneg_left hstep (mul_nonneg hL0 hp0.le)]
+
+open NormalNumbers.G4Confine in
+/-- **Grouped confinement at the `dmin^{−w/2}` rate.**  The joint sample may be broken into
+groups, provided each group still carries `w` atoms with `|𝓕| m H² dmax ≤ 2 dmin^{w−w/2}`. -/
+theorem grouped_union_le' {ι : Type*} [Fintype ι] [DecidableEq ι] {κ : Type*} [DecidableEq κ]
+    {G : ℕ} (grp : ι → Fin G)
+    (𝓕 : Finset κ) (d t : κ → ι → ℕ) (P : κ → Fin G → Finset ℕ)
+    {dmin dmax m L w : ℕ} (hdmin : 0 < dmin)
+    (hw : ∀ g : Fin G, w ≤ Fintype.card {α : ι // grp α = g})
+    (hGH : G ≤ Fintype.card ι)
+    (hbig : 𝓕.card * m * Fintype.card ι ^ 2 * dmax ≤ 2 * dmin ^ (w - w / 2))
+    (hd : ∀ ν ∈ 𝓕, ∀ α, dmin ≤ d ν α ∧ d ν α ≤ dmax)
+    (hcop : ∀ ν ∈ 𝓕, ∀ α β, α ≠ β → Nat.Coprime (d ν α) (d ν β))
+    (hP : ∀ ν ∈ 𝓕, ∀ g, ∀ n ∈ P ν g, ∀ α, grp α = g → n % d ν α = t ν α)
+    (U : ℕ → Prop) [DecidablePred U]
+    (hcov : ∀ j, j < L → U j → ∃ ν ∈ 𝓕, ∃ g, ∃ n ∈ P ν g, ∃ α, grp α = g ∧ ∃ h < m,
+      j = 2 * physIdx (d ν α) (t ν α) n + h) :
+    (((Finset.range L).filter U).card : ℝ) ≤
+      (L : ℝ) / (dmin : ℝ) ^ (w / 2)
+        + (G : ℝ) * ((𝓕.card : ℝ) * (Fintype.card ι * m)) := by
+  have hbase := Grouped.grouped_union_card_le grp 𝓕 d t P hdmin hw hd hcop hP U hcov
+  have hcoef := grouped_coeff_le (dmin := dmin) (dmax := dmax) (m := m)
+    (H := Fintype.card ι) (G := G) (w := w) (F := 𝓕.card) (L := L) hdmin hGH hbig
+  have hexp : (G : ℝ) * ((𝓕.card : ℝ) * ((L : ℝ) * m * Fintype.card ι * dmax
+        / (2 * (dmin : ℝ) ^ w) + Fintype.card ι * m))
+      = (G : ℝ) * ((𝓕.card : ℝ) * ((L : ℝ) * m * Fintype.card ι * dmax
+          / (2 * (dmin : ℝ) ^ w)))
+        + (G : ℝ) * ((𝓕.card : ℝ) * (Fintype.card ι * m)) := by ring
+  rw [hexp] at hbase
+  linarith
+
 end NormalNumbers.G4.RowVariance
