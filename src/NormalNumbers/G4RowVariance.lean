@@ -1276,4 +1276,52 @@ theorem roughRowVarianceLower_dyadic {K L T Q c0 N k : ℕ} (hT : 4 ≤ T) (hQ :
     have h3 : 3 * (S.card : ℝ) ^ 2 / N = 3 * (S.card : ℝ) ^ 2 / N := rfl
     linarith
 
+/-- The variance constant of `roughRowVarianceLower_dyadic` is strictly positive whenever the
+rough set is nonempty — the strictness `budget_forces_two_layers` needs. -/
+lemma dyadic_v_pos {A t M n : ℝ} (hA : 1 ≤ A) (ht : 0 < t) (hn : 0 < n) (hM : 0 < M)
+    (hN : 1440 * A * M * t ≤ n) : 0 < M / (4 * t) - 3 * M ^ 2 / n := by
+  have hb3 : 3 * M ^ 2 / n ≤ M / (480 * t) := by
+    rw [div_le_div_iff₀ hn (by positivity)]
+    nlinarith [mul_nonneg (mul_nonneg hM.le hM.le) ht.le,
+      mul_nonneg (mul_nonneg (mul_nonneg hM.le hM.le) ht.le) (sub_nonneg.2 hA)]
+  have h1 : M / (480 * t) < M / (4 * t) := by
+    apply div_lt_div_of_pos_left hM (by positivity)
+    linarith
+  linarith
+
+/-- **The verdict, with (E) proved.**  A sampler whose released-row second moment fits the
+capture budget must cancel at least two layers.  Compared with `Budget.budget_forces_two_layers`,
+the variance hypothesis is no longer assumed: it is `roughRowVarianceLower_dyadic`. -/
+theorem two_layers_of_dyadic {K L T Q c0 N k : ℕ} (hT : 4 ≤ T) (hQ : 0 < Q) (hN : 0 < N)
+    (hK : 8 ≤ K) (hL : 0 < L)
+    (S : Finset ℕ) (hSne : 0 < S.card) (hge : ∀ p ∈ S, T ≤ p) (hle : ∀ p ∈ S, p ≤ 2 * T)
+    (hQcop : ∀ p ∈ S, Nat.Coprime Q p)
+    (hcop : ∀ p ∈ S, ∀ q ∈ S, p ≠ q → Nat.Coprime p q)
+    (ρ : ℕ → Fin (2 ^ K) × Fin L → ℤ) (w : ℕ → Fin (2 ^ K) × Fin L → ℝ)
+    (hw : ∀ K' i, |w K' i| = (1 / 4 : ℝ) ^ (K' + 1 + (i.2 : ℕ)))
+    (hΔ : ∀ (K' : ℕ) (i j), i ≠ j →
+      ρ K' i - ρ K' j ≠ 0 ∧ (ρ K' i - ρ K' j).natAbs < T ^ (k + 1))
+    (hTA : (1440 : ℝ) * 2 ^ K ≤ (T : ℝ))
+    (hmA : (1920 : ℝ) * 2 ^ K * (k : ℝ) ≤ (S.card : ℝ))
+    (hNA : (1440 : ℝ) * 2 ^ K * (S.card : ℝ) * (T : ℝ) ≤ (N : ℝ))
+    {K' : ℕ}
+    (hcap : avg ((Finset.range N).image (fun x => c0 + Q * x))
+        (fun n => (∑ i, w K' i * fluct S (ρ K' i) n) ^ 2)
+      ≤ ((((S.card : ℝ) / (4 * T) - 3 * (S.card : ℝ) ^ 2 / N) / 2)
+          * (1 - (1 / 16 : ℝ) ^ L)) * ((1 : ℝ) / 2) ^ (K / 2)) :
+    2 ≤ K' := by
+  have hT0 : (0 : ℝ) < (T : ℝ) := by exact_mod_cast (by omega : 0 < T)
+  have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  have hM0 : (0 : ℝ) < (S.card : ℝ) := by exact_mod_cast hSne
+  have hA1 : (1 : ℝ) ≤ (2 : ℝ) ^ K := one_le_pow₀ (by norm_num)
+  have hv := dyadic_v_pos hA1 hT0 hN0 hM0 hNA
+  have hL16 : (0 : ℝ) < 1 - (1 / 16 : ℝ) ^ L := by
+    have : (1 / 16 : ℝ) ^ L < 1 := by
+      apply pow_lt_one₀ (by norm_num) (by norm_num) (by omega)
+    linarith
+  have hc : (0 : ℝ) < (((S.card : ℝ) / (4 * T) - 3 * (S.card : ℝ) ^ 2 / N) / 2)
+      * (1 - (1 / 16 : ℝ) ^ L) := by positivity
+  exact Budget.budget_forces_two_layers hc hK
+    (roughRowVarianceLower_dyadic hT hQ hN S hge hle hQcop hcop ρ w hw hΔ hTA hmA hNA) hcap
+
 end NormalNumbers.G4.RowVariance
