@@ -3,7 +3,43 @@
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
 > section; do **not** append to the bottom.
 
-## 🎯 ACTIVE (entropy **lap 126 close**, 2026-09-15) — THE BASE-`2^k` UPGRADE
+## 🎯 ACTIVE (entropy **lap 128**, 2026-09-15) — 🏁 THE BASE-`2^k` UPGRADE IS **PROVED**
+
+**Read `DIRECTION.md`'s CURRENT DIRECTIVE (lap 126 close) first; it outranks any handoff.  Its
+🎯 is now MET — by the successor route of lap 127's E-T13 escalation, not by its own steps 3–4
+(step 3 is refuted; see `ROUTE-ESCALATION-2026-09-15-base2k-step3.md`).  E-T7 applies: this lap
+does not pick the next target; an altitude lap does.**
+
+| theorem | module | trust triple |
+|---|---|---|
+| `PowerBase.tendsto_resCount` | `PowerBaseLimit` | clean |
+| `PowerBase.isNormalSequence_pow` | `PowerBaseBlock` | clean |
+| `PowerBase.isNormal_pow` — `IsNormal b x → IsNormal (b^K) x` | `PowerBaseReal` | clean |
+| 🎯 `G4.Sched.isNormal_four_fullRealW` — **`IsNormal 4 fullRealW`** | `PowerBaseReal` | clean |
+| 🎯 `G4.Sched.isNormal_two_pow_fullRealW` — **`IsNormal (2^k) fullRealW`**, `k ≥ 1` | `PowerBaseReal` | clean |
+
+The route is strictly more general than the directive asked: `isNormal_pow` holds for **every**
+base and **every** normal number, with no Wall, no Fourier, no Maxfield, no measure theory —
+`BlockRigidity.Sys.eq_uniform` (ergodicity of the Bernoulli shift, by two Cauchy–Schwarz steps on
+a finite energy) plus an ultrafilter compactness argument.
+
+Small supporting change: `BlockRigidity.Sys.shift` now carries `k < b ^ m` (every call site
+already had the bound); this is what lets the ultrafilter limit `G` serve as `F` with no
+mod-`b^m` reindexing.
+
+### Retired with this lap
+The lap-126-close steps 2–4 ("parity ↔ offset classes", "transport to the read", "the digit
+bridge"): step 2 was proved (`G4EntropyResidue.abs_posAvgRes_sub_le`, kept), step 3 is **refuted**
+(the local class alternates with the window index `b` because `kk i` is odd for odd `i`, and the
+compensating index is the sorted *rank*, which the certificate cannot see), and step 4 is
+subsumed by `blockOf_digitOf` in `PowerBaseReal`.
+
+### Open, nothing on the critical path
+* `src/` carries exactly the **two** pre-expedition off-path `sorry`s
+  (`PrimeLambertOscillation.phaseOscillation`, `MahlerDriftOne.exists_drift_one_background`).
+* The Aristotle line-by-line diff of job `48c7d703-d18e-4e47-ae9c-6734f6737047` (cheap, optional).
+
+## 🗄️ SUPERSEDED (entropy **lap 126 close**, 2026-09-15) — THE BASE-`2^k` UPGRADE
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE (lap 126 close) first; it outranks any handoff.**
 
