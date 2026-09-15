@@ -1,4 +1,5 @@
 import NormalNumbers.BlockRigidity
+import NormalNumbers.PowerBaseCount
 import NormalNumbers.SeqDefs
 import NormalNumbers.RealDefs
 import NormalNumbers.Counting
