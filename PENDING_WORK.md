@@ -91,6 +91,26 @@ not retried.
 (`IsNormalSequence 2 (fullDigW …)` → `IsNormal 2 fullRealW`), per lap 123's "Next lap" item 2.
 `exists_matchesAt_fullDigW` still needs a wide non-vacuity witness.
 
+### Lap 125 (in progress) — item 4, the squeeze
+
+`G4EntropyWCap.lean` (landed): `abs_prefix_ratio_sub_le` **with no upper hypothesis**.
+`cutHi i c ≤ wTop i` fails for the top `O(1/K)` of every band (a start is `c ≤ 2n/d_α`, so
+`cutHi ≈ wTop·(1+2/K)`), so both flanks are capped at the tile top:
+`cutBot = min (cutLo) (wTop)`, `cutTop = min (cutHi) (wTop)`.  Both inclusions survive
+(`pairsLe ⊆ bandWPairs` already forces `z.1 < wTop`), and `card_flank_ratio_cap` is a case
+split: below the cap it is the old statement, above it both flanks are `bandWtr i (wTop i)`.
+
+**Next (the squeeze proper).**  For `fTW i ≤ n < fTW (i+1)`, `i ≥ 1`, put `a := (n − fTW i)/kk i`
+and `T := fTW i`, `G := winCount v T`, `D := winCount v n − G`, `s := n − T`:
+* `fullW_prefix_winCount_bounds` bounds `D` by `fullGoodWPre i a ± (a·ℓ + kk i)`;
+* gated (`8·wFloor i ≤ cutLo i (fnthW i (a−1))`): `abs_prefix_ratio_sub_le_cap` +
+  `aLe_fnthW` give `|D/s − r|` small;
+* ungated: `aLe_le_headW` + `head_frac_tiny` give `s ≤ T/KK i`, and then
+  `|(G+D)/(T+s) − r| ≤ |G/T − r| + 1/KK i` directly;
+* the mediant lemma `|(G+D)/(T+s) − r| ≤ max(|G/T − r|, |D/s − r|)` closes both.
+Then `|g n − r| ≤ |g (fTW (fgrpW n)) − r| + midErr (fgrpW n)`, and `fgrpW n → ∞`, so the
+band-end limit `tendsto_fullWRead_freq` transfers to all `n`.
+
 ### Landed since (grind laps, 2026-09-15)
 
 ```
