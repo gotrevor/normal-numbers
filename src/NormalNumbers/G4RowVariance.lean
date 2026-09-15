@@ -222,4 +222,80 @@ theorem avg_centred_dvd_nonpos (P : Finset ℕ) (hP : P.Nonempty) {p : ℕ} {r r
   rw [avg_centred_mul_of_disjoint P hP _ _ (fun n => not_both_dvd hgap (n : ℤ)) hA hB]
   nlinarith
 
+
+
+/-! ### Input (1) is an identity, not an estimate
+
+The per-term non-degeneracy `v` of `rowVariance_half` looks like an analytic lower bound.  It is
+not: for a sum of *centred indicators* that are pairwise independent on the sample, the second
+moment is **exactly** `Σ_p a_p(1 − a_p)` (`avg_sq_centred_sum`).  The two facts doing the work are
+elementary — an indicator is idempotent (`X² = X`, so the diagonal term is `a_p − a_p²`), and
+pairwise independence kills every off-diagonal term outright.
+
+At a single shift the pairwise input is exactly CRT: `1[p ∣ n+ρ]·1[q ∣ n+ρ] = 1[pq ∣ n+ρ]` and
+`a_{pq} = a_p a_q` along a progression whose modulus is coprime to `pq`.  With `a_p = 1/p` over the
+rough primes `T < p ≤ R` this gives `v = Σ_p (1/p)(1 − 1/p) ≍ log(log R / log T) > 0`.
+
+So input (1) reduces to the same CRT frequency statement input (2) needs — the two inputs are one
+input. -/
+
+lemma avg_double_sum' (P : Finset ℕ) (S : Finset ι) (F : ι → ι → ℕ → ℝ) :
+    avg P (fun n => ∑ i ∈ S, ∑ j ∈ S, F i j n) = ∑ i ∈ S, ∑ j ∈ S, avg P (F i j) := by
+  unfold avg
+  rw [Finset.sum_comm, Finset.sum_div]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [Finset.sum_comm, Finset.sum_div]
+
+/-- **The second moment of a centred indicator sum is an identity.**  Pairwise independence on the
+sample plus idempotence give `avg (Σ (X_i − a_i))² = Σ a_i(1 − a_i)` exactly. -/
+theorem avg_sq_centred_sum (P : Finset ℕ) (hP : P.Nonempty) (S : Finset ι)
+    (X : ι → ℕ → ℝ) (a : ι → ℝ)
+    (hidem : ∀ i ∈ S, ∀ n, X i n * X i n = X i n)
+    (hfreq : ∀ i ∈ S, avg P (X i) = a i)
+    (hpair : ∀ i ∈ S, ∀ j ∈ S, i ≠ j → avg P (fun n => X i n * X j n) = a i * a j) :
+    avg P (fun n => (∑ i ∈ S, (X i n - a i)) ^ 2) = ∑ i ∈ S, (a i - (a i) ^ 2) := by
+  classical
+  have hpt : ∀ n, (∑ i ∈ S, (X i n - a i)) ^ 2
+      = ∑ i ∈ S, ∑ j ∈ S, (X i n - a i) * (X j n - a j) := by
+    intro n
+    rw [sq, Finset.sum_mul_sum]
+  rw [show (fun n => (∑ i ∈ S, (X i n - a i)) ^ 2)
+      = (fun n => ∑ i ∈ S, ∑ j ∈ S, (X i n - a i) * (X j n - a j)) from funext hpt,
+    avg_double_sum' P S (fun i j n => (X i n - a i) * (X j n - a j))]
+  -- each entry of the double sum
+  have hentry : ∀ i ∈ S, ∀ j ∈ S,
+      avg P (fun n => (X i n - a i) * (X j n - a j))
+        = if i = j then a i - (a i) ^ 2 else 0 := by
+    intro i hi j hj
+    have hexp : (fun n => (X i n - a i) * (X j n - a j))
+        = (fun n => X i n * X j n
+            + ((-(a j)) * X i n + ((-(a i)) * X j n + a i * a j))) := by
+      funext n; ring
+    rw [hexp, avg_add, avg_add, avg_add, avg_smul, avg_smul, avg_const P hP,
+      hfreq i hi, hfreq j hj]
+    by_cases hij : i = j
+    · subst hij
+      rw [if_pos rfl]
+      have : avg P (fun n => X i n * X i n) = a i := by
+        rw [show (fun n => X i n * X i n) = X i from funext fun n => hidem i hi n]
+        exact hfreq i hi
+      rw [this]; ring
+    · rw [if_neg hij, hpair i hi j hj hij]; ring
+  rw [Finset.sum_congr rfl fun i hi =>
+    Finset.sum_congr rfl fun j hj => hentry i hi j hj]
+  refine Finset.sum_congr rfl fun i hi => ?_
+  rw [Finset.sum_ite_eq S i (fun _ => a i - (a i) ^ 2), if_pos hi]
+
+/-- The packaged non-degeneracy: with pairwise-independent centred indicators, the per-term second
+moment is bounded below by `Σ a_i(1 − a_i)` — input (1) of `rowVariance_half`, discharged into the
+same CRT frequency statement input (2) needs. -/
+theorem avg_sq_centred_sum_ge (P : Finset ℕ) (hP : P.Nonempty) (S : Finset ι)
+    (X : ι → ℕ → ℝ) (a : ι → ℝ) {v : ℝ}
+    (hidem : ∀ i ∈ S, ∀ n, X i n * X i n = X i n)
+    (hfreq : ∀ i ∈ S, avg P (X i) = a i)
+    (hpair : ∀ i ∈ S, ∀ j ∈ S, i ≠ j → avg P (fun n => X i n * X j n) = a i * a j)
+    (hv : v ≤ ∑ i ∈ S, (a i - (a i) ^ 2)) :
+    v ≤ avg P (fun n => (∑ i ∈ S, (X i n - a i)) ^ 2) := by
+  rw [avg_sq_centred_sum P hP S X a hidem hfreq hpair]; exact hv
+
 end NormalNumbers.G4.RowVariance
