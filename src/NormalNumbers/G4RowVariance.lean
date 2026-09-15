@@ -298,4 +298,75 @@ theorem avg_sq_centred_sum_ge (P : Finset ℕ) (hP : P.Nonempty) (S : Finset ι)
     v ≤ avg P (fun n => (∑ i ∈ S, (X i n - a i)) ^ 2) := by
   rw [avg_sq_centred_sum P hP S X a hidem hfreq hpair]; exact hv
 
+
+/-! ### The remaining input, base case: frequencies on the sample are exact to `O(1/N)`
+
+Laps 137–139 reduced all of (E) to one statement: exact CRT frequencies for rough primes and
+their pairwise products along the sample.  Over a full interval that statement is not an estimate
+either — mathlib's interval counts give it with an explicit `O(1)` error:
+
+* `card_filter_modEq_sub_le` — `|#{x < N : x ≡ v [MOD m]} − N/m| ≤ 1`, from the exact ceiling
+  formula `Nat.count_modEq_card_eq_ceil`;
+* `avg_indicator_modEq_sub_le` — hence the sample frequency of a congruence class differs from
+  `1/m` by at most `1/N`.
+
+Applied with `m = p` this is `a_p = 1/p + O(1/N)`; with `m = pq` (legitimate exactly when
+`p ≠ q`, by CRT) it is `a_{pq} = 1/(pq) + O(1/N)`, which is the pairwise independence
+`avg_sq_centred_sum` consumes.  On the schedule the sample is a progression `n ≡ c [MOD Q]` rather
+than an interval; re-indexing `n = c + Qk` turns `p ∣ n + ρ` into a congruence on `k` (using
+`gcd(p, Q) = 1`) and returns to exactly this lemma with `N` the number of `k`'s. -/
+
+theorem card_filter_modEq_sub_le {m : ℕ} (hm : 0 < m) (N v : ℕ) :
+    |((((Finset.range N).filter (fun x => x ≡ v [MOD m])).card : ℝ)) - (N : ℝ) / m| ≤ 1 := by
+  classical
+  set r := v % m with hr
+  have hcount : ((((Finset.range N).filter (fun x => x ≡ v [MOD m])).card : ℤ) : ℚ)
+      = ((⌈((N : ℚ) - (r : ℕ)) / (m : ℚ)⌉ : ℤ) : ℚ) := by
+    have h := Nat.count_modEq_card_eq_ceil N hm v
+    rw [Nat.count_eq_card_filter_range] at h
+    exact_mod_cast h
+  have hm0 : (0 : ℚ) < (m : ℚ) := by exact_mod_cast hm
+  set x : ℚ := ((N : ℚ) - (r : ℕ)) / (m : ℚ) with hx
+  have hx1 : x ≤ (⌈x⌉ : ℚ) := Int.le_ceil _
+  have hx2 : (⌈x⌉ : ℚ) < x + 1 := Int.ceil_lt_add_one _
+  have hsplit : x = (N : ℚ) / m - (r : ℚ) / m := by rw [hx, sub_div]
+  have hrm0 : (0 : ℚ) ≤ (r : ℚ) / m := by positivity
+  have hrm1 : (r : ℚ) / m ≤ 1 := by
+    rw [div_le_one hm0]
+    exact_mod_cast (Nat.mod_lt _ hm).le
+  have hQ : |((((Finset.range N).filter (fun x => x ≡ v [MOD m])).card : ℚ)) - (N : ℚ) / m| ≤ 1 := by
+    have hc : ((((Finset.range N).filter (fun x => x ≡ v [MOD m])).card : ℚ)) = (⌈x⌉ : ℚ) := by
+      rw [← hcount]; norm_cast
+    rw [hc, abs_le]
+    constructor <;> linarith [hx1, hx2, hsplit, hrm0, hrm1]
+  have := hQ
+  rw [abs_le] at this ⊢
+  constructor
+  · have h1 := this.1
+    have : ((-1 : ℚ) : ℝ) ≤ (((((Finset.range N).filter (fun x => x ≡ v [MOD m])).card : ℚ))
+        - (N : ℚ) / m : ℚ) := by exact_mod_cast h1
+    push_cast at this
+    linarith
+  · have h2 := this.2
+    have : ((((((Finset.range N).filter (fun x => x ≡ v [MOD m])).card : ℚ))
+        - (N : ℚ) / m : ℚ) : ℝ) ≤ ((1 : ℚ) : ℝ) := by exact_mod_cast h2
+    push_cast at this
+    linarith
+
+/-- The sample frequency of a congruence class on `range N` is `1/m` up to `1/N`. -/
+theorem avg_indicator_modEq_sub_le {m : ℕ} (hm : 0 < m) {N : ℕ} (hN : 0 < N) (v : ℕ) :
+    |avg (Finset.range N) (fun n => if n ≡ v [MOD m] then (1 : ℝ) else 0) - 1 / m| ≤ 1 / N := by
+  classical
+  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+  have hcard : avg (Finset.range N) (fun n => if n ≡ v [MOD m] then (1 : ℝ) else 0)
+      = ((((Finset.range N).filter (fun x => x ≡ v [MOD m])).card : ℝ)) / N := by
+    unfold avg
+    simp [Finset.sum_boole, Finset.card_range]
+  rw [hcard]
+  have hsub : ((((Finset.range N).filter (fun x => x ≡ v [MOD m])).card : ℝ)) / N - 1 / m
+      = (((((Finset.range N).filter (fun x => x ≡ v [MOD m])).card : ℝ)) - (N : ℝ) / m) / N := by
+    field_simp
+  rw [hsub, abs_div, abs_of_pos hN0, div_le_div_iff_of_pos_right hN0]
+  exact card_filter_modEq_sub_le hm N v
+
 end NormalNumbers.G4.RowVariance
