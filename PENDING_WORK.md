@@ -39,6 +39,32 @@ generalised in `G4EntropyOffsetClass.lean` (both axiom-clean):
 4. **The digit bridge** — `digitOf (b^k) y j` in terms of `digitOf b y (k·j + t)` (new,
    `Bridge`-level), then `IsNormal 4 fullRealW`, then general `k`.
 
+### ⛔ STEP 3 IS REFUTED (lap 127) — read `ROUTE-ESCALATION-2026-09-15-base2k-step3.md`
+
+Steps 1, 2 and the whole counting layer are PROVED and kept (`G4EntropyOffsetClass`,
+`G4EntropyResidue`, `G4EntropySubLaw`, `G4EntropyResRead`).  Step 3 fails: for a fixed READ class
+the local class inside window `b` is `locRes i k c b`, which alternates with `b` because
+`kk i = 40000 + i` is odd for odd `i`; and `{b : b ≡ e (mod k)}` is neither a sample-time set nor
+a coordinate set (window index = sorted RANK of `2(n − t_α)/d_α` over `bandW i ×ˢ Atoms`), so the
+entropy machinery cannot price it.  Certified: `∑_b N_b(r)` for each FIXED `r`, and the sum over
+classes — two equations, four unknowns.
+
+### 🎯 THE SUCCESSOR ROUTE (elementary, and the heart is already in kernel)
+
+`NormalNumbers/BlockRigidity.lean` — **`Sys.eq_uniform`, axiom-clean**: a density system on
+base-`b` words that refines on the right, closes up under `K` prepends, and is dominated by
+`C·b^{−m}`, IS the uniform one.  Elementary: energy `A m = ∑_k b^m (F m k)²` is bounded with
+nonneg increments `Var m`, and the shift relation gives `Var m ≤ Var (m+K)`; a summable sequence
+nondecreasing along each class mod `K` vanishes.  (= ergodicity of the Bernoulli shift, with no
+measure theory.)
+
+Next, in order:
+1. the ultrafilter/density layer: for `d` normal in base `b` and `g ≤ atTop` an ultrafilter, the
+   class densities `F m k = lim_g (K/n)·#{p<n : p ≡ 0 mod K, word at p}` satisfy `Sys b K K F`;
+2. `tendsto_iff_ultrafilter` ⇒ the densities converge to `b^{−m}` ⇒
+   **`IsNormal b y → IsNormal (b^K) y`**;
+3. corollaries off `isNormal_fullRealW`: `IsNormal 4 fullRealW`, `IsNormal (2^k) fullRealW`.
+
 ### Do not retry
 * Wall + Maxfield as the route to base `2^k`.  It is a genuinely harder classical theorem: u.d. of
   `(b^n x)` does **not** formally give u.d. of `(b^{kn} x)`, and the Fourier route only yields
