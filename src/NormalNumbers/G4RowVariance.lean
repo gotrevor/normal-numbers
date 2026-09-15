@@ -1071,4 +1071,59 @@ theorem roughRowVarianceLower_arith {K L Q c0 N : ℕ} (hQ : 0 < Q) (hN : 0 < N)
     rw [show ((2 ^ K : ℕ) : ℝ) = (2 : ℝ) ^ K from by push_cast; ring]
     exact hsmall
 
+/-! ### The gap-divisor budget `g`, from roughness
+
+The last arithmetic input of `roughRowVarianceLower_arith` is `g ≥ Σ_{p ∈ S, p ∣ Δ} 4/p`.
+Because the primes of `S` are **rough** (`p ≥ T`) and pairwise coprime, their product divides
+`Δ`, so at most `log|Δ|/log T` of them can divide `Δ` at all, and each contributes `≤ 4/T`.
+The statement below avoids logarithms: `k` is any exponent with `|Δ| < T^{k+1}`. -/
+
+/-- At most `k` pairwise-coprime numbers `≥ T` divide a nonzero `Δ` with `|Δ| < T^{k+1}`. -/
+lemma card_rough_divisors_le {T : ℕ} (hT : 2 ≤ T) (F : Finset ℕ) {Δ : ℤ} (hΔ : Δ ≠ 0)
+    (hge : ∀ p ∈ F, T ≤ p)
+    (hcop : ∀ p ∈ F, ∀ q ∈ F, p ≠ q → Nat.Coprime p q)
+    (hdvd : ∀ p ∈ F, (p : ℤ) ∣ Δ) {k : ℕ} (hk : Δ.natAbs < T ^ (k + 1)) :
+    F.card ≤ k := by
+  classical
+  have hprodZ : (∏ p ∈ F, (p : ℤ)) ∣ Δ := by
+    refine Finset.prod_dvd_of_coprime ?_ hdvd
+    intro p hp q hq hne
+    exact Nat.isCoprime_iff_coprime.2 (hcop p hp q hq (by exact_mod_cast hne))
+  have hprodN : (∏ p ∈ F, p) ∣ Δ.natAbs := by
+    have : ((∏ p ∈ F, p : ℕ) : ℤ) ∣ Δ := by push_cast; exact hprodZ
+    exact Int.natCast_dvd_natCast.1 (Int.dvd_natAbs.2 this)
+  have hpos : 0 < Δ.natAbs := Int.natAbs_pos.2 hΔ
+  have h1 : T ^ F.card ≤ ∏ p ∈ F, p := Finset.pow_card_le_prod F _ _ hge
+  have h2 : (∏ p ∈ F, p) ≤ Δ.natAbs := Nat.le_of_dvd hpos hprodN
+  have h3 : T ^ F.card < T ^ (k + 1) := lt_of_le_of_lt (le_trans h1 h2) hk
+  have := (Nat.pow_lt_pow_iff_right (by omega : 1 < T)).1 h3
+  omega
+
+/-- **The gap-divisor budget.**  With rough, pairwise-coprime primes, the shift-gap correlation
+`Σ_{p ∣ Δ} 4/p` is at most `4k/T`. -/
+theorem gap_divisor_sum_le {T : ℕ} (hT : 2 ≤ T) (S : Finset ℕ) {Δ : ℤ} (hΔ : Δ ≠ 0)
+    (hge : ∀ p ∈ S, T ≤ p)
+    (hcop : ∀ p ∈ S, ∀ q ∈ S, p ≠ q → Nat.Coprime p q)
+    {k : ℕ} (hk : Δ.natAbs < T ^ (k + 1)) :
+    (∑ p ∈ S.filter (fun p : ℕ => (p : ℤ) ∣ Δ), 4 * (1 / (p : ℝ))) ≤ 4 * k / T := by
+  classical
+  set F := S.filter (fun p : ℕ => (p : ℤ) ∣ Δ) with hF
+  have hsub : F ⊆ S := Finset.filter_subset _ _
+  have hcard : F.card ≤ k :=
+    card_rough_divisors_le hT F hΔ (fun p hp => hge p (hsub hp))
+      (fun p hp q hq hne => hcop p (hsub hp) q (hsub hq) hne)
+      (fun p hp => (Finset.mem_filter.1 hp).2) hk
+  have hT0 : (0 : ℝ) < T := by exact_mod_cast (by omega : 0 < T)
+  have hterm : ∀ p ∈ F, 4 * (1 / (p : ℝ)) ≤ 4 / T := by
+    intro p hp
+    have : (T : ℝ) ≤ (p : ℝ) := by exact_mod_cast hge p (hsub hp)
+    rw [show (4 : ℝ) * (1 / (p : ℝ)) = 4 / p from by ring]
+    exact div_le_div_of_nonneg_left (by norm_num) hT0 this
+  calc (∑ p ∈ F, 4 * (1 / (p : ℝ))) ≤ ∑ _p ∈ F, (4 : ℝ) / T := Finset.sum_le_sum hterm
+    _ = (F.card : ℝ) * (4 / T) := by rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ (k : ℝ) * (4 / T) := by
+        have : (F.card : ℝ) ≤ (k : ℝ) := by exact_mod_cast hcard
+        exact mul_le_mul_of_nonneg_right this (by positivity)
+    _ = 4 * k / T := by ring
+
 end NormalNumbers.G4.RowVariance
