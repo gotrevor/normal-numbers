@@ -1997,4 +1997,26 @@ theorem cube_ignores_not_necessary :
   revert i
   decide
 
+/-! ### Balance is strictly stronger than `MDF`
+
+`mdf_of_balanced` sends row-balance into `MDF`, and the confinement
+(`union_le_of_determining`, `Sched.balanced_union_le`) consumes only `MDF`.  The implication is
+strict: the additive function `α ↦ α₀ + α₁` on `(Fin 2 → Fin 2)` is `MDF` — its single mixed
+difference vanishes — but its level set `{ρ = 1}` has alternating sum `−2` on the unit square.
+So a balanced family is confined by *more* than the confinement currently uses: any determining
+set for balance smaller than `skel` would sharpen the density coefficient directly, by
+`union_le_of_determining`. -/
+
+/-- The additive witness. -/
+def addWit : (Fin 2 → Fin (1 + 1)) → ℤ := fun α => ((α 0 : ℕ) : ℤ) + ((α 1 : ℕ) : ℤ)
+
+/-- **Balance is strictly stronger than `MDF`.** -/
+theorem balanced_strictly_stronger :
+    MDF (K := 2) (s := 1) addWit ∧ ¬ Balanced (K := 2) (s := 1) addWit := by
+  refine ⟨fun c => by revert c; decide, ?_⟩
+  intro h
+  have := h (fun _ => 0) 1
+  revert this
+  decide
+
 end NormalNumbers.G4.RowVariance

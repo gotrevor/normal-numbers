@@ -33,6 +33,13 @@ its hypotheses are demonstrably meetable for every `K`, `k`, `Q`.  The chain
 
 Nothing here is a claim about the normality of `G₄`.
 
+### A concrete sharpening this opens (lap 162)
+`balanced_strictly_stronger` shows balance is *strictly* stronger than `MDF`, and the confinement
+(`union_le_of_determining`) consumes only `MDF` via `skel`.  So **any determining set for
+row-balance smaller than `skel`** would sharpen the density coefficient of
+`Sched.balanced_union_le` directly, with no new confinement proof.  That is the one visible route
+to a better exponent than `dmin^{−H/2}` for balanced families.
+
 ### Next (nothing on the critical path is open)
 * The two pre-expedition `sorry`s (`PrimeLambertOscillation.phaseOscillation`,
   `MahlerDriftOne.exists_drift_one_background`) remain on DIRECTION's forbidden-drift list.
