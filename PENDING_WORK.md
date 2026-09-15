@@ -48,7 +48,55 @@ entropy_E1_tile    E1 at EVERY outer scale in [Xlo K, Xlo (K+4)]  ← THE GAP CL
 
 All trust-triple clean except `entropy_E1_tile`, which is honestly gated on the one named leaf.
 
-### Open, in order
+### Proved 2026-09-15 (grind laps after 119)
+
+```
+G4EntropyMTowerHarmonic   sum_inv_smallPrimes_{ge,le}_gen   Mertens, generic in the cutoff exponent
+G4EntropyMTowerBudget     smallPrime_term_tiny_down_m       the five terms at (Rm, Mcm), downward
+G4EntropyMTowerDown       hbig_small_down_m, hfar_small_down_m
+G4EntropyMTowerAssembly   entropy_E1_march  ✅ PROVED       →  entropy_E1_tile is a THEOREM
+G4EntropyBandTrunc        card_bandTtr_ge   ✅ PROVED       (m_step_seven, band_gap_strong_Xlo)
+G4EntropyBandHead         bandLoH, bandTH, card_bandTH_ge, Xlo_le_of_mem_bandTH,
+                          bandTop_le_bandLoH, head_gate
+```
+
+All trust-triple clean.  **No `sorry` remains in the expedition's part of `src/`.**
+
+### The design change that `entropy_E1_tile` unlocks — `bandLoH`
+
+Item 3's `density_antitone` and item 4's level-switch were designed to pay for an *uncertified
+head*.  With the raised floor there is no head to pay for:
+
+> **`bandLoH i := 2·Xlo (KK i)`.**  `bandLo` is a free design parameter.  Raising it to twice
+> the level-`i` certificate floor makes every sample time of the band satisfy
+> `n ≥ gridDm·2·Xlo (KK i) ≥ Xlo (KK i)` (`Xlo_le_of_mem_bandTH`), so **every** mid-band
+> truncation `X'` is inside `G4EntropyBandTrunc`'s certified range and the truncated chain
+> (`H₂_bandTLawTr_ge`, `abs_posAvg_bandTLawTr_le`) applies at it.
+
+Nothing is lost: the raised band still keeps half the sample (`card_bandTH_ge`), because
+`X (KK i) = Xlo (KK i)²` — the dropped stretch is the *square root* of the range and the gate
+`8·gridDm·Xlo + 4P₀ ≤ X` has `2^{49·2^m}` to spare (`head_gate`); and the raised floor still
+clears the previous band's ceiling (`bandTop_le_bandLoH`, exponents `100·2^{m_i}` vs
+`50·2^{m_{i+1}} ≥ 6400·2^{m_i}`), so the read stays strictly increasing.  The cost is a skipped
+*position* gap between `bandTop i` and `bandLoH (i+1)`, which is harmless — the read was already
+a density-zero subsequence (`tendsto_density_fullPos`).
+
+`density_antitone` is therefore **not needed** on this route and is withdrawn as an objective.
+
+### Open, in order (revised 2026-09-15)
+
+0. **`fullPos'` on the raised band.**  Re-run `G4EntropyFullSeq`'s construction with `bandTH`
+   in place of `bandT`: `winStartsH`, `fnthH`, `fLH`, `fTH`, `fullPosH`, `fullDigH`.  The
+   window-gap and overhang arguments are `bandLo`-free and port verbatim; what changes is the
+   count lemma (`card_bandTH_ge` for `card_bandT_ge'`) and the floor lemma
+   (`bandLoH_le_pos_of_mem_bandTH` for `bandLo_le_pos_of_mem_bandT`).
+0b. **Mid-band prefix control.**  For a cutoff `a` inside band `i`, the read's first `a` window
+   starts are those of `bandTtr`-style truncation at `X' = ` (the `a`-th sample time), and
+   `Xlo_le_of_mem_bandTH` puts `X'` above the floor, so `abs_posAvg_bandTLawTr_le` applies
+   with **no** restriction price.  Then `IsNormalSequence 2 (fullDigH …)` and
+   `Bridge.isNormal_realOfDigits`.
+
+### Superseded (kept for the record) — the pre-`bandLoH` plan
 
 1. **`Sched.entropy_E1_march`** (the leaf).  Port the cone to `(K, j)`, mirroring
    `G4EntropyE0Down`/`G4EntropyE1Down`'s verbatim-copy-plus-substitution:

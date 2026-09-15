@@ -214,6 +214,7 @@ import NormalNumbers.G4EntropyScaleGap
 import NormalNumbers.G4EntropyE1Down
 import NormalNumbers.G4EntropyMultiplierSpread
 import NormalNumbers.G4EntropyBandTrunc
+import NormalNumbers.G4EntropyBandHead
 import NormalNumbers.G4EntropyMTower
 import NormalNumbers.G4EntropyMTowerBig
 import NormalNumbers.G4EntropyMTowerHarmonic
