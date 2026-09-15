@@ -2019,4 +2019,74 @@ theorem balanced_strictly_stronger :
   revert this
   decide
 
+/-! ### The sharpening route is refuted: `skel` cannot be shrunk to the axes
+
+The previous section observed that a determining set for *balance* smaller than `skel` would
+sharpen the density coefficient.  The natural candidate — the **axis skeleton**
+`skel₁ = {α : at most one coordinate is nonzero}`, of polynomial size `Ks + 1` against `skel`'s
+`K(s+1)^{K−1}` — does not work, and the witness is immediate rather than searched (an exhaustive
+probe at `K = 3, s = 2` first found `15786` colliding pairs among the `128` `0/1`-valued balanced
+functions; the cleanest witness is below).
+
+`pairWit α = [α₁ = 1 ∧ α₂ = 1]` ignores coordinate `0`, hence is balanced, is not identically
+zero, and vanishes on the whole axis skeleton — it needs *two* nonzero coordinates to fire.  So
+no determining set for balance can omit the points with two nonzero coordinates, and the
+exponential `skel` is not an artifact of using `MDF`. -/
+
+/-- The axis skeleton: at most one coordinate nonzero. -/
+def skel₁ (K s : ℕ) : Finset (Fin K → Fin (s + 1)) :=
+  Finset.univ.filter (fun α => (Finset.univ.filter (fun i => α i ≠ 0)).card ≤ 1)
+
+/-- The witness: fires only when coordinates `1` and `2` are both `1`. -/
+def pairWit {K s : ℕ} (h1 : 1 < K) (h2 : 2 < K) (hs : 0 < s) :
+    (Fin K → Fin (s + 1)) → ℤ :=
+  fun α => if α ⟨1, h1⟩ = ⟨1, by omega⟩ ∧ α ⟨2, h2⟩ = ⟨1, by omega⟩ then 1 else 0
+
+/-- **Balance is not determined by the axis skeleton.**  For `K ≥ 3`, `s ≥ 1` there is a balanced
+function vanishing on `skel₁` but not identically zero. -/
+theorem balance_not_determined_by_axes {K s : ℕ} (h1 : 1 < K) (h2 : 2 < K) (hs : 0 < s) :
+    ∃ ρ : (Fin K → Fin (s + 1)) → ℤ, Balanced ρ ∧
+      (∀ α ∈ skel₁ K s, ρ α = 0) ∧ ρ ≠ (fun _ => 0) := by
+  classical
+  have hK0 : 0 < K := by omega
+  set i₁ : Fin K := ⟨1, h1⟩ with hi₁
+  set i₂ : Fin K := ⟨2, h2⟩ with hi₂
+  set one : Fin (s + 1) := ⟨1, by omega⟩ with hone
+  refine ⟨pairWit h1 h2 hs, ?_, ?_, ?_⟩
+  · -- it ignores coordinate `0`
+    refine balanced_of_update_invariant ⟨0, hK0⟩ (fun α c => ?_)
+    have e1 : (⟨0, hK0⟩ : Fin K) ≠ i₁ := by rw [hi₁, Ne, Fin.mk.injEq]; omega
+    have e2 : (⟨0, hK0⟩ : Fin K) ≠ i₂ := by rw [hi₂, Ne, Fin.mk.injEq]; omega
+    unfold pairWit
+    rw [Function.update_of_ne (Ne.symm e1), Function.update_of_ne (Ne.symm e2)]
+  · -- it vanishes on the axis skeleton
+    intro α hα
+    rw [skel₁, Finset.mem_filter] at hα
+    unfold pairWit
+    by_cases hcase : α i₁ = one ∧ α i₂ = one
+    swap
+    · exact if_neg hcase
+    exfalso
+    obtain ⟨ha1, ha2⟩ := hcase
+    have hi : i₁ ≠ i₂ := by rw [hi₁, hi₂, Ne, Fin.mk.injEq]; omega
+    have hsub : ({i₁, i₂} : Finset (Fin K)) ⊆ Finset.univ.filter (fun i => α i ≠ 0) := by
+      intro x hx
+      rcases Finset.mem_insert.1 hx with rfl | hx'
+      · refine Finset.mem_filter.2 ⟨Finset.mem_univ _, ?_⟩
+        rw [ha1, hone]; exact fun hc => by simpa [Fin.ext_iff] using hc
+      · rw [Finset.mem_singleton.1 hx']
+        refine Finset.mem_filter.2 ⟨Finset.mem_univ _, ?_⟩
+        rw [ha2, hone]; exact fun hc => by simpa [Fin.ext_iff] using hc
+    have hcard : ({i₁, i₂} : Finset (Fin K)).card = 2 := by
+      rw [Finset.card_insert_of_notMem (by simpa using hi), Finset.card_singleton]
+    have := Finset.card_le_card hsub
+    omega
+  · -- it is not identically zero
+    intro hzero
+    have h := congrFun hzero (fun x => if x = i₁ ∨ x = i₂ then one else ⟨0, by omega⟩)
+    simp only [pairWit] at h
+    rw [if_pos] at h
+    · exact absurd h (by norm_num)
+    · refine ⟨?_, ?_⟩ <;> simp [hi₁, hi₂, hone]
+
 end NormalNumbers.G4.RowVariance

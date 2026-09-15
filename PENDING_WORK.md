@@ -37,8 +37,17 @@ Nothing here is a claim about the normality of `G₄`.
 `balanced_strictly_stronger` shows balance is *strictly* stronger than `MDF`, and the confinement
 (`union_le_of_determining`) consumes only `MDF` via `skel`.  So **any determining set for
 row-balance smaller than `skel`** would sharpen the density coefficient of
-`Sched.balanced_union_le` directly, with no new confinement proof.  That is the one visible route
+`Sched.balanced_union_le` directly, with no new confinement proof.  That was the one visible route
 to a better exponent than `dmin^{−H/2}` for balanced families.
+
+**Refuted the same lap.**  The natural candidate — the *axis skeleton*
+`skel₁ = {α : at most one coordinate nonzero}`, polynomial size `Ks+1` against `skel`'s
+`K(s+1)^{K−1}` — fails: `balance_not_determined_by_axes` exhibits
+`pairWit α = [α₁ = 1 ∧ α₂ = 1]`, balanced (it ignores coordinate `0`), not identically zero, and
+vanishing on all of `skel₁`.  (An exhaustive probe at `K = 3, s = 2` found `15786` colliding
+pairs among the `128` `0/1`-valued balanced functions before the clean witness was extracted.)
+So the exponential `skel` is not an artifact of routing through `MDF`, and `dmin^{−H/2}` is not
+improvable by shrinking the determining set to the axes.
 
 ### Next (nothing on the critical path is open)
 * The two pre-expedition `sorry`s (`PrimeLambertOscillation.phaseOscillation`,
