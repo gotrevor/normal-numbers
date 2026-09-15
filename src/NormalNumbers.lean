@@ -220,6 +220,7 @@ import NormalNumbers.G4EntropyFullSeqW
 import NormalNumbers.G4EntropyWSandwich
 import NormalNumbers.G4EntropyWPrefix
 import NormalNumbers.G4EntropyWTrunc
+import NormalNumbers.G4EntropyWCount
 import NormalNumbers.G4EntropyMTower
 import NormalNumbers.G4EntropyMTowerBig
 import NormalNumbers.G4EntropyMTowerHarmonic
