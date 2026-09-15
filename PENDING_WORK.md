@@ -3,7 +3,7 @@
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
 > section; do **not** append to the bottom.
 
-## 🎯 ACTIVE (after-the-extraction **lap 130**, 2026-09-15) — L1 ✅, L2 ✅, F ✅ (verdict in kernel), W next
+## 🎯 ACTIVE (after-the-extraction **lap 131**, 2026-09-15) — L1 ✅, L2 ✅, F ✅ (verdict in kernel), W ✅ (withdrawn form) — override STOP condition met
 
 **F verdict (`DESIGN-2026-09-15-deformation.md`): proved limitation of T(K′).**  The deformation
 "vary multipliers and offsets jointly, cancel only the first `K′` layers coordinatewise" is
@@ -46,7 +46,18 @@ W on slack).  Grind laps do not edit DIRECTION or the brief.
 reads a set of upper density essentially zero, *whatever* the multiplier residues and frozen
 classes do — CRT alone pins `n mod D`.
 
-### Next: F, the design lap
+### Lap 131 — W in its withdrawn form (DIRECTION: no `docs/` essay)
+One paragraph in the module docstrings of `G4EntropyWStatement` and `G4EntropyWSqueeze`: the
+definition of `fullRealW`, density-zero read set (`Sched.density_coeff_le`), positions above
+`wLo i` (`wLo_le_fnthW`), and NOT normality of `G₄`.  Re-verified this lap in real output:
+`lake build` 🟢 9038 jobs; `deformation_coeff_le`, `deformation_union_le`, `density_coeff_le`,
+`offset_rigidity`, `isNormal_two_of_schedule_read` all `[propext, Classical.choice, Quot.sound]`;
+`recentring_anchor` no axioms.  **The override's stop condition (F verdict + L1 + L2) is met.**
+The honest frontier after F, recorded in `DESIGN-2026-09-15-deformation.md` §4: a non-coordinatewise
+(row-balanced) cancellation of the heavy layers — a question about the tensor matrix, needs a new
+decision, not a grind lap.
+
+### F design lap (done, lap 130)
 `DESIGN-2026-09-15-deformation.md` — choose ONE deformation (L1+L2 force: vary the
 multipliers, replace exact coordinatewise cancellation, or control its error) and discharge the
 brief's four preconditions on paper with numbers before any Lean.  Then frozen `Prop`

@@ -31,7 +31,16 @@ The same `head_frac_tiny`, at `a = 1`, gives the sharper fact that drives everyt
 **`kk j · KK j ≤ fTW j`** (`kk_mul_KK_le_fTW`) — one window is a `1/KK j` fraction of the history.
 
 Endpoint: `abs_ratio_mid_le`, then `tendsto_winCount_fullDigW` at **every** `n`, then
-`IsNormalSequence 2 (fullDigW (primeLambertAtBase 4))`.
+`IsNormalSequence 2 (fullDigW (primeLambertAtBase 4))`, and finally `fullRealW` with
+`isNormal_fullRealW`.
+
+**Claim limits.**  `fullRealW` is the real whose binary digits are `G₄`'s binary digits read at
+the schedule-only positions `fullPosW` (strictly increasing, astronomically large: every
+window start of band `i` lies above `wLo i = 4 · Xlo (KK i)`, `wLo_le_fnthW`).  The read set has density zero in `G₄`'s digit string
+(`Sched.density_coeff_le` in `G4ResidualConfinement` gives a coefficient below
+`10^(−10^1665000)` at scale `0`), so `isNormal_fullRealW` is normality of that extracted real
+and not normality of `G₄`; every unread digit of `G₄` is free.  See `G4EntropyWStatement` for
+the audit surface.
 -/
 
 open Finset Filter
