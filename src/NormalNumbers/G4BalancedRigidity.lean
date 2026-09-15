@@ -211,12 +211,21 @@ theorem card_skel_le (K s : ℕ) : (skel K s).card ≤ K * (s + 1) ^ (K - 1) := 
 
 /-! ### Counting `MDF` pairs -/
 
-/-- A family of `MDF` pairs with values in `[−M, M]` has at most `(2M+1)^{2|skel|}` members. -/
-theorem card_mdf_pairs_le {M : ℕ}
-    (𝓕 : Finset (((Fin K → Fin (s + 1)) → ℤ) × ((Fin K → Fin (s + 1)) → ℤ)))
-    (hmdf : ∀ p ∈ 𝓕, MDF p.1 ∧ MDF p.2)
+/-- **Abstract pinning.**  If an invariant `Inv` on integer-valued functions is *determined* by a
+finite set `S` — two functions with `Inv` agreeing on `S` are equal — then a family of `Inv`-pairs
+with values in `[−M, M]` has at most `(2M+1)^{2|S|}` members.
+
+This is the whole counting mechanism of the verdict, stated without reference to the tensor matrix
+`D_s^{⊗K}`: *any* row family whose balance relations determine a function from a set of size `|S|`
+confines a sampler family the same way.  `card_mdf_pairs_le` is the instance `Inv = MDF`,
+`S = skel`. -/
+theorem card_pairs_le_of_determining {A : Type*} [Fintype A] [DecidableEq A]
+    (Inv : (A → ℤ) → Prop) (S : Finset A)
+    (hdet : ∀ f g : A → ℤ, Inv f → Inv g → (∀ β ∈ S, f β = g β) → f = g)
+    {M : ℕ} (𝓕 : Finset ((A → ℤ) × (A → ℤ)))
+    (hI : ∀ p ∈ 𝓕, Inv p.1 ∧ Inv p.2)
     (hM : ∀ p ∈ 𝓕, ∀ α, |p.1 α| ≤ M ∧ |p.2 α| ≤ M) :
-    𝓕.card ≤ (2 * M + 1) ^ (2 * (skel K s).card) := by
+    𝓕.card ≤ (2 * M + 1) ^ (2 * S.card) := by
   classical
   let clamp : ℤ → Fin (2 * M + 1) := fun z =>
     ⟨(min (2 * (M : ℤ)) (max 0 (z + M))).toNat, by omega⟩
@@ -226,18 +235,18 @@ theorem card_mdf_pairs_le {M : ℕ}
     simp only [clamp] at this
     rw [abs_le] at hz hz'
     omega
-  let T := ({β // β ∈ skel K s} → Fin (2 * M + 1)) × ({β // β ∈ skel K s} → Fin (2 * M + 1))
-  let Φ : (((Fin K → Fin (s + 1)) → ℤ) × ((Fin K → Fin (s + 1)) → ℤ)) → T :=
+  let T := ({β // β ∈ S} → Fin (2 * M + 1)) × ({β // β ∈ S} → Fin (2 * M + 1))
+  let Φ : ((A → ℤ) × (A → ℤ)) → T :=
     fun p => (fun β => clamp (p.1 β), fun β => clamp (p.2 β))
   have hinj : Set.InjOn Φ 𝓕 := by
     intro p hp p' hp' he
     obtain ⟨h1, h2⟩ := Prod.ext_iff.1 he
     have e1 : p.1 = p'.1 := by
-      refine mdf_ext (hmdf p hp).1 (hmdf p' hp').1 fun β hβ => ?_
+      refine hdet _ _ (hI p hp).1 (hI p' hp').1 fun β hβ => ?_
       have := congrFun h1 ⟨β, hβ⟩
       exact hclamp _ _ (hM p hp β).1 (hM p' hp' β).1 this
     have e2 : p.2 = p'.2 := by
-      refine mdf_ext (hmdf p hp).2 (hmdf p' hp').2 fun β hβ => ?_
+      refine hdet _ _ (hI p hp).2 (hI p' hp').2 fun β hβ => ?_
       have := congrFun h2 ⟨β, hβ⟩
       exact hclamp _ _ (hM p hp β).2 (hM p' hp' β).2 this
     exact Prod.ext e1 e2
@@ -248,6 +257,14 @@ theorem card_mdf_pairs_le {M : ℕ}
   simp only [T]
   rw [Fintype.card_prod, Fintype.card_fun, Fintype.card_fin, Fintype.card_coe, ← pow_add]
   congr 1; ring
+
+/-- A family of `MDF` pairs with values in `[−M, M]` has at most `(2M+1)^{2|skel|}` members. -/
+theorem card_mdf_pairs_le {M : ℕ}
+    (𝓕 : Finset (((Fin K → Fin (s + 1)) → ℤ) × ((Fin K → Fin (s + 1)) → ℤ)))
+    (hmdf : ∀ p ∈ 𝓕, MDF p.1 ∧ MDF p.2)
+    (hM : ∀ p ∈ 𝓕, ∀ α, |p.1 α| ≤ M ∧ |p.2 α| ≤ M) :
+    𝓕.card ≤ (2 * M + 1) ^ (2 * (skel K s).card) :=
+  card_pairs_le_of_determining MDF (skel K s) (fun _ _ hf hg h => mdf_ext hf hg h) 𝓕 hmdf hM
 
 /-! ### Coordinatewise cancellation is a special case -/
 

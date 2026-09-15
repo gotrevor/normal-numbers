@@ -112,7 +112,12 @@ Not covered by `balanced_union_le`, and therefore the honest frontier:
   `K′ ≥ 2`, which is exactly the hypothesis of `Sched.balanced_union_le`.  What stays external is
   now *one* inequality — the rough-prime variance bound `≪ (Σc²) log M + exp(−βL)`, draft
   (6.4)–(6.5), carried by `G4TransferMoment`/`G4ScheduleBudget` — and nothing else;
-* a different matrix `A` in place of `D_s^{⊗K}`, whose rows are not unit cubes;
+* a different matrix `A` in place of `D_s^{⊗K}`, whose rows are not unit cubes — **but the
+  counting mechanism is now matrix-agnostic**: `card_pairs_le_of_determining` proves the
+  `(2M+1)^{2|S|}` bound for *any* invariant `Inv` determined by a finite set `S`, with
+  `card_mdf_pairs_le` the instance `Inv = MDF`, `S = skel`.  So a new matrix only has to be shown
+  to have a small determining set for its own balance relations; the rest of the verdict
+  (`balanced_coeff_le`, `balanced_union_le`) is unchanged;
 * giving up the single-`n` joint sample (all `H` atoms read from one `n`), which is what makes
   the L1 confinement `≤ m Σd_α/(2D)` available at all.
 
