@@ -27,13 +27,11 @@ directive asked for, and `fullRealW`, `fullPosW`, `fullDigW`, `G4EntropyWStateme
 
 | commit | content |
 |---|---|
-| `da…` skeleton | `PowerBaseLimit` skeleton; `Sys.shift` gains `k < b ^ m` |
-| `…` | **`PowerBaseLimit`** — the ultrafilter glue, sorry-free |
-| `…` skeleton | `PowerBaseBlock` skeleton |
-| `…` | **`PowerBaseBlock`** — `isNormalSequence_pow`, sorry-free |
-| `…` | **`PowerBaseReal`** — `isNormal_pow` and the two corollaries |
-
-(`git log --oneline -6` for the hashes.)
+| `a010cd1` | `PowerBaseLimit` skeleton; `Sys.shift` gains `k < b ^ m` |
+| `2bd68ef` | **`PowerBaseLimit`** — the ultrafilter glue, sorry-free |
+| `5eadf1f` | `PowerBaseBlock` skeleton |
+| `6f0ec8f` | **`PowerBaseBlock`** — `isNormalSequence_pow`, sorry-free |
+| `35cd03b` | **`PowerBaseReal`** — `isNormal_pow` and the two corollaries |
 
 ## The three new modules
 
