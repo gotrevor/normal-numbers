@@ -1,6 +1,6 @@
 # Handoff: after-the-extraction laps 129–130 — L1, L2 proved; F designed and its verdict proved in kernel; W next
 
-**Date**: 2026-09-15 · **Branch**: `wip/g4-entropy` · tree clean after this commit
+**Date**: 2026-09-15 · **Branch**: `wip/g4-entropy` · **HEAD**: `87f5190` (+ this handoff commit) · tree clean · `lake build` 🟢 9038 jobs
 
 ## 🎯 Objective
 `DIRECTION.md` ACTIVE override "AFTER THE EXTRACTION": L1, L2, then F (design lap first), W on
@@ -32,7 +32,7 @@ slack.  Spec: `BRIEF-after-extraction-2026-09-14.md`.
 * Not formalized (by design): (E), the rough-error pricing `K′ ≥ 3K/8`; the kernel theorems need
   only `K′ ≥ 2`.
 
-## 🎬 Next
+## 🎬 Next (lap budget reached at lap 130 close; resume here)
 0. **W**: `docs/extracted-normal-number-2026-09-15.md` (ordinary-language account of `fullRealW`
    with claim limits).  Then the override's stop condition is met (F has its verdict, L1/L2 done).
 1. ~~**F design lap**~~ (done): write `DESIGN-2026-09-15-deformation.md`.  Pick one deformation; discharge
