@@ -631,4 +631,238 @@ theorem avg_indicator_dvd_two_progression {p q Q : ℕ} (hp : 0 < p) (hq : 0 < q
   rw [hre]
   exact avg_indicator_modEq_sub_le (Nat.mul_pos hp hq) hN w''
 
+
+
+/-- Numeric core, diagonal case: `|c − uA − uB + u²| ≤ 4u + 3e`. -/
+private lemma abs_diag_bound {u e A B c : ℝ} (hu : 0 < u)
+    (hsq : u * u ≤ u) (hsq0 : 0 ≤ u * u)
+    (hqA1 : u * A ≤ u * u + e) (hqA2 : u * u - e ≤ u * A)
+    (hpB1 : u * B ≤ u * u + e) (hpB2 : u * u - e ≤ u * B)
+    (hc1 : -e ≤ c) (hc2 : c ≤ u + e) :
+    |c + (-u * A + (-u * B + u * u))| ≤ 4 * u + 3 * e := by
+  rw [abs_le]
+  constructor <;> nlinarith
+
+/-- Numeric core, disjoint diagonal case: `|−uA − uB + u²| ≤ 3u² + 3e`. -/
+private lemma abs_disj_bound {u e A B : ℝ} (hsq0 : 0 ≤ u * u)
+    (hqA1 : u * A ≤ u * u + e) (hqA2 : u * u - e ≤ u * A)
+    (hpB1 : u * B ≤ u * u + e) (hpB2 : u * u - e ≤ u * B) :
+    |(0 : ℝ) + (-u * A + (-u * B + u * u))| ≤ 3 * (u * u) + 3 * e := by
+  rw [abs_le]
+  constructor <;> nlinarith
+
+/-- Numeric core, off-diagonal case: `|C − vA − uB + uv| ≤ 3e`. -/
+private lemma abs_offdiag_bound {u v e A B C : ℝ}
+    (hC1 : u * v - e ≤ C) (hC2 : C ≤ u * v + e)
+    (hqA1 : v * A ≤ u * v + e) (hqA2 : u * v - e ≤ v * A)
+    (hpB1 : u * B ≤ u * v + e) (hpB2 : u * v - e ≤ u * B) :
+    |C + (-v * A + (-u * B + u * v))| ≤ 3 * e := by
+  rw [abs_le]
+  constructor <;> nlinarith
+
+/-! ### The cross-shift correlation bound
+
+Summing the three-case table: the `p = q` diagonal carries everything (`4/p` when `p` divides the
+shift gap, `3/p²` when it does not — the disjoint case, which is where `not_both_dvd` pays off),
+and every off-diagonal pair costs only the frequency error `3/N`. -/
+
+theorem cross_shift_corr_le {Q c N : ℕ} (hQ : 0 < Q) (hN : 0 < N) (r r' : ℤ)
+    (S : Finset ℕ) (hpos : ∀ p ∈ S, 0 < p)
+    (hQcop : ∀ p ∈ S, Nat.Coprime Q p)
+    (hcop : ∀ p ∈ S, ∀ q ∈ S, p ≠ q → Nat.Coprime p q) :
+    |avg ((Finset.range N).image (fun k => c + Q * k))
+        (fun n => (∑ p ∈ S, ((if (p : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0) - 1 / p))
+          * (∑ q ∈ S, ((if (q : ℤ) ∣ ((n : ℤ) + r') then (1 : ℝ) else 0) - 1 / q)))|
+      ≤ (∑ p ∈ S, (if (p : ℤ) ∣ (r - r') then 4 * (1 / (p : ℝ)) else 3 * (1 / (p : ℝ)) ^ 2))
+          + 3 * (S.card : ℝ) ^ 2 / N := by
+  classical
+  set P := (Finset.range N).image (fun k => c + Q * k) with hPdef
+  have hPne : P.Nonempty := ⟨c + Q * 0, Finset.mem_image.2 ⟨0, Finset.mem_range.2 hN, rfl⟩⟩
+  set I : ℕ → ℤ → ℕ → ℝ := fun p t n => if (p : ℤ) ∣ ((n : ℤ) + t) then (1 : ℝ) else 0 with hI
+  have hpt : ∀ n, (∑ p ∈ S, (I p r n - 1 / p)) * (∑ q ∈ S, (I q r' n - 1 / q))
+      = ∑ p ∈ S, ∑ q ∈ S, (I p r n - 1 / p) * (I q r' n - 1 / q) := fun n => by
+    rw [Finset.sum_mul_sum]
+  rw [show (fun n => (∑ p ∈ S, (I p r n - 1 / p)) * (∑ q ∈ S, (I q r' n - 1 / q)))
+      = (fun n => ∑ p ∈ S, ∑ q ∈ S, (I p r n - 1 / p) * (I q r' n - 1 / q)) from funext hpt,
+    avg_double_sum' P S (fun p q n => (I p r n - 1 / p) * (I q r' n - 1 / q))]
+  have hterm : ∀ p ∈ S, ∀ q ∈ S,
+      |avg P (fun n => (I p r n - 1 / p) * (I q r' n - 1 / q))|
+        ≤ (if p = q then (if (p : ℤ) ∣ (r - r') then 4 * (1 / (p : ℝ))
+              else 3 * (1 / (p : ℝ)) ^ 2) else 0) + 3 / N := by
+    intro p hp q hq
+    have hp1 : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpos p hp
+    have hq1 : (1 : ℝ) ≤ (q : ℝ) := by exact_mod_cast hpos q hq
+    have hup : (0 : ℝ) < 1 / p := by positivity
+    have huq : (0 : ℝ) < 1 / q := by positivity
+    have hup1 : (1 : ℝ) / p ≤ 1 := by rw [div_le_one (by linarith)]; linarith
+    have huq1 : (1 : ℝ) / q ≤ 1 := by rw [div_le_one (by linarith)]; linarith
+    have he : (0 : ℝ) < 1 / (N : ℝ) := by
+      have : (0 : ℝ) < N := by exact_mod_cast hN
+      positivity
+    have hue : (1 / (p : ℝ)) * (1 / (N : ℝ)) ≤ 1 / (N : ℝ) := by nlinarith
+    have hve : (1 / (q : ℝ)) * (1 / (N : ℝ)) ≤ 1 / (N : ℝ) := by nlinarith
+    have hA := avg_indicator_dvd_progression (hpos p hp) hQ (hQcop p hp) c r hN
+    have hB := avg_indicator_dvd_progression (hpos q hq) hQ (hQcop q hq) c r' hN
+    rw [abs_le] at hA hB
+    have hAle : avg P (I p r) ≤ 1 / (p : ℝ) + 1 / N := by
+      have := hA.2; simp only [hI, hPdef]; linarith [this]
+    have hAge : 1 / (p : ℝ) - 1 / N ≤ avg P (I p r) := by
+      have := hA.1; simp only [hI, hPdef]; linarith [this]
+    have hBle : avg P (I q r') ≤ 1 / (q : ℝ) + 1 / N := by
+      have := hB.2; simp only [hI, hPdef]; linarith [this]
+    have hBge : 1 / (q : ℝ) - 1 / N ≤ avg P (I q r') := by
+      have := hB.1; simp only [hI, hPdef]; linarith [this]
+    have hexp : avg P (fun n => (I p r n - 1 / p) * (I q r' n - 1 / q))
+        = avg P (fun n => I p r n * I q r' n)
+          + ((-(1 / (q : ℝ))) * avg P (I p r)
+            + ((-(1 / (p : ℝ))) * avg P (I q r') + (1 / (p : ℝ)) * (1 / (q : ℝ)))) := by
+      rw [show (fun n => (I p r n - 1 / p) * (I q r' n - 1 / q))
+          = (fun n => I p r n * I q r' n
+              + ((-(1 / (q : ℝ))) * I p r n
+                + ((-(1 / (p : ℝ))) * I q r' n + (1 / (p : ℝ)) * (1 / (q : ℝ)))))
+        from funext fun n => by ring]
+      rw [avg_add, avg_add, avg_add, avg_smul, avg_smul, avg_const P hPne]
+    rw [hexp]
+    by_cases hpq : p = q
+    · subst hpq
+      rw [if_pos rfl]
+      -- products, with the diagonal square as a single atom
+      have hqA1 : (1 / (p : ℝ)) * avg P (I p r)
+          ≤ (1 / (p : ℝ)) * (1 / (p : ℝ)) + 1 / (N : ℝ) := by
+        calc (1 / (p : ℝ)) * avg P (I p r)
+            ≤ (1 / (p : ℝ)) * (1 / (p : ℝ) + 1 / (N : ℝ)) :=
+              mul_le_mul_of_nonneg_left hAle hup.le
+          _ = (1 / (p : ℝ)) * (1 / (p : ℝ)) + (1 / (p : ℝ)) * (1 / (N : ℝ)) := by ring
+          _ ≤ (1 / (p : ℝ)) * (1 / (p : ℝ)) + 1 / (N : ℝ) := by linarith
+      have hqA2 : (1 / (p : ℝ)) * (1 / (p : ℝ)) - 1 / (N : ℝ)
+          ≤ (1 / (p : ℝ)) * avg P (I p r) := by
+        calc (1 / (p : ℝ)) * (1 / (p : ℝ)) - 1 / (N : ℝ)
+            ≤ (1 / (p : ℝ)) * (1 / (p : ℝ)) - (1 / (p : ℝ)) * (1 / (N : ℝ)) := by linarith
+          _ = (1 / (p : ℝ)) * (1 / (p : ℝ) - 1 / (N : ℝ)) := by ring
+          _ ≤ (1 / (p : ℝ)) * avg P (I p r) := mul_le_mul_of_nonneg_left hAge hup.le
+      have hpB1 : (1 / (p : ℝ)) * avg P (I p r')
+          ≤ (1 / (p : ℝ)) * (1 / (p : ℝ)) + 1 / (N : ℝ) := by
+        calc (1 / (p : ℝ)) * avg P (I p r')
+            ≤ (1 / (p : ℝ)) * (1 / (p : ℝ) + 1 / (N : ℝ)) :=
+              mul_le_mul_of_nonneg_left hBle hup.le
+          _ = (1 / (p : ℝ)) * (1 / (p : ℝ)) + (1 / (p : ℝ)) * (1 / (N : ℝ)) := by ring
+          _ ≤ (1 / (p : ℝ)) * (1 / (p : ℝ)) + 1 / (N : ℝ) := by linarith
+      have hpB2 : (1 / (p : ℝ)) * (1 / (p : ℝ)) - 1 / (N : ℝ)
+          ≤ (1 / (p : ℝ)) * avg P (I p r') := by
+        calc (1 / (p : ℝ)) * (1 / (p : ℝ)) - 1 / (N : ℝ)
+            ≤ (1 / (p : ℝ)) * (1 / (p : ℝ)) - (1 / (p : ℝ)) * (1 / (N : ℝ)) := by linarith
+          _ = (1 / (p : ℝ)) * (1 / (p : ℝ) - 1 / (N : ℝ)) := by ring
+          _ ≤ (1 / (p : ℝ)) * avg P (I p r') := mul_le_mul_of_nonneg_left hBge hup.le
+      have hsqe : (1 / (p : ℝ)) * (1 / (p : ℝ)) = (1 / (p : ℝ)) ^ 2 := by ring
+      have hsq : (1 / (p : ℝ)) ^ 2 ≤ 1 / (p : ℝ) := by nlinarith
+      have hsq0 : (0 : ℝ) ≤ (1 / (p : ℝ)) ^ 2 := by positivity
+      by_cases hdvd : (p : ℤ) ∣ (r - r')
+      · rw [if_pos hdvd]
+        have hsame : ∀ n : ℕ, I p r n * I p r' n = I p r n := by
+          intro n
+          have hiff : ((p : ℤ) ∣ ((n : ℤ) + r)) ↔ ((p : ℤ) ∣ ((n : ℤ) + r')) := by
+            constructor
+            · intro h
+              rw [show ((n : ℤ) + r') = ((n : ℤ) + r) - (r - r') from by ring]
+              exact dvd_sub h hdvd
+            · intro h
+              rw [show ((n : ℤ) + r) = ((n : ℤ) + r') + (r - r') from by ring]
+              exact dvd_add h hdvd
+          simp only [hI]
+          by_cases h1 : (p : ℤ) ∣ ((n : ℤ) + r)
+          · rw [if_pos h1, if_pos (hiff.1 h1)]; norm_num
+          · rw [if_neg h1]; norm_num
+        rw [show (fun n => I p r n * I p r' n) = I p r from funext hsame]
+        have hsq' : (1 / (p : ℝ)) * (1 / (p : ℝ)) ≤ 1 / (p : ℝ) := by rw [hsqe]; exact hsq
+        have hsq0' : (0 : ℝ) ≤ (1 / (p : ℝ)) * (1 / (p : ℝ)) := by rw [hsqe]; exact hsq0
+        have := abs_diag_bound (u := 1 / (p : ℝ)) (e := 1 / (N : ℝ))
+          (A := avg P (I p r)) (B := avg P (I p r')) (c := avg P (I p r))
+          hup hsq' hsq0' hqA1 hqA2 hpB1 hpB2 (by linarith) (by linarith)
+        calc |avg P (I p r) + (-(1 / (p : ℝ)) * avg P (I p r)
+              + (-(1 / (p : ℝ)) * avg P (I p r') + 1 / (p : ℝ) * (1 / (p : ℝ))))|
+            ≤ 4 * (1 / (p : ℝ)) + 3 * (1 / (N : ℝ)) := this
+          _ = 4 * (1 / (p : ℝ)) + 3 / (N : ℝ) := by ring
+      · rw [if_neg hdvd]
+        have hzero : ∀ n : ℕ, I p r n * I p r' n = 0 := by
+          intro n
+          have hd := not_both_dvd (p := p) (r := r) (r' := r') hdvd (n : ℤ)
+          simp only [hI]
+          by_cases h1 : (p : ℤ) ∣ ((n : ℤ) + r)
+          · rw [if_pos h1, if_neg (fun hc => hd ⟨h1, hc⟩)]; norm_num
+          · rw [if_neg h1]; norm_num
+        rw [show (fun n => I p r n * I p r' n) = (fun _ => (0 : ℝ)) from funext hzero,
+          avg_const P hPne]
+        have hsq0' : (0 : ℝ) ≤ (1 / (p : ℝ)) * (1 / (p : ℝ)) := by rw [hsqe]; exact hsq0
+        have := abs_disj_bound (u := 1 / (p : ℝ)) (e := 1 / (N : ℝ))
+          (A := avg P (I p r)) (B := avg P (I p r')) hsq0' hqA1 hqA2 hpB1 hpB2
+        calc |(0 : ℝ) + (-(1 / (p : ℝ)) * avg P (I p r)
+              + (-(1 / (p : ℝ)) * avg P (I p r') + 1 / (p : ℝ) * (1 / (p : ℝ))))|
+            ≤ 3 * ((1 / (p : ℝ)) * (1 / (p : ℝ))) + 3 * (1 / (N : ℝ)) := this
+          _ = 3 * (1 / (p : ℝ)) ^ 2 + 3 / (N : ℝ) := by rw [hsqe]; ring
+    · rw [if_neg hpq, zero_add]
+      have hC := avg_indicator_dvd_two_progression (hpos p hp) (hpos q hq) hQ
+        (hcop p hp q hq hpq) (hQcop p hp) (hQcop q hq) c r r' hN
+      rw [abs_le] at hC
+      have hCle : avg P (fun n => I p r n * I q r' n)
+          ≤ (1 / (p : ℝ)) * (1 / (q : ℝ)) + 1 / N := by
+        have := hC.2
+        have hpqinv : (1 : ℝ) / ((p * q : ℕ) : ℝ) = (1 / (p : ℝ)) * (1 / (q : ℝ)) := by
+          push_cast; ring
+        rw [hpqinv] at this
+        simp only [hI, hPdef]; linarith [this]
+      have hCge : (1 / (p : ℝ)) * (1 / (q : ℝ)) - 1 / N
+          ≤ avg P (fun n => I p r n * I q r' n) := by
+        have := hC.1
+        have hpqinv : (1 : ℝ) / ((p * q : ℕ) : ℝ) = (1 / (p : ℝ)) * (1 / (q : ℝ)) := by
+          push_cast; ring
+        rw [hpqinv] at this
+        simp only [hI, hPdef]; linarith [this]
+      have hqA1 : (1 / (q : ℝ)) * avg P (I p r)
+          ≤ (1 / (p : ℝ)) * (1 / (q : ℝ)) + 1 / (N : ℝ) := by
+        calc (1 / (q : ℝ)) * avg P (I p r)
+            ≤ (1 / (q : ℝ)) * (1 / (p : ℝ) + 1 / (N : ℝ)) :=
+              mul_le_mul_of_nonneg_left hAle huq.le
+          _ = (1 / (p : ℝ)) * (1 / (q : ℝ)) + (1 / (q : ℝ)) * (1 / (N : ℝ)) := by ring
+          _ ≤ (1 / (p : ℝ)) * (1 / (q : ℝ)) + 1 / (N : ℝ) := by linarith
+      have hqA2 : (1 / (p : ℝ)) * (1 / (q : ℝ)) - 1 / (N : ℝ)
+          ≤ (1 / (q : ℝ)) * avg P (I p r) := by
+        calc (1 / (p : ℝ)) * (1 / (q : ℝ)) - 1 / (N : ℝ)
+            ≤ (1 / (p : ℝ)) * (1 / (q : ℝ)) - (1 / (q : ℝ)) * (1 / (N : ℝ)) := by linarith
+          _ = (1 / (q : ℝ)) * (1 / (p : ℝ) - 1 / (N : ℝ)) := by ring
+          _ ≤ (1 / (q : ℝ)) * avg P (I p r) := mul_le_mul_of_nonneg_left hAge huq.le
+      have hpB1 : (1 / (p : ℝ)) * avg P (I q r')
+          ≤ (1 / (p : ℝ)) * (1 / (q : ℝ)) + 1 / (N : ℝ) := by
+        calc (1 / (p : ℝ)) * avg P (I q r')
+            ≤ (1 / (p : ℝ)) * (1 / (q : ℝ) + 1 / (N : ℝ)) :=
+              mul_le_mul_of_nonneg_left hBle hup.le
+          _ = (1 / (p : ℝ)) * (1 / (q : ℝ)) + (1 / (p : ℝ)) * (1 / (N : ℝ)) := by ring
+          _ ≤ (1 / (p : ℝ)) * (1 / (q : ℝ)) + 1 / (N : ℝ) := by linarith
+      have hpB2 : (1 / (p : ℝ)) * (1 / (q : ℝ)) - 1 / (N : ℝ)
+          ≤ (1 / (p : ℝ)) * avg P (I q r') := by
+        calc (1 / (p : ℝ)) * (1 / (q : ℝ)) - 1 / (N : ℝ)
+            ≤ (1 / (p : ℝ)) * (1 / (q : ℝ)) - (1 / (p : ℝ)) * (1 / (N : ℝ)) := by linarith
+          _ = (1 / (p : ℝ)) * (1 / (q : ℝ) - 1 / (N : ℝ)) := by ring
+          _ ≤ (1 / (p : ℝ)) * avg P (I q r') := mul_le_mul_of_nonneg_left hBge hup.le
+      have := abs_offdiag_bound (u := 1 / (p : ℝ)) (v := 1 / (q : ℝ)) (e := 1 / (N : ℝ))
+        (A := avg P (I p r)) (B := avg P (I q r'))
+        (C := avg P (fun n => I p r n * I q r' n))
+        (by linarith) (by linarith) hqA1 hqA2 hpB1 hpB2
+      calc |avg P (fun n => I p r n * I q r' n) + (-(1 / (q : ℝ)) * avg P (I p r)
+            + (-(1 / (p : ℝ)) * avg P (I q r') + 1 / (p : ℝ) * (1 / (q : ℝ))))|
+          ≤ 3 * (1 / (N : ℝ)) := this
+        _ = 3 / (N : ℝ) := by ring
+  refine le_trans (Finset.abs_sum_le_sum_abs _ _) ?_
+  refine le_trans (Finset.sum_le_sum fun p hp =>
+    le_trans (Finset.abs_sum_le_sum_abs _ _) (Finset.sum_le_sum fun q hq => hterm p hp q hq)) ?_
+  have hinner : ∀ p ∈ S, ∑ q ∈ S, ((if p = q then (if (p : ℤ) ∣ (r - r') then 4 * (1 / (p : ℝ))
+        else 3 * (1 / (p : ℝ)) ^ 2) else 0) + 3 / N)
+      = (if (p : ℤ) ∣ (r - r') then 4 * (1 / (p : ℝ)) else 3 * (1 / (p : ℝ)) ^ 2)
+        + (S.card : ℝ) * (3 / N) := by
+    intro p hp
+    rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul,
+      Finset.sum_ite_eq S p (fun _ => (if (p : ℤ) ∣ (r - r') then 4 * (1 / (p : ℝ))
+        else 3 * (1 / (p : ℝ)) ^ 2)), if_pos hp]
+  rw [Finset.sum_congr rfl hinner, Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul,
+    show (S.card : ℝ) * ((S.card : ℝ) * (3 / N)) = 3 * (S.card : ℝ) ^ 2 / N from by ring]
+
 end NormalNumbers.G4.RowVariance
