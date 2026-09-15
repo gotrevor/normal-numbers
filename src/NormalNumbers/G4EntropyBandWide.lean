@@ -74,7 +74,91 @@ lemma Xlo_le_wFloor (i : ℕ) : Xlo (KK i) ≤ wFloor i := by
   have : wLo i ≤ gridDm (KK i) (N (KK i)) * wLo i := Nat.le_mul_of_pos_left _ hDm
   omega
 
-attribute [local irreducible] Xlo wLo wFloor
+/-- `Xlo K² = X K`: the downward floor is the square root of the scale. -/
+lemma Xlo_sq (K : ℕ) : Xlo K * Xlo K = X K := by
+  show (Y K ^ 50) * (Y K ^ 50) = 2 ^ (100 * 2 ^ m K)
+  rw [← pow_add]
+  show (2 ^ (2 ^ m K)) ^ (100 : ℕ) = _
+  rw [← pow_mul]
+  ring_nf
+
+/-- The wide band's **scale top**: the top of level `i`'s own certified tile. -/
+noncomputable def wTop (i : ℕ) : ℕ := Xlo (KK (i + 1))
+
+/-- `18·X (KK i) ≤ wTop i`.  The whole of level `i`'s old scale range, inflated by a constant,
+is still far below the top of its tile — the exponents are `100·2^{m_i}` against
+`50·2^{m_{i+1}} ≥ 6400·2^{m_i}`. -/
+lemma eighteen_X_le_wTop (i : ℕ) : 18 * X (KK i) ≤ wTop i := by
+  have hstep := m_step_seven i
+  have hone : (1 : ℕ) ≤ 2 ^ m (KK i) := Nat.one_le_two_pow
+  have h128 : (2 : ℕ) ^ 7 * 2 ^ m (KK i) ≤ 2 ^ m (KK (i + 1)) := by
+    rw [← pow_add]
+    exact Nat.pow_le_pow_right (by norm_num) (by omega)
+  have h27 : (2 : ℕ) ^ 7 = 128 := by norm_num
+  have hX : X (KK i) = 2 ^ (100 * 2 ^ m (KK i)) := rfl
+  have hXlo : wTop i = 2 ^ (50 * 2 ^ m (KK (i + 1))) := by
+    show (2 ^ (2 ^ m (KK (i + 1)))) ^ 50 = _
+    rw [← pow_mul]; ring_nf
+  have h18 : (18 : ℕ) ≤ 2 ^ 5 := by norm_num
+  have hmain : 2 ^ 5 * X (KK i) ≤ wTop i := by
+    rw [hX, hXlo, ← pow_add]
+    exact Nat.pow_le_pow_right (by norm_num) (by omega)
+  calc 18 * X (KK i) ≤ 2 ^ 5 * X (KK i) := Nat.mul_le_mul_right _ h18
+    _ ≤ wTop i := hmain
+
+/-- **The gate holds at the band's own top**, with room to spare. -/
+theorem wgate_wTop (i : ℕ) : 4 * wFloor i + 4 * (gridAt i).P₀ ≤ wTop i := by
+  have hDm : gridDm (KK i) (N (KK i)) ≤ Xlo (KK i) := gridDm_le_Xlo (KK_hundred i)
+  have hP : 2 * (gridAt i).P₀ ≤ Xlo (KK i) := two_mul_P₀_le_Xlo (KK_hundred i)
+  have hsq : Xlo (KK i) * Xlo (KK i) = X (KK i) := Xlo_sq (KK i)
+  have hXle : Xlo (KK i) ≤ X (KK i) := Xlo_le_X (KK i)
+  have hwf : wFloor i = gridDm (KK i) (N (KK i)) * (4 * Xlo (KK i)) := rfl
+  have hmono : gridDm (KK i) (N (KK i)) * (4 * Xlo (KK i)) ≤ Xlo (KK i) * (4 * Xlo (KK i)) :=
+    Nat.mul_le_mul_right _ hDm
+  have hexp : Xlo (KK i) * (4 * Xlo (KK i)) = 4 * X (KK i) := by
+    rw [← hsq]; ring
+  have h18 := eighteen_X_le_wTop i
+  omega
+
+lemma wLo_eq (i : ℕ) : wLo i = 4 * Xlo (KK i) := rfl
+
+lemma wFloor_eq (i : ℕ) : wFloor i = gridDm (KK i) (N (KK i)) * wLo i := rfl
+
+lemma wTop_eq (i : ℕ) : wTop i = Xlo (KK (i + 1)) := rfl
+
+/-- The window length is negligible against the certificate floor. -/
+lemma kk_lt_Xlo (i : ℕ) : kk i + 1 ≤ Xlo (KK i) := by
+  have hK1 : 1 ≤ KK i := KK_one_le i
+  have hcube : KK i ^ 3 ≤ m (KK i) := by
+    have h1 := m₁_ge_cube (show 1 ≤ KK i by omega)
+    unfold m
+    omega
+  have hkkK : kk i ≤ KK i := by unfold KK; omega
+  have hpow : KK i ≤ KK i ^ 3 := Nat.le_self_pow (by norm_num) _
+  have hm : m (KK i) < 2 ^ m (KK i) := Nat.lt_two_pow_self
+  have hone : (1 : ℕ) ≤ 2 ^ m (KK i) := Nat.one_le_two_pow
+  have hbig : 50 * 2 ^ m (KK i) < 2 ^ (50 * 2 ^ m (KK i)) := Nat.lt_two_pow_self
+  have hXlo : Xlo (KK i) = 2 ^ (50 * 2 ^ m (KK i)) := by
+    show (2 ^ (2 ^ m (KK i))) ^ 50 = _
+    rw [← pow_mul]; ring_nf
+  omega
+
+/-- The wide band's **position ceiling**: every window of band `i` ends below it. -/
+noncomputable def wPosTop (i : ℕ) : ℕ := 2 * wTop i + kk i
+
+/-- **The bands' position ranges stay ordered.**  This is where the floor multiple `4` (rather
+than `2`) is spent: `wLo (i+1) = 4·Xlo (KK (i+1))` clears `wPosTop i = 2·Xlo (KK (i+1)) + kk i`
+with a whole `Xlo` to spare. -/
+theorem wPosTop_le_wLo_succ (i : ℕ) : wPosTop i ≤ wLo (i + 1) := by
+  have h : kk (i + 1) + 1 ≤ Xlo (KK (i + 1)) := kk_lt_Xlo (i + 1)
+  have hkk : kk i ≤ kk (i + 1) := by unfold kk; omega
+  have h1 : wPosTop i = 2 * Xlo (KK (i + 1)) + kk i := rfl
+  have h2 : wLo (i + 1) = 4 * Xlo (KK (i + 1)) := rfl
+  omega
+
+lemma wPosTop_eq (i : ℕ) : wPosTop i = 2 * wTop i + kk i := rfl
+
+attribute [local irreducible] Xlo wLo wFloor wTop wPosTop
 
 open Classical in
 /-- The wide band, truncated at the outer scale `X'`: the truncated sample above the raised
@@ -277,5 +361,88 @@ theorem abs_posAvg_bandWLaw_le (i X' ℓ : ℕ) (hg : 4 * wFloor i + 4 * (gridAt
   have hpos1 : (0 : ℝ) ≤ Real.log 2 * (ℓ : ℝ) * (101 * Real.sqrt (KK i))
       / ((kk i : ℝ) - ℓ + 1) := by positivity
   exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hstep) (by norm_num)
+
+/-! ### The wide band's geometry -/
+
+/-- **The wide band**: the whole tile's sample above the floor. -/
+noncomputable def bandW (i : ℕ) : Finset ℕ := bandWtr i (wTop i)
+
+lemma bandW_subset (i : ℕ) : bandW i ⊆ PKtr i (wTop i) := bandWtr_subset i (wTop i)
+
+lemma mem_bandWtr_lt {i X' n : ℕ} (hn : n ∈ bandWtr i X') : n < X' := by
+  classical
+  have h := (Finset.mem_filter.1 hn).1
+  rw [PKtr, apSample, Finset.mem_filter, Finset.mem_range] at h
+  exact h.1
+
+lemma wFloor_le_of_mem_bandWtr {i X' n : ℕ} (hn : n ∈ bandWtr i X') : wFloor i ≤ n := by
+  classical
+  exact (Finset.mem_filter.1 hn).2
+
+/-- **Every window of the wide band starts above the position floor.** -/
+theorem wLo_le_pos_of_mem_bandWtr (i X' : ℕ) {n : ℕ} (hn : n ∈ bandWtr i X')
+    (α : (gridAt i).Atom) : wLo i ≤ 2 * kIdx (gridAt i) n α := by
+  classical
+  have hmem : gridDm (KK i) (N (KK i)) * wLo i ≤ n := by
+    rw [← wFloor_eq]; exact wFloor_le_of_mem_bandWtr hn
+  have hnPK : n ∈ PKtr i X' := (Finset.mem_filter.1 hn).1
+  obtain ⟨hk, -⟩ := kIdx_spec (gridAt i) (X := X') hnPK α
+  have hd : (gridAt i).d α ≤ gridDm (KK i) (N (KK i)) :=
+    gridOf.d_le (K := KK i) (N := N (KK i)) (hK := KK_one_le i) α
+  have hdpos : 0 < (gridAt i).d α := (gridAt i).d_pos α
+  have ht : (gridAt i).t α < (gridAt i).d α := (gridAt i).t_lt_d α
+  have hmono : (gridAt i).d α * wLo i ≤ gridDm (KK i) (N (KK i)) * wLo i :=
+    Nat.mul_le_mul_right _ hd
+  have h1 : (gridAt i).d α * wLo i ≤ n := le_trans hmono hmem
+  have h2 : n < (gridAt i).d α * (kIdx (gridAt i) n α + 1) := by
+    have hexp : (gridAt i).d α * (kIdx (gridAt i) n α + 1)
+        = (gridAt i).d α * kIdx (gridAt i) n α + (gridAt i).d α := by ring
+    omega
+  have hstrict : (gridAt i).d α * wLo i
+      < (gridAt i).d α * (kIdx (gridAt i) n α + 1) := by omega
+  have hlt : wLo i < kIdx (gridAt i) n α + 1 :=
+    lt_of_mul_lt_mul_left hstrict (Nat.zero_le _)
+  omega
+
+/-- **Every window of the wide band ends below the position ceiling.** -/
+theorem pos_lt_wPosTop (i X' : ℕ) (hX : X' ≤ wTop i) {n : ℕ} (hn : n ∈ PKtr i X')
+    (α : (gridAt i).Atom) {p : ℕ} (hp : p < kk i) :
+    2 * kIdx (gridAt i) n α + p < wPosTop i := by
+  classical
+  have hnX : n < X' := by
+    rw [PKtr, apSample, Finset.mem_filter, Finset.mem_range] at hn
+    exact hn.1
+  have hk := kIdx_le_self (gridAt i) n α
+  have hpt := wPosTop_eq i
+  omega
+
+/-- **`windows_eq_or_disjoint` at a truncated scale.**  The proof of `windows_eq_or_disjoint`
+uses the sample only through `kIdx_congr_Q`, which is generic in the outer scale. -/
+theorem windows_eq_or_disjoint_at (i X' : ℕ) {n n' : ℕ} (hn : n ∈ PKtr i X')
+    (hn' : n' ∈ PKtr i X') (α β : (gridAt i).Atom) :
+    kIdx (gridAt i) n α = kIdx (gridAt i) n' β ∨
+      2 * kIdx (gridAt i) n α + kk i ≤ 2 * kIdx (gridAt i) n' β ∨
+      2 * kIdx (gridAt i) n' β + kk i ≤ 2 * kIdx (gridAt i) n α := by
+  have hcong := kIdx_congr_Q (gridAt i) (two_le_card_Atom i) (N_pos_gridAt i) hn hn' α β
+  have hQ : kk i < (gridAt i).Q := by
+    have hgt : gridUmax (KK i) (N (KK i)) + KK i + N (KK i) + 2
+        ≤ gridQ (KK i) (N (KK i)) := gridQ_gt _ _
+    have hQeq : (gridAt i).Q = gridQ (KK i) (N (KK i)) := rfl
+    have hkkK : kk i ≤ KK i := by unfold KK; omega
+    omega
+  rcases Nat.lt_trichotomy (kIdx (gridAt i) n α) (kIdx (gridAt i) n' β) with h | h | h
+  · right; left
+    have hdvd : (gridAt i).Q ∣ kIdx (gridAt i) n' β - kIdx (gridAt i) n α :=
+      (Nat.modEq_iff_dvd' (le_of_lt h)).1 hcong
+    have := Nat.le_of_dvd (by omega) hdvd
+    omega
+  · exact Or.inl h
+  · right; right
+    have hdvd : (gridAt i).Q ∣ kIdx (gridAt i) n α - kIdx (gridAt i) n' β :=
+      (Nat.modEq_iff_dvd' (le_of_lt h)).1 hcong.symm
+    have := Nat.le_of_dvd (by omega) hdvd
+    omega
+
+lemma bandW_nonempty (i : ℕ) : (bandW i).Nonempty := bandWtr_nonempty (wgate_wTop i)
 
 end NormalNumbers.G4.Sched
