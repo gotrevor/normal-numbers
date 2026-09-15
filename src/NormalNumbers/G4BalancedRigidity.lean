@@ -14,7 +14,9 @@ matrix `D_s^{⊗K}` (a unit cube of the grid with the parity signs `(−1)^{|T|}
 multiplicities of the shift values `ρ_{α,j} = j d_α − t_α` over the corners vanish.  The design
 asked whether "balanced on every row" forces "ignores a coordinate" (true for `K = 1`).
 
-**The answer is NO for `K ≥ 3`** (`ex_balanced`, `ex_not_ignoring`: at `K = 3`, `s = 2` the
+**The answer is NO for `K ≥ 3`, and YES for `K ≤ 2`** — the threshold is exact.
+`ignores_coord_of_balanced_two` (via the grid lemma `two_dim_rigidity`) proves rigidity at
+`K = 2` for every `s`; `ex_balanced`/`ex_not_ignoring` refute it at `K = 3`.  Concretely: at `K = 3`, `s = 2` the
 function `[α₀=1 ∧ α₁=2] + [α₀=2 ∧ α₂=2]` is balanced on all eight rows and ignores no
 coordinate) — **and it does not matter.**  The right invariant is the lattice
 `MDF = {ρ : every full mixed difference vanishes}`:
@@ -303,6 +305,174 @@ theorem balanced_layer_of_coordCancel {K' : ℕ} {d t : (Fin K → Fin (s + 1)) 
   balanced_of_update_invariant i fun α c => by
     have := h i hi α c
     simp only [layer]; push_cast; linarith
+
+
+/-! ### The exact threshold: `K = 2` **is** rigid
+
+The `K = 3` counterexample above is sharp.  At `K = 2` row-balance *does* force ignoring a
+coordinate, so the rigidity of the design's `K = 1` case survives one more step and dies at
+`K = 3`.  (Computational probe, lap R-b: no non-ignoring balanced function exists on a `6 × 6`
+grid with three values; the proof below is general.) -/
+
+/-- The two-dimensional core: a grid function whose every unit square has its two diagonals
+matched as multisets is constant in one of the two directions. -/
+theorem two_dim_rigidity (f : ℕ → ℕ → ℤ)
+    (h : ∀ a b, (f a b = f (a + 1) b ∧ f (a + 1) (b + 1) = f a (b + 1)) ∨
+                (f a b = f a (b + 1) ∧ f (a + 1) (b + 1) = f (a + 1) b)) :
+    (∀ a a' b, f a b = f a' b) ∨ (∀ a b b', f a b = f a b') := by
+  by_cases hstep : ∀ a b, f a b = f a (b + 1)
+  · refine Or.inr fun a b b' => ?_
+    have key : ∀ n, f a n = f a 0 := by
+      intro n; induction n with
+      | zero => rfl
+      | succ n ih => rw [← hstep a n, ih]
+    rw [key b, key b']
+  push_neg at hstep
+  obtain ⟨a₀, b₀, hne₀⟩ := hstep
+  -- `Q b a`: the vertical step at `(a, b)` is nontrivial.  It does not depend on `a`.
+  have hstepiff : ∀ b a, (f a b ≠ f a (b + 1)) ↔ (f (a + 1) b ≠ f (a + 1) (b + 1)) := by
+    intro b a
+    rcases h a b with ⟨h1, h2⟩ | ⟨h1, h2⟩
+    · rw [h1, ← h2]
+    · exact ⟨fun hc => absurd h1 hc, fun hc => absurd h2.symm hc⟩
+  have hQ : ∀ b a, (f a b ≠ f a (b + 1)) ↔ (f 0 b ≠ f 0 (b + 1)) := by
+    intro b a
+    induction a with
+    | zero => rfl
+    | succ a ih => exact (hstepiff b a).symm.trans ih
+  -- `G b`: all horizontal steps at height `b` are trivial.
+  set G : ℕ → Prop := fun b => ∀ a, f a b = f (a + 1) b with hG
+  have hGiff : ∀ b, G b ↔ G (b + 1) := by
+    intro b
+    by_cases hb : f 0 b ≠ f 0 (b + 1)
+    · have hall : ∀ a, f a b = f (a + 1) b ∧ f (a + 1) (b + 1) = f a (b + 1) := by
+        intro a
+        rcases h a b with hc | ⟨h1, _⟩
+        · exact hc
+        · exact absurd h1 ((hQ b a).2 hb)
+      exact iff_of_true (fun a => (hall a).1) (fun a => ((hall a).2).symm)
+    · push_neg at hb
+      have heq : ∀ a, f a b = f a (b + 1) := fun a => by
+        by_contra hc; exact ((hQ b a).1 hc) hb
+      constructor
+      · intro hgb a; rw [← heq a, ← heq (a + 1)]; exact hgb a
+      · intro hgb a; rw [heq a, heq (a + 1)]; exact hgb a
+  have hGb₀ : G b₀ := by
+    intro a
+    rcases h a b₀ with hc | ⟨h1, _⟩
+    · exact hc.1
+    · exact absurd h1 ((hQ b₀ a).2 ((hQ b₀ a₀).1 hne₀))
+  have hGall : ∀ b, G b := by
+    have hdown : ∀ n, G (b₀ - n) := by
+      intro n; induction n with
+      | zero => simpa using hGb₀
+      | succ n ih =>
+        rcases Nat.eq_zero_or_pos (b₀ - n) with he | hp
+        · rw [show b₀ - (n + 1) = 0 by omega]; rw [he] at ih; exact ih
+        · have : b₀ - n = (b₀ - (n + 1)) + 1 := by omega
+          exact (hGiff (b₀ - (n + 1))).2 (this ▸ ih)
+    have hG0 : G 0 := by simpa using hdown b₀
+    intro b
+    induction b with
+    | zero => exact hG0
+    | succ b ih => exact (hGiff b).1 ih
+  refine Or.inl fun a a' b => ?_
+  have key : ∀ n, f n b = f 0 b := by
+    intro n; induction n with
+    | zero => rfl
+    | succ n ih => rw [← hGall b n, ih]
+  rw [key a, key a']
+
+/-- Row-balance at `K = 2` **does** force ignoring a coordinate. -/
+theorem ignores_coord_of_balanced_two {ρ : (Fin 2 → Fin (s + 1)) → ℤ} (h : Balanced ρ) :
+    (∀ α c, ρ (update α 0 c) = ρ α) ∨ (∀ α c, ρ (update α 1 c) = ρ α) := by
+  classical
+  set cl : ℕ → Fin (s + 1) := fun a => ⟨min a s, by omega⟩ with hcl
+  set f : ℕ → ℕ → ℤ := fun a b => ρ ![cl a, cl b] with hf
+  have hclf : ∀ i : Fin (s + 1), cl (i : ℕ) = i := by
+    intro i; apply Fin.ext; simp only [hcl]; have := i.isLt; omega
+  have hρf : ∀ α : Fin 2 → Fin (s + 1), ρ α = f (α 0 : ℕ) (α 1 : ℕ) := by
+    intro α
+    simp only [hf, hclf]
+    congr 1
+    funext i; fin_cases i <;> simp
+  -- the square condition
+  have hsq : ∀ a b, (f a b = f (a + 1) b ∧ f (a + 1) (b + 1) = f a (b + 1)) ∨
+      (f a b = f a (b + 1) ∧ f (a + 1) (b + 1) = f (a + 1) b) := by
+    intro a b
+    by_cases ha : s ≤ a
+    · have hca : cl a = cl (a + 1) := by apply Fin.ext; simp only [hcl]; omega
+      exact Or.inl ⟨by simp only [hf, hca], by simp only [hf, hca]⟩
+    by_cases hb : s ≤ b
+    · have hcb : cl b = cl (b + 1) := by apply Fin.ext; simp only [hcl]; omega
+      exact Or.inr ⟨by simp only [hf, hcb], by simp only [hf, hcb]⟩
+    push_neg at ha hb
+    set c : Fin 2 → Fin s := ![⟨a, ha⟩, ⟨b, hb⟩] with hc
+    have h0 : ∀ T : Finset (Fin 2), corner c T 0 = cl (a + (if (0 : Fin 2) ∈ T then 1 else 0)) := by
+      intro T
+      apply Fin.ext; rw [corner_val]
+      simp only [hc, hcl, Matrix.cons_val_zero]
+      split_ifs <;> simp <;> omega
+    have h1 : ∀ T : Finset (Fin 2), corner c T 1 = cl (b + (if (1 : Fin 2) ∈ T then 1 else 0)) := by
+      intro T
+      apply Fin.ext; rw [corner_val]
+      simp only [hc, hcl, Matrix.cons_val_one]
+      split_ifs <;> simp <;> omega
+    have hcorner : ∀ T : Finset (Fin 2), corner c T =
+        ![cl (a + (if (0 : Fin 2) ∈ T then 1 else 0)),
+          cl (b + (if (1 : Fin 2) ∈ T then 1 else 0))] := by
+      intro T
+      funext i; fin_cases i
+      · simpa using h0 T
+      · simpa using h1 T
+    set x := f a b with hx
+    set y := f (a + 1) b with hy
+    set z := f a (b + 1) with hz
+    set w := f (a + 1) (b + 1) with hw
+    have hval : ∀ v : ℤ, (if x = v then (1:ℤ) else 0) + (if w = v then (1:ℤ) else 0)
+        = (if y = v then (1:ℤ) else 0) + (if z = v then (1:ℤ) else 0) := by
+      intro v
+      have hsum := h c v
+      have huniv : (Finset.univ : Finset (Finset (Fin 2))) = {∅, {0}, {1}, {0, 1}} := by decide
+      rw [huniv, Finset.sum_insert (by decide), Finset.sum_insert (by decide),
+        Finset.sum_insert (by decide), Finset.sum_singleton,
+        hcorner ∅, hcorner {0}, hcorner {1}, hcorner {0, 1}] at hsum
+      norm_num [hx, hy, hz, hw, hf] at hsum ⊢
+      split_ifs at hsum ⊢ <;> omega
+    have hx1 := hval x
+    rw [if_pos rfl] at hx1
+    by_cases hwx : w = x
+    · rw [if_pos hwx] at hx1
+      have hyx : y = x := by by_contra hc; rw [if_neg hc] at hx1; split_ifs at hx1 <;> omega
+      have hzx : z = x := by by_contra hc; rw [if_neg hc] at hx1; split_ifs at hx1 <;> omega
+      exact Or.inl ⟨hyx.symm, by rw [hwx, hzx]⟩
+    · rw [if_neg hwx] at hx1
+      have hw1 := hval w
+      rw [if_pos rfl, if_neg (fun hcc => hwx hcc.symm)] at hw1
+      by_cases hyx : y = x
+      · have hzw : z = w := by
+          by_contra hcc
+          rw [if_neg hcc] at hw1
+          have hnyw : ¬ (y = w) := fun he => hwx (by rw [← he, hyx])
+          rw [if_neg hnyw] at hw1; omega
+        exact Or.inl ⟨hyx.symm, hzw.symm⟩
+      · have hzx : z = x := by
+          rw [if_neg hyx] at hx1
+          by_contra hcc; rw [if_neg hcc] at hx1; omega
+        have hyw : y = w := by
+          have hnzw : ¬ (z = w) := fun he => hwx (by rw [← he, hzx])
+          rw [if_neg hnzw] at hw1
+          by_contra hcc; rw [if_neg hcc] at hw1; omega
+        exact Or.inr ⟨hzx.symm, hyw.symm⟩
+  rcases two_dim_rigidity f hsq with hA | hB
+  · refine Or.inl fun α c => ?_
+    rw [hρf (update α 0 c), hρf α]
+    simp only [update_self, update_of_ne (by decide : (1 : Fin 2) ≠ 0)]
+    exact hA _ _ _
+  · refine Or.inr fun α c => ?_
+    rw [hρf (update α 1 c), hρf α]
+    simp only [update_self, update_of_ne (by decide : (0 : Fin 2) ≠ 1)]
+    exact hB _ _ _
 
 /-! ### The `K = 3`, `s = 2` counterexample to "balanced ⇒ ignores a coordinate" -/
 
