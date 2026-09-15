@@ -66,7 +66,7 @@ structure Sys (b K : ℕ) (C : ℝ) (F : ℕ → ℕ → ℝ) : Prop where
   bdd : ∀ m k, F m k ≤ C / (b : ℝ) ^ m
   unit : F 0 0 = 1
   right : ∀ m k, F m k = ∑ s ∈ Finset.range b, F (m + 1) (k * b + s)
-  shift : ∀ m k, F m k = ∑ t ∈ Finset.range (b ^ K), F (m + K) (t * b ^ m + k)
+  shift : ∀ m k, k < b ^ m → F m k = ∑ t ∈ Finset.range (b ^ K), F (m + K) (t * b ^ m + k)
 
 namespace Sys
 
@@ -160,13 +160,19 @@ lemma A_succ (h : Sys b K C F) (m : ℕ) : A b F (m + 1) = A b F m + Var b F m :
   ring
 
 /-- **The `shift` relation pushes defects down.** -/
-lemma D_shift (h : Sys b K C F) (m k s : ℕ) :
+lemma D_shift (h : Sys b K C F) (m k s : ℕ) (hk : k < b ^ m) (hs : s < b) :
     D b F m k s = ∑ t ∈ Finset.range (b ^ K), D b F (m + K) (t * b ^ m + k) s := by
   have hb := h.bR_pos
+  have hks : k * b + s < b ^ (m + 1) := by
+    have h1 : (k + 1) * b ≤ b ^ m * b := Nat.mul_le_mul_right b hk
+    rw [pow_succ]
+    calc k * b + s < k * b + b := by omega
+      _ = (k + 1) * b := by ring
+      _ ≤ b ^ m * b := h1
   have h1 : F (m + 1) (k * b + s)
       = ∑ t ∈ Finset.range (b ^ K), F (m + 1 + K) (t * b ^ (m + 1) + (k * b + s)) :=
-    h.shift (m + 1) (k * b + s)
-  have h2 : F m k = ∑ t ∈ Finset.range (b ^ K), F (m + K) (t * b ^ m + k) := h.shift m k
+    h.shift (m + 1) (k * b + s) hks
+  have h2 : F m k = ∑ t ∈ Finset.range (b ^ K), F (m + K) (t * b ^ m + k) := h.shift m k hk
   have hterm : ∀ t : ℕ, D b F (m + K) (t * b ^ m + k) s
       = F (m + 1 + K) (t * b ^ (m + 1) + (k * b + s))
         - F (m + K) (t * b ^ m + k) * (b : ℝ)⁻¹ := by
@@ -184,26 +190,27 @@ lemma Var_le_shift (h : Sys b K C F) (m : ℕ) : Var b F m ≤ Var b F (m + K) :
   have hbK : (0 : ℝ) < (b : ℝ) ^ K := by positivity
   have hpw : (b : ℝ) ^ (m + 1) * (b : ℝ) ^ K = (b : ℝ) ^ (m + K + 1) := by
     rw [← pow_add]; congr 1; omega
-  have hcs : ∀ k s : ℕ, (D b F m k s) ^ 2
+  have hcs : ∀ k < b ^ m, ∀ s < b, (D b F m k s) ^ 2
       ≤ ((b : ℝ) ^ K) * ∑ t ∈ Finset.range (b ^ K), (D b F (m + K) (t * b ^ m + k) s) ^ 2 := by
-    intro k s
+    intro k hk s hs
     have hch := sq_sum_le_card_mul_sum_sq (s := Finset.range (b ^ K))
       (f := fun t => D b F (m + K) (t * b ^ m + k) s)
     rw [Finset.card_range] at hch
-    rw [h.D_shift m k s]
+    rw [h.D_shift m k s hk hs]
     have hcast : (((b ^ K : ℕ) : ℝ)) = (b : ℝ) ^ K := by push_cast; ring
     rwa [hcast] at hch
   have hstep : Var b F m
       ≤ ∑ k ∈ Finset.range (b ^ m), ∑ s ∈ Finset.range b, ∑ t ∈ Finset.range (b ^ K),
           (b : ℝ) ^ (m + K + 1) * (D b F (m + K) (t * b ^ m + k) s) ^ 2 := by
     rw [Var]
-    refine Finset.sum_le_sum fun k _ => Finset.sum_le_sum fun s _ => ?_
+    refine Finset.sum_le_sum fun k hkm => Finset.sum_le_sum fun s hsm => ?_
+    rw [Finset.mem_range] at hkm hsm
     have hb1 : (0 : ℝ) ≤ (b : ℝ) ^ (m + 1) := by positivity
     calc (b : ℝ) ^ (m + 1) * (D b F m k s) ^ 2
         ≤ (b : ℝ) ^ (m + 1)
             * ((b : ℝ) ^ K * ∑ t ∈ Finset.range (b ^ K),
                 (D b F (m + K) (t * b ^ m + k) s) ^ 2) :=
-          mul_le_mul_of_nonneg_left (hcs k s) hb1
+          mul_le_mul_of_nonneg_left (hcs k hkm s hsm) hb1
       _ = ∑ t ∈ Finset.range (b ^ K),
             (b : ℝ) ^ (m + K + 1) * (D b F (m + K) (t * b ^ m + k) s) ^ 2 := by
           rw [Finset.mul_sum, Finset.mul_sum]
