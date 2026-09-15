@@ -88,7 +88,74 @@ here.  The "forbidden drift" list of the G5 directive still applies except for
 its ban on "the multiplicity/entropy/ordinary-normality questions", which this
 expedition explicitly lifts.
 
-## CURRENT DIRECTIVE — entropy expedition (set 2026-09-15, FRESH-MIND REVIEW lap 122)
+## CURRENT DIRECTIVE — entropy expedition (set 2026-09-15, FRESH-MIND REVIEW lap 126)
+
+*Altitude-lap section, inside the ACTIVE override's scope.  It OUTRANKS every HANDOFF, and it
+outranks the lap-122 directive below, whose mandated steps 1–3 are DONE: `G4EntropyWPrefix`
+(the prefix read count), the sandwich (`abs_prefix_ratio_sub_le`, then the uncapped
+`abs_prefix_ratio_sub_le_cap`), and `head_frac_tiny` (the ungated head, on `G4GridP0Lower.P₀_growth`).
+Only its **step 4** remains.*
+
+**State (verified this lap).**  Build 🟢 **9021 jobs**, `lake build` exit 0.  `src/` carries
+exactly **two** `sorry`s, both pre-expedition and off-path (`PrimeLambertOscillation.phaseOscillation`,
+`MahlerDriftOne.exists_drift_one_background`); the expedition's part of `src/` is sorry-free.
+`tendsto_fullWRead_freq`, `fullPosW_strictMono`, `abs_prefix_ratio_sub_le_cap`, `head_frac_tiny`,
+`fullW_prefix_winCount_bounds`, `aLe_fnthW`, `aLe_le_headW` each print
+`[propext, Classical.choice, Quot.sound]`.
+
+**Why the direction is KEPT and NARROWED.**  No route trigger has fired: E-T11's failure mode
+(no single gated pair `X₁ ≤ X₂` brackets `pairsLe i c`) did occur in the exact form the trigger
+anticipated — `cutHi i c` runs past the tile top for the top `O(1/K)` of each band — and lap 125
+*absorbed* it inside the route by capping both flanks at `wTop i` (`cutBot`/`cutTop`,
+`card_flank_ratio_cap`), so the route survives as designed and no escalation is owed.  Every
+ingredient of the mid-band estimate is now in kernel; what is left is assembly, and it is
+simultaneously the hardest remaining obligation because it is the **only** thing between here
+and the headline.
+
+- 🎯 **THE objective (unchanged): `IsNormal 2` of a strictly increasing, schedule-only read off
+  `G₄`'s binary digits.**  Endpoint: `IsNormalSequence 2 (fullDigW (primeLambertAtBase 4))`,
+  then `IsNormal 2 fullRealW` via `Bridge.isNormal_realOfDigits`.
+- 🔨 **Mandated next move — lap-122 step 4 only, "the squeeze and the endpoint", in this order.**
+    1. **`G4EntropyWMediant.lean` — the schedule-free mediant lemma** (pure ℝ, no schedule defs):
+       `(r−e₁)T ≤ G ≤ (r+e₁)T`, `(r−e₂)s ≤ D ≤ (r+e₂)s`, `T > 0`, `s ≥ 0`
+       ⇒ `|(G+D)/(T+s) − r| ≤ max e₁ e₂`.  Prove it, do not `sorry` it.
+    2. **`G4EntropyWSqueeze.lean` — the mid-band ratio at an arbitrary read index.**  Skeleton
+       first (named `sorry` leaves, committed green), then: `winCount_split` at `T := fTW i`;
+       `fullW_prefix_winCount_bounds` for the band-`i` increment at `n = T + a·kk i`; the partial
+       window costs `≤ kk i`; **gated branch** via `aLe_fnthW` + `abs_prefix_ratio_sub_le_cap`;
+       **ungated branch** via `aLe_le_headW` + `head_frac_tiny`.  Output:
+       `|winCount v n / n − r| ≤ |winCount v (fTW i) / fTW i − r| + midErr i` at `i = fgrpW n`.
+    3. **The limit and the endpoint.**  `fgrpW n → ∞`; first term → 0 by `tendsto_fullWRead_freq`
+       at `i−1`; `midErr i → 0`; `eventually_ge_atTop` for `n < fTW 1`.  Then
+       `isNormalSequence_of_tendsto_winCount`, `properDigits_fullDigW`, `fullRealW`,
+       `Bridge.isNormal_realOfDigits` → **`IsNormal 2 fullRealW`**.  (`properDigits_fullDigW`
+       and `fullRealW` do not exist yet — write them; `exists_matchesAt_fullDigW` needs a wide
+       non-vacuity witness.)
+- 📌 **Leaf rule.**  Commit a compiling skeleton with named `sorry` leaves before each hard step,
+  and keep every leaf in `src/` — decomposition raises the `src/` count and that is progress.
+- ⛔ **Forbidden drift**: re-litigating the scale gap, the head obstruction, or the flank cap
+  (all three retired); retrying `Mprod`/the primorial as a `P₀` lower bound (refuted, lap 125 §1);
+  lowering the band floor; adding joint-ladder rungs or sharpening constants; touching
+  `fullReal`/`fullPos`/`bandT` and their theorems; editing any pre-expedition G4/G5 file;
+  `Adder*`, `CF*`, `Mahler*`, `LnTwo*`, `Stoneham*`, `PrimeLambertOscillation`; a trusted axiom
+  for any candidate lemma; appending to the BOTTOM of `PENDING_WORK.md`; and **claiming anything
+  about the normality of `G₄` itself**.
+- 🚦 **Route triggers**:
+    * **E-T12 (new, route-decisive)** — if the ungated branch's bound cannot be closed because
+      `head_frac_tiny`'s `headW (i+1)·kk (i+1)·KK (i+1) ≤ fTW (i+1)` is stated one level off from
+      where the squeeze needs it (i.e. the squeeze needs it at `i` with `i ≥ 1` and re-indexing
+      does not produce it), fix the indexing in `G4EntropyWHead`; if instead the head bound is
+      *quantitatively* too weak at the read index, write `ROUTE-ESCALATION-<date>.md` naming the
+      failing inequality.  Nothing else in this directive survives that.
+    * **E-T3** (kept) — two laps stalled on one assertion ⇒ decompose it in `PENDING_WORK.md`.
+    * **E-T7** (kept) — a lap that MEETS the 🎯 objective says so and does not pick its own next
+      target; the next altitude lap sets one.
+
+### Directive history (entropy expedition)
+* lap 51 → lap 119 → lap 122 → **lap 126**: lap 126 keeps the route and narrows the mandate to
+  lap-122 step 4 (the squeeze + the endpoint), the only obligation left before `IsNormal 2 fullRealW`.
+
+## SUPERSEDED DIRECTIVE — entropy expedition (set 2026-09-15, FRESH-MIND REVIEW lap 122; steps 1–3 DONE)
 
 *Altitude-lap section, inside the ACTIVE override's scope.  It OUTRANKS every HANDOFF, and it
 outranks the lap-119 directive below (whose steps 1–4 are DONE: `entropy_E1_march`,

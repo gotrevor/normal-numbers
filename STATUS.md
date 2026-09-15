@@ -21,8 +21,33 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (9012 jobs) ·
-**Updated**: entropy **review lap 122** · 2026-09-15 · `wip/g4-entropy` @ `6fe9ae2`
+· **Build**: 🟢 green (9021 jobs) ·
+**Updated**: entropy **review lap 126** · 2026-09-15 · `wip/g4-entropy` @ `e80ca1c`
+
+## 🧭 2026-09-15 (entropy **review lap 126**): the mid-band estimate is COMPLETE; only the squeeze and the endpoint remain
+
+**Build** 🟢 9021 jobs · `src/` carries exactly **two** `sorry`s, both pre-expedition and off-path ·
+`tendsto_fullWRead_freq`, `fullPosW_strictMono`, `abs_prefix_ratio_sub_le_cap`, `head_frac_tiny`,
+`fullW_prefix_winCount_bounds`, `aLe_fnthW`, `aLe_le_headW` all print the trust triple.
+
+Lap 122's mandated steps 1–3 all landed in laps 123–125:
+
+* **`G4EntropyWPrefix`** — the prefix read count (`startsLe`, `aLe`, the order-isomorphism
+  `image (fnthW i) (range (aLe i c)) = startsLe i c`, `fullGoodWPre`,
+  `fullW_prefix_winCount_bounds`).
+* **The sandwich, THE CRUX** — `pairsLe i c` bracketed by two honest truncations
+  `bandWtr i X₁ ×ˢ univ ⊆ pairsLe i c ⊆ bandWtr i X₂ ×ˢ univ` with `X₂/X₁ = 1 + O(1/K)`, then
+  **`abs_prefix_ratio_sub_le_cap`**: the mid-band word frequency at *every* cutoff above the gate,
+  with **no upper hypothesis** — the top-`O(1/K)` failure the route trigger E-T11 anticipated was
+  absorbed by capping both flanks at the tile top (`cutBot`/`cutTop`, `card_flank_ratio_cap`).
+* **`head_frac_tiny`** — the ungated head, on the new **lower** bound for `P₀`
+  (`G4GridP0Lower.P₀_growth`, from counting `Q`-separated *pairs* of same-layer atoms;
+  the `Mprod` and primorial routes are refuted by a log count and must not be retried).
+
+> **What is left is exactly one thing**: the monotone **squeeze** — the mediant lemma, the
+> band-`i` increment at an arbitrary read index `n` (gated branch via
+> `aLe_fnthW` + `abs_prefix_ratio_sub_le_cap`, ungated branch via `aLe_le_headW` + `head_frac_tiny`),
+> the limit at `i = fgrpW n`, and then `IsNormalSequence 2 (fullDigW …)` → **`IsNormal 2 fullRealW`**.
 
 ## 🧭 2026-09-15 (entropy **review lap 122**): the ladder's four steps are DONE; the last obligation is MID-BAND PREFIX CONTROL
 
@@ -726,19 +751,26 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-Campaign **entropy expedition** (ACTIVE) — `DIRECTION.md` CURRENT DIRECTIVE, **review lap 122**,
-MID-BAND PREFIX CONTROL toward `IsNormal 2 fullRealW`:
+Campaign **entropy expedition** (ACTIVE) — `DIRECTION.md` CURRENT DIRECTIVE, **review lap 126**,
+THE SQUEEZE AND THE ENDPOINT toward `IsNormal 2 fullRealW`:
+1. **`G4EntropyWMediant.lean`** — the schedule-free mediant lemma in `ℝ`.
+2. **`G4EntropyWSqueeze.lean`** — the read ratio at an arbitrary `n` (gated branch
+   `aLe_fnthW` + `abs_prefix_ratio_sub_le_cap`; ungated branch `aLe_le_headW` + `head_frac_tiny`).
+3. **The limit and the endpoint** — `fgrpW n → ∞`, `tendsto_fullWRead_freq`,
+   `isNormalSequence_of_tendsto_winCount`, `properDigits_fullDigW`, `fullRealW`,
+   `Bridge.isNormal_realOfDigits`.
+
+DONE in laps 123–125 (kept for provenance):
 1. **`G4EntropyWPrefix.lean`** — the prefix read count: `startsLe i c`, the order-isomorphism
    `image (fnthW i) (range (aLe i c)) = startsLe i c`, `fullGoodWPre`, and the prefix analogues of
-   `fullW_band_winCount_bounds` / `fullW_winCount_bounds`.  Mechanical; prove it.
+   `fullW_band_winCount_bounds` / `fullW_winCount_bounds`.  ✅
 2. **The sandwich — THE CRUX.**  `pairsLe i c := (bandWPairs i).filter (2·kIdx · ≤ c)`;
    `bandWtr i X₁ ×ˢ univ ⊆ pairsLe i c ⊆ bandWtr i X₂ ×ˢ univ` with `X₂/X₁ ≤ (K+1)/K·(1+2/c)`
    (`kIdx_cross`, `gridOf.mul_d_le_mul_d`); the cardinality ratio from `card_apSample_ge_half` /
-   `card_apSample_le`; the truncated overhang (`card_multi_atom_le_real_at`, already generic).
-3. **`head_frac_tiny`** — cutoffs below the gate `4·wFloor i + 4·P₀`: bound band `i`'s read
-   trivially and absorb into `fTW i` (imitate `granuleW_exceeds_previous_scale`).
-4. Then the monotone squeeze, `IsNormalSequence 2 (fullDigW …)`, `properDigits_fullDigW`,
-   `fullRealW`, and `Bridge.isNormal_realOfDigits` — the objective.
+   `card_apSample_le`; the truncated overhang (`card_multi_atom_le_real_at`, already generic).  ✅
+   (`abs_prefix_ratio_sub_le`, then `abs_prefix_ratio_sub_le_cap` with no upper hypothesis)
+3. **`head_frac_tiny`** — cutoffs below the gate `4·wFloor i + 4·P₀`.  ✅ (on `G4GridP0Lower.P₀_growth`)
+4. The monotone squeeze and the endpoint — **the only item still open**; see the lap-126 list above.
 
 Superseded short-term list (lap 37's three rungs — all MET, kept for provenance):
 1. **`G4EntropyOcc.lean`** — the counting bridge, **and the decisive probe**: `occCount s v n`
@@ -783,10 +815,11 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, re-run this lap (2026-09-15 entropy **review lap 122**, HEAD
-`6fe9ae2`, build 🟢 9012 jobs).  **Re-verified this lap**: `tendsto_fullWRead_freq`,
-`fullPosW_strictMono`, `tendsto_fullRead_freq`, `entropy_E1_march`, `entropy_E1_tile`,
-`isDisjunctive_two`, `isDisjunctive_four` — all exactly `[propext, Classical.choice, Quot.sound]`.
+Real `#print axioms` output, re-run this lap (2026-09-15 entropy **review lap 126**, HEAD
+`e80ca1c`, build 🟢 9021 jobs).  **Re-verified this lap**: `tendsto_fullWRead_freq`,
+`fullPosW_strictMono`, `abs_prefix_ratio_sub_le_cap`, `head_frac_tiny`,
+`fullW_prefix_winCount_bounds`, `aLe_fnthW`, `aLe_le_headW` — all exactly
+`[propext, Classical.choice, Quot.sound]`.
 `entropy_E1_tile`'s lap-119 `sorryAx` is **gone**: its leaf `entropy_E1_march` is now a theorem.
 **Math-axiom count in the entropy wing: 0** — every headline
 below prints exactly the trust triple `[propext, Classical.choice, Quot.sound]`, with no
@@ -822,6 +855,8 @@ real inequalities that live in the witness.
 | `G4.Sched.entropy_E1_march` | **E1 on the marched `(K, j)` ladder** — the deficit bound at every marched outer scale (uncond.) | trust triple | 🟢 clean (2026-09-15) — retires the scale gap: `entropy_E1_tile` is now unconditional |
 | `G4.Sched.entropy_E1_tile` | **E1 at EVERY outer scale in `[Xlo K, Xlo (K+4)]`** — the certified windows tile with no hole (uncond.) | trust triple | 🟢 clean (2026-09-15) — was `sorryAx`-gated at lap 119 |
 | `G4.Sched.tendsto_fullWRead_freq` / `fullPosW_strictMono` | **every finite binary word has frequency `2^{−|v|}` in `G₄`'s digits read along the strictly increasing, schedule-only `fullPosW`, at the band cutoffs `fTW (i+1)`** (uncond.) | trust triple | 🟢 clean (lap 121) — the frequency half of the live objective; **not** a normality claim yet (all `n` still open: MID-BAND PREFIX CONTROL) |
+| `G4.Sched.abs_prefix_ratio_sub_le_cap` | **mid-band prefix control**: at every position cutoff `c` above the gate, the prefix read's word frequency is within `2√(808 log2·ℓ/√K) + 128/K` of `2^{−ℓ}` (uncond.) | trust triple | 🟢 clean (lap 125) — the crux of the last obligation; no upper hypothesis on `c` |
+| `G4.Sched.head_frac_tiny` | **the ungated head is negligible**: `headW(i+1)·kk(i+1)·KK(i+1) ≤ fTW(i+1)`, i.e. band `i+1`'s pre-gate read is a `1/K` fraction of the history (uncond.) | trust triple | 🟢 clean (lap 125) — rests on the new `P₀` lower bound `G4GridP0Lower.P₀_growth` |
 | `G4.isDisjunctive_base` | **`3 ≤ b → IsDisjunctive b (∑_n ω(n)/bⁿ)`** — UNCONDITIONAL, the campaign endpoint generalised (brief §7.1) | trust triple | 🟢 clean — no `sorry`, no `native_decide`, no local axiom in the cone |
 | `G4.isDisjunctive_four` / `isDisjunctive_two` | **G₄ disjunctive in base 4 and base 2** — UNCONDITIONAL, the attended frozen endpoint | trust triple | 🟢 clean |
 | `G4.isDisjunctive_primeSum` / `every_word_occurs_base` / `isDisjunctive_root` | prime-sum form, every finite word, root bases (uncond.) | trust triple | 🟢 clean |

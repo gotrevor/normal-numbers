@@ -3,7 +3,53 @@
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
 > section; do **not** append to the bottom.
 
-## 🎯 ACTIVE (entropy **review lap 122**, 2026-09-15) — MID-BAND PREFIX CONTROL
+## 🎯 ACTIVE (entropy **review lap 126**, 2026-09-15) — THE SQUEEZE AND THE ENDPOINT
+
+**Read `DIRECTION.md`'s CURRENT DIRECTIVE (lap 126) first; it outranks any handoff.**
+
+Lap 122's steps 1–3 are DONE (laps 123–125): `G4EntropyWPrefix`, the sandwich +
+`abs_prefix_ratio_sub_le_cap` (no upper hypothesis; flanks capped at `wTop i`), and
+`head_frac_tiny` on the new `G4GridP0Lower.P₀_growth`.  **One obligation is left.**
+
+### The attack path (concrete, do not re-derive)
+
+For `fTW i ≤ n < fTW (i+1)`, `i ≥ 1`; `T := fTW i`, `s := n − T`, `a := s / kk i`,
+`G := winCount v T`, `D := winCount v n − G`, `r := 2^{−ℓ}`, `F := kk i − ℓ + 1`.
+
+1. **`G4EntropyWMediant.lean` — the mediant lemma** (schedule-free, `ℝ`):
+   `(r−e₁)T ≤ G ≤ (r+e₁)T`, `(r−e₂)s ≤ D ≤ (r+e₂)s`, `0 < T`, `0 ≤ s`
+   ⇒ `|(G+D)/(T+s) − r| ≤ max e₁ e₂`.  Pure algebra: `(G+D) − r(T+s) = (G−rT) + (D−rs)`.
+2. **`G4EntropyWSqueeze.lean` — the band-`i` increment.**  `winCount_split` at `T`;
+   `fullW_prefix_winCount_bounds x i a v` gives
+   `fullGoodWPre i a ≤ winCount v (T + a·kk i) ≤ fullGoodWPre i a + T + a·ℓ`;
+   the partial window costs `≤ kk i` (`winCount` monotone, increments `≤ n−m`);
+   `s ∈ [a·kk i, (a+1)·kk i)`.
+3. **Gated branch** (`8·wFloor i ≤ cutLo i c`, `c := fnthW i (a−1)`, `a ≥ 1`): `aLe_fnthW`
+   turns the read index into the cutoff (`aLe i c = a`), then `abs_prefix_ratio_sub_le_cap`
+   gives `|fullGoodWPre i a/(a·F) − r| ≤ ε_i + 128/K_i`; `F/kk i = 1 − O(ℓ/kk i)` converts to
+   `|D/s − r| ≤ ε_i + 128/K_i + O(ℓ/kk i)`.
+4. **Ungated branch**: `aLe_le_headW` gives `a ≤ headW i`, and `head_frac_tiny` gives
+   `a·kk i·KK i ≤ T`, so `s ≤ T/KK i + kk i` and directly
+   `|(G+D)/(T+s) − r| ≤ |G/T − r| + 2/KK i` (use `D ≤ s`, `G/(T+s) ≥ (G/T)(1 − 1/KK i)`).
+5. **The limit.**  `|winCount v n/n − r| ≤ |winCount v (fTW i)/fTW i − r| + midErr i` at
+   `i = fgrpW n`; `fgrpW n → ∞` (`self_le_fTW`, `lt_fTW_fgrpW_succ`); the first term → 0 by
+   `tendsto_fullWRead_freq` at `i−1`; `midErr i → 0`.  `n < fTW 1` by `eventually_ge_atTop`.
+6. **The endpoint.**  `isNormalSequence_of_tendsto_winCount` →
+   `IsNormalSequence 2 (fullDigW (primeLambertAtBase 4))`; then `properDigits_fullDigW`,
+   `fullRealW`, `Bridge.isNormal_realOfDigits` → **`IsNormal 2 fullRealW`**.
+   (`properDigits_fullDigW`, `fullRealW` do not exist yet; `exists_matchesAt_fullDigW` needs a
+   wide non-vacuity witness.)
+
+### Refuted, do not retry
+* `Mprod = ∏_α d_α²  ≥ gridQ^{2|Atom|}` and the primorial as routes to a `P₀` **lower** bound
+  (lap 125 §1: `log Mprod(K+4) ≈ K^{6K}` against `log P₀(K) ≳ K^{8K}`).
+* `abs_prefix_ratio_sub_le`'s **upper hypothesis** `cutHi i c ≤ wTop i` — genuinely false for the
+  top `O(1/K)` of each band.  The cap (`cutBot`/`cutTop`) is the fix; `abs_prefix_ratio_sub_le_cap`
+  is the statement to use.
+
+---
+
+## 🗂️ SUPERSEDED ACTIVE (entropy **review lap 122**, 2026-09-15) — MID-BAND PREFIX CONTROL
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
 
