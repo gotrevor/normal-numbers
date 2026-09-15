@@ -33,6 +33,17 @@ The point is that the confinement is a property of the **multipliers**, not of t
 handoff finds them all class-uniform), but because the *payoff* is unavailable: the union over
 every residue class still misses more than half of every prefix, so it can never read density
 one.  The surviving arithmetic gap is named there: it is not an estimate, it is `d_α ∣ kIdx`.
+
+**Scope (attended correction, 2026-09-14 brief).**  This is a theorem about the sampler it
+defines: `sampledPosOf` reads windows at the **re-centred** index
+`kIdxOf G b n α = (n − b mod d_α²)/d_α`, which subtracts the whole residue `b mod d_α²`.  That
+is *not* the physical orbit index `(n − t_α)/d_α` once the multiplier residue `c` varies: for
+`n = t + d·c + d²·q` the physical index is `c + d·q` and the re-centred one is `d·q`
+(`G4Confine.recentring`; `d = 5, t = 1, c = 2, q = 3, n = 86` gives `17` vs `15`).  So the
+verdict closes objective B *as posed* (this sampler, this read), and is not a universal
+impossibility theorem about every way of varying the CRT phases.  The physically indexed
+confinement bound — with no frozen-residue input at all — is `G4ResidualConfinement`
+(`G4Confine.density_bound`, `Sched.confinement_at_scale`).
 -/
 
 open Finset
@@ -138,16 +149,21 @@ namespace NormalNumbers.G4.Sched
 
 open NormalNumbers NormalNumbers.G4 NormalNumbers.G4Entropy Finset
 
-/-- **B's verdict, as a theorem: moving the residue class cannot help.**
+/-- **B's verdict, as a theorem: moving the residue class does not help *this* sampler.**
 
 At scale `i`, for *any* set `B` of residue classes mod `P₀` — every class, if you like, each
-with its own frozen multiplier residues — the digit positions the classes read below `L` are
-less than half of `[0, L)`, for every prefix length `L ≥ 2·dmin i`.
+with its own frozen multiplier residues — the digit positions the classes read below `L`
+**through `sampledPosOf`, i.e. at the re-centred index `kIdxOf`**, are less than half of
+`[0, L)`, for every prefix length `L ≥ 2·dmin i`.
 
-So the union over classes does **not** read density one, and the hypothesis objective B hoped to
-place on it cannot force normality of `G₄`.  The obstruction is not an estimate in the E0 cone:
-it is the structural identity `d_α ∣ kIdxOf G b n α`, which `exists_kIdxOf_eq` shows holds in
-every class, exactly as `kIdx_spec` shows it in `b₀`'s. -/
+So the union over classes, read this way, does **not** read density one, and the hypothesis
+objective B hoped to place on it cannot force normality of `G₄`.  The obstruction is not an
+estimate in the E0 cone: it is the structural identity `d_α ∣ kIdxOf G b n α`, which
+`exists_kIdxOf_eq` shows holds in every class, exactly as `kIdx_spec` shows it in `b₀`'s.
+
+Scope: `kIdxOf` is not the physical orbit index when the residue varies (module docstring);
+this is a statement about the defined sampler, not a universal impossibility for every way of
+varying the CRT phases.  The physically indexed bound is `G4ResidualConfinement`. -/
 theorem not_dense_of_any_residue (i : ℕ) (B : Finset ℕ) (U : ℕ → Prop) [DecidablePred U]
     {L : ℕ} (hL : 2 * dmin i ≤ L)
     (hcov : ∀ j, j < L → U j →

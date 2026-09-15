@@ -58,7 +58,14 @@ G4Entropy.kIdxOf, exists_kIdxOf_eq      -- d_α ∣ kIdx in EVERY class (needs o
 G4Entropy.sampledPosOf, periodCol₀
 G4Entropy.card_filter_le_of_classes     -- ≤ |D|·((L/2dm)+1)·m, no |B| in it
 Sched.not_dense_of_any_residue          -- union over ANY set of classes misses half of [0,L)
+                                        --   (read at the RE-CENTRED index kIdxOf; see scope note)
 ```
+
+*Scope note (attended correction, 2026-09-14 brief; formalized 2026-09-15 in
+`G4ResidualConfinement.lean`): `kIdxOf = (n − b mod d_α²)/d_α` is not the physical orbit index
+`(n − t_α)/d_α` once the multiplier residue varies (`d=5,t=1,c=2,q=3,n=86`: 17 vs 15), so this
+closes B as posed for that sampler; it is not a universal impossibility for every way of varying
+the CRT phases.  The physically indexed bound is `G4Confine.density_bound`.*
 
 Class-side companion of `G4EntropyFamily.not_dense_of_scale` (which covered only grids, each
 sampling its own `b₀`).  Together they close the brief's §6 positive branch on both axes.
