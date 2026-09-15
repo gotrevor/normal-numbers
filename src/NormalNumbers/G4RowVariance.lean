@@ -1368,4 +1368,73 @@ theorem cancelled_union_le (i : ℕ)
     (fun ν hν => two_balanced_of_cancelled (hcancel ν hν) (hK' ν hν))
     hd ht hcop hP U hcov
 
+/-! ### Non-vacuity: rough primes of any prescribed total weight exist
+
+The hypotheses of the chain are only worth proving if they can be met.  The one that is not
+obviously satisfiable is the per-term variance: `Σ_{p ∈ S} (1/p − 1/p²) ≥ v` with **every** `p`
+above the roughness threshold `T`.  It is satisfiable for every `v`, because the sum of prime
+reciprocals diverges (`not_summable_one_div_on_primes`) — removing the finitely many primes below
+`T` removes at most `T` from the total. -/
+
+/-- **Rough primes of arbitrary total weight.**  For every roughness threshold `T ≥ 2` and every
+target `V`, some finite set of primes, all `≥ T`, has `Σ (1/p − 1/p²) ≥ V`. -/
+theorem exists_rough_primes (T : ℕ) (hT : 2 ≤ T) (V : ℝ) :
+    ∃ S : Finset ℕ, (∀ p ∈ S, Nat.Prime p) ∧ (∀ p ∈ S, T ≤ p) ∧
+      V ≤ ∑ p ∈ S, ((1 : ℝ) / p - ((1 : ℝ) / p) ^ 2) := by
+  classical
+  set f : ℕ → ℝ := Set.indicator {p | Nat.Prime p} (fun n : ℕ => (1 : ℝ) / n) with hf
+  have hfnn : ∀ n, 0 ≤ f n := fun n =>
+    Set.indicator_nonneg (fun p _ => by positivity) n
+  have htend := (not_summable_iff_tendsto_nat_atTop_of_nonneg hfnn).1
+    not_summable_one_div_on_primes
+  obtain ⟨M, hM⟩ := (Filter.tendsto_atTop.1 htend (2 * V + T)).exists
+  refine ⟨(Finset.range M).filter (fun n => Nat.Prime n ∧ T ≤ n),
+    fun p hp => (Finset.mem_filter.1 hp).2.1, fun p hp => (Finset.mem_filter.1 hp).2.2, ?_⟩
+  set A := (Finset.range M).filter (fun n => Nat.Prime n) with hA
+  set S := (Finset.range M).filter (fun n => Nat.Prime n ∧ T ≤ n) with hS
+  have hprimes : ∑ n ∈ Finset.range M, f n = ∑ n ∈ A, (1 : ℝ) / n := by
+    rw [hA, Finset.sum_filter]
+    exact Finset.sum_congr rfl fun n _ => by
+      simp [hf, Set.indicator_apply, Set.mem_setOf_eq]
+  have hSeq : S = A.filter (fun n => T ≤ n) := by
+    ext n
+    simp only [hS, hA, Finset.mem_filter, Finset.mem_range]
+    tauto
+  have hsplit : ∑ n ∈ A, (1 : ℝ) / n
+      = (∑ n ∈ A.filter (fun n => T ≤ n), (1 : ℝ) / n)
+        + ∑ n ∈ A.filter (fun n => ¬ T ≤ n), (1 : ℝ) / n :=
+    (Finset.sum_filter_add_sum_filter_not A _ _).symm
+  have hsmallpart : ∑ n ∈ A.filter (fun n => ¬ T ≤ n), (1 : ℝ) / n ≤ (T : ℝ) := by
+    have hsub : A.filter (fun n => ¬ T ≤ n) ⊆ Finset.range T := by
+      intro n hn
+      have h := (Finset.mem_filter.1 hn).2
+      exact Finset.mem_range.2 (by omega)
+    have hcard : (A.filter (fun n => ¬ T ≤ n)).card ≤ T := by
+      have := Finset.card_le_card hsub
+      simpa using this
+    calc ∑ n ∈ A.filter (fun n => ¬ T ≤ n), (1 : ℝ) / n
+        ≤ ∑ _n ∈ A.filter (fun n => ¬ T ≤ n), (1 : ℝ) := by
+          refine Finset.sum_le_sum fun n hn => ?_
+          have hp : Nat.Prime n := (Finset.mem_filter.1 (Finset.mem_filter.1 hn).1).2
+          have : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hp.one_lt.le
+          rw [div_le_one (by linarith)]; linarith
+      _ = ((A.filter (fun n => ¬ T ≤ n)).card : ℝ) := by
+          rw [Finset.sum_const, nsmul_eq_mul, mul_one]
+      _ ≤ (T : ℝ) := by exact_mod_cast hcard
+  have hbig : 2 * V + T ≤ ∑ n ∈ A, (1 : ℝ) / n := by rw [← hprimes]; exact hM
+  have hSsum : 2 * V ≤ ∑ p ∈ S, (1 : ℝ) / p := by
+    rw [hSeq]; linarith [hsplit ▸ hbig]
+  have hterm : ∀ p ∈ S, (1 : ℝ) / 2 * (1 / p) ≤ (1 : ℝ) / p - ((1 : ℝ) / p) ^ 2 := by
+    intro p hp
+    have hpp : Nat.Prime p := (Finset.mem_filter.1 hp).2.1
+    have h2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hp0 : (0 : ℝ) < p := by linarith
+    have h1 : (1 : ℝ) / p ≤ 1 / 2 := one_div_le_one_div_of_le (by norm_num) h2
+    have hnn : (0 : ℝ) ≤ 1 / p := by positivity
+    nlinarith
+  calc V = (1 : ℝ) / 2 * (2 * V) := by ring
+    _ ≤ (1 : ℝ) / 2 * ∑ p ∈ S, (1 : ℝ) / p := by linarith
+    _ = ∑ p ∈ S, (1 : ℝ) / 2 * (1 / p) := by rw [Finset.mul_sum]
+    _ ≤ ∑ p ∈ S, ((1 : ℝ) / p - ((1 : ℝ) / p) ^ 2) := Finset.sum_le_sum hterm
+
 end NormalNumbers.G4.RowVariance
