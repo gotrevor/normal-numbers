@@ -43,6 +43,26 @@ will speak for itself.")**  At most: make sure the module docstring of `G4Entrop
 `G4EntropyWStatement` states `fullRealW`'s definition and claim limits in one paragraph
 (density-zero read set; not normality of `G₄`; positions astronomically large).  No `docs/` essay.
 
+**Addendum 2026-09-15 00:05 EDT (attended, Ren): L1 ✅ L2 ✅ F ✅ (proved limitation of T(K′),
+`G4DeformationVerdict`) W ✅.  Stop condition met; do NOT file further stuck strikes.  New
+objective R, authorized for the rest of this run (Trevor: burn Fable tonight on this endeavor):**
+
+**R — row-balanced cancellation on `D_s^{⊗K}` (prove or refute).**  From
+`DESIGN-2026-09-15-deformation.md` §4: the only escape from (R1)–(R3) is a cancellation of the
+heavy layers that is NOT coordinatewise - on every row `ν` of the tensor matrix, the multiset of
+shifts `{ρ_{α,j} : α ∈ supp A_ν}` cancels with signs.  Question: does "balanced on every row of
+`D_s^{⊗K}`" force "ignores a coordinate"?  True for `K = 1` (adjacent pairs force `g` constant).
+Order: (R-a) write `DESIGN-2026-09-15-row-balanced.md` stating the exact combinatorial
+proposition over `ℤ` with `D_s` and the tensor rows made explicit, and its `K = 1` proof;
+(R-b) **probe before proving**: exhaustive/computational check at `K = 2` and `K = 3` for small
+`s` (a Python or `decide`-sized search; record the witness or the exhaustion), because a
+refutation at `K = 2` ends the question; (R-c) if it holds at small `K`, prove the general
+statement in a new module `G4RowBalanced.lean` (frozen `Prop` first, skeleton committed); if it
+fails, formalize the counterexample and state exactly what it buys - a non-coordinatewise
+cancellation is only useful if the transport identity + error term (§3) survive it, so (R-d)
+price that on paper before any claim.  This is a question about the tensor matrix, not about
+`G₄`; neither outcome is "normality of `G₄`".  Stop when R has a kernel verdict, else the cap.
+
 Preserved declarations, forbidden-drift list, one-writer-per-file, commit-a-skeleton-early,
 and the wrap's elaborator hygiene all apply.  Stop when F has its verdict (mechanism + isolated
 estimate, or proved limitation) with L1, L2 done; the cap otherwise.
