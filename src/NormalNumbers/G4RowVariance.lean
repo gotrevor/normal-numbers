@@ -1937,4 +1937,20 @@ theorem ptrFun_not_ignoring {K s : ℕ} (hK0 : 0 < K) (hK2 : 2 ≤ K) (hKs : K �
       simp [hz]
     rw [e1, e2]; norm_num
 
+/-- **The rigidity threshold is exact at every `K ≥ 3`.**  `ignores_coord_of_balanced_two` shows
+row-balance forces ignoring a coordinate at `K ≤ 2`.  At every `K ≥ 3` it does not: `ex` supplies
+the witness at `K = 3` (alphabet `s = 2`) and `ptrFun` at every `K ≥ 4` (alphabet `s = K − 1`).
+Neither outcome is a statement about `G₄`; and since `mdf_of_balanced` still applies, these
+witnesses are `MDF`, so the confinement of `union_le_of_determining` is untouched by them. -/
+theorem threshold_exact (K : ℕ) (hK : 3 ≤ K) :
+    ∃ (s : ℕ) (ρ : (Fin K → Fin (s + 1)) → ℤ), Balanced ρ ∧
+      (∀ i : Fin K, ∃ (α : Fin K → Fin (s + 1)) (b : Fin (s + 1)),
+        ρ (Function.update α i b) ≠ ρ α) := by
+  rcases eq_or_lt_of_le hK with h | h
+  · have hK3 : K = 3 := h.symm
+    subst hK3
+    exact ⟨2, ex, ex_balanced, ex_not_ignoring⟩
+  · refine ⟨K - 1, ptrFun (by omega), ptrFun_balanced (by omega) (by omega),
+      ptrFun_not_ignoring (by omega) (by omega) (by omega)⟩
+
 end NormalNumbers.G4.RowVariance
