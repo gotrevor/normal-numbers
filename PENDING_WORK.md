@@ -49,6 +49,12 @@ pairs among the `128` `0/1`-valued balanced functions before the clean witness w
 So the exponential `skel` is not an artifact of routing through `MDF`, and `dmin^{−H/2}` is not
 improvable by shrinking the determining set to the axes.
 
+### Refuted, do not retry (laps 163–164)
+* Shrinking the determining set for balance to the axis skeleton — `balance_not_determined_by_axes`.
+* Counting balanced families more tightly — `PROBE-2026-09-15-balanced-count.md`: the `skel`
+  bound is loose only by a constant factor in the exponent, which moves the coefficient and not
+  the density rate `dmin^{−H/2}`.
+
 ### Next (nothing on the critical path is open)
 * The two pre-expedition `sorry`s (`PrimeLambertOscillation.phaseOscillation`,
   `MahlerDriftOne.exists_drift_one_background`) remain on DIRECTION's forbidden-drift list.
