@@ -21,10 +21,46 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (9021 jobs) ·
-**Updated**: entropy **review lap 126** · 2026-09-15 · `wip/g4-entropy` @ `e80ca1c`
+· **Build**: 🟢 green (9024 jobs) ·
+**Updated**: entropy **lap 126** · 2026-09-15 · `wip/g4-entropy` @ `6abd3f0`
 
-## 🧭 2026-09-15 (entropy **review lap 126**): the mid-band estimate is COMPLETE; only the squeeze and the endpoint remain
+## 🏁 2026-09-15 (entropy **lap 126**): **`IsNormal 2 fullRealW` — THE EXPEDITION'S ENDPOINT, PROVED AND AXIOM-CLEAN**
+
+**Build** 🟢 9024 jobs.  `src/` carries exactly **two** `sorry`s, both pre-expedition and off-path
+(`PrimeLambertOscillation.phaseOscillation`, `MahlerDriftOne.exists_drift_one_background`); the
+entropy expedition's part of `src/` is **sorry-free**.
+
+> **`G4.Sched.isNormal_fullRealW : IsNormal 2 fullRealW`** — `[propext, Classical.choice, Quot.sound]`.
+
+`fullRealW = realOfDigits 2 (fullDigW (primeLambertAtBase 4))`: the real whose `j`-th **binary**
+digit is `G₄`'s `fullPosW j`-th binary digit.  `fullPosW` is `StrictMono` (`fullPosW_strictMono`)
+and takes **no real argument at all** — the machine-checkable form of "schedule only".  The
+unwound audit statement is `isNormal_two_of_schedule_read` (`G4EntropyWStatement`):
+
+> `∃ p, StrictMono p ∧ (∀ j, digitOf 2 fullRealW j = digitOf 2 (Int.fract G₄) (p j)) ∧ IsNormal 2 fullRealW`
+
+with `digitOf_fullRealW` as the faithfulness step (`fullRealW`'s **own** expansion is the read,
+not merely a number assembled from those digits).  Corollaries: `isDisjunctive_fullRealW`,
+`irrational_fullRealW`.
+
+**What closed it.**  Lap 122's steps 1–3 landed in laps 123–125 (`G4EntropyWPrefix`, the sandwich
+and `abs_prefix_ratio_sub_le_cap`, `head_frac_tiny` on the new `P₀` lower bound).  This lap's
+step 4:
+
+* **`kk_mul_KK_le_fTW`** — `head_frac_tiny` at `a = 1`: *one read window is a `1/KK` fraction of
+  the history before it*.  This one fact pays for the ungated head, the partial window and the
+  `a = 0` stub, none of which then needs a certificate.
+* **The threshold `a` vs `⌊√(KK j)⌋`** — a *fixed* split cannot work (at `a = 1` the certified
+  branch's leftover `2·kk/s` is `O(1)`), so the branches are balanced at `2/√K` each.
+* `mediant_abs_le` (deviations of history and increment simply add), `incr_bounds`,
+  `mid_assemble_gated`/`_trivial`, 🎯 **`abs_ratio_mid_le`**, `tendsto_midErrW`,
+  `tendsto_fgrpW_atTop`, `tendsto_winCount_fullDigW`, `isNormalSequence_fullDigW`,
+  `properDigits_fullDigW`.
+
+`exists_matchesAt_fullDigW` needed no separate non-vacuity witness after all: once the frequency
+limit holds at every `n`, the limit `2^{−|v|} > 0` forces `winCount v n > 0` directly.
+
+## 🧭 2026-09-15 (entropy **review lap 126, opening**): the mid-band estimate is COMPLETE; only the squeeze and the endpoint remain
 
 **Build** 🟢 9021 jobs · `src/` carries exactly **two** `sorry`s, both pre-expedition and off-path ·
 `tendsto_fullWRead_freq`, `fullPosW_strictMono`, `abs_prefix_ratio_sub_le_cap`, `head_frac_tiny`,
@@ -751,14 +787,24 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-Campaign **entropy expedition** (ACTIVE) — `DIRECTION.md` CURRENT DIRECTIVE, **review lap 126**,
-THE SQUEEZE AND THE ENDPOINT toward `IsNormal 2 fullRealW`:
-1. **`G4EntropyWMediant.lean`** — the schedule-free mediant lemma in `ℝ`.
-2. **`G4EntropyWSqueeze.lean`** — the read ratio at an arbitrary `n` (gated branch
-   `aLe_fnthW` + `abs_prefix_ratio_sub_le_cap`; ungated branch `aLe_le_headW` + `head_frac_tiny`).
-3. **The limit and the endpoint** — `fgrpW n → ∞`, `tendsto_fullWRead_freq`,
-   `isNormalSequence_of_tendsto_winCount`, `properDigits_fullDigW`, `fullRealW`,
-   `Bridge.isNormal_realOfDigits`.
+Campaign **entropy expedition** — 🏁 **OBJECTIVE MET (lap 126)**: `IsNormal 2 fullRealW` is
+proved and axiom-clean, so `DIRECTION.md`'s lap-126 CURRENT DIRECTIVE and the ACTIVE operator
+override's stop condition ("stop when the endpoint is proved axiom-clean") are both discharged.
+Per route trigger **E-T7**, the lap that meets the objective does **not** pick its own successor;
+the next altitude lap sets one.  Candidates it should weigh (recorded, not chosen):
+* **`IsNormal 4 fullRealW`, and `IsNormal (2^k)`** — the natural strengthening of the *same*
+  object.  Requires the read's word frequencies **restricted to positions in a fixed residue
+  class mod `k`**.  The entropy machinery does support this: the block-entropy deficit over a
+  sub-class of positions is bounded by the *total* deficit `ℓ·δ`, so Pinsker costs only a factor
+  `√k`.  What is new is tracking the parity of `fTW i + a·kk i + q` across window boundaries.
+  (Going through Wall + Maxfield instead is a genuinely harder classical theorem — do not assume
+  it is the cheap route.)
+* Anything about `G₄` itself remains **forbidden** by the ACTIVE override.
+
+DONE in lap 126 (kept for provenance):
+1. **`G4EntropyWMediant.lean`** — the schedule-free mediant lemma in `ℝ`.  ✅
+2. **`G4EntropyWSqueeze.lean`** — the read ratio at an arbitrary `n`.  ✅
+3. **The limit and the endpoint.**  ✅  `G4EntropyWStatement.lean` is the audit surface.
 
 DONE in laps 123–125 (kept for provenance):
 1. **`G4EntropyWPrefix.lean`** — the prefix read count: `startsLe i c`, the order-isomorphism
@@ -815,10 +861,12 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, re-run this lap (2026-09-15 entropy **review lap 126**, HEAD
-`e80ca1c`, build 🟢 9021 jobs).  **Re-verified this lap**: `tendsto_fullWRead_freq`,
-`fullPosW_strictMono`, `abs_prefix_ratio_sub_le_cap`, `head_frac_tiny`,
-`fullW_prefix_winCount_bounds`, `aLe_fnthW`, `aLe_le_headW` — all exactly
+Real `#print axioms` output, re-run this lap (2026-09-15 entropy **lap 126**, HEAD `6abd3f0`,
+build 🟢 9024 jobs).  **Re-verified this lap**: `isNormal_fullRealW`,
+`isNormal_two_of_schedule_read`, `digitOf_fullRealW`, `isDisjunctive_fullRealW`,
+`irrational_fullRealW`, `isNormalSequence_fullDigW`, `tendsto_winCount_fullDigW`,
+`abs_ratio_mid_le`, `tendsto_fullWRead_freq`, `fullPosW_strictMono`,
+`abs_prefix_ratio_sub_le_cap`, `head_frac_tiny` — all exactly
 `[propext, Classical.choice, Quot.sound]`.
 `entropy_E1_tile`'s lap-119 `sorryAx` is **gone**: its leaf `entropy_E1_march` is now a theorem.
 **Math-axiom count in the entropy wing: 0** — every headline
@@ -855,6 +903,10 @@ real inequalities that live in the witness.
 | `G4.Sched.entropy_E1_march` | **E1 on the marched `(K, j)` ladder** — the deficit bound at every marched outer scale (uncond.) | trust triple | 🟢 clean (2026-09-15) — retires the scale gap: `entropy_E1_tile` is now unconditional |
 | `G4.Sched.entropy_E1_tile` | **E1 at EVERY outer scale in `[Xlo K, Xlo (K+4)]`** — the certified windows tile with no hole (uncond.) | trust triple | 🟢 clean (2026-09-15) — was `sorryAx`-gated at lap 119 |
 | `G4.Sched.tendsto_fullWRead_freq` / `fullPosW_strictMono` | **every finite binary word has frequency `2^{−|v|}` in `G₄`'s digits read along the strictly increasing, schedule-only `fullPosW`, at the band cutoffs `fTW (i+1)`** (uncond.) | trust triple | 🟢 clean (lap 121) — the frequency half of the live objective; **not** a normality claim yet (all `n` still open: MID-BAND PREFIX CONTROL) |
+| 🏁 **`G4.Sched.isNormal_fullRealW`** / **`isNormal_two_of_schedule_read`** | **`IsNormal 2 fullRealW`** — a strictly increasing, schedule-only read of `G₄`'s binary digits is the binary expansion of a number normal in base two (uncond.) | trust triple | 🟢 clean (lap 126) — **the entropy expedition's endpoint**; says nothing about the normality of `G₄` itself |
+| `G4.Sched.digitOf_fullRealW` | `fullRealW`'s **own** base-two expansion is that read (uncond.) | trust triple | 🟢 clean (lap 126) — the faithfulness step of the headline |
+| `G4.Sched.isDisjunctive_fullRealW` / `irrational_fullRealW` | `fullRealW` is disjunctive in base two, hence irrational (uncond.) | trust triple | 🟢 clean (lap 126) |
+| `G4.Sched.abs_ratio_mid_le` | **mid-band control at an ARBITRARY read index**: the read ratio at any `n` is within `midErrW` of its value at the band cutoff (uncond.) | trust triple | 🟢 clean (lap 126) — the last structural obligation |
 | `G4.Sched.abs_prefix_ratio_sub_le_cap` | **mid-band prefix control**: at every position cutoff `c` above the gate, the prefix read's word frequency is within `2√(808 log2·ℓ/√K) + 128/K` of `2^{−ℓ}` (uncond.) | trust triple | 🟢 clean (lap 125) — the crux of the last obligation; no upper hypothesis on `c` |
 | `G4.Sched.head_frac_tiny` | **the ungated head is negligible**: `headW(i+1)·kk(i+1)·KK(i+1) ≤ fTW(i+1)`, i.e. band `i+1`'s pre-gate read is a `1/K` fraction of the history (uncond.) | trust triple | 🟢 clean (lap 125) — rests on the new `P₀` lower bound `G4GridP0Lower.P₀_growth` |
 | `G4.isDisjunctive_base` | **`3 ≤ b → IsDisjunctive b (∑_n ω(n)/bⁿ)`** — UNCONDITIONAL, the campaign endpoint generalised (brief §7.1) | trust triple | 🟢 clean — no `sorry`, no `native_decide`, no local axiom in the cone |
