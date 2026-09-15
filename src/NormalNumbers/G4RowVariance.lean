@@ -578,4 +578,57 @@ theorem rough_variance_lower {Q c N : ℕ} (hQ : 0 < Q) (hN : 0 < N) (r : ℤ)
     exact avg_indicator_dvd_progression (Nat.mul_pos (hpos p hp) (hpos q hq)) hQ
       ((hQcop p hp).mul_right (hQcop q hq)) c r hN
 
+
+/-! ### Joint frequencies at *distinct* shifts
+
+The cross-shift correlation `ε` of `rowVariance_half` needs the joint frequency of
+`p ∣ n + r` and `q ∣ n + r'` for `p ≠ q` and *different* shifts.  That is no longer a single
+divisibility, but by CRT it is still a single congruence class — mod `p·q` — so the same interval
+count applies. -/
+
+/-- Two congruence conditions at coprime moduli are one congruence class mod the product. -/
+lemma exists_class_of_two {p q : ℕ} (hpq : Nat.Coprime p q) (w w' : ℕ) :
+    ∃ w'' : ℕ, ∀ k : ℕ, ((k ≡ w [MOD p] ∧ k ≡ w' [MOD q]) ↔ k ≡ w'' [MOD (p * q)]) := by
+  refine ⟨(Nat.chineseRemainder hpq w w' : ℕ), fun k => ⟨fun h => ?_, fun h => ?_⟩⟩
+  · exact Nat.chineseRemainder_modEq_unique hpq h.1 h.2
+  · have h1 : k ≡ (Nat.chineseRemainder hpq w w' : ℕ) [MOD p] :=
+      h.of_dvd (Dvd.intro _ rfl)
+    have h2 : k ≡ (Nat.chineseRemainder hpq w w' : ℕ) [MOD q] :=
+      h.of_dvd (Dvd.intro_left _ rfl)
+    exact ⟨h1.trans (Nat.chineseRemainder hpq w w').prop.1,
+      h2.trans (Nat.chineseRemainder hpq w w').prop.2⟩
+
+/-- **The joint frequency at distinct shifts.**  On the progression sample, the frequency of
+`p ∣ n + r` and `q ∣ n + r'` together is `1/(pq)` up to `1/N`. -/
+theorem avg_indicator_dvd_two_progression {p q Q : ℕ} (hp : 0 < p) (hq : 0 < q) (hQ : 0 < Q)
+    (hpq : Nat.Coprime p q) (hQp : Nat.Coprime Q p) (hQq : Nat.Coprime Q q)
+    (c : ℕ) (r r' : ℤ) {N : ℕ} (hN : 0 < N) :
+    |avg ((Finset.range N).image (fun k => c + Q * k))
+        (fun n => (if (p : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0)
+          * (if (q : ℤ) ∣ ((n : ℤ) + r') then (1 : ℝ) else 0))
+      - 1 / ((p * q : ℕ) : ℝ)| ≤ 1 / N := by
+  classical
+  obtain ⟨w, hw⟩ := exists_class_of_coprime hp hQp c r
+  obtain ⟨w', hw'⟩ := exists_class_of_coprime hq hQq c r'
+  obtain ⟨w'', hw''⟩ := exists_class_of_two hpq w w'
+  rw [avg_image_progression c Q N hQ]
+  have hre : (fun k : ℕ => (if (p : ℤ) ∣ (((c + Q * k : ℕ) : ℤ) + r) then (1 : ℝ) else 0)
+      * (if (q : ℤ) ∣ (((c + Q * k : ℕ) : ℤ) + r') then (1 : ℝ) else 0))
+      = (fun k : ℕ => if k ≡ w'' [MOD (p * q)] then (1 : ℝ) else 0) := by
+    funext k
+    have e1 : ((p : ℤ) ∣ (((c + Q * k : ℕ) : ℤ) + r)) ↔ k ≡ w [MOD p] := by
+      rw [show (((c + Q * k : ℕ) : ℤ) + r) = ((c : ℤ) + Q * k + r) from by push_cast; ring]
+      exact hw k
+    have e2 : ((q : ℤ) ∣ (((c + Q * k : ℕ) : ℤ) + r')) ↔ k ≡ w' [MOD q] := by
+      rw [show (((c + Q * k : ℕ) : ℤ) + r') = ((c : ℤ) + Q * k + r') from by push_cast; ring]
+      exact hw' k
+    by_cases h1 : k ≡ w [MOD p]
+    · by_cases h2 : k ≡ w' [MOD q]
+      · rw [if_pos (e1.2 h1), if_pos (e2.2 h2), if_pos ((hw'' k).1 ⟨h1, h2⟩)]; norm_num
+      · rw [if_pos (e1.2 h1), if_neg (fun hc => h2 (e2.1 hc)),
+          if_neg (fun hc => h2 ((hw'' k).2 hc).2)]; norm_num
+    · rw [if_neg (fun hc => h1 (e1.1 hc)), if_neg (fun hc => h1 ((hw'' k).2 hc).1)]; norm_num
+  rw [hre]
+  exact avg_indicator_modEq_sub_le (Nat.mul_pos hp hq) hN w''
+
 end NormalNumbers.G4.RowVariance
