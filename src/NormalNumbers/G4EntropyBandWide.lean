@@ -158,7 +158,8 @@ theorem wPosTop_le_wLo_succ (i : ℕ) : wPosTop i ≤ wLo (i + 1) := by
 
 lemma wPosTop_eq (i : ℕ) : wPosTop i = 2 * wTop i + kk i := rfl
 
-attribute [local irreducible] Xlo wLo wFloor wTop wPosTop
+attribute [local irreducible] Xlo
+attribute [irreducible] wLo wFloor wTop wPosTop
 
 open Classical in
 /-- The wide band, truncated at the outer scale `X'`: the truncated sample above the raised
