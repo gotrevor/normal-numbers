@@ -239,6 +239,7 @@ rough primes `T < p ≤ R` this gives `v = Σ_p (1/p)(1 − 1/p) ≍ log(log R /
 So input (1) reduces to the same CRT frequency statement input (2) needs — the two inputs are one
 input. -/
 
+omit [Fintype ι] in
 lemma avg_double_sum' (P : Finset ℕ) (S : Finset ι) (F : ι → ι → ℕ → ℝ) :
     avg P (fun n => ∑ i ∈ S, ∑ j ∈ S, F i j n) = ∑ i ∈ S, ∑ j ∈ S, avg P (F i j) := by
   unfold avg
@@ -246,6 +247,7 @@ lemma avg_double_sum' (P : Finset ℕ) (S : Finset ι) (F : ι → ι → ℕ �
   refine Finset.sum_congr rfl fun i _ => ?_
   rw [Finset.sum_comm, Finset.sum_div]
 
+omit [Fintype ι] in
 /-- **The second moment of a centred indicator sum is an identity.**  Pairwise independence on the
 sample plus idempotence give `avg (Σ (X_i − a_i))² = Σ a_i(1 − a_i)` exactly. -/
 theorem avg_sq_centred_sum (P : Finset ℕ) (hP : P.Nonempty) (S : Finset ι)
@@ -286,6 +288,7 @@ theorem avg_sq_centred_sum (P : Finset ℕ) (hP : P.Nonempty) (S : Finset ι)
   refine Finset.sum_congr rfl fun i hi => ?_
   rw [Finset.sum_ite_eq S i (fun _ => a i - (a i) ^ 2), if_pos hi]
 
+omit [Fintype ι] in
 /-- The packaged non-degeneracy: with pairwise-independent centred indicators, the per-term second
 moment is bounded below by `Σ a_i(1 − a_i)` — input (1) of `rowVariance_half`, discharged into the
 same CRT frequency statement input (2) needs. -/
@@ -378,6 +381,7 @@ slack `δ`.  The proof is the same expansion: the diagonal loses `δ` (idempoten
 `a_i − a_i²` up to the frequency error), and each off-diagonal entry, instead of vanishing, is
 bounded below by `−3δ` once the `a_i` are genuine frequencies in `[0,1]`. -/
 
+omit [Fintype ι] in
 theorem avg_sq_centred_sum_approx (P : Finset ℕ) (hP : P.Nonempty) (S : Finset ι)
     (X : ι → ℕ → ℝ) (a : ι → ℝ) {δ : ℝ} (hδ : 0 ≤ δ)
     (hidem : ∀ i ∈ S, ∀ n, X i n * X i n = X i n)
@@ -513,5 +517,65 @@ theorem avg_indicator_dvd_progression {p Q : ℕ} (hp : 0 < p) (hQ : 0 < Q)
     · rw [if_neg (fun hc => h (this.1 hc)), if_neg h]
   rw [hre]
   exact avg_indicator_modEq_sub_le hp hN w
+
+
+/-! ### Assembly: the rough-prime variance on the schedule's sample
+
+Everything above is now instantiated at the real object.  `S` is a finite set of rough primes,
+pairwise coprime and coprime to the frozen modulus `Q`; the sample is the progression
+`{c + Qk : k < N}`; the fluctuation at shift `r` is `X_p(n) = 1[p ∣ n + r] − 1/p`.  The two
+hypotheses `avg_sq_centred_sum_approx` needs are supplied by `avg_indicator_dvd_progression`:
+singly at modulus `p`, and pairwise at modulus `p·q` — legitimate because `p ∣ m ∧ q ∣ m ↔ pq ∣ m`
+for coprime `p, q`. -/
+
+theorem rough_variance_lower {Q c N : ℕ} (hQ : 0 < Q) (hN : 0 < N) (r : ℤ)
+    (S : Finset ℕ) (hpos : ∀ p ∈ S, 0 < p)
+    (hQcop : ∀ p ∈ S, Nat.Coprime Q p)
+    (hcop : ∀ p ∈ S, ∀ q ∈ S, p ≠ q → Nat.Coprime p q) :
+    (∑ p ∈ S, ((1 : ℝ) / p - ((1 : ℝ) / p) ^ 2)) - 3 * (1 / (N : ℝ)) * (S.card : ℝ) ^ 2
+      ≤ avg ((Finset.range N).image (fun k => c + Q * k))
+          (fun n => (∑ p ∈ S, ((if (p : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0) - 1 / p)) ^ 2) := by
+  classical
+  set P := (Finset.range N).image (fun k => c + Q * k) with hPdef
+  have hPne : P.Nonempty := by
+    refine ⟨c + Q * 0, Finset.mem_image.2 ⟨0, Finset.mem_range.2 hN, rfl⟩⟩
+  have hδ : (0 : ℝ) ≤ 1 / (N : ℝ) := by positivity
+  refine avg_sq_centred_sum_approx P hPne S
+    (fun p n => if (p : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0) (fun p => 1 / p) hδ
+    (fun p _ n => by split_ifs <;> norm_num) (fun p hp => ?_) (fun p hp => ?_) (fun p hp q hq hne => ?_)
+  · have h1 : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpos p hp
+    constructor
+    · positivity
+    · rw [div_le_one (by linarith)]; linarith
+  · exact avg_indicator_dvd_progression (hpos p hp) hQ (hQcop p hp) c r hN
+  · -- the pair indicator is the indicator of divisibility by `p * q`
+    have hpq : ∀ n : ℕ, ((if (p : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0)
+        * (if (q : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0))
+        = if ((p * q : ℕ) : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0 := by
+      intro n
+      have hiff : ((p : ℤ) ∣ ((n : ℤ) + r) ∧ (q : ℤ) ∣ ((n : ℤ) + r))
+          ↔ ((p * q : ℕ) : ℤ) ∣ ((n : ℤ) + r) := by
+        constructor
+        · rintro ⟨h1, h2⟩
+          have hcz : IsCoprime (p : ℤ) (q : ℤ) :=
+            Nat.isCoprime_iff_coprime.2 (hcop p hp q hq hne)
+          push_cast
+          exact hcz.mul_dvd h1 h2
+        · intro h
+          push_cast at h
+          exact ⟨dvd_trans (Dvd.intro _ rfl) h, dvd_trans (Dvd.intro_left _ rfl) h⟩
+      by_cases h1 : (p : ℤ) ∣ ((n : ℤ) + r)
+      · by_cases h2 : (q : ℤ) ∣ ((n : ℤ) + r)
+        · rw [if_pos h1, if_pos h2, if_pos (hiff.1 ⟨h1, h2⟩)]; norm_num
+        · rw [if_pos h1, if_neg h2, if_neg (fun hc => h2 (hiff.2 hc).2)]; norm_num
+      · rw [if_neg h1, if_neg (fun hc => h1 (hiff.2 hc).1)]; norm_num
+    rw [show (fun n : ℕ => (if (p : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0)
+        * (if (q : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0))
+        = (fun n : ℕ => if ((p * q : ℕ) : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0) from
+      funext (fun n => hpq n)]
+    have hmul : (1 : ℝ) / p * (1 / q) = 1 / ((p * q : ℕ) : ℝ) := by push_cast; ring
+    rw [hmul]
+    exact avg_indicator_dvd_progression (Nat.mul_pos (hpos p hp) (hpos q hq)) hQ
+      ((hQcop p hp).mul_right (hQcop q hq)) c r hN
 
 end NormalNumbers.G4.RowVariance
