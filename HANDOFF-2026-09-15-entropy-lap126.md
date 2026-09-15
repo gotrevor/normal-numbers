@@ -1,6 +1,7 @@
 # HANDOFF — lap 126: 🏁 `IsNormal 2 fullRealW` — the expedition's endpoint, proved
 
-**Branch** `wip/g4-entropy`.  **HEAD** `6abd3f0`+.  `lake build` 🟢 **9024 jobs**.
+**Branch** `wip/g4-entropy`.  **HEAD** `6c40f85`.  Working tree **clean**.
+`lake build` 🟢 **9025 jobs**.
 `src/` carries **two** `sorry`s, both pre-expedition and off-path and both on the
 forbidden-drift list (`PrimeLambertOscillation.phaseOscillation`,
 `MahlerDriftOne.exists_drift_one_background`).  **The entropy expedition's part of `src/` is
@@ -37,6 +38,8 @@ normality of `G₄` itself, and the ACTIVE override forbids claiming otherwise.
 | `c1a55b7` | 🎯 `abs_ratio_mid_le` — mid-band control at an ARBITRARY read index |
 | `c840b22` | 🎯🎯 `IsNormal 2 fullRealW` |
 | `6abd3f0` | the audit surface (`G4EntropyWStatement`) + corollaries |
+| `7d75a71` | handoff + STATUS |
+| `6c40f85` | successor directive + its decisive probe `abs_posAvgR_sub_le`, proved |
 
 ## The two ideas that closed it (do not re-derive)
 
@@ -93,6 +96,43 @@ normality of `G₄` itself, and the ACTIVE override forbids claiming otherwise.
   `IsNormal 4 fullRealW` / `IsNormal (2^k)`, which needs the read's word frequencies restricted
   to a residue class of positions; the entropy machinery supports it at a cost of `√k`, since the
   block-entropy deficit over a sub-class is bounded by the total deficit).
-* An independent NL→formalization **faithfulness cross-check** of the headline was submitted to
-  Aristotle from prose only (project `48c7d703-d18e-4e47-ae9c-6734f6737047`); its returned
-  statement should be compared with `isNormal_two_of_schedule_read` for logical equivalence.
+* An independent NL→formalization **faithfulness cross-check** of the headline was run at
+  Aristotle from prose only, never the Lean (project `48c7d703-d18e-4e47-ae9c-6734f6737047`).
+  **Verdict: PASS on the structure.**  Its independent rendering has
+  `dig b z j = (⌊Int.fract z * b^(j+1)⌋).toNat % b` (= the repo's `digitOf`),
+  `IsNormalBase b y` as "for every `ℓ ≥ 1` and every word `w`, `blockCount b y w N / N → b^{−ℓ}`"
+  (= `IsNormalSequence` through `isNormalSequence_of_tendsto_winCount`),
+  `ω n = n.primeFactors.card` and `A = ∑' n, ω(n)/4^n` (= `primeLambertAtBase 4`), and the
+  headline `∃ p strictly increasing, ∃ y ∈ [0,1), (∀ j, dig 2 y j = dig 2 A (p j)) ∧ y normal in
+  base 2` — logically the conjunction of `isNormal_two_of_schedule_read` and
+  `fullRealW_mem_Ico`.  ⚠️ This was read from the job's own summary; a line-by-line diff of the
+  returned file (`aristotle download 48c7d703-…`) has **not** been done and is a cheap item for a
+  future lap.
+
+## 🔜 The successor is SET and its decisive probe is already PROVED
+
+`DIRECTION.md`'s CURRENT DIRECTIVE (lap 126 close) is **`IsNormal 4 fullRealW`, then
+`IsNormal (2^k) fullRealW`** — the natural strengthening of the *same* object.
+
+**The finding that opens it** (`G4EntropyOffsetClass.lean`, both theorems trust-triple clean):
+`abs_posAvg_sub_le` is not a monolithic average.  It splits the `m − ℓ + 1` window positions into
+the `ℓ` offset classes `p ≡ r (mod ℓ)` — `posEquiv` is literally `(r, j) ↦ r + jℓ` — certifies
+each class *separately*, and only then sums.  Extracted as **`abs_offset_class_le`** (each class
+alone obeys the bound, at the *same* constant `B`), hence **`abs_posAvgR_sub_le`** (the average
+over any sub-family `R : Finset (Fin ℓ)` obeys `B`).
+
+> Restricting to positions of a fixed residue mod `k` therefore costs **nothing** — not a factor
+> `√k`, not even a constant — whenever `k ∣ ℓ`.  A base-`2^k` word of length `ℓ'` is a binary word
+> of length `ℓ = kℓ'`, so `k ∣ ℓ` holds exactly where it is needed.  (I expected to pay `√k` via
+> Pinsker; the offset-class structure makes it free.)  E-T13's second failure mode is ruled out.
+
+**Next lap, steps 2–4** (detail in `PENDING_WORK.md` ACTIVE):
+2. parity ↔ offset classes against `posEquiv`;
+3. transport to the read (in window `a` of band `i` the class needed is
+   `q ≡ (fTW i + a·kk i) (mod k)` — depends on `a`, but every class carries the same bound);
+4. the `digitOf (b^k)` ↔ `digitOf b` bridge, then `IsNormal 4 fullRealW`, then general `k`.
+
+**Do not retry**: Wall + Maxfield as the route to base `2^k`.  It is a genuinely harder classical
+theorem — u.d. of `(b^n x)` does not formally give u.d. of `(b^{kn} x)`, and the Fourier route
+yields only `μ̂(hb) = −μ̂(h)`-type periodicity, not vanishing.  The offset-class route is strictly
+easier *here* because we own the entropy certificate.
