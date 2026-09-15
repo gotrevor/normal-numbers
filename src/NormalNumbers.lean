@@ -223,6 +223,7 @@ import NormalNumbers.G4ScheduleFar
 import NormalNumbers.G4ScheduleBig
 import NormalNumbers.G4EntropyXCeiling
 import NormalNumbers.G4EntropyResidueProbe
+import NormalNumbers.G4ResidualConfinement
 import NormalNumbers.G4EntropyFullDensity
 import NormalNumbers.G4EntropyE0Down
 import NormalNumbers.G4EntropyScaleGap
