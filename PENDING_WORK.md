@@ -3,7 +3,31 @@
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
 > section; do **not** append to the bottom.
 
-## 🎯 ACTIVE (after-the-extraction **lap 129**, 2026-09-15) — L1 ✅, L2 ✅, F next (design lap)
+## 🎯 ACTIVE (after-the-extraction **lap 130**, 2026-09-15) — L1 ✅, L2 ✅, F ✅ (verdict in kernel), W next
+
+**F verdict (`DESIGN-2026-09-15-deformation.md`): proved limitation of T(K′).**  The deformation
+"vary multipliers and offsets jointly, cancel only the first `K′` layers coordinatewise" is
+rigid (additive form R3), so its family has `≤ (4M+1)^{(s+1)^{K−K′}(K′(s+1)+2)}` members; with
+`K′ ≥ 2` the union over the *whole* family reads upper density `≤ dmin^{−H/2}` at the schedule.
+The error budget (draft (6.4)–(6.5), base 4, `η = 2^{−K/4}`) forces `K′ ≥ 3K/8`; the two escape
+values `K′ ∈ {0,1}` cost `≥ 2^{K/2}` in the row second moment.  (E) is documented, not
+formalized, no axiom.
+
+| item | module | status |
+|---|---|---|
+| F (R1) `diff_rel`, (R2) `mixed_diff_zero(_t)`, `additive_of_mixed_diff`, (R3) `additive_form` | `G4TensorRigidity` | ✅ clean |
+| F (C) `card_family_le`, `family_exponent_le`, (U) `G4Confine.union_card_le` | `G4TensorRigidity` | ✅ clean |
+| F 🎯 `Sched.deformation_coeff_le` (coefficient `≤ dmin^{−H/2}`), `Sched.deformation_union_le` | `G4DeformationVerdict` | ✅ clean |
+| F (E) rough-error pricing `K′ ≥ 3K/8` | design doc §3 | 📄 documented external estimate |
+
+### Next
+* **W** (on slack): `docs/extracted-normal-number-2026-09-15.md`.
+* The honest frontier after F (design §4): non-coordinatewise *balanced* cancellation on the
+  rows of `D_s^{⊗K}` — does "balanced on every row" force "ignores a coordinate"?  `K = 1` yes.
+  A question about the tensor matrix, not `G₄`; not started (F's verdict is what the override
+  asked for).
+
+## 🗄️ (after-the-extraction **lap 129**, 2026-09-15) — L1 ✅, L2 ✅
 
 **Objective: `DIRECTION.md`'s ACTIVE "AFTER THE EXTRACTION" override** (L1, L2, then F with
 W on slack).  Grind laps do not edit DIRECTION or the brief.
