@@ -124,15 +124,25 @@ Not covered by `balanced_union_le`, and therefore the honest frontier:
   `card_mdf_pairs_le` the instance `Inv = MDF`, `S = skel`.  So a new matrix only has to be shown
   to have a small determining set for its own balance relations; the rest of the verdict
   (`balanced_coeff_le`, `balanced_union_le`) is unchanged;
-* giving up the single-`n` joint sample — **now quantified, not open**.
+* giving up the single-`n` joint sample — **closed at the schedule (lap 166), with a correction**.
   `Grouped.grouped_union_card_le` partitions the atoms into `G` groups, each sharing one sample
   point (`G = 1` is the implemented sampler, `G = H` total release), and bounds the read set below
-  `L` by `G · |𝓕| · (L m H dmax / (2 dmin^w) + H m)` with `w` the smallest group size.  So the
-  density coefficient is `G H dmax / (2 dmin^w)` and confinement survives **iff** `dmin^w ≳ G H`,
-  i.e. iff every group has size `w ≳ (log G + log H)/log dmin ≈ 2 log H / log dmin` at `G = H/w`.
-  The joint sample may therefore be broken into `H/w` independent blocks with no loss — the blocks
-  must simply be that large.  At the schedule (`H = (s+1)^K`, `dmin > 10^6`) that is
-  `w ≳ 2K log(s+1)/log dmin`: enormous absolutely, a vanishing fraction of `H`.  What is *not*
-  covered, and is the honest residue of this item, is a sampler with groups below that size.
+  `L` by `G · |𝓕| · (L m H dmax / (2 dmin^w) + H m)` with `w` the smallest group size.  An earlier
+  reading of that bound dropped the family factor `|𝓕|` and concluded `w ≳ 2 log H / log dmin`,
+  "a vanishing fraction of `H`", hence `H/w` free blocks.  **That is wrong.**  At the schedule
+  `|𝓕| = (2 dmax+1)^{2E}` with `E = K(K²+1)^{K−1}`, which is already `dmin^{4E}`, so
+  `Sched.grouped_size_cond` (`G4GroupedVerdict.lean`) gives the true threshold `w ≥ 8E + 5`, and
+  `Sched.grouped_block_count_le` turns it into the clean statement
+
+      8 K G ≤ K² + 1,   i.e. at most (K²+1)/(8K) ≈ K/8 blocks (20000 at i = 0).
+
+  `Sched.grouped_balanced_union_le` then delivers the verdict for grouped samplers verbatim:
+  read set below `L` at most `L / dmin^{w/2} + G (2dmax+1)^{2E} H m`, upper density
+  `≤ dmin^{−w/2} ≤ dmin^{−(4E+2)}` — the same rate as the single-`n` `balanced_union_le`.  So the
+  joint sample is *not* sacred, but it may only be cut into about `K/8` blocks, each a `1/K`
+  fraction of the atoms; confinement is untouched.  The honest residue is now sharp: **below
+  `w = 8E + 5` the counting bound is vacuous** — nothing exhibits an escaping sampler, and the
+  point where it expires is exactly where a block carries fewer atoms than the determining set
+  `skel` needs (`|skel| ≤ E`).
 
 Each of these leaves the tensor-matrix question behind; none of them is "normality of `G₄`".

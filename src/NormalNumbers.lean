@@ -229,6 +229,7 @@ import NormalNumbers.G4TensorRigidity
 import NormalNumbers.G4DeformationVerdict
 import NormalNumbers.G4BalancedRigidity
 import NormalNumbers.G4RowVariance
+import NormalNumbers.G4GroupedVerdict
 import NormalNumbers.G4EntropyFullDensity
 import NormalNumbers.G4EntropyE0Down
 import NormalNumbers.G4EntropyScaleGap

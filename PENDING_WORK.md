@@ -3,7 +3,58 @@
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
 > section; do **not** append to the bottom.
 
-## 🎯 ACTIVE (objective R, **laps 146–160**, 2026-09-15) — R ✅ verdict + **(E) PROVED** + R's three open items all closed
+## 🎯 ACTIVE (objective **S**, review **lap 166**, 2026-09-15) — DESIGN §0's third escape CLOSED at the schedule
+
+`DESIGN-2026-09-15-deformation.md` §0 names three deformations the `T(K′)` verdict does not test.
+Two were closed (row-balanced cancellation → `Sched.balanced_union_le`; a different matrix →
+`RowVariance.union_le_of_determining`).  The third — **giving up the single-`n` joint sample** —
+had only a *generic* reduction (`grouped_coeff_le` / `grouped_union_le'`) whose size condition was
+never checked at the schedule.  Lap 166 checked it, in the new `src/NormalNumbers/G4GroupedVerdict.lean`
+(all four declarations `[propext, Classical.choice, Quot.sound]`, build 🟢 9041 jobs):
+
+| declaration | content |
+|---|---|
+| `Sched.grouped_size_cond` | at the schedule, `(2dmax+1)^{2E}·m·H²·dmax ≤ dmin^{4E+3}`, so `grouped_coeff_le`'s hypothesis holds once `w ≥ 8E + 5` |
+| `Sched.grouped_block_size` | groups are disjoint and cover the atoms: `G · w ≤ H` |
+| `Sched.grouped_block_count_le` | hence **`8 K G ≤ K² + 1`** — at most `(K²+1)/(8K) ≈ K/8` blocks (`20000` at `i = 0`) |
+| `Sched.grouped_balanced_union_le` | the grouped verdict: read set below `L` at most `L/dmin^{w/2} + G·(2dmax+1)^{2E}·H·m`, rate `dmin^{−w/2} ≤ dmin^{−(4E+2)}` |
+
+**The correction this forced.**  `G4BalancedRigidity`'s `Grouped` docstring and
+`DESIGN-2026-09-15-row-balanced.md` both read the criterion as `w ≳ 2 log H / log dmin`,
+"a vanishing fraction of `H`", concluding "the single-`n` sample is *not* essential".  That
+dropped the family factor `|𝓕|`, which at the schedule is already `dmin^{4E}`.  Both prose
+passages are rewritten to the true threshold.  The verdict is unchanged — grouping is allowed,
+but only into `≈ K/8` blocks, each a `1/K` fraction of the atoms.
+
+### Next, in order (mirrors `DIRECTION.md` → CURRENT DIRECTIVE)
+
+1. **The seam.**  `RowVariance.two_layers_of_dyadic` *proves* `2 ≤ K′` from the capture budget;
+   `RowVariance.cancelled_union_le` *assumes* it.  Nobody has joined them at the schedule.
+   Target: `Sched.budget_confines` — a family of samplers at scale `i`, each inside the capture
+   budget, reads upper density `≤ dmin^{−H/2}`, with `2 ≤ K′` **derived**.  Then the grouped
+   analogue on top of `grouped_balanced_union_le`.  The work is to carry the analytic data
+   (`S`, `T`, `N`, `ρ`, `w`, the three scale conditions) alongside the combinatorial family, and
+   to relate `LayersCancelled` to `K′` in the budget statement.
+2. **The honest residue, sharply posed.**  Below `w = 8E + 5` the *counting* bound is vacuous —
+   not the arithmetic.  Nothing exhibits an escaping sampler.  The point where it expires is
+   exactly where a block carries fewer atoms than `skel` needs (`|skel| ≤ E`, threshold `8E`).
+   Decide it from the **certificate** side: what is the smallest block dimension at which the E0
+   entropy/volume saving still certifies a block's windows?  Named `Prop` first; an explicit
+   obstruction is a valid outcome.
+
+### Refuted / checked this lap, do not retry
+* **Sharpening `|𝓕|` with the pairwise-coprimality hypothesis.**  `hcop` forces `d` injective on
+  all `H` atoms (values `≥ dmin ≥ 9` that are pairwise coprime are distinct), so `|𝓕|` is at most
+  the number of injections into `[dmin, dmax]`, `≈ (4H·kk)^H`, i.e. `≈ dmin^H` — **weaker** than
+  the MDF bound `dmin^{4E} = dmin^{4H·K/(K²+1)}` by a factor `K/4` in the exponent.  Coprimality
+  cannot lower the group threshold.
+* The two pre-expedition `sorry`s stay where they are: `MahlerDriftOne.exists_prime_nonresidue`
+  is a prime in `(p/3, p/2)` with prescribed Legendre symbol (Linnik strength — character sums
+  over primes at `x ≈ q`, unconditionally out of reach and nowhere near mathlib), and
+  `PrimeLambertOscillation.phaseOscillation` is the open analytic obligation of an *open*
+  irrationality problem.  Both are on the forbidden-drift list and neither is in a headline cone.
+
+## 🗄️ SUPERSEDED (objective R, **laps 146–160**, 2026-09-15) — R ✅ verdict + **(E) PROVED** + R's three open items all closed
 
 Objective R had its kernel verdict at lap 136 (`G4BalancedRigidity`).  Laps 146–160 closed
 everything the R session wrap listed as "still open"; all in `src/NormalNumbers/G4RowVariance.lean`,

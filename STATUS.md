@@ -1,5 +1,18 @@
 # STATUS — normal-numbers 📊
 
+> **Review lap 166 (2026-09-15).**  DESIGN §0's **third** untested escape — *giving up the
+> single-`n` joint sample* — is closed at the schedule in the new `G4GroupedVerdict.lean`, and
+> the design's prose estimate for it is **corrected**.  That estimate (`w ≳ 2 log H / log dmin`,
+> "a vanishing fraction of `H`", so `H/w` free blocks) dropped the family factor `|𝓕|`, which at
+> the schedule is `(2 dmax+1)^{2E} = dmin^{4E}`.  Putting it back: `grouped_size_cond` gives the
+> true threshold `w ≥ 8E + 5`, `grouped_block_count_le` turns it into **`8 K G ≤ K² + 1`** (at
+> most `(K²+1)/(8K) ≈ K/8 = 20000` blocks at `i = 0`), and `grouped_balanced_union_le` delivers
+> the grouped verdict at the same rate `dmin^{−w/2} ≤ dmin^{−(4E+2)}`.  So the joint sample is
+> not sacred, but it may only be cut into `≈ K/8` blocks, each a `1/K` fraction of the atoms;
+> confinement is untouched.  Lap 165's stuck-bail is **refused** — it mistook "R's checklist is
+> done" for "no work is open".  New objective **S** in `DIRECTION.md` → CURRENT DIRECTIVE.
+> Build 🟢 9041 jobs; all new declarations `[propext, Classical.choice, Quot.sound]`.
+
 > **Laps 146–160 (2026-09-15).**  Objective R's error budget **(E) is proved**, not documented:
 > `Budget.RoughRowVarianceLower` — the one hypothesis the deformation verdict rested on — now
 > follows from explicit arithmetic on a CRT progression (`G4RowVariance.roughRowVarianceLower_arith`
@@ -42,8 +55,8 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (9024 jobs) ·
-**Updated**: entropy **lap 126** · 2026-09-15 · `wip/g4-entropy` @ `6abd3f0`
+· **Build**: 🟢 green (9041 jobs) ·
+**Updated**: **review lap 166** · 2026-09-15 · `wip/g4-entropy` @ `70f003b`+
 
 ## 🏁 2026-09-15 (entropy **lap 126**): **`IsNormal 2 fullRealW` — THE EXPEDITION'S ENDPOINT, PROVED AND AXIOM-CLEAN**
 
@@ -808,6 +821,18 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
+**Objective S (set review lap 166, `DIRECTION.md` → CURRENT DIRECTIVE).**
+1. ✅ lap 166 — DESIGN §0's third escape (grouped sampling) closed at the schedule
+   (`G4GroupedVerdict.lean`).
+2. **The seam**: `two_layers_of_dyadic` *proves* `2 ≤ K′` from the capture budget;
+   `cancelled_union_le` *assumes* it.  Join them at the schedule into one
+   `Sched.budget_confines`, then the grouped analogue on top of item 1.
+3. **The residue**: below `w = 8E + 5` the counting bound is vacuous and nothing exhibits an
+   escaping sampler.  Decide it from the certificate side — the smallest block dimension at
+   which the E0 entropy/volume saving still certifies a block's windows.
+
+Historical (entropy expedition):
+
 Campaign **entropy expedition** — 🏁 **OBJECTIVE MET (lap 126)**: `IsNormal 2 fullRealW` is
 proved and axiom-clean, so `DIRECTION.md`'s lap-126 CURRENT DIRECTIVE and the ACTIVE operator
 override's stop condition ("stop when the endpoint is proved axiom-clean") are both discharged.
@@ -882,7 +907,22 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, re-run this lap (2026-09-15 entropy **lap 126**, HEAD `6abd3f0`,
+**Re-run at review lap 166** (2026-09-15, build 🟢 9041 jobs), all exactly
+`[propext, Classical.choice, Quot.sound]`: `isNormal_fullRealW`,
+`isNormal_two_of_schedule_read`, `PowerBase.isNormal_pow`, `RowVariance.two_layers_of_dyadic`,
+`RowVariance.cancelled_union_le`, `RowVariance.roughRowVarianceLower_mertens`,
+`RowVariance.threshold_exact`, `RowVariance.union_le_of_determining`,
+`RowVariance.grouped_union_le'`, `Sched.balanced_union_le`, and lap 166's
+`Sched.grouped_size_cond` / `grouped_block_size` / `grouped_block_count_le` /
+`grouped_balanced_union_le`.  **Math-axiom count (🟢+🟡+🟠): 0** in the G4 / entropy /
+deformation wing — no `axiom` declaration anywhere in `src/`, no `native_decide` artifact in
+these cones.  The repo's two open `sorry`s are `MahlerDriftOne.exists_prime_nonresidue` (a prime
+in `(p/3, p/2)` with prescribed Legendre symbol — 🟠 generational: Linnik strength, nowhere near
+mathlib) and `PrimeLambertOscillation.phaseOscillation` (the target of an open irrationality
+problem; `irrational_primeLambert` is *explicitly* labelled sorry-gated, not a theorem).
+Neither appears in any headline cone below.
+
+Real `#print axioms` output, re-run at entropy **lap 126** (HEAD `6abd3f0`,
 build 🟢 9024 jobs).  **Re-verified this lap**: `isNormal_fullRealW`,
 `isNormal_two_of_schedule_read`, `digitOf_fullRealW`, `isDisjunctive_fullRealW`,
 `irrational_fullRealW`, `isNormalSequence_fullDigW`, `tendsto_winCount_fullDigW`,

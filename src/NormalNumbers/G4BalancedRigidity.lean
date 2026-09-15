@@ -803,15 +803,18 @@ question; the question is *how much* joint sampling the confinement actually con
 `grouped_union_card_le` answers it.  Partition the atoms into `G` groups, each group sharing one
 sample point (`G = 1` is the implemented sampler, `G = H` is total release).  Then the read set
 below `L` has size `≤ G · |𝓕| · (L m H dmax / (2 dmin^w) + H m)`, where `w` is the smallest group
-size.  The density coefficient is `G H dmax / (2 dmin^w)`, so confinement survives **iff**
-`dmin^w ≳ G H`, i.e. iff every group has size
+size.  The density coefficient is `G |𝓕| m H dmax / (2 dmin^w)`, so confinement survives **iff**
+`dmin^w ≳ G |𝓕| m H dmax`, i.e. iff every group has size
 
-    w ≳ (log G + log H) / log dmin  ≈  2 log H / log dmin   (at `G = H/w`).
+    w ≳ (log G + log|𝓕| + log(m H dmax)) / log dmin.
 
-So the joint sample may be broken into `H/w` independent blocks with no loss — but the blocks
-must be that large.  At the schedule (`H = (s+1)^K`, `dmin > 10^6`) this is `w ≳ 2K log(s+1)/log
-dmin`: enormous in absolute terms, yet a vanishing fraction of `H`.  The single-`n` sample is
-therefore *not* essential; large blocks are. -/
+⚠️ The family factor `|𝓕|` dominates and must not be dropped: at the schedule it is
+`(2 dmax+1)^{2E}` with `E = K(K²+1)^{K−1}`, already `dmin^{4E}`, so the threshold is
+`w ≳ 8E ≈ 8H/K` — **not** the `2 log H / log dmin` a reading without `|𝓕|` suggests.
+`Sched.grouped_size_cond` and `Sched.grouped_block_count_le` (`G4GroupedVerdict.lean`) do the
+schedule arithmetic: the joint sample may be broken into at most `(K²+1)/(8K) ≈ K/8` blocks,
+and at that price the density rate `dmin^{−w/2} ≤ dmin^{−(4E+2)}` is unchanged.  Large blocks —
+a fixed `1/K` fraction of the atoms each — are what the confinement actually consumes. -/
 
 namespace NormalNumbers.G4.Grouped
 

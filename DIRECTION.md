@@ -67,6 +67,56 @@ Preserved declarations, forbidden-drift list, one-writer-per-file, commit-a-skel
 and the wrap's elaborator hygiene all apply.  Stop when F has its verdict (mechanism + isolated
 estimate, or proved limitation) with L1, L2 done; the cap otherwise.
 
+## CURRENT DIRECTIVE — objective S: **the last untested escape, and the seam** (set 2026-09-15, review lap 166)
+
+*Altitude-lap section, INSIDE the ACTIVE override's scope; it does not amend the override.  It
+OUTRANKS every HANDOFF.  Why it exists: the override's stop condition ("stop when R has a kernel
+verdict") was met at lap 136 and laps 146–164 closed R's own residue, so lap 165 filed a
+stuck-bail.  The bail is refused: `DESIGN-2026-09-15-deformation.md` §0 lists **three**
+deformations the verdict does not test, and only two were closed.  The third — giving up the
+single-`n` joint sample — was never checked at the schedule.  Lap 166 checked it.*
+
+**State.**  Build 🟢.  Headlines `isNormal_fullRealW`, `isNormal_two_of_schedule_read`,
+`isNormal_pow`, and R's `balanced_union_le` / `two_layers_of_dyadic` / `cancelled_union_le` /
+`threshold_exact` / `union_le_of_determining` all print `[propext, Classical.choice, Quot.sound]`.
+`src/` carries exactly two `sorry`s, both pre-expedition, off-path, forbidden-drift, and both
+genuinely hard (`phaseOscillation` is an open irrationality problem; `exists_prime_nonresidue`
+is a prime in a fixed-ratio interval with prescribed Legendre symbol — Linnik strength).  They
+are NOT the objective and NOT a reason to stop; the objective is below.
+
+🎯 **THE objective: close DESIGN §0's third escape, and remove the last hypothesis-seam in R's
+verdict.**
+
+- 🔨 **Mandated next move, in this order.**
+  1. **DONE lap 166** — `G4GroupedVerdict.lean`: `grouped_size_cond`, `grouped_block_size`,
+     `grouped_block_count_le` (**`8 K G ≤ K²+1`**), `grouped_balanced_union_le`.  The joint
+     sample may be cut into at most `≈ K/8` blocks, each a `1/K` fraction of the atoms, with the
+     density rate `dmin^{−w/2} ≤ dmin^{−(4E+2)}` unchanged.  (This CORRECTS the design's
+     "`w ≳ 2 log H/log dmin`, a vanishing fraction of `H`", which dropped the `|𝓕|` factor.)
+  2. **The seam.**  `two_layers_of_dyadic` proves `2 ≤ K′` from the capture budget;
+     `cancelled_union_le` *assumes* it.  Join them at the schedule: ONE theorem
+     `Sched.budget_confines` — a family of samplers at scale `i`, each inside the capture budget,
+     reads upper density `≤ dmin^{−H/2}`, with `2 ≤ K′` **derived**.  Then the grouped analogue
+     on top of item 1.
+  3. **The honest residue, sharply posed.**  Below `w = 8E + 5` the counting bound is vacuous.
+     Nothing exhibits an escaping sampler.  Decide it from the *certificate* side: what is the
+     smallest block dimension at which the E0 entropy/volume saving still certifies a block's
+     windows?  Frozen `Prop` first; a named obstruction is a valid outcome.
+- 📌 **Leaf rule.**  Compiling skeleton with named `sorry` leaves in `src/` before each hard step.
+- ⛔ **Forbidden drift**: the two pre-expedition `sorry`s; re-deriving (E) or the rigidity
+  threshold (both closed, `threshold_exact`); shrinking the determining set for balance
+  (`balance_not_determined_by_axes` refuted it) or sharpening the balanced-family count
+  (`PROBE-2026-09-15-balanced-count.md` refuted it); another sparse extraction; any claim about
+  the normality of `G₄` itself.
+- 🚦 **Trigger**: if item 2's composite cannot be stated without a new analytic hypothesis, that
+  hypothesis is the real frontier — name it as a Lean `Prop` and switch to discharging it.
+
+### Directive history
+* 2026-09-15 lap 166 (review): R declared complete; objective **S** set — DESIGN §0's third
+  escape (grouped sampling) closed at the schedule, then the budget↔confinement seam, then the
+  small-block residue.  Lap 165's stuck-bail refused: the bail mistook "R's checklist is done"
+  for "no work is open".
+
 ## Attended operator override: 2026-09-14 19:06 EDT RE-TARGET (ACTIVE, supersedes the 10:52 override)
 
 Brief §8 is satisfied and the expedition's own wrap (`HANDOFF-2026-09-14-entropy-session-wrap-laps61-118.md`)
