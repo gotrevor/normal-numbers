@@ -1976,4 +1976,25 @@ theorem three_eighths_of_budget {sm : ℕ → ℝ} {c : ℝ} (hc : 0 < c) {K : �
     (hcap : sm K' ≤ c * ((1 : ℝ) / 2) ^ (K / 2)) : 3 * K ≤ 8 * K' + 7 :=
   by have := layers_of_budget hc hvar hcap; omega
 
+/-! ### Cube-local ignoring is **strictly** stronger than balance
+
+`balanced_of_cube_ignores` is sufficient.  It is not necessary: R's own `K = 3` witness `ex` is
+row-balanced, yet on the cube `c ≡ 1` — where every coordinate ranges over `{1,2}` — no single
+coordinate can be toggled without changing `ex`.  (Probe, this lap: `c ≡ 1` is the *only* such
+cube for `ex`.)  So the balance condition genuinely constrains only the level-set alternating
+sums, not the function, and no strengthening of the cube-local criterion characterizes it. -/
+
+/-- **The criterion is strictly sufficient.**  `ex` is balanced and has a cube on which no
+coordinate is ignorable. -/
+theorem cube_ignores_not_necessary :
+    Balanced (K := 3) (s := 2) ex ∧
+      ¬ (∀ c : Fin 3 → Fin 2, ∃ i : Fin 3, ∀ T : Finset (Fin 3),
+          ex (corner c (toggle i T)) = ex (corner c T)) := by
+  refine ⟨ex_balanced, ?_⟩
+  intro h
+  obtain ⟨i, hi⟩ := h (fun _ => 1)
+  revert hi
+  revert i
+  decide
+
 end NormalNumbers.G4.RowVariance

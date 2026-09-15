@@ -36,9 +36,11 @@ Nothing here is a claim about the normality of `G₄`.
 ### Next (nothing on the critical path is open)
 * The two pre-expedition `sorry`s (`PrimeLambertOscillation.phaseOscillation`,
   `MahlerDriftOne.exists_drift_one_background`) remain on DIRECTION's forbidden-drift list.
-* Open question, not on the path: is `balanced_of_cube_ignores` also *necessary* — is every
-  row-balanced function cube-locally ignoring?  True at `K ≤ 2` (globally, by
-  `ignores_coord_of_balanced_two`); unknown for `K ≥ 3`.
+* **Answered (lap 161): NO.**  `cube_ignores_not_necessary` — `ex` is balanced yet on the cube
+  `c ≡ 1` no coordinate is ignorable (a Python probe first showed `c ≡ 1` is the only such cube
+  for `ex`; the Lean proof is `decide`).  So cube-local ignoring is *strictly* sufficient for
+  balance, and no strengthening of that criterion characterizes the balance condition — balance
+  constrains only the level-set alternating sums.
 
 ## 🗄️ SUPERSEDED (after-the-extraction **lap 131**, 2026-09-15) — L1 ✅, L2 ✅, F ✅ (verdict in kernel), W ✅ (withdrawn form) — override STOP condition met
 
