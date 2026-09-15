@@ -1,3 +1,51 @@
+# DIRECTION — normal-numbers 🧭
+
+## Attended operator override: 2026-09-14 night — AFTER THE EXTRACTION (ACTIVE; supersedes the 10:52 / 19:06 overrides and every CURRENT DIRECTIVE below)
+
+**Banked, do not re-derive, do not extend as this campaign:** `isNormal_fullRealW` (base 2, 4,
+`2^k`), `entropy_E0/E1(_down/_march/_tile)`, `not_T_E`, `qForces_normal_iff_density_one`,
+`PowerBase.isNormal_pow`.  The Maxfield converse, further bases, and a novelty search are NOT
+objectives.  Specification: `BRIEF-after-extraction-2026-09-14.md`.  Engine: Fable (grind low,
+review high), Opus fallback.  **The research target is information about G₄'s ORDINARY digits
+that the sparse-sample mask can change.**  Objectives in order:
+
+**L1 — residual CRT confinement, correctly indexed (formalize).**  `not_dense_of_any_residue`
+uses the re-centred `kIdxOf = (n − b % d_α²)/d_α`, NOT the physical orbit index `(n − t_α)/d_α`
+(`d=5, t=1, c=2, q=3, n=86`: 15 vs 17).  Keep that theorem; correct every docstring/prose line
+that calls it a universal impossibility.  Then prove the brief's lemma with the PHYSICAL index:
+pairwise-coprime `d_α`, `0 ≤ t_α < d_α`, `D = ∏ d_α`, all multiplier residues and frozen-prime
+classes free, but `n = t_α + d_α k_α` exact for every atom ⇒ CRT pins `n` to one class mod `D`,
+`k_α = (a − t_α)/d_α + (D/d_α) q`, and the union of length-`m` windows at `2k_α` has upper density
+`≤ m (Σ_α d_α)/(2D)`.  Record the actual schedule specialization (numbers, not "small").
+
+**L2 — offset rigidity of the coordinatewise cancellation (formalize, scoped).**  At fixed
+multipliers, if new offsets `t'_α` preserve the pointwise coordinate-cancellation identities
+(`j d_α − t_α` independent of coordinate `j`) for every coordinate, then `t'_α − t_α` is constant
+on the product grid, so it only translates sample time.  State the scope in the docstring: this
+coordinatewise mechanism only.
+
+**F — the bounded frontier: ONE explicitly specified deformation.**  L1+L2 say a new
+mechanism must *vary the multipliers, replace exact coordinatewise cancellation, or control its
+error*.  The FIRST Fable lap after L1/L2 is a DESIGN lap: write `DESIGN-2026-09-15-deformation.md`
+choosing one deformation and discharging, on paper with numbers, the brief's four preconditions:
+(1) actual orbit indices of the unchanged `G₄`, all divisibility hypotheses visible; (2) a
+finite-prefix coverage AND weighting calculation showing access to positions the fixed grid
+cannot reach - coverage alone is not equidistribution; (3) the exact replacement transport
+identity with its new error term, priced against the entropy/volume saving at digit resolution;
+(4) a proof plan or an explicit obstruction.  Only then Lean: frozen `Prop` interfaces first, the
+transport identity + error term as the first proof target.  A random-prime model may diagnose,
+never replace, the arithmetic estimate.  Success = a better sampling mechanism with an isolated
+arithmetic estimate, OR a proved limitation of the tested deformation.  Neither is "normality of
+G₄".  Another sparse extraction is a return to the completed task: refuse it.
+
+**W — write-up (low cost, any lap with slack):** `docs/extracted-normal-number-2026-09-15.md`,
+the mathematical account of `fullRealW` in ordinary language with claim limits (density-zero
+read set; not normality of `G₄`; positions astronomically large; novelty unchecked).
+
+Preserved declarations, forbidden-drift list, one-writer-per-file, commit-a-skeleton-early,
+and the wrap's elaborator hygiene all apply.  Stop when F has its verdict (mechanism + isolated
+estimate, or proved limitation) with L1, L2 done; the cap otherwise.
+
 ## Attended operator override: 2026-09-14 19:06 EDT RE-TARGET (ACTIVE, supersedes the 10:52 override)
 
 Brief §8 is satisfied and the expedition's own wrap (`HANDOFF-2026-09-14-entropy-session-wrap-laps61-118.md`)
