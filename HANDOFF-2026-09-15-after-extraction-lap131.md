@@ -23,3 +23,15 @@ limitation of the deformation T(K′)), W ✅.  `src/` carries only the two pre-
 The override says stop here.  The open question F left (design §4): does row-balanced,
 non-coordinatewise cancellation on `D_s^{⊗K}` force "ignores a coordinate"?  True for `K = 1`;
 open in general.  That is the only route not closed by L1/L2/F.
+
+## ⛔ Stuck-bail (strike 1) — verify fast, then `box stuck` again if you agree
+* **Blocked**: nothing on the override's path.  L1, L2, F, W are all done and re-verified in
+  kernel (see above).  DIRECTION's ACTIVE override: "Stop when F has its verdict … with L1, L2 done."
+* **Why operator-gated**: the only `src/` obligations are `PrimeLambertOscillation.phaseOscillation`
+  and `MahlerDriftOne.exists_drift_one_background`, both pre-expedition, off-path, on DIRECTION's
+  forbidden-drift list (DIRECTION.md lines 217–218, 283–284).  The repo-wide gate declines
+  `box done` because of them; touching them violates DIRECTION.
+* **The exact ask**: an attended decision on the next frontier — either (a) authorize the
+  row-balanced cancellation question from `DESIGN-2026-09-15-deformation.md` §4 as a new campaign,
+  or (b) close the run.  Verification for the fresh lap: `lake build` (9038 jobs) and
+  `#print axioms` on `Sched.deformation_union_le`, `Sched.density_coeff_le`, `Rigidity.offset_rigidity`.
