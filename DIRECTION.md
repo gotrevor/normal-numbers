@@ -88,7 +88,85 @@ here.  The "forbidden drift" list of the G5 directive still applies except for
 its ban on "the multiplicity/entropy/ordinary-normality questions", which this
 expedition explicitly lifts.
 
-## CURRENT DIRECTIVE — entropy expedition (set 2026-09-14, FRESH-MIND REVIEW lap 119)
+## CURRENT DIRECTIVE — entropy expedition (set 2026-09-15, FRESH-MIND REVIEW lap 122)
+
+*Altitude-lap section, inside the ACTIVE override's scope.  It OUTRANKS every HANDOFF, and it
+outranks the lap-119 directive below (whose steps 1–4 are DONE: `entropy_E1_march`,
+`entropy_E1_tile`, `card_bandTtr_ge`, `density_antitone` withdrawn, and the read rebuilt on the
+wide band).*
+
+**State (verified this lap).**  Build 🟢 **9012 jobs**, `lake build` exit 0.  `src/` carries
+exactly **two** `sorry`s, both pre-expedition and off-path (`PrimeLambertOscillation.phaseOscillation`,
+`MahlerDriftOne.exists_drift_one_background`); the expedition's part of `src/` is sorry-free.
+`tendsto_fullWRead_freq` and `fullPosW_strictMono` print `[propext, Classical.choice, Quot.sound]`.
+
+**Where the headline actually stands.**  `fullPosW` is a `StrictMono`, schedule-only read of
+`G₄`'s binary digits, and every binary word has its correct frequency **along the band cutoffs
+`fTW (i+1)`**.  `IsNormalSequence 2` quantifies over **all** `n`, so the one and only remaining
+obligation is
+
+> 🎯 **MID-BAND PREFIX CONTROL** — the read ratio at an arbitrary read index `n`, not just at a
+> band end.  Endpoint unchanged: `IsNormalSequence 2 (fullDigW (primeLambertAtBase 4))`, hence
+> `IsNormal 2 fullRealW` via `Bridge.isNormal_realOfDigits`.
+
+**The finding that sets this directive — the prefix cut is an ATOM-DEPENDENT scale cut, and the
+spread is exactly `1/K`.**  The read consumes band `i`'s distinct window starts in increasing
+order, so a read index `n` cuts the band at a **position** threshold `c`: the consumed starts are
+`(winStartsW i).filter (· ≤ c)`.  A start is `2·kIdx(gridAt i) n α`, and `d_α·kIdx(n,α) ≤ n <
+d_α·(kIdx(n,α)+1)`, so `2·kIdx(n,α) ≤ c` is `n ≲ c·d_α/2` — a cutoff that **depends on the atom**.
+It is NOT a single truncated sample, which is why `abs_posAvg_bandWLaw_le` does not apply
+verbatim.  But `gridOf.mul_d_le_mul_d` bounds the multiplier spread by `K·d_β ≤ (K+1)·d_α`, so
+(`G4EntropyMultiplierSpread.kIdx_cross`)
+
+> `bandWtr i X₁ ×ˢ univ  ⊆  pairsLe i c  ⊆  bandWtr i X₂ ×ˢ univ`, with `X₂/X₁ ≤ (K+1)/K·(1+2/c)`.
+
+Both flanks are honest truncations at gated scales, both are certified by `abs_posAvg_bandWLaw_le`
+/ `H₂_bandWLaw_ge` at level `i`, and the sandwich costs a **relative `O(1/K)`** — negligible
+against the capture error `2√(808 log 2·ℓ/√K) = O(K^{−1/4})` already carried.  This is the step
+the one-dimensional ladder could never take, and the wide band (lap 121) makes it available at
+*every* `X' ∈ [Xlo (KK i), Xlo (KK (i+1))]`.
+
+- 🔨 **Mandated next move — mid-band prefix control, in this order.**
+    1. **`G4EntropyWPrefix.lean` — the prefix read count (mechanical port, prove it, don't sorry
+       it).**  `fullGoodWPre i a x v` over `Finset.range a`; `startsLe i c`; the order-isomorphism
+       `Finset.image (fnthW i) (range (startsLe i c).card) = startsLe i c`; then
+       `fullW_band_prefix_winCount_bounds` and `fullW_prefix_winCount_bounds` — verbatim copies of
+       `fullW_band_winCount_bounds` / `fullW_winCount_bounds` with `range a` for
+       `range (winStartsW i).card`.
+    2. **The sandwich — THE CRUX, attack it first among the hard leaves.**  `pairsLe i c :=
+       (bandWPairs i).filter (2·kIdx · ≤ c)`; the two inclusions above with explicit `X₁ X₂`;
+       `card_bandWtr` comparison `|bandWtr i X₂| ≤ (1+δ_i)·|bandWtr i X₁|` from
+       `card_apSample_ge_half`/`card_apSample_le`; and the truncated overhang (the collision chain
+       is already scale-generic: `card_multi_atom_le_real_at`).
+    3. **`head_frac_tiny` — the ungated head.**  For `c` below the gate `4·wFloor i + 4·P₀`,
+       bound band `i`'s read trivially and absorb it into `fTW i` via
+       `fLW (i−1) ≥ |bandW (i−1)|·kk (i−1)` and `wTop (i−1) = Xlo (KK i)`: the `Xlo (KK i)` cancels
+       and what is left is `16·gridDm_i·|Atom_i|·kk_i·P₀_{i−1} / (P₀_i·|Atom_{i−1}|·kk_{i−1})`.
+       Imitate `granuleW_exceeds_previous_scale`.
+    4. **The squeeze and the endpoint.**  `winCount` is monotone in `n`, so it is enough to
+       control the ratio at the cutoffs `fTW i + a·kk i` (the partial window costs `kk i`, and
+       `kk i / fTW i → 0`).  Then `IsNormalSequence 2 (fullDigW …)`, `properDigits_fullDigW`,
+       `fullRealW`, and **`IsNormal 2 fullRealW`**.
+- 📌 **Leaf rule.**  Commit a compiling skeleton with named `sorry` leaves before step 2, and
+  keep every leaf in `src/` — decomposition raises the `src/` count and that is progress.
+- ⛔ **Forbidden drift**: re-litigating the scale gap or the head obstruction (both retired by
+  `entropy_E1_tile` and the wide band); lowering the band floor instead of widening the band;
+  adding joint-ladder rungs or sharpening constants; touching `fullReal`/`fullPos`/`bandT` and
+  their theorems; editing any pre-expedition G4/G5 file; `Adder*`, `CF*`, `Mahler*`, `LnTwo*`,
+  `Stoneham*`, `PrimeLambertOscillation`; a trusted axiom for any candidate lemma; appending to
+  the BOTTOM of `PENDING_WORK.md`; and **claiming anything about the normality of `G₄` itself**.
+- 🚦 **Route triggers**:
+    * **E-T11 (new, route-decisive)** — if the multiplier spread `K·d_β ≤ (K+1)·d_α` turns out
+      NOT to give a *single* pair `X₁ ≤ X₂` bracketing `pairsLe i c` at a gated scale (e.g. the
+      lower flank `X₁` falls below the gate for cutoffs that carry a non-negligible share of the
+      band), the prefix route fails as designed: write `ROUTE-ESCALATION-<date>.md` naming the
+      failing inclusion, and fall back to the squeeze along *sample-time* cutoffs with a
+      re-ordered read.  Nothing else in this directive survives that.
+    * **E-T3** (kept) — two laps stalled on one assertion ⇒ decompose it in `PENDING_WORK.md`.
+    * **E-T7** (kept) — a lap that MEETS the 🎯 objective says so and does not pick its own next
+      target; the next altitude lap sets one.
+
+## SUPERSEDED DIRECTIVE — entropy expedition (set 2026-09-14, FRESH-MIND REVIEW lap 119)
 
 *Altitude-lap section, inside the ACTIVE override's scope.  It OUTRANKS every HANDOFF.  The
 19:06 operator override's own stop condition ("A and B both have verdicts and A's endpoint is
@@ -263,6 +341,13 @@ block-concatenation normality proof consumes.
   the lap-23 objective was met at lap 31 and laps 32–36 ran objective-less.  Normality of `G₄`
   recorded as CLOSED on this mechanism by theorem and quantitatively.  New objective: the
   JOINT (`t`-wise) sampled-word frequency theorem — the sampled windows decorrelate.
+- 2026-09-15 (review lap 122): lap-119's steps 1–4 all landed (`entropy_E1_march`,
+  `entropy_E1_tile`, `card_bandTtr_ge`, the wide band, `tendsto_fullWRead_freq`), so the read has
+  correct frequencies at the band ends and `src/` is expedition-sorry-free.  **Course correction**:
+  the single remaining obligation is MID-BAND PREFIX CONTROL, and the reason it is not a corollary
+  of `abs_posAvg_bandWLaw_le` is that a read-index cut is a *position* cut, hence an ATOM-DEPENDENT
+  scale cut.  New objective: bracket it between two honest truncations via the `1/K` multiplier
+  spread (`kIdx_cross`), then squeeze.
 - 2026-09-14 (review lap 119): the operator override is discharged (A0 NO, B NO, A's obstruction
   named).  **Course correction**: the scale gap that blocks `IsNormal 2 fullReal` is an artifact of
   pinning `m` to `K`; `m₁` is bounded only from below in the E0 cone, and marching it squares `Y`

@@ -3,7 +3,73 @@
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
 > section; do **not** append to the bottom.
 
-## 🎯 ACTIVE (entropy **review lap 119**, 2026-09-14) — the two-dimensional `(K, j)` ladder
+## 🎯 ACTIVE (entropy **review lap 122**, 2026-09-15) — MID-BAND PREFIX CONTROL
+
+**Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
+
+### Where the headline stands
+
+`fullPosW` (`G4EntropyFullSeqW`) is a `StrictMono`, schedule-only read of `G₄`'s binary digits;
+`tendsto_fullWRead_freq` gives every binary word its correct frequency **at the band cutoffs
+`fTW (i+1)`**.  `IsNormalSequence 2` quantifies over **all** `n`.  So exactly one obligation is
+left: the read ratio at an arbitrary read index.
+
+### Why it is not a corollary of `abs_posAvg_bandWLaw_le` — and how it closes
+
+The read consumes band `i`'s distinct window starts *in increasing order*, so a read index cuts
+the band at a **position** threshold `c`.  A start is `2·kIdx(gridAt i) n α` with
+`d_α·kIdx(n,α) ≤ n < d_α·(kIdx(n,α)+1)`, so `2·kIdx(n,α) ≤ c` means `n ≲ c·d_α/2` — the cutoff
+**depends on the atom**, and the consumed set is not a truncated sample.
+
+`gridOf.mul_d_le_mul_d` (`K·d_β ≤ (K+1)·d_α`) and `G4EntropyMultiplierSpread.kIdx_cross` bound the
+spread by `1/K`, so with `X₁ := ⌊c·d_min/2⌋`, `X₂ := ⌈d_max·(c+2)/2⌉`:
+
+> `bandWtr i X₁ ×ˢ univ  ⊆  pairsLe i c  ⊆  bandWtr i X₂ ×ˢ univ`,  `X₂/X₁ ≤ (K+1)/K·(1+2/c)`.
+
+Both flanks are honest truncations at scales inside `[Xlo (KK i), Xlo (KK (i+1))]`, both certified
+by `H₂_bandWLaw_ge` / `abs_posAvg_bandWLaw_le`.  The sandwich costs a **relative `O(1/K)`**, against
+a capture error already `O(K^{−1/4})`.  Arithmetic of the sandwich (record so it is not re-derived):
+
+```
+Σ_{X₁} ≤ Σ_{pairsLe c} ≤ Σ_{X₂}                        winOcc ≥ 0
+Σ_{X₂} ≤ (2^{−ℓ}+ε)·|bandWtr X₂|·|Atom|·F              abs_posAvg_bandWLaw_le at X₂
+|pairsLe c| ≥ |bandWtr X₁|·|Atom|                       lower inclusion
+⇒ ratio ≤ (2^{−ℓ}+ε)·(1+δ),  δ := |bandWtr X₂|/|bandWtr X₁| − 1 = O(1/K)
+⇒ ratio ≥ (2^{−ℓ}−ε)·(1−δ)   symmetrically
+```
+
+`δ = O(1/K)` needs `X₁ ≥ 4·wFloor i` (the gate), which is what makes step 3 necessary.
+
+### Open, in order (review lap 122)
+
+1. **`G4EntropyWPrefix.lean` — the prefix read count.**  Mechanical port; *prove* it.
+   * `startsLe i c := (winStartsW i).filter (· ≤ c)`,  `aLe i c := (startsLe i c).card`
+   * `image_fnthW_range`: `Finset.image (fnthW i) (Finset.range (aLe i c)) = startsLe i c`
+     (order-embedding: `q ≤ fnthW i (a−1) ↔ ∃ b < a, q = fnthW i b`)
+   * `fullGoodWPre i a x v := ∑ b ∈ range a, |{q < kk i − ℓ + 1 : OccursAt 2 x v (fnthW i b + q)}|`
+   * `fullW_band_prefix_winCount_bounds` / `fullW_prefix_winCount_bounds`: verbatim
+     `fullW_band_winCount_bounds` / `fullW_winCount_bounds` with `range a` for
+     `range (winStartsW i).card` and `Ico (fTW i) (fTW i + a·kk i)`.
+2. **`G4EntropyWPrefixSandwich.lean` — THE CRUX.**  `pairsLe i c := (bandWPairs i).filter
+   (fun z => 2·kIdx (gridAt i) z.1 z.2 ≤ c)`; the two inclusions with explicit `X₁ X₂`;
+   `card_bandWtr_ratio`; the truncated overhang (`card_multi_atom_le_real_at` is already
+   scale-generic).
+3. **`head_frac_tiny` — the ungated head.**  For `c` below the gate, bound band `i`'s read
+   trivially and absorb into `fTW i`: `fLW (i−1) ≥ |bandW (i−1)|·kk (i−1)`,
+   `wTop (i−1) = Xlo (KK i)`, so `Xlo (KK i)` cancels and what remains is
+   `16·gridDm_i·|Atom_i|·kk_i·P₀_{i−1}/(P₀_i·|Atom_{i−1}|·kk_{i−1})`, astronomically small because
+   `m ≥ K³ ≫ 21K²`.  Imitate `granuleW_exceeds_previous_scale`.
+4. **The squeeze and the endpoint.**  `winCount` monotone in `n` ⇒ control at the cutoffs
+   `fTW i + a·kk i` suffices (partial window costs `kk i`, and `kk i / fTW i → 0`).  Then
+   `IsNormalSequence 2 (fullDigW …)`, `properDigits_fullDigW`, `fullRealW`,
+   **`IsNormal 2 fullRealW`**.  (`exists_matchesAt_fullDigW` needs a wide non-vacuity witness.)
+
+### Deliberately not ported
+
+`isSampled_fullPos` — `IsSampled` is pinned to `sampledPos … (X (KK i))` and the wide read visits
+sample times above it.  A density remark, not an input to normality.
+
+## 🗂️ SUPERSEDED ACTIVE (entropy **review lap 119**, 2026-09-14) — the two-dimensional `(K, j)` ladder
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE first; it outranks any handoff.**
 

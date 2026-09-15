@@ -21,8 +21,41 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (9004 jobs) ·
-**Updated**: entropy **review lap 119** · 2026-09-14 · `wip/g4-entropy`
+· **Build**: 🟢 green (9012 jobs) ·
+**Updated**: entropy **review lap 122** · 2026-09-15 · `wip/g4-entropy` @ `6fe9ae2`
+
+## 🧭 2026-09-15 (entropy **review lap 122**): the ladder's four steps are DONE; the last obligation is MID-BAND PREFIX CONTROL
+
+**Build** 🟢 9012 jobs · `src/` carries exactly **two** `sorry`s, both pre-expedition and
+off-path (`PrimeLambertOscillation.phaseOscillation`, `MahlerDriftOne.exists_drift_one_background`);
+the expedition's part of `src/` is **sorry-free** · `tendsto_fullWRead_freq`,
+`fullPosW_strictMono`, `entropy_E1_march`, `entropy_E1_tile` all print the trust triple.
+
+Lap 119's mandated four steps all landed: `entropy_E1_march` (the `(K,j)` cone, laps to `3ab6487`),
+`entropy_E1_tile` (E1 at **every** outer scale of the tile), `card_bandTtr_ge`, and the read —
+rebuilt in laps 120–121 on the **wide band** `bandW i = ` level-`i` sample in
+`[wFloor i, wTop i]`, `wTop i = Xlo (KK (i+1))`.  Widening (rather than lowering the floor) is what
+drowns band `i+1`'s uncertifiable head in band `i`'s full read.  Endpoint so far:
+
+> **`Sched.tendsto_fullWRead_freq`** — every finite binary word `v` has frequency `2^{−|v|}` in
+> `G₄`'s digits read along `fullPosW`, **at the band cutoffs `fTW (i+1)`**; `fullPosW` is
+> `StrictMono` and schedule-only.
+
+**The single remaining obligation, and why it is not a corollary.**  `IsNormalSequence 2`
+quantifies over *all* `n`.  The read consumes band `i`'s distinct window starts in increasing
+order, so a read index cuts the band at a **position** threshold `c`; a start is
+`2·kIdx(gridAt i) n α` with `d_α·kIdx ≤ n < d_α·(kIdx+1)`, so `2·kIdx(n,α) ≤ c` means `n ≲ c·d_α/2`
+— an **atom-dependent** scale cut, not a truncated sample, so `abs_posAvg_bandWLaw_le` does not
+apply verbatim.  The fix, and this lap's course correction:
+
+> `gridOf.mul_d_le_mul_d` (`K·d_β ≤ (K+1)·d_α`) and `kIdx_cross` bracket the consumed pair set
+> between two honest truncations, `bandWtr i X₁ ×ˢ univ ⊆ pairsLe i c ⊆ bandWtr i X₂ ×ˢ univ`
+> with `X₂/X₁ ≤ (K+1)/K·(1+2/c)`.  The sandwich costs a **relative `O(1/K)`** against a capture
+> error already `O(K^{−1/4})`.
+
+Four ordered items follow in `PENDING_WORK.md`: the prefix read count (mechanical), the sandwich
+(the crux), `head_frac_tiny` for cutoffs below the gate, and the monotone squeeze to
+`IsNormal 2 fullRealW`.
 
 ## 🧭 2026-09-14 (entropy **review lap 119**): the scale gap is an ARTIFACT — the two-dimensional ladder
 
@@ -693,18 +726,19 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-Campaign **entropy expedition** (ACTIVE) — `DIRECTION.md` CURRENT DIRECTIVE, **review lap 119**,
-the two-dimensional `(K, j)` ladder toward `IsNormal 2 fullReal'`:
-1. **`Sched.entropy_E1_march`** (the one open leaf of `G4EntropyMTower`) — port `hbig_holds`
-   (inputs unchanged/monotone), `hfar_holds` (use `four_mul_le_four_pow_N_m`) and the five
-   `smallPrimeBound` terms (use `Mcm_le_two_pow_m₂`) to the marched parameters `(K, j)`.
-2. **`Sched.card_bandTtr_ge`** — the carried leaf: `4·Dm·bandLo i + 4P₀ ≤ Xlo (KK i)` from
-   `gridDm_le_Xlo`, `two_mul_exp_le_Xlo`, `Xlo_cast`.
-3. **The read** — `fullPos'`: level `K` for `n ∈ [Xlo K, Xlo (K+4)·d_K/d_{K+4}]`, then level
-   `K+4`.  Needs one new estimate, **`density_antitone`**
-   (`d_K|Atom_K|kk_K/P₀ K ≥ d_{K+4}|Atom_{K+4}|kk_{K+4}/P₀ (K+4)`), which pays for the head the
-   switch skips.
-4. Then `IsNormalSequence 2` + `isNormal_realOfDigits` — the objective.
+Campaign **entropy expedition** (ACTIVE) — `DIRECTION.md` CURRENT DIRECTIVE, **review lap 122**,
+MID-BAND PREFIX CONTROL toward `IsNormal 2 fullRealW`:
+1. **`G4EntropyWPrefix.lean`** — the prefix read count: `startsLe i c`, the order-isomorphism
+   `image (fnthW i) (range (aLe i c)) = startsLe i c`, `fullGoodWPre`, and the prefix analogues of
+   `fullW_band_winCount_bounds` / `fullW_winCount_bounds`.  Mechanical; prove it.
+2. **The sandwich — THE CRUX.**  `pairsLe i c := (bandWPairs i).filter (2·kIdx · ≤ c)`;
+   `bandWtr i X₁ ×ˢ univ ⊆ pairsLe i c ⊆ bandWtr i X₂ ×ˢ univ` with `X₂/X₁ ≤ (K+1)/K·(1+2/c)`
+   (`kIdx_cross`, `gridOf.mul_d_le_mul_d`); the cardinality ratio from `card_apSample_ge_half` /
+   `card_apSample_le`; the truncated overhang (`card_multi_atom_le_real_at`, already generic).
+3. **`head_frac_tiny`** — cutoffs below the gate `4·wFloor i + 4·P₀`: bound band `i`'s read
+   trivially and absorb into `fTW i` (imitate `granuleW_exceeds_previous_scale`).
+4. Then the monotone squeeze, `IsNormalSequence 2 (fullDigW …)`, `properDigits_fullDigW`,
+   `fullRealW`, and `Bridge.isNormal_realOfDigits` — the objective.
 
 Superseded short-term list (lap 37's three rungs — all MET, kept for provenance):
 1. **`G4EntropyOcc.lean`** — the counting bridge, **and the decisive probe**: `occCount s v n`
@@ -749,11 +783,12 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 
 ## Axiom ledger
 
-Real `#print axioms` output, re-run this lap (2026-09-14 entropy **review lap 119**, HEAD
-`05c6472`+, build 🟢 9004 jobs).  **New this lap** (`G4EntropyMTower`): `Xlom_succ`, `Xm_jstar`,
-`Mcm_le_two_pow_m₂`, `four_mul_le_four_pow_N_m`, `exists_tile`, `entropy_E1_march_zero` all print
-the trust triple; `entropy_E1_tile` prints `[propext, sorryAx, Classical.choice, Quot.sound]` —
-honestly gated on the single named leaf `entropy_E1_march`, which is the active decomposition.  **Math-axiom count in the entropy wing: 0** — every headline
+Real `#print axioms` output, re-run this lap (2026-09-15 entropy **review lap 122**, HEAD
+`6fe9ae2`, build 🟢 9012 jobs).  **Re-verified this lap**: `tendsto_fullWRead_freq`,
+`fullPosW_strictMono`, `tendsto_fullRead_freq`, `entropy_E1_march`, `entropy_E1_tile`,
+`isDisjunctive_two`, `isDisjunctive_four` — all exactly `[propext, Classical.choice, Quot.sound]`.
+`entropy_E1_tile`'s lap-119 `sorryAx` is **gone**: its leaf `entropy_E1_march` is now a theorem.
+**Math-axiom count in the entropy wing: 0** — every headline
 below prints exactly the trust triple `[propext, Classical.choice, Quot.sound]`, with no
 `native_decide` artifact and no local `axiom` anywhere in `src/`.  The two open `sorry`s in the
 repo (`MahlerDriftOne.exists_prime_nonresidue`, `PrimeLambertOscillation.phaseOscillation`)
@@ -784,6 +819,9 @@ real inequalities that live in the witness.
 | `G4.log_det_normalized_two_sided` | `1/300000 ≤ log det(1+T_{K²}^{⊗K})/((K²)^K√K) ≤ log2/√K + 12` for `K ≥ 5` (uncond.) | trust triple | 🟢 clean (lap 34) — the `√K` deficit is **structural**, so `ℓ = o(√K)` is a property of the object |
 | `G4.Sched.not_T_E_of_density_lt_one` | `T_E` refuted again from density `< 1` alone, at a single `c` (uncond.) | trust triple | 🟢 clean (lap 18) |
 | `G4Entropy.tendsto_density_compl_zero` | a satisfiable digit-local hypothesis forces normality only if its read set has density **one** (uncond.) | trust triple | 🟢 clean (lap 18) — the barrier at full strength |
+| `G4.Sched.entropy_E1_march` | **E1 on the marched `(K, j)` ladder** — the deficit bound at every marched outer scale (uncond.) | trust triple | 🟢 clean (2026-09-15) — retires the scale gap: `entropy_E1_tile` is now unconditional |
+| `G4.Sched.entropy_E1_tile` | **E1 at EVERY outer scale in `[Xlo K, Xlo (K+4)]`** — the certified windows tile with no hole (uncond.) | trust triple | 🟢 clean (2026-09-15) — was `sorryAx`-gated at lap 119 |
+| `G4.Sched.tendsto_fullWRead_freq` / `fullPosW_strictMono` | **every finite binary word has frequency `2^{−|v|}` in `G₄`'s digits read along the strictly increasing, schedule-only `fullPosW`, at the band cutoffs `fTW (i+1)`** (uncond.) | trust triple | 🟢 clean (lap 121) — the frequency half of the live objective; **not** a normality claim yet (all `n` still open: MID-BAND PREFIX CONTROL) |
 | `G4.isDisjunctive_base` | **`3 ≤ b → IsDisjunctive b (∑_n ω(n)/bⁿ)`** — UNCONDITIONAL, the campaign endpoint generalised (brief §7.1) | trust triple | 🟢 clean — no `sorry`, no `native_decide`, no local axiom in the cone |
 | `G4.isDisjunctive_four` / `isDisjunctive_two` | **G₄ disjunctive in base 4 and base 2** — UNCONDITIONAL, the attended frozen endpoint | trust triple | 🟢 clean |
 | `G4.isDisjunctive_primeSum` / `every_word_occurs_base` / `isDisjunctive_root` | prime-sum form, every finite word, root bases (uncond.) | trust triple | 🟢 clean |
