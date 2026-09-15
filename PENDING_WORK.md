@@ -40,9 +40,25 @@ a capture error already `O(K^{−1/4})`.  Arithmetic of the sandwich (record so 
 
 `δ = O(1/K)` needs `X₁ ≥ 4·wFloor i` (the gate), which is what makes step 3 necessary.
 
+### Landed (grind laps after 122)
+
+```
+G4EntropyWSandwich   two_kIdx_le_of_lt_cutLo, lt_cutHi_of_two_kIdx_le   THE TWO INCLUSIONS
+                     cutLo/cutHi, flank_gap, cutLo_le_cutHi
+                     card_bandWtr_add, card_bandWtr_{le,ge}_real
+                     KK_le_Xlo, KK_mul_P₀_le_Xlo, KK_mul_{P₀,dRef}_le_wFloor
+                     card_flank_ratio   K·|bandWtr cutHi| ≤ (K+16)·|bandWtr cutLo|
+G4EntropyWPrefix     fnthW_surj/_mono'/_le_iff, startsLe, aLe, idxLe, idxLe_eq_range,
+                     startsLe_eq_image   THE READ-INDEX ↔ POSITION-THRESHOLD BRIDGE
+                     fullGoodWPre, fullGoodWPre_eq,
+                     fullW_band_prefix_winCount_bounds, fullW_prefix_winCount_bounds
+```
+
+All trust-triple clean.  Route trigger **E-T11 did NOT fire**: the bracket exists in-kernel.
+
 ### Open, in order (review lap 122)
 
-1. **`G4EntropyWPrefix.lean` — the prefix read count.**  Mechanical port; *prove* it.
+1. ✅ **`G4EntropyWPrefix.lean` — the prefix read count.**  DONE.
    * `startsLe i c := (winStartsW i).filter (· ≤ c)`,  `aLe i c := (startsLe i c).card`
    * `image_fnthW_range`: `Finset.image (fnthW i) (Finset.range (aLe i c)) = startsLe i c`
      (order-embedding: `q ≤ fnthW i (a−1) ↔ ∃ b < a, q = fnthW i b`)
