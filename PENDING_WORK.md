@@ -50,12 +50,41 @@ but only into `≈ K/8` blocks, each a `1/K` fraction of the atoms.
    `c·2^{−K/2}`, and the two meet precisely when `K′ ≳ 3K/8` — DESIGN §3's (E) recovered as the
    consistency range of the packaged `Prop`.
 
-2. **The honest residue, sharply posed.**  Below `w = 8E + 5` the *counting* bound is vacuous —
-   not the arithmetic.  Nothing exhibits an escaping sampler.  The point where it expires is
-   exactly where a block carries fewer atoms than `skel` needs (`|skel| ≤ E`, threshold `8E`).
-   Decide it from the **certificate** side: what is the smallest block dimension at which the E0
-   entropy/volume saving still certifies a block's windows?  Named `Prop` first; an explicit
-   obstruction is a valid outcome.
+2. ✅ **The residue, decided from the certificate side — ANSWERED (lap 169): NO threshold.**
+   `src/NormalNumbers/G4EntropyBlocks.lean`:
+   * `Blocks.H₂_le_sum_blocks` — cutting the coordinates into blocks and keeping only each
+     block's own marginal is **subadditive**: `H₂(L) ≤ Σ_g H₂(L|block g)`.  (Generalized
+     subadditivity `FinLaw.H₂_le_sum_H₂_map` at the family of padded block restrictions, which is
+     injective exactly because the blocks partition the coordinates.)
+   * `Blocks.H₂_restrictCoords_le` — a block's marginal carries at most `m` bits per coordinate.
+   * `Blocks.weight_of_good_blocks` — the pigeonhole, division-free: per-block caps
+     `H_g ≤ m·w_g` plus `Σ H_g ≥ c·m·Σ w_g` force the blocks keeping a `θ`-fraction of the
+     maximal rate to carry `≥ (c−θ)/(1−θ)` of the total weight.
+   * `Blocks.good_block_weight` — the two combined for a `FinLaw` on `A → Fin (2^m)`.
+
+   At E0's constant (`entropy_E0`: `(1/5)·m·H < H₂`) and `θ = 1/10`: **whatever the block
+   structure — blocks of size one included — at least a ninth of the atoms sit in blocks whose
+   own marginal still carries a tenth of the maximal rate.**  So the entropy saving is diluted
+   at worst proportionally by blocking and never destroyed; there is **no certificate-side
+   dimension threshold**, and the certificate is not what forbids small blocks.
+
+3. **The honest residue of objective S, now sharp.**  Everything that forbids blocks below
+   `w = 8E + 5` is the *counting* bound, and that bound is essentially tight (lap 164's probe:
+   the `skel` count is loose only by a constant factor **in the exponent**).  With lap 169's
+   answer on the certificate side, the residue is exactly:
+
+   > a sampler whose blocks carry fewer than `8E + 5` atoms is **not excluded by anything
+   > proved**.  Not by the counting bound (vacuous there), not by the error budget
+   > (`InsideCapture` is block-independent — it constrains the row second moment, not how the
+   > atoms are grouped), and not by the entropy certificate (`good_block_weight`).
+
+   That is where a future escape from the deformation verdict would have to live.  The next
+   concrete move is to decide whether a small-block sampler can *exist*: the transport identity
+   is atom-local (`G4Grid.add_shiftG_eq` needs only `n ≡ t_α mod d_α` for the atoms sharing `n`),
+   so nothing obviously forbids blocks of size one — in which case the read set has density one
+   and the obstruction must come from somewhere the present chain does not reach.  Formalize the
+   *positive* direction first: a `Prop` saying "a `G`-block sampler with the full certificate
+   exists", and see which of the three pillars it contradicts.
 
 ### Refuted / checked this lap, do not retry
 * **Sharpening `|𝓕|` with the pairwise-coprimality hypothesis.**  `hcop` forces `d` injective on
