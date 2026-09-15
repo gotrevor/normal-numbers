@@ -1555,4 +1555,74 @@ theorem roughRowVarianceLower_mertens {K L T Q c0 N k : ℕ} (hT : 4 ≤ T) (hQ 
     have h5 : (3 : ℝ) * (1 / ((T : ℝ) - 1)) = 3 / ((T : ℝ) - 1) := by ring
     linarith
 
+/-! ### The scales are satisfiable
+
+The last thing an audit should ask of (E): are the hypotheses of
+`roughRowVarianceLower_mertens` ever met?  They are, for every row size `K`, every gap exponent
+`k` and every frozen modulus `Q` — choose `T` beyond `16·(5·2^K/3)·(4k+3) + 4 + Q`, then rough
+primes of total weight `1` (`exists_rough_primes`), then a sample length `N` beyond
+`24·(5·2^K/3)·|S|² + 6|S|²`.  Nothing in the chain is vacuous. -/
+
+/-- **Non-vacuity of (E).**  For every `K`, `k`, `Q` there are a roughness threshold, a rough
+prime set and a sample length meeting every numeric hypothesis of
+`roughRowVarianceLower_mertens` at `V = 1`. -/
+theorem scales_satisfiable (K k Q : ℕ) :
+    ∃ (T : ℕ) (S : Finset ℕ) (N : ℕ), 4 ≤ T ∧ Q < T ∧ 0 < N ∧
+      (∀ p ∈ S, Nat.Prime p) ∧ (∀ p ∈ S, T ≤ p) ∧
+      (1 : ℝ) ≤ ∑ p ∈ S, ((1 : ℝ) / p - ((1 : ℝ) / p) ^ 2) ∧
+      (4 * (k : ℝ) / T + 3 / ((T : ℝ) - 1) + 3 * (S.card : ℝ) ^ 2 / N) * (5 * (2 : ℝ) ^ K / 3)
+        ≤ ((1 : ℝ) - 3 * (S.card : ℝ) ^ 2 / N) / 2 := by
+  classical
+  set A : ℝ := 5 * (2 : ℝ) ^ K / 3 with hAdef
+  have hA1 : (1 : ℝ) ≤ A := by
+    have : (1 : ℝ) ≤ (2 : ℝ) ^ K := one_le_pow₀ (by norm_num)
+    rw [hAdef]; linarith
+  have hA0 : (0 : ℝ) < A := by linarith
+  obtain ⟨T, hTge⟩ := exists_nat_ge (16 * A * (4 * (k : ℝ) + 3) + 4 + (Q : ℝ))
+  have hQr : (0 : ℝ) ≤ (Q : ℝ) := Nat.cast_nonneg Q
+  have hkr : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+  have hAk : 0 ≤ 16 * A * (4 * (k : ℝ) + 3) := by positivity
+  have hT4r : (4 : ℝ) ≤ (T : ℝ) := by linarith
+  have hT4 : 4 ≤ T := by exact_mod_cast hT4r
+  have hQT : Q < T := by
+    have : (Q : ℝ) < (T : ℝ) := by linarith
+    exact_mod_cast this
+  have hT0 : (0 : ℝ) < (T : ℝ) := by linarith
+  have hT1 : (0 : ℝ) < (T : ℝ) - 1 := by linarith
+  have h4k : 4 * (k : ℝ) / T ≤ 1 / (16 * A) := by
+    rw [div_le_div_iff₀ hT0 (by positivity)]
+    nlinarith
+  have h3T : 3 / ((T : ℝ) - 1) ≤ 1 / (16 * A) := by
+    rw [div_le_div_iff₀ hT1 (by positivity)]
+    nlinarith
+  obtain ⟨S, hprime, hge, hV⟩ := exists_rough_primes T (by omega) 1
+  obtain ⟨N, hNge⟩ := exists_nat_ge (24 * A * (S.card : ℝ) ^ 2 + 6 * (S.card : ℝ) ^ 2 + 1)
+  have hm0 : (0 : ℝ) ≤ (S.card : ℝ) ^ 2 := by positivity
+  have hAm : 0 ≤ 24 * A * (S.card : ℝ) ^ 2 := by positivity
+  have hN1r : (1 : ℝ) ≤ (N : ℝ) := by nlinarith
+  have hN0 : (0 : ℝ) < (N : ℝ) := by linarith
+  have hNpos : 0 < N := by exact_mod_cast hN1r
+  have hb1 : 3 * (S.card : ℝ) ^ 2 / N ≤ 1 / (8 * A) := by
+    rw [div_le_div_iff₀ hN0 (by positivity)]
+    nlinarith
+  have hb2 : 3 * (S.card : ℝ) ^ 2 / N ≤ 1 / 2 := by
+    rw [div_le_div_iff₀ hN0 (by norm_num)]
+    nlinarith
+  refine ⟨T, S, N, hT4, hQT, hNpos, hprime, hge, hV, ?_⟩
+  have hsum : 4 * (k : ℝ) / T + 3 / ((T : ℝ) - 1) + 3 * (S.card : ℝ) ^ 2 / N
+      ≤ 1 / (16 * A) + 1 / (16 * A) + 1 / (8 * A) := by linarith
+  have hval : (1 / (16 * A) + 1 / (16 * A) + 1 / (8 * A)) * A = 1 / 4 := by
+    field_simp
+    ring
+  have hnn : (0 : ℝ) ≤ 4 * (k : ℝ) / T + 3 / ((T : ℝ) - 1) + 3 * (S.card : ℝ) ^ 2 / N := by
+    have : (0 : ℝ) ≤ 3 / ((T : ℝ) - 1) := by positivity
+    have h2 : (0 : ℝ) ≤ 4 * (k : ℝ) / T := by positivity
+    have h3 : (0 : ℝ) ≤ 3 * (S.card : ℝ) ^ 2 / N := by positivity
+    linarith
+  calc (4 * (k : ℝ) / T + 3 / ((T : ℝ) - 1) + 3 * (S.card : ℝ) ^ 2 / N) * A
+      ≤ (1 / (16 * A) + 1 / (16 * A) + 1 / (8 * A)) * A :=
+        mul_le_mul_of_nonneg_right hsum hA0.le
+    _ = 1 / 4 := hval
+    _ ≤ ((1 : ℝ) - 3 * (S.card : ℝ) ^ 2 / N) / 2 := by linarith
+
 end NormalNumbers.G4.RowVariance
