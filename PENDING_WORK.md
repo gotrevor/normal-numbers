@@ -3,7 +3,51 @@
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
 > section; do **not** append to the bottom.
 
-## 🎯 ACTIVE (entropy **review lap 126**, 2026-09-15) — THE SQUEEZE AND THE ENDPOINT
+## 🎯 ACTIVE (entropy **lap 126 close**, 2026-09-15) — THE BASE-`2^k` UPGRADE
+
+**Read `DIRECTION.md`'s CURRENT DIRECTIVE (lap 126 close) first; it outranks any handoff.**
+
+🏁 The base-two objective is **MET**: `isNormal_fullRealW : IsNormal 2 fullRealW`, axiom-clean.
+The successor is the natural strengthening of the *same* object:
+**`IsNormal 4 fullRealW`, then `IsNormal (2^k) fullRealW`.**
+
+### The finding that opens it (probe run and PROVED this lap)
+
+`abs_posAvg_sub_le` is not a monolithic average.  Its proof splits the `m − ℓ + 1` window
+positions into the **`ℓ` offset classes** `p ≡ r (mod ℓ)` — `posEquiv` is literally
+`(r, j) ↦ r + jℓ` — certifies each class *separately*, and only then sums.  Extracted and
+generalised in `G4EntropyOffsetClass.lean` (both axiom-clean):
+
+* **`abs_offset_class_le`** — each class `r` on its own obeys `|classSum − 2^{−ℓ}·classCard| ≤
+  B·classCard` with `B = 2√(log2·ℓδ/(m − ℓ + 1))`, the *same* `B` as the full average.
+* 🎯 **`abs_posAvgR_sub_le`** — therefore the average over **any** sub-family `R : Finset (Fin ℓ)`
+  of classes obeys the same bound `B`.
+
+> Consequence: restricting to positions of a fixed residue mod `k` costs **nothing** — not a
+> factor `√k`, not even a constant — whenever `k ∣ ℓ`.  A base-`2^k` word of length `ℓ'` is a
+> binary word of length `ℓ = kℓ'`, so `k ∣ ℓ` always holds where it is needed.
+
+### Next, in order
+
+2. **Parity ↔ offset classes.**  For `k ∣ ℓ` and `c < k`, the positions `p < m − ℓ + 1` with
+   `p ≡ c (mod k)` are exactly `⋃ {class r : r ≡ c (mod k)}`; state it against `posEquiv`
+   (`toFun (r,j) = r + jℓ`, so `p ≡ r (mod k)` since `k ∣ ℓ`).
+3. **Transport to the read.**  Parity-restricted analogues of the `bandWLaw` chain,
+   `abs_prefix_ratio_sub_le_cap`, `tendsto_fullWRead_freq`, `abs_ratio_mid_le`.  In window `a` of
+   band `i` the needed class is `q ≡ (fTW i + a·kk i) (mod k)` — it depends on `a`, but **every**
+   class carries the same bound, so this costs nothing.
+4. **The digit bridge** — `digitOf (b^k) y j` in terms of `digitOf b y (k·j + t)` (new,
+   `Bridge`-level), then `IsNormal 4 fullRealW`, then general `k`.
+
+### Do not retry
+* Wall + Maxfield as the route to base `2^k`.  It is a genuinely harder classical theorem: u.d. of
+  `(b^n x)` does **not** formally give u.d. of `(b^{kn} x)`, and the Fourier route only yields
+  `μ̂(hb) = −μ̂(h)`-type periodicity, not vanishing.  The offset-class route above is strictly
+  easier *here* because we own the entropy certificate.
+
+---
+
+## 🗂️ SUPERSEDED ACTIVE (entropy **review lap 126 opening**, 2026-09-15) — THE SQUEEZE AND THE ENDPOINT
 
 **Read `DIRECTION.md`'s CURRENT DIRECTIVE (lap 126) first; it outranks any handoff.**
 

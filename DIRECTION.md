@@ -88,7 +88,75 @@ here.  The "forbidden drift" list of the G5 directive still applies except for
 its ban on "the multiplicity/entropy/ordinary-normality questions", which this
 expedition explicitly lifts.
 
-## CURRENT DIRECTIVE — entropy expedition (set 2026-09-15, FRESH-MIND REVIEW lap 126)
+## CURRENT DIRECTIVE — entropy expedition (set 2026-09-15, lap 126 close — the base-`2^k` upgrade)
+
+*Altitude-lap section, inside the ACTIVE override's scope.  It OUTRANKS every HANDOFF.  The
+lap-126-opening directive below is DISCHARGED: `isNormal_fullRealW : IsNormal 2 fullRealW` is
+proved and prints `[propext, Classical.choice, Quot.sound]`, so the ACTIVE operator override's
+own stop condition ("stop when the endpoint is proved axiom-clean") is met.  E-T7 is honoured —
+the lap that met the objective did not choose this; this altitude section does.*
+
+**State.**  Build 🟢 **9024 jobs**.  `src/` carries exactly two `sorry`s, both pre-expedition,
+off-path and on the forbidden-drift list.  Headline: `isNormal_fullRealW`,
+`isNormal_two_of_schedule_read`, `digitOf_fullRealW`, `isDisjunctive_fullRealW`,
+`irrational_fullRealW` — all trust-triple clean.  Audit surface: `G4EntropyWStatement.lean`.
+
+**The successor, and why it is the right one.**  The proved theorem is base **two**.  The
+natural strengthening of the *same object* — not a new campaign, not a re-point — is
+
+> 🎯 **`IsNormal 4 fullRealW`, and then `IsNormal (2^k) fullRealW` for every `k ≥ 1`.**
+
+**The structural finding that makes it reachable** (probe run this lap, source-grounded):
+`G4Entropy.abs_posAvg_sub_le` does **not** average over positions monolithically.  Its proof
+decomposes the `m − ℓ + 1` window positions into the **`ℓ` offset classes** `p ≡ r (mod ℓ)`,
+certifies each class *separately* (`hclaim : ∀ r : Fin ℓ, |S r − 2^{−ℓ}·N r| ≤ B·N r`, via
+`abs_avg_block_prob_offset_le`), and only then sums.  Therefore:
+
+> when `ℓ` is **even**, the positions of a fixed **parity** are exactly the union of the
+> **even-indexed offset classes**, and the restricted average obeys the *same* bound `B` — no
+> `√2`, no loss at all.
+
+Base-`2^k` digits of a number in `[0,1)` are `k`-blocks of its binary digits at positions
+`≡ 0 (mod k)`, so a base-`4` word of length `ℓ'` is a binary word of length `ℓ = 2ℓ'` — even, as
+required.  (Going through Wall + Maxfield instead is a genuinely harder classical theorem; do
+**not** assume it is the cheap route.)
+
+- 🔨 **Mandated next move, in this order.**
+    1. **`G4EntropyOffsetClass.lean` — the decisive probe, prove it in kernel first.**  Extract
+       `abs_posAvg_sub_le`'s per-class claim as a standalone `abs_offset_class_le`, then
+       `posAvgR` (average over `R : Finset (Fin ℓ)`) and **`abs_posAvgR_sub_le`** with the same
+       bound.  Add a new module; do **not** edit `G4EntropyOffset.lean`.
+    2. **Parity ↔ offset classes.**  For `ℓ` even and `c < 2`, the positions `p < m − ℓ + 1` with
+       `p ≡ c (mod 2)` are exactly `⋃ {class r : r ≡ c (mod 2)}` (the class of `r` is
+       `{r + jℓ}`).  State it against `posEquiv`.
+    3. **Transport to the read.**  The parity-restricted analogues of the `bandWLaw` chain and of
+       `abs_prefix_ratio_sub_le_cap` / `tendsto_fullWRead_freq` / `abs_ratio_mid_le`.  Within
+       window `a` of band `i` the needed class is `q ≡ (fTW i + a·kk i) (mod 2)` — it *depends on
+       `a`*, but **both** parity classes carry the same bound, so this costs nothing.
+    4. **The digit bridge** `digitOf (b^k) y j` in terms of `digitOf b y (k·j + t)` (new; the
+       `Bridge`-level fact), then `IsNormal 4 fullRealW`, then general `k`.
+- 📌 **Leaf rule.**  Commit a compiling skeleton with named `sorry` leaves before each hard step;
+  keep every leaf in `src/`.
+- ⛔ **Forbidden drift**: everything the lap-126-opening directive forbade still applies, plus —
+  do **not** weaken or restate `isNormal_fullRealW`, `fullRealW`, `fullPosW`, `fullDigW` or
+  `G4EntropyWStatement`'s theorems (they are the frozen endpoint); do not edit
+  `G4EntropyOffset.lean` or any other pre-expedition or already-closed module; and still
+  **claim nothing about the normality of `G₄` itself**.
+- 🚦 **Route triggers**:
+    * **E-T13 (new, route-decisive)** — if step 1's `abs_posAvgR_sub_le` cannot be obtained at the
+      *same* constant `B` (e.g. `abs_avg_block_prob_offset_le`'s hypothesis turns out to need all
+      classes jointly), or if step 2's parity↔class identification fails because `posEquiv` is not
+      the arithmetic map `(r, j) ↦ r + jℓ`, the base-`2^k` route fails as designed: write
+      `ROUTE-ESCALATION-<date>.md` naming the failing step.  Nothing else in this directive
+      survives that.
+    * **E-T3**, **E-T7** (both kept).
+
+### Directive history (entropy expedition)
+* lap 51 → lap 119 → lap 122 → lap 126 opening (🏁 MET: `IsNormal 2 fullRealW`) →
+  **lap 126 close**: the base-`2^k` upgrade of the same object, on the offset-class decomposition
+  that `abs_posAvg_sub_le` already contains.
+
+## SUPERSEDED DIRECTIVE — entropy expedition (set 2026-09-15, lap 126 opening; 🏁 OBJECTIVE MET)
 
 *Altitude-lap section, inside the ACTIVE override's scope.  It OUTRANKS every HANDOFF, and it
 outranks the lap-122 directive below, whose mandated steps 1–3 are DONE: `G4EntropyWPrefix`
@@ -151,9 +219,9 @@ and the headline.
     * **E-T7** (kept) — a lap that MEETS the 🎯 objective says so and does not pick its own next
       target; the next altitude lap sets one.
 
-### Directive history (entropy expedition)
-* lap 51 → lap 119 → lap 122 → **lap 126**: lap 126 keeps the route and narrows the mandate to
-  lap-122 step 4 (the squeeze + the endpoint), the only obligation left before `IsNormal 2 fullRealW`.
+### Directive history (superseded section)
+* lap 51 → lap 119 → lap 122 → lap 126 opening: narrowed to lap-122 step 4 (the squeeze + the
+  endpoint).  **Discharged 2026-09-15.**
 
 ## SUPERSEDED DIRECTIVE — entropy expedition (set 2026-09-15, FRESH-MIND REVIEW lap 122; steps 1–3 DONE)
 
