@@ -36,15 +36,19 @@ but only into `≈ K/8` blocks, each a `1/K` fraction of the atoms.
    sample at rate `dmin^{−H/2}`, blocks of size `w ≥ 8E+5` at rate `dmin^{−w/2}`.  All in
    `G4GroupedVerdict.lean`, all trust-triple clean.
 
-1b. **Non-vacuity of `InsideCapture` — the live item.**  `InsideCapture` routes through
-   `two_layers_of_dyadic`, whose rough primes must lie in `[T, 2T]` with `|S| ≥ 1920·2^K·k`.
-   Counting primes in a dyadic interval is not in mathlib (only `Nat.bertrand`, one prime).  The
-   `|S|`-free **Mertens** form has no upper bound on `p` and its hypotheses are *proved*
-   satisfiable for every `K, k, Q` (`scales_satisfiable`).  So: build `two_layers_of_mertens`
-   (`Budget.budget_forces_two_layers` fed by `roughRowVarianceLower_mertens`), re-package
-   `InsideCapture` on it, and add `Capture.structural_satisfiable` — every hypothesis except the
-   capture inequality itself is meetable.  That turns `budget_confines` from "true" into
-   "true and not vacuous".
+1b. ✅ **Non-vacuity of `InsideCapture` — DONE (lap 168).**  The dyadic route needed
+   `|S| ≥ 1920·2^K·k` primes inside `[T, 2T]`, a dyadic prime *count* mathlib does not have (only
+   `Nat.bertrand`, one prime).  `Capture.two_layers_of_mertens` replaces it with the `|S|`-free
+   Mertens bound (`Budget.budget_forces_two_layers` fed by `roughRowVarianceLower_mertens`; the
+   strict positivity of the constant is free, since `ε ≥ 3/(T−1) > 0`), `InsideCapture` is
+   re-packaged on it, and **`Capture.structural_satisfiable`** proves every conjunct but the
+   capture inequality meetable for every `K`, `k` and every `L > 0`.  The trick: `Q` is
+   existential too, so taking `Q = 2^K·L` makes `scales_satisfiable`'s own `Q < T` deliver the
+   shift-gap bound `|ρ i − ρ j| < T^{k+1}` for free (shifts enumerated by `finProdFinEquiv`).
+   What is left is exactly the sampler's own capture inequality — a genuine constraint, and a
+   consistent one: `RoughRowVarianceLower` forces `sm K′ ≥ c·2^K·16^{−K′}/15` against the cap
+   `c·2^{−K/2}`, and the two meet precisely when `K′ ≳ 3K/8` — DESIGN §3's (E) recovered as the
+   consistency range of the packaged `Prop`.
 
 2. **The honest residue, sharply posed.**  Below `w = 8E + 5` the *counting* bound is vacuous —
    not the arithmetic.  Nothing exhibits an escaping sampler.  The point where it expires is

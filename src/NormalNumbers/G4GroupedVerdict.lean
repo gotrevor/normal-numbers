@@ -226,35 +226,141 @@ namespace NormalNumbers.G4.Capture
 
 open NormalNumbers.G4.RowVariance
 
-/-- **The analytic side of one sampler, packaged.**  Everything `two_layers_of_dyadic` consumes
-except the row size `K` and the cancelled-layer count `K′`: a dyadic rough-prime set `S ⊆ [T, 2T]`
-coprime to the frozen modulus `Q`, released weights `w` of the standard shape `4^{−(K″+1+ℓ)}`,
-released shifts `ρ` with distinct, `T^{k+1}`-bounded gaps, the three scale conditions
-`T ≥ 1440·2^K`, `|S| ≥ 1920·2^K·k`, `N ≥ 1440·2^K·|S|·T`, and the capture inequality at `K′`. -/
+/-- **The two-layer conclusion in Mertens form.**  `two_layers_of_dyadic` needs its rough primes
+to lie in `[T, 2T]` with `|S| ≥ 1920·2^K·k` — a *count* of primes in a dyadic interval, which
+mathlib does not supply (only `Nat.bertrand`, one prime).  The `|S|`-free Mertens bound
+`roughRowVarianceLower_mertens` has no upper bound on `p`, and `scales_satisfiable` proves its
+hypotheses meetable for every `K`, `k`, `Q`.  This is `Budget.budget_forces_two_layers` fed by
+it; the strict positivity of the constant comes for free, since `ε ≥ 3/(T−1) > 0`. -/
+theorem two_layers_of_mertens {K L T Q c0 N k : ℕ} (hT : 4 ≤ T) (hQ : 0 < Q) (hQT : Q < T)
+    (hN : 0 < N) (hK : 8 ≤ K) (hL : 0 < L)
+    (S : Finset ℕ) (hprime : ∀ p ∈ S, Nat.Prime p) (hge : ∀ p ∈ S, T ≤ p)
+    (ρ : ℕ → Fin (2 ^ K) × Fin L → ℤ) (w : ℕ → Fin (2 ^ K) × Fin L → ℝ)
+    (hw : ∀ K'' i, |w K'' i| = (1 / 4 : ℝ) ^ (K'' + 1 + (i.2 : ℕ)))
+    (hΔ : ∀ (K'' : ℕ) (i j), i ≠ j →
+      ρ K'' i - ρ K'' j ≠ 0 ∧ (ρ K'' i - ρ K'' j).natAbs < T ^ (k + 1))
+    {V : ℝ} (hV : V ≤ ∑ p ∈ S, ((1 : ℝ) / p - ((1 : ℝ) / p) ^ 2))
+    (hsmall : (4 * (k : ℝ) / T + 3 / ((T : ℝ) - 1) + 3 * (S.card : ℝ) ^ 2 / N)
+        * (5 * (2 : ℝ) ^ K / 3)
+      ≤ (V - 3 * (S.card : ℝ) ^ 2 / N) / 2)
+    {K' : ℕ}
+    (hcap : avg ((Finset.range N).image (fun x => c0 + Q * x))
+        (fun n => (∑ i, w K' i * fluct S (ρ K' i) n) ^ 2)
+      ≤ (((V - 3 * (S.card : ℝ) ^ 2 / N) / 2) * (1 - (1 / 16 : ℝ) ^ L))
+          * ((1 : ℝ) / 2) ^ (K / 2)) :
+    2 ≤ K' := by
+  have hT1 : (0 : ℝ) < (T : ℝ) - 1 := by
+    have : (4 : ℝ) ≤ (T : ℝ) := by exact_mod_cast hT
+    linarith
+  have h1 : (0 : ℝ) ≤ 4 * (k : ℝ) / T := by positivity
+  have h2 : (0 : ℝ) < 3 / ((T : ℝ) - 1) := div_pos (by norm_num) hT1
+  have h3 : (0 : ℝ) ≤ 3 * (S.card : ℝ) ^ 2 / N := by positivity
+  have hApos : (0 : ℝ) < 5 * (2 : ℝ) ^ K / 3 := by positivity
+  have hεpos : (0 : ℝ) < 4 * (k : ℝ) / T + 3 / ((T : ℝ) - 1) + 3 * (S.card : ℝ) ^ 2 / N := by
+    linarith
+  have hc0 : (0 : ℝ) < (V - 3 * (S.card : ℝ) ^ 2 / N) / 2 := by
+    nlinarith [mul_pos hεpos hApos]
+  have hL16 : (0 : ℝ) < 1 - (1 / 16 : ℝ) ^ L := by
+    have : (1 / 16 : ℝ) ^ L < 1 := pow_lt_one₀ (by norm_num) (by norm_num) (by omega)
+    linarith
+  exact RowBalance.Budget.budget_forces_two_layers (mul_pos hc0 hL16) hK
+    (roughRowVarianceLower_mertens hT hQ hQT hN S hprime hge ρ w hw hΔ hV hsmall) hcap
+
+/-- **The analytic side of one sampler, packaged.**  Everything `two_layers_of_mertens` consumes
+except the row size `K` and the cancelled-layer count `K′`: a rough prime set `S` above the
+roughness threshold `T > Q`, released weights `w` of the standard shape `4^{−(K″+1+ℓ)}`,
+released shifts `ρ` with distinct, `T^{k+1}`-bounded gaps, the variance target `V`, the
+correlation-level inequality, and the capture inequality at `K′`. -/
 def InsideCapture (K K' : ℕ) : Prop :=
   ∃ (L T Q c0 N k : ℕ) (S : Finset ℕ)
-    (ρ : ℕ → Fin (2 ^ K) × Fin L → ℤ) (w : ℕ → Fin (2 ^ K) × Fin L → ℝ),
-    4 ≤ T ∧ 0 < Q ∧ 0 < N ∧ 0 < L ∧ 0 < S.card ∧
-    (∀ p ∈ S, T ≤ p) ∧ (∀ p ∈ S, p ≤ 2 * T) ∧
-    (∀ p ∈ S, Nat.Coprime Q p) ∧
-    (∀ p ∈ S, ∀ q ∈ S, p ≠ q → Nat.Coprime p q) ∧
+    (ρ : ℕ → Fin (2 ^ K) × Fin L → ℤ) (w : ℕ → Fin (2 ^ K) × Fin L → ℝ) (V : ℝ),
+    4 ≤ T ∧ 0 < Q ∧ Q < T ∧ 0 < N ∧ 0 < L ∧
+    (∀ p ∈ S, Nat.Prime p) ∧ (∀ p ∈ S, T ≤ p) ∧
     (∀ K'' i, |w K'' i| = (1 / 4 : ℝ) ^ (K'' + 1 + (i.2 : ℕ))) ∧
     (∀ (K'' : ℕ) (i j), i ≠ j →
       ρ K'' i - ρ K'' j ≠ 0 ∧ (ρ K'' i - ρ K'' j).natAbs < T ^ (k + 1)) ∧
-    (1440 : ℝ) * 2 ^ K ≤ (T : ℝ) ∧
-    (1920 : ℝ) * 2 ^ K * (k : ℝ) ≤ (S.card : ℝ) ∧
-    (1440 : ℝ) * 2 ^ K * (S.card : ℝ) * (T : ℝ) ≤ (N : ℝ) ∧
+    V ≤ ∑ p ∈ S, ((1 : ℝ) / p - ((1 : ℝ) / p) ^ 2) ∧
+    (4 * (k : ℝ) / T + 3 / ((T : ℝ) - 1) + 3 * (S.card : ℝ) ^ 2 / N) * (5 * (2 : ℝ) ^ K / 3)
+      ≤ (V - 3 * (S.card : ℝ) ^ 2 / N) / 2 ∧
     avg ((Finset.range N).image (fun x => c0 + Q * x))
         (fun n => (∑ i, w K' i * fluct S (ρ K' i) n) ^ 2)
-      ≤ ((((S.card : ℝ) / (4 * T) - 3 * (S.card : ℝ) ^ 2 / N) / 2)
-          * (1 - (1 / 16 : ℝ) ^ L)) * ((1 : ℝ) / 2) ^ (K / 2)
+      ≤ (((V - 3 * (S.card : ℝ) ^ 2 / N) / 2) * (1 - (1 / 16 : ℝ) ^ L))
+          * ((1 : ℝ) / 2) ^ (K / 2)
 
-/-- **The budget forces two cancelled layers.**  `two_layers_of_dyadic`, with its analytic data
+/-- **The budget forces two cancelled layers.**  `two_layers_of_mertens`, with its analytic data
 existentially quantified. -/
 theorem two_le_of_insideCapture {K K' : ℕ} (hK : 8 ≤ K) (h : InsideCapture K K') : 2 ≤ K' := by
-  obtain ⟨L, T, Q, c0, N, k, S, ρ, w, hT, hQ, hN, hL, hSne, hge, hle, hQcop, hcop,
-    hw, hΔ, hTA, hmA, hNA, hcap⟩ := h
-  exact two_layers_of_dyadic hT hQ hN hK hL S hSne hge hle hQcop hcop ρ w hw hΔ hTA hmA hNA hcap
+  obtain ⟨L, T, Q, c0, N, k, S, ρ, w, V, hT, hQ, hQT, hN, hL, hprime, hge, hw, hΔ, hV,
+    hsmall, hcap⟩ := h
+  exact two_layers_of_mertens hT hQ hQT hN hK hL S hprime hge ρ w hw hΔ hV hsmall hcap
+
+/-! ### `InsideCapture` is not an empty hypothesis
+
+An existential hypothesis that nothing satisfies would make `budget_confines` vacuously true.
+`structural_satisfiable` rules that out for everything except the capture inequality itself:
+for every row size `K`, window length `L > 0` and gap exponent `k`, all of `InsideCapture`'s
+structural conjuncts are simultaneously meetable.  The trick is that the frozen modulus `Q` is
+existential too, so taking `Q = 2^K · L` makes `scales_satisfiable`'s own conclusion `Q < T`
+deliver the shift-gap bound for free.
+
+What is left is exactly the sampler's own capture inequality — a genuine constraint, and a
+consistent one: `RoughRowVarianceLower` forces `sm K′ ≥ c·2^K·16^{−K′}/15` while the budget caps
+it at `c·2^{−K/2}`, and the two meet precisely when `4K′ ≳ 3K/2`, i.e. `K′ ≳ 3K/8` — DESIGN §3's
+estimate (E), recovered as the consistency range of the packaged `Prop`. -/
+
+/-- **Structural non-vacuity of `InsideCapture`.**  Every conjunct but the capture inequality is
+satisfiable, for every `K`, `k` and every `L > 0`. -/
+theorem structural_satisfiable (K k L : ℕ) (hL : 0 < L) :
+    ∃ (T Q c0 N : ℕ) (S : Finset ℕ)
+      (ρ : ℕ → Fin (2 ^ K) × Fin L → ℤ) (w : ℕ → Fin (2 ^ K) × Fin L → ℝ) (V : ℝ),
+      4 ≤ T ∧ 0 < Q ∧ Q < T ∧ 0 < N ∧
+      (∀ p ∈ S, Nat.Prime p) ∧ (∀ p ∈ S, T ≤ p) ∧
+      (∀ K'' i, |w K'' i| = (1 / 4 : ℝ) ^ (K'' + 1 + (i.2 : ℕ))) ∧
+      (∀ (K'' : ℕ) (i j), i ≠ j →
+        ρ K'' i - ρ K'' j ≠ 0 ∧ (ρ K'' i - ρ K'' j).natAbs < T ^ (k + 1)) ∧
+      V ≤ ∑ p ∈ S, ((1 : ℝ) / p - ((1 : ℝ) / p) ^ 2) ∧
+      (4 * (k : ℝ) / T + 3 / ((T : ℝ) - 1) + 3 * (S.card : ℝ) ^ 2 / N) * (5 * (2 : ℝ) ^ K / 3)
+        ≤ (V - 3 * (S.card : ℝ) ^ 2 / N) / 2 := by
+  classical
+  -- the frozen modulus is existential: take it to be the index count, so `Q < T` bounds the gaps
+  set Q : ℕ := 2 ^ K * L with hQdef
+  have hQpos : 0 < Q := by
+    have h2 : 0 < 2 ^ K := by positivity
+    exact Nat.mul_pos h2 hL
+  obtain ⟨T, S, N, hT, hQT, hN, hprime, hge, hV, hsmall⟩ := scales_satisfiable K k Q
+  refine ⟨T, Q, 0, N, S,
+    fun _ i => ((finProdFinEquiv i : ℕ) : ℤ),
+    fun K'' i => (1 / 4 : ℝ) ^ (K'' + 1 + (i.2 : ℕ)), 1,
+    hT, hQpos, hQT, hN, hprime, hge, ?_, ?_, hV, hsmall⟩
+  · intro K'' i
+    exact abs_of_pos (by positivity)
+  · intro K'' i j hij
+    have hlt : ∀ x : Fin (2 ^ K) × Fin L, ((finProdFinEquiv x : ℕ) : ℤ) < (Q : ℤ) := by
+      intro x
+      have := (finProdFinEquiv x).isLt
+      exact_mod_cast this
+    have hnn : ∀ x : Fin (2 ^ K) × Fin L, (0 : ℤ) ≤ ((finProdFinEquiv x : ℕ) : ℤ) := by
+      intro x; positivity
+    have hne : ((finProdFinEquiv i : ℕ) : ℤ) ≠ ((finProdFinEquiv j : ℕ) : ℤ) := by
+      intro h
+      exact hij (finProdFinEquiv.injective (Fin.ext (by exact_mod_cast h)))
+    refine ⟨sub_ne_zero_of_ne hne, ?_⟩
+    have hTk : (T : ℤ) ≤ (T : ℤ) ^ (k + 1) := by
+      have : (T : ℕ) ≤ T ^ (k + 1) := Nat.le_self_pow (by omega) _
+      exact_mod_cast this
+    have hQTz : (Q : ℤ) < (T : ℤ) := by exact_mod_cast hQT
+    have habs : |((finProdFinEquiv i : ℕ) : ℤ) - ((finProdFinEquiv j : ℕ) : ℤ)| < (T : ℤ) ^ (k + 1) := by
+      rw [abs_lt]
+      constructor
+      · have := hlt j; have := hnn i; linarith
+      · have := hlt i; have := hnn j; linarith
+    show (((finProdFinEquiv i : ℕ) : ℤ) - ((finProdFinEquiv j : ℕ) : ℤ)).natAbs < T ^ (k + 1)
+    have hz : ((((finProdFinEquiv i : ℕ) : ℤ) - ((finProdFinEquiv j : ℕ) : ℤ)).natAbs : ℤ)
+        < ((T ^ (k + 1) : ℕ) : ℤ) := by
+      rw [Int.natCast_natAbs]
+      push_cast
+      exact habs
+    exact Nat.cast_lt.mp hz
 
 end NormalNumbers.G4.Capture
 
