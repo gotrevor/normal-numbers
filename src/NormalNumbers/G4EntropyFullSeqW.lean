@@ -849,4 +849,333 @@ theorem tendsto_fTW_atTop : Tendsto (fun i => (fTW i : ℝ)) atTop atTop := by
 
 
 
+/-! ### The wide band's certified frequency -/
+
+open Classical in
+/-- The wide band's joint window law at its own top. -/
+noncomputable def bandWLawTop (i : ℕ) (x : ℝ) : FinLaw ((gridAt i).Atom → Fin (2 ^ kk i)) :=
+  bandWLaw i (wTop i) (wgate_wTop i) x
+
+theorem abs_posAvg_bandWLawTop_le (i ℓ : ℕ) (hℓ : 0 < ℓ) (hℓm : 2 * ℓ ≤ kk i)
+    (w : Fin (2 ^ ℓ)) :
+    |posAvg (kk i) ℓ (bandWLawTop i (primeLambertAtBase 4)) w - 1 / (2 : ℝ) ^ ℓ|
+      ≤ 2 * Real.sqrt (808 * Real.log 2 * (ℓ : ℝ) / Real.sqrt (KK i)) :=
+  abs_posAvg_bandWLaw_le i (wTop i) ℓ (wgate_wTop i) (le_of_eq (wTop_eq i)) hℓ hℓm w
+
+open Classical in
+/-- **The band's count rendering.**  `posAvg` at the band law is the density, among the
+`|bandW i|·|Atom|·(m−ℓ+1)` triples `(n, α, p)` with `n` a band sample time, of those whose
+`ℓ`-block at window position `p` is `w`. -/
+theorem posAvg_bandWLawTop_eq_count (i ℓ : ℕ) (x : ℝ) (w : Fin (2 ^ ℓ)) :
+    posAvg (kk i) ℓ (bandWLawTop i x) w
+      = (∑ c : (gridAt i).Atom × Fin (kk i - ℓ + 1),
+            (((bandW i).filter fun n =>
+              posAt (kk i) ℓ (c.2 : ℕ) (ZVec (gridAt i) (kk i) x n c.1) = w).card : ℝ))
+        / (((bandW i).card : ℝ)
+            * ((Fintype.card (gridAt i).Atom : ℝ) * ((kk i - ℓ + 1 : ℕ) : ℝ))) := by
+  classical
+  have hp : ∀ c : (gridAt i).Atom × Fin (kk i - ℓ + 1),
+      ((bandWLawTop i x).map (fun z => posAt (kk i) ℓ (c.2 : ℕ) (z c.1))).prob {w}
+        = (((bandW i).filter fun n =>
+              posAt (kk i) ℓ (c.2 : ℕ) (ZVec (gridAt i) (kk i) x n c.1) = w).card : ℝ)
+          / ((bandW i).card : ℝ) := by
+    intro c
+    rw [FinLaw.prob, Finset.sum_singleton]
+    exact map_empirical_p (bandW_nonempty i) _ _ w
+  have hsum : (∑ c : (gridAt i).Atom × Fin (kk i - ℓ + 1),
+        ((bandWLawTop i x).map (fun z => posAt (kk i) ℓ (c.2 : ℕ) (z c.1))).prob {w})
+      = (∑ c : (gridAt i).Atom × Fin (kk i - ℓ + 1),
+          (((bandW i).filter fun n =>
+            posAt (kk i) ℓ (c.2 : ℕ) (ZVec (gridAt i) (kk i) x n c.1) = w).card : ℝ))
+        / ((bandW i).card : ℝ) := by
+    rw [Finset.sum_div]
+    exact Finset.sum_congr rfl fun c _ => hp c
+  rw [posAvg, hsum, div_div]
+
+open Classical in
+/-- **The band's digit rendering.** -/
+theorem posAvg_bandWLawTop_eq_digits (i ℓ : ℕ) (hℓm : ℓ ≤ kk i) (x : ℝ) (w : Fin (2 ^ ℓ)) :
+    posAvg (kk i) ℓ (bandWLawTop i x) w
+      = (∑ c : (gridAt i).Atom × Fin (kk i - ℓ + 1),
+            (((bandW i).filter fun n =>
+              blockVal (Int.fract x) (2 * kIdx (gridAt i) n c.1 + (c.2 : ℕ)) ℓ
+                = (w : ℕ)).card : ℝ))
+        / (((bandW i).card : ℝ)
+            * ((Fintype.card (gridAt i).Atom : ℝ) * ((kk i - ℓ + 1 : ℕ) : ℝ))) := by
+  classical
+  rw [posAvg_bandWLawTop_eq_count i ℓ x w]
+  congr 1
+  refine Finset.sum_congr rfl fun c _ => ?_
+  congr 2
+  have hZ : ∀ n : ℕ, ZVec (gridAt i) (kk i) x n c.1
+      = ⟨blockVal (Int.fract x) (2 * kIdx (gridAt i) n c.1) (kk i), blockVal_lt _ _ _⟩ :=
+    fun n => Fin.ext (ZSample_eq_blockVal (gridAt i) (kk i) x n c.1)
+  have hfit : (c.2 : ℕ) + ℓ ≤ kk i := by
+    have := c.2.isLt
+    omega
+  refine Finset.filter_congr fun n _ => ?_
+  rw [hZ n, posAt_blockVal _ _ _ _ _ hfit]
+  exact ⟨fun h => congrArg Fin.val h, fun h => Fin.ext h⟩
+
+open Classical in
+/-- **The band's occurrence limit for the whole sample.**  For every finite binary word `v`,
+the proportion of triples `(n, α, p)` with `n` a band-`i` sample time at which `v` occurs in
+`G₄`'s digits at `2·kIdx(n,α) + p` tends to `2^{−|v|}`. -/
+theorem tendsto_bandW_occursCount (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
+    Tendsto (fun i =>
+      (∑ c : (gridAt i).Atom × Fin (kk i - v.length + 1),
+          (((bandW i).filter fun n =>
+            OccursAt 2 (primeLambertAtBase 4) v
+              (2 * kIdx (gridAt i) n c.1 + (c.2 : ℕ))).card : ℝ))
+        / (((bandW i).card : ℝ)
+            * ((Fintype.card (gridAt i).Atom : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ))))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+  classical
+  set w : ∀ i : ℕ, Fin (2 ^ v.length) := fun _ => ⟨wordVal v, wordVal_lt hv⟩ with hw
+  have hgrow : Tendsto (fun i => (v.length : ℝ) / Real.sqrt (KK i)) atTop (nhds 0) := by
+    have hsqrt : Tendsto (fun i => Real.sqrt (KK i)) atTop atTop :=
+      Real.tendsto_sqrt_atTop.comp tendsto_KK_atTop
+    exact hsqrt.const_div_atTop _
+  have hinner : Tendsto (fun i => 808 * Real.log 2 * (v.length : ℝ) / Real.sqrt (KK i))
+      atTop (nhds 0) := by
+    have h := hgrow.const_mul (808 * Real.log 2)
+    simp only [mul_zero] at h
+    refine h.congr fun i => ?_
+    rw [mul_div_assoc]
+  have hsq : Tendsto (fun i => 2 * Real.sqrt (808 * Real.log 2 * (v.length : ℝ)
+      / Real.sqrt (KK i))) atTop (nhds 0) := by
+    have := hinner.sqrt
+    simpa using this.const_mul (2 : ℝ)
+  have hzero : Tendsto (fun i =>
+      posAvg (kk i) v.length (bandWLawTop i (primeLambertAtBase 4)) (w i)
+        - 1 / (2 : ℝ) ^ v.length) atTop (nhds 0) := by
+    refine squeeze_zero_norm' ?_ hsq
+    filter_upwards [eventually_ge_atTop (2 * v.length)] with i hi
+    have hle : 2 * v.length ≤ kk i := by unfold kk; omega
+    simpa [Real.norm_eq_abs] using abs_posAvg_bandWLawTop_le i v.length hlen hle (w i)
+  have hmain : Tendsto (fun i =>
+      posAvg (kk i) v.length (bandWLawTop i (primeLambertAtBase 4)) (w i))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+    have hlim : Tendsto (fun _ : ℕ => (1 : ℝ) / (2 : ℝ) ^ v.length) atTop
+        (nhds (1 / (2 : ℝ) ^ v.length)) := tendsto_const_nhds
+    simpa using hzero.add hlim
+  refine hmain.congr' ?_
+  filter_upwards [eventually_ge_atTop v.length] with i hi
+  have hle : v.length ≤ kk i := by unfold kk; omega
+  rw [posAvg_bandWLawTop_eq_digits i v.length hle _ (w i)]
+  congr 1
+  refine Finset.sum_congr rfl fun c _ => ?_
+  congr 2
+  refine Finset.filter_congr fun n _ => ?_
+  exact blockVal_eq_wordVal_iff (y := primeLambertAtBase 4) hv
+
+/-! ### The schedule-only frequency limit -/
+
+open Classical in
+/-- The band's certified frequency, as in `tendsto_bandW_occursCount`. -/
+noncomputable def bandWRatio (i : ℕ) (x : ℝ) (v : List ℕ) : ℝ :=
+  (∑ c : (gridAt i).Atom × Fin (kk i - v.length + 1),
+      (((bandW i).filter fun n =>
+        OccursAt 2 x v (2 * kIdx (gridAt i) n c.1 + (c.2 : ℕ))).card : ℝ))
+    / (((bandW i).card : ℝ)
+        * ((Fintype.card (gridAt i).Atom : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ)))
+
+set_option maxHeartbeats 2000000 in
+open Classical in
+/-- **The read frequency tracks the certified one** at every scale. -/
+theorem abs_fullWRead_sub_bandWRatio_le (v : List ℕ) (hlen : 0 < v.length) (i : ℕ)
+    (hℓm : v.length ≤ kk i) (h16 : 16 ≤ Fintype.card (gridAt i).Atom) :
+    |(winCount (fullDigW (primeLambertAtBase 4)) v (fTW (i + 1)) : ℝ) / ((fTW (i + 1) : ℕ) : ℝ)
+        - bandWRatio i (primeLambertAtBase 4) v|
+      ≤ 16 / (Fintype.card (gridAt i).Atom : ℝ) + ((v.length : ℝ) + 4) / (kk i : ℝ) := by
+  classical
+  have hApos : (0 : ℝ) < ((winStartsW i).card : ℝ) := by
+    exact_mod_cast card_winStartsW_pos i
+  have hQpos : (0 : ℝ) < (Fintype.card (gridAt i).Atom : ℝ) := by
+    have : 0 < Fintype.card (gridAt i).Atom := Fintype.card_pos
+    exact_mod_cast this
+  have hQ16 : (16 : ℝ) ≤ (Fintype.card (gridAt i).Atom : ℝ) := by exact_mod_cast h16
+  have hmpos : (0 : ℝ) < (kk i : ℝ) := by
+    have : 0 < kk i := by unfold kk; omega
+    exact_mod_cast this
+  have hFpos : (0 : ℝ) < ((kk i - v.length + 1 : ℕ) : ℝ) := by
+    have : 0 < kk i - v.length + 1 := by omega
+    exact_mod_cast this
+  have hFm : ((kk i - v.length + 1 : ℕ) : ℝ) ≤ (kk i : ℝ) := by
+    have : (kk i - v.length + 1 : ℕ) ≤ kk i := by omega
+    exact_mod_cast this
+  have hFeq : ((kk i - v.length + 1 : ℕ) : ℝ) = (kk i : ℝ) - (v.length : ℝ) + 1 := by
+    have h1 : (kk i - v.length + 1 : ℕ) = kk i + 1 - v.length := by omega
+    rw [h1, Nat.cast_sub (by omega)]
+    push_cast
+    ring
+  have hNeq : ((fTW (i + 1) : ℕ) : ℝ)
+      = ((fTW i : ℕ) : ℝ) + ((winStartsW i).card : ℝ) * (kk i : ℝ) := by
+    show ((fTW i + fLW i : ℕ) : ℝ) = _
+    rw [fLW]
+    push_cast
+    ring
+  have hT4 : ((fTW i : ℕ) : ℝ) ≤ 4 * ((winStartsW i).card : ℝ) := by
+    have h := fTW_kk_le i
+    have hfl : (fLW i : ℝ) = ((winStartsW i).card : ℝ) * (kk i : ℝ) := by
+      show ((((winStartsW i).card * kk i : ℕ)) : ℝ) = _
+      push_cast; ring
+    rw [hfl] at h
+    nlinarith [hmpos, hApos]
+  obtain ⟨hlo, hhi⟩ := fullW_winCount_bounds (primeLambertAtBase 4) i v hlen hℓm
+  have hWlo : (fullGoodW i (primeLambertAtBase 4) v : ℝ)
+      ≤ (winCount (fullDigW (primeLambertAtBase 4)) v (fTW (i + 1)) : ℝ) := by
+    exact_mod_cast hlo
+  have hWhi : (winCount (fullDigW (primeLambertAtBase 4)) v (fTW (i + 1)) : ℝ)
+      ≤ (fullGoodW i (primeLambertAtBase 4) v : ℝ) + ((fTW i : ℕ) : ℝ)
+        + ((winStartsW i).card : ℝ) * (v.length : ℝ) := by
+    have heq : ((fullGoodW i (primeLambertAtBase 4) v + fTW i
+        + (winStartsW i).card * v.length : ℕ) : ℝ)
+        = (fullGoodW i (primeLambertAtBase 4) v : ℝ) + ((fTW i : ℕ) : ℝ)
+          + ((winStartsW i).card : ℝ) * (v.length : ℝ) := by push_cast; ring
+    rw [← heq]
+    exact_mod_cast hhi
+  obtain ⟨hp1, hp2⟩ := sum_pairsW_sub_le i (primeLambertAtBase 4) v
+  have hAB : ((winStartsW i).card : ℝ) ≤ ((bandWPairs i).card : ℝ) := by
+    exact_mod_cast card_bandWPairs_sub i
+  have hSP : (fullGoodW i (primeLambertAtBase 4) v : ℝ)
+      ≤ ((∑ z ∈ bandWPairs i,
+          winOccW i (primeLambertAtBase 4) v (2 * kIdx (gridAt i) z.1 z.2) : ℕ) : ℝ) := by
+    rw [fullGoodW_eq i (primeLambertAtBase 4) v]
+    exact_mod_cast hp1
+  have hPS : ((∑ z ∈ bandWPairs i,
+        winOccW i (primeLambertAtBase 4) v (2 * kIdx (gridAt i) z.1 z.2) : ℕ) : ℝ)
+      ≤ (fullGoodW i (primeLambertAtBase 4) v : ℝ)
+        + (((bandWPairs i).card : ℝ) - ((winStartsW i).card : ℝ))
+          * ((kk i - v.length + 1 : ℕ) : ℝ) := by
+    have hov : ((((bandWPairs i).card - (winStartsW i).card : ℕ)) : ℝ)
+        = ((bandWPairs i).card : ℝ) - ((winStartsW i).card : ℝ) := by
+      rw [Nat.cast_sub (card_bandWPairs_sub i)]
+    have h2 : ((∑ z ∈ bandWPairs i,
+        winOccW i (primeLambertAtBase 4) v (2 * kIdx (gridAt i) z.1 z.2) : ℕ) : ℝ)
+        ≤ ((∑ q ∈ winStartsW i, winOccW i (primeLambertAtBase 4) v q : ℕ) : ℝ)
+          + ((((bandWPairs i).card - (winStartsW i).card : ℕ)) : ℝ)
+            * ((kk i - v.length + 1 : ℕ) : ℝ) := by
+      have := hp2
+      push_cast
+      exact_mod_cast this
+    rw [hov] at h2
+    rw [fullGoodW_eq i (primeLambertAtBase 4) v]
+    exact h2
+  have hnumcast : (∑ c : (gridAt i).Atom × Fin (kk i - v.length + 1),
+      ((((bandW i).filter fun n =>
+        OccursAt 2 (primeLambertAtBase 4) v
+          (2 * kIdx (gridAt i) n c.1 + (c.2 : ℕ))).card : ℕ) : ℝ))
+      = (((∑ z ∈ bandWPairs i,
+          winOccW i (primeLambertAtBase 4) v (2 * kIdx (gridAt i) z.1 z.2) : ℕ)) : ℝ) := by
+    rw [← pairCountW_eq i (primeLambertAtBase 4) v]
+    push_cast
+    rfl
+  have hBFeq : ((bandWPairs i).card : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ)
+      = ((bandW i).card : ℝ)
+        * ((Fintype.card (gridAt i).Atom : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ)) := by
+    have hnat : (bandWPairs i).card = (bandW i).card * Fintype.card (gridAt i).Atom := by
+      rw [bandWPairs, Finset.card_product, Finset.card_univ]
+    rw [hnat]
+    push_cast
+    ring
+  have hden : ((bandW i).card : ℝ)
+      * ((Fintype.card (gridAt i).Atom : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ)) ≠ 0 := by
+    have h1 : (0 : ℝ) < ((bandW i).card : ℝ) := by
+      exact_mod_cast Finset.card_pos.2 (bandW_nonempty i)
+    exact (mul_pos h1 (mul_pos hQpos hFpos)).ne'
+  have hPr : (((∑ z ∈ bandWPairs i,
+        winOccW i (primeLambertAtBase 4) v (2 * kIdx (gridAt i) z.1 z.2) : ℕ)) : ℝ)
+      = bandWRatio i (primeLambertAtBase 4) v
+        * (((bandWPairs i).card : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ)) := by
+    rw [bandWRatio, hnumcast, hBFeq]
+    exact (div_mul_cancel₀ _ hden).symm
+  have hrnn : (0 : ℝ) ≤ bandWRatio i (primeLambertAtBase 4) v := by
+    rw [bandWRatio]
+    refine div_nonneg (Finset.sum_nonneg fun c _ => Nat.cast_nonneg _) ?_
+    exact mul_nonneg (Nat.cast_nonneg _) (mul_nonneg (Nat.cast_nonneg _) (Nat.cast_nonneg _))
+  have hr1 : bandWRatio i (primeLambertAtBase 4) v ≤ 1 := by
+    have hBpos : (0 : ℝ) < ((bandWPairs i).card : ℝ) := lt_of_lt_of_le hApos hAB
+    have hBF : (0 : ℝ) < ((bandWPairs i).card : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ) :=
+      mul_pos hBpos hFpos
+    have hbound : ∑ z ∈ bandWPairs i,
+        winOccW i (primeLambertAtBase 4) v (2 * kIdx (gridAt i) z.1 z.2)
+        ≤ (bandWPairs i).card * (kk i - v.length + 1) := by
+      calc ∑ z ∈ bandWPairs i,
+            winOccW i (primeLambertAtBase 4) v (2 * kIdx (gridAt i) z.1 z.2)
+          ≤ ∑ _z ∈ bandWPairs i, (kk i - v.length + 1) :=
+            Finset.sum_le_sum fun z _ => winOccW_le i (primeLambertAtBase 4) v _
+        _ = (bandWPairs i).card * (kk i - v.length + 1) := by
+            rw [Finset.sum_const, smul_eq_mul]
+    have hPle : (((∑ z ∈ bandWPairs i,
+          winOccW i (primeLambertAtBase 4) v (2 * kIdx (gridAt i) z.1 z.2) : ℕ)) : ℝ)
+        ≤ ((bandWPairs i).card : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ) := by
+      exact_mod_cast hbound
+    rw [hPr] at hPle
+    refine le_of_mul_le_mul_right ?_ hBF
+    rw [one_mul]
+    exact hPle
+  have hovA : ((bandWPairs i).card : ℝ) - ((winStartsW i).card : ℝ)
+      ≤ 16 / (Fintype.card (gridAt i).Atom : ℝ) * ((winStartsW i).card : ℝ) := by
+    have hfrac := overhangW_frac_le i
+    rw [Nat.cast_sub (card_bandWPairs_sub i)] at hfrac
+    have hBA2 : ((bandWPairs i).card : ℝ) ≤ 2 * ((winStartsW i).card : ℝ) := by
+      have h8 : 8 / (Fintype.card (gridAt i).Atom : ℝ) ≤ 1 / 2 := by
+        rw [div_le_div_iff₀ hQpos (by norm_num)]
+        linarith
+      nlinarith [hfrac, h8, hApos]
+    have h2 : (0 : ℝ) ≤ 8 / (Fintype.card (gridAt i).Atom : ℝ) := by positivity
+    have h3 : 8 / (Fintype.card (gridAt i).Atom : ℝ) * ((bandWPairs i).card : ℝ)
+        ≤ 8 / (Fintype.card (gridAt i).Atom : ℝ) * (2 * ((winStartsW i).card : ℝ)) :=
+      mul_le_mul_of_nonneg_left hBA2 h2
+    have h4 : 8 / (Fintype.card (gridAt i).Atom : ℝ) * (2 * ((winStartsW i).card : ℝ))
+        = 16 / (Fintype.card (gridAt i).Atom : ℝ) * ((winStartsW i).card : ℝ) := by ring
+    linarith [hfrac, h3, h4]
+  have hWnn : (0 : ℝ) ≤ (winCount (fullDigW (primeLambertAtBase 4)) v (fTW (i + 1)) : ℝ) :=
+    Nat.cast_nonneg _
+  have hTnn : (0 : ℝ) ≤ ((fTW i : ℕ) : ℝ) := Nat.cast_nonneg _
+  have hℓnn : (0 : ℝ) ≤ (v.length : ℝ) := Nat.cast_nonneg _
+  exact read_freq_error_bound hApos hFpos hmpos hQpos hQ16 hTnn hℓnn hWnn hFm hFeq hNeq hT4
+    hWlo hWhi hSP hPS hPr hrnn hr1 hAB hovA
+
+
+
+/-- **The headline of the schedule-only line.**  For every finite binary word `v`, the frequency
+of `v` in the first `fTW (i+1)` digits of `G₄` read along the **schedule-only**, strictly
+increasing position map `fullPosW` tends to `2^{−|v|}`.
+
+Unlike `tendsto_bandRead_freq`, nothing in `fullPosW`'s definition refers to `G₄`: the map is
+built from the base-four schedule alone (the band thresholds and the distinct window starts).
+This is the lap-51 objective's x-freeness and `E-T8`'s strict monotonicity at once, and by
+`certified_granule_exceeds_previous_scale` it is the strongest form available. -/
+theorem tendsto_fullWRead_freq (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
+    Tendsto (fun i =>
+        (winCount (fullDigW (primeLambertAtBase 4)) v (fTW (i + 1)) : ℝ)
+          / ((fTW (i + 1) : ℕ) : ℝ))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
+  classical
+  have hband : Tendsto (fun i => bandWRatio i (primeLambertAtBase 4) v) atTop
+      (nhds (1 / (2 : ℝ) ^ v.length)) := tendsto_bandW_occursCount v hlen hv
+  have hAtom : Tendsto (fun i => 16 / (Fintype.card (gridAt i).Atom : ℝ)) atTop (nhds 0) :=
+    tendsto_card_Atom_atTop.const_div_atTop 16
+  have hkkt : Tendsto (fun i => ((v.length : ℝ) + 4) / (kk i : ℝ)) atTop (nhds 0) :=
+    tendsto_const_div_kk _
+  have herr : Tendsto (fun i => 16 / (Fintype.card (gridAt i).Atom : ℝ)
+      + ((v.length : ℝ) + 4) / (kk i : ℝ)) atTop (nhds 0) := by
+    have := hAtom.add hkkt
+    simpa using this
+  have hdiff : Tendsto (fun i =>
+      (winCount (fullDigW (primeLambertAtBase 4)) v (fTW (i + 1)) : ℝ) / ((fTW (i + 1) : ℕ) : ℝ)
+        - bandWRatio i (primeLambertAtBase 4) v) atTop (nhds 0) := by
+    refine squeeze_zero_norm' ?_ herr
+    filter_upwards [eventually_ge_atTop v.length] with i hi
+    have hli : v.length ≤ kk i := by unfold kk; omega
+    simpa [Real.norm_eq_abs] using
+      abs_fullWRead_sub_bandWRatio_le v hlen i hli (sixteen_le_card_Atom i)
+  have := hdiff.add hband
+  rw [zero_add] at this
+  exact this.congr fun i => by ring
+
 end NormalNumbers.G4.Sched
