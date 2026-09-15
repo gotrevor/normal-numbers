@@ -586,4 +586,152 @@ theorem window_gap_same_atom_at (i X' : ℕ) (α : (gridAt i).Atom) {n n' : ℕ}
     le_of_mul_le_mul_left hgap hd
   omega
 
+/-! ### The multiplicity fraction at a truncated scale -/
+
+open Classical in
+/-- **How many scale-`i` sample times give an `α`-window that some *other* atom `β` also
+produces**: at most `(X/d_α + 1)/P₀ + 1`.  The orbit indices of `α` only reach `X/d_α`, and the
+multiplier `d_α ≥ 1 + Q·D₀` is enormous — so against the `|P_K| ≈ X/(2P₀)` sample times `α` has
+in total, a pair of atoms collides on a `≈ 1/d_α` fraction. -/
+theorem card_collide_pair_le_at (i X' : ℕ) {α β : (gridAt i).Atom} (hαβ : α ≠ β) :
+    (((PKtr i X').filter (fun n => ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card)
+      ≤ (X' / (gridAt i).d α + 1) / (gridAt i).P₀ + 1 := by
+  classical
+  refine le_trans ?_ (card_shared_le (gridAt i) hαβ (X' / (gridAt i).d α + 1))
+  refine Finset.card_le_card_of_injOn (fun n => kIdx (gridAt i) n α) ?_ ?_
+  · intro n hn
+    simp only [Finset.coe_filter, Set.mem_setOf_eq] at hn ⊢
+    refine ⟨Finset.mem_range.2 ?_, activeIdx_kIdx (gridAt i) hn.1 α, hn.2⟩
+    have hnX : n < X' := Finset.mem_range.1 (Finset.mem_filter.1 hn.1).1
+    have hle : kIdx (gridAt i) n α ≤ n / (gridAt i).d α :=
+      Nat.div_le_div_right (Nat.sub_le _ _)
+    have hmono : n / (gridAt i).d α ≤ X' / (gridAt i).d α :=
+      Nat.div_le_div_right (le_of_lt hnX)
+    omega
+  · intro n hn n' hn' heq
+    simp only [Finset.coe_filter, Set.mem_setOf_eq] at hn hn'
+    simp only at heq
+    by_contra hne
+    rcases Nat.lt_or_ge n n' with hlt | hge
+    · have := window_gap_same_atom_at i X' α hn.1 hn'.1 hlt
+      have hkk : 0 < kk i := by unfold kk; omega
+      omega
+    · have hgt : n' < n := by omega
+      have := window_gap_same_atom_at i X' α hn'.1 hn.1 hgt
+      have hkk : 0 < kk i := by unfold kk; omega
+      omega
+
+open Classical in
+/-- **The total collision count at one atom.**  Summing `card_collide_pair_le_at` over the other
+atoms: the sample times whose `α`-window is shared with *some* other atom number at most
+`|Atom|·((X/d_α + 1)/P₀ + 1)`. -/
+theorem card_multi_atom_le_at (i X' : ℕ) (α : (gridAt i).Atom) :
+    (((PKtr i X').filter (fun n =>
+        ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card)
+      ≤ Fintype.card (gridAt i).Atom
+        * ((X' / (gridAt i).d α + 1) / (gridAt i).P₀ + 1) := by
+  classical
+  have hsub : (PKtr i X').filter (fun n =>
+        ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))
+      ⊆ (Finset.univ.filter (fun β : (gridAt i).Atom => β ≠ α)).biUnion
+          (fun β => (PKtr i X').filter (fun n => ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))) := by
+    intro n hn
+    rw [Finset.mem_filter] at hn
+    obtain ⟨β, hβ, hact⟩ := hn.2
+    exact Finset.mem_biUnion.2 ⟨β, Finset.mem_filter.2 ⟨Finset.mem_univ _, hβ⟩,
+      Finset.mem_filter.2 ⟨hn.1, hact⟩⟩
+  refine le_trans (Finset.card_le_card hsub) ?_
+  refine le_trans (Finset.card_biUnion_le) ?_
+  have hterm : ∀ β ∈ Finset.univ.filter (fun β : (gridAt i).Atom => β ≠ α),
+      ((PKtr i X').filter (fun n => ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card
+        ≤ (X' / (gridAt i).d α + 1) / (gridAt i).P₀ + 1 := by
+    intro β hβ
+    have hne : α ≠ β := fun h => (Finset.mem_filter.1 hβ).2 h.symm
+    exact card_collide_pair_le_at i X' hne
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [Finset.sum_const, smul_eq_mul]
+  refine Nat.mul_le_mul_right _ ?_
+  exact le_trans (Finset.card_filter_le _ _) (le_of_eq (Finset.card_univ))
+
+/-! ### The multiplicity fraction -/
+
+open Classical in
+/-- **The collision fraction at one atom is `≤ 2/|Atom| + 2|Atom|/|P_K|`.**  Both terms vanish:
+`|Atom| → ∞`, and `|P_K| ≈ X/(2P₀)` dwarfs `|Atom|²`. -/
+theorem card_multi_atom_le_real_at (i X' : ℕ) (h2P : 2 * (gridAt i).P₀ ≤ X') (α : (gridAt i).Atom) :
+    (((PKtr i X').filter (fun n =>
+        ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card : ℝ)
+      ≤ 2 * ((PKtr i X').card : ℝ) / (Fintype.card (gridAt i).Atom : ℝ)
+        + 2 * (Fintype.card (gridAt i).Atom : ℝ) := by
+  classical
+  set A : ℕ := Fintype.card (gridAt i).Atom with hA
+  have hApos : 0 < A := Fintype.card_pos
+  have hApos' : (0 : ℝ) < (A : ℝ) := by exact_mod_cast hApos
+  have hP₀ : 0 < (gridAt i).P₀ := (gridAt i).P₀_pos
+  have hd : A ^ 2 ≤ (gridAt i).d α := card_Atom_sq_le_d i α
+  -- the nat bound
+  have hnat := card_multi_atom_le_at i X' α
+  -- `(X/d + 1)/P₀ + 1 ≤ X/(A²·P₀) + 2`
+  have hstep : (X' / (gridAt i).d α + 1) / (gridAt i).P₀ + 1
+      ≤ X' / (A ^ 2 * (gridAt i).P₀) + 2 := by
+    have h1 : X' / (gridAt i).d α ≤ X' / A ^ 2 :=
+      Nat.div_le_div_left hd (by positivity)
+    have h2 : (X' / (gridAt i).d α + 1) / (gridAt i).P₀
+        ≤ (X' / A ^ 2) / (gridAt i).P₀ + 1 := by
+      have := Nat.div_le_div_right (c := (gridAt i).P₀) (Nat.add_le_add_right h1 1)
+      have hsplit : (X' / A ^ 2 + 1) / (gridAt i).P₀
+          ≤ (X' / A ^ 2) / (gridAt i).P₀ + 1 := by
+        have hdm := Nat.div_add_mod' (X' / A ^ 2 + 1) (gridAt i).P₀
+        have hdm2 := Nat.div_add_mod' (X' / A ^ 2) (gridAt i).P₀
+        have hle : (X' / A ^ 2) / (gridAt i).P₀
+            ≤ (X' / A ^ 2 + 1) / (gridAt i).P₀ :=
+          Nat.div_le_div_right (by omega)
+        by_contra hcon
+        push_neg at hcon
+        have hge : (X' / A ^ 2) / (gridAt i).P₀ + 2
+            ≤ (X' / A ^ 2 + 1) / (gridAt i).P₀ := by omega
+        have hmul : ((X' / A ^ 2) / (gridAt i).P₀ + 2) * (gridAt i).P₀
+            ≤ (X' / A ^ 2 + 1) := by
+          refine le_trans (Nat.mul_le_mul_right _ hge) ?_
+          exact Nat.div_mul_le_self _ _
+        have hmod : (X' / A ^ 2) % (gridAt i).P₀ < (gridAt i).P₀ := Nat.mod_lt _ hP₀
+        nlinarith [hdm2, hmul, hmod, hP₀]
+      omega
+    have h3 : (X' / A ^ 2) / (gridAt i).P₀ = X' / (A ^ 2 * (gridAt i).P₀) :=
+      Nat.div_div_eq_div_mul _ _ _
+    omega
+  -- assemble in `ℝ`
+  have hX : (X' : ℝ) / (2 * ((gridAt i).P₀ : ℝ)) ≤ ((PKtr i X').card : ℝ) :=
+    card_apSample_ge_half X' (gridAt i).P₀ (gridAt i).b₀ (gridAt i).P₀_pos
+      (gridAt i).b₀_lt_P₀ h2P
+  have hP₀R : (0 : ℝ) < ((gridAt i).P₀ : ℝ) := by exact_mod_cast hP₀
+  have hdivR : ((X' / (A ^ 2 * (gridAt i).P₀) : ℕ) : ℝ)
+      ≤ (X' : ℝ) / ((A : ℝ) ^ 2 * ((gridAt i).P₀ : ℝ)) := by
+    refine le_trans Nat.cast_div_le ?_
+    push_cast
+    exact le_rfl
+  have hXle : (X' : ℝ) / ((A : ℝ) ^ 2 * ((gridAt i).P₀ : ℝ))
+      ≤ 2 * ((PKtr i X').card : ℝ) / (A : ℝ) ^ 2 := by
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    have h := hX
+    rw [div_le_iff₀ (by positivity)] at h
+    nlinarith [h, hP₀R, hApos']
+  have hnatR : ((((PKtr i X').filter (fun n =>
+      ∃ β, β ≠ α ∧ ActiveIdx (gridAt i) β (kIdx (gridAt i) n α))).card : ℕ) : ℝ)
+      ≤ (A : ℝ) * (((X' / (A ^ 2 * (gridAt i).P₀) + 2 : ℕ)) : ℝ) := by
+    have h := le_trans hnat (Nat.mul_le_mul_left A hstep)
+    exact_mod_cast h
+  refine hnatR.trans ?_
+  have hcast2 : (((X' / (A ^ 2 * (gridAt i).P₀) + 2 : ℕ)) : ℝ)
+      ≤ (X' : ℝ) / ((A : ℝ) ^ 2 * ((gridAt i).P₀ : ℝ)) + 2 := by
+    push_cast
+    linarith [hdivR]
+  refine le_trans (mul_le_mul_of_nonneg_left hcast2 (le_of_lt hApos')) ?_
+  calc (A : ℝ) * ((X' : ℝ) / ((A : ℝ) ^ 2 * ((gridAt i).P₀ : ℝ)) + 2)
+      ≤ (A : ℝ) * (2 * ((PKtr i X').card : ℝ) / (A : ℝ) ^ 2 + 2) := by
+        refine mul_le_mul_of_nonneg_left ?_ (le_of_lt hApos')
+        linarith [hXle]
+    _ = 2 * ((PKtr i X').card : ℝ) / (A : ℝ) + 2 * (A : ℝ) := by
+        field_simp
+
 end NormalNumbers.G4.Sched
