@@ -217,6 +217,7 @@ import NormalNumbers.G4EntropyBandTrunc
 import NormalNumbers.G4EntropyBandHead
 import NormalNumbers.G4EntropyBandWide
 import NormalNumbers.G4EntropyFullSeqW
+import NormalNumbers.G4EntropyWSandwich
 import NormalNumbers.G4EntropyMTower
 import NormalNumbers.G4EntropyMTowerBig
 import NormalNumbers.G4EntropyMTowerHarmonic
