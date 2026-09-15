@@ -43,7 +43,7 @@ will speak for itself.")**  At most: make sure the module docstring of `G4Entrop
 `G4EntropyWStatement` states `fullRealW`'s definition and claim limits in one paragraph
 (density-zero read set; not normality of `G₄`; positions astronomically large).  No `docs/` essay.
 
-**Addendum 2026-09-15 00:05 EDT (attended, Ren): L1 ✅ L2 ✅ F ✅ (proved limitation of T(K′),
+**Addendum 2026-09-14 23:59 EDT (attended, Ren): L1 ✅ L2 ✅ F ✅ (proved limitation of T(K′),
 `G4DeformationVerdict`) W ✅.  Stop condition met; do NOT file further stuck strikes.  New
 objective R, authorized for the rest of this run (Trevor: burn Fable tonight on this endeavor):**
 
