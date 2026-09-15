@@ -407,14 +407,152 @@ theorem abs_ratio_mid_le (v : List ℕ) (hlen : 0 < v.length)
 
 /-! ### The limit at every `n`, and the endpoint -/
 
-theorem tendsto_midErrW (ℓ : ℕ) : Tendsto (fun i => midErrW i ℓ) atTop (nhds 0) := by
-  sorry
+lemma tendsto_natSqrt_KK_atTop : Tendsto (fun i => (Nat.sqrt (KK i) : ℝ)) atTop atTop := by
+  refine tendsto_atTop.2 fun b => ?_
+  obtain ⟨M, hM⟩ := exists_nat_ge b
+  filter_upwards [eventually_ge_atTop (M * M)] with i hi
+  have hKK : M * M ≤ KK i := by
+    have hle : i ≤ KK i := by unfold KK kk; omega
+    omega
+  have hMs : M ≤ Nat.sqrt (KK i) := by
+    have h := Nat.sqrt_le_sqrt hKK
+    rwa [Nat.sqrt_eq] at h
+  have hR : (M : ℝ) ≤ (Nat.sqrt (KK i) : ℝ) := by exact_mod_cast hMs
+  linarith
 
+theorem tendsto_midErrW (ℓ : ℕ) : Tendsto (fun i => midErrW i ℓ) atTop (nhds 0) := by
+  have hsqrtKK : Tendsto (fun i => Real.sqrt (KK i)) atTop atTop :=
+    Real.tendsto_sqrt_atTop.comp tendsto_KK_atTop
+  have h1 : Tendsto (fun i => 2 * Real.sqrt (808 * Real.log 2 * (ℓ : ℝ) / Real.sqrt (KK i)))
+      atTop (nhds 0) := by
+    have hinner : Tendsto (fun i => 808 * Real.log 2 * (ℓ : ℝ) / Real.sqrt (KK i))
+        atTop (nhds 0) := hsqrtKK.const_div_atTop _
+    have := hinner.sqrt
+    simpa using this.const_mul (2 : ℝ)
+  have h2 : Tendsto (fun i => 128 / (KK i : ℝ)) atTop (nhds 0) :=
+    tendsto_KK_atTop.const_div_atTop _
+  have h3 : Tendsto (fun i => 2 * (ℓ : ℝ) / (kk i : ℝ)) atTop (nhds 0) :=
+    tendsto_const_div_kk (2 * (ℓ : ℝ))
+  have h4 : Tendsto (fun i => 2 / (Nat.sqrt (KK i) : ℝ)) atTop (nhds 0) :=
+    tendsto_natSqrt_KK_atTop.const_div_atTop _
+  have h := ((h1.add h2).add h3).add h4
+  simpa [midErrW] using h
+
+/-- The band index of a read position goes to infinity. -/
+lemma tendsto_fgrpW_atTop : Tendsto fgrpW atTop atTop := by
+  classical
+  refine tendsto_atTop_atTop.2 fun M => ⟨fTW M, fun n hn => ?_⟩
+  have hMn : M ≤ n := le_trans (self_le_fTW M) hn
+  show M ≤ Nat.findGreatest (fun m => fTW m ≤ n) n
+  exact Nat.le_findGreatest hMn hn
+
+set_option maxHeartbeats 1000000 in
+open Classical in
 /-- **Every binary word has frequency `2^{−|v|}` in the schedule-only read, at EVERY prefix.** -/
 theorem tendsto_winCount_fullDigW (v : List ℕ) (hlen : 0 < v.length)
     (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
     Tendsto (fun n => (winCount (fullDigW (primeLambertAtBase 4)) v n : ℝ) / (n : ℝ))
       atTop (nhds (1 / (2 : ℝ) ^ v.length)) := by
-  sorry
+  classical
+  -- the band-cutoff limit, reindexed from `i+1` to `i`
+  have hband : Tendsto (fun i =>
+      (winCount (fullDigW (primeLambertAtBase 4)) v (fTW i) : ℝ) / ((fTW i : ℕ) : ℝ))
+      atTop (nhds (1 / (2 : ℝ) ^ v.length)) :=
+    (tendsto_add_atTop_iff_nat 1).1 (tendsto_fullWRead_freq v hlen hv)
+  -- the per-band error bound tends to zero
+  have hg : Tendsto (fun i =>
+      |(winCount (fullDigW (primeLambertAtBase 4)) v (fTW i) : ℝ) / ((fTW i : ℕ) : ℝ)
+          - 1 / (2 : ℝ) ^ v.length| + midErrW i v.length) atTop (nhds 0) := by
+    have h1 : Tendsto (fun i =>
+        |(winCount (fullDigW (primeLambertAtBase 4)) v (fTW i) : ℝ) / ((fTW i : ℕ) : ℝ)
+            - 1 / (2 : ℝ) ^ v.length|) atTop (nhds 0) := by
+      have h := (hband.sub_const (1 / (2 : ℝ) ^ v.length)).abs
+      simpa using h
+    have h := h1.add (tendsto_midErrW v.length)
+    simpa using h
+  have hcomp := hg.comp tendsto_fgrpW_atTop
+  have hmain : Tendsto (fun n =>
+      (winCount (fullDigW (primeLambertAtBase 4)) v n : ℝ) / (n : ℝ)
+        - 1 / (2 : ℝ) ^ v.length) atTop (nhds 0) := by
+    refine squeeze_zero_norm' ?_ hcomp
+    filter_upwards [eventually_ge_atTop (fTW (max 1 (2 * v.length)))] with n hn
+    have hMn : max 1 (2 * v.length) ≤ n := le_trans (self_le_fTW _) hn
+    have hMg : max 1 (2 * v.length) ≤ fgrpW n := by
+      show max 1 (2 * v.length) ≤ Nat.findGreatest (fun m => fTW m ≤ n) n
+      exact Nat.le_findGreatest hMn hn
+    have hg1 : 1 ≤ fgrpW n := le_trans (le_max_left _ _) hMg
+    obtain ⟨i, hi⟩ : ∃ i, fgrpW n = i + 1 := ⟨fgrpW n - 1, by omega⟩
+    have hn1 : fTW (i + 1) ≤ n := by rw [← hi]; exact fTW_fgrpW_le n
+    have hn2 : n < fTW (i + 2) := by
+      have h := lt_fTW_fgrpW_succ n
+      rw [hi] at h; exact h
+    have hℓm : 2 * v.length ≤ kk (i + 1) := by
+      have h : 2 * v.length ≤ fgrpW n := le_trans (le_max_right _ _) hMg
+      rw [hi] at h
+      unfold kk; omega
+    have h := abs_ratio_mid_le v hlen hv i hℓm n hn1 hn2
+    simp only [Function.comp_apply, hi, Real.norm_eq_abs]
+    exact h
+  have h := hmain.add_const (1 / (2 : ℝ) ^ v.length)
+  simpa using h
+
+/-! ### The endpoint -/
+
+open Classical in
+/-- **`IsNormalSequence 2` for the schedule-only read.**  Every nonempty binary word has
+frequency `2^{−|v|}` in `G₄`'s digits along `fullPosW`, at every prefix. -/
+theorem isNormalSequence_fullDigW :
+    IsNormalSequence 2 (fullDigW (primeLambertAtBase 4)) := by
+  refine isNormalSequence_of_tendsto_winCount ?_
+  intro v hv0 hvb
+  have hlen : 0 < v.length := List.length_pos_iff.2 hv0
+  have hv : ∀ j, ∀ h : j < v.length, v[j] < 2 := fun j hj => hvb _ (List.getElem_mem hj)
+  have h := tendsto_winCount_fullDigW v hlen hv
+  simpa [one_div] using h
+
+open Classical in
+/-- Every binary word actually occurs in the read — a corollary of the frequency limit. -/
+theorem exists_matchesAt_fullDigW (v : List ℕ) (hlen : 0 < v.length)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
+    ∃ t, MatchesAt (fullDigW (primeLambertAtBase 4)) v t := by
+  classical
+  have h := tendsto_winCount_fullDigW v hlen hv
+  have hpos : (0 : ℝ) < 1 / (2 : ℝ) ^ v.length := by positivity
+  obtain ⟨n, hn⟩ := (h.eventually (eventually_gt_nhds hpos)).exists
+  have hW : 0 < winCount (fullDigW (primeLambertAtBase 4)) v n := by
+    by_contra hcon
+    push_neg at hcon
+    have hz : winCount (fullDigW (primeLambertAtBase 4)) v n = 0 := by omega
+    rw [hz] at hn
+    simp at hn
+  obtain ⟨t, ht⟩ := Finset.card_pos.1 hW
+  exact ⟨t, (Finset.mem_filter.1 ht).2⟩
+
+/-- The schedule-only read never sticks at `1`. -/
+theorem properDigits_fullDigW : ProperDigits 2 (fullDigW (primeLambertAtBase 4)) := by
+  intro N
+  have hbin : ∀ j, ∀ h : j < (List.replicate (N + 1) 0).length,
+      (List.replicate (N + 1) 0)[j] < 2 := by
+    intro j hj
+    rw [List.getElem_replicate]
+    omega
+  obtain ⟨t, ht⟩ := exists_matchesAt_fullDigW (List.replicate (N + 1) 0) (by simp) hbin
+  refine ⟨t + N, by omega, ?_⟩
+  have hN : N < (List.replicate (N + 1) 0).length := by simp
+  have h := ht N hN
+  rw [List.getD_eq_getElem _ 0 hN, List.getElem_replicate] at h
+  have h0 : fullDigW (primeLambertAtBase 4) (t + N) = 0 := h
+  rw [h0]
+  omega
+
+/-- **The schedule-only real, on the wide band.**  `G₄`'s binary digits at the strictly
+increasing, schedule-defined positions `fullPosW`, summed in base two.  Nothing in `fullPosW`
+refers to `G₄`: the map is built from the base-four schedule alone. -/
+noncomputable def fullRealW : ℝ := realOfDigits 2 (fullDigW (primeLambertAtBase 4))
+
+/-- 🎯 **`fullRealW` IS NORMAL IN BASE TWO.** -/
+theorem isNormal_fullRealW : IsNormal 2 fullRealW :=
+  isNormal_realOfDigits 2 (le_refl 2) _ (fullDigW_lt _) properDigits_fullDigW
+    isNormalSequence_fullDigW
 
 end NormalNumbers.G4.Sched
