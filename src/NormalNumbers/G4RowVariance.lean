@@ -1746,4 +1746,63 @@ theorem union_le_of_determining {ι : Type*} [Fintype ι] [DecidableEq ι]
       + Fintype.card ι * m := by positivity
   exact le_trans hU (mul_le_mul_of_nonneg_right hF' hpos)
 
+/-! ### Cube-local balance: the tool for the `K ≥ 3` family
+
+`RowBalance.balanced_of_update_invariant` asks a function to ignore coordinate `i` *globally*.
+The counterexample family below ignores a coordinate on each unit cube, but a **different** one
+per cube, so the global criterion does not apply.  The pairing argument is entirely local, and
+this is its local form. -/
+
+/-- Toggling `i` in and out of `T`. -/
+def toggle {K : ℕ} (i : Fin K) (T : Finset (Fin K)) : Finset (Fin K) :=
+  if i ∈ T then T.erase i else insert i T
+
+lemma toggle_toggle {K : ℕ} (i : Fin K) (T : Finset (Fin K)) : toggle i (toggle i T) = T := by
+  classical
+  by_cases hi : i ∈ T
+  · have h2 : i ∉ T.erase i := fun h => (Finset.mem_erase.1 h).1 rfl
+    simp only [toggle, if_pos hi, if_neg h2, Finset.insert_erase hi]
+  · simp only [toggle, if_neg hi, if_pos (Finset.mem_insert_self i T), Finset.erase_insert hi]
+
+lemma card_toggle {K : ℕ} (i : Fin K) (T : Finset (Fin K)) :
+    (-1 : ℤ) ^ (toggle i T).card = -(-1 : ℤ) ^ T.card := by
+  classical
+  simp only [toggle]
+  split_ifs with hi
+  · rw [show T.card = (T.erase i).card + 1 from (Finset.card_erase_add_one hi).symm, pow_succ]
+    ring
+  · rw [Finset.card_insert_of_notMem hi, pow_succ]; ring
+
+lemma toggle_ne {K : ℕ} (i : Fin K) (T : Finset (Fin K)) : toggle i T ≠ T := by
+  classical
+  intro hg
+  have h := congrArg Finset.card hg
+  simp only [toggle] at h
+  split_ifs at h with hi
+  · rw [Finset.card_erase_of_mem hi] at h
+    have := Finset.card_pos.2 ⟨i, hi⟩; omega
+  · rw [Finset.card_insert_of_notMem hi] at h; omega
+
+/-- **The local pairing.**  An alternating sum over the subsets of `Fin K` vanishes as soon as
+the summand is invariant under toggling one coordinate. -/
+lemma sum_alt_toggle_zero {K : ℕ} (i : Fin K) (F : Finset (Fin K) → ℤ)
+    (h : ∀ T, F (toggle i T) = F T) :
+    ∑ T : Finset (Fin K), (-1 : ℤ) ^ T.card * F T = 0 := by
+  classical
+  refine Finset.sum_ninvolution (toggle i) (fun T => ?_) (fun T _ => toggle_ne i T)
+    (fun T => Finset.mem_univ _) (fun T => toggle_toggle i T)
+  rw [h, card_toggle]; ring
+
+/-- **Cube-local balance.**  If on every unit cube some coordinate — possibly a different one on
+each cube — leaves `ρ` unchanged, then `ρ` is row-balanced. -/
+theorem balanced_of_cube_ignores {K s : ℕ} {ρ : (Fin K → Fin (s + 1)) → ℤ}
+    (h : ∀ c : Fin K → Fin s, ∃ i : Fin K,
+      ∀ T : Finset (Fin K), ρ (corner c (toggle i T)) = ρ (corner c T)) :
+    Balanced ρ := by
+  classical
+  intro c v
+  obtain ⟨i, hi⟩ := h c
+  exact sum_alt_toggle_zero i (fun T => if ρ (corner c T) = v then 1 else 0)
+    (fun T => by rw [hi T])
+
 end NormalNumbers.G4.RowVariance
