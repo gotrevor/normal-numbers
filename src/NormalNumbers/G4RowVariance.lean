@@ -32,6 +32,8 @@ open Finset
 
 namespace NormalNumbers.G4.RowVariance
 
+open NormalNumbers.G4.RowBalance
+
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 /-- The sample average of `f` over a finite set of sample points. -/
@@ -864,5 +866,127 @@ theorem cross_shift_corr_le {Q c N : ℕ} (hQ : 0 < Q) (hN : 0 < N) (r r' : ℤ)
         else 3 * (1 / (p : ℝ)) ^ 2)), if_pos hp]
   rw [Finset.sum_congr rfl hinner, Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul,
     show (S.card : ℝ) * ((S.card : ℝ) * (3 / N)) = 3 * (S.card : ℝ) ^ 2 / N from by ring]
+
+/-! ### Assembly: the released-layer weights, and (E)
+
+The row's released pairs are `(α, j)`: `α` ranges over the row support of `A_ν` (`m = 2^K` of
+them, `|A_{να}| = 1`) and `j` over the released window `K′ < j ≤ K′ + L`.  The weight is
+`c_{α,j} = A_{να} 4^{-j}`, so the two norms the reduction needs are exact geometric sums:
+
+    Σ |c| = m · 4^{-K′}(1 − 4^{-L})/3,        Σ c² = m · 16^{-K′}(1 − 16^{-L})/15,
+
+whence `(Σ|c|)²/Σc² = (5m/3)·(1 − 4^{-L})/(1 + 4^{-L}) ≤ 5m/3`.  Feeding that into
+`rowVariance_half` at `ratio = 5m/3` produces exactly the shape of
+`Budget.RoughRowVarianceLower`, with constant `c = (v/2)(1 − 16^{-L})`. -/
+
+/-- A geometric sum with an offset exponent. -/
+lemma geom_offset (r : ℝ) (hr : r ≠ 1) (a L : ℕ) :
+    ∑ j ∈ Finset.range L, r ^ (a + j) = r ^ a * ((r ^ L - 1) / (r - 1)) := by
+  have h : ∑ j ∈ Finset.range L, r ^ (a + j) = r ^ a * ∑ j ∈ Finset.range L, r ^ j := by
+    rw [Finset.mul_sum]; exact Finset.sum_congr rfl fun j _ => by rw [pow_add]
+  rw [h, geom_sum_eq hr]
+
+/-- The `ℓ¹` norm of the released weights. -/
+lemma sum_abs_released {m L K' : ℕ} (c : Fin m × Fin L → ℝ)
+    (hc : ∀ i, |c i| = (1 / 4 : ℝ) ^ (K' + 1 + (i.2 : ℕ))) :
+    ∑ i, |c i| = (m : ℝ) * ((1 / 4 : ℝ) ^ K' * (1 - (1 / 4 : ℝ) ^ L) / 3) := by
+  have hinner : ∀ _a : Fin m, ∑ j : Fin L, |c (_a, j)|
+      = (1 / 4 : ℝ) ^ K' * (1 - (1 / 4 : ℝ) ^ L) / 3 := by
+    intro a
+    have : ∑ j : Fin L, |c (a, j)| = ∑ j ∈ Finset.range L, (1 / 4 : ℝ) ^ (K' + 1 + j) := by
+      rw [← Fin.sum_univ_eq_sum_range (fun j => (1 / 4 : ℝ) ^ (K' + 1 + j)) L]
+      exact Finset.sum_congr rfl fun j _ => hc (a, j)
+    rw [this, geom_offset _ (by norm_num) (K' + 1) L, pow_succ]
+    ring
+  rw [Fintype.sum_prod_type]
+  rw [Finset.sum_congr rfl (fun a _ => hinner a), Finset.sum_const, Finset.card_univ,
+    Fintype.card_fin, nsmul_eq_mul]
+
+/-- The `ℓ²` norm of the released weights. -/
+lemma sum_sq_released {m L K' : ℕ} (c : Fin m × Fin L → ℝ)
+    (hc : ∀ i, |c i| = (1 / 4 : ℝ) ^ (K' + 1 + (i.2 : ℕ))) :
+    ∑ i, (c i) ^ 2 = (m : ℝ) * ((1 / 16 : ℝ) ^ K' * (1 - (1 / 16 : ℝ) ^ L) / 15) := by
+  have hsq : ∀ i : Fin m × Fin L, (c i) ^ 2 = (1 / 16 : ℝ) ^ (K' + 1 + (i.2 : ℕ)) := by
+    intro i
+    have h1 : (c i) ^ 2 = |c i| ^ 2 := (sq_abs _).symm
+    rw [h1, hc i, ← pow_mul, show (1 / 4 : ℝ) = (1 / 16 : ℝ) ^ (1 / 2 : ℝ) from by
+      rw [show (1 / 16 : ℝ) = (1 / 4 : ℝ) ^ (2 : ℕ) from by norm_num,
+        ← Real.rpow_natCast ((1 : ℝ) / 4) 2, ← Real.rpow_mul (by norm_num)]
+      norm_num]
+    rw [← Real.rpow_natCast (((1 : ℝ) / 16) ^ (1 / 2 : ℝ)) ((K' + 1 + (i.2 : ℕ)) * 2),
+      ← Real.rpow_mul (by norm_num), ← Real.rpow_natCast ((1 : ℝ) / 16) (K' + 1 + (i.2 : ℕ))]
+    congr 1
+    push_cast
+    ring
+  have hinner : ∀ _a : Fin m, ∑ j : Fin L, (c (_a, j)) ^ 2
+      = (1 / 16 : ℝ) ^ K' * (1 - (1 / 16 : ℝ) ^ L) / 15 := by
+    intro a
+    have : ∑ j : Fin L, (c (a, j)) ^ 2 = ∑ j ∈ Finset.range L, (1 / 16 : ℝ) ^ (K' + 1 + j) := by
+      rw [← Fin.sum_univ_eq_sum_range (fun j => (1 / 16 : ℝ) ^ (K' + 1 + j)) L]
+      exact Finset.sum_congr rfl fun j _ => hsq (a, j)
+    rw [this, geom_offset _ (by norm_num) (K' + 1) L, pow_succ]
+    ring
+  rw [Fintype.sum_prod_type]
+  rw [Finset.sum_congr rfl (fun a _ => hinner a), Finset.sum_const, Finset.card_univ,
+    Fintype.card_fin, nsmul_eq_mul]
+
+/-- The ratio the reduction prices the correlation against: `(Σ|c|)² ≤ (5m/3) Σ c²`.
+The truncation factors improve it — `(1 − x)²/(1 − x²) = (1 − x)/(1 + x) ≤ 1` — so the clean
+constant `5m/3` holds for every window length. -/
+lemma ratio_released {m L K' : ℕ} (c : Fin m × Fin L → ℝ)
+    (hc : ∀ i, |c i| = (1 / 4 : ℝ) ^ (K' + 1 + (i.2 : ℕ))) :
+    (∑ i, |c i|) ^ 2 ≤ (5 * (m : ℝ) / 3) * ∑ i, (c i) ^ 2 := by
+  rw [sum_abs_released c hc, sum_sq_released c hc]
+  set x : ℝ := (1 / 4 : ℝ) ^ L with hx
+  have hx0 : 0 ≤ x := by positivity
+  have hx1 : x ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+  have h16 : (1 / 16 : ℝ) ^ L = x ^ 2 := by
+    rw [hx, ← pow_mul, mul_comm, pow_mul]; norm_num
+  have h16K : (1 / 16 : ℝ) ^ K' = ((1 / 4 : ℝ) ^ K') ^ 2 := by
+    rw [← pow_mul, mul_comm, pow_mul]; norm_num
+  set y : ℝ := (1 / 4 : ℝ) ^ K' with hy
+  have hy0 : 0 ≤ y := by positivity
+  have hm0 : (0 : ℝ) ≤ (m : ℝ) := Nat.cast_nonneg m
+  rw [h16, h16K]
+  -- goal: (m * (y*(1-x)/3))^2 ≤ (5m/3) * (m * (y^2*(1-x^2)/15))
+  have key : ((m : ℝ) * (y * (1 - x) / 3)) ^ 2
+      = (5 * (m : ℝ) / 3) * ((m : ℝ) * (y ^ 2 * (1 - x) ^ 2 / 15)) := by ring
+  rw [key]
+  have hfac : (1 - x) ^ 2 ≤ 1 - x ^ 2 := by nlinarith
+  have hcoef : (0 : ℝ) ≤ 5 * (m : ℝ) / 3 := by positivity
+  refine mul_le_mul_of_nonneg_left ?_ hcoef
+  refine mul_le_mul_of_nonneg_left ?_ hm0
+  have : y ^ 2 * (1 - x) ^ 2 ≤ y ^ 2 * (1 - x ^ 2) :=
+    mul_le_mul_of_nonneg_left hfac (by positivity)
+  linarith
+
+/-- **The released row's second moment, bounded below.**  This is `rowVariance_half` at the
+schedule's own weights: `ratio = 5m/3` with `m` the row support, so the near-orthogonality the
+hypothesis asks for is `ε ≤ 3v/(20m)` — at `m = 2^K`, the `ε ≲ v 2^{-K}` of the design. -/
+theorem released_row_lower {m L K' : ℕ} (P : Finset ℕ) (X : Fin m × Fin L → ℕ → ℝ)
+    (c : Fin m × Fin L → ℝ) (hc : ∀ i, |c i| = (1 / 4 : ℝ) ^ (K' + 1 + (i.2 : ℕ)))
+    {v ε : ℝ} (hε : 0 ≤ ε) (hv : 0 ≤ v)
+    (hvar : ∀ i, v ≤ avg P (fun n => (X i n) ^ 2))
+    (hcov : ∀ i j, i ≠ j → |avg P (fun n => X i n * X j n)| ≤ ε)
+    (hsmall : ε * (5 * (m : ℝ) / 3) ≤ v / 2) :
+    (v / 2) * ((m : ℝ) * ((1 / 16 : ℝ) ^ K' * (1 - (1 / 16 : ℝ) ^ L) / 15))
+      ≤ avg P (fun n => (∑ i, c i * X i n) ^ 2) := by
+  have h := rowVariance_half P X c hε hv hvar hcov (ratio_released c hc) hsmall
+    (by positivity)
+  rwa [sum_sq_released c hc] at h
+
+/-- **(E), discharged into its interface.**  A family of released-row lower bounds of the shape
+`released_row_lower` produces `Budget.RoughRowVarianceLower` verbatim, at row support `m = 2^K`
+and constant `(v/2)(1 − 16^{-L})`.  Nothing external remains between the two arithmetic inputs
+(`rough_variance_lower`, `cross_shift_corr_le`) and the verdict. -/
+theorem roughRowVarianceLower_of_released {K L : ℕ} {sm : ℕ → ℝ} {v : ℝ}
+    (h : ∀ K', (v / 2) * (((2 : ℝ) ^ K) * ((1 / 16 : ℝ) ^ K' * (1 - (1 / 16 : ℝ) ^ L) / 15))
+      ≤ sm K') :
+    Budget.RoughRowVarianceLower sm ((v / 2) * (1 - (1 / 16 : ℝ) ^ L)) K := by
+  intro K'
+  have := h K'
+  calc (v / 2) * (1 - (1 / 16 : ℝ) ^ L) * ((2 : ℝ) ^ K * ((1 / 16 : ℝ) ^ K' / 15))
+      = (v / 2) * ((2 : ℝ) ^ K * ((1 / 16 : ℝ) ^ K' * (1 - (1 / 16 : ℝ) ^ L) / 15)) := by ring
+    _ ≤ sm K' := this
 
 end NormalNumbers.G4.RowVariance
