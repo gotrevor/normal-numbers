@@ -1,5 +1,17 @@
 # STATUS — normal-numbers 📊
 
+> **Laps 146–160 (2026-09-15).**  Objective R's error budget **(E) is proved**, not documented:
+> `Budget.RoughRowVarianceLower` — the one hypothesis the deformation verdict rested on — now
+> follows from explicit arithmetic on a CRT progression (`G4RowVariance.roughRowVarianceLower_arith`
+> / `_dyadic` / `_mertens`), and `scales_satisfiable` shows its hypotheses are meetable for every
+> `K`, `k`, `Q`.  The chain *arithmetic of ω → variance lower bound → capture budget → cancelled
+> layers → upper density ≤ dmin^(−H/2)* is machine-checked end to end (`two_layers_of_dyadic`,
+> `cancelled_union_le`).  R's other two open items are theorems too
+> (`union_le_of_determining`, `grouped_union_le'`), and the refutation of
+> "row-balanced ⇒ ignores a coordinate" is a uniform family at every `K ≥ 3`
+> (`threshold_exact`).  Build 🟢 9040 jobs; every new declaration axiom-clean.
+> No claim about the normality of `G₄`.
+
 > **Lap 127 (2026-09-15).**  The base-`2^k` directive's **step 3 is refuted** (E-T13 fired) —
 > see `ROUTE-ESCALATION-2026-09-15-base2k-step3.md`.  Steps 1–2 and the whole residue counting
 > layer are proved and kept (`G4EntropyResidue`, `G4EntropySubLaw`, `G4EntropyResRead`).

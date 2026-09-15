@@ -3,7 +3,44 @@
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
 > section; do **not** append to the bottom.
 
-## 🎯 ACTIVE (after-the-extraction **lap 131**, 2026-09-15) — L1 ✅, L2 ✅, F ✅ (verdict in kernel), W ✅ (withdrawn form) — override STOP condition met
+## 🎯 ACTIVE (objective R, **laps 146–160**, 2026-09-15) — R ✅ verdict + **(E) PROVED** + R's three open items all closed
+
+Objective R had its kernel verdict at lap 136 (`G4BalancedRigidity`).  Laps 146–160 closed
+everything the R session wrap listed as "still open"; all in `src/NormalNumbers/G4RowVariance.lean`,
+every declaration `#print axioms`-clean (`[propext, Classical.choice, Quot.sound]`).
+
+| item | declaration | status |
+|---|---|---|
+| (E) weight norms | `sum_abs_released`, `sum_sq_released`, `ratio_released`, `released_row_lower` | ✅ |
+| (E) interface | `roughRowVarianceLower_of_released`, `roughRowVarianceLower_arith` | ✅ |
+| (E) gap-divisor budget `g` | `card_rough_divisors_le`, `gap_divisor_sum_le` | ✅ |
+| (E) at explicit scales | `dyadic_variance_ge`, `dyadic_scales`, `roughRowVarianceLower_dyadic` | ✅ |
+| (E) Mertens form (`|S|`-free tail) | `inv_sq_le_telescope`, `sum_inv_sq_rough_le`, `roughRowVarianceLower_mertens` | ✅ |
+| (E) non-vacuity | `exists_rough_primes`, `scales_satisfiable` | ✅ |
+| verdict with (E) supplied | `dyadic_v_pos`, `two_layers_of_dyadic`, `cancelled_union_le` | ✅ |
+| layer count linear in `K` | `layers_of_budget`, `three_eighths_of_budget` (`K′ > (3K−8)/8`) | ✅ |
+| R item 2 — a different matrix `A` | `union_le_of_determining` (confinement for any determined invariant) | ✅ |
+| R item 3 — grouped sample | `grouped_coeff_le`, `grouped_union_le'` (criterion without logarithms) | ✅ |
+| R threshold exact for all `K ≥ 3` | `toggle`, `sum_alt_toggle_zero`, `balanced_of_cube_ignores`, `ptrFun_balanced`, `ptrFun_not_ignoring`, `threshold_exact` | ✅ |
+
+**What this means.**  `Budget.RoughRowVarianceLower` — the single hypothesis the deformation
+verdict rested on — is now a *theorem* from explicit arithmetic data on a CRT progression, and
+its hypotheses are demonstrably meetable for every `K`, `k`, `Q`.  The chain
+*arithmetic of `ω` → variance lower bound → capture budget → cancelled layers → upper density
+`≤ dmin^{−H/2}`* is machine-checked end to end.  R's refutation of
+"row-balanced ⇒ ignores a coordinate" is now a uniform family (`ptrFun α = α (α 0)`) at every
+`K ≥ 4`, not one searched witness.
+
+Nothing here is a claim about the normality of `G₄`.
+
+### Next (nothing on the critical path is open)
+* The two pre-expedition `sorry`s (`PrimeLambertOscillation.phaseOscillation`,
+  `MahlerDriftOne.exists_drift_one_background`) remain on DIRECTION's forbidden-drift list.
+* Open question, not on the path: is `balanced_of_cube_ignores` also *necessary* — is every
+  row-balanced function cube-locally ignoring?  True at `K ≤ 2` (globally, by
+  `ignores_coord_of_balanced_two`); unknown for `K ≥ 3`.
+
+## 🗄️ SUPERSEDED (after-the-extraction **lap 131**, 2026-09-15) — L1 ✅, L2 ✅, F ✅ (verdict in kernel), W ✅ (withdrawn form) — override STOP condition met
 
 **F verdict (`DESIGN-2026-09-15-deformation.md`): proved limitation of T(K′).**  The deformation
 "vary multipliers and offsets jointly, cancel only the first `K′` layers coordinatewise" is

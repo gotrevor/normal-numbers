@@ -1953,4 +1953,27 @@ theorem threshold_exact (K : ℕ) (hK : 3 ≤ K) :
   · refine ⟨K - 1, ptrFun (by omega), ptrFun_balanced (by omega) (by omega),
       ptrFun_not_ignoring (by omega) (by omega) (by omega)⟩
 
+/-! ### The layer count is linear in `K`, not just `≥ 2`
+
+`Budget.budget_forces_two_layers` records only the consequence `Sched.balanced_union_le` needs.
+The same inequality gives the design's actual threshold `K′ > 3K/8` — the number of cancelled
+layers grows *linearly* in the row size. -/
+
+/-- **The full budget threshold.**  A sampler fitting the capture budget cancels more than
+`(3K − 8)/8` layers. -/
+theorem layers_of_budget {sm : ℕ → ℝ} {c : ℝ} (hc : 0 < c) {K : ℕ}
+    (hvar : Budget.RoughRowVarianceLower sm c K) {K' : ℕ}
+    (hcap : sm K' ≤ c * ((1 : ℝ) / 2) ^ (K / 2)) : 3 * K < 8 * K' + 8 := by
+  by_contra hle
+  have h1 := Budget.released_budget_exceeded (K := K) (K' := K') (by omega)
+  have h2 := hvar K'
+  nlinarith
+
+/-- Restated: `K′ ≥ ⌈(3K − 7)/8⌉`, so at `K = 8` one already gets `K′ ≥ 2` and the count grows
+linearly thereafter. -/
+theorem three_eighths_of_budget {sm : ℕ → ℝ} {c : ℝ} (hc : 0 < c) {K : ℕ}
+    (hvar : Budget.RoughRowVarianceLower sm c K) {K' : ℕ}
+    (hcap : sm K' ≤ c * ((1 : ℝ) / 2) ^ (K / 2)) : 3 * K ≤ 8 * K' + 7 :=
+  by have := layers_of_budget hc hvar hcap; omega
+
 end NormalNumbers.G4.RowVariance
