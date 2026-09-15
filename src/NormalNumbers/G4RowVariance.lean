@@ -369,4 +369,79 @@ theorem avg_indicator_modEq_sub_le {m : ℕ} (hm : 0 < m) {N : ℕ} (hN : 0 < N)
   rw [hsub, abs_div, abs_of_pos hN0, div_le_div_iff_of_pos_right hN0]
   exact card_filter_modEq_sub_le hm N v
 
+
+/-! ### The identity with approximate frequencies
+
+`avg_sq_centred_sum` assumed the sample frequencies were exact.  `avg_indicator_modEq_sub_le`
+delivers them only to `O(1/N)`, so the identity is relaxed here to an inequality carrying explicit
+slack `δ`.  The proof is the same expansion: the diagonal loses `δ` (idempotence still gives
+`a_i − a_i²` up to the frequency error), and each off-diagonal entry, instead of vanishing, is
+bounded below by `−3δ` once the `a_i` are genuine frequencies in `[0,1]`. -/
+
+theorem avg_sq_centred_sum_approx (P : Finset ℕ) (hP : P.Nonempty) (S : Finset ι)
+    (X : ι → ℕ → ℝ) (a : ι → ℝ) {δ : ℝ} (hδ : 0 ≤ δ)
+    (hidem : ∀ i ∈ S, ∀ n, X i n * X i n = X i n)
+    (ha : ∀ i ∈ S, 0 ≤ a i ∧ a i ≤ 1)
+    (hfreq : ∀ i ∈ S, |avg P (X i) - a i| ≤ δ)
+    (hpair : ∀ i ∈ S, ∀ j ∈ S, i ≠ j → |avg P (fun n => X i n * X j n) - a i * a j| ≤ δ) :
+    (∑ i ∈ S, (a i - (a i) ^ 2)) - 3 * δ * (S.card : ℝ) ^ 2
+      ≤ avg P (fun n => (∑ i ∈ S, (X i n - a i)) ^ 2) := by
+  classical
+  have hpt : ∀ n, (∑ i ∈ S, (X i n - a i)) ^ 2
+      = ∑ i ∈ S, ∑ j ∈ S, (X i n - a i) * (X j n - a j) := fun n => by
+    rw [sq, Finset.sum_mul_sum]
+  rw [show (fun n => (∑ i ∈ S, (X i n - a i)) ^ 2)
+      = (fun n => ∑ i ∈ S, ∑ j ∈ S, (X i n - a i) * (X j n - a j)) from funext hpt,
+    avg_double_sum' P S (fun i j n => (X i n - a i) * (X j n - a j))]
+  have hentry : ∀ i ∈ S, ∀ j ∈ S,
+      (if i = j then a i - (a i) ^ 2 - δ else -(3 * δ))
+        ≤ avg P (fun n => (X i n - a i) * (X j n - a j)) := by
+    intro i hi j hj
+    have hexp : (fun n => (X i n - a i) * (X j n - a j))
+        = (fun n => X i n * X j n
+            + ((-(a j)) * X i n + ((-(a i)) * X j n + a i * a j))) := funext fun n => by ring
+    rw [hexp, avg_add, avg_add, avg_add, avg_smul, avg_smul, avg_const P hP]
+    obtain ⟨hai0, hai1⟩ := ha i hi
+    by_cases hij : i = j
+    · subst hij
+      rw [if_pos rfl,
+        show avg P (fun n => X i n * X i n) = avg P (X i) from by
+          rw [show (fun n => X i n * X i n) = X i from funext fun n => hidem i hi n]]
+      have h1 := hfreq i hi
+      rw [abs_le] at h1
+      nlinarith [h1.1, h1.2]
+    · rw [if_neg hij]
+      obtain ⟨haj0, haj1⟩ := ha j hj
+      have h1 := hfreq i hi
+      have h2 := hfreq j hj
+      have h3 := hpair i hi j hj hij
+      rw [abs_le] at h1 h2 h3
+      nlinarith [h1.1, h1.2, h2.1, h2.2, h3.1, h3.2]
+  have hsum : ∑ i ∈ S, ∑ j ∈ S, (if i = j then a i - (a i) ^ 2 - δ else -(3 * δ))
+      ≤ ∑ i ∈ S, ∑ j ∈ S, avg P (fun n => (X i n - a i) * (X j n - a j)) :=
+    Finset.sum_le_sum fun i hi => Finset.sum_le_sum fun j hj => hentry i hi j hj
+  refine le_trans ?_ hsum
+  -- evaluate the left-hand double sum
+  have hinner : ∀ i ∈ S, ∑ j ∈ S, (if i = j then a i - (a i) ^ 2 - δ else -(3 * δ))
+      = (-(3 * δ)) * (S.card : ℝ) + ((a i - (a i) ^ 2 - δ) - (-(3 * δ))) := by
+    intro i hi
+    have hre : ∀ j : ι, (if i = j then a i - (a i) ^ 2 - δ else -(3 * δ))
+        = (-(3 * δ)) + (if i = j then (a i - (a i) ^ 2 - δ) - (-(3 * δ)) else 0) := by
+      intro j; split_ifs <;> ring
+    rw [Finset.sum_congr rfl (fun j _ => hre j), Finset.sum_add_distrib, Finset.sum_const,
+      Finset.sum_ite_eq S i (fun _ => (a i - (a i) ^ 2 - δ) - (-(3 * δ))), if_pos hi,
+      nsmul_eq_mul]
+    ring
+  rw [Finset.sum_congr rfl hinner, Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul]
+  have hcard : (0 : ℝ) ≤ (S.card : ℝ) := by positivity
+  have hsplit : ∑ i ∈ S, ((a i - (a i) ^ 2 - δ) - (-(3 * δ)))
+      = (∑ i ∈ S, (a i - (a i) ^ 2)) + 2 * δ * (S.card : ℝ) := by
+    have hre : ∀ i : ι, ((a i - (a i) ^ 2 - δ) - (-(3 * δ)))
+        = (a i - (a i) ^ 2) + 2 * δ := fun i => by ring
+    rw [Finset.sum_congr rfl (fun i _ => hre i), Finset.sum_add_distrib, Finset.sum_const,
+      nsmul_eq_mul]
+    ring
+  rw [hsplit]
+  nlinarith [hcard, hδ]
+
 end NormalNumbers.G4.RowVariance
