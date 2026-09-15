@@ -474,6 +474,65 @@ theorem ignores_coord_of_balanced_two {ρ : (Fin 2 → Fin (s + 1)) → ℤ} (h 
     simp only [update_self, update_of_ne (by decide : (0 : Fin 2) ≠ 1)]
     exact hB _ _ _
 
+
+/-! ### Sharpness: **one** balanced layer buys nothing
+
+`balanced_union_le` needs *two* distinct balanced layers, and that is exactly right: with a
+single layer `j` the hypothesis is vacuous, because `t := j d` makes `layer j d t ≡ 0` — a
+constant, hence balanced — for an arbitrary multiplier vector `d`, including ones far outside
+`MDF`.  So no skeleton-pinning, no count, no confinement from one layer alone.  It is the error
+budget (E) of `DESIGN-2026-09-15-deformation.md` §3 that supplies the second layer: it forces
+`K′ ≥ 3K/8 ≥ 2` layers to cancel, and each cancelled layer is balanced
+(`balanced_layer_of_coordCancel`, or the row-balanced replacement). -/
+
+/-- Constant functions are row-balanced (`K ≥ 1`). -/
+theorem balanced_const (i : Fin K) (v : ℤ) : Balanced (fun _ : Fin K → Fin (s + 1) => v) :=
+  balanced_of_update_invariant i fun _ _ => rfl
+
+/-- The multilinear atom function `α ↦ ∏ α i` is **not** `MDF`: at the cube based at the origin
+every corner but the top one has a zero coordinate. -/
+theorem not_mdf_prod (hK : 0 < K) (hs : 0 < s) :
+    ¬ MDF (fun α : Fin K → Fin (s + 1) => ∏ i, ((α i : ℕ) : ℤ)) := by
+  classical
+  intro h
+  set c : Fin K → Fin s := fun _ => ⟨0, hs⟩ with hc
+  have hval : ∀ T : Finset (Fin K), (∏ i, ((corner c T i : Fin (s + 1)) : ℤ))
+      = if T = Finset.univ then 1 else 0 := by
+    intro T
+    have hentry : ∀ i, ((corner c T i : Fin (s + 1)) : ℤ) = if i ∈ T then 1 else 0 := by
+      intro i
+      have := corner_val c T i
+      simp only [hc] at this
+      split_ifs with hi <;> · rw [show ((corner c T i : Fin (s + 1)) : ℤ)
+            = (((corner c T i : Fin (s + 1)) : ℕ) : ℤ) from rfl, this]
+        <;> simp [hi]
+    simp_rw [hentry]
+    by_cases hT : T = Finset.univ
+    · subst hT; simp
+    · rw [if_neg hT]
+      obtain ⟨i, hi⟩ : ∃ i, i ∉ T := by
+        by_contra hall; push_neg at hall
+        exact hT (Finset.eq_univ_iff_forall.2 hall)
+      exact Finset.prod_eq_zero (Finset.mem_univ i) (by rw [if_neg hi])
+  have hsum := h c
+  simp only [hval] at hsum
+  rw [Finset.sum_eq_single Finset.univ (fun T _ hT => by rw [if_neg hT, mul_zero])
+    (fun hn => absurd (Finset.mem_univ _) hn), if_pos rfl, mul_one] at hsum
+  exact (pow_ne_zero (Finset.univ : Finset (Fin K)).card (by norm_num : (-1 : ℤ) ≠ 0)) hsum
+
+/-- **One balanced layer imposes nothing on the multipliers.**  For every `j` there is a sampler
+whose layer `j` is row-balanced and whose multiplier vector is not `MDF` — so the two-layer
+hypothesis of `Sched.balanced_union_le` cannot be weakened to one layer. -/
+theorem one_balanced_layer_insufficient (hK : 0 < K) (hs : 0 < s) (j : ℕ) :
+    ∃ d t : (Fin K → Fin (s + 1)) → ℤ, Balanced (layer j d t) ∧ ¬ MDF d := by
+  refine ⟨fun α => ∏ i, ((α i : ℕ) : ℤ), fun α => (j : ℤ) * ∏ i, ((α i : ℕ) : ℤ), ?_,
+    not_mdf_prod hK hs⟩
+  have hzero : layer (K := K) (s := s) j (fun α => ∏ i, ((α i : ℕ) : ℤ))
+      (fun α => (j : ℤ) * ∏ i, ((α i : ℕ) : ℤ)) = fun _ => (0 : ℤ) := by
+    funext α; simp [layer]
+  rw [hzero]
+  exact balanced_const ⟨0, hK⟩ 0
+
 /-! ### The `K = 3`, `s = 2` counterexample to "balanced ⇒ ignores a coordinate" -/
 
 /-- `[α₀ = 1 ∧ α₁ = 2] + [α₀ = 2 ∧ α₂ = 2]` on `(Fin 3 → Fin 3)`. -/
