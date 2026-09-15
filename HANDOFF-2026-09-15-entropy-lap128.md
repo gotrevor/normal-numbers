@@ -32,6 +32,7 @@ directive asked for, and `fullRealW`, `fullPosW`, `fullDigW`, `G4EntropyWStateme
 | `5eadf1f` | `PowerBaseBlock` skeleton |
 | `6f0ec8f` | **`PowerBaseBlock`** — `isNormalSequence_pow`, sorry-free |
 | `35cd03b` | **`PowerBaseReal`** — `isNormal_pow` and the two corollaries |
+| (after the handoff) | **`PowerBaseStatement`** — the audit surface + six kernel anchors |
 
 ## The three new modules
 
@@ -74,6 +75,30 @@ integer `⌊z·b^{K(j+1)}⌋₊` via the nested-floor identity `⌊z·b^e⌋₊ 
 * `Int.floor_toNat : ⌊a⌋.toNat = ⌊a⌋₊` turns `digitOf`'s `Int` floor into a `Nat` floor, after
   which `Nat.floor_div_natCast` does the nesting with no sign side conditions.
 * `Nat.mul_lt_mul_left hK` is an **iff** here (`K*a < K*b ↔ a < b`), not an implication.
+
+## The audit surface
+
+`PowerBaseStatement.lean` (new; `G4EntropyWStatement` is untouched, as the directive requires):
+
+* `isNormal_two_pow_of_schedule_read` — the upgrade unwound: one strictly increasing, `G₄`-free
+  position map `p`, the faithfulness identity `digitOf 2 fullRealW j = digitOf 2 G₄ (p j)`, and
+  `∀ k ≥ 1, IsNormal (2^k) fullRealW`.
+* `isDisjunctive_four_fullRealW`.
+* Six `decide +kernel` anchors (no axioms at all) pinning the definitions the statement rests on:
+  `wordOf_anchor`, `wordOf_leading_zero_anchor`, `valOf_anchor`, `flat_anchor`, `blockOf_anchor`,
+  and `blockOf_offset_anchor` (which would catch an off-by-`K` in the block's start position).
+
+## The natural successor (NOT chosen by this lap — E-T7)
+
+The obvious completion is the **converse**, `IsNormal (b^K) x → IsNormal b x`, which would make
+`isNormal_pow` an iff (the full Maxfield equivalence).  Sketch, for an altitude lap to weigh:
+split positions `p = K·q + r` by residue; an occurrence of `v` (length `ℓ`) at `K·q + r` is
+exactly an occurrence at `q`, in `blockOf`, of one of the base-`b^K` words `W` of length
+`L = ⌈(r+ℓ)/K⌉` whose flattening carries `v` at offset `r`; each such `W` has density `b^{−KL}`
+by hypothesis, and there are `b^{KL−ℓ}` of them, giving `b^{−ℓ}` per class and `b^{−ℓ}` in total.
+The one genuinely new ingredient is the count `#{k < b^M : wordOf b M k has v at offset r}
+= b^{M−ℓ}` (a bijection with `range (b^r) ×ˢ range (b^{M−r−ℓ})`); everything else is already in
+`PowerBaseBlock`.
 
 ## Governing documents
 
