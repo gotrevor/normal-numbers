@@ -49,7 +49,18 @@ theorem eq_of_update_invariant_on {K : ℕ} {X R : Type*} [DecidableEq (Fin K)]
     (g : (Fin K → X) → R) (S' : Finset (Fin K))
     (hg : ∀ i ∈ S', ∀ γ c, g (update γ i c) = g γ)
     (γ γ' : Fin K → X) (h : ∀ i ∉ S', γ i = γ' i) : g γ = g γ' := by
-  sorry
+  induction S' using Finset.induction_on generalizing γ with
+  | empty =>
+    have : γ = γ' := funext fun i => h i (Finset.notMem_empty i)
+    rw [this]
+  | insert a S' ha ih =>
+    have h1 : g γ = g (update γ a (γ' a)) := (hg a (Finset.mem_insert_self a S') γ (γ' a)).symm
+    rw [h1]
+    refine ih (fun i hi => hg i (Finset.mem_insert_of_mem hi)) _ fun i hi => ?_
+    by_cases hia : i = a
+    · rw [hia, update_self]
+    · rw [update_of_ne hia]
+      exact h i (fun hmem => hi ((Finset.mem_insert.1 hmem).resolve_left hia))
 
 /-- **Additivity from vanishing mixed differences.**  If all mixed second differences of `f`
 along pairs of distinct coordinates in `S` vanish, then on the fibre of the coordinates outside
@@ -60,7 +71,47 @@ theorem additive_of_mixed_diff {K : ℕ} {X R : Type*} [AddCommGroup R] [Decidab
       f (update (update α i c) i' c') - f (update α i c) - f (update α i' c') + f α = 0)
     (α₀ α : Fin K → X) (hout : ∀ i ∉ S, α i = α₀ i) :
     f α = f α₀ + ∑ i ∈ S, (f (update α₀ i (α i)) - f α₀) := by
-  sorry
+  induction S using Finset.induction_on generalizing α with
+  | empty =>
+    have : α = α₀ := funext fun i => hout i (Finset.notMem_empty i)
+    rw [this]; simp
+  | insert a S ha ih =>
+    -- the atom with coordinate `a` reset
+    set α' := update α a (α₀ a) with hα'
+    have hout' : ∀ i ∉ S, α' i = α₀ i := by
+      intro i hi
+      by_cases hia : i = a
+      · rw [hia, hα', update_self]
+      · rw [hα', update_of_ne hia]
+        exact hout i (fun hmem => hi ((Finset.mem_insert.1 hmem).resolve_left hia))
+    have hf' : ∀ i ∈ S, ∀ i' ∈ S, i ≠ i' → ∀ α c c',
+        f (update (update α i c) i' c') - f (update α i c) - f (update α i' c') + f α = 0 :=
+      fun i hi i' hi' => hf i (Finset.mem_insert_of_mem hi) i' (Finset.mem_insert_of_mem hi')
+    have ih' := ih hf' α' hout'
+    -- `α = update α' a (α a)`
+    have hα : α = update α' a (α a) := by
+      rw [hα', update_idem, update_eq_self]
+    -- the `a`-increment is invariant under updates in `S`
+    have hinc : f (update α' a (α a)) - f α' = f (update α₀ a (α a)) - f α₀ := by
+      refine eq_of_update_invariant_on (fun γ => f (update γ a (α a)) - f γ) S ?_ α' α₀ hout'
+      intro i hi γ c
+      have hia : i ≠ a := fun h => ha (h ▸ hi)
+      have := hf a (Finset.mem_insert_self a S) i (Finset.mem_insert_of_mem hi) hia.symm γ (α a) c
+      show f (update (update γ i c) a (α a)) - f (update γ i c) = f (update γ a (α a)) - f γ
+      rw [update_comm hia.symm] at this
+      rw [sub_eq_sub_iff_sub_eq_sub, ← sub_eq_zero]
+      rw [← this]
+      abel
+    have hsum : ∑ i ∈ S, (f (update α₀ i (α' i)) - f α₀) = ∑ i ∈ S, (f (update α₀ i (α i)) - f α₀) := by
+      refine Finset.sum_congr rfl fun i hi => ?_
+      have hia : i ≠ a := fun h => ha (h ▸ hi)
+      rw [hα', update_of_ne hia]
+    rw [Finset.sum_insert ha]
+    calc f α = f (update α' a (α a)) := by rw [← hα]
+      _ = (f (update α' a (α a)) - f α') + f α' := by abel
+      _ = (f (update α₀ a (α a)) - f α₀) + (f α₀ + ∑ i ∈ S, (f (update α₀ i (α i)) - f α₀)) := by
+          rw [hinc, ih', hsum]
+      _ = _ := by abel
 
 /-! ### The deformation T(K′): cancellation of the first `K′` layers -/
 
@@ -89,14 +140,29 @@ theorem mixed_diff_zero {K s K' : ℕ} {d t : (Fin K → Fin (s + 1)) → ℤ}
     (h : CoordCancelUpTo K' d t) (i i' : Fin K) (hi : (i : ℕ) < K') (hi' : (i' : ℕ) < K')
     (hne : i ≠ i') (α : Fin K → Fin (s + 1)) (c c' : Fin (s + 1)) :
     d (update (update α i c) i' c') - d (update α i c) - d (update α i' c') + d α = 0 := by
-  sorry
+  have h1 := diff_rel h i hi α c
+  have h2 := diff_rel h i' hi' (update α i c) c'
+  have h3 := diff_rel h i' hi' α c'
+  have h4 := diff_rel h i hi (update α i' c') c
+  rw [update_comm hne.symm] at h4
+  have hne' : ((i : ℕ) : ℤ) ≠ ((i' : ℕ) : ℤ) := by
+    intro heq; exact hne (Fin.ext (by exact_mod_cast heq))
+  have key : (((i' : ℕ) : ℤ) - ((i : ℕ) : ℤ)) *
+      (d (update (update α i c) i' c') - d (update α i c) - d (update α i' c') + d α) = 0 := by
+    linear_combination h3 + h4 - h1 - h2
+  rcases mul_eq_zero.1 key with h0 | h0
+  · exact absurd (sub_eq_zero.1 h0).symm hne'
+  · exact h0
 
 /-- Mixed differences of `t` vanish too (they are `(i+1)` times those of `d`). -/
 theorem mixed_diff_zero_t {K s K' : ℕ} {d t : (Fin K → Fin (s + 1)) → ℤ}
     (h : CoordCancelUpTo K' d t) (i i' : Fin K) (hi : (i : ℕ) < K') (hi' : (i' : ℕ) < K')
     (hne : i ≠ i') (α : Fin K → Fin (s + 1)) (c c' : Fin (s + 1)) :
     t (update (update α i c) i' c') - t (update α i c) - t (update α i' c') + t α = 0 := by
-  sorry
+  have h2 := diff_rel h i' hi' (update α i c) c'
+  have h3 := diff_rel h i' hi' α c'
+  have hm := mixed_diff_zero h i i' hi hi' hne α c c'
+  linear_combination h2 - h3 + (((i' : ℕ) : ℤ) + 1) * hm
 
 /-- The cancelled coordinates. -/
 def lowSet (K K' : ℕ) : Finset (Fin K) := Finset.univ.filter (fun i : Fin K => (i : ℕ) < K')
@@ -115,7 +181,21 @@ theorem additive_form {K s K' : ℕ} {d t : (Fin K → Fin (s + 1)) → ℤ}
         (d (update (zeroLow K' α) i (α i)) - d (zeroLow K' α)) ∧
     t α = t (zeroLow K' α) + ∑ i ∈ lowSet K K',
         ((i : ℕ) + 1 : ℤ) * (d (update (zeroLow K' α) i (α i)) - d (zeroLow K' α)) := by
-  sorry
+  have hout : ∀ i ∉ lowSet K K', α i = zeroLow K' α i := by
+    intro i hi
+    have : ¬ ((i : ℕ) < K') := fun hlt => hi (Finset.mem_filter.2 ⟨Finset.mem_univ _, hlt⟩)
+    simp [zeroLow, this]
+  have hlow : ∀ i ∈ lowSet K K', (i : ℕ) < K' := fun i hi => (Finset.mem_filter.1 hi).2
+  constructor
+  · exact additive_of_mixed_diff d (lowSet K K')
+      (fun i hi i' hi' hne α c c' => mixed_diff_zero h i i' (hlow i hi) (hlow i' hi') hne α c c')
+      (zeroLow K' α) α hout
+  · have ht := additive_of_mixed_diff t (lowSet K K')
+      (fun i hi i' hi' hne α c c' => mixed_diff_zero_t h i i' (hlow i hi) (hlow i' hi') hne α c c')
+      (zeroLow K' α) α hout
+    rw [ht]
+    congr 1
+    exact Finset.sum_congr rfl fun i hi => diff_rel h i (hlow i hi) _ _
 
 /-- L2 recovered: at `K′ = K` with `d` fixed, `t′ − t` is constant. -/
 theorem offset_rigidity' {K s : ℕ} (d t t' : (Fin K → Fin (s + 1)) → ℤ)
