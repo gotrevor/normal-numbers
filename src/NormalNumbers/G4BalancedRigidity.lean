@@ -767,3 +767,94 @@ theorem balanced_union_le (i : ℕ)
     _ = (L : ℝ) / (dmin i : ℝ) ^ (H / 2) + F * ((H : ℕ) * kk i) := by ring
 
 end NormalNumbers.G4.Sched
+
+/-! ### How much of the joint sample is needed: grouped confinement
+
+The third route left open by `DESIGN-2026-09-15-row-balanced.md` is to give up the **single-`n`
+joint sample**: let each atom read from its own sample point instead of all `H` atoms reading one
+`n`.  Taken to the extreme (one `n` per atom) confinement is plainly gone — a single atom's
+progression has density `1/d_α`, and there are `H ≫ d_α` atoms.  But the extreme is not the
+question; the question is *how much* joint sampling the confinement actually consumes.
+
+`grouped_union_card_le` answers it.  Partition the atoms into `G` groups, each group sharing one
+sample point (`G = 1` is the implemented sampler, `G = H` is total release).  Then the read set
+below `L` has size `≤ G · |𝓕| · (L m H dmax / (2 dmin^w) + H m)`, where `w` is the smallest group
+size.  The density coefficient is `G H dmax / (2 dmin^w)`, so confinement survives **iff**
+`dmin^w ≳ G H`, i.e. iff every group has size
+
+    w ≳ (log G + log H) / log dmin  ≈  2 log H / log dmin   (at `G = H/w`).
+
+So the joint sample may be broken into `H/w` independent blocks with no loss — but the blocks
+must be that large.  At the schedule (`H = (s+1)^K`, `dmin > 10^6`) this is `w ≳ 2K log(s+1)/log
+dmin`: enormous in absolute terms, yet a vanishing fraction of `H`.  The single-`n` sample is
+therefore *not* essential; large blocks are. -/
+
+namespace NormalNumbers.G4.Grouped
+
+open NormalNumbers.G4 NormalNumbers.G4Confine
+
+/-- **Grouped confinement.**  With the atoms partitioned into `G` groups, each sharing one sample
+point, the read set below `L` is bounded by `G` times the single-`n` bound at the *smallest group
+size* `w`. -/
+theorem grouped_union_card_le {ι : Type*} [Fintype ι] [DecidableEq ι] {κ : Type*} [DecidableEq κ]
+    {G : ℕ} (grp : ι → Fin G)
+    (𝓕 : Finset κ) (d t : κ → ι → ℕ) (P : κ → Fin G → Finset ℕ)
+    {dmin dmax m L w : ℕ} (hdmin : 0 < dmin)
+    (hw : ∀ g : Fin G, w ≤ Fintype.card {α : ι // grp α = g})
+    (hd : ∀ ν ∈ 𝓕, ∀ α, dmin ≤ d ν α ∧ d ν α ≤ dmax)
+    (hcop : ∀ ν ∈ 𝓕, ∀ α β, α ≠ β → Nat.Coprime (d ν α) (d ν β))
+    (hP : ∀ ν ∈ 𝓕, ∀ g, ∀ n ∈ P ν g, ∀ α, grp α = g → n % d ν α = t ν α)
+    (U : ℕ → Prop) [DecidablePred U]
+    (hcov : ∀ j, j < L → U j → ∃ ν ∈ 𝓕, ∃ g, ∃ n ∈ P ν g, ∃ α, grp α = g ∧ ∃ h < m,
+      j = 2 * physIdx (d ν α) (t ν α) n + h) :
+    (((Finset.range L).filter U).card : ℝ) ≤
+      (G : ℝ) * (𝓕.card * ((L : ℝ) * m * Fintype.card ι * dmax / (2 * (dmin : ℝ) ^ w)
+        + Fintype.card ι * m)) := by
+  classical
+  set H := Fintype.card ι with hH
+  -- the per-group predicate
+  let Ug : Fin G → ℕ → Prop := fun g j => ∃ ν ∈ 𝓕, ∃ n ∈ P ν g,
+    ∃ α : {α : ι // grp α = g}, ∃ h < m, j = 2 * physIdx (d ν α) (t ν α) n + h
+  have hsub : (Finset.range L).filter U ⊆
+      (Finset.univ : Finset (Fin G)).biUnion (fun g => (Finset.range L).filter (Ug g)) := by
+    intro j hj
+    rw [Finset.mem_filter, Finset.mem_range] at hj
+    obtain ⟨ν, hν, g, n, hn, α, hα, h, hh, hje⟩ := hcov j hj.1 hj.2
+    exact Finset.mem_biUnion.2 ⟨g, Finset.mem_univ _,
+      Finset.mem_filter.2 ⟨Finset.mem_range.2 hj.1, ⟨ν, hν, n, hn, ⟨α, hα⟩, h, hh, hje⟩⟩⟩
+  have hnat : ((Finset.range L).filter U).card ≤
+      ∑ g : Fin G, ((Finset.range L).filter (Ug g)).card :=
+    le_trans (Finset.card_le_card hsub) Finset.card_biUnion_le
+  -- each group is confined by the single-`n` bound at its own size
+  have hgrp : ∀ g : Fin G, (((Finset.range L).filter (Ug g)).card : ℝ) ≤
+      𝓕.card * ((L : ℝ) * m * H * dmax / (2 * (dmin : ℝ) ^ w) + H * m) := by
+    intro g
+    set Hg := Fintype.card {α : ι // grp α = g} with hHg
+    have hbase := union_card_le (ι := {α : ι // grp α = g}) 𝓕
+      (fun ν α => d ν α) (fun ν α => t ν α) (fun ν => P ν g) (dmin := dmin) (dmax := dmax)
+      (m := m) (L := L) hdmin
+      (fun ν hν α => hd ν hν α)
+      (fun ν hν α β hab => hcop ν hν α β (fun he => hab (Subtype.ext he)))
+      (fun ν hν n hn α => hP ν hν g n hn α α.2)
+      (Ug g) (fun j _ hj => hj)
+    refine le_trans hbase ?_
+    have hHgH : (Hg : ℝ) ≤ H := by
+      rw [hHg, hH]; exact_mod_cast Fintype.card_subtype_le _
+    have hd1 : (1 : ℝ) ≤ (dmin : ℝ) := by exact_mod_cast hdmin
+    have hpow : ((dmin : ℝ)) ^ w ≤ (dmin : ℝ) ^ Hg := pow_le_pow_right₀ hd1 (hw g)
+    have hpos : (0 : ℝ) < (dmin : ℝ) ^ w := by positivity
+    have hcard : (0 : ℝ) ≤ (𝓕.card : ℝ) := by positivity
+    refine mul_le_mul_of_nonneg_left (add_le_add ?_ ?_) hcard
+    · calc (L : ℝ) * m * Hg * dmax / (2 * (dmin : ℝ) ^ Hg)
+          ≤ (L : ℝ) * m * H * dmax / (2 * (dmin : ℝ) ^ Hg) := by gcongr
+        _ ≤ (L : ℝ) * m * H * dmax / (2 * (dmin : ℝ) ^ w) := by
+            gcongr
+    · gcongr
+  calc (((Finset.range L).filter U).card : ℝ)
+      ≤ ∑ g : Fin G, (((Finset.range L).filter (Ug g)).card : ℝ) := by exact_mod_cast hnat
+    _ ≤ ∑ _g : Fin G, (𝓕.card * ((L : ℝ) * m * H * dmax / (2 * (dmin : ℝ) ^ w) + H * m)) :=
+        Finset.sum_le_sum fun g _ => hgrp g
+    _ = (G : ℝ) * (𝓕.card * ((L : ℝ) * m * H * dmax / (2 * (dmin : ℝ) ^ w) + H * m)) := by
+        simp [Finset.sum_const, Finset.card_univ]
+
+end NormalNumbers.G4.Grouped

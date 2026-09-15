@@ -118,7 +118,15 @@ Not covered by `balanced_union_le`, and therefore the honest frontier:
   `card_mdf_pairs_le` the instance `Inv = MDF`, `S = skel`.  So a new matrix only has to be shown
   to have a small determining set for its own balance relations; the rest of the verdict
   (`balanced_coeff_le`, `balanced_union_le`) is unchanged;
-* giving up the single-`n` joint sample (all `H` atoms read from one `n`), which is what makes
-  the L1 confinement `≤ m Σd_α/(2D)` available at all.
+* giving up the single-`n` joint sample — **now quantified, not open**.
+  `Grouped.grouped_union_card_le` partitions the atoms into `G` groups, each sharing one sample
+  point (`G = 1` is the implemented sampler, `G = H` total release), and bounds the read set below
+  `L` by `G · |𝓕| · (L m H dmax / (2 dmin^w) + H m)` with `w` the smallest group size.  So the
+  density coefficient is `G H dmax / (2 dmin^w)` and confinement survives **iff** `dmin^w ≳ G H`,
+  i.e. iff every group has size `w ≳ (log G + log H)/log dmin ≈ 2 log H / log dmin` at `G = H/w`.
+  The joint sample may therefore be broken into `H/w` independent blocks with no loss — the blocks
+  must simply be that large.  At the schedule (`H = (s+1)^K`, `dmin > 10^6`) that is
+  `w ≳ 2K log(s+1)/log dmin`: enormous absolutely, a vanishing fraction of `H`.  What is *not*
+  covered, and is the honest residue of this item, is a sampler with groups below that size.
 
 Each of these leaves the tensor-matrix question behind; none of them is "normality of `G₄`".
