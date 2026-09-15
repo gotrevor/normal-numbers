@@ -444,4 +444,74 @@ theorem avg_sq_centred_sum_approx (P : Finset ℕ) (hP : P.Nonempty) (S : Finset
   rw [hsplit]
   nlinarith [hcard, hδ]
 
+
+/-! ### The progression re-indexing: the schedule's sample is an interval in disguise
+
+The schedule samples a progression `n ≡ c [MOD Q]`, not an interval.  Writing `n = c + Q k`, the
+condition `p ∣ n + ρ` becomes a single congruence on `k` whenever `gcd(Q, p) = 1` — which the
+frozen modulus supplies — so every frequency on the schedule's sample is a frequency on `range N`
+and `avg_indicator_modEq_sub_le` applies verbatim.  That closes the last gap in (E). -/
+
+/-- Averaging over a progression sample is averaging over the index range. -/
+lemma avg_image_progression (c Q N : ℕ) (hQ : 0 < Q) (f : ℕ → ℝ) :
+    avg ((Finset.range N).image (fun k => c + Q * k)) f
+      = avg (Finset.range N) (fun k => f (c + Q * k)) := by
+  classical
+  have hinj : Set.InjOn (fun k => c + Q * k) (Finset.range N) := by
+    intro x _ y _ h
+    simp only at h
+    have : Q * x = Q * y := by omega
+    exact Nat.eq_of_mul_eq_mul_left hQ this
+  unfold avg
+  rw [Finset.sum_image (fun x hx y hy h => hinj hx hy h),
+    Finset.card_image_of_injOn hinj]
+
+/-- **The shifted divisibility condition on a progression is one congruence class in the index.** -/
+theorem exists_class_of_coprime {p Q : ℕ} (hp : 0 < p) (hcop : Nat.Coprime Q p) (c : ℕ) (r : ℤ) :
+    ∃ w : ℕ, ∀ k : ℕ, ((p : ℤ) ∣ ((c : ℤ) + Q * k + r) ↔ k ≡ w [MOD p]) := by
+  haveI : NeZero p := ⟨hp.ne'⟩
+  have hQu : IsUnit ((Q : ℕ) : ZMod p) := (ZMod.isUnit_iff_coprime Q p).2 hcop
+  obtain ⟨u, hu⟩ := hQu
+  set z : ZMod p := (↑u⁻¹ : ZMod p) * (-((c : ZMod p) + (r : ZMod p))) with hz
+  refine ⟨z.val, fun k => ?_⟩
+  have hcast : (((c : ℤ) + Q * k + r : ℤ) : ZMod p)
+      = (Q : ZMod p) * (k : ZMod p) + ((c : ZMod p) + (r : ZMod p)) := by
+    push_cast; ring
+  rw [← ZMod.intCast_zmod_eq_zero_iff_dvd, hcast]
+  rw [← ZMod.natCast_eq_natCast_iff, ZMod.natCast_val, ZMod.cast_id]
+  constructor
+  · intro h
+    have hk : (Q : ZMod p) * (k : ZMod p) = -((c : ZMod p) + (r : ZMod p)) := by linear_combination h
+    rw [hz, ← hk, ← hu]
+    rw [← mul_assoc]
+    rw [show (↑u⁻¹ : ZMod p) * (↑u : ZMod p) = 1 from by
+      rw [← Units.val_mul, inv_mul_cancel, Units.val_one]]
+    rw [one_mul]
+  · intro h
+    rw [h, hz, ← hu, ← mul_assoc]
+    rw [show (↑u : ZMod p) * (↑u⁻¹ : ZMod p) = 1 from by
+      rw [← Units.val_mul, mul_inv_cancel, Units.val_one]]
+    rw [one_mul]; ring
+
+/-- **The frequency statement on the schedule's sample.**  On a progression `n ≡ c [MOD Q]` with
+`gcd(Q, p) = 1`, the sample frequency of `p ∣ n + ρ` is `1/p` up to `1/N`. -/
+theorem avg_indicator_dvd_progression {p Q : ℕ} (hp : 0 < p) (hQ : 0 < Q)
+    (hcop : Nat.Coprime Q p) (c : ℕ) (r : ℤ) {N : ℕ} (hN : 0 < N) :
+    |avg ((Finset.range N).image (fun k => c + Q * k))
+        (fun n => if (p : ℤ) ∣ ((n : ℤ) + r) then (1 : ℝ) else 0) - 1 / p| ≤ 1 / N := by
+  classical
+  obtain ⟨w, hw⟩ := exists_class_of_coprime hp hcop c r
+  rw [avg_image_progression c Q N hQ]
+  have hre : (fun k => if (p : ℤ) ∣ (((c + Q * k : ℕ) : ℤ) + r) then (1 : ℝ) else 0)
+      = (fun k => if k ≡ w [MOD p] then (1 : ℝ) else 0) := by
+    funext k
+    have : ((p : ℤ) ∣ (((c + Q * k : ℕ) : ℤ) + r)) ↔ k ≡ w [MOD p] := by
+      rw [show (((c + Q * k : ℕ) : ℤ) + r) = ((c : ℤ) + Q * k + r) from by push_cast; ring]
+      exact hw k
+    by_cases h : k ≡ w [MOD p]
+    · rw [if_pos (this.2 h), if_pos h]
+    · rw [if_neg (fun hc => h (this.1 hc)), if_neg h]
+  rw [hre]
+  exact avg_indicator_modEq_sub_le hp hN w
+
 end NormalNumbers.G4.RowVariance
