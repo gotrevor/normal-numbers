@@ -63,6 +63,18 @@ cancellation is only useful if the transport identity + error term (§3) survive
 price that on paper before any claim.  This is a question about the tensor matrix, not about
 `G₄`; neither outcome is "normality of `G₄`".  Stop when R has a kernel verdict, else the cap.
 
+**Addendum 2026-09-15 01:10 EDT (attended, Ren, hourly check): R ✅** - counterexample
+`ex_not_ignoring` (row-balanced does NOT force ignoring a coordinate) AND the broader confinement
+`Sched.balanced_union_le`; the grouped/decoupled third escape closed at the schedule
+(`G4GroupedVerdict`).  Review lap 166's self-assigned **objective S is authorized ONLY as its
+item 1**: the seam `Sched.budget_confines` (derive `2 ≤ K′` from the capture budget via
+`two_layers_of_dyadic` and join it to `cancelled_union_le`, then the grouped analogue on
+`grouped_balanced_union_le`).  Astra's review (KB, 2026-09-15 00:05) is the reason it matters:
+the design's "`K′ ≥ 3K/8` is forced" reads an UPPER bound as a lower bound - so state exactly
+what the budget forces and nothing more.  **After S item 1: STOP.**  Write the handoff, do not
+pick another successor, do not file stuck strikes (the repo-wide gate is a known tooling defect;
+the operator stops the run).  Any lap that finds S item 1 done simply ends idle.
+
 Preserved declarations, forbidden-drift list, one-writer-per-file, commit-a-skeleton-early,
 and the wrap's elaborator hygiene all apply.  Stop when F has its verdict (mechanism + isolated
 estimate, or proved limitation) with L1, L2 done; the cap otherwise.
