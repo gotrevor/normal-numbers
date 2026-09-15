@@ -1126,4 +1126,154 @@ theorem gap_divisor_sum_le {T : ℕ} (hT : 2 ≤ T) (S : Finset ℕ) {Δ : ℤ} 
         exact mul_le_mul_of_nonneg_right this (by positivity)
     _ = 4 * k / T := by ring
 
+/-! ### The dyadic instantiation: (E) at explicit scales
+
+All four inputs of `roughRowVarianceLower_arith` are now arithmetic facts about a *dyadic* set of
+rough primes `S ⊆ [T, 2T]`.  Writing `m = |S|` and `A = 2^K` for the row support:
+
+    v ≥ m/(4T)  (per-term),      ε ≤ 4k/T + 3m/T² + 3m²/N  (correlation),
+
+and the reduction's `ε·(5A/3) ≤ v/2` holds as soon as
+
+    T ≥ 1440 A,      m ≥ 1920 A k,      N ≥ 1440 A m T.
+
+Each term of `ε` is then below `m/(480 A T)`, so `ε·(5A/3) ≤ m/(96T) ≤ v/2`.  These are exactly
+the schedule's "rough primes are plentiful, the sample is long, the gaps are short" conditions,
+with the constants made explicit. -/
+
+/-- Per-term non-degeneracy on a dyadic rough range. -/
+lemma dyadic_variance_ge {T : ℕ} (hT : 4 ≤ T) (S : Finset ℕ)
+    (hge : ∀ p ∈ S, T ≤ p) (hle : ∀ p ∈ S, p ≤ 2 * T) :
+    (S.card : ℝ) / (4 * T) ≤ ∑ p ∈ S, ((1 : ℝ) / p - ((1 : ℝ) / p) ^ 2) := by
+  have hT0 : (0 : ℝ) < T := by exact_mod_cast (by omega : 0 < T)
+  have hterm : ∀ p ∈ S, (1 : ℝ) / (4 * T) ≤ (1 : ℝ) / p - ((1 : ℝ) / p) ^ 2 := by
+    intro p hp
+    have hp4 : (4 : ℝ) ≤ (p : ℝ) := by
+      have := hge p hp; have : (4 : ℕ) ≤ p := le_trans hT this
+      exact_mod_cast this
+    have hple : (p : ℝ) ≤ 2 * T := by exact_mod_cast hle p hp
+    have hp0 : (0 : ℝ) < p := by linarith
+    have h1 : (1 : ℝ) / p - ((1 : ℝ) / p) ^ 2 = (1 / p) * (1 - 1 / p) := by ring
+    have h2 : (1 : ℝ) / p ≥ 1 / (2 * T) := by
+      apply one_div_le_one_div_of_le (by linarith) hple
+    have h3 : (1 : ℝ) / p ≤ 1 / 4 := by
+      apply one_div_le_one_div_of_le (by norm_num) hp4
+    have h4 : (0 : ℝ) < 1 / (2 * T) := by positivity
+    rw [h1]
+    have : (1 / (2 * (T : ℝ))) * (3 / 4) ≤ (1 / p) * (1 - 1 / p) := by
+      apply mul_le_mul h2 (by linarith) (by norm_num) (by positivity)
+    calc (1 : ℝ) / (4 * T) ≤ (1 / (2 * (T : ℝ))) * (3 / 4) := by
+          rw [div_le_iff₀ (by positivity)]
+          field_simp
+          linarith
+      _ ≤ (1 / p) * (1 - 1 / p) := this
+  calc (S.card : ℝ) / (4 * T) = (S.card : ℝ) * (1 / (4 * T)) := by ring
+    _ = ∑ _p ∈ S, (1 : ℝ) / (4 * T) := by rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ _ := Finset.sum_le_sum hterm
+
+/-- The `Σ 3/p²` remainder on a dyadic rough range. -/
+lemma dyadic_sq_sum_le {T : ℕ} (hT : 4 ≤ T) (S : Finset ℕ) (hge : ∀ p ∈ S, T ≤ p) :
+    (∑ p ∈ S, 3 * (1 / (p : ℝ)) ^ 2) ≤ 3 * (S.card : ℝ) / (T : ℝ) ^ 2 := by
+  have hT0 : (0 : ℝ) < T := by exact_mod_cast (by omega : 0 < T)
+  have hterm : ∀ p ∈ S, 3 * (1 / (p : ℝ)) ^ 2 ≤ 3 / (T : ℝ) ^ 2 := by
+    intro p hp
+    have hpT : (T : ℝ) ≤ (p : ℝ) := by exact_mod_cast hge p hp
+    have h : (1 : ℝ) / p ≤ 1 / T := one_div_le_one_div_of_le hT0 hpT
+    have h0 : (0 : ℝ) ≤ 1 / p := by positivity
+    have : ((1 : ℝ) / p) ^ 2 ≤ (1 / (T : ℝ)) ^ 2 := by nlinarith
+    calc 3 * ((1 : ℝ) / p) ^ 2 ≤ 3 * (1 / (T : ℝ)) ^ 2 := by linarith
+      _ = 3 / (T : ℝ) ^ 2 := by rw [div_pow]; ring
+  calc (∑ p ∈ S, 3 * (1 / (p : ℝ)) ^ 2) ≤ ∑ _p ∈ S, (3 : ℝ) / (T : ℝ) ^ 2 :=
+        Finset.sum_le_sum hterm
+    _ = (S.card : ℝ) * (3 / (T : ℝ) ^ 2) := by rw [Finset.sum_const, nsmul_eq_mul]
+    _ = 3 * (S.card : ℝ) / (T : ℝ) ^ 2 := by ring
+
+/-- **The scale inequality.**  At `T ≥ 1440 A`, `m ≥ 1920 A k`, `N ≥ 1440 A m T` the correlation
+level is below `v/(2·ratio)`: the hypothesis `released_row_lower` needs. -/
+lemma dyadic_scales {A t M n kk : ℝ} (hA : 1 ≤ A) (ht : 0 < t) (hn : 0 < n) (hM : 0 ≤ M)
+    (hk : 0 ≤ kk) (hT : 1440 * A ≤ t) (hm : 1920 * A * kk ≤ M) (hN : 1440 * A * M * t ≤ n) :
+    (4 * kk / t + 3 * M / t ^ 2 + 3 * M ^ 2 / n) * (5 * A / 3)
+      ≤ (M / (4 * t) - 3 * M ^ 2 / n) / 2 := by
+  have hAt : (0 : ℝ) < 480 * A * t := by positivity
+  have hb1 : 4 * kk / t ≤ M / (480 * A * t) := by
+    rw [div_le_div_iff₀ ht hAt]
+    nlinarith [mul_nonneg hk (le_of_lt ht)]
+  have hb2 : 3 * M / t ^ 2 ≤ M / (480 * A * t) := by
+    rw [div_le_div_iff₀ (by positivity) hAt]
+    nlinarith [mul_nonneg hM (le_of_lt ht)]
+  have hb3 : 3 * M ^ 2 / n ≤ M / (480 * A * t) := by
+    rw [div_le_div_iff₀ hn hAt]
+    nlinarith [sq_nonneg M, mul_nonneg hM (le_of_lt ht)]
+  have hXv : M / (480 * A * t) ≤ M / (480 * t) := by
+    rw [div_le_div_iff₀ hAt (by positivity)]
+    nlinarith [mul_nonneg (mul_nonneg hM ht.le) (sub_nonneg.2 hA)]
+  have hfin : (M / (480 * A * t)) * (5 * A) = M / (96 * t) := by
+    field_simp
+    ring
+  have hle : (4 * kk / t + 3 * M / t ^ 2 + 3 * M ^ 2 / n) * (5 * A / 3)
+      ≤ (3 * (M / (480 * A * t))) * (5 * A / 3) := by
+    have h5 : (0 : ℝ) ≤ 5 * A / 3 := by positivity
+    exact mul_le_mul_of_nonneg_right (by linarith) h5
+  have heq : (3 * (M / (480 * A * t))) * (5 * A / 3) = M / (96 * t) := by
+    rw [show (3 * (M / (480 * A * t))) * (5 * A / 3) = (M / (480 * A * t)) * (5 * A) from by ring,
+      hfin]
+  rw [heq] at hle
+  have hv : M / (96 * t) ≤ (M / (4 * t) - 3 * M ^ 2 / n) / 2 := by
+    have h1 : 3 * M ^ 2 / n ≤ M / (480 * t) := le_trans hb3 hXv
+    have h2 : M / (96 * t) ≤ (M / (4 * t) - M / (480 * t)) / 2 := by
+      rw [div_le_div_iff₀ (by positivity) (by norm_num : (0:ℝ) < 2)]
+      have e1 : M / (4 * t) - M / (480 * t) = 119 * M / (480 * t) := by
+        field_simp; ring
+      rw [e1, div_mul_eq_mul_div, le_div_iff₀ (by positivity)]
+      nlinarith [mul_nonneg hM (le_of_lt ht)]
+    linarith
+  linarith
+
+/-- **(E) at explicit scales.**  The whole chain, instantiated: a dyadic set `S ⊆ [T, 2T]` of
+pairwise-coprime rough primes coprime to the frozen modulus `Q`, shift gaps bounded by `T^{k+1}`,
+and the three scale conditions `T ≥ 1440·2^K`, `|S| ≥ 1920·2^K·k`, `N ≥ 1440·2^K·|S|·T`.  Then the
+row second moments of the released layers satisfy `Budget.RoughRowVarianceLower` — no hypothesis
+left over.  Chaining with `Budget.budget_forces_two_layers` and `Sched.balanced_union_le` closes
+(E) in the deformation verdict. -/
+theorem roughRowVarianceLower_dyadic {K L T Q c0 N k : ℕ} (hT : 4 ≤ T) (hQ : 0 < Q) (hN : 0 < N)
+    (S : Finset ℕ) (hge : ∀ p ∈ S, T ≤ p) (hle : ∀ p ∈ S, p ≤ 2 * T)
+    (hQcop : ∀ p ∈ S, Nat.Coprime Q p)
+    (hcop : ∀ p ∈ S, ∀ q ∈ S, p ≠ q → Nat.Coprime p q)
+    (ρ : ℕ → Fin (2 ^ K) × Fin L → ℤ) (w : ℕ → Fin (2 ^ K) × Fin L → ℝ)
+    (hw : ∀ K' i, |w K' i| = (1 / 4 : ℝ) ^ (K' + 1 + (i.2 : ℕ)))
+    (hΔ : ∀ (K' : ℕ) (i j), i ≠ j →
+      ρ K' i - ρ K' j ≠ 0 ∧ (ρ K' i - ρ K' j).natAbs < T ^ (k + 1))
+    (hTA : (1440 : ℝ) * 2 ^ K ≤ (T : ℝ))
+    (hmA : (1920 : ℝ) * 2 ^ K * (k : ℝ) ≤ (S.card : ℝ))
+    (hNA : (1440 : ℝ) * 2 ^ K * (S.card : ℝ) * (T : ℝ) ≤ (N : ℝ)) :
+    Budget.RoughRowVarianceLower
+      (fun K' => avg ((Finset.range N).image (fun x => c0 + Q * x))
+        (fun n => (∑ i, w K' i * fluct S (ρ K' i) n) ^ 2))
+      ((((S.card : ℝ) / (4 * T) - 3 * (S.card : ℝ) ^ 2 / N) / 2) * (1 - (1 / 16 : ℝ) ^ L)) K := by
+  classical
+  have hT0 : (0 : ℝ) < (T : ℝ) := by exact_mod_cast (by omega : 0 < T)
+  have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  have hA1 : (1 : ℝ) ≤ (2 : ℝ) ^ K := one_le_pow₀ (by norm_num)
+  have hsmall := dyadic_scales (A := (2 : ℝ) ^ K) (t := (T : ℝ)) (M := (S.card : ℝ))
+    (n := (N : ℝ)) (kk := (k : ℝ)) hA1 hT0 hN0 (Nat.cast_nonneg _) (Nat.cast_nonneg _)
+    hTA hmA hNA
+  have hεnn : (0 : ℝ) ≤ 4 * (k : ℝ) / T + 3 * (S.card : ℝ) / (T : ℝ) ^ 2
+      + 3 * (S.card : ℝ) ^ 2 / N := by positivity
+  have hvnn : (0 : ℝ) ≤ (S.card : ℝ) / (4 * T) - 3 * (S.card : ℝ) ^ 2 / N := by
+    have h5 : (0 : ℝ) ≤ 5 * (2 : ℝ) ^ K / 3 := by positivity
+    nlinarith [mul_nonneg hεnn h5]
+  refine roughRowVarianceLower_arith (g := 4 * (k : ℝ) / T) hQ hN S
+      (fun p hp => lt_of_lt_of_le (by omega) (hge p hp)) hQcop hcop ρ w hw hvnn hεnn ?_ ?_ ?_
+      hsmall
+  · have h1 := dyadic_variance_ge hT S hge hle
+    have h2 : 3 * (1 / (N : ℝ)) * (S.card : ℝ) ^ 2 = 3 * (S.card : ℝ) ^ 2 / N := by ring
+    rw [h2]
+    linarith
+  · intro K' i j hij
+    exact gap_divisor_sum_le (by omega) S (hΔ K' i j hij).1
+      (fun p hp => hge p hp) hcop (hΔ K' i j hij).2
+  · have := dyadic_sq_sum_le hT S hge
+    have h3 : 3 * (S.card : ℝ) ^ 2 / N = 3 * (S.card : ℝ) ^ 2 / N := rfl
+    linarith
+
 end NormalNumbers.G4.RowVariance
