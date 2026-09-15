@@ -88,16 +88,197 @@ theorem deficit_primeLambertFour_down (i X' : ℕ) (hlo : Xlo (KK i) ≤ X')
 
 /-! ### The truncated band keeps at least half the truncated sample -/
 
+/-- `m (KK i) + 7 ≤ m (KK (i+1))`: a crude strengthening of `two_pow_m_step`, enough to put the
+whole previous scale below `Xlo` rather than merely below `X`.  (The true gap is a tower;
+`m₂ (K+4) - m₂ K = 64K + 128` alone suffices.) -/
+lemma m_step_seven (i : ℕ) : m (KK i) + 7 ≤ m (KK (i + 1)) := by
+  have hK : 160000 ≤ KK i := KK_ge i
+  have hsucc : KK (i + 1) = KK i + 4 := KK_succ i
+  have h1 : m₁ (KK i) ≤ m₁ (KK i + 4) := by
+    show 1000 * 8 ^ KK i * KK i ^ (2 * KK i + 1)
+      ≤ 1000 * 8 ^ (KK i + 4) * (KK i + 4) ^ (2 * (KK i + 4) + 1)
+    have hA : (8 : ℕ) ^ KK i ≤ 8 ^ (KK i + 4) := Nat.pow_le_pow_right (by norm_num) (by omega)
+    have hB : KK i ^ (2 * KK i + 1) ≤ (KK i + 4) ^ (2 * (KK i + 4) + 1) :=
+      le_trans (Nat.pow_le_pow_left (by omega) _) (Nat.pow_le_pow_right (by omega) (by omega))
+    exact Nat.mul_le_mul (Nat.mul_le_mul (le_refl 1000) hA) hB
+  have h2 : m₂ (KK i) + 7 ≤ m₂ (KK i + 4) := by
+    show 8 * KK i ^ 2 + 7 ≤ 8 * (KK i + 4) ^ 2
+    nlinarith
+  rw [hsucc]
+  show m₁ (KK i) + m₂ (KK i) + 7 ≤ m₁ (KK i + 4) + m₂ (KK i + 4)
+  omega
+
+/-- The exponent gap with `Xlo`'s exponent `50` in place of `X`'s `100`. -/
+lemma exponent_gap_Xlo (i : ℕ) :
+    4 + 2 * 2 ^ (21 * KK (i + 1) ^ 2) + 100 * 2 ^ m (KK i) ≤ 49 * 2 ^ m (KK (i + 1)) := by
+  have hK : 160000 ≤ KK i := KK_ge i
+  have hsucc : KK (i + 1) = KK i + 4 := KK_succ i
+  have hcube : KK i ^ 3 ≤ m (KK i) := by
+    have h1 := m₁_ge_cube (show 1 ≤ KK i by omega)
+    unfold m
+    omega
+  have hbig : 21 * KK (i + 1) ^ 2 + 2 ≤ KK i ^ 3 := by
+    rw [hsucc]
+    nlinarith [hK]
+  have hstep : (2 : ℕ) ^ 7 * 2 ^ m (KK i) ≤ 2 ^ m (KK (i + 1)) := by
+    rw [← pow_add]
+    exact Nat.pow_le_pow_right (by norm_num) (by have := m_step_seven i; omega)
+  have hmono : 2 ^ (21 * KK (i + 1) ^ 2 + 2) ≤ 2 ^ m (KK i) :=
+    Nat.pow_le_pow_right (by norm_num) (by omega)
+  have hpow : 2 ^ (21 * KK (i + 1) ^ 2 + 2) = 4 * 2 ^ (21 * KK (i + 1) ^ 2) := by
+    rw [pow_add]; ring
+  have hone : 1 ≤ 2 ^ (21 * KK (i + 1) ^ 2) := Nat.one_le_two_pow
+  have h128 : (2 : ℕ) ^ 7 = 128 := by norm_num
+  omega
+
+set_option maxHeartbeats 1000000 in
+/-- **The band gap, against the downward floor.**  `12·Dm(K_{i+1})·X(K_i) + 4·P₀ ≤ Xlo(K_{i+1})`:
+the previous scale's whole inflated position range sits below the *floor* of the next scale's
+certified window, not merely below its top. -/
+theorem band_gap_strong_Xlo (i : ℕ) :
+    (12 : ℝ) * (gridDm (KK (i + 1)) (N (KK (i + 1))) : ℝ) * (X (KK i) : ℝ)
+        + 4 * ((gridAt (i + 1)).P₀ : ℝ)
+      ≤ (Xlo (KK (i + 1)) : ℝ) := by
+  have hK1 : 100 ≤ KK (i + 1) := by have := KK_ge (i + 1); omega
+  have hgap := exponent_gap_Xlo i
+  have hXv : ((X (KK i) : ℕ) : ℝ) = (2 : ℝ) ^ (100 * 2 ^ m (KK i)) := by
+    show ((2 ^ (100 * 2 ^ m (KK i)) : ℕ) : ℝ) = _
+    push_cast; ring
+  have hone : (1 : ℕ) ≤ 2 ^ m (KK (i + 1)) := Nat.one_le_two_pow
+  have hA : (12 : ℝ) * (gridDm (KK (i + 1)) (N (KK (i + 1))) : ℝ) * (X (KK i) : ℝ)
+      ≤ (2 : ℝ) ^ (49 * 2 ^ m (KK (i + 1))) := by
+    have hDm : (gridDm (KK (i + 1)) (N (KK (i + 1))) : ℝ)
+        ≤ (2 : ℝ) ^ (2 * 2 ^ (21 * KK (i + 1) ^ 2)) := by
+      have h := gridDm_le_two_pow hK1
+      have h' : ((gridDm (KK (i + 1)) (N (KK (i + 1))) : ℕ) : ℝ)
+          ≤ ((2 ^ (2 * 2 ^ (21 * KK (i + 1) ^ 2)) : ℕ) : ℝ) := by exact_mod_cast h
+      push_cast at h'
+      exact h'
+    have h12 : (12 : ℝ) ≤ (2 : ℝ) ^ 4 := by norm_num
+    calc (12 : ℝ) * (gridDm (KK (i + 1)) (N (KK (i + 1))) : ℝ) * (X (KK i) : ℝ)
+        ≤ (2 : ℝ) ^ 4 * (2 : ℝ) ^ (2 * 2 ^ (21 * KK (i + 1) ^ 2))
+            * (2 : ℝ) ^ (100 * 2 ^ m (KK i)) := by
+          rw [hXv]
+          have hXpos : (0 : ℝ) ≤ (2 : ℝ) ^ (100 * 2 ^ m (KK i)) := by positivity
+          have hDmpos : (0 : ℝ) ≤ (gridDm (KK (i + 1)) (N (KK (i + 1))) : ℝ) :=
+            Nat.cast_nonneg _
+          exact mul_le_mul_of_nonneg_right
+            (mul_le_mul h12 hDm hDmpos (by positivity)) hXpos
+      _ = (2 : ℝ) ^ (4 + 2 * 2 ^ (21 * KK (i + 1) ^ 2) + 100 * 2 ^ m (KK i)) := by
+          rw [← pow_add, ← pow_add]
+      _ ≤ (2 : ℝ) ^ (49 * 2 ^ m (KK (i + 1))) := pow_le_pow_right₀ (by norm_num) hgap
+  have hB : 4 * ((gridAt (i + 1)).P₀ : ℝ) ≤ (2 : ℝ) ^ (49 * 2 ^ m (KK (i + 1))) := by
+    have hP := P₀_le_two_pow_band i
+    calc 4 * ((gridAt (i + 1)).P₀ : ℝ)
+        ≤ (2 : ℝ) ^ 2 * (2 : ℝ) ^ (2 * 2 ^ m (KK (i + 1))) := by
+          have : (4 : ℝ) = (2 : ℝ) ^ 2 := by norm_num
+          rw [this]
+          exact mul_le_mul_of_nonneg_left hP (by positivity)
+      _ = (2 : ℝ) ^ (2 + 2 * 2 ^ m (KK (i + 1))) := by rw [← pow_add]
+      _ ≤ (2 : ℝ) ^ (49 * 2 ^ m (KK (i + 1))) :=
+          pow_le_pow_right₀ (by norm_num) (by omega)
+  have hsum : (2 : ℝ) ^ (49 * 2 ^ m (KK (i + 1))) + (2 : ℝ) ^ (49 * 2 ^ m (KK (i + 1)))
+      ≤ (Xlo (KK (i + 1)) : ℝ) := by
+    rw [Xlo_cast]
+    have he : (2 : ℝ) ^ (49 * 2 ^ m (KK (i + 1))) + (2 : ℝ) ^ (49 * 2 ^ m (KK (i + 1)))
+        = (2 : ℝ) ^ (49 * 2 ^ m (KK (i + 1)) + 1) := by rw [pow_succ]; ring
+    rw [he]
+    exact pow_le_pow_right₀ (by norm_num) (by omega)
+  linarith
+
+open Classical in
+/-- The truncated band is the truncated sample's part above the band floor. -/
+lemma bandTtr_eq_filter (i X' : ℕ) (hhi : X' ≤ X (KK i)) :
+    bandTtr i X' = (PKtr i X').filter (fun n => gridDm (KK i) (N (KK i)) * bandLo i ≤ n) := by
+  classical
+  ext n
+  simp only [bandTtr, PKtr, PK, bandT, apSample, Finset.mem_filter, Finset.mem_range]
+  constructor
+  · rintro ⟨⟨⟨-, hmod⟩, hfl⟩, hlt⟩
+    exact ⟨⟨hlt, hmod⟩, hfl⟩
+  · rintro ⟨⟨hlt, hmod⟩, hfl⟩
+    exact ⟨⟨⟨lt_of_lt_of_le hlt hhi, hmod⟩, hfl⟩, hlt⟩
+
+set_option maxHeartbeats 1000000 in
 /-- **The head-room leaf.**  At every truncation above the downward floor, the band's `n`-floor
 `Dm·bandLo i` removes at most half the truncated sample.
 
-Arithmetic: `|PKtr| ≥ X'/P₀ − 1` and the removed part is at most `Dm·bandLo i/P₀ + 1`, so it
-suffices that `4·Dm·bandLo i + 4P₀ ≤ Xlo (KK i)`.  `bandLo i ≤ 2X(KK i − 4) + kk i`, and both
-`Dm` and `X (KK i − 4)` are below `2^{2^{m (KK i)}}` while `Xlo (KK i) = 2^{50·2^{m (KK i)}}` —
-the tower gap of `G4EntropyScaleGap`, with room to spare. -/
+The count is `card_bandT_ge`'s, at the outer scale `X'`: the dropped times are below
+`M = 3·Dm·X(K_{i−1})`, an arithmetic progression of modulus `P₀` meets `[0, M)` at most
+`M/P₀ + 1` times, and `|PKtr| ≥ X'/(2P₀)`; `band_gap_strong_Xlo` says `4M + 4P₀ ≤ Xlo (KK i) ≤ X'`,
+which is exactly `2(M/P₀ + 1) ≤ X'/(2P₀)`. -/
 theorem card_bandTtr_ge (i X' : ℕ) (hlo : Xlo (KK i) ≤ X') (hhi : X' ≤ X (KK i)) :
     ((PKtr i X').card : ℝ) ≤ 2 * ((bandTtr i X').card : ℝ) := by
-  sorry
+  classical
+  have hP₀pos : 0 < (gridAt i).P₀ := (gridAt i).P₀_pos
+  have hP₀R : (0 : ℝ) < ((gridAt i).P₀ : ℝ) := by exact_mod_cast hP₀pos
+  have h2P₀ : 2 * (gridAt i).P₀ ≤ X' :=
+    le_trans (two_mul_P₀_le_Xlo (KK_hundred i)) hlo
+  have heq := bandTtr_eq_filter i X' hhi
+  rcases i with _ | j
+  · -- scale `0`: the floor is `0`, nothing is dropped
+    have hb : bandTtr 0 X' = PKtr 0 X' := by
+      rw [heq]
+      refine Finset.filter_true_of_mem fun n _ => ?_
+      rw [show bandLo 0 = 0 from rfl, Nat.mul_zero]
+      exact Nat.zero_le n
+    rw [hb]
+    have h0 : (0 : ℝ) ≤ ((PKtr 0 X').card : ℝ) := Nat.cast_nonneg _
+    linarith
+  · set Dm : ℕ := gridDm (KK (j + 1)) (N (KK (j + 1))) with hDm
+    set M : ℕ := 3 * Dm * X (KK j) with hM
+    have hdrop : (PKtr (j + 1) X').filter (fun n => ¬ Dm * bandLo (j + 1) ≤ n)
+        ⊆ (PKtr (j + 1) X').filter (fun n => n < M) := by
+      intro n hn
+      rw [Finset.mem_filter] at hn ⊢
+      refine ⟨hn.1, ?_⟩
+      have hlt : n < Dm * bandLo (j + 1) := by have := hn.2; omega
+      have hbl : bandLo (j + 1) = bandTop j := rfl
+      have hbt : bandTop j = 2 * X (KK j) + kk j := rfl
+      have hkk := kk_succ_le_X j
+      have hmono : Dm * bandLo (j + 1) ≤ Dm * (3 * X (KK j)) := by
+        refine Nat.mul_le_mul_left _ ?_
+        rw [hbl, hbt]
+        omega
+      have hMeq : Dm * (3 * X (KK j)) = M := by rw [hM]; ring
+      omega
+    have hcount : (((PKtr (j + 1) X').filter (fun n => n < M)).card : ℝ)
+        ≤ (M : ℝ) / ((gridAt (j + 1)).P₀ : ℝ) + 1 := by
+      have h := card_filter_lt_apSample_le X' (gridAt (j + 1)).P₀ (gridAt (j + 1)).b₀ M hP₀pos
+      have hR : ((((PKtr (j + 1) X').filter (fun n => n < M)).card : ℕ) : ℝ)
+          ≤ ((M / (gridAt (j + 1)).P₀ + 1 : ℕ) : ℝ) := by exact_mod_cast h
+      refine hR.trans ?_
+      push_cast
+      have : ((M / (gridAt (j + 1)).P₀ : ℕ) : ℝ) ≤ (M : ℝ) / ((gridAt (j + 1)).P₀ : ℝ) := Nat.cast_div_le
+      linarith
+    have hbig : (X' : ℝ) / (2 * ((gridAt (j + 1)).P₀ : ℝ)) ≤ ((PKtr (j + 1) X').card : ℝ) :=
+      card_apSample_ge_half X' (gridAt (j + 1)).P₀ (gridAt (j + 1)).b₀ hP₀pos (gridAt (j + 1)).b₀_lt_P₀ h2P₀
+    have hgate : (12 : ℝ) * (Dm : ℝ) * (X (KK j) : ℝ) + 4 * ((gridAt (j + 1)).P₀ : ℝ)
+        ≤ (X' : ℝ) := by
+      refine le_trans (band_gap_strong_Xlo j) ?_
+      exact Nat.cast_le.2 hlo
+    have hMR : (M : ℝ) = 3 * (Dm : ℝ) * (X (KK j) : ℝ) := by rw [hM]; push_cast; ring
+    have hhalf : 2 * ((M : ℝ) / ((gridAt (j + 1)).P₀ : ℝ) + 1) ≤ ((PKtr (j + 1) X').card : ℝ) := by
+      refine le_trans ?_ hbig
+      rw [le_div_iff₀ (show (0:ℝ) < 2 * ((gridAt (j + 1)).P₀ : ℝ) by linarith)]
+      have hexp : 2 * ((M : ℝ) / ((gridAt (j + 1)).P₀ : ℝ) + 1) * (2 * ((gridAt (j + 1)).P₀ : ℝ))
+          = 4 * (M : ℝ) + 4 * ((gridAt (j + 1)).P₀ : ℝ) := by
+        field_simp
+        ring
+      rw [hexp, hMR]
+      linarith [hgate]
+    have hsplit : ((PKtr (j + 1) X').card : ℝ)
+        = ((bandTtr (j + 1) X').card : ℝ)
+          + (((PKtr (j + 1) X').filter (fun n => ¬ Dm * bandLo (j + 1) ≤ n)).card : ℝ) := by
+      have h := Finset.card_filter_add_card_filter_not
+        (s := PKtr (j + 1) X') (p := fun n => Dm * bandLo (j + 1) ≤ n)
+      rw [heq, ← h]
+      push_cast
+      ring
+    have hdropR : ((((PKtr (j + 1) X').filter (fun n => ¬ Dm * bandLo (j + 1) ≤ n)).card : ℕ) : ℝ)
+        ≤ (((PKtr (j + 1) X').filter (fun n => n < M)).card : ℝ) := by
+      exact Nat.cast_le.2 (Finset.card_le_card hdrop)
+    linarith
 
 lemma bandTtr_nonempty {i X' : ℕ} (hlo : Xlo (KK i) ≤ X') (hhi : X' ≤ X (KK i)) :
     (bandTtr i X').Nonempty := by
