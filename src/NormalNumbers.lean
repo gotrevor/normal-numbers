@@ -211,6 +211,7 @@ import NormalNumbers.G4EntropyWSqueeze
 import NormalNumbers.G4EntropyWStatement
 import NormalNumbers.G4EntropyOffsetClass
 import NormalNumbers.G4EntropyResidue
+import NormalNumbers.G4EntropySubLaw
 import NormalNumbers.G4ScheduleFar
 import NormalNumbers.G4ScheduleBig
 import NormalNumbers.G4EntropyXCeiling
