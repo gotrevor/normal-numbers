@@ -45,6 +45,131 @@ lemma gate_cutHi (i c : ℕ) (hg : 8 * wFloor i ≤ cutLo i c) :
     4 * wFloor i + 4 * (gridAt i).P₀ ≤ cutHi i c :=
   le_trans (gate_cutLo i c hg) (cutLo_le_cutHi i c)
 
+/-! ### The ratio arithmetic
+
+Three schedule-free lemmas in `ℝ`.  `S` is the prefix's start sum, `A` its window count, `F` the
+per-window capacity `kk − ℓ + 1`, `L`/`H` the two flanks' sample counts, `Q = |Atom|`, `K` the
+level, `r = 2^{−ℓ}` and `ε` the capture error.  The conclusion is the two-sided ratio bound with
+the sandwich's own `O(1/K)` price folded in. -/
+
+/-- The decisive flank comparison for the LOWER side. -/
+theorem mid_core_lower {A L H Q K r ε : ℝ}
+    (hK : 160000 ≤ K) (hQK : K ≤ Q) (hL : 1 ≤ L) (hLH : L ≤ H)
+    (hflank : K * H ≤ (K + 16) * L) (hA2 : A ≤ H * Q)
+    (hr1 : r ≤ 1/2) (hε : 0 ≤ ε) (hpos : 0 < r - (ε + 128 / K)) :
+    (r - (ε + 128 / K)) * A ≤ (r - ε) * (L * Q) - 8 * H := by
+  have hKpos : (0:ℝ) < K := by linarith
+  have hQpos : (0:ℝ) < Q := by linarith
+  have hLpos : (0:ℝ) < L := by linarith
+  have hHpos : (0:ℝ) < H := by linarith
+  have hcKmul : (128 / K) * K = 128 := by field_simp
+  have hstep : (r - (ε + 128 / K)) * A ≤ (r - (ε + 128 / K)) * (H * Q) :=
+    mul_le_mul_of_nonneg_left hA2 (le_of_lt hpos)
+  have hKHmL : K * (H - L) ≤ 16 * L := by linarith
+  have hQKHmL : Q * (K * (H - L)) ≤ Q * (16 * L) :=
+    mul_le_mul_of_nonneg_left hKHmL (le_of_lt hQpos)
+  have hQKnn : (0:ℝ) ≤ Q * (K * (H - L)) := by
+    have h1 : (0:ℝ) ≤ H - L := by linarith
+    have : (0:ℝ) ≤ K * (H - L) := mul_nonneg (le_of_lt hKpos) h1
+    exact mul_nonneg (le_of_lt hQpos) this
+  have hsq : (r - ε) * (Q * (K * (H - L))) ≤ (1/2) * (Q * (16 * L)) :=
+    mul_le_mul (by linarith) hQKHmL hQKnn (by norm_num)
+  have hLQHQ : L * Q ≤ H * Q := mul_le_mul_of_nonneg_right hLH (le_of_lt hQpos)
+  have hKHQ : K * H ≤ Q * H := mul_le_mul_of_nonneg_right hQK (le_of_lt hHpos)
+  have hHQnn : (0:ℝ) ≤ H * Q := by positivity
+  have hmulK : ((r - (ε + 128 / K)) * (H * Q)) * K
+      ≤ ((r - ε) * (L * Q) - 8 * H) * K := by
+    have hexp : ((r - (ε + 128 / K)) * (H * Q)) * K
+        = (r - ε) * (H * Q) * K - ((128 / K) * K) * (H * Q) := by ring
+    rw [hexp, hcKmul]
+    linarith [hsq, hLQHQ, hKHQ, hHQnn]
+  have hcore : (r - (ε + 128 / K)) * (H * Q) ≤ (r - ε) * (L * Q) - 8 * H :=
+    le_of_mul_le_mul_right hmulK hKpos
+  linarith
+
+/-- The decisive flank comparison for the UPPER side. -/
+theorem mid_core_upper {A L H Q K r ε : ℝ}
+    (hK : 160000 ≤ K) (hQK : K ≤ Q) (hL : 1 ≤ L) (hLH : L ≤ H)
+    (hflank : K * H ≤ (K + 16) * L) (hA1 : L * Q - 8 * H ≤ A) (hA2 : A ≤ H * Q)
+    (hr0 : 0 < r) (hr1 : r ≤ 1/2) (hε : 0 ≤ ε) (hε1 : ε < 1) :
+    (r + ε) * (H * Q) ≤ ((r + ε) + 128 / K) * A := by
+  have hKpos : (0:ℝ) < K := by linarith
+  have hQpos : (0:ℝ) < Q := by linarith
+  have hLpos : (0:ℝ) < L := by linarith
+  have hHpos : (0:ℝ) < H := by linarith
+  have ht : r + ε ≤ 3/2 := by linarith
+  have htnn : (0:ℝ) ≤ r + ε := by linarith
+  have hspread : K * H - K * L ≤ 16 * L := by linarith
+  have hKA : K * (L * Q) - 8 * (K * H) ≤ K * A := by
+    have := mul_le_mul_of_nonneg_left hA1 (le_of_lt hKpos); linarith
+  have hQspread : Q * (K * H - K * L) ≤ Q * (16 * L) :=
+    mul_le_mul_of_nonneg_left hspread (le_of_lt hQpos)
+  have hgapK : K * (H * Q) - K * A ≤ 16 * (L * Q) + 8 * (K * H) := by linarith
+  have hgap0 : (0:ℝ) ≤ K * (H * Q) - K * A := by
+    have := mul_le_mul_of_nonneg_left hA2 (le_of_lt hKpos); linarith
+  have hKLQ : K * L ≤ Q * L := mul_le_mul_of_nonneg_right hQK (le_of_lt hLpos)
+  have hbigQ : 160000 * L ≤ Q * L := mul_le_mul_of_nonneg_right (by linarith) (le_of_lt hLpos)
+  have hKH2 : K * H ≤ 2 * (L * Q) := by linarith
+  have hstep1 : (r + ε) * (K * (H * Q) - K * A) ≤ (3/2) * (16 * (L * Q) + 8 * (K * H)) :=
+    mul_le_mul ht hgapK hgap0 (by linarith)
+  have hHL : H ≤ 2 * L := by
+    have h16L : 16 * L ≤ K * L := mul_le_mul_of_nonneg_right (by linarith) (le_of_lt hLpos)
+    have h : K * H ≤ K * (2 * L) := by linarith
+    exact le_of_mul_le_mul_left h hKpos
+  have h128 : 1024 * H ≤ 80 * (L * Q) := by linarith
+  have hupK : (r + ε) * (K * (H * Q)) ≤ ((r + ε) * K + 128) * A := by linarith
+  have hAK : ((r + ε) + 128 / K) * A * K = ((r + ε) * K + 128) * A := by
+    field_simp
+  refine le_of_mul_le_mul_right ?_ hKpos
+  rw [hAK]
+  linarith
+
+/-- **The mid-band ratio estimate**, free of schedule content. -/
+theorem mid_ratio_arith {S A F L H Q K r ε : ℝ}
+    (hK : 160000 ≤ K) (hQK : K ≤ Q) (hL : 1 ≤ L) (hLH : L ≤ H) (hF : 1 ≤ F)
+    (hflank : K * H ≤ (K + 16) * L)
+    (hA1 : L * Q - 8 * H ≤ A) (hA2 : A ≤ H * Q)
+    (hS1 : S ≤ (r + ε) * (H * Q * F)) (hS2 : (r - ε) * (L * Q * F) - 8 * (H * F) ≤ S)
+    (hS0 : 0 ≤ S) (hSAF : S ≤ A * F)
+    (hr0 : 0 < r) (hr1 : r ≤ 1/2) (hε : 0 ≤ ε) :
+    |S / (A * F) - r| ≤ ε + 128 / K := by
+  have hKpos : (0:ℝ) < K := by linarith
+  have hQpos : (0:ℝ) < Q := by linarith
+  have hFpos : (0:ℝ) < F := by linarith
+  have hLpos : (0:ℝ) < L := by linarith
+  have hHpos : (0:ℝ) < H := by linarith
+  have hHL : H ≤ 2 * L := by
+    have h16L : 16 * L ≤ K * L := mul_le_mul_of_nonneg_right (by linarith) (le_of_lt hLpos)
+    have h : K * H ≤ K * (2 * L) := by linarith
+    exact le_of_mul_le_mul_left h hKpos
+  have hQL : Q - 16 ≤ L * (Q - 16) := le_mul_of_one_le_left (by linarith) hL
+  have hApos : (0:ℝ) < A := by nlinarith
+  have hAF : (0:ℝ) < A * F := by positivity
+  have hcK : (0:ℝ) < 128 / K := by positivity
+  rcases le_or_gt 1 ε with hε1 | hε1
+  · have h1 : S / (A * F) ≤ 1 := by rw [div_le_one hAF]; exact hSAF
+    have h2 : (0:ℝ) ≤ S / (A * F) := by positivity
+    rw [abs_le]; constructor <;> linarith
+  · rw [abs_le]
+    constructor
+    · have hlow : (r - (ε + 128 / K)) * (A * F) ≤ S := by
+        rcases le_or_gt (r - (ε + 128 / K)) 0 with hneg | hpos
+        · have := mul_nonpos_of_nonpos_of_nonneg hneg (le_of_lt hAF)
+          linarith
+        · have hcore := mid_core_lower hK hQK hL hLH hflank hA2 hr1 hε hpos
+          have hfin : ((r - (ε + 128 / K)) * A) * F
+              ≤ ((r - ε) * (L * Q) - 8 * H) * F :=
+            mul_le_mul_of_nonneg_right hcore (le_of_lt hFpos)
+          linarith
+      have := (le_div_iff₀ hAF).2 hlow
+      linarith
+    · have h2 := mid_core_upper hK hQK hL hLH hflank hA1 hA2 hr0 hr1 hε hε1
+      have h3 : ((r + ε) * (H * Q)) * F ≤ (((r + ε) + 128 / K) * A) * F :=
+        mul_le_mul_of_nonneg_right h2 (le_of_lt hFpos)
+      have hup : S ≤ (r + (ε + 128 / K)) * (A * F) := by linarith
+      have := (div_le_iff₀ hAF).2 hup
+      linarith
+
 /-! ### The prefix start sum, and its two flank sums -/
 
 open Classical in
