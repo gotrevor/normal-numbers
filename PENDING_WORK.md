@@ -28,13 +28,24 @@ but only into `≈ K/8` blocks, each a `1/K` fraction of the atoms.
 
 ### Next, in order (mirrors `DIRECTION.md` → CURRENT DIRECTIVE)
 
-1. **The seam.**  `RowVariance.two_layers_of_dyadic` *proves* `2 ≤ K′` from the capture budget;
-   `RowVariance.cancelled_union_le` *assumes* it.  Nobody has joined them at the schedule.
-   Target: `Sched.budget_confines` — a family of samplers at scale `i`, each inside the capture
-   budget, reads upper density `≤ dmin^{−H/2}`, with `2 ≤ K′` **derived**.  Then the grouped
-   analogue on top of `grouped_balanced_union_le`.  The work is to carry the analytic data
-   (`S`, `T`, `N`, `ρ`, `w`, the three scale conditions) alongside the combinatorial family, and
-   to relate `LayersCancelled` to `K′` in the budget statement.
+1. ✅ **The seam — DONE (lap 167).**  `Capture.InsideCapture K K′` packages the analytic side of
+   one sampler (dyadic rough primes, released weights, bounded shift gaps, the three scale
+   conditions, the capture inequality) as one `Prop`; `Capture.two_le_of_insideCapture` is
+   `two_layers_of_dyadic` with that data existentially quantified; and `Sched.budget_confines` /
+   `Sched.grouped_budget_confines` are the verdict with `2 ≤ K′` **derived, not assumed** — joint
+   sample at rate `dmin^{−H/2}`, blocks of size `w ≥ 8E+5` at rate `dmin^{−w/2}`.  All in
+   `G4GroupedVerdict.lean`, all trust-triple clean.
+
+1b. **Non-vacuity of `InsideCapture` — the live item.**  `InsideCapture` routes through
+   `two_layers_of_dyadic`, whose rough primes must lie in `[T, 2T]` with `|S| ≥ 1920·2^K·k`.
+   Counting primes in a dyadic interval is not in mathlib (only `Nat.bertrand`, one prime).  The
+   `|S|`-free **Mertens** form has no upper bound on `p` and its hypotheses are *proved*
+   satisfiable for every `K, k, Q` (`scales_satisfiable`).  So: build `two_layers_of_mertens`
+   (`Budget.budget_forces_two_layers` fed by `roughRowVarianceLower_mertens`), re-package
+   `InsideCapture` on it, and add `Capture.structural_satisfiable` — every hypothesis except the
+   capture inequality itself is meetable.  That turns `budget_confines` from "true" into
+   "true and not vacuous".
+
 2. **The honest residue, sharply posed.**  Below `w = 8E + 5` the *counting* bound is vacuous —
    not the arithmetic.  Nothing exhibits an escaping sampler.  The point where it expires is
    exactly where a block carries fewer atoms than `skel` needs (`|skel| ≤ E`, threshold `8E`).

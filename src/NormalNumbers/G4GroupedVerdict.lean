@@ -208,3 +208,114 @@ theorem grouped_balanced_union_le (i : ℕ) {G : ℕ} (grp : (gridAt i).Atom →
   exact mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right hF' hHm) hG0
 
 end NormalNumbers.G4.Sched
+
+/-! ### The seam: the capture budget *supplies* the two cancelled layers
+
+`RowVariance.two_layers_of_dyadic` **proves** `2 ≤ K′` from the sampler's released-row second
+moment; `RowVariance.cancelled_union_le` and `grouped_balanced_union_le` **assume** it.  Until
+now nothing joined them, so the verdict read as an implication with an unmet hypothesis.
+
+`Capture.InsideCapture K K′` packages the analytic side of one sampler — the dyadic rough-prime
+data, the released weights, the bounded shift gaps, the three scale conditions and the capture
+inequality — as a single `Prop` in `K` and `K′`.  Then `budget_confines` and
+`grouped_budget_confines` are the verdict with `2 ≤ K′` **derived**: a family of samplers at the
+schedule, each inside the capture budget and each cancelling its first `K′` layers, reads upper
+density `≤ dmin^{−H/2}` (joint sample) resp. `≤ dmin^{−w/2}` (blocks of size `w ≥ 8E + 5`). -/
+
+namespace NormalNumbers.G4.Capture
+
+open NormalNumbers.G4.RowVariance
+
+/-- **The analytic side of one sampler, packaged.**  Everything `two_layers_of_dyadic` consumes
+except the row size `K` and the cancelled-layer count `K′`: a dyadic rough-prime set `S ⊆ [T, 2T]`
+coprime to the frozen modulus `Q`, released weights `w` of the standard shape `4^{−(K″+1+ℓ)}`,
+released shifts `ρ` with distinct, `T^{k+1}`-bounded gaps, the three scale conditions
+`T ≥ 1440·2^K`, `|S| ≥ 1920·2^K·k`, `N ≥ 1440·2^K·|S|·T`, and the capture inequality at `K′`. -/
+def InsideCapture (K K' : ℕ) : Prop :=
+  ∃ (L T Q c0 N k : ℕ) (S : Finset ℕ)
+    (ρ : ℕ → Fin (2 ^ K) × Fin L → ℤ) (w : ℕ → Fin (2 ^ K) × Fin L → ℝ),
+    4 ≤ T ∧ 0 < Q ∧ 0 < N ∧ 0 < L ∧ 0 < S.card ∧
+    (∀ p ∈ S, T ≤ p) ∧ (∀ p ∈ S, p ≤ 2 * T) ∧
+    (∀ p ∈ S, Nat.Coprime Q p) ∧
+    (∀ p ∈ S, ∀ q ∈ S, p ≠ q → Nat.Coprime p q) ∧
+    (∀ K'' i, |w K'' i| = (1 / 4 : ℝ) ^ (K'' + 1 + (i.2 : ℕ))) ∧
+    (∀ (K'' : ℕ) (i j), i ≠ j →
+      ρ K'' i - ρ K'' j ≠ 0 ∧ (ρ K'' i - ρ K'' j).natAbs < T ^ (k + 1)) ∧
+    (1440 : ℝ) * 2 ^ K ≤ (T : ℝ) ∧
+    (1920 : ℝ) * 2 ^ K * (k : ℝ) ≤ (S.card : ℝ) ∧
+    (1440 : ℝ) * 2 ^ K * (S.card : ℝ) * (T : ℝ) ≤ (N : ℝ) ∧
+    avg ((Finset.range N).image (fun x => c0 + Q * x))
+        (fun n => (∑ i, w K' i * fluct S (ρ K' i) n) ^ 2)
+      ≤ ((((S.card : ℝ) / (4 * T) - 3 * (S.card : ℝ) ^ 2 / N) / 2)
+          * (1 - (1 / 16 : ℝ) ^ L)) * ((1 : ℝ) / 2) ^ (K / 2)
+
+/-- **The budget forces two cancelled layers.**  `two_layers_of_dyadic`, with its analytic data
+existentially quantified. -/
+theorem two_le_of_insideCapture {K K' : ℕ} (hK : 8 ≤ K) (h : InsideCapture K K') : 2 ≤ K' := by
+  obtain ⟨L, T, Q, c0, N, k, S, ρ, w, hT, hQ, hN, hL, hSne, hge, hle, hQcop, hcop,
+    hw, hΔ, hTA, hmA, hNA, hcap⟩ := h
+  exact two_layers_of_dyadic hT hQ hN hK hL S hSne hge hle hQcop hcop ρ w hw hΔ hTA hmA hNA hcap
+
+end NormalNumbers.G4.Capture
+
+namespace NormalNumbers.G4.Sched
+
+open NormalNumbers NormalNumbers.G4 NormalNumbers.G4Confine NormalNumbers.G4.RowBalance
+open NormalNumbers.G4.RowVariance
+
+/-- **The verdict with the budget supplying its own hypothesis.**  A family of samplers at scale
+`i` of the schedule, each of which (a) sits inside the capture budget and (b) cancels its first
+`K′` layers, reads below `L` at most `L / dmin^{H/2} + (2 dmax+1)^{2E} · H · m` positions.  The
+`2 ≤ K′` that `cancelled_union_le` assumes is **derived** here, from `InsideCapture`. -/
+theorem budget_confines (i : ℕ)
+    {κ : Type*} [DecidableEq κ] (𝓕 : Finset κ)
+    (d t : κ → (gridAt i).Atom → ℕ) (P : κ → Finset ℕ) (K' : κ → ℕ)
+    (hinj : Set.InjOn (fun ν => ((fun α => (d ν α : ℤ)), (fun α => (t ν α : ℤ)))) 𝓕)
+    (hbudget : ∀ ν ∈ 𝓕, Capture.InsideCapture (KK i) (K' ν))
+    (hcancel : ∀ ν ∈ 𝓕,
+      LayersCancelled (fun α => (d ν α : ℤ)) (fun α => (t ν α : ℤ)) (K' ν))
+    (hd : ∀ ν ∈ 𝓕, ∀ α, dmin i ≤ d ν α ∧ d ν α ≤ dmax i)
+    (ht : ∀ ν ∈ 𝓕, ∀ α, t ν α ≤ dmax i)
+    (hcop : ∀ ν ∈ 𝓕, ∀ α β, α ≠ β → Nat.Coprime (d ν α) (d ν β))
+    (hP : ∀ ν ∈ 𝓕, ∀ n ∈ P ν, ∀ α, n % d ν α = t ν α)
+    (U : ℕ → Prop) [DecidablePred U] {L : ℕ}
+    (hcov : ∀ j, j < L → U j → ∃ ν ∈ 𝓕, ∃ n ∈ P ν, ∃ α, ∃ h < kk i,
+      j = 2 * physIdx (d ν α) (t ν α) n + h) :
+    (((Finset.range L).filter U).card : ℝ) ≤
+      (L : ℝ) / (dmin i : ℝ) ^ ((KK i ^ 2 + 1) ^ KK i / 2)
+        + ((2 * dmax i + 1 : ℕ) : ℝ) ^ (2 * (KK i * (KK i ^ 2 + 1) ^ (KK i - 1)))
+            * (((KK i ^ 2 + 1) ^ KK i : ℕ) * kk i) :=
+  cancelled_union_le i 𝓕 d t P hinj K'
+    (fun ν hν => Capture.two_le_of_insideCapture (by have := KK_ge i; omega) (hbudget ν hν))
+    hcancel hd ht hcop hP U hcov
+
+/-- **The grouped verdict with the budget supplying its own hypothesis.**  Same statement with
+the atoms cut into `G` blocks of size `≥ w ≥ 8E + 5`, each block sharing one sample point: the
+rate is `dmin^{−w/2}`, and `grouped_block_count_le` caps `G` at `(K²+1)/(8K)`. -/
+theorem grouped_budget_confines (i : ℕ) {G : ℕ} (grp : (gridAt i).Atom → Fin G)
+    {κ : Type*} [DecidableEq κ] (𝓕 : Finset κ)
+    (d t : κ → (gridAt i).Atom → ℕ) (P : κ → Fin G → Finset ℕ) (K' : κ → ℕ) {w L : ℕ}
+    (hinj : Set.InjOn (fun ν => ((fun α => (d ν α : ℤ)), (fun α => (t ν α : ℤ)))) 𝓕)
+    (hbudget : ∀ ν ∈ 𝓕, Capture.InsideCapture (KK i) (K' ν))
+    (hcancel : ∀ ν ∈ 𝓕,
+      LayersCancelled (fun α => (d ν α : ℤ)) (fun α => (t ν α : ℤ)) (K' ν))
+    (hd : ∀ ν ∈ 𝓕, ∀ α, dmin i ≤ d ν α ∧ d ν α ≤ dmax i)
+    (ht : ∀ ν ∈ 𝓕, ∀ α, t ν α ≤ dmax i)
+    (hcop : ∀ ν ∈ 𝓕, ∀ α β, α ≠ β → Nat.Coprime (d ν α) (d ν β))
+    (hP : ∀ ν ∈ 𝓕, ∀ g, ∀ n ∈ P ν g, ∀ α, grp α = g → n % d ν α = t ν α)
+    (hwg : ∀ g : Fin G, w ≤ Fintype.card {α : (gridAt i).Atom // grp α = g})
+    (hGH : G ≤ (KK i ^ 2 + 1) ^ KK i)
+    (hw : 8 * (KK i * (KK i ^ 2 + 1) ^ (KK i - 1)) + 5 ≤ w)
+    (U : ℕ → Prop) [DecidablePred U]
+    (hcov : ∀ j, j < L → U j → ∃ ν ∈ 𝓕, ∃ g, ∃ n ∈ P ν g, ∃ α, grp α = g ∧ ∃ h < kk i,
+      j = 2 * physIdx (d ν α) (t ν α) n + h) :
+    (((Finset.range L).filter U).card : ℝ) ≤
+      (L : ℝ) / (dmin i : ℝ) ^ (w / 2)
+        + (G : ℝ) * (((2 * dmax i + 1 : ℕ) : ℝ) ^ (2 * (KK i * (KK i ^ 2 + 1) ^ (KK i - 1)))
+            * (((KK i ^ 2 + 1) ^ KK i : ℕ) * kk i)) :=
+  grouped_balanced_union_le i grp 𝓕 d t P hinj
+    (fun ν hν => two_balanced_of_cancelled (hcancel ν hν)
+      (Capture.two_le_of_insideCapture (by have := KK_ge i; omega) (hbudget ν hν)))
+    hd ht hcop hP hwg hGH hw U hcov
+
+end NormalNumbers.G4.Sched
