@@ -223,6 +223,7 @@ import NormalNumbers.G4EntropyWTrunc
 import NormalNumbers.G4EntropyWCount
 import NormalNumbers.G4EntropyWOverhang
 import NormalNumbers.G4EntropyWMid
+import NormalNumbers.G4EntropyWHead
 import NormalNumbers.G4EntropyMTower
 import NormalNumbers.G4EntropyMTowerBig
 import NormalNumbers.G4EntropyMTowerHarmonic

@@ -66,6 +66,56 @@ G4EntropyWTrunc      startsOf, sum_pairs_eq_gen, card_startsOf_le, sum_pairs_sub
 
 All trust-triple clean.  Route trigger **E-T11 did NOT fire**: the bracket exists in-kernel.
 
+### Landed since (grind laps, 2026-09-15)
+
+```
+G4EntropyWCount      posAvg_bandWLaw_eq_count/_eq_digits at a GENERAL gated X'
+                     abs_occ_bandWtr_sub_le   the packaged capture estimate at any flank
+                     pairCount_prod_eq        the triple count over any sample set
+G4EntropyWOverhang   card_Atom_sq_le_PKtr     |Atom|² ≤ |PKtr i X'| at every gated scale
+                     badPairsAt, overhang_gen_le_at, card_badPairsAt_le_real,
+                     overhang_gen_le_band     ov T ≤ 8·|bandWtr i X'| — the overhang charged
+                                              against the FLANK's own scale, not the band's
+G4EntropyWMid        mid_core_lower/_upper/mid_ratio_arith   the ratio arithmetic, closed form
+                     gate_cutLo/gate_cutHi, fullGoodWPre_eq_startsOf, sum_pairsLe_sandwich,
+                     abs_flank_sum_sub_le, card_pairsLe_ge/_le, aLe_ge_real/aLe_le_real,
+                     bandWtr_mono, fullGoodWPre_le
+                     🎯 abs_prefix_ratio_sub_le   MID-BAND PREFIX CONTROL, THE CRUX
+G4EntropyWHead       aLe_fnthW (read-index ↔ cutoff, both ways), cutHi_le_of_ungated,
+                     headW, aLe_le_headW
+                     ⚠️ head_frac_tiny — THE ONE OPEN LEAF (see below)
+```
+
+**The crux is closed.**  `abs_prefix_ratio_sub_le` (all trust-triple clean):
+
+> `|fullGoodWPre i (aLe i c) x v / (aLe i c · (kk i − ℓ + 1)) − 2^{−ℓ}| ≤ ε_i + 128/K_i`
+
+at every position cutoff above the gate `8·wFloor i ≤ cutLo i c`.  Route trigger **E-T11 did not
+fire**.
+
+### ⚠️ The one open leaf — `head_frac_tiny`
+
+`headW i · kk i · KK i ≤ fTW i` (stated at `i+1`; band 0 has no history and does not affect the
+limit).  The head is a bounded multiple of the floor in sample-time scale
+(`cutHi_le_of_ungated`), so it consumes `≈ 16·wFloor_i·|Atom_i|/P₀_i` windows; against
+`fTW i ≥ fLW (i−1) ≥ Xlo (KK i)·kk_{i−1}/(4·P₀_{i−1})` and `wFloor i = 4·gridDm_i·Xlo (KK i)` the
+`Xlo (KK i)` cancels and what is left is
+
+> `256·gridDm_i·|Atom_i|·kk_i·P₀_{i−1} / (P₀_i·kk_{i−1})`.
+
+**What is missing is a LOWER bound on `P₀`.**  The repo carries only upper bounds (`P₀_le`,
+`P₀_le_two_pow`, `logP₀Nat_le_two_pow`) — every estimate in the E0 cone wants `P₀` small.  Closing
+the leaf needs `P₀_i = Mprod_i·freezeQ_i ≥ gridDm_i·|Atom_i|·kk_i·P₀_{i−1}·K_i/kk_{i−1}`, i.e. one
+of:
+* a Chebyshev-type lower bound on the primorial `∏_{p ≤ 2|Idx|} p` with `|Idx| = (K²+1)^K·N(K)`
+  (mathlib has `Nat.primorial_le_4_pow`, the upper bound; the lower one is not there), or
+* a lower bound on `Mprod = ∏_α d_α²` — i.e. on the multipliers `d_α = mult B Q D₀ α`, which are
+  `≡ 1 mod gridQ`, so `d_α ≥ gridQ + 1` unless `d_α = 1`; **this looks like the cheap route** —
+  check whether `mult` is ever `1`, and if not, `Mprod ≥ gridQ^{2|Atom|}` closes it against
+  `P₀_{i−1} ≤ gridP₀Bound (K−4)` by a pure exponent comparison.
+
+Everything else in the headline is now above this leaf.
+
 ### Open, in order (review lap 122)
 
 1. ✅ **`G4EntropyWPrefix.lean` — the prefix read count.**  DONE.
