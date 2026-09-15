@@ -40,6 +40,29 @@ For `fTW i ≤ n < fTW (i+1)`, `i ≥ 1`; `T := fTW i`, `s := n − T`, `a := s 
    (`properDigits_fullDigW`, `fullRealW` do not exist yet; `exists_matchesAt_fullDigW` needs a
    wide non-vacuity witness.)
 
+### Progress (lap 126)
+
+Steps 1–4 of the attack path are **PROVED**, axiom-clean:
+
+* `G4EntropyWMediant` — `mediant_abs_le`, `mediant_abs_le_max`, `mediant_abs_le_trivial`.
+* `G4EntropyWSqueeze` — `winCount_mono`, `winCount_sub_le`, `one_le_headW`,
+  **`kk_mul_KK_le_fTW`** (`head_frac_tiny` at `a = 1`: ONE read window is a `1/KK` fraction of the
+  history — this is what makes the head, the partial window and the `a = 0` stub all cost
+  `O(1/KK)`), `incr_bounds`, `mid_gated_core`, `mid_trivial_core`, `mid_assemble_gated`,
+  `mid_assemble_trivial`, and 🎯 **`abs_ratio_mid_le`**.
+
+**The threshold that makes the three branches close** (record it — it is not in the directive):
+split on `a` vs `A := Nat.sqrt (KK j)`.
+* `a ≤ A` — trivial bound; `s < (a+1)·kk ≤ (A+1)·kk`, so `s·A ≤ (A²+A)·kk ≤ 2·kk·KK ≤ 2T`, error `2/A`.
+* `a > A`, gate holds — certified; the leftover `2E/s = 2aℓ/s + 2kk/s ≤ 2ℓ/kk + 2/a ≤ 2ℓ/kk + 2/A`.
+* `a > A`, gate fails — trivial again, via `aLe_le_headW` + `head_frac_tiny`: `s·KK ≤ 2T`.
+A *fixed* threshold does not work: at `a = 1` the certified branch's leftover `2·kk/s` is `O(1)`.
+Hence `midErrW i ℓ = 2√(808 log2·ℓ/√(KK i)) + 128/KK i + 2ℓ/kk i + 2/⌊√(KK i)⌋`.
+
+**Still open (2 leaves):** `tendsto_midErrW` (needs `Nat.sqrt (KK i) → ∞`) and
+`tendsto_winCount_fullDigW` (the limit at every `n`: `fgrpW n → ∞`, `tendsto_fullWRead_freq` at
+`i−1`, `eventually_ge_atTop` for `n < fTW 1`), then step 6, the endpoint.
+
 ### Refuted, do not retry
 * `Mprod = ∏_α d_α²  ≥ gridQ^{2|Atom|}` and the primorial as routes to a `P₀` **lower** bound
   (lap 125 §1: `log Mprod(K+4) ≈ K^{6K}` against `log P₀(K) ≳ K^{8K}`).
