@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.G4EntropyWOverhang
+import NormalNumbers.G4EntropyJointSched
 
 /-!
 # The mid-band sandwich
@@ -294,5 +295,149 @@ theorem aLe_ge_real (i c : ℕ) (hg : 8 * wFloor i ≤ cutLo i c) (hhi : cutHi i
     have := card_pairsLe_ge i c hlo
     exact_mod_cast this
   linarith
+
+/-! ### Monotonicity of the truncated band -/
+
+lemma bandWtr_mono (i : ℕ) {X X' : ℕ} (h : X ≤ X') : bandWtr i X ⊆ bandWtr i X' := by
+  intro n hn
+  rw [bandWtr, Finset.mem_filter, PKtr, apSample, Finset.mem_filter, Finset.mem_range] at hn ⊢
+  exact ⟨⟨lt_of_lt_of_le hn.1.1 h, hn.1.2⟩, hn.2⟩
+
+open Classical in
+lemma card_bandWtr_mono (i : ℕ) {X X' : ℕ} (h : X ≤ X') :
+    ((bandWtr i X).card : ℝ) ≤ ((bandWtr i X').card : ℝ) := by
+  have := Finset.card_le_card (bandWtr_mono i h)
+  exact_mod_cast this
+
+open Classical in
+/-- The prefix window count never exceeds the upper flank's pair count. -/
+theorem aLe_le_real (i c : ℕ) :
+    (aLe i c : ℝ)
+      ≤ ((bandWtr i (cutHi i c)).card : ℝ) * (Fintype.card (gridAt i).Atom : ℝ) := by
+  have h1 : aLe i c ≤ (pairsLe i c).card := by
+    rw [aLe_eq_card_startsOf]; exact card_startsOf_le i (pairsLe i c)
+  have h2 := card_pairsLe_le i c
+  have : aLe i c ≤ (bandWtr i (cutHi i c)).card * Fintype.card (gridAt i).Atom :=
+    le_trans h1 h2
+  exact_mod_cast this
+
+open Classical in
+/-- The prefix start sum never exceeds one window's worth per consumed window. -/
+theorem fullGoodWPre_le (i a : ℕ) (x : ℝ) (v : List ℕ) :
+    fullGoodWPre i a x v ≤ a * (kk i - v.length + 1) := by
+  classical
+  rw [fullGoodWPre]
+  calc ∑ b ∈ Finset.range a,
+        ((Finset.range (kk i - v.length + 1)).filter
+          (fun q => OccursAt 2 x v (fnthW i b + q))).card
+      ≤ ∑ _b ∈ Finset.range a, (kk i - v.length + 1) := by
+        refine Finset.sum_le_sum fun b _ => ?_
+        refine le_trans (Finset.card_filter_le _ _) ?_
+        rw [Finset.card_range]
+    _ = a * (kk i - v.length + 1) := by rw [Finset.sum_const, Finset.card_range, smul_eq_mul]
+
+/-! ### The mid-band prefix ratio -/
+
+set_option maxHeartbeats 1000000 in
+open Classical in
+/-- **MID-BAND PREFIX CONTROL.**  At every position cutoff `c` above the gate, the prefix read's
+word frequency is within `ε_i + 128/K_i` of `2^{−|v|}` — where `ε_i` is the capture error already
+carried at the band ends.  The `128/K` is the entire price of the sandwich. -/
+theorem abs_prefix_ratio_sub_le (i c : ℕ) (v : List ℕ)
+    (hg : 8 * wFloor i ≤ cutLo i c) (hhi : cutHi i c ≤ wTop i)
+    (hlen : 0 < v.length) (hℓm : 2 * v.length ≤ kk i)
+    (hv : ∀ j, ∀ h : j < v.length, v[j] < 2) :
+    |(fullGoodWPre i (aLe i c) (primeLambertAtBase 4) v : ℝ)
+          / ((aLe i c : ℝ) * ((kk i - v.length + 1 : ℕ) : ℝ))
+        - 1 / (2 : ℝ) ^ v.length|
+      ≤ 2 * Real.sqrt (808 * Real.log 2 * (v.length : ℝ) / Real.sqrt (KK i))
+          + 128 / (KK i : ℝ) := by
+  classical
+  set x : ℝ := primeLambertAtBase 4 with hx
+  set L : ℝ := ((bandWtr i (cutLo i c)).card : ℝ) with hLdef
+  set H : ℝ := ((bandWtr i (cutHi i c)).card : ℝ) with hHdef
+  set Q : ℝ := (Fintype.card (gridAt i).Atom : ℝ) with hQdef
+  set F : ℝ := ((kk i - v.length + 1 : ℕ) : ℝ) with hFdef
+  set A : ℝ := (aLe i c : ℝ) with hAdef
+  set S : ℝ := (fullGoodWPre i (aLe i c) x v : ℝ) with hSdef
+  set r : ℝ := 1 / (2 : ℝ) ^ v.length with hrdef
+  set ε : ℝ := 2 * Real.sqrt (808 * Real.log 2 * (v.length : ℝ) / Real.sqrt (KK i)) with hεdef
+  -- the two gates
+  have hgLo : 4 * wFloor i + 4 * (gridAt i).P₀ ≤ cutLo i c := gate_cutLo i c hg
+  have hgHi : 4 * wFloor i + 4 * (gridAt i).P₀ ≤ cutHi i c := gate_cutHi i c hg
+  have hloTop : cutLo i c ≤ wTop i := le_trans (cutLo_le_cutHi i c) hhi
+  have hhiX : cutHi i c ≤ Xlo (KK (i + 1)) := by rw [← wTop_eq i]; exact hhi
+  have hloX : cutLo i c ≤ Xlo (KK (i + 1)) := le_trans (cutLo_le_cutHi i c) hhiX
+  -- the numeric side conditions
+  have hK : (160000 : ℝ) ≤ (KK i : ℝ) := by exact_mod_cast KK_ge i
+  have hQK : (KK i : ℝ) ≤ Q := by
+    have := KK_le_card_Atom i
+    rw [hQdef]; exact_mod_cast this
+  have hL : (1 : ℝ) ≤ L := by
+    have := Finset.card_pos.2 (bandWtr_nonempty hgLo)
+    rw [hLdef]; exact_mod_cast this
+  have hLH : L ≤ H := card_bandWtr_mono i (cutLo_le_cutHi i c)
+  have hF : (1 : ℝ) ≤ F := by
+    have : 1 ≤ kk i - v.length + 1 := Nat.succ_le_succ (Nat.zero_le _)
+    rw [hFdef]; exact_mod_cast this
+  have hflank : (KK i : ℝ) * H ≤ ((KK i : ℝ) + 16) * L := card_flank_ratio i c hg
+  have hA1 : L * Q - 8 * H ≤ A := aLe_ge_real i c hg hhi
+  have hA2 : A ≤ H * Q := aLe_le_real i c
+  have hr0 : (0 : ℝ) < r := by rw [hrdef]; positivity
+  have hr1 : r ≤ 1 / 2 := by
+    rw [hrdef]
+    have h2 : (2 : ℝ) ^ 1 ≤ (2 : ℝ) ^ v.length := pow_le_pow_right₀ (by norm_num) hlen
+    rw [div_le_div_iff₀ (by positivity) (by norm_num)]
+    simpa using h2
+  have hε : (0 : ℝ) ≤ ε := by
+    rw [hεdef]; exact mul_nonneg (by norm_num) (Real.sqrt_nonneg _)
+  have hS0 : (0 : ℝ) ≤ S := by rw [hSdef]; exact Nat.cast_nonneg _
+  have hSAF : S ≤ A * F := by
+    have h := fullGoodWPre_le i (aLe i c) x v
+    have : ((fullGoodWPre i (aLe i c) x v : ℕ) : ℝ)
+        ≤ ((aLe i c * (kk i - v.length + 1) : ℕ) : ℝ) := by exact_mod_cast h
+    rw [hSdef, hAdef, hFdef]
+    push_cast at this ⊢
+    exact this
+  -- the start sum / pair sum bridge
+  have hbridge := sum_pairs_sub_le_gen i (pairsLe i c) x v
+  have hstart : (fullGoodWPre i (aLe i c) x v : ℕ)
+      = ∑ q ∈ startsOf i (pairsLe i c), winOccW i x v q := fullGoodWPre_eq_startsOf i c x v
+  have hov : (((pairsLe i c).card - (startsOf i (pairsLe i c)).card : ℕ) : ℝ) ≤ 8 * H :=
+    overhang_gen_le_band i (cutHi i c) (pairsLe i c) hgHi (pairsLe_subset_prod_cutHi i c)
+  obtain ⟨hsand1, hsand2⟩ := sum_pairsLe_sandwich i c x v hloTop
+  -- the two certified flanks
+  have hcertHi := abs_flank_sum_sub_le i (cutHi i c) v hgHi hhiX hlen hℓm hv
+  have hcertLo := abs_flank_sum_sub_le i (cutLo i c) v hgLo hloX hlen hℓm hv
+  rw [abs_le] at hcertHi hcertLo
+  -- assemble the two sum bounds
+  have hS1 : S ≤ (r + ε) * (H * Q * F) := by
+    have h1 : S ≤ ((∑ z ∈ pairsLe i c, winOccW i x v (2 * kIdx (gridAt i) z.1 z.2) : ℕ) : ℝ) := by
+      rw [hSdef, hstart]
+      exact_mod_cast hbridge.1
+    have h2 : ((∑ z ∈ pairsLe i c, winOccW i x v (2 * kIdx (gridAt i) z.1 z.2) : ℕ) : ℝ)
+        ≤ ((∑ z ∈ (bandWtr i (cutHi i c)) ×ˢ (Finset.univ : Finset (gridAt i).Atom),
+              winOccW i x v (2 * kIdx (gridAt i) z.1 z.2) : ℕ) : ℝ) := by
+      exact_mod_cast hsand2
+    have h3 := hcertHi.2
+    rw [← hx, ← hHdef, ← hQdef, ← hFdef, ← hrdef, ← hεdef] at h3
+    linarith
+  have hS2 : (r - ε) * (L * Q * F) - 8 * (H * F) ≤ S := by
+    have h1 : ((∑ z ∈ (bandWtr i (cutLo i c)) ×ˢ (Finset.univ : Finset (gridAt i).Atom),
+            winOccW i x v (2 * kIdx (gridAt i) z.1 z.2) : ℕ) : ℝ)
+        ≤ ((∑ z ∈ pairsLe i c, winOccW i x v (2 * kIdx (gridAt i) z.1 z.2) : ℕ) : ℝ) := by
+      exact_mod_cast hsand1
+    have h2 : ((∑ z ∈ pairsLe i c, winOccW i x v (2 * kIdx (gridAt i) z.1 z.2) : ℕ) : ℝ)
+        ≤ S + (((pairsLe i c).card - (startsOf i (pairsLe i c)).card : ℕ) : ℝ) * F := by
+      have := hbridge.2
+      rw [hSdef, hstart, hFdef]
+      exact_mod_cast this
+    have h3 := hcertLo.1
+    rw [← hx, ← hLdef, ← hQdef, ← hFdef, ← hrdef, ← hεdef] at h3
+    have hFnn : (0:ℝ) ≤ F := by linarith
+    have h4 : (((pairsLe i c).card - (startsOf i (pairsLe i c)).card : ℕ) : ℝ) * F
+        ≤ 8 * H * F := mul_le_mul_of_nonneg_right hov hFnn
+    linarith
+  exact mid_ratio_arith hK hQK hL hLH hF hflank hA1 hA2 hS1 hS2 hS0 hSAF hr0 hr1 hε
 
 end NormalNumbers.G4.Sched
