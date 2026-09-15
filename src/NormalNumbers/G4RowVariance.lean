@@ -133,4 +133,93 @@ theorem rowVariance_half (P : Finset ℕ) (X : ι → ℕ → ℝ) (c : ι → �
       _ ≤ (v / 2) * ∑ i, (c i) ^ 2 := mul_le_mul_of_nonneg_right hsmall hsq
   linarith
 
+
+
+/-! ### Where the correlation comes from: only primes dividing the shift gap
+
+Input (2) of the reduction — near-orthogonality `|avg X_i X_j| ≤ ε` at distinct shifts — is not a
+uniform smallness assumption.  For the fluctuation `X_i(n) = Σ_p (1[p ∣ n + ρ_i] − a_p)` the
+same-prime cross terms are completely determined by one divisibility test:
+
+* if `p ∤ (ρ_i − ρ_j)` the two events are **disjoint** (`not_both_dvd`) and the centred product
+  averages to exactly `−a_p b_p ≤ 0` (`avg_centred_mul_of_disjoint`) — a *negative* contribution,
+  which helps rather than hurts;
+* if `p ∣ (ρ_i − ρ_j)` the events coincide and the contribution is positive, of size `≈ 1/p`.
+
+So the positive part of the correlation is carried by the rough primes dividing the shift gap
+`ρ_i − ρ_j`, of which there are at most `log|ρ_i − ρ_j| / log T` — that counting, plus the
+cross-prime (`p ≠ q`) CRT independence, is all that input (2) still needs. -/
+
+lemma avg_const (P : Finset ℕ) (hP : P.Nonempty) (r : ℝ) : avg P (fun _ => r) = r := by
+  unfold avg
+  rw [Finset.sum_const, nsmul_eq_mul]
+  field_simp
+
+lemma avg_add (P : Finset ℕ) (f g : ℕ → ℝ) :
+    avg P (fun n => f n + g n) = avg P f + avg P g := by
+  unfold avg; rw [← add_div, Finset.sum_add_distrib]
+
+lemma avg_smul (P : Finset ℕ) (r : ℝ) (f : ℕ → ℝ) :
+    avg P (fun n => r * f n) = r * avg P f := by
+  unfold avg; rw [← Finset.mul_sum, mul_div_assoc]
+
+lemma avg_sub (P : Finset ℕ) (f g : ℕ → ℝ) :
+    avg P (fun n => f n - g n) = avg P f - avg P g := by
+  have := avg_add P f (fun n => -g n)
+  rw [show avg P (fun n => -g n) = -avg P g by
+    have := avg_smul P (-1) g; simpa using this] at this
+  simpa [sub_eq_add_neg] using this
+
+/-- Two divisibility events at distinct shifts are disjoint unless `p` divides the shift gap. -/
+lemma not_both_dvd {p : ℕ} {r r' : ℤ} (h : ¬ (p : ℤ) ∣ (r - r')) (n : ℤ) :
+    ¬ ((p : ℤ) ∣ n + r ∧ (p : ℤ) ∣ n + r') := by
+  rintro ⟨h1, h2⟩
+  exact h (by simpa using dvd_sub h1 h2)
+
+/-- **Centred indicators of disjoint events are negatively correlated, exactly.**  If the two
+events never co-occur on the sample and each has exact sample frequency, the centred product
+averages to `−a·b`. -/
+theorem avg_centred_mul_of_disjoint (P : Finset ℕ) (hP : P.Nonempty)
+    (A B : ℕ → Prop) [DecidablePred A] [DecidablePred B]
+    (hdisj : ∀ n, ¬ (A n ∧ B n)) {a b : ℝ}
+    (hA : avg P (fun n => if A n then (1 : ℝ) else 0) = a)
+    (hB : avg P (fun n => if B n then (1 : ℝ) else 0) = b) :
+    avg P (fun n => ((if A n then (1 : ℝ) else 0) - a) * ((if B n then (1 : ℝ) else 0) - b))
+      = -(a * b) := by
+  classical
+  have hzero : ∀ n, (if A n then (1 : ℝ) else 0) * (if B n then (1 : ℝ) else 0) = 0 := by
+    intro n
+    by_cases hAn : A n
+    · by_cases hBn : B n
+      · exact absurd ⟨hAn, hBn⟩ (hdisj n)
+      · rw [if_neg hBn, mul_zero]
+    · rw [if_neg hAn, zero_mul]
+  have hpt : ∀ n, ((if A n then (1 : ℝ) else 0) - a) * ((if B n then (1 : ℝ) else 0) - b)
+      = -(b * (if A n then (1 : ℝ) else 0)) + (-(a * (if B n then (1 : ℝ) else 0)) + a * b) := by
+    intro n
+    have := hzero n
+    nlinarith [this]
+  rw [show (fun n => ((if A n then (1 : ℝ) else 0) - a) * ((if B n then (1 : ℝ) else 0) - b))
+      = (fun n => -(b * (if A n then (1 : ℝ) else 0))
+          + (-(a * (if B n then (1 : ℝ) else 0)) + a * b)) from funext hpt]
+  rw [avg_add, avg_add]
+  rw [show (fun n => -(b * (if A n then (1 : ℝ) else 0)))
+      = (fun n => (-b) * (if A n then (1 : ℝ) else 0)) from funext fun n => by ring]
+  rw [show (fun n => -(a * (if B n then (1 : ℝ) else 0)))
+      = (fun n => (-a) * (if B n then (1 : ℝ) else 0)) from funext fun n => by ring]
+  rw [avg_smul, avg_smul, avg_const P hP, hA, hB]
+  ring
+
+/-- The same-prime cross term at distinct shifts is **non-positive** unless `p` divides the shift
+gap: the only positive correlation in input (2) comes from `p ∣ ρ_i − ρ_j`. -/
+theorem avg_centred_dvd_nonpos (P : Finset ℕ) (hP : P.Nonempty) {p : ℕ} {r r' : ℤ}
+    (hgap : ¬ (p : ℤ) ∣ (r - r')) {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b)
+    (hA : avg P (fun n => if (p : ℤ) ∣ (n : ℤ) + r then (1 : ℝ) else 0) = a)
+    (hB : avg P (fun n => if (p : ℤ) ∣ (n : ℤ) + r' then (1 : ℝ) else 0) = b) :
+    avg P (fun n => ((if (p : ℤ) ∣ (n : ℤ) + r then (1 : ℝ) else 0) - a) *
+      ((if (p : ℤ) ∣ (n : ℤ) + r' then (1 : ℝ) else 0) - b)) ≤ 0 := by
+  classical
+  rw [avg_centred_mul_of_disjoint P hP _ _ (fun n => not_both_dvd hgap (n : ℤ)) hA hB]
+  nlinarith
+
 end NormalNumbers.G4.RowVariance
