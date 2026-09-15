@@ -1437,4 +1437,122 @@ theorem exists_rough_primes (T : ℕ) (hT : 2 ≤ T) (V : ℝ) :
     _ = ∑ p ∈ S, (1 : ℝ) / 2 * (1 / p) := by rw [Finset.mul_sum]
     _ ≤ ∑ p ∈ S, ((1 : ℝ) / p - ((1 : ℝ) / p) ^ 2) := Finset.sum_le_sum hterm
 
+/-! ### A roughness-only bound for the `Σ 1/p²` remainder
+
+`dyadic_sq_sum_le` priced `Σ_{p∈S} 3/p²` by `3|S|/T²`, which forces `|S|` to stay small compared
+with `T` — incompatible with making `Σ 1/p` large by taking *many* primes.  The correct bound is
+`|S|`-free: every `p ∈ S` is `≥ T` and the `p` are distinct, so the sum is dominated by the tail
+`Σ_{n ≥ T} 1/n² ≤ 1/(T−1)`, whatever `|S|` is.  This is what lets `exists_rough_primes` and the
+correlation bound hold simultaneously. -/
+
+/-- The telescoping step `1/n² ≤ 1/(n−1) − 1/n`. -/
+lemma inv_sq_le_telescope {T : ℕ} (hT : 2 ≤ T) (j : ℕ) :
+    ((1 : ℝ) / ((T + j : ℕ) : ℝ)) ^ 2
+      ≤ (1 / ((T : ℝ) + j - 1) - 1 / ((T : ℝ) + j)) := by
+  have hT2 : (2 : ℝ) ≤ (T : ℝ) := by exact_mod_cast hT
+  have hj : (0 : ℝ) ≤ (j : ℝ) := Nat.cast_nonneg j
+  have hcast : (((T + j : ℕ) : ℝ)) = (T : ℝ) + j := by push_cast; ring
+  rw [hcast]
+  have h1 : (0 : ℝ) < (T : ℝ) + j - 1 := by linarith
+  have h2 : (0 : ℝ) < (T : ℝ) + j := by linarith
+  rw [div_pow, one_pow, div_sub_div _ _ (ne_of_gt h1) (ne_of_gt h2), div_le_div_iff₀
+    (by positivity) (by positivity)]
+  nlinarith
+
+/-- **The `|S|`-free remainder bound.**  Distinct naturals `≥ T ≥ 2` have `Σ 1/p² ≤ 1/(T−1)`. -/
+theorem sum_inv_sq_rough_le {T : ℕ} (hT : 2 ≤ T) (S : Finset ℕ) (hge : ∀ p ∈ S, T ≤ p) :
+    ∑ p ∈ S, ((1 : ℝ) / p) ^ 2 ≤ 1 / ((T : ℝ) - 1) := by
+  classical
+  set L := S.sup id + 1 - T with hL
+  have hsub : S ⊆ (Finset.range L).image (fun j => T + j) := by
+    intro p hp
+    have h1 : T ≤ p := hge p hp
+    have h2 : p ≤ S.sup id := Finset.le_sup (f := id) hp
+    exact Finset.mem_image.2 ⟨p - T, Finset.mem_range.2 (by omega), by omega⟩
+  have himg : ∑ p ∈ (Finset.range L).image (fun j => T + j), ((1 : ℝ) / p) ^ 2
+      = ∑ j ∈ Finset.range L, ((1 : ℝ) / ((T + j : ℕ) : ℝ)) ^ 2 := by
+    refine Finset.sum_image ?_
+    intro a _ b _ hab
+    simp only at hab
+    omega
+  have hmono : ∑ p ∈ S, ((1 : ℝ) / p) ^ 2
+      ≤ ∑ p ∈ (Finset.range L).image (fun j => T + j), ((1 : ℝ) / p) ^ 2 :=
+    Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p _ _ => by positivity)
+  have htel : ∑ j ∈ Finset.range L, ((1 : ℝ) / ((T + j : ℕ) : ℝ)) ^ 2
+      ≤ ∑ j ∈ Finset.range L, (1 / ((T : ℝ) + j - 1) - 1 / ((T : ℝ) + (j + 1) - 1)) := by
+    refine Finset.sum_le_sum fun j _ => ?_
+    have := inv_sq_le_telescope hT j
+    have heq : (T : ℝ) + (j + 1) - 1 = (T : ℝ) + j := by ring
+    rw [heq]
+    exact this
+  have hsum : ∑ j ∈ Finset.range L, (1 / ((T : ℝ) + j - 1) - 1 / ((T : ℝ) + (j + 1) - 1))
+      = 1 / ((T : ℝ) + 0 - 1) - 1 / ((T : ℝ) + L - 1) := by
+    have := Finset.sum_range_sub' (f := fun j : ℕ => 1 / ((T : ℝ) + j - 1)) L
+    simpa using this
+  have hT2 : (2 : ℝ) ≤ (T : ℝ) := by exact_mod_cast hT
+  have hlast : (0 : ℝ) ≤ 1 / ((T : ℝ) + L - 1) := by
+    have hLn : (0 : ℝ) ≤ (L : ℝ) := Nat.cast_nonneg L
+    exact le_of_lt (div_pos one_pos (by linarith))
+  rw [himg] at hmono
+  have : ∑ j ∈ Finset.range L, ((1 : ℝ) / ((T + j : ℕ) : ℝ)) ^ 2 ≤ 1 / ((T : ℝ) - 1) := by
+    refine le_trans htel ?_
+    rw [hsum]
+    have : (T : ℝ) + 0 - 1 = (T : ℝ) - 1 := by ring
+    rw [this]
+    linarith
+  linarith
+
+/-- **(E) in Mertens form.**  `S` is any finite set of primes above the roughness threshold `T`,
+with `T` above the frozen modulus `Q` (so coprimality is automatic).  The correlation level is
+`ε = 4k/T + 3/(T−1) + 3|S|²/N` — the middle term now `|S|`-free, so `Σ(1/p − 1/p²) ≥ V` may be
+made as large as one likes by `exists_rough_primes` without spoiling it. -/
+theorem roughRowVarianceLower_mertens {K L T Q c0 N k : ℕ} (hT : 4 ≤ T) (hQ : 0 < Q)
+    (hQT : Q < T) (hN : 0 < N)
+    (S : Finset ℕ) (hprime : ∀ p ∈ S, Nat.Prime p) (hge : ∀ p ∈ S, T ≤ p)
+    (ρ : ℕ → Fin (2 ^ K) × Fin L → ℤ) (w : ℕ → Fin (2 ^ K) × Fin L → ℝ)
+    (hw : ∀ K' i, |w K' i| = (1 / 4 : ℝ) ^ (K' + 1 + (i.2 : ℕ)))
+    (hΔ : ∀ (K' : ℕ) (i j), i ≠ j →
+      ρ K' i - ρ K' j ≠ 0 ∧ (ρ K' i - ρ K' j).natAbs < T ^ (k + 1))
+    {V : ℝ} (hV : V ≤ ∑ p ∈ S, ((1 : ℝ) / p - ((1 : ℝ) / p) ^ 2))
+    (hsmall : (4 * (k : ℝ) / T + 3 / ((T : ℝ) - 1) + 3 * (S.card : ℝ) ^ 2 / N)
+        * (5 * (2 : ℝ) ^ K / 3)
+      ≤ (V - 3 * (S.card : ℝ) ^ 2 / N) / 2) :
+    Budget.RoughRowVarianceLower
+      (fun K' => avg ((Finset.range N).image (fun x => c0 + Q * x))
+        (fun n => (∑ i, w K' i * fluct S (ρ K' i) n) ^ 2))
+      (((V - 3 * (S.card : ℝ) ^ 2 / N) / 2) * (1 - (1 / 16 : ℝ) ^ L)) K := by
+  classical
+  have hT0 : (0 : ℝ) < (T : ℝ) := by exact_mod_cast (by omega : 0 < T)
+  have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  have hT1 : (0 : ℝ) < (T : ℝ) - 1 := by
+    have : (4 : ℝ) ≤ (T : ℝ) := by exact_mod_cast hT
+    linarith
+  have hcop : ∀ p ∈ S, ∀ q ∈ S, p ≠ q → Nat.Coprime p q := fun p hp q hq hne =>
+    (Nat.coprime_primes (hprime p hp) (hprime q hq)).2 hne
+  have hQcop : ∀ p ∈ S, Nat.Coprime Q p := by
+    intro p hp
+    have hpp := hprime p hp
+    have hlt : Q < p := lt_of_lt_of_le hQT (hge p hp)
+    have : ¬ p ∣ Q := fun hdvd => by
+      have := Nat.le_of_dvd hQ hdvd; omega
+    exact (Nat.coprime_comm.1 ((Nat.Prime.coprime_iff_not_dvd hpp).2 this))
+  have hεnn : (0 : ℝ) ≤ 4 * (k : ℝ) / T + 3 / ((T : ℝ) - 1) + 3 * (S.card : ℝ) ^ 2 / N := by
+    positivity
+  have hvnn : (0 : ℝ) ≤ V - 3 * (S.card : ℝ) ^ 2 / N := by
+    have h5 : (0 : ℝ) ≤ 5 * (2 : ℝ) ^ K / 3 := by positivity
+    nlinarith [mul_nonneg hεnn h5]
+  refine roughRowVarianceLower_arith (g := 4 * (k : ℝ) / T) hQ hN S
+      (fun p hp => (hprime p hp).pos) hQcop hcop ρ w hw hvnn hεnn ?_ ?_ ?_ hsmall
+  · have h2 : 3 * (1 / (N : ℝ)) * (S.card : ℝ) ^ 2 = 3 * (S.card : ℝ) ^ 2 / N := by ring
+    rw [h2]; linarith
+  · intro K' i j hij
+    exact gap_divisor_sum_le (by omega) S (hΔ K' i j hij).1 hge hcop (hΔ K' i j hij).2
+  · have h := sum_inv_sq_rough_le (by omega : 2 ≤ T) S hge
+    have h3 : (∑ p ∈ S, 3 * (1 / (p : ℝ)) ^ 2) = 3 * ∑ p ∈ S, ((1 : ℝ) / p) ^ 2 := by
+      rw [Finset.mul_sum]
+    have h4 : 3 * ∑ p ∈ S, ((1 : ℝ) / p) ^ 2 ≤ 3 * (1 / ((T : ℝ) - 1)) := by linarith
+    rw [h3]
+    have h5 : (3 : ℝ) * (1 / ((T : ℝ) - 1)) = 3 / ((T : ℝ) - 1) := by ring
+    linarith
+
 end NormalNumbers.G4.RowVariance
