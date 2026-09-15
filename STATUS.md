@@ -1,5 +1,14 @@
 # STATUS — normal-numbers 📊
 
+> **Lap 127 (2026-09-15).**  The base-`2^k` directive's **step 3 is refuted** (E-T13 fired) —
+> see `ROUTE-ESCALATION-2026-09-15-base2k-step3.md`.  Steps 1–2 and the whole residue counting
+> layer are proved and kept (`G4EntropyResidue`, `G4EntropySubLaw`, `G4EntropyResRead`).
+> The successor is elementary and its heart is in kernel:
+> `NormalNumbers.BlockRigidity.Sys.eq_uniform` + `NormalNumbers/PowerBaseCount.lean` give the
+> route to `IsNormal b y → IsNormal (b^K) y`, hence `IsNormal 4 fullRealW`, with no measure
+> theory, no Wall and no Fourier.  Build 🟢 9030 jobs.  See
+> `HANDOFF-2026-09-15-entropy-lap127.md`.
+
 ## Attended update, 2026-09-13: Stoneham base-6 disjunctivity proved
 
 Every finite base-6 word occurs arbitrarily late in `stoneham23`:
