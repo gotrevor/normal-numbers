@@ -189,6 +189,21 @@ lemma cube_le_two_pow : ∀ {k : ℕ}, 40 ≤ k → 100000 * k ^ 3 ≤ 2 ^ k := 
           _ ≤ 2 * 2 ^ n := Nat.mul_le_mul_left _ hih
           _ = 2 ^ (n + 1) := by ring
 
+/-- `2^{ω(N)} ≤ N`. -/
+theorem two_pow_card_primeFactors_le {N : ℕ} (hN : N ≠ 0) : 2 ^ N.primeFactors.card ≤ N := by
+  calc 2 ^ N.primeFactors.card = ∏ _p ∈ N.primeFactors, 2 := by rw [Finset.prod_const]
+    _ ≤ ∏ p ∈ N.primeFactors, p :=
+        Finset.prod_le_prod' fun p hp => (Nat.prime_of_mem_primeFactors hp).two_le
+    _ ≤ N := Nat.le_of_dvd (Nat.pos_of_ne_zero hN) (Nat.prod_primeFactors_dvd N)
+
+/-- `ω(N) · log 2 ≤ log N`. -/
+theorem card_primeFactors_mul_log_two_le {N : ℕ} (hN : N ≠ 0) :
+    (N.primeFactors.card : ℝ) * Real.log 2 ≤ Real.log N := by
+  have h := two_pow_card_primeFactors_le hN
+  have hr : ((2 : ℝ)) ^ N.primeFactors.card ≤ (N : ℝ) := by exact_mod_cast h
+  have := Real.log_le_log (by positivity) hr
+  rwa [Real.log_pow] at this
+
 /-! ### The schedule instance of the size condition -/
 
 namespace SchedB
