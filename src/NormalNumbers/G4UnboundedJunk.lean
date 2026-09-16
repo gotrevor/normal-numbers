@@ -30,7 +30,7 @@ so the `C`-free statement is the honest one and it exposes exactly two hypothese
 -/
 
 open Finset
-open scoped BigOperators
+open scoped BigOperators ArithmeticFunction.Omega
 
 namespace NormalNumbers.PrimeLambert
 
@@ -389,5 +389,64 @@ theorem tame_of_bounded {c : ℕ → ℕ} {C : ℕ} (hC : ∀ p, c p ≤ C) :
     have h0 : (0 : ℝ) ≤ ((max C 1 : ℕ) : ℝ) := by positivity
     rw [Finset.sum_const, nsmul_eq_mul] at hstep
     nlinarith
+
+/-! ### Summability at a tame `c`
+
+`TWeight` demands `Summable (w(n)/bⁿ)` at every base `b ≥ 2`.  For bounded `c` this came from
+the linear bound `w_c(n) ≤ (1+C)n`; tameness gives the quadratic `w_c(n) ≤ (1+A)(n+1)²`, which
+is just as summable against a geometric factor. -/
+
+lemma weightW_le_tame {c : ℕ → ℕ} {A : ℝ} (hT : Tame c A) (m : ℕ) :
+    weightW c m ≤ (1 + A) * ((m : ℝ) + 1) ^ 2 := by
+  have hA0 : 0 ≤ A := hT.nonneg
+  have hm0 : (0 : ℝ) ≤ (m : ℝ) := by positivity
+  have hex : excess c m ≤ (A * ((m : ℝ) + 1)) * ((Ω m : ℝ) - omegaR m) := by
+    have h1 : (Ω m : ℝ) - omegaR m = excess (fun _ => (1 : ℕ)) m := by
+      unfold excess; rw [valWeight_one_coeff, omegaW_one_coeff]
+    rw [h1, excess_eq, excess_eq, Finset.mul_sum]
+    refine Finset.sum_le_sum fun p hp => ?_
+    have hmem := Nat.mem_primeFactors.1 hp
+    have hple : (p : ℝ) ≤ (m : ℝ) := by
+      exact_mod_cast Nat.le_of_dvd (Nat.pos_of_ne_zero hmem.2.2) hmem.2.1
+    have h2 : 1 ≤ m.factorization p :=
+      (hmem.1.dvd_iff_one_le_factorization hmem.2.2).1 hmem.2.1
+    have hv : (0 : ℝ) ≤ (m.factorization p : ℝ) - 1 := by
+      have : (1 : ℝ) ≤ m.factorization p := by exact_mod_cast h2
+      linarith
+    have hc := hT.coeff_le hmem.1
+    push_cast
+    nlinarith [mul_le_mul_of_nonneg_right hc hv,
+      mul_nonneg (mul_nonneg hA0 (sub_nonneg.2 hple)) hv]
+  have hΩ : (Ω m : ℝ) ≤ m := by
+    rcases Nat.eq_zero_or_pos m with rfl | hm
+    · simp
+    · exact_mod_cast (two_pow_cardFactors_le hm.ne').trans' (Nat.lt_two_pow_self).le
+  have hom := omegaR_le m
+  have hom0 := omegaR_nonneg m
+  have hdiff : (Ω m : ℝ) - omegaR m ≤ (m : ℝ) := by linarith
+  have hstep : excess c m ≤ A * ((m : ℝ) + 1) * (m : ℝ) :=
+    hex.trans (mul_le_mul_of_nonneg_left hdiff (mul_nonneg hA0 (by positivity)))
+  unfold weightW
+  nlinarith [hstep, hom, hom0, hA0, hm0]
+
+/-- Summability of the interface series at a tame `c`, in any base `b ≥ 2`. -/
+theorem summable_weightW_div_pow_tame {b : ℕ} (hb : 2 ≤ b) {c : ℕ → ℕ} {A : ℝ} (hT : Tame c A) :
+    Summable (fun n : ℕ => weightW c n / (b : ℝ) ^ n) := by
+  have hb' : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hr : ‖((b : ℝ))⁻¹‖ < 1 := by
+    rw [norm_inv, Real.norm_of_nonneg (by positivity), inv_lt_one_iff₀]
+    right; linarith
+  have h2 := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 2 hr
+  have h1 := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1 hr
+  have h0 := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 0 hr
+  have hs : Summable (fun n : ℕ => (1 + A) * (((n : ℝ) + 1) ^ 2 / (b : ℝ) ^ n)) := by
+    refine Summable.mul_left _ ?_
+    refine ((h2.add (h1.mul_left 2)).add h0).congr fun n => ?_
+    simp only [pow_one, pow_zero, one_mul, div_eq_mul_inv, ← inv_pow]
+    ring
+  refine Summable.of_nonneg_of_le (fun n => ?_) (fun n => ?_) hs
+  · exact div_nonneg (weightW_nonneg n) (by positivity)
+  · rw [← mul_div_assoc]
+    exact div_le_div_of_nonneg_right (weightW_le_tame hT n) (by positivity)
 
 end NormalNumbers.PrimeLambert

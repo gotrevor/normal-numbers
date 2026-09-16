@@ -18,7 +18,7 @@
 | B2b | **the effective-constant reduction** | ✅ **DONE**: `Tame c A` (`one_le`/`tail`/`pref`) in `G4UnboundedJunk`, with `tame_of_bounded` (every bounded `c` is tame at `A = max C 1`) and `Tame.coeff_le` (`c_p ≤ A(p+1)`).  In `G4UnboundedAvg`: `effC c P₀ A = max (A + frozenHarm c P₀) (frozenCap c P₀)`, `junkShiftBoundC_le_effC`, `frozenCap_le_effC_mul`, and **`sum_weightW_shiftG_le_effC`** — literally `sum_abs_farPartC_le`'s `h3` with `κ := effC`. |
 | B2c' | `sum_abs_farPartC_le'` — the far part at `effC` | next: copy `G4WeightJunkAvg.sum_abs_farPartC_le` with `κ := effC` and `h3 := sum_weightW_shiftG_le_effC`; needs `TWeight.weightU` first so `farPartW` has a weight to talk about |
 | B2 | far field without `κ = max C 1` | open — take the `Ω` route (`ω + frozenExcess_c + junk_c`), not `w_c ≤ κ·Ω` |
-| B2c | `TWeight.weightU c` — the unbounded weight as a `TWeight` (B0 makes `ov_le` statable; summability comes from `Tame`'s prefix bound `c_p ≤ A(p+1)`) | open |
+| B2c | `TWeight.weightU c hT` — the unbounded weight as a `TWeight` | ✅ **DONE** (`G4UnboundedTW.lean`).  `ovB d = ω(d) + ∑_{p∣d} c_p` needs **no** hypothesis on `c`; only `summable` uses `Tame` (via `weightW_le_tame : w_c(m) ≤ (1+A)(m+1)²` and `summable_weightW_div_pow_tame`).  §4A/§4B/§4C are therefore free for it. |
 | B3 | `isDisjunctive_weight_of_tame`, then the merge `w_{c,S}` | open — `G4SubsetCWeight` already has the `TWeight` instance and §4A/B/C |
 
 **The hypothesis class `Tame c A`** (the replacement for `∀ p, c p ≤ C`):
