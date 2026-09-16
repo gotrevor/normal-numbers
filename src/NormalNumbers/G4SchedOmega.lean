@@ -672,6 +672,76 @@ theorem hfar_junkA_leE {k₄ : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
     _ = ((1 : ℝ) / 2) ^ (2 * k₄ + (100 * K ^ 2 - (2 * K + 6))) := by rw [hfinal, pow_add]
     _ ≤ (1 / 64 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := half_pow_le_target' (by omega) hD
 
+/-- The `junkB` far piece — the one that needs base `≥ 3` (its ratio is `2/b`). -/
+theorem hfar_junkB_leE {k₄ : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
+    (2 : ℝ) ^ K * ((junkB (XE K e) (gridDm K (N K))
+          / ((apSample (XE K e) (gridOf K (N K) h.hK1).P₀
+              (gridOf K (N K) h.hK1).b₀).card : ℝ))
+        * ((2 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 2))))
+      ≤ (1 / 64 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
+  have hb := h.base.hb
+  have hK := h.base.hK
+  have hKr : (100 : ℝ) ≤ K := by exact_mod_cast hK
+  have hbr : (3 : ℝ) ≤ b := by exact_mod_cast hb
+  set G := gridOf K (N K) h.hK1 with hG
+  have hcard0 : (0 : ℝ) < (apSample (XE K e) G.P₀ G.b₀).card := by
+    exact_mod_cast (sample_nonemptyE h).card_pos
+  have hcard := Sched.card_apSample_ge_half (XE K e) G.P₀ G.b₀ G.P₀_pos G.b₀_lt_P₀
+    (two_mul_P₀_le_XE h)
+  have hXpos : 1 ≤ XE K e := Nat.one_le_two_pow
+  have hB := junkB_div_le (P₀ := G.P₀) (X := XE K e) (Dm := gridDm K (N K)) G.P₀_pos hXpos
+    (gridDm_le_XE h) hcard0 hcard (junk_size_holdsE' h)
+  have hB0 : (0 : ℝ) ≤ junkB (XE K e) (gridDm K (N K))
+      / ((apSample (XE K e) G.P₀ G.b₀).card : ℝ) :=
+    div_nonneg (junkB_nonneg _ _) hcard0.le
+  -- the geometric factor at ratio `2/b ≤ 2/3`
+  have hg2 : (2 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 2))
+      ≤ (2 / 3 : ℝ) ^ (N K) * 3 := by
+    have h1 : (2 / (b : ℝ)) ^ (K + N K + 1) ≤ (2 / 3 : ℝ) ^ (K + N K + 1) := by
+      refine pow_le_pow_left₀ (by positivity) ?_ _
+      rw [div_le_div_iff₀ (by linarith) (by norm_num)]
+      linarith
+    have h2 : (b : ℝ) / ((b : ℝ) - 2) ≤ 3 := by
+      rw [div_le_iff₀ (by linarith)]
+      linarith
+    have hb0 : (0 : ℝ) ≤ (b : ℝ) / ((b : ℝ) - 2) := by
+      have : (0 : ℝ) < (b : ℝ) - 2 := by linarith
+      positivity
+    have h3 : (2 / 3 : ℝ) ^ (K + N K + 1) ≤ (2 / 3 : ℝ) ^ (N K) :=
+      pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
+    calc (2 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 2))
+        ≤ (2 / 3 : ℝ) ^ (K + N K + 1) * 3 := mul_le_mul h1 h2 hb0 (by positivity)
+      _ ≤ (2 / 3 : ℝ) ^ (N K) * 3 := by gcongr
+  have hNK : N K = 100 * K ^ 2 := rfl
+  have hN23 : (2 / 3 : ℝ) ^ (N K) ≤ ((1 : ℝ) / 2) ^ (50 * K ^ 2) := by
+    rw [hNK, show 100 * K ^ 2 = 2 * (50 * K ^ 2) by ring, pow_mul]
+    exact pow_le_pow_left₀ (by positivity) (by norm_num) _
+  have hK2 : (K : ℝ) ≤ (2 : ℝ) ^ K := by
+    have : (K : ℕ) < 2 ^ K := Nat.lt_two_pow_self
+    exact_mod_cast this.le
+  have hfinal : ((1 : ℝ) / 2) ^ (50 * K ^ 2) * (2 : ℝ) ^ (K + 2)
+      = ((1 : ℝ) / 2) ^ (50 * K ^ 2 - (K + 2)) :=
+    half_pow_mul_two_pow (by nlinarith [hK, sq_nonneg K])
+  have hD : k₄ + 2 * K ≤ 50 * K ^ 2 - (K + 2) := by
+    have hKsq : K * 100 ≤ K ^ 2 := by nlinarith [hK]
+    have hKk : K = 4 * k₄ := hK4
+    omega
+  calc (2 : ℝ) ^ K * ((junkB (XE K e) (gridDm K (N K))
+        / ((apSample (XE K e) G.P₀ G.b₀).card : ℝ))
+        * ((2 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 2))))
+      ≤ (2 : ℝ) ^ K * (1 * ((2 / 3 : ℝ) ^ (N K) * 3)) := by
+        have hg20 : (0 : ℝ) ≤ (2 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 2)) := by
+          have h2 : (0 : ℝ) < (b : ℝ) - 2 := by linarith
+          positivity
+        refine mul_le_mul_of_nonneg_left (mul_le_mul hB hg2 hg20 (by norm_num)) (by positivity)
+    _ = ((2 : ℝ) ^ K * 3) * (2 / 3 : ℝ) ^ (N K) := by ring
+    _ ≤ (2 : ℝ) ^ (K + 2) * ((1 : ℝ) / 2) ^ (50 * K ^ 2) := by
+        refine mul_le_mul ?_ hN23 (by positivity) (by positivity)
+        rw [pow_add]
+        nlinarith [(by positivity : (0:ℝ) < (2:ℝ) ^ K)]
+    _ = ((1 : ℝ) / 2) ^ (50 * K ^ 2 - (K + 2)) := by rw [mul_comm]; exact hfinal
+    _ ≤ (1 / 64 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := half_pow_le_target' (by omega) hD
+
 /-- **`hjunk` in base `b ≥ 3`**, against `η = 2^{−k₄}`, `ε = 1/K`. -/
 theorem hjunk_holdsE {k₄ : ℕ} (hK4 : K = 4 * k₄) (hk : 40 ≤ k₄) (h : HypE b K e) :
     (junkShiftBound (gridOf K (N K) h.hK1).P₀ (XE K e) (J K * gridDm K (N K))
