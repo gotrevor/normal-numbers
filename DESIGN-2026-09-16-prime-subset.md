@@ -150,3 +150,36 @@ prefix condition, satisfied even by `c_p ≍ log p` via `Nat.primorial_le_4_pow`
 against the far-field budget.  `k₄` must now be chosen *after* `effC(k₄)`, which is polynomial
 in `k₄`, so `exists_good_k₄` has to be re-run with `C := ⌈F(k₄)⌉₊` for an explicit polynomial
 `F`; `2^{k₄}` still wins.  That is the next step.
+
+### The quantitative verdict: the achievable growth class is **doubly logarithmic**
+
+Chasing the two budgets to their real slack (this lap, from the schedule files, not conjecture):
+
+| budget | statement | slack |
+|---|---|---|
+| junk | `hjunk_holdsCE`: `C·(junkShiftBound/|P|)·rowL1 ≤ (1/8)(1/K)2^{-k₄}` | `junkShiftBound/|P| ≤ 5+30K²` and `rowL1 b K ≤ 3(2/3)^K`, so `C ≲ 2^{0.58K}/K³ = 2^{Θ(K)}` |
+| far | `hfarC_holdsE`: the four `Ω` pieces are each `≤ 2^{-50K²}`-small | `κ ≲ 2^{Θ(K²)}` |
+
+So **junk binds**: the schedule can pay `effC ≤ 2^{Θ(K)} = 2^{Θ(k₄)}`, no more.  Against that,
+
+* `effC ≤ A + cMax·(1 + log ω(P₀))` and `log ω(P₀) ≤ 5+30K²` (`log_card_primeFactors_P₀_leE`),
+  so the demand is `cMax = max_{p∣P₀} c_p ≲ 2^{Θ(K)}/K²`;
+* the largest prime dividing `P₀` is of the size of `gridDm ≤ 2^{2·2^{21K²}}`
+  (`Sched.gridDm_le_two_pow`), i.e. `log₂ pMax ≈ 2^{21K²}`.
+
+Hence, with `L = log₂ pMax ≈ 2^{21K²}`:
+
+* `c_p = ⌊log₂ p⌋` gives `cMax ≈ 2^{21K²}` — **past the junk budget** `2^{Θ(K)}`. ✗
+* `c_p = ⌊log₂ log₂ p⌋` gives `cMax ≈ 21K²` — polynomial, so `cMax·(1+30K²) ≈ 630K⁴ ≪ 2^{1.3k₄}`
+  for `k₄ ≥ 40`. ✓  Same for `c_p ≤ A(1 + log₂log₂ p)^s`, any fixed `s`.
+
+**Corrected headline target for campaign B:** `isDisjunctive_weight_of_growth` for
+`c_p = O((log log p)^s)` — genuinely unbounded, and the *proved* boundary of this schedule is
+that `c_p ≍ log p` is not reachable without re-engineering the junk budget (the `rowL1 ≈ (2/3)^K`
+factor is the binding one; enlarging the far slack does not help).
+
+**Next leaf:** `tame_of_log_le` — `c_p ≤ ⌊log₂ p⌋ ⇒ Tame c A`.  `pref` is exact and cheap:
+`2^{∑_{p<M} ⌊log₂ p⌋} = ∏ 2^{⌊log₂ p⌋} ≤ ∏_{p<M} p ≤ primorial M ≤ 4^M` (mathlib
+`Nat.primorial_le_4_pow`), so `∑ ≤ 2M`.  `tail` is the swap
+`⌊log₂ n⌋ = #{j ≥ 1 : 2^j ≤ n}` followed by `∑_{n ≥ m} 1/(n(n−1)) = 1/(m−1)`, giving
+`∑_p ⌊log₂ p⌋/(p(p−1)) ≤ ∑_{j≥1} 1/(2^j−1) ≤ 2`.
