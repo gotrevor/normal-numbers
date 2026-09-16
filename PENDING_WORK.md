@@ -12,7 +12,8 @@
 | # | leaf | status |
 |---|---|---|
 | B0 | `TWeight.ov_le` → per-`d` bound `ovB : ℕ → ℕ` | open — **free**: `ovC` is consumed only by `G4TransportW.summable_corrB` (probe, lap B-review-1), never quantitatively.  5 instances to update. |
-| B1 | **crux** — `sum_junk_le` with the `c_p` kept inside the sum | open — decisive case is the error term `log₂(N)·∑_{p≤√N} c_p = o(X)`; `∑_p c_p/p² < ∞` alone is *not* enough |
+| B1 | **crux** — `sum_junk_le` with the `c_p` kept inside the sum | ✅ **DONE** (`G4UnboundedJunk.lean`): `sum_junk_le'`, the `C`-free bound functional `junkShiftBoundC`, `sum_junk_C_le'`, and the faithfulness check `sum_junk_le_of_bounded` (the old estimate is the `c ≤ C` case).  All trust-triple clean. |
+| B1b | `junkAvgC_le'` — the block average against `junkShiftBoundC` | next: `G4WeightJunkAvg.junkAvgC_le` with `B := junkShiftBoundC c G.P₀ X ρmax / |P|`; the proof body never touches `C` again |
 | B2 | far field without `κ = max C 1` | open — take the `Ω` route (`ω + frozenExcess_c + junk_c`), not `w_c ≤ κ·Ω` |
 | B3 | `isDisjunctive_weight_of_growth`, then the merge `w_{c,S}` | open — `G4SubsetCWeight` already has the `TWeight` instance and §4A/B/C |
 
