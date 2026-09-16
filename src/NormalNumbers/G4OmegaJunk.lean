@@ -266,23 +266,159 @@ noncomputable def junkB (X Dm : ℕ) : ℝ :=
   4 * (Real.sqrt ((X + Dm : ℕ) : ℝ) + 1) * (Real.log ((X + Dm : ℕ) : ℝ) / Real.log 2 + 1)
 
 lemma junkA_nonneg (P₀ X : ℕ) : 0 ≤ junkA P₀ X := by
-  sorry
+  unfold junkA
+  have h1 : (0 : ℝ) ≤ ∑ p ∈ P₀.primeFactors, 1 / ((p : ℝ) - 1) := by
+    refine Finset.sum_nonneg fun p hp => ?_
+    have hp2 : 2 ≤ p := (Nat.prime_of_mem_primeFactors hp).two_le
+    have : (2 : ℝ) ≤ p := by exact_mod_cast hp2
+    have : (0 : ℝ) < (p : ℝ) - 1 := by linarith
+    positivity
+  positivity
 
 lemma junkB_nonneg (X Dm : ℕ) : 0 ≤ junkB X Dm := by
-  sorry
+  unfold junkB
+  have hlog : 0 ≤ Real.log ((X + Dm : ℕ) : ℝ) := by
+    rcases Nat.eq_zero_or_pos (X + Dm) with h | h
+    · rw [h]; norm_num
+    · exact Real.log_nonneg (by exact_mod_cast h)
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have : 0 ≤ Real.log ((X + Dm : ℕ) : ℝ) / Real.log 2 := by positivity
+  have hs : 0 ≤ Real.sqrt ((X + Dm : ℕ) : ℝ) := Real.sqrt_nonneg _
+  nlinarith
+
+/-- `(j+1)² ≤ 4·2^j`. -/
+lemma sq_succ_le_four_mul_two_pow (j : ℕ) : (j + 1) ^ 2 ≤ 4 * 2 ^ j := by
+  induction j with
+  | zero => norm_num
+  | succ k ih =>
+      have hk : k + 1 ≤ 2 ^ k := Nat.lt_two_pow_self
+      have : 2 ^ (k + 1) = 2 * 2 ^ k := by ring
+      nlinarith [ih, hk]
 
 /-- **The junk envelope at layer `j`.** -/
 theorem junkShiftBound_layer_le (P₀ X Dm : ℕ) {j : ℕ} (hj : 1 ≤ j) :
     junkShiftBound P₀ X (j * Dm) ≤ junkA P₀ X + junkB X Dm * 2 ^ j := by
-  sorry
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  set M : ℕ := X + Dm with hM
+  set Nj : ℕ := X + j * Dm with hNj
+  have hjr : (1 : ℝ) ≤ (j : ℝ) := by exact_mod_cast hj
+  have hNjM : Nj ≤ M * j := by
+    have : X ≤ j * X := Nat.le_mul_of_pos_left X (by omega)
+    rw [hNj, hM]; nlinarith [this]
+  have hNjMr : ((Nj : ℕ) : ℝ) ≤ ((M : ℕ) : ℝ) * (j : ℝ) := by exact_mod_cast hNjM
+  have hM0 : (0 : ℝ) ≤ ((M : ℕ) : ℝ) := by positivity
+  set L : ℝ := Real.log ((M : ℕ) : ℝ) / Real.log 2 with hL
+  have hLlog : 0 ≤ Real.log ((M : ℕ) : ℝ) := by
+    rcases Nat.eq_zero_or_pos M with h | h
+    · rw [h]; norm_num
+    · exact Real.log_nonneg (by exact_mod_cast h)
+  have hL0 : 0 ≤ L := by rw [hL]; positivity
+  -- the square root piece
+  have hsq : ((Nat.sqrt Nj : ℕ) : ℝ) ≤ Real.sqrt ((M : ℕ) : ℝ) * (j : ℝ) := by
+    have h1 : ((Nat.sqrt Nj : ℕ) : ℝ) ≤ Real.sqrt ((Nj : ℕ) : ℝ) := by
+      rw [show ((Nat.sqrt Nj : ℕ) : ℝ) = Real.sqrt (((Nat.sqrt Nj : ℕ) : ℝ) ^ 2) by
+        rw [Real.sqrt_sq (by positivity)]]
+      refine Real.sqrt_le_sqrt ?_
+      have h0 : Nat.sqrt Nj ^ 2 ≤ Nj := Nat.sqrt_le' Nj
+      have h0' : ((Nat.sqrt Nj : ℕ) : ℝ) ^ 2 ≤ ((Nj : ℕ) : ℝ) := by exact_mod_cast h0
+      nlinarith [h0']
+    refine h1.trans ?_
+    calc Real.sqrt ((Nj : ℕ) : ℝ) ≤ Real.sqrt (((M : ℕ) : ℝ) * (j : ℝ)) :=
+          Real.sqrt_le_sqrt hNjMr
+      _ = Real.sqrt ((M : ℕ) : ℝ) * Real.sqrt (j : ℝ) :=
+          Real.sqrt_mul hM0 _
+      _ ≤ Real.sqrt ((M : ℕ) : ℝ) * (j : ℝ) := by
+          refine mul_le_mul_of_nonneg_left ?_ (Real.sqrt_nonneg _)
+          have : Real.sqrt (j : ℝ) ≤ Real.sqrt ((j : ℝ) ^ 2) := by
+            refine Real.sqrt_le_sqrt ?_; nlinarith
+          rwa [Real.sqrt_sq (by linarith)] at this
+  -- the logarithm piece
+  have hlogj : Real.log (j : ℝ) ≤ (j : ℝ) * Real.log 2 := by
+    have h2 : (j : ℝ) ≤ (2 : ℝ) ^ j := by
+      have : (j : ℕ) < 2 ^ j := Nat.lt_two_pow_self
+      exact_mod_cast this.le
+    calc Real.log (j : ℝ) ≤ Real.log ((2 : ℝ) ^ j) := Real.log_le_log (by linarith) h2
+      _ = (j : ℝ) * Real.log 2 := by rw [Real.log_pow]
+  have hlg : ((Nat.log 2 Nj : ℕ) : ℝ) ≤ L + (j : ℝ) := by
+    rcases Nat.eq_zero_or_pos Nj with h | h
+    · rw [h]
+      simp only [Nat.log_zero_right, Nat.cast_zero]
+      positivity
+    · have hpow : (2 : ℕ) ^ (Nat.log 2 Nj) ≤ Nj := Nat.pow_log_le_self 2 (by omega)
+      have hpowr : (2 : ℝ) ^ (Nat.log 2 Nj) ≤ ((Nj : ℕ) : ℝ) := by exact_mod_cast hpow
+      have hNj0 : (0 : ℝ) < ((Nj : ℕ) : ℝ) := by exact_mod_cast h
+      have hle : ((Nat.log 2 Nj : ℕ) : ℝ) * Real.log 2 ≤ Real.log ((Nj : ℕ) : ℝ) := by
+        have := Real.log_le_log (by positivity) hpowr
+        rwa [Real.log_pow] at this
+      have hlogNj : Real.log ((Nj : ℕ) : ℝ) ≤ Real.log ((M : ℕ) : ℝ) + Real.log (j : ℝ) := by
+        have hMpos : (0 : ℝ) < ((M : ℕ) : ℝ) := by
+          rcases Nat.eq_zero_or_pos M with h' | h'
+          · exfalso; rw [h'] at hNjM; omega
+          · exact_mod_cast h'
+        calc Real.log ((Nj : ℕ) : ℝ) ≤ Real.log (((M : ℕ) : ℝ) * (j : ℝ)) :=
+              Real.log_le_log hNj0 hNjMr
+          _ = Real.log ((M : ℕ) : ℝ) + Real.log (j : ℝ) :=
+              Real.log_mul hMpos.ne' (by linarith)
+      rw [hL, div_add' _ _ _ hlog2.ne', le_div_iff₀ hlog2]
+      linarith
+  -- assemble
+  have hsq0 : 0 ≤ Real.sqrt ((M : ℕ) : ℝ) := Real.sqrt_nonneg _
+  have hquad : ((j : ℝ) + 1) ^ 2 ≤ 4 * 2 ^ j := by
+    have := sq_succ_le_four_mul_two_pow j
+    exact_mod_cast this
+  have hmain : (((Nat.sqrt Nj + 1) * Nat.log 2 Nj : ℕ) : ℝ) ≤ junkB X Dm * 2 ^ j := by
+    have hcast : (((Nat.sqrt Nj + 1) * Nat.log 2 Nj : ℕ) : ℝ)
+        = (((Nat.sqrt Nj : ℕ) : ℝ) + 1) * ((Nat.log 2 Nj : ℕ) : ℝ) := by push_cast; ring
+    rw [hcast]
+    have h1 : (((Nat.sqrt Nj : ℕ) : ℝ) + 1) ≤ (Real.sqrt ((M : ℕ) : ℝ) + 1) * ((j : ℝ) + 1) := by
+      nlinarith [hsq, hjr, hsq0]
+    have h2 : ((Nat.log 2 Nj : ℕ) : ℝ) ≤ (L + 1) * ((j : ℝ) + 1) := by nlinarith [hlg, hL0, hjr]
+    have h3 : (0 : ℝ) ≤ ((Nat.log 2 Nj : ℕ) : ℝ) := by positivity
+    have h4 : (0 : ℝ) ≤ (((Nat.sqrt Nj : ℕ) : ℝ) + 1) := by positivity
+    have hstep : (((Nat.sqrt Nj : ℕ) : ℝ) + 1) * ((Nat.log 2 Nj : ℕ) : ℝ)
+        ≤ ((Real.sqrt ((M : ℕ) : ℝ) + 1) * ((j : ℝ) + 1)) * ((L + 1) * ((j : ℝ) + 1)) :=
+      mul_le_mul h1 h2 h3 (by nlinarith [hjr, hsq0])
+    refine hstep.trans ?_
+    unfold junkB
+    rw [show X + Dm = M from hM.symm, ← hL]
+    nlinarith [hquad, hsq0, hL0, (by positivity : (0:ℝ) ≤ (Real.sqrt ((M : ℕ) : ℝ) + 1) * (L + 1))]
+  unfold junkShiftBound junkA
+  linarith [hmain]
 
 /-- The closed form of the far junk series in base `bb ≥ 3`. -/
 noncomputable def farJunkBound (bb : ℝ) (J : ℕ) (A B : ℝ) : ℝ :=
-  A * (1 / bb) ^ J / (bb - 1) + B * (2 / bb) ^ (J + 1) * (bb / (bb - 2))
+  A * (1 / bb) ^ (J + 1) * (bb / (bb - 1)) + B * (2 / bb) ^ (J + 1) * (bb / (bb - 2))
 
 lemma hasSum_farJunkBound {bb : ℝ} (hb : 3 ≤ bb) (A B : ℝ) (J : ℕ) :
     HasSum (fun i : ℕ => (A + B * 2 ^ (J + i + 1)) * (1 / bb) ^ (J + i + 1))
       (farJunkBound bb J A B) := by
-  sorry
+  have hbpos : (0 : ℝ) < bb := by linarith
+  have hr0 : (0 : ℝ) ≤ 1 / bb := by positivity
+  have hr1 : (1 / bb : ℝ) < 1 := by rw [div_lt_one hbpos]; linarith
+  have hs0 : (0 : ℝ) ≤ 2 / bb := by positivity
+  have hs1 : (2 / bb : ℝ) < 1 := by rw [div_lt_one hbpos]; linarith
+  have h1 := (hasSum_geometric_of_lt_one hr0 hr1).mul_left (A * (1 / bb) ^ (J + 1))
+  have h2 := (hasSum_geometric_of_lt_one hs0 hs1).mul_left (B * (2 / bb) ^ (J + 1))
+  have h := h1.add h2
+  have hfun : (fun i : ℕ => (A + B * 2 ^ (J + i + 1)) * (1 / bb) ^ (J + i + 1))
+      = fun i : ℕ => A * (1 / bb) ^ (J + 1) * (1 / bb) ^ i
+          + B * (2 / bb) ^ (J + 1) * (2 / bb) ^ i := by
+    funext i
+    have hbne : (bb : ℝ) ≠ 0 := hbpos.ne'
+    rw [show J + i + 1 = (J + 1) + i by omega]
+    simp only [pow_add, div_pow, one_pow]
+    field_simp
+  rw [hfun]
+  have hclosed : farJunkBound bb J A B
+      = A * (1 / bb) ^ (J + 1) * (1 - 1 / bb)⁻¹ + B * (2 / bb) ^ (J + 1) * (1 - 2 / bb)⁻¹ := by
+    unfold farJunkBound
+    have hb1 : (bb : ℝ) - 1 ≠ 0 := by linarith
+    have hb2 : (bb : ℝ) - 2 ≠ 0 := by linarith
+    have hb0 : (bb : ℝ) ≠ 0 := hbpos.ne'
+    have e1 : (1 - 1 / bb : ℝ)⁻¹ = bb / (bb - 1) := by field_simp
+    have e2 : (1 - 2 / bb : ℝ)⁻¹ = bb / (bb - 2) := by field_simp
+    rw [e1, e2]
+  rw [hclosed]
+  exact h
 
 end NormalNumbers.G4
