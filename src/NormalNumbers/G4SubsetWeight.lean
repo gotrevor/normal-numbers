@@ -110,6 +110,20 @@ lemma overlapS_le (d m : ℕ) : overlapS S d m ≤ overlap d m :=
     simp only [Finset.mem_filter] at hp ⊢
     exact ⟨hp.1.1, hp.2⟩)
 
+/-! ### The closed form `c_S(b) = ∑_{p ∈ S} 1/(b^p − 1)` -/
+
+/-- The double family `[p prime ∈ S, p ∣ n, n ≠ 0]·b^{−n}` whose two iterated sums are the two
+descriptions of `c_S(b)`. -/
+private noncomputable def cell (S : ℕ → Prop) [DecidablePred S] (b : ℕ) (x : ℕ × ℕ) : ℝ :=
+  if x.2.Prime ∧ S x.2 ∧ x.2 ∣ x.1 ∧ x.1 ≠ 0 then ((b : ℝ) ^ x.1)⁻¹ else 0
+
+/-- **The closed form.**  `∑_n ω_S(n)/bⁿ = ∑_{p ∈ S} 1/(b^p − 1)`, the description of `c_S` in
+the campaign statement. -/
+theorem subsetLambert_eq_tsum_inv {b : ℕ} (hb : 2 ≤ b) :
+    subsetLambert S b
+      = ∑' p : ℕ, (if p.Prime ∧ S p then 1 / ((b : ℝ) ^ p - 1) else 0) := by
+  sorry
+
 /-! ### The sanity instance `S = univ` -/
 
 /-- With `S` everything, `ω_S` is `ω` on the nose. -/
