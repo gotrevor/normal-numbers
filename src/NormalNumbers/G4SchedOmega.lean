@@ -131,4 +131,31 @@ theorem junkShiftBound_div_le {P₀ X ρmax : ℕ} (hP₀ : 0 < P₀) (hX : 0 < 
   rw [hexp, he] at hstep
   linarith
 
+/-- **The `√X` piece of the junk average is at most `1`** once `X` dominates
+`P₀ · √X · log₂ X` — which the free cutoff `e` arranges, since `X = 2^{100·2^{mE}}` while `P₀`
+depends only on `K`. -/
+theorem junk_sqrt_term_le {P₀ X ρmax : ℕ} (hX : 0 < X) (hρ : ρmax ≤ X)
+    (hsize : 2 * P₀ * ((2 * Nat.sqrt X + 2) * (Nat.log 2 X + 1)) ≤ X) :
+    (2 * (P₀ : ℝ) / X) * (((Nat.sqrt (X + ρmax) + 1) * Nat.log 2 (X + ρmax) : ℕ) : ℝ) ≤ 1 := by
+  have hXr : (0 : ℝ) < X := by exact_mod_cast hX
+  -- the numerator, in `ℕ`
+  have hsq : Nat.sqrt (X + ρmax) ≤ 2 * Nat.sqrt X + 1 := by
+    have h1 : Nat.sqrt (X + ρmax) ≤ Nat.sqrt (2 * X) := Nat.sqrt_le_sqrt (by omega)
+    have h2 : Nat.sqrt (2 * X) < 2 * Nat.sqrt X + 2 := by
+      rw [Nat.sqrt_lt']
+      have := Nat.lt_succ_sqrt' X
+      nlinarith [Nat.sqrt_le' X, this]
+    omega
+  have hlg : Nat.log 2 (X + ρmax) ≤ Nat.log 2 X + 1 := by
+    have h1 : Nat.log 2 (X + ρmax) ≤ Nat.log 2 (X * 2) := Nat.log_mono_right (by omega)
+    rwa [Nat.log_mul_base (by norm_num) (by omega)] at h1
+  have hnum : (Nat.sqrt (X + ρmax) + 1) * Nat.log 2 (X + ρmax)
+      ≤ (2 * Nat.sqrt X + 2) * (Nat.log 2 X + 1) := Nat.mul_le_mul (by omega) hlg
+  have hkey : 2 * P₀ * ((Nat.sqrt (X + ρmax) + 1) * Nat.log 2 (X + ρmax)) ≤ X :=
+    le_trans (Nat.mul_le_mul_left _ hnum) hsize
+  have hkeyr : 2 * (P₀ : ℝ) * (((Nat.sqrt (X + ρmax) + 1) * Nat.log 2 (X + ρmax) : ℕ) : ℝ)
+      ≤ (X : ℝ) := by exact_mod_cast hkey
+  rw [div_mul_eq_mul_div, div_le_one hXr]
+  linarith
+
 end NormalNumbers.G4
