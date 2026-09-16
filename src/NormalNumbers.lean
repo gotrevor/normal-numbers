@@ -184,3 +184,4 @@ import NormalNumbers.HittingSetReduced
 import NormalNumbers.HittingSetBase6
 import NormalNumbers.HittingSetBase8
 import NormalNumbers.HittingSetBase2Len4
+import NormalNumbers.HittingSetBase2Len5Core

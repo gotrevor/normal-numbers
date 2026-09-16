@@ -24,9 +24,8 @@ is one check per run — **24 runs**.  No `native_decide` anywhere.
 * `hitting_7_1_seven_reduced` : `S(7,1) ≤ 7` via `{1, 2, 3, 4, 5, 6, 13}`.
 
 This is the SAME statement as `hitting_7_1_seven` (`HittingSetBase7.lean`), which
-proves it by a chunked kernel sweep over the `9360` ambient states and costs ~24
-minutes to build.  Here it is `24` states and seconds.  Neither file is deleted:
-the old one is the independent check.
+proves it by a chunked kernel sweep over the `9360` ambient states.  Neither file
+is deleted: the old one is the independent check.
 
 Nothing here claims the matching lower bound `S(7,1) ≥ 7`.
 -/
@@ -46,9 +45,14 @@ def h71rN : ℕ := 780
 /-- The 24 reachable joint states, sorted. -/
 def h71rL : Array ℕ := #[0, 720, 1440, 1560, 1584, 2304, 2310, 3030, 3152, 3872, 3896, 4616, 4743, 5463, 5487, 6207, 6329, 7049, 7055, 7775, 7799, 7919, 8639, 9359]
 
-def h71rLget (j : ℕ) : ℕ := h71rL.getD j 0
+/-- The `j`-th state, as a balanced if-tree.  `h71rL.getD j 0` would be
+`O(j)` in the KERNEL (it walks the literal), which makes the run sweep quadratic
+in the number of runs; this is `O(log 24)`. -/
+def h71rLget (j : ℕ) : ℕ := if j < 12 then if j < 6 then if j < 3 then if j < 1 then 0 else if j < 2 then 720 else 1440 else if j < 4 then 1560 else if j < 5 then 1584 else 2304 else if j < 9 then if j < 7 then 2310 else if j < 8 then 3030 else 3152 else if j < 10 then 3872 else if j < 11 then 3896 else 4616 else if j < 18 then if j < 15 then if j < 13 then 4743 else if j < 14 then 5463 else 5487 else if j < 16 then 6207 else if j < 17 then 6329 else 7049 else if j < 21 then if j < 19 then 7055 else if j < 20 then 7775 else 7799 else if j < 22 then 7919 else if j < 23 then 8639 else 9359
 
-def h71ridx (s : ℕ) : ℕ := (bfind h71rL s).getD 0
+/-- Its inverse, as a binary search on the sorted values.  Nothing is trusted
+about either: `h71r_section` checks `Lget (idx s) = s` on every reachable `s`. -/
+def h71ridx (s : ℕ) : ℕ := if s < 4743 then if s < 2310 then if s < 1560 then if s < 720 then 0 else if s < 1440 then 1 else 2 else if s < 1584 then 3 else if s < 2304 then 4 else 5 else if s < 3872 then if s < 3030 then 6 else if s < 3152 then 7 else 8 else if s < 3896 then 9 else if s < 4616 then 10 else 11 else if s < 7055 then if s < 6207 then if s < 5463 then 12 else if s < 5487 then 13 else 14 else if s < 6329 then 15 else if s < 7049 then 16 else 17 else if s < 7919 then if s < 7775 then 18 else if s < 7799 then 19 else 20 else if s < 8639 then 21 else if s < 9359 then 22 else 23
 
 def h71rstep (w : List ℕ) : ℕ → ℕ → Option ℕ :=
   fun σ j => (gfamPred 7 (chansOfW h71rms w) (σ % 7) (σ / 7) (h71rLget j)).map h71ridx

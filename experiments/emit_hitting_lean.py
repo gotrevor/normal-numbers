@@ -159,6 +159,24 @@ def cert(g, ell, ms, L, idx, W, word):
     return alive, rho, omega, fsig, fdst
 
 
+def tree_get(L, lo, hi, ind=0):
+    """`Lget` as a balanced if-tree: kernel `Array.getD`/`bfind` on a literal array
+    costs O(index) (it walks the cons cells), which makes the run sweep QUADRATIC in
+    the number of runs.  An if-tree on `j` is O(log M) per lookup."""
+    if hi - lo == 1:
+        return str(L[lo])
+    mid = (lo + hi) // 2
+    return (f"if j < {mid} then {tree_get(L, lo, mid)} else {tree_get(L, mid, hi)}")
+
+
+def tree_idx(L, lo, hi):
+    """The inverse, as a binary search on the (sorted) values: O(log M) too."""
+    if hi - lo == 1:
+        return str(lo)
+    mid = (lo + hi) // 2
+    return (f"if s < {L[mid]} then {tree_idx(L, lo, mid)} else {tree_idx(L, mid, hi)}")
+
+
 def lst(xs):
     return "[" + ", ".join(map(str, xs)) + "]"
 
@@ -243,9 +261,14 @@ def {p}N : ℕ := {N}
 /-- The {M} reachable joint states, sorted. -/
 def {p}L : Array ℕ := #{lst(L)}
 
-def {p}Lget (j : ℕ) : ℕ := {p}L.getD j 0
+/-- The `j`-th state, as a balanced if-tree.  `{p}L.getD j 0` would be
+`O(j)` in the KERNEL (it walks the literal), which makes the run sweep quadratic
+in the number of runs; this is `O(log {M})`. -/
+def {p}Lget (j : ℕ) : ℕ := {tree_get(L, 0, M)}
 
-def {p}idx (s : ℕ) : ℕ := (bfind {p}L s).getD 0
+/-- Its inverse, as a binary search on the sorted values.  Nothing is trusted
+about either: `{p}_section` checks `Lget (idx s) = s` on every reachable `s`. -/
+def {p}idx (s : ℕ) : ℕ := {tree_idx(L, 0, M)}
 
 def {p}step (w : List ℕ) : ℕ → ℕ → Option ℕ :=
   fun σ j => (gfamPred {g} (chansOfW {p}ms w) (σ % {g}) (σ / {g}) ({p}Lget j)).map {p}idx

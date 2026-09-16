@@ -56,6 +56,35 @@ the monolithic `(2,5)` file (5328 states × 32 words, 1.4 MB) is **OOM-killed**
 on this 19 GB box (`Lean exited with code 137`), and worse, two concurrent
 `lean` processes on it guarantee the kill — run ONE build at a time here.
 
+## ⭐ The lap's best finding: kernel `Array.getD` on a literal array is `O(index)`
+
+`h*Lget j = L.getD j 0` and `h*idx s = (bfind L s).getD 0` look like `O(1)` and
+`O(log M)`.  In the KERNEL they are not: evaluating `Array.getD` on a literal
+walks the literal, so a lookup costs `O(j)`.  The reachability sweep does one
+lookup per run with `j` growing across the sweep, so **the sweep is quadratic in
+the number of runs**.  That is the whole reason `(2,4)` (520 runs) took 16
+minutes and `(2,5)` (5328 runs) did not finish in 70.
+
+The emitter now writes both as **balanced `if`-trees** — `Lget` branching on `j`,
+`idx` binary-searching the sorted values — so each is `O(log M)` with `M`
+comparisons of literals.  Nothing is trusted about either: `h*_section` checks
+`Lget (idx s) = s` on every reachable `s`, so a wrong tree cannot produce a
+proof, only a failed build.  Measured on `(2,5)`:
+
+| module | array literal | if-tree |
+|---|---|---|
+| `Runs1` … `Runs6` | 42 s, 71 s, 104 s, 160 s, 180 s, **326 s** (growing) | **9–15 s, flat** |
+| `Core` (the append chain + `_section`) | never reached | **8 s** |
+| whole sweep, one module | OOM-killed / 70 min unfinished | **~4 min total** |
+
+The growth-vs-flat is the signature: the old cost tracked the index, the new one
+does not.  (On a small family it is a mild loss — `(7,1)`'s 24 states went 16 s →
+74 s, the tree term being bigger to elaborate — so this is a large-`M` tool.)
+
+**Landed because of it**: `h25_section`, the reachability of the `(2,5)` family —
+`5328` states, `5328` runs, `27` kernel chunks across 14 modules — is a theorem,
+axiom-clean `[propext, Classical.choice, Quot.sound]`.
+
 ## Where `(2,5)` actually stands — read this before restarting it
 
 `S(2,5) ≤ 20` is **emitted and Python-verified** (all 32 certificates pass
@@ -64,14 +93,17 @@ was measured this lap, on the 19 GB box:
 
 * the `(2,5)` reduction is `5328` states and `5328` runs — 10× `(2,4)`'s `520`,
   with state labels of 47 digits instead of 16;
-* as ONE module it is OOM-killed (`Lean exited with code 137`);
-* split into `…Core` (defs + the 29 run-sweep chunks of 200 + `_section`) plus
-  16 certificate modules, the Core module ran **70 minutes without finishing**,
-  peak RSS cycling between 4 and 14 GB.  It was killed to protect the lap, not
-  because it errored.  The certificate modules were never reached.
+* **the reachability half is DONE** (`h25_section`, above): `…Base` + `Runs0…13`
+  + `…Core`, about four minutes of kernel time in all;
+* **the 32 certificates are what is left.**  `Cert0` (two words, `checkCertA`
+  over 5328 states) was still running at **7½ minutes** when the lap ended, so
+  budget ~2 hours for the sixteen cert modules as they stand, and look for the
+  same kind of kernel-cost bug in `checkCertA`/`gfamPred` before paying it: the
+  per-step work is one `gfamPred` over 20 channels plus one `idx`, and the
+  `idx` is now `O(log M)`, so something else in there is the cost.
 
-So the run sweep must be **split across `lean` processes**, not just across
-declarations — memory is released between chunks but the wall-clock is not.
+The run sweep is also split across `lean` PROCESSES, not just declarations —
+memory is released between chunk declarations but wall-clock is not.
 `emit_hitting_lean.py --split` now does exactly that: it writes `…Base` (defs +
 a LOCAL `runsCover_append` lemma, so no rebuild of the rest of the chapter),
 `…Runs{i}` (a couple of `decide +kernel` chunks each), `…Core` (the append

@@ -23,9 +23,18 @@ The lap's real advance is that a `(g, k, S)` census row now becomes a Lean theor
   4–14 GB).  The sweep must be split across `lean` PROCESSES; `--split` now emits
   `…Base`/`…Runs{i}`/`…Core`/`…Cert{i}`/assembly for exactly that, untested.
 
-**Next attack.**  (1) build `(2,5)` on the per-process split, `-j1`, one module at a time (two
-concurrent `lean` processes on a module this size is an instant OOM); the `RUNCHUNK` / group-count
-knobs are free, so shrink until a `Runs` module is a minute.  Then `(3,3)`.
+**⭐ The lap's key finding.**  Kernel `Array.getD` on a LITERAL array is `O(index)` — it walks the
+literal — so `Lget`/`idx` made the reachability sweep QUADRATIC in the number of runs.  Emitting
+both as balanced `if`-trees (`Lget` on `j`, `idx` binary-searching the sorted values) made the
+`(2,5)` `Runs` modules go from 42/71/104/160/180/**326** s (growing with the index) to a flat
+**9–15 s**, and `Core` to **8 s**.  Nothing is trusted: `_section` checks `Lget (idx s) = s` on
+every reachable `s`.  **`h25_section` is now a theorem** — the reachability of the 5328-state
+`(2,5)` family, axiom-clean.
+
+**Next attack.**  (1) the 32 `(2,5)` CERTIFICATES are what remains; `Cert0` ran 7½ minutes, so
+look for the same class of kernel-cost bug inside `checkCertA`/`gfamPred` before paying ~2 hours.
+(2) Then `(3,3)` (5094 states, 27 words), emitted and Python-verified.  (3) Build one module at a
+time: parallel `lake` hits BOTH an OOM and a system-wide "Too many open files".
 (2) The multiplier sets are greedy-minimal-BY-INCLUSION, not minimum — every `≤` above is soft.
 (3) The real open content of the invariant is the LOWER halves: every `≥` in the table is a search
 cap, not a theorem, and no finite automaton decides them.
