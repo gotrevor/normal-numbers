@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.G4SchedOmega
+import NormalNumbers.G4OmegaClosedForm
 
 /-!
 # The `Ω` schedule witness at a free cutoff
@@ -131,6 +132,14 @@ theorem isDisjunctive_Omega {b : ℕ} (hb : 3 ≤ b) :
     simp only [Nat.cast_zero, pow_zero, zero_add, div_one] at this
     exact this (orbit_mem_Ico b _ 0)
   · exact exists_scheduleWitnessΩ b ℓ w hb hℓ
+
+
+/-- **The `Ω` headline in closed form.**  `∑_{q a prime power} 1/(b^q − 1)` is disjunctive in
+every base `b ≥ 3`. -/
+theorem isDisjunctive_Omega_primePowerSum {b : ℕ} (hb : 3 ≤ b) :
+    IsDisjunctive b (∑' q : ℕ, (if IsPrimePow q then 1 / ((b : ℝ) ^ q - 1) else 0)) := by
+  have h := isDisjunctive_Omega hb
+  rwa [cardFactorsLambert_eq_tsum_inv (b := b) (by omega)] at h
 
 
 end SchedB
