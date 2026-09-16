@@ -261,6 +261,7 @@ import NormalNumbers.G4ScheduleWitness
 import NormalNumbers.G4ScheduleAssembly
 import NormalNumbers.G4SeparatingTest
 import NormalNumbers.G4SmallPrimeVector
+import NormalNumbers.G4PhaseA
 import NormalNumbers.G4Spectral
 import NormalNumbers.G4Tensor
 import NormalNumbers.G4TorusProjection
