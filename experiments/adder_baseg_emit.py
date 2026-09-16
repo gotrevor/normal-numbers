@@ -83,6 +83,19 @@ FAMILIES = {
     "h23": (2, True, [[(m, 0, [a, b, c]) for m in (1, 3, 5, 7)]
                       for a in range(2) for b in range(2) for c in range(2)],
             [f"w{a}{b}{c}" for a in range(2) for b in range(2) for c in range(2)]),
+    # 2026-09-16 kickoff (upper halves U5-U7):
+    # h61: {1,8,11,14,16,20,23} at (6,1) => S(6,1) <= 7.
+    # h32: {1,2,4,5,7,8} at (3,2) => S(3,2) <= 6.
+    # h24: {1,3,...,17} at (2,4) => S(2,4) <= 9.
+    "h61": (6, True, [[(m, 0, [d]) for m in (1, 8, 11, 14, 16, 20, 23)] for d in range(6)],
+            [f"d{d}" for d in range(6)]),
+    "h32": (3, True, [[(m, 0, [a, b]) for m in (1, 2, 4, 5, 7, 8)]
+                      for a in range(3) for b in range(3)],
+            [f"w{a}{b}" for a in range(3) for b in range(3)]),
+    "h24": (2, True, [[(m, 0, [a, b, c, e]) for m in (1, 3, 5, 7, 9, 11, 13, 15, 17)]
+                      for a in range(2) for b in range(2) for c in range(2) for e in range(2)],
+            [f"w{a}{b}{c}{e}" for a in range(2) for b in range(2)
+             for c in range(2) for e in range(2)]),
 }
 
 

@@ -177,3 +177,5 @@ import NormalNumbers.AdderSignedInstance
 import NormalNumbers.LnTwoIrrational
 import NormalNumbers.HittingSetBounds
 import NormalNumbers.HittingSetBase7
+import NormalNumbers.HittingSetSparse
+import NormalNumbers.HittingSetBase3Len2
