@@ -315,4 +315,79 @@ theorem sum_junk_le_of_bounded (c : ℕ → ℕ) {C : ℝ} (hC : ∀ p, (c p : �
   have hXP : (0 : ℝ) ≤ (X : ℝ) / P₀ := by positivity
   nlinarith [mul_le_mul_of_nonneg_left (add_le_add h1 h2) hXP, h3]
 
+/-! ### The hypothesis class: tame coefficients
+
+`sum_junk_le'` exposes exactly two demands on `c`.  `Tame c A` is the smallest package that
+meets both with one constant, and it is *strictly* weaker than `c ≤ C`:
+
+* `tail` — `∑_{p<M} c_p/(p(p−1)) ≤ A`, the convergence of `∑_p c_p/p²`;
+* `pref` — `∑_{p<M} c_p ≤ A·M`, the prime prefix sums grow at most linearly.
+
+`pref` is Chebyshev-shaped, so it holds for **unbounded** `c`: `c_p = ⌊log₂ p⌋` satisfies it
+because `∑_{p≤M} log₂ p = log₂(primorial M) ≤ 2M` (mathlib's `Nat.primorial_le_4_pow`).  A
+bounded `c ≤ C` satisfies both with `A = max C 1` (`∑_{p<M} C/(p(p−1)) ≤ C` and
+`∑_{p<M} C ≤ C·M`). -/
+
+/-- **Tame coefficients**: the hypothesis class that replaces a uniform bound `c ≤ C`. -/
+structure Tame (c : ℕ → ℕ) (A : ℝ) : Prop where
+  /-- the constant is at least one -/
+  one_le : 1 ≤ A
+  /-- the tail condition: `∑_p c_p/p²` converges, uniformly in the cutoff -/
+  tail : ∀ M : ℕ, ∑ p ∈ M.primesBelow, (c p : ℝ) / ((p : ℝ) * ((p : ℝ) - 1)) ≤ A
+  /-- the growth condition: the prime prefix sums are at most linear -/
+  pref : ∀ M : ℕ, ∑ p ∈ M.primesBelow, (c p : ℝ) ≤ A * M
+
+lemma Tame.nonneg {c : ℕ → ℕ} {A : ℝ} (h : Tame c A) : 0 ≤ A := by linarith [h.one_le]
+
+/-- A tame `c` grows at most linearly at each prime — enough for the Lambert series to
+converge at every base `b ≥ 2`. -/
+lemma Tame.coeff_le {c : ℕ → ℕ} {A : ℝ} (h : Tame c A) {p : ℕ} (hp : p.Prime) :
+    (c p : ℝ) ≤ A * ((p : ℝ) + 1) := by
+  have hmem : p ∈ (p + 1).primesBelow := Nat.mem_primesBelow.2 ⟨by omega, hp⟩
+  have hsingle := Finset.single_le_sum (f := fun q : ℕ => (c q : ℝ))
+    (fun q _ => by positivity) hmem
+  have h2 := h.pref (p + 1)
+  push_cast at h2
+  linarith
+
+/-- A uniformly bounded `c` is tame with `A = max C 1`. -/
+theorem tame_of_bounded {c : ℕ → ℕ} {C : ℕ} (hC : ∀ p, c p ≤ C) :
+    Tame c ((max C 1 : ℕ) : ℝ) := by
+  have hC1 : (1 : ℝ) ≤ ((max C 1 : ℕ) : ℝ) := by exact_mod_cast le_max_right C 1
+  have hCC : (C : ℝ) ≤ ((max C 1 : ℕ) : ℝ) := by exact_mod_cast le_max_left C 1
+  have hC0 : (0 : ℝ) ≤ (C : ℝ) := by positivity
+  refine ⟨hC1, fun M => ?_, fun M => ?_⟩
+  · have hstep : ∑ p ∈ M.primesBelow, (c p : ℝ) / ((p : ℝ) * ((p : ℝ) - 1))
+        ≤ ∑ p ∈ M.primesBelow, (C : ℝ) * (1 / ((p : ℝ) * ((p : ℝ) - 1))) := by
+      refine Finset.sum_le_sum fun p hp => ?_
+      have h2 := (Nat.mem_primesBelow.1 hp).2.two_le
+      have h2' : (2 : ℝ) ≤ p := by exact_mod_cast h2
+      have hp1 : (0 : ℝ) < (p : ℝ) * ((p : ℝ) - 1) := by nlinarith
+      have hrw : (C : ℝ) * (1 / ((p : ℝ) * ((p : ℝ) - 1))) = (C : ℝ) / ((p : ℝ) * ((p : ℝ) - 1)) :=
+        by ring
+      rw [hrw]
+      gcongr
+      exact_mod_cast hC p
+    have hsub : ∑ p ∈ M.primesBelow, 1 / ((p : ℝ) * ((p : ℝ) - 1))
+        ≤ ∑ n ∈ Icc 2 M, 1 / ((n : ℝ) * ((n : ℝ) - 1)) := by
+      refine Finset.sum_le_sum_of_subset_of_nonneg ?_ fun n hn _ => ?_
+      · intro p hp
+        have h1 := Nat.mem_primesBelow.1 hp
+        exact Finset.mem_Icc.2 ⟨h1.2.two_le, by omega⟩
+      · have h2 := (Finset.mem_Icc.1 hn).1
+        have h2' : (2 : ℝ) ≤ n := by exact_mod_cast h2
+        have : (0 : ℝ) < (n : ℝ) - 1 := by linarith
+        positivity
+    rw [← Finset.mul_sum] at hstep
+    nlinarith [sum_inv_mul_pred_le M]
+  · have hstep : ∑ p ∈ M.primesBelow, (c p : ℝ) ≤ ∑ _p ∈ M.primesBelow, ((max C 1 : ℕ) : ℝ) :=
+      Finset.sum_le_sum fun p _ => le_trans (by exact_mod_cast hC p) hCC
+    have hcard : (M.primesBelow.card : ℝ) ≤ (M : ℝ) := by
+      have := Finset.card_le_card (primesBelow_subset_range M)
+      rw [Finset.card_range] at this
+      exact_mod_cast this
+    have h0 : (0 : ℝ) ≤ ((max C 1 : ℕ) : ℝ) := by positivity
+    rw [Finset.sum_const, nsmul_eq_mul] at hstep
+    nlinarith
+
 end NormalNumbers.PrimeLambert
