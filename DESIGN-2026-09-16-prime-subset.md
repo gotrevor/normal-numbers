@@ -1,0 +1,113 @@
+# DESIGN 2026-09-16 — prime-subset Lambert series: the audit lap (item 0)
+
+Campaign A (`DIRECTION.md`, attended override 2026-09-15 23:58).  Read-only audit of how the
+base-`b` schedule consumes the cutoff `R b K = 2^{2^{m₁ b K}}` and the lower Mertens input, to
+decide between (i) "parametrize `R`" and (ii) "freeze a Mertens-in-AP `sorry` leaf".
+
+## Verdict
+
+**(i), but not in the form the override states, and (ii) is needed anyway — in a *quantitative*
+form that is a real theorem, not a black box.**
+
+The override's phrasing "any `R ≥ R b K` works if every other use of `R` is an inequality
+`R ≤ Y`, `R ≤ X` or monotone in `R`" is **false**: `R` is genuinely capped from above.  What is
+true, and what the existing `m₁`-march (`G4EntropyMTower*`) already demonstrates, is that the
+schedule constrains the *cutoff exponent* `e` (with `R = 2^{2^e}`, `m₁ ↦ e`) inside a window
+whose two ends are separated by a doubly-exponential factor in `K`.  So the correct
+generalization is: **make `e` a free parameter and carry it through `G4SchedB*`**, and supply the
+`S`-side lower bound as a *rate* hypothesis.
+
+## The four constraints on `e`, with the declarations that impose them
+
+Writing `r = (K²)^K`, `θ = freqSeed b K = b^{−4}(2/b²)^K`, `T = T K`, `m₂ = 8K²`, `m = e + m₂`,
+`Mc = 10⁵·T·e`:
+
+1. **Gain (lower, and the ONLY place divergence enters).**  `G4SchedBBudget.main_term_le` needs
+   exactly `2(Kr) − 4θ·Sg ≤ −4`, i.e.
+
+       Sg ≥ (2·K·r + 4) / (4θ)          (≈ 500·2^K·K^{2K+1} for b = 3)
+
+   where `Sg = ∑_{p ∈ smallPrimes R P₀} 1/p`.  This is a bound **in `K` alone** — `e` appears
+   only because `G4SchedBParams.sum_inv_smallPrimes_ge` supplies `Sg ≥ e·log 2 − 21K² − 4` and
+   `m₁` was *defined* to make that exceed the demand.  This is the seam: for a subset `S` the
+   demand is unchanged and only the supply shrinks.
+2. **Upper harmonic (free under subsetting).**  `sum_inv_smallPrimes_le : Sg ≤ 3e + 5`, consumed
+   by `term_b_le`/`term_c_le` (they need `Mc ≳ 44·T·e`).  Restricting to `S` only decreases
+   `Sg`, so this direction is monotone in the good direction — **no new work**.
+3. **Moment cap (upper, the constraint the override missed).**  `term_b_le` forces
+   `Mc ≳ 44·T·e`, and `G4SchedBParams.R_pow_two_Mc_le` (`R^{2Mc} ≤ 2^{10·2^m}`) forces
+   `Mc ≤ 2^{m₂}` (`Mc_le_two_pow_m₂`).  Hence
+
+       e ≤ 2^{8K²} / (10⁵·T K)                     (the cap)
+
+   `R` is therefore **not** free upward: raising `R` raises the moment order `Mc`, and `Mc` is
+   capped by the `X`-side counting budget.
+4. **Rigid gap `m − e = m₂`.**  `G4SchedBParams.dyadic_factor_le` needs
+   `1 + log log Y − log log R ≤ 1 + 6K²`, i.e. `(m − e)·log 2 ≤ 6K²`, satisfied by
+   `m = e + 8K²` exactly as now; `R_le_Y`, `natLog_R/natLog_Y`, `m₁_le_m` follow.
+   `m₁_ge_cube` (`K³ ≤ e`) is a harmless floor.
+
+Full list of the declarations that mention `R b K` and must be re-read with `e`:
+`G4SchedBParams` (`m₁ m Mc R Y X m₁_le m₁_ge m_le Mc_le natLog_R log_R log_log_R_ge
+sum_inv_smallPrimes_ge sum_inv_smallPrimes_le dyadic_factor_le R_pow_two_Mc_le R_ge_two
+Mc_le_two_pow_m₂ Kr_le_T_mul_m₁ m₁_le_m m_sub_m₁`), `G4SchedBBudget` (`main_term_le term_a_le
+term_b_le term_c_le`, the `smallPrimes (R b K) P₀` occurrences), `G4SchedBAssembly` (`R_le_Y`,
+the `√(4(1+log log Y − log log R)·rowL2)` block, the final `Sched` record at line 478).
+The generic-in-`e` versions of the two harmonic bounds **already exist**:
+`G4EntropyMTowerHarmonic.sum_inv_smallPrimes_ge_gen / _le_gen {Rg} (hK) (e) (hRg : Rg = 2^2^e)`,
+whose own docstring records the same finding ("the cone constrains `m₁` only from below").
+
+## Consequence for `S`
+
+* `e_min(K) ≈ m₁ b K = 1000·b^{2K+4}·K^{2K+1} = exp(O(K log K))`,
+  `e_max(K) = 2^{8K²}/(10⁵ T K) = exp(Θ(K²))`.  The window is enormous, so a *constant-factor*
+  loss in the Mertens supply is free: **any `S` with
+  `∑_{p∈S, p<2^{2^e}} 1/p ≥ c·e − C` for a fixed `c > 0`** is admissible, by taking
+  `e ≈ (m₁ b K + C)/c`, which is `≤ e_max(K)` for all large `K`.
+* Residue classes `p ≡ a (q)`, `a` a unit: `c = 1/φ(q)` — admissible for every fixed `q`.
+* **Mere divergence `∑_{p∈S} 1/p = ∞` is NOT sufficient.**  The demand `exp(O(K log K))` must be
+  met before the cap `exp(Θ(K²))`; a set whose partial sums diverge arbitrarily slowly (e.g.
+  like `log* `) fails.  So the override's Objective A must be restated with a **rate**: this is a
+  proved limitation of the G4 route, not a defect of the formalization.  (It is not a limitation
+  of the *theorem*: `c_S` is presumably still disjunctive.  It is this proof that needs the rate.)
+
+## The crux, and why it is now a finite program
+
+The rate for a residue class — Mertens in arithmetic progressions — is not in mathlib, but every
+ingredient is:
+
+* `ArithmeticFunction.vonMangoldt.LSeries_residueClass_lower_bound` (mathlib,
+  `LSeries/PrimesInAP.lean:348`): `(φ q)⁻¹/(x−1) − C ≤ ∑' n, Λ_a(n)/n^x` for `x ∈ (1,2]`.
+* `ArithmeticFunction.vonMangoldt.summable_residueClass_non_primes_div` (ibid. :181) — the
+  prime-power part is `O(1)`, uniformly for `x ≥ 1` by term-wise monotonicity.
+* `Chebyshev.psi_le_const_mul_self : ψ x ≤ (log 4 + 4)·x` (mathlib `NumberTheory/Chebyshev.lean`)
+  — Chebyshev upper bound, for the tail.
+* `Mathlib/NumberTheory/AbelSummation.lean` (`sum_mul_eq_sub_integral_mul₀'`) — partial summation.
+
+The elementary chain (no Tauberian theorem):
+
+1. Put `x = 1 + λ/log N`, `λ := λ_q` a constant.  Split
+   `∑_p∈S log p·p^{−x} = ∑_{p≤N} (log p/p)·p^{−(x−1)} + tail ≤ A_S(N) + tail`,
+   `A_S(N) := ∑_{p∈S, p≤N} log p / p`.
+2. Tail `∑_{n>N} Λ(n) n^{−x} ≤ C₁·e^{−λ}·(log N)/λ` by Abel summation against `ψ(t) ≤ 5.4 t`.
+3. LHS `≥ (1/φ(q))·(log N)/λ − C₀` by the mathlib lower bound (minus the `O(1)` prime powers).
+4. Choose `λ_q := log(11·C₁·φ(q))` so that `C₁e^{−λ} ≤ 1/(2φ(q))`; then
+   `A_S(N) ≥ (1/(2φ(q)λ_q))·log N − C₀`.
+5. Partial summation once more, `1/p = (log p/p)·(1/log p)`, gives
+   `∑_{p∈S,p<N} 1/p ≥ c_q·log log N − C_q`, which is the interface `MertensRate`.
+
+Steps 2 and 5 are the two real Abel-summation lemmas; 1, 3, 4 are bookkeeping.
+
+## Order of work (revises the override's items, same objective)
+
+* **A0 (this lap):** `src/NormalNumbers/G4MertensAP.lean` — `sumInvPrimesIn`, `sumLogPrimesIn`,
+  the `MertensRate` interface, and the chain above as four named `sorry` leaves.
+* **A1:** discharge `mertensRate_of_sumLog` (step 5) and `sumLog_tail_le` (step 2); these are
+  self-contained Abel-summation facts and do not mention residue classes.
+* **A2:** `sumLog_residueClass_ge` from the mathlib `LSeries` bound (steps 1, 3, 4).
+* **A3:** the `e`-parametrization of `G4SchedB*` (the declaration list above), consuming
+  `MertensRate` in place of `sum_inv_smallPrimes_ge`.
+* **A4:** definitions + transport (`G4SubsetWeight.lean`, override item 1) and assembly;
+  `S = univ` must re-derive `isDisjunctive_base`.
+
+Items A1–A2 are the crux: they are the only place where anything is *not* a rerun of G4.
