@@ -221,6 +221,30 @@ if __name__ == "__main__":
             if is_hitting(g, k, S, report=True):
                 print(f"least odd prefix: n={n}, S={list(S)}")
                 break
+    elif cmd == "shrink":
+        # greedy minimisation by inclusion from a starting hitting set, several orders
+        import random
+        g, k = int(args[1]), int(args[2])
+        S0 = tuple(int(x) for x in args[3].split(","))
+        tries = int(args[4]) if len(args) > 4 else 8
+        if not is_hitting(g, k, S0, report=True):
+            sys.exit("start set is not hitting")
+        best = None
+        rng = random.Random(20260916)
+        for r in range(tries):
+            order = list(S0)
+            if r:
+                rng.shuffle(order)
+            cur = list(S0)
+            for m in order:
+                T = tuple(x for x in cur if x != m)
+                if T and is_hitting(g, k, T):
+                    cur = list(T)
+            cur = tuple(cur)
+            if best is None or len(cur) < len(best):
+                best = cur
+            print(f"  [{r}] minimal-by-inclusion size {len(cur)}: {list(cur)}", flush=True)
+        print(f"g={g} k={k}: best minimal-by-inclusion size {len(best)}: {list(best)}")
     elif cmd == "first":
         g, k, size, mmax = (int(x) for x in args[1:5])
         cands = [m for m in range(1, mmax + 1) if m % g]
