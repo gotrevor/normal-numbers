@@ -5,6 +5,8 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.G4WeightAWitness
 import NormalNumbers.G4SchedBEAssembly
+import NormalNumbers.G4UnboundedSched
+import NormalNumbers.G4SubsetCAssembly
 
 /-!
 # The schedule's `D`-side at a general bounded multiplier
@@ -105,6 +107,114 @@ theorem hbigA_holdsE {b K k₄ e Ca : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e)
     _ ≤ (1 / 16 : ℝ) * ((1 / K : ℝ) * a) + (1 / 16 : ℝ) * ((1 / K : ℝ) * a) :=
         add_le_add hc1 hc2
     _ = (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by rw [ha]; ring
+
+/-! ### The schedule witness for the master weight -/
+
+set_option maxHeartbeats 1000000 in
+/-- **The schedule witness at the effective constant, for a general bounded `a`.**  Every field
+but `hN`, `hbig`, `hfar` and `hbudget` is `scheduleWitnessUE`'s verbatim; those four are the
+whole cost of the multiplier, and all four are paid by the single condition
+`10⁵·(Ca·C)·k₄³ ≤ 2^{k₄}` on the schedule's free parameter. -/
+noncomputable def scheduleWitnessAUE (a c : ℕ → ℕ) {Ca : ℕ} (hCa1 : 1 ≤ Ca) {A : ℝ} (C : ℕ)
+    (hC1 : 1 ≤ C) (b ℓ w e k₄ : ℕ) (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ)
+    (hk : k₄bℓ b ℓ ≤ k₄) (hk40 : 40 ≤ k₄) (hCk : 100000 * (Ca * C) * k₄ ^ 3 ≤ 2 ^ k₄)
+    (hE : HypE b (4 * k₄) e)
+    (hEff : effC c (gridOf (4 * k₄) (Sched.N (4 * k₄)) hE.base.hK1).P₀ A ≤ (C : ℝ))
+    (hlow : (m₁ b (4 * k₄) : ℝ) * Real.log 2 - 21 * ((4 * k₄ : ℕ) : ℝ) ^ 2 - 4
+      ≤ ∑ p ∈ (smallPrimes (RE e)
+          (gridOf (4 * k₄) (Sched.N (4 * k₄)) hE.hK1).P₀).filter (fun p => 1 ≤ a p),
+            (p : ℝ)⁻¹) :
+    ScheduleWitnessAU a c Ca A b ℓ w :=
+  let K := 4 * k₄
+  have hK4 : K = 4 * k₄ := rfl
+  have h : Hyp b K := hE.base
+  have hK100 : 100 ≤ K := h.hK
+  have hK1 : 1 ≤ K := h.hK1
+  have hCk' : 100000 * C * k₄ ^ 3 ≤ 2 ^ k₄ := by
+    refine le_trans ?_ hCk
+    have : C ≤ Ca * C := Nat.le_mul_of_pos_left _ (by omega)
+    exact Nat.mul_le_mul_right _ (Nat.mul_le_mul_left _ this)
+  have hCkA : 100000 * Ca * k₄ ^ 3 ≤ 2 ^ k₄ := by
+    refine le_trans ?_ hCk
+    have : Ca ≤ Ca * C := Nat.le_mul_of_pos_right _ (by omega)
+    exact Nat.mul_le_mul_right _ (Nat.mul_le_mul_left _ this)
+  have hCaK : Ca ≤ 2 ^ K := by
+    have h1 : Ca ≤ 100000 * Ca * k₄ ^ 3 := by
+      have : 1 ≤ k₄ ^ 3 := Nat.one_le_pow _ _ (by omega)
+      nlinarith [Nat.zero_le Ca]
+    have h2 : (2 : ℕ) ^ k₄ ≤ 2 ^ K :=
+      Nat.pow_le_pow_right (by norm_num) (by omega)
+    omega
+  have hCaC : Ca * C ≤ 2 ^ k₄ := by
+    have : 1 ≤ k₄ ^ 3 := Nat.one_le_pow _ _ (by omega)
+    nlinarith [hCk, Nat.zero_le (Ca * C)]
+  let U := scheduleWitnessUE c C b ℓ w e k₄ hb hℓ hk hk40 hCk' hE hEff
+  { G := U.G
+    hK := U.hK
+    hr := U.hr
+    hP₀ := U.hP₀
+    hΩ := U.hΩ
+    X := U.X
+    hne := U.hne
+    η := U.η
+    hη := U.hη
+    ε := U.ε
+    hε := U.hε
+    hε1 := U.hε1
+    M := U.M
+    hM := U.hM
+    Lg := U.Lg
+    hlog := U.hlog
+    δ₁ := U.δ₁
+    hδ₁ := U.hδ₁
+    hB := U.hB
+    R := U.R
+    hR := U.hR
+    Y := U.Y
+    hRY := U.hRY
+    D := U.D
+    hN := hN_holdsA (by omega) hK4 hK100 hCaK
+    Mc := U.Mc
+    hMc := U.hMc
+    lam' := U.lam'
+    hlam' := U.hlam'
+    lam := U.lam
+    hlam := U.hlam
+    Mx := U.Mx
+    hMx1 := U.hMx1
+    hMx := U.hMx
+    Dm := U.Dm
+    hDm := U.hDm
+    ρmax := U.ρmax
+    hρm := U.hρm
+    δbig := U.δbig
+    δjunk := U.δjunk
+    δfar := U.δfar
+    hbig := hbigA_holdsE hK4 hE hCa1 hCkA
+    hjunk := U.hjunk
+    hfar := by
+      have hκ : max (Ca * C) 1 ≤ 2 ^ k₄ := by
+        have h2 : 1 ≤ 2 ^ k₄ := Nat.one_le_two_pow
+        omega
+      refine le_trans ?_ (hfarC_holdsE (κ := max (Ca * C) 1) hK4 hκ hE)
+      have hbr := farBracket_nonneg (bb := b) (by omega) (gridOf K (Sched.N K) hK1) (XE K e)
+        (sample_nonemptyE hE) (gridDm K (Sched.N K))
+      refine mul_le_mul_of_nonneg_right ?_ hbr
+      have hCa0 : (0 : ℝ) ≤ (Ca : ℝ) := by positivity
+      have h1 : (Ca : ℝ) * effC c U.G.P₀ A ≤ (Ca : ℝ) * (C : ℝ) :=
+        mul_le_mul_of_nonneg_left hEff hCa0
+      have h2 : ((Ca : ℝ) * (C : ℝ)) ≤ ((max (Ca * C) 1 : ℕ) : ℝ) := by
+        have hle : (Ca * C : ℕ) ≤ max (Ca * C) 1 := le_max_left _ _
+        calc ((Ca : ℝ) * (C : ℝ)) = ((Ca * C : ℕ) : ℝ) := by push_cast; ring
+          _ ≤ ((max (Ca * C) 1 : ℕ) : ℝ) := Nat.cast_le.2 hle
+      linarith
+    hbudget := by
+      have hsub : (smallPrimes (RE e) (gridOf K (Sched.N K) hK1).P₀).filter (fun p => 1 ≤ a p)
+          ⊆ smallPrimes (RE e) (gridOf K (Sched.N K) hK1).P₀ := Finset.filter_subset _ _
+      have hbud := hbudget_holdsΩE_gen (k₄ := k₄) hK4 hE hsub hlow
+      have hc : Fintype.card (gridOf K (Sched.N K) hK1).Idx = Sched.T K := gridOf.card_Idx hK1
+      rw [← hc] at hbud
+      exact hbud }
 
 end SchedB
 
