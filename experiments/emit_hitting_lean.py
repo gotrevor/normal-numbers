@@ -177,6 +177,26 @@ def tree_idx(L, lo, hi):
     return (f"if s < {L[mid]} then {tree_idx(L, lo, mid)} else {tree_idx(L, mid, hi)}")
 
 
+def tree_runs(vals, var="j"):
+    """Same as `tree_vals` but first collapses maximal runs of EQUAL values into
+    single leaves: `rho`/`omega`/`live`/`forced` are mostly constant (0 / false /
+    none) across long stretches, so the tree shrinks by an order of magnitude and
+    the module fits in memory (a per-index tree over 5328 states OOM-kills)."""
+    bnds = [0]
+    for j in range(1, len(vals)):
+        if vals[j] != vals[j - 1]:
+            bnds.append(j)
+    lv = [vals[b] for b in bnds]
+
+    def go(lo, hi):
+        if hi - lo == 1:
+            return lv[lo]
+        mid = (lo + hi) // 2
+        return f"if {var} < {bnds[mid]} then {go(lo, mid)} else {go(mid, hi)}"
+
+    return go(0, len(bnds))
+
+
 def tree_vals(vals, lo, hi, var="j"):
     """A total function `[0,M) -> value` as a balanced if-tree on `var`.
     `List.lookup` / `List.contains` on a literal association list is a LINEAR
@@ -185,6 +205,37 @@ def tree_vals(vals, lo, hi, var="j"):
         return vals[lo]
     mid = (lo + hi) // 2
     return f"if {var} < {mid} then {tree_vals(vals, lo, mid, var)} else {tree_vals(vals, mid, hi, var)}"
+
+
+def cert_chunks(p, tag, w, g, M):
+    """The C1 edge sweep as `checkEdgesOnA` chunks glued by `checkEdgesOnA_of_chunks`
+    (the `HittingSetBase7.lean` pattern), plus one `checkForcedA`.  A monolithic
+    `checkCertA` over 5328 states is an OOM kill at 13 GB; chunking bounds the peak.
+    The chunk size must DIVIDE M, since the glue proves `0 (k*c)`."""
+    want = int(__import__("os").environ.get("CERTCHUNK", "400"))
+    c = max((d for d in range(1, M + 1) if M % d == 0 and d <= want), default=M)
+    k = M // c
+    step = f"({p}step {lst(w)})"
+    args = f"{p}w{tag}live {p}w{tag}rho {p}w{tag}omega {p}w{tag}forced"
+    out = []
+    for j in range(k):
+        out.append(f"""theorem {p}w{tag}_e{j} : checkEdgesOnA {step} {g}
+    {args} {j * c} {c} = true := by decide +kernel
+""")
+    names = ", ".join(f"{p}w{tag}_e{j}" for j in range(k))
+    out.append(f"""theorem {p}w{tag}_forced : checkForcedA {step} {g} {M}
+    {p}w{tag}live {p}w{tag}forced = true := by decide +kernel
+
+theorem {p}w{tag}_cert : checkCertA {step} {g} {M}
+    {args} = true := by
+  refine checkCertA_of_edgesOn ?_ {p}w{tag}_forced
+  exact checkEdgesOnA_of_chunks (c := {c}) {k} (by
+    intro j hj lo hlo
+    interval_cases j <;>
+      simp only [Nat.reduceMul, Nat.zero_mul, Nat.one_mul] at hlo <;> subst hlo
+    exacts [{names}])
+""")
+    return "\n".join(out)
 
 
 def lst(xs):
@@ -234,6 +285,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.HittingSetReduced
+import NormalNumbers.HittingSetBounds
 import NormalNumbers.Literature
 
 /-!
@@ -347,17 +399,16 @@ theorem {p}_section (k : ℕ) (hk : k < {p}N) :
         alive, rho, omega, fsig, fdst = certs[tuple(w)]
         cert_blocks.append(f"""
 /-- Certificate for the word `{lst(w)}`: {sum(alive)} live states of the {M}. -/
-def {p}w{tag}live : ℕ → Bool := fun j => {tree_vals(["true" if alive[j] else "false" for j in range(M)], 0, M)}
+def {p}w{tag}live : ℕ → Bool := fun j => {tree_runs(["true" if alive[j] else "false" for j in range(M)])}
 
-def {p}w{tag}rho : ℕ → ℕ := fun j => {tree_vals([str(rho[j]) for j in range(M)], 0, M)}
+def {p}w{tag}rho : ℕ → ℕ := fun j => {tree_runs([str(rho[j]) for j in range(M)])}
 
-def {p}w{tag}omega : ℕ → ℕ := fun j => {tree_vals([str(omega[j]) for j in range(M)], 0, M)}
+def {p}w{tag}omega : ℕ → ℕ := fun j => {tree_runs([str(omega[j]) for j in range(M)])}
 
 def {p}w{tag}forced : ℕ → Option (ℕ × ℕ) :=
-  fun j => {tree_vals([(f"some ({fsig[j]}, {fdst[j]})" if fsig[j] >= 0 else "none") for j in range(M)], 0, M)}
+  fun j => {tree_runs([(f"some ({fsig[j]}, {fdst[j]})" if fsig[j] >= 0 else "none") for j in range(M)])}
 
-theorem {p}w{tag}_cert : checkCertA ({p}step {lst(w)}) {g} {M}
-    {p}w{tag}live {p}w{tag}rho {p}w{tag}omega {p}w{tag}forced = true := by decide +kernel
+{cert_chunks(p, tag, w, g, M)}
 """)
     fin = []
     A = fin.append
