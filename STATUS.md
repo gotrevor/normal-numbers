@@ -1,5 +1,14 @@
 # STATUS — normal-numbers 📊
 
+> **Campaign B is CLOSED (2026-09-16, overnight laps).**  The master additive weight is proved
+> for **unbounded** coefficients and, simultaneously, on a **divergent prime subset**:
+> `isDisjunctive_weight_logLogPow` (`c_p ≤ A₀(1+log₂log₂ p)^s`, any `A₀, s`),
+> `isDisjunctive_subsetWeight_logLogPow` and `isDisjunctive_residueClass_weight_logLogPow`,
+> all trust-triple clean, with an unwound audit surface in `G4WeightStatement`.  Build 🟢 9084
+> jobs; `src/` = the two pre-expedition forbidden-drift `sorry`s, **zero `axiom`s**.  The
+> remaining boundary (`c_p ≍ log p`) is a *proved* obstruction of this schedule family, not an
+> open lemma: see `DESIGN-2026-09-16-prime-subset.md`.
+
 > **Review lap B-review-1 (2026-09-16).**  **Campaign A is CLOSED.**  All three of its headlines
 > are unconditional and trust-triple clean: `isDisjunctive_residueClass` (∑_{p≡a(q)} 1/(bᵖ−1)),
 > `isDisjunctive_Omega` (∑ₙ Ω(n)/bⁿ = ∑_{q prime power} 1/(b^q−1)) and
@@ -955,6 +964,10 @@ shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09
 | `G4.SchedB.isDisjunctive_Omega (hb : 3 ≤ b)` | `∑ₙ Ω(n)/bⁿ` disjunctive, `b ≥ 3` — UNCONDITIONAL | trust triple | 🟢 clean |
 | `G4.SchedB.isDisjunctive_Omega_primePowerSum` | the same constant as `∑_{q prime power} 1/(b^q−1)` | trust triple | 🟢 clean |
 | `G4.SchedB.isDisjunctive_weight c C hC (hb)` | every bounded coefficient weight `w_c = ω + excess c`, `b ≥ 3` — UNCONDITIONAL | trust triple | 🟢 clean |
+| `G4.SchedB.isDisjunctive_weight_logLogPow c hc (hb)` | **unbounded** coefficients: every `c_p ≤ A₀(1+log₂log₂ p)^s`, `b ≥ 3` — UNCONDITIONAL | trust triple | 🟢 clean (2026-09-16) |
+| `G4.SchedB.isDisjunctive_subsetWeight_logLogPow` | the **merge**: a prime set `S` with a Mertens rate *and* an unbounded polylog `c` | trust triple | 🟢 clean (2026-09-16) |
+| `G4.isDisjunctive_residueClass_weight_logLogPow (ha)` | the merge at `S = {p ≡ a (q)}`, `a` a unit | trust triple | 🟢 clean (2026-09-16) |
+| `G4.audit_isDisjunctive_*_logLogPow` (`G4WeightStatement`) | the same three with every abbreviation unwound — the audit surface | trust triple | 🟢 clean (2026-09-16) |
 | `G4.Sched.isNormal_fullRealW` | `IsNormal 2 fullRealW` — UNCONDITIONAL | trust triple | 🟢 clean (banked) |
 
 **Math-axiom count (🟢+🟡+🟠): 0.**  No `axiom` declaration anywhere in `src/`, no

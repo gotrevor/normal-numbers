@@ -366,3 +366,4 @@ import NormalNumbers.G4SubsetCFrame
 import NormalNumbers.G4SubsetCWitness
 import NormalNumbers.G4SubsetCAssembly
 import NormalNumbers.G4LogLogPowSched
+import NormalNumbers.G4WeightStatement
