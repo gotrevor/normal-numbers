@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.G4SchedBParams
 import NormalNumbers.G4EntropyMTowerHarmonic
+import NormalNumbers.G4SchedBBudget
 
 /-!
 # The base-`b` schedule in a FREE cutoff exponent `e`
@@ -180,6 +181,188 @@ lemma sizes_le_two_pow_mE (h : HypE b K e) :
   have h6 := e_le_mE K e
   calc 8 = 2 ^ 3 := by norm_num
     _ ≤ 2 ^ mE K e := Nat.pow_le_pow_right (by norm_num) (by omega)
+
+
+lemma logP₀Nat_le_two_pow_mE {b K e : ℕ} (h : HypE b K e) : logP₀Nat K ≤ 2 ^ mE K e :=
+  (logP₀Nat_le_two_pow_m h.base).trans (Nat.pow_le_pow_right (by norm_num) (m_le_mE h))
+
+theorem farC_leE {b K e : ℕ} (h : HypE b K e) :
+    farC (gridOf K (N K) h.hK1) (XE K e) (gridDm K (N K)) ≤ logP₀Nat K + mE K e + 10 := by
+  have hb := h.base.hb; have hbK := h.base.hbK; have hK := h.base.hK
+  set G := gridOf K (N K) (by omega : 1 ≤ K) with hG
+  have hP₀ : (0 : ℝ) < G.P₀ := by exact_mod_cast G.P₀_pos
+  have hXr : (0 : ℝ) < XE K e := by unfold XE; positivity
+  have hcard := card_apSample_ge_half (XE K e) G.P₀ G.b₀ G.P₀_pos G.b₀_lt_P₀ (two_mul_P₀_le_XE h)
+  have hcard0 : (0 : ℝ) < (apSample (XE K e) G.P₀ G.b₀).card := by
+    have : (0 : ℝ) < (XE K e : ℝ) / (2 * G.P₀) := by positivity
+    linarith
+  have hDmX : (gridDm K (N K) : ℝ) ≤ XE K e := by exact_mod_cast gridDm_le_XE h
+  have hP₀exp := P₀_le_exp (K := K) (by omega)
+  unfold farC
+  -- first term: `(X+Dm)/|P| ≤ 4P₀`
+  have h1 : (((XE K e + gridDm K (N K) : ℕ) : ℝ) / (apSample (XE K e) G.P₀ G.b₀).card)
+      ≤ 4 * G.P₀ := by
+    push_cast
+    rw [div_le_iff₀ hcard0]
+    calc (XE K e : ℝ) + gridDm K (N K) ≤ 2 * XE K e := by linarith
+      _ = 4 * G.P₀ * ((XE K e : ℝ) / (2 * G.P₀)) := by field_simp; ring
+      _ ≤ 4 * G.P₀ * (apSample (XE K e) G.P₀ G.b₀).card := by gcongr
+  have h1' : Real.log (((XE K e + gridDm K (N K) : ℕ) : ℝ) / (apSample (XE K e) G.P₀ G.b₀).card)
+      ≤ 2 + logP₀Nat K := by
+    have hpos : (0 : ℝ) < ((XE K e + gridDm K (N K) : ℕ) : ℝ) / (apSample (XE K e) G.P₀ G.b₀).card := by
+      push_cast; positivity
+    calc Real.log (((XE K e + gridDm K (N K) : ℕ) : ℝ) / (apSample (XE K e) G.P₀ G.b₀).card)
+        ≤ Real.log (4 * G.P₀) := Real.log_le_log hpos h1
+      _ = Real.log 4 + Real.log G.P₀ := Real.log_mul (by norm_num) hP₀.ne'
+      _ ≤ 2 + logP₀Nat K := by
+          have ha : Real.log 4 ≤ 2 := by
+            have : (4 : ℝ) ≤ Real.exp 2 := by
+              have := Real.add_one_le_exp (1 : ℝ)
+              have h2 : Real.exp 2 = Real.exp 1 * Real.exp 1 := by rw [← Real.exp_add]; norm_num
+              rw [h2]; nlinarith [Real.exp_pos 1]
+            calc Real.log 4 ≤ Real.log (Real.exp 2) := Real.log_le_log (by norm_num) this
+              _ = 2 := Real.log_exp 2
+          have hb : Real.log G.P₀ ≤ logP₀Nat K := by
+            calc Real.log G.P₀ ≤ Real.log (Real.exp (logP₀Nat K)) := Real.log_le_log hP₀ hP₀exp
+              _ = logP₀Nat K := Real.log_exp _
+          linarith
+  -- second term: `log(log(X+Dm)+1) ≤ m + 8`
+  have h2 : Real.log (Real.log ((XE K e + gridDm K (N K) : ℕ) : ℝ) + 1) ≤ mE K e + 8 := by
+    have hl2 : Real.log 2 ≤ 1 := by linarith [Real.log_two_lt_d9]
+    have hl2' : 0 < Real.log 2 := Real.log_pos (by norm_num)
+    have hlogX : Real.log ((XE K e + gridDm K (N K) : ℕ) : ℝ) ≤ (2 : ℝ) ^ (mE K e + 7) := by
+      have hle : ((XE K e + gridDm K (N K) : ℕ) : ℝ) ≤ (2 : ℝ) ^ (100 * 2 ^ mE K e + 1) := by
+        push_cast
+        have : (XE K e : ℝ) = (2 : ℝ) ^ (100 * 2 ^ mE K e) := by unfold XE; push_cast; rfl
+        rw [pow_succ]
+        linarith
+      calc Real.log ((XE K e + gridDm K (N K) : ℕ) : ℝ)
+          ≤ Real.log ((2 : ℝ) ^ (100 * 2 ^ mE K e + 1)) :=
+            Real.log_le_log (by push_cast; positivity) hle
+        _ = (100 * 2 ^ mE K e + 1 : ℕ) * Real.log 2 := by rw [Real.log_pow]
+        _ ≤ (100 * 2 ^ mE K e + 1 : ℕ) := by
+            have : (0 : ℝ) ≤ (100 * 2 ^ mE K e + 1 : ℕ) := by positivity
+            nlinarith
+        _ ≤ (2 : ℝ) ^ (mE K e + 7) := by
+            have : 100 * 2 ^ mE K e + 1 ≤ 2 ^ (mE K e + 7) := by
+              rw [pow_add]
+              have : 1 ≤ 2 ^ mE K e := Nat.one_le_two_pow
+              omega
+            exact_mod_cast this
+    have hpos : (0 : ℝ) < Real.log ((XE K e + gridDm K (N K) : ℕ) : ℝ) + 1 := by
+      have : (0 : ℝ) ≤ Real.log ((XE K e + gridDm K (N K) : ℕ) : ℝ) :=
+        Real.log_nonneg (by push_cast; unfold XE; have : (1:ℝ) ≤ 2 ^ (100 * 2 ^ mE K e) := one_le_pow₀ (by norm_num); push_cast; linarith [(Nat.cast_nonneg (gridDm K (N K)) : (0:ℝ) ≤ _)])
+      linarith
+    calc Real.log (Real.log ((XE K e + gridDm K (N K) : ℕ) : ℝ) + 1)
+        ≤ Real.log ((2 : ℝ) ^ (mE K e + 8)) := by
+          apply Real.log_le_log hpos
+          have : (1 : ℝ) ≤ (2 : ℝ) ^ (mE K e + 7) := one_le_pow₀ (by norm_num)
+          rw [pow_succ]
+          linarith
+      _ = (mE K e + 8 : ℕ) * Real.log 2 := by rw [Real.log_pow]
+      _ ≤ (mE K e + 8 : ℕ) := by
+          have : (0 : ℝ) ≤ (mE K e + 8 : ℕ) := by positivity
+          nlinarith
+      _ = mE K e + 8 := by push_cast; ring
+  linarith
+
+lemma inv_card_leE {b K e : ℕ} (h : HypE b K e) :
+    1 / ((apSample (XE K e) (gridOf K (N K) h.hK1).P₀ (gridOf K (N K) h.hK1).b₀).card : ℝ)
+      ≤ 2 * (gridOf K (N K) h.hK1).P₀ / XE K e := by
+  have hb := h.base.hb; have hbK := h.base.hbK; have hK := h.base.hK
+  set G := gridOf K (N K) (by omega : 1 ≤ K)
+  have hP₀ : (0 : ℝ) < G.P₀ := by exact_mod_cast G.P₀_pos
+  have hXr : (0 : ℝ) < XE K e := by unfold XE; positivity
+  have hcard := card_apSample_ge_half (XE K e) G.P₀ G.b₀ G.P₀_pos G.b₀_lt_P₀ (two_mul_P₀_le_XE h)
+  have hcard0 : (0 : ℝ) < (apSample (XE K e) G.P₀ G.b₀).card := by
+    have : (0 : ℝ) < (XE K e : ℝ) / (2 * G.P₀) := by positivity
+    linarith
+  rw [div_le_div_iff₀ hcard0 hXr]
+  have := hcard
+  rw [div_le_iff₀ (by positivity)] at this
+  linarith
+
+lemma log_Mx_div_leE {b K e : ℕ} (h : HypE b K e) :
+    Real.log ((XE K e + J K * gridDm K (N K) : ℕ) : ℝ) / Real.log (YE K e) ≤ 101 := by
+  have hb := h.base.hb; have hbK := h.base.hbK; have hK := h.base.hK
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hlogY : Real.log (YE K e) = (2 : ℝ) ^ mE K e * Real.log 2 := by
+    unfold YE; rw [Nat.cast_pow, Real.log_pow]; push_cast; ring
+  have hY0 : 0 < Real.log (YE K e) := by rw [hlogY]; positivity
+  rw [div_le_iff₀ hY0, hlogY]
+  have hMx : ((XE K e + J K * gridDm K (N K) : ℕ) : ℝ) ≤ (2 : ℝ) ^ (100 * 2 ^ mE K e + 1) := by
+    have := J_mul_gridDm_le_XE h
+    have hX : (XE K e : ℝ) = (2 : ℝ) ^ (100 * 2 ^ mE K e) := by unfold XE; push_cast; rfl
+    push_cast
+    rw [pow_succ]
+    have : (J K * gridDm K (N K) : ℝ) ≤ XE K e := by exact_mod_cast this
+    linarith
+  have hX0 : (0 : ℝ) < XE K e := by unfold XE; positivity
+  calc Real.log ((XE K e + J K * gridDm K (N K) : ℕ) : ℝ)
+      ≤ Real.log ((2 : ℝ) ^ (100 * 2 ^ mE K e + 1)) :=
+        Real.log_le_log (by push_cast; positivity) hMx
+    _ = (100 * 2 ^ mE K e + 1 : ℕ) * Real.log 2 := by rw [Real.log_pow]
+    _ ≤ 101 * ((2 : ℝ) ^ mE K e * Real.log 2) := by
+        push_cast
+        have : (1 : ℝ) ≤ 2 ^ mE K e := one_le_pow₀ (by norm_num)
+        nlinarith
+
+
+/-! ### The main budget term at a free cutoff -/
+
+/-- **The gain term at cutoff `e`.**  Identical to `main_term_le`, and the only place the
+Mertens supply enters: raising `e` above `m₁ b K` only helps. -/
+lemma main_term_leE (h : HypE b K e) :
+    (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
+      * Real.exp (-∑ p ∈ smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀,
+          4 * freqSeed b K / p)
+      ≤ Real.exp (-4) := by
+  have hb := h.base.hb; have hK := h.base.hK
+  have hS : (m₁ b K : ℝ) * Real.log 2 - 21 * (K : ℝ) ^ 2 - 4
+      ≤ ∑ p ∈ smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀, (p : ℝ)⁻¹ := by
+    refine le_trans ?_ (sum_inv_smallPrimes_geE h)
+    have hle : (m₁ b K : ℝ) ≤ (e : ℝ) := by exact_mod_cast h.lo
+    have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+    nlinarith
+  set Sg := ∑ p ∈ smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀, (p : ℝ)⁻¹ with hSgdef
+  set θ := freqSeed b K with hθ
+  have hθ0 : 0 ≤ θ := freqSeed_nonneg (by exact_mod_cast (show 2 ≤ b by omega)) K
+  have hsum : ∑ p ∈ smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀, 4 * θ / p = 4 * θ * Sg := by
+    rw [hSgdef, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun p _ => by rw [div_eq_mul_inv]
+  rw [hsum]
+  have hKr : (100 : ℝ) ≤ K := by exact_mod_cast hK
+  set r : ℝ := (((K ^ 2) ^ K : ℕ) : ℝ) with hr
+  have hr1 : (1 : ℝ) ≤ r := by rw [hr]; exact_mod_cast Nat.one_le_pow _ _ (by positivity)
+  have hKr1 : (1 : ℝ) ≤ K * r := by nlinarith
+  have h2K : (1 : ℝ) ≤ (2 : ℝ) ^ K := one_le_pow₀ (by norm_num)
+  have hm₁ : θ * m₁ b K = 1000 * (2 : ℝ) ^ K * (K * r) := by
+    rw [hθ, hr]; exact freqSeed_mul_m₁ hb K
+  have hsmall : θ * (21 * (K : ℝ) ^ 2 + 4) ≤ 1 := by
+    have hq := twentyone_sq_add_four_le_four_pow hK
+    have h' : (21 * (K : ℝ) ^ 2 + 4) ≤ (4 : ℝ) ^ K := by exact_mod_cast hq
+    have hθ8 := freqSeed_le_quarter_pow hb K
+    calc θ * (21 * (K : ℝ) ^ 2 + 4) ≤ (1 / 4 : ℝ) ^ K * 4 ^ K := by gcongr
+      _ = 1 := by rw [← mul_pow]; norm_num
+  have hl2 : (69 / 100 : ℝ) ≤ Real.log 2 := by linarith [Real.log_two_gt_d9]
+  have hS8 : 690 * (K * r) - 1 ≤ θ * Sg := by
+    have hmul := mul_le_mul_of_nonneg_left hS hθ0
+    have ee : θ * ((m₁ b K : ℝ) * Real.log 2 - 21 * (K : ℝ) ^ 2 - 4)
+        = 1000 * (2 : ℝ) ^ K * (K * r) * Real.log 2 - θ * (21 * (K : ℝ) ^ 2 + 4) := by
+      rw [← hm₁]; ring
+    rw [ee] at hmul
+    have hKr0 : 0 ≤ K * r := by positivity
+    nlinarith [mul_le_mul_of_nonneg_right
+      (mul_le_mul_of_nonneg_left h2K (by norm_num : (0:ℝ) ≤ 1000)) hKr0]
+  have h2 := Sched.two_pow_le_exp (2 * (K * (K ^ 2) ^ K))
+  have hcast : ((2 * (K * (K ^ 2) ^ K) : ℕ) : ℝ) = 2 * (K * r) := by rw [hr]; push_cast; ring
+  rw [hcast] at h2
+  calc (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K)) * Real.exp (-(4 * θ * Sg))
+      ≤ Real.exp (2 * (K * r)) * Real.exp (-(4 * θ * Sg)) := by gcongr
+    _ = Real.exp (2 * (K * r) - 4 * θ * Sg) := by rw [← Real.exp_add]; ring_nf
+    _ ≤ Real.exp (-4) := by
+        apply Real.exp_le_exp.2
+        nlinarith
 
 end SchedB
 
