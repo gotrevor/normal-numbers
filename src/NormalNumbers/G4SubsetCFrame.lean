@@ -202,6 +202,28 @@ theorem gridFrameW_weightSC_propD (W : TWeight)
         add_le_add hbig (add_le_add hjunk hfar)
     _ = (δbig + δjunk + δfar) * (ε * η) := by ring
 
+/-! ### Monotonicity of the effective constant -/
+
+/-- `effC` is monotone in the coefficient vector — so the schedule may supply the bound at `c`
+and the merged §4D consume it at `c·1_S`. -/
+lemma effC_mono {c c' : ℕ → ℕ} (h : ∀ p, c' p ≤ c p) (P₀ : ℕ) (A : ℝ) :
+    effC c' P₀ A ≤ effC c P₀ A := by
+  have hharm : frozenHarm c' P₀ ≤ frozenHarm c P₀ := by
+    unfold frozenHarm
+    refine Finset.sum_le_sum fun p hp => ?_
+    have h2 := (Nat.mem_primeFactors.1 hp).1.two_le
+    have h2' : (2 : ℝ) ≤ p := by exact_mod_cast h2
+    have hp1 : (0 : ℝ) < (p : ℝ) - 1 := by linarith
+    have : (c' p : ℝ) ≤ (c p : ℝ) := by exact_mod_cast h p
+    exact div_le_div_of_nonneg_right this hp1.le
+  have hmax : cMax c' P₀ ≤ cMax c P₀ := by
+    unfold cMax
+    have : P₀.primeFactors.sup c' ≤ P₀.primeFactors.sup c :=
+      Finset.sup_mono_fun fun p _ => h p
+    exact_mod_cast this
+  unfold effC
+  exact max_le_max (by linarith) hmax
+
 /-! ### §4D for the merged weight from the closed-form bounds -/
 
 /-- **§4D for `w_{c,S}` at the effective constant** — the merged analogue of
@@ -219,7 +241,7 @@ theorem gridFrameW_weightSU_propD_of_bounds {A : ℝ} (hT : Tame c A)
     (hbig : Real.sqrt (4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R)) * rowL2 bb G.K
           + 2 * (Y : ℝ) ^ 2 * (rowL1 bb G.K) ^ 2 / (apSample X G.P₀ G.b₀).card)
         + (Real.log Mx / Real.log Y) * rowL1 bb G.K ≤ δbig * (ε * η))
-    (hjunk : (effC (coeffOn S c) G.P₀ A * junkShiftBound G.P₀ X ρmax
+    (hjunk : (effC c G.P₀ A * junkShiftBound G.P₀ X ρmax
           / ((apSample X G.P₀ G.b₀).card : ℝ)) * rowL1 bb G.K ≤ δjunk * (ε * η))
     (hfar : effC c G.P₀ A * ((2 : ℝ) ^ G.K *
         ((farBound bb (G.K + G.N) (farC G X Dm) / Real.log 2
@@ -236,7 +258,12 @@ theorem gridFrameW_weightSU_propD_of_bounds {A : ℝ} (hT : Tame c A)
     ((farAvgW_le_effC c hT bb hbb G X hne hP₀ hΩ hDm (TWeight.weightSU S c hT)
       (TWeight.weightSU_le S c hT)).trans hfar)
   refine (junkAvgC_le' (coeffOn S c) bb (by omega) G X hne hP₀ hρm).trans (le_trans ?_ hjunk)
-  have h := junkShiftBoundC_le_effC hTS G.P₀ X ρmax
+  have h : junkShiftBoundC (coeffOn S c) G.P₀ X ρmax
+      ≤ effC c G.P₀ A * junkShiftBound G.P₀ X ρmax := by
+    refine (junkShiftBoundC_le_effC hTS G.P₀ X ρmax).trans ?_
+    have hmono := effC_mono (coeffOn_le_self S c) G.P₀ A
+    have h0 : 0 ≤ junkShiftBound G.P₀ X ρmax := junkShiftBound_nonneg _ _ _
+    gcongr
   have hrow : 0 ≤ rowL1 bb G.K :=
     rowL1_nonneg (by exact_mod_cast (show 2 ≤ bb by omega) : (2:ℝ) ≤ bb) G.K
   gcongr
