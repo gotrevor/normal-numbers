@@ -43,12 +43,14 @@ structure TWeight where
   wN : ℕ → ℕ
   /-- the transport correction `overlap`, signed -/
   ov : ℕ → ℕ → ℤ
-  /-- the size constant of the correction -/
-  ovC : ℕ
+  /-- the size bound of the correction — allowed to depend on `d` -/
+  ovB : ℕ → ℕ
   /-- exact transport: `w(dm) + ov(d,m) = w(m) + w(d)` -/
   mul_eq : ∀ d m : ℕ, d ≠ 0 → m ≠ 0 → (wN (d * m) : ℤ) + ov d m = (wN m : ℤ) + (wN d : ℤ)
-  /-- the correction is bounded by `ovC` times the number of prime factors of `d` -/
-  ov_le : ∀ d m : ℕ, |ov d m| ≤ (ovC : ℤ) * (d.primeFactors.card : ℤ)
+  /-- the correction is bounded, uniformly in `m`, by `ovB d`.  Only *summability* of
+  `∑_j b^{-j} ov(d, k+j)` uses this, so a bound depending on `d` is enough — that is what lets
+  an **unbounded** coefficient vector `c` be a `TWeight` (`ovB d = ∑_{p∣d}(1 + c_p)`). -/
+  ov_le : ∀ d m : ℕ, |ov d m| ≤ (ovB d : ℤ)
   /-- the correction is periodic in `m` modulo every prime of `d` -/
   ov_congr : ∀ d m m' : ℕ, (∀ p ∈ d.primeFactors, m ≡ m' [MOD p]) → ov d m = ov d m'
   /-- the Lambert series converges at every base `b ≥ 2` -/
@@ -115,11 +117,10 @@ lemma summable_corrB (hb : 2 ≤ b) (d k : ℕ) :
   have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
   refine Summable.of_norm ?_
   refine Summable.of_nonneg_of_le (fun i => norm_nonneg _) (fun i => ?_)
-    ((summable_inv_pow_succ hb).mul_left ((W.ovC : ℝ) * (d.primeFactors.card : ℝ)))
-  have habs : |(W.ov d (k + i + 1) : ℝ)| ≤ (W.ovC : ℝ) * (d.primeFactors.card : ℝ) := by
+    ((summable_inv_pow_succ hb).mul_left ((W.ovB d : ℝ)))
+  have habs : |(W.ov d (k + i + 1) : ℝ)| ≤ (W.ovB d : ℝ) := by
     have := W.ov_le d (k + i + 1)
-    have : ((|W.ov d (k + i + 1)| : ℤ) : ℝ) ≤ (((W.ovC : ℤ) * (d.primeFactors.card : ℤ) : ℤ) : ℝ) :=
-      by exact_mod_cast this
+    have : ((|W.ov d (k + i + 1)| : ℤ) : ℝ) ≤ (((W.ovB d : ℤ) : ℤ) : ℝ) := by exact_mod_cast this
     push_cast at this
     simpa using this
   rw [Real.norm_eq_abs, abs_div, abs_of_nonneg (by positivity : (0:ℝ) ≤ (b : ℝ) ^ (i + 1)),
@@ -177,12 +178,10 @@ lemma coe_tailB (hb : 2 ≤ b) (k : ℕ) :
 def omega : TWeight where
   wN := fun m => ArithmeticFunction.cardDistinctFactors m
   ov := fun d m => (overlap d m : ℤ)
-  ovC := 1
+  ovB := fun d => d.primeFactors.card
   mul_eq := fun d m hd hm => by exact_mod_cast omega_mul_eq d m hd hm
   ov_le := fun d m => by
     rw [abs_of_nonneg (by positivity)]
-    push_cast
-    rw [one_mul]
     exact_mod_cast overlap_le d m
   ov_congr := fun d m m' h => by rw [overlap_congr d m m' h]
   summable := fun b hb => (summable_omegaR_div_pow hb).congr (fun n => by rw [omegaR])
@@ -197,12 +196,10 @@ lemma lambert_omega (hb : 2 ≤ b) : omega.lambert b = primeLambertAtBase b := b
 def subset (S : ℕ → Prop) [DecidablePred S] : TWeight where
   wN := omegaSN S
   ov := fun d m => (overlapS S d m : ℤ)
-  ovC := 1
+  ovB := fun d => d.primeFactors.card
   mul_eq := fun d m hd hm => by exact_mod_cast omegaSN_mul_eq (S := S) d m hd hm
   ov_le := fun d m => by
     rw [abs_of_nonneg (by positivity)]
-    push_cast
-    rw [one_mul]
     exact_mod_cast le_trans (overlapS_le (S := S) d m) (overlap_le d m)
   ov_congr := fun d m m' h => by rw [overlapS_congr (S := S) d m m' h]
   summable := fun b hb => (summable_omegaS_div_pow (S := S) hb).congr (fun n => by rw [omegaS])

@@ -104,7 +104,7 @@ lemma weightSN_le_weightN {C : ℕ} (hC : ∀ p, c p ≤ C) (m : ℕ) :
 noncomputable def TWeight.weightS {C : ℕ} (hC : ∀ p, c p ≤ C) : TWeight where
   wN := weightSN S c
   ov := fun d m => (overlapS S d m : ℤ) - (overlapWN (coeffOn S c) d m : ℤ)
-  ovC := max C 1
+  ovB := fun d => max C 1 * d.primeFactors.card
   mul_eq := fun d m hd hm => by
     have hR := weightSW_mul S c hd hm
     rw [weightSW_eq_cast, weightSW_eq_cast, weightSW_eq_cast,
@@ -127,7 +127,7 @@ noncomputable def TWeight.weightS {C : ℕ} (hC : ∀ p, c p ≤ C) : TWeight wh
     have hC1 : (1 : ℤ) ≤ ((max C 1 : ℕ) : ℤ) := by exact_mod_cast le_max_right C 1
     have hCC : (C : ℤ) ≤ ((max C 1 : ℕ) : ℤ) := by exact_mod_cast le_max_left C 1
     have hcard : (0 : ℤ) ≤ (d.primeFactors.card : ℤ) := by positivity
-    rw [abs_le]
+    rw [Nat.cast_mul, abs_le]
     constructor
     · nlinarith [Int.natCast_nonneg (overlapS S d m)]
     · nlinarith [Int.natCast_nonneg (overlapWN (coeffOn S c) d m)]

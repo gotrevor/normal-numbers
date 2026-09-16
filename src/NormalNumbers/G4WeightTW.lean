@@ -65,7 +65,7 @@ namespace TWeight
 noncomputable def weight (c : ℕ → ℕ) (C : ℕ) (hC : ∀ p, c p ≤ C) : TWeight where
   wN := weightN c
   ov := fun d m => (overlap d m : ℤ) - (overlapWN c d m : ℤ)
-  ovC := max C 1
+  ovB := fun d => max C 1 * d.primeFactors.card
   mul_eq := fun d m hd hm => by
     have hR : weightW c (d * m)
         = weightW c m + weightW c d - ((overlap d m : ℝ) - overlapW c d m) :=
@@ -84,7 +84,7 @@ noncomputable def weight (c : ℕ → ℕ) (C : ℕ) (hC : ∀ p, c p ≤ C) : T
     have hC1 : (1 : ℤ) ≤ (max C 1 : ℕ) := by exact_mod_cast le_max_right C 1
     have hCC : (C : ℤ) ≤ ((max C 1 : ℕ) : ℤ) := by exact_mod_cast le_max_left C 1
     have hcard : (0 : ℤ) ≤ (d.primeFactors.card : ℤ) := by positivity
-    rw [abs_le]
+    rw [Nat.cast_mul, abs_le]
     constructor
     · nlinarith [Int.natCast_nonneg (overlap d m)]
     · nlinarith [Int.natCast_nonneg (overlapWN c d m)]
