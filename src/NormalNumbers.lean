@@ -362,3 +362,4 @@ import NormalNumbers.G4UnboundedSched
 import NormalNumbers.G4SubsetCTW
 import NormalNumbers.G4SubsetCFrame
 import NormalNumbers.G4SubsetCWitness
+import NormalNumbers.G4SubsetCAssembly
