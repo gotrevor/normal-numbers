@@ -1,10 +1,27 @@
-# PENDING WORK — campaign A closed; G5/Ω is the live target (2026-09-16)
+# PENDING WORK — campaign A closed through item 4 (2026-09-16 late)
 
-## Campaign A: DONE, unconditional, axiom-clean
+## Closed, unconditional, axiom-clean
 
-`isDisjunctive_residueClass_primeSum` (and `isDisjunctive_subsetLambert`,
-`isDisjunctive_residueClass`, `isDisjunctive_subsetLambert_univ`) — see
-`HANDOFF-2026-09-16-residueClass.md`.  Nothing left open on that thread.
+* `isDisjunctive_residueClass_primeSum`, `isDisjunctive_subsetLambert`,
+  `isDisjunctive_subsetLambert_univ` (`HANDOFF-2026-09-16-residueClass.md`).
+* `isDisjunctive_Omega`, `isDisjunctive_Omega_primePowerSum`
+  (`HANDOFF-2026-09-16-omega-done.md`).
+* **`isDisjunctive_weight c C hC (hb : 3 ≤ b) : IsDisjunctive b (weightLambert b c)`** — every
+  bounded coefficient vector (`HANDOFF-2026-09-16-weight-headline.md`).  The whole
+  `C`-dependence is one schedule condition, `100000·C·k₄³ ≤ 2^{k₄}`.
+
+## Open, in order of interest
+
+1. **`w_c` on a prime subset**: `w_{c,S} = ω_S + excess_{c·1_S}`.  Both axes are proved
+   separately; the combination needs the Mertens-in-AP cutoff `e` (subset side) *and* the
+   `C`-inflated `k₄` (coefficient side) in one witness.  `ScheduleWitnessS` and
+   `ScheduleWitnessC` differ only in the §4D fields, so the merge is a third witness type with
+   the `S`-filtered small primes AND the `C`-scaled junk/far budgets.
+2. **Unbounded `c`** (e.g. `c_p = p`): the junk budget is linear in `C`, so no `k₄` fixes it —
+   this needs a junk estimate weighted by `c_p/p`, not a uniform bound.
+3. **Base 2 for `Ω`**: refuted at the design level for this route — the far junk grows like
+   `2^j` (`junkShiftBound_layer_le`), so `∑ 2^j bb^{-j}` needs `bb ≥ 3`
+   (`HANDOFF-2026-09-16-omega-schedule.md` §2).
 
 ## The live crux: `isDisjunctive_Omega` (override item 4, PENDING_WORK §"Next actions" step 3–4)
 
