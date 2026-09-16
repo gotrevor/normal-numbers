@@ -177,6 +177,16 @@ def tree_idx(L, lo, hi):
     return (f"if s < {L[mid]} then {tree_idx(L, lo, mid)} else {tree_idx(L, mid, hi)}")
 
 
+def tree_vals(vals, lo, hi, var="j"):
+    """A total function `[0,M) -> value` as a balanced if-tree on `var`.
+    `List.lookup` / `List.contains` on a literal association list is a LINEAR
+    kernel scan, so the certificate sweep was O(A*M^2); an if-tree is O(log M)."""
+    if hi - lo == 1:
+        return vals[lo]
+    mid = (lo + hi) // 2
+    return f"if {var} < {mid} then {tree_vals(vals, lo, mid, var)} else {tree_vals(vals, mid, hi, var)}"
+
+
 def lst(xs):
     return "[" + ", ".join(map(str, xs)) + "]"
 
@@ -337,14 +347,14 @@ theorem {p}_section (k : ℕ) (hk : k < {p}N) :
         alive, rho, omega, fsig, fdst = certs[tuple(w)]
         cert_blocks.append(f"""
 /-- Certificate for the word `{lst(w)}`: {sum(alive)} live states of the {M}. -/
-def {p}w{tag}live : ℕ → Bool := fun j => {lst([j for j in range(M) if alive[j]])}.contains j
+def {p}w{tag}live : ℕ → Bool := fun j => {tree_vals(["true" if alive[j] else "false" for j in range(M)], 0, M)}
 
-def {p}w{tag}rho : ℕ → ℕ := fun j => (({lst([f"({j}, {rho[j]})" for j in range(M) if rho[j]])} : List (ℕ × ℕ)).lookup j).getD 0
+def {p}w{tag}rho : ℕ → ℕ := fun j => {tree_vals([str(rho[j]) for j in range(M)], 0, M)}
 
-def {p}w{tag}omega : ℕ → ℕ := fun j => (({lst([f"({j}, {omega[j]})" for j in range(M) if omega[j]])} : List (ℕ × ℕ)).lookup j).getD 0
+def {p}w{tag}omega : ℕ → ℕ := fun j => {tree_vals([str(omega[j]) for j in range(M)], 0, M)}
 
 def {p}w{tag}forced : ℕ → Option (ℕ × ℕ) :=
-  fun j => ({lst([f"({j}, ({fsig[j]}, {fdst[j]}))" for j in range(M) if fsig[j] >= 0])} : List (ℕ × ℕ × ℕ)).lookup j
+  fun j => {tree_vals([(f"some ({fsig[j]}, {fdst[j]})" if fsig[j] >= 0 else "none") for j in range(M)], 0, M)}
 
 theorem {p}w{tag}_cert : checkCertA ({p}step {lst(w)}) {g} {M}
     {p}w{tag}live {p}w{tag}rho {p}w{tag}omega {p}w{tag}forced = true := by decide +kernel
