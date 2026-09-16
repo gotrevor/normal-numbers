@@ -839,6 +839,49 @@ theorem hjunk_holdsE {k₄ : ℕ} (hK4 : K = 4 * k₄) (hk : 40 ≤ k₄) (h : H
         have hKpos : (0 : ℝ) < K := by linarith
         field_simp
 
+/-! ### The closed budget for the `Ω` schedule
+
+Four deltas instead of three: `δ₁ + (δbig + δjunk + δfar) = 1/8 + (1/8 + 1/8 + 11/64) = 35/64`.
+The slack in `Sched.budget_assembly` (whose head constant is `3/8`) covers the extra `11/64`:
+`35/64 + 1/8 + 3e^{-4} + 2/64 ≈ 0.76 < 1`. -/
+
+/-- `Sched.budget_assembly` with the `Ω` head constant `35/64` in place of `3/8`. -/
+lemma budget_assemblyΩ {Λ Λ' t0 ta tb tc td A : ℝ} (hΛ : Λ ≤ Λ') (_hΛ0 : 0 ≤ Λ)
+    (h0' : 0 ≤ t0) (ha' : 0 ≤ ta) (hb' : 0 ≤ tb) (hc' : 0 ≤ tc) (hd' : 0 ≤ td)
+    (h0 : Λ' * t0 ≤ Real.exp (-4)) (ha : Λ' * ta ≤ 1 / 64) (hb : Λ' * tb ≤ Real.exp (-4))
+    (hc : Λ' * tc ≤ Real.exp (-4)) (hd : Λ' * td ≤ 1 / 64) (hJ : A ≤ 1 / 8) :
+    (1 / 8 : ℝ) + ((1 / 8 : ℝ) + (1 / 8 : ℝ) + (11 / 64 : ℝ)) + A
+      + Λ * (t0 + (ta + tb + tc + td)) < 1 := by
+  have he4 := Sched.exp_neg_four_le
+  have hsum : Λ * (t0 + (ta + tb + tc + td)) ≤ Λ' * t0 + Λ' * ta + Λ' * tb + Λ' * tc + Λ' * td := by
+    have : Λ * (t0 + (ta + tb + tc + td)) = Λ * t0 + Λ * ta + Λ * tb + Λ * tc + Λ * td := by ring
+    rw [this]
+    gcongr
+  linarith
+
+/-- **`hbudget` for the `Ω` witness at a free cutoff `e`.** -/
+theorem hbudget_holdsΩE {b K k₄ e : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
+    (1 / 8 : ℝ) + ((1 / 8 : ℝ) + (1 / 8 : ℝ) + (11 / 64 : ℝ))
+      + 2 * (1 / ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄ * Real.sqrt ((Sched.Dj K k₄ : ℕ) + 1)))
+      + (((2 * Sched.Dj K k₄ + 1) ^ ((K ^ 2) ^ K) : ℕ) : ℝ)
+        * smallPrimeBound (smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀) (Sched.T K) (RE e) (McE K e)
+            (apSample (XE K e) (gridOf K (N K) h.hK1).P₀ (gridOf K (N K) h.hK1).b₀).card
+            (Real.exp 1) (13 / 2) (freqSeed b K) < 1 := by
+  have hK := h.base.hK
+  have hk : 25 ≤ k₄ := by omega
+  have hJ := Sched.jackson_term_le (K := K) (k₄ := k₄) (by omega)
+  have hΛ := Sched.Lambda_le hK4 hk
+  have hlow : (m₁ b K : ℝ) * Real.log 2 - 21 * (K : ℝ) ^ 2 - 4
+      ≤ ∑ p ∈ smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀, (p : ℝ)⁻¹ := by
+    refine le_trans ?_ (sum_inv_smallPrimes_geE h)
+    have hle : (m₁ b K : ℝ) ≤ (e : ℝ) := by exact_mod_cast h.lo
+    have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+    nlinarith
+  unfold smallPrimeBound
+  exact budget_assemblyΩ hΛ (by positivity) (by positivity) (by positivity) (by positivity)
+    (by positivity) (by positivity) (main_term_leE_gen h hlow) (term_a_leE h)
+    (term_b_leE h) (term_c_leE h) (term_d_leE h) hJ
+
 end SchedB
 
 end NormalNumbers.G4
