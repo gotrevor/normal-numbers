@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.G4OmegaWitness
+import NormalNumbers.G4SchedBEAssembly
 import Mathlib.NumberTheory.Harmonic.Bounds
 
 /-!
@@ -187,5 +188,58 @@ lemma cube_le_two_pow : ∀ {k : ℕ}, 40 ≤ k → 100000 * k ^ 3 ≤ 2 ^ k := 
           _ = 2 * (100000 * n ^ 3) := by ring
           _ ≤ 2 * 2 ^ n := Nat.mul_le_mul_left _ hih
           _ = 2 ^ (n + 1) := by ring
+
+/-! ### The schedule instance of the size condition -/
+
+namespace SchedB
+
+open Sched (N J logP₀Nat)
+
+variable {b K e : ℕ}
+
+/-- **The junk size condition holds in the schedule.**  `X = 2^{100·2^{mE}}` while
+`P₀ ≤ 2^{2·2^{mE}}`, so `2P₀·√X·log₂X ≤ 2^{53·2^{mE}+10} ≤ X`. -/
+theorem junk_size_holdsE (h : HypE b K e) :
+    2 * (gridOf K (N K) h.hK1).P₀ *
+        ((2 * Nat.sqrt (XE K e) + 2) * (Nat.log 2 (XE K e) + 1)) ≤ XE K e := by
+  set t := 2 ^ mE K e with ht
+  have ht1 : 1 ≤ t := Nat.one_le_two_pow
+  have hX : XE K e = 2 ^ (100 * t) := rfl
+  have hsqrt : Nat.sqrt (XE K e) = 2 ^ (50 * t) := by
+    have : XE K e = (2 ^ (50 * t)) ^ 2 := by
+      rw [hX, ← pow_mul]
+      congr 1
+      omega
+    rw [this, Nat.sqrt_eq']
+  have hlog : Nat.log 2 (XE K e) = 100 * t := by rw [hX, Nat.log_pow (by norm_num)]
+  have hP₀ : (gridOf K (N K) h.hK1).P₀ ≤ 2 ^ (2 * t) := by
+    have := P₀_le_two_powE h
+    rw [← ht] at this
+    exact_mod_cast this
+  rw [hsqrt, hlog, hX]
+  have h1 : 2 * 2 ^ (50 * t) + 2 ≤ 2 ^ (50 * t + 2) := by
+    have : (2 : ℕ) ≤ 2 ^ (50 * t) := by
+      calc (2 : ℕ) = 2 ^ 1 := by norm_num
+        _ ≤ 2 ^ (50 * t) := Nat.pow_le_pow_right (by norm_num) (by omega)
+    calc 2 * 2 ^ (50 * t) + 2 ≤ 2 * 2 ^ (50 * t) + 2 * 2 ^ (50 * t) := by omega
+      _ = 4 * 2 ^ (50 * t) := by ring
+      _ = 2 ^ (50 * t + 2) := by rw [pow_add]; ring
+  have htt : t ≤ 2 ^ t := Nat.le_of_lt Nat.lt_two_pow_self
+  have h2 : 100 * t + 1 ≤ 2 ^ (t + 7) := by
+    calc 100 * t + 1 ≤ 128 * t := by omega
+      _ ≤ 128 * 2 ^ t := by exact Nat.mul_le_mul_left _ htt
+      _ = 2 ^ (t + 7) := by rw [pow_add]; ring
+  calc 2 * (gridOf K (N K) h.hK1).P₀ * ((2 * 2 ^ (50 * t) + 2) * (100 * t + 1))
+      ≤ 2 * 2 ^ (2 * t) * (2 ^ (50 * t + 2) * 2 ^ (t + 7)) := by
+        refine Nat.mul_le_mul (Nat.mul_le_mul_left _ hP₀) (Nat.mul_le_mul h1 h2)
+    _ = 2 ^ (53 * t + 10) := by
+        rw [show (2 : ℕ) * 2 ^ (2 * t) * (2 ^ (50 * t + 2) * 2 ^ (t + 7))
+            = 2 ^ 1 * 2 ^ (2 * t) * (2 ^ (50 * t + 2) * 2 ^ (t + 7)) by norm_num]
+        rw [← pow_add, ← pow_add, ← pow_add]
+        congr 1
+        omega
+    _ ≤ 2 ^ (100 * t) := Nat.pow_le_pow_right (by norm_num) (by omega)
+
+end SchedB
 
 end NormalNumbers.G4
