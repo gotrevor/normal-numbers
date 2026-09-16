@@ -1,5 +1,17 @@
 # STATUS — normal-numbers 📊
 
+> **Review lap A-review-1 (2026-09-16).**  Campaign A (prime-subset Lambert series, operator
+> override 2026-09-15 23:58) is the live objective; the R/S deformation campaign is banked.
+> In kernel already: Mertens-in-AP (`G4MertensAP`), the subset weight and its closed form
+> `∑_n ω_S(n)/bⁿ = ∑_{p∈S} 1/(b^p−1)` (`G4SubsetWeight`), the **entire analytic route A–D made
+> weight-generic** (`G4TransportW`, `G4FrameW`, `G4RemainderW`, `G4SubsetJunk`), and the
+> conditional headline `isDisjunctive_subsetLambert_of_witness`.  The ONE remaining obligation is
+> the `e`-parametrized *schedule witness*: `G4SchedBE` has 12 of the 14 parameter facts and 4 of
+> the 6 budget terms; `term_b_leE`/`term_c_leE` → `hbudget_holdsE` → the `e`-assembly with the
+> `S`-filtered small primes is the crux ladder to `isDisjunctive_residueClass`.  Directive reset
+> to that ladder (`DIRECTION.md` → CURRENT DIRECTIVE).  Build 🟢 9051 jobs; `src/` has exactly the
+> two pre-expedition forbidden-drift `sorry`s and **zero `axiom`s**.
+
 > **Review lap 166 (2026-09-15).**  DESIGN §0's **third** untested escape — *giving up the
 > single-`n` joint sample* — is closed at the schedule in the new `G4GroupedVerdict.lean`, and
 > the design's prose estimate for it is **corrected**.  That estimate (`w ≳ 2 log H / log dmin`,
@@ -55,8 +67,8 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (9041 jobs) ·
-**Updated**: **review lap 166** · 2026-09-15 · `wip/g4-entropy` @ `70f003b`+
+· **Build**: 🟢 green (9051 jobs) ·
+**Updated**: **review lap A-review-1** · 2026-09-16 · `wip/g5-prime-subset` @ `df78640`+
 
 ## 🏁 2026-09-15 (entropy **lap 126**): **`IsNormal 2 fullRealW` — THE EXPEDITION'S ENDPOINT, PROVED AND AXIOM-CLEAN**
 

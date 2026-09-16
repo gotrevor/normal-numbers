@@ -56,6 +56,54 @@ the remaining leaves, it does not restate this objective.  Progress = a named le
 skeleton committed, or a proved obstruction written into the DESIGN file.  If the audit shows
 neither (i) nor (ii) can be stated, write why and switch to item 4.
 
+
+## CURRENT DIRECTIVE — campaign A, step 3: **close the `e`-schedule and make `isDisjunctive_residueClass` unconditional** (set 2026-09-16, review lap A-review-1)
+
+*Altitude-lap section, INSIDE the 2026-09-15 23:58 campaign-A override; it does not amend it.  It
+OUTRANKS every HANDOFF.  It REPLACES the objective-S directive below, whose campaign (R/S, the
+deformation verdict) the campaign-A override superseded.*
+
+**State (verified this lap).**  Build 🟢 9051 jobs.  `src/` carries exactly the two pre-expedition,
+forbidden-drift `sorry`s (`phaseOscillation`, `exists_prime_nonresidue`); **zero `axiom`s**;
+`isDisjunctive_subsetLambert_of_witness` prints `[propext, Classical.choice, Quot.sound]`.
+Campaign A's audit verdict (i) was taken: the cutoff `e` is free, `HypE b K e = Hyp b K + (m₁ ≤ e)
++ (10⁵·T·e ≤ 2^{m₂})`.  The whole analytic route A–D is weight-generic and the `S`-junk meets the
+same two closed inequalities as the `ω`-junk.
+
+🎯 **THE objective: `isDisjunctive_residueClass`, unconditional.**  Everything else in campaign A
+is done or reduces to it.  The ONLY remaining obligation is the `e`-parametrized *schedule
+witness*: the seam between `G4SubsetSchedule.exists_cutoff_subset` (which produces the `e` the
+Mertens-in-AP supply demands) and `ScheduleWitnessS` (which the conditional headline consumes).
+
+- 🔨 **Mandated next move, in this order — this is the crux ladder, do not detour.**
+  1. `term_b_leE`, `term_c_leE` in `G4SchedBE.lean` — the two budget terms that consume the
+     **upper** harmonic bound (`sum_inv_smallPrimes_leE`, `3·e + 5`).  Port from
+     `G4SchedBBudget` lines 249–345 under `R→RE e`, `Mc→McE K e`, `m→mE K e`, `Hyp→HypE`.
+     These are the last two of the six budget terms.
+  2. `hbudget_holdsE` — the `HypE` version of `G4SchedBBudget.hbudget_holds`.
+  3. The `e`-version of `G4SchedBAssembly`'s witness construction, with the small primes
+     replaced by `(smallPrimes (RE e) P₀).filter S` in the `δ₃` slot of `ScheduleWitnessS`.
+     **This is the decisive case**: if the `S`-filtered small-prime set cannot be substituted
+     into the assembly without a NEW estimate, that estimate is the real frontier (see trigger).
+  4. `isDisjunctive_subsetLambert` (divergence-rate hypothesis) ⇒ `isDisjunctive_residueClass`
+     via `mertensRate_residueClass`; then the `S = univ` sanity instance must re-derive
+     `isDisjunctive_base`'s statement.
+- 📌 **Leaf rule.**  Compiling skeleton with named `sorry` leaves in `src/` before each hard step.
+  Raising the `src/` sorry count by decomposing THIS crux is progress, not regression.
+- ⛔ **Forbidden drift**: the two pre-expedition `sorry`s; the Comparator holes; re-opening the
+  R/S deformation campaign (closed, banked); any `native_decide`; any `docs/` essay; any new
+  campaign before item 4 lands.
+- 🚦 **Trigger**: if item 3 needs an estimate that is not `sum_inv_smallPrimes_geE` restricted to
+  `S` (i.e. the filtered set breaks a *non*-Mertens input), name it as a Lean `Prop`, write it
+  into `DESIGN-2026-09-16-prime-subset.md`, and discharge THAT — do not weaken the headline to a
+  second hypothesis without recording why.
+
+### Directive history
+* 2026-09-16 review lap A-review-1: campaign-A directive set — the `e`-schedule ladder
+  (`term_b_leE`/`term_c_leE` → `hbudget_holdsE` → `e`-assembly with the `S`-filtered small primes
+  → `isDisjunctive_residueClass`).  Objective S's directive retired: its campaign was superseded
+  by the 2026-09-15 23:58 operator override.
+
 ## Attended operator override: 2026-09-14 night — AFTER THE EXTRACTION (ACTIVE; supersedes the 10:52 / 19:06 overrides and every CURRENT DIRECTIVE below)
 
 **Banked, do not re-derive, do not extend as this campaign:** `isNormal_fullRealW` (base 2, 4,
@@ -135,7 +183,7 @@ Preserved declarations, forbidden-drift list, one-writer-per-file, commit-a-skel
 and the wrap's elaborator hygiene all apply.  Stop when F has its verdict (mechanism + isolated
 estimate, or proved limitation) with L1, L2 done; the cap otherwise.
 
-## CURRENT DIRECTIVE — objective S: **the last untested escape, and the seam** (set 2026-09-15, review lap 166)
+## SUPERSEDED DIRECTIVE (2026-09-16) — objective S: **the last untested escape, and the seam** (set 2026-09-15, review lap 166)
 
 *Altitude-lap section, INSIDE the ACTIVE override's scope; it does not amend the override.  It
 OUTRANKS every HANDOFF.  Why it exists: the override's stop condition ("stop when R has a kernel
