@@ -221,4 +221,151 @@ theorem stateOfT_eq_stateOfK (ms : List ℕ) (N : ℕ) (hN : 0 < N)
     congr 1
     rw [carry_of_index a q hq0 t ht, ← hq]
 
+
+/-! ## Word length `ℓ ≥ 2`: the window digits are also functions of `t`
+
+The window of channel `a` at base point `m` holds the digits
+`gdigit g (a·X) (m+j)`, `j < ℓ−1`.  Writing `u = X·gᵐ`, `F = ⌊u⌋`, `t = fract u`:
+
+  `gdigit g (a·X) (m+j) = ⌊a·g^(j+1)·u⌋ − g·⌊a·g^j·u⌋
+                        = (a g^{j+1} F + ⌊a g^{j+1} t⌋) − g (a g^j F + ⌊a g^j t⌋)`
+
+and the two `F` terms **cancel**, because `a·g^{j+1} = g·(a·g^j)`.  So the whole
+state — carry and window — is a function of `t` alone, exactly as for `ℓ = 1`,
+provided `N` is divisible by `a·g^j` for every `j ≤ ℓ−1` (one power of `g` more
+than the window depth). -/
+
+/-- `⌊a·u⌋ = a·⌊u⌋ + ⌊a·fract u⌋`. -/
+theorem floor_mul_split (a : ℕ) (u : ℝ) :
+    ⌊(a : ℝ) * u⌋ = a * ⌊u⌋ + ⌊(a : ℝ) * Int.fract u⌋ := by
+  have h : (a : ℝ) * Int.fract u = (a : ℝ) * u - ((a * ⌊u⌋ : ℤ) : ℝ) := by
+    rw [Int.fract]; push_cast; ring
+  rw [h, Int.floor_sub_intCast]
+  ring
+
+/-- The window digits of `a·X` depend only on the tail `t = fract(X·gᵐ)`. -/
+theorem gdigit_window (g a : ℕ) (X : ℝ) (m j : ℕ) :
+    gdigit g ((a : ℝ) * X) (m + j)
+      = ⌊((a * g ^ (j + 1) : ℕ) : ℝ) * Int.fract (X * (g : ℝ) ^ m)⌋
+        - g * ⌊((a * g ^ j : ℕ) : ℝ) * Int.fract (X * (g : ℝ) ^ m)⌋ := by
+  unfold gdigit
+  have e1 : (a : ℝ) * X * (g : ℝ) ^ (m + j + 1)
+      = ((a * g ^ (j + 1) : ℕ) : ℝ) * (X * (g : ℝ) ^ m) := by
+    push_cast; ring
+  have e2 : (a : ℝ) * X * (g : ℝ) ^ (m + j)
+      = ((a * g ^ j : ℕ) : ℝ) * (X * (g : ℝ) ^ m) := by
+    push_cast; ring
+  rw [e1, e2, floor_mul_split (a * g ^ (j + 1)) (X * (g : ℝ) ^ m),
+    floor_mul_split (a * g ^ j) (X * (g : ℝ) ^ m)]
+  have hc : ((a * g ^ (j + 1) : ℕ) : ℤ) = (g : ℤ) * ((a * g ^ j : ℕ) : ℤ) := by
+    push_cast; ring
+  rw [hc]
+  ring
+
+/-! ## The indexed state for word length `ℓ` -/
+
+/-- The `j`-th window digit, read off the index `k = ⌊N·t⌋`. -/
+def digitK (g N a j k : ℕ) : ℕ := (a * g ^ (j + 1) * k) / N - g * ((a * g ^ j * k) / N)
+
+/-- One channel's code (carry in the high part, window below). -/
+def chanCodeK (g N a ell k : ℕ) : ℕ :=
+  ((a * k) / N) * g ^ (ell - 1)
+    + ∑ j ∈ Finset.range (ell - 1), digitK g N a j k * g ^ j
+
+/-- The joint state, read off the single index `k = ⌊N·t⌋`. -/
+def stateOfKW (g N ell : ℕ) : List ℕ → ℕ → ℕ
+  | [], _ => 0
+  | a :: rest, k => chanCodeK g N a ell k + (a * g ^ (ell - 1)) * stateOfKW g N ell rest k
+
+/-- The channel list of a single-track family avoiding the word `w`. -/
+def chansOfW (ms : List ℕ) (w : List ℕ) : List ZChannel :=
+  ms.map (fun a : ℕ => ZChannel.mk (Int.ofNat a) 0 w)
+
+
+/-- `⌊b·t⌋` read off the index `k = ⌊N·t⌋`, for any `b ∣ N`. -/
+theorem floor_index (b N k : ℕ) (hN : 0 < N) (hb : b ∣ N) (t : ℝ) (ht : 0 ≤ t)
+    (hk : k = (⌊(N : ℝ) * t⌋).toNat) : (⌊(b : ℝ) * t⌋).toNat = (b * k) / N := by
+  obtain ⟨q, hq⟩ := hb
+  have hq0 : 0 < q := by
+    rcases Nat.eq_zero_or_pos q with rfl | h
+    · omega
+    · exact h
+  subst hq
+  subst hk
+  exact carry_of_index b q hq0 t ht
+
+/-- The window digit, read off the index. -/
+theorem gdigit_window_index (g a N k j : ℕ) (hg : 1 ≤ g) (hN : 0 < N)
+    (h1 : a * g ^ (j + 1) ∣ N) (h2 : a * g ^ j ∣ N) (X : ℝ) (m : ℕ)
+    (hk : k = (⌊(N : ℝ) * Int.fract (X * (g : ℝ) ^ m)⌋).toNat) :
+    (gdigit g ((a : ℝ) * X) (m + j)).toNat = digitK g N a j k := by
+  have ht : 0 ≤ Int.fract (X * (g : ℝ) ^ m) := Int.fract_nonneg _
+  have hA := floor_index (a * g ^ (j + 1)) N k hN h1 _ ht hk
+  have hB := floor_index (a * g ^ j) N k hN h2 _ ht hk
+  have hd := gdigit_window g a X m j
+  have hnn : 0 ≤ gdigit g ((a : ℝ) * X) (m + j) := gdigit_nonneg g hg _ _
+  have hA0 : 0 ≤ ⌊((a * g ^ (j + 1) : ℕ) : ℝ) * Int.fract (X * (g : ℝ) ^ m)⌋ :=
+    Int.floor_nonneg.2 (by positivity)
+  have hB0 : 0 ≤ ⌊((a * g ^ j : ℕ) : ℝ) * Int.fract (X * (g : ℝ) ^ m)⌋ :=
+    Int.floor_nonneg.2 (by positivity)
+  have key : ∀ (x y : ℕ) (z : ℤ), z = (x : ℤ) - (g : ℤ) * (y : ℤ) → 0 ≤ z →
+      z.toNat = x - g * y := by
+    intro x y z h1 h2
+    omega
+  unfold digitK
+  rw [← hA, ← hB]
+  refine key _ _ _ ?_ hnn
+  rw [hd, Int.toNat_of_nonneg hA0, Int.toNat_of_nonneg hB0]
+
+
+/-- One channel's code, read off the index `k = ⌊N·t⌋`. -/
+theorem gchanCode_window (g a N k ell : ℕ) (hg : 1 ≤ g) (w : List ℕ) (hw : w.length = ell)
+    (hN : 0 < N) (hdvd : ∀ j, j ≤ ell - 1 → a * g ^ j ∣ N)
+    (X : ℝ) (m : ℕ) (hk : k = (⌊(N : ℝ) * Int.fract (X * (g : ℝ) ^ m)⌋).toNat) :
+    gchanCode g ⟨(a : ℤ), 0, w⟩ X 0 m = chanCodeK g N a ell k := by
+  have ht : 0 ≤ Int.fract (X * (g : ℝ) ^ m) := Int.fract_nonneg _
+  have hell : (ZChannel.ell ⟨(a : ℤ), 0, w⟩) = ell := hw
+  have hoff : (ZChannel.off ⟨(a : ℤ), 0, w⟩) = 0 := by simp [ZChannel.off]
+  have hwin : (ZChannel.gwinSize g ⟨(a : ℤ), 0, w⟩) = g ^ (ell - 1) := by
+    simp [ZChannel.gwinSize, hell]
+  have hz : ((a : ℤ) : ℝ) * X + ((0 : ℤ) : ℝ) * (0 : ℝ) = (a : ℝ) * X := by
+    push_cast; ring
+  unfold gchanCode chanCodeK
+  rw [hoff, hwin, hell]
+  simp only [hz, Nat.cast_zero, add_zero]
+  congr 1
+  · congr 1
+    rw [carryTG_single]
+    have h0 := hdvd 0 (by omega)
+    simp only [pow_zero, mul_one] at h0
+    exact floor_index a N k hN h0 _ ht hk
+  · unfold winCodeG
+    refine Finset.sum_congr rfl ?_
+    intro j hj
+    rw [Finset.mem_range] at hj
+    congr 1
+    exact gdigit_window_index g a N k j hg hN (hdvd (j + 1) (by omega))
+      (hdvd j (by omega)) X m hk
+
+/-- **The family state for any word length**, read off the single index
+`k = ⌊N·fract(X·gᵐ)⌋`. -/
+theorem gfamState_window (g : ℕ) (hg : 1 ≤ g) (ms : List ℕ) (hms : ∀ a ∈ ms, 1 ≤ a)
+    (w : List ℕ) (ell : ℕ) (hw : w.length = ell) (N : ℕ) (hN : 0 < N)
+    (hdvd : ∀ a ∈ ms, ∀ j, j ≤ ell - 1 → a * g ^ j ∣ N)
+    (X : ℝ) (m : ℕ) :
+    gfamState g (chansOfW ms w) X 0 m
+      = stateOfKW g N ell ms (⌊(N : ℝ) * Int.fract (X * (g : ℝ) ^ m)⌋).toNat := by
+  induction ms with
+  | nil => simp [chansOfW, gfamState, stateOfKW]
+  | cons a rest ih =>
+    have ih := ih (fun b hb => hms b (by simp [hb])) (fun b hb => hdvd b (by simp [hb]))
+    have ha : 1 ≤ a := hms a (by simp)
+    simp only [chansOfW, List.map_cons, gfamState, stateOfKW]
+    rw [show (Int.ofNat a) = ((a : ℕ) : ℤ) from rfl,
+      gchanCode_window g a N _ ell hg w hw hN (hdvd a (by simp)) X m rfl, ← ih]
+    simp only [chansOfW]
+    congr 1
+    simp [ZChannel.gsize, ZChannel.gwinSize, ZChannel.carrySize, ZChannel.posSum,
+      ZChannel.off, ZChannel.ell, hw, ha]
+
 end NormalNumbers.Adder
