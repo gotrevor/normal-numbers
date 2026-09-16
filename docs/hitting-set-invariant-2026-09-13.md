@@ -36,8 +36,11 @@ only hypothesis beyond the certificate is that the index map is a section over t
 reachable states, which is one sweep over `k < N`.  `(3,2)` and `(6,1)` are entirely kernel
 `decide +kernel` and axiom-clean — the `(6,1)` sweep over `k < 141 680` runs as
 fourteen chunks of `10 120` (`allOn_of_chunks`; the whole sweep in one probe was
-killed at 15 GB).  `(2,4)` carries a single `native_decide` for its
-`6 126 120`-index sweep.  Emitters: `experiments/adder_reduced_emit.py` (ℓ = 1),
+killed at 15 GB).  `(2,4)`'s `6 126 120`-index sweep is kernel too, by **run
+compression**: the state reads `k` only through the monotone quotients `(b·k)/N`,
+so it is constant on each of the `520` runs between breakpoints and the sweep is
+`520` checks (`stateOfKW_congr`, `runsCover_spec`).  **All three upper halves are
+axiom-clean** — `[propext, Classical.choice, Quot.sound]`, no `native_decide`.  Emitters: `experiments/adder_reduced_emit.py` (ℓ = 1),
 `experiments/adder_reduced_emit_ell.py` (any ℓ, with a state/`gfamPred`
 intertwining self-test).
 

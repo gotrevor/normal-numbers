@@ -423,4 +423,88 @@ theorem allOn_zero_spec {N : ℕ} {f : ℕ → Bool} (h : allOn 0 N f = true) :
   have := allOn_spec h k hk
   rwa [Nat.zero_add] at this
 
+
+/-! ## Run compression
+
+`stateOfKW g N ℓ ms k` depends on `k` only through the quotients `(b·k)/N` for the
+finitely many coefficients `b = a·g^j`, and each of those is monotone in `k`.  So
+the state is constant on every run of `k` on which the quotients do not move, and
+a sweep over `k < N` collapses to one check per run — `520` checks instead of
+`6126120` for the `(2,4)` family. -/
+
+/-- The coefficients the state reads: `a·g^j`, `a ∈ ms`, `j < ℓ`. -/
+def coeffsOf (g : ℕ) (ms : List ℕ) (ell : ℕ) : List ℕ :=
+  ms.flatMap (fun a => (List.range ell).map (fun j => a * g ^ j))
+
+/-- Inside a run the quotient is constant, by monotonicity. -/
+theorem quot_const_of_run (b N lo hi k : ℕ) (hlo : lo ≤ k) (hk : k < hi)
+    (h : (b * lo) / N = (b * (hi - 1)) / N) : (b * k) / N = (b * lo) / N := by
+  have h1 : (b * lo) / N ≤ (b * k) / N :=
+    Nat.div_le_div_right (Nat.mul_le_mul_left _ hlo)
+  have h2 : (b * k) / N ≤ (b * (hi - 1)) / N :=
+    Nat.div_le_div_right (Nat.mul_le_mul_left _ (by omega))
+  omega
+
+/-- One channel's code depends on `k` only through the quotients. -/
+theorem chanCodeK_congr (g N a ell k k' : ℕ) (hell : 1 ≤ ell)
+    (h : ∀ j, j < ell → (a * g ^ j * k) / N = (a * g ^ j * k') / N) :
+    chanCodeK g N a ell k = chanCodeK g N a ell k' := by
+  unfold chanCodeK digitK
+  have h0 := h 0 hell
+  simp only [pow_zero, mul_one] at h0
+  rw [h0]
+  congr 1
+  refine Finset.sum_congr rfl ?_
+  intro j hj
+  rw [Finset.mem_range] at hj
+  rw [h (j + 1) (by omega), h j (by omega)]
+
+/-- The joint state depends on `k` only through the quotients. -/
+theorem stateOfKW_congr (g N ell : ℕ) (hell : 1 ≤ ell) (ms : List ℕ) (k k' : ℕ)
+    (h : ∀ b ∈ coeffsOf g ms ell, (b * k) / N = (b * k') / N) :
+    stateOfKW g N ell ms k = stateOfKW g N ell ms k' := by
+  induction ms with
+  | nil => rfl
+  | cons a rest ih =>
+    have hsplit : ∀ b ∈ coeffsOf g rest ell, (b * k) / N = (b * k') / N := by
+      intro b hb
+      refine h b ?_
+      simp only [coeffsOf, List.mem_flatMap] at hb ⊢
+      obtain ⟨c, hc, hbc⟩ := hb
+      exact ⟨c, by simp [hc], hbc⟩
+    have ha : ∀ j, j < ell → (a * g ^ j * k) / N = (a * g ^ j * k') / N := by
+      intro j hj
+      refine h _ ?_
+      simp only [coeffsOf, List.mem_flatMap]
+      exact ⟨a, by simp, List.mem_map.2 ⟨j, List.mem_range.2 hj, rfl⟩⟩
+    simp only [stateOfKW]
+    rw [chanCodeK_congr g N a ell k k' hell ha, ih hsplit]
+
+/-! ### Tiling `[lo, N)` by runs -/
+
+/-- `runsCover P lo rs N`: the endpoints `rs` tile `[lo, N)` into runs, each
+passing `P`. -/
+def runsCover (P : ℕ → ℕ → Bool) : ℕ → List ℕ → ℕ → Bool
+  | lo, [], N => decide (lo = N)
+  | lo, hi :: rest, N => decide (lo < hi) && P lo hi && runsCover P hi rest N
+
+/-- A covering sweep gives the pointwise statement on `[lo, N)`. -/
+theorem runsCover_spec {P : ℕ → ℕ → Bool} {Q : ℕ → Prop}
+    (hP : ∀ lo hi, P lo hi = true → ∀ k, lo ≤ k → k < hi → Q k) :
+    ∀ (rs : List ℕ) (lo N : ℕ), runsCover P lo rs N = true →
+      ∀ k, lo ≤ k → k < N → Q k := by
+  intro rs
+  induction rs with
+  | nil =>
+    intro lo N h k hk1 hk2
+    simp only [runsCover, decide_eq_true_eq] at h
+    omega
+  | cons hi rest ih =>
+    intro lo N h k hk1 hk2
+    simp only [runsCover, Bool.and_eq_true, decide_eq_true_eq] at h
+    obtain ⟨⟨hlt, hPok⟩, hrest⟩ := h
+    rcases lt_or_ge k hi with hkh | hkh
+    · exact hP lo hi hPok k hk1 hkh
+    · exact ih hi N hrest k hkh hk2
+
 end NormalNumbers.Adder

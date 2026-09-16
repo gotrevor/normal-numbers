@@ -9,7 +9,7 @@ Branch `wip/adder-tower-c9`.  HEAD at handoff: see `git log -1`.*
 |---|---|---|---|---|---|
 | `hitting_6_1_seven` | `HittingSetBase6.lean` | `{1,8,11,14,16,20,23}` | 9 067 520 | **76** | **trust triple only** |
 | `hitting_3_2_six` | `HittingSetBase3Len2.lean` | `{1,2,4,5,7,8}` | 1 632 960 | **54** | **trust triple only** |
-| `hitting_2_4_nine` | `HittingSetBase2Len4.lean` | `{1,3,…,17}` | 4 625 065 731 686 400 | **520** | trust triple + `h24_all` (1 native_decide) |
+| `hitting_2_4_nine` | `HittingSetBase2Len4.lean` | `{1,3,…,17}` | 4 625 065 731 686 400 | **520** | **trust triple only** |
 
 ## The lap's real content: `src/NormalNumbers/HittingSetReduced.lean`
 
@@ -42,14 +42,14 @@ exactly, by walking the breakpoints of `t` with `Fraction`s.
 
 ## Next moves, in order
 
-1. **DONE for `(6,1)`**: `allOn` + `allOn_of_chunks` (`HittingSetReduced.lean`)
-   sweep `k < 141 680` as fourteen kernel chunks of `10 120`, so `(6,1)` and
-   `(3,2)` are both axiom-clean.  `h24_all` (6 126 120 indices) is the last
-   `native_decide` in the chapter; it needs ~600 chunks at 10 000, which is a lot
-   of theorem sites.  The better fix is to restructure the sweep: the state map is
-   constant on long runs of `k`, so a breakpoint-indexed formulation would cut it
-   to ~520 checks — prove `stateOfKW` constant on `[b_i, b_{i+1})` and check one
-   `k` per run.
+1. **DONE — all three are axiom-clean** (`[propext, Classical.choice, Quot.sound]`),
+   no `native_decide` anywhere in the chapter.  `(6,1)` uses `allOn_of_chunks`
+   (fourteen kernel chunks of `10 120`); `(2,4)`'s `6 126 120`-index sweep uses
+   **run compression** — `stateOfKW` reads `k` only through the monotone quotients
+   `(b·k)/N`, so it is constant on each of the `520` runs between breakpoints
+   (`stateOfKW_congr`, `quot_const_of_run`, `runsCover_spec`), and the whole sweep
+   is `520` kernel checks.  Module build times: `(3,2)` 19 s, `(2,4)` ~16 min,
+   `(6,1)` ~17 min.
 2. **The lower halves** `S(6,1) ≥ 7`, `S(3,2) ≥ 6`, `S(2,4) ≥ 9` are untouched and
    are the real remaining content of the invariant (only searches, no theorems).
    `N5` (`S(2,k) = 2^(k−1)`) is refuted at `k = 4` but `8` is not excluded.
