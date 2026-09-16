@@ -270,6 +270,76 @@ theorem sumLog_tail_le {δ : ℝ} (hδ : 0 < δ) (k₀ : ℕ) :
   rw [Finset.sum_filter] at hts
   simpa using hts
 
+/-- The Dirichlet-series summand in the shape the tail lemma uses. -/
+private lemma series_val {δ : ℝ} (n : ℕ) :
+    (if Nat.Prime n ∧ S n then Real.log n else 0) / (n : ℝ) ^ (1 + δ)
+      = (if Nat.Prime n ∧ S n then Real.log n / n * (n : ℝ) ^ (-δ) else 0) := by
+  split_ifs with hn
+  · have hn0 : (0 : ℝ) < n := by exact_mod_cast hn.1.pos
+    rw [Real.rpow_add hn0, Real.rpow_one, Real.rpow_neg hn0.le]
+    field_simp
+  · simp
+
+/-- **Splitting the Dirichlet series at `2^{k₀}`.**  Below the cutoff drop `n^{−δ} ≤ 1`, above it
+use the dyadic tail. -/
+private lemma series_le_split {δ : ℝ} (hδ : 0 < δ) (k₀ : ℕ) :
+    ∑' n : ℕ, (if Nat.Prime n ∧ S n then Real.log n else 0) / (n : ℝ) ^ (1 + δ)
+      ≤ sumLogPrimesIn S (2 ^ k₀ + 1)
+        + 2 * Real.log 4 * ((2 : ℝ) ^ (-δ)) ^ k₀ / (1 - (2 : ℝ) ^ (-δ)) := by
+  have hnn : (0 : ℕ → ℝ)
+      ≤ fun n => (if Nat.Prime n ∧ S n then Real.log n else 0) / (n : ℝ) ^ (1 + δ) := by
+    intro n
+    simp only [Pi.zero_apply]
+    rw [series_val]
+    split_ifs with hn
+    · have h1 : (1 : ℝ) ≤ n := by exact_mod_cast hn.1.one_le
+      have h2 : 0 ≤ Real.log n := Real.log_nonneg h1
+      have h3 : (0 : ℝ) ≤ (n : ℝ) ^ (-δ) := Real.rpow_nonneg (by linarith) _
+      positivity
+    · exact le_rfl
+  refine Real.tsum_le_of_sum_le hnn (fun s => ?_)
+  have hval : ∑ n ∈ s, (if Nat.Prime n ∧ S n then Real.log n else 0) / (n : ℝ) ^ (1 + δ)
+      = ∑ n ∈ s, (if Nat.Prime n ∧ S n then Real.log n / n * (n : ℝ) ^ (-δ) else 0) :=
+    Finset.sum_congr rfl fun n _ => series_val n
+  rw [hval, ← Finset.sum_filter_add_sum_filter_not s (fun n => n ≤ 2 ^ k₀)]
+  gcongr ?_ + ?_
+  · -- below the cutoff
+    have hterm : ∀ n ∈ {n ∈ s | n ≤ 2 ^ k₀},
+        (if Nat.Prime n ∧ S n then Real.log n / n * (n : ℝ) ^ (-δ) else 0)
+          ≤ (if Nat.Prime n ∧ S n then Real.log n / n else 0) := by
+      intro n _
+      split_ifs with hn
+      · have h1 : (1 : ℝ) ≤ n := by exact_mod_cast hn.1.one_le
+        have h2 : 0 ≤ Real.log n / n := by
+          have := Real.log_nonneg h1; positivity
+        have h3 : (n : ℝ) ^ (-δ) ≤ 1 :=
+          Real.rpow_le_one_of_one_le_of_nonpos h1 (by linarith)
+        nlinarith
+      · exact le_rfl
+    calc ∑ n ∈ {n ∈ s | n ≤ 2 ^ k₀},
+            (if Nat.Prime n ∧ S n then Real.log n / n * (n : ℝ) ^ (-δ) else 0)
+        ≤ ∑ n ∈ {n ∈ s | n ≤ 2 ^ k₀}, (if Nat.Prime n ∧ S n then Real.log n / n else 0) :=
+          Finset.sum_le_sum hterm
+      _ = ∑ n ∈ {n ∈ {n ∈ s | n ≤ 2 ^ k₀} | Nat.Prime n ∧ S n}, Real.log n / n :=
+          (Finset.sum_filter _ _).symm
+      _ ≤ sumLogPrimesIn S (2 ^ k₀ + 1) := by
+          refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun n hn _ => ?_)
+          · intro n hn
+            simp only [Finset.mem_filter, Nat.mem_primesBelow] at hn ⊢
+            exact ⟨⟨by omega, hn.2.1⟩, hn.2.2⟩
+          · simp only [Finset.mem_filter, Nat.mem_primesBelow] at hn
+            have : (1 : ℝ) ≤ n := by exact_mod_cast hn.1.2.one_le
+            have := Real.log_nonneg this
+            positivity
+  · -- above the cutoff
+    have hts := tail_finset_le (S := S) hδ k₀ {n ∈ s | ¬ n ≤ 2 ^ k₀}
+    rw [Finset.sum_filter] at hts
+    refine le_trans (le_of_eq ?_) hts
+    refine Finset.sum_congr rfl fun n hn => ?_
+    simp only [Finset.mem_filter] at hn
+    have hgt : 2 ^ k₀ < n := by omega
+    simp only [hgt, true_and]
+
 /-! ### Leaf 2 — the transfer from the `L`-series lower bound to `A_S(N)` -/
 
 /-- **Leaf.**  If the Dirichlet series of `S`-primes weighted by `log` is bounded below by
@@ -280,9 +350,137 @@ constants depending only on `c, C₀`.  Steps 1, 3, 4 of the design chain: split
 theorem sumLog_ge_of_LSeries_ge {c C₀ : ℝ} (hc : 0 < c)
     (h : ∀ x : ℝ, 1 < x → x ≤ 2 →
       c / (x - 1) - C₀
-        ≤ ∑' n : ℕ, (if n.Prime ∧ S n then Real.log n else 0) / (n : ℝ) ^ x) :
+        ≤ ∑' n : ℕ, (if Nat.Prime n ∧ S n then Real.log n else 0) / (n : ℝ) ^ x) :
     ∃ c' C' : ℝ, 0 < c' ∧ ∀ N : ℕ, 2 ≤ N → c' * Real.log N - C' ≤ sumLogPrimesIn S N := by
-  sorry
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlog2' : Real.log 2 < 1 := by linarith [Real.log_two_lt_d9]
+  set lam : ℝ := max 1 (Real.log (17 / c)) with hlam
+  have hlam1 : (1 : ℝ) ≤ lam := le_max_left _ _
+  have hlam0 : (0 : ℝ) < lam := by linarith
+  have hexp : Real.exp (-lam) ≤ c / 17 := by
+    have h1 : Real.log (17 / c) ≤ lam := le_max_right _ _
+    have h2 : Real.exp (-lam) ≤ Real.exp (-Real.log (17 / c)) := by
+      apply Real.exp_le_exp.2; linarith
+    have h3 : Real.exp (-Real.log (17 / c)) = c / 17 := by
+      rw [← Real.log_inv, Real.exp_log (by positivity)]
+      rw [inv_div]
+    linarith [h3 ▸ h2]
+  set c' : ℝ := c / (2 * lam) with hc'
+  have hc'0 : 0 < c' := by rw [hc']; positivity
+  refine ⟨c', |C₀| + c' * Real.log 2 + c / 2, hc'0, fun N hN => ?_⟩
+  set k₀ : ℕ := Nat.log 2 (N - 1) with hk₀
+  have hN1 : N - 1 ≠ 0 := by omega
+  have hlow : 2 ^ k₀ ≤ N - 1 := Nat.pow_log_le_self 2 hN1
+  have hhigh : N ≤ 2 ^ (k₀ + 1) := by
+    have h9 := Nat.lt_pow_succ_log_self (b := 2) (by norm_num) (N - 1)
+    rw [← hk₀] at h9
+    omega
+  have hlogN : Real.log N ≤ ((k₀ : ℝ) + 1) * Real.log 2 := by
+    have h1 : (N : ℝ) ≤ (2 : ℝ) ^ (k₀ + 1) := by exact_mod_cast hhigh
+    have := Real.log_le_log (show (0 : ℝ) < N by positivity) h1
+    rw [Real.log_pow] at this
+    push_cast at this
+    linarith
+  have hsum0 : 0 ≤ sumLogPrimesIn S N := sumLogPrimesIn_nonneg N
+  by_cases hcase : lam ≤ (k₀ : ℝ) * Real.log 2
+  · -- the main case: the cutoff `2^{k₀}` is large enough that `δ ≤ 1`
+    have hk₀0 : (0 : ℝ) < (k₀ : ℝ) * Real.log 2 := by linarith
+    set δ : ℝ := lam / ((k₀ : ℝ) * Real.log 2) with hδdef
+    have hδ0 : 0 < δ := by rw [hδdef]; positivity
+    have hδ1 : δ ≤ 1 := by
+      rw [hδdef, div_le_one hk₀0]; exact hcase
+    have hk₀ne : ((k₀ : ℝ) * Real.log 2) ≠ 0 := ne_of_gt hk₀0
+    have hk₀pos : (0 : ℝ) < (k₀ : ℝ) := by
+      rcases Nat.eq_zero_or_pos k₀ with hz | hz
+      · exfalso; rw [hz] at hk₀0; norm_num at hk₀0
+      · exact_mod_cast hz
+    have hδk : δ * ((k₀ : ℝ) * Real.log 2) = lam := by
+      rw [hδdef]; field_simp
+    -- the two sides
+    have hH := h (1 + δ) (by linarith) (by linarith)
+    have hsplit := series_le_split (S := S) hδ0 k₀
+    have hx : (1 : ℝ) + δ - 1 = δ := by ring
+    rw [hx] at hH
+    -- the tail is at most `(c/2)/δ`
+    set ρ : ℝ := (2 : ℝ) ^ (-δ) with hρ
+    have hρ0 : 0 < ρ := Real.rpow_pos_of_pos (by norm_num) _
+    have hρexp : ρ = Real.exp (-(δ * Real.log 2)) := by
+      rw [hρ, Real.rpow_def_of_pos (by norm_num)]
+      congr 1
+      ring
+    have hρk : ρ ^ k₀ = Real.exp (-lam) := by
+      rw [hρexp, ← Real.exp_nat_mul]
+      congr 1
+      rw [← hδk]; ring
+    have hu1 : δ * Real.log 2 ≤ 1 := by nlinarith
+    have hden : δ * Real.log 2 / 2 ≤ 1 - ρ := by
+      have hpos : (0 : ℝ) < 1 + δ * Real.log 2 := by positivity
+      have h1 : Real.exp (δ * Real.log 2) ≥ 1 + δ * Real.log 2 := by
+        linarith [Real.add_one_le_exp (δ * Real.log 2)]
+      have h2 : ρ ≤ 1 / (1 + δ * Real.log 2) := by
+        rw [hρexp, Real.exp_neg]
+        rw [inv_eq_one_div]
+        apply div_le_div_of_nonneg_left (by norm_num) hpos h1
+      have h3 : 1 - 1 / (1 + δ * Real.log 2) = δ * Real.log 2 / (1 + δ * Real.log 2) := by
+        field_simp
+        ring
+      have h4 : δ * Real.log 2 / (1 + δ * Real.log 2) ≥ δ * Real.log 2 / 2 := by
+        apply div_le_div_of_nonneg_left (by positivity) hpos
+        linarith
+      linarith
+    have htail : 2 * Real.log 4 * ρ ^ k₀ / (1 - ρ) ≤ c / 2 / δ := by
+      have h4 : 2 * Real.log 4 = 4 * Real.log 2 := by
+        rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow]
+        push_cast; ring
+      have hnum : 2 * Real.log 4 * ρ ^ k₀ = 4 * Real.log 2 * Real.exp (-lam) := by
+        rw [h4, hρk]
+      have hden0 : (0 : ℝ) < 1 - ρ := by
+        have : (0 : ℝ) < δ * Real.log 2 / 2 := by positivity
+        linarith
+      have hstep : 2 * Real.log 4 * ρ ^ k₀ / (1 - ρ)
+          ≤ 4 * Real.log 2 * Real.exp (-lam) / (δ * Real.log 2 / 2) := by
+        rw [hnum]
+        apply div_le_div_of_nonneg_left (by positivity) (by positivity) hden
+      have hval : 4 * Real.log 2 * Real.exp (-lam) / (δ * Real.log 2 / 2)
+          = 8 * Real.exp (-lam) / δ := by
+        field_simp
+        ring
+      have hfin : 8 * Real.exp (-lam) / δ ≤ c / 2 / δ := by
+        gcongr
+        linarith [hexp]
+      have hstep' : 2 * Real.log 4 * ρ ^ k₀ / (1 - ρ) ≤ 8 * Real.exp (-lam) / δ := by
+        rw [← hval]; exact hstep
+      linarith [hstep', hfin]
+    -- combine
+    have hAle : sumLogPrimesIn S (2 ^ k₀ + 1) ≤ sumLogPrimesIn S N := by
+      refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun p hp _ => ?_)
+      · intro p hp
+        simp only [Finset.mem_filter, Nat.mem_primesBelow] at hp ⊢
+        exact ⟨⟨by omega, hp.1.2⟩, hp.2⟩
+      · simp only [Finset.mem_filter, Nat.mem_primesBelow] at hp
+        have : (1 : ℝ) ≤ p := by exact_mod_cast hp.1.2.one_le
+        have := Real.log_nonneg this
+        positivity
+    have hmain : c / 2 / δ - C₀ ≤ sumLogPrimesIn S N := by
+      have hcd : c / δ = c / 2 / δ + c / 2 / δ := by field_simp; ring
+      linarith [hH, hsplit, hAle, htail]
+    have hval2 : c / 2 / δ = c' * ((k₀ : ℝ) * Real.log 2) := by
+      rw [hc', hδdef]
+      field_simp
+    have hgeN : c' * Real.log N - c' * Real.log 2 ≤ c' * ((k₀ : ℝ) * Real.log 2) := by
+      have : Real.log N - Real.log 2 ≤ (k₀ : ℝ) * Real.log 2 := by linarith
+      nlinarith [hc'0.le]
+    linarith [hval2 ▸ hmain, hgeN, le_abs_self C₀]
+  · -- the small case: `log N` is bounded by a constant, absorbed into `C'`
+    replace hcase : (k₀ : ℝ) * Real.log 2 < lam := not_le.mp hcase
+    have h1 : Real.log N ≤ lam + Real.log 2 := by
+      have : ((k₀ : ℝ) + 1) * Real.log 2 = (k₀ : ℝ) * Real.log 2 + Real.log 2 := by ring
+      linarith [hlogN, this ▸ hlogN]
+    have h2 : c' * Real.log N ≤ c' * (lam + Real.log 2) := by nlinarith [hc'0.le]
+    have h3 : c' * lam = c / 2 := by
+      rw [hc']; field_simp
+    have h4 : 0 ≤ |C₀| := abs_nonneg _
+    nlinarith [h2, h3, hsum0]
 
 /-! ### Leaf 3 — partial summation `A_S ↦ ∑ 1/p`
 
