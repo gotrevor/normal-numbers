@@ -145,4 +145,39 @@ theorem sum_inv_smallPrimes_subset_ge {K : ℕ} (hK : 100 ≤ K) (R : ℕ) :
   rw [hP₀] at hsecond
   linarith [hsecond, hexcl]
 
+/-- Monotonicity of the `S`-prime reciprocal sum in the cutoff. -/
+lemma sumInvPrimesIn_mono {M N : ℕ} (h : M ≤ N) : sumInvPrimesIn S M ≤ sumInvPrimesIn S N := by
+  refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun p _ _ => by positivity)
+  intro p hp
+  simp only [Finset.mem_filter, Nat.mem_primesBelow] at hp ⊢
+  exact ⟨⟨lt_of_lt_of_le hp.1.1 h, hp.1.2⟩, hp.2⟩
+
+open NormalNumbers.PrimeLambert GridParams in
+/-- **The drop-in replacement for `G4SchedBParams.sum_inv_smallPrimes_ge`.**  Given a Mertens
+rate for `S`, for every target `m` there is a cutoff exponent `e` at which the schedule's
+`S`-restricted small-prime sum satisfies the base schedule's bound verbatim —
+
+    `m·log 2 − 21K² − 4 ≤ ∑_{p ∈ smallPrimes (2^{2^e}) P₀, p ∈ S} 1/p` —
+
+together with the explicit bound on `e` (essentially `m/c`) that must be checked against the
+moment cap `10⁵·T K·e ≤ 2^{8K²}`.  For `S` = a residue class, `c = 1/(2 φ(q) log 2)`-ish, so the
+inflation is by a constant factor in `q`, while the cap is doubly exponential in `K`. -/
+theorem exists_cutoff_subset {c C : ℝ} (h : MertensRate S c C) {K : ℕ} (hK : 100 ≤ K) (m : ℕ) :
+    ∃ e : ℕ,
+      ((m : ℝ) * Real.log 2 - 21 * (K : ℝ) ^ 2 - 4
+        ≤ ∑ p ∈ {p ∈ smallPrimes (2 ^ 2 ^ e) (gridOf K (Sched.N K) (by omega)).P₀ | S p},
+            (p : ℝ)⁻¹)
+      ∧ (e : ℝ)
+          ≤ max 0 (((m : ℝ) * Real.log 2 + 21 * (K : ℝ) ^ 2 + 2 + C + c) / (c * Real.log 2)) + 1 := by
+  obtain ⟨e, hsum, hbound⟩ :=
+    exists_exponent h ((m : ℝ) * Real.log 2 + 21 * (K : ℝ) ^ 2 + 2)
+  refine ⟨e, ?_, hbound⟩
+  have hmono : sumInvPrimesIn S (2 ^ 2 ^ e) ≤ sumInvPrimesIn S (2 ^ 2 ^ e + 1) :=
+    sumInvPrimesIn_mono (Nat.le_succ _)
+  have hsched := sum_inv_smallPrimes_subset_ge (S := S) hK (2 ^ 2 ^ e)
+  refine le_trans ?_ hsched
+  have hstep : (m : ℝ) * Real.log 2 + 21 * (K : ℝ) ^ 2 + 2 ≤ sumInvPrimesIn S (2 ^ 2 ^ e + 1) :=
+    le_trans hsum hmono
+  linarith [hstep, sq_nonneg (K : ℝ)]
+
 end NormalNumbers.G4.MertensAP
