@@ -455,6 +455,82 @@ theorem sum_abs_farPartΩ_le (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : �
               (farBound bb (G.K + G.N) (farC G X Dm) / Real.log 2
                 + ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (bb : ℝ)) ^ (G.K + G.N + 1) * (bb / (bb - 1))))
             + farJunkBound bb (G.K + G.N) (junkA G.P₀ X) (junkB X Dm)) := by
-  sorry
+  have hbr : (3 : ℝ) ≤ bb := by exact_mod_cast hbb
+  have hbr2 : (2 : ℝ) ≤ bb := by linarith
+  have hbb2 : 2 ≤ bb := by omega
+  set P := apSample X G.P₀ G.b₀ with hP
+  set J := G.K + G.N with hJ
+  set C := farC G X Dm with hC
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hc : (0 : ℝ) < P.card := by exact_mod_cast hne.card_pos
+  set f : G.Atom → ℕ → ℕ → ℝ := fun α n i =>
+    ((Ω (n + shiftG G.B G.Q G.D₀ α (J + i + 1)) : ℕ) : ℝ) / (bb : ℝ) ^ (J + i + 1) with hf
+  have hf0 : ∀ α n i, 0 ≤ f α n i := fun α n i => by
+    simp only [hf]; positivity
+  have hfs : ∀ α, ∀ n ∈ P, Summable (f α n) := fun α n hn =>
+    summable_farW TWeight.cardFactors bb hbb2 G hn α
+  have hpt : ∀ n ∈ P, |farPartW TWeight.cardFactors bb G n a|
+      ≤ ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, f α n i := by
+    intro n hn
+    unfold farPartW
+    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun α _ => ?_)
+    rw [abs_mul]
+    refine mul_le_mul_of_nonneg_left (le_of_eq ?_) (abs_nonneg _)
+    exact abs_of_nonneg (tsum_nonneg fun i => hf0 α n i)
+  -- the per-layer AP-mean
+  have hlayer : ∀ α i, ∑ n ∈ P, f α n i
+      ≤ ((P.card : ℝ) / Real.log 2 * (C + 2 * ((J : ℝ) + i + 1))
+          + (P.card : ℝ) * ((Ω G.P₀ : ℕ) : ℝ)
+          + (junkA G.P₀ X + junkB X Dm * 2 ^ (J + i + 1))) * (1 / (bb : ℝ)) ^ (J + i + 1) := by
+    intro α i
+    simp only [hf]
+    rw [← Finset.sum_div]
+    have h1 := sum_cardFactors_shiftG_le G X hne hP₀ hDm α
+      (j := J + i + 1) (by omega)
+    have h2 := junkShiftBound_layer_le G.P₀ X Dm (j := J + i + 1) (by omega)
+    have hbpos : (0 : ℝ) < (bb : ℝ) := by linarith
+    rw [div_le_iff₀ (by positivity : (0 : ℝ) < (bb : ℝ) ^ (J + i + 1))]
+    rw [← hP, ← hC] at h1
+    refine (h1.trans (add_le_add le_rfl h2)).trans (le_of_eq ?_)
+    rw [one_div_pow]
+    field_simp
+    push_cast
+    ring
+  -- the three summable pieces
+  have hgeo := hasSum_farJunkBound hbr ((P.card : ℝ) * ((Ω G.P₀ : ℕ) : ℝ)) 0 J
+  have hjk := hasSum_farJunkBound hbr (junkA G.P₀ X) (junkB X Dm) J
+  have hom := (hasSum_farBound hbr2 C J).mul_left ((P.card : ℝ) / Real.log 2)
+  have hsum3 := (hom.add hgeo).add hjk
+  have hfun : (fun i : ℕ => (P.card : ℝ) / Real.log 2 * ((C + 2 * ((J : ℝ) + i + 1))
+          * (1 / (bb : ℝ)) ^ (J + i + 1))
+        + ((P.card : ℝ) * ((Ω G.P₀ : ℕ) : ℝ) + 0 * 2 ^ (J + i + 1))
+            * (1 / (bb : ℝ)) ^ (J + i + 1)
+        + (junkA G.P₀ X + junkB X Dm * 2 ^ (J + i + 1)) * (1 / (bb : ℝ)) ^ (J + i + 1))
+      = fun i : ℕ => ((P.card : ℝ) / Real.log 2 * (C + 2 * ((J : ℝ) + i + 1))
+          + (P.card : ℝ) * ((Ω G.P₀ : ℕ) : ℝ)
+          + (junkA G.P₀ X + junkB X Dm * 2 ^ (J + i + 1))) * (1 / (bb : ℝ)) ^ (J + i + 1) := by
+    funext i; ring
+  rw [hfun] at hsum3
+  set T : ℝ := (P.card : ℝ) / Real.log 2 * farBound bb J C
+      + farJunkBound bb J ((P.card : ℝ) * ((Ω G.P₀ : ℕ) : ℝ)) 0
+      + farJunkBound bb J (junkA G.P₀ X) (junkB X Dm) with hT
+  calc ∑ n ∈ P, |farPartW TWeight.cardFactors bb G n a|
+      ≤ ∑ n ∈ P, ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, f α n i :=
+        Finset.sum_le_sum hpt
+    _ = ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, ∑ n ∈ P, f α n i := by
+        rw [Finset.sum_comm]
+        refine Finset.sum_congr rfl fun α _ => ?_
+        rw [← Finset.mul_sum, Summable.tsum_finsetSum (hfs α)]
+    _ ≤ ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * T := by
+        refine Finset.sum_le_sum fun α _ => mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
+        rw [← hsum3.tsum_eq]
+        refine Summable.tsum_le_tsum (hlayer α) ?_ hsum3.summable
+        exact summable_sum fun n hn => hfs α n hn
+    _ = (2 : ℝ) ^ G.K * T := by
+        rw [← Finset.sum_mul, sum_abs_kronPow_diffZ]
+    _ = _ := by
+        rw [hT]
+        unfold farJunkBound
+        ring
 
 end NormalNumbers.G4
