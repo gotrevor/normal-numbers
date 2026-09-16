@@ -33,7 +33,7 @@ open PrimeLambert GridParams
 /-- **The far average, generic in the weight and in `κ`** — `farAvgC_le` with the pointwise
 domination replaced by the per-layer hypothesis of `sum_abs_farPartW_le_of_layer`. -/
 theorem farAvgW_le_of_layer (W : TWeight) (c : ℕ → ℕ)
-    (hW : ∀ m : ℕ, ((W.wN m : ℕ) : ℝ) = weightW c m)
+    (hW : ∀ m : ℕ, ((W.wN m : ℕ) : ℝ) ≤ weightW c m)
     (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (hP₀ : 0 < G.P₀)
     {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) {κ : ℝ} (hκ0 : 0 ≤ κ)
@@ -104,7 +104,7 @@ theorem farAvgW_le_of_layer (W : TWeight) (c : ℕ → ℕ)
 theorem farAvgW_le_effC (c : ℕ → ℕ) {A : ℝ} (hT : Tame c A) (bb : ℕ) (hbb : 3 ≤ bb)
     (G : GridParams) (X : ℕ) (hne : (apSample X G.P₀ G.b₀).Nonempty) (hP₀ : 0 < G.P₀)
     (hΩ : (1 : ℝ) ≤ ((Ω G.P₀ : ℕ) : ℝ)) {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) (W : TWeight)
-    (hW : ∀ m : ℕ, ((W.wN m : ℕ) : ℝ) = weightW c m) :
+    (hW : ∀ m : ℕ, ((W.wN m : ℕ) : ℝ) ≤ weightW c m) :
     farAvgW W bb G X
       ≤ effC c G.P₀ A * ((2 : ℝ) ^ G.K *
           ((farBound bb (G.K + G.N) (farC G X Dm) / Real.log 2
@@ -142,7 +142,7 @@ theorem gridFrameW_weightU_propD_of_bounds (c : ℕ → ℕ) {A : ℝ} (hT : Tam
     (by omega) G X hne R hη hε D
     ((bigAvgC_le' bb (by omega) G X R Y hne hK hR hRY hMx1 hMx).trans hbig) ?_
     ((farAvgW_le_effC c hT bb hbb G X hne hP₀ hΩ hDm (TWeight.weightU c hT)
-      (TWeight.weightU_wN c hT)).trans hfar)
+      (fun m => le_of_eq (TWeight.weightU_wN c hT m))).trans hfar)
   refine (junkAvgC_le' c bb (by omega) G X hne hP₀ hρm).trans (le_trans ?_ hjunk)
   have h := junkShiftBoundC_le_effC hT G.P₀ X ρmax
   have hrow : 0 ≤ rowL1 bb G.K :=
