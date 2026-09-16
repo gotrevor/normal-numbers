@@ -56,3 +56,38 @@ So the whole Mertens-side obligation of campaign A is discharged.  What is left 
 mechanical re-parametrization of `G4SchedBParams`/`G4SchedBBudget`/`G4SchedBAssembly` in the free
 exponent `e` (declaration list: `DESIGN-2026-09-16-prime-subset.md`), for which the two harmonic
 bounds already exist generically (`G4EntropyMTowerHarmonic.sum_inv_smallPrimes_*_gen`).
+
+## Addendum 2 — A4 arithmetic layer complete (HEAD `7d1e4f0`, branch `wip/g5-prime-subset`)
+
+Working tree clean, `lake build` green (9045 jobs), **no `sorry` in either new module**.
+
+`src/NormalNumbers/G4SubsetWeight.lean` (sorry-free, axiom-clean):
+* `omegaSN/omegaS/overlapS/subsetLambert` — the subset weight and the constant `c_S(b)`.
+* `omegaSN_mul_eq` : `ω_S(d·m) + overlap_S(d,m) = ω_S(m) + ω_S(d)` (`d, m ≠ 0`), and
+  `omegaS_mul_eq` (real form) — the exact transport identity, proved verbatim from the `ω`
+  version because `Finset.filter S` commutes with `Nat.primeFactors_mul`.
+* `overlapS_congr` — periodicity of the overlap modulo `rad d`; `overlapS_le`.
+* `summable_omegaS_div_pow` (all `b ≥ 2`), `omegaS_le_omegaR`.
+* `subsetLambert_eq_tsum_inv` — **the closed form** `∑_n ω_S(n)/bⁿ = ∑_{p∈S} 1/(b^p − 1)`
+  (Tonelli over the pair family; columns geometric, reindexed along `n = p(k+1)`).
+* `omegaSN_univ / omegaS_univ / subsetLambert_univ` — the `S = univ` sanity instance.
+
+## Where campaign A stands
+
+Discharged in kernel: the whole **Mertens side** (`G4MertensAP`, `G4SubsetSchedule`) and the
+whole **subset arithmetic side** (`G4SubsetWeight`).  The audit
+(`DESIGN-2026-09-16-prime-subset.md`) is the map.
+
+**Next lap, in order:**
+1. **A3 finish** — re-parametrize `G4SchedBParams`/`G4SchedBBudget`/`G4SchedBAssembly` in the
+   free cutoff exponent `e` (declaration list in the design doc §"The four constraints"), with
+   `exists_cutoff_subset` replacing `sum_inv_smallPrimes_ge` and `moment_cap_subset` replacing
+   `Mc_le_two_pow_m₂`.  The generic harmonic bounds already exist
+   (`G4EntropyMTowerHarmonic.sum_inv_smallPrimes_ge_gen/_le_gen`).  Mechanical but large: do it
+   file by file, committing each green step.
+2. **Frame wiring** — `G4Wiring.SeparatingFrameExistsW` with `w := omegaS S`,
+   `x := subsetLambert b S`; the transport layer (`G4Transport`) still speaks only of `omegaR`,
+   so the honest move is to generalize it over a weight satisfying `omegaS_mul_eq` +
+   `overlapS_congr` (this also serves the G5 `weightW c` target — one generalization, two uses).
+3. Then `isDisjunctive_subset` / `isDisjunctive_residueClass`, with `subsetLambert_univ`
+   re-deriving `isDisjunctive_base`'s statement as the sanity check.
