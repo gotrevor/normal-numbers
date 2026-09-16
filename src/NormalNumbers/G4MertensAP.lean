@@ -736,8 +736,80 @@ prime-power part (`summable_residueClass_non_primes_div`, uniformly `O(1)` for `
 theorem LSeries_residueClass_primes_ge (ha : IsUnit a) :
     ∃ C₀ : ℝ, ∀ x : ℝ, 1 < x → x ≤ 2 →
       ((q.totient : ℝ)⁻¹) / (x - 1) - C₀
-        ≤ ∑' n : ℕ, (if n.Prime ∧ (n : ZMod q) = a then Real.log n else 0) / (n : ℝ) ^ x := by
-  sorry
+        ≤ ∑' n : ℕ, (if Nat.Prime n ∧ (n : ZMod q) = a then Real.log n else 0) / (n : ℝ) ^ x := by
+  classical
+  obtain ⟨C, hC⟩ := ArithmeticFunction.vonMangoldt.LSeries_residueClass_lower_bound ha
+  set rc : ℕ → ℝ := ArithmeticFunction.vonMangoldt.residueClass a with hrc
+  have hrc0 : ∀ n, 0 ≤ rc n := ArithmeticFunction.vonMangoldt.residueClass_nonneg a
+  set g : ℕ → ℝ := fun n => (if Nat.Prime n then 0 else rc n) / n with hg
+  have hgsum : Summable g := ArithmeticFunction.vonMangoldt.summable_residueClass_non_primes_div a
+  have hg0 : ∀ n, 0 ≤ g n := by
+    intro n
+    rw [hg]
+    simp only
+    have : 0 ≤ (if Nat.Prime n then 0 else rc n) := by split_ifs; exacts [le_rfl, hrc0 n]
+    positivity
+  refine ⟨C + ∑' n, g n, fun x hx1 hx2 => ?_⟩
+  -- the prime / non-prime split of the summand
+  have hPeq : ∀ n : ℕ, (if Nat.Prime n then rc n else 0)
+      = (if Nat.Prime n ∧ (n : ZMod q) = a then Real.log n else 0) := by
+    intro n
+    by_cases hp : Nat.Prime n
+    · by_cases hres : (n : ZMod q) = a
+      · simp [hp, hres, hrc, ArithmeticFunction.vonMangoldt.residueClass, Set.indicator_apply,
+          ArithmeticFunction.vonMangoldt_apply_prime hp]
+      · simp [hp, hres, hrc, ArithmeticFunction.vonMangoldt.residueClass, Set.indicator_apply]
+    · simp [hp]
+  -- summability
+  have htot : Summable (fun n : ℕ => rc n / (n : ℝ) ^ x) := by
+    refine LSeries.summable_real_of_abscissaOfAbsConv_lt ?_
+    refine lt_of_le_of_lt (ArithmeticFunction.vonMangoldt.abscissaOfAbsConv_residueClass_le_one a) ?_
+    exact_mod_cast hx1
+  have hcmp : ∀ n : ℕ, (if Nat.Prime n then 0 else rc n) / (n : ℝ) ^ x ≤ g n := by
+    intro n
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · have h0 : rc 0 = 0 := ArithmeticFunction.vonMangoldt.residueClass_apply_zero a
+      simp [hg, h0]
+    · have hn1 : (1 : ℝ) ≤ n := by exact_mod_cast hn
+      have hnum : 0 ≤ (if Nat.Prime n then 0 else rc n) := by
+        split_ifs; exacts [le_rfl, hrc0 n]
+      have hpow : (n : ℝ) ≤ (n : ℝ) ^ x := by
+        calc (n : ℝ) = (n : ℝ) ^ (1 : ℝ) := (Real.rpow_one _).symm
+          _ ≤ (n : ℝ) ^ x := Real.rpow_le_rpow_of_exponent_le hn1 (by linarith)
+      rw [hg]
+      simp only
+      exact div_le_div_of_nonneg_left hnum (by linarith) hpow
+  have hQ0 : ∀ n : ℕ, 0 ≤ (if Nat.Prime n then 0 else rc n) / (n : ℝ) ^ x := by
+    intro n
+    have hnum : 0 ≤ (if Nat.Prime n then 0 else rc n) := by
+      split_ifs; exacts [le_rfl, hrc0 n]
+    have : (0 : ℝ) ≤ (n : ℝ) ^ x := Real.rpow_nonneg (by positivity) _
+    positivity
+  have hQ : Summable (fun n : ℕ => (if Nat.Prime n then 0 else rc n) / (n : ℝ) ^ x) :=
+    Summable.of_nonneg_of_le hQ0 hcmp hgsum
+  have hsplit : ∀ n : ℕ, rc n / (n : ℝ) ^ x
+      = (if Nat.Prime n ∧ (n : ZMod q) = a then Real.log n else 0) / (n : ℝ) ^ x
+        + (if Nat.Prime n then 0 else rc n) / (n : ℝ) ^ x := by
+    intro n
+    rw [← hPeq n, ← add_div]
+    congr 1
+    by_cases hp : Nat.Prime n <;> simp [hp]
+  have hP : Summable (fun n : ℕ =>
+      (if Nat.Prime n ∧ (n : ZMod q) = a then Real.log n else 0) / (n : ℝ) ^ x) := by
+    have := htot.sub hQ
+    refine this.congr (fun n => ?_)
+    rw [hsplit n]
+    ring
+  have htsum : ∑' n : ℕ, rc n / (n : ℝ) ^ x
+      = (∑' n : ℕ, (if Nat.Prime n ∧ (n : ZMod q) = a then Real.log n else 0) / (n : ℝ) ^ x)
+        + ∑' n : ℕ, (if Nat.Prime n then 0 else rc n) / (n : ℝ) ^ x := by
+    rw [← Summable.tsum_add hP hQ]
+    exact tsum_congr hsplit
+  have hQle : ∑' n : ℕ, (if Nat.Prime n then 0 else rc n) / (n : ℝ) ^ x ≤ ∑' n, g n :=
+    Summable.tsum_le_tsum hcmp hQ hgsum
+  have hCx := hC (x := x) ⟨hx1, hx2⟩
+  rw [htsum] at hCx
+  linarith [hCx, hQle]
 
 /-- **Mertens in arithmetic progressions, in the form the schedule needs.**  Not in mathlib;
 assembled here from the `L`-series lower bound plus Chebyshev and two partial summations. -/
