@@ -742,6 +742,47 @@ theorem hfar_junkB_leE {k₄ : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
     _ = ((1 : ℝ) / 2) ^ (50 * K ^ 2 - (K + 2)) := by rw [mul_comm]; exact hfinal
     _ ≤ (1 / 64 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := half_pow_le_target' (by omega) hD
 
+/-- **`hfar` for `Ω` in base `b ≥ 3`**: the `ω` far bound plus the frozen geometric term plus
+the two far-junk terms, against `δfar = 11/64`. -/
+theorem hfarΩ_holdsE {k₄ : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
+    (2 : ℝ) ^ K *
+        ((farBound b (K + N K) (farC (gridOf K (N K) h.hK1) (XE K e) (gridDm K (N K)))
+              / Real.log 2
+            + ((Ω (gridOf K (N K) h.hK1).P₀ : ℕ) : ℝ)
+                * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))))
+          + farJunkBound b (K + N K) (junkA (gridOf K (N K) h.hK1).P₀ (XE K e))
+              (junkB (XE K e) (gridDm K (N K)))
+              / ((apSample (XE K e) (gridOf K (N K) h.hK1).P₀
+                  (gridOf K (N K) h.hK1).b₀).card : ℝ))
+      ≤ (11 / 64 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
+  set G := gridOf K (N K) h.hK1 with hG
+  set c : ℝ := ((apSample (XE K e) G.P₀ G.b₀).card : ℝ) with hc
+  set A := junkA G.P₀ (XE K e) with hA
+  set B := junkB (XE K e) (gridDm K (N K)) with hB
+  have h1 := hfar_holdsE hK4 h
+  have h2 := hfar_frozen_leE hK4 h
+  have h3 := hfar_junkA_leE hK4 h
+  have h4 := hfar_junkB_leE hK4 h
+  have hfj : farJunkBound b (K + N K) A B / c
+      = (A / c) * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1)))
+        + (B / c) * ((2 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 2))) := by
+    unfold farJunkBound
+    ring
+  have hexpand : (2 : ℝ) ^ K *
+      ((farBound b (K + N K) (farC G (XE K e) (gridDm K (N K))) / Real.log 2
+          + ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))))
+        + farJunkBound b (K + N K) A B / c)
+      = ((2 : ℝ) ^ K / Real.log 2 * farBound b (K + N K) (farC G (XE K e) (gridDm K (N K)))
+          + (2 : ℝ) ^ K * (((Ω G.P₀ : ℕ) : ℝ)
+              * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1)))))
+        + ((2 : ℝ) ^ K * ((A / c) * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))))
+          + (2 : ℝ) ^ K * ((B / c)
+              * ((2 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 2))))) := by
+    rw [hfj]
+    ring
+  rw [hexpand]
+  linarith
+
 /-- **`hjunk` in base `b ≥ 3`**, against `η = 2^{−k₄}`, `ε = 1/K`. -/
 theorem hjunk_holdsE {k₄ : ℕ} (hK4 : K = 4 * k₄) (hk : 40 ≤ k₄) (h : HypE b K e) :
     (junkShiftBound (gridOf K (N K) h.hK1).P₀ (XE K e) (J K * gridDm K (N K))
