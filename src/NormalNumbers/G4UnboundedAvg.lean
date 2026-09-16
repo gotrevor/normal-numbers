@@ -251,4 +251,114 @@ theorem sum_weightW_shiftG_le_effC (c : ℕ → ℕ) {A : ℝ} (hT : Tame c A) (
   nlinarith [mul_le_mul_of_nonneg_left hfroz hcard0,
     mul_le_mul_of_nonneg_right (show (1:ℝ) ≤ D from hD1) (mul_nonneg hcard0 hfar0)]
 
+/-! ### B2c′: the far part, generic in the weight and the constant
+
+`sum_abs_farPartC_le`'s proof uses the bounded hypothesis in exactly one step (`hdom`/`h3`:
+`∑_n w_c(n+ρ_{α,j}) ≤ κ · (the Ω layer bound)`).  Taking that step as a *hypothesis* makes the
+whole far-field estimate generic: `κ = max C 1` recovers the bounded case, `κ = effC` gives the
+tame one. -/
+
+theorem sum_abs_farPartW_le_of_layer (W : TWeight) (c : ℕ → ℕ)
+    (hW : ∀ m : ℕ, ((W.wN m : ℕ) : ℝ) = weightW c m)
+    (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) (hP₀ : 0 < G.P₀)
+    {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) {κ : ℝ} (hκ0 : 0 ≤ κ)
+    (hlay : ∀ (α : G.Atom) (j : ℕ), 1 ≤ j →
+      ∑ n ∈ apSample X G.P₀ G.b₀, weightW c (n + shiftG G.B G.Q G.D₀ α j)
+        ≤ κ * ((apSample X G.P₀ G.b₀).card
+              * ((farC G X Dm + 2 * j) / Real.log 2 + ((Ω G.P₀ : ℕ) : ℝ))
+            + junkShiftBound G.P₀ X (j * Dm)))
+    (a : Fin G.K → Fin G.s) :
+    ∑ n ∈ apSample X G.P₀ G.b₀, |farPartW W bb G n a|
+      ≤ κ * ((2 : ℝ) ^ G.K *
+          ((apSample X G.P₀ G.b₀).card *
+              (farBound bb (G.K + G.N) (farC G X Dm) / Real.log 2
+                + ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (bb : ℝ)) ^ (G.K + G.N + 1) * (bb / (bb - 1))))
+            + farJunkBound bb (G.K + G.N) (junkA G.P₀ X) (junkB X Dm))) := by
+  have hbr : (3 : ℝ) ≤ bb := by exact_mod_cast hbb
+  have hbr2 : (2 : ℝ) ≤ bb := by linarith
+  have hbb2 : 2 ≤ bb := by omega
+  set P := apSample X G.P₀ G.b₀ with hP
+  set J := G.K + G.N with hJ
+  set Cf := farC G X Dm with hCf
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hc : (0 : ℝ) < P.card := by exact_mod_cast hne.card_pos
+  set f : G.Atom → ℕ → ℕ → ℝ := fun α n i =>
+    ((W.wN (n + shiftG G.B G.Q G.D₀ α (J + i + 1)) : ℕ) : ℝ) / (bb : ℝ) ^ (J + i + 1) with hf
+  have hf0 : ∀ α n i, 0 ≤ f α n i := fun α n i => by simp only [hf]; positivity
+  have hfs : ∀ α, ∀ n ∈ P, Summable (f α n) := fun α n hn => summable_farW W bb hbb2 G hn α
+  have hpt : ∀ n ∈ P, |farPartW W bb G n a|
+      ≤ ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, f α n i := by
+    intro n hn
+    unfold farPartW
+    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun α _ => ?_)
+    rw [abs_mul]
+    refine mul_le_mul_of_nonneg_left (le_of_eq ?_) (abs_nonneg _)
+    exact abs_of_nonneg (tsum_nonneg fun i => hf0 α n i)
+  -- the per-layer AP-mean, from the hypothesis
+  have hlayer : ∀ α i, ∑ n ∈ P, f α n i
+      ≤ (κ * (P.card : ℝ) / Real.log 2 * (Cf + 2 * ((J : ℝ) + i + 1))
+          + κ * (P.card : ℝ) * ((Ω G.P₀ : ℕ) : ℝ)
+          + (κ * junkA G.P₀ X + κ * junkB X Dm * 2 ^ (J + i + 1)))
+        * (1 / (bb : ℝ)) ^ (J + i + 1) := by
+    intro α i
+    simp only [hf]
+    rw [← Finset.sum_div]
+    have h2 := junkShiftBound_layer_le G.P₀ X Dm (j := J + i + 1) (by omega)
+    have hlay' := hlay α (J + i + 1) (by omega)
+    have hrwW : ∑ n ∈ P, ((W.wN (n + shiftG G.B G.Q G.D₀ α (J + i + 1)) : ℕ) : ℝ)
+        = ∑ n ∈ P, weightW c (n + shiftG G.B G.Q G.D₀ α (J + i + 1)) :=
+      Finset.sum_congr rfl fun n _ => hW _
+    rw [div_le_iff₀ (by positivity : (0 : ℝ) < (bb : ℝ) ^ (J + i + 1))]
+    rw [hrwW]
+    have h3 : ∑ n ∈ P, weightW c (n + shiftG G.B G.Q G.D₀ α (J + i + 1))
+        ≤ κ * ((P.card : ℝ) * ((Cf + 2 * ((J : ℝ) + i + 1)) / Real.log 2
+              + ((Ω G.P₀ : ℕ) : ℝ))
+            + (junkA G.P₀ X + junkB X Dm * 2 ^ (J + i + 1))) := by
+      refine hlay'.trans ?_
+      have hpc : (0 : ℝ) ≤ (P.card : ℝ) := hc.le
+      push_cast at h2 ⊢
+      nlinarith [h2]
+    refine h3.trans (le_of_eq ?_)
+    rw [one_div_pow]
+    field_simp
+  -- the three summable pieces
+  have hgeo := hasSum_farJunkBound hbr (κ * (P.card : ℝ) * ((Ω G.P₀ : ℕ) : ℝ)) 0 J
+  have hjk := hasSum_farJunkBound hbr (κ * junkA G.P₀ X) (κ * junkB X Dm) J
+  have hom := (hasSum_farBound hbr2 Cf J).mul_left (κ * (P.card : ℝ) / Real.log 2)
+  have hsum3 := (hom.add hgeo).add hjk
+  have hfun : (fun i : ℕ => κ * (P.card : ℝ) / Real.log 2 * ((Cf + 2 * ((J : ℝ) + i + 1))
+          * (1 / (bb : ℝ)) ^ (J + i + 1))
+        + (κ * (P.card : ℝ) * ((Ω G.P₀ : ℕ) : ℝ) + 0 * 2 ^ (J + i + 1))
+            * (1 / (bb : ℝ)) ^ (J + i + 1)
+        + (κ * junkA G.P₀ X + κ * junkB X Dm * 2 ^ (J + i + 1))
+            * (1 / (bb : ℝ)) ^ (J + i + 1))
+      = fun i : ℕ => (κ * (P.card : ℝ) / Real.log 2 * (Cf + 2 * ((J : ℝ) + i + 1))
+          + κ * (P.card : ℝ) * ((Ω G.P₀ : ℕ) : ℝ)
+          + (κ * junkA G.P₀ X + κ * junkB X Dm * 2 ^ (J + i + 1)))
+        * (1 / (bb : ℝ)) ^ (J + i + 1) := by
+    funext i; ring
+  rw [hfun] at hsum3
+  set T : ℝ := κ * (P.card : ℝ) / Real.log 2 * farBound bb J Cf
+      + farJunkBound bb J (κ * (P.card : ℝ) * ((Ω G.P₀ : ℕ) : ℝ)) 0
+      + farJunkBound bb J (κ * junkA G.P₀ X) (κ * junkB X Dm) with hT
+  calc ∑ n ∈ P, |farPartW W bb G n a|
+      ≤ ∑ n ∈ P, ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, f α n i :=
+        Finset.sum_le_sum hpt
+    _ = ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, ∑ n ∈ P, f α n i := by
+        rw [Finset.sum_comm]
+        refine Finset.sum_congr rfl fun α _ => ?_
+        rw [← Finset.mul_sum, Summable.tsum_finsetSum (hfs α)]
+    _ ≤ ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * T := by
+        refine Finset.sum_le_sum fun α _ => mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
+        rw [← hsum3.tsum_eq]
+        refine Summable.tsum_le_tsum (hlayer α) ?_ hsum3.summable
+        exact summable_sum fun n hn => hfs α n hn
+    _ = (2 : ℝ) ^ G.K * T := by
+        rw [← Finset.sum_mul, sum_abs_kronPow_diffZ]
+    _ = _ := by
+        rw [hT]
+        unfold farJunkBound
+        ring
+
 end NormalNumbers.G4
