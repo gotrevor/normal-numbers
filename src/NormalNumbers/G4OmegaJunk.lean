@@ -421,4 +421,40 @@ lemma hasSum_farJunkBound {bb : ℝ} (hb : 3 ≤ bb) (A B : ℝ) (J : ℕ) :
   rw [hclosed]
   exact h
 
+/-! ### The far tail of `Ω`, assembled -/
+
+/-- The far layers of one atom are summable for any `TWeight`. -/
+lemma summable_farW (W : TWeight) (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) {X n : ℕ}
+    (hn : n ∈ apSample X G.P₀ G.b₀) (α : G.Atom) :
+    Summable (fun i : ℕ => (W.wN (n + shiftG G.B G.Q G.D₀ α (G.K + G.N + i + 1)) : ℝ)
+      / (bb : ℝ) ^ (G.K + G.N + i + 1)) := by
+  obtain ⟨k, hk1, -⟩ := G.exists_mult_mul hn α
+  have hsum : Summable
+      (fun j : ℕ => (W.wN (n + shiftG G.B G.Q G.D₀ α (j + 1)) : ℝ) / (bb : ℝ) ^ (j + 1)) := by
+    refine (W.summable_dilatedTailB (b := bb) hbb (G.d α) k (G.d_pos α).ne').congr (fun j => ?_)
+    rw [hk1]
+    show (W.wN (G.d α * (k + j + 1)) : ℝ) / (bb : ℝ) ^ (j + 1)
+      = (W.wN (offset G.B G.Q α + mult G.B G.Q G.D₀ α * k
+          + shiftG G.B G.Q G.D₀ α (j + 1)) : ℝ) / (bb : ℝ) ^ (j + 1)
+    rw [add_shiftG_eq G.B G.Q G.D₀ α (G.hD α) (by omega)]
+    show (W.wN (G.d α * (k + j + 1)) : ℝ) / (bb : ℝ) ^ (j + 1)
+      = (W.wN (G.d α * (k + (j + 1))) : ℝ) / (bb : ℝ) ^ (j + 1)
+    rw [show k + j + 1 = k + (j + 1) by omega]
+  refine ((summable_nat_add_iff (G.K + G.N)).2 hsum).congr (fun i => ?_)
+  rw [show i + (G.K + G.N) = G.K + G.N + i from by omega]
+
+/-- **The `Ω` far tail of one row, summed over the sample.**  Three pieces: the `ω` tail
+(`farBound`), the frozen excess (a bare geometric series) and the valuation junk
+(`farJunkBound`).  Base `≥ 3` is used by the junk piece. -/
+theorem sum_abs_farPartΩ_le (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) (hP₀ : 0 < G.P₀)
+    {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) (a : Fin G.K → Fin G.s) :
+    ∑ n ∈ apSample X G.P₀ G.b₀, |farPartW TWeight.cardFactors bb G n a|
+      ≤ (2 : ℝ) ^ G.K *
+          ((apSample X G.P₀ G.b₀).card *
+              (farBound bb (G.K + G.N) (farC G X Dm) / Real.log 2
+                + ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (bb : ℝ)) ^ (G.K + G.N + 1) * (bb / (bb - 1))))
+            + farJunkBound bb (G.K + G.N) (junkA G.P₀ X) (junkB X Dm)) := by
+  sorry
+
 end NormalNumbers.G4
