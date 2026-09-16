@@ -1,7 +1,9 @@
 # HANDOFF 2026-09-16 — the three upper halves are theorems, via the carry-consistency reduction 🧵
 
 *Lap: overnight Opus run on `KICKOFF-2026-09-16-hitting-set-upper-bounds.md` (U5/U6/U7).
-Branch `wip/adder-tower-c9`.  HEAD at handoff: see `git log -1`.*
+Branch `wip/adder-tower-c9`.  HEAD at handoff: `0e21ff7`.  Working tree clean;
+nothing uncommitted.  Stop sentinel written (`box done --green`), so the host
+verifies GREEN and halts.*
 
 ## Done — all three kickoff targets
 
