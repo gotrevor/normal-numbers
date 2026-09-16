@@ -604,4 +604,34 @@ theorem farAvgΩ_le (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : ℕ)
   rw [← hr]
   exact avg_le_of_forall_le _ _ hBd0 fun ν _ => hrow ν
 
+/-! ### `PropD` for `Ω` from the three closed forms -/
+
+/-- **`PropD` for the `Ω`-frame from three closed-form bounds.**  The first is literally the `ω`
+bound; the other two are this module's `Ω`-specific estimates.  Base `≥ 3` enters through the
+far-tail junk series. -/
+theorem gridFrameW_cardFactors_propD_of_bounds (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams)
+    (X R Y : ℕ) (hne : (apSample X G.P₀ G.b₀).Nonempty) (hP₀ : 0 < G.P₀)
+    (hK : 0 < G.K) (hR : 2 ≤ R) (hRY : R ≤ Y) {Mx : ℝ} (hMx1 : 1 ≤ Mx)
+    (hMx : ∀ n ∈ apSample X G.P₀ G.b₀, ∀ i : G.Idx,
+      ((n + shiftAL G.B G.Q G.D₀ i : ℕ) : ℝ) ≤ Mx)
+    {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) {ρmax : ℕ}
+    (hρm : ∀ i : G.Idx, shiftAL G.B G.Q G.D₀ i ≤ ρmax)
+    {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) {δbig δjunk δfar : ℝ}
+    (hbig : Real.sqrt (4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R)) * rowL2 bb G.K
+          + 2 * (Y : ℝ) ^ 2 * (rowL1 bb G.K) ^ 2 / (apSample X G.P₀ G.b₀).card)
+        + (Real.log Mx / Real.log Y) * rowL1 bb G.K ≤ δbig * (ε * η))
+    (hjunk : (junkShiftBound G.P₀ X ρmax / ((apSample X G.P₀ G.b₀).card : ℝ)) * rowL1 bb G.K
+        ≤ δjunk * (ε * η))
+    (hfar : (2 : ℝ) ^ G.K *
+        ((farBound bb (G.K + G.N) (farC G X Dm) / Real.log 2
+            + ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (bb : ℝ)) ^ (G.K + G.N + 1) * (bb / (bb - 1))))
+          + farJunkBound bb (G.K + G.N) (junkA G.P₀ X) (junkB X Dm)
+              / ((apSample X G.P₀ G.b₀).card : ℝ)) ≤ δfar * (ε * η)) :
+    (gridFrameW TWeight.cardFactors bb (by omega) G X hne (smallPrimes R G.P₀)
+      (frozenGammaΩ bb G) hη hε D).PropD (δbig + δjunk + δfar) :=
+  gridFrameW_cardFactors_propD bb (by omega) G X hne R hη hε D
+    ((bigAvgΩ_le' bb (by omega) G X R Y hne hK hR hRY hMx1 hMx).trans hbig)
+    ((junkAvgΩ_le bb (by omega) G X hne hP₀ hρm).trans hjunk)
+    ((farAvgΩ_le bb hbb G X hne hP₀ hDm).trans hfar)
+
 end NormalNumbers.G4
