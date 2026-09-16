@@ -249,4 +249,40 @@ theorem sum_cardFactors_shiftG_le (G : GridParams) (X : ℕ)
           exact sum_junk_one_le hP₀ hρ1 hρle
     _ = _ := by ring
 
+/-! ### The far tail for `Ω`
+
+Summing the AP-mean against `bb^{-j}` over `j > J`.  The `ω` piece is `farBound` verbatim; the
+frozen piece is a bare geometric series; the junk piece needs an envelope, because
+`junkShiftBound P₀ X (j·Dm)` grows in `j`.  Using `X + jDm ≤ (X+Dm)·j` and `(j+1)² ≤ 4·2^j`, the
+growth is at most `2^j`, which is summable against `bb^{-j}` for `bb ≥ 3` (and only for `bb ≥ 3`
+— the same wall as the row masses). -/
+
+/-- The `j`-free part of the junk envelope. -/
+noncomputable def junkA (P₀ X : ℕ) : ℝ :=
+  (X : ℝ) / P₀ * (∑ p ∈ P₀.primeFactors, 1 / ((p : ℝ) - 1) + 1)
+
+/-- The `2^j`-coefficient of the junk envelope. -/
+noncomputable def junkB (X Dm : ℕ) : ℝ :=
+  4 * (Real.sqrt ((X + Dm : ℕ) : ℝ) + 1) * (Real.log ((X + Dm : ℕ) : ℝ) / Real.log 2 + 1)
+
+lemma junkA_nonneg (P₀ X : ℕ) : 0 ≤ junkA P₀ X := by
+  sorry
+
+lemma junkB_nonneg (X Dm : ℕ) : 0 ≤ junkB X Dm := by
+  sorry
+
+/-- **The junk envelope at layer `j`.** -/
+theorem junkShiftBound_layer_le (P₀ X Dm : ℕ) {j : ℕ} (hj : 1 ≤ j) :
+    junkShiftBound P₀ X (j * Dm) ≤ junkA P₀ X + junkB X Dm * 2 ^ j := by
+  sorry
+
+/-- The closed form of the far junk series in base `bb ≥ 3`. -/
+noncomputable def farJunkBound (bb : ℝ) (J : ℕ) (A B : ℝ) : ℝ :=
+  A * (1 / bb) ^ J / (bb - 1) + B * (2 / bb) ^ (J + 1) * (bb / (bb - 2))
+
+lemma hasSum_farJunkBound {bb : ℝ} (hb : 3 ≤ bb) (A B : ℝ) (J : ℕ) :
+    HasSum (fun i : ℕ => (A + B * 2 ^ (J + i + 1)) * (1 / bb) ^ (J + i + 1))
+      (farJunkBound bb J A B) := by
+  sorry
+
 end NormalNumbers.G4
