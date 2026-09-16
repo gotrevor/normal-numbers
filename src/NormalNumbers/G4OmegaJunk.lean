@@ -25,7 +25,7 @@ is that step for an arbitrary weight, and `junkAvgΩ_le` is the instance.
 -/
 
 open Finset
-open scoped BigOperators
+open scoped BigOperators ArithmeticFunction.Omega
 
 namespace NormalNumbers.G4
 
@@ -189,19 +189,64 @@ the junk by `junkShiftBound`. -/
 
 /-- The frozen excess at `c ≡ 1` never exceeds `Ω(P₀)`. -/
 lemma frozenExcess_one_le {P₀ : ℕ} (hP₀ : P₀ ≠ 0) (m : ℕ) :
-    frozenExcess (fun _ => (1 : ℕ)) P₀ m ≤ ((ArithmeticFunction.cardFactors P₀ : ℕ) : ℝ) := by
-  sorry
+    frozenExcess (fun _ => (1 : ℕ)) P₀ m ≤ ((Ω P₀ : ℕ) : ℝ) := by
+  classical
+  have hsum : ((Ω P₀ : ℕ) : ℝ) = ∑ p ∈ P₀.primeFactors, ((P₀.factorization p : ℕ) : ℝ) := by
+    rw [ArithmeticFunction.cardFactors_eq_sum_factorization, Finsupp.sum,
+      Nat.support_factorization]
+    push_cast
+    rfl
+  rw [hsum]
+  unfold frozenExcess
+  refine Finset.sum_le_sum fun p _ => ?_
+  rw [Nat.cast_one, one_mul]
+  have : (min (m.factorization p) (P₀.factorization p) - 1 : ℕ) ≤ P₀.factorization p := by
+    omega
+  exact_mod_cast this
 
 /-- **The AP-mean of `Ω` at layer `j`** — the `ω` bound plus the two `Ω`-specific costs. -/
 theorem sum_cardFactors_shiftG_le (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (hP₀ : 0 < G.P₀)
     {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) (α : G.Atom) {j : ℕ} (hj : 1 ≤ j) :
     ∑ n ∈ apSample X G.P₀ G.b₀,
-        ((ArithmeticFunction.cardFactors (n + shiftG G.B G.Q G.D₀ α j) : ℕ) : ℝ)
+        ((Ω (n + shiftG G.B G.Q G.D₀ α j) : ℕ) : ℝ)
       ≤ (apSample X G.P₀ G.b₀).card *
             ((farC G X Dm + 2 * j) / Real.log 2
-              + ((ArithmeticFunction.cardFactors G.P₀ : ℕ) : ℝ))
+              + ((Ω G.P₀ : ℕ) : ℝ))
           + junkShiftBound G.P₀ X (j * Dm) := by
-  sorry
+  classical
+  set P := apSample X G.P₀ G.b₀ with hP
+  set ρ := shiftG G.B G.Q G.D₀ α j with hρ
+  have hρ1 : 1 ≤ ρ := shiftG_pos G α hj
+  have hρle : ρ ≤ j * Dm := by
+    rw [hρ]; unfold shiftG
+    exact (Nat.sub_le _ _).trans (Nat.mul_le_mul_left j (hDm α))
+  have hP₀' : G.P₀ ≠ 0 := hP₀.ne'
+  -- pointwise: Ω = ω + frozen + junk
+  have hpt : ∀ n, ((Ω (n + ρ) : ℕ) : ℝ)
+      = omegaR (n + ρ) + frozenExcess (fun _ => (1 : ℕ)) G.P₀ (n + ρ)
+        + junk (fun _ => (1 : ℕ)) G.P₀ (n + ρ) := by
+    intro n
+    rw [cardFactors_eq_omegaR_add_excess,
+      excess_eq_frozen_add_junk (fun _ => (1 : ℕ)) hP₀' (show n + ρ ≠ 0 by omega)]
+    ring
+  calc ∑ n ∈ P, ((Ω (n + ρ) : ℕ) : ℝ)
+      = ∑ n ∈ P, omegaR (n + ρ) + ∑ n ∈ P, frozenExcess (fun _ => (1 : ℕ)) G.P₀ (n + ρ)
+          + ∑ n ∈ P, junk (fun _ => (1 : ℕ)) G.P₀ (n + ρ) := by
+        simp_rw [hpt]
+        rw [Finset.sum_add_distrib, Finset.sum_add_distrib]
+    _ ≤ (P.card * ((farC G X Dm + 2 * j) / Real.log 2)
+          + P.card * ((Ω G.P₀ : ℕ) : ℝ)) + junkShiftBound G.P₀ X (j * Dm) := by
+        refine add_le_add (add_le_add ?_ ?_) ?_
+        · rw [hP, hρ]
+          exact sum_omegaR_shiftG_le G X hne hDm α hj
+        · calc ∑ n ∈ P, frozenExcess (fun _ => (1 : ℕ)) G.P₀ (n + ρ)
+              ≤ ∑ _n ∈ P, ((Ω G.P₀ : ℕ) : ℝ) :=
+                Finset.sum_le_sum fun n _ => frozenExcess_one_le hP₀' _
+            _ = P.card * ((Ω G.P₀ : ℕ) : ℝ) := by
+                rw [Finset.sum_const, nsmul_eq_mul]
+        · rw [hP]
+          exact sum_junk_one_le hP₀ hρ1 hρle
+    _ = _ := by ring
 
 end NormalNumbers.G4
