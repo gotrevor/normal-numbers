@@ -1,3 +1,42 @@
+# PENDING WORK — campaign A closed; G5/Ω is the live target (2026-09-16)
+
+## Campaign A: DONE, unconditional, axiom-clean
+
+`isDisjunctive_residueClass_primeSum` (and `isDisjunctive_subsetLambert`,
+`isDisjunctive_residueClass`, `isDisjunctive_subsetLambert_univ`) — see
+`HANDOFF-2026-09-16-residueClass.md`.  Nothing left open on that thread.
+
+## The live crux: `isDisjunctive_Omega` (override item 4, PENDING_WORK §"Next actions" step 3–4)
+
+**Done (`G4OmegaWeight.lean`, 2026-09-16):** `TWeight.cardFactors` — `Ω` as a `TWeight` with
+`ov = 0` (complete additivity), so §4A/§4B/§4C are free from `G4TransportW`/`G4FrameW`
+(§4C never sees the weight: the retained vector is the `ω`-vector on `smallPrimes R P₀`).
+Plus the pointwise split `cardFactors_eq_omegaR_add_excess : Ω = ω + excess 1` and its
+integrality `excess_one_eq_cast`.
+
+**The crux, sharply posed.**  `PropD` is the ONLY property of the frame that sees the weight.
+For `ω_S` it was proved by *re-splitting by prime size* (`G4RemainderW`, `G4SubsetJunk`); for
+`Ω` the split is different and the junk is a **valuation excess**, not a prime-count:
+
+    Ffull_Ω(n,ν) = Ffull_ω(n,ν) + tailFrom(excess 1)(n,ν)
+
+and `excess 1 = frozenExcess P₀ + junk P₀` (`G4WeightJunk.excess_eq_frozen_add_junk`), where
+`frozenExcess` depends only on `m mod P₀` (`frozenExcess_congr`) and so is absorbed into the
+frame's translate `γ`, while `junk` has the sample-mean bound `G4WeightJunk.sum_junk_le`.
+
+**Next attack, in order (each a named leaf in `src/`):**
+
+1. `excessTail bb G n ν := ∑_{j≥1} bb^{-j} · excess 1 (n + shift + j·D)` — the analogue of
+   `tailFromW`/`farPartW` for the excess; and `tailFromW cardFactors = tailFromW omega +
+   excessTail` (pointwise, from `cardFactors_eq_omegaR_add_excess` and linearity of the tail).
+2. `frozenExcessGamma` — the `γ` translate carrying `frozenExcess`, mirroring `frozenGammaS`.
+3. `excessAvg_le` — `E_n ∑_ν |excessTail|` bounded by `sum_junk_le` summed against the
+   geometric weights `bb^{-j}` (the `√(X+ρ)log(X+ρ)` term is the one to watch; it is
+   `≤ (j+1)²·tiny` with `tiny = 4P₀ log₂X/√X`, cf. the paper budget note below).
+4. `gridFrameW_omega_propD_of_bounds` for `cardFactors` = the `ω` `PropD` plus `excessAvg_le`.
+5. Schedule: `Hyp` needs no new field at `c = 1` (`C = 1 ≤ K`); `hbig`/`hfar` gain the junk
+   terms; then `isDisjunctive_Omega`.
+
 # PENDING_WORK
 
 > ⚠️ This file is 493 KB.  Everything below the ACTIVE section is archive.  Write in the ACTIVE
