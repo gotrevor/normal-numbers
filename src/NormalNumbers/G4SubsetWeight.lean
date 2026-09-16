@@ -122,7 +122,110 @@ the campaign statement. -/
 theorem subsetLambert_eq_tsum_inv {b : ℕ} (hb : 2 ≤ b) :
     subsetLambert S b
       = ∑' p : ℕ, (if p.Prime ∧ S p then 1 / ((b : ℝ) ^ p - 1) else 0) := by
-  sorry
+  classical
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hb0 : (0 : ℝ) < b := by linarith
+  set f : ℕ → ℕ → ℝ := fun n p =>
+    if p.Prime ∧ S p ∧ p ∣ n ∧ n ≠ 0 then ((b : ℝ) ^ n)⁻¹ else 0 with hf
+  have hf0 : ∀ n p, 0 ≤ f n p := by
+    intro n p
+    rw [hf]
+    simp only
+    split_ifs
+    · positivity
+    · exact le_rfl
+  -- rows: fixed `n`
+  have hrowsupp : ∀ n : ℕ, ∀ p ∉ n.primeFactors.filter S, f n p = 0 := by
+    intro n p hp
+    have hc : ¬ (p.Prime ∧ S p ∧ p ∣ n ∧ n ≠ 0) := by
+      intro hc
+      exact hp (Finset.mem_filter.2 ⟨Nat.mem_primeFactors.2 ⟨hc.1, hc.2.2.1, hc.2.2.2⟩, hc.2.1⟩)
+    simp only [hf]
+    exact if_neg hc
+  have hrowS : ∀ n, Summable (f n) := fun n => summable_of_ne_finset_zero (hrowsupp n)
+  have hrow : ∀ n, ∑' p, f n p = omegaS S n / (b : ℝ) ^ n := by
+    intro n
+    rw [tsum_eq_sum (hrowsupp n)]
+    have hval : ∀ p ∈ n.primeFactors.filter S, f n p = ((b : ℝ) ^ n)⁻¹ := by
+      intro p hp
+      simp only [Finset.mem_filter, Nat.mem_primeFactors] at hp
+      simp only [hf]
+      exact if_pos ⟨hp.1.1, hp.2, hp.1.2.1, hp.1.2.2⟩
+    rw [Finset.sum_congr rfl hval, Finset.sum_const, nsmul_eq_mul]
+    rw [omegaS, omegaSN, div_eq_mul_inv]
+  -- columns: fixed `p`
+  have hcolS : ∀ p, Summable (fun n => f n p) := by
+    intro p
+    refine Summable.of_nonneg_of_le (fun n => hf0 n p) (fun n => ?_)
+      (summable_geometric_of_lt_one (r := (b : ℝ)⁻¹) (by positivity) (by
+        rw [inv_lt_one_iff₀]; right; linarith))
+    simp only [hf]
+    split_ifs
+    · rw [← inv_pow]
+    · positivity
+  have hcol : ∀ p : ℕ, ∑' n, f n p = if p.Prime ∧ S p then 1 / ((b : ℝ) ^ p - 1) else 0 := by
+    intro p
+    by_cases hp : p.Prime ∧ S p
+    · rw [if_pos hp]
+      have hp2 : 2 ≤ p := hp.1.two_le
+      have hbp : (1 : ℝ) < (b : ℝ) ^ p := one_lt_pow₀ (by linarith) (by omega)
+      set r : ℝ := ((b : ℝ) ^ p)⁻¹ with hrdef
+      have hr0 : 0 < r := by rw [hrdef]; positivity
+      have hr1 : r < 1 := by
+        rw [hrdef, inv_lt_one_iff₀]
+        right; exact hbp
+      have hgeo0 : HasSum (fun k : ℕ => r ^ k) (1 - r)⁻¹ :=
+        hasSum_geometric_of_lt_one hr0.le hr1
+      have hval : r * (1 - r)⁻¹ = 1 / ((b : ℝ) ^ p - 1) := by
+        have hne : ((b : ℝ) ^ p - 1) ≠ 0 := by intro hc; rw [sub_eq_zero] at hc; linarith
+        rw [hrdef]
+        field_simp
+      have hgeo : HasSum (fun k : ℕ => r ^ (k + 1)) (1 / ((b : ℝ) ^ p - 1)) := by
+        rw [← hval]
+        exact (hgeo0.mul_left r).congr_fun (fun k => by rw [pow_succ]; ring)
+      have hinj : Function.Injective (fun k : ℕ => p * (k + 1)) := by
+        intro k1 k2 hk
+        simp only at hk
+        have : k1 + 1 = k2 + 1 := Nat.eq_of_mul_eq_mul_left (by omega) hk
+        omega
+      have hzero : ∀ n ∉ Set.range (fun k : ℕ => p * (k + 1)), f n p = 0 := by
+        intro n hn
+        have hc : ¬ (p.Prime ∧ S p ∧ p ∣ n ∧ n ≠ 0) := by
+          rintro ⟨-, -, hdvd, hn0⟩
+          obtain ⟨m, rfl⟩ := hdvd
+          have hm : m ≠ 0 := by rintro rfl; exact hn0 (by ring)
+          exact hn ⟨m - 1, by simp only; congr 1; omega⟩
+        simp only [hf]
+        exact if_neg hc
+      have hcomp : ∀ k : ℕ, f (p * (k + 1)) p = r ^ (k + 1) := by
+        intro k
+        have hne : p * (k + 1) ≠ 0 := Nat.mul_ne_zero (by omega) (Nat.succ_ne_zero k)
+        simp only [hf]
+        rw [if_pos ⟨hp.1, hp.2, Dvd.intro _ rfl, hne⟩, hrdef, inv_pow, ← pow_mul]
+      have hHS : HasSum (fun n => f n p) (1 / ((b : ℝ) ^ p - 1)) :=
+        (Function.Injective.hasSum_iff (f := fun n => f n p) hinj hzero).1
+          (hgeo.congr_fun (fun k => hcomp k))
+      exact hHS.tsum_eq
+    · rw [if_neg hp]
+      have hz : ∀ n, f n p = 0 := by
+        intro n
+        have hc : ¬ (p.Prime ∧ S p ∧ p ∣ n ∧ n ≠ 0) := by
+          rintro ⟨h1, h2, -, -⟩
+          exact hp ⟨h1, h2⟩
+        simp only [hf]
+        exact if_neg hc
+      simp [hz]
+  -- the swap
+  have huncurry : Summable (Function.uncurry f) := by
+    have huc : Function.uncurry f = fun x : ℕ × ℕ => f x.1 x.2 := rfl
+    rw [huc, summable_prod_of_nonneg (fun x => hf0 x.1 x.2)]
+    refine ⟨fun n => hrowS n, ?_⟩
+    refine Summable.congr (summable_omegaS_div_pow (S := S) hb) (fun n => (hrow n).symm)
+  calc subsetLambert S b = ∑' n, ∑' p, f n p := by
+        rw [subsetLambert]
+        exact tsum_congr fun n => (hrow n).symm
+    _ = ∑' p, ∑' n, f n p := (huncurry.tsum_comm' hrowS hcolS).symm
+    _ = ∑' p : ℕ, (if p.Prime ∧ S p then 1 / ((b : ℝ) ^ p - 1) else 0) := tsum_congr hcol
 
 /-! ### The sanity instance `S = univ` -/
 
