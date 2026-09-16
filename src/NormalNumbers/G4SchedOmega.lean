@@ -189,6 +189,34 @@ lemma cube_le_two_pow : ∀ {k : ℕ}, 40 ≤ k → 100000 * k ^ 3 ≤ 2 ^ k := 
           _ ≤ 2 * 2 ^ n := Nat.mul_le_mul_left _ hih
           _ = 2 ^ (n + 1) := by ring
 
+/-- `√X ≤ Nat.sqrt X + 1`. -/
+lemma real_sqrt_le_nat_sqrt_add_one (X : ℕ) :
+    Real.sqrt (X : ℝ) ≤ ((Nat.sqrt X : ℕ) : ℝ) + 1 := by
+  have h : (X : ℝ) ≤ (((Nat.sqrt X : ℕ) : ℝ) + 1) ^ 2 := by
+    have := Nat.lt_succ_sqrt' X
+    have : (X : ℝ) ≤ ((Nat.sqrt X + 1 : ℕ) : ℝ) ^ 2 := by exact_mod_cast this.le
+    push_cast at this
+    linarith
+  calc Real.sqrt (X : ℝ) ≤ Real.sqrt ((((Nat.sqrt X : ℕ) : ℝ) + 1) ^ 2) :=
+        Real.sqrt_le_sqrt h
+    _ = ((Nat.sqrt X : ℕ) : ℝ) + 1 := Real.sqrt_sq (by positivity)
+
+/-- `log N / log 2 ≤ Nat.log 2 N + 1`. -/
+lemma log_div_log_two_le (N : ℕ) :
+    Real.log (N : ℝ) / Real.log 2 ≤ ((Nat.log 2 N : ℕ) : ℝ) + 1 := by
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  rcases Nat.eq_zero_or_pos N with h | h
+  · rw [h]
+    simp only [Nat.cast_zero, Real.log_zero, zero_div]
+    positivity
+  · have hlt : N < 2 ^ (Nat.log 2 N + 1) := Nat.lt_pow_succ_log_self (by norm_num) N
+    have hltr : (N : ℝ) ≤ (2 : ℝ) ^ (Nat.log 2 N + 1) := by exact_mod_cast hlt.le
+    have := Real.log_le_log (by exact_mod_cast h) hltr
+    rw [Real.log_pow] at this
+    rw [div_le_iff₀ hlog2]
+    push_cast at this ⊢
+    linarith
+
 /-- `2^{ω(N)} ≤ N`. -/
 theorem two_pow_card_primeFactors_le {N : ℕ} (hN : N ≠ 0) : 2 ^ N.primeFactors.card ≤ N := by
   calc 2 ^ N.primeFactors.card = ∏ _p ∈ N.primeFactors, 2 := by rw [Finset.prod_const]
@@ -262,6 +290,108 @@ theorem junk_size_holdsE (h : HypE b K e) :
   have h2 : 2 * (gridOf K (N K) h.hK1).P₀ ≤ 2 ^ 20 * (gridOf K (N K) h.hK1).P₀ :=
     Nat.mul_le_mul_right _ (by norm_num)
   exact Nat.mul_le_mul h2 (Nat.mul_le_mul_left _ h1)
+
+/-- **`junkA / |P|`** is `log log`-size. -/
+theorem junkA_div_le {P₀ X : ℕ} (hP₀ : 0 < P₀) (hX : 0 < X) {c : ℝ} (hc : 0 < c)
+    (hcard : (X : ℝ) / (2 * P₀) ≤ c) :
+    junkA P₀ X / c ≤ 2 * (2 + Real.log (P₀.primeFactors.card)) := by
+  have hP₀r : (0 : ℝ) < P₀ := by exact_mod_cast hP₀
+  have hXr : (0 : ℝ) < X := by exact_mod_cast hX
+  have hinv : 1 / c ≤ 2 * P₀ / X := by
+    rw [div_le_div_iff₀ hc (by positivity)]
+    have : (X : ℝ) / (2 * P₀) * (2 * P₀) ≤ c * (2 * P₀) :=
+      mul_le_mul_of_nonneg_right hcard (by positivity)
+    rw [div_mul_cancel₀ _ (by positivity : (2 * (P₀ : ℝ)) ≠ 0)] at this
+    linarith
+  have h0 : 0 ≤ junkA P₀ X := junkA_nonneg _ _
+  have hstep : junkA P₀ X / c ≤ junkA P₀ X * (2 * P₀ / X) := by
+    rw [div_eq_mul_one_div]
+    exact mul_le_mul_of_nonneg_left hinv h0
+  have he : (X : ℝ) / P₀ * (2 * P₀ / X) = 2 := by field_simp
+  have hexp : junkA P₀ X * (2 * P₀ / X)
+      = ((X : ℝ) / P₀ * (2 * P₀ / X)) * (∑ p ∈ P₀.primeFactors, 1 / ((p : ℝ) - 1) + 1) := by
+    unfold junkA
+    ring
+  rw [hexp, he] at hstep
+  have hT := sum_inv_sub_one_primeFactors_le_log P₀
+  linarith
+
+/-- **`junkB / |P| ≤ 1`** under the size condition. -/
+theorem junkB_div_le {P₀ X Dm : ℕ} (hP₀ : 0 < P₀) (hX : 1 ≤ X) (hDm : Dm ≤ X)
+    {c : ℝ} (hc : 0 < c) (hcard : (X : ℝ) / (2 * P₀) ≤ c)
+    (hsize : 2 ^ 20 * P₀ * ((2 * Nat.sqrt X + 2) * (Nat.log 2 X + 2)) ≤ X) :
+    junkB X Dm / c ≤ 1 := by
+  have hP₀r : (0 : ℝ) < P₀ := by exact_mod_cast hP₀
+  have hXr : (0 : ℝ) < X := by exact_mod_cast hX
+  set s : ℝ := ((Nat.sqrt X : ℕ) : ℝ) with hs
+  set L : ℝ := ((Nat.log 2 X : ℕ) : ℝ) with hL
+  have hs0 : 0 ≤ s := by positivity
+  have hL0 : 0 ≤ L := by positivity
+  have hinv : 1 / c ≤ 2 * P₀ / X := by
+    rw [div_le_div_iff₀ hc (by positivity)]
+    have : (X : ℝ) / (2 * P₀) * (2 * P₀) ≤ c * (2 * P₀) :=
+      mul_le_mul_of_nonneg_right hcard (by positivity)
+    rw [div_mul_cancel₀ _ (by positivity : (2 * (P₀ : ℝ)) ≠ 0)] at this
+    linarith
+  have hB0 : 0 ≤ junkB X Dm := junkB_nonneg _ _
+  have hstep : junkB X Dm / c ≤ junkB X Dm * (2 * P₀ / X) := by
+    rw [div_eq_mul_one_div]
+    exact mul_le_mul_of_nonneg_left hinv hB0
+  -- bound `junkB` itself
+  have hXD : ((X + Dm : ℕ) : ℝ) ≤ 2 * X := by
+    have : X + Dm ≤ 2 * X := by omega
+    exact_mod_cast this
+  have hsq : Real.sqrt ((X + Dm : ℕ) : ℝ) + 1 ≤ 2 * (2 * s + 2) := by
+    have h1 : Real.sqrt ((X + Dm : ℕ) : ℝ) ≤ Real.sqrt (4 * (X : ℝ)) :=
+      Real.sqrt_le_sqrt (by linarith)
+    have h2 : Real.sqrt (4 * (X : ℝ)) = 2 * Real.sqrt (X : ℝ) := by
+      rw [show (4 : ℝ) * X = 2 ^ 2 * X by ring, Real.sqrt_mul (by positivity),
+        Real.sqrt_sq (by norm_num)]
+    have h3 : Real.sqrt (X : ℝ) ≤ s + 1 := real_sqrt_le_nat_sqrt_add_one X
+    rw [h2] at h1
+    linarith
+  have hlg : Real.log ((X + Dm : ℕ) : ℝ) / Real.log 2 + 1 ≤ 2 * (L + 2) := by
+    have h1 : Real.log ((X + Dm : ℕ) : ℝ) / Real.log 2 ≤ L + 2 := by
+      have h2 := log_div_log_two_le (X + Dm)
+      have h3 : Nat.log 2 (X + Dm) ≤ Nat.log 2 X + 1 := by
+        have h4 : Nat.log 2 (X + Dm) ≤ Nat.log 2 (X * 2) := Nat.log_mono_right (by omega)
+        rwa [Nat.log_mul_base (by norm_num) (by omega)] at h4
+      have h3' : ((Nat.log 2 (X + Dm) : ℕ) : ℝ) ≤ L + 1 := by
+        rw [hL]; exact_mod_cast h3
+      linarith
+    linarith
+  have hjb : junkB X Dm ≤ 4 * ((2 * (2 * s + 2)) * (2 * (L + 2))) := by
+    unfold junkB
+    have h1 : 0 ≤ Real.sqrt ((X + Dm : ℕ) : ℝ) + 1 := by positivity
+    have h2 : 0 ≤ Real.log ((X + Dm : ℕ) : ℝ) / Real.log 2 + 1 := by
+      have : 0 ≤ Real.log ((X + Dm : ℕ) : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ X + Dm))
+      have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+      positivity
+    calc 4 * (Real.sqrt ((X + Dm : ℕ) : ℝ) + 1) * (Real.log ((X + Dm : ℕ) : ℝ) / Real.log 2 + 1)
+        = 4 * ((Real.sqrt ((X + Dm : ℕ) : ℝ) + 1) * (Real.log ((X + Dm : ℕ) : ℝ) / Real.log 2 + 1)) := by
+          ring
+      _ ≤ 4 * ((2 * (2 * s + 2)) * (2 * (L + 2))) := by
+          refine mul_le_mul_of_nonneg_left (mul_le_mul hsq hlg h2 (by linarith)) (by norm_num)
+  -- the size condition
+  have hsizer : (2 : ℝ) ^ 20 * P₀ * ((2 * s + 2) * (L + 2)) ≤ X := by
+    have : ((2 ^ 20 * P₀ * ((2 * Nat.sqrt X + 2) * (Nat.log 2 X + 2)) : ℕ) : ℝ) ≤ (X : ℝ) := by
+      exact_mod_cast hsize
+    push_cast at this
+    rw [hs, hL]
+    linarith
+  have hfin : junkB X Dm * (2 * P₀ / X) ≤ 1 := by
+    have hpos : (0 : ℝ) < 2 * P₀ / X := by positivity
+    have h1 : junkB X Dm * (2 * P₀ / X)
+        ≤ (4 * ((2 * (2 * s + 2)) * (2 * (L + 2)))) * (2 * P₀ / X) :=
+      mul_le_mul_of_nonneg_right hjb hpos.le
+    refine h1.trans ?_
+    have hexp : 4 * ((2 * (2 * s + 2)) * (2 * (L + 2))) * (2 * P₀ / X)
+        = (32 * ((P₀ : ℝ) * ((2 * s + 2) * (L + 2)))) / X := by
+      field_simp
+      ring
+    rw [hexp, div_le_one hXr]
+    nlinarith [hsizer, (by positivity : (0:ℝ) ≤ (P₀ : ℝ) * ((2 * s + 2) * (L + 2)))]
+  linarith
 
 /-! ### Power-of-two bookkeeping for the far pieces -/
 
