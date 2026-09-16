@@ -52,7 +52,32 @@ theorem sampleAvg_abs_blockSum_le_of_shift (bb : ℕ) (hbb : 2 ≤ bb) (G : Grid
       ∑ n ∈ apSample X G.P₀ G.b₀, |w (n + shiftAL G.B G.Q G.D₀ i)| ≤ B) :
     ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ *
         ∑ n ∈ apSample X G.P₀ G.b₀, |blockSum bb G w n a| ≤ B * rowL1 bb G.K := by
-  sorry
+  classical
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
+  have hc : (0 : ℝ) ≤ ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ := by positivity
+  have hstep : ∀ n ∈ apSample X G.P₀ G.b₀, |blockSum bb G w n a|
+      ≤ ∑ i : G.Idx, |rowCoeff bb G a i| * |w (n + shiftAL G.B G.Q G.D₀ i)| := by
+    intro n _
+    rw [blockSum_eq_sum_rowCoeff]
+    refine (Finset.abs_sum_le_sum_abs _ _).trans (le_of_eq ?_)
+    exact Finset.sum_congr rfl fun i _ => abs_mul _ _
+  calc ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ *
+        ∑ n ∈ apSample X G.P₀ G.b₀, |blockSum bb G w n a|
+      ≤ ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
+          ∑ i : G.Idx, |rowCoeff bb G a i| * |w (n + shiftAL G.B G.Q G.D₀ i)| :=
+        mul_le_mul_of_nonneg_left (Finset.sum_le_sum hstep) hc
+    _ = ∑ i : G.Idx, |rowCoeff bb G a i| * (((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ *
+          ∑ n ∈ apSample X G.P₀ G.b₀, |w (n + shiftAL G.B G.Q G.D₀ i)|) := by
+        rw [Finset.sum_comm, Finset.mul_sum]
+        refine Finset.sum_congr rfl fun i _ => ?_
+        rw [← Finset.mul_sum]
+        ring
+    _ ≤ ∑ i : G.Idx, |rowCoeff bb G a i| * B := by
+        refine Finset.sum_le_sum fun i _ => ?_
+        exact mul_le_mul_of_nonneg_left (hw i) (abs_nonneg _)
+    _ = (∑ i : G.Idx, |rowCoeff bb G a i|) * B := by rw [Finset.sum_mul]
+    _ ≤ rowL1 bb G.K * B := mul_le_mul_of_nonneg_right (sum_abs_rowCoeff_le bb hbb G a) hB
+    _ = B * rowL1 bb G.K := mul_comm _ _
 
 /-! ### The junk at a single shift -/
 
@@ -62,12 +87,31 @@ noncomputable def junkShiftBound (P₀ X ρmax : ℕ) : ℝ :=
     + (((Nat.sqrt (X + ρmax) + 1) * Nat.log 2 (X + ρmax) : ℕ) : ℝ)
 
 lemma junkShiftBound_nonneg (P₀ X ρmax : ℕ) : 0 ≤ junkShiftBound P₀ X ρmax := by
-  sorry
+  unfold junkShiftBound
+  have h1 : (0 : ℝ) ≤ ∑ p ∈ P₀.primeFactors, 1 / ((p : ℝ) - 1) := by
+    refine Finset.sum_nonneg fun p hp => ?_
+    have hp2 : 2 ≤ p := (Nat.prime_of_mem_primeFactors hp).two_le
+    have : (2 : ℝ) ≤ p := by exact_mod_cast hp2
+    have : (0 : ℝ) < (p : ℝ) - 1 := by linarith
+    positivity
+  positivity
 
 /-- The sample sum of the valuation junk at any shift `1 ≤ ρ ≤ ρmax`. -/
 theorem sum_junk_one_le {X P₀ b₀ ρ ρmax : ℕ} (hP₀ : 0 < P₀) (hρ : 1 ≤ ρ) (hρm : ρ ≤ ρmax) :
     ∑ n ∈ apSample X P₀ b₀, junk (fun _ => (1 : ℕ)) P₀ (n + ρ) ≤ junkShiftBound P₀ X ρmax := by
-  sorry
+  have h := sum_junk_le (fun _ => (1 : ℕ)) (C := 1) (fun _ => by norm_num) (X := X) (b₀ := b₀) hP₀ hρ
+  refine h.trans ?_
+  rw [one_mul]
+  unfold junkShiftBound
+  have hmono : ((Nat.sqrt (X + ρ) + 1) * Nat.log 2 (X + ρ) : ℕ)
+      ≤ ((Nat.sqrt (X + ρmax) + 1) * Nat.log 2 (X + ρmax) : ℕ) :=
+    Nat.mul_le_mul (by
+        have := Nat.sqrt_le_sqrt (show X + ρ ≤ X + ρmax by omega)
+        omega)
+      (Nat.log_mono_right (by omega))
+  have : (((Nat.sqrt (X + ρ) + 1) * Nat.log 2 (X + ρ) : ℕ) : ℝ)
+      ≤ (((Nat.sqrt (X + ρmax) + 1) * Nat.log 2 (X + ρmax) : ℕ) : ℝ) := by exact_mod_cast hmono
+  linarith
 
 /-! ### `junkAvgΩ` -/
 
@@ -77,6 +121,43 @@ theorem junkAvgΩ_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     (hρm : ∀ i : G.Idx, shiftAL G.B G.Q G.D₀ i ≤ ρmax) :
     junkAvgΩ bb G X
       ≤ (junkShiftBound G.P₀ X ρmax / ((apSample X G.P₀ G.b₀).card : ℝ)) * rowL1 bb G.K := by
-  sorry
+  classical
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
+  set P := apSample X G.P₀ G.b₀ with hP
+  have hc : (0 : ℝ) < P.card := by exact_mod_cast hne.card_pos
+  set B : ℝ := junkShiftBound G.P₀ X ρmax / (P.card : ℝ) with hBdef
+  have hB0 : 0 ≤ B := div_nonneg (junkShiftBound_nonneg _ _ _) hc.le
+  have hjunk0 : ∀ m : ℕ, 0 ≤ junk (fun _ => (1 : ℕ)) G.P₀ m := by
+    intro m
+    unfold junk
+    exact Finset.sum_nonneg fun p _ => by positivity
+  have hshift : ∀ i : G.Idx, (P.card : ℝ)⁻¹ *
+      ∑ n ∈ P, |junk (fun _ => (1 : ℕ)) G.P₀ (n + shiftAL G.B G.Q G.D₀ i)| ≤ B := by
+    intro i
+    have habs : ∑ n ∈ P, |junk (fun _ => (1 : ℕ)) G.P₀ (n + shiftAL G.B G.Q G.D₀ i)|
+        = ∑ n ∈ P, junk (fun _ => (1 : ℕ)) G.P₀ (n + shiftAL G.B G.Q G.D₀ i) :=
+      Finset.sum_congr rfl fun n _ => abs_of_nonneg (hjunk0 _)
+    rw [habs, hP]
+    have := sum_junk_one_le (b₀ := G.b₀) (X := X) hP₀ (shiftAL_pos G i) (hρm i)
+    rw [hBdef, ← hP, div_eq_inv_mul]
+    exact mul_le_mul_of_nonneg_left this (by positivity)
+  have hrow : ∀ ν : Fin G.rDim, (P.card : ℝ)⁻¹ *
+      ∑ n ∈ P, |blockSum bb G (junk (fun _ => (1 : ℕ)) G.P₀) n (G.rowEquiv.symm ν)|
+      ≤ B * rowL1 bb G.K := fun ν =>
+    sampleAvg_abs_blockSum_le_of_shift bb hbb G X hB0 _ (G.rowEquiv.symm ν) hshift
+  unfold junkAvgΩ
+  rw [← hP]
+  have hswap : (P.card : ℝ)⁻¹ * ∑ n ∈ P, (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
+        |blockSum bb G (junk (fun _ => (1 : ℕ)) G.P₀) n (G.rowEquiv.symm ν)|
+      = (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, (P.card : ℝ)⁻¹ * ∑ n ∈ P,
+        |blockSum bb G (junk (fun _ => (1 : ℕ)) G.P₀) n (G.rowEquiv.symm ν)| := by
+    simp_rw [Finset.mul_sum]
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun ν _ => Finset.sum_congr rfl fun n _ => ?_
+    ring
+  rw [hswap]
+  have hr : ((Finset.univ : Finset (Fin G.rDim)).card : ℝ) = G.rDim := by simp
+  rw [← hr]
+  exact avg_le_of_forall_le _ _ (mul_nonneg hB0 (rowL1_nonneg hbr G.K)) fun ν _ => hrow ν
 
 end NormalNumbers.G4
