@@ -1,5 +1,9 @@
 # DIRECTION — normal-numbers 🧭
 
+## Attended operator override: 2026-09-16 02:50 EDT — census up (ACTIVE for this run only; the 00:35 kickoff is DONE at `0e21ff7`)
+
+Execute `KICKOFF-2026-09-16-hitting-set-census-up.md` and nothing else; it outranks everything below for this run.  Reconcile with `git log` and the newest `HANDOFF-*.md` first.
+
 ## Attended operator override: 2026-09-16 00:35 EDT — hitting-set upper halves (ACTIVE for this run only)
 
 Execute `KICKOFF-2026-09-16-hitting-set-upper-bounds.md` and nothing else; it outranks the CURRENT DIRECTIVE below for this run.  Reconcile with `git log` and the newest `HANDOFF-*.md` first.
