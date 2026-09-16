@@ -353,3 +353,4 @@ import NormalNumbers.G4SchedOmega
 import NormalNumbers.G4UnboundedJunk
 import NormalNumbers.G4UnboundedAvg
 import NormalNumbers.G4UnboundedTW
+import NormalNumbers.G4UnboundedFrame

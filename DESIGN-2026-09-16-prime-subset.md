@@ -111,3 +111,42 @@ Steps 2 and 5 are the two real Abel-summation lemmas; 1, 3, 4 are bookkeeping.
   `S = univ` must re-derive `isDisjunctive_base`.
 
 Items A1–A2 are the crux: they are the only place where anything is *not* a rerun of G4.
+
+---
+
+## 2026-09-16 (campaign B, lap B2d/B2e): `effC` must be `max_{p∣P₀} c_p`, not `frozenCap`
+
+**The obstruction found, and removed.**  `G4UnboundedAvg.effC` was first defined as
+`max (A + frozenHarm c P₀) (frozenCap c P₀)` with `frozenCap c P₀ = ∑_{p∣P₀} c_p·v_p(P₀)`.
+That branch is *fatal* for the schedule: the schedule's modulus satisfies
+`gridQ K N ^ (T·(H−1)) ≤ P₀ ≤ gridQ K N ^ (7T²)` (`G4GridP0Lower`), with
+`gridQ K N = (U+K+N+2)!`, so `frozenCap ≥ Ω(P₀) ≈ log P₀` is astronomically larger than the
+budget `2^{k₄}` that `hjunk_holdsCE` / `hfarC_holdsE` allow (`100000·C·k₄³ ≤ 2^{k₄}`,
+`κ ≤ 2^{k₄}`).  Even for `c ≡ 1` that branch would fail; it only ever appeared multiplied by
+`Ω(P₀)` in a *ratio*.
+
+**The fix (this lap, machine-checked).**  The far field consumes `frozenCap` only through
+`frozenCap c P₀ ≤ effC · Ω(P₀)`, and `Ω(P₀) = ∑_{p∣P₀} v_p(P₀)`, so
+
+> `frozenCap c P₀ = ∑_{p∣P₀} c_p v_p(P₀) ≤ (max_{p∣P₀} c_p) · Ω(P₀)`  (`frozenCap_le_cMax_mul`)
+
+and `effC c P₀ A := max (A + frozenHarm c P₀) (cMax c P₀)` with
+`cMax c P₀ = P₀.primeFactors.sup c`.  Both branches now depend on `P₀` only through its
+**largest prime factor** `pMax ≤ U + K + N + 2` (every prime factor of `P₀` divides a power of
+`gridQ K N = (U+K+N+2)!`).
+
+**Consequence for B2e — the schedule is feasible for `c_p ≍ log p`, and the budget is the
+binding constraint for anything much larger.**  With `K = 4k₄`, `U = gridUmax K N ≤ K³·B^K`,
+`B = K²(K+N)+1`, so `log₂ pMax = O(k₄ log k₄)` (for `N` polynomial in `K`).  Hence
+
+* `c_p ≤ A(1 + log₂ p)` ⇒ `cMax ≤ A·(1 + log₂ pMax) = O(k₄ log k₄)` and
+  `frozenHarm ≤ cMax · ∑_{p∣P₀} 1/(p−1) = O((k₄ log k₄)²)`, both `≪ 2^{k₄}/(100000 k₄³)`;
+* `c_p ≤ A p^θ` (`θ > 0`) ⇒ `cMax ≈ pMax^θ ≈ 2^{θ·O(k₄ log k₄)}`, which is **doubly** past the
+  budget — the far field would need `2^{k₄} ≥ 2^{θ k₄ log k₄}`, false for large `k₄`.
+
+So the growth class the closed proof supports is **`c_p = O(polylog p)`**, not `c_p = O(p^θ)`:
+the binding constraint is not the junk error term `∑_{p ≤ √N} c_p` (that one is `Tame`'s linear
+prefix condition, satisfied even by `c_p ≍ log p` via `Nat.primorial_le_4_pow`) but `cMax`
+against the far-field budget.  `k₄` must now be chosen *after* `effC(k₄)`, which is polynomial
+in `k₄`, so `exists_good_k₄` has to be re-run with `C := ⌈F(k₄)⌉₊` for an explicit polynomial
+`F`; `2^{k₄}` still wins.  That is the next step.

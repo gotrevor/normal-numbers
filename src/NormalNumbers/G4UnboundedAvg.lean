@@ -162,10 +162,35 @@ lemma frozenHarm_nonneg (c : ℕ → ℕ) (P₀ : ℕ) : 0 ≤ frozenHarm c P₀
   have : (0 : ℝ) < (p : ℝ) - 1 := by linarith
   positivity
 
+/-- `max_{p ∣ P₀} c_p` — a *finite* number, and the sharp replacement for `frozenCap` inside
+`effC`.  `frozenCap c P₀ = ∑_{p∣P₀} c_p v_p(P₀)` is of the size of `log P₀`, which for the
+schedule's `P₀` (a huge power of `gridQ`) dwarfs the budget `2^{k₄}`; but the far field only
+ever compares `frozenCap` with `Ω(P₀) = ∑_{p∣P₀} v_p(P₀)`, and that ratio is at most the
+largest coefficient on a prime dividing `P₀`. -/
+noncomputable def cMax (c : ℕ → ℕ) (P₀ : ℕ) : ℝ := ((P₀.primeFactors.sup c : ℕ) : ℝ)
+
+lemma cMax_nonneg (c : ℕ → ℕ) (P₀ : ℕ) : 0 ≤ cMax c P₀ := by unfold cMax; positivity
+
+/-- **The frozen cap against `Ω(P₀)`, with no loss**: `∑ c_p v_p ≤ (max c_p) ∑ v_p`. -/
+lemma frozenCap_le_cMax_mul (c : ℕ → ℕ) (P₀ : ℕ) :
+    frozenCap c P₀ ≤ cMax c P₀ * ((Ω P₀ : ℕ) : ℝ) := by
+  have hΩ : ((Ω P₀ : ℕ) : ℝ) = ∑ p ∈ P₀.primeFactors, ((P₀.factorization p : ℕ) : ℝ) := by
+    rw [ArithmeticFunction.cardFactors_eq_sum_factorization, Finsupp.sum,
+      Nat.support_factorization]
+    push_cast
+    rfl
+  rw [hΩ, Finset.mul_sum]
+  unfold frozenCap
+  refine Finset.sum_le_sum fun p hp => ?_
+  have hle : (c p : ℝ) ≤ cMax c P₀ := by
+    unfold cMax
+    exact_mod_cast Finset.le_sup (f := c) hp
+  exact mul_le_mul_of_nonneg_right hle (by positivity)
+
 /-- **The effective constant**: the single real number that plays the role of `max C 1` once
 `c` is only tame. -/
 noncomputable def effC (c : ℕ → ℕ) (P₀ : ℕ) (A : ℝ) : ℝ :=
-  max (A + frozenHarm c P₀) (frozenCap c P₀)
+  max (A + frozenHarm c P₀) (cMax c P₀)
 
 lemma one_le_effC {c : ℕ → ℕ} {A : ℝ} (hA : 1 ≤ A) (P₀ : ℕ) : 1 ≤ effC c P₀ A :=
   le_trans (by linarith [frozenHarm_nonneg c P₀]) (le_max_left _ _)
@@ -176,8 +201,9 @@ lemma effC_nonneg {c : ℕ → ℕ} {A : ℝ} (hA : 1 ≤ A) (P₀ : ℕ) : 0 �
 /-- The frozen cap against `Ω(P₀)`. -/
 lemma frozenCap_le_effC_mul {c : ℕ → ℕ} {A : ℝ} (hA : 1 ≤ A) {P₀ : ℕ}
     (hΩ : (1 : ℝ) ≤ ((Ω P₀ : ℕ) : ℝ)) : frozenCap c P₀ ≤ effC c P₀ A * ((Ω P₀ : ℕ) : ℝ) := by
-  have h1 : frozenCap c P₀ ≤ effC c P₀ A := le_max_right _ _
-  nlinarith [frozenCap_nonneg c P₀, effC_nonneg (c := c) hA P₀]
+  have h1 : cMax c P₀ ≤ effC c P₀ A := le_max_right _ _
+  have h2 := frozenCap_le_cMax_mul c P₀
+  nlinarith [cMax_nonneg c P₀, effC_nonneg (c := c) hA P₀]
 
 /-- **The junk shift bound against the `c ≡ 1` one.**  This is where `Tame`'s two conditions
 are spent, and the only place they are needed. -/
