@@ -21,7 +21,7 @@ the `j`-th smallest prime factor is at least `j + 2`, so `T(P₀) ≤ harmonic �
 -/
 
 open Finset
-open scoped BigOperators
+open scoped BigOperators ArithmeticFunction.Omega
 
 namespace NormalNumbers.G4
 
@@ -343,6 +343,97 @@ theorem log_card_primeFactors_P₀_leE (h : HypE b K e) :
       ring
     rw [hsplit] at hlog
     nlinarith [(by positivity : (0:ℝ) ≤ (K:ℝ) ^ 2)]
+
+/-- `Ω(P₀) ≤ 2^{21K²+1}`. -/
+theorem cardFactors_P₀_leE (h : HypE b K e) :
+    ((Ω (gridOf K (N K) h.hK1).P₀ : ℕ) : ℝ) ≤ (2 : ℝ) ^ (21 * K ^ 2 + 1) := by
+  have hK := h.base.hK
+  set G := gridOf K (N K) h.hK1 with hG
+  have hP₀0 : G.P₀ ≠ 0 := G.P₀_pos.ne'
+  have h1 : (2 : ℝ) ^ (Ω G.P₀) ≤ (G.P₀ : ℝ) := by
+    have := PrimeLambert.two_pow_cardFactors_le hP₀0
+    exact_mod_cast this
+  have h2 : (G.P₀ : ℝ) ≤ (2 : ℝ) ^ (2 * logP₀Nat K) := by
+    refine (Sched.P₀_le_exp (K := K) (by omega)).trans ?_
+    exact Sched.exp_nat_le_two_pow (logP₀Nat K)
+  have h3 : logP₀Nat K ≤ 2 ^ (21 * K ^ 2) := Sched.logP₀Nat_le_two_pow (by omega)
+  have hmono : (2 : ℝ) ^ (Ω G.P₀) ≤ (2 : ℝ) ^ (2 * logP₀Nat K) := le_trans h1 h2
+  have hexp : Ω G.P₀ ≤ 2 * logP₀Nat K :=
+    (pow_le_pow_iff_right₀ (by norm_num : (1:ℝ) < 2)).1 hmono
+  have : Ω G.P₀ ≤ 2 ^ (21 * K ^ 2 + 1) := by
+    calc Ω G.P₀ ≤ 2 * logP₀Nat K := hexp
+      _ ≤ 2 * 2 ^ (21 * K ^ 2) := by omega
+      _ = 2 ^ (21 * K ^ 2 + 1) := by rw [pow_succ]; ring
+  exact_mod_cast this
+
+/-- **The frozen geometric far piece.** -/
+theorem hfar_frozen_leE {k₄ : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
+    (2 : ℝ) ^ K * (((Ω (gridOf K (N K) h.hK1).P₀ : ℕ) : ℝ)
+        * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))))
+      ≤ (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
+  have hb := h.base.hb
+  have hK := h.base.hK
+  have hbr : (3 : ℝ) ≤ b := by exact_mod_cast hb
+  set G := gridOf K (N K) h.hK1 with hG
+  have hΩ := cardFactors_P₀_leE h
+  have hΩ0 : (0 : ℝ) ≤ ((Ω G.P₀ : ℕ) : ℝ) := by positivity
+  -- the geometric factor
+  have hg1 : (1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))
+      ≤ (1 / 3 : ℝ) ^ (K + N K) := by
+    have h1 : (1 / (b : ℝ)) ^ (K + N K + 1) ≤ (1 / 3 : ℝ) ^ (K + N K + 1) := by
+      refine pow_le_pow_left₀ (by positivity) ?_ _
+      rw [div_le_div_iff₀ (by linarith) (by norm_num)]
+      linarith
+    have h2 : (b : ℝ) / ((b : ℝ) - 1) ≤ 3 / 2 := by
+      rw [div_le_div_iff₀ (by linarith) (by norm_num)]
+      linarith
+    have h3 : (0 : ℝ) < (1 / 3 : ℝ) ^ (K + N K + 1) := by positivity
+    calc (1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))
+        ≤ (1 / 3 : ℝ) ^ (K + N K + 1) * (3 / 2) := by
+          have hb0 : (0 : ℝ) ≤ (b : ℝ) / ((b : ℝ) - 1) := by
+            have : (0 : ℝ) < (b : ℝ) - 1 := by linarith
+            positivity
+          exact mul_le_mul h1 h2 hb0 h3.le
+      _ = (1 / 3 : ℝ) ^ (K + N K) * (1 / 2) := by rw [pow_succ]; ring
+      _ ≤ (1 / 3 : ℝ) ^ (K + N K) := by nlinarith [(by positivity : (0:ℝ) < (1/3:ℝ) ^ (K + N K))]
+  -- `2^K (1/3)^{K+N} ≤ (1/2)^{2k₄} (1/2)^{100K²}`
+  have hNK : N K = 100 * K ^ 2 := rfl
+  have hsplit : (2 : ℝ) ^ K * (1 / 3 : ℝ) ^ (K + N K)
+      ≤ ((1 : ℝ) / 2) ^ (2 * k₄) * ((1 : ℝ) / 2) ^ (100 * K ^ 2) := by
+    have h23 : (2 : ℝ) ^ K * (1 / 3 : ℝ) ^ K = (2 / 3 : ℝ) ^ K := by
+      rw [← mul_pow]; norm_num
+    have hth : (2 / 3 : ℝ) ^ K ≤ ((1 / 2 : ℝ) ^ k₄) ^ 2 := two_thirds_pow_le hK4
+    have hth' : (2 / 3 : ℝ) ^ K ≤ ((1 : ℝ) / 2) ^ (2 * k₄) := by
+      rw [mul_comm, pow_mul]
+      exact hth
+    have hN3 : (1 / 3 : ℝ) ^ (N K) ≤ ((1 : ℝ) / 2) ^ (100 * K ^ 2) := by
+      rw [hNK]
+      exact pow_le_pow_left₀ (by norm_num) (by norm_num) _
+    calc (2 : ℝ) ^ K * (1 / 3 : ℝ) ^ (K + N K)
+        = ((2 : ℝ) ^ K * (1 / 3 : ℝ) ^ K) * (1 / 3 : ℝ) ^ (N K) := by rw [pow_add]; ring
+      _ = (2 / 3 : ℝ) ^ K * (1 / 3 : ℝ) ^ (N K) := by rw [h23]
+      _ ≤ ((1 : ℝ) / 2) ^ (2 * k₄) * ((1 : ℝ) / 2) ^ (100 * K ^ 2) := by
+          exact mul_le_mul hth' hN3 (by positivity) (by positivity)
+  -- assemble
+  have hfinal : ((1 : ℝ) / 2) ^ (100 * K ^ 2) * (2 : ℝ) ^ (21 * K ^ 2 + 1)
+      = ((1 : ℝ) / 2) ^ (100 * K ^ 2 - (21 * K ^ 2 + 1)) :=
+    half_pow_mul_two_pow (by nlinarith [hK, sq_nonneg K])
+  have hD : k₄ + K ≤ 2 * k₄ + (100 * K ^ 2 - (21 * K ^ 2 + 1)) := by
+    have hKsq : K * 100 ≤ K ^ 2 := by nlinarith [hK]
+    have hKk : K = 4 * k₄ := hK4
+    omega
+  calc (2 : ℝ) ^ K * (((Ω G.P₀ : ℕ) : ℝ)
+        * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))))
+      ≤ (2 : ℝ) ^ K * (((Ω G.P₀ : ℕ) : ℝ) * (1 / 3 : ℝ) ^ (K + N K)) := by
+        refine mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hg1 hΩ0) (by positivity)
+    _ = ((2 : ℝ) ^ K * (1 / 3 : ℝ) ^ (K + N K)) * ((Ω G.P₀ : ℕ) : ℝ) := by ring
+    _ ≤ (((1 : ℝ) / 2) ^ (2 * k₄) * ((1 : ℝ) / 2) ^ (100 * K ^ 2)) * (2 : ℝ) ^ (21 * K ^ 2 + 1) := by
+        exact mul_le_mul hsplit hΩ hΩ0 (by positivity)
+    _ = ((1 : ℝ) / 2) ^ (2 * k₄) * (((1 : ℝ) / 2) ^ (100 * K ^ 2) * (2 : ℝ) ^ (21 * K ^ 2 + 1)) := by
+        ring
+    _ = ((1 : ℝ) / 2) ^ (2 * k₄ + (100 * K ^ 2 - (21 * K ^ 2 + 1))) := by
+        rw [hfinal, pow_add]
+    _ ≤ (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := half_pow_le_target (by omega) hD
 
 /-- **`hjunk` in base `b ≥ 3`**, against `η = 2^{−k₄}`, `ε = 1/K`. -/
 theorem hjunk_holdsE {k₄ : ℕ} (hK4 : K = 4 * k₄) (hk : 40 ≤ k₄) (h : HypE b K e) :
