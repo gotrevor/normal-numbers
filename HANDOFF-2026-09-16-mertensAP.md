@@ -38,3 +38,21 @@ route — a *rate* is, and any fixed `c > 0` suffices because the window for `e`
   constraints".
 * **A4** — `G4SubsetWeight.lean` (override item 1): `omegaS`, `subsetLambert`, `omegaS_mul`,
   `overlapS_congr`, the `Frame` instance; then `isDisjunctive_residueClass`.
+
+## Addendum — A3 input layer complete (commits ade6e41, fa66828, 9b9910d, + this one)
+
+`src/NormalNumbers/G4SubsetSchedule.lean` (sorry-free, all axiom-clean):
+
+* `exists_exponent` — a Mertens rate meets any demand `M` at `e ≤ max 0 ((M+C+c)/(c log 2)) + 1`.
+* `sum_inv_smallPrimes_subset_ge` — the `S`-restricted sum over `smallPrimes R P₀` loses only the
+  frozen primes (`≤ 21K² + 2`, uniformly in `S`).
+* `exists_cutoff_subset` — the drop-in replacement for `G4SchedBParams.sum_inv_smallPrimes_ge`:
+  `∃ e`, the base bound `m log 2 − 21K² − 4 ≤ Sg_S(2^{2^e})` holds, with `e ≲ m/c`.
+* `moment_cap_subset` — **the feasibility certificate**: for any inflation factor `D ≤ 2^K`,
+  `10⁵·T K·(D·(m₁ b K + K² + 1)) ≤ 2^{m₂ K}`.  This is the inequality campaign A turns on, and
+  it holds with room to spare (`18 + 7K + 6K² ≤ 8K²` for `K ≥ 100`).
+
+So the whole Mertens-side obligation of campaign A is discharged.  What is left in A3 is the
+mechanical re-parametrization of `G4SchedBParams`/`G4SchedBBudget`/`G4SchedBAssembly` in the free
+exponent `e` (declaration list: `DESIGN-2026-09-16-prime-subset.md`), for which the two harmonic
+bounds already exist generically (`G4EntropyMTowerHarmonic.sum_inv_smallPrimes_*_gen`).

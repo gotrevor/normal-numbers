@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.G4MertensAP
 import NormalNumbers.G4ScheduleHarmonic
+import NormalNumbers.G4SchedBParams
 
 /-!
 # Campaign A, step A3: from a Mertens rate to a schedule-admissible cutoff exponent
@@ -179,5 +180,52 @@ theorem exists_cutoff_subset {c C : ℝ} (h : MertensRate S c C) {K : ℕ} (hK :
   have hstep : (m : ℝ) * Real.log 2 + 21 * (K : ℝ) ^ 2 + 2 ≤ sumInvPrimesIn S (2 ^ 2 ^ e + 1) :=
     le_trans hsum hmono
   linarith [hstep, sq_nonneg (K : ℝ)]
+
+/-! ### The cap: the inflated exponent still fits
+
+`exists_cutoff_subset` buys the Mertens demand at an exponent inflated by `1/c` (plus additive
+constants), and the schedule's moment order `Mc = 10⁵·T K·e` must stay under `2^{m₂ K} = 2^{8K²}`
+(`G4SchedBParams.Mc_le_two_pow_m₂`, needed by `R_pow_two_Mc_le`).  This is the one inequality on
+which campaign A's feasibility turns: the demand is `exp(O(K log K))` and the cap is
+`exp(Θ(K²))`, so ANY fixed inflation factor `D` is absorbed once `D ≤ 2^K`. -/
+
+/-- **Feasibility certificate.**  With the exponent inflated by any factor `D ≤ 2^K`, the moment
+order still obeys the schedule's cap `Mc ≤ 2^{m₂ K}`. -/
+theorem moment_cap_subset {b K D e : ℕ} (hb : 3 ≤ b) (hbK : 2 * b ^ 2 ≤ K) (hK : 100 ≤ K)
+    (hD : D ≤ 2 ^ K) (he : e ≤ D * (SchedB.m₁ b K + K ^ 2 + 1)) :
+    100000 * Sched.T K * e ≤ 2 ^ Sched.m₂ K := by
+  have hT := Sched.T_le hK
+  have hm₁ := SchedB.m₁_le (K := K) ⟨hb, hbK, hK⟩
+  have hK1 : 1 ≤ K := by omega
+  have hsq : K ^ 2 + 1 ≤ K ^ (3 * K + 3) := by
+    calc K ^ 2 + 1 ≤ K ^ 2 + K ^ 2 := by nlinarith [Nat.one_le_pow 2 K (by omega : 0 < K)]
+      _ = 2 * K ^ 2 := by ring
+      _ ≤ K * K ^ 2 := Nat.mul_le_mul_right _ (by omega)
+      _ = K ^ 3 := by ring
+      _ ≤ K ^ (3 * K + 3) := Nat.pow_le_pow_right (by omega) (by omega)
+  have hsum : SchedB.m₁ b K + K ^ 2 + 1 ≤ 2 * K ^ (3 * K + 3) := by omega
+  have he' : e ≤ 2 ^ K * (2 * K ^ (3 * K + 3)) := by
+    calc e ≤ D * (SchedB.m₁ b K + K ^ 2 + 1) := he
+      _ ≤ 2 ^ K * (2 * K ^ (3 * K + 3)) := Nat.mul_le_mul hD hsum
+  have hpow : K ^ (3 * K + 3) * K ^ (3 * K + 3) = K ^ (6 * K + 6) := by
+    rw [← pow_add]; ring_nf
+  have hstep : 100000 * Sched.T K * e
+      ≤ 200000 * (2 ^ K * K ^ (6 * K + 6)) := by
+    calc 100000 * Sched.T K * e
+        ≤ 100000 * K ^ (3 * K + 3) * (2 ^ K * (2 * K ^ (3 * K + 3))) := by
+          exact Nat.mul_le_mul (Nat.mul_le_mul_left _ hT) he'
+      _ = 200000 * (2 ^ K * (K ^ (3 * K + 3) * K ^ (3 * K + 3))) := by ring
+      _ = 200000 * (2 ^ K * K ^ (6 * K + 6)) := by rw [hpow]
+  have hbig : K ^ (6 * K + 6) ≤ 2 ^ (K * (6 * K + 6)) := Sched.pow_le_two_pow_mul _ _
+  have h2e : (200000 : ℕ) ≤ 2 ^ 18 := by norm_num
+  have hfin : 200000 * (2 ^ K * K ^ (6 * K + 6)) ≤ 2 ^ (18 + K + K * (6 * K + 6)) := by
+    calc 200000 * (2 ^ K * K ^ (6 * K + 6))
+        ≤ 2 ^ 18 * (2 ^ K * 2 ^ (K * (6 * K + 6))) := by
+          exact Nat.mul_le_mul h2e (Nat.mul_le_mul_left _ hbig)
+      _ = 2 ^ (18 + K + K * (6 * K + 6)) := by rw [← pow_add, ← pow_add]; ring_nf
+  have hexp : 18 + K + K * (6 * K + 6) ≤ Sched.m₂ K := by
+    unfold Sched.m₂
+    nlinarith
+  exact le_trans hstep (le_trans hfin (Nat.pow_le_pow_right (by norm_num) hexp))
 
 end NormalNumbers.G4.MertensAP
