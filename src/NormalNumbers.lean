@@ -334,3 +334,4 @@ import NormalNumbers.G4RemainderW
 import NormalNumbers.G4SubsetJunk
 import NormalNumbers.G4SubsetWitness
 import NormalNumbers.G4SchedBE
+import NormalNumbers.G4SchedBEAssembly
