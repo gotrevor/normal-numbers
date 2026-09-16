@@ -255,6 +255,99 @@ theorem junk_size_holdsE (h : HypE b K e) :
         omega
     _ ≤ 2 ^ (100 * t) := Nat.pow_le_pow_right (by norm_num) (by omega)
 
+/-- `log ω(P₀) ≤ 15K²`. -/
+theorem log_card_primeFactors_P₀_leE (h : HypE b K e) :
+    Real.log (((gridOf K (N K) h.hK1).P₀.primeFactors.card : ℕ) : ℝ) ≤ 15 * (K : ℝ) ^ 2 := by
+  have hK := h.base.hK
+  have hKr : (100 : ℝ) ≤ K := by exact_mod_cast hK
+  set G := gridOf K (N K) h.hK1 with hG
+  have hP₀0 : G.P₀ ≠ 0 := G.P₀_pos.ne'
+  have hl2 : (0.6 : ℝ) ≤ Real.log 2 := by linarith [Real.log_two_gt_d9]
+  have hl2' : Real.log 2 ≤ 0.7 := by linarith [Real.log_two_lt_d9]
+  -- `ω(P₀) ≤ 2 logP₀Nat K ≤ 2^{21K²+1}`
+  have h1 := card_primeFactors_mul_log_two_le hP₀0
+  have h2 : Real.log (G.P₀ : ℝ) ≤ (logP₀Nat K : ℝ) := by
+    have hpos : (0 : ℝ) < G.P₀ := by exact_mod_cast G.P₀_pos
+    calc Real.log (G.P₀ : ℝ) ≤ Real.log (Real.exp (logP₀Nat K)) :=
+          Real.log_le_log hpos (Sched.P₀_le_exp (by omega))
+      _ = logP₀Nat K := Real.log_exp _
+  have h3 : (logP₀Nat K : ℝ) ≤ (2 : ℝ) ^ (21 * K ^ 2) := by
+    have := Sched.logP₀Nat_le_two_pow (K := K) (by omega)
+    exact_mod_cast this
+  have hcard : ((G.P₀.primeFactors.card : ℕ) : ℝ) ≤ 2 * (2 : ℝ) ^ (21 * K ^ 2) := by
+    have hle : ((G.P₀.primeFactors.card : ℕ) : ℝ) * Real.log 2 ≤ (2 : ℝ) ^ (21 * K ^ 2) := by
+      linarith
+    nlinarith [(by positivity : (0:ℝ) ≤ ((G.P₀.primeFactors.card : ℕ) : ℝ)),
+      (by positivity : (0:ℝ) < (2:ℝ) ^ (21 * K ^ 2))]
+  rcases Nat.eq_zero_or_pos G.P₀.primeFactors.card with h0 | h0
+  · rw [h0]
+    simp only [Nat.cast_zero, Real.log_zero]
+    positivity
+  · have hlog := Real.log_le_log (by exact_mod_cast h0) hcard
+    have hsplit : Real.log (2 * (2 : ℝ) ^ (21 * K ^ 2))
+        = Real.log 2 + (21 * (K : ℝ) ^ 2) * Real.log 2 := by
+      rw [Real.log_mul (by norm_num) (by positivity), Real.log_pow]
+      push_cast
+      ring
+    rw [hsplit] at hlog
+    nlinarith [(by positivity : (0:ℝ) ≤ (K:ℝ) ^ 2)]
+
+/-- **`hjunk` in base `b ≥ 3`**, against `η = 2^{−k₄}`, `ε = 1/K`. -/
+theorem hjunk_holdsE {k₄ : ℕ} (hK4 : K = 4 * k₄) (hk : 40 ≤ k₄) (h : HypE b K e) :
+    (junkShiftBound (gridOf K (N K) h.hK1).P₀ (XE K e) (J K * gridDm K (N K))
+        / ((apSample (XE K e) (gridOf K (N K) h.hK1).P₀
+              (gridOf K (N K) h.hK1).b₀).card : ℝ)) * rowL1 b K
+      ≤ (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
+  have hb := h.base.hb
+  have hK := h.base.hK
+  have hKr : (100 : ℝ) ≤ K := by exact_mod_cast hK
+  set G := gridOf K (N K) h.hK1 with hG
+  set a : ℝ := (1 / 2 : ℝ) ^ k₄ with ha
+  have ha0 : 0 < a := by positivity
+  have hcard0 : (0 : ℝ) < (apSample (XE K e) G.P₀ G.b₀).card := by
+    exact_mod_cast (sample_nonemptyE h).card_pos
+  have hcard := Sched.card_apSample_ge_half (XE K e) G.P₀ G.b₀ G.P₀_pos G.b₀_lt_P₀
+    (two_mul_P₀_le_XE h)
+  have hXpos : 0 < XE K e := by unfold XE; positivity
+  have hV := junkShiftBound_div_le' (P₀ := G.P₀) (X := XE K e)
+    (ρmax := J K * gridDm K (N K)) G.P₀_pos hXpos (J_mul_gridDm_le_XE h) hcard0 hcard
+    (junk_size_holdsE h)
+  have hlogω := log_card_primeFactors_P₀_leE h
+  have hV' : junkShiftBound G.P₀ (XE K e) (J K * gridDm K (N K))
+      / ((apSample (XE K e) G.P₀ G.b₀).card : ℝ) ≤ 5 + 30 * (K : ℝ) ^ 2 := by linarith
+  have hV0 : (0 : ℝ) ≤ junkShiftBound G.P₀ (XE K e) (J K * gridDm K (N K))
+      / ((apSample (XE K e) G.P₀ G.b₀).card : ℝ) :=
+    div_nonneg (junkShiftBound_nonneg _ _ _) hcard0.le
+  have hL1 : rowL1 b K ≤ a ^ 2 / 2 := by
+    have := rowL1_le_three hb K; have := two_thirds_pow_le (k₄ := k₄) hK4; linarith
+  have hL10 : (0 : ℝ) ≤ rowL1 b K :=
+    rowL1_nonneg (by exact_mod_cast (show 2 ≤ b by omega) : (2:ℝ) ≤ b) K
+  -- the arithmetic condition `20K + 120K³ ≤ 2^{k₄}`
+  have hcube : 100000 * k₄ ^ 3 ≤ 2 ^ k₄ := cube_le_two_pow hk
+  have hk₄r : (40 : ℝ) ≤ k₄ := by exact_mod_cast hk
+  have hKk : (K : ℝ) = 4 * k₄ := by rw [hK4]; push_cast; ring
+  have hpow : (20 * (K : ℝ) + 120 * (K : ℝ) ^ 3) * a ≤ 1 := by
+    have hcr : (100000 : ℝ) * (k₄ : ℝ) ^ 3 ≤ (2 : ℝ) ^ k₄ := by exact_mod_cast hcube
+    have hae : a = 1 / (2 : ℝ) ^ k₄ := by rw [ha, one_div_pow]
+    rw [hae, mul_one_div, div_le_one (by positivity), hKk]
+    have hsq : (1600 : ℝ) ≤ (k₄ : ℝ) ^ 2 := by nlinarith [hk₄r]
+    have hk3 : (k₄ : ℝ) ≤ (k₄ : ℝ) ^ 3 := by nlinarith [hk₄r, hsq]
+    nlinarith [hcr, hk3, hk₄r]
+  calc (junkShiftBound G.P₀ (XE K e) (J K * gridDm K (N K))
+        / ((apSample (XE K e) G.P₀ G.b₀).card : ℝ)) * rowL1 b K
+      ≤ (5 + 30 * (K : ℝ) ^ 2) * (a ^ 2 / 2) := by
+        exact mul_le_mul hV' hL1 hL10 (by positivity)
+    _ = ((20 * (K : ℝ) + 120 * (K : ℝ) ^ 3) * a) * (a / (8 * K)) := by
+        have hKpos : (0 : ℝ) < K := by linarith
+        field_simp
+        ring
+    _ ≤ 1 * (a / (8 * K)) := by
+        have hKpos : (0 : ℝ) < K := by linarith
+        exact mul_le_mul_of_nonneg_right hpow (by positivity)
+    _ = (1 / 8 : ℝ) * ((1 / K : ℝ) * a) := by
+        have hKpos : (0 : ℝ) < K := by linarith
+        field_simp
+
 end SchedB
 
 end NormalNumbers.G4
