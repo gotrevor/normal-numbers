@@ -47,11 +47,13 @@ zero, so `Ω`'s §4A is the degenerate case of `G4TransportW`. -/
 def cardFactors : TWeight where
   wN := fun m => Ω m
   ov := fun _ _ => 0
+  ovC := 0
   mul_eq := fun d m hd hm => by
-    simp only [Nat.add_zero]
+    simp only [add_zero]
     rw [ArithmeticFunction.cardFactors_mul hd hm]
+    push_cast
     ring
-  ov_le := fun _ _ => Nat.zero_le _
+  ov_le := fun _ _ => by simp
   ov_congr := fun _ _ _ _ => rfl
   summable := fun b hb => summable_cardFactors_div_pow hb
 
