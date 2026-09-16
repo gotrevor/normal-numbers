@@ -360,6 +360,7 @@ import NormalNumbers.G4LogLogPow
 import NormalNumbers.G4SchedLogLog
 import NormalNumbers.G4UnboundedWitness
 import NormalNumbers.G4UnboundedSched
+import NormalNumbers.G4PolySched
 import NormalNumbers.G4SubsetCTW
 import NormalNumbers.G4SubsetCFrame
 import NormalNumbers.G4SubsetCWitness
