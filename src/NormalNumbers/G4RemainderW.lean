@@ -316,4 +316,83 @@ theorem gridFrameW_subset_Ffull_decomp (bb : ℕ) (hbb : 2 ≤ bb) (G : GridPara
   congr 1
   ring
 
+/-! ### `PropD` for the prime-subset weight -/
+
+/-- The `S`-large-prime block average. -/
+noncomputable def bigAvgS (bb : ℕ) (G : GridParams) (X R : ℕ) : ℝ :=
+  ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
+    (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
+      |blockSum bb G (fun m => (omegaBigS S R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+
+/-- The `S`-far-tail average. -/
+noncomputable def farAvgS (bb : ℕ) (G : GridParams) (X : ℕ) : ℝ :=
+  ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
+    (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
+      |farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν)|
+
+/-- **`PropD` for the prime-subset weight**, reduced to the same two arithmetic estimates. -/
+theorem gridFrameW_subset_propD (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) (R : ℕ)
+    {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) {δbig δfar : ℝ}
+    (hbig : bigAvgS S bb G X R ≤ δbig * (ε * η)) (hfar : farAvgS S bb G X ≤ δfar * (ε * η)) :
+    (gridFrameW (TWeight.subset S) bb hbb G X hne ((smallPrimes R G.P₀).filter S)
+      (frozenGammaS S bb G) hη hε D).PropD (δbig + δfar) := by
+  classical
+  set fr := gridFrameW (TWeight.subset S) bb hbb G X hne ((smallPrimes R G.P₀).filter S)
+    (frozenGammaS S bb G) hη hε D with hfr
+  have hcard : (0 : ℝ) ≤ ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ := by positivity
+  have hstep : ∀ n ∈ apSample X G.P₀ G.b₀, dAv (fr.S n) (fr.Ffull n)
+      ≤ (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
+            |blockSum bb G (fun m => (omegaBigS S R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+        + (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
+            |farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν)| := by
+    intro n hn
+    have hpt : ∀ ν : Fin G.rDim, dist (fr.S n ν) (fr.Ffull n ν)
+        ≤ |blockSum bb G (fun m => (omegaBigS S R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+          + |farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν)| := by
+      intro ν
+      rw [gridFrameW_subset_Ffull_decomp S bb hbb G X hne R hη hε D hn ν]
+      refine (dist_coe_le' _ _).trans ?_
+      have : Sval bb ((smallPrimes R G.P₀).filter S) (shiftAL G.B G.Q G.D₀ (N := G.N)) n
+              (G.rowEquiv.symm ν)
+          - (Sval bb ((smallPrimes R G.P₀).filter S) (shiftAL G.B G.Q G.D₀ (N := G.N)) n
+              (G.rowEquiv.symm ν)
+            + blockSum bb G (fun m => (omegaBigS S R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
+            + farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν))
+          = -(blockSum bb G (fun m => (omegaBigS S R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)
+              + farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν)) := by ring
+      rw [this, abs_neg]
+      exact abs_add_le _ _
+    calc dAv (fr.S n) (fr.Ffull n)
+        = (∑ ν : Fin G.rDim, dist (fr.S n ν) (fr.Ffull n ν)) / (G.rDim : ℝ) := rfl
+      _ ≤ (∑ ν : Fin G.rDim,
+            (|blockSum bb G (fun m => (omegaBigS S R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+              + |farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν)|)) / (G.rDim : ℝ) := by
+            gcongr with ν
+            exact hpt ν
+      _ = (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
+            |blockSum bb G (fun m => (omegaBigS S R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+          + (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
+            |farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν)| := by
+            rw [Finset.sum_add_distrib]
+            ring
+  show ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
+      dAv (fr.S n) (fr.Ffull n) ≤ (δbig + δfar) * fr.res
+  have hres : fr.res = ε * η := rfl
+  rw [hres]
+  calc ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
+        dAv (fr.S n) (fr.Ffull n)
+      ≤ ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
+          ((G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
+              |blockSum bb G (fun m => (omegaBigS S R G.P₀ m : ℝ)) n (G.rowEquiv.symm ν)|
+            + (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
+              |farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν)|) :=
+        mul_le_mul_of_nonneg_left (Finset.sum_le_sum hstep) hcard
+    _ = bigAvgS S bb G X R + farAvgS S bb G X := by
+        unfold bigAvgS farAvgS
+        rw [Finset.sum_add_distrib]
+        ring
+    _ ≤ δbig * (ε * η) + δfar * (ε * η) := add_le_add hbig hfar
+    _ = (δbig + δfar) * (ε * η) := by ring
+
 end NormalNumbers.G4
