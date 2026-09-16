@@ -1,5 +1,9 @@
 # DIRECTION — normal-numbers 🧭
 
+## Attended operator override: 2026-09-16 00:35 EDT — hitting-set upper halves (ACTIVE for this run only)
+
+Execute `KICKOFF-2026-09-16-hitting-set-upper-bounds.md` and nothing else; it outranks the CURRENT DIRECTIVE below for this run.  Reconcile with `git log` and the newest `HANDOFF-*.md` first.
+
 Altitude laps (review/reflection) are the ONLY writers of the CURRENT DIRECTIVE
 section. Grind laps READ and OBEY it; it OUTRANKS the HANDOFF. Keep it short —
 detail lives in PENDING_WORK.md.
