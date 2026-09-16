@@ -35,7 +35,8 @@ open PrimeLambert GridParams
 namespace SchedB
 
 open Sched (N J T m₂ logP₀Nat gridDm_le_gridP₀Bound card_apSample_ge_half P₀_le_exp
-  pow_le_two_pow_mul)
+  pow_le_two_pow_mul card_small_subsets_le card_smallPrimes_le exp_one_le
+  prod_one_add_le_exp_sum two_pow_le_exp)
 
 /-- `mE = e + m₂ K`. -/
 def mE (K e : ℕ) : ℕ := e + m₂ K
@@ -363,6 +364,125 @@ lemma main_term_leE (h : HypE b K e) :
     _ ≤ Real.exp (-4) := by
         apply Real.exp_le_exp.2
         nlinarith
+
+
+lemma P₀_le_two_powE (h : HypE b K e) :
+    ((gridOf K (N K) h.hK1).P₀ : ℝ) ≤ (2 : ℝ) ^ (2 * 2 ^ mE K e) :=
+  (P₀_le_two_pow h.base).trans (pow_le_pow_right₀ (by norm_num)
+    (Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (by norm_num) (m_le_mE h))))
+
+lemma two_pow_div_leE {e₁ : ℕ} (K e : ℕ) (h : e₁ + 6 ≤ 100 * 2 ^ mE K e) :
+    (2 : ℝ) ^ e₁ / (2 : ℝ) ^ (100 * 2 ^ mE K e) ≤ 1 / 64 := by
+  rw [div_le_div_iff₀ (by positivity) (by norm_num)]
+  calc (2 : ℝ) ^ e₁ * 64 = (2 : ℝ) ^ (e₁ + 6) := by rw [pow_add]; norm_num
+    _ ≤ (2 : ℝ) ^ (100 * 2 ^ mE K e) := pow_le_pow_right₀ (by norm_num) h
+    _ = _ := (one_mul _).symm
+
+lemma term_a_leE (h : HypE b K e) :
+    (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
+      * ((((smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).powerset.filter
+            (fun T' => T'.Nonempty ∧ T'.card ≤ McE K e)).card : ℝ)
+          * (2 ^ McE K e * (2 * (RE e : ℝ) ^ McE K e
+              / ((apSample (XE K e) (gridOf K (N K) h.hK1).P₀ (gridOf K (N K) h.hK1).b₀).card : ℝ))))
+      ≤ 1 / 64 := by
+  have hb := h.base.hb; have hbK := h.base.hbK; have hK := h.base.hK
+  have hcardN := card_small_subsets_le (smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀) (McE K e)
+  have hsmN := card_smallPrimes_le (RE e) (gridOf K (N K) h.hK1).P₀
+  have hR2 := RE_ge_two e
+  have hcard : ((((smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).powerset.filter
+      (fun T' => T'.Nonempty ∧ T'.card ≤ McE K e)).card : ℕ) : ℝ) ≤ McE K e * (2 * (RE e : ℝ)) ^ McE K e := by
+    have : ((smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).powerset.filter
+        (fun T' => T'.Nonempty ∧ T'.card ≤ McE K e)).card ≤ McE K e * (2 * RE e) ^ McE K e := by
+      refine hcardN.trans ?_
+      apply Nat.mul_le_mul_left
+      apply Nat.pow_le_pow_left
+      omega
+    exact_mod_cast this
+  have hinv := inv_card_leE h
+  have hMc : (McE K e : ℝ) ≤ 2 ^ McE K e := by exact_mod_cast (Nat.lt_two_pow_self).le
+  have hR2Mc := RE_pow_two_McE_le h
+  have hP₀ := P₀_le_two_powE h
+  have hX : (XE K e : ℝ) = (2 : ℝ) ^ (100 * 2 ^ mE K e) := by unfold XE; push_cast; rfl
+  have hXpos : (0 : ℝ) < XE K e := by rw [hX]; positivity
+  have hP₀0 : (0 : ℝ) ≤ (gridOf K (N K) h.hK1).P₀ := by positivity
+  set Λ := (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K)) with hΛ
+  set Psz := ((apSample (XE K e) (gridOf K (N K) h.hK1).P₀ (gridOf K (N K) h.hK1).b₀).card : ℝ)
+  set c := ((((smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).powerset.filter
+      (fun T' => T'.Nonempty ∧ T'.card ≤ McE K e)).card : ℕ) : ℝ)
+  have hΛ0 : 0 ≤ Λ := by positivity
+  have hRr : (0 : ℝ) ≤ RE e := by positivity
+  calc Λ * (c * (2 ^ McE K e * (2 * (RE e : ℝ) ^ McE K e / Psz)))
+      = Λ * c * 2 ^ McE K e * 2 * (RE e : ℝ) ^ McE K e * (1 / Psz) := by ring
+    _ ≤ Λ * (McE K e * (2 * (RE e : ℝ)) ^ McE K e) * 2 ^ McE K e * 2 * (RE e : ℝ) ^ McE K e
+          * (2 * (gridOf K (N K) h.hK1).P₀ / XE K e) := by gcongr
+    _ = Λ * McE K e * 2 ^ McE K e * 2 ^ McE K e * 4 * (RE e : ℝ) ^ (2 * McE K e) * (gridOf K (N K) h.hK1).P₀ / XE K e := by
+        rw [mul_pow, pow_mul (RE e : ℝ) 2 (McE K e), sq]; ring
+    _ ≤ Λ * 2 ^ McE K e * 2 ^ McE K e * 2 ^ McE K e * 4 * (2 : ℝ) ^ (10 * 2 ^ mE K e)
+          * (2 : ℝ) ^ (2 * 2 ^ mE K e) / (2 : ℝ) ^ (100 * 2 ^ mE K e) := by
+        rw [hX]; gcongr
+    _ = (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K) + McE K e + McE K e + McE K e + 2 + 10 * 2 ^ mE K e + 2 * 2 ^ mE K e)
+          / (2 : ℝ) ^ (100 * 2 ^ mE K e) := by
+        rw [hΛ, show (4 : ℝ) = 2 ^ 2 by norm_num, ← pow_add, ← pow_add, ← pow_add, ← pow_add,
+          ← pow_add, ← pow_add]
+    _ ≤ 1 / 64 := by
+        apply two_pow_div_leE
+        obtain ⟨h1, h2, h3⟩ := sizes_le_two_pow_mE h
+        omega
+
+lemma term_d_leE (h : HypE b K e) :
+    (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K))
+      * (2 * (2 * Real.exp 1 / McE K e) ^ McE K e * ((smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).card : ℝ) ^ McE K e
+          * (2 * (RE e : ℝ) ^ McE K e / ((apSample (XE K e) (gridOf K (N K) h.hK1).P₀ (gridOf K (N K) h.hK1).b₀).card : ℝ)))
+      ≤ 1 / 64 := by
+  have hb := h.base.hb; have hbK := h.base.hbK; have hK := h.base.hK
+  have hsmN := card_smallPrimes_le (RE e) (gridOf K (N K) h.hK1).P₀
+  have hR2 := RE_ge_two e
+  have hMc1 : (1 : ℝ) ≤ McE K e := by exact_mod_cast McE_pos h
+  have he := exp_one_le
+  -- `(2e/Mc)^{Mc}·|sm|^{Mc} ≤ (16R)^{Mc}`
+  have hbase : 2 * Real.exp 1 / McE K e * ((smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).card : ℝ) ≤ 16 * RE e := by
+    have hsm : ((smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).card : ℝ) ≤ 2 * RE e := by
+      have : (smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).card ≤ 2 * RE e := by omega
+      exact_mod_cast this
+    have hsm0 : (0 : ℝ) ≤ (smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).card := by positivity
+    have h1 : 2 * Real.exp 1 / McE K e ≤ 2 * Real.exp 1 := by
+      rw [div_le_iff₀ (by linarith)]
+      nlinarith [Real.exp_pos 1]
+    have h2 : 2 * Real.exp 1 / McE K e * ((smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).card : ℝ)
+        ≤ 2 * Real.exp 1 * (2 * RE e) := by
+      apply mul_le_mul h1 hsm hsm0 (by positivity)
+    nlinarith [Real.exp_pos 1]
+  have hpow : (2 * Real.exp 1 / McE K e) ^ McE K e * ((smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).card : ℝ) ^ McE K e
+      ≤ (2 : ℝ) ^ (4 * McE K e) * (RE e : ℝ) ^ McE K e := by
+    rw [← mul_pow, pow_mul, show (2 : ℝ) ^ 4 = 16 by norm_num, ← mul_pow]
+    exact pow_le_pow_left₀ (by positivity) hbase _
+  have hinv := inv_card_leE h
+  have hR2Mc := RE_pow_two_McE_le h
+  have hP₀ := P₀_le_two_powE h
+  have hX : (XE K e : ℝ) = (2 : ℝ) ^ (100 * 2 ^ mE K e) := by unfold XE; push_cast; rfl
+  have hXpos : (0 : ℝ) < XE K e := by rw [hX]; positivity
+  set Λ := (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K)) with hΛ
+  set Psz := ((apSample (XE K e) (gridOf K (N K) h.hK1).P₀ (gridOf K (N K) h.hK1).b₀).card : ℝ)
+  set q := (2 * Real.exp 1 / McE K e) ^ McE K e * ((smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).card : ℝ) ^ McE K e with hq
+  have hq0 : 0 ≤ q := by positivity
+  calc Λ * (2 * (2 * Real.exp 1 / McE K e) ^ McE K e * ((smallPrimes (RE e) (gridOf K (N K) h.hK1).P₀).card : ℝ) ^ McE K e
+          * (2 * (RE e : ℝ) ^ McE K e / Psz))
+      = Λ * q * 2 * 2 * (RE e : ℝ) ^ McE K e * (1 / Psz) := by rw [hq]; ring
+    _ ≤ Λ * ((2 : ℝ) ^ (4 * McE K e) * (RE e : ℝ) ^ McE K e) * 2 * 2 * (RE e : ℝ) ^ McE K e
+          * (2 * (gridOf K (N K) h.hK1).P₀ / XE K e) := by gcongr
+    _ = Λ * (2 : ℝ) ^ (4 * McE K e) * 8 * (RE e : ℝ) ^ (2 * McE K e) * (gridOf K (N K) h.hK1).P₀ / XE K e := by
+        rw [pow_mul (RE e : ℝ) 2 (McE K e), sq]; ring
+    _ ≤ Λ * (2 : ℝ) ^ (4 * McE K e) * 8 * (2 : ℝ) ^ (10 * 2 ^ mE K e) * (2 : ℝ) ^ (2 * 2 ^ mE K e)
+          / (2 : ℝ) ^ (100 * 2 ^ mE K e) := by
+        rw [hX]; gcongr
+    _ = (2 : ℝ) ^ (2 * (K * (K ^ 2) ^ K) + 4 * McE K e + 3 + 10 * 2 ^ mE K e + 2 * 2 ^ mE K e)
+          / (2 : ℝ) ^ (100 * 2 ^ mE K e) := by
+        rw [hΛ, show (8 : ℝ) = 2 ^ 3 by norm_num, ← pow_add, ← pow_add, ← pow_add, ← pow_add]
+    _ ≤ 1 / 64 := by
+        apply two_pow_div_leE
+        obtain ⟨h1, h2, h3⟩ := sizes_le_two_pow_mE h
+        omega
+
 
 end SchedB
 
