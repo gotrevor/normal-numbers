@@ -437,6 +437,28 @@ lemma half_pow_le_target {K k₄ D : ℕ} (hK : 100 ≤ K) (hD : k₄ + K ≤ D)
         exact mul_le_mul_of_nonneg_left hKpow (by positivity)
     _ = (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by field_simp
 
+/-- A version with room: `(1/2)^D ≤ (1/64)·(1/K)·2^{−k₄}` once `D ≥ k₄ + 2K`. -/
+lemma half_pow_le_target' {K k₄ D : ℕ} (hK : 100 ≤ K) (hD : k₄ + 2 * K ≤ D) :
+    ((1 : ℝ) / 2) ^ D ≤ (1 / 64 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
+  have hKr : (0 : ℝ) < K := by positivity
+  have hKr' : (100 : ℝ) ≤ K := by exact_mod_cast hK
+  have h8 : 8 * K ≤ 2 ^ K := eight_mul_le_two_pow (by omega)
+  have h8r : (8 : ℝ) * K ≤ (2 : ℝ) ^ K := by exact_mod_cast h8
+  have hpos : (0 : ℝ) < (2 : ℝ) ^ K := by positivity
+  have hsplit : ((1 : ℝ) / 2) ^ D ≤ ((1 : ℝ) / 2) ^ (k₄ + 2 * K) :=
+    pow_le_pow_of_le_one (by norm_num) (by norm_num) hD
+  have hKpow : ((1 : ℝ) / 2) ^ (2 * K) ≤ 1 / (64 * K) := by
+    rw [one_div_pow, pow_mul, div_le_div_iff₀ (by positivity) (by positivity)]
+    have h4 : ((2 : ℝ) ^ 2) ^ K = ((2 : ℝ) ^ K) ^ 2 := by
+      rw [← pow_mul, ← pow_mul, mul_comm]
+    rw [h4]
+    nlinarith [h8r, hpos, hKr]
+  calc ((1 : ℝ) / 2) ^ D ≤ ((1 : ℝ) / 2) ^ (k₄ + 2 * K) := hsplit
+    _ = ((1 : ℝ) / 2) ^ k₄ * ((1 : ℝ) / 2) ^ (2 * K) := by rw [pow_add]
+    _ ≤ ((1 : ℝ) / 2) ^ k₄ * (1 / (64 * K)) := by
+        exact mul_le_mul_of_nonneg_left hKpow (by positivity)
+    _ = (1 / 64 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by field_simp
+
 /-- `log ω(P₀) ≤ 15K²`. -/
 theorem log_card_primeFactors_P₀_leE (h : HypE b K e) :
     Real.log (((gridOf K (N K) h.hK1).P₀.primeFactors.card : ℕ) : ℝ) ≤ 15 * (K : ℝ) ^ 2 := by
@@ -500,7 +522,7 @@ theorem cardFactors_P₀_leE (h : HypE b K e) :
 theorem hfar_frozen_leE {k₄ : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
     (2 : ℝ) ^ K * (((Ω (gridOf K (N K) h.hK1).P₀ : ℕ) : ℝ)
         * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))))
-      ≤ (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
+      ≤ (1 / 64 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
   have hb := h.base.hb
   have hK := h.base.hK
   have hbr : (3 : ℝ) ≤ b := by exact_mod_cast hb
@@ -548,7 +570,7 @@ theorem hfar_frozen_leE {k₄ : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
   have hfinal : ((1 : ℝ) / 2) ^ (100 * K ^ 2) * (2 : ℝ) ^ (21 * K ^ 2 + 1)
       = ((1 : ℝ) / 2) ^ (100 * K ^ 2 - (21 * K ^ 2 + 1)) :=
     half_pow_mul_two_pow (by nlinarith [hK, sq_nonneg K])
-  have hD : k₄ + K ≤ 2 * k₄ + (100 * K ^ 2 - (21 * K ^ 2 + 1)) := by
+  have hD : k₄ + 2 * K ≤ 2 * k₄ + (100 * K ^ 2 - (21 * K ^ 2 + 1)) := by
     have hKsq : K * 100 ≤ K ^ 2 := by nlinarith [hK]
     have hKk : K = 4 * k₄ := hK4
     omega
@@ -563,7 +585,7 @@ theorem hfar_frozen_leE {k₄ : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
         ring
     _ = ((1 : ℝ) / 2) ^ (2 * k₄ + (100 * K ^ 2 - (21 * K ^ 2 + 1))) := by
         rw [hfinal, pow_add]
-    _ ≤ (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := half_pow_le_target (by omega) hD
+    _ ≤ (1 / 64 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := half_pow_le_target' (by omega) hD
 
 /-- **`hjunk` in base `b ≥ 3`**, against `η = 2^{−k₄}`, `ε = 1/K`. -/
 theorem hjunk_holdsE {k₄ : ℕ} (hK4 : K = 4 * k₄) (hk : 40 ≤ k₄) (h : HypE b K e) :
