@@ -334,4 +334,47 @@ theorem farAvgS_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
   rw [← hr]
   exact avg_le_of_forall_le _ _ hBd0 fun ν _ => hrow ν
 
+/-- `bigAvgS` in closed form: the same RHS as `bigAvg_le'`. -/
+theorem bigAvgS_le' (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X R Y : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty)
+    (hK : 0 < G.K) (hR : 2 ≤ R) (hRY : R ≤ Y) {Mx : ℝ} (hMx1 : 1 ≤ Mx)
+    (hMx : ∀ n ∈ apSample X G.P₀ G.b₀, ∀ i : G.Idx,
+      ((n + shiftAL G.B G.Q G.D₀ i : ℕ) : ℝ) ≤ Mx) :
+    bigAvgS S bb G X R
+      ≤ Real.sqrt (4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R)) * rowL2 bb G.K
+          + 2 * (Y : ℝ) ^ 2 * (rowL1 bb G.K) ^ 2 / (apSample X G.P₀ G.b₀).card)
+        + (Real.log Mx / Real.log Y) * rowL1 bb G.K := by
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
+  have hY : 1 < Y := by omega
+  refine (bigAvgS_le S bb hbb G X R Y hne hK hRY hY hMx1 hMx).trans ?_
+  gcongr
+  unfold medBudget
+  have hc : (0 : ℝ) ≤ (apSample X G.P₀ G.b₀).card := by positivity
+  have hcard : ((medPrimes R Y G.P₀).card : ℝ) ≤ Y := by exact_mod_cast card_medPrimes_le R Y G.P₀
+  have h1 := sum_inv_medPrimes_le (P₀ := G.P₀) hR hRY
+  have h2 := rowL2_nonneg hbr G.K
+  have h3 := rowL1_nonneg hbr G.K
+  have h4 : (0 : ℝ) ≤ ((medPrimes R Y G.P₀).card : ℝ) := by positivity
+  gcongr
+
+/-- **`PropD` for the prime-subset frame from the two closed-form bounds** — literally the same
+two inequalities as `gridFrame_propD_of_bounds`. -/
+theorem gridFrameW_subset_propD_of_bounds (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X R Y : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) (hK : 0 < G.K) (hR : 2 ≤ R) (hRY : R ≤ Y)
+    {Mx : ℝ} (hMx1 : 1 ≤ Mx)
+    (hMx : ∀ n ∈ apSample X G.P₀ G.b₀, ∀ i : G.Idx,
+      ((n + shiftAL G.B G.Q G.D₀ i : ℕ) : ℝ) ≤ Mx)
+    {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm)
+    {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) {δbig δfar : ℝ}
+    (hbig : Real.sqrt (4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R)) * rowL2 bb G.K
+          + 2 * (Y : ℝ) ^ 2 * (rowL1 bb G.K) ^ 2 / (apSample X G.P₀ G.b₀).card)
+        + (Real.log Mx / Real.log Y) * rowL1 bb G.K ≤ δbig * (ε * η))
+    (hfar : (2 : ℝ) ^ G.K / Real.log 2 * farBound bb (G.K + G.N) (farC G X Dm)
+        ≤ δfar * (ε * η)) :
+    (gridFrameW (TWeight.subset S) bb hbb G X hne ((smallPrimes R G.P₀).filter S)
+      (frozenGammaS S bb G) hη hε D).PropD (δbig + δfar) :=
+  gridFrameW_subset_propD S bb hbb G X hne R hη hε D
+    ((bigAvgS_le' S bb hbb G X R Y hne hK hR hRY hMx1 hMx).trans hbig)
+    ((farAvgS_le S bb hbb G X hne hDm).trans hfar)
+
 end NormalNumbers.G4
