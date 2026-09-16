@@ -15,6 +15,7 @@ proving `Literature.IsHittingSet g ell {ms}` on the carry-consistency reduction
     verified here (C1/C1'/C3') before anything is written.
 
 Usage: emit_hitting_lean.py NAME G ELL M1,M2,... [THEOREM] > src/NormalNumbers/File.lean
+       emit_hitting_lean.py NAME G ELL M1,M2,... THEOREM --split DIR MODULEBASE NGROUPS
 """
 import sys
 from math import gcd
@@ -162,7 +163,7 @@ def lst(xs):
     return "[" + ", ".join(map(str, xs)) + "]"
 
 
-def main(name, g, ell, ms, thm=None):
+def main(name, g, ell, ms, thm=None, split=None):
     thm = thm or (name + "_hitting")
     N, coeffs, runs, starts, L, idx, W = build(g, ell, ms)
     M = len(L)
@@ -177,8 +178,28 @@ def main(name, g, ell, ms, thm=None):
         certs[tuple(w)] = cert(g, ell, ms, L, idx, W, w)
         sys.stderr.write(f"[{name}] word {''.join(map(str,w))}: "
                          f"{sum(certs[tuple(w)][0])} live of {M}\n")
-    out = []
-    A = out.append
+    csz = int(__import__("os").environ.get("RUNCHUNK", "250"))
+    chunks = [runs[i:i + csz] for i in range(0, len(runs), csz)]
+    nchunk = len(chunks)
+    los = [0] + [c[-1] for c in chunks[:-1]]
+    chunkdefs = "\n" + "\n".join(
+        f"def {name}runsC{i} : List ℕ := {lst(c)}\n" for i, c in enumerate(chunks))
+    runsexpr = "[]" if not chunks else f"{name}runsC{nchunk-1}"
+    for i in range(nchunk - 2, -1, -1):
+        runsexpr = f"({name}runsC{i} ++ {runsexpr})"
+    chunkthms = "\n" + "\n--%%CHUNK%%\n".join(
+        f"theorem {name}_runs_c{i} : runsCover {name}P {los[i]} {name}runsC{i} "
+        f"{c[-1] if i < nchunk - 1 else str(N)} = true := by decide +kernel\n"
+        for i, c in enumerate(chunks))
+    chunkchain = f"{name}_runs_c{nchunk-1}"
+    for i in range(nchunk - 2, -1, -1):
+        tail = f"{name}runsC{nchunk-1}"
+        for j in range(nchunk - 2, i, -1):
+            tail = f"({name}runsC{j} ++ {tail})"
+        chunkchain = (f"{name}_runsCover_append {tail} {chunks[i][-1]} {name}N "
+                      f"({chunkchain}) {name}runsC{i} {los[i]} {name}_runs_c{i}")
+    core = []
+    A = core.append
     A(f"""/-
 Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
@@ -234,16 +255,40 @@ def {p}ok (k : ℕ) : Bool :=
   decide ({p}Lget ({p}idx (stateOfKW {g} {p}N {ell} {p}ms k)) = stateOfKW {g} {p}N {ell} {p}ms k)
     && decide ({p}idx (stateOfKW {g} {p}N {ell} {p}ms k) < {M})
 
-/-- The run endpoints: {len(runs)} runs tile `[0, {N})`. -/
-def {p}runs : List ℕ := {lst(runs)}
-
 /-- The per-run check: the quotients are constant across the run, and the run's
 first index is reachable. -/
 def {p}P (lo hi : ℕ) : Bool :=
   (coeffsOf {g} {p}ms {ell}).all (fun b => decide ((b * lo) / {p}N = (b * (hi - 1)) / {p}N))
     && {p}ok lo
 
-theorem {p}_runs_ok : runsCover {p}P 0 {p}runs {p}N = true := by decide +kernel
+/-- Two abutting covering sweeps concatenate.  Local to this module so that
+adding it costs no rebuild of the rest of the chapter. -/
+theorem {p}_runsCover_append {{P : ℕ → ℕ → Bool}} (rs2 : List ℕ) (e N : ℕ)
+    (h2 : runsCover P e rs2 N = true) :
+    ∀ (rs1 : List ℕ) (lo : ℕ), runsCover P lo rs1 e = true →
+      runsCover P lo (rs1 ++ rs2) N = true := by
+  intro rs1
+  induction rs1 with
+  | nil =>
+    intro lo h1
+    simp only [runsCover, decide_eq_true_eq] at h1
+    subst h1
+    simpa using h2
+  | cons hi rest ih =>
+    intro lo h1
+    simp only [List.cons_append, runsCover, Bool.and_eq_true] at h1 ⊢
+    exact ⟨h1.1, ih hi h1.2⟩
+{chunkdefs}
+/-- The run endpoints: {len(runs)} runs tile `[0, {N})`, in {nchunk} chunks —
+one `decide +kernel` per chunk keeps the peak memory of each kernel probe down
+(the whole sweep in one probe is OOM-killed on a 19 GB box). -/
+def {p}runs : List ℕ := {runsexpr}
+--%%BASE_END%%
+{chunkthms}
+--%%CORE_START%%
+theorem {p}_runs_ok : runsCover {p}P 0 {p}runs {p}N = true := by
+  show runsCover {p}P 0 {runsexpr} {p}N = true
+  exact {chunkchain}
 
 /-- **Reachability**, by run compression: {len(runs)} kernel checks instead of {N}. -/
 theorem {p}_section (k : ℕ) (hk : k < {p}N) :
@@ -263,10 +308,11 @@ theorem {p}_section (k : ℕ) (hk : k < {p}N) :
   rw [hconst]
   exact h
 """)
+    cert_blocks = []
     for w in words:
         tag = "".join(map(str, w))
         alive, rho, omega, fsig, fdst = certs[tuple(w)]
-        A(f"""
+        cert_blocks.append(f"""
 /-- Certificate for the word `{lst(w)}`: {sum(alive)} live states of the {M}. -/
 def {p}w{tag}live : ℕ → Bool := fun j => {lst([j for j in range(M) if alive[j]])}.contains j
 
@@ -280,6 +326,8 @@ def {p}w{tag}forced : ℕ → Option (ℕ × ℕ) :=
 theorem {p}w{tag}_cert : checkCertA ({p}step {lst(w)}) {g} {M}
     {p}w{tag}live {p}w{tag}rho {p}w{tag}omega {p}w{tag}forced = true := by decide +kernel
 """)
+    fin = []
+    A = fin.append
     A(f"""
 /-- The section hypothesis of `signed_engine_g_single_reduced`, from `{p}_section`. -/
 theorem {p}_sec (X : ℝ) (w : List ℕ) (hw : w.length = {ell}) (m : ℕ) :
@@ -345,10 +393,64 @@ theorem {thm} : Literature.IsHittingSet {g} {ell} {{{', '.join(map(str, ms))}}} 
     for a in ms:
         A(f"  · exact ⟨{a}, by simp, by norm_num, by simpa using hio⟩")
     A("\nend NormalNumbers.Adder")
-    print("\n".join(out))
+    if not split:
+        print("\n".join(core + cert_blocks + fin)
+              .replace("--%%BASE_END%%\n", "").replace("--%%CORE_START%%\n", "")
+              .replace("--%%CHUNK%%\n", ""))
+        return
+    # split into Core / CertN / the assembly, so no single `lean` process has to
+    # hold the whole state table plus every certificate (the box is 19 GB and a
+    # 5328-state module OOMs as one file)
+    from pathlib import Path
+    d = Path(split[0]); mod = split[1]; ngroups = int(split[2])
+    pre = ("/-\nCopyright (c) 2026 Trevor Morris. All rights reserved.\n"
+           "Released under Apache 2.0 license as described in the file LICENSE.\nAuthors: Trevor Morris\n-/\n")
+    head = ("set_option maxRecDepth 100000\n\nnamespace NormalNumbers.Adder\n\nopen NormalNumbers\n")
+    text = "\n".join(core)
+    basetxt, rest = text.split("--%%BASE_END%%")
+    chunkstxt, coretxt = rest.split("--%%CORE_START%%")
+    chunk_thms = [c for c in chunkstxt.split("--%%CHUNK%%") if c.strip()]
+    (d / f"{mod}Base.lean").write_text(basetxt + "\nend NormalNumbers.Adder\n")
+    runmods = []
+    rper = max(1, (len(chunk_thms) + ngroups - 1) // ngroups)
+    for i in range(0, len(chunk_thms), rper):
+        rm = f"{mod}Runs{i // rper}"
+        runmods.append(rm)
+        (d / f"{rm}.lean").write_text(
+            pre + f"import NormalNumbers.{mod}Base\n\n/-! Run-sweep chunks {i // rper} of the `{name}` "
+            "family: one `lean` process per group, so no single kernel probe run holds them all. -/\n\n"
+            + head + "\n".join(chunk_thms[i:i + rper]) + "\nend NormalNumbers.Adder\n")
+    (d / f"{mod}Core.lean").write_text(
+        pre + "".join(f"import NormalNumbers.{rm}\n" for rm in runmods)
+        + f"\n/-! The run-compressed reachability of the `{name}` family, assembled from "
+        f"`{mod}Runs*.lean`. -/\n\n" + head + coretxt + "\nend NormalNumbers.Adder\n")
+    per = (len(cert_blocks) + ngroups - 1) // ngroups
+    certmods = []
+    for i in range(ngroups):
+        chunk = cert_blocks[i * per:(i + 1) * per]
+        if not chunk:
+            continue
+        cm = f"{mod}Cert{i}"
+        certmods.append(cm)
+        (d / f"{cm}.lean").write_text(
+            pre + f"import NormalNumbers.{mod}Base\n\n/-! Certificates {i} of the `{name}` family "
+            f"(split out so no one `lean` process holds them all). -/\n\n"
+            "set_option maxRecDepth 100000\n\nnamespace NormalNumbers.Adder\n\nopen NormalNumbers\n"
+            + "\n".join(chunk) + "\nend NormalNumbers.Adder\n")
+    (d / f"{mod}.lean").write_text(
+        pre + f"import NormalNumbers.{mod}Core\n" + "".join(f"import NormalNumbers.{cm}\n" for cm in certmods)
+        + f"\n/-!\n# `S({g},{ell}) ≤ {len(ms)}` — the assembly\n\nSee `{mod}Core.lean` for the reduction and the "
+        f"run-compressed reachability sweep; the certificates are in `{mod}Cert*.lean`.\n-/\n\n"
+        "set_option maxRecDepth 100000\n\nnamespace NormalNumbers.Adder\n\nopen NormalNumbers\n"
+        + "\n".join(fin) + "\n")
+    sys.stderr.write(f"[{name}] wrote {mod}Core + {len(certmods)} cert modules + {mod}\n")
 
 
 if __name__ == "__main__":
     name, g, ell, msv = sys.argv[1:5]
-    thm = sys.argv[5] if len(sys.argv) > 5 else None
-    main(name, int(g), int(ell), [int(x) for x in msv.split(",")], thm)
+    thm = sys.argv[5] if len(sys.argv) > 5 and not sys.argv[5].startswith("--") else None
+    split = None
+    if "--split" in sys.argv:
+        i = sys.argv.index("--split")
+        split = sys.argv[i + 1:i + 4]          # DIR MODULEBASE NGROUPS
+    main(name, int(g), int(ell), [int(x) for x in msv.split(",")], thm, split)

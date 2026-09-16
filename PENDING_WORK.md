@@ -1,4 +1,38 @@
 # PENDING WORK — Phase 3 publishing-prep complete locally
+
+## 🧵 GRIND 2026-09-16 (hitting-set census-up kickoff): the upper halves are now EMITTED, not hand-written
+
+The lap's real advance is that a `(g, k, S)` census row now becomes a Lean theorem by one command.
+
+* `experiments/hitting_set_search_reduced.py` — the hitting test on the carry-consistent states.
+  The carry vector into the current position is `(⌊m·t⌋)ₘ` for the unread tail `t`, so a forward
+  BFS from the zero carry IS the reachable space (`t ↦ (d+t)/g` generates the `g`-adic rationals,
+  dense in every interval between the breakpoints `p/m`).  Controls: block-by-block agreement with
+  the ambient automaton on twelve families, every published row reproduced, and minimality of each
+  published minimal set.
+* `experiments/emit_hitting_lean.py` — emits the whole module from `(g, ell, ms)`, refusing unless
+  every certificate's C1/C1'/C3' check passes in Python first.  `--split DIR MOD N` writes
+  `…Base` + `…Runs*` + `…Core` + `…Cert*` + the assembly, because the box is 19 GB and one
+  5000-state module is OOM-killed (`Lean exited with code 137`); NEVER run two `lake build`s of
+  such a module at once, that alone guarantees the kill.
+* Landed: `hitting_8_1_eleven` (`S(8,1) ≤ 11`, new row, 128 states, axiom-clean) and
+  `hitting_7_1_seven_reduced` (the `(7,1)` chapter re-proved in seconds instead of 24 minutes).
+* Emitted and Python-verified but NOT kernel-checked: `S(2,5) ≤ 20` (5328 states, 32 words) and
+  `S(3,3) ≤ 26` (5094 states, 27 words).  MEASURED: the `(2,5)` run sweep as one module is
+  OOM-killed, and as 29 in-module chunks it ran **70 minutes without finishing** (peak RSS cycling
+  4–14 GB).  The sweep must be split across `lean` PROCESSES; `--split` now emits
+  `…Base`/`…Runs{i}`/`…Core`/`…Cert{i}`/assembly for exactly that, untested.
+
+**Next attack.**  (1) build `(2,5)` on the per-process split, `-j1`, one module at a time (two
+concurrent `lean` processes on a module this size is an instant OOM); the `RUNCHUNK` / group-count
+knobs are free, so shrink until a `Runs` module is a minute.  Then `(3,3)`.
+(2) The multiplier sets are greedy-minimal-BY-INCLUSION, not minimum — every `≤` above is soft.
+(3) The real open content of the invariant is the LOWER halves: every `≥` in the table is a search
+cap, not a theorem, and no finite automaton decides them.
+
+**Refuted this lap.**  "`0^k` is the last block standing, so hitting `0^k` is the whole invariant":
+`{5,7}` at base 3 hits digits `0` and `2` and misses `1`; 45 of 57 random hitting-`0` 5-sets at
+base 5 miss some other digit.  `0^k` is the hardest block generically, not universally.
 ## 📏 MEASURED 2026-09-08 (lap 4): the run+jump theorem alone reaches `1/4 − O(1/p)` at EVERY prime `< 2000`
 
 `experiments/mahler_runjump_admissible.py`: for each prime `p < 2000`, the best `b` with

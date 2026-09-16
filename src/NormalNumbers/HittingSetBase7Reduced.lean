@@ -25,8 +25,8 @@ is one check per run — **24 runs**.  No `native_decide` anywhere.
 
 This is the SAME statement as `hitting_7_1_seven` (`HittingSetBase7.lean`), which
 proves it by a chunked kernel sweep over the `9360` ambient states and costs ~24
-minutes to build.  Here it is `24` states and `8` seconds.  Neither file is
-deleted: the old one is the independent check.
+minutes to build.  Here it is `24` states and seconds.  Neither file is deleted:
+the old one is the independent check.
 
 Nothing here claims the matching lower bound `S(7,1) ≥ 7`.
 -/
@@ -58,16 +58,42 @@ def h71rok (k : ℕ) : Bool :=
   decide (h71rLget (h71ridx (stateOfKW 7 h71rN 1 h71rms k)) = stateOfKW 7 h71rN 1 h71rms k)
     && decide (h71ridx (stateOfKW 7 h71rN 1 h71rms k) < 24)
 
-/-- The run endpoints: 24 runs tile `[0, 780)`. -/
-def h71rruns : List ℕ := [60, 120, 130, 156, 180, 195, 240, 260, 300, 312, 360, 390, 420, 468, 480, 520, 540, 585, 600, 624, 650, 660, 720, 780]
-
 /-- The per-run check: the quotients are constant across the run, and the run's
 first index is reachable. -/
 def h71rP (lo hi : ℕ) : Bool :=
   (coeffsOf 7 h71rms 1).all (fun b => decide ((b * lo) / h71rN = (b * (hi - 1)) / h71rN))
     && h71rok lo
 
-theorem h71r_runs_ok : runsCover h71rP 0 h71rruns h71rN = true := by decide +kernel
+/-- Two abutting covering sweeps concatenate.  Local to this module so that
+adding it costs no rebuild of the rest of the chapter. -/
+theorem h71r_runsCover_append {P : ℕ → ℕ → Bool} (rs2 : List ℕ) (e N : ℕ)
+    (h2 : runsCover P e rs2 N = true) :
+    ∀ (rs1 : List ℕ) (lo : ℕ), runsCover P lo rs1 e = true →
+      runsCover P lo (rs1 ++ rs2) N = true := by
+  intro rs1
+  induction rs1 with
+  | nil =>
+    intro lo h1
+    simp only [runsCover, decide_eq_true_eq] at h1
+    subst h1
+    simpa using h2
+  | cons hi rest ih =>
+    intro lo h1
+    simp only [List.cons_append, runsCover, Bool.and_eq_true] at h1 ⊢
+    exact ⟨h1.1, ih hi h1.2⟩
+
+def h71rrunsC0 : List ℕ := [60, 120, 130, 156, 180, 195, 240, 260, 300, 312, 360, 390, 420, 468, 480, 520, 540, 585, 600, 624, 650, 660, 720, 780]
+
+/-- The run endpoints: 24 runs tile `[0, 780)`, in 1 chunks —
+one `decide +kernel` per chunk keeps the peak memory of each kernel probe down
+(the whole sweep in one probe is OOM-killed on a 19 GB box). -/
+def h71rruns : List ℕ := h71rrunsC0
+
+theorem h71r_runs_c0 : runsCover h71rP 0 h71rrunsC0 780 = true := by decide +kernel
+
+theorem h71r_runs_ok : runsCover h71rP 0 h71rruns h71rN = true := by
+  show runsCover h71rP 0 h71rrunsC0 h71rN = true
+  exact h71r_runs_c0
 
 /-- **Reachability**, by run compression: 24 kernel checks instead of 780. -/
 theorem h71r_section (k : ℕ) (hk : k < h71rN) :
