@@ -62,4 +62,90 @@ lemma effC_le_closed {c : ℕ → ℕ} {A : ℝ} (hA : 1 ≤ A) (P₀ : ℕ) :
   refine max_le (by linarith) ?_
   nlinarith
 
+
+/-! ### The primes dividing the progression modulus
+
+`P₀ = (∏_α d_α²) · freezeQ` and `freezeQ = (∏_{q ≤ 2T} q)·∏_{i≠i'} |ρ_i − ρ_{i'}|`, so every
+prime factor of `P₀` is bounded by `max(Dm, 2T, ρmax)` — a *schedule* quantity, exponentially
+smaller than `P₀` itself.  This is what turns `cMax c P₀` into something the budget can pay. -/
+
+theorem prime_le_of_dvd_P₀ (G : GridParams) {p : ℕ} (hp : p.Prime) (hdvd : p ∣ G.P₀)
+    {Dm ρmax : ℕ} (hDm : ∀ α, G.d α ≤ Dm) (hρ : ∀ i : G.Idx, G.ρ i ≤ ρmax) :
+    p ≤ max (max Dm (2 * Fintype.card G.Idx)) ρmax := by
+  classical
+  have hP : G.P₀ = G.Mprod * G.freezeQ := rfl
+  rw [hP] at hdvd
+  rcases (Nat.Prime.dvd_mul hp).1 hdvd with hM | hF
+  · obtain ⟨α, -, hα⟩ := hp.prime.exists_mem_finset_dvd (by
+      simpa [GridParams.Mprod] using hM)
+    have hd : p ∣ G.d α := hp.dvd_of_dvd_pow hα
+    have : p ≤ G.d α := Nat.le_of_dvd (G.d_pos α) hd
+    exact le_trans (le_trans this (hDm α)) (le_trans (le_max_left _ _) (le_max_left _ _))
+  · rw [GridParams.freezeQ] at hF
+    rcases (Nat.Prime.dvd_mul hp).1 hF with hA | hB
+    · obtain ⟨q, hq, hqd⟩ := hp.prime.exists_mem_finset_dvd hA
+      have hq' := Nat.mem_primesBelow.1 hq
+      have : p = q := ((Nat.prime_dvd_prime_iff_eq hp hq'.2).1 hqd)
+      subst this
+      exact le_trans (by omega : p ≤ 2 * Fintype.card G.Idx)
+        (le_trans (le_max_right _ _) (le_max_left _ _))
+    · obtain ⟨i, -, hi⟩ := hp.prime.exists_mem_finset_dvd hB
+      obtain ⟨i', -, hii⟩ := hp.prime.exists_mem_finset_dvd hi
+      by_cases h : i = i'
+      · rw [if_pos h] at hii
+        exact absurd (Nat.le_of_dvd Nat.one_pos hii) (by have := hp.two_le; omega)
+      · rw [if_neg h] at hii
+        have hpos : 0 < Nat.dist (G.ρ i) (G.ρ i') :=
+          Nat.dist_pos_of_ne (fun h' => h (G.ρ_injective h'))
+        have hle : p ≤ Nat.dist (G.ρ i) (G.ρ i') := Nat.le_of_dvd hpos hii
+        have hd : Nat.dist (G.ρ i) (G.ρ i') ≤ max (G.ρ i) (G.ρ i') := by
+          unfold Nat.dist; omega
+        have : max (G.ρ i) (G.ρ i') ≤ ρmax := max_le (hρ i) (hρ i')
+        exact le_trans (le_trans hle (le_trans hd this)) (le_max_right _ _)
+
+/-- **`cMax` at the schedule's modulus**, for a coefficient vector monotone in `p`. -/
+theorem cMax_le_of_mono (G : GridParams) {c : ℕ → ℕ} (hmono : Monotone c)
+    {Dm ρmax : ℕ} (hDm : ∀ α, G.d α ≤ Dm) (hρ : ∀ i : G.Idx, G.ρ i ≤ ρmax) :
+    cMax c G.P₀ ≤ (c (max (max Dm (2 * Fintype.card G.Idx)) ρmax) : ℝ) := by
+  refine cMax_le (fun p hp => hmono ?_)
+  exact prime_le_of_dvd_P₀ G (Nat.prime_of_mem_primeFactors hp)
+    (Nat.dvd_of_mem_primeFactors hp) hDm hρ
+
+/-- `ω(P₀)` is at most the prime bound: all prime factors sit in `[2, M]`. -/
+theorem card_primeFactors_P₀_le (G : GridParams) {Dm ρmax : ℕ} (hDm : ∀ α, G.d α ≤ Dm)
+    (hρ : ∀ i : G.Idx, G.ρ i ≤ ρmax) :
+    G.P₀.primeFactors.card ≤ max (max Dm (2 * Fintype.card G.Idx)) ρmax + 1 := by
+  classical
+  set M := max (max Dm (2 * Fintype.card G.Idx)) ρmax with hM
+  have hsub : G.P₀.primeFactors ⊆ Finset.range (M + 1) := by
+    intro p hp
+    exact Finset.mem_range.2 (Nat.lt_succ_of_le (prime_le_of_dvd_P₀ G
+      (Nat.prime_of_mem_primeFactors hp) (Nat.dvd_of_mem_primeFactors hp) hDm hρ))
+  calc G.P₀.primeFactors.card ≤ (Finset.range (M + 1)).card := Finset.card_le_card hsub
+    _ = M + 1 := Finset.card_range _
+
+/-- **`effC` at the schedule's modulus, in schedule quantities only.** -/
+theorem effC_le_sched (G : GridParams) {c : ℕ → ℕ} (hmono : Monotone c) {A : ℝ} (hA : 1 ≤ A)
+    {Dm ρmax : ℕ} (hDm : ∀ α, G.d α ≤ Dm) (hρ : ∀ i : G.Idx, G.ρ i ≤ ρmax) :
+    effC c G.P₀ A
+      ≤ A + (c (max (max Dm (2 * Fintype.card G.Idx)) ρmax) : ℝ)
+          * (1 + Real.log ((max (max Dm (2 * Fintype.card G.Idx)) ρmax : ℕ) + 1)) := by
+  set M := max (max Dm (2 * Fintype.card G.Idx)) ρmax with hM
+  refine (effC_le_closed (c := c) hA G.P₀).trans ?_
+  have h1 := cMax_le_of_mono G hmono hDm hρ
+  have h2 : Real.log (G.P₀.primeFactors.card) ≤ Real.log ((M : ℝ) + 1) := by
+    have hcard := card_primeFactors_P₀_le G hDm hρ
+    have : ((G.P₀.primeFactors.card : ℕ) : ℝ) ≤ (M : ℝ) + 1 := by exact_mod_cast hcard
+    rcases Nat.eq_zero_or_pos G.P₀.primeFactors.card with h0 | hpos
+    · rw [h0]
+      simp only [Nat.cast_zero, Real.log_zero]
+      have : (0:ℝ) ≤ (M:ℝ) := Nat.cast_nonneg _
+      exact Real.log_nonneg (by linarith)
+    · exact Real.log_le_log (by exact_mod_cast hpos) this
+  have hlog0 : (0 : ℝ) ≤ Real.log (G.P₀.primeFactors.card) := Real.log_natCast_nonneg _
+  have hc0 := cMax_nonneg c G.P₀
+  have hcM : (0 : ℝ) ≤ (c M : ℝ) := Nat.cast_nonneg _
+  push_cast
+  nlinarith [Real.log_natCast_nonneg (M + 1)]
+
 end NormalNumbers.G4
