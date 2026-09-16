@@ -80,15 +80,195 @@ lemma sumInvPrimesIn_le_of_subset {S' : ℕ → Prop} [DecidablePred S']
 
 /-! ### Leaf 1 — the Chebyshev tail (no residue classes) -/
 
-/-- **Leaf.**  The von Mangoldt tail beyond `N` at exponent `x = 1 + λ/log N`, bounded by Abel
-summation against Chebyshev's `ψ t ≤ (log 4 + 4)·t`.  The shape recorded here is the one the
-transfer step needs: the tail is `≤ 11·e^{−λ}·(log N)/λ`. -/
-theorem sumLog_tail_le {N : ℕ} (hN : 16 ≤ N) {lam : ℝ} (hlam : 1 ≤ lam)
-    (hlam' : lam ≤ Real.log N) :
-    ∑' n : ℕ, (if N < n then ArithmeticFunction.vonMangoldt n else 0)
-        / (n : ℝ) ^ (1 + lam / Real.log N)
-      ≤ 11 * Real.exp (-lam) * Real.log N / lam := by
-  sorry
+/-- **Dyadic block bound.**  `∑_{p ∈ (2^k, 2^{k+1}]} (log p)/p ≤ 2 log 4`, straight from
+Chebyshev's `θ x ≤ log 4 · x`: on the block `1/p ≤ 2^{-k}` and the numerators sum to
+`θ(2^{k+1}) ≤ log 4 · 2^{k+1}`.  This replaces an Abel-summation tail estimate by a geometric
+series — the whole tail bound is then a `∑_k 2^{-kδ}`. -/
+theorem dyadic_block_le (k : ℕ) :
+    ∑ p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) with Nat.Prime p, Real.log p / p ≤ 2 * Real.log 4 := by
+  have hpow : (0 : ℝ) < (2 : ℝ) ^ k := by positivity
+  have hstep : ∀ p ∈ {p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) | Nat.Prime p},
+      Real.log p / p ≤ Real.log p / (2 : ℝ) ^ k := by
+    intro p hp
+    simp only [Finset.mem_filter, Finset.mem_Ioc] at hp
+    have h1 : (2 : ℝ) ^ k ≤ p := by exact_mod_cast hp.1.1.le
+    have h2 : 0 ≤ Real.log p := Real.log_nonneg (by exact_mod_cast hp.2.one_lt.le)
+    exact div_le_div_of_nonneg_left h2 hpow h1
+  have hθ : ∑ p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) with Nat.Prime p, Real.log p
+      ≤ Real.log 4 * (2 : ℝ) ^ (k + 1) := by
+    have hsub : {p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) | Nat.Prime p}
+        ⊆ {p ∈ Finset.Ioc 0 ⌊((2 : ℝ) ^ (k + 1))⌋₊ | Nat.Prime p} := by
+      intro p hp
+      simp only [Finset.mem_filter, Finset.mem_Ioc] at hp ⊢
+      refine ⟨⟨hp.2.pos, ?_⟩, hp.2⟩
+      have : ⌊((2 : ℝ) ^ (k + 1))⌋₊ = 2 ^ (k + 1) := by
+        rw [show ((2 : ℝ) ^ (k + 1)) = ((2 ^ (k + 1) : ℕ) : ℝ) by push_cast; ring,
+          Nat.floor_natCast]
+      rw [this]
+      exact hp.1.2
+    have h1 : ∑ p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) with Nat.Prime p, Real.log p
+        ≤ Chebyshev.theta ((2 : ℝ) ^ (k + 1)) := by
+      refine Finset.sum_le_sum_of_subset_of_nonneg hsub fun p hp _ => ?_
+      simp only [Finset.mem_filter] at hp
+      exact Real.log_nonneg (by exact_mod_cast hp.2.one_lt.le)
+    exact h1.trans (Chebyshev.theta_le_log4_mul_x (by positivity))
+  calc ∑ p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) with Nat.Prime p, Real.log p / p
+      ≤ ∑ p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) with Nat.Prime p, Real.log p / (2 : ℝ) ^ k :=
+        Finset.sum_le_sum hstep
+    _ = (∑ p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) with Nat.Prime p, Real.log p) / (2 : ℝ) ^ k := by
+        rw [Finset.sum_div]
+    _ ≤ (Real.log 4 * (2 : ℝ) ^ (k + 1)) / (2 : ℝ) ^ k := by gcongr
+    _ = 2 * Real.log 4 := by rw [pow_succ]; field_simp
+
+/-- **The tail, finite form.**  Every finite piece of the `S`-prime tail beyond `2^{k₀}` is
+bounded by the geometric series `2 log 4 · ρ^{k₀}/(1−ρ)`, `ρ = 2^{−δ}`. -/
+private lemma tail_finset_le {δ : ℝ} (hδ : 0 < δ) (k₀ : ℕ) (F : Finset ℕ) :
+    ∑ p ∈ F with (2 ^ k₀ < p ∧ Nat.Prime p ∧ S p), Real.log p / p * (p : ℝ) ^ (-δ)
+      ≤ 2 * Real.log 4 * ((2 : ℝ) ^ (-δ)) ^ k₀ / (1 - (2 : ℝ) ^ (-δ)) := by
+  set ρ : ℝ := (2 : ℝ) ^ (-δ) with hρ
+  have hρ0 : 0 < ρ := Real.rpow_pos_of_pos (by norm_num) _
+  have hρ1 : ρ < 1 := by
+    rw [hρ]
+    exact Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by linarith)
+  set K : ℕ := F.sup id with hK
+  set T : Finset ℕ := (Finset.Ico k₀ K).biUnion
+    (fun k => {p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) | Nat.Prime p}) with hT
+  have hg0 : ∀ p : ℕ, 0 ≤ Real.log p / p * (p : ℝ) ^ (-δ) := by
+    intro p
+    rcases Nat.lt_or_ge p 1 with hp | hp
+    · interval_cases p <;> simp
+    · have : (1 : ℝ) ≤ p := by exact_mod_cast hp
+      have h1 : 0 ≤ Real.log p := Real.log_nonneg this
+      have : (0 : ℝ) ≤ (p : ℝ) ^ (-δ) := Real.rpow_nonneg (by linarith) _
+      positivity
+  -- the filtered `F` sits inside the dyadic blocks
+  have hsub : {p ∈ F | 2 ^ k₀ < p ∧ Nat.Prime p ∧ S p} ⊆ T := by
+    intro p hp
+    simp only [Finset.mem_filter] at hp
+    obtain ⟨hpF, hk₀, hprime, -⟩ := hp
+    have hp2 : 2 ≤ p := hprime.two_le
+    have hpK : p ≤ 2 ^ K := by
+      have h1 : p ≤ K := Finset.le_sup (f := id) hpF
+      have h2 : K < 2 ^ K := Nat.lt_two_pow_self
+      omega
+    set k : ℕ := Nat.log 2 (p - 1) with hk
+    have hp1 : 1 ≤ p - 1 := by omega
+    have hlow : 2 ^ k ≤ p - 1 := Nat.pow_log_le_self 2 (by omega)
+    have hhigh : p - 1 < 2 ^ (k + 1) := Nat.lt_pow_succ_log_self (by norm_num) _
+    have hk₀k : k₀ ≤ k := by
+      rw [hk]
+      exact Nat.le_log_of_pow_le (by norm_num) (by omega)
+    have hkK : k < K := by
+      by_contra hcon
+      have : (2 : ℕ) ^ K ≤ 2 ^ k := Nat.pow_le_pow_right (by norm_num) (by omega)
+      omega
+    refine Finset.mem_biUnion.2 ⟨k, Finset.mem_Ico.2 ⟨hk₀k, hkK⟩, ?_⟩
+    simp only [Finset.mem_filter, Finset.mem_Ioc]
+    exact ⟨⟨by omega, by omega⟩, hprime⟩
+  have hdisj : Set.PairwiseDisjoint (↑(Finset.Ico k₀ K) : Set ℕ)
+      (fun k => {p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) | Nat.Prime p}) := by
+    intro i _ j _ hij
+    simp only [Function.onFun, Finset.disjoint_left]
+    intro p hpi hpj
+    simp only [Finset.mem_filter, Finset.mem_Ioc] at hpi hpj
+    rcases Nat.lt_or_ge i j with h | h
+    · have : (2 : ℕ) ^ (i + 1) ≤ 2 ^ j := Nat.pow_le_pow_right (by norm_num) (by omega)
+      omega
+    · have hji : j < i := by omega
+      have : (2 : ℕ) ^ (j + 1) ≤ 2 ^ i := Nat.pow_le_pow_right (by norm_num) (by omega)
+      omega
+  have hblock : ∀ k ∈ Finset.Ico k₀ K,
+      ∑ p ∈ {p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) | Nat.Prime p}, Real.log p / p * (p : ℝ) ^ (-δ)
+        ≤ ρ ^ k * (2 * Real.log 4) := by
+    intro k _
+    have hterm : ∀ p ∈ {p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) | Nat.Prime p},
+        Real.log p / p * (p : ℝ) ^ (-δ) ≤ ρ ^ k * (Real.log p / p) := by
+      intro p hp
+      simp only [Finset.mem_filter, Finset.mem_Ioc] at hp
+      have hp2 : 2 ≤ p := hp.2.two_le
+      have hpR : ((2 : ℝ) ^ k) ≤ p := by exact_mod_cast hp.1.1.le
+      have hpow : (p : ℝ) ^ (-δ) ≤ ρ ^ k := by
+        have h1 : (p : ℝ) ^ (-δ) ≤ ((2 : ℝ) ^ k) ^ (-δ) :=
+          Real.rpow_le_rpow_of_nonpos (by positivity) hpR (by linarith)
+        have h2 : ((2 : ℝ) ^ k) ^ (-δ) = ρ ^ k := by
+          rw [hρ, ← Real.rpow_natCast ((2 : ℝ) ^ (-δ)) k, ← Real.rpow_mul (by norm_num),
+            ← Real.rpow_natCast (2 : ℝ) k, ← Real.rpow_mul (by norm_num)]
+          ring_nf
+        linarith [h2 ▸ h1]
+      have hlogp : 0 ≤ Real.log p / p := by
+        have : (1 : ℝ) ≤ p := by exact_mod_cast hp.2.one_le
+        have := Real.log_nonneg this
+        positivity
+      calc Real.log p / p * (p : ℝ) ^ (-δ) ≤ Real.log p / p * ρ ^ k := by
+            exact mul_le_mul_of_nonneg_left hpow hlogp
+        _ = ρ ^ k * (Real.log p / p) := by ring
+    calc ∑ p ∈ {p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) | Nat.Prime p},
+            Real.log p / p * (p : ℝ) ^ (-δ)
+        ≤ ∑ p ∈ {p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) | Nat.Prime p}, ρ ^ k * (Real.log p / p) :=
+          Finset.sum_le_sum hterm
+      _ = ρ ^ k * ∑ p ∈ {p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) | Nat.Prime p}, Real.log p / p := by
+          rw [Finset.mul_sum]
+      _ ≤ ρ ^ k * (2 * Real.log 4) := by
+          have := dyadic_block_le k
+          have hρk : (0 : ℝ) ≤ ρ ^ k := by positivity
+          exact mul_le_mul_of_nonneg_left this hρk
+  have hgeom : ∑ k ∈ Finset.Ico k₀ K, ρ ^ k ≤ ρ ^ k₀ / (1 - ρ) := by
+    have h1 : (0 : ℝ) < 1 - ρ := by linarith
+    have hne : ρ - 1 ≠ 0 := by intro hc; apply absurd hc; intro hc'; linarith
+    have hne' : (1 : ℝ) - ρ ≠ 0 := ne_of_gt h1
+    have hrange : ∑ j ∈ Finset.range (K - k₀), ρ ^ j ≤ 1 / (1 - ρ) := by
+      rw [geom_sum_eq (by intro hc; exact absurd hc (by intro hc'; linarith))]
+      have hid : (ρ ^ (K - k₀) - 1) / (ρ - 1) = (1 - ρ ^ (K - k₀)) / (1 - ρ) := by
+        rw [div_eq_div_iff hne hne']
+        ring
+      rw [hid]
+      have h2 : (0 : ℝ) ≤ ρ ^ (K - k₀) := by positivity
+      gcongr
+      linarith
+    have hsplit : ∑ k ∈ Finset.Ico k₀ K, ρ ^ k
+        = ρ ^ k₀ * ∑ j ∈ Finset.range (K - k₀), ρ ^ j := by
+      rw [Finset.sum_Ico_eq_sum_range, Finset.mul_sum]
+      exact Finset.sum_congr rfl fun j _ => by rw [pow_add]
+    rw [hsplit]
+    have hk0 : (0 : ℝ) ≤ ρ ^ k₀ := by positivity
+    calc ρ ^ k₀ * ∑ j ∈ Finset.range (K - k₀), ρ ^ j ≤ ρ ^ k₀ * (1 / (1 - ρ)) :=
+          mul_le_mul_of_nonneg_left hrange hk0
+      _ = ρ ^ k₀ / (1 - ρ) := by ring
+  calc ∑ p ∈ F with (2 ^ k₀ < p ∧ Nat.Prime p ∧ S p), Real.log p / p * (p : ℝ) ^ (-δ)
+      ≤ ∑ p ∈ T, Real.log p / p * (p : ℝ) ^ (-δ) :=
+        Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p _ _ => hg0 p)
+    _ = ∑ k ∈ Finset.Ico k₀ K,
+          ∑ p ∈ {p ∈ Finset.Ioc (2 ^ k) (2 ^ (k + 1)) | Nat.Prime p},
+            Real.log p / p * (p : ℝ) ^ (-δ) := Finset.sum_biUnion hdisj
+    _ ≤ ∑ k ∈ Finset.Ico k₀ K, ρ ^ k * (2 * Real.log 4) := Finset.sum_le_sum hblock
+    _ = (∑ k ∈ Finset.Ico k₀ K, ρ ^ k) * (2 * Real.log 4) := by rw [Finset.sum_mul]
+    _ ≤ (ρ ^ k₀ / (1 - ρ)) * (2 * Real.log 4) := by
+        have : (0 : ℝ) ≤ 2 * Real.log 4 := by
+          have : (0 : ℝ) ≤ Real.log 4 := Real.log_nonneg (by norm_num)
+          linarith
+        exact mul_le_mul_of_nonneg_right hgeom this
+    _ = 2 * Real.log 4 * ρ ^ k₀ / (1 - ρ) := by ring
+
+/-- **The tail.**  The `S`-prime tail of the Dirichlet series beyond `2^{k₀}`, at exponent
+`1 + δ`, is at most `2 log 4 · 2^{−k₀δ}/(1 − 2^{−δ})`.  Purely dyadic: Chebyshev's `θ` bound on
+each block, then a geometric series — no Abel summation, no integrals. -/
+theorem sumLog_tail_le {δ : ℝ} (hδ : 0 < δ) (k₀ : ℕ) :
+    ∑' p : ℕ, (if 2 ^ k₀ < p ∧ Nat.Prime p ∧ S p then Real.log p / p * (p : ℝ) ^ (-δ) else 0)
+      ≤ 2 * Real.log 4 * ((2 : ℝ) ^ (-δ)) ^ k₀ / (1 - (2 : ℝ) ^ (-δ)) := by
+  have hnn : (0 : ℕ → ℝ)
+      ≤ fun p => if 2 ^ k₀ < p ∧ Nat.Prime p ∧ S p then Real.log p / p * (p : ℝ) ^ (-δ) else 0 := by
+    intro p
+    simp only [Pi.zero_apply]
+    split_ifs with hp
+    · have h1 : (1 : ℝ) ≤ p := by exact_mod_cast hp.2.1.one_le
+      have h2 : 0 ≤ Real.log p := Real.log_nonneg h1
+      have h3 : (0 : ℝ) ≤ (p : ℝ) ^ (-δ) := Real.rpow_nonneg (by linarith) _
+      positivity
+    · exact le_rfl
+  refine Real.tsum_le_of_sum_le hnn (fun s => ?_)
+  have hts := tail_finset_le (S := S) hδ k₀ s
+  rw [Finset.sum_filter] at hts
+  simpa using hts
 
 /-! ### Leaf 2 — the transfer from the `L`-series lower bound to `A_S(N)` -/
 
@@ -344,7 +524,6 @@ theorem mertensRate_of_sumLog {c C : ℝ} (hc : 0 < c)
         = c / (2 * Real.log 2) * Real.log (Real.log N) - c / 2 := by
       field_simp
     linarith [he ▸ this]
-  unfold MertensRate at *
   linarith [hmono, hD J, hfin]
 
 /-! ### The residue-class instance -/
