@@ -1,7 +1,16 @@
 # HANDOFF 2026-09-16 — the census goes up, and the upper halves are now EMITTED 🧵📈
 
 *Lap: overnight Opus run on `KICKOFF-2026-09-16-hitting-set-census-up.md` (the
-02:50 EDT attended override).  Branch `wip/adder-tower-c9`.*
+02:50 EDT attended override).  Branch `wip/adder-tower-c9`; HEAD at handoff
+`dc3a1c9`.  Working tree clean, nothing uncommitted.  Six green commits:
+`97cec2d` (reduced search) → `d041ae0` (`S(8,1) ≤ 11`) → `e1df04e` (census) →
+`fbf099f` (`(7,1)` re-proved) → `1cad26d` (per-process split) → `dc3a1c9` (the
+`O(index)` kernel finding + `h25_section`).*
+
+**Uncommitted / out-of-tree on purpose**: the 16 `(2,5)` certificate modules and
+the `(2,5)` assembly, plus the whole emitted `(3,3)` family, live only in the
+session scratchpad — they are Python-verified but NOT kernel-checked, and are
+regenerated in seconds by the two commands below.  Nothing was hidden in `wip/`.
 
 ## Done
 
