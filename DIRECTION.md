@@ -1,5 +1,61 @@
 # DIRECTION — normal-numbers 🧭
 
+## Attended operator override: 2026-09-15 23:58 EDT — campaign A: PRIME-SUBSET LAMBERT SERIES (ACTIVE; supersedes the AFTER THE EXTRACTION override below, whose stop condition was met at lap 170)
+
+Operator: Ren, unattended overnight run authorized by Trevor 2026-09-15 ("you're in charge - dig").
+Engine: Opus/low grind.  Branch `wip/g5-prime-subset` (from `wip/g4-entropy` @ `cec3d08`).
+Hard stop: the host kills every lap by 05:25 EDT 2026-09-16 - **commit a compiling skeleton with
+named `sorry` leaves before every hard step**; a lap with nothing committed when killed is lost.
+Read this addendum, then the newest `HANDOFF-*.md`, then `git log`; reconcile before acting.
+
+**Banked, do not touch:** `isDisjunctive_base/_four/_two`, `isNormal_fullRealW`, everything in the
+entropy/extraction/R/S campaigns.  The two pre-expedition `sorry`s (`phaseOscillation`,
+`exists_prime_nonresidue`) and the Comparator holes stay forbidden drift.  The repo-wide self-stop
+gate is a known defect: finish with `box done --green`, never `box stuck`.
+
+🎯 **Objective A.**  For a set `S` of primes with `∑_{p∈S} 1/p = ∞`, the number
+`c_S(b) = ∑_n ω_S(n)/bⁿ = ∑_{p∈S} 1/(bᵖ−1)`, `ω_S(n) = #{p ∈ S : p ∣ n}`, is disjunctive in base
+`b ≥ 3`.  Instance: `S = {p : p ≡ a (mod q)}`, `a` a unit mod `q`, via mathlib's
+`ArithmeticFunction.vonMangoldt.not_summable_residueClass_prime_div`
+(`Mathlib/NumberTheory/LSeries/PrimesInAP.lean`).  The G4 proof is monotone in `S` everywhere
+except the Mertens input (KB map 2026-09-15 §3A): transport `ω_S(dm) = ω_S(d)+ω_S(m) − overlap_S`
+is the same proof; the local contraction C2 (`norm_localSum_le`) is a single-prime statement, so
+primes outside `S` contribute phase 0; junk only shrinks.
+
+**The one design seam, and the order of work.**
+0. **Audit lap first (read-only, one lap, write `DESIGN-2026-09-16-prime-subset.md`).**  The
+   schedule hard-codes `R b K = 2^(2^m₁)` and consumes the quantitative lower Mertens bound
+   `log log R ≤ ∑_{p<R} 1/p + 1` (`G4Mertens.log_log_le_sum_inv_primesBelow`, used at
+   `G4SchedBParams.sum_inv_smallPrimes_ge`, `G4ScheduleHarmonic`).  For `S` a residue class the
+   analogue (Mertens in arithmetic progressions) is **not in mathlib**.  Decide between:
+   (i) parametrize `R` - the contraction only needs `∑_{p∈S, p<R, p ∤ P₀} 1/p ≥ m₁ log 2 − 21K² − 4`,
+   so define `R_S` by `Nat.find` on divergence (any `R ≥ R b K` works if every other use of `R` is
+   an inequality `R ≤ Y`, `R ≤ X` or monotone in `R`; check each use and list them); or
+   (ii) freeze `sum_inv_primes_residueClass_ge : (1/φ q) log log N − C_q ≤ ∑_{p<N, p≡a(q)} 1/p` as a
+   named `sorry` leaf and make the headline conditional on it.  Prefer (i); fall back to (ii) only
+   if a use of `R` is not monotone.  Record the verdict with the exact declaration list.
+1. **Definitions + transport** (new `G4SubsetWeight.lean`): `omegaS (S : Set ℕ) [DecidablePred
+   (· ∈ S)] (m) : ℝ := ((m.primeFactors.filter (· ∈ S)).card : ℝ)`, `subsetLambert b S`,
+   integer-valuedness, `omegaS_mul`/`overlapS_congr` mirroring `weightW_mul`/`overlapW_congr`
+   (`G4WeightInterface`), then the `Frame` instance with `w := omegaS S`, `x := subsetLambert b S`
+   (`G4Wiring.SeparatingFrameExistsW`, step 1 of G5 already generic).
+2. **Local contraction restricted to `S`**: re-run `G4LocalContraction` / `G4SmallPrimeVector` with
+   the active-prime set `smallPrimes ∩ S`; the product `exp(−c 8^{−K} ∑_{p≤R, p∈S} 1/p)` is where
+   divergence enters.  Inactive primes: phase 0, prove it once as a lemma, do not duplicate files.
+3. **Schedule + assembly**: `isDisjunctive_subset (hb : 3 ≤ b) (hS : ¬ Summable (fun p : S => 1/p))
+   : IsDisjunctive b (subsetLambert b S)` - or conditional on the leaf from 0(ii) - then
+   `isDisjunctive_residueClass (hb) (ha : IsUnit (a : ZMod q))`, and the sanity instance
+   `S = Set.univ` must re-derive `isDisjunctive_base`'s statement.
+4. Only if 1-3 are green: G5 steps 2-5 for `weightW c` (`PENDING_WORK.md` §"Next actions",
+   2026-09-14) - transport for `w_c`, junk via `sum_junk_le`, `isDisjunctive_Omega`.
+
+**Rules.**  One writer per file; commit a skeleton early; every new theorem prints
+`[propext, Classical.choice, Quot.sound]` (record `#print axioms` in the handoff); no
+`native_decide`; no outward action; no `docs/` essay (module docstrings only).  A review lap ranks
+the remaining leaves, it does not restate this objective.  Progress = a named leaf closed, a
+skeleton committed, or a proved obstruction written into the DESIGN file.  If the audit shows
+neither (i) nor (ii) can be stated, write why and switch to item 4.
+
 ## Attended operator override: 2026-09-14 night — AFTER THE EXTRACTION (ACTIVE; supersedes the 10:52 / 19:06 overrides and every CURRENT DIRECTIVE below)
 
 **Banked, do not re-derive, do not extend as this campaign:** `isNormal_fullRealW` (base 2, 4,
