@@ -533,4 +533,75 @@ theorem sum_abs_farPartΩ_le (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : �
         unfold farJunkBound
         ring
 
+lemma farJunkBound_nonneg {bb : ℝ} (hb : 3 ≤ bb) (J : ℕ) {A B : ℝ} (hA : 0 ≤ A) (hB : 0 ≤ B) :
+    0 ≤ farJunkBound bb J A B := by
+  unfold farJunkBound
+  have h1 : (0 : ℝ) < bb - 1 := by linarith
+  have h2 : (0 : ℝ) < bb - 2 := by linarith
+  have h3 : (0 : ℝ) ≤ 1 / bb := by positivity
+  have h4 : (0 : ℝ) ≤ 2 / bb := by positivity
+  positivity
+
+/-- **`farAvgΩ` in closed form.**  The `ω` far bound, plus the frozen geometric term, plus the
+junk term normalised by the sample size (where the `√X / |P| → 0` saving lives). -/
+theorem farAvgΩ_le (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) (hP₀ : 0 < G.P₀)
+    {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) :
+    farAvgΩ bb G X
+      ≤ (2 : ℝ) ^ G.K *
+          ((farBound bb (G.K + G.N) (farC G X Dm) / Real.log 2
+              + ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (bb : ℝ)) ^ (G.K + G.N + 1) * (bb / (bb - 1))))
+            + farJunkBound bb (G.K + G.N) (junkA G.P₀ X) (junkB X Dm)
+                / ((apSample X G.P₀ G.b₀).card : ℝ)) := by
+  have hbr : (3 : ℝ) ≤ bb := by exact_mod_cast hbb
+  have hbr2 : (2 : ℝ) ≤ bb := by linarith
+  set P := apSample X G.P₀ G.b₀ with hP
+  have hc : (0 : ℝ) < P.card := by exact_mod_cast hne.card_pos
+  set Bd : ℝ := (2 : ℝ) ^ G.K *
+      ((farBound bb (G.K + G.N) (farC G X Dm) / Real.log 2
+          + ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (bb : ℝ)) ^ (G.K + G.N + 1) * (bb / (bb - 1))))
+        + farJunkBound bb (G.K + G.N) (junkA G.P₀ X) (junkB X Dm) / (P.card : ℝ)) with hBd
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hCn := farC_nonneg G X hne Dm
+  have hfb := farBound_nonneg hbr2 (G.K + G.N) hCn
+  have hfj := farJunkBound_nonneg hbr (G.K + G.N) (junkA_nonneg G.P₀ X) (junkB_nonneg X Dm)
+  have hgeo : (0 : ℝ) ≤ ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (bb : ℝ)) ^ (G.K + G.N + 1) * (bb / (bb - 1))) := by
+    have h1 : (0 : ℝ) < bb - 1 := by linarith
+    have h2 : (0 : ℝ) ≤ 1 / (bb : ℝ) := by positivity
+    positivity
+  have hBd0 : 0 ≤ Bd := by
+    rw [hBd]
+    have : (0 : ℝ) ≤ farJunkBound bb (G.K + G.N) (junkA G.P₀ X) (junkB X Dm) / (P.card : ℝ) :=
+      div_nonneg hfj hc.le
+    have h5 : (0 : ℝ) ≤ farBound bb (G.K + G.N) (farC G X Dm) / Real.log 2 :=
+      div_nonneg hfb hlog2.le
+    positivity
+  have hrow : ∀ ν : Fin G.rDim,
+      (P.card : ℝ)⁻¹ * ∑ n ∈ P, |farPartW TWeight.cardFactors bb G n (G.rowEquiv.symm ν)|
+        ≤ Bd := by
+    intro ν
+    have h := sum_abs_farPartΩ_le bb hbb G X hne hP₀ hDm (G.rowEquiv.symm ν)
+    rw [← hP] at h
+    calc (P.card : ℝ)⁻¹ * ∑ n ∈ P, |farPartW TWeight.cardFactors bb G n (G.rowEquiv.symm ν)|
+        ≤ (P.card : ℝ)⁻¹ * ((2 : ℝ) ^ G.K *
+            ((P.card : ℝ) * (farBound bb (G.K + G.N) (farC G X Dm) / Real.log 2
+                + ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (bb : ℝ)) ^ (G.K + G.N + 1) * (bb / (bb - 1))))
+              + farJunkBound bb (G.K + G.N) (junkA G.P₀ X) (junkB X Dm))) :=
+          mul_le_mul_of_nonneg_left h (by positivity)
+      _ = Bd := by rw [hBd]; field_simp
+  unfold farAvgΩ
+  rw [← hP]
+  have hswap : (P.card : ℝ)⁻¹ * ∑ n ∈ P, (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
+        |farPartW TWeight.cardFactors bb G n (G.rowEquiv.symm ν)|
+      = (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, (P.card : ℝ)⁻¹ * ∑ n ∈ P,
+        |farPartW TWeight.cardFactors bb G n (G.rowEquiv.symm ν)| := by
+    simp_rw [Finset.mul_sum]
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun ν _ => Finset.sum_congr rfl fun n _ => ?_
+    ring
+  rw [hswap]
+  have hr : ((Finset.univ : Finset (Fin G.rDim)).card : ℝ) = G.rDim := by simp
+  rw [← hr]
+  exact avg_le_of_forall_le _ _ hBd0 fun ν _ => hrow ν
+
 end NormalNumbers.G4
