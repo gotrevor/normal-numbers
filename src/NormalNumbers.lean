@@ -199,6 +199,7 @@ import NormalNumbers.G4LocalContraction
 import NormalNumbers.G4MediumPrimes
 import NormalNumbers.G4Mertens
 import NormalNumbers.G4MertensAP
+import NormalNumbers.G4SubsetSchedule
 import NormalNumbers.G4MinWeight
 import NormalNumbers.G4PhaseDecomp
 import NormalNumbers.G4Progression
