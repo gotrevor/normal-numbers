@@ -320,14 +320,19 @@ theorem {thm} : Literature.IsHittingSet {g} {ell} {{{', '.join(map(str, ms))}}} 
     simp only [chansOfW, List.mem_map] at hch
     obtain ⟨a, _, rfl⟩ := hch
     exact hv c hc""")
-    assert ell == 1, "only ell = 1 is emitted for the final assembly so far"
-    A(f"""  obtain ⟨d, rfl⟩ : ∃ d, w = [d] := by
-    rcases w with _ | ⟨d, _ | ⟨e, t⟩⟩ <;> simp at hw
-    exact ⟨d, rfl⟩
-  have hd' : d < {g} := hd d (by simp)
-  have key : ∃ ch ∈ chansOfW {p}ms [d],
+    vs = [f"d{i}" for i in range(ell)]
+    # rcases pattern: peel ell digits off, then the (ell+1)-st cons/nil split
+    pat = "_ | ⟨z, t⟩"
+    for v in reversed(vs):
+        pat = f"_ | ⟨{v}, {pat}⟩"
+    A(f"""  obtain ⟨{', '.join(vs)}, rfl⟩ : ∃ {' '.join(vs)}, w = {lst(vs)} := by
+    rcases w with {pat} <;> simp at hw
+    exact ⟨{', '.join(vs)}, rfl⟩""")
+    for v in vs:
+        A(f"  have hlt{v} : {v} < {g} := hd {v} (by simp)")
+    A(f"""  have key : ∃ ch ∈ chansOfW {p}ms {lst(vs)},
       ∀ N, ∃ n, N ≤ n ∧ OccursAt {g} (ch.a * α) ch.word n := by
-    interval_cases d""")
+    {' <;> '.join('interval_cases ' + v for v in vs)}""")
     for w in words:
         tag = "".join(map(str, w))
         A(f"""    · exact signed_engine_g_single_reduced {g} (by norm_num) (chansOfW {p}ms {lst(w)})

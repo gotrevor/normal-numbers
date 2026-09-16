@@ -87,15 +87,16 @@ reproduces the naive controls; the naive short-circuit search stays faster for t
 | (5,1) | **5** | **272 channel-distinct sets ≤ 30** (2008 naive), e.g. `{1,2,3,4,6}`, `{1,2,3,4,8}`, `{1,2,3,6,14}` | – | – | sizes ≤ 5, ≤ 30 |
 | (6,1) | **7** | **2 channel-distinct sets ≤ 24**: `{1,8,11,14,16,20,23}` (**theorem** `hitting_6_1_seven`, `HittingSetBase6.lean`, 2026-09-16, on the 76-state carry-consistency reduction of the 9067520 ambient), `{3,7,10,13,14,17,20}` (the other two naive ones carry `6·1`, `6·3`); no 6-set ≤ 24 | – | – | sizes ≤ 7, ≤ 24 |
 | (7,1) | **7** | **3 channel-distinct 7-sets ≤ 24**: `{1,2,3,4,5,6,13}` (**theorem** `hitting_7_1_seven`, `HittingSetBase7.lean`, chunked kernel decide, verified 23:16), `{1,3,4,5,6,9,13}`, `{1,3,4,5,6,9,18}`; `{1,…,6,8}` does NOT hit (digits 1 and 5 escape); `{1..8}` and `{1..6}` fail as theorems (`not_hitting_7_1_eight`, `not_hitting_7_1_six`) | – | – | sizes ≤ 7, ≤ 24 |
-| (8,1), (9,1) | > 8 | – | – | – | sizes ≤ 8, ≤ 20 (cap probably binding) |
+| (8,1) | **≤ 11**, `> 8` | `{2,4,7,11,13,14,17,20,22,28,38}` (**theorem** `hitting_8_1_eleven`, `HittingSetBase8.lean`, 2026-09-16, axiom-clean on the `128`-state reduction of the `892268016640` ambient); no `8`-set ≤ 20 | – | – | sizes ≤ 8 ≤ 20; upper by randomised greedy, pool ≤ 40 |
+| (9,1) | > 8 | – | – | – | sizes ≤ 8, ≤ 20 (cap probably binding) |
 | (10,1) | > 9 | – | – | – | sizes ≤ 9, ≤ 20 (cap probably binding) |
 | (2,2) | 2 | **3 channel-distinct pairs ≤ 60**: `{1,3}`, `{1,11}`, `{3,5}` (151 naive, with 2-multiples and scalings) | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
 | (2,3) | 4 | **2 channel-distinct 4-sets ≤ 60**: `{1,3,5,7}`, `{1,5,7,11}` (the naive 928 are these with elements doubled: `{1,3,5,14}` is `{1,3,5,7}`, channel 14 = channel 7 shifted) | > 4 (`{1,3,5,7}` fails) | – | sizes ≤ 4, ≤ 60 (naive, 2 h 38 min) |
 | (2,4) | **9** (within ≤ 60) | **`{1,3,5,7,9,11,13,15,17}`, the first nine odd numbers, is the only channel-distinct 9-set ≤ 40** (930 s; **theorem** `hitting_2_4_nine`, `HittingSetBase2Len4.lean`, 2026-09-16, on the 520-state reduction of the 4.6·10^15 ambient); `{1,3,…,15}` does NOT hit, nor any 8-set ≤ 60 (5 852 880 primitive 8-sets, 36 882 sparse survivors, all fail at `0000`; 5288 s). N5's `≥ 8` is strict here | – | – | size 8 ≤ 60, size 9 ≤ 40 |
 | (3,2) | **6** | **1 channel-distinct set ≤ 20**: `{1,2,4,5,7,8}` (42 naive; `{1,4,5,6,7,8}` is it with `6 = 3·2`); **theorem** `hitting_3_2_six`, `HittingSetBase3Len2.lean`, 2026-09-16, axiom-clean on the 54-state reduction of the 1632960 ambient | – | – | sizes ≤ 6, ≤ 20 |
 
-Read along rows: `S(g,1) = 1, 2, 3, 5, 7, >6, >8, >8, >9` for `g = 2..10`; `S(2,k) = 1, 2, 4, >7`
-for `k = 1..4`; `S(3,k) = 2, 6`.  The tempting conjecture that the odd multipliers below `2^k`
+Read along rows: `S(g,1) = 1, 2, 3, 5, 7, >6, 8<·≤11, >8, >9` for `g = 2..10`; `S(2,k) = 1, 2, 4, 9, ≤20`
+for `k = 1..5`; `S(3,k) = 2, 6, ≤28`.  The tempting conjecture that the odd multipliers below `2^k`
 realise `S(2,k) = 2^(k−1)` is **refuted at `k = 4`**, but the value `8` is not.  `S(6,1) = 7` is
 the first value above `g`; base 8 (a prime power) is already `> 8`, so no "prime power vs two
 primes" reading.  **Growth heuristic (Fable, 19:50)**: each multiplier deletes about a fraction
@@ -127,6 +128,36 @@ hits.  The guess that the base-5 pattern `{1..p−1, p+1}` hits at every prime i
 `{1,2,3,4,5,6,13}`, `{1,3,4,5,6,9,13}`, `{1,3,4,5,6,9,18}` - again `{1..p−1}` plus one element,
 but `13 ≡ 6 (mod 7)`, not `p+1`; and at base 5 the extra element `6 ≡ 1`.  For `S(11,1)` the same argument gives
 `≤ 24`, surely far from tight.
+
+## New rows on the reduced instrument (2026-09-16)
+
+`experiments/hitting_set_search_reduced.py` runs the hitting test on the
+carry-consistent states instead of the ambient product.  The carry vector into
+the current position is `(⌊m·t⌋)ₘ` for the unread tail `t`, so a forward BFS from
+the zero carry enumerates the whole reachable space — `t ↦ (d+t)/g` generates the
+`g`-adic rationals, dense in every interval between the breakpoints `p/m`, so BFS
+reachability *is* realizability.  Restricting to reachable states is sound for
+hitting: an escaping `α` is an infinite path read upward from the deep positions,
+and it never leaves that set.  `--selftest` is three layers of control: block-by-block
+agreement with the ambient automaton on twelve families (including `(6,1)`,
+`(3,2)`, `(2,3)`), every published row reproduced exactly, and the minimality of
+each published minimal set (every proper subset fails).
+
+| row | upper bound | set | how |
+|---|---|---|---|
+| `S(2,5)` | **≤ 20** | `{1,3,…,37,41}` (the odd prefix to `41` minus `39`) | the odd prefix `{1,3,…,2n−1}` first hits at `n = 21`, then one greedy removal |
+| `S(3,3)` | **≤ 28** | `{2,8,10,13,14,17,20,22,25,26,31,32,34,37,38,40,41,43,44,46,47,49,50,52,53,55,58,59}` | randomised greedy from the pool `3∤m ≤ 60` |
+| `S(8,1)` | **≤ 11** | `{2,4,7,11,13,14,17,20,22,28,38}` | randomised greedy from `8∤m ≤ 40`; **theorem** |
+
+Every one of these is an upper bound only; they are certainly not known to be
+optimal (greedy minimal-by-inclusion, not minimum).  Two structural points:
+
+* at `(2,5)` the odd prefix needs **`21`** multipliers, not `16` — the
+  `S(2,k) = 2^(k−1)` shape, already refuted at `k = 4`, breaks the other way at
+  `k = 5`: the first `2^(k−1)` odd numbers are not enough.  The block that
+  survives longest is always `0^k`.
+* the kickoff's cap `≤ 40` for `(3,3)` is **not enough** — the whole pool
+  `3∤m ≤ 40` fails at `000`; `≤ 60` hits.
 
 ## Sparse adversaries: an elementary lower-bound route (`experiments/mahler_sparse_adversary.py`)
 
