@@ -1,7 +1,57 @@
-# PENDING WORK — **campaign B: the master additive weight** (review lap B-review-1, 2026-09-16)
+# PENDING WORK — **campaign B FINAL: the `a`-side** (DEEP REFLECTION lap, 2026-09-16)
 
-> Campaign A is **closed**; see `DIRECTION.md` → CURRENT DIRECTIVE for the binding orders.
-> Build 🟢 9067 jobs, zero `axiom`s, `src/` = the two pre-expedition forbidden-drift `sorry`s.
+> Campaign B's `c` axis and subset axis are **closed**; the `a`-side is the campaign's
+> **TERMINAL** objective and there is a pre-registered FINISH LINE after it.
+> See `DIRECTION.md` → CURRENT DIRECTIVE for the binding orders and
+> `REFLECTION-2026-09-16-campaignB.md` for the full reasoning.
+> Build 🟢 9085 jobs, zero `axiom`s, `src/` = the two pre-expedition forbidden-drift `sorry`s.
+
+## Reflection — 2026-09-16 (deep reflection lap): the `a`-side crux is PROBED and it HOLDS
+
+**ROUTE VERDICT: CONTINUE.**  No registered trigger fired (B-review-1's 🚦 growth-class trigger
+did not fire — `Tame` + `isDisjunctive_weight_logLogPow` landed).  Neither rationalization tell
+is present: two whole campaigns *closed* in the last day, and the finishability estimate rose.
+
+**The named risk is scope creep, not a false summit.**  B0–B3 attacked the machine; B4/B5 were
+growth-class bookkeeping and an audit surface.  Left open-ended this campaign can emit headlines
+indefinitely at zero marginal content.  Hence the pre-registered finish line in the directive.
+
+**The decisive probe (`scratch/ProbeA.lean`, compiles against the tree).**  The one genuinely
+uncertain question was whether the §4C good-prime contraction survives the *scaled* frequency
+`a_p·q` — it can fail catastrophically in principle, since `distZ(a·x)` can vanish while
+`distZ(x) > 0`.  It survives, and cheaply:
+
+| lemma | content |
+|---|---|
+| `phaseA_eq_sum_local` | `Φ_a(n) = ∑_{p∈s} localPhase p ρ (a_p • x) n` — the local phase at `p` is the **ordinary** one at scaled coefficients |
+| `vecMul_const_mul` / `coeffAL_const_mul` | `coeffAL` is **linear in the frequency**: `a_p·(q ᵥ* A) = (a_p·q) ᵥ* A` |
+| `sum_sq_distZ_coeffA_ge_gen` | `freqSeed bb K ≤ ∑_i distZ(a_p·coeffAL bb q i)²` for `1 ≤ a_p ≤ Ca`, given `N ≥ 1 + ⌈log_bb(2^K·Ca·D)⌉` — **the seed is unchanged** |
+
+Why it is cheap: `sum_sq_distZ_freqDepthB_ge` has **no box hypothesis** — it holds for an
+arbitrary nonzero `q`.  The box `D` enters only through `freqDepthB_le`, the admissibility of
+the chosen depth inside the layer budget `N`.  So a general bounded `a` costs exactly one
+**additive** `⌈log_bb Ca⌉` on `N`, absorbable the way `C` was in B2e.  The roots of
+`LocalPhase.ofShifts` depend only on `ρ`, so the four §4C error terms are *identical*, and
+`norm_sampleAvg_prod_ee_le` already takes a **per-prime** `LocalPhase` family and a **per-prime**
+seed, so no new probabilistic layer is needed.
+
+**Architecture call (binding).**  `omegaOnA 1_S s m = omegaOn (s.filter S) m` — the prime-subset
+campaign IS the `a`-side at `a = 1_S`.  Generalize `G4SubsetC*` **in place**; do not build a
+fifth parallel §4D stack.  This collapses the `a`-side and the `a`-side × subset merge into one
+obligation.
+
+**Stretch, after the `a`-side only**: the **general additive function** `f(p^v) ≤ a_p + c_p(v−1)`
+with `f(p) = a_p`, `f` non-decreasing in `v`.  §4C sees only `f(p)`; §4D's estimates are upper
+bounds and the far-field `hW` is already a *domination* (`sum_abs_farPartW_le_of_layer`), so it
+should ride the `a`-side with no new §4D work.  `w_{a,c}` is exactly the additive functions whose
+`p`-local value is affine in `v` — an odd class to headline; this is the natural statement.
+
+**Not targets, and why (all machine-checked, do not re-derive)**: base 2
+(`one_le_rowMass_two`), normality of `G₄` on this mechanism (`qForces_normal_iff_density_one`),
+`c_p ≍ log p` (`DESIGN-2026-09-16-prime-subset.md`), divergence without a rate (ibid.).
+`phaseOscillation` is the *base-two* constant `∑ ω(n)/2ⁿ` — the proved-dead case, and superseded
+in the literature by Tao–Teräväinen arXiv 2512.01739 Thm 1.3; the `b ≥ 3` half is ours
+(`irrational_primeSum`, trust-triple clean).
 
 ## 🎯 Campaign B ladder (the live attack path)
 
@@ -24,7 +74,7 @@
 | B3 | `isDisjunctive_weight_of_tame`, then the merge `w_{c,S}` | ✅ **DONE** — `isDisjunctive_weight_logLog` (2026-09-16) and the merge `isDisjunctive_subsetWeight_logLog` / `isDisjunctive_residueClass_weight_logLog` (`G4SubsetCTW`/`CFrame`/`CWitness`/`CAssembly`, see `HANDOFF-2026-09-16-merge-wcS.md`).  Key move: the far-field `hW` is a *domination*, not an equality. |
 | B4 | widen the class to `c_p ≤ A₀(1+log₂log₂ p)^s` | ✅ **DONE** — `tame_of_logLog_pow`, `exists_good_k₄_polyGen`, `isDisjunctive_weight_logLogPow`, `isDisjunctive_subsetWeight_logLogPow`, `isDisjunctive_residueClass_weight_logLogPow`.  See the addendum in `HANDOFF-2026-09-16-merge-wcS.md`. |
 | B5 | audit surface for the campaign-B headlines | ✅ **DONE** — `G4WeightStatement` (`audit_isDisjunctive_*_logLogPow`, abbreviations unwound) + `STATUS.md` rows |
-| B6 | **the `a`-side of the master weight**: `w_{a,c} = ∑_{p∣m}(a_p + c_p(v_p−1))` for a general *bounded* `a` | 🔨 in progress.  Arithmetic layer **done** (`G4WeightA`: `weightAW`, `weightAN`, `weightAW_mul`, `TWeight.weightA`, instances `a=1` and `a=1_S`).  **The crux is §4C**: `Sval` is the *indicator* small-prime vector (`omegaOn`), so for a general `a` the local phase at `p` is `a_p·localPhase p` — the contraction `norm_localSum_le` then runs at the *scaled* frequency `a_p·q`.  Attack: keep the existing per-prime factorization (`ee_phase_eq_prod`), and prove the good-prime gain at frequency `a_p q ≠ 0` (nonzero since `1 ≤ a_p` on the active set), with the frequency box enlarged from `D` to `Ca·D`.  Divergence needed: `∑_{p : a_p ≥ 1} 1/p = ∞` — i.e. the `a`-side is the subset side with `S = {p : a_p ≥ 1}`. |
+| B6 | **the `a`-side of the master weight**: `w_{a,c} = ∑_{p∣m}(a_p + c_p(v_p−1))` for a general *bounded* `a` — **the campaign's TERMINAL objective** | 🔨 in progress.  Arithmetic layer **done** (`G4WeightA`).  **§4C crux PROBED AND CLOSED IN PRINCIPLE** (deep reflection lap, `scratch/ProbeA.lean`): `phaseA_eq_sum_local` + `sum_sq_distZ_coeffA_ge_gen` compile — the seed `freqSeed bb K` is unchanged, the only cost is `N ≥ 1 + ⌈log_bb(2^K·Ca·D)⌉`.  Ladder: (1) promote the probe to `G4PhaseA.lean` + `norm_sampleAvg_ee_phaseA_le`; (2) `SvalA`/`torusChar_SvalA`/`norm_sampleAvg_torusChar_SvalA_le`; (3) the schedule's layer budget; (4) assembly at `S = {p : 1 ≤ a_p}` by generalizing `G4SubsetC*` **in place**. |
 
 **The hypothesis class `Tame c A`** (the replacement for `∀ p, c p ≤ C`):
 `1 ≤ A`, `∀ M, ∑_{p<M} c_p/(p(p−1)) ≤ A` (tail), `∀ M, ∑_{p<M} c_p ≤ A·M` (linear prime prefix).

@@ -57,61 +57,81 @@ skeleton committed, or a proved obstruction written into the DESIGN file.  If th
 neither (i) nor (ii) can be stated, write why and switch to item 4.
 
 
-## CURRENT DIRECTIVE — **campaign B: the master additive-weight theorem** (set 2026-09-16, review lap B-review-1)
+## CURRENT DIRECTIVE — **campaign B FINAL: the `a`-side, and then STOP** (set 2026-09-16, DEEP REFLECTION lap)
 
-*Altitude-lap section, INSIDE the 2026-09-15 23:58 campaign-A override.  Campaign A's own
-objective and its item 4 are **CLOSED** (see State), so this directive names the successor
-target inside the same weight programme.  It OUTRANKS every HANDOFF.*
+*Altitude-lap section, INSIDE the 2026-09-15 23:58 campaign-A override.  It OUTRANKS every
+HANDOFF.  Full reasoning: `REFLECTION-2026-09-16-campaignB.md`.*
 
-**State (verified this lap, `lake build` 🟢 9067 jobs).**  `src/` carries exactly the two
-pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**.  Trust-triple clean (`[propext,
-Classical.choice, Quot.sound]`): `isDisjunctive_base`, `isDisjunctive_residueClass`,
-`isDisjunctive_residueClass_primeSum`, `isDisjunctive_subsetLambert`, `isDisjunctive_Omega`,
-`isDisjunctive_Omega_primePowerSum`, `isDisjunctive_weight`, `isNormal_fullRealW`.
-**Campaign A is finished**: the `e`-schedule ladder of the previous directive (items 1–4) landed,
-and so did its item 4 (`isDisjunctive_weight`, every bounded `c`).
+**State (re-verified this lap, not inherited).**  `lake build` 🟢 **9085 jobs**.  `src/` = the two
+pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**; math-axiom count **0**.  Trust-triple
+clean and re-run this lap: `audit_isDisjunctive_{weight,subsetWeight,residueClass_weight}_logLogPow`,
+`SchedB.isDisjunctive_{weight,subsetWeight}_logLogPow`, `isDisjunctive_residueClass_weight_logLogPow`,
+`isDisjunctive_{base,four,two,residueClass,subsetLambert}`, `irrational_primeSum`,
+`SchedB.isDisjunctive_{Omega,weight}`, `Sched.isNormal_fullRealW`.  **Campaign B's `c` axis and
+subset axis are CLOSED.**  ROUTE VERDICT: **CONTINUE** — no registered trigger fired (B-review-1's
+🚦 growth-class trigger did not fire: `Tame` + `isDisjunctive_weight_logLogPow` landed).
 
-🎯 **THE objective: `w(n) = ∑_{p∣n} (a_p + c_p(v_p(n)−1))` with `c` UNBOUNDED** — the master
-additive weight, of which `ω` (`a=1,c=0`), `Ω` (`a=c=1`), `ω_S` (`a=1_S,c=0`), `w_c` (`c ≤ C`)
-and the merged `w_{c,S}` are all instances.  The route-decisive uncertainty is `c` unbounded:
-the whole `C`-dependence of the closed proof is a *uniform* bound, in exactly two places
-(`hjunk_holdsCE`'s `100000·C·k₄³ ≤ 2^{k₄}`, and `hfarC_holdsE` via
-`weightW_le_kappa_mul_cardFactors : w_c ≤ (max C 1)·Ω`), and both must become **tail conditions
-on `∑_p c_p/p²`**, which is where the new mathematics is.
+🎯 **THE objective, and the LAST one of this campaign: `isDisjunctive_weightA`** —
+`w_{a,c}(n) = ∑_{p∣n}(a_p + c_p(v_p(n)−1))` for a **general bounded `a`** (`a_p ≤ Ca`), on the
+active set `S = {p : 1 ≤ a_p}` carrying a Mertens rate.  This is the only remaining axis that
+touches **§4C, the near-field Fourier core**; every campaign since A left the retained vector
+equal to the indicator `omegaOn sm` and worked §4D plumbing only.
 
-- 🔨 **Mandated next move, in this order — the crux ladder, do not detour.**
-  0. **`TWeight.ov_le` relaxation** (cheap, prerequisite; the probe is done): `ovC` is consumed
-     at exactly ONE site, `G4TransportW.summable_corrB` lines 118–121, and *only* for
-     summability — never in a downstream quantitative bound.  Replace `ovC : ℕ` +
-     `|ov d m| ≤ ovC·ω(d)` by a per-`d` bound `ovB : ℕ → ℕ`, `|ov d m| ≤ ovB d`.  Four instances
-     to update (`omega`, `subset`, `cardFactors`, `weight`, `weightS`).  This is what lets
-     `ov_c(d,m) = ∑_{p∣d,p∣m}(1−c_p)` be stated with no uniform `C`.
-  1. **The crux: `sum_junk_le` without a uniform `C`.**  `G4WeightJunk.sum_junk_le` currently
-     pulls `C` out of `∑_{(p,u)} c_p · junkCount`.  The `C`-free form keeps the weights inside:
-     `≤ (X/P₀)·(∑_{p∣P₀} c_p/(p−1) + ∑_{p∤P₀} c_p/(p(p−1))) + log₂(N)·∑_{p ≤ √N} c_p`.
-     **The decisive case** is the *second* error term: it must be `o(X)` — i.e. the growth
-     hypothesis on `c`, not just the convergence of `∑ c_p/p²`.  Name it as a `Prop`, state the
-     sufficient instance (`c_p ≤ A·p^θ`, `θ < 1`), and prove the estimate.
-  2. **Far field without `κ`**: replace `w_c ≤ (max C 1)·Ω` by the §4D split
-     (`ω + frozenExcess_c + junk_c`) — the route the `Ω` far field already takes
-     (`hfar_frozen/junkA/junkB_leSE`).  `max_{p∣P₀} c_p` is a *finite* number once the schedule
-     is fixed, and `k₄` is chosen afterwards, so `exists_good_k₄` absorbs it unchanged.
-  3. **The headline** `isDisjunctive_weight_of_growth`, then the merge `w_{c,S}`
-     (`G4SubsetCWeight` §4D) falls out as the `a = 1_S` instance.
-- 📌 **Leaf rule.**  Compiling skeleton with named `sorry` leaves in `src/` before each hard
-  step.  Raising the `src/` sorry count by decomposing THIS crux is progress, not regression.
-- ⛔ **Forbidden drift**: the two pre-expedition `sorry`s; the Comparator holes; re-opening the
-  R/S deformation campaign; **base 2**, which is *proved* dead for this design family
-  (`G4RowMassOptimal.two_pow_le_sum_abs` ⇒ `one_le_rowMass_two`: every line-sum-annihilating
-  integer array has row-ℓ¹ mass `≥ 2^K`, so `rowL1 2 K ≥ 1`); any `native_decide`; any `docs/`
-  essay.
-- 🚦 **Trigger**: if step 1's error term cannot be made `o(X)` for any growth class strictly
-  larger than "bounded" — i.e. if the `∑_{p≤√N} c_p` term is genuinely the binding constraint
-  and it forces `c` bounded — that is a *proved obstruction*: write it into
-  `DESIGN-2026-09-16-prime-subset.md`, fall back to the merge `w_{c,S}` (ladder step 3's second
-  half) as the campaign's headline, and re-rank.
+**The crux is already PROBED and it holds** (`scratch/ProbeA.lean`, compiles against the tree):
+* `phaseA_eq_sum_local` — `Φ_a(n) = ∑_{p∈s} localPhase p ρ (a_p • x) n`: the local phase at `p`
+  is the ordinary one at the **scaled** coefficients.
+* `sum_sq_distZ_coeffA_ge_gen` — `freqSeed bb K ≤ ∑_i distZ(a_p · coeffAL bb q i)²` whenever
+  `1 ≤ a_p ≤ Ca` and `N ≥ 1 + ⌈log_bb(2^K·Ca·D)⌉`.  **The seed is unchanged**; `coeffAL` is
+  linear in `q`, and `sum_sq_distZ_freqDepthB_ge` has no box hypothesis — the box enters only
+  through `freqDepthB_le`, i.e. through the layer budget.  So the entire cost of a general `a`
+  is the additive `⌈log_bb Ca⌉` on `N`.
+* The roots of `LocalPhase.ofShifts` depend only on `ρ`, so the four §4C error terms are
+  **identical**; and `norm_sampleAvg_prod_ee_le` already takes a **per-prime** `LocalPhase`
+  family and a **per-prime** seed, so no new probabilistic layer is needed.
+
+- 🔨 **Mandated next move, in this order — do not detour.**
+  1. Promote the probe into `src/NormalNumbers/G4PhaseA.lean` (`omegaOnA`, `totalPhaseA`,
+     `localPhase_const_mul`, `phaseA_eq_sum_local`, `vecMul_const_mul`, `coeffAL_const_mul`,
+     `sum_sq_distZ_coeffA_ge_gen`), plus `norm_sampleAvg_ee_phaseA_le` through
+     `norm_sampleAvg_prod_ee_le` with the per-prime seed
+     `fun p => if GoodPrime ρ p ∧ 1 ≤ a p then θ₀ else 0`.
+  2. `SvalA` / `torusChar_SvalA` / `norm_sampleAvg_torusChar_SvalA_le`, mirroring
+     `G4SmallPrimeVector` — `SvalA` is `Sval` with `omegaOn` replaced by `omegaOnA`.
+  3. The schedule's layer budget: `N ≥ 1 + clog bb (2^K * (Ca * D))`.  `Ca` is a fixed constant
+     and `k₄`/`N` are chosen after it, exactly as `C` was in B2e.
+  4. Assembly at `S = {p : 1 ≤ a_p}`, then the audit theorem in `G4WeightStatement`.
+- 🏗️ **Architecture (binding).**  `omegaOnA 1_S s m = omegaOn (s.filter S) m`: the prime-subset
+  campaign **is** the `a`-side at `a = 1_S`.  **Generalize `G4SubsetC*` IN PLACE** — replace the
+  `S`-filter by the `a`-weight and recover the subset results as the `a = 1_S` instance.  Do NOT
+  create a fifth parallel §4D stack; four already exist.
+- 📌 **Leaf rule.**  Compiling skeleton with named `sorry` leaves in `src/` before each hard step.
+  Raising the `src/` sorry count by decomposing THIS crux is progress, not regression.
+- ⛔ **Forbidden drift**: the two pre-expedition `sorry`s (`phaseOscillation` is the *base-two*
+  constant — the proved-dead case, and superseded by Tao–Teräväinen anyway); the Comparator
+  holes; base 2 (`one_le_rowMass_two`); normality of `G₄` on this mechanism
+  (`qForces_normal_iff_density_one`); any `native_decide`; any `docs/` essay.  **Also forbidden:
+  growth-class bookkeeping** — widening an exponent against an unchanged budget is not worth a
+  lap; fold it in or skip it.
+- 🚦 **Trigger (`a`-side).**  If step 2 or 3 shows the layer-budget enlargement `D → Ca·D` is
+  *not* absorbable — i.e. some schedule quantity is capped from above by `N` in a way that
+  `⌈log_bb Ca⌉` breaks (the `Mc ≤ 2^{m₂}` moment cap is the one to watch, cf.
+  `DESIGN-2026-09-16-prime-subset.md` §3) — that is a **proved obstruction**: write it into the
+  DESIGN file, and the campaign's headline stays what is already proved.
+- 🏁 **FINISH LINE (pre-registered, this is the course change).**  When `isDisjunctive_weightA`
+  and its audit theorem are proved and trust-triple clean — or the 🚦 trigger fires and the
+  obstruction is written — **the campaign is COMPLETE**.  Do **not** open a successor campaign by
+  re-parametrizing again.  The one permitted stretch, attempted only after the `a`-side lands, is
+  the **general additive function** `f(p^v) ≤ a_p + c_p(v−1)`, `f(p) = a_p`, `f` non-decreasing in
+  `v` — which should ride the existing far-field *domination* (`sum_abs_farPartW_le_of_layer`)
+  with no new §4D work, since §4C sees only `f(p)`.  After that: write the handoff and stop.
 
 ### Directive history
+* 2026-09-16 **DEEP REFLECTION lap**: campaign B's `c` and subset axes **closed**; directive
+  re-set to the `a`-side as the campaign's TERMINAL objective, with a pre-registered FINISH LINE.
+  Decisive probe run and compiled: the §4C good-prime gain **survives** the scaled frequency
+  `a_p·q` with the seed unchanged, at the cost of one additive `⌈log_bb Ca⌉` on the layer budget
+  (`scratch/ProbeA.lean`).  Architecture call: generalize `G4SubsetC*` in place, no fifth stack.
+  Route verdict CONTINUE (no trigger fired); the named risk is scope creep, not a false summit.
 * 2026-09-16 review lap B-review-1: campaign A **closed** (`isDisjunctive_residueClass`,
   `isDisjunctive_Omega`, `isDisjunctive_weight` all unconditional and trust-triple clean);
   directive re-set to campaign B, the master additive weight with **unbounded** `c`.  Probe

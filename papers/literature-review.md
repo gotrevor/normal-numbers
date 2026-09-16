@@ -5,6 +5,58 @@ the route-oriented read: what the sources COLLECTIVELY say about the open
 strategic questions, not a per-paper summary (those are the sibling `.md`s).
 Keep it current — the next reflection lap inherits THIS read.*
 
+## Campaign B chapter — route synthesis (2026-09-16 DEEP REFLECTION lap)
+
+*Added this lap.  Read this first: it is the current read, and it supersedes the "live campaign"
+pointer in the section below (the entropy expedition closed at lap 126; the G4 weight campaign
+is what is live).*
+
+### The strategic question this chapter answers
+
+How far does the G4 disjunctivity machine's *weight class* extend, and is there a source-grounded
+reason to prefer a different route for any of the axes?
+
+### What the on-disk corpus actually contains on this
+
+**Nothing directly.**  There is no source in `papers/` on weighted prime-Lambert series, on
+`∑_n ω(n)/bⁿ`, or on disjunctivity of additive-function generating series.  The only nearby
+external anchor is **Tao–Teräväinen arXiv 2512.01739 Thm 1.3** (irrationality of `∑_p 1/(2^p−1)`),
+whose PDF is *still not on disk* and which is *still not a prerequisite* — the repo's `b ≥ 3` half
+(`G4.irrational_primeSum`) is proved by an independent route that deliberately avoids their
+two-point correlation input.  Stated plainly so no lap mistakes "nothing on disk" for
+"nothing exists".
+
+### Route judgement, re-grounded this lap (against the compiler, not the handoffs)
+
+| axis | status | grounding |
+|---|---|---|
+| `c` unbounded (polylog class) | **proved** | `isDisjunctive_weight_logLogPow`, trust triple |
+| prime subset with a Mertens rate | **proved** | `isDisjunctive_subsetWeight_logLogPow`; Mertens-in-AP is a *theorem* here (`G4MertensAP`), built from mathlib's `LSeries/PrimesInAP` + Chebyshev + Abel summation, not cited |
+| general bounded `a` | **open, and this lap's probe says FEASIBLE** | `scratch/ProbeA.lean`: the §4C seed is unchanged under `q ↦ a_p q`; cost = `⌈log_bb Ca⌉` on the layer budget |
+| `c_p ≍ log p` | **proved obstruction** of this schedule family | `DESIGN-2026-09-16-prime-subset.md` (`cMax ≈ 2^{21K²}` vs an exponential junk budget) |
+| divergence without a rate | **proved limitation** of this route (not of the theorem) | ibid.: the demand `exp(O(K log K))` must be met before the cap `exp(Θ(K²))` |
+| base 2 | **proved dead for the whole design family** | `G4RowMassOptimal.two_pow_le_sum_abs` ⇒ `one_le_rowMass_two` |
+| normality rather than disjunctivity | **proved dead on this mechanism** | `qForces_normal_iff_density_one`, `not_qForces_normal_at_pow` |
+
+### Precedent check (what is originated vs inherited)
+
+* The weighted disjunctivity theorem (`ω`, `Ω`, `ω_S`, `w_c`, `w_{c,S}` and the polylog class)
+  has **no precedent found** on disk or in the earlier web sweep.  Absence of evidence, recorded
+  as such; no novelty claim is made or contemplated.
+* Mertens in arithmetic progressions is classical; it is **re-proved from scratch** here because
+  mathlib has the `L`-series lower bound but not the `∑_{p<N,p≡a(q)} 1/p ≥ c_q log log N − C_q`
+  form.  Not novel.
+* The `a`-side reduction found this lap (scaling the local phase by `a_p` = scaling the frequency,
+  because `coeffAL` is linear in `q` and the separation bound has no box hypothesis) is an
+  internal structural observation, not a literature import.
+
+### What is still missing from the corpus
+
+1. **Tao–Teräväinen arXiv 2512.01739** — still not on disk; still not a prerequisite.
+2. Any source on disjunctivity/normality of generating series of **additive functions**.  If one
+   exists it is the natural place to check the campaign's stretch statement (general additive `f`).
+   Worth an `ON-LINE-REQUEST` *only* if a novelty claim were ever contemplated, which it is not.
+
 ## ⚠️ Two campaigns live in this file
 
 The synthesis below (`## The strategic question` onward) is the **B5′ / normality**

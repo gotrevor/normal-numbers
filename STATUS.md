@@ -1,5 +1,23 @@
 # STATUS — normal-numbers 📊
 
+> **DEEP REFLECTION lap — 2026-09-16.**  Build 🟢 **9085 jobs**, re-verified.  `src/` = the two
+> pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**; **math-axiom count 0** — there is no
+> axiom ledger to chip on this project, so the reflection's job is *route*, not debt.
+> **ROUTE VERDICT: CONTINUE** — no registered trigger fired.  The named risk is **scope creep**,
+> not a false summit: B0–B3 attacked the machine, B4/B5 were growth-class bookkeeping, and a
+> working machine always has one more parameter to widen.  So the directive now carries a
+> **pre-registered FINISH LINE**: the `a`-side is campaign B's TERMINAL objective.
+> **Decisive probe, compiled this lap** (`scratch/ProbeA.lean`): the §4C good-prime contraction
+> **survives** the scaled frequency `a_p·q` — `phaseA_eq_sum_local` shows the local phase at `p`
+> is the ordinary one at scaled coefficients, and `sum_sq_distZ_coeffA_ge_gen` shows the seed
+> `freqSeed bb K` is *unchanged*, the entire cost being one additive `⌈log_bb Ca⌉` on the layer
+> budget (`coeffAL` is linear in `q`, and `sum_sq_distZ_freqDepthB_ge` has no box hypothesis at
+> all).  So the `a`-side is a two-module port, not a wall.  Architecture call:
+> `omegaOnA 1_S s m = omegaOn (s.filter S) m`, so the prime-subset campaign **is** the `a`-side at
+> `a = 1_S` — generalize `G4SubsetC*` **in place**, no fifth §4D stack.
+> Ledger re-run from real `#print axioms` this lap, every headline row confirmed trust-triple
+> clean; no drift found and no correction needed.  See `REFLECTION-2026-09-16-campaignB.md`.
+
 > **Campaign B is CLOSED (2026-09-16, overnight laps).**  The master additive weight is proved
 > for **unbounded** coefficients and, simultaneously, on a **divergent prime subset**:
 > `isDisjunctive_weight_logLogPow` (`c_p ≤ A₀(1+log₂log₂ p)^s`, any `A₀, s`),
@@ -93,8 +111,8 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (9067 jobs) ·
-**Updated**: **review lap B-review-1** · 2026-09-16 · `wip/g5-prime-subset` @ `4dcfb45`+
+· **Build**: 🟢 green (9085 jobs) ·
+**Updated**: **DEEP REFLECTION lap** · 2026-09-16 · `wip/g5-prime-subset` @ `36c02ca`+
 
 ## 🏁 2026-09-15 (entropy **lap 126**): **`IsNormal 2 fullRealW` — THE EXPEDITION'S ENDPOINT, PROVED AND AXIOM-CLEAN**
 
@@ -515,6 +533,21 @@ the dependency cone.  The whole brief §4–§5 candidate argument is machine-ch
 
 ## Where it stands
 
+**Live (2026-09-16, DEEP REFLECTION lap).**  The G4 disjunctivity machine's theorem now reads:
+for `b ≥ 3` and a weight `w(n) = ∑_{p∣n}(a_p + c_p(v_p(n)−1))` with `c` in the polylog class
+`c_p ≤ A₀(1+log₂log₂p)^s`, optionally restricted to any prime set with a Mertens rate,
+`∑_n w(n)/bⁿ` is disjunctive — proved for `a ∈ {1, 1_S}`, unconditional, trust-triple clean,
+with an unwound audit surface (`G4WeightStatement`).  **The one remaining axis is a general
+bounded `a`**, and it is campaign B's *terminal* objective: a pre-registered finish line now sits
+in `DIRECTION.md`, because a machine that works always has one more parameter to widen and the
+marginal content of a widening lap goes to zero.  This lap's probe settled the `a`-side's
+feasibility in the affirmative — §4C's good-prime contraction survives the scaled frequency
+`a_p·q` with the frequency-separation seed **unchanged**, the whole cost being one additive
+`⌈log_bb Ca⌉` on the layer budget.  Two upgrades that sound natural are *machine-checked dead
+ends of this mechanism and are not targets*: base 2 (`one_le_rowMass_two` — every design in the
+family has row mass `≥ 1`, while §4D needs `< 1`) and normality rather than disjunctivity
+(`qForces_normal_iff_density_one`).
+
 **The attended campaign is CLOSED.**  `G₄ = ∑_p 1/(4ᵖ−1) = ∑_n ω(n)/4ⁿ` is disjunctive in
 base four and in base two (`G4.isDisjunctive_four`, `isDisjunctive_two`), and the whole brief
 §4–§5 argument generalises: `G4.isDisjunctive_base : 3 ≤ b → IsDisjunctive b
@@ -557,6 +590,24 @@ a character sum over primes in an interval shorter than the reciprocity modulus,
 Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lean`).
 
 ## What's happened (newest first)
+
+- **2026-09-16 (DEEP REFLECTION lap — campaign B closed, `a`-side probed)** — **ROUTE VERDICT:
+  CONTINUE**; no registered trigger fired (B-review-1's 🚦 growth-class trigger did not fire —
+  `Tame` + `isDisjunctive_weight_logLogPow` landed).  Ground truth re-derived: `lake build` 🟢
+  **9085 jobs**, every campaign-B headline re-`#print axioms`-ed to the trust triple, **zero
+  `axiom`s** and **math-axiom count 0**, `src/` = the two pre-expedition forbidden-drift `sorry`s.
+  **Governance finding**: the risk on this project is not a false summit but **scope creep** —
+  B0–B3 attacked the machine, B4/B5 were growth-class bookkeeping and an audit surface, and an
+  open-ended generalization ladder emits headlines indefinitely at falling marginal content.  Fix:
+  a **pre-registered FINISH LINE** in `DIRECTION.md` making the `a`-side campaign B's terminal
+  objective.  **Mathematical finding (the decisive probe, compiled)**: the `a`-side crux *holds* —
+  `coeffAL` is linear in the frequency and `sum_sq_distZ_freqDepthB_ge` carries **no box
+  hypothesis**, so scaling the local phase by `a_p` leaves the seed `freqSeed bb K` untouched and
+  costs only `N ≥ 1 + ⌈log_bb(2^K·Ca·D)⌉`; and `norm_sampleAvg_prod_ee_le` already takes a
+  per-prime `LocalPhase` family and per-prime seed, so no new probabilistic layer is needed.
+  Architecture call: the prime-subset campaign **is** the `a`-side at `a = 1_S`
+  (`omegaOnA 1_S s m = omegaOn (s.filter S) m`), so generalize `G4SubsetC*` *in place* — no fifth
+  §4D stack.  (`REFLECTION-2026-09-16-campaignB.md`, `DIRECTION.md` → CURRENT DIRECTIVE.)
 
 - **2026-09-14 (entropy DEEP REFLECTION lap 37)** — **ROUTE VERDICT: CONTINUE** (no registered
   trigger fired; E-T3/E-T4/E-T5 all checked against the laplog and git history).  Inventory from
@@ -859,17 +910,24 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-**Campaign B — the master additive weight (set review lap B-review-1, `DIRECTION.md` →
-CURRENT DIRECTIVE).**  `w(n) = ∑_{p∣n}(a_p + c_p(v_p(n)−1))`, `c` **unbounded**.
-0. `TWeight.ov_le` relaxed to a per-`d` bound `ovB : ℕ → ℕ` (free — `ovC` is summability-only).
-1. **The crux**: `sum_junk_le` with the coefficients kept *inside* the sum, no uniform `C`.
-   Decisive case = the error term `log₂(N)·∑_{p ≤ √N} c_p`, which must be `o(X)`; that is the
-   growth hypothesis, and `∑_p c_p/p² < ∞` alone does not give it.
-2. Far field without `κ = max C 1`: the §4D split (`ω + frozenExcess_c + junk_c`), the route
-   the `Ω` far field already takes; `max_{p∣P₀} c_p` is finite once the schedule is fixed and
-   `k₄` is chosen afterwards, so `exists_good_k₄` absorbs it.
-3. The headline `isDisjunctive_weight_of_growth`; then the merged `w_{c,S}`
-   (`G4SubsetCWeight` §4D) is the `a = 1_S` instance.
+**Campaign B FINAL — the `a`-side, the campaign's TERMINAL objective** (set 2026-09-16 DEEP
+REFLECTION lap, `DIRECTION.md` → CURRENT DIRECTIVE).  `w_{a,c}(n) = ∑_{p∣n}(a_p + c_p(v_p(n)−1))`
+for a general **bounded** `a` (`a_p ≤ Ca`), active set `S = {p : 1 ≤ a_p}` with a Mertens rate.
+1. Promote `scratch/ProbeA.lean` into `src/NormalNumbers/G4PhaseA.lean` (`omegaOnA`,
+   `totalPhaseA`, `localPhase_const_mul`, `phaseA_eq_sum_local`, `vecMul_const_mul`,
+   `coeffAL_const_mul`, `sum_sq_distZ_coeffA_ge_gen`) + `norm_sampleAvg_ee_phaseA_le` through
+   `norm_sampleAvg_prod_ee_le` with the per-prime seed
+   `fun p => if GoodPrime ρ p ∧ 1 ≤ a p then θ₀ else 0`.
+2. `SvalA` / `torusChar_SvalA` / `norm_sampleAvg_torusChar_SvalA_le` (`Sval` with `omegaOn`
+   replaced by `omegaOnA`).
+3. The schedule's layer budget `N ≥ 1 + clog bb (2^K * (Ca * D))`.  🚦 if some schedule quantity
+   is capped from above by `N` in a way `⌈log_bb Ca⌉` breaks (watch the moment cap
+   `Mc ≤ 2^{m₂}`), that is a proved obstruction — write it into the DESIGN file.
+4. Assembly at `S = {p : 1 ≤ a_p}` by generalizing `G4SubsetC*` **in place**, then the audit
+   theorem in `G4WeightStatement`.
+Then 🏁 **STOP** — the campaign is complete; do not re-parametrize again.  Permitted stretch
+only: the general **additive function** `f(p^v) ≤ a_p + c_p(v−1)`, `f(p) = a_p`, `f` monotone in
+`v`, which should ride the existing far-field *domination* with no new §4D work.
 
 Historical (objective S, review lap 166 — banked, closed):
 1. ✅ lap 166 — DESIGN §0's third escape (grouped sampling) closed at the schedule
@@ -947,13 +1005,17 @@ ladder (`LnTwoFreq`, `ConditionalDisjunctive`), the run tower
 (`LnTwoExpSep`/`LnTwoPolySep`), the shared Diophantine-wall interface.
 
 ### To completion
-No axiom debt to discharge — "completion" here means new nodes/edges, not a
-shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09-01.
+No axiom debt to discharge — the math-axiom count is **0** and has been since the G4 wing landed,
+so "completion" here is not a shrinking ledger.  As of the 2026-09-16 deep reflection it has a
+concrete meaning: **campaign B's `a`-side, and then stop.**  The two `CFScheduleA` residues are
+`Prop` nodes as of 2026-09-01; the two `src/` `sorry`s are pre-expedition, off-path and not
+prerequisites for anything proved here.
 
 ## Axiom ledger
 
-**Re-run at review lap B-review-1** (2026-09-16, build 🟢 9067 jobs, HEAD `4dcfb45`).  Real
-`#print axioms` output, all exactly `[propext, Classical.choice, Quot.sound]`:
+**Re-run at the DEEP REFLECTION lap** (2026-09-16, build 🟢 9085 jobs, HEAD `36c02ca`).  Real
+`#print axioms` output, all exactly `[propext, Classical.choice, Quot.sound]`; every row below
+was re-checked against the compiler this lap, not inherited:
 
 | headline theorem | paper claim | `#print axioms` shows | verdict |
 |---|---|---|---|
