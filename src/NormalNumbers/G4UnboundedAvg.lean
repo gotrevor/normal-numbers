@@ -284,13 +284,13 @@ theorem sum_weightW_shiftG_le_effC (c : ℕ → ℕ) {A : ℝ} (hT : Tame c A) (
 whole far-field estimate generic: `κ = max C 1` recovers the bounded case, `κ = effC` gives the
 tame one. -/
 
-theorem sum_abs_farPartW_le_of_layer (W : TWeight) (c : ℕ → ℕ)
-    (hW : ∀ m : ℕ, ((W.wN m : ℕ) : ℝ) ≤ weightW c m)
+theorem sum_abs_farPartW_le_of_layer (W : TWeight) (g : ℕ → ℝ)
+    (hW : ∀ m : ℕ, ((W.wN m : ℕ) : ℝ) ≤ g m)
     (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (hP₀ : 0 < G.P₀)
     {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) {κ : ℝ} (hκ0 : 0 ≤ κ)
     (hlay : ∀ (α : G.Atom) (j : ℕ), 1 ≤ j →
-      ∑ n ∈ apSample X G.P₀ G.b₀, weightW c (n + shiftG G.B G.Q G.D₀ α j)
+      ∑ n ∈ apSample X G.P₀ G.b₀, g (n + shiftG G.B G.Q G.D₀ α j)
         ≤ κ * ((apSample X G.P₀ G.b₀).card
               * ((farC G X Dm + 2 * j) / Real.log 2 + ((Ω G.P₀ : ℕ) : ℝ))
             + junkShiftBound G.P₀ X (j * Dm)))
@@ -333,11 +333,11 @@ theorem sum_abs_farPartW_le_of_layer (W : TWeight) (c : ℕ → ℕ)
     have h2 := junkShiftBound_layer_le G.P₀ X Dm (j := J + i + 1) (by omega)
     have hlay' := hlay α (J + i + 1) (by omega)
     have hrwW : ∑ n ∈ P, ((W.wN (n + shiftG G.B G.Q G.D₀ α (J + i + 1)) : ℕ) : ℝ)
-        ≤ ∑ n ∈ P, weightW c (n + shiftG G.B G.Q G.D₀ α (J + i + 1)) :=
+        ≤ ∑ n ∈ P, g (n + shiftG G.B G.Q G.D₀ α (J + i + 1)) :=
       Finset.sum_le_sum fun n _ => hW _
     rw [div_le_iff₀ (by positivity : (0 : ℝ) < (bb : ℝ) ^ (J + i + 1))]
     refine hrwW.trans ?_
-    have h3 : ∑ n ∈ P, weightW c (n + shiftG G.B G.Q G.D₀ α (J + i + 1))
+    have h3 : ∑ n ∈ P, g (n + shiftG G.B G.Q G.D₀ α (J + i + 1))
         ≤ κ * ((P.card : ℝ) * ((Cf + 2 * ((J : ℝ) + i + 1)) / Real.log 2
               + ((Ω G.P₀ : ℕ) : ℝ))
             + (junkA G.P₀ X + junkB X Dm * 2 ^ (J + i + 1))) := by

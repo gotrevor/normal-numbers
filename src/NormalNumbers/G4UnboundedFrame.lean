@@ -32,13 +32,13 @@ open PrimeLambert GridParams
 
 /-- **The far average, generic in the weight and in `κ`** — `farAvgC_le` with the pointwise
 domination replaced by the per-layer hypothesis of `sum_abs_farPartW_le_of_layer`. -/
-theorem farAvgW_le_of_layer (W : TWeight) (c : ℕ → ℕ)
-    (hW : ∀ m : ℕ, ((W.wN m : ℕ) : ℝ) ≤ weightW c m)
+theorem farAvgW_le_of_layer (W : TWeight) (g : ℕ → ℝ)
+    (hW : ∀ m : ℕ, ((W.wN m : ℕ) : ℝ) ≤ g m)
     (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (hP₀ : 0 < G.P₀)
     {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) {κ : ℝ} (hκ0 : 0 ≤ κ)
     (hlay : ∀ (α : G.Atom) (j : ℕ), 1 ≤ j →
-      ∑ n ∈ apSample X G.P₀ G.b₀, weightW c (n + shiftG G.B G.Q G.D₀ α j)
+      ∑ n ∈ apSample X G.P₀ G.b₀, g (n + shiftG G.B G.Q G.D₀ α j)
         ≤ κ * ((apSample X G.P₀ G.b₀).card
               * ((farC G X Dm + 2 * j) / Real.log 2 + ((Ω G.P₀ : ℕ) : ℝ))
             + junkShiftBound G.P₀ X (j * Dm))) :
@@ -75,7 +75,7 @@ theorem farAvgW_le_of_layer (W : TWeight) (c : ℕ → ℕ)
   have hrow : ∀ ν : Fin G.rDim,
       (P.card : ℝ)⁻¹ * ∑ n ∈ P, |farPartW W bb G n (G.rowEquiv.symm ν)| ≤ Bd := by
     intro ν
-    have h := sum_abs_farPartW_le_of_layer W c hW bb hbb G X hne hP₀ hDm hκ0 hlay
+    have h := sum_abs_farPartW_le_of_layer W g hW bb hbb G X hne hP₀ hDm hκ0 hlay
       (G.rowEquiv.symm ν)
     rw [← hP] at h
     calc (P.card : ℝ)⁻¹ * ∑ n ∈ P, |farPartW W bb G n (G.rowEquiv.symm ν)|
@@ -111,7 +111,8 @@ theorem farAvgW_le_effC (c : ℕ → ℕ) {A : ℝ} (hT : Tame c A) (bb : ℕ) (
               + ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (bb : ℝ)) ^ (G.K + G.N + 1) * (bb / (bb - 1))))
             + farJunkBound bb (G.K + G.N) (junkA G.P₀ X) (junkB X Dm)
                 / ((apSample X G.P₀ G.b₀).card : ℝ))) :=
-  farAvgW_le_of_layer W c hW bb hbb G X hne hP₀ hDm (effC_nonneg (c := c) hT.one_le G.P₀)
+  farAvgW_le_of_layer W (weightW c) hW bb hbb G X hne hP₀ hDm
+    (effC_nonneg (c := c) hT.one_le G.P₀)
     (fun α j hj => sum_weightW_shiftG_le_effC c hT G X hne hP₀ hΩ hDm α hj)
 
 /-- **§4D for the unbounded (tame) weight**, at the effective constant `effC c G.P₀ A`. -/
