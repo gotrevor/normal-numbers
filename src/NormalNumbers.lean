@@ -371,3 +371,4 @@ import NormalNumbers.G4LogLogPowSched
 import NormalNumbers.G4WeightStatement
 import NormalNumbers.G4WeightA
 import NormalNumbers.G4WeightAFrame
+import NormalNumbers.G4WeightAWitness
