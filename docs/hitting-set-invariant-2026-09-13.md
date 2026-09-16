@@ -2,7 +2,43 @@
 
 *Host thread opened 2026-09-13 (Fable) after the CC/NN review; instrument
 `experiments/mahler_hitting_set.py` (this branch).  Status: new invariant, exact data through the
-automaton's reach, one conjecture already refuted, no theorem yet.*
+automaton's reach, one conjecture already refuted; the upper halves at `(4,1)`,
+`(5,1)`, `(2,2)`, `(2,3)`, `(7,1)`, `(6,1)`, `(3,2)`, `(2,4)` are now theorems
+(2026-09-13/16).*
+
+## The carry-consistency reduction (2026-09-16)
+
+The three upper halves `S(6,1) ≤ 7`, `S(3,2) ≤ 6`, `S(2,4) ≤ 9` are theorems.  The
+obstacle was scale: the ambient state space of the `gfamPred` family is the
+**product** `∏ᵢ mᵢ · g^(ℓ−1)`, which is `9067520` for `(6,1)`, `1632960` for
+`(3,2)` and `4625065731686400` for `(2,4)`.
+
+`src/NormalNumbers/HittingSetReduced.lean` removes the product.  All channels read
+the *same* `X`, so with `u = X·gᵐ`, `F = ⌊u⌋`, `t = fract u`:
+
+* the carry of channel `a` is `carryTG g a 0 X 0 m = ⌊a·t⌋` (`carryTG_single`);
+* its `j`-th window digit is
+  `gdigit g (a·X) (m+j) = ⌊a·g^(j+1)·u⌋ − g·⌊a·g^j·u⌋ = ⌊a·g^(j+1)·t⌋ − g·⌊a·g^j·t⌋`
+  (`gdigit_window`) — the `F` terms cancel because `a·g^(j+1) = g·(a·g^j)`.
+
+So the joint state is a **one-parameter curve** in `t`, not a product, and with
+`N = lcm{a·g^j : j ≤ ℓ−1}` it is `stateOfKW g N ℓ ms ⌊N·t⌋` (`gfamState_window`).
+Reachable-state counts, versus ambient:
+
+| family | ambient | `N` | reachable |
+|---|---|---|---|
+| (6,1) `{1,8,11,14,16,20,23}` | 9 067 520 | 141 680 | **76** |
+| (3,2) `{1,2,4,5,7,8}` | 1 632 960 | 840 | **54** |
+| (2,4) `{1,3,…,17}` | 4 625 065 731 686 400 | 6 126 120 | **520** |
+
+`signed_engine_g_single_reduced` runs the engine on the relabelled state space; the
+only hypothesis beyond the certificate is that the index map is a section over the
+reachable states, which is one sweep over `k < N`.  `(3,2)` is entirely kernel
+`decide +kernel` (axiom-clean); `(6,1)` and `(2,4)` carry a single `native_decide`
+for that sweep.  Emitters: `experiments/adder_reduced_emit.py` (ℓ = 1),
+`experiments/adder_reduced_emit_ell.py` (any ℓ, with a state/`gfamPred`
+intertwining self-test).
+
 
 ## Definition
 
@@ -44,14 +80,14 @@ reproduces the naive controls; the naive short-circuit search stays faster for t
 | (3,1) | 2 | **12 channel-distinct pairs ≤ 40** (162 naive), incl. `{1,2}` (B–B) and `{2,11}` (tower C2) | 2 | **`{2,11}` unique ≤ 20**; `{1,2}` is per-block only | pairs ≤ 40 / ≤ 20 |
 | (4,1) | 3 | **2 channel-distinct triples ≤ 60**: `{1,10,14}`, `{2,5,7}` (the naive 35 are these with 4-multiples and scalings, e.g. `{3,30,42} = 3·{1,10,14}`) | > 3 | – | sizes ≤ 3, ≤ 60 |
 | (5,1) | **5** | **272 channel-distinct sets ≤ 30** (2008 naive), e.g. `{1,2,3,4,6}`, `{1,2,3,4,8}`, `{1,2,3,6,14}` | – | – | sizes ≤ 5, ≤ 30 |
-| (6,1) | **7** | **2 channel-distinct sets ≤ 24**: `{1,8,11,14,16,20,23}`, `{3,7,10,13,14,17,20}` (the other two naive ones carry `6·1`, `6·3`); no 6-set ≤ 24 | – | – | sizes ≤ 7, ≤ 24 |
+| (6,1) | **7** | **2 channel-distinct sets ≤ 24**: `{1,8,11,14,16,20,23}` (**theorem** `hitting_6_1_seven`, `HittingSetBase6.lean`, 2026-09-16, on the 76-state carry-consistency reduction of the 9067520 ambient), `{3,7,10,13,14,17,20}` (the other two naive ones carry `6·1`, `6·3`); no 6-set ≤ 24 | – | – | sizes ≤ 7, ≤ 24 |
 | (7,1) | **7** | **3 channel-distinct 7-sets ≤ 24**: `{1,2,3,4,5,6,13}` (**theorem** `hitting_7_1_seven`, `HittingSetBase7.lean`, chunked kernel decide, verified 23:16), `{1,3,4,5,6,9,13}`, `{1,3,4,5,6,9,18}`; `{1,…,6,8}` does NOT hit (digits 1 and 5 escape); `{1..8}` and `{1..6}` fail as theorems (`not_hitting_7_1_eight`, `not_hitting_7_1_six`) | – | – | sizes ≤ 7, ≤ 24 |
 | (8,1), (9,1) | > 8 | – | – | – | sizes ≤ 8, ≤ 20 (cap probably binding) |
 | (10,1) | > 9 | – | – | – | sizes ≤ 9, ≤ 20 (cap probably binding) |
 | (2,2) | 2 | **3 channel-distinct pairs ≤ 60**: `{1,3}`, `{1,11}`, `{3,5}` (151 naive, with 2-multiples and scalings) | 3 | `{1,3,5}` | ≤ 60 / ≤ 30 |
 | (2,3) | 4 | **2 channel-distinct 4-sets ≤ 60**: `{1,3,5,7}`, `{1,5,7,11}` (the naive 928 are these with elements doubled: `{1,3,5,14}` is `{1,3,5,7}`, channel 14 = channel 7 shifted) | > 4 (`{1,3,5,7}` fails) | – | sizes ≤ 4, ≤ 60 (naive, 2 h 38 min) |
-| (2,4) | **9** (within ≤ 60) | **`{1,3,5,7,9,11,13,15,17}`, the first nine odd numbers, is the only channel-distinct 9-set ≤ 40** (930 s); `{1,3,…,15}` does NOT hit, nor any 8-set ≤ 60 (5 852 880 primitive 8-sets, 36 882 sparse survivors, all fail at `0000`; 5288 s). N5's `≥ 8` is strict here | – | – | size 8 ≤ 60, size 9 ≤ 40 |
-| (3,2) | **6** | **1 channel-distinct set ≤ 20**: `{1,2,4,5,7,8}` (42 naive; `{1,4,5,6,7,8}` is it with `6 = 3·2`) | – | – | sizes ≤ 6, ≤ 20 |
+| (2,4) | **9** (within ≤ 60) | **`{1,3,5,7,9,11,13,15,17}`, the first nine odd numbers, is the only channel-distinct 9-set ≤ 40** (930 s; **theorem** `hitting_2_4_nine`, `HittingSetBase2Len4.lean`, 2026-09-16, on the 520-state reduction of the 4.6·10^15 ambient); `{1,3,…,15}` does NOT hit, nor any 8-set ≤ 60 (5 852 880 primitive 8-sets, 36 882 sparse survivors, all fail at `0000`; 5288 s). N5's `≥ 8` is strict here | – | – | size 8 ≤ 60, size 9 ≤ 40 |
+| (3,2) | **6** | **1 channel-distinct set ≤ 20**: `{1,2,4,5,7,8}` (42 naive; `{1,4,5,6,7,8}` is it with `6 = 3·2`); **theorem** `hitting_3_2_six`, `HittingSetBase3Len2.lean`, 2026-09-16, axiom-clean on the 54-state reduction of the 1632960 ambient | – | – | sizes ≤ 6, ≤ 20 |
 
 Read along rows: `S(g,1) = 1, 2, 3, 5, 7, >6, >8, >8, >9` for `g = 2..10`; `S(2,k) = 1, 2, 4, >7`
 for `k = 1..4`; `S(3,k) = 2, 6`.  The tempting conjecture that the odd multipliers below `2^k`
