@@ -46,3 +46,22 @@ arbitrary `a ≤ k₄`; passing `a = max ⌈A⌉₊ Dc` buys both.  No new estim
    `STATUS.md`'s trust-triple list.
 3. The `S = univ` sanity instance for the merged weight (`weightSW_univ` + `mertensRate_univ`
    should re-derive `isDisjunctive_weight_logLog`).
+
+## Addendum (same session): B4 — the growth class, and the merge at the growth class
+
+`lake build` 🟢 9083 jobs.  New, all `[propext, Classical.choice, Quot.sound]`:
+
+* `tame_of_logLog_pow` (`G4LogLogPow`): `c_p ≤ A₀(1 + log₂log₂ p)^s` is tame at
+  `A = 5A₀(s+1)^s + 1`.  Ingredients: `one_add_pow_le_mul_two_pow : (1+ℓ)^s ≤ (s+1)^s 2^ℓ`
+  (write `q = ℓ/s`; `1+ℓ ≤ (s+1)(q+1)` and `(q+1)^s ≤ 2^{sq} ≤ 2^ℓ`) and the new
+  `tame_of_affine_natLog` (an affine-in-`log₂` bound is tame).
+* `exists_good_k₄_polyGen` (`G4PolySched`): a `k₄` for `100000(a + γk₄^d)k₄³ ≤ 2^{k₄}` at any
+  degree `d ≥ 1`, via `exists_lin_le_two_pow (m D) : ∃ T, ∀ t ≥ T, m + Dt ≤ 2^t` (threshold
+  `T = 8·max(m+D,2)`, base case `9a² ≤ a^8`).
+* `isDisjunctive_weight_logLogPow` and `isDisjunctive_subsetWeight_logLogPow` /
+  `isDisjunctive_residueClass_weight_logLogPow` (`G4LogLogPowSched`): the headline and the
+  merge for the whole class, with `cMax ≤ A₀(1+V)^s`, `effC` numerator
+  `≤ 256A₀384^s·k₄^{2s+2}` (`effC_numerator_le`), degree `d = 2s+2`.
+
+**Still the boundary** (`DESIGN-2026-09-16-prime-subset.md`): `c_p ≍ log p` needs
+`cMax ≈ 2^{21K²}`, past the exponential junk budget — no power of `log log` reaches it.

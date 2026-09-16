@@ -22,7 +22,8 @@
 | B2 | far field without `κ = max C 1` | open — take the `Ω` route (`ω + frozenExcess_c + junk_c`), not `w_c ≤ κ·Ω` |
 | B2c | `TWeight.weightU c hT` — the unbounded weight as a `TWeight` | ✅ **DONE** (`G4UnboundedTW.lean`).  `ovB d = ω(d) + ∑_{p∣d} c_p` needs **no** hypothesis on `c`; only `summable` uses `Tame` (via `weightW_le_tame : w_c(m) ≤ (1+A)(m+1)²` and `summable_weightW_div_pow_tame`).  §4A/§4B/§4C are therefore free for it. |
 | B3 | `isDisjunctive_weight_of_tame`, then the merge `w_{c,S}` | ✅ **DONE** — `isDisjunctive_weight_logLog` (2026-09-16) and the merge `isDisjunctive_subsetWeight_logLog` / `isDisjunctive_residueClass_weight_logLog` (`G4SubsetCTW`/`CFrame`/`CWitness`/`CAssembly`, see `HANDOFF-2026-09-16-merge-wcS.md`).  Key move: the far-field `hW` is a *domination*, not an equality. |
-| B4 | widen the class to `c_p ≤ A(1+log₂log₂ p)^s` | open — only `cMax_le_of_logLog` and the `C`-polynomial degree in `exists_good_k₄_poly` change; the merge inherits it for free |
+| B4 | widen the class to `c_p ≤ A₀(1+log₂log₂ p)^s` | ✅ **DONE** — `tame_of_logLog_pow`, `exists_good_k₄_polyGen`, `isDisjunctive_weight_logLogPow`, `isDisjunctive_subsetWeight_logLogPow`, `isDisjunctive_residueClass_weight_logLogPow`.  See the addendum in `HANDOFF-2026-09-16-merge-wcS.md`. |
+| B5 | audit surface: put the campaign-B headlines into `Statement.lean` + `STATUS.md` | open (next) |
 
 **The hypothesis class `Tame c A`** (the replacement for `∀ p, c p ≤ C`):
 `1 ≤ A`, `∀ M, ∑_{p<M} c_p/(p(p−1)) ≤ A` (tail), `∀ M, ∑_{p<M} c_p ≤ A·M` (linear prime prefix).
