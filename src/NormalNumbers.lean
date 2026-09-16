@@ -338,3 +338,4 @@ import NormalNumbers.G4SchedBEAssembly
 import NormalNumbers.G4SubsetAssembly
 import NormalNumbers.G4OmegaWeight
 import NormalNumbers.G4OmegaRemainder
+import NormalNumbers.G4OmegaJunk
