@@ -13,9 +13,19 @@
 |---|---|---|
 | B0 | `TWeight.ov_le` → per-`d` bound `ovB : ℕ → ℕ` | open — **free**: `ovC` is consumed only by `G4TransportW.summable_corrB` (probe, lap B-review-1), never quantitatively.  5 instances to update. |
 | B1 | **crux** — `sum_junk_le` with the `c_p` kept inside the sum | ✅ **DONE** (`G4UnboundedJunk.lean`): `sum_junk_le'`, the `C`-free bound functional `junkShiftBoundC`, `sum_junk_C_le'`, and the faithfulness check `sum_junk_le_of_bounded` (the old estimate is the `c ≤ C` case).  All trust-triple clean. |
-| B1b | `junkAvgC_le'` — the block average against `junkShiftBoundC` | next: `G4WeightJunkAvg.junkAvgC_le` with `B := junkShiftBoundC c G.P₀ X ρmax / |P|`; the proof body never touches `C` again |
+| B1b | `junkAvgC_le'` — the block average against `junkShiftBoundC` | ✅ **DONE** (`G4UnboundedAvg.lean`) — no hypothesis on `c` at all |
+| B2a | `sum_weightW_shiftG_le` — the far-field sample sum via the §4D split | ✅ **DONE** (`G4UnboundedAvg.lean`): `frozenCap c P₀ = ∑_{p∣P₀} c_p·v_p(P₀)`, `frozenExcess_le_frozenCap`, and `∑_n w_c(n+shift_j) ≤ |P|·((farC+2j)/log 2 + frozenCap) + junkShiftBoundC c P₀ X (j·Dm)` |
+| B2b | **the effective-constant reduction** — `Tame c A` ⇒ `junkShiftBoundC ≤ effC · junkShiftBound` and `frozenCap ≤ effC · Ω(P₀)` | next.  This is the move that makes the rest cheap: with those two, `∑_n w_c(n+shift) ≤ effC · (the Ω bound)`, which is *literally* `sum_abs_farPartC_le`'s `h3` with `κ := effC`, so the entire existing schedule runs with `C := effC` |
 | B2 | far field without `κ = max C 1` | open — take the `Ω` route (`ω + frozenExcess_c + junk_c`), not `w_c ≤ κ·Ω` |
-| B3 | `isDisjunctive_weight_of_growth`, then the merge `w_{c,S}` | open — `G4SubsetCWeight` already has the `TWeight` instance and §4A/B/C |
+| B2c | `TWeight.weightU c` — the unbounded weight as a `TWeight` (B0 makes `ov_le` statable; summability comes from `Tame`'s prefix bound `c_p ≤ A(p+1)`) | open |
+| B3 | `isDisjunctive_weight_of_tame`, then the merge `w_{c,S}` | open — `G4SubsetCWeight` already has the `TWeight` instance and §4A/B/C |
+
+**The hypothesis class `Tame c A`** (the replacement for `∀ p, c p ≤ C`):
+`1 ≤ A`, `∀ M, ∑_{p<M} c_p/(p(p−1)) ≤ A` (tail), `∀ M, ∑_{p<M} c_p ≤ A·M` (linear prime prefix).
+**The concrete unbounded instance**: `c_p = ⌊log₂ p⌋`.  The prefix bound is Chebyshev —
+`∑_{p≤M} log₂ p ≤ 2M` follows from mathlib's `Nat.primorial_le_4_pow` — and the tail is
+`∑_p log p/p² < ∞`.  So the headline to aim at is: `∑_n (ω(n) + ∑_{p∣n} ⌊log₂ p⌋(v_p(n)−1))/bⁿ`
+is disjunctive for `b ≥ 3`, the first such theorem with **unbounded** coefficients.
 
 **Where `C` actually bites** (the complete list, verified lap B-review-1):
 `G4SchedWeight.hjunk_holdsCE` (`100000·C·k₄³ ≤ 2^{k₄}`) and `G4SchedWeight.hfarC_holdsE` via
