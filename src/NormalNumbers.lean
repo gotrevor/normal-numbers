@@ -336,6 +336,7 @@ import NormalNumbers.G4SubsetWitness
 import NormalNumbers.G4SchedBE
 import NormalNumbers.G4SchedBEAssembly
 import NormalNumbers.G4SubsetAssembly
+import NormalNumbers.G4WeightJunkAvg
 import NormalNumbers.G4WeightRemainder
 import NormalNumbers.G4WeightTW
 import NormalNumbers.G4OmegaClosedForm
