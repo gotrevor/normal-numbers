@@ -148,4 +148,41 @@ theorem effC_le_sched (G : GridParams) {c : ℕ → ℕ} (hmono : Monotone c) {A
   push_cast
   nlinarith [Real.log_natCast_nonneg (M + 1)]
 
+/-! ### The doubly-logarithmic class: `cMax` is polynomial in `K`
+
+`DESIGN-2026-09-16-prime-subset.md` records why this is the class the schedule can pay for:
+every prime dividing `P₀` is at most `max(Dm, 2T, ρmax)`, and that is of the size of
+`gridDm ≤ 2^{2·2^{21K²}}` (`Sched.gridDm_le_two_pow`).  A coefficient vector bounded by
+`⌊log₂ log₂ p⌋` therefore has `cMax ≤ V` whenever the prime bound is at most `2^{2^V}` — i.e.
+`V ≈ 21K²`, polynomial, while the junk budget allows `2^{Θ(K)}`. -/
+
+/-- **`cMax` for a doubly-logarithmic coefficient vector.** -/
+theorem cMax_le_of_logLog (G : GridParams) {c : ℕ → ℕ}
+    (hc : ∀ x, c x ≤ Nat.log 2 (Nat.log 2 x)) {Dm ρmax V : ℕ}
+    (hDm : ∀ α, G.d α ≤ Dm) (hρ : ∀ i : G.Idx, G.ρ i ≤ ρmax)
+    (hM : max (max Dm (2 * Fintype.card G.Idx)) ρmax ≤ 2 ^ 2 ^ V) :
+    cMax c G.P₀ ≤ (V : ℝ) := by
+  refine cMax_le (fun p hp => ?_)
+  have hple : p ≤ 2 ^ 2 ^ V :=
+    le_trans (prime_le_of_dvd_P₀ G (Nat.prime_of_mem_primeFactors hp)
+      (Nat.dvd_of_mem_primeFactors hp) hDm hρ) hM
+  calc c p ≤ Nat.log 2 (Nat.log 2 p) := hc p
+    _ ≤ Nat.log 2 (Nat.log 2 (2 ^ 2 ^ V)) :=
+        Nat.log_mono_right (Nat.log_mono_right hple)
+    _ = V := by rw [Nat.log_pow (by norm_num), Nat.log_pow (by norm_num)]
+
+/-- **`effC` for a doubly-logarithmic `c`**, in the two quantities the schedule already
+bounds: the prime-size exponent `V` and `log ω(P₀)`. -/
+theorem effC_le_of_logLog (G : GridParams) {c : ℕ → ℕ}
+    (hc : ∀ x, c x ≤ Nat.log 2 (Nat.log 2 x)) {A : ℝ} (hA : 1 ≤ A) {Dm ρmax V : ℕ}
+    (hDm : ∀ α, G.d α ≤ Dm) (hρ : ∀ i : G.Idx, G.ρ i ≤ ρmax)
+    (hM : max (max Dm (2 * Fintype.card G.Idx)) ρmax ≤ 2 ^ 2 ^ V) {L : ℝ}
+    (hL : Real.log (G.P₀.primeFactors.card) ≤ L) (hL0 : 0 ≤ L) :
+    effC c G.P₀ A ≤ A + (V : ℝ) * (1 + L) := by
+  refine (effC_le_closed (c := c) hA G.P₀).trans ?_
+  have h1 := cMax_le_of_logLog G hc hDm hρ hM
+  have hc0 := cMax_nonneg c G.P₀
+  have hlog0 : (0 : ℝ) ≤ Real.log (G.P₀.primeFactors.card) := Real.log_natCast_nonneg _
+  nlinarith
+
 end NormalNumbers.G4
