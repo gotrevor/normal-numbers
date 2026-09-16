@@ -212,11 +212,11 @@ open Sched (N J logP₀Nat)
 
 variable {b K e : ℕ}
 
-/-- **The junk size condition holds in the schedule.**  `X = 2^{100·2^{mE}}` while
-`P₀ ≤ 2^{2·2^{mE}}`, so `2P₀·√X·log₂X ≤ 2^{53·2^{mE}+10} ≤ X`. -/
-theorem junk_size_holdsE (h : HypE b K e) :
-    2 * (gridOf K (N K) h.hK1).P₀ *
-        ((2 * Nat.sqrt (XE K e) + 2) * (Nat.log 2 (XE K e) + 1)) ≤ XE K e := by
+/-- **The junk size condition holds in the schedule, with room to spare.**
+`X = 2^{100·2^{mE}}` while `P₀ ≤ 2^{2·2^{mE}}`, so even `2^{20}·P₀·√X·log₂X ≤ X`. -/
+theorem junk_size_holdsE' (h : HypE b K e) :
+    2 ^ 20 * (gridOf K (N K) h.hK1).P₀ *
+        ((2 * Nat.sqrt (XE K e) + 2) * (Nat.log 2 (XE K e) + 2)) ≤ XE K e := by
   set t := 2 ^ mE K e with ht
   have ht1 : 1 ≤ t := Nat.one_le_two_pow
   have hX : XE K e = 2 ^ (100 * t) := rfl
@@ -240,20 +240,28 @@ theorem junk_size_holdsE (h : HypE b K e) :
       _ = 4 * 2 ^ (50 * t) := by ring
       _ = 2 ^ (50 * t + 2) := by rw [pow_add]; ring
   have htt : t ≤ 2 ^ t := Nat.le_of_lt Nat.lt_two_pow_self
-  have h2 : 100 * t + 1 ≤ 2 ^ (t + 7) := by
-    calc 100 * t + 1 ≤ 128 * t := by omega
+  have h2 : 100 * t + 2 ≤ 2 ^ (t + 7) := by
+    calc 100 * t + 2 ≤ 128 * t := by omega
       _ ≤ 128 * 2 ^ t := by exact Nat.mul_le_mul_left _ htt
       _ = 2 ^ (t + 7) := by rw [pow_add]; ring
-  calc 2 * (gridOf K (N K) h.hK1).P₀ * ((2 * 2 ^ (50 * t) + 2) * (100 * t + 1))
-      ≤ 2 * 2 ^ (2 * t) * (2 ^ (50 * t + 2) * 2 ^ (t + 7)) := by
+  calc 2 ^ 20 * (gridOf K (N K) h.hK1).P₀ * ((2 * 2 ^ (50 * t) + 2) * (100 * t + 2))
+      ≤ 2 ^ 20 * 2 ^ (2 * t) * (2 ^ (50 * t + 2) * 2 ^ (t + 7)) := by
         refine Nat.mul_le_mul (Nat.mul_le_mul_left _ hP₀) (Nat.mul_le_mul h1 h2)
-    _ = 2 ^ (53 * t + 10) := by
-        rw [show (2 : ℕ) * 2 ^ (2 * t) * (2 ^ (50 * t + 2) * 2 ^ (t + 7))
-            = 2 ^ 1 * 2 ^ (2 * t) * (2 ^ (50 * t + 2) * 2 ^ (t + 7)) by norm_num]
+    _ = 2 ^ (53 * t + 29) := by
         rw [← pow_add, ← pow_add, ← pow_add]
         congr 1
         omega
     _ ≤ 2 ^ (100 * t) := Nat.pow_le_pow_right (by norm_num) (by omega)
+
+/-- The form consumed by `hjunk`. -/
+theorem junk_size_holdsE (h : HypE b K e) :
+    2 * (gridOf K (N K) h.hK1).P₀ *
+        ((2 * Nat.sqrt (XE K e) + 2) * (Nat.log 2 (XE K e) + 1)) ≤ XE K e := by
+  refine le_trans ?_ (junk_size_holdsE' h)
+  have h1 : Nat.log 2 (XE K e) + 1 ≤ Nat.log 2 (XE K e) + 2 := by omega
+  have h2 : 2 * (gridOf K (N K) h.hK1).P₀ ≤ 2 ^ 20 * (gridOf K (N K) h.hK1).P₀ :=
+    Nat.mul_le_mul_right _ (by norm_num)
+  exact Nat.mul_le_mul h2 (Nat.mul_le_mul_left _ h1)
 
 /-- `log ω(P₀) ≤ 15K²`. -/
 theorem log_card_primeFactors_P₀_leE (h : HypE b K e) :
