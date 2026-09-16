@@ -356,6 +356,7 @@ import NormalNumbers.G4UnboundedTW
 import NormalNumbers.G4UnboundedFrame
 import NormalNumbers.G4UnboundedEffC
 import NormalNumbers.G4LogTame
+import NormalNumbers.G4LogLogPow
 import NormalNumbers.G4SchedLogLog
 import NormalNumbers.G4UnboundedWitness
 import NormalNumbers.G4UnboundedSched
