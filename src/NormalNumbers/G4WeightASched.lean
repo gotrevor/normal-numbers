@@ -7,6 +7,7 @@ import NormalNumbers.G4WeightAWitness
 import NormalNumbers.G4SchedBEAssembly
 import NormalNumbers.G4UnboundedSched
 import NormalNumbers.G4SubsetCAssembly
+import NormalNumbers.G4PolySched
 
 /-!
 # The schedule's `D`-side at a general bounded multiplier
@@ -215,6 +216,168 @@ noncomputable def scheduleWitnessAUE (a c : ℕ → ℕ) {Ca : ℕ} (hCa1 : 1 �
       have hc : Fintype.card (gridOf K (Sched.N K) hK1).Idx = Sched.T K := gridOf.card_Idx hK1
       rw [← hc] at hbud
       exact hbud }
+
+/-- **The existence statement for the master weight.**  A Mertens rate for the ACTIVE primes
+`{p : 1 ≤ a_p}` and the `log₂log₂` coefficient bound produce a schedule witness at every base
+`b ≥ 3`, depth `ℓ ≥ 1`, word `w`.  The multiplier costs one enlargement of the schedule's free
+parameter: `k₄ ≥ Ca · max ⌈A⌉₊ Dc`, supplied by `exists_good_k₄_polyGen` at degree 4. -/
+theorem exists_scheduleWitnessAU (a c : ℕ → ℕ) {Ca : ℕ} (hCa1 : 1 ≤ Ca) {A : ℝ} (hA : 1 ≤ A)
+    (hc : ∀ x, c x ≤ Nat.log 2 (Nat.log 2 x)) {cm Cm : ℝ}
+    (hmert : MertensAP.MertensRate (fun p => 1 ≤ a p) cm Cm)
+    (b ℓ w : ℕ) (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ) :
+    Nonempty (ScheduleWitnessAU a c Ca A b ℓ w) := by
+  classical
+  obtain ⟨hcm, -⟩ := id hmert
+  have hl2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hl2' : Real.log 2 ≤ 1 := by linarith [Real.log_two_lt_d9]
+  -- the Mertens inflation factor
+  set Xr : ℝ := (24 + max Cm 0 + cm) / (cm * Real.log 2) with hXr
+  have hXr0 : 0 < Xr := by
+    rw [hXr]; have : (0:ℝ) ≤ max Cm 0 := le_max_right _ _; positivity
+  set Dc : ℕ := ⌈Xr + 1⌉₊ with hDc
+  have hDcge : Xr + 1 ≤ (Dc : ℝ) := Nat.le_ceil _
+  have hDc1 : 1 ≤ Dc := by
+    have : (1 : ℝ) ≤ (Dc : ℝ) := by linarith
+    exact_mod_cast this
+  -- a `k₄` large enough for BOTH the Mertens inflation and the junk budget
+  obtain ⟨k₄, hk, hk40, ha, hCkgen⟩ :=
+    exists_good_k₄_polyGen b ℓ (Ca * max ⌈A⌉₊ Dc) (88688 * Ca) (d := 4) (by norm_num)
+  have hmaxk : max ⌈A⌉₊ Dc ≤ k₄ :=
+    le_trans (Nat.le_mul_of_pos_left _ (by omega)) ha
+  have hDck : Dc ≤ k₄ := le_trans (le_max_right _ _) hmaxk
+  set K : ℕ := 4 * k₄ with hKdef
+  set C : ℕ := max ⌈A⌉₊ Dc + 368 * k₄ ^ 2 + 88320 * k₄ ^ 4 with hC
+  have hC1 : 1 ≤ C := by
+    have : 1 ≤ k₄ ^ 2 := Nat.one_le_pow _ _ (by omega)
+    omega
+  have hk2le : k₄ ^ 2 ≤ k₄ ^ 4 := Nat.pow_le_pow_right (by omega) (by norm_num)
+  have hCk : 100000 * (Ca * C) * k₄ ^ 3 ≤ 2 ^ k₄ := by
+    refine le_trans ?_ hCkgen
+    have hle : Ca * C ≤ Ca * max ⌈A⌉₊ Dc + 88688 * Ca * k₄ ^ 4 := by
+      have h1 : Ca * (368 * k₄ ^ 2) ≤ 368 * Ca * k₄ ^ 4 := by
+        have := Nat.mul_le_mul_left (368 * Ca) hk2le
+        calc Ca * (368 * k₄ ^ 2) = 368 * Ca * k₄ ^ 2 := by ring
+          _ ≤ 368 * Ca * k₄ ^ 4 := this
+      rw [hC]
+      calc Ca * (max ⌈A⌉₊ Dc + 368 * k₄ ^ 2 + 88320 * k₄ ^ 4)
+          = Ca * max ⌈A⌉₊ Dc + Ca * (368 * k₄ ^ 2) + 88320 * Ca * k₄ ^ 4 := by ring
+        _ ≤ Ca * max ⌈A⌉₊ Dc + 368 * Ca * k₄ ^ 4 + 88320 * Ca * k₄ ^ 4 :=
+            Nat.add_le_add_right (Nat.add_le_add_left h1 _) _
+        _ = Ca * max ⌈A⌉₊ Dc + 88688 * Ca * k₄ ^ 4 := by ring
+    exact Nat.mul_le_mul_right _ (Nat.mul_le_mul_left _ hle)
+  have h : Hyp b K := hyp_KG hb hℓ hk
+  have hK100 : 100 ≤ K := h.hK
+  have hK1 : 1 ≤ K := h.hK1
+  -- the cutoff exponent supplied by the rate
+  obtain ⟨e₀, hsum₀, hbnd₀⟩ := MertensAP.exists_cutoff_subset hmert hK100 (m₁ b K)
+  set e : ℕ := max e₀ (m₁ b K) with hedef
+  have hlo : m₁ b K ≤ e := le_max_right _ _
+  have he₀e : e₀ ≤ e := le_max_left _ _
+  have hDle : Dc ≤ 2 ^ K := by
+    calc Dc ≤ k₄ := hDck
+      _ ≤ 2 ^ k₄ := (Nat.lt_two_pow_self).le
+      _ ≤ 2 ^ K := Nat.pow_le_pow_right (by norm_num) (by omega)
+  set Aq : ℕ := m₁ b K + K ^ 2 + 1 with hAq
+  have hA1 : (1 : ℝ) ≤ (Aq : ℝ) := by
+    have : 1 ≤ Aq := by omega
+    exact_mod_cast this
+  have hA0 : (0 : ℝ) < (Aq : ℝ) := by linarith
+  have hm₁A : (m₁ b K : ℝ) ≤ (Aq : ℝ) := by
+    have : m₁ b K ≤ Aq := by omega
+    exact_mod_cast this
+  have hKA : ((K : ℝ)) ^ 2 ≤ (Aq : ℝ) := by
+    have : K ^ 2 ≤ Aq := by omega
+    have h' : ((K ^ 2 : ℕ) : ℝ) ≤ (Aq : ℝ) := by exact_mod_cast this
+    push_cast at h'; linarith
+  have hm₁0 : (0 : ℝ) ≤ (m₁ b K : ℝ) := by positivity
+  have hCmax : Cm ≤ max Cm 0 := le_max_left _ _
+  have hCmax0 : (0 : ℝ) ≤ max Cm 0 := le_max_right _ _
+  have hQ : ((m₁ b K : ℝ) * Real.log 2 + 21 * (K : ℝ) ^ 2 + 2 + Cm + cm)
+      ≤ (Aq : ℝ) * (24 + max Cm 0 + cm) := by
+    have h1 : (m₁ b K : ℝ) * Real.log 2 ≤ (Aq : ℝ) := by nlinarith
+    have h2 : 21 * (K : ℝ) ^ 2 ≤ 21 * (Aq : ℝ) := by linarith
+    have h3 : (2 : ℝ) ≤ 2 * (Aq : ℝ) := by linarith
+    have h4 : Cm ≤ max Cm 0 * (Aq : ℝ) := by nlinarith
+    have h5 : cm ≤ cm * (Aq : ℝ) := by nlinarith
+    nlinarith
+  have hbnd : (e₀ : ℝ) ≤ (Dc : ℝ) * (Aq : ℝ) := by
+    have hdiv : ((m₁ b K : ℝ) * Real.log 2 + 21 * (K : ℝ) ^ 2 + 2 + Cm + cm)
+        / (cm * Real.log 2) ≤ (Aq : ℝ) * Xr := by
+      rw [hXr, ← mul_div_assoc, div_le_div_iff₀ (by positivity) (by positivity)]
+      exact mul_le_mul_of_nonneg_right hQ (by positivity)
+    have hmax : max 0 (((m₁ b K : ℝ) * Real.log 2 + 21 * (K : ℝ) ^ 2 + 2 + Cm + cm)
+        / (cm * Real.log 2)) ≤ (Aq : ℝ) * Xr := by
+      refine max_le ?_ hdiv
+      positivity
+    have : (e₀ : ℝ) ≤ (Aq : ℝ) * Xr + 1 := by linarith
+    nlinarith
+  have hele : e ≤ Dc * Aq := by
+    have h1 : e₀ ≤ Dc * Aq := by
+      have : (e₀ : ℝ) ≤ ((Dc * Aq : ℕ) : ℝ) := by push_cast; linarith
+      exact_mod_cast this
+    have h2 : m₁ b K ≤ Dc * Aq := by
+      calc m₁ b K ≤ Aq := by omega
+        _ ≤ Dc * Aq := Nat.le_mul_of_pos_left _ (by omega)
+    omega
+  have hhi : McE K e ≤ 2 ^ Sched.m₂ K :=
+    MertensAP.moment_cap_subset hb h.hbK hK100 hDle hele
+  have hE : HypE b K e := ⟨h, hlo, hhi⟩
+  -- the Mertens supply at the enlarged cutoff
+  have hlow : (m₁ b K : ℝ) * Real.log 2 - 21 * (K : ℝ) ^ 2 - 4
+      ≤ ∑ p ∈ (smallPrimes (RE e) (gridOf K (N K) hE.hK1).P₀).filter (fun p => 1 ≤ a p), (p : ℝ)⁻¹ := by
+    refine hsum₀.trans ?_
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun p _ _ => by positivity)
+    intro p hp
+    rw [Finset.mem_filter] at hp ⊢
+    exact ⟨smallPrimes_mono (Nat.pow_le_pow_right (by norm_num)
+      (Nat.pow_le_pow_right (by norm_num) he₀e)) hp.1, hp.2⟩
+  -- the effective constant at this grid
+  have hEff : effC c (gridOf K (N K) hK1).P₀ A ≤ (C : ℝ) := by
+    have hbound := effC_le_of_logLog (gridOf K (N K) hK1) hc hA
+      (Dm := gridDm K (N K)) (ρmax := J K * gridDm K (N K)) (V := 23 * K ^ 2)
+      (gridOf.d_le hK1) (fun i => gridOf.shiftAL_le hK1 i)
+      (Sched.sched_prime_size hK100 hK1)
+      (L := 15 * (K : ℝ) ^ 2) (log_card_primeFactors_P₀_leE hE) (by positivity)
+    refine hbound.trans ?_
+    have hAc : A ≤ ((max ⌈A⌉₊ Dc : ℕ) : ℝ) :=
+      le_trans (Nat.le_ceil A) (by exact_mod_cast le_max_left ⌈A⌉₊ Dc)
+    have hCr : (C : ℝ) = ((max ⌈A⌉₊ Dc : ℕ) : ℝ) + 368 * (k₄ : ℝ) ^ 2 + 88320 * (k₄ : ℝ) ^ 4 := by
+      rw [hC]; push_cast; ring
+    have hKr : (K : ℝ) = 4 * (k₄ : ℝ) := by rw [hKdef]; push_cast; ring
+    have hcast : ((23 * K ^ 2 : ℕ) : ℝ) = 23 * (K : ℝ) ^ 2 := by push_cast; ring
+    have hEq : ((23 * K ^ 2 : ℕ) : ℝ) * (1 + 15 * (K : ℝ) ^ 2)
+        = 368 * (k₄ : ℝ) ^ 2 + 88320 * (k₄ : ℝ) ^ 4 := by
+      rw [hcast, hKr]; ring
+    rw [hCr, hEq]
+    linarith [hAc]
+  exact ⟨scheduleWitnessAUE a c hCa1 C hC1 b ℓ w e k₄ hb hℓ hk hk40 hCk hE hEff hlow⟩
+
+
+/-! ### The master headline -/
+
+/-- **The master headline.**  For a bounded multiplier `a` whose active primes `{p : 1 ≤ a_p}`
+carry a Mertens rate, and any coefficient vector with `c_p ≤ ⌊log₂ log₂ p⌋`, the constant
+`∑_n w_{a,c}(n)/bⁿ`, `w_{a,c}(n) = ∑_{p ∣ n} (a_p + c_p (v_p(n) − 1))`, is disjunctive in every
+base `b ≥ 3`. -/
+theorem isDisjunctive_weightA_logLog (a c : ℕ → ℕ) {Ca : ℕ} (hCa1 : 1 ≤ Ca)
+    (hCa : ∀ p, a p ≤ Ca) (hc : ∀ x, c x ≤ Nat.log 2 (Nat.log 2 x)) {cm Cm : ℝ}
+    (hmert : MertensAP.MertensRate (fun p => 1 ≤ a p) cm Cm) {b : ℕ} (hb : 3 ≤ b) :
+    IsDisjunctive b (weightALambert b a c) := by
+  have hlog : ∀ p, c p ≤ Nat.log 2 p := fun p =>
+    (hc p).trans (Nat.log_mono_right (Nat.log_le_self 2 p))
+  have hT : PrimeLambert.Tame c 4 := tame_of_natLog_le hlog
+  have hmain : IsDisjunctive b ((TWeight.weightA a c hCa hT).lambert b) := by
+    refine isDisjunctive_weightA_of_witness a c hCa hT hCa1 b hb fun ℓ w hw homit => ?_
+    rcases Nat.eq_zero_or_pos ℓ with hℓ | hℓ
+    · exfalso
+      subst hℓ
+      have hw0 : w = 0 := by simpa using hw
+      subst hw0
+      have := homit 0
+      simp only [Nat.cast_zero, pow_zero, zero_add, div_one] at this
+      exact this (orbit_mem_Ico b _ 0)
+    · exact exists_scheduleWitnessAU a c hCa1 (by norm_num : (1:ℝ) ≤ 4) hc hmert b ℓ w hb hℓ
+  rwa [TWeight.lambert_weightA (b := b) a c hCa hT] at hmain
 
 end SchedB
 
