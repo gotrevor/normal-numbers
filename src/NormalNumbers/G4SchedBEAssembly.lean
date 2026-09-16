@@ -310,6 +310,65 @@ theorem hfar_holdsE {b K k₄ e : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
         nlinarith
 
 
+/-! ### The schedule's outer dimension at a free `k₄` -/
+
+/-- `M = ⌈K log 2 / (4 ℓ log b)⌉`, at a free outer dimension `K`. -/
+noncomputable def MG (b ℓ K : ℕ) : ℕ :=
+  ⌈(K : ℝ) * Real.log 2 / (4 * ℓ * Real.log b)⌉₊
+
+lemma MG_lo {b ℓ K : ℕ} (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ) :
+    (K : ℝ) / 4 * Real.log 2 ≤ (MG b ℓ K : ℝ) * ℓ * Real.log b := by
+  have hlb : 0 < Real.log b := Real.log_pos (by exact_mod_cast (show 1 < b by omega))
+  have hℓr : (1 : ℝ) ≤ ℓ := by exact_mod_cast hℓ
+  have hden : 0 < 4 * (ℓ : ℝ) * Real.log b := by positivity
+  have h := Nat.le_ceil ((K : ℝ) * Real.log 2 / (4 * ℓ * Real.log b))
+  unfold MG
+  rw [div_le_iff₀ hden] at h
+  nlinarith
+
+lemma MG_hi {b ℓ K : ℕ} (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ) :
+    (MG b ℓ K : ℝ) * ℓ * Real.log b ≤ (K : ℝ) / 4 * Real.log 2 + ℓ * Real.log b := by
+  have hlb : 0 < Real.log b := Real.log_pos (by exact_mod_cast (show 1 < b by omega))
+  have hℓr : (1 : ℝ) ≤ ℓ := by exact_mod_cast hℓ
+  have hden : 0 < 4 * (ℓ : ℝ) * Real.log b := by positivity
+  have hnn : 0 ≤ (K : ℝ) * Real.log 2 / (4 * ℓ * Real.log b) := by
+    have := Real.log_pos (show (1:ℝ) < 2 by norm_num); positivity
+  have h := Nat.ceil_lt_add_one hnn
+  unfold MG
+  have h' : (⌈(K : ℝ) * Real.log 2 / (4 * ℓ * Real.log b)⌉₊ : ℝ) * (4 * ℓ * Real.log b)
+      < (K : ℝ) * Real.log 2 + 4 * ℓ * Real.log b := by
+    have := mul_lt_mul_of_pos_right h hden
+    rwa [add_mul, div_mul_cancel₀ _ hden.ne', one_mul] at this
+  nlinarith [h']
+
+/-- `hM`: `b^{−ℓM} ≤ 2^{−k₄}`. -/
+lemma hM_holdsG {b ℓ K k₄ : ℕ} (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ) (hK4 : K = 4 * k₄) :
+    1 / ((b : ℝ) ^ ℓ) ^ MG b ℓ K ≤ (1 / 2 : ℝ) ^ k₄ := by
+  have hbr : (1 : ℝ) < b := by exact_mod_cast (show 1 < b by omega)
+  have hlo := MG_lo (K := K) hb hℓ
+  have hK4' : (K : ℝ) / 4 = k₄ := by rw [hK4]; push_cast; ring
+  rw [hK4'] at hlo
+  have e1 : ((b : ℝ) ^ ℓ) ^ MG b ℓ K = Real.exp ((MG b ℓ K : ℝ) * ℓ * Real.log b) := by
+    rw [← pow_mul, ← Real.rpow_natCast, Real.rpow_def_of_pos (by linarith)]
+    push_cast; ring_nf
+  have e2 : (2 : ℝ) ^ k₄ = Real.exp ((k₄ : ℝ) * Real.log 2) := by
+    rw [← Real.rpow_natCast, Real.rpow_def_of_pos (by norm_num), mul_comm]
+  rw [one_div_pow, e1, one_div, one_div, e2]
+  exact inv_anti₀ (Real.exp_pos _) (Real.exp_le_exp.2 hlo)
+
+
+/-- Enlarging `k₄` keeps the `hB` size hypothesis. -/
+lemma KG_ge {b ℓ k₄ : ℕ} (hk : k₄bℓ b ℓ ≤ k₄) :
+    8464 * ℓ ^ 2 * b ^ (2 * ℓ) * Nat.clog 2 b ^ 2 ≤ 4 * k₄ :=
+  Kbℓ_ge.trans (Nat.mul_le_mul_left _ hk)
+
+/-- Enlarging `k₄` keeps the standing schedule hypotheses. -/
+lemma hyp_KG {b ℓ k₄ : ℕ} (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ) (hk : k₄bℓ b ℓ ≤ k₄) :
+    Hyp b (4 * k₄) := by
+  have h := hyp_Kbℓ hb hℓ
+  have hKle : Kbℓ b ℓ ≤ 4 * k₄ := Nat.mul_le_mul_left _ hk
+  exact ⟨h.hb, le_trans h.hbK hKle, le_trans h.hK hKle⟩
+
 /-! ### The `S`-restricted schedule witness at a free cutoff -/
 
 lemma RE_le_YE (K e : ℕ) : RE e ≤ YE K e :=
@@ -321,14 +380,14 @@ variable (S : ℕ → Prop) [DecidablePred S]
 for the schedule (`HypE`) at which the `S`-restricted small primes still meet the schedule's
 Mertens demand (`hlow`).  Every field except `hbudget` is the base-`b` witness at the inflated
 cutoff; `hbudget` is `hbudget_holdsE_gen` applied to the `S`-filtered small primes. -/
-noncomputable def scheduleWitnessSE (b ℓ w e : ℕ) (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ)
-    (hE : HypE b (Kbℓ b ℓ) e)
-    (hlow : (m₁ b (Kbℓ b ℓ) : ℝ) * Real.log 2 - 21 * (Kbℓ b ℓ : ℝ) ^ 2 - 4
+noncomputable def scheduleWitnessSE (b ℓ w e k₄ : ℕ) (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ)
+    (hk : k₄bℓ b ℓ ≤ k₄)
+    (hE : HypE b (4 * k₄) e)
+    (hlow : (m₁ b (4 * k₄) : ℝ) * Real.log 2 - 21 * ((4 * k₄ : ℕ) : ℝ) ^ 2 - 4
       ≤ ∑ p ∈ (smallPrimes (RE e)
-          (gridOf (Kbℓ b ℓ) (Sched.N (Kbℓ b ℓ)) hE.hK1).P₀).filter S, (p : ℝ)⁻¹) :
+          (gridOf (4 * k₄) (Sched.N (4 * k₄)) hE.hK1).P₀).filter S, (p : ℝ)⁻¹) :
     ScheduleWitnessS S b ℓ w :=
-  let k₄ := k₄bℓ b ℓ
-  let K := Kbℓ b ℓ
+  let K := 4 * k₄
   have hK4 : K = 4 * k₄ := rfl
   have h : Hyp b K := hE.base
   have hK100 : 100 ≤ K := h.hK
@@ -344,8 +403,8 @@ noncomputable def scheduleWitnessSE (b ℓ w e : ℕ) (hb : 3 ≤ b) (hℓ : 1 �
     ε := 1 / (K : ℝ)
     hε := by positivity
     hε1 := by rw [div_lt_one (by linarith)]; linarith
-    M := Mbℓ b ℓ
-    hM := hM_holds hb hℓ
+    M := MG b ℓ K
+    hM := hM_holdsG hb hℓ hK4
     Lg := (((K ^ 2) ^ K : ℕ) : ℝ) * (Real.log 2 + 23 * Real.sqrt K)
     hlog := by
       have h := log_det_one_add_tensorGram_le' hK1
@@ -361,7 +420,7 @@ noncomputable def scheduleWitnessSE (b ℓ w e : ℕ) (hb : 3 ≤ b) (hℓ : 1 �
       rw [hr, hH]
       have hη : ((1 / 2 : ℝ) ^ k₄) ^ 4 ≤ (1 / 2 : ℝ) ^ K := by
         rw [← pow_mul, hK4, mul_comm]
-      exact gridB_bound (bb := b) (by omega) hℓ Kbℓ_ge (Mbℓ_lo hb hℓ) (Mbℓ_hi hb hℓ)
+      exact gridB_bound (bb := b) (by omega) hℓ (KG_ge hk) (MG_lo hb hℓ) (MG_hi hb hℓ)
         (by positivity) hη le_rfl hglo hghi
     R := RE e
     hR := RE_ge_two e
