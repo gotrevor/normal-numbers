@@ -24,18 +24,31 @@ and `excess 1 = frozenExcess P₀ + junk P₀` (`G4WeightJunk.excess_eq_frozen_a
 `frozenExcess` depends only on `m mod P₀` (`frozenExcess_congr`) and so is absorbed into the
 frame's translate `γ`, while `junk` has the sample-mean bound `G4WeightJunk.sum_junk_le`.
 
+**DONE 2026-09-16 (`G4OmegaRemainder.lean`), the whole §4D *structure* for `Ω`:**
+
+* `cardFactors_split` — the four-way split
+  `Ω = [ω_{p∣P₀} + frozenExcess] + ω_{smallPrimes R P₀} + ω_big + junk`;
+* `frozenWeightΩ` / `frozenTranslateΩ` / `frozenGammaΩ` / `blockSum_frozenΩ_eq` — the first
+  bracket is constant on the progression, so it is absorbed by the frame's translate `γ`;
+* `blockSum_cardFactors_split`, `gridFrameW_cardFactors_Ffull_decomp` — `Ffull` for `Ω` is
+  `Sval(smallPrimes) + blockSum(ω_big) + blockSum(junk) + farPart`;
+* **`gridFrameW_cardFactors_propD`** — `PropD (δbig + δjunk + δfar)` from three sample averages
+  `bigAvgΩ`, `junkAvgΩ`, `farAvgΩ`.
+
 **Next attack, in order (each a named leaf in `src/`):**
 
-1. `excessTail bb G n ν := ∑_{j≥1} bb^{-j} · excess 1 (n + shift + j·D)` — the analogue of
-   `tailFromW`/`farPartW` for the excess; and `tailFromW cardFactors = tailFromW omega +
-   excessTail` (pointwise, from `cardFactors_eq_omegaR_add_excess` and linearity of the tail).
-2. `frozenExcessGamma` — the `γ` translate carrying `frozenExcess`, mirroring `frozenGammaS`.
-3. `excessAvg_le` — `E_n ∑_ν |excessTail|` bounded by `sum_junk_le` summed against the
-   geometric weights `bb^{-j}` (the `√(X+ρ)log(X+ρ)` term is the one to watch; it is
-   `≤ (j+1)²·tiny` with `tiny = 4P₀ log₂X/√X`, cf. the paper budget note below).
-4. `gridFrameW_omega_propD_of_bounds` for `cardFactors` = the `ω` `PropD` plus `excessAvg_le`.
-5. Schedule: `Hyp` needs no new field at `c = 1` (`C = 1 ≤ K`); `hbig`/`hfar` gain the junk
-   terms; then `isDisjunctive_Omega`.
+1. **`junkAvgΩ_le`** — the ONE genuinely new arithmetic estimate: bound `junkAvgΩ` by
+   `G4WeightJunk.sum_junk_le` applied at each shift `ρ_{α,jj}` and summed against the layer
+   weights `bb^{-layer}`.  Shape to aim for:
+   `junkAvgΩ ≤ rowL1 bb G.K · max_{ρ} (2 P₀/X) · (X/P₀ (∑_{p∣P₀} 1/(p−1) + 1) + √(X+ρ)log₂(X+ρ))`,
+   i.e. `≤ rowL1 · (2(log ω(P₀) + 2) + 2P₀(√(X+ρmax)+1)log₂(X+ρmax)/X)`.
+   Note `∑_{p ∣ P₀} 1/(p−1) ≤ H_{ω(P₀)} ≤ 1 + log ω(P₀)` is `sum_inv_pred_le_harmonic`.
+2. **`bigAvgΩ_le` / `farAvgΩ_le`** — should be the existing `ω` estimates verbatim
+   (`omegaBig` is the same function; `farPartW TWeight.cardFactors` needs `Ω(m) ≤ log₂ m`
+   where the `ω` proof used `ω(m) ≤ log₂ m`, i.e. `cardFactors_le_log`).
+3. **Schedule**: `hbig`/`hfar` gain the junk term (no new `Hyp` field at `c = 1`, since
+   `C = 1`), then `isDisjunctive_Omega` through `isDisjunctive_of_framesW`.
+4. The series identity `∑_n Ω(n)/bⁿ = ∑_{p,a≥1} 1/(b^{pᵃ}−1)`.
 
 # PENDING_WORK
 
