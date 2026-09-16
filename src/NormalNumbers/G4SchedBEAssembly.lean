@@ -157,13 +157,13 @@ lemma four_mul_le_two_pow_NE {b K e : ℕ} (h : HypE b K e) :
 /-! ### `hbig` and `hfar` at a free cutoff -/
 
 /-- **`hbig` in base `b ≥ 3`**, with `K = 4k₄`, `η = 2^{−k₄}`, `ε = 1/K`, `δbig = 1/8`,
-`Mx = X + J·Dm`. -/
-theorem hbig_holdsE {b K k₄ e : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
+`Mx = X + J·Dm`, before the final numeric closing — the shape a scaled version can reuse. -/
+theorem hbig_two_termsE {b K k₄ e : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
     Real.sqrt (4 * (1 + Real.log (Nat.log 2 (YE K e)) - Real.log (Nat.log 2 (RE e))) * rowL2 b K
           + 2 * (YE K e : ℝ) ^ 2 * (rowL1 b K) ^ 2
             / ((apSample (XE K e) (gridOf K (Sched.N K) h.hK1).P₀ (gridOf K (Sched.N K) h.hK1).b₀).card : ℝ))
       + (Real.log ((XE K e + J K * gridDm K (Sched.N K) : ℕ) : ℝ) / Real.log (YE K e)) * rowL1 b K
-      ≤ (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
+      ≤ 2 * (K : ℝ) * ((1 / 2 : ℝ) ^ k₄) ^ 4 + 51 * ((1 / 2 : ℝ) ^ k₄) ^ 2 := by
   have hb := h.base.hb; have hK := h.base.hK
   have hk : 25 ≤ k₄ := by omega
   have hKr : (100 : ℝ) ≤ K := by exact_mod_cast hK
@@ -233,7 +233,25 @@ theorem hbig_holdsE {b K k₄ e : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
     calc (Real.log ((XE K e + J K * gridDm K (Sched.N K) : ℕ) : ℝ) / Real.log (YE K e)) * rowL1 b K
         ≤ 101 * (a ^ 2 / 2) := by gcongr
       _ ≤ 51 * a ^ 2 := by nlinarith
-  -- close: `2K a⁴ ≤ (1/16)(1/K) a` and `51 a² ≤ (1/16)(1/K) a`
+  exact add_le_add hsq ht3
+
+/-- **`hbig` in base `b ≥ 3`**, with `K = 4k₄`, `η = 2^{−k₄}`, `ε = 1/K`, `δbig = 1/8`. -/
+theorem hbig_holdsE {b K k₄ e : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
+    Real.sqrt (4 * (1 + Real.log (Nat.log 2 (YE K e)) - Real.log (Nat.log 2 (RE e))) * rowL2 b K
+          + 2 * (YE K e : ℝ) ^ 2 * (rowL1 b K) ^ 2
+            / ((apSample (XE K e) (gridOf K (Sched.N K) h.hK1).P₀ (gridOf K (Sched.N K) h.hK1).b₀).card : ℝ))
+      + (Real.log ((XE K e + J K * gridDm K (Sched.N K) : ℕ) : ℝ) / Real.log (YE K e)) * rowL1 b K
+      ≤ (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
+  have hK := h.base.hK
+  have hk : 25 ≤ k₄ := by omega
+  have hKr : (100 : ℝ) ≤ K := by exact_mod_cast hK
+  have hKpos : (0 : ℝ) < K := by linarith
+  have hKk : (K : ℝ) = 4 * k₄ := by rw [hK4]; push_cast; ring
+  set a : ℝ := (1 / 2 : ℝ) ^ k₄ with ha
+  have ha0 : 0 < a := by positivity
+  have ha1 : a ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+  have hb1r : (512 : ℝ) * k₄ ^ 2 ≤ 2 ^ (3 * k₄) := by exact_mod_cast k₄_bound_three hk
+  have hb2r : (4096 : ℝ) * k₄ ≤ 2 ^ k₄ := by exact_mod_cast k₄_bound_one hk
   have hc1 : 2 * K * a ^ 4 ≤ (1 / 16 : ℝ) * ((1 / K : ℝ) * a) := by
     have : (32 : ℝ) * K ^ 2 * a ^ 3 ≤ 1 := by
       have e : a ^ 3 = 1 / (2 : ℝ) ^ (3 * k₄) := by rw [ha, ← pow_mul, one_div_pow, mul_comm]
@@ -250,7 +268,7 @@ theorem hbig_holdsE {b K k₄ e : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
     rw [show (1 / 16 : ℝ) * ((1 / K : ℝ) * a) = a / (16 * K) by field_simp]
     rw [le_div_iff₀ (by positivity)]
     nlinarith [ha0]
-  calc _ ≤ 2 * K * a ^ 4 + 51 * a ^ 2 := add_le_add hsq ht3
+  calc _ ≤ 2 * K * a ^ 4 + 51 * a ^ 2 := hbig_two_termsE hK4 h
     _ ≤ (1 / 16 : ℝ) * ((1 / K : ℝ) * a) + (1 / 16 : ℝ) * ((1 / K : ℝ) * a) := add_le_add hc1 hc2
     _ = (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by rw [ha]; ring
 
