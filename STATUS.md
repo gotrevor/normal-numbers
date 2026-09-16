@@ -1,5 +1,22 @@
 # STATUS — normal-numbers 📊
 
+> **Review lap B-review-1 (2026-09-16).**  **Campaign A is CLOSED.**  All three of its headlines
+> are unconditional and trust-triple clean: `isDisjunctive_residueClass` (∑_{p≡a(q)} 1/(bᵖ−1)),
+> `isDisjunctive_Omega` (∑ₙ Ω(n)/bⁿ = ∑_{q prime power} 1/(b^q−1)) and
+> **`isDisjunctive_weight c C hC`** — *every* bounded coefficient vector, `b ≥ 3`.  The previous
+> directive's `e`-schedule ladder landed in full, and so did its item 4.  Directive re-set
+> (`DIRECTION.md` → CURRENT DIRECTIVE) to **campaign B: the master additive weight**
+> `w(n) = ∑_{p∣n}(a_p + c_p(v_p(n)−1))` with **`c` unbounded**.  Two probe results this lap:
+> (a) `TWeight.ovC` is consumed at exactly one site (`summable_corrB`) and *only* for
+> summability, so the transport interface is **not** the obstacle — relaxing `ov_le` to a per-`d`
+> bound is free; (b) **base 2 stays a machine-checked dead end** — `G4RowMassOptimal`'s
+> `two_pow_le_sum_abs` proves every line-sum-annihilating integer array has row-ℓ¹ mass `≥ 2^K`,
+> so `rowL1 2 K ≥ 1` for the whole design family, not just our parameters.  The whole
+> `C`-dependence of the closed proof sits in exactly two places (`hjunk_holdsCE`'s
+> `100000·C·k₄³ ≤ 2^{k₄}` and `hfarC_holdsE` via `w_c ≤ (max C 1)·Ω`); both must become tail
+> conditions on `∑_p c_p/p²`.  Build 🟢 9067 jobs; `src/` = the two pre-expedition
+> forbidden-drift `sorry`s, **zero `axiom`s**.
+
 > **Review lap A-review-1 (2026-09-16).**  Campaign A (prime-subset Lambert series, operator
 > override 2026-09-15 23:58) is the live objective; the R/S deformation campaign is banked.
 > In kernel already: Mertens-in-AP (`G4MertensAP`), the subset weight and its closed form
@@ -67,8 +84,8 @@ The September 8 and 13 snapshots below are historical; the live campaign is G4.
 sorry-free proof wing (Becher–Yuhjtman, image-Khinchin, the adder tower, the
 Mahler multiplier chapter) — and the G4 disjunctivity theorem, proved and
 kernel-verified 2026-09-14; the live campaign is now its base-`b` generalization.**
-· **Build**: 🟢 green (9051 jobs) ·
-**Updated**: **review lap A-review-1** · 2026-09-16 · `wip/g5-prime-subset` @ `df78640`+
+· **Build**: 🟢 green (9067 jobs) ·
+**Updated**: **review lap B-review-1** · 2026-09-16 · `wip/g5-prime-subset` @ `4dcfb45`+
 
 ## 🏁 2026-09-15 (entropy **lap 126**): **`IsNormal 2 fullRealW` — THE EXPEDITION'S ENDPOINT, PROVED AND AXIOM-CLEAN**
 
@@ -833,15 +850,22 @@ Burgess/Karatsuba-strength) and `phaseOscillation` (`PrimeLambertOscillation.lea
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-**Objective S (set review lap 166, `DIRECTION.md` → CURRENT DIRECTIVE).**
+**Campaign B — the master additive weight (set review lap B-review-1, `DIRECTION.md` →
+CURRENT DIRECTIVE).**  `w(n) = ∑_{p∣n}(a_p + c_p(v_p(n)−1))`, `c` **unbounded**.
+0. `TWeight.ov_le` relaxed to a per-`d` bound `ovB : ℕ → ℕ` (free — `ovC` is summability-only).
+1. **The crux**: `sum_junk_le` with the coefficients kept *inside* the sum, no uniform `C`.
+   Decisive case = the error term `log₂(N)·∑_{p ≤ √N} c_p`, which must be `o(X)`; that is the
+   growth hypothesis, and `∑_p c_p/p² < ∞` alone does not give it.
+2. Far field without `κ = max C 1`: the §4D split (`ω + frozenExcess_c + junk_c`), the route
+   the `Ω` far field already takes; `max_{p∣P₀} c_p` is finite once the schedule is fixed and
+   `k₄` is chosen afterwards, so `exists_good_k₄` absorbs it.
+3. The headline `isDisjunctive_weight_of_growth`; then the merged `w_{c,S}`
+   (`G4SubsetCWeight` §4D) is the `a = 1_S` instance.
+
+Historical (objective S, review lap 166 — banked, closed):
 1. ✅ lap 166 — DESIGN §0's third escape (grouped sampling) closed at the schedule
-   (`G4GroupedVerdict.lean`).
-2. **The seam**: `two_layers_of_dyadic` *proves* `2 ≤ K′` from the capture budget;
-   `cancelled_union_le` *assumes* it.  Join them at the schedule into one
-   `Sched.budget_confines`, then the grouped analogue on top of item 1.
-3. **The residue**: below `w = 8E + 5` the counting bound is vacuous and nothing exhibits an
-   escaping sampler.  Decide it from the certificate side — the smallest block dimension at
-   which the E0 entropy/volume saving still certifies a block's windows.
+   (`G4GroupedVerdict.lean`); ✅ laps 167–168 — the seam (`Sched.budget_confines`) and the
+   non-vacuity of `InsideCapture` (`Capture.structural_satisfiable`).
 
 Historical (entropy expedition):
 
@@ -918,6 +942,27 @@ No axiom debt to discharge — "completion" here means new nodes/edges, not a
 shrinking ledger.  The two `CFScheduleA` residues are `Prop` nodes as of 2026-09-01.
 
 ## Axiom ledger
+
+**Re-run at review lap B-review-1** (2026-09-16, build 🟢 9067 jobs, HEAD `4dcfb45`).  Real
+`#print axioms` output, all exactly `[propext, Classical.choice, Quot.sound]`:
+
+| headline theorem | paper claim | `#print axioms` shows | verdict |
+|---|---|---|---|
+| `G4.isDisjunctive_base (hb : 3 ≤ b)` | `∑_p 1/(bᵖ−1)` is disjunctive in base `b ≥ 3` — UNCONDITIONAL | trust triple | 🟢 clean; 0 math axioms |
+| `G4.isDisjunctive_residueClass (ha : IsUnit a)` | `∑ₙ ω_S(n)/bⁿ`, `S = {p ≡ a (q)}`, disjunctive, `b ≥ 3` — UNCONDITIONAL | trust triple | 🟢 clean; Mertens-in-AP is a *theorem* here (`G4MertensAP`), not an axiom |
+| `G4.isDisjunctive_residueClass_primeSum` | the same constant as `∑_{p≡a(q)} 1/(bᵖ−1)` | trust triple | 🟢 clean |
+| `G4.isDisjunctive_subsetLambert (hmert)` | any prime set `S` with a Mertens rate | trust triple | 🟢 clean; `MertensRate S c C` is an explicit hypothesis, not an axiom |
+| `G4.SchedB.isDisjunctive_Omega (hb : 3 ≤ b)` | `∑ₙ Ω(n)/bⁿ` disjunctive, `b ≥ 3` — UNCONDITIONAL | trust triple | 🟢 clean |
+| `G4.SchedB.isDisjunctive_Omega_primePowerSum` | the same constant as `∑_{q prime power} 1/(b^q−1)` | trust triple | 🟢 clean |
+| `G4.SchedB.isDisjunctive_weight c C hC (hb)` | every bounded coefficient weight `w_c = ω + excess c`, `b ≥ 3` — UNCONDITIONAL | trust triple | 🟢 clean |
+| `G4.Sched.isNormal_fullRealW` | `IsNormal 2 fullRealW` — UNCONDITIONAL | trust triple | 🟢 clean (banked) |
+
+**Math-axiom count (🟢+🟡+🟠): 0.**  No `axiom` declaration anywhere in `src/`, no
+`native_decide` artifact in any headline cone.  `src/`'s two open `sorry`s
+(`MahlerDriftOne.exists_prime_nonresidue`, `PrimeLambertOscillation.phaseOscillation`) are
+pre-expedition, off-path, forbidden drift, and appear in **no** row above.  There is **no 🔴**:
+every row is an unconditional statement.  Campaign B's target is a strictly stronger theorem,
+not a debt.
 
 **Re-run at review lap 166** (2026-09-15, build 🟢 9041 jobs), all exactly
 `[propext, Classical.choice, Quot.sound]`: `isNormal_fullRealW`,

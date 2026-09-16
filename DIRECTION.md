@@ -57,48 +57,66 @@ skeleton committed, or a proved obstruction written into the DESIGN file.  If th
 neither (i) nor (ii) can be stated, write why and switch to item 4.
 
 
-## CURRENT DIRECTIVE — campaign A, step 3: **close the `e`-schedule and make `isDisjunctive_residueClass` unconditional** (set 2026-09-16, review lap A-review-1)
+## CURRENT DIRECTIVE — **campaign B: the master additive-weight theorem** (set 2026-09-16, review lap B-review-1)
 
-*Altitude-lap section, INSIDE the 2026-09-15 23:58 campaign-A override; it does not amend it.  It
-OUTRANKS every HANDOFF.  It REPLACES the objective-S directive below, whose campaign (R/S, the
-deformation verdict) the campaign-A override superseded.*
+*Altitude-lap section, INSIDE the 2026-09-15 23:58 campaign-A override.  Campaign A's own
+objective and its item 4 are **CLOSED** (see State), so this directive names the successor
+target inside the same weight programme.  It OUTRANKS every HANDOFF.*
 
-**State (verified this lap).**  Build 🟢 9051 jobs.  `src/` carries exactly the two pre-expedition,
-forbidden-drift `sorry`s (`phaseOscillation`, `exists_prime_nonresidue`); **zero `axiom`s**;
-`isDisjunctive_subsetLambert_of_witness` prints `[propext, Classical.choice, Quot.sound]`.
-Campaign A's audit verdict (i) was taken: the cutoff `e` is free, `HypE b K e = Hyp b K + (m₁ ≤ e)
-+ (10⁵·T·e ≤ 2^{m₂})`.  The whole analytic route A–D is weight-generic and the `S`-junk meets the
-same two closed inequalities as the `ω`-junk.
+**State (verified this lap, `lake build` 🟢 9067 jobs).**  `src/` carries exactly the two
+pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**.  Trust-triple clean (`[propext,
+Classical.choice, Quot.sound]`): `isDisjunctive_base`, `isDisjunctive_residueClass`,
+`isDisjunctive_residueClass_primeSum`, `isDisjunctive_subsetLambert`, `isDisjunctive_Omega`,
+`isDisjunctive_Omega_primePowerSum`, `isDisjunctive_weight`, `isNormal_fullRealW`.
+**Campaign A is finished**: the `e`-schedule ladder of the previous directive (items 1–4) landed,
+and so did its item 4 (`isDisjunctive_weight`, every bounded `c`).
 
-🎯 **THE objective: `isDisjunctive_residueClass`, unconditional.**  Everything else in campaign A
-is done or reduces to it.  The ONLY remaining obligation is the `e`-parametrized *schedule
-witness*: the seam between `G4SubsetSchedule.exists_cutoff_subset` (which produces the `e` the
-Mertens-in-AP supply demands) and `ScheduleWitnessS` (which the conditional headline consumes).
+🎯 **THE objective: `w(n) = ∑_{p∣n} (a_p + c_p(v_p(n)−1))` with `c` UNBOUNDED** — the master
+additive weight, of which `ω` (`a=1,c=0`), `Ω` (`a=c=1`), `ω_S` (`a=1_S,c=0`), `w_c` (`c ≤ C`)
+and the merged `w_{c,S}` are all instances.  The route-decisive uncertainty is `c` unbounded:
+the whole `C`-dependence of the closed proof is a *uniform* bound, in exactly two places
+(`hjunk_holdsCE`'s `100000·C·k₄³ ≤ 2^{k₄}`, and `hfarC_holdsE` via
+`weightW_le_kappa_mul_cardFactors : w_c ≤ (max C 1)·Ω`), and both must become **tail conditions
+on `∑_p c_p/p²`**, which is where the new mathematics is.
 
-- 🔨 **Mandated next move, in this order — this is the crux ladder, do not detour.**
-  1. `term_b_leE`, `term_c_leE` in `G4SchedBE.lean` — the two budget terms that consume the
-     **upper** harmonic bound (`sum_inv_smallPrimes_leE`, `3·e + 5`).  Port from
-     `G4SchedBBudget` lines 249–345 under `R→RE e`, `Mc→McE K e`, `m→mE K e`, `Hyp→HypE`.
-     These are the last two of the six budget terms.
-  2. `hbudget_holdsE` — the `HypE` version of `G4SchedBBudget.hbudget_holds`.
-  3. The `e`-version of `G4SchedBAssembly`'s witness construction, with the small primes
-     replaced by `(smallPrimes (RE e) P₀).filter S` in the `δ₃` slot of `ScheduleWitnessS`.
-     **This is the decisive case**: if the `S`-filtered small-prime set cannot be substituted
-     into the assembly without a NEW estimate, that estimate is the real frontier (see trigger).
-  4. `isDisjunctive_subsetLambert` (divergence-rate hypothesis) ⇒ `isDisjunctive_residueClass`
-     via `mertensRate_residueClass`; then the `S = univ` sanity instance must re-derive
-     `isDisjunctive_base`'s statement.
-- 📌 **Leaf rule.**  Compiling skeleton with named `sorry` leaves in `src/` before each hard step.
-  Raising the `src/` sorry count by decomposing THIS crux is progress, not regression.
+- 🔨 **Mandated next move, in this order — the crux ladder, do not detour.**
+  0. **`TWeight.ov_le` relaxation** (cheap, prerequisite; the probe is done): `ovC` is consumed
+     at exactly ONE site, `G4TransportW.summable_corrB` lines 118–121, and *only* for
+     summability — never in a downstream quantitative bound.  Replace `ovC : ℕ` +
+     `|ov d m| ≤ ovC·ω(d)` by a per-`d` bound `ovB : ℕ → ℕ`, `|ov d m| ≤ ovB d`.  Four instances
+     to update (`omega`, `subset`, `cardFactors`, `weight`, `weightS`).  This is what lets
+     `ov_c(d,m) = ∑_{p∣d,p∣m}(1−c_p)` be stated with no uniform `C`.
+  1. **The crux: `sum_junk_le` without a uniform `C`.**  `G4WeightJunk.sum_junk_le` currently
+     pulls `C` out of `∑_{(p,u)} c_p · junkCount`.  The `C`-free form keeps the weights inside:
+     `≤ (X/P₀)·(∑_{p∣P₀} c_p/(p−1) + ∑_{p∤P₀} c_p/(p(p−1))) + log₂(N)·∑_{p ≤ √N} c_p`.
+     **The decisive case** is the *second* error term: it must be `o(X)` — i.e. the growth
+     hypothesis on `c`, not just the convergence of `∑ c_p/p²`.  Name it as a `Prop`, state the
+     sufficient instance (`c_p ≤ A·p^θ`, `θ < 1`), and prove the estimate.
+  2. **Far field without `κ`**: replace `w_c ≤ (max C 1)·Ω` by the §4D split
+     (`ω + frozenExcess_c + junk_c`) — the route the `Ω` far field already takes
+     (`hfar_frozen/junkA/junkB_leSE`).  `max_{p∣P₀} c_p` is a *finite* number once the schedule
+     is fixed, and `k₄` is chosen afterwards, so `exists_good_k₄` absorbs it unchanged.
+  3. **The headline** `isDisjunctive_weight_of_growth`, then the merge `w_{c,S}`
+     (`G4SubsetCWeight` §4D) falls out as the `a = 1_S` instance.
+- 📌 **Leaf rule.**  Compiling skeleton with named `sorry` leaves in `src/` before each hard
+  step.  Raising the `src/` sorry count by decomposing THIS crux is progress, not regression.
 - ⛔ **Forbidden drift**: the two pre-expedition `sorry`s; the Comparator holes; re-opening the
-  R/S deformation campaign (closed, banked); any `native_decide`; any `docs/` essay; any new
-  campaign before item 4 lands.
-- 🚦 **Trigger**: if item 3 needs an estimate that is not `sum_inv_smallPrimes_geE` restricted to
-  `S` (i.e. the filtered set breaks a *non*-Mertens input), name it as a Lean `Prop`, write it
-  into `DESIGN-2026-09-16-prime-subset.md`, and discharge THAT — do not weaken the headline to a
-  second hypothesis without recording why.
+  R/S deformation campaign; **base 2**, which is *proved* dead for this design family
+  (`G4RowMassOptimal.two_pow_le_sum_abs` ⇒ `one_le_rowMass_two`: every line-sum-annihilating
+  integer array has row-ℓ¹ mass `≥ 2^K`, so `rowL1 2 K ≥ 1`); any `native_decide`; any `docs/`
+  essay.
+- 🚦 **Trigger**: if step 1's error term cannot be made `o(X)` for any growth class strictly
+  larger than "bounded" — i.e. if the `∑_{p≤√N} c_p` term is genuinely the binding constraint
+  and it forces `c` bounded — that is a *proved obstruction*: write it into
+  `DESIGN-2026-09-16-prime-subset.md`, fall back to the merge `w_{c,S}` (ladder step 3's second
+  half) as the campaign's headline, and re-rank.
 
 ### Directive history
+* 2026-09-16 review lap B-review-1: campaign A **closed** (`isDisjunctive_residueClass`,
+  `isDisjunctive_Omega`, `isDisjunctive_weight` all unconditional and trust-triple clean);
+  directive re-set to campaign B, the master additive weight with **unbounded** `c`.  Probe
+  result recorded: `TWeight.ovC` is summability-only, so the transport interface is *not* the
+  obstacle.  Base 2 re-confirmed as a machine-checked dead end, not a target.
 * 2026-09-16 review lap A-review-1: campaign-A directive set — the `e`-schedule ladder
   (`term_b_leE`/`term_c_leE` → `hbudget_holdsE` → `e`-assembly with the `S`-filtered small primes
   → `isDisjunctive_residueClass`).  Objective S's directive retired: its campaign was superseded

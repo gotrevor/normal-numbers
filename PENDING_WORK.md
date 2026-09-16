@@ -1,4 +1,34 @@
-# PENDING WORK — campaign A closed through item 4 (2026-09-16 late)
+# PENDING WORK — **campaign B: the master additive weight** (review lap B-review-1, 2026-09-16)
+
+> Campaign A is **closed**; see `DIRECTION.md` → CURRENT DIRECTIVE for the binding orders.
+> Build 🟢 9067 jobs, zero `axiom`s, `src/` = the two pre-expedition forbidden-drift `sorry`s.
+
+## 🎯 Campaign B ladder (the live attack path)
+
+**Target.**  `w_{a,c}(n) = ∑_{p∣n} (a_p + c_p(v_p(n)−1))`, `a` bounded (or `a = 1_S` with
+`∑_{p∈S} 1/p = ∞`), **`c` unbounded**.  Instances: `ω` (`a=1,c=0`), `Ω` (`a=c=1`), `ω_S`,
+`w_c` (`c ≤ C`), `w_{c,S}`.
+
+| # | leaf | status |
+|---|---|---|
+| B0 | `TWeight.ov_le` → per-`d` bound `ovB : ℕ → ℕ` | open — **free**: `ovC` is consumed only by `G4TransportW.summable_corrB` (probe, lap B-review-1), never quantitatively.  5 instances to update. |
+| B1 | **crux** — `sum_junk_le` with the `c_p` kept inside the sum | open — decisive case is the error term `log₂(N)·∑_{p≤√N} c_p = o(X)`; `∑_p c_p/p² < ∞` alone is *not* enough |
+| B2 | far field without `κ = max C 1` | open — take the `Ω` route (`ω + frozenExcess_c + junk_c`), not `w_c ≤ κ·Ω` |
+| B3 | `isDisjunctive_weight_of_growth`, then the merge `w_{c,S}` | open — `G4SubsetCWeight` already has the `TWeight` instance and §4A/B/C |
+
+**Where `C` actually bites** (the complete list, verified lap B-review-1):
+`G4SchedWeight.hjunk_holdsCE` (`100000·C·k₄³ ≤ 2^{k₄}`) and `G4SchedWeight.hfarC_holdsE` via
+`G4WeightJunkAvg.weightW_le_kappa_mul_cardFactors : w_c ≤ (max C 1)·Ω`.  Nowhere else.
+
+**Proved obstruction, do not re-derive.**  Base 2 is dead for this design family:
+`G4RowMassOptimal.two_pow_le_sum_abs` (every integer array with vanishing line sums in all `K`
+directions has `∑|μ| ≥ 2^K`) ⇒ `rowL1_le_rowMass` ⇒ `one_le_rowMass_two`.  The only named
+escape is signed cancellation in the `p > Y` range — a two-point-correlation input this
+programme excludes.
+
+---
+
+## Archive of campaign A's closing state (2026-09-16 late)
 
 ## Closed, unconditional, axiom-clean
 
