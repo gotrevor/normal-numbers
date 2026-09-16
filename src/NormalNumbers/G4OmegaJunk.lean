@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.G4OmegaRemainder
 import NormalNumbers.G4MediumPrimes
+import NormalNumbers.G4FarTail
 
 /-!
 # `junkAvgΩ` — the one genuinely new §4D estimate for `Ω`
@@ -159,5 +160,48 @@ theorem junkAvgΩ_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
   have hr : ((Finset.univ : Finset (Fin G.rDim)).card : ℝ) = G.rDim := by simp
   rw [← hr]
   exact avg_le_of_forall_le _ _ (mul_nonneg hB0 (rowL1_nonneg hbr G.K)) fun ν _ => hrow ν
+
+/-! ### `bigAvgΩ`: literally the `ω` estimate -/
+
+lemma bigAvgΩ_eq_bigAvg (bb : ℕ) (G : GridParams) (X R : ℕ) :
+    bigAvgΩ bb G X R = bigAvg bb G X R := rfl
+
+/-- **`bigAvgΩ` in closed form** — the same RHS as `bigAvg_le'`: the large-prime block of `Ω`
+*is* the large-prime block of `ω` (the valuation excess was split off into the junk). -/
+theorem bigAvgΩ_le' (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X R Y : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty)
+    (hK : 0 < G.K) (hR : 2 ≤ R) (hRY : R ≤ Y) {Mx : ℝ} (hMx1 : 1 ≤ Mx)
+    (hMx : ∀ n ∈ apSample X G.P₀ G.b₀, ∀ i : G.Idx,
+      ((n + shiftAL G.B G.Q G.D₀ i : ℕ) : ℝ) ≤ Mx) :
+    bigAvgΩ bb G X R
+      ≤ Real.sqrt (4 * (1 + Real.log (Nat.log 2 Y) - Real.log (Nat.log 2 R)) * rowL2 bb G.K
+          + 2 * (Y : ℝ) ^ 2 * (rowL1 bb G.K) ^ 2 / (apSample X G.P₀ G.b₀).card)
+        + (Real.log Mx / Real.log Y) * rowL1 bb G.K := by
+  rw [bigAvgΩ_eq_bigAvg]
+  exact bigAvg_le' bb hbb G X R Y hne hK hR hRY hMx1 hMx
+
+/-! ### The AP-mean of `Ω` — the far-tail input
+
+`Ω` is **not** controlled by `log d(m)` (the inequality `2^{Ω} ≥ d` goes the wrong way), and the
+pointwise bound `Ω(m) ≤ log₂ m` costs a `log X` the schedule cannot pay.  The working route is the
+same split as §4D: `Ω = ω + frozenExcess + junk`, where the frozen part is bounded by `Ω(P₀)` and
+the junk by `junkShiftBound`. -/
+
+/-- The frozen excess at `c ≡ 1` never exceeds `Ω(P₀)`. -/
+lemma frozenExcess_one_le {P₀ : ℕ} (hP₀ : P₀ ≠ 0) (m : ℕ) :
+    frozenExcess (fun _ => (1 : ℕ)) P₀ m ≤ ((ArithmeticFunction.cardFactors P₀ : ℕ) : ℝ) := by
+  sorry
+
+/-- **The AP-mean of `Ω` at layer `j`** — the `ω` bound plus the two `Ω`-specific costs. -/
+theorem sum_cardFactors_shiftG_le (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) (hP₀ : 0 < G.P₀)
+    {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) (α : G.Atom) {j : ℕ} (hj : 1 ≤ j) :
+    ∑ n ∈ apSample X G.P₀ G.b₀,
+        ((ArithmeticFunction.cardFactors (n + shiftG G.B G.Q G.D₀ α j) : ℕ) : ℝ)
+      ≤ (apSample X G.P₀ G.b₀).card *
+            ((farC G X Dm + 2 * j) / Real.log 2
+              + ((ArithmeticFunction.cardFactors G.P₀ : ℕ) : ℝ))
+          + junkShiftBound G.P₀ X (j * Dm) := by
+  sorry
 
 end NormalNumbers.G4
