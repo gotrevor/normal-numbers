@@ -234,13 +234,13 @@ theorem hitting_8_1_eleven : Literature.IsHittingSet 8 1 {2, 4, 7, 11, 13, 14, 1
     simp only [chansOfW, List.mem_map] at hch
     obtain ⟨a, _, rfl⟩ := hch
     exact hv c hc
-  obtain ⟨d, rfl⟩ : ∃ d, w = [d] := by
-    rcases w with _ | ⟨d, _ | ⟨e, t⟩⟩ <;> simp at hw
-    exact ⟨d, rfl⟩
-  have hd' : d < 8 := hd d (by simp)
-  have key : ∃ ch ∈ chansOfW h81ms [d],
+  obtain ⟨d0, rfl⟩ : ∃ d0, w = [d0] := by
+    rcases w with _ | ⟨d0, _ | ⟨z, t⟩⟩ <;> simp at hw
+    exact ⟨d0, rfl⟩
+  have hltd0 : d0 < 8 := hd d0 (by simp)
+  have key : ∃ ch ∈ chansOfW h81ms [d0],
       ∀ N, ∃ n, N ≤ n ∧ OccursAt 8 (ch.a * α) ch.word n := by
-    interval_cases d
+    interval_cases d0
     · exact signed_engine_g_single_reduced 8 (by norm_num) (chansOfW h81ms [0])
         h81Lget h81idx h81w0_cert α hα (hpos _) (hell _ rfl) (hword _ (by decide))
         (fun m => (h81_sec α [0] rfl m).2)
