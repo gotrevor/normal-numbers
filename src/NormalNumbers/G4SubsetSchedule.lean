@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.G4MertensAP
+import NormalNumbers.G4ScheduleHarmonic
 
 /-!
 # Campaign A, step A3: from a Mertens rate to a schedule-admissible cutoff exponent
@@ -96,5 +97,52 @@ theorem exists_exponent {c C : ℝ} (h : MertensRate S c C) (M : ℝ) :
       have : (0 : ℝ) ≤ max 0 t := le_max_left _ _
       push_cast
       linarith
+
+/-! ### The schedule-side statement
+
+`G4SchedBBudget.main_term_le` consumes `∑ p ∈ smallPrimes R P₀, 1/p ≥ …`.  In the subset world
+the sum runs over `smallPrimes R P₀` intersected with `S`, and the only loss relative to
+`sumInvPrimesIn S (R+1)` is the frozen primes dividing `P₀` — already bounded by
+`Sched.sum_inv_excluded_le` (`≤ 21K² + 2`), *uniformly in `S`* because dropping primes only
+decreases the excluded sum.  This is the promised monotonicity: junk only shrinks. -/
+
+open NormalNumbers.PrimeLambert GridParams in
+/-- **The subset lower bound at the schedule's small-prime set.**  Everything the base proof
+needs, with `S` inserted: the `S`-Mertens sum below the cutoff, minus the frozen primes. -/
+theorem sum_inv_smallPrimes_subset_ge {K : ℕ} (hK : 100 ≤ K) (R : ℕ) :
+    sumInvPrimesIn S (R + 1) - (21 * (K : ℝ) ^ 2 + 2)
+      ≤ ∑ p ∈ {p ∈ smallPrimes R (gridOf K (Sched.N K) (by omega)).P₀ | S p}, (p : ℝ)⁻¹ := by
+  classical
+  set P₀ := (gridOf K (Sched.N K) (by omega : 1 ≤ K)).P₀ with hP₀
+  have hsplit : sumInvPrimesIn S (R + 1)
+      = (∑ p ∈ {p ∈ (R + 1).primesBelow | S p ∧ ¬ p ∣ P₀}, (p : ℝ)⁻¹)
+        + ∑ p ∈ {p ∈ (R + 1).primesBelow | S p ∧ p ∣ P₀}, (p : ℝ)⁻¹ := by
+    rw [sumInvPrimesIn]
+    rw [← Finset.sum_filter_add_sum_filter_not {p ∈ (R + 1).primesBelow | S p} (fun p => ¬ p ∣ P₀)]
+    congr 1
+    · apply Finset.sum_congr _ (fun _ _ => rfl)
+      ext p
+      simp only [Finset.mem_filter]
+      tauto
+    · apply Finset.sum_congr _ (fun _ _ => rfl)
+      ext p
+      simp only [Finset.mem_filter, not_not]
+      tauto
+  have hfirst : ∑ p ∈ {p ∈ (R + 1).primesBelow | S p ∧ ¬ p ∣ P₀}, (p : ℝ)⁻¹
+      = ∑ p ∈ {p ∈ smallPrimes R P₀ | S p}, (p : ℝ)⁻¹ := by
+    apply Finset.sum_congr _ (fun _ _ => rfl)
+    ext p
+    simp only [Finset.mem_filter, smallPrimes]
+    tauto
+  have hsecond : ∑ p ∈ {p ∈ (R + 1).primesBelow | S p ∧ p ∣ P₀}, (p : ℝ)⁻¹
+      ≤ ∑ p ∈ {p ∈ (R + 1).primesBelow | p ∣ P₀}, (p : ℝ)⁻¹ := by
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun p _ _ => by positivity)
+    intro p hp
+    simp only [Finset.mem_filter] at hp ⊢
+    exact ⟨hp.1, hp.2.2⟩
+  have hexcl := Sched.sum_inv_excluded_le hK R
+  rw [hsplit, hfirst]
+  rw [hP₀] at hsecond
+  linarith [hsecond, hexcl]
 
 end NormalNumbers.G4.MertensAP
