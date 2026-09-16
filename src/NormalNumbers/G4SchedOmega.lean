@@ -263,6 +263,50 @@ theorem junk_size_holdsE (h : HypE b K e) :
     Nat.mul_le_mul_right _ (by norm_num)
   exact Nat.mul_le_mul h2 (Nat.mul_le_mul_left _ h1)
 
+/-! ### Power-of-two bookkeeping for the far pieces -/
+
+lemma eight_mul_le_two_pow : ∀ {K : ℕ}, 8 ≤ K → 8 * K ≤ 2 ^ K := by
+  intro K
+  induction K with
+  | zero => intro h; omega
+  | succ n ih =>
+      intro h
+      rcases Nat.lt_or_ge n 8 with hn | hn
+      · have : n = 7 := by omega
+        subst this
+        norm_num
+      · have := ih hn
+        have : 2 ^ (n + 1) = 2 * 2 ^ n := by ring
+        omega
+
+lemma half_pow_mul_two_pow {m c : ℕ} (h : c ≤ m) :
+    ((1 : ℝ) / 2) ^ m * (2 : ℝ) ^ c = ((1 : ℝ) / 2) ^ (m - c) := by
+  have hm : m = (m - c) + c := by omega
+  rw [hm, pow_add]
+  have : ((1 : ℝ) / 2) ^ c * (2 : ℝ) ^ c = 1 := by
+    rw [← mul_pow]
+    norm_num
+  rw [show ((1 : ℝ) / 2) ^ (m - c + c - c) = ((1:ℝ)/2) ^ (m - c) by congr 1; omega]
+  nlinarith [this, (by positivity : (0:ℝ) < ((1:ℝ)/2) ^ (m - c))]
+
+/-- The target shape: `(1/2)^D ≤ (1/8)·(1/K)·2^{−k₄}` once `D ≥ k₄ + K`. -/
+lemma half_pow_le_target {K k₄ D : ℕ} (hK : 100 ≤ K) (hD : k₄ + K ≤ D) :
+    ((1 : ℝ) / 2) ^ D ≤ (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
+  have hKr : (0 : ℝ) < K := by positivity
+  have hKr' : (100 : ℝ) ≤ K := by exact_mod_cast hK
+  have h8 : 8 * K ≤ 2 ^ K := eight_mul_le_two_pow (by omega)
+  have h8r : (8 : ℝ) * K ≤ (2 : ℝ) ^ K := by exact_mod_cast h8
+  have hsplit : ((1 : ℝ) / 2) ^ D ≤ ((1 : ℝ) / 2) ^ (k₄ + K) :=
+    pow_le_pow_of_le_one (by norm_num) (by norm_num) hD
+  have hKpow : ((1 : ℝ) / 2) ^ K ≤ 1 / (8 * K) := by
+    rw [one_div_pow, div_le_div_iff₀ (by positivity) (by positivity)]
+    linarith
+  calc ((1 : ℝ) / 2) ^ D ≤ ((1 : ℝ) / 2) ^ (k₄ + K) := hsplit
+    _ = ((1 : ℝ) / 2) ^ k₄ * ((1 : ℝ) / 2) ^ K := by rw [pow_add]
+    _ ≤ ((1 : ℝ) / 2) ^ k₄ * (1 / (8 * K)) := by
+        exact mul_le_mul_of_nonneg_left hKpow (by positivity)
+    _ = (1 / 8 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by field_simp
+
 /-- `log ω(P₀) ≤ 15K²`. -/
 theorem log_card_primeFactors_P₀_leE (h : HypE b K e) :
     Real.log (((gridOf K (N K) h.hK1).P₀.primeFactors.card : ℕ) : ℝ) ≤ 15 * (K : ℝ) ^ 2 := by
