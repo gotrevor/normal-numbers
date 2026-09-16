@@ -91,27 +91,29 @@ theorem blockSum_weightC_split (bb : ℕ) (G : GridParams) (R : ℕ) (n : ℕ)
 
 /-! ### `Ffull` for `Ω`, fully decomposed -/
 
-theorem gridFrameW_weightC_Ffull_decomp (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
+theorem gridFrameW_weightC_Ffull_decomp (W : TWeight)
+    (hW : ∀ m : ℕ, ((W.wN m : ℕ) : ℝ) = weightW c m) (bb : ℕ)
+    (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (R : ℕ)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) {n : ℕ} (hn : n ∈ apSample X G.P₀ G.b₀)
     (ν : Fin G.rDim) :
-    (gridFrameW (TWeight.weight c C hC) bb hbb G X hne (smallPrimes R G.P₀)
+    (gridFrameW (W) bb hbb G X hne (smallPrimes R G.P₀)
         (frozenGammaC c bb G) hη hε D).Ffull n ν
       = (((Sval bb (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν)
           + blockSum bb G (fun m => ((omegaBig R G.P₀ m : ℕ) : ℝ)) n (G.rowEquiv.symm ν)
           + blockSum bb G (junk c G.P₀) n (G.rowEquiv.symm ν)
-          + farPartW (TWeight.weight c C hC) bb G n (G.rowEquiv.symm ν) : ℝ)) : UnitAddCircle) := by
-  have hw : (fun m => ((TWeight.weight c C hC).wN m : ℝ)) = fun m => weightW c m :=
-    funext fun m => TWeight.weight_wN c C hC m
-  rw [gridFrameW_Ffull_eq (TWeight.weight c C hC) bb hbb G X hne _ _ hη hε D hn ν,
-    tailFrom_splitW (TWeight.weight c C hC) bb hbb G X hne _ _ hη hε D hn ν, hw,
+          + farPartW (W) bb G n (G.rowEquiv.symm ν) : ℝ)) : UnitAddCircle) := by
+  have hw : (fun m => ((W).wN m : ℝ)) = fun m => weightW c m :=
+    funext fun m => hW m
+  rw [gridFrameW_Ffull_eq (W) bb hbb G X hne _ _ hη hε D hn ν,
+    tailFrom_splitW (W) bb hbb G X hne _ _ hη hε D hn ν, hw,
     blockSum_weightC_split c bb G R n (G.rowEquiv.symm ν),
     blockSum_frozenC_eq c bb G hn (G.rowEquiv.symm ν)]
   show (((frozenTranslateC c bb G ν
       + Sval bb (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n (G.rowEquiv.symm ν)
       + blockSum bb G (fun m => ((omegaBig R G.P₀ m : ℕ) : ℝ)) n (G.rowEquiv.symm ν)
       + blockSum bb G (junk c G.P₀) n (G.rowEquiv.symm ν)
-      + farPartW (TWeight.weight c C hC) bb G n (G.rowEquiv.symm ν) : ℝ)) : UnitAddCircle)
+      + farPartW (W) bb G n (G.rowEquiv.symm ν) : ℝ)) : UnitAddCircle)
       - ((frozenTranslateC c bb G ν : ℝ) : UnitAddCircle) = _
   rw [← QuotientAddGroup.mk_sub]
   congr 1
@@ -132,22 +134,24 @@ noncomputable def junkAvgC (bb : ℕ) (G : GridParams) (X : ℕ) : ℝ :=
       |blockSum bb G (junk c G.P₀) n (G.rowEquiv.symm ν)|
 
 /-- The far-tail average for `Ω`. -/
-noncomputable def farAvgC (bb : ℕ) (G : GridParams) (X : ℕ) : ℝ :=
+noncomputable def farAvgW (W : TWeight) (bb : ℕ) (G : GridParams) (X : ℕ) : ℝ :=
   ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
     (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-      |farPartW (TWeight.weight c C hC) bb G n (G.rowEquiv.symm ν)|
+      |farPartW (W) bb G n (G.rowEquiv.symm ν)|
 
 /-- **`PropD` for `Ω`**, reduced to three arithmetic estimates. -/
-theorem gridFrameW_weightC_propD (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
+theorem gridFrameW_weightC_propD (W : TWeight)
+    (hW : ∀ m : ℕ, ((W.wN m : ℕ) : ℝ) = weightW c m) (bb : ℕ)
+    (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (R : ℕ)
     {η ε : ℝ} (hη : 0 < η) (hε : 0 < ε) (D : ℕ) {δbig δjunk δfar : ℝ}
     (hbig : bigAvgC bb G X R ≤ δbig * (ε * η))
     (hjunk : junkAvgC c bb G X ≤ δjunk * (ε * η))
-    (hfar : farAvgC c C hC bb G X ≤ δfar * (ε * η)) :
-    (gridFrameW (TWeight.weight c C hC) bb hbb G X hne (smallPrimes R G.P₀)
+    (hfar : farAvgW W bb G X ≤ δfar * (ε * η)) :
+    (gridFrameW (W) bb hbb G X hne (smallPrimes R G.P₀)
       (frozenGammaC c bb G) hη hε D).PropD (δbig + δjunk + δfar) := by
   classical
-  set fr := gridFrameW (TWeight.weight c C hC) bb hbb G X hne (smallPrimes R G.P₀)
+  set fr := gridFrameW (W) bb hbb G X hne (smallPrimes R G.P₀)
     (frozenGammaC c bb G) hη hε D with hfr
   have hcard : (0 : ℝ) ≤ ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ := by positivity
   have hstep : ∀ n ∈ apSample X G.P₀ G.b₀, dAv (fr.S n) (fr.Ffull n)
@@ -156,14 +160,14 @@ theorem gridFrameW_weightC_propD (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X
         + ((G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
             |blockSum bb G (junk c G.P₀) n (G.rowEquiv.symm ν)|
           + (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-            |farPartW (TWeight.weight c C hC) bb G n (G.rowEquiv.symm ν)|) := by
+            |farPartW (W) bb G n (G.rowEquiv.symm ν)|) := by
     intro n hn
     have hpt : ∀ ν : Fin G.rDim, dist (fr.S n ν) (fr.Ffull n ν)
         ≤ |blockSum bb G (fun m => ((omegaBig R G.P₀ m : ℕ) : ℝ)) n (G.rowEquiv.symm ν)|
           + (|blockSum bb G (junk c G.P₀) n (G.rowEquiv.symm ν)|
-            + |farPartW (TWeight.weight c C hC) bb G n (G.rowEquiv.symm ν)|) := by
+            + |farPartW (W) bb G n (G.rowEquiv.symm ν)|) := by
       intro ν
-      rw [gridFrameW_weightC_Ffull_decomp c C hC bb hbb G X hne R hη hε D hn ν]
+      rw [gridFrameW_weightC_Ffull_decomp c W hW bb hbb G X hne R hη hε D hn ν]
       refine (dist_coe_le' _ _).trans ?_
       have hrw : Sval bb (smallPrimes R G.P₀) (shiftAL G.B G.Q G.D₀ (N := G.N)) n
               (G.rowEquiv.symm ν)
@@ -171,10 +175,10 @@ theorem gridFrameW_weightC_propD (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X
               (G.rowEquiv.symm ν)
             + blockSum bb G (fun m => ((omegaBig R G.P₀ m : ℕ) : ℝ)) n (G.rowEquiv.symm ν)
             + blockSum bb G (junk c G.P₀) n (G.rowEquiv.symm ν)
-            + farPartW (TWeight.weight c C hC) bb G n (G.rowEquiv.symm ν))
+            + farPartW (W) bb G n (G.rowEquiv.symm ν))
           = -(blockSum bb G (fun m => ((omegaBig R G.P₀ m : ℕ) : ℝ)) n (G.rowEquiv.symm ν)
               + (blockSum bb G (junk c G.P₀) n (G.rowEquiv.symm ν)
-                + farPartW (TWeight.weight c C hC) bb G n (G.rowEquiv.symm ν))) := by ring
+                + farPartW (W) bb G n (G.rowEquiv.symm ν))) := by ring
       rw [hrw, abs_neg]
       exact (abs_add_le _ _).trans (by gcongr; exact abs_add_le _ _)
     calc dAv (fr.S n) (fr.Ffull n)
@@ -182,7 +186,7 @@ theorem gridFrameW_weightC_propD (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X
       _ ≤ (∑ ν : Fin G.rDim,
             (|blockSum bb G (fun m => ((omegaBig R G.P₀ m : ℕ) : ℝ)) n (G.rowEquiv.symm ν)|
               + (|blockSum bb G (junk c G.P₀) n (G.rowEquiv.symm ν)|
-                + |farPartW (TWeight.weight c C hC) bb G n (G.rowEquiv.symm ν)|)))
+                + |farPartW (W) bb G n (G.rowEquiv.symm ν)|)))
             / (G.rDim : ℝ) := by
             gcongr with ν
             exact hpt ν
@@ -201,10 +205,10 @@ theorem gridFrameW_weightC_propD (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X
             + ((G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
                 |blockSum bb G (junk c G.P₀) n (G.rowEquiv.symm ν)|
               + (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
-                |farPartW (TWeight.weight c C hC) bb G n (G.rowEquiv.symm ν)|)) :=
+                |farPartW (W) bb G n (G.rowEquiv.symm ν)|)) :=
         mul_le_mul_of_nonneg_left (Finset.sum_le_sum hstep) hcard
-    _ = bigAvgC bb G X R + (junkAvgC c bb G X + farAvgC c C hC bb G X) := by
-        unfold bigAvgC junkAvgC farAvgC
+    _ = bigAvgC bb G X R + (junkAvgC c bb G X + farAvgW W bb G X) := by
+        unfold bigAvgC junkAvgC farAvgW
         rw [Finset.sum_add_distrib, Finset.sum_add_distrib]
         ring
     _ ≤ δbig * (ε * η) + (δjunk * (ε * η) + δfar * (ε * η)) :=

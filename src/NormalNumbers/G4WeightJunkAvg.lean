@@ -257,7 +257,7 @@ theorem sum_abs_farPartC_le (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : �
 theorem farAvgC_le (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : ℕ)
     (hne : (apSample X G.P₀ G.b₀).Nonempty) (hP₀ : 0 < G.P₀)
     {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) :
-    farAvgC c C hC bb G X
+    farAvgW (TWeight.weight c C hC) bb G X
       ≤ ((max C 1 : ℕ) : ℝ) * ((2 : ℝ) ^ G.K *
           ((farBound bb (G.K + G.N) (farC G X Dm) / Real.log 2
               + ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (bb : ℝ)) ^ (G.K + G.N + 1) * (bb / (bb - 1))))
@@ -301,7 +301,7 @@ theorem farAvgC_le (bb : ℕ) (hbb : 3 ≤ bb) (G : GridParams) (X : ℕ)
               + farJunkBound bb (G.K + G.N) (junkA G.P₀ X) (junkB X Dm)))) :=
           mul_le_mul_of_nonneg_left h (by positivity)
       _ = Bd := by rw [hBd]; field_simp
-  unfold farAvgC
+  unfold farAvgW
   rw [← hP]
   have hswap : (P.card : ℝ)⁻¹ * ∑ n ∈ P, (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
         |farPartW (TWeight.weight c C hC) bb G n (G.rowEquiv.symm ν)|
@@ -341,7 +341,7 @@ theorem gridFrameW_weightC_propD_of_bounds (bb : ℕ) (hbb : 3 ≤ bb) (G : Grid
               / ((apSample X G.P₀ G.b₀).card : ℝ))) ≤ δfar * (ε * η)) :
     (gridFrameW (TWeight.weight c C hC) bb (by omega) G X hne (smallPrimes R G.P₀)
       (frozenGammaC c bb G) hη hε D).PropD (δbig + δjunk + δfar) :=
-  gridFrameW_weightC_propD c C hC bb (by omega) G X hne R hη hε D
+  gridFrameW_weightC_propD c (TWeight.weight c C hC) (TWeight.weight_wN c C hC) bb (by omega) G X hne R hη hε D
     ((bigAvgC_le' bb (by omega) G X R Y hne hK hR hRY hMx1 hMx).trans hbig)
     ((junkAvgC_le c C hC bb (by omega) G X hne hP₀ hρm).trans hjunk)
     ((farAvgC_le c C hC bb hbb G X hne hP₀ hDm).trans hfar)
