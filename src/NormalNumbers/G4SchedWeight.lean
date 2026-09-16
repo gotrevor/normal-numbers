@@ -413,6 +413,71 @@ theorem hfar_holdsSE {b K k₄ e : ℕ} (hK4 : K = 4 * k₄) (h : HypE b K e) :
 
 
 
+/-! ### The assembled far field for `w_c` -/
+
+theorem hfarC_holdsE {k₄ κ : ℕ} (hK4 : K = 4 * k₄) (hκ : κ ≤ 2 ^ k₄) (h : HypE b K e) :
+    (κ : ℝ) * ((2 : ℝ) ^ K *
+        ((farBound b (K + N K) (farC (gridOf K (N K) h.hK1) (XE K e) (gridDm K (N K)))
+              / Real.log 2
+            + ((Ω (gridOf K (N K) h.hK1).P₀ : ℕ) : ℝ)
+                * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))))
+          + farJunkBound b (K + N K) (junkA (gridOf K (N K) h.hK1).P₀ (XE K e))
+              (junkB (XE K e) (gridDm K (N K)))
+              / ((apSample (XE K e) (gridOf K (N K) h.hK1).P₀
+                  (gridOf K (N K) h.hK1).b₀).card : ℝ)))
+      ≤ (11 / 64 : ℝ) * ((1 / K : ℝ) * (1 / 2 : ℝ) ^ k₄) := by
+  set G := gridOf K (N K) h.hK1 with hG
+  set c : ℝ := ((apSample (XE K e) G.P₀ G.b₀).card : ℝ) with hc
+  set A := junkA G.P₀ (XE K e) with hA
+  set B := junkB (XE K e) (gridDm K (N K)) with hB
+  have h1 := hfar_holdsSE hK4 h
+  have h2 := hfar_frozen_leSE hK4 h
+  have h3 := hfar_junkA_leSE hK4 h
+  have h4 := hfar_junkB_leSE hK4 h
+  have hfj : farJunkBound b (K + N K) A B / c
+      = (A / c) * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1)))
+        + (B / c) * ((2 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 2))) := by
+    unfold farJunkBound
+    ring
+  have hexpand : (2 : ℝ) ^ K *
+      ((farBound b (K + N K) (farC G (XE K e) (gridDm K (N K))) / Real.log 2
+          + ((Ω G.P₀ : ℕ) : ℝ) * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))))
+        + farJunkBound b (K + N K) A B / c)
+      = ((2 : ℝ) ^ K / Real.log 2 * farBound b (K + N K) (farC G (XE K e) (gridDm K (N K)))
+          + (2 : ℝ) ^ K * (((Ω G.P₀ : ℕ) : ℝ)
+              * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1)))))
+        + ((2 : ℝ) ^ K * ((A / c) * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))))
+          + (2 : ℝ) ^ K * ((B / c)
+              * ((2 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 2))))) := by
+    rw [hfj]
+    ring
+  rw [hexpand]
+  -- the four pieces sum to the target times the spare factor `a`
+  set a : ℝ := (1 / 2 : ℝ) ^ k₄ with ha
+  have ha0 : 0 < a := by positivity
+  have hK := h.base.hK
+  have hKr : (100 : ℝ) ≤ K := by exact_mod_cast hK
+  set T : ℝ := (11 / 64 : ℝ) * ((1 / K : ℝ) * a) with hT
+  have hT0 : 0 ≤ T := by rw [hT]; positivity
+  set S : ℝ := ((2 : ℝ) ^ K / Real.log 2 * farBound b (K + N K) (farC G (XE K e) (gridDm K (N K)))
+      + (2 : ℝ) ^ K * (((Ω G.P₀ : ℕ) : ℝ)
+          * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1)))))
+    + ((2 : ℝ) ^ K * ((A / c) * ((1 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 1))))
+      + (2 : ℝ) ^ K * ((B / c)
+          * ((2 / (b : ℝ)) ^ (K + N K + 1) * ((b : ℝ) / ((b : ℝ) - 2))))) with hS
+  have hSle : S ≤ T * a := by rw [hS, hT, ha] at *; linarith
+  have hκr : (κ : ℝ) ≤ (2 : ℝ) ^ k₄ := by exact_mod_cast hκ
+  have hκ0 : (0 : ℝ) ≤ (κ : ℝ) := by positivity
+  have hainv : (κ : ℝ) * a ≤ 1 := by
+    have : a = 1 / (2 : ℝ) ^ k₄ := by rw [ha, one_div_pow]
+    rw [this, mul_one_div, div_le_one (by positivity)]
+    exact hκr
+  calc (κ : ℝ) * S ≤ (κ : ℝ) * (T * a) := mul_le_mul_of_nonneg_left hSle hκ0
+    _ = ((κ : ℝ) * a) * T := by ring
+    _ ≤ 1 * T := mul_le_mul_of_nonneg_right hainv hT0
+    _ = T := by ring
+
+
 end SchedB
 
 end NormalNumbers.G4
