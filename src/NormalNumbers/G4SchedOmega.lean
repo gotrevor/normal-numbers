@@ -100,4 +100,35 @@ theorem sum_inv_sub_one_primeFactors_le_log (N : ℕ) :
     ∑ p ∈ N.primeFactors, 1 / ((p : ℝ) - 1) ≤ 1 + Real.log (N.primeFactors.card) :=
   (sum_inv_sub_one_primeFactors_le N).trans (harmonic_le_one_add_log _)
 
+/-! ### The junk bound divided by the sample size -/
+
+/-- **`junkShiftBound / |P|` in two clean pieces.**  The frozen piece is `log log`-size; the
+`√X` piece carries the `P₀/√X` factor that the free cutoff `e` makes arbitrarily small. -/
+theorem junkShiftBound_div_le {P₀ X ρmax : ℕ} (hP₀ : 0 < P₀) (hX : 0 < X) {c : ℝ} (hc : 0 < c)
+    (hcard : (X : ℝ) / (2 * P₀) ≤ c) :
+    junkShiftBound P₀ X ρmax / c
+      ≤ 2 * (2 + Real.log (P₀.primeFactors.card))
+        + (2 * P₀ / X) * (((Nat.sqrt (X + ρmax) + 1) * Nat.log 2 (X + ρmax) : ℕ) : ℝ) := by
+  have hP₀r : (0 : ℝ) < P₀ := by exact_mod_cast hP₀
+  have hXr : (0 : ℝ) < X := by exact_mod_cast hX
+  have hinv : 1 / c ≤ 2 * P₀ / X := by
+    rw [div_le_div_iff₀ hc (by positivity)]
+    have : (X : ℝ) / (2 * P₀) * (2 * P₀) ≤ c * (2 * P₀) := by
+      exact mul_le_mul_of_nonneg_right hcard (by positivity)
+    rw [div_mul_cancel₀ _ (by positivity : (2 * (P₀ : ℝ)) ≠ 0)] at this
+    linarith
+  have hjb0 : 0 ≤ junkShiftBound P₀ X ρmax := junkShiftBound_nonneg _ _ _
+  have hstep : junkShiftBound P₀ X ρmax / c ≤ junkShiftBound P₀ X ρmax * (2 * P₀ / X) := by
+    rw [div_eq_mul_one_div]
+    exact mul_le_mul_of_nonneg_left hinv hjb0
+  have hexp : junkShiftBound P₀ X ρmax * (2 * P₀ / X)
+      = ((X : ℝ) / P₀ * (2 * P₀ / X)) * (∑ p ∈ P₀.primeFactors, 1 / ((p : ℝ) - 1) + 1)
+        + (2 * P₀ / X) * (((Nat.sqrt (X + ρmax) + 1) * Nat.log 2 (X + ρmax) : ℕ) : ℝ) := by
+    unfold junkShiftBound
+    ring
+  have he : (X : ℝ) / P₀ * (2 * P₀ / X) = 2 := by field_simp
+  have hT := sum_inv_sub_one_primeFactors_le_log P₀
+  rw [hexp, he] at hstep
+  linarith
+
 end NormalNumbers.G4
