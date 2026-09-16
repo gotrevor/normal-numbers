@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.G4MediumPrimes
 import NormalNumbers.G4RemainderW
+import NormalNumbers.G4FarTail
 
 /-!
 # The §4D junk estimates for a sub-family of the medium primes
@@ -216,5 +217,121 @@ theorem bigAvgS_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X R Y : ℕ)
           rw [← hr]
           refine avg_le_of_forall_le _ _ hC fun ν _ => ?_
           exact abs_blockSum_omegaVLS_le S bb hbb G hY hMx1 (hMx n hn) _
+
+/-! ### The far tail for `ω_S` -/
+
+/-- The `S`-far tail of one row, summed over the sample: the same bound as for `ω`, because
+`ω_S ≤ ω` pointwise. -/
+theorem sum_abs_farPartW_subset_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty)
+    {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) (a : Fin G.K → Fin G.s) :
+    ∑ n ∈ apSample X G.P₀ G.b₀, |farPartW (TWeight.subset S) bb G n a|
+      ≤ (apSample X G.P₀ G.b₀).card * ((2 : ℝ) ^ G.K / Real.log 2
+          * farBound bb (G.K + G.N) (farC G X Dm)) := by
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
+  set P := apSample X G.P₀ G.b₀ with hP
+  set J := G.K + G.N with hJ
+  set C := farC G X Dm with hC
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  set f : G.Atom → ℕ → ℕ → ℝ := fun α n i =>
+    omegaR (n + shiftG G.B G.Q G.D₀ α (J + i + 1)) / (bb : ℝ) ^ (J + i + 1) with hf
+  set g : G.Atom → ℕ → ℕ → ℝ := fun α n i =>
+    ((TWeight.subset S).wN (n + shiftG G.B G.Q G.D₀ α (J + i + 1)) : ℝ)
+      / (bb : ℝ) ^ (J + i + 1) with hg
+  have hf0 : ∀ α n i, 0 ≤ f α n i := fun α n i => by
+    simp only [hf]; exact div_nonneg (omegaR_nonneg _) (by positivity)
+  have hg0 : ∀ α n i, 0 ≤ g α n i := fun α n i => by
+    simp only [hg]; positivity
+  have hgf : ∀ α n i, g α n i ≤ f α n i := by
+    intro α n i
+    simp only [hg, hf]
+    have h := omegaS_le_omegaR (S := S) (n + shiftG G.B G.Q G.D₀ α (J + i + 1))
+    rw [TWeight.subset_wN]
+    exact div_le_div_of_nonneg_right h (by positivity)
+  have hfs : ∀ α, ∀ n ∈ P, Summable (f α n) := fun α n hn => summable_far bb hbb G hn α
+  have hgs : ∀ α, ∀ n ∈ P, Summable (g α n) := fun α n hn =>
+    Summable.of_nonneg_of_le (fun i => hg0 α n i) (fun i => hgf α n i) (hfs α n hn)
+  have hpt : ∀ n ∈ P, |farPartW (TWeight.subset S) bb G n a|
+      ≤ ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, f α n i := by
+    intro n hn
+    unfold farPartW
+    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun α _ => ?_)
+    rw [abs_mul]
+    refine mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
+    refine le_trans (le_of_eq (abs_of_nonneg (tsum_nonneg fun i => hg0 α n i))) ?_
+    exact Summable.tsum_le_tsum (fun i => hgf α n i) (hgs α n hn) (hfs α n hn)
+  have hlayer : ∀ α i, ∑ n ∈ P, f α n i
+      ≤ P.card * ((C + 2 * ((J : ℝ) + i + 1)) * (1 / (bb : ℝ)) ^ (J + i + 1)) / Real.log 2 := by
+    intro α i
+    simp only [hf]
+    rw [← Finset.sum_div]
+    have := sum_omegaR_shiftG_le G X hne hDm α (j := J + i + 1) (by omega)
+    have hbpos : (0 : ℝ) < bb := by linarith
+    rw [div_le_iff₀ (by positivity : (0 : ℝ) < (bb : ℝ) ^ (J + i + 1))]
+    refine this.trans (le_of_eq ?_)
+    rw [one_div_pow, ← hP, ← hC]
+    field_simp
+    push_cast
+    ring
+  have hbound := hasSum_farBound hbr C J
+  have hbound_sum : HasSum (fun i : ℕ => P.card * ((C + 2 * ((J : ℝ) + i + 1))
+      * (1 / (bb : ℝ)) ^ (J + i + 1)) / Real.log 2)
+      (P.card * farBound bb J C / Real.log 2) :=
+    (hbound.mul_left (P.card : ℝ)).div_const (Real.log 2)
+  calc ∑ n ∈ P, |farPartW (TWeight.subset S) bb G n a|
+      ≤ ∑ n ∈ P, ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, f α n i :=
+        Finset.sum_le_sum hpt
+    _ = ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)| * ∑' i, ∑ n ∈ P, f α n i := by
+        rw [Finset.sum_comm]
+        refine Finset.sum_congr rfl fun α _ => ?_
+        rw [← Finset.mul_sum, Summable.tsum_finsetSum (hfs α)]
+    _ ≤ ∑ α : G.Atom, |((kronPow G.K (diffZ G.s) a α : ℤ) : ℝ)|
+          * (P.card * farBound bb J C / Real.log 2) := by
+        refine Finset.sum_le_sum fun α _ => mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
+        rw [← hbound_sum.tsum_eq]
+        refine Summable.tsum_le_tsum (hlayer α) ?_ hbound_sum.summable
+        exact summable_sum fun n hn => hfs α n hn
+    _ = _ := by
+        rw [← Finset.sum_mul, sum_abs_kronPow_diffZ]
+        ring
+
+/-- **`farAvgS` in closed form**: the same bound as `farAvg_le`. -/
+theorem farAvgS_le (bb : ℕ) (hbb : 2 ≤ bb) (G : GridParams) (X : ℕ)
+    (hne : (apSample X G.P₀ G.b₀).Nonempty) {Dm : ℕ} (hDm : ∀ α, G.d α ≤ Dm) :
+    farAvgS S bb G X ≤ (2 : ℝ) ^ G.K / Real.log 2 * farBound bb (G.K + G.N) (farC G X Dm) := by
+  have hbr : (2 : ℝ) ≤ bb := by exact_mod_cast hbb
+  set P := apSample X G.P₀ G.b₀ with hP
+  set Bd : ℝ := (2 : ℝ) ^ G.K / Real.log 2 * farBound bb (G.K + G.N) (farC G X Dm) with hBd
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hC := farC_nonneg G X hne Dm
+  have hBd0 : 0 ≤ Bd := by
+    rw [hBd]
+    have h1 : 0 ≤ (2 : ℝ) ^ G.K / Real.log 2 := by positivity
+    have h2 := farBound_nonneg hbr (G.K + G.N) hC
+    positivity
+  have hrow : ∀ ν : Fin G.rDim,
+      (P.card : ℝ)⁻¹ * ∑ n ∈ P, |farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν)|
+        ≤ Bd := by
+    intro ν
+    have hc : (0 : ℝ) < P.card := by exact_mod_cast hne.card_pos
+    have := sum_abs_farPartW_subset_le S bb hbb G X hne hDm (G.rowEquiv.symm ν)
+    rw [← hP] at this
+    calc (P.card : ℝ)⁻¹ * ∑ n ∈ P, |farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν)|
+        ≤ (P.card : ℝ)⁻¹ * (P.card * Bd) := mul_le_mul_of_nonneg_left this (by positivity)
+      _ = Bd := by field_simp
+  unfold farAvgS
+  rw [← hP]
+  have hswap : (P.card : ℝ)⁻¹ * ∑ n ∈ P, (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim,
+        |farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν)|
+      = (G.rDim : ℝ)⁻¹ * ∑ ν : Fin G.rDim, (P.card : ℝ)⁻¹ * ∑ n ∈ P,
+        |farPartW (TWeight.subset S) bb G n (G.rowEquiv.symm ν)| := by
+    simp_rw [Finset.mul_sum]
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun ν _ => Finset.sum_congr rfl fun n _ => ?_
+    ring
+  rw [hswap]
+  have hr : ((Finset.univ : Finset (Fin G.rDim)).card : ℝ) = G.rDim := by simp
+  rw [← hr]
+  exact avg_le_of_forall_le _ _ hBd0 fun ν _ => hrow ν
 
 end NormalNumbers.G4
