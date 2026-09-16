@@ -158,4 +158,34 @@ theorem junk_sqrt_term_le {P₀ X ρmax : ℕ} (hX : 0 < X) (hρ : ρmax ≤ X)
   rw [div_mul_eq_mul_div, div_le_one hXr]
   linarith
 
+/-- **The junk average, in one number**: `5 + 2 log ω(P₀)`. -/
+theorem junkShiftBound_div_le' {P₀ X ρmax : ℕ} (hP₀ : 0 < P₀) (hX : 0 < X) (hρ : ρmax ≤ X)
+    {c : ℝ} (hc : 0 < c) (hcard : (X : ℝ) / (2 * P₀) ≤ c)
+    (hsize : 2 * P₀ * ((2 * Nat.sqrt X + 2) * (Nat.log 2 X + 1)) ≤ X) :
+    junkShiftBound P₀ X ρmax / c ≤ 5 + 2 * Real.log (P₀.primeFactors.card) := by
+  have h1 := junkShiftBound_div_le hP₀ hX hc hcard (ρmax := ρmax)
+  have h2 := junk_sqrt_term_le (P₀ := P₀) (X := X) (ρmax := ρmax) hX hρ hsize
+  linarith
+
+/-- `100000 k³ ≤ 2^k` for `k ≥ 40`. -/
+lemma cube_le_two_pow : ∀ {k : ℕ}, 40 ≤ k → 100000 * k ^ 3 ≤ 2 ^ k := by
+  intro k
+  induction k with
+  | zero => intro h; omega
+  | succ n ih =>
+      intro h
+      rcases Nat.lt_or_ge n 40 with hn | hn
+      · have hn40 : n = 39 := by omega
+        subst hn40
+        norm_num
+      · have hih := ih hn
+        have hstep : (n + 1) ^ 3 ≤ 2 * n ^ 3 := by
+          have h40 : 40 ≤ n := hn
+          nlinarith [sq_nonneg n, sq_nonneg (n - 1)]
+        calc 100000 * (n + 1) ^ 3 ≤ 100000 * (2 * n ^ 3) := by
+              exact Nat.mul_le_mul_left _ hstep
+          _ = 2 * (100000 * n ^ 3) := by ring
+          _ ≤ 2 * 2 ^ n := Nat.mul_le_mul_left _ hih
+          _ = 2 ^ (n + 1) := by ring
+
 end NormalNumbers.G4
