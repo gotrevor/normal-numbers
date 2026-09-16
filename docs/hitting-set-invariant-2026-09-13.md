@@ -33,9 +33,11 @@ Reachable-state counts, versus ambient:
 
 `signed_engine_g_single_reduced` runs the engine on the relabelled state space; the
 only hypothesis beyond the certificate is that the index map is a section over the
-reachable states, which is one sweep over `k < N`.  `(3,2)` is entirely kernel
-`decide +kernel` (axiom-clean); `(6,1)` and `(2,4)` carry a single `native_decide`
-for that sweep.  Emitters: `experiments/adder_reduced_emit.py` (ℓ = 1),
+reachable states, which is one sweep over `k < N`.  `(3,2)` and `(6,1)` are entirely kernel
+`decide +kernel` and axiom-clean — the `(6,1)` sweep over `k < 141 680` runs as
+fourteen chunks of `10 120` (`allOn_of_chunks`; the whole sweep in one probe was
+killed at 15 GB).  `(2,4)` carries a single `native_decide` for its
+`6 126 120`-index sweep.  Emitters: `experiments/adder_reduced_emit.py` (ℓ = 1),
 `experiments/adder_reduced_emit_ell.py` (any ℓ, with a state/`gfamPred`
 intertwining self-test).
 

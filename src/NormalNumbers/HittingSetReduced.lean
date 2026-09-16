@@ -368,4 +368,59 @@ theorem gfamState_window (g : ℕ) (hg : 1 ≤ g) (ms : List ℕ) (hms : ∀ a �
     simp [ZChannel.gsize, ZChannel.gwinSize, ZChannel.carrySize, ZChannel.posSum,
       ZChannel.off, ZChannel.ell, hw, ha]
 
+
+/-! ## Chunked sweeps
+
+A whole-range `decide +kernel` on `(List.range N).all f` at `N ≈ 1.4·10^5` blows
+the box's memory (probe 2026-09-16: killed at `15` GB), but the same sweep in
+chunks of `10^4` is cheap.  `allOn lo n f` sweeps `[lo, lo+n)`; the glue is the
+`checkEdgesOnA_add` pattern. -/
+
+/-- Sweep of `f` over `[lo, lo + n)`. -/
+def allOn (lo n : ℕ) (f : ℕ → Bool) : Bool := (List.range n).all fun i => f (lo + i)
+
+theorem allOn_spec {lo n : ℕ} {f : ℕ → Bool} (h : allOn lo n f = true) :
+    ∀ i, i < n → f (lo + i) = true := by
+  unfold allOn at h
+  rw [List.all_eq_true] at h
+  exact fun i hi => h i (List.mem_range.2 hi)
+
+/-- Two adjacent sweeps glue to one. -/
+theorem allOn_add {lo n m : ℕ} {f : ℕ → Bool} (h1 : allOn lo n f = true)
+    (h2 : allOn (lo + n) m f = true) : allOn lo (n + m) f = true := by
+  have s1 := allOn_spec h1
+  have s2 := allOn_spec h2
+  unfold allOn
+  rw [List.all_eq_true]
+  intro i hi
+  rw [List.mem_range] at hi
+  rcases lt_or_ge i n with h | h
+  · exact s1 i h
+  · have := s2 (i - n) (by omega)
+    rwa [show lo + n + (i - n) = lo + i by omega] at this
+
+/-- Gluing with the arithmetic kept out of unification. -/
+theorem allOn_glue {lo n lo' m n' : ℕ} {f : ℕ → Bool} (h1 : allOn lo n f = true)
+    (h2 : allOn lo' m f = true) (hlo : lo' = lo + n) (hn : n' = n + m) :
+    allOn lo n' f = true := by
+  subst hlo hn
+  exact allOn_add h1 h2
+
+/-- `k` consecutive chunks of width `c` sweep `[0, k·c)`. -/
+theorem allOn_of_chunks {c : ℕ} {f : ℕ → Bool} :
+    ∀ k : ℕ, (∀ j, j < k → ∀ lo, lo = j * c → allOn lo c f = true) →
+      allOn 0 (k * c) f = true
+  | 0, _ => by unfold allOn; simp
+  | k + 1, h => by
+    have ih := allOn_of_chunks k (fun j hj => h j (by omega))
+    have hk := h k (by omega) (k * c) rfl
+    exact allOn_glue ih hk (by ring) (by ring)
+
+/-- A full chunked sweep gives the pointwise statement. -/
+theorem allOn_zero_spec {N : ℕ} {f : ℕ → Bool} (h : allOn 0 N f = true) :
+    ∀ k, k < N → f k = true := by
+  intro k hk
+  have := allOn_spec h k hk
+  rwa [Nat.zero_add] at this
+
 end NormalNumbers.Adder

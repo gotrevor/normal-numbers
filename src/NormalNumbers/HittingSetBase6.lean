@@ -23,7 +23,8 @@ image has just **`76` states** (`experiments/adder_reduced_emit.py`), and the
 six certificates — one per base-6 digit — are checked on that relabelled space by
 `signed_engine_g_single_reduced`.  The reachability fact `h61_section` (every
 `k < 141680` lands in the state list) is the only ambient-sized check left, and it
-is one `native_decide` over `141680` indices rather than `9067520 · 6` edges.
+is fourteen kernel `decide +kernel` chunks of `10120` indices rather than
+`9067520 · 6` edges — so this file has NO `native_decide` at all.
 
 * `hitting_6_1_seven` : `S(6,1) ≤ 7`, hitting set `{1, 8, 11, 14, 16, 20, 23}`.
 
@@ -55,13 +56,59 @@ def h61idx (s : ℕ) : ℕ := (bfind h61L s).getD 0
 def h61step (d : ℕ) : ℕ → ℕ → Option ℕ :=
   fun σ j => (gfamPred 6 (chansOf h61ms d) (σ % 6) (σ / 6) (h61Lget j)).map h61idx
 
+/-- The reachability predicate at one index. -/
+def h61ok (k : ℕ) : Bool :=
+  decide (h61Lget (h61idx (stateOfK h61ms h61N k)) = stateOfK h61ms h61N k)
+    && decide (h61idx (stateOfK h61ms h61N k) < 76)
+
+theorem h61_c0 : allOn 0 10120 h61ok = true := by decide +kernel
+
+theorem h61_c1 : allOn 10120 10120 h61ok = true := by decide +kernel
+
+theorem h61_c2 : allOn 20240 10120 h61ok = true := by decide +kernel
+
+theorem h61_c3 : allOn 30360 10120 h61ok = true := by decide +kernel
+
+theorem h61_c4 : allOn 40480 10120 h61ok = true := by decide +kernel
+
+theorem h61_c5 : allOn 50600 10120 h61ok = true := by decide +kernel
+
+theorem h61_c6 : allOn 60720 10120 h61ok = true := by decide +kernel
+
+theorem h61_c7 : allOn 70840 10120 h61ok = true := by decide +kernel
+
+theorem h61_c8 : allOn 80960 10120 h61ok = true := by decide +kernel
+
+theorem h61_c9 : allOn 91080 10120 h61ok = true := by decide +kernel
+
+theorem h61_c10 : allOn 101200 10120 h61ok = true := by decide +kernel
+
+theorem h61_c11 : allOn 111320 10120 h61ok = true := by decide +kernel
+
+theorem h61_c12 : allOn 121440 10120 h61ok = true := by decide +kernel
+
+theorem h61_c13 : allOn 131560 10120 h61ok = true := by decide +kernel
+
+theorem h61_all : allOn 0 h61N h61ok = true := by
+  have h := allOn_of_chunks (c := 10120) 14 (by
+    intro j hj lo hlo
+    interval_cases j <;> simp only [Nat.reduceMul, Nat.zero_mul, Nat.one_mul] at hlo <;> subst hlo
+    exacts [h61_c0, h61_c1, h61_c2, h61_c3, h61_c4, h61_c5, h61_c6, h61_c7,
+      h61_c8, h61_c9, h61_c10, h61_c11, h61_c12, h61_c13])
+  exact h
+
 /-- **Reachability**: every index `k < 141680` gives a state in the list `h61L`,
 at a position below `76`.  With `gfamState_ell1` and `stateOfT_eq_stateOfK` this
-is exactly the section hypothesis of `signed_engine_g_single_reduced`. -/
+is exactly the section hypothesis of `signed_engine_g_single_reduced`.  Kernel
+`decide +kernel` in fourteen chunks of `10120`: the whole sweep in one probe was
+killed at `15` GB. -/
 theorem h61_section : ∀ k : ℕ, k < h61N →
     h61Lget (h61idx (stateOfK h61ms h61N k)) = stateOfK h61ms h61N k
       ∧ h61idx (stateOfK h61ms h61N k) < 76 := by
-  native_decide
+  intro k hk
+  have h := allOn_zero_spec h61_all k hk
+  simp only [h61ok, Bool.and_eq_true, decide_eq_true_eq] at h
+  exact h
 
 /-- Certificate `h61r_d0` (`experiments/certs/adder_cert_h61r_d0.json`): digit `0`,
 `16` live states of the `76` reachable. -/
