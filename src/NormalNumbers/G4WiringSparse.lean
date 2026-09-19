@@ -146,8 +146,10 @@ elementary inequality `KMT_quant C` below with some constant `C J` depending onl
 Reading the proof (KMT §4.1–4.2) the constant collects: the sum over `e_j ∣ A^∞` with
 `A ⊇ ∏_{p<J} p` (`≍ (log J)^J`), the fundamental lemma of sieve theory in dimension `J`, dimension-`J`
 Mertens products, and the smooth-number truncation `d_j ≤ x^{1/(4J)}` (which needs only `Jε → 0`,
-although the paper's fixed form `exp(−1/(2ε))` silently costs `ε ≤ e^{−4J}/(4J)`).  Everything is
-`exp(O(J log J))`; the existence theorem below needs only `log C J = o(4^J)`.
+although the paper's fixed form `exp(−1/(2ε))` silently costs `ε ≤ e^{−4J}/(4J)`).  The small-prime
+tuple sum dominates, giving `C J = exp(O(J²))` once (4.20) is re-run with the natural Dickman bound
+(as printed the constant absorbs `ε > e^{−4J}/(4J)` and is too large); the existence theorem below
+needs only `log C J = o(4^J)`.
 -/
 
 /-- `∑_{p ≤ x, p ∈ S} 1/p`. -/
