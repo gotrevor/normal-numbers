@@ -67,7 +67,22 @@ Estimated effort: W3 one Opus/low lap; L1–L2 two to three laps (the analytic p
 
 The one-site truncated mean `E e(α ω_{≤P}(n+1))` at `P = N^t` is the model `∏_{p≤P}(1 + (e(α)−1)/p)` times a factor that is **bounded but not universal in `t`** when `Re e(α) ≤ 0` (KB verdict §2d: at fixed `t = 1/2` it moves 0.69 → 1.22 as `P` runs 100 → 10⁴, the signature of `A(u) + B(u)(log P)^{−z}`).  Its proof needs Selberg–Delange plus a Dickman/Buchstab convolution with the discrete cutoff sum `∑_{n≤K} z^{ω(n)}/n` carried exactly.  Classical technology, not in mathlib (no Selberg–Delange, no Dickman function), and a multi-week formalization.  Freezing it is honest: it is a theorem in the literature's reach, the node `BCR` is not.
 
-Cheaper unconditional surrogate for `OneSiteDecay`, if wanted: only *boundedness away from the model by a constant* plus `|model| → 0` is used, and `|model| = |∏(1+(z−1)/p)| ≍ (log P)^{Re z − 1}` follows from the Mertens rate already in the repo.  So `OneSiteDecay` may be replaced by `OneSiteRatioBounded : ∃ C, ‖siteMean N P h j‖ ≤ C ‖∏_{p≤P}(1+(z−1)/p)‖` on the middle range — still unproved, but purely a statement about one multiplicative function on a truncated prime set.
+Cheaper unconditional surrogate for `OneSiteDecay`, if wanted: only *boundedness by a constant times a decaying scale* is used.  ⚠️ The scale must be the analytic one, `(log P)^{Re z − 1}` with `z = e(h 4^{-j})`, **not** the CRT product `∏_{p≤P}(1+(z−1)/p)`: at `z = −1` (h = 2, 6 at the leading site) that product is identically 0 from `p = 2` on, so a statement against it is vacuous or false (KB verdict §2e).  So `OneSiteDecay` may be replaced by
+
+```lean
+/-- Leading-site surrogate: the one-site truncated mean is bounded by the
+Selberg–Delange scale on the middle range.  Measured against the CRT prefix at
+z = ±i the ratio climbs 2.98 → 3.27 → 3.51 across N = 10^6..10^8 (top edge), so
+the constant is not small; but it is classical (KB verdict §2e). -/
+def OneSiteRatioBounded : Prop :=
+  ∀ h j : ℤ, (h * 4^{-j} : ℝ) ∉ ℤ → ∀ δ θ, 0 < δ → δ < θ → θ < 1 → ∃ C : ℝ, ∀ᶠ N in atTop,
+    ∀ P : ℕ, (N : ℝ)^δ ≤ P → (P : ℝ) ≤ (N : ℝ)^θ →
+      ‖siteMean N P h j‖ ≤ C * (Real.log P) ^ (Real.cos (2 * π * h * 4^{-j}) - 1)
+```
+
+and `(log P)^{Re z − 1} → 0` is immediate for `Re z < 1`.  Provability (KB verdict §2e): on `P ≥ N^{1/2}` an exact one-large-prime identity reduces `siteMean` to full-ω Selberg–Delange means at scales `N/p`, and for `Re z ≤ 0` the prime sum converges by the oscillation of `(1−t)^{z}`; down to `N^δ` the Buchstab expansion has depth `⌊1/δ⌋`.  Classical, multi-week to formalize (no Selberg–Delange in mathlib), but not a conjecture.  The measured phase of `siteMean / CRT prefix` rotates two thirds of a turn across the middle range at every N, so no *complex* proportionality to the CRT prefix should be stated.
+
+Measured shape of `BCR` itself (KB verdict §2e): the ratio `windowMean / ∏ siteMean` is a slowly varying **real positive** factor, phase within ±0.015 turns (h = 1) and ±0.042 (h = 3) over the whole middle range at N = 10^8, magnitudes 1.1–1.4 and 0.3–0.65.  A future sharpening of the node is `∃ c_h > 0, windowMean / ∏ siteMean → c_h`; not frozen yet, the magnitude bound is what the wiring uses.
 
 ## 4. What not to do
 
