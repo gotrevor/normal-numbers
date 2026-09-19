@@ -173,7 +173,7 @@ schedule tail.  Reading KMT §4.1–4.2, `C(k)` collects `(log k)^k` (sum over `
 `K = exp(O(k/log k))`), dimension-`k` Mertens products, and the smooth-number truncation
 `d_j ≤ x^{1/(4k)}`, which needs only `kε → 0` (the paper's fixed `exp(−1/(2ε))` form silently
 requires `ε ≤ e^{−4k}/(4k)`, which would *conflict* with the tail; re-running (4.20) removes it).
-Net `C(k) = exp(O(k²))` — the small-prime tuple sum `∑_{e_j ∣ A^∞} 1/[e_1,…,e_k]` has `p`-factor `≈ (k/(e log p))^k`, so `log C ≈ 0.6 k²` (checked numerically for `k ≤ 64`); still `o(4^k)` in the log.  ⚠️ The (4.20) re-run is *required*: the paper's literal constant absorbs `ε > e^{−4k}/(4k)` and so has `log C(k) ≥ e^{4k}/(2k)`, which is not `o(4^k)`.  The fundamental-lemma constant multiplies `e^{−s}` with `s = 6J_i² log i` in the block construction and has no bite.  Status: a theorem-shaped target
+Net `C(k) = exp(O(k²))` — the small-prime tuple sum `∑_{e_j ∣ A^∞} 1/[e_1,…,e_k]` has `p`-factor `≈ (k/(e log p))^k`, so `log C ≈ 0.6 k²` (checked numerically for `k ≤ 64`); still `o(4^k)` in the log.  ⚠️ The (4.20) re-run is *required*: the paper's literal constant absorbs `ε > e^{−4k}/(4k)` and so has `log C(k) ≥ e^{4k}/(2k)`, which is not `o(4^k)`.  The fundamental-lemma constant multiplies `e^{−s}` with `s = 6J_i² log i` in the block construction and has no bite.  The rest of §4.2 (error term of (4.25)) repeats the same Dickman step with the same fix; no other `k`-sensitive step.  Status: a theorem-shaped target
 whose proof is "KMT §4 with the `k`-dependence made explicit + the block construction"; no new
 idea needed, real bookkeeping.  Lean cost dominated by the fundamental lemma of sieve theory
 (not in Mathlib).
