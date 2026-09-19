@@ -373,3 +373,4 @@ import NormalNumbers.G4WeightA
 import NormalNumbers.G4WeightAFrame
 import NormalNumbers.G4WeightAWitness
 import NormalNumbers.G4WeightASched
+import NormalNumbers.WeylCriterion

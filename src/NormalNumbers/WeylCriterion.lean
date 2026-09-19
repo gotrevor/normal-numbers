@@ -403,6 +403,56 @@ lemma le_integral_trapLo (a c δ : ℝ) (ha : 0 ≤ a) (hac : a ≤ c) (hc : c �
     have : c - a = 2 * r := by rw [hr]; ring
     linarith
 
+/-- Distance from a point outside the arc to every integer translate of the midpoint. -/
+lemma le_abs_sub_int (a c x : ℝ) (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1)
+    (hx0 : 0 ≤ x) (hx1 : x < 1) (hnot : ¬ (a ≤ x ∧ x < c)) (k : ℤ) :
+    (c - a) / 2 ≤ |x - (a + c) / 2 - (k : ℝ)| := by
+  rcases lt_trichotomy k 0 with hk | hk | hk
+  · have hk1 : (k : ℝ) ≤ -1 := by exact_mod_cast (by omega : k ≤ -1)
+    rw [abs_of_nonneg (by linarith)]
+    linarith
+  · subst hk
+    rcases not_and_or.mp hnot with h | h
+    · have hxa : x < a := lt_of_not_ge h
+      rw [abs_of_nonpos (by linarith)]
+      linarith
+    · have hxc : c ≤ x := le_of_not_gt h
+      rw [abs_of_nonneg (by linarith)]
+      linarith
+  · have hk1 : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast (by omega : (1:ℤ) ≤ k)
+    rw [abs_of_nonpos (by linarith)]
+    linarith
+
+lemma trapUp_ge_indicator (a c δ x : ℝ) (hδ : 0 < δ) (hx : a ≤ x ∧ x < c) :
+    (1 : ℝ) ≤ trapUp a c δ ((x : ℝ) : AddCircle (1 : ℝ)) := by
+  have hnorm : ‖((x : ℝ) : AddCircle (1 : ℝ)) - (((a + c) / 2 : ℝ) : AddCircle (1 : ℝ))‖
+      ≤ (c - a) / 2 := by
+    rw [← AddCircle.coe_sub]
+    refine (norm_coe_le _).trans ?_
+    rw [abs_le]
+    constructor <;> linarith [hx.1, hx.2]
+  simp only [trapUp, ContinuousMap.coe_mk, le_min_iff]
+  refine ⟨le_refl _, ?_⟩
+  refine le_max_of_le_right ?_
+  rw [le_div_iff₀ hδ]
+  linarith
+
+lemma trapLo_eq_zero_outside (a c δ x : ℝ) (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1)
+    (hx0 : 0 ≤ x) (hx1 : x < 1) (hnot : ¬ (a ≤ x ∧ x < c)) (hδ : 0 < δ) :
+    trapLo a c δ ((x : ℝ) : AddCircle (1 : ℝ)) = 0 := by
+  have hnorm : (c - a) / 2
+      ≤ ‖((x : ℝ) : AddCircle (1 : ℝ)) - (((a + c) / 2 : ℝ) : AddCircle (1 : ℝ))‖ := by
+    rw [← AddCircle.coe_sub]
+    refine norm_coe_ge _ _ fun k => ?_
+    have := le_abs_sub_int a c x ha hac hc hx0 hx1 hnot k
+    rwa [show x - (a + c) / 2 - (k : ℝ) = x - (a + c) / 2 - (k : ℝ) from rfl] at this
+  simp only [trapLo, ContinuousMap.coe_mk]
+  have h1 : ((c - a) / 2 - ‖((x : ℝ) : AddCircle (1 : ℝ))
+      - (((a + c) / 2 : ℝ) : AddCircle (1 : ℝ))‖) / δ ≤ 0 :=
+    div_nonpos_of_nonpos_of_nonneg (by linarith) hδ.le
+  rw [max_eq_left h1]
+  exact min_eq_right zero_le_one
+
 end Trapezoid
 
 end Analysis
@@ -412,7 +462,60 @@ Fourier means at every nonzero frequency give equidistribution. -/
 theorem equidistributed_of_weyl (u : ℕ → ℝ) (hu : ∀ k, u k ∈ Set.Ico (0 : ℝ) 1)
     (hW : ∀ h : ℤ, h ≠ 0 → Tendsto (fourierMean u h) atTop (𝓝 0)) :
     Equidistributed u := by
-  sorry
+  intro a c ha hac hc
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  set δ : ℝ := ε / 8 with hδdef
+  have hδ : 0 < δ := by rw [hδdef]; linarith
+  have hupT := cgood_real u hW (trapUp a c δ)
+  have hloT := cgood_real u hW (trapLo a c δ)
+  rw [Metric.tendsto_atTop] at hupT hloT
+  obtain ⟨N1, hN1⟩ := hupT (ε / 4) (by linarith)
+  obtain ⟨N2, hN2⟩ := hloT (ε / 4) (by linarith)
+  refine ⟨max (max N1 N2) 1, fun n hn => ?_⟩
+  have hn1 : 1 ≤ n := le_trans (le_max_right _ _) hn
+  have hnR : (0:ℝ) < n := by exact_mod_cast hn1
+  -- the visit count is the sum of the indicator
+  have hcard : (visitCount u a c n : ℝ)
+      = ∑ k ∈ Finset.range n, (if (a ≤ u k ∧ u k < c) then (1:ℝ) else 0) := by
+    rw [visitCount]
+    rw [Finset.card_filter]
+    push_cast
+    refine Finset.sum_congr rfl fun k _ => ?_
+    by_cases h : a ≤ u k ∧ u k < c
+    · simp [Set.mem_Ico, h.1, h.2]
+    · simp [Set.mem_Ico, h]
+  -- squeeze the indicator between the trapezoids
+  have hsqueezeUp : (visitCount u a c n : ℝ)
+      ≤ ∑ k ∈ Finset.range n, trapUp a c δ ((u k : ℝ) : AddCircle (1 : ℝ)) := by
+    rw [hcard]
+    refine Finset.sum_le_sum fun k _ => ?_
+    by_cases h : a ≤ u k ∧ u k < c
+    · rw [if_pos h]; exact trapUp_ge_indicator a c δ (u k) hδ h
+    · rw [if_neg h]; exact trapUp_nonneg a c δ hδ _
+  have hsqueezeLo : (∑ k ∈ Finset.range n, trapLo a c δ ((u k : ℝ) : AddCircle (1 : ℝ)))
+      ≤ (visitCount u a c n : ℝ) := by
+    rw [hcard]
+    refine Finset.sum_le_sum fun k _ => ?_
+    by_cases h : a ≤ u k ∧ u k < c
+    · rw [if_pos h]; exact trapLo_le_one a c δ _
+    · rw [if_neg h]
+      have hk := hu k
+      rw [trapLo_eq_zero_outside a c δ (u k) ha hac hc hk.1 hk.2 h hδ]
+  -- pass to the means
+  have hdivUp : (visitCount u a c n : ℝ) / n
+      ≤ (∑ k ∈ Finset.range n, trapUp a c δ ((u k : ℝ) : AddCircle (1 : ℝ))) / n :=
+    div_le_div_of_nonneg_right hsqueezeUp hnR.le
+  have hdivLo : (∑ k ∈ Finset.range n, trapLo a c δ ((u k : ℝ) : AddCircle (1 : ℝ))) / n
+      ≤ (visitCount u a c n : ℝ) / n :=
+    div_le_div_of_nonneg_right hsqueezeLo hnR.le
+  have hd1 := hN1 n (le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hn)
+  have hd2 := hN2 n (le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) hn)
+  rw [Real.dist_eq, abs_lt] at hd1 hd2
+  have hIup := integral_trapUp_le a c δ ha hac hc hδ
+  have hIlo := le_integral_trapLo a c δ ha hac hc hδ
+  rw [Real.dist_eq, abs_lt]
+  constructor <;> [linarith [hd2.1, hd1.2]; linarith [hd1.2, hd2.1]]
 
 end NormalNumbers
 
