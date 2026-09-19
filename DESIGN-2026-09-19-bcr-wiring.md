@@ -120,3 +120,28 @@ Chain: for each `h ≠ 0` pick `J₀` with some `j ≤ J₀` having `e(h4^{-j}) 
 - Do not formalize the ledger, the covariance notation, (BL), or the band-freezing lemmas; they are restatements (KB verdict §1).
 - Do not launch a treadmill from this document; Trevor fires it.  When he does: Opus/low, `--allow-from-agent`, branch off `wip/g5-prime-subset`, first lap = W3 only.
 - Do not report `sorry` counts; report which row of §2 is green.
+
+## 5. New node (2026-09-19, late): sparse prime subsets through KMT Proposition 4.3
+
+KB verdict §4d.  Klurman–Mangerel–Teräväinen, arXiv:2304.05344, Prop. 4.3 is an ordinary-average,
+every-scale k-point correlation bound in terms of truncated pretentious distances.  It gives nothing
+for `G₄` (the leading site `i^ω` has truncated distance `≫ √log(1/ε)` on every range), but for
+`c_𝒫(4) = ∑_{p∈𝒫} 1/(4^p − 1)` with `𝒫` of relative density 0 and `∑_{p∈𝒫} 1/p = ∞` it gives, for
+every fixed `J` and `h ≠ 0`, `prefixMean (fun n => e(h · truncTail_𝒫 J n)) → 0` at every scale.
+
+Frozen input to state in Lean (a theorem in the literature, not a conjecture):
+
+```lean
+/-- KMT 2023 Prop 4.3 specialised: shifts n+1, …, n+J, χ = 1, t = 0, fixed J. -/
+def KMT_sparse (𝒫 : Set ℕ) : Prop :=
+  ∀ J : ℕ, ∀ h : ℤ, h ≠ 0 → (∃ j, 1 ≤ j ∧ j ≤ J ∧ ¬ (∃ m : ℤ, (h : ℝ) / 4 ^ j = m)) →
+    Tendsto (fun n => prefixMean (fun n => ePhase (h * truncTailS 𝒫 J n)) n) atTop (𝓝 0)
+```
+
+Wiring `isNormal_cP4_of_KMT_sparse (hSparse : …) (hDiv : ¬ Summable (fun p ∈ 𝒫 => 1/p))
+(hKMT : KMT_sparse 𝒫) (hRate : …) : IsNormal 4 (TWeight.subset 𝒫).lambert 4`: same chain as
+§3b with `TWeight.subset`, W3 fed prefix means directly (no W4), tail lemma in L¹ form
+(`∑_{m≤X} ω_𝒫(m) ≤ X · S_𝒫(X)`, with `J_N := ⌈log₄ S_𝒫(3N)⌉ + 1`), and one extra hypothesis
+`hRate` expressing that the fixed-`J` convergence is fast enough for `J = J_N` (the diagonal
+condition; discharged by choosing `𝒫` sparse enough, or by a `k`-uniform reading of Prop 4.3).
+Existence statement first: `∃ 𝒫, ¬Summable ∧ IsNormal 4 (c_𝒫 4)`.  Not fired; Trevor's call.
