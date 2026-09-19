@@ -198,6 +198,213 @@ lemma cgood_all (u : ℕ → ℝ)
         (norm_add_le _ _).trans (by gcongr; exact norm_add_le _ _)
     _ < ε := by linarith
 
+/-- Real-valued form of `cgood_all`. -/
+lemma cgood_real (u : ℕ → ℝ)
+    (hW : ∀ h : ℤ, h ≠ 0 → Tendsto (fourierMean u h) atTop (𝓝 0))
+    (g : C(AddCircle (1 : ℝ), ℝ)) :
+    Tendsto (fun n : ℕ => (∑ k ∈ Finset.range n, g ((u k : ℝ) : AddCircle (1 : ℝ))) / n)
+      atTop (𝓝 (∫ x in (0 : ℝ)..1, g ((x : ℝ) : AddCircle (1 : ℝ)))) := by
+  set f : C(AddCircle (1 : ℝ), ℂ) :=
+    ⟨fun y => ((g y : ℝ) : ℂ), Complex.continuous_ofReal.comp g.continuous⟩ with hf
+  have hmean : ∀ n : ℕ, (cMean u f n).re
+      = (∑ k ∈ Finset.range n, g ((u k : ℝ) : AddCircle (1 : ℝ))) / n := by
+    intro n
+    rw [cMean]
+    have : (∑ k ∈ Finset.range n, f ((u k : ℝ) : AddCircle (1 : ℝ)))
+        = ((∑ k ∈ Finset.range n, g ((u k : ℝ) : AddCircle (1 : ℝ)) : ℝ) : ℂ) := by
+      push_cast [hf]; rfl
+    rw [this, ← Complex.ofReal_natCast n, ← Complex.ofReal_div, Complex.ofReal_re]
+  have hint : (cInt f).re = ∫ x in (0 : ℝ)..1, g ((x : ℝ) : AddCircle (1 : ℝ)) := by
+    have h := intervalIntegral_re (μ := volume) (a := (0:ℝ)) (b := 1)
+      (f := fun x : ℝ => f ((x : ℝ) : AddCircle (1 : ℝ))) (intervalIntegrable_comp_coe f 0 1)
+    rw [cInt, show ((∫ x in (0:ℝ)..1, f ((x : ℝ) : AddCircle (1 : ℝ))).re)
+      = RCLike.re (∫ x in (0:ℝ)..1, f ((x : ℝ) : AddCircle (1 : ℝ))) from rfl, ← h]
+    simp [hf]
+  have := (Complex.continuous_re.tendsto (cInt f)).comp (cgood_all u hW f)
+  simp only [Function.comp_def, hmean, hint] at this
+  exact this
+
+section Trapezoid
+
+/-- Continuous upper trapezoid for the arc `[a, c)` on the circle: `1` on the arc,
+`0` at circle-distance `≥ δ` from it. -/
+noncomputable def trapUp (a c δ : ℝ) : C(AddCircle (1 : ℝ), ℝ) :=
+  ⟨fun y => min 1 (max 0 (((c - a) / 2 + δ - ‖y - (((a + c) / 2 : ℝ) : AddCircle (1 : ℝ))‖) / δ)),
+    by fun_prop⟩
+
+/-- Continuous lower trapezoid for the arc `[a, c)`: `0` outside the arc. -/
+noncomputable def trapLo (a c δ : ℝ) : C(AddCircle (1 : ℝ), ℝ) :=
+  ⟨fun y => min 1 (max 0 (((c - a) / 2 - ‖y - (((a + c) / 2 : ℝ) : AddCircle (1 : ℝ))‖) / δ)),
+    by fun_prop⟩
+
+lemma trapUp_nonneg (a c δ : ℝ) (hδ : 0 < δ) (y : AddCircle (1 : ℝ)) : 0 ≤ trapUp a c δ y := by
+  simp only [trapUp, ContinuousMap.coe_mk, le_min_iff]
+  exact ⟨zero_le_one, le_max_left _ _⟩
+
+lemma trapUp_le_one (a c δ : ℝ) (y : AddCircle (1 : ℝ)) : trapUp a c δ y ≤ 1 :=
+  min_le_left _ _
+
+lemma trapLo_nonneg (a c δ : ℝ) (y : AddCircle (1 : ℝ)) : 0 ≤ trapLo a c δ y := by
+  simp only [trapLo, ContinuousMap.coe_mk, le_min_iff]
+  exact ⟨zero_le_one, le_max_left _ _⟩
+
+lemma trapLo_le_one (a c δ : ℝ) (y : AddCircle (1 : ℝ)) : trapLo a c δ y ≤ 1 :=
+  min_le_left _ _
+
+/-- The circle norm of `↑x - ↑m` equals `|x - m|` on the fundamental interval centred at `m`. -/
+lemma norm_coe_sub (m x : ℝ) (hx : |x - m| ≤ 1 / 2) :
+    ‖((x : ℝ) : AddCircle (1 : ℝ)) - ((m : ℝ) : AddCircle (1 : ℝ))‖ = |x - m| := by
+  rw [← AddCircle.coe_sub]
+  rw [AddCircle.norm_coe_eq_abs_iff (p := (1:ℝ)) one_ne_zero]
+  simpa using hx
+
+/-- Circle norm as a distance to the nearest integer. -/
+lemma norm_coe_ge (t : ℝ) (r : ℝ) (h : ∀ k : ℤ, r ≤ |t - k|) :
+    r ≤ ‖((t : ℝ) : AddCircle (1 : ℝ))‖ := by
+  rw [AddCircle.norm_eq (p := (1:ℝ))]
+  simpa using h (round t)
+
+lemma norm_coe_le (t : ℝ) : ‖((t : ℝ) : AddCircle (1 : ℝ))‖ ≤ |t| := by
+  rw [AddCircle.norm_eq (p := (1:ℝ))]
+  have := round_le t 0
+  simpa using this
+
+lemma continuousR_comp (g : C(AddCircle (1 : ℝ), ℝ)) :
+    Continuous fun x : ℝ => g ((x : ℝ) : AddCircle (1 : ℝ)) :=
+  g.continuous.comp (AddCircle.continuous_mk' 1)
+
+lemma intIntegrableR (g : C(AddCircle (1 : ℝ), ℝ)) (a b : ℝ) :
+    IntervalIntegrable (fun x : ℝ => g ((x : ℝ) : AddCircle (1 : ℝ))) volume a b :=
+  (continuousR_comp g).intervalIntegrable a b
+
+lemma periodicR (g : C(AddCircle (1 : ℝ), ℝ)) :
+    Function.Periodic (fun x : ℝ => g ((x : ℝ) : AddCircle (1 : ℝ))) 1 := by
+  intro x
+  simp [AddCircle.coe_add_period]
+
+lemma intR_shift (g : C(AddCircle (1 : ℝ), ℝ)) (t : ℝ) :
+    (∫ x in (0:ℝ)..1, g ((x : ℝ) : AddCircle (1 : ℝ)))
+      = ∫ x in t..t+1, g ((x : ℝ) : AddCircle (1 : ℝ)) := by
+  simpa using ((periodicR g).intervalIntegral_add_eq t 0).symm
+
+lemma trapUp_apply_of_close (a c δ x : ℝ) (hx : |x - (a + c) / 2| ≤ 1 / 2) :
+    trapUp a c δ ((x : ℝ) : AddCircle (1 : ℝ))
+      = min 1 (max 0 (((c - a) / 2 + δ - |x - (a + c) / 2|) / δ)) := by
+  simp only [trapUp, ContinuousMap.coe_mk]
+  rw [norm_coe_sub _ _ hx]
+
+lemma trapLo_apply_of_close (a c δ x : ℝ) (hx : |x - (a + c) / 2| ≤ 1 / 2) :
+    trapLo a c δ ((x : ℝ) : AddCircle (1 : ℝ))
+      = min 1 (max 0 (((c - a) / 2 - |x - (a + c) / 2|) / δ)) := by
+  simp only [trapLo, ContinuousMap.coe_mk]
+  rw [norm_coe_sub _ _ hx]
+
+/-- Upper trapezoid: integral at most `(c - a) + 2δ`. -/
+lemma integral_trapUp_le (a c δ : ℝ) (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1) (hδ : 0 < δ) :
+    (∫ x in (0:ℝ)..1, trapUp a c δ ((x : ℝ) : AddCircle (1 : ℝ))) ≤ (c - a) + 2 * δ := by
+  by_cases hbig : 1 / 2 ≤ (c - a) / 2 + δ
+  · have h1 : (∫ x in (0:ℝ)..1, trapUp a c δ ((x : ℝ) : AddCircle (1 : ℝ)))
+        ≤ ∫ _x in (0:ℝ)..1, (1:ℝ) := by
+      refine intervalIntegral.integral_mono_on (by norm_num) (intIntegrableR _ _ _)
+        intervalIntegrable_const (fun x _ => trapUp_le_one a c δ _)
+    simp only [intervalIntegral.integral_const, smul_eq_mul, mul_one, sub_zero] at h1
+    linarith
+  · push_neg at hbig
+    set m : ℝ := (a + c) / 2 with hm
+    set r : ℝ := (c - a) / 2 with hr
+    have hr0 : 0 ≤ r := by rw [hr]; linarith
+    have hAB : m - 1/2 ≤ m - r - δ := by linarith
+    have hBC : m - r - δ ≤ m + r + δ := by linarith
+    have hCD : m + r + δ ≤ m + 1/2 := by linarith
+    have hzero : ∀ x : ℝ, |x - m| ≤ 1/2 → r + δ ≤ |x - m| →
+        trapUp a c δ ((x : ℝ) : AddCircle (1 : ℝ)) = 0 := by
+      intro x hx1 hx2
+      rw [trapUp_apply_of_close a c δ x (by rw [← hm]; exact hx1), ← hm, ← hr]
+      have : ((r + δ - |x - m|) / δ) ≤ 0 := by
+        apply div_nonpos_of_nonpos_of_nonneg (by linarith) hδ.le
+      rw [max_eq_left this]
+      exact min_eq_right zero_le_one
+    have e1 : (∫ x in (m - 1/2)..(m - r - δ), trapUp a c δ ((x : ℝ) : AddCircle (1 : ℝ))) = 0 := by
+      rw [intervalIntegral.integral_congr (g := fun _ => (0:ℝ)) ?_, intervalIntegral.integral_zero]
+      intro x hx
+      rw [Set.uIcc_of_le hAB] at hx
+      exact hzero x (by rw [abs_le]; constructor <;> [linarith [hx.1]; linarith [hx.2]])
+        (by rw [abs_of_nonpos (by linarith [hx.2])]; linarith [hx.2])
+    have e3 : (∫ x in (m + r + δ)..(m + 1/2), trapUp a c δ ((x : ℝ) : AddCircle (1 : ℝ))) = 0 := by
+      rw [intervalIntegral.integral_congr (g := fun _ => (0:ℝ)) ?_, intervalIntegral.integral_zero]
+      intro x hx
+      rw [Set.uIcc_of_le hCD] at hx
+      exact hzero x (by rw [abs_le]; constructor <;> [linarith [hx.1]; linarith [hx.2]])
+        (by rw [abs_of_nonneg (by linarith [hx.1])]; linarith [hx.1])
+    have e2 : (∫ x in (m - r - δ)..(m + r + δ), trapUp a c δ ((x : ℝ) : AddCircle (1 : ℝ)))
+        ≤ 2 * r + 2 * δ := by
+      have := intervalIntegral.integral_mono_on hBC (intIntegrableR (trapUp a c δ) _ _)
+        (intervalIntegrable_const (c := (1:ℝ))) (fun x _ => trapUp_le_one a c δ _)
+      simp only [intervalIntegral.integral_const, smul_eq_mul, mul_one] at this
+      linarith
+    have hs1 := intervalIntegral.integral_add_adjacent_intervals
+      (a := m - 1/2) (b := m - r - δ) (c := m + r + δ)
+      (intIntegrableR (trapUp a c δ) _ _) (intIntegrableR (trapUp a c δ) _ _)
+    have hs2 := intervalIntegral.integral_add_adjacent_intervals
+      (a := m - 1/2) (b := m + r + δ) (c := m + 1/2)
+      (intIntegrableR (trapUp a c δ) _ _) (intIntegrableR (trapUp a c δ) _ _)
+    have hshift := intR_shift (trapUp a c δ) (m - 1/2)
+    have hend : m - 1/2 + 1 = m + 1/2 := by ring
+    rw [hend] at hshift
+    rw [hshift, ← hs2, ← hs1, e1, e3]
+    have : c - a = 2 * r := by rw [hr]; ring
+    linarith
+
+/-- Lower trapezoid: integral at least `(c - a) - 2δ`. -/
+lemma le_integral_trapLo (a c δ : ℝ) (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1) (hδ : 0 < δ) :
+    (c - a) - 2 * δ ≤ ∫ x in (0:ℝ)..1, trapLo a c δ ((x : ℝ) : AddCircle (1 : ℝ)) := by
+  by_cases hsmall : (c - a) / 2 ≤ δ
+  · have h0 : (0:ℝ) ≤ ∫ x in (0:ℝ)..1, trapLo a c δ ((x : ℝ) : AddCircle (1 : ℝ)) :=
+      intervalIntegral.integral_nonneg (by norm_num) (fun x _ => trapLo_nonneg a c δ _)
+    linarith
+  · push_neg at hsmall
+    set m : ℝ := (a + c) / 2 with hm
+    set r : ℝ := (c - a) / 2 with hr
+    have hr2 : r ≤ 1/2 := by rw [hr]; linarith
+    have hAB : m - 1/2 ≤ m - r + δ := by linarith
+    have hBC : m - r + δ ≤ m + r - δ := by linarith
+    have hCD : m + r - δ ≤ m + 1/2 := by linarith
+    have hone : ∀ x : ℝ, |x - m| ≤ r - δ → trapLo a c δ ((x : ℝ) : AddCircle (1 : ℝ)) = 1 := by
+      intro x hx
+      have hx1 : |x - m| ≤ 1/2 := by linarith
+      rw [trapLo_apply_of_close a c δ x (by rw [← hm]; exact hx1), ← hm, ← hr]
+      have h1 : (1:ℝ) ≤ (r - |x - m|) / δ := by
+        rw [le_div_iff₀ hδ]; linarith
+      rw [max_eq_right (by linarith : (0:ℝ) ≤ (r - |x - m|) / δ)]
+      exact min_eq_left h1
+    have e2 : (∫ x in (m - r + δ)..(m + r - δ), trapLo a c δ ((x : ℝ) : AddCircle (1 : ℝ)))
+        = 2 * r - 2 * δ := by
+      rw [intervalIntegral.integral_congr (g := fun _ => (1:ℝ)) ?_]
+      · simp only [intervalIntegral.integral_const, smul_eq_mul, mul_one]; ring
+      · intro x hx
+        rw [Set.uIcc_of_le hBC] at hx
+        refine hone x ?_
+        rw [abs_le]
+        constructor <;> [linarith [hx.1]; linarith [hx.2]]
+    have e1 : (0:ℝ) ≤ ∫ x in (m - 1/2)..(m - r + δ), trapLo a c δ ((x : ℝ) : AddCircle (1 : ℝ)) :=
+      intervalIntegral.integral_nonneg hAB (fun x _ => trapLo_nonneg a c δ _)
+    have e3 : (0:ℝ) ≤ ∫ x in (m + r - δ)..(m + 1/2), trapLo a c δ ((x : ℝ) : AddCircle (1 : ℝ)) :=
+      intervalIntegral.integral_nonneg hCD (fun x _ => trapLo_nonneg a c δ _)
+    have hs1 := intervalIntegral.integral_add_adjacent_intervals
+      (a := m - 1/2) (b := m - r + δ) (c := m + r - δ)
+      (intIntegrableR (trapLo a c δ) _ _) (intIntegrableR (trapLo a c δ) _ _)
+    have hs2 := intervalIntegral.integral_add_adjacent_intervals
+      (a := m - 1/2) (b := m + r - δ) (c := m + 1/2)
+      (intIntegrableR (trapLo a c δ) _ _) (intIntegrableR (trapLo a c δ) _ _)
+    have hshift := intR_shift (trapLo a c δ) (m - 1/2)
+    have hend : m - 1/2 + 1 = m + 1/2 := by ring
+    rw [hend] at hshift
+    rw [hshift, ← hs2, ← hs1, e2]
+    have : c - a = 2 * r := by rw [hr]; ring
+    linarith
+
+end Trapezoid
+
 end Analysis
 
 /-- **Weyl's criterion**, the direction used by the normality wiring: vanishing
