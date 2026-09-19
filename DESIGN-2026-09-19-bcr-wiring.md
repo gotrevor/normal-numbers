@@ -145,3 +145,15 @@ Wiring `isNormal_cP4_of_KMT_sparse (hSparse : …) (hDiv : ¬ Summable (fun p �
 `hRate` expressing that the fixed-`J` convergence is fast enough for `J = J_N` (the diagonal
 condition; discharged by choosing `𝒫` sparse enough, or by a `k`-uniform reading of Prop 4.3).
 Existence statement first: `∃ 𝒫, ¬Summable ∧ IsNormal 4 (c_𝒫 4)`.  Not fired; Trevor's call.
+
+**Stated in Lean (2026-09-19, `src/NormalNumbers/G4WiringSparse.lean`, compiles):** `truncTailS`,
+`windowMeanS` (prefix mean directly, no W4), `RelDensityZero`, `DivergentRecip`, `NontrivialWindow`,
+the frozen `KMT_sparse S` (fixed `J`), the diagonal form `KMT_along S Jsched` actually consumed, and
+`TailOK S Jsched`.  Tail: the crude `ω_S ≤ ω ≤ log₂` route works for every `S` with the same
+`windowJ` as `G₄` (`tail_error_le_subset`, `tailOK_windowJ`), so the L¹ form above is not needed
+unless one wants a slower schedule.  Wiring `isNormal_subsetLambert_of_KMT_along` (leaves
+`orbit_eq_fract_tailB_subset`, `prefix_fourier_tendsto_zero`, one inline `fourierMean = prefixMean`
+sorry), `isNormal_subsetLambert_of_KMT_windowJ`, and the existence theorem `exists_sparse_normal`
+(sorry-free modulo `exists_relDensityZero_divergent`) under the hypothesis
+`∀ S, RelDensityZero S → DivergentRecip S → KMT_along S windowJ`.  The gap between `KMT_sparse` and
+`KMT_along S windowJ` is exactly the `k`-dependence of Prop 4.3 with `k = J_N ≍ log log N`.
