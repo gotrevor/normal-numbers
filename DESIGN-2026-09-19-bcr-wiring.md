@@ -92,12 +92,28 @@ At full ω (no truncation) the ratio `windowMean / ∏ siteMean` converges geome
 /-- Hardy–Littlewood-type law for ω-phases: shifted correlations factor as the
 CRT local density times one-site means, with a 1/log N error (measured shape). -/
 def CRTConstant (h : ℤ) : Prop :=
-  ∀ J : ℕ, ∃ C : ℝ, ∀ᶠ N in atTop,
+  ∃ C : ℝ, ∀ J : ℕ, ∀ᶠ N in atTop,
     ‖fullWindowMean N J h - crtFactor h J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j‖
       ≤ C / Real.log N * ∏ j ∈ Finset.Icc 1 J, ‖fullSiteMean N h j‖
 ```
 
-with `fullWindowMean`, `fullSiteMean` the untruncated versions of §1's means and `crtFactor` the absolutely convergent product.  `CRTConstant h` for all `h ≠ 0`, plus Selberg–Delange for the one-site means (classical, `|fullSiteMean N h j| ≍ (log N)^{cos(2πh4^{-j}) − 1}`) and the `J_N` schedule, gives `IsNormal 4 G₄` through W1–W4 directly, skipping L1–L3.  Not provable by any 2026 method (it is Elliott with a main term); it is the cleanest statement of what the numerics say.
+with `fullWindowMean`, `fullSiteMean` the untruncated versions of §1's means and `crtFactor` the absolutely convergent product.  `CRTConstant h` for all `h ≠ 0`, plus Selberg–Delange for the one-site means (classical, `|fullSiteMean N h j| ≍ (log N)^{cos(2πh4^{-j}) − 1}`) and the `J_N` schedule, gives `IsNormal 4 G₄` through W1–W4 plus the tail lemma L1, skipping the peeling layers L2–L3 entirely.  Not provable by any 2026 method (it is Elliott with a main term); it is the cleanest statement of what the numerics say.
+
+Second wiring theorem (untruncated route; shorter than §2, and the one to lap first once W3 is green):
+
+```lean
+/-- Delange–Wirsing–Halász: a 1-bounded multiplicative f with ∑_p (1 − Re f(p))/p = ∞
+has mean zero.  Here f(p) = e(h 4^{-j}) is constant on primes, so the series diverges
+whenever e(h 4^{-j}) ≠ 1.  Classical; frozen as an input, not a node. -/
+def SiteDecayFull : Prop :=
+  ∀ h j : ℤ, (h * 4^{-j} : ℝ) ∉ ℤ → Tendsto (fun N => ‖fullSiteMean N h j‖) atTop (𝓝 0)
+
+theorem isNormal_G4_of_CRTConstant
+    (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant h) (hSite : SiteDecayFull) :
+    IsNormal 4 (primeLambertAtBase 4)
+```
+
+Chain: for each `h ≠ 0` pick `J₀` with some `j ≤ J₀` having `e(h4^{-j}) ≠ 1` (any `j` with `4^j ∤ h`); by `hLaw` at `J = J₀`, `‖fullWindowMean N J₀ h‖ ≤ (‖crtFactor h J₀‖ + C/log N) ∏_{j≤J₀} ‖fullSiteMean‖ → 0` by `hSite` (the product has a factor tending to 0 and the rest are ≤ 1).  Then L1 (tail, `4^{-J} (1 + log log N)` with `J = J_N ≥ J₀` eventually; the law is applied at `J = J_N`, so the `∀ J` in `CRTConstant` must carry uniformity of `C` in `J`: ⚠️ **freeze `CRTConstant` with `C` independent of `J`**, which the measurement supports since `c_h(J)` converges geometrically), then W4 (dyadic → prefix), W3 (Weyl), W2, W1.  Obligations: W1 ✅, W2 ✅, W3 🔨 (one lap), W4 🔨 (elementary), L1 🔨 (Mertens upper bound), assembly 🔨.  No Selberg–Delange, no Dickman, no peeling.
 
 ## 4. What not to do
 
