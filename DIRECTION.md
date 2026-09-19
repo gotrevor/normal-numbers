@@ -1,5 +1,13 @@
 # DIRECTION — normal-numbers 🧭
 
+## Attended operator override: 2026-09-19 17:50 EDT — W3 WEYL CRITERION (ACTIVE; one lap, supersedes the prime-subset campaign below for this run only)
+
+Operator: Ren, attended; Trevor fired the run.  Engine Opus/low.  Branch `wip/g5-prime-subset`.
+Read `KICKOFF-2026-09-19-weyl-criterion.md` and do exactly that: prove
+`NormalNumbers.equidistributed_of_weyl` in `src/NormalNumbers/WeylCriterion.lean` (statement frozen,
+name guarded).  Pure analysis via `span_fourier_closure_eq_top`; no number theory, nothing else in the
+repo is in scope.  Commit a compiling skeleton with named `sorry` leaves before every hard step.
+
 ## Attended operator override: 2026-09-15 23:58 EDT — campaign A: PRIME-SUBSET LAMBERT SERIES (ACTIVE; supersedes the AFTER THE EXTRACTION override below, whose stop condition was met at lap 170)
 
 Operator: Ren, unattended overnight run authorized by Trevor 2026-09-15 ("you're in charge - dig").
