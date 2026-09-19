@@ -84,6 +84,21 @@ and `(log P)^{Re z − 1} → 0` is immediate for `Re z < 1`.  Provability (KB v
 
 Measured shape of `BCR` itself (KB verdict §2e): the ratio `windowMean / ∏ siteMean` is a slowly varying **real positive** factor, phase within ±0.015 turns (h = 1) and ±0.042 (h = 3) over the whole middle range at N = 10^8, magnitudes 1.1–1.4 and 0.3–0.65.  A future sharpening of the node is `∃ c_h > 0, windowMean / ∏ siteMean → c_h`; not frozen yet, the magnitude bound is what the wiring uses.
 
+## 3b. The sharper node: `CRTConstant` (measured 2026-09-19, KB verdict §2f)
+
+At full ω (no truncation) the ratio `windowMean / ∏ siteMean` converges geometrically in `J` (sites `j ≥ 4` move it < 0.5%) and approaches the CRT local factor `∏_p [1+∑_j(z_j−1)/p] / ∏_j(1+(z_j−1)/p)` at rate `≍ 1/log N` (|c/CRT| = 0.945, 0.955, 0.962 at h = 1 and 1.327, 1.257, 1.216 at h = 3 for N = 10⁶, 10⁷, 10⁸).  Frozen as a *stronger* node than `BCR`, for when a lap wants the untruncated route (no L1/L2 peeling at all):
+
+```lean
+/-- Hardy–Littlewood-type law for ω-phases: shifted correlations factor as the
+CRT local density times one-site means, with a 1/log N error (measured shape). -/
+def CRTConstant (h : ℤ) : Prop :=
+  ∀ J : ℕ, ∃ C : ℝ, ∀ᶠ N in atTop,
+    ‖fullWindowMean N J h - crtFactor h J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j‖
+      ≤ C / Real.log N * ∏ j ∈ Finset.Icc 1 J, ‖fullSiteMean N h j‖
+```
+
+with `fullWindowMean`, `fullSiteMean` the untruncated versions of §1's means and `crtFactor` the absolutely convergent product.  `CRTConstant h` for all `h ≠ 0`, plus Selberg–Delange for the one-site means (classical, `|fullSiteMean N h j| ≍ (log N)^{cos(2πh4^{-j}) − 1}`) and the `J_N` schedule, gives `IsNormal 4 G₄` through W1–W4 directly, skipping L1–L3.  Not provable by any 2026 method (it is Elliott with a main term); it is the cleanest statement of what the numerics say.
+
 ## 4. What not to do
 
 - Do not formalize the ledger, the covariance notation, (BL), or the band-freezing lemmas; they are restatements (KB verdict §1).
