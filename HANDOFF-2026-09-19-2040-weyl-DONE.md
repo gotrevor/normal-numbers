@@ -1,4 +1,7 @@
-# HANDOFF 2026-09-19 — W3 (Weyl's criterion) PROVED, one lap
+# HANDOFF 2026-09-19 20:40 — W3 (Weyl's criterion) PROVED, one lap
+
+Branch `wip/g5-prime-subset`, HEAD at this commit (parent `bf1379b`).  Treadmill STOP
+signalled (`box done --green`); scope for the lap was W3 only and it is met.
 
 `src/NormalNumbers/WeylCriterion.lean` is sorry-free; `NormalNumbers.equidistributed_of_weyl`
 depends only on `[propext, Classical.choice, Quot.sound]`.  Statement unchanged (frozen).
@@ -31,7 +34,17 @@ Module wired into `src/NormalNumbers.lean`; full `lake build` green (9091 jobs).
    `[m − 1/2, m + 1/2]` where `‖↑x − ↑m‖ = |x − m|` (`AddCircle.norm_coe_eq_abs_iff`), and a
    three-piece `integral_add_adjacent_intervals` split (outer pieces vanish identically).
 
-## Next (per DESIGN-2026-09-19-bcr-wiring.md §2)
+## Next (per DESIGN-2026-09-19-bcr-wiring.md §2), exact steps
 
-W4 (dyadic → prefix, elementary), then L1 (Mertens upper bound) and the L4 assembly.
-W3 is no longer a blocker for either wiring theorem.
+W3 is no longer a blocker for either wiring theorem.  In priority order:
+
+1. **W4** (dyadic → prefix): elementary, one lap.  Frozen shape is the §2 row W4; it converts
+   the dyadic-block mean statement into the prefix (`n → ∞` along all `n`) mean that
+   `equidistributed_of_weyl`'s hypothesis `hW` wants.  Nothing in mathlib needed beyond
+   Cesàro/Abel bookkeeping.
+2. **L1** (Mertens upper bound, `4^{-J}(1 + log log N)` tail) — the real analytic crux of the
+   untruncated route; expect several laps and commit named `sorry` leaves per inequality.
+3. **L4 assembly** (`isNormal_G4_of_CRTConstant`): L1 + W1 ✅ + W2 ✅ + W3 ✅ + W4.
+   ⚠️ keep `CRTConstant` frozen with `C` independent of `J` (see §3b).
+
+Do not start a treadmill from the design doc; Trevor fires it.
