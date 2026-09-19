@@ -135,4 +135,59 @@ theorem exists_sparse_normal
   obtain ⟨S, hdec, hden, hdiv⟩ := exists_relDensityZero_divergent
   exact ⟨S, hdec, hden, hdiv, isNormal_subsetLambert_of_KMT_windowJ S (hKMT S hden hdiv)⟩
 
+/-! ### The quantitative node: Prop. 4.3 specialised, with its `k`-dependent constant exposed
+
+For `f_j(n) = e(h 4^{-j} ω_S(n))` the pretentious distances in Prop. 4.3 are explicit:
+`𝔻(f_j, 1; y, x)² = (1 − cos(2πh/4^j)) ∑_{y<p≤x, p∈S} 1/p ≤ 2 ∑_{y<p≤x, p∈S} 1/p`, and at the first
+site `j` with `h/4^j ∉ ℤ` the fractional part is `1/4, 1/2` or `3/4`, so `1 − cos ≥ 1` and
+`max_j 𝔻(f_j, 1; y)² ≥ ∑_{p≤y, p∈S} 1/p`.  So the proposition, at shifts `1, …, J`, reads as the
+elementary inequality `KMT_quant C` below with some constant `C J` depending only on `J`.
+
+Reading the proof (KMT §4.1–4.2) the constant collects: the sum over `e_j ∣ A^∞` with
+`A ⊇ ∏_{p<J} p` (`≍ (log J)^J`), the fundamental lemma of sieve theory in dimension `J`, dimension-`J`
+Mertens products, and the smooth-number truncation `d_j ≤ x^{1/(4J)}` (which needs only `Jε → 0`,
+although the paper's fixed form `exp(−1/(2ε))` silently costs `ε ≤ e^{−4J}/(4J)`).  Everything is
+`exp(O(J log J))`; the existence theorem below needs only `log C J = o(4^J)`.
+-/
+
+/-- `∑_{p ≤ x, p ∈ S} 1/p`. -/
+noncomputable def recipSumLe (x : ℕ) : ℝ :=
+  ∑ p ∈ (Finset.Iic x).filter (fun p => p.Prime ∧ S p), (1 : ℝ) / p
+
+/-- `∑_{y < p ≤ x, p ∈ S} 1/p`. -/
+noncomputable def recipSumIoc (y x : ℕ) : ℝ :=
+  ∑ p ∈ (Finset.Ioc y x).filter (fun p => p.Prime ∧ S p), (1 : ℝ) / p
+
+/-- **Frozen input**, quantitative form of KMT 2023 Prop. 4.3 at shifts `1, …, J`, `χ = 1`, `t = 0`,
+for the phases `e(h 4^{-j} ω_S)`, with the implied constant `C J` exposed.  The `n < x` versus
+`n ≤ x` discrepancy is `≤ 1/x ≤ exp(−1/(8J²ε))` on the stated `ε`-range, absorbed by `C`. -/
+def KMT_quant (C : ℕ → ℝ) : Prop :=
+  ∀ (S : ℕ → Prop) [DecidablePred S] (J : ℕ) (h : ℤ), h ≠ 0 → NontrivialWindow J h →
+    ∀ x : ℕ, 3 ≤ x → ∀ ε : ℝ, 1 / Real.log (Real.log x) < ε → ε < 1 / 2 →
+      ‖windowMeanS S J h x‖ ≤ C J *
+        (Real.sqrt (Real.log (1 / ε)) * Real.sqrt (2 * recipSumIoc S ⌊(x : ℝ) ^ ε⌋₊ x)
+          + Real.exp (- recipSumLe S ⌊(x : ℝ) ^ ε⌋₊)
+          + Real.exp (- 1 / (8 * (J : ℝ) ^ 2 * ε)))
+
+/-- **Existence from the fixed-`k` proposition alone** (no uniformity in `k` beyond a growth bound
+on its constant).  Block construction: `S = ⋃ᵢ Bᵢ`, `Bᵢ ⊆ (xᵢ, xᵢ₊₁]` with `∑_{p∈Bᵢ} 1/p = δᵢ`,
+`xᵢ₊₁ ≥ xᵢ^{1/εᵢ₊₁}` so that `[x^ε, x]` meets at most two blocks; schedule `J_N = Jᵢ` on
+`(xᵢ, xᵢ₊₁]` with `εᵢ = 1/(8 Jᵢ² log i)`.  The three terms give `C(Jᵢ) √δᵢ √log(Jᵢ² log i)`,
+`C(Jᵢ) exp(−∑_{i'<i−1} δᵢ')`, `C(Jᵢ)/i`; the L¹ tail (`tail_error_L1`) needs
+`∑_{i'≤i} δᵢ' = o(4^{Jᵢ})`.  With `δᵢ = 1/i` the sandwich `log C(Jᵢ) + ω(1) ≤ log i ≤ o(4^{Jᵢ})`
+is solvable iff `log C k = o(4^k)`, and `∑ δᵢ = ∞` gives `DivergentRecip`. -/
+theorem exists_sparse_normal_of_KMT_quant (C : ℕ → ℝ)
+    (hgrow : Tendsto (fun k : ℕ => Real.log (C k) / 4 ^ k) atTop (𝓝 0))
+    (hKMT : KMT_quant C) :
+    ∃ (S : ℕ → Prop) (_ : DecidablePred S), DivergentRecip S ∧ IsNormal 4 (subsetLambert S 4) := by
+  sorry
+
+/-- L¹ tail for a slow schedule: `(1/N) ∑_{n<N} |tailB n − truncTailS J n|` is at most
+`(∑_{j>J} 4^{-j}) (recipSumLe S (2N) + 2)` up to the `n + j > 2N` fringe, i.e. `≪ 4^{-J} S_S(2N)`.
+This is what lets `J_N` grow as slowly as `log₄ S_S(N)` instead of `log₂ log₂ N`. -/
+theorem tail_error_L1 (J N : ℕ) (hN : 1 ≤ N) :
+    (∑ n ∈ Finset.range N, |(TWeight.subset S).tailB 4 n - truncTailS S J n|) / N
+      ≤ (recipSumLe S (2 * N) + (Nat.log 2 (2 * N) : ℝ) + 3) / (4 : ℝ) ^ J := by
+  sorry
+
 end NormalNumbers.G4Sparse

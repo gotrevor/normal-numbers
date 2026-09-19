@@ -157,3 +157,23 @@ sorry), `isNormal_subsetLambert_of_KMT_windowJ`, and the existence theorem `exis
 (sorry-free modulo `exists_relDensityZero_divergent`) under the hypothesis
 `∀ S, RelDensityZero S → DivergentRecip S → KMT_along S windowJ`.  The gap between `KMT_sparse` and
 `KMT_along S windowJ` is exactly the `k`-dependence of Prop 4.3 with `k = J_N ≍ log log N`.
+
+**Sharper (same evening): existence needs no `k`-uniformity, only a growth bound on the constant.**
+Prop 4.3 holds for *all* 1-bounded multiplicative `f_j` with a constant `C(k)` depending on `k` and
+the shifts alone, so it is uniform over `𝒫`.  Specialised to `f_j = e(h 4^{-j} ω_𝒫)` the distances
+are explicit (`𝔻(f_j,1;y,x)² ≤ 2 ∑_{y<p≤x,p∈𝒫} 1/p`; at the first nontrivial site `1 − cos ≥ 1`, so
+`max_j 𝔻(f_j,1;y)² ≥ S_𝒫(y)`), giving the elementary frozen Prop `KMT_quant C`.  Block
+construction: `𝒫 = ⋃ Bᵢ`, `Bᵢ ⊆ (xᵢ, xᵢ₊₁]`, `∑_{Bᵢ} 1/p = δᵢ = 1/i`, `xᵢ₊₁ ≥ xᵢ^{1/εᵢ₊₁}`,
+schedule `J_N = Jᵢ` on `(xᵢ, xᵢ₊₁]`, `εᵢ = 1/(8Jᵢ² log i)`.  Terms: `C(Jᵢ)√(2/i)√log(8Jᵢ² log i)`,
+`C(Jᵢ)/i^{1-o(1)}` (from `exp(−S_𝒫(x^ε))`, `S_𝒫(x^ε) ≥ log i − O(1)`), `C(Jᵢ)/i`; L¹ tail needs
+`log i = o(4^{Jᵢ})`.  Sandwich `log C(Jᵢ) + ω(1) ≤ log i ≤ o(4^{Jᵢ})` is solvable iff
+`log C(k) = o(4^k)`.  `exists_sparse_normal_of_KMT_quant` states this; `tail_error_L1` is the slow-
+schedule tail.  Reading KMT §4.1–4.2, `C(k)` collects `(log k)^k` (sum over `e_j ∣ A^∞`,
+`A ⊇ ∏_{p<k} p`), the dimension-`k` fundamental lemma (IK 6.3, constant in `κ = k` and
+`K = exp(O(k/log k))`), dimension-`k` Mertens products, and the smooth-number truncation
+`d_j ≤ x^{1/(4k)}`, which needs only `kε → 0` (the paper's fixed `exp(−1/(2ε))` form silently
+requires `ε ≤ e^{−4k}/(4k)`, which would *conflict* with the tail; re-running (4.20) removes it).
+Net `C(k) = exp(O(k log k))`, comfortably `o(4^k)` in the log.  Status: a theorem-shaped target
+whose proof is "KMT §4 with the `k`-dependence made explicit + the block construction"; no new
+idea needed, real bookkeeping.  Lean cost dominated by the fundamental lemma of sieve theory
+(not in Mathlib).
