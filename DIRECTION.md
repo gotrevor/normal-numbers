@@ -1,6 +1,6 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-20 18:25 EDT — `RoughIndependence` SPLIT LAP (ACTIVE)
+## Attended operator override: 2026-09-20 18:22 EDT — `RoughIndependence` SPLIT LAP (ACTIVE)
 
 Run `KICKOFF-2026-09-20-rough-independence-lap.md`: new file `src/NormalNumbers/G4WiringRough.lean`
 splitting N1 into the elementary smooth/CRT part and the frozen crux `RoughIndependence` (blueprint probe 6),
