@@ -1,6 +1,13 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-20 02:20 EDT — `KMT_quant₂` RE-FREEZE LAP (ACTIVE)
+## Attended operator override: 2026-09-20 02:20 EDT — `KMT_quant₂` RE-FREEZE LAP (DONE, one lap)
+
+**Result:** all six leaves landed in `src/NormalNumbers/G4WiringSparse.lean`; the file is sorry-free
+and `#print axioms exists_sparse_normal_of_KMT_quant₂` is `[propext, Classical.choice, Quot.sound]`.
+Pure addition — `git diff 2a58809` deletes no line, so every frozen statement is untouched.  The
+two-constant existence theorem needs only `log log C₂ k = o(4^k)` for the sieve constant.  See
+`HANDOFF-2026-09-20-kmt-quant2.md`.  Next crux: extract `C₁`, `C₂` from KMT Prop. 4.3 and verify the
+growth bounds — the fundamental-lemma constant of (4.20) is the open piece.  No active override.
 
 Operator: Ren, attended; fired under Trevor's standing "Why wait for me to fire?  Do it!" / "keep on
 trucking" (2026-09-20).  Engine Opus/low.  Branch `wip/g5-prime-subset`.  Read
