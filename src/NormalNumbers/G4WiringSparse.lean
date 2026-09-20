@@ -2694,7 +2694,49 @@ theorem terms₂_tendsto (C₂ : ℕ → ℝ) (Jf : ℕ → ℕ) (hle : ∀ i, J
     (hC : ∀ᶠ i : ℕ in atTop, Real.log |C₂ (Jf i)| ≤ (i : ℝ) / 2) :
     Tendsto (fun i => C₂ ((DDJ Jf).J i) *
       Real.exp (- 1 / (8 * ((DDJ Jf).J i : ℝ) ^ 2 * (DDJ Jf).ε i))) atTop (𝓝 0) := by
-  sorry
+  simp only [DDJ_J, DDJ_eps]
+  have hmaj : Tendsto (fun i : ℕ => Real.exp (- (i : ℝ) / 2)) atTop (𝓝 0) := by
+    have h1 : Tendsto (fun i : ℕ => - (i : ℝ) / 2) atTop atBot := by
+      have : Tendsto (fun i : ℕ => (i : ℝ) / 2) atTop atTop :=
+        tendsto_natCast_atTop_atTop.atTop_div_const (by norm_num)
+      exact (tendsto_neg_atTop_atBot.comp this).congr (fun i => by simp only [Function.comp_apply]; ring)
+    exact Real.tendsto_exp_atBot.comp h1
+  refine squeeze_zero_norm' ?_ hmaj
+  filter_upwards [eventually_ge_atTop 1, hJ1, hC] with i hi hJ1i hCi
+  have hi1 : (1 : ℝ) ≤ (i : ℝ) := by exact_mod_cast hi
+  have hJ1' : (1 : ℝ) ≤ (Jf i : ℝ) := by exact_mod_cast hJ1i
+  have hJle : (Jf i : ℝ) ≤ (i : ℝ) := by exact_mod_cast hle i
+  -- `|C₂ (Jf i)| ≤ exp (i/2)`
+  have habs : |C₂ (Jf i)| ≤ Real.exp ((i : ℝ) / 2) := by
+    rcases eq_or_ne (C₂ (Jf i)) 0 with h0 | h0
+    · rw [h0]; simpa using (Real.exp_pos ((i : ℝ) / 2)).le
+    · have : |C₂ (Jf i)| = Real.exp (Real.log |C₂ (Jf i)|) :=
+        (Real.exp_log (abs_pos.mpr h0)).symm
+      rw [this]
+      exact Real.exp_le_exp.mpr hCi
+  -- the exponential term is `≤ exp (-i)`
+  have hKeq : (8 : ℝ) * (Jf i : ℝ) ^ 2 * epsF i = 8 * (Jf i : ℝ) ^ 2 / (Kn i : ℝ) := by
+    rw [epsF]; field_simp
+  have hKn : (Kn i : ℝ) = 8 * ((i : ℝ) + 3) ^ 3 := by simp only [Kn]; push_cast; ring
+  have hge : (i : ℝ) ≤ 1 / (8 * (Jf i : ℝ) ^ 2 / (Kn i : ℝ)) := by
+    rw [one_div_div, hKn, le_div_iff₀ (by positivity)]
+    have hJ2 : (Jf i : ℝ) ^ 2 ≤ (i : ℝ) ^ 2 := by nlinarith
+    have hc1 : (i : ℝ) * (8 * (Jf i : ℝ) ^ 2) ≤ 8 * (i : ℝ) ^ 3 := by nlinarith
+    have hc2 : (8 : ℝ) * (i : ℝ) ^ 3 ≤ 8 * ((i : ℝ) + 3) ^ 3 := by nlinarith [sq_nonneg (i:ℝ)]
+    linarith
+  have hTle : Real.exp (-1 / (8 * (Jf i : ℝ) ^ 2 * epsF i)) ≤ Real.exp (- (i : ℝ)) := by
+    rw [hKeq]
+    refine Real.exp_le_exp.mpr ?_
+    have hone : (-1 : ℝ) / (8 * (Jf i : ℝ) ^ 2 / (Kn i : ℝ))
+        = - (1 / (8 * (Jf i : ℝ) ^ 2 / (Kn i : ℝ))) := by ring
+    rw [hone]
+    linarith [hge]
+  calc ‖C₂ (Jf i) * Real.exp (-1 / (8 * (Jf i : ℝ) ^ 2 * epsF i))‖
+      = |C₂ (Jf i)| * Real.exp (-1 / (8 * (Jf i : ℝ) ^ 2 * epsF i)) := by
+        rw [norm_mul, Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (Real.exp_pos _).le]
+    _ ≤ Real.exp ((i : ℝ) / 2) * Real.exp (- (i : ℝ)) := by
+        exact mul_le_mul habs hTle (Real.exp_pos _).le (Real.exp_pos _).le
+    _ = Real.exp (- (i : ℝ) / 2) := by rw [← Real.exp_add]; ring_nf
 
 /-- Leaf 4c (two-constant): `log i = o(4^{Jᵢ})` for the `JF₂` schedule. -/
 theorem log_o_pow₂ (C₁ C₂ : ℕ → ℝ)
@@ -2704,11 +2746,81 @@ theorem log_o_pow₂ (C₁ C₂ : ℕ → ℝ)
   sorry
 
 /-- Leaf 6 (general schedule): the L¹ tail. -/
+theorem DDJ_delta_ge (Jf : ℕ → ℕ) (i : ℕ) : (1 : ℝ) / ((i : ℝ) + 1) ≤ (DDJ Jf).δ i := by
+  rw [DDJ_delta]; exact delta_ge _ i
+
+theorem DDJ_delta_le (Jf : ℕ → ℕ) (i : ℕ) : (DDJ Jf).δ i ≤ 2 / ((i : ℝ) + 1) := by
+  rw [DDJ_delta]; exact delta_le _ i
+
 theorem tail_tendsto_gen (Jf : ℕ → ℕ) (hJt : Tendsto Jf atTop atTop)
     (hlog : Tendsto (fun i : ℕ => Real.log i / (4 : ℝ) ^ Jf i) atTop (𝓝 0)) :
     Tendsto (fun i => (∑ i' ∈ Finset.range (i + 2), (DDJ Jf).δ i' + 1) / (4 : ℝ) ^ (DDJ Jf).J i)
       atTop (𝓝 0) := by
-  sorry
+  simp only [DDJ_J]
+  have hpow : Tendsto (fun i : ℕ => (6 : ℝ) / (4 : ℝ) ^ Jf i) atTop (𝓝 0) := by
+    have hbase : Tendsto (fun k : ℕ => (6 : ℝ) / (4 : ℝ) ^ k) atTop (𝓝 0) := by
+      have h0 := (tendsto_pow_atTop_nhds_zero_of_lt_one (r := (1 : ℝ) / 4)
+        (by norm_num) (by norm_num)).const_mul (6 : ℝ)
+      have h1 : Tendsto (fun k : ℕ => 6 * ((1 : ℝ) / 4) ^ k) atTop (𝓝 0) := by
+        simpa using h0
+      refine h1.congr (fun k => ?_)
+      rw [div_pow, one_pow]
+      field_simp
+    exact hbase.comp hJt
+  have hmaj : Tendsto (fun i : ℕ => (6 : ℝ) / (4 : ℝ) ^ Jf i
+      + 2 * (Real.log i / (4 : ℝ) ^ Jf i)) atTop (𝓝 0) := by
+    simpa using hpow.add (hlog.const_mul 2)
+  refine squeeze_zero' ?_ ?_ hmaj
+  · filter_upwards [eventually_ge_atTop 1] with i hi
+    have hs : (0 : ℝ) ≤ ∑ i' ∈ Finset.range (i + 2), (DDJ Jf).δ i' :=
+      Finset.sum_nonneg (fun k _ => le_trans (by positivity) (DDJ_delta_ge Jf k))
+    positivity
+  · filter_upwards [eventually_ge_atTop 1] with i hi
+    have hi1 : (1 : ℝ) ≤ (i : ℝ) := by exact_mod_cast hi
+    have hipos : (0 : ℝ) < (i : ℝ) := by linarith
+    have hp : (0 : ℝ) < (4 : ℝ) ^ Jf i := by positivity
+    -- numerator bound
+    have hsum : ∑ i' ∈ Finset.range (i + 2), (DDJ Jf).δ i'
+        ≤ 2 * (1 + Real.log ((i : ℝ) + 2)) := by
+      have h1 : ∑ i' ∈ Finset.range (i + 2), (DDJ Jf).δ i'
+          ≤ ∑ i' ∈ Finset.range (i + 2), 2 * ((1 : ℝ) / ((i' : ℝ) + 1)) :=
+        Finset.sum_le_sum (fun k _ => by
+          have := DDJ_delta_le Jf k
+          have : (2 : ℝ) / ((k : ℝ) + 1) = 2 * (1 / ((k : ℝ) + 1)) := by ring
+          linarith [DDJ_delta_le Jf k])
+      have h2 : ∑ i' ∈ Finset.range (i + 2), 2 * ((1 : ℝ) / ((i' : ℝ) + 1))
+          = 2 * ∑ i' ∈ Finset.range (i + 2), (1 : ℝ) / ((i' : ℝ) + 1) := by
+        rw [Finset.mul_sum]
+      have h3 := harm_upper (i + 2)
+      have h4 : ((i + 2 : ℕ) : ℝ) = (i : ℝ) + 2 := by push_cast; ring
+      rw [h4] at h3
+      linarith [h1, h2.le, h2.ge, h3]
+    have hlog2 : Real.log ((i : ℝ) + 2) ≤ Real.log 3 + Real.log i := by
+      have h1 : Real.log ((i : ℝ) + 2) ≤ Real.log (3 * (i : ℝ)) :=
+        Real.log_le_log (by linarith) (by linarith)
+      rwa [Real.log_mul (by norm_num) (ne_of_gt hipos)] at h1
+    have hl3 : Real.log 3 ≤ 3 / 2 := by
+      have he3 : Real.exp 3 = Real.exp (3 / 2) * Real.exp (3 / 2) := by
+        rw [← Real.exp_add]; norm_num
+      have h1 : (9 : ℝ) < Real.exp 3 := by
+        have he : Real.exp 3 = Real.exp 1 * (Real.exp 1 * Real.exp 1) := by
+          rw [← Real.exp_add, ← Real.exp_add]; norm_num
+        nlinarith [Real.exp_one_gt_d9, Real.exp_pos 1]
+      have h2 : (3 : ℝ) ≤ Real.exp (3 / 2) := by
+        nlinarith [Real.exp_pos (3 / 2 : ℝ), he3, h1]
+      have h3 := Real.log_le_log (show (0 : ℝ) < 3 by norm_num) h2
+      rwa [Real.log_exp] at h3
+    have hnum : ∑ i' ∈ Finset.range (i + 2), (DDJ Jf).δ i' + 1 ≤ 6 + 2 * Real.log i := by
+      linarith
+    have hstep : (∑ i' ∈ Finset.range (i + 2), (DDJ Jf).δ i' + 1) / (4 : ℝ) ^ Jf i
+        ≤ (6 + 2 * Real.log i) / (4 : ℝ) ^ Jf i :=
+      div_le_div_of_nonneg_right hnum hp.le
+    have hsplit : (6 + 2 * Real.log i) / (4 : ℝ) ^ Jf i
+        = 6 / (4 : ℝ) ^ Jf i + 2 * (Real.log i / (4 : ℝ) ^ Jf i) := by
+      field_simp
+    show (∑ i' ∈ Finset.range (i + 2), (DDJ Jf).δ i' + 1) / (4 : ℝ) ^ Jf i ≤ _
+    linarith [hstep, hsplit.le, hsplit.ge]
+
 
 end GoodExists
 
