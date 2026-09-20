@@ -1475,8 +1475,11 @@ structure Good (C : ℕ → ℝ) : Prop where
   δ_div : ¬ Summable D.δ
   /-- The KMT `ε`-range holds at every scale of block `i`. -/
   ε_range : ∀ i N, D.x i < N → 1 / Real.log (Real.log N) < D.ε i ∧ D.ε i < 1 / 2
-  /-- `[N^{εᵢ}, N]` meets at most blocks `i−1, i`: `N^{εᵢ} ≥ xᵢ₋₁` on block `i`. -/
-  sep : ∀ i N, D.x i < N → D.x (i - 1) ≤ ⌊(N : ℝ) ^ D.ε i⌋₊
+  /-- `[N^{εᵢ}, N]` meets at most blocks `i−1, i`: `N^{εᵢ} ≥ xᵢ₋₁` on block `i`.
+  ⚠️ The hypothesis `1 ≤ i` is **necessary**: at `i = 0` this field and `ε_range` are jointly
+  contradictory (`sep_eps_incompatible` below, machine-checked).  `kmt_along` only ever uses it
+  at `blockIndex N ≥ 1`, which holds for all large `N`. -/
+  sep : ∀ i N, 1 ≤ i → D.x i < N → D.x (i - 1) ≤ ⌊(N : ℝ) ^ D.ε i⌋₊
   /-- `2N` stays inside block `i+1`. -/
   x_double : ∀ i, 2 * D.x (i + 1) ≤ D.x (i + 2)
   /-- The three KMT terms, with the constant, vanish along the blocks. -/
@@ -1629,15 +1632,16 @@ theorem kmt_along {C : ℕ → ℝ} (hKMT : KMT_quant C) (hG : D.Good C) :
   have hterms := hG.terms.comp D.blockIndex_tendsto
   refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _)) ?_ hterms
   filter_upwards [eventually_gt_atTop (D.x 0), eventually_ge_atTop 3,
-    (hG.J_tendsto.comp D.blockIndex_tendsto).eventually_ge_atTop (h.natAbs + 1)]
-    with N hN hN3 hJ
+    (hG.J_tendsto.comp D.blockIndex_tendsto).eventually_ge_atTop (h.natAbs + 1),
+    D.blockIndex_tendsto.eventually_ge_atTop 1]
+    with N hN hN3 hJ hbi1
   obtain ⟨hspec1, hspec2⟩ := D.blockIndex_spec N hN
   have hntw : NontrivialWindow (D.J (D.blockIndex N)) h :=
     ⟨h.natAbs + 1, by omega, hJ, nontrivial_site hh⟩
   obtain ⟨hε1, hε2⟩ := hG.ε_range (D.blockIndex N) N hspec1
   have hb := hKMT D.set (D.J (D.blockIndex N)) h hh hntw N hN3 (D.ε (D.blockIndex N)) hε1 hε2
   have hy : D.x (D.blockIndex N - 1) ≤ ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊ :=
-    hG.sep (D.blockIndex N) N hspec1
+    hG.sep (D.blockIndex N) N hbi1 hspec1
   have hIoc := D.recipSumIoc_le (D.blockIndex N) N ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊
     hspec1 hspec2 hy
   have hLe := D.recipSumLe_ge (D.blockIndex N) ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊ hy
@@ -1838,3 +1842,61 @@ theorem exists_sparse_normal_of_KMT_quant (C : ℕ → ℝ)
   exists_sparse_normal_of_KMT_quant' C hgrow hKMT
 
 end NormalNumbers.G4Sparse
+
+section Refutation
+
+/-- **The `i = 0` obstruction.**  `Good.ε_range` and `Good.sep` are jointly unsatisfiable at
+`i = 0`: `ε_range` forces `x 0` to be huge (`N = 16` already needs `ε > 1/2` when `x 0 < 16`),
+while `sep` at `N = x 0 + 1` forces `x 0 ≤ (x 0 + 1)^ε < (x 0 + 1)^{1/2}`, i.e. `x 0 ≤ 1`. -/
+theorem sep_eps_incompatible (x0 : ℕ) (ε : ℝ) (hε2 : ε < 1 / 2)
+    (hrange : ∀ N : ℕ, x0 < N → 1 / Real.log (Real.log N) < ε)
+    (hsep : ∀ N : ℕ, x0 < N → x0 ≤ ⌊(N : ℝ) ^ ε⌋₊) : False := by
+  by_cases hsmall : x0 < 16
+  · have h16 : ((16 : ℕ) : ℝ) = 16 := by norm_num
+    have hl2 : Real.log 2 < 0.6931471808 := Real.log_two_lt_d9
+    have hl2' : 0.6931471803 < Real.log 2 := Real.log_two_gt_d9
+    have hlog16 : Real.log ((16 : ℕ) : ℝ) = 4 * Real.log 2 := by
+      rw [h16]
+      rw [show (16 : ℝ) = 2 ^ (4 : ℕ) by norm_num, Real.log_pow]
+      push_cast; ring
+    have h1 : 1 < Real.log ((16 : ℕ) : ℝ) := by rw [hlog16]; linarith
+    have h2 : Real.log ((16 : ℕ) : ℝ) ≤ 7 := by rw [hlog16]; linarith
+    have hpos : 0 < Real.log (Real.log ((16 : ℕ) : ℝ)) := Real.log_pos h1
+    have hle : Real.log (Real.log ((16 : ℕ) : ℝ)) ≤ 2 := by
+      have : Real.log (Real.log ((16 : ℕ) : ℝ)) ≤ Real.log 7 :=
+        Real.log_le_log (by linarith) h2
+      have hexp2 : (7 : ℝ) ≤ Real.exp 2 := by
+        have he : Real.exp 2 = Real.exp 1 * Real.exp 1 := by
+          rw [← Real.exp_add]; norm_num
+        nlinarith [Real.exp_one_gt_d9, Real.exp_pos 1]
+      have h7 : Real.log 7 ≤ 2 := by
+        have : Real.log 7 ≤ Real.log (Real.exp 2) :=
+          Real.log_le_log (by norm_num) hexp2
+        simpa using this
+      linarith
+    have := hrange 16 (by omega)
+    have hge : (1 : ℝ) / 2 ≤ 1 / Real.log (Real.log ((16 : ℕ) : ℝ)) := by
+      apply one_div_le_one_div_of_le hpos hle
+    linarith
+  · push_neg at hsmall
+    have hN : x0 < x0 + 1 := by omega
+    have := hsep (x0 + 1) hN
+    have hcast : ((x0 + 1 : ℕ) : ℝ) = (x0 : ℝ) + 1 := by push_cast; ring
+    have hb1 : (1 : ℝ) ≤ (x0 : ℝ) + 1 := by
+      have : (0 : ℝ) ≤ (x0 : ℝ) := Nat.cast_nonneg x0
+      linarith
+    have hfl : ((x0 : ℕ) : ℝ) ≤ ((x0 + 1 : ℕ) : ℝ) ^ ε := by
+      refine le_trans ?_ (Nat.floor_le (by positivity))
+      exact_mod_cast this
+    have hmono : ((x0 + 1 : ℕ) : ℝ) ^ ε ≤ ((x0 + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 2) := by
+      rw [hcast]
+      exact Real.rpow_le_rpow_of_exponent_le hb1 (le_of_lt hε2)
+    have hsq : ((x0 + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 2) = Real.sqrt ((x0 : ℝ) + 1) := by
+      rw [hcast, Real.sqrt_eq_rpow]
+    have hx16 : (16 : ℝ) ≤ (x0 : ℝ) := by exact_mod_cast hsmall
+    have hfin : (x0 : ℝ) ≤ Real.sqrt ((x0 : ℝ) + 1) := by
+      rw [← hsq]; linarith [hfl, hmono]
+    nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ (x0 : ℝ) + 1 by positivity),
+      Real.sqrt_nonneg ((x0 : ℝ) + 1)]
+
+end Refutation
