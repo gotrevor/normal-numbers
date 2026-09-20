@@ -1901,6 +1901,37 @@ theorem roughWindow_sub_prod_eq_covariances (N J : ℕ) (h : ℤ) (hN : 0 < N) :
   rw [roughWindowMean_eq_winMean]
   simpa [roughSiteMean_eq_winMean] using winMean_prod_telescope N hN (fun j => roughPhase h j) J
 
+/-- The prefix/site covariance at index `k`: the object the crux is made of. -/
+noncomputable def prefixCov (N : ℕ) (h : ℤ) (k : ℕ) : ℂ :=
+  winMean N (fun n => ∏ j ∈ Finset.Icc 1 k, roughPhase h j n)
+    - winMean N (fun n => ∏ j ∈ Finset.Icc 1 (k-1), roughPhase h j n) * roughSiteMean N h k 2
+
+/-- Triangle-inequality form of the decomposition: the crux is controlled by the covariances,
+each weighted only by the *tail* site means. -/
+theorem norm_roughWindow_sub_prod_le (N J : ℕ) (h : ℤ) (hN : 0 < N) :
+    ‖roughWindowMean N J h 2 - ∏ j ∈ Finset.Icc 1 J, roughSiteMean N h j 2‖
+      ≤ ∑ k ∈ Finset.Icc 1 J,
+          ‖prefixCov N h k‖ * ∏ j ∈ Finset.Icc (k+1) J, ‖roughSiteMean N h j 2‖ := by
+  rw [roughWindow_sub_prod_eq_covariances N J h hN]
+  refine (norm_sum_le _ _).trans ?_
+  refine Finset.sum_le_sum (fun k _ => ?_)
+  rw [norm_mul, norm_prod, prefixCov]
+
+/-- Consequence: if the covariances are small **relative to the head product**, the crux holds
+with constant `c = 1`.  This is the shape the node must take *only if* the sites genuinely
+decorrelate; see `probes/prefix_covariance.py` for the measurement that decides it. -/
+theorem roughIndependenceAt_two_of_prefixCov {h : ℤ}
+    (hC : ∃ C : ℝ, ∀ᶠ N : ℕ in atTop,
+      ∑ k ∈ Finset.Icc 1 (windowJ N),
+          ‖prefixCov N h k‖ * ∏ j ∈ Finset.Icc (k+1) (windowJ N), ‖roughSiteMean N h j 2‖
+        ≤ C / Real.log N * ∏ j ∈ Finset.Icc 1 (windowJ N), ‖roughSiteMean N h j 2‖) :
+    RoughIndependenceAt h 2 := by
+  obtain ⟨C, hev⟩ := hC
+  refine ⟨fun _ => 1, 1, C, fun J => by simp, ?_⟩
+  filter_upwards [hev, eventually_gt_atTop 0] with N hN hN0
+  rw [one_mul]
+  exact (norm_roughWindow_sub_prod_le N (windowJ N) h hN0).trans hN
+
 /-- **Headline wiring on the two minimal nodes.**  On the non-Chowla sector the whole G₄ window
 law rests on exactly two open statements: `RoughIndependenceAt h 2` (the rough window mean
 factorises into its site means) and `ParityDiscrepancy h` (the rough phase has no parity bias
