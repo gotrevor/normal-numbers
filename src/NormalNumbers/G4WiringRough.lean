@@ -51,7 +51,20 @@ so `omegaLe y 0 = 0`, while `omegaLe y (primorial y) = #{p ≤ y prime} > 0` for
 site has `m = n + j + 1 ≥ 1`, so the hypothesis costs nothing. -/
 theorem omegaLe_add_primorial (y m : ℕ) (hm : m ≠ 0) :
     omegaLe y (m + primorial y) = omegaLe y m := by
-  sorry
+  have hP : 0 < primorial y := primorial_pos y
+  unfold omegaLe
+  congr 1
+  ext p
+  simp only [Finset.mem_filter, Nat.mem_primeFactors]
+  constructor
+  · rintro ⟨⟨hp, hdvd, -⟩, hpy⟩
+    have hpP : p ∣ primorial y := hp.dvd_primorial_iff.2 hpy
+    refine ⟨⟨hp, ?_, hm⟩, hpy⟩
+    have := Nat.dvd_sub hdvd hpP
+    simpa using this
+  · rintro ⟨⟨hp, hdvd, -⟩, hpy⟩
+    have hpP : p ∣ primorial y := hp.dvd_primorial_iff.2 hpy
+    exact ⟨⟨hp, hdvd.add hpP, by omega⟩, hpy⟩
 
 noncomputable def smoothTail (y J n : ℕ) : ℝ :=
   ∑ j ∈ Finset.range J, (omegaLe y (n + j + 1) : ℝ) / (4 : ℝ) ^ (j + 1)
@@ -103,7 +116,68 @@ theorem crtConstantSched_of_crtConstant {h : ℤ} (hL : CRTConstant h) : CRTCons
 theorem fullWindowMean_tendsto_zero_of_sched {h : ℤ} (hL : CRTConstantSched h)
     (hSite : SiteDecayFull) (hh : h ≠ 0) :
     Tendsto (fun N => fullWindowMean N (windowJ N) h) atTop (𝓝 0) := by
-  sorry
+  obtain ⟨c, B, C, hcB, hlaw⟩ := hL
+  set j₀ : ℕ := h.natAbs + 1 with hj₀def
+  have hj₀1 : 1 ≤ j₀ := by omega
+  have hnotint : ¬ ∃ m : ℤ, (h : ℝ) / (4 : ℝ) ^ j₀ = m := by
+    rintro ⟨m, hm⟩
+    have h4 : ((4 : ℝ) ^ j₀) ≠ 0 := by positivity
+    have hR : (h : ℝ) = (m : ℝ) * (4 : ℝ) ^ j₀ := by field_simp at hm; linarith [hm]
+    have hZ : h = m * 4 ^ j₀ := by exact_mod_cast hR
+    have hm0 : m ≠ 0 := by rintro rfl; simp at hZ; exact hh hZ
+    have hlb : (4 : ℤ) ^ j₀ ≤ |h| := by
+      rw [hZ, abs_mul, abs_of_nonneg (by positivity : (0 : ℤ) ≤ 4 ^ j₀)]
+      have : 1 ≤ |m| := Int.one_le_abs (by omega)
+      nlinarith [abs_nonneg m, (by positivity : (0 : ℤ) < 4 ^ j₀)]
+    have hub : h.natAbs < 4 ^ j₀ := by
+      calc h.natAbs < 2 ^ h.natAbs := Nat.lt_two_pow_self
+        _ ≤ 4 ^ (h.natAbs + 1) := by
+            calc 2 ^ h.natAbs ≤ 4 ^ h.natAbs := Nat.pow_le_pow_left (by norm_num) _
+              _ ≤ 4 ^ (h.natAbs + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+    have habs : |h| = (h.natAbs : ℤ) := Int.abs_eq_natAbs h
+    have : ((4 : ℤ) ^ j₀) ≤ (h.natAbs : ℤ) := by rw [habs] at hlb; exact hlb
+    have hub' : ((h.natAbs : ℤ)) < 4 ^ j₀ := by exact_mod_cast hub
+    omega
+  have hsite := hSite h j₀ hj₀1 hnotint
+  have hBnn : (0 : ℝ) ≤ B := le_trans (norm_nonneg _) (hcB 0)
+  refine tendsto_zero_iff_norm_tendsto_zero.mpr ?_
+  refine squeeze_zero' (Eventually.of_forall (fun N => norm_nonneg _))
+    (g := fun N => (B + |C|) * ‖fullSiteMean N h j₀‖) ?_ (by simpa using hsite.const_mul (B + |C|))
+  filter_upwards [hlaw, tendsto_windowJ.eventually_ge_atTop j₀, eventually_ge_atTop 3]
+    with N hN hNJ hN3
+  set J := windowJ N with hJ
+  set P : ℝ := ∏ j ∈ Finset.Icc 1 J, ‖fullSiteMean N h j‖ with hP
+  have hPnn : 0 ≤ P := Finset.prod_nonneg (fun j _ => norm_nonneg _)
+  have hmem : j₀ ∈ Finset.Icc 1 J := Finset.mem_Icc.mpr ⟨hj₀1, hNJ⟩
+  have hPle : P ≤ ‖fullSiteMean N h j₀‖ := by
+    rw [hP, ← Finset.prod_erase_mul _ _ hmem]
+    have h1 : (∏ j ∈ (Finset.Icc 1 J).erase j₀, ‖fullSiteMean N h j‖) ≤ 1 :=
+      Finset.prod_le_one (fun j _ => norm_nonneg _) (fun j _ => norm_fullSiteMean_le_one _ _ _)
+    nlinarith [norm_nonneg (fullSiteMean N h j₀),
+      Finset.prod_nonneg (fun j (_ : j ∈ (Finset.Icc 1 J).erase j₀) => norm_nonneg
+        (fullSiteMean N h j))]
+  have hN3R : (3 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN3
+  have hlogN : (1 : ℝ) ≤ Real.log N := by
+    rw [Real.le_log_iff_exp_le (by linarith)]
+    linarith [Real.exp_one_lt_d9]
+  have hCbound : C / Real.log N ≤ |C| := by
+    rw [div_le_iff₀ (by linarith)]
+    nlinarith [le_abs_self C, abs_nonneg C]
+  have hprodnorm : ‖c J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j‖ ≤ B * P := by
+    rw [norm_mul, norm_prod]
+    exact mul_le_mul (hcB J) le_rfl hPnn hBnn
+  calc ‖fullWindowMean N J h‖
+      ≤ ‖fullWindowMean N J h - c J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j‖
+          + ‖c J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j‖ := by
+        simpa using norm_add_le (fullWindowMean N J h
+          - c J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j)
+          (c J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j)
+    _ ≤ C / Real.log N * P + B * P := by gcongr
+    _ ≤ |C| * P + B * P := by nlinarith
+    _ = (B + |C|) * P := by ring
+    _ ≤ (B + |C|) * ‖fullSiteMean N h j₀‖ := by
+        have : (0 : ℝ) ≤ B + |C| := by positivity
+        nlinarith
 
 /-! ### The frozen nodes -/
 
