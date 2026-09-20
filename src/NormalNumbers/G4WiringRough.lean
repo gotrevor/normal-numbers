@@ -210,7 +210,92 @@ average over one period. -/
 theorem periodic_mean_close (F : ℕ → ℂ) (P : ℕ) (hP : 0 < P) (hper : ∀ n, F (n + P) = F n)
     (hb : ∀ n, ‖F n‖ ≤ 1) (N : ℕ) (hN : 0 < N) :
     ‖(∑ n ∈ Finset.Ico N (2 * N), F n) / N - (∑ n ∈ Finset.range P, F n) / P‖ ≤ 2 * P / N := by
-  sorry
+  set A : ℂ := ∑ n ∈ Finset.range P, F n with hA
+  -- every block of `P` consecutive values sums to `A`
+  have hblock : ∀ a : ℕ, ∑ n ∈ Finset.Ico a (a + P), F n = A := by
+    intro a
+    induction a with
+    | zero => rw [hA, Finset.range_eq_Ico, Nat.zero_add]
+    | succ a ih =>
+        have h1 : ∑ n ∈ Finset.Ico a (a + 1 + P), F n
+            = F a + ∑ n ∈ Finset.Ico (a + 1) (a + 1 + P), F n :=
+          Finset.sum_eq_sum_Ico_succ_bot (by omega) _
+        have h2 : ∑ n ∈ Finset.Ico a (a + 1 + P), F n
+            = (∑ n ∈ Finset.Ico a (a + P), F n) + F (a + P) := by
+          rw [show a + 1 + P = (a + P) + 1 from by omega]
+          exact Finset.sum_Ico_succ_top (by omega) _
+        have h3 : F (a + P) = F a := hper a
+        rw [ih] at h2
+        rw [h3] at h2
+        rw [h1] at h2
+        have : ∑ n ∈ Finset.Ico (a + 1) (a + 1 + P), F n = A := by
+          have := h2
+          linear_combination (norm := ring_nf) this
+        simpa using this
+  -- `k` full blocks starting at `N`
+  set k : ℕ := N / P with hk
+  set s : ℕ := N % P with hs
+  have hNks : N = k * P + s := by
+    rw [hk, hs, mul_comm]; exact (Nat.div_add_mod N P).symm
+  have hsP : s < P := Nat.mod_lt _ hP
+  have hfull : ∀ j : ℕ, ∑ n ∈ Finset.Ico N (N + j * P), F n = (j : ℂ) * A := by
+    intro j
+    induction j with
+    | zero => simp
+    | succ j ih =>
+        rw [show N + (j + 1) * P = (N + j * P) + P from by ring,
+          ← Finset.sum_Ico_consecutive F (Nat.le_add_right N (j * P))
+            (Nat.le_add_right (N + j * P) P), ih, hblock]
+        push_cast
+        ring
+  have hsplit2 : ∑ n ∈ Finset.Ico N (2 * N), F n
+      = (k : ℂ) * A + ∑ n ∈ Finset.Ico (N + k * P) (2 * N), F n := by
+    rw [← hfull k]
+    rw [← Finset.sum_Ico_consecutive F (by omega : N ≤ N + k * P) (by omega : N + k * P ≤ 2 * N)]
+  set R : ℂ := ∑ n ∈ Finset.Ico (N + k * P) (2 * N), F n with hR
+  have hRle : ‖R‖ ≤ (s : ℝ) := by
+    have hcard : (Finset.Ico (N + k * P) (2 * N)).card = s := by
+      rw [Nat.card_Ico]; omega
+    calc ‖R‖ ≤ ∑ n ∈ Finset.Ico (N + k * P) (2 * N), ‖F n‖ := norm_sum_le _ _
+      _ ≤ ∑ _n ∈ Finset.Ico (N + k * P) (2 * N), (1 : ℝ) :=
+          Finset.sum_le_sum (fun n _ => hb n)
+      _ = (s : ℝ) := by rw [Finset.sum_const, nsmul_eq_mul, mul_one, hcard]
+  have hAle : ‖A‖ ≤ (P : ℝ) := by
+    calc ‖A‖ ≤ ∑ n ∈ Finset.range P, ‖F n‖ := norm_sum_le _ _
+      _ ≤ ∑ _n ∈ Finset.range P, (1 : ℝ) := Finset.sum_le_sum (fun n _ => hb n)
+      _ = (P : ℝ) := by simp
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  have hPR : (0 : ℝ) < P := by exact_mod_cast hP
+  have hkey : (∑ n ∈ Finset.Ico N (2 * N), F n) / N - A / P
+      = A * (((k : ℝ) * P - N : ℝ) : ℂ) / ((N : ℂ) * P) + R / N := by
+    rw [hsplit2]
+    have hN0 : (N : ℂ) ≠ 0 := by exact_mod_cast hN.ne'
+    have hP0 : (P : ℂ) ≠ 0 := by exact_mod_cast hP.ne'
+    field_simp
+    push_cast
+    ring
+  have hkPN : |(k : ℝ) * P - N| ≤ (P : ℝ) := by
+    have : (N : ℝ) = (k : ℝ) * P + s := by exact_mod_cast hNks
+    rw [this]
+    have hs0 : (0 : ℝ) ≤ (s : ℝ) := Nat.cast_nonneg s
+    have hsP' : (s : ℝ) ≤ (P : ℝ) := by exact_mod_cast hsP.le
+    rw [abs_le]; constructor <;> linarith
+  have hsP' : (s : ℝ) ≤ (P : ℝ) := by exact_mod_cast hsP.le
+  rw [hkey]
+  have h1 : ‖A * (((k : ℝ) * P - N : ℝ) : ℂ) / ((N : ℂ) * P)‖ ≤ (P : ℝ) / N := by
+    rw [norm_div, norm_mul, norm_mul]
+    rw [Complex.norm_real, Complex.norm_natCast, Complex.norm_natCast, Real.norm_eq_abs]
+    rw [div_le_div_iff₀ (by positivity) hNR]
+    have hstep : ‖A‖ * |(k : ℝ) * P - N| ≤ (P : ℝ) * P :=
+      mul_le_mul hAle hkPN (abs_nonneg _) (by positivity)
+    nlinarith [mul_le_mul_of_nonneg_right hstep hNR.le]
+  have h2 : ‖R / (N : ℂ)‖ ≤ (P : ℝ) / N := by
+    rw [norm_div, Complex.norm_natCast, div_le_div_iff₀ hNR hNR]
+    nlinarith [hRle, hsP', hNR.le]
+  calc ‖A * (((k : ℝ) * P - N : ℝ) : ℂ) / ((N : ℂ) * P) + R / N‖
+      ≤ ‖A * (((k : ℝ) * P - N : ℝ) : ℂ) / ((N : ℂ) * P)‖ + ‖R / (N : ℂ)‖ := norm_add_le _ _
+    _ ≤ (P : ℝ) / N + (P : ℝ) / N := by linarith
+    _ = 2 * P / N := by ring
 
 /-! ### Leaf 4: N1a proper -/
 
