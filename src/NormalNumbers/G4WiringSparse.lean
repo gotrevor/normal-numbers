@@ -3000,7 +3000,23 @@ theorem exists_good₂ (C₁ C₂ : ℕ → ℝ)
     (h₁ : Tendsto (fun k : ℕ => Real.log (C₁ k) / 4 ^ k) atTop (𝓝 0))
     (h₂ : Tendsto (fun k : ℕ => Real.log (Real.log (C₂ k)) / 4 ^ k) atTop (𝓝 0)) :
     ∃ D : BlockData, D.Good₂ C₁ C₂ := by
-  sorry
+  classical
+  set Jf : ℕ → ℕ := GoodExists.JF₂ C₁ C₂ with hJf
+  refine ⟨GoodExists.DDJ Jf, GoodExists.JF₂_tendsto C₁ C₂, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · exact GoodExists.delta_div (fun _ => 0)
+  · exact fun i N hN => GoodExists.eps_range (fun _ => 0) i N hN
+  · exact fun i N hi hN => GoodExists.sep_holds (fun _ => 0) i N hi hN
+  · intro i
+    show 2 * GoodExists.XF (i + 1) ≤ GoodExists.XF (i + 1 + 1)
+    have := GoodExists.XF_succ_ge (i + 1)
+    omega
+  · refine GoodExists.terms₁_tendsto C₁ Jf ?_
+    filter_upwards [GoodExists.JF₂_C_le C₁ C₂] with i hi using hi.1
+  · refine GoodExists.terms₂_tendsto C₂ Jf (fun i => GoodExists.JF₂_le C₁ C₂ i) ?_ ?_
+    · exact (GoodExists.JF₂_tendsto C₁ C₂).eventually_ge_atTop 1
+    · filter_upwards [GoodExists.JF₂_C_le C₁ C₂] with i hi using hi.2
+  · exact GoodExists.tail_tendsto_gen Jf (GoodExists.JF₂_tendsto C₁ C₂)
+      (GoodExists.log_o_pow₂ C₁ C₂ h₁ h₂)
 
 /-- **Existence from the two-constant proposition**: the sieve constant only needs
 `log log C₂ k = o(4^k)`. -/
