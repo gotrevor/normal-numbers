@@ -75,15 +75,35 @@ with `Complex.exp (2πi k d / b)`, and the real-number wrapper `IsNormal 2 x ↔
   `∏ 1/|h_i|`-weighted sum of Weyl sums at frequencies `Σ h_i 2^{i−1}`, not absolutely
   summable.  The `1/H` loss in Erdős–Turán is the price of crossing between the duals; stay on
   the digit side and there is no loss.
-- **The G₄ "sectors" are Walsh characters.**  G₄'s base-4 digits are `ω(n)` with carries.
-  The depth-1 digit characters are `e(k·d/4)`, `k = 1, 2, 3`; `k = 2` is `(−1)^{d}` ≈
-  `(−1)^{ω(n)}` modulo carries, a bounded multiplicative function, so its correlations are
-  Chowla-shaped.  The 2026-09-19 verdict's split into an SD sector (`h = 1, 3, 5`) and a
-  Chowla sector (`h ≡ 2 mod 4`) is this character split seen from the circle side.  Owed
-  before anything is built on it: a check that the carry layer does not break the
-  identification (confidence 75%).  If it holds, Tao–Teräväinen's logarithmically averaged
-  odd-order Chowla is the external theorem nearest the `k = 2` sector, which is why
-  log-density normality is the honest lane the verdict named.
+- **🧯 REFUTED the same day: the G₄ "sectors" are NOT the digit characters.**  The earlier
+  version of this bullet claimed (75%) that G₄'s base-4 digit character at `k = 2`, i.e.
+  `(−1)^{d_n}`, stands in for `(−1)^{ω(n)}` "modulo carries", and that the 2026-09-19
+  verdict's SD sector (`h = 1,3,5`) versus Chowla sector (`h ≡ 2 mod 4`) is that character
+  split seen from the circle side.  The owed carry check
+  (`experiments/g4_carry_parity.py`, exact base-4 digits of `G₄ = Σ ω(n)/4ⁿ`) kills it:
+
+  | N | carry-disturbed digits | `⟨(−1)^{d_n}(−1)^{ω(n)}⟩` |
+  |---:|---:|---:|
+  | 50 000 | 0.212 | +0.575 |
+  | 200 000 | 0.301 | +0.399 |
+  | 800 000 | 0.381 | +0.238 |
+
+  The correlation **decays toward zero** and the disturbed fraction **rises**, so the two
+  parities become asymptotically uncorrelated.  The mechanism is that `ω(n)` has mean
+  `log log n` and fluctuation `√(log log n)`, so overflow past `3` is not a perturbation of
+  the digit stream — it is a growing share of it, first biting at `n = 210 = 2·3·5·7` (the
+  carry lands on position 209, hand-derived and confirmed).  "Modulo carries" was doing all
+  the work in that sentence.
+
+  What survives: the `k = 2` means of the true digits and of the carry-free surrogate are
+  both ≈ 0 and track each other (0.0011 vs 0.0026 at `N = 800 000`).  That is **not**
+  evidence for the identification — two quantities both near zero agree for free — so no
+  sector claim should be rebuilt on it without a discriminating statistic.
+
+  ⚠️ Nothing here touches `Walsh.lean`: the criterion is a theorem about an arbitrary binary
+  sequence and does not care where the digits came from.  What is withdrawn is the *bridge*
+  from that machinery to the live G₄ wiring.
+
 - **What it does not buy.**  Nothing about any natural constant: the Walsh criterion moves
   the unknown from "Weyl sums at `h·2^n x`" to "digit correlations", the same wall in the
   other dual.  For constructions (Stoneham, G₄) it is a bookkeeping simplification, not a
