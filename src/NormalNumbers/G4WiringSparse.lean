@@ -265,64 +265,37 @@ theorem isNormal_subsetLambert_of_KMT_windowJ (hKMT : KMT_along S windowJ) :
 
 /-! ### The existence statement -/
 
-/-- A sparse divergent set of primes exists (e.g. `π_S(x) ≍ π(x) / log log x`, whose reciprocal
-sum grows like `log log log x`).
+/-- A sparse divergent set of primes exists.
 
-⚠️ **Disclosed `sorry`: this needs the Prime Number Theorem, which mathlib does not have**
-(2026-09-20: `Mathlib.NumberTheory.Chebyshev` supplies only the constant-factor bounds
-`Chebyshev.pi_ge : (n log 2 − log(n+1))/log n ≤ π n` and
-`Chebyshev.pi_le_log4_mul_div : π ⌊x⌋₊ ≤ log 4 · x/log √x + √x`; there is no
-`π(x) ~ x/log x`, and `G4Mertens` has only the one-sided `log log N ≤ ∑_{p<N} 1/p + 1`).
+**Construction that needs no prime counting for the density and only Chebyshev for the sum**
+(operator, 2026-09-19 22:15, after the lap's "PNT wall" claim below): index the primes by `π`.
+Let `m k := Nat.log 2 (Nat.log 2 k) + 1` (slowly growing, `→ ∞`) and
 
-The obstruction is structural, not tactical.  Write `S = ⋃ᵢ Bᵢ` with `Bᵢ` a set of primes in
-`(yᵢ, vᵢ]`, `δᵢ = ∑_{Bᵢ} 1/p`.  Relative density `0` is tested at `x = vᵢ` (the top of the block),
-where the ratio is `≥ (#Bᵢ)/π(vᵢ)`, so `#Bᵢ = o(π(vᵢ))` is forced.  Three routes, all blocked:
-* `Bᵢ` = **all** primes of `(yᵢ, vᵢ]`: then `#Bᵢ = π(vᵢ) − π(yᵢ)`, and `#Bᵢ = o(π(vᵢ))` forces
-  `π(yᵢ)/π(vᵢ) → 1`, hence `vᵢ/yᵢ → 1` — asymptotic counting, i.e. PNT.  Chebyshev's constants
-  (`0.69` vs `2.77`) cannot give a ratio tending to `1` at all.  And once the block is short,
-  `δᵢ` needs a *lower* bound on primes in short intervals.
-* `Bᵢ` = a residue class `a mod qᵢ` inside the block: the count is `≤ vᵢ/qᵢ + 1` for free, so
-  `qᵢ ≫ log vᵢ` suffices for density — but then the mass rate is `d(log log v)/log v`, whose
-  integral `∫ dL/L²` **converges**, so `∑ δᵢ < ∞` always.  (Mertens in AP with the right constant
-  would be needed, and is also absent.)
-* `Bᵢ` a general thin subset: `p > yᵢ` gives `#Bᵢ ≥ δᵢ yᵢ`, and lower-bounding `δᵢ` without
-  locating the primes of `Bᵢ` is exactly the counting input again.
+  `S p :↔ p.Prime ∧ m (π p) ∣ π p`,   i.e. keep the `k`-th prime iff `m k ∣ k`.
 
-The general form of the obstruction: the only count bound available *for free* (without prime
-counting) is "a fraction of the integers", which is off by a factor `log x` from `π(x)`.  So any
-`S` whose density-zero we can prove for free has integer-density `≤ 1/log v`, hence reciprocal-mass
-rate `≤ d(log log v)/log v = dL/L²` (with `L = log v`), and `∫ dL/L² < ∞`.  **Every free-count
-construction has a convergent reciprocal sum.**  That is why prime counting is unavoidable here.
+* *Density.*  `π` is a bijection from the primes `≤ x` onto `[1, π x]`, so
+  `#{p ≤ x : S p} = #{k ≤ π x : m k ∣ k}`.  On the block `I_m = {k : m k = m}` (an interval, since
+  `m` is monotone) there are at most `|I_m|/m + 1` multiples of `m`; splitting at any `m₀`,
+  `#{k ≤ K : m k ∣ k} ≤ C(m₀) + K/m₀ + m(K)`, and `m(K) = o(K)`, so the ratio to `K = π x` is
+  `≤ 1/m₀ + o(1)` for every `m₀`.  **No estimate for `π` is used** - only that `π x → ∞`.
+* *Divergence.*  `∑_{p∈S} 1/p = ∑_{k : m k ∣ k} 1/p_k` with `p_k = Nat.nth Nat.Prime (k-1)`.
+  Chebyshev's lower bound (`Chebyshev.pi_ge : (n log 2 − log(n+1))/log n ≤ π n`, in Mathlib) gives
+  `p_k ≤ C k log k` for large `k` (from `k = π(p_k) ≥ c p_k/log p_k`, then `log p_k ≤ 2 log k`).
+  So it suffices that `∑_{k : m k ∣ k} 1/(k log k) = ∞`.  On `I_m = [2^{2^{m-1}}, 2^{2^m})` the
+  multiples of `m` are `k = m j`, `j ∈ [A, B)` with `A = 2^{2^{m-1}}/m`, `B = 2^{2^m}/m`, and
+  `∑_{j∈[A,B)} 1/(mj log(mj)) ≥ (1/(2m)) ∑_{j∈[A,B)} 1/(j log j) ≥ (1/(2m)) (log(B/A) − 1)/log B
+  ≥ (1/(2m)) · (1/4)` for large `m` (`log(B/A) = 2^{m-1} log 2 + log 1 ≈ ½ log B`), using only
+  `log_le_sum_range_inv`-type harmonic bounds.  Then `∑_m 1/(8m) = ∞`.
 
-**The construction that does work** (found this lap; it matches the `π_S ≍ π/log log x` hint
-above).  Work in `L = log y`.  Blocks `Bᵢ` = all primes of `(yᵢ, vᵢ]` with `log vᵢ = Lᵢ + εᵢ`:
-* count fraction at the top of the block is `1 − π(yᵢ)/π(vᵢ) ≈ 1 − e^{-εᵢ}`, so `εᵢ → 0` is forced;
-* mass is `log log vᵢ − log log yᵢ ≈ εᵢ / Lᵢ`;
-* gaps `ΔLᵢ = Lᵢ₊₁ − Lᵢ ≫ εᵢ` are needed so the *accumulated* `S` stays thin: the density of `S`
-  among the primes is `≈ εᵢ/ΔLᵢ =: 1/gᵢ`, so `gᵢ → ∞`;
-* total mass is `∑ εᵢ/Lᵢ = ∑ (ΔLᵢ/Lᵢ)/gᵢ`.
-With `gᵢ = log Lᵢ` this is `∫ dL/(L log L) = log log L → ∞` while the density `1/log Lᵢ → 0`.  So
-the sandwich closes, with room, and the density is exactly `1/log log x`.  The two analytic inputs
-are `π(x) ~ x/log x` (for the count fraction) and Mertens *with its constant*,
-`∑_{p≤x} 1/p = log log x + M + o(1)` (for the mass) — the repo's one-sided
-`log log N ≤ ∑_{p<N} 1/p + 1` is not enough, because the block mass is a *difference* of two such
-sums and the `±1` swamps `εᵢ/Lᵢ → 0`.
+Sub-leaves for a lap: (a) `nth_prime_le_mul_log : ∀ᶠ k, Nat.nth Nat.Prime k ≤ C * k * log k`
+from `Chebyshev.pi_ge`; (b) the block-count bound for multiples of a slowly varying modulus;
+(c) the harmonic lower bound on `[A, B)`; (d) assembly.  Elementary throughout.
 
-⚠️ **Elementary Mertens does not suffice, so do not chase it.**  Mertens' second theorem is
-elementary, but its classical error is `O(1/log x)`, i.e. `O(1/L)` — and the block mass is
-`εᵢ/Lᵢ` with `εᵢ → 0`, so the error *swamps the mass*.  Raising `εᵢ` to a constant `A` to clear
-the error costs the count fraction: the primes of `(y, y e^A]` are a `1 − e^{-A}` fraction of
-`π(y e^A)`, which is not small for any `A` that beats the error constant.  (And the crude
-`count ≤ v · mass` is lossy by a factor `A`, so it does not rescue the long-block regime either.)
-The two regimes are exclusive: short blocks need a *PNT-quality* error term,
-`π(x) = Li(x) + O(x e^{-c√log x})`, which resolves intervals of length `εy` down to
-`ε ≥ e^{-c√L}` — comfortably enough for `εᵢ = 1/log Lᵢ`, and strictly more than Mertens gives.
-Likewise a Brun–Titchmarsh sieve bound does not help: it bounds the count from *above* only, and
-the binding constraint in the short-block regime is the mass from *below*.
-
-It is **off the main line**: the headline `exists_sparse_normal_of_KMT_quant` does not mention
-`RelDensityZero` at all — it consumes only `DivergentRecip`, which `BlockData.divergentRecip`
-supplies unconditionally. -/
+**The lap's claim of 2026-09-20 ("needs PNT with error term") is withdrawn**: its obstruction
+argument assumed the count of `S` is bounded by "a fraction of the integers"; indexing by `π p`
+makes the density statement combinatorial and moves all analytic input into the one-sided
+Chebyshev bound, which Mathlib has.  It remains off the main line: `exists_sparse_normal_of_KMT_quant'`
+consumes only `DivergentRecip`. -/
 theorem exists_relDensityZero_divergent :
     ∃ (S : ℕ → Prop) (_ : DecidablePred S), RelDensityZero S ∧ DivergentRecip S := by
   sorry

@@ -1,6 +1,15 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-19 21:30 EDT — SPARSE-SUBSET LAP (ACTIVE; supersedes everything below for this run)
+## Attended operator override: 2026-09-19 22:20 EDT — SPARSE-SUBSET LAP, PART 2: LEAF 6 ONLY (ACTIVE)
+
+Operator: Ren, attended; same authorization as 21:30.  Everything in the 21:30 override is done except
+leaf 6, `exists_relDensityZero_divergent`.  The previous lap's stuck claim ("needs PNT") is **withdrawn
+by the operator**: prove it with the π-indexed construction in its docstring (sub-leaves (a)–(d)),
+using `Chebyshev.pi_ge` from Mathlib.  `exists_good` stays out of scope.  Frozen names unchanged.
+Done when the file's only sorry is `exists_good`; `box done --green` only then.  If a sub-leaf costs
+more than ~40 minutes, commit the skeleton with named sorries and report which one.
+
+## Attended operator override: 2026-09-19 21:30 EDT — SPARSE-SUBSET LAP (DONE except leaf 6; see above)
 
 Operator: Ren, attended; Trevor fired the run.  Engine Opus/low.  Branch `wip/g5-prime-subset`.
 Read `KICKOFF-2026-09-19-sparse-subset-lap.md` and do exactly that, leaves in the listed order, in

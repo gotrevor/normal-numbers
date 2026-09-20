@@ -22,7 +22,11 @@ not run: leaves 2, 3, 6, 7 there are the `G₄` versions of leaves 1–4 here an
    `‖prefixMean(ePhase(h·orbit)) − windowMeanS S J h N‖ ≤ 2π|h| · (L¹ tail)`; `hTail` + `hKMT`.
 5. Inline sorry in `isNormal_subsetLambert_of_KMT_along`: `fourierMean u h = prefixMean (fun n => ePhase (h * u n))`
    (unfold; the summands are syntactically equal).
-6. `exists_relDensityZero_divergent`: any explicit `S`.  Suggested: `S p :↔ p.Prime ∧ ∃ k, p ∈ Icc (2^(2^k)) (2^(2^k) · k)`?
+6. `exists_relDensityZero_divergent`: **use the π-indexed construction in the docstring** (2026-09-19 22:15):
+   `S p :↔ p.Prime ∧ m (π p) ∣ π p`, `m k = Nat.log 2 (Nat.log 2 k) + 1`.  Density needs no prime
+   counting; divergence needs only `Chebyshev.pi_ge` (Mathlib) via `p_k ≤ C k log k`.  The earlier
+   "needs PNT" claim is withdrawn.  Sub-leaves (a)–(d) are listed in the docstring; commit each.
+   (Old text: any explicit `S`.  Suggested: `S p :↔ p.Prime ∧ ∃ k, p ∈ Icc (2^(2^k)) (2^(2^k) · k)`?
    Check the two conditions before committing to a witness; simplest is `S p :↔ p.Prime ∧ Nat.log 2 (Nat.log 2 p) ∣ … `
    — the lap picks; the requirement is `π_S(x)/π(x) → 0` (use `Nat.primesBelow` counting) and
    `∑ 1/p = ∞` (compare with `G4Mertens.log_log_le_sum_inv_primesBelow` on blocks).  This leaf is
