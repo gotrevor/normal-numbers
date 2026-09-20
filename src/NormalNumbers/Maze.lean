@@ -11,6 +11,7 @@ import NormalNumbers.G4EntropyDiagonal
 import NormalNumbers.G4RowVariance
 import NormalNumbers.G4RowMassOptimal
 import NormalNumbers.G4WiringSparse
+import NormalNumbers.Walsh
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -242,19 +243,24 @@ separates nothing within the family. -/
 def VacuousFor {α : Type*} (criterion : α → Prop) (family : α → Prop) : Prop :=
   ∀ a, family a → criterion a
 
-/-- **FROZEN: the Walsh / parity criterion** (the one live *new* node, 2026-09-20, NOT a
-hall).  Stated here because the maze's whole point is that the register and the frontier live
-in one checkable place.  `s` is 2-normal iff every parity correlation tends to zero; see
-`DESIGN-2026-09-20-walsh-weyl-bridge.md` §3 for the full statement and ingredients, and
-`experiments/walsh_parity_identity.py` for the identity verified to machine precision. -/
-def WalshCriterionHolds : Prop :=
-  ∀ s : ℕ → ℕ, (∀ n, s n < 2) →
-    (IsNormalSequence 2 s ↔
-      ∀ S : Finset ℕ, S.Nonempty →
-        Filter.Tendsto
-          (fun N => (∑ n ∈ Finset.range N, ∏ i ∈ S, (-1 : ℝ) ^ s (n + i)) / N)
-          Filter.atTop (nhds 0))
+/-- **PARTLY DISCHARGED: the Walsh / parity criterion** (the one live *new* node, 2026-09-20,
+NOT a hall).  Stated here because the maze's point is that the register and the frontier live
+in one checkable place.
 
+**Sufficiency is now a theorem**: `Walsh.isNormalSequence_two_of_parityMean_tendsto` — a
+binary sequence whose every nonempty parity correlation vanishes is normal in base two.  The
+transform (`Walsh.blockMean_eq`) and the lossless inequality (`Walsh.abs_blockMean_sub_le`)
+are proved, so the digit dual now stands beside `equidistributed_of_weyl` on the circle side.
+
+**Necessity remains open here**: normal ⟹ every parity correlation vanishes needs the inverse
+transform, i.e. enumeration of binary words of a given length plus the orthogonality
+`∑_w (-1)^{w·S} = 0` for `S ≠ ∅`.  That is the named next lap; the Prop below is what it must
+discharge.  See `DESIGN-2026-09-20-walsh-weyl-bridge.md` §2-3, and
+`experiments/walsh_parity_identity.py` for the identity at machine precision. -/
+def WalshNecessity : Prop :=
+  ∀ s : ℕ → ℕ, (∀ n, s n < 2) → IsNormalSequence 2 s →
+    ∀ S : Finset ℕ, S.Nonempty →
+      Filter.Tendsto (NormalNumbers.Walsh.parityMean s S) Filter.atTop (nhds 0)
 
 /-! ## 4. The register
 
