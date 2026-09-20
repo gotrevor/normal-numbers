@@ -2160,12 +2160,201 @@ theorem log_o_pow (C : ℕ → ℝ)
         positivity
       linarith
 
+/-- `1/√i → 0`. -/
+theorem one_div_sqrt_tendsto : Tendsto (fun i : ℕ => 1 / Real.sqrt i) atTop (𝓝 0) := by
+  have h : Tendsto (fun i : ℕ => Real.sqrt i) atTop atTop :=
+    Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop
+  exact (h.inv_tendsto_atTop).congr (fun i => by simp [one_div])
+
+/-- `log i/√i → 0`. -/
+theorem log_div_sqrt_tendsto : Tendsto (fun i : ℕ => Real.log i / Real.sqrt i) atTop (𝓝 0) := by
+  have h : Tendsto (fun x : ℝ => Real.log x / x) atTop (𝓝 0) :=
+    Real.isLittleO_log_id_atTop.tendsto_div_nhds_zero
+  have h2 : Tendsto (fun i : ℕ => 2 * (Real.log (Real.sqrt i) / Real.sqrt i)) atTop (𝓝 0) := by
+    have := (h.comp (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop)).const_mul 2
+    simpa using this
+  refine h2.congr' ?_
+  filter_upwards [eventually_ge_atTop 1] with i hi
+  have hi0 : (0 : ℝ) ≤ (i : ℝ) := Nat.cast_nonneg i
+  rw [Real.log_sqrt hi0]
+  ring
+
+/-- `log Kᵢ/√i → 0`. -/
+theorem log_Kn_div_sqrt : Tendsto (fun i : ℕ => Real.log (Kn i) / Real.sqrt i) atTop (𝓝 0) := by
+  have hmaj : Tendsto (fun i : ℕ => Real.log 512 * (1 / Real.sqrt i)
+      + 3 * (Real.log i / Real.sqrt i)) atTop (𝓝 0) := by
+    simpa using (one_div_sqrt_tendsto.const_mul (Real.log 512)).add
+      (log_div_sqrt_tendsto.const_mul 3)
+  refine squeeze_zero' ?_ ?_ hmaj
+  · filter_upwards [eventually_ge_atTop 1] with i hi
+    have h1 : (1 : ℝ) ≤ (Kn i : ℝ) := by
+      have := Kn_ge i
+      have : (216 : ℝ) ≤ (Kn i : ℝ) := by exact_mod_cast this
+      linarith
+    have := Real.log_nonneg h1
+    positivity
+  · filter_upwards [eventually_ge_atTop 1] with i hi
+    have hi1 : (1 : ℝ) ≤ (i : ℝ) := by exact_mod_cast hi
+    have hsq : (0 : ℝ) < Real.sqrt i := Real.sqrt_pos.mpr (by linarith)
+    have hKle : (Kn i : ℝ) ≤ 512 * (i : ℝ) ^ 3 := by
+      have h4 : (i + 3 : ℕ) ≤ 4 * i := by omega
+      have : ((i + 3 : ℕ) : ℝ) ≤ 4 * (i : ℝ) := by exact_mod_cast h4
+      have hb : (0 : ℝ) ≤ ((i : ℝ) + 3) := by linarith
+      have hc : ((i : ℝ) + 3) ≤ 4 * (i : ℝ) := by push_cast at this ⊢; linarith
+      have : ((i : ℝ) + 3) ^ 3 ≤ (4 * (i : ℝ)) ^ 3 := pow_le_pow_left₀ hb hc 3
+      simp only [Kn]
+      push_cast
+      nlinarith
+    have hlogle : Real.log (Kn i) ≤ Real.log 512 + 3 * Real.log i := by
+      have h1 : Real.log (Kn i) ≤ Real.log (512 * (i : ℝ) ^ 3) :=
+        Real.log_le_log (by
+          have : (216 : ℝ) ≤ (Kn i : ℝ) := by exact_mod_cast Kn_ge i
+          linarith) hKle
+      rw [Real.log_mul (by norm_num) (by positivity), Real.log_pow] at h1
+      push_cast at h1
+      linarith
+    have hstep : Real.log (Kn i) / Real.sqrt i
+        ≤ (Real.log 512 + 3 * Real.log i) / Real.sqrt i :=
+      div_le_div_of_nonneg_right hlogle hsq.le
+    have hsplit : (Real.log 512 + 3 * Real.log i) / Real.sqrt i
+        = Real.log 512 * (1 / Real.sqrt i) + 3 * (Real.log i / Real.sqrt i) := by
+      field_simp
+    linarith [hstep, hsplit.le, hsplit.ge]
+
+theorem DD_J (C : ℕ → ℝ) (i : ℕ) : (DD C).J i = JF C i := rfl
+theorem DD_eps (C : ℕ → ℝ) (i : ℕ) : (DD C).ε i = epsF i := rfl
+
 /-- Leaf 5: the three KMT terms. -/
 theorem terms_tendsto (C : ℕ → ℝ) : Tendsto (fun i => C ((DD C).J i) *
       (Real.sqrt (Real.log (1 / (DD C).ε i)) * Real.sqrt (2 * ((DD C).δ (i - 1) + (DD C).δ i))
         + Real.exp (- ∑ i' ∈ Finset.range (i - 1), (DD C).δ i')
         + Real.exp (- 1 / (8 * ((DD C).J i : ℝ) ^ 2 * (DD C).ε i)))) atTop (𝓝 0) := by
-  sorry
+  have hmaj : Tendsto (fun i : ℕ => Real.sqrt (8 * (Real.log (Kn i) / Real.sqrt i))
+      + 2 * (1 / Real.sqrt i)) atTop (𝓝 0) := by
+    have h1 : Tendsto (fun i : ℕ => Real.sqrt (8 * (Real.log (Kn i) / Real.sqrt i)))
+        atTop (𝓝 0) := by
+      have := (log_Kn_div_sqrt.const_mul (8 : ℝ)).sqrt
+      simpa using this
+    simpa using h1.add (one_div_sqrt_tendsto.const_mul 2)
+  refine squeeze_zero_norm' ?_ hmaj
+  filter_upwards [eventually_ge_atTop 2, JF_C_le C, (JF_tendsto C).eventually_ge_atTop 1]
+    with i hi hCle hJ1
+  have hi1 : (1 : ℝ) ≤ (i : ℝ) := by exact_mod_cast (by omega : 1 ≤ i)
+  have hipos : (0 : ℝ) < (i : ℝ) := by linarith
+  have hsq : (0 : ℝ) < Real.sqrt i := Real.sqrt_pos.mpr hipos
+  -- the three terms
+  set T1 : ℝ := Real.sqrt (Real.log (1 / (DD C).ε i))
+      * Real.sqrt (2 * ((DD C).δ (i - 1) + (DD C).δ i)) with hT1
+  set T2 : ℝ := Real.exp (- ∑ i' ∈ Finset.range (i - 1), (DD C).δ i') with hT2
+  set T3 : ℝ := Real.exp (- 1 / (8 * ((DD C).J i : ℝ) ^ 2 * (DD C).ε i)) with hT3
+  have hT1nn : 0 ≤ T1 := by rw [hT1]; positivity
+  have hT2nn : 0 < T2 := Real.exp_pos _
+  have hT3nn : 0 < T3 := Real.exp_pos _
+  -- bound on T1
+  have hlogeps : Real.log (1 / (DD C).ε i) = Real.log (Kn i) := by
+    rw [DD_eps, epsF, one_div_one_div]
+  have hdeltasum : (DD C).δ (i - 1) + (DD C).δ i ≤ 4 / (i : ℝ) := by
+    have h1 := delta_le C (i - 1)
+    have h2 := delta_le C i
+    have hcast : ((i - 1 : ℕ) : ℝ) + 1 = (i : ℝ) := by
+      have : ((i - 1 : ℕ) : ℝ) = (i : ℝ) - 1 := by
+        have : (1 : ℕ) ≤ i := by omega
+        push_cast [Nat.cast_sub this]
+        ring
+      rw [this]; ring
+    rw [hcast] at h1
+    have h3 : (2 : ℝ) / ((i : ℝ) + 1) ≤ 2 / (i : ℝ) :=
+      div_le_div_of_nonneg_left (by norm_num) hipos (by linarith)
+    have : (4 : ℝ) / (i : ℝ) = 2 / (i : ℝ) + 2 / (i : ℝ) := by ring
+    linarith
+  have hT1le : T1 ≤ Real.sqrt (Real.log (Kn i)) * Real.sqrt (8 / (i : ℝ)) := by
+    rw [hT1, hlogeps]
+    refine mul_le_mul_of_nonneg_left ?_ (Real.sqrt_nonneg _)
+    refine Real.sqrt_le_sqrt ?_
+    have h8 : (8 : ℝ) / (i : ℝ) = 2 * (4 / (i : ℝ)) := by ring
+    linarith
+  -- bound on T2
+  have hT2le : T2 ≤ 1 / (i : ℝ) := by
+    have hsumge : Real.log ((((i - 1 : ℕ)) : ℝ) + 1)
+        ≤ ∑ i' ∈ Finset.range (i - 1), (DD C).δ i' := by
+      refine le_trans (harm_lower (i - 1)) ?_
+      exact Finset.sum_le_sum (fun k _ => delta_ge C k)
+    have hcast : ((i - 1 : ℕ) : ℝ) + 1 = (i : ℝ) := by
+      have h1 : (1 : ℕ) ≤ i := by omega
+      have : ((i - 1 : ℕ) : ℝ) = (i : ℝ) - 1 := by
+        push_cast [Nat.cast_sub h1]; ring
+      rw [this]; ring
+    rw [hcast] at hsumge
+    rw [hT2]
+    calc Real.exp (- ∑ i' ∈ Finset.range (i - 1), (DD C).δ i')
+        ≤ Real.exp (- Real.log i) := Real.exp_le_exp.mpr (by linarith)
+      _ = 1 / (i : ℝ) := by rw [Real.exp_neg, Real.exp_log hipos, one_div]
+  -- bound on T3
+  have hT3le : T3 ≤ 1 / (i : ℝ) := by
+    have hJle : (JF C i : ℝ) ≤ (i : ℝ) := by exact_mod_cast JF_le C i
+    have hJ1' : (1 : ℝ) ≤ (JF C i : ℝ) := by exact_mod_cast hJ1
+    have hKeq : (8 : ℝ) * ((DD C).J i : ℝ) ^ 2 * (DD C).ε i
+        = 8 * (JF C i : ℝ) ^ 2 / (Kn i : ℝ) := by
+      rw [DD_J, DD_eps, epsF]
+      field_simp
+    have hKn : (Kn i : ℝ) = 8 * ((i : ℝ) + 3) ^ 3 := by
+      simp only [Kn]; push_cast; ring
+    have hpos : (0 : ℝ) < 8 * (JF C i : ℝ) ^ 2 / (Kn i : ℝ) := by
+      rw [hKn]; positivity
+    have hge : (i : ℝ) ≤ 1 / (8 * (JF C i : ℝ) ^ 2 / (Kn i : ℝ)) := by
+      rw [one_div_div, hKn, le_div_iff₀ (by positivity)]
+      have hJ2 : (JF C i : ℝ) ^ 2 ≤ (i : ℝ) ^ 2 := by nlinarith
+      have hc1 : (i : ℝ) * (8 * (JF C i : ℝ) ^ 2) ≤ 8 * (i : ℝ) ^ 3 := by nlinarith
+      have hc2 : (8 : ℝ) * (i : ℝ) ^ 3 ≤ 8 * ((i : ℝ) + 3) ^ 3 := by nlinarith [sq_nonneg (i:ℝ)]
+      linarith
+    rw [hT3, hKeq]
+    calc Real.exp (-1 / (8 * (JF C i : ℝ) ^ 2 / (Kn i : ℝ)))
+        ≤ Real.exp (- (i : ℝ)) := by
+          refine Real.exp_le_exp.mpr ?_
+          have hone : (-1 : ℝ) / (8 * (JF C i : ℝ) ^ 2 / (Kn i : ℝ))
+              = - (1 / (8 * (JF C i : ℝ) ^ 2 / (Kn i : ℝ))) := by ring
+          rw [hone]
+          linarith [hge]
+      _ ≤ 1 / (i : ℝ) := by
+          rw [Real.exp_neg, ← one_div]
+          refine one_div_le_one_div_of_le hipos ?_
+          linarith [Real.add_one_le_exp (i : ℝ)]
+  -- assemble
+  have habs : ‖C ((DD C).J i) * (T1 + T2 + T3)‖ ≤ Real.sqrt (Real.sqrt i) * (T1 + T2 + T3) := by
+    rw [norm_mul, Real.norm_eq_abs, Real.norm_eq_abs,
+      abs_of_nonneg (by linarith : (0:ℝ) ≤ T1 + T2 + T3)]
+    exact mul_le_mul_of_nonneg_right (by rw [DD_J]; exact hCle) (by linarith)
+  refine le_trans habs ?_
+  have hstep : Real.sqrt (Real.sqrt i) * (T1 + T2 + T3)
+      ≤ Real.sqrt (Real.sqrt i) * (Real.sqrt (Real.log (Kn i)) * Real.sqrt (8 / (i : ℝ))
+        + 2 * (1 / (i : ℝ))) := by
+    refine mul_le_mul_of_nonneg_left ?_ (Real.sqrt_nonneg _)
+    have : (2 : ℝ) * (1 / (i : ℝ)) = 1 / (i : ℝ) + 1 / (i : ℝ) := by ring
+    linarith
+  refine le_trans hstep ?_
+  have hA : Real.sqrt (Real.sqrt i) * (Real.sqrt (Real.log (Kn i)) * Real.sqrt (8 / (i : ℝ)))
+      = Real.sqrt (8 * (Real.log (Kn i) / Real.sqrt i)) := by
+    have hlogKn : (0 : ℝ) ≤ Real.log (Kn i) := by
+      have : (216 : ℝ) ≤ (Kn i : ℝ) := by exact_mod_cast Kn_ge i
+      exact Real.log_nonneg (by linarith)
+    rw [← Real.sqrt_mul hlogKn, ← Real.sqrt_mul (Real.sqrt_nonneg _)]
+    congr 1
+    have hs : Real.sqrt i * Real.sqrt i = (i : ℝ) := Real.mul_self_sqrt hipos.le
+    field_simp
+    nlinarith [hs, hsq]
+  have hB : Real.sqrt (Real.sqrt i) * (2 * (1 / (i : ℝ))) ≤ 2 * (1 / Real.sqrt i) := by
+    have h1 : Real.sqrt (Real.sqrt i) ≤ Real.sqrt i :=
+      Real.sqrt_le_self_iff.mpr (Or.inr (Real.one_le_sqrt.mpr hi1))
+    have h2 : Real.sqrt i * (2 * (1 / (i : ℝ))) = 2 * (1 / Real.sqrt i) := by
+      have hs : Real.sqrt i * Real.sqrt i = (i : ℝ) := Real.mul_self_sqrt hipos.le
+      field_simp
+      nlinarith [hs]
+    calc Real.sqrt (Real.sqrt i) * (2 * (1 / (i : ℝ)))
+        ≤ Real.sqrt i * (2 * (1 / (i : ℝ))) := by
+          refine mul_le_mul_of_nonneg_right h1 (by positivity)
+      _ = 2 * (1 / Real.sqrt i) := h2
+  rw [mul_add, hA]
+  linarith
 
 /-- Leaf 6: the L¹ tail. -/
 theorem tail_tendsto (C : ℕ → ℝ)
