@@ -850,4 +850,339 @@ theorem isNormal_G4_of_rough
   · obtain ⟨hR, hD, hS⟩ := hSD h hh hc
     exact fullWindowMean_tendsto_zero_of_sched (crtConstantSched_of_rough hR hD hS) hSite hh
 
+
+/-! ### N1a **discharged** at `y = 2`
+
+At `y = 2` the smooth site mean is, up to `O(1/N)`, the period-2 average
+`(1 + e(h 4^{-j}))/2`, whose modulus is `|cos(π h 4^{-j})|`.  The product over `j ≤ J` is bounded
+below uniformly in `J` exactly when no `h 4^{-j}` is a half-integer — i.e. exactly when `v₂(h)` is
+even, which is the complement of `ChowlaSector`.  So the frozen node `SmoothNonvanishing`, at the
+only `y` the wiring consumes, is a **theorem** on the sector where the wiring invokes it. -/
+
+lemma omegaLe_two_eq (m : ℕ) (hm : m ≠ 0) : omegaLe 2 m = if 2 ∣ m then 1 else 0 := by
+  classical
+  have hfil : (m.primeFactors.filter (fun p => p ≤ 2)) = if 2 ∣ m then {2} else ∅ := by
+    ext p
+    simp only [Finset.mem_filter, Nat.mem_primeFactors]
+    split_ifs with hd
+    · simp only [Finset.mem_singleton]
+      constructor
+      · rintro ⟨⟨hp, _, _⟩, hle⟩
+        exact le_antisymm hle hp.two_le
+      · rintro rfl
+        exact ⟨⟨Nat.prime_two, hd, hm⟩, le_rfl⟩
+    · simp only [Finset.notMem_empty, iff_false, not_and]
+      rintro ⟨hp, hdvd, _⟩ hle
+      exact hd (le_antisymm hle hp.two_le ▸ hdvd)
+  rw [omegaLe, hfil]
+  split_ifs <;> simp
+
+/-- The period-2 average that `smoothSiteMean _ h j 2` approximates. -/
+noncomputable def halfAvg (h : ℤ) (j : ℕ) : ℂ := (1 + ePhase ((h : ℝ) / (4 : ℝ) ^ j)) / 2
+
+lemma norm_halfAvg_le_one (h : ℤ) (j : ℕ) : ‖halfAvg h j‖ ≤ 1 := by
+  rw [halfAvg, norm_div, Complex.norm_ofNat]
+  have h1 : ‖(1 : ℂ) + ePhase ((h : ℝ) / (4 : ℝ) ^ j)‖ ≤ 2 := by
+    calc ‖(1 : ℂ) + ePhase ((h : ℝ) / (4 : ℝ) ^ j)‖ ≤ ‖(1 : ℂ)‖ + ‖ePhase ((h : ℝ) / (4:ℝ)^j)‖ :=
+          norm_add_le _ _
+      _ = 2 := by rw [norm_one, norm_ePhase]; norm_num
+  linarith [h1]
+
+lemma ePhase_zero : ePhase 0 = 1 := by simp [ePhase]
+
+/-- Leaf: the `y = 2` site mean is within `4/N` of the period average. -/
+lemma smoothSiteMean_two_close (h : ℤ) (j : ℕ) (hj : 1 ≤ j) (N : ℕ) (hN : 0 < N) :
+    ‖smoothSiteMean N h j 2 - halfAvg h j‖ ≤ 4 / N := by
+  classical
+  set F : ℕ → ℂ := fun n => ePhase ((h : ℝ) * omegaLe 2 (n + j) / (4 : ℝ) ^ j) with hF
+  have hper : ∀ n, F (n + 2) = F n := by
+    intro n
+    have h1 : n + 2 + j ≠ 0 := by omega
+    have h2 : n + j ≠ 0 := by omega
+    have hiff : (2 ∣ n + 2 + j) ↔ (2 ∣ n + j) := by omega
+    have heq : omegaLe 2 (n + 2 + j) = omegaLe 2 (n + j) := by
+      rw [omegaLe_two_eq _ h1, omegaLe_two_eq _ h2]
+      simp only [hiff]
+    simp only [hF]
+    rw [heq]
+  have hb : ∀ n, ‖F n‖ ≤ 1 := fun n => le_of_eq (norm_ePhase _)
+  have key := periodic_mean_close F 2 (by norm_num) hper hb N hN
+  have hsum : (∑ n ∈ Finset.range 2, F n) / ((2 : ℕ) : ℂ) = halfAvg h j := by
+    have hr : (∑ n ∈ Finset.range 2, F n) = F 0 + F 1 := by
+      simp [Finset.sum_range_succ]
+    rcases Nat.even_or_odd j with he | ho
+    · have hj2 : j % 2 = 0 := Nat.even_iff.mp he
+      have h0 : omegaLe 2 (0 + j) = 1 := by
+        rw [omegaLe_two_eq _ (by omega), if_pos (by omega)]
+      have h1 : omegaLe 2 (1 + j) = 0 := by
+        rw [omegaLe_two_eq _ (by omega), if_neg (by omega)]
+      rw [hr, hF]
+      simp only [h0, h1]
+      rw [halfAvg]
+      norm_num [ePhase_zero]
+      ring_nf
+    · have hj2 : j % 2 = 1 := Nat.odd_iff.mp ho
+      have h0 : omegaLe 2 (0 + j) = 0 := by
+        rw [omegaLe_two_eq _ (by omega), if_neg (by omega)]
+      have h1 : omegaLe 2 (1 + j) = 1 := by
+        rw [omegaLe_two_eq _ (by omega), if_pos (by omega)]
+      rw [hr, hF]
+      simp only [h0, h1]
+      rw [halfAvg]
+      norm_num [ePhase_zero]
+  have hsite : smoothSiteMean N h j 2 = (∑ n ∈ Finset.Ico N (2 * N), F n) / N := rfl
+  rw [hsite, ← hsum]
+  calc ‖(∑ n ∈ Finset.Ico N (2 * N), F n) / N - (∑ n ∈ Finset.range 2, F n) / ((2:ℕ):ℂ)‖
+      ≤ 2 * ((2 : ℕ) : ℝ) / N := key
+    _ = 4 / N := by norm_num
+
+/-- Off the Chowla sector no `h 4^{-j}` is a half-integer. -/
+lemma ePhase_ne_neg_one_of_not_chowla {h : ℤ} (hh : h ≠ 0) (hc : ¬ ChowlaSector h)
+    {j : ℕ} (hj : 1 ≤ j) : ePhase ((h : ℝ) / (4 : ℝ) ^ j) ≠ -1 := by
+  haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+  intro heq
+  set x : ℝ := (h : ℝ) / (4 : ℝ) ^ j with hx
+  have hsq : ePhase (x + x) = 1 := by
+    rw [ePhase_add, heq]; norm_num
+  have hexp : Complex.exp (2 * Real.pi * Complex.I * ((x + x : ℝ) : ℂ)) = 1 := hsq
+  obtain ⟨n, hn⟩ := Complex.exp_eq_one_iff.mp hexp
+  have hpi : (Real.pi : ℂ) ≠ 0 := by
+    exact_mod_cast Real.pi_ne_zero
+  have hne : (2 * (Real.pi : ℂ) * Complex.I) ≠ 0 :=
+    mul_ne_zero (mul_ne_zero two_ne_zero hpi) Complex.I_ne_zero
+  have hcast : ((x + x : ℝ) : ℂ) = (n : ℂ) := by
+    refine mul_right_cancel₀ hne ?_
+    linear_combination hn
+  have hreal : x + x = (n : ℝ) := by exact_mod_cast hcast
+  -- `n` is odd, else `ePhase x = 1`
+  have hnodd : ¬ (2 ∣ n) := by
+    rintro ⟨m, hmdef⟩
+    have hxm : x = (m : ℝ) := by
+      rw [hmdef] at hreal
+      push_cast at hreal
+      linarith
+    have : ePhase x = 1 := by
+      rw [hxm, show ((m : ℝ)) = 0 + (m : ℤ) from by push_cast; ring, ePhase_add_int, ePhase_zero]
+    rw [heq] at this
+    norm_num at this
+  -- `2h = n · 4^j`
+  have h4 : ((4 : ℝ) ^ j) ≠ 0 := by positivity
+  have hmulR : (2 : ℝ) * h = (n : ℝ) * (4 : ℝ) ^ j := by
+    rw [hx] at hreal
+    field_simp at hreal
+    linarith
+  have hmulZ : (2 : ℤ) * h = n * 4 ^ j := by exact_mod_cast hmulR
+  set k : ℕ := 2 * j - 1 with hk
+  have hkodd : Odd k := ⟨j - 1, by omega⟩
+  have hpow : (4 : ℤ) ^ j = 2 * 2 ^ k := by
+    have : (4 : ℤ) ^ j = 2 ^ (2 * j) := by
+      rw [show (4 : ℤ) = 2 ^ 2 from by norm_num, ← pow_mul]
+    rw [this, show 2 * j = k + 1 from by omega, pow_succ]
+    ring
+  have hh2 : h = n * 2 ^ k := by
+    have : (2 : ℤ) * h = 2 * (n * 2 ^ k) := by rw [hmulZ, hpow]; ring
+    omega
+  have hn0 : n ≠ 0 := by
+    rintro rfl; simp at hh2; exact hh hh2
+  have hval : padicValInt 2 h = k := by
+    rw [hh2, padicValInt.mul hn0 (by positivity)]
+    have hz : padicValInt 2 n = 0 := by
+      refine padicValInt.eq_zero_of_not_dvd ?_
+      simpa using hnodd
+    have hp : padicValInt 2 ((2 : ℤ) ^ k) = k := by
+      rw [padicValInt, show ((2 : ℤ) ^ k).natAbs = 2 ^ k from by simp,
+        padicValNat.prime_pow]
+    rw [hz, hp, zero_add]
+  exact hc (by rw [ChowlaSector, hval]; exact hkodd)
+
+/-- Weierstrass-type product bound. -/
+lemma one_sub_sum_le_prod {ι : Type*} (s : Finset ι) (f ε : ι → ℝ)
+    (hε : ∀ i ∈ s, 0 ≤ ε i) (h0 : ∀ i ∈ s, 0 ≤ f i) (h1 : ∀ i ∈ s, f i ≤ 1)
+    (hlb : ∀ i ∈ s, 1 - ε i ≤ f i) :
+    1 - ∑ i ∈ s, ε i ≤ ∏ i ∈ s, f i := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert a t ha ih =>
+      have hmem : ∀ i ∈ t, i ∈ insert a t := fun i hi => Finset.mem_insert_of_mem hi
+      have hat : a ∈ insert a t := Finset.mem_insert_self a t
+      have IH := ih (fun i hi => hε i (hmem i hi)) (fun i hi => h0 i (hmem i hi))
+        (fun i hi => h1 i (hmem i hi)) (fun i hi => hlb i (hmem i hi))
+      have hpnn : 0 ≤ ∏ i ∈ t, f i :=
+        Finset.prod_nonneg (fun i hi => h0 i (hmem i hi))
+      have hple : (∏ i ∈ t, f i) ≤ 1 :=
+        Finset.prod_le_one (fun i hi => h0 i (hmem i hi)) (fun i hi => h1 i (hmem i hi))
+      rw [Finset.sum_insert ha, Finset.prod_insert ha]
+      have hfa : 1 - ε a ≤ f a := hlb a hat
+      have hεa : 0 ≤ ε a := hε a hat
+      nlinarith [hpnn, hple, IH, hfa, hεa]
+
+/-- Geometric tail. -/
+lemma sum_quarter_pow_Ico_le (a b : ℕ) :
+    ∑ j ∈ Finset.Ico a b, ((1 : ℝ) / 4) ^ j ≤ (4 / 3) * ((1 : ℝ) / 4) ^ a := by
+  rw [Finset.sum_Ico_eq_sum_range]
+  have hfac : ∀ k ∈ Finset.range (b - a),
+      ((1 : ℝ) / 4) ^ (a + k) = ((1:ℝ)/4) ^ a * ((1:ℝ)/4) ^ k := fun k _ => pow_add _ _ _
+  rw [Finset.sum_congr rfl hfac, ← Finset.mul_sum]
+  have hgeom : ∑ k ∈ Finset.range (b - a), ((1 : ℝ) / 4) ^ k ≤ 4 / 3 := by
+    rw [geom_sum_eq (by norm_num : ((1:ℝ)/4) ≠ 1),
+      show ∀ x : ℝ, (x - 1) / ((1:ℝ)/4 - 1) = (4/3) * (1 - x) from fun x => by ring]
+    have hp : (0 : ℝ) ≤ ((1:ℝ)/4) ^ (b - a) := by positivity
+    linarith
+  have hanm : (0 : ℝ) ≤ ((1:ℝ)/4) ^ a := by positivity
+  nlinarith [hgeom, hanm]
+
+/-- **N1a is a theorem at `y = 2`** off the Chowla sector. -/
+theorem smoothNonvanishingAt_two {h : ℤ} (hh : h ≠ 0) (hc : ¬ ChowlaSector h) :
+    SmoothNonvanishingAt h 2 := by
+  classical
+  have hpi : (0 : ℝ) < Real.pi := Real.pi_pos
+  have habs : (0 : ℝ) < |(h : ℝ)| := by
+    have : ((h : ℝ)) ≠ 0 := Int.cast_ne_zero.mpr hh
+    positivity
+  -- choose the cut `j₁`
+  obtain ⟨m, hm⟩ := pow_unbounded_of_one_lt (16 * Real.pi * |(h : ℝ)|) (by norm_num : (1:ℝ) < 4)
+  set j₁ : ℕ := m + 1 with hj₁
+  have hj₁1 : 1 ≤ j₁ := by omega
+  have hcut : 16 * Real.pi * |(h : ℝ)| < (4 : ℝ) ^ j₁ := by
+    refine hm.trans_le ?_
+    exact pow_le_pow_right₀ (by norm_num) (by omega)
+  set A : ℕ → ℝ := fun j => ‖halfAvg h j‖ with hA
+  have hA1 : ∀ j, A j ≤ 1 := fun j => norm_halfAvg_le_one h j
+  have hA0 : ∀ j, 0 ≤ A j := fun j => norm_nonneg _
+  have hApos : ∀ j, 1 ≤ j → 0 < A j := by
+    intro j hj
+    rw [hA]
+    simp only
+    rw [norm_pos_iff, halfAvg]
+    intro hzero
+    have : (1 : ℂ) + ePhase ((h : ℝ) / (4:ℝ)^j) = 0 := by
+      field_simp at hzero; linear_combination hzero
+    exact ePhase_ne_neg_one_of_not_chowla hh hc hj (by linear_combination this)
+  set δ₀ : ℝ := ∏ j ∈ Finset.Ico 1 j₁, A j with hδ₀
+  have hδ₀pos : 0 < δ₀ := by
+    refine Finset.prod_pos (fun j hj => hApos j ?_)
+    exact (Finset.mem_Ico.mp hj).1
+  -- tail bound
+  have htail : ∀ j, j₁ ≤ j → 1 - (2 * Real.pi * |(h : ℝ)|) * ((1:ℝ)/4) ^ j ≤ A j := by
+    intro j hj
+    have hd : ‖ePhase ((h : ℝ) / (4:ℝ)^j) - ePhase 0‖ ≤ 4 * Real.pi * |(h : ℝ) / (4:ℝ)^j - 0| :=
+      norm_ePhase_sub _ _
+    have h4 : (0 : ℝ) < (4:ℝ)^j := by positivity
+    have habs2 : |(h : ℝ) / (4:ℝ)^j - 0| = |(h:ℝ)| * ((1:ℝ)/4)^j := by
+      rw [sub_zero, abs_div, abs_of_pos h4, div_pow, one_pow]
+      field_simp
+    rw [ePhase_zero, habs2] at hd
+    have hnorm : ‖(1 : ℂ) + ePhase ((h : ℝ) / (4:ℝ)^j)‖
+        ≥ 2 - 4 * Real.pi * (|(h:ℝ)| * ((1:ℝ)/4)^j) := by
+      have hsplit : (1 : ℂ) + ePhase ((h : ℝ) / (4:ℝ)^j)
+          = 2 + (ePhase ((h : ℝ) / (4:ℝ)^j) - 1) := by ring
+      rw [hsplit]
+      have := norm_sub_norm_le (2 : ℂ) (-(ePhase ((h : ℝ) / (4:ℝ)^j) - 1))
+      have h2 : ‖(2 : ℂ)‖ = 2 := by norm_num
+      have h3 : ‖-(ePhase ((h : ℝ) / (4:ℝ)^j) - 1)‖ = ‖ePhase ((h : ℝ) / (4:ℝ)^j) - 1‖ := by
+        rw [norm_neg]
+      have h4' : (2 : ℂ) - (-(ePhase ((h : ℝ) / (4:ℝ)^j) - 1)) = 2 + (ePhase ((h : ℝ) / (4:ℝ)^j) - 1) := by
+        ring
+      rw [h2, h3, h4'] at this
+      linarith [this, hd]
+    rw [hA]
+    simp only [halfAvg, norm_div, Complex.norm_ofNat]
+    linarith [hnorm]
+  -- the uniform lower bound on the head·tail product
+  have hprodA : ∀ J : ℕ, j₁ ≤ J + 1 → δ₀ / 2 ≤ ∏ j ∈ Finset.Icc 1 J, A j := by
+    intro J hJ
+    have hIcc : Finset.Icc 1 J = Finset.Ico 1 (J + 1) := by
+      ext x; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega
+    have hsplit : (∏ j ∈ Finset.Ico 1 j₁, A j) * ∏ j ∈ Finset.Ico j₁ (J+1), A j
+        = ∏ j ∈ Finset.Ico 1 (J+1), A j := Finset.prod_Ico_consecutive _ hj₁1 hJ
+    set ε : ℕ → ℝ := fun j => (2 * Real.pi * |(h : ℝ)|) * ((1:ℝ)/4) ^ j with hε
+    have hsum : ∑ j ∈ Finset.Ico j₁ (J+1), ε j ≤ 1 / 2 := by
+      have h1 : ∑ j ∈ Finset.Ico j₁ (J+1), ε j
+          = (2 * Real.pi * |(h : ℝ)|) * ∑ j ∈ Finset.Ico j₁ (J+1), ((1:ℝ)/4) ^ j := by
+        rw [hε, ← Finset.mul_sum]
+      have h2 := sum_quarter_pow_Ico_le j₁ (J+1)
+      have hq : ((1:ℝ)/4) ^ j₁ = 1 / (4:ℝ)^j₁ := by
+        rw [div_pow, one_pow]
+      have h4pos : (0 : ℝ) < (4:ℝ)^j₁ := by positivity
+      have hkey : (2 * Real.pi * |(h : ℝ)|) * ((4/3) * ((1:ℝ)/4) ^ j₁) ≤ 1 / 2 := by
+        have h5 : (2 * Real.pi * |(h : ℝ)|) * ((4/3) * (1 / (4:ℝ)^j₁))
+            = (8/3) * (Real.pi * |(h : ℝ)|) / (4:ℝ)^j₁ := by
+          field_simp; ring
+        rw [hq, h5, div_le_iff₀ h4pos]
+        nlinarith [hcut, hpi, habs]
+      have hcoef : (0:ℝ) ≤ 2 * Real.pi * |(h : ℝ)| := by positivity
+      calc ∑ j ∈ Finset.Ico j₁ (J+1), ε j
+          = (2 * Real.pi * |(h : ℝ)|) * ∑ j ∈ Finset.Ico j₁ (J+1), ((1:ℝ)/4) ^ j := h1
+        _ ≤ (2 * Real.pi * |(h : ℝ)|) * ((4/3) * ((1:ℝ)/4) ^ j₁) := by
+              exact mul_le_mul_of_nonneg_left h2 hcoef
+        _ ≤ 1 / 2 := hkey
+    have htailprod : (1:ℝ)/2 ≤ ∏ j ∈ Finset.Ico j₁ (J+1), A j := by
+      have := one_sub_sum_le_prod (Finset.Ico j₁ (J+1)) A ε
+        (fun i _ => by rw [hε]; positivity) (fun i _ => hA0 i) (fun i _ => hA1 i)
+        (fun i hi => htail i (Finset.mem_Ico.mp hi).1)
+      linarith [this, hsum]
+    rw [hIcc, ← hsplit]
+    have hδ₀nn : 0 ≤ δ₀ := hδ₀pos.le
+    rw [← hδ₀]
+    nlinarith [htailprod, hδ₀pos]
+  -- transfer to the site means
+  refine ⟨δ₀ / 4, by positivity, ?_⟩
+  have hsmall : ∀ᶠ N : ℕ in atTop, 4 * (windowJ N : ℝ) / N ≤ δ₀ / 4 := by
+    have hlim : Tendsto (fun N : ℕ => 4 * ((windowJ N : ℝ) / N)) atTop (𝓝 0) := by
+      simpa using windowJ_div_tendsto_zero.const_mul (4 : ℝ)
+    refine (hlim.eventually (eventually_lt_nhds (by positivity : (0:ℝ) < δ₀ / 4))).mono ?_
+    intro N hN
+    calc 4 * (windowJ N : ℝ) / N = 4 * ((windowJ N : ℝ) / N) := by ring
+      _ ≤ δ₀ / 4 := hN.le
+  filter_upwards [hsmall, tendsto_windowJ.eventually_ge_atTop j₁, eventually_gt_atTop 0]
+    with N hNsmall hNJ hN0
+  set J := windowJ N with hJ
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN0
+  have hdiff : ‖(∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j 2) - ∏ j ∈ Finset.Icc 1 J, halfAvg h j‖
+      ≤ (Finset.Icc 1 J).card * (4 / N) := by
+    refine norm_prod_sub_prod_le _ _ _ _ (by positivity)
+      (fun j _ => norm_smoothSiteMean_le_one N h j 2) (fun j _ => norm_halfAvg_le_one h j)
+      (fun j hj => smoothSiteMean_two_close h j (Finset.mem_Icc.mp hj).1 N hN0)
+  have hcard : ((Finset.Icc 1 J).card : ℝ) ≤ (J : ℝ) := by
+    rw [Nat.card_Icc]
+    simp
+  have hprodnorm : ∏ j ∈ Finset.Icc 1 J, ‖smoothSiteMean N h j 2‖
+      = ‖∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j 2‖ := by
+    rw [norm_prod]
+  have hAprod : ‖∏ j ∈ Finset.Icc 1 J, halfAvg h j‖ = ∏ j ∈ Finset.Icc 1 J, A j := by
+    rw [norm_prod]
+  have hlow : δ₀ / 2 ≤ ∏ j ∈ Finset.Icc 1 J, A j := hprodA J (by omega)
+  have hstep := norm_sub_norm_le (∏ j ∈ Finset.Icc 1 J, halfAvg h j)
+    (∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j 2)
+  rw [hprodnorm]
+  have hdiff' : ‖(∏ j ∈ Finset.Icc 1 J, halfAvg h j) - ∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j 2‖
+      ≤ (J : ℝ) * (4 / N) := by
+    rw [norm_sub_rev]
+    exact hdiff.trans (by nlinarith [hcard, (by positivity : (0:ℝ) ≤ 4 / N)])
+  have hJN : (J : ℝ) * (4 / N) ≤ δ₀ / 4 := by
+    have : (J : ℝ) * (4 / N) = 4 * (J : ℝ) / N := by ring
+    rw [this]; exact hNsmall
+  rw [hAprod] at hstep
+  linarith [hstep, hdiff', hlow, hJN]
+
+/-- **Wiring, N1a discharged**: on the non-Chowla sector the only open inputs are
+`RoughIndependenceAt h 2` and `SmoothRoughDecoupling h`. -/
+theorem crtConstantSched_of_roughAt_notChowla {h : ℤ} (hh : h ≠ 0) (hc : ¬ ChowlaSector h)
+    (hR : RoughIndependenceAt h 2) (hD : SmoothRoughDecoupling h) : CRTConstantSched h :=
+  crtConstantSched_of_roughAt hR hD (smoothNonvanishingAt_two hh hc)
+
+/-- **Headline wiring with N1a discharged**: `SmoothNonvanishing` is gone from the hypotheses. -/
+theorem isNormal_G4_of_roughAt
+    (hSD : ∀ h : ℤ, h ≠ 0 → ¬ ChowlaSector h →
+      RoughIndependenceAt h 2 ∧ SmoothRoughDecoupling h)
+    (hCh : ∀ h : ℤ, h ≠ 0 → ChowlaSector h → WindowDecay h)
+    (hSite : SiteDecayFull) : IsNormal 4 (primeLambertAtBase 4) := by
+  refine isNormal_G4_of_windowDecay (fun h hh => ?_)
+  by_cases hc : ChowlaSector h
+  · exact hCh h hh hc
+  · obtain ⟨hR, hD⟩ := hSD h hh hc
+    exact fullWindowMean_tendsto_zero_of_sched
+      (crtConstantSched_of_roughAt_notChowla hh hc hR hD) hSite hh
+
 end NormalNumbers.G4
