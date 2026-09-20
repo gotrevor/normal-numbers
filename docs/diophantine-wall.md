@@ -44,20 +44,29 @@ architecture; the interface theorems make each door consumable with zero repo co
 3. **Citation axioms** (BASELINE per moonshot doctrine): Marcovecchio for NN, Rhin for
    moonshot - honest, disclosed, does not clear GO gates.
 
-## Not a door: normality of the constants themselves 🚪🚫
+## Not a KNOWN door: normality of the constants themselves 🚪❓
 
-2026-09-20, from Trevor's question "if ln 2, ln 3 are normal, does that help Collatz?"  No.
-Normality of `α` in base `b` is equidistribution of `{bⁿ α}` (multiplicative multipliers); the
-Collatz door needs the discrepancy of `{k · log₂ 3}` near 0 (linear multipliers), governed by the
-continued-fraction partial quotients of `log₂ 3` (Ostrowski), i.e. the irrationality measure.  The
-two invariants are independent both ways - absolutely normal Liouville numbers exist (Bugeaud 2002,
-see `irregularity-landscape.md`), and `e` has irrationality exponent exactly 2 with normality open -
-and separate normality of `ln 2`, `ln 3` says nothing about their ratio.  Even the ideal input
-(`μ(log₂ 3) = 2 + ε`) plus the verified orbit floor `~2⁷¹` only forces a cycle's odd-term count to
-`k ≳ 2^{35}`; exclusion needs circuit-count machinery and divergence is untouched.  The
-normality-flavoured statements that *do* bite Collatz are orbit-level - base-3 digits of `2ⁿ`
-(the Erdős digit-2 face, Furstenberg ×2×3 rigidity, `collatz-cryptid` notes/25 and /27) and
-`‖(3/2)ⁿ‖` (Mahler, = Tier 2 above) - which is why they are as hard as the problem.
+2026-09-20, from Trevor's question "if ln 2, ln 3 are normal, does that help Collatz?"  This is a
+**heuristic, not a theorem** (Trevor's correction, same day): nobody can prove that no Collatz proof
+passes through normality of these constants, and a normality proof for `ln 2` might carry technique
+that also yields measure bounds.  What *is* established:
+
+- Every known cycle-elimination route (Steiner, Simons–de Weger, Eliahou) consumes a lower bound on
+  `|m·log 2 − k·log 3|`, i.e. the discrepancy of `{k · log₂ 3}` near 0, governed by the
+  continued-fraction partial quotients (Ostrowski) - the irrationality measure.  Normality of `α` in
+  base `b` is equidistribution of `{bⁿ α}`, a different sequence of multipliers.
+- Normality does **not** imply any finite irrationality measure: absolutely normal Liouville numbers
+  exist (Bugeaud 2002, see `irregularity-landscape.md`).  So the hypothesis, taken alone, feeds
+  nothing into the known routes.  (The converse gap - finite measure without normality - is the
+  generic case but has no *proved* famous witness: `e` has exponent 2 with normality open.)
+- Separate normality of `ln 2` and `ln 3` says nothing about their ratio, the number Collatz sees.
+- Even the ideal measure input (`μ(log₂ 3) = 2 + ε`) plus the verified orbit floor `~2⁷¹` only
+  forces a cycle's odd-term count to `k ≳ 2^{35}`; exclusion needs circuit-count machinery and
+  divergence is untouched.
+
+The normality-flavoured statements that *do* enter known attacks are orbit-level - base-3 digits of
+`2ⁿ` (the Erdős digit-2 face, Furstenberg ×2×3 rigidity, `collatz-cryptid` notes/25 and /27) and
+`‖(3/2)ⁿ‖` (Mahler, = Tier 2 above).
 
 ## Graph bookkeeping
 
