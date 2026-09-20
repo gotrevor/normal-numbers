@@ -1,13 +1,15 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-20 18:22 EDT — `RoughIndependence` SPLIT LAP (DONE, one lap)
+## Attended operator override: 2026-09-20 — `ParityDiscrepancy` REDUCTION LAP (DONE, one lap)
 
-**Result:** `src/NormalNumbers/G4WiringRough.lean` landed sorry-free and axiom-clean; all six
-leaves closed, `isNormal_G4_of_rough` proved.  Two forced deviations (the verbatim
-`omegaLe_add_primorial` is false at `m = 0`; leaf 5's `J·P/N` error had to be kept *relative*
-via `‖R_W‖ ≤ (B_R+|C_R|)∏‖R_j‖` rather than absorbed into `1/log N`).  Next crux: probe
-`SmoothRoughDecoupling` (the only unprobed node in the new chain).  See
-`HANDOFF-2026-09-20-rough-independence.md`.  No active override.
+**Result:** the kickoff lap (`G4WiringRough.lean`) was already complete; this lap executed its
+stated next attack.  `SmoothNonvanishing` (N1a) is now a **theorem** off the Chowla sector
+(`smoothNonvanishingAt_two`), and `SmoothRoughDecoupling` (N1a′) is **reduced** to a new, strictly
+weaker node `ParityDiscrepancy` via two exact covariance identities.  `isNormal_G4_of_parity`:
+on the non-Chowla sector the G₄ window law now rests on exactly two open statements,
+`RoughIndependenceAt h 2` and `ParityDiscrepancy h`.  File sorry-free, all axiom-clean.
+**Sole crux now: `RoughIndependenceAt h 2`.**  See `HANDOFF-2026-09-20-parity-reduction.md`.
+No active override.
 
 ## (superseded) kickoff text
 
