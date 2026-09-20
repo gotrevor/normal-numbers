@@ -1,6 +1,6 @@
 # HANDOFF 2026-09-20 — `G4WiringCRT.lean` SORRY-FREE (closing lap complete)
 
-Branch `wip/g5-prime-subset`. Scope was leaves 2–7 of `KICKOFF-2026-09-19-closing-lap.md`; all six landed.
+Branch `wip/g5-prime-subset`, HEAD `a9fdd5d` (2026-09-20, lap end; treadmill STOP honoured). Scope was leaves 2–7 of `KICKOFF-2026-09-19-closing-lap.md`; all six landed.
 
 ```
 #print axioms NormalNumbers.G4.isNormal_G4_of_CRTConstant
@@ -58,3 +58,19 @@ takes `a ≠ 0` (omega cannot see through `|·|`). `Filter.Tendsto.atTop_pow` ne
 Delange–Wirsing–Halász). Discharging `SiteDecayFull` is the natural next crux — it is a single-site
 mean of `e(α ω(n))` on `[N,2N)`, a classical Halász/Delange statement with no mathlib analogue yet.
 `G4WiringSparse.lean` remains out of scope.
+
+
+## Exact next steps for a fresh session
+
+1. Nothing in `src/NormalNumbers/G4WiringCRT.lean` or `src/NormalNumbers/DyadicToPrefix.lean` is
+   open; do not reopen them. `lake build` is green repo-wide (pre-commit gate ran on every commit
+   this lap).
+2. The closing-lap override in `DIRECTION.md` (2026-09-19 21:55) is now **satisfied** — a new
+   operator override is needed before further work on this line.
+3. The next real crux, if the campaign continues, is discharging `SiteDecayFull`
+   (`G4WiringCRT.lean:~70`): for `h/4^j ∉ ℤ`, `𝔼_{n∈[N,2N)} e(h 4^{-j} ω(n+j)) → 0`. This is
+   Delange–Wirsing–Halász for the completely-additive-ish `ω`; mathlib has no Halász mean-value
+   theorem, so expect a multi-lap decomposition (Turán–Kubilius or a direct Halász–Montgomery
+   estimate) rather than a citation. Do not attack `CRTConstant` first: it is the genuinely deeper
+   of the two (Hardy–Littlewood CRT law, measured only numerically to N = 10⁸).
+4. `G4WiringSparse.lean` is still out of scope and still holds its own open leaves.
