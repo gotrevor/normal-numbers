@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.G4LogLogPowSched
+import NormalNumbers.G4WeightASched
 
 /-!
 # The audit surface for campaign B: the additive weights with unbounded coefficients
@@ -77,5 +78,31 @@ theorem audit_isDisjunctive_residueClass_weight_logLogPow {q : ℕ} [NeZero q] {
         / (b : ℝ) ^ n) := by
   obtain ⟨cm, Cm, hmert⟩ := MertensAP.mertensRate_residueClass ha
   exact audit_isDisjunctive_subsetWeight_logLogPow _ c hc hmert hb
+
+/-- **Audit form of the `a`-side headline** (campaign B's terminal objective).  For a bounded
+multiplier `a` whose active primes `{p : 1 ≤ a_p}` carry a Mertens rate, and any coefficient
+vector with `c_p ≤ ⌊log₂ log₂ p⌋`, the real number
+`∑_n (∑_{p ∣ n} a_p + ∑_{p ∣ n} c_p (v_p(n) − 1)) / bⁿ` is disjunctive in base `b ≥ 3`.
+
+At `a = 1` this is `audit_isDisjunctive_weight_logLogPow` (at `s = 0`); at `a = 1_S` it is
+`audit_isDisjunctive_subsetWeight_logLogPow`. -/
+theorem audit_isDisjunctive_weightA_logLog (a c : ℕ → ℕ) {Ca : ℕ} (hCa1 : 1 ≤ Ca)
+    (hCa : ∀ p, a p ≤ Ca) (hc : ∀ x, c x ≤ Nat.log 2 (Nat.log 2 x)) {cm Cm : ℝ}
+    (hmert : MertensAP.MertensRate (fun p => 1 ≤ a p) cm Cm) {b : ℕ} (hb : 3 ≤ b) :
+    IsDisjunctive b (∑' n : ℕ,
+      (((∑ p ∈ n.primeFactors, a p)
+          + ∑ p ∈ n.primeFactors, c p * (n.factorization p - 1) : ℕ) : ℝ)
+        / (b : ℝ) ^ n) := by
+  have hrw : (∑' n : ℕ,
+      (((∑ p ∈ n.primeFactors, a p)
+          + ∑ p ∈ n.primeFactors, c p * (n.factorization p - 1) : ℕ) : ℝ)
+        / (b : ℝ) ^ n) = weightALambert b a c := by
+    unfold weightALambert
+    refine tsum_congr fun n => ?_
+    rw [weightAW_eq_cast]
+    unfold weightAN
+    rfl
+  rw [hrw]
+  exact SchedB.isDisjunctive_weightA_logLog a c hCa1 hCa hc hmert hb
 
 end NormalNumbers.G4
