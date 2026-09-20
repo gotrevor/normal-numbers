@@ -408,4 +408,121 @@ theorem isNormalSequence_iff_digitMean_zeta (s : ℕ → ℕ) (hs : ∀ m, s m <
       ∀ L, ∀ k : Fin L → Fin b, k ≠ 0 → Tendsto (digitMean (zeta b) s k) atTop (𝓝 0) :=
   isNormalSequence_iff_digitMean (isPrimitiveRoot_zeta b) s hs
 
+/-! ## Base two recovers `Walsh.lean` exactly
+
+So that nobody re-litigates whether the two files say the same thing at `b = 2`: the standard
+root is `-1`, the parity character of an offset set `S ⊆ range L` is the digit character at
+the indicator index `kOf L S`, every index `k : Fin L → Fin 2` is such an indicator, and the
+two criterion statements are equivalent **directly**, with no digit hypothesis and without
+passing through normality. -/
+
+theorem zeta_two : zeta 2 = -1 := by
+  rw [zeta, Nat.cast_ofNat, show (2 * (Real.pi : ℂ) * Complex.I / 2) = Real.pi * Complex.I by ring]
+  exact Complex.exp_pi_mul_I
+
+/-- The base-two index attached to an offset set: its indicator on `Fin L`. -/
+def kOf (L : ℕ) (S : Finset ℕ) : Fin L → Fin 2 := fun i => if (i : ℕ) ∈ S then 1 else 0
+
+/-- The offset set attached to a base-two index: the positions where it is `1`. -/
+def setOf' {L : ℕ} (k : Fin L → Fin 2) : Finset ℕ :=
+  (Finset.univ.filter (fun i => k i = 1)).map Fin.valEmbedding
+
+theorem fin_two_eq_zero_or_one (j : Fin 2) : j = 0 ∨ j = 1 := by
+  fin_cases j <;> simp
+
+theorem setOf'_subset {L : ℕ} (k : Fin L → Fin 2) : setOf' k ⊆ range L := by
+  intro i hi
+  rw [setOf', Finset.mem_map] at hi
+  obtain ⟨j, _, rfl⟩ := hi
+  exact Finset.mem_range.mpr j.isLt
+
+theorem mem_setOf' {L : ℕ} (k : Fin L → Fin 2) (i : Fin L) : (i : ℕ) ∈ setOf' k ↔ k i = 1 := by
+  rw [setOf', Finset.mem_map]
+  constructor
+  · rintro ⟨j, hj, hji⟩
+    have : j = i := Fin.ext hji
+    subst this
+    exact (Finset.mem_filter.mp hj).2
+  · intro h
+    exact ⟨i, Finset.mem_filter.mpr ⟨Finset.mem_univ _, h⟩, rfl⟩
+
+theorem kOf_setOf' {L : ℕ} (k : Fin L → Fin 2) : kOf L (setOf' k) = k := by
+  funext i
+  rw [kOf]
+  rcases fin_two_eq_zero_or_one (k i) with h | h
+  · rw [if_neg (fun hm => by rw [(mem_setOf' k i).mp hm] at h; exact absurd h (by decide)), h]
+  · rw [if_pos ((mem_setOf' k i).mpr h), h]
+
+theorem setOf'_nonempty_iff {L : ℕ} (k : Fin L → Fin 2) : (setOf' k).Nonempty ↔ k ≠ 0 := by
+  constructor
+  · rintro ⟨i, hi⟩ hk
+    rw [setOf', Finset.mem_map] at hi
+    obtain ⟨j, hj, _⟩ := hi
+    have := (Finset.mem_filter.mp hj).2
+    rw [hk, Pi.zero_apply] at this
+    exact absurd this (by decide)
+  · intro hk
+    by_contra hne
+    apply hk
+    funext i
+    rcases fin_two_eq_zero_or_one (k i) with h | h
+    · exact h
+    · exact absurd ⟨_, (mem_setOf' k i).mpr h⟩ hne
+
+theorem kOf_ne_zero {L : ℕ} {S : Finset ℕ} (hS : S.Nonempty) (hSL : S ⊆ range L) :
+    kOf L S ≠ 0 := by
+  obtain ⟨j, hj⟩ := hS
+  intro h
+  have hjL : j < L := Finset.mem_range.mp (hSL hj)
+  have := congrFun h ⟨j, hjL⟩
+  rw [kOf] at this
+  simp only [if_pos hj, Pi.zero_apply] at this
+  exact absurd this (by decide)
+
+/-- 🔗 **Pointwise wiring.**  The parity character of `Walsh.lean` is the base-two digit
+character at the indicator index. -/
+theorem digitChar_neg_one_kOf (s : ℕ → ℕ) {L : ℕ} {S : Finset ℕ} (hSL : S ⊆ range L) (n : ℕ) :
+    digitChar (-1) s (kOf L S) n = ((parityChar s S n : ℝ) : ℂ) := by
+  rw [digitChar, charOf, parityChar]
+  push_cast
+  have hfac : ∀ i : Fin L, (-1 : ℂ) ^ (window s L n i * (kOf L S i : ℕ))
+      = if (i : ℕ) ∈ S then (-1 : ℂ) ^ s (n + i) else 1 := by
+    intro i
+    rw [window, kOf]
+    split_ifs <;> simp
+  simp only [hfac]
+  rw [Fin.prod_univ_eq_prod_range (fun i => if i ∈ S then (-1 : ℂ) ^ s (n + i) else 1) L,
+    ← Finset.prod_filter, Finset.filter_mem_eq_inter, Finset.inter_eq_right.mpr hSL]
+
+theorem digitMean_neg_one_kOf (s : ℕ → ℕ) {L : ℕ} {S : Finset ℕ} (hSL : S ⊆ range L) (N : ℕ) :
+    digitMean (-1) s (kOf L S) N = ((parityMean s S N : ℝ) : ℂ) := by
+  rw [digitMean, parityMean, Finset.sum_congr rfl (fun n _ => digitChar_neg_one_kOf s hSL n)]
+  push_cast
+  rfl
+
+theorem digitMean_zeta_two_kOf (s : ℕ → ℕ) {L : ℕ} {S : Finset ℕ} (hSL : S ⊆ range L)
+    (N : ℕ) : digitMean (zeta 2) s (kOf L S) N = ((parityMean s S N : ℝ) : ℂ) := by
+  rw [zeta_two, digitMean_neg_one_kOf s hSL]
+
+/-- 🔗 **The two criteria are one statement at base two** — proved directly, with no digit
+hypothesis and without going through `IsNormalSequence`. -/
+theorem parityMean_criterion_iff_digitMean_criterion (s : ℕ → ℕ) :
+    (∀ S : Finset ℕ, S.Nonempty → Tendsto (parityMean s S) atTop (𝓝 0)) ↔
+      ∀ L, ∀ k : Fin L → Fin 2, k ≠ 0 → Tendsto (digitMean (zeta 2) s k) atTop (𝓝 0) := by
+  constructor
+  · intro h L k hk
+    have hS := (setOf'_nonempty_iff k).mpr hk
+    have hSL := setOf'_subset k
+    have hre := (Complex.continuous_ofReal.tendsto 0).comp (h _ hS)
+    rw [← kOf_setOf' k]
+    refine hre.congr' (Eventually.of_forall (fun N => ?_))
+    simp [Function.comp, digitMean_zeta_two_kOf s hSL]
+  · intro h S hS
+    obtain ⟨L, hSL⟩ : ∃ L, S ⊆ range L := ⟨S.max' hS + 1, fun i hi =>
+      Finset.mem_range.mpr (Nat.lt_succ_of_le (S.le_max' i hi))⟩
+    have hk := h L (kOf L S) (kOf_ne_zero hS hSL)
+    have hre := (Complex.continuous_re.tendsto 0).comp hk
+    refine hre.congr' (Eventually.of_forall (fun N => ?_))
+    simp [Function.comp, digitMean_zeta_two_kOf s hSL]
+
 end NormalNumbers.WalshBase

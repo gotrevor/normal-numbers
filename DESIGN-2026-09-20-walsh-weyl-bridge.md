@@ -39,6 +39,10 @@ and evaluate as `∏ ζ^{s(n+i) k_i}` with `ζ = exp(2πi/b)`.  The dictionary f
 | `S.Nonempty` | `k ≠ 0` |
 
 The real-valued inequality (A) survives with `‖digitMean‖` in place of `|parityMean|`.
+**Wiring** (`parityMean_criterion_iff_digitMean_criterion`, Maze alias
+`walsh_two_files_agree`): at `b = 2` the general criterion *is* the base-two one - `zeta 2 = -1`,
+parity character of `S` = digit character at the indicator `kOf L S`, every `k` is an indicator.
+Direct proof, no digit hypothesis, no detour through normality.
 Neither the repo nor Mathlib has Walsh functions or Erdős-Turán (grep 2026-09-20).
 
 ## 1. Two duals

@@ -271,6 +271,13 @@ sets becomes `Finset.univ` on `Fin L → Fin b`; `Finset.prod_add` becomes `Fint
 Same skeleton, same exactness, no truncation term. -/
 alias walsh_criterion_base := NormalNumbers.WalshBase.isNormalSequence_iff_digitMean_zeta
 
+/-- 🔗 **Wiring: base two of the general criterion IS `Walsh.lean`.**  Proved directly (no
+digit hypothesis, no pass through normality): `zeta 2 = -1`, the parity character of `S` is
+the digit character at the indicator index `kOf L S`, and every `k : Fin L → Fin 2` is such
+an indicator.  Recorded so the question "do the two files agree at `b = 2`?" is never
+re-litigated. -/
+alias walsh_two_files_agree := NormalNumbers.WalshBase.parityMean_criterion_iff_digitMean_criterion
+
 /-! ## 4. The register
 
 One entry per walked hall.  `Tier.kernel` rows are the aliases and theorem of §2; the rest
