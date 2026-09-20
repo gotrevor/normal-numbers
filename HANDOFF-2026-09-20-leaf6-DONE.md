@@ -1,5 +1,8 @@
 # HANDOFF 2026-09-20 — sparse-subset lap, leaf 6 DONE
 
+**Branch** `wip/g5-prime-subset` · **HEAD at write time** `74c83c7` (this doc's own commit follows)
+· build GREEN (`lake build`, pre-commit gate ran) · treadmill STOP requested after this lap.
+
 ## What landed
 
 `NormalNumbers.G4Sparse.exists_relDensityZero_divergent` is a machine-checked theorem
@@ -42,7 +45,18 @@ argument over a `Nat.log`-defined predicate.
 the override).  `PrimeLambertOscillation.lean:94` is the untouched pre-expedition sorry.
 Build green; `box done --green` fired on this.
 
-## Next
+## Next — exact steps
 
-`exists_good` (the block schedule `Jᵢ, εᵢ, xᵢ` of the docstring) is the next real leaf, and after it
-the `KMT_quant` wiring is what the headline actually waits on.
+1. **`exists_good (C) (hgrow : log (C k)/4^k → 0) : ∃ D : BlockData, D.Good C`**
+   (`src/NormalNumbers/G4WiringSparse.lean`, the file's only sorry).  Its docstring already fixes the
+   schedule: `Jᵢ` maximal with `C(Jᵢ) ≤ i^{1/4}`, `εᵢ := 1/(8Jᵢ² log i)`, `Bᵢ` from
+   `exists_block (y := xᵢ) (δ := 1/(i+1))`, `xᵢ₊₁ := max(max Bᵢ, 2xᵢ, (xᵢ+1)^{⌈1/εᵢ₊₁⌉},
+   ⌈exp exp(8Jᵢ₊₁² log(i+1))⌉)`.  Build it as `Nat.rec` on `i` producing `⟨xᵢ, Bᵢ, Jᵢ⟩`, then
+   discharge `Good`'s four fields against the three printed term bounds
+   (`i^{1/4}√(log(8(log i)³))√(8/i)`, `e·i^{−3/4}`, `i^{−3/4}`) and the tail
+   `(log(i+2)+3)/4^{Jᵢ} → 0`.  `exists_block` and `divergentRecip` are already proved above it.
+2. After that the headline `exists_sparse_normal_of_KMT_quant'` is fully wired and what remains is
+   the frozen analytic input `KMT_quant` (KMT 2023 Prop. 4.3 with its `J`-dependent constant) —
+   that, not the block combinatorics, is what the headline really waits on.
+3. Reusable outside this file: `SparseExists.nth_prime_le_mul_log` (Chebyshev ⇒ `p_k ≲ k log k`) and
+   `card_multiples_le`; both are stated generally.
