@@ -121,6 +121,22 @@ Chain: for each `h ≠ 0` pick `J₀` with some `j ≤ J₀` having `e(h4^{-j}) 
 - Do not launch a treadmill from this document; Trevor fires it.  When he does: Opus/low, `--allow-from-agent`, branch off `wip/g5-prime-subset`, first lap = W3 only.
 - Do not report `sorry` counts; report which row of §2 is green.
 
+## 3c. Probe-refutation (2026-09-19, 21:00): `CRTConstant` is false in the Chowla sector; node split
+
+KB verdict §4c″.  For `v₂(h)` odd the CRT site-product prediction is singular (`z_j = −1` at
+`j = (v₂(h)+1)/2`, `p = 2` local factor `0`), and the measurement at `h = 2` (N = 10⁶ … 1.6·10⁷)
+shows `W` and `m_j` both at the `√N` noise floor with ratio `2.5, 13.9, 45, 5.0, 3.1`, random phase;
+at `h = 1` the ratio is `1.289 → 1.305`, phase `0.004`.  So `∀ h ≠ 0, CRTConstant h` is false and
+`isNormal_G4_of_CRTConstant` was vacuous.  Repaired in `G4WiringCRT.lean` (eae6785):
+`WindowDecay h := Tendsto (fun N => fullWindowMean N (windowJ N) h) atTop (𝓝 0)` is the minimal node;
+`isNormal_G4_of_windowDecay`; `ChowlaSector h := Odd (padicValInt 2 h)`;
+`isNormal_G4_of_split (hSD : ∀ h ≠ 0, ¬ChowlaSector h → CRTConstant h)
+(hCh : ∀ h ≠ 0, ChowlaSector h → WindowDecay h) (hSite : SiteDecayFull)`; the old theorem is a
+corollary.  The Chowla sector is unavoidable (h = 2 is the base-2 odd-position coefficient); the SD
+sector is "Selberg–Delange with shifts" and is a separate, plausibly-tractable-two-point problem.
+Obligations now: SD law (conjecture, measured), Chowla-sector decay (Chowla-type, open), `SiteDecayFull`
+(classical).
+
 ## 5. New node (2026-09-19, late): sparse prime subsets through KMT Proposition 4.3
 
 KB verdict §4d.  Klurman–Mangerel–Teräväinen, arXiv:2304.05344, Prop. 4.3 is an ordinary-average,
