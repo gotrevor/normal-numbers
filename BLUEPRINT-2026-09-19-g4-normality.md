@@ -15,14 +15,17 @@ IsNormal 4 G₄
    │      [N1] CRTConstant h   🔴  W = c_J ∏ m_j (1 + O(1/log N)), uniform in J.  Measured to 10⁸ (§2f).
    │             ├── [N1a] small-prime part = CRT local factor         🟡 fundamental lemma (provable)
    │             ├── [N1b] P-rough parts asymptotically independent    🔴 the crux ("SD with shifts")
-   │             └── [N1c] two-point case ∑ z^{ω(n)} w^{ω(n+1)}       ❓ literature question first
+   │             └── [N1c] two-point case ∑ z^{ω(n)} w^{ω(n+1)}       🔴 open: DT 2019 does τ_z × τ (full divisor
+   │                    function); TT 2025 gives only (log N)^{-c} decay, below the (log N)^{-1} main term
    │      [N3] SiteDecayFull   🟡  Delange–Wirsing–Halász, not in Mathlib
    │
    └── v₂(h) odd   (Chowla sector: z_j = −1 at j = (v₂(h)+1)/2, CRT prediction singular)
           [N2] WindowDecay h directly   🔴  Chowla-type: 𝔼 (−1)^{ω(n+j)} · (other sites) → 0 at every scale.
                  ⚫ CRTConstant h refuted here (probe 2026-09-19: ratio wanders 2.5…45, W at √N floor)
-                 known: log-averaged two-point (Tao 2016), density-1 set of scales (KMT 2023) — neither
-                 gives all scales, which Weyl needs.  Numerically W ≈ N^{-1/2}: decay is robust, proof is hard.
+                 known: log-averaged two-point (Tao 2016), density-1 set of scales (KMT 2023), and the frontier
+                 Tao–Teräväinen 2025 Thm 3.1: two-point, natural averages, (log N)^{-c}, all scales outside a
+                 log-density-o(1) exceptional set.  TT §4: triple correlations + exceptional-set removal are
+                 "not within current technology".  Numerically W ≈ N^{-1/2}: decay is robust, proof is hard.
 ```
 
 ## What would move a node
