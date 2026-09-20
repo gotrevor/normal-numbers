@@ -506,6 +506,18 @@ theorem tsum_lin_geom (B c : ℝ) : ∑' t : ℕ, (B + c * t) / 2 ^ (t + 1) = B 
     Summable.tsum_add (summable_geom_shift.mul_left B) (summable_i_geom.mul_left c),
     tsum_mul_left, tsum_mul_left, tsum_geom_shift, tsum_i_geom, mul_one, mul_one]
 
+/-- `(5k + 11)/4^k → 0`. -/
+theorem tendsto_lin_div_pow : Tendsto (fun k : ℕ => (5 * (k : ℝ) + 11) / 4 ^ k) atTop (𝓝 0) := by
+  have h1 : Tendsto (fun k : ℕ => (k : ℝ) * (1 / 4 : ℝ) ^ k) atTop (𝓝 0) :=
+    tendsto_self_mul_const_pow_of_abs_lt_one (by norm_num)
+  have h2 : Tendsto (fun k : ℕ => ((1 : ℝ) / 4) ^ k) atTop (𝓝 0) :=
+    tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)
+  have h3 := (h1.const_mul 5).add (h2.const_mul 11)
+  rw [mul_zero, mul_zero, add_zero] at h3
+  refine h3.congr (fun k => ?_)
+  rw [div_pow, one_pow]
+  field_simp
+
 /-- L¹ tail for a slow schedule.  For `J < j`, `∑_{n<N} ω_S(n+j) ≤ N·(S_S(2N) + 2) + 5j`
 (double counting over the primes of `S`, `#{n<N : p ∣ n+j} ≤ N/p + 2`), so the geometric sum gives
 `≪ 4^{-J}(S_S(2N) + J)` — no `log N`, which is what lets `J_N` grow as slowly as `log₄ S_S(N)`.
@@ -793,7 +805,36 @@ theorem kmt_along {C : ℕ → ℝ} (hKMT : KMT_quant C) (hG : D.Good C) :
 /-- The L¹ tail vanishes along the block schedule: `tail_error_L1` + `recipSumLe_le` +
 `Good.tail`. -/
 theorem tailOK {C : ℕ → ℝ} (hG : D.Good C) : TailOK D.set D.sched := by
-  sorry
+  rw [TailOK]
+  have h2 : Tendsto (fun i => (5 * (D.J i : ℝ) + 11) / (4 : ℝ) ^ D.J i) atTop (𝓝 0) :=
+    tendsto_lin_div_pow.comp hG.J_tendsto
+  have hGto : Tendsto (fun i => (∑ i' ∈ Finset.range (i + 2), D.δ i' + 1) / (4 : ℝ) ^ D.J i
+      + (5 * (D.J i : ℝ) + 11) / (4 : ℝ) ^ D.J i) atTop (𝓝 0) := by
+    simpa using hG.tail.add h2
+  have hcomp := hGto.comp D.blockIndex_tendsto
+  refine squeeze_zero' (Eventually.of_forall (fun N =>
+    div_nonneg (Finset.sum_nonneg fun _ _ => abs_nonneg _) (Nat.cast_nonneg N))) ?_ hcomp
+  filter_upwards [eventually_gt_atTop (D.x 0), eventually_ge_atTop 1] with N hN hN1
+  obtain ⟨hspec1, hspec2⟩ := D.blockIndex_spec N hN
+  have h2N : 2 * N ≤ D.x (D.blockIndex N + 2) :=
+    le_trans (by have := hG.x_double (D.blockIndex N); omega) (le_refl _)
+  have hrec := D.recipSumLe_le (D.blockIndex N) (2 * N) h2N
+  have hsched : D.sched N = D.J (D.blockIndex N) := rfl
+  calc (∑ n ∈ Finset.range N,
+        |(TWeight.subset D.set).tailB 4 n - truncTailS D.set (D.sched N) n|) / N
+      ≤ (recipSumLe D.set (2 * N) + 5 * (D.sched N) + 12) / (4 : ℝ) ^ (D.sched N) :=
+        tail_error_L1 D.set (D.sched N) N hN1
+    _ = (recipSumLe D.set (2 * N) + 5 * (D.J (D.blockIndex N) : ℝ) + 12)
+          / (4 : ℝ) ^ (D.J (D.blockIndex N)) := by rw [hsched]
+    _ ≤ (∑ i' ∈ Finset.range (D.blockIndex N + 2), D.δ i' + 5 * (D.J (D.blockIndex N) : ℝ) + 12)
+          / (4 : ℝ) ^ (D.J (D.blockIndex N)) := by gcongr
+    _ = (∑ i' ∈ Finset.range (D.blockIndex N + 2), D.δ i' + 1)
+            / (4 : ℝ) ^ (D.J (D.blockIndex N))
+          + (5 * (D.J (D.blockIndex N) : ℝ) + 11) / (4 : ℝ) ^ (D.J (D.blockIndex N)) := by
+        rw [← add_div]
+        ring_nf
+    _ = ((fun i => (∑ i' ∈ Finset.range (i + 2), D.δ i' + 1) / (4 : ℝ) ^ D.J i
+          + (5 * (D.J i : ℝ) + 11) / (4 : ℝ) ^ D.J i) ∘ D.blockIndex) N := rfl
 
 end BlockData
 
