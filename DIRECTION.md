@@ -1,5 +1,15 @@
 # DIRECTION — normal-numbers 🧭
 
+## Attended operator override: 2026-09-20 02:20 EDT — `KMT_quant₂` RE-FREEZE LAP (ACTIVE)
+
+Operator: Ren, attended; fired under Trevor's standing "Why wait for me to fire?  Do it!" / "keep on
+trucking" (2026-09-20).  Engine Opus/low.  Branch `wip/g5-prime-subset`.  Read
+`KICKOFF-2026-09-20-kmt-quant2-lap.md` and do exactly that: add `KMT_quant₂`, `Good₂`, `kmt_along₂`,
+`exists_good₂`, `exists_sparse_normal_of_KMT_quant₂` with the ratified statements verbatim, skeleton
+first.  **Never change any existing statement** (`KMT_quant`, `Good`, `exists_good`,
+`exists_sparse_normal_of_KMT_quant'`, `exists_sparse_normal`, `exists_relDensityZero_divergent`, …).
+Done when the file is sorry-free and the new theorem is axiom-clean; `box done --green` only then.
+
 ## Attended operator override: 2026-09-20 00:50 EDT — `exists_good` LAP (DONE 01:40 EDT, one lap: `G4WiringSparse.lean` sorry-free; frozen `Good.sep` refuted at i=0 and repaired with `1 ≤ i`, see `HANDOFF-2026-09-20-exists-good.md`.  No active override.)
 
 **Result:** `G4WiringSparse.lean` sorry-free, `exists_sparse_normal_of_KMT_quant'` axiom-clean.
