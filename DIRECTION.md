@@ -1,6 +1,16 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-19 17:50 EDT — W3 WEYL CRITERION (ACTIVE; one lap, supersedes the prime-subset campaign below for this run only)
+## Attended operator override: 2026-09-19 21:55 EDT — CLOSING LAP: W4 + L1 + ASSEMBLY (ACTIVE; supersedes everything below for this run)
+
+Operator: Ren, attended; Trevor fired the run.  Engine Opus/low.  Branch `wip/g5-prime-subset`.
+Read `KICKOFF-2026-09-19-closing-lap.md` and do exactly that, leaves in the listed order: make
+`src/NormalNumbers/DyadicToPrefix.lean` and `src/NormalNumbers/G4WiringCRT.lean` sorry-free.
+**Never change the statements of `CRTConstant`, `SiteDecayFull`, `isNormal_G4_of_CRTConstant`**
+(exception in the kickoff: strengthening `CRTConstant` to `∀ᶠ N, ∀ J` if uniformity blocks leaf 5 —
+say so in the handoff).  W3 is done (`equidistributed_of_weyl`); do not touch `WeylCriterion.lean`.
+`G4WiringSparse.lean` is out of scope.  Commit a compiling skeleton before every hard step.
+
+## Attended operator override: 2026-09-19 17:50 EDT — W3 WEYL CRITERION (DONE 20:40; kept for the record)
 
 Operator: Ren, attended; Trevor fired the run.  Engine Opus/low.  Branch `wip/g5-prime-subset`.
 Read `KICKOFF-2026-09-19-weyl-criterion.md` and do exactly that: prove
