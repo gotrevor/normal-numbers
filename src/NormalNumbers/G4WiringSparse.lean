@@ -81,7 +81,76 @@ def TailOK (Jsched : ℕ → ℕ) : Prop :=
 theorem tail_error_le_subset (J n : ℕ) :
     |(TWeight.subset S).tailB 4 n - truncTailS S J n|
       ≤ ((Nat.log 2 (n + J + 2) : ℝ) + J + 3) / (4 : ℝ) ^ J := by
-  sorry
+  set A : ℝ := (Nat.log 2 (n + J + 2) : ℝ) with hA
+  have hsum : Summable (fun i : ℕ => omegaS S (n + i + 1) / (4 : ℝ) ^ (i + 1)) := by
+    have h := TWeight.summable_tailB (W := TWeight.subset S) (b := 4) (by norm_num) n
+    exact h.congr (fun i => by rw [TWeight.subset_wN]; norm_num)
+  have hsplit := hsum.sum_add_tsum_nat_add J
+  have hdiff : (TWeight.subset S).tailB 4 n - truncTailS S J n
+      = ∑' t : ℕ, omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1) := by
+    have htB : (TWeight.subset S).tailB 4 n
+        = ∑' i : ℕ, omegaS S (n + i + 1) / (4 : ℝ) ^ (i + 1) := by
+      rw [TWeight.tailB]; exact tsum_congr fun i => by rw [TWeight.subset_wN]; norm_num
+    rw [htB, truncTailS, ← hsplit]
+    ring
+  have hterm : ∀ t : ℕ, omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1)
+      ≤ (1 / (4 : ℝ) ^ J) * ((A + J + t) / 2 ^ (t + 1)) := by
+    intro t
+    rw [show n + (t + J) + 1 = n + J + t + 1 from by ring]
+    have h1 : omegaS S (n + J + t + 1) ≤ (Nat.log 2 (n + J + t + 1) : ℝ) := by
+      refine le_trans (omegaS_le_omegaR (S := S) _) ?_
+      exact_mod_cast omegaR_le_log (n + J + t + 1)
+    have h2 : (Nat.log 2 (n + J + t + 1) : ℝ) ≤ A + t := by
+      have := log_add_le (n + J) t
+      have hmono : Nat.log 2 (n + J + 1) ≤ Nat.log 2 (n + J + 2) :=
+        Nat.log_mono_right (by omega)
+      have : Nat.log 2 (n + J + t + 1) ≤ Nat.log 2 (n + J + 2) + t := by omega
+      rw [hA]; exact_mod_cast this
+    have hnum : omegaS S (n + J + t + 1) ≤ A + J + t := by
+      have hJ : (0 : ℝ) ≤ J := Nat.cast_nonneg J
+      linarith
+    have hden : (2 : ℝ) ^ (t + 1) * 4 ^ J ≤ 4 ^ (t + J + 1) := by
+      have : (2 : ℝ) ^ (t + 1) ≤ 4 ^ (t + 1) := by
+        gcongr <;> norm_num
+      calc (2 : ℝ) ^ (t + 1) * 4 ^ J ≤ 4 ^ (t + 1) * 4 ^ J := by gcongr
+        _ = 4 ^ (t + J + 1) := by rw [← pow_add]; ring_nf
+    have hnn : (0 : ℝ) ≤ A + J + t := by
+      have : (0 : ℝ) ≤ A := by rw [hA]; positivity
+      have : (0 : ℝ) ≤ (J : ℝ) := Nat.cast_nonneg J
+      have : (0 : ℝ) ≤ (t : ℝ) := Nat.cast_nonneg t
+      positivity
+    have hpos1 : (0:ℝ) < 4 ^ (t + J + 1) := by positivity
+    have hpos2 : (0:ℝ) < 2 ^ (t + 1) * (4:ℝ) ^ J := by positivity
+    rw [one_div, inv_mul_eq_div, div_div, div_le_div_iff₀ hpos1 hpos2]
+    nlinarith [hnum, hden, hnn, omegaS_nonneg (S := S) (n + J + t + 1), hpos1.le, hpos2.le]
+  have hAJ : (0 : ℝ) ≤ A + J := by
+    have h1 : (0 : ℝ) ≤ A := by rw [hA]; positivity
+    have h2 : (0 : ℝ) ≤ (J : ℝ) := Nat.cast_nonneg J
+    linarith
+  have hmajsum0 : Summable (fun t : ℕ => ((A + J) + (t : ℝ)) / 2 ^ (t + 1)) := by
+    have := (summable_geom_shift.mul_left (A + J)).add summable_i_geom
+    refine this.congr (fun i => ?_); ring
+  have hmajsum : Summable (fun t : ℕ => (1 / (4 : ℝ) ^ J) * (((A + J) + (t : ℝ)) / 2 ^ (t + 1))) :=
+    hmajsum0.mul_left _
+  have hmaj : ∑' t : ℕ, ((A + J) + (t : ℝ)) / 2 ^ (t + 1) = A + J + 1 := by
+    have h := tsum_majorant (A + J) 0
+    simpa using h
+  have hLsum : Summable (fun t : ℕ => omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1)) := by
+    have := (summable_nat_add_iff J).mpr hsum
+    exact this.congr (fun t => by rw [show t + J + 1 = t + J + 1 from rfl])
+  have hterm' : ∀ t : ℕ, omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1)
+      ≤ (1 / (4 : ℝ) ^ J) * (((A + J) + (t : ℝ)) / 2 ^ (t + 1)) := by
+    intro t; have := hterm t; linarith [this]
+  rw [hdiff, abs_of_nonneg (tsum_nonneg (fun t => by
+    have := omegaS_nonneg (S := S) (n + (t + J) + 1); positivity))]
+  calc ∑' t : ℕ, omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1)
+      ≤ ∑' t : ℕ, (1 / (4 : ℝ) ^ J) * (((A + J) + (t : ℝ)) / 2 ^ (t + 1)) :=
+        Summable.tsum_le_tsum hterm' hLsum hmajsum
+    _ = (1 / (4 : ℝ) ^ J) * (A + J + 1) := by rw [tsum_mul_left, hmaj]
+    _ ≤ (A + J + 3) / (4 : ℝ) ^ J := by
+        rw [one_div, inv_mul_eq_div]
+        gcongr
+        linarith
 
 /-- The crude schedule works for every `S`: `TailOK S windowJ`. -/
 theorem tailOK_windowJ : TailOK S windowJ := by
@@ -92,7 +161,9 @@ theorem tailOK_windowJ : TailOK S windowJ := by
 /-- The orbit of `c_S(4)` is the subset tail mod one (`coe_tailB` + `lambert_subset`). -/
 theorem orbit_eq_fract_tailB_subset (n : ℕ) :
     orbit 4 (subsetLambert S 4) n = Int.fract ((TWeight.subset S).tailB 4 n) := by
-  sorry
+  rw [TWeight.tailB_eq (W := TWeight.subset S) (b := 4) (by norm_num) n,
+    TWeight.lambert_subset (b := 4) S]
+  rw [Int.fract_sub_natCast, orbit, mul_comm]
 
 /-- Prefix Fourier means of the orbit vanish: `TailOK` + `KMT_along`. -/
 theorem prefix_fourier_tendsto_zero (Jsched : ℕ → ℕ) (hTail : TailOK S Jsched)
