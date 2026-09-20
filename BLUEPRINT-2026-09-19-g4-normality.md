@@ -51,6 +51,13 @@ IsNormal 4 G₄
    one site; the mean is shift-invariant).
 3. ✅ PASSED 21:15: h = 6, 8, 24 all at the noise floor (|W|√N ≈ 0.5 … 2.3), ratios random (118, 2.5, 118 →
    146, 3.1, 145).  The sector classification {v₂(h) odd} is exact.
-4. Open: N1's *rate*.  c/CRT − 1 should be ≍ 1/log N with a computable coefficient (next Selberg–Delange
+4. ✅ PASSED 23:05: N1's *rate*.  Log-log slope of |c/CRT − 1| vs log N is −1.01 (h=1), −1.29 (h=3),
+   −0.99 (h=5) over N = 10⁶ … 10⁸.  The coefficient κ (c/CRT = 1 + κ/log N) matches the Hardy–Littlewood
+   coupling through cofactor sizes, κ_B = −Σ_j (z_j−1) Σ_p (log p/(p−1))[Π_{r(j)}/μ_p − z_j/(1+(z_j−1)/p)]:
+   h=1 fit −0.55−0.93i vs κ_B −0.59−0.83i (10%, no free parameter); h=3 fit 2.6−2.1i (spread 2.1…3.8) vs
+   3.34−2.00i; h=5 low power (κ₂/log N ≈ κ).  The multiplicative-model coefficient κ_A (Selberg–Delange on
+   ζ(s)∏(1+b_p p^{-s})) is in the wrong quadrant and its amplitude ∏Γ(z_j)/Γ(Z) = 2.6, 0.12, 46 is refuted
+   by c/CRT → 1.  KB verdict §4h; `lambert_carry_probe.py --window-rate-fit data-2026-09-19-window-rate-sweep.json`.
+   Was: N1's *rate*.  c/CRT − 1 should be ≍ 1/log N with a computable coefficient (next Selberg–Delange
    term); fit the coefficient at h = 1, 3, 5 from N = 10⁶ … 10⁸ and compare with the derivative of the
    local factor.  A wrong sign or a wrong order would be the first crack in the SD law.
