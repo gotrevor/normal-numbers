@@ -330,14 +330,133 @@ theorem exists_sparse_normal_of_KMT_quant (C : ℕ → ℝ)
     ∃ (S : ℕ → Prop) (_ : DecidablePred S), DivergentRecip S ∧ IsNormal 4 (subsetLambert S 4) := by
   sorry
 
-/-- L¹ tail for a slow schedule.  For `J < j ≤ N`, `∑_{n<N} ω_S(n+j) ≤ ∑_{p∈S, p≤2N} (N/p + 1)
-≤ N (S_S(2N) + 1)` (`π(2N) ≤ N`); for `j > N` use `ω_S ≤ log₂`.  Hence
-`(1/N) ∑_{n<N} |tailB n − truncTailS J n| ≤ (S_S(2N) + 1)/4^J + (log₂ N + 3)/4^N`,
-which lets `J_N` grow as slowly as `log₄ S_S(N)` instead of `log₂ log₂ N`. -/
+/-- The tail difference as a convergent nonnegative series (the leaf-2 decomposition, factored
+out for the L¹ bound). -/
+theorem summable_tail_diff (J n : ℕ) :
+    Summable (fun t : ℕ => omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1)) := by
+  have hsum : Summable (fun i : ℕ => omegaS S (n + i + 1) / (4 : ℝ) ^ (i + 1)) := by
+    have h := TWeight.summable_tailB (W := TWeight.subset S) (b := 4) (by norm_num) n
+    exact h.congr (fun i => by rw [TWeight.subset_wN]; norm_num)
+  exact (summable_nat_add_iff J).mpr hsum
+
+theorem tail_diff_tsum (J n : ℕ) :
+    (TWeight.subset S).tailB 4 n - truncTailS S J n
+      = ∑' t : ℕ, omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1) := by
+  have hsum : Summable (fun i : ℕ => omegaS S (n + i + 1) / (4 : ℝ) ^ (i + 1)) := by
+    have h := TWeight.summable_tailB (W := TWeight.subset S) (b := 4) (by norm_num) n
+    exact h.congr (fun i => by rw [TWeight.subset_wN]; norm_num)
+  have hsplit := hsum.sum_add_tsum_nat_add J
+  have htB : (TWeight.subset S).tailB 4 n
+      = ∑' i : ℕ, omegaS S (n + i + 1) / (4 : ℝ) ^ (i + 1) := by
+    rw [TWeight.tailB]; exact tsum_congr fun i => by rw [TWeight.subset_wN]; norm_num
+  rw [htB, truncTailS, ← hsplit]
+  ring
+
+/-- Multiples of `p` in a shifted window: at most `N/p + 2`. -/
+theorem card_filter_dvd_shift_le (p N j : ℕ) (hp : 0 < p) :
+    ((((Finset.range N).filter (fun n => p ∣ n + j)).card : ℝ)) ≤ (N : ℝ) / p + 2 := by
+  sorry
+
+/-- Double counting: `∑_{n<N} ω_S(n+j) ≤ N · S_S(2N) + 2N + 5j`. -/
+theorem sum_omegaS_shift_le (N j : ℕ) (hN : 1 ≤ N) (hj : 1 ≤ j) :
+    ∑ n ∈ Finset.range N, omegaS S (n + j)
+      ≤ (N : ℝ) * (recipSumLe S (2 * N) + 2) + 5 * j := by
+  sorry
+
+/-- `∑'_t (B + c t)/2^{t+1} = B + c`. -/
+theorem tsum_lin_geom (B c : ℝ) : ∑' t : ℕ, (B + c * t) / 2 ^ (t + 1) = B + c := by
+  sorry
+
+/-- L¹ tail for a slow schedule.  For `J < j`, `∑_{n<N} ω_S(n+j) ≤ N·(S_S(2N) + 2) + 5j`
+(double counting over the primes of `S`, `#{n<N : p ∣ n+j} ≤ N/p + 2`), so the geometric sum gives
+`≪ 4^{-J}(S_S(2N) + J)` — no `log N`, which is what lets `J_N` grow as slowly as `log₄ S_S(N)`.
+(The constant deviates from the kickoff's `+1`/`log₂ N` shape: the honest elementary count costs
+`+2` per `n` and `+5j` for the primes above `2N`, and the fringe `j > N` is absorbed into the same
+geometric series rather than a separate `4^{-N}` term.  The shape `≪ 4^{-J}(S_S(2N) + o(4^J))` is
+what the block construction consumes.) -/
 theorem tail_error_L1 (J N : ℕ) (hN : 1 ≤ N) :
     (∑ n ∈ Finset.range N, |(TWeight.subset S).tailB 4 n - truncTailS S J n|) / N
-      ≤ (recipSumLe S (2 * N) + 1) / (4 : ℝ) ^ J + ((Nat.log 2 N : ℝ) + 3) / (4 : ℝ) ^ N := by
-  sorry
+      ≤ (recipSumLe S (2 * N) + 5 * J + 12) / (4 : ℝ) ^ J := by
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  set R : ℝ := recipSumLe S (2 * N) with hRdef
+  have hR0 : 0 ≤ R := by
+    rw [hRdef, recipSumLe]
+    exact Finset.sum_nonneg (fun p _ => by positivity)
+  -- each term is a nonnegative tsum
+  have habs : ∀ n : ℕ, |(TWeight.subset S).tailB 4 n - truncTailS S J n|
+      = ∑' t : ℕ, omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1) := by
+    intro n
+    rw [tail_diff_tsum S J n, abs_of_nonneg]
+    exact tsum_nonneg (fun t => by have := omegaS_nonneg (S := S) (n + (t + J) + 1); positivity)
+  -- swap the finite and infinite sums
+  have hswap : ∑ n ∈ Finset.range N, |(TWeight.subset S).tailB 4 n - truncTailS S J n|
+      = ∑' t : ℕ, ∑ n ∈ Finset.range N,
+          omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1) := by
+    rw [Finset.sum_congr rfl (fun n _ => habs n)]
+    exact (Summable.tsum_finsetSum (fun n _ => summable_tail_diff S J n)).symm
+  -- the majorant
+  set B : ℝ := (N : ℝ) * (R + 2) + 5 * J + 5 with hB
+  have hmajterm : ∀ t : ℕ, ∑ n ∈ Finset.range N,
+      omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1)
+        ≤ (1 / (4 : ℝ) ^ J) * ((B + 5 * t) / 2 ^ (t + 1)) := by
+    intro t
+    have hcount := sum_omegaS_shift_le S N (t + J + 1) hN (by omega)
+    have hre : ∑ n ∈ Finset.range N, omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1)
+        = (∑ n ∈ Finset.range N, omegaS S (n + (t + J + 1))) / (4 : ℝ) ^ (t + J + 1) := by
+      rw [Finset.sum_div]
+      exact Finset.sum_congr rfl (fun n _ => by rw [show n + (t + J) + 1 = n + (t + J + 1) by ring])
+    rw [hre]
+    have hnum : (∑ n ∈ Finset.range N, omegaS S (n + (t + J + 1)))
+        ≤ B + 5 * t := by
+      have : ((t : ℝ) + J + 1) = ((t + J + 1 : ℕ) : ℝ) := by push_cast; ring
+      rw [hB]
+      push_cast at hcount ⊢
+      linarith
+    have hden : (2 : ℝ) ^ (t + 1) * 4 ^ J ≤ 4 ^ (t + J + 1) := by
+      have h2 : (2 : ℝ) ^ (t + 1) ≤ 4 ^ (t + 1) := by gcongr <;> norm_num
+      calc (2 : ℝ) ^ (t + 1) * 4 ^ J ≤ 4 ^ (t + 1) * 4 ^ J := by gcongr
+        _ = 4 ^ (t + J + 1) := by rw [← pow_add]; ring_nf
+    have hB0 : 0 ≤ B + 5 * t := by
+      rw [hB]
+      have : (0 : ℝ) ≤ (t : ℝ) := Nat.cast_nonneg t
+      have hJ : (0 : ℝ) ≤ (J : ℝ) := Nat.cast_nonneg J
+      nlinarith
+    have hs0 : (0 : ℝ) ≤ ∑ n ∈ Finset.range N, omegaS S (n + (t + J + 1)) :=
+      Finset.sum_nonneg (fun n _ => omegaS_nonneg (S := S) _)
+    have hpos1 : (0:ℝ) < 4 ^ (t + J + 1) := by positivity
+    have hpos2 : (0:ℝ) < 2 ^ (t + 1) * (4:ℝ) ^ J := by positivity
+    rw [one_div, inv_mul_eq_div, div_div, div_le_div_iff₀ hpos1 hpos2]
+    nlinarith [hnum, hden, hB0, hs0, hpos1.le, hpos2.le]
+  have hmajsum : Summable (fun t : ℕ => (1 / (4 : ℝ) ^ J) * ((B + 5 * t) / 2 ^ (t + 1))) := by
+    have h1 : Summable (fun t : ℕ => (B + 5 * (t : ℝ)) / 2 ^ (t + 1)) := by
+      have := (summable_geom_shift.mul_left B).add (summable_i_geom.mul_left 5)
+      refine this.congr (fun i => ?_); ring
+    exact h1.mul_left _
+  have hLsum : Summable (fun t : ℕ => ∑ n ∈ Finset.range N,
+      omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1)) :=
+    summable_sum (fun n _ => summable_tail_diff S J n)
+  have hkey : ∑ n ∈ Finset.range N, |(TWeight.subset S).tailB 4 n - truncTailS S J n|
+      ≤ (1 / (4 : ℝ) ^ J) * (B + 5) := by
+    rw [hswap]
+    calc ∑' t : ℕ, ∑ n ∈ Finset.range N,
+            omegaS S (n + (t + J) + 1) / (4 : ℝ) ^ (t + J + 1)
+        ≤ ∑' t : ℕ, (1 / (4 : ℝ) ^ J) * ((B + 5 * t) / 2 ^ (t + 1)) :=
+          Summable.tsum_le_tsum hmajterm hLsum hmajsum
+      _ = (1 / (4 : ℝ) ^ J) * (B + 5) := by rw [tsum_mul_left, tsum_lin_geom]
+  have h4 : (0 : ℝ) < (4 : ℝ) ^ J := by positivity
+  have hN1 : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+  have hJ0 : (0 : ℝ) ≤ (J : ℝ) := Nat.cast_nonneg J
+  rw [div_le_div_iff₀ hNR h4]
+  have hkey' : (∑ n ∈ Finset.range N, |(TWeight.subset S).tailB 4 n - truncTailS S J n|)
+      * (4 : ℝ) ^ J ≤ B + 5 := by
+    rw [← le_div_iff₀ h4]
+    calc (∑ n ∈ Finset.range N, |(TWeight.subset S).tailB 4 n - truncTailS S J n|)
+        ≤ (1 / (4 : ℝ) ^ J) * (B + 5) := hkey
+      _ = (B + 5) / (4 : ℝ) ^ J := by rw [one_div, inv_mul_eq_div]
+  have : B + 5 ≤ (R + 5 * J + 12) * N := by
+    rw [hB]
+    nlinarith [hR0, hN1, hJ0]
+  linarith
 
 /-! ### The block construction, decomposed
 
