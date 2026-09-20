@@ -1813,6 +1813,183 @@ theorem exists_block (y : ℕ) (hy : 1 ≤ y) (δ : ℝ) (hδ : 0 < δ) :
     have : T n₀ = ∑ p ∈ (Finset.Ioc y n₀).filter Nat.Prime, (1 : ℝ) / p := rfl
     linarith [hstep, hmin.le]
 
+/-! ### The explicit schedule for `exists_good`
+
+`Jᵢ := max{J ≤ i : ∀ J' ≤ J, |C J'| ≤ ⁴√i}` (so `|C Jᵢ| ≤ ⁴√i`, and by maximality
+`log i ≤ 4 log|C(Jᵢ+1)| = o(4^{Jᵢ})`); `εᵢ := 1/Kᵢ` with `Kᵢ := 8(i+3)³` (so `εᵢ < 1/2` and
+`1/(8Jᵢ²εᵢ) = (i+3)³/Jᵢ² ≥ i`); `Bᵢ := ` a greedy block above `xᵢ` of mass `≈ 1/(i+1)`;
+`x₀ := ⌈exp exp K₀⌉`, `xᵢ₊₁ := max(2xᵢ+1, ⌈exp exp Kᵢ₊₁⌉, xᵢ^{Kᵢ₊₁}, max Bᵢ)`. -/
+
+namespace GoodExists
+
+/-- `Kᵢ = 8(i+3)³ = 1/εᵢ`. -/
+def Kn (i : ℕ) : ℕ := 8 * (i + 3) ^ 3
+
+/-- `εᵢ = 1/Kᵢ`. -/
+noncomputable def epsF (i : ℕ) : ℝ := 1 / (Kn i : ℝ)
+
+/-- `⌈exp exp Kᵢ⌉`: the cut point must exceed this for `ε_range`. -/
+noncomputable def EF (i : ℕ) : ℕ := ⌈Real.exp (Real.exp (Kn i))⌉₊
+
+open Classical in
+/-- `Jᵢ`: the greatest `J ≤ i` with `|C J'| ≤ ⁴√i` for all `J' ≤ J`. -/
+noncomputable def JF (C : ℕ → ℝ) (i : ℕ) : ℕ :=
+  Nat.findGreatest (fun J => ∀ J' ≤ J, |C J'| ≤ Real.sqrt (Real.sqrt i)) i
+
+/-- The greedy block above `y` of mass `≈ 1/(i+1)`. -/
+noncomputable def blkAux (y i : ℕ) (hy : 1 ≤ y) : Finset ℕ :=
+  (exists_block y hy ((1 : ℝ) / ((i : ℝ) + 1)) (by positivity)).choose
+
+theorem blkAux_spec (y i : ℕ) (hy : 1 ≤ y) :
+    (∀ p ∈ blkAux y i hy, p.Prime ∧ y < p) ∧
+      (1 : ℝ) / ((i : ℝ) + 1) ≤ ∑ p ∈ blkAux y i hy, (1 : ℝ) / p ∧
+      ∑ p ∈ blkAux y i hy, (1 : ℝ) / p ≤ (1 : ℝ) / ((i : ℝ) + 1) + 1 / y :=
+  (exists_block y hy ((1 : ℝ) / ((i : ℝ) + 1)) (by positivity)).choose_spec
+
+noncomputable def blk (y i : ℕ) : Finset ℕ := if h : 1 ≤ y then blkAux y i h else ∅
+
+/-- The cut points. -/
+noncomputable def XF : ℕ → ℕ
+  | 0 => EF 0
+  | i + 1 => max (max (2 * XF i + 1) (EF (i + 1)))
+      (max ((XF i) ^ Kn (i + 1)) ((blk (XF i) i).sup id))
+
+theorem Kn_pos (i : ℕ) : 0 < Kn i := by unfold Kn; positivity
+
+theorem Kn_ge (i : ℕ) : 216 ≤ Kn i := by
+  have h : 3 ^ 3 ≤ (i + 3) ^ 3 := Nat.pow_le_pow_left (by omega) 3
+  simp only [Kn]
+  omega
+
+theorem epsF_pos (i : ℕ) : 0 < epsF i := by
+  unfold epsF
+  have : (0 : ℝ) < (Kn i : ℝ) := by exact_mod_cast Kn_pos i
+  positivity
+
+theorem epsF_lt (i : ℕ) : epsF i < 1 / 2 := by
+  unfold epsF
+  have h : (216 : ℝ) ≤ (Kn i : ℝ) := by exact_mod_cast Kn_ge i
+  rw [div_lt_div_iff₀ (by linarith) (by norm_num)]
+  linarith
+
+theorem one_le_EF (i : ℕ) : 1 ≤ EF i := by
+  have h1 : (1 : ℝ) ≤ Real.exp (Real.exp (Kn i)) := Real.one_le_exp (Real.exp_pos _).le
+  simp only [EF]
+  exact Nat.one_le_ceil_iff.mpr (by linarith)
+
+theorem EF_le (i : ℕ) : Real.exp (Real.exp (Kn i)) ≤ (EF i : ℝ) := Nat.le_ceil _
+
+theorem XF_succ_eq (i : ℕ) : XF (i + 1) = max (max (2 * XF i + 1) (EF (i + 1)))
+    (max ((XF i) ^ Kn (i + 1)) ((blk (XF i) i).sup id)) := rfl
+
+theorem XF_ge_EF (i : ℕ) : EF i ≤ XF i := by
+  cases i with
+  | zero => exact le_refl _
+  | succ n => rw [XF_succ_eq]; omega
+
+theorem XF_succ_ge (i : ℕ) : 2 * XF i + 1 ≤ XF (i + 1) := by rw [XF_succ_eq]; omega
+
+theorem XF_ge_pow (i : ℕ) : (XF i) ^ Kn (i + 1) ≤ XF (i + 1) := by rw [XF_succ_eq]; omega
+
+theorem XF_ge_sup (i : ℕ) : (blk (XF i) i).sup id ≤ XF (i + 1) := by rw [XF_succ_eq]; omega
+
+theorem XF_ge (i : ℕ) : i + 1 ≤ XF i := by
+  induction i with
+  | zero => exact le_trans (one_le_EF 0) (XF_ge_EF 0)
+  | succ n ih => have := XF_succ_ge n; omega
+
+theorem one_le_XF (i : ℕ) : 1 ≤ XF i := by have := XF_ge i; omega
+
+theorem XF_strictMono : StrictMono XF := by
+  refine strictMono_nat_of_lt_succ (fun n => ?_)
+  have := XF_succ_ge n
+  have := one_le_XF n
+  omega
+
+/-- The block data of the explicit schedule. -/
+noncomputable def DD (C : ℕ → ℝ) : BlockData where
+  x := XF
+  B := fun i => blk (XF i) i
+  J := JF C
+  ε := epsF
+  x_mono := XF_strictMono
+  B_prime := by
+    intro i p hp
+    have hy : 1 ≤ XF i := one_le_XF i
+    have hmem : p ∈ blkAux (XF i) i hy := by
+      rw [show blk (XF i) i = blkAux (XF i) i hy from dif_pos hy] at hp; exact hp
+    obtain ⟨hprime, hgt⟩ := (blkAux_spec (XF i) i hy).1 p hmem
+    refine ⟨hprime, hgt, ?_⟩
+    refine le_trans ?_ (XF_ge_sup i)
+    exact Finset.le_sup (f := id) hp
+
+theorem DD_delta (C : ℕ → ℝ) (i : ℕ) :
+    (DD C).δ i = ∑ p ∈ blk (XF i) i, (1 : ℝ) / p := rfl
+
+/-! #### Leaves -/
+
+/-- Leaf 3a: `δᵢ ≥ 1/(i+1)`. -/
+theorem delta_ge (C : ℕ → ℝ) (i : ℕ) : (1 : ℝ) / ((i : ℝ) + 1) ≤ (DD C).δ i := by
+  sorry
+
+/-- Leaf 3b: `δᵢ ≤ 2/(i+1)`. -/
+theorem delta_le (C : ℕ → ℝ) (i : ℕ) : (DD C).δ i ≤ 2 / ((i : ℝ) + 1) := by
+  sorry
+
+/-- Harmonic lower bound. -/
+theorem harm_lower (m : ℕ) :
+    Real.log ((m : ℝ) + 1) ≤ ∑ k ∈ Finset.range m, (1 : ℝ) / ((k : ℝ) + 1) := by
+  sorry
+
+/-- Harmonic upper bound. -/
+theorem harm_upper (m : ℕ) :
+    ∑ k ∈ Finset.range m, (1 : ℝ) / ((k : ℝ) + 1) ≤ 1 + Real.log m := by
+  sorry
+
+/-- Leaf 3: `∑ δᵢ = ∞`. -/
+theorem delta_div (C : ℕ → ℝ) : ¬ Summable (DD C).δ := by
+  sorry
+
+/-- Leaf 4a: the `ε`-range. -/
+theorem eps_range (C : ℕ → ℝ) (i N : ℕ) (hN : XF i < N) :
+    1 / Real.log (Real.log N) < epsF i ∧ epsF i < 1 / 2 := by
+  sorry
+
+/-- Leaf 4b: separation. -/
+theorem sep_holds (C : ℕ → ℝ) (i N : ℕ) (hi : 1 ≤ i) (hN : XF i < N) :
+    XF (i - 1) ≤ ⌊(N : ℝ) ^ epsF i⌋₊ := by
+  sorry
+
+/-- Leaf 1a: `Jᵢ → ∞`. -/
+theorem JF_tendsto (C : ℕ → ℝ) : Tendsto (JF C) atTop atTop := by
+  sorry
+
+/-- Leaf 1b: `|C Jᵢ| ≤ ⁴√i` eventually. -/
+theorem JF_C_le (C : ℕ → ℝ) : ∀ᶠ i : ℕ in atTop, |C (JF C i)| ≤ Real.sqrt (Real.sqrt i) := by
+  sorry
+
+/-- Leaf 1c: `log i = o(4^{Jᵢ})`. -/
+theorem log_o_pow (C : ℕ → ℝ)
+    (hgrow : Tendsto (fun k : ℕ => Real.log (C k) / 4 ^ k) atTop (𝓝 0)) :
+    Tendsto (fun i : ℕ => Real.log i / (4 : ℝ) ^ JF C i) atTop (𝓝 0) := by
+  sorry
+
+/-- Leaf 5: the three KMT terms. -/
+theorem terms_tendsto (C : ℕ → ℝ) : Tendsto (fun i => C ((DD C).J i) *
+      (Real.sqrt (Real.log (1 / (DD C).ε i)) * Real.sqrt (2 * ((DD C).δ (i - 1) + (DD C).δ i))
+        + Real.exp (- ∑ i' ∈ Finset.range (i - 1), (DD C).δ i')
+        + Real.exp (- 1 / (8 * ((DD C).J i : ℝ) ^ 2 * (DD C).ε i)))) atTop (𝓝 0) := by
+  sorry
+
+/-- Leaf 6: the L¹ tail. -/
+theorem tail_tendsto (C : ℕ → ℝ)
+    (hgrow : Tendsto (fun k : ℕ => Real.log (C k) / 4 ^ k) atTop (𝓝 0)) :
+    Tendsto (fun i => (∑ i' ∈ Finset.range (i + 2), (DD C).δ i' + 1) / (4 : ℝ) ^ (DD C).J i)
+      atTop (𝓝 0) := by
+  sorry
+
+end GoodExists
+
 /-- **The sandwich is solvable** when `log C k = o(4^k)`.  Explicit choices (design doc §5,
 "`exists_good`, explicit"): `φ(J) := max(1, max_{J'≤J} log C J')`, `Jᵢ := max{J : 4φ(J) + 4J ≤ log i}`
 (so `C(Jᵢ) ≤ i^{1/4}` and, by maximality, `log i = o(4^{Jᵢ})`), `εᵢ := 1/(8Jᵢ² log i)`,
@@ -1822,7 +1999,15 @@ theorem exists_block (y : ℕ) (hy : 1 ≤ y) (δ : ℝ) (hδ : 0 < δ) :
 theorem exists_good (C : ℕ → ℝ)
     (hgrow : Tendsto (fun k : ℕ => Real.log (C k) / 4 ^ k) atTop (𝓝 0)) :
     ∃ D : BlockData, D.Good C := by
-  sorry
+  refine ⟨GoodExists.DD C, ?_, GoodExists.delta_div C, ?_, ?_, ?_,
+    GoodExists.terms_tendsto C, GoodExists.tail_tendsto C hgrow⟩
+  · exact GoodExists.JF_tendsto C
+  · exact fun i N hN => GoodExists.eps_range C i N hN
+  · exact fun i N hi hN => GoodExists.sep_holds C i N hi hN
+  · intro i
+    show 2 * GoodExists.XF (i + 1) ≤ GoodExists.XF (i + 1 + 1)
+    have := GoodExists.XF_succ_ge (i + 1)
+    omega
 
 /-- **Existence from the fixed-`k` proposition alone**, assembled from the leaves above. -/
 theorem exists_sparse_normal_of_KMT_quant' (C : ℕ → ℝ)
