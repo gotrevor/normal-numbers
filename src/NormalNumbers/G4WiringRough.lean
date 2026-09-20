@@ -198,6 +198,22 @@ def SmoothRoughDecoupling (h : ℤ) : Prop :=
           * ∏ j ∈ Finset.Icc 1 (windowJ N), roughSiteMean N h j y‖
       ≤ C / Real.log N * ∏ j ∈ Finset.Icc 1 (windowJ N), ‖fullSiteMean N h j‖
 
+/-- Single-`y` form of N1a′, as the wiring consumes it. -/
+def SmoothRoughDecouplingAt (h : ℤ) (y : ℕ) : Prop :=
+  ∃ C : ℝ, ∀ᶠ N : ℕ in atTop,
+    ‖fullWindowMean N (windowJ N) h - smoothWindowMean N (windowJ N) h y
+        * roughWindowMean N (windowJ N) h y‖
+      ≤ C / Real.log N * ∏ j ∈ Finset.Icc 1 (windowJ N), ‖fullSiteMean N h j‖ ∧
+    ‖(∏ j ∈ Finset.Icc 1 (windowJ N), fullSiteMean N h j)
+        - (∏ j ∈ Finset.Icc 1 (windowJ N), smoothSiteMean N h j y)
+          * ∏ j ∈ Finset.Icc 1 (windowJ N), roughSiteMean N h j y‖
+      ≤ C / Real.log N * ∏ j ∈ Finset.Icc 1 (windowJ N), ‖fullSiteMean N h j‖
+
+lemma smoothRoughDecouplingAt_of_decoupling {h : ℤ} (hD : SmoothRoughDecoupling h) {y : ℕ}
+    (hy : 2 ≤ y) : SmoothRoughDecouplingAt h y := by
+  obtain ⟨C, hev⟩ := hD
+  exact ⟨C, hev y hy⟩
+
 /-- **Frozen, elementary** (N1a): the product of smooth site means is bounded below. -/
 def SmoothNonvanishing (h : ℤ) : Prop :=
   ∀ y : ℕ, 2 ≤ y → ∃ δ : ℝ, 0 < δ ∧ ∀ᶠ N : ℕ in atTop,
@@ -663,7 +679,7 @@ set_option maxHeartbeats 1000000 in
 value `y = 2`, and only with a `C / log N` relative error — the `1/y` gain of the frozen node is
 never used.  This is the honest shape of the open obligation. -/
 theorem crtConstantSched_of_roughAt {h : ℤ} (hR : RoughIndependenceAt h 2)
-    (hD : SmoothRoughDecoupling h) (hS : SmoothNonvanishingAt h 2) : CRTConstantSched h := by
+    (hD : SmoothRoughDecouplingAt h 2) (hS : SmoothNonvanishingAt h 2) : CRTConstantSched h := by
   classical
   obtain ⟨cR, BR, CR, hcRB, hRev⟩ := hR
   obtain ⟨CD, hDev⟩ := hD
@@ -689,7 +705,7 @@ theorem crtConstantSched_of_roughAt {h : ℤ} (hR : RoughIndependenceAt h 2)
         simpa using (windowJ_log_div_tendsto_zero).const_mul (B' * P₀ + 1)
       exact (hlim.eventually (eventually_lt_nhds (by norm_num : (0:ℝ) < 1))).mono
         (fun N hN => hN.le)
-    filter_upwards [hRev, hDev 2 le_rfl, hδev, h4ev, hsmall, eventually_ge_atTop 3]
+    filter_upwards [hRev, hDev, hδev, h4ev, hsmall, eventually_ge_atTop 3]
       with N hRN hDN hδN h4N hsmallN hN3
     set J := windowJ N with hJdef
     clear_value J
@@ -837,7 +853,8 @@ theorem crtConstantSched_of_roughAt {h : ℤ} (hR : RoughIndependenceAt h 2)
 /-- The kickoff's wiring, now a corollary of the sharpened one. -/
 theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : SmoothRoughDecoupling h)
     (hS : SmoothNonvanishing h) : CRTConstantSched h :=
-  crtConstantSched_of_roughAt (roughIndependenceAt_of_rough hR le_rfl) hD (hS 2 le_rfl)
+  crtConstantSched_of_roughAt (roughIndependenceAt_of_rough hR le_rfl)
+    (smoothRoughDecouplingAt_of_decoupling hD le_rfl) (hS 2 le_rfl)
 
 theorem isNormal_G4_of_rough
     (hSD : ∀ h : ℤ, h ≠ 0 → ¬ ChowlaSector h →
@@ -1469,11 +1486,180 @@ theorem fullWindowMean_covariance_identity (N J : ℕ) (h : ℤ) (hN : 0 < N) :
   rw [hfull, hsm, hro]
   exact twoValued_covariance N hN (fun n => 2 ∣ n) a b r
 
+/-! ### N1a′ at `y = 2` reduces to a single parity-discrepancy node -/
+
+/-- The even/odd discrepancy of a phase `r` over `[N,2N)`, with the parity taken at `n + j`. -/
+noncomputable def parityDisc (N j : ℕ) (r : ℕ → ℂ) : ℂ :=
+  ((((Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j)).card : ℂ))
+      * (∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j), r n)
+    - ((((Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j)).card : ℂ))
+      * (∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), r n)
+
+lemma site_covariance_parityDisc (N : ℕ) (h : ℤ) (j : ℕ) (hj : 1 ≤ j) (hN : 0 < N) :
+    fullSiteMean N h j - smoothSiteMean N h j 2 * roughSiteMean N h j 2
+      = (ePhase ((h:ℝ)/(4:ℝ)^j) - 1) * parityDisc N j (roughPhase h j) / (N:ℂ)^2 := by
+  rw [fullSiteMean_covariance_identity N h j hj hN, parityDisc]
+
+lemma window_covariance_parityDisc (N J : ℕ) (h : ℤ) (hN : 0 < N) :
+    fullWindowMean N J h - smoothWindowMean N J h 2 * roughWindowMean N J h 2
+      = (ePhase ((h:ℝ) * tailEven J) - ePhase ((h:ℝ) * tailOdd J))
+        * parityDisc N 0 (fun n => ePhase ((h:ℝ) * roughTail 2 J n)) / (N:ℂ)^2 := by
+  rw [fullWindowMean_covariance_identity N J h hN, parityDisc]
+  simp only [Nat.add_zero]
+
+/-- **New node, strictly weaker than N1a′**: the rough phase carries no parity bias beyond
+`O(1/log N)`, measured relative to the full site means.  By the two exact covariance identities
+this is *equivalent* to `SmoothRoughDecouplingAt h 2` (the forward direction is proved below).
+The `1/4^j` gain in the site identity makes the `J`-uniformity automatic. -/
+def ParityDiscrepancy (h : ℤ) : Prop :=
+  ∃ C : ℝ, ∀ᶠ N : ℕ in atTop,
+    (∀ j, 1 ≤ j → ‖parityDisc N j (roughPhase h j)‖
+        ≤ C / Real.log N * ((N:ℝ)^2 * ‖fullSiteMean N h j‖))
+    ∧ ‖parityDisc N 0 (fun n => ePhase ((h:ℝ) * roughTail 2 (windowJ N) n))‖
+        ≤ C / Real.log N * ((N:ℝ)^2 * ∏ j ∈ Finset.Icc 1 (windowJ N), ‖fullSiteMean N h j‖)
+
+set_option maxHeartbeats 1000000 in
+/-- **The reduction**: `ParityDiscrepancy h → SmoothRoughDecouplingAt h 2`. -/
+theorem smoothRoughDecouplingAt_two_of_parity {h : ℤ} (hP : ParityDiscrepancy h) :
+    SmoothRoughDecouplingAt h 2 := by
+  classical
+  obtain ⟨C, hev⟩ := hP
+  set K : ℝ := 4 * Real.pi * |(h : ℝ)| with hK
+  have hKnn : 0 ≤ K := by rw [hK]; positivity
+  refine ⟨2 * |C| + 2 * K * |C|, ?_⟩
+  have hsmall : ∀ᶠ N : ℕ in atTop, K * |C| / Real.log N / 3 ≤ 1/2 := by
+    have hlim : Tendsto (fun N : ℕ => K * |C| / Real.log N / 3) atTop (𝓝 0) := by
+      have : Tendsto (fun N : ℕ => Real.log N) atTop atTop :=
+        Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+      have h0 := (this.inv_tendsto_atTop.const_mul (K * |C|)).div_const 3
+      rw [mul_zero, zero_div] at h0
+      exact h0.congr (fun N => by simp only [Pi.inv_apply]; ring)
+    exact (hlim.eventually (eventually_lt_nhds (by norm_num : (0:ℝ) < 1/2))).mono
+      (fun N hN => hN.le)
+  filter_upwards [hev, hsmall, eventually_ge_atTop 3] with N hN hNsmall hN3
+  set J := windowJ N with hJ
+  have hN0 : 0 < N := by omega
+  have hNR : (0:ℝ) < N := by exact_mod_cast hN0
+  have hN3R : (3:ℝ) ≤ (N:ℝ) := by exact_mod_cast hN3
+  have hlogN : (1:ℝ) ≤ Real.log N := by
+    rw [Real.le_log_iff_exp_le (by linarith)]
+    linarith [Real.exp_one_lt_d9]
+  have hlogpos : (0:ℝ) < Real.log N := by linarith
+  set F : ℝ := ∏ j ∈ Finset.Icc 1 J, ‖fullSiteMean N h j‖ with hF
+  have hFnn : 0 ≤ F := Finset.prod_nonneg (fun j _ => norm_nonneg _)
+  have hN2 : (0:ℝ) < (N:ℝ)^2 := by positivity
+  have hNC2 : ‖((N:ℂ)^2)‖ = (N:ℝ)^2 := by rw [norm_pow, Complex.norm_natCast]
+  -- upgrade the hypothesis constant to `|C|`
+  have hsite : ∀ j, 1 ≤ j → ‖parityDisc N j (roughPhase h j)‖
+      ≤ |C| / Real.log N * ((N:ℝ)^2 * ‖fullSiteMean N h j‖) := by
+    intro j hj
+    refine (hN.1 j hj).trans ?_
+    have h1 : C / Real.log N ≤ |C| / Real.log N :=
+      div_le_div_of_nonneg_right (le_abs_self C) hlogpos.le
+    have h2 : (0:ℝ) ≤ (N:ℝ)^2 * ‖fullSiteMean N h j‖ := by positivity
+    exact mul_le_mul_of_nonneg_right h1 h2
+  have hwin : ‖parityDisc N 0 (fun n => ePhase ((h:ℝ) * roughTail 2 J n))‖
+      ≤ |C| / Real.log N * ((N:ℝ)^2 * F) := by
+    refine hN.2.trans ?_
+    have h1 : C / Real.log N ≤ |C| / Real.log N :=
+      div_le_div_of_nonneg_right (le_abs_self C) hlogpos.le
+    have h2 : (0:ℝ) ≤ (N:ℝ)^2 * F := by positivity
+    exact mul_le_mul_of_nonneg_right h1 h2
+  constructor
+  · -- window half
+    rw [window_covariance_parityDisc N J h hN0, norm_div, norm_mul, hNC2]
+    have hab : ‖ePhase ((h:ℝ) * tailEven J) - ePhase ((h:ℝ) * tailOdd J)‖ ≤ 2 := by
+      refine (norm_sub_le _ _).trans ?_
+      rw [norm_ePhase, norm_ePhase]; norm_num
+    have hdnn : (0:ℝ) ≤ ‖parityDisc N 0 (fun n => ePhase ((h:ℝ) * roughTail 2 J n))‖ :=
+      norm_nonneg _
+    rw [div_le_iff₀ hN2]
+    have hstep : ‖ePhase ((h:ℝ) * tailEven J) - ePhase ((h:ℝ) * tailOdd J)‖
+        * ‖parityDisc N 0 (fun n => ePhase ((h:ℝ) * roughTail 2 J n))‖
+        ≤ 2 * (|C| / Real.log N * ((N:ℝ)^2 * F)) :=
+      mul_le_mul hab hwin hdnn (by norm_num)
+    have hfin : 2 * (|C| / Real.log N * ((N:ℝ)^2 * F))
+        ≤ (2 * |C| + 2 * K * |C|) / Real.log N * F * (N:ℝ)^2 := by
+      have hKC : (0:ℝ) ≤ 2 * K * |C| := by positivity
+      rw [show 2 * (|C| / Real.log N * ((N:ℝ)^2 * F)) = (2 * |C| * ((N:ℝ)^2 * F)) / Real.log N
+          from by ring,
+        show (2 * |C| + 2 * K * |C|) / Real.log N * F * (N:ℝ)^2
+          = ((2 * |C| + 2 * K * |C|) * ((N:ℝ)^2 * F)) / Real.log N from by ring]
+      gcongr
+      nlinarith [hFnn, hN2, hKC, abs_nonneg C]
+    linarith [hstep, hfin]
+  · -- site half
+    set ε : ℕ → ℝ := fun j => K * ((1:ℝ)/4)^j * (|C| / Real.log N) with hε
+    have hεnn : ∀ j, 0 ≤ ε j := by
+      intro j; rw [hε]; positivity
+    have hper : ∀ j ∈ Finset.Icc 1 J,
+        ‖fullSiteMean N h j - smoothSiteMean N h j 2 * roughSiteMean N h j 2‖
+          ≤ ε j * ‖fullSiteMean N h j‖ := by
+      intro j hj
+      have hj1 : 1 ≤ j := (Finset.mem_Icc.mp hj).1
+      rw [site_covariance_parityDisc N h j hj1 hN0, norm_div, norm_mul, hNC2, div_le_iff₀ hN2]
+      have hz : ‖ePhase ((h:ℝ)/(4:ℝ)^j) - 1‖ ≤ K * ((1:ℝ)/4)^j := by
+        have hd : ‖ePhase ((h : ℝ) / (4:ℝ)^j) - ePhase 0‖ ≤ 4 * Real.pi * |(h : ℝ) / (4:ℝ)^j - 0| :=
+          norm_ePhase_sub _ _
+        have h4 : (0 : ℝ) < (4:ℝ)^j := by positivity
+        have habs2 : |(h : ℝ) / (4:ℝ)^j - 0| = |(h:ℝ)| * ((1:ℝ)/4)^j := by
+          rw [sub_zero, abs_div, abs_of_pos h4, div_pow, one_pow]
+          field_simp
+        rw [ePhase_zero, habs2] at hd
+        rw [hK]; linarith [hd]
+      have hdnn : (0:ℝ) ≤ ‖parityDisc N j (roughPhase h j)‖ := norm_nonneg _
+      have hstep : ‖ePhase ((h:ℝ)/(4:ℝ)^j) - 1‖ * ‖parityDisc N j (roughPhase h j)‖
+          ≤ (K * ((1:ℝ)/4)^j) * (|C| / Real.log N * ((N:ℝ)^2 * ‖fullSiteMean N h j‖)) :=
+        mul_le_mul hz (hsite j hj1) hdnn (by positivity)
+      have : (K * ((1:ℝ)/4)^j) * (|C| / Real.log N * ((N:ℝ)^2 * ‖fullSiteMean N h j‖))
+          = ε j * ‖fullSiteMean N h j‖ * (N:ℝ)^2 := by rw [hε]; ring
+      linarith [hstep, this.le, this.ge]
+    have hprodsplit : (∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j 2)
+        * ∏ j ∈ Finset.Icc 1 J, roughSiteMean N h j 2
+        = ∏ j ∈ Finset.Icc 1 J, (smoothSiteMean N h j 2 * roughSiteMean N h j 2) := by
+      rw [Finset.prod_mul_distrib]
+    rw [hprodsplit]
+    have htel := norm_prod_sub_prod_rel (Finset.Icc 1 J) (fun j => fullSiteMean N h j)
+      (fun j => smoothSiteMean N h j 2 * roughSiteMean N h j 2) ε hεnn hper
+    have hsumε : ∑ j ∈ Finset.Icc 1 J, ε j ≤ K * |C| / Real.log N / 3 := by
+      have hIcc : Finset.Icc 1 J = Finset.Ico 1 (J+1) := by
+        ext x; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega
+      have hfac : ∑ j ∈ Finset.Icc 1 J, ε j
+          = (K * (|C| / Real.log N)) * ∑ j ∈ Finset.Ico 1 (J+1), ((1:ℝ)/4)^j := by
+        rw [hIcc, Finset.mul_sum]
+        exact Finset.sum_congr rfl (fun j _ => by rw [hε]; ring)
+      have hg := sum_quarter_pow_Ico_le 1 (J+1)
+      have hcoef : (0:ℝ) ≤ K * (|C| / Real.log N) := by positivity
+      have : (K * (|C| / Real.log N)) * ∑ j ∈ Finset.Ico 1 (J+1), ((1:ℝ)/4)^j
+          ≤ (K * (|C| / Real.log N)) * ((4/3) * ((1:ℝ)/4)^1) :=
+        mul_le_mul_of_nonneg_left hg hcoef
+      rw [hfac]
+      calc (K * (|C| / Real.log N)) * ∑ j ∈ Finset.Ico 1 (J+1), ((1:ℝ)/4)^j
+          ≤ (K * (|C| / Real.log N)) * ((4/3) * ((1:ℝ)/4)^1) := this
+        _ = K * |C| / Real.log N / 3 := by ring
+    have hsum2 : ∑ j ∈ Finset.Icc 1 J, ε j ≤ 1/2 := le_trans hsumε hNsmall
+    have hpr := prod_one_add_le (Finset.Icc 1 J) ε hεnn hsum2
+    have hFeq : ∏ j ∈ Finset.Icc 1 J, ‖fullSiteMean N h j‖ = F := hF.symm
+    have hfin : ((∏ j ∈ Finset.Icc 1 J, (1 + ε j)) - 1) * F
+        ≤ (2 * |C| + 2 * K * |C|) / Real.log N * F := by
+      have h1 : (∏ j ∈ Finset.Icc 1 J, (1 + ε j)) - 1 ≤ 2 * ∑ j ∈ Finset.Icc 1 J, ε j := by
+        linarith [hpr]
+      have h2 : 2 * ∑ j ∈ Finset.Icc 1 J, ε j ≤ 2 * (K * |C| / Real.log N / 3) := by
+        linarith [hsumε]
+      have h3 : 2 * (K * |C| / Real.log N / 3) ≤ (2 * |C| + 2 * K * |C|) / Real.log N := by
+        rw [show 2 * (K * |C| / Real.log N / 3) = (2 * K * |C| / 3) / Real.log N from by ring]
+        gcongr
+        nlinarith [abs_nonneg C, hKnn]
+      nlinarith [hFnn, h1, h2, h3]
+    rw [hFeq] at htel
+    linarith [htel, hfin]
+
 /-- **Wiring, N1a discharged**: on the non-Chowla sector the only open inputs are
 `RoughIndependenceAt h 2` and `SmoothRoughDecoupling h`. -/
 theorem crtConstantSched_of_roughAt_notChowla {h : ℤ} (hh : h ≠ 0) (hc : ¬ ChowlaSector h)
     (hR : RoughIndependenceAt h 2) (hD : SmoothRoughDecoupling h) : CRTConstantSched h :=
-  crtConstantSched_of_roughAt hR hD (smoothNonvanishingAt_two hh hc)
+  crtConstantSched_of_roughAt hR (smoothRoughDecouplingAt_of_decoupling hD le_rfl)
+    (smoothNonvanishingAt_two hh hc)
 
 /-- **Headline wiring with N1a discharged**: `SmoothNonvanishing` is gone from the hypotheses. -/
 theorem isNormal_G4_of_roughAt
@@ -1487,5 +1673,24 @@ theorem isNormal_G4_of_roughAt
   · obtain ⟨hR, hD⟩ := hSD h hh hc
     exact fullWindowMean_tendsto_zero_of_sched
       (crtConstantSched_of_roughAt_notChowla hh hc hR hD) hSite hh
+
+/-- **Headline wiring on the two minimal nodes.**  On the non-Chowla sector the whole G₄ window
+law rests on exactly two open statements: `RoughIndependenceAt h 2` (the rough window mean
+factorises into its site means) and `ParityDiscrepancy h` (the rough phase has no parity bias
+beyond `O(1/log N)`).  `SmoothNonvanishing` is proved (`smoothNonvanishingAt_two`) and
+`SmoothRoughDecoupling` is *reduced* (`smoothRoughDecouplingAt_two_of_parity`) via the two exact
+covariance identities. -/
+theorem isNormal_G4_of_parity
+    (hSD : ∀ h : ℤ, h ≠ 0 → ¬ ChowlaSector h →
+      RoughIndependenceAt h 2 ∧ ParityDiscrepancy h)
+    (hCh : ∀ h : ℤ, h ≠ 0 → ChowlaSector h → WindowDecay h)
+    (hSite : SiteDecayFull) : IsNormal 4 (primeLambertAtBase 4) := by
+  refine isNormal_G4_of_windowDecay (fun h hh => ?_)
+  by_cases hc : ChowlaSector h
+  · exact hCh h hh hc
+  · obtain ⟨hR, hP⟩ := hSD h hh hc
+    exact fullWindowMean_tendsto_zero_of_sched
+      (crtConstantSched_of_roughAt hR (smoothRoughDecouplingAt_two_of_parity hP)
+        (smoothNonvanishingAt_two hh hc)) hSite hh
 
 end NormalNumbers.G4
