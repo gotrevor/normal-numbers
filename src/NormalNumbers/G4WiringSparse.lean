@@ -2361,7 +2361,69 @@ theorem tail_tendsto (C : ℕ → ℝ)
     (hgrow : Tendsto (fun k : ℕ => Real.log (C k) / 4 ^ k) atTop (𝓝 0)) :
     Tendsto (fun i => (∑ i' ∈ Finset.range (i + 2), (DD C).δ i' + 1) / (4 : ℝ) ^ (DD C).J i)
       atTop (𝓝 0) := by
-  sorry
+  have hpow : Tendsto (fun i : ℕ => (6 : ℝ) / (4 : ℝ) ^ JF C i) atTop (𝓝 0) := by
+    have hbase : Tendsto (fun k : ℕ => (6 : ℝ) / (4 : ℝ) ^ k) atTop (𝓝 0) := by
+      have h0 := (tendsto_pow_atTop_nhds_zero_of_lt_one (r := (1 : ℝ) / 4)
+        (by norm_num) (by norm_num)).const_mul (6 : ℝ)
+      have h1 : Tendsto (fun k : ℕ => 6 * ((1 : ℝ) / 4) ^ k) atTop (𝓝 0) := by
+        simpa using h0
+      refine h1.congr (fun k => ?_)
+      rw [div_pow, one_pow]
+      field_simp
+    exact hbase.comp (JF_tendsto C)
+  have hmaj : Tendsto (fun i : ℕ => (6 : ℝ) / (4 : ℝ) ^ JF C i
+      + 2 * (Real.log i / (4 : ℝ) ^ JF C i)) atTop (𝓝 0) := by
+    simpa using hpow.add ((log_o_pow C hgrow).const_mul 2)
+  refine squeeze_zero' ?_ ?_ hmaj
+  · filter_upwards [eventually_ge_atTop 1] with i hi
+    have hs : (0 : ℝ) ≤ ∑ i' ∈ Finset.range (i + 2), (DD C).δ i' :=
+      Finset.sum_nonneg (fun k _ => le_trans (by positivity) (delta_ge C k))
+    positivity
+  · filter_upwards [eventually_ge_atTop 1] with i hi
+    have hi1 : (1 : ℝ) ≤ (i : ℝ) := by exact_mod_cast hi
+    have hipos : (0 : ℝ) < (i : ℝ) := by linarith
+    have hp : (0 : ℝ) < (4 : ℝ) ^ JF C i := by positivity
+    -- numerator bound
+    have hsum : ∑ i' ∈ Finset.range (i + 2), (DD C).δ i'
+        ≤ 2 * (1 + Real.log ((i : ℝ) + 2)) := by
+      have h1 : ∑ i' ∈ Finset.range (i + 2), (DD C).δ i'
+          ≤ ∑ i' ∈ Finset.range (i + 2), 2 * ((1 : ℝ) / ((i' : ℝ) + 1)) :=
+        Finset.sum_le_sum (fun k _ => by
+          have := delta_le C k
+          have : (2 : ℝ) / ((k : ℝ) + 1) = 2 * (1 / ((k : ℝ) + 1)) := by ring
+          linarith [delta_le C k])
+      have h2 : ∑ i' ∈ Finset.range (i + 2), 2 * ((1 : ℝ) / ((i' : ℝ) + 1))
+          = 2 * ∑ i' ∈ Finset.range (i + 2), (1 : ℝ) / ((i' : ℝ) + 1) := by
+        rw [Finset.mul_sum]
+      have h3 := harm_upper (i + 2)
+      have h4 : ((i + 2 : ℕ) : ℝ) = (i : ℝ) + 2 := by push_cast; ring
+      rw [h4] at h3
+      linarith [h1, h2.le, h2.ge, h3]
+    have hlog2 : Real.log ((i : ℝ) + 2) ≤ Real.log 3 + Real.log i := by
+      have h1 : Real.log ((i : ℝ) + 2) ≤ Real.log (3 * (i : ℝ)) :=
+        Real.log_le_log (by linarith) (by linarith)
+      rwa [Real.log_mul (by norm_num) (ne_of_gt hipos)] at h1
+    have hl3 : Real.log 3 ≤ 3 / 2 := by
+      have he3 : Real.exp 3 = Real.exp (3 / 2) * Real.exp (3 / 2) := by
+        rw [← Real.exp_add]; norm_num
+      have h1 : (9 : ℝ) < Real.exp 3 := by
+        have he : Real.exp 3 = Real.exp 1 * (Real.exp 1 * Real.exp 1) := by
+          rw [← Real.exp_add, ← Real.exp_add]; norm_num
+        nlinarith [Real.exp_one_gt_d9, Real.exp_pos 1]
+      have h2 : (3 : ℝ) ≤ Real.exp (3 / 2) := by
+        nlinarith [Real.exp_pos (3 / 2 : ℝ), he3, h1]
+      have h3 := Real.log_le_log (show (0 : ℝ) < 3 by norm_num) h2
+      rwa [Real.log_exp] at h3
+    have hnum : ∑ i' ∈ Finset.range (i + 2), (DD C).δ i' + 1 ≤ 6 + 2 * Real.log i := by
+      linarith
+    have hstep : (∑ i' ∈ Finset.range (i + 2), (DD C).δ i' + 1) / (4 : ℝ) ^ JF C i
+        ≤ (6 + 2 * Real.log i) / (4 : ℝ) ^ JF C i :=
+      div_le_div_of_nonneg_right hnum hp.le
+    have hsplit : (6 + 2 * Real.log i) / (4 : ℝ) ^ JF C i
+        = 6 / (4 : ℝ) ^ JF C i + 2 * (Real.log i / (4 : ℝ) ^ JF C i) := by
+      field_simp
+    show (∑ i' ∈ Finset.range (i + 2), (DD C).δ i' + 1) / (4 : ℝ) ^ JF C i ≤ _
+    linarith [hstep, hsplit.le, hsplit.ge]
 
 end GoodExists
 
