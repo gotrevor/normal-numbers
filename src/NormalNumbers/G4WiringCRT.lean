@@ -142,7 +142,63 @@ theorem tail_error_le (J n : ℕ) :
 theorem tail_error_uniform :
     Tendsto (fun N : ℕ => ((Nat.log 2 (2 * N + windowJ N + 2) : ℝ) + windowJ N + 3)
       / (4 : ℝ) ^ (windowJ N)) atTop (𝓝 0) := by
-  sorry
+  have hlog : Tendsto (fun N : ℕ => Nat.log 2 N) atTop atTop := by
+    refine tendsto_atTop_atTop.mpr (fun b => ⟨2 ^ b, fun a ha => ?_⟩)
+    exact Nat.le_log_of_pow_le (by norm_num) ha
+  have hgtends : Tendsto (fun L : ℕ => 4 / (L : ℝ)) atTop (𝓝 0) := by
+    have hL : Tendsto (fun L : ℕ => (L : ℝ)) atTop atTop := tendsto_natCast_atTop_atTop
+    exact Tendsto.div_atTop tendsto_const_nhds hL
+  have hcomp := hgtends.comp hlog
+  refine squeeze_zero' (Eventually.of_forall (fun N => by positivity)) ?_ hcomp
+  filter_upwards [eventually_ge_atTop 16] with N hN
+  set L := Nat.log 2 N with hLdef
+  set M := Nat.log 2 L with hMdef
+  have hN0 : N ≠ 0 := by omega
+  have hL4 : 4 ≤ L := Nat.le_log_of_pow_le (by norm_num) (by omega : 2 ^ 4 ≤ N)
+  have hJ : windowJ N = M + 1 := rfl
+  -- numerator bound
+  have hJle : windowJ N ≤ L := by
+    have : M < L := Nat.log_lt_self 2 (by omega)
+    omega
+  have hnum : (Nat.log 2 (2 * N + windowJ N + 2) : ℝ) + windowJ N + 3 ≤ 2 * (L : ℝ) + 5 := by
+    have harg : 2 * N + windowJ N + 2 ≤ 4 * N := by
+      have : windowJ N ≤ L := hJle
+      have hLN : L ≤ N := Nat.log_le_self 2 N
+      omega
+    have h1 : Nat.log 2 (2 * N + windowJ N + 2) ≤ Nat.log 2 (4 * N) := Nat.log_mono_right harg
+    have h2 : Nat.log 2 (4 * N) ≤ L + 2 := by
+      have hNlt : N < 2 ^ (L + 1) := Nat.lt_pow_succ_log_self (by norm_num) N
+      have : 4 * N < 2 ^ (L + 3) := by
+        calc 4 * N < 4 * 2 ^ (L + 1) := by omega
+          _ = 2 ^ (L + 3) := by rw [show L + 3 = 2 + (L + 1) by ring, pow_add]; ring
+      have := Nat.log_lt_of_lt_pow (by omega : 4 * N ≠ 0) this
+      omega
+    have : Nat.log 2 (2 * N + windowJ N + 2) + windowJ N + 3 ≤ 2 * L + 5 := by omega
+    exact_mod_cast this
+  -- denominator bound
+  have hden : ((L : ℝ)) ^ 2 ≤ (4 : ℝ) ^ (windowJ N) := by
+    have hpow : L < 2 ^ (M + 1) := Nat.lt_pow_succ_log_self (by norm_num) L
+    have : (L : ℝ) ^ 2 ≤ ((2 : ℝ) ^ (M + 1)) ^ 2 := by
+      have : (L : ℝ) ≤ (2 : ℝ) ^ (M + 1) := by exact_mod_cast hpow.le
+      have h0 : (0 : ℝ) ≤ (L : ℝ) := Nat.cast_nonneg L
+      nlinarith
+    calc (L : ℝ) ^ 2 ≤ ((2 : ℝ) ^ (M + 1)) ^ 2 := this
+      _ = (4 : ℝ) ^ (M + 1) := by
+          rw [← pow_mul, mul_comm (M + 1) 2, pow_mul]; norm_num
+      _ = (4 : ℝ) ^ (windowJ N) := by rw [hJ]
+  have hLpos : (0 : ℝ) < (L : ℝ) := by exact_mod_cast (by omega : 0 < L)
+  have hdenpos : (0 : ℝ) < (4 : ℝ) ^ (windowJ N) := by positivity
+  have hL4R : (4 : ℝ) ≤ (L : ℝ) := by exact_mod_cast hL4
+  calc ((Nat.log 2 (2 * N + windowJ N + 2) : ℝ) + windowJ N + 3) / (4 : ℝ) ^ (windowJ N)
+      ≤ (2 * (L : ℝ) + 5) / (L : ℝ) ^ 2 := by
+        rw [div_le_div_iff₀ hdenpos (by positivity)]
+        have hn0 : (0 : ℝ) ≤ (Nat.log 2 (2 * N + windowJ N + 2) : ℝ) + windowJ N + 3 := by
+          positivity
+        nlinarith [hnum, hden, hn0, hdenpos.le]
+    _ ≤ 4 / (L : ℝ) := by
+        rw [div_le_div_iff₀ (by positivity) hLpos]
+        nlinarith
+    _ = ((fun L : ℕ => 4 / (L : ℝ)) ∘ fun N : ℕ => Nat.log 2 N) N := rfl
 
 /-! ### Assembly -/
 
