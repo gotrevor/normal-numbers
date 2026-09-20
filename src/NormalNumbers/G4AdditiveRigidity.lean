@@ -113,6 +113,45 @@ theorem weightAN_prime_pow (a c : ℕ → ℕ) {p : ℕ} (hp : p.Prime) {v : ℕ
   unfold weightAN
   rw [hpf, Finset.sum_singleton, Finset.sum_singleton, hfac]
 
+/-! ### The classification, as a biconditional
+
+`G4WeightInterface` claims the transport identity holds **iff** every per-prime profile is
+affine on `v ≥ 1`.  `wN_prime_pow_affine` is the forward half for an arbitrary `TWeight`; the
+two lemmas below turn it into a statement about additive weights proper, and record the
+converse half (the affine profiles are realised by `weightA`). -/
+
+/-- An additive weight assembled from per-prime profiles `g p : ℕ → ℕ` (with `g p 0 = 0`
+implicit, since the sum runs over `m.primeFactors`). -/
+def addWeightN (g : ℕ → ℕ → ℕ) (m : ℕ) : ℕ := ∑ p ∈ m.primeFactors, g p (m.factorization p)
+
+lemma addWeightN_prime_pow (g : ℕ → ℕ → ℕ) {p : ℕ} (hp : p.Prime) {v : ℕ} (hv : 1 ≤ v) :
+    addWeightN g (p ^ v) = g p v := by
+  have hv0 : v ≠ 0 := by omega
+  have hpf : (p ^ v).primeFactors = {p} := by
+    rw [Nat.primeFactors_pow p hv0, hp.primeFactors]
+  have hfac : (p ^ v).factorization p = v := by
+    rw [Nat.Prime.factorization_pow hp]; simp
+  rw [addWeightN, hpf, Finset.sum_singleton, hfac]
+
+/-- **Forward half of the classification.**  If an additive weight is the `wN` of *some*
+`TWeight`, then every per-prime profile is affine on `v ≥ 1`. -/
+theorem affine_of_addWeightN_isTWeight (g : ℕ → ℕ → ℕ) (W : TWeight)
+    (hW : W.wN = addWeightN g) {p : ℕ} (hp : p.Prime) {v : ℕ} (hv : 1 ≤ v) :
+    (g p v : ℤ) = (g p 1 : ℤ) + ((v : ℤ) - 1) * ((g p 2 : ℤ) - (g p 1 : ℤ)) := by
+  have h := W.wN_prime_pow_affine hp v hv
+  have h1 : addWeightN g p = g p 1 := by
+    have := addWeightN_prime_pow g hp (v := 1) le_rfl
+    simpa using this
+  rw [hW, addWeightN_prime_pow g hp hv, h1,
+    addWeightN_prime_pow g hp (by omega : 1 ≤ 2)] at h
+  exact h
+
+/-- **Converse half.**  Every affine family of profiles is an additive weight of the
+already-realised class `w_{a,c}` — so `weightA a c` is a `TWeight` carrying it. -/
+theorem addWeightN_affine_eq_weightAN (a c : ℕ → ℕ) (m : ℕ) :
+    addWeightN (fun p v => a p + c p * (v - 1)) m = weightAN a c m := by
+  rw [addWeightN, weightAN, ← Finset.sum_add_distrib]
+
 end TWeight
 
 end NormalNumbers.G4
