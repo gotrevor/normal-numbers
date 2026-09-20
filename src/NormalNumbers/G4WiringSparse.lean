@@ -2040,19 +2040,125 @@ theorem sep_holds (C : ℕ → ℝ) (i N : ℕ) (hi : 1 ≤ i) (hN : XF i < N) :
     rw [mul_one_div, div_self (ne_of_gt hK0), Real.rpow_one]
   linarith [hid ▸ hmono]
 
+/-- `⁴√i → ∞`. -/
+theorem tendsto_qsqrt : Tendsto (fun i : ℕ => Real.sqrt (Real.sqrt i)) atTop atTop :=
+  Real.tendsto_sqrt_atTop.comp (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop)
+
+/-- Every `J' ≤ Jᵢ` satisfies the defining bound (given that `J' = 0` does). -/
+theorem JF_spec (C : ℕ → ℝ) (i : ℕ) (h0 : |C 0| ≤ Real.sqrt (Real.sqrt i)) :
+    ∀ J' ≤ JF C i, |C J'| ≤ Real.sqrt (Real.sqrt i) := by
+  classical
+  refine Nat.findGreatest_spec (P := fun J => ∀ J' ≤ J, |C J'| ≤ Real.sqrt (Real.sqrt i))
+    (Nat.zero_le i) ?_
+  intro J' hJ'
+  rw [Nat.le_zero.mp hJ']
+  exact h0
+
+theorem JF_le (C : ℕ → ℝ) (i : ℕ) : JF C i ≤ i := Nat.findGreatest_le i
+
+/-- Maximality: if `Jᵢ < i` then `|C (Jᵢ+1)| > ⁴√i`. -/
+theorem JF_max (C : ℕ → ℝ) (i : ℕ) (h0 : |C 0| ≤ Real.sqrt (Real.sqrt i)) (hlt : JF C i < i) :
+    Real.sqrt (Real.sqrt i) < |C (JF C i + 1)| := by
+  classical
+  have hng : ¬ (∀ J' ≤ JF C i + 1, |C J'| ≤ Real.sqrt (Real.sqrt i)) :=
+    Nat.findGreatest_is_greatest (P := fun J => ∀ J' ≤ J, |C J'| ≤ Real.sqrt (Real.sqrt i))
+      (k := JF C i + 1) (Nat.lt_succ_self _) (by omega)
+  push_neg at hng
+  obtain ⟨J', hJ', hgt⟩ := hng
+  rcases Nat.lt_or_ge J' (JF C i + 1) with hc | hc
+  · exact absurd (JF_spec C i h0 J' (by omega)) (not_le.mpr hgt)
+  · have : J' = JF C i + 1 := by omega
+    rw [this] at hgt; exact hgt
+
 /-- Leaf 1a: `Jᵢ → ∞`. -/
 theorem JF_tendsto (C : ℕ → ℝ) : Tendsto (JF C) atTop atTop := by
-  sorry
+  refine tendsto_atTop.mpr (fun m => ?_)
+  have hb : ∀ J' ≤ m, |C J'| ≤ ∑ J'' ∈ Finset.range (m + 1), |C J''| := by
+    intro J' hJ'
+    refine Finset.single_le_sum (f := fun J'' => |C J''|) (fun _ _ => abs_nonneg _) ?_
+    exact Finset.mem_range.mpr (by omega)
+  filter_upwards [eventually_ge_atTop m,
+    tendsto_qsqrt.eventually_ge_atTop (∑ J'' ∈ Finset.range (m + 1), |C J''|)]
+    with i him hbig
+  exact Nat.le_findGreatest him (fun J' hJ' => le_trans (hb J' hJ') hbig)
 
 /-- Leaf 1b: `|C Jᵢ| ≤ ⁴√i` eventually. -/
 theorem JF_C_le (C : ℕ → ℝ) : ∀ᶠ i : ℕ in atTop, |C (JF C i)| ≤ Real.sqrt (Real.sqrt i) := by
-  sorry
+  filter_upwards [tendsto_qsqrt.eventually_ge_atTop |C 0|] with i hi
+  exact JF_spec C i hi _ (le_refl _)
 
 /-- Leaf 1c: `log i = o(4^{Jᵢ})`. -/
+theorem log_div_self_tendsto : Tendsto (fun i : ℕ => Real.log i / (i : ℝ)) atTop (𝓝 0) :=
+  (Real.isLittleO_log_id_atTop.tendsto_div_nhds_zero).comp tendsto_natCast_atTop_atTop
+
+/-- `log i / 4^i → 0`, crudely from `i ≤ 4^i`. -/
+theorem log_div_four_pow : Tendsto (fun i : ℕ => Real.log i / (4 : ℝ) ^ i) atTop (𝓝 0) := by
+  refine squeeze_zero' ?_ ?_ log_div_self_tendsto
+  · filter_upwards [eventually_ge_atTop 1] with i hi
+    have : (0 : ℝ) ≤ Real.log i := Real.log_natCast_nonneg i
+    positivity
+  · filter_upwards [eventually_ge_atTop 1] with i hi
+    have hlog : (0 : ℝ) ≤ Real.log i := Real.log_natCast_nonneg i
+    have hip : (0 : ℝ) < (i : ℝ) := by exact_mod_cast hi
+    have h4 : (i : ℝ) ≤ (4 : ℝ) ^ i := by
+      have : i < 4 ^ i := Nat.lt_pow_self (by norm_num)
+      calc (i : ℝ) ≤ ((4 ^ i : ℕ) : ℝ) := by exact_mod_cast this.le
+        _ = (4 : ℝ) ^ i := by push_cast; ring
+    exact div_le_div_of_nonneg_left hlog hip h4
+
 theorem log_o_pow (C : ℕ → ℝ)
     (hgrow : Tendsto (fun k : ℕ => Real.log (C k) / 4 ^ k) atTop (𝓝 0)) :
     Tendsto (fun i : ℕ => Real.log i / (4 : ℝ) ^ JF C i) atTop (𝓝 0) := by
-  sorry
+  have hJ1 : Tendsto (fun i => JF C i + 1) atTop atTop :=
+    tendsto_atTop_mono (fun i => Nat.le_succ _) (JF_tendsto C)
+  have hg : Tendsto (fun i : ℕ => |Real.log (C (JF C i + 1)) / 4 ^ (JF C i + 1)|)
+      atTop (𝓝 0) := by
+    have := (hgrow.comp hJ1).abs
+    simpa using this
+  have hbd : Tendsto (fun i : ℕ => 16 * |Real.log (C (JF C i + 1)) / 4 ^ (JF C i + 1)|
+      + Real.log i / (4 : ℝ) ^ i) atTop (𝓝 0) := by
+    simpa using (hg.const_mul 16).add log_div_four_pow
+  refine squeeze_zero' ?_ ?_ hbd
+  · filter_upwards [eventually_ge_atTop 1] with i hi
+    have : (0 : ℝ) ≤ Real.log i := Real.log_natCast_nonneg i
+    positivity
+  · filter_upwards [eventually_ge_atTop 1, tendsto_qsqrt.eventually_ge_atTop |C 0|] with i hi h0
+    have hlog : (0 : ℝ) ≤ Real.log i := Real.log_natCast_nonneg i
+    have hpow : (0 : ℝ) < (4 : ℝ) ^ JF C i := by positivity
+    have habs : (0 : ℝ) ≤ |Real.log (C (JF C i + 1)) / 4 ^ (JF C i + 1)| := abs_nonneg _
+    rcases eq_or_lt_of_le (JF_le C i) with heq | hlt
+    · have hrw : Real.log i / (4 : ℝ) ^ JF C i = Real.log i / (4 : ℝ) ^ i := by rw [heq]
+      rw [hrw]
+      have : (0 : ℝ) ≤ 16 * |Real.log (C (JF C i + 1)) / 4 ^ (JF C i + 1)| := by positivity
+      linarith
+    · have hmax := JF_max C i h0 hlt
+      have hq : (0 : ℝ) < Real.sqrt (Real.sqrt i) := by
+        have : (1 : ℝ) ≤ (i : ℝ) := by exact_mod_cast hi
+        have h1 : (0 : ℝ) < Real.sqrt i := Real.sqrt_pos.mpr (by linarith)
+        exact Real.sqrt_pos.mpr h1
+      have hlogle : Real.log (Real.sqrt (Real.sqrt i)) ≤ Real.log |C (JF C i + 1)| :=
+        Real.log_le_log hq hmax.le
+      have hq4 : Real.log (Real.sqrt (Real.sqrt i)) = Real.log i / 4 := by
+        rw [Real.log_sqrt (Real.sqrt_nonneg _), Real.log_sqrt (by positivity)]
+        ring
+      rw [hq4, Real.log_abs] at hlogle
+      have hnum : Real.log i ≤ 4 * Real.log (C (JF C i + 1)) := by linarith
+      have hkey : Real.log i / (4 : ℝ) ^ JF C i
+          ≤ 4 * (Real.log (C (JF C i + 1)) / (4 : ℝ) ^ JF C i) := by
+        rw [mul_div_assoc']
+        exact div_le_div_of_nonneg_right hnum hpow.le
+      have hrw : 4 * (Real.log (C (JF C i + 1)) / (4 : ℝ) ^ JF C i)
+          = 16 * (Real.log (C (JF C i + 1)) / (4 : ℝ) ^ (JF C i + 1)) := by
+        rw [pow_succ]
+        field_simp
+        ring
+      have hle2 : Real.log (C (JF C i + 1)) / (4 : ℝ) ^ (JF C i + 1)
+          ≤ |Real.log (C (JF C i + 1)) / 4 ^ (JF C i + 1)| := le_abs_self _
+      rw [hrw] at hkey
+      have hlog4 : (0 : ℝ) ≤ Real.log i / (4 : ℝ) ^ i := by
+        have : (0 : ℝ) < (4 : ℝ) ^ i := by positivity
+        positivity
+      linarith
 
 /-- Leaf 5: the three KMT terms. -/
 theorem terms_tendsto (C : ℕ → ℝ) : Tendsto (fun i => C ((DD C).J i) *
