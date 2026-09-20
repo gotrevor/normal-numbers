@@ -1,6 +1,6 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-20 02:20 EDT — `KMT_quant₂` RE-FREEZE LAP (DONE, one lap)
+## Attended operator override: 2026-09-20 10:20 EDT — `KMT_quant₂` RE-FREEZE LAP (DONE, one lap)
 
 **Result:** all six leaves landed in `src/NormalNumbers/G4WiringSparse.lean`; the file is sorry-free
 and `#print axioms exists_sparse_normal_of_KMT_quant₂` is `[propext, Classical.choice, Quot.sound]`.
