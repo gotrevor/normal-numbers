@@ -331,3 +331,13 @@ which nobody in this chain has opened.  The Lean hypotheses `log C₁ = o(4^k)`,
 with enormous margin under every reading, including the discarded literal `exp(exp(e^{4k}/2e))` of Part I.
 
 **Still open (one item).**  IV.5(a).  It is a book lookup, not mathematics.
+
+**Addendum (14:12 EDT), a second origin for the *form* of the hypothesis.**  Iwaniec, *Rosser's sieve*, Acta
+Arith. 36 (1980) 171–202, open access at `http://matwbn.icm.edu.pl/ksiazki/aa/aa36/aa36210.pdf` (scanned; OCR in
+`papers/iwaniec-1980-rossers-sieve.ocr.txt`).  Its dimension hypothesis (1.3) is
+`∏_{w≤p<z} (1 − ω(p)/p)^{−1} ≤ K (log z/log w)^κ` for all `z > w ≥ 2`, `K ≥ 2` - the form used in III.1, and the
+one Thorner–Zaman's printed (6.2) fails to reduce to.  Its Fundamental Lemma (Theorem 4, (2.12)) has error
+`Q(s) ≤ exp(−s log s + s log log 3s + O(s))` with "all constants implied … will at most depend on κ" - so the
+1980 paper does **not** supply the explicit `e^{9κ}K^{10}`; that refinement is the β-sieve chapter of Opera de
+Cribro.  Status of IV.5(a): hypothesis form confirmed by an independent primary source; the explicit constant
+still rests on Thorner–Zaman's restatement alone.

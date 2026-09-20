@@ -1,0 +1,1856 @@
+170 V. Ennola
+References
+
+[i] J. H. Conway and A. J. Jones, Lrigonomelric diophantine equations (On van-
+ishing swms of roots of wnity), Acta Arith. 30 (1976), pp. 229--240,
+
+[2] V.Ennola, A note on a cyclotomis diophantine equation, ibid. 28 (1975), pp. 157-159,
+[3]. EB. Hl. Grossman, On the solutions of diophantine equations in unite, ibid. 30
+(1976), pp. 137-143. . _—
+
+[4] K. Gydry, Sur une classe des corps de nombres algébriques ef sex applications,
+
+Publ. Math. (Debrecen) 22 (1976), pp. 151-175.
+[5] — Representation des nombres entiors par dee formes binatres, to appear in Publ.
+Math. (Debrecon).
+
+[6] L. P. Postnikova and A. Sohinzel, Primitive divigora of the expression ait — pe
+: in algebraic number fields, Mat. Sbornik 75 (1968), pp. L71-177 (in Russian).
+[7] A. Schinzel, Primitive divisors of the expression A” — 2B" in algebraia number
+
+fields, J. Reine Angew. Math. 268/269 (1974), pp. 27-33.
+
+Received on 80. 7%. L977 (973)
+
+icn ACTA ARITUMETICA
+
+XXXVI (1980)
+
+Rosser’s sieve
+by
+
+Hunryx Iwanrec (Warsaw-—Pisa)
+
+1. Introduction. Statement of the results. Let there be given a finite
+integer sequence «7 and a sequence P of primes. A basic problem of the
+sieve is to estimate, for any real number z > 2 the sum (sifting function)
+
+S(#,P,2)= 1
+(a, Beye
+
+where P(z) = |[] p. The sequence can bo almost arbitrary. The
+
+<2, peP
+only knowledge we need about »/ is a good approximation formula (in
+an average sense) for the number of those elements from « which are
+divisible by the squarefree number d@|P(z);
+
+Wy = {ae @; 6 =0(modd)}.
+
+We assume that || may be written.in the form
+
+(1.4) ja = 29 xi Re, a,
+
+a ;
+where a X is considered ag a main term and J2(./, d) is an error term.
+
+Tho arithmetic function w(d) is multiplicative and for cach prime number
+pel it satisfies ,
+(1.2) 0< wlp) <p.
+
+Since wo need the formula (1.1) only for d/P(z) we are free to define w(p)
+= 0 for 9 éP. -
+Our next assumption is about dimension. There exists a parameter
+«20 (dimension) and a constant K > 2 such that for all e>w22 we
+have :
+
+(1.3) IT (1- oe" < (ceo) (13 fogs]
+
+wap<e
+
+172 HW. Iwaniee
+
+Remarks. Note that « is not uniquely defined, but the smaller it
+is, the better the results we shall obtain. The advantage that we assumed
+a one-sided estimation is that one can derive results for » from those
+for x,> x. This fact, that sieve results depend essontially only on an
+upper bound of the type (1.3) was first observed by Halberstam and
+Richert [3].
+
+The dimension contains two kind of informations; estimation on
+average of w(p), and the distribution of primes from 2’. It appears in prac-
+tice that the mean value of w(p) is often integer (for example whon w(p)is
+the number of solutions of a congruence modp), but the set P can be of
+arbitrary density <1, so the dimension is not necessarily an integer.
+
+For all y>2 and 222 define s = logy/loge and
+
+@=[](2-?).
+
+Piz
+
+All constants implied in the symbols 0, < will at most depend on » and
+we sball not mention this throughout the paper.
+
+THHOREM 1. For all y > 22> 2 we have
+
+(LA) 8(9t,2) < XV (eM Ms) + e"%Q(8) ogy) }+ Pa fy A)\,
+. dee)
+
+(1.5) S(o4, 2) > XP (2) {H(s)~e"*Q(8) ogy) "}— J? |R(s, @)|.
+d<y
+For all s>1 we have me
+
+(1.6) Q (8) < exp {—~slogs + sloglog3s + 0(s)}
+
+and for 3° < loge, we even have
+
+(1.7) O(s)< exp | —sloge—sloglog3s-+ slogen-+0 (¢ eee).
+
+The functions F(s) and f(s) are the continuous solution of the fol-
+lowing system of linear differential-difference equations
+
+(1.8) on =A for s<f-+1,
+s*f(s) =B for s< 8,
+Lire” = xs" f(g—1) for s> B+-1,
+{s*f(s))' = xs*"'-F(s—1) for s> 8.
+
+-The. definition of the numbers A,B and 8 (sieving limit) requires
+some results about the solutions.g(s) and h(s) of
+
+(1.10) (sg (s))’ = xg(s)-+xg(¢-+1),
+(sh(8)}' = xh(s)—wh(s+1),
+
+(1.9)
+
+Rosser’s sieve 173
+
+so we give here only a few properties, referring for details to Section 5.
+We have
+
+A>, B>0, B=1 ifu<l/2,
+A =2(e’/n)¥2, B=0, Bl ifx=1/2,
+A>I, B=0, B>1 if #>1/2.
+
+Moreover, #(s), f(s) are monotonic (decreasing and increasing respecti-
+vely) and such that
+
+O<f(s)<1<F(s) fors>f, —
+F(s) =1+0(e*), f(s) =14+0(e7*) as 8+ oo.
+
+Iam very grateful to the Scuola Normale Superiore di Pisa for pro-
+viding me with comfortable conditions in which to work. I should also
+like to thank Francesco Romani from the Istituto di Elaborazione dell’
+Informazione for doing the computer calculations in Tables 1,2 and to
+Professor Jobn. Friedlander for his help and valuable discussions.
+
+2. Corollaries and comments
+
+2.1. The sieve of dimension x < 1/2. We have 8 = 1,
+
+“” fore (ef fe elas
+
+0
+
+(2.4) A=
+P(1—x) 2 H fot
+{e *g cost ( Fe aa
+and ~
+xy
+(2.2) B=
+
+“0 for) du ~
+p78 yo oak nn
+fe z cosn (x Fe a
+Tunorme 2. Suppose that
+(2.3) |B(.f, d)| < w(d).
+For sufficiently large X and all a< X the sifting Funetion 8 (07, 2) is posi-
+live. More precisely we have
+(2.4) XV (2 Be of 008EY << S (of, 2) < XV (2) {A +c0evE (log X)~"}
+uniformly for all X > ey 2, where b = min(1 —2x, 1/3) and oe 43 @ constant
+depending only on x.
+Proof. We have F(s)<A and f(s) 2B, so we must estimate the
+
+error term
+R= } o(@).
+
+dX, d|P(2)
+174 Tl. Iwaniec
+
+In the study of sums of multiplicative functions, it is often convenicnt
+to define the generalized von Mangoldt function 4 by
+
+w(d)logd = ye (nya (=) .
+
+ald
+Since w is multiplicative the support of A is contained in the set of powers
+of primes. It is easily seen that A(p) == w(p)logp, so
+
+¥ afaylogd = 3 w(n) S? 2(m)< SN a(n) YD) a(p)loge.
+
+aX ns mein : ga A penx |e
+d\P(2) ni P(e) men |P(2) alP(e)
+From (1.3), by partial summation, we obtain
+» a(p)logp < Ke
+Paez
+and henee
+>, o(dlogd < KX Dy a(n) in < KX/V (2) <IOX (log X).
+ax ng
+a|P(s) 1|P(z)
+
+Using partial summation again, we obtain
+R <K2X (log kX)" < KV (2) log xX)".
+
+This completes the proof of Theorem 2.
+THmoREM 3. Suppose (2.3) holds and, in place of (1.3), it holds
+
+(25) ye logp = o(loge).
+
+pas
+As X—-> oo we have
+S(.W, 2) ~ XV (z)
+uniformly for all e< X.
+
+Proof. Assumption (2.5) implies (1.3) for arbitrarily small «% 0
+with the constant X depending on x. Therefore, by Theorem 2 it is sul.
+ficient to prove that
+
+lim.A == ° and lim == 1,
+
+wend mal)
+
+But this follows easily from (2.1) and (2.2).
+
+Remarks. Theorem 3 was first proved by Sullivan, (unpublished)
+by a different method based mainly on the Fundamental Lemma [5] of
+Halberstam and Richert.
+
+We do not know whether the estimates (1.4) and (1.5) are the best
+possible (so far as the main terms and general sequences are considered).
+
+Rosser’s steve 175
+
+We should mention that the Hratosthenes-Legendre sieve: (see [10])
+yields the following asymptotic formula:
+Assume that the elements of ./ are not too large; that is
+
+max la) <<
+
+Hee
+and the error terms 22 (.7, @) satisfy (2.3). Next, instead of (1.2) and (1.3),
+axsume 0 < w(p) < (: ~~ 4 p and
+- oy op) 2
+~~ >» vom Log p -xlog — <
+Ww
+Us Tp 6d
+
+for some constants K, Land My 2. Then for all X > 2 > 2 we have
+S(.@A, 2) = XV (z){H(s)+-0(s*(log Xx)" }},
+where s = log X/logz and H(s) is the continuous solution of the following
+equation:
+8" (8) = | P(1L—x) for O<s <i],
+(s*B(s)\’ = ve*7H(s—1) for s>1.
+The function #(s) satisfies
+f(s) < B(s) < F(s)
+
+and E(s)~1 changes sign in each interval of length one. The latter fact
+follows from
+
+& Fa
+sh(s)(H(s)—1} = —* f h(a--1)(H(#)—1)de for s>1
+bol
+and
+~ y [en
+{2.6) h(s) == f exp —8e— Hs f — a ae > 0.
+0 a
+
+2.2. The sieve of dimension 1/2<*%<1. The cases » =1/2 and
+“c= 1 have been. considered in [9] and [12] respectively and the results
+obtained are best possible. The examples showing optimality of (1.4)
+for x = 1/2 (see [9], [16]) and for # == 1 (seo [15], [16]) are quite differ-
+ent and none of them can be adapted for 1/2 << *< 1. The feature of
+these extreme cases is that both « and f are simultaneously rational.
+For 1/2 < «<1, 8—1 is the zero of
+
+‘ or a . a 8S r or - a —_ 1 dz
+
+0
+
+176 IL. Lwanice
+so, one can expcet that for rational « with 1j2<« <1, the sieving limit £
+is transcendental. It seems to be very difficult to construct ./ and P
+transforming the estimates (1.4) and (1.5) into asymptotic formulae.
+Some special values of from the interval 1/2 < #< 1 are very import-
+ant for applications. For instance, if /@ is a Galois extension of dogree
+” > 2 then the number of those elements from .«/ which are nornis from 4
+is expressible by the sifting function S(.7,P,2) and the density of P
+is 1—1/m. “As an example we quote from [11] the following result: (2/3
+dimensional sieve);
+Let K/Q be a cubic normal extension with conductor f. Hach suf-
+ficiently large number % satisfying the congruence
+
+wn = Na-+Nb(mod2f)
+
+with (ab, 2f) =1 is expressible as a swn of two norms of integral ideals.
+Recall that B = 0 and S—1 is the root of g(s). Kor A we have the:
+formula
+
+h(p—2)
+Using (2.6) and (2.7) computer calculations give the following approxi-
+mations.
+
+(2.8)
+
+Table 1 Table 2
+0.55 1.0340 1.6066 1/2 1 2 (eY fre)"
+0.6 1.1042 1.7264 2/3 1.2242 1.9134
+0.65 1,1922 1.86381 3/4 L.3898t 2.2020
+0.7 1.2912 2.0212 4 fi 1.5107 2.4082:
+0.75 1.3981 2.2020 A/6 1.5884. 2,5614
+0.8 1.5107 2.4082 — 1 2 2¢”
+0.85 1.6279 2.6431
+0.9 1.7489 2.9106
+0.95 1.8731 3.2152
+
+We have had the opportunity to see the unpublished computer calenations
+of Diamond and Jurkat for the sieving limit of the Buchstab iteration
+method. Their results are very close to those given in Table 1, thus sugges-
+ting that the iteration method leads in the limit to the same tunetions J'(s)
+and f(s). Note that the upper bound is better for all » (even for ¢ = 2)
+than that given by Selberg’s method, except in the case x == 1, ¢< 2
+when the results co-incide.
+
+icm
+
+Rossey’s sieve 177
+2.3. The sieve of dimension x > 1. In this case the Buchstab iter-
+
+ation method leads (in. the limit) to better results if it starts from the Sel-
+
+berg upper bound
+
+(2.9)  S(.07, 2) < XV (z) | say + oe + » 3) | B(x, d)|
+
+which for small s is better than (1.4) (for details see [7]). Here the func-
+tion o(s) is the continuous solution of
+
+wn. en DT +1) for 0<3<2,
+o(8)
+(s *o(s))' = —xs*"'o(s—2) for s > 2.
+
+The first iteration step (for all dimensions) was done by Ankeny and
+Onishi [1]. Their sieving limit satisfies
+
+Y, ~ 4K ah #-—-> OO,
+where
+pr . du
+n = 2OxXp iJ (e —1) 7 —1—loglog2} = 2.44...
+0
+For further iterations see [2], [13] and [14].
+We shall show that
+(2.10)
+x w
+
+where ¢ is the solution of cloge = 0+1 (¢ = 3.5911 weed
+
+9.4. A Fundamental Lemma. It is cvident from the above that
+Selberg’s sieve is very. strong for large dimensions and small s (at least
+for s = 2). However the function F(s) tends to 1 much faster than 1/o(s);
+
+loglogs
+E(a) 1 ‘t Oxp —slogs — sloglogs + slog ex +- O (: “Togs } ,
+
+(2.3.1)
+a(#) = 1—oxp{—dslogs —}sloglogs + O(s)};
+
+and thus, tor sufficiently large 8, (1.4) is sharper than (2.0).
+
+From (1.4), (1.5) and (2.11) we obtain
+
+Tanonum. 4 (Fundamental Lemma). Assume (1.2) and (1.3). For
+all yee we have
+(2.12) S(.o/, 2) = XV (a2) {L+GreEQ(s)} +0, D7 [R(%, a),
+
+aint
+
+where |0;| <1, 8 = logy/loge and Q(s) satisfies (1.6) and (1.7).
+
+' ~
+178 IH. Iwaniee
+
+Remarks. Asymptotic formulae of this type were investigated in
+greater detail in a series of papers by Halberstam and Richert [4], [5], [6].
+Their result is essentially (1.6). We should mention, that if |/0(.9/, d)|
+< w(d) then, the remainder term can be easily estimated as follows:
+
+. co(d) Y ;
+ald) <y pa t ve < yV (2) 4? (log)
+
+ey
+aP(2)
+
+3. The weights. We precede the construction of the weights o, (trmne-
+ated Mobius function) by some compbinatorial identities for tho sitting
+function S(.%, 2).
+
+For a given sequence of real numbers {Agkqrq@, such that ay = 1
+and 2, = 0 for d>y, we construct two sequences {ogharg Wd {onhap)
+as -follows:
+
+Let ge, =1 and a, = 0. For d@> 1, d= pyre. Dyy Dy ee > Diy
+let
+
+oo PPam md oy (Lay a) PP anne
+Leeghecy
+
+legdssr
+
+Let »(d) stand for the smallest prime divisor of d if d= 1, and anything
+you like if d@ = 1.
+
+Lemma 1.
+
+(81) S(ot,2) = S? ud) oaleal + SY) (a) o,8( 74, 9 (A).
+
+aPe) Pe)
+
+Proof. This follows from a simple application of the well-known
+Legendre formula
+
+S(t, 2) =) w(d)|0%4
+(2)
+to S(.o%,2) and S(.0/,, p(d)),
+
+The identity (3.1) may be found in a slightly different form in [7]
+(see formula 2.1.8).
+
+We are not going to use any ostimiates for S(« uy D(G)) oxeopt: the
+trivial one S{.97,, p(d)) > 0. Thus, in order to got an upper bound for
+S(.o/,2), we must impose
+
+(3.2) H(d)o, <0 for all d|P(z)
+and to get a lower bound we must impose
+
+(3.3) K(d)o,>0 for all a|P(z).
+
+Rosser’s steve 179
+Writing
+—y ad) : ‘ee
+gi Suop Sand Kt = NT oF IR(o4, dl,
+d\2(e) aP(@
+
+where the signs --, — stress the conditions (3.2) and (3.3) respectively,
+we obtain.
+
+43.4) S(f, 2) < X8' +R",
+(3.5) (7,2) 2 XS" —R-.
+
+It would be very interesting to find the weights 27 and 47 optimizing
+(8.4) and (3.5) but this seems to be vory difficult, A. natural reasoning
+based on the concept of the sieving limit (for the definition see [16])
+suggests the choice
+
+ye al? # w(d) = FA. and p(d)> (yay,
+(3.6) 4 |1— otherwise,
+whore f (21) and y (2 2") are parameters at our disposal. We have
+(14: u(d)) oz = 0 80, the conditions (3.2) and (3.3) are satisfied. We have
+also |o#| <1 and ox == 0 if d>y. Hence
+(3.7) | Re < S| R(#, a).
+
+thant
+dP)
+
+4. Recurrence formulae. For V(z) there holds an identity similar
+‘to (3.1), namely
+
+. a
+ve) = Sela 0 + Sma ou V 01a).
+
+. d d
+de ie
+Wenee
+. a) (Py +++ Panst)
+(41) 8 = Vie) > SER EEL V (Day)
+ore . Da oes Papi
+reo) Dyp poy Seer SP] HE
+Myf Pate DL yf, Oa h cet
+Ph Popa DY
+™
+vs V (2) 1 » Si.(s), say,
+Prat}
+and,
+Ly a)
+y 1 1 © (Di +++ Por)
+(4.2) 0 S87 = V(z)— er va V (Por)
+Pool Pop ove SPY <2 Hiss: Mar
+pe Pap Dy <uoel<e
+yao DRY
+oy
+= V(ay— S'Srels), say.
+jee
+180 Il. Twaniee
+
+Note, that in both cases, 8 and &~, we necd only upper bounds for S#, (3)
+and. in, consequence only one-sided estimates such ax (1.3).
+Let us denote
+
+Dia(8) = Sie(8)-F eee + Sie (4)
+for all y> 2,222, 8 = logyfloge > B-1, R> 0 and
+PR a(8) = Sye(8)-b oe + Spe (8)
+for all y > 2, 2>2, 8 = logy/loge = fp, R= 1.
+For s > p-+-2r-+ ne, wo have S)',(8) == 0,
+
+For f—1 << B--1, we have
+
+(48) Ti) = 85,6) = SEB yp = vy —Ve).
+
+yb Dae pce
+
+It is easy to see that
+
+7 log y /;
+(44) Tpe(s)= Ol) wn Seale, for sc A, Ro 4,
+YUE +22) nce P ORD
+Nal ~ log y /4
+WMOHIE Rec cg 08P
+and
+
+(4.6) TH,(s) = Li.(s)+Lk,(B+1) tor B-l<s<p+l, Rel.
+5. Some differential-difference equations
+
+5.1. The conjugate equation. In the study of the differential-difterence
+equation
+
+(5.4) gp'(s) == — ap(s)—bp(s~1)
+it is useful to consider the “conjugate” equation
+(5.2) (84q(s))’ = ag(s) +-0g(9-++-1).
+
+A justification is offered by the integral formula
+
+(6.3) sp(s)q(s) = b f p(m)q(w-+-1)da-- ¢
+
+which is valid for all sufficiently large s. Although p(s) can be a very wild
+function, q(s) has always a very smooth behaviour; g(s) € O%(0, 00)
+
+Roxser’s steve 181
+
+and q(s) ~ s+"! ag s -» oo, For our purpose we need. (5.1) with a = —x,
+_w—1 and b = —,x. Hopefully, other cases will find application in
+different sieves, so we consider (5.2) with arbitrary coefficients a, b.
+
+It is easy to seo that if a+b = +1 is a positive integer, then q(s)
+is a polynomial of degree n,
+
+Ogbean
+where a) = 1 and, for all t> 0, we have the recurrence formula
+
+la, = ~b » (; Gy.
+
+ogi<t
+
+BxaAmenn 1. For a-+-b = 1, 2,3 we have
+
+q(s)=1, g(s)=s—b,  g(s) = (8b)? —3/2,
+
+respectively.
+Examein 2. For @ = b = x =1/2,1,3/2,2,5/2,3 we have
+q{s) =1,
+q(8) =8—1,
+
+q(8) = 8° 689+ 98-3, 55
+
+q(s) = st —108° + 308*—F8+35, 18
+
+q(s) = 3° 158+ 758? -1458? + 908 —-.
+If s > 0, the function
+
+z
+1—e
+z7*- exp [s+ f - au
+0
+
+7
+
+tends exponentially to zero as Rez —oo and Imz remains bounded.
+Thus, using integration by parts one can check that
+
+2 iu
+Pad) ¢ 9-5 ( or a
+(0-4) | Q(8) = 5 fe P J u
+
+satistios (5.2), where ¢ is any curve of the shape
+
+182 H. Iwaniec
+
+and the power ~*~? ig defined by exp(—(a+5)Loge}, where Loge is the
+principal branch of the logarithm. We have
+
+A 4 ott
+sq‘ (s) = Max?) fare rexp (> f ‘ — au) de®?
+0
+
+Qn
+
+Pla+b Ye
+— Soon f eraet-Pexn (0 f 1 = an|
+a
+
+tf
+
+2nt ,
+
+L(a+6) . ; bd L —~ gt dz
+
+uw
+= (@—1)q(s)+bg(s-+1)
+
+and. hence (5.2) holds.
+Expand the function
+
+a 1
+R(z) = b
+w= eo(* fa
+
+into the Taylor series
+
+;:
+Riz) = S* BO) +Byle), say
+i!
+Olean .
+For s> 0, we have
+
+‘1. { , . gi’
+— per2’dz =
+2a ¢ L(—»)
+and, for any integer 7 > 0,
+P(a-+-b) _ (4)
+Ur(a+ob—l oo \ bt 7
+Hence, from (5.4) we get
+
+} wo(oysetrsty, T1C-2) f eet) mS
+é
+
+a+b —1
+I
+onlin Qa
+
+q(s) =
+
+We have Ry(@) < zi"? as 2->0, so, if V>a+b—2 one can change
+_the contour ¢ into two negative half-lines with opposite orientations.
+
+On the lower half-line we have
+a-*-" = exp{—(a-+b) (log |e] ~i)}
+and one the upper half-line
+
+a8"? = exp{ — (a+b) (log || + xi)}.
+
+Losser's sieve 183.
+It follows that
+~|- v r wee db bad
+Tex" ) f ea OR, (2) dig =n = er sin (a +. b) | eg t— R( _ 2) dz.
+Qrt
+
+0
+
+Since J(a--b) (1 --a--b)sinn(a--b) == we have proved the following:
+lemm&:
+Tama 2. Por any integer N > a+b~2 and all s > 0 we have
+
+(she NV
+90
+
+de
+Tad) f Ney — 8) are «
+OoROLLARY 1.
+(5.6) q(s) ~ ste! as 8 > 0.
+COROLLARY 2. If a< 1 and a+b <1 then
+
+pt GOP centered GET —>O-.
+(5.7) q(s) ~eé Pa—a—by 8 as 8 +
+Proof. It is woll know that
+
+o
+1—e"
+
+lima! exp ( il A av} =e",
+
+Bs oo
+
+0
+
+Heneo, from (5.5) we obtain
+
+1 ~ t\7? t—-e™
+sy gl woe yy wenn ree ty (=) ex of b du | dt.
+fim. s'7*q (8) lim. Tad—a—3) J e , a} i u
+
+m+}. grew
+
+oO
+
+Pad nlge 5
+we yf oe tdt = a
+L(L— a— 6) F
+5.2. The zeros of gis). It follows from (5.6) that g(s) can have only
+finitely many zerod.
+Luma 3. Lf b <0 then q(a) 8 positive. oe
+Proof. By (5.6) q(s) is positive for all sufficiently large s. Letting a
+be the largest root of g(a), then q(a-+1) > 0 and q'(a) 2 0. Tf 6 < 0 this.
+is in contradiction with. tho differential equation which gives
+
+aq' (a) == bg(a+1).
+
+Lil—a—d)-
+184 H. Lwanies icn
+
+Lemma 4. [f a+b <1 then g(s) 48 posttive.
+Proof. This follows from
+1 ~ & L~e dg
+
+Remark. The derivative ¢(s) satisfies (5.2) with first coeff
+cient a—n instead of a and it differs from tho corresponding q-functic
+by the factor (a-+b—1)... (@+b—mn).
+
+CornontaARy. The number of zeros of q(s) tx lesa than a+b.
+
+Imuma 5. If b> 0 and 1 < a+b <2 then q(s) ts inereasing and hi
+azeroa< db.
+
+Proof. By Lemma 4 q’(s) > 0, so g(s) ts increasing, We have
+
+| 1 al fame") a
+4d. we GATOR I RE Fay | h ete ne een ~~ [Lb
+(5.9) (8) = 8 ; Faina—3) J eo“ exp (J 7 an | J =
+
+whence lim q(s)< 0 and lim g(s) = oo. Therefore g(s) has exactly o1
+Sz Q-b 8900 -
+
+zero. By Lemina 4 g'’(s) < 0, so the differential equation gives
+(5.10) 8q'(3) = (a—1)q(s) + bg(s-+-1) < (a+b ~1)q(8) + bg’ (8).
+Inserting s = a we obtain a < b.
+
+Lemma 6. Let b> 0 and a+6> 2. If a and a, are the largest zeros
+Q(s) and q'(s) respectively then a> a.
+
+Proof. Since, for s > a,, ¢(s) is increasing, we obtain
+O = ag’ (a,) = (@—J)q (ay) +bg(a, +1) > (a+ b—1) g(a),
+which gives the result.
+
+Lemma 7. If b> 0 and 2<a+b<3 then the largest zero a of g(
+lies in the interval
+
+(5.11) b<a<b+(hb(a+b—2))'*,
+
+Proof. Since q’(s)>0, we have inequalities opposite to (5.(1(
+In particular a> b. We have algo
+
+sq’ (8) == (@—1)q(8)+bg(8-+1) < (a+b —1)g(8)-+ bg’ (8) +-4bq""(8),
+and, since q'’’(s) < 0,
+sq'"(8) = (a—2)q" (8) +bq'(s 1) < (a+b —2)q’ (8) 4-09'"(8).
+Hence, for s> d,
+(5.12) ((8~b)*—4b(a-+b —2)) q'(8) < (a-+b—1)(8—b) g(a).
+
+Substituting s = a, the lemma follows.
+
+e
+
+, oo
+Losser's siove 185
+
+Imma 8. If) > 0 and a-+-b > 3, thon the largest cero a of q(s) satisfies
+(5.18) a > b+(4b(a-+b—2)),
+
+Proof. If a,, a, stand for the largest zeros of q'(s) and q‘'(8) respect-
+ively then a> a, > a, and wo have the inoquality opposite to (5.12)
+In particular, we have (5.13).
+
+Romark. The largest zoro of g(#) is simple and is a continnous
+function of a, b whon b> 0 and a--b > 1,
+
+ry
+
+5.3, The largest zero of g(s). Asymptotic formulae. In, this special
+case (@ == b -= x) Lommata 5, 7 and 8 give
+
+Ocadcx for ¢<x#<1,
+u<a<u+Ve(e—1) for 1<x<d,
+a> x+Vu(e—l) for x>&,
+
+For x = 1 and » =: 3/2 we have a = 1 and a = (3 +73) /2 respectively.
+Gonerally, if 2% is a positive integer then g(s) is a polynomial of degree
+2x—1 and with rational coofficients, Therefore a is an algebraic number
+(see [16] and [8]).
+
+Tn the next two theorems we shall show that a tends very rapidly
+to zero ag x~> 4-4. and it tends lincarly to infinity as x— oo.
+
+THRORUM 5, Ag w-> b-b,
+
+a ~ me? (Qn 1)%,
+
+Proof. For
+
+an Pe)
+r(z) = 2"loxp («f= c aw) —1|
+pom el
+we have 7 (2) —» ¢’” as 2 -+ oo, whence wo obtain
+
+ata | f orn 2) du mw 0 EO Pa) (1)
+(1 — 2x) F a LL —2x)
+as xem d-b. This completes the proof.
+Thvionnm 6, We have
+a = on-- O(n)
+
+where ois the solution of cloge = 6-4-1 (6 = 3.5911...).
+Tt appoars that the two largest real zeros of g(s) are very far apart
+and. this makos it possible to localize the largest zero by estimating g(s)
+
+Gm Acka Arithmetlaa XXXVI
+
+186 H. Iwanice
+
+in vicinity of ex. Using formula (5.4) we shall show that g(s) < 0 for all
+6 > ex-+ ex? and g(s’) <0 for some 8” = ex -+O(x"),
+
+Tt will be shown that the part of the integral in (5.4) corresponding
+to a small are of @ near ¢ = 7 dominates if the radius ¢ is a suitably chosen
+function of s.
+
+Let us denote
+
+a
+
+2) == 82-+ an,
+i(z) vem | u du
+
+The part of g(s) corresponding to the half-lines (— co, 7) can be taajorized
+by
+E(2)
+
+de de gl(-=2)
+me (2% — 1)
+
+2 r 9
+(5.14) 2 PQx) f ( —2)-* el de <
+The part of g(s) corresponding to the circle z = re", ~n < g < wis equal to
+
+™
+
+ine f exp(I(re™) ~—(24— L)ig) dy.
+
+~T
+
+(2x)
+
+(5.16) 5
+
+Writing L(a) = U(re*) we obtain
+
+* a e
+
+Ly = L(0) = rs-+u ~——— du,
+| u
+
+DL, = L'(0) = rs+x(1—~e’),
+Dy = L' (0) = rs —xre",
+Dy = L'"'(0) = rs ~ar(y +1) e
+
+We shall choose r and s to satisfy
+(5.16) ler<2, @>2e and —E,>1.
+
+We can then write
+
+(5.11) tig) = Ly-bip Dat O24 OP ry + ole me
+and
+
+(5.18) Lig) = Ly-+ighy + “1,4 o((ntaygA).
+
+Lemma 9. For —7r<o< x we have
+
+(8.19) ReL (ig) <Ly—2sin®(p/2)L
+
+Rosser’s sieve 187
+
+Proof. Since
+
+wit
+
+; —y
+U2) =< ¢e—-n SIE
+ame ne mn!
+
+we have
+
+fs}
+na pt CT, CORY
+Re Lig) = ra cong —«»? pr SORE.
+
+went.
+thal
+rot ww D a commen YY
+E (9) ~~ Qresin® (qo /2) -]- 2 » ni sin 3( ng /2)
+Vw h
+se E (7) ~ 2renin® (p/2) -}- 2% x i sin? /2)
+nt
+sine
+Lumma 10. We have
+(5.20) V0} Lig 2D.
+Proof, vo aes 7 in Lemma 9.
+Lemma Li. Dhere emists o,2> 1 such that for all ¢> ont oul g (8)
+
+ds positive.
+Proof, Split wp the integral (5.15) as follows
+
+ba vm (fe) ya (x-eayr a
+fo= for fo o+ = 8, +8)+38,, say.
+“Tt ~T (ea ep aye 8
+
+Inserting (5.18) into 8, and. estimating: 8,, S, trivially by means of (5.19),
+wo arrive at
+
+w ™ 2
+{ a | exp {Boch ip(Ly = 2-41) — F 14| dp+
+“> a ii (24-8) paxp (zo —~ Zain? (2) 1) ap)
+ont
+
+Hence, if wo define » by
+(5.21) Ty = Qe—1
+188 H. Iwanies icn
+
+and combine (5.14), (5.15) and (5.20) we obtain
+(5.22) g(s) = apt PQ) (V2L(4) eM LE 4} O (e+ 8) Lig? @F0 tare tv *Fa) |
+It is easy to see that, for s > @ -|- ex" andr defined by (5.21) the con-
+ditions (5.16) are satisfied and the orror term in (5,12) is small compared
+to the main term. This completes the proof of Lemma 11.
+
+Lema 12. There eaists ¢ =< ex+-O(2") such that g(s) << 0.
+
+Proof, As in the proof of Lomma 1, by (5.14), (5.15), (5.17), (5.19)
+and. (5.20) we have
+
+(5.23) (8)
+
+i ; pa
+= EA emf oxp je + ip Ly —2n-b 1) Ee Ly Dig \ap +
+
+—T
+
++0 ( { (x+8)p*exp fy —28in? ( 2 1} dp ex gra)
+
+£2 5 ° a ge? ig?
+= oe pol i exp {2 edge (Ly — 2H +L) — ye ~~ Tl dg +
+
+99
+
++ O((4-+ 8) By? | ,
+
+We shall choose * and s in such a way to make the integral nogative.
+The following result ensures that we can. do this,
+
+LEMMA 13. Lhere exists a cubic polynomial w(m) == ¢y@° + 0ga4 + O45
+with positive coefficients such that
+
+oe
+
+A= eM) dn <0.
+d
+
+Proof. One can prove that
+i
+| e #6 699 (2 — Bat) dat <2 0
+re ad
+0
+
+and Lemma 13 follows.
+
+Now, returning to the proof of Lemma 12, we define r and s ox the
+solution of
+
+2/8 Ty. 1/8
+
+One can. easily check that the numbers r and s, so defined satisfy
+
+Pom y+ 0(07 M9) and Sas xe” +0 (x7)
+
+te at
+Eosser’s sieve 189
+
+where (y—1)e" = 1. Hence x <Z, <% and tho conditions (5.16) are
+satisfied.
+From (5.23) we obtain
+
+L2H) enw tof (BCs) 6
+g(8) =F oma) +0 (at; *)|
+
+and this is negative. This completes the proof of Lemma 12 and of The-
+orem 6,
+
+6. The functions Q* (8). Assume # > $ and let B—~1 be the largest
+root of g(s). Let Q* (#) and Q~ (3) be the continnous solution of
+
+stlQ+(g) mx pr for s<A+1,
+s1Q-(¢) = (f—1)"" for s <8,
+
+(s*tQt (s))' = —xs"Q-(s—1) for s> B+1,
+
+(s*"'Q7 (8))’ = —xs*Q*(s—1) for s> 8.
+
+This section is concerned with the proof of the following result.
+
+Immma 13. The funetions Q*(s) are positive and, for s>2, satisfy
+the conditions
+
+(6.3) Q* (8) <Q" (8) < Q*(s),
+(6.4) Q* (s)slogs < Qt (s—1) < s%Q*(s),
+
+(6.1)
+
+(6.2)
+
+(6.5) Q*(s) = exp — slogs —sloglogs-+slogex--O (> oe
+
+logs
+
+Q*(s) will be used for the majorization of the error term Q(s) and
+of the functions 7(s)~1. and 1—/(s) as well.
+Tt is convenient to introduce the functions
+
+a(s) = s*1(Q* (8) +> (8)),
+b(a) = 9 2(Q* (8) —Q> (8).
+
+Por 68 B- we have
+
+(0.6) ala (8) om PM (Bad tm npr™ fh 1y ae,
+A
+
+(6.7) GAT) (8) me BT (Bm 1) eesm™ fe (E— Ayn
+
+and, for § > P-L ‘
+
+(6.8) sa’ (8) sz —~(x+1)a(8)~—xal(s—1),
+
+(6.9) ab'(g) = —~(x-+-1)b(s) +b(s—1).
+190 H. Iwanies
+
+The conjugate equations are .
+(sG(s))’ = (#+1)@(s) +xG(s +1),
+
+(6.10) (sH(s))’ = (#+1)H(s)—#H(s-+1),
+80
+(6.11) G (s) = 2Qxeg(s) and H(s) =1.
+
+Hence, there exist two constants c, and ¢, such that
+
+f
+
+(6.12) sa(s)@(s) = % f a(a)G(w+1)de-t-¢,,
+(6.13) sb(s) = —x f b(a)da-+ey
+am]
+
+for all s> f+1. If we substitute s = 8-+-1 and utilize (6.6) and (6.7)
+we find that ¢, =o, = 0.
+
+To show that Q*(s) are positive and have the same order of magnitude
+(see (6.3)) it suffices to prove:
+
+Luma 14. There exists a constant 47 <1 such that
+
+(6.14) [b(s)| < na(s).
+Proof. First we shall prove that
+(6.15) lb(s)\|<a(s) for all s<f+1.
+
+The inequality —b(s) < a(s) is evident. To show b(s)< a(s) it suffices
+to consider the worst case s = 6-4-1. This is equivalent to
+
+A+1 B x
+(6,16) xf H(t—-1)* db< (4,] :
+; _
+Integrating of
+(s~*G@(s))' = xe" "'G(s--1) and = (s7*)! = as"
+from B—1 to £ we obtain
+a
+
+(6.17) B*@(B)—(B—1)-*@(B—1) = f (w— 1A (a) don
+: i
+
+and
+. Pop
+(6.18) pr*—(B—Ay* = =x f (m—1)-*"" da.
+B
+
+Since #—1 is the largest zero of @’ (s), G(s) is increasing for s > @—1 and,
+by (6.10), (8) = —G@(S—1). In particular, the function.
+
+Rosaer’s steve . 191
+is inercasing for t> f since
+
+Fence O(t) > O(8) == 2. By (6.17) and (6.18) wo obtain
+
+ftp B41
+sn f (LAO) di > Oe fe t—1y olde.
+A B
+
+This completes the proof of (6.16) and (6.18).
+
+Since a(s) and b(s) are continuous there exists 7 <1 such that (6.14)
+holds for all e < B-+-1. Now, wo shall prove this is true for all s. Suppose
+that the set {#5 [b(s)| 2 7a(s)} is not empty and denote by w its infimum.
+Wo have w> f-tl and [b(u)| = na(#), From (6.12) and (6.13) we obtaia
+
+ub Wb
+
+led (w)| < f {b (o)| das < f a(o)ae < my fa@ See
+
+tom 1, teed toh ¢ (w)
+
+dy = 1 ua(e),
+
+which is a contradiction. This completes the proof of Lemma 14.
+Lama 15, For ¢ > 2 we have
+
+a(g—1) < sta(s). |
+
+Proof. It is sufficient to prove this for s= B+}. From (6.8) a(s)
+is increasing and by (6.12) we obtain “
+
+ga(a)G (8) > txa(s —4)E(s)
+for s > #-+-1. This completes the proof. —
+Lama 16. herve ewists > 0 such that (es)%a(s)s"** is decreasing for alt
+s> P+. |
+OConoLLany, Lor e522 we have —
+a(s—1) ® a(s)slogs. |
+Proof of Gorollary. Vor s 2 f8+1 we have
+
+(6.19) (et a(s))" = —ne*a(s —1) |
+and hence writing r(s) == (es) and -A(s) = a(s)r(s) s*** we obtain
+A’ yg #a(s—1)
+(6.20) SO a |
+192 H. Iwanice
+
+i /
+
+A
+Since * (s) == log(ees) and 7) <0, it follows that
+r
+
+xa(s—1)
+
+for all
+sa(s) > log (ees) or al s>8+l1.
+
+Proof of Lemma 16. Suppose « is the infimum of those numbers
+8 > $+-1 for which A(s) is not decreasing. Thus, by (6.20) we have
+
+r
+
+(6.21) = (uw) = a(e—I)
+
+ua(u)
+
+and, since « can be chosen arbitrarily small, we may assume w is suffi-
+ciently large. From (6.12) we obtain
+
+UG (4) a(u) = f at@(e+t)ae < wa(u—L)G(u+1) < 2xa(u—1)E(u),
+
+unl
+,
+
+?
+ie. —(u) > 1/2. Hence
+T
+
+© (w—1) = Fw +log (1-2) > 2 —(u ae
+
+Using again (6.12) we obtain
+
+u Pg eel
+uG(u)a(w) = x f a@@(w+ de < xA(u—1)6(u+1) lew da.
+We have _ i |
+—1 1 1» 1 9 u—3 {u—1\"t
+(= =) - ay > Haye MD? Fy a
+whence
+
+r ua (uw) u—1 G(w+1) 1 r(u—1)
+r  xa(w—1) ~ u—3 Gu) (.- r (1)
+uU— 1 G(w+1) 1
+
+(-a)<1
+
+w—-3 G(u)-
+
+provided « is sufficiently small. This is in contradiction with (6.21) and
+the proof of Lemma 16 is completed.
+
+Remark. Similar, but more precise calculations lead to the following
+result: There exists a constant ¢ such that for all s > £+1 the function
+
+rata)
+
+—caflog gs
+7 =) (logs)
+
+is decreasing.
+
+Rosser’y ateve 193
+
+To complete the proof of Lemma 13 it remains to show (6.5) or the
+game for the function a(s). From (6.12) we obtain.
+
+~ | a(a)da = = (- - O(1)) a(s)
+
+8
+
+Lae
+
+rovided # is sufficiently large. Hence, a standard argument shows that
+
+pr
+loglogs
+a(s) = xp} — slogs — sloglogs -+-slogex+-O {8 f me jogs alk
+7. The functions T*(s). Lot x 2 0 and
+0 ike <1),
+poh = the largest zoro of g(s) if x > 1/2.
+Define
+(B-+1y*~—s* for f—-1<s<8t+l,
+0 for s> #+1,
+SR (8) ms f (t—1)"*Sj_a(t—1) ae for s > B, REA,
+a
+Sh (8) = f (iL) "Sptt—Lat® for s > A+1, Red,
+#
+SH (s) == Sf (8+1) for B—l<s<é+1,
+
+and
+
+K
+(7.1) Lila) = S'St(s) for s> 8-1,
+
+pon (h
+
+ze
+(7.2) "3 (a) = S'S; (8) for 8 2 p.
+
+free |
+It is my to seo that 2 (s) are continuous with the compact. support
+[p-" Teen Bo pa t +-2R| and satisty
+
+oO
+
+Tats) = f (+) 1 hatte, 8B
+
+ri. 1" at
+(7.3) TRI) = xf (t-4] Ty(i-l--, 8 BB +I,
+
+a
+
+Tia(s) +s" = (PLA +LA(B+1), B-1<s<Prt-
+
+194 Il. Iwaniec
+
+In this section we prove that the series (7.1) and (7.2) converge and examine
+the limit functions;
+T*(s) = limT#(s) for s> p- ==.
+Roo
+From the previous section we recall that, for »> 1/2, there exist two
+positive functions g=(s) = s**?Q*(s) such that
+
+1-1
+g=(s) = constant for 0<s< f+ -3*,
+
+a a\-*t dt tI
+(7.4) g*(s) = [ (:- =) q*(t—1)—— for s=> p+.
+It will be shown that g* (s) majorize T#(s). Since g*(s) is not defined if
+x <1/2 we choose, in this case a g*(s) corresponding to some x, slightly
+greater than 1/2. For these we have
+L+1
+
+for 0<s<q1+——.,
+
+g* (s) = constant 9
+
+(7.5)
+(4 8 —9/10 h
+*(6)>5 [ (:- 4] wri) for sp14—e*
+
+instead of (7.4). This is an immediate consequence of the fact that.
+lm f, =1..
+rt oe
+Having chosen the functions g*(s), we shall prove
+Lemma 17. There exists a constant o> 0 such that
+
+(7.6) T#(s)< cg*(s) for s > p- ==.
+
+Proof. Since g*(s) is positive and T&(s) havo compact support,
+the result is true for any fixed R. We shall, show that if (7.6) is true for
+TH_,(8) (respectively for 77 (s)) then it is true, provided ¢ is sufficiently
+large, with the same constant ¢, for 7"; (s) (respectively for 7} (8).
+
+From (7.3) and the inductive assumption (7.6) wo obtain
+
+Tris) << ox | (.-4) q* (f—1) < eg” (8)
+: t t
+for s> 8. This follows from (7.4) if x>1/2 and trom, (7.5) if wef 1/2.
+The same argument applies to L3(8), 8 > B+. For ¢ = B-+-1 we must
+save a little. We have ,
+
+TRBH+IA) < ex fi-d)e (1) <o (1— dq! (B41)
+ad \
+
+Roaser’'s sieve 195.
+
+with some positive 6. This follows from (7.4) if x> 1/2 and from (7.5).
+4-1
+
+1\"%
+ify << 1/2 because the kernel (1-3) is less than (.-3) and
+
+fi
+
+9}10 .
+(:-4) respectively. Hence, by (7.3) we obtain
+Pies) & (BHA + BRB) < (B+ 1)" -o(L— 8)q* (8+)
+< ag (B-/-1) == eq (8)
+for B—-1<s<f-+-1, provided ¢ is sufficiently large. This completes.
+the proof of Lemma 17,
+Now, it is a simple matter to deduce the following result.
+Lmuma 18. The series (7.1) and (7.2) converge and the limit functions:
+T*(s) satisfy
+O< pl (s) < srlge (8),
+
+T* (3) -ke" == constant for s< P+ 2et,
+
+(7.7)
+
+; oa a oe dt 1-1
+VT (3) = x ( coe 5) LF(t—1)——- for s> B+——.,
+
+L-(s)— 8" = constant for s < f is to be considered as a definition.
+Our next task is to find the constants
+
+A= D"(B)+—", B= 2" (p)—B.
+It is convenient to introduce the functions
+m(s) == 87*(T* (s) +27 (s)},
+(8) = 97" (7 (8) ~T™ (8).
+
+For Bc #< 4-1, wo have
+
+(7.8) sm(8) = A--B—d. { (t-—~1)-*8 at,
+4a
+
+(7.9) gn(s) = Ad Bow ftir dt
+&
+
+and, for s> 6-+-1,
+
+(7.10) smi’ (8) =: —xin(s)-—-xm(s—~1),
+
+(7.11) sw’ (a) == —n(s)-+een(¢—1).
+
+The conjugate equations’ are
+
+t
+
+196 H. Iwaniec .
+
+(sg(s)}’ = «g(s)+~g(s +1),
+(sh(s)}’ = xh(s)—xh(s+1).
+Since g{s) < s""', h(s) <8, m(s) « e* and n(s) <e* as 3-> 0,
+
+~we obtain
+
+sg(sym(s) = % f g(a+1)m(a)de,
+
+s—1
+
+sh(s\n(s) = —x fro tna) de
+
+for alls > 8+1. If we substitute s = 6+ 1, integrate by parts, and use (7.8)
+and (7.9) we arrive at
+
+{7.12) bg (Bym(B) = A[B-*g(B)—(B—1)'-"9 (8-21,
+Att
+(7.13)  Bh(8)n(B) = A[B*h(B)—(8 —1)-*h(B —1)] +2 f h(x) do.
+If 8 =1, the symbols 04-”g(0) and 0'-*h(0) mean
+a ye F(1 —x)
+jin 918) = O° FTO
+
+and
+lim s’“*h(s) = e7*I'(1—x),
+S04
+~respectively (see Lemma 2, Corollary 2). From Lemma 2, Corollary 1
+we obtain.
+s+1
+
+sh(s) +x f h({zv)de = constant = limsh(s) = 1.
+3
+
+goo
+
+B+1
+
+In particular, x ! h(a)de = 1—fh(). Finally, from (7.12) and (7.13)
+
+‘we get two linear equations for A and B;
+(B—1)'"*g(B —1)4 — pg (f)B = 0,
+(B-I)*h(B-1) A+ A "R(A)B = 2.
+
+For. x >1/2 we have f>1 and g(f—1) = 0. Thus
+
+B=0 and A =2-— (Ga1)"
+p h(B—4)
+For x =1/2 we have § =1, lim s’?9(s) = 0 and lim s"*A(s) == (m/e”)!*,
+$=0+ 8=Q-+-
+
+"Thus
+B=0 cnd A = 2(e"/x)”
+
+icn Rosser’s sieve 197
+
+or #< 1/2 we have B = 1 and hence
+1 an nL =
+Fn ax) 47 IDB = 9,
+eM PL —xA+A(L)B = 2.
+
+rom (5.8) we obtain.
+~
+
+1 ‘ 1-
+0) = Fay | en| —ats f
+
+Dy
+
+au) 2 * de
+
+nd.
+
+oo
+
+ACL) = { exp (—#—# f aa au) ae.
+
+tu
+
+imple calculations lead to (2.1) and (2.2).
+Lemma 19. We have
+“
+Proof. Since h(s) is decreasing, we obtain
+at
+1 = sh(s)+x f h(w) do < (8 +%)h(s)
+é
+nod hence
+dy ”
+1 > sh(s)-+x Jae?! h(s + STTTy’
+his completes the proof.
+OCornontaRy. For «> 1/2 we have
+a
+2(B—1)*(1+-—|< A <a(p—d (1 +544}.
+(ry (1+4) (e—ay(t4+5 45
+8. Estimates of Ti,(#). This section is devoted to estimates of
+#..(8). Let q*(s) be chosen as in Lemma 17.
+
+Lad
+Lema 20. Por YB 2,2 > 2, and > p--= we have
+
+2) Tiel) < V(e)s-"{Liils) +45 (8)(logy)"),
+here
+
+vom gF? 8
+Gt (9) = Cev* + ia) g* (8)
+
+vd O is some constant depending at most on x.
+Remarks. Assuming two-sided inequalities of the type (1.3) one
+
+M1 —x) \
+
+198 H, Iwaniec
+
+can, prove that the main term V(z)s-"TR., (8) is actually equal to the
+asymptotic value of TH, (8) a8 2 approaches ov.
+
+The dependence on and 'y can be improved; é ‘® can be reduced
+to some power of K and the exponent 1 /3 can. be increased to an arbitrary
+
+number <1 if «> 1/2 and <1/2 if x<1)2.
+
+50 48 ee :
+is introduced in order to
+
+The very artificial factor (i+ +
+weaken the result in the range where ie induction method does not work.
+The following lemma follows immediately from (1.8) by partial
+
+_ summation.
+Lema 21. Let B(x) be a positive, continuous and imereasing function
+
+in the interval w<a<2. We have
+
+o(p) V(p) { logp \’
+(8.2) » > ve (pe) B(p)
+
+‘wpe
+
+(¥+1)K
+logw
+
+, f B(a)dloglog «+ B(2)
+
+w
+Proof of Lemma 20. The idea of the proof is similar to that of
+Lemma 17, but is more complicated in details because of the error term.
+Biz 2)(e-1)K flogw in the estimate of sums of' the typo (8.2).
+For B—1<s<f+1 we have
+
+‘+ _ 16-41) = E(B +1y| ,
+(3) Bhele) = FMM) — Ve) < Vee*{ip+a—8 +
+‘and, for s > 6-+1, we have T'{,(s) = 0. This completes the proof of (8.1)
+
+for Tf ,(8).
+
+Now, assume that (8.1) is true for T#-1.(8) or for T;,,(s) with some
+R>1. We shall show that (8.1) is true, provided C is sufficiently large,
+with the same constant C,-for Tz (8) and T3,.(s) respectively.
+
+1
+Let 3s. +S First we eliminate some trivial cases. If s > 2r-+
+
+t+1
+2
+
++ B+ then S2,(s) = 0 and 80, we have
+
+TAS) < » aS) TP* exp (u >? oh) <LPtt8 7 (a) %
+
+r>s—f-1 pee Pos
+
+with any L>1. Note that for > 2, V(z)"'< 2K (loge)* and for 2< 2,
+
+T#,(8) = 0. Therefore, putting D = 1+ o Tek we obtain
+(8.4) T#,(8)< rear oe elgg +0 (MEME | soey”
+: log2s /} logy
+
+: st om Hf . K
+(8.9) XK Via)s fa 8) +0 (= q? ()Qogy)**)\.
+ft]
+
++. oe
+Rosser’s sieve 199
+
+But, from (6.5), we have
+
+(8.5) GF(s)
+
+50
+
+== Cexp | — slogs~—sloglog 2s +-slog (1 + ies) +VE+0 (}.
+
+Henee, (8.1) is evident if K™* > lo if 3°°
+ont gy or if s°° > logy (loglogy)’,
+‘we can assume that > Noe y Coglogy”. Therefore
+
+(8.6) K~““logy is sufficiently large
+and
+(8.7) 8 < (logy)""*(loglogy)"” = 9, say.
+By the recurrence formulae (4.4), (4.5) and the inductive assumption
+we obtain
+(88) TEs) < PRe(6)+ oe att) ven) +
+yepeylis p \log(y/p)
+2p<y
+(nz log (y/p) log (y/p)
+a 2 (tog )+ “o ice | Poet in)"
+
+It is clear from the definition of 8$(s) that T#(s) are decreasing. Hence
+
+Bee) = TF, sa(? etal) ogy fay)
+
+is increasing and we may apply Lemma 21, getting
+
+A< Peeler |wele) +0 (2 ¥(s—1) (-=) "<*)!
+8} logy |f?
+
+log 2 We 1
+
+Tory . @ have
+
+where s, == max f
+
+Lo noean .
+(1-5) < (logy)? and -¥(s—1) < g¥(s—1) < s%q* (8).
+
+&y
+
+Hence, by (8.7) we obtain,
+
+Consider the two functions
+
+(1. ee"
+
+t
+Ae t) sx 1 is =
+(t) joey Ja (t) (e = 0,1)
+
+Sere
+
+crepe mrvetcarccer wt pom tee enee
+
+200 H. ITwanice
+
+i+1 .
+in the interval peta <t< 8%, Where kK =x if x>1/2 and b=»,
+
+pe
+
+log 2%
+
+if x < 1/2. From (7.4) and (6.4) we obtain
+
+50 \é 1 hal
+— Alt) = (1+ ere )e{1—<) g*(t—1)
+logy t
+
+1+0
+
+The term in the bracket { } is positive and for sufficiently large ¢ (say
+
+(t+ 2)? \~> er ,
+t> s,) it is greater than 1l+—5 : This implies that A,(i) is
+
+decreasing and for %.<s < S$,
+
+$0 i-1 — tem 1/3 dé
+a rd
+logy t t
+
+1 2/3 gh s ‘
+1—— 3 .
+<| =) (1555) ae)
+
+< s, this is also true. For, write w =s,+2 and split
+
+50
+
+(8.10) « f (ue
+
+For p++ <s<
+
+up the integral into x i +f "0 The first integral, by (7.4) and (7.5), satisfies
+§ E?4
+
+s
+
+ue ,
+1 \uas 5% \%
+_. &
+
+“{<b-a) (trig) #0
+
+&
+
+and the second integral, by (8.10), satisfies
+
+£0 1\28 eo \%
+1—— = (ay)
+| <|( =| (+a ow
+
+u
+
+Since g*(u) < u~*g*(s), (8.10) follows.
+1
+For By} =
+
+(8.11)
+—x~1f —x—Tf3
+A(t) ae * Ay(t—1) a 5
+
+1
+<t<s,+1, the function
+
+» 250
+
+{1
+Fp 1
+me at—1)
+
+141
+
++ +1 because g*(t—1) = constant and y is large.
+
+icm
+
+Rosser’s sieve 201
+
+logy
+loga
+
+It follows from (8.11) that B(a#) =| is increasing and
+
+we may apply Lemma 21 getting
+
+» y 1 2/3 5° $ 4 3
+S ~*eStL — — - 7 ay) M8
+every (t— 2) (142) eedoggy
+
+1 ~ K-18 3 8 Ks
+-Ofg*(s—1) (1—-= 14—~— o \
+( (8 (1 =| ( + ‘say ‘iceni*
+
+Hence, as for 2,, we obtain
+
+s I
+3% ) Fe ee
+8
+
+12 aan ~*
+(8.12) 2) < Vi(e)s (+e (2-2
+
+K
+For T#,(8o) we apply (8.4) getting
+
+58° \80
+THe (8) < V2) so" ( + 5) g* (89) (logy).
+
+Collecting together (8.8), (8.9), (8.12) and (8.138) we obtain
+
+(8.14) TH. (s)
+
+2/3 .
+< ¥ (2) ys" (s} + GE (5 (s ) [f. — =| +0 (ss00en| (ogy).
+
+$6
+
+The term in the square bracket is, for sufficiently large y (see (8.6)), less.
+
+1
+than 1—-> <1 and hence (8.1) follows.
+foie
+
+Now, it only remains to prove (8.1) for 72 ,(s) with B~l<s < f+41.
+To this end we apply the recurrence formula (4.6). If we estimate T},(s}
+by (8.3) and 2#,(8-+1) by (8-14) we arrive again at (8.14) but with an i
+extra tern)
+
+0 (Ke-"* (log y)-**)
+
+in the square bracket. The same argument completes the proof,
+
+9, Proof of Theorem 1 (Conclusion). For 3° < logz we have (: +. a }
+<¢e and hence. by Lemma 20
+
+(9.1) Ti (8) < V (2) 8 *{P#(s) +00'*"® g* (8) (logy) ™}. |
+For «°° > loge, by (8.4) we have |
+(9.2) LH (8) < Viz)s7*exp { —slogs + sloglog3s +VK+0(s)} (logy).
+
+7— Acla Arithmetica XXXVI,2
+
+202 H. Iwaniec
+
+‘Writing
+B(s) =1-+s "Ft (8s) for s>
+f(s) =1—s"*F(s) for s2
+and
+s*F(s) =(8+1)"F(6+1) forl<s<
+<
+
+p
+s*f(s) = Bf (8) for i<s<f.
+
+Theorem 1 follows from (3.4), (3.5), (3.7), (4.1), (4.2), (9-1), (9-2), (6.5)
+and: (7.7).
+
+References
+
+[1] N.C. Ankeny and H. Onishi, The general sieve, Acta Avith. 10 (1964/1965),
+pp. 31-62.
+
+{2] H. W. Hagedorn, Sieve methods and polynomial sequences, ibid. 28 (1975),
+pp. 245-252.
+
+{3] H. Halberstam and H.-E. Richert, Mean value theorems for a class of arith-
+metic functions, ibid. 18 (1971), pp. 243-256.
+
+{4} — -- Brun’s method and the Fundamental Lemma, Proc. Sympos. Pure Math. 24
+(1973), pp. 247-249.
+
+5] — ~ Brun’s method and the Fundamental Lemma, Acta Arith., 24 (1973),
+pp. 118-133.
+
+[6] - — Bron’s method and the Fundamental Lemma II, ibid. 27 (1975), pp. 51-59.
+
+{7] — — Steve methods, Academic Press, London 1974.
+
+{8] RK. R. Hall, On the constant B(k) in Rosser’s sieve, Acta Arith. 32 (1977),
+pp. 393-395. *
+[9] H. Iwaniec, The half dimensional sieve, ibid. 29 (1976), pp. 67-95.
+[10] -— Zhe sieve of Hratosthenes—Legendre, Ann. Scuola Norm, Sup. Pisa, IV, 2
+(1977), pp. 257-268.
+{11] — On sume of two norms from cubic fields (to appear).
+{12] W. B. Jurkat and H.-E. Richert, An improvement of Selberg’s sieve method. I,
+Acta Arith. 11 (1965), pp. 217-240.
+[13] J. W. Porter, Some numerical resulta in the Selberg sieve method, ibid. 20 (1972),
+pp. 417-421.
+[14] — On the non-linear sieve, ibid. 29 (1976), pp. 377-400.
+[15] H.-E. Richert, unpublished manuscript.
+{16] A: Selberg, Sieve methods, Proc. Sympos. Pure Math. 20 (1071), pp. 311-351.
+
+Received on 27. -9. 1977 (986)
+
+Les volumos IV Volumes from IV Die Binde IV und Toms IV u cnezy-
+et suivants sont on are «available folgende sind zu Jomme momo m0-
+& obtenir chez ~ at beziehen durch ayant wepes
+
+Ars Polona, Krakowskie Przedmiegcie 7, 00-068 Warszawa
+
+Les volumes I-IIL Volumes I-III Dio Bande I-I1I sind Toms I-III momno
+sout & obtenir chez are available at zu beziehen dureh HONYWTh wepea
+
+Johnson Reprint Corporation, 111 Fifth Ave., New York, N. ¥.
+
+4
+
+BOOKS PUBLISHED BY THE POLISH ACADEMY OF SCIENCES
+INSTITUTE OF MATHEMATICS
+
+8S. Banach, Ocuvres, vol. II, 1979, 470 pp.
+
+_ 8. Mazurkiewicz, Travaux de topologie et scs applications, 1969, 380 pp.
+
+W. Sierpinski, Oeuvres choisies, vol. I, 1974, 300 pp.; vol. IT, 1975, 780 pp.; vol.
+TIT, 1976, 688 pp.
+
+J. P. Schauder, Oeuvres, 1978, 487 pp.
+
+H. Steinhaus, Selected papers, in print.
+
+Proceedings of the Symposium to honour Jeray Neyman, 1977, 349 pp.
+
+MONOGRAFIE MATEMATYCZNE
+27. K. Kuratowski i A. Mostowski, Teoria mnogodei, 5-th ed., 1978, #70 pp.
+
+Vol.
+Vol.
+
+. Spectral theory, in print.
+. Universal algebra and applications, in print.
+
+43. J. Szaraki, Differential inequalities, 2nd ed., 1967, 256 pp.
+44. K Borsuk, Theory of retracts, 1967, 251 pp.
+47. D. Przeworska-Rolewioz and §, Rolewiez, Equations in lincar spaces,
+1968, 380 pp.
+50, K. Boreuk, Multidimensional analytic geometry, 1969, 443 pp.
+51, R. Sikorski, Advanced calculus. Functions of several “variables, 1969, 460 pp.
+57. W. Narkiewiez, Elementary and analytic theory of algebraic numbers, 1974,
+630 pp.
+58. C. Bessaga and A. Pelozyiiski, Selected topics in infinite-dimensional top-
+ology, 1975, 353 pp.
+60. K. Borsuk, Theory of shape, 1975, 379 pp.
+60. R. Engelking, General topology, 1977, 626 pp.
+61. J. Dugundji and A, Granas, Fixed point theory, vol. I, in print,
+BANACH CINTELR PUBLICATIONS
+Vol. 1. Mathematical control theory, 1976, 166 pp.
+Vol. 2. Mathematical fundations of computer science, 1977, 260 pp.
+Vol. 3. Mathematical models and numerical methods, 1978, 391 py.
+Vol. 4. Approximation theory, 1979, 314 pp.
+Vol. 5. Probability theory, 1979, 289 pp.
+Vol. 6. Mathematical statisties, in print.
+Vol. 7. Discrete mathomaties, in print.
+8
+9
+
