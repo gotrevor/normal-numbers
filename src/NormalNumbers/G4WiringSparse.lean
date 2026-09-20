@@ -317,18 +317,17 @@ def KMT_quant (C : ℕ → ℝ) : Prop :=
           + Real.exp (- recipSumLe S ⌊(x : ℝ) ^ ε⌋₊)
           + Real.exp (- 1 / (8 * (J : ℝ) ^ 2 * ε)))
 
-/-- **Existence from the fixed-`k` proposition alone** (no uniformity in `k` beyond a growth bound
+/-! ### The block construction
+
+**Existence from the fixed-`k` proposition alone** (no uniformity in `k` beyond a growth bound
 on its constant).  Block construction: `S = ⋃ᵢ Bᵢ`, `Bᵢ ⊆ (xᵢ, xᵢ₊₁]` with `∑_{p∈Bᵢ} 1/p = δᵢ`,
 `xᵢ₊₁ ≥ xᵢ^{1/εᵢ₊₁}` so that `[x^ε, x]` meets at most two blocks; schedule `J_N = Jᵢ` on
 `(xᵢ, xᵢ₊₁]` with `εᵢ = 1/(8 Jᵢ² log i)`.  The three terms give `C(Jᵢ) √δᵢ √log(Jᵢ² log i)`,
 `C(Jᵢ) exp(−∑_{i'<i−1} δᵢ')`, `C(Jᵢ)/i`; the L¹ tail (`tail_error_L1`) needs
 `∑_{i'≤i} δᵢ' = o(4^{Jᵢ})`.  With `δᵢ = 1/i` the sandwich `log C(Jᵢ) + ω(1) ≤ log i ≤ o(4^{Jᵢ})`
-is solvable iff `log C k = o(4^k)`, and `∑ δᵢ = ∞` gives `DivergentRecip`. -/
-theorem exists_sparse_normal_of_KMT_quant (C : ℕ → ℝ)
-    (hgrow : Tendsto (fun k : ℕ => Real.log (C k) / 4 ^ k) atTop (𝓝 0))
-    (hKMT : KMT_quant C) :
-    ∃ (S : ℕ → Prop) (_ : DecidablePred S), DivergentRecip S ∧ IsNormal 4 (subsetLambert S 4) := by
-  sorry
+is solvable iff `log C k = o(4^k)`, and `∑ δᵢ = ∞` gives `DivergentRecip`.  Proved at the end of
+the file as `exists_sparse_normal_of_KMT_quant`, from `exists_good` + the block leaves. 
+-/
 
 /-- The tail difference as a convergent nonnegative series (the leaf-2 decomposition, factored
 out for the L¹ bound). -/
@@ -505,6 +504,29 @@ theorem tsum_lin_geom (B c : ℝ) : ∑' t : ℕ, (B + c * t) / 2 ^ (t + 1) = B 
   rw [tsum_congr hcongr,
     Summable.tsum_add (summable_geom_shift.mul_left B) (summable_i_geom.mul_left c),
     tsum_mul_left, tsum_mul_left, tsum_geom_shift, tsum_i_geom, mul_one, mul_one]
+
+/-- The site `j = |h| + 1` always carries a nontrivial phase (as in `G₄`). -/
+theorem nontrivial_site {h : ℤ} (hh : h ≠ 0) :
+    ¬ ∃ m : ℤ, (h : ℝ) / (4 : ℝ) ^ (h.natAbs + 1) = m := by
+  set j₀ : ℕ := h.natAbs + 1 with hj₀def
+  rintro ⟨m, hm⟩
+  have h4 : ((4 : ℝ) ^ j₀) ≠ 0 := by positivity
+  have hR : (h : ℝ) = (m : ℝ) * (4 : ℝ) ^ j₀ := by field_simp at hm; linarith [hm]
+  have hZ : h = m * 4 ^ j₀ := by exact_mod_cast hR
+  have hm0 : m ≠ 0 := by rintro rfl; simp at hZ; exact hh hZ
+  have hlb : (4 : ℤ) ^ j₀ ≤ |h| := by
+    rw [hZ, abs_mul, abs_of_nonneg (by positivity : (0 : ℤ) ≤ 4 ^ j₀)]
+    have : 1 ≤ |m| := Int.one_le_abs (by omega)
+    nlinarith [abs_nonneg m, (by positivity : (0 : ℤ) < 4 ^ j₀)]
+  have hub : h.natAbs < 4 ^ j₀ := by
+    calc h.natAbs < 2 ^ h.natAbs := Nat.lt_two_pow_self
+      _ ≤ 4 ^ (h.natAbs + 1) := by
+          calc 2 ^ h.natAbs ≤ 4 ^ h.natAbs := Nat.pow_le_pow_left (by norm_num) _
+            _ ≤ 4 ^ (h.natAbs + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  have habs : |h| = (h.natAbs : ℤ) := Int.abs_eq_natAbs h
+  have hge : ((4 : ℤ) ^ j₀) ≤ (h.natAbs : ℤ) := by rw [habs] at hlb; exact hlb
+  have hub' : ((h.natAbs : ℤ)) < 4 ^ j₀ := by exact_mod_cast hub
+  omega
 
 /-- `(5k + 11)/4^k → 0`. -/
 theorem tendsto_lin_div_pow : Tendsto (fun k : ℕ => (5 * (k : ℝ) + 11) / 4 ^ k) atTop (𝓝 0) := by
@@ -800,7 +822,70 @@ theorem divergentRecip (hδ : ¬ Summable D.δ) : DivergentRecip D.set := by
 `ε = εᵢ`, `J = Jᵢ`, the three bounds above, and `Good.terms`. -/
 theorem kmt_along {C : ℕ → ℝ} (hKMT : KMT_quant C) (hG : D.Good C) :
     KMT_along D.set D.sched := by
-  sorry
+  intro h hh
+  refine tendsto_zero_iff_norm_tendsto_zero.mpr ?_
+  have hterms := hG.terms.comp D.blockIndex_tendsto
+  refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _)) ?_ hterms
+  filter_upwards [eventually_gt_atTop (D.x 0), eventually_ge_atTop 3,
+    (hG.J_tendsto.comp D.blockIndex_tendsto).eventually_ge_atTop (h.natAbs + 1)]
+    with N hN hN3 hJ
+  obtain ⟨hspec1, hspec2⟩ := D.blockIndex_spec N hN
+  have hntw : NontrivialWindow (D.J (D.blockIndex N)) h :=
+    ⟨h.natAbs + 1, by omega, hJ, nontrivial_site hh⟩
+  obtain ⟨hε1, hε2⟩ := hG.ε_range (D.blockIndex N) N hspec1
+  have hb := hKMT D.set (D.J (D.blockIndex N)) h hh hntw N hN3 (D.ε (D.blockIndex N)) hε1 hε2
+  have hy : D.x (D.blockIndex N - 1) ≤ ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊ :=
+    hG.sep (D.blockIndex N) N hspec1
+  have hIoc := D.recipSumIoc_le (D.blockIndex N) N ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊
+    hspec1 hspec2 hy
+  have hLe := D.recipSumLe_ge (D.blockIndex N) ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊ hy
+  set A : ℝ := Real.sqrt (Real.log (1 / D.ε (D.blockIndex N)))
+      * Real.sqrt (2 * recipSumIoc D.set ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊ N)
+    + Real.exp (- recipSumLe D.set ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊)
+    + Real.exp (- 1 / (8 * (D.J (D.blockIndex N) : ℝ) ^ 2 * D.ε (D.blockIndex N))) with hA
+  set B : ℝ := Real.sqrt (Real.log (1 / D.ε (D.blockIndex N)))
+      * Real.sqrt (2 * (D.δ (D.blockIndex N - 1) + D.δ (D.blockIndex N)))
+    + Real.exp (- ∑ i' ∈ Finset.range (D.blockIndex N - 1), D.δ i')
+    + Real.exp (- 1 / (8 * (D.J (D.blockIndex N) : ℝ) ^ 2 * D.ε (D.blockIndex N))) with hB
+  have hApos : 0 < A := by
+    rw [hA]
+    have h1 : 0 ≤ Real.sqrt (Real.log (1 / D.ε (D.blockIndex N)))
+        * Real.sqrt (2 * recipSumIoc D.set ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊ N) := by positivity
+    have h2 : 0 < Real.exp (- recipSumLe D.set ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊) :=
+      Real.exp_pos _
+    have h3 : 0 < Real.exp (- 1 / (8 * (D.J (D.blockIndex N) : ℝ) ^ 2
+      * D.ε (D.blockIndex N))) := Real.exp_pos _
+    linarith
+  have hC : 0 ≤ C (D.J (D.blockIndex N)) := by
+    by_contra hc
+    push_neg at hc
+    nlinarith [norm_nonneg (windowMeanS D.set (D.J (D.blockIndex N)) h N), hb,
+      mul_neg_of_neg_of_pos hc hApos]
+  have hAB : A ≤ B := by
+    rw [hA, hB]
+    have hsq : Real.sqrt (2 * recipSumIoc D.set ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊ N)
+        ≤ Real.sqrt (2 * (D.δ (D.blockIndex N - 1) + D.δ (D.blockIndex N))) :=
+      Real.sqrt_le_sqrt (by linarith)
+    have hmul : Real.sqrt (Real.log (1 / D.ε (D.blockIndex N)))
+        * Real.sqrt (2 * recipSumIoc D.set ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊ N)
+        ≤ Real.sqrt (Real.log (1 / D.ε (D.blockIndex N)))
+        * Real.sqrt (2 * (D.δ (D.blockIndex N - 1) + D.δ (D.blockIndex N))) :=
+      mul_le_mul_of_nonneg_left hsq (Real.sqrt_nonneg _)
+    have hexp : Real.exp (- recipSumLe D.set ⌊(N : ℝ) ^ D.ε (D.blockIndex N)⌋₊)
+        ≤ Real.exp (- ∑ i' ∈ Finset.range (D.blockIndex N - 1), D.δ i') :=
+      Real.exp_le_exp.mpr (by linarith)
+    linarith
+  have hsched : D.sched N = D.J (D.blockIndex N) := rfl
+  calc ‖windowMeanS D.set (D.sched N) h N‖
+      = ‖windowMeanS D.set (D.J (D.blockIndex N)) h N‖ := by rw [hsched]
+    _ ≤ C (D.J (D.blockIndex N)) * A := hb
+    _ ≤ C (D.J (D.blockIndex N)) * B := mul_le_mul_of_nonneg_left hAB hC
+    _ = ((fun i => C (D.J i) *
+          (Real.sqrt (Real.log (1 / D.ε i)) * Real.sqrt (2 * (D.δ (i - 1) + D.δ i))
+            + Real.exp (- ∑ i' ∈ Finset.range (i - 1), D.δ i')
+            + Real.exp (- 1 / (8 * (D.J i : ℝ) ^ 2 * D.ε i)))) ∘ D.blockIndex) N := by
+        simp only [Function.comp_apply]
+        rw [hB]
 
 /-- The L¹ tail vanishes along the block schedule: `tail_error_L1` + `recipSumLe_le` +
 `Good.tail`. -/
@@ -865,5 +950,13 @@ theorem exists_sparse_normal_of_KMT_quant' (C : ℕ → ℝ)
   obtain ⟨D, hG⟩ := exists_good C hgrow
   exact ⟨D.set, inferInstance, D.divergentRecip hG.δ_div,
     isNormal_subsetLambert_of_KMT_along D.set D.sched (D.tailOK hG) (D.kmt_along hKMT hG)⟩
+
+/-- **Existence from the fixed-`k` proposition alone** (the block construction; identical to
+`exists_sparse_normal_of_KMT_quant'`). -/
+theorem exists_sparse_normal_of_KMT_quant (C : ℕ → ℝ)
+    (hgrow : Tendsto (fun k : ℕ => Real.log (C k) / 4 ^ k) atTop (𝓝 0))
+    (hKMT : KMT_quant C) :
+    ∃ (S : ℕ → Prop) (_ : DecidablePred S), DivergentRecip S ∧ IsNormal 4 (subsetLambert S 4) :=
+  exists_sparse_normal_of_KMT_quant' C hgrow hKMT
 
 end NormalNumbers.G4Sparse
