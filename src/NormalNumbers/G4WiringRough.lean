@@ -623,10 +623,31 @@ theorem smoothWindowCRT (h : ℤ) (y : ℕ) (hy : 2 ≤ y) (hS : SmoothNonvanish
 
 /-! ### Leaf 5–6: the wiring -/
 
+/-- The shape of `RoughIndependence` that the wiring actually consumes: a single `y`, and a
+relative error `C / log N` with no `1/y` gain. -/
+def RoughIndependenceAt (h : ℤ) (y : ℕ) : Prop :=
+  ∃ (c : ℕ → ℂ) (B C : ℝ), (∀ J, ‖c J‖ ≤ B) ∧ ∀ᶠ N : ℕ in atTop,
+    ‖roughWindowMean N (windowJ N) h y
+        - c (windowJ N) * ∏ j ∈ Finset.Icc 1 (windowJ N), roughSiteMean N h j y‖
+      ≤ C / Real.log N * ∏ j ∈ Finset.Icc 1 (windowJ N), ‖roughSiteMean N h j y‖
+
+theorem roughIndependenceAt_of_rough {h : ℤ} (hR : RoughIndependence h) {y : ℕ} (hy : 2 ≤ y) :
+    RoughIndependenceAt h y := by
+  obtain ⟨c, B, C, hcB, hev⟩ := hR
+  have hy0 : (0 : ℝ) < y := by
+    have : (2 : ℝ) ≤ y := by exact_mod_cast hy
+    linarith
+  refine ⟨c y, B, C / y, fun J => hcB y J, (hev y hy).mono (fun N hN => ?_)⟩
+  have : C / ((y : ℝ) * Real.log N) = C / y / Real.log N := by
+    rw [div_div]
+  rwa [this] at hN
+
 set_option maxHeartbeats 1000000 in
-/-- **Wiring**: N1 (schedule form) from N1a + N1a′ + N1b. -/
-theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : SmoothRoughDecoupling h)
-    (hS : SmoothNonvanishing h) : CRTConstantSched h := by
+/-- **Wiring, sharpened**: N1 (schedule form) needs `RoughIndependence` only at the *single*
+value `y = 2`, and only with a `C / log N` relative error — the `1/y` gain of the frozen node is
+never used.  This is the honest shape of the open obligation. -/
+theorem crtConstantSched_of_roughAt {h : ℤ} (hR : RoughIndependenceAt h 2)
+    (hD : SmoothRoughDecoupling h) (hS : SmoothNonvanishing h) : CRTConstantSched h := by
   classical
   obtain ⟨cR, BR, CR, hcRB, hRev⟩ := hR
   obtain ⟨CD, hDev⟩ := hD
@@ -636,14 +657,14 @@ theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : Smo
   have hP₀R : (0 : ℝ) < P₀ := by rw [hP₀]; exact_mod_cast primorial_pos 2
   clear_value P₀
   have hB'nn : (0 : ℝ) ≤ B' := le_trans (norm_nonneg _) (hc'B 0)
-  have hBRnn : (0 : ℝ) ≤ BR := le_trans (norm_nonneg _) (hcRB 0 0)
+  have hBRnn : (0 : ℝ) ≤ BR := le_trans (norm_nonneg _) (hcRB 0)
   set κ : ℝ := (1 + |CD|) / δ with hκ
   have hκnn : (0 : ℝ) ≤ κ := by rw [hκ]; positivity
-  refine ⟨fun J => c' J * cR 2 J, B' * BR,
+  refine ⟨fun J => c' J * cR J, B' * BR,
     |CD| + (BR + |CR|) * κ + B' * |CR| * κ + B' * BR * |CD|, ?_, ?_⟩
   · intro J
     rw [norm_mul]
-    exact mul_le_mul (hc'B J) (hcRB 2 J) (norm_nonneg _) hB'nn
+    exact mul_le_mul (hc'B J) (hcRB J) (norm_nonneg _) hB'nn
   · -- the `J · P₀ / N` errors are `≤ 1 / log N` eventually
     have hsmall : ∀ᶠ N : ℕ in atTop,
         (B' * P₀ + 1) * ((windowJ N : ℝ) * Real.log N / N) ≤ 1 := by
@@ -652,7 +673,7 @@ theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : Smo
         simpa using (windowJ_log_div_tendsto_zero).const_mul (B' * P₀ + 1)
       exact (hlim.eventually (eventually_lt_nhds (by norm_num : (0:ℝ) < 1))).mono
         (fun N hN => hN.le)
-    filter_upwards [hRev 2 le_rfl, hDev 2 le_rfl, hδev, h4ev, hsmall, eventually_ge_atTop 3]
+    filter_upwards [hRev, hDev 2 le_rfl, hδev, h4ev, hsmall, eventually_ge_atTop 3]
       with N hRN hDN hδN h4N hsmallN hN3
     set J := windowJ N with hJdef
     clear_value J
@@ -697,17 +718,17 @@ theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : Smo
       rw [hκ, div_mul_eq_mul_div, le_div_iff₀ hδ]
       nlinarith [h4, h5]
     -- `‖R_W‖ ≤ (B_R + |C_R|) K`
-    have hCRlog : CR / (2 * Real.log N) ≤ |CR| := by
-      rw [div_le_iff₀ (by linarith)]
+    have hCRlog : CR / Real.log N ≤ |CR| := by
+      rw [div_le_iff₀ hlogpos]
       nlinarith [le_abs_self CR, abs_nonneg CR]
     have hRWK : ‖RW‖ ≤ (BR + |CR|) * K := by
-      have h1 : ‖RW - cR 2 J * PR‖ ≤ CR / ((2 : ℝ) * Real.log N) * K := by
+      have h1 : ‖RW - cR J * PR‖ ≤ CR / Real.log N * K := by
         simpa [hRW, hPR, hK, hJdef] using hRN
-      have h2 : ‖cR 2 J * PR‖ ≤ BR * K := by
+      have h2 : ‖cR J * PR‖ ≤ BR * K := by
         rw [norm_mul, hPRK]
-        exact mul_le_mul (hcRB 2 J) le_rfl hKnn hBRnn
-      have h3 : ‖RW‖ ≤ ‖RW - cR 2 J * PR‖ + ‖cR 2 J * PR‖ := by
-        simpa using norm_add_le (RW - cR 2 J * PR) (cR 2 J * PR)
+        exact mul_le_mul (hcRB J) le_rfl hKnn hBRnn
+      have h3 : ‖RW‖ ≤ ‖RW - cR J * PR‖ + ‖cR J * PR‖ := by
+        simpa using norm_add_le (RW - cR J * PR) (cR J * PR)
       nlinarith [h1, h2, h3, hKnn, hCRlog]
     -- the four pieces
     have hT1 : ‖fullWindowMean N J h - SW * RW‖ ≤ |CD| / Real.log N * F := by
@@ -736,25 +757,25 @@ theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : Smo
       rw [norm_mul]
       have hb : (0 : ℝ) ≤ (BR + |CR|) * K := by positivity
       exact mul_le_mul (h1.trans hJP) hRWK (norm_nonneg _) (by positivity)
-    have hT3 : ‖(c' J * PS) * (RW - cR 2 J * PR)‖ ≤ B' * (|CR| / Real.log N * K) := by
+    have hT3 : ‖(c' J * PS) * (RW - cR J * PR)‖ ≤ B' * (|CR| / Real.log N * K) := by
       rw [norm_mul]
       have h1 : ‖c' J * PS‖ ≤ B' := by
         rw [norm_mul, hPSSn]
         nlinarith [hc'B J, hSnle, norm_nonneg (c' J), hB'nn,
           Finset.prod_nonneg (fun j (_ : j ∈ Finset.Icc 1 J) =>
             norm_nonneg (smoothSiteMean N h j 2))]
-      have h2 : ‖RW - cR 2 J * PR‖ ≤ |CR| / Real.log N * K := by
-        have := (show ‖RW - cR 2 J * PR‖ ≤ CR / ((2 : ℝ) * Real.log N) * K by
+      have h2 : ‖RW - cR J * PR‖ ≤ |CR| / Real.log N * K := by
+        have := (show ‖RW - cR J * PR‖ ≤ CR / Real.log N * K by
           simpa [hRW, hPR, hK, hJdef] using hRN)
-        have h3 : CR / (2 * Real.log N) ≤ |CR| / Real.log N := by
-          rw [div_le_div_iff₀ (by linarith) hlogpos]
-          nlinarith [le_abs_self CR, abs_nonneg CR]
+        have h3 : CR / Real.log N ≤ |CR| / Real.log N := by
+          gcongr
+          exact le_abs_self CR
         nlinarith [this, h3, hKnn]
       exact mul_le_mul h1 h2 (norm_nonneg _) hB'nn
-    have hT4 : ‖(c' J * cR 2 J) * (PS * PR - Pf)‖ ≤ B' * BR * (|CD| / Real.log N * F) := by
+    have hT4 : ‖(c' J * cR J) * (PS * PR - Pf)‖ ≤ B' * BR * (|CD| / Real.log N * F) := by
       rw [norm_mul]
-      have h1 : ‖c' J * cR 2 J‖ ≤ B' * BR := by
-        rw [norm_mul]; exact mul_le_mul (hc'B J) (hcRB 2 J) (norm_nonneg _) hB'nn
+      have h1 : ‖c' J * cR J‖ ≤ B' * BR := by
+        rw [norm_mul]; exact mul_le_mul (hc'B J) (hcRB J) (norm_nonneg _) hB'nn
       have h2 : ‖PS * PR - Pf‖ ≤ |CD| / Real.log N * F := by
         rw [norm_sub_rev]
         have h3 : CD / Real.log N ≤ |CD| / Real.log N := by
@@ -763,9 +784,9 @@ theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : Smo
         nlinarith [hDN.2, h3, hFnn]
       exact mul_le_mul h1 h2 (norm_nonneg _) (by positivity)
     -- assemble
-    have hdecomp : fullWindowMean N J h - (c' J * cR 2 J) * Pf
+    have hdecomp : fullWindowMean N J h - (c' J * cR J) * Pf
         = (fullWindowMean N J h - SW * RW) + (SW - c' J * PS) * RW
-          + (c' J * PS) * (RW - cR 2 J * PR) + (c' J * cR 2 J) * (PS * PR - Pf) := by
+          + (c' J * PS) * (RW - cR J * PR) + (c' J * cR J) * (PS * PR - Pf) := by
       ring
     have hKκ : K ≤ κ * F := hKF
     have hnorm4 : ∀ a b c d : ℂ, ‖a + b + c + d‖ ≤ ‖a‖ + ‖b‖ + ‖c‖ + ‖d‖ := by
@@ -773,9 +794,9 @@ theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : Smo
       calc ‖a + b + c + d‖ ≤ ‖a + b + c‖ + ‖d‖ := norm_add_le _ _
         _ ≤ (‖a + b‖ + ‖c‖) + ‖d‖ := by linarith [norm_add_le (a + b) c]
         _ ≤ ((‖a‖ + ‖b‖) + ‖c‖) + ‖d‖ := by linarith [norm_add_le a b]
-    calc ‖fullWindowMean N J h - (c' J * cR 2 J) * Pf‖
+    calc ‖fullWindowMean N J h - (c' J * cR J) * Pf‖
         ≤ ‖fullWindowMean N J h - SW * RW‖ + ‖(SW - c' J * PS) * RW‖
-            + ‖(c' J * PS) * (RW - cR 2 J * PR)‖ + ‖(c' J * cR 2 J) * (PS * PR - Pf)‖ := by
+            + ‖(c' J * PS) * (RW - cR J * PR)‖ + ‖(c' J * cR J) * (PS * PR - Pf)‖ := by
           rw [hdecomp]; exact hnorm4 _ _ _ _
       _ ≤ |CD| / Real.log N * F + (1 / Real.log N) * ((BR + |CR|) * K)
             + B' * (|CR| / Real.log N * K) + B' * BR * (|CD| / Real.log N * F) := by
@@ -797,6 +818,10 @@ theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : Smo
             field_simp
           rw [e3]
           linarith [e1, e2]
+/-- The kickoff's wiring, now a corollary of the sharpened one. -/
+theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : SmoothRoughDecoupling h)
+    (hS : SmoothNonvanishing h) : CRTConstantSched h :=
+  crtConstantSched_of_roughAt (roughIndependenceAt_of_rough hR le_rfl) hD hS
 
 theorem isNormal_G4_of_rough
     (hSD : ∀ h : ℤ, h ≠ 0 → ¬ ChowlaSector h →

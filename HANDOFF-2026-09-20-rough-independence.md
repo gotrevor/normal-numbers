@@ -64,3 +64,16 @@ factors), `windowJ_div_tendsto_zero`, `windowJ_log_div_tendsto_zero`,
   **That is a real simplification opportunity**: the wiring only ever needs `y = 2`.
 * `SmoothNonvanishing` is elementary and should be provable outright (CRT over `p ≤ y`);
   it is frozen only because this lap was wiring-only.
+
+## Post-lap addendum: the crux is narrower than it was frozen
+
+`RoughIndependenceAt h y` (added, pure addition) is the shape the wiring actually consumes:
+a **single** `y`, a constant `c : ℕ → ℂ` of one argument, and a relative error `C / log N`
+with **no `1/y` gain**.  `roughIndependenceAt_of_rough` shows the frozen node implies it (for
+every `y ≥ 2`), `crtConstantSched_of_roughAt` is the wiring from it, and the kickoff's
+`crtConstantSched_of_rough` is now a one-line corollary — statement untouched.
+
+So the open obligation is exactly: **`RoughIndependenceAt h 2`** — after stripping the primes
+`p ≤ 2` (i.e. dividing out the parity of `ω`), the window mean factorises into its site means
+with relative error `O(1/log N)`.  The measured `1/y` decay of probe 6 is head-room, not a
+requirement.  A future probe should attack `y = 2` directly.
