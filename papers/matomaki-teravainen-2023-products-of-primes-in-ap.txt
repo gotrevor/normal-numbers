@@ -1,0 +1,2913 @@
+                                                 PRODUCTS OF PRIMES IN ARITHMETIC PROGRESSIONS
+
+                                                                     KAISA MATOMÄKI AND JONI TERÄVÄINEN
+
+
+                                                  Abstract. A conjecture of Erdős states that, for any large prime q, every reduced
+                                                  residue class (mod q) can be represented as a product p1 p2 of two primes p1 , p2 ≤ q.
+                                                  We establish a ternary version of this conjecture, showing that, for any sufficiently large
+                                                  cube-free integer q, every reduced residue class (mod q) can be written as p1 p2 p3 with
+
+
+
+
+arXiv:2301.07679v3 [math.NT] 15 Feb 2024
+                                                  p1 , p2 , p3 ≤ q primes. We also show that, for any ε > 0 and any sufficiently large integer
+                                                  q, at least (2/3 − ε)φ(q) reduced residue classes (mod q) can be represented as a product
+                                                  p1 p2 of two primes p1 , p2 ≤ q.
+                                                      The problems naturally reduce to studying character sums. The main innovation in
+                                                  the paper is the establishment of a multiplicative dense model theorem for character sums
+                                                  over primes in the spirit of the transference principle. In order to deal with possible local
+                                                  obstructions we establish bounds for the logarithmic density of primes in certain unions
+                                                  of cosets of subgroups of Z× q of small index and study in detail the exceptional case that
+                                                  there exists a quadratic character ψ (mod q) such that ψ(p) = −1 for very many primes
+                                                  p ≤ q.
+
+
+
+
+                                                                                    1     Introduction
+                                             For integers k, q ≥ 1 and a real number N ≥ 1, write
+                                                  Ek (N ) = {a ∈ Z×
+                                                                  q : a ≡ p1 · · · pk (mod q) for some primes p1 , . . . , pk ≤ N },
+
+                                           where Z× q is the set of reduced residue classes (mod q). We study the size of Ek (N ) for
+                                           k ∈ {2, 3}.
+                                              Let us first note that when k = 1, Linnik’s problem can be formulated as asking for
+                                           the smallest L such that E1 (Cq L ) = Z×   q for some constant C and all large enough q.
+                                           Linnik [13, 14] first proved the existence of such constant L and the best known exponent
+                                           today is L = 5 by a result of Xylouris [27] (which is a slight improvement of an earlier
+                                           result of Heath-Brown [9]).
+                                              Concerning the case k = 2, Erdős conjectured (see [4]) that E2 (q) = Z×  q for all large
+                                           enough primes q. This remains open even under the generalized Riemann hypothesis. In
+                                           this paper we establish a ternary variant of Erdős’ conjecture:
+                                           Theorem 1.1.        (i) Let q ∈ N be cube-free and sufficiently large. Then
+                                                                                         E3 (q) = Z×
+                                                                                                   q .
+
+                                            (ii) Let ε > 0 and let q ∈ N be sufficiently large in terms of ε. Then
+                                                                                        E3 (q 1+ε ) = Z×
+                                                                                                       q .
+
+                                             Previously, Walker had shown in [26] that E48 (q) = Z×  q and later in [25] that E20 (q) =
+                                           Zq . This was improved independently by Szabó [23] and Zhao [28] to E6 (q) = Z×
+                                            ×
+                                                                                                                                      q
+                                           (Szabó [23] needed to assume that q is prime), so we get significantly closer to the conjec-
+                                           ture of Erdős.
+                                                                                                1
+2                       Kaisa Matomäki and Joni Teräväinen
+
+   On the other hand, several authors have considered the least N for which E3 (N ) = Z×    q .
+The best results in the literature are that N = 650q 3 works for all q ≥ 2 due to Ramaré,
+Srivastav and Serra [21], and that N = q 6/5+ε works for all sufficiently large q due to
+Szabó [23] (improving on [1]). Theorem 1.1 shows that N = q works for every sufficiently
+large cube-free q, and that N = q 1+ε works for every q that is sufficiently large in terms of
+ε. Actually our techniques would allow one to establish that, for some quite small α > 0,
+one has E3 (q 1−α ) = Z×q for all sufficiently large cube-free q.
+   We also note that Klurman, Mangerel and the second author [11] proved that, once
+ε > 0 is sufficiently small, we have E3 (q) = Z×                            ε
+                                                  q for all large enough q -smooth numbers q,
+and also E3 (q) = Z×  q for all but O(1) primes q ∈ [Q
+                                                           1/2 , Q] for any Q ≥ 1. The method
+
+in [11] depends on the quality of the zero-free regions available for Dirichlet L-functions
+(mod q), and hence it does not work for arbitrary q. In case when q is smooth, one has
+better character sum estimates, and due to this our methods would allow one to prove
+E3 (q 1−α ) = Z×
+               q for somewhat larger α than in the cube-free case.
+
+Remark 1.2. In Theorem 1.1(i), the assumption that q ∈ N is cube-free and sufficiently
+large could be weakened for instance to the assumption that, for some ε > 0, the cube-full
+part of q is ≤ q 1/9−ε and q is sufficiently large in terms of ε. Let us briefly sketch why this
+is the case; we leave the details to the interested reader. In the proof of Theorem 1.1(ii), we
+look at E3 (q 1+100ε ) instead of E3 (q) just because we need Proposition 6.2 to be applicable
+with θ = 2/3 + 10ε. But, as noted in Remark 5.1, the only property of θ needed for
+Proposition 6.2 is that
+
+                                               1 X
+(1.1)                       max        max         χ(n) ≪ N −ε0
+                          χ (mod q) N 1−θ ≤y≤N y
+                            χ̸=χ0                 n≤y
+
+for some ε0 > 0. By a direct consequence of the Burgess bound (see [10, (12.56)]), we do
+have (1.1) with N = q and θ = 2/3 + 10ε under the assumption that the cube-full part of
+q is ≤ q 1/9−100ε . Now the claim follows by adjusting ε.
+  We also consider another approximation toward the conjecture of Erdős, namely the
+problem of lower-bounding the density of E2 (q) inside Z×
+                                                        q , and prove the following.
+
+Theorem 1.3. Let ε > 0 and let q ∈ N be sufficiently large in terms of ε.
+  (i) We have                                      
+                                               2
+                                 |E2 (q)| ≥      − ε φ(q).
+                                               3
+ (ii) Assume that q is cube-free. Then
+                                                   
+                                              11
+                                |E2 (q)| ≥       − ε φ(q).
+                                              16
+   Here 2/3 ≈ 0.666 . . . and 11/16 = 0.6875 whereas the previous record was due to
+Szabó [23] with 3/8 = 0.375 in place of 11/16 in the case that q is cube-free (for general q,
+Szabó’s method gives proportion 1/3 − ε). Note that Theorem 1.3(i) immediately implies
+(taking ε < 1/6) the previously unknown result that E4 (q) = Z×   q for all large q.
+   In addition to studying Ek (N ) as in Theorems 1.1 and 1.3, there is still another ap-
+proximation toward the conjecture of Erdős — one can ask what is the least integer k
+such that every a ∈ Z× q can be written as a = pn with p, n ≤ q and n having at most
+                   Products of primes in arithmetic progressions                           3
+
+k prime factors. Our methods are not applicable to this binary problem that is in the
+literature approached through sieving the variable n. The best result on this problem is
+due to Zhao [28] with k = 5. Zhao [28] also obtained that every a ∈ Z×     q can be written
+as a = p1 p2 n with p1 , p2 , n ≤ q and n having at most two prime factors. Of course our
+Theorem 1.1 improves this last result to n being prime in case q is cube-free.
+   We shall give outlines of proofs in the following subsection, but let us here very briefly
+mention the main components of the proofs. The main innovation is the establishment
+of a multiplicative dense model theorem for character sums over primes in the spirit of
+the transference principle. The dense model theorem transfers our problems to additive
+combinatorial problems concerning product sets of positive density subsets of Z×      q . To
+consider these latter problems, we use Kneser’s theorem after which we need to deal with
+the case that the primes are concentrated in a union of cosets of a small index subgroup
+of Z×q . To deal with this case, we use some sieve theory to obtain lower bounds for the
+number of primes in unions of cosets of small index. In particular we need to take special
+care of the case when there exists an exceptional quadratic character ψ (mod q) for which
+ψ(p) = −1 for very many primes p ≤ q.
+   The multiplicative transference principle established here is likely to have other appli-
+cations as well. In a forthcoming work joint with Merikoski, we shall consider Linnik’s
+problem using sieve ideas and some of the techniques used in this work.
+
+1.1     Proof outline
+   The starting point of the proof of Theorem 1.1(i) is (essentially) the orthogonality
+identity
+                                                                         3
+                X                                1   X      X
+(1.2)                    log p1 log p2 log p3 =                χ(p) log p χ(a).
+                                                φ(q)
+                p1 ,p2 ,p3 ≤q                                χ (mod q)    p≤q
+           p1 p2 p3 ≡a (mod q)
+
+Separating the contribution of the principal character χ0 (mod q) and applying the prime
+number theorem, this becomes
+                                                                3
+                             q3     1      X       X
+                 (1 + o(1))     +                     χ(p) log p χ(a).
+                            φ(q) φ(q)
+                                                 χ (mod q)   p≤q
+                                                   χ̸=χ0
+
+If we knew that we have
+                                          X                         q
+(1.3)                              max           χ(p) log p ≪             ,
+                                 χ (mod q)                      (log q)10
+                                   χ̸=χ0   p≤q
+
+say, the claim would follow quickly by applying to (1.2) this bound together with the
+standard mean value theorem for character sums (see Lemma 3.6 below). However, un-
+fortunately, there are no chances to unconditionally establish (1.3) — note that the sum
+is only up to p ≤ q with q the conductor of the character.
+   We overcome this obstacle by establishing a dense model theorem for character sums
+over primes. This is motivated by the transference approach to additive problems, in-
+troduced by Green [6] in the case of counting arithmetic progressions and generalized
+in [12], [22], [17], [16] to deal with the ternary Goldbach equation.
+4                             Kaisa Matomäki and Joni Teräväinen
+
+   In particular Shao [22] considered the ternary Goldbach problem for positive density
+subsets of the primes. More precisely, he proved that if a set A ⊆ P has lower relative
+density greater than 5/8, then each sufficiently large
+                                                   Q odd integer N can be represented
+as a sum of three primes from A. Taking W = p≤w p with w growing to infinity and
+splitting into arithmetic progressions (mod W ), this problem reduces to studying a sumset
+problem in ZW and to studying, for bi coprime to W ,
+                              X
+                                              log n1 log n2 log n3
+                              n1 ,n2 ,n3 ≤N/W
+                  (W n1 +b1 )+(W n2 +b2 )+(W n3 +b3 )=N
+                      W n1 +b1 ,W n2 +b2 ,W n3 +b3 ∈A
+(1.4)                                                                         
+                      Z 1       3
+                               Y  X         W
+                  =                            fb (n)e(α(W n + bi )) e(−αN ) dα,
+                          0                φ(W ) i
+                              i=1 n≤N/W
+
+where fbi : [1, N/W ] ∩ N → R≥0 are defined by fbi (n) = φ(W )
+                                                          W (log n)1W n+b∈A .
+   Now, for each b with (b, W ) = 1, one can find a dense model gb : [1, N/W ] ∩ N → [0, 1]
+such that gbb is close to fbb in sup norm. Then one can replace fbi by gbi in (1.4) (since
+one has also an Lr bound for fbb and gbb for some r ∈ (2, 3)) and reduce the problem to
+studying sumsets of positive density subsets of the integers. The corresponding sumset
+problems can in principle be solved unless there are some ”local” obstructions, such as A
+being concentrated in an arithmetic progression or a Bohr set.
+   We argue similarly. In particular we essentially let f : [1, q] ∩ N → R≥0 be defined
+through f (n) = 1n∈P log n and prove a multiplicative analogue of a dense model theorem,
+showing, using the Burgess bound for cube-free q and a linear sieve majorant, that there
+exists g : Z×       8
+            q → [0, 3 + ε] such that
+
+                                 X                    q X
+                       max             f (n)χ(n) −          g(a)χ(a) = o(φ(q)).
+                    χ (mod q)                        φ(q) ×
+                                 n≤q                       a∈Zq
+
+Moreover, by a Halász–Montgomery type inequality and the mean value theorem (again
+in the form of Lemma 3.6) we can show that fb and gb satisfy suitable Lr bounds with
+r ∈ (2, 3) (which we will formulate as large value estimates rather than Lr bounds, see
+Remark 3.9 below). Combining these facts with (1.2), we can show that
+          X                                  X
+                   log p1 log p2 log p3 =              f (n1 )f (n2 )f (n3 )
+         p1 ,p2 ,p3 ≤q                              n1 ,n2 ,n3 ≤q
+    p1 p2 p3 ≡a (mod q)                         n1 n2 n3 ≡a (mod q)
+
+                                                 q3                                                      q3
+                                                              X                                               
+                                              =                            g(a1 )g(a2 )g(a3 ) + o                  .
+                                                φ(q)3                                                   φ(q)
+                                                          a1 ,a2 ,a3 ∈Z×
+                                                                       q
+                                                           a1 a2 a3 =a
+
+Writing
+                                       A = {a ∈ Z×
+                                                 q : |g(a)| ≥ ε/10},
+we obtain that a ∈ E3 (q) if (1A ∗ 1A ∗ 1A )(a) ≫ φ(q)2 . Furthermore, it follows from the
+construction of g that
+                                                
+                                            3
+                                   |A| ≥      − ε φ(q).
+                                            8
+                      Products of primes in arithmetic progressions                                                5
+
+   Using a popular sums version of Kneser’s theorem (Lemma 6.1), we have (1A ∗ 1A ∗
+1A )(a) ≫ φ(q)2 for all a ∈ Z×                           ×
+                               q (and hence E3 (q) = Zq ) unless A is essentially (up to a
+set of cardinality o(φ(q))) stuck in k + 1 cosets of a subgroup H ≤ Z×    q of index 3k + 2,
+for some k ∈ {0, 1, 2}, and A · A is essentially the union of 2k + 1 cosets of H. The dense
+model g is defined in such a way that this means that also the primes p ≤ q are essentially
+stuck in these cosets.
+   We are now left with three problematic scenarios:
+  (i) Almost all primes up to q are contained in 3 cosets of an index 8 subgroup of Z×
+                                                                                     q .
+ (ii) Almost all primes up to q are contained in 2 cosets of an index 5 subgroup of Z×
+                                                                                     q .
+(iii) Almost all primes up to q are contained in a coset of an index 2 subgroup of Z×
+                                                                                    q .
+   None of these scenarios should happen in reality, but the existing bounds for least primes
+in cosets (for example [1, Theorem 2.4]) do not seem to rule them out, and scenario (iii)
+could in fact happen if there were Siegel zeros.
+   Using a lemma of Heath-Brown on character sums over primes, we will be able to show
+that, for at least one of the remaining 2k + 1 cosets not occupied by A, say a0 H, one has
+                                  X      1
+(1.5)                                      ≫1              for some α ∈ [2ε, 1],
+                                   α−ε α
+                                         p
+                               p∈(q   ,q ]
+                                 p∈a0 H
+
+except in the case when k = 0 and A is essentially contained in the coset a1 H ̸= H. This
+last case, corresponding to (iii) above, requires some special care as we will explain below.
+Also the bound (1.5) is not quite sufficient to refute the scenarios (i) or (ii), since above
+we would need a positive natural density of primes p ≤ q in the coset a0 H. However, in
+case (1.5) holds we study the logarithmically weighted count
+                                                              2                     
+       X         log p2 log p3     1     X        X                     X       χ(p1 ) 
+                               =                    χ(p) log p                        χ(a).
+                      p1         φ(q)                                α−ε      α
+                                                                                  p1
+p1 p2 p3 ≡a (mod q)                          χ (mod q)           p≤q                       q    <p1 ≤q
+       p2 ,p3 ≤q
+    q α−ε <p1 ≤q α
+
+In this case we use the dense model only for the primes p2 , p3 . Using again large value
+results for character sums (also for an appropriate moment of the character sum of p1 ),
+we can show that
+                                              2                              2 
+              X         log p2 log p3      q         X        g(a2 )g(a3 )      q
+                                      =                                    +o
+                             p1           φ(q)    p1 a2 a3 =a     p1           φ(q)
+         p1 p2 p3 ≡a (mod q)
+                p2 ,p3 ≤q                                        q α−ε <p1 ≤q α
+             q α−ε <p1 ≤q α                                        a2 ,a3 ∈Z×
+                                                                            q
+                                                                 2
+                                                                                                     q2
+                                                                                                         
+                                                  2        q               X            1
+                                             ≥ε                                            +o                  ,
+                                                          φ(q)           p1 a2 a3 =a    p1          φ(q)
+                                                                       q α−ε <p1 ≤q α
+                                                                          a2 ,a3 ∈A
+
+with A as above. Since A · A is now essentially a union of 2k + 1 cosets, this together
+with (1.5) will allow us to finish the proof.
+   On the other hand, in case that k = 0 and A is essentially contained in the coset
+a1 H ̸= H (so that we are in scenario (iii)), we can use sieve-theoretic arguments to show
+6                      Kaisa Matomäki and Joni Teräväinen
+
+(see Lemma 8.1) that either (1.5) holds with a0 ∈ H or there exists y ∈ [q 5/7 , q] such that
+                                                             
+                         X                 φ(q) Y           2
+(1.6)                         1 ≫ yL(1, ψ)              1−      ,
+                                             q              p
+                          p≤y                          2<p<q
+                         ψ(p)=1                        ψ(p)=1
+
+where ψ is the quadratic character (mod q) for which ψ(h) = 1 for every h ∈ H. The lower
+bound in (1.6) can be a lot smaller than y/ log y if L(1, ψ) is small (and hence we cannot
+rule out scenario (iii)), but we can use a sieve to construct a pseudorandom majorant for
+the primes p ≤ q with ψ(p) = 1 that takes into account this smaller density of primes
+with ψ(p) = 1, and this allows us to prove a lossless Halász–Montgomery type large value
+theorem for primes p ≤ y with ψ(p) = 1 (see Lemma 9.5). This in turn will allow us to
+make an appropriate transference and finish the proof.
+   In case q is not cube-free, taking into account the version of Burgess for arbitrary moduli
+the previous argument would only give us
+                                                  
+                                              1
+(1.7)                                 |A| ≥     − ε φ(q).
+                                              3
+This is not sufficient for a successful application of Kneser’s theorem since we might have
+that |A · A · A| ≤ (1 − 3ε)φ(q) even if A is not stuck in a union of arithmetic progressions.
+But once we study E3 (q 1+100ε ) we can replace 1/3 − ε by 1/3 + ε in (1.7) and the previous
+method works, since we can also show that A occupies at least proportion 3/8 − ε of cosets
+of any subgroup of Z×  q with fixed index.
+   In the proof of Theorem 1.3, we argue similarly to the first part of the proof of The-
+orem 1.1 to obtain that either the claim holds or we have a similar local obstruction as
+in the ternary case. In this case, we are able to prove lower bounds for the number of
+products of two primes in the cosets not occupied by A · A through studying multiplicative
+energy.
+
+
+                                         2      Notation
+2.1     General notation
+  Throughout the paper, we assume that ε > 0 is sufficiently small. We write x ∼ y as a
+shorthand for y < x ≤ 2y. By φ, Λ, and τk we denote the Euler totient function, the von
+Mangoldt function,
+             Q     and the k-fold divisor function (with τ = τ2 ), as usual. For z ≥ 1, we
+write P (z) = p<z p. We write (a, b) for the greatest common divisor of integers a and b.
+We write
+(2.1)                             [N ]q = {n ≤ N : (n, q) = 1}.
+By (3.2) below we have that
+                                               φ(q)
+(2.2)                             |[N ]q | =        N + O(τ (q)).
+                                                q
+For a finite, nonempty set A and a function f : A → C, we use the notation
+                                             1 X
+                               En∈A f (n) =        f (n).
+                                            |A|
+                                                       n∈A
+                    Products of primes in arithmetic progressions                       7
+
+2.2     Group theory
+  For a finite abelian group G written in multiplicative notation and subsets A, B ⊆ G,
+define the product set A · B = {ab : a ∈ A, b ∈ B}, and for c ∈ G define the dilation
+cA = c · A = {ca : a ∈ G}. For a subset A ⊆ G, the stabilizer of A is the subgroup
+{g ∈ G : g · A = A}.
+  The convolution of two functions f, g : G → C is defined as
+                                            X
+                               (f ∗ g)(a) =     f (b)g(c).
+                                                        b,c∈G
+                                                        bc=a
+
+  By χ0 (mod q) we denote the principal Dirichlet character (mod q). For a subgroup
+H ≤ Z×                        ×
+      q and an element b ∈ Zq , we abuse the notation by writing, for n ∈ Z, n ∈ bH if n
+(mod q) ∈ bH.
+  We will frequently use that the orthogonality of characters implies that, for any a ∈ Z×
+                                                                                         q
+and n ∈ N or n ∈ Z×q ,
+                                          1     X
+                         1n=a (mod q) =                χ(n)χ(a)
+                                        φ(q)
+                                                          χ (mod q)
+
+and, for any H ≤ Z×          ×
+                  q and b ∈ Zq ,
+                                            1             X
+(2.3)                      1n∈bH =                                       χ(n)χ(b).
+                                           φ(q)
+                                                      χ (mod q)
+                                                  χ(h)=1 for all h ∈ H
+
+Note that the number of characters in the last sum equals the index of H in Z×
+                                                                             q .
+
+
+                                       3     Auxiliary results
+3.1     Sieves, Burgess’ bound, and products of primes in cosets
+  We shall use the linear sieve, see e.g. [5, Section 12].
+Lemma 3.1. Let z ≥ 2 and let D = z s with s ≥ 1. There exist coefficients λ± d such that
+the following hold.
+                                     ±
+  (i) |λ±
+        d | ≤ 1 for every d ∈ N and λd are supported on {d ≤ D : d | P (z)}.
+ (ii) For every n ∈ N,
+                               X                      X
+                                  λ−
+                                   d ≤ 1(n,P (z))=1 ≤   λ+
+                                                         d.
+                                    d|n                            d|n
+(iii) If h : N → [0, 1) is a multiplicative function such that
+                                                                    
+                         Y
+                                         −1    log z1             1
+                              (1 − h(p)) ≤             1+O
+                                               log w1          log w1
+                       w1 ≤p<z1
+
+        for any z1 ≥ w1 ≥ 2, then
+                         X                                Y
+                              λ+d h(d) ≤ (F 0 (s) + o(1))   (1 − h(p)),
+                         d|P (z)                                   p<z
+                          X                                       Y
+                                   λ−
+                                    d h(d) ≥ (f0 (s) + o(1))             (1 − h(p)),
+                         d|P (z)                                  p<z
+8                       Kaisa Matomäki and Joni Teräväinen
+
+        where F0 and f0 are the upper and lower bound linear sieve functions (see e.g. [5,
+        (12.1)–(12.2)]), so that in particular
+                               F0 (s) = 2eγ /s for s ∈ [1, 3],
+(3.1)
+                               f0 (s) = 2eγ log(s − 1)/s for s ∈ [2, 4].
+   Applying the sieve in our set-up often leads us to sums over integers coprime to the
+modulus q ∈ N. For these we note that by Möbius inversion we have, for any y ≥ 1,
+             X         X        X          X µ(e)                 φ(q)
+(3.2)             1=      µ(e)       1=y           + O(τ (q)) = y      + O(τ (q)).
+                                                e                  q
+               m≤y       e|q        m≤y/e          e|q
+              (m,q)=1
+
+    For character sums we use the Burgess bound.
+Lemma 3.2. Let q ∈ N, let χ be a primitive character (mod q) and let M, N ≥ 1. Then,
+for any ε > 0
+                                                   1 r+1
+                                     χ(n) ≪ε N 1− r q 4r2 +ε
+                             X
+
+                                 M <n≤M +N
+for r ∈ {1, 2, 3}. If q is cube-free or χ has bounded order, then this holds for any r ∈ N.
+   In particular, for any ε > 0, there exists δ = δ(ε) > 0 such that for any q ∈ N and any
+N ≥ q 1/3+ε we have
+                                       X
+                                           χ(n) ≪ε N 1−δ .
+                                         n≤N
+
+When q is cube-free or χ has bounded order, this holds for N ≥ q 1/4+ε .
+Proof. The case r = 1 of the first part follows from the Pólya–Vinogradov inequality (see
+e.g. [10, Theorem 12.4]). The case r ≥ 2 of the first part is the Burgess bound, see e.g. [10,
+Theorem 12.5] for the general and cube-free case and [9, Lemma 2.4] for the bounded
+order case.
+   The second part follows from the first by taking r = 3 in the case of arbitrary q and r
+large in case q is cube-free or χ has bounded order.                                        □
+    Let us prove the following quick consequence of the linear sieve and the Burgess bound.
+Lemma 3.3 (The number of products of at most two primes in cosets). Let ε > 0 be
+fixed. Let q ∈ N, N ≥ q 3/4+ε , and let θ0 = 1 − ε − 4 log q              ×
+                                                       log N . Let H ≤ Zq be a subgroup of
+                              ×
+fixed index Y and let b ∈ Zq . Then
+                   2 log(3θ0 − 1)      N         X                        2     N
+        (1 + o(1))                ·         ≤               1 ≤ (1 + o(1)) ·
+                         θ0         Y log N                               θ0 Y log N
+                                                       n≤N
+                                                       n∈bH
+                                                  p|n =⇒ p≥N 1/3
+
+Proof. Let us first prove the lower bound. Let λ−
+                                                d be as in Lemma 3.1 with D = N
+                                                                                θ0 and
+
+s = 3θ0 (so that z = N 1/3 ). By Lemma 3.1(ii),
+                                  X          X        X
+(3.3)                                    1≥      λ−
+                                                  d        1.
+                                      n≤N            d≤D     m≤N/d
+                                      n∈bH                   dm∈bH
+                                 p|n =⇒ p≥N 1/3
+                     Products of primes in arithmetic progressions                                9
+
+Now we detect the condition dm ∈ b·H using (2.3). Let χ0 , χ1 , . . . , χY −1 be the characters
+(mod q) for which χj (h) = 1 for every h ∈ H. Then
+                       Y −1                                              Y −1
+ X              X    1 X                 1(d,q)=1        X             1 X                 X
+        1=               χj (dm)χj (b) =                          1+          χj (d)χj (b)   χj (m).
+                     Y                      Y                          Y
+m≤N/d        m≤N/d     j=0                              m≤N/d            j=1           m≤N/d
+dm∈bH                                                   (m,q)=1
+
+   By (3.2) and the Burgess bound (Lemma 3.2, where we note that each χj has bounded
+order ≤ Y ) we obtain, for some δ = δ(ε) > 0,
+                   X                 1 N φ(q)
+(3.4)                   1 = 1(d,q)=1          + O(τ (q)) + O((N/d)1−δ ).
+                                     Y d q
+                     m≤N/d
+                     dm∈bH
+
+Plugging this into (3.3), we obtain
+                   X            N φ(q) X λ−
+                            1≥      ·     d
+                                            + O(Dτ (q) + N 1−δ Dδ ).
+                                Y     q   d
+                     n≤N                      (d,q)=1
+                     n∈bH
+                p|n =⇒ p>N 1/3
+
+By Lemma 3.1(iii) and Mertens’ theorem, we have
+     X λ−                       Y       1p∤q
+                                              
+                                                                            q
+           d
+             ≥ (f0 (s) + o(1))        1−        = (e−γ f0 (s) + o(1))
+          d                       1/3
+                                           p                          φ(q) log N 1/3
+      (d,q)=1                        p<N
+
+The lower bound part of the claim now follows from (3.1), since s = 3θ0 ≤ 4 and either
+3θ0 ≥ 2 or the claim is trivial. The upper bound follows completely similarly but using
+the upper bound linear sieve instead.                                                □
+3.2   Lower bounds on product sets
+   Next we collect some results concerning convolutions of characteristic functions and
+product sets (or equivalently sumsets in additive notation). The following simple lemma
+gives a lower bound for convolutions on a product set.
+Lemma 3.4. Let G be a finite abelian group.
+ (i) Let A, B ⊆ G be nonempty subsets of G. Then we have
+                                   1A ∗ 1B (c) ≥ |A| + |B| − |G|
+      for all c ∈ G.
+ (ii) Let H ≤ G, let a, b ∈ G, and let A ⊆ aH and B ⊆ bH. Then, for any c ∈ abH, we
+      have
+                                   1A ∗ 1B (c) ≥ |A| + |B| − |H|.
+Proof. Part (i) follows since
+                1A ∗ 1B (c) = |cA−1 ∩ B| = |G| − |(cA−1 )c ∪ B c |
+                              ≥ |G| − (|G| − |A|) − (|G| − |B|) = |A| + |B| − |G|.
+Part (ii) follows from applying part (i) to the group H and sets a−1 A, b−1 B ⊆ H.               □
+   Kneser’s theorem (see e.g. [24, Theorem 5.5]) is a standard tool for studying product
+sets inside abelian groups.
+10                          Kaisa Matomäki and Joni Teräväinen
+
+Lemma 3.5 (Kneser’s theorem). Let G be a finite abelian group and let A, B ⊆ G. Let
+H be the stabilizer of A · B. Then
+                       |A · B| ≥ |A · H| + |B · H| − |H| ≥ |A| + |B| − |H|.
+3.3    Mean values of character sums
+  The following lemma is the basic mean value theorem (or large sieve) for characters
+sums.
+Lemma 3.6 (Mean value theorem). Let q ∈ N and N ≥ 2. Then, for any complex
+coefficients an ,
+                                                           2
+                            X            X                                            X
+                                              an χ(n)          ≤ (N + φ(q))                    |an |2 .
+                        χ (mod q) n≤N                                                 n≤N
+                                                                                     (n,q)=1
+
+Proof. Squaring out, using the orthogonality of characters and the inequality |am an | ≤
+(|am |2 + |an |2 )/2, we obtain
+                                 2
+        X      X                                       X                                   X                         X
+                      an χ(n)        ≤ φ(q)                       |am an | ≤ φ(q)                   |an |2                 1
+      χ (mod q) n≤N                              m,n≤N                                    n≤N                  m≤N
+                                               m≡n (mod q)                               (n,q)=1             m≡n (mod q)
+                                                (mn,q)=1
+                                                               X
+                                                   N
+                                     ≤ φ(q)          +1                   |an |2 .
+                                                   q
+                                                                 n≤N
+                                                                (n,q)=1
+
+                                                                                                                               □
+   We shall also use the following large value theorem due to Huxley (see e.g. [10, Theorem
+9.15 with sr (χ) = 0 for every r]).
+Lemma 3.7. Let q ∈ N and N ≥ 2, and let χ1 , . . . , χR be distinct Dirichlet characters of
+modulus q. Then, for any complex coefficients an ,
+                                         2
+              R X
+              X                                                                                    X
+                           an χj (n)         ≪ (N + R2/3 N 1/3 q 1/3 )(log(qN ))6                         |an |2 .
+              j=1 n≤N                                                                             n≤N
+
+   The following lemma gives variants of Halász–Montgomery type mean value theorems
+that are tailored for character sums supported on numbers without small prime factors
+(for the usual Halász–Montgomery type mean value theorem, see e.g. [10, Theorem 9.14]).
+Using different r in Burgess’ bound one would obtain different results. A similar result
+can also be found from [20, Theorem 3].
+Lemma 3.8. Let q ∈ N and let χ1 , . . . , χR be distinct Dirichlet characters of modulus q.
+Let ε > 0 and C ≥ 1 be fixed. Then the following hold.
+ (i) Let N ∈ [q ε , q C ]. Then, for any complex coefficients an ,
+                                                   2
+               R                                                                    
+               X          X                                     N        1                   X
+                                       an χj (n)       ≪             + q 2 +2ε R                          |an |2 .
+                                                               log q
+               j=1       n≤N                                                                n≤N
+                      (n,P (q ε ))=1                                                     (n,P (q ε ))=1
+                      Products of primes in arithmetic progressions                                                                  11
+
+ (ii) Let q C ≥ N2 ≥ N1 ≥ q 2ε . Then, for any complex coefficients an ,
+                                                         2
+                R
+                                                                                            !
+                X           X            an                                    q 1/9+3ε             X            |an |2
+                                            χj (n)           ≪         1+           1/3
+                                                                                        R                               .
+                                         n                                      N1                                 n
+                j=1      N1 <n≤N2                                                                N1 <n≤N2
+                        (n,P (q ε ))=1                                                          (n,P (q ε ))=1
+
+Proof. We only prove the second claim, the first claim follows similarly (using non-logarithmic
+averages and taking r = 1 instead of r = 3 in Burgess’ bound). By the duality principle
+(see e.g. [10, Section 7.1]), it suffices to show that, for any complex coefficients cj ,
+                                                                   2
+                                            R
+                                                                                                    ! R
+                          X            1 X                                           q 1/9+2ε        X
+(3.5)                                      cj χj (n)                   ≪       1+         1/3
+                                                                                                R           |cj |2 .
+                                       n                                                 N1
+                       N1 <n≤N2            j=1                                                        j=1
+                      (n,P (q ε ))=1
+
+Let λ+                                                ε
+     d be as in Lemma 3.1 with sifting parameter D = q and s = 1 (so that z = D).
+Then the left-hand side of (3.5) is by Lemma 3.1(ii)
+                                                 2
+                              R                            R                X λ+
+        X      1X + X                                      X
+                                                                                      d
+                                                                                                                 X          χj (n)χk (n)
+≤                λd   cj χj (n)                      =              cj ck                 χj (d)χk (d)                                   .
+               n                                                                     d                                           n
+    N1 <n≤N2    d|n         j=1                          j,k=1              d≤q ε                        N1 /d<n≤N2 /d
+
+The diagonal terms with j = k contribute by (3.2), partial summation, and Lemma 3.1(iii)
+   R         X λ+                     R         X λ+  φ(q)                        
+  X                      X       1 X                               N2        τ (q)d
+      |cj |2      d
+                                   =     |cj |2        d
+                                                               log     +O
+               ε
+                 d               n                 ε
+                                                      d      q     N1          N1
+    j=1      d≤q            N1 /d<n≤N2 /d                    j=1             d≤q
+            (d,q)=1             (n,q)=1                                     (d,q)=1
+                                                             R
+                                                             X
+                                                      ≪             |cj |2 .
+                                                             j=1
+
+    On the other hand, the non-diagonal terms with j ̸= k contribute
+                                  R
+                                  X                  X 1                    X             χj (n)χk (n)
+                            ≪             |cj ck |                                                     .
+                                                             d                                 n
+                                  j,k=1              d≤q ε         N1 /d<n≤N2 /d
+                                   j̸=k
+
+By partial summation and the Burgess bound (Lemma 3.2) with r = 3, this is
+                                                     R
+                                                     X                 X 1    q 1/9+ε
+                                          ≪R               |cj |2                      ,
+                                                                        ε
+                                                                          d (N1 /d)1/3
+                                                     j=1            d≤q
+
+and the claim follows.                                                                                                                □
+
+    Lemma 9.5 below will provide another Halász–Montgomery type mean value theorem.
+Remark 3.9. It would be possible to combine the previous three lemmas to obtain bounds
+for rth moments of character sums over primes with real r > 2 in the spirit of what is often
+done in the transference principle. However we obtain quantitatively stronger results by
+applying these lemmas directly in the proof of Proposition 5.2 below.
+12                         Kaisa Matomäki and Joni Teräväinen
+
+                     4     A multiplicative transference principle
+4.1     A dense model theorem
+     Recall the notation
+                              [N ]q = {n ∈ N : n ≤ N and (n, q) = 1}.
+The following proposition is a dense model theorem which gives, for an unbounded function
+f : [N ]q → R≥0 which is majorized by a pseudorandom measure, a model function g :
+Z×
+ q → R≥0 that is bounded and such that character sums of f and g behave similarly.
+  Such results originate from the work of Green [6]. The following proposition should be
+compared with e.g. [7, Proposition 5.1], [19, Theorem 2.1] or [17, Theorem 2.3].
+Proposition 4.1 (A multiplicative dense model theorem). Let q ∈ N and N ≥ 2. Let
+r > 1 be fixed. Let η, ε ∈ (0, 1), C ≥ 1, and let
+                                                              !
+                                       10Cr log log q 1/r 1
+                                                    
+(4.1)                          δ∈                        ,      .
+                                           ε log q         10
+Let f : [N ]q → R≥0 satisfy:
+(A1) There exists a majorant function ν : [N ]q → R≥0 such that f (n) ≤ ν(n) for every
+      n ∈ [N ]q ,
+                En∈[N ]q ν(n) − 1 ≤ η,     and    max En∈[N ]q ν(n)χ(n) ≪ q −ε .
+                                                  χ̸=χ0
+
+(A2) There are at most Cδ −r characters χ (mod q) such that
+                                       En∈[N ]q f (n)χ(n) ≥ δ.
+Then there exists a function g : Z×
+                                  q → R≥0 with the following properties.
+ (i) For every a ∈ Z×q , we have
+
+                                   0 ≤ g(a) ≤ 1 + η + O(q −ε/2 ).
+ (ii) We have, for any χ (mod q),
+                              En∈[N ]q f (n)χ(n) − Ea∈Z×
+                                                       q
+                                                         g(a)χ(a) ≤ δ.
+(iii) We have, for any χ (mod q),
+                               Ea∈Z×
+                                   q
+                                     g(a)χ(a) ≤ |En∈[N ]q f (n)χ(n)|
+       and
+                   En∈[N ]q f (n)χ(n) − Ea∈Z×
+                                            q
+                                              g(a)χ(a) ≤ |En∈[N ]q f (n)χ(n)|.
+(iv) We have Ea∈Z×
+                 q
+                   g(a) = En∈[N ]q f (n).
+ (v) Let H ≤ Zq be a subgroup of index Y < 1/(2δ). Then, for any b ∈ Z×
+              ×
+                                                                      q , we have
+
+                           En∈[N ]q f (n)1n∈bH = Ea∈Z×
+                                                     q
+                                                       g(a)1a∈bH + O(δ).
+Proof. Let                   
+                      T := χ (mod q) : En∈[N ]q f (n)χ(n) ≥ δ
+be the large spectrum of f , and define the multiplicative Bohr set
+                         B := {b ∈ Z×
+                                    q : |χ(b) − 1| ≤ δ/5 for all χ ∈ T }.
+                   Products of primes in arithmetic progressions                                 13
+
+   By (A2) we have |T | ≤ Cδ −r . Let us bound |B| from below similarly to [24, Proof
+of Lemma 4.20]. Write T = {χ1 , . . . , χk }, where χj are distinct and k ≤ Cδ −r . By the
+pigeonhole principle, there exists a k-tuple (ξ1 , . . . , ξk ) ∈ Ck with |ξi | = 1 for every i such
+that, writing
+                 A = {a ∈ Z×
+                           q : |χj (a) − ξj | ≤ δ/10 for every j = 1, . . . , k},
+
+we have
+                                    |A| ≥ (100/δ + 1)−k φ(q).
+But now if x, y ∈ A, then x/y ∈ B. Hence, using (4.1),
+
+(4.2)              |B| ≥ |A| ≥ φ(q) exp(−Cδ −r log(100/δ + 1)) ≥ q 1−ε/2 .
+  We define g : Z×
+                 q → R by
+
+                      g(a) := φ(q)Eb1 ,b2 ∈B En∈[N ]q f (n)1n≡ab1 b−1 (mod q) .
+                                                                   2
+
+Let us now verify the claims (i)–(v).
+  Claim (i): The lower bound g(a) ≥ 0 is immediate from the definition of g. By the
+definition of g, assumption (A1) and orthogonality of characters,
+                      g(a) ≤ φ(q)Eb1 ,b2 ∈B En∈[N ]q ν(n)1n≡ab1 b−1 (mod q)
+                                                                 2
+                               X
+                           =           En∈[N ]q ν(n)χ(n)χ(a) |Eb∈B χ(b)|2 .
+                              χ (mod q)
+
+Separating the contribution of the principal character, we obtain
+                                                                              
+                                                            X
+        g(a) ≤ En∈[N ]q ν(n) + O  max En∈[N ]q ν(n)χ(n)          |Eb∈B χ(b)|2  .
+                                      χ̸=χ0
+                                                                 χ (mod q)
+
+By the assumption (A1), Lemma 3.6, and (4.2), we obtain
+                                      1−ε 
+                                      q
+                    g(a) ≤ 1 + η + O         ≤ 1 + η + O(q −ε/2 ).
+                                       |B|
+  Claim (ii): Changing the order of summation and using the orthogonality of characters,
+we see that
+           Ea∈Z×
+               q
+                 g(a)χ(a) = Eb1 ,b2 ∈B Ea∈Z×
+                                           q
+                                             χ(a)φ(q)En∈[N ]q f (n)1n≡ab1 b−1 (mod q)
+                                                                                  2
+
+(4.3)                       = Eb1 ,b2 ∈B χ(b1 )χ(b2 )Ea∈Z×
+                                                         q
+                                                           χ(a)χ(a)En∈[N ]q f (n)χ(n)
+                            = |Eb∈B χ(b)|2 En∈[N ]q f (n)χ(n).
+Hence
+                                                                                       
+                                                                                      2
+(4.4)      En∈[N ]q f (n)χ(n) − Ea∈Z×
+                                    q
+                                      g(a)χ(a) = En∈[N ] q
+                                                           f (n)χ(n)   1 − |Eb∈B χ(b)|    .
+
+  If now χ ̸∈ T , then by (4.4) and the definition of T , we have
+
+                En∈[N ]q f (n)χ(n) − Ea∈Z×
+                                         q
+                                           g(a)χ(a) ≤ En∈[N ]q f (n)χ(n) ≤ δ.
+14                          Kaisa Matomäki and Joni Teräväinen
+
+On the other hand, if χ ∈ T , then for every b ∈ B we have |χ(b) − 1| ≤ δ/5 and thus
+by (4.4) and (A1) we obtain
+              En∈[N ]q f (n)χ(n) − Ea∈Z×
+                                       q
+                                         g(a)χ(a) ≤ En∈[N ]q ν(n) 1 − |Eb∈B χ(b)|2
+                                                                            !
+                                                                    δ 2
+                                                                     
+                                                  ≤ (1 + η)     1+       −1 .
+                                                                    5
+Since by assumptions of the proposition η < 1 and δ < 1/10, the last expression is ≤ δ
+and claim (ii) follows.
+  Claim (iii): This is immediate from (4.3) and (4.4).
+  Claim (iv): This follows from (4.3) with χ = χ0 .
+  Claim (v): Let
+                        D = {χ (mod q) : χ(n) = 1 for every n ∈ H}.
+By (2.3)
+(4.5)
+                                               1 X                                         
+En∈[N ]q f (n)1n∈bH − Ea∈Z× g(a)1a∈bH =            χ(b) En∈[N ]q f (n)χ(n) − Ea∈Z× g(a)χ(a)
+                          q                    Y                                 q
+                                                 χ∈D
+
+     If now χ ̸∈ T , then by (iii) and the definition of T we have
+                             Ea∈Z×
+                                 q
+                                   g(a)χ(a) ≤ En∈[N ]q f (n)χ(n) ≤ δ.
+On the other hand if χ ∈ T , then (since δ < 1/(2Y ) and χ takes values in Y th roots of
+unity) by the definition of B we have χ(b) = 1 for every b ∈ B and so by (4.3) we have
+                               Ea∈Z×
+                                   q
+                                     g(a)χ(a) = En∈[N ]q f (n)χ(n).
+     Consequently, in any case
+                            Ea∈Z×
+                                q
+                                  g(a)χ(a) = En∈[N ]q f (n)χ(n) + O(δ)
+and the claim (v) follows from inserting this into (4.5).                                  □
+
+                        5    Applying the transference principle
+     Let ε > 0, N ≥ q 1/2 , and define
+                                      (
+                                       1 − ε − 4 log q
+                                                 log N       if q is cube-free;
+(5.1)                  θ = θ(N, q) :=
+                                       1 − ε − 3 log q
+                                                 log N       otherwise,
+and
+                                                              log q
+(5.2)                            θ0 = θ0 (N, q) := 1 − ε −           .
+                                                             4 log N
+Remark 5.1. The only property of θ(N, q) needed in what follows is that
+
+                                                  1 X
+(5.3)                          max       max          χ(n) ≪ N −ε0
+                             χ (mod q) N 1−θ ≤y≤N y
+                               χ̸=χ0                n≤y
+
+for some ε0 > 0. Similarly, θ0 (N, q) is any exponent such that (5.3) holds with θ0 in place
+of θ when the maximum is taken over characters χ (mod q) of bounded order.
+                  Products of primes in arithmetic progressions                              15
+
+   The following proposition transfers the problem of studying E3 (N ) into a dense setup.
+We only need a qualitative result for N ≥ q, but prove a more quantitative result in a
+larger range which might be helpful for further applications, or for working out a value of
+α for which E3 (q 1−α ) = Z×
+                           q for every sufficiently large cube-free q ∈ N.
+
+Proposition 5.2 (Conclusion of transference). Let q ∈ N be sufficiently large. Let κ > 0
+and C ≥ 1 be fixed and let N ∈ [q 2/3+κ , q C ]. Let ε > 0 be sufficiently small but fixed. Then
+there exists a set A ⊆ Z×
+                        q such that the following hold.
+ (i) We have
+                                                         
+                                                     θ
+                                         |A| ≥         − ε φ(q).
+                                                     2
+ (ii) For all but O(φ(q)(log q)−ε/5 ) values of a ∈ Z×
+                                                     q we have
+
+                                                φ(q)
+(5.4)                  (1A ∗ 1A )(a) ≫                   =⇒ a ∈ E2 (N ).
+                                            (log q)1/2−ε
+(iii) If N ≥ q 4/5+κ , then
+                                                     φ(q)2
+(5.5)                (1A ∗ 1A ∗ 1A )(a) ≫                      =⇒ a ∈ E3 (N ).
+                                                  (log q)1/2−ε
+(iv) Assume that N ≥ q and let α1 ∈ (2ε, 1]. Write L = ⌊1/α1 ⌋. Then
+                       X       1        φ(q)
+                                 ≫           1    =⇒ a ∈ E3 (N ).
+                     a=pa1 a2  p    (log q) 2L −ε
+                       q α1 −ε <p≤q α1
+                           a1 ,a2 ∈A
+
+  (v) For any subgroup H ≤ Z×   q of index Y < ε
+                                                  −1/2 , A contains > εφ(q) elements from at
+
+      least                                           
+                                        θ0      1/2 θ0
+                                           − 3ε         Y
+                                         2          θ
+      distinct cosets of H.
+ (vi) For any subgroup H ≤ Z×   q of index Y < ε
+                                                   −1/2 and any b ∈ Z× , we have
+                                                                      q
+                                                              
+                                       θ |E1 (N ) ∩ bH|      ε
+(5.6)                    |A ∩ bH| ≥      ·                −      φ(q).
+                                       2    N/ log N        5Y
+  Proposition 9.6 below adds one more conclusion to this proposition.
+Remark 5.3. In the case where q is cube-free and N = q, we obtain the bound |A| ≥
+(3/8 − 3ε/2)φ(q) which is rather good. However, when q is not cube-free, we only obtain
+that |A| ≥ (1/3 − 3ε/2)φ(q) which is problematic — for instance A could be stuck in a
+single coset of a subgroup of index 3 and we could not deduce Theorem 1.3(i). However,
+we can actually rule out this scenario by utilizing part (v) of the proposition.
+Proof of Proposition 5.2. We let D = N θ and z = N θ/3 . We shall apply Proposition 4.1
+with r = 2,
+                                                        1
+(5.7)                                    δ=                     ,
+                                                 (log q)1/2−ε/2
+16                       Kaisa Matomäki and Joni Teräväinen
+
+and with f, ν : [N ]q → R≥0 defined by
+                                          θ φ(q)
+(5.8)                          f (n) :=     ·    log N · 1n∈P 1n≥z
+                                          2   q
+and
+                                          θ φ(q)         X
+(5.9)                           ν(n) :=     ·    log N ·   λ+
+                                                            d,
+                                          2   q
+                                                                  d|n
+                                                                 d≤D
+
+where λ+d are the upper bound linear sieve weights from Lemma 3.1 with D and z as above
+(and s = 3), so that f (n) ≤ ν(n) for every n ∈ [N ]q .
+   Now f satisfies Proposition 4.1(A2) for some C = O(1) by Lemma 3.8(i). Let us confirm
+that ν satisfies Proposition 4.1(A1) for some η = o(1). For any character χ (mod q), we
+have
+                                 θ φ(q)                         X
+(5.10)       En∈[N ]q ν(n)χ(n) = ·        log N · En∈[N ]q χ(n)   λ+
+                                                                   d
+                                 2    q
+                                                                         d|n
+                                                                        d≤D
+                                     θ φ(q)       X            1     X
+                                 =     ·    log N   λ+
+                                                     d χ(d)            χ(m).
+                                     2   q                  |[N ]q |
+                                                           d≤D                 m≤N/d
+
+By the choice of θ, here N/d ≥ q 1/4+ε/4 when q is cube-free and N/d ≥ q 1/3+ε/4 otherwise.
+Hence when χ ̸= χ0 , the Burgess bound (Lemma 3.2) gives that the innermost sum is
+O(q −2ε0 N/d) for some ε0 = ε0 (ε) > 0 and thus we have that, for any χ ̸= χ0 ,
+                                           ν (χ)| ≪ q 1−ε0 .
+                                          |b
+     On the other hand, by (5.10) and (3.2),
+                                                     θ φ(q)         X       1    X
+          En∈[N ]q ν(n) = En∈[N ]q ν(n)χ0 (n) =        ·    · log N   λ+
+                                                                       d |[N ] |   1
+                                                     2   q                    q
+                                                                         d≤D           n≤N/d
+                                                                        (d,q)=1        (n,q)=1
+                                                                                 
+                            θ φ(q)               1         X      φ(q)N
+                        =     ·    · log N φ(q)              λ+
+                                                              d         + O(τ (q))
+(5.11)                      2   q         N     + O(τ (q))          qd
+                                                q                    d≤D
+                                                                    (d,q)=1
+
+                         θ φ(q)       X λ+     ε
+                                               Dq log N
+                                                        
+                                         d
+                        = ·     log N      +O             .
+                         2  q            d        N
+                                            d≤D
+                                           (d,q)=1
+
+By Lemma 3.1(iii) and Mertens’ theorem,
+                X λ+                log z Y
+                                             
+                                                 1
+                                                   
+                                                                      2    q
+                   d      γ
+(5.12)               = (2e + o(1))            1−     = (1 + o(1))        ·
+                   d               log D p<z     p                θ log N φ(q)
+               d≤D
+              (d,q)=1                                p∤q
+
+and thus
+                                     En∈[N ]q ν(n) = 1 + o(1)
+and Proposition 4.1(A1) holds for some η = o(1).
+                       Products of primes in arithmetic progressions                             17
+
+   Having established the assumptions, we may now apply Proposition 4.1 with r = 2 and
+δ, f and ν as in (5.7), (5.8) and (5.9). Hence we can find a function g : Z×
+                                                                           q → [0, 1 + o(1)]
+obeying Proposition 4.1(i)–(v). By Proposition 4.1(iv) and the prime number theorem,
+                                               θ φ(q)                             θ
+(5.13) Ea∈Z× g(a) = En∈[N ]q f (n) =             ·    log N · En∈[N ]q 1n∈P 1n≥z = + O((log q)−1 ).
+           q                                   2   q                              2
+We will constantly use the fact that, by the definition of f , the prime number theorem,
+and (2.2),
+                                                   φ(q) 2
+                                                      
+                  1       X
+                                  2      1                           log N
+(5.14)                  2
+                             f (n) ≪           2
+                                                          N log N ≪        .
+               |[N ]q |               |[N ]q |      q                  N
+                                n∈[N ]q
+
+Write
+(5.15)                                    A := {a ∈ Z×
+                                                     q : |g(a)| ≥ ε/10}.
+
+Now we are ready to establish the claims (i)–(v) of Proposition 5.2.
+  Claim (i): By Proposition 4.1(i),
+                                                    
+                        1  X                         ≤ ε + |A| (1 + o(1)).
+                                             X
+         Ea∈Z×  g(a) =                g(a) +     g(a)
+              q        φ(q)      ×
+                                                          10 φ(q)
+                                           a∈Zq \A           a∈A
+
+Combining this with (5.13) we obtain
+                                                               
+                                                           θ
+(5.16)                                        |A| ≥          − ε φ(q).
+                                                           2
+  Claim (iii): Note that definitely a ∈ E3 (N ) if (f ∗f ∗f )(n) > 0 for some n ≡ a (mod q).
+Now, by orthogonality of characters and Proposition 4.1(iii) we obtain that
+(5.17)
+         1           X                                 1
+                             (f ∗ f ∗ f )(n) −             (g ∗ g ∗ g)(a)
+      |[N ]q |3                                      φ(q)3
+                  n≡a (mod q)
+         1      X                        3       1       X                    3
+      =                En∈[N ]q f (n)χ(n) χ(a) −                 Eb∈Z×  g(b)χ(n)   χ(a)
+        φ(q)                                     φ(q)                q
+             χ (mod q)                                 χ (mod q)
+                                                                                 
+              1     X                       2
+      = O                En∈[N ]q f (n)χ(n) En∈[N ]q f (n)χ(n) − Eb∈Z×  g(b)χ(b)  .
+            φ(q)                                                       q
+                       χ (mod q)
+
+To bound the right-hand side, we split the characters into three sets
+                                                                    
+                                                                1
+(5.18)             X1 = χ (mod q) : En∈[N ]q f (n)χ(n) ≤ 1/4 ,
+                                                              N
+                    (                                                     )
+                                    1                             q 1/4+κ
+(5.19)        X2 = χ (mod q) : 1/4 < En∈[N ]q f (n)χ(n) ≤                   ,
+                                  N                                N 1/2
+and
+                                 (                                             )
+                                                                     q 1/4+κ
+(5.20)                   X3 =       χ (mod q) : En∈[N ]q f (n)χ(n) >               .
+                                                                      N 1/2
+18                         Kaisa Matomäki and Joni Teräväinen
+
+     By the definition of X1 , Proposition 4.1(iii), Lemma 3.6 and (5.14), we see that
+                 1 X                        2
+                          En∈[N ]q f (n)χ(n) En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b)
+               φ(q)                                                   q
+                    χ∈X1
+                  1    1         X                              2
+(5.21)         ≤                          En∈[N ]q f (n)χ(n)
+                 φ(q) N 1/4
+                              χ (mod q)
+                  1    1               log N    qκ      qκ
+               ≪            (N + φ(q))       ≪        +      .
+                 φ(q) N 1/4              N     N 1/4 q N 5/4
+This is O(1/q 1+κ/4 ) when N ≥ q 4/5+κ .
+  On the other hand, by the definition of X3 , Lemma 3.8(i) with ε = κ/2 and (5.14),
+                 !2
+         q 1/4+κ
+                                                                         
+                             X                   2     N       1/2+κ        log N
+             1/2
+                     |X3 | ≤   En∈[N ]q f (n)χ(n) ≪         +q       |X3 |        .
+          N                                           log q                   N
+                              χ∈X3
+Now the second term cannot dominate and so
+                                                  2
+                            X
+(5.22)                          En∈[N ]q f (n)χ(n) ≪ 1.
+                                   χ∈X3
+
+Combining this with Proposition 4.1(ii), we obtain
+           1 X                        2                                       δ
+(5.23)              En∈[N ]q f (n)χ(n) En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b) ≪      .
+         φ(q)                                                   q            φ(q)
+                  χ∈X3
+
+   To deal with X2 , we write, for δ0 ∈ [N −1/4 , q 1/4+κ /N 1/2 ],
+                          
+(5.24)           X2,δ0 := χ (mod q) : δ0 < En∈[N ]q f (n)χ(n) ≤ 2δ0 .
+If we can show that, for any δ0 ∈ [N −1/4 , q 1/4+κ /N 1/2 ], we have
+                                                          δ0−3
+(5.25)                                    |X2,δ0 | ≪             ,
+                                                       (log q)10
+then we obtain using also Proposition 4.1(iii) that
+          1 X                               2
+                    En∈[N ]q f (n)χ(n) En∈[N ]q f (n)χ(n) − Eb∈Z×       g(b)χ(b)
+        φ(q)                                                          q
+             χ∈X2
+(5.26)
+              1                                        X                    3         1
+         ≪       (log q)           max                   En∈[N ]q f (n)χ(n) ≪                 .
+            φ(q)         δ0 ∈[N −1/4 ,q 1/4+κ /N 1/2 ]                           φ(q)(log q)9
+                                                   χ∈X2,δ0
+
+Now (5.25) follows for δ0 ∈ [N −1/4 , q 1/4+κ /N 1/2 ] and N ≥ q 4/5+κ since Lemma 3.7 implies
+that
+(5.27)                      |X2,δ0 | ≪ δ0−2 (log q)7 + δ0−6 qN −2 (log q)21 .
+   Using (5.21), (5.23), and (5.26) on the right-hand side of (5.17), we obtain
+                                                                                  
+                  1       X                          1                         δ
+(5.28)                           (f ∗ f ∗ f )(n) =       (g ∗ g ∗ g)(a) + O          .
+              |[N ]q |3                            φ(q)3                      φ(q)
+                         n≡a (mod q)
+
+     By the definitions of f and δ and (5.28) we obtain that a ∈ E3 (N ) if
+                                                            φ(q)2
+                                   (g ∗ g ∗ g)(a) ≫                   .
+                                                         (log q)1/2−ε
+                   Products of primes in arithmetic progressions                                              19
+
+But this obviously holds if (1A ∗ 1A ∗ 1A )(a) ≫ φ(q)2 (log q)−1/2+ε .
+  Claim (ii): Now definitely a ∈ E2 (N ) if (f ∗ f )(n) > 0 for some n ≡ a (mod q). By
+the orthogonality of characters
+                  1            X                            1
+                                         (f ∗ f )(n) −          (g ∗ g)(a)
+               |[N ]q |2                                  φ(q)2
+                           n≡a (mod q)
+(5.29)                                                                                2 
+               1           X                                   2        
+            =                          En∈[N ]q f (n)χ(n)           − Eb∈Z× g(b)χ(b)          χ(a).
+              φ(q)                                                        q
+                      χ (mod q)
+
+By orthogonality of characters and Proposition 4.1(iii),
+                                                                                                      2
+           X      1           X        
+                                                                    2                  2 
+                                           En∈[N ]q f (n)χ(n)            − Eb∈Z× g(b)χ(b)     χ(a)
+               ×
+                 φ(q)                                                          q
+           a∈Zq            χ (mod q)
+
+                1                                    2               2 2
+(5.30)
+                           X
+           =                       En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b)
+               φ(q)                                         q
+                      χ (mod q)
+                1          X                               2                                              2
+           ≪                       En∈[N ]q f (n)χ(n)           En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b) .
+               φ(q)                                                                      q
+                      χ (mod q)
+
+  We split the characters into three sets X1 ∪ X2 ∪ X3 as in (5.18), (5.19), and (5.20). By
+the definition of X1 , Proposition 4.1(iii), Lemma 3.6, and (5.14) we see that
+             1 X                         2                                    2
+                       En∈[N ]q f (n)χ(n) En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b)
+            φ(q)                                                   q
+                 χ∈X1
+                      2
+                  1        1       X                        2
+(5.31)      ≤                            En∈[N ]q f (n)χ(n)
+                 N 1/4    φ(q)
+                                      χ (mod q)
+                      1                 log N   log N  log N
+            ≪                (N + φ(q))       ≪ 1/2   + 3/2 .
+                  N 1/2 φ(q)              N    N φ(q)  N
+
+This is O(1/q 1+κ/2 ) when N ≥ q 2/3+κ . On the other hand, recall that by (5.22)
+                                                      2
+                              X
+                                    En∈[N ]q f (n)χ(n) ≪ 1.
+                                      χ∈X3
+
+Combining this with Proposition 4.1(ii), we obtain
+
+           1 X                   2                                    2    δ2
+(5.32)         En∈[N ]q f (n)χ(n) En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b)   ≪      .
+          φ(q)                                             q              φ(q)
+                  χ∈X3
+
+  To deal with X2 , we recall the definition of X2,δ0 from (5.24). If we can show that, for
+any δ0 ∈ [N −1/4 , q 1/4+κ /N 1/2 ], we have
+
+                                                             δ0−4
+(5.33)                                       |X2,δ0 | ≪             ,
+                                                          (log q)10
+20                                Kaisa Matomäki and Joni Teräväinen
+
+then we obtain using also Proposition 4.1(iii) that
+(5.34)
+      1 X                   2                                   2       1
+          En∈[N ]q f (n)χ(n) En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b) ≪              .
+    φ(q)                                              q            φ(q)(log q)9
+            χ∈X2
+
+Now (5.33) follows for δ0 ∈ [N −1/4 , q 1/4+κ /N 1/2 ] and N ≥ q 2/3+κ from (5.27).
+  Combining (5.31), (5.32), and (5.34), we obtain
+         1          X                               2                                         2        δ2
+                              En∈[N ]q f (n)χ(n)        En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b)       ≪        .
+        φ(q)                                                                     q                    φ(q)
+                  χ (mod q)
+
+This together with (5.29) and (5.30) implies
+                                                                                              !
+                        1           X                      1                        δ 1−ε/2
+(5.35)                                     (f ∗ f )(n) =       (g ∗ g)(a) + O
+                     |[N ]q |2                           φ(q)2                       φ(q)
+                                 n≡a (mod q)
+
+for all but O(δ ε/2 φ(q)) elements a ∈ Z×q . Now
+                                           !                                                      !
+              1                    δ 1−ε/2       ε2                                    δ 1−ε/2
+                   (g ∗ g)(a) + O            ≥       (1A ∗ 1A )(a) + O
+            φ(q)2                   φ(q)       φ(q)2                                    φ(q)
+
+and claim (ii) follows recalling the definition of δ.
+  Claim (iv): Let f0 : [N ]q → R≥0 be defined through
+                                                          1n∈P∩(qα1 −ε ,qα1 ]
+                                               f0 (n) =                         .
+                                                                  n
+Note that definitely a ∈ E3 (N ) if (f ∗ f ∗ f0 )(n) > 0 for some n ≡ a (mod q). Now by
+orthogonality of characters and Proposition 4.1(iii) (abusing the notation to consider f0
+as a function from Z×q when convolved with g),
+
+(5.36)
+         1            X                                   1
+                                 (f ∗ f ∗ f0 )(n) −           (g ∗ g ∗ f0 )(a)
+      |[N ]q |2                                         φ(q)2
+                  n≡a (mod q)
+         1      X                             2                    2  X
+      =                    En∈[N ]q f (n)χ(n) − Eb∈Z×         g(b)χ(b)            f0 (n)χ(n)χ(a)
+        φ(q)                                               q
+             χ (mod q)                                                    n∈[N ]q
+         
+             1     X                               X
+      =O                     En∈[N ]q f (n)χ(n)           f0 (n)χ(n)
+           φ(q)
+                 χ (mod q)                        n∈[N ]q
+                                                          
+               · En∈[N ]q f (n)χ(n) − Eb∈Z×  q
+                                               g(b)χ(b)     .
+
+     When considering the right-hand side, we split the characters into two sets
+                                                                      
+                                         X                            
+                   X1 = χ (mod q) :            f0 (n)χ(n) < (log q)−10
+                                                                      
+                                                        n∈[N ]q
+                   Products of primes in arithmetic progressions                                                      21
+
+and                                                                                            
+                                                  X                                            
+                   X2 = χ (mod q) :                         f0 (n)χ(n) ≥ (log q)−10                 .
+                                                                                               
+                                                  n∈[N ]q
+
+By the definition of X1 , Proposition 4.1(iii), Lemma 3.6, and (5.14), we see that
+(5.37)
+       1 X                                X
+           En∈[N ]q f (n)χ(n)                     f0 (n)χ(n) En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b)
+      φ(q)                                                                            q
+           χ∈X1                         n∈[N ]q
+                    1        X                                    2
+      ≪ (log q)−10                     En∈[N ]q f (n)χ(n)
+                   φ(q)
+                          χ (mod q)
+                    1              log N        1
+      ≪ (log q)−10      (N + φ(q))       ≪              .
+                   φ(q)              N     φ(q)(log q)9
+Recall that L = ⌊1/α1 ⌋. By Proposition 4.1(ii,iii) and Hölder’s inequality, we obtain
+(5.38)
+       1 X                                X
+           En∈[N ]q f (n)χ(n)                     f0 (n)χ(n) En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b)
+      φ(q)                                                                            q
+           χ∈X2                         n∈[N ]q
+                                                        1                                            1− 1
+                                                    2L       2L
+                                                                                                             2L
+               1 X           X                                       X                                 2
+      ≪ δ 1/L                         f0 (n)χ(n)                             En∈[N ]q f (n)χ(n)                   .
+                                                                 
+              φ(q)
+                                                        
+                       χ∈X2 n∈[N ]q                                   χ∈X2
+
+Recall we assume that ε is sufficiently small. Then [L(α1 − ε), Lα1 ] ⊆ [3/8, 1]. We obtain
+by the definition of X2 , Lemma 3.8(ii), and Mertens’ theorem that
+                                                                  2L
+                    2L         X         X
+         (log q)−10     |X2 | ≤                f0 (n)χ(n)
+                                χ∈X2 n∈[N ]q
+                                                                                                       2
+                                X              X                             X                  χ(n)
+                            =                                  
+                                                                                              1
+                                                                                                 n
+                                χ∈X2 q L(α1 −ε) <n≤q Lα1                  n=p1 ···pL
+                                                                   q α1 −ε <p1 ,...,pL ≤q α1
+                                                                      X              τL (n)2
+                            ≤ 1 + q 1/9+3ε−1/8 |X2 |
+                                                                                          n
+                                                                         n≤q
+                                                                  (n,P (q α1 −ε ))=1
+
+                                                                              L2
+                                                               Y                
+                                        −1/100
+                            ≪ (1 + q              |X2 |)                   1+      ≪ 1 + q −1/100 |X2 |.
+                                                                              p
+                                                           q α1 −ε ≤p≤q
+
+Now the second term cannot dominate, and so |X2 | ≪ (log q)20L and
+                                                                       2L
+                                      X     X
+                                                    f0 (n)χ(n)               ≪ 1.
+                                   χ∈X2 n∈[N ]q
+22                         Kaisa Matomäki and Joni Teräväinen
+                                                                   1
+   Applying also Lemma 3.8(i), we see that (5.38) is ≪ δ L /φ(q). Combining this with (5.37)
+we obtain from (5.36) that
+                                                                               1
+                                                                                  !
+                1       X                            1                        δL
+(5.39)                         (f ∗ f ∗ f0 )(n) =       (g ∗ g ∗ f0 )(a) + O        ,
+             |[N ]q |2                            φ(q)2                      φ(q)
+                      n≡a (mod q)
+
+where we still have abused the notation by considering on the right-hand side f0 as a
+function from Z×q .
+  By the definitions of f and f0 and (5.39) we obtain that a ∈ E3 (N ) if
+
+                                   (g ∗ g ∗ f0 )(a) ≫ φ(q)δ 1/L−ε/4 ,
+
+and the claim follows by the definitions of A and δ.
+
+Remark 5.4. The reason we needed to use logarithmic averaging in Proposition 5.2(iv)
+is that when α1 < 1/3 + ε, we cannot apply Halász–Montgomery type results without
+losses without logarithmic averaging. In this range, in order to make the Burgess bound
+applicable, we need to take higher than second moment of the character sum, and we
+cannot use a sieve to find a correct order of magnitude sieve majorant for example for the
+characteristic function of integers of the form n = p1 p2 with pj ∼ q α1 .
+
+   Claim (v): Let H ≤ Z×       q be a subgroup of index Y < ε
+                                                                  −1/2 , and let b H, . . . , b H
+                                                                                  1            K
+be all the distinct cosets of H from which A contains at least εφ(q) elements, and let
+c1 H, . . . , cY −K H be the remaining distinct cosets. Thanks to Proposition 4.1(v), the
+definition of f , and Lemma 3.3, we have, for any j ∈ {1, . . . , K}
+
+              1 X
+                  g(a) = En∈[N ]q 1n∈bj H f (n) + O(δ)
+             φ(q)
+                  a∈bj H
+(5.40)                             θ φ(q)          1     X                        θ
+                               =     ·    log N            1 + O(δ) ≤ (1 + o(1))      ,
+                                   2   q        |[N ]q |                         Y θ0
+                                                            z≤p≤N
+                                                             p∈bj H
+
+
+recalling that δ = o(1). On the other hand, for any j ∈ {1, . . . , Y − K} we have by
+Proposition 4.1(i) and (5.15) (using also ε ≤ ε1/2 /Y )
+
+            1 X         1                 X                 1          X
+                g(a) =                            g(a) +                       g(a)
+           φ(q)        φ(q)                                φ(q)
+                a∈cj H                 a∈A∩cj H                   a∈Ac ∩cj H
+
+                                  1                 ε    1    φ(q) ε     2ε1/2
+                             ≤        · εφ(q) · 1 +     +     ·     ·    ≤       .
+                                 φ(q)               10    φ(q) Y      10    Y
+
+Combining these with (5.13), we obtain that
+
+                            θ                θ
+                              ≤ (1 + o(1))K      + 2ε1/2 φ(q) + o(1),
+                            2               Y θ0
+
+and the claim follows.
+                     Products of primes in arithmetic progressions                          23
+
+  Claim (vi): The definition of f , Proposition 4.1(v, i), and the definition of A imply
+that
+ θ |E1 (N ) ∩ bH|     1 X                     1    X             1     X
+                  =           g(a) + o(1) =             g(a) +               g(a) + o(1)
+ 2 N/ log N         φ(q)                    φ(q)               φ(q)      c
+                         a∈bH                    a∈A∩bH              a∈A ∩bH
+                         ε  |A ∩ bH|     ε            |A ∩ bH|     ε
+                  ≤ 1+                 +       + o(1) ≤          +     ,
+                         20     φ(q)      10Y             φ(q)      5Y
+and (5.6) follows.                                                                           □
+
+                                            6     Products sets
+6.1     Reduction from popular products to product sets
+   In the notation of Proposition 5.2, we have reduced the study of E3 (q) to getting a
+lower bound of the form (1A ∗ 1A ∗ 1A )(a) ≫ φ(q)2 for all a ∈ Z×
+                                                                q . If instead it sufficed just
+to show that a ∈ A · A · A, we could apply Kneser’s theorem (Lemma 3.5). However, we
+need that a has many representations as a product of three elements of A. Fortunately,
+the following lemma which is a quick consequence of work of Grynkiewicz [8] allows us to
+essentially reduce to studying A · A · A.
+Lemma 6.1. Let t ≥ u ≥ 1 be integers. Let A, B be finite subsets of a finite abelian group
+G with |A|, |B| ≥ t. Then at least one of the following holds.
+(a) We have
+                                                (1A ∗ 1B )(a) ≥ u
+      for at least
+                                                               u|G|
+                                           |A| + |B| − 2t −
+                                                                 t
+    values of a ∈ G.
+(b) There exist subsets A′ ⊆ A, B ′ ⊆ B with
+                                         |A \ A′ | + |B \ B ′ | ≤ t − 1
+      such that
+                                                (1A ∗ 1B )(a) ≥ t
+      for every a ∈ A′ · B ′ .
+Proof. Let Ni (A, B) denote the set of c ∈ G such that c has at least i representations as
+ab with a ∈ A, b ∈ B. Then by [8, Theorem 1.1] either (b) holds, or we have
+                                 t
+                                 X
+(6.1)                                  |Ni (A, B)| ≥ t(|A| + |B| − 2t) + 1.
+                                 i=1
+If (6.1) holds, then we trivially also have
+                             t
+                             X
+                                   |Ni (A, B)| ≥ t(|A| + |B| − 2t) − u|G|.
+                             i=u
+Since |Nu (A, B)| ≥ |Nt (A, B)| for t ≥ u, we conclude that
+                                            t
+                                   1X                                u|G|
+                     |Nu (A, B)| ≥    |Ni (A, B)| ≥ |A| + |B| − 2t −      .
+                                   t                                   t
+                                          i=u
+24                      Kaisa Matomäki and Joni Teräväinen
+
+The claim (a) follows, since for each a ∈ Nu (A, B) we have (1A ∗ 1B )(a) ≥ u.                □
+  Next we combine the previous lemma with Proposition 5.2 to obtain criteria about when
+a ∈ Ej (N ).
+Proposition 6.2 (Criteria on sizes of E2 (N ) and E3 (N )). Let κ, ε > 0 and C ≥ 1 be
+fixed. Let q ∈ N be large in terms of κ, ε, and let N ∈ [q 2/3+κ , q C ]. Let θ and θ0 be as
+in (5.1) and (5.2). Then at least one of the following holds:
+(a) We have |E2 (N )| ≥ (θ − 2ε)φ(q). If θ > 2/3 + 3ε, then we also have E3 (N ) = Z×  q .
+(b) There exist sets A′ , B ′ ⊆ Z×q  such     that the following   hold.
+    (b.i)
+                                 |A′ |, |B ′ | ≥ (θ/2 − 3ε/2)φ(q).
+   (b.ii)
+                            |(A′ · B ′ ) ∩ E2 (N )| ≥ |A′ · B ′ | − εφ(q),
+  (b.iii) If N ≥ q 4/5+κ , then
+                          (1A′ ·B ′ ∗ 1A′ )(a) ≫ φ(q) =⇒ a ∈ E3 (N ).
+  (b.iv) Assume that N ≥ q and let α1 ∈ (2ε, 1]. Write L = ⌊1/α1 ⌋. Then
+                             X       1
+                                       ≫ 1 =⇒ a ∈ E3 (N ).
+                                     p
+                             cp≡a (mod q)
+                             q α1 −ε <p≤q α1
+                                 c∈A′ ·B ′
+
+   (b.v) For any subgroup H ≤ Z×                       −1/2 , A′ ∩ B ′ contains at least ε φ(q)
+                                   q of index Y ≤ ε                                      2
+         elements from at least ⌈(θ0 /2 − 3ε1/2 θ0 /θ)Y ⌉ cosets of H.
+  (b.vi) For any b ∈ Z×q , we have
+                                                                 
+                        ′    ′           θ |E1 (N ) ∩ bH| ε
+                     |A ∩ B ∩ bH| ≥        ·                  −     φ(q).
+                                         2      N/ log N        3
+     Proposition 8.3 below adds one more conclusion to part (b) of this proposition.
+Proof of Proposition 6.2. We may assume that ε > 0 is small enough. Let A be as in
+Proposition 5.2. Note that |A| ≥ (θ/2 − ε)φ(q). We apply Lemma 6.1 with t = ⌈εφ(q)/10⌉
+and u = ⌊ε2 φ(q)/1000⌋, and with A and B in the lemma both equalling the set A.
+   If Lemma 6.1(a) holds, then the first part of Proposition 6.2(a) holds by Proposi-
+tion 5.2(ii) and the second part of Proposition 6.2(a) holds by Proposition 5.2(iii) and
+Lemma 3.4(i) applied with {a ∈ Z× q : (1A ∗ 1A )(a) ≥ u} in place of A and A in place of B.
+   Let us now show that if Lemma 6.1(b) holds then (b.i)–(b.vi) hold. Now (b.i) follows
+immediately and (b.ii) holds by Proposition 5.2(ii) since A′ , B ′ ⊆ A and
+(6.2)                      c ∈ A′ · B ′ =⇒ 1A ∗ 1A (c) ≥ εφ(q)/10.
+Moreover, we have (b.iii) by Proposition 5.2(iii) and the estimate
+                          X                               1   X
+   (1A′ ·B ′ ∗ 1A′ )(a) =      1A′ ·B ′ (c)1A′ (ac−1 ) ≪           (1A ∗ 1A )(c)1A′ (ac−1 )
+                           ′ ′
+                                                         φ(q)  ′ ′
+                         c∈A ·B                             c∈A ·B
+                         1A ∗ 1A ∗ 1A (a)
+                       ≤                  .
+                               φ(q)
+Claim (b.iv) follows similarly from Proposition 5.2(iv).
+                 Products of primes in arithmetic progressions                          25
+
+  Since
+                                                     ε
+(6.3)                         |A \ A′ | + |A \ B ′ | ≤  φ(q),
+                                                    10
+Claim (b.v) follows from Proposition 5.2(v) and (b.vi) follows from Proposition 5.2(vi). □
+6.2     Structure of sets with small doubling
+  In this subsection we provide a consequence of Kneser’s theorem which tells us about
+the structure of A and B in case A · B is small. The following lemma is quite similar to
+parts of [1, Section 4] and [23, Lemma 3].
+Lemma 6.3. Let α, α′ , β ∈ (0, 1] be such that β < 2α ≤ 2α′ , and let A, B ⊆ Z×     q with
+                                                                          ′
+|A|, |B| ≥ αφ(q). Assume that A and B each meet at least proportion α of cosets of any
+subgroup H0 ≤ Z×   q of order < 1/(2α − β). Then at least one of the following holds.
+(a) We have
+                                      |A · B| ≥ βφ(q).
+                   ×
+(b) Write H ≤ Zq for the stabilizer of A · B and write Y for its index. Then the following
+     hold.
+    (b.i) We have
+                                                  1
+                                     1<Y <             .
+                                               2α′ − β
+   (b.ii) If α′ > 1/3 and β ≤ 2/3, then Y = 3k + 2 for some integer k with
+                                         k+1
+(6.4)                                          ≥ α′ ,
+                                        3k + 2
+          and each of A and B intersects exactly k + 1 cosets of H, and A · B is the union
+          of 2k + 1 cosets (mod H).
+  (b.iii) If, for some small enough ε > 0, we have α′ ≥ 38 − ε and β < 11    16 − 2ε, then
+          Y = 3k + 2 for some integer k ∈ {0, 1, 2}, and each of A and B intersects exactly
+          k + 1 cosets of H, and A · B is the union of 2k + 1 cosets (mod H).
+Proof. If Y = 1, then A · B = Z×   q and (a) holds. Assume henceforth that Y > 1. By
+Kneser’s theorem (Lemma 3.5)
+                                                                      
+                                                                     1
+          |A · B| ≥ |A · H| + |B · H| − |H| ≥ |A| + |B| − |H| ≥ 2α −     φ(q).
+                                                                     Y
+We see that either (a) holds or
+                                               1
+                                    1<Y <           .
+                                             2α − β
+By assumption, this implies that each of A and B meets at least proportion α′ of cosets
+of H. Hence actually
+                                                                         
+                                                 ′               ′   1
+(6.5)     |A · B| ≥ |A · H| + |B · H| − |H| ≥ 2 α Y − 1 |H| ≥ 2α −          φ(q)
+                                                                        Y
+and so either (a) holds or (b.i) holds.
+   We may suppose from now on that (b.i) holds. Then using the second inequality in (6.5),
+we obtain in this case
+                                                   2⌈α′ Y ⌉ − 1
+                      |A · B| ≥ 2⌈α′ Y ⌉ − 1 |H| =
+                                            
+(6.6)                                                           φ(q).
+                                                        Y
+26                       Kaisa Matomäki and Joni Teräväinen
+
+     If α′ > 1/3 and β ≤ 2/3, then if Y is not 2 (mod 3), we have
+                                                   
+                            ′       Y       ′   1        Y    2
+                            αY =         + α −       Y ≥      + ,
+                                       3          3         3   3
+so we obtain by (6.6)
+                                               
+                                      2Y  4         φ(q)  2
+                      |A · B| ≥          + −1            > φ(q) ≥ βφ(q),
+                                       3  3          Y    3
+so (a) holds.
+   If instead α′ ≥ 3/8 − ε and β < 11/16 − 2ε with ε > 0 small, then (b.i) gives Y < 16.
+Moreover, by a case check we see that
+                                        2⌈α′ Y ⌉ − 1   11
+                                                     ≥
+                                             Y         16
+for all Y ∈ {1, . . . , 15} that are not of the form Y = 3k + 2 with k ∈ {0, 1, 2}. Hence, if Y
+is not of this form, then (6.6) implies that (a) holds.
+   We may henceforth assume that Y = 3k + 2 for some k ∈ N if α′ > 1/3 and β ≤ 2/3,
+and that Y = 3k + 2 with k ∈ {0, 1, 2} if α′ ≥ 3/8 − ε and β < 11/16 − 2ε. Now A and B
+must each intersect at least
+                                                        
+                                      ′        1
+                                   ⌈α Y ⌉ ≥      (3k + 2) ≥ k + 1
+                                               3
+cosets of H. If A intersects ≥ k + 2 cosets of H, then |A · H| ≥ (k + 2)|H|, so by the first
+inequality of (6.5) we have
+                                                                     φ(q)
+                     |A · B| ≥ (k + 2 + k + 1 − 1) |H| = (2k + 2)          ,
+                                                                    3k + 2
+and now (a) holds since (2k +2)/(3k +2) > 2/3 for all k ∈ N and (2k +2)/(3k +2) > 11/16
+for k ∈ {0, 1, 2}. Using symmetry, we may assume that each of A and B intersects exactly
+k + 1 cosets.
+   Now since
+                       |A · B| ≥ |A · H| + |B · H| − |H| = (2k + 1)|H|,
+we see that A · B must intersect (and hence consist of) at least 2k + 1 cosets of H. If A · B
+is the union of at least 2k + 2 cosets of H, then we have
+                       |A · B| ≥ (2k + 2)|H| ≥ 2|A| ≥ 2αφ(q) > βφ(q)
+
+and (a) holds.
+  Hence if (a) does not hold, then A and B must each be contained in k + 1 cosets of H
+and A·B must be the union of 2k +1 cosets of H. Finally, we have (6.4) by the assumption
+that A meets at least proposition α′ of cosets of an index Y subgroup.                 □
+
+     We shall also use the following which is [23, Lemma 4].
+Lemma 6.4. Let G be an abelian group of order 3k +2 for some integer k ≥ 0. Let B ⊆ G
+with |B| = k + 1. Assume that B · B = G \ B and that the stabilizer of B · B is the identity.
+Then G is cyclic and for some g ∈ G which generates G we have B = {g k+1 , . . . , g 2k+1 }.
+                 Products of primes in arithmetic progressions                         27
+
+                       7   Primes in cosets of indices 5 and 8
+   In order to deal with the case that Lemma 6.3(b) holds, we need to have information
+on the distribution of primes in cosets of Z×
+                                            q of index 3k + 2 for small k (k ∈ {0, 1, 2}
+suffices for us). We can obtain lower bounds for the logarithmic density of primes in
+certain collections of such cosets.
+Lemma 7.1 (Positive logarithmic density of primes in some unions of cosets). Let q ∈ N
+be large, let k ∈ {1, 2} and let H be a subgroup of index 3k + 2 such that Z×
+                                                                            q /H is cyclic
+and generated by gH with g ∈ Z×   q . Then
+                                      X          log p     1
+(7.1)                                                  ≥      log q.
+                                                   p     1000
+                                      p≤q
+                                    Sk+1 k+j
+                              p̸∈    j=1 g   H
+
+   In the proof of this lemma we use the following lemma which is [23, Proposition 6] and
+is based on [9, Lemmas 5.2–5.3]. Also Szabó [23] used it in a similar context.
+Lemma 7.2. Let q ∈ N and α ∈ R>0 . Let f : R≥0 → R be defined as
+                                  (
+                                   α − t if 0 ≤ t ≤ α;
+                          f (t) =
+                                   0       if t > α.
+ (i) If χ is a non-principal character (mod q) of bounded order, then
+                        X χ(p) log p  log p   α          
+                     Re               f         ≤     + o(1) log q.
+                          p
+                                p        log q      8
+
+ (ii) We have
+                      X χ0 (p) log p  log p   α2       
+                                    f         =     + o(1) log q.
+                      p
+                             p         log q     2
+
+Proof of Lemma 7.1. Let J = 2 if k = 1 and J = 4 if k = 2. Let α = 1 in Lemma 7.2. For
+j = 0, . . . , J, we define
+                                                                       
+                                  P             χ0 (p) log p      log p
+                                      j   −j
+                                   p∈g H∪g H         p       f    log q
+                            βj :=     P χ0 (p) log p  log p             .
+                                        p    p       f    log q
+
+Trivially
+                                                                 J
+                                                                 X
+(7.2)                βj ∈ [0, 1] for each j = 0, . . . , J and         βj = 1.
+                                                                 j=0
+
+Let us first consider the case k = 1, so that J = 2. If (7.1) does not hold, then
+                                   X       log p    1
+                                                 <      log q.
+                                             p     1000
+                                     p≤q
+                               p̸∈g 2 H∪g 3 H
+                                                                                  1
+Hence by definition of βj and Lemma 7.2(ii) we have β0 + β1 ≤ (2 + o(1)) · 1000     , and
+consequently (7.2) implies that β2 ≥ 499
+                                     500 − o(1). Let χ be the character (mod q) for which
+28                     Kaisa Matomäki and Joni Teräväinen
+
+χ(g) = e(2/5) and χ(h) = 1 for every h ∈ H. Then, since cos(0) > cos(2π/5) > 0 >
+cos(4π/5), we have
+            X χ(p) log p  log p 
+         Re               f
+             p
+                    p          log q
+                                          X                            
+                            4π               2π        χ0 (p) log p     log p
+          = β0 + β1 cos           + β2 cos                          f
+                             5                5     p
+                                                            p           log q
+                                                  X                          
+               1       4π        499       2π                χ0 (p) log p     log p
+          ≥       cos         +      cos        − o(1)                    f           .
+              500       5        500        5            p
+                                                                  p           log q
+
+Applying Lemma 7.2(i) to the left-hand side and Lemma 7.2(ii) to the right-hand side, we
+obtain                                   
+            1      499      2π      1       4π     1
+              ≥        cos      +      cos           − o(1) = 0.153 . . . + o(1).
+            8      500       5     500       5     2
+But this is not true, and we have obtained a contradiction.
+  Let us now turn to the case k = 2. If (7.1) does not hold, then
+                                 X         log p     1
+                                                 <      log q.
+                                             p     1000
+                                    p≤q
+                            p̸∈g 3 H∪g 4 H∪g 5 H
+
+Hence, by definition of βj and Lemma 7.2(ii),
+                                                     1
+(7.3)                        β0 + β1 + β2 ≤ 2 ·          + o(1).
+                                                   1000
+Let now χ be the character (mod q) for which χ(g) = e(1/8) and χ(h) = 1 for every
+h ∈ H. By the definitions of βj and Lemma 7.2(ii) we obtain
+         X χ(p)2 log p  log p                         X χ0 (p) log p  log p 
+      Re               f          = (β0 + β4 − β2 )                    f
+          p
+                p          log q                         p
+                                                                 p        log q
+                          X                                                
+                1                χ0 (p) log p     log p       β4       1
+      ≥ β4 −        + o(1)                    f            =       −      + o(1) log q.
+               500            p
+                                      p           log q        2     1000
+
+Applying Lemma 7.2(i) to the left-hand side, we obtain β4 ≤ 14 + 5001
+                                                                        + o(1), and conse-
+                                               3   1
+quently by (7.2) and (7.3) we must have β3 ≥ 4 − 250 + o(1).
+  On the other hand, using the definition of βj and our bounds for βj , we obtain
+     X χ(p)3 log p  log p               1        1
+                                                          X
+                                                                  χ0 (p) log p
+                                                                                  
+                                                                                    log p
+                                                                                          
+  Re                f         = β0 − β1 √ + β3 √ − β4                          f
+       p
+              p         log q               2        2        p
+                                                                        p           log q
+                                                  X                          
+          1 1         3    1           1     1    1       χ0 (p) log p      log p
+   ≥ −       √ +        −     + o(1) √ − −                             f            .
+         500 2        4 250             2 4 500         p
+                                                               p            log q
+
+Applying Lemma 7.2(i) to the left-hand side and Lemma 7.2(ii) to the right-hand side, we
+obtain
+                    1       93    1     1
+                      ≥      √ − −          + o(1) = 0.137 . . . + o(1),
+                    8     250 2   8   1000
+which is a contradiction.                                                              □
+                   Products of primes in arithmetic progressions                                    29
+
+Remark 7.3. We have not tried to optimize the lower bound in Lemma 7.1. In our
+cases k ∈ {1, 2}, it would be quite easy to do such an optimization by hand. For larger k
+one could use linear programming (which has been previously used in a somewhat similar
+context in [15, Proof of Theorem 2]) to take full advantage of the information provided
+by Lemma 7.2. Even this is not sufficient to prove a similar result in case k = 3, but as it
+turns out we will only need the cases k ∈ {1, 2} in the proofs of our theorems.
+
+                                        8     Size of E3 (N )
+Proof of Theorem 1.1. Let ε > 0 be small. Let N = q if q is cube-free and N = q 1+100ε
+otherwise. Adjusting ε, it suffices to prove that E3 (N ) = Z×
+                                                             q . Recall the definitions of θ
+and θ0 from (5.1) and (5.2). We have
+                                                    log q   2
+                                  θ ≥1−ε−                  ≥ + 10ε
+                                                   3 log N  3
+and
+                                                     log q   3
+                                  θ0 = 1 − ε −              ≥ − ε.
+                                                    4 log N  4
+Let us apply Proposition 6.2. If Proposition 6.2(a) holds, then we immediately get
+E3 (N ) = Z×
+           q .
+   Hence we can assume that Proposition 6.2(b) holds. Let A′ and B ′ be as there, in
+particular
+                                                       
+                                      θ 3           1
+(8.1)               |A′ |, |B ′ | ≥    − ε φ(q) ≥     + 3ε φ(q).
+                                      2 2           3
+   Write H for the stabilizer of A′ · B ′ . We apply Lemma 6.3 with A = A′ , B = B ′ , α =
+1/3 + 3ε, α′ = 3/8 − 10ε1/2 , β = 2/3 − 5ε/2 (which is an admissible choice of parameters
+by (8.1) and Proposition 6.2(b.v)). In case Lemma 6.3(a) holds, we have E3 (N ) = Z×  q by
+Proposition 6.2(b.iii), (8.1), and Lemma 3.4(i).
+   Hence we can assume that Lemma 6.3(b) holds. Then by Lemma 6.3(b.i)–(b.ii) A′ and
+B ′ are contained in k + 1 cosets of a subgroup H of index Y = 3k + 2 with
+                                                    1
+                               1<Y <                           < 13,
+                                            3/4 − 2/3 − 30ε1/2
+so that k ∈ {0, 1, 2, 3}. Furthermore A′ · B ′ is the union of 2k + 1 cosets of H. If k = 3
+(so that Y = 11) then (6.4) fails, so this case cannot actually occur.
+   Hence we can assume that k ∈ {0, 1, 2}. By Proposition 6.2(b.v) we know that A′ and
+B ′ are contained in the same k + 1 cosets of H. Let now a1 , . . . , ak+1 , b1 , . . . , b2k+1 be such
+that
+                                                 k+1
+                                                 [
+                                      A′ , B ′ ⊆     aj H
+                                                      j=1
+
+and
+                                                                       2
+                                            2k+1
+                                             [              k+1
+                                                            [
+(8.2)                          A′ · B ′ =          bj H =          aj H  .
+                                            j=1               j=1
+30                       Kaisa Matomäki and Joni Teräväinen
+
+By Proposition 6.2(b.v) the set A′ contains at least 2ε φ(q) elements from each aj H with
+j ∈ {1, . . . , k +1}. Combining this and (8.2) with Proposition 6.2(b.iii) and Lemma 3.4(ii),
+we see that
+                                                     
+                               k+1
+                               [              2k+1
+                                               [
+(8.3)                             aj H  ·       bj H  ⊆ E3 (N ).
+                               j=1                   j=1
+
+The left-hand side does not yet necessarily cover all of Z×
+                                                          q . To proceed, we split into two
+cases.
+
+8.1     Case 1: k ∈ {1, 2} or k = 0 and a1 ∈ H
+     We shall in a moment show that in this case there exists α1 ∈ (2ε, 1] such that
+                                          X            log p
+(8.4)                                                        ≫ log q.
+                                                         p
+                                     q α1 −ε <p≤q α1
+                                       p̸∈∪k+1
+                                           j=1 aj H
+
+
+Let us first show how (8.4) implies the claim that E3 (N ) = Z×
+                                                              q . By (8.4) there exists
+      ×
+a0 ∈ Zq such that a0 H ̸∈ {a1 H, . . . , ak+1 H} and
+                                          X            log p
+                                                             ≫ log q.
+                                                         p
+                                     q α1 −ε <p≤q α1
+                                          p∈a0 H
+                            S2k+1
+Then, for each a ∈ a0 H ·    j=1     bj H we have by (8.2)
+                                   X           1      X                  1
+                                                 ≥                         ≫ 1.
+                                               p   α −ε
+                                                                         p
+                             cp≡a (mod q)              q 1     <p≤q α1
+                             q α1 −ε <p≤q α1                 p∈a0 H
+                                 c∈A′ ·B ′
+
+Hence by Proposition 6.2(b.iv) we obtain that
+                                              2k+1
+                                               [
+                                     a0 H ·          bj H ⊆ E3 (N ).
+                                               j=1
+
+Combining this with (8.3) and Lemma 3.4(i) we see that E3 (N ) = Z×    q .
+   Hence the remaining task is to prove (8.4). Consider first the case that ∪k+1
+                                                                               j=1 aj H and
+  2k+1
+∪j=1 bj H are not complements of each other. In this case there exists b0 ∈ Z×  q such that
+b0 H intersects neither of these unions. By Lemma 3.3 we know that b0 H ∩ [1, q] contains
+≫ q/ log q integers who have at most two prime factors and whose prime factors are ≥ q 1/3 .
+Since b0 ̸∈ ∪k+1
+             j=1 aj H by Proposition 6.2(b.vi), there must be ≫ q/ log q products of exactly
+two primes ≥ q 1/3 in b0 H ∩ [1, q]. But since
+                                                           2
+                                     2k+1
+                                      [            k+1
+                                                   [
+                               b0 ̸∈      bj H =      aj H  ,
+                                        j=1                   j=1
+                    Products of primes in arithmetic progressions                          31
+
+we see that both prime factors cannot be from ∪k+1
+                                               j=1 aj H. Consequently
+                   q          X          X              X         q
+                       ≪                      1≪
+                 log q    1/3    2/3 1/3  ′         1/3   2/3
+                                                              p log q/p
+                               q ≤p≤q       q     ≤p ≤q/p      q ≤p≤q
+                               p̸∈∪k+1
+                                   j=1 aj H                    p̸∈∪k+1
+                                                                   j=1 aj H
+
+and (8.4) follows.
+   Note that if k = 0 and a1 ∈ H, then definitely a1 H = H and b1 H = a21 H = H are not
+complements of each other, and so in the rest of the proof of case 1 we can assume that
+k ∈ {1, 2} and ∪k+1             2k+1
+                  j=1 aj H and ∪j=1 bj H are complements of each other. But then (8.4)
+follows from Lemmas 6.4 and 7.1.
+8.2   Case 2: k = 0 and a1 ̸∈ H
+   This is the most difficult case; due to the possible existence of exceptional characters,
+there may exist a quadratic character ψ such that ψ(p) = −1 for almost all primes, and
+thus we might indeed have p ̸∈ H for almost all primes p. We need two auxiliary results
+before we can finish the proof of Theorem 1.1 in this case. In this subsection we state
+these results and finish the proof of Theorem 1.1 asssuming them. We postpone the proofs
+of the auxiliary results to Section 9.
+   First, while we cannot show that the primes with ψ(p) = 1 have positive logarithmic
+density, we can show the following.
+Lemma 8.1 (Lower-bounding the number of primes with ψ(p) = 1). Let q ∈ N be suffi-
+ciently large and let ψ (mod q) be a real character. Then there exists a positive constant
+c0 such that either
+                                         X      1    1
+(8.5)                                             ≥
+                                     1/4    5/7
+                                                p   10
+                                          q      <p≤q
+                                                ψ(p)=1
+
+or there exists y ∈ [q 5/7 , q] such that
+                                                               
+                             X                     φ(q) Y     2
+(8.6)                              1 ≥ c0 yL(1, ψ)         1−     .
+                                                    q         p
+                             p≤y                             2<p≤q
+                            ψ(p)=1                           ψ(p)=1
+
+   This lemma has some similarities with the work of Dunn, Kerr, Shparlinski and Za-
+harescu [3, Theorem 1.1] (see also work of Benli [2, Theorem 4], but there is an inaccuracy1
+in the proof: In the proof of [2, Lemma 9] the k-dimensional fundamental lemma of the
+sieve is currently applied with level z s larger than the upper bound for e in [2, Proposition
+7] — however the methods in [2] definitely do yield a result like [2, Theorem 4], possibly
+with a slightly different lower bound).
+Remark 8.2. The bound (8.5) is clearly optimal up to a constant factor, and similarly
+the lower bound in (8.6) is optimal up to a constant factor (see Lemma 9.4 below).
+  The second important auxiliary result is the following addition to Proposition 6.2.
+Proposition 8.3. In the set-up of Proposition 6.2, in case Proposition 6.2(b) holds, the
+sets A′ , B ′ satisfy in addition to (b.i)–(b.vi) also the following:
+  1The author of [2] is in the process of correcting this.
+32                       Kaisa Matomäki and Joni Teräväinen
+
+     Assume that N ≥ q and M ∈ [q 2/3+3ε , q]. Then
+                                                          
+                  X                    φ(q) Y            2
+                         1 ≫ M L(1, ψ)                1−     =⇒ a ∈ E3 (N ).
+                                          q              p
+               cp≡a (mod q)                      2<p≤q
+                p∼M,ψ(p)=1
+                  c∈A′ ·B ′
+
+   Now we finish the proof of Theorem 1.1 in the remaining case k = 0 and a1 ̸∈ H,
+assuming Lemma 8.1 and Proposition 8.3. In this case A′ , B ′ ⊆ a1 H and A′ · B ′ = a21 H =
+H.
+   By (8.3) it suffices to show that a ∈ E3 (N ) for every a ∈ H. Since A′ · B ′ = H, by
+Proposition 8.3 this follows if, for some M ∈ [q 2/3+3ε , q], we have
+                                                                   
+                           X                  φ(q) Y              2
+                                1 ≫ M L(1, ψ)                 1−      .
+                                               q                  p
+                           p∼M                       2<p<q
+                          ψ(p)=1                     ψ(p)=1
+
+But this either follows from Lemma 8.1 or (8.5) holds. But if (8.5) holds, then (8.4) holds
+and the argument in case 1 goes through.                                                 □
+
+                    9   Proofs of Lemma 8.1 and Proposition 8.3
+   In the proofs of Lemma 8.1 and Proposition 8.3 we will apply a sieve to the sequence
+(1 ∗ ψ)(n). In the course of doing this, we shall need the fundamental lemma of the sieve
+(see e.g. [5, Lemma 6.8]):
+Lemma 9.1 (Fundamental lemma of the sieve). Let κ ≥ 1 be fixed. Let z ≥ 2 and let
+D = z s with s ≥ 9κ + 1. There exist coefficients λ± d such that the following hold.
+        ±                            ±
+  (i) |λd | ≤ 1 for every d ∈ N and λd are supported on {d ≤ D : d | P (z)}.
+ (ii) For every n ∈ N,         X                       X
+                                  λ−
+                                   d ≤ 1 (n,P (z))=1 ≤    λ+d.
+                                    d|n                     d|n
+(iii) If h : N → [0, 1) is a multiplicative function such that, for some K ≥ 1, one has
+                                                          log z1 κ
+                               Y                               
+                                                −1
+                                     (1 − h(p)) ≤ K
+                                                         log w1
+                              w1 ≤p<z1
+       for any z1 ≥ w1 ≥ 2, then
+                        X                              Y
+                             λ+
+                              d h(d) ≤ (1 + e9κ−s 10
+                                                 K   )   (1 − h(p)),
+                        d|P (z)                             p<z
+                         X                                  Y
+                                  λ−
+                                   d h(d) ≥ (1 − e
+                                                  9κ−s 10
+                                                      K )         (1 − h(p)).
+                        d|P (z)                             p<z
+
+     Before moving on, let us collect some arithmetic information concerning (1 ∗ ψ)(n).
+Lemma 9.2. Let q ∈ N and let ψ be a quadratic character (mod q). For each ε > 0,
+there exists a constant η = η(ε) such that, for any x ≥ q 1/4+ε ,
+                           X
+                              (1 ∗ ψ)(n) = L(1, ψ)x + Oε (x1−η ).
+                              n≤x
+
+Proof. This follows easily from the Dirichlet hyperbola method and the Burgess bound,
+see [18, Proposition 3.1].                                                         □
+                     Products of primes in arithmetic progressions                              33
+
+Lemma 9.3. Let q ∈ N and let ψ be a quadratic character (mod q). For each ε > 0,
+there exists a constant η = η(ε) such that whenever d ∈ N and x/d ≥ q 1/4+ε , we have
+                  X
+(9.1)                (1 ∗ ψ)(n) = h(d)L(1, ψ)x + Oε (τ3 (d)τ (d)(x/d)1−η ),
+                     n≤x
+                     d|n
+
+where h is a multiplicative function such that, for every p ∈ P,
+                           1 + ψ(p) ψ(p)                                    2k
+(9.2)          h(p) =              − 2               and     |h(pk )| ≤        for any k ∈ N.
+                              p      p                                      pk
+Proof. This follows easily from Lemma 9.2 (and is essentially a special case of [2, Propo-
+sition 7]). Let
+                                 X               X
+                           Sd :=   (1 ∗ ψ)(n) =        ψ(m2 ).
+                                         n≤x                   m1 m2 ≤x
+                                         d|n                   d|m1 m2
+
+Writing d = d1 d2 with d1 = (d, m1 ), we see that
+                                X         X                       X
+                         Sd =                                               ψ(m2 ).
+                                       d=d1 d2         m1        m2 ≤x/m1
+                                                      d1 |m1      d2 |m2
+                                                 (d2 ,m1 /d1 )=1
+
+  We remove the condition (d2 , m1 /d1 ) = 1 by Möbius inversion, obtaining
+                           X X                X       X
+                   Sd =                 µ(f )               ψ(m2 ).
+                                   d=d1 d2 d2 =f g            m1     m2 ≤x/m1
+                                                             d1 |m1   d2 |m2
+                                                           f |m1 /d1
+
+Making the change of variables m1 → d1 f m1 and m2 → m2 d2 = m2 f g, we obtain
+          X                    X                  X               X
+   Sd =        µ(f )ψ(f g)               ψ(m2 ) =    µ(f )ψ(f g)      (1 ∗ ψ)(m).
+                                                                                           x
+          d=d1 f g                 m1 m2 ≤x/(d1 f 2 g)             d=d1 f g            m≤ df
+
+
+Now f ≥ (x/d)ε/2 contribute
+                                    X          x    x               x 1−ε/2    x
+                     ≪ τ3 (d)                    log ≪ τ3 (d)τ (d)            log ,
+                                              df    d                d           d
+                                    f |d
+                                f ≥(x/d)ε/2
+
+
+whereas by Lemma 9.2 the contribution of f < (x/d)ε/2 is, for some η > 0,
+                                                       1−η !!
+                  X                           x           x
+                         µ(f )ψ(f g) L(1, ψ) + O
+                                             df          df
+                       d=d1 f g
+                     f <(x/d)ε/2
+                                 X µ(f )ψ(f g)            x 1−η/2 
+                      = xL(1, ψ)               + O τ3 (d)              .
+                                     d1 f 2 g               d
+                                      d=d1 f g
+34                             Kaisa Matomäki and Joni Teräväinen
+
+Writing out the Euler product we obtain (9.1) with h being the multiplicative function
+such that, for any p ∈ P and k ∈ N,
+                                                                           k                 k−1
+                    k
+                         X ψ(g)     X                           ψ(pg) X ψ(pj ) X ψ(pj+1 )
+                h(p ) =         −                                       =     −
+                           d1 g                                 d1 p2 g   pk      pk+1
+                        k  p =d1 gk                  p =d1 pg             j=0                j=0
+                                      k−1
+                           ψ(pk )
+                                                        
+                                    1 X      j      ψ(p)
+                         =        + k     ψ(p ) 1 −
+                            pk     p                 p
+                                             j=0
+
+which clearly satisfies (9.2).                                                                                    □
+
+   Before turning to the proof of Lemma 8.1, let us quickly combine Lemmas 9.1 and 9.3
+to obtain an upper bound corresponding to (8.6).
+
+Lemma 9.4 (Upper-bounding the number of primes with ψ(p) = 1). Let ε > 0 be fixed,
+let q ∈ N be sufficiently large and let ψ (mod q) be a real character. Then there exists a
+positive constant Cε such that, for any y ∈ [q 1/4+ε , q] we have
+                                                                   
+                          X                    φ(q) Y             2
+                               1 ≤ Cε yL(1, ψ)               1−       .
+                                                q                 p
+                                p≤y                                  2<p≤q
+                               ψ(p)=1                                ψ(p)=1
+
+Proof. We can clearly assume that ε is small. Let λ+  d be as in Lemma 9.1 with κ = 2,
+                       ε2                 ε/2
+sifting parameter z = q , and level D = q     (so that s = 1/(2ε)).
+   Now by Lemma 9.1(ii) and Lemma 9.3, we have, for some η > 0,
+          X        X               X             X          X        X
+              1≤      (1 ∗ ψ)(p) ≤   (1 ∗ ψ)(n)     λ+
+                                                     e ≤         λ+e   (1 ∗ ψ)(n)
+            p≤y         p≤y                      n≤y                e|n                2           n≤y
+                                                                                e|P (q ε )
+           ψ(p)=1                                                                                  e|n
+                                     X
+                    = yL(1, ψ)                   λ+
+                                                  e h(e) + O(y
+                                                               1−η
+                                                                   ),
+                                   e|P (q ε2 )
+
+
+where h is as in Lemma 9.3. Now the claim follows from the fact that L(1, ψ) ≫δ q −δ by
+Siegel’s theorem and Lemma 9.1(iii) since
+
+(9.3)
+                                            Y      Y                     
+   Y                     Y                       1         2     φ(q) Y     2
+          (1 − h(p)) ≍         (1 − h(p)) ≍   1−        1−     =         1−     .
+                                                 p         p      q         p
+ p<q ε2                  p≤q                         p|q           2<p≤q                                 2<p≤q
+                                                                   ψ(p)=1                                ψ(p)=1
+
+                                                                                                                  □
+                                                 4
+Proof of Lemma 8.1. Let w = q ε , where ε > 0 is small but fixed. Let an = (1 ∗
+ψ)(n)1(n,P (w))=1 . Note that an ≥ 0 for all n. Let λ±
+                                                     d be as in Lemma 9.1 with κ = 2,
+                                          2
+sifting parameter z = w, and level D = q (so that s = ε−2 ).
+                                         ε
+
+   We use Chebychev’s method like Dunn, Kerr, Shparlinski and Zaharescu do in the proof
+of [3, Theorem 1.1]. Now by Lemma 9.1(ii), Lemma 9.3, and partial summation, we have,
+                     Products of primes in arithmetic progressions                                             35
+
+for some η > 0,
+       X        X      X X        X            X    X
+           Λ(d)   an =  an Λ(d) =   an log n ≥   λ−
+                                                  e   (1 ∗ ψ)(n)(log n)
+        d≤q         n≤q        n≤q      d|n            n≤q                   e|P (w)    n≤q
+(9.4)               d|n                                                                 e|n
+                                                   X
+                             = q(log q)L(1, ψ)             λ−
+                                                            e h(e) + O(q
+                                                                         1−η
+                                                                             ).
+                                                 e|P (w)
+
+  By Lemma 9.1(ii) and Lemma 9.3, we have, for some η > 0,
+         X           X         X            X       X
+               Λ(d)     an ≤         Λ(d)        λ+
+                                                  e   (1 ∗ ψ)(n)
+           d≤q 5/7           n≤q          d≤q 5/7            e|P (w)       n≤q
+         (d,P (w))=1         d|n        (d,P (w))=1                        de|n
+(9.5)                                                 X                      X
+                                      = L(1, ψ)q             λ+
+                                                              e h(e) ·                 Λ(d)h(d) + O(q 1−η ).
+                                                   e|P (w)                 d≤q 5/7
+                                                                         (d,P (w))=1
+
+   By (9.2) and Mertens’ theorem,
+              X                   X 2 log p                            X     2k         1
+                    Λ(d)h(d) ≤              +                                  k
+                                                                                 log p ≤ log q.
+(9.6)                                  p                                     p          2
+                1/4
+                d≤q                1/4  w≤p≤q                    pk ≤q   1/4
+              (d,P (w))=1                                        p≥w,k≥2
+
+Furthermore, if (8.5) does not hold, then since |h(p)| > 1/p2 for p ∤ q implies ψ(p) = 1, we
+have
+               X                        1                          1
+(9.7)                   Λ(d)h(d) < 2 ·    log q 5/7 + O(q −1/10 ) = log q + O(q −1/10 ).
+           1/4      5/7
+                                       10                          7
+              q ≤d≤q
+               (d,P (w))=1
+
+  Inserting (9.6) and (9.7) into (9.5) and noting that L(1, ψ) e|P (w) λ+
+                                                               P
+                                                                        e h(e) > 0, we see
+that, for some η > 0,
+               X           X          9                X
+                      Λ(d)     an ≤ qL(1, ψ)(log q)         λ+
+                                                             e h(e) + O(q
+                                                                          1−η
+                                                                              ).
+                                     14
+                 5/7
+                 d≤q            n≤q                                    e|P (w)
+               (d,P (w))=1      d|n
+
+Once ε is sufficiently small, this together with (9.4) and Lemma 9.1(iii) implies that, for
+some η > 0,
+                X          X         1                Y
+(9.8)                 Λ(d)     an ≥ q(log q)L(1, ψ)      (1 − h(p)) + O(q 1−η ).
+                                     3               p<w
+              5/7
+                q   <d≤q       n≤q
+                               d|n
+
+By Siegel’s bound, the right-hand side is ≫δ q 1−δ for any δ > 0. Note that higher prime
+powers give a negligible contribution to the left-hand side, an are supported on numbers
+whose all prime factors p satisfy ψ(p) ∈ {0, 1} and p ≥ w. Furthermore an = Oε (1).
+Hence (9.8) implies
+                          Y                   X              q       X
+          q(log q)L(1, ψ)     (1 − h(p)) ≪          log p         +        log p
+                          p<w
+                                                          p log w
+                                            5/7       q <p≤q                              p≤q
+                                                      ψ(p)∈{0,1}                       ψ(p)∈{0,1}
+36                                     Kaisa Matomäki and Joni Teräväinen
+
+Now the primes with ψ(p) = 0 make a negligible contribution and we obtain
+                       Y                    X    1 X                    X
+       q(log q)L(1, ψ)     (1 − h(p)) ≪                     1 + (log q)   1.
+                       p<w
+                                                 y    p∼y
+                                        5/7                        q       /2≤y<q/2                                    p≤q
+                                                                           y=2ℓ            q 5/7 <p≤q                 ψ(p)=1
+                                                                                           ψ(p)∈{0,1}
+
+and the claim follows.                                                                                                                 □
+  We will need the following variant of the Halász–Montgomery type mean value theorem
+(Lemma 3.8) which takes into account the possible sparsity of the set of primes p with
+ψ(p) = 1.
+Lemma 9.5 (Sharp Halász–Montgomery with weight 1 ∗ ψ). Let ε > 0 and C ≥ 1 be
+fixed, q ∈ N, and let N ∈ [q 2/3+3ε , q C ]. Let χ1 , . . . , χR be distinct Dirichlet characters of
+modulus q and let ψ be a quadratic character of modulus q. Then there exists η = η(ε) > 0
+such that, for any complex coefficients an ,
+                                                                       2
+            R
+            X             X
+                                       (1 ∗ ψ)(n)an χj (n)
+            j=1          n≤N
+                      (n,P (q ε ))=1
+                                                  
+                                      
+                          φ(q) Y     2                                                              X
+                                         + N q −η R                                                          (1 ∗ ψ)(n)|an |2 .
+                                                  
+            ≪ε N L(1, ψ)         1−
+                          q         p             
+                                              2<p≤q                                              n≤N
+                                              ψ(p)=1                                          (n,P (q ε ))=1
+
+Proof. The proof is somewhat similar to the proof of Lemma 3.8 although there are some
+additional complications. By the duality principle (see e.g. [10, Section 7.1]), it suffices to
+show that, for any complex coefficients cj ,
+(9.9)
+                                                                                               
+                                                     2
+                                 R
+                                                                                                 R
+                                                                                   
+     X                           X                                    φ(q) Y      2         −η 
+                                                                                                  X
+                                                                                                    |cj |2 .
+                                                          
+               (1 ∗ ψ)(n)                cj χj (n)       ≪ N L(1, ψ)         1 −     + N q   R
+                                                                      q          p             
+   n≤N                           j=1                                                       2<p≤q                               j=1
+(n,P (q ε ))=1                                                                             ψ(p)=1
+                                                                                                               2
+Let λ+d be as in Lemma 9.1 with κ = 2, sifting parameter z = q
+                                                                ε and level D = q ε (so
+          −1
+that s = ε ). Then the left-hand side of (9.9) is by Lemma 9.1(ii)
+(9.10)
+                                                                   2
+         X            X                      R
+                                             X                              R
+                                                                            X              X          X
+     ≤           λ+
+                  d          (1 ∗ ψ)(n)              cj χj (n)         =           cj ck         λ+
+                                                                                                  d          χj (n)χk (n)(1 ∗ ψ)(n).
+         d≤D          n≤N                    j=1                           j,k=1           d≤D        n≤N
+                       d|n                                                                             d|n
+
+  Note that for a character χ (mod q) with χ ̸∈ {χ0 , ψ}, by the hyperbola method and
+the Burgess bound (Lemma 3.2) we have
+ X                    X           X           X              X                 N
+     χ(n)(1 ∗ ψ)(n) =        ψ(e)     χ(n) +         ψ(e)          χ(n)ψ(n) ≪ q −2η
+                                                                               d
+n≤N                      1/2       e≤N           1/2      n≤N
+                                                            1/2               e≤N                eN      <n≤N
+ d|n                                                     d|n,e|n                                      d|n,e|n
+                      Products of primes in arithmetic progressions                                                              37
+
+for some η = η(ε) > 0, provided that N 1/2 /d ≥ q 1/3+ε/10 . Using this and the assumption
+N ≥ q 2/3+3ε , we see that (9.10) for χj χk ̸∈ {χ0 , ψ} is
+
+
+                                                           R
+                                                           X
+                                                   ≪R            |cj |2 N q −η .
+                                                           j=1
+
+
+
+
+  For the remaining pairs we note that
+
+
+
+                       (1 ∗ ψ)(n)ψ(n) = (1 ∗ ψ)(n)χ0 (n) = (1 ∗ ψ)(n)1(n,q)=1
+
+
+
+and thus they contribute to (9.10) at most
+
+
+
+
+              R
+              X                    X            X                           R
+                                                                            X                X                  X
+(9.11)                     cj ck         λ+
+                                          d            (1 ∗ ψ)(n) ≤ 2              |cj |2              λ+
+                                                                                                        d            (1 ∗ ψ)(n) .
+              j,k=1                d≤D         n≤N                          j=1              d≤D             n≤N
+          χj χk ∈{χ0 ,ψ}                        d|n                                         (d,q)=1           d|n
+                                              (n,q)=1                                                       (n,q)=1
+
+
+
+
+By Möbius inversion, Lemma 9.3 and (9.2), we have, for any d ≤ D with (d, q) = 1 and
+some η ′ > 0,
+
+
+ X                         X             X
+         (1 ∗ ψ)(n) =            µ(e)           (1 ∗ ψ)(n)
+ n≤N                       e|q           n≤N
+  d|n                                    de|n
+(n,q)=1
+                                                                                                                   
+                                 X                 X                                   X              X             
+                     =                     µ(e)           (1 ∗ ψ)(n) + O                                       τ (n)
+                                                                                                                    
+                                                                                                                    
+                               e|q                 n≤N                                 e|q      n≤N
+                           de≤N/q 1/4+ε            de|n                            de>N/q 1/4+ε de|n
+                                                                                                               1−η′ !!
+                                 X
+                                                                                             η ′ /10       N                        
+                     =                     µ(e) L(1, ψ)h(de)N + O (de)                                                     + O q 1/3
+                                                                                                           de
+                               e|q
+                           de≤N/q 1/4+ε
+                                                     1−η′ /2 !
+                                    Y                N
+                     = h(d)N L(1, ψ) (1 − h(p)) + O              .
+                                                     d
+                                                 p|q
+38                           Kaisa Matomäki and Joni Teräväinen
+
+   Thus, using Lemma 9.1(iii) and a variant of (9.3) we can bound the right-hand side
+of (9.11) as
+                                                                               
+         R                                               R                    ′
+                                                                       N 1−η /2 
+        X                  Y           X                                 
+                                                       X         X
+    =2     |cj |2 N L(1, ψ) (1 − h(p))    h(d)λ+d +  O    |cj |2               
+                                                                       d       
+          j=1                   p|q               d≤D                      j=1           d≤D
+                                                 (d,q)=1                                (d,q)=1
+                                                                                  
+          R                                                      R
+                                                                               ′
+          X                     Y             Y                  X
+     ≤4         |cj |2 N L(1, ψ) (1 − h(p)) ·   (1 − h(p)) + O    |cj |2 N 1−η /4 
+          j=1                   p|q                 p<z                           j=1
+                                                  (p,q)=1
+         R                                 
+         X
+                  2            φ(q) Y     2
+     ≪         |cj | N L(1, ψ)         1−
+                                q         p
+         j=1                           2<p≤q
+                                       ψ(p)=1
+
+by Siegel’s bound L(1, ψ) ≫δ q −δ . Now the claim follows.                                        □
+
+     This allows us to add one more conclusion to Proposition 5.2:
+Proposition 9.6. In the set-up of Proposition 5.2, the set A satisfies in addition to (i)–
+(vi) also the following:
+   Assume that N ≥ q and M ∈ [q 2/3+3ε , q]. Then
+                                                               
+            X                φ(q)               φ(q) Y        2
+                     1≫               M L(1, ψ)           1−       =⇒ a ∈ E3 (N ).
+                         (log q)1/2−ε            q            p
+                                                                  2<p≤q
+       pa1 a2 ≡a (mod q)
+         p∼M, ψ(p)=1                                              ψ(p)=1
+            a1 ,a2 ∈A
+
+Proof. We proceed similarly to the proof of Proposition 5.2(iv) but with different choice
+of f0 . We let f : [N ]q → R≥0 be as in (5.8) and let f0 : [N ]q → R≥0 be defined through
+                                f0 (n) = 1n∈P∩(M,2M ] 1(n,q)=1 (1 ∗ ψ)(n).
+Note that f0 is supported on primes with ψ(p) = 1 and definitely a ∈ E3 (N ) if (f ∗ f ∗
+f0 )(n) > 0 for some n ≡ a (mod q). Recall that f satisfies the assumptions in Proposi-
+tion 4.1 with δ = (log q)−1/2+ε/2 and η = o(1). Let g then be as in Proposition 4.1.
+   Now by orthogonality of characters and Proposition 4.1(iii) (abusing the notation to
+consider f0 as a function from Z×q when necessary)
+
+             1           X                                 1
+                                    (f ∗ f ∗ f0 )(n) −         (g ∗ g ∗ f0 )(a)
+          |[N ]q |2                                      φ(q)2
+                      n≡a (mod q)
+          1      X                             2                  2  X
+       =                    En∈[N ]q f (n)χ(n) − Eb∈Z×       g(b)χ(b)        f0 (n)χ(n)χ(a)
+         φ(q)                                              q
+              χ (mod q)                                                  n∼M
+(9.12)    
+              1     X                               X
+       =O                     En∈[N ]q f (n)χ(n)        f0 (n)χ(n)
+            φ(q)
+                  χ (mod q)                        n∼M
+                                                         
+                · En∈[N ]q f (n)χ(n) − Eb∈Z×  q
+                                                g(b)χ(b) .
+                 Products of primes in arithmetic progressions                                             39
+
+  Let us first consider the right-hand side. Let the multiplicative function h be as in
+Lemma 9.3. We split the characters into two sets
+                                                                                
+        
+                                                                              
+                                                                                 
+                         X
+                                                  −10         φ(q)  Y         2  
+   X1 = χ (mod q) :           f0 (n)χ(n) < (log q) M L(1, ψ)               1−
+                                                              q              p 
+        
+                        n∼M                                       2<p≤q         
+                                                                                 
+                                                                                    ψ(p)=1
+
+and
+                                       X2 = {χ (mod q) : χ ̸∈ X1 } .
+By the definition of X1 , Proposition 4.1(iii) and Lemma 3.6, we see that
+
+          1 X                                   X
+              En∈[N ]q f (n)χ(n)                      f0 (n)χ(n) En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b)
+         φ(q)                                                                             q
+             χ∈X1                               n∼M
+                                                 
+                    −10              φ(q) Y     2   1                    X                             2
+         ≪ (log q)         M L(1, ψ)         1−                                   En∈[N ]q f (n)χ(n)
+                                      q         p φ(q)
+                                            2<p≤q                     χ (mod q)
+                                            ψ(p)=1
+(9.13)                               φ(q) Y
+                                            
+                                                2
+                                                  
+                                                    1             log N
+                     −10
+         ≪ (log q)         M L(1, ψ)         1−        (N + φ(q))
+                                      q         p φ(q)              N
+                                            2<p≤q
+                                            ψ(p)=1
+                                              
+                1                 φ(q) Y     2
+         ≪              M L(1, ψ)         1−     .
+           φ(q)(log q)9            q         p
+                                                2<p≤q
+                                                ψ(p)=1
+
+On the other hand, by the definition of X2 , Lemma 9.5, and Lemma 9.4, we obtain
+                                             2
+                                                                        2
+   (log q)−10 M L(1, ψ) φ(q)             2 
+                              Y                         X X
+                                      1−        |X2 | ≤       f0 (n)χ(n)
+                         q               p 
+                                       2<p≤q                         χ∈X2 n∼M
+                                       ψ(p)=1
+                                                               
+                                
+                   φ(q) Y      2                  X
+                                   + M q −η |X2 |
+        
+      ≪ M L(1, ψ)
+                           1−                       (1 ∗ ψ)(p)
+                    q          p                 
+                              2<p≤q                                  p∼M
+                              ψ(p)=1                                (p,q)=1
+                                             
+                                                                    
+                  φ(q) Y      2        −η
+                                                         φ(q) Y     2
+      ≪ M L(1, ψ)
+                           1−     + M q |X2 | M L(1, ψ)
+                                                                 1−     .
+                    q          p                           q         p
+                              2<p≤q                                                  2<p≤q
+                              ψ(p)=1                                                 ψ(p)=1
+
+By Siegel’s bound L(1, ψ) ≫ q −η/10 , so the second term cannot dominate and so |X2 | ≪
+(log q)20 and moreover
+                                                                     2
+                                  2                                
+               X X                                  φ(q) Y        2 
+                       f0 (n)χ(n) ≪      M  L(1, ψ)           1−      .
+                                                     q            p 
+              χ∈X2 n∼M                                                2<p≤q
+                                                                      ψ(p)=1
+40                          Kaisa Matomäki and Joni Teräväinen
+
+Furthermore using the bound |X2 | ≪ (log q)20 and Lemma 3.8(i), we obtain similarly
+to (5.22) that
+                                                   2
+                           X
+                                 En∈[N ]q f (n)χ(n) ≪ 1.
+                                      χ∈X2
+Combining these with Proposition 4.1(ii) and Cauchy–Schwarz, we obtain
+        1 X                                  X
+            En∈[N ]q f (n)χ(n)                     f0 (n)χ(n) En∈[N ]q f (n)χ(n) − Eb∈Z× g(b)χ(b)
+       φ(q)                                                                            q
+              χ∈X2                           n∼M
+                                      1                             1/2
+                                      2 2
+            1 X X                             X                     2
+       ≪δ                   f0 (n)χ(n)           En∈[N ]q f (n)χ(n) 
+          φ(q)
+                 χ∈X2 n∼M                     χ∈X2
+                                         
+          δ             φ(q)   Y        2
+       ≪      M L(1, ψ)              1−     .
+         φ(q)            q              p
+                                    2<p≤q
+                                    ψ(p)=1
+
+Combining with (9.12) and (9.13), we obtain
+                                                                                           
+                                                                                          
+   1           X                          1                   δ              φ(q) Y      2 
+                       (f ∗f ∗f0 )(n) =       (g∗g∗f0 )(a)+O       M L(1, ψ)         1 −   .
+|[N ]q |2                               φ(q)2                 φ(q)            q          p 
+            n≡a (mod q)                                                                        2<p≤q
+                                                                                               ψ(p)=1
+
+Recall A = {a ∈ Z×
+                 q : |g(a)| ≥ ε/10} in Proposition 5.2, so the main term on the right-hand
+side is
+                   1         X                           ε2     X
+              ≥       2
+                                       g(a 1 )g(a 2 ) ≥     2
+                                                                         1,
+                 φ(q)                                   φ(q)
+                             pa1 a2 ≡a (mod q)                           pa1 a2 ≡a (mod q)
+                               p∼M,ψ(p)=1                                  p∼M,ψ(p)=1
+                                                                              a1 ,a2 ∈A
+and the claim follows.                                                                                  □
+     Now Proposition 8.3 finally follows from Proposition 9.6 since (6.2) implies that
+                  X                   X                      εφ(q)     X
+                            1≥               (1A ∗ 1A )(c) ≥                   1.
+                                                              10
+                pa1 a2 ≡a (mod q)     cp≡a (mod q)                              cp≡a (mod q)
+                  p∼M, ψ(p)=1          p∼M, ψ(p)=1                               p∼M, ψ(p)=1
+                     a1 ,a2 ∈A           c∈A′ ·B ′                                 c∈A′ ·B ′
+
+                                             10     Size of E2 (q)
+Proof of Theorem 1.3. Let ε > 0 be small. Recall the definitions of θ and θ0 from (5.1)
+and (5.2). Note that θ ≥ 3/4 − ε if q is cube-free and θ ≥ 2/3 − ε if q is not cube-free. Let
+us apply Proposition 6.2. If Proposition 6.2(a) holds, then the claim follows immediately
+(adjusting ε). Hence we can assume that Proposition 6.2(b) holds. Let A′ and B ′ be as
+there. We apply Lemma 6.3 for these sets, taking α = α′ = 3/8 − 2ε, and β = 11/16 − 5ε if
+q is cube-free and α = 1/3 − 2ε, α′ = 3/8 − 10ε1/2 and β = 2/3 − 7ε if q is not cube-free. If
+Lemma 6.3(a) holds, the claim follows immediately (adjusting ε) from Proposition 6.2(b.ii)
+    We may then assume that Lemma 6.3(b) holds. In particular, then the stabilizer H of
+A · B ′ has index Y = 3k + 2 with k ∈ {0, 1, 2} (in case q is cube-free, this follows from
+  ′
+
+Lemma 6.3(b.iii) and in case q is not cube-free first Lemma 6.3(b.i) implies that Y ≤ 12
+so that k ∈ {0, 1, 2, 3} and then (6.4) implies k ̸= 3). Moreover, by Lemma 6.3(b.ii) there
+                       Products of primes in arithmetic progressions                                         41
+
+exist cosets a1 H, . . . , ak+1 H and b1 H, . . . , b2k+1 H such that A′ and B ′ are contained in
+∪k+1                                     ′           ′
+ j=1 aj H (by Proposition 6.2(b.v) A and B are contained in the same k + 1 cosets) and
+                                                   
+                            k+1
+                             [           k+1
+                                          [                2k+1
+                                                            [
+                               aj H ·
+                                             aj H =          bj H = A′ · B ′ .
+                               j=1                j=1                j=1
+
+Furthermore by Proposition 6.2(b.ii) and (b.vi)
+                                         
+                                2k+1                       
+                                 [                2k + 1
+(10.1)               E2 (q) ∩       bj H   ≥           − ε φ(q)
+                                                    Y
+                                               j=1
+
+and
+                                            X                                  q
+(10.2)                                                1 ≤ (2k + 1) · 2ε            .
+                                                                             log q
+                                          p≤q
+                                      p̸∈∪k+1
+                                          j=1 aj H
+
+
+  Let us next observe that there exists y ∈ [q ε , q] and a0 such that a0 ̸∈ ∪k+1
+                                                                              j=1 aj H and
+                                       X             y
+(10.3)                                     1 ≫ η′
+                                       p∼y          q
+                                                     p∈a0 H
+
+for any η ′ > 0; in case k = 0 and a1 ̸∈ H this follows from Lemma 8.1 and otherwise it
+follows as (8.4).
+   By Kneser’s theorem (Lemma 3.5),
+                        
+    k+1
+    [             k+1
+                   [                                                         2k+1
+                                                                              [
+       aj H  ·     aj H  ≥ (k + 2)|H| + (k + 1)|H| − |H| = (2k + 2)|H| >      bj H .
+   j=0                 j=1                                                                      j=1
+
+Hence there exists j0 ∈ {1, . . . , k + 1} such that
+                                                              2k+1
+                                                               [
+(10.4)                                          a0 aj0 H ̸∈          bj H.
+                                                              j=1
+
+  Let
+                                             P1 = {p ∼ y : p ∈ a0 H}
+and
+                                             P2 = {p ≤ q : p ∈ aj0 H}.
+Now by the prime number theorem, Lemma 3.3 and (10.2),
+(10.5)
+                      k+1 X                                                                         
+           X          X                      X                         k     2                             q
+ |P2 | =         1−                  1−                  1≥ 1−             ·   − 2ε(2k + 1) + o(1)
+                                                                     3k + 2 θ0                           log q
+           p≤q        j=1 p≤q                 p≤q
+                      j̸=j0 p∈aj H        p̸∈∪k+1
+                                              j=1 aj H
+
+                         q
+           
+           (1 − 20ε) log q
+                                    if k = 0;
+              7             q
+         ≥   15 − 20ε                if k = 1;
+            1
+                      log
+                          q
+                              q
+
+             3  − 20ε   log q        if k = 2.
+42                        Kaisa Matomäki and Joni Teräväinen
+
+Note that, for any a ∈ Z×
+                        q , we have
+                            X
+(10.6)                          1 > 0 =⇒ a ∈ E2 (q) ∩ a0 aj0 H.
+                                 a=p1 p2
+                                 p1 ∈P1
+                                 p2 ∈P2
+
+By the Cauchy–Schwarz inequality,
+                                                         2                                                   2
+                                                                               
+                              X X                                  X  X 
+                          2
+(10.7)         (|P1 ||P2 |) = 
+                                          1 ≤ |E2 (q) ∩ a0 aj0 H|
+                                                                        
+                                                                                1
+                                                                                   .
+                              a∈Z× a=p1 p2                           × a=p1 p2 
+                                           q                        a∈Z                       q
+                                               p1 ∈P1                                                 p1 ∈P1
+                                               p2 ∈P2                                                 p2 ∈P2
+
+This is a multiplicative variant of [24, second inequality in (2.8)] — on the right-hand side
+we have the multiplicative energy Eq× (P1 , P2 ), where Eq× (B, C) is defined between two
+finite sets B, C ⊆ {n ∈ Z : (n, q) = 1} by
+                                                   X
+                               Eq× (B, C) =                  1.
+                                                             b1 ,b2 ∈B,c1 ,c2 ∈C
+                                                            b1 c1 ≡b2 c2 (mod q)
+
+     Then by (10.7)
+                                                                    (|P1 ||P2 |)2
+(10.8)                              |E2 (q) ∩ a0 aj0 H| ≥                          .
+                                                                    Eq× (P1 , P2 )
+Now we show an upper bound for Eq× (P1 , P2 ). Let λ+d be as in Lemma 3.1 with level
+D = q θ and s = 1 (so that z = D).
+  Then by Lemma 3.1(ii)
+                                   X           X
+               Eq× (P1 , P2 ) ≤                   λ+
+                                                   d 1p1 p2 ≡q1 n2 (mod q) .
+                                      p1 ,q1 ∈P1 ,p2 ∈P2 ,n2 ≤q d|n2
+
+Thus by the orthogonality of characters
+                                                                       2
+                                 1             X           X               X             X          X
+(10.9)         Eq× (P1 , P2 ) ≤                                 χ(p)              χ(p)       χ(n)         λ+
+                                                                                                           d.
+                                φ(q)
+                                           χ (mod q) p∈P1                  p∈P2        n≤q          d|n
+
+  We first consider the contribution of χ = χ0 to (10.9). This is by (3.2), Lemma 3.1(iii)
+and (10.5)
+
+                                                                      
+              1                    X                    φ(q)               1                            q
+           ≤      |P1 |2 |P2 |                 λ+
+                                                d            + O(τ (q)) ≤      (2 + o(1))|P1 |2 |P2 |
+             φ(q)                                        d                φ(q)                        log z
+                                   d≤D
+                                  (d,q)=1
+            2 + o(1)                   q
+(10.10)    ≤         |P1 |2 |P2 |
+               θ                  φ(q) log q
+             1                       2      2
+             φ(q) (3 + 100ε) |P
+                                  1 | |P2 |                when k = 0;
+               1    45                  2      2
+                                 
+           ≤ φ(q)
+                    7 + 100ε |P1 | |P2 |                   when k = 1;
+             1                       2      2
+              φ(q) (9 + 100ε) |P1 | |P2 |                   when k = 2.
+                  Products of primes in arithmetic progressions                                                         43
+
+  We shall show that
+                                                 2
+              1        X           X                  X               X               X               |P1 |2 |P2 |2
+(10.11)                                   χ(p)               χ(p)              χ(n)         λ+
+                                                                                             d ≪                    .
+             φ(q)                                                                                   (log q)20 φ(q)
+                    χ (mod q) p∈P1                   p∈P2             n≤q             d|n
+                      χ̸=χ0
+
+Before proving (10.11), let us show how it implies Theorem 1.3(i)–(ii). Combining (10.11)
+with (10.9) and the evaluation of the contribution of the principal character in (10.10), we
+obtain
+                                 1                    2     2
+                                 φ(q) (3 + 101ε) |P
+                                                   1 | |P2 |    when k = 0;
+                  ×                1    45               2     2
+                                                  
+                Eq (P1 , P2 ) ≤ φ(q) 7 + 101ε |P1 | |P2 | when k = 1;
+                                
+                                 1                    2     2
+                                  φ(q) (9 + 101ε) |P1 | |P2 |    when k = 2.
+This together with (10.8), (10.4), and (10.1) implies
+                            
+                               1               1
+                                                     
+                             2 − ε φ(q) + 3 − 200ε φ(q) if k = 0;
+                            
+                 |E2 (q)| ≥    3               7
+                               5 − ε φ(q) + 45 − 200ε  φ(q) if k = 1;
+                             5
+                                              1
+                                                      
+                               8 − ε φ(q) + 9 − 200ε φ(q)    if k = 2.
+In each case the claim follows on taking ε > 0 small enough (since 1/2 + 1/3, 3/5 +
+7/45, 5/8 + 1/9 > 11/16).
+   Let us now turn to proving the remaining claim (10.11). We argue somewhat similarly
+as in the proof of Proposition 5.2(iv). We write
+                                                                 
+                                           X              |P1 | 
+                      X1 = χ (mod q) :           χ(p) ≤
+                                                       (log q)20 
+                                                             p∈P1
+
+and                                                                                                   
+                                                                     X                        |P1 |   
+                X2 = χ (mod q) : χ ̸= χ0 and                                χ(p) >                      .
+                                                                                           (log q)20 
+                                                                     p∈P1
+
+By the definition of X1 , the Cauchy–Schwarz inequality, the mean value theorem (Lemma 3.6)
+and (10.5), we have
+                               2
+       1 X X                       X                 X            X
+             χ(p)                         χ(p)             χ(n)           λ+
+                                                                           d
+      φ(q)
+           χ∈X1 p∈P1               p∈P2              n≤q            d|n
+                                                            2 1/2                                           2 1/2
+         1     |P1 |2  X        X                                             X            X          X
+      ≪                               χ(p)                                                    χ(n)         λ+
+                                                                                                              d
+                                                                                                                
+        φ(q) (log q)40
+                       χ (mod q) p∈P2                                      χ (mod q) n≤q               d|n
+
+         1     |P1 |2          1/2              1/2     |P1 |2 |P2 |2
+      ≪                (q|P2 |)    (q · q log q)    ≪                 .
+        φ(q) (log q)40                                (log q)20 φ(q)
+For χ ∈ X2 , we note that by the Burgess bound (Lemma 3.2), for some η > 0,
+
+                     X             X                 X                    X
+                           χ(n)          λ+
+                                          d =                λ+
+                                                              d χ(d)              χ(n) ≪ q 1−η .
+                     n≤q           d|n               d≤q θ                n≤q/d
+44                             Kaisa Matomäki and Joni Teräväinen
+
+                      log q
+Hence, choosing L = ⌈ log y ⌉ and applying Hölder’s inequality, we obtain
+                           2
+ 1 X X                         X              X            X
+       χ(p)                           χ(p)          χ(n)         λ+
+                                                                  d
+φ(q)
+      χ∈X2 p∈P1                p∈P2           n≤q          d|n
+                                              1                                                                  1   1
+                                                                         2 1/2                              2 2 − L
+                   
+                                         2L    L
+
+     (q 1−η )2/L   X X                               X X                           X X               X
+≪                       χ(p)                                          χ(p)                    χ(n)         λ+             .
+                                                                                                            
+       φ(q)
+                                                                                                           d
+                       χ∈X2 p∈P1                     χ∈X2 p∈P2                      χ∈X2 n≤q          d|n
+
+Applying Lemma 3.6 to each mean square and using (10.3) with η ′ = η/(10L), we see that
+the above expression is
+                   (q 1−η )2/L 2L          1                           1   1  |P1 |2 |P2 |2
+            ≪                  y (log q)L−1 L (q|P2 |)1/2 (q · q log q) 2 − L ≪ η/L          .
+                       φ(q)                                                     q φ(q)
+This completes the proof of (10.11).                                                                               □
+
+                                              Acknowledgments
+  KM was supported by Academy of Finland grant no. 285894. JT was supported
+by Academy of Finland grant no. 340098, a von Neumann Fellowship (NSF grant no.
+DMS-1926686), and funding from the European Union’s Horizon Europe research and
+innovation programme under Marie Sklodowska-Curie grant agreement no. 101058904.
+The authors would like to thank Igor Shparlinski for useful discussions and for pointing
+out the paper [28]. The authors are also grateful to the anonymous referee for helpful
+comments and corrections.
+
+                                                    References
+ [1] R. Balasubramanian, O. Ramaré, and P. Srivastav. Product of three primes in large arithmetic pro-
+     gressions. Int. J. Number Theory, 19(4):843–857, 2023.
+ [2] K. Benli. Small prime kth power residues. Proc. Amer. Math. Soc., 148(9):3801–3809, 2020.
+ [3] A. Dunn, B. Kerr, I. E. Shparlinski, and A. Zaharescu. Bilinear forms in Weyl sums for modular
+     square roots and applications. Adv. Math., 375:107369, 58, 2020.
+ [4] P. Erdős, A. M. Odlyzko, and A. Sárközy. On the residues of products of prime numbers. Period.
+     Math. Hungar., 18(3):229–239, 1987.
+ [5] J. Friedlander and H. Iwaniec. Opera de cribro, volume 57 of American Mathematical Society Collo-
+     quium Publications. American Mathematical Society, Providence, RI, 2010.
+ [6] B. Green. Roth’s theorem in the primes. Ann. of Math. (2), 161(3):1609–1636, 2005.
+ [7] B. Green and T. Tao. Restriction theory of the Selberg sieve, with applications. J. Théor. Nombres
+     Bordeaux, 18(1):147–182, 2006.
+ [8] D. J. Grynkiewicz. On extending Pollard’s theorem for t-representable sums. Israel J. Math., 177:413–
+     439, 2010.
+ [9] D. R. Heath-Brown. Zero-free regions for Dirichlet L-functions, and the least prime in an arithmetic
+     progression. Proc. London Math. Soc. (3), 1992.
+[10] H. Iwaniec and E. Kowalski. Analytic number theory, volume 53 of American Mathematical Society
+     Colloquium Publications. American Mathematical Society, Providence, RI, 2004.
+[11] O. Klurman, A. P. Mangerel, and J. Teräväinen. Multiplicative functions in short arithmetic progres-
+     sions. Proc. Lond. Math. Soc. (3), 127(2):366–446, 2023.
+[12] H. Li and H. Pan. A density version of Vinogradov’s three primes theorem. Forum Math., 22(4):699–
+     714, 2010.
+[13] U. V. Linnik. On the least prime in an arithmetic progression. I. The basic theorem. Rec. Math. [Mat.
+     Sbornik] N.S., 15(57):139–178, 1944.
+                    Products of primes in arithmetic progressions                                        45
+
+[14] U. V. Linnik. On the least prime in an arithmetic progression. II. The Deuring-Heilbronn phenomenon.
+     Rec. Math. [Mat. Sbornik] N.S., 15(57):347–368, 1944.
+[15] K. Matomäki. On signs of Fourier coefficients of cusp forms. Math. Proc. Cambridge Philos. Soc.,
+     152(2):207–222, 2012.
+[16] K. Matomäki, J. Maynard, and X. Shao. Vinogradov’s theorem with almost equal summands. Proc.
+     Lond. Math. Soc. (3), 115(2):323–347, 2017.
+[17] K. Matomäki and X. Shao. Vinogradov’s three primes theorem with almost twin primes. Compos.
+     Math., 153(6):1220–1256, 2017.
+[18] P. Pollack. Bounds for the first several prime character nonresidues. Proc. Amer. Math. Soc.,
+     145(7):2815–2826, 2017.
+[19] S. Prendiville. Four variants of the Fourier-analytic transference principle. Online J. Anal. Comb.,
+     (12):Paper No. 5, 25, 2017.
+[20] J.-C. Puchta. Primes in short arithmetic progressions. Acta Arith., 106(2):143–149, 2003.
+[21] O. Ramaré, P. Srivastav, and O. Serra. Product of primes in arithmetic progressions. Int. J. Number
+     Theory, 16(4):747–766, 2020.
+[22] X. Shao. A density version of the Vinogradov three primes theorem. Duke Math. J., 163(3):489–512,
+     2014.
+[23] B. Szabó. On the existence of products of primes in arithmetic progressions. arXiv e-prints, page
+     arXiv:2208.05762, August 2022.
+[24] T. Tao and V. Vu. Additive combinatorics, volume 105 of Cambridge Studies in Advanced Mathematics.
+     Cambridge University Press, Cambridge, 2006.
+[25] A. Walker. Topics in analytic and combinatorial number theory. PhD thesis. University of Oxford,
+     2018.
+[26] A. Walker. A multiplicative analogue of Schnirelmann’s theorem. Bull. Lond. Math. Soc., 48(6):1018–
+     1028, 2016.
+[27] T. Xylouris. Über die Nullstellen der Dirichletschen L-Funktionen und die kleinste Primzahl in einer
+     arithmetischen Progression, volume 404 of Bonner Mathematische Schriften [Bonn Mathematical Pub-
+     lications]. Universität Bonn, Mathematisches Institut, Bonn, 2011. Dissertation for the degree of Doc-
+     tor of Mathematics and Natural Sciences at the University of Bonn, Bonn, 2011.
+[28] L. Zhao. On products of primes and almost primes in arithmetic progressions. Acta Arith., 204(3):253–
+     267, 2022.
+
+   Department of Mathematics and Statistics, University of Turku, 20014 Turku, Finland
+   Email address: ksmato@utu.fi
+
+   Department of Mathematics and Statistics, University of Turku, 20014 Turku, Finland
+   Email address: joni.p.teravainen@gmail.com
+

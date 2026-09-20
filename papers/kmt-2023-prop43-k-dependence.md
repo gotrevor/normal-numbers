@@ -341,3 +341,19 @@ one Thorner–Zaman's printed (6.2) fails to reduce to.  Its Fundamental Lemma (
 1980 paper does **not** supply the explicit `e^{9κ}K^{10}`; that refinement is the β-sieve chapter of Opera de
 Cribro.  Status of IV.5(a): hypothesis form confirmed by an independent primary source; the explicit constant
 still rests on Thorner–Zaman's restatement alone.
+
+**IV.5(a) CLOSED (15:52 EDT) - second independent restatement.**  Matomäki–Teräväinen, *Products of primes in
+arithmetic progressions*, arXiv:2301.07679, §9, **Lemma 9.1** ("see e.g. [Opera de Cribro, Lemma 6.8]"; local text
+`papers/matomaki-teravainen-2023-products-of-primes-in-ap.txt`, lines 1960–1990): for fixed `κ ≥ 1`, `z ≥ 2`,
+`D = z^s` with `s ≥ 9κ+1`, there are `λ^±_d` with `|λ^±_d| ≤ 1`, supported on `d ≤ D`, `d | P(z)`, sandwiching
+`1_{(n,P(z))=1}`, such that for multiplicative `h : ℕ → [0,1)` with
+`∏_{w₁≤p<z₁}(1 − h(p))^{−1} ≤ K (log z₁/log w₁)^κ` for all `z₁ ≥ w₁ ≥ 2`,
+```
+Σ_{d|P(z)} λ^+_d h(d) ≤ (1 + e^{9κ−s}K^{10}) ∏_{p<z}(1−h(p)),     Σ_{d|P(z)} λ^−_d h(d) ≥ (1 − e^{9κ−s}K^{10}) ∏_{p<z}(1−h(p)).
+```
+This is exactly III.1: the `∏(1−h)^{−1}` hypothesis (the Iwaniec 1980 (1.3) form), `β`-free statement with
+`s ≥ 9κ+1`, explicit `e^{9κ}K^{10}`, two-sided.  Thorner–Zaman's (6.2) was their misprint.  Two independent
+published restatements (Thorner–Zaman 2018, Matomäki–Teräväinen 2023, the latter by a KMT coauthor) now carry
+the constant; the book itself remains unread, which is a footnote rather than an open item.
+`C_FL(k) = e^{9k}K^{10}`, `K = exp(O(k))` stands.  The remaining referee items are IV.5(c)'s `h(p) < 1` at
+`p ≤ k` (degenerate, handled by sifting only `p > k`) and the bookkeeping slips already applied.
