@@ -529,6 +529,7 @@ theorem smoothWindowCRT (h : ℤ) (y : ℕ) (hy : 2 ≤ y) (hS : SmoothNonvanish
       exact this.eventually (eventually_le_nhds hpos)
     filter_upwards [hδN, hsmall, eventually_gt_atTop 0] with N hδprod hNsmall hN0
     set J := windowJ N with hJdef
+    clear_value J
     have hJ1 : 1 ≤ J := by rw [hJdef, windowJ]; omega
     have hNR : (0 : ℝ) < N := by exact_mod_cast hN0
     -- window mean vs its period average
@@ -622,10 +623,180 @@ theorem smoothWindowCRT (h : ℤ) (y : ℕ) (hy : 2 ≤ y) (hS : SmoothNonvanish
 
 /-! ### Leaf 5–6: the wiring -/
 
+set_option maxHeartbeats 1000000 in
 /-- **Wiring**: N1 (schedule form) from N1a + N1a′ + N1b. -/
 theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : SmoothRoughDecoupling h)
     (hS : SmoothNonvanishing h) : CRTConstantSched h := by
-  sorry
+  classical
+  obtain ⟨cR, BR, CR, hcRB, hRev⟩ := hR
+  obtain ⟨CD, hDev⟩ := hD
+  obtain ⟨δ, hδ, hδev⟩ := hS 2 le_rfl
+  obtain ⟨c', B', hc'B, h4ev⟩ := smoothWindowCRT h 2 le_rfl hS
+  set P₀ : ℕ := primorial 2 with hP₀
+  have hP₀R : (0 : ℝ) < P₀ := by rw [hP₀]; exact_mod_cast primorial_pos 2
+  clear_value P₀
+  have hB'nn : (0 : ℝ) ≤ B' := le_trans (norm_nonneg _) (hc'B 0)
+  have hBRnn : (0 : ℝ) ≤ BR := le_trans (norm_nonneg _) (hcRB 0 0)
+  set κ : ℝ := (1 + |CD|) / δ with hκ
+  have hκnn : (0 : ℝ) ≤ κ := by rw [hκ]; positivity
+  refine ⟨fun J => c' J * cR 2 J, B' * BR,
+    |CD| + (BR + |CR|) * κ + B' * |CR| * κ + B' * BR * |CD|, ?_, ?_⟩
+  · intro J
+    rw [norm_mul]
+    exact mul_le_mul (hc'B J) (hcRB 2 J) (norm_nonneg _) hB'nn
+  · -- the `J · P₀ / N` errors are `≤ 1 / log N` eventually
+    have hsmall : ∀ᶠ N : ℕ in atTop,
+        (B' * P₀ + 1) * ((windowJ N : ℝ) * Real.log N / N) ≤ 1 := by
+      have hlim : Tendsto (fun N : ℕ => (B' * P₀ + 1) * ((windowJ N : ℝ) * Real.log N / N))
+          atTop (𝓝 0) := by
+        simpa using (windowJ_log_div_tendsto_zero).const_mul (B' * P₀ + 1)
+      exact (hlim.eventually (eventually_lt_nhds (by norm_num : (0:ℝ) < 1))).mono
+        (fun N hN => hN.le)
+    filter_upwards [hRev 2 le_rfl, hDev 2 le_rfl, hδev, h4ev, hsmall, eventually_ge_atTop 3]
+      with N hRN hDN hδN h4N hsmallN hN3
+    set J := windowJ N with hJdef
+    clear_value J
+    have hN3R : (3 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN3
+    have hNR : (0 : ℝ) < N := by linarith
+    have hlogN : (1 : ℝ) ≤ Real.log N := by
+      rw [Real.le_log_iff_exp_le (by linarith)]
+      linarith [Real.exp_one_lt_d9]
+    have hlogpos : (0 : ℝ) < Real.log N := by linarith
+    -- abbreviations
+    set SW : ℂ := smoothWindowMean N J h 2 with hSW
+    set RW : ℂ := roughWindowMean N J h 2 with hRW
+    set PS : ℂ := ∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j 2 with hPS
+    set PR : ℂ := ∏ j ∈ Finset.Icc 1 J, roughSiteMean N h j 2 with hPR
+    set Pf : ℂ := ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j with hPf
+    set F : ℝ := ∏ j ∈ Finset.Icc 1 J, ‖fullSiteMean N h j‖ with hF
+    set K : ℝ := ∏ j ∈ Finset.Icc 1 J, ‖roughSiteMean N h j 2‖ with hK
+    set Sn : ℝ := ∏ j ∈ Finset.Icc 1 J, ‖smoothSiteMean N h j 2‖ with hSn
+    have hFnn : (0 : ℝ) ≤ F := Finset.prod_nonneg (fun j _ => norm_nonneg _)
+    have hKnn : (0 : ℝ) ≤ K := Finset.prod_nonneg (fun j _ => norm_nonneg _)
+    have hPfF : ‖Pf‖ = F := by rw [hPf, hF, norm_prod]
+    have hPRK : ‖PR‖ = K := by rw [hPR, hK, norm_prod]
+    have hPSSn : ‖PS‖ = Sn := by rw [hPS, hSn, norm_prod]
+    have hSnle : Sn ≤ 1 :=
+      Finset.prod_le_one (fun j _ => norm_nonneg _)
+        (fun j _ => norm_smoothSiteMean_le_one _ _ _ _)
+    -- (b) of the decoupling: transfer `K` to `F`
+    have hKF : K ≤ κ * F := by
+      have h1 : ‖Pf - PS * PR‖ ≤ CD / Real.log N * F := hDN.2
+      have h2 : ‖PS * PR‖ ≤ F + CD / Real.log N * F := by
+        have hA : ‖PS * PR‖ - ‖Pf‖ ≤ ‖PS * PR - Pf‖ := norm_sub_norm_le _ _
+        have hB : ‖PS * PR - Pf‖ ≤ CD / Real.log N * F := by
+          rw [norm_sub_rev]; exact h1
+        rw [hPfF] at hA
+        linarith
+      have h3 : CD / Real.log N ≤ |CD| := by
+        rw [div_le_iff₀ hlogpos]; nlinarith [le_abs_self CD, abs_nonneg CD]
+      have h4 : Sn * K ≤ (1 + |CD|) * F := by
+        rw [← hPSSn, ← hPRK, ← norm_mul]
+        nlinarith [h2, hFnn, h3]
+      have h5 : δ * K ≤ Sn * K := by nlinarith [hδN, hKnn]
+      rw [hκ, div_mul_eq_mul_div, le_div_iff₀ hδ]
+      nlinarith [h4, h5]
+    -- `‖R_W‖ ≤ (B_R + |C_R|) K`
+    have hCRlog : CR / (2 * Real.log N) ≤ |CR| := by
+      rw [div_le_iff₀ (by linarith)]
+      nlinarith [le_abs_self CR, abs_nonneg CR]
+    have hRWK : ‖RW‖ ≤ (BR + |CR|) * K := by
+      have h1 : ‖RW - cR 2 J * PR‖ ≤ CR / ((2 : ℝ) * Real.log N) * K := by
+        simpa [hRW, hPR, hK, hJdef] using hRN
+      have h2 : ‖cR 2 J * PR‖ ≤ BR * K := by
+        rw [norm_mul, hPRK]
+        exact mul_le_mul (hcRB 2 J) le_rfl hKnn hBRnn
+      have h3 : ‖RW‖ ≤ ‖RW - cR 2 J * PR‖ + ‖cR 2 J * PR‖ := by
+        simpa using norm_add_le (RW - cR 2 J * PR) (cR 2 J * PR)
+      nlinarith [h1, h2, h3, hKnn, hCRlog]
+    -- the four pieces
+    have hT1 : ‖fullWindowMean N J h - SW * RW‖ ≤ |CD| / Real.log N * F := by
+      have h1 : ‖fullWindowMean N J h - SW * RW‖ ≤ CD / Real.log N * F := hDN.1
+      have h3 : CD / Real.log N ≤ |CD| / Real.log N := by
+        gcongr
+        exact le_abs_self CD
+      exact h1.trans (mul_le_mul_of_nonneg_right h3 hFnn)
+    have hJP : B' * (J : ℝ) * P₀ / N ≤ 1 / Real.log N := by
+      rw [div_le_div_iff₀ hNR hlogpos]
+      have hJnn : (0 : ℝ) ≤ (J : ℝ) := Nat.cast_nonneg _
+      have hlognn : (0 : ℝ) ≤ Real.log N := by linarith
+      have hJL : (0 : ℝ) ≤ (J : ℝ) * Real.log N := by positivity
+      have hkey : (B' * P₀ + 1) * ((J : ℝ) * Real.log N / N) ≤ 1 := hsmallN
+      have hmul : (B' * P₀ + 1) * ((J : ℝ) * Real.log N) ≤ N := by
+        have hdiv : (B' * P₀ + 1) * ((J : ℝ) * Real.log N) / N ≤ 1 := by
+          calc (B' * P₀ + 1) * ((J : ℝ) * Real.log N) / N
+              = (B' * P₀ + 1) * ((J : ℝ) * Real.log N / N) := by ring
+            _ ≤ 1 := hkey
+        have := (div_le_iff₀ hNR).mp hdiv
+        linarith
+      nlinarith [hmul, hJL, hB'nn, hP₀R.le]
+    have hT2 : ‖(SW - c' J * PS) * RW‖ ≤ (1 / Real.log N) * ((BR + |CR|) * K) := by
+      have h1 : ‖SW - c' J * PS‖ ≤ B' * (J : ℝ) * P₀ / N := by
+        simpa [hSW, hPS, hJdef, hP₀] using h4N
+      rw [norm_mul]
+      have hb : (0 : ℝ) ≤ (BR + |CR|) * K := by positivity
+      exact mul_le_mul (h1.trans hJP) hRWK (norm_nonneg _) (by positivity)
+    have hT3 : ‖(c' J * PS) * (RW - cR 2 J * PR)‖ ≤ B' * (|CR| / Real.log N * K) := by
+      rw [norm_mul]
+      have h1 : ‖c' J * PS‖ ≤ B' := by
+        rw [norm_mul, hPSSn]
+        nlinarith [hc'B J, hSnle, norm_nonneg (c' J), hB'nn,
+          Finset.prod_nonneg (fun j (_ : j ∈ Finset.Icc 1 J) =>
+            norm_nonneg (smoothSiteMean N h j 2))]
+      have h2 : ‖RW - cR 2 J * PR‖ ≤ |CR| / Real.log N * K := by
+        have := (show ‖RW - cR 2 J * PR‖ ≤ CR / ((2 : ℝ) * Real.log N) * K by
+          simpa [hRW, hPR, hK, hJdef] using hRN)
+        have h3 : CR / (2 * Real.log N) ≤ |CR| / Real.log N := by
+          rw [div_le_div_iff₀ (by linarith) hlogpos]
+          nlinarith [le_abs_self CR, abs_nonneg CR]
+        nlinarith [this, h3, hKnn]
+      exact mul_le_mul h1 h2 (norm_nonneg _) hB'nn
+    have hT4 : ‖(c' J * cR 2 J) * (PS * PR - Pf)‖ ≤ B' * BR * (|CD| / Real.log N * F) := by
+      rw [norm_mul]
+      have h1 : ‖c' J * cR 2 J‖ ≤ B' * BR := by
+        rw [norm_mul]; exact mul_le_mul (hc'B J) (hcRB 2 J) (norm_nonneg _) hB'nn
+      have h2 : ‖PS * PR - Pf‖ ≤ |CD| / Real.log N * F := by
+        rw [norm_sub_rev]
+        have h3 : CD / Real.log N ≤ |CD| / Real.log N := by
+          gcongr
+          exact le_abs_self CD
+        nlinarith [hDN.2, h3, hFnn]
+      exact mul_le_mul h1 h2 (norm_nonneg _) (by positivity)
+    -- assemble
+    have hdecomp : fullWindowMean N J h - (c' J * cR 2 J) * Pf
+        = (fullWindowMean N J h - SW * RW) + (SW - c' J * PS) * RW
+          + (c' J * PS) * (RW - cR 2 J * PR) + (c' J * cR 2 J) * (PS * PR - Pf) := by
+      ring
+    have hKκ : K ≤ κ * F := hKF
+    have hnorm4 : ∀ a b c d : ℂ, ‖a + b + c + d‖ ≤ ‖a‖ + ‖b‖ + ‖c‖ + ‖d‖ := by
+      intro a b c d
+      calc ‖a + b + c + d‖ ≤ ‖a + b + c‖ + ‖d‖ := norm_add_le _ _
+        _ ≤ (‖a + b‖ + ‖c‖) + ‖d‖ := by linarith [norm_add_le (a + b) c]
+        _ ≤ ((‖a‖ + ‖b‖) + ‖c‖) + ‖d‖ := by linarith [norm_add_le a b]
+    calc ‖fullWindowMean N J h - (c' J * cR 2 J) * Pf‖
+        ≤ ‖fullWindowMean N J h - SW * RW‖ + ‖(SW - c' J * PS) * RW‖
+            + ‖(c' J * PS) * (RW - cR 2 J * PR)‖ + ‖(c' J * cR 2 J) * (PS * PR - Pf)‖ := by
+          rw [hdecomp]; exact hnorm4 _ _ _ _
+      _ ≤ |CD| / Real.log N * F + (1 / Real.log N) * ((BR + |CR|) * K)
+            + B' * (|CR| / Real.log N * K) + B' * BR * (|CD| / Real.log N * F) := by
+          linarith [hT1, hT2, hT3, hT4]
+      _ ≤ (|CD| + (BR + |CR|) * κ + B' * |CR| * κ + B' * BR * |CD|) / Real.log N * F := by
+          have hinv : (0 : ℝ) < 1 / Real.log N := by positivity
+          have e1 : (1 / Real.log N) * ((BR + |CR|) * K)
+              ≤ (1 / Real.log N) * ((BR + |CR|) * (κ * F)) := by
+            have hbc : (0 : ℝ) ≤ BR + |CR| := by positivity
+            exact mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hKκ hbc) hinv.le
+          have e2 : B' * (|CR| / Real.log N * K) ≤ B' * (|CR| / Real.log N * (κ * F)) := by
+            have h0 : (0 : ℝ) ≤ |CR| / Real.log N := by positivity
+            exact mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hKκ h0) hB'nn
+          have e3 : (|CD| + (BR + |CR|) * κ + B' * |CR| * κ + B' * BR * |CD|)
+                / Real.log N * F
+              = |CD| / Real.log N * F + (1 / Real.log N) * ((BR + |CR|) * (κ * F))
+                + B' * (|CR| / Real.log N * (κ * F)) + B' * BR * (|CD| / Real.log N * F) := by
+            have hL0 : Real.log N ≠ 0 := ne_of_gt hlogpos
+            field_simp
+          rw [e3]
+          linarith [e1, e2]
 
 theorem isNormal_G4_of_rough
     (hSD : ∀ h : ℤ, h ≠ 0 → ¬ ChowlaSector h →
