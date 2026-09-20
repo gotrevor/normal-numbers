@@ -1,3 +1,29 @@
+# PENDING WORK
+
+## 2026-09-20 — campaign B has reached its pre-registered FINISH LINE
+
+Both terminating conditions of the 2026-09-16 CURRENT DIRECTIVE are met:
+
+* **terminal objective** — `SchedB.isDisjunctive_weightA_logLog` plus its audit theorem
+  `audit_isDisjunctive_weightA_logLog` (`G4WeightStatement.lean`), trust-triple clean;
+* **the one permitted stretch** (general additive `f`) — **refuted in the kernel** by
+  `src/NormalNumbers/G4AdditiveRigidity.lean`: every `TWeight` is affine along every
+  prime-power tower (`wN_prime_pow_affine`) and additive across pieces `≡ 1` mod `rad d`
+  (`wN_mul_of_modEq_one`), so a non-affine profile is not a `TWeight` at all.  The obstruction
+  is in the transport interface, upstream of §4C and §4D; domination cannot reach it.
+  `G4WeightInterface`'s prose "iff" is now a machine-checked biconditional.
+
+Build 🟢 9103 jobs, zero `axiom`s.  `src/` = the two pre-expedition forbidden-drift `sorry`s
+(`phaseOscillation`, `exists_prime_nonresidue`), both named on the directive's ⛔ list.
+
+**The repo needs a new directive from an altitude lap**, not more work inside this one.
+Candidates, with the state of each, are in `HANDOFF-2026-09-20-campaignB-close.md` §4.
+Open (attempted, not settled, this lap): *is every normalised `TWeight` additive on all coprime
+pairs?*  `wN_mul_of_modEq_one` gives it when `m ≡ 1` mod `rad d`; the general case looks to need
+a Dirichlet prime `q ≡ m` mod `rad d`.
+
+---
+
 # PENDING WORK — **campaign B FINAL: the `a`-side** (DEEP REFLECTION lap, 2026-09-16)
 
 > Campaign B's `c` axis and subset axis are **closed**; the `a`-side is the campaign's
