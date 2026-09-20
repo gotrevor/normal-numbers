@@ -2606,6 +2606,13 @@ theorem DDJ_delta (Jf : ℕ → ℕ) (i : ℕ) : (DDJ Jf).δ i = (DD (fun _ => 0
 theorem DDJ_J (Jf : ℕ → ℕ) (i : ℕ) : (DDJ Jf).J i = Jf i := rfl
 theorem DDJ_eps (Jf : ℕ → ℕ) (i : ℕ) : (DDJ Jf).ε i = epsF i := rfl
 
+theorem DDJ_delta_ge (Jf : ℕ → ℕ) (i : ℕ) : (1 : ℝ) / ((i : ℝ) + 1) ≤ (DDJ Jf).δ i := by
+  rw [DDJ_delta]; exact delta_ge _ i
+
+theorem DDJ_delta_le (Jf : ℕ → ℕ) (i : ℕ) : (DDJ Jf).δ i ≤ 2 / ((i : ℝ) + 1) := by
+  rw [DDJ_delta]; exact delta_le _ i
+
+
 theorem JF₂_le (C₁ C₂ : ℕ → ℝ) (i : ℕ) : JF₂ C₁ C₂ i ≤ i := Nat.findGreatest_le i
 
 /-- Every `J' ≤ Jᵢ` satisfies the defining bounds (given that `J' = 0` does). -/
@@ -2686,7 +2693,89 @@ theorem terms₁_tendsto (C₁ : ℕ → ℝ) (Jf : ℕ → ℕ)
       (Real.sqrt (Real.log (1 / (DDJ Jf).ε i)) *
           Real.sqrt (2 * ((DDJ Jf).δ (i - 1) + (DDJ Jf).δ i))
         + Real.exp (- ∑ i' ∈ Finset.range (i - 1), (DDJ Jf).δ i'))) atTop (𝓝 0) := by
-  sorry
+  have hmaj : Tendsto (fun i : ℕ => Real.sqrt (8 * (Real.log (Kn i) / Real.sqrt i))
+      + 2 * (1 / Real.sqrt i)) atTop (𝓝 0) := by
+    have h1 : Tendsto (fun i : ℕ => Real.sqrt (8 * (Real.log (Kn i) / Real.sqrt i)))
+        atTop (𝓝 0) := by
+      have := (log_Kn_div_sqrt.const_mul (8 : ℝ)).sqrt
+      simpa using this
+    simpa using h1.add (one_div_sqrt_tendsto.const_mul 2)
+  refine squeeze_zero_norm' ?_ hmaj
+  filter_upwards [eventually_ge_atTop 2, hC] with i hi hCle
+  have hi1 : (1 : ℝ) ≤ (i : ℝ) := by exact_mod_cast (by omega : 1 ≤ i)
+  have hipos : (0 : ℝ) < (i : ℝ) := by linarith
+  have hsq : (0 : ℝ) < Real.sqrt i := Real.sqrt_pos.mpr hipos
+  set T1 : ℝ := Real.sqrt (Real.log (1 / (DDJ Jf).ε i))
+      * Real.sqrt (2 * ((DDJ Jf).δ (i - 1) + (DDJ Jf).δ i)) with hT1
+  set T2 : ℝ := Real.exp (- ∑ i' ∈ Finset.range (i - 1), (DDJ Jf).δ i') with hT2
+  have hT1nn : 0 ≤ T1 := by rw [hT1]; positivity
+  have hT2nn : 0 < T2 := Real.exp_pos _
+  have hlogeps : Real.log (1 / (DDJ Jf).ε i) = Real.log (Kn i) := by
+    rw [DDJ_eps, epsF, one_div_one_div]
+  have hcast : ((i - 1 : ℕ) : ℝ) + 1 = (i : ℝ) := by
+    have h1 : (1 : ℕ) ≤ i := by omega
+    have : ((i - 1 : ℕ) : ℝ) = (i : ℝ) - 1 := by push_cast [Nat.cast_sub h1]; ring
+    rw [this]; ring
+  have hdeltasum : (DDJ Jf).δ (i - 1) + (DDJ Jf).δ i ≤ 4 / (i : ℝ) := by
+    have h1 := DDJ_delta_le Jf (i - 1)
+    have h2 := DDJ_delta_le Jf i
+    rw [hcast] at h1
+    have h3 : (2 : ℝ) / ((i : ℝ) + 1) ≤ 2 / (i : ℝ) :=
+      div_le_div_of_nonneg_left (by norm_num) hipos (by linarith)
+    have h4 : (4 : ℝ) / (i : ℝ) = 2 / (i : ℝ) + 2 / (i : ℝ) := by ring
+    linarith
+  have hT1le : T1 ≤ Real.sqrt (Real.log (Kn i)) * Real.sqrt (8 / (i : ℝ)) := by
+    rw [hT1, hlogeps]
+    refine mul_le_mul_of_nonneg_left ?_ (Real.sqrt_nonneg _)
+    refine Real.sqrt_le_sqrt ?_
+    have h8 : (8 : ℝ) / (i : ℝ) = 2 * (4 / (i : ℝ)) := by ring
+    linarith
+  have hT2le : T2 ≤ 1 / (i : ℝ) := by
+    have hsumge : Real.log ((((i - 1 : ℕ)) : ℝ) + 1)
+        ≤ ∑ i' ∈ Finset.range (i - 1), (DDJ Jf).δ i' := by
+      refine le_trans (harm_lower (i - 1)) ?_
+      exact Finset.sum_le_sum (fun k _ => DDJ_delta_ge Jf k)
+    rw [hcast] at hsumge
+    rw [hT2]
+    calc Real.exp (- ∑ i' ∈ Finset.range (i - 1), (DDJ Jf).δ i')
+        ≤ Real.exp (- Real.log i) := Real.exp_le_exp.mpr (by linarith)
+      _ = 1 / (i : ℝ) := by rw [Real.exp_neg, Real.exp_log hipos, one_div]
+  have habs : ‖C₁ ((DDJ Jf).J i) * (T1 + T2)‖ ≤ Real.sqrt (Real.sqrt i) * (T1 + T2) := by
+    rw [norm_mul, Real.norm_eq_abs, Real.norm_eq_abs,
+      abs_of_nonneg (by linarith : (0:ℝ) ≤ T1 + T2)]
+    exact mul_le_mul_of_nonneg_right (by rw [DDJ_J]; exact hCle) (by linarith)
+  refine le_trans habs ?_
+  have hstep : Real.sqrt (Real.sqrt i) * (T1 + T2)
+      ≤ Real.sqrt (Real.sqrt i) * (Real.sqrt (Real.log (Kn i)) * Real.sqrt (8 / (i : ℝ))
+        + 2 * (1 / (i : ℝ))) := by
+    refine mul_le_mul_of_nonneg_left ?_ (Real.sqrt_nonneg _)
+    have h2i : (0 : ℝ) < 1 / (i : ℝ) := by positivity
+    have : (2 : ℝ) * (1 / (i : ℝ)) = 1 / (i : ℝ) + 1 / (i : ℝ) := by ring
+    linarith
+  refine le_trans hstep ?_
+  have hA : Real.sqrt (Real.sqrt i) * (Real.sqrt (Real.log (Kn i)) * Real.sqrt (8 / (i : ℝ)))
+      = Real.sqrt (8 * (Real.log (Kn i) / Real.sqrt i)) := by
+    have hlogKn : (0 : ℝ) ≤ Real.log (Kn i) := by
+      have : (216 : ℝ) ≤ (Kn i : ℝ) := by exact_mod_cast Kn_ge i
+      exact Real.log_nonneg (by linarith)
+    rw [← Real.sqrt_mul hlogKn, ← Real.sqrt_mul (Real.sqrt_nonneg _)]
+    congr 1
+    have hs : Real.sqrt i * Real.sqrt i = (i : ℝ) := Real.mul_self_sqrt hipos.le
+    field_simp
+    nlinarith [hs, hsq]
+  have hB : Real.sqrt (Real.sqrt i) * (2 * (1 / (i : ℝ))) ≤ 2 * (1 / Real.sqrt i) := by
+    have h1 : Real.sqrt (Real.sqrt i) ≤ Real.sqrt i :=
+      Real.sqrt_le_self_iff.mpr (Or.inr (Real.one_le_sqrt.mpr hi1))
+    have h2 : Real.sqrt i * (2 * (1 / (i : ℝ))) = 2 * (1 / Real.sqrt i) := by
+      have hs : Real.sqrt i * Real.sqrt i = (i : ℝ) := Real.mul_self_sqrt hipos.le
+      field_simp
+      nlinarith [hs]
+    calc Real.sqrt (Real.sqrt i) * (2 * (1 / (i : ℝ)))
+        ≤ Real.sqrt i * (2 * (1 / (i : ℝ))) := by
+          refine mul_le_mul_of_nonneg_right h1 (by positivity)
+      _ = 2 * (1 / Real.sqrt i) := h2
+  rw [mul_add, hA]
+  linarith
 
 /-- Leaf 5b: the sieve term, for any schedule with `1 ≤ Jf i ≤ i` and `log |C₂ (Jf i)| ≤ i/2`. -/
 theorem terms₂_tendsto (C₂ : ℕ → ℝ) (Jf : ℕ → ℕ) (hle : ∀ i, Jf i ≤ i)
@@ -2746,12 +2835,6 @@ theorem log_o_pow₂ (C₁ C₂ : ℕ → ℝ)
   sorry
 
 /-- Leaf 6 (general schedule): the L¹ tail. -/
-theorem DDJ_delta_ge (Jf : ℕ → ℕ) (i : ℕ) : (1 : ℝ) / ((i : ℝ) + 1) ≤ (DDJ Jf).δ i := by
-  rw [DDJ_delta]; exact delta_ge _ i
-
-theorem DDJ_delta_le (Jf : ℕ → ℕ) (i : ℕ) : (DDJ Jf).δ i ≤ 2 / ((i : ℝ) + 1) := by
-  rw [DDJ_delta]; exact delta_le _ i
-
 theorem tail_tendsto_gen (Jf : ℕ → ℕ) (hJt : Tendsto Jf atTop atTop)
     (hlog : Tendsto (fun i : ℕ => Real.log i / (4 : ℝ) ^ Jf i) atTop (𝓝 0)) :
     Tendsto (fun i => (∑ i' ∈ Finset.range (i + 2), (DDJ Jf).δ i' + 1) / (4 : ℝ) ^ (DDJ Jf).J i)
