@@ -55,3 +55,26 @@ Two consequences:
 Formalise the identity (elementary, `N` even) and split `SmoothRoughDecoupling`'s site half into
 `RoughScaleSmoothness`.  The window half has the same shape with the parity of the whole
 `J`-tuple in place of a single site.
+
+---
+
+## Addendum (same day): probe of the *reduced* node `ParityDiscrepancy`
+
+Script `probes/parity_discrepancy.py`.  Measured `‖parityDisc_j‖/(N²‖fullSiteMean_j‖) · log N`
+for `j = 1…J` and the window analogue against `∏_j ‖fullSiteMean_j‖`, `h ∈ {1,3,5}`,
+`N = 2^12 … 2^18`.
+
+| h | j = 1 | 2 | 3 | 4 | 5 | window |
+|---|---|---|---|---|---|---|
+| 1 | 0.67 → 0.745 | 0.130 | 0.032 | 0.008 | 0.002 | 0.63 → 0.73 |
+| 3 | 0.67 → 0.745 | 0.44 → 0.47 | 0.098 | 0.024 | 0.006 | 0.77 – 0.90 |
+| 5 | 0.67 → 0.745 | 1.03 → 1.21 | 0.167 | 0.040 | 0.010 | 0.14 – 1.14 |
+
+Two things to note.  (i) The quantity is flat in `N` after multiplying by `log N` — the node's
+`C/log N` shape is right, with `C ≈ 1.5` covering every cell measured.  (ii) It decays like
+`4^{-j}` in `j`, so the sum over the schedule converges and the `J`-uniformity is not merely
+provable (it is, see `smoothRoughDecouplingAt_two_of_parity`) but numerically comfortable.
+
+`ParityDiscrepancy` is therefore a *safe* replacement for `SmoothRoughDecoupling`: nothing in the
+reduction costs accuracy, and the reduced node is the more classical statement (by
+`parityDisc_eq_scale`, it is the scale-smoothness of the rough mean under halving `N`).
