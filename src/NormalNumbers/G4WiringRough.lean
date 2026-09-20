@@ -203,6 +203,14 @@ def SmoothNonvanishing (h : ℤ) : Prop :=
   ∀ y : ℕ, 2 ≤ y → ∃ δ : ℝ, 0 < δ ∧ ∀ᶠ N : ℕ in atTop,
     δ ≤ ∏ j ∈ Finset.Icc 1 (windowJ N), ‖smoothSiteMean N h j y‖
 
+/-- The single-`y` form of N1a.  `SmoothNonvanishing h` is definitionally
+`∀ y ≥ 2, SmoothNonvanishingAt h y`, so `hS y hy : SmoothNonvanishingAt h y` for `hS` of the
+frozen type.  The wiring only ever consumes `y = 2`, and at `y = 2` the node is *proved* below
+(`smoothNonvanishingAt_two`), off the Chowla sector. -/
+def SmoothNonvanishingAt (h : ℤ) (y : ℕ) : Prop :=
+  ∃ δ : ℝ, 0 < δ ∧ ∀ᶠ N : ℕ in atTop,
+    δ ≤ ∏ j ∈ Finset.Icc 1 (windowJ N), ‖smoothSiteMean N h j y‖
+
 /-! ### Leaf 3: periodic means -/
 
 /-- The average over `[N, 2N)` of a `P`-periodic function bounded by `1` is within `2P/N` of its
@@ -455,13 +463,13 @@ lemma norm_roughSiteMean_le_one (N : ℕ) (h : ℤ) (j y : ℕ) : ‖roughSiteMe
 
 /-! ### Leaf 4: N1a proper -/
 
-theorem smoothWindowCRT (h : ℤ) (y : ℕ) (hy : 2 ≤ y) (hS : SmoothNonvanishing h) :
+theorem smoothWindowCRT' (h : ℤ) (y : ℕ) (hy : 2 ≤ y) (hS : SmoothNonvanishingAt h y) :
     ∃ (c' : ℕ → ℂ) (B : ℝ), (∀ J, ‖c' J‖ ≤ B) ∧ ∀ᶠ N : ℕ in atTop,
       ‖smoothWindowMean N (windowJ N) h y
           - c' (windowJ N) * ∏ j ∈ Finset.Icc 1 (windowJ N), smoothSiteMean N h j y‖
         ≤ B * (windowJ N : ℝ) * primorial y / N := by
   classical
-  obtain ⟨δ, hδ, hδN⟩ := hS y hy
+  obtain ⟨δ, hδ, hδN⟩ := hS
   set P : ℕ := primorial y with hPdef
   have hP : 0 < P := primorial_pos y
   have hPR : (0 : ℝ) < P := by exact_mod_cast hP
@@ -621,6 +629,14 @@ theorem smoothWindowCRT (h : ℤ) (y : ℕ) (hy : 2 ≤ y) (hS : SmoothNonvanish
             nlinarith [hJR, hPR.le]
           linarith [hfield, hnn, e1, e2]
 
+/-- The kickoff's form of N1a, now a corollary of the single-`y` one. -/
+theorem smoothWindowCRT (h : ℤ) (y : ℕ) (hy : 2 ≤ y) (hS : SmoothNonvanishing h) :
+    ∃ (c' : ℕ → ℂ) (B : ℝ), (∀ J, ‖c' J‖ ≤ B) ∧ ∀ᶠ N : ℕ in atTop,
+      ‖smoothWindowMean N (windowJ N) h y
+          - c' (windowJ N) * ∏ j ∈ Finset.Icc 1 (windowJ N), smoothSiteMean N h j y‖
+        ≤ B * (windowJ N : ℝ) * primorial y / N :=
+  smoothWindowCRT' h y hy (hS y hy)
+
 /-! ### Leaf 5–6: the wiring -/
 
 /-- The shape of `RoughIndependence` that the wiring actually consumes: a single `y`, and a
@@ -647,12 +663,12 @@ set_option maxHeartbeats 1000000 in
 value `y = 2`, and only with a `C / log N` relative error — the `1/y` gain of the frozen node is
 never used.  This is the honest shape of the open obligation. -/
 theorem crtConstantSched_of_roughAt {h : ℤ} (hR : RoughIndependenceAt h 2)
-    (hD : SmoothRoughDecoupling h) (hS : SmoothNonvanishing h) : CRTConstantSched h := by
+    (hD : SmoothRoughDecoupling h) (hS : SmoothNonvanishingAt h 2) : CRTConstantSched h := by
   classical
   obtain ⟨cR, BR, CR, hcRB, hRev⟩ := hR
   obtain ⟨CD, hDev⟩ := hD
-  obtain ⟨δ, hδ, hδev⟩ := hS 2 le_rfl
-  obtain ⟨c', B', hc'B, h4ev⟩ := smoothWindowCRT h 2 le_rfl hS
+  obtain ⟨c', B', hc'B, h4ev⟩ := smoothWindowCRT' h 2 le_rfl hS
+  obtain ⟨δ, hδ, hδev⟩ := hS
   set P₀ : ℕ := primorial 2 with hP₀
   have hP₀R : (0 : ℝ) < P₀ := by rw [hP₀]; exact_mod_cast primorial_pos 2
   clear_value P₀
@@ -821,7 +837,7 @@ theorem crtConstantSched_of_roughAt {h : ℤ} (hR : RoughIndependenceAt h 2)
 /-- The kickoff's wiring, now a corollary of the sharpened one. -/
 theorem crtConstantSched_of_rough {h : ℤ} (hR : RoughIndependence h) (hD : SmoothRoughDecoupling h)
     (hS : SmoothNonvanishing h) : CRTConstantSched h :=
-  crtConstantSched_of_roughAt (roughIndependenceAt_of_rough hR le_rfl) hD hS
+  crtConstantSched_of_roughAt (roughIndependenceAt_of_rough hR le_rfl) hD (hS 2 le_rfl)
 
 theorem isNormal_G4_of_rough
     (hSD : ∀ h : ℤ, h ≠ 0 → ¬ ChowlaSector h →
