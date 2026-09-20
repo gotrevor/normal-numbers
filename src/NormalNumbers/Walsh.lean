@@ -371,9 +371,9 @@ theorem parityChar_eq_sum {L : ℕ} (s : ℕ → ℕ) (hs : ∀ m, s m < 2) {S :
     exact absurd (Finset.mem_powerset.mpr (windowSet_subset s L n)) h
 
 /-- Normality transfers from `countOccurrences` frequencies to the unclipped `blockMean`. -/
-theorem tendsto_blockMean_of_isNormal {s : ℕ → ℕ} (h : IsNormalSequence 2 s)
-    {w : List ℕ} (hwne : w ≠ []) (hw : ∀ d ∈ w, d < 2) :
-    Tendsto (blockMean s w) atTop (𝓝 ((2 ^ w.length : ℝ))⁻¹) := by
+theorem tendsto_blockMean_of_isNormal {b : ℕ} {s : ℕ → ℕ} (h : IsNormalSequence b s)
+    {w : List ℕ} (hwne : w ≠ []) (hw : ∀ d ∈ w, d < b) :
+    Tendsto (blockMean s w) atTop (𝓝 (((b : ℝ) ^ w.length))⁻¹) := by
   have hcount := h w hwne hw
   have hdiff : Tendsto
       (fun N => blockMean s w N - (countOccurrences w ((List.range N).map s) : ℝ) / N)
@@ -418,7 +418,7 @@ theorem tendsto_parityMean_of_isNormalSequence_two {s : ℕ → ℕ} (hs : ∀ m
       simp only [List.length_nil] at hlen
       omega
     have hb := tendsto_blockMean_of_isNormal h hne (wordOf_lt_two L T)
-    rw [length_wordOf] at hb
+    rw [length_wordOf, Nat.cast_ofNat] at hb
     have : Tendsto (fun N => blockMean s (wordOf L T) N - ((2 : ℝ) ^ L)⁻¹) atTop
         (𝓝 (((2 : ℝ) ^ L)⁻¹ - ((2 : ℝ) ^ L)⁻¹)) := hb.sub_const _
     rw [sub_self] at this

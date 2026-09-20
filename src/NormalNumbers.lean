@@ -379,3 +379,4 @@ import NormalNumbers.G4WiringCRT
 import NormalNumbers.G4WiringSparse
 import NormalNumbers.Maze
 import NormalNumbers.Walsh
+import NormalNumbers.WalshBase

@@ -2,7 +2,7 @@
 
 ## 🗺️ The maze map — read before proposing a route
 
-`src/NormalNumbers/Maze.lean` is the register of routes **walked and closed**: 115 halls, 10
+`src/NormalNumbers/Maze.lean` is the register of routes **walked and closed**: 116 halls, 10
 of them machine-checked (`alias` onto the refutation theorem, so renaming it breaks the
 build).  Verdict vocabulary and its tells live in the `Verdict` inductive; the three evidence
 tiers in `Tier`.  ⚠️ Only `Tier.kernel` rows carry the kernel's authority.
@@ -10,6 +10,8 @@ tiers in `Tier`.  ⚠️ Only `Tier.kernel` rows carry the kernel's authority.
 Two passes: match your route against the eight shapes first (most halls close for a
 structural reason visible *before* any work), then grep `register` for your object.  Design
 notes: `DESIGN-2026-09-20-t3c-verdict.md`, `DESIGN-2026-09-20-walsh-weyl-bridge.md`.
+The frontier beside the register: `Walsh.lean` (base two) and `WalshBase.lean` (every base)
+carry the digit-character criterion, both directions, as the dual of `equidistributed_of_weyl`.
 
 > **DEEP REFLECTION lap — 2026-09-16.**  Build 🟢 **9085 jobs**, re-verified.  `src/` = the two
 > pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**; **math-axiom count 0** — there is no

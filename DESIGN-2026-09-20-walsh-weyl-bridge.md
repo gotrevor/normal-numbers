@@ -24,7 +24,21 @@ Words are indexed by their one-sets (`wordOf`), which turns the enumeration of b
 into a powerset and makes orthogonality fall out of the same product collapse used for
 sufficiency.  The only analysis in the file is an `O(1)/N` boundary correction.
 
-**The one ask.**  Next is base `b` (roots of unity in place of `±1`), or stop at base two.
+**BASE `b` DONE 2026-09-20**, `src/NormalNumbers/WalshBase.lean`:
+`isNormalSequence_iff_digitMean_zeta` - for any base `b`, normality **is** the vanishing of
+every nontrivial character mean of `(ℤ/b)^L`.  Characters are indexed by `k : Fin L → Fin b`
+and evaluate as `∏ ζ^{s(n+i) k_i}` with `ζ = exp(2πi/b)`.  The dictionary from base two:
+
+| base two | base `b` |
+|---|---|
+| `(-1)^a (-1)^c ∈ {±1}` | `(ζ^a)⁻¹ ζ^c`, a `b`-th root of unity |
+| factor `1 + ε δ ∈ {0, 2}` | `∑_{j<b} x^j ∈ {0, b}` (`geom_sum_eq`) |
+| offset set `S ⊆ range L` | index `k : Fin L → Fin b` |
+| word = one-set `T`, powerset | word = digit vector `T : Fin L → Fin b`, `Finset.univ` |
+| `Finset.prod_add` | `Fintype.prod_sum` |
+| `S.Nonempty` | `k ≠ 0` |
+
+The real-valued inequality (A) survives with `‖digitMean‖` in place of `|parityMean|`.
 Neither the repo nor Mathlib has Walsh functions or Erdős-Turán (grep 2026-09-20).
 
 ## 1. Two duals

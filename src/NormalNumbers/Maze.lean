@@ -12,6 +12,7 @@ import NormalNumbers.G4RowVariance
 import NormalNumbers.G4RowMassOptimal
 import NormalNumbers.G4WiringSparse
 import NormalNumbers.Walsh
+import NormalNumbers.WalshBase
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -259,6 +260,16 @@ programme has Weyl's criterion and Walsh's criterion in one build.
 as digit characters" below.  The criterion is a theorem about an *arbitrary* binary sequence
 and says nothing about where the digits came from. -/
 alias walsh_criterion := NormalNumbers.Walsh.isNormalSequence_two_iff_parityMean
+
+/-- ✅ **DISCHARGED: the digit-character criterion in every base** (2026-09-20, same day).
+
+`WalshBase.isNormalSequence_iff_digitMean_zeta`: for a base-`b` digit sequence, normality
+**is** the vanishing of every nontrivial character mean of `(ℤ/b)^L`, for every `L`.  The
+`±1` of the binary case becomes `exp(2πi/b)`; the product collapse becomes the geometric sum
+`∑_{j<b} x^j` at a `b`-th root of unity (`sum_inv_char_mul_char`); the powerset of offset
+sets becomes `Finset.univ` on `Fin L → Fin b`; `Finset.prod_add` becomes `Fintype.prod_sum`.
+Same skeleton, same exactness, no truncation term. -/
+alias walsh_criterion_base := NormalNumbers.WalshBase.isNormalSequence_iff_digitMean_zeta
 
 /-! ## 4. The register
 
