@@ -243,24 +243,22 @@ separates nothing within the family. -/
 def VacuousFor {α : Type*} (criterion : α → Prop) (family : α → Prop) : Prop :=
   ∀ a, family a → criterion a
 
-/-- **PARTLY DISCHARGED: the Walsh / parity criterion** (the one live *new* node, 2026-09-20,
-NOT a hall).  Stated here because the maze's point is that the register and the frontier live
-in one checkable place.
+/-- ✅ **DISCHARGED: the Walsh / parity criterion** (2026-09-20, NOT a hall — recorded here
+because the maze's point is that the register and the frontier live in one checkable place).
 
-**Sufficiency is now a theorem**: `Walsh.isNormalSequence_two_of_parityMean_tendsto` — a
-binary sequence whose every nonempty parity correlation vanishes is normal in base two.  The
-transform (`Walsh.blockMean_eq`) and the lossless inequality (`Walsh.abs_blockMean_sub_le`)
-are proved, so the digit dual now stands beside `equidistributed_of_weyl` on the circle side.
+`Walsh.isNormalSequence_two_iff_parityMean`: binary normality **is** the vanishing of every
+nonempty parity correlation.  Both directions proved the same day the node was frozen.
+Sufficiency runs through the exact Hadamard expansion of a block indicator; necessity through
+the inverse transform, indexing binary words by their one-sets so that the orthogonality
+`∑_T (-1)^{|S ∩ T|} = 0` falls out of the same product collapse.
 
-**Necessity remains open here**: normal ⟹ every parity correlation vanishes needs the inverse
-transform, i.e. enumeration of binary words of a given length plus the orthogonality
-`∑_w (-1)^{w·S} = 0` for `S ≠ ∅`.  That is the named next lap; the Prop below is what it must
-discharge.  See `DESIGN-2026-09-20-walsh-weyl-bridge.md` §2-3, and
-`experiments/walsh_parity_identity.py` for the identity at machine precision. -/
-def WalshNecessity : Prop :=
-  ∀ s : ℕ → ℕ, (∀ n, s n < 2) → IsNormalSequence 2 s →
-    ∀ S : Finset ℕ, S.Nonempty →
-      Filter.Tendsto (NormalNumbers.Walsh.parityMean s S) Filter.atTop (nhds 0)
+So the digit dual now stands beside `equidistributed_of_weyl` on the circle side, and the
+programme has Weyl's criterion and Walsh's criterion in one build.
+
+⚠️ What this does NOT license is the sector identification: see the refuted row "G4 sectors
+as digit characters" below.  The criterion is a theorem about an *arbitrary* binary sequence
+and says nothing about where the digits came from. -/
+alias walsh_criterion := NormalNumbers.Walsh.isNormalSequence_two_iff_parityMean
 
 /-! ## 4. The register
 

@@ -261,4 +261,225 @@ theorem isNormalSequence_two_of_parityMean_tendsto (s : ℕ → ℕ) (hs : ∀ m
   · ring
   · norm_num
 
+/-! ## The inverse transform: normality forces the parity correlations to vanish
+
+The converse needs an enumeration of the binary words of a given length.  Indexing a word by
+its set of one-positions turns that enumeration into a powerset, and the orthogonality
+`∑_T (-1)^{|S ∩ T|} = 0` then falls out of the same product collapse used above. -/
+
+/-- The binary word of length `L` whose ones sit exactly at `T`. -/
+def wordOf (L : ℕ) (T : Finset ℕ) : List ℕ :=
+  (List.range L).map (fun i => if i ∈ T then 1 else 0)
+
+@[simp] theorem length_wordOf (L : ℕ) (T : Finset ℕ) : (wordOf L T).length = L := by
+  simp [wordOf]
+
+theorem getD_wordOf {L : ℕ} (T : Finset ℕ) {i : ℕ} (hi : i < L) :
+    (wordOf L T).getD i 0 = if i ∈ T then 1 else 0 := by
+  rw [wordOf, List.getD_eq_getElem _ _ (by simpa using hi)]
+  simp [List.getElem_map, List.getElem_range]
+
+theorem wordOf_lt_two (L : ℕ) (T : Finset ℕ) : ∀ d ∈ wordOf L T, d < 2 := by
+  intro d hd
+  rw [wordOf, List.mem_map] at hd
+  obtain ⟨i, _, rfl⟩ := hd
+  by_cases h : i ∈ T <;> simp [h]
+
+/-- The one-positions of the length-`L` window of `s` at `n`. -/
+def windowSet (s : ℕ → ℕ) (L n : ℕ) : Finset ℕ := (range L).filter (fun i => s (n + i) = 1)
+
+theorem windowSet_subset (s : ℕ → ℕ) (L n : ℕ) : windowSet s L n ⊆ range L :=
+  Finset.filter_subset _ _
+
+/-- The window word of `s` at `n` is the word of its own one-positions. -/
+theorem matchesAt_wordOf_windowSet (s : ℕ → ℕ) (hs : ∀ m, s m < 2) (L n : ℕ) :
+    MatchesAt s (wordOf L (windowSet s L n)) n := by
+  intro j hj
+  have hjL : j < L := by simpa using hj
+  rw [getD_wordOf _ hjL, windowSet]
+  by_cases h : s (n + j) = 1
+  · simp [Finset.mem_filter, Finset.mem_range, hjL, h]
+  · have : s (n + j) = 0 := by have := hs (n + j); omega
+    simp [Finset.mem_filter, Finset.mem_range, hjL, h, this]
+
+/-- Only the window's own one-set matches: the fibers are singletons. -/
+theorem eq_windowSet_of_matchesAt (s : ℕ → ℕ) {L n : ℕ} {T : Finset ℕ} (hT : T ⊆ range L)
+    (h : MatchesAt s (wordOf L T) n) : T = windowSet s L n := by
+  ext i
+  constructor
+  · intro hi
+    have hiL : i < L := Finset.mem_range.mp (hT hi)
+    have := h i (by simpa using hiL)
+    rw [getD_wordOf _ hiL, if_pos hi] at this
+    simp [windowSet, Finset.mem_filter, Finset.mem_range, hiL, this]
+  · intro hi
+    rw [windowSet, Finset.mem_filter] at hi
+    have hiL : i < L := Finset.mem_range.mp hi.1
+    have := h i (by simpa using hiL)
+    rw [getD_wordOf _ hiL] at this
+    by_contra hnot
+    rw [if_neg hnot] at this
+    omega
+
+/-- **Orthogonality of the block signs.**  Summed over all binary words of length `L`, the
+sign attached by a nonempty offset set cancels exactly. -/
+theorem sum_neg_one_pow_inter_eq_zero {L : ℕ} {S : Finset ℕ} (hS : S.Nonempty)
+    (hSL : S ⊆ range L) :
+    ∑ T ∈ (range L).powerset, (-1 : ℝ) ^ (S ∩ T).card = 0 := by
+  have key : ∀ T ∈ (range L).powerset,
+      (-1 : ℝ) ^ (S ∩ T).card = ∏ i ∈ T, (if i ∈ S then (-1 : ℝ) else 1) := by
+    intro T _
+    rw [Finset.prod_ite_mem, Finset.prod_const, Finset.inter_comm T S]
+  rw [Finset.sum_congr rfl key]
+  have hprod : ∑ T ∈ (range L).powerset, ∏ i ∈ T, (if i ∈ S then (-1 : ℝ) else 1)
+      = ∏ i ∈ range L, ((if i ∈ S then (-1 : ℝ) else 1) + 1) := by
+    rw [Finset.prod_add]
+    exact (Finset.sum_congr rfl (fun T _ => by simp)).symm
+  rw [hprod]
+  obtain ⟨j, hj⟩ := hS
+  refine Finset.prod_eq_zero (hSL hj) ?_
+  rw [if_pos hj]
+  norm_num
+
+/-- The parity character at `n` is the sign of its own window's one-set. -/
+theorem parityChar_eq_pow {L : ℕ} (s : ℕ → ℕ) (hs : ∀ m, s m < 2) {S : Finset ℕ}
+    (hSL : S ⊆ range L) (n : ℕ) :
+    parityChar s S n = (-1 : ℝ) ^ (S ∩ windowSet s L n).card := by
+  have hstep : ∀ i ∈ S, (-1 : ℝ) ^ s (n + i)
+      = if i ∈ windowSet s L n then (-1 : ℝ) else 1 := by
+    intro i hi
+    have hiL : i < L := Finset.mem_range.mp (hSL hi)
+    by_cases h1 : s (n + i) = 1
+    · simp [windowSet, Finset.mem_filter, Finset.mem_range, hiL, h1]
+    · have h0 : s (n + i) = 0 := by have := hs (n + i); omega
+      simp [windowSet, Finset.mem_filter, Finset.mem_range, hiL, h1, h0]
+  rw [parityChar, Finset.prod_congr rfl hstep, Finset.prod_ite_mem, Finset.prod_const]
+
+/-- **The pointwise inverse transform.**  The parity character is the signed indicator sum
+over all binary words of the window length: exactly one word matches at each position. -/
+theorem parityChar_eq_sum {L : ℕ} (s : ℕ → ℕ) (hs : ∀ m, s m < 2) {S : Finset ℕ}
+    (hSL : S ⊆ range L) (n : ℕ) :
+    parityChar s S n
+      = ∑ T ∈ (range L).powerset,
+          (if MatchesAt s (wordOf L T) n then (-1 : ℝ) ^ (S ∩ T).card else 0) := by
+  rw [Finset.sum_eq_single (windowSet s L n)]
+  · rw [if_pos (matchesAt_wordOf_windowSet s hs L n), parityChar_eq_pow s hs hSL n]
+  · intro T hT hne
+    refine if_neg (fun hm => hne ?_)
+    exact eq_windowSet_of_matchesAt s (Finset.mem_powerset.mp hT) hm
+  · intro h
+    exact absurd (Finset.mem_powerset.mpr (windowSet_subset s L n)) h
+
+/-- Normality transfers from `countOccurrences` frequencies to the unclipped `blockMean`. -/
+theorem tendsto_blockMean_of_isNormal {s : ℕ → ℕ} (h : IsNormalSequence 2 s)
+    {w : List ℕ} (hwne : w ≠ []) (hw : ∀ d ∈ w, d < 2) :
+    Tendsto (blockMean s w) atTop (𝓝 ((2 ^ w.length : ℝ))⁻¹) := by
+  have hcount := h w hwne hw
+  have hdiff : Tendsto
+      (fun N => blockMean s w N - (countOccurrences w ((List.range N).map s) : ℝ) / N)
+      atTop (𝓝 0) := by
+    have hbound : Tendsto (fun N : ℕ => (w.length : ℝ) / N) atTop (𝓝 0) :=
+      tendsto_const_div_atTop_nhds_zero_nat _
+    refine squeeze_zero_norm' ?_ hbound
+    filter_upwards [eventually_gt_atTop 0] with N hN
+    have hNpos : (0 : ℝ) < N := by exact_mod_cast hN
+    rw [Real.norm_eq_abs, blockMean, div_sub_div_same, abs_div, abs_of_pos hNpos,
+      abs_sub_comm]
+    gcongr
+    exact abs_count_sub_blockCount_le s hwne N
+  have := hcount.add hdiff
+  simp only [add_zero] at this
+  refine this.congr (fun N => ?_)
+  push_cast
+  ring
+
+/-- 🎯 **The Walsh criterion, necessity.**  A base-two normal sequence has every nonempty
+parity correlation tending to zero.
+
+With `isNormalSequence_two_of_parityMean_tendsto` this closes the equivalence: binary
+normality *is* the vanishing of the digit-group characters.  The only inputs are the exact
+transform and `sum_neg_one_pow_inter_eq_zero`; there is no truncation loss anywhere. -/
+theorem tendsto_parityMean_of_isNormalSequence_two {s : ℕ → ℕ} (hs : ∀ m, s m < 2)
+    (h : IsNormalSequence 2 s) {S : Finset ℕ} (hS : S.Nonempty) :
+    Tendsto (parityMean s S) atTop (𝓝 0) := by
+  classical
+  obtain ⟨L, hSL⟩ : ∃ L, S ⊆ range L := ⟨S.max' hS + 1, fun i hi =>
+    Finset.mem_range.mpr (Nat.lt_succ_of_le (S.le_max' i hi))⟩
+  -- each word of length `L` has frequency tending to `2⁻ᴸ`
+  have hword : ∀ T ∈ (range L).powerset,
+      Tendsto (fun N => |blockMean s (wordOf L T) N - ((2 : ℝ) ^ L)⁻¹|) atTop (𝓝 0) := by
+    intro T _
+    have hne : wordOf L T ≠ [] := by
+      intro hnil
+      obtain ⟨j, hj⟩ := hS
+      have hjL : j < L := Finset.mem_range.mp (hSL hj)
+      have hlen := length_wordOf L T
+      rw [hnil] at hlen
+      simp only [List.length_nil] at hlen
+      omega
+    have hb := tendsto_blockMean_of_isNormal h hne (wordOf_lt_two L T)
+    rw [length_wordOf] at hb
+    have : Tendsto (fun N => blockMean s (wordOf L T) N - ((2 : ℝ) ^ L)⁻¹) atTop
+        (𝓝 (((2 : ℝ) ^ L)⁻¹ - ((2 : ℝ) ^ L)⁻¹)) := hb.sub_const _
+    rw [sub_self] at this
+    simpa using this.abs
+  -- the transform: the parity mean is the signed average of block frequencies
+  have hrepr : ∀ N : ℕ, 0 < N → parityMean s S N
+      = ∑ T ∈ (range L).powerset,
+          (blockMean s (wordOf L T) N - ((2 : ℝ) ^ L)⁻¹) * (-1 : ℝ) ^ (S ∩ T).card := by
+    intro N hN
+    have hNne : (N : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hN.ne'
+    have hsum : ∑ n ∈ range N, parityChar s S n
+        = ∑ T ∈ (range L).powerset,
+            (blockCount s (wordOf L T) N : ℝ) * (-1 : ℝ) ^ (S ∩ T).card := by
+      rw [Finset.sum_congr rfl (fun n _ => parityChar_eq_sum s hs hSL n), Finset.sum_comm]
+      refine Finset.sum_congr rfl (fun T _ => ?_)
+      rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, blockCount]
+    have horth : ∑ T ∈ (range L).powerset,
+        ((2 : ℝ) ^ L)⁻¹ * (-1 : ℝ) ^ (S ∩ T).card = 0 := by
+      rw [← Finset.mul_sum, sum_neg_one_pow_inter_eq_zero hS hSL, mul_zero]
+    have hexp : ∑ T ∈ (range L).powerset,
+          (blockMean s (wordOf L T) N - ((2 : ℝ) ^ L)⁻¹) * (-1 : ℝ) ^ (S ∩ T).card
+        = (∑ T ∈ (range L).powerset,
+            blockMean s (wordOf L T) N * (-1 : ℝ) ^ (S ∩ T).card)
+          - ∑ T ∈ (range L).powerset, ((2 : ℝ) ^ L)⁻¹ * (-1 : ℝ) ^ (S ∩ T).card := by
+      rw [← Finset.sum_sub_distrib]
+      exact Finset.sum_congr rfl (fun T _ => by ring)
+    rw [hexp, horth, sub_zero, parityMean, hsum, Finset.sum_div]
+    refine Finset.sum_congr rfl (fun T _ => ?_)
+    rw [blockMean, div_mul_eq_mul_div]
+  -- squeeze
+  have hmaj : Tendsto
+      (fun N => ∑ T ∈ (range L).powerset, |blockMean s (wordOf L T) N - ((2 : ℝ) ^ L)⁻¹|)
+      atTop (𝓝 0) := by
+    have : Tendsto
+        (fun N => ∑ T ∈ (range L).powerset, |blockMean s (wordOf L T) N - ((2 : ℝ) ^ L)⁻¹|)
+        atTop (𝓝 (∑ T ∈ (range L).powerset, (0 : ℝ))) :=
+      tendsto_finsetSum _ hword
+    simpa using this
+  refine squeeze_zero_norm' ?_ hmaj
+  filter_upwards [eventually_gt_atTop 0] with N hN
+  rw [Real.norm_eq_abs, hrepr N hN]
+  refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum (fun T _ => ?_))
+  rw [abs_mul, abs_pow, abs_neg, abs_one, one_pow, mul_one]
+
+/-- 🎯 **THE WALSH CRITERION.**  For a binary digit sequence, normality in base two is
+*exactly* the vanishing of every nonempty parity correlation.
+
+This is the digit-group counterpart of Weyl's criterion (`equidistributed_of_weyl`, the
+circle side).  Normality is thus the statement that one empirical measure looks like Haar
+measure in **both** duals; the transform between them (`blockMean_eq`,
+`parityChar_eq_sum`) is exact at every finite `N`, with no Erdős–Turán truncation term,
+because both sides live on the same finite group.
+
+⚠️ The two duals do not see the same things at finite `N`: a forbidden-block constraint is
+invisible to a circle-side instrument built from difference sets, while the depth-2 parity
+correlation detects it outright.  See `Maze.Verdict.refuted` row "G4 sectors as digit
+characters" for what this machinery does NOT license. -/
+theorem isNormalSequence_two_iff_parityMean (s : ℕ → ℕ) (hs : ∀ m, s m < 2) :
+    IsNormalSequence 2 s ↔
+      ∀ S : Finset ℕ, S.Nonempty → Tendsto (parityMean s S) atTop (𝓝 0) :=
+  ⟨fun h S hS => tendsto_parityMean_of_isNormalSequence_two hs h hS,
+   fun h => isNormalSequence_two_of_parityMean_tendsto s hs h⟩
+
 end NormalNumbers.Walsh
