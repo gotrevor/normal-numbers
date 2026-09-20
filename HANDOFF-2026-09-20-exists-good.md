@@ -1,6 +1,7 @@
 # HANDOFF 2026-09-20 — `exists_good` DONE (and a frozen statement refuted)
 
-**Branch** `wip/g5-prime-subset` · build GREEN (pre-commit `lake build` gate ran on every commit)
+**Branch** `wip/g5-prime-subset` · **HEAD at write time** `6367be0` (this doc's own commit follows)
+· build GREEN (pre-commit `lake build` gate ran on every commit)
 · `src/NormalNumbers/G4WiringSparse.lean` is **sorry-free**.
 
 ```
@@ -68,3 +69,21 @@ analytic input `KMT_quant C` (KMT 2023 Prop. 4.3 with its `J`-dependent constant
 `log C J = o(4^J)`).  That is the whole remaining debt on this line, and it is a genuine
 analytic-number-theory obligation, not bookkeeping.  Also still open repo-wide:
 `PrimeLambertOscillation.lean:94` (pre-expedition).
+
+## Exact next steps for a fresh session
+
+1. Nothing is open in `G4WiringSparse.lean`.  Do **not** reopen `exists_good`; do not "restore"
+   the old `Good.sep` — it is refuted by `sep_eps_incompatible` in the same file.
+2. The one live obligation on this line is the frozen analytic input
+   `NormalNumbers.G4Sparse.KMT_quant C` (KMT 2023 arXiv:2304.05344 Prop. 4.3, ordinary-average
+   k-point correlations of 1-bounded multiplicative functions, with the k-dependent constant).
+   `exists_sparse_normal_of_KMT_quant'` consumes it with `log C J = o(4^J)`, which is exactly the
+   growth the proposition's constant is believed to have; the task is to track that dependence.
+   Start from `papers/` and `DESIGN-2026-09-19-bcr-wiring.md` §4.
+3. Repo-wide the other open sorry is `src/NormalNumbers/PrimeLambertOscillation.lean:94`
+   (pre-expedition, untouched all campaign).
+4. Verification command:
+   `lake env lean` on a file with
+   `#print axioms NormalNumbers.G4Sparse.exists_sparse_normal_of_KMT_quant'`
+   — must stay `[propext, Classical.choice, Quot.sound]`.
+
