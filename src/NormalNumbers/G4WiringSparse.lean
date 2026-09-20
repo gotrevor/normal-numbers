@@ -154,7 +154,25 @@ theorem tail_error_le_subset (J n : ℕ) :
 
 /-- The crude schedule works for every `S`: `TailOK S windowJ`. -/
 theorem tailOK_windowJ : TailOK S windowJ := by
-  sorry
+  rw [TailOK]
+  refine squeeze_zero' (Eventually.of_forall (fun N => ?_)) ?_ tail_error_uniform
+  · exact div_nonneg (Finset.sum_nonneg fun _ _ => abs_nonneg _) (Nat.cast_nonneg N)
+  · filter_upwards [eventually_gt_atTop 0] with N hN
+    set J := windowJ N with hJ
+    have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+    rw [div_le_iff₀ hNR]
+    calc ∑ n ∈ Finset.range N, |(TWeight.subset S).tailB 4 n - truncTailS S J n|
+        ≤ ∑ _n ∈ Finset.range N, ((Nat.log 2 (2 * N + J + 2) : ℝ) + J + 3) / (4 : ℝ) ^ J := by
+          refine Finset.sum_le_sum (fun n hn => ?_)
+          have hnlt : n < N := Finset.mem_range.mp hn
+          refine le_trans (tail_error_le_subset S J n) ?_
+          have hmono : Nat.log 2 (n + J + 2) ≤ Nat.log 2 (2 * N + J + 2) :=
+            Nat.log_mono_right (by omega)
+          have hc : (Nat.log 2 (n + J + 2) : ℝ) ≤ (Nat.log 2 (2 * N + J + 2) : ℝ) := by
+            exact_mod_cast hmono
+          gcongr
+      _ = ((Nat.log 2 (2 * N + J + 2) : ℝ) + J + 3) / (4 : ℝ) ^ J * N := by
+          rw [Finset.sum_const, nsmul_eq_mul, Finset.card_range]; ring
 
 /-! ### Assembly (W1 + W3 directly on prefix means; no W4) -/
 
@@ -169,7 +187,54 @@ theorem orbit_eq_fract_tailB_subset (n : ℕ) :
 theorem prefix_fourier_tendsto_zero (Jsched : ℕ → ℕ) (hTail : TailOK S Jsched)
     (hKMT : KMT_along S Jsched) (h : ℤ) (hh : h ≠ 0) :
     Tendsto (prefixMean (fun n => ePhase (h * orbit 4 (subsetLambert S 4) n))) atTop (𝓝 0) := by
-  sorry
+  set F : ℕ → ℂ := fun n => ePhase (h * orbit 4 (subsetLambert S 4) n) with hF
+  have hFtail : ∀ n : ℕ, F n = ePhase (h * (TWeight.subset S).tailB 4 n) := by
+    intro n
+    have hshift : (h : ℝ) * Int.fract ((TWeight.subset S).tailB 4 n)
+        = (h : ℝ) * (TWeight.subset S).tailB 4 n
+          + ((-(h * ⌊(TWeight.subset S).tailB 4 n⌋) : ℤ) : ℝ) := by
+      rw [Int.fract]; push_cast; ring
+    rw [hF]
+    simp only
+    rw [orbit_eq_fract_tailB_subset, hshift, ePhase_add_int]
+  have hgoal : Tendsto (fun N => prefixMean F N - windowMeanS S (Jsched N) h N) atTop (𝓝 0) := by
+    refine tendsto_zero_iff_norm_tendsto_zero.mpr ?_
+    refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _))
+      (g := fun N : ℕ => 4 * Real.pi * |(h : ℝ)| *
+        ((∑ n ∈ Finset.range N,
+            |(TWeight.subset S).tailB 4 n - truncTailS S (Jsched N) n|) / N)) ?_
+      (by simpa using hTail.const_mul (4 * Real.pi * |(h : ℝ)|))
+    filter_upwards [eventually_gt_atTop 0] with N hN
+    have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+    set J := Jsched N with hJ
+    have hsub : prefixMean F N - windowMeanS S J h N
+        = (∑ n ∈ Finset.range N,
+            (ePhase (h * (TWeight.subset S).tailB 4 n) - ePhase (h * truncTailS S J n))) / N := by
+      rw [prefixMean, windowMeanS, prefixMean, ← sub_div, ← Finset.sum_sub_distrib]
+      congr 1
+      exact Finset.sum_congr rfl (fun n _ => by rw [hFtail n])
+    rw [hsub, norm_div, Complex.norm_natCast]
+    rw [div_le_iff₀ hNR, mul_assoc, div_mul_cancel₀ _ (ne_of_gt hNR)]
+    calc ‖∑ n ∈ Finset.range N,
+            (ePhase (h * (TWeight.subset S).tailB 4 n) - ePhase (h * truncTailS S J n))‖
+        ≤ ∑ n ∈ Finset.range N,
+            ‖ePhase (h * (TWeight.subset S).tailB 4 n) - ePhase (h * truncTailS S J n)‖ :=
+          norm_sum_le _ _
+      _ ≤ ∑ n ∈ Finset.range N, 4 * Real.pi * |(h : ℝ)| *
+            |(TWeight.subset S).tailB 4 n - truncTailS S J n| := by
+          refine Finset.sum_le_sum (fun n _ => ?_)
+          calc ‖ePhase (h * (TWeight.subset S).tailB 4 n) - ePhase (h * truncTailS S J n)‖
+              ≤ 4 * Real.pi *
+                  |(h : ℝ) * (TWeight.subset S).tailB 4 n - (h : ℝ) * truncTailS S J n| :=
+                norm_ePhase_sub _ _
+            _ = 4 * Real.pi * |(h : ℝ)| *
+                  |(TWeight.subset S).tailB 4 n - truncTailS S J n| := by
+                rw [← mul_sub, abs_mul]; ring
+      _ = 4 * Real.pi * |(h : ℝ)| *
+            ∑ n ∈ Finset.range N, |(TWeight.subset S).tailB 4 n - truncTailS S J n| := by
+          rw [Finset.mul_sum]
+  have := (hKMT h hh).add hgoal
+  simpa using this
 
 /-- **Wiring theorem**: normality of `c_S(4)` from the diagonal KMT input along any schedule with a
 negligible tail. -/
@@ -178,9 +243,19 @@ theorem isNormal_subsetLambert_of_KMT_along (Jsched : ℕ → ℕ) (hTail : Tail
   rw [isNormal_iff_equidistributed_orbit 4 (by norm_num)]
   refine equidistributed_of_weyl _ (orbit_mem_Ico 4 _) ?_
   intro h hh
-  have := prefix_fourier_tendsto_zero S Jsched hTail hKMT h hh
-  -- `fourierMean u h = prefixMean (fun n => ePhase (h * u n))`
-  sorry
+  have hpre := prefix_fourier_tendsto_zero S Jsched hTail hKMT h hh
+  have heq : fourierMean (orbit 4 (subsetLambert S 4)) h
+      = prefixMean (fun n => ePhase (h * orbit 4 (subsetLambert S 4) n)) := by
+    funext n
+    rw [fourierMean, prefixMean]
+    congr 1
+    refine Finset.sum_congr rfl (fun k _ => ?_)
+    rw [ePhase]
+    congr 1
+    push_cast
+    ring
+  rw [heq]
+  exact hpre
 
 /-- Specialised to the crude schedule: only the diagonal KMT input remains. -/
 theorem isNormal_subsetLambert_of_KMT_windowJ (hKMT : KMT_along S windowJ) :
