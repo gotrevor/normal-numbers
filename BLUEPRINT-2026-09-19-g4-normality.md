@@ -76,6 +76,12 @@ IsNormal 4 G₄
    y ≥ 1000, the 1/√x noise on the ratio).  So the rough two-point correlation factorises up to the CRT
    product with the same 1/log x cofactor-coupling residue as target 4 (Σ_{p>y} log p/p² ≍ 1/y).
    `--rough-independence`; data `instruments/data-2026-09-20-rough-independence-h1-s12.json`.
+   **Window version (13:57)**: J = 1..4 sites (z_j = e(1/4^j)), same normalisation with the exact local
+   factor L_p = (1/p)Σ_r ∏_{p|r+j} z_j: c(y,J)·log x stable in x to three digits and *bounded in J* -
+   y=1: 1.13 / 1.20 / 1.22 (J = 2,3,4); y=3: 0.32 / 0.40 / 0.43; y=10: 0.12 / 0.16 / 0.17; y=100: 0.010 /
+   0.008 / 0.008.  Far sites add almost nothing (|z_j − 1| → 0), so the residue converges in J.  N1b holds
+   at the window level with error ≍ 1/(y log x), uniformly in J on the range measured.  `--rough-window`;
+   data `instruments/data-2026-09-20-rough-window-h1.json`.
 
 - **N1c, TT 2025 read closely (13:36)**: Thm 3.1(ii) applies to g = z^{ω} with L = (log X)^{1−Re z}
   (M(g;X²,·) ≍ (1−Re z) log log X), giving 𝔼 z^{ω(n)}w^{ω(n+1)} ≪ (log N)^{−c(1−Re z)} off a
