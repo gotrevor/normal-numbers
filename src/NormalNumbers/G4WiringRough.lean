@@ -1166,6 +1166,130 @@ theorem smoothNonvanishingAt_two {h : ℤ} (hh : h ≠ 0) (hc : ¬ ChowlaSector 
   rw [hAprod] at hstep
   linarith [hstep, hdiff', hlow, hJN]
 
+/-! ### The site half of N1a′ is an exact identity
+
+At `y = 2` the smooth phase at one site takes only the two values `1` (odd argument) and
+`ζ_j = e(h 4^{-j})` (even argument), so the site covariance can be computed exactly: it is
+`(ζ_j − 1)` times the discrepancy between the rough mean over the whole window and its restriction
+to the odd residue.  No analysis enters.  Since `‖ζ_j − 1‖ ≤ 2π|h| 4^{-j}`, the per-site errors are
+geometrically small in `j`, which is what makes the `J`-uniformity of `SmoothRoughDecoupling`
+cheap.  See `PROBE-2026-09-20-smooth-rough-decoupling.md`. -/
+
+/-- The rough phase at one site. -/
+noncomputable def roughPhase (h : ℤ) (j n : ℕ) : ℂ :=
+  ePhase ((h : ℝ) * omegaAbove 2 (n + j) / (4 : ℝ) ^ j)
+
+/-- The full phase splits into the two-valued smooth factor and the rough phase. -/
+lemma fullPhase_eq (h : ℤ) (j n : ℕ) (hj : 1 ≤ j) :
+    ePhase ((h : ℝ) * omegaR (n + j) / (4 : ℝ) ^ j)
+      = (if 2 ∣ n + j then ePhase ((h : ℝ) / (4:ℝ)^j) else 1) * roughPhase h j n := by
+  have hne : n + j ≠ 0 := by omega
+  have hsplit : (h : ℝ) * omegaR (n + j) / (4:ℝ)^j
+      = (h : ℝ) * omegaLe 2 (n + j) / (4:ℝ)^j + (h : ℝ) * omegaAbove 2 (n + j) / (4:ℝ)^j := by
+    rw [omegaR_eq_omegaLe_add_omegaAbove 2 (n + j)]; ring
+  rw [hsplit, ePhase_add, roughPhase]
+  congr 1
+  rw [omegaLe_two_eq _ hne]
+  by_cases hd : 2 ∣ n + j
+  · rw [if_pos hd, if_pos hd]; norm_num
+  · rw [if_neg hd, if_neg hd]; norm_num [ePhase_zero]
+
+/-- **Exact site covariance**.  With `ζ = e(h 4^{-j})`, `cₑ`/`c_o` the number of even/odd
+arguments and `Sₑ`/`S_o` the corresponding rough sums, the one-site covariance is
+`(ζ − 1)(c_o Sₑ − cₑ S_o)/N²`. -/
+theorem fullSiteMean_covariance_identity (N : ℕ) (h : ℤ) (j : ℕ) (hj : 1 ≤ j) (hN : 0 < N) :
+    fullSiteMean N h j - smoothSiteMean N h j 2 * roughSiteMean N h j 2
+      = (ePhase ((h:ℝ)/(4:ℝ)^j) - 1)
+        * ((((Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j)).card : ℂ)
+              * ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j), roughPhase h j n
+            - (((Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j)).card : ℂ)
+              * ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), roughPhase h j n)
+        / (N : ℂ)^2 := by
+  classical
+  set S : Finset ℕ := Finset.Ico N (2*N) with hS
+  set ζ : ℂ := ePhase ((h:ℝ)/(4:ℝ)^j) with hζ
+  set Se : ℂ := ∑ n ∈ S.filter (fun n => 2 ∣ n + j), roughPhase h j n with hSe
+  set So : ℂ := ∑ n ∈ S.filter (fun n => ¬ 2 ∣ n + j), roughPhase h j n with hSo
+  set ce : ℂ := ((S.filter (fun n => 2 ∣ n + j)).card : ℂ) with hce
+  set co : ℂ := ((S.filter (fun n => ¬ 2 ∣ n + j)).card : ℂ) with hco
+  have hNC : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  have hcard : ce + co = (N : ℂ) := by
+    rw [hce, hco, ← Nat.cast_add, Finset.card_filter_add_card_filter_not, hS, Nat.card_Ico]
+    congr 1
+    omega
+  -- the three window sums
+  have hfull : ∑ n ∈ S, ePhase ((h : ℝ) * omegaR (n + j) / (4 : ℝ) ^ j) = ζ * Se + So := by
+    rw [← Finset.sum_filter_add_sum_filter_not S (fun n => 2 ∣ n + j)]
+    rw [hSe, hSo, Finset.mul_sum]
+    congr 1
+    · refine Finset.sum_congr rfl (fun n hn => ?_)
+      rw [fullPhase_eq h j n hj, if_pos (Finset.mem_filter.mp hn).2]
+    · refine Finset.sum_congr rfl (fun n hn => ?_)
+      rw [fullPhase_eq h j n hj, if_neg (Finset.mem_filter.mp hn).2, one_mul]
+  have hsmooth : ∑ n ∈ S, ePhase ((h : ℝ) * omegaLe 2 (n + j) / (4 : ℝ) ^ j) = ζ * ce + co := by
+    rw [← Finset.sum_filter_add_sum_filter_not S (fun n => 2 ∣ n + j)]
+    congr 1
+    · rw [hce, Finset.sum_congr rfl (fun n hn => ?_), Finset.sum_const, nsmul_eq_mul, mul_comm]
+      have hne : n + j ≠ 0 := by omega
+      rw [omegaLe_two_eq _ hne, if_pos (Finset.mem_filter.mp hn).2]
+      norm_num [hζ]
+    · rw [hco, Finset.sum_congr rfl (fun n hn => ?_), Finset.sum_const, nsmul_eq_mul, mul_one]
+      have hne : n + j ≠ 0 := by omega
+      rw [omegaLe_two_eq _ hne, if_neg (Finset.mem_filter.mp hn).2]
+      norm_num [ePhase_zero]
+  have hrough : ∑ n ∈ S, roughPhase h j n = Se + So := by
+    rw [← Finset.sum_filter_add_sum_filter_not S (fun n => 2 ∣ n + j)]
+  have hf : fullSiteMean N h j = (ζ * Se + So) / N := by rw [fullSiteMean, ← hS, hfull]
+  have hs : smoothSiteMean N h j 2 = (ζ * ce + co) / N := by rw [smoothSiteMean, ← hS, hsmooth]
+  have hr : roughSiteMean N h j 2 = (Se + So) / N := by
+    rw [roughSiteMean, ← hS, ← hrough]
+    rfl
+  have hsum0 : ce + co ≠ 0 := by rw [hcard]; exact hNC
+  rw [hf, hs, hr, ← hcard]
+  field_simp
+  ring
+
+/-- The covariance in "mean minus conditional mean" form: `(ζ − 1)·(c_o/N)·(E r − E[r | odd])`,
+divided out.  Bound form: the covariance is at most `‖ζ − 1‖` times the odd-residue discrepancy. -/
+theorem norm_fullSiteMean_covariance_le (N : ℕ) (h : ℤ) (j : ℕ) (hj : 1 ≤ j) (hN : 0 < N) :
+    ‖fullSiteMean N h j - smoothSiteMean N h j 2 * roughSiteMean N h j 2‖
+      ≤ 4 * Real.pi * |(h : ℝ)| * ((1:ℝ)/4) ^ j
+        * (‖(((Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j)).card : ℂ)
+              * ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j), roughPhase h j n
+            - (((Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j)).card : ℂ)
+              * ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), roughPhase h j n‖
+           / (N : ℝ)^2) := by
+  classical
+  rw [fullSiteMean_covariance_identity N h j hj hN, norm_div, norm_mul]
+  have hz : ‖ePhase ((h:ℝ)/(4:ℝ)^j) - 1‖ ≤ 4 * Real.pi * |(h : ℝ)| * ((1:ℝ)/4) ^ j := by
+    have hd : ‖ePhase ((h : ℝ) / (4:ℝ)^j) - ePhase 0‖ ≤ 4 * Real.pi * |(h : ℝ) / (4:ℝ)^j - 0| :=
+      norm_ePhase_sub _ _
+    have h4 : (0 : ℝ) < (4:ℝ)^j := by positivity
+    have habs2 : |(h : ℝ) / (4:ℝ)^j - 0| = |(h:ℝ)| * ((1:ℝ)/4)^j := by
+      rw [sub_zero, abs_div, abs_of_pos h4, div_pow, one_pow]
+      field_simp
+    rw [ePhase_zero, habs2] at hd
+    linarith [hd]
+  have hden : ‖((N : ℂ)^2)‖ = (N : ℝ)^2 := by
+    rw [norm_pow, Complex.norm_natCast]
+  rw [hden]
+  have hd2 : (0:ℝ) < (N:ℝ)^2 := by
+    have hNR : (0:ℝ) < N := by exact_mod_cast hN
+    positivity
+  rw [show 4 * Real.pi * |(h : ℝ)| * ((1:ℝ)/4) ^ j
+        * (‖(((Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j)).card : ℂ)
+              * ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j), roughPhase h j n
+            - (((Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j)).card : ℂ)
+              * ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), roughPhase h j n‖
+           / (N : ℝ)^2)
+      = (4 * Real.pi * |(h : ℝ)| * ((1:ℝ)/4) ^ j)
+        * ‖(((Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j)).card : ℂ)
+              * ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j), roughPhase h j n
+            - (((Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j)).card : ℂ)
+              * ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), roughPhase h j n‖
+        / (N : ℝ)^2 from by ring]
+  gcongr
+
 /-- **Wiring, N1a discharged**: on the non-Chowla sector the only open inputs are
 `RoughIndependenceAt h 2` and `SmoothRoughDecoupling h`. -/
 theorem crtConstantSched_of_roughAt_notChowla {h : ℤ} (hh : h ≠ 0) (hc : ¬ ChowlaSector h)
