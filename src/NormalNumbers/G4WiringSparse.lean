@@ -370,12 +370,232 @@ theorem nth_prime_le_mul_log (k : ℕ) (hk : 16 ≤ k) :
   have hst := nth_prime_mul_log_two_le k
   nlinarith [hst, hlp, hlogk, h2, hkR]
 
+theorem mu_pos (a : ℕ) : 0 < mu a := Nat.succ_pos _
+
 /-! #### (b) the density count -/
 
-/-- **(b)** `#{k < K : m k ∣ k} / K → 0`. -/
+/-- Multiples of `M` in `[x, y)`: at most `(y-x)/M + 2`. -/
+theorem card_multiples_le (M x y : ℕ) (hM : 0 < M) (hxy : x ≤ y) :
+    (((Finset.Ico x y).filter (fun k => M ∣ k)).card : ℝ) ≤ ((y : ℝ) - x) / M + 2 := by
+  have hmap : ∀ k ∈ (Finset.Ico x y).filter (fun k => M ∣ k), k / M ∈ Finset.Icc (x / M) (y / M) := by
+    intro k hk
+    rw [Finset.mem_filter, Finset.mem_Ico] at hk
+    exact Finset.mem_Icc.mpr ⟨Nat.div_le_div_right hk.1.1, Nat.div_le_div_right hk.1.2.le⟩
+  have hinj : Set.InjOn (fun k => k / M) ((Finset.Ico x y).filter (fun k => M ∣ k) : Set ℕ) := by
+    intro a ha b hb hab
+    simp only [Finset.coe_filter, Set.mem_setOf_eq] at ha hb
+    have ha' : M * (a / M) = a := Nat.mul_div_cancel' ha.2
+    have hb' : M * (b / M) = b := Nat.mul_div_cancel' hb.2
+    simp only at hab
+    rw [← ha', ← hb', hab]
+  have hcard := Finset.card_le_card_of_injOn (fun k => k / M) hmap hinj
+  rw [Nat.card_Icc] at hcard
+  have hMR : (0:ℝ) < (M:ℝ) := by exact_mod_cast hM
+  have h1 : ((y / M : ℕ) : ℝ) ≤ (y : ℝ) / M := by
+    rw [le_div_iff₀ hMR]
+    have := Nat.div_mul_le_self y M
+    exact_mod_cast this
+  have h2 : (x : ℝ) / M - 1 ≤ ((x / M : ℕ) : ℝ) := by
+    have hdm := Nat.div_add_mod x M
+    have hmod := Nat.mod_lt x hM
+    have hx : x < (x / M + 1) * M := by nlinarith [hdm, hmod]
+    have hxR : (x : ℝ) < (((x / M : ℕ) : ℝ) + 1) * M := by
+      have := (Nat.cast_lt (α := ℝ)).mpr hx
+      push_cast at this
+      linarith
+    rw [sub_le_iff_le_add, div_le_iff₀ hMR]
+    linarith
+  have hle : x / M ≤ y / M + 1 := le_trans (Nat.div_le_div_right hxy) (by omega)
+  have hc : (((Finset.Ico x y).filter (fun k => M ∣ k)).card : ℝ)
+      ≤ ((y / M : ℕ) : ℝ) - ((x / M : ℕ) : ℝ) + 1 := by
+    have hcast := (Nat.cast_le (α := ℝ)).mpr hcard
+    rw [Nat.cast_sub hle] at hcast
+    push_cast at hcast
+    linarith
+  have hdiv : ((y:ℝ) - x) / M = (y:ℝ)/M - (x:ℝ)/M := by ring
+  linarith
+
+theorem keepCount_le (m₀ K : ℕ) (hm : 0 < m₀) (hK : 1 ≤ K) :
+    ((((Finset.range K).filter Keep).card : ℝ))
+      ≤ (2 : ℝ) ^ (2 ^ (m₀ - 1)) + 2 * K / m₀ + 2 * (Nat.log 2 K + 1) := by
+  set a₀ := 2 ^ (m₀ - 1) with ha₀
+  set L := Nat.log 2 K with hL
+  have hmR : (0:ℝ) < (m₀:ℝ) := by exact_mod_cast hm
+  -- covering
+  have hsub : (Finset.range K).filter Keep ⊆ (Finset.range (2 ^ a₀)) ∪
+      (Finset.Ico a₀ (L + 1)).biUnion
+        (fun a => (Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter (fun k => mu a ∣ k)) := by
+    intro k hk
+    rw [Finset.mem_filter, Finset.mem_range] at hk
+    obtain ⟨hkK, hkeep⟩ := hk
+    by_cases hsmall : k < 2 ^ a₀
+    · exact Finset.mem_union_left _ (Finset.mem_range.mpr hsmall)
+    · push_neg at hsmall
+      have hk0 : k ≠ 0 := by
+        have : 0 < 2 ^ a₀ := Nat.two_pow_pos a₀
+        omega
+      set a := Nat.log 2 k with ha
+      have hlow : 2 ^ a ≤ k := Nat.pow_log_le_self 2 hk0
+      have hhigh : k < 2 ^ (a + 1) := Nat.lt_pow_succ_log_self (by norm_num) k
+      have haa₀ : a₀ ≤ a := Nat.le_log_of_pow_le (by norm_num) hsmall
+      have haL : a ≤ L := Nat.log_mono_right (by omega)
+      refine Finset.mem_union_right _ (Finset.mem_biUnion.mpr ⟨a, Finset.mem_Ico.mpr ⟨haa₀, by omega⟩, ?_⟩)
+      refine Finset.mem_filter.mpr ⟨Finset.mem_Ico.mpr ⟨hlow, hhigh⟩, ?_⟩
+      have : modulus k = mu a := by rw [modulus, ha]
+      rw [Keep, this] at hkeep
+      exact hkeep
+  have hcard1 := Finset.card_le_card hsub
+  have hcard2 := (Finset.card_union_le (Finset.range (2 ^ a₀))
+    ((Finset.Ico a₀ (L + 1)).biUnion
+      (fun a => (Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter (fun k => mu a ∣ k))))
+  have hcard3 := Finset.card_biUnion_le (s := Finset.Ico a₀ (L + 1))
+    (t := fun a => (Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter (fun k => mu a ∣ k))
+  have hchain : ((((Finset.range K).filter Keep).card : ℝ)) ≤ ((2 ^ a₀ : ℕ) : ℝ) +
+      ∑ a ∈ Finset.Ico a₀ (L + 1),
+        (((Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter (fun k => mu a ∣ k)).card : ℝ) := by
+    have h : ((Finset.range K).filter Keep).card ≤ 2 ^ a₀ +
+        ∑ a ∈ Finset.Ico a₀ (L + 1),
+          ((Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter (fun k => mu a ∣ k)).card := by
+      refine (hcard1.trans hcard2).trans ?_
+      rw [Finset.card_range]
+      exact Nat.add_le_add_left hcard3 _
+    have := (Nat.cast_le (α := ℝ)).mpr h
+    push_cast at this ⊢
+    simpa using this
+  -- each block
+  have hblock : ∀ a ∈ Finset.Ico a₀ (L + 1),
+      (((Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter (fun k => mu a ∣ k)).card : ℝ)
+        ≤ (2 : ℝ) ^ a / m₀ + 2 := by
+    intro a ha
+    rw [Finset.mem_Ico] at ha
+    have ha0 : a ≠ 0 := by
+      have : 0 < a₀ := Nat.two_pow_pos _
+      omega
+    have hmu : m₀ ≤ mu a := by
+      have : m₀ - 1 ≤ Nat.log 2 a := Nat.le_log_of_pow_le (by norm_num) ha.1
+      rw [mu]; omega
+    have hle := card_multiples_le (mu a) (2 ^ a) (2 ^ (a + 1)) (mu_pos a)
+      (Nat.pow_le_pow_right (by norm_num) (by omega))
+    have hdiff : ((2 ^ (a + 1) : ℕ) : ℝ) - ((2 ^ a : ℕ) : ℝ) = (2 : ℝ) ^ a := by
+      push_cast; ring
+    rw [hdiff] at hle
+    refine hle.trans ?_
+    have hmuR : (m₀ : ℝ) ≤ (mu a : ℝ) := by exact_mod_cast hmu
+    have : (2 : ℝ) ^ a / (mu a) ≤ (2 : ℝ) ^ a / m₀ := by
+      apply div_le_div_of_nonneg_left (by positivity) hmR hmuR
+    linarith
+  have hsum := Finset.sum_le_sum hblock
+  -- the geometric sum
+  have hgeo : ∑ a ∈ Finset.Ico a₀ (L + 1), ((2 : ℝ) ^ a / m₀ + 2)
+      ≤ 2 * K / m₀ + 2 * (L + 1) := by
+    have hsub2 : Finset.Ico a₀ (L + 1) ⊆ Finset.range (L + 1) := by
+      intro a ha; rw [Finset.mem_Ico] at ha; exact Finset.mem_range.mpr ha.2
+    have hnn : ∀ a, (0:ℝ) ≤ (2 : ℝ) ^ a / m₀ + 2 := by intro a; positivity
+    have h1 : ∑ a ∈ Finset.Ico a₀ (L + 1), ((2 : ℝ) ^ a / m₀ + 2)
+        ≤ ∑ a ∈ Finset.range (L + 1), ((2 : ℝ) ^ a / m₀ + 2) :=
+      Finset.sum_le_sum_of_subset_of_nonneg hsub2 (fun i _ _ => hnn i)
+    have h2 : ∑ a ∈ Finset.range (L + 1), ((2 : ℝ) ^ a / m₀ + 2)
+        = (∑ a ∈ Finset.range (L + 1), (2 : ℝ) ^ a) / m₀ + 2 * (L + 1) := by
+      rw [Finset.sum_add_distrib, Finset.sum_div, Finset.sum_const, Finset.card_range]
+      push_cast
+      ring
+    have h3 : ∑ a ∈ Finset.range (L + 1), (2 : ℝ) ^ a = 2 ^ (L + 1) - 1 := by
+      rw [geom_sum_eq (by norm_num)]
+      ring
+    have h4 : (2 : ℝ) ^ (L + 1) ≤ 2 * K := by
+      have : (2 : ℕ) ^ L ≤ K := Nat.pow_log_le_self 2 (by omega)
+      have := (Nat.cast_le (α := ℝ)).mpr this
+      push_cast at this
+      have : (2:ℝ) ^ (L + 1) = 2 * 2 ^ L := by ring
+      nlinarith [this, (Nat.cast_le (α := ℝ)).mpr (Nat.pow_log_le_self 2 (show K ≠ 0 by omega))]
+    rw [h2, h3] at h1
+    have : ((2:ℝ) ^ (L+1) - 1) / m₀ ≤ 2 * K / m₀ := by
+      apply div_le_div_of_nonneg_right _ hmR.le
+      linarith
+    linarith
+  linarith [hchain, hsum, hgeo, (by push_cast; ring_nf : ((2 ^ a₀ : ℕ) : ℝ) = (2:ℝ) ^ a₀)]
+
+theorem tendsto_natLog_div :
+    Filter.Tendsto (fun K : ℕ => ((Nat.log 2 K : ℝ) + 1) / K) Filter.atTop (𝓝 0) := by
+  have hlog2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hdiv : Tendsto (fun x : ℝ => Real.log x / x) atTop (𝓝 0) :=
+    Real.isLittleO_log_id_atTop.tendsto_div_nhds_zero
+  have hinv : Tendsto (fun x : ℝ => 1 / x) atTop (𝓝 0) := by
+    simpa only [one_div] using tendsto_inv_atTop_zero
+  have hcomb : Tendsto (fun x : ℝ => (1 / Real.log 2) * (Real.log x / x) + 1 / x) atTop (𝓝 0) := by
+    have := (hdiv.const_mul (1 / Real.log 2)).add hinv
+    simpa using this
+  have hnat : Tendsto (fun K : ℕ => (1 / Real.log 2) * (Real.log K / K) + 1 / (K:ℝ))
+      atTop (𝓝 0) := hcomb.comp tendsto_natCast_atTop_atTop
+  refine squeeze_zero' ?_ ?_ hnat
+  · filter_upwards [eventually_ge_atTop 1] with K hK
+    positivity
+  · filter_upwards [eventually_ge_atTop 1] with K hK
+    have hKR : (1:ℝ) ≤ (K:ℝ) := by exact_mod_cast hK
+    have hKpos : (0:ℝ) < (K:ℝ) := by linarith
+    have hL : ((Nat.log 2 K : ℝ)) ≤ Real.log K / Real.log 2 := by
+      have h2 : (2:ℕ) ^ Nat.log 2 K ≤ K := Nat.pow_log_le_self 2 (by omega)
+      have h2R : (2:ℝ) ^ (Nat.log 2 K) ≤ (K:ℝ) := by exact_mod_cast h2
+      have := Real.log_le_log (by positivity) h2R
+      rw [Real.log_pow] at this
+      rw [le_div_iff₀ hlog2]
+      linarith
+    rw [div_le_iff₀ hKpos]
+    have hexp : ((1 / Real.log 2) * (Real.log K / K) + 1 / (K:ℝ)) * K
+        = Real.log K / Real.log 2 + 1 := by
+      field_simp
+    rw [hexp]
+    linarith
+
 theorem tendsto_keepCount_div : Filter.Tendsto
-    (fun K : ℕ => (((Finset.range K).filter Keep).card : ℝ) / K) Filter.atTop (𝓝 0) := by
-  sorry
+    (fun K : ℕ => ((((Finset.range K).filter Keep).card : ℝ)) / K) Filter.atTop (𝓝 0) := by
+  refine tendsto_order.mpr ⟨fun a ha => ?_, fun ε hε => ?_⟩
+  · filter_upwards [eventually_ge_atTop 1] with K hK
+    have : (0:ℝ) ≤ ((((Finset.range K).filter Keep).card : ℝ)) / K := by positivity
+    linarith
+  · set m₀ := ⌈8 / ε⌉₊ + 1 with hm₀
+    have hm₀pos : 0 < m₀ := by omega
+    have hm₀R : (8 / ε) ≤ (m₀ : ℝ) := by
+      have := Nat.le_ceil (8 / ε)
+      rw [hm₀]
+      push_cast
+      linarith
+    have hm₀R' : (0:ℝ) < (m₀ : ℝ) := by exact_mod_cast hm₀pos
+    have hfrac : 2 / (m₀ : ℝ) ≤ ε / 4 := by
+      rw [div_le_div_iff₀ hm₀R' (by norm_num)]
+      have h8 : 8 ≤ ε * m₀ := by
+        rw [div_le_iff₀ hε] at hm₀R
+        linarith
+      linarith
+    set c : ℝ := (2 : ℝ) ^ (2 ^ (m₀ - 1)) with hc
+    have h1 : Tendsto (fun K : ℕ => c / (K:ℝ)) atTop (𝓝 0) :=
+      tendsto_const_div_atTop_nhds_zero_nat c
+    have h2 : Tendsto (fun K : ℕ => 2 * (((Nat.log 2 K : ℝ) + 1) / K)) atTop (𝓝 0) := by
+      have := tendsto_natLog_div.const_mul 2
+      simpa using this
+    have hadd : Tendsto (fun K : ℕ => c / (K:ℝ) + 2 * (((Nat.log 2 K : ℝ) + 1) / K))
+        atTop (𝓝 0) := by simpa using h1.add h2
+    have hsmall := hadd.eventually_lt_const (show (0:ℝ) < ε / 2 by linarith)
+    filter_upwards [hsmall, eventually_ge_atTop 1] with K hKs hK1
+    have hKpos : (0:ℝ) < (K:ℝ) := by
+      have : (1:ℝ) ≤ (K:ℝ) := by exact_mod_cast hK1
+      linarith
+    have hb := keepCount_le m₀ K hm₀pos hK1
+    rw [div_lt_iff₀ hKpos]
+    have hexp : c / K + 2 * (((Nat.log 2 K : ℝ) + 1) / K) < ε / 2 := hKs
+    have hlt : c + 2 * ((Nat.log 2 K : ℝ) + 1) < (ε / 2) * K := by
+      have heq : c / K + 2 * (((Nat.log 2 K : ℝ) + 1) / K)
+          = (c + 2 * ((Nat.log 2 K : ℝ) + 1)) / K := by field_simp
+      rw [heq, div_lt_iff₀ hKpos] at hexp
+      linarith
+    calc ((((Finset.range K).filter Keep).card : ℝ))
+        ≤ c + 2 * K / m₀ + 2 * ((Nat.log 2 K : ℝ) + 1) := by
+          rw [hc]; push_cast at hb ⊢; linarith
+      _ < (ε / 2) * K + 2 * K / m₀ := by linarith
+      _ ≤ ε * K := by
+          have : 2 * (K:ℝ) / m₀ = (2 / m₀) * K := by ring
+          rw [this]
+          nlinarith [hfrac, hKpos]
 
 /-! #### (c) the divergent harmonic sum along `A` -/
 
@@ -388,7 +608,6 @@ theorem harm_nonneg (k : ℕ) : 0 ≤ harm k := by
   · positivity
   · exact le_rfl
 
-theorem mu_pos (a : ℕ) : 0 < mu a := Nat.succ_pos _
 
 /-- On the dyadic block `[2^a, 2^{a+1})` the modulus is constant `= μ a`. -/
 theorem modulus_eq_of_mem (a k : ℕ) (h1 : 2 ^ a ≤ k) (h2 : k < 2 ^ (a + 1)) :
