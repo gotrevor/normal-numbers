@@ -1930,35 +1930,115 @@ theorem DD_delta (C : ℕ → ℝ) (i : ℕ) :
 
 /-- Leaf 3a: `δᵢ ≥ 1/(i+1)`. -/
 theorem delta_ge (C : ℕ → ℝ) (i : ℕ) : (1 : ℝ) / ((i : ℝ) + 1) ≤ (DD C).δ i := by
-  sorry
+  have hy : 1 ≤ XF i := one_le_XF i
+  rw [DD_delta, show blk (XF i) i = blkAux (XF i) i hy from dif_pos hy]
+  exact (blkAux_spec (XF i) i hy).2.1
 
 /-- Leaf 3b: `δᵢ ≤ 2/(i+1)`. -/
 theorem delta_le (C : ℕ → ℝ) (i : ℕ) : (DD C).δ i ≤ 2 / ((i : ℝ) + 1) := by
-  sorry
+  have hy : 1 ≤ XF i := one_le_XF i
+  rw [DD_delta, show blk (XF i) i = blkAux (XF i) i hy from dif_pos hy]
+  have h := (blkAux_spec (XF i) i hy).2.2
+  have hx : ((i : ℝ) + 1) ≤ (XF i : ℝ) := by
+    have := XF_ge i
+    have : ((i + 1 : ℕ) : ℝ) ≤ (XF i : ℝ) := by exact_mod_cast this
+    push_cast at this; linarith
+  have hpos : (0 : ℝ) < (i : ℝ) + 1 := by positivity
+  have : (1 : ℝ) / (XF i : ℝ) ≤ 1 / ((i : ℝ) + 1) := by
+    apply one_div_le_one_div_of_le hpos hx
+  have h2 : (2 : ℝ) / ((i : ℝ) + 1) = 1 / ((i : ℝ) + 1) + 1 / ((i : ℝ) + 1) := by ring
+  rw [h2]
+  linarith
 
 /-- Harmonic lower bound. -/
 theorem harm_lower (m : ℕ) :
     Real.log ((m : ℝ) + 1) ≤ ∑ k ∈ Finset.range m, (1 : ℝ) / ((k : ℝ) + 1) := by
-  sorry
+  induction m with
+  | zero => simp
+  | succ n ih =>
+    rw [Finset.sum_range_succ]
+    have hn : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+    have hstep : Real.log (((n : ℝ) + 1) + 1) - Real.log ((n : ℝ) + 1)
+        ≤ 1 / ((n : ℝ) + 1) := by
+      have hdiv : Real.log ((((n : ℝ) + 1) + 1) / ((n : ℝ) + 1))
+          ≤ (((n : ℝ) + 1) + 1) / ((n : ℝ) + 1) - 1 :=
+        Real.log_le_sub_one_of_pos (by positivity)
+      rw [Real.log_div (by positivity) (by positivity)] at hdiv
+      have : (((n : ℝ) + 1) + 1) / ((n : ℝ) + 1) - 1 = 1 / ((n : ℝ) + 1) := by
+        field_simp; ring
+      linarith
+    have hcast : ((n : ℕ) + 1 : ℕ) = (n : ℕ) + 1 := rfl
+    push_cast
+    push_cast at ih
+    linarith
 
 /-- Harmonic upper bound. -/
 theorem harm_upper (m : ℕ) :
     ∑ k ∈ Finset.range m, (1 : ℝ) / ((k : ℝ) + 1) ≤ 1 + Real.log m := by
-  sorry
+  induction m with
+  | zero => simp
+  | succ n ih =>
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · simp
+    · rw [Finset.sum_range_succ]
+      have hn0 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn
+      have hstep : 1 / ((n : ℝ) + 1) ≤ Real.log ((n : ℝ) + 1) - Real.log n := by
+        have hdiv : Real.log ((n : ℝ) / ((n : ℝ) + 1)) ≤ (n : ℝ) / ((n : ℝ) + 1) - 1 :=
+          Real.log_le_sub_one_of_pos (by positivity)
+        rw [Real.log_div (by positivity) (by positivity)] at hdiv
+        have : (n : ℝ) / ((n : ℝ) + 1) - 1 = - (1 / ((n : ℝ) + 1)) := by field_simp; ring
+        rw [this] at hdiv
+        linarith
+      push_cast
+      linarith
 
 /-- Leaf 3: `∑ δᵢ = ∞`. -/
 theorem delta_div (C : ℕ → ℝ) : ¬ Summable (DD C).δ := by
-  sorry
+  intro hsum
+  have hcomp : Summable (fun i : ℕ => (1 : ℝ) / ((i : ℝ) + 1)) := by
+    refine Summable.of_nonneg_of_le (fun i => by positivity) (fun i => delta_ge C i) hsum
+  refine Real.not_summable_one_div_natCast ?_
+  rw [← summable_nat_add_iff 1]
+  simpa using hcomp
 
 /-- Leaf 4a: the `ε`-range. -/
-theorem eps_range (C : ℕ → ℝ) (i N : ℕ) (hN : XF i < N) :
+theorem eps_range (_C : ℕ → ℝ) (i N : ℕ) (hN : XF i < N) :
     1 / Real.log (Real.log N) < epsF i ∧ epsF i < 1 / 2 := by
-  sorry
+  refine ⟨?_, epsF_lt i⟩
+  have hK : (0 : ℝ) < (Kn i : ℝ) := by exact_mod_cast Kn_pos i
+  have h1 : Real.exp (Real.exp (Kn i)) < (N : ℝ) := by
+    have hE : Real.exp (Real.exp (Kn i)) ≤ (EF i : ℝ) := EF_le i
+    have hX : (EF i : ℝ) ≤ (XF i : ℝ) := by exact_mod_cast XF_ge_EF i
+    have hNN : (XF i : ℝ) < (N : ℝ) := by exact_mod_cast hN
+    linarith
+  have hNpos : (0 : ℝ) < (N : ℝ) := lt_trans (Real.exp_pos _) h1
+  have hlogN : Real.exp (Kn i) < Real.log N :=
+    (Real.lt_log_iff_exp_lt hNpos).mpr h1
+  have hlogpos : (0 : ℝ) < Real.log N := lt_trans (Real.exp_pos _) hlogN
+  have h2 : (Kn i : ℝ) < Real.log (Real.log N) :=
+    (Real.lt_log_iff_exp_lt hlogpos).mpr hlogN
+  rw [epsF]
+  exact one_div_lt_one_div_of_lt hK h2
 
 /-- Leaf 4b: separation. -/
 theorem sep_holds (C : ℕ → ℝ) (i N : ℕ) (hi : 1 ≤ i) (hN : XF i < N) :
     XF (i - 1) ≤ ⌊(N : ℝ) ^ epsF i⌋₊ := by
-  sorry
+  obtain ⟨j, rfl⟩ : ∃ j, i = j + 1 := ⟨i - 1, by omega⟩
+  simp only [Nat.add_sub_cancel]
+  refine Nat.le_floor ?_
+  set K : ℕ := Kn (j + 1) with hKdef
+  have hK0 : (0 : ℝ) < (K : ℝ) := by exact_mod_cast Kn_pos (j + 1)
+  have ha : (1 : ℝ) ≤ (XF j : ℝ) := by exact_mod_cast one_le_XF j
+  have hpow : ((XF j : ℝ)) ^ (K : ℕ) ≤ (N : ℝ) := by
+    have h1 : (XF j) ^ K ≤ XF (j + 1) := XF_ge_pow j
+    have h2 : (XF j) ^ K ≤ N := by omega
+    exact_mod_cast h2
+  have hmono : ((XF j : ℝ) ^ (K : ℕ)) ^ epsF (j + 1) ≤ (N : ℝ) ^ epsF (j + 1) :=
+    Real.rpow_le_rpow (by positivity) hpow (epsF_pos _).le
+  have hid : ((XF j : ℝ) ^ (K : ℕ)) ^ epsF (j + 1) = (XF j : ℝ) := by
+    rw [← Real.rpow_natCast (XF j : ℝ) K, ← Real.rpow_mul (by linarith), epsF, ← hKdef]
+    rw [mul_one_div, div_self (ne_of_gt hK0), Real.rpow_one]
+  linarith [hid ▸ hmono]
 
 /-- Leaf 1a: `Jᵢ → ∞`. -/
 theorem JF_tendsto (C : ℕ → ℝ) : Tendsto (JF C) atTop atTop := by
