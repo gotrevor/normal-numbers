@@ -1194,6 +1194,48 @@ lemma fullPhase_eq (h : ℤ) (j n : ℕ) (hj : 1 ≤ j) :
   · rw [if_pos hd, if_pos hd]; norm_num
   · rw [if_neg hd, if_neg hd]; norm_num [ePhase_zero]
 
+/-- **The covariance of a two-valued factor is exact.**  If `s n = a` on `p` and `b` off `p`,
+then `𝔼[s·r] − 𝔼[s]𝔼[r] = (a − b)(c_¬p Σ_p r − c_p Σ_¬p r)/N²`.  No hypothesis on `r`. -/
+theorem twoValued_covariance (N : ℕ) (hN : 0 < N) (p : ℕ → Prop) [DecidablePred p]
+    (a b : ℂ) (r : ℕ → ℂ) :
+    (∑ n ∈ Finset.Ico N (2*N), (if p n then a else b) * r n) / N
+      - ((∑ n ∈ Finset.Ico N (2*N), (if p n then a else b)) / N)
+        * ((∑ n ∈ Finset.Ico N (2*N), r n) / N)
+      = (a - b) * ((((Finset.Ico N (2*N)).filter (fun n => ¬ p n)).card : ℂ)
+            * (∑ n ∈ (Finset.Ico N (2*N)).filter p, r n)
+          - (((Finset.Ico N (2*N)).filter p).card : ℂ)
+            * (∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ p n), r n)) / (N:ℂ)^2 := by
+  classical
+  set S : Finset ℕ := Finset.Ico N (2*N) with hS
+  set Se : ℂ := ∑ n ∈ S.filter p, r n with hSe
+  set So : ℂ := ∑ n ∈ S.filter (fun n => ¬ p n), r n with hSo
+  set ce : ℂ := ((S.filter p).card : ℂ) with hce
+  set co : ℂ := ((S.filter (fun n => ¬ p n)).card : ℂ) with hco
+  have hNC : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  have hcard : ce + co = (N : ℂ) := by
+    rw [hce, hco, ← Nat.cast_add, Finset.card_filter_add_card_filter_not, hS, Nat.card_Ico]
+    congr 1
+    omega
+  have h1 : ∑ n ∈ S, (if p n then a else b) * r n = a * Se + b * So := by
+    rw [← Finset.sum_filter_add_sum_filter_not S p]
+    rw [hSe, hSo, Finset.mul_sum, Finset.mul_sum]
+    congr 1
+    · exact Finset.sum_congr rfl (fun n hn => by rw [if_pos (Finset.mem_filter.mp hn).2])
+    · exact Finset.sum_congr rfl (fun n hn => by rw [if_neg (Finset.mem_filter.mp hn).2])
+  have h2 : ∑ n ∈ S, (if p n then a else b) = a * ce + b * co := by
+    rw [← Finset.sum_filter_add_sum_filter_not S p]
+    congr 1
+    · rw [hce, Finset.sum_congr rfl (fun n hn => by
+        rw [if_pos (Finset.mem_filter.mp hn).2]), Finset.sum_const, nsmul_eq_mul, mul_comm]
+    · rw [hco, Finset.sum_congr rfl (fun n hn => by
+        rw [if_neg (Finset.mem_filter.mp hn).2]), Finset.sum_const, nsmul_eq_mul, mul_comm]
+  have h3 : ∑ n ∈ S, r n = Se + So := by
+    rw [← Finset.sum_filter_add_sum_filter_not S p]
+  rw [h1, h2, h3, ← hcard]
+  have hsum0 : ce + co ≠ 0 := by rw [hcard]; exact hNC
+  field_simp
+  ring
+
 /-- **Exact site covariance**.  With `ζ = e(h 4^{-j})`, `cₑ`/`c_o` the number of even/odd
 arguments and `Sₑ`/`S_o` the corresponding rough sums, the one-site covariance is
 `(ζ − 1)(c_o Sₑ − cₑ S_o)/N²`. -/
@@ -1289,6 +1331,75 @@ theorem norm_fullSiteMean_covariance_le (N : ℕ) (h : ℤ) (j : ℕ) (hj : 1 �
               * ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), roughPhase h j n‖
         / (N : ℝ)^2 from by ring]
   gcongr
+
+/-! ### The window half of N1a′ is the *same* identity
+
+At `y = 2` the smooth *window* phase is two-valued too: `[2 ∣ n+j+1]` alternates with `j`, so
+`smoothTail 2 J n` depends on `n` only through its parity.  Both halves of
+`SmoothRoughDecoupling` at `y = 2` are therefore instances of `twoValued_covariance`, and the
+whole node collapses to a single quantity: the even/odd discrepancy of the rough phase. -/
+
+/-- The value of `smoothTail 2 J` at even arguments. -/
+noncomputable def tailEven (J : ℕ) : ℝ :=
+  ∑ j ∈ Finset.range J, (if 2 ∣ (j + 1) then (1:ℝ) else 0) / (4:ℝ) ^ (j + 1)
+/-- The value of `smoothTail 2 J` at odd arguments. -/
+noncomputable def tailOdd (J : ℕ) : ℝ :=
+  ∑ j ∈ Finset.range J, (if ¬ 2 ∣ (j + 1) then (1:ℝ) else 0) / (4:ℝ) ^ (j + 1)
+
+lemma smoothTail_two_eq (J n : ℕ) :
+    smoothTail 2 J n = if 2 ∣ n then tailEven J else tailOdd J := by
+  by_cases hn : 2 ∣ n
+  · rw [if_pos hn, smoothTail, tailEven]
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    congr 1
+    rw [omegaLe_two_eq _ (by omega)]
+    have hiff : (2 ∣ n + j + 1) ↔ (2 ∣ (j + 1)) := by omega
+    by_cases hd : 2 ∣ (j + 1)
+    · rw [if_pos (hiff.mpr hd), if_pos hd]; norm_num
+    · rw [if_neg (fun hx => hd (hiff.mp hx)), if_neg hd]; norm_num
+  · rw [if_neg hn, smoothTail, tailOdd]
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    congr 1
+    rw [omegaLe_two_eq _ (by omega)]
+    have hiff : (2 ∣ n + j + 1) ↔ ¬ (2 ∣ (j + 1)) := by omega
+    by_cases hd : 2 ∣ (j + 1)
+    · rw [if_neg (fun hx => (hiff.mp hx) hd), if_neg (not_not_intro hd)]; norm_num
+    · rw [if_pos (hiff.mpr hd), if_pos hd]; norm_num
+
+/-- **Exact window covariance** at `y = 2`. -/
+theorem fullWindowMean_covariance_identity (N J : ℕ) (h : ℤ) (hN : 0 < N) :
+    fullWindowMean N J h - smoothWindowMean N J h 2 * roughWindowMean N J h 2
+      = (ePhase ((h:ℝ) * tailEven J) - ePhase ((h:ℝ) * tailOdd J))
+        * ((((Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n)).card : ℂ)
+            * (∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n),
+                ePhase ((h:ℝ) * roughTail 2 J n))
+          - (((Finset.Ico N (2*N)).filter (fun n => 2 ∣ n)).card : ℂ)
+            * (∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n),
+                ePhase ((h:ℝ) * roughTail 2 J n))) / (N:ℂ)^2 := by
+  classical
+  set a : ℂ := ePhase ((h:ℝ) * tailEven J) with ha
+  set b : ℂ := ePhase ((h:ℝ) * tailOdd J) with hb
+  set r : ℕ → ℂ := fun n => ePhase ((h:ℝ) * roughTail 2 J n) with hr
+  have hsmoothphase : ∀ n, ePhase ((h:ℝ) * smoothTail 2 J n) = if 2 ∣ n then a else b := by
+    intro n
+    rw [smoothTail_two_eq]
+    by_cases hn : 2 ∣ n
+    · rw [if_pos hn, if_pos hn]
+    · rw [if_neg hn, if_neg hn]
+  have hfull : fullWindowMean N J h
+      = (∑ n ∈ Finset.Ico N (2*N), (if 2 ∣ n then a else b) * r n) / N := by
+    rw [fullWindowMean]
+    congr 1
+    refine Finset.sum_congr rfl (fun n _ => ?_)
+    rw [ePhase_truncTail_factor 2 J n h, hsmoothphase n]
+  have hsm : smoothWindowMean N J h 2
+      = (∑ n ∈ Finset.Ico N (2*N), (if 2 ∣ n then a else b)) / N := by
+    rw [smoothWindowMean]
+    congr 1
+    exact Finset.sum_congr rfl (fun n _ => hsmoothphase n)
+  have hro : roughWindowMean N J h 2 = (∑ n ∈ Finset.Ico N (2*N), r n) / N := rfl
+  rw [hfull, hsm, hro]
+  exact twoValued_covariance N hN (fun n => 2 ∣ n) a b r
 
 /-- **Wiring, N1a discharged**: on the non-Chowla sector the only open inputs are
 `RoughIndependenceAt h 2` and `SmoothRoughDecoupling h`. -/
