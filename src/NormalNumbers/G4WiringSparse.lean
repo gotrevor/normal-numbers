@@ -930,9 +930,47 @@ theorem not_summable_keep_harmonic : ¬ Summable harm := by
 
 /-! #### (d) assembly -/
 
+/-- `π` is a bijection from the primes `< x` in `S` onto `{k < π'(x) : m k ∣ k}`. -/
+theorem card_filter_PSet (x : ℕ) :
+    ((x.primesBelow.filter PSet).card)
+      = ((Finset.range (Nat.count Nat.Prime x)).filter Keep).card := by
+  apply Finset.card_bij (fun p _ => Nat.count Nat.Prime p)
+  · intro p hp
+    rw [Finset.mem_filter, Nat.mem_primesBelow] at hp
+    obtain ⟨⟨hpx, hprime⟩, hps⟩ := hp
+    refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr ?_, hps.2⟩
+    have h1 : Nat.count Nat.Prime (p + 1) = Nat.count Nat.Prime p + 1 := by
+      rw [Nat.count_succ, if_pos hprime]
+    have h2 : Nat.count Nat.Prime (p + 1) ≤ Nat.count Nat.Prime x :=
+      Nat.count_monotone Nat.Prime (by omega)
+    omega
+  · intro a ha b hb hab
+    rw [Finset.mem_filter, Nat.mem_primesBelow] at ha hb
+    have := Nat.nth_count ha.1.2
+    have hb' := Nat.nth_count hb.1.2
+    rw [← this, ← hb', hab]
+  · intro k hk
+    rw [Finset.mem_filter, Finset.mem_range] at hk
+    refine ⟨Nat.nth Nat.Prime k, ?_, ?_⟩
+    · refine Finset.mem_filter.mpr ⟨Nat.mem_primesBelow.mpr ⟨Nat.nth_lt_of_lt_count hk.1,
+        Nat.prime_nth_prime k⟩, ⟨Nat.prime_nth_prime k, ?_⟩⟩
+      have hc : Nat.count Nat.Prime (Nat.nth Nat.Prime k) = k := Nat.primeCounting'_nth_eq k
+      rw [hc]
+      exact hk.2
+    · exact Nat.primeCounting'_nth_eq k
+
 /-- **(d)** the prime set `PSet` has relative density `0`. -/
 theorem relDensityZero_PSet : RelDensityZero PSet := by
-  sorry
+  rw [RelDensityZero]
+  have hcard : ∀ x : ℕ, ((x.primesBelow.filter PSet).card : ℝ) / (x.primesBelow.card : ℝ)
+      = ((((Finset.range (Nat.count Nat.Prime x)).filter Keep).card : ℝ))
+        / (Nat.count Nat.Prime x : ℝ) := by
+    intro x
+    rw [card_filter_PSet x]
+    congr 1
+    rw [Nat.primesBelow_eq_filter_range, ← Nat.count_eq_card_filter_range]
+  rw [funext hcard]
+  exact tendsto_keepCount_div.comp Nat.tendsto_primeCounting'
 
 /-- `1/p_k` along `A`, `0` off it (a named function: `ite` on `Keep` must not be unfolded
 during unification, or `Nat.log`'s well-founded recursion makes `whnf` diverge). -/
