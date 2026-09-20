@@ -1,5 +1,12 @@
 # DIRECTION — normal-numbers 🧭
 
+## Attended operator override: 2026-09-20 18:25 EDT — `RoughIndependence` SPLIT LAP (ACTIVE)
+
+Run `KICKOFF-2026-09-20-rough-independence-lap.md`: new file `src/NormalNumbers/G4WiringRough.lean`
+splitting N1 into the elementary smooth/CRT part and the frozen crux `RoughIndependence` (blueprint probe 6),
+with wiring back to `CRTConstantSched` and `isNormal_G4_of_rough`.  Statements are ratified verbatim; add
+only.  Operator: Ren, attended; fired under Trevor's "go" (2026-09-20 18:18 EDT).
+
 ## Attended operator override: 2026-09-20 10:20 EDT — `KMT_quant₂` RE-FREEZE LAP (DONE, one lap)
 
 **Result:** all six leaves landed in `src/NormalNumbers/G4WiringSparse.lean`; the file is sorry-free
