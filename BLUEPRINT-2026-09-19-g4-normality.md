@@ -44,7 +44,10 @@ IsNormal 4 G₄
 1. ✅ PASSED 2026-09-19 21:05: N1 at h = 1, 3, 5, N = 10⁷ and 10⁸, J = 8, 16, 24, 32 — the constant is
    identical to four decimals across J (far sites add ≤ h·log₂N/4^j to the phase; J > 32 is below double
    precision and below relevance).  `∀ᶠ N, ∀ J` is safe.
-2. N1 at h = 4·odd, 16·odd (v₂ even but ≥ 2): the leading site is trivial (phase ∈ ℤ) — does the law hold
-   with the first nontrivial site as leader?
-3. N2 at h = 6, 8, 24: is |W|√N bounded (noise floor) at every Chowla-sector h, or does some h show a
-   polylog main term the sector classification missed?
+2. ✅ PASSED 21:15: h = 4, 16 reproduce h = 1 exactly, h = 12 tracks h = 3 (h → 4h shifts the window by
+   one site; the mean is shift-invariant).
+3. ✅ PASSED 21:15: h = 6, 8, 24 all at the noise floor (|W|√N ≈ 0.5 … 2.3), ratios random (118, 2.5, 118 →
+   146, 3.1, 145).  The sector classification {v₂(h) odd} is exact.
+4. Open: N1's *rate*.  c/CRT − 1 should be ≍ 1/log N with a computable coefficient (next Selberg–Delange
+   term); fit the coefficient at h = 1, 3, 5 from N = 10⁶ … 10⁸ and compare with the derivative of the
+   local factor.  A wrong sign or a wrong order would be the first crack in the SD law.
