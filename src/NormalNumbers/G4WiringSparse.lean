@@ -184,12 +184,138 @@ theorem exists_sparse_normal_of_KMT_quant (C : ℕ → ℝ)
     ∃ (S : ℕ → Prop) (_ : DecidablePred S), DivergentRecip S ∧ IsNormal 4 (subsetLambert S 4) := by
   sorry
 
-/-- L¹ tail for a slow schedule: `(1/N) ∑_{n<N} |tailB n − truncTailS J n|` is at most
-`(∑_{j>J} 4^{-j}) (recipSumLe S (2N) + 2)` up to the `n + j > 2N` fringe, i.e. `≪ 4^{-J} S_S(2N)`.
-This is what lets `J_N` grow as slowly as `log₄ S_S(N)` instead of `log₂ log₂ N`. -/
+/-- L¹ tail for a slow schedule.  For `J < j ≤ N`, `∑_{n<N} ω_S(n+j) ≤ ∑_{p∈S, p≤2N} (N/p + 1)
+≤ N (S_S(2N) + 1)` (`π(2N) ≤ N`); for `j > N` use `ω_S ≤ log₂`.  Hence
+`(1/N) ∑_{n<N} |tailB n − truncTailS J n| ≤ (S_S(2N) + 1)/4^J + (log₂ N + 3)/4^N`,
+which lets `J_N` grow as slowly as `log₄ S_S(N)` instead of `log₂ log₂ N`. -/
 theorem tail_error_L1 (J N : ℕ) (hN : 1 ≤ N) :
     (∑ n ∈ Finset.range N, |(TWeight.subset S).tailB 4 n - truncTailS S J n|) / N
-      ≤ (recipSumLe S (2 * N) + (Nat.log 2 (2 * N) : ℝ) + 3) / (4 : ℝ) ^ J := by
+      ≤ (recipSumLe S (2 * N) + 1) / (4 : ℝ) ^ J + ((Nat.log 2 N : ℝ) + 3) / (4 : ℝ) ^ N := by
   sorry
+
+/-! ### The block construction, decomposed
+
+`S = ⋃ᵢ Bᵢ` with `Bᵢ` a finite set of primes in `(xᵢ, xᵢ₊₁]`, `δᵢ = ∑_{Bᵢ} 1/p`.  At a scale `N`
+in block `i` (`xᵢ < N ≤ xᵢ₊₁`) the schedule is `Jᵢ` and the KMT parameter `εᵢ`.  `Good C` lists
+the sandwich inequalities that make the three KMT terms and the L¹ tail vanish; `exists_good`
+solves the sandwich from `log C k = o(4^k)`; the rest is bookkeeping. -/
+
+/-- Block data: cut points `x`, blocks `B`, schedule `J`, KMT parameter `ε`. -/
+structure BlockData where
+  x : ℕ → ℕ
+  B : ℕ → Finset ℕ
+  J : ℕ → ℕ
+  ε : ℕ → ℝ
+  x_mono : StrictMono x
+  B_prime : ∀ i, ∀ p ∈ B i, p.Prime ∧ x i < p ∧ p ≤ x (i + 1)
+
+namespace BlockData
+
+variable (D : BlockData)
+
+/-- The union of the blocks. -/
+def set (p : ℕ) : Prop := ∃ i, p ∈ D.B i
+
+noncomputable instance : DecidablePred D.set := Classical.decPred _
+
+/-- `δᵢ = ∑_{p ∈ Bᵢ} 1/p`. -/
+noncomputable def δ (i : ℕ) : ℝ := ∑ p ∈ D.B i, (1 : ℝ) / p
+
+/-- The block containing `N`: the greatest `i` with `xᵢ < N` (so `xᵢ < N ≤ xᵢ₊₁`). -/
+noncomputable def blockIndex (N : ℕ) : ℕ := Nat.findGreatest (fun i => D.x i < N) N
+
+/-- The schedule `J_N = J_{blockIndex N}`. -/
+noncomputable def sched (N : ℕ) : ℕ := D.J (D.blockIndex N)
+
+/-- The sandwich: everything the diagonal needs, as inequalities in `i`. -/
+structure Good (C : ℕ → ℝ) : Prop where
+  /-- `Jᵢ → ∞` (so every `h ≠ 0` eventually has a nontrivial site). -/
+  J_tendsto : Tendsto D.J atTop atTop
+  /-- `∑ δᵢ = ∞`. -/
+  δ_div : ¬ Summable D.δ
+  /-- The KMT `ε`-range holds at every scale of block `i`. -/
+  ε_range : ∀ i N, D.x i < N → 1 / Real.log (Real.log N) < D.ε i ∧ D.ε i < 1 / 2
+  /-- `[N^{εᵢ}, N]` meets at most blocks `i−1, i`: `N^{εᵢ} ≥ xᵢ₋₁` on block `i`. -/
+  sep : ∀ i N, D.x i < N → D.x (i - 1) ≤ ⌊(N : ℝ) ^ D.ε i⌋₊
+  /-- `2N` stays inside block `i+1`. -/
+  x_double : ∀ i, 2 * D.x (i + 1) ≤ D.x (i + 2)
+  /-- The three KMT terms, with the constant, vanish along the blocks. -/
+  terms : Tendsto (fun i => C (D.J i) *
+      (Real.sqrt (Real.log (1 / D.ε i)) * Real.sqrt (2 * (D.δ (i - 1) + D.δ i))
+        + Real.exp (- ∑ i' ∈ Finset.range (i - 1), D.δ i')
+        + Real.exp (- 1 / (8 * (D.J i : ℝ) ^ 2 * D.ε i)))) atTop (𝓝 0)
+  /-- The L¹ tail vanishes: `∑_{i' ≤ i+1} δᵢ' = o(4^{Jᵢ})`. -/
+  tail : Tendsto (fun i => (∑ i' ∈ Finset.range (i + 2), D.δ i' + 1) / (4 : ℝ) ^ D.J i)
+    atTop (𝓝 0)
+
+/-- On block `i`, `∑_{y<p≤N, p∈S} 1/p ≤ δᵢ₋₁ + δᵢ` once `y ≥ xᵢ₋₁`. -/
+theorem recipSumIoc_le (i N y : ℕ) (hN : D.x i < N) (hN' : N ≤ D.x (i + 1))
+    (hy : D.x (i - 1) ≤ y) : recipSumIoc D.set y N ≤ D.δ (i - 1) + D.δ i := by
+  sorry
+
+/-- `∑_{p≤y, p∈S} 1/p ≥ ∑_{i'<i−1} δᵢ'` once `y ≥ xᵢ₋₁`. -/
+theorem recipSumLe_ge (i y : ℕ) (hy : D.x (i - 1) ≤ y) :
+    ∑ i' ∈ Finset.range (i - 1), D.δ i' ≤ recipSumLe D.set y := by
+  sorry
+
+/-- `∑_{p≤y, p∈S} 1/p ≤ ∑_{i'≤i+1} δᵢ'` once `y ≤ xᵢ₊₂`. -/
+theorem recipSumLe_le (i y : ℕ) (hy : y ≤ D.x (i + 2)) :
+    recipSumLe D.set y ≤ ∑ i' ∈ Finset.range (i + 2), D.δ i' := by
+  sorry
+
+/-- `blockIndex N → ∞`. -/
+theorem blockIndex_tendsto : Tendsto D.blockIndex atTop atTop := by
+  sorry
+
+/-- `x (blockIndex N) < N ≤ x (blockIndex N + 1)` for `N > x 0`. -/
+theorem blockIndex_spec (N : ℕ) (hN : D.x 0 < N) :
+    D.x (D.blockIndex N) < N ∧ N ≤ D.x (D.blockIndex N + 1) := by
+  sorry
+
+/-- Divergence of `∑ δᵢ` gives divergence of `∑_{p∈S} 1/p`. -/
+theorem divergentRecip (hδ : ¬ Summable D.δ) : DivergentRecip D.set := by
+  sorry
+
+/-- The KMT means vanish along the block schedule: `KMT_quant` at scale `N` in block `i` with
+`ε = εᵢ`, `J = Jᵢ`, the three bounds above, and `Good.terms`. -/
+theorem kmt_along {C : ℕ → ℝ} (hKMT : KMT_quant C) (hG : D.Good C) :
+    KMT_along D.set D.sched := by
+  sorry
+
+/-- The L¹ tail vanishes along the block schedule: `tail_error_L1` + `recipSumLe_le` +
+`Good.tail`. -/
+theorem tailOK {C : ℕ → ℝ} (hG : D.Good C) : TailOK D.set D.sched := by
+  sorry
+
+end BlockData
+
+/-- Greedy block: a finite set of primes above `y` with reciprocal sum in `[δ, δ + 1/y]`
+(take primes `> y` in order until the sum exceeds `δ`; `∑_{p>y} 1/p = ∞` from
+`G4Mertens.log_log_le_sum_inv_primesBelow`). -/
+theorem exists_block (y : ℕ) (hy : 1 ≤ y) (δ : ℝ) (hδ : 0 < δ) :
+    ∃ B : Finset ℕ, (∀ p ∈ B, p.Prime ∧ y < p) ∧
+      δ ≤ ∑ p ∈ B, (1 : ℝ) / p ∧ ∑ p ∈ B, (1 : ℝ) / p ≤ δ + 1 / y := by
+  sorry
+
+/-- **The sandwich is solvable** when `log C k = o(4^k)`.  Take `δᵢ = 1/(i+1)` (so
+`∑_{i'<i−1} δᵢ' ≥ log i − 1`, `∑_{i'≤i+1} δᵢ' ≤ log i + 2`); choose `Jᵢ → ∞` so slowly that
+`log C(Jᵢ) ≤ (1/4) log i` (possible since `C` is finite at each `k`) **and** `4^{Jᵢ} ≥ (log i)²`
+(possible since `log C(k) = o(4^k)` lets `Jᵢ ≍ log₄ log i` satisfy the first); set
+`εᵢ = 1/(8 Jᵢ² log i)`; then choose `xᵢ` inductively so large that `ε_range`, `sep` and `x_double`
+hold, and `Bᵢ` from `exists_block`.  The three terms are then `≪ i^{1/4}·(log i)^{1/2}·i^{-1/2}`,
+`i^{1/4}·e·i^{-1}`, `i^{1/4}·i^{-1}`, and the tail is `(log i + 3)/(log i)² → 0`. -/
+theorem exists_good (C : ℕ → ℝ)
+    (hgrow : Tendsto (fun k : ℕ => Real.log (C k) / 4 ^ k) atTop (𝓝 0)) :
+    ∃ D : BlockData, D.Good C := by
+  sorry
+
+/-- **Existence from the fixed-`k` proposition alone**, assembled from the leaves above. -/
+theorem exists_sparse_normal_of_KMT_quant' (C : ℕ → ℝ)
+    (hgrow : Tendsto (fun k : ℕ => Real.log (C k) / 4 ^ k) atTop (𝓝 0))
+    (hKMT : KMT_quant C) :
+    ∃ (S : ℕ → Prop) (_ : DecidablePred S), DivergentRecip S ∧ IsNormal 4 (subsetLambert S 4) := by
+  obtain ⟨D, hG⟩ := exists_good C hgrow
+  exact ⟨D.set, inferInstance, D.divergentRecip hG.δ_div,
+    isNormal_subsetLambert_of_KMT_along D.set D.sched (D.tailOK hG) (D.kmt_along hKMT hG)⟩
 
 end NormalNumbers.G4Sparse

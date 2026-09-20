@@ -32,6 +32,14 @@ not run: leaves 2, 3, 6, 7 there are the `G₄` versions of leaves 1–4 here an
    `≤ N·recipSumLe S (2N) + π(2N)`, for `j > N` use `ω_S ≤ log₂`; the `+ 3` and the `log₂(2N)` term
    absorb the fringe.  Weaken the constant if needed but keep the shape `≪ 4^{-J}(S_S(2N) + o(1))`.
 
+8. Block-construction leaves (`BlockData` namespace), only after 1–7: `recipSumIoc_le`,
+   `recipSumLe_ge`, `recipSumLe_le` (Finset bookkeeping over the blocks), `blockIndex_tendsto`,
+   `blockIndex_spec` (`Nat.findGreatest_spec`/`Nat.le_findGreatest`), `divergentRecip`
+   (comparison of nonneg series), `kmt_along` (apply `hKMT` at `N` in block `i` with `ε = εᵢ`,
+   `J = Jᵢ`; squeeze with `Good.terms`), `tailOK` (`tail_error_L1` + `recipSumLe_le` + `Good.tail`),
+   `exists_block` (greedy over primes `> y`, divergence from `G4Mertens.log_log_le_sum_inv_primesBelow`).
+   `exists_good` (the sandwich) is the hardest and is a lap of its own; leave it if it resists.
+
 ## Rules
 Report the advance, not the sorry count.  `box done --green` when every leaf but
 `exists_sparse_normal_of_KMT_quant` is closed.  Nothing in `G4WiringCRT.lean`'s frozen Props changes.
