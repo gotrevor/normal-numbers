@@ -1,5 +1,16 @@
 # DIRECTION — normal-numbers 🧭
 
+## Attended operator override: 2026-09-20 00:15 EDT — `exists_good` LAP (ACTIVE)
+
+Operator: Ren, attended; Trevor fired it ("Why wait for me to fire?  Do it!").  Engine Opus/low.  Branch
+`wip/g5-prime-subset`.  Read `KICKOFF-2026-09-20-exists-good-lap.md` and do exactly that: make
+`src/NormalNumbers/G4WiringSparse.lean` sorry-free by proving `exists_good` through the named leaves in
+the kickoff, skeleton first.  Frozen, never edit the statements: `exists_good`, `BlockData`, `BlockData.Good`,
+`KMT_sparse`, `KMT_along`, `KMT_quant`, `TailOK`, `exists_sparse_normal_of_KMT_quant'`, `exists_sparse_normal`,
+`exists_relDensityZero_divergent`.  `G4WiringCRT.lean`, `DyadicToPrefix.lean`, `WeylCriterion.lean` are out
+of scope.  Done when `#print axioms` of `exists_sparse_normal_of_KMT_quant'` has no `sorryAx`;
+`box done --green` only then.  Commit a compiling skeleton before every hard step.
+
 ## Attended operator override: 2026-09-19 22:20 EDT — SPARSE-SUBSET LAP, PART 2: LEAF 6 ONLY (DONE 22:39 EDT, one lap: `exists_relDensityZero_divergent` and `exists_sparse_normal` axiom-clean; file's only sorry is `exists_good`.  No active override; next lap NOT fired.)
 
 Operator: Ren, attended; same authorization as 21:30.  Everything in the 21:30 override is done except
