@@ -379,10 +379,335 @@ theorem tendsto_keepCount_div : Filter.Tendsto
 
 /-! #### (c) the divergent harmonic sum along `A` -/
 
+/-- The harmonic weight along `A`: `1/(k log k)` on `A`, `0` off it. -/
+noncomputable def harm (k : ℕ) : ℝ := if Keep k then 1 / ((k : ℝ) * Real.log k) else 0
+
+theorem harm_nonneg (k : ℕ) : 0 ≤ harm k := by
+  unfold harm
+  split
+  · positivity
+  · exact le_rfl
+
+theorem mu_pos (a : ℕ) : 0 < mu a := Nat.succ_pos _
+
+/-- On the dyadic block `[2^a, 2^{a+1})` the modulus is constant `= μ a`. -/
+theorem modulus_eq_of_mem (a k : ℕ) (h1 : 2 ^ a ≤ k) (h2 : k < 2 ^ (a + 1)) :
+    modulus k = mu a := by
+  have : Nat.log 2 k = a := by
+    rw [Nat.log_eq_iff (by omega)]
+    exact ⟨h1, h2⟩
+  rw [modulus, this]
+
+
+/-- Lower bound on the number of multiples of `M` inside the dyadic block. -/
+theorem card_block (a : ℕ) :
+    ((2 ^ a : ℝ)) / (mu a) - 3 ≤
+      ((Finset.Ico (2 ^ a / mu a + 1) (2 ^ (a + 1) / mu a)).card : ℝ) := by
+  set M := mu a with hM
+  have hMpos : 0 < M := mu_pos a
+  have hpow : (2:ℕ) ^ (a + 1) = 2 ^ a * 2 := pow_succ 2 a
+  set q := 2 ^ a / M with hq
+  set A := q + 1 with hA
+  have hdm := Nat.div_add_mod (2 ^ a) M
+  have hmod := Nat.mod_lt (2 ^ a) hMpos
+  have hkey : A + q ≤ 2 ^ a * 2 / M + 2 := by
+    have h3 : 2 * 2 ^ a = 2 ^ a * 2 := by ring
+    have h2 : 2 * (2 ^ a / M) ≤ 2 ^ a * 2 / M := by
+      rw [← h3]; exact Nat.mul_div_le_mul_div_assoc 2 (2 ^ a) M
+    omega
+  rw [hpow]
+  have hcard : (Finset.Ico A (2 ^ a * 2 / M)).card = 2 ^ a * 2 / M - A := Nat.card_Ico _ _
+  have hnat : q ≤ (Finset.Ico A (2 ^ a * 2 / M)).card + 2 := by omega
+  have hqr : ((2 : ℝ) ^ a) / M ≤ (q : ℝ) + 1 := by
+    have hMR : (0:ℝ) < (M:ℝ) := by exact_mod_cast hMpos
+    have hlt : (2:ℕ) ^ a < (q + 1) * M := by nlinarith [hdm, hmod]
+    have hlt' := (Nat.cast_lt (α := ℝ)).mpr hlt
+    rw [div_le_iff₀ hMR]
+    push_cast at hlt' ⊢
+    nlinarith [hlt']
+  have hc := (Nat.cast_le (α := ℝ)).mpr hnat
+  push_cast at hc
+  linarith
+
+theorem block_sum (a : ℕ) (ha : 1 ≤ a) :
+    ((2 : ℝ) ^ a / (mu a) - 3) * (1 / ((2 : ℝ) ^ (a + 1) * ((a + 1) * Real.log 2)))
+      ≤ ∑ k ∈ (Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter Keep, harm k := by
+  set M := mu a with hM
+  have hMpos : 0 < M := mu_pos a
+  set A := 2 ^ a / M + 1 with hA
+  set B := 2 ^ (a + 1) / M with hB
+  have hdm := Nat.div_add_mod (2 ^ a) M
+  have hmod := Nat.mod_lt (2 ^ a) hMpos
+  have hlog2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  set w : ℝ := 1 / ((2 : ℝ) ^ (a + 1) * ((a + 1) * Real.log 2)) with hw
+  have hwpos : 0 < w := by rw [hw]; positivity
+  -- membership
+  have hmem : ∀ j ∈ Finset.Ico A B, M * j ∈ (Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter Keep := by
+    intro j hj
+    rw [Finset.mem_Ico] at hj
+    have hlow : 2 ^ a ≤ M * j := by
+      have : M * A ≤ M * j := Nat.mul_le_mul_left M hj.1
+      have hMA : 2 ^ a < M * A := by
+        rw [hA]; nlinarith [hdm, hmod]
+      omega
+    have hhigh : M * j < 2 ^ (a + 1) := by
+      have hMB : M * B ≤ 2 ^ (a + 1) := Nat.mul_div_le _ _ |>.trans_eq rfl
+      have : M * j ≤ M * (B - 1) := Nat.mul_le_mul_left M (by omega)
+      have hB1 : M * (B - 1) + M = M * B := by
+        have h1B : 1 ≤ B := by omega
+        have hle : M ≤ M * B := Nat.le_mul_of_pos_right M (by omega)
+        rw [Nat.mul_sub, Nat.mul_one]; omega
+      omega
+    refine Finset.mem_filter.mpr ⟨Finset.mem_Ico.mpr ⟨hlow, hhigh⟩, ?_⟩
+    have : modulus (M * j) = M := modulus_eq_of_mem a _ hlow hhigh
+    rw [Keep, this]
+    exact Dvd.intro j rfl
+  have hinj : Set.InjOn (fun j => M * j) (Finset.Ico A B : Set ℕ) := by
+    intro x _ y _ hxy
+    exact Nat.eq_of_mul_eq_mul_left hMpos hxy
+  have hsub : ((Finset.Ico A B).image (fun j => M * j)) ⊆
+      (Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter Keep := by
+    intro k hk
+    rw [Finset.mem_image] at hk
+    obtain ⟨j, hj, rfl⟩ := hk
+    exact hmem j hj
+  have h1 : ∑ k ∈ (Finset.Ico A B).image (fun j => M * j), harm k
+      ≤ ∑ k ∈ (Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter Keep, harm k :=
+    Finset.sum_le_sum_of_subset_of_nonneg hsub (fun i _ _ => harm_nonneg i)
+  have h2 : ∑ k ∈ (Finset.Ico A B).image (fun j => M * j), harm k
+      = ∑ j ∈ Finset.Ico A B, harm (M * j) := Finset.sum_image (by
+        intro x hx y hy hxy; exact hinj hx hy hxy)
+  have h3 : ∀ j ∈ Finset.Ico A B, w ≤ harm (M * j) := by
+    intro j hj
+    have hk := hmem j hj
+    rw [Finset.mem_filter, Finset.mem_Ico] at hk
+    obtain ⟨⟨hlow, hhigh⟩, hkeep⟩ := hk
+    have h2a : (2:ℕ) ≤ M * j := le_trans (by
+      calc (2:ℕ) = 2 ^ 1 := by norm_num
+        _ ≤ 2 ^ a := Nat.pow_le_pow_right (by norm_num) ha) hlow
+    have hkR : (2:ℝ) ≤ (M * j : ℕ) := by exact_mod_cast h2a
+    have hkR2 : ((M * j : ℕ) : ℝ) ≤ (2:ℝ) ^ (a + 1) := by
+      have := hhigh.le
+      have : ((M * j : ℕ) : ℝ) ≤ ((2 ^ (a+1) : ℕ) : ℝ) := by exact_mod_cast hhigh.le
+      simpa using this
+    have hlogle : Real.log (M * j : ℕ) ≤ (a + 1) * Real.log 2 := by
+      have hx := Real.log_le_log (by linarith) hkR2
+      rw [Real.log_pow] at hx; push_cast at hx ⊢; exact hx
+    have hlogpos : 0 < Real.log (M * j : ℕ) := Real.log_pos (by linarith)
+    rw [harm, if_pos hkeep, hw]
+    apply one_div_le_one_div_of_le (by positivity)
+    have : (0:ℝ) < ((M*j : ℕ) : ℝ) := by linarith
+    nlinarith [hlogle, hkR2, hlogpos]
+  calc ((2 : ℝ) ^ a / M - 3) * w
+      ≤ ((Finset.Ico A B).card : ℝ) * w := by
+        have := card_block a
+        nlinarith [hwpos, this]
+    _ = ∑ _j ∈ Finset.Ico A B, w := by rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ ∑ j ∈ Finset.Ico A B, harm (M * j) := Finset.sum_le_sum h3
+    _ = _ := h2.symm
+    _ ≤ _ := h1
+
+noncomputable def F (a : ℕ) : ℝ := ∑ k ∈ (Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter Keep, harm k
+
+theorem F_nonneg (a : ℕ) : 0 ≤ F a := Finset.sum_nonneg (fun i _ => harm_nonneg i)
+
+theorem two_mul_le_two_pow (t : ℕ) : 2 * t ≤ 2 ^ t := by
+  induction t with
+  | zero => norm_num
+  | succ n ih =>
+      rcases Nat.eq_zero_or_pos n with rfl | hn
+      · norm_num
+      · have : 2 ^ (n + 1) = 2 * 2 ^ n := by ring
+        omega
+
+/-- Super-block bound: over the `a`-range `[2^t, 2^{t+1})` the modulus is `t+1`. -/
+theorem superblock (t : ℕ) :
+    1 / (4 * ((t : ℝ) + 1) * Real.log 2) - (3 / Real.log 2) * (1 / 2 ^ (t + 1))
+      ≤ ∑ a ∈ Finset.Ico (2 ^ t) (2 ^ (t + 1)), F a := by
+  have hlog2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  set N := 2 ^ t with hN
+  have hNpos : 0 < N := Nat.two_pow_pos t
+  have hmu : ∀ a ∈ Finset.Ico N (2 ^ (t+1)), mu a = t + 1 := by
+    intro a ha
+    rw [Finset.mem_Ico] at ha
+    have : Nat.log 2 a = t := by
+      rw [Nat.log_eq_iff (by omega)]
+      exact ⟨ha.1, ha.2⟩
+    rw [mu, this]
+  have hlow : ∀ a ∈ Finset.Ico N (2 ^ (t+1)),
+      1 / (2 * ((t:ℝ)+1) * ((a:ℝ)+1) * Real.log 2) - 3 / ((2:ℝ) ^ (a+1) * (((a:ℝ)+1) * Real.log 2))
+        ≤ F a := by
+    intro a ha
+    have ha1 : 1 ≤ a := by
+      rw [Finset.mem_Ico] at ha; omega
+    have hb := block_sum a ha1
+    rw [hmu a ha] at hb
+    refine le_trans (le_of_eq ?_) hb
+    have h1 : ((t:ℕ) + 1 : ℕ) = ((t:ℝ) + 1) := by push_cast; ring
+    push_cast
+    field_simp
+    ring
+  refine le_trans ?_ (Finset.sum_le_sum hlow)
+  rw [Finset.sum_sub_distrib]
+  have hA : 1 / (4 * ((t : ℝ) + 1) * Real.log 2)
+      ≤ ∑ a ∈ Finset.Ico N (2 ^ (t+1)), 1 / (2 * ((t:ℝ)+1) * ((a:ℝ)+1) * Real.log 2) := by
+    have hterm : ∀ a ∈ Finset.Ico N (2 ^ (t+1)),
+        1 / (2 * ((t:ℝ)+1) * (2 * (N:ℝ)) * Real.log 2)
+          ≤ 1 / (2 * ((t:ℝ)+1) * ((a:ℝ)+1) * Real.log 2) := by
+      intro a ha
+      rw [Finset.mem_Ico] at ha
+      have haR : ((a:ℝ) + 1) ≤ 2 * (N:ℝ) := by
+        have : a + 1 ≤ 2 ^ (t+1) := by omega
+        have := (Nat.cast_le (α := ℝ)).mpr this
+        rw [hN]
+        have hps : (2:ℝ) ^ (t+1) = 2 * 2 ^ t := by ring
+        push_cast at this ⊢
+        linarith [this, hps]
+      have hNR : (0:ℝ) < (N:ℝ) := by exact_mod_cast hNpos
+      have haR0 : (0:ℝ) < (a:ℝ) + 1 := by positivity
+      apply one_div_le_one_div_of_le (by positivity)
+      have hc : (0:ℝ) ≤ 2 * ((t:ℝ)+1) * Real.log 2 := by positivity
+      nlinarith [mul_le_mul_of_nonneg_left haR hc]
+    have hcard : (Finset.Ico N (2 ^ (t+1))).card = N := by
+      rw [Nat.card_Ico, hN]
+      have : (2:ℕ) ^ (t+1) = 2 * 2 ^ t := by ring
+      omega
+    have := Finset.card_nsmul_le_sum (Finset.Ico N (2 ^ (t+1)))
+      (fun a => 1 / (2 * ((t:ℝ)+1) * ((a:ℝ)+1) * Real.log 2))
+      (1 / (2 * ((t:ℝ)+1) * (2 * (N:ℝ)) * Real.log 2)) hterm
+    rw [hcard, nsmul_eq_mul] at this
+    refine le_trans (le_of_eq ?_) this
+    have hNR : (0:ℝ) < (N:ℝ) := by exact_mod_cast hNpos
+    field_simp
+    ring
+  have hB : ∑ a ∈ Finset.Ico N (2 ^ (t+1)),
+      3 / ((2:ℝ) ^ (a+1) * (((a:ℝ)+1) * Real.log 2)) ≤ (3 / Real.log 2) * (1 / 2 ^ (t + 1)) := by
+    have hterm : ∀ a ∈ Finset.Ico N (2 ^ (t+1)),
+        3 / ((2:ℝ) ^ (a+1) * (((a:ℝ)+1) * Real.log 2)) ≤ 3 / ((2:ℝ) ^ (N+1) * Real.log 2) := by
+      intro a ha
+      rw [Finset.mem_Ico] at ha
+      have hpow : ((2:ℝ) ^ (N+1)) ≤ (2:ℝ) ^ (a+1) := by
+        apply pow_le_pow_right₀ (by norm_num); omega
+      have ha0 : (1:ℝ) ≤ (a:ℝ) + 1 := by
+        have : (0:ℝ) ≤ (a:ℝ) := Nat.cast_nonneg a
+        linarith
+      apply div_le_div_of_nonneg_left (by norm_num) (by positivity)
+      have h1 : (2:ℝ) ^ (N+1) * 1 ≤ 2 ^ (a+1) * ((a:ℝ)+1) :=
+        mul_le_mul hpow ha0 (by norm_num) (by positivity)
+      nlinarith [mul_le_mul_of_nonneg_right h1 hlog2.le]
+    have hcard : (Finset.Ico N (2 ^ (t+1))).card = N := by
+      rw [Nat.card_Ico, hN]
+      have : (2:ℕ) ^ (t+1) = 2 * 2 ^ t := by ring
+      omega
+    have hsum := Finset.sum_le_card_nsmul (Finset.Ico N (2 ^ (t+1)))
+      (fun a => 3 / ((2:ℝ) ^ (a+1) * (((a:ℝ)+1) * Real.log 2)))
+      (3 / ((2:ℝ) ^ (N+1) * Real.log 2)) hterm
+    rw [hcard, nsmul_eq_mul] at hsum
+    refine le_trans hsum ?_
+    -- `N * 2^{t+1} ≤ 2^{N+1}`
+    have hkey : (N:ℝ) * 2 ^ (t+1) ≤ (2:ℝ) ^ (N+1) := by
+      have hnat : N * 2 ^ (t+1) ≤ 2 ^ (N+1) := by
+        rw [hN]
+        have h1 : 2 ^ t * 2 ^ (t+1) = 2 ^ (2*t+1) := by
+          rw [← pow_add]; ring_nf
+        rw [h1]
+        exact Nat.pow_le_pow_right (by norm_num) (by have := two_mul_le_two_pow t; omega)
+      have := (Nat.cast_le (α := ℝ)).mpr hnat
+      push_cast at this
+      exact this
+    have hNR : (0:ℝ) < (N:ℝ) := by exact_mod_cast hNpos
+    have h2p : (0:ℝ) < (2:ℝ) ^ (N+1) := by positivity
+    have h2q : (0:ℝ) < (2:ℝ) ^ (t+1) := by positivity
+    have hL : (N:ℝ) * (3 / ((2:ℝ) ^ (N+1) * Real.log 2))
+        = ((N:ℝ) * 3) / ((2:ℝ) ^ (N+1) * Real.log 2) := by ring
+    have hR : 3 / Real.log 2 * (1 / (2:ℝ) ^ (t+1))
+        = 3 / ((2:ℝ) ^ (t+1) * Real.log 2) := by field_simp
+    rw [hL, hR, div_le_div_iff₀ (by positivity) (by positivity)]
+    nlinarith [hkey, hlog2, h2p, h2q]
+  linarith
+
+/-- Blocks are pairwise disjoint. -/
+theorem blocks_disjoint : ∀ (n : ℕ), ((Finset.Ico 1 (2 ^ n) : Finset ℕ) : Set ℕ).PairwiseDisjoint
+    (fun a => (Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter Keep) := by
+  intro n a _ b _ hab
+  simp only [Function.onFun, Finset.disjoint_left, Finset.mem_filter, Finset.mem_Ico]
+  rintro k ⟨⟨hk1, hk2⟩, -⟩ ⟨⟨hk3, hk4⟩, -⟩
+  rcases lt_or_gt_of_ne hab with h | h
+  · have : (2:ℕ) ^ (a + 1) ≤ 2 ^ b := Nat.pow_le_pow_right (by norm_num) (by omega)
+    omega
+  · have : (2:ℕ) ^ (b + 1) ≤ 2 ^ a := Nat.pow_le_pow_right (by norm_num) (by omega)
+    omega
+
 /-- **(c)** `∑_{k ∈ A} 1/(k log k) = ∞`. -/
-theorem not_summable_keep_harmonic :
-    ¬ Summable (fun k : ℕ => if Keep k then 1 / ((k : ℝ) * Real.log k) else 0) := by
-  sorry
+theorem not_summable_f : ¬ Summable harm := by
+  intro hsum
+  have hlog2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  set C := ∑' k, harm k with hC
+  -- every finite union of blocks has sum ≤ C
+  have hbound : ∀ n : ℕ, ∑ a ∈ Finset.Ico 1 (2 ^ n), F a ≤ C := by
+    intro n
+    have hdis := blocks_disjoint n
+    have heq : ∑ a ∈ Finset.Ico 1 (2 ^ n), F a
+        = ∑ k ∈ (Finset.Ico 1 (2 ^ n)).biUnion
+            (fun a => (Finset.Ico (2 ^ a) (2 ^ (a + 1))).filter Keep), harm k :=
+      (Finset.sum_biUnion hdis).symm
+    rw [heq, hC]
+    exact hsum.sum_le_tsum _ (fun i _ => harm_nonneg i)
+  -- the super-block lower bounds telescope
+  have hlower : ∀ n : ℕ, ∑ t ∈ Finset.range n,
+      (1 / (4 * ((t : ℝ) + 1) * Real.log 2) - (3 / Real.log 2) * (1 / 2 ^ (t + 1)))
+        ≤ ∑ a ∈ Finset.Ico 1 (2 ^ n), F a := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ m ih =>
+        have hsplit : ∑ a ∈ Finset.Ico 1 (2 ^ (m + 1)), F a
+            = (∑ a ∈ Finset.Ico 1 (2 ^ m), F a) + ∑ a ∈ Finset.Ico (2 ^ m) (2 ^ (m + 1)), F a := by
+          rw [Finset.sum_Ico_consecutive _ (Nat.one_le_two_pow)
+            (Nat.pow_le_pow_right (by norm_num) (by omega))]
+        rw [Finset.sum_range_succ, hsplit]
+        exact add_le_add ih (superblock m)
+  -- harmonic divergence
+  have hgeom : ∀ n : ℕ, ∑ t ∈ Finset.range n, (3 / Real.log 2) * (1 / (2:ℝ) ^ (t + 1))
+      ≤ 3 / Real.log 2 := by
+    intro n
+    have h1 : ∑ t ∈ Finset.range n, (1 / (2:ℝ) ^ (t + 1)) ≤ 1 := by
+      have := sum_geometric_two_le n
+      have heq : ∑ t ∈ Finset.range n, (1 / (2:ℝ) ^ (t + 1))
+          = (1/2) * ∑ t ∈ Finset.range n, (1 / (2:ℝ)) ^ t := by
+        rw [Finset.mul_sum]
+        refine Finset.sum_congr rfl (fun t _ => ?_)
+        rw [div_pow, one_pow, pow_succ]
+        field_simp
+      rw [heq]
+      linarith
+    rw [← Finset.mul_sum]
+    have hpos : (0:ℝ) < 3 / Real.log 2 := by positivity
+    nlinarith [h1, hpos]
+  have hharm : ∀ n : ℕ, (1 / (4 * Real.log 2)) * ∑ t ∈ Finset.range n, (1 / ((t:ℝ) + 1))
+      ≤ C + 3 / Real.log 2 := by
+    intro n
+    have h1 := (hlower n).trans (hbound n)
+    rw [Finset.sum_sub_distrib] at h1
+    have h2 := hgeom n
+    have heq : ∑ t ∈ Finset.range n, 1 / (4 * ((t : ℝ) + 1) * Real.log 2)
+        = (1 / (4 * Real.log 2)) * ∑ t ∈ Finset.range n, (1 / ((t:ℝ) + 1)) := by
+      rw [Finset.mul_sum]
+      refine Finset.sum_congr rfl (fun t _ => ?_)
+      have : (0:ℝ) < (t:ℝ) + 1 := by positivity
+      field_simp
+    rw [heq] at h1
+    linarith
+  have hdiv := Real.tendsto_sum_range_one_div_nat_succ_atTop
+  have hbdd : ∀ n : ℕ, ∑ t ∈ Finset.range n, (1 / ((t:ℝ) + 1)) ≤ (C + 3 / Real.log 2) * (4 * Real.log 2) := by
+    intro n
+    have := hharm n
+    have h4 : (0:ℝ) < 4 * Real.log 2 := by positivity
+    rw [div_mul_eq_mul_div, one_mul, div_le_iff₀ h4] at this
+    nlinarith [this, h4]
+  have := (hdiv.eventually_ge_atTop ((C + 3 / Real.log 2) * (4 * Real.log 2) + 1)).exists
+  obtain ⟨n, hn⟩ := this
+  linarith [hbdd n, hn]
 
 /-! #### (d) assembly -/
 
