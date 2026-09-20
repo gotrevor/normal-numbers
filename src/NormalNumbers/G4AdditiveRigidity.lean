@@ -152,6 +152,59 @@ theorem addWeightN_affine_eq_weightAN (a c : ℕ → ℕ) (m : ℕ) :
     addWeightN (fun p v => a p + c p * (v - 1)) m = weightAN a c m := by
   rw [addWeightN, weightAN, ← Finset.sum_add_distrib]
 
+/-! ### Multiplicative rigidity: the interface forces near-additivity
+
+The affine law above uses `ov_congr` at `d = p` with `m` a power of `p`.  Used at `m ≡ 1`
+instead it gives the companion statement: the transport correction is *exactly* `w(1)` whenever
+`m` is `1` modulo every prime of `d`, so `w` is additive on such pairs.  No hypothesis beyond
+the interface is needed — in particular `w` is not assumed additive, multiplicative, or
+monotone. -/
+
+/-- The transport correction at `m = 1` is `w(1)`, for every `d ≠ 0`. -/
+lemma ov_one (W : TWeight) {d : ℕ} (hd : d ≠ 0) : W.ov d 1 = (W.wN 1 : ℤ) := by
+  rw [W.ov_eq hd one_ne_zero, mul_one]
+  ring
+
+/-- **Multiplicative rigidity.**  If `m ≡ 1` modulo every prime of `d`, then the weight is
+additive at `(d, m)` up to the constant `w(1)`. -/
+theorem wN_mul_of_modEq_one (W : TWeight) {d m : ℕ} (hd : d ≠ 0) (hm : m ≠ 0)
+    (h : ∀ p ∈ d.primeFactors, m ≡ 1 [MOD p]) :
+    (W.wN (d * m) : ℤ) = (W.wN d : ℤ) + (W.wN m : ℤ) - (W.wN 1 : ℤ) := by
+  have hcong := W.ov_congr d m 1 h
+  rw [W.ov_eq hd hm, W.ov_one hd] at hcong
+  omega
+
+/-- The same, normalised: a `TWeight` with `w(1) = 0` is genuinely additive on those pairs. -/
+theorem wN_mul_of_modEq_one' (W : TWeight) (h1 : W.wN 1 = 0) {d m : ℕ} (hd : d ≠ 0) (hm : m ≠ 0)
+    (h : ∀ p ∈ d.primeFactors, m ≡ 1 [MOD p]) :
+    W.wN (d * m) = W.wN d + W.wN m := by
+  have := W.wN_mul_of_modEq_one hd hm h
+  rw [h1] at this
+  omega
+
+/-- Additive weights are normalised: `addWeightN g 1 = 0`. -/
+@[simp] lemma addWeightN_one (g : ℕ → ℕ → ℕ) : addWeightN g 1 = 0 := by
+  rw [addWeightN, Nat.primeFactors_one, Finset.sum_empty]
+
+/-- **The two rigidities together.**  For any `TWeight` with `w(1) = 0`, a prime `p`, an
+exponent `v ≥ 1` and an `m ≥ 1` with `m ≡ 1 [MOD p]`:
+`w(p^v · m) = w(p) + (v − 1)·(w(p²) − w(p)) + w(m)`.  The whole `p`-local structure of the
+interface is one affine profile. -/
+theorem wN_prime_pow_mul (W : TWeight) (h1 : W.wN 1 = 0) {p : ℕ} (hp : p.Prime) {v m : ℕ}
+    (hv : 1 ≤ v) (hm : m ≠ 0) (h : m ≡ 1 [MOD p]) :
+    (W.wN (p ^ v * m) : ℤ)
+      = (W.wN p : ℤ) + ((v : ℤ) - 1) * ((W.wN (p ^ 2) : ℤ) - (W.wN p : ℤ)) + (W.wN m : ℤ) := by
+  have hpv : p ^ v ≠ 0 := pow_ne_zero v hp.pos.ne'
+  have hpf : ∀ q ∈ (p ^ v).primeFactors, m ≡ 1 [MOD q] := by
+    intro q hq
+    rw [Nat.primeFactors_pow p (by omega : v ≠ 0), hp.primeFactors, Finset.mem_singleton] at hq
+    subst hq
+    exact h
+  have hsplit := W.wN_mul_of_modEq_one hpv hm hpf
+  have haff := W.wN_prime_pow_affine hp v hv
+  rw [h1] at hsplit
+  omega
+
 end TWeight
 
 end NormalNumbers.G4
