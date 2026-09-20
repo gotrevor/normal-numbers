@@ -297,6 +297,77 @@ theorem periodic_mean_close (F : ℕ → ℂ) (P : ℕ) (hP : 0 < P) (hper : ∀
     _ ≤ (P : ℝ) / N + (P : ℝ) / N := by linarith
     _ = 2 * P / N := by ring
 
+/-! ### Helpers for leaf 4 -/
+
+/-- Telescoping product estimate: two products of unit-bounded factors differ by at most
+`card · ε` if the factors differ by at most `ε`. -/
+theorem norm_prod_sub_prod_le {ι : Type*} [DecidableEq ι] (s : Finset ι) (f g : ι → ℂ) (ε : ℝ)
+    (hε : 0 ≤ ε) (hf : ∀ i ∈ s, ‖f i‖ ≤ 1) (hg : ∀ i ∈ s, ‖g i‖ ≤ 1)
+    (hfg : ∀ i ∈ s, ‖f i - g i‖ ≤ ε) :
+    ‖(∏ i ∈ s, f i) - ∏ i ∈ s, g i‖ ≤ s.card * ε := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert a s ha ih =>
+      have hf' : ∀ i ∈ s, ‖f i‖ ≤ 1 := fun i hi => hf i (Finset.mem_insert_of_mem hi)
+      have hg' : ∀ i ∈ s, ‖g i‖ ≤ 1 := fun i hi => hg i (Finset.mem_insert_of_mem hi)
+      have hfg' : ∀ i ∈ s, ‖f i - g i‖ ≤ ε := fun i hi => hfg i (Finset.mem_insert_of_mem hi)
+      have hrec := ih hf' hg' hfg'
+      have hma : a ∈ insert a s := Finset.mem_insert_self a s
+      rw [Finset.prod_insert ha, Finset.prod_insert ha]
+      have hid : f a * (∏ i ∈ s, f i) - g a * ∏ i ∈ s, g i
+          = f a * ((∏ i ∈ s, f i) - ∏ i ∈ s, g i) + (f a - g a) * ∏ i ∈ s, g i := by ring
+      have hgs : ‖∏ i ∈ s, g i‖ ≤ 1 := by
+        rw [norm_prod]
+        exact Finset.prod_le_one (fun i _ => norm_nonneg _) hg'
+      have hcard : ((insert a s).card : ℝ) = s.card + 1 := by
+        rw [Finset.card_insert_of_notMem ha]; push_cast; ring
+      rw [hid, hcard]
+      calc ‖f a * ((∏ i ∈ s, f i) - ∏ i ∈ s, g i) + (f a - g a) * ∏ i ∈ s, g i‖
+          ≤ ‖f a * ((∏ i ∈ s, f i) - ∏ i ∈ s, g i)‖ + ‖(f a - g a) * ∏ i ∈ s, g i‖ :=
+            norm_add_le _ _
+        _ = ‖f a‖ * ‖(∏ i ∈ s, f i) - ∏ i ∈ s, g i‖ + ‖f a - g a‖ * ‖∏ i ∈ s, g i‖ := by
+            rw [norm_mul, norm_mul]
+        _ ≤ 1 * ((s.card : ℝ) * ε) + ε * 1 := by
+            gcongr
+            · exact hf a hma
+            · exact hfg a hma
+        _ = ((s.card : ℝ) + 1) * ε := by ring
+
+/-- `windowJ N / N → 0`: the schedule is `log₂ log₂ N`, far smaller than `N`. -/
+theorem windowJ_div_tendsto_zero : Tendsto (fun N : ℕ => (windowJ N : ℝ) / N) atTop (𝓝 0) := by
+  have hsq : ∀ L : ℕ, 4 ≤ L → L ^ 2 ≤ 2 ^ L := by
+    intro L hL
+    induction L, hL using Nat.le_induction with
+    | base => norm_num
+    | succ L hL ih =>
+        have h1 : 2 * L + 1 ≤ L ^ 2 := by nlinarith
+        have : (L + 1) ^ 2 = L ^ 2 + (2 * L + 1) := by ring
+        calc (L + 1) ^ 2 = L ^ 2 + (2 * L + 1) := this
+          _ ≤ 2 ^ L + 2 ^ L := by omega
+          _ = 2 ^ (L + 1) := by ring
+  have hlog : Tendsto (fun N : ℕ => Nat.log 2 N) atTop atTop :=
+    tendsto_atTop_atTop.mpr (fun b => ⟨2 ^ b, fun a ha => Nat.le_log_of_pow_le (by norm_num) ha⟩)
+  have hgtends : Tendsto (fun L : ℕ => 1 / (L : ℝ)) atTop (𝓝 0) := by
+    have hL : Tendsto (fun L : ℕ => (L : ℝ)) atTop atTop := tendsto_natCast_atTop_atTop
+    exact Tendsto.div_atTop tendsto_const_nhds hL
+  refine squeeze_zero' (Eventually.of_forall (fun N => by positivity)) ?_ (hgtends.comp hlog)
+  filter_upwards [eventually_ge_atTop 16] with N hN
+  set L := Nat.log 2 N with hLdef
+  have hL4 : 4 ≤ L := Nat.le_log_of_pow_le (by norm_num) (by omega : 2 ^ 4 ≤ N)
+  have hJle : windowJ N ≤ L := by
+    have : Nat.log 2 L < L := Nat.log_lt_self 2 (by omega)
+    simpa [windowJ, ← hLdef] using this
+  have hpow : 2 ^ L ≤ N := Nat.pow_log_le_self 2 (by omega)
+  have hLN : L ^ 2 ≤ N := le_trans (hsq L hL4) hpow
+  have hLR : (4 : ℝ) ≤ (L : ℝ) := by exact_mod_cast hL4
+  have hJR : (windowJ N : ℝ) ≤ (L : ℝ) := by exact_mod_cast hJle
+  have hLNR : ((L : ℝ)) ^ 2 ≤ (N : ℝ) := by exact_mod_cast hLN
+  have hNR : (0 : ℝ) < N := by positivity
+  show (windowJ N : ℝ) / N ≤ 1 / (L : ℝ)
+  rw [div_le_div_iff₀ hNR (by linarith)]
+  nlinarith [hJR, hLNR, hLR]
+
 /-! ### Leaf 4: N1a proper -/
 
 theorem smoothWindowCRT (h : ℤ) (y : ℕ) (hy : 2 ≤ y) (hS : SmoothNonvanishing h) :
@@ -304,7 +375,165 @@ theorem smoothWindowCRT (h : ℤ) (y : ℕ) (hy : 2 ≤ y) (hS : SmoothNonvanish
       ‖smoothWindowMean N (windowJ N) h y
           - c' (windowJ N) * ∏ j ∈ Finset.Icc 1 (windowJ N), smoothSiteMean N h j y‖
         ≤ B * (windowJ N : ℝ) * primorial y / N := by
-  sorry
+  classical
+  obtain ⟨δ, hδ, hδN⟩ := hS y hy
+  set P : ℕ := primorial y with hPdef
+  have hP : 0 < P := primorial_pos y
+  have hPR : (0 : ℝ) < P := by exact_mod_cast hP
+  -- the two period averages (independent of `N`)
+  set AW : ℕ → ℂ := fun J => (∑ n ∈ Finset.range P, ePhase (h * smoothTail y J n)) / P with hAW
+  set Aj : ℕ → ℂ :=
+    fun j => (∑ n ∈ Finset.range P, ePhase (h * omegaLe y (n + j) / (4 : ℝ) ^ j)) / P with hAj
+  set c' : ℕ → ℂ := fun J =>
+    if ‖∏ j ∈ Finset.Icc 1 J, Aj j‖ < δ / 2 then 0
+    else AW J / ∏ j ∈ Finset.Icc 1 J, Aj j with hc'
+  have hAWle : ∀ J, ‖AW J‖ ≤ 1 := by
+    intro J
+    rw [hAW]
+    simp only
+    rw [norm_div, Complex.norm_natCast, div_le_one hPR]
+    calc ‖∑ n ∈ Finset.range P, ePhase (h * smoothTail y J n)‖
+        ≤ ∑ n ∈ Finset.range P, ‖ePhase (h * smoothTail y J n)‖ := norm_sum_le _ _
+      _ = (P : ℝ) := by
+          rw [Finset.sum_congr rfl (fun n _ => norm_ePhase _), Finset.sum_const, nsmul_eq_mul,
+            mul_one, Finset.card_range]
+  have hAjle : ∀ j, ‖Aj j‖ ≤ 1 := by
+    intro j
+    rw [hAj]
+    simp only
+    rw [norm_div, Complex.norm_natCast, div_le_one hPR]
+    calc ‖∑ n ∈ Finset.range P, ePhase (h * omegaLe y (n + j) / (4 : ℝ) ^ j)‖
+        ≤ ∑ n ∈ Finset.range P, ‖ePhase (h * omegaLe y (n + j) / (4 : ℝ) ^ j)‖ := norm_sum_le _ _
+      _ = (P : ℝ) := by
+          rw [Finset.sum_congr rfl (fun n _ => norm_ePhase _), Finset.sum_const, nsmul_eq_mul,
+            mul_one, Finset.card_range]
+  have hSitele : ∀ (N : ℕ) (j : ℕ), ‖smoothSiteMean N h j y‖ ≤ 1 := by
+    intro N j
+    rcases Nat.eq_zero_or_pos N with rfl | hN
+    · simp [smoothSiteMean]
+    have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+    rw [smoothSiteMean, norm_div, Complex.norm_natCast, div_le_one hNR]
+    calc ‖∑ n ∈ Finset.Ico N (2 * N), ePhase (h * omegaLe y (n + j) / (4 : ℝ) ^ j)‖
+        ≤ ∑ n ∈ Finset.Ico N (2 * N), ‖ePhase (h * omegaLe y (n + j) / (4 : ℝ) ^ j)‖ :=
+          norm_sum_le _ _
+      _ = (N : ℝ) := by
+          rw [Finset.sum_congr rfl (fun n _ => norm_ePhase _), Finset.sum_const, nsmul_eq_mul,
+            mul_one, Nat.card_Ico]
+          congr 1
+          omega
+  refine ⟨c', 2 + 4 / δ, ?_, ?_⟩
+  · intro J
+    rw [hc']
+    simp only
+    split_ifs with hlt
+    · simp only [norm_zero]; positivity
+    · push_neg at hlt
+      rw [norm_div]
+      have hden : δ / 2 ≤ ‖∏ j ∈ Finset.Icc 1 J, Aj j‖ := hlt
+      have hden0 : (0 : ℝ) < ‖∏ j ∈ Finset.Icc 1 J, Aj j‖ := lt_of_lt_of_le (by linarith) hden
+      rw [div_le_iff₀ hden0]
+      have h1 : ‖AW J‖ ≤ 1 := hAWle J
+      have hpos : (0 : ℝ) < 2 + 4 / δ := by positivity
+      have hkey : (2 + 4 / δ) * (δ / 2) = δ + 2 := by field_simp; ring
+      have hmul := mul_le_mul_of_nonneg_left hden hpos.le
+      linarith
+  · -- the eventual estimate
+    have hsmall : ∀ᶠ N : ℕ in atTop, (windowJ N : ℝ) / N ≤ δ / (8 * P) := by
+      have := windowJ_div_tendsto_zero
+      have hpos : (0 : ℝ) < δ / (8 * P) := by positivity
+      exact this.eventually (eventually_le_nhds hpos)
+    filter_upwards [hδN, hsmall, eventually_gt_atTop 0] with N hδprod hNsmall hN0
+    set J := windowJ N with hJdef
+    have hJ1 : 1 ≤ J := by rw [hJdef, windowJ]; omega
+    have hNR : (0 : ℝ) < N := by exact_mod_cast hN0
+    -- window mean vs its period average
+    have hW : ‖smoothWindowMean N J h y - AW J‖ ≤ 2 * P / N := by
+      have := periodic_mean_close (fun n => ePhase (h * smoothTail y J n)) P hP
+        (fun n => by rw [smoothTail_add_primorial]) (fun n => le_of_eq (norm_ePhase _)) N hN0
+      simpa [smoothWindowMean, hAW] using this
+    -- site means vs their period averages
+    have hSj : ∀ j, 1 ≤ j → ‖smoothSiteMean N h j y - Aj j‖ ≤ 2 * P / N := by
+      intro j hj
+      have hper : ∀ n : ℕ, ePhase (h * omegaLe y (n + P + j) / (4 : ℝ) ^ j)
+          = ePhase (h * omegaLe y (n + j) / (4 : ℝ) ^ j) := by
+        intro n
+        have hEq : omegaLe y (n + P + j) = omegaLe y (n + j) := by
+          rw [show n + P + j = (n + j) + P from by omega]
+          exact omegaLe_add_primorial y (n + j) (by omega)
+        rw [hEq]
+      have := periodic_mean_close (fun n => ePhase (h * omegaLe y (n + j) / (4 : ℝ) ^ j)) P hP
+        hper (fun n => le_of_eq (norm_ePhase _)) N hN0
+      simpa [smoothSiteMean, hAj] using this
+    have hεnn : (0 : ℝ) ≤ 2 * P / N := by positivity
+    have hcard : (Finset.Icc 1 J).card = J := by rw [Nat.card_Icc]; omega
+    have hprod : ‖(∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j y) - ∏ j ∈ Finset.Icc 1 J, Aj j‖
+        ≤ (J : ℝ) * (2 * P / N) := by
+      have := norm_prod_sub_prod_le (Finset.Icc 1 J) (fun j => smoothSiteMean N h j y) Aj
+        (2 * P / N) hεnn (fun j _ => hSitele N j) (fun j _ => hAjle j)
+        (fun j hj => hSj j (Finset.mem_Icc.mp hj).1)
+      rwa [hcard] at this
+    -- the bound `J · 2P/N ≤ δ/2`
+    have hJP : (J : ℝ) * (2 * P / N) ≤ δ / 2 := by
+      have h1 : (J : ℝ) / N ≤ δ / (8 * P) := hNsmall
+      have : (J : ℝ) * (2 * P / N) = 2 * P * ((J : ℝ) / N) := by field_simp
+      rw [this]
+      calc 2 * (P : ℝ) * ((J : ℝ) / N) ≤ 2 * P * (δ / (8 * P)) :=
+            mul_le_mul_of_nonneg_left h1 (by positivity)
+        _ = δ / 4 := by field_simp; ring
+        _ ≤ δ / 2 := by linarith
+    -- so the product of period averages is bounded below and `c'` takes its "else" branch
+    have hnormfull : δ ≤ ‖∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j y‖ := by
+      rw [norm_prod]; exact hδprod
+    have hAjbig : δ / 2 ≤ ‖∏ j ∈ Finset.Icc 1 J, Aj j‖ := by
+      have := norm_sub_norm_le (∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j y)
+        (∏ j ∈ Finset.Icc 1 J, Aj j)
+      linarith [hprod, hnormfull, this]
+    have hne : (∏ j ∈ Finset.Icc 1 J, Aj j) ≠ 0 := by
+      intro hzero
+      rw [hzero] at hAjbig
+      simp at hAjbig
+      linarith
+    have hcval : c' J = AW J / ∏ j ∈ Finset.Icc 1 J, Aj j := by
+      rw [hc']; simp only; rw [if_neg (by push_neg; exact hAjbig)]
+    have hcmul : c' J * ∏ j ∈ Finset.Icc 1 J, Aj j = AW J := by
+      rw [hcval]; field_simp
+    have hcnorm : ‖c' J‖ ≤ 2 / δ := by
+      rw [hcval, norm_div, div_le_div_iff₀ (by linarith [hAjbig] : (0:ℝ) < ‖∏ j ∈ Finset.Icc 1 J, Aj j‖) hδ]
+      nlinarith [hAWle J, hAjbig]
+    -- assemble
+    have hdecomp : smoothWindowMean N J h y - c' J * ∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j y
+        = (smoothWindowMean N J h y - AW J)
+          + c' J * ((∏ j ∈ Finset.Icc 1 J, Aj j) - ∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j y) := by
+      rw [mul_sub, hcmul]; ring
+    have hJR : (1 : ℝ) ≤ (J : ℝ) := by exact_mod_cast hJ1
+    calc ‖smoothWindowMean N J h y - c' J * ∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j y‖
+        ≤ ‖smoothWindowMean N J h y - AW J‖
+            + ‖c' J * ((∏ j ∈ Finset.Icc 1 J, Aj j)
+              - ∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j y)‖ := by
+          rw [hdecomp]; exact norm_add_le _ _
+      _ ≤ 2 * P / N + (2 / δ) * ((J : ℝ) * (2 * P / N)) := by
+          refine add_le_add hW ?_
+          · rw [norm_mul]
+            have hnn : (0 : ℝ) ≤ ‖(∏ j ∈ Finset.Icc 1 J, Aj j)
+                - ∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j y‖ := norm_nonneg _
+            have hsymm : ‖(∏ j ∈ Finset.Icc 1 J, Aj j)
+                - ∏ j ∈ Finset.Icc 1 J, smoothSiteMean N h j y‖ ≤ (J : ℝ) * (2 * P / N) := by
+              rw [← norm_neg]; simpa using hprod
+            have h2δ : (0 : ℝ) ≤ 2 / δ := by positivity
+            exact mul_le_mul hcnorm hsymm hnn h2δ
+      _ ≤ (2 + 4 / δ) * (J : ℝ) * P / N := by
+          have e2 : (2 / δ) * ((J : ℝ) * (2 * P / N)) = (4 / δ) * (J : ℝ) * P / N := by
+            field_simp; ring
+          have e1 : 2 * (P : ℝ) / N ≤ 2 * (J : ℝ) * P / N := by
+            rw [div_le_div_iff₀ hNR hNR]
+            nlinarith [mul_nonneg (mul_nonneg (sub_nonneg.mpr hJR) hPR.le) hNR.le]
+          have hfield : (2 + 4 / δ) * (J : ℝ) * P / N
+              - (2 * P / N + (2 / δ) * ((J : ℝ) * (2 * P / N)))
+              = 2 * ((J : ℝ) - 1) * P / N := by field_simp; ring
+          have hnn : (0 : ℝ) ≤ 2 * ((J : ℝ) - 1) * P / N := by
+            apply div_nonneg _ hNR.le
+            nlinarith [hJR, hPR.le]
+          linarith [hfield, hnn, e1, e2]
 
 /-! ### Leaf 5–6: the wiring -/
 
