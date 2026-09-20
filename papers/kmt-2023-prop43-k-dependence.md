@@ -20,7 +20,7 @@ block construction needs.  Shifts `a_j = 1, h_j = j` (j = 1..k), `χ_j = 1`, `t_
 | Step 2 main-term tuple sum | (4.6): `Σ_{e_j | A^∞} 1/[e_1..e_k]` | first two terms | lcm-tuple sum ≈ ∏_{p<k} Σ_m p^{−m}((m+1)^k − m^k) = exp(≈0.6 k²) (numerically, k = 4..64; KB §4e) |
 | (4.16)–(4.18) Cauchy–Schwarz + Mertens on [x^ε, x] | first term | absolute |
 | **(4.20) smooth-number truncation d_j ≤ x^{1/(4k)}** | third term | **O(k) after the re-run below** (the paper's literal `≪ exp(−1/(2ε))` costs `exp(≈e^{4k}/(2e))`) |
-| (4.22) fundamental lemma, dimension κ = k | third term | **unverified**: IK Lemma 6.3's implied constant depends on κ (and on K in Ω(κ), K = exp(O(k/log k)) here) |
+| (4.22) fundamental lemma, dimension κ = k | third term | **explicit (Part III)**: β-sieve with β = 9k+1 gives error `e^{9k−s}K^{10}` with no implied constant (Opera de Cribro Lemma 6.8, restated in Thorner–Zaman arXiv:1803.02823 Lemma 6.2); `K = exp(O(k))` here, so `C_FL(k) = exp(O(k))` |
 | Lemma 4.5 / (4.25) dimension-k Mertens | first two terms | exp(O(k/log k)) |
 
 ## The (4.20) re-run
@@ -53,7 +53,7 @@ dependence on the sifting dimension.  KB §4e argued `C_FL` "has no bite" becaus
 construction it multiplies `exp(−s)` with `s = 3/(4ε_i)` huge.  That is true on paper and **false for
 the frozen `KMT_quant C`**, which puts one `C J` in front of `exp(−1/(8J²ε))` for *every* ε up to 1/2,
 where the exponential is ≥ e^{−1/(4J²)} and cannot absorb anything: the Lean hypothesis
-`log C(k) = o(4^k)` silently demands `log C_FL(k) = o(4^k)`, which nobody has checked.
+`log C(k) = o(4^k)` silently demands `log C_FL(k) = o(4^k)`, which nobody had checked (Part III now does: it holds, `log C_FL(k) = O(k)`; the two-constant shape stays because it is the weaker hypothesis).
 
 **Repair (re-freeze):** two constants.
 ```
@@ -88,6 +88,7 @@ where `W = (1/x) Σ_{n<x} ∏_{j≤k} z_j^{ω_𝒫(n+j)}`, `z_j = e(h/4^j)`, `S_
 `S_𝒫(y,x) = Σ_{y<p≤x, p∈𝒫} 1/p`.  Moreover `log log C₂(k) = O(log k) + log log C_FL(k)`, where
 `C_FL(k)` is the implied constant of the fundamental lemma of sieve theory in dimension `k`
 (Iwaniec–Kowalski Lemma 6.3), so `h₂ : log log C₂(k) = o(4^k)` holds for any `C_FL(k) ≤ exp(exp(o(4^k)))`.
+**Part III: `C_FL(k) = e^{9k}K^{10} = exp(O(k))`, so in fact `C₂(k) = exp(O(k²))` and even the one-constant `KMT_quant` hypothesis `log C = o(4^k)` is met.**
 
 ## II.0  Instance and three inherited uniformities
 
@@ -170,13 +171,12 @@ For `d_j ≤ x^{1/(4k)}` pairwise coprime and coprime to `A`, `Σ(x;d)` counts `
 forms sifted by `P(y)`; `ρ(p) = k/p` if `p ∤ d_1⋯d_k`, `1/p` if `p | d_1⋯d_k` (4.23), for `p > k`.  The
 fundamental lemma in dimension `κ = k` with `s = log(X/(d_1⋯d_k))/log y ≥ 3/(4ε)` gives
 `Σ = (1 + O_k(e^{−s})) (X/d_1⋯d_k) ∏_{k<p≤y}(1 − ρ(p)) + O(X^{1/2})`; the implied constant is `C_FL(k)`
-(depends on `κ = k` and on the `Ω(κ)` constant `K = ∏_{k<p}(1 + O(k²/p²)) = exp(O(k/log k))`).  The lemma
+(depends on `κ = k` and on the `Ω(κ)` constant `K`; **Part III: `C_FL(k) = e^{9k}K^{10}` exactly, and `K = exp(O(k))`** - the earlier `exp(O(k/log k))` used `(1−k/p)^{−1} = e^{k/p}(1+O(k²/p²))`, valid only for `p ≥ 2k`; the primes `k < p < 2k` cost `Σ log(p/(p−k)) ≤ π(2k) log(k+1) = O(k)`).  The lemma
 needs `s ≥ s₀(k)` (IK: `s ≥ 9κ+1` suffices), i.e. `ε ≤ 3/(4(9k+1))`; outside that range the bound is trivial
 with constant `e^{2}`.  Summing the `O_k(e^{−s})` error over `d` with weights `∏_{p|d_j}(1−1/p)/d_j` and
 the product `∏_{k<p≤y, p∤d}(1−k/p)` is Lemma 4.5 with `f_j = 1`: `≤ E₄₅(k)` (II.5).  The `O(X^{1/2})` terms:
 `≤ x^{1/4}·x^{1/2} = x^{3/4}`.
-→ **sieve term: `C_FL(k)·E₄₅(k)·e^{2}`.**  This is the only leg whose growth in `k` is not written down
-anywhere; `KMT_quant₂` needs only `log log C_FL(k) = o(4^k)`.
+→ **sieve term: `C_FL(k)·E₄₅(k)·e^{2}` = `exp(O(k))·E₄₅(k)` by Part III.**  (Before Part III this was the only leg whose growth in `k` was not written down; `KMT_quant₂` needs only `log log C_FL(k) = o(4^k)`.)
 
 ## II.5  (4.25) + Lemma 4.5: the main term — constant `E₄₅(k)·E_M(k)` on `exp(−S_𝒫(x^ε))`, and a completion error on the sieve term
 
@@ -203,7 +203,7 @@ Collecting, with `T₁ = exp(O(k²))` in front of everything from Prop 4.4:
 ```
 C₁(k) = T₁(k) · max( A₀ k ,  E₄₅(k)(log k)² e^{O(1)} )               = exp(O(k²))
 C₂(k) = T₁(k) · ( A₀ k + e⁹ k + e² C_FL(k) E₄₅(k) + e^{O(k)} ) · (threshold factors, O(1))  +  2 T₂(k)
-      = exp(O(k²)) · (1 + C_FL(k))
+      = exp(O(k²)) · (1 + C_FL(k))  = exp(O(k²))          (Part III: C_FL(k) = exp(O(k)))
 ```
 so `log C₁(k) = O(k²) = o(4^k)` and `log log C₂(k) = O(log k) + log log(1 + C_FL(k))`.  With II.0's
 translation of the distance terms and the `n<x` shift, this is `KMT_quant₂ C₁ C₂`, and
@@ -211,9 +211,12 @@ translation of the distance terms and the `n<x` shift, this is `KMT_quant₂ C�
 
 ## II.7  What a referee should push on
 
-1. **`C_FL(k)`.**  The single unquantified input.  IK Lemma 6.3 is stated for fixed `κ`; a version with
-   explicit `κ`-dependence (e.g. via the β-sieve with `β = β(κ)`, or Friedlander–Iwaniec *Opera de Cribro*
-   Thm 6.9 / Lemma 6.8) would make `C₂` fully explicit.  Anything `≤ exp(exp(o(4^k)))` suffices.
+1. **`C_FL(k)`.**  ~~The single unquantified input.~~  **CLOSED (Part III, 2026-09-20):** the β-sieve
+   Fundamental Lemma with `β = 9κ+1` has the fully explicit error `e^{9κ−s}K^{10}` (Opera de Cribro
+   Lemma 6.8; explicit restatement in Thorner–Zaman arXiv:1803.02823 Lemma 6.2), and `K = exp(O(k))` for
+   `g(p) = k/p`, `p > k`.  So `C_FL(k) = exp(O(k))`, far inside the `exp(exp(o(4^k)))` needed.  What a
+   referee should still check: that the `Ω(κ)` hypothesis is verified with the *same* `K` for both the
+   `p ∤ d` density `k/p` and the `p | d` density `1/p` (it is - the second product is termwise smaller).
 2. **`T₁(k)` and `T₂(k)`.**  Both `exp(O(k²))`; the numerics (§4e) say `log T₁ ≈ 0.6k²`.  If one wanted
    `log C₁ = o(4^k)` to fail one would need `k²` to beat `4^k`; it does not.
 3. **The `A ∋ k` choice.**  Harmless and makes (4.25)'s `(1−k/p)^{−1}` well-defined when `k` is prime.
@@ -221,3 +224,74 @@ translation of the distance terms and the `n<x` shift, this is `KMT_quant₂ C�
    factor `exp(log log x₀/(8k²))` is then `O(1)`.  The absurd absolute threshold in II.3 (`log x ≥ 10^{25}`)
    is an artefact of using Hildebrand–Tenenbaum's crude `(log D)^{1/20}` term rather than a
    smooth-numbers-in-progressions bound in a wider range; it costs a constant, nothing else.
+
+---
+
+# Part III — The fundamental-lemma constant is explicit: `C_FL(k) = e^{9k}K^{10} = exp(O(k))` (2026-09-20)
+
+## III.1  The statement with an explicit constant
+
+The β-sieve Fundamental Lemma (Friedlander–Iwaniec, *Opera de Cribro*, §6.5, Lemma 6.8) carries no
+implied constant.  In the form given by Thorner–Zaman, arXiv:1803.02823, §6, Lemma 6.2 (their proof says
+"this statement is essentially the Fundamental Lemma [Opera, Lemma 6.8]", with the same truncation
+parameters): let `g` be multiplicative with `0 ≤ g(p) < 1` and satisfying `Ω(κ)` with constant `K > 1`,
+```
+∏_{w≤p<z} (1 − g(p))^{−1} ≤ K (log z / log w)^κ        for all 2 ≤ w ≤ z.
+```
+Let `λ^±_d` be the β-sieve weights of level `R` with `β = 9κ+1`, and `s = log R / log z ≥ β`.  Then
+```
+Σ_d λ^−_d g(d) ≥ (1 − e^{9κ−s} K^{10}) V(z),      Σ_d λ^+_d g(d) ≤ (1 + e^{9κ−s} K^{10}) V(z),
+```
+`V(z) = ∏_{p<z}(1 − g(p))`.  (Thorner–Zaman state it for the composed sums `Σ_b θ_b h̃(b)`, which is the
+same inequality after the change of variables `θ = 1 ∗ λ`, `h̃(p) = g(p)/(1−g(p))`, cf. their (6.5)–(6.7).)
+Iwaniec–Kowalski Lemma 6.3 is the same lemma with the constant hidden: `(1 + O(e^{−s} K^{10}))`,
+"implied constant depending only on κ" - that constant is `e^{9κ}`.
+
+So in II.4, with `κ = k` and `s ≥ 3/(4ε) ≥ 9k+1`:
+```
+C_FL(k) = e^{9k} K^{10}.
+```
+
+## III.2  The `Ω(k)` constant `K` for the KMT densities
+
+In (4.23) the sifted density is `g(p) = k/p` for `p ∤ d_1⋯d_k` and `1/p` for `p | d_1⋯d_k`, both only for
+`p > k` (the primes `≤ k` sit in `A`, II.0/II.7 item 3).  Since `1/p ≤ k/p`, the `Ω(k)` product for the
+mixed density is termwise `≤` the one for `g(p) = k/p`, so one `K` serves both.  For `k < w ≤ p < z`:
+```
+log ∏_{w≤p<z} (1 − k/p)^{−1} = k Σ_{w≤p<z} 1/p  +  Σ_{w≤p<z} [ −log(1 − k/p) − k/p ].
+```
+- Mertens with an absolute error: `Σ_{w≤p<z} 1/p ≤ log log z − log log w + c₀/log w` (`c₀` absolute,
+  e.g. Rosser–Schoenfeld), so the first sum contributes `(log z/log w)^k · e^{c₀ k / log w} ≤ (log z/log w)^k e^{c₀ k}`.
+- The second sum, over `p > k`: for `k < p < 2k`, `−log(1−k/p) − k/p ≤ log(p/(p−k)) ≤ log(k+1)`, and there
+  are at most `π(2k) ≤ 1.26·2k/log(2k)` such primes, total `≤ 2.52 k log(k+1)/log(2k) ≤ 2.52 k`; for
+  `p ≥ 2k`, `−log(1−t) − t ≤ t²` at `t = k/p ≤ 1/2`, total `≤ k² Σ_{p≥2k} 1/p² ≤ k²·(2/(2k log 2k)) = k/log(2k)`.
+
+Hence `K ≤ exp((c₀ + 2.52 + 1) k) = exp(O(k))` and
+```
+C_FL(k) = e^{9k} K^{10} ≤ exp((9 + 10 c₀ + 35.2) k) = exp(O(k)).
+```
+(If one prefers `w` unrestricted, i.e. `w ≤ k`, the product over `p < k` is empty because those primes
+are not sifted, so nothing changes.)
+
+## III.3  Consequence for II.6 and for the Lean node
+
+```
+C₂(k) = exp(O(k²)) · (1 + C_FL(k)) = exp(O(k²)).
+```
+So both constants of `KMT_quant₂` are `exp(O(k²))`: `h₁` and `h₂` of `exists_sparse_normal_of_KMT_quant₂`
+hold outright, and the single-constant `KMT_quant C` with `log C(k) = o(4^k)` would also have been
+satisfiable.  The two-constant shape is kept in Lean because it is the weaker hypothesis and already green
+(`KMT_quant₂_of_KMT_quant` goes the other way for free).  Every constant in the chain from KMT §4 to
+`KMT_quant₂` is now either absolute, numerically measured (`T₁`, §4e), or bounded by an explicit
+expression in `k`; nothing is `O_k(1)` with an unnamed dependence.
+
+## III.4  Provenance and what was not read
+
+- Read this session: Thorner–Zaman arXiv:1803.02823 §6 (statement of Lemma 6.2, the proof's pointer to
+  Opera de Cribro (6.40), (6.43)–(6.44), (5.38), Lemma 6.8), extracted with `pdftotext`.
+- **Not read**: *Opera de Cribro* itself (not local, not open-access).  The claim "no implied constant" rests
+  on Thorner–Zaman's restatement, a single origin.  A second, independent statement of the `e^{9κ−s}K^{10}`
+  form turned up in a search summary but was not verified in a document, so it does not count.  Referee
+  item: open Opera de Cribro Lemma 6.8 and confirm the `e^{9κ}` and the `K^{10}`.
+- Iwaniec–Kowalski Lemma 6.3 (the version cited in Parts I–II) was likewise not re-read; only its table of
+  contents (§6.4 "Fundamental Lemma of sieve theory", p. 158) was seen.
