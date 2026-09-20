@@ -1,4 +1,4 @@
-# KICKOFF 2026-09-20 — `exists_good`: the explicit block schedule (FIRED 2026-09-20 ~00:15 EDT)
+# KICKOFF 2026-09-20 — `exists_good`: the explicit block schedule (FIRED 2026-09-20 00:50 EDT; DONE 01:40, see HANDOFF-2026-09-20-exists-good.md - the lap found `Good.sep` unsatisfiable at i=0 and added `1 ≤ i`)
 
 Branch `wip/g5-prime-subset`.  Engine Opus/low.  Design: `DESIGN-2026-09-19-bcr-wiring.md` §5 ("`exists_good`,
 explicit").  Goal: `src/NormalNumbers/G4WiringSparse.lean` **sorry-free**.  Its only sorry is

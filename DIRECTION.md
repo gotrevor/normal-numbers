@@ -1,6 +1,6 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-20 00:15 EDT — `exists_good` LAP (DONE; no active override)
+## Attended operator override: 2026-09-20 00:50 EDT — `exists_good` LAP (DONE 01:40 EDT, one lap: `G4WiringSparse.lean` sorry-free; frozen `Good.sep` refuted at i=0 and repaired with `1 ≤ i`, see `HANDOFF-2026-09-20-exists-good.md`.  No active override.)
 
 **Result:** `G4WiringSparse.lean` sorry-free, `exists_sparse_normal_of_KMT_quant'` axiom-clean.
 ⚠️ One frozen statement had to be repaired: `BlockData.Good.sep` was UNSATISFIABLE at `i = 0`
