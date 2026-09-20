@@ -19,9 +19,9 @@ block construction needs.  Shifts `a_j = 1, h_j = j` (j = 1..k), `χ_j = 1`, `t_
 | Step 2 e-tuple truncation | (4.7): `z^{−9/(10k)}·(∏_{p|A}(1−p^{−1/(10k)})^{−1})^k`, z = (log x)^{1/(3k)} | third term (absorbed via ε ≥ 1/log log x into exp(−1/(4k²ε)); this is where the k² in the exponent comes from) | `exp(k Σ_{p<k} −log(1−p^{−1/(10k)})) = exp(O(k²))` |
 | Step 2 main-term tuple sum | (4.6): `Σ_{e_j | A^∞} 1/[e_1..e_k]` | first two terms | lcm-tuple sum ≈ ∏_{p<k} Σ_m p^{−m}((m+1)^k − m^k) = exp(≈0.6 k²) (numerically, k = 4..64; KB §4e) |
 | (4.16)–(4.18) Cauchy–Schwarz + Mertens on [x^ε, x] | first term | absolute |
-| **(4.20) smooth-number truncation d_j ≤ x^{1/(4k)}** | third term | **O(k) after the re-run below** (the paper's literal `≪ exp(−1/(2ε))` costs `exp(≈e^{4k}/(2e))`) |
+| **(4.20) smooth-number truncation d_j ≤ x^{1/(4k)}** | third term | **O(k) after the re-run below**: `e^{10} k` (referee-corrected from `e⁹ k`, Part IV.4) (the paper's literal `≪ exp(−1/(2ε))` costs `exp(≈e^{4k}/(2e))`) |
 | (4.22) fundamental lemma, dimension κ = k | third term | **explicit (Part III)**: β-sieve with β = 9k+1 gives error `e^{9k−s}K^{10}` with no implied constant (Opera de Cribro Lemma 6.8, restated in Thorner–Zaman arXiv:1803.02823 Lemma 6.2); `K = exp(O(k))` here, so `C_FL(k) = exp(O(k))` |
-| Lemma 4.5 / (4.25) dimension-k Mertens | first two terms | exp(O(k/log k)) |
+| Lemma 4.5 / (4.25) dimension-k Mertens | first two terms | exp(O(k log k)) (referee-corrected from exp(O(k/log k)); the primes k < p < 2k, Part IV.6) |
 
 ## The (4.20) re-run
 
@@ -176,7 +176,7 @@ needs `s ≥ s₀(k)` (IK: `s ≥ 9κ+1` suffices), i.e. `ε ≤ 3/(4(9k+1))`; o
 with constant `e^{2}`.  Summing the `O_k(e^{−s})` error over `d` with weights `∏_{p|d_j}(1−1/p)/d_j` and
 the product `∏_{k<p≤y, p∤d}(1−k/p)` is Lemma 4.5 with `f_j = 1`: `≤ E₄₅(k)` (II.5).  The `O(X^{1/2})` terms:
 `≤ x^{1/4}·x^{1/2} = x^{3/4}`.
-→ **sieve term: `C_FL(k)·E₄₅(k)·e^{2}` = `exp(O(k))·E₄₅(k)` by Part III.**  (Before Part III this was the only leg whose growth in `k` was not written down; `KMT_quant₂` needs only `log log C_FL(k) = o(4^k)`.)
+→ **sieve term: `C_FL(k)·E₄₅(k)·e^{2}` = `exp(O(k))·E₄₅(k)` by Part III** (referee: `s = 1/(2ε)` not `3/(4ε)`, remainder `x^{3/4}(log x)^{k−1}` not `x^{3/4}`, ε-threshold `ε ≤ c/k`; Part IV.5).  (Before Part III this was the only leg whose growth in `k` was not written down; `KMT_quant₂` needs only `log log C_FL(k) = o(4^k)`.)
 
 ## II.5  (4.25) + Lemma 4.5: the main term — constant `E₄₅(k)·E_M(k)` on `exp(−S_𝒫(x^ε))`, and a completion error on the sieve term
 
@@ -186,7 +186,7 @@ the product `∏_{k<p≤y, p∤d}(1−k/p)` is Lemma 4.5 with `f_j = 1`: `≤ E�
 `A₂^{k}/log y`.  The smooth-tail sum is `≤ Σ_{D=2^ℓ ≥ x^{1/(4k)}/2} [exp(−½(log D/log y) log log(D/log y…)) +
 exp(−(log D)^{1/20})]` (Hildebrand–Tenenbaum).  The first summand is `≤ exp(−1/(2ε))` as in II.3; the second
 needs `(log x/(4k))^{1/20} ≥ log log x`, i.e. `x ≥ x₀(k)` with `log log x₀(k) = O(log k)` — absorbed with
-factor `k^{O(1/k²)}`.  → **sieve term: `exp(O(k))`.**
+factor `k^{O(1/k²)}`.  → **sieve term: `exp(O(k))`.**  **Referee (Part IV.6): this exponent is wrong - the completion factor is `exp(O(k log k))` because the Euler factor at `k < p < 2k` is `1 + 1/(p−k)`, not `1 + 1/p + O(k/p²)`; `2^{k−1}` alone when `k+1` is prime.  Harmless for `exp(O(k²))`.**
 
 *Main term*, Lemma 4.5 at `a_p = (k−1)/(1−k/p)` (`p > k`; here `A ∋ k` so `1 − k/p ≠ 0` throughout):
 `∏_{k<p≤y}(1−k/p) |Σ_d ∏_j f_j(d_j)/d_j ∏_{p|d_j}(1+a_p/p)| = ∏_{k<p≤y} |(1−k/p)(1 + Σ_j f_j(p)(1+a_p/p)/p)|`
@@ -202,7 +202,7 @@ The Mertens comparison `∏_{k<p≤y}(1−k/p) ≍ (log y)^{−k}` is not needed
 Collecting, with `T₁ = exp(O(k²))` in front of everything from Prop 4.4:
 ```
 C₁(k) = T₁(k) · max( A₀ k ,  E₄₅(k)(log k)² e^{O(1)} )               = exp(O(k²))
-C₂(k) = T₁(k) · ( A₀ k + e⁹ k + e² C_FL(k) E₄₅(k) + e^{O(k)} ) · (threshold factors, O(1))  +  2 T₂(k)
+C₂(k) = T₁(k) · ( A₀ k + e^{10} k + e² C_FL(k) E₄₅(k) + e^{O(k log k)} ) · (threshold factors, O(1))  +  2 T₂(k)
       = exp(O(k²)) · (1 + C_FL(k))  = exp(O(k²))          (Part III: C_FL(k) = exp(O(k)))
 ```
 so `log C₁(k) = O(k²) = o(4^k)` and `log log C₂(k) = O(log k) + log log(1 + C_FL(k))`.  With II.0's
@@ -270,8 +270,7 @@ Hence `K ≤ exp((c₀ + 2.52 + 1) k) = exp(O(k))` and
 ```
 C_FL(k) = e^{9k} K^{10} ≤ exp((9 + 10 c₀ + 35.2) k) = exp(O(k)).
 ```
-(If one prefers `w` unrestricted, i.e. `w ≤ k`, the product over `p < k` is empty because those primes
-are not sifted, so nothing changes.)
+(Referee, Part IV.5: KMT sift by all of `P(y)`, so the primes `p ≤ k` *are* sifted; at those primes the density `ρ(p;d)` is `≤ 1` and can equal 1 (`k = 2`, `p = 2`: both forms cover both classes), a degenerate case in which sifted count and `∏(1−ρ)` both vanish.  The lemma's `0 ≤ g(p) < 1` hypothesis has to be discharged there separately, e.g. by sifting only by `p > k` and handling `p ≤ k` through the class of `n` mod `A` - which is what Step 2 already does.  Also `e^{c₀k/log w} ≤ e^{c₀k}` needs `log w ≥ 1`; at `w = 2` read `e^{1.45c₀k}`.)
 
 ## III.3  Consequence for II.6 and for the Lean node
 
@@ -295,3 +294,40 @@ expression in `k`; nothing is `O_k(1)` with an unnamed dependence.
   item: open Opera de Cribro Lemma 6.8 and confirm the `e^{9κ}` and the `K^{10}`.
 - Iwaniec–Kowalski Lemma 6.3 (the version cited in Parts I–II) was likewise not re-read; only its table of
   contents (§6.4 "Fundamental Lemma of sieve theory", p. 158) was seen.
+- **Referee (Part IV.5a): Thorner–Zaman's printed hypothesis (6.2) is `∏(1 − g'/(1−g'−g''))^{−1} ≤ K(log z/log w)^κ`,
+  which for a single sieve (`g'' = 0`) is `∏((1−g)/(1−2g))`, not the `∏(1−g)^{−1}` used in III.1; with `g = k/p` it is
+  negative at the least prime `> k`.  Their proof says (6.2) "corresponds to" Opera de Cribro (5.38), which is the
+  `∏(1−g)^{−1}` form, so (6.2) is most likely a misprint for `∏(1 − g'/(1−g''))^{−1}` - but that is a guess until
+  the book is opened.  Their Theorem 6.1 also needs `s > 9κ+1+10 log K`, harmless here.  **Item not closed.**
+
+---
+
+# Part IV — Referee corrections applied (2026-09-20 13:58 EDT)
+
+An independent referee pass (fresh Opus agent, brief `REFEREE-REQUEST-2026-09-20-kmt-quant2-constants.md`,
+report `REFEREE-REPORT-2026-09-20-kmt-quant2-constants.md`) recomputed `T₁`, `T₂` and the `R(k,u₀)` scan
+from scratch and checked every leg against KMT lines 660–1290 and Thorner–Zaman §6.  Verdicts, and what
+changed in the note:
+
+| item | verdict | change |
+|---|---|---|
+| IV.1 II.0 uniformities | holds | `|W| ≤ 1 + 1/x`, so the absorption constant is `2 exp(log log x₀/(8k²))`; the ε-window is empty for `x ≤ e^{e²} = 1618` |
+| IV.2 II.1 tuple sums | holds | `log T₁/k²` = 0.53…0.63 on k = 4..64 but 0.67 at k = 256, tending to 1 (`π(k)·k log k`); `log T₂/k²` ≈ 1.4–1.9; `A = ∏_{p≤k}p` legitimate (only `rad Δ` is needed) |
+| IV.3 II.2 (4.16)–(4.18) | holds | factor `k` confirmed |
+| IV.4 II.3 (4.20) | holds with two corrections | (a) the note double-booked `+5/2`: KMT's exponent `−1/(8kε)+5/2` *is* `−u₀/2`; (b) the leg sits inside Prop 4.4 whose parameter is `ε' ∈ [ε,2ε]`, so the target must be `exp(−1/(4k²ε'))`.  Rescanned max `log R` = 9.67 → constant `e^{10} k`.  `O(k)` stands |
+| IV.5 II.4 + Part III | holds with corrections; **5(a) not closed** | TZ Lemma 6.2 verbatim as quoted, but TZ's printed Ω(κ) hypothesis (6.2) differs from III.1's form (see III.4); `s = 1/(2ε)` (level `≈ x^{1/2}`), remainder `Σ_{m<D} k^{ω(m)} ≍ D(log D)^{k−1}` so `x^{3/4}(log x)^{k−1}` total (absorbed, `log log x₀(k) = O(log k)`); `0 ≤ g(p) < 1` unverified at `p ≤ k` (degenerate) |
+| IV.6 II.5 completion | **fails on one exponent** | completion factor is `exp(O(k log k))`, not `exp(O(k/log k))` (Euler factor `1 + 1/(p−k)` at `k<p<2k`; `2^{k−1}` when `k+1` prime).  `E₄₅ = exp(O(k log k))` holds but its derivation via `|1+w| ≤ exp(Re w + |w|²/2)` is unlicensed for `p ≲ 2k`; repaired exactly: local factor `≤ (p²−k)/p² ≤ 1` there, so that range costs only `exp(O(k/log k))` |
+| IV.7 II.6 assembly | holds | one unbooked global slip: the `ε'`/`ε` factor 2 is bought once (II.0, from the `t=0` `exp(−1/(4k²ε))`) and spent twice; one line of bookkeeping |
+| glitches A, B | both confirmed | plus two new ones in KMT: Prop 4.4's first term is squared in both in-proof applications but unsquared in both statements (statements are right, (4.18) is unsquared); the end of §4.1 names `𝔻(f_j,χ_j;·)` where Prop 4.4 delivers `𝔻(g_j,1;·)`, a factor `exp(Σ_{p|A}1/p) ≍ log k` KMT do not book |
+
+**Net after corrections.**
+```
+C₁(k) = T₁ · max( A₀ k , E₄₅ (log k)² e^{O(1)} )                                      = exp(O(k²))
+C₂(k) = T₁ · ( A₀ k + e^{10} k + e² C_FL E₄₅ + e^{O(k log k)} ) · O(1)  +  2 T₂        = exp(O(k²))
+```
+with `C_FL(k) = e^{9k}K^{10}`, `K = exp(O(k))`, conditional on IV.5(a): the single-sieve Ω(κ) form of the
+Fundamental Lemma must be confirmed in *Opera de Cribro* Lemma 6.8 / (5.38) (or Iwaniec–Kowalski (6.13)),
+which nobody in this chain has opened.  The Lean hypotheses `log C₁ = o(4^k)`, `log log C₂ = o(4^k)` hold
+with enormous margin under every reading, including the discarded literal `exp(exp(e^{4k}/2e))` of Part I.
+
+**Still open (one item).**  IV.5(a).  It is a book lookup, not mathematics.
