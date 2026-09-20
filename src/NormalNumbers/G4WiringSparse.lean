@@ -266,7 +266,32 @@ theorem isNormal_subsetLambert_of_KMT_windowJ (hKMT : KMT_along S windowJ) :
 /-! ### The existence statement -/
 
 /-- A sparse divergent set of primes exists (e.g. `π_S(x) ≍ π(x) / log log x`, whose reciprocal
-sum grows like `log log log x`). -/
+sum grows like `log log log x`).
+
+⚠️ **Disclosed `sorry`: this needs the Prime Number Theorem, which mathlib does not have**
+(2026-09-20: `Mathlib.NumberTheory.Chebyshev` supplies only the constant-factor bounds
+`Chebyshev.pi_ge : (n log 2 − log(n+1))/log n ≤ π n` and
+`Chebyshev.pi_le_log4_mul_div : π ⌊x⌋₊ ≤ log 4 · x/log √x + √x`; there is no
+`π(x) ~ x/log x`, and `G4Mertens` has only the one-sided `log log N ≤ ∑_{p<N} 1/p + 1`).
+
+The obstruction is structural, not tactical.  Write `S = ⋃ᵢ Bᵢ` with `Bᵢ` a set of primes in
+`(yᵢ, vᵢ]`, `δᵢ = ∑_{Bᵢ} 1/p`.  Relative density `0` is tested at `x = vᵢ` (the top of the block),
+where the ratio is `≥ (#Bᵢ)/π(vᵢ)`, so `#Bᵢ = o(π(vᵢ))` is forced.  Three routes, all blocked:
+* `Bᵢ` = **all** primes of `(yᵢ, vᵢ]`: then `#Bᵢ = π(vᵢ) − π(yᵢ)`, and `#Bᵢ = o(π(vᵢ))` forces
+  `π(yᵢ)/π(vᵢ) → 1`, hence `vᵢ/yᵢ → 1` — asymptotic counting, i.e. PNT.  Chebyshev's constants
+  (`0.69` vs `2.77`) cannot give a ratio tending to `1` at all.  And once the block is short,
+  `δᵢ` needs a *lower* bound on primes in short intervals.
+* `Bᵢ` = a residue class `a mod qᵢ` inside the block: the count is `≤ vᵢ/qᵢ + 1` for free, so
+  `qᵢ ≫ log vᵢ` suffices for density — but then the mass rate is `d(log log v)/log v`, whose
+  integral `∫ dL/L²` **converges**, so `∑ δᵢ < ∞` always.  (Mertens in AP with the right constant
+  would be needed, and is also absent.)
+* `Bᵢ` a general thin subset: `p > yᵢ` gives `#Bᵢ ≥ δᵢ yᵢ`, and lower-bounding `δᵢ` without
+  locating the primes of `Bᵢ` is exactly the counting input again.
+
+So this leaf is a genuine PNT-wall, to be narrowed when mathlib gains `π(x) ~ x/log x` (or the
+`PrimeNumberTheoremAnd` material is upstreamed).  It is **off the main line**: the headline
+`exists_sparse_normal_of_KMT_quant` does not mention `RelDensityZero` at all — it consumes only
+`DivergentRecip`, which `BlockData.divergentRecip` supplies unconditionally. -/
 theorem exists_relDensityZero_divergent :
     ∃ (S : ℕ → Prop) (_ : DecidablePred S), RelDensityZero S ∧ DivergentRecip S := by
   sorry

@@ -8711,3 +8711,24 @@ class (B) trades that.
    `abs_freq_sub_freq_mid`, stated for `bandPos`) to `fullPos`, carrying the multiplicity term
    through `overhang_frac_le`.  (Wrap next-step 1.)  This is the only remaining on-path work the
    wall permits; `IsNormal 2 fullReal` itself is blocked by `wall_at_zero_deficit` plus A0.
+
+## 2026-09-20 — sparse-subset lap (`src/NormalNumbers/G4WiringSparse.lean`)
+
+Leaves 1–5, 7 and all `BlockData` bookkeeping + `exists_block` are proved.  Two sorries remain.
+
+**`exists_relDensityZero_divergent` (leaf 6) — PNT wall, refuted three ways this lap.**
+Not a tactic problem.  Relative density `0` is tested at the *top* of each block, forcing
+`#Bᵢ = o(π(vᵢ))`; combined with a lower bound on `δᵢ = ∑_{Bᵢ} 1/p` this needs either
+`π(x) ~ x/log x` + primes in short intervals, or Mertens/Chebyshev in arithmetic progressions.
+Mathlib has only constant-factor Chebyshev (`Chebyshev.pi_ge`, `Chebyshev.pi_le_log4_mul_div`)
+and the repo only the one-sided `G4Mertens.log_log_le_sum_inv_primesBelow`.  The residue-class
+dodge (count `≤ v/q + 1` for free, so `q ≫ log v` gives density) is *provably* insufficient: the
+mass rate becomes `d(log log v)/log v`, whose integral `∫ dL/L²` converges, so `∑ δᵢ < ∞` always.
+Full argument in the theorem's docstring.  **Next attack:** wait for PNT in mathlib, or restate
+the existence theorem to take the density-zero witness as a hypothesis (it is off the main line —
+`exists_sparse_normal_of_KMT_quant` consumes only `DivergentRecip`).
+
+**`exists_good` — the sandwich; out of scope for this lap by operator instruction.**
+All its consumers are now proved, so it is the single remaining obligation of
+`exists_sparse_normal_of_KMT_quant`.  Explicit choices are in its docstring; `exists_block` (now
+proved) supplies the blocks.
