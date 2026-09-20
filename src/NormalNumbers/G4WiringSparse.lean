@@ -2467,6 +2467,8 @@ end NormalNumbers.G4Sparse
 
 section Refutation
 
+namespace NormalNumbers.G4Sparse
+
 /-- **The `i = 0` obstruction.**  `Good.ε_range` and `Good.sep` are jointly unsatisfiable at
 `i = 0`: `ε_range` forces `x 0` to be huge (`N = 16` already needs `ε > 1/2` when `x 0 < 16`),
 while `sep` at `N = x 0 + 1` forces `x 0 ≤ (x 0 + 1)^ε < (x 0 + 1)^{1/2}`, i.e. `x 0 ≤ 1`. -/
@@ -2520,5 +2522,7 @@ theorem sep_eps_incompatible (x0 : ℕ) (ε : ℝ) (hε2 : ε < 1 / 2)
       rw [← hsq]; linarith [hfl, hmono]
     nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ (x0 : ℝ) + 1 by positivity),
       Real.sqrt_nonneg ((x0 : ℝ) + 1)]
+
+end NormalNumbers.G4Sparse
 
 end Refutation

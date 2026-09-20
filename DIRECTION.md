@@ -1,6 +1,11 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-20 00:15 EDT — `exists_good` LAP (ACTIVE)
+## Attended operator override: 2026-09-20 00:15 EDT — `exists_good` LAP (DONE; no active override)
+
+**Result:** `G4WiringSparse.lean` sorry-free, `exists_sparse_normal_of_KMT_quant'` axiom-clean.
+⚠️ One frozen statement had to be repaired: `BlockData.Good.sep` was UNSATISFIABLE at `i = 0`
+(jointly with `ε_range`); it now carries `1 ≤ i`.  The refutation is machine-checked in the file as
+`sep_eps_incompatible`.  See `HANDOFF-2026-09-20-exists-good.md`.
 
 Operator: Ren, attended; Trevor fired it ("Why wait for me to fire?  Do it!").  Engine Opus/low.  Branch
 `wip/g5-prime-subset`.  Read `KICKOFF-2026-09-20-exists-good-lap.md` and do exactly that: make
