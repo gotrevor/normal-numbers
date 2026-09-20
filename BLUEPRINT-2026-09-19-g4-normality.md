@@ -61,6 +61,27 @@ IsNormal 4 G₄
    Was: N1's *rate*.  c/CRT − 1 should be ≍ 1/log N with a computable coefficient (next Selberg–Delange
    term); fit the coefficient at h = 1, 3, 5 from N = 10⁶ … 10⁸ and compare with the derivative of the
    local factor.  A wrong sign or a wrong order would be the first crack in the SD law.
+5. ⚫ **Divisor-expansion route to N1c is numerically dead** (2026-09-20 13:40).  Writing
+   z^{ω(n)} = Σ_{d|n} μ²(d)(z−1)^{ω(d)} splits T = 𝔼 z^{ω(n)}w^{ω(n+1)} (z = i, w = e(1/16), the h=1 sites 1,2)
+   into a d ≤ x^θ part (Bombieri–Vinogradov-for-multiplicative-functions range, Granville–Shao) and a
+   bilinear tail.  At x = 3·10⁷, |T| = 0.251 while the d > x^{1/2} tail is 0.41 and the partial sums swing
+   to 4|T| at small θ: the tail is not a correction, it carries the sign.  The route needs the open half
+   to give an *asymptotic*, not an upper bound.  `--two-point-split`; data
+   `instruments/data-2026-09-20-two-point-split-h1-s12.json`.
+6. ✅ **N1b (rough parts asymptotically independent) PASSED** (13:41).  For ω_{>y} = primes above y,
+   R(y,x) = 𝔼[z^{ω_{>y}(n)}w^{ω_{>y}(n+1)}] / (𝔼 z^{ω_{>y}(n)} · 𝔼 w^{ω_{>y}(n+1)}) divided by the CRT product
+   ∏_{p>y}(1+(z+w−2)/p)/((1+(z−1)/p)(1+(w−1)/p)) satisfies |R/CRT − 1| = c(y)/log x with c(y) stable to
+   three digits across x = 10⁶, 10⁷, 3·10⁷ (y=1: 1.15, 1.14, 1.13; y=3: 0.319, 0.319, 0.317; y=10: 0.119,
+   0.122, 0.122) and c(y) ≈ 1/y (y = 1, 3, 10, 30, 100 → 1.14, 0.32, 0.12, 0.03, 0.010; floor ≈ 10⁻³ from
+   y ≥ 1000, the 1/√x noise on the ratio).  So the rough two-point correlation factorises up to the CRT
+   product with the same 1/log x cofactor-coupling residue as target 4 (Σ_{p>y} log p/p² ≍ 1/y).
+   `--rough-independence`; data `instruments/data-2026-09-20-rough-independence-h1-s12.json`.
+
+- **N1c, TT 2025 read closely (13:36)**: Thm 3.1(ii) applies to g = z^{ω} with L = (log X)^{1−Re z}
+  (M(g;X²,·) ≍ (1−Re z) log log X), giving 𝔼 z^{ω(n)}w^{ω(n+1)} ≪ (log N)^{−c(1−Re z)} off a
+  log-density-L^{−c} exceptional set, with c "sufficiently small" and never stated.  The expected main
+  term is ≍ (log N)^{(Re z−1)+(Re w−1)}, smaller than the bound for every z, w since c < 1: TT never
+  captures the main term at any site, including the far sites where z_j → 1.  N1c stays open at every site.
 
 ## Sparse-𝒫 node probes (2026-09-20)
 5. ✅ NOT REFUTED 13:20: the frozen `KMT_quant₂` shape on three prime sets (π-indexed leaf-6 set, p ≡ 1 mod 4,
