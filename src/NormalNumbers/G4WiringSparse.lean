@@ -2832,7 +2832,94 @@ theorem log_o_pow₂ (C₁ C₂ : ℕ → ℝ)
     (h₁ : Tendsto (fun k : ℕ => Real.log (C₁ k) / 4 ^ k) atTop (𝓝 0))
     (h₂ : Tendsto (fun k : ℕ => Real.log (Real.log (C₂ k)) / 4 ^ k) atTop (𝓝 0)) :
     Tendsto (fun i : ℕ => Real.log i / (4 : ℝ) ^ JF₂ C₁ C₂ i) atTop (𝓝 0) := by
-  sorry
+  have hJ1 : Tendsto (fun i => JF₂ C₁ C₂ i + 1) atTop atTop :=
+    tendsto_atTop_mono (fun i => Nat.le_succ _) (JF₂_tendsto C₁ C₂)
+  have hg1 : Tendsto (fun i : ℕ => |Real.log (C₁ (JF₂ C₁ C₂ i + 1)) / 4 ^ (JF₂ C₁ C₂ i + 1)|)
+      atTop (𝓝 0) := by simpa using (h₁.comp hJ1).abs
+  have hg2 : Tendsto (fun i : ℕ =>
+      |Real.log (Real.log (C₂ (JF₂ C₁ C₂ i + 1))) / 4 ^ (JF₂ C₁ C₂ i + 1)|)
+      atTop (𝓝 0) := by simpa using (h₂.comp hJ1).abs
+  have hg3 : Tendsto (fun i : ℕ => 1 / (4 : ℝ) ^ JF₂ C₁ C₂ i) atTop (𝓝 0) := by
+    have hbase : Tendsto (fun k : ℕ => 1 / (4 : ℝ) ^ k) atTop (𝓝 0) := by
+      have h0 := tendsto_pow_atTop_nhds_zero_of_lt_one (r := (1 : ℝ) / 4)
+        (by norm_num) (by norm_num)
+      refine h0.congr (fun k => ?_)
+      rw [div_pow, one_pow]
+    exact hbase.comp (JF₂_tendsto C₁ C₂)
+  have hbd : Tendsto (fun i : ℕ =>
+      16 * |Real.log (C₁ (JF₂ C₁ C₂ i + 1)) / 4 ^ (JF₂ C₁ C₂ i + 1)|
+      + 4 * |Real.log (Real.log (C₂ (JF₂ C₁ C₂ i + 1))) / 4 ^ (JF₂ C₁ C₂ i + 1)|
+      + Real.log 2 * (1 / (4 : ℝ) ^ JF₂ C₁ C₂ i)
+      + Real.log i / (4 : ℝ) ^ i) atTop (𝓝 0) := by
+    simpa using (((hg1.const_mul 16).add (hg2.const_mul 4)).add
+      (hg3.const_mul (Real.log 2))).add log_div_four_pow
+  refine squeeze_zero' ?_ ?_ hbd
+  · filter_upwards [eventually_ge_atTop 1] with i hi
+    have : (0 : ℝ) ≤ Real.log i := Real.log_natCast_nonneg i
+    positivity
+  · filter_upwards [eventually_ge_atTop 1, JF₂_base C₁ C₂] with i hi h0
+    have hlog : (0 : ℝ) ≤ Real.log i := Real.log_natCast_nonneg i
+    have hi1 : (1 : ℝ) ≤ (i : ℝ) := by exact_mod_cast hi
+    have hpow : (0 : ℝ) < (4 : ℝ) ^ JF₂ C₁ C₂ i := by positivity
+    have hn1 : (0 : ℝ) ≤ 16 * |Real.log (C₁ (JF₂ C₁ C₂ i + 1)) / 4 ^ (JF₂ C₁ C₂ i + 1)| := by
+      positivity
+    have hn2 : (0 : ℝ) ≤ 4 * |Real.log (Real.log (C₂ (JF₂ C₁ C₂ i + 1)))
+        / 4 ^ (JF₂ C₁ C₂ i + 1)| := by positivity
+    have hn3 : (0 : ℝ) ≤ Real.log 2 * (1 / (4 : ℝ) ^ JF₂ C₁ C₂ i) := by
+      have : (0 : ℝ) ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+      positivity
+    have hn4 : (0 : ℝ) ≤ Real.log i / (4 : ℝ) ^ i := by positivity
+    rcases eq_or_lt_of_le (JF₂_le C₁ C₂ i) with heq | hlt
+    · have hrw : Real.log i / (4 : ℝ) ^ JF₂ C₁ C₂ i = Real.log i / (4 : ℝ) ^ i := by rw [heq]
+      rw [hrw]; linarith
+    · rcases JF₂_max C₁ C₂ i h0 hlt with hmax | hmax
+      · -- the `C₁` branch, as in `log_o_pow`
+        have hq : (0 : ℝ) < Real.sqrt (Real.sqrt i) :=
+          Real.sqrt_pos.mpr (Real.sqrt_pos.mpr (by linarith))
+        have hlogle : Real.log (Real.sqrt (Real.sqrt i))
+            ≤ Real.log |C₁ (JF₂ C₁ C₂ i + 1)| := Real.log_le_log hq hmax.le
+        have hq4 : Real.log (Real.sqrt (Real.sqrt i)) = Real.log i / 4 := by
+          rw [Real.log_sqrt (Real.sqrt_nonneg _), Real.log_sqrt (by positivity)]; ring
+        rw [hq4, Real.log_abs] at hlogle
+        have hnum : Real.log i ≤ 4 * Real.log (C₁ (JF₂ C₁ C₂ i + 1)) := by linarith
+        have hkey : Real.log i / (4 : ℝ) ^ JF₂ C₁ C₂ i
+            ≤ 4 * (Real.log (C₁ (JF₂ C₁ C₂ i + 1)) / (4 : ℝ) ^ JF₂ C₁ C₂ i) := by
+          rw [mul_div_assoc']
+          exact div_le_div_of_nonneg_right hnum hpow.le
+        have hrw : 4 * (Real.log (C₁ (JF₂ C₁ C₂ i + 1)) / (4 : ℝ) ^ JF₂ C₁ C₂ i)
+            = 16 * (Real.log (C₁ (JF₂ C₁ C₂ i + 1)) / (4 : ℝ) ^ (JF₂ C₁ C₂ i + 1)) := by
+          rw [pow_succ]; field_simp; ring
+        have hle2 : Real.log (C₁ (JF₂ C₁ C₂ i + 1)) / (4 : ℝ) ^ (JF₂ C₁ C₂ i + 1)
+            ≤ |Real.log (C₁ (JF₂ C₁ C₂ i + 1)) / 4 ^ (JF₂ C₁ C₂ i + 1)| := le_abs_self _
+        rw [hrw] at hkey
+        linarith
+      · -- the `C₂` branch: only `log log C₂ = o(4^k)` is used
+        set L : ℝ := Real.log |C₂ (JF₂ C₁ C₂ i + 1)| with hL
+        have hLpos : 0 < L := by linarith
+        have hhalf : (0 : ℝ) < (i : ℝ) / 2 := by linarith
+        have hlogL : Real.log ((i : ℝ) / 2) ≤ Real.log L := Real.log_le_log hhalf hmax.le
+        have hsplit : Real.log ((i : ℝ) / 2) = Real.log i - Real.log 2 := by
+          rw [Real.log_div (by linarith) (by norm_num)]
+        have hLeq : Real.log L = Real.log (Real.log (C₂ (JF₂ C₁ C₂ i + 1))) := by
+          rw [hL, Real.log_abs]
+        have hnum : Real.log i
+            ≤ Real.log 2 + Real.log (Real.log (C₂ (JF₂ C₁ C₂ i + 1))) := by
+          rw [← hLeq]; linarith
+        have hpow1 : (0 : ℝ) < (4 : ℝ) ^ (JF₂ C₁ C₂ i + 1) := by positivity
+        have hstep : Real.log i / (4 : ℝ) ^ JF₂ C₁ C₂ i
+            ≤ (Real.log 2 + Real.log (Real.log (C₂ (JF₂ C₁ C₂ i + 1))))
+              / (4 : ℝ) ^ JF₂ C₁ C₂ i := div_le_div_of_nonneg_right hnum hpow.le
+        have hrw : (Real.log 2 + Real.log (Real.log (C₂ (JF₂ C₁ C₂ i + 1))))
+              / (4 : ℝ) ^ JF₂ C₁ C₂ i
+            = Real.log 2 * (1 / (4 : ℝ) ^ JF₂ C₁ C₂ i)
+              + 4 * (Real.log (Real.log (C₂ (JF₂ C₁ C₂ i + 1)))
+                / (4 : ℝ) ^ (JF₂ C₁ C₂ i + 1)) := by
+          rw [pow_succ]; field_simp
+        have hle2 : Real.log (Real.log (C₂ (JF₂ C₁ C₂ i + 1))) / (4 : ℝ) ^ (JF₂ C₁ C₂ i + 1)
+            ≤ |Real.log (Real.log (C₂ (JF₂ C₁ C₂ i + 1))) / 4 ^ (JF₂ C₁ C₂ i + 1)| :=
+          le_abs_self _
+        rw [hrw] at hstep
+        linarith
 
 /-- Leaf 6 (general schedule): the L¹ tail. -/
 theorem tail_tendsto_gen (Jf : ℕ → ℕ) (hJt : Tendsto Jf atTop atTop)
