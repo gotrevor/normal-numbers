@@ -1,5 +1,7 @@
 import NormalNumbers.G4Mertens
 import NormalNumbers.G4WiringCRT
+import Mathlib.NumberTheory.Chebyshev
+import Mathlib.Analysis.Complex.ExponentialBounds
 
 /-!
 # Sparse prime subsets: `IsNormal 4 (c_𝒫 4)` from KMT 2023 Prop 4.3
@@ -265,6 +267,135 @@ theorem isNormal_subsetLambert_of_KMT_windowJ (hKMT : KMT_along S windowJ) :
 
 /-! ### The existence statement -/
 
+/-! ### Sub-leaves for `exists_relDensityZero_divergent` (the π-indexed construction)
+
+`m k = log₂ log₂ k + 1`; keep the `k`-th prime (0-indexed, `k = π'(p) = #{q < p : q prime}`)
+exactly when `m k ∣ k`.  Density is combinatorial in `k`; divergence needs only Chebyshev's
+lower bound through `nth_prime_le_mul_log`. -/
+
+namespace SparseExists
+
+open Nat
+
+/-- The slowly growing modulus `m k = log₂ log₂ k + 1`; constant `= μ a` on the dyadic block
+`[2^a, 2^{a+1})`, where `μ a = log₂ a + 1`. -/
+def mu (a : ℕ) : ℕ := Nat.log 2 a + 1
+
+/-- `m k = μ (log₂ k)`. -/
+def modulus (k : ℕ) : ℕ := mu (Nat.log 2 k)
+
+/-- The index set `A = {k : m k ∣ k}`. -/
+def Keep (k : ℕ) : Prop := modulus k ∣ k
+
+instance : DecidablePred Keep := fun k => inferInstanceAs (Decidable (modulus k ∣ k))
+
+/-- The prime subset: keep the `k`-th prime iff `k ∈ A`. -/
+def PSet (p : ℕ) : Prop := p.Prime ∧ Keep (Nat.count Nat.Prime p)
+
+instance : DecidablePred PSet := fun p =>
+  inferInstanceAs (Decidable (p.Prime ∧ Keep (Nat.count Nat.Prime p)))
+
+/-! #### (a) the Chebyshev input: `p_k ≤ 20 k log k` -/
+
+/-- `π (p_k) = k + 1`. -/
+theorem primeCounting_nth_prime (k : ℕ) : Nat.primeCounting (Nat.nth Nat.Prime k) = k + 1 := by
+  rw [Nat.primeCounting_eq_primeCounting'_succ, Nat.primeCounting', Nat.count_succ]
+  simp [Nat.prime_nth_prime k]
+  exact Nat.primeCounting'_nth_eq k
+
+/-- Chebyshev's lower bound, read at `p = p_k`: `p log 2 ≤ (k+3) log p`. -/
+theorem nth_prime_mul_log_two_le (k : ℕ) :
+    (Nat.nth Nat.Prime k : ℝ) * Real.log 2 ≤ ((k : ℝ) + 3) * Real.log (Nat.nth Nat.Prime k) := by
+  set p := Nat.nth Nat.Prime k with hp
+  have hp2 : 2 ≤ p := (Nat.prime_nth_prime k).two_le
+  have hpR : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hp2
+  have hlogpos : 0 < Real.log p := Real.log_pos (by linarith)
+  have hche := Chebyshev.pi_ge p
+  rw [primeCounting_nth_prime k] at hche
+  have h1 : ((p : ℝ) * Real.log 2 - Real.log ((p : ℝ) + 1)) ≤ ((k : ℝ) + 1) * Real.log p := by
+    rw [div_le_iff₀ hlogpos] at hche
+    push_cast at hche ⊢
+    linarith
+  have h2 : Real.log ((p : ℝ) + 1) ≤ 2 * Real.log p := by
+    have hsq : ((p : ℝ) + 1) ≤ (p : ℝ) ^ 2 := by nlinarith
+    calc Real.log ((p : ℝ) + 1) ≤ Real.log ((p : ℝ) ^ 2) := Real.log_le_log (by linarith) hsq
+      _ = 2 * Real.log p := by rw [Real.log_pow]; push_cast; ring
+  linarith
+
+/-- Crude self-bounding consequence: `p_k ≤ 9 (k+3)²`. -/
+theorem nth_prime_le_sq (k : ℕ) : (Nat.nth Nat.Prime k : ℝ) ≤ 9 * ((k : ℝ) + 3) ^ 2 := by
+  set p := Nat.nth Nat.Prime k with hp
+  have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (Nat.prime_nth_prime k).two_le
+  have hs : Real.sqrt p * Real.sqrt p = (p : ℝ) := Real.mul_self_sqrt (by linarith)
+  have hspos : 0 < Real.sqrt p := Real.sqrt_pos.mpr (by linarith)
+  have hlog : Real.log p ≤ 2 * Real.sqrt p := by
+    have h1 : Real.log (Real.sqrt p) ≤ Real.sqrt p - 1 := Real.log_le_sub_one_of_pos hspos
+    have h2 : Real.log (Real.sqrt p) = Real.log p / 2 := Real.log_sqrt (by linarith)
+    linarith [h2 ▸ h1]
+  have h2 := Real.log_two_gt_d9
+  have hst := nth_prime_mul_log_two_le k
+  have hk0 : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+  have hsle : Real.sqrt p ≤ 3 * ((k : ℝ) + 3) := by nlinarith [hst, hlog, hs, hspos]
+  nlinarith [hs, hsle, hspos]
+
+/-- **(a)** `p_k ≤ 20 k log k` for `k ≥ 16`, from `Chebyshev.pi_ge` alone. -/
+theorem nth_prime_le_mul_log (k : ℕ) (hk : 16 ≤ k) :
+    (Nat.nth Nat.Prime k : ℝ) ≤ 20 * k * Real.log k := by
+  set p := Nat.nth Nat.Prime k with hp
+  have hkR : (16 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+  have h2 := Real.log_two_gt_d9
+  have h2' := Real.log_two_lt_d9
+  have hppos : (0 : ℝ) < (p : ℝ) := by
+    have : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (Nat.prime_nth_prime k).two_le
+    linarith
+  have hlogk : 2.7 ≤ Real.log k := by
+    have hle : Real.log 16 ≤ Real.log k := Real.log_le_log (by norm_num) (by linarith)
+    have h16 : Real.log 16 = 4 * Real.log 2 := by
+      rw [show (16 : ℝ) = 2 ^ (4 : ℕ) by norm_num, Real.log_pow]; push_cast; ring
+    linarith [h16 ▸ hle]
+  have h9 : Real.log 9 ≤ 2 * Real.log k := by
+    have hle : Real.log 9 ≤ Real.log ((k : ℝ) ^ 2) := Real.log_le_log (by norm_num) (by nlinarith)
+    rw [Real.log_pow] at hle; push_cast at hle; linarith
+  have hk3 : Real.log ((k : ℝ) + 3) ≤ Real.log 2 + Real.log k := by
+    have h : Real.log ((k : ℝ) + 3) ≤ Real.log (2 * (k : ℝ)) :=
+      Real.log_le_log (by linarith) (by linarith)
+    rwa [Real.log_mul (by norm_num) (by linarith)] at h
+  have hple := nth_prime_le_sq k
+  have hlp : Real.log p ≤ 4.6 * Real.log k := by
+    have hmono : Real.log p ≤ Real.log (9 * ((k : ℝ) + 3) ^ 2) := Real.log_le_log hppos hple
+    have hexp : Real.log (9 * ((k : ℝ) + 3) ^ 2) = Real.log 9 + 2 * Real.log ((k : ℝ) + 3) := by
+      rw [Real.log_mul (by norm_num) (by positivity), Real.log_pow]; push_cast; ring
+    rw [hexp] at hmono
+    linarith
+  have hst := nth_prime_mul_log_two_le k
+  nlinarith [hst, hlp, hlogk, h2, hkR]
+
+/-! #### (b) the density count -/
+
+/-- **(b)** `#{k < K : m k ∣ k} / K → 0`. -/
+theorem tendsto_keepCount_div : Filter.Tendsto
+    (fun K : ℕ => (((Finset.range K).filter Keep).card : ℝ) / K) Filter.atTop (𝓝 0) := by
+  sorry
+
+/-! #### (c) the divergent harmonic sum along `A` -/
+
+/-- **(c)** `∑_{k ∈ A} 1/(k log k) = ∞`. -/
+theorem not_summable_keep_harmonic :
+    ¬ Summable (fun k : ℕ => if Keep k then 1 / ((k : ℝ) * Real.log k) else 0) := by
+  sorry
+
+/-! #### (d) assembly -/
+
+/-- **(d)** the prime set `PSet` has relative density `0`. -/
+theorem relDensityZero_PSet : RelDensityZero PSet := by
+  sorry
+
+/-- **(d)** the prime set `PSet` has divergent reciprocal sum. -/
+theorem divergentRecip_PSet : DivergentRecip PSet := by
+  sorry
+
+end SparseExists
+
 /-- A sparse divergent set of primes exists.
 
 **Construction that needs no prime counting for the density and only Chebyshev for the sum**
@@ -297,8 +428,9 @@ makes the density statement combinatorial and moves all analytic input into the 
 Chebyshev bound, which Mathlib has.  It remains off the main line: `exists_sparse_normal_of_KMT_quant'`
 consumes only `DivergentRecip`. -/
 theorem exists_relDensityZero_divergent :
-    ∃ (S : ℕ → Prop) (_ : DecidablePred S), RelDensityZero S ∧ DivergentRecip S := by
-  sorry
+    ∃ (S : ℕ → Prop) (_ : DecidablePred S), RelDensityZero S ∧ DivergentRecip S :=
+  ⟨SparseExists.PSet, inferInstance, SparseExists.relDensityZero_PSet,
+    SparseExists.divergentRecip_PSet⟩
 
 /-- **Existence**, conditional on the diagonal reading of Prop. 4.3 for every sparse divergent `S`
 (the "∀ sufficiently sparse" form; the `k`-uniformity of the implied constant is the open step):
