@@ -355,7 +355,37 @@ theorem tail_diff_tsum (J n : ℕ) :
 /-- Multiples of `p` in a shifted window: at most `N/p + 2`. -/
 theorem card_filter_dvd_shift_le (p N j : ℕ) (hp : 0 < p) :
     ((((Finset.range N).filter (fun n => p ∣ n + j)).card : ℝ)) ≤ (N : ℝ) / p + 2 := by
-  sorry
+  have hnat : ((Finset.range N).filter (fun n => p ∣ n + j)).card ≤ N / p + 2 := by
+    have hsub : ∀ n ∈ (Finset.range N).filter (fun n => p ∣ n + j),
+        (n + j) / p ∈ Finset.Icc (j / p) ((N + j) / p) := by
+      intro n hn
+      rw [Finset.mem_filter, Finset.mem_range] at hn
+      exact Finset.mem_Icc.mpr
+        ⟨Nat.div_le_div_right (by omega), Nat.div_le_div_right (by omega)⟩
+    have hinj : Set.InjOn (fun n => (n + j) / p)
+        ((Finset.range N).filter (fun n => p ∣ n + j) : Finset ℕ) := by
+      intro a ha b hb hab
+      simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range] at ha hb
+      have ha' : p * ((a + j) / p) = a + j := Nat.mul_div_cancel' ha.2
+      have hb' : p * ((b + j) / p) = b + j := Nat.mul_div_cancel' hb.2
+      simp only at hab
+      have h1 : a + j = b + j := by
+        calc a + j = p * ((a + j) / p) := ha'.symm
+          _ = p * ((b + j) / p) := by rw [hab]
+          _ = b + j := hb'
+      omega
+    have hcard := Finset.card_le_card_of_injOn _ hsub hinj
+    rw [Nat.card_Icc] at hcard
+    have hadd := Nat.add_div (a := N) (b := j) hp
+    generalize hA : N / p = A at *
+    generalize hBb : j / p = Bb at *
+    generalize hC : (N + j) / p = Cc at *
+    split_ifs at hadd <;> omega
+  have hcast : ((N / p : ℕ) : ℝ) ≤ (N : ℝ) / p := Nat.cast_div_le
+  calc ((((Finset.range N).filter (fun n => p ∣ n + j)).card : ℝ))
+      ≤ ((N / p + 2 : ℕ) : ℝ) := by exact_mod_cast hnat
+    _ = ((N / p : ℕ) : ℝ) + 2 := by push_cast; ring
+    _ ≤ (N : ℝ) / p + 2 := by linarith
 
 /-- Double counting: `∑_{n<N} ω_S(n+j) ≤ N · S_S(2N) + 2N + 5j`. -/
 theorem sum_omegaS_shift_le (N j : ℕ) (hN : 1 ≤ N) (hj : 1 ≤ j) :
@@ -365,7 +395,12 @@ theorem sum_omegaS_shift_le (N j : ℕ) (hN : 1 ≤ N) (hj : 1 ≤ j) :
 
 /-- `∑'_t (B + c t)/2^{t+1} = B + c`. -/
 theorem tsum_lin_geom (B c : ℝ) : ∑' t : ℕ, (B + c * t) / 2 ^ (t + 1) = B + c := by
-  sorry
+  have hcongr : ∀ t : ℕ, (B + c * t) / 2 ^ (t + 1)
+      = B * ((1 : ℝ) / 2 ^ (t + 1)) + c * ((t : ℝ) / 2 ^ (t + 1)) := by
+    intro t; ring
+  rw [tsum_congr hcongr,
+    Summable.tsum_add (summable_geom_shift.mul_left B) (summable_i_geom.mul_left c),
+    tsum_mul_left, tsum_mul_left, tsum_geom_shift, tsum_i_geom, mul_one, mul_one]
 
 /-- L¹ tail for a slow schedule.  For `J < j`, `∑_{n<N} ω_S(n+j) ≤ N·(S_S(2N) + 2) + 5j`
 (double counting over the primes of `S`, `#{n<N : p ∣ n+j} ≤ N/p + 2`), so the geometric sum gives
