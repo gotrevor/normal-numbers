@@ -391,7 +391,111 @@ theorem card_filter_dvd_shift_le (p N j : ℕ) (hp : 0 < p) :
 theorem sum_omegaS_shift_le (N j : ℕ) (hN : 1 ≤ N) (hj : 1 ≤ j) :
     ∑ n ∈ Finset.range N, omegaS S (n + j)
       ≤ (N : ℝ) * (recipSumLe S (2 * N) + 2) + 5 * j := by
-  sorry
+  classical
+  set P : Finset ℕ := (Finset.Iic (N + j)).filter (fun p => p.Prime ∧ S p) with hP
+  have hrec : recipSumLe S (N + j) = ∑ p ∈ P, (1 : ℝ) / p := by rw [hP, recipSumLe]
+  -- pointwise: `ω_S(n+j)` counts the primes of `P` dividing `n+j`
+  have hpoint : ∀ n ∈ Finset.range N,
+      omegaS S (n + j) = ∑ p ∈ P, (if p ∣ n + j then (1 : ℝ) else 0) := by
+    intro n hn
+    rw [Finset.mem_range] at hn
+    have hset : (n + j).primeFactors.filter S = P.filter (fun p => p ∣ n + j) := by
+      ext q
+      simp only [hP, Finset.mem_filter, Nat.mem_primeFactors, Finset.mem_Iic]
+      constructor
+      · rintro ⟨⟨hpp, hdvd, _⟩, hs⟩
+        exact ⟨⟨le_trans (Nat.le_of_dvd (by omega) hdvd) (by omega), hpp, hs⟩, hdvd⟩
+      · rintro ⟨⟨_, hpp, hs⟩, hdvd⟩
+        exact ⟨⟨hpp, hdvd, by omega⟩, hs⟩
+    rw [omegaS, omegaSN, hset, ← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, mul_one]
+  -- double counting
+  have hswap : ∑ n ∈ Finset.range N, omegaS S (n + j)
+      = ∑ p ∈ P, ((((Finset.range N).filter (fun n => p ∣ n + j)).card : ℝ)) := by
+    rw [Finset.sum_congr rfl hpoint, Finset.sum_comm]
+    refine Finset.sum_congr rfl (fun p _ => ?_)
+    rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, mul_one]
+  have hbd : ∑ p ∈ P, ((((Finset.range N).filter (fun n => p ∣ n + j)).card : ℝ))
+      ≤ ∑ p ∈ P, ((N : ℝ) / p + 2) := by
+    refine Finset.sum_le_sum (fun p hp => ?_)
+    have hpp : p.Prime := (((Finset.mem_filter.mp (hP ▸ hp)).2).1)
+    exact card_filter_dvd_shift_le p N j hpp.pos
+  have hsplit : ∑ p ∈ P, ((N : ℝ) / p + 2)
+      = (N : ℝ) * recipSumLe S (N + j) + (P.card : ℝ) * 2 := by
+    rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul, hrec, Finset.mul_sum]
+    congr 1
+    exact Finset.sum_congr rfl (fun p _ => by rw [mul_one_div])
+  -- primes above `2N` contribute little
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  have hQ : recipSumLe S (N + j) ≤ recipSumLe S (2 * N)
+      + ∑ p ∈ (Finset.Ioc (2 * N) (N + j)).filter (fun p => p.Prime ∧ S p), (1 : ℝ) / p := by
+    have hsub : (Finset.Iic (N + j)).filter (fun p => p.Prime ∧ S p)
+        ⊆ ((Finset.Iic (2 * N)).filter (fun p => p.Prime ∧ S p))
+          ∪ ((Finset.Ioc (2 * N) (N + j)).filter (fun p => p.Prime ∧ S p)) := by
+      intro q hq
+      rw [Finset.mem_filter, Finset.mem_Iic] at hq
+      by_cases h : q ≤ 2 * N
+      · exact Finset.mem_union_left _ (Finset.mem_filter.mpr ⟨Finset.mem_Iic.mpr h, hq.2⟩)
+      · exact Finset.mem_union_right _
+          (Finset.mem_filter.mpr ⟨Finset.mem_Ioc.mpr ⟨by omega, hq.1⟩, hq.2⟩)
+    have hdisj : Disjoint ((Finset.Iic (2 * N)).filter (fun p => p.Prime ∧ S p))
+        ((Finset.Ioc (2 * N) (N + j)).filter (fun p => p.Prime ∧ S p)) := by
+      refine Finset.disjoint_left.mpr (fun q hq1 hq2 => ?_)
+      rw [Finset.mem_filter, Finset.mem_Iic] at hq1
+      rw [Finset.mem_filter, Finset.mem_Ioc] at hq2
+      omega
+    calc recipSumLe S (N + j)
+        ≤ ∑ p ∈ ((Finset.Iic (2 * N)).filter (fun p => p.Prime ∧ S p))
+            ∪ ((Finset.Ioc (2 * N) (N + j)).filter (fun p => p.Prime ∧ S p)), (1 : ℝ) / p := by
+          rw [recipSumLe]
+          exact Finset.sum_le_sum_of_subset_of_nonneg hsub (fun q _ _ => by positivity)
+      _ = _ := by rw [Finset.sum_union hdisj, recipSumLe]
+  have hQsmall : ∑ p ∈ (Finset.Ioc (2 * N) (N + j)).filter (fun p => p.Prime ∧ S p), (1 : ℝ) / p
+      ≤ (j : ℝ) / (2 * N) := by
+    have hterm : ∀ q ∈ (Finset.Ioc (2 * N) (N + j)).filter (fun p => p.Prime ∧ S p),
+        (1 : ℝ) / q ≤ 1 / (2 * N) := by
+      intro q hq
+      rw [Finset.mem_filter, Finset.mem_Ioc] at hq
+      have : (2 * (N : ℝ)) ≤ q := by exact_mod_cast hq.1.1.le
+      exact one_div_le_one_div_of_le (by linarith) this
+    have hcard : (((Finset.Ioc (2 * N) (N + j)).filter (fun p => p.Prime ∧ S p)).card : ℝ)
+        ≤ (j : ℝ) := by
+      have h1 := Finset.card_filter_le (Finset.Ioc (2 * N) (N + j)) (fun p => p.Prime ∧ S p)
+      rw [Nat.card_Ioc] at h1
+      have : ((Finset.Ioc (2 * N) (N + j)).filter (fun p => p.Prime ∧ S p)).card ≤ j := by omega
+      exact_mod_cast this
+    calc ∑ p ∈ (Finset.Ioc (2 * N) (N + j)).filter (fun p => p.Prime ∧ S p), (1 : ℝ) / p
+        ≤ ∑ _p ∈ (Finset.Ioc (2 * N) (N + j)).filter (fun p => p.Prime ∧ S p),
+            (1 : ℝ) / (2 * N) := Finset.sum_le_sum hterm
+      _ = (((Finset.Ioc (2 * N) (N + j)).filter (fun p => p.Prime ∧ S p)).card : ℝ)
+            * (1 / (2 * N)) := by rw [Finset.sum_const, nsmul_eq_mul]
+      _ ≤ (j : ℝ) * (1 / (2 * N)) := by
+          have : (0 : ℝ) ≤ 1 / (2 * N) := by positivity
+          exact mul_le_mul_of_nonneg_right hcard this
+      _ = (j : ℝ) / (2 * N) := by ring
+  have hPcard : (P.card : ℝ) ≤ (N : ℝ) + j + 1 := by
+    have h1 : P.card ≤ (Finset.Iic (N + j)).card := by
+      rw [hP]; exact Finset.card_filter_le _ _
+    rw [Nat.card_Iic] at h1
+    have : (P.card : ℝ) ≤ ((N + j + 1 : ℕ) : ℝ) := by exact_mod_cast h1
+    push_cast at this; linarith
+  have hjR : (1 : ℝ) ≤ (j : ℝ) := by exact_mod_cast hj
+  have hextra : (N : ℝ) * ((j : ℝ) / (2 * N)) = (j : ℝ) / 2 := by
+    field_simp
+  have hchain : (N : ℝ) * recipSumLe S (N + j)
+      ≤ (N : ℝ) * recipSumLe S (2 * N) + (j : ℝ) / 2 := by
+    calc (N : ℝ) * recipSumLe S (N + j)
+        ≤ (N : ℝ) * (recipSumLe S (2 * N) + (j : ℝ) / (2 * N)) := by
+          refine mul_le_mul_of_nonneg_left ?_ hNR.le
+          linarith [hQ, hQsmall]
+      _ = (N : ℝ) * recipSumLe S (2 * N) + (j : ℝ) / 2 := by rw [mul_add, hextra]
+  calc ∑ n ∈ Finset.range N, omegaS S (n + j)
+      = ∑ p ∈ P, ((((Finset.range N).filter (fun n => p ∣ n + j)).card : ℝ)) := hswap
+    _ ≤ ∑ p ∈ P, ((N : ℝ) / p + 2) := hbd
+    _ = (N : ℝ) * recipSumLe S (N + j) + (P.card : ℝ) * 2 := hsplit
+    _ ≤ (N : ℝ) * recipSumLe S (2 * N) + (j : ℝ) / 2 + ((N : ℝ) + j + 1) * 2 := by
+        linarith [hchain, hPcard]
+    _ ≤ (N : ℝ) * (recipSumLe S (2 * N) + 2) + 5 * j := by
+        rw [mul_add]; linarith
 
 /-- `∑'_t (B + c t)/2^{t+1} = B + c`. -/
 theorem tsum_lin_geom (B c : ℝ) : ∑' t : ℕ, (B + c * t) / 2 ^ (t + 1) = B + c := by
