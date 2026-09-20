@@ -377,3 +377,4 @@ import NormalNumbers.WeylCriterion
 import NormalNumbers.DyadicToPrefix
 import NormalNumbers.G4WiringCRT
 import NormalNumbers.G4WiringSparse
+import NormalNumbers.Maze
