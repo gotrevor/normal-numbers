@@ -1,6 +1,15 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-20 18:22 EDT — `RoughIndependence` SPLIT LAP (ACTIVE)
+## Attended operator override: 2026-09-20 18:22 EDT — `RoughIndependence` SPLIT LAP (DONE, one lap)
+
+**Result:** `src/NormalNumbers/G4WiringRough.lean` landed sorry-free and axiom-clean; all six
+leaves closed, `isNormal_G4_of_rough` proved.  Two forced deviations (the verbatim
+`omegaLe_add_primorial` is false at `m = 0`; leaf 5's `J·P/N` error had to be kept *relative*
+via `‖R_W‖ ≤ (B_R+|C_R|)∏‖R_j‖` rather than absorbed into `1/log N`).  Next crux: probe
+`SmoothRoughDecoupling` (the only unprobed node in the new chain).  See
+`HANDOFF-2026-09-20-rough-independence.md`.  No active override.
+
+## (superseded) kickoff text
 
 Run `KICKOFF-2026-09-20-rough-independence-lap.md`: new file `src/NormalNumbers/G4WiringRough.lean`
 splitting N1 into the elementary smooth/CRT part and the frozen crux `RoughIndependence` (blueprint probe 6),
