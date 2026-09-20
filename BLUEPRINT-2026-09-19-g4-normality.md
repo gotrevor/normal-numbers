@@ -61,3 +61,11 @@ IsNormal 4 G₄
    Was: N1's *rate*.  c/CRT − 1 should be ≍ 1/log N with a computable coefficient (next Selberg–Delange
    term); fit the coefficient at h = 1, 3, 5 from N = 10⁶ … 10⁸ and compare with the derivative of the
    local factor.  A wrong sign or a wrong order would be the first crack in the SD law.
+
+## Sparse-𝒫 node probes (2026-09-20)
+5. ✅ NOT REFUTED 14:00: the frozen `KMT_quant₂` shape on three prime sets (π-indexed leaf-6 set, p ≡ 1 mod 4,
+   a two-block set), x ≤ 10⁸, J ≤ 3, h = 1: LHS/(t1+t2+t3) ≤ 0.15 at every admissible ε, non-increasing in x.
+   ⚠️ Low power: the admissible window (1/log log x, 1/2) is (0.36, 0.5) here and exp(−1/(8J²ε)) ≥ 0.7, so the
+   Prop is satisfied by C₂ ≥ 1.5 regardless of arithmetic.  Measurable sharpening: LHS ≤ 1.3·exp(−S_𝒫(⌊x^ε⌋))
+   (Euler-product picture).  `lambert_carry_probe.py --kmt-probe`; data in the KB instruments dir; KB verdict §4l.
+
