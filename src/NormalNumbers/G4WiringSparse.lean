@@ -288,10 +288,29 @@ where the ratio is `≥ (#Bᵢ)/π(vᵢ)`, so `#Bᵢ = o(π(vᵢ))` is forced.  
 * `Bᵢ` a general thin subset: `p > yᵢ` gives `#Bᵢ ≥ δᵢ yᵢ`, and lower-bounding `δᵢ` without
   locating the primes of `Bᵢ` is exactly the counting input again.
 
-So this leaf is a genuine PNT-wall, to be narrowed when mathlib gains `π(x) ~ x/log x` (or the
-`PrimeNumberTheoremAnd` material is upstreamed).  It is **off the main line**: the headline
-`exists_sparse_normal_of_KMT_quant` does not mention `RelDensityZero` at all — it consumes only
-`DivergentRecip`, which `BlockData.divergentRecip` supplies unconditionally. -/
+The general form of the obstruction: the only count bound available *for free* (without prime
+counting) is "a fraction of the integers", which is off by a factor `log x` from `π(x)`.  So any
+`S` whose density-zero we can prove for free has integer-density `≤ 1/log v`, hence reciprocal-mass
+rate `≤ d(log log v)/log v = dL/L²` (with `L = log v`), and `∫ dL/L² < ∞`.  **Every free-count
+construction has a convergent reciprocal sum.**  That is why prime counting is unavoidable here.
+
+**The construction that does work** (found this lap; it matches the `π_S ≍ π/log log x` hint
+above).  Work in `L = log y`.  Blocks `Bᵢ` = all primes of `(yᵢ, vᵢ]` with `log vᵢ = Lᵢ + εᵢ`:
+* count fraction at the top of the block is `1 − π(yᵢ)/π(vᵢ) ≈ 1 − e^{-εᵢ}`, so `εᵢ → 0` is forced;
+* mass is `log log vᵢ − log log yᵢ ≈ εᵢ / Lᵢ`;
+* gaps `ΔLᵢ = Lᵢ₊₁ − Lᵢ ≫ εᵢ` are needed so the *accumulated* `S` stays thin: the density of `S`
+  among the primes is `≈ εᵢ/ΔLᵢ =: 1/gᵢ`, so `gᵢ → ∞`;
+* total mass is `∑ εᵢ/Lᵢ = ∑ (ΔLᵢ/Lᵢ)/gᵢ`.
+With `gᵢ = log Lᵢ` this is `∫ dL/(L log L) = log log L → ∞` while the density `1/log Lᵢ → 0`.  So
+the sandwich closes, with room, and the density is exactly `1/log log x`.  The two analytic inputs
+are `π(x) ~ x/log x` (for the count fraction) and Mertens *with its constant*,
+`∑_{p≤x} 1/p = log log x + M + o(1)` (for the mass) — the repo's one-sided
+`log log N ≤ ∑_{p<N} 1/p + 1` is not enough, because the block mass is a *difference* of two such
+sums and the `±1` swamps `εᵢ/Lᵢ → 0`.
+
+It is **off the main line**: the headline `exists_sparse_normal_of_KMT_quant` does not mention
+`RelDensityZero` at all — it consumes only `DivergentRecip`, which `BlockData.divergentRecip`
+supplies unconditionally. -/
 theorem exists_relDensityZero_divergent :
     ∃ (S : ℕ → Prop) (_ : DecidablePred S), RelDensityZero S ∧ DivergentRecip S := by
   sorry

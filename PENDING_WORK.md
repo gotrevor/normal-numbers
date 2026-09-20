@@ -8724,9 +8724,21 @@ Mathlib has only constant-factor Chebyshev (`Chebyshev.pi_ge`, `Chebyshev.pi_le_
 and the repo only the one-sided `G4Mertens.log_log_le_sum_inv_primesBelow`.  The residue-class
 dodge (count `≤ v/q + 1` for free, so `q ≫ log v` gives density) is *provably* insufficient: the
 mass rate becomes `d(log log v)/log v`, whose integral `∫ dL/L²` converges, so `∑ δᵢ < ∞` always.
-Full argument in the theorem's docstring.  **Next attack:** wait for PNT in mathlib, or restate
-the existence theorem to take the density-zero witness as a hypothesis (it is off the main line —
-`exists_sparse_normal_of_KMT_quant` consumes only `DivergentRecip`).
+General form of the obstruction (this is the sharp statement): the only free count bound is
+"a fraction of the integers", off by `log x` from `π(x)`; so any free-count construction has
+integer-density `≤ 1/log v`, mass rate `≤ dL/L²`, and `∫dL/L² < ∞` — **every** such construction
+has a convergent reciprocal sum.
+
+**The construction that does work** (found this lap, matches the `π_S ≍ π/log log x` hint):
+blocks `Bᵢ` = primes of `(yᵢ, vᵢ]`, `log vᵢ = Lᵢ + εᵢ`, gaps `ΔLᵢ = εᵢ gᵢ` with `gᵢ = log Lᵢ`.
+Count fraction `≈ 1 − e^{-εᵢ} → 0`; accumulated density `≈ 1/gᵢ = 1/log log yᵢ → 0`; total mass
+`∑ (ΔLᵢ/Lᵢ)/gᵢ = ∫ dL/(L log L) = ∞`.  Sandwich closes with room.
+
+**Exact inputs needed** (both absent): `π(x) ~ x/log x`, and Mertens *with its constant*
+`∑_{p≤x} 1/p = log log x + M + o(1)`.  The repo's one-sided `log log N ≤ ∑_{p<N} 1/p + 1` cannot
+substitute: the block mass is a difference of two such sums and the `±1` swamps `εᵢ/Lᵢ → 0`.
+**Next attack:** wait for PNT in mathlib (or upstream `PrimeNumberTheoremAnd`), then formalize the
+recursion above; the `L`-coordinate parameterization is the part that was missing.
 
 **`exists_good` — the sandwich; out of scope for this lap by operator instruction.**
 All its consumers are now proved, so it is the single remaining obligation of
