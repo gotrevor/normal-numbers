@@ -2463,6 +2463,170 @@ theorem exists_sparse_normal_of_KMT_quant (C : ℕ → ℝ)
     ∃ (S : ℕ → Prop) (_ : DecidablePred S), DivergentRecip S ∧ IsNormal 4 (subsetLambert S 4) :=
   exists_sparse_normal_of_KMT_quant' C hgrow hKMT
 
+
+/-! ### Two-constant re-freeze
+
+The frozen `KMT_quant C` puts a single constant on all three terms of KMT 2023 Prop. 4.3, which
+silently demands `log C_FL(k) = o(4^k)` for the fundamental-lemma constant of (4.20)
+(`papers/kmt-2023-prop43-k-dependence.md`).  Splitting the constant in two removes that assumption:
+the sieve/truncation term only needs `log log C₂ k = o(4^k)`. -/
+
+/-- Two-constant form of `KMT_quant`: `C₁` on the distance terms, `C₂` on the sieve/truncation term
+(KMT 2023 (4.7), (4.20), (4.22)); see `papers/kmt-2023-prop43-k-dependence.md`. -/
+def KMT_quant₂ (C₁ C₂ : ℕ → ℝ) : Prop :=
+  ∀ (S : ℕ → Prop) [DecidablePred S] (J : ℕ) (h : ℤ), h ≠ 0 → NontrivialWindow J h →
+    ∀ x : ℕ, 3 ≤ x → ∀ ε : ℝ, 1 / Real.log (Real.log x) < ε → ε < 1 / 2 →
+      ‖windowMeanS S J h x‖ ≤ C₁ J *
+        (Real.sqrt (Real.log (1 / ε)) * Real.sqrt (2 * recipSumIoc S ⌊(x : ℝ) ^ ε⌋₊ x)
+          + Real.exp (- recipSumLe S ⌊(x : ℝ) ^ ε⌋₊))
+        + C₂ J * Real.exp (- 1 / (8 * (J : ℝ) ^ 2 * ε))
+
+/-- Leaf 1: the one-constant form is the two-constant form with `C₁ = C₂ = C`. -/
+theorem KMT_quant₂_of_KMT_quant (C : ℕ → ℝ) (h : KMT_quant C) : KMT_quant₂ C C := by
+  intro S _ J hh hh0 hntw x hx ε hε1 hε2
+  have := h S J hh hh0 hntw x hx ε hε1 hε2
+  linarith [this]
+
+namespace BlockData
+
+variable (D : BlockData)
+
+/-- The two-constant sandwich: `Good` with the `terms` field split along the two constants. -/
+structure Good₂ (C₁ C₂ : ℕ → ℝ) : Prop where
+  /-- `Jᵢ → ∞` (so every `h ≠ 0` eventually has a nontrivial site). -/
+  J_tendsto : Tendsto D.J atTop atTop
+  /-- `∑ δᵢ = ∞`. -/
+  δ_div : ¬ Summable D.δ
+  /-- The KMT `ε`-range holds at every scale of block `i`. -/
+  ε_range : ∀ i N, D.x i < N → 1 / Real.log (Real.log N) < D.ε i ∧ D.ε i < 1 / 2
+  /-- `[N^{εᵢ}, N]` meets at most blocks `i−1, i` (see `Good.sep`: `1 ≤ i` is necessary). -/
+  sep : ∀ i N, 1 ≤ i → D.x i < N → D.x (i - 1) ≤ ⌊(N : ℝ) ^ D.ε i⌋₊
+  /-- `2N` stays inside block `i+1`. -/
+  x_double : ∀ i, 2 * D.x (i + 1) ≤ D.x (i + 2)
+  /-- The two distance terms, with the constant `C₁`, vanish along the blocks. -/
+  terms₁ : Tendsto (fun i => C₁ (D.J i) *
+      (Real.sqrt (Real.log (1 / D.ε i)) * Real.sqrt (2 * (D.δ (i - 1) + D.δ i))
+        + Real.exp (- ∑ i' ∈ Finset.range (i - 1), D.δ i'))) atTop (𝓝 0)
+  /-- The sieve/truncation term, with the constant `C₂`, vanishes along the blocks. -/
+  terms₂ : Tendsto (fun i => C₂ (D.J i) *
+      Real.exp (- 1 / (8 * (D.J i : ℝ) ^ 2 * D.ε i))) atTop (𝓝 0)
+  /-- The L¹ tail vanishes: `∑_{i' ≤ i+1} δᵢ' = o(4^{Jᵢ})`. -/
+  tail : Tendsto (fun i => (∑ i' ∈ Finset.range (i + 2), D.δ i' + 1) / (4 : ℝ) ^ D.J i)
+    atTop (𝓝 0)
+
+/-- Leaf 3: the KMT means vanish along the block schedule, two-constant form. -/
+theorem kmt_along₂ {C₁ C₂ : ℕ → ℝ} (hKMT : KMT_quant₂ C₁ C₂) (hG : D.Good₂ C₁ C₂) :
+    KMT_along D.set D.sched := by
+  sorry
+
+end BlockData
+
+namespace GoodExists
+
+open Classical in
+/-- `Jᵢ` for the two-constant schedule: the greatest `J ≤ i` with `|C₁ J'| ≤ ⁴√i` and
+`log |C₂ J'| ≤ i/2` for all `J' ≤ J`. -/
+noncomputable def JF₂ (C₁ C₂ : ℕ → ℝ) (i : ℕ) : ℕ :=
+  Nat.findGreatest
+    (fun J => ∀ J' ≤ J, |C₁ J'| ≤ Real.sqrt (Real.sqrt i) ∧ Real.log |C₂ J'| ≤ (i : ℝ) / 2) i
+
+/-- The block data of the explicit schedule, with an arbitrary schedule function. -/
+noncomputable def DDJ (Jf : ℕ → ℕ) : BlockData where
+  x := XF
+  B := fun i => blk (XF i) i
+  J := Jf
+  ε := epsF
+  x_mono := XF_strictMono
+  B_prime := (DD (fun _ => 0)).B_prime
+
+theorem DDJ_delta (Jf : ℕ → ℕ) (i : ℕ) : (DDJ Jf).δ i = (DD (fun _ => 0)).δ i := rfl
+
+theorem DDJ_J (Jf : ℕ → ℕ) (i : ℕ) : (DDJ Jf).J i = Jf i := rfl
+theorem DDJ_eps (Jf : ℕ → ℕ) (i : ℕ) : (DDJ Jf).ε i = epsF i := rfl
+
+theorem JF₂_le (C₁ C₂ : ℕ → ℝ) (i : ℕ) : JF₂ C₁ C₂ i ≤ i := Nat.findGreatest_le i
+
+/-- Every `J' ≤ Jᵢ` satisfies the defining bounds (given that `J' = 0` does). -/
+theorem JF₂_spec (C₁ C₂ : ℕ → ℝ) (i : ℕ)
+    (h0 : |C₁ 0| ≤ Real.sqrt (Real.sqrt i) ∧ Real.log |C₂ 0| ≤ (i : ℝ) / 2) :
+    ∀ J' ≤ JF₂ C₁ C₂ i, |C₁ J'| ≤ Real.sqrt (Real.sqrt i) ∧ Real.log |C₂ J'| ≤ (i : ℝ) / 2 := by
+  sorry
+
+/-- Maximality at `Jᵢ + 1`. -/
+theorem JF₂_max (C₁ C₂ : ℕ → ℝ) (i : ℕ)
+    (h0 : |C₁ 0| ≤ Real.sqrt (Real.sqrt i) ∧ Real.log |C₂ 0| ≤ (i : ℝ) / 2)
+    (hlt : JF₂ C₁ C₂ i < i) :
+    Real.sqrt (Real.sqrt i) < |C₁ (JF₂ C₁ C₂ i + 1)| ∨
+      (i : ℝ) / 2 < Real.log |C₂ (JF₂ C₁ C₂ i + 1)| := by
+  sorry
+
+theorem JF₂_tendsto (C₁ C₂ : ℕ → ℝ) : Tendsto (JF₂ C₁ C₂) atTop atTop := by
+  sorry
+
+theorem JF₂_base (C₁ C₂ : ℕ → ℝ) : ∀ᶠ i : ℕ in atTop,
+    |C₁ 0| ≤ Real.sqrt (Real.sqrt i) ∧ Real.log |C₂ 0| ≤ (i : ℝ) / 2 := by
+  sorry
+
+theorem JF₂_C_le (C₁ C₂ : ℕ → ℝ) : ∀ᶠ i : ℕ in atTop,
+    |C₁ (JF₂ C₁ C₂ i)| ≤ Real.sqrt (Real.sqrt i) ∧
+      Real.log |C₂ (JF₂ C₁ C₂ i)| ≤ (i : ℝ) / 2 := by
+  filter_upwards [JF₂_base C₁ C₂] with i hi
+  exact JF₂_spec C₁ C₂ i hi _ (le_refl _)
+
+/-- Leaf 5a: the two distance terms, for any schedule with `Jf i ≤ i` and `|C₁ (Jf i)| ≤ ⁴√i`. -/
+theorem terms₁_tendsto (C₁ : ℕ → ℝ) (Jf : ℕ → ℕ)
+    (hC : ∀ᶠ i : ℕ in atTop, |C₁ (Jf i)| ≤ Real.sqrt (Real.sqrt i)) :
+    Tendsto (fun i => C₁ ((DDJ Jf).J i) *
+      (Real.sqrt (Real.log (1 / (DDJ Jf).ε i)) *
+          Real.sqrt (2 * ((DDJ Jf).δ (i - 1) + (DDJ Jf).δ i))
+        + Real.exp (- ∑ i' ∈ Finset.range (i - 1), (DDJ Jf).δ i'))) atTop (𝓝 0) := by
+  sorry
+
+/-- Leaf 5b: the sieve term, for any schedule with `1 ≤ Jf i ≤ i` and `log |C₂ (Jf i)| ≤ i/2`. -/
+theorem terms₂_tendsto (C₂ : ℕ → ℝ) (Jf : ℕ → ℕ) (hle : ∀ i, Jf i ≤ i)
+    (hJ1 : ∀ᶠ i : ℕ in atTop, 1 ≤ Jf i)
+    (hC : ∀ᶠ i : ℕ in atTop, Real.log |C₂ (Jf i)| ≤ (i : ℝ) / 2) :
+    Tendsto (fun i => C₂ ((DDJ Jf).J i) *
+      Real.exp (- 1 / (8 * ((DDJ Jf).J i : ℝ) ^ 2 * (DDJ Jf).ε i))) atTop (𝓝 0) := by
+  sorry
+
+/-- Leaf 4c (two-constant): `log i = o(4^{Jᵢ})` for the `JF₂` schedule. -/
+theorem log_o_pow₂ (C₁ C₂ : ℕ → ℝ)
+    (h₁ : Tendsto (fun k : ℕ => Real.log (C₁ k) / 4 ^ k) atTop (𝓝 0))
+    (h₂ : Tendsto (fun k : ℕ => Real.log (Real.log (C₂ k)) / 4 ^ k) atTop (𝓝 0)) :
+    Tendsto (fun i : ℕ => Real.log i / (4 : ℝ) ^ JF₂ C₁ C₂ i) atTop (𝓝 0) := by
+  sorry
+
+/-- Leaf 6 (general schedule): the L¹ tail. -/
+theorem tail_tendsto_gen (Jf : ℕ → ℕ) (hJt : Tendsto Jf atTop atTop)
+    (hlog : Tendsto (fun i : ℕ => Real.log i / (4 : ℝ) ^ Jf i) atTop (𝓝 0)) :
+    Tendsto (fun i => (∑ i' ∈ Finset.range (i + 2), (DDJ Jf).δ i' + 1) / (4 : ℝ) ^ (DDJ Jf).J i)
+      atTop (𝓝 0) := by
+  sorry
+
+end GoodExists
+
+/-- **The two-constant sandwich is solvable** when `log C₁ k = o(4^k)` and
+`log log C₂ k = o(4^k)`. -/
+theorem exists_good₂ (C₁ C₂ : ℕ → ℝ)
+    (h₁ : Tendsto (fun k : ℕ => Real.log (C₁ k) / 4 ^ k) atTop (𝓝 0))
+    (h₂ : Tendsto (fun k : ℕ => Real.log (Real.log (C₂ k)) / 4 ^ k) atTop (𝓝 0)) :
+    ∃ D : BlockData, D.Good₂ C₁ C₂ := by
+  sorry
+
+/-- **Existence from the two-constant proposition**: the sieve constant only needs
+`log log C₂ k = o(4^k)`. -/
+theorem exists_sparse_normal_of_KMT_quant₂ (C₁ C₂ : ℕ → ℝ)
+    (h₁ : Tendsto (fun k : ℕ => Real.log (C₁ k) / 4 ^ k) atTop (𝓝 0))
+    (h₂ : Tendsto (fun k : ℕ => Real.log (Real.log (C₂ k)) / 4 ^ k) atTop (𝓝 0))
+    (hKMT : KMT_quant₂ C₁ C₂) :
+    ∃ (S : ℕ → Prop) (_ : DecidablePred S), DivergentRecip S ∧ IsNormal 4 (subsetLambert S 4) := by
+  obtain ⟨D, hG⟩ := exists_good₂ C₁ C₂ h₁ h₂
+  exact ⟨D.set, inferInstance, D.divergentRecip hG.δ_div,
+    isNormal_subsetLambert_of_KMT_along D.set D.sched
+      (D.tailOK (C := fun _ => 0) ⟨hG.J_tendsto, hG.δ_div, hG.ε_range, hG.sep, hG.x_double,
+        by simpa using tendsto_const_nhds, hG.tail⟩) (D.kmt_along₂ hKMT hG)⟩
+
 end NormalNumbers.G4Sparse
 
 section Refutation
