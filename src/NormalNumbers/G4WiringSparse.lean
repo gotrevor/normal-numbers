@@ -1,3 +1,4 @@
+import NormalNumbers.G4Mertens
 import NormalNumbers.G4WiringCRT
 
 /-!
@@ -925,11 +926,87 @@ end BlockData
 
 /-- Greedy block: a finite set of primes above `y` with reciprocal sum in `[δ, δ + 1/y]`
 (take primes `> y` in order until the sum exceeds `δ`; `∑_{p>y} 1/p = ∞` from
-`G4Mertens.log_log_le_sum_inv_primesBelow`). -/
+`log_log_le_sum_inv_primesBelow`). -/
 theorem exists_block (y : ℕ) (hy : 1 ≤ y) (δ : ℝ) (hδ : 0 < δ) :
     ∃ B : Finset ℕ, (∀ p ∈ B, p.Prime ∧ y < p) ∧
       δ ≤ ∑ p ∈ B, (1 : ℝ) / p ∧ ∑ p ∈ B, (1 : ℝ) / p ≤ δ + 1 / y := by
-  sorry
+  classical
+  set T : ℕ → ℝ := fun n => ∑ p ∈ (Finset.Ioc y n).filter Nat.Prime, (1 : ℝ) / p with hT
+  set K : ℝ := ∑ p ∈ (y + 1).primesBelow, (p : ℝ)⁻¹ with hK
+  have hsplit : ∀ n : ℕ, y ≤ n → ∑ p ∈ (n + 1).primesBelow, (p : ℝ)⁻¹ = K + T n := by
+    intro n hn
+    have hset : (n + 1).primesBelow
+        = ((y + 1).primesBelow) ∪ ((Finset.Ioc y n).filter Nat.Prime) := by
+      ext q
+      simp only [Nat.mem_primesBelow, Finset.mem_union, Finset.mem_filter, Finset.mem_Ioc]
+      constructor
+      · rintro ⟨hq, hp⟩
+        by_cases hc : q ≤ y
+        · exact Or.inl ⟨by omega, hp⟩
+        · exact Or.inr ⟨⟨by omega, by omega⟩, hp⟩
+      · rintro (⟨hq, hp⟩ | ⟨⟨h1, h2⟩, hp⟩)
+        · exact ⟨by omega, hp⟩
+        · exact ⟨by omega, hp⟩
+    have hdisj : Disjoint ((y + 1).primesBelow) ((Finset.Ioc y n).filter Nat.Prime) := by
+      refine Finset.disjoint_left.mpr (fun q hq1 hq2 => ?_)
+      rw [Nat.mem_primesBelow] at hq1
+      rw [Finset.mem_filter, Finset.mem_Ioc] at hq2
+      omega
+    rw [hset, Finset.sum_union hdisj, hK, hT]
+    congr 1
+    exact Finset.sum_congr rfl (fun q _ => by rw [one_div])
+  -- divergence gives some `n` with `δ ≤ T n`
+  have htend : Tendsto (fun n : ℕ => Real.log (Real.log ((n : ℝ) + 1))) atTop atTop := by
+    have h1 : Tendsto (fun n : ℕ => ((n : ℝ) + 1)) atTop atTop :=
+      tendsto_atTop_add_const_right _ 1 tendsto_natCast_atTop_atTop
+    exact Real.tendsto_log_atTop.comp (Real.tendsto_log_atTop.comp h1)
+  obtain ⟨n, hn2, hn1⟩ :=
+    ((htend.eventually_ge_atTop (δ + K + 1)).and (eventually_ge_atTop y)).exists
+  have hex : ∃ n, δ ≤ T n := by
+    refine ⟨n, ?_⟩
+    have hM := log_log_le_sum_inv_primesBelow (n + 1) (by omega)
+    rw [hsplit n hn1] at hM
+    have hcast : ((n + 1 : ℕ) : ℝ) = (n : ℝ) + 1 := by push_cast; ring
+    rw [hcast] at hM
+    linarith
+  set n₀ := Nat.find hex with hn₀
+  have hspec : δ ≤ T n₀ := Nat.find_spec hex
+  have hgt : y < n₀ := by
+    by_contra hc
+    have hempty : Finset.Ioc y n₀ = ∅ := Finset.Ioc_eq_empty (by omega)
+    rw [hT] at hspec
+    simp only [hempty, Finset.filter_empty, Finset.sum_empty] at hspec
+    linarith
+  have hmin : ¬ (δ ≤ T (n₀ - 1)) := Nat.find_min hex (by omega)
+  have hyR : (0 : ℝ) < y := by exact_mod_cast hy
+  have hstep : T n₀ ≤ T (n₀ - 1) + 1 / (y : ℝ) := by
+    have hIoc : Finset.Ioc y n₀ = insert n₀ (Finset.Ioc y (n₀ - 1)) := by
+      ext q
+      simp only [Finset.mem_Ioc, Finset.mem_insert]
+      omega
+    have hnotmem : n₀ ∉ (Finset.Ioc y (n₀ - 1)).filter Nat.Prime := by
+      rw [Finset.mem_filter, Finset.mem_Ioc]
+      rintro ⟨⟨-, h2⟩, -⟩
+      omega
+    rw [hT]
+    simp only
+    rw [hIoc, Finset.filter_insert]
+    by_cases hp : Nat.Prime n₀
+    · rw [if_pos hp, Finset.sum_insert hnotmem]
+      have hle : (1 : ℝ) / n₀ ≤ 1 / y := by
+        refine one_div_le_one_div_of_le hyR ?_
+        exact_mod_cast le_of_lt hgt
+      linarith
+    · rw [if_neg hp]
+      have : (0 : ℝ) < 1 / y := by positivity
+      linarith
+  refine ⟨(Finset.Ioc y n₀).filter Nat.Prime, ?_, hspec, ?_⟩
+  · intro q hq
+    rw [Finset.mem_filter, Finset.mem_Ioc] at hq
+    exact ⟨hq.2, hq.1.1⟩
+  · push_neg at hmin
+    have : T n₀ = ∑ p ∈ (Finset.Ioc y n₀).filter Nat.Prime, (1 : ℝ) / p := rfl
+    linarith [hstep, hmin.le]
 
 /-- **The sandwich is solvable** when `log C k = o(4^k)`.  Explicit choices (design doc §5,
 "`exists_good`, explicit"): `φ(J) := max(1, max_{J'≤J} log C J')`, `Jᵢ := max{J : 4φ(J) + 4J ≤ log i}`
