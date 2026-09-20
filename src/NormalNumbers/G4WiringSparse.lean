@@ -652,20 +652,92 @@ structure Good (C : ℕ → ℝ) : Prop where
   tail : Tendsto (fun i => (∑ i' ∈ Finset.range (i + 2), D.δ i' + 1) / (4 : ℝ) ^ D.J i)
     atTop (𝓝 0)
 
+/-- Distinct blocks are disjoint: `B i ⊆ (x i, x (i+1)]`. -/
+theorem B_disjoint {i i' : ℕ} (h : i ≠ i') : Disjoint (D.B i) (D.B i') := by
+  refine Finset.disjoint_left.mpr (fun p hp hp' => ?_)
+  obtain ⟨-, h1, h2⟩ := D.B_prime i p hp
+  obtain ⟨-, h1', h2'⟩ := D.B_prime i' p hp'
+  rcases lt_or_gt_of_ne h with hlt | hlt
+  · have := D.x_mono.monotone (show i + 1 ≤ i' by omega)
+    omega
+  · have := D.x_mono.monotone (show i' + 1 ≤ i by omega)
+    omega
+
+theorem B_pairwiseDisjoint (s : Finset ℕ) : (s : Set ℕ).PairwiseDisjoint D.B :=
+  fun _ _ _ _ h => D.B_disjoint h
+
+/-- Every prime of `D.set` below `y` lies in one of the first blocks. -/
+theorem biUnion_subset_filter (i y : ℕ) (hy : D.x (i - 1) ≤ y) :
+    (Finset.range (i - 1)).biUnion D.B ⊆ (Finset.Iic y).filter (fun p => p.Prime ∧ D.set p) := by
+  intro p hp
+  rw [Finset.mem_biUnion] at hp
+  obtain ⟨i', hi', hpB⟩ := hp
+  rw [Finset.mem_range] at hi'
+  obtain ⟨hprime, -, h2⟩ := D.B_prime i' p hpB
+  have hx : D.x (i' + 1) ≤ D.x (i - 1) := D.x_mono.monotone (by omega)
+  exact Finset.mem_filter.mpr ⟨Finset.mem_Iic.mpr (by omega), hprime, ⟨i', hpB⟩⟩
+
 /-- On block `i`, `∑_{y<p≤N, p∈S} 1/p ≤ δᵢ₋₁ + δᵢ` once `y ≥ xᵢ₋₁`. -/
 theorem recipSumIoc_le (i N y : ℕ) (hN : D.x i < N) (hN' : N ≤ D.x (i + 1))
     (hy : D.x (i - 1) ≤ y) : recipSumIoc D.set y N ≤ D.δ (i - 1) + D.δ i := by
-  sorry
+  have hsub : (Finset.Ioc y N).filter (fun p => p.Prime ∧ D.set p) ⊆ D.B (i - 1) ∪ D.B i := by
+    intro p hp
+    rw [Finset.mem_filter, Finset.mem_Ioc] at hp
+    obtain ⟨k, hk⟩ := hp.2.2
+    obtain ⟨-, hkl, hkr⟩ := D.B_prime k p hk
+    have h1 : p ≤ D.x (i + 1) := le_trans hp.1.2 hN'
+    have h2 : D.x (i - 1) < p := lt_of_le_of_lt hy hp.1.1
+    have hkle : k ≤ i := by
+      by_contra hc
+      have := D.x_mono.monotone (show i + 1 ≤ k by omega)
+      omega
+    have hkge : i - 1 ≤ k := by
+      by_contra hc
+      have := D.x_mono.monotone (show k + 1 ≤ i - 1 by omega)
+      omega
+    rcases (by omega : k = i - 1 ∨ k = i) with rfl | rfl
+    · exact Finset.mem_union_left _ hk
+    · exact Finset.mem_union_right _ hk
+  calc recipSumIoc D.set y N ≤ ∑ p ∈ D.B (i - 1) ∪ D.B i, (1 : ℝ) / p := by
+        rw [recipSumIoc]
+        exact Finset.sum_le_sum_of_subset_of_nonneg hsub (fun q _ _ => by positivity)
+    _ ≤ D.δ (i - 1) + D.δ i := by
+        rw [δ, δ, ← Finset.sum_union_inter]
+        have : (0 : ℝ) ≤ ∑ p ∈ D.B (i - 1) ∩ D.B i, (1 : ℝ) / p :=
+          Finset.sum_nonneg (fun q _ => by positivity)
+        linarith
 
 /-- `∑_{p≤y, p∈S} 1/p ≥ ∑_{i'<i−1} δᵢ'` once `y ≥ xᵢ₋₁`. -/
 theorem recipSumLe_ge (i y : ℕ) (hy : D.x (i - 1) ≤ y) :
     ∑ i' ∈ Finset.range (i - 1), D.δ i' ≤ recipSumLe D.set y := by
-  sorry
+  have heq : ∑ i' ∈ Finset.range (i - 1), D.δ i'
+      = ∑ p ∈ (Finset.range (i - 1)).biUnion D.B, (1 : ℝ) / p := by
+    rw [Finset.sum_biUnion (D.B_pairwiseDisjoint _)]
+    rfl
+  rw [heq, recipSumLe]
+  exact Finset.sum_le_sum_of_subset_of_nonneg (D.biUnion_subset_filter i y hy)
+    (fun q _ _ => by positivity)
 
 /-- `∑_{p≤y, p∈S} 1/p ≤ ∑_{i'≤i+1} δᵢ'` once `y ≤ xᵢ₊₂`. -/
 theorem recipSumLe_le (i y : ℕ) (hy : y ≤ D.x (i + 2)) :
     recipSumLe D.set y ≤ ∑ i' ∈ Finset.range (i + 2), D.δ i' := by
-  sorry
+  have heq : ∑ i' ∈ Finset.range (i + 2), D.δ i'
+      = ∑ p ∈ (Finset.range (i + 2)).biUnion D.B, (1 : ℝ) / p := by
+    rw [Finset.sum_biUnion (D.B_pairwiseDisjoint _)]
+    rfl
+  have hsub : (Finset.Iic y).filter (fun p => p.Prime ∧ D.set p)
+      ⊆ (Finset.range (i + 2)).biUnion D.B := by
+    intro p hp
+    rw [Finset.mem_filter, Finset.mem_Iic] at hp
+    obtain ⟨k, hk⟩ := hp.2.2
+    obtain ⟨-, hkl, -⟩ := D.B_prime k p hk
+    have hklt : k < i + 2 := by
+      by_contra hc
+      have := D.x_mono.monotone (show i + 2 ≤ k by omega)
+      omega
+    exact Finset.mem_biUnion.mpr ⟨k, Finset.mem_range.mpr hklt, hk⟩
+  rw [heq, recipSumLe]
+  exact Finset.sum_le_sum_of_subset_of_nonneg hsub (fun q _ _ => by positivity)
 
 /-- `blockIndex N → ∞`. -/
 theorem blockIndex_tendsto : Tendsto D.blockIndex atTop atTop := by
