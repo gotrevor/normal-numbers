@@ -1,6 +1,6 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-19 21:55 EDT — CLOSING LAP: W4 + L1 + ASSEMBLY (ACTIVE; supersedes everything below for this run)
+## Attended operator override: 2026-09-19 21:55 EDT — CLOSING LAP: W4 + L1 + ASSEMBLY (DONE 20:45 EDT in two laps: `isNormal_G4_of_CRTConstant` is an axiom-clean theorem; kept for the record.  Next prepared, NOT fired: `KICKOFF-2026-09-19-sparse-subset-lap.md`)
 
 Operator: Ren, attended; Trevor fired the run.  Engine Opus/low.  Branch `wip/g5-prime-subset`.
 Read `KICKOFF-2026-09-19-closing-lap.md` and do exactly that, leaves in the listed order: make
