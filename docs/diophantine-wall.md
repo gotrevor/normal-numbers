@@ -44,6 +44,21 @@ architecture; the interface theorems make each door consumable with zero repo co
 3. **Citation axioms** (BASELINE per moonshot doctrine): Marcovecchio for NN, Rhin for
    moonshot - honest, disclosed, does not clear GO gates.
 
+## Not a door: normality of the constants themselves 🚪🚫
+
+2026-09-20, from Trevor's question "if ln 2, ln 3 are normal, does that help Collatz?"  No.
+Normality of `α` in base `b` is equidistribution of `{bⁿ α}` (multiplicative multipliers); the
+Collatz door needs the discrepancy of `{k · log₂ 3}` near 0 (linear multipliers), governed by the
+continued-fraction partial quotients of `log₂ 3` (Ostrowski), i.e. the irrationality measure.  The
+two invariants are independent both ways - absolutely normal Liouville numbers exist (Bugeaud 2002,
+see `irregularity-landscape.md`), and `e` has irrationality exponent exactly 2 with normality open -
+and separate normality of `ln 2`, `ln 3` says nothing about their ratio.  Even the ideal input
+(`μ(log₂ 3) = 2 + ε`) plus the verified orbit floor `~2⁷¹` only forces a cycle's odd-term count to
+`k ≳ 2^{35}`; exclusion needs circuit-count machinery and divergence is untouched.  The
+normality-flavoured statements that *do* bite Collatz are orbit-level - base-3 digits of `2ⁿ`
+(the Erdős digit-2 face, Furstenberg ×2×3 rigidity, `collatz-cryptid` notes/25 and /27) and
+`‖(3/2)ⁿ‖` (Mahler, = Tier 2 above) - which is why they are as hard as the problem.
+
 ## Graph bookkeeping
 
 Nodes: `LnTwoExpSep` 🟡 (citable), `LnTwoPolySep` 🔴 (open), `SliverEscape` 🔵 (new family,
