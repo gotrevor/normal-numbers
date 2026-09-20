@@ -82,6 +82,21 @@ lemma ePhase_add_int (x : ℝ) (w : ℤ) : ePhase (x + w) = ePhase x := by
     push_cast; ring
   rw [hx, Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, mul_one]
 
+lemma ePhase_add (x y : ℝ) : ePhase (x + y) = ePhase x * ePhase y := by
+  unfold ePhase; rw [← Complex.exp_add]; congr 1; push_cast; ring
+
+lemma ePhase_eq_e (x : ℝ) : ePhase x = NormalNumbers.PrimeLambert.e x := by
+  unfold ePhase NormalNumbers.PrimeLambert.e; congr 1; push_cast; ring
+
+/-- `‖e(a) − e(b)‖ ≤ 4π|a − b|`. -/
+lemma norm_ePhase_sub (a b : ℝ) : ‖ePhase a - ePhase b‖ ≤ 4 * Real.pi * |a - b| := by
+  have hsplit : ePhase a - ePhase b = ePhase b * (ePhase (a - b) - 1) := by
+    rw [mul_sub, ← ePhase_add, mul_one]
+    congr 2
+    ring
+  rw [hsplit, norm_mul, norm_ePhase, one_mul, ePhase_eq_e]
+  exact NormalNumbers.PrimeLambert.norm_e_sub_one_le _
+
 lemma norm_fullSiteMean_le_one (N : ℕ) (h : ℤ) (j : ℕ) : ‖fullSiteMean N h j‖ ≤ 1 := by
   rcases Nat.eq_zero_or_pos N with rfl | hN
   · simp [fullSiteMean]
@@ -323,7 +338,72 @@ theorem fullWindowMean_tendsto_zero (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant
 theorem dyadic_fourier_tendsto_zero (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant h)
     (hSite : SiteDecayFull) (h : ℤ) (hh : h ≠ 0) :
     Tendsto (dyadicMean (fun n => ePhase (h * orbit 4 (primeLambertAtBase 4) n))) atTop (𝓝 0) := by
-  sorry
+  set F : ℕ → ℂ := fun n => ePhase (h * orbit 4 (primeLambertAtBase 4) n) with hF
+  have hFtail : ∀ n : ℕ, F n = ePhase (h * TWeight.omega.tailB 4 n) := by
+    intro n
+    have hshift : (h : ℝ) * Int.fract (TWeight.omega.tailB 4 n)
+        = (h : ℝ) * TWeight.omega.tailB 4 n
+          + ((-(h * ⌊TWeight.omega.tailB 4 n⌋) : ℤ) : ℝ) := by
+      rw [Int.fract]; push_cast; ring
+    rw [hF]
+    simp only
+    rw [orbit_eq_fract_tailB, hshift, ePhase_add_int]
+  have hmain := fullWindowMean_tendsto_zero hLaw hSite h hh
+  have hgoal : Tendsto (fun N => dyadicMean F N - fullWindowMean N (windowJ N) h) atTop (𝓝 0) := by
+    refine tendsto_zero_iff_norm_tendsto_zero.mpr ?_
+    refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _))
+      (g := fun N => 4 * Real.pi * |(h : ℝ)| *
+        (((Nat.log 2 (2 * N + windowJ N + 2) : ℝ) + windowJ N + 3) / (4 : ℝ) ^ (windowJ N))) ?_
+      (by simpa using tail_error_uniform.const_mul (4 * Real.pi * |(h : ℝ)|))
+    filter_upwards [eventually_gt_atTop 0] with N hN
+    have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+    set J := windowJ N with hJ
+    have hsub : dyadicMean F N - fullWindowMean N J h
+        = (∑ n ∈ Finset.Ico N (2 * N),
+            (ePhase (h * TWeight.omega.tailB 4 n) - ePhase (h * truncTail J n))) / N := by
+      rw [dyadicMean, fullWindowMean, ← sub_div, ← Finset.sum_sub_distrib]
+      congr 1
+      exact Finset.sum_congr rfl (fun n _ => by rw [hFtail n])
+    rw [hsub, norm_div, Complex.norm_natCast]
+    rw [div_le_iff₀ hNR]
+    calc ‖∑ n ∈ Finset.Ico N (2 * N),
+            (ePhase (h * TWeight.omega.tailB 4 n) - ePhase (h * truncTail J n))‖
+        ≤ ∑ n ∈ Finset.Ico N (2 * N),
+            ‖ePhase (h * TWeight.omega.tailB 4 n) - ePhase (h * truncTail J n)‖ :=
+          norm_sum_le _ _
+      _ ≤ ∑ _n ∈ Finset.Ico N (2 * N), 4 * Real.pi * |(h : ℝ)| *
+            (((Nat.log 2 (2 * N + J + 2) : ℝ) + J + 3) / (4 : ℝ) ^ J) := by
+          refine Finset.sum_le_sum (fun n hn => ?_)
+          have hnlt : n < 2 * N := (Finset.mem_Ico.mp hn).2
+          have hterr := tail_error_le J n
+          have hmono : ((Nat.log 2 (n + J + 2) : ℝ) + J + 3) / (4 : ℝ) ^ J
+              ≤ ((Nat.log 2 (2 * N + J + 2) : ℝ) + J + 3) / (4 : ℝ) ^ J := by
+            have : Nat.log 2 (n + J + 2) ≤ Nat.log 2 (2 * N + J + 2) :=
+              Nat.log_mono_right (by omega)
+            have hc : (Nat.log 2 (n + J + 2) : ℝ) ≤ (Nat.log 2 (2 * N + J + 2) : ℝ) := by
+              exact_mod_cast this
+            gcongr
+          calc ‖ePhase (h * TWeight.omega.tailB 4 n) - ePhase (h * truncTail J n)‖
+              ≤ 4 * Real.pi * |(h : ℝ) * TWeight.omega.tailB 4 n - (h : ℝ) * truncTail J n| :=
+                norm_ePhase_sub _ _
+            _ = 4 * Real.pi * |(h : ℝ)| * |TWeight.omega.tailB 4 n - truncTail J n| := by
+                rw [← mul_sub, abs_mul]; ring
+            _ ≤ 4 * Real.pi * |(h : ℝ)| *
+                  (((Nat.log 2 (n + J + 2) : ℝ) + J + 3) / (4 : ℝ) ^ J) := by
+                have hpi := Real.pi_pos
+                have : (0:ℝ) ≤ 4 * Real.pi * |(h : ℝ)| := by positivity
+                exact mul_le_mul_of_nonneg_left hterr this
+            _ ≤ 4 * Real.pi * |(h : ℝ)| *
+                  (((Nat.log 2 (2 * N + J + 2) : ℝ) + J + 3) / (4 : ℝ) ^ J) := by
+                have hpi := Real.pi_pos
+                have h0 : (0:ℝ) ≤ 4 * Real.pi * |(h : ℝ)| := by positivity
+                exact mul_le_mul_of_nonneg_left hmono h0
+      _ = 4 * Real.pi * |(h : ℝ)| *
+            (((Nat.log 2 (2 * N + J + 2) : ℝ) + J + 3) / (4 : ℝ) ^ J) * N := by
+          rw [Finset.sum_const, nsmul_eq_mul, Nat.card_Ico, show 2 * N - N = N from by omega]
+          ring
+  have := hmain.add hgoal
+  simpa using this
 
 /-- **Wiring theorem**: normality of `G₄` from the two frozen inputs. -/
 theorem isNormal_G4_of_CRTConstant (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant h)
@@ -332,9 +412,20 @@ theorem isNormal_G4_of_CRTConstant (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant 
   refine equidistributed_of_weyl _ (orbit_mem_Ico 4 _) ?_
   intro h hh
   have hd := dyadic_fourier_tendsto_zero hLaw hSite h hh
-  have := prefixMean_tendsto_zero_of_dyadic _ 1 (fun n => ?_) hd
-  · -- `fourierMean u h = prefixMean (fun n => ePhase (h * u n))`
-    sorry
-  · sorry
+  have hb : ∀ n : ℕ, ‖(fun n => ePhase (h * orbit 4 (primeLambertAtBase 4) n)) n‖ ≤ 1 :=
+    fun n => le_of_eq (norm_ePhase _)
+  have hpre := prefixMean_tendsto_zero_of_dyadic _ 1 hb hd
+  have heq : fourierMean (orbit 4 (primeLambertAtBase 4)) h
+      = prefixMean (fun n => ePhase (h * orbit 4 (primeLambertAtBase 4) n)) := by
+    funext n
+    rw [fourierMean, prefixMean]
+    congr 1
+    refine Finset.sum_congr rfl (fun k _ => ?_)
+    rw [ePhase]
+    congr 1
+    push_cast
+    ring
+  rw [heq]
+  exact hpre
 
 end NormalNumbers.G4
