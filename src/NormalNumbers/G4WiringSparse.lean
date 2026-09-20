@@ -639,7 +639,7 @@ theorem blocks_disjoint : ∀ (n : ℕ), ((Finset.Ico 1 (2 ^ n) : Finset ℕ) : 
     omega
 
 /-- **(c)** `∑_{k ∈ A} 1/(k log k) = ∞`. -/
-theorem not_summable_f : ¬ Summable harm := by
+theorem not_summable_keep_harmonic : ¬ Summable harm := by
   intro hsum
   have hlog2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
   set C := ∑' k, harm k with hC
@@ -715,9 +715,67 @@ theorem not_summable_f : ¬ Summable harm := by
 theorem relDensityZero_PSet : RelDensityZero PSet := by
   sorry
 
+/-- `1/p_k` along `A`, `0` off it (a named function: `ite` on `Keep` must not be unfolded
+during unification, or `Nat.log`'s well-founded recursion makes `whnf` diverge). -/
+noncomputable def recipNth (k : ℕ) : ℝ := if Keep k then 1 / (Nat.nth Nat.Prime k : ℝ) else 0
+
+/-- Reindexing the prime sum by `k = π'(p)`. -/
+theorem summable_recipNth_of (h : Summable (fun p : ℕ => if p.Prime ∧ PSet p then (1 : ℝ) / p
+    else 0)) : Summable recipNth := by
+  have hinj : Function.Injective (Nat.nth Nat.Prime) :=
+    Nat.nth_injective Nat.infinite_setOfPred_prime
+  have hzero : ∀ x ∉ Set.range (Nat.nth Nat.Prime),
+      (if x.Prime ∧ PSet x then (1 : ℝ) / x else 0) = 0 := by
+    intro x hx
+    rw [if_neg]
+    rintro ⟨hp, -⟩
+    exact hx ⟨Nat.count Nat.Prime x, Nat.nth_count hp⟩
+  have hcomp := (Function.Injective.summable_iff hinj hzero).mpr h
+  have hfun : (fun k : ℕ => if (Nat.nth Nat.Prime k).Prime ∧ PSet (Nat.nth Nat.Prime k)
+      then (1 : ℝ) / (Nat.nth Nat.Prime k) else 0) = recipNth := by
+    funext k
+    have hp : (Nat.nth Nat.Prime k).Prime := Nat.prime_nth_prime k
+    have hc : Nat.count Nat.Prime (Nat.nth Nat.Prime k) = k := Nat.primeCounting'_nth_eq k
+    rw [recipNth]
+    by_cases hk : Keep k
+    · have hkeep' : Keep (Nat.count Nat.Prime (Nat.nth Nat.Prime k)) := by rw [hc]; exact hk
+      rw [if_pos ⟨hp, hp, hkeep'⟩, if_pos hk]
+    · rw [if_neg, if_neg hk]
+      rintro ⟨-, -, hkeep⟩
+      rw [hc] at hkeep
+      exact hk hkeep
+  exact hfun ▸ hcomp
+
 /-- **(d)** the prime set `PSet` has divergent reciprocal sum. -/
 theorem divergentRecip_PSet : DivergentRecip PSet := by
-  sorry
+  rw [DivergentRecip]
+  intro hsum
+  have hcomp := summable_recipNth_of hsum
+  have htail : Summable (fun k : ℕ => recipNth (k + 16)) := (summable_nat_add_iff 16).mpr hcomp
+  have hcmp : Summable (fun k : ℕ => (1 / 20 : ℝ) * harm (k + 16)) := by
+    refine Summable.of_nonneg_of_le
+      (fun k => by have := harm_nonneg (k + 16); linarith) (fun k => ?_) htail
+    set K := k + 16 with hK
+    by_cases hk : Keep K
+    · rw [harm, recipNth, if_pos hk, if_pos hk]
+      have hple := nth_prime_le_mul_log K (by omega)
+      have hKR : (16 : ℝ) ≤ (K : ℝ) := by exact_mod_cast (by omega : 16 ≤ K)
+      have hlogK : 0 < Real.log K := Real.log_pos (by linarith)
+      have hppos : (0 : ℝ) < (Nat.nth Nat.Prime K : ℝ) := by
+        have : (2 : ℝ) ≤ (Nat.nth Nat.Prime K : ℝ) := by
+          exact_mod_cast (Nat.prime_nth_prime K).two_le
+        linarith
+      have hKpos : (0 : ℝ) < (K : ℝ) := by linarith
+      have hKlog : (0 : ℝ) < (K : ℝ) * Real.log K := mul_pos hKpos hlogK
+      rw [mul_one_div, div_le_div_iff₀ (by positivity) hppos]
+      nlinarith [hple, hlogK, hKR]
+    · rw [harm, recipNth, if_neg hk, if_neg hk]; simp
+  have hs : Summable (fun k : ℕ => harm (k + 16)) := by
+    have h20 := hcmp.mul_left 20
+    have hid : ∀ k : ℕ, (20 : ℝ) * ((1 / 20 : ℝ) * harm (k + 16)) = harm (k + 16) := by
+      intro k; ring
+    simpa [hid] using h20
+  exact not_summable_keep_harmonic ((summable_nat_add_iff 16).mp hs)
 
 end SparseExists
 
