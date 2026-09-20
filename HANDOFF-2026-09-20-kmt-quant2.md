@@ -1,5 +1,10 @@
 # HANDOFF 2026-09-20 — `KMT_quant₂` two-constant re-freeze: DONE
 
+**Branch** `wip/g5-prime-subset`.  **HEAD at handoff** `65b9311` (this doc committed on top).
+**Build** green (`lake build`, 9098 jobs); `src/NormalNumbers/G4WiringSparse.lean` sorry-free.
+The only `sorry` reachable in the repo from this file's imports is the pre-existing, out-of-scope
+`src/NormalNumbers/PrimeLambertOscillation.lean:94` (`phaseOscillation`) — forbidden drift, untouched.
+
 Branch `wip/g5-prime-subset`.  File `src/NormalNumbers/G4WiringSparse.lean` (pure addition; `git diff
 2a58809` shows **no deleted line** — every frozen statement is untouched).  The file is sorry-free and
 
@@ -57,3 +62,27 @@ accounting; the open piece is the fundamental-lemma constant in (4.20).  That is
 * ⚠️ editing hazard: a python splice keyed on a proof-body fragment (`push_neg at hng; obtain …`)
   matched the **older** copy of the same idiom and silently deleted 400 lines.  Anchor splices on a
   unique statement line, and `assert s.count(old) == 1`.
+
+## Exact next steps for the next lap
+
+1. **The crux, stated concretely.**  `KMT_quant₂ C₁ C₂` is still a frozen *input*.  Discharge it by
+   reading KMT 2023 (arXiv:2304.05344) Prop. 4.3 and its proof, and producing explicit `C₁ k`, `C₂ k`
+   with `log C₁ k = o(4^k)` and `log log C₂ k = o(4^k)`.  The accounting so far is in
+   `papers/kmt-2023-prop43-k-dependence.md`:
+   * (4.7) and (4.22) — the two distance terms — carry the `C₁` constant; the note already argues
+     these are `exp(O(k log k))`-ish, i.e. comfortably `log C₁ k = o(4^k)`.  **Verify this line by
+     line and record the exponent**; that is the smallest useful probe.
+   * (4.20) — the sieve/fundamental-lemma step — carries `C₂`.  Its constant is the open piece.  The
+     only thing needed now is a bound of the shape `C₂ k ≤ exp(exp(o(4^k)))`, which is very weak;
+     a crude `C₂ k ≤ exp(exp(k²))`-type bound from the standard Rosser–Iwaniec fundamental lemma
+     (sieve dimension `k`, level `x^ε`) would already close it.
+2. Landing shape: add `theorem KMT_quant₂_of_KMT_prop43 …` (or an axiom narrowed to (4.20) alone,
+   with the distance terms proved), then feed it to `exists_sparse_normal_of_KMT_quant₂` to get an
+   *unconditional* `∃ S, DivergentRecip S ∧ IsNormal 4 (subsetLambert S 4)`.
+3. Do not re-derive `exists_good₂` / `log_o_pow₂`: the schedule side of the sandwich is closed and
+   axiom-clean.  If a future lap needs different `ε`, note that `GoodExists.DDJ` now takes an
+   arbitrary schedule `Jf`, and `terms₁_tendsto`, `terms₂_tendsto`, `tail_tendsto_gen` are all
+   stated for a general `Jf` — only `JF₂` and `log_o_pow₂` are schedule-specific.
+4. If the paper is not readable from the box, append a dated request to `ON-LINE-REQUEST.md` for the
+   text of KMT 2023 §4 (Prop. 4.3 proof, eqs (4.7), (4.20), (4.22)) and work step 1's (4.7)/(4.22)
+   half meanwhile.
