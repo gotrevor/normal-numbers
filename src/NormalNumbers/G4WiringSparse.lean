@@ -308,6 +308,18 @@ are `π(x) ~ x/log x` (for the count fraction) and Mertens *with its constant*,
 `log log N ≤ ∑_{p<N} 1/p + 1` is not enough, because the block mass is a *difference* of two such
 sums and the `±1` swamps `εᵢ/Lᵢ → 0`.
 
+⚠️ **Elementary Mertens does not suffice, so do not chase it.**  Mertens' second theorem is
+elementary, but its classical error is `O(1/log x)`, i.e. `O(1/L)` — and the block mass is
+`εᵢ/Lᵢ` with `εᵢ → 0`, so the error *swamps the mass*.  Raising `εᵢ` to a constant `A` to clear
+the error costs the count fraction: the primes of `(y, y e^A]` are a `1 − e^{-A}` fraction of
+`π(y e^A)`, which is not small for any `A` that beats the error constant.  (And the crude
+`count ≤ v · mass` is lossy by a factor `A`, so it does not rescue the long-block regime either.)
+The two regimes are exclusive: short blocks need a *PNT-quality* error term,
+`π(x) = Li(x) + O(x e^{-c√log x})`, which resolves intervals of length `εy` down to
+`ε ≥ e^{-c√L}` — comfortably enough for `εᵢ = 1/log Lᵢ`, and strictly more than Mertens gives.
+Likewise a Brun–Titchmarsh sieve bound does not help: it bounds the count from *above* only, and
+the binding constraint in the short-block regime is the mass from *below*.
+
 It is **off the main line**: the headline `exists_sparse_normal_of_KMT_quant` does not mention
 `RelDensityZero` at all — it consumes only `DivergentRecip`, which `BlockData.divergentRecip`
 supplies unconditionally. -/

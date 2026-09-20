@@ -8737,8 +8737,16 @@ Count fraction `≈ 1 − e^{-εᵢ} → 0`; accumulated density `≈ 1/gᵢ = 1
 **Exact inputs needed** (both absent): `π(x) ~ x/log x`, and Mertens *with its constant*
 `∑_{p≤x} 1/p = log log x + M + o(1)`.  The repo's one-sided `log log N ≤ ∑_{p<N} 1/p + 1` cannot
 substitute: the block mass is a difference of two such sums and the `±1` swamps `εᵢ/Lᵢ → 0`.
-**Next attack:** wait for PNT in mathlib (or upstream `PrimeNumberTheoremAnd`), then formalize the
-recursion above; the `L`-coordinate parameterization is the part that was missing.
+**Elementary Mertens is NOT a way around it — do not chase it.**  Mertens' second theorem is
+elementary but its error is `O(1/log x) = O(1/L)`, and the block mass is `εᵢ/Lᵢ` with `εᵢ → 0`:
+the error swamps the mass.  Raising `εᵢ` to a constant to clear the error makes the block a
+`1 − e^{-A}` fraction of `π(v)`, killing the density.  The regimes are exclusive; short blocks
+need the PNT error term `π(x) = Li(x) + O(x e^{-c√log x})`.  A Brun–Titchmarsh sieve does not help
+either (it bounds the count from above; the binding constraint is the mass from below).
+
+**Next attack:** wait for PNT-with-error-term in mathlib (or upstream `PrimeNumberTheoremAnd`),
+then formalize the recursion above; the `L`-coordinate parameterization is the part that was
+missing, and the sandwich `∫dL/(L log L) = ∞` vs density `1/log L → 0` closes with room.
 
 **`exists_good` — the sandwich; out of scope for this lap by operator instruction.**
 All its consumers are now proved, so it is the single remaining obligation of
