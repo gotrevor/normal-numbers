@@ -79,3 +79,36 @@ before (`LnTwoExpSepSharp.lean:55`).
 
 `exists_good` (needs the operator to put it in scope), or leaf 6 once PNT-with-error-term reaches
 mathlib.  Nothing else in `G4WiringSparse.lean` is open.
+
+---
+
+## ⛔ STUCK CLAIM (strike 1) — for the verifying lap
+
+**What is blocked.** `exists_relDensityZero_divergent` (leaf 6), the only in-scope sorry left in
+`src/NormalNumbers/G4WiringSparse.lean`.  The other sorry, `exists_good`, is forbidden by DIRECTION.
+
+**Why it is not a tactic problem.**  Verify in three cheap steps:
+1. `grep -rn "PrimeNumberTheorem\|IsEquivalent.*primeCounting" .lake/packages/mathlib/Mathlib/`
+   → only a provenance comment in `Chebyshev.lean`.  Mathlib has **no** `π(x) ~ x/log x`.
+2. `grep -n "theorem" .lake/packages/mathlib/Mathlib/NumberTheory/Chebyshev.lean | grep pi_`
+   → only `pi_ge` (constant `log 2 ≈ 0.69`) and `pi_le_log4_mul_div` (constant `≈ 2.77`).
+   A constant-factor gap of 4 cannot produce a ratio tending to `1`, which density-zero forces.
+3. `grep -n "theorem" src/NormalNumbers/G4Mertens.lean` → one-sided Mertens only.
+
+**The impossibility argument** (not a failed attempt — a proof that the cheap routes cannot work):
+the only count bound available without prime counting is "a fraction of the integers", off by
+`log x` from `π(x)`; so any such construction has integer-density `≤ 1/log v`, reciprocal-mass rate
+`≤ dL/L²`, and `∫ dL/L² < ∞`.  Every free-count construction has a **convergent** reciprocal sum.
+Elementary Mertens (error `O(1/L)`) and Brun–Titchmarsh are separately ruled out above.
+
+**The exact ask — one of:**
+* (a) accept leaf 6's disclosed `sorry` and let the lap close `--green` (the kickoff already says
+  "This leaf is allowed to be hard; if it costs more than one lap, leave it and report"; the terse
+  "no sorry except `exists_good`" gate contradicts that clause); **or**
+* (b) put `exists_good` in scope, since it is the last obligation on the main line and is
+  elementary-but-long (explicit parameter choices are already in its docstring); **or**
+* (c) authorise restating `exists_sparse_normal` to take the density-zero witness as a hypothesis,
+  moving leaf 6 out of the theorem's body.
+
+**Do not** spend a lap re-deriving the PNT wall; it is fully written up in the leaf's docstring and
+in `PENDING_WORK.md`.  Everything else the kickoff asked for is proved and committed.
