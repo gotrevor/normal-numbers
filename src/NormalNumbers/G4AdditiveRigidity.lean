@@ -205,6 +205,41 @@ theorem wN_prime_pow_mul (W : TWeight) (h1 : W.wN 1 = 0) {p : ℕ} (hp : p.Prime
   rw [h1] at hsplit
   omega
 
+/-! ### The cocycle structure of the transport correction
+
+`ov` is not an extra datum: `mul_eq` pins it to `w(m) + w(d) − w(dm)`, so it is symmetric and
+satisfies the `2`-cocycle identity of the multiplicative semigroup.  Combined with `ov_congr`
+this is the whole content of the interface, and it is the tool the remaining classification
+question needs (see `PENDING_WORK.md`). -/
+
+lemma ov_symm (W : TWeight) {d m : ℕ} (hd : d ≠ 0) (hm : m ≠ 0) : W.ov d m = W.ov m d := by
+  rw [W.ov_eq hd hm, W.ov_eq hm hd, mul_comm]
+  ring
+
+/-- **The cocycle identity.**  `ov d m + ov (d·m) k = ov m k + ov d (m·k)`. -/
+theorem ov_cocycle (W : TWeight) {d m k : ℕ} (hd : d ≠ 0) (hm : m ≠ 0) (hk : k ≠ 0) :
+    W.ov d m + W.ov (d * m) k = W.ov m k + W.ov d (m * k) := by
+  have h1 := W.ov_eq hd hm
+  have h2 := W.ov_eq (mul_ne_zero hd hm) hk
+  have h3 := W.ov_eq hm hk
+  have h4 := W.ov_eq hd (mul_ne_zero hm hk)
+  rw [h1, h2, h3, h4, mul_assoc]
+  ring
+
+/-- If `k ≡ 1` modulo every prime of `d`, the correction does not see the `d`-part:
+`ov (d·m) k = ov m k`.  (Cocycle identity plus `ov_congr` in the `d`-slot.) -/
+theorem ov_mul_left_of_modEq_one (W : TWeight) {d m k : ℕ} (hd : d ≠ 0) (hm : m ≠ 0)
+    (hk : k ≠ 0) (h : ∀ p ∈ d.primeFactors, k ≡ 1 [MOD p]) :
+    W.ov (d * m) k = W.ov m k := by
+  have hstable : W.ov d (m * k) = W.ov d m := by
+    refine W.ov_congr d (m * k) m (fun p hp => ?_)
+    have hk1 : k ≡ 1 [MOD p] := h p hp
+    calc m * k ≡ m * 1 [MOD p] := Nat.ModEq.mul_left m hk1
+      _ = m := by ring
+  have hc := W.ov_cocycle hd hm hk
+  rw [hstable] at hc
+  omega
+
 end TWeight
 
 end NormalNumbers.G4

@@ -18,9 +18,26 @@ Build 🟢 9103 jobs, zero `axiom`s.  `src/` = the two pre-expedition forbidden-
 
 **The repo needs a new directive from an altitude lap**, not more work inside this one.
 Candidates, with the state of each, are in `HANDOFF-2026-09-20-campaignB-close.md` §4.
-Open (attempted, not settled, this lap): *is every normalised `TWeight` additive on all coprime
-pairs?*  `wN_mul_of_modEq_one` gives it when `m ≡ 1` mod `rad d`; the general case looks to need
-a Dirichlet prime `q ≡ m` mod `rad d`.
+### The one genuinely open interface question, stated precisely
+
+**Conjecture.**  For every `W : TWeight`, the function `m ↦ w(m) − w(1)` is additive; equivalently
+`W` is `addWeightN g + w(1)` for an affine family `g`, i.e. `w_{a,c}` up to a constant.
+
+*Why the constant is necessary* (worked out this lap, not formalised): `w = ω + 1_{m odd}` passes
+every axiom — the correction is `overlap_ω(d,m) + 1 − e(d)e(m)` with `e = 1_{even}`, which is
+constant `= 1` for odd `d` and, for even `d`, depends on `m` only mod `2 ∈ rad d`, so `ov_congr`
+holds; `ovB d = ω(d) + 1`.  It is **not** additive (`w(15) = 3 ≠ w(3) + w(5) = 4`) and has
+`w(1) = 1`.  But `1_{m odd} = 1 − 1_{2 ∣ m}` and `1_{2 ∣ m}` is additive, so it is
+*additive + constant*.  Formalising this instance would show the `− w(1)` in
+`wN_mul_of_modEq_one` is load-bearing rather than cosmetic.
+
+*State of the proof.*  `wN_mul_of_modEq_one` settles the case `m ≡ 1` mod `rad d`.  The tools for
+the general case are now in place: `ov_symm`, the cocycle identity `ov_cocycle`
+(`ov d m + ov (dm) k = ov m k + ov d (mk)`, forced by `mul_eq` alone) and
+`ov_mul_left_of_modEq_one`.  The gap: for coprime `d, m` one wants `ov d m = w(1)`, and the
+cocycle only relates corrections at residues that are already `1` somewhere.  The natural next
+probe is a Dirichlet prime `q ≡ m` mod `rad d` together with `ord_q(p)`; attempted this lap and
+**not** settled — recorded as open, not refuted.
 
 ---
 
