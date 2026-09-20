@@ -48,9 +48,15 @@ noncomputable def fullSiteMean (N : ℕ) (h : ℤ) (j : ℕ) : ℂ :=
 factor `∏_p [1 + ∑_{j≤J}(z_j − 1)/p] / ∏_j (1 + (z_j − 1)/p)`, measured 1.36 / 0.33 / 6.1 at
 `h = 1, 3, 5`) times the product of one-site means, with a `C / log N` relative error uniform in
 `J`.  The constant is existentially quantified with a uniform bound `B`, which is all the wiring
-uses; its arithmetic identity is recorded in the design doc, not asserted here. -/
+uses; its arithmetic identity is recorded in the design doc, not asserted here.
+
+⚠️ 2026-09-20: the quantifier order is `∀ᶠ N, ∀ J` (uniform in `J`), not `∀ J, ∀ᶠ N`.  This is the
+intended reading of KB verdict §2f (the relative error `C / log N` has no `J`-dependence) and it is
+*required*: with `∀ J, ∀ᶠ N` the `N`-threshold `n_J` may grow arbitrarily fast in `J`, so no
+schedule `J_N → ∞` fast enough for the L1 tail (`J_N ≳ log₂ log₂ N`) can be certified.  The
+kickoff authorised exactly this strengthening. -/
 def CRTConstant (h : ℤ) : Prop :=
-  ∃ (c : ℕ → ℂ) (B C : ℝ), (∀ J, ‖c J‖ ≤ B) ∧ ∀ J : ℕ, ∀ᶠ N : ℕ in atTop,
+  ∃ (c : ℕ → ℂ) (B C : ℝ), (∀ J, ‖c J‖ ≤ B) ∧ ∀ᶠ N : ℕ in atTop, ∀ J : ℕ,
     ‖fullWindowMean N J h - c J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j‖
       ≤ C / Real.log N * ∏ j ∈ Finset.Icc 1 J, ‖fullSiteMean N h j‖
 
@@ -61,6 +67,42 @@ def SiteDecayFull : Prop :=
 
 /-- Window schedule: `J_N = ⌈log₂ log₂ N⌉ + 1`; any `J_N → ∞` with `4^{-J_N} log N → 0` works. -/
 def windowJ (N : ℕ) : ℕ := Nat.log 2 (Nat.log 2 N) + 1
+
+/-! ### Elementary facts about `ePhase` and the site means -/
+
+lemma norm_ePhase (x : ℝ) : ‖ePhase x‖ = 1 := by
+  have hx : ePhase x = Complex.exp (((2 * Real.pi * x : ℝ) : ℂ) * Complex.I) := by
+    unfold ePhase; congr 1; push_cast; ring
+  rw [hx]; exact Complex.norm_exp_ofReal_mul_I _
+
+lemma ePhase_add_int (x : ℝ) (w : ℤ) : ePhase (x + w) = ePhase x := by
+  unfold ePhase
+  have hx : (2 * Real.pi * Complex.I * ((x + w : ℝ) : ℂ))
+      = 2 * Real.pi * Complex.I * (x : ℂ) + (w : ℂ) * (2 * (Real.pi : ℂ) * Complex.I) := by
+    push_cast; ring
+  rw [hx, Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, mul_one]
+
+lemma norm_fullSiteMean_le_one (N : ℕ) (h : ℤ) (j : ℕ) : ‖fullSiteMean N h j‖ ≤ 1 := by
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp [fullSiteMean]
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  rw [fullSiteMean, norm_div, Complex.norm_natCast, div_le_one hNR]
+  calc ‖∑ n ∈ Finset.Ico N (2 * N), ePhase (h * omegaR (n + j) / (4 : ℝ) ^ j)‖
+      ≤ ∑ n ∈ Finset.Ico N (2 * N), ‖ePhase (h * omegaR (n + j) / (4 : ℝ) ^ j)‖ :=
+        norm_sum_le _ _
+    _ = ((Finset.Ico N (2 * N)).card : ℝ) := by
+        rw [Finset.sum_congr rfl (fun n _ => norm_ePhase _), Finset.sum_const, nsmul_eq_mul,
+          mul_one]
+    _ = (N : ℝ) := by rw [Nat.card_Ico]; congr 1; omega
+
+lemma tendsto_windowJ : Tendsto windowJ atTop atTop := by
+  have hlog : Tendsto (fun N : ℕ => Nat.log 2 N) atTop atTop :=
+    tendsto_atTop_atTop.mpr (fun b => ⟨2 ^ b, fun a ha => Nat.le_log_of_pow_le (by norm_num) ha⟩)
+  exact tendsto_atTop_atTop.mpr (fun b =>
+    ⟨2 ^ (2 ^ b), fun a ha => by
+      have h1 : 2 ^ b ≤ Nat.log 2 a := Nat.le_log_of_pow_le (by norm_num) ha
+      have h2 : b ≤ Nat.log 2 (Nat.log 2 a) := Nat.le_log_of_pow_le (by norm_num) h1
+      simpa [windowJ] using Nat.le_succ_of_le h2⟩)
 
 /-! ### L1: the tail lemma, elementary -/
 
@@ -214,7 +256,68 @@ of site means then tends to `0`; with the law, the window mean tends to `0`. -/
 theorem fullWindowMean_tendsto_zero (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant h)
     (hSite : SiteDecayFull) (h : ℤ) (hh : h ≠ 0) :
     Tendsto (fun N => fullWindowMean N (windowJ N) h) atTop (𝓝 0) := by
-  sorry
+  obtain ⟨c, B, C, hcB, hlaw⟩ := hLaw h hh
+  set j₀ : ℕ := h.natAbs + 1 with hj₀def
+  have hj₀1 : 1 ≤ j₀ := by omega
+  have hnotint : ¬ ∃ m : ℤ, (h : ℝ) / (4 : ℝ) ^ j₀ = m := by
+    rintro ⟨m, hm⟩
+    have h4 : ((4 : ℝ) ^ j₀) ≠ 0 := by positivity
+    have hR : (h : ℝ) = (m : ℝ) * (4 : ℝ) ^ j₀ := by field_simp at hm; linarith [hm]
+    have hZ : h = m * 4 ^ j₀ := by exact_mod_cast hR
+    have hm0 : m ≠ 0 := by rintro rfl; simp at hZ; exact hh hZ
+    have hlb : (4 : ℤ) ^ j₀ ≤ |h| := by
+      rw [hZ, abs_mul, abs_of_nonneg (by positivity : (0 : ℤ) ≤ 4 ^ j₀)]
+      have : 1 ≤ |m| := Int.one_le_abs (by omega)
+      nlinarith [abs_nonneg m, (by positivity : (0 : ℤ) < 4 ^ j₀)]
+    have hub : h.natAbs < 4 ^ j₀ := by
+      calc h.natAbs < 2 ^ h.natAbs := Nat.lt_two_pow_self
+        _ ≤ 4 ^ (h.natAbs + 1) := by
+            calc 2 ^ h.natAbs ≤ 4 ^ h.natAbs := Nat.pow_le_pow_left (by norm_num) _
+              _ ≤ 4 ^ (h.natAbs + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+    have habs : |h| = (h.natAbs : ℤ) := Int.abs_eq_natAbs h
+    have : ((4 : ℤ) ^ j₀) ≤ (h.natAbs : ℤ) := by rw [habs] at hlb; exact hlb
+    have hub' : ((h.natAbs : ℤ)) < 4 ^ j₀ := by exact_mod_cast hub
+    omega
+  have hsite := hSite h j₀ hj₀1 hnotint
+  have hBnn : (0 : ℝ) ≤ B := le_trans (norm_nonneg _) (hcB 0)
+  refine tendsto_zero_iff_norm_tendsto_zero.mpr ?_
+  refine squeeze_zero' (Eventually.of_forall (fun N => norm_nonneg _))
+    (g := fun N => (B + |C|) * ‖fullSiteMean N h j₀‖) ?_ (by simpa using hsite.const_mul (B + |C|))
+  filter_upwards [hlaw, tendsto_windowJ.eventually_ge_atTop j₀, eventually_ge_atTop 3]
+    with N hN hNJ hN3
+  set J := windowJ N with hJ
+  set P : ℝ := ∏ j ∈ Finset.Icc 1 J, ‖fullSiteMean N h j‖ with hP
+  have hPnn : 0 ≤ P := Finset.prod_nonneg (fun j _ => norm_nonneg _)
+  have hmem : j₀ ∈ Finset.Icc 1 J := Finset.mem_Icc.mpr ⟨hj₀1, hNJ⟩
+  have hPle : P ≤ ‖fullSiteMean N h j₀‖ := by
+    rw [hP, ← Finset.prod_erase_mul _ _ hmem]
+    have h1 : (∏ j ∈ (Finset.Icc 1 J).erase j₀, ‖fullSiteMean N h j‖) ≤ 1 :=
+      Finset.prod_le_one (fun j _ => norm_nonneg _) (fun j _ => norm_fullSiteMean_le_one _ _ _)
+    nlinarith [norm_nonneg (fullSiteMean N h j₀),
+      Finset.prod_nonneg (fun j (_ : j ∈ (Finset.Icc 1 J).erase j₀) => norm_nonneg
+        (fullSiteMean N h j))]
+  have hN3R : (3 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN3
+  have hlogN : (1 : ℝ) ≤ Real.log N := by
+    rw [Real.le_log_iff_exp_le (by linarith)]
+    linarith [Real.exp_one_lt_d9]
+  have hCbound : C / Real.log N ≤ |C| := by
+    rw [div_le_iff₀ (by linarith)]
+    nlinarith [le_abs_self C, abs_nonneg C]
+  have hprodnorm : ‖c J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j‖ ≤ B * P := by
+    rw [norm_mul, norm_prod]
+    exact mul_le_mul (hcB J) le_rfl hPnn hBnn
+  calc ‖fullWindowMean N J h‖
+      ≤ ‖fullWindowMean N J h - c J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j‖
+          + ‖c J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j‖ := by
+        simpa using norm_add_le (fullWindowMean N J h
+          - c J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j)
+          (c J * ∏ j ∈ Finset.Icc 1 J, fullSiteMean N h j)
+    _ ≤ C / Real.log N * P + B * P := by gcongr; exact hN J
+    _ ≤ |C| * P + B * P := by nlinarith
+    _ = (B + |C|) * P := by ring
+    _ ≤ (B + |C|) * ‖fullSiteMean N h j₀‖ := by
+        have : (0 : ℝ) ≤ B + |C| := by positivity
+        nlinarith
 
 /-- Dyadic Fourier means of the orbit vanish: tail error (L1) + `fullWindowMean_tendsto_zero`. -/
 theorem dyadic_fourier_tendsto_zero (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant h)
