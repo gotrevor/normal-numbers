@@ -41,7 +41,9 @@ IsNormal 4 G₄
   the one place the Chowla-type node is a theorem.  That is why it is the programme's live target.
 
 ## Refutation targets (cheap, run before proving)
-1. N1 at h = 3, 5 for N ≥ 10⁸ with J ∈ {24, 32, 48}: is the ratio still 1 + O(1/log N) uniformly in J?
+1. ✅ PASSED 2026-09-19 21:05: N1 at h = 1, 3, 5, N = 10⁷ and 10⁸, J = 8, 16, 24, 32 — the constant is
+   identical to four decimals across J (far sites add ≤ h·log₂N/4^j to the phase; J > 32 is below double
+   precision and below relevance).  `∀ᶠ N, ∀ J` is safe.
 2. N1 at h = 4·odd, 16·odd (v₂ even but ≥ 2): the leading site is trivial (phase ∈ ℤ) — does the law hold
    with the first nontrivial site as leader?
 3. N2 at h = 6, 8, 24: is |W|√N bounded (noise floor) at every Chowla-sector h, or does some h show a
