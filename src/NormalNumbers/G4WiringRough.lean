@@ -368,6 +368,91 @@ theorem windowJ_div_tendsto_zero : Tendsto (fun N : ℕ => (windowJ N : ℝ) / N
   rw [div_le_div_iff₀ hNR (by linarith)]
   nlinarith [hJR, hLNR, hLR]
 
+/-- `windowJ N · log N / N → 0`: the schedule is `log₂ log₂ N`, so even against a factor `log N`
+it is `o(N)`.  (`L³ ≤ 2^L ≤ N` and `log N ≤ L + 1`, with `L = log₂ N`.) -/
+theorem windowJ_log_div_tendsto_zero :
+    Tendsto (fun N : ℕ => (windowJ N : ℝ) * Real.log N / N) atTop (𝓝 0) := by
+  have hcube : ∀ L : ℕ, 10 ≤ L → L ^ 3 ≤ 2 ^ L := by
+    intro L hL
+    induction L, hL using Nat.le_induction with
+    | base => norm_num
+    | succ L hL ih =>
+        have h1 : 3 * L ^ 2 + 3 * L + 1 ≤ L ^ 3 := by nlinarith
+        calc (L + 1) ^ 3 = L ^ 3 + (3 * L ^ 2 + 3 * L + 1) := by ring
+          _ ≤ 2 ^ L + 2 ^ L := by omega
+          _ = 2 ^ (L + 1) := by ring
+  have hlog : Tendsto (fun N : ℕ => Nat.log 2 N) atTop atTop :=
+    tendsto_atTop_atTop.mpr (fun b => ⟨2 ^ b, fun a ha => Nat.le_log_of_pow_le (by norm_num) ha⟩)
+  have hgtends : Tendsto (fun L : ℕ => 2 / (L : ℝ)) atTop (𝓝 0) := by
+    have hL : Tendsto (fun L : ℕ => (L : ℝ)) atTop atTop := tendsto_natCast_atTop_atTop
+    exact Tendsto.div_atTop tendsto_const_nhds hL
+  refine squeeze_zero' ?_ ?_ (hgtends.comp hlog)
+  · filter_upwards [eventually_ge_atTop 1] with N hN
+    have h1 : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+    have : (0 : ℝ) ≤ Real.log N := Real.log_nonneg h1
+    positivity
+  filter_upwards [eventually_ge_atTop 1024] with N hN
+  set L := Nat.log 2 N with hLdef
+  have hL10 : 10 ≤ L := Nat.le_log_of_pow_le (by norm_num) (by omega : 2 ^ 10 ≤ N)
+  have hJle : windowJ N ≤ L := by
+    have : Nat.log 2 L < L := Nat.log_lt_self 2 (by omega)
+    simpa [windowJ, ← hLdef] using this
+  have hpow : 2 ^ L ≤ N := Nat.pow_log_le_self 2 (by omega)
+  have hLN : L ^ 3 ≤ N := le_trans (hcube L hL10) hpow
+  have hN1024 : (1024 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+  have hNR : (0 : ℝ) < N := by linarith
+  have hLR : (10 : ℝ) ≤ (L : ℝ) := by exact_mod_cast hL10
+  have hJR : (windowJ N : ℝ) ≤ (L : ℝ) := by exact_mod_cast hJle
+  have hLNR : ((L : ℝ)) ^ 3 ≤ (N : ℝ) := by exact_mod_cast hLN
+  have hlogle : Real.log N ≤ (L : ℝ) + 1 := by
+    have hlt : N < 2 ^ (L + 1) := Nat.lt_pow_succ_log_self (by norm_num) N
+    have hltR : (N : ℝ) ≤ (2 : ℝ) ^ (L + 1) := by exact_mod_cast hlt.le
+    calc Real.log N ≤ Real.log ((2 : ℝ) ^ (L + 1)) := Real.log_le_log hNR hltR
+      _ = ((L : ℝ) + 1) * Real.log 2 := by rw [Real.log_pow]; push_cast; ring
+      _ ≤ ((L : ℝ) + 1) * 1 := by
+          have := Real.log_two_lt_d9
+          nlinarith [hLR]
+      _ = (L : ℝ) + 1 := by ring
+  have hlognn : (0 : ℝ) ≤ Real.log N := Real.log_nonneg (by linarith)
+  have hL3 : (L : ℝ) ^ 2 * 10 ≤ (L : ℝ) ^ 3 := by nlinarith
+  have hJnn : (0 : ℝ) ≤ (windowJ N : ℝ) := Nat.cast_nonneg _
+  show (windowJ N : ℝ) * Real.log N / N ≤ 2 / (L : ℝ)
+  rw [div_le_div_iff₀ hNR (by linarith)]
+  have hstep : (windowJ N : ℝ) * Real.log N ≤ (L : ℝ) * ((L : ℝ) + 1) := by
+    calc (windowJ N : ℝ) * Real.log N ≤ (L : ℝ) * Real.log N := by nlinarith
+      _ ≤ (L : ℝ) * ((L : ℝ) + 1) := by nlinarith
+  nlinarith [mul_le_mul_of_nonneg_right hstep (show (0:ℝ) ≤ (L:ℝ) by linarith), hL3, hLNR, hLR]
+
+/-! ### Norm bounds for the smooth / rough means -/
+
+lemma norm_smoothSiteMean_le_one (N : ℕ) (h : ℤ) (j y : ℕ) : ‖smoothSiteMean N h j y‖ ≤ 1 := by
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp [smoothSiteMean]
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  rw [smoothSiteMean, norm_div, Complex.norm_natCast, div_le_one hNR]
+  calc ‖∑ n ∈ Finset.Ico N (2 * N), ePhase (h * omegaLe y (n + j) / (4 : ℝ) ^ j)‖
+      ≤ ∑ n ∈ Finset.Ico N (2 * N), ‖ePhase (h * omegaLe y (n + j) / (4 : ℝ) ^ j)‖ :=
+        norm_sum_le _ _
+    _ = (N : ℝ) := by
+        rw [Finset.sum_congr rfl (fun n _ => norm_ePhase _), Finset.sum_const, nsmul_eq_mul,
+          mul_one, Nat.card_Ico]
+        congr 1
+        omega
+
+lemma norm_roughSiteMean_le_one (N : ℕ) (h : ℤ) (j y : ℕ) : ‖roughSiteMean N h j y‖ ≤ 1 := by
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp [roughSiteMean]
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  rw [roughSiteMean, norm_div, Complex.norm_natCast, div_le_one hNR]
+  calc ‖∑ n ∈ Finset.Ico N (2 * N), ePhase (h * omegaAbove y (n + j) / (4 : ℝ) ^ j)‖
+      ≤ ∑ n ∈ Finset.Ico N (2 * N), ‖ePhase (h * omegaAbove y (n + j) / (4 : ℝ) ^ j)‖ :=
+        norm_sum_le _ _
+    _ = (N : ℝ) := by
+        rw [Finset.sum_congr rfl (fun n _ => norm_ePhase _), Finset.sum_const, nsmul_eq_mul,
+          mul_one, Nat.card_Ico]
+        congr 1
+        omega
+
 /-! ### Leaf 4: N1a proper -/
 
 theorem smoothWindowCRT (h : ℤ) (y : ℕ) (hy : 2 ≤ y) (hS : SmoothNonvanishing h) :
