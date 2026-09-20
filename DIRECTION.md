@@ -1,6 +1,6 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-19 22:20 EDT — SPARSE-SUBSET LAP, PART 2: LEAF 6 ONLY (ACTIVE)
+## Attended operator override: 2026-09-19 22:20 EDT — SPARSE-SUBSET LAP, PART 2: LEAF 6 ONLY (DONE 22:39 EDT, one lap: `exists_relDensityZero_divergent` and `exists_sparse_normal` axiom-clean; file's only sorry is `exists_good`.  No active override; next lap NOT fired.)
 
 Operator: Ren, attended; same authorization as 21:30.  Everything in the 21:30 override is done except
 leaf 6, `exists_relDensityZero_divergent`.  The previous lap's stuck claim ("needs PNT") is **withdrawn
