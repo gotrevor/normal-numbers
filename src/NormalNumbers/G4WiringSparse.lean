@@ -741,16 +741,48 @@ theorem recipSumLe_le (i y : ℕ) (hy : y ≤ D.x (i + 2)) :
 
 /-- `blockIndex N → ∞`. -/
 theorem blockIndex_tendsto : Tendsto D.blockIndex atTop atTop := by
-  sorry
+  refine tendsto_atTop_atTop.mpr (fun b => ⟨D.x b + 1, fun N hN => ?_⟩)
+  have hxb : b ≤ D.x b := D.x_mono.le_apply
+  exact Nat.le_findGreatest (by omega) (by omega)
 
 /-- `x (blockIndex N) < N ≤ x (blockIndex N + 1)` for `N > x 0`. -/
 theorem blockIndex_spec (N : ℕ) (hN : D.x 0 < N) :
     D.x (D.blockIndex N) < N ∧ N ≤ D.x (D.blockIndex N + 1) := by
-  sorry
+  have hspec : D.x (D.blockIndex N) < N :=
+    Nat.findGreatest_spec (P := fun i => D.x i < N) (Nat.zero_le N) hN
+  refine ⟨hspec, ?_⟩
+  have hle : D.blockIndex N ≤ N := Nat.findGreatest_le N
+  have hlt : D.blockIndex N < N := by
+    rcases eq_or_lt_of_le hle with heq | h
+    · exfalso
+      have : N ≤ D.x N := D.x_mono.le_apply
+      rw [heq] at hspec
+      omega
+    · exact h
+  have := Nat.findGreatest_is_greatest (P := fun i => D.x i < N)
+    (show D.blockIndex N < D.blockIndex N + 1 by omega) (by omega)
+  omega
 
 /-- Divergence of `∑ δᵢ` gives divergence of `∑_{p∈S} 1/p`. -/
 theorem divergentRecip (hδ : ¬ Summable D.δ) : DivergentRecip D.set := by
-  sorry
+  rw [DivergentRecip]
+  intro hsum
+  refine hδ ?_
+  set f : ℕ → ℝ := fun p => if p.Prime ∧ D.set p then (1 : ℝ) / p else 0 with hf
+  have hf0 : ∀ p, 0 ≤ f p := by intro p; rw [hf]; dsimp only; split_ifs <;> positivity
+  have hδ0 : ∀ i, 0 ≤ D.δ i := fun i => Finset.sum_nonneg (fun p _ => by positivity)
+  refine summable_of_sum_range_le (c := ∑' p, f p) hδ0 (fun n => ?_)
+  have heq : ∑ i ∈ Finset.range n, D.δ i = ∑ p ∈ (Finset.range n).biUnion D.B, f p := by
+    rw [Finset.sum_biUnion (D.B_pairwiseDisjoint _)]
+    refine Finset.sum_congr rfl (fun i _ => ?_)
+    rw [δ]
+    refine Finset.sum_congr rfl (fun p hp => ?_)
+    obtain ⟨hprime, -, -⟩ := D.B_prime i p hp
+    have hmem : Nat.Prime p ∧ D.set p := ⟨hprime, ⟨i, hp⟩⟩
+    rw [hf]
+    simp only [if_pos hmem]
+  rw [heq]
+  exact hsum.sum_le_tsum _ (fun p _ => hf0 p)
 
 /-- The KMT means vanish along the block schedule: `KMT_quant` at scale `N` in block `i` with
 `ε = εᵢ`, `J = Jᵢ`, the three bounds above, and `Good.terms`. -/
