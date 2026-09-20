@@ -1332,6 +1332,74 @@ theorem norm_fullSiteMean_covariance_le (N : ℕ) (h : ℤ) (j : ℕ) (hj : 1 �
         / (N : ℝ)^2 from by ring]
   gcongr
 
+/-! ### Relative telescoping -/
+
+/-- `∏(1+εᵢ) ≤ 1 + 2∑εᵢ` when `∑εᵢ ≤ 1/2`. -/
+lemma prod_one_add_le {ι : Type*} (s : Finset ι) (ε : ι → ℝ) (hε : ∀ i, 0 ≤ ε i)
+    (hsum : ∑ i ∈ s, ε i ≤ 1/2) : ∏ i ∈ s, (1 + ε i) ≤ 1 + 2 * ∑ i ∈ s, ε i := by
+  classical
+  revert hsum
+  induction s using Finset.induction_on with
+  | empty => intro _; simp
+  | insert a t ha ih =>
+      intro hsum
+      rw [Finset.prod_insert ha, Finset.sum_insert ha] at *
+      have hSt : (0:ℝ) ≤ ∑ i ∈ t, ε i := Finset.sum_nonneg (fun i _ => hε i)
+      have hSt2 : ∑ i ∈ t, ε i ≤ 1/2 := by linarith [hε a]
+      have IH := ih hSt2
+      have hprodnn : (0:ℝ) ≤ ∏ i ∈ t, (1 + ε i) :=
+        Finset.prod_nonneg (fun i _ => by linarith [hε i])
+      nlinarith [hε a, IH, hSt, hprodnn]
+
+/-- Relative telescoping: if each factor differs from `f i` by at most `εᵢ‖f i‖`, the products
+differ by at most `(∏(1+εᵢ) − 1)∏‖f i‖`. -/
+lemma norm_prod_sub_prod_rel {ι : Type*} (s : Finset ι) (f g : ι → ℂ) (ε : ι → ℝ)
+    (hε : ∀ i, 0 ≤ ε i) (hd : ∀ i ∈ s, ‖f i - g i‖ ≤ ε i * ‖f i‖) :
+    ‖(∏ i ∈ s, f i) - ∏ i ∈ s, g i‖ ≤ ((∏ i ∈ s, (1 + ε i)) - 1) * ∏ i ∈ s, ‖f i‖ := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert a t ha ih =>
+      have hd' : ∀ i ∈ t, ‖f i - g i‖ ≤ ε i * ‖f i‖ :=
+        fun i hi => hd i (Finset.mem_insert_of_mem hi)
+      have IH := ih hd'
+      have hat : a ∈ insert a t := Finset.mem_insert_self a t
+      set P : ℝ := ∏ i ∈ t, (1 + ε i) with hP
+      set F : ℝ := ∏ i ∈ t, ‖f i‖ with hF
+      have hFnn : 0 ≤ F := Finset.prod_nonneg (fun i _ => norm_nonneg _)
+      have hPnn : 1 ≤ P := by
+        rw [hP]
+        calc (1:ℝ) = ∏ i ∈ t, (1:ℝ) := by simp
+          _ ≤ ∏ i ∈ t, (1 + ε i) :=
+              Finset.prod_le_prod (fun i _ => zero_le_one) (fun i _ => by linarith [hε i])
+      have hgt : ‖∏ i ∈ t, g i‖ ≤ P * F := by
+        have h1 : ‖∏ i ∈ t, g i‖ ≤ ‖∏ i ∈ t, f i‖ + ‖(∏ i ∈ t, f i) - ∏ i ∈ t, g i‖ := by
+          have := norm_sub_norm_le (∏ i ∈ t, g i) (∏ i ∈ t, f i)
+          have h2 : ‖(∏ i ∈ t, g i) - ∏ i ∈ t, f i‖ = ‖(∏ i ∈ t, f i) - ∏ i ∈ t, g i‖ :=
+            norm_sub_rev _ _
+          rw [h2] at this
+          linarith
+        have h3 : ‖∏ i ∈ t, f i‖ = F := by rw [hF, norm_prod]
+        rw [h3] at h1
+        linarith [IH, h1]
+      rw [Finset.prod_insert ha, Finset.prod_insert ha, Finset.prod_insert ha,
+        Finset.prod_insert ha]
+      have hsplit : (f a * ∏ i ∈ t, f i) - g a * ∏ i ∈ t, g i
+          = f a * ((∏ i ∈ t, f i) - ∏ i ∈ t, g i) + (f a - g a) * ∏ i ∈ t, g i := by ring
+      have hbound : ‖(f a * ∏ i ∈ t, f i) - g a * ∏ i ∈ t, g i‖
+          ≤ ‖f a‖ * ((P - 1) * F) + (ε a * ‖f a‖) * (P * F) := by
+        rw [hsplit]
+        refine le_trans (norm_add_le _ _) ?_
+        rw [norm_mul, norm_mul]
+        have hda := hd a hat
+        have hεa : (0:ℝ) ≤ ε a * ‖f a‖ := mul_nonneg (hε a) (norm_nonneg _)
+        exact add_le_add (mul_le_mul_of_nonneg_left IH (norm_nonneg _))
+          (mul_le_mul hda hgt (norm_nonneg _) hεa)
+      have hfa : 0 ≤ ‖f a‖ := norm_nonneg _
+      calc ‖(f a * ∏ i ∈ t, f i) - g a * ∏ i ∈ t, g i‖
+          ≤ ‖f a‖ * ((P - 1) * F) + (ε a * ‖f a‖) * (P * F) := hbound
+        _ = ((1 + ε a) * P - 1) * (‖f a‖ * F) := by ring
+      
 /-! ### The window half of N1a′ is the *same* identity
 
 At `y = 2` the smooth *window* phase is two-valued too: `[2 ∣ n+j+1]` alternates with `j`, so
