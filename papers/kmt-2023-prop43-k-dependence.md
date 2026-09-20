@@ -332,7 +332,7 @@ with enormous margin under every reading, including the discarded literal `exp(e
 
 **Still open (one item).**  IV.5(a).  It is a book lookup, not mathematics.
 
-**Addendum (14:12 EDT), a second origin for the *form* of the hypothesis.**  Iwaniec, *Rosser's sieve*, Acta
+**Addendum (15:45 EDT), a second origin for the *form* of the hypothesis.**  Iwaniec, *Rosser's sieve*, Acta
 Arith. 36 (1980) 171–202, open access at `http://matwbn.icm.edu.pl/ksiazki/aa/aa36/aa36210.pdf` (scanned; OCR in
 `papers/iwaniec-1980-rossers-sieve.ocr.txt`).  Its dimension hypothesis (1.3) is
 `∏_{w≤p<z} (1 − ω(p)/p)^{−1} ≤ K (log z/log w)^κ` for all `z > w ≥ 2`, `K ≥ 2` - the form used in III.1, and the
