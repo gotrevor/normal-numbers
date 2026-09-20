@@ -1795,6 +1795,112 @@ theorem parityDisc_eq_scale (N j : ℕ) (h : ℤ) (hj : 1 ≤ j) :
   rw [parityDisc, hSe, hSo, ← hce, ← hco]
   linear_combination (roughSum h j ((N+j+1)/2) ((2*N+j+1)/2)) * hcard
 
+/-! ### Decomposing the crux `RoughIndependenceAt h 2`
+
+The window mean of a product of site phases differs from the product of the site means by an exact
+telescoping sum of **prefix/site covariances**.  This names the sub-objects the crux is about: no
+analysis is used, and nothing is assumed about the phases. -/
+
+/-- The window average over `[N,2N)`. -/
+noncomputable def winMean (N : ℕ) (g : ℕ → ℂ) : ℂ := (∑ n ∈ Finset.Ico N (2*N), g n) / N
+
+lemma winMean_one (N : ℕ) (hN : 0 < N) : winMean N (fun _ => 1) = 1 := by
+  rw [winMean, Finset.sum_const, Nat.card_Ico, nsmul_eq_mul, mul_one]
+  rw [show 2 * N - N = N from by omega]
+  exact div_self (Nat.cast_ne_zero.mpr (by omega))
+
+lemma roughSiteMean_eq_winMean (N : ℕ) (h : ℤ) (j : ℕ) :
+    roughSiteMean N h j 2 = winMean N (roughPhase h j) := rfl
+
+/-- The rough window phase is the product of the rough site phases. -/
+lemma ePhase_roughTail_prod (h : ℤ) (J n : ℕ) :
+    ePhase ((h:ℝ) * roughTail 2 J n) = ∏ j ∈ Finset.Icc 1 J, roughPhase h j n := by
+  induction J with
+  | zero => simp [roughTail, ePhase_zero]
+  | succ J ih =>
+      have hIcc : Finset.Icc 1 (J+1) = insert (J+1) (Finset.Icc 1 J) := by
+        ext x; simp only [Finset.mem_Icc, Finset.mem_insert]; omega
+      have hnot : (J+1) ∉ Finset.Icc 1 J := by simp
+      rw [hIcc, Finset.prod_insert hnot, ← ih]
+      have htail : roughTail 2 (J+1) n
+          = roughTail 2 J n + (omegaAbove 2 (n + J + 1) : ℝ) / (4:ℝ)^(J+1) := by
+        rw [roughTail, roughTail, Finset.sum_range_succ]
+      have hfac : ePhase ((h:ℝ) * ((omegaAbove 2 (n + J + 1) : ℝ) / (4:ℝ)^(J+1)))
+          = roughPhase h (J+1) n := by
+        rw [roughPhase, show n + (J+1) = n + J + 1 from by omega]
+        congr 1
+        ring
+      rw [htail, mul_add, ePhase_add, hfac, mul_comm]
+
+lemma roughWindowMean_eq_winMean (N J : ℕ) (h : ℤ) :
+    roughWindowMean N J h 2 = winMean N (fun n => ∏ j ∈ Finset.Icc 1 J, roughPhase h j n) := by
+  rw [roughWindowMean, winMean]
+  congr 1
+  exact Finset.sum_congr rfl (fun n _ => ePhase_roughTail_prod h J n)
+
+/-- **Exact telescoping of the window/site discrepancy.**  Each term is the covariance of the
+prefix product `∏_{j<k} f j` with the single site `f k`, weighted by the tail site means. -/
+theorem winMean_prod_telescope (N : ℕ) (hN : 0 < N) (f : ℕ → ℕ → ℂ) (J : ℕ) :
+    winMean N (fun n => ∏ j ∈ Finset.Icc 1 J, f j n) - ∏ j ∈ Finset.Icc 1 J, winMean N (f j)
+      = ∑ k ∈ Finset.Icc 1 J,
+          (winMean N (fun n => ∏ j ∈ Finset.Icc 1 k, f j n)
+            - winMean N (fun n => ∏ j ∈ Finset.Icc 1 (k-1), f j n) * winMean N (f k))
+          * ∏ j ∈ Finset.Icc (k+1) J, winMean N (f j) := by
+  induction J with
+  | zero => simp [winMean_one N hN]
+  | succ J ih =>
+      have hIcc : ∀ m : ℕ, Finset.Icc 1 (m+1) = insert (m+1) (Finset.Icc 1 m) := by
+        intro m; ext x; simp only [Finset.mem_Icc, Finset.mem_insert]; omega
+      have hnot : ∀ m : ℕ, (m+1) ∉ Finset.Icc 1 m := by intro m; simp
+      have hprodf : ∀ n, ∏ j ∈ Finset.Icc 1 (J+1), f j n
+          = f (J+1) n * ∏ j ∈ Finset.Icc 1 J, f j n := by
+        intro n; rw [hIcc J, Finset.prod_insert (hnot J)]
+      have hprodw : ∏ j ∈ Finset.Icc 1 (J+1), winMean N (f j)
+          = winMean N (f (J+1)) * ∏ j ∈ Finset.Icc 1 J, winMean N (f j) := by
+        rw [hIcc J, Finset.prod_insert (hnot J)]
+      -- split off the top term of the sum
+      have hsum : ∑ k ∈ Finset.Icc 1 (J+1),
+          (winMean N (fun n => ∏ j ∈ Finset.Icc 1 k, f j n)
+            - winMean N (fun n => ∏ j ∈ Finset.Icc 1 (k-1), f j n) * winMean N (f k))
+          * ∏ j ∈ Finset.Icc (k+1) (J+1), winMean N (f j)
+        = (winMean N (fun n => ∏ j ∈ Finset.Icc 1 (J+1), f j n)
+            - winMean N (fun n => ∏ j ∈ Finset.Icc 1 J, f j n) * winMean N (f (J+1)))
+          + (∑ k ∈ Finset.Icc 1 J,
+              (winMean N (fun n => ∏ j ∈ Finset.Icc 1 k, f j n)
+                - winMean N (fun n => ∏ j ∈ Finset.Icc 1 (k-1), f j n) * winMean N (f k))
+              * ∏ j ∈ Finset.Icc (k+1) J, winMean N (f j)) * winMean N (f (J+1)) := by
+        rw [hIcc J, Finset.sum_insert (hnot J)]
+        congr 1
+        · have hempty : Finset.Icc (J+1+1) (J+1) = (∅ : Finset ℕ) := by
+            rw [Finset.Icc_eq_empty]; omega
+          rw [hempty, Finset.prod_empty, mul_one, show J+1-1 = J from by omega, ← hIcc J]
+        · rw [Finset.sum_mul]
+          refine Finset.sum_congr rfl (fun k hk => ?_)
+          have hk1 : k ≤ J := (Finset.mem_Icc.mp hk).2
+          have hI : Finset.Icc (k+1) (J+1) = insert (J+1) (Finset.Icc (k+1) J) := by
+            ext x; simp only [Finset.mem_Icc, Finset.mem_insert]; omega
+          have hn2 : (J+1) ∉ Finset.Icc (k+1) J := by simp
+          rw [hI, Finset.prod_insert hn2]
+          ring
+      rw [hsum, ← ih, hprodw]
+      have hA : winMean N (fun n => ∏ j ∈ Finset.Icc 1 (J+1), f j n)
+          = winMean N (fun n => f (J+1) n * ∏ j ∈ Finset.Icc 1 J, f j n) := by
+        congr 1; funext n; exact hprodf n
+      rw [hA]
+      ring
+
+/-- The crux, decomposed: `roughWindowMean − ∏ roughSiteMean` is the telescoping sum of
+prefix/site covariances of the rough phases. -/
+theorem roughWindow_sub_prod_eq_covariances (N J : ℕ) (h : ℤ) (hN : 0 < N) :
+    roughWindowMean N J h 2 - ∏ j ∈ Finset.Icc 1 J, roughSiteMean N h j 2
+      = ∑ k ∈ Finset.Icc 1 J,
+          (winMean N (fun n => ∏ j ∈ Finset.Icc 1 k, roughPhase h j n)
+            - winMean N (fun n => ∏ j ∈ Finset.Icc 1 (k-1), roughPhase h j n)
+              * roughSiteMean N h k 2)
+          * ∏ j ∈ Finset.Icc (k+1) J, roughSiteMean N h j 2 := by
+  rw [roughWindowMean_eq_winMean]
+  simpa [roughSiteMean_eq_winMean] using winMean_prod_telescope N hN (fun j => roughPhase h j) J
+
 /-- **Headline wiring on the two minimal nodes.**  On the non-Chowla sector the whole G₄ window
 law rests on exactly two open statements: `RoughIndependenceAt h 2` (the rough window mean
 factorises into its site means) and `ParityDiscrepancy h` (the rough phase has no parity bias
