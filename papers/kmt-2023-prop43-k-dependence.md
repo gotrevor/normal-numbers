@@ -342,7 +342,7 @@ one Thorner–Zaman's printed (6.2) fails to reduce to.  Its Fundamental Lemma (
 Cribro.  Status of IV.5(a): hypothesis form confirmed by an independent primary source; the explicit constant
 still rests on Thorner–Zaman's restatement alone.
 
-**IV.5(a) CLOSED (15:52 EDT) - second independent restatement.**  Matomäki–Teräväinen, *Products of primes in
+**IV.5(a) CLOSED (18:16 EDT) - second independent restatement.**  Matomäki–Teräväinen, *Products of primes in
 arithmetic progressions*, arXiv:2301.07679, §9, **Lemma 9.1** ("see e.g. [Opera de Cribro, Lemma 6.8]"; local text
 `papers/matomaki-teravainen-2023-products-of-primes-in-ap.txt`, lines 1960–1990): for fixed `κ ≥ 1`, `z ≥ 2`,
 `D = z^s` with `s ≥ 9κ+1`, there are `λ^±_d` with `|λ^±_d| ≤ 1`, supported on `d ≤ D`, `d | P(z)`, sandwiching
