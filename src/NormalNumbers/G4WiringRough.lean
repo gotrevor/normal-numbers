@@ -1674,6 +1674,127 @@ theorem isNormal_G4_of_roughAt
     exact fullWindowMean_tendsto_zero_of_sched
       (crtConstantSched_of_roughAt_notChowla hh hc hR hD) hSite hh
 
+/-! ### `parityDisc` is a scale difference
+
+`ω_{>2}` does not see the factor 2, so the rough phase satisfies `ρ(2m) = ρ(m)`: summing it over
+the *even* arguments of a window is the same as summing it over a window at half the scale.  The
+parity discrepancy is therefore not an oscillating sum at all — it measures how much the rough
+mean changes when the scale is halved. -/
+
+lemma omegaAbove_two_double (m : ℕ) (hm : m ≠ 0) : omegaAbove 2 (2 * m) = omegaAbove 2 m := by
+  classical
+  rw [omegaAbove, omegaAbove]
+  congr 1
+  rw [Nat.primeFactors_mul (by norm_num) hm, Finset.filter_union]
+  have h2 : (Nat.primeFactors 2).filter (fun p => 2 < p) = ∅ := by
+    rw [Nat.Prime.primeFactors Nat.prime_two]
+    ext p
+    simp only [Finset.mem_filter, Finset.mem_singleton, Finset.notMem_empty, iff_false, not_and]
+    rintro rfl
+    omega
+  rw [h2, Finset.empty_union]
+
+/-- Sum of `ρ(n+j)` over a window, reindexed to a sum over the shifted window. -/
+lemma sum_shift (N j : ℕ) (ρ : ℕ → ℂ) (P : ℕ → Prop) [DecidablePred P] :
+    ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => P (n+j)), ρ (n+j)
+      = ∑ m ∈ (Finset.Ico (N+j) (2*N+j)).filter P, ρ m := by
+  classical
+  refine Finset.sum_nbij' (fun n => n + j) (fun m => m - j) ?_ ?_ ?_ ?_ ?_
+  · intro n hn
+    simp only [Finset.mem_filter, Finset.mem_Ico] at hn ⊢
+    exact ⟨⟨by omega, by omega⟩, hn.2⟩
+  · intro m hm
+    simp only [Finset.mem_filter, Finset.mem_Ico] at hm ⊢
+    refine ⟨⟨by omega, by omega⟩, ?_⟩
+    have : m - j + j = m := by omega
+    rw [this]; exact hm.2
+  · intro n hn; omega
+  · intro m hm
+    simp only [Finset.mem_filter, Finset.mem_Ico] at hm
+    omega
+  · intro n _; rfl
+
+/-- The even arguments of a window are a window at half the scale. -/
+lemma sum_even_eq_half (A B : ℕ) (hA : 1 ≤ A) (ρ : ℕ → ℂ)
+    (hρ : ∀ m, m ≠ 0 → ρ (2*m) = ρ m) :
+    ∑ m ∈ (Finset.Ico A B).filter (fun m => 2 ∣ m), ρ m
+      = ∑ k ∈ Finset.Ico ((A+1)/2) ((B+1)/2), ρ k := by
+  classical
+  refine Finset.sum_nbij' (fun m => m / 2) (fun k => 2 * k) ?_ ?_ ?_ ?_ ?_
+  · intro m hm
+    simp only [Finset.mem_filter, Finset.mem_Ico] at hm ⊢
+    obtain ⟨⟨h1, h2⟩, h3⟩ := hm
+    obtain ⟨c, rfl⟩ := h3
+    omega
+  · intro k hk
+    simp only [Finset.mem_Ico] at hk
+    simp only [Finset.mem_filter, Finset.mem_Ico]
+    exact ⟨⟨by omega, by omega⟩, ⟨k, rfl⟩⟩
+  · intro m hm
+    simp only [Finset.mem_filter] at hm
+    obtain ⟨c, rfl⟩ := hm.2
+    omega
+  · intro k _; omega
+  · intro m hm
+    simp only [Finset.mem_filter, Finset.mem_Ico] at hm
+    obtain ⟨⟨h1, h2⟩, c, rfl⟩ := hm
+    have hc : c ≠ 0 := by omega
+    rw [show 2 * c / 2 = c from by omega]
+    exact hρ c hc
+
+/-- The rough sum over a window `[A,B)` at site `j`. -/
+noncomputable def roughSum (h : ℤ) (j A B : ℕ) : ℂ :=
+  ∑ m ∈ Finset.Ico A B, ePhase ((h:ℝ) * omegaAbove 2 m / (4:ℝ)^j)
+
+lemma roughSiteMean_eq_roughSum (N : ℕ) (h : ℤ) (j : ℕ) :
+    roughSiteMean N h j 2 = roughSum h j (N+j) (2*N+j) / N := by
+  rw [roughSiteMean, roughSum]
+  congr 1
+  have := sum_shift N j (fun m => ePhase ((h:ℝ) * omegaAbove 2 m / (4:ℝ)^j)) (fun _ => True)
+  simpa using this
+
+/-- **`parityDisc` is a scale difference.**  With `T` the rough sum over the window and `Sₑ` the
+rough sum over the window at half the scale, `parityDisc = N·Sₑ − cₑ·T`. -/
+theorem parityDisc_eq_scale (N j : ℕ) (h : ℤ) (hj : 1 ≤ j) :
+    parityDisc N j (roughPhase h j)
+      = (N:ℂ) * roughSum h j ((N+j+1)/2) ((2*N+j+1)/2)
+        - (((Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j)).card : ℂ)
+          * roughSum h j (N+j) (2*N+j) := by
+  classical
+  set S : Finset ℕ := Finset.Ico N (2*N) with hS
+  set ρ : ℕ → ℂ := fun m => ePhase ((h:ℝ) * omegaAbove 2 m / (4:ℝ)^j) with hρ
+  have hrp : ∀ n, roughPhase h j n = ρ (n + j) := fun n => rfl
+  set ce : ℂ := ((S.filter (fun n => 2 ∣ n + j)).card : ℂ) with hce
+  set co : ℂ := ((S.filter (fun n => ¬ 2 ∣ n + j)).card : ℂ) with hco
+  have hcard : ce + co = (N : ℂ) := by
+    rw [hce, hco, ← Nat.cast_add, Finset.card_filter_add_card_filter_not, hS, Nat.card_Ico]
+    congr 1
+    omega
+  -- the even part is a half-scale rough sum
+  have hSe : ∑ n ∈ S.filter (fun n => 2 ∣ n + j), roughPhase h j n
+      = roughSum h j ((N+j+1)/2) ((2*N+j+1)/2) := by
+    have h1 : ∑ n ∈ S.filter (fun n => 2 ∣ n + j), ρ (n + j)
+        = ∑ m ∈ (Finset.Ico (N+j) (2*N+j)).filter (fun m => 2 ∣ m), ρ m :=
+      sum_shift N j ρ (fun m => 2 ∣ m)
+    have h2 : ∑ m ∈ (Finset.Ico (N+j) (2*N+j)).filter (fun m => 2 ∣ m), ρ m
+        = ∑ k ∈ Finset.Ico ((N+j+1)/2) ((2*N+j+1)/2), ρ k := by
+      refine sum_even_eq_half _ _ (by omega) ρ (fun m hm => ?_)
+      rw [hρ]
+      simp only
+      rw [omegaAbove_two_double m hm]
+    rw [Finset.sum_congr rfl (fun n _ => hrp n), h1, h2, roughSum]
+  have hT : ∑ n ∈ S, roughPhase h j n = roughSum h j (N+j) (2*N+j) := by
+    rw [Finset.sum_congr rfl (fun n _ => hrp n), roughSum]
+    have := sum_shift N j ρ (fun _ => True)
+    simpa using this
+  have hSo : ∑ n ∈ S.filter (fun n => ¬ 2 ∣ n + j), roughPhase h j n
+      = roughSum h j (N+j) (2*N+j) - roughSum h j ((N+j+1)/2) ((2*N+j+1)/2) := by
+    have := Finset.sum_filter_add_sum_filter_not S (fun n => 2 ∣ n + j) (roughPhase h j)
+    rw [hSe, hT] at this
+    linear_combination this
+  rw [parityDisc, hSe, hSo, ← hce, ← hco]
+  linear_combination (roughSum h j ((N+j+1)/2) ((2*N+j+1)/2)) * hcard
+
 /-- **Headline wiring on the two minimal nodes.**  On the non-Chowla sector the whole G₄ window
 law rests on exactly two open statements: `RoughIndependenceAt h 2` (the rough window mean
 factorises into its site means) and `ParityDiscrepancy h` (the rough phase has no parity bias
