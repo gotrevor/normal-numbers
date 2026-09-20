@@ -6,9 +6,26 @@ normality is the assertion that one measure looks like Haar measure in **two dif
 and the repo so far only carries one of them.  This note freezes the missing one as a Lean
 node and records what the bridge does and does not buy.
 
-**The one ask.**  Freeze `isNormalSequence_iff_walsh` (§3) as the next small lap; it is
-self-contained, finite, and fills a gap that neither the repo nor Mathlib has (grep
-2026-09-20: no `Walsh`, no Erdős–Turán in `Mathlib/`).
+**STATUS 2026-09-20: BOTH DIRECTIONS PROVED**, `src/NormalNumbers/Walsh.lean`.
+
+`isNormalSequence_two_iff_parityMean` - binary normality **is** the vanishing of every
+nonempty parity correlation.  Standard axioms, no sorries.  The chain:
+
+| lemma | content |
+|---|---|
+| `prod_one_add_eq` | each window factor collapses to `2` on agreement, `0` on disagreement |
+| `matchesAt_indicator_eq` | exact Hadamard expansion of a block indicator |
+| `blockMean_eq` | the summed transform, exact at every finite `N` |
+| `abs_blockMean_sub_le` | inequality (A), no truncation term |
+| `sum_neg_one_pow_inter_eq_zero` | orthogonality of the block signs, `S` nonempty |
+| `parityChar_eq_sum` | the pointwise inverse transform (exactly one word matches) |
+
+Words are indexed by their one-sets (`wordOf`), which turns the enumeration of binary words
+into a powerset and makes orthogonality fall out of the same product collapse used for
+sufficiency.  The only analysis in the file is an `O(1)/N` boundary correction.
+
+**The one ask.**  Next is base `b` (roots of unity in place of `±1`), or stop at base two.
+Neither the repo nor Mathlib has Walsh functions or Erdős-Turán (grep 2026-09-20).
 
 ## 1. Two duals
 
