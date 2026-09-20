@@ -173,7 +173,33 @@ schedule tail.  Reading KMT §4.1–4.2, `C(k)` collects `(log k)^k` (sum over `
 `K = exp(O(k/log k))`), dimension-`k` Mertens products, and the smooth-number truncation
 `d_j ≤ x^{1/(4k)}`, which needs only `kε → 0` (the paper's fixed `exp(−1/(2ε))` form silently
 requires `ε ≤ e^{−4k}/(4k)`, which would *conflict* with the tail; re-running (4.20) removes it).
-Net `C(k) = exp(O(k²))` — the small-prime tuple sum `∑_{e_j ∣ A^∞} 1/[e_1,…,e_k]` has `p`-factor `≈ (k/(e log p))^k`, so `log C ≈ 0.6 k²` (checked numerically for `k ≤ 64`); still `o(4^k)` in the log.  ⚠️ The (4.20) re-run is *required*: the paper's literal constant absorbs `ε > e^{−4k}/(4k)` and so has `log C(k) ≥ e^{4k}/(2k)`, which is not `o(4^k)`.  The fundamental-lemma constant multiplies `e^{−s}` with `s = 6J_i² log i` in the block construction and has no bite.  The rest of §4.2 (error term of (4.25)) repeats the same Dickman step with the same fix; no other `k`-sensitive step.  Status: a theorem-shaped target
+Net `C(k) = exp(O(k²))` — the small-prime tuple sum `∑_{e_j ∣ A^∞} 1/[e_1,…,e_k]` has `p`-factor `≈ (k/(e log p))^k`, so `log C ≈ 0.6 k²` (checked numerically for `k ≤ 64`); still `o(4^k)` in the log.  ⚠️ The (4.20) re-run is *required*: the paper's literal constant absorbs `ε > e^{−4k}/(4k)` and so has `log C(k) ≥ e^{4k}/(2k)`, which is not `o(4^k)`.  The fundamental-lemma constant multiplies `e^{−s}` with `s = 6J_i² log i` in the block construction and has no bite.  The rest of §4.2 (error term of (4.25)) repeats the same Dickman step with the same fix; no other `k`-sensitive step.
+
+**`exists_good`, explicit (so the lap has no choices to make).**  Let `φ(J) := max(1, max_{J'≤J} log C(J'))`
+(nondecreasing; `φ(k) = o(4^k)` since `max_{J'≤k} ε(J')4^{J'} ≤ max(4^{k/2}·sup ε, 4^k·sup_{J'>k/2} ε(J'))`).
+For `i ≥ 3`:
+- `Jᵢ := max{J : 4φ(J) + 4J ≤ log i}` — so `C(Jᵢ) ≤ i^{1/4}`, `Jᵢ ≤ log i`, `Jᵢ → ∞`, and by
+  maximality `log i < 4φ(Jᵢ+1) + 4Jᵢ + 4 = o(4^{Jᵢ})`.
+- `εᵢ := 1/(8 Jᵢ² log i)` — third term `C(Jᵢ)·e^{−log i} ≤ i^{−3/4}`; `εᵢ < 1/2`.
+- `δᵢ ∈ [1/(i+1), 1/(i+1) + 1/xᵢ]` from `exists_block (y := xᵢ)`; so `∑_{i'<i−1} δᵢ' ≥ H_{i−1} ≥ log i`,
+  `∑_{i'≤i+1} δᵢ' ≤ log(i+2) + 2`, `δᵢ₋₁ + δᵢ ≤ 4/i`.
+- Terms: first `≤ i^{1/4}·√(log(8 (log i)³))·√(8/i) → 0`; second `≤ i^{1/4}·e·i^{−1}`; tail
+  `≤ (log(i+2) + 3)/4^{Jᵢ} → 0` by the maximality line.
+- `xᵢ₊₁ := max( max Bᵢ, 2xᵢ, (xᵢ+1)^{⌈1/εᵢ₊₁⌉}, ⌈exp exp(8 Jᵢ₊₁² log(i+1))⌉ )` inductively (`x₀ := 3`):
+  gives `x_double`, `sep` (`N^{εᵢ} ≥ xᵢ^{εᵢ} ≥ xᵢ₋₁ + 1`), and `ε_range`
+  (`log log N > log log xᵢ ≥ 8Jᵢ² log i`).  Blocks lie in `(xᵢ, xᵢ₊₁]` by construction.
+- `Good.δ_div`: `∑ δᵢ ≥ ∑ 1/(i+1) = ∞`.
+So `log C(k) = o(4^k)` is exactly the right hypothesis (not `O(4^k/k)`; the `4φ + 4J` slack
+absorbs the `i^{1/4}` and the `Jᵢ ≤ log i` bound).
+
+**Step 2 of §4.1 re-read** (2026-09-19, late): for our forms `a_j = 1`, `h_j = j`, `Q = 1`,
+`A = ∏_{i<j≤k}(j−i)`, so every prime `< k` divides `A`.  Solvability/CRT bookkeeping checks: `K_j = M/e_j ∣ A^∞`,
+`(K_j, B_j) = 1` or the sum vanishes, `p ∣ K_{i₁}B_{i₂} − K_{i₂}B_{i₁} ⟹ p ∣ A`, and Prop 4.4's size
+condition `K_j, B_j ≤ (log X)^{1/2}/10` needs only `k ≤ (log x)^{1/2}/20`.  One `k`-factor I had not
+listed: 4.4 is applied to `f̃_j` (with `p ∣ A` killed), and `𝔻(f̃_j,1;x^ε)² ≥ 𝔻(f_j,1;x^ε)² − 2∑_{p<k} 1/p`,
+so the second term picks up `(log k)^{2+o(1)}` — harmless.  Total `C(k) = exp(O(k²))` stands, with the
+side conditions `k ≤ (log x)^{1/2}/20`, `k² ≪ log log x`, `kε ≤ 1/(4e)`, all trivial in the block
+construction (`εᵢ = 1/(8Jᵢ² log i)`, `xᵢ ≥ exp exp(8Jᵢ² log i)`).  Status: a theorem-shaped target
 whose proof is "KMT §4 with the `k`-dependence made explicit + the block construction"; no new
 idea needed, real bookkeeping.  Lean cost dominated by the fundamental lemma of sieve theory
 (not in Mathlib).

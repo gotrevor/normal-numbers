@@ -297,13 +297,12 @@ theorem exists_block (y : ℕ) (hy : 1 ≤ y) (δ : ℝ) (hδ : 0 < δ) :
       δ ≤ ∑ p ∈ B, (1 : ℝ) / p ∧ ∑ p ∈ B, (1 : ℝ) / p ≤ δ + 1 / y := by
   sorry
 
-/-- **The sandwich is solvable** when `log C k = o(4^k)`.  Take `δᵢ = 1/(i+1)` (so
-`∑_{i'<i−1} δᵢ' ≥ log i − 1`, `∑_{i'≤i+1} δᵢ' ≤ log i + 2`); choose `Jᵢ → ∞` so slowly that
-`log C(Jᵢ) ≤ (1/4) log i` (possible since `C` is finite at each `k`) **and** `4^{Jᵢ} ≥ (log i)²`
-(possible since `log C(k) = o(4^k)` lets `Jᵢ ≍ log₄ log i` satisfy the first); set
-`εᵢ = 1/(8 Jᵢ² log i)`; then choose `xᵢ` inductively so large that `ε_range`, `sep` and `x_double`
-hold, and `Bᵢ` from `exists_block`.  The three terms are then `≪ i^{1/4}·(log i)^{1/2}·i^{-1/2}`,
-`i^{1/4}·e·i^{-1}`, `i^{1/4}·i^{-1}`, and the tail is `(log i + 3)/(log i)² → 0`. -/
+/-- **The sandwich is solvable** when `log C k = o(4^k)`.  Explicit choices (design doc §5,
+"`exists_good`, explicit"): `φ(J) := max(1, max_{J'≤J} log C J')`, `Jᵢ := max{J : 4φ(J) + 4J ≤ log i}`
+(so `C(Jᵢ) ≤ i^{1/4}` and, by maximality, `log i = o(4^{Jᵢ})`), `εᵢ := 1/(8Jᵢ² log i)`,
+`Bᵢ` from `exists_block (y := xᵢ) (δ := 1/(i+1))`, and `xᵢ₊₁ := max(max Bᵢ, 2xᵢ, (xᵢ+1)^{⌈1/εᵢ₊₁⌉},
+⌈exp exp(8Jᵢ₊₁² log(i+1))⌉)`.  Then the three terms are `≤ i^{1/4}√(log(8(log i)³))√(8/i)`,
+`≤ e·i^{−3/4}`, `≤ i^{−3/4}`, and the tail is `≤ (log(i+2) + 3)/4^{Jᵢ} → 0`. -/
 theorem exists_good (C : ℕ → ℝ)
     (hgrow : Tendsto (fun k : ℕ => Real.log (C k) / 4 ^ k) atTop (𝓝 0)) :
     ∃ D : BlockData, D.Good C := by
