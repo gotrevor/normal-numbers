@@ -2517,7 +2517,69 @@ structure Good₂ (C₁ C₂ : ℕ → ℝ) : Prop where
 /-- Leaf 3: the KMT means vanish along the block schedule, two-constant form. -/
 theorem kmt_along₂ {C₁ C₂ : ℕ → ℝ} (hKMT : KMT_quant₂ C₁ C₂) (hG : D.Good₂ C₁ C₂) :
     KMT_along D.set D.sched := by
-  sorry
+  intro h hh
+  refine tendsto_zero_iff_norm_tendsto_zero.mpr ?_
+  have hterms : Tendsto (fun i => |C₁ (D.J i) *
+      (Real.sqrt (Real.log (1 / D.ε i)) * Real.sqrt (2 * (D.δ (i - 1) + D.δ i))
+        + Real.exp (- ∑ i' ∈ Finset.range (i - 1), D.δ i'))|
+      + |C₂ (D.J i) * Real.exp (- 1 / (8 * (D.J i : ℝ) ^ 2 * D.ε i))|) atTop (𝓝 0) := by
+    simpa using hG.terms₁.abs.add hG.terms₂.abs
+  have hcomp := hterms.comp D.blockIndex_tendsto
+  refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _)) ?_ hcomp
+  filter_upwards [eventually_gt_atTop (D.x 0), eventually_ge_atTop 3,
+    (hG.J_tendsto.comp D.blockIndex_tendsto).eventually_ge_atTop (h.natAbs + 1),
+    D.blockIndex_tendsto.eventually_ge_atTop 1]
+    with N hN hN3 hJ hbi1
+  obtain ⟨hspec1, hspec2⟩ := D.blockIndex_spec N hN
+  set i := D.blockIndex N with hi
+  have hntw : NontrivialWindow (D.J i) h := ⟨h.natAbs + 1, by omega, hJ, nontrivial_site hh⟩
+  obtain ⟨hε1, hε2⟩ := hG.ε_range i N hspec1
+  have hb := hKMT D.set (D.J i) h hh hntw N hN3 (D.ε i) hε1 hε2
+  have hy : D.x (i - 1) ≤ ⌊(N : ℝ) ^ D.ε i⌋₊ := hG.sep i N hbi1 hspec1
+  have hIoc := D.recipSumIoc_le i N ⌊(N : ℝ) ^ D.ε i⌋₊ hspec1 hspec2 hy
+  have hLe := D.recipSumLe_ge i ⌊(N : ℝ) ^ D.ε i⌋₊ hy
+  set A : ℝ := Real.sqrt (Real.log (1 / D.ε i))
+      * Real.sqrt (2 * recipSumIoc D.set ⌊(N : ℝ) ^ D.ε i⌋₊ N)
+    + Real.exp (- recipSumLe D.set ⌊(N : ℝ) ^ D.ε i⌋₊) with hA
+  set B : ℝ := Real.sqrt (Real.log (1 / D.ε i))
+      * Real.sqrt (2 * (D.δ (i - 1) + D.δ i))
+    + Real.exp (- ∑ i' ∈ Finset.range (i - 1), D.δ i') with hB
+  set T : ℝ := Real.exp (- 1 / (8 * (D.J i : ℝ) ^ 2 * D.ε i)) with hT
+  have hTpos : 0 < T := Real.exp_pos _
+  have hAnn : 0 ≤ A := by rw [hA]; positivity
+  have hAB : A ≤ B := by
+    rw [hA, hB]
+    have hsq : Real.sqrt (2 * recipSumIoc D.set ⌊(N : ℝ) ^ D.ε i⌋₊ N)
+        ≤ Real.sqrt (2 * (D.δ (i - 1) + D.δ i)) := Real.sqrt_le_sqrt (by linarith)
+    have hmul := mul_le_mul_of_nonneg_left hsq
+      (Real.sqrt_nonneg (Real.log (1 / D.ε i)))
+    have hexp : Real.exp (- recipSumLe D.set ⌊(N : ℝ) ^ D.ε i⌋₊)
+        ≤ Real.exp (- ∑ i' ∈ Finset.range (i - 1), D.δ i') :=
+      Real.exp_le_exp.mpr (by linarith)
+    linarith
+  have hsched : D.sched N = D.J i := rfl
+  have hkey : ‖windowMeanS D.set (D.J i) h N‖ ≤ |C₁ (D.J i) * B| + |C₂ (D.J i) * T| := by
+    refine le_trans hb ?_
+    have h1 : C₁ (D.J i) * A ≤ |C₁ (D.J i)| * A :=
+      mul_le_mul_of_nonneg_right (le_abs_self _) hAnn
+    have h2 : |C₁ (D.J i)| * A ≤ |C₁ (D.J i)| * B :=
+      mul_le_mul_of_nonneg_left hAB (abs_nonneg _)
+    have h3 : C₂ (D.J i) * T ≤ |C₂ (D.J i)| * T :=
+      mul_le_mul_of_nonneg_right (le_abs_self _) hTpos.le
+    have h4 : |C₁ (D.J i) * B| = |C₁ (D.J i)| * B := by
+      rw [abs_mul, abs_of_nonneg (le_trans hAnn hAB)]
+    have h5 : |C₂ (D.J i) * T| = |C₂ (D.J i)| * T := by
+      rw [abs_mul, abs_of_nonneg hTpos.le]
+    rw [h4, h5]
+    linarith
+  calc ‖windowMeanS D.set (D.sched N) h N‖
+      = ‖windowMeanS D.set (D.J i) h N‖ := by rw [hsched]
+    _ ≤ |C₁ (D.J i) * B| + |C₂ (D.J i) * T| := hkey
+    _ = ((fun i => |C₁ (D.J i) *
+          (Real.sqrt (Real.log (1 / D.ε i)) * Real.sqrt (2 * (D.δ (i - 1) + D.δ i))
+            + Real.exp (- ∑ i' ∈ Finset.range (i - 1), D.δ i'))|
+          + |C₂ (D.J i) * Real.exp (- 1 / (8 * (D.J i : ℝ) ^ 2 * D.ε i))|) ∘ D.blockIndex) N := by
+        simp only [Function.comp_apply, ← hi, hB, hT]
 
 end BlockData
 
@@ -2550,7 +2612,12 @@ theorem JF₂_le (C₁ C₂ : ℕ → ℝ) (i : ℕ) : JF₂ C₁ C₂ i ≤ i :
 theorem JF₂_spec (C₁ C₂ : ℕ → ℝ) (i : ℕ)
     (h0 : |C₁ 0| ≤ Real.sqrt (Real.sqrt i) ∧ Real.log |C₂ 0| ≤ (i : ℝ) / 2) :
     ∀ J' ≤ JF₂ C₁ C₂ i, |C₁ J'| ≤ Real.sqrt (Real.sqrt i) ∧ Real.log |C₂ J'| ≤ (i : ℝ) / 2 := by
-  sorry
+  classical
+  refine Nat.findGreatest_spec (P := fun J => ∀ J' ≤ J,
+    |C₁ J'| ≤ Real.sqrt (Real.sqrt i) ∧ Real.log |C₂ J'| ≤ (i : ℝ) / 2) (Nat.zero_le i) ?_
+  intro J' hJ'
+  rw [Nat.le_zero.mp hJ']
+  exact h0
 
 /-- Maximality at `Jᵢ + 1`. -/
 theorem JF₂_max (C₁ C₂ : ℕ → ℝ) (i : ℕ)
@@ -2558,14 +2625,53 @@ theorem JF₂_max (C₁ C₂ : ℕ → ℝ) (i : ℕ)
     (hlt : JF₂ C₁ C₂ i < i) :
     Real.sqrt (Real.sqrt i) < |C₁ (JF₂ C₁ C₂ i + 1)| ∨
       (i : ℝ) / 2 < Real.log |C₂ (JF₂ C₁ C₂ i + 1)| := by
-  sorry
+  classical
+  have hng : ¬ (∀ J' ≤ JF₂ C₁ C₂ i + 1,
+      |C₁ J'| ≤ Real.sqrt (Real.sqrt i) ∧ Real.log |C₂ J'| ≤ (i : ℝ) / 2) :=
+    Nat.findGreatest_is_greatest (P := fun J => ∀ J' ≤ J,
+      |C₁ J'| ≤ Real.sqrt (Real.sqrt i) ∧ Real.log |C₂ J'| ≤ (i : ℝ) / 2)
+      (k := JF₂ C₁ C₂ i + 1) (Nat.lt_succ_self _) (by omega)
+  push_neg at hng
+  obtain ⟨J', hJ', hgt⟩ := hng
+  have hJ'eq : J' = JF₂ C₁ C₂ i + 1 := by
+    by_contra hcne
+    have hs := JF₂_spec C₁ C₂ i h0 J' (by omega)
+    exact absurd (hgt hs.1) (not_lt.mpr hs.2)
+  rw [hJ'eq] at hgt
+  by_cases hc : |C₁ (JF₂ C₁ C₂ i + 1)| ≤ Real.sqrt (Real.sqrt i)
+  · exact Or.inr (hgt hc)
+  · exact Or.inl (not_le.mp hc)
 
 theorem JF₂_tendsto (C₁ C₂ : ℕ → ℝ) : Tendsto (JF₂ C₁ C₂) atTop atTop := by
-  sorry
+  classical
+  refine tendsto_atTop.mpr (fun m => ?_)
+  have hb₁ : ∀ J' ≤ m, |C₁ J'| ≤ ∑ J'' ∈ Finset.range (m + 1), |C₁ J''| := by
+    intro J' hJ'
+    refine Finset.single_le_sum (f := fun J'' => |C₁ J''|) (fun _ _ => abs_nonneg _) ?_
+    exact Finset.mem_range.mpr (by omega)
+  have hb₂ : ∀ J' ≤ m, Real.log |C₂ J'|
+      ≤ ∑ J'' ∈ Finset.range (m + 1), abs (Real.log |C₂ J''|) := by
+    intro J' hJ'
+    refine le_trans (le_abs_self _) ?_
+    refine Finset.single_le_sum (f := fun J'' => abs (Real.log |C₂ J''|))
+      (fun _ _ => abs_nonneg _) ?_
+    exact Finset.mem_range.mpr (by omega)
+  have hhalf : Tendsto (fun i : ℕ => (i : ℝ) / 2) atTop atTop :=
+    tendsto_natCast_atTop_atTop.atTop_div_const (by norm_num)
+  filter_upwards [eventually_ge_atTop m,
+    tendsto_qsqrt.eventually_ge_atTop (∑ J'' ∈ Finset.range (m + 1), |C₁ J''|),
+    hhalf.eventually_ge_atTop (∑ J'' ∈ Finset.range (m + 1), abs (Real.log |C₂ J''|))]
+    with i him hbig1 hbig2
+  exact Nat.le_findGreatest him
+    (fun J' hJ' => ⟨le_trans (hb₁ J' hJ') hbig1, le_trans (hb₂ J' hJ') hbig2⟩)
 
 theorem JF₂_base (C₁ C₂ : ℕ → ℝ) : ∀ᶠ i : ℕ in atTop,
     |C₁ 0| ≤ Real.sqrt (Real.sqrt i) ∧ Real.log |C₂ 0| ≤ (i : ℝ) / 2 := by
-  sorry
+  have hhalf : Tendsto (fun i : ℕ => (i : ℝ) / 2) atTop atTop :=
+    tendsto_natCast_atTop_atTop.atTop_div_const (by norm_num)
+  filter_upwards [tendsto_qsqrt.eventually_ge_atTop |C₁ 0|,
+    hhalf.eventually_ge_atTop (Real.log |C₂ 0|)] with i h1 h2
+  exact ⟨h1, h2⟩
 
 theorem JF₂_C_le (C₁ C₂ : ℕ → ℝ) : ∀ᶠ i : ℕ in atTop,
     |C₁ (JF₂ C₁ C₂ i)| ≤ Real.sqrt (Real.sqrt i) ∧
