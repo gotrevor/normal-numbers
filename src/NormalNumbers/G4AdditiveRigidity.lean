@@ -240,6 +240,103 @@ theorem ov_mul_left_of_modEq_one (W : TWeight) {d m k : ℕ} (hd : d ≠ 0) (hm 
   rw [hstable] at hc
   omega
 
+/-! ### The interface is strictly larger than the additive weights
+
+`omegaOdd` is `ω(m) + 1_{m odd}`.  It satisfies every axiom of `TWeight` — the twist is constant
+for odd `d`, and for even `d` the prime `2` lies in `d.primeFactors`, so `ov_congr`'s hypothesis
+supplies `m ≡ m' [MOD 2]` — yet it is **not** additive: `w(15) = 3 ≠ w(3) + w(5) = 4`.
+
+It is, however, `ω(m) − 1_{2 ∣ m}` plus the constant `1`, i.e. additive **plus a constant**, and
+`w(1) = 1 ≠ 0`.  So the `− w(1)` in `wN_mul_of_modEq_one` is load-bearing, and the sharp
+classification conjecture is about `m ↦ w(m) − w(1)` (see `PENDING_WORK.md`). -/
+
+/-- The twist `1_{m odd}`. -/
+def oddBit (m : ℕ) : ℕ := if m % 2 = 1 then 1 else 0
+
+lemma oddBit_le_one (m : ℕ) : oddBit m ≤ 1 := by unfold oddBit; split_ifs <;> omega
+
+/-- The transport twist: `0` exactly when `2` is a prime factor of `d` and divides `m`. -/
+def oddTwist (d m : ℕ) : ℤ := if 2 ∈ d.primeFactors ∧ 2 ∣ m then 0 else 1
+
+/-- `1_{dm odd} + twist = 1_{m odd} + 1_{d odd}` for `d, m ≠ 0`. -/
+lemma oddBit_mul (d m : ℕ) (hd : d ≠ 0) (hm : m ≠ 0) :
+    (oddBit (d * m) : ℤ) + oddTwist d m = (oddBit m : ℤ) + (oddBit d : ℤ) := by
+  have hmul : (d * m) % 2 = (d % 2) * (m % 2) % 2 := Nat.mul_mod d m 2
+  unfold oddBit oddTwist
+  by_cases hD : 2 ∈ d.primeFactors
+  · have hDd : (2 : ℕ) ∣ d := (Nat.mem_primeFactors.1 hD).2.1
+    have hd0 : d % 2 = 0 := Nat.dvd_iff_mod_eq_zero.1 hDd
+    by_cases hM : (2 : ℕ) ∣ m
+    · have hm0 : m % 2 = 0 := Nat.dvd_iff_mod_eq_zero.1 hM
+      simp [hD, hM, hmul, hd0, hm0]
+    · have hm1 : m % 2 = 1 := by omega
+      simp [hD, hM, hmul, hd0, hm1]
+  · have hDd : ¬ ((2 : ℕ) ∣ d) := fun h => hD (Nat.mem_primeFactors.2 ⟨Nat.prime_two, h, hd⟩)
+    have hd1 : d % 2 = 1 := by omega
+    by_cases hM : (2 : ℕ) ∣ m
+    · have hm0 : m % 2 = 0 := Nat.dvd_iff_mod_eq_zero.1 hM
+      simp [hD, hmul, hd1, hm0]
+    · have hm1 : m % 2 = 1 := by omega
+      simp [hD, hmul, hd1, hm1]
+
+/-- **`ω + 1_{odd}` is a `TWeight`.** -/
+def omegaOdd : TWeight where
+  wN := fun m => omega.wN m + oddBit m
+  ov := fun d m => omega.ov d m + oddTwist d m
+  ovB := fun d => omega.ovB d + 1
+  mul_eq := fun d m hd hm => by
+    have h1 := omega.mul_eq d m hd hm
+    have h2 := oddBit_mul d m hd hm
+    push_cast
+    push_cast at h1 h2
+    linarith
+  ov_le := fun d m => by
+    have h1 := omega.ov_le d m
+    have h2 : oddTwist d m = 0 ∨ oddTwist d m = 1 := by
+      unfold oddTwist; split_ifs <;> simp
+    have h3 : (0 : ℤ) ≤ (omega.ovB d : ℤ) := Int.natCast_nonneg _
+    rw [abs_le] at h1 ⊢
+    push_cast
+    omega
+  ov_congr := fun d m m' h => by
+    have h1 := omega.ov_congr d m m' h
+    have h2 : oddTwist d m = oddTwist d m' := by
+      unfold oddTwist
+      by_cases h2d : 2 ∈ d.primeFactors
+      · have hmm : m ≡ m' [MOD 2] := h 2 h2d
+        unfold Nat.ModEq at hmm
+        have hiff : ((2 : ℕ) ∣ m) ↔ ((2 : ℕ) ∣ m') := by omega
+        simp [h2d, hiff]
+      · simp [h2d]
+    rw [h1, h2]
+  summable := fun b hb => by
+    have h1 := omega.summable b hb
+    have hb1 : (1 : ℝ) < (b : ℝ) := by
+      have : (2 : ℝ) ≤ b := by exact_mod_cast hb
+      linarith
+    have h2 : Summable (fun n : ℕ => (1 : ℝ) / (b : ℝ) ^ n) := by
+      have : Summable (fun n : ℕ => ((b : ℝ)⁻¹) ^ n) :=
+        summable_geometric_of_lt_one (by positivity)
+          (by rw [inv_lt_one_iff₀]; exact Or.inr hb1)
+      simpa [one_div, inv_pow] using this
+    refine Summable.of_nonneg_of_le (fun n => by positivity) (fun n => ?_) (h1.add h2)
+    have hbn : (0 : ℝ) < (b : ℝ) ^ n := by positivity
+    have hle : ((omega.wN n + oddBit n : ℕ) : ℝ) ≤ (omega.wN n : ℝ) + 1 := by
+      have h3 : ((oddBit n : ℕ) : ℝ) ≤ 1 := by exact_mod_cast oddBit_le_one n
+      push_cast
+      linarith
+    calc ((omega.wN n + oddBit n : ℕ) : ℝ) / (b : ℝ) ^ n
+        ≤ ((omega.wN n : ℝ) + 1) / (b : ℝ) ^ n := by gcongr
+      _ = (omega.wN n : ℝ) / (b : ℝ) ^ n + 1 / (b : ℝ) ^ n := by ring
+
+@[simp] lemma omegaOdd_wN (m : ℕ) : omegaOdd.wN m = omega.wN m + oddBit m := rfl
+
+/-- **`omegaOdd` is not additive**, and `w(1) = 1 ≠ 0`: the `TWeight` interface strictly
+contains the additive weights, and only `w − w(1)` can be additive. -/
+theorem omegaOdd_not_additive :
+    omegaOdd.wN 1 = 1 ∧ omegaOdd.wN 15 ≠ omegaOdd.wN 3 + omegaOdd.wN 5 := by
+  refine ⟨?_, ?_⟩ <;> · simp only [omegaOdd_wN, oddBit]; decide +kernel
+
 end TWeight
 
 end NormalNumbers.G4
