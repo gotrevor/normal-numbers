@@ -268,10 +268,10 @@ theorem orbit_eq_fract_tailB (n : ℕ) :
 
 /-- For every `h ≠ 0` some site `j ≤ windowJ N` (eventually) has `h 4^{-j} ∉ ℤ`, and the product
 of site means then tends to `0`; with the law, the window mean tends to `0`. -/
-theorem fullWindowMean_tendsto_zero (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant h)
-    (hSite : SiteDecayFull) (h : ℤ) (hh : h ≠ 0) :
+theorem fullWindowMean_tendsto_zero_of_law {h : ℤ} (hL : CRTConstant h)
+    (hSite : SiteDecayFull) (hh : h ≠ 0) :
     Tendsto (fun N => fullWindowMean N (windowJ N) h) atTop (𝓝 0) := by
-  obtain ⟨c, B, C, hcB, hlaw⟩ := hLaw h hh
+  obtain ⟨c, B, C, hcB, hlaw⟩ := hL
   set j₀ : ℕ := h.natAbs + 1 with hj₀def
   have hj₀1 : 1 ≤ j₀ := by omega
   have hnotint : ¬ ∃ m : ℤ, (h : ℝ) / (4 : ℝ) ^ j₀ = m := by
@@ -335,8 +335,8 @@ theorem fullWindowMean_tendsto_zero (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant
         nlinarith
 
 /-- Dyadic Fourier means of the orbit vanish: tail error (L1) + `fullWindowMean_tendsto_zero`. -/
-theorem dyadic_fourier_tendsto_zero (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant h)
-    (hSite : SiteDecayFull) (h : ℤ) (hh : h ≠ 0) :
+theorem dyadic_fourier_tendsto_zero_of_window {h : ℤ}
+    (hmain : Tendsto (fun N => fullWindowMean N (windowJ N) h) atTop (𝓝 0)) :
     Tendsto (dyadicMean (fun n => ePhase (h * orbit 4 (primeLambertAtBase 4) n))) atTop (𝓝 0) := by
   set F : ℕ → ℂ := fun n => ePhase (h * orbit 4 (primeLambertAtBase 4) n) with hF
   have hFtail : ∀ n : ℕ, F n = ePhase (h * TWeight.omega.tailB 4 n) := by
@@ -348,7 +348,6 @@ theorem dyadic_fourier_tendsto_zero (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant
     rw [hF]
     simp only
     rw [orbit_eq_fract_tailB, hshift, ePhase_add_int]
-  have hmain := fullWindowMean_tendsto_zero hLaw hSite h hh
   have hgoal : Tendsto (fun N => dyadicMean F N - fullWindowMean N (windowJ N) h) atTop (𝓝 0) := by
     refine tendsto_zero_iff_norm_tendsto_zero.mpr ?_
     refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _))
@@ -405,13 +404,17 @@ theorem dyadic_fourier_tendsto_zero (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant
   have := hmain.add hgoal
   simpa using this
 
-/-- **Wiring theorem**: normality of `G₄` from the two frozen inputs. -/
-theorem isNormal_G4_of_CRTConstant (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant h)
-    (hSite : SiteDecayFull) : IsNormal 4 (primeLambertAtBase 4) := by
+/-- The minimal node: window means along the schedule vanish at every `h ≠ 0`. -/
+def WindowDecay (h : ℤ) : Prop :=
+  Tendsto (fun N => fullWindowMean N (windowJ N) h) atTop (𝓝 0)
+
+/-- **Wiring theorem, minimal form**: normality of `G₄` from window decay alone. -/
+theorem isNormal_G4_of_windowDecay (hW : ∀ h : ℤ, h ≠ 0 → WindowDecay h) :
+    IsNormal 4 (primeLambertAtBase 4) := by
   rw [isNormal_iff_equidistributed_orbit 4 (by norm_num)]
   refine equidistributed_of_weyl _ (orbit_mem_Ico 4 _) ?_
   intro h hh
-  have hd := dyadic_fourier_tendsto_zero hLaw hSite h hh
+  have hd := dyadic_fourier_tendsto_zero_of_window (hW h hh)
   have hb : ∀ n : ℕ, ‖(fun n => ePhase (h * orbit 4 (primeLambertAtBase 4) n)) n‖ ≤ 1 :=
     fun n => le_of_eq (norm_ePhase _)
   have hpre := prefixMean_tendsto_zero_of_dyadic _ 1 hb hd
@@ -427,5 +430,31 @@ theorem isNormal_G4_of_CRTConstant (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant 
     ring
   rw [heq]
   exact hpre
+
+/-- The **Chowla sector**: `v₂(h)` odd, so the site `j = (v₂(h)+1)/2` has phase `h/4^j ≡ 1/2`,
+`z_j = −1`, and the CRT main term of the site product vanishes (the `p = 2` local factor is `0`).
+Probe 2026-09-19 (`--window-constant`, `h = 2`, `N = 10⁶ … 1.6·10⁷`): both `W` and `m_j` sit at the
+`√N` noise floor and their ratio wanders `2.5, 13.9, 45, 5.0, 3.1` with phase `±0.25` turns, while at
+`h = 1` it is `1.289 → 1.305`, phase `0.004`.  So `CRTConstant h` is false there and the only honest
+node is `WindowDecay h` itself: a Chowla-type statement for `(−1)^{ω(n+j)}` against the other sites. -/
+def ChowlaSector (h : ℤ) : Prop := Odd (padicValInt 2 h)
+
+/-- **Wiring theorem, split form**: the CRT law only where its main term is nonvanishing
+(`v₂(h)` even), bare decay in the Chowla sector. -/
+theorem isNormal_G4_of_split
+    (hSD : ∀ h : ℤ, h ≠ 0 → ¬ ChowlaSector h → CRTConstant h)
+    (hCh : ∀ h : ℤ, h ≠ 0 → ChowlaSector h → WindowDecay h)
+    (hSite : SiteDecayFull) : IsNormal 4 (primeLambertAtBase 4) := by
+  refine isNormal_G4_of_windowDecay (fun h hh => ?_)
+  by_cases hc : ChowlaSector h
+  · exact hCh h hh hc
+  · exact fullWindowMean_tendsto_zero_of_law (hSD h hh hc) hSite hh
+
+/-- The original two-input form, now a corollary (⚠️ vacuous if `CRTConstant` fails in the
+Chowla sector, as the probe indicates; kept because its name is guarded). -/
+theorem isNormal_G4_of_CRTConstant (hLaw : ∀ h : ℤ, h ≠ 0 → CRTConstant h)
+    (hSite : SiteDecayFull) : IsNormal 4 (primeLambertAtBase 4) :=
+  isNormal_G4_of_split (fun h hh _ => hLaw h hh)
+    (fun h hh _ => fullWindowMean_tendsto_zero_of_law (hLaw h hh) hSite hh) hSite
 
 end NormalNumbers.G4
