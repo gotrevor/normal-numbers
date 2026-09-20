@@ -1,0 +1,3189 @@
+                                                       ON ELLIOTT’S CONJECTURE AND APPLICATIONS
+
+                                                    OLEKSIY KLURMAN, ALEXANDER P. MANGEREL, AND JONI TERÄVÄINEN
+
+
+                                                   Abstract. Let f : N → D be a multiplicative function. Under the merely necessary
+                                                   assumption that f is non-pretentious (in the sense of Granville and Soundararajan), we
+                                                   show that for any pair of distinct integer shifts h1 , h2 the two-point correlation
+
+
+
+
+arXiv:2304.05344v2 [math.NT] 26 May 2023
+                                                                                   1 X
+                                                                                          f (n + h1 )f (n + h2 )
+                                                                                   x
+                                                                                      n≤x
+
+                                                   tends to 0 along a set of x ∈ N of full upper logarithmic density. We also show that the
+                                                   same result holds for the k-point correlations
+                                                                                 1 X
+                                                                                        f (n + h1 ) · · · f (n + hk )
+                                                                                 x
+                                                                                   n≤x
+
+                                                   if k is odd and f is a real-valued non-pretentious function. Previously, the vanishing of
+                                                   correlations was known only under stronger non-pretentiousness hypotheses on f by the
+                                                   works of Tao, and Tao and the third author. We derive several applications, including:
+                                                       • A classification of ±1-valued completely multiplicative functions that omit a length
+                                                          four sign pattern, solving a 1974 conjecture of R.H. Hudson.
+                                                       • A proof that a class of “Liouville-like” functions satisfies the unweighted Elliott
+                                                          conjecture of all orders, solving a problem of de la Rue.
+                                                       • Constructing examples of multiplicative f : N → {−1, 0, 1} with a given (unique)
+                                                          Furstenberg system, answering a question of Lemańczyk.
+                                                       • A density version of the Erdős discrepancy theorem of Tao.
+
+
+
+
+                                                                                      1. Introduction
+                                              Let f1 , . . . , fk : N → D be multiplicative functions, where D denotes the closed unit disc
+                                           of the complex plane. We shall study the problem of determining when the correlation
+                                           averages
+
+                                                                             1X
+                                           (1.1)                                f1 (n + h1 ) · · · fk (n + hk )
+                                                                             x
+                                                                                n≤x
+
+
+                                           converge to 0 along a subsequence (which is dense with respect to some notion of density),
+                                           with h1 , . . . , hk ∈ N being fixed, distinct integer shifts. It is well known that the behavior of
+                                           the correlation averages (1.1) depends crucially on whether the functions fj are pretentious
+                                           or not.
+
+                                           Definition 1.1 (Pretentious and non-pretentious functions). Let f : N → D be a multi-
+                                           plicative function. We say that f is pretentious if there exist a Dirichlet character χ and
+                                           a real number t such that
+
+                                                                                  D(f, χ(n)nit ; ∞) < ∞,
+                                                                                               1
+2       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+where for sequences g1 , g2 : N → D,
+                                                                     1/2
+                                               X 1 − Re(g1 (p)g2 (p))
+(1.2)                       D(g1 , g2 ; x) :=                        
+                                                         p
+                                                   p≤x
+
+is the pretentious distance of Granville and Soundararajan [18]. If f is not pretentious,
+we say that it is non-pretentious1.
+   A deep and influential conjecture of Elliott [9] states that if f1 , . . . , fk : N → D are
+multiplicative functions with f1 non-pretentious, then the correlation averages (1.1) tend
+to 0 as x → ∞. Elliott’s conjecture includes as a special case Chowla’s conjecture [5],
+which is the case where f1 = · · · = fk = µ, with µ the Möbius function.
+   The original formulation of Elliott’s conjecture turns out to be technically false, with
+a counterexample constructed by Matomäki, Radziwill and Tao [32, Appendix B]. The
+conjecture can be corrected to a form believed to be true by strengthening the hypothesis
+on the distances D(f1 , χ(n)nit , x); see Conjecture 2.12 below (we pose as Conjecture 2.10
+another possible way to correct Elliott’s conjecture without strengthening the hypothesis
+on f1 ).
+   Tao [42], and Tao and the third author [44] considered a logarithmically averaged version
+of Elliott’s conjecture in the cases k = 2 and k ≥ 3, respectively. These results were
+strengthened by the same authors in [43, Corollaries 1.8 and 1.13] to cover asymptotic
+averages on a dense sequence of scales.
+Theorem A ([43]). Let k ≥ 2, and let h1 , . . . , hk ∈ N be distinct. Let f1 , . . . , fk : N → D
+be multiplicative functions.
+     (1) Suppose that f1 satisfies
+
+(1.3)                                  inf D(f1 , χ(n)nit ; x) −−−→ ∞
+                                     |t|≤x                       x→∞
+
+         for every Dirichlet character χ. Then there exists a set X ⊂ N with2 δlog (X ) = 1
+         such that we have
+                                 1X
+                             lim
+                            x→∞ x
+                                       f1 (n + h1 )f2 (n + h2 ) = 0.
+                             x∈X          n≤x
+
+     (2) Suppose that the product f1 · · · fk satisfies
+                                           1
+(1.4)                        lim sup             D(f1 · · · fk , χ(n)nit ; x)2 > 0
+                               x→∞     log log x
+
+    1Non-pretentiousness is equivalent to the concept of aperiodicity sometimes used in connection with
+multiplicative functions. One calls f aperiodic if f has mean 0 on every infinite arithmetic progression.
+See [7, Théorème 1] for the equivalence of these notions.
+    2By δ (A) = lim               1
+                                     P
+           log           X→∞ log X      n≤X 1A (n)/n we denote the logarithmic density of a set A, and by
+                             1
+                                  P
+δlog log (A) = limX→∞ log log   X   2≤n≤X 1A (n)/(n log n) we denote its double-logarithmic density, provided
+                                                +    +
+these limits exist. The upper densities δlog      , δlog log are defined with lim sup in place of lim, and the
+                  −     −
+lower densities δlog , δlog log are defined with lim inf in place of lim. For a set X = {x1 , x2 , . . .} ⊂ N with
+x1 < x2 < · · · and F : N → C, we define x→∞  lim F (x) := lim F (xj ).
+                                                          j→∞
+                                             x∈X
+                     On Elliott’s conjecture and applications                               3
+
+        for every Dirichlet character χ and real number t. Then there exists a set X ⊂ N
+        with δlog (X ) = 1 such that we have
+                                1X
+                            lim
+                           x→∞ x
+                                      f1 (n + h1 ) · · · fk (n + hk ) = 0.
+                           x∈X   n≤x
+
+   Theorem A covers most of the known cases in the literature where the correlation
+averages (1.1) are known to tend to 0 along a dense subsequence. See however also
+the work of Gomilko, Lemańczyk and de la Rue [17] for a proof that functions in the
+MRT class (a set of functions including the Matomäki–Radziwill–Tao counterexample)
+have vanishing autocorrelations along a subsequence. We also mention a result of the
+first author [24] which complements Theorem A by giving a formula for the limit of the
+correlation averages (1.1) in the case where f1 , . . . , fk are all pretentious (the limit is
+“typically” nonzero, but in some cases it may vanish).
+   Theorem A and the other aforementioned results do not cover all bounded multiplicative
+functions even in the case of 2-point correlations. Our first main result bridges this gap.
+Theorem 1.2 (Two-point Elliott conjecture at almost all scales). Let f1 , f2 : N → D
+be multiplicative functions. Suppose that f1 is non-pretentious. Then there exists a set
+              +
+X ⊂ N with δlog  (X ) = 1 such that for any distinct h1 , h2 ∈ N we have
+                                 1X
+                             lim
+                            x→∞ x
+                                       f1 (n + h1 )f2 (n + hk ) = 0.
+                            x∈X      n≤x
+
+   This result settles the two-point case of Problem 7.3 of the 2018 AIM conference on
+Sarnak’s conjecture [1] in a strong form. This problem asks if the non-pretentiousness of f
+is enough for the two-point correlations of f and f to tend to 0 along a subsequence. We
+note that a logarithmically averaged version of this conjecture was solved very recently
+by Frantzikinakis, Lemańczyk and de la Rue in [15, Proposition C.1]. Thus, Theorem 1.2
+strengthens [15, Proposition C.1].
+   Theorem 1.2 is essentially optimal. The condition that f1 is non-pretentious is clearly
+                                 +
+necessary and the condition δlog   (X ) = 1 cannot be strengthened to δlog (X ) = 1, or even
+to δlog log (X ) = 1 (which is weaker) as the following result shows.
+Proposition 1.3. There exists a non-pretentious multiplicative function f : N → D and
+                  +
+a set X ⊂ N with δlog log (X ) = 1 such that
+
+                                       1X
+                                lim
+                               x→∞
+                                          f (n)f (n + 1) = 1.
+                               x∈X
+                                       x
+                                           n≤x
+
+  Our second main result (which is a consequence of the more general Theorem 1.7 be-
+low) shows that the odd order cases of Elliott’s conjecture hold for any non-pretentious
+multiplicative function f : N → [−1, 1] along a dense sequence of scales.
+Corollary 1.4 (Odd order Elliott conjecture at almost all scales for real-valued functions).
+Let k ≥ 1 be an odd integer. Let f : N → [−1, 1] be a multiplicative function. Suppose that
+D(f, χ; ∞) = ∞ for any real Dirichlet character χ. Then there exists a set X ⊂ N with
+ +
+δlog log (X ) = 1 such that for any distinct h1 , . . . , hk ∈ N we have
+                                  1X
+                              lim
+                             x→∞ x
+                                        f (n + h1 ) · · · f (n + hk ) = 0.
+                             x∈X  n≤x
+4      Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+1.1. Further main results. Our next main result interpolates between pretentious func-
+tions covered by [24] and the class of functions covered by Theorem A by showing that
+functions that are non-pretentious but not too strongly so have vanishing autocorrelations
+of any order along a dense sequence of scales. The class of functions to which our next
+main theorem applies are what we call moderately non-pretentious functions.
+Definition 1.5 (Moderately non-pretentious functions). We say that a multiplicative
+function f : N → D is moderately non-pretentious if f is non-pretentious and there exists
+a constant A ≥ 1 such that
+                           1
+                  lim             inf    min D(f, χ(n)nit ; X)2 = 0.
+                 X→∞ log log X |t|≤X A χ (mod q)
+                                              q≤(log X)A
+
+   This class of functions is clearly closed under complex conjugation and under mul-
+tiplication by a twisted Dirichlet character ξ(n)niu . Moreover, by the pretentious tri-
+angle inequality (3.1) we see that it is also closed under products. In view of The-
+orem A, important examples to keep in mind are those non-pretentious f for which
+D(f, χ(n)nit ; X)2 = o(log log X) for some fixed χ, t or inf |t|≤X D(f, χ(n)nit ; X) = O(1)
+for some fixed χ.3
+Theorem 1.6 (Moderately non-pretentious functions satisfy Elliott’s conjecture at al-
+most all scales). Let k ≥ 1. Let f1 , . . . , fk : N → D be multiplicative functions, with f1
+moderately non-pretentious and each of f2 , . . . , fk either moderately non-pretentious or
+pretentious. Then there exists a set X ⊂ N, depending only on the set {f1 , . . . , fk }, with
+ +
+δlog log (X ) = 1 such that for any distinct h1 , . . . , hk ∈ N we have
+                                 1X
+                             lim
+                            x→∞ x
+                                       f1 (n + h1 ) · · · fk (n + hk ) = 0.
+                            x∈X      n≤x
+
+   We can use Theorem 1.6 to prove that the condition (1.4) on f1 · · · fk in Theorem A(2)
+can be relaxed to just f1 · · · fk being non-pretentious in the case where fj are powers of
+the same multiplicative function taking values in (the convex hull of) the roots of unity of
+a certain order.
+Theorem 1.7 (Higher order Elliott conjecture for functions with non-pretentious powers).
+Let k ≥ 1 and e1 , . . . , ek ≥ 1 be integers. Let d ≥ 1 be an integer with (d, e1 + · · · + ek ) = 1,
+and let f : N → D be a multiplicative function taking values in the convex hull of the dth
+roots of unity. Suppose also that D(f e1 , χ; ∞) = ∞ for any Dirichlet character χ. Then
+                                    +
+there exists a set X ⊂ N with δlog     log (X ) = 1 such that for any fixed, distinct h1 , . . . , hk ∈ N
+we have
+                                  1X
+                              lim
+                             x→∞ x
+                                         f (n + h1 )e1 · · · f (n + hk )ek = 0.
+                              x∈X   n≤x
+
+                                           2. Applications
+   Previous results on correlations of bounded multiplicative functions have had many ap-
+plications, including Tao’s solution of the Erdős discrepancy problem [41], and a proof of
+the logarithmic form of Sarnak’s conjecture for uniquely ergodic systems by Frantzikinakis
+  3Note that our notion of moderate non-pretentious is somewhat disjoint from the notion of strong
+aperiodicity, i.e. (1.3); neither condition implies the other.
+                      On Elliott’s conjecture and applications                                      5
+
+and Host [13]. See also [11], [14], [17], [4], [15] for some works on classifying Fursten-
+berg systems of multiplicative functions. Results on correlations have also played an
+important role in establishing various “rigidity theorems” for multiplicative functions, see
+e.g. [24], [26], [27], [28], [12], [3], and results on sign patterns in multiplicative sequences,
+see e.g. [33], [42], [44], [25], [13], [45], [35], [34].
+   The new results from the preceding section enable progress on several problems related
+to correlations, sign patterns and “rigidity phenomena” for multiplicative functions, where
+e.g. the lack of a version of the three-point Elliott conjecture with weaker hypotheses was
+previously a problem. Further consequences of these results will be explored in future
+works. Here we demonstrate their applicability in solving several open problems. We
+remark that for some of our applications it is crucial that the set X ⊂ N in our main
+                                                     +
+theorems has full upper density in the sense δlog       (X ) = 1 (rather than just X being infinite).
+2.1. Chowla property for “Liouville-like” functions. Using the proof ideas of Theo-
+rem 1.6, we can settle in a strong form a problem posed by de la Rue at the AIM conference
+on Sarnak’s conjecture (Problem
+                              P     7.2 in the list [1]). This problem asked if there is a set
+A = {a1 , a2 , . . .} ⊂ N with j≥1 1/aj = ∞ such that the “Liouville-like” function
+                                      f (n) = (−1)|{j∈N: aj |n}|
+satisfies the Chowla property, i.e. the autocorrelations of f of any order tend to 0 (or
+in other words Elliott’s conjecture holds with f1 = · · · = fk = f for any k ≥ 1). In
+what follows, for a subset P of the primes P, ωP (n) denotes the number of distinct prime
+divisors of n from P and ΩP (n) denotes the number of prime divisors of n from P counted
+with multiplicities.
+ Theorem 2.1 (Elliott’s conjecture for Liouville-like functions involving sparse sets). Let
+fP(n) = (−1)ωP (n) or f (n) = (−1)ΩP (n) , where P ⊂ P has relative density4 0 in P and
+       1
+   p∈P p = ∞. Then, for any k ≥ 1 and a1 , . . . , ak , h1 , . . . , hk ∈ N with ai hj ̸= aj hi
+ whenever i ̸= j, we have
+                             1X
+                         lim     f (a1 n + h1 ) · · · f (ak n + hk ) = 0.
+                        x→∞ x
+                                  n≤x
+
+   To the best of our knowledge, this result gives the first construction of a multiplica-
+tive function f : N → [−1, 1] whose autocorrelations of all orders vanish (for random f ,
+however, one can show that the autocorrelations vanish almost surely).
+   By a general implication from Chowla-type statements to Sarnak-type statements, we
+deduce that these Liouville-like functions are orthogonal to all deterministic sequences. In
+what follows, we say that a sequence a : N → D is deterministic if there exists a topological
+dynamical system (X, T ) of zero entropy, a continuous function F : X → C and a point
+y ∈ X such that a(n) = F (T n y) for all n ≥ 1.
+Corollary 2.2 (A Sarnak-type conjecture for Liouville-like functions involving sparse
+sets). Let
+       P f (n) = (−1)ωP (n) or f (n) = (−1)ΩP (n) , where P ⊂ P has relative density 0 in
+            1
+P and p∈P p = ∞. Let a : N → D be any deterministic sequence. Then
+                                     1X
+                                lim       f (n)a(n) = 0.
+                               x→∞ x
+                                             n≤x
+  4The relative density of a subset P ⊂ P within P is defined as lim
+                                                                   x→∞ |P ∩ [1, x]|/|P ∩ [1, x]|.
+6      Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+2.2. Hudson’s conjecture. Motivated by the question of the longest consecutive runs
+of quadratic residues, we say that a completely multiplicative function f : N → {−1, +1}
+has length ℓ if ℓ is the maximal number of consecutive +1’s that occur in the sequence
+(f (n))n≥1 . That is, f has length ℓ if there exists m ∈ N such that
+
+                  (f (m), f (m + 1), . . . , f (m + ℓ − 1)) = (+1, +1, . . . , +1),
+
+but for any n ∈ N,
+
+                       (f (n), f (n + 1), . . . , f (n + ℓ)) ̸= (+1, . . . , +1).
+
+We denote by F2,ℓ the set of all completely multiplicative f : N → {−1, 1} of length ℓ. In
+1962, D.H. Lehmer and E. Lehmer [31] noted (and later Mills conjectured [36]) that F2,2
+consists of two functions, f3+ and f3− , defined by complete multiplicativity as follows: for
+p ̸= 3 we set f3+ (p) = f3− (p) = p3 , and for p = 3 we set f3+ (3) = −f3− (3) = +1. That
+is, f3± are defined by taking the Legendre symbol modulo 3 and modifying the value at
+its conductor, 3, so that it takes values in {−1, +1}. This conjecture was later proved by
+Schur [38].
+   Almost fifty years ago, Hudson [22] considered the much more difficult classification
+problem for F2,3 , i.e., completely multiplicative ±1-valued functions with length 3. He
+conjectured the following:
+
+Conjecture 2.3 (Hudson, 1974). The set F2,3 consists of precisely 13 functions, namely
+F2,3 = S ∪ T , where
+
+               S := {fp+ : p ∈ {5, 7, 11, 13, 53}} ∪ {fp− : p ∈ {5, 7, 11, 13, 53}},
+                                                    ′
+fp± are modified Legendre symbols (fp± (p′ ) = pp for p′ ̸= p and fp± (p) = ±1), and
+T = {g1 , g2 , g3 }, where the completely multiplicative functions gi are defined as
+                                          p−1
+                 g1 (p) = g2 (p) = (−1) 2 if p ̸= 2,         g1 (2) = −g2 (2) = +1
+                 g3 (p) = +1 if p ̸= 2,                      g3 (2) = −1.
+
+    We resolve Conjecture 2.3 in a strong form.
+
+Theorem 2.4 (Hudson’s conjecture, density version). Hudson’s conjecture is true, i.e.,
+F2,3 = S ∪ T . Moreover, if f : N → {−1, +1} is a completely multiplicative function for
+which f ∈
+        / F2,3 then
+
+               1
+        lim sup |{n ≤ x : f (n + 1) = f (n + 2) = f (n + 3) = f (n + 4) = +1}| > 0.
+          x→∞ x
+
+   In principle, our methods allow us to characterize all completely multiplicative functions
+f : N → {−1, +1} that omit a given sign pattern of length ≤ 4 (see also related work
+of Hildebrand [20] which studies sign patterns of length ≤ 3). Unlike in the case of
+Conjecture 2.3, for some of these patterns infinitely many exceptional functions exist.
+For example, for any fixed prime p0 , the completely multiplicative function satisfying
+f (p0 ) = −1 and f (p) = +1 for all p ̸= p0 , avoids the sign pattern {−1, −1, +1, +1}.
+                        On Elliott’s conjecture and applications                                          7
+
+2.3. A density version of the Erdős discrepancy theorem. The next application
+relates to the celebrated Erdős discrepancy theorem of Tao [41] that settled an old con-
+jecture of Erdős [10]. The Erdős discrepancy theorem tells us, in particular, that if
+f : N → {−1, +1} is completely multiplicative, then the partial sums
+                                         X
+                                             f (n)
+                                                n≤x
+
+are unbounded. It is a natural question to ask if one can quantify the size of the set of x
+along which the partial sums are unbounded. Our next theorem establishes such a density
+version.
+Theorem 2.5 (Density version of the Erdős discrepancy theorem). Let f : N → {−1, +1}
+be completely multiplicative. Let M ≥ 1, and let
+                                  (                       )
+                                             X
+                            XM := x ∈ N :        f (n) ≥ M .
+                                                      n≤x
+                                        +
+    (1) If f is non-pretentious, then δlog (XM ) > 0.
+    (2) If f is pretentious, then5 d− (XM ) > 0.
+                                        +
+   In particular, in any case, we have δlog (XM ) > 0.
+
+2.4. Furstenberg systems of multiplicative functions. An important object that
+has played a pivotal role in recent advances towards the Möbius disjointness conjecture of
+Sarnak [37] is the notion of Furstenberg systems. To facilitate our discussion, we introduce
+several definitions. Given any sequence η : N → D, we interpret η as an infinite word on
+DZ (by extending η for instance as 0 to the nonpositive integers). Let T be the left-shift
+on DZ , that is, T (y)(j) = y(j + 1) for y ∈ DZ . Equip DZ with the product topology, and
+let B be the Borel σ-algebra of DZ .
+   We say that the measure-preserving system (DZ , B, T, ν) with ν a T -invariant Borel
+probability measure on DZ is a Furstenberg system of η (and ν is a Furstenberg measure
+of η) if there exists an infinite sequence (xj )j≥1 tending to infinity such that
+                                       Z
+                     1 X
+(2.1)          lim          h(T n η) =     h dν for all continuous h : DZ → C.
+              j→∞ xj                    DZ
+                         n≤xj
+
+It is not difficult to see (using compactness of the space of Borel probability measures on
+DZ in the weak*-topology) that any sequence η has at least one Furstenberg system and
+that (by the Riesz representation theorem) the Furstenberg system is unique if and only if
+the limit on the left-hand side of (2.1) exists with xj = j. Moreover, it is not hard to show
+that the Furstenberg measure ν is always T -invariant and supported on {T n η : n ∈ Z}.
+For more on Furstenberg systems of multiplicative functions, see e.g. [14], [17].
+   We say that a measure-preserving system (X Z , B, T, ν) is a Bernoulli system if ν = κ⊗Z
+for some measure κ on X.
+   At the AIM workshop on Sarnak’s conjecture [1], Lemańczyk asked for a construction
+of a (deterministic) multiplicative function taking values in {−1, +1} and having as its
+unique Furstenberg measure the Bernoulli measure (1/2, 1/2)Z , assigning mass 1/2 to each
+   5By d(A) = lim      1
+                           P
+                   X→∞ X      n≤X 1A (n) we denote the asymptotic density of a set A. The upper density
+d+ is defined with lim sup in place of lim and the lower density d− is defined with lim inf in place of lim.
+8      Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+of ±1. We note that all functions satisfying Theorem 2.1 provide corresponding examples
+and deduce this from the following more general result.
+Theorem 2.6 (Constructing multiplicative functions with a given Furstenberg system).
+Let g : N → {0, 1} be a pretentious multiplicative function. Let S = ({0, 1}Z , B, T, ν)
+be its (necessarily unique) Furstenberg system. Then there is (an explicit) multiplicative
+function f : N → {−1, 0, +1} whose unique Furstenberg system is isomorphic to the direct
+product of S and a Bernoulli system. In fact, one can take f = f˜g, where f˜ is any of the
+functions in Theorem 2.1.
+Remark 2.7. Specializing to g = µ2 , Theorem 2.6 provides an example of f whose
+Furstenberg system is isomorphic to the direct product of the Mirsky system (correspond-
+ing to the Mirsky measure; see e.g. [8]) and a Bernoulli system. Chowla’s conjecture is
+equivalent to the statement that this holds for f = µ.
+   Frantzikinakis and Host [13, Conjecture 1] conjectured that the Furstenberg system
+of any multiplicative function f : N → [−1, 1] is ergodic and isomorphic to the direct
+product of an ergodic odometer (an inverse limit of periodic systems) and a Bernoulli
+system6. Theorem 2.6 goes in the other direction: it shows with an explicit construction
+the existence of a non-pretentious multiplicative function whose Furstenberg system is up
+to isomorphism the direct product of the Furstenberg system of a pretentious multiplicative
+function (which is necessarily an ergodic odometer by [4, Theorem 1.7]) and a Bernoulli
+system. We conjecture that these systems are a complete characterization of Furstenberg
+systems of non-pretentious multiplicative functions taking values in {−1, 0, +1}.
+Conjecture 2.8 (Classification of Furstenberg systems). Let f : N → {−1, 0, +1} be a
+non-pretentious multiplicative function. Then it has a unique Furstenberg system, which
+is isomorphic to the direct product of the Furstenberg system of the function |f | with a
+Bernoulli system.
+  We support Conjecture 2.8 by showing that it is implied by Conjecture 2.12, an alter-
+native form of Elliott’s conjecture due to Tao [40] and to be discussed below.
+Proposition 2.9. Conjecture 2.12 implies Conjecture 2.8.
+   Let us remark that for general complex-valued multiplicative functions f : N → D even
+determining the right conjectural statement about the structure of their Furstenberg sys-
+tems does not seem easy, in light for example of the work [17], where the authors construct
+multiplicative functions whose Furstenberg systems have as their ergodic components affine
+extensions of irrational rotations.
+   We conclude by mentioning one other direct application of our results to Furstenberg
+systems of multiplicative functions. Very recently, Frantzikinakis, Lemańczyk and de la
+Rue [15, Theorem 2.7] proved that if f : N → D is any pretentious multiplicative function,
+all of its Furstenberg systems for logarithmic or Cesàro averages have has rational discrete
+spectrum. For the case of logarithmic averages, they also proved the converse implication
+in [15, Appendix C]. By following the arguments in [15, Appendix C] verbatim but using
+our Theorem 1.2 in place of [15, Proposition C.1], we can extend the converse direction to
+the case of Cesàro averages (the same observation is also made in [15]).
+   We shall explore some further ergodic-theoretic consequences in a future work.
+  6They defined Furstenberg systems in terms of logarithmic averages, but the same should be true for
+Furstenberg systems defined in terms of Cesàro averages as well.
+                      On Elliott’s conjecture and applications                                    9
+
+2.5. Alternative to Elliott’s conjecture for non-pretentious functions. Our The-
+orems 1.2 and 1.6 give some indication that Elliott’s original formulation of his conjecture
+may be almost right, in the sense that whenever f1 is non-pretentious the correlation av-
+erage (1.1) tends to 0 along a sequence of scales that is dense with respect to the upper
+logarithmic density. We pose this as the following conjecture.
+Conjecture 2.10 (A modified Elliott conjecture for non-pretentious functions). Let k ≥ 1,
+and let f1 , . . . , fk : N → D be multiplicative functions with f1 non-pretentious. Then there
+                                                              +
+exists a set X ⊂ N, depending only on f1 , with δlog             (X ) = 1 such that for any distinct
+h1 , . . . , hk ∈ N we have
+                                   1X
+                               lim
+                              x→∞ x
+                                         f1 (n + h1 ) · · · fk (n + hk ) = 0.
+                               x∈X n≤x
+
+  We also pose a generalized Sarnak conjecture for multiplicative functions in this fashion.
+Conjecture 2.11 (A generalized Sarnak conjecture for multiplicative functions). Let
+f : N → D be a non-pretentious multiplicative function. Then there exists a set X ⊂ N
+      +
+with δlog (X ) = 1 such that for any deterministic sequence a : N → D we have
+                                       1X
+                                   lim
+                                  x→∞ x
+                                            f (n)a(n) = 0.
+                                  x∈X         n≤x
+
+  The following corrected asymptotic version of Elliott’s conjecture was formulated by
+Tao in [40].
+Conjecture 2.12 (An asymptotic Elliott conjecture). Let k ≥ 1 and h1 , . . . , hk ∈ N be
+fixed and distinct. Let x ≥ A ≥ 2, and let f1 , . . . , fk : N → D be multiplicative functions
+such that
+                                    inf      D(f1 , χ(n)nit ; x) ≥ A
+                                 |t|≤Axk−1
+
+for every Dirichlet character χ of modulus ≤ A. Then we have
+
+                   1X
+                      f1 (n + h1 ) · · · fk (n + hk ) = oA→∞ (1) + ox→∞ (1).
+                   x
+                     n≤x
+
+   We show that Conjecture 2.12, which has a more restrictive hypothesis, implies Con-
+jecture 2.10, which uses Elliott’s original hypothesis (but involves almost all scales).
+Proposition 2.13. Conjecture 2.12 implies Conjecture 2.10, and Conjecture 2.10 implies
+Conjecture 2.11.
+   Thus, if Conjecture 2.12 holds, then Elliott’s original conjecture holds at almost all
+scales in the sense of Conjecture 2.10, and so does the Sarnak-type Conjecture 2.11.
+2.6. Organization of the paper. The proofs of our main correlation results crucially
+rely on the interplay between different scales. In Section 4 we prove an important technical
+result, Theorem 4.1 (see also Proposition 4.3), where the correlations of f1 , . . . , fk are
+estimated in terms of the truncated pretentious distances maxj≤k D(fj , χj (n)nitj ; xε , x).
+   In Section 5, we prove a key Lemma 5.3, which says that if we can control pretentious
+distance at an infinite sequence of scales (xn ), and xn does not grow too rapidly (xn + 1 ≤
+          O(1)
+xn+1 ≤ xn ), then we can control it at all scales.
+10     Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+  In Section 6, we use the results of the two previous sections to prove Theorem 1.6.
+  Section 7 is devoted to the proofs of the other correlation results. Here, to prove
+Theorem 1.2, we prove a strengthening of Theorem A(1) (Theorem 7.1) and combine it
+with our Theorem 1.6 to conclude. To prove Theorem 1.7, we use Theorem A(2) and
+Theorem 1.6, and to prove Theorem 2.1 we use Theorem 4.1.
+  Section 8 is devoted to constructing Furstenberg systems (proof of Theorem 2.6) using
+Theorem 2.1 and Proposition 8.1 as inputs.
+  In Section 9, we use Theorem 1.6 together with an upper bound bound for 4-point
+correlations (Lemma 9.1), the “rotation trick” for multiplicative functions from [28], and
+various combinatorial arguments to resolve Hudson’s conjecture (Theorem 2.4).
+  Finally, in Section 10 we prove the quantitative version of the Erdős discrepancy theorem
+(Theorem 2.5) using Theorem 1.2 in the non-pretentious case and Proposition 9.3 in the
+pretentious case.
+
+2.7. Acknowledgments. The first author was supported by an FRG grant from the
+Heilbronn Institute for Mathematical Research. The third author was supported by a
+Titchmarsh Fellowship, Academy of Finland grant no. 340098, a von Neumann Fellowship
+(NSF grant DMS-1926686), and funding from European Union’s Horizon Europe research
+and innovation programme under Marie Sklodowska-Curie grant agreement No 101058904.
+   We thank Nikos Frantzikinakis and Mariusz Lemańczyk for many helpful discussions.
+
+                          3. Notation and some preliminaries
+3.1. Arithmetic functions. If a1 , . . . , ak are integers, by (a1 , . . . , ak ) we denote their
+greatest common divisor and by [a1 , . . . , ak ] their least common multiple. If a, b ∈ N, we
+write a | b∞ as a shorthand for the statement that a | bℓ for some ℓ ≥ 1. The notation
+pℓ || n for integers n, ℓ and prime p stands          ℓ
+                                              for p | n and p
+                                                                 ℓ+1 ∤ n. We denote by φ the
+                                          a
+Euler totient function. The notation m stands for the Jacobi symbol of a modulo m,
+when m ∈ N is odd. If P is a subset of the primes P, ΩP (n) and ωP (n) are the number of
+prime factors of n from P counted with and without multiplicities, respectively. Also let
+ω := ωP . Finally, we use the standard abbreviation e(t) = e2πit for t ∈ R.
+
+3.2. Averaging notation. Let f : A → C be a function defined on a non-empty set A.
+We define averaging operators by
+                                            P
+                                             n∈A f (n)
+                               En∈A f (n) := P         ,
+                                               n∈A 1
+
+and
+                                                  P   f (n)
+                                  Elog
+                                   n∈A f (n) :=
+                                                   n∈A n
+                                                   P    1 ,
+                                                     n∈A n
+where in the latter case we assume that A ⊂ N.
+
+3.3. Asymptotic notation. As usual, we use A = O(B) or A ≪ B or B ≫ A to denote
+that |A| ≤ C|B| for some absolute constant C. If we instead denote A = Oc (B) or
+A ≪c B, then the implied constant C may depend on c. We also write A = ox→∞ (B) if
+|A| ≤ C(x)|B| for some function C(x) tending to 0 as x → ∞. If the underlying variable
+x is clear from context, we just write A = o(B).
+                     On Elliott’s conjecture and applications                                 11
+
+3.4. The pretentious distance. The pretentious distance, defined in (1.2), can be gen-
+eralized to a truncated pretentious distance as follows: for f, g : N → D and x ≥ y ≥ 1,
+                                                                1/2
+                                         X 1 − Re(f (p)g(p))
+                      D(f, g; y, x) :=                           .
+                                                      p
+                                             y≤p≤x
+
+We will frequently use the triangle inequalities for the pretentious distance:
+                          D(f1 , f3 ; y, x) ≤ D(f1 , f2 ; y, x) + D(f2 , f3 ; y, x),
+(3.1)
+                     D(f1 f2 , g1 g2 ; y, x) ≤ D(f1 , g1 ; y, x) + D(f2 , g2 ; y, x)
+for fi , gi : N → D (see e.g. [18, Lemma 3.1] and [19]).
+
+3.5. Densities. Define the asymptotic density, logarithmic density and double-logarithmic
+density of a set A ⊂ N as
+                                        1 X
+                           d(A) : = lim             1,
+                                   x→∞ x
+                                                   n∈A∩[1,x]
+                                              1            X        1
+                            δlog (A) : = lim                          ,
+                                        x→∞ log x                   n
+                                                        n∈A∩[1,x]
+                                                 1             X             1
+                         δlog log (A) : = lim                                     .
+                                         x→∞ log log x                    n log n
+                                                            n∈A∩[2,x]
+
+respectively, whenever the limits exists.
+                                       +     +
+   Define the upper densities d+ , δlog   , δlog log similarly, but with lim sup in place of lim.
+                            −   −      −
+Define the lower densities d , δlog , δlog log also similarly, but with lim inf in place of lim.
+   For an infinite set A = {a1 , a2 , a3 . . .} ⊂ N with a1 < a2 < · · · , and a sequence
+f : N → C, define the limit of f along A as
+(3.2)                                 lim f (a) := lim f (aj ),
+                                     a→∞              j→∞
+                                      a∈A
+
+whenever the limit exists. We also define lim supa→∞ f (a) and lim inf a→∞ f (a) similarly
+                                                  a∈A                   a∈A
+by replacing in (3.2) lim with lim sup and lim inf, respectively. We collect the following
+simple, standard facts to be used without further mention in the following sections.
+Lemma 3.1 (Basic properties of densities). Let ν ∈ {d, δlog , δlog log }.
+  (1) For any set A ⊂ N, we have
+                         −          −
+               d− (A) ≤ δlog (A) ≤ δlog            +              +          +
+                                        log (A) ≤ δlog log (A) ≤ δlog (A) ≤ d (A).
+
+   (2) For any A ⊂ N, we have ν − (A) + ν + (N \ A) = 1.
+   (3) Let k ≥ 1, and let A1 , . . . , Ak ⊂ N satisfy ν(Ai ) = 1 for i ≤ k. Then ν(A1 ∩ · · · ∩
+       Ak ) = 1.
+   (4) Let h ∈ N. Then ν − (A + h) = ν − (A) and ν + (A + h) = ν + (A).
+Proof. All the pairwise inequalities in part (1) follow from partial summation, except the
+                    −              +
+trivial inequality δlog log (A) ≤ δlog log (A).
+   Part (2) follows from averaging the identity
+                                       1A (n) = 1 − 1N\A (n)
+12      Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+with weights corresponding to ν and using the identity
+                              lim inf (1 − a(x)) = 1 − lim sup a(x),
+                               x→∞                        x→∞
+
+valid for any function a(x).
+  Part (3) follows from averaging the inequality
+                        1A1 ∩···∩Ak (n) ≥ 1 − (1N\A1 (n) + · · · + 1N\Ak (n))
+with weights corresponding to ν and noting that ν(A) = 1 implies ν(N \ A) = 0 by part
+(2).
+   Part (4) follows from the approximate translation invariance of asymptotic, logarithmic
+and doubly logarithmic averages.                                                        □
+
+                        4. Correlations via truncated distance
+   In this section, we establish an upper bound for the correlations
+                             1X
+(4.1)                              f1 (a1 n + h1 ) · · · fk (ak n + hk )
+                             x
+                                 n≤x
+
+in terms of the truncated pretentious distances Dj (x, χj , tj ) := D(fj , χj (n)nitj ; xε , x). In
+particular, if f1 , . . . , fk are non-pretentious and max1≤j≤k Dj (x, χj , tj ) = o(1) for some χj ,
+tj , then our upper bound implies that (4.1) converges to 0 as x → ∞.
+Theorem 4.1 (Correlations of multiplicative functions having small truncated pretentious
+distance). Let k ≥ 1 and a1 , . . . , ak , h1 , . . . , hk ∈ N be fixed with ai hj ̸= aj hi whenever
+i ̸= j. Also let Dirichlet characters χ1 , . . . , χk and real numbers t1 , . . . , tk be fixed. Then
+for any x ≥ 3, ε ∈ (1/(log log x), 1/2) and any multiplicative functions f1 , . . . , fk : N → D
+satisfying
+           max D(fj , χj (n)nitj ; xε , x) ≤ ε   and     max D(fj , χj (n)nitj ; x) ≥ 1/ε
+           1≤j≤k                                        1≤j≤k
+
+we have
+
+                                                                       1 1/2
+                                                                        
+                     1X
+(4.2)                   f1 (a1 n + h1 ) · · · fk (ak n + hk ) ≪    log       ε.
+                     x                                                 ε
+                        n≤x
+
+Remark 4.2. In [24], the first author gave a formula for computing the limit as x → ∞
+of (4.1) where f1 , . . . , fk are pretentious functions (the formula was written explicitly for
+k = 2, but it works for larger k as well, and with the linear forms aj n + hj replaced by
+polynomials). The error term in this formula depends on D(fj , χj (n)nitj ; log x, x). For the
+proofs of our main theorems, however, it is crucial to work with the “shorter” pretentious
+distance D(fj , χj (n)nitj ; xε , x) in Theorem 4.1. We are able to work with this shorter
+pretentious distance by in particular using the fundamental lemma of the sieve and by
+carefully analyzing various error terms.
+     Theorem 4.1 follows immediately from the following proposition.
+Proposition 4.3. Let k ≥ 1 and a1 , . . . , ak , h1 , . . . , hk ∈ N be fixed with ai hj ̸= aj hi
+whenever i ̸= j. Also let Dirichlet characters χ1 , . . . , χk and real numbers t1 , . . . , tk
+                          On Elliott’s conjecture and applications                                      13
+
+be fixed. Then for any x ≥ 3, ε ∈ (1/(log log x), 1/2) and any multiplicative functions
+f1 , . . . , fk : N → D we have
+(4.3)
+ 1X
+    f1 (a1 n + h1 ) · · · fk (ak n + hk )
+ x
+    n≤x
+
+      1 1/2
+                                                                                
+                              itj ε                               itj ε 2        1
+≪ log       max D(fj , χj (n)n ; x , x) + exp − max D(fj , χj (n)n ; x ) + exp − 2     .
+      ε     j≤k                                 j≤k                             8k ε
+   Proposition 4.3 will be deduced from the following proposition, which is uniform in the
+linear forms but requires some further assumptions.
+Proposition 4.4. Let integers k ≥ 1 and A ≥ 2 be fixed. Let x ≥ 3, ε ∈ (1/(log log x), 1/2)
+and a1 , . . . , ak , h1 , . . . , hk ∈ N with ai hj ̸= aj hi whenever i ̸= j. Suppose that (aj , hj ) = 1,
+aj , hj ≤ (log x)1/2 , and aj | A∞ for all j. Then for any multiplicative functions f1 , . . . , fk :
+N → D satisfying fj (pℓ ) = 0 for all p | 1≤i<j≤k (ai hj − aj hi ) and ℓ ≥ 1 we have
+                                                   Q
+
+
+          1X
+             f1 (a1 n + h1 ) · · · fk (ak n + hk )
+          x
+            n≤x
+
+              1 1/2
+                                                                         
+                                   ε                            ε 2        1
+        ≪ log       max D(fj , 1; x , x) + exp − max D(fj , 1; x ) + exp −      .
+              ε     j≤k                          j≤k                       2ε
+4.1. Proof of Proposition 4.3. We shall first show how Proposition 4.4 implies Propo-
+sition 4.3, and then in the next subsection we prove Proposition 4.4.
+
+Proof of Proposition 4.3 assuming Proposition 4.4.
+Step 1: reduction to the case tj = 0 for all j ≤ k. Suppose that Proposition 4.3 has
+been proved under the additional assumption that tj = 0 for all j, and with exp(−1/(4k 2 ε))
+in place of exp(−1/(8k 2 ε)) in (4.3), and consider the general case. We may assume that ε >
+0 is small enough in terms of all fixed quantities, since otherwise the claim is trivial. Note
+                                                                                                 2
+also that since ε ≥ 1/ log log x we may absorb any error terms of size O(1/(log x)1/(4k ) )
+to an error term of O(exp(−1/(4k ε))).   2
+
+   Let t = t1 + · · · + tk , and let fj′ (n) = fj (n)n−itj . By the mean value theorem, we have
+(y + h)iu = y iu + O(h|u|/y) for any h, u, y ≥ 1, so
+                    k                      k                   k                            
+            1 XY                               itj 1                                   log x
+                                           Y          X        Y
+                                                            it    ′
+(4.4)                  fj (aj n + h1 ) =      aj ·        n      fj (aj n + hj ) + O           .
+            x                                       x                                    x
+                n≤x j=1                   j=1            n≤x   j=1
+
+The error term above is certainly admissible. By partial summation, the main term on
+the right-hand side of (4.4) is
+                                                     k
+                                         1 XY ′                   log x
+(4.5)                 ≪ (1 + |t|) √max       fj (aj n + hj ) + |t| √ .
+                                   x≤y≤x y                           x
+                                                n≤y j=1
+
+Let y ∈ [x1/2 , x] be a point where the maximum is attained. Let ε′ ∈ [ε, 2ε] be such that
+   ′
+y ε = xε . Applying the case of the theorem where tj = 0 (with the slight improvement
+14       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+mentioned above), we obtain
+
+           k
+ 1 XY ′
+     fj (aj n + hj )
+ y
+     n≤y j=1
+
+          1 1/2
+                                                                                      
+                                                                                        1
+≪     log ′     max D(fj′ , χj (n); xε , y)2 + exp − max D(fj′ , χj (n); xε )2 + exp − 2 ′ .
+         ε      j≤k                                  j≤k                              4k ε
+
+This gives the desired bound for the left-hand side of (4.4), since ε′ ∈ [ε, 2ε], y ≤ x,
+and D(fj′ , χj (n); x1 , x2 ) = D(fj , χj (n)nitj ; x1 , x2 ) for any x1 , x2 ≥ 1. Hence for the rest
+of the proof we may assume that tj = 0 for all j ≤ k, and we seek to prove (4.3) with
+exp(−1/(4k 2 ε)) in place of exp(−1/(8k 2 ε)).
+    Step 2: Reduction to Proposition 4.4. In what follows, let the modulus of χj be
+qj , and let Q = q1 · · · qk . Let
+                                                                   Y
+                                         ∆ = a1 · · · ak                      (ai hj − aj hi )
+                                                               1≤i<j≤k
+
+
+and A = Q∆. Define new multiplicative functions fej on the prime powers by
+                                                         (
+                                                          fj (pℓ ),                 p ∤ A,
+                                             fej (pℓ ) =
+                                                          0,                        p | A.
+
+Then writing
+                                                               X
+                                               fj (n) =                  fj (e)fej (n/e)
+                                                               e|n
+                                                              e|A∞
+
+
+we see that
+
+                           k
+                 1 XY                                        X            f1 (e1 ) · · · fk (ek )
+(4.6)                 fj (aj n + hj ) =                                                           S(x; e1 , . . . , ek ),
+                 x                                                      ∞
+                                                                             [e1 , . . . , ek ]
+                    n≤x j=1                             e1 ,...,ek |A
+
+
+where
+                                                                                                                                  
+                                  [e1 , . . . , ek ]          X                         a 1 n + h1                       ak n + hk
+        S(x; e1 , . . . , ek ) :=                                             fe1                        · · · fek                       .
+                                          x                                                  e1                              ek
+                                                               n≤x
+                                                       ej |aj n+hj ∀ j≤k
+
+
+   Let us first estimate the contribution to (4.6) from the case where one of the ej is large.
+Note that we have |S(x; e1 , . . . , ek )| ≪ [e1 , . . . , ek ]/ej for all j ≤ k, so |S(x; e1 , . . . , ek )| ≪
+[e1 , . . . , ek ]/(e1 · · · ek )1/k . Hence, the contribution to (4.6) of those tuples with one of the
+                                  On Elliott’s conjecture and applications                                                               15
+
+ej (say e1 ) being ≥ z, for any z ≥ 1, is crudely
+(4.7)
+           X                    1             1                 X                       1
+ ≪                                    1/k
+                                          ≤ 9/(10k)
+                      ∞
+                        (e1 · · · ek )     z                               ∞
+                                                                             (e1 · · · ek )1/(10k)
+      e1 ,...,ek |A                                        e1 ,...,ek |A
+           e1 ≥z
+                                                                                                                                       k
+                                                   1           Y                  1                1           1
+                                                                                                                                    
+                                           =                         1+                  +              +              + ··· 
+                                               z 9/(10k)                       p1/(10k)       p2/(10k)       p3/(10k)
+                                                               p|A
+                                  1
+                                        .  ≪
+                              z 9/(10k)
+Hence, we may truncate the sums over ej in (4.6) to ej ≤ (log x)1/(3k) with admissible
+error.
+   Consider now the contribution to (4.6) from the terms with e1 , . . . , ek ≤ (log x)1/(3k) . If
+the system of k congruences aj n + hj ≡ 0 (mod ej ), 1 ≤ j ≤ k is solvable, it has a unique
+solution of the form n ≡ b (mod M ), where 1 ≤ b ≤ M and
+                                    M = M (e1 , . . . , ek ) := [e1 , . . . , ek ] ≤ (log x)1/3 .
+Hence we have
+                                                             k                                                           
+                                            1              X Y                   aj (M m + b) + hj                      1
+(4.8)            S(x; e1 , . . . , ek ) =                             fej                                    +O                 .
+                                          x/M                                           ej                            x/M
+                                                       m≤x/M j=1
+
+  Since fej (pℓ ) = 0 for p | A and since Q | A, we can now write fej = χj gj for some
+multiplicative functions gj : N → D also satisfying gj (pℓ ) = 0 whenever p | A. Splitting
+the sum in (4.8) into residue classes, we now obtain
+(4.9)
+S(x; e1 , . . . , ek )
+        k                                                                            k                                                        
+      X Y                       aj (M u + b) + hj            1             X           Y            aj (M m + b) + hj                          1
+=                      χj                                                                  gj                                +O                        .
+                                        ej                 x/M                                             ej                                x/M
+    1≤u≤Q j=1                                                       m≤x/M     j=1
+                                                                  m≡u (mod Q)
+
+   We can write the inner expression in (4.9) as
+                            k                                        
+              1      X Y            aj (M (Qn + u) + b) + hj          1
+(4.10)                         gj                              +O         .
+            x/M                                ej                   x/M
+                                n≤x/(M Q) j=1
+
+The error term here is O(x−1/2 ), since M ≤ (log x)1/3 ≪ x1/2 , and this gives a negligible
+total contribution to (4.6) by using (4.7) with z = 1. Also by (4.7) with z = 1, it now
+suffices to show that the main term in (4.10) is bounded by the right-hand side of (4.3)
+(with exp(−1/(4k 2 ε)) in place of exp(−1/(8k 2 ε))).
+   Write
+                           aj (M (Qn + u) + b) + hj
+                                                      = Kj n + Bj .
+                                      ej
+We may assume that
+(4.11)                                             (Kj , Bj , A) = 1 ∀j ≤ k,
+16       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+since otherwise noting that Kj | A∞ the sum in (4.10) is 0 by the fact that gj (pℓ ) = 0 for
+p | A, ℓ ≥ 1. We now claim that
+
+                                                              (Kj , Bj ) = 1 ∀j ≤ k
+(4.12)
+                                            Y
+                                 p|                 (Ki1 Bi2 − Ki2 Bi1 ) =⇒ p | A.
+                                      1≤i1 <i2 ≤k
+
+
+                                                                            aj M Q                     ∞
+To verify the first claim in (4.12), note that if p | Kj =                     ej , then p | aj M Q | A , so
+p | A. Hence, (Kj , Bj ) = (Kj , Bj , Aℓ ) for some ℓ, but this implies (Kj , Bj ) = 1 by (4.11).
+To verify the second claim in (4.12), note that
+
+                                                                  ai1 hi2 − ai2 hi1
+                                   Ki1 Bi2 − Ki2 Bi1 = M Q                          ,
+                                                                        ei1 ei2
+
+so if p | Ki1 Bi2 − Ki2 Bi1 , we must have p | M Q(ai1 hi2 − ai2 hi1 ) | A∞ , and so p|A.
+   Setting X = x/(M Q) ∈ [x1/2 , x], the main term in (4.10) can now be rewritten as
+
+                                                          k
+                                               1 XY
+                                                    gj (Kj n + Bj ).
+                                              QX
+                                                    n≤X j=1
+
+
+Note that Kj | A∞ and Kj , Bj ≤ 10 1
+                                     (log X)1/2 , say, for all large X (since M ≪ (log X)1/3 ).
+Note also that by (4.12) we have (Kj , Bj ) = 1 for all j ≤ k and gj (pℓ ) = 0 for all j ≤ k
+                                                                                      ′
+whenever p | 1≤i1 <i2 ≤k (Ki1 Bi2 − Ki2 Bi1 ), ℓ ≥ 1. Letting ε′ ∈ [ε, 2ε] satisfy X ε = xε , we
+             Q
+
+can apply Proposition 4.4 to bound the main term in (4.10) by
+
+                    1/2                                                             
+                 1                              ε     2                     ε 2        1
+     ≪       log ′          max D(fj , χj ; x , X) + exp − max D(fj , χj ; x ) + exp − ′ .
+                ε           j≤k                            j≤k                        2ε
+
+Since X ≤ x, and ε′ ∈ [ε, 2ε], this completes the proof.                                                  □
+
+
+4.2. Proof of Proposition 4.4. We begin with the following lemma.
+                                                                                    Q
+Lemma 4.5. Let integers k ≥ 1 and A ≥ 1 be fixed. Let y ≥ 3, P (y) = p≤y p, and
+let f1 , . . . , fk : N → D be multiplicative functions. Suppose that (ap )p is a complex-valued
+sequence with ap = O(1). Then
+
+(4.13)
+ Y                                                                k                                   
+          k                   X             f1 (d1 ) · · · fk (dk ) Y Y     ap                           2
+       1−                                                                1+      ≪ exp − max D(fj , 1; y) .
+          p                                      d1 · · · dk                p            j≤k
+k<p≤y                   d1 ,...,dk |P (y)                     j=1 p|dj
+                       (di ,dj )=1 ∀ i̸=j
+                       (dj ,A)=1 ∀ j≤k
+                        On Elliott’s conjecture and applications                                     17
+
+Proof. By the multiplicativity of the fj , the left-hand side of (4.13) is
+                                                                          
+                 Y                                    k             
+                             k         Y               X   fj (p)       1 
+              =         1−                       1 +             +O
+                             p                               p         p2
+                      k<p≤y                  p1 ,...,pk ≤y            j=1
+                                             pi ̸=pj ∀ i̸=j
+                                           (pj ,A)=1 ∀ j≤k
+                                 k                               
+                      Y          X   fj (p) − 1               1
+                 =          1+                      +O
+                                             p                p2
+                      p≤y        i=1
+                                                                 
+                                     k                          
+                      Y         fj (p) − 1
+                                     X                        1 
+                 =          exp            +O
+                                     p                        p2
+                   p≤y      j=1
+                                                       
+                                     k                 
+                             X X        fj (p) − 1     1 
+                 = exp Re                       +O         ,
+                                             p         p2
+                                     p≤y   j=1
+
+and exchanging the order of summation and estimating the sum over j by the maximum
+of the terms, this becomes ≪ exp(− maxj≤k D(fj , 1; y)2 ).                       □
+Proof of Proposition 4.4. Set
+                1 1/2
+                                                                                            
+                                          ε                                    ε 2            1
+     η := log         max D(fj , χj ; x , x) + exp − max D(fj , χj ; x ) + exp −                   .
+                ε     j≤k                                   j≤k                               2ε
+We may assume that η is small enough in terms of all fixed quantities, as otherwise the
+claim is trivial.
+   Let y = xε . Define multiplicative functions fej by
+                                              (
+                                        ℓ        1,        p>y
+                                  fej (p ) =
+                                                 fj (pℓ ), p ≤ y.
+                            Q
+for ℓ ∈ N. Also let P (y) = p≤y p.
+   For complex numbers z1 , . . . , zm , w1 , . . . , wm with |zi |, |wi | ≤ 1, we have the inequality
+                                                            Xm
+(4.14)                     |z1 · · · zm − w1 · · · wm | ≤       |zj − wj |,
+                                                                    j=1
+which is easily proved by induction on m. Hence for any j ≤ k we have
+                                                          X
+(4.15)             |fj (aj n + hj ) − f˜j (aj n + hj )| ≤   |1 − fj (pℓ )|
+                                                                    pℓ ||aj n+hj
+                                                                         p>y
+
+Applying (4.14) and (4.15), we find
+             X                                           X
+                 f1 (a1 n + h1 ) · · · fk (ak n + hk ) =   fe1 (a1 n + h1 ) · · · fek (ak n + hk )
+                n≤x                                                n≤x
+                                                        
+(4.16)            X              X
+                                           |1 − fj (pℓ )|
+                                                         
+                +O
+                                                        
+                        n≤x pℓ ||aj n+hj
+                                 p>y
+for some j ≤ k.
+18        Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+  Consider the error term in (4.16). Since aj n + hj ≤ 2x(log x)1/2 and the number of
+n ≤ X that are divisible by p2 for some p > y is by the union bound ≪ p>y pX2 ≪ Xy ,
+                                                                         P
+
+and furthermore as any n ≤ z has ≪ log z prime factors, the error term in (4.16) is
+                                                                                                        !
+                                       X         X                                   x(log x)3/2
+(4.17)                                                  |1 − fj (p)| + O                                    .
+                                                                                          y
+                                       n≤x p|aj n+hj
+                                              p>y
+
+
+Since y = xε ≥ x1/ log log x , the error term here is admissible. Exchanging the order of
+summation, evaluating the n sum, and using the prime number theorem, we see that the
+main term in (4.17) is
+                                                              
+                          X                |1 − fj (p)|                          X           |1 − fj (p)|     aj x + hj
+(4.18)         ≤                         x              +1         ≪x                                     +                 .
+                                                p                                                 p         log(aj x + hj )
+                     y<p≤aj x+hj                                          y<p≤aj x+hj
+
+
+By the assumption aj , hj ≤ (log x)1/2 , the second term on the right of (4.18) is ≪
+x/(log x)1/2 , which is dominated by O(exp(−1/(2ε))) for ε ≥ 1/(log log x). Moreover,
+the first term on the right of (4.18) can be truncated to p ≤ x at the cost of an acceptable
+error of ≪ x(log log x)/(log x) by Mertens’ theorem.
+   Now, by the Cauchy–Schwarz inequality and Mertens’ theorem, (4.18) is
+                                                1/2      1/2
+                                 X |1 − fj (p)|2        X 1          x
+                            ≪ x                           +
+                                        p
+                                       y<p≤x
+                                                          p      (log x)1/2y<p≤x
+                                                                    1/2
+                                         X 2 − 2Re(fj (p))                                 1/2
+                                                                                        1                   x
+                            ≪ x                                                   log             +
+                                       y<p≤x
+                                                 p                                      ε               (log x)1/2
+                                              1/2
+                                    1                                                     x
+                            ≪ x log                   max D(fj , 1; xε , x) +                    ≪ ηx,
+                                    ε                 j≤k                             (log x)1/2
+
+recalling that ε ≥ 1/(log log x).
+   Now we are left with estimating the main term on the right of (4.16). This can be
+expanded out as
+
+(4.19)
+    X                                                  X                              X
+                    f1 (d1 ) · · · fk (dk )                              1 =:                       f1 (d1 ) · · · fk (dk )Σ(x; d1 , . . . , dk ).
+d1 ,...,dk |P (y)                                        n≤x                    d1 ,...,dk |P (y)
+                                                 dj |aj n+hj ∀j≤k
+                                              ((aj n+hj )/dj ,P (y))=1
+
+
+Since fj (pℓ ) = 0 whenever p | 1≤i1 <i2 ≤k (ai1 hi2 −ai2 hi1 ), we have f (d1 ) · · · f (dk )Σ(x; d1 , . . . , dk ) =
+                                   Q
+
+0 unless (di , dj ) = 1 for all i ̸= j.
+   We claim that we can truncate the sum over dj in (4.19) to dj ≤ x1/(4k) for all j ≤ k. To
+see this, note that the contribution of the terms with e.g. d1 > x1/(4k) to Σ(x; d1 , . . . , dk )
+                             On Elliott’s conjecture and applications                                                                19
+
+is
+         X           k
+                    XY                                                              X         X
+ x                               1dj |aj n+hj 1 aj n+hj                     ≪x                      1d1 |a1 n+h1 1( a1 n+h1 ,P (y))=1
+                                                  (     dj
+                                                                ,P (y))=1                                             d1
+     d1 ,...,dk |P (y) n≤x j=1                                                     d1 |P (y) n≤x
+      d1 >x1/(4k)                                                                d1 >x1/(4k)
+                                                                                          X                        X
+(4.20)                                                                      ≪x                                                  1,
+                                                                                 e1 ≤(a1 x+h1 )/x1/(4k)    d1 ≤(a1 x+h1 )/e1
+                                                                                      (e1 ,P (y))=1       d1 e1 ≡h1 (mod a1 )
+                                                                                                                 d1 |P (y)
+
+using the fact that
+                                                      X
+                                                              1d|m 1(m/d,P (y))=1 = 1
+                                                  d|P (y)
+
+for every m ≥ 1. By an estimate for smooth numbers in arithmetic progressions [16], for
+                         1/10
+any z ∈ [y 10 , y (log y) ] and any coprime a, q with 1 ≤ a ≤ q ≤ y we have
+                                                                
+                                X               log z   log q      z
+                                       1≪ρ            −       −4     ,
+                                                log y log y        q
+                                            d≤z
+                                        d≡a (mod q)
+                                           d|P (y)
+
+where ρ(·) is the Dickman function. By [21, (1.7)], we have ρ(u) ≪ u−u/2 for u ≥ 1. Note
+that, by Selberg’s sieve, for any Y ≥ y the number of e ∈ [1, Y ] with (e, P (y)) = 1 is
+≪ Y /(log y), so (4.20) becomes
+                       −1/(8kε)+5/2                                                                  −1/(8kε)+5/2
+                   1                                             X              x              1                           log x
+       ≪x             −5                                                           ≪x             −5
+                  4kε                                                    1/(4k)
+                                                                                e1            4kε                          log y
+                                                      e1 ≤(a1 x+h1 )/x
+                                                           (e1 ,P (y))=1
+                           
+                 1
+       ≪ x exp −                 ,
+                 2ε
+say.
+   We conclude that (4.19) is up to acceptable error
+                          X
+(4.21)                              f1 (d1 ) · · · fk (dk )Σ(x; d1 , . . . , dk ).
+                                       d1 ,...,dk |P (y)
+                                     d1 ,...,dk ≤x1/(4k)
+                                      (di ,dj )=1 ∀i̸=j
+
+Now, by the Chinese remainder theorem we can write
+                                          X
+              Σ(x; d1 , . . . , dk ) =                                                             1 + O(x1/2 ),
+                                                                        n≤x/(d1 ···dk )
+                                                              d1 ···dk    aj b+hj
+                                                        (aj     dj
+                                                                       n+    dj
+                                                                                  ,P (y))=1 ∀j≤k
+
+
+where b = b(d1 , . . . , dk ) ∈ [0, (d1 · · · dk )) ∩ Z is the unique solution to
+
+                                             aj b + hj ≡ 0            (mod dj )       ∀j ≤ k.
+20         Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+Since dj ≤ x1/(4k) for all j ≤ k in (4.21), by the fundamental lemma of sieve theory [23,
+Fundamental lemma 6.3] we have
+(4.22)
+                                      
+                                      1          x       Y
+ Σ(x; d1 , . . . , dk ) = 1 + O exp −                      (1 − ρ(p; d1 , . . . , dk )) + O(x1/2 ),
+                                      2ε     d1 · · · dk
+                                                                              p≤y
+
+where
+                                                                                                     
+                                                                                            aj b+hj
+                                                                          aj d1d···d
+                                                             Qk
+                                               |{w ∈ Fp :       j=1               j
+                                                                                    k
+                                                                                      w+       dj         = 0}|
+                   ρ(p; d1 , . . . , dk ) :=                                                                      .
+                                                                              p
+   Let p be any prime coprime to A. We claim that
+                                                 (
+                                                   k
+                                                     , p ∤ d1 · · · dk
+(4.23)                   ρ(p; d1 , . . . , dk ) = 1p
+                                                   p , p | d1 · · · dk .
+
+Suppose first that p ∤ d1 · · · dk . Then p | ai d1 d···d
+                                                       i
+                                                         k
+                                                           w + ai b+h
+                                                                  di
+                                                                     i
+                                                                       for i ∈ {i1 , i2 } with i1 ̸= i2
+            d1 ···dk
+implies p | di di (ai1 hi2 − ai2 hi1 ), so p | A, a contradiction. This leads to k distinct
+              1 2
+solutions w ∈ Fp .
+   Suppose next that p | d1 · · · dk . Then as (di , dj ) = 1 for i ̸= j, it must be that p divides
+exactly one of the di , say p | d1 . But then
+     k                                                                            k
+     Y           d1 · · · dk    aj b + hj                                  a1 b + h1 Y aj b + hj
+            aj               w+                    ≡    a1 d2 · · · dk w +                                            (mod p),
+                     dj             dj                                         d1          dj
+     j=1                                                                                     j=2
+
+and this linear congruence has either 1 or p solutions. If it has p solutions, then for
+some 2 ≤ j ≤ k we have p | aj b + hj . But since p | d1 we also have p | a1 b + h1 , so
+p | a1 hj − aj h1 | A. We conclude that (4.23) holds.
+   Now by (4.23) and (4.22) we can write (4.21) as
+(4.24)
+                                                   k                      Y                  
+            X              f1 (d1 ) · · · fk (dk ) Y Y     1                                k
+x                                                       1−     ·                       1−
+                                d1 · · · dk                p                                p
+       d1 ,...,dk |P (y)                        j=1 p|dj                    p≤y
+     d1 ,...,dk ≤x1/(4k)                                                     p∤A
+      (di ,dj )=1 ∀ i̸=j                                                  p∤d1 ···dk
+      (dj ,A)=1 ∀ j≤k
+                                                                    k
+                                                                                                              !
+                  1                      X                  1       YY    1
+                                                                                               Y    k
+                                                                                                        
+      + O x exp −                                                       1−     ·                   1−     + x3/4 .
+                  2ε                                    d1 · · · dk        p                          p
+                                    d1 ,...,dk |P (y)           j=1 p|dj                       p≤y
+                                  d1 ,...,dk ≤x1/(4k)                                           p∤A
+                                   (di ,dj )=1 ∀ i̸=j                                        p∤d1 ···dk
+                                   (dj ,A)=1 ∀ j≤k
+
+The first error term in (4.24) is by Lemma 4.5 (with fj = 1)
+                                                  
+                                                 1
+                                      ≪ x exp −      .
+                                                2ε
+                       On Elliott’s conjecture and applications                                                21
+
+ We then estimate the main term in (4.24). Completing the sums over dj and using
+Mertens’s theorem, we see that the main term is
+                                                 k
+                                                                k −1 Y
+                                                                         
+                 X       f1 (d1 ) · · · fk (dk ) Y Y     1                  k
+           x                                          1−     1−          1−
+                              d1 · · · dk                p      p           p
+               d1 ,...,dk |P (y)                           j=1 p|dj                     p≤y
+              (di ,dj )=1 ∀ i̸=j                                                        p∤A
+              (dj ,A)=1 ∀ j≤k
+(4.25)                                                  k Y
+                                                                                     !
+                                                                      k −1
+                                                                      
+                               X                1       Y      1                  −k
+             +O x                                           1−     1−      (log y)    .
+                                            d1 · · · dk        p      p
+                        d1 ,...,dk |P (y)                 j=1 p|dj
+                         d1 >x1/(4k)
+                       (di ,dj )=1 ∀ i̸=j
+                       (dj ,A)=1 ∀ j≤k
+
+We then bound the error term in (4.25). By Mertens’s theorem and the fact that the den-
+sity of y-smooth numbers in any interval [D, 2D] with D ≥ y is ≪ exp(− 12 log D      log D
+                                                                           log y log log y ) +
+exp(−(log D)1/20 ) by [21, Theorem 1.1 and (1.7)], the error term is
+                                                          k−1
+                                                       k −1 
+                                                        
+                       X 1  X 1 Y
+         ≪ x(log y)−k                           1 −       
+                               d        d           p     
+                                d|P (y)             d|P (y)     p|d
+                               d>x1/(4k)                       p>k
+                                           
+                                                            k−1
+                                                             
+                                                   
+                       X                   1  Y    1    1
+         ≪ x(log y)−k 
+                                             
+                                                    1+ +O     
+                                           d        p    p2
+                                d|P (y)             p≤y
+                               d>x1/(4k)
+                                                                                                        
+                      −1
+                                X                     1 log D     log D                         1/20
+         ≪ x(log y)                             exp −         log              + exp(−(log D)          )
+                                                      2 log y      log y
+                           D≥x1/(4k) /2
+                            D=2ℓ ,ℓ∈N
+                     
+                   1
+         ≪ x exp −      ,
+                   2ε
+say.
+   We are left with the main term in (4.25), which by Lemma 4.5 is
+                                                        
+                                                       ε
+                             ≪ x exp − max D(fj , 1; x ) ,
+                                                           j≤k
+
+completing the proof.                                                                                          □
+
+                               5. Lemmas on pretentious distance
+   In this section, we present some lemmas on the pretentious distance, with the aim to
+prove an iterative Lemma 5.3. The first lemma is a standard bound on the pretentious
+distance between twisted Dirichlet characters and the constant function 1.
+Lemma 5.1. Let A ≥ 1 be fixed. Let X ≥ 10 and let χ be a Dirichlet character of modulus
+q ≤ (log X)A . Then we have
+                                                          
+                                      iu      2    1
+                       inf     D(χ(n)n , 1; X) ≥     − o(1) log log X,
+                  δ(χ)≤|u|≤X A                     4
+22       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+where δ(χ) = 0 if χ is non-principal and δ(χ) = 1 if χ is principal. Additionally for
+0 ≤ |u| ≤ 1 and χ (mod q) principal we have
+                    D(χ(n)niu , 1; X)2 = log(1 + |u| log X) + O(log log(3ω(q))).
+Proof. Suppose first that χ is non-principal. We have
+                                                                                              
+                      iu      2                             iu       A 2               1
+      inf      D(χ(n)n , 1; X) =         inf   D(χ(n)n , 1; X ) − O(1) ≥                 − o(1) log log X
+     |u|≤X A                         |u|≤X A                                           4
+by [29, Lemma 7.9]. Suppose then that χ (mod q) is principal. Note that by Mertens’s
+theorem
+                         X1        X 1
+(5.1)                          ≤         ≪ log log(3ω(q))
+                             p         p
+                                   p|q         p≤ω(q)
+
+Then for u ∈ [−X A , X A ] we have
+                                                                 
+                                                               X1
+                      D(χ(n)niu , 1; X)2 = D(niu , 1; X)2 − O    
+                                                                p
+                                                                             p|q
+                                                       iu        2
+                                               = D(n , 1; X) − O(log log(3ω(q))).
+Now for 1 ≤ |u| ≤ X A the claim follows from [32, Lemma C.1], and if instead |u| ≤ 1, the
+claim follows from the prime number theorem and partial summation.                     □
+  For later use, we need a lemma on the pretentious distance of real-valued multiplicative
+functions.
+Lemma 5.2. Let f : N → [−1, 1] be a multiplicative function such that D(f, χ; ∞) = ∞
+for all real Dirichlet characters χ. Then for any A ≥ 1 we have
+                             inf           min       D(f, χ(n)nit ; x) −−−→ ∞.
+                            |t|≤xA   χ     (mod q)                         x→∞
+                                           q≤A
+
+Proof. This follows directly from [32, Lemma C.1].                                                          □
+   Our next crucial iterative lemma says that a multiplicative function cannot pretend
+to be different characters at an infinite sequence of scales (xn ), if xn does not grow too
+                            O(1)
+rapidly (xn + 1 ≤ xn+1 ≤ xn ).
+Lemma 5.3. Let A ≥ 1 be fixed, and let f : N → D be multiplicative. Let F : N → R≥1
+                                                           1
+be an increasing function with log log log log X ≤ F (X) ≤ 10 (log log X)1/2 and F (X A )2 ≤
+      2
+F (X) + 1 for all large enough X. Let (xn ) be a sequence of real numbers in [10, ∞) with
+xn + 1 ≤ xn+1 ≤ xA  n for all n ≥ 1. Suppose that for each j ∈ N there exists a Dirichlet
+character χj of modulus qj ≤ (log xj )A and a real number tj ∈ [−xA       A
+                                                                     j , xj ] such that
+
+                                         D(f, χj (n)nitj ; xj ) ≤ F (xj ).
+Then there exists a primitive Dirichlet character χ and a real number t such that
+                                          D(f, χ(n)nit ; x) ≤ 4F (x)
+for all large enough x.
+   Additionally, if ω(qj ) is bounded, then the conclusion holds without the assumption
+F (X) ≥ log log log log X.
+                       On Elliott’s conjecture and applications                                  23
+
+Proof. In what follows, let ωmax (m) := max1≤j≤m ω(qj ). By passing to a subsequence of
+(xn ) if necessary (and adjusting A), we may assume that xn+1 ≥ x100
+                                                                  n for all n ≥ 1. Also
+by passing to a subsequence, we may assume that x1 is large enough.
+  By assumption, we have
+        D(f, χm+1 (n)nitm+1 ; xm+1 )2 ≤ F (xm+1 )2
+                                                                         
+                                                               X         1
+            D(f, χm (n)nitm ; xm+1 )2 ≤ F (xm )2 + O                       ≤ F (xm )2 + O(1).
+                                                                         p
+                                                            xm <p≤xm+1
+
+Applying the triangle inequality for the pretentious distance and the fact that F is in-
+creasing, this implies that
+                  D(χm (n)nitm , χm+1 (n)nitm+1 ; xm+1 )2 ≤ 4F (xm+1 )2 + O(1).
+Since χm+1 χm (n) is unimodular for all primes not dividing qm qm+1 , by (5.1) we deduce
+that
+                                                                                
+                                                                         X 1
+        D(χm+1 χm (n)ni(tm+1 −tm ) , 1; xm )2 ≤ 4F (xm+1 )2 + O(1) + O          
+(5.2)                                                                          p
+                                                                                 p|qm qm+1
+
+                                                = 4F (xm+1 )2 + O(log log(3ωmax (m + 1))).
+                                                          1
+Applying Lemma 5.1 to (5.2) (and recalling that F (X) ≤ 10  (log log X)1/2 for all large
+enough X), we conclude that for all large enough m the character χm+1 χm is principal,
+and additionally
+                                   exp(4F (xm+1 )2 + O(log log(3ωmax (m + 1))))
+(5.3)            |tm+1 − tm | ≪                                                 .
+                                                     log xm+1
+  Note that by our assumption on F and the fact that ωmax (m + 1) ≪ log log xm+1 we
+have
+                 exp(4F (xm+1 )2 + O(log log(3ωmax (m + 1))))) ≪ (log xm )1/10 ,
+so
+                                                           1
+(5.4)                               |tm+1 − tm | ≪                 .
+                                                     (log xm )9/10
+By telescoping (5.4), and using the fact that xn+1 ≥ x100n , we see that for any j ≥ 1 we
+have
+                                   j
+                                  X         1                   1
+(5.5)              |tm+j − tm | ≪                 9/10
+                                                       ≪                 .
+                                  i=1
+                                      (log xm+i )        (log xm+1 )9/10
+Hence, the sequence (tn ) is a Cauchy sequence, so it has some limit t ∈ R. By (5.3), t
+satisfies
+                          X exp(4F (xm+j )2 + O(log log(3ωmax (m + j)))))
+              |t − tm | ≪
+                                              log xm+j
+                             j≥1
+
+                             exp(4F (xm+1 )2 + O(log log(3ωmax (m + 1)))))
+                         ≪                                                 ,
+                                               log xm+1
+where the second estimate comes from the assumption F (X A )2 ≤ F (X)2 +1, which implies
+that the summands decay exponentially in j.
+24       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+   From the triangle inequality for the pretentious distance and Lemma 5.1, we now con-
+clude that
+(5.6)
+   D(f, χm (n)nit ; xm ) ≤ D(f, χm (n)nitm ; xm ) + D(χm (n)nitm , χm (n)nit ; xm )
+                                                              1/2 
+                                                       X 1                   i(t −t)
+                         ≤ D(f, χm (n)nitm ; xm ) + O               + D(n m , 1; xm )
+                                                              p
+                                                           p|qm
+
+                         ≤ D(f, χm (n)nitm ; xm ) + O(log log(3ωmax (m))))1/2 )
+                           + (log(1 + |tm − t| log xm ))1/2
+                         ≤ F (xm ) + 2F (xm+1 ) + O((log log(3ωmax (m + 1))))1/2 ).
+     Since χm+1 χm is principal for all m ≥ m0 , by telescoping we see that
+                                     χm χm 0    is principal.
+Let χ∗m0 be the primitive character inducing χm0 . For m ≥ m0 , write χm = χ∗m0 χ0,m ,
+where χ0,m (mod qm ) is principal. Using (5.6), this implies that
+                                                                       
+                                                                    X 1
+            D(f, χ∗m0 (n)nit ; xm )2 ≤ D(f, χm (n)nit ; xm )2 + O      
+                                                                      p
+                                                                      p|qm qm0
+                                                  2
+                                     ≤ 9F (xm+1 ) + O(log log(3ωmax (m + 1))))
+   Since any large enough x belongs to some interval [xm , xm+1 ] and since F (xm ) ≫
+log log(3ωmax (m + 1)), we conclude that
+                                                                     
+                                                                 X  1
+       D(f, χ∗m0 (n)nit ; x)2 ≤ D(f, χ∗m0 (n)nit ; xm−1 )2 + O       
+                                                                    p
+                                                                  xm−1 ≤p≤xm+1
+
+                            = D(f, χ∗m0 (n)nit ; xm−1 )2 + O(1) ≤ 10F (xm )2 ≤ 16F (x)2
+for all large enough x. This completes the proof.                                          □
+
+                                 6. Proof of Theorem 1.6
+   As we shall see later, Theorem 1.6 follows by combining Theorem 4.1 with the next
+result.
+Lemma 6.1 (Boosting a pretentiousness hypothesis). Let A ≥ 1 be fixed. Let f : N → D
+be a multiplicative function such that for every ε > 0 we have
+                n                                                          o
+             −
+           δlog   x ∈ N : inf       inf    D(f, χ(n)nit ; x)2 ≤ ε log log x    > 0.
+                            |t|≤xA χ (mod q)
+                                   q≤(log x)A
+
+Then there exists a real number t, a primitive Dirichlet character χ, and a function η(X)
+tending to 0 as X → ∞ such that
+                          n                                        o
+                  δlog log x ∈ N : D(f, χ(n)nit ; xη(x) , x) ≤ η(x)    = 1.
+
+     In particular, the result applies to any function f that is moderately non-pretentious.
+                     On Elliott’s conjecture and applications                                 25
+
+Proof. If f is pretentious, the claim is clear, since then there exist a Dirichlet character χ
+and a real number t such that D(f, χ(n)nit ; y, ∞) = oy→∞ (1). Suppose from now on that
+f is non-pretentious.
+   Let ε > 0. In what follows, any implied constants will be independent of ε. By
+assumption, the set
+                     n                                                            o
+               Sε := x ∈ N : inf          inf    D(f, χ(n)nit ; x)2 ≤ ε log log x
+                                |t|≤xA χ (mod q)
+                                       q≤(log x)A
+
+satisfies
+                                              −
+                                             δlog (Sε ) > 0.
+In particular, this implies that there is some a ≥ 1 (depending on ε) such that Sε contains
+a sequence of the form (xn )n≥1 with xn + 1 ≤ xn+1 ≤ xan for all n ≥ 1. Hence we have
+(6.1)                  inf       inf        D(f, χ(n)nit ; xn )2 ≤ ε log log xn .
+                      |t|≤xA
+                           n χ (mod q)
+                             q≤(log xn )A
+
+  Combining (6.1) and Lemma 5.3, we see that for some real number tε and some primitive
+Dirichlet character χε we have
+(6.2)                          D(f, χε (n)nitε ; x)2 ≪ ε log log x.
+for all x ≥ 10. We claim that tε and χε are in fact independent of ε. Indeed, if ε0 > 0 is
+a small constant and ε ∈ (0, ε0 ) then
+                              D(f, χε0 (n)nitε0 ; x)2 ≪ ε0 log log x,
+                                D(f, χε (n)nitε ; x)2 ≪ ε0 log log x
+for j ∈ {1, 2} and all x ≥ 10, and by the triangle inequality for the pretentious distance
+this gives
+                         D(χε0 (n)nitε0 , χε (n)nitε ; x)2 ≪ ε0 log log x
+for all x ≥ 10. If ε0 > 0 is small enough, by Lemma 5.1 this implies that tε = tε0 and
+χε = χε0 . Therefore, there exist some real numbers t and χ such that for any ε > 0 we
+have
+                                D(f, χ(n)nit ; x)2 ≪ ε log log x.
+for all x ≥ 10. This means that there exists a decreasing function η1 (X) tending to 0 as
+X → ∞ such that
+(6.3)                    D(x) := D(f, χ(n)nit ; x)2 ≤ η1 (x) log log x
+for all x ≥ 10.
+   Let
+                        D = {x ∈ N : D(x) − D(xη1 (x) ) ≥ η1 (x)1/2 }.
+Now, for any X ≥ 10 we have
+                1     X 1n∈D
+           log log X       n log n
+                     3≤n≤X
+(6.4)           1       X           X        1
+         ≤                                       1    j+1     j−log(1/η1 (X))
+                                                                              )≥η1 (X)1/2
+                                                                                          ,
+           log log X              j   j+1
+                                          n log n D(ee )−D(ee
+                     0≤j≤log log X ee ≤n≤ee
+26      Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+using the fact that η1 (·) is decreasing. By telescopic summation and (6.3), we see that the
+left-hand side of (6.4) is
+                       1               X            j+1       j−log(1/η1 (X))
+          ≪         1/2
+                                              (D(ee ) − D(ee                  ))
+              η1 (X) log log X 0≤j≤log log X
+                       1               X              X                j+1−k          j−k
+          ≪         1/2
+                                                               (D(ee          ) − D(ee ))
+              η1 (X) log log X 0≤j≤log log X
+                                                   0≤k≤1+log(1/η1 (X))
+                   log(1/η1 (X))                         X              j+1−k         j−k
+            ≪          1/2
+                                       max                         (D(ee      ) − D(ee ))
+                η1 (X) log log X 0≤k≤1+log(1/η1 (X)) 0≤j≤log log X
+                 log(1/η1 (X))
+            ≪                     D(X e )
+              η1 (X)1/2 log log X
+                 log(1/η1 (X))
+(6.5)       ≪                     η1 (X e )(log log X) ≪ η1 (X)1/2 log(1/η1 (X)).
+              η1 (X)1/2 log log X
+     Putting together (6.4) and (6.5) and sending X → ∞, we obtain
+                                            +
+                                           δlog log (D) = 0,
+so
+                                          −
+                                         δlog log (N \ D) = 1,
+
+Now, the function η(X) := η1 (X)1/4 satisfies
+                         n                                       o
+                 δlog log x ∈ N : D(f, χ(n)nit ; xη(x) , x) ≤ η(x)   = 1,
+as desired.                                                                                 □
+     We are now ready to prove Theorem 1.6.
+Proof of Theorem 1.6. Let k ≥ 1 and h1 , . . . , hk ∈ N. Let f1 , . . . , fk : N → D be multi-
+plicative functions with f1 moderately non-pretentious and f2 , . . . , fk either moderately
+non-pretentious or pretentious. Then, by Lemma 6.1 there exist real numbers t1 , . . . , tk ,
+Dirichlet characters χ1 , . . . , χk , and a function η(X) tending to 0 as X → ∞ such that
+the sets
+                        Sj = {x ∈ N : D(fj , χj (n)nitj ; xη(x) , x) ≤ η(x)}
+for 1 ≤ j ≤ k satisfy
+                                           δlog log (Sj ) = 1.
+                        T
+Hence, denoting S =         1≤j≤k Sj , we also have
+
+(6.6)                                      δlog log (S) = 1.
+Moreover, the set S only depends on the set {f1 , . . . , fk }.
+ Now, for any ε > 0, we have for all large enough x ∈ S the bound
+(6.7)                             max D(fj , χj (n)nitj ; xε , x) ≤ ε.
+                                 1≤j≤k
+
+Furthermore, by the assumption that f1 is moderately non-pretentious, we have
+(6.8)                             D(f1 , χ1 (n)nit1 ; xε ) −−−→ ∞.
+                                                           x→∞
+                       On Elliott’s conjecture and applications                                      27
+
+Applying Theorem 4.1, taking (6.7) and (6.8) into account, it follows that
+                                                                                1/2
+                          1X                                                 1
+                  lim sup    f1 (n + h1 ) · · · fk (n + hk ) ≪           log            ε.
+                    x→∞   x                                                  ε
+                      x∈S      n≤x
+
+Sending ε → 0, we conclude that
+
+                                   1X
+                             lim
+                            x→∞
+                                      f1 (n + h1 ) · · · fk (n + hk ) = 0.
+                            x∈S
+                                   x
+                                     n≤x
+
+Combining this with (6.6), Theorem 1.6 follows.                                                       □
+
+                      7. Proofs of the other correlation results
+7.1. Two-point correlations. The proof of Theorem 1.2 is based on the following strength-
+ening of Theorem A(1) that tells us more about the set of scales where the correlations
+of two multiplicative functions can be large. We prove this with a somewhat more di-
+rect argument than the proof of Theorem A(1) in [43] (related to the one in [2, Section
+8]), using ideas of Tao from [42] (as in [43]) but avoiding some other tools (approximate
+homomorphisms and the Hardy–Littlewood maximal inequality) that were used in [43].
+Theorem 7.1. Let f1 , f2 : N → D be multiplicative functions. Let A(X) be any function
+tending to infinity as X → ∞. Let
+                  n                                                      o
+            X = x ∈ N : max       inf     min D(f1 , χ(n)nit ; x) ≥ A(x) ,
+                              j∈{1,2} |t|≤A(x)x χ    (mod q)
+                                                    q≤A(x)
+
+and suppose that X is infinite. Then, for some function ψ(X) tending to infinity as
+X → ∞ we have
+
+                      1 X                 1 X
+(7.1)           lim
+               x→∞
+                              max             f1 (n + h1 )f2 (n + h2 ) = 0.
+                x∈X
+                    log x 1≤h1 ,h2 ≤ψ(N ) N
+                            N ≤x     h1 ̸=h2         n≤N
+
+   We note that Theorem A(1) essentially corresponds to the case X = N of Theorem 7.1.
+   For the proof of Theorem 7.1, we first need what might be called a “decoupling inequal-
+ity” for correlations, developed by Tao in [42] (and generalized in [44, Theorem 3.6], [13,
+Proposition C.1]). This allows one to compare a one-variable correlation average with a
+two-variable correlation average (we shall only need the two-point case of the result).
+Lemma 7.2 (Decoupling inequality for correlations). Let k ≥ 1 and h1 , . . . , hk ∈ N be
+fixed. Then, for any function P (x) tending to infinity slowly enough and any g1 , . . . , gk :
+N → D, we have
+Elog
+ p≤P (x) |En≤x g1 (n + ph1 ) · · · gk (n + phk ) − En≤x/p g1 (p(n + h1 )) · · · gk (p(n + hk ))| = o(1).
+
+Proof. This follows from [43, Proposition 2.3] (where the multiplicativity assumption is
+not used). See also [2, Corollary 1.1] for a quantitative version of the case k = 2.  □
+  We also need the following lemma that can be extracted from [42] (and is based on the
+work in [32]). It allows one to deal with the two-dimensional averages that result from
+Lemma 7.2.
+28         Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+Lemma 7.3. Let h1 , h2 ∈ N be distinct fixed integers. Let 1 ≤ P (X) ≤ X be a function
+tending to infinity. Let f1 , f2 : N → D be multiplicative. Let x ≥ 3, and let
+                          MA = min         inf        min       D(fj , χ(n)nit ; x).
+                                  j∈{1,2} |t|≤Ax χ    (mod q)
+                                                      q≤A
+
+Then we have
+           Elog
+            p≤P (x) |En≤x f1 (n + ph1 )f2 (n + ph2 )| = oMA →∞ (1) + oA→∞ (1) + ox→∞ (1).
+
+Proof. This follows from the arguments in [42, Section 3]. Alternatively, combine [2,
+Proposition 8.3] (with Q there a suitably chosen subset of the primes in [H/2, H] for any
+H ≤ P (x)) with [32, Theorem 1.7].                                                      □
+     We are now ready to prove Theorem 7.1.
+Proof of Theorem 7.1. Let us first note that we can assume for every c > 0 and for j ∈
+{1, 2} that
+                                      X      1
+(7.2)                                          < ∞,
+                                             p
+                                                p∈P
+                                           |fj (p)|≤1−c
+
+since otherwise the claim follows (with the limit in (7.1) being over all x ∈ N) by applying
+the triangle inequality and Delange’s theorem [46, Thm. III.4.2] to bound
+                                                                                 
+    1 X                             1 X                          X   1 − |fj (p)| 
+         f1 (n + h1 )f2 (n + h2 ) ≤      |fj (n + hj )| ≪ exp −                    = o(1).
+    x                               x                                      p
+        n≤x                                n≤x                                p≤x
+
+     Let A(·) be as in the theorem, and let
+              X1 = {x ∈ N :     max      inf          min       D(fj , χ(n)nit ; x) ≥ A(x)/2}.
+                               j∈{1,2} |t|≤A(x)x χ    (mod q)
+                                                     q≤A(x)
+
+  By the triangle inequality for the pretentious distance, we see that for all large enough
+x we have
+(7.3)                            x ∈ X =⇒ [x1/A(x) , x] ∩ N ⊂ X1 .
+     Let
+                             S(x; h1 , h2 ) := En≤x f1 (n + h1 )f2 (n + h2 ).
+By Lemma 7.2 and the fact that fj (pn) = fj (p)fj (n) + O(1p|n ), for any slowly enough
+growing function P (·) and any fixed, distinct h1 , h2 ∈ N we have
+(7.4)               lim Elog
+                         p≤P (x) |S(x; ph1 , ph2 ) − f1 (p)f2 (p)S(x/p; h1 , h2 )| = 0.
+                   x→∞
+We may choose P (·) so that P (·) is increasing and P (log x) ≥ P (x) − 1 for all x.
+   We make the following simple observation which we will use several times in this section
+without further mention. If F : Nk → R≥0 satisfies limx→∞ F (x, n1 , . . . , nk−1 ) = 0 for any
+ni ∈ N, then there exists some function N (X) tending to infinity as X → ∞ such that
+                                                                           1
+(7.5)                          max           F (x, n1 , . . . , nk−1 ) ≤
+                       1≤n1 ,...,nk−1 ≤N (x)                             N (x)
+for all x ∈ N.
+                            On Elliott’s conjecture and applications                                              29
+
+  By this observation and (7.4), there exists a function H(·) tending to infinity such that
+(7.6)           lim         max       Elog
+                                       p≤P (x) |S(x; ph1 , ph2 ) − f1 (p)f2 (p)S(x/p; h1 , h2 )| = 0.
+               x→∞ 1≤h1 ,h2 ≤H(x)
+                      h1 ̸=h2
+
+  By Lemma 7.3, if H(·) is growing sufficiently slowly we have
+                               lim       max
+                               x→∞ 1≤h1 ,h2 ≤H(x)
+                                                    Elog
+                                                     p≤P (x) |S(x; ph1 , ph2 )| = 0,
+                               x∈X1
+                                      h1 ̸=h2
+
+so by (7.6) we have
+                         lim       max
+                         x→∞ 1≤h1 ,h2 ≤H(x)
+                                              Elog
+                                               p≤P (x) |f1 (p)f2 (p)S(x/p; h1 , h2 )| = 0.
+                         x∈X1
+                                h1 ̸=h2
+
+Recalling (7.2), we obtain
+                               lim       max
+                               x→∞ 1≤h1 ,h2 ≤H(x)
+                                                    Elog
+                                                     p≤P (x) |S(x/p; h1 , h2 )| = 0.
+                               x∈X1
+                                      h1 ̸=h2
+
+Therefore, for some increasing function h(X) ≤ H(X) tending to infinity slowly we have
+                                                                      1
+(7.7)                      max        Elog
+                                       p≤P (x) |S(x/p; h1 , h2 )| ≤
+                       1≤h1 ,h2 ≤H(x)                               h(x)3
+                                   h1 ̸=h2
+
+for all x ∈ X1 . We have
+                                                           1
+                         Elog                                                       Elog
+                                                                       X
+            max
+        1≤h1 ,h2 ≤h(x)    p≤P (x) |S(x/p; h1 , h2 )| ≥   h(x)2                       p≤P (x) |S(x/p; h1 , h2 )|
+           h1 ̸=h2                                                 1≤h1 ,h2 ≤h(x)
+                                                                      h1 ̸=h2
+                                                           1
+                                                     ≥        Elog        max         |S(x/p; h1 , h2 )|,
+                                                         h(x)2 p≤P (x) 1≤h1 ,h2 ≤h(x)
+                                                                                h1 ̸=h2
+
+and combined with (7.7) this yields
+                               lim Elog
+                               x→∞  p≤P (x)        max          |S(x/p; h1 , h2 )| = 0.
+                                               1≤h1 ,h2 ≤h(x)
+                               x∈X1
+                                                  h1 ̸=h2
+
+  Recalling (7.3) and using the fact that P (x1/A(x) ) ≥ P (log x) ≥ P (x) − 1 for all large x
+by the choice of P (·), we have
+                                 Z x
+                   log        1                                                     dy
+             lim
+            x→∞
+                 E p≤P  (x)                      max            |S(y/p; h 1 , h2 )|    = 0.
+            x∈X
+                            log x x1/A(x) 1≤h1 ,h2 ≤h(x1/A(x) )                     y
+                                                         h1 ̸=h2
+
+By the pigeonhole principle, we can find some Px ∈ [2, P (x)] such that
+                         Z x
+                     1                                                       dy
+               lim
+              x→∞ log x
+                                         max            |S(y/Px ; h1 , h2 )|    = 0,
+              x∈X         x1/A(x) 1≤h1 ,h2 ≤h(x1/A(x) )                      y
+                                                   h1 ̸=h2
+
+and making the change of variables w = y/Px in the integral, this implies that
+                         Z x
+                     1                                                   dw
+                lim
+               x→∞ log x
+                                         max            |S(w; h1 , h2 )|    = 0,
+                x∈X       x1/A(x) 1≤h1 ,h2 ≤h(x1/A(x) )                  w
+                                                    h1 ̸=h2
+30      Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+since Px ≤ P (x) and P (·) is growing sufficiently slowly. Widening the integration range
+to [1, x] (noting that the contribution of [1, x1/A(x) ] is negligible) and approximating the
+integral with a sum, we see that
+                            1 X1
+(7.8)                 lim
+                     x→∞ log x
+                                            max            |S(n; h1 , h2 )| = 0.
+                     x∈X
+                                   n 1≤h1 ,h2 ≤h(x1/A(x) )
+                                    n≤x
+                                                     h1 ̸=h2
+
+Taking ψ(X) = h(X 1/A(X) ) completes the proof.                                                        □
+     Theorem 1.2 follows quickly by combining Theorem 7.1 and Theorem 1.6.
+Proof of Theorem 1.2. Let
+            Y = {x ∈ N :     max      inf        min           D(fj , χ(n)nit ; x) ≥ log log log x}.
+                            j∈{1,2} |t|≤x2 χ    (mod q)
+                                               q≤log x
+
+If Y is infinite, the claim follows from Theorem 7.1 (taking A(x) = log log log x) and
+Markov’s inequality. Suppose then that Y is finite. Then f1 is moderately non-pretentious
+(recalling that by assumption f1 is non-pretentious) and f2 is either pretentious or mod-
+erately non-pretentious. Hence, the claim follows from Theorem 1.6.                    □
+     We next prove Proposition 1.3, which complements Theorem 1.2.
+Proof of Proposition 1.3. We modify the parameters in the construction of Matomäki–
+Radziwill–Tao [32, Appendix B] of a multiplicative function violating two-point Elliott.
+We define a sequence (f (p))p iteratively as follows.
+   (1) Set t1 = 100 and f (p) = 1 for p ≤ t1 .
+                                                                              it
+   (2) Suppose that f (p) has been defined Q for p1 ≤ tm . Since the vector (p )p≤tm is
+       asymptotically equidistributed in p≤tm S as t → ∞, we can find some sm+1 >
+       exp(tm ) such that
+                                                       1
+                                   |pism+1 − f (p)| ≤ 2
+                                                      tm
+      for all p ≤ tm . Set tm+1 = exp(sm+1 ) and define f (p) = pism+1 for tm < p ≤ tm+1 .
+      Now iterate step (2).
+Then we define a completely multiplicative function f : N → D by
+                                           Y
+                                   f (n) =     f (p)ℓ .
+                                                       pℓ ||n
+
+  Now, for any n ∈ [s2m+1 , tm+1 ] such that pℓ | n with p ≤ tm implies ℓ ≤ log tm , we
+compute
+                      Y              Y             Y
+              f (n) =      f (p)ℓ =      f (p)ℓ ·        f (p)ℓ
+                           pℓ ||n           pℓ ||n                  pℓ ||n
+                                            p≤tm                tm <p≤tm+1
+                        Y            ℓ
+                                       1                                Y
+                      =    p ism+1
+                                   +O 2    ·                                     pism+1 ℓ
+                        ℓ
+                                      tm
+                           p ||n                                        pℓ ||n
+                           p≤tm                                     tm <p≤tm+1
+                                         O(tm )              
+                             ism+1         1           ism+1      1
+                      =n              1+O 2         =n       +O     ,
+                                          tm                     tm
+                         On Elliott’s conjecture and applications                                       31
+
+so
+                                                     ism+1     
+                                                  1                1
+                          f (n)f (n + 1) = 1 −               +O
+                                                n+1               tm
+                                                             
+                                                  sm+1          1
+                                           =1+O           +O
+                                                  s2m+1        tm
+                                                 
+                                                   1
+                                           =1+O        .
+                                                  tm
+
+   Now let x ∈ [(log tm+1 )4 , tm+1 ]. Note that the proportion of n ≤ x that satisfy pℓ | n
+for some p ≤ tm and ℓ > log tm is ox→∞ (1). Hence, we have by the union bound (recalling
+that x1/2 ≥ (log tm+1 )2 = s2m+1 )
+             1X                  1          X
+(7.9)           f (n)f (n + 1) =                     f (n)f (n + 1) + ox→∞ (1) = 1 + ox→∞ (1).
+             x                   x
+               n≤x                       x1/2 ≤n≤x
+
+     Let X be the set of x ∈ N for which (7.9) holds. We have
+            1         X        1n∈X           1                X                 1
+                                      ≥                                               = 1 − om→∞ (1),
+      log log tm+1            n log n   log log tm+1                          n log n
+                     n≤tm+1                            (log tm+1 )4 ≤n≤tm+1
+
+             +
+so we have δlog log (X ) = 1.
+   What remains to be shown is that f is non-pretentious. Let χ be any fixed Dirichlet
+character and t any fixed real number. Then by Lemma 5.1 and Mertens’s theorem
+(recalling sm+1 = log tm+1 ) we have
+
+            D(f, χ(n)nit ; tm , tm+1 )2 = D(nism+1 , χ(n)nit ; tm , tm+1 )2
+                                         ≥ D(ni log tm+1 , χ(n)nit ; tm+1 )2 − O(log log tm )
+                                         ≫ log log tm+1 .
+Letting m → ∞, we see that f is non-pretentious.                                                        □
+
+Remark 7.4. By modifying the growth rate of tm in terms of sm in the construction
+above, one can show that for any function ψ(X) ≤ X tending to infinity as X → ∞ and
+for any δ > 0 there exists a multiplicative function f : N → D such that
+
+                                           1X
+(7.10)                             min        f (n)f (n + 1) ≥ 1 − δ
+                                y∈[ψ(X),X] x
+                                             n≤x
+
+holds for infinitely many X ∈ N.
+
+7.2. Higher order correlations.
+
+Proof of Theorem 1.7. Let us first note that we can assume for every c > 0 that
+                                       X 1
+(7.11)                                         < ∞,
+                                             p
+                                                p∈P
+                                           |f (p)|≤1−c
+32         Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+since otherwise by the triangle inequality and Delange’s theorem [46, Thm. III.4.2] we
+have
+(7.12)
+                                                                                   
+ 1 X e1                                1 X                         X 1 − |f e1 (p)|
+    f (n + h1 ) · · · f ek (n + hk ) ≤     |f e1 (n + h1 )| ≪ exp                   = o(1),
+ x                                     x                                  p
+     n≤x                                              n≤x                                  p≤x
+
+since |f (p)| ≤ 1 − c implies |f (p)e1 | ≤ 1 − c.
+   Set m := e1 + · · · + ek . By Theorem A(2), we have the desired conclusion (with X
+satisfying δlog (X ) = 1, so in particular δlog log (X ) = 1), unless there exist a Dirichlet
+character χ and a real number t such that
+(7.13)                                   D(f m , χ(n)nit ; x)2 = o(log log x)
+for x ≥ 10.
+   We shall first show that t = 0. Let ℓ be the order of χ. Then by the triangle inequality
+for the pretentious distance we deduce that
+(7.14)                                   D(f dℓm , nidℓt ; x)2 = o(log log x).
+Since f takes values in the convex hull of the dth roots of unity, there exists some η > 0
+such that all the values f dℓm (p) are at least distance η away from −1. Now, we can
+estimate
+                                    X       1 − Re(f (p)dℓm p−idℓt )       X       1
+(7.15)     D(f dℓm , nidℓt ; x)2 ≥                                   ≫η              .
+                                                      p                            p
+                                                   p≤x                                                  p≤x
+                                             |pitdℓ +1|≤η/3                                       |pidℓt +1|≤η/3
+
+If t ̸= 0 observe that for a large enough constant j0 (η) ≥ 1 we have
+                                 [
+                           p∈        [Aj , Bj ] =⇒ |pidℓt + 1| ≤ η/3,
+                                      j≥j0 (η)
+
+where we have set
+                                     π                                     π
+                                           (2j+1−η/(10π))                        (2j+1+η/(10π))
+                            Aj = e dℓ|t|                      ,   Bj = e dℓ|t|                    .
+Note that Bj = eη/(5dℓ|t|) Aj , so if j ≥ j0 (η) then the prime number theorem implies that
+                            X 1             Bj − Aj          1     1
+                                       ≫η             ≫η         ≫ ,
+                                     p     Aj log Aj      log Aj   j
+                                 Aj ≤p≤Bj
+
+and thus
+(7.16)
+                                                                                                  
+           X          1             X                  X          1                dℓ|t|(log x)
+                        ≥                                           ≫η log                      − 1 ≫ log log x.
+                      p                                           p                     2π
+           p≤x                       dℓ|t|       Aj ≤p≤Bj
+     |pidℓt +1|≤η/3         j0 (η)≤j≤ 2π log x−1
+
+Together with (7.15) this contradicts (7.14). Thus, we may assume that t = 0 in (7.14).
+  Now (7.13) reads as
+                                            D(f m , χ; x)2 = o(log log x).
+                     On Elliott’s conjecture and applications                                  33
+
+Since (d, m) = 1, there exist a, b ∈ N such that am = 1 + bd. Hence, by the triangle
+inequality,
+(7.17)                           D(f 1+bd , χa ; x)2 = o(log log x).
+  Let η > 0 be small, and let
+                                Pη = {p ∈ P : |f (p)bd − 1| ≥ η}.
+Note that
+                                                                              
+                           bd                                              j
+                     |f (p) − 1| ≥ η =⇒           min     f (p) − e                ≫ η.
+                                                1≤j≤bd                    bd
+Since f takes values in the convex hull of the dth roots of unity f , this implies that
+|f (p)| ≤ 1 − c0 η for some constant c0 > 0. Hence,
+                                 p ∈ Pη =⇒ |f (p)| ≤ 1 − c0 η.
+But by (7.11) this implies that
+                                           X 1
+                                                      ≪η 1.
+                                                  p
+                                           p∈Pη
+
+Therefore, for any η > 0 we have by Mertens’s theorem
+                                              Xη
+                   D(f bd , 1; x)2 ≤ Oη (1) +    ≤ Oη (1) + η log log x.
+                                               p
+                                                  p≤x
+
+Sending η → 0, we conclude that
+                                   D(f bd , 1; x)2 = o(log log x).
+  Now, recalling (7.17) and applying the triangle inequality, we see that
+                                                              bd
+              D(f, χa ; x)2 ≤ 2(D(f 1+bd , χa ; x)2 + D(f , 1; x)2 ) = o(log log x).
+Hence, by the triangle inequality again, for each 1 ≤ j ≤ k we have
+                                 D(f ej , χaej ; x)2 = o(log log x).
+This implies that each of f1e1 , . . . , fkek is either pretentious of moderately non-pretentious.
+   We shall show that f1e1 cannot be pretentious. Supposing for a contradiction that f1e1
+is pretentious, there exist some real number u and Dirichlet character χ′ such that
+                                   D(f1e1 , χ′ (n)niu ; ∞) < ∞.
+We must have u ̸= 0, as otherwise we contradict the assumption of the theorem. If ℓ′ is
+the order of χ′ , then the triangle inequality for the pretentious distance gives
+                                            ′         ′
+(7.18)                              D(f1de1 ℓ , nidℓ u ; ∞) < ∞.
+By our assumption that f1 takes values in the convex hull of the dth roots of unity,
+                                                 ′
+there exists some η > 0 such that |f1 (p)de1 ℓ + 1| ≥ η for all primes p. This leads to a
+contradiction with (7.18), arguing as in (7.15) and (7.16). Summarizing, we now know that
+f1e1 is moderately non-pretentious and f2e2 , . . . , fkek are either moderately non-pretentious
+or pretentious, so the claim follows from Theorem 1.6.                                        □
+Proof of Corollary 1.4. This follows immediately from Theorem 1.7 with e1 = · · · = ek = 1
+and d = 2 after we note that for f : N → [−1, 1] and χ any non-real Dirichlet character
+we always have D(f, χ; ∞) = ∞; this follows from Lemma 5.2.                             □
+34       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+Proof of Theorem 2.1. Let f : N → {−1, +1} be either of the two multiplicative functions
+(−1)ωP (n) or (−1)ΩP (n) . Since p∈P p1 = ∞, we have
+                                P
+
+                                           D(f, 1; ∞) = ∞.
+  On the other hand, since P has relative density 0 in the primes, for any fixed ε > 0 we
+have
+                                               X 2
+                           D(f, 1; xε , x)2 =         = o(1)
+                                              ε    p
+                                                       x <p≤x
+                                                         p∈P
+
+as x → ∞ by partial summation and the fact that |{p ∈ [y/2, y] : p ∈ P}| = o(π(y)).
+Therefore, there exists some function η(X) tending to zero slowly as X → ∞ such that
+                                       D(f, 1; xη(x) , x)2 = o(1)
+as x → ∞. Hence, the claim follows from Theorem 4.1.                                         □
+Proof of Corollary 2.2. This follows immediately by combining Theorem 2.1 with [8, The-
+orem 4.10].                                                                          □
+Proof of Proposition 2.13. We shall prove the two claimed implications separately.
+  Implication from Conjecture 2.12 to Conjecture 2.10.
+  Since f1 is non-pretentious, there must exist some function M (x) tending to infinity
+such that
+(7.19)                        inf       min        D(f1 , χ(n)nit ; x) ≥ M (x)
+                        |t|≤M (x) χ      (mod q)
+                                       q≤M (x)
+
+for infinitely many x ∈ N (using (7.5) with F (x, χ, N ) := 1/ max|t|≤N D(f1 , χ(n)nit ; x)).
+   Denote by M the collection of multiplicative functions taking values in D. By Conjec-
+ture 2.12, there exist functions x0 (·) and A(·) such that the following holds. For any ε > 0
+k ∈ N, H ≥ 1, if x ≥ x0 (ε, k, H) and h1 , . . . , hk ∈ [1, H] are distinct natural numbers, we
+have
+                                     1X
+                         max            f1 (n + h1 ) · · · fk (n + hk ) ≤ ε
+                       f2 ,...,fk ∈M x
+                                        n≤x
+
+unless
+                        inf              min        D(f1 , χ(n)nit ; x) ≤ A(ε, k, H).
+                  |t|≤A(ε,k,H)xk−1 χ (mod q)
+                                   q≤A(ε,k,H)
+
+By letting ε(x) be a function tending to 0 sufficiently slowly (in terms of x0 (·), A(·) and
+M (·)), we see that
+
+                                             1X Y
+(7.20)                 max          max           fj (n + j) ≤ ε(x)
+                      J≤1/ε(x) f2 ,...,fJ ∈M x
+                                                   n≤x 1≤j≤J
+
+unless
+(7.21)                        inf       min        D(f1 , χ(n)nit ; x) ≤ B(x),
+                         |t|≤xB(x) χ    (mod q)
+                                       q≤B(x)
+                    On Elliott’s conjecture and applications                              35
+
+say, for some function B(x) that may be made to tend to infinity arbitrarily slowly by
+making ε(x) → 0 slowly enough. In particular, we may require that B(x) ≤ M (x)1/2 and
+B(ex ) ≤ B(x) + 1 for all x ∈ N.
+   Let a ≥ 2. Let E be the set of x for which (7.21) holds. If E contains a subsequence
+(xn ) with xn + 1 ≤ xn+1 ≤ xan for some a > 1, then by Lemma 5.3, and the fact that B(x)
+grows sufficiently slowly, there exist a real number t1 and a Dirichlet character χ1 such
+that
+                          D(f1 , χ1 (n)nit1 ; x) ≪ B(x) ≤ M (x)1/2
+for x ≥ 10. But this contradicts (7.19). Hence, the set E of x ∈ N for which (7.21)
+                                                                    −
+holds contains no such subsequence (xn ) for any a > 1. But then δlog (E) = oa→∞ (1), and
+                             −                +
+sending a → ∞ we obtain δlog (E) = 0, so δlog (N \ E) = 1. Noting that (7.20) holds for
+x ∈ N \ E, the statement of Conjecture 2.10 follows with X = N \ E, noting that X depends
+only on f1 .
+   Implication from Conjecture 2.10 to Conjecture 2.11.
+   To see that Conjecture 2.10 implies Conjecture 2.11, we may follow verbatim Sarnak’s
+combinatorial proof (see [39]) that the Chowla conjecture implies the Elliott conjecture.
+For the sake of completeness we give details. Let f : N → D be a non-pretentious mul-
+tiplicative function. Let X be the set corresponding to f in Conjecture 2.10. Then
+ +
+δlog (X ) = 1 and
+                                                k
+                                                Y
+(7.22)                     lim En≤x f (n + h)
+                          x→∞
+                                                      fj (n + hj ) = 0
+                          x∈X                   j=1
+
+for any k ≥ 1, any multiplicative functions fj : N → D and any h1 , . . . , hk ∈ N distinct
+from h.
+   Let a : N → D be deterministic, and let
+                                    x ≫ H ≫ 1/ε ≫ 1
+with x ∈ X be parameters, each one large enough in terms of the ones to the right of it.
+By the triangle inequality, we can estimate
+(7.23)         |En≤x f (n)a(n)| ≤ En≤x |Ej≤H f (n + j)a(n + j)| + oH→∞ (1).
+This can be bounded as
+                       ≪ ε + Pn≤x ({|Ej≤H f (n + j)a(n + j)| ≥ ε}),
+where for any event En we write Pn≤x (En ) := x1 |{n ≤ x : En holds}|.
+   Since a is deterministic, the set ((a(n + 1), . . . , a(n + H)))n∈N can be covered with
+O(exp(ε10 H)) balls of radius ε/2 (since H is large in terms of ε). Using this, the triangle
+inequality and the union bound, we see that
+(7.24)
+   Pn≤x ({|Ej≤H f (n + j)a(n + j)| ≥ ε}) ≪ exp(ε10 H)Pn≤x ({|Ej≤H f (n + j)ζj | ≥ ε/2})
+for some ζj ∈ D. By Chebyshev’s inequality, for any integer 1 ≤ m ≤ H/2 (to be specified
+later) the right-hand side of (7.24) is
+                                       1
+                     ≪ exp(ε10 H)           En≤x |Ej≤H f (n + j)ζj |2m .
+                                    (ε/2)2m
+36       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+Expanding out 2mth moment here, this becomes
+(7.25)
+                                                                  m             m
+      10    1     1    X                                          Y             Y
+exp(ε H)                      ζj1 · · · ζjm ζjm+1 · · · ζj2m En≤x   f (n + ji )   f (n + ji+m ).
+         (ε/2)2m H 2m
+                             j1 ,...,j2m ≤H                               i=1             i=1
+
+   Using (7.22) (which is based on Conjecture 2.10), the contribution of all the terms
+in (7.25) where at least one of the ji occurs with multiplicity 1 in (j1 , . . . , j2m ) is ox→∞ (1),
+recalling that x ∈ X . We then upper bound the number of tuples j1 , . . . , j2m for which all
+the ji have multiplicity ≥ 2 in (j1 , . . . , j2m ). Such tuples necessarily satisfy |{j1 , . . . , j2m }| ≤
+m, so there are at most
+                       X H                                               Hm
+                                                           
+                                                            H
+                                    (2m)! ≤ m(2m)!              ≤ m(2m)!
+                               j                            m               m!
+                         1≤j≤m
+
+such tuples (recalling that m ≤ H/2), each giving a contribution of ≤ 1 to the sum
+in (7.25). Hence, (7.25) is bounded by
+                                          H −m
+                          ≪ exp(ε10 H)m(2m)!   (ε/2)−2m + ox→∞ (1).
+                                           m!
+Using the simple inequalities n ≤ 2n and nn e−n ≤ n! ≤ nn , the main term here is
+                                          m
+                                2 · (2m)2                     32em m
+                                                                 
+                      10                              10
+                 exp(ε H)                     = exp(ε H)               .
+                              H(ε/2)2 m/e                      Hε2
+Taking m to be the largest integer less than ε2 H/(64e) (which is necessarily > 1 by the
+assumption that H is large in terms of ε), the previous expression is bounded by
+                                                  ε2 H
+                                                        
+                       10    −m            10
+              ≪ exp(ε H)2        ≪ exp ε H −               ≪ exp(−ε3 H),
+                                                  10 64e
+using again H ≫ 1/ε ≫ 1. Collecting all the error terms, we see that
+                             lim sup |En≤x f (n)a(n)| ≪ ε + exp(−ε3 H).
+                              x→∞
+                              x∈X
+
+Since H ≥ ε−10 and 1/ε can be taken to be arbitrarily large, the claim follows.                          □
+
+                           8. Constructing Furstenberg systems
+  For proving Theorem 2.6, we first need to know that pretentious multiplicative functions
+have unique Furstenberg systems.7
+Proposition 8.1. Let g : N → {0, 1} be a pretentious multiplicative function. Then g has
+a unique Furstenberg system.
+Proof. By [6, Theorem 6], g is “rationally almost periodic” in the sense that for any ε > 0
+and n ≥ 1 we can write
+                                                        1X
+(8.1)           g(n) = Pε (n) + Eε (n) where lim sup          |Eε (n)| ≤ ε,
+                                                 x→∞ x
+                                                                    n≤x
+
+where Pε is some periodic function. It follows from [4, Theorem 1.7] that any rationally
+almost periodic sequence taking values in a finite set has a unique Furstenberg system.
+Hence, g has a unique Furstenberg system.                                             □
+     7We thank Nikos Frantzikinakis for pointing out the following argument to us.
+                       On Elliott’s conjecture and applications                                     37
+
+  We then show that a class of non-pretentious multiplicative functions has a unique and
+explicitly given Furstenberg measure.
+Theorem 8.2. Let g : N → {0, 1} be a pretentious multiplicative function, and let νg
+be the corresponding   unique Furstenberg measure on {0, 1}Z . Let P be any subset of the
+              P      1
+primes with      p∈P p = ∞ such that the relative density of P within P is 0. Then, if
+f (n) = (−1) ΩP (n) or f (n) = (−1)ωP (n) , the function f g has a unique Furstenberg measure
+νf g given on cylinder sets C of {−1, 0, +1}Z by
+(8.2)                              νf g (C) = 2−|Supp(C)| νg (C 2 ),
+where Supp(C) is the set of coordinates of C fixed to be ̸= 0 and C 2 := {x2 : x ∈ C},
+where x2 (j) := x(j)2 for all j ∈ Z.
+Remark 8.3. Note that there are many explicit choices of f satisfying the assump-
+tion. For example, if pm denotes the mth prime one can take f (n) = (−1)ΩP (n) , P =
+{pm⌊log log log m⌋ : m ≥ e100 }.
+Proof. Let F be the collection of completely multiplicative functions f : N → {−1, +1}
+that satisfy Elliott’s conjecture in the following sense: for any k ≥ 1, any integers
+a1 , . . . , ak ≥ 1 and any distinct h1 , . . . , hk ∈ N with ai hj ̸= aj hi for all i ̸= j we have
+                                  1X
+(8.3)                        lim        f (a1 n + h1 ) · · · f (ak n + hk ) = 0.
+                            x→∞ x
+                                   n≤x
+
+By Theorem 2.1 we have
+                                                   X1
+(8.4)                  F ⊃ {n 7→ (−1)ΩP (n) :                = ∞, dP (P) = 0},
+                                                         p
+                                                   p∈P
+
+where dP (P) denotes the relative density of P within P. The same holds also with ωP (n)
+in place of ΩP (n).
+   We claim that for any f ∈ F the multiplicative function f g : N → {−1, 0, +1} has a
+unique Furstenberg measure, and that this measure satisfies (8.2). After that the desired
+claim follows (8.4).
+   Using the identity
+                                            1         v
+                                1f g(n)=v = g(n) + f g(n)
+                                            2         2
+for v ∈ {−1, +1}, we see that for any distinct integers h1 , . . . , hk and v1 , . . . , vk ∈ {−1, 0, +1}
+and for any x ≥ 1 we have
+(8.5)
+                                                                            Y
+1X                                          1X Y 1              vj
+      1f g(n+h1 )=v1 · · · 1f g(n+hk )=vk =         g(n + hj ) + f g(n + hj )   (1 − g(n + hj )).
+x                                           x     2             2
+  n≤x                                        n≤x j≤k                                      j≤k
+                                                vj ̸=0                                    vj =0
+
+We claim that
+(8.6)
+                                                              Y
+ 1X                                         1X Y 1
+      1f g(n+h1 )=v1 · · · 1f g(n+hk )=vk =         g(n + hj )    (1 − g(n + hj )) + o(1).
+ x                                          x     2
+   n≤x                                       n≤x j≤k                    j≤k
+                                                vj ̸=0                  vj =0
+38       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+To deduce this from (8.5), it suffices to show that for any nonempty set A ⊂ {h1 , . . . , hk }
+and any set B ⊂ {h1 , . . . , hk } \ A we have
+                                  1XY                 Y
+(8.7)                      lim             f g(n + j)   g(n + j) = 0.
+                          x→∞ x
+                                      n≤x j∈A              j∈B
+
+By applying the decomposition (8.1) to each occurrence of g in (8.7), and noting that as
+ε → 0 the contribution of any term involving Eε is negligible, we see that (8.7) follows if
+we show that
+                             1XY
+                        lim           f (n + j)1n≡C (mod D) = 0
+                       x→∞ x
+                                      n≤x j∈A
+
+for any C, D ∈ N. But this follows from (8.3) after making a change of variables.
+   We now conclude that (8.6) holds, so
+                                                                       Y
+      1X                                             1X Y 1
+ lim       1f g(n+h1 )=v1 · · · 1f g(n+hk )=vk = lim         g(n + hj )    (1 − g(n + hj ));
+x→∞ x                                           x→∞ x      2
+          n≤x                                              n≤x j≤k                j≤k
+                                                              vj ̸=0              vj =0
+
+the limit on the right-hand side exists by Proposition 8.1. Hence we have
+(8.8)
+     1X                                               1X Y             Y
+  lim   1f g(n+h1 )=v1 · · · 1f g(n+hk )=vk = 2−r lim      1g(n+hj )=1   1g(n+hj )=0 ,
+ x→∞ x                                           x→∞ x
+              n≤x                                                 n≤x j≤k           j≤k
+                                                                     vj ̸=0         vj =0
+
+where r is the number of j ≤ k for which vj ̸= 0. In particular, since these limits exist,
+there exists a unique Furstenberg measure νf g for f g. Let νg be the unique Furstenberg
+measure of g.
+   Now, by the definition of a Furstenberg measure, and the fact that the algebra generated
+by the indicators of cylinder sets is dense in the space of continuous functions with respect
+to the uniform topology, we have
+        1X
+   lim        1f g(n+h1 )=v1 · · · 1f g(n+hk )=vk = νf g (x ∈ {−1, 0, +1}Z : x(hi ) = vj ∀ j ≤ k),
+  x→∞ x
+              n≤x
+           1X
+        lim   1g(n+h1 )=v12 · · · 1g(n+hk )=v2 = νg (x ∈ {0, 1}Z : x(hj ) = vj2 ∀ j ≤ k)
+       x→∞ x                                 k
+                n≤x
+
+for any v1 , . . . , vk ∈ {−1, 0, +1} and any distinct integers h1 , . . . , hk . By (8.8) this implies
+that
+     νf g (x ∈ {−1, 0, +1}Z : x(hj ) = vj ∀ j ≤ k) = 2−r νg (x ∈ {0, 1}Z : x(hj ) = vj2 ∀ j ≤ k)
+for any v1 , . . . , vk ∈ {−1, 0, +1} and any h1 , . . . , hk ∈ Z, where r is the number of j such
+that vj ̸= 0. Hence, for any cylinder set C of {−1, 0, +1}Z we have
+                                      νf g (C) = 2−|supp(C)| νg (C 2 ),
+as desired.                                                                                         □
+   Theorem 2.6 will follow immediately by combining Theorem 8.2 and the following propo-
+sition (cf. [8, (15) and Section 4.3]).8
+     8We thank Mariusz Lemańczyk for discussions relating to this.
+                       On Elliott’s conjecture and applications                                     39
+
+Proposition 8.4. Let ν be a shift-invariant measure on {0, 1}Z . Let νe be a measure on
+{−1, 0, +1}Z given on cylinder sets C of {−1, 0, +1}Z by
+                                     νe(C) = 2−|Supp(C)| ν(C 2 ).
+Let T be the left shift on {−1, 0, +1}Z . Then the dynamical system ({−1, 0, +1}Z , T, νe) is
+isomorphic to the product of the system ({0, 1}Z , T, ν) and a Bernoulli system.
+Proof. Define a measure ν ′ on cylinder sets C of {−1, 0, +1}Z by ν ′ (C) = ν(C 2 ). Consider
+the following dynamical systems
+                        S1 = ({0, 1}Z × {−1, +1}Z , T ⊗ T, ν ⊗ B(1/2)),
+                        S2 = ({−1, 0, +1}Z , T, ν ′ · B(1/2)),
+                        S3 = ({0, 1}Z , T, ν),
+where ν1 · ν2 (A) := ν1 (A)ν2 (A) for all A and B(1/2) is the Bernoulli measure (1/2, 1/2)⊗Z .
+Note that ν̃ = ν ′ · B(1/2). The system S2 is a factor of S1 (with the factor map
+π(x, y) = x · y, where · denotes pointwise multiplication of sequences) and the system
+S3 is a factor of S2 (with the factor map π(x) = x2 , with the squaring map of a sequence
+taken pointwise). Note that S1 is a relatively Bernoulli extension of S3 . By Thouvenot’s
+theorem [47], S2 must then be relatively Bernoulli over S3 , and therefore, up to measure-
+theoretic isomorphism of dynamical systems, the system S2 is the direct product of S3
+and a Bernoulli system.                                                                    □
+  We then turn to proving Proposition 2.9.
+Proof of Proposition 2.9. Let f : N → −1, 0, +1 be a non-pretentious multiplicative func-
+tion. We may factorize f = f ′ g. where f ′ : N → {−1, +1} and g : N → {0, 1},
+g(n) = |f (n)| are multiplicative. We may suppose that D(g, 1; ∞) < ∞, since otherwise
+by the triangle inequality and Delange’s theorem [46, Thm. III.4.2] similarly as in (7.12)
+we have
+                                1X
+                           lim      f (n + h1 ) · · · fk (n + hk ) = 0
+                          x→∞ x
+                                     n≤x
+
+for any distinct h1 , . . . , hk ∈ N, which implies that the unique Furstenberg measure of f
+(and of |f |)is the Bernoulli measure κZ , where κ is the measure on {−1, 0, 1} supported on
+0. Now, since f is non-pretentious by assumption, from the pretentious triangle inequality
+it follows that f ′ is also non-pretentious.
+   From the proof of Theorem 8.2 it is clear that if f ′ satisfies Elliott’s conjecture (in
+the sense that f ′ satisfies (8.3)), then f ′ g has a unique Furstenberg system, which is
+isomorphic to the direct product of the Furstenberg system of g and a Bernoulli system.
+Hence, it suffices to show that any non-pretentious f ′ : N → {−1, +1} satisfies (8.3). Let
+a1 , . . . , ak , h1 , . . . , hk ∈ N satisfy ai hj ̸= aj hi whenever i ̸= j. Let q = a1 · · · ak , and
+factor f ′ = f1 f2 , where f2 is the completely multiplicative function given on the primes
+by f2 (p) = f ′ (p), and f1 is the multiplicative function given by f1 (pℓ ) = f ′ (pℓ )f ′ (p)ℓ for
+ℓ ≥ 1. Then the left-hand side of (8.3) is equivalent to
+                                        k                              
+                                  1 XY                               q
+(8.9)                                      f1 (aj n + hj )f2 qn + hj      = o(1).
+                                  x                                  aj
+                           n≤x j=1
+40     Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+  The function f1 is pretentious (in fact, D(f1 , 1; ∞) = 0) and therefore we have the
+decomposition (8.1) for f1 . Substituting that into (8.9) and sending ε → 0, it suffices to
+show that
+                             k               
+                     1 XY                   q
+                               f2 qn + hj       1n≡bj (mod rj ) = o(1)
+                     x                     aj
+                            n≤x j=1
+
+for any bj , rj ∈ N. Making a change of variables m = qn, we reduce to showing that
+                 k             
+             1 X Y           q
+                   f2 m + hj      1m/q≡bj                 (mod rj ) 1m≡0   (mod q) = o(1).
+             x               aj
+                 m≤qx j=1
+
+If the simultaneous congruences m/q ≡ bj (mod rj ) and m ≡ 0 (mod q) are solvable
+in m, they have a unique solution m ≡ b′j (mod rj′ ) for some b′j , rj′ ∈ N. Let sj be
+distinct integers greater than maxi≤k hi such that (bj + sj , rj ) = 1. We can expand
+1n≡bj (mod rj ) = 1n+sj ≡bj +sj mod rj as a linear combination of Dirichlet characters to reduce
+matters to showing that
+                                k                  k
+                      1 X Y                      q Y
+(8.10)                            f2 m + hj            χj (m + sj ) = o(1)
+                      x                         aj
+                        m≤qx j=1                         j=1
+
+for any Dirichlet characters χj (mod rj′ ).
+   By Conjecture 2.12, we have (8.10) provided that for any fixed A ≥ 1 we have
+                               inf       min       D(f2 , χ(n)nit ; x)2 ≥ A
+                              |t|≤xA χ   (mod q)
+                                         q≤A
+
+for all large enough x. But since f2 is real-valued and non-pretentious, this follows from
+Lemma 5.2.                                                                               □
+
+                                      9. Hudson’s conjecture
+9.1. A lemma on correlations of multiplicative functions. For proving Theorem 2.4,
+we need the following explicit upper bound for correlations of multiplicative functions along
+a dense set of scales.
+Lemma 9.1. Let k ≥ 1, and let f : N → {−1, +1} be multiplicative. Suppose that
+D(f, χ; ∞) = ∞ for all Dirichlet characters χ. Then there exists a set X ⊂ N with
+ +
+δlog (X ) = 1 such that we have
+
+                                        1X                             1
+                             lim sup       f (n + 1) · · · f (n + k) ≤
+                              x→∞       x                              2
+                              x∈X        n≤x
+
+and
+                                          1X
+                                       lim
+                                      x→∞
+                                             f (n)f (n + j) = 0
+                                      x∈X
+                                          x
+                                             n≤x
+
+for all j ∈ N.
+                            On Elliott’s conjecture and applications                                              41
+
+Proof. We follow the proof of [45, Lemma 7.2], where a similar statement was proved for
+logarithmic averages with f = λ. Let
+                                     X
+                            S(x) :=    f (n + 1) · · · f (n + k)
+                                                   n≤x
+
+with x ∈ N. By shifting the summation index, we have
+                              X
+                      S(x) =    f (n + 2) · · · f (n + k + 1) + O(1).
+                                            n≤x
+
+Combining these and using the triangle inequality, we have
+                  X
+        2|S(x)| ≤    |f (n + 1) · · · f (n + k) + f (n + 2) · · · f (n + k + 1)| + O(1)
+                            n≤x
+                            X
+                        =         |f (n + 1) + f (n + k + 1)| + O(1).
+                            n≤x
+
+Note that
+(9.1)
+     X
+        |f (n + 1) + f (n + k + 1)|
+      n≤x
+            X                        X
+  =                     |v1 + v2 |         1f (n+1)=v1 1f (n+k+1)=v2
+      v1 ,v2 ∈{−1,+1}                n≤x
+                                                                                                     
+            X           |v1 + v2 |                      X                     X
+  =                                 x + (v1 + v2 )             f (n) + v1 v2         f (n)f (n + k + 1) + o(x)
+                            4
+      v1 ,v2 ∈{−1,+1}                                    n≤x                   n≤x
+            X
+  =x +            f (n)f (n + k + 1) + o(x)
+            n≤x
+
+by Wirsing’s theorem on mean values of real-valued multiplicative functions (see [46, Thm.
+III.4.5]) and the fact that D(f, χ; ∞) = ∞ for all real characters χ.
+                                                 +
+   Now let X be the set in Theorem 1.2. Then δlog   (X ) = 1 and
+
+                                                    1X
+                                         lim sup       f (n)f (n + j) = 0
+                                           x→∞      x
+                                           x∈X       n≤x
+
+for all j ∈ N, so by (9.1) we obtain
+                                                         1        1
+                                                  lim sup |S(x)| ≤ .
+                                                    x→∞ x         2
+                                                   x∈X
+
+This completes the proof.                                                                                         □
+
+9.2. Non-pretentious case. In the case of non-pretentious functions, we obtain a stronger
+conclusion than what Theorem 2.4 states.
+Theorem 9.2 (Length four sign patterns of non-pretentious functions). Let f : N →
+{−1, +1} be a multiplicative function such that D(f, χ; ∞) = ∞ for all real9 Dirichlet
+  9In light of Lemma 5.2, this condition implies that f is non-pretentious in the sense of Definition 1.1.
+42      Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+characters χ. Let v1 , v2 , v3 , v4 ∈ {−1, +1}. Then
+                       +                                          1
+                      δlog ({n ∈ N : f (n + j) = vj ∀1 ≤ j ≤ 4}) ≥  .
+                                                                 32
+Proof. Using 1f (n+j)=v = (1 + vf (n + j))/2 for v ∈ {−1, +1}, we have
+                                                                   
+                            4
+                    1 XY               1                     X                
+(9.2)                    1f (n+j)=vj =    1 +                           CA (x)
+                                                                               ,
+                    x                  16 
+                      n≤x j=1                              A⊆{1,2,3,4}
+                                                             A̸=∅
+
+where
+                                             1XY
+                                CA (x) :=        vj f (n + j).
+                                             x
+                                                 n≤x j∈A
+
+  By Wirsing’s theorem, we have CA (x) = o(1) for |A| = 1. Moreover, by Lemma 9.1
+                            +
+there exists a set X1 with δlog (X1 ) = 1 such that for x ∈ X1 we have
+                                   X                   1
+                                            |CA (x)| ≤ + o(1).
+                                                       2
+                                  A⊂{1,2,3,4}
+                                |A|=2 or |A|=4
+
+   If f is not moderately non-pretentious, then by Theorem A(2) there exists a set X2 with
+δlog (X2 ) = 1 such that for x ∈ X2 and |A| = 3 we have
+                                           |CA (x)| = o(1).
+Then we can take X = X1 ∩ X2 to obtain
+                                                  4
+                                          1 XY             1
+(9.3)                           lim
+                                 x→∞
+                                    inf        1f (n+j)=1 ≥ .
+                                 x∈X
+                                          x                32
+                                           n≤x j=1
+                                       +                                       +
+The claim follows in this case, since δlog (X1 ) = 1 and δlog (X2 ) = 1 imply δlog (X ) = 1.
+   If instead f is moderately non-pretentious, then applying Theorem 1.6 with k = 5 and
+                                                       +
+fj ∈ {f, 1} we see that there exists a set X3 with δlog  (X3 ) = 1 such that for x ∈ X3 and
+1 ≤ |A| ≤ 4 we have
+                                           CA (x) = o(1);
+here we make crucial use of the fact that the dense set in Theorem 1.6 depends only on
+the set {f1 , . . . , f5 } = {f, 1} and not on the corresponding 5-tuple. Taking X = X3 , we
+again obtain (9.3).                                                                        □
+9.3. A reduction. By Theorem 9.2, it suffices to prove Theorem 2.4 for pretentious
+functions. The following lemma reduces this to the seemingly weaker claim that if f :
+N → {−1, +1} is a pretentious completely multiplicative function and f ̸∈ F2,3 , then
+f (n + 1) = f (n + 2) = f (n + 3) = f (n + 4) = +1 for at least one n ∈ N.
+Proposition 9.3. Let f : N → {−1, +1} be multiplicative, and suppose that D(f, χ; ∞) <
+∞ for some real Dirichlet character χ. Let k ≥ 1, and let v1 , . . . , vk ∈ {−1, +1}. Then
+the set
+                        {n ∈ N : f (n + 1) = v1 , . . . , f (n + k) = vk }
+is either empty or has positive asymptotic lower density.
+                    On Elliott’s conjecture and applications                             43
+
+  In the proof of this proposition and in several subsequent proofs in this section, we will
+use the following simple lemma.
+Lemma 9.4. Let Q ≥ 2 be an integer. Let f : N → {−1, +1} be a multiplicative function
+such that for some Dirichlet character χ we have f (p) = χ(p) for all p ∤ Q. Then for any
+integers α ≥ n + 1 and m ∈ N we have
+                                   f (n + mQα ) = f (n).
+               n+mQ  α
+                                                         α  α             α α−1 ) by the
+Proof. Since (n+mQ  α ,Qα ) is coprime to Q and (n + mQ , Q ) = (n + mQ , Q
+
+assumption α ≥ n + 1, we have
+                                                           n + mQα
+                                                                       
+                               α              α   α
+                 f (n + mQ ) = f ((n + mQ , Q ))f
+                                                        (n + mQα , Qα )
+                                                           n + mQα
+                                                                       
+                                              α   α
+                                 = f ((n + mQ , Q ))χ
+                                                        (n + mQα , Qα )
+                                                                       
+                                              α   α            n
+                                 = f ((n + mQ , Q ))χ
+                                                        (n + mQα , Qα )
+                                 = f (n),
+using the fact that the modulus of χ necessarily divides Q.                               □
+Proof of Proposition 9.3. Let S be the set in question. Suppose that there is some n0 ∈ S.
+Let P = {p ∈ P : f (p) ̸= χ(p)}. Then by assumption
+                                       X1
+(9.4)                                         < ∞.
+                                            p
+                                        p∈P
+
+  Let q be the modulus of χ. Let y > max{q, n0 + k} be large, and factorize
+                              (                               (
+                                f (p), p ≤ y                    1, p < y
+f = f≤y f>y , where f≤y (p) =                       f>y (p) =
+                                χ(p), p > y,                    f (p)χ(p), p > y.
+             Q
+  Let Qy = p≤y p, and let α ≥ n0 + k + 1 be an integer. Then by Lemma 9.4 for all
+1 ≤ j ≤ k and m ∈ N we have
+                            f≤y (n0 + j + mQαy ) = f≤y (n0 + j).
+Moreover, we also have
+                            f>y (n0 + j + mQαy ) = f>y (n0 + j)
+if n0 + j + mQαy is coprime to all the primes in P>y := P \ [2, y].
+   For any x large enough in terms of y, α, k, we have by the union bound and (9.4) the
+estimate
+                                                                             
+       1                                                          k X    1 1
+         |{m ≤ x : ∃1 ≤ j ≤ k, p ∈ P>y : p | n0 + j + mQαy }| ≤            +
+       x                                                          x      p x
+                                                                    p∈P>y
+                                                                   p≤2xQαy
+
+                                                               = oy→∞ (1).
+We conclude that if y, α are suitably chosen then the asymptotic lower density of m ∈ N
+for which f (n0 + j + mQαy ) = f (n0 + j) for all 1 ≤ j ≤ k is ≥ 0.99, say. The claim
+follows.                                                                              □
+44       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+9.4. The case of pretentious functions that are not modified characters. Before
+continuing further, we record the following result of Schur mentioned in the introduction.
+Lemma 9.5 (Schur). If f : N → {−1, +1} is a completely multiplicative function such that
+f ̸= f3± then there is some n ∈ N such that (f (n + 1), f (n + 2), f (n + 3)) = (+1, +1, +1).
+     We will use this lemma to get a first structural result for F2,3 .
+Proposition 9.6. Suppose f : N → {−1, +1} is a completely multiplicative function
+and f ∈ F2,3 . Suppose further that D(f, χ; ∞) < ∞ for some real primitive10 Dirichlet
+character modulo q ≥ 1. Then, for any p ∤ 6q we have f (p) = χ(p).
+   The proof of the proposition requires the following basic observation about the functions
+f3± .
+Lemma 9.7. If f ∈ {f3+ , f3− }, both of the length 4 sign patterns ε1 := (+1, +1, −1, +1),
+ε2 := (+1, +1, −1, −1) occur in the sequence f along an arithmetic progression.
+   Precisely, we have
+                                                             (
+             +        +            +            +             ε1 if n ≡ 9 (mod 27)
+          (f3 (n), f3 (n + 1), f3 (n + 2), f3 (n + 3)) =
+                                                              ε2 if n ≡ 3 (mod 9)
+                                                             (
+                                                              ε1 if n ≡ 6 (mod 27)
+          (f3− (n), f3− (n + 1), f3− (n + 2), f3− (n + 3)) =
+                                                              ε2 if n ≡ 9 (mod 27)
+
+Proof. If f = f3+ (so f (3) = +1) then by taking n = 9(3m + 1) for m ∈ N we have
+(f (n), f (n + 1), f (n + 2), f (n + 3)) = (χ3 (3m + 1), χ3 (27m + 10), χ3 (27m + 11), χ3 (9m + 4))
+                                             = (+1, +1, −1, +1),
+and if n = 3(3m + 1) then
+(f (n), f (n + 1), f (n + 2), f (n + 3)) = (χ3 (3m + 1), χ3 (9m + 4), χ3 (9m + 5), χ3 (3m + 2))
+                                              = (+1, +1, −1, −1).
+     Similarly, if f = f3− (so f (3) = −1) then, again taking n = 9(3m + 1) we get
+                 (f (n), f (n + 1), f (n + 2), f (n + 3))
+               =(f1 (3)2 χ3 (3m + 1), χ3 (27m + 10), χ3 (27m + 11), f1 (3)χ3 (9m + 4))
+               =(+1, +1, −1, −1),
+while taking n = 3(9m + 2) with 3 | m, we get
+                  (f (n), f (n + 1), f (n + 2), f (n + 3))
+                =(f1 (3)χ3 (9m + 2), χ3 (27m + 7), χ3 (27m + 8), f1 (3)2 χ3 (3m + 1))
+                =(+1, +1, −1, +1).
+                                                                                             □
+Proof of Proposition 9.6. We employ a simple variant of the “rotation trick” for multi-
+plicative functions, as developed in [28] (for a different application, see also [30]).
+   We begin by showing that at most one prime p > 3 with p ∤ q yields f (p)χ(p) ̸= 1.
+     10Here, we allow χ to be the trivial character, i.e., with q = 1.
+                        On Elliott’s conjecture and applications                                  45
+
+  Let S := {p > 3 : p ∤ q, f (p)χ(p) ̸= 1}. We necessarily have
+            X1        1 X 1 − f (p)χ(p)              1
+                  =                         + O(1) = D(f, χ; x)2 + O(1) ≪ 1.
+                p     2            p                 2
+              p≤x          p≤x
+              p∈S
+
+    Assume for the sake of contradiction that |S| ≥ 2, and select p1 , p2 ∈ S distinct. Let
+k1 , k2 ∈ N and let a := (6q)2 . We claim that there exist arbitrarily large integers m with
+(m, 6) = 1 for which
+                          (am + j, p) = 1, ∀1 ≤ j ≤ 4, p ∈ S\{p1 , p2 },
+(9.5)                                pk11 || am + 2,
+                                     pk22 || am + 3.
+Indeed, if y ≥ 2, by the Chinese remainder theorem we can find integers 1 ≤ by ≤ Qy such
+that (9.5) holds for m ≡ by (mod Qy ) when the set S there is replaced with S ∩ [1, y].
+Now, the proportion of m ≡ by (mod Qy ) for which (am + j, p) = 1 for some p > y, p ∈ S
+is by the union bound
+                                     X1
+                                   ≪       = oy→∞ (1),
+                                         p
+                                            p∈S
+                                            p>y
+so if y is large enough then at least proportion 0.99 of m ≡ by (mod Qy ) satisfy (9.5).
+   Fix any m satisfying (9.5). Since 4q | a, f (am + j) = f (j)f ( aj m + 1) = f (j) = +1 for
+j = 1, 4. Moreover for j ∈ {2, 3} we have χ((am + j)/j) = 1, and so
+(9.6)
+                    k
+                   j−1
+f (am + j) = f (jpj−1  )f ( am+j
+                             kj−1 ) = f (j)f (pj−1 )
+                                                    kj−1
+                                                         χ( am+j
+                                                             kj−1 ) = f (j)(f (pj−1 )χ(pj−1 ))
+                                                                                              kj−1
+                                                                                                   .
+                             jpj−1                           jpj−1
+
+Since f ∈ F2,3 and p1 , p2 ∈ S, it follows that
+           0 = (1 + f (am + 1))(1 + f (am + 2))(1 + f (am + 3))(1 + f (am + 4))
+(9.7)
+             = 4(1 + f (2)(f (p1 )χ(p1 ))k1 )(1 + f (3)(f (p2 )χ(p2 ))k3 ).
+Since f (pj ) = −χ(pj ) for j = 1, 2, choosing k1 , k2 such that f (2) = (−1)k1 and f (3) =
+(−1)k2 the right-hand side is non-zero, which is a patent contradiction.
+   Next, we show that S = ∅. Suppose instead that there is a unique prime p0 > 3 with
+p0 ∤ q and f (p0 ) = −χ(p0 ), with f ∈ F2,3 . Thus, f is a modification of χ outside of the
+primes dividing 6qp0 .
+   Define hp0 to be the completely multiplicative function defined by hp0 (p) = 1 if p ̸= p0
+and hp0 (p0 ) = −1. Then g := f hp0 satisfies g(p) = χ(p) for all p ∤ q. We consider two
+cases.
+   Case 1: g ̸= f3± . By Lemma 9.5, we may find n ∈ N such that either (g(n + 1), g(n +
+2), g(n+3), g(n+4)) = (+1, +1, +1, −1) or (+1, +1, +1, +1). Let α ≥ n+5 be any integer,
+and let k ∈ Z be chosen so that
+                              n + k(6q)α + 4 ≡ p0 − η       (mod p20 ),
+where η := 0 if (+1, +1, +1, −1) is produced, and otherwise η := −1 if (+1, +1, +1, +1)
+is produced. Each of these may be done since (p0 , q) = 1. By Lemma 9.4 we have
+                        g(n + j + k(6q)α ) = g(n + j) = +1 for j = 1, 2, 3,
+46      Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+and g(n+4+k(6q)α ) = (−1)η+1 . On the other hand, since p0 ∤ n+j +k(6q)α for j = 1, 2, 3,
+we have
+                          hp0 (n + j + k(6q)α ) = +1 for j = 1, 2, 3,
+and also
+                       hp0 (n + 4 + k(6q)α ) = hp0 (p0 − η) = (−1)η+1 .
+Thus, as f = ghp0 , setting n′ = n+k(6q)α we find (f (n′ +1), f (n′ +2), f (n′ +3), f (n′ +4)) =
+(+1, +1, +1, +1), which is also a contradiction.
+  Case 2: g ∈ {f3+ , f3− }
+  Assume first that g = f3+ . Applying Lemma 9.7, we have
+                    (g(n), g(n + 1), g(n + 2), g(n + 3)) = (+1, +1, −1, +1)
+whenever n = 27m + 9. If we choose m ∈ N such that n + 2 = 27m + 11 ≡ p0 (mod p20 )
+(which can be done since p0 ̸= 3) then p0 ∤ n + j for j = 0, 1, 3, and so
+                (hp0 (n), hp0 (n + 1), hp0 (n + 2), hp0 (n + 3)) = (+1, +1, −1, +1).
+Again using f = ghp0 we conclude that (f (n), f (n+1), f (n+2), f (n+3)) = (+1, +1, +1, +1),
+a contradiction.
+   A similar contradiction is obtained if g = f3− , picking instead n = 27m + 6 and using
+Lemma 9.7.
+   Thus, in all cases we get a contradiction if S ̸= ∅, so the claim follows.            □
+     The case q = 1 of Proposition 9.6 may be disposed of by a direct check.
+Corollary 9.8. Let f ∈ F2,3 be such that D(f, 1; ∞) < ∞. Then f (p) = +1 for all p > 2,
+and f (2) = −1 (i.e., f = g3 in Conjecture 2.3).
+Proof. By Proposition 9.6 we conclude that f (p) = +1 for all p > 3.
+  If f (2) = f (3) = +1 then f (n) = +1 for all n ∈ N, and thus f ∈
+                                                                  / F2,3 .
+  If f (2) = f (3) = −1 then we have
+          f (28) = f (7) = +1, f (29) = +1, f (30) = f (2)f (3)f (5) = +1, f (31) = +1,
+so f ∈
+     / F2,3 also.
+   Finally, if f (2) = +1 but f (3) = −1 then
+         f (7) = +1, f (8) = f (2)3 = +1, f (9) = f (3)2 = +1, f (10) = f (2)f (5) = +1,
+hence f ∈ / F2,3 .
+   The only remaining case is f (2) = −1, f (3) = +1, which is precisely f = g3 in Hudson’s
+classification.                                                                          □
+9.5. The case of modified characters. In the sequel, let
+             D := {m ∈ N : m = 2k m′ , k ∈ {0, 2, 3}, 2 ∤ m′ and µ2 (m′ ) = 1}\{1}.
+Given m ∈ D we denote by χm a primitive real character modulo m; when 8 ∤ m there is
+a unique such primitive character with conductor m, whereas if 8|m then there are two
+of them (corresponding to the two primitive real characters modulo 8). For example, any
+odd prime p belongs to D, and χp is the Legendre symbol χp = ( p· ).
+   We say that f : N → {−1, +1} is a modification of a character χm , m ∈ D, if f (p)
+differs from χm (p) at only finitely many primes p.
+   Combining Proposition9.6 and Corollary 9.8, we know that any f ∈ F2,3 , f ̸= g3 is
+a modification of some real primitive Dirichlet character χ (mod q) at a subset of the
+                     On Elliott’s conjecture and applications                                 47
+
+primes dividing 6q, with q ≥ 3. But then f is the modification of χm outside the primes
+dividing 6m for some m ∈ D. The main goal in this subsection is to prove the following
+proposition, which limits the possibilities for m, showing among other things that the set
+F2,3 must be finite.
+Proposition 9.9. Let f ∈ F2,3 be a function for which there is an m ∈ D such that
+f (p) = χm (p) for all p ∤ 6m. Then the following hold.
+    (1) Either m ∈ {4, 8}, or else m is a prime.
+    (2) We have m < 197.
+  The proof of Proposition 9.9 is based on the following lemma.
+Lemma 9.10. Let m1 , m2 ∈ D be coprime. Let f1 , f2 : N → {−1, +1} be completely
+multiplicative functions satisfying fi (p) = χmi (p) whenever p ∤ 6mi for i = 1, 2. Then
+f1 f2 ∈
+      / F2,3 .
+Proof. Let S := {p ∈ {2, 3} : f1 (p) ̸= χm1 (p) and f2 (p) ̸= χm2 (p)}, and for p ∈ S define
+the completely multiplicative function hp by
+                                                (
+                                           ′       −1 if p′ = p
+                                      hp (p ) =
+                                                   1 otherwise.
+
+Observe that the functions f˜i := fi p∈S hp , i = 1, 2, satisfy the following properties:
+                                          Q
+
+   (i) f˜1 f˜2 = f1 f2
+  (ii) f˜i (p) = fi (p) = χmi (p) for all p ∤ 6mi , and
+ (iii) at most one of f˜1 χm1 (p) and f˜2 χm2 (p) is −1 for p ∈ {2, 3}.
+                    Q
+If we let m̃i := p:f˜i χm (p)=−1 p, i = 1, 2, then because m1 , m2 are coprime, so are m̃1 and
+                            i
+m̃2 .
+    In light of (i), we will work with the functions f˜i in place of fi and show that f1 f2 =
+ ˜
+f1 f˜2 ∈
+       / F2,3 . We consider the following two cases.
+    Case 1: f˜1 , f˜2 ̸= f3± .
+    Observe that for f ∈ {f˜1 , f˜2 } there is a positive integer n = nf for which
+(9.8)           (f (n + 1), f (n + 2), f (n + 3), f (n + 4)) = (−1, +1, +1, +1).
+Indeed, f is a modification of a non-principal character modulo 6m for some m and f ̸= f3± ,
+so by Lemma 9.5 we may find n ∈ N such that (f (n+1), f (n+2), f (n+3)) = (+1, +1, +1).
+   If f ∈ F2,3 then, necessarily, f (n) = −1, and thus the length 4 pattern (−1, +1, +1, +1)
+must arise.
+   If, on the other hand, f ∈ / F2,3 then it is possible for (f (n), f (n + 1), f (n + 2), f (n +
+3)) = (+1, +1, +1, +1), and in fact by Proposition 9.3 such patterns occur with positive
+asymptotic lower density, so n can be arbitrarily large. But as f is a modification of a
+non-principal character, there must exist k ∈ N, chosen minimally with 1 ≤ k < n, such
+that
+                    f (n − j + 1) = +1 for 0 ≤ j ≤ k, f (n − k) = −1
+(otherwise there exist arbitrarily large n such that f (1) = f (2) = · · · = f (n), in which
+case f ≡ 1, contradicting the assumption that f is a modification of a non-principal
+character modulo 6m). In that case, (f (n − k), f (n − k + 1), f (n − k + 2), f (n − k + 3)) =
+(−1, +1, +1, +1). Thus, in all cases, f must produce the pattern (−1, +1, +1, +1).
+48       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+     From (9.8), for each i = 1, 2 there is ni ∈ N such that
+               (f˜i (ni + 1), f˜i (ni + 2), f˜i (ni + 3), f˜i (ni + 4)) = (−1, +1, +1, +1).
+We use these to show that there is in fact n ∈ N that yields this pattern simultaneously
+for both f˜1 , f˜2 , i.e., that
+(9.9)      (f˜i (n + 1), f˜i (n + 2), f˜i (n + 3), f˜i (n + 4)) = (−1, +1, +1, +1), i = 1, 2.
+    Let α be large enough in terms of n1 , n2 . Then, as m̃α1 , m̃α2 are coprime, we can find
+k1 , k2 ∈ N such that
+                                       k1 m̃α1 − k2 m̃α2 = n2 − n1 .
+                                      e α1 = n2 + k2 m
+But then by Lemma 9.4 for n = n1 + k1 m              e α2 for all 1 ≤ j ≤ 4 we have
+                         f˜1 (n + j) = f˜1 (n1 + j),   f˜2 (n + j) = f˜2 (n2 + j),
+so the claim (9.9) follows.
+     It follows that there is n ∈ N such that f˜1 (n + j) = f˜2 (n + j) for 1 ≤ j ≤ 4, and thus
+f˜1 f˜2 (n + j) = +1 for 1 ≤ j ≤ 4. Hence, f1 f2 ∈/ F2,3 , as claimed.
+                ˜        ±  ˜     ±
+     Case 2: f1 = f3 or f2 = f3 .
+     By symmetry, we may assume that f˜1 ∈ {f3+ , f3− }. Then m1 = 3, and necessarily 3 ∤ m2
+and f˜2 ∈  / {f3+ , f3− }.
+                                         −
+     By Lemma 9.7, we can find n+   1 , n1 such that
+                                 ±            ±            ±
+              (f1 (n±
+                    1 + 1), f1 (n1 + 2), f1 (n1 + 3), f1 (n1 + 4)) = (+1, +1, −1, ±1).
+Now, as f2 ̸= f3± , Lemma 9.5 implies the existence of n2 such that
+                  (f2 (n2 ), f2 (n2 + 1), f2 (n2 + 2), f2 (n2 + 3)) = (+1, +1, +1, −1)
+(since f2 is a modification of a non-principal character, f2 must change sign eventually).
+This implies that either
+ (f2 (n2 + 1), f2 (n2 + 2), f2 (n2 + 3), f2 (n2 + 4)) = (+1, +1, −1, +1) or (+1, +1, −1, −1).
+Hence, we find that for some ε ∈ {(+1, +1, −1, +1), (+1, +1, −1, −1)} both f1 and f2
+must take the sign pattern ε. Arguing as in Case 1, we can find a common n ∈ N such
+that
+(f1 (n + 1), f1 (n + 2), f1 (n + 3), f1 (n + 4)) = (f2 (n + 1), f2 (n + 2), f2 (n + 3), f2 (n + 4)) = ε,
+and thus (f1 f2 (n + 1), . . . , f1 f2 (n + 4)) = (+1, +1, +1, +1), as claimed.                      □
+     With the above lemma proved, we are ready to prove Proposition 9.9.
+Proof of Proposition 9.9. (1) Suppose instead that m is not a prime and m ∈    / {4, 8}. Write
+m = m0 d, where m0 is either prime or in {4, 8}, and d > 1 is coprime to m0 . Whenever
+p ∤ 6m0 d we have f (p) = χm0 (p)χd (p), and so we can factor f = fm0 fd0 , where fm0 , fd are
+completely multiplicative functions given by
+                                                         
+               χm0 (p)
+                             if p ∤ [6, m0 ]             χd (p)
+                                                                          if p ∤ [6, d]
+      fm0 (p) = f (p)χd (p) if p | m0 , p ∤ 6     fd (p) = f (p)χm0 (p) if p | d, p ∤ 6
+                                                         
+                 f (p)        if p | 6                      1              if p | 6.
+                                                         
+
+Then fm0 (p) = χm0 (p) for all p ∤ 6m0 and fd (p) = χd (p) for all p ∤ 6d. But by Lemma 9.10,
+f∈
+ / F2,3 , which is a contradiction. Thus, m must be either prime or equal to 4 or 8.
+                               On Elliott’s conjecture and applications                                           49
+
+   (2) If m ∈ {3, 4, 8} then the claim m < 197 is trivial. Thus, assume next that m > 3 is
+prime, writing m = p0 .
+   Suppose that f ∈ F2,3 , with f (p) = χp0 (p), outside, possibly, of p = 2, 3 and p0 .
+For 1 ≤ j ≤ 4 let 1 ≤ aj ≤ p0 be such that 36aj + j ≡ 0 (mod p0 ), and let a ∈
+{1, . . . , p0 }\{a1 , a2 , a3 , a4 }. Then
+        Y                               Y                                Y
+0=             (1 + f (36a + j)) =          (1 + f (j)χp0 ( 36
+                                                             j a + 1)) =   (1 + f χp0 (j)χp0 (36a + j)).
+    1≤j≤4                               1≤j≤4                                             1≤j≤4
+
+Summing over 1 ≤ a ≤ p0 , upper bounding the contribution of the above product at each
+of a ∈ {a1 , a2 , a3 , a4 } trivially by 8, we obtain
+              X
+   0=                     (1 + f (36a + 1)) (1 + f (36a + 2)) (1 + f (36a + 3)) (1 + f (36a + 4))
+            1≤a≤p0
+          ∈{a1 ,a2 ,a3 ,a4 }
+         a/
+         Xp0 Y
+     ≥                 (1 + f χp0 (j)χp0 (36a + j)) − 4 · 8.
+         a=1 1≤j≤4
+
+Expanding out the product, we obtain
+                                                                                                     
+                                4
+                                X      X                      Y          p0
+                                                                         X               Y
+               0 ≥ p0 +                           f χp0            j         χp 0           (36a + j) − 32,
+                                i=1 S⊆{1,2,3,4}               j∈S        a=1             j∈S
+                                      |S|=i
+
+and so by the triangle inequality we find
+                                                                                                  
+                                             4
+                                             X       X          p0
+                                                                X                  Y
+(9.10)                      p0 ≤ 32 +                                χp0                (36a + j) .
+                                             j=1 S⊆{1,2,3,4} a=1                   j∈S
+                                                   |S|=j
+                                                  Q              
+For each S ⊆ {1, 2, 3, 4} define ΞS := pa=1
+                                         P0
+                                             χp 0    j∈S (36a + j)  (note that the polyno-
+           Q
+mial X 7→ j∈S (36X + j) is not a square modulo p0 since p0 > 3).
+    When |S| = 1 the orthogonality of Dirichlet characters (as well as p0 ∤ 36) implies that
+ΞS = 0.
+    When |S| = 2, say S = {i, j}, then as p0 > 3 the element j − i is invertible modulo
+p0 . Hence, on Fp0 we have the bijective transformations a 7→ 36a =: b, b 7→ b + i =: c,
+c 7→ −(j − i)−1 c =: d that give rise to
+                            p0
+                            X                                                  X
+               Ξ{i,j} =           χp0 ((36a + i)(36a + j)) =                               χp0 ((b + i)(b + j))
+                            a=1                                           b    (mod p0 )
+                                 X
+                        =                    χp0 (c(c + j − i))
+                            c    (mod p0 )
+                                               X
+                        = χp0 (−1)                        χp0 (d(1 − d)) = χp0 (−1) J(p0 ),
+                                        d     (mod p0 )
+
+where J(p0 ) is the Jacobi sum attached to the Legendre symbol modulo p0 . It is a classical
+result (e.g., [23, (3.20)]) that J(p0 ) = −1, and thus |ΞS | = 1 whenever |S| = 2.
+   Finally, if |S| ∈ {3, 4}, the Weil bound (see e.g. [23, Corollary 11.24]) implies that
+                                                       √
+                                      |ΞS | ≤ (|S| − 1) p0 .
+50       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+Applied to (9.10), the above remarks show that
+                                            √      √            √
+                     p0 ≤ 32 + 6 · 1 + 4 · 2 p0 + 3 p0 = 38 + 11 p0 .
+                                                        √
+From this, we deduce by completing the square that ( p0 − 11/2)2 ≤ 273/4, and thus
+p0 ≤ 196, and the claim follows.                                                □
+  It remains to classify those completely multiplicative functions f : N → {−1, +1} for
+which there is m < 197, with either m ∈ {4, 8} or m a prime, such that
+(9.11)                          f (p) = χm (p) whenever p ∤ 6m.
+To deal with the case of m ∈ / {3, 4, 8} (thus prime, say m = p0 > 3, and χp0 = ( p·0 )) we
+use the following simple criterion, which helps with a computer verification.
+Lemma 9.11. Let p0 > 3 be a prime, and let f : N → {−1, +1} be a completely mul-
+tiplicative function such that f (p) = χp0 (p) whenever p ∤ 6p0 . Then if there is n ∈ N
+satisfying 24n + 4 < p30 such that
+                            4                       
+                           Y               j    24n + j
+(9.12)                          1 + f (j)                   > 0,
+                                           p0      p0
+                          j=1
+
+we have f ∈
+          / F2,3 .
+Proof. Suppose (9.12) holds for some n0 ∈ N with 24n0 + 4 < p30 , but f ∈ F2,3 . For p ̸= p0
+set g(p) := f (p)( pp0 ), and extend g to a completely multiplicative function.
+   By assumption, there is some 1 ≤ j ≤ 4 such that
+                            f (24n0 + j) = f (j)f (24n0 /j + 1) ̸= +1.
+                                                                               
+If p0 ∤ (24n0 /j + 1) for each 1 ≤ j ≤ 4 then f (24n0 + j0 ) = g(j0 ) 24np00+j0 ̸= +1 for some
+1 ≤ j0 ≤ 4, hence (9.12) fails, a contradiction. Thus, we must have p0 | 24n0 + j0 for
+exactly one 1 ≤ j0 ≤ 4, with f (24n0 + j) = +1 for j ∈ {1, 2, 3, 4} \ {j0 } necessarily.
+   Let b0 ≡ n0 (mod p0 ). Then for any n′ ≡ b0 (mod p) and j ̸= j0 , 1 ≤ j ≤ 4, we have
+                                  24n′ + j
+                                                                               
+                 ′                                    24b0 + j             24n0 + j
+(9.13) f (24n + j) = g(j)                    = g(j)               = g(j)              = +1.
+                                     p0                  p0                    p0
+Suppose pν0 || 24n0 + j0 ; by assumption, ν ∈ {1, 2}. Write 24n0 + j0 = N0 pν0 . Then
+                                                             
+                                                          ν  N0
+                             −1 = f (24n0 + j0 ) = f (p0 )      .
+                                                             p0
+If ν = 1 then shifting n0 to n = n0 + N1 p0 with N1 chosen to satisfy N0 + 24N1 ≡ p0
+(mod p20 ), then f (24n + j) = +1 for j ̸= j0 by (9.13), 24n + j0 ≡ p20 (mod p30 ), and thus
+                                                       
+                                                    2  1
+                             f (24n + j0 ) = f (p0 )      = +1.
+                                                       p0
+Suppose then that ν = 2, so that N0 must be a quadratic non-residue modulo p0 . This
+time, we shift n0 to n = n0 +N1 p20 , where N0 +24N1 ≡ 1 (mod p0 ). Thus, f (24n+j) = +1
+for j ̸= j0 by (9.13) and 24n + j0 ≡ p20 (mod p30 ), once again. Thus, in this case too, we
+obtain                                                 
+                                                    2  1
+                             f (24n + j0 ) = f (p0 )      = +1.
+                                                       p0
+                       On Elliott’s conjecture and applications                                          51
+
+In either case, we find n such that
+                                f (24n + j) = +1 for all 1 ≤ j ≤ 4,
+and thus (f (24n + 1), f (24n + 2), f (24n + 3), f (24n + 4)) = (+1, +1, +1, +1), contradicting
+f ∈ F2,3 .                                                                                    □
+
+9.6. Exceptional examples. In the Mathematica notebook found alongside       the arXiv
+submission of this paper, a verification of (9.12) for modifications of χ = p·0 at primes
+dividing 6p0 is made for all 3 ≤ p0 < 197. The examples fp± with p ∈ {5, 7, 11, 13, 53}
+from Conjecture 2.3 are identified there, along with the following exceptional cases not
+included in Hudson’s classification (bolded in the Mathematica file), but for which (9.12)
+does not hold for any n in the range 24n + 4 < p30 (with either choice f (p0 ) = ±1):
+   (i) p0 = 3, and11 (f (2), f (3)) = (+1, +1) or (+1, −1)
+  (ii) p0 = 5, (f χ(2), f χ(3)) = (+1, −1)
+ (iii) p0 = 5,(f χ(2), f χ(3)) = (−1, +1)
+ (iv) p0 = 7, (f χ(2), f χ(3)) = (−1, +1)
+  (v) p0 = 13, (f χ(2), f χ(3)) = (−1, −1)
+ (vi) p0 = 17, (f χ(2), f χ(3)) = (−1, −1).
+For each of these cases one can, by hand, recover n for which f (n + j) = +1 for each
+0 ≤ j ≤ 3:
+   (i) n = 1 for (+1, +1), and n = 13 for (+1, −1):
+f (1) = +1, f (2) = +1, f (3) = +1, f (4) = f (2)2 = +1
+f (13) = χ(13) = +1, f (14) = f (2)χ(7) = +1, f (15) = f (3)χ(5) = +1, f (16) = f (4)2 = +1.
+ (ii) n = 99:
+        f (99) = f (3)2 χ(11) = +1, f (100) = f (10)2 = +1, f (101) = χ(101) = +1,
+        f (102) = −χ(2)χ(3)χ(17) = +1.
+(iii) n = 8 if f (5) = +1 and n = 29 if f (5) = −1:
+ f (8) = −χ(2) = +1, f (9) = f (3)2 = +1, f (10) = −χ(2)f (5) = +1, f (11) = χ(1) = +1
+ f (29) = χ(4) = +1, f (30) = −χ(2)χ(3)f (5) = +1, f (31) = χ(31) = +1,
+ f (32) = (−χ(2))5 = +1.
+(iv) n = 23:
+           f (23) = χ(2) = +1, f (24) = (−χ(2))3 χ(3) = +1, f (25) = f (5)2 = +1
+           f (26) = −χ(2)χ(13) = +1.
+ (v) n = 15:
+f (15) = −χ(3)χ(5) = +1, f (16) = f (4)2 = +1, f (17) = χ(4) = +1, f (18) = −χ(2) = +1.
+(vi) n = 46:
+f (46) = −χ(2)χ(6) = +1, f (47) = χ(−4) = +1, f (48) = −χ(3) = +1, f (49) = f (7)2 = +1.
+  11The cases p = 3, (f (2), f (3)) ∈ {(−1, +1), (−1, −1)} correspond to f ± , which belong instead to F
+               0                                                          3                              2,2
+by Lemma 9.5, and may thus be ignored.
+52       Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+To complete the classification, we must verify that, of the modifications of the primitive
+characters modulo 4 and 8, i.e.12 χ4 , χ8 and ψ8 , any functions other than13 χ±      4 (i.e.,
+f (3) = −1, f (2) = ±1) do not belong to F2,3 . This is summarized as follows (the interested
+reader may verify that the pattern (+1, +1, +1, +1) arises in each case):
+    (i) m = 4, (f (2), f (3)) = (+1, +1) : n = 1.
+   (ii) m = 4, (f (2), f (3)) = (−1, +1) : n = 13.
+  (iii) m = 8 (χ8 case), (f (2), f (3)) = (+1, +1): n = 1.
+  (iv) m = 8 (χ8 case), (f (2), f (3)) = (+1, −1): n = 15.
+   (v) m = 8 (χ8 case), (f (2), f (3)) = (−1, +1): n = 9.
+  (vi) m = 8 (χ8 case), (f (2), f (3)) = (−1, −1): n = 14.
+ (vii) m = 8 (ψ8 case), (f (2), f (3)) = (+1, +1): n = 1.
+(viii) m = 8 (ψ8 case), (f (2), f (3)) = (+1, −1): n = 14.
+  (ix) m = 8 (ψ8 case), (f (2), f (3)) = (−1, +1): n = 25.
+   (x) m = 8 (ψ8 case), (f (2), f (3)) = (−1, −1): n = 22.
+
+                10. Density version of the Erdős discrepancy theorem
+  We now turn to the proof of Theorem 2.5. We consider the cases of non-pretentious
+and pretentious functions separately.
+
+10.1. Non-pretentious case.
+
+Proof of Theorem 2.5(1). We may assume that M is a large enough integer. Let
+                                        X
+                                 S(x) =     f (n).
+                                                    n≤x
+                                   +                      −
+Let EM := N \ XM . Suppose that δlog (XM ) < M −3 . Then δlog (EM ) > 1 − M −3 . Let
+H = 1000M 2 and EM  ′ = E ∩ (E + H). Then, by the union bound, we have δ − (E ′ ) >
+                          M    M                                          log M
+1 − 2M −3 , and for n ∈ EM
+                         ′ we have
+
+(10.1)                                |S(n + H) − S(n)| ≤ 2M.
+Since (10.1) holds for all n in a set of logarithmic lower density > 1 − 2M −3 , we have
+         1 X |S(n + H) − S(n)|2                                            H
+                                ≤ 1 − 2M −3 · (2M )2 + 2M −3 · H 2 + o(1) ≤ ,
+                                           
+       log x         n                                                     10
+            n≤x
+
+     On the other hand, we have
+(10.2)
+     1 X |S(n + H) − S(n)|2                 X                    1 X f (n)f (n + h)
+                            =                      (H − |h|)
+   log x         n                                             log x        n
+          n≤x                            0≤h≤|H|                    n≤x
+                                                          X                    1 X f (n)f (n + h)
+                                      = H − o(1) +               (H − |h|)                        .
+                                                                             log x        n
+                                                       1≤h≤|H|                    n≤x
+
+
+   12Here χ is the primitive odd real character modulo 8 with χ (3) = +1, χ (5) = −1, and ψ is the
+              8                                                     8           8                  8
+primitive even real character modulo 8 with ψ8 (3) = −1 = ψ8 (5).
+   13It is straightforward to check that the functions g , g mentioned in Conjecture 2.3 coincide with χ± .
+                                                        1   2                                           4
+                        On Elliott’s conjecture and applications                                         53
+
+                                                +
+By Theorem 1.2, there exists a set YM ⊂ N with δlog (YM ) = 1 such that for x ∈ YM each
+                         −2
+of the sums over n is ≤ H (log x), say. We conclude that for large enough x we have
+                            1 X |S(n + H) − S(n)|2        H
+                                                       ≥ ,
+                          log x             n              2
+                                       n≤x
+
+say. This contradicts (10.2), so the theorem follows.                                                    □
+10.2. Pretentious case.
+Proof of Theorem 2.5(2). Let
+                                                      X
+                                             S(x) =         f (n),
+                                                      n≤x
+and let M ≥ 1. By the Erdős discrepancy theorem of Tao [41], we know that there is
+an integer H such that |S(H)| ≥ 2M . Now, by Proposition 9.3, there exists a set YM of
+positive asymptotic lower density such that for n ∈ YM we have f (n + j) = f (j) for all
+1 ≤ j ≤ H. Then |S(n + H) − S(n)| = |S(H)| ≥ 2M . It follows that for every n ∈ YM
+either |S(n)| ≥ M or |S(n + H)| ≥ M , so |S(m)| ≥ M for a positive asymptotic lower
+density of m ∈ N.                                                                     □
+
+                                              References
+ [1] American Institute of Mathematics, workshop on Sarnak’s Conjecture, December 2018. http: //
+     aimpl. org/ sarnakconjecture/ .
+ [2] H. A. Helfgott and M. Radziwill. Expansion, divisibility and parity. arXiv e-prints, page
+     arXiv:2103.06853, March 2021.
+ [3] M. Aymone. The Erdős discrepancy problem over the squarefree and cubefree integers. Mathematika,
+     68(1):51–73, 2022.
+ [4] V. Bergelson, J. Kulaga-Przymus, M. Lemańczyk, and F. K. Richter. Rationally almost periodic
+     sequences, polynomial multiple recurrence and symbolic dynamics. Ergodic Theory Dynam. Systems,
+     39(9):2332–2383, 2019.
+ [5] S. Chowla. The Riemann hypothesis and Hilbert’s tenth problem. Mathematics and Its Applications,
+     Vol. 4. Gordon and Breach Science Publishers, New York-London-Paris, 1965.
+ [6] H. Daboussi and H. Delange. On multiplicative arithmetical functions whose modulus does not exceed
+     one. J. London Math. Soc. (2), 26(2):245–264, 1982.
+ [7] H. Delange. Sur les fonctions arithmétiques multiplicatives de module ≤ 1. Acta Arith., 42(2):121–151,
+     1983.
+ [8] E. H. El Abdalaoui, J. Kulaga-Przymus, M. Lemańczyk, and T. de la Rue. The Chowla and the
+     Sarnak conjectures from ergodic theory point of view. Discrete Contin. Dyn. Syst., 37(6):2899–2944,
+     2017.
+ [9] P. D. T. A. Elliott. On the correlation of multiplicative and the sum of additive arithmetic functions.
+     Mem. Amer. Math. Soc., 112(538):viii+88, 1994.
+[10] P. Erdős. Some unsolved problems. Michigan Math. J., 4:291–300, 1957.
+[11] N. Frantzikinakis. Ergodicity of the Liouville system implies the Chowla conjecture. Discrete Anal.,
+     pages Paper No. 19, 41, 2017.
+[12] N. Frantzikinakis. Good weights for the Erdős discrepancy problem. Discrete Anal., pages Paper No.
+     8, 23, 2020.
+[13] N. Frantzikinakis and B. Host. The logarithmic Sarnak conjecture for ergodic weights. Ann. of Math.
+     (2), 187(3):869–931, 2018.
+[14] N. Frantzikinakis and B. Host. Furstenberg systems of bounded multiplicative functions and applica-
+     tions. Int. Math. Res. Not. IMRN, (8):6077–6107, 2021.
+[15] N. Frantzikinakis, M. Lemańczyk, and T. de la Rue. Furstenberg systems of pretentious and MRT
+     multiplicative functions. arXiv e-prints, page arXiv:2304.03121, April 2023.
+[16] J. B. Friedlander. Integers without large prime factors. II. Acta Arith., 39(1):53–57, 1981.
+54      Oleksiy Klurman, Alexander P. Mangerel, and Joni Teräväinen
+
+[17] A. Gomilko, M. Lemańczyk, and T. de la Rue. On Furstenberg systems of aperiodic multiplicative
+     functions of Matomäki, Radziwill, and Tao. J. Mod. Dyn., 17:529–555, 2021.
+[18] A. Granville and K. Soundararajan. Large character sums: pretentious characters and the Pólya-
+     Vinogradov theorem. J. Amer. Math. Soc., 20(2):357–384, 2007.
+[19] A. Granville and K. Soundararajan. Pretentious multiplicative functions and an inequality for the
+     zeta-function. In Anatomy of integers, volume 46 of CRM Proc. Lecture Notes, pages 191–197. Amer.
+     Math. Soc., Providence, RI, 2008.
+[20] A. Hildebrand. On consecutive values of the Liouville function. Enseign. Math. (2), 32(3-4):219–226,
+     1986.
+[21] A. Hildebrand and G. Tenenbaum. Integers without large prime factors. J. Théor. Nombres Bordeaux,
+     5(2):411–484, 1993.
+[22] R. H. Hudson. Totally multiplicative sequences with values ±1 which exclude four consecutive values
+     of 1. J. Reine Angew. Math., 271:218–220, 1974.
+[23] H. Iwaniec and E. Kowalski. Analytic number theory, volume 53 of American Mathematical Society
+     Colloquium Publications. American Mathematical Society, Providence, RI, 2004.
+[24] O. Klurman. Correlations of multiplicative functions and applications. Compos. Math., 153(8):1622–
+     1657, 2017.
+[25] O. Klurman and A. P. Mangerel. Effective Asymptotic Formulae for Multilinear Averages of Multi-
+     plicative Functions. arXiv e-prints, page arXiv:1708.03176, August 2017.
+[26] O. Klurman and A. P. Mangerel. Rigidity theorems for multiplicative functions. Math. Ann., 372(1-
+     2):651–697, 2018.
+[27] O. Klurman and A. P. Mangerel. On the orbits of multiplicative pairs. Algebra Number Theory,
+     14(1):155–189, 2020.
+[28] O. Klurman, A. P. Mangerel, C. Pohoata, and J. Teräväinen. Multiplicative functions that are close
+     to their mean. Trans. Amer. Math. Soc., 374(11):7967–7990, 2021.
+[29] O. Klurman, A. P. Mangerel, and J. Teräväinen. Multiplicative functions in short arithmetic progres-
+     sions. arXiv e-prints, page arXiv:1909.12280, September 2019.
+[30] O. Klurman, A. P. Mangerel, and J. Teräväinen. Beyond the Erdős discrepancy problem in function
+     fields. arXiv e-prints, page arXiv:2202.10370, February 2022.
+[31] D. H. Lehmer and E. Lehmer. On runs of residues. Proc. Amer. Math. Soc., 13:102–106, 1962.
+[32] K. Matomäki, M. Radziwill, and T. Tao. An averaged form of Chowla’s conjecture. Algebra Number
+     Theory, 9(9):2167–2196, 2015.
+[33] K. Matomäki, M. Radziwill, and T. Tao. Sign patterns of the Liouville and Möbius functions. Forum
+     Math. Sigma, 4:e14, 44, 2016.
+[34] K. Matomäki, M. Radziwill, T. Tao, J. Teräväinen, and T. Ziegler. Higher uniformity of bounded
+     multiplicative functions in short intervals on average. Ann. of Math. (2), 197(2):739–857, 2023.
+[35] R. McNamara. Sarnak’s conjecture for sequences of almost quadratic word growth. Ergodic Theory
+     Dynam. Systems, 41(10):3060–3115, 2021.
+[36] W. H. Mills. Bounded consecutive residues and related problems. In Proc. Sympos. Pure Math., Vol.
+     VIII, pages 170–174. Amer. Math. Soc., Providence, R.I., 1965.
+[37] P. Sarnak. Mobius randomness and dynamics. Not. S. Afr. Math. Soc., 43(2):89–97, 2012.
+[38] I. Schur. Gesammelte Abhandlungen. Band III. Springer-Verlag, Berlin-New York, 1973. Heraus-
+     gegeben von Alfred Brauer und Hans Rohrbach.
+[39] T. Tao. The Chowla conjecture and the Sarnak conjecture. terrytao.wordpress.com/2012/10/14.
+[40] T. Tao. A small remark on the Elliott conjecture. terrytao.wordpress.com/2015/09/18.
+[41] T. Tao. The Erdős discrepancy problem. Discrete Anal., pages Paper No. 1, 29, 2016.
+[42] T. Tao. The logarithmically averaged Chowla and Elliott conjectures for two-point correlations. Forum
+     Math. Pi, 4:e8, 36, 2016.
+[43] T. Tao and J. Teräväinen. The structure of correlations of multiplicative functions at almost all scales,
+     with applications to the Chowla and Elliott conjectures. Algebra Number Theory, 13(9):2103–2150,
+     2019.
+[44] T. Tao and J. Teräväinen. The structure of logarithmically averaged correlations of multiplicative
+     functions, with applications to the Chowla and Elliott conjectures. Duke Math. J., 168(11):1977–2027,
+     2019.
+[45] T. Tao and J. Teräväinen. Value patterns of multiplicative functions and related sequences. Forum
+     Math. Sigma, 7:Paper No. e33, 55, 2019.
+                       On Elliott’s conjecture and applications                                       55
+
+[46] G. Tenenbaum. Introduction to analytic and probabilistic number theory, volume 163 of Graduate Stud-
+     ies in Mathematics. American Mathematical Society, Providence, RI, third edition, 2015. Translated
+     from the 2008 French edition by Patrick D. F. Ion.
+[47] J.-P. Thouvenot. Quelques propriétés des systèmes dynamiques qui se décomposent en un produit de
+     deux systèmes dont l’un est un schéma de Bernoulli. Israel J. Math., 21(2-3):177–207, 1975.
+
+  School of Mathematics, University of Bristol, Woodland Road, Bristol, UK
+  Email address: lklurman@gmail.com
+
+  Department of Mathematical Sciences, Durham University, Upper Mountjoy Campus, Stock-
+ton Road, Durham, UK
+  Email address: smangerel@gmail.com
+
+  Department of Mathematics and Statistics, University of Turku, 20014 Turku, Finland
+  Email address: joni.p.teravainen@gmail.com
+
