@@ -587,10 +587,259 @@ lemma exists_const_prod_lower {c : Finset ℕ → ℂ} {B δ : ℝ} (hBnn : 0 �
   rw [norm_sub_rev] at h1
   linarith
 
+lemma roughWindowMean_eq_prefixMean (N J : ℕ) (h : ℤ) :
+    roughWindowMean N J h 2 = roughPrefixMean N h J := roughWindowMean_eq_winMean N J h
+
+lemma cpow_ofReal_ne_zero {L : ℝ} (hL : 0 < L) (κ : ℂ) : ((L : ℝ) : ℂ) ^ κ ≠ 0 := by
+  rw [Complex.cpow_def_of_ne_zero (by simpa using hL.ne')]
+  exact Complex.exp_ne_zero _
+
+set_option maxHeartbeats 1000000 in
 /-- **Wiring 1**: the summatory node gives the rough factorisation. -/
 theorem roughIndependenceAt_two_of_summatory {h : ℤ} (hS : RoughSummatory h) :
     RoughIndependenceAt h 2 := by
-  sorry
+  classical
+  obtain ⟨c, B, A, δ, hAnn, hδ, hBnn, hcB, hclow, hcone, hev⟩ := summatory_means_approx hS
+  obtain ⟨δc, hδc, hδcJ⟩ := exists_const_prod_lower hBnn hδ hclow hcone
+  obtain ⟨j₀, hj₀1, hj₀⟩ := exists_geom_cut (B + 1) (by linarith)
+  set p : ℝ := min (δ/2) 1 with hpdef
+  have hp0 : 0 < p := lt_min (by positivity) one_pos
+  set δ' : ℝ := p ^ j₀ / 2 with hδ'def
+  have hδ'0 : 0 < δ' := by positivity
+  set Ctot : ℝ := (A + 2*A*B/(3*δ)) / δ' with hCtot
+  refine ⟨fun J => c (Finset.Icc 1 J) / ∏ j ∈ Finset.Icc 1 J, c {j}, B / δc, Ctot, ?_, ?_⟩
+  · intro J
+    rw [norm_div, norm_prod]
+    have h1 : δc ≤ ∏ j ∈ Finset.Icc 1 J, ‖c {j}‖ := hδcJ J
+    have h2 : ‖c (Finset.Icc 1 J)‖ ≤ B := hcB _
+    have h3 : (0:ℝ) < ∏ j ∈ Finset.Icc 1 J, ‖c {j}‖ := lt_of_lt_of_le hδc h1
+    rw [div_le_div_iff₀ h3 hδc]
+    nlinarith [norm_nonneg (c (Finset.Icc 1 J)), hδc.le, h1, h2, hBnn]
+  · have hbig : ∀ᶠ N : ℕ in atTop, (1 + A + 2*A/δ : ℝ) ≤ Real.log N := by
+      have := Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+      exact this.eventually_ge_atTop _
+    filter_upwards [hev, hbig, eventually_gt_atTop 0] with N hN hNlog hN0
+    set J : ℕ := windowJ N with hJ
+    set L : ℝ := Real.log N with hLdef
+    have hd2 : (0:ℝ) ≤ 2*A/δ := by positivity
+    have hL1 : (1:ℝ) ≤ L := by linarith
+    have hL0 : (0:ℝ) < L := by linarith
+    have hLA : A ≤ L := by linarith
+    have hLδ : 2*A/δ ≤ L := by linarith
+    have hJ1 : 1 ≤ J := by rw [hJ, windowJ]; omega
+    set κ : ℂ := sdExponent h (Finset.Icc 1 J) with hκ
+    set q : ℕ → ℝ := fun j => ((1:ℝ)/4) ^ j with hq
+    have hqpos : ∀ j, (0:ℝ) < q j := fun j => by rw [hq]; positivity
+    have hq1 : ∀ j, q j ≤ 1 := fun j => pow_le_one₀ (by norm_num) (by norm_num)
+    -- the site data
+    set r : ℕ → ℝ := fun j => L ^ (sdExponent h {j}).re with hr
+    have hrpos : ∀ j, (0:ℝ) < r j := fun j => Real.rpow_pos_of_pos hL0 _
+    set S : ℕ → ℂ := fun j => roughSiteMean N h j 2 with hSdef
+    have hSj : ∀ j, 1 ≤ j → j ≤ J → ‖S j - c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j}‖
+        ≤ A * q j / L * r j := fun j hj1 hjJ => (hN j hj1 hjJ).2
+    -- lower bound for each normalised site mean
+    set g : ℕ → ℝ := fun j => ‖S j‖ / r j with hg
+    have hgS : ∀ j, ‖S j‖ = g j * r j := fun j => by
+      rw [hg]; field_simp [(hrpos j).ne']
+    have hglow : ∀ j, 1 ≤ j → j ≤ J → ‖c {j}‖ - A * q j / L ≤ g j := by
+      intro j hj1 hjJ
+      have h1 := hSj j hj1 hjJ
+      have h2 : ‖c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j}‖ - ‖S j‖
+          ≤ ‖c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j} - S j‖ := norm_sub_norm_le _ _
+      rw [norm_sub_rev] at h2
+      rw [norm_mul, norm_ofReal_cpow hL0] at h2
+      have h3 : ‖c {j}‖ * r j - A * q j / L * r j ≤ ‖S j‖ := by
+        rw [hr]; linarith [h1, h2]
+      rw [hg, le_div_iff₀ (hrpos j)]
+      linarith [h3]
+    have hgp : ∀ j, 1 ≤ j → j ≤ J → p ≤ g j := by
+      intro j hj1 hjJ
+      refine le_trans (min_le_left _ _) ?_
+      have h1 := hglow j hj1 hjJ
+      have h2 : δ ≤ ‖c {j}‖ := (hclow j hj1).2
+      have h3 : A * q j / L ≤ δ/2 := by
+        rw [div_le_iff₀ hL0]
+        have hqa : A * q j ≤ A := by nlinarith [hAnn, hq1 j, hqpos j]
+        have hmul : (δ/2) * (2*A/δ) ≤ (δ/2) * L :=
+          mul_le_mul_of_nonneg_left hLδ (by positivity)
+        have heq : (δ/2) * (2*A/δ) = A := by field_simp
+        rw [heq] at hmul
+        nlinarith [hqa, hmul]
+      linarith
+    have hgeps : ∀ j, 1 ≤ j → j ≤ J → 1 - (B+1) * q j ≤ g j := by
+      intro j hj1 hjJ
+      have h1 := hglow j hj1 hjJ
+      have h2 : ‖(1:ℂ)‖ - ‖c {j}‖ ≤ ‖(1:ℂ) - c {j}‖ := norm_sub_norm_le _ _
+      rw [norm_one, norm_sub_rev] at h2
+      have h3 := hcone j hj1
+      have h4 : A * q j / L ≤ q j := by
+        rw [div_le_iff₀ hL0]
+        nlinarith [hLA, hqpos j, hAnn]
+      rw [hq] at *
+      linarith
+    -- the product of site means
+    have hprodg : δ' ≤ ∏ j ∈ Finset.Icc 1 J, g j := by
+      rw [hδ'def]
+      have hp1 : p ≤ 1 := min_le_right _ _
+      have hsplit := prod_Icc_split_lower J j₀ hj₀1 (fun j => if j ≤ J then g j else 1)
+        (fun j => (B+1) * q j) p hp0 hp1 ?_ (fun j => by rw [hq]; positivity) ?_ hj₀
+      · refine hsplit.trans_eq (Finset.prod_congr rfl (fun j hj => ?_))
+        rw [if_pos (Finset.mem_Icc.mp hj).2]
+      · intro j hj1
+        by_cases hjJ : j ≤ J
+        · rw [if_pos hjJ]; exact hgp j hj1 hjJ
+        · rw [if_neg hjJ]; exact hp1
+      · intro j hjj
+        by_cases hjJ : j ≤ J
+        · rw [if_pos hjJ]; exact hgeps j (by omega) hjJ
+        · rw [if_neg hjJ]
+          have : (0:ℝ) ≤ (B+1) * q j := by rw [hq]; positivity
+          linarith
+    have hprodS : δ' * L ^ κ.re ≤ ∏ j ∈ Finset.Icc 1 J, ‖S j‖ := by
+      have heq : ∏ j ∈ Finset.Icc 1 J, ‖S j‖
+          = (∏ j ∈ Finset.Icc 1 J, g j) * ∏ j ∈ Finset.Icc 1 J, r j := by
+        rw [← Finset.prod_mul_distrib]
+        exact Finset.prod_congr rfl (fun j _ => hgS j)
+      have hrprod : ∏ j ∈ Finset.Icc 1 J, r j = L ^ κ.re := by
+        rw [hr, hκ]; exact prod_rpow_sdExponent L hL0 h J
+      rw [heq, hrprod]
+      have hrp : (0:ℝ) < L ^ κ.re := Real.rpow_pos_of_pos hL0 _
+      nlinarith [hprodg, hrp, hδ'0]
+    -- the relative perturbations
+    set w : ℕ → ℂ := fun j => S j / (c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j}) - 1 with hw
+    have hcne : ∀ j, 1 ≤ j → c {j} ≠ 0 := by
+      intro j hj hzero
+      have := (hclow j hj).2
+      rw [hzero, norm_zero] at this; linarith
+    have hSfac : ∀ j, 1 ≤ j → S j
+        = c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j} * (1 + w j) := by
+      intro j hj
+      have hd : c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j} ≠ 0 :=
+        mul_ne_zero (hcne j hj) (cpow_ofReal_ne_zero hL0 _)
+      have h1 : (1 : ℂ) + w j = S j / (c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j}) := by
+        rw [hw]; ring
+      rw [h1, mul_div_cancel₀ _ hd]
+    have hwnorm : ∀ j, 1 ≤ j → j ≤ J → ‖w j‖ ≤ A * q j / (δ * L) := by
+      intro j hj1 hjJ
+      have h1 := hSj j hj1 hjJ
+      have hd : c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j} ≠ 0 :=
+        mul_ne_zero (hcne j hj1) (cpow_ofReal_ne_zero hL0 _)
+      have heq : w j = (S j - c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j})
+          / (c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j}) := by
+        rw [hw, sub_div, div_self hd]
+      have h2 : δ ≤ ‖c {j}‖ := (hclow j hj1).2
+      have h3 : (0:ℝ) < r j := hrpos j
+      have hcpos : (0:ℝ) < ‖c {j}‖ := lt_of_lt_of_le hδ h2
+      have h4 : ‖S j - c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j}‖ ≤ A * q j / L * r j := h1
+      have h5 : (0:ℝ) ≤ A * q j := by rw [hq]; positivity
+      rw [heq, norm_div, norm_mul, norm_ofReal_cpow hL0]
+      rw [div_le_div_iff₀ (by positivity) (by positivity)]
+      have hb1 : ‖S j - c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j}‖ * (δ * L)
+          ≤ (A * q j / L * r j) * (δ * L) :=
+        mul_le_mul_of_nonneg_right h4 (by positivity)
+      have hb2 : (A * q j / L * r j) * (δ * L) = A * q j * (δ * r j) := by
+        field_simp
+      have hb3 : A * q j * (δ * r j) ≤ A * q j * (‖c {j}‖ * r j) := by
+        refine mul_le_mul_of_nonneg_left ?_ h5
+        exact mul_le_mul_of_nonneg_right h2 h3.le
+      have hrj : r j = L ^ (sdExponent h {j}).re := rfl
+      rw [← hrj]
+      linarith [hb1, hb2, hb3]
+    have hwsum : ∑ j ∈ Finset.Icc 1 J, ‖w j‖ ≤ A / (3 * δ * L) := by
+      have h1 : ∑ j ∈ Finset.Icc 1 J, ‖w j‖ ≤ ∑ j ∈ Finset.Icc 1 J, A * q j / (δ * L) :=
+        Finset.sum_le_sum (fun j hj => hwnorm j (Finset.mem_Icc.mp hj).1 (Finset.mem_Icc.mp hj).2)
+      have h2 : ∑ j ∈ Finset.Icc 1 J, A * q j / (δ * L)
+          = (A / (δ * L)) * ∑ j ∈ Finset.Icc 1 J, q j := by
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl (fun j _ => by rw [hq]; ring)
+      have hIcc : Finset.Icc 1 J = Finset.Ico 1 (J+1) := by
+        ext x; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega
+      have h3 : ∑ j ∈ Finset.Icc 1 J, q j ≤ 1/3 := by
+        rw [hIcc, hq]
+        have := sum_quarter_pow_Ico_le 1 (J+1)
+        norm_num at this ⊢
+        linarith
+      have h4 : (0:ℝ) < A / (δ * L) + 1 := by positivity
+      have h5 : (0:ℝ) ≤ A / (δ * L) := by positivity
+      have h6 : A / (δ * L) * (1/3) = A / (3 * δ * L) := by field_simp
+      have h7 : (A / (δ * L)) * ∑ j ∈ Finset.Icc 1 J, q j ≤ (A / (δ * L)) * (1/3) :=
+        mul_le_mul_of_nonneg_left h3 h5
+      linarith [h1, h2, h6, h7]
+    have hwsumhalf : ∑ j ∈ Finset.Icc 1 J, ‖w j‖ ≤ 1/2 := by
+      refine hwsum.trans ?_
+      rw [div_le_iff₀ (by positivity)]
+      have hm := mul_le_mul_of_nonneg_left hLδ hδ.le
+      have heq2 : δ * (2*A/δ) = 2*A := by field_simp
+      rw [heq2] at hm
+      linarith [hm, hAnn]
+    -- product of the perturbations
+    have hprodw : ‖(1:ℂ) - ∏ j ∈ Finset.Icc 1 J, (1 + w j)‖ ≤ 2 * (A / (3 * δ * L)) := by
+      have hrel := norm_prod_sub_prod_rel (Finset.Icc 1 J) (fun _ => (1:ℂ))
+        (fun j => 1 + w j) (fun j => ‖w j‖) (fun j => norm_nonneg _)
+        (fun j _ => by simp [norm_sub_rev])
+      simp only [Finset.prod_const_one, norm_one, Finset.prod_const_one, mul_one] at hrel
+      have hpo := prod_one_add_le (Finset.Icc 1 J) (fun j => ‖w j‖) (fun j => norm_nonneg _)
+        hwsumhalf
+      have : ((∏ j ∈ Finset.Icc 1 J, (1 + ‖w j‖)) - 1) ≤ 2 * ∑ j ∈ Finset.Icc 1 J, ‖w j‖ := by
+        linarith [hpo]
+      calc ‖(1:ℂ) - ∏ j ∈ Finset.Icc 1 J, (1 + w j)‖
+          ≤ (∏ j ∈ Finset.Icc 1 J, (1 + ‖w j‖)) - 1 := hrel
+        _ ≤ 2 * ∑ j ∈ Finset.Icc 1 J, ‖w j‖ := this
+        _ ≤ 2 * (A / (3 * δ * L)) := by linarith [hwsum]
+    -- assemble
+    have hprodSfac : ∏ j ∈ Finset.Icc 1 J, S j
+        = (∏ j ∈ Finset.Icc 1 J, c {j}) * ((L : ℝ) : ℂ) ^ κ
+          * ∏ j ∈ Finset.Icc 1 J, (1 + w j) := by
+      have h1 : ∏ j ∈ Finset.Icc 1 J, S j
+          = ∏ j ∈ Finset.Icc 1 J, (c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j} * (1 + w j)) :=
+        Finset.prod_congr rfl (fun j hj => hSfac j (Finset.mem_Icc.mp hj).1)
+      rw [h1, Finset.prod_mul_distrib, Finset.prod_mul_distrib, hκ,
+        prod_cpow_sdExponent L hL0 h J]
+    have hcprodne : (∏ j ∈ Finset.Icc 1 J, c {j}) ≠ 0 := by
+      intro hzero
+      have := hδcJ J
+      rw [← norm_prod] at this
+      rw [hzero, norm_zero] at this
+      linarith
+    have hmain : roughWindowMean N J h 2
+        - (c (Finset.Icc 1 J) / ∏ j ∈ Finset.Icc 1 J, c {j}) * ∏ j ∈ Finset.Icc 1 J, S j
+        = (roughPrefixMean N h J - c (Finset.Icc 1 J) * ((L : ℝ) : ℂ) ^ κ)
+          + c (Finset.Icc 1 J) * ((L : ℝ) : ℂ) ^ κ
+            * (1 - ∏ j ∈ Finset.Icc 1 J, (1 + w j)) := by
+      rw [roughWindowMean_eq_prefixMean, hprodSfac]
+      field_simp
+      ring
+    have hPref : ‖roughPrefixMean N h J - c (Finset.Icc 1 J) * ((L : ℝ) : ℂ) ^ κ‖
+        ≤ A / L * L ^ κ.re := (hN J hJ1 le_rfl).1
+    have hrpκ : (0:ℝ) < L ^ κ.re := Real.rpow_pos_of_pos hL0 _
+    have hfinal : ‖roughWindowMean N J h 2
+        - (c (Finset.Icc 1 J) / ∏ j ∈ Finset.Icc 1 J, c {j}) * ∏ j ∈ Finset.Icc 1 J, S j‖
+        ≤ (A + 2*A*B/(3*δ)) / L * L ^ κ.re := by
+      rw [hmain]
+      refine (norm_add_le _ _).trans ?_
+      have h2 : ‖c (Finset.Icc 1 J) * ((L : ℝ) : ℂ) ^ κ
+          * (1 - ∏ j ∈ Finset.Icc 1 J, (1 + w j))‖
+          ≤ B * L ^ κ.re * (2 * (A / (3 * δ * L))) := by
+        rw [norm_mul, norm_mul, norm_ofReal_cpow hL0]
+        refine mul_le_mul ?_ hprodw (norm_nonneg _) (by positivity)
+        exact mul_le_mul_of_nonneg_right (hcB _) hrpκ.le
+      have h3 : B * L ^ κ.re * (2 * (A / (3 * δ * L))) = 2*A*B/(3*δ) / L * L ^ κ.re := by
+        field_simp
+      rw [h3] at h2
+      have : (A + 2*A*B/(3*δ)) / L * L ^ κ.re
+          = A / L * L ^ κ.re + 2*A*B/(3*δ) / L * L ^ κ.re := by ring
+      rw [this]
+      exact add_le_add hPref h2
+    refine hfinal.trans ?_
+    rw [hCtot]
+    have hstep : (A + 2*A*B/(3*δ)) / δ' / L * (δ' * L ^ κ.re)
+        = (A + 2*A*B/(3*δ)) / L * L ^ κ.re := by field_simp
+    calc (A + 2*A*B/(3*δ)) / L * L ^ κ.re
+        = (A + 2*A*B/(3*δ)) / δ' / L * (δ' * L ^ κ.re) := hstep.symm
+      _ ≤ (A + 2*A*B/(3*δ)) / δ' / L * ∏ j ∈ Finset.Icc 1 J, ‖S j‖ := by
+          refine mul_le_mul_of_nonneg_left hprodS ?_
+          have : (0:ℝ) ≤ A + 2*A*B/(3*δ) := by positivity
+          positivity
 
 /-- **Wiring 2**: the summatory node gives the parity node. -/
 theorem parityDiscrepancy_of_summatory {h : ℤ} (hh : h ≠ 0) (hc : ¬ ChowlaSector h)
