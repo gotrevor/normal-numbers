@@ -706,6 +706,62 @@ lemma halfIter_le_div {M : ℕ} (hM : 1 ≤ M) (v : ℕ) : (halfIter M v : ℝ) 
   rw [← sub_le_iff_le_add, le_div_iff₀ hp]
   nlinarith [hb']
 
+/-! ### Geometric sums and the scale sum -/
+
+lemma geom_half_sum (V : ℕ) :
+    ∑ v ∈ Finset.Icc 1 V, ((1:ℝ)/2) ^ v = 1 - ((1:ℝ)/2) ^ V := by
+  induction V with
+  | zero => simp
+  | succ V ih =>
+      rw [Finset.sum_Icc_succ_top (by omega : 1 ≤ V + 1), ih]
+      rw [pow_succ]
+      ring
+
+lemma geom_half_weighted (V : ℕ) :
+    ∑ v ∈ Finset.Icc 1 V, (v:ℝ) * ((1:ℝ)/2) ^ v = 2 - ((V:ℝ) + 2) * ((1:ℝ)/2) ^ V := by
+  induction V with
+  | zero => simp
+  | succ V ih =>
+      rw [Finset.sum_Icc_succ_top (by omega : 1 ≤ V + 1), ih]
+      push_cast
+      rw [pow_succ]
+      ring
+
+lemma geom_half_weighted_le (V : ℕ) :
+    ∑ v ∈ Finset.Icc 1 V, (v:ℝ) * ((1:ℝ)/2) ^ v ≤ 2 := by
+  rw [geom_half_weighted]
+  have : (0:ℝ) ≤ ((V:ℝ) + 2) * ((1:ℝ)/2) ^ V := by positivity
+  linarith
+
+/-- **The halved scales sum to `M`.**  `Σ_{v=1}^{V} ⌈M/2^v⌉ − M ∈ [−M 2^{-V}, V]`. -/
+lemma sum_halfIter_sub_le {M : ℕ} (hM : 1 ≤ M) (V : ℕ) :
+    |(∑ v ∈ Finset.Icc 1 V, (halfIter M v : ℝ)) - (M:ℝ)| ≤ (M:ℝ) * ((1:ℝ)/2) ^ V + V := by
+  have hlow : (M:ℝ) * (1 - ((1:ℝ)/2) ^ V) ≤ ∑ v ∈ Finset.Icc 1 V, (halfIter M v : ℝ) := by
+    have h1 : ∑ v ∈ Finset.Icc 1 V, ((M:ℝ) / 2 ^ v)
+        ≤ ∑ v ∈ Finset.Icc 1 V, (halfIter M v : ℝ) :=
+      Finset.sum_le_sum (fun v _ => halfIter_ge_div v)
+    have h2 : ∑ v ∈ Finset.Icc 1 V, ((M:ℝ) / 2 ^ v) = (M:ℝ) * (1 - ((1:ℝ)/2) ^ V) := by
+      rw [← geom_half_sum V, Finset.mul_sum]
+      exact Finset.sum_congr rfl (fun v _ => by rw [div_pow, one_pow]; ring)
+    linarith [h1, h2.ge, h2.le]
+  have hhigh : (∑ v ∈ Finset.Icc 1 V, (halfIter M v : ℝ))
+      ≤ (M:ℝ) * (1 - ((1:ℝ)/2) ^ V) + V := by
+    have h1 : ∑ v ∈ Finset.Icc 1 V, (halfIter M v : ℝ)
+        ≤ ∑ v ∈ Finset.Icc 1 V, ((M:ℝ) / 2 ^ v + 1) :=
+      Finset.sum_le_sum (fun v _ => halfIter_le_div hM v)
+    have h2 : ∑ v ∈ Finset.Icc 1 V, ((M:ℝ) / 2 ^ v + 1)
+        = (M:ℝ) * (1 - ((1:ℝ)/2) ^ V) + V := by
+      rw [Finset.sum_add_distrib, Finset.sum_const, ← geom_half_sum V, Finset.mul_sum]
+      have : ∑ v ∈ Finset.Icc 1 V, ((M:ℝ) / 2 ^ v)
+          = ∑ v ∈ Finset.Icc 1 V, (M:ℝ) * ((1:ℝ)/2) ^ v :=
+        Finset.sum_congr rfl (fun v _ => by rw [div_pow, one_pow]; ring)
+      rw [this]
+      simp [Nat.card_Icc]
+    linarith [h1, h2.le, h2.ge]
+  have hp : (0:ℝ) ≤ (M:ℝ) * ((1:ℝ)/2) ^ V := by positivity
+  rw [abs_le]
+  constructor <;> nlinarith [hlow, hhigh]
+
 /-! ### The primitive node: the ODD class alone -/
 
 /-- **The primitive Landau–Selberg–Delange node.**  One multiplicative function `n ↦ z_k^{ω_{>2}(n)}`,
