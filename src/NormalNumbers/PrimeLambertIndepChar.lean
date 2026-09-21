@@ -342,4 +342,69 @@ theorem norm_localChar_lt_one {q : ℤ} (C : Chain q) (N : ℕ) {p : ℕ} (hp : 
       - primePart (C.c N) (C.K N) (C.S N).J p (v : ℤ)))) ^ 2 / p := by positivity
   linarith
 
+/-! ### Evaluating a local variable
+
+For a prime `p` larger than all the moduli involved, each pair `(a, i) ∈ support × [K,J)` pins a
+single residue class `n ≡ s_a − (i+1) d_a (mod p)`.  A residue hit by no pair gives `X_p = 0`; a
+residue hit by exactly one pair `(a₀, i₀)` gives `X_p = c(a₀)/2^{i₀+1}`.  So the local defect at
+such a prime is the explicit sine `sin²(π q c(a₀) 2^{−(i₀+1)})`. -/
+
+/-- A residue hit by no `(a,i)` has `X_p = 0`. -/
+theorem primePart_eq_zero {c : TConfig} {K J p : ℕ} {n : ℤ}
+    (h : ∀ a ∈ c.support, ∀ i ∈ Ico K J, ¬ (p : ℤ) ∣ n + ((i : ℤ) + 1) * a.1 - a.2) :
+    primePart c K J p n = 0 := by
+  unfold primePart Finsupp.sum
+  refine Finset.sum_eq_zero (fun a ha => ?_)
+  dsimp only
+  have : ∑ i ∈ Ico K J,
+      (if (p : ℤ) ∣ n + ((i : ℤ) + 1) * a.1 - a.2 then (1 : ℝ) / 2 ^ (i + 1) else 0) = 0 :=
+    Finset.sum_eq_zero (fun i hi => if_neg (h a ha i hi))
+  rw [this, mul_zero]
+
+/-- A residue hit by exactly one `(a₀,i₀)` has `X_p = c(a₀)/2^{i₀+1}`. -/
+theorem primePart_eq_single {c : TConfig} {K J p : ℕ} {n : ℤ} {a₀ : ℕ × ℤ} {i₀ : ℕ}
+    (ha₀ : a₀ ∈ c.support) (hi₀ : i₀ ∈ Ico K J)
+    (hhit : (p : ℤ) ∣ n + ((i₀ : ℤ) + 1) * a₀.1 - a₀.2)
+    (hother : ∀ a ∈ c.support, ∀ i ∈ Ico K J, (a, i) ≠ (a₀, i₀) →
+      ¬ (p : ℤ) ∣ n + ((i : ℤ) + 1) * a.1 - a.2) :
+    primePart c K J p n = (c a₀ : ℝ) / 2 ^ (i₀ + 1) := by
+  classical
+  unfold primePart Finsupp.sum
+  rw [Finset.sum_eq_single_of_mem a₀ ha₀ ?_]
+  · dsimp only
+    have hinner : ∑ i ∈ Ico K J,
+        (if (p : ℤ) ∣ n + ((i : ℤ) + 1) * a₀.1 - a₀.2 then (1 : ℝ) / 2 ^ (i + 1) else 0)
+        = (1 : ℝ) / 2 ^ (i₀ + 1) := by
+      rw [Finset.sum_eq_single_of_mem i₀ hi₀ ?_]
+      · exact if_pos hhit
+      · intro i hi hne
+        exact if_neg (hother a₀ ha₀ i hi (by simp [hne]))
+    rw [hinner]
+    ring
+  · intro a ha hne
+    dsimp only
+    have : ∑ i ∈ Ico K J,
+        (if (p : ℤ) ∣ n + ((i : ℤ) + 1) * a.1 - a.2 then (1 : ℝ) / 2 ^ (i + 1) else 0) = 0 :=
+      Finset.sum_eq_zero (fun i hi => if_neg (hother a ha i hi (by simp [hne])))
+    rw [this, mul_zero]
+
+/-- **The explicit local defect at a large prime.**  If the residues `u` and `v` (mod `p`)
+respectively hit exactly one pair `(a₀,i₀)` and no pair at all, the local factor obeys
+`‖localChar p‖ ≤ 1 − sin²(π q c(a₀) 2^{−(i₀+1)})/p` — a bound with no arithmetic left in it. -/
+theorem norm_localChar_le_of_single {q : ℤ} (C : Chain q) (N : ℕ) {p : ℕ} (hp : 0 < p)
+    {u v : ℕ} (hu : u < p) (hv : v < p) (huv : u ≠ v)
+    {a₀ : ℕ × ℤ} {i₀ : ℕ} (ha₀ : a₀ ∈ (C.c N).support) (hi₀ : i₀ ∈ Ico (C.K N) (C.S N).J)
+    (hhit : (p : ℤ) ∣ (u : ℤ) + ((i₀ : ℤ) + 1) * a₀.1 - a₀.2)
+    (hother : ∀ a ∈ (C.c N).support, ∀ i ∈ Ico (C.K N) (C.S N).J, (a, i) ≠ (a₀, i₀) →
+      ¬ (p : ℤ) ∣ (u : ℤ) + ((i : ℤ) + 1) * a.1 - a.2)
+    (hfree : ∀ a ∈ (C.c N).support, ∀ i ∈ Ico (C.K N) (C.S N).J,
+      ¬ (p : ℤ) ∣ (v : ℤ) + ((i : ℤ) + 1) * a.1 - a.2) :
+    ‖localChar C N p‖
+      ≤ 1 - Real.sin (Real.pi * (q * ((C.c N) a₀ : ℝ) / 2 ^ (i₀ + 1))) ^ 2 / p := by
+  have hbd := norm_localChar_le_one_sub_sin C N hp hu hv huv
+  rw [primePart_eq_single ha₀ hi₀ hhit hother, primePart_eq_zero hfree] at hbd
+  refine hbd.trans (le_of_eq ?_)
+  congr 3
+  ring
+
 end NormalNumbers.PrimeLambert
