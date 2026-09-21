@@ -1,5 +1,43 @@
 # PENDING WORK
 
+## 2026-09-21 — the LOWER BRUN SIEVE CORE is PROVED (`KICKOFF-brun-lower-core.md` complete)
+
+`src/NormalNumbers/PrimeModelBrunLower.lean`, build 🟢 9109 jobs, **no `sorry`, no `axiom`**,
+trust triple clean.  `brun_lower_fundamental` proves all three target properties together —
+coefficient/support (1), the pointwise minorant for EVERY bad subset (2), and the relative
+error (3) — from only the stated elementary hypotheses plus the assessment's tail-product
+`Dimension` hypothesis.  Nothing equivalent to (2), (3), the first-failure decomposition or
+the factorial estimate is assumed.  Full account: `HANDOFF-2026-09-21-brun-lower-core-DONE.md`.
+
+Three findings worth carrying forward:
+
+* **One engine for (2) and (3).**  `sum_not_adm_eq` is weight-generic; `f = 1` gives the
+  minorant, `f = g` gives `defect_eq`.  They are not two arguments.
+* **The factorial/Stirling step of the assessment is unnecessary.**  `xⁿ eₙ(W) ≤ ∏(1+xg)
+  ≤ exp(x∑g)`, optimised at `x = n/T`, yields `eₙ ≤ (eT/n)ⁿ` directly.  No factorial occurs
+  anywhere in the file; `e^{21/20}/20 ≤ 1/4` and `e² ≤ 16` also come from `1+u ≤ eᵘ` alone.
+* **The floor in the cutoffs is free.**  For naturals `q0 > ⌊t⌋ ↔ q0 > t`, so the support side
+  uses `⌊t⌋ ≤ t` and the error side uses `q0 > t` with no loss.  A `max 2 t` cutoff falling
+  below 2 is absorbed, not a special case: there `log 2 > α^ℓ log y`.
+
+### NEXT ATTACK (the remaining assembly, none of it inside this file)
+
+The sieve core is no longer the bottleneck.  The open obligations are, in dependency order:
+
+1. **Discharge `Dimension`** for the intended `g` — the interval→dimension estimate of the
+   assessment (`∏_{t<p≤2y}(1-g p)^{-1} ≤ K₀ (log 2y/log t)^k`, then `K ↦ (3/2)^k K₀` using
+   `log y ≥ 2`).  This is the only input `brun_lower_fundamental` still takes on faith, and it
+   is a prime-distribution estimate, not sieve combinatorics.
+2. Radical-state predicate equivalence and retained-state cardinality.
+3. Sum the sieve remainders against the already-proved `radical_sieve_count`
+   (`PrimeModelRadicalCRT.lean`), whose error is `ρ = k^{#E}` per divisor; the support bound
+   `∏ E ≤ y^s` from (1) is exactly what makes that sum affordable at level `R = x^{1/4}`.
+4. Phase decay and constant bookkeeping.
+
+---
+
+# PENDING WORK
+
 ## 2026-09-20 — campaign B has reached its pre-registered FINISH LINE
 
 Both terminating conditions of the 2026-09-16 CURRENT DIRECTIVE are met:
