@@ -771,4 +771,116 @@ theorem momentComparison_of_discrepancy {q : ℤ} (C : Chain q) (M : ℕ → ℕ
       _ ≤ max 1 (momentBound C N) ^ M N := pow_le_pow_right₀ h1 hk
   exact mul_le_mul_of_nonneg_right hb hdisc
 
+/-! ### Generalised bounds: any uniform bound on `S_N` will do
+
+`momentBound = #small · ‖c‖₁ 2^{−K}` is the *coarse* bound: it charges every small prime, whereas
+`X_p(n) ≠ 0` only for the primes actually dividing one of the `|support|·(J−K)` arguments
+(`activePrimes`).  The coarse bound is fatally lossy for the chain design (see
+`PENDING_WORK.md`), so the moment obligations are restated here against an arbitrary uniform
+bound `B_N`, with the coarse one as a corollary. -/
+
+theorem abs_rIndepAvg_pow_le_of_bound {q : ℤ} (C : Chain q) (N M : ℕ) (B : ℝ) (hB0 : 0 ≤ B)
+    (hB : ∀ r : ℕ, r < modulus C N → |smallSum C N (r : ℤ)| ≤ B) :
+    |rIndepAvg C N (fun x => x ^ M)| ≤ B ^ M := by
+  have hmod : 0 < modulus C N := modulus_pos C N
+  have hcard : (0:ℝ) < ((range (modulus C N)).card : ℝ) := by
+    rw [Finset.card_range]; exact_mod_cast hmod
+  unfold rIndepAvg ravg
+  rw [abs_div, abs_of_pos hcard, div_le_iff₀ hcard]
+  calc |∑ r ∈ range (modulus C N), smallSum C N (r : ℤ) ^ M|
+      ≤ ∑ r ∈ range (modulus C N), |smallSum C N (r : ℤ) ^ M| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ r ∈ range (modulus C N), B ^ M := by
+        refine Finset.sum_le_sum (fun r hr => ?_)
+        rw [abs_pow]
+        exact pow_le_pow_left₀ (abs_nonneg _) (hB r (Finset.mem_range.mp hr)) M
+    _ = B ^ M * ((range (modulus C N)).card : ℝ) := by
+        rw [Finset.sum_const, nsmul_eq_mul]; ring
+
+/-- `IndepMomentSmall` against an arbitrary uniform bound. -/
+theorem indepMomentSmall_of_bound {q : ℤ} (C : Chain q) (M : ℕ → ℕ) (B : ℕ → ℝ)
+    (hB0 : ∀ N, 0 ≤ B N)
+    (hB : ∀ N, ∀ r : ℕ, r < modulus C N → |smallSum C N (r : ℤ)| ≤ B N)
+    (h : Tendsto (fun N => (2 * Real.pi * |(q : ℝ)|) ^ M N / ((M N).factorial : ℝ)
+      * B N ^ M N) atTop (𝓝 0)) :
+    IndepMomentSmall C M := by
+  refine squeeze_zero_norm (fun N => ?_) h
+  have hcoeff : (0:ℝ) ≤ (2 * Real.pi * |(q : ℝ)|) ^ M N / ((M N).factorial : ℝ) := by
+    have := Real.pi_pos; positivity
+  simp only [Int.cast_abs]
+  rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg hcoeff]
+  exact mul_le_mul_of_nonneg_left
+    (abs_rIndepAvg_pow_le_of_bound C N (M N) (B N) (hB0 N) (hB N)) hcoeff
+
+/-- The moment comparison against an arbitrary uniform bound. -/
+theorem abs_moment_diff_le_of_bound {q : ℤ} (C : Chain q) (N k : ℕ) (B : ℝ) (hB0 : 0 ≤ B)
+    (hB : ∀ r : ℕ, r < modulus C N → |smallSum C N (r : ℤ)| ≤ B) :
+    |rSampleAvg C N (fun x => x ^ k) - rIndepAvg C N (fun x => x ^ k)|
+      ≤ B ^ k * sampleDiscrepancy C N := by
+  classical
+  have hP : (0:ℝ) < ((C.D N).P.card : ℝ) := by
+    exact_mod_cast Finset.card_pos.mpr (C.D N).nonempty
+  have hM : (0:ℝ) < (modulus C N : ℝ) := by exact_mod_cast modulus_pos C N
+  have hs : rSampleAvg C N (fun x => x ^ k)
+      = ∑ u ∈ range (modulus C N),
+          ((residueCount C N u : ℝ) / ((C.D N).P.card : ℝ)) * smallSum C N (u : ℤ) ^ k := by
+    unfold rSampleAvg ravg
+    rw [sum_smallSum_pow_eq, Finset.sum_div]
+    exact Finset.sum_congr rfl (fun u _ => by ring)
+  have hi : rIndepAvg C N (fun x => x ^ k)
+      = ∑ u ∈ range (modulus C N),
+          (1 / (modulus C N : ℝ)) * smallSum C N (u : ℤ) ^ k := by
+    unfold rIndepAvg ravg
+    rw [Finset.card_range, Finset.sum_div]
+    exact Finset.sum_congr rfl (fun u _ => by ring)
+  rw [hs, hi, ← Finset.sum_sub_distrib]
+  calc |∑ u ∈ range (modulus C N),
+        (((residueCount C N u : ℝ) / ((C.D N).P.card : ℝ)) * smallSum C N (u : ℤ) ^ k
+          - (1 / (modulus C N : ℝ)) * smallSum C N (u : ℤ) ^ k)|
+      ≤ ∑ u ∈ range (modulus C N),
+          |((residueCount C N u : ℝ) / ((C.D N).P.card : ℝ)) * smallSum C N (u : ℤ) ^ k
+            - (1 / (modulus C N : ℝ)) * smallSum C N (u : ℤ) ^ k| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ u ∈ range (modulus C N),
+          B ^ k * |(residueCount C N u : ℝ) / ((C.D N).P.card : ℝ)
+            - 1 / (modulus C N : ℝ)| := by
+        refine Finset.sum_le_sum (fun u hu => ?_)
+        rw [← sub_mul, abs_mul, abs_pow]
+        have hpw : |smallSum C N (u : ℤ)| ^ k ≤ B ^ k :=
+          pow_le_pow_left₀ (abs_nonneg _) (hB u (Finset.mem_range.mp hu)) k
+        calc |(residueCount C N u : ℝ) / ((C.D N).P.card : ℝ) - 1 / (modulus C N : ℝ)|
+              * |smallSum C N (u : ℤ)| ^ k
+            ≤ |(residueCount C N u : ℝ) / ((C.D N).P.card : ℝ) - 1 / (modulus C N : ℝ)|
+              * B ^ k := mul_le_mul_of_nonneg_left hpw (abs_nonneg _)
+          _ = B ^ k * |(residueCount C N u : ℝ) / ((C.D N).P.card : ℝ)
+              - 1 / (modulus C N : ℝ)| := by ring
+    _ = B ^ k * sampleDiscrepancy C N := by
+        unfold sampleDiscrepancy
+        rw [Finset.mul_sum]
+
+/-- `MomentComparison` against an arbitrary uniform bound. -/
+theorem momentComparison_of_bound {q : ℤ} (C : Chain q) (M : ℕ → ℕ) (B : ℕ → ℝ)
+    (hB0 : ∀ N, 0 ≤ B N)
+    (hB : ∀ N, ∀ r : ℕ, r < modulus C N → |smallSum C N (r : ℤ)| ≤ B N)
+    (h : Tendsto (fun N => max 1 (B N) ^ M N * sampleDiscrepancy C N) atTop (𝓝 0)) :
+    MomentComparison C M := by
+  refine ⟨fun N => max 1 (B N) ^ M N * sampleDiscrepancy C N, h, ?_⟩
+  intro N k hk
+  refine (abs_moment_diff_le_of_bound C N k (B N) (hB0 N) (hB N)).trans ?_
+  have hdisc : 0 ≤ sampleDiscrepancy C N := Finset.sum_nonneg (fun u _ => abs_nonneg _)
+  have hb : B N ^ k ≤ max 1 (B N) ^ M N := by
+    have h1 : (1:ℝ) ≤ max 1 (B N) := le_max_left _ _
+    calc B N ^ k ≤ max 1 (B N) ^ k := pow_le_pow_left₀ (hB0 N) (le_max_right _ _) k
+      _ ≤ max 1 (B N) ^ M N := pow_le_pow_right₀ h1 hk
+  exact mul_le_mul_of_nonneg_right hb hdisc
+
+/-- **Sub-unit bound kills the exponential loss.**  If the sample sum is bounded by `1` then
+`MomentComparison` needs only `sampleDiscrepancy → 0`, with no dependence on `M_N` at all. -/
+theorem momentComparison_of_le_one {q : ℤ} (C : Chain q) (M : ℕ → ℕ)
+    (hB : ∀ N, ∀ r : ℕ, r < modulus C N → |smallSum C N (r : ℤ)| ≤ 1)
+    (h : Tendsto (fun N => sampleDiscrepancy C N) atTop (𝓝 0)) :
+    MomentComparison C M := by
+  refine momentComparison_of_bound C M (fun _ => 1) (fun _ => zero_le_one) hB ?_
+  simpa using h
+
 end NormalNumbers.PrimeLambert

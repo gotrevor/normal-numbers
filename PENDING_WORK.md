@@ -8837,3 +8837,49 @@ missing, and the sandwich `∫dL/(L log L) = ∞` vs density `1/log L → 0` clo
 All its consumers are now proved, so it is the single remaining obligation of
 `exists_sparse_normal_of_KMT_quant`.  Explicit choices are in its docstring; `exists_block` (now
 proved) supplies the blocks.
+
+## 2026-09-21 — `phaseOscillation` chain: the three `MomentChain` obligations are reduced, and they are in TENSION
+
+`src/NormalNumbers/PrimeLambertIndepChar.lean` (new, sorry-free) reduces all three obligations of
+`MomentChain` → `SmallPrimeDecay` → `phaseOscillation` to elementary numeric conditions on the
+chain's own parameters (see `HANDOFF-2026-09-21-indepchar.md` for the lemma list):
+
+* `IndepCharDecay`   ⟸ `∑_{p ∈ Good N} sin²(π q c(a₀) 2^{−(i₀+1)}) / p → ∞`
+* `IndepMomentSmall` ⟸ `(2π|q|)^{M_N}/M_N! · B_N^{M_N} → 0`
+* `MomentComparison` ⟸ `max(1, B_N)^{M_N} · sampleDiscrepancy_N → 0`
+
+where `B_N` is any uniform bound on `|S_N|` over the residues.
+
+### The tension (the real finding of the lap — check this before building a chain)
+
+Write `y` for the sieve cutoff, so `#small ≈ π(y)` and `modulus ≈ e^y`.
+
+1. `MomentComparison` is only affordable when **`B_N ≤ 1`** — otherwise it demands
+   `sampleDiscrepancy ≤ B_N^{−M_N}`, exponentially small, while the discrepancy is `≳ 1` unless
+   `|P_N| ≫ modulus ≈ e^y` (most residue classes are empty otherwise).  With `B_N ≤ 1`,
+   `momentComparison_of_le_one` needs only `sampleDiscrepancy → 0`, and `IndepMomentSmall` is free.
+2. `IndepCharDecay` pushes the other way: `i₀ ≥ K`, so the site defect is
+   `sin²(π q c(a₀) 2^{−(i₀+1)}) ≈ 4^{−K}`, and the sum is `≈ 4^{−K} log log y`.  Divergence needs
+   **`log log y ≫ 4^K`**, i.e. `y ≈ exp(exp(4^K))`.
+3. But the COARSE bound `momentBound = #small · ‖c‖₁ / 2^K ≈ π(y)‖c‖₁/2^K ≤ 1` forces
+   **`y ≲ 2^K`** — flatly contradicting (2).
+
+So the route **cannot close with the coarse bound**.  This is not a defect of the reduction: the
+coarse bound charges every small prime, whereas `X_p(n) ≠ 0` only for primes actually dividing one
+of the `|support|·(J−K)` arguments (`activePrimes`, `abs_classSum_le_card`).  The sharp bound is
+`#activePrimes · ‖c‖₁ 2^{−K} ≲ |support|(J−K) · log₂(max arg) · ‖c‖₁ 2^{−K}` — **independent of `y`**,
+which removes the contradiction entirely.
+
+### Next attack (in order)
+
+1. **Formalize the sharp bound.**  `activeBound C N := sup_{n} #activePrimes(n) · ‖c‖₁/2^K`, and
+   `∀ r, |smallSum C N r| ≤ activeBound C N`.  The moment obligations already accept an arbitrary
+   `B_N` (`indepMomentSmall_of_bound`, `momentComparison_of_bound`,
+   `momentComparison_of_le_one`), so this plugs straight in.  Bound `#activePrimes` by
+   `∑_{a,i} ω(n + (i+1)d_a − s_a) ≤ |support|(J−K)·log₂(max arg)` via `omegaR_le_log`.
+2. Then `B_N ≤ 1` becomes `2^K ≳ |support|(J−K)‖c‖₁ log₂(max arg)` — a condition on `K` alone,
+   compatible with `y ≈ exp(exp(4^K))`.
+3. The only genuinely arithmetic obligation left is then `sampleDiscrepancy_N → 0`: the progression
+   sample must equidistribute in `L¹` modulo `∏_{p small} p`.  Since that modulus is `≈ e^y` with
+   `y ≈ exp(exp(4^K))`, the sample must be *at least* that long — this is the real cost of the route
+   and the number to check against the draft's `N^{−9/10+o(1)}` claim before going further.
