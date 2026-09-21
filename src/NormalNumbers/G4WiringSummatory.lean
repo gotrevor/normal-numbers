@@ -387,6 +387,81 @@ lemma node_winApprox {s : Finset ℕ} {c κ : ℂ} {E Bκ : ℝ} {N : ℕ}
         rw [hmain]; exact hmainclose
     _ = (6 * E + 4 * ‖c‖ * Bκ) / L * L ^ κ.re := by ring
 
+/-- **Packaging**: the node gives uniform approximations for the rough prefix and site means. -/
+theorem summatory_means_approx {h : ℤ} (hS : RoughSummatory h) :
+    ∃ (c : Finset ℕ → ℂ) (B A δ : ℝ), 0 ≤ A ∧ 0 < δ ∧ 0 ≤ B ∧
+      (∀ s, ‖c s‖ ≤ B) ∧
+      (∀ k, 1 ≤ k → δ ≤ ‖c (Finset.Icc 1 k)‖ ∧ δ ≤ ‖c {k}‖) ∧
+      (∀ k, 1 ≤ k → ‖c {k} - 1‖ ≤ B * ((1:ℝ)/4) ^ k) ∧
+      ∀ᶠ N : ℕ in atTop, ∀ k, 1 ≤ k → k ≤ windowJ N →
+        ‖roughPrefixMean N h k
+            - c (Finset.Icc 1 k) * ((Real.log N : ℝ) : ℂ) ^ sdExponent h (Finset.Icc 1 k)‖
+          ≤ A / Real.log N * Real.log N ^ (sdExponent h (Finset.Icc 1 k)).re
+        ∧ ‖roughSiteMean N h k 2 - c {k} * ((Real.log N : ℝ) : ℂ) ^ sdExponent h {k}‖
+          ≤ A * ((1:ℝ)/4) ^ k / Real.log N * Real.log N ^ (sdExponent h {k}).re := by
+  classical
+  obtain ⟨c, B, C, δ, hC, hδ, hcB, hclow, hcone, hev⟩ := hS
+  have hBnn : (0:ℝ) ≤ B := le_trans (norm_nonneg _) (hcB ∅)
+  have hpi : (0:ℝ) < Real.pi := Real.pi_pos
+  set K : ℝ := 4 * Real.pi * |(h : ℝ)| with hK
+  have hKnn : (0:ℝ) ≤ K := by rw [hK]; positivity
+  set A : ℝ := 6 * C + 4 * B * K with hA
+  have hAnn : (0:ℝ) ≤ A := by rw [hA]; positivity
+  refine ⟨c, B, A, δ, hAnn, hδ, hBnn, hcB, hclow, hcone, ?_⟩
+  have hdouble : Tendsto (fun N : ℕ => 2 * N) atTop atTop :=
+    tendsto_atTop_mono (fun n : ℕ => by show n ≤ 2 * n; omega) tendsto_id
+  have hev2 := hdouble.eventually hev
+  have hlogK : ∀ᶠ N : ℕ in atTop, max 1 K ≤ Real.log N := by
+    have := Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+    exact this.eventually_ge_atTop (max 1 K)
+  filter_upwards [hev, hev2, hlogK, eventually_gt_atTop 0] with N hN hN2 hNlog hN0
+  intro k hk1 hkJ
+  have hL1 : (1:ℝ) ≤ Real.log N := le_trans (le_max_left _ _) hNlog
+  have hLK : K ≤ Real.log N := le_trans (le_max_right _ _) hNlog
+  have hkJ2 : k ≤ windowJ (2 * N) := le_trans hkJ (windowJ_mono (by omega))
+  have hq : (0:ℝ) < ((1:ℝ)/4) ^ k := by positivity
+  have hq1 : ((1:ℝ)/4) ^ k ≤ 1 := by
+    exact pow_le_one₀ (by norm_num) (by norm_num)
+  constructor
+  · -- prefix
+    have hkey := node_winApprox (h := h) (s := Finset.Icc 1 k)
+      (c := c (Finset.Icc 1 k)) (κ := sdExponent h (Finset.Icc 1 k)) (E := C) (Bκ := K)
+      hC (re_sdExponent_nonpos h _) (by rw [hK]; exact norm_sdExponent_Icc h k) hKnn hN0 hL1 hLK
+      (fun a ha => (hN a ha k hk1 hkJ).1) (fun a ha => (hN2 a ha k hk1 hkJ2).1)
+    rw [roughPrefixMean_eq_classSum N h k hN0]
+    refine le_trans hkey ?_
+    have hrp : (0:ℝ) ≤ Real.log N ^ (sdExponent h (Finset.Icc 1 k)).re :=
+      Real.rpow_nonneg (by linarith) _
+    have hLpos : (0:ℝ) < Real.log N := by linarith
+    have h1 : 6 * C + 4 * ‖c (Finset.Icc 1 k)‖ * K ≤ A := by
+      rw [hA]
+      nlinarith [hcB (Finset.Icc 1 k), hKnn, norm_nonneg (c (Finset.Icc 1 k))]
+    have h2 : (6 * C + 4 * ‖c (Finset.Icc 1 k)‖ * K) / Real.log N ≤ A / Real.log N :=
+      div_le_div_of_nonneg_right h1 hLpos.le
+    exact mul_le_mul_of_nonneg_right h2 hrp
+  · -- singleton
+    have hkey := node_winApprox (h := h) (s := ({k} : Finset ℕ))
+      (c := c {k}) (κ := sdExponent h {k}) (E := C * ((1:ℝ)/4) ^ k)
+      (Bκ := K * ((1:ℝ)/4) ^ k)
+      (by positivity) (re_sdExponent_nonpos h _)
+      (by rw [hK]; simpa [mul_assoc] using norm_sdExponent_singleton h k)
+      (by positivity) hN0 hL1
+      (by nlinarith [hLK, hKnn, hq, hq1])
+      (fun a ha => (hN a ha k hk1 hkJ).2) (fun a ha => (hN2 a ha k hk1 hkJ2).2)
+    rw [roughSiteMean_eq_classSum N h k hN0]
+    refine le_trans hkey ?_
+    have hrp : (0:ℝ) ≤ Real.log N ^ (sdExponent h {k}).re :=
+      Real.rpow_nonneg (by linarith) _
+    have hLpos : (0:ℝ) < Real.log N := by linarith
+    have h1 : 6 * (C * ((1:ℝ)/4) ^ k) + 4 * ‖c {k}‖ * (K * ((1:ℝ)/4) ^ k)
+        ≤ A * ((1:ℝ)/4) ^ k := by
+      rw [hA]
+      nlinarith [mul_nonneg (mul_nonneg (sub_nonneg.mpr (hcB ({k} : Finset ℕ))) hKnn) hq.le]
+    have h2 : (6 * (C * ((1:ℝ)/4) ^ k) + 4 * ‖c {k}‖ * (K * ((1:ℝ)/4) ^ k)) / Real.log N
+        ≤ A * ((1:ℝ)/4) ^ k / Real.log N :=
+      div_le_div_of_nonneg_right h1 hLpos.le
+    exact mul_le_mul_of_nonneg_right h2 hrp
+
 end Wiring
 
 /-! ### Leaf 4–6: the wirings -/
