@@ -1932,6 +1932,193 @@ theorem roughIndependenceAt_two_of_prefixCov {h : ℤ}
   rw [one_mul]
   exact (norm_roughWindow_sub_prod_le N (windowJ N) h hN0).trans hN
 
+/-! ### The crux in its true shape: a fixed sequence of prefix ratios
+
+The measurement (`probes/prefix_covariance.py`) **refutes** the `c = 1` route: the relative prefix
+correlations are `O(1)`, not `o(1)`, and `E[∏ r_j] / ∏ E[r_j]` settles near `1.14`, `0.69`, `2.32`
+at `h = 1, 3, 5`.  What the data *does* show is that the relative correlation at step `k` tends to
+a limit `ρ k` which decays geometrically in `k` (`h = 5`: `0, 0.82, 0.32, 0.032, 0.004`).  That is
+the honest shape of the crux: the `J`-uniform constant `c(J)` is the partial product
+`∏_{k≤J}(1+ρ k)`, bounded because `∑‖ρ k‖ < ∞`. -/
+
+/-- `E[∏_{j≤k} r_j]`, the rough prefix mean. -/
+noncomputable def roughPrefixMean (N : ℕ) (h : ℤ) (k : ℕ) : ℂ :=
+  winMean N (fun n => ∏ j ∈ Finset.Icc 1 k, roughPhase h j n)
+
+lemma roughPrefixMean_zero (N : ℕ) (h : ℤ) (hN : 0 < N) : roughPrefixMean N h 0 = 1 := by
+  rw [roughPrefixMean]
+  simpa using winMean_one N hN
+
+/-- **The reshaped crux.**  Each step of the prefix product contributes a *fixed* relative factor
+`1 + ρ k`, with `ρ k` geometrically small and approached at rate `1/log N`.  Strictly weaker than
+a `J`-uniform statement: every clause is about a single, fixed `k`. -/
+def PrefixLimit (h : ℤ) : Prop :=
+  ∃ (ρ : ℕ → ℂ) (Cρ C : ℝ), 0 ≤ Cρ ∧ 0 ≤ C ∧ (∀ k, ‖ρ k‖ ≤ Cρ * ((1:ℝ)/4) ^ k) ∧
+    ∀ᶠ N : ℕ in atTop, ∀ k, 1 ≤ k → k ≤ windowJ N →
+      ‖roughPrefixMean N h k - (1 + ρ k) * roughPrefixMean N h (k-1) * roughSiteMean N h k 2‖
+        ≤ C * ((1:ℝ)/4) ^ k / Real.log N * ∏ j ∈ Finset.Icc 1 k, ‖roughSiteMean N h j 2‖
+
+lemma prod_one_add_le_exp {ι : Type*} (s : Finset ι) (a : ι → ℝ) (ha : ∀ i, 0 ≤ a i) :
+    ∏ i ∈ s, (1 + a i) ≤ Real.exp (∑ i ∈ s, a i) := by
+  rw [Real.exp_sum]
+  exact Finset.prod_le_prod (fun i _ => by linarith [ha i])
+    (fun i _ => by linarith [Real.add_one_le_exp (a i)])
+
+set_option maxHeartbeats 1000000 in
+/-- **The reduction**: `PrefixLimit h → RoughIndependenceAt h 2`, with
+`c J = ∏_{k ≤ J} (1 + ρ k)`. -/
+theorem roughIndependenceAt_two_of_prefixLimit {h : ℤ} (hL : PrefixLimit h) :
+    RoughIndependenceAt h 2 := by
+  classical
+  obtain ⟨ρ, Cρ, C, hCρ, hC, hρ, hev⟩ := hL
+  set M : ℝ := Real.exp (Cρ / 3) with hM
+  have hMpos : 0 < M := Real.exp_pos _
+  have hρnn : ∀ k, 0 ≤ ‖ρ k‖ := fun k => norm_nonneg _
+  -- a uniform bound on the partial products of `1 + ‖ρ k‖`
+  have hprodbound : ∀ J : ℕ, ∏ k ∈ Finset.Icc 1 J, (1 + ‖ρ k‖) ≤ M := by
+    intro J
+    refine (prod_one_add_le_exp _ _ hρnn).trans ?_
+    rw [hM]
+    refine Real.exp_le_exp.mpr ?_
+    have h1 : ∑ k ∈ Finset.Icc 1 J, ‖ρ k‖ ≤ ∑ k ∈ Finset.Icc 1 J, Cρ * ((1:ℝ)/4)^k :=
+      Finset.sum_le_sum (fun k _ => hρ k)
+    have hIcc : Finset.Icc 1 J = Finset.Ico 1 (J+1) := by
+      ext x; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega
+    have h2 : ∑ k ∈ Finset.Icc 1 J, Cρ * ((1:ℝ)/4)^k ≤ Cρ / 3 := by
+      rw [hIcc, ← Finset.mul_sum]
+      have h3 := sum_quarter_pow_Ico_le 1 (J+1)
+      nlinarith [h3, hCρ]
+    linarith
+  refine ⟨fun J => ∏ k ∈ Finset.Icc 1 J, (1 + ρ k), M, C * M / 3, ?_, ?_⟩
+  · intro J
+    rw [norm_prod]
+    refine le_trans (Finset.prod_le_prod (fun k _ => norm_nonneg _)
+      (fun k _ => ?_)) (hprodbound J)
+    exact (norm_add_le _ _).trans (by rw [norm_one])
+  · filter_upwards [hev, eventually_ge_atTop 3] with N hN hN3
+    set J := windowJ N with hJ
+    have hN0 : 0 < N := by omega
+    have hN3R : (3:ℝ) ≤ (N:ℝ) := by exact_mod_cast hN3
+    have hlogN : (1:ℝ) ≤ Real.log N := by
+      rw [Real.le_log_iff_exp_le (by linarith)]
+      linarith [Real.exp_one_lt_d9]
+    have hlogpos : (0:ℝ) < Real.log N := by linarith
+    -- the induction on the prefix length
+    have key : ∀ k, k ≤ J →
+        ‖roughPrefixMean N h k - (∏ i ∈ Finset.Icc 1 k, (1 + ρ i))
+            * ∏ j ∈ Finset.Icc 1 k, roughSiteMean N h j 2‖
+          ≤ ((∑ i ∈ Finset.Icc 1 k, C * ((1:ℝ)/4)^i / Real.log N)
+              * ∏ i ∈ Finset.Icc 1 k, (1 + ‖ρ i‖))
+            * ∏ j ∈ Finset.Icc 1 k, ‖roughSiteMean N h j 2‖ := by
+      intro k
+      induction k with
+      | zero => intro _; simp [roughPrefixMean_zero N h hN0]
+      | succ k ih =>
+          intro hk
+          have hk' : k ≤ J := by omega
+          have IH := ih hk'
+          have hIcc : ∀ m : ℕ, Finset.Icc 1 (m+1) = insert (m+1) (Finset.Icc 1 m) := by
+            intro m; ext x; simp only [Finset.mem_Icc, Finset.mem_insert]; omega
+          have hnot : ∀ m : ℕ, (m+1) ∉ Finset.Icc 1 m := by intro m; simp
+          set Ek : ℂ := roughSiteMean N h (k+1) 2 with hEk
+          set Pk : ℂ := ∏ j ∈ Finset.Icc 1 k, roughSiteMean N h j 2 with hPk
+          set Ck : ℂ := ∏ i ∈ Finset.Icc 1 k, (1 + ρ i) with hCk
+          set Fk : ℝ := ∏ j ∈ Finset.Icc 1 k, ‖roughSiteMean N h j 2‖ with hFk
+          set Rk : ℝ := ∏ i ∈ Finset.Icc 1 k, (1 + ‖ρ i‖) with hRk
+          set Sk : ℝ := ∑ i ∈ Finset.Icc 1 k, C * ((1:ℝ)/4)^i / Real.log N with hSk
+          have hFknn : 0 ≤ Fk := Finset.prod_nonneg (fun j _ => norm_nonneg _)
+          have hRk1 : 1 ≤ Rk := by
+            rw [hRk]
+            calc (1:ℝ) = ∏ i ∈ Finset.Icc 1 k, (1:ℝ) := by simp
+              _ ≤ _ := Finset.prod_le_prod (fun i _ => zero_le_one)
+                    (fun i _ => by linarith [hρnn i])
+          have hSknn : 0 ≤ Sk := by
+            rw [hSk]
+            refine Finset.sum_nonneg (fun i _ => ?_)
+            positivity
+          have hstep := hN (k+1) (by omega) hk
+          have hsplit : roughPrefixMean N h (k+1)
+              - (∏ i ∈ Finset.Icc 1 (k+1), (1 + ρ i))
+                * ∏ j ∈ Finset.Icc 1 (k+1), roughSiteMean N h j 2
+              = (roughPrefixMean N h (k+1) - (1 + ρ (k+1)) * roughPrefixMean N h k * Ek)
+                + (1 + ρ (k+1)) * Ek * (roughPrefixMean N h k - Ck * Pk) := by
+            rw [hIcc k, Finset.prod_insert (hnot k), Finset.prod_insert (hnot k), ← hCk, ← hPk,
+              ← hEk]
+            ring
+          have hEknorm : ‖Ek‖ ≤ 1 := norm_roughSiteMean_le_one N h (k+1) 2
+          have hcoef : ‖(1 + ρ (k+1)) * Ek‖ ≤ (1 + ‖ρ (k+1)‖) * ‖Ek‖ := by
+            rw [norm_mul]
+            exact mul_le_mul_of_nonneg_right
+              ((norm_add_le _ _).trans (by rw [norm_one])) (norm_nonneg _)
+          have hterm2 : ‖(1 + ρ (k+1)) * Ek * (roughPrefixMean N h k - Ck * Pk)‖
+              ≤ ((1 + ‖ρ (k+1)‖) * ‖Ek‖) * ((Sk * Rk) * Fk) := by
+            rw [norm_mul]
+            exact mul_le_mul hcoef IH (norm_nonneg _)
+              (mul_nonneg (by linarith [hρnn (k+1)]) (norm_nonneg _))
+          have hstep' : ‖roughPrefixMean N h (k+1)
+              - (1 + ρ (k+1)) * roughPrefixMean N h k * Ek‖
+              ≤ C * ((1:ℝ)/4)^(k+1) / Real.log N * (‖Ek‖ * Fk) := by
+            have : (∏ j ∈ Finset.Icc 1 (k+1), ‖roughSiteMean N h j 2‖) = ‖Ek‖ * Fk := by
+              rw [hIcc k, Finset.prod_insert (hnot k), ← hFk, ← hEk]
+            have hstep2 := hstep
+            rw [show k + 1 - 1 = k from by omega] at hstep2
+            rw [← this]
+            exact hstep2
+          have hgoal : ‖roughPrefixMean N h (k+1)
+              - (∏ i ∈ Finset.Icc 1 (k+1), (1 + ρ i))
+                * ∏ j ∈ Finset.Icc 1 (k+1), roughSiteMean N h j 2‖
+              ≤ C * ((1:ℝ)/4)^(k+1) / Real.log N * (‖Ek‖ * Fk)
+                + ((1 + ‖ρ (k+1)‖) * ‖Ek‖) * ((Sk * Rk) * Fk) := by
+            rw [hsplit]
+            exact (norm_add_le _ _).trans (add_le_add hstep' hterm2)
+          refine hgoal.trans ?_
+          rw [hIcc k, Finset.sum_insert (hnot k), Finset.prod_insert (hnot k),
+            Finset.prod_insert (hnot k), ← hSk, ← hRk, ← hFk, ← hEk]
+          have hEknn : 0 ≤ ‖Ek‖ := norm_nonneg _
+          have hεnn : 0 ≤ C * ((1:ℝ)/4)^(k+1) / Real.log N := by positivity
+          have hX : (0:ℝ) ≤ ‖Ek‖ * Fk := mul_nonneg hEknn hFknn
+          have hrr : (1:ℝ) ≤ (1 + ‖ρ (k+1)‖) * Rk := by nlinarith [hρnn (k+1), hRk1]
+          have hkey : (0:ℝ) ≤ (C * ((1:ℝ)/4)^(k+1) / Real.log N)
+              * ((‖Ek‖ * Fk) * ((1 + ‖ρ (k+1)‖) * Rk - 1)) :=
+            mul_nonneg hεnn (mul_nonneg hX (by linarith))
+          nlinarith [hkey]
+    -- from the induction to the statement
+    have hfin := key J le_rfl
+    rw [roughWindowMean_eq_winMean, ← roughPrefixMean]
+    refine hfin.trans ?_
+    have hF : 0 ≤ ∏ j ∈ Finset.Icc 1 J, ‖roughSiteMean N h j 2‖ :=
+      Finset.prod_nonneg (fun j _ => norm_nonneg _)
+    have hS : ∑ i ∈ Finset.Icc 1 J, C * ((1:ℝ)/4)^i / Real.log N ≤ C / 3 / Real.log N := by
+      have hIcc : Finset.Icc 1 J = Finset.Ico 1 (J+1) := by
+        ext x; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega
+      have heq : ∑ i ∈ Finset.Icc 1 J, C * ((1:ℝ)/4)^i / Real.log N
+          = (C / Real.log N) * ∑ i ∈ Finset.Ico 1 (J+1), ((1:ℝ)/4)^i := by
+        rw [hIcc, Finset.mul_sum]
+        exact Finset.sum_congr rfl (fun i _ => by ring)
+      rw [heq]
+      have h3 := sum_quarter_pow_Ico_le 1 (J+1)
+      have hCL : 0 ≤ C / Real.log N := by positivity
+      have : (C / Real.log N) * ∑ i ∈ Finset.Ico 1 (J+1), ((1:ℝ)/4)^i
+          ≤ (C / Real.log N) * ((4/3) * ((1:ℝ)/4)^1) := mul_le_mul_of_nonneg_left h3 hCL
+      calc (C / Real.log N) * ∑ i ∈ Finset.Ico 1 (J+1), ((1:ℝ)/4)^i
+          ≤ (C / Real.log N) * ((4/3) * ((1:ℝ)/4)^1) := this
+        _ = C / 3 / Real.log N := by ring
+    have hR := hprodbound J
+    have hRnn : 0 ≤ ∏ i ∈ Finset.Icc 1 J, (1 + ‖ρ i‖) :=
+      Finset.prod_nonneg (fun i _ => by linarith [hρnn i])
+    have hSnn : 0 ≤ ∑ i ∈ Finset.Icc 1 J, C * ((1:ℝ)/4)^i / Real.log N :=
+      Finset.sum_nonneg (fun i _ => by positivity)
+    have hCLnn : 0 ≤ C / 3 / Real.log N := by positivity
+    have hmul : (∑ i ∈ Finset.Icc 1 J, C * ((1:ℝ)/4)^i / Real.log N)
+        * ∏ i ∈ Finset.Icc 1 J, (1 + ‖ρ i‖) ≤ C * M / 3 / Real.log N := by
+      have h1 : (∑ i ∈ Finset.Icc 1 J, C * ((1:ℝ)/4)^i / Real.log N)
+          * ∏ i ∈ Finset.Icc 1 J, (1 + ‖ρ i‖) ≤ (C / 3 / Real.log N) * M :=
+        mul_le_mul hS hR hRnn hCLnn
+      calc (∑ i ∈ Finset.Icc 1 J, C * ((1:ℝ)/4)^i / Real.log N)
+          * ∏ i ∈ Finset.Icc 1 J, (1 + ‖ρ i‖) ≤ (C / 3 / Real.log N) * M := h1
+        _ = C * M / 3 / Real.log N := by ring
+    exact mul_le_mul_of_nonneg_right hmul hF
+
 /-- **Headline wiring on the two minimal nodes.**  On the non-Chowla sector the whole G₄ window
 law rests on exactly two open statements: `RoughIndependenceAt h 2` (the rough window mean
 factorises into its site means) and `ParityDiscrepancy h` (the rough phase has no parity bias
@@ -1950,5 +2137,18 @@ theorem isNormal_G4_of_parity
     exact fullWindowMean_tendsto_zero_of_sched
       (crtConstantSched_of_roughAt hR (smoothRoughDecouplingAt_two_of_parity hP)
         (smoothNonvanishingAt_two hh hc)) hSite hh
+
+/-- **Headline wiring on the reshaped nodes.**  Off the Chowla sector the G₄ window law follows
+from `PrefixLimit h` (each step of the rough prefix product has a fixed limiting relative factor
+`1 + ρ k`, geometrically small in `k`) and `ParityDiscrepancy h` (the rough mean is scale-smooth).
+Both clauses of both nodes are statements about a *single fixed* index — no `J`-uniformity is
+assumed anywhere; it is derived. -/
+theorem isNormal_G4_of_prefixLimit
+    (hSD : ∀ h : ℤ, h ≠ 0 → ¬ ChowlaSector h → PrefixLimit h ∧ ParityDiscrepancy h)
+    (hCh : ∀ h : ℤ, h ≠ 0 → ChowlaSector h → WindowDecay h)
+    (hSite : SiteDecayFull) : IsNormal 4 (primeLambertAtBase 4) := by
+  refine isNormal_G4_of_parity (fun h hh hc => ?_) hCh hSite
+  obtain ⟨hL, hP⟩ := hSD h hh hc
+  exact ⟨roughIndependenceAt_two_of_prefixLimit hL, hP⟩
 
 end NormalNumbers.G4
