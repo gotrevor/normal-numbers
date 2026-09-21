@@ -1,6 +1,15 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-20 22:43 EDT — `windowK` / `PrefixDecay` LAP (ACTIVE, one lap)
+## Attended operator override: 2026-09-20 22:43 EDT — `windowK` / `PrefixDecay` LAP (DONE, one lap)
+
+**Result (2026-09-21):** `src/NormalNumbers/G4WindowK.lean` is **sorry-free**, all 14 ratified statements
+verbatim, headlines `[propext, Classical.choice, Quot.sound]`.  Pure addition.  The schedule drops from
+double-log (`windowJ`) to triple-log (`windowK`) — the truncation cost is `≤ 28π|h| / log₂log₂N` because only
+the window AVERAGE of `ω` (`O(log log N)`) enters, not its maximum.  Off the SD route the G₄ window law now
+rests on the single sector-free `o(1)` node `PrefixDecay h`, via `isNormal_G4_of_prefixDecay`.
+See `HANDOFF-2026-09-20-windowK.md`.  **No active override.**
+
+### (the override as fired)
 
 Run `KICKOFF-2026-09-20-windowK-lap.md`: new file `src/NormalNumbers/G4WindowK.lean` - the triple-log site schedule
 `windowK`, the L¹ tail bound `window_tail_tendsto_zero` (via `sum_omegaR_add_le`), node `WindowDecayK`, and the crux in
