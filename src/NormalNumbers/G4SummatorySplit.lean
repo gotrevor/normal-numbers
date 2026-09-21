@@ -1332,10 +1332,11 @@ def SDOdd (h : ℤ) : Prop :=
       ‖classOmegaSum (sdBase h k) 1 X - sdMain (c k) (sdExponent h {k}) X‖
         ≤ C * ((1:ℝ)/4)^k / Real.log X * ((X : ℝ) * Real.log X ^ (sdExponent h {k}).re)
 
-/-- **OPEN SUB-GOAL — the 2-adic assembly.**  Disclosed `sorry`: the even class inherits the odd
-class's asymptotic *with the same constant*, by `classOmegaSum_zero_unroll` with `2^V ≈ √M`.
+set_option maxHeartbeats 1000000 in
+/-- **The 2-adic assembly (PROVED).**  The even class inherits the odd class's asymptotic *with the
+same constant*, by `classOmegaSum_zero_unroll` at depth `V = halfDepth M = 10 log₂ log₂ M`.
 
-The three pieces, all elementary but each a real estimate:
+The three pieces:
 
 * **main terms.**  `Σ_{v=1}^{V} (c/2)·M_v·(log M_v)^κ = (c/2)·M·(log M)^κ + O(‖κ‖ M (log M)^{Re κ−1})`,
   using `M_v = M/2^v + O(1)`, `Σ_{v≥1} 2^{-v} = 1` (this is *where the equal-constants-on-both-
@@ -1358,7 +1359,179 @@ theorem exists_classOmegaSum_zero_bound (h : ℤ) (c : ℕ → ℂ) (B C : ℝ)
       ‖classOmegaSum (sdBase h k) 0 M - sdMain (c k) (sdExponent h {k}) M‖
         ≤ C' * ((1:ℝ)/4)^k / Real.log M
             * ((M : ℝ) * Real.log M ^ (sdExponent h {k}).re) := by
-  sorry
+  have hB0 : (0:ℝ) ≤ B := le_trans (norm_nonneg _) (hB 0)
+  obtain ⟨X₀, hX₀⟩ := eventually_atTop.mp hodd
+  refine ⟨8 * C + 24 * Real.pi * |(h:ℝ)| * B + B + 1, by positivity, ?_⟩
+  filter_upwards [eventually_assembly X₀] with M hass
+  obtain ⟨hM8, hΛ, hL128, hD1, hD2, hD3, hD4, hDv⟩ := hass
+  intro k hk1 hkW
+  have hM1 : 1 ≤ M := by omega
+  set V : ℕ := halfDepth M with hVdef
+  set L : ℝ := Real.log M with hLdef
+  set κ : ℂ := sdExponent h {k} with hκdef
+  set r : ℝ := κ.re with hrdef
+  have hL1 : (1:ℝ) ≤ L := by linarith
+  have hLpos : (0:ℝ) < L := by linarith
+  have hMnn : (0:ℝ) ≤ (M:ℝ) := Nat.cast_nonneg _
+  have hq : (0:ℝ) < ((1:ℝ)/4)^k := by positivity
+  have hr0 : r ≤ 0 := re_sdExponent_singleton_le h k
+  have hr2 : -2 ≤ r := re_sdExponent_singleton_ge h k
+  have hLr : (0:ℝ) < L ^ r := Real.rpow_pos_of_pos hLpos _
+  have hLrle : L ^ r ≤ 1 := Real.rpow_le_one_of_one_le_of_nonpos hL1 hr0
+  set Bud : ℝ := ((1:ℝ)/4)^k / L * ((M:ℝ) * L ^ r) with hBuddef
+  have hBudpos : (0:ℝ) < Bud := by
+    rw [hBuddef]
+    have : (0:ℝ) < (M:ℝ) := by exact_mod_cast hM1
+    positivity
+  have hblow : (M:ℝ) / (64 * L ^ 6) ≤ Bud := budget_lower h hM8 hk1 hkW
+  -- side conditions for the assembly lemmas
+  have hVlog : (V:ℝ) * Real.log 2 ≤ L / 4 := halfDepth_log_le hM1 hΛ
+  have h4V : 4 * V ≤ Nat.log 2 M := halfDepth_le hΛ
+  have hκ2 : ‖κ‖ ≤ 2 := by
+    rw [hκdef, sdExponent_singleton_eq]
+    calc ‖sdBase h k - 1‖ ≤ ‖sdBase h k‖ + ‖(1:ℂ)‖ := norm_sub_le _ _
+      _ = 2 := by rw [norm_sdBase]; norm_num
+  have hκq : ‖κ‖ ≤ 4 * Real.pi * |(h:ℝ)| * ((1:ℝ)/4)^k := by
+    rw [hκdef]; exact norm_sdExponent_singleton h k
+  -- the three-way split
+  have hid : classOmegaSum (sdBase h k) 0 M - sdMain (c k) κ M
+      = (∑ v ∈ Finset.Icc 1 V, (classOmegaSum (sdBase h k) 1 (halfIter M v)
+            - sdMain (c k) κ (halfIter M v)))
+        + ((∑ v ∈ Finset.Icc 1 V, sdMain (c k) κ (halfIter M v)) - sdMain (c k) κ M)
+        + classOmegaSum (sdBase h k) 0 (halfIter M V) := by
+    rw [classOmegaSum_zero_unroll (sdBase h k) hM1 V, Finset.sum_sub_distrib]
+    ring
+  -- T1 : the node errors
+  have hT1 : ‖∑ v ∈ Finset.Icc 1 V, (classOmegaSum (sdBase h k) 1 (halfIter M v)
+        - sdMain (c k) κ (halfIter M v))‖
+      ≤ 4 * (C * ((1:ℝ)/4)^k) / L * ((M:ℝ) + V) * L ^ r := by
+    refine le_trans (norm_sum_le _ _) ?_
+    refine le_trans (Finset.sum_le_sum (fun v hv => ?_))
+      (err_sum_le (A := C * ((1:ℝ)/4)^k) (by positivity) hr2 hr0 hM8 hVlog)
+    have hvV : v ≤ V := (Finset.mem_Icc.mp hv).2
+    have hXge : X₀ ≤ halfIter M v := hDv v hvV
+    have hrange : k ≤ windowJ (halfIter M v) + 2 := by
+      have := windowJ_halfIter (M := M) (V := V) (v := v) hM8 hvV h4V
+      omega
+    exact hX₀ (halfIter M v) hXge k hk1 hrange
+  -- T2 : the main-term defect
+  have hT2 : ‖(∑ v ∈ Finset.Icc 1 V, sdMain (c k) κ (halfIter M v)) - sdMain (c k) κ M‖
+      ≤ ‖c k‖/2 * L ^ r
+          * (4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2)
+             + ((M:ℝ) * ((1:ℝ)/2)^V + V)) := main_sum_diff (c k) κ hM8 hκ2 hVlog
+  -- T3 : the trivial remainder
+  have hT3 : ‖classOmegaSum (sdBase h k) 0 (halfIter M V)‖ ≤ (M:ℝ) * ((1:ℝ)/2)^V + 1 := by
+    refine le_trans (norm_classOmegaSum_le (norm_sdBase h k) 0 (halfIter M V)) ?_
+    have := halfIter_le_div hM1 V
+    rw [div_pow, one_pow]
+    calc (halfIter M V : ℝ) ≤ (M:ℝ)/2^V + 1 := this
+      _ = (M:ℝ) * (1/2^V) + 1 := by ring
+  -- now dominate each piece by the budget
+  have hgeom : (M:ℝ) * ((1:ℝ)/2)^V ≤ (M:ℝ) / (256 * L ^ 6) := halfDepth_geom_le hM1 hΛ hL128
+  have hVM : (V:ℝ) ≤ (M:ℝ) := hD4
+  have hVsq : ((V:ℝ))^2 ≤ (M:ℝ) := hD3
+  have hlog2le : Real.log 2 ≤ 1 := by have := Real.log_two_lt_d9; linarith
+  have hlog2nn : (0:ℝ) ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  -- (a)
+  have ha : 4 * (C * ((1:ℝ)/4)^k) / L * ((M:ℝ) + V) * L ^ r ≤ 8 * C * Bud := by
+    rw [hBuddef]
+    have hc : (0:ℝ) < ((1:ℝ)/4)^k / L := by positivity
+    have e0 : ((M:ℝ) + V) * L ^ r ≤ 2 * ((M:ℝ) * L ^ r) := by
+      have h1 : ((M:ℝ) + V) ≤ 2 * (M:ℝ) := by linarith
+      nlinarith [hLr.le]
+    have e1 : 4 * (C * ((1:ℝ)/4)^k) / L * ((M:ℝ) + V) * L ^ r
+        = (4 * C) * ((((1:ℝ)/4)^k / L) * (((M:ℝ) + V) * L ^ r)) := by field_simp
+    have e2 : (((1:ℝ)/4)^k / L) * (((M:ℝ) + V) * L ^ r)
+        ≤ (((1:ℝ)/4)^k / L) * (2 * ((M:ℝ) * L ^ r)) := mul_le_mul_of_nonneg_left e0 hc.le
+    calc 4 * (C * ((1:ℝ)/4)^k) / L * ((M:ℝ) + V) * L ^ r
+        = (4 * C) * ((((1:ℝ)/4)^k / L) * (((M:ℝ) + V) * L ^ r)) := e1
+      _ ≤ (4 * C) * ((((1:ℝ)/4)^k / L) * (2 * ((M:ℝ) * L ^ r))) :=
+          mul_le_mul_of_nonneg_left e2 (by linarith)
+      _ = 8 * C * (((1:ℝ)/4)^k / L * ((M:ℝ) * L ^ r)) := by ring
+  -- (b)
+  have hb : ‖c k‖/2 * L ^ r * (4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2))
+      ≤ 24 * Real.pi * |(h:ℝ)| * B * Bud := by
+    have h1 : 2*(M:ℝ) + (V:ℝ)^2 ≤ 3 * (M:ℝ) := by linarith
+    have hπ : (0:ℝ) ≤ 4 * Real.pi * |(h:ℝ)| := by positivity
+    have h2 : 4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2)
+        ≤ 4 * (4 * Real.pi * |(h:ℝ)| * ((1:ℝ)/4)^k) * 1 / L * (3 * (M:ℝ)) := by
+      have hnn : (0:ℝ) ≤ 4 * ‖κ‖ * Real.log 2 / L := by positivity
+      have hstep1 : 4 * ‖κ‖ * Real.log 2 / L
+          ≤ 4 * (4 * Real.pi * |(h:ℝ)| * ((1:ℝ)/4)^k) * 1 / L := by
+        have hnum : 4 * ‖κ‖ * Real.log 2 ≤ 4 * (4 * Real.pi * |(h:ℝ)| * ((1:ℝ)/4)^k) * 1 := by
+          have hknn : (0:ℝ) ≤ 4 * ‖κ‖ := by positivity
+          have e1 : 4 * ‖κ‖ * Real.log 2 ≤ 4 * ‖κ‖ * 1 :=
+            mul_le_mul_of_nonneg_left hlog2le hknn
+          have e2 : 4 * ‖κ‖ ≤ 4 * (4 * Real.pi * |(h:ℝ)| * ((1:ℝ)/4)^k) := by linarith [hκq]
+          linarith
+        exact div_le_div_of_nonneg_right hnum hLpos.le
+      have hpos2 : (0:ℝ) ≤ 2*(M:ℝ) + (V:ℝ)^2 := by positivity
+      have hpos3 : (0:ℝ) ≤ 4 * (4 * Real.pi * |(h:ℝ)| * ((1:ℝ)/4)^k) * 1 / L := by positivity
+      exact mul_le_mul hstep1 h1 hpos2 hpos3
+    have hck := hB k
+    have hcknn : (0:ℝ) ≤ ‖c k‖ := norm_nonneg _
+    have hkey : ‖c k‖/2 * L ^ r * (4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2))
+        ≤ B/2 * L ^ r * (4 * (4 * Real.pi * |(h:ℝ)| * ((1:ℝ)/4)^k) * 1 / L * (3 * (M:ℝ))) := by
+      have hA : (0:ℝ) ≤ 4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2) := by positivity
+      have hL2 : (0:ℝ) ≤ L ^ r := hLr.le
+      have h3 : ‖c k‖/2 * L ^ r ≤ B/2 * L ^ r := by
+        have : ‖c k‖/2 ≤ B/2 := by linarith
+        exact mul_le_mul_of_nonneg_right this hL2
+      have h4 : (0:ℝ) ≤ B/2 * L ^ r := by positivity
+      exact mul_le_mul h3 h2 hA h4
+    refine le_trans hkey (le_of_eq ?_)
+    rw [hBuddef]
+    field_simp
+    ring
+  -- (c) and (d): the polylog-small terms
+  have hsmall : ‖c k‖/2 * L ^ r * ((M:ℝ) * ((1:ℝ)/2)^V + V) + ((M:ℝ) * ((1:ℝ)/2)^V + 1)
+      ≤ (B + 1) * Bud := by
+    have hVsmall : (V:ℝ) ≤ (M:ℝ) / (256 * L ^ 6) := hD1
+    have hone : (1:ℝ) ≤ (M:ℝ) / (256 * L ^ 6) := hD2
+    have hsum : (M:ℝ) * ((1:ℝ)/2)^V + (V:ℝ) ≤ 2 * ((M:ℝ) / (256 * L ^ 6)) := by linarith
+    have hsum2 : (M:ℝ) * ((1:ℝ)/2)^V + 1 ≤ 2 * ((M:ℝ) / (256 * L ^ 6)) := by linarith
+    have hck := hB k
+    have hcknn : (0:ℝ) ≤ ‖c k‖ := norm_nonneg _
+    have hnn : (0:ℝ) ≤ (M:ℝ) * ((1:ℝ)/2)^V + (V:ℝ) := by positivity
+    have hfirst : ‖c k‖/2 * L ^ r * ((M:ℝ) * ((1:ℝ)/2)^V + V)
+        ≤ B/2 * 1 * (2 * ((M:ℝ) / (256 * L ^ 6))) := by
+      have h1 : ‖c k‖/2 * L ^ r ≤ B/2 * 1 := by
+        have ha1 : ‖c k‖/2 * L ^ r ≤ ‖c k‖/2 * 1 :=
+          mul_le_mul_of_nonneg_left hLrle (by positivity)
+        have ha2 : ‖c k‖/2 * 1 ≤ B/2 * 1 := by linarith
+        linarith
+      have h2 : (0:ℝ) ≤ B/2 * 1 := by positivity
+      exact mul_le_mul h1 hsum hnn h2
+    have hbud6 : (M:ℝ) / (256 * L ^ 6) ≤ Bud / 4 := by
+      have : (M:ℝ) / (256 * L ^ 6) = ((M:ℝ) / (64 * L ^ 6)) / 4 := by
+        rw [div_div]; congr 1; ring
+      rw [this]
+      linarith [hblow]
+    have hmul : (B + 2) * ((M:ℝ) / (256 * L ^ 6)) ≤ (B + 2) * (Bud / 4) :=
+      mul_le_mul_of_nonneg_left hbud6 (by linarith)
+    have hBB : (0:ℝ) ≤ B * Bud := mul_nonneg hB0 hBudpos.le
+    linarith [hfirst, hsum2, hmul, hBB]
+  -- assemble
+  have hnorm : ‖classOmegaSum (sdBase h k) 0 M - sdMain (c k) κ M‖
+      ≤ 4 * (C * ((1:ℝ)/4)^k) / L * ((M:ℝ) + V) * L ^ r
+        + (‖c k‖/2 * L ^ r
+            * (4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2)
+               + ((M:ℝ) * ((1:ℝ)/2)^V + V)))
+        + ((M:ℝ) * ((1:ℝ)/2)^V + 1) := by
+    rw [hid]
+    refine le_trans (norm_add_le _ _) ?_
+    refine add_le_add (le_trans (norm_add_le _ _) (add_le_add hT1 hT2)) hT3
+  have hexpand : ‖c k‖/2 * L ^ r
+        * (4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2)
+           + ((M:ℝ) * ((1:ℝ)/2)^V + V))
+      = ‖c k‖/2 * L ^ r * (4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2))
+        + ‖c k‖/2 * L ^ r * ((M:ℝ) * ((1:ℝ)/2)^V + V) := by ring
+  rw [hexpand] at hnorm
+  have hfinal : (8 * C + 24 * Real.pi * |(h:ℝ)| * B + B + 1) * ((1:ℝ)/4)^k / L
+      * ((M:ℝ) * L ^ r) = (8 * C + 24 * Real.pi * |(h:ℝ)| * B + B + 1) * Bud := by
+    rw [hBuddef]; ring
+  rw [hfinal]
+  linarith [hnorm, ha, hb, hsmall]
 
 /-- **The shift-free node is carried by the odd class alone.** -/
 theorem sdShiftFree_of_sdOdd (h : ℤ) (hodd : SDOdd h) : SDShiftFree h := by
@@ -1388,6 +1561,9 @@ theorem isNormal_G4_of_oddNode
 
 end NormalNumbers.G4
 
+#print axioms NormalNumbers.G4.isNormal_G4_of_oddNode
+#print axioms NormalNumbers.G4.sdShiftFree_of_sdOdd
+#print axioms NormalNumbers.G4.exists_classOmegaSum_zero_bound
 #print axioms NormalNumbers.G4.isNormal_G4_of_shiftSplit
 #print axioms NormalNumbers.G4.roughSummatory_of_split
 #print axioms NormalNumbers.G4.norm_roughClassSum_sub_classOmegaSum
