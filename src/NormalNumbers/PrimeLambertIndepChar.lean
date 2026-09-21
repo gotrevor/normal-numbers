@@ -495,4 +495,58 @@ theorem exists_single_hit_residue {c : TConfig} {K J p : ℕ} (hp : 0 < p)
     exact hsep a ha i hi hne
       ((dvd_iff_eq_hitResidue hp (hitResidue_lt hp a₀ i₀) a i).mp hdvd).symm
 
+/-! ### Assembling: `IndepCharDecay` from a divergent defect sum
+
+`∏(1 − δ_p) ≤ exp(−∑ δ_p)`, so a divergent sum of local defects over any subfamily of the small
+primes kills the whole product.  This is the last analytic step of `IndepCharDecay`: what remains
+afterwards is a *counting* statement about how many small primes carry a defect. -/
+
+/-- Local defects on any subfamily control the whole product. -/
+theorem prod_norm_localChar_le_exp {q : ℤ} (C : Chain q) (N : ℕ) (Good : Finset ℕ)
+    (hsub : Good ⊆ (C.S N).small) (δ : ℕ → ℝ) (hδ0 : ∀ p ∈ Good, 0 ≤ δ p)
+    (hδ : ∀ p ∈ Good, ‖localChar C N p‖ ≤ 1 - δ p) :
+    ∏ p ∈ (C.S N).small, ‖localChar C N p‖ ≤ Real.exp (-∑ p ∈ Good, δ p) := by
+  classical
+  have hsplit : ∏ p ∈ (C.S N).small, ‖localChar C N p‖
+      = (∏ p ∈ (C.S N).small \ Good, ‖localChar C N p‖) * ∏ p ∈ Good, ‖localChar C N p‖ :=
+    (Finset.prod_sdiff hsub).symm
+  have hrest : (∏ p ∈ (C.S N).small \ Good, ‖localChar C N p‖) ≤ 1 :=
+    Finset.prod_le_one (fun p _ => norm_nonneg _)
+      (fun p hp => norm_localChar_le_one C N
+        ((C.S N).prime_small p (Finset.mem_sdiff.mp hp).1).pos)
+  have hgoodnn : (0:ℝ) ≤ ∏ p ∈ Good, ‖localChar C N p‖ :=
+    Finset.prod_nonneg (fun p _ => norm_nonneg _)
+  have hgood : (∏ p ∈ Good, ‖localChar C N p‖) ≤ Real.exp (-∑ p ∈ Good, δ p) := by
+    have hstep : ∀ p ∈ Good, ‖localChar C N p‖ ≤ Real.exp (-δ p) := by
+      intro p hp
+      refine (hδ p hp).trans ?_
+      have := Real.add_one_le_exp (-δ p)
+      linarith
+    calc (∏ p ∈ Good, ‖localChar C N p‖) ≤ ∏ p ∈ Good, Real.exp (-δ p) :=
+          Finset.prod_le_prod (fun p _ => norm_nonneg _) hstep
+      _ = Real.exp (-∑ p ∈ Good, δ p) := by
+          rw [← Real.exp_sum, ← Finset.sum_neg_distrib]
+  rw [hsplit]
+  calc (∏ p ∈ (C.S N).small \ Good, ‖localChar C N p‖) * ∏ p ∈ Good, ‖localChar C N p‖
+      ≤ 1 * ∏ p ∈ Good, ‖localChar C N p‖ :=
+        mul_le_mul_of_nonneg_right hrest hgoodnn
+    _ = ∏ p ∈ Good, ‖localChar C N p‖ := one_mul _
+    _ ≤ Real.exp (-∑ p ∈ Good, δ p) := hgood
+
+/-- **`IndepCharDecay` from a divergent defect sum.**  This is the final reduction: the
+obligation holds as soon as, along the chain, *some* subfamily of the small primes carries local
+defects whose sum diverges.  Combined with `norm_localChar_le_of_single`, `exists_free_residue`
+and `exists_single_hit_residue`, the defects are explicit sines and what is left is a count of
+class-separating small primes — no analysis. -/
+theorem indepCharDecay_of_defect_sum {q : ℤ} (C : Chain q) (Good : ℕ → Finset ℕ)
+    (δ : ℕ → ℕ → ℝ) (hsub : ∀ N, Good N ⊆ (C.S N).small)
+    (hδ0 : ∀ N, ∀ p ∈ Good N, 0 ≤ δ N p)
+    (hδ : ∀ N, ∀ p ∈ Good N, ‖localChar C N p‖ ≤ 1 - δ N p)
+    (hdiv : Tendsto (fun N => ∑ p ∈ Good N, δ N p) atTop atTop) :
+    IndepCharDecay C := by
+  refine indepCharDecay_of_localChar C ?_
+  refine squeeze_zero (fun N => Finset.prod_nonneg (fun p _ => norm_nonneg _))
+    (fun N => prod_norm_localChar_le_exp C N (Good N) (hsub N) (δ N) (hδ0 N) (hδ N)) ?_
+  exact Real.tendsto_exp_atBot.comp (tendsto_neg_atBot_iff.mpr hdiv)
+
 end NormalNumbers.PrimeLambert
