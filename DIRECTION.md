@@ -1,6 +1,15 @@
 # DIRECTION — normal-numbers 🧭
 
-## Attended operator override: 2026-09-20 20:32 EDT — `RoughSummatory` LAP (ACTIVE, one lap)
+## Attended operator override: 2026-09-20 20:32 EDT — `RoughSummatory` LAP (DONE, one lap)
+
+**Result (2026-09-21):** `src/NormalNumbers/G4WiringSummatory.lean` is **sorry-free** and
+`isNormal_G4_of_summatory`, `roughIndependenceAt_two_of_summatory`, `parityDiscrepancy_of_summatory`
+are all `[propext, Classical.choice, Quot.sound]`.  Pure addition; all ratified statements verbatim.
+Off the Chowla sector the G₄ window law now rests on **ONE** analytic input, `RoughSummatory h`.
+The `j > windowJ N` range of `ParityDiscrepancy` (where the node is silent) was proved elementarily
+(`parityDisc_tail_small`).  See `HANDOFF-2026-09-20-summatory-node.md`.  **No active override.**
+
+### (the override as fired)
 
 Run `KICKOFF-2026-09-20-summatory-node-lap.md`: new file `src/NormalNumbers/G4WiringSummatory.lean` freezing
 ONE summatory node `RoughSummatory h` (Selberg–Delange with shifts for the rough phase product, on parity
