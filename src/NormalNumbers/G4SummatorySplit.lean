@@ -626,6 +626,86 @@ lemma classOmegaSum_zero_unroll (z : ℂ) {M : ℕ} (hM : 1 ≤ M) (V : ℕ) :
         classOmegaSum_zero_eq z (one_le_halfIter hM V), ← halfIter_succ]
       ring
 
+/-! ### Tools for the 2-adic assembly -/
+
+/-- The downward companion of `norm_ofReal_one_add_cpow_sub_one_le`: a *shrinking* scale factor.
+`‖(1−y)^κ − 1‖ ≤ 4‖κ‖y` for `0 ≤ y ≤ 1/2`. -/
+theorem norm_ofReal_one_sub_cpow_sub_one_le (y : ℝ) (hy : 0 ≤ y) (hy2 : y ≤ 1/2) (κ : ℂ)
+    (hκy : ‖κ‖ * (2 * y) ≤ 1) : ‖(((1 - y : ℝ)) : ℂ) ^ κ - 1‖ ≤ 4 * (‖κ‖ * y) := by
+  have h1y : (0:ℝ) < 1 - y := by linarith
+  have hne : (((1 - y : ℝ)) : ℂ) ≠ 0 := by
+    simpa using (Complex.ofReal_ne_zero.mpr h1y.ne')
+  rw [Complex.cpow_def_of_ne_zero hne]
+  have hlog : Complex.log (((1 - y : ℝ)) : ℂ) = ((Real.log (1 - y) : ℝ) : ℂ) :=
+    (Complex.ofReal_log h1y.le).symm
+  rw [hlog]
+  -- `|log (1−y)| ≤ 2y` for `y ≤ 1/2`
+  have hlognp : Real.log (1 - y) ≤ 0 := Real.log_nonpos (by linarith) (by linarith)
+  have hlogge : -(2 * y) ≤ Real.log (1 - y) := by
+    have hkey : Real.log (1 - y) = -Real.log (1 / (1 - y)) := by
+      rw [one_div, Real.log_inv]; ring
+    have hb : Real.log (1 / (1 - y)) ≤ 2 * y := by
+      have h1 : (1:ℝ) / (1 - y) ≤ 1 + 2 * y := by
+        rw [div_le_iff₀ h1y]
+        nlinarith
+      have h2 : Real.log (1 / (1 - y)) ≤ Real.log (1 + 2 * y) :=
+        Real.log_le_log (by positivity) h1
+      have h3 : Real.log (1 + 2 * y) ≤ 2 * y := by
+        have := Real.log_le_sub_one_of_pos (show (0:ℝ) < 1 + 2 * y by linarith)
+        linarith
+      linarith
+    rw [hkey]; linarith
+  have habs : |Real.log (1 - y)| ≤ 2 * y := abs_le.mpr ⟨hlogge, by linarith⟩
+  have hw : ‖((Real.log (1 - y) : ℝ) : ℂ) * κ‖ ≤ ‖κ‖ * (2 * y) := by
+    rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, mul_comm]
+    exact mul_le_mul_of_nonneg_left habs (norm_nonneg _)
+  have hw1 : ‖((Real.log (1 - y) : ℝ) : ℂ) * κ‖ ≤ 1 := le_trans hw hκy
+  refine (Complex.norm_exp_sub_one_le hw1).trans ?_
+  linarith [hw]
+
+/-- `M ≤ 2^v · ⌈M/2^v⌉`. -/
+lemma le_halfIter_bound (M v : ℕ) : M ≤ 2 ^ v * halfIter M v := by
+  induction v with
+  | zero => simp
+  | succ v ih =>
+      have hstep : halfIter M v ≤ 2 * halfCeil (halfIter M v) := by
+        rw [halfCeil]; omega
+      have := Nat.mul_le_mul_left (2 ^ v) hstep
+      rw [halfIter_succ, pow_succ]
+      calc M ≤ 2 ^ v * halfIter M v := ih
+        _ ≤ 2 ^ v * (2 * halfCeil (halfIter M v)) := this
+        _ = 2 ^ v * 2 * halfCeil (halfIter M v) := by ring
+
+/-- The halved scale loses at most `v·log 2` of the logarithm. -/
+lemma log_halfIter_ge {M : ℕ} (hM : 1 ≤ M) (v : ℕ) :
+    Real.log M - v * Real.log 2 ≤ Real.log (halfIter M v) := by
+  have hpos : 0 < halfIter M v := one_le_halfIter hM v
+  have hle : (M : ℝ) ≤ (2:ℝ) ^ v * (halfIter M v : ℝ) := by
+    have := le_halfIter_bound M v
+    exact_mod_cast (by exact_mod_cast this : (M:ℝ) ≤ ((2 ^ v * halfIter M v : ℕ) : ℝ))
+  have h1 : Real.log M ≤ Real.log ((2:ℝ) ^ v * (halfIter M v : ℝ)) :=
+    Real.log_le_log (by exact_mod_cast hM) hle
+  rw [Real.log_mul (by positivity) (by exact_mod_cast hpos.ne'), Real.log_pow] at h1
+  linarith
+
+/-- The halved scale is at least `M/2^v`. -/
+lemma halfIter_ge_div {M : ℕ} (v : ℕ) : (M : ℝ) / 2 ^ v ≤ (halfIter M v : ℝ) := by
+  have hle : (M : ℝ) ≤ (2:ℝ) ^ v * (halfIter M v : ℝ) := by
+    have := le_halfIter_bound M v
+    exact_mod_cast (by exact_mod_cast this : (M:ℝ) ≤ ((2 ^ v * halfIter M v : ℕ) : ℝ))
+  rw [div_le_iff₀ (by positivity)]
+  linarith
+
+/-- The halved scale is at most `M/2^v + 1`. -/
+lemma halfIter_le_div {M : ℕ} (hM : 1 ≤ M) (v : ℕ) : (halfIter M v : ℝ) ≤ (M : ℝ) / 2 ^ v + 1 := by
+  have hb := halfIter_bound hM v
+  have hb' : ((2 ^ v * halfIter M v : ℕ) : ℝ) + 1 ≤ (M : ℝ) + ((2 ^ v : ℕ) : ℝ) := by
+    exact_mod_cast hb
+  push_cast at hb'
+  have hp : (0:ℝ) < (2:ℝ) ^ v := by positivity
+  rw [← sub_le_iff_le_add, le_div_iff₀ hp]
+  nlinarith [hb']
+
 /-! ### The primitive node: the ODD class alone -/
 
 /-- **The primitive Landau–Selberg–Delange node.**  One multiplicative function `n ↦ z_k^{ω_{>2}(n)}`,
