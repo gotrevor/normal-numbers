@@ -268,4 +268,99 @@ theorem radical_box_tail_exp20 (k : ℕ) {ι : Type*} [Fintype ι] [DecidableEq 
   exact radical_box_tail k hkp (fun i => (hprime i).one_lt.le.trans' (by norm_num)) hT
     (by positivity) (radical_moment_budget hinj hprime hy0 hy hle)
 
+/-! ## Joint uniform-residue transfer -/
+
+/-- The **joint model**: the radical law on states, tensored with the uniform
+law on a nonempty finite residue type `R`. -/
+noncomputable def jointModel {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (R : Type*) [Fintype R] (k : ℕ) (q : ι → ℝ)
+    (x : R × (ι → Option (Fin k))) : ℝ :=
+  weight k q x.2 / (Fintype.card R)
+
+lemma jointModel_nonneg {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {R : Type*} [Fintype R] {k : ℕ} {p : ι → ℕ}
+    (hp : ∀ i, 0 < p i) (hkp : ∀ i, k ≤ p i)
+    (x : R × (ι → Option (Fin k))) : 0 ≤ jointModel R k (primeRecip p) x := by
+  have := radical_weight_nonneg_prime hp hkp x.2
+  unfold jointModel
+  positivity
+
+lemma jointModel_mass_one {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (R : Type*) [Fintype R] [Nonempty R] (k : ℕ) (p : ι → ℕ) :
+    ∑ x : R × (ι → Option (Fin k)), jointModel R k (primeRecip p) x = 1 := by
+  have hcard : (0:ℝ) < (Fintype.card R : ℝ) := by
+    exact_mod_cast Fintype.card_pos (α := R)
+  have hinner : ∀ r : R, (∑ s : ι → Option (Fin k),
+      weight k (primeRecip p) s / (Fintype.card R : ℝ)) = 1 / (Fintype.card R : ℝ) := by
+    intro _
+    rw [← Finset.sum_div, radical_mass_one_prime]
+  rw [Fintype.sum_prod_type]
+  simp only [jointModel]
+  rw [Finset.sum_congr rfl (fun r _ => hinner r), Finset.sum_const, Finset.card_univ,
+    nsmul_eq_mul]
+  field_simp
+
+open scoped Classical in
+/-- The joint tail outside `R × B(T)` equals the state-only tail: the uniform
+residue factor integrates out. -/
+lemma jointModel_tail {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (R : Type*) [Fintype R] [Nonempty R] (k : ℕ) (p : ι → ℕ) (T : ℝ) :
+    (∑ x ∈ (Finset.univ ×ˢ retainedBox k p T)ᶜ, jointModel R k (primeRecip p) x)
+      = ∑ s ∈ (retainedBox k p T)ᶜ, weight k (primeRecip p) s := by
+  have hcard : (0:ℝ) < (Fintype.card R : ℝ) := by
+    exact_mod_cast Fintype.card_pos (α := R)
+  have hcompl : ((Finset.univ : Finset R) ×ˢ retainedBox k p T)ᶜ
+      = (Finset.univ : Finset R) ×ˢ (retainedBox k p T)ᶜ := by
+    ext x
+    simp [Finset.mem_compl, Finset.mem_product]
+  rw [hcompl, Finset.sum_product]
+  simp only [jointModel]
+  rw [Finset.sum_congr rfl (fun r _ => (Finset.sum_div _ _ _).symm), Finset.sum_const,
+    Finset.card_univ, nsmul_eq_mul]
+  field_simp
+
+open scoped Classical in
+/-- **Joint uniform-residue phase transfer.**  Let `R` be a nonempty finite
+residue type and `ν` *any* normalized nonnegative law on `R × states` — its
+residue marginal is **not** assumed uniform.  If the retained joint `L¹`
+discrepancy of `ν` against the joint model `μ(r,s) = weight(s) / |R|` is at most
+`δ`, then expectations of any `f` with `‖f‖ ≤ 1` (the small-prime phase factor
+may depend on `r`) match to within `2 k exp 20 / T^α + 2 δ`, where
+`α = 1/(2 log y)`.  The tail is `radical_box_tail_exp20`, so no moment
+hypothesis remains. -/
+theorem radical_joint_phase_transfer (k : ℕ) {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (R : Type*) [Fintype R] [Nonempty R]
+    {p : ι → ℕ} {T y δ : ℝ}
+    (hinj : Function.Injective p) (hprime : ∀ i, (p i).Prime)
+    (hkp : ∀ i, k ≤ p i) (hy0 : 0 < y) (hy : 2 ≤ Real.log y)
+    (hle : ∀ i, (p i : ℝ) ≤ y) (hT : 1 ≤ T)
+    (ν : R × (ι → Option (Fin k)) → ℝ) (hν_nonneg : ∀ x, 0 ≤ ν x)
+    (hν_one : ∑ x, ν x = 1)
+    (hδ : ∑ x ∈ Finset.univ ×ˢ retainedBox k p T,
+        |ν x - jointModel R k (primeRecip p) x| ≤ δ)
+    (f : R × (ι → Option (Fin k)) → ℂ) (hf : ∀ x, ‖f x‖ ≤ 1) :
+    ‖(∑ x, (ν x : ℂ) * f x)
+        - (∑ x, (jointModel R k (primeRecip p) x : ℂ) * f x)‖
+      ≤ 2 * ((k : ℝ) * Real.exp 20 / T ^ (1 / (2 * Real.log y))) + 2 * δ := by
+  have hppos : ∀ i, 0 < p i := fun i => (hprime i).pos
+  set μ : R × (ι → Option (Fin k)) → ℝ := jointModel R k (primeRecip p) with hμdef
+  have hμ_nonneg : ∀ x, 0 ≤ μ x := fun x => jointModel_nonneg hppos hkp x
+  have hμ_one : ∑' x, μ x = 1 := by
+    rw [tsum_fintype]; exact jointModel_mass_one R k p
+  have hν_one' : ∑' x, ν x = 1 := by rw [tsum_fintype]; exact hν_one
+  have hmain := probability_complement_phase μ ν
+    (Finset.univ ×ˢ retainedBox k p T) Summable.of_finite Summable.of_finite
+    hμ_nonneg hν_nonneg hμ_one hν_one' f hf
+  have hsub : (∑' x : {x // x ∉ (Finset.univ : Finset R) ×ˢ retainedBox k p T}, μ x)
+      = ∑ x ∈ ((Finset.univ : Finset R) ×ˢ retainedBox k p T)ᶜ, μ x := by
+    rw [tsum_fintype]
+    exact (Finset.sum_subtype _ (fun x => by simp) μ).symm
+  rw [hsub, tsum_fintype, tsum_fintype] at hmain
+  refine hmain.trans ?_
+  have htail : (∑ x ∈ ((Finset.univ : Finset R) ×ˢ retainedBox k p T)ᶜ, μ x)
+      ≤ (k : ℝ) * Real.exp 20 / T ^ (1 / (2 * Real.log y)) := by
+    rw [hμdef, jointModel_tail]
+    exact radical_box_tail_exp20 k hinj hprime hkp hy0 hy hle hT
+  linarith
+
 end NormalNumbers.PrimeModel.Radical

@@ -38,5 +38,12 @@ which quoted a `2 log y` prime bound as if it were supplied.
 
 General CRT counting; two-sided sieve discrepancy `δ` (fundamental lemma);
 phase decay; final constants.  This is a selected-prime shortcut layer, **not**
-G4 normality.  SECONDARY (joint uniform-residue transfer,
-`radical_joint_phase_transfer`) is still open.
+G4 normality.  SECONDARY is **done**: `jointModel R k q (r,s) = weight k q s / |R|`,
+`jointModel_nonneg`, `jointModel_mass_one`, `jointModel_tail` (the joint tail
+outside `R × B(T)` equals the state-only tail — the uniform residue factor
+integrates out), and `radical_joint_phase_transfer`, which composes
+`probability_complement_phase` on `R × states` with `radical_box_tail_exp20`
+to give `≤ 2 k exp 20 / T^α + 2 δ` from a retained **joint** `L¹` discrepancy
+`δ`.  The actual law `ν` is an arbitrary normalized nonnegative law: its
+residue marginal is *not* assumed uniform, and `f` may depend on `r` (so the
+small-prime phase factor may).
