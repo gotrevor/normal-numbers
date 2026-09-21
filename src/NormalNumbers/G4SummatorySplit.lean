@@ -626,6 +626,73 @@ lemma classOmegaSum_zero_unroll (z : ℂ) {M : ℕ} (hM : 1 ≤ M) (V : ℕ) :
         classOmegaSum_zero_eq z (one_le_halfIter hM V), ← halfIter_succ]
       ring
 
+/-! ### The primitive node: the ODD class alone -/
+
+/-- **The primitive Landau–Selberg–Delange node.**  One multiplicative function `n ↦ z_k^{ω_{>2}(n)}`,
+no shift, ODD arguments only.  The `windowJ X + 2` range (rather than `windowJ X`) is what lets the
+halving recursion feed the node back at the halved scales `X ≈ M/2^v ≥ √M`. -/
+def SDOdd (h : ℤ) : Prop :=
+  ∃ (c : ℕ → ℂ) (B C δ : ℝ), 0 ≤ C ∧ 0 < δ ∧
+    (∀ k, ‖c k‖ ≤ B) ∧ (∀ k, 1 ≤ k → δ ≤ ‖c k‖) ∧
+    (∀ k, 1 ≤ k → ‖c k - 1‖ ≤ B * ((1:ℝ)/4) ^ k) ∧
+    ∀ᶠ X : ℕ in atTop, ∀ k, 1 ≤ k → k ≤ windowJ X + 2 →
+      ‖classOmegaSum (sdBase h k) 1 X - sdMain (c k) (sdExponent h {k}) X‖
+        ≤ C * ((1:ℝ)/4)^k / Real.log X * ((X : ℝ) * Real.log X ^ (sdExponent h {k}).re)
+
+/-- **OPEN SUB-GOAL — the 2-adic assembly.**  Disclosed `sorry`: the even class inherits the odd
+class's asymptotic *with the same constant*, by `classOmegaSum_zero_unroll` with `2^V ≈ √M`.
+
+The three pieces, all elementary but each a real estimate:
+
+* **main terms.**  `Σ_{v=1}^{V} (c/2)·M_v·(log M_v)^κ = (c/2)·M·(log M)^κ + O(‖κ‖ M (log M)^{Re κ−1})`,
+  using `M_v = M/2^v + O(1)`, `Σ_{v≥1} 2^{-v} = 1` (this is *where the equal-constants-on-both-
+  parity-classes clause comes from*, so it is derived, not assumed), and
+  `(log M_v)^κ = (log M)^κ (1 + O(‖κ‖ v / log M))`; the sum `Σ v 2^{-v} = 2` converges.
+  Since `‖κ‖ = ‖sdExponent h {k}‖ ≤ 4π|h| 4^{-k}`, this error has exactly the node's shape.
+* **error terms.**  `Σ_{v=1}^{V} C 4^{-k} M_v (log M_v)^{Re κ−1} ≤ 8C 4^{-k} (M+V) (log M)^{Re κ−1}`,
+  using `log M_v ≥ ½ log M` on the retained range `M_v ≥ √M/2` and `Re κ ≥ −2`.
+* **remainder.**  `‖E(M_V)‖ ≤ M_V ≤ √M + 1`, negligible since the budget is
+  `≥ M (log M)^{−3}/(4 (log₂ M)²)`.
+
+Applicability of the node at the halved scales needs `k ≤ windowJ M_v + 2`, which is why `SDOdd`
+carries the `+2`: `M_v ≥ √M/2` gives `windowJ M_v ≥ windowJ M − 2`. -/
+theorem exists_classOmegaSum_zero_bound (h : ℤ) (c : ℕ → ℂ) (B C : ℝ)
+    (hC : 0 ≤ C) (hB : ∀ k, ‖c k‖ ≤ B)
+    (hodd : ∀ᶠ X : ℕ in atTop, ∀ k, 1 ≤ k → k ≤ windowJ X + 2 →
+      ‖classOmegaSum (sdBase h k) 1 X - sdMain (c k) (sdExponent h {k}) X‖
+        ≤ C * ((1:ℝ)/4)^k / Real.log X * ((X : ℝ) * Real.log X ^ (sdExponent h {k}).re)) :
+    ∃ C' : ℝ, 0 ≤ C' ∧ ∀ᶠ M : ℕ in atTop, ∀ k, 1 ≤ k → k ≤ windowJ M →
+      ‖classOmegaSum (sdBase h k) 0 M - sdMain (c k) (sdExponent h {k}) M‖
+        ≤ C' * ((1:ℝ)/4)^k / Real.log M
+            * ((M : ℝ) * Real.log M ^ (sdExponent h {k}).re) := by
+  sorry
+
+/-- **The shift-free node is carried by the odd class alone.** -/
+theorem sdShiftFree_of_sdOdd (h : ℤ) (hodd : SDOdd h) : SDShiftFree h := by
+  obtain ⟨c, B, C, δ, hC, hδ, hB, hδk, hc1, hev⟩ := hodd
+  obtain ⟨C', hC', heven⟩ := exists_classOmegaSum_zero_bound h c B C hC hB hev
+  refine ⟨c, B, max C C', δ, le_trans hC (le_max_left _ _), hδ, hB, hδk, hc1, ?_⟩
+  filter_upwards [hev, heven, eventually_ge_atTop 8] with M hoddM hevenM hM8
+  intro b hb k hk1 hkW
+  have hL1 : 1 ≤ Real.log M := one_le_log_of_eight hM8
+  have hLpos : 0 < Real.log M := lt_of_lt_of_le one_pos hL1
+  have hX : (0:ℝ) ≤ (M:ℝ) * Real.log M ^ (sdExponent h {k}).re := by positivity
+  have hp : (0:ℝ) ≤ ((1:ℝ)/4) ^ k := by positivity
+  interval_cases b
+  · refine le_trans (hevenM k hk1 hkW) ?_
+    exact bound_mono hLpos hX (mul_le_mul_of_nonneg_right (le_max_right _ _) hp)
+  · refine le_trans (hoddM k hk1 (by omega)) ?_
+    exact bound_mono hLpos hX (mul_le_mul_of_nonneg_right (le_max_left _ _) hp)
+
+/-- **Headline, re-based on the primitive odd-class node.** -/
+theorem isNormal_G4_of_oddNode
+    (hPre : ∀ h : ℤ, h ≠ 0 → ¬ ChowlaSector h → RoughSummatoryPrefix h)
+    (hOdd : ∀ h : ℤ, h ≠ 0 → ¬ ChowlaSector h → SDOdd h)
+    (hCh : ∀ h : ℤ, h ≠ 0 → ChowlaSector h → WindowDecay h)
+    (hSite : SiteDecayFull) : IsNormal 4 (primeLambertAtBase 4) :=
+  isNormal_G4_of_shiftSplit hPre
+    (fun h hh hc => sdShiftFree_of_sdOdd h (hOdd h hh hc)) hCh hSite
+
 end NormalNumbers.G4
 
 #print axioms NormalNumbers.G4.isNormal_G4_of_shiftSplit
