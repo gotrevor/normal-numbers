@@ -1000,6 +1000,70 @@ lemma err_sum_le {A : ℝ} (hA : 0 ≤ A) {r : ℝ} (hr2 : -2 ≤ r) (hr0 : r �
   have hMnn : (0:ℝ) ≤ (M:ℝ) := Nat.cast_nonneg _
   nlinarith [mul_nonneg (mul_nonneg hc hMnn) hg, hc, hg, hMnn, hLr]
 
+/-! ### Range bookkeeping and the trivial remainder -/
+
+/-- **The window range survives halving.**  This is what the `+2` in `SDOdd` pays for (only `+1` is
+actually needed): at `v ≤ V ≤ ⌊log₂ M⌋/4` the halved scale still has at least half the binary
+logarithm, so its `windowJ` drops by at most one. -/
+lemma windowJ_halfIter {M V v : ℕ} (hM : 8 ≤ M) (hv : v ≤ V) (hV : 4 * V ≤ Nat.log 2 M) :
+    windowJ M ≤ windowJ (halfIter M v) + 1 := by
+  have hM1 : 1 ≤ M := by omega
+  set Λ : ℕ := Nat.log 2 M with hΛ
+  have hΛ3 : 3 ≤ Λ := by
+    rw [hΛ]
+    have h1 : Nat.log 2 8 ≤ Nat.log 2 M := Nat.log_mono_right hM
+    have h2 : Nat.log 2 8 = 3 := by decide
+    omega
+  set X : ℕ := halfIter M v with hX
+  have hX1 : 1 ≤ X := one_le_halfIter hM1 v
+  -- `2^{Λ−v} ≤ X`
+  have hpow : (2:ℕ) ^ (Λ - v) ≤ X := by
+    have h1 : (2:ℕ) ^ Λ ≤ M := Nat.pow_log_le_self 2 (by omega)
+    have h2 : M ≤ 2 ^ v * X := le_halfIter_bound M v
+    have h3 : (2:ℕ) ^ v * 2 ^ (Λ - v) = 2 ^ Λ := by
+      rw [← pow_add]
+      congr 1
+      omega
+    have h4 : (2:ℕ) ^ v * 2 ^ (Λ - v) ≤ 2 ^ v * X := by
+      rw [h3]; omega
+    exact Nat.le_of_mul_le_mul_left h4 (Nat.two_pow_pos v)
+  have hlogX : Λ - v ≤ Nat.log 2 X := Nat.le_log_of_pow_le (by norm_num) hpow
+  -- `2^{log₂ Λ − 1} ≤ Λ/2 ≤ Λ − v ≤ log₂ X`
+  have hΛpow : (2:ℕ) ^ (Nat.log 2 Λ) ≤ Λ := Nat.pow_log_le_self 2 (by omega)
+  have hhalf : (2:ℕ) ^ (Nat.log 2 Λ - 1) ≤ Nat.log 2 X := by
+    rcases Nat.eq_zero_or_pos (Nat.log 2 Λ) with h0 | h0
+    · rw [h0]
+      simp only [Nat.zero_sub, pow_zero]
+      omega
+    · have hsplit : (2:ℕ) ^ (Nat.log 2 Λ) = 2 * 2 ^ (Nat.log 2 Λ - 1) := by
+        rw [← pow_succ']
+        congr 1
+        omega
+      omega
+  have hfinal : Nat.log 2 Λ - 1 ≤ Nat.log 2 (Nat.log 2 X) :=
+    Nat.le_log_of_pow_le (by norm_num) hhalf
+  have hw1 : windowJ M = Nat.log 2 Λ + 1 := by rw [windowJ, hΛ]
+  have hw2 : windowJ X = Nat.log 2 (Nat.log 2 X) + 1 := by rw [windowJ]
+  rw [hw1, hw2]
+  omega
+
+/-- The class sum is trivially bounded by the range length. -/
+lemma norm_classOmegaSum_le {z : ℂ} (hz : ‖z‖ = 1) (b M : ℕ) :
+    ‖classOmegaSum z b M‖ ≤ M := by
+  rw [classOmegaSum]
+  calc ‖∑ n ∈ (Finset.range M).filter (fun n => n % 2 = b), z ^ omegaAbove 2 n‖
+      ≤ ∑ n ∈ (Finset.range M).filter (fun n => n % 2 = b), ‖z ^ omegaAbove 2 n‖ :=
+        norm_sum_le _ _
+    _ ≤ ∑ _n ∈ (Finset.range M).filter (fun n => n % 2 = b), (1:ℝ) :=
+        Finset.sum_le_sum (fun n _ => by rw [norm_pow, hz, one_pow])
+    _ ≤ (M : ℝ) := by
+        rw [Finset.sum_const, nsmul_eq_mul, mul_one]
+        have : ((Finset.range M).filter (fun n => n % 2 = b)).card ≤ M := by
+          calc ((Finset.range M).filter (fun n => n % 2 = b)).card
+              ≤ (Finset.range M).card := Finset.card_filter_le _ _
+            _ = M := Finset.card_range M
+        exact_mod_cast this
+
 /-! ### The primitive node: the ODD class alone -/
 
 /-- **The primitive Landau–Selberg–Delange node.**  One multiplicative function `n ↦ z_k^{ω_{>2}(n)}`,
