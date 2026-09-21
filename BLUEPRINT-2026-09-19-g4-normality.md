@@ -100,6 +100,25 @@ main terms; `PrefixDecay` is the route where Elliott/Tao–Teräväinen-type *de
 barriers: `k → ∞`, and all scales rather than a log-density-1 set).  It does not change the class of the problem; it
 states it in the weakest form the wiring can use.
 
+## Minimal route after the windowK lap (`G4WindowK.lean`, sorry-free, axiom-clean, verified 23:35 EDT)
+
+```
+IsNormal 4 G₄  🟢 isNormal_G4_of_prefixDecay
+   ▲
+[N0″] PrefixDecay h  (∀ h ≠ 0)   🔴 THE CRUX, o(1) form, NO SECTORS:
+        ‖Σ_{m<M} ∏_{j≤k} e(h ω(m+j)/4^j)‖ ≤ ε M  eventually, uniformly for 1 ≤ k ≤ windowK M = ⌊log₂log₂log₂M⌋+1
+   ▲ 🟢 windowDecayK_of_prefixDecay
+[N0′] WindowDecayK h              (window mean along the TRIPLE-log schedule → 0)
+   ▲ 🟢 windowDecay_of_windowDecayK  (window_tail_tendsto_zero: dropping sites above windowK costs ≤ 28π|h|/log₂log₂N,
+   │                                  because only the window AVERAGE of ω enters - sum_omegaR_add_le - not its maximum)
+[N0]  WindowDecay h               (double-log schedule windowJ; the old minimal node)
+```
+
+Two routes into `PrefixDecay`: (1) the SD-sector asymptotic chain above (`RoughSummatoryPrefix` + `SDOdd`, plus a
+separate Chowla-sector argument); (2) a direct Elliott/Daboussi-type decay for `k ≤ log₂log₂log₂M` shifted ω-twists.
+The triple-log shift count is the leverage for (2): a shift-uniform loss of `exp(O(k))` per shift is now affordable.
+Known barriers for (2) stand: `k → ∞` (Tao–Teräväinen 2025 is two-point) and all scales vs a log-density-1 set.
+
 ## What would move a node
 
 - **N1c (two-point SD)**: settle whether ∑_{n≤x} z^{ω(n)} w^{ω(n+1)} has a known asymptotic for fixed

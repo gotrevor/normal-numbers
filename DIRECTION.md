@@ -8,6 +8,7 @@ double-log (`windowJ`) to triple-log (`windowK`) — the truncation cost is `≤
 the window AVERAGE of `ω` (`O(log log N)`) enters, not its maximum.  Off the SD route the G₄ window law now
 rests on the single sector-free `o(1)` node `PrefixDecay h`, via `isNormal_G4_of_prefixDecay`.
 See `HANDOFF-2026-09-20-windowK.md`.  **No active override.**
+**Ren, 2026-09-20 23:35 EDT:** run stopped by operator after lap 2 (exit 143 = the stop; lap 2 committed nothing - it was launched only because `box done` was judged against the repo-wide sorry count; bounded laps carry `--done-when sorry-free:<file>` from now on).  Verified on the host: `G4WindowK.lean` sorry-free; `isNormal_G4_of_prefixDecay`, `isNormal_G4_of_windowDecayK`, `window_tail_tendsto_zero`, `windowDecay_of_windowDecayK`, `windowDecayK_of_prefixDecay` all `[propext, Classical.choice, Quot.sound]`; all 14 ratified kickoff statements present verbatim.  **No active override.**
 
 ### (the override as fired)
 
