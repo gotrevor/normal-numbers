@@ -270,4 +270,76 @@ theorem norm_localChar_le_one_sub {q : ℤ} (C : Chain q) (N : ℕ) {p : ℕ} (h
   refine hbd.trans (le_of_eq ?_)
   field_simp
 
+/-! ### The defect in closed form
+
+`‖e x − e y‖ = 2|sin π(x−y)|`, so the local defect is a sine of the phase gap and the bound
+becomes `‖localChar p‖ ≤ 1 − sin²(π q (X_p(u) − X_p(v)))/p`. -/
+
+lemma norm_e_sub_one_eq (t : ℝ) : ‖e t - 1‖ = 2 * |Real.sin (Real.pi * t)| := by
+  have hexp : e t - 1
+      = ((Real.cos (2 * Real.pi * t) - 1 : ℝ) : ℂ)
+        + ((Real.sin (2 * Real.pi * t) : ℝ) : ℂ) * Complex.I := by
+    unfold e
+    rw [Complex.exp_mul_I, ← Complex.ofReal_cos, ← Complex.ofReal_sin]
+    push_cast
+    ring
+  rw [hexp, Complex.norm_add_mul_I]
+  have hpy := Real.sin_sq_add_cos_sq (Real.pi * t)
+  have hcos : Real.cos (2 * Real.pi * t) = 1 - 2 * Real.sin (Real.pi * t) ^ 2 := by
+    rw [show 2 * Real.pi * t = 2 * (Real.pi * t) by ring, Real.cos_two_mul]
+    nlinarith [hpy]
+  have hs : Real.sin (2 * Real.pi * t) ^ 2 = 1 - Real.cos (2 * Real.pi * t) ^ 2 := by
+    nlinarith [Real.sin_sq_add_cos_sq (2 * Real.pi * t)]
+  have hkey : (Real.cos (2 * Real.pi * t) - 1) ^ 2 + Real.sin (2 * Real.pi * t) ^ 2
+      = (2 * |Real.sin (Real.pi * t)|) ^ 2 := by
+    rw [hs, hcos]
+    have habs : |Real.sin (Real.pi * t)| ^ 2 = Real.sin (Real.pi * t) ^ 2 := sq_abs _
+    nlinarith [habs]
+  rw [hkey, Real.sqrt_sq (by positivity)]
+
+lemma norm_e_sub_e (x y : ℝ) : ‖e x - e y‖ = 2 * |Real.sin (Real.pi * (x - y))| := by
+  have hfac : e x - e y = e y * (e (x - y) - 1) := by
+    rw [mul_sub, ← e_mul, mul_one, show y + (x - y) = x by ring]
+  rw [hfac, norm_mul, norm_e, one_mul, norm_e_sub_one_eq]
+
+/-- **The local defect in closed form.** -/
+theorem norm_localChar_le_one_sub_sin {q : ℤ} (C : Chain q) (N : ℕ) {p : ℕ} (hp : 0 < p)
+    {u v : ℕ} (hu : u < p) (hv : v < p) (huv : u ≠ v) :
+    ‖localChar C N p‖
+      ≤ 1 - Real.sin (Real.pi * (q * (primePart (C.c N) (C.K N) (C.S N).J p (u : ℤ)
+              - primePart (C.c N) (C.K N) (C.S N).J p (v : ℤ)))) ^ 2 / p := by
+  have hpr : (0:ℝ) < p := by exact_mod_cast hp
+  have hbd := norm_localChar_le_one_sub C N hp hu hv huv
+  refine hbd.trans (le_of_eq ?_)
+  rw [norm_e_sub_e]
+  have harg : (q : ℝ) * primePart (C.c N) (C.K N) (C.S N).J p (u : ℤ)
+      - (q : ℝ) * primePart (C.c N) (C.K N) (C.S N).J p (v : ℤ)
+      = (q : ℝ) * (primePart (C.c N) (C.K N) (C.S N).J p (u : ℤ)
+          - primePart (C.c N) (C.K N) (C.S N).J p (v : ℤ)) := by ring
+  rw [harg]
+  have habs : |Real.sin (Real.pi * ((q : ℝ) *
+      (primePart (C.c N) (C.K N) (C.S N).J p (u : ℤ)
+        - primePart (C.c N) (C.K N) (C.S N).J p (v : ℤ))))| ^ 2
+      = Real.sin (Real.pi * ((q : ℝ) *
+      (primePart (C.c N) (C.K N) (C.S N).J p (u : ℤ)
+        - primePart (C.c N) (C.K N) (C.S N).J p (v : ℤ)))) ^ 2 := sq_abs _
+  rw [mul_pow, habs]
+  field_simp
+  ring
+
+/-- **Qualitative form**: a local factor has modulus `< 1` as soon as the `q`-phase gap between
+two residues is not an integer. -/
+theorem norm_localChar_lt_one {q : ℤ} (C : Chain q) (N : ℕ) {p : ℕ} (hp : 0 < p)
+    {u v : ℕ} (hu : u < p) (hv : v < p) (huv : u ≠ v)
+    (hgap : Real.sin (Real.pi * (q * (primePart (C.c N) (C.K N) (C.S N).J p (u : ℤ)
+              - primePart (C.c N) (C.K N) (C.S N).J p (v : ℤ)))) ≠ 0) :
+    ‖localChar C N p‖ < 1 := by
+  have hpr : (0:ℝ) < p := by exact_mod_cast hp
+  have hbd := norm_localChar_le_one_sub_sin C N hp hu hv huv
+  have hpos : 0 < Real.sin (Real.pi * (q * (primePart (C.c N) (C.K N) (C.S N).J p (u : ℤ)
+      - primePart (C.c N) (C.K N) (C.S N).J p (v : ℤ)))) ^ 2 := by positivity
+  have : 0 < Real.sin (Real.pi * (q * (primePart (C.c N) (C.K N) (C.S N).J p (u : ℤ)
+      - primePart (C.c N) (C.K N) (C.S N).J p (v : ℤ)))) ^ 2 / p := by positivity
+  linarith
+
 end NormalNumbers.PrimeLambert
