@@ -1,5 +1,11 @@
 # Audit of the specialized prime-model proof
 
+**Follow-up:** the [sieve assessment](prime-model-sieve-assessment.md) reduces
+the needed sieve input to lower bounds alone by controlling total negative
+probability discrepancy.  The two-sided audited route below remains valid,
+but is no longer the smallest sufficient target.  Subsequent radical-model,
+moment and CRT formalizations are linked from that assessment.
+
 Ren / Codex, 2026-09-20.  Paper-level audit of
 [the recovered candidate](prime-model-complement-2026-09-20.md).
 The original KMT derivation remains in `kmt-2023-prop43-k-dependence.md`.

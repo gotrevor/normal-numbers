@@ -1,5 +1,12 @@
 # The finite radical model (2026-09-21)
 
+**Sieve reassessment:** [the current assessment](prime-model-sieve-assessment.md)
+shows that lower retained-probability estimates alone suffice by normalization.
+It gives an explicit candidate lower Brun construction with the required rate.
+The two-sided interface discussed below remains sufficient, but is stronger
+than necessary.  Next decisive milestone: prove the lower weights, support and
+relative error together, not another conditional assembly theorem.
+
 Formalized in `src/NormalNumbers/PrimeModelRadical.lean`, namespace
 `NormalNumbers.PrimeModel.Radical`.  Sorry-free, axioms
 `propext, Classical.choice, Quot.sound` only.
