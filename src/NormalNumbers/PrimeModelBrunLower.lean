@@ -918,6 +918,330 @@ lemma dim_sum_le {U : Finset ℕ} {g : ℕ → ℝ} {y : ℕ} {K : ℝ} {k : ℕ
     linarith
   exact Real.exp_le_exp.1 (h1.trans (dim_prod_le hk hK hy hdim l))
 
+/-- `e^{21/20}/20 ≤ 1/4`: the constant that makes each block geometric with ratio `1/4`.
+Proved from `1 + u ≤ exp u` alone (at `u = -21/40`), with no numeric bound on `e` imported. -/
+lemma exp_const_le : Real.exp (1 / 20) * Real.exp 1 / 20 ≤ 1 / 4 := by
+  have hE : Real.exp (-(21 / 40 : ℝ)) * Real.exp (21 / 40) = 1 := by
+    rw [← Real.exp_add]; norm_num
+  have h4 : (1 : ℝ) - 21 / 40 ≤ Real.exp (-(21 / 40 : ℝ)) := by
+    have := Real.add_one_le_exp (-(21 / 40 : ℝ)); linarith
+  have hpos := Real.exp_pos (21 / 40 : ℝ)
+  have h5 : Real.exp (21 / 40) ≤ 40 / 19 := by nlinarith
+  have hsq : Real.exp (1 / 20) * Real.exp 1 = Real.exp (21 / 40) * Real.exp (21 / 40) := by
+    rw [← Real.exp_add, ← Real.exp_add]; norm_num
+  rw [hsq]
+  nlinarith
+
+/-- `e^2 ≤ 16`, from `exp (1/2) ≤ 2`. -/
+lemma exp_two_le : Real.exp 2 ≤ 16 := by
+  have hE : Real.exp (-(1 / 2 : ℝ)) * Real.exp (1 / 2) = 1 := by
+    rw [← Real.exp_add]; norm_num
+  have h4 : (1 : ℝ) - 1 / 2 ≤ Real.exp (-(1 / 2 : ℝ)) := by
+    have := Real.add_one_le_exp (-(1 / 2 : ℝ)); linarith
+  have hpos := Real.exp_pos (1 / 2 : ℝ)
+  have h5 : Real.exp (1 / 2) ≤ 2 := by nlinarith
+  have h2 : Real.exp 2 = Real.exp (1 / 2) ^ 4 := by
+    rw [← Real.exp_nat_mul]; norm_num
+  rw [h2]
+  nlinarith [pow_le_pow_left₀ hpos.le h5 4]
+
+/-- The geometric tail of the block bounds. -/
+lemma geom_tail_le (M N : ℕ) :
+    ∑ n ∈ Finset.range N, (if M ≤ n then (1 / 4 : ℝ) ^ n else 0) ≤ (1 / 4 : ℝ) ^ M * (4 / 3) := by
+  have hfil : (Finset.range N).filter (fun n => M ≤ n) = Finset.Ico M N := by
+    ext n
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
+    omega
+  rw [← Finset.sum_filter, hfil, Finset.sum_Ico_eq_sum_range]
+  have hterm : ∀ i ∈ Finset.range (N - M), (1 / 4 : ℝ) ^ (M + i) = (1 / 4 : ℝ) ^ M * (1 / 4) ^ i :=
+    fun i _ => pow_add _ _ _
+  rw [Finset.sum_congr rfl hterm, ← Finset.mul_sum]
+  have hg := geom_partial_le (a := (1 / 4 : ℝ)) (by norm_num) (by norm_num) (N - M)
+  have hp : (0 : ℝ) < (1 / 4 : ℝ) ^ M := by positivity
+  have : ((1 : ℝ) - 1 / 4)⁻¹ = 4 / 3 := by norm_num
+  rw [this] at hg
+  exact mul_le_mul_of_nonneg_left hg hp.le
+
+/-- **Structure of a first failed prefix**: its length is `2m` with `m > J`, and all of it lies
+above the real cutoff `t_{m-J}`.  A prefix of length `≤ 2J` cannot fail, because the first `J`
+cutoffs are `y` itself. -/
+lemma firstFail_struct {k : ℕ} {s : ℝ} {y : ℕ} {U F : Finset ℕ}
+    (hU : ∀ p ∈ U, p ≤ y) (hFU : F ⊆ U) (hF : FirstFail (brunCut k s y) F) :
+    ∃ m : ℕ, F.card = 2 * m ∧ Jidx s < m ∧ ∀ p ∈ F, tcut k y (m - Jidx s) < (p : ℝ) := by
+  obtain ⟨m, hm⟩ := hF.even_card
+  obtain ⟨q0, hq0, hmin, hodd, hfail, -⟩ := hF
+  have hcard : F.card = 2 * m := by omega
+  have hq0card : ab F q0 = F.card - 1 := ab_min hq0 hmin
+  have hpos : 1 ≤ F.card := Finset.card_pos.2 ⟨q0, hq0⟩
+  have hm1 : 1 ≤ m := by omega
+  have hidx : (ab F q0 + 1) / 2 = m := by rw [hq0card, hcard]; omega
+  rw [hidx] at hfail
+  refine ⟨m, hcard, ?_, ?_⟩
+  · by_contra hc
+    push_neg at hc
+    rw [brunCut, if_pos hc] at hfail
+    exact hfail (hU q0 (hFU hq0))
+  · intro p hp
+    have hmJ : ¬ m ≤ Jidx s := by
+      intro hc
+      rw [brunCut, if_pos hc] at hfail
+      exact hfail (hU q0 (hFU hq0))
+    rw [brunCut, if_neg hmJ] at hfail
+    have ht0 : (0 : ℝ) ≤ tcut k y (m - Jidx s) :=
+      Real.rpow_nonneg (Nat.cast_nonneg y) _
+    have hfail2 : ⌊tcut k y (m - Jidx s)⌋₊ < q0 := by
+      simp only [tcut]
+      omega
+    have hlt : tcut k y (m - Jidx s) < (q0 : ℝ) := (Nat.floor_lt ht0).1 hfail2
+    exact lt_of_lt_of_le hlt (by exact_mod_cast hmin p hp)
+
+private lemma one_le_prod_of {s : Finset ℕ} {f : ℕ → ℝ} (h : ∀ i ∈ s, 1 ≤ f i) :
+    1 ≤ ∏ i ∈ s, f i := by
+  calc (1 : ℝ) = ∏ _i ∈ s, (1 : ℝ) := Finset.prod_const_one.symm
+    _ ≤ ∏ i ∈ s, f i := Finset.prod_le_prod (fun i _ => zero_le_one) h
+
+private lemma prod_le_prod_subset {s t : Finset ℕ} {f : ℕ → ℝ} (hst : s ⊆ t)
+    (h1 : ∀ i ∈ t, 1 ≤ f i) (h0 : ∀ i ∈ s, 0 ≤ f i) : ∏ i ∈ s, f i ≤ ∏ i ∈ t, f i := by
+  rw [← Finset.prod_sdiff hst]
+  have hA : 1 ≤ ∏ i ∈ t \ s, f i := one_le_prod_of fun i hi => h1 i (Finset.mem_sdiff.1 hi).1
+  have hB : 0 ≤ ∏ i ∈ s, f i := Finset.prod_nonneg h0
+  nlinarith
+
+/-- **The block bound.**  The first-failure blocks of length `n` contribute at most
+`V · 4^{-n}`, and nothing at all unless `n ≥ 2J+2`. -/
+lemma block_le {k : ℕ} (hk : 1 ≤ k) {K : ℝ} (hK : 1 ≤ K) {s : ℝ} {y : ℕ}
+    (hy : Real.exp 2 ≤ (y : ℝ)) (hsA : 40 * Real.log K + 4 ≤ s)
+    {U : Finset ℕ} {g : ℕ → ℝ} (hg0 : ∀ p ∈ U, 0 ≤ g p) (hg1 : ∀ p ∈ U, g p < 1)
+    (hU : ∀ p ∈ U, p ≤ y) (hdim : Dimension U g y K k) (n : ℕ) :
+    ∑ F ∈ (Finset.powersetCard n U).filter (fun F => FirstFail (brunCut k s y) F),
+        (∏ p ∈ F, g p) * ∏ p ∈ below U F, (1 - g p)
+      ≤ (∏ p ∈ U, (1 - g p)) * (if 2 * Jidx s + 2 ≤ n then (1 / 4 : ℝ) ^ n else 0) := by
+  have hV0 : 0 ≤ ∏ p ∈ U, (1 - g p) :=
+    Finset.prod_nonneg fun p hp => by have := hg1 p hp; linarith
+  set S := (Finset.powersetCard n U).filter (fun F => FirstFail (brunCut k s y) F) with hSdef
+  rcases Finset.eq_empty_or_nonempty S with he | ⟨F₀, hF₀⟩
+  · rw [he, Finset.sum_empty]
+    have : (0 : ℝ) ≤ (if 2 * Jidx s + 2 ≤ n then (1 / 4 : ℝ) ^ n else 0) := by
+      split <;> positivity
+    exact mul_nonneg hV0 this
+  · obtain ⟨hF₀mem, hF₀ff⟩ := Finset.mem_filter.1 hF₀
+    have hF₀U : F₀ ⊆ U := (Finset.mem_powersetCard.1 hF₀mem).1
+    have hF₀card : F₀.card = n := (Finset.mem_powersetCard.1 hF₀mem).2
+    obtain ⟨m, hm2, hmJ, -⟩ := firstFail_struct hU hF₀U hF₀ff
+    have hn : n = 2 * m := by omega
+    have hl1 : 1 ≤ m - Jidx s := by omega
+    have hif : 2 * Jidx s + 2 ≤ n := by omega
+    rw [if_pos hif]
+    set l := m - Jidx s with hldef
+    set A := Aconst K with hAdef
+    set B := Bconst k with hBdef
+    set T := A + B * l with hTdef
+    have hA0 : 0 ≤ A := Real.log_nonneg hK
+    have hB0 : 0 < B := Bconst_pos hk
+    have hl0 : (1 : ℝ) ≤ (l : ℝ) := by exact_mod_cast hl1
+    have hT0 : 0 < T := by nlinarith
+    have hn0 : 0 < n := by omega
+    have hnR : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn0
+    have hAJ : A ≤ (Jidx s : ℝ) / 10 := by
+      have h1 : (s / 4 : ℝ) < (Jidx s : ℝ) + 1 := Nat.lt_floor_add_one _
+      rw [hAdef, Aconst]
+      linarith
+    have hTn : T ≤ (n : ℝ) / 20 := by
+      have hBl : B * (l : ℝ) ≤ (l : ℝ) / 10 := by
+        have hBle := Bconst_le hk
+        rw [← hBdef] at hBle
+        nlinarith
+      have hne : (n : ℝ) = 2 * ((Jidx s : ℝ) + (l : ℝ)) := by
+        have : n = 2 * (Jidx s + l) := by omega
+        rw [this]; push_cast; ring
+      rw [hTdef, hne]
+      linarith
+    set C := U.filter (fun p : ℕ => tcut k y l < (p : ℝ)) with hCdef
+    have hCU : C ⊆ U := Finset.filter_subset _ _
+    have hSsub : S ⊆ Finset.powersetCard n C := by
+      intro F hF
+      obtain ⟨hFmem, hFff⟩ := Finset.mem_filter.1 hF
+      have hFU : F ⊆ U := (Finset.mem_powersetCard.1 hFmem).1
+      have hFcard : F.card = n := (Finset.mem_powersetCard.1 hFmem).2
+      obtain ⟨m', hm2', hmJ', habove⟩ := firstFail_struct hU hFU hFff
+      have hmm : m' = m := by omega
+      subst hmm
+      exact Finset.mem_powersetCard.2
+        ⟨fun p hp => Finset.mem_filter.2 ⟨hFU hp, habove p hp⟩, hFcard⟩
+    -- the per-prefix bound
+    have hterm : ∀ F ∈ S, (∏ p ∈ F, g p) * ∏ p ∈ below U F, (1 - g p)
+        ≤ ((∏ p ∈ U, (1 - g p)) * Real.exp T) * ∏ p ∈ F, g p := by
+      intro F hF
+      obtain ⟨hFmem, hFff⟩ := Finset.mem_filter.1 hF
+      have hFU : F ⊆ U := (Finset.mem_powersetCard.1 hFmem).1
+      obtain ⟨m', hm2', hmJ', habove⟩ := firstFail_struct hU hFU hFff
+      have hFcard : F.card = n := (Finset.mem_powersetCard.1 hFmem).2
+      have hmm : m' = m := by omega
+      subst hmm
+      set D := below U F with hDdef
+      have hDU : D ⊆ U := Finset.filter_subset _ _
+      have hsdiff : U \ D ⊆ C := by
+        intro p hp
+        rw [Finset.mem_sdiff, hDdef, below, Finset.mem_filter] at hp
+        obtain ⟨hpU, hpD⟩ := hp
+        push_neg at hpD
+        obtain ⟨r, hr, hpr⟩ := hpD hpU
+        refine Finset.mem_filter.2 ⟨hpU, lt_of_lt_of_le (habove r hr) ?_⟩
+        exact_mod_cast hpr
+      have hone : ∀ p ∈ C, (1 : ℝ) ≤ (1 - g p)⁻¹ := by
+        intro p hp
+        have hpU := hCU hp
+        have h0 := hg0 p hpU
+        have h1 := hg1 p hpU
+        rw [le_inv_comm₀ (by norm_num) (by linarith)]
+        linarith
+      have hCbound : ∏ p ∈ U \ D, (1 - g p)⁻¹ ≤ Real.exp T := by
+        refine le_trans (prod_le_prod_subset hsdiff hone ?_) (dim_prod_le hk hK hy hdim l)
+        intro p hp
+        have h1 := hg1 p (Finset.mem_sdiff.1 hp).1
+        have h1' : (0 : ℝ) < 1 - g p := by linarith
+        positivity
+      have hYpos : (0 : ℝ) < ∏ p ∈ U \ D, (1 - g p) :=
+        Finset.prod_pos fun p hp => by
+          have := hg1 p (Finset.mem_sdiff.1 hp).1; linarith
+      have hYinv : (∏ p ∈ U \ D, (1 - g p))⁻¹ ≤ Real.exp T := by
+        rw [← Finset.prod_inv_distrib]; exact hCbound
+      have hY1 : 1 ≤ (∏ p ∈ U \ D, (1 - g p)) * Real.exp T := by
+        rw [inv_le_iff_one_le_mul₀ hYpos] at hYinv
+        linarith [hYinv]
+      have hXnn : (0 : ℝ) ≤ ∏ p ∈ D, (1 - g p) :=
+        Finset.prod_nonneg fun p hp => by have := hg1 p (hDU hp); linarith
+      have hDle : ∏ p ∈ D, (1 - g p) ≤ (∏ p ∈ U, (1 - g p)) * Real.exp T := by
+        rw [← Finset.prod_sdiff hDU]
+        nlinarith
+      have hgF : (0 : ℝ) ≤ ∏ p ∈ F, g p := Finset.prod_nonneg fun p hp => hg0 p (hFU hp)
+      calc (∏ p ∈ F, g p) * ∏ p ∈ D, (1 - g p)
+          ≤ (∏ p ∈ F, g p) * ((∏ p ∈ U, (1 - g p)) * Real.exp T) :=
+            mul_le_mul_of_nonneg_left hDle hgF
+        _ = ((∏ p ∈ U, (1 - g p)) * Real.exp T) * ∏ p ∈ F, g p := by ring
+    -- assemble
+    have hVexp : (0 : ℝ) ≤ (∏ p ∈ U, (1 - g p)) * Real.exp T :=
+      mul_nonneg hV0 (Real.exp_pos _).le
+    have hesymm : ∑ F ∈ Finset.powersetCard n C, ∏ p ∈ F, g p ≤ (Real.exp 1 * T / n) ^ n := by
+      refine esymm_le_pow C g (fun p hp => hg0 p (hCU hp)) hn0 hT0 ?_
+      exact dim_sum_le hk hK hy hg1 hdim l
+    have hfinal : Real.exp T * (Real.exp 1 * T / n) ^ n ≤ (1 / 4 : ℝ) ^ n := by
+      have h1 : Real.exp T ≤ Real.exp (1 / 20) ^ n := by
+        have : Real.exp ((n : ℝ) / 20) = Real.exp (1 / 20) ^ n := by
+          rw [← Real.exp_nat_mul]; congr 1; ring
+        rw [← this]
+        exact Real.exp_le_exp.2 (by linarith)
+      have hbase : 0 ≤ Real.exp 1 * T / n := by positivity
+      have h2 : Real.exp 1 * T / n ≤ Real.exp 1 / 20 := by
+        rw [div_le_div_iff₀ hnR (by norm_num)]
+        nlinarith [Real.exp_pos (1 : ℝ)]
+      have h3 : (Real.exp 1 * T / n) ^ n ≤ (Real.exp 1 / 20) ^ n := pow_le_pow_left₀ hbase h2 n
+      have h4 : Real.exp (1 / 20) ^ n * (Real.exp 1 / 20) ^ n
+          = (Real.exp (1 / 20) * Real.exp 1 / 20) ^ n := by
+        rw [← mul_pow]; congr 1; ring
+      have h5 : (Real.exp (1 / 20) * Real.exp 1 / 20) ^ n ≤ (1 / 4 : ℝ) ^ n :=
+        pow_le_pow_left₀ (by positivity) exp_const_le n
+      calc Real.exp T * (Real.exp 1 * T / n) ^ n
+          ≤ Real.exp (1 / 20) ^ n * (Real.exp 1 / 20) ^ n := by
+            refine mul_le_mul h1 h3 (by positivity) (by positivity)
+        _ = (Real.exp (1 / 20) * Real.exp 1 / 20) ^ n := h4
+        _ ≤ (1 / 4 : ℝ) ^ n := h5
+    calc ∑ F ∈ S, (∏ p ∈ F, g p) * ∏ p ∈ below U F, (1 - g p)
+        ≤ ∑ F ∈ S, ((∏ p ∈ U, (1 - g p)) * Real.exp T) * ∏ p ∈ F, g p :=
+          Finset.sum_le_sum hterm
+      _ = ((∏ p ∈ U, (1 - g p)) * Real.exp T) * ∑ F ∈ S, ∏ p ∈ F, g p := by
+          rw [Finset.mul_sum]
+      _ ≤ ((∏ p ∈ U, (1 - g p)) * Real.exp T)
+            * ∑ F ∈ Finset.powersetCard n C, ∏ p ∈ F, g p := by
+          refine mul_le_mul_of_nonneg_left ?_ hVexp
+          refine Finset.sum_le_sum_of_subset_of_nonneg hSsub ?_
+          intro F hF _
+          exact Finset.prod_nonneg fun p hp =>
+            hg0 p (hCU ((Finset.mem_powersetCard.1 hF).1 hp))
+      _ ≤ ((∏ p ∈ U, (1 - g p)) * Real.exp T) * (Real.exp 1 * T / n) ^ n :=
+          mul_le_mul_of_nonneg_left hesymm hVexp
+      _ = (∏ p ∈ U, (1 - g p)) * (Real.exp T * (Real.exp 1 * T / n) ^ n) := by ring
+      _ ≤ (∏ p ∈ U, (1 - g p)) * (1 / 4 : ℝ) ^ n := mul_le_mul_of_nonneg_left hfinal hV0
+
+/-- **Target property (3): the relative error.**  The Brun lower model sum is at least
+`(1 - 2 e^{-s/2}) V`, under exactly the elementary hypotheses and the tail-product dimension
+hypothesis of the assessment — no first-failure decomposition, factorial estimate, or lower
+bound is assumed. -/
+theorem brun_lower_three {k : ℕ} (hk : 1 ≤ k) {K : ℝ} (hK : 1 ≤ K) {s : ℝ} {y : ℕ}
+    (hy : Real.exp 2 ≤ (y : ℝ)) (hsA : 40 * Real.log K + 4 ≤ s)
+    {U : Finset ℕ} {g : ℕ → ℝ} (hg0 : ∀ p ∈ U, 0 ≤ g p) (hg1 : ∀ p ∈ U, g p < 1)
+    (hU : ∀ p ∈ U, p ≤ y) (hdim : Dimension U g y K k) :
+    (1 - 2 * Real.exp (-s / 2)) * ∏ p ∈ U, (1 - g p)
+      ≤ ∑ E ∈ U.powerset, lam (brunCut k s y) E * ∏ p ∈ E, g p := by
+  have hV0 : 0 ≤ ∏ p ∈ U, (1 - g p) :=
+    Finset.prod_nonneg fun p hp => by have := hg1 p hp; linarith
+  have hJ : (s / 4 : ℝ) < (Jidx s : ℝ) + 1 := Nat.lt_floor_add_one _
+  have key : (∏ p ∈ U, (1 - g p)) - ∑ E ∈ U.powerset, lam (brunCut k s y) E * ∏ p ∈ E, g p
+      ≤ 2 * Real.exp (-s / 2) * ∏ p ∈ U, (1 - g p) := by
+    rw [defect_eq]
+    have hsplit : ∑ F ∈ U.powerset.filter (fun F => FirstFail (brunCut k s y) F),
+          (∏ p ∈ F, g p) * ∏ p ∈ below U F, (1 - g p)
+        = ∑ n ∈ Finset.range (U.card + 1),
+            ∑ F ∈ (Finset.powersetCard n U).filter (fun F => FirstFail (brunCut k s y) F),
+              (∏ p ∈ F, g p) * ∏ p ∈ below U F, (1 - g p) := by
+      rw [Finset.sum_filter, Finset.sum_powerset]
+      exact Finset.sum_congr rfl fun n _ => (Finset.sum_filter _ _).symm
+    rw [hsplit]
+    have hblocks : ∑ n ∈ Finset.range (U.card + 1),
+          ∑ F ∈ (Finset.powersetCard n U).filter (fun F => FirstFail (brunCut k s y) F),
+            (∏ p ∈ F, g p) * ∏ p ∈ below U F, (1 - g p)
+        ≤ ∑ n ∈ Finset.range (U.card + 1),
+            (∏ p ∈ U, (1 - g p)) * (if 2 * Jidx s + 2 ≤ n then (1 / 4 : ℝ) ^ n else 0) :=
+      Finset.sum_le_sum fun n _ => block_le hk hK hy hsA hg0 hg1 hU hdim n
+    refine hblocks.trans ?_
+    rw [← Finset.mul_sum]
+    have htail : ∑ n ∈ Finset.range (U.card + 1),
+        (if 2 * Jidx s + 2 ≤ n then (1 / 4 : ℝ) ^ n else 0)
+          ≤ (1 / 4 : ℝ) ^ (2 * Jidx s + 2) * (4 / 3) := geom_tail_le _ _
+    have hpow : (1 / 4 : ℝ) ^ (2 * Jidx s + 2) = ((1 : ℝ) / 16) ^ (Jidx s) * (1 / 16) := by
+      rw [pow_add, pow_mul]; norm_num
+    have hb : (1 : ℝ) / 16 ≤ Real.exp (-2) := by
+      rw [Real.exp_neg, inv_eq_one_div]
+      exact one_div_le_one_div_of_le (Real.exp_pos 2) exp_two_le
+    have h16 : ((1 : ℝ) / 16) ^ (Jidx s) ≤ Real.exp (-(2 * (Jidx s : ℝ))) := by
+      calc ((1 : ℝ) / 16) ^ (Jidx s) ≤ (Real.exp (-2)) ^ (Jidx s) :=
+            pow_le_pow_left₀ (by norm_num) hb _
+        _ = Real.exp (-(2 * (Jidx s : ℝ))) := by
+            rw [← Real.exp_nat_mul]; congr 1; ring
+    have hexp : Real.exp (-(2 * (Jidx s : ℝ))) ≤ Real.exp 2 * Real.exp (-s / 2) := by
+      rw [← Real.exp_add]
+      exact Real.exp_le_exp.2 (by linarith)
+    have hnum : (1 / 4 : ℝ) ^ (2 * Jidx s + 2) * (4 / 3) ≤ 2 * Real.exp (-s / 2) := by
+      rw [hpow]
+      have h2 := exp_two_le
+      have hp : (0 : ℝ) < Real.exp (-s / 2) := Real.exp_pos _
+      nlinarith [h16, hexp]
+    have hchain : ∑ n ∈ Finset.range (U.card + 1),
+        (if 2 * Jidx s + 2 ≤ n then (1 / 4 : ℝ) ^ n else 0) ≤ 2 * Real.exp (-s / 2) :=
+      htail.trans hnum
+    calc (∏ p ∈ U, (1 - g p)) * ∑ n ∈ Finset.range (U.card + 1),
+          (if 2 * Jidx s + 2 ≤ n then (1 / 4 : ℝ) ^ n else 0)
+        ≤ (∏ p ∈ U, (1 - g p)) * (2 * Real.exp (-s / 2)) :=
+          mul_le_mul_of_nonneg_left hchain hV0
+      _ = 2 * Real.exp (-s / 2) * ∏ p ∈ U, (1 - g p) := by ring
+  nlinarith [key]
+
+/-- **The combined lower Brun sieve.**  Coefficient bound, support level `y ^ s`, the pointwise
+minorant for *every* bad subset, and the relative error — all three target properties, with only
+the stated elementary hypotheses and the tail-product dimension hypothesis. -/
+theorem brun_lower_fundamental {k : ℕ} (hk : 1 ≤ k) {K : ℝ} (hK : 1 ≤ K) {s : ℝ} {y : ℕ}
+    (hy : Real.exp 2 ≤ (y : ℝ)) (hs80 : 80 * (k : ℝ) ≤ s) (hsA : 40 * Real.log K + 4 ≤ s)
+    {U : Finset ℕ} {g : ℕ → ℝ} (hg0 : ∀ p ∈ U, 0 ≤ g p) (hg1 : ∀ p ∈ U, g p < 1)
+    (hU : ∀ p ∈ U, p ≤ y) (hy1 : 1 ≤ y) (hdim : Dimension U g y K k) :
+    (∀ E ⊆ U, |lam (brunCut k s y) E| ≤ 1 ∧
+        (lam (brunCut k s y) E ≠ 0 → ((∏ p ∈ E, p : ℕ) : ℝ) ≤ (y : ℝ) ^ s)) ∧
+      (∀ B ⊆ U, ∑ E ∈ B.powerset, lam (brunCut k s y) E ≤ if B = ∅ then 1 else 0) ∧
+      (1 - 2 * Real.exp (-s / 2)) * ∏ p ∈ U, (1 - g p)
+        ≤ ∑ E ∈ U.powerset, lam (brunCut k s y) E * ∏ p ∈ E, g p :=
+  ⟨fun E hEU => brun_lower_one hk hs80 hy1 hU hEU,
+   fun B _ => sum_lam_le_indicator _ B,
+   brun_lower_three hk hK hy hsA hg0 hg1 hU hdim⟩
+
 /-! ### Numeric anchors (kernel `decide`)
 
 The controls of `papers/prime-model-sieve-assessment.md`: `U = {2,3,5,7}` with the even-position
