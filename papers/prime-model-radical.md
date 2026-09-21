@@ -90,6 +90,24 @@ finite controls of those statements, not their proof.
 
 ### Analytic assembly still required
 
+### Existing counting tools to reuse
+
+`G4CRTInput.lean` already proves `NormalNumbers.G4.abs_card_filter_modEq_sub_le`:
+each residue class modulo m>0 has count within 1 of x/m on `range x`.
+It also has `apSample_filter_eq` and the finite CRT factorization `resMean_prod`.
+Use those for the radical counting bridge instead of weakening the remainder
+to the shifted-divisibility bound `x/p+2` in `G4WiringSparse.lean`.
+
+For a fixed assignment and small residue, the assigned-prime conditions give
+one progression modulo QD.  For squarefree sieve modulus e composed of
+UNASSIGNED primes, CRT gives rho(e)=k^omega(e) distinct classes modulo QDe.
+Summing the existing per-class discrepancy gives error <=rho(e), relative
+to x*rho(e)/(QDe).  Assigned primes have g=0 and contribute no such classes;
+restricting sieve support to unassigned primes makes gcd(QD,e)=1 explicit.
+Still to prove: the assignment/progression equivalence, distinct local roots,
+and their product count.  The general two-sided sieve weights are a separate
+remaining obligation, not a consequence of exact full-period CRT.
+
 The above does **not** prove the two-sided sieve fundamental lemma that the
 shortcut consumes.  Mathlib's `SelbergSieve` provides upper-bound machinery only;
 the matching lower bound (Rosser–Iwaniec / Brun with an explicit error
