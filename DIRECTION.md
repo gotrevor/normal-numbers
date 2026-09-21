@@ -9,7 +9,7 @@ weaker node `ParityDiscrepancy` via two exact covariance identities.  `isNormal_
 on the non-Chowla sector the G₄ window law now rests on exactly two open statements,
 `RoughIndependenceAt h 2` and `ParityDiscrepancy h`.  File sorry-free, all axiom-clean.
 **Sole crux now: `RoughIndependenceAt h 2`.**  See `HANDOFF-2026-09-20-parity-reduction.md`.
-No active override.
+**Ren, 2026-09-20 20:11 EDT:** run stopped by operator after lap 2 (exit 143 = the stop); verified on the host: file sorry-free, `isNormal_G4_of_rough` / `_of_parity` / `_of_prefixLimit`, `smoothNonvanishingAt_two`, `crtConstantSched_of_roughAt` all `[propext, Classical.choice, Quot.sound]`; all ratified kickoff statements present verbatim except `omegaLe_add_primorial` (`m ≠ 0`).  Lap 2 continued past this note to `PrefixLimit` (c = 1 refuted).  Blueprint SD block updated.  No active override.
 
 ## (superseded) kickoff text
 

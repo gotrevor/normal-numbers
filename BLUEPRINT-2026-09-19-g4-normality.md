@@ -28,7 +28,7 @@ IsNormal 4 G₄
                  "not within current technology".  Numerically W ≈ N^{-1/2}: decay is robust, proof is hard.
 ```
 
-## SD sector after the 2026-09-20 laps (`G4WiringRough.lean`, sorry-free, axiom-clean, verified 20:15 EDT)
+## SD sector after the 2026-09-20 laps (`G4WiringRough.lean`, sorry-free, axiom-clean, verified 20:11 EDT)
 
 `CRTConstant` is no longer the input.  N1 in schedule form (`J = windowJ N`) is a theorem from strictly
 weaker, individually probed nodes, and the small-prime half is machine-checked:
