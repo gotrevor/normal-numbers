@@ -393,12 +393,21 @@ theorem summatory_means_approx {h : ℤ} (hS : RoughSummatory h) :
       (∀ s, ‖c s‖ ≤ B) ∧
       (∀ k, 1 ≤ k → δ ≤ ‖c (Finset.Icc 1 k)‖ ∧ δ ≤ ‖c {k}‖) ∧
       (∀ k, 1 ≤ k → ‖c {k} - 1‖ ≤ B * ((1:ℝ)/4) ^ k) ∧
-      ∀ᶠ N : ℕ in atTop, ∀ k, 1 ≤ k → k ≤ windowJ N →
+      (∀ᶠ N : ℕ in atTop, ∀ k, 1 ≤ k → k ≤ windowJ N →
         ‖roughPrefixMean N h k
             - c (Finset.Icc 1 k) * ((Real.log N : ℝ) : ℂ) ^ sdExponent h (Finset.Icc 1 k)‖
           ≤ A / Real.log N * Real.log N ^ (sdExponent h (Finset.Icc 1 k)).re
         ∧ ‖roughSiteMean N h k 2 - c {k} * ((Real.log N : ℝ) : ℂ) ^ sdExponent h {k}‖
-          ≤ A * ((1:ℝ)/4) ^ k / Real.log N * Real.log N ^ (sdExponent h {k}).re := by
+          ≤ A * ((1:ℝ)/4) ^ k / Real.log N * Real.log N ^ (sdExponent h {k}).re)
+      ∧ (∀ᶠ N : ℕ in atTop, ∀ k, 1 ≤ k → k ≤ windowJ N → ∀ a, a < 2 → ∀ b, b < 2 →
+        ‖(roughClassSum h (Finset.Icc 1 k) a (2*N) - roughClassSum h (Finset.Icc 1 k) a N)
+            - (roughClassSum h (Finset.Icc 1 k) b (2*N) - roughClassSum h (Finset.Icc 1 k) b N)‖
+          ≤ A / Real.log N
+              * ((N : ℝ) * Real.log N ^ (sdExponent h (Finset.Icc 1 k)).re)
+        ∧ ‖(roughClassSum h {k} a (2*N) - roughClassSum h {k} a N)
+            - (roughClassSum h {k} b (2*N) - roughClassSum h {k} b N)‖
+          ≤ A * ((1:ℝ)/4) ^ k / Real.log N
+              * ((N : ℝ) * Real.log N ^ (sdExponent h {k}).re)) := by
   classical
   obtain ⟨c, B, C, δ, hC, hδ, hcB, hclow, hcone, hev⟩ := hS
   have hBnn : (0:ℝ) ≤ B := le_trans (norm_nonneg _) (hcB ∅)
@@ -407,60 +416,124 @@ theorem summatory_means_approx {h : ℤ} (hS : RoughSummatory h) :
   have hKnn : (0:ℝ) ≤ K := by rw [hK]; positivity
   set A : ℝ := 6 * C + 4 * B * K with hA
   have hAnn : (0:ℝ) ≤ A := by rw [hA]; positivity
-  refine ⟨c, B, A, δ, hAnn, hδ, hBnn, hcB, hclow, hcone, ?_⟩
   have hdouble : Tendsto (fun N : ℕ => 2 * N) atTop atTop :=
     tendsto_atTop_mono (fun n : ℕ => by show n ≤ 2 * n; omega) tendsto_id
   have hev2 := hdouble.eventually hev
   have hlogK : ∀ᶠ N : ℕ in atTop, max 1 K ≤ Real.log N := by
     have := Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
     exact this.eventually_ge_atTop (max 1 K)
-  filter_upwards [hev, hev2, hlogK, eventually_gt_atTop 0] with N hN hN2 hNlog hN0
-  intro k hk1 hkJ
-  have hL1 : (1:ℝ) ≤ Real.log N := le_trans (le_max_left _ _) hNlog
-  have hLK : K ≤ Real.log N := le_trans (le_max_right _ _) hNlog
-  have hkJ2 : k ≤ windowJ (2 * N) := le_trans hkJ (windowJ_mono (by omega))
-  have hq : (0:ℝ) < ((1:ℝ)/4) ^ k := by positivity
-  have hq1 : ((1:ℝ)/4) ^ k ≤ 1 := by
-    exact pow_le_one₀ (by norm_num) (by norm_num)
-  constructor
-  · -- prefix
-    have hkey := node_winApprox (h := h) (s := Finset.Icc 1 k)
-      (c := c (Finset.Icc 1 k)) (κ := sdExponent h (Finset.Icc 1 k)) (E := C) (Bκ := K)
-      hC (re_sdExponent_nonpos h _) (by rw [hK]; exact norm_sdExponent_Icc h k) hKnn hN0 hL1 hLK
-      (fun a ha => (hN a ha k hk1 hkJ).1) (fun a ha => (hN2 a ha k hk1 hkJ2).1)
-    rw [roughPrefixMean_eq_classSum N h k hN0]
-    refine le_trans hkey ?_
-    have hrp : (0:ℝ) ≤ Real.log N ^ (sdExponent h (Finset.Icc 1 k)).re :=
-      Real.rpow_nonneg (by linarith) _
+  refine ⟨c, B, A, δ, hAnn, hδ, hBnn, hcB, hclow, hcone, ?_, ?_⟩
+  · filter_upwards [hev, hev2, hlogK, eventually_gt_atTop 0] with N hN hN2 hNlog hN0
+    intro k hk1 hkJ
+    have hL1 : (1:ℝ) ≤ Real.log N := le_trans (le_max_left _ _) hNlog
+    have hLK : K ≤ Real.log N := le_trans (le_max_right _ _) hNlog
+    have hkJ2 : k ≤ windowJ (2 * N) := le_trans hkJ (windowJ_mono (by omega))
+    have hq : (0:ℝ) < ((1:ℝ)/4) ^ k := by positivity
+    have hq1 : ((1:ℝ)/4) ^ k ≤ 1 := by
+      exact pow_le_one₀ (by norm_num) (by norm_num)
+    constructor
+    · -- prefix
+      have hkey := node_winApprox (h := h) (s := Finset.Icc 1 k)
+        (c := c (Finset.Icc 1 k)) (κ := sdExponent h (Finset.Icc 1 k)) (E := C) (Bκ := K)
+        hC (re_sdExponent_nonpos h _) (by rw [hK]; exact norm_sdExponent_Icc h k) hKnn hN0 hL1 hLK
+        (fun a ha => (hN a ha k hk1 hkJ).1) (fun a ha => (hN2 a ha k hk1 hkJ2).1)
+      rw [roughPrefixMean_eq_classSum N h k hN0]
+      refine le_trans hkey ?_
+      have hrp : (0:ℝ) ≤ Real.log N ^ (sdExponent h (Finset.Icc 1 k)).re :=
+        Real.rpow_nonneg (by linarith) _
+      have hLpos : (0:ℝ) < Real.log N := by linarith
+      have h1 : 6 * C + 4 * ‖c (Finset.Icc 1 k)‖ * K ≤ A := by
+        rw [hA]
+        nlinarith [hcB (Finset.Icc 1 k), hKnn, norm_nonneg (c (Finset.Icc 1 k))]
+      have h2 : (6 * C + 4 * ‖c (Finset.Icc 1 k)‖ * K) / Real.log N ≤ A / Real.log N :=
+        div_le_div_of_nonneg_right h1 hLpos.le
+      exact mul_le_mul_of_nonneg_right h2 hrp
+    · -- singleton
+      have hkey := node_winApprox (h := h) (s := ({k} : Finset ℕ))
+        (c := c {k}) (κ := sdExponent h {k}) (E := C * ((1:ℝ)/4) ^ k)
+        (Bκ := K * ((1:ℝ)/4) ^ k)
+        (by positivity) (re_sdExponent_nonpos h _)
+        (by rw [hK]; simpa [mul_assoc] using norm_sdExponent_singleton h k)
+        (by positivity) hN0 hL1
+        (by nlinarith [hLK, hKnn, hq, hq1])
+        (fun a ha => (hN a ha k hk1 hkJ).2) (fun a ha => (hN2 a ha k hk1 hkJ2).2)
+      rw [roughSiteMean_eq_classSum N h k hN0]
+      refine le_trans hkey ?_
+      have hrp : (0:ℝ) ≤ Real.log N ^ (sdExponent h {k}).re :=
+        Real.rpow_nonneg (by linarith) _
+      have hLpos : (0:ℝ) < Real.log N := by linarith
+      have h1 : 6 * (C * ((1:ℝ)/4) ^ k) + 4 * ‖c {k}‖ * (K * ((1:ℝ)/4) ^ k)
+          ≤ A * ((1:ℝ)/4) ^ k := by
+        rw [hA]
+        nlinarith [mul_nonneg (mul_nonneg (sub_nonneg.mpr (hcB ({k} : Finset ℕ))) hKnn) hq.le]
+      have h2 : (6 * (C * ((1:ℝ)/4) ^ k) + 4 * ‖c {k}‖ * (K * ((1:ℝ)/4) ^ k)) / Real.log N
+          ≤ A * ((1:ℝ)/4) ^ k / Real.log N :=
+        div_le_div_of_nonneg_right h1 hLpos.le
+      exact mul_le_mul_of_nonneg_right h2 hrp
+  · filter_upwards [hev, hev2, hlogK, eventually_gt_atTop 0] with N hN hN2 hNlog hN0
+    intro k hk1 hkJ a ha b hb
+    have hL1 : (1:ℝ) ≤ Real.log N := le_trans (le_max_left _ _) hNlog
     have hLpos : (0:ℝ) < Real.log N := by linarith
-    have h1 : 6 * C + 4 * ‖c (Finset.Icc 1 k)‖ * K ≤ A := by
-      rw [hA]
-      nlinarith [hcB (Finset.Icc 1 k), hKnn, norm_nonneg (c (Finset.Icc 1 k))]
-    have h2 : (6 * C + 4 * ‖c (Finset.Icc 1 k)‖ * K) / Real.log N ≤ A / Real.log N :=
-      div_le_div_of_nonneg_right h1 hLpos.le
-    exact mul_le_mul_of_nonneg_right h2 hrp
-  · -- singleton
-    have hkey := node_winApprox (h := h) (s := ({k} : Finset ℕ))
-      (c := c {k}) (κ := sdExponent h {k}) (E := C * ((1:ℝ)/4) ^ k)
-      (Bκ := K * ((1:ℝ)/4) ^ k)
-      (by positivity) (re_sdExponent_nonpos h _)
-      (by rw [hK]; simpa [mul_assoc] using norm_sdExponent_singleton h k)
-      (by positivity) hN0 hL1
-      (by nlinarith [hLK, hKnn, hq, hq1])
-      (fun a ha => (hN a ha k hk1 hkJ).2) (fun a ha => (hN2 a ha k hk1 hkJ2).2)
-    rw [roughSiteMean_eq_classSum N h k hN0]
-    refine le_trans hkey ?_
-    have hrp : (0:ℝ) ≤ Real.log N ^ (sdExponent h {k}).re :=
-      Real.rpow_nonneg (by linarith) _
-    have hLpos : (0:ℝ) < Real.log N := by linarith
-    have h1 : 6 * (C * ((1:ℝ)/4) ^ k) + 4 * ‖c {k}‖ * (K * ((1:ℝ)/4) ^ k)
-        ≤ A * ((1:ℝ)/4) ^ k := by
-      rw [hA]
-      nlinarith [mul_nonneg (mul_nonneg (sub_nonneg.mpr (hcB ({k} : Finset ℕ))) hKnn) hq.le]
-    have h2 : (6 * (C * ((1:ℝ)/4) ^ k) + 4 * ‖c {k}‖ * (K * ((1:ℝ)/4) ^ k)) / Real.log N
-        ≤ A * ((1:ℝ)/4) ^ k / Real.log N :=
-      div_le_div_of_nonneg_right h1 hLpos.le
-    exact mul_le_mul_of_nonneg_right h2 hrp
+    have hkJ2 : k ≤ windowJ (2 * N) := le_trans hkJ (windowJ_mono (by omega))
+    have hq : (0:ℝ) < ((1:ℝ)/4) ^ k := by positivity
+    have hrpP : (0:ℝ) ≤ (N : ℝ) * Real.log N ^ (sdExponent h (Finset.Icc 1 k)).re := by
+      have : (0:ℝ) ≤ (N:ℝ) := Nat.cast_nonneg N
+      positivity
+    have hrpS : (0:ℝ) ≤ (N : ℝ) * Real.log N ^ (sdExponent h {k}).re := by
+      have : (0:ℝ) ≤ (N:ℝ) := Nat.cast_nonneg N
+      positivity
+    constructor
+    · have hda := node_winDiff (h := h) (s := Finset.Icc 1 k) (c := c (Finset.Icc 1 k))
+        (κ := sdExponent h (Finset.Icc 1 k)) (E := C) (a := a) hC
+        (re_sdExponent_nonpos h _) hN0 hL1 (hN a ha k hk1 hkJ).1 (hN2 a ha k hk1 hkJ2).1
+      have hdb := node_winDiff (h := h) (s := Finset.Icc 1 k) (c := c (Finset.Icc 1 k))
+        (κ := sdExponent h (Finset.Icc 1 k)) (E := C) (a := b) hC
+        (re_sdExponent_nonpos h _) hN0 hL1 (hN b hb k hk1 hkJ).1 (hN2 b hb k hk1 hkJ2).1
+      have hsplit : (roughClassSum h (Finset.Icc 1 k) a (2*N)
+            - roughClassSum h (Finset.Icc 1 k) a N)
+          - (roughClassSum h (Finset.Icc 1 k) b (2*N) - roughClassSum h (Finset.Icc 1 k) b N)
+          = ((roughClassSum h (Finset.Icc 1 k) a (2*N) - roughClassSum h (Finset.Icc 1 k) a N)
+              - (sdMain (c (Finset.Icc 1 k)) (sdExponent h (Finset.Icc 1 k)) (2*N)
+                  - sdMain (c (Finset.Icc 1 k)) (sdExponent h (Finset.Icc 1 k)) N))
+            - ((roughClassSum h (Finset.Icc 1 k) b (2*N) - roughClassSum h (Finset.Icc 1 k) b N)
+              - (sdMain (c (Finset.Icc 1 k)) (sdExponent h (Finset.Icc 1 k)) (2*N)
+                  - sdMain (c (Finset.Icc 1 k)) (sdExponent h (Finset.Icc 1 k)) N)) := by ring
+      rw [hsplit]
+      refine (norm_sub_le _ _).trans ?_
+      have hAC : 6 * C ≤ A := by rw [hA]; nlinarith [hBnn, hKnn]
+      have hfin : 3 * C / Real.log N * ((N : ℝ) * Real.log N ^
+            (sdExponent h (Finset.Icc 1 k)).re)
+          + 3 * C / Real.log N * ((N : ℝ) * Real.log N ^
+            (sdExponent h (Finset.Icc 1 k)).re)
+          ≤ A / Real.log N * ((N : ℝ) * Real.log N ^
+            (sdExponent h (Finset.Icc 1 k)).re) := by
+        have h1 : 3 * C / Real.log N + 3 * C / Real.log N ≤ A / Real.log N := by
+          rw [← add_div, div_le_div_iff_of_pos_right hLpos]; linarith
+        nlinarith [hrpP, h1]
+      linarith [hda, hdb, hfin]
+    · have hE : (0:ℝ) ≤ C * ((1:ℝ)/4) ^ k := by positivity
+      have hda := node_winDiff (h := h) (s := ({k} : Finset ℕ)) (c := c {k})
+        (κ := sdExponent h {k}) (E := C * ((1:ℝ)/4) ^ k) (a := a) hE
+        (re_sdExponent_nonpos h _) hN0 hL1 (hN a ha k hk1 hkJ).2 (hN2 a ha k hk1 hkJ2).2
+      have hdb := node_winDiff (h := h) (s := ({k} : Finset ℕ)) (c := c {k})
+        (κ := sdExponent h {k}) (E := C * ((1:ℝ)/4) ^ k) (a := b) hE
+        (re_sdExponent_nonpos h _) hN0 hL1 (hN b hb k hk1 hkJ).2 (hN2 b hb k hk1 hkJ2).2
+      have hsplit : (roughClassSum h {k} a (2*N) - roughClassSum h {k} a N)
+          - (roughClassSum h {k} b (2*N) - roughClassSum h {k} b N)
+          = ((roughClassSum h {k} a (2*N) - roughClassSum h {k} a N)
+              - (sdMain (c {k}) (sdExponent h {k}) (2*N) - sdMain (c {k}) (sdExponent h {k}) N))
+            - ((roughClassSum h {k} b (2*N) - roughClassSum h {k} b N)
+              - (sdMain (c {k}) (sdExponent h {k}) (2*N)
+                  - sdMain (c {k}) (sdExponent h {k}) N)) := by ring
+      rw [hsplit]
+      refine (norm_sub_le _ _).trans ?_
+      have hAC : 6 * (C * ((1:ℝ)/4) ^ k) ≤ A * ((1:ℝ)/4) ^ k := by
+        rw [hA]
+        nlinarith [mul_nonneg (mul_nonneg hBnn hKnn) hq.le]
+      have h1 : 3 * (C * ((1:ℝ)/4) ^ k) / Real.log N + 3 * (C * ((1:ℝ)/4) ^ k) / Real.log N
+          ≤ A * ((1:ℝ)/4) ^ k / Real.log N := by
+        rw [← add_div, div_le_div_iff_of_pos_right hLpos]; linarith
+      nlinarith [hda, hdb, hrpS, h1]
 
 end Wiring
 
@@ -599,7 +672,8 @@ set_option maxHeartbeats 1000000 in
 theorem roughIndependenceAt_two_of_summatory {h : ℤ} (hS : RoughSummatory h) :
     RoughIndependenceAt h 2 := by
   classical
-  obtain ⟨c, B, A, δ, hAnn, hδ, hBnn, hcB, hclow, hcone, hev⟩ := summatory_means_approx hS
+  obtain ⟨c, B, A, δ, hAnn, hδ, hBnn, hcB, hclow, hcone, hev, hdiff⟩ :=
+    summatory_means_approx hS
   obtain ⟨δc, hδc, hδcJ⟩ := exists_const_prod_lower hBnn hδ hclow hcone
   obtain ⟨j₀, hj₀1, hj₀⟩ := exists_geom_cut (B + 1) (by linarith)
   set p : ℝ := min (δ/2) 1 with hpdef
