@@ -549,4 +549,55 @@ theorem indepCharDecay_of_defect_sum {q : ℤ} (C : Chain q) (Good : ℕ → Fin
     (fun N => prod_norm_localChar_le_exp C N (Good N) (hsub N) (δ N) (hδ0 N) (hδ N)) ?_
   exact Real.tendsto_exp_atBot.comp (tendsto_neg_atBot_iff.mpr hdiv)
 
+/-! ### The fully assembled reduction
+
+Everything above combines into a statement of `IndepCharDecay` with **no analysis in it**: pick,
+at each `N`, one atom `a₀` and one site `i₀` of the configuration, and a family of small primes
+that are bigger than the pair count and separate the residue classes.  Then `IndepCharDecay`
+follows from divergence of `∑_p siteDefect / p` — a Mertens-type count. -/
+
+/-- The site defect `sin²(π q c(a) 2^{−(i+1)})`: nonzero exactly when `q c(a) 2^{−(i+1)} ∉ ℤ`. -/
+noncomputable def siteDefect (q : ℤ) (w : ℤ) (i : ℕ) : ℝ :=
+  Real.sin (Real.pi * (q * (w : ℝ) / 2 ^ (i + 1))) ^ 2
+
+lemma siteDefect_nonneg (q w : ℤ) (i : ℕ) : 0 ≤ siteDefect q w i := sq_nonneg _
+
+/-- A prime at which the local variable `X_p` is controlled by a single atom-site pair. -/
+def SeparatingAt {q : ℤ} (C : Chain q) (N : ℕ) (a₀ : ℕ × ℤ) (i₀ : ℕ) (p : ℕ) : Prop :=
+  ((C.c N).support ×ˢ Ico (C.K N) (C.S N).J).card < p ∧
+    ∀ a ∈ (C.c N).support, ∀ i ∈ Ico (C.K N) (C.S N).J, (a, i) ≠ (a₀, i₀) →
+      hitResidue p a i ≠ hitResidue p a₀ i₀
+
+/-- At a separating prime the local factor carries the full site defect. -/
+theorem norm_localChar_le_of_separating {q : ℤ} (C : Chain q) (N : ℕ) {a₀ : ℕ × ℤ} {i₀ : ℕ}
+    (ha₀ : a₀ ∈ (C.c N).support) (hi₀ : i₀ ∈ Ico (C.K N) (C.S N).J)
+    {p : ℕ} (hsep : SeparatingAt C N a₀ i₀ p) :
+    ‖localChar C N p‖ ≤ 1 - siteDefect q ((C.c N) a₀) i₀ / p := by
+  obtain ⟨hbig, hclass⟩ := hsep
+  have hppos : 0 < p := lt_of_le_of_lt (Nat.zero_le _) hbig
+  obtain ⟨u, hu, hhit, hother⟩ := exists_single_hit_residue (c := C.c N) (K := C.K N)
+    (J := (C.S N).J) hppos hclass
+  obtain ⟨v, hv, hfree⟩ := exists_free_residue (c := C.c N) (K := C.K N) (J := (C.S N).J) hbig
+  have huv : u ≠ v := by
+    rintro rfl
+    exact hfree a₀ ha₀ i₀ hi₀ hhit
+  exact norm_localChar_le_of_single C N hppos hu hv huv ha₀ hi₀ hhit hother hfree
+
+/-- **The fully assembled reduction of `IndepCharDecay`.** -/
+theorem indepCharDecay_of_separating {q : ℤ} (C : Chain q)
+    (a₀ : ℕ → ℕ × ℤ) (i₀ : ℕ → ℕ) (Good : ℕ → Finset ℕ)
+    (ha₀ : ∀ N, a₀ N ∈ (C.c N).support)
+    (hi₀ : ∀ N, i₀ N ∈ Ico (C.K N) (C.S N).J)
+    (hsub : ∀ N, Good N ⊆ (C.S N).small)
+    (hsep : ∀ N, ∀ p ∈ Good N, SeparatingAt C N (a₀ N) (i₀ N) p)
+    (hdiv : Tendsto (fun N => ∑ p ∈ Good N, siteDefect q ((C.c N) (a₀ N)) (i₀ N) / p)
+      atTop atTop) :
+    IndepCharDecay C := by
+  refine indepCharDecay_of_defect_sum C Good
+    (fun N p => siteDefect q ((C.c N) (a₀ N)) (i₀ N) / p) hsub ?_ ?_ hdiv
+  · intro N p _
+    exact div_nonneg (siteDefect_nonneg _ _ _) (Nat.cast_nonneg p)
+  · intro N p hp
+    exact norm_localChar_le_of_separating C N (ha₀ N) (hi₀ N) (hsep N p hp)
+
 end NormalNumbers.PrimeLambert
