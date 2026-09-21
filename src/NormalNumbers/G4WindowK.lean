@@ -72,7 +72,48 @@ theorem norm_fullWindowMean_sub_le (N : ℕ) (h : ℤ) (K J : ℕ) (hK : K ≤ J
     ‖fullWindowMean N J h - fullWindowMean N K h‖
       ≤ 4 * Real.pi * |(h : ℝ)|
           * (∑ n ∈ Finset.Ico N (2 * N), ∑ j ∈ Finset.Ico K J, omegaR (n + j + 1) / (4 : ℝ) ^ (j + 1)) / N := by
-  sorry
+  have hdiff : ∀ n : ℕ, truncTail J n - truncTail K n
+      = ∑ j ∈ Finset.Ico K J, omegaR (n + j + 1) / (4 : ℝ) ^ (j + 1) := by
+    intro n
+    rw [truncTail, truncTail, Finset.range_eq_Ico, Finset.range_eq_Ico,
+      ← Finset.sum_Ico_consecutive (fun j => omegaR (n + j + 1) / (4 : ℝ) ^ (j + 1))
+        (Nat.zero_le K) hK]
+    ring
+  have hNpos : (0:ℝ) < N := by exact_mod_cast hN
+  have hsub : fullWindowMean N J h - fullWindowMean N K h
+      = (∑ n ∈ Finset.Ico N (2 * N),
+          (ePhase (h * truncTail J n) - ePhase (h * truncTail K n))) / N := by
+    rw [fullWindowMean, fullWindowMean, ← sub_div, ← Finset.sum_sub_distrib]
+  rw [hsub, norm_div, Complex.norm_natCast]
+  rw [div_le_div_iff₀ hNpos hNpos]
+  have hbound : ‖∑ n ∈ Finset.Ico N (2 * N),
+        (ePhase (h * truncTail J n) - ePhase (h * truncTail K n))‖
+      ≤ 4 * Real.pi * |(h : ℝ)|
+          * ∑ n ∈ Finset.Ico N (2 * N),
+              ∑ j ∈ Finset.Ico K J, omegaR (n + j + 1) / (4 : ℝ) ^ (j + 1) := by
+    calc ‖∑ n ∈ Finset.Ico N (2 * N),
+            (ePhase (h * truncTail J n) - ePhase (h * truncTail K n))‖
+        ≤ ∑ n ∈ Finset.Ico N (2 * N),
+            ‖ePhase (h * truncTail J n) - ePhase (h * truncTail K n)‖ := norm_sum_le _ _
+      _ ≤ ∑ n ∈ Finset.Ico N (2 * N), 4 * Real.pi * |(h : ℝ)|
+            * ∑ j ∈ Finset.Ico K J, omegaR (n + j + 1) / (4 : ℝ) ^ (j + 1) := by
+          refine Finset.sum_le_sum (fun n _ => ?_)
+          have hnn : (0:ℝ) ≤ ∑ j ∈ Finset.Ico K J, omegaR (n + j + 1) / (4 : ℝ) ^ (j + 1) :=
+            Finset.sum_nonneg (fun j _ => by
+              have := omegaR_nonneg (n + j + 1); positivity)
+          calc ‖ePhase (h * truncTail J n) - ePhase (h * truncTail K n)‖
+              ≤ 4 * Real.pi * |(h : ℝ) * truncTail J n - (h : ℝ) * truncTail K n| :=
+                norm_ePhase_sub _ _
+            _ = 4 * Real.pi * |(h : ℝ)| * |truncTail J n - truncTail K n| := by
+                rw [← mul_sub, abs_mul]; ring
+            _ = 4 * Real.pi * |(h : ℝ)|
+                  * ∑ j ∈ Finset.Ico K J, omegaR (n + j + 1) / (4 : ℝ) ^ (j + 1) := by
+                rw [hdiff n, abs_of_nonneg hnn]
+      _ = 4 * Real.pi * |(h : ℝ)|
+            * ∑ n ∈ Finset.Ico N (2 * N),
+                ∑ j ∈ Finset.Ico K J, omegaR (n + j + 1) / (4 : ℝ) ^ (j + 1) := by
+          rw [← Finset.mul_sum]
+  nlinarith [hbound, hNpos]
 
 /-- The tail is `o(1)` along `K = windowK N`. -/
 theorem window_tail_tendsto_zero (h : ℤ) :
@@ -116,7 +157,29 @@ theorem fullWindowMean_eq_prefixSum (N J : ℕ) (h : ℤ) :
     Finset.sum_Ico_consecutive _ (Nat.zero_le N) (by omega)]
 
 theorem windowDecayK_of_prefixDecay {h : ℤ} (hP : PrefixDecay h) : WindowDecayK h := by
-  sorry
+  show Tendsto (fun N => fullWindowMean N (windowK N) h) atTop (𝓝 0)
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨M₀, hM₀⟩ := (hP (ε / 6) (by linarith)).exists_forall_of_atTop
+  refine ⟨max M₀ 1, fun N hN => ?_⟩
+  have hNM : M₀ ≤ N := le_trans (le_max_left _ _) hN
+  have hN1 : 1 ≤ N := le_trans (le_max_right _ _) hN
+  have hNpos : (0:ℝ) < N := by exact_mod_cast hN1
+  have hk1 : 1 ≤ windowK N := Nat.le_add_left 1 _
+  have hkN : windowK N ≤ windowK N := le_rfl
+  have hk2N : windowK N ≤ windowK (2 * N) := windowK_mono (by omega)
+  have hA : ‖fullPrefixSum h (windowK N) N‖ ≤ ε / 6 * N := hM₀ N hNM _ hk1 hkN
+  have hB : ‖fullPrefixSum h (windowK N) (2 * N)‖ ≤ ε / 6 * ((2 * N : ℕ) : ℝ) :=
+    hM₀ (2 * N) (by omega) _ hk1 hk2N
+  have hBcast : ‖fullPrefixSum h (windowK N) (2 * N)‖ ≤ ε / 6 * (2 * (N : ℝ)) := by
+    push_cast at hB ⊢; linarith
+  rw [dist_eq_norm, sub_zero, fullWindowMean_eq_prefixSum, norm_div, Complex.norm_natCast]
+  rw [div_lt_iff₀ hNpos]
+  calc ‖fullPrefixSum h (windowK N) (2 * N) - fullPrefixSum h (windowK N) N‖
+      ≤ ‖fullPrefixSum h (windowK N) (2 * N)‖ + ‖fullPrefixSum h (windowK N) N‖ :=
+        norm_sub_le _ _
+    _ ≤ ε / 6 * (2 * (N : ℝ)) + ε / 6 * N := by linarith
+    _ < ε * N := by nlinarith
 
 /-- **Headline**: G₄ is normal in base 4 if the `ω`-twist correlations decay at triple-log many
 shifts. -/
