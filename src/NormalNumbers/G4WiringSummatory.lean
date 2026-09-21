@@ -466,6 +466,127 @@ end Wiring
 
 /-! ### Leaf 4–6: the wirings -/
 
+/-! ### Leaf 3: uniform lower bounds on partial products -/
+
+lemma prod_ge_one_sub_sum {ι : Type*} [DecidableEq ι] (s : Finset ι) (g ε : ι → ℝ)
+    (hg : ∀ i ∈ s, 0 ≤ g i) (hε : ∀ i ∈ s, 0 ≤ ε i) (hlb : ∀ i ∈ s, 1 - ε i ≤ g i) :
+    1 - ∑ i ∈ s, ε i ≤ ∏ i ∈ s, g i := by
+  classical
+  have hmin := one_sub_sum_le_prod s (fun i => min (g i) 1) ε hε
+    (fun i hi => le_min (hg i hi) zero_le_one) (fun _ _ => min_le_right _ _)
+    (fun i hi => le_min (hlb i hi) (by linarith [hε i hi]))
+  refine hmin.trans (Finset.prod_le_prod (fun i hi => le_min (hg i hi) zero_le_one)
+    (fun i _ => min_le_left _ _))
+
+/-- Split a partial product at a cut `j₀`: a crude positive bound below the cut, a Weierstrass
+bound above it. -/
+lemma prod_Icc_split_lower (J j₀ : ℕ) (hj₀1 : 1 ≤ j₀) (g ε : ℕ → ℝ) (p : ℝ)
+    (hp0 : 0 < p) (hp1 : p ≤ 1)
+    (hlow : ∀ j, 1 ≤ j → p ≤ g j) (hεnn : ∀ j, 0 ≤ ε j)
+    (hlb : ∀ j, j₀ ≤ j → 1 - ε j ≤ g j)
+    (hsum : ∀ K, ∑ j ∈ Finset.Icc j₀ K, ε j ≤ 1/2) :
+    p ^ j₀ / 2 ≤ ∏ j ∈ Finset.Icc 1 J, g j := by
+  classical
+  have hgnn : ∀ j, 1 ≤ j → 0 ≤ g j := fun j hj => le_trans hp0.le (hlow j hj)
+  by_cases hcase : J < j₀
+  · have hp : ∏ j ∈ Finset.Icc 1 J, p ≤ ∏ j ∈ Finset.Icc 1 J, g j :=
+      Finset.prod_le_prod (fun i _ => hp0.le) (fun i hi => hlow i (Finset.mem_Icc.mp hi).1)
+    have hcard : (Finset.Icc 1 J).card = J := by simp
+    rw [Finset.prod_const, hcard] at hp
+    have hmono : p ^ j₀ ≤ p ^ J := pow_le_pow_of_le_one hp0.le hp1 (by omega)
+    have : (0:ℝ) < p ^ j₀ := by positivity
+    linarith
+  · push_neg at hcase
+    have hIcc : Finset.Icc 1 J = Finset.Ico 1 (J+1) := by
+      ext x; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega
+    have hIcc2 : Finset.Icc j₀ J = Finset.Ico j₀ (J+1) := by
+      ext x; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega
+    have hsplit := Finset.prod_Ico_consecutive g (by omega : 1 ≤ j₀) (by omega : j₀ ≤ J + 1)
+    rw [hIcc, ← hsplit]
+    have hhead : p ^ j₀ ≤ ∏ j ∈ Finset.Ico 1 j₀, g j := by
+      have hp : ∏ j ∈ Finset.Ico 1 j₀, p ≤ ∏ j ∈ Finset.Ico 1 j₀, g j :=
+        Finset.prod_le_prod (fun i _ => hp0.le) (fun i hi => hlow i (Finset.mem_Ico.mp hi).1)
+      have hcard : (Finset.Ico 1 j₀).card = j₀ - 1 := by simp
+      rw [Finset.prod_const, hcard] at hp
+      have hmono : p ^ j₀ ≤ p ^ (j₀ - 1) := pow_le_pow_of_le_one hp0.le hp1 (by omega)
+      linarith
+    have htail : (1:ℝ)/2 ≤ ∏ j ∈ Finset.Ico j₀ (J+1), g j := by
+      rw [← hIcc2]
+      have := prod_ge_one_sub_sum (Finset.Icc j₀ J) g ε
+        (fun i hi => le_trans hp0.le (hlow i (by have := (Finset.mem_Icc.mp hi).1; omega)))
+        (fun i _ => hεnn i) (fun i hi => hlb i (Finset.mem_Icc.mp hi).1)
+      linarith [hsum J]
+    have hheadnn : (0:ℝ) ≤ ∏ j ∈ Finset.Ico 1 j₀, g j :=
+      Finset.prod_nonneg (fun i hi => hgnn i (Finset.mem_Ico.mp hi).1)
+    have hppos : (0:ℝ) < p ^ j₀ := by positivity
+    nlinarith [hhead, htail, hheadnn]
+
+/-- A cut `j₀ ≥ 1` making the geometric tail summable below `1/2`. -/
+lemma exists_geom_cut (B' : ℝ) (hB' : 0 ≤ B') :
+    ∃ j₀ : ℕ, 1 ≤ j₀ ∧ ∀ K : ℕ, ∑ j ∈ Finset.Icc j₀ K, B' * ((1:ℝ)/4) ^ j ≤ 1/2 := by
+  obtain ⟨m, hm⟩ := exists_pow_lt_of_lt_one (x := 3 / (8 * (B' + 1)))
+    (by positivity) (by norm_num : ((1:ℝ)/4) < 1)
+  refine ⟨m + 1, by omega, fun K => ?_⟩
+  have hIcc : Finset.Icc (m+1) K = Finset.Ico (m+1) (K+1) := by
+    ext x; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega
+  rw [hIcc, ← Finset.mul_sum]
+  have hgeom := sum_quarter_pow_Ico_le (m+1) (K+1)
+  have hq : ((1:ℝ)/4) ^ (m+1) ≤ ((1:ℝ)/4) ^ m := by
+    exact pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
+  have hsum : ∑ j ∈ Finset.Ico (m+1) (K+1), ((1:ℝ)/4) ^ j ≤ (4/3) * ((1:ℝ)/4) ^ m := by
+    nlinarith [hgeom, hq]
+  have hsnn : (0:ℝ) ≤ ∑ j ∈ Finset.Ico (m+1) (K+1), ((1:ℝ)/4) ^ j :=
+    Finset.sum_nonneg (fun _ _ => by positivity)
+  have hmlt : ((1:ℝ)/4) ^ m < 3 / (8 * (B' + 1)) := hm
+  have hkey : B' * ((4:ℝ)/3 * ((1:ℝ)/4) ^ m) ≤ 1/2 := by
+    rw [lt_div_iff₀ (by positivity)] at hmlt
+    nlinarith [hB', hmlt, pow_nonneg (by norm_num : (0:ℝ) ≤ 1/4) m]
+  nlinarith [hB', hsum, hsnn, hkey]
+
+/-- `∏_{j≤J} L^{Re z_j} = L^{Re κ_J}`. -/
+lemma prod_rpow_sdExponent (L : ℝ) (hL : 0 < L) (h : ℤ) (J : ℕ) :
+    ∏ j ∈ Finset.Icc 1 J, L ^ (sdExponent h {j}).re
+      = L ^ (sdExponent h (Finset.Icc 1 J)).re := by
+  induction J with
+  | zero =>
+      rw [show Finset.Icc 1 0 = (∅ : Finset ℕ) from by decide, Finset.prod_empty, sdExponent,
+        Finset.sum_empty]
+      simp [Real.rpow_zero]
+  | succ J ih =>
+      rw [Finset.prod_Icc_succ_top (by omega : 1 ≤ J + 1), ih, sdExponent_Icc_succ,
+        Complex.add_re, Real.rpow_add hL]
+
+/-- `∏_{j≤J} (L:ℂ)^{z_j} = (L:ℂ)^{κ_J}`. -/
+lemma prod_cpow_sdExponent (L : ℝ) (hL : 0 < L) (h : ℤ) (J : ℕ) :
+    ∏ j ∈ Finset.Icc 1 J, ((L : ℝ) : ℂ) ^ sdExponent h {j}
+      = ((L : ℝ) : ℂ) ^ sdExponent h (Finset.Icc 1 J) := by
+  have hLc : ((L : ℝ) : ℂ) ≠ 0 := by simpa using hL.ne'
+  induction J with
+  | zero =>
+      rw [show Finset.Icc 1 0 = (∅ : Finset ℕ) from by decide, Finset.prod_empty, sdExponent,
+        Finset.sum_empty, Complex.cpow_zero]
+  | succ J ih =>
+      rw [Finset.prod_Icc_succ_top (by omega : 1 ≤ J + 1), ih, sdExponent_Icc_succ,
+        Complex.cpow_add _ _ hLc]
+
+/-- The site constants have partial products bounded away from `0`, uniformly in `J`. -/
+lemma exists_const_prod_lower {c : Finset ℕ → ℂ} {B δ : ℝ} (hBnn : 0 ≤ B) (hδ : 0 < δ)
+    (hclow : ∀ k, 1 ≤ k → δ ≤ ‖c (Finset.Icc 1 k)‖ ∧ δ ≤ ‖c {k}‖)
+    (hcone : ∀ k, 1 ≤ k → ‖c {k} - 1‖ ≤ B * ((1:ℝ)/4) ^ k) :
+    ∃ δ' : ℝ, 0 < δ' ∧ ∀ J, δ' ≤ ∏ j ∈ Finset.Icc 1 J, ‖c {j}‖ := by
+  obtain ⟨j₀, hj₀1, hj₀⟩ := exists_geom_cut B hBnn
+  refine ⟨(min δ 1) ^ j₀ / 2, by positivity, fun J => ?_⟩
+  refine prod_Icc_split_lower J j₀ hj₀1 (fun j => ‖c {j}‖) (fun j => B * ((1:ℝ)/4) ^ j)
+    (min δ 1) (lt_min hδ one_pos) (min_le_right _ _)
+    (fun j hj => le_trans (min_le_left _ _) (hclow j hj).2)
+    (fun j => by positivity) (fun j hj => ?_) hj₀
+  have hjj : 1 ≤ j := by omega
+  have h1 := hcone j hjj
+  have h2 : ‖(1:ℂ)‖ - ‖c {j}‖ ≤ ‖(1:ℂ) - c {j}‖ := norm_sub_norm_le _ _
+  rw [norm_one] at h2
+  rw [norm_sub_rev] at h1
+  linarith
+
 /-- **Wiring 1**: the summatory node gives the rough factorisation. -/
 theorem roughIndependenceAt_two_of_summatory {h : ℤ} (hS : RoughSummatory h) :
     RoughIndependenceAt h 2 := by
