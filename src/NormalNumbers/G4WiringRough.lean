@@ -2119,6 +2119,104 @@ theorem roughIndependenceAt_two_of_prefixLimit {h : ℤ} (hL : PrefixLimit h) :
         _ = C * M / 3 / Real.log N := by ring
     exact mul_le_mul_of_nonneg_right hmul hF
 
+/-! ### A per-site smooth lower bound, uniform in `j`
+
+`smoothNonvanishingAt_two` bounds the *product* below.  Restating both surviving nodes purely in
+terms of the rough means needs the per-site version: `‖smoothSiteMean N h j 2‖ ≥ δ` for every
+`j ≥ 1`, with `δ` independent of `j` and `N`. -/
+
+lemma norm_halfAvg_ge (h : ℤ) (j : ℕ) :
+    1 - 2 * Real.pi * |(h : ℝ)| * ((1:ℝ)/4) ^ j ≤ ‖halfAvg h j‖ := by
+  have hd : ‖ePhase ((h : ℝ) / (4:ℝ)^j) - ePhase 0‖ ≤ 4 * Real.pi * |(h : ℝ) / (4:ℝ)^j - 0| :=
+    norm_ePhase_sub _ _
+  have h4 : (0 : ℝ) < (4:ℝ)^j := by positivity
+  have habs2 : |(h : ℝ) / (4:ℝ)^j - 0| = |(h:ℝ)| * ((1:ℝ)/4)^j := by
+    rw [sub_zero, abs_div, abs_of_pos h4, div_pow, one_pow]
+    field_simp
+  rw [ePhase_zero, habs2] at hd
+  have hsplit : (1 : ℂ) + ePhase ((h : ℝ) / (4:ℝ)^j)
+      = 2 + (ePhase ((h : ℝ) / (4:ℝ)^j) - 1) := by ring
+  have hnorm : (2 : ℝ) - 4 * Real.pi * (|(h:ℝ)| * ((1:ℝ)/4)^j)
+      ≤ ‖(1 : ℂ) + ePhase ((h : ℝ) / (4:ℝ)^j)‖ := by
+    rw [hsplit]
+    have hle := norm_sub_norm_le (2 : ℂ) (-(ePhase ((h : ℝ) / (4:ℝ)^j) - 1))
+    have h2 : ‖(2 : ℂ)‖ = 2 := by norm_num
+    have h3 : ‖-(ePhase ((h : ℝ) / (4:ℝ)^j) - 1)‖ = ‖ePhase ((h : ℝ) / (4:ℝ)^j) - 1‖ := norm_neg _
+    have h4' : (2 : ℂ) - (-(ePhase ((h : ℝ) / (4:ℝ)^j) - 1))
+        = 2 + (ePhase ((h : ℝ) / (4:ℝ)^j) - 1) := by ring
+    rw [h2, h3, h4'] at hle
+    linarith [hle, hd]
+  rw [halfAvg, norm_div, Complex.norm_ofNat]
+  linarith [hnorm]
+
+/-- **Uniform per-site lower bound on the period average.** -/
+theorem exists_halfAvg_lower {h : ℤ} (hh : h ≠ 0) (hc : ¬ ChowlaSector h) :
+    ∃ δ : ℝ, 0 < δ ∧ ∀ j, 1 ≤ j → δ ≤ ‖halfAvg h j‖ := by
+  classical
+  have hpi : (0 : ℝ) < Real.pi := Real.pi_pos
+  have habs : (0 : ℝ) < |(h : ℝ)| := by
+    have : ((h : ℝ)) ≠ 0 := Int.cast_ne_zero.mpr hh
+    positivity
+  obtain ⟨m, hm⟩ := pow_unbounded_of_one_lt (4 * Real.pi * |(h : ℝ)|) (by norm_num : (1:ℝ) < 4)
+  set j₁ : ℕ := m + 1 with hj₁
+  have hj₁1 : 1 ≤ j₁ := by omega
+  have hcut : 4 * Real.pi * |(h : ℝ)| < (4 : ℝ) ^ j₁ :=
+    hm.trans_le (pow_le_pow_right₀ (by norm_num) (by omega))
+  -- for `j ≥ j₁` the tail bound already gives `1/2`
+  have htail : ∀ j, j₁ ≤ j → (1:ℝ)/2 ≤ ‖halfAvg h j‖ := by
+    intro j hj
+    refine le_trans ?_ (norm_halfAvg_ge h j)
+    have hmono : ((1:ℝ)/4)^j ≤ ((1:ℝ)/4)^j₁ :=
+      pow_le_pow_of_le_one (by norm_num) (by norm_num) hj
+    have hq : ((1:ℝ)/4)^j₁ = 1 / (4:ℝ)^j₁ := by rw [div_pow, one_pow]
+    have h4pos : (0:ℝ) < (4:ℝ)^j₁ := by positivity
+    have hkey : 2 * Real.pi * |(h : ℝ)| * ((1:ℝ)/4)^j₁ ≤ 1/2 := by
+      rw [hq, mul_one_div, div_le_div_iff₀ h4pos (by norm_num : (0:ℝ) < 2)]
+      nlinarith [hcut, hpi, habs]
+    have hcoef : (0:ℝ) ≤ 2 * Real.pi * |(h : ℝ)| := by positivity
+    nlinarith [mul_le_mul_of_nonneg_left hmono hcoef, hkey]
+  -- the finitely many small `j` are handled by the (positive) head product
+  have hApos : ∀ j, 1 ≤ j → 0 < ‖halfAvg h j‖ := by
+    intro j hj
+    rw [norm_pos_iff, halfAvg]
+    intro hzero
+    have h1 : (1 : ℂ) + ePhase ((h : ℝ) / (4:ℝ)^j) = 0 := by
+      field_simp at hzero; linear_combination hzero
+    exact ePhase_ne_neg_one_of_not_chowla hh hc hj (by linear_combination h1)
+  set δ₀ : ℝ := ∏ j ∈ Finset.Ico 1 j₁, ‖halfAvg h j‖ with hδ₀
+  have hδ₀pos : 0 < δ₀ :=
+    Finset.prod_pos (fun j hj => hApos j (Finset.mem_Ico.mp hj).1)
+  refine ⟨min ((1:ℝ)/2) δ₀, lt_min (by norm_num) hδ₀pos, fun j hj => ?_⟩
+  by_cases hcase : j₁ ≤ j
+  · exact le_trans (min_le_left _ _) (htail j hcase)
+  · refine le_trans (min_le_right _ _) ?_
+    push_neg at hcase
+    have hmem : j ∈ Finset.Ico 1 j₁ := Finset.mem_Ico.mpr ⟨hj, hcase⟩
+    rw [hδ₀, ← Finset.prod_erase_mul _ _ hmem]
+    have h1 : (∏ i ∈ (Finset.Ico 1 j₁).erase j, ‖halfAvg h i‖) ≤ 1 :=
+      Finset.prod_le_one (fun i _ => norm_nonneg _) (fun i _ => norm_halfAvg_le_one h i)
+    nlinarith [norm_nonneg (halfAvg h j),
+      Finset.prod_nonneg (fun i (_ : i ∈ (Finset.Ico 1 j₁).erase j) => norm_nonneg (halfAvg h i))]
+
+/-- **Uniform per-site lower bound on the smooth site mean.** -/
+theorem exists_smoothSiteMean_lower {h : ℤ} (hh : h ≠ 0) (hc : ¬ ChowlaSector h) :
+    ∃ δ : ℝ, 0 < δ ∧ ∀ᶠ N : ℕ in atTop, ∀ j, 1 ≤ j → δ ≤ ‖smoothSiteMean N h j 2‖ := by
+  obtain ⟨δ, hδ, hlow⟩ := exists_halfAvg_lower hh hc
+  refine ⟨δ / 2, by positivity, ?_⟩
+  have hev : ∀ᶠ N : ℕ in atTop, (4:ℝ) / N ≤ δ / 2 := by
+    have hlim : Tendsto (fun N : ℕ => (4:ℝ) / N) atTop (𝓝 0) :=
+      tendsto_const_nhds.div_atTop tendsto_natCast_atTop_atTop
+    exact (hlim.eventually (eventually_lt_nhds (by positivity : (0:ℝ) < δ / 2))).mono
+      (fun N hN => hN.le)
+  filter_upwards [hev, eventually_gt_atTop 0] with N hN hN0
+  intro j hj
+  have hclose := smoothSiteMean_two_close h j hj N hN0
+  have h1 := norm_sub_norm_le (halfAvg h j) (smoothSiteMean N h j 2)
+  have h2 : ‖halfAvg h j - smoothSiteMean N h j 2‖ = ‖smoothSiteMean N h j 2 - halfAvg h j‖ :=
+    norm_sub_rev _ _
+  rw [h2] at h1
+  linarith [hlow j hj, hclose, hN]
+
 /-! ### Forced facts, and the `cpow` estimate any Selberg–Delange wiring needs -/
 
 /-- `ρ 1 = 0` is forced: the prefix at `k = 1` is empty, so the first covariance vanishes. -/
