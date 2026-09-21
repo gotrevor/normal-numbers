@@ -387,3 +387,4 @@ import NormalNumbers.PrimeModelRadical
 import NormalNumbers.PrimeModelRadicalTail
 import NormalNumbers.PrimeModelRadicalMoment
 import NormalNumbers.PrimeModelRadicalCRT
+import NormalNumbers.PrimeModelBrunLower

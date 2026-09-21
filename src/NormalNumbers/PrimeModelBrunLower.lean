@@ -1,0 +1,472 @@
+/-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+import Mathlib.Algebra.BigOperators.Ring.Finset
+import Mathlib.Data.Nat.Choose.Sum
+import Mathlib.Data.Finset.Max
+import Mathlib.Tactic
+
+/-!
+# The lower Brun sieve: weights, first-failure decomposition, pointwise minorant
+
+This file builds the **lower** Brun sieve weights of `papers/prime-model-sieve-assessment.md`
+from scratch, over an arbitrary finite set `U` of distinct naturals (primality is never used).
+
+For a finite set `E` listed in *decreasing* order `p₁ > p₂ > ⋯ > p_r` and a cutoff sequence
+`Y : ℕ → ℕ`, the Brun weight is
+
+    lam Y E = (-1) ^ r   if `p_{2j} ≤ Y j` for every `2j ≤ r`,     0 otherwise.
+
+Instead of lists we use the *rank from the top*: for `q ∈ E`,
+`ab E q = #{p ∈ E | q < p}` is the rank of `q` minus one, so "`q` sits at an even position"
+means `ab E q` is odd, and the position is then `(ab E q + 1) / 2`.  This makes admissibility
+(`Adm`) a purely local, decidable condition and — crucially — one that only depends on the part
+of `E` weakly above each element.
+
+## Main results
+
+* `sum_not_adm_eq` — the **first-failure decomposition** (the engine of the file): for any
+  weight function `f` and any `B`,
+  `∑_{E ⊆ B, ¬ Adm E} (-1)^{#E} ∏_{p ∈ E} f p
+     = ∑_{F ⊆ B, FirstFail F} (∏_{p ∈ F} f p) · ∏_{p ∈ B, p < min F} (1 - f p)`.
+  Every failed subset is `F ∪ S` for a unique first failed even prefix `F` and an arbitrary
+  set `S` of elements below `F`; the inner sum over `S` telescopes by `Finset.prod_sub`.
+* `sum_lam_le_indicator` — **the pointwise minorant (property (2))**: for *every* `B ⊆ U`,
+  `∑_{E ⊆ B} lam Y E ≤ if B = ∅ then 1 else 0`.  Obtained from `sum_not_adm_eq` with `f = 1`:
+  each first-failure block contributes `∏_{p < min F} (1 - 1) ≥ 0`.
+* `lam_abs_le_one` — `|lam Y E| ≤ 1` (part of property (1)).
+* `defect_eq` — the **exact model defect** `V - ∑_E lam E ∏_E g` as a nonnegative sum over
+  first-failure prefixes; this is the starting point of the relative-error estimate (3).
+-/
+
+namespace NormalNumbers.PrimeModel.Brun
+
+open Finset
+
+/-- `ab E q` is the number of elements of `E` strictly above `q`.  For `q ∈ E` this is the rank
+of `q`, counted from the largest element, minus one. -/
+def ab (E : Finset ℕ) (q : ℕ) : ℕ := (E.filter (fun p => q < p)).card
+
+/-- Brun admissibility: every element sitting at an **even** position `(ab + 1)/2` from the top
+(i.e. with `ab` odd) is at most the corresponding cutoff. -/
+def Adm (Y : ℕ → ℕ) (E : Finset ℕ) : Prop :=
+  ∀ q ∈ E, Odd (ab E q) → q ≤ Y ((ab E q + 1) / 2)
+
+instance (Y : ℕ → ℕ) (E : Finset ℕ) : Decidable (Adm Y E) := by unfold Adm; infer_instance
+
+/-- The Brun lower-sieve weight. -/
+noncomputable def lam (Y : ℕ → ℕ) (E : Finset ℕ) : ℝ := if Adm Y E then (-1) ^ E.card else 0
+
+lemma lam_abs_le_one (Y : ℕ → ℕ) (E : Finset ℕ) : |lam Y E| ≤ 1 := by
+  unfold lam; split
+  · simp
+  · norm_num
+
+lemma lam_eq_of_adm {Y : ℕ → ℕ} {E : Finset ℕ} (h : Adm Y E) :
+    lam Y E = (-1) ^ E.card := if_pos h
+
+lemma lam_eq_zero_of_not_adm {Y : ℕ → ℕ} {E : Finset ℕ} (h : ¬ Adm Y E) : lam Y E = 0 := if_neg h
+
+/-! ### Elementary properties of `ab` -/
+
+lemma ab_filter_ge (E : Finset ℕ) {q0 q : ℕ} (h : q0 ≤ q) :
+    ab (E.filter (fun p => q0 ≤ p)) q = ab E q := by
+  unfold ab
+  congr 1
+  ext p
+  simp only [mem_filter]
+  constructor
+  · rintro ⟨⟨hp, _⟩, h2⟩; exact ⟨hp, h2⟩
+  · rintro ⟨hp, h2⟩; exact ⟨⟨hp, h.trans h2.le⟩, h2⟩
+
+lemma ab_union_of_lt {F S : Finset ℕ} (hS : ∀ p ∈ S, ∀ r ∈ F, p < r) {q : ℕ} (hq : q ∈ F) :
+    ab (F ∪ S) q = ab F q := by
+  unfold ab
+  congr 1
+  ext p
+  simp only [mem_filter, mem_union]
+  constructor
+  · rintro ⟨hp | hp, h2⟩
+    · exact ⟨hp, h2⟩
+    · exact absurd (hS p hp q hq) (by omega)
+  · rintro ⟨hp, h2⟩; exact ⟨Or.inl hp, h2⟩
+
+lemma ab_min {F : Finset ℕ} {q0 : ℕ} (hq0 : q0 ∈ F) (h : ∀ p ∈ F, q0 ≤ p) :
+    ab F q0 = F.card - 1 := by
+  have : F.filter (fun p => q0 < p) = F.erase q0 := by
+    ext p
+    simp only [mem_filter, mem_erase]
+    constructor
+    · rintro ⟨hp, h2⟩; exact ⟨by omega, hp⟩
+    · rintro ⟨h2, hp⟩; exact ⟨hp, lt_of_le_of_ne (h p hp) (Ne.symm h2)⟩
+  unfold ab
+  rw [this, card_erase_of_mem hq0]
+
+/-! ### First failures -/
+
+/-- The elements of `E` that violate admissibility. -/
+def FailSet (Y : ℕ → ℕ) (E : Finset ℕ) : Finset ℕ :=
+  E.filter (fun q => Odd (ab E q) ∧ ¬ q ≤ Y ((ab E q + 1) / 2))
+
+lemma failSet_nonempty_iff (Y : ℕ → ℕ) (E : Finset ℕ) :
+    (FailSet Y E).Nonempty ↔ ¬ Adm Y E := by
+  unfold FailSet Adm
+  rw [Finset.filter_nonempty_iff]
+  constructor
+  · rintro ⟨q, hq, h1, h2⟩ hA; exact h2 (hA q hq h1)
+  · intro h
+    by_contra hc
+    refine h fun q hq h1 => ?_
+    by_contra h2
+    exact hc ⟨q, hq, h1, h2⟩
+
+private lemma sup_id_mem {s : Finset ℕ} (h : s.Nonempty) : s.sup id ∈ s := by
+  have : s.sup id = s.max' h := by rw [Finset.max'_eq_sup', Finset.sup'_eq_sup]
+  rw [this]; exact s.max'_mem h
+
+/-- The largest failing element of `E` (junk value `0` if there is none). -/
+def topFail (Y : ℕ → ℕ) (E : Finset ℕ) : ℕ := (FailSet Y E).sup id
+
+/-- The **first failed prefix** of `E`: the part of `E` weakly above the largest failing
+element.  Its length is even, and it is the first even prefix that violates its cutoff. -/
+def ff (Y : ℕ → ℕ) (E : Finset ℕ) : Finset ℕ := E.filter (fun p => topFail Y E ≤ p)
+
+/-- `F` is a first failed prefix: it has a least element `q0` which fails its (even) cutoff,
+and no element above `q0` fails. -/
+def FirstFail (Y : ℕ → ℕ) (F : Finset ℕ) : Prop :=
+  ∃ q0 ∈ F, (∀ p ∈ F, q0 ≤ p) ∧ Odd (ab F q0) ∧ ¬ q0 ≤ Y ((ab F q0 + 1) / 2) ∧
+    ∀ q ∈ F, q ≠ q0 → Odd (ab F q) → q ≤ Y ((ab F q + 1) / 2)
+
+instance (Y : ℕ → ℕ) (F : Finset ℕ) : Decidable (FirstFail Y F) := by
+  unfold FirstFail; infer_instance
+
+/-- A first failed prefix has **even** cardinality: its least element sits at an even position
+from the top. -/
+lemma FirstFail.even_card {Y : ℕ → ℕ} {F : Finset ℕ} (h : FirstFail Y F) : Even F.card := by
+  obtain ⟨q0, hq0, hmin, hodd, -, -⟩ := h
+  rw [ab_min hq0 hmin] at hodd
+  have h1 : 1 ≤ F.card := card_pos.2 ⟨q0, hq0⟩
+  rw [Nat.odd_iff] at hodd
+  rw [Nat.even_iff]
+  omega
+
+/-- The set of elements of `B` lying strictly below every element of `F`. -/
+def below (B F : Finset ℕ) : Finset ℕ := B.filter (fun p => ∀ r ∈ F, p < r)
+
+/-! ### Direction A: the first failed prefix of a non-admissible set -/
+
+section DirA
+
+variable {Y : ℕ → ℕ} {E : Finset ℕ} (hE : ¬ Adm Y E)
+
+include hE
+
+private lemma topFail_mem : topFail Y E ∈ FailSet Y E :=
+  sup_id_mem ((failSet_nonempty_iff Y E).2 hE)
+
+private lemma topFail_max {q : ℕ} (hq : q ∈ FailSet Y E) : q ≤ topFail Y E :=
+  Finset.le_sup (f := id) hq
+
+lemma ff_firstFail : FirstFail Y (ff Y E) := by
+  set q0 := topFail Y E with hq0def
+  have hmem := topFail_mem hE
+  rw [FailSet, mem_filter] at hmem
+  obtain ⟨hq0E, hq0odd, hq0fail⟩ := hmem
+  have habq0 : ab (ff Y E) q0 = ab E q0 := ab_filter_ge E (le_refl q0)
+  refine ⟨q0, mem_filter.2 ⟨hq0E, le_refl q0⟩, fun p hp => (mem_filter.1 hp).2, ?_, ?_, ?_⟩
+  · rw [habq0]; exact hq0odd
+  · rw [habq0]; exact hq0fail
+  · intro q hq hne hodd
+    obtain ⟨hqE, hqge⟩ := mem_filter.1 hq
+    have habq : ab (ff Y E) q = ab E q := ab_filter_ge E hqge
+    rw [habq] at hodd ⊢
+    by_contra hcon
+    have : q ∈ FailSet Y E := mem_filter.2 ⟨hqE, hodd, hcon⟩
+    exact hne (le_antisymm (topFail_max hE this) hqge)
+
+lemma ff_subset : ff Y E ⊆ E := filter_subset _ _
+
+lemma sdiff_ff_mem {B : Finset ℕ} (hEB : E ⊆ B) : E \ ff Y E ⊆ below B (ff Y E) := by
+  intro p hp
+  rw [mem_sdiff, ff, mem_filter] at hp
+  obtain ⟨hpE, hp2⟩ := hp
+  have hlt : p < topFail Y E := by
+    by_contra hc
+    exact hp2 ⟨hpE, by omega⟩
+  refine mem_filter.2 ⟨hEB hpE, fun r hr => ?_⟩
+  exact lt_of_lt_of_le hlt (mem_filter.1 hr).2
+
+lemma ff_union_sdiff : ff Y E ∪ (E \ ff Y E) = E :=
+  Finset.union_sdiff_of_subset (ff_subset hE)
+
+end DirA
+
+/-! ### Direction B: reconstructing a non-admissible set from a prefix and a tail -/
+
+section DirB
+
+variable {Y : ℕ → ℕ} {F S : Finset ℕ}
+
+lemma disjoint_of_below (hS : ∀ p ∈ S, ∀ r ∈ F, p < r) : Disjoint F S := by
+  rw [Finset.disjoint_right]
+  intro p hpS hpF
+  exact absurd (hS p hpS p hpF) (lt_irrefl p)
+
+lemma union_not_adm (hF : FirstFail Y F) (hS : ∀ p ∈ S, ∀ r ∈ F, p < r) :
+    ¬ Adm Y (F ∪ S) := by
+  obtain ⟨q0, hq0, -, hodd, hfail, -⟩ := hF
+  intro hA
+  have h := hA q0 (mem_union_left _ hq0)
+  rw [ab_union_of_lt hS hq0] at h
+  exact hfail (h hodd)
+
+lemma topFail_union (_hF : FirstFail Y F) (hS : ∀ p ∈ S, ∀ r ∈ F, p < r) :
+    ∀ q0 ∈ F, (∀ p ∈ F, q0 ≤ p) → Odd (ab F q0) → ¬ q0 ≤ Y ((ab F q0 + 1) / 2) →
+      (∀ q ∈ F, q ≠ q0 → Odd (ab F q) → q ≤ Y ((ab F q + 1) / 2)) →
+      topFail Y (F ∪ S) = q0 := by
+  intro q0 hq0 hmin hodd hfail hrest
+  have hq0mem : q0 ∈ FailSet Y (F ∪ S) := by
+    refine mem_filter.2 ⟨mem_union_left _ hq0, ?_, ?_⟩
+    · rw [ab_union_of_lt hS hq0]; exact hodd
+    · rw [ab_union_of_lt hS hq0]; exact hfail
+  refine le_antisymm ?_ (Finset.le_sup (f := id) hq0mem)
+  refine Finset.sup_le ?_
+  intro q hq
+  rw [FailSet, mem_filter] at hq
+  obtain ⟨hqU, hqodd, hqfail⟩ := hq
+  rcases mem_union.1 hqU with hqF | hqS
+  · rw [ab_union_of_lt hS hqF] at hqodd hqfail
+    by_cases hne : q = q0
+    · simp [hne]
+    · exact absurd (hrest q hqF hne hqodd) hqfail
+  · exact le_of_lt (hS q hqS q0 hq0)
+
+lemma ff_union (hF : FirstFail Y F) (hS : ∀ p ∈ S, ∀ r ∈ F, p < r) : ff Y (F ∪ S) = F := by
+  obtain ⟨q0, hq0, hmin, hodd, hfail, hrest⟩ := hF
+  have htop : topFail Y (F ∪ S) = q0 :=
+    topFail_union ⟨q0, hq0, hmin, hodd, hfail, hrest⟩ hS q0 hq0 hmin hodd hfail hrest
+  ext p
+  rw [ff, mem_filter, htop, mem_union]
+  constructor
+  · rintro ⟨hp | hp, hge⟩
+    · exact hp
+    · exact absurd (hS p hp q0 hq0) (by omega)
+  · intro hp; exact ⟨Or.inl hp, hmin p hp⟩
+
+end DirB
+
+/-! ### The first-failure decomposition -/
+
+/-- The fibre of `ff` over a first failed prefix `F`, inside the non-admissible subsets of `B`,
+is exactly `{F ∪ S : S ⊆ below B F}`. -/
+lemma sum_fiber_eq (Y : ℕ → ℕ) (B F : Finset ℕ) (f : ℕ → ℝ) (hF : FirstFail Y F)
+    (hFB : F ⊆ B) :
+    ∑ E ∈ (B.powerset.filter (fun E => ¬ Adm Y E)).filter (fun E => ff Y E = F),
+        ((-1 : ℝ) ^ E.card * ∏ p ∈ E, f p)
+      = (∏ p ∈ F, f p) * ∏ p ∈ below B F, (1 - f p) := by
+  classical
+  have hbelow : ∀ S ∈ (below B F).powerset, ∀ p ∈ S, ∀ r ∈ F, p < r := by
+    intro S hS p hp r hr
+    have := (mem_powerset.1 hS) hp
+    exact (mem_filter.1 this).2 r hr
+  -- reindex the fibre by `S ↦ F ∪ S`
+  have key : ∑ E ∈ (B.powerset.filter (fun E => ¬ Adm Y E)).filter (fun E => ff Y E = F),
+        ((-1 : ℝ) ^ E.card * ∏ p ∈ E, f p)
+      = ∑ S ∈ (below B F).powerset, ((-1 : ℝ) ^ (F ∪ S).card * ∏ p ∈ F ∪ S, f p) := by
+    refine (Finset.sum_nbij' (i := fun S => F ∪ S) (j := fun E => E \ F) ?_ ?_ ?_ ?_ ?_).symm
+    · intro S hS
+      refine mem_filter.2 ⟨mem_filter.2 ⟨mem_powerset.2 ?_, union_not_adm hF (hbelow S hS)⟩,
+        ff_union hF (hbelow S hS)⟩
+      exact union_subset hFB (((mem_powerset.1 hS)).trans (filter_subset _ _))
+    · intro E hE
+      obtain ⟨hE1, hE2⟩ := mem_filter.1 hE
+      obtain ⟨hEB, hEadm⟩ := mem_filter.1 hE1
+      have := sdiff_ff_mem hEadm (mem_powerset.1 hEB)
+      rw [hE2] at this
+      exact mem_powerset.2 this
+    · intro S hS
+      have hdisj : Disjoint F S := disjoint_of_below (hbelow S hS)
+      simp [Finset.union_sdiff_cancel_left hdisj]
+    · intro E hE
+      obtain ⟨hE1, hE2⟩ := mem_filter.1 hE
+      obtain ⟨hEB, hEadm⟩ := mem_filter.1 hE1
+      rw [← hE2]
+      exact ff_union_sdiff hEadm
+    · intro S _; rfl
+  rw [key]
+  have hcardF : Even F.card := hF.even_card
+  have : ∀ S ∈ (below B F).powerset,
+      ((-1 : ℝ) ^ (F ∪ S).card * ∏ p ∈ F ∪ S, f p)
+        = (∏ p ∈ F, f p) * ((-1 : ℝ) ^ S.card * ∏ p ∈ S, f p) := by
+    intro S hS
+    have hdisj : Disjoint F S := disjoint_of_below (hbelow S hS)
+    rw [Finset.card_union_of_disjoint hdisj, Finset.prod_union hdisj, pow_add,
+      hcardF.neg_one_pow]
+    ring
+  rw [Finset.sum_congr rfl this, ← Finset.mul_sum]
+  congr 1
+  have := Finset.prod_sub (fun _ : ℕ => (1 : ℝ)) f (below B F)
+  simp only [Finset.prod_const_one] at this
+  rw [this]
+  exact Finset.sum_congr rfl fun S _ => by ring
+
+/-- **First-failure decomposition.**  The alternating weighted sum over the *discarded* subsets
+of `B` splits, without any error term, over first failed even prefixes. -/
+theorem sum_not_adm_eq (Y : ℕ → ℕ) (B : Finset ℕ) (f : ℕ → ℝ) :
+    ∑ E ∈ B.powerset.filter (fun E => ¬ Adm Y E), ((-1 : ℝ) ^ E.card * ∏ p ∈ E, f p)
+      = ∑ F ∈ B.powerset.filter (fun F => FirstFail Y F),
+          (∏ p ∈ F, f p) * ∏ p ∈ below B F, (1 - f p) := by
+  classical
+  have hmaps : ∀ E ∈ B.powerset.filter (fun E => ¬ Adm Y E),
+      ff Y E ∈ B.powerset.filter (fun F => FirstFail Y F) := by
+    intro E hE
+    obtain ⟨hEB, hEadm⟩ := mem_filter.1 hE
+    exact mem_filter.2 ⟨mem_powerset.2 ((ff_subset hEadm).trans (mem_powerset.1 hEB)),
+      ff_firstFail hEadm⟩
+  rw [← Finset.sum_fiberwise_of_maps_to hmaps]
+  refine Finset.sum_congr rfl fun F hF => ?_
+  obtain ⟨hFB, hFF⟩ := mem_filter.1 hF
+  exact sum_fiber_eq Y B F f hFF (mem_powerset.1 hFB)
+
+/-! ### Property (2): the pointwise minorant -/
+
+/-- **Property (2).**  For *every* subset `B` of the bad primes, the Brun weights sum to at most
+the indicator of `B = ∅`.  No hypothesis on `Y` whatsoever. -/
+theorem sum_lam_le_indicator (Y : ℕ → ℕ) (B : Finset ℕ) :
+    ∑ E ∈ B.powerset, lam Y E ≤ if B = ∅ then 1 else 0 := by
+  classical
+  have hsplit : ∑ E ∈ B.powerset, ((-1 : ℝ) ^ E.card)
+      = (∑ E ∈ B.powerset, lam Y E)
+        + ∑ E ∈ B.powerset.filter (fun E => ¬ Adm Y E), ((-1 : ℝ) ^ E.card) := by
+    rw [← Finset.sum_filter_add_sum_filter_not B.powerset (fun E => Adm Y E)]
+    congr 1
+    · exact (Finset.sum_congr rfl fun E hE => lam_eq_of_adm (mem_filter.1 hE).2).symm.trans
+        (by
+          rw [← Finset.sum_filter_add_sum_filter_not B.powerset (fun E => Adm Y E)
+            (fun E => lam Y E)]
+          have : ∑ E ∈ B.powerset.filter (fun E => ¬ Adm Y E), lam Y E = 0 :=
+            Finset.sum_eq_zero fun E hE => lam_eq_zero_of_not_adm (mem_filter.1 hE).2
+          rw [this, add_zero])
+  have hfull : ∑ E ∈ B.powerset, ((-1 : ℝ) ^ E.card) = if B = ∅ then 1 else 0 := by
+    have := Finset.sum_powerset_neg_one_pow_card (x := B)
+    have h2 : ((∑ E ∈ B.powerset, ((-1 : ℤ) ^ E.card) : ℤ) : ℝ)
+        = ∑ E ∈ B.powerset, ((-1 : ℝ) ^ E.card) := by push_cast; ring
+    rw [← h2, this]
+    split <;> norm_num
+  have hrest : 0 ≤ ∑ E ∈ B.powerset.filter (fun E => ¬ Adm Y E), ((-1 : ℝ) ^ E.card) := by
+    have := sum_not_adm_eq Y B (fun _ => (1 : ℝ))
+    simp only [Finset.prod_const_one, mul_one] at this
+    rw [this]
+    refine Finset.sum_nonneg fun F _ => ?_
+    rw [one_mul]
+    exact Finset.prod_nonneg fun p _ => by norm_num
+  rw [hfull] at hsplit
+  linarith [hsplit, hrest]
+
+/-! ### The exact model defect (entry point for the relative-error bound (3)) -/
+
+/-- The Brun model sum differs from the true product `∏ (1 - g p)` by an explicit, termwise
+**nonnegative** sum over first failed even prefixes.  This is the identity that the
+relative-error estimate (3) bounds. -/
+theorem defect_eq (Y : ℕ → ℕ) (U : Finset ℕ) (g : ℕ → ℝ) :
+    (∏ p ∈ U, (1 - g p)) - ∑ E ∈ U.powerset, lam Y E * ∏ p ∈ E, g p
+      = ∑ F ∈ U.powerset.filter (fun F => FirstFail Y F),
+          (∏ p ∈ F, g p) * ∏ p ∈ below U F, (1 - g p) := by
+  classical
+  have hfull : ∏ p ∈ U, (1 - g p)
+      = ∑ E ∈ U.powerset, ((-1 : ℝ) ^ E.card * ∏ p ∈ E, g p) := by
+    have := Finset.prod_sub (fun _ : ℕ => (1 : ℝ)) g U
+    simp only [Finset.prod_const_one] at this
+    rw [this]
+    exact Finset.sum_congr rfl fun E _ => by ring
+  have hlam : ∑ E ∈ U.powerset, lam Y E * ∏ p ∈ E, g p
+      = ∑ E ∈ U.powerset.filter (fun E => Adm Y E), ((-1 : ℝ) ^ E.card * ∏ p ∈ E, g p) := by
+    rw [← Finset.sum_filter_add_sum_filter_not U.powerset (fun E => Adm Y E)
+      (fun E => lam Y E * ∏ p ∈ E, g p)]
+    have h0 : ∑ E ∈ U.powerset.filter (fun E => ¬ Adm Y E), (lam Y E * ∏ p ∈ E, g p) = 0 :=
+      Finset.sum_eq_zero fun E hE => by
+        rw [lam_eq_zero_of_not_adm (mem_filter.1 hE).2]; ring
+    rw [h0, add_zero]
+    exact Finset.sum_congr rfl fun E hE => by rw [lam_eq_of_adm (mem_filter.1 hE).2]
+  rw [hfull, hlam, ← sum_not_adm_eq Y U g,
+    ← Finset.sum_filter_add_sum_filter_not U.powerset (fun E => Adm Y E)
+      (fun E => (-1 : ℝ) ^ E.card * ∏ p ∈ E, g p)]
+  ring
+
+/-! ### Numeric anchors (kernel `decide`)
+
+The controls of `papers/prime-model-sieve-assessment.md`: `U = {2,3,5,7}` with the even-position
+cutoffs `Y 1 = 3`, `Y 2 = 2` and local densities `g p = 1/p`.  These pin the *semantics* of
+`Adm`/`lam` against the hand computation; they are controls, never a substitute for the uniform
+theorems above. -/
+
+/-- The rational avatar of `lam`, so the anchors are decidable. -/
+def lamQ (Y : ℕ → ℕ) (E : Finset ℕ) : ℚ := if Adm Y E then (-1) ^ E.card else 0
+
+lemma lam_eq_lamQ (Y : ℕ → ℕ) (E : Finset ℕ) : lam Y E = (lamQ Y E : ℝ) := by
+  unfold lam lamQ; split <;> push_cast <;> ring
+
+/-- The anchor cutoffs: `Y 1 = 3`, `Y j = 2` otherwise. -/
+def Yanchor : ℕ → ℕ := fun j => if j = 1 then 3 else 2
+
+/-- Anchor: every supported subset of `{2,3,5,7}` has product at most `42`. -/
+theorem anchor_support :
+    ∀ E ∈ ({2, 3, 5, 7} : Finset ℕ).powerset, Adm Yanchor E → (∏ p ∈ E, p) ≤ 42 := by decide
+
+/-- Anchor: the bound `42` is attained (so the support bound is sharp here). -/
+theorem anchor_support_sharp :
+    Adm Yanchor ({2, 3, 7} : Finset ℕ) ∧ (∏ p ∈ ({2, 3, 7} : Finset ℕ), p) = 42 := by decide
+
+/-- Anchor: the true product `V = 8/35`. -/
+theorem anchor_V : ∏ p ∈ ({2, 3, 5, 7} : Finset ℕ), (1 - 1 / (p : ℚ)) = 8 / 35 := by norm_num
+
+/-- The integral avatar of `lam`; `Rat` division does not reduce in the kernel, so the numeric
+anchor for the model sum is run through this integer-valued weight. -/
+def lamZ (Y : ℕ → ℕ) (E : Finset ℕ) : ℤ := if Adm Y E then (-1) ^ E.card else 0
+
+lemma lamQ_eq_lamZ (Y : ℕ → ℕ) (E : Finset ℕ) : lamQ Y E = (lamZ Y E : ℚ) := by
+  unfold lamQ lamZ; split <;> push_cast <;> ring
+
+/-- Clearing denominators in a squarefree model sum: if `(∏ E) * c E = M` for every subset,
+the sum of `w E * ∏_{p ∈ E} p⁻¹` is `(∑ w E * c E) / M`. -/
+lemma sum_inv_prod_eq (U : Finset ℕ) (w : Finset ℕ → ℚ) (M : ℕ) (hM : M ≠ 0)
+    (c : Finset ℕ → ℕ) (hc : ∀ E ∈ U.powerset, (∏ p ∈ E, p) * c E = M) :
+    ∑ E ∈ U.powerset, w E * ∏ p ∈ E, (1 / (p : ℚ))
+      = (∑ E ∈ U.powerset, w E * (c E : ℚ)) / (M : ℚ) := by
+  rw [Finset.sum_div]
+  refine Finset.sum_congr rfl fun E hE => ?_
+  have hcast : ((∏ p ∈ E, p : ℕ) : ℚ) * (c E : ℚ) = (M : ℚ) := by exact_mod_cast hc E hE
+  have hM' : (M : ℚ) ≠ 0 := Nat.cast_ne_zero.2 hM
+  have hP : ((∏ p ∈ E, p : ℕ) : ℚ) ≠ 0 := by
+    intro h0; rw [h0, zero_mul] at hcast; exact hM' hcast.symm
+  have hcE : (c E : ℚ) ≠ 0 := by
+    intro h0; rw [h0, mul_zero] at hcast; exact hM' hcast.symm
+  have key : ∏ p ∈ E, (1 / (p : ℚ)) = ((∏ p ∈ E, p : ℕ) : ℚ)⁻¹ := by
+    rw [Nat.cast_prod]
+    simp [one_div, Finset.prod_inv_distrib]
+  have h2 : ((∏ p ∈ E, p : ℕ) : ℚ)⁻¹ = (c E : ℚ) / (M : ℚ) := by
+    rw [← hcast]; field_simp
+  rw [key, h2, mul_div_assoc]
+
+/-- Anchor: the cleared-denominator model sum over `{2,3,5,7}` is `46 = 210 · 23/105`. -/
+theorem anchor_model_sum_int :
+    ∑ E ∈ ({2, 3, 5, 7} : Finset ℕ).powerset, lamZ Yanchor E * (210 / (∏ p ∈ E, p) : ℕ) = 46 := by
+  decide
+
+/-- Anchor: the Brun lower model sum is `23/105`, i.e. the model defect is `1/105` and the
+relative defect `1/24` against `V = 8/35`. -/
+theorem anchor_model_sum :
+    ∑ E ∈ ({2, 3, 5, 7} : Finset ℕ).powerset, lamQ Yanchor E * ∏ p ∈ E, (1 / (p : ℚ))
+      = 23 / 105 := by
+  have hc : ∀ E ∈ ({2, 3, 5, 7} : Finset ℕ).powerset,
+      (∏ p ∈ E, p) * (210 / (∏ p ∈ E, p)) = 210 := by decide
+  rw [sum_inv_prod_eq _ _ 210 (by norm_num) _ hc]
+  have hterm : ∀ E : Finset ℕ, lamQ Yanchor E * ((210 / (∏ p ∈ E, p) : ℕ) : ℚ)
+      = ((lamZ Yanchor E * ((210 / (∏ p ∈ E, p) : ℕ) : ℤ) : ℤ) : ℚ) := by
+    intro E; rw [lamQ_eq_lamZ, Int.cast_mul, Int.cast_natCast]
+  rw [Finset.sum_congr rfl (fun E _ => hterm E), ← Int.cast_sum, anchor_model_sum_int]
+  norm_num
+
+end NormalNumbers.PrimeModel.Brun
