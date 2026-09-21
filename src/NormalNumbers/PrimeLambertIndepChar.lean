@@ -201,4 +201,73 @@ theorem norm_localChar_le_one {q : ℤ} (C : Chain q) (N : ℕ) {p : ℕ} (hp : 
         rw [Finset.sum_congr rfl (fun u _ => norm_e _), Finset.sum_const, Finset.card_range,
           nsmul_eq_mul, mul_one]
 
+/-! ### The local factors are bounded away from one
+
+`IndepCharDecay` now reads `∏_{p small} ‖localChar p‖ → 0`.  What makes a factor useful is a
+*defect*: `‖localChar p‖ ≤ 1 − (defect)/p`.  The elementary source of a defect is that two of the
+`p` local phases differ — one pair of unequal unimodular summands already costs the average
+`‖z_a − z_b‖²/(4p)`, by the parallelogram law. -/
+
+/-- Two unequal unimodular summands cost a sum of unimodular terms a definite amount. -/
+lemma norm_add_le_two_sub (x y : ℂ) (hx : ‖x‖ = 1) (hy : ‖y‖ = 1) :
+    ‖x + y‖ ≤ 2 - ‖x - y‖ ^ 2 / 4 := by
+  have hpar : ‖x + y‖ ^ 2 + ‖x - y‖ ^ 2 = 2 * (‖x‖ ^ 2 + ‖y‖ ^ 2) :=
+    parallelogram_law_with_norm ℝ x y
+  rw [hx, hy] at hpar
+  have hs : 0 ≤ ‖x + y‖ := norm_nonneg _
+  nlinarith [hpar, hs, sq_nonneg (‖x + y‖ - 2)]
+
+/-- **Defect bound.**  A sum of unimodular terms over a finite set loses `‖z a − z b‖²/4`
+from the trivial bound as soon as two of its terms differ. -/
+lemma norm_sum_le_card_sub {ι : Type*} [DecidableEq ι] {P : Finset ι} (z : ι → ℂ)
+    (hz : ∀ i ∈ P, ‖z i‖ = 1) {a b : ι} (ha : a ∈ P) (hb : b ∈ P) (hab : a ≠ b) :
+    ‖∑ i ∈ P, z i‖ ≤ (P.card : ℝ) - ‖z a - z b‖ ^ 2 / 4 := by
+  have hsub : ({a, b} : Finset ι) ⊆ P := by
+    intro x hx
+    simp only [Finset.mem_insert, Finset.mem_singleton] at hx
+    rcases hx with rfl | rfl <;> assumption
+  have hcard2 : ({a, b} : Finset ι).card = 2 := by rw [Finset.card_pair hab]
+  have hcardle : 2 ≤ P.card := by
+    have := Finset.card_le_card hsub
+    omega
+  have hsplit : ∑ i ∈ P, z i = ∑ i ∈ P \ {a, b}, z i + ∑ i ∈ ({a, b} : Finset ι), z i :=
+    (Finset.sum_sdiff hsub).symm
+  have hpair : ∑ i ∈ ({a, b} : Finset ι), z i = z a + z b := Finset.sum_pair hab
+  have hrest : ‖∑ i ∈ P \ {a, b}, z i‖ ≤ ((P \ {a, b}).card : ℝ) := by
+    calc ‖∑ i ∈ P \ {a, b}, z i‖ ≤ ∑ i ∈ P \ {a, b}, ‖z i‖ := norm_sum_le _ _
+      _ = ((P \ {a, b}).card : ℝ) := by
+          rw [Finset.sum_congr rfl (fun i hi => hz i (Finset.mem_sdiff.mp hi).1),
+            Finset.sum_const, nsmul_eq_mul, mul_one]
+  have hcardsd : ((P \ {a, b}).card : ℝ) = (P.card : ℝ) - 2 := by
+    have : (P \ {a, b}).card = P.card - 2 := by
+      rw [Finset.card_sdiff, Finset.inter_eq_left.mpr hsub, hcard2]
+    rw [this]
+    have : ((P.card - 2 : ℕ) : ℝ) = (P.card : ℝ) - 2 := by
+      have := hcardle; push_cast [Nat.cast_sub hcardle]; ring
+    exact this
+  have hab' := norm_add_le_two_sub (z a) (z b) (hz a ha) (hz b hb)
+  calc ‖∑ i ∈ P, z i‖ ≤ ‖∑ i ∈ P \ {a, b}, z i‖ + ‖z a + z b‖ := by
+        rw [hsplit, hpair]; exact norm_add_le _ _
+    _ ≤ ((P.card : ℝ) - 2) + (2 - ‖z a - z b‖ ^ 2 / 4) := by
+        rw [← hcardsd]; exact add_le_add hrest hab'
+    _ = (P.card : ℝ) - ‖z a - z b‖ ^ 2 / 4 := by ring
+
+/-- **The local defect.**  If the local variable `X_p` takes two phases that differ at
+`u ≠ v` mod `p`, the local factor is bounded away from `1` by `‖·‖²/(4p)`. -/
+theorem norm_localChar_le_one_sub {q : ℤ} (C : Chain q) (N : ℕ) {p : ℕ} (hp : 0 < p)
+    {u v : ℕ} (hu : u < p) (hv : v < p) (huv : u ≠ v) :
+    ‖localChar C N p‖
+      ≤ 1 - ‖e (q * primePart (C.c N) (C.K N) (C.S N).J p (u : ℤ))
+              - e (q * primePart (C.c N) (C.K N) (C.S N).J p (v : ℤ))‖ ^ 2 / (4 * p) := by
+  have hpr : (0:ℝ) < p := by exact_mod_cast hp
+  unfold localChar avg
+  rw [norm_div, Complex.norm_natCast, Finset.card_range]
+  rw [div_le_iff₀ hpr]
+  have hbd := norm_sum_le_card_sub
+    (P := range p) (fun r : ℕ => e (q * primePart (C.c N) (C.K N) (C.S N).J p (r : ℤ)))
+    (fun i _ => norm_e _) (Finset.mem_range.mpr hu) (Finset.mem_range.mpr hv) huv
+  rw [Finset.card_range] at hbd
+  refine hbd.trans (le_of_eq ?_)
+  field_simp
+
 end NormalNumbers.PrimeLambert
