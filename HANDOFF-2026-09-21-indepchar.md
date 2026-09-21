@@ -97,3 +97,33 @@ the lemma to state and prove next; it is the last place a genuine equidistributi
 `src/NormalNumbers/MahlerDriftOne.lean:380` — `exists_prime_nonresidue`, a prime in `(p/3, p/2)` with
 a prescribed Legendre symbol.  By reciprocity that is primes in a fixed residue class mod `4p` inside
 an interval of length `p/6`: genuinely Linnik-strength, correctly left disclosed.
+
+---
+
+## Continuation (same session, HEAD `9c5b9cd`)
+
+After the handoff above, the lap continued and closed out the whole `MomentChain`:
+
+* **`MomentComparison` reduced** (`e26e94f`).  The key structural point: `S_N` is `modulus`-periodic,
+  so both averages are averages of the *same* function, one over the sample and one over a full
+  period.  `resOf` / `residueCount` / `sampleDiscrepancy`, `smallSum_resOf`, `sum_smallSum_pow_eq`
+  (via `Finset.sum_fiberwise_of_maps_to'`), `abs_moment_diff_le`, `momentComparison_of_discrepancy`.
+  The moment order enters only through the amplitude `B^k`, never through the equidistribution — which
+  is why the draft's `δ_N` is uniform in `k ≤ M_N`.
+* **Generalised to an arbitrary uniform bound** (`93d9d2f`): `indepMomentSmall_of_bound`,
+  `abs_moment_diff_le_of_bound`, `momentComparison_of_bound`, `momentComparison_of_le_one`.
+* **Tension found and then resolved** (`93d9d2f`, `9c5b9cd`).  With all three obligations numeric they
+  became comparable and conflicted under the coarse bound; the sharp active-prime bound
+  (`card_activePrimes_le`, `abs_smallSum_le_active`, `abs_smallSum_le_one_of_pow_le`) removes the
+  conflict.  Full analysis and correction in `PENDING_WORK.md`.
+
+### Where the next lap starts
+
+`sampleDiscrepancy_N → 0` — the **only** arithmetic obligation left in the chain.  Read the
+`PENDING_WORK.md` correction block first: it records the tower `|P_N| ≫ exp(exp(exp(4^K)))` that the
+discrepancy forces, and flags checking it against the draft's `N^{−9/10+o(1)}` before building a chain.
+
+Also still open, untouched and correctly disclosed: `MahlerDriftOne.lean:380` (`exists_prime_nonresidue`,
+Linnik-strength) and the `windowK` lap's frozen node `PrefixDecay` in `G4WindowK.lean`.
+
+Working tree clean at `9c5b9cd`; `src/NormalNumbers/PrimeLambertIndepChar.lean` sorry-free throughout.

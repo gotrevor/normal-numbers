@@ -8883,3 +8883,31 @@ which removes the contradiction entirely.
    sample must equidistribute in `L¹` modulo `∏_{p small} p`.  Since that modulus is `≈ e^y` with
    `y ≈ exp(exp(4^K))`, the sample must be *at least* that long — this is the real cost of the route
    and the number to check against the draft's `N^{−9/10+o(1)}` claim before going further.
+
+### CORRECTION (same lap, commit `9c5b9cd`): the tension above is RESOLVED, the route survives
+
+Step 1 of the "next attack" is done.  `card_activePrimes_le` / `abs_smallSum_le_active` /
+`abs_smallSum_le_one_of_pow_le` give the sharp bound
+
+  `|S_N(n)| ≤ (∑_{a,i} log₂|n+(i+1)d_a−s_a|) · ‖c‖₁ 2^{−K}`,  provided no argument vanishes,
+
+which is **independent of `y`**.  So `|S_N| ≤ 1` is a condition on `K` and the configuration alone
+(`2^K ≳ (window log₂-mass)·‖c‖₁`) and is compatible with `y ≈ exp(exp(4^K))`.  The contradiction
+`y ≲ 2^K` was an artifact of the coarse `momentBound` charging every small prime instead of the
+`O(log)` that actually divide an argument.  Net:
+
+| obligation | cost with the sharp bound |
+|---|---|
+| `MomentComparison` | `sampleDiscrepancy_N → 0` only (via `momentComparison_of_le_one`) |
+| `IndepMomentSmall` | free |
+| `IndepCharDecay` | free to demand `y ≈ exp(exp(4^K))` |
+
+**The one arithmetic obligation left in the whole `phaseOscillation` chain is
+`sampleDiscrepancy_N → 0`.**  Next lap starts there.  Note the scale it forces: a sample shorter
+than the modulus has discrepancy `≳ 1` (most classes empty), and the modulus is `∏_{p small} p ≈ e^y`
+with `y ≈ exp(exp(4^K))`, so `|P_N| ≫ exp(exp(exp(4^K)))`.  **Check that tower against the draft's
+`δ_N = N^{−9/10+o(1)}` claim before building a chain** — if the draft's sample is polynomial in `N`
+while the modulus is a tower, the route has a second, more serious gap and `IndepCharDecay`'s
+`y ≈ exp(exp(4^K))` demand is where to look.  The remaining side condition to discharge along the
+way: no argument `n+(i+1)d_a−s_a` vanishes, for `n` ranging over the sample AND over the residues
+`0 ≤ r < modulus` (the latter is where it can fail, at `≤ |support|(J−K)` residues).
