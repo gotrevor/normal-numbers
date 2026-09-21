@@ -116,6 +116,37 @@ be substituted for it in a success report.
 
 ## Evidence and sources
 
+### Review: avoid requiring sharp Mertens for the dimension hypothesis
+
+The core sieve parameter is a dimension, not necessarily the number of shifts.
+For h shifts, the intended density is g(p)=h/p on unassigned primes p>h.
+The already-proved `mertens_crude` bounds sum_{p<=N} log(p)/p by4logN.
+This suffices for a larger dimension **24h**, still linear in h:
+
+For 2<=w<=y, partition (w,y] into at most
+`ceil(log(log y/log w)/log2)` intervals of the form (v,v^2].  Each has
+reciprocal mass at most8, by dividing the weighted prime sum by log v.
+Since log2>=2/3, this gives
+`sum_{w<p<=y}1/p <=8+12log(log y/log w)`.
+For h<p<=2h the entire inverse sieve product is at most4^h (the existing
+binomial-product argument).  For p>2h, `-log(1-h/p)<=2h/p`.  Therefore
+the needed tail-product condition holds with
+
+    dimension=24h, K=4^h*exp(16h).
+
+For a cutoff t<2, use w=2; the large-prime part contains no prime2,
+which is already covered by the small-prime factor.  Subsets only decrease
+these positive estimates.  With this substitution the core threshold stays
+O(h), and its final rate remains `2exp(-s/2)`; it is NOT weakened to a rate
+divided by the dimension.  This is a paper-level derivation to formalize after
+the core, not a claimed additional Lean theorem.
+
+For the factorial step, a convenient coarse numerical bound is
+`c*exp(1+c)<=3/19<1/4` for 0<=c<=1/20, using exp1<3 and
+exp(c)<=1/(1-c).  No sharp numerical analysis is needed.
+
+### Finite controls
+
 The incumbent `prime_model_certificate.py test` now has 43 passing CLI tests.
 New `brun-lower` controls exhaust every bad subset for a small explicit prime
 set.  For primes2,3,5,7 and even cutoffs3,2, the largest supported divisor is42,
