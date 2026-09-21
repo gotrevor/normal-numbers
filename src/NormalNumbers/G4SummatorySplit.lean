@@ -1247,6 +1247,78 @@ lemma halfDepth_le_log {M : ℕ} (hM1 : 1 ≤ M) (hΛ : 512 ≤ Nat.log 2 M) :
   have h3 : (4 * halfDepth M : ℝ) ≤ (Nat.log 2 M : ℝ) := by exact_mod_cast h1
   linarith
 
+/-- `2^{halfDepth M} ≤ 1024 (log M)^{10}`: the retained scales stay above `M / (1024 (log M)^{10})`,
+so the odd node (an eventual statement) applies at every one of them. -/
+lemma halfDepth_pow_le {M : ℕ} (hM1 : 1 ≤ M) (hΛ : 512 ≤ Nat.log 2 M) :
+    (2:ℝ) ^ (halfDepth M) ≤ 1024 * Real.log M ^ 10 := by
+  set Λ : ℕ := Nat.log 2 M with hΛdef
+  set a : ℕ := Nat.log 2 Λ with hadef
+  have h1 : ((2:ℝ)) ^ a ≤ (Λ:ℝ) := by
+    have := Nat.pow_log_le_self 2 (show Λ ≠ 0 by omega)
+    exact_mod_cast this
+  have h2 : (Λ:ℝ) ≤ 2 * Real.log M := natLog_two_le_two_log hM1
+  have h3 : (0:ℝ) ≤ (2:ℝ) ^ a := by positivity
+  have hid : (2:ℝ) ^ (halfDepth M) = ((2:ℝ) ^ a) ^ 10 := by
+    rw [halfDepth, ← hΛdef, ← hadef, ← pow_mul]
+    congr 1
+    omega
+  rw [hid]
+  calc ((2:ℝ) ^ a) ^ 10 ≤ (2 * Real.log M) ^ 10 :=
+        pow_le_pow_left₀ h3 (le_trans h1 h2) 10
+    _ = 1024 * Real.log M ^ 10 := by ring
+
+/-- Every retained scale exceeds `M / (1024 (log M)^{10})`. -/
+lemma halfIter_ge_of_le_depth {M v : ℕ} (hM1 : 1 ≤ M) (hΛ : 512 ≤ Nat.log 2 M)
+    (hv : v ≤ halfDepth M) :
+    (M:ℝ) / (1024 * Real.log M ^ 10) ≤ (halfIter M v : ℝ) := by
+  have h1 : (M:ℝ) / 2 ^ v ≤ (halfIter M v : ℝ) := halfIter_ge_div v
+  have h2 : (2:ℝ) ^ v ≤ (2:ℝ) ^ (halfDepth M) := pow_le_pow_right₀ (by norm_num) hv
+  have h3 : (2:ℝ) ^ (halfDepth M) ≤ 1024 * Real.log M ^ 10 := halfDepth_pow_le hM1 hΛ
+  have hMnn : (0:ℝ) ≤ (M:ℝ) := Nat.cast_nonneg _
+  have hpos : (0:ℝ) < (2:ℝ) ^ v := by positivity
+  have h4 : (M:ℝ) / (1024 * Real.log M ^ 10) ≤ (M:ℝ) / 2 ^ v :=
+    div_le_div_of_nonneg_left hMnn hpos (le_trans h2 h3)
+  linarith
+
+/-- **The eventual facts the assembly needs**, bundled. -/
+lemma eventually_assembly (X₀ : ℕ) :
+    ∀ᶠ M : ℕ in atTop,
+      8 ≤ M ∧ 512 ≤ Nat.log 2 M ∧ 128 ≤ Real.log M
+      ∧ (halfDepth M : ℝ) ≤ (M:ℝ) / (256 * Real.log M ^ 6)
+      ∧ (1:ℝ) ≤ (M:ℝ) / (256 * Real.log M ^ 6)
+      ∧ ((halfDepth M : ℝ))^2 ≤ (M:ℝ)
+      ∧ (halfDepth M : ℝ) ≤ (M:ℝ)
+      ∧ ∀ v ≤ halfDepth M, X₀ ≤ halfIter M v := by
+  filter_upwards [eventually_ge_atTop 8, eventually_ge_atTop (2 ^ 512),
+    eventually_const_mul_log_pow_le 7 3840, eventually_const_mul_log_pow_le 6 256,
+    eventually_const_mul_log_pow_le 2 225, eventually_const_mul_log_pow_le 1 15,
+    eventually_const_mul_log_pow_le 10 (1024 * (X₀ : ℝ) + 1024)]
+    with M hM8 hMbig h7 h6 h2 h1 h10
+  have hM1 : 1 ≤ M := by omega
+  have hΛ : 512 ≤ Nat.log 2 M := by
+    have h := Nat.log_mono_right (b := 2) hMbig
+    rwa [Nat.log_pow (by norm_num)] at h
+  have hL : 128 ≤ Real.log M := log_ge_of_natLog_ge hM1 hΛ
+  have hLpos : (0:ℝ) < Real.log M := by linarith
+  have hD := halfDepth_le_log hM1 hΛ
+  have hDnn : (0:ℝ) ≤ (halfDepth M : ℝ) := Nat.cast_nonneg _
+  have hden : (0:ℝ) < 256 * Real.log M ^ 6 := by positivity
+  refine ⟨hM8, hΛ, hL, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [le_div_iff₀ hden]
+    nlinarith [h7, hD, hLpos]
+  · rw [le_div_iff₀ hden]
+    nlinarith [h6, hLpos]
+  · nlinarith [h2, hD, hDnn, hLpos]
+  · nlinarith [h1, hD, hLpos]
+  · intro v hv
+    have hge := halfIter_ge_of_le_depth hM1 hΛ hv
+    have hX : (X₀ : ℝ) ≤ (M:ℝ) / (1024 * Real.log M ^ 10) := by
+      rw [le_div_iff₀ (by positivity)]
+      nlinarith [h10, Nat.cast_nonneg (α := ℝ) X₀, hLpos,
+        pow_pos hLpos 10]
+    have : (X₀ : ℝ) ≤ (halfIter M v : ℝ) := le_trans hX hge
+    exact_mod_cast this
+
 /-! ### The primitive node: the ODD class alone -/
 
 /-- **The primitive Landau–Selberg–Delange node.**  One multiplicative function `n ↦ z_k^{ω_{>2}(n)}`,
