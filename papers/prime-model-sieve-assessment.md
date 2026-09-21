@@ -9,8 +9,11 @@ The lower-sieve core is now proved and integrated in
 `brun_lower_fundamental` (main commit `6bbc27f`).  It supplies coefficient
 bounds, support at level y^s, the pointwise minorant, and relative model error
 at most `2 exp(-s/2)`, under the explicit tail-product `Dimension` hypothesis
-and the elementary size/density assumptions below.  The hypothesis is not yet
-instantiated for our prime density.  Arithmetic/probability assembly and the
+and the elementary size/density assumptions below.  The dimension hypothesis
+is now discharged for density h/p by `prime_density_dimension` and the
+instantiated `prime_density_brun_lower` in
+[PrimeModelPrimeDimension.lean](../src/NormalNumbers/PrimeModelPrimeDimension.lean)
+(main commit `39f1d31`).  Arithmetic/probability assembly and the
 selected-prime theorem remain open.
 
 The Lean theorem uses integer y and floored cutoffs.  For the application use
@@ -34,8 +37,8 @@ this is not a claim that none exists anywhere.
 There is, however, a smaller sufficient target: **a specialized lower Brun
 sieve**.  The two-sided requirement in earlier notes was stronger than needed.
 Below is an explicit finite-set construction and coarse quantitative estimate.
-That core has now been proved.  Next: discharge its dimension hypothesis by
-the crude-prime-sum route below, then assemble the lower counting estimates.
+That core and its prime-density input have now been proved.  Next: assemble
+the lower counting estimates, bound their accumulated errors and phase decay.
 
 ## Lower probabilities suffice
 
@@ -53,6 +56,12 @@ would not suffice: nu could put all its mass outside B.
 This is a deduction for our normalized joint residue/radical law, not an
 assertion that Mathlib's upper sieve becomes a lower sieve for free.
 
+The finite-law transfer is now formalized in
+[PrimeModelLowerTransfer.lean](../src/NormalNumbers/PrimeModelLowerTransfer.lean):
+`finite_L1_of_lower_atoms` and `finite_phase_of_lower_atoms`.  The bound is
+exactly 2*tau+2*eta+2*sum_B e, with no upper atom hypothesis.  Instantiating
+the empirical/model laws and summing their sieve remainders remains open.
+
 ## Concrete lower-weight construction
 
 Let U be a finite set of primes <=y, y>=exp(2), k>=1, and 0<=g(p)<1.
@@ -64,8 +73,9 @@ for 1<=t<=y, with K>=1:
 
 The earlier standard interval-dimension condition implies this after replacing
 its K0 by `(3/2)^k*K0`: use upper endpoint 2y and log y>=2.  Consequently
-log K=O(k) in the intended application.  This dimension estimate still needs
-formalization; no new prime-distribution conjecture is assumed.
+log K=O(k) in the intended application.  The dimension estimate is now proved:
+`prime_density_dimension` supplies it directly
+with dimension 24h and K=4^h*exp(16h) for density h/p.
 
 Put a=log K, alpha=1-1/(20k), J=floor(s/4), and assume
 `s>=max(80k,40a+4)`.  For each j>=1 set
@@ -156,8 +166,9 @@ For a cutoff t<2, use w=2; the large-prime part contains no prime2,
 which is already covered by the small-prime factor.  Subsets only decrease
 these positive estimates.  With this substitution the core threshold stays
 O(h), and its final rate remains `2exp(-s/2)`; it is NOT weakened to a rate
-divided by the dimension.  This is a paper-level derivation to formalize after
-the core, not a claimed additional Lean theorem.
+divided by the dimension.  This derivation is now proved in
+`PrimeModelPrimeDimension.lean`; the block cutoffs stay real, with flooring
+only at the Mertens call.  Its binding size condition is s>=1920h.
 
 For the factorial step, a convenient coarse numerical bound is
 `c*exp(1+c)<=3/19<1/4` for 0<=c<=1/20, using exp1<3 and
