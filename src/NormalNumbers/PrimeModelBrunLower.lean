@@ -395,6 +395,324 @@ theorem defect_eq (Y : ℕ → ℕ) (U : Finset ℕ) (g : ℕ → ℝ) :
       (fun E => (-1 : ℝ) ^ E.card * ∏ p ∈ E, g p)]
   ring
 
+/-! ### Property (1): the support bound
+
+The rank map `ab E : E → range #E` is a bijection (it is strictly antitone on `E`), so a
+pointwise bound `q ≤ W (ab E q)` turns into `∏_{q ∈ E} q ≤ ∏_{i < #E} W i`.  For an admissible
+`E` the pointwise bound is `W i = y` at `i = 0` and `W i = Y ((i+1)/2)` for `i ≥ 1`: at an odd
+`ab` this *is* admissibility, and at an even `ab = 2j` the element directly above sits at
+`ab = 2j-1` and is `≤ Y j`, with `(2j+1)/2 = j`. -/
+
+lemma ab_lt_card {E : Finset ℕ} {q : ℕ} (hq : q ∈ E) : ab E q < E.card := by
+  unfold ab
+  refine card_lt_card ⟨filter_subset _ _, ?_⟩
+  intro hsub
+  have := hsub hq
+  rw [mem_filter] at this
+  exact absurd this.2 (lt_irrefl q)
+
+lemma ab_lt_ab {E : Finset ℕ} {q q' : ℕ} (hq' : q' ∈ E) (h : q < q') : ab E q' < ab E q := by
+  unfold ab
+  refine card_lt_card ⟨?_, ?_⟩
+  · intro p hp
+    rw [mem_filter] at hp ⊢
+    exact ⟨hp.1, h.trans hp.2⟩
+  · intro hsub
+    have := hsub (mem_filter.2 ⟨hq', h⟩)
+    rw [mem_filter] at this
+    exact absurd this.2 (lt_irrefl q')
+
+lemma ab_injOn (E : Finset ℕ) : Set.InjOn (ab E) E := by
+  intro q hq q' hq' h
+  by_contra hne
+  rcases lt_or_gt_of_ne hne with hlt | hlt
+  · exact absurd h (ne_of_gt (ab_lt_ab hq' hlt))
+  · exact absurd h.symm (ne_of_gt (ab_lt_ab hq hlt))
+
+lemma image_ab (E : Finset ℕ) : E.image (ab E) = Finset.range E.card := by
+  refine Finset.eq_of_subset_of_card_le ?_ ?_
+  · intro i hi
+    obtain ⟨q, hq, rfl⟩ := mem_image.1 hi
+    exact mem_range.2 (ab_lt_card hq)
+  · rw [Finset.card_range, Finset.card_image_of_injOn (ab_injOn E)]
+
+/-- Reindexing along the rank map. -/
+lemma prod_comp_ab (E : Finset ℕ) (W : ℕ → ℕ) :
+    ∏ q ∈ E, W (ab E q) = ∏ i ∈ Finset.range E.card, W i := by
+  rw [← image_ab E, Finset.prod_image (fun a ha b hb h => ab_injOn E ha hb h)]
+
+/-- The element of `E` directly above `q`. -/
+lemma exists_ab_pred {E : Finset ℕ} {q : ℕ} (hq : q ∈ E) (h : ab E q ≠ 0) :
+    ∃ q' ∈ E, q < q' ∧ ab E q' + 1 = ab E q := by
+  have hne : (E.filter (fun p => q < p)).Nonempty := by
+    rw [← Finset.card_pos]
+    exact Nat.pos_of_ne_zero h
+  set q' := (E.filter (fun p => q < p)).min' hne with hq'def
+  have hq'mem := (E.filter (fun p => q < p)).min'_mem hne
+  rw [mem_filter] at hq'mem
+  refine ⟨q', hq'mem.1, hq'mem.2, ?_⟩
+  have hfil : E.filter (fun p => q' < p) = (E.filter (fun p => q < p)).erase q' := by
+    ext p
+    simp only [mem_filter, mem_erase]
+    constructor
+    · rintro ⟨hp, h2⟩
+      exact ⟨h2.ne', hp, hq'mem.2.trans h2⟩
+    · rintro ⟨hne2, hp, h2⟩
+      refine ⟨hp, lt_of_le_of_ne ?_ (Ne.symm hne2)⟩
+      exact Finset.min'_le _ p (mem_filter.2 ⟨hp, h2⟩)
+  have hcard : (E.filter (fun p => q' < p)).card = (E.filter (fun p => q < p)).card - 1 := by
+    rw [hfil, card_erase_of_mem (mem_filter.2 ⟨hq'mem.1, hq'mem.2⟩)]
+  have hpos : 0 < (E.filter (fun p => q < p)).card := Nat.pos_of_ne_zero h
+  show ab E q' + 1 = ab E q
+  unfold ab
+  omega
+
+/-- The pointwise cutoff bound available to every element of an admissible set: an element at
+rank `≥ 2` from the top is bounded by the cutoff of its **pair**. -/
+lemma le_cutoff_of_adm {Y : ℕ → ℕ} {E : Finset ℕ} (hA : Adm Y E) {q : ℕ} (hq : q ∈ E)
+    (h : ab E q ≠ 0) : q ≤ Y ((ab E q + 1) / 2) := by
+  rcases Nat.even_or_odd (ab E q) with hev | hodd
+  · obtain ⟨q', hq', hlt, hpred⟩ := exists_ab_pred hq h
+    have hoddq' : Odd (ab E q') := by
+      rw [Nat.even_iff] at hev; rw [Nat.odd_iff]; omega
+    have := hA q' hq' hoddq'
+    have heq : (ab E q' + 1) / 2 = (ab E q + 1) / 2 := by
+      rw [Nat.even_iff] at hev; omega
+    rw [heq] at this
+    exact le_trans hlt.le this
+  · exact hA q hq hodd
+
+/-- **Support, combinatorial half.**  For an admissible `E` whose elements are all `≤ y`,
+`∏ E ≤ y · Y 1 ^ 2 · Y 2 ^ 2 ⋯`, in the precise form `∏_{i < #E} W i`. -/
+theorem prod_le_of_adm {Y : ℕ → ℕ} {E : Finset ℕ} (hA : Adm Y E) {y : ℕ}
+    (hy : ∀ p ∈ E, p ≤ y) :
+    ∏ p ∈ E, p ≤ ∏ i ∈ Finset.range E.card, (if i = 0 then y else Y ((i + 1) / 2)) := by
+  rw [← prod_comp_ab E (fun i => if i = 0 then y else Y ((i + 1) / 2))]
+  refine Finset.prod_le_prod' ?_
+  intro q hq
+  by_cases h : ab E q = 0
+  · simp [h, hy q hq]
+  · simp only [h, if_neg]
+    exact le_cutoff_of_adm hA hq h
+
+/-! ### Property (1): the explicit shrinking cutoffs and the level `y ^ s`
+
+`Y j = y` for `j ≤ J = ⌊s/4⌋`, and `Y j = ⌊y ^ (α ^ (j - J))⌋` afterwards, with
+`α = 1 - 1/(20k)`.  The first `2J+1` ranks cost at most one `log y` each and each later pair
+costs at most `2 α ^ ℓ`, so the total exponent is at most `2J + 40k - 1 ≤ s` once `s ≥ 80k`. -/
+
+/-- The shrinking factor `α = 1 - 1/(20k)`. -/
+noncomputable def alph (k : ℕ) : ℝ := 1 - 1 / (20 * k)
+
+/-- The number of full-length initial cutoffs, `J = ⌊s/4⌋`. -/
+noncomputable def Jidx (s : ℝ) : ℕ := ⌊s / 4⌋₊
+
+/-- The Brun cutoffs of the assessment. -/
+noncomputable def brunCut (k : ℕ) (s : ℝ) (y : ℕ) : ℕ → ℕ :=
+  fun j => if j ≤ Jidx s then y else ⌊(y : ℝ) ^ (alph k ^ (j - Jidx s))⌋₊
+
+/-- The exponent (in units of `log y`) charged to the cutoff at position `j`. -/
+noncomputable def expo (k : ℕ) (s : ℝ) : ℕ → ℝ :=
+  fun j => if j ≤ Jidx s then 1 else alph k ^ (j - Jidx s)
+
+/-- The exponent charged to rank `i` from the top. -/
+noncomputable def expoI (k : ℕ) (s : ℝ) : ℕ → ℝ :=
+  fun i => if i = 0 then 1 else expo k s ((i + 1) / 2)
+
+lemma alph_nonneg {k : ℕ} (hk : 1 ≤ k) : 0 ≤ alph k := by
+  unfold alph
+  have : (1 : ℝ) ≤ 20 * k := by
+    have : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+    linarith
+  rw [sub_nonneg, div_le_one (by linarith)]
+  linarith
+
+lemma alph_lt_one {k : ℕ} (hk : 1 ≤ k) : alph k < 1 := by
+  unfold alph
+  have hk' : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+  have : 0 < 1 / (20 * (k : ℝ)) := by positivity
+  linarith
+
+lemma expo_nonneg {k : ℕ} (hk : 1 ≤ k) (s : ℝ) (j : ℕ) : 0 ≤ expo k s j := by
+  unfold expo; split
+  · norm_num
+  · exact pow_nonneg (alph_nonneg hk) _
+
+lemma expo_le_one {k : ℕ} (hk : 1 ≤ k) (s : ℝ) (j : ℕ) : expo k s j ≤ 1 := by
+  unfold expo; split
+  · exact le_refl 1
+  · exact pow_le_one₀ (alph_nonneg hk) (alph_lt_one hk).le
+
+lemma expoI_nonneg {k : ℕ} (hk : 1 ≤ k) (s : ℝ) (i : ℕ) : 0 ≤ expoI k s i := by
+  unfold expoI; split
+  · norm_num
+  · exact expo_nonneg hk s _
+
+lemma brunCut_le_rpow {k : ℕ} (hk : 1 ≤ k) (s : ℝ) {y : ℕ} (hy : 1 ≤ y) (j : ℕ) :
+    ((brunCut k s y j : ℕ) : ℝ) ≤ (y : ℝ) ^ (expo k s j) := by
+  have hy1 : (1 : ℝ) ≤ (y : ℝ) := by exact_mod_cast hy
+  unfold brunCut expo
+  split
+  · rw [Real.rpow_one]
+  · exact Nat.floor_le (Real.rpow_nonneg (by linarith) _)
+
+/-- Turning a family of pointwise bounds `W i ≤ y ^ e i` into a bound on the product. -/
+lemma prod_le_rpow_sum {y : ℕ} (hy : 1 ≤ y) (W : ℕ → ℕ) (e : ℕ → ℝ)
+    (hW : ∀ i, (W i : ℝ) ≤ (y : ℝ) ^ (e i)) (r : ℕ) :
+    ((∏ i ∈ Finset.range r, W i : ℕ) : ℝ) ≤ (y : ℝ) ^ (∑ i ∈ Finset.range r, e i) := by
+  have hy0 : (0 : ℝ) < (y : ℝ) := by exact_mod_cast hy
+  induction r with
+  | zero => simp
+  | succ n ih =>
+    rw [Finset.prod_range_succ, Finset.sum_range_succ, Nat.cast_mul, Real.rpow_add hy0]
+    refine mul_le_mul ih (hW n) (Nat.cast_nonneg _) (Real.rpow_nonneg hy0.le _)
+
+/-- The rank exponents pair up: rank `2j-1` and rank `2j` both charge `expo j`. -/
+lemma sum_expoI_odd (k : ℕ) (s : ℝ) (M : ℕ) :
+    ∑ i ∈ Finset.range (2 * M + 1), expoI k s i
+      = 1 + 2 * ∑ j ∈ Finset.Icc 1 M, expo k s j := by
+  induction M with
+  | zero => simp [expoI]
+  | succ m ih =>
+    have h1 : 2 * (m + 1) + 1 = (2 * m + 1) + 1 + 1 := by ring
+    rw [h1, Finset.sum_range_succ, Finset.sum_range_succ, ih,
+      Finset.sum_Icc_succ_top (by omega : 1 ≤ m + 1)]
+    have e1 : expoI k s (2 * m + 1) = expo k s (m + 1) := by
+      unfold expoI
+      rw [if_neg (by omega)]
+      congr 1
+      omega
+    have e2 : expoI k s (2 * m + 1 + 1) = expo k s (m + 1) := by
+      unfold expoI
+      rw [if_neg (by omega)]
+      congr 1
+      omega
+    rw [e1, e2]
+    ring
+
+lemma geom_partial_le {a : ℝ} (h0 : 0 ≤ a) (h1 : a < 1) (n : ℕ) :
+    ∑ i ∈ Finset.range n, a ^ i ≤ (1 - a)⁻¹ := by
+  have hne : a ≠ 1 := ne_of_lt h1
+  have hd : (0 : ℝ) < 1 - a := by linarith
+  rw [geom_sum_eq hne]
+  have hrw : (a ^ n - 1) / (a - 1) = (1 - a ^ n) / (1 - a) := by
+    rw [← neg_sub a 1, ← neg_sub (a ^ n) 1, neg_div_neg_eq]
+  rw [hrw, inv_eq_one_div]
+  have hpn : 0 ≤ a ^ n := pow_nonneg h0 n
+  gcongr
+  linarith
+
+/-- The cutoff exponents sum to at most `J + 20k - 1`: `J` full-length cutoffs and a geometric
+tail `α/(1-α) = 20k - 1`. -/
+lemma sum_expo_le {k : ℕ} (hk : 1 ≤ k) (s : ℝ) (M : ℕ) :
+    ∑ j ∈ Finset.Icc 1 M, expo k s j ≤ (Jidx s : ℝ) + (20 * k - 1) := by
+  set J := Jidx s with hJ
+  set a := alph k with ha
+  have h0 : 0 ≤ a := alph_nonneg hk
+  have h1 : a < 1 := alph_lt_one hk
+  have hk' : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+  have hinv : a / (1 - a) = 20 * (k : ℝ) - 1 := by
+    have h20 : (0 : ℝ) < 20 * (k : ℝ) := by linarith
+    rw [ha]
+    unfold alph
+    field_simp
+    ring
+  -- extend `M` so that `J ≤ M`
+  have hmono : ∑ j ∈ Finset.Icc 1 M, expo k s j ≤ ∑ j ∈ Finset.Icc 1 (max M J), expo k s j := by
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun j _ _ => expo_nonneg hk s j)
+    exact Finset.Icc_subset_Icc_right (le_max_left _ _)
+  refine hmono.trans ?_
+  set N := max M J with hN
+  have hJN : J ≤ N := le_max_right _ _
+  have hsplit : ∑ j ∈ Finset.Icc 1 N, expo k s j
+      = (∑ j ∈ Finset.Ico 1 (J + 1), expo k s j) + ∑ j ∈ Finset.Ico (J + 1) (N + 1), expo k s j := by
+    rw [Finset.sum_Ico_consecutive _ (by omega) (by omega)]
+    congr 1
+  have hfirst : ∑ j ∈ Finset.Ico 1 (J + 1), expo k s j = (J : ℝ) := by
+    have : ∀ j ∈ Finset.Ico 1 (J + 1), expo k s j = 1 := by
+      intro j hj
+      rw [Finset.mem_Ico] at hj
+      unfold expo
+      rw [if_pos (by omega)]
+    rw [Finset.sum_congr rfl this]
+    simp
+  have hsecond : ∑ j ∈ Finset.Ico (J + 1) (N + 1), expo k s j ≤ a / (1 - a) := by
+    rw [Finset.sum_Ico_eq_sum_range]
+    have hterm : ∀ i ∈ Finset.range (N + 1 - (J + 1)), expo k s (J + 1 + i) = a * a ^ i := by
+      intro i _
+      unfold expo
+      rw [if_neg (by omega)]
+      have : J + 1 + i - J = i + 1 := by omega
+      rw [this, ← ha, pow_succ]
+      ring
+    rw [Finset.sum_congr rfl hterm, ← Finset.mul_sum]
+    have hd : (0 : ℝ) < 1 - a := by linarith
+    calc a * ∑ i ∈ Finset.range (N + 1 - (J + 1)), a ^ i
+        ≤ a * (1 - a)⁻¹ := by
+          exact mul_le_mul_of_nonneg_left (geom_partial_le h0 h1 _) h0
+      _ = a / (1 - a) := by rw [div_eq_mul_inv]
+  rw [hinv] at hsecond
+  rw [hsplit, hfirst]
+  linarith
+
+/-- **Property (1), support half.**  Every subset supported by the Brun weights has product at
+most `y ^ s`, for `s ≥ 80k`.  No hypothesis beyond `1 ≤ k`, `1 ≤ y` and the elements being
+`≤ y`. -/
+theorem prod_le_rpow_of_adm {k : ℕ} (hk : 1 ≤ k) {s : ℝ} (hs : 80 * k ≤ s) {y : ℕ} (hy : 1 ≤ y)
+    {E : Finset ℕ} (hA : Adm (brunCut k s y) E) (hyE : ∀ p ∈ E, p ≤ y) :
+    ((∏ p ∈ E, p : ℕ) : ℝ) ≤ (y : ℝ) ^ s := by
+  have hy1 : (1 : ℝ) ≤ (y : ℝ) := by exact_mod_cast hy
+  set r := E.card with hr
+  -- combinatorial half
+  have hcomb : ((∏ p ∈ E, p : ℕ) : ℝ)
+      ≤ ((∏ i ∈ Finset.range r, (if i = 0 then y else brunCut k s y ((i + 1) / 2)) : ℕ) : ℝ) := by
+    exact_mod_cast prod_le_of_adm hA hyE
+  -- pointwise exponent bound
+  have hW : ∀ i, ((if i = 0 then y else brunCut k s y ((i + 1) / 2) : ℕ) : ℝ)
+      ≤ (y : ℝ) ^ (expoI k s i) := by
+    intro i
+    unfold expoI
+    by_cases h : i = 0
+    · simp [h, Real.rpow_one]
+    · rw [if_neg h, if_neg h]
+      exact brunCut_le_rpow hk s hy _
+  have hprod := prod_le_rpow_sum hy _ (expoI k s) hW r
+  -- the exponent sum
+  have hsub : ∑ i ∈ Finset.range r, expoI k s i ≤ ∑ i ∈ Finset.range (2 * r + 1), expoI k s i := by
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun i _ _ => expoI_nonneg hk s i)
+    intro x hx
+    rw [Finset.mem_range] at hx ⊢
+    omega
+  have hsum : ∑ i ∈ Finset.range (2 * r + 1), expoI k s i
+      ≤ 1 + 2 * ((Jidx s : ℝ) + (20 * k - 1)) := by
+    rw [sum_expoI_odd]
+    have := sum_expo_le hk s r
+    linarith
+  have hJ : (Jidx s : ℝ) ≤ s / 4 := by
+    have hs0 : (0 : ℝ) ≤ s := by
+      have : (0 : ℝ) ≤ 80 * (k : ℝ) := by positivity
+      linarith
+    exact Nat.floor_le (by positivity)
+  have hk' : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+  have hfinal : ∑ i ∈ Finset.range r, expoI k s i ≤ s := by
+    have h40 : 40 * (k : ℝ) ≤ s / 2 := by linarith
+    linarith [hsub, hsum, hJ]
+  calc ((∏ p ∈ E, p : ℕ) : ℝ)
+      ≤ ((∏ i ∈ Finset.range r, (if i = 0 then y else brunCut k s y ((i + 1) / 2)) : ℕ) : ℝ) := hcomb
+    _ ≤ (y : ℝ) ^ (∑ i ∈ Finset.range r, expoI k s i) := hprod
+    _ ≤ (y : ℝ) ^ s := Real.rpow_le_rpow_of_exponent_le hy1 hfinal
+
+/-- **Target property (1)**, both halves: the Brun coefficients are bounded by `1` in absolute
+value and supported on divisors `≤ y ^ s`, for `s ≥ 80k`. -/
+theorem brun_lower_one {k : ℕ} (hk : 1 ≤ k) {s : ℝ} (hs : 80 * k ≤ s) {y : ℕ} (hy : 1 ≤ y)
+    {U : Finset ℕ} (hU : ∀ p ∈ U, p ≤ y) {E : Finset ℕ} (hEU : E ⊆ U) :
+    |lam (brunCut k s y) E| ≤ 1 ∧
+      (lam (brunCut k s y) E ≠ 0 → ((∏ p ∈ E, p : ℕ) : ℝ) ≤ (y : ℝ) ^ s) := by
+  refine ⟨lam_abs_le_one _ _, fun hne => ?_⟩
+  have hA : Adm (brunCut k s y) E := by
+    by_contra h; exact hne (lam_eq_zero_of_not_adm h)
+  exact prod_le_rpow_of_adm hk hs hy hA (fun p hp => hU p (hEU hp))
+
 /-! ### Numeric anchors (kernel `decide`)
 
 The controls of `papers/prime-model-sieve-assessment.md`: `U = {2,3,5,7}` with the even-position
