@@ -383,3 +383,4 @@ import NormalNumbers.Maze
 import NormalNumbers.Walsh
 import NormalNumbers.WalshBase
 import NormalNumbers.G4WiringSummatory
+import NormalNumbers.PrimeModelComplement

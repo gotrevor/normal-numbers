@@ -658,6 +658,61 @@ lemma fullSiteMean_sub_halfAvg_mul (N : ℕ) (h : ℤ) (j : ℕ) (hj : 1 ≤ j) 
   field_simp
   ring
 
+lemma parityDisc_class_diff (h : ℤ) (s : Finset ℕ) (N j : ℕ) :
+    (∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j), roughProd h s n)
+      - ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), roughProd h s n
+    = (roughClassSum h s (j%2) (2*N) - roughClassSum h s (j%2) N)
+      - (roughClassSum h s ((j+1)%2) (2*N) - roughClassSum h s ((j+1)%2) N) := by
+  classical
+  rw [classSum_window, classSum_window]
+  congr 1
+  · exact Finset.sum_congr (Finset.filter_congr
+      (fun n _ => by constructor <;> intro hh <;> omega)) (fun _ _ => rfl)
+  · exact Finset.sum_congr (Finset.filter_congr
+      (fun n _ => by constructor <;> intro hh <;> omega)) (fun _ _ => rfl)
+
+lemma log_le_of_rpow_le {L z c : ℝ} (hL1 : 1 ≤ L) (m : ℕ) (hc : 0 ≤ c)
+    (hpow : L ^ ((m : ℝ) + 1) ≤ c) (hz : -(m:ℝ) ≤ z) : L ≤ c * L ^ z := by
+  have h2 : (0:ℝ) < L := lt_of_lt_of_le one_pos hL1
+  have h1 : L ^ (-(m:ℝ)) ≤ L ^ z := Real.rpow_le_rpow_of_exponent_le hL1 hz
+  have h3 : L ^ ((m:ℝ)+1) * L ^ (-(m:ℝ)) = L := by
+    rw [← Real.rpow_add h2]
+    norm_num
+  calc L = L ^ ((m:ℝ)+1) * L ^ (-(m:ℝ)) := h3.symm
+    _ ≤ c * L ^ z := mul_le_mul hpow h1 (Real.rpow_nonneg h2.le _) hc
+
+lemma eventually_rpow_log_le (m : ℕ) (c : ℝ) (hc : 0 < c) :
+    ∀ᶠ N : ℕ in atTop, Real.log N ^ ((m:ℝ)+1) ≤ c * (N:ℝ) := by
+  have h := eventually_const_mul_log_pow_le (m+1) (1/c)
+  filter_upwards [h] with N hN
+  have heq : Real.log N ^ ((m:ℝ)+1) = Real.log N ^ (m+1) := by
+    rw [show ((m:ℝ)+1) = (((m+1 : ℕ) : ℝ)) from by push_cast; ring, Real.rpow_natCast]
+  rw [heq]
+  have h2 := mul_le_mul_of_nonneg_left hN hc.le
+  have h3 : c * (1 / c * Real.log N ^ (m+1)) = Real.log N ^ (m+1) := by field_simp
+  rw [h3] at h2
+  exact h2
+
+lemma neg_bound_le_re {z : ℂ} {K : ℝ} (hz : ‖z‖ ≤ K) : -K ≤ z.re := by
+  have h1 : |z.re| ≤ ‖z‖ := Complex.abs_re_le_norm z
+  have h2 := abs_le.mp (le_trans h1 hz)
+  linarith [h2.1]
+
+/-- **Elementary tail regime (open, elementary).**  For `j > windowJ N` the node says nothing, but
+nothing is needed: `4^j ≥ 4^{windowJ N} ≳ (log₂ N)²` while `ω_{>2}(n+j) ≤ log₂(2N+j)`, so every
+`roughPhase h j n` is within `O(1/log N)` of `1`; hence `parityDisc N j (roughPhase h j)` — which
+vanishes identically when the phase is constant — is `O(N²/log N)`, and `‖fullSiteMean N h j‖ ≥ 1/2`
+in the same range.
+
+MISSING (purely elementary, no analytic input): the two inequalities
+`‖parityDisc N j r‖ ≤ N² · sup_n ‖r n − 1‖` and
+`sup_{n ∈ [N,2N)} ‖roughPhase h j n − 1‖ ≤ 4π|h| · (log₂(2N) + j) / 4^j ≤ C / log N` for
+`j > windowJ N`, using `omegaR_le_log` and `Nat.lt_pow_succ_log_self`. -/
+theorem parityDisc_tail_small (h : ℤ) : ∃ C : ℝ, 0 ≤ C ∧ ∀ᶠ N : ℕ in atTop,
+    ∀ j, windowJ N < j → ‖parityDisc N j (roughPhase h j)‖
+      ≤ C / Real.log N * ((N:ℝ)^2 * ‖fullSiteMean N h j‖) := by
+  sorry
+
 /-! ### Leaf 4–6: the wirings -/
 
 /-! ### Leaf 3: uniform lower bounds on partial products -/
@@ -1036,10 +1091,363 @@ theorem roughIndependenceAt_two_of_summatory {h : ℤ} (hS : RoughSummatory h) :
           have : (0:ℝ) ≤ A + 2*A*B/(3*δ) := by positivity
           positivity
 
-/-- **Wiring 2**: the summatory node gives the parity node. -/
+set_option maxHeartbeats 2000000 in
+/-- **Wiring 2**: the summatory node gives the parity node (the class main terms cancel exactly;
+the lower bound on `∏‖fullSiteMean‖` comes from the node's own main terms and `|cos(πh/4^j)| > 0`
+off the Chowla sector).  The range `j > windowJ N`, where the node says nothing, is the elementary
+`parityDisc_tail_small`. -/
 theorem parityDiscrepancy_of_summatory {h : ℤ} (hh : h ≠ 0) (hc : ¬ ChowlaSector h)
     (hS : RoughSummatory h) : ParityDiscrepancy h := by
-  sorry
+  classical
+  obtain ⟨c, B, A, δ, hAnn, hδ, hBnn, hcB, hclow, hcone, hev, hdiff⟩ := summatory_means_approx hS
+  obtain ⟨δh, hδh0, hhalf⟩ := exists_halfAvg_lower hh hc
+  obtain ⟨Ct, hCt0, hCtev⟩ := parityDisc_tail_small h
+  have hpi : (0:ℝ) < Real.pi := Real.pi_pos
+  set K : ℝ := 4 * Real.pi * |(h:ℝ)| with hK
+  have hKnn : (0:ℝ) ≤ K := by rw [hK]; positivity
+  set p : ℝ := min (δ/2) 1 with hpdef
+  have hp0 : (0:ℝ) < p := lt_min (by positivity) one_pos
+  have hp1 : p ≤ 1 := min_le_right _ _
+  set p₂ : ℝ := min (δh * p / 2) 1 with hp2def
+  have hp20 : (0:ℝ) < p₂ := lt_min (by positivity) one_pos
+  have hp21 : p₂ ≤ 1 := min_le_right _ _
+  obtain ⟨j₁, hj₁1, hj₁⟩ :=
+    exists_geom_cut (2*Real.pi*|(h:ℝ)| + B + 1 + K*A) (by positivity)
+  set δ₂ : ℝ := p₂ ^ j₁ / 2 with hδ₂def
+  have hδ₂0 : (0:ℝ) < δ₂ := by positivity
+  set m : ℕ := ⌈K⌉₊ with hmdef
+  have hmK : K ≤ (m : ℝ) := Nat.le_ceil _
+  set C' : ℝ := A/p₂ + A/δ₂ + 1 + Ct with hC'def
+  have hC'1 : (1:ℝ) ≤ C' := by
+    rw [hC'def]
+    have : (0:ℝ) ≤ A/p₂ := by positivity
+    have h2 : (0:ℝ) ≤ A/δ₂ := by positivity
+    linarith
+  have hC'p : A ≤ C' * p₂ := by
+    rw [hC'def]
+    have h1 : A / p₂ * p₂ = A := by field_simp
+    nlinarith [hp20, hCt0, div_nonneg hAnn hδ₂0.le, h1]
+  have hC'δ : A ≤ C' * δ₂ := by
+    rw [hC'def]
+    have h1 : A / δ₂ * δ₂ = A := by field_simp
+    nlinarith [hδ₂0, hCt0, div_nonneg hAnn hp20.le, h1]
+  have hCtle : Ct ≤ C' := by
+    rw [hC'def]
+    have : (0:ℝ) ≤ A/p₂ := by positivity
+    have h2 : (0:ℝ) ≤ A/δ₂ := by positivity
+    linarith
+  refine ⟨C', ?_⟩
+  have hlogbig : ∀ᶠ N : ℕ in atTop,
+      (1 + K + A + 2*A/δ + 2*K*A/(δh*p) : ℝ) ≤ Real.log N := by
+    have := Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+    exact this.eventually_ge_atTop _
+  filter_upwards [hev, hdiff, hCtev, hlogbig,
+    eventually_rpow_log_le m (min p₂ δ₂) (lt_min hp20 hδ₂0), eventually_gt_atTop 0]
+    with N hN hND hNt hNlog hNpow hN0
+  set J : ℕ := windowJ N with hJdef
+  set L : ℝ := Real.log N with hLdef
+  have hbits : (0:ℝ) ≤ 2*A/δ ∧ (0:ℝ) ≤ 2*K*A/(δh*p) := ⟨by positivity, by positivity⟩
+  have hL1 : (1:ℝ) ≤ L := by linarith [hbits.1, hbits.2, hKnn, hAnn]
+  have hL0 : (0:ℝ) < L := by linarith
+  have hLK : K ≤ L := by linarith [hbits.1, hbits.2, hAnn]
+  have hLA : A ≤ L := by linarith [hbits.1, hbits.2, hKnn]
+  have hLδ : 2*A/δ ≤ L := by linarith [hbits.2, hKnn, hAnn]
+  have hLhp : 2*K*A/(δh*p) ≤ L := by linarith [hbits.1, hKnn, hAnn]
+  have hJ1 : 1 ≤ J := by rw [hJdef, windowJ]; omega
+  have hNR : (0:ℝ) < N := by exact_mod_cast hN0
+  set q : ℕ → ℝ := fun j => ((1:ℝ)/4) ^ j with hqdef
+  have hqpos : ∀ j, (0:ℝ) < q j := fun j => by rw [hqdef]; positivity
+  have hq1 : ∀ j, q j ≤ 1 := fun j => pow_le_one₀ (by norm_num) (by norm_num)
+  set r : ℕ → ℝ := fun j => L ^ (sdExponent h {j}).re with hrdef
+  have hrpos : ∀ j, (0:ℝ) < r j := fun j => Real.rpow_pos_of_pos hL0 _
+  set κ : ℂ := sdExponent h (Finset.Icc 1 J) with hκdef
+  have hκre : (0:ℝ) < L ^ κ.re := Real.rpow_pos_of_pos hL0 _
+  -- per-site facts in the node range
+  have hsite : ∀ j, 1 ≤ j → j ≤ J →
+      ‖parityDisc N j (roughPhase h j)‖ ≤ (N:ℝ)/2 * (A * q j / L * ((N:ℝ) * r j)) + (N:ℝ)/2
+      ∧ p₂ * r j ≤ ‖fullSiteMean N h j‖
+      ∧ (1 - (2*Real.pi*|(h:ℝ)| + B + 1 + K*A) * q j) * r j ≤ ‖fullSiteMean N h j‖ := by
+    intro j hj1 hjJ
+    have hfun : roughPhase h j = roughProd h {j} :=
+      funext (fun n => (roughProd_singleton h j n).symm)
+    set D : ℝ := A * q j / L * ((N:ℝ) * r j) with hDdef
+    have hDnn : (0:ℝ) ≤ D := by rw [hDdef]; positivity
+    have hdd : ‖(∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j), roughProd h {j} n)
+        - ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), roughProd h {j} n‖ ≤ D := by
+      rw [parityDisc_class_diff]
+      exact (hND j hj1 hjJ (j % 2) (by omega) ((j+1) % 2) (by omega)).2
+    have hpd : ‖parityDisc N j (roughPhase h j)‖ ≤ (N:ℝ)/2 * D + (N:ℝ)/2 := by
+      rw [hfun]
+      exact norm_parityDisc_le N j _ (fun n => le_of_eq (norm_roughProd h {j} n)) D hdd
+    -- the rough site mean
+    have hS1 : ‖roughSiteMean N h j 2 - c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j}‖
+        ≤ A * q j / L * r j := (hN j hj1 hjJ).2
+    have hglow : ‖c {j}‖ * r j - A * q j / L * r j ≤ ‖roughSiteMean N h j 2‖ := by
+      have h2 : ‖c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j}‖ - ‖roughSiteMean N h j 2‖
+          ≤ ‖c {j} * ((L : ℝ) : ℂ) ^ sdExponent h {j} - roughSiteMean N h j 2‖ :=
+        norm_sub_norm_le _ _
+      rw [norm_sub_rev] at h2
+      rw [norm_mul, norm_ofReal_cpow hL0] at h2
+      have : r j = L ^ (sdExponent h {j}).re := rfl
+      rw [← this] at h2
+      linarith [hS1, h2]
+    have hAqL : A * q j / L ≤ q j := by
+      rw [div_le_iff₀ hL0]; nlinarith [hLA, hqpos j, hAnn]
+    have hAqL2 : A * q j / L ≤ δ/2 := by
+      rw [div_le_iff₀ hL0]
+      have hqa : A * q j ≤ A := by nlinarith [hAnn, hq1 j, hqpos j]
+      have hmul : (δ/2) * (2*A/δ) ≤ (δ/2) * L := mul_le_mul_of_nonneg_left hLδ (by positivity)
+      have heq : (δ/2) * (2*A/δ) = A := by field_simp
+      rw [heq] at hmul
+      linarith
+    have hrp : p * r j ≤ ‖roughSiteMean N h j 2‖ := by
+      have h1 : δ ≤ ‖c {j}‖ := (hclow j hj1).2
+      have : p ≤ δ/2 := min_le_left _ _
+      nlinarith [hglow, hrpos j, hAqL2, h1]
+    have hre : (1 - (B+1) * q j) * r j ≤ ‖roughSiteMean N h j 2‖ := by
+      have h2 : ‖(1:ℂ)‖ - ‖c {j}‖ ≤ ‖(1:ℂ) - c {j}‖ := norm_sub_norm_le _ _
+      rw [norm_one, norm_sub_rev] at h2
+      have h3 : ‖c {j} - 1‖ ≤ B * q j := hcone j hj1
+      nlinarith [hglow, hrpos j, hAqL, h2, h3]
+    -- the full site mean
+    have hfullclose : ‖fullSiteMean N h j - halfAvg h j * roughSiteMean N h j 2‖
+        ≤ K * A / 2 * q j / L * r j := by
+      rw [fullSiteMean_sub_halfAvg_mul N h j hj1 hN0, norm_mul, norm_div, norm_div,
+        Complex.norm_ofNat, Complex.norm_natCast]
+      have h1 : ‖ePhase ((h:ℝ)/(4:ℝ)^j) - 1‖ ≤ K * q j := by
+        exact norm_ePhase_site_sub_one h j
+      have hdd' : ‖(∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j), roughPhase h j n)
+          - ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), roughPhase h j n‖ ≤ D := by
+        rw [hfun]; exact hdd
+      have h3 : ‖(∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j), roughPhase h j n)
+          - ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), roughPhase h j n‖ / (N:ℝ)
+          ≤ D / (N:ℝ) := by
+        exact div_le_div_of_nonneg_right hdd' hNR.le
+      have h4 : D / (N:ℝ) = A * q j / L * r j := by
+        rw [hDdef]; field_simp
+      rw [h4] at h3
+      have h5 : ‖ePhase ((h:ℝ)/(4:ℝ)^j) - 1‖ / 2 ≤ K * q j / 2 := by linarith
+      have h6 : (0:ℝ) ≤ ‖ePhase ((h:ℝ)/(4:ℝ)^j) - 1‖ / 2 := by positivity
+      have h7 : (0:ℝ) ≤ A * q j / L * r j := by positivity
+      have h8 := mul_le_mul h5 h3 (by positivity) (by positivity)
+      have h9 : K * q j / 2 * (A * q j / L * r j) ≤ K * A / 2 * q j / L * r j := by
+        have hqq : q j * q j ≤ q j := by nlinarith [hqpos j, hq1 j]
+        have : K * q j / 2 * (A * q j / L * r j) = (K * A / 2 / L * r j) * (q j * q j) := by
+          field_simp <;> ring
+        rw [this]
+        have hcoef : (0:ℝ) ≤ K * A / 2 / L * r j := by positivity
+        have := mul_le_mul_of_nonneg_left hqq hcoef
+        calc (K * A / 2 / L * r j) * (q j * q j) ≤ (K * A / 2 / L * r j) * q j := this
+          _ = K * A / 2 * q j / L * r j := by field_simp <;> ring
+      linarith [h8, h9]
+    have hFlow : ‖halfAvg h j‖ * ‖roughSiteMean N h j 2‖ - K * A / 2 * q j / L * r j
+        ≤ ‖fullSiteMean N h j‖ := by
+      have h1 : ‖halfAvg h j * roughSiteMean N h j 2‖ - ‖fullSiteMean N h j‖
+          ≤ ‖halfAvg h j * roughSiteMean N h j 2 - fullSiteMean N h j‖ := norm_sub_norm_le _ _
+      rw [norm_sub_rev] at h1
+      rw [norm_mul] at h1
+      linarith [hfullclose, h1]
+    refine ⟨hpd, ?_, ?_⟩
+    · -- crude uniform bound
+      have h1 : δh ≤ ‖halfAvg h j‖ := hhalf j hj1
+      have h2 : δh * (p * r j) ≤ ‖halfAvg h j‖ * ‖roughSiteMean N h j 2‖ := by
+        refine mul_le_mul h1 hrp (by positivity) (norm_nonneg _)
+      have h3 : K * A / 2 * q j / L * r j ≤ δh * p / 2 * r j := by
+        have hq' : q j ≤ 1 := hq1 j
+        have hkey : K * A / 2 * q j / L ≤ δh * p / 2 := by
+          rw [div_le_iff₀ hL0]
+          have hmul : (δh*p/2) * (2*K*A/(δh*p)) ≤ (δh*p/2) * L :=
+            mul_le_mul_of_nonneg_left hLhp (by positivity)
+          have heq : (δh*p/2) * (2*K*A/(δh*p)) = K*A := by field_simp <;> ring
+          rw [heq] at hmul
+          nlinarith [hq', hqpos j, hKnn, hAnn, mul_nonneg hKnn hAnn]
+        exact mul_le_mul_of_nonneg_right hkey (hrpos j).le
+      have h4 : p₂ ≤ δh * p / 2 := min_le_left _ _
+      nlinarith [hFlow, h2, h3, h4, hrpos j]
+    · -- the geometric bound
+      have h1 : 1 - 2*Real.pi*|(h:ℝ)| * q j ≤ ‖halfAvg h j‖ := by
+        exact norm_halfAvg_ge h j
+      have h1' : ‖halfAvg h j‖ ≤ 1 := norm_halfAvg_le_one h j
+      have h2 : (1 - (B+1) * q j) * r j ≤ ‖roughSiteMean N h j 2‖ := hre
+      have hrjpos := hrpos j
+      have hprod : (1 - 2*Real.pi*|(h:ℝ)| * q j - (B+1) * q j) * r j
+          ≤ ‖halfAvg h j‖ * ‖roughSiteMean N h j 2‖ := by
+        rcases le_or_gt (1 - 2*Real.pi*|(h:ℝ)| * q j) 0 with hneg | hpos
+        · have hb : (0:ℝ) ≤ (B+1) * q j := by positivity
+          have : (1 - 2*Real.pi*|(h:ℝ)| * q j - (B+1) * q j) * r j ≤ 0 := by
+            nlinarith [hrjpos, hneg, hb]
+          have : (0:ℝ) ≤ ‖halfAvg h j‖ * ‖roughSiteMean N h j 2‖ := by positivity
+          linarith
+        · have hA1 : (1 - 2*Real.pi*|(h:ℝ)| * q j) * ‖roughSiteMean N h j 2‖
+              ≤ ‖halfAvg h j‖ * ‖roughSiteMean N h j 2‖ :=
+            mul_le_mul_of_nonneg_right h1 (norm_nonneg _)
+          have hA2 : (1 - 2*Real.pi*|(h:ℝ)| * q j) * ((1 - (B+1) * q j) * r j)
+              ≤ (1 - 2*Real.pi*|(h:ℝ)| * q j) * ‖roughSiteMean N h j 2‖ :=
+            mul_le_mul_of_nonneg_left h2 hpos.le
+          have hA3 : (1 - 2*Real.pi*|(h:ℝ)| * q j - (B+1) * q j) * r j
+              ≤ (1 - 2*Real.pi*|(h:ℝ)| * q j) * ((1 - (B+1) * q j) * r j) := by
+            have hexp : (1 - 2*Real.pi*|(h:ℝ)| * q j) * ((1 - (B+1) * q j) * r j)
+                - (1 - 2*Real.pi*|(h:ℝ)| * q j - (B+1) * q j) * r j
+                = (2*Real.pi*|(h:ℝ)| * q j) * ((B+1) * q j) * r j := by ring
+            have hnn : (0:ℝ) ≤ (2*Real.pi*|(h:ℝ)| * q j) * ((B+1) * q j) * r j := by
+              have := hqpos j
+              have := hrjpos
+              positivity
+            linarith [hexp, hnn]
+          linarith
+      have h3 : K * A / 2 * q j / L * r j ≤ K * A * q j * r j := by
+        have hkey : K * A / 2 * q j / L ≤ K * A * q j := by
+          rw [div_le_iff₀ hL0]
+          nlinarith [hL1, mul_nonneg (mul_nonneg hKnn hAnn) (hqpos j).le]
+        exact mul_le_mul_of_nonneg_right hkey hrjpos.le
+      have hexp2 : (1 - (2*Real.pi*|(h:ℝ)| + B + 1 + K*A) * q j) * r j
+          = (1 - 2*Real.pi*|(h:ℝ)| * q j - (B+1) * q j) * r j - K * A * q j * r j := by ring
+      rw [hexp2]
+      linarith [hFlow, hprod, h3]
+  -- the product of full site means
+  have hprodF : δ₂ * L ^ κ.re ≤ ∏ j ∈ Finset.Icc 1 J, ‖fullSiteMean N h j‖ := by
+    set G : ℕ → ℝ := fun j => if j ≤ J then ‖fullSiteMean N h j‖ / r j else 1 with hGdef
+    have hGsplit := prod_Icc_split_lower J j₁ hj₁1 G
+      (fun j => (2*Real.pi*|(h:ℝ)| + B + 1 + K*A) * q j) p₂ hp20 hp21 ?_
+      (fun j => by positivity) ?_ hj₁
+    · have heq : ∏ j ∈ Finset.Icc 1 J, ‖fullSiteMean N h j‖
+          = (∏ j ∈ Finset.Icc 1 J, G j) * ∏ j ∈ Finset.Icc 1 J, r j := by
+        rw [← Finset.prod_mul_distrib]
+        refine Finset.prod_congr rfl (fun j hj => ?_)
+        show ‖fullSiteMean N h j‖ = (if j ≤ J then ‖fullSiteMean N h j‖ / r j else 1) * r j
+        rw [if_pos (Finset.mem_Icc.mp hj).2]
+        field_simp [(hrpos j).ne']
+      have hrprod : ∏ j ∈ Finset.Icc 1 J, r j = L ^ κ.re := by
+        rw [hrdef, hκdef]; exact prod_rpow_sdExponent L hL0 h J
+      rw [heq, hrprod]
+      nlinarith [hGsplit, hκre, hδ₂0]
+    · intro j hj1
+      by_cases hjJ : j ≤ J
+      · simp only [hGdef]
+        rw [if_pos hjJ, le_div_iff₀ (hrpos j)]
+        exact (hsite j hj1 hjJ).2.1
+      · simp only [hGdef]
+        rw [if_neg hjJ]
+        exact hp21
+    · intro j hjj
+      by_cases hjJ : j ≤ J
+      · simp only [hGdef]
+        rw [if_pos hjJ, le_div_iff₀ (hrpos j)]
+        exact (hsite j (by omega) hjJ).2.2
+      · simp only [hGdef]
+        rw [if_neg hjJ]
+        have : (0:ℝ) ≤ (2*Real.pi*|(h:ℝ)| + B + 1 + K*A) * q j := by positivity
+        linarith
+  have hminpow : L ^ ((m:ℝ)+1) ≤ min p₂ δ₂ * (N:ℝ) := hNpow
+  constructor
+  · -- site clause
+    intro j hj1
+    by_cases hjJ : j ≤ J
+    · obtain ⟨hpd, hFp, -⟩ := hsite j hj1 hjJ
+      have hrej : -((m:ℝ)) ≤ (sdExponent h {j}).re :=
+        le_trans (by linarith [hmK]) (neg_bound_le_re (norm_sdExponent_singleton h j |>.trans
+          (by nlinarith [hq1 j, hqpos j, hKnn, hK] : 4 * Real.pi * |(h:ℝ)| * ((1:ℝ)/4)^j ≤ K)))
+      have hLabs : L ≤ p₂ * (N:ℝ) * r j :=
+        log_le_of_rpow_le hL1 m (by positivity)
+          (le_trans hminpow (by nlinarith [min_le_left p₂ δ₂, hNR.le])) hrej
+      have hfin : (N:ℝ)/2 * (A * q j / L * ((N:ℝ) * r j)) + (N:ℝ)/2
+          ≤ C' / L * ((N:ℝ)^2 * ‖fullSiteMean N h j‖) := by
+        have hR : C' * p₂ * (N:ℝ)^2 * r j / L
+            ≤ C' / L * ((N:ℝ)^2 * ‖fullSiteMean N h j‖) := by
+          have h1 : C' * p₂ * (N:ℝ)^2 * r j / L = C' / L * ((N:ℝ)^2 * (p₂ * r j)) := by
+            field_simp <;> ring
+          rw [h1]
+          have h2 : (0:ℝ) ≤ C' / L := by positivity
+          refine mul_le_mul_of_nonneg_left ?_ h2
+          exact mul_le_mul_of_nonneg_left hFp (by positivity)
+        refine le_trans ?_ hR
+        have hterm1 : (N:ℝ)/2 * (A * q j / L * ((N:ℝ) * r j))
+            ≤ C' * p₂ * (N:ℝ)^2 * r j / L / 2 := by
+          have hq' : q j ≤ 1 := hq1 j
+          have h1 : (N:ℝ)/2 * (A * q j / L * ((N:ℝ) * r j))
+              = (A * q j) * ((N:ℝ)^2 * r j) / L / 2 := by field_simp <;> ring
+          have h2 : C' * p₂ * (N:ℝ)^2 * r j / L / 2
+              = (C' * p₂) * ((N:ℝ)^2 * r j) / L / 2 := by ring
+          rw [h1, h2]
+          have hAq : A * q j ≤ C' * p₂ := by nlinarith [hC'p, hAnn, hq', hqpos j]
+          have hnn : (0:ℝ) ≤ ((N:ℝ)^2 * r j) / L / 2 := by positivity
+          have e1 : (A * q j) * ((N:ℝ)^2 * r j) / L / 2
+              = (A * q j) * (((N:ℝ)^2 * r j) / L / 2) := by ring
+          have e2 : (C' * p₂) * ((N:ℝ)^2 * r j) / L / 2
+              = (C' * p₂) * (((N:ℝ)^2 * r j) / L / 2) := by ring
+          rw [e1, e2]
+          exact mul_le_mul_of_nonneg_right hAq hnn
+        have hterm2 : (N:ℝ)/2 ≤ C' * p₂ * (N:ℝ)^2 * r j / L / 2 := by
+          have hkey : L ≤ C' * p₂ * (N:ℝ) * r j := by
+            nlinarith [hLabs, mul_nonneg (mul_nonneg (mul_nonneg
+              (sub_nonneg.mpr hC'1) hp20.le) hNR.le) (hrpos j).le]
+          have h1 := mul_le_mul_of_nonneg_right hkey hNR.le
+          have h2 : C' * p₂ * (N:ℝ)^2 * r j / L / 2
+              = (C' * p₂ * (N:ℝ)^2 * r j) / (2*L) := by ring
+          rw [h2, le_div_iff₀ (by positivity)]
+          calc (N:ℝ)/2 * (2*L) = L * (N:ℝ) := by ring
+            _ ≤ (C' * p₂ * (N:ℝ) * r j) * (N:ℝ) := h1
+            _ = C' * p₂ * (N:ℝ)^2 * r j := by ring
+        linarith
+      exact le_trans hpd hfin
+    · push_neg at hjJ
+      refine le_trans (hNt j hjJ) ?_
+      have h1 : Ct / L ≤ C' / L := div_le_div_of_nonneg_right hCtle hL0.le
+      have h2 : (0:ℝ) ≤ (N:ℝ)^2 * ‖fullSiteMean N h j‖ := by positivity
+      exact mul_le_mul_of_nonneg_right h1 h2
+  · -- window clause
+    have hfun0 : (fun n => ePhase ((h:ℝ) * roughTail 2 J n)) = roughProd h (Finset.Icc 1 J) :=
+      funext (fun n => ePhase_roughTail_prod h J n)
+    have hdd0 : ‖(∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + 0),
+          roughProd h (Finset.Icc 1 J) n)
+        - ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + 0),
+          roughProd h (Finset.Icc 1 J) n‖ ≤ A / L * ((N:ℝ) * L ^ κ.re) := by
+      rw [parityDisc_class_diff]
+      simpa using (hND J hJ1 le_rfl 0 (by norm_num) 1 (by norm_num)).1
+    have hpd0 : ‖parityDisc N 0 (fun n => ePhase ((h:ℝ) * roughTail 2 J n))‖
+        ≤ (N:ℝ)/2 * (A / L * ((N:ℝ) * L ^ κ.re)) + (N:ℝ)/2 := by
+      rw [hfun0]
+      exact norm_parityDisc_le N 0 _ (fun n => le_of_eq (norm_roughProd h _ n)) _ hdd0
+    have hreJ : -((m:ℝ)) ≤ κ.re :=
+      le_trans (by linarith [hmK]) (neg_bound_le_re (hκdef ▸ norm_sdExponent_Icc h J))
+    have hLabs : L ≤ δ₂ * (N:ℝ) * L ^ κ.re :=
+      log_le_of_rpow_le hL1 m (by positivity)
+        (le_trans hminpow (by nlinarith [min_le_right p₂ δ₂, hNR.le])) hreJ
+    refine le_trans hpd0 ?_
+    have hR : C' * δ₂ * (N:ℝ)^2 * L ^ κ.re / L
+        ≤ C' / L * ((N:ℝ)^2 * ∏ j ∈ Finset.Icc 1 J, ‖fullSiteMean N h j‖) := by
+      have h1 : C' * δ₂ * (N:ℝ)^2 * L ^ κ.re / L
+          = C' / L * ((N:ℝ)^2 * (δ₂ * L ^ κ.re)) := by field_simp <;> ring
+      rw [h1]
+      have h2 : (0:ℝ) ≤ C' / L := by positivity
+      exact mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hprodF (by positivity)) h2
+    refine le_trans ?_ hR
+    have hterm1 : (N:ℝ)/2 * (A / L * ((N:ℝ) * L ^ κ.re))
+        ≤ C' * δ₂ * (N:ℝ)^2 * L ^ κ.re / L / 2 := by
+      have h1 : (N:ℝ)/2 * (A / L * ((N:ℝ) * L ^ κ.re))
+          = A * ((N:ℝ)^2 * L ^ κ.re) / L / 2 := by field_simp <;> ring
+      have h2 : C' * δ₂ * (N:ℝ)^2 * L ^ κ.re / L / 2
+          = (C' * δ₂) * ((N:ℝ)^2 * L ^ κ.re) / L / 2 := by ring
+      rw [h1, h2]
+      have hnn : (0:ℝ) ≤ ((N:ℝ)^2 * L ^ κ.re) / L / 2 := by positivity
+      have e1 : A * ((N:ℝ)^2 * L ^ κ.re) / L / 2
+          = A * (((N:ℝ)^2 * L ^ κ.re) / L / 2) := by ring
+      have e2 : (C' * δ₂) * ((N:ℝ)^2 * L ^ κ.re) / L / 2
+          = (C' * δ₂) * (((N:ℝ)^2 * L ^ κ.re) / L / 2) := by ring
+      rw [e1, e2]
+      exact mul_le_mul_of_nonneg_right hC'δ hnn
+    have hterm2 : (N:ℝ)/2 ≤ C' * δ₂ * (N:ℝ)^2 * L ^ κ.re / L / 2 := by
+      have hkey : L ≤ C' * δ₂ * (N:ℝ) * L ^ κ.re := by
+        nlinarith [hLabs, mul_nonneg (mul_nonneg (mul_nonneg
+          (sub_nonneg.mpr hC'1) hδ₂0.le) hNR.le) hκre.le]
+      have h1 := mul_le_mul_of_nonneg_right hkey hNR.le
+      have h2 : C' * δ₂ * (N:ℝ)^2 * L ^ κ.re / L / 2
+          = (C' * δ₂ * (N:ℝ)^2 * L ^ κ.re) / (2*L) := by ring
+      rw [h2, le_div_iff₀ (by positivity)]
+      calc (N:ℝ)/2 * (2*L) = L * (N:ℝ) := by ring
+        _ ≤ (C' * δ₂ * (N:ℝ) * L ^ κ.re) * (N:ℝ) := h1
+        _ = C' * δ₂ * (N:ℝ)^2 * L ^ κ.re := by ring
+    linarith
 
 /-- **Headline**: off the Chowla sector the G₄ window law rests on ONE analytic input. -/
 theorem isNormal_G4_of_summatory
@@ -1049,5 +1457,9 @@ theorem isNormal_G4_of_summatory
   isNormal_G4_of_parity
     (fun h hh hc => ⟨roughIndependenceAt_two_of_summatory (hSD h hh hc),
       parityDiscrepancy_of_summatory hh hc (hSD h hh hc)⟩) hCh hSite
+
+#print axioms isNormal_G4_of_summatory
+#print axioms roughIndependenceAt_two_of_summatory
+#print axioms parityDiscrepancy_of_summatory
 
 end NormalNumbers.G4
