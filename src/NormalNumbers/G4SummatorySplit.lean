@@ -1118,6 +1118,68 @@ lemma budget_lower (h : ℤ) {M k : ℕ} (hM : 8 ≤ M) (hk1 : 1 ≤ k) (hkW : k
   refine le_trans (le_of_eq ?_) hstep2
   field_simp
 
+/-! ### The halving depth -/
+
+/-- The number of halvings the assembly performs: `10 log₂ log₂ M`.  Chosen so that
+`2^{halfDepth M} ≳ (log M)^{10}` (which beats the `(log M)^6` budget denominator with room) while
+`halfDepth M ≤ (log₂ M)/4` (which keeps three quarters of the logarithm at every retained scale). -/
+def halfDepth (M : ℕ) : ℕ := 10 * Nat.log 2 (Nat.log 2 M)
+
+lemma forty_mul_le_two_pow {j : ℕ} (hj : 9 ≤ j) : 40 * j ≤ 2 ^ j := by
+  induction j, hj using Nat.le_induction with
+  | base => norm_num
+  | succ j hj ih =>
+      have : (2:ℕ) ^ (j + 1) = 2 * 2 ^ j := by rw [pow_succ]; ring
+      omega
+
+lemma forty_log_le {n : ℕ} (hn : 512 ≤ n) : 40 * Nat.log 2 n ≤ n := by
+  have h9 : 9 ≤ Nat.log 2 n := by
+    have : Nat.log 2 512 ≤ Nat.log 2 n := Nat.log_mono_right hn
+    have h512 : Nat.log 2 512 = 9 := by decide
+    omega
+  have h1 : (2:ℕ) ^ (Nat.log 2 n) ≤ n := Nat.pow_log_le_self 2 (by omega)
+  have h2 := forty_mul_le_two_pow h9
+  omega
+
+/-- `⌊log₂ M⌋ · log 2 ≤ log M`. -/
+lemma natLog_two_mul_log_le {M : ℕ} (hM : 1 ≤ M) :
+    (Nat.log 2 M : ℝ) * Real.log 2 ≤ Real.log M := by
+  have h1 : ((2:ℝ)) ^ (Nat.log 2 M) ≤ (M : ℝ) := by
+    have := Nat.pow_log_le_self 2 (show M ≠ 0 by omega)
+    exact_mod_cast this
+  have h2 : Real.log ((2:ℝ) ^ (Nat.log 2 M)) ≤ Real.log M :=
+    Real.log_le_log (by positivity) h1
+  rwa [Real.log_pow] at h2
+
+/-- `log M − 1 ≤ ⌊log₂ M⌋`. -/
+lemma log_le_natLog_two_add_one {M : ℕ} (hM : 1 ≤ M) :
+    Real.log M - 1 ≤ (Nat.log 2 M : ℝ) := by
+  have h1 : (M : ℝ) < (2:ℝ) ^ (Nat.log 2 M + 1) := by
+    have := Nat.lt_pow_succ_log_self (show 1 < 2 by norm_num) M
+    exact_mod_cast this
+  have h2 : Real.log M ≤ Real.log ((2:ℝ) ^ (Nat.log 2 M + 1)) :=
+    Real.log_le_log (by exact_mod_cast hM) h1.le
+  rw [Real.log_pow] at h2
+  have hl2 : Real.log 2 ≤ 1 := by
+    have := Real.log_two_lt_d9; linarith
+  have hnn : (0:ℝ) ≤ ((Nat.log 2 M : ℕ) : ℝ) + 1 := by positivity
+  push_cast at h2
+  nlinarith [h2, hl2, hnn]
+
+/-- On the retained range the halving depth is at most a quarter of `log₂ M`. -/
+lemma halfDepth_le {M : ℕ} (hM : 512 ≤ Nat.log 2 M) : 4 * halfDepth M ≤ Nat.log 2 M := by
+  have := forty_log_le hM
+  rw [halfDepth]
+  omega
+
+lemma halfDepth_log_le {M : ℕ} (hM1 : 1 ≤ M) (hM : 512 ≤ Nat.log 2 M) :
+    (halfDepth M : ℝ) * Real.log 2 ≤ Real.log M / 4 := by
+  have h1 := halfDepth_le hM
+  have h2 := natLog_two_mul_log_le hM1
+  have h3 : (4 * halfDepth M : ℝ) ≤ (Nat.log 2 M : ℝ) := by exact_mod_cast h1
+  have hl2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  nlinarith [h3, h2, hl2.le]
+
 /-! ### The primitive node: the ODD class alone -/
 
 /-- **The primitive Landau–Selberg–Delange node.**  One multiplicative function `n ↦ z_k^{ω_{>2}(n)}`,
