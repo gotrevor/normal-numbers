@@ -384,3 +384,4 @@ import NormalNumbers.Walsh
 import NormalNumbers.WalshBase
 import NormalNumbers.PrimeModelComplement
 import NormalNumbers.PrimeModelRadical
+import NormalNumbers.PrimeModelRadicalTail
