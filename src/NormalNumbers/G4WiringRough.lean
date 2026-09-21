@@ -2119,6 +2119,51 @@ theorem roughIndependenceAt_two_of_prefixLimit {h : ℤ} (hL : PrefixLimit h) :
         _ = C * M / 3 / Real.log N := by ring
     exact mul_le_mul_of_nonneg_right hmul hF
 
+/-! ### Forced facts, and the `cpow` estimate any Selberg–Delange wiring needs -/
+
+/-- `ρ 1 = 0` is forced: the prefix at `k = 1` is empty, so the first covariance vanishes. -/
+theorem prefixCov_one (N : ℕ) (h : ℤ) (hN : 0 < N) : prefixCov N h 1 = 0 := by
+  rw [prefixCov, roughSiteMean_eq_winMean]
+  have h0 : Finset.Icc 1 (1-1) = (∅ : Finset ℕ) := by decide
+  have h1 : (fun n => ∏ j ∈ Finset.Icc 1 1, roughPhase h j n) = roughPhase h 1 := by
+    funext n; simp
+  rw [h0, h1]
+  simp only [Finset.prod_empty]
+  rw [winMean_one N hN, one_mul, sub_self]
+
+/-- Hence the `k = 1` clause of `PrefixLimit` is automatic. -/
+theorem prefixLimit_clause_one (N : ℕ) (h : ℤ) (hN : 0 < N) :
+    roughPrefixMean N h 1 - (1 + 0) * roughPrefixMean N h (1-1) * roughSiteMean N h 1 2 = 0 := by
+  have := prefixCov_one N h hN
+  rw [prefixCov, roughPrefixMean, roughPrefixMean] at *
+  simpa using this
+
+/-- **The `cpow` estimate.**  `‖(1+x)^κ − 1‖ ≤ 2‖κ‖x` for `0 ≤ x` with `‖κ‖x ≤ 1`.
+
+This is the step every Selberg–Delange-style wiring in this campaign needs: both surviving nodes
+compare a mean at scale `N` with one at scale `αN`, and the main terms differ by exactly
+`(1 + log α / log N)^κ`.  With `x = log α / log N` the estimate gives the `O(1/log N)` relative
+error that `ParityDiscrepancy` and `PrefixLimit` assert. -/
+theorem norm_ofReal_one_add_cpow_sub_one_le (x : ℝ) (hx : 0 ≤ x) (κ : ℂ)
+    (hκx : ‖κ‖ * x ≤ 1) : ‖(((1 + x : ℝ)) : ℂ) ^ κ - 1‖ ≤ 2 * (‖κ‖ * x) := by
+  have h1x : (0:ℝ) < 1 + x := by linarith
+  have hne : (((1 + x : ℝ)) : ℂ) ≠ 0 := by
+    simpa using (Complex.ofReal_ne_zero.mpr h1x.ne')
+  rw [Complex.cpow_def_of_ne_zero hne]
+  have hlog : Complex.log (((1 + x : ℝ)) : ℂ) = ((Real.log (1 + x) : ℝ) : ℂ) :=
+    (Complex.ofReal_log h1x.le).symm
+  rw [hlog]
+  have hlognn : 0 ≤ Real.log (1 + x) := Real.log_nonneg (by linarith)
+  have hlogle : Real.log (1 + x) ≤ x := by
+    have := Real.log_le_sub_one_of_pos h1x
+    linarith
+  have hw : ‖((Real.log (1 + x) : ℝ) : ℂ) * κ‖ ≤ ‖κ‖ * x := by
+    rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hlognn, mul_comm]
+    exact mul_le_mul_of_nonneg_left hlogle (norm_nonneg _)
+  have hw1 : ‖((Real.log (1 + x) : ℝ) : ℂ) * κ‖ ≤ 1 := le_trans hw hκx
+  refine (Complex.norm_exp_sub_one_le hw1).trans ?_
+  linarith [hw]
+
 /-- **Headline wiring on the two minimal nodes.**  On the non-Chowla sector the whole G₄ window
 law rests on exactly two open statements: `RoughIndependenceAt h 2` (the rough window mean
 factorises into its site means) and `ParityDiscrepancy h` (the rough phase has no parity bias
