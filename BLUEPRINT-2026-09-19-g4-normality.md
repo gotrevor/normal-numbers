@@ -63,6 +63,31 @@ within the expected `O(1/log M)` scale term (not sharply tested).  `h = 5` is th
 `KICKOFF-2026-09-20-summatory-node-lap.md` with `C/log M` (prefix) and `C·4^{-k}/log M` (singleton) errors;
 the parity-class form removes the bootstrap circularity of HANDOFF item 1.
 
+## SD sector after the summatory laps (`G4WiringSummatory.lean`, `G4SummatorySplit.lean`; sorry-free, axiom-clean, verified 22:36 EDT)
+
+```
+[N1] CRTConstantSched h   🟢 from RoughIndependenceAt h 2 ∧ ParityDiscrepancy h (isNormal_G4_of_parity)
+   ├── RoughIndependenceAt h 2   🟢 roughIndependenceAt_two_of_summatory   ⎫
+   └── ParityDiscrepancy h       🟢 parityDiscrepancy_of_summatory         ⎬ from ONE node:
+[N1s] RoughSummatory h   🟢 roughSummatory_of_split, from                  ⎭
+   ├── RoughSummatoryPrefix h  🔴 THE CRUX: SD with k DISTINCT SHIFTS, Σ_{m<M} ∏_{j≤k} z_j^{ω_{>2}(m+j)} on each
+   │        parity class, same constant, rel. error C/log M, uniform in k ≤ windowJ M
+   │        (probe 11 ✅ exponents κ_k = Σ(z_j−1); probe 12 ✅ parity-class constants equal to O(1/log M))
+   │        ⚫ pointwise truncation of the shift product REFUTED (exists_re_sdExponent_le_neg_one: Re κ ≤ −1 past
+   │          v₄(h), so the budget is M/(log M)², and any truncation costs M·log log M/(log M)²)
+   └── SDOdd h                 🟡 CLASSICAL, not in Mathlib: Landau–Selberg–Delange for n ↦ z^{ω_{>2}(n)}, no shift,
+            odd n only, rel. error C·4^{-k}/log X (the 4^{-k} is analyticity in z, exact at z = 1);
+            the even class is DERIVED (2-adic unrolling, ω_{>2}(2m) = ω_{>2}(m)) - the singleton
+            parity-class clause is a theorem, not a hypothesis.
+```
+
+Headline: `isNormal_G4_of_oddNode : (∀ h≠0 off Chowla, RoughSummatoryPrefix h) → (∀ h≠0 off Chowla, SDOdd h) →
+(Chowla → WindowDecay) → SiteDecayFull → IsNormal 4 G₄`.  Everything between the two primitive objects and
+normality is machine-checked.  The crux is a named classical-shaped statement: for k = 2 it is the Ingham/Estermann
+shifted-divisor asymptotic for ω-twists; for k ≥ 3 it is open territory.  The one route that would change the class
+of the problem (`HANDOFF-2026-09-21-summatory-split.md` §Next lap): can the G₄ wiring run with k ≤ K FIXED instead
+of k ≤ windowJ M?  That is a question about `G4WiringCRT`/`G4WiringRough`, not about the node.
+
 ## What would move a node
 
 - **N1c (two-point SD)**: settle whether ∑_{n≤x} z^{ω(n)} w^{ω(n+1)} has a known asymptotic for fixed

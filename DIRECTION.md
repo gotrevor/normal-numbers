@@ -8,6 +8,7 @@ are all `[propext, Classical.choice, Quot.sound]`.  Pure addition; all ratified 
 Off the Chowla sector the G₄ window law now rests on **ONE** analytic input, `RoughSummatory h`.
 The `j > windowJ N` range of `ParityDiscrepancy` (where the node is silent) was proved elementarily
 (`parityDisc_tail_small`).  See `HANDOFF-2026-09-20-summatory-node.md`.  **No active override.**
+**Ren, 2026-09-20 22:36 EDT:** run stopped by operator after lap 2 (exit 143 = the stop).  Verified on the host: `G4WiringSummatory.lean` and `G4SummatorySplit.lean` both sorry-free; the three theorems above plus `isNormal_G4_of_oddNode`, `isNormal_G4_of_shiftSplit`, `roughSummatory_of_split`, `sdShiftFree_of_sdOdd`, `exists_re_sdExponent_le_neg_one` all `[propext, Classical.choice, Quot.sound]`; all 12 ratified kickoff statements present verbatim.  Lap 2 ran past the override (kept, on target): node peeled into `RoughSummatoryPrefix` (multi-shift, OPEN) + `SDOdd` (classical LSD, no shift, odd arguments), pointwise truncation of the shift product refuted (`HANDOFF-2026-09-21-summatory-split.md`).  Probe 12 (`probes/data-2026-09-20-summatory-node-parity.txt`): parity-class deviation × log M flat, clause holds.  **No active override.**
 
 ### (the override as fired)
 
