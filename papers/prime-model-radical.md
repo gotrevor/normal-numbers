@@ -58,7 +58,7 @@ For `n` in a progression and the window `(k, y]`:
   the sieve main term divided by `QD` equals `μ(d)/Q`.
 * With `α = 1/(2 log y)` and `y ≥ e²`, `radical_site_moment` with
   `t_p = p^α` gives
-  `E d_j^α = ∏_{p ≤ y} (1 + (p^α - 1)/p) ≤ exp(∑_{p≤y} (p^α-1)/p)
+  `E d_j^α = ∏_{k<p≤y} (1 + (p^α - 1)/p) ≤ exp(∑_{p≤y} (p^α-1)/p)
    ≤ exp(√e · α ∑_{p≤y} log p / p) ≤ exp(4√e)`,
   using `p^α - 1 ≤ √e · α log p` for `α log p ≤ 1/2` and Mertens.  So the old
   `e^20` bound survives the model change with no geometric series over
@@ -70,5 +70,10 @@ The above does **not** prove the two-sided sieve fundamental lemma that the
 shortcut consumes.  Mathlib's `SelbergSieve` provides upper-bound machinery only;
 the matching lower bound (Rosser–Iwaniec / Brun with an explicit error
 `1 + O(e^{-s})`) is not in mathlib and is not supplied here.  That remains the
-single analytic input for the downstream argument; the radical model removes the
-*valuation-tail* obligation, not the fundamental-lemma obligation.
+major sieve input for the downstream argument.  The radical model removes the
+infinite valuation state space, not the retained-box tail obligation:
+the counting argument still restricts every d_j to T, and must bound the mass
+outside that box with the moment estimate above and Markov's inequality.
+The arithmetic CRT bridge, that tail bound, the phase-decay estimate, and the
+downstream constant bookkeeping remain to be assembled in Lean.  None is
+asserted to follow merely from finite support.
