@@ -432,9 +432,108 @@ theorem isNormal_G4_of_shiftSplit
   isNormal_G4_of_summatory
     (fun h hh hc => roughSummatory_of_split h (hPre h hh hc) (hSF h hh hc)) hCh hSite
 
+/-! ### How small the prefix main term really is
+
+The prefix main term is `c·M·(log M)^{κ_k}` with `κ_k = sdExponent h (Icc 1 k)`, and the node's
+error budget is `C·M·(log M)^{Re κ_k − 1}`.  The size of `Re κ_k` therefore controls every attack on
+the prefix node.  It is **at most `−1`** as soon as `k` passes the `4`-adic valuation of `h`:
+at the first site `j` with `4^j ∤ h` the phase `e(h/4^j)` is a quarter turn or a half turn, so
+`Re(e(h/4^j) − 1) ≤ −1`, and every other site contributes `≤ 0`.
+
+Consequence (recorded in `PENDING_WORK.md`): a *pointwise* truncation of the shift product at
+`j₀ ≤ windowJ M` costs `≍ M·(log log M)·4^{-j₀} ≥ M (log log M)/(4 (log₂ M)²)`, while the budget is
+at most `C·M·(log M)^{-2}`.  The truncation route to the multi-shift node is refuted. -/
+
+lemma re_ePhase (x : ℝ) : (ePhase x).re = Real.cos (2 * Real.pi * x) := by
+  have : ePhase x = Complex.exp (((2 * Real.pi * x : ℝ) : ℂ) * Complex.I) := by
+    unfold ePhase; congr 1; push_cast; ring
+  rw [this, Complex.exp_ofReal_mul_I_re]
+
+/-- A quarter- or half-turn phase has non-positive real part. -/
+lemma re_ePhase_quarter_nonpos {r : ℤ} (hr : ¬ (4:ℤ) ∣ r) :
+    (ePhase ((r : ℝ) / 4)).re ≤ 0 := by
+  have hsplit : (r : ℝ) / 4 = ((r % 4 : ℤ) : ℝ) / 4 + ((r / 4 : ℤ) : ℝ) := by
+    have hr' : (r : ℝ) = ((r % 4 : ℤ) : ℝ) + 4 * ((r / 4 : ℤ) : ℝ) := by
+      have h2 : r = r % 4 + 4 * (r / 4) := by omega
+      exact_mod_cast congrArg (fun z : ℤ => (z : ℝ)) h2
+    rw [hr']; ring
+  rw [hsplit, ePhase_add_int, re_ePhase]
+  have hlt : r % 4 < 4 := Int.emod_lt_of_pos r (by norm_num)
+  have hge : 0 ≤ r % 4 := Int.emod_nonneg r (by norm_num)
+  have hne : r % 4 ≠ 0 := fun hc => hr (Int.dvd_of_emod_eq_zero hc)
+  interval_cases hm : (r % 4)
+  · exact absurd rfl hne
+  · have : 2 * Real.pi * (((1:ℤ) : ℝ) / 4) = Real.pi / 2 := by push_cast; ring
+    rw [this, Real.cos_pi_div_two]
+  · have : 2 * Real.pi * (((2:ℤ) : ℝ) / 4) = Real.pi := by push_cast; ring
+    rw [this, Real.cos_pi]; norm_num
+  · have : 2 * Real.pi * (((3:ℤ) : ℝ) / 4) = Real.pi + Real.pi / 2 := by push_cast; ring
+    rw [this, Real.cos_add_pi_div_two, Real.sin_pi]
+    norm_num
+
+/-- **The prefix exponent has real part `≤ −1` past the `4`-adic valuation of `h`.** -/
+theorem exists_re_sdExponent_le_neg_one (h : ℤ) (hh : h ≠ 0) :
+    ∃ t : ℕ, 1 ≤ t ∧ ∀ k : ℕ, t ≤ k → (sdExponent h (Finset.Icc 1 k)).re ≤ -1 := by
+  have hex : ∃ j : ℕ, 1 ≤ j ∧ ¬ ((4:ℤ) ^ j ∣ h) := by
+    obtain ⟨j, hj⟩ := pow_unbounded_of_one_lt (|(h:ℤ)| : ℤ) (by norm_num : (1:ℤ) < 4)
+    refine ⟨j + 1, by omega, ?_⟩
+    intro hdvd
+    have h1 : (4:ℤ) ^ (j+1) ≤ |h| := Int.le_of_dvd (abs_pos.mpr hh) ((dvd_abs _ _).mpr hdvd)
+    have h2 : (4:ℤ) ^ j ≤ (4:ℤ) ^ (j+1) := by
+      apply pow_le_pow_right₀ (by norm_num); omega
+    omega
+  classical
+  set P : ℕ → Prop := fun j => 1 ≤ j ∧ ¬ ((4:ℤ) ^ j ∣ h) with hP
+  have hdec : DecidablePred P := fun _ => inferInstance
+  obtain ⟨t, htP, htmin⟩ := Nat.findX (p := P) hex
+  refine ⟨t, htP.1, ?_⟩
+  intro k hk
+  -- the site `t` contributes `≤ -1`
+  have hprev : (4:ℤ) ^ (t - 1) ∣ h := by
+    rcases Nat.eq_or_lt_of_le htP.1 with h1 | h1
+    · rw [← h1]; simp
+    · by_contra hcon
+      exact absurd ⟨by omega, hcon⟩ (htmin (t-1) (by omega))
+  obtain ⟨r, hr⟩ := hprev
+  have hr4 : ¬ ((4:ℤ) ∣ r) := by
+    intro ⟨u, hu⟩
+    refine htP.2 ⟨u, ?_⟩
+    rw [hr, hu, ← mul_assoc, ← pow_succ]
+    congr 2
+    omega
+  have hval : ((h : ℝ)) / (4:ℝ) ^ t = (r : ℝ) / 4 := by
+    have hcast : ((h : ℝ)) = ((4:ℝ) ^ (t-1)) * (r : ℝ) := by
+      rw [hr]; push_cast; ring
+    rw [hcast]
+    have : ((4:ℝ) ^ t) = (4:ℝ) ^ (t-1) * 4 := by
+      rw [← pow_succ]; congr 1; omega
+    rw [this]
+    have h4 : ((4:ℝ) ^ (t-1)) ≠ 0 := by positivity
+    field_simp
+  have hsite : (ePhase ((h:ℝ) / (4:ℝ)^t) - 1).re ≤ -1 := by
+    rw [Complex.sub_re, Complex.one_re, hval]
+    have := re_ePhase_quarter_nonpos hr4
+    linarith
+  -- every site contributes `≤ 0`
+  have hall : ∀ j : ℕ, (ePhase ((h:ℝ) / (4:ℝ)^j) - 1).re ≤ 0 := by
+    intro j
+    rw [Complex.sub_re, Complex.one_re, re_ePhase]
+    have := Real.cos_le_one (2 * Real.pi * ((h:ℝ)/(4:ℝ)^j))
+    linarith
+  have hmem : t ∈ Finset.Icc 1 k := Finset.mem_Icc.mpr ⟨htP.1, hk⟩
+  rw [sdExponent, Complex.re_sum]
+  calc ∑ j ∈ Finset.Icc 1 k, (ePhase ((h:ℝ) / (4:ℝ)^j) - 1).re
+      ≤ ∑ j ∈ Finset.Icc 1 k, (if j = t then (-1 : ℝ) else 0) := by
+        refine Finset.sum_le_sum (fun j _ => ?_)
+        by_cases hj : j = t
+        · rw [if_pos hj, hj]; exact hsite
+        · rw [if_neg hj]; exact hall j
+    _ = -1 := by rw [Finset.sum_ite_eq' (Finset.Icc 1 k) t (fun _ => (-1:ℝ))]; simp [hmem]
+
 end NormalNumbers.G4
 
 #print axioms NormalNumbers.G4.isNormal_G4_of_shiftSplit
 #print axioms NormalNumbers.G4.roughSummatory_of_split
 #print axioms NormalNumbers.G4.norm_roughClassSum_sub_classOmegaSum
 #print axioms NormalNumbers.G4.shift_cost_small
+#print axioms NormalNumbers.G4.exists_re_sdExponent_le_neg_one

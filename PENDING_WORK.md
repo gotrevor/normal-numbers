@@ -16,13 +16,23 @@ The sole analytic input of the G4 window law off the Chowla sector, `RoughSummat
 absorbed by `shift_cost_small` (the node budget carries `4^{-k}` and `4^k <= 4(log_2 M)^2` on the
 window range).
 
-**Next attack on the crux.**  Two routes, in order of promise:
-1. *Dimension reduction.*  `|z_j - 1| <= 2 pi |h| 4^{-j}` and `omega_{>2}(n) = O(log log M)` pointwise
-   off a thin set, so for `4^j >> log log M` the factor is `1 + O(4^{-j} log log M)` *pointwise*.
-   Truncating the product at `j0 = log_4 log log M` should reduce the multi-shift clause to a
-   correlation of only `j0` factors, at the cost of an error the node's `C/log M` budget must absorb
-   — check that first, it is the decisive computation.
-2. If (1) holds, the residual is a `j0`-fold shifted correlation with `j0 -> infinity` very slowly;
+**Route 1 (pointwise truncation of the shift product) is REFUTED — 2026-09-21.**  The decisive
+computation was run.  Truncating `prod_{j<=k}` at `j0` costs, pointwise,
+`sum_{j>j0} 2 pi |h| omega_{>2}(m+j) 4^{-j} ≍ (log log M) 4^{-j0}` per `m`, i.e. `M (log log M) 4^{-j0}`
+in total, and `j0 <= k <= windowJ M` forces `4^{j0} <= 4 (log_2 M)^2`, so the cost is at least
+`≍ M (log log M) / (log M)^2`.  The node's budget is NOT `C M / log M`: it is
+`C M (log M)^{Re kappa_k - 1}`, and `Re kappa_k <= -1` as soon as `k` passes the 4-adic valuation of
+`h` — this is now a **machine-checked theorem**, `exists_re_sdExponent_le_neg_one` in
+`G4SummatorySplit.lean` (at the first site `j` with `4^j` not dividing `h`, `e(h/4^j)` is a quarter
+or half turn, so `Re(e(h/4^j)-1) <= -1`; all other sites contribute `<= 0`).  So the budget is at
+most `C M (log M)^{-2}`, which the truncation cost exceeds by the factor `log log M`.  No choice of
+`j0` repairs this: the loss is intrinsic, because the truncation error is measured against `M` while
+the budget is measured against the much smaller main term `M (log M)^{Re kappa}`.  Any future attack
+must keep the tail sites **inside** the main term, not discard them.
+
+**Next attack on the crux.**
+1. *(dead — see above)*
+2. The residual is a `k`-fold shifted correlation with `k -> infinity` very slowly;
    the natural formal input is a Nair-Tenenbaum / fundamental-lemma upper bound plus a main term
    from the `k`-dimensional Selberg-Delange of Tenenbaum II.5 Thm 3 applied to the product
    Dirichlet series, whose singularity exponent is exactly `sdExponent h (Icc 1 k)`.
