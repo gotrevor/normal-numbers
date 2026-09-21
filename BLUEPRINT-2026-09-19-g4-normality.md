@@ -119,6 +119,12 @@ separate Chowla-sector argument); (2) a direct Elliott/Daboussi-type decay for `
 The triple-log shift count is the leverage for (2): a shift-uniform loss of `exp(O(k))` per shift is now affordable.
 Known barriers for (2) stand: `k → ∞` (Tao–Teräväinen 2025 is two-point) and all scales vs a log-density-1 set.
 
+**Literature sweep (23:46 EDT, `LITERATURE-2026-09-20-prefixdecay-sweep.md`):** nothing in 2023–2026-09 gives `PrefixDecay`
+or even its `k = 2` case at natural density along all scales; the "number of shifts growing with the scale" axis is
+untouched in any averaging.  Nearest objects: Charamaras–Richter 2412.17583 (our exact `k=2` Ω-twist, log-averaged) and
+Tao–Teräväinen 2512.01739 (2-point, natural, almost all scales).  ⚠️ the local TT paper is arXiv **2512.01739** (Dec 2025).
+No lap on `PrefixDecay` without a mechanism; none is known.
+
 ## What would move a node
 
 - **N1c (two-point SD)**: settle whether ∑_{n≤x} z^{ω(n)} w^{ω(n+1)} has a known asymptotic for fixed
