@@ -407,4 +407,92 @@ theorem norm_localChar_le_of_single {q : ℤ} (C : Chain q) (N : ℕ) {p : ℕ} 
   congr 3
   ring
 
+/-! ### Both residues exist at a large prime
+
+`X_p` is determined by the `|support| · (J−K)` residue classes `s_a − (i+1)d_a (mod p)`.  Once `p`
+exceeds that count a *free* residue exists (`exists_free_residue`), and once `p` separates the
+classes a *single-hit* residue exists (`exists_single_hit_residue`).  Together with
+`norm_localChar_le_of_single` this makes the defect at such a prime unconditional. -/
+
+/-- The residue class pinned by a pair `(a, i)`. -/
+def hitResidue (p : ℕ) (a : ℕ × ℤ) (i : ℕ) : ℕ := ((a.2 - ((i : ℤ) + 1) * a.1) % p).toNat
+
+lemma hitResidue_lt {p : ℕ} (hp : 0 < p) (a : ℕ × ℤ) (i : ℕ) : hitResidue p a i < p := by
+  have hppos : (0:ℤ) < p := by exact_mod_cast hp
+  have h := Int.emod_nonneg (a.2 - ((i : ℤ) + 1) * a.1) (ne_of_gt hppos)
+  have h2 := Int.emod_lt_of_pos (a.2 - ((i : ℤ) + 1) * a.1) hppos
+  unfold hitResidue
+  omega
+
+lemma dvd_iff_eq_hitResidue {p : ℕ} (hp : 0 < p) {v : ℕ} (hv : v < p) (a : ℕ × ℤ) (i : ℕ) :
+    (p : ℤ) ∣ (v : ℤ) + ((i : ℤ) + 1) * a.1 - a.2 ↔ v = hitResidue p a i := by
+  have hppos : (0:ℤ) < p := by exact_mod_cast hp
+  have hvz : (0:ℤ) ≤ (v:ℤ) := Int.natCast_nonneg v
+  have hvlt : (v:ℤ) < (p:ℤ) := by exact_mod_cast hv
+  have hvmod : ((v:ℤ)) % p = (v:ℤ) := Int.emod_eq_of_lt hvz hvlt
+  have hnn := Int.emod_nonneg (a.2 - ((i : ℤ) + 1) * a.1) (ne_of_gt hppos)
+  constructor
+  · intro hdvd
+    have hd : (p:ℤ) ∣ (a.2 - ((i:ℤ)+1) * a.1) - (v:ℤ) := by
+      have := dvd_neg.mpr hdvd
+      rwa [show -((v:ℤ) + ((i:ℤ)+1) * a.1 - a.2) = (a.2 - ((i:ℤ)+1) * a.1) - (v:ℤ) by ring] at this
+    have hmod : ((v:ℤ)) % p = (a.2 - ((i:ℤ)+1) * a.1) % p := Int.modEq_iff_dvd.mpr hd
+    rw [hvmod] at hmod
+    unfold hitResidue
+    omega
+  · intro hveq
+    subst hveq
+    have hmod : ((hitResidue p a i : ℕ) : ℤ) = (a.2 - ((i:ℤ)+1) * a.1) % p := by
+      unfold hitResidue; omega
+    have hd : (p:ℤ) ∣ (a.2 - ((i:ℤ)+1) * a.1) - ((hitResidue p a i : ℕ) : ℤ) := by
+      rw [hmod]
+      exact Int.dvd_self_sub_emod
+    have := dvd_neg.mpr hd
+    rwa [show -((a.2 - ((i:ℤ)+1) * a.1) - ((hitResidue p a i : ℕ) : ℤ))
+      = ((hitResidue p a i : ℕ) : ℤ) + ((i:ℤ)+1) * a.1 - a.2 by ring] at this
+
+/-- **A free residue exists** once `p` exceeds the number of pairs. -/
+theorem exists_free_residue {c : TConfig} {K J p : ℕ}
+    (hp : (c.support ×ˢ Ico K J).card < p) :
+    ∃ v < p, ∀ a ∈ c.support, ∀ i ∈ Ico K J,
+      ¬ (p : ℤ) ∣ (v : ℤ) + ((i : ℤ) + 1) * a.1 - a.2 := by
+  classical
+  have hppos : 0 < p := lt_of_le_of_lt (Nat.zero_le _) hp
+  set Bad : Finset ℕ := (range p).filter
+    (fun v => ∃ a ∈ c.support, ∃ i ∈ Ico K J,
+      (p : ℤ) ∣ (v : ℤ) + ((i : ℤ) + 1) * a.1 - a.2) with hBad
+  have hsub : Bad ⊆ (c.support ×ˢ Ico K J).image (fun x => hitResidue p x.1 x.2) := by
+    intro v hv
+    rw [hBad, Finset.mem_filter, Finset.mem_range] at hv
+    obtain ⟨hvp, a, ha, i, hi, hdvd⟩ := hv
+    exact Finset.mem_image.mpr ⟨(a, i), Finset.mem_product.mpr ⟨ha, hi⟩,
+      ((dvd_iff_eq_hitResidue hppos hvp a i).mp hdvd).symm⟩
+  have hcard : Bad.card < p :=
+    lt_of_le_of_lt (le_trans (Finset.card_le_card hsub) Finset.card_image_le) hp
+  have hex : ∃ v ∈ range p, v ∉ Bad := by
+    by_contra hcon
+    push Not at hcon
+    have hle := Finset.card_le_card (show range p ⊆ Bad from hcon)
+    rw [Finset.card_range] at hle
+    omega
+  obtain ⟨v, hv, hvn⟩ := hex
+  refine ⟨v, Finset.mem_range.mp hv, fun a ha i hi hdvd => hvn ?_⟩
+  rw [hBad, Finset.mem_filter]
+  exact ⟨hv, a, ha, i, hi, hdvd⟩
+
+/-- **A single-hit residue exists** once `p` separates the classes of the other pairs from
+`(a₀, i₀)`. -/
+theorem exists_single_hit_residue {c : TConfig} {K J p : ℕ} (hp : 0 < p)
+    {a₀ : ℕ × ℤ} {i₀ : ℕ}
+    (hsep : ∀ a ∈ c.support, ∀ i ∈ Ico K J, (a, i) ≠ (a₀, i₀) →
+      hitResidue p a i ≠ hitResidue p a₀ i₀) :
+    ∃ u < p, (p : ℤ) ∣ (u : ℤ) + ((i₀ : ℤ) + 1) * a₀.1 - a₀.2 ∧
+      ∀ a ∈ c.support, ∀ i ∈ Ico K J, (a, i) ≠ (a₀, i₀) →
+        ¬ (p : ℤ) ∣ (u : ℤ) + ((i : ℤ) + 1) * a.1 - a.2 := by
+  refine ⟨hitResidue p a₀ i₀, hitResidue_lt hp a₀ i₀, ?_, ?_⟩
+  · exact (dvd_iff_eq_hitResidue hp (hitResidue_lt hp a₀ i₀) a₀ i₀).mpr rfl
+  · intro a ha i hi hne hdvd
+    exact hsep a ha i hi hne
+      ((dvd_iff_eq_hitResidue hp (hitResidue_lt hp a₀ i₀) a i).mp hdvd).symm
+
 end NormalNumbers.PrimeLambert
