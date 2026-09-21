@@ -386,3 +386,4 @@ import NormalNumbers.G4WiringSummatory
 import NormalNumbers.G4SummatorySplit
 import NormalNumbers.PrimeModelComplement
 import NormalNumbers.PrimeModelRadical
+import NormalNumbers.PrimeModelRadicalTail
