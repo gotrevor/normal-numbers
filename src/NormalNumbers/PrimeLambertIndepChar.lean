@@ -647,4 +647,128 @@ theorem indepMomentSmall_of_growth {q : ℤ} (C : Chain q) (M : ℕ → ℕ)
   rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg hcoeff]
   exact mul_le_mul_of_nonneg_left (abs_rIndepAvg_pow_le C N (M N)) hcoeff
 
+/-! ### `MomentComparison` by sample discrepancy
+
+`S_N` is `modulus`-periodic, so **both** averages in `MomentComparison` are averages of the *same*
+periodic function `G(n) = S_N(n)^k` — one over the sample `P_N`, one over a full period.  Sorting
+the sample into residue classes turns the difference into an `L¹` discrepancy of the sample modulo
+the CRT modulus, weighted by `max |G| ≤ momentBound^k`.  No moments survive. -/
+
+/-- The canonical representative of `n` modulo the CRT modulus. -/
+noncomputable def resOf {q : ℤ} (C : Chain q) (N : ℕ) (n : ℤ) : ℕ :=
+  (n % (modulus C N : ℤ)).toNat
+
+lemma resOf_lt {q : ℤ} (C : Chain q) (N : ℕ) (n : ℤ) : resOf C N n < modulus C N := by
+  have hm : (0:ℤ) < (modulus C N : ℤ) := by exact_mod_cast modulus_pos C N
+  have h1 := Int.emod_nonneg n (ne_of_gt hm)
+  have h2 := Int.emod_lt_of_pos n hm
+  unfold resOf
+  omega
+
+/-- `S_N` only depends on the residue. -/
+lemma smallSum_resOf {q : ℤ} (C : Chain q) (N : ℕ) (n : ℤ) :
+    smallSum C N (resOf C N n : ℤ) = smallSum C N n := by
+  have hm : (0:ℤ) < (modulus C N : ℤ) := by exact_mod_cast modulus_pos C N
+  have h1 := Int.emod_nonneg n (ne_of_gt hm)
+  have hres : ((resOf C N n : ℕ) : ℤ) = n % (modulus C N : ℤ) := by unfold resOf; omega
+  have hsplit : n = ((resOf C N n : ℕ) : ℤ) + (n / (modulus C N : ℤ)) * (modulus C N : ℤ) := by
+    rw [hres]
+    have := Int.emod_add_mul_ediv n (modulus C N : ℤ)
+    linarith [this]
+  calc smallSum C N (resOf C N n : ℤ)
+      = smallSum C N (((resOf C N n : ℕ) : ℤ)
+          + (n / (modulus C N : ℤ)) * (modulus C N : ℤ)) :=
+        (smallSum_add_modulus C N _ _).symm
+    _ = smallSum C N n := by rw [← hsplit]
+
+/-- How many sample points land in residue class `u`. -/
+noncomputable def residueCount {q : ℤ} (C : Chain q) (N : ℕ) (u : ℕ) : ℕ :=
+  ((C.D N).P.filter (fun n => resOf C N n = u)).card
+
+/-- Sorting the sample into residue classes. -/
+theorem sum_smallSum_pow_eq {q : ℤ} (C : Chain q) (N k : ℕ) :
+    ∑ n ∈ (C.D N).P, smallSum C N n ^ k
+      = ∑ u ∈ range (modulus C N), (residueCount C N u : ℝ) * smallSum C N (u : ℤ) ^ k := by
+  classical
+  have hmaps : ∀ n ∈ (C.D N).P, resOf C N n ∈ range (modulus C N) :=
+    fun n _ => Finset.mem_range.mpr (resOf_lt C N n)
+  have hstep : ∑ n ∈ (C.D N).P, smallSum C N n ^ k
+      = ∑ n ∈ (C.D N).P, smallSum C N (resOf C N n : ℤ) ^ k :=
+    Finset.sum_congr rfl (fun n _ => by rw [smallSum_resOf])
+  rw [hstep, ← Finset.sum_fiberwise_of_maps_to' hmaps
+    (fun u : ℕ => smallSum C N (u : ℤ) ^ k)]
+  refine Finset.sum_congr rfl (fun u _ => ?_)
+  rw [Finset.sum_const, nsmul_eq_mul]
+  rfl
+
+/-- The `L¹` discrepancy of the sample modulo the CRT modulus. -/
+noncomputable def sampleDiscrepancy {q : ℤ} (C : Chain q) (N : ℕ) : ℝ :=
+  ∑ u ∈ range (modulus C N),
+    |(residueCount C N u : ℝ) / ((C.D N).P.card : ℝ) - 1 / (modulus C N : ℝ)|
+
+/-- **The moment comparison is a discrepancy estimate.** -/
+theorem abs_moment_diff_le {q : ℤ} (C : Chain q) (N k : ℕ) :
+    |rSampleAvg C N (fun x => x ^ k) - rIndepAvg C N (fun x => x ^ k)|
+      ≤ momentBound C N ^ k * sampleDiscrepancy C N := by
+  classical
+  have hP : (0:ℝ) < ((C.D N).P.card : ℝ) := by
+    exact_mod_cast Finset.card_pos.mpr (C.D N).nonempty
+  have hM : (0:ℝ) < (modulus C N : ℝ) := by exact_mod_cast modulus_pos C N
+  have hs : rSampleAvg C N (fun x => x ^ k)
+      = ∑ u ∈ range (modulus C N),
+          ((residueCount C N u : ℝ) / ((C.D N).P.card : ℝ)) * smallSum C N (u : ℤ) ^ k := by
+    unfold rSampleAvg ravg
+    rw [sum_smallSum_pow_eq, Finset.sum_div]
+    exact Finset.sum_congr rfl (fun u _ => by ring)
+  have hi : rIndepAvg C N (fun x => x ^ k)
+      = ∑ u ∈ range (modulus C N),
+          (1 / (modulus C N : ℝ)) * smallSum C N (u : ℤ) ^ k := by
+    unfold rIndepAvg ravg
+    rw [Finset.card_range, Finset.sum_div]
+    exact Finset.sum_congr rfl (fun u _ => by ring)
+  rw [hs, hi, ← Finset.sum_sub_distrib]
+  calc |∑ u ∈ range (modulus C N),
+        (((residueCount C N u : ℝ) / ((C.D N).P.card : ℝ)) * smallSum C N (u : ℤ) ^ k
+          - (1 / (modulus C N : ℝ)) * smallSum C N (u : ℤ) ^ k)|
+      ≤ ∑ u ∈ range (modulus C N),
+          |((residueCount C N u : ℝ) / ((C.D N).P.card : ℝ)) * smallSum C N (u : ℤ) ^ k
+            - (1 / (modulus C N : ℝ)) * smallSum C N (u : ℤ) ^ k| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ u ∈ range (modulus C N),
+          momentBound C N ^ k
+            * |(residueCount C N u : ℝ) / ((C.D N).P.card : ℝ) - 1 / (modulus C N : ℝ)| := by
+        refine Finset.sum_le_sum (fun u _ => ?_)
+        rw [← sub_mul, abs_mul, abs_pow]
+        have hpw : |smallSum C N (u : ℤ)| ^ k ≤ momentBound C N ^ k :=
+          pow_le_pow_left₀ (abs_nonneg _) (abs_smallSum_le C N _) k
+        calc |(residueCount C N u : ℝ) / ((C.D N).P.card : ℝ) - 1 / (modulus C N : ℝ)|
+              * |smallSum C N (u : ℤ)| ^ k
+            ≤ |(residueCount C N u : ℝ) / ((C.D N).P.card : ℝ) - 1 / (modulus C N : ℝ)|
+              * momentBound C N ^ k := mul_le_mul_of_nonneg_left hpw (abs_nonneg _)
+          _ = momentBound C N ^ k
+              * |(residueCount C N u : ℝ) / ((C.D N).P.card : ℝ) - 1 / (modulus C N : ℝ)| := by
+              ring
+    _ = momentBound C N ^ k * sampleDiscrepancy C N := by
+        unfold sampleDiscrepancy
+        rw [Finset.mul_sum]
+
+/-- **`MomentComparison` from the sample discrepancy.**  The last `MomentChain` obligation, with
+all moment structure removed: what is needed is that the progression sample equidistributes in the
+`L¹` sense modulo the CRT modulus, at a rate beating `momentBound^{M_N}`. -/
+theorem momentComparison_of_discrepancy {q : ℤ} (C : Chain q) (M : ℕ → ℕ)
+    (h : Tendsto (fun N => max 1 (momentBound C N) ^ M N * sampleDiscrepancy C N) atTop (𝓝 0)) :
+    MomentComparison C M := by
+  refine ⟨fun N => max 1 (momentBound C N) ^ M N * sampleDiscrepancy C N, h, ?_⟩
+  intro N k hk
+  refine (abs_moment_diff_le C N k).trans ?_
+  have hdisc : 0 ≤ sampleDiscrepancy C N :=
+    Finset.sum_nonneg (fun u _ => abs_nonneg _)
+  have hb : momentBound C N ^ k ≤ max 1 (momentBound C N) ^ M N := by
+    have h1 : (1:ℝ) ≤ max 1 (momentBound C N) := le_max_left _ _
+    have h2 : momentBound C N ≤ max 1 (momentBound C N) := le_max_right _ _
+    calc momentBound C N ^ k ≤ max 1 (momentBound C N) ^ k :=
+          pow_le_pow_left₀ (momentBound_nonneg C N) h2 k
+      _ ≤ max 1 (momentBound C N) ^ M N := pow_le_pow_right₀ h1 hk
+  exact mul_le_mul_of_nonneg_right hb hdisc
+
 end NormalNumbers.PrimeLambert
