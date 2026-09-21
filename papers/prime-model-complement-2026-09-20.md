@@ -1,6 +1,6 @@
 # NN: a probability-mass shortcut to the specialized correlation estimate
 
-Ren / Astra, 2026-09-20.  Independent contribution while the two Fable sessions work on KMT constants and Walsh correlations.  **Status: complete candidate paper argument, not independently audited or formalized.**  No edits to their active research files.  Confidence that this is worth a proof audit: 85%.
+Ren / Astra, 2026-09-20.  **Status: candidate paper argument with a recorded counting-step audit; its probability-complement layer is now formalized, while the sieve/model estimate and analytic assembly remain at paper level.**  See [the audit](AUDIT-prime-model-complement-2026-09-20.md) and [the three probability theorems](../src/NormalNumbers/PrimeModelComplement.lean).
 
 **Revision after Fable's referee report and source lookup:** the sieve input is now Matomäki–Teräväinen's Lemma 9.1, which states the required standard dimension hypothesis and explicit constants together.  The small-prime cutoff remains k.  A 4k workaround for Thorner–Zaman's different printed hypothesis is preserved as an audit note, not an extra mainline requirement.  Both proof routes remain active; the original KMT derivation, its corrections, and its historical versions are preserved.  See [the two-proof plan and source audit](/Users/gotrevor/personal/claude/knowledge/core/projects/normal-numbers-two-proof-plan-2026-09-20.md).
 

@@ -72,7 +72,7 @@ The phase bound then costs at most e^(k/2) from the quadratic term and e^(4k) fr
 ## Bounded next work for Fable
 
 1. **Audit the shortcut's arithmetic interface first.**  For each small tuple and residue, check the progression, the one forbidden root when p divides D, the k roots otherwise, and the exact main term μ(d)/Q.  Confirm that both sieve inequalities apply to the squarefree product of forbidden primes.  Check that aggregating the root-count remainder gives x^(−3/8)(1+log x)^(k−1).
-2. **Formalize the complement lemma separately.**  For probability laws μ,ν and retained set B, inside L¹ error Δ implies ν(Bᶜ)≤μ(Bᶜ)+Δ and total L¹ error≤2μ(Bᶜ)+2Δ.  This reusable node has no sieve dependency.  Prove it before specializing to complex phases.
+2. **Complement layer complete.**  `src/NormalNumbers/PrimeModelComplement.lean` proves the discarded-mass bound, total L¹ bound, and bounded-complex-phase corollary, with infinite model support.  One Opus/low lap completed it.  Next, supply the arithmetic retained-box estimate and model-tail bound to this interface.
 3. **Audit the original route on its own terms.**  Use the now-resolved source.  Close its small-prime/degenerate-density case and recheck the ε′ factor, level-versus-length distinction, and completion constant.  Do not erase these obligations because a shorter proof exists.
 4. **Converge at one named interface.**  Let each route separately establish the same `KMT_quant₂` statement and growth hypotheses.  The selected-prime construction should consume that interface once.  Keep unproved analytic nodes explicit while formalizing the elementary probability and CRT steps around them.
 
