@@ -52,6 +52,17 @@ correlations; a single summatory node `R(M) = M·c·(log M)^κ(1 + O(1/log M))` 
 correlation sums would yield both (lap HANDOFF §"Next steps" item 2).  That node *is* Selberg–Delange with
 shifts (N1c generalised to `k` sites), so the crux has not become classical; it has become one statement.
 
+**Probe 11 (Ren, 2026-09-20 20:32 EDT, `probes/summatory_node.py`, data `probes/data-2026-09-20-summatory-node*.txt`)** -
+the summatory node `R_k(M) = Σ_{m<M} ∏_{j≤k} e(h ω_{>2}(m+j)/4^j) = c_k·M·(log M)^{κ_k}(1+O(1/log M))`
+with `κ_k = Σ_{j≤k}(e(h/4^j) − 1)` ✅ consistent: at `M = 2^26` the fitted exponent lags the prediction by the
+same amount as the known-answer control `k = 1` (classical SD), `Q_k` moves `< 1%` per doubling (`h = 1, 3`),
+prefix ratios `|Q_k/Q_{k−1}| → 1` geometrically, singleton secondary terms decay like `4^{-k}` (the prefix
+secondary does not: `0.26` flat in `k`), `|c_{\{k\}}| → 1` geometrically.  Parity-class constants equal to
+within the expected `O(1/log M)` scale term (not sharply tested).  `h = 5` is the hard regime
+(`Re κ = −2.5`, main term `M/(log M)^{2.5}`): same shape, larger secondary.  Frozen as `RoughSummatory h` in
+`KICKOFF-2026-09-20-summatory-node-lap.md` with `C/log M` (prefix) and `C·4^{-k}/log M` (singleton) errors;
+the parity-class form removes the bootstrap circularity of HANDOFF item 1.
+
 ## What would move a node
 
 - **N1c (two-point SD)**: settle whether ∑_{n≤x} z^{ω(n)} w^{ω(n+1)} has a known asymptotic for fixed

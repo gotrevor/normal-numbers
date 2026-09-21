@@ -1,5 +1,14 @@
 # DIRECTION — normal-numbers 🧭
 
+## Attended operator override: 2026-09-20 20:32 EDT — `RoughSummatory` LAP (ACTIVE, one lap)
+
+Run `KICKOFF-2026-09-20-summatory-node-lap.md`: new file `src/NormalNumbers/G4WiringSummatory.lean` freezing
+ONE summatory node `RoughSummatory h` (Selberg–Delange with shifts for the rough phase product, on parity
+classes, prefixes + singletons) and proving `RoughIndependenceAt h 2` and `ParityDiscrepancy h` from it,
+headline `isNormal_G4_of_summatory`.  Statements are ratified verbatim; add only.  Operator: Ren, attended;
+fired under Trevor's standing "go" (2026-09-20).  **When this override is done, write the HANDOFF and STOP** -
+every section below is DONE or CLOSED; there is no fallback objective.
+
 ## Attended operator override: 2026-09-20 — `ParityDiscrepancy` REDUCTION LAP (DONE, one lap)
 
 **Result:** the kickoff lap (`G4WiringRough.lean`) was already complete; this lap executed its
@@ -145,7 +154,14 @@ skeleton committed, or a proved obstruction written into the DESIGN file.  If th
 neither (i) nor (ii) can be stated, write why and switch to item 4.
 
 
-## CURRENT DIRECTIVE — **campaign B FINAL: the `a`-side, and then STOP** (set 2026-09-16, DEEP REFLECTION lap)
+## CLOSED DIRECTIVE — **campaign B FINAL: the `a`-side, and then STOP** (set 2026-09-16; 🏁 FINISH LINE REACHED 2026-09-20, see `HANDOFF-2026-09-20-campaignB-close.md`)
+
+🚧 **Ren, 2026-09-20 20:22 EDT: this directive is CLOSED and is NOT a fallback objective.**  Both of its
+pre-registered terminating conditions are met (`audit_isDisjunctive_weightA_logLog` landed; the one permitted
+stretch was refuted in the kernel, `G4AdditiveRigidity.lean`).  A lap that finishes its attended override
+early must **stop**, not roll into this section - lap 1 of the 2026-09-20 rough-independence run spent an
+hour here after finishing its override in 30 minutes.  With no active override at the top of this file,
+there is nothing to do: write the HANDOFF and exit.
 
 *Altitude-lap section, INSIDE the 2026-09-15 23:58 campaign-A override.  It OUTRANKS every
 HANDOFF.  Full reasoning: `REFLECTION-2026-09-16-campaignB.md`.*
