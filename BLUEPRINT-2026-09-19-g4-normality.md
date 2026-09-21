@@ -28,6 +28,30 @@ IsNormal 4 G₄
                  "not within current technology".  Numerically W ≈ N^{-1/2}: decay is robust, proof is hard.
 ```
 
+## SD sector after the 2026-09-20 laps (`G4WiringRough.lean`, sorry-free, axiom-clean, verified 20:15 EDT)
+
+`CRTConstant` is no longer the input.  N1 in schedule form (`J = windowJ N`) is a theorem from strictly
+weaker, individually probed nodes, and the small-prime half is machine-checked:
+
+```
+[N1] CRTConstantSched h   🟢 crtConstantSched_of_roughAt / isNormal_G4_of_parity / isNormal_G4_of_prefixLimit
+   ├── N1a  smooth CRT half              🟢 smoothWindowCRT (periodic_mean_close, primorial-periodicity), and
+   │        SmoothNonvanishing at y = 2  🟢 smoothNonvanishingAt_two: |cos(πh/4^j)| ≠ 0 ⟺ ¬ChowlaSector
+   ├── N1a′ SmoothRoughDecoupling        🟡→ reduced: both halves are EXACT covariance identities at y = 2
+   │        └── [N1a″] ParityDiscrepancy h  🔴 = the rough mean moves by O(1/log N) when the scale halves
+   │              (parityDisc_eq_scale; probe 9 ✅: flat in N, C ≈ 1.5, decays 4^{-j} in the site)
+   └── N1b  RoughIndependenceAt h 2      🔴 the crux: rough window mean = c(J)·∏ rough site means, rel. O(1/log N)
+            (probe 8 ✅: C ≈ 0.8/log x, bounded in J)
+            └── [N1b′] PrefixLimit h     🔴 relative prefix correlation at step k → ρ k with |ρ k| ≤ C/4^k
+                  (probe 10 ✅: ρ = 0, 0.82, 0.32, 0.03, 0.004 at h = 5; ρ 1 = 0 forced; J-uniformity now DERIVED)
+                  ⚫ "c = 1" (full decorrelation) REFUTED: E∏r_j/∏Er_j → 1.14 / 0.69 / 2.32 at h = 1/3/5
+```
+
+Both surviving nodes compare a rough mean at scale `N` with one at scale `αN` or with a product of shorter
+correlations; a single summatory node `R(M) = M·c·(log M)^κ(1 + O(1/log M))` for the `k`-site rough
+correlation sums would yield both (lap HANDOFF §"Next steps" item 2).  That node *is* Selberg–Delange with
+shifts (N1c generalised to `k` sites), so the crux has not become classical; it has become one statement.
+
 ## What would move a node
 
 - **N1c (two-point SD)**: settle whether ∑_{n≤x} z^{ω(n)} w^{ω(n+1)} has a known asymptotic for fixed
