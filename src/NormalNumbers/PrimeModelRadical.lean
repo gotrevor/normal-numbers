@@ -304,4 +304,25 @@ example :
 
 end Anchors
 
+/-! ## The one bound the bridge needs
+
+`∏ (1 + x_i) ≤ exp (∑ x_i)` turns the moment identity into the `exp` form used by
+the `d_j^α` estimate; the arithmetic input (`p^α - 1 ≤ √e · α log p` and Mertens)
+is documented in `papers/prime-model-radical.md` and not formalized here. -/
+
+/-- The moment identity in exponential form.  For `t p ≥ 1` (the case `t p = p^α`)
+the single-site moment is at most `exp (∑_p q_p (t_p - 1))`. -/
+theorem radical_site_moment_le_exp (k : ℕ) (q : ι → ℝ) (j₀ : Fin k) (t : ι → ℝ)
+    (hq : ∀ i, 0 ≤ q i) (ht : ∀ i, 1 ≤ t i) :
+    ∑ s : ι → Option (Fin k),
+        weight k q s * ∏ i, (if s i = some j₀ then t i else 1)
+      ≤ Real.exp (∑ i, q i * (t i - 1)) := by
+  rw [radical_site_moment k q j₀ t, Real.exp_sum]
+  refine Finset.prod_le_prod (fun i _ => ?_) (fun i _ => ?_)
+  · have : 0 ≤ q i * (t i - 1) :=
+      mul_nonneg (hq i) (sub_nonneg.mpr (ht i))
+    linarith
+  · rw [add_comm]
+    exact Real.add_one_le_exp _
+
 end NormalNumbers.PrimeModel.Radical

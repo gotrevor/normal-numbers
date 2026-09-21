@@ -58,3 +58,12 @@ the residual obligation.
 The two-sided sieve fundamental lemma is NOT proved.  Mathlib's `SelbergSieve`
 has upper-bound machinery only; the Rosser–Iwaniec lower bound with
 `1 + O(e^{-s})` error is absent.  Do not broaden into it without a new kickoff.
+
+## Addendum (same lap)
+
+Added `radical_site_moment_le_exp`: for `0 ≤ q p` and `1 ≤ t p`,
+`E ∏_p (…) = ∏_p (1 + q_p(t_p-1)) ≤ exp (∑_p q_p (t_p - 1))`
+(`Real.exp_sum` + `Finset.prod_le_prod` + `Real.add_one_le_exp`).  This is the
+first step of the documented `d_j^α` bridge; the arithmetic input
+(`p^α - 1 ≤ √e · α log p`, Mertens) stays in `papers/prime-model-radical.md`,
+per the kickoff's "avoid unnecessary analytic bounds in this lap".
