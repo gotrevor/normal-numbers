@@ -88,6 +88,18 @@ shifted-divisor asymptotic for ω-twists; for k ≥ 3 it is open territory.  The
 of the problem (`HANDOFF-2026-09-21-summatory-split.md` §Next lap): can the G₄ wiring run with k ≤ K FIXED instead
 of k ≤ windowJ M?  That is a question about `G4WiringCRT`/`G4WiringRough`, not about the node.
 
+**Probe 13 (Ren, 22:43 EDT, `probes/window_truncation.py`): the fixed-K question is settled - ⚫ NO for fixed K,
+✅ YES for K ≈ log₂log₂log₂N.**  `|W_K − W_J|` scales like `4^{-K}` (`0.33 / 0.10 / 0.023 / 0.005` at `K = 1..4`, `h = 1`,
+`N = 2^24`) and does not shrink with `N` at fixed `K`; the L¹ bound `4π|h|·(avg ω)·4^{-K}/3` holds with ~4× slack.
+Since the tail is controlled by the window AVERAGE of ω (≈ log log N, `sum_omegaR_add_le`) rather than its maximum
+(≈ log N, which is what `windowJ` was built for), the schedule drops from double-log to triple-log.  Consequence for the
+graph (lap fired 22:43): a new minimal node **N0′ `WindowDecayK`** and the crux in **o(1) form, no sectors**:
+`PrefixDecay h`: `∑_{m<M} ∏_{j≤k} e(h ω(m+j)/4^j) = o(M)` uniformly for `k ≤ windowK M`, every `h ≠ 0`, with
+`isNormal_G4_of_prefixDecay`.  The SD-sector asymptotic route (`RoughSummatoryPrefix` + `SDOdd`) stays as the route with
+main terms; `PrefixDecay` is the route where Elliott/Tao–Teräväinen-type *decay* technology lives (its two known
+barriers: `k → ∞`, and all scales rather than a log-density-1 set).  It does not change the class of the problem; it
+states it in the weakest form the wiring can use.
+
 ## What would move a node
 
 - **N1c (two-point SD)**: settle whether ∑_{n≤x} z^{ω(n)} w^{ω(n+1)} has a known asymptotic for fixed

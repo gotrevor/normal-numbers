@@ -1,5 +1,13 @@
 # DIRECTION — normal-numbers 🧭
 
+## Attended operator override: 2026-09-20 22:43 EDT — `windowK` / `PrefixDecay` LAP (ACTIVE, one lap)
+
+Run `KICKOFF-2026-09-20-windowK-lap.md`: new file `src/NormalNumbers/G4WindowK.lean` - the triple-log site schedule
+`windowK`, the L¹ tail bound `window_tail_tendsto_zero` (via `sum_omegaR_add_le`), node `WindowDecayK`, and the crux in
+o(1) form `PrefixDecay h` (no sector split) with `isNormal_G4_of_prefixDecay`.  Statements ratified verbatim; add only.
+Operator: Ren, attended; fired under Trevor's "keep going!" (2026-09-20).  **When this override is done, write the HANDOFF
+and STOP** - every section below is DONE or CLOSED; there is no fallback objective.
+
 ## Attended operator override: 2026-09-20 20:32 EDT — `RoughSummatory` LAP (DONE, one lap)
 
 **Result (2026-09-21):** `src/NormalNumbers/G4WiringSummatory.lean` is **sorry-free** and
