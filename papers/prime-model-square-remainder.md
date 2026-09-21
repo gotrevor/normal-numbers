@@ -28,6 +28,10 @@ For k>=1 this is already <=exp(-1/(8*k^2*epsilon)): indeed
 only an absolute coefficient in C2, not a worse decay rate or growth class.
 The lower-only phase transfer doubles this term.
 
+This absorption is now proved as `square_remainder_absorbed` in
+[PrimeModelErrorBudget.lean](../src/NormalNumbers/PrimeModelErrorBudget.lean),
+using t=log x and the exact epsilon-window premise.
+
 ## Brun threshold and exceptional range
 
 Use Y=floor(x^epsilon), R=x^(1/4), s=log R/log Y.  In the nonempty window
@@ -40,6 +44,10 @@ For epsilon>1/(7680*k), the target error factor is at least exp(-960/k),
 hence at least exp(-960).  The trivial phase bound 1 is absorbed by the
 absolute coefficient exp960 in C2.  This is deliberately coarse; tuning it
 does not improve the required asymptotic growth condition.
+
+The exceptional-epsilon bound is proved in the same module as
+`brun_large_epsilon_absorbed`.  The numerical threshold and remaining
+parameter substitutions in this section are still paper-level.
 
 The small-x exception needed for Q<=x^(1/8) is unchanged from the earlier
 assessment: Q<=4^k gives the sufficient threshold x>=4^(8k).
