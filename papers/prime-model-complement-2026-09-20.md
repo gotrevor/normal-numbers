@@ -6,6 +6,13 @@ Ren / Astra, 2026-09-20.  **Status: candidate paper argument with a recorded cou
 
 ## Upshot and exact delta
 
+**Finite-model follow-up:** [prime-model-radical.md](prime-model-radical.md)
+replaces the exact-valuation law below by its prime-presence pushforward.
+Normalization, phase factorization, and the moment identity are formalized in
+`PrimeModelRadical.lean`.  The valuation version remains here as the audited
+original argument; its warning against squarefree *truncation* does not rule
+out merging all valuations into radical states with their full mass.
+
 For the particular functions needed here, there is a potentially much shorter route than re-running all of KMT §4.  Use an exact independent-prime model for the small-prime parts of consecutive integers.  Sieve only the tuples whose coordinates are small.  Then obtain the actual discarded tail by **subtracting the retained mass from one**, instead of separately estimating smooth numbers in progressions.
 
 The candidate argument gives the existing `KMT_quant₂` statement with

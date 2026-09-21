@@ -66,6 +66,30 @@ For `n` in a progression and the window `(k, y]`:
 
 ## Residual analytic obligation
 
+### Keep the small-prime residue in the joint law
+
+For assembly with the counting argument, the sample space is `(r,s)`, not only
+the radical assignment `s`: `r` ranges over residues modulo
+`Q = product of primes <= k`.  Use model mass `mu(r,s) = weight(s)/Q` and
+actual mass `nu(r,s) = #{0 <= n < x : n mod Q = r, state(n)=s}/x`.
+For integer x>0 these both sum to one.  The retained box is independent of r,
+so the joint model tail equals the radical model tail, without a factor Q.
+The retained L1 discrepancy is the sum over ALL r and retained s.
+
+The bounded phase is `a(r) * product_i localPhase(i,s_i)`, with |a(r)|=1.
+Independence in the model factors its expectation into the small-prime average
+and the already-proved radical Euler product.  Apply `probability_complement_phase`
+to this JOINT law.  Do not treat the empirical residue masses as exactly 1/Q:
+they are not uniform unless Q divides x.  Alternatively, conditioning each
+nonempty residue class works, but changing its empirical mass to 1/Q costs
+an extra endpoint estimate.  The joint-law formulation avoids that step.
+
+The counting bridge must still prove the CRT assignment progression and the
+unassigned-prime exclusion counts for general k; the persistent CLI tests are
+finite controls of those statements, not their proof.
+
+### Analytic assembly still required
+
 The above does **not** prove the two-sided sieve fundamental lemma that the
 shortcut consumes.  Mathlib's `SelbergSieve` provides upper-bound machinery only;
 the matching lower bound (Rosser–Iwaniec / Brun with an explicit error
