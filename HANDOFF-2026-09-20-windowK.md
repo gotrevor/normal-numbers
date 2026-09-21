@@ -56,3 +56,15 @@ Supporting leaf: `geom_tail_le` (`∑_{K ≤ j < J} 4^{-(j+1)} ≤ 4^{-K}`).
 
 Per the operator override, this lap is the last one; every other section of `DIRECTION.md` is DONE or
 CLOSED.  Stopping here.
+
+## Note on the repo-wide stop gate
+
+`box done` was signalled but the repo-wide gate counts two *pre-existing, off-path* sorries, neither
+touched by this lap and both predating it:
+
+* `src/NormalNumbers/PrimeLambertOscillation.lean:95` — `phaseOscillation` (the disclosed open node
+  gating `irrational_primeLambert`);
+* `src/NormalNumbers/MahlerDriftOne.lean:380` — `exists_prime_nonresidue`.
+
+This lap was a BOUNDED subset (the `windowK` override); if it is relaunched it should carry
+`--done-when 'sorry-free:src/NormalNumbers/G4WindowK.lean'`, which is already satisfied.
