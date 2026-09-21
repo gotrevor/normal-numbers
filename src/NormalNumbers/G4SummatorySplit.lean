@@ -1064,6 +1064,60 @@ lemma norm_classOmegaSum_le {z : ℂ} (hz : ‖z‖ = 1) (b M : ℕ) :
             _ = M := Finset.card_range M
         exact_mod_cast this
 
+/-! ### A uniform lower bound for the node's budget
+
+Every small term in the 2-adic assembly is compared against the node's own error budget through
+ONE interface: the budget is at least `M / (64 (log M)^6)` uniformly over the window range. -/
+
+lemma re_sdExponent_singleton_ge (h : ℤ) (k : ℕ) : -2 ≤ (sdExponent h {k}).re := by
+  rw [sdExponent_singleton_eq, Complex.sub_re, Complex.one_re, sdBase, re_ePhase]
+  have := Real.neg_one_le_cos (2 * Real.pi * ((h:ℝ) / (4:ℝ)^k))
+  linarith
+
+lemma re_sdExponent_singleton_le (h : ℤ) (k : ℕ) : (sdExponent h {k}).re ≤ 0 := by
+  rw [sdExponent_singleton_eq, Complex.sub_re, Complex.one_re, sdBase, re_ePhase]
+  have := Real.cos_le_one (2 * Real.pi * ((h:ℝ) / (4:ℝ)^k))
+  linarith
+
+/-- **The budget interface.**  On the whole window range the node's error budget dominates
+`M / (64 (log M)^6)`. -/
+lemma budget_lower (h : ℤ) {M k : ℕ} (hM : 8 ≤ M) (hk1 : 1 ≤ k) (hkW : k ≤ windowJ M) :
+    (M:ℝ) / (64 * Real.log M ^ 6)
+      ≤ ((1:ℝ)/4)^k / Real.log M * ((M:ℝ) * Real.log M ^ (sdExponent h {k}).re) := by
+  set L : ℝ := Real.log M with hLdef
+  have hL1 : 1 ≤ L := one_le_log_of_eight hM
+  have hLpos : 0 < L := lt_of_lt_of_le one_pos hL1
+  have hMnn : (0:ℝ) ≤ (M:ℝ) := Nat.cast_nonneg _
+  -- `4^k ≤ 64 L^3`
+  have h4k : (4:ℝ) ^ k ≤ 64 * L ^ 3 := by
+    have h1 := two_mul_pow_four_le (M := M) (k := k) (by omega) hkW
+    have h2 : (1:ℝ) ≤ 2 * (k:ℝ) := by
+      have : (1:ℝ) ≤ (k:ℝ) := by exact_mod_cast hk1
+      linarith
+    nlinarith [pow_pos (show (0:ℝ) < 4 by norm_num) k]
+  have h4kpos : (0:ℝ) < (4:ℝ) ^ k := by positivity
+  -- `(1/4)^k ≥ 1/(64 L^3)`
+  have hquarter : (1:ℝ) / (64 * L ^ 3) ≤ ((1:ℝ)/4)^k := by
+    rw [div_pow, one_pow]
+    exact one_div_le_one_div_of_le h4kpos h4k
+  -- `L^r ≥ L^{-2}`
+  have hrpow : L ^ (-2 : ℝ) ≤ L ^ (sdExponent h {k}).re :=
+    Real.rpow_le_rpow_of_exponent_le hL1 (by
+      have := re_sdExponent_singleton_ge h k
+      linarith)
+  have hLm2 : L ^ (-2:ℝ) = 1 / L ^ 2 := by
+    rw [show (-2:ℝ) = ((-2 : ℤ) : ℝ) by norm_num, Real.rpow_intCast]
+    field_simp
+  have hstep1 : (M:ℝ) * (1 / L ^ 2) ≤ (M:ℝ) * L ^ (sdExponent h {k}).re := by
+    rw [← hLm2]
+    exact mul_le_mul_of_nonneg_left hrpow hMnn
+  have hstep2 : (1:ℝ) / (64 * L ^ 3) / L * ((M:ℝ) * (1 / L ^ 2))
+      ≤ ((1:ℝ)/4)^k / Real.log M * ((M:ℝ) * Real.log M ^ (sdExponent h {k}).re) := by
+    apply mul_le_mul _ hstep1 (by positivity) (by positivity)
+    exact div_le_div_of_nonneg_right hquarter hLpos.le
+  refine le_trans (le_of_eq ?_) hstep2
+  field_simp
+
 /-! ### The primitive node: the ODD class alone -/
 
 /-- **The primitive Landau–Selberg–Delange node.**  One multiplicative function `n ↦ z_k^{ω_{>2}(n)}`,
