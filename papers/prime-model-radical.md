@@ -108,6 +108,33 @@ Still to prove: the assignment/progression equivalence, distinct local roots,
 and their product count.  The general two-sided sieve weights are a separate
 remaining obligation, not a consequence of exact full-period CRT.
 
+### Counting-to-sieve interface for the next proof step
+
+Fix an assignment s and small residue r.  Write A for assigned primes, U for
+unassigned primes, D=product(A), and V=product_{p in U}(1-k/p).
+For E subset U let C_E count assigned divisibilities and a hit at every p in E,
+always with n mod Q=r and 0<=n<X.  The CRT lemma being formalized gives
+`|C_E - X*rho(E)/(QD*product(E))| <= rho(E)`, `rho(E)=k^|E|`.
+The actual radical atom is the count C of those same assigned divisibilities
+with NO hit at any prime of U.
+
+The still-needed two-sided weights lambdaMinus(E), lambdaPlus(E) must bound
+that no-hit indicator pointwise on EVERY subset of bad primes.  Their main
+sums `sum_E lambda(E)*rho(E)/product(E)` must lie between
+`(1-eta)*V` and `(1+eta)*V`, in the appropriate direction.
+If `L` bounds `sum_E |lambda(E)|*rho(E)` for EACH sign, then
+`|C - X*V/(QD)| <= eta*X*V/(QD) + L`.
+For X>0 this becomes retained-atom discrepancy
+`|nu(r,s)-mu(r,s)| <= eta*mu(r,s) + L/X`, since `mu(r,s)=V/(QD)`.
+This finite implication does not construct the weights or prove their estimates.
+
+Summing retained atoms costs at most `eta + (#retained joint atoms)*L/X`.
+The remaining combinatorics must inject radical assignments into their integer
+tuples to justify `#retained joint atoms <= Q*floor(T)^k`; finite support alone
+does not give this bound.  Level-supported weights with absolute value <=1
+would allow `L <= sum_{squarefree e<=R} k^omega(e)`; the useful estimate
+`<= R*(1+log R)^(k-1)` is another explicit arithmetic obligation.
+
 The above does **not** prove the two-sided sieve fundamental lemma that the
 shortcut consumes.  Mathlib's `SelbergSieve` provides upper-bound machinery only;
 the matching lower bound (Rosser–Iwaniec / Brun with an explicit error
