@@ -537,6 +537,127 @@ theorem summatory_means_approx {h : ℤ} (hS : RoughSummatory h) :
 
 end Wiring
 
+/-! ### Leaf 5 support: parity bookkeeping -/
+
+lemma classSum_window (h : ℤ) (s : Finset ℕ) (a N : ℕ) :
+    roughClassSum h s a (2*N) - roughClassSum h s a N
+      = ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => n % 2 = a), roughProd h s n := by
+  classical
+  rw [roughClassSum, roughClassSum, Finset.sum_filter, Finset.sum_filter, Finset.sum_filter,
+    ← Finset.sum_Ico_eq_sub _ (by omega : N ≤ 2 * N)]
+
+/-- Exact parity count on `[a,b)`. -/
+lemma card_parity_Ico (t : ℕ) (ht : t < 2) (a b : ℕ) (hab : a ≤ b) :
+    2 * ((Finset.Ico a b).filter (fun n => n % 2 = t)).card + (if b % 2 = t then 1 else 0)
+      = (b - a) + (if a % 2 = t then 1 else 0) := by
+  induction b, hab using Nat.le_induction with
+  | base => simp
+  | succ b hb ih =>
+      rw [show b + 1 = b.succ from rfl, Nat.Ico_succ_right_eq_insert_Ico hb, Finset.filter_insert]
+      by_cases hbt : b % 2 = t
+      · rw [if_pos hbt, Finset.card_insert_of_notMem (by simp)]
+        have h2 : ¬ (b.succ % 2 = t) := by omega
+        rw [if_pos hbt] at ih
+        rw [if_neg h2]
+        omega
+      · rw [if_neg hbt]
+        have h2 : b.succ % 2 = t := by omega
+        rw [if_neg hbt] at ih
+        rw [if_pos h2]
+        omega
+
+/-- Evens and odds in `[a,b)` differ in count by at most one. -/
+lemma card_parity_Ico_le (t : ℕ) (ht : t < 2) (a b : ℕ) (hab : a ≤ b) :
+    2 * ((Finset.Ico a b).filter (fun n => n % 2 = t)).card ≤ (b - a) + 1
+    ∧ (b - a) ≤ 2 * ((Finset.Ico a b).filter (fun n => n % 2 = t)).card + 1 := by
+  have h := card_parity_Ico t ht a b hab
+  by_cases h1 : b % 2 = t <;> by_cases h2 : a % 2 = t <;>
+    simp only [h1, h2, if_pos, if_neg, if_true, if_false] at h <;> omega
+
+/-- `parityDisc` in terms of the class difference. -/
+lemma norm_parityDisc_le (N j : ℕ) (r : ℕ → ℂ) (hr : ∀ n, ‖r n‖ ≤ 1) (D : ℝ)
+    (hdiff : ‖(∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j), r n)
+        - ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), r n‖ ≤ D) :
+    ‖parityDisc N j r‖ ≤ (N:ℝ)/2 * D + (N:ℝ)/2 := by
+  classical
+  set S : Finset ℕ := Finset.Ico N (2*N) with hSdef
+  set Se : ℂ := ∑ n ∈ S.filter (fun n => 2 ∣ n + j), r n with hSe
+  set So : ℂ := ∑ n ∈ S.filter (fun n => ¬ 2 ∣ n + j), r n with hSo
+  set en : ℕ := (S.filter (fun n => 2 ∣ n + j)).card with hen
+  set on : ℕ := (S.filter (fun n => ¬ 2 ∣ n + j)).card with hon
+  have hcards : en + on = N := by
+    rw [hen, hon, Finset.card_filter_add_card_filter_not, hSdef, Nat.card_Ico]
+    omega
+  have hfe : S.filter (fun n => 2 ∣ n + j) = S.filter (fun n => n % 2 = j % 2) := by
+    refine Finset.filter_congr (fun n _ => ?_)
+    constructor <;> intro hh <;> omega
+  have hpar := card_parity_Ico_le (j % 2) (by omega) N (2*N) (by omega)
+  rw [← hfe] at hpar
+  have hparity : 2 * en ≤ N + 1 ∧ N ≤ 2 * en + 1 := by
+    rw [hen]
+    constructor
+    · have := hpar.1; omega
+    · have := hpar.2; omega
+  have hZ : |((on : ℤ) - (en : ℤ))| ≤ 1 := abs_le.mpr ⟨by omega, by omega⟩
+  have hdc : ‖((on : ℂ) - (en : ℂ))‖ ≤ 1 := by
+    have heq : ((on : ℂ) - (en : ℂ)) = (((on : ℤ) - (en : ℤ) : ℤ) : ℂ) := by push_cast; ring
+    rw [heq, Complex.norm_intCast]
+    exact_mod_cast hZ
+  have hT : ‖Se + So‖ ≤ (N:ℝ) := by
+    rw [hSe, hSo, Finset.sum_filter_add_sum_filter_not]
+    refine (norm_sum_le _ _).trans ?_
+    calc ∑ n ∈ S, ‖r n‖ ≤ ∑ _n ∈ S, (1:ℝ) := Finset.sum_le_sum (fun n _ => hr n)
+      _ = (N:ℝ) := by rw [Finset.sum_const, hSdef, Nat.card_Ico,
+            show 2 * N - N = N from by omega]; simp
+  have hid : parityDisc N j r
+      = ((on : ℂ) + (en : ℂ)) / 2 * (Se - So) + ((on : ℂ) - (en : ℂ)) / 2 * (Se + So) := by
+    rw [parityDisc, ← hSe, ← hSo, ← hen, ← hon]
+    ring
+  have hsum : ((on : ℂ) + (en : ℂ)) = (N : ℂ) := by
+    rw [← Nat.cast_add, show on + en = N from by omega]
+  rw [hid, hsum]
+  refine (norm_add_le _ _).trans ?_
+  have hDnn : (0:ℝ) ≤ D := le_trans (norm_nonneg _) hdiff
+  have h1 : ‖(N : ℂ) / 2 * (Se - So)‖ ≤ (N:ℝ)/2 * D := by
+    rw [norm_mul, norm_div, Complex.norm_natCast, Complex.norm_ofNat]
+    exact mul_le_mul_of_nonneg_left hdiff (by positivity)
+  have h2 : ‖((on : ℂ) - (en : ℂ)) / 2 * (Se + So)‖ ≤ (N:ℝ)/2 := by
+    rw [norm_mul, norm_div, Complex.norm_ofNat]
+    have hnn : (0:ℝ) ≤ ‖Se + So‖ := norm_nonneg _
+    have := mul_le_mul hdc hT hnn (by norm_num)
+    calc ‖(on : ℂ) - (en : ℂ)‖ / 2 * ‖Se + So‖
+        = (‖(on : ℂ) - (en : ℂ)‖ * ‖Se + So‖) / 2 := by ring
+      _ ≤ (1 * (N:ℝ)) / 2 := by linarith [this]
+      _ = (N:ℝ)/2 := by ring
+  linarith
+
+/-- The full site mean is the half-average times the rough site mean, up to the parity gap. -/
+lemma fullSiteMean_sub_halfAvg_mul (N : ℕ) (h : ℤ) (j : ℕ) (hj : 1 ≤ j) (hN : 0 < N) :
+    fullSiteMean N h j - halfAvg h j * roughSiteMean N h j 2
+      = (ePhase ((h:ℝ)/(4:ℝ)^j) - 1) / 2
+        * (((∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => 2 ∣ n + j), roughPhase h j n)
+           - ∑ n ∈ (Finset.Ico N (2*N)).filter (fun n => ¬ 2 ∣ n + j), roughPhase h j n) / N) := by
+  classical
+  set S : Finset ℕ := Finset.Ico N (2*N) with hSdef
+  set α : ℂ := ePhase ((h:ℝ)/(4:ℝ)^j) with hα
+  set Se : ℂ := ∑ n ∈ S.filter (fun n => 2 ∣ n + j), roughPhase h j n with hSe
+  set So : ℂ := ∑ n ∈ S.filter (fun n => ¬ 2 ∣ n + j), roughPhase h j n with hSo
+  have hNc : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hN.ne'
+  have hfull : ∑ n ∈ S, ePhase ((h:ℝ) * omegaR (n + j) / (4:ℝ)^j) = α * Se + So := by
+    rw [← Finset.sum_filter_add_sum_filter_not S (fun n => 2 ∣ n + j), hSe, hSo, Finset.mul_sum]
+    congr 1
+    · refine Finset.sum_congr rfl (fun n hn => ?_)
+      rw [fullPhase_eq h j n hj, if_pos (Finset.mem_filter.mp hn).2]
+    · refine Finset.sum_congr rfl (fun n hn => ?_)
+      rw [fullPhase_eq h j n hj, if_neg (Finset.mem_filter.mp hn).2, one_mul]
+  have hrough : roughSiteMean N h j 2 = (Se + So) / N := by
+    rw [roughSiteMean_eq_winMean, winMean, hSe, hSo, Finset.sum_filter_add_sum_filter_not]
+  have hfs : fullSiteMean N h j = (α * Se + So) / N := by
+    rw [fullSiteMean, ← hfull]
+  rw [hfs, hrough, halfAvg, ← hα]
+  field_simp
+  ring
+
 /-! ### Leaf 4–6: the wirings -/
 
 /-! ### Leaf 3: uniform lower bounds on partial products -/
