@@ -713,6 +713,211 @@ theorem brun_lower_one {k : ℕ} (hk : 1 ≤ k) {s : ℝ} (hs : 80 * k ≤ s) {y
     by_contra h; exact hne (lam_eq_zero_of_not_adm h)
   exact prod_le_rpow_of_adm hk hs hy hA (fun p hp => hU p (hEU hp))
 
+/-! ### Property (3): the relative error
+
+The exact defect of `defect_eq` is grouped by the length `#F = 2m` of the first failed prefix.
+A prefix of length `2m` fails only if its least element exceeds the cutoff `Y m`, which is
+impossible for `m ≤ J`; so `m = J + ℓ` with `ℓ ≥ 1`, and all of `F` lies above
+`t_ℓ = y ^ (α ^ ℓ)`.  Two estimates then finish it:
+
+* the *elementary symmetric* bound `e_n(W) ≤ exp(x·∑_W g)/x^n` for every `x > 0` (a one-line
+  consequence of `Finset.prod_add` and `1 + u ≤ exp u`), optimised at `x = n/T`; this replaces
+  the factorial/Stirling step of the assessment entirely;
+* the dimension hypothesis, which bounds both `∏_{p > t_ℓ}(1-g p)⁻¹` and `∑_{p > t_ℓ} g p`
+  by `exp(A + Bℓ)` resp. `A + Bℓ`, with `A = log K ≤ J/10` and `B = -k log α ≤ 1/19`.
+
+Since `A + Bℓ ≤ (J+ℓ)/10 = n/20`, each block is at most `V·(e^{1+1/20}/20)^n ≤ V·4^{-n}`. -/
+
+/-- The elementary-symmetric bound.  No factorials: `x ^ n · e_n(W) ≤ ∏ (1 + x g) ≤ exp(x ∑ g)`. -/
+lemma esymm_le_exp_div (W : Finset ℕ) (g : ℕ → ℝ) (hg : ∀ p ∈ W, 0 ≤ g p) (n : ℕ) {x : ℝ}
+    (hx : 0 < x) :
+    ∑ E ∈ Finset.powersetCard n W, ∏ p ∈ E, g p
+      ≤ Real.exp (x * ∑ p ∈ W, g p) / x ^ n := by
+  have hxn : (0 : ℝ) < x ^ n := pow_pos hx n
+  rw [le_div_iff₀ hxn]
+  have hstep : (∑ E ∈ Finset.powersetCard n W, ∏ p ∈ E, g p) * x ^ n
+      = ∑ E ∈ Finset.powersetCard n W, ∏ p ∈ E, (x * g p) := by
+    rw [Finset.sum_mul]
+    refine Finset.sum_congr rfl fun E hE => ?_
+    rw [Finset.prod_mul_distrib, Finset.prod_const, (Finset.mem_powersetCard.1 hE).2]
+    ring
+  rw [hstep]
+  have hsub : ∑ E ∈ Finset.powersetCard n W, ∏ p ∈ E, (x * g p)
+      ≤ ∑ E ∈ W.powerset, ∏ p ∈ E, (x * g p) := by
+    refine Finset.sum_le_sum_of_subset_of_nonneg
+      (fun E hE => Finset.mem_powerset.2 (Finset.mem_powersetCard.1 hE).1) ?_
+    intro E hE _
+    exact Finset.prod_nonneg fun p hp =>
+      mul_nonneg hx.le (hg p ((Finset.mem_powerset.1 hE) hp))
+  refine hsub.trans ?_
+  have hadd : ∑ E ∈ W.powerset, ∏ p ∈ E, (x * g p) = ∏ p ∈ W, (x * g p + 1) := by
+    rw [Finset.prod_add]
+    exact Finset.sum_congr rfl fun E _ => by simp
+  rw [hadd]
+  calc ∏ p ∈ W, (x * g p + 1) ≤ ∏ p ∈ W, Real.exp (x * g p) := by
+        refine Finset.prod_le_prod (fun p hp => by have := hg p hp; positivity) ?_
+        intro p _
+        exact Real.add_one_le_exp _
+    _ = Real.exp (x * ∑ p ∈ W, g p) := by
+        rw [← Real.exp_sum, Finset.mul_sum]
+
+/-- The optimised form: `e_n(W) ≤ (e·T/n)^n` whenever `∑_W g ≤ T` and `0 < T`. -/
+lemma esymm_le_pow (W : Finset ℕ) (g : ℕ → ℝ) (hg : ∀ p ∈ W, 0 ≤ g p) {n : ℕ} (hn : 0 < n)
+    {T : ℝ} (hT : 0 < T) (hsum : ∑ p ∈ W, g p ≤ T) :
+    ∑ E ∈ Finset.powersetCard n W, ∏ p ∈ E, g p ≤ (Real.exp 1 * T / n) ^ n := by
+  have hn' : (0 : ℝ) < n := by exact_mod_cast hn
+  have hx : 0 < (n : ℝ) / T := by positivity
+  refine (esymm_le_exp_div W g hg n hx).trans ?_
+  have h1 : ((n : ℝ) / T) * ∑ p ∈ W, g p ≤ (n : ℝ) := by
+    calc ((n : ℝ) / T) * ∑ p ∈ W, g p ≤ ((n : ℝ) / T) * T :=
+          mul_le_mul_of_nonneg_left hsum hx.le
+      _ = (n : ℝ) := by field_simp
+  have h2 : Real.exp (((n : ℝ) / T) * ∑ p ∈ W, g p) ≤ Real.exp (n : ℝ) := Real.exp_le_exp.2 h1
+  have hTne : T ≠ 0 := ne_of_gt hT
+  have hnne : (n : ℝ) ≠ 0 := ne_of_gt hn'
+  have key : Real.exp (((n : ℝ) / T) * ∑ p ∈ W, g p) / ((n : ℝ) / T) ^ n
+      ≤ Real.exp (n : ℝ) / ((n : ℝ) / T) ^ n := by
+    have hpp := pow_pos hx n
+    gcongr
+  refine key.trans_eq ?_
+  have e1 : Real.exp (n : ℝ) = Real.exp 1 ^ n := by
+    rw [← Real.exp_nat_mul, mul_one]
+  rw [e1, div_pow, mul_div_assoc, mul_pow, div_pow]
+  field_simp
+
+/-- The `ℓ`-th cutoff as a real number, `t_ℓ = y ^ (α ^ ℓ)`. -/
+noncomputable def tcut (k : ℕ) (y : ℕ) (l : ℕ) : ℝ := (y : ℝ) ^ (alph k ^ l)
+
+/-- The tail-product dimension hypothesis of the assessment. -/
+def Dimension (U : Finset ℕ) (g : ℕ → ℝ) (y : ℕ) (K : ℝ) (k : ℕ) : Prop :=
+  ∀ t : ℝ, 1 ≤ t → t ≤ (y : ℝ) →
+    ∏ p ∈ U.filter (fun p : ℕ => t < (p : ℝ)), (1 - g p)⁻¹
+      ≤ K * (Real.log y / Real.log (max 2 t)) ^ k
+
+/-- `A = log K`. -/
+noncomputable def Aconst (K : ℝ) : ℝ := Real.log K
+
+/-- `B = -k log α`, the per-step loss of the shrinking cutoffs. -/
+noncomputable def Bconst (k : ℕ) : ℝ := -(k : ℝ) * Real.log (alph k)
+
+lemma alph_pos {k : ℕ} (hk : 1 ≤ k) : 0 < alph k := by
+  unfold alph
+  have hk' : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+  have h1 : 1 / (20 * (k : ℝ)) ≤ 1 / 20 :=
+    one_div_le_one_div_of_le (by norm_num) (by linarith)
+  linarith
+
+lemma Bconst_pos {k : ℕ} (hk : 1 ≤ k) : 0 < Bconst k := by
+  unfold Bconst
+  have hk' : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+  have hlog : Real.log (alph k) < 0 := Real.log_neg (alph_pos hk) (alph_lt_one hk)
+  nlinarith
+
+lemma Bconst_le {k : ℕ} (hk : 1 ≤ k) : Bconst k ≤ 1 / 19 := by
+  have hk' : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+  have hp := alph_pos hk
+  have hinvpos : 0 < (alph k)⁻¹ := by positivity
+  have hlog : Real.log ((alph k)⁻¹) ≤ (alph k)⁻¹ - 1 := Real.log_le_sub_one_of_pos hinvpos
+  rw [Real.log_inv] at hlog
+  have halph : alph k = 1 - 1 / (20 * (k : ℝ)) := rfl
+  have h20 : (0 : ℝ) < 20 * (k : ℝ) := by linarith
+  have hden : (0 : ℝ) < 20 * (k : ℝ) - 1 := by linarith
+  have hval : (alph k)⁻¹ - 1 = 1 / (20 * (k : ℝ) - 1) := by
+    rw [halph, show (1 : ℝ) - 1 / (20 * (k : ℝ)) = (20 * (k : ℝ) - 1) / (20 * (k : ℝ)) by
+      field_simp, inv_div]
+    field_simp
+    ring
+  rw [hval] at hlog
+  unfold Bconst
+  have hkey : -Real.log (alph k) ≤ 1 / (20 * (k : ℝ) - 1) := by linarith
+  have hden : (0 : ℝ) < 20 * (k : ℝ) - 1 := by linarith
+  have : -(k : ℝ) * Real.log (alph k) = (k : ℝ) * (-Real.log (alph k)) := by ring
+  rw [this]
+  have h2 : (k : ℝ) * (-Real.log (alph k)) ≤ (k : ℝ) * (1 / (20 * (k : ℝ) - 1)) :=
+    mul_le_mul_of_nonneg_left hkey (by linarith)
+  refine h2.trans ?_
+  rw [mul_one_div, div_le_div_iff₀ hden (by norm_num)]
+  linarith
+
+/-- Consequence of the dimension hypothesis: the tail product above `t_ℓ`. -/
+lemma dim_prod_le {U : Finset ℕ} {g : ℕ → ℝ} {y : ℕ} {K : ℝ} {k : ℕ} (hk : 1 ≤ k)
+    (hK : 1 ≤ K) (hy : Real.exp 2 ≤ (y : ℝ)) (hdim : Dimension U g y K k) (l : ℕ) :
+    ∏ p ∈ U.filter (fun p : ℕ => tcut k y l < (p : ℝ)), (1 - g p)⁻¹
+      ≤ Real.exp (Aconst K + Bconst k * l) := by
+  have hy1 : (1 : ℝ) ≤ (y : ℝ) := le_trans (Real.one_le_exp (by norm_num)) hy
+  have hy0 : (0 : ℝ) < (y : ℝ) := by linarith
+  have hlogy : (2 : ℝ) ≤ Real.log y := by
+    rw [← Real.log_exp 2]
+    exact Real.log_le_log (Real.exp_pos 2) hy
+  have hap : 0 < alph k := alph_pos hk
+  have hal : alph k < 1 := alph_lt_one hk
+  have hpow_pos : 0 < alph k ^ l := pow_pos hap l
+  have hpow_le : alph k ^ l ≤ 1 := pow_le_one₀ hap.le hal.le
+  set t := tcut k y l with ht
+  have ht1 : 1 ≤ t := Real.one_le_rpow hy1 hpow_pos.le
+  have hty : t ≤ (y : ℝ) := by
+    calc t ≤ (y : ℝ) ^ (1 : ℝ) := Real.rpow_le_rpow_of_exponent_le hy1 hpow_le
+      _ = (y : ℝ) := Real.rpow_one _
+  have hlogt : Real.log t = alph k ^ l * Real.log y := Real.log_rpow hy0 _
+  -- the key ratio bound
+  have hkey : Real.log y / Real.log (max 2 t) ≤ (alph k ^ l)⁻¹ := by
+    have hden : alph k ^ l * Real.log y ≤ Real.log (max 2 t) := by
+      rcases le_or_gt 2 t with h2 | h2
+      · rw [max_eq_right h2, hlogt]
+      · rw [max_eq_left h2.le]
+        have : Real.log t < Real.log 2 := Real.log_lt_log (by linarith) h2
+        rw [hlogt] at this
+        linarith
+    have hpos : 0 < alph k ^ l * Real.log y := by positivity
+    rw [div_le_iff₀ (by linarith)]
+    rw [inv_mul_eq_div, le_div_iff₀ hpow_pos]
+    nlinarith
+  have hratio_nonneg : 0 ≤ Real.log y / Real.log (max 2 t) := by
+    have h1 : 0 < Real.log (max 2 t) := by
+      have : (1 : ℝ) < max 2 t := lt_of_lt_of_le (by norm_num) (le_max_left _ _)
+      exact Real.log_pos this
+    positivity
+  refine (hdim t ht1 hty).trans ?_
+  have hstep : (Real.log y / Real.log (max 2 t)) ^ k ≤ ((alph k ^ l)⁻¹) ^ k :=
+    pow_le_pow_left₀ hratio_nonneg hkey k
+  have hKpos : (0 : ℝ) < K := by linarith
+  have h1 : K * (Real.log y / Real.log (max 2 t)) ^ k ≤ K * ((alph k ^ l)⁻¹) ^ k :=
+    mul_le_mul_of_nonneg_left hstep (by linarith)
+  refine h1.trans_eq ?_
+  rw [Real.exp_add, Aconst, Real.exp_log hKpos]
+  congr 1
+  rw [inv_pow, ← pow_mul]
+  have he : alph k ^ (l * k) = Real.exp (((l * k : ℕ) : ℝ) * Real.log (alph k)) := by
+    rw [Real.exp_nat_mul, Real.exp_log hap]
+  rw [he, ← Real.exp_neg]
+  congr 1
+  push_cast
+  rw [Bconst]
+  ring
+
+/-- Consequence of the dimension hypothesis: the tail *sum* of local densities above `t_ℓ`,
+via `1 - u ≤ exp (-u)`. -/
+lemma dim_sum_le {U : Finset ℕ} {g : ℕ → ℝ} {y : ℕ} {K : ℝ} {k : ℕ} (hk : 1 ≤ k)
+    (hK : 1 ≤ K) (hy : Real.exp 2 ≤ (y : ℝ)) (hg1 : ∀ p ∈ U, g p < 1)
+    (hdim : Dimension U g y K k) (l : ℕ) :
+    ∑ p ∈ U.filter (fun p : ℕ => tcut k y l < (p : ℝ)), g p ≤ Aconst K + Bconst k * l := by
+  have h1 : Real.exp (∑ p ∈ U.filter (fun p : ℕ => tcut k y l < (p : ℝ)), g p)
+      ≤ ∏ p ∈ U.filter (fun p : ℕ => tcut k y l < (p : ℝ)), (1 - g p)⁻¹ := by
+    rw [Real.exp_sum]
+    refine Finset.prod_le_prod (fun p _ => (Real.exp_pos _).le) ?_
+    intro p hp
+    have hp' : p ∈ U := (Finset.mem_filter.1 hp).1
+    have hpos : 0 < 1 - g p := by have := hg1 p hp'; linarith
+    have h1x : 1 - g p ≤ Real.exp (-(g p)) := by
+      have := Real.add_one_le_exp (-(g p)); linarith
+    have hE : Real.exp (-(g p)) * Real.exp (g p) = 1 := by
+      rw [← Real.exp_add]; simp
+    have hmul : (1 - g p) * Real.exp (g p) ≤ 1 := by
+      nlinarith [Real.exp_pos (g p)]
+    rw [inv_eq_one_div, le_div_iff₀ hpos]
+    linarith
+  exact Real.exp_le_exp.1 (h1.trans (dim_prod_le hk hK hy hdim l))
+
 /-! ### Numeric anchors (kernel `decide`)
 
 The controls of `papers/prime-model-sieve-assessment.md`: `U = {2,3,5,7}` with the even-position
