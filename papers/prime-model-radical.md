@@ -104,16 +104,19 @@ UNASSIGNED primes, CRT gives rho(e)=k^omega(e) distinct classes modulo QDe.
 Summing the existing per-class discrepancy gives error <=rho(e), relative
 to x*rho(e)/(QDe).  Assigned primes have g=0 and contribute no such classes;
 restricting sieve support to unassigned primes makes gcd(QD,e)=1 explicit.
-Still to prove: the assignment/progression equivalence, distinct local roots,
-and their product count.  The general two-sided sieve weights are a separate
-remaining obligation, not a consequence of exact full-period CRT.
+Now proved in `PrimeModelRadicalCRT.lean`: distinct local roots, their CRT
+product count, and the finite-interval bound `radical_sieve_count`, with the
+class count discharged by `radical_sieve_admissible_card`.  The general
+two-sided sieve weights remain a separate obligation, not a consequence of
+exact full-period CRT.  Still to connect: an actual radical state with this
+assigned-divisibility predicate and the absence of all unassigned hits.
 
 ### Counting-to-sieve interface for the next proof step
 
 Fix an assignment s and small residue r.  Write A for assigned primes, U for
 unassigned primes, D=product(A), and V=product_{p in U}(1-k/p).
 For E subset U let C_E count assigned divisibilities and a hit at every p in E,
-always with n mod Q=r and 0<=n<X.  The CRT lemma being formalized gives
+always with n mod Q=r and 0<=n<X.  The proved CRT lemma gives
 `|C_E - X*rho(E)/(QD*product(E))| <= rho(E)`, `rho(E)=k^|E|`.
 The actual radical atom is the count C of those same assigned divisibilities
 with NO hit at any prime of U.
