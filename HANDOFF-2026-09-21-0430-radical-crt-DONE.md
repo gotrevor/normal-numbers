@@ -51,13 +51,43 @@ else i` and `locCond` the matching local predicate; `sieveCond_iff` is the
 `k=2,Q=2,r=0,A={3},j≡0,E={5}`: classes mod 30 are exactly `{8,14}`; `X=20`
 count 2; `X=9` count 1.  `A={3},E=∅,X=20` count 3.  `A=∅,E={3,5},X=20` count 3.
 
+## Second layer (same lap, beyond the kickoff): the Legendre sieve
+
+`SiftedCond k A P Q r j n` = `n % Q = r` ∧ `∀ p ∈ A, p ∣ n+(j p)+1` ∧
+`∀ p ∈ P, ∀ t : Fin k, ¬ p ∣ n+t+1` — i.e. **no** sieve prime divides any shift.
+
+* `legendre_identity` — exact inclusion–exclusion, no error term:
+  `∑_{E ⊆ P} (−1)^{#E} · #{n<X : SieveCond E} = #{n<X : SiftedCond}`.
+  Proof: swap the sums, and for each `n` reduce to the hit set
+  `hitSet k P n = P.filter (∃ t, p ∣ n+t+1)`; `SieveCond E n ↔ base n ∧ E ⊆ hitSet n`
+  and `SiftedCond n ↔ base n ∧ hitSet n = ∅`, so the inner sum is
+  `Finset.sum_powerset_neg_one_pow_card`.
+* `legendre_sieve_count` — combining with `radical_sieve_count` term by term:
+
+      | #{n < X : SiftedCond} − X/(Q·D) · ∏_{p∈P} (1 − k/p) |  ≤  (1+k)^{#P}.
+
+  Main term via `Finset.prod_one_add` with `f p = −k/p` (`legendre_main_term`);
+  error via the same identity with `f p = k` (`sum_powerset_pow_card`).
+
+Anchor: `A={3}, P={5}, X=20` → sifted count `1` (`n=2`), main term
+`20/6 · 3/5 = 2`, bound `3`.  Kernel `decide`.
+
 ## Remaining obligation (explicit)
 
-This is a **one-sided local divisibility count**, not radical tuples.  The
-two-sided fundamental lemma of the sieve — upper and lower bounds for the
-sifted count with the error summed over all `E` in the sieve range — is NOT
-proved.  The file's closing note records how `E` ranges over subsets of the
-unassigned primes and why assigned primes need no exclusion.
+`legendre_sieve_count` is the **untruncated** Legendre sieve: the error
+`(1+k)^{#P}` is unconditional but swamps the main term once `#P` is large —
+the classical defect of Legendre's sieve.  The **two-sided fundamental lemma**
+(usable upper *and* lower bounds) is still OPEN.
+
+**Next attack: Brun's truncation.**  Restrict the alternating sum to `#E ≤ 2h`.
+Every per-subset term is already supplied by `radical_sieve_count`; the two
+missing pieces are (a) the **Bonferroni inequalities** — a truncated version of
+`Finset.sum_powerset_neg_one_pow_card`, i.e. for `S ≠ ∅`,
+`∑_{E ⊆ S, #E ≤ 2h} (−1)^{#E} ∈ [0,1]` with the sign alternating by parity of
+the cut — and (b) the tail estimate `∑_{#E = 2h+1, E ⊆ P} k^{#E} ≤
+(k log z)^{2h}/(2h)!`.  Piece (a) is pure `Finset`/binomial combinatorics and is
+the right next lemma to write; it is what converts the exact identity into the
+one-sided bounds the sieve needs.
 
 ## Lean gotchas worth keeping
 

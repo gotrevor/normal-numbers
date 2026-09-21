@@ -416,6 +416,182 @@ theorem radical_sieve_count {k : ℕ} (_hk : 1 ≤ k) (A E : Finset ℕ) (Q r : 
         rw [← hMcast]; ring_nf
     _ ≤ ((k ^ E.card : ℕ) : ℝ) := hbase
 
+/-! ### The Legendre sieve
+
+Truncation-free inclusion–exclusion over subsets `E` of the sieve primes `P` turns the one-sided
+count `radical_sieve_count` into a genuine sifted count: `n` for which **no** prime of `P`
+divides any of the `k` shifted values `n + t + 1`.  The main term is the expected
+`X/(Q D) ∏_{p ∈ P} (1 − k/p)` and the accumulated error is `∑_{E ⊆ P} k^{#E} = (1+k)^{#P}`.
+-/
+
+/-- The sifted condition: residue `r` mod `Q`, the prescribed shift at each assigned prime of
+`A`, and **no** prime of `P` dividing any of the `k` shifted values. -/
+def SiftedCond (k : ℕ) (A P : Finset ℕ) (Q r : ℕ) (j : ℕ → Fin k) (n : ℕ) : Prop :=
+  n % Q = r ∧ (∀ p ∈ A, p ∣ n + (j p).val + 1) ∧ (∀ p ∈ P, ∀ t : Fin k, ¬ p ∣ n + t.val + 1)
+
+instance (k : ℕ) (A P : Finset ℕ) (Q r : ℕ) (j : ℕ → Fin k) :
+    DecidablePred (SiftedCond k A P Q r j) := fun n => by
+  unfold SiftedCond; infer_instance
+
+/-- The primes of `P` that actually divide one of the `k` shifted values at `n`. -/
+private def hitSet (k : ℕ) (P : Finset ℕ) (n : ℕ) : Finset ℕ :=
+  P.filter fun p => ∃ t : Fin k, p ∣ n + t.val + 1
+
+private lemma sieveCond_iff_subset {k : ℕ} (A E P : Finset ℕ) (Q r : ℕ) (j : ℕ → Fin k)
+    (n : ℕ) (hE : E ⊆ P) :
+    SieveCond k A E Q r j n ↔
+      ((n % Q = r ∧ ∀ p ∈ A, p ∣ n + (j p).val + 1) ∧ E ⊆ hitSet k P n) := by
+  unfold SieveCond hitSet
+  simp only [Finset.subset_iff, Finset.mem_filter]
+  constructor
+  · rintro ⟨h1, h2, h3⟩
+    refine ⟨⟨h1, h2⟩, ?_⟩
+    intro p hp
+    exact ⟨hE hp, h3 p hp⟩
+  · rintro ⟨⟨h1, h2⟩, h3⟩
+    exact ⟨h1, h2, fun p hp => (h3 hp).2⟩
+
+private lemma siftedCond_iff_empty {k : ℕ} (A P : Finset ℕ) (Q r : ℕ) (j : ℕ → Fin k) (n : ℕ) :
+    SiftedCond k A P Q r j n ↔
+      ((n % Q = r ∧ ∀ p ∈ A, p ∣ n + (j p).val + 1) ∧ hitSet k P n = ∅) := by
+  unfold SiftedCond hitSet
+  rw [Finset.filter_eq_empty_iff]
+  constructor
+  · rintro ⟨h1, h2, h3⟩
+    refine ⟨⟨h1, h2⟩, ?_⟩
+    intro p hp hex
+    obtain ⟨t, ht⟩ := hex
+    exact h3 p hp t ht
+  · rintro ⟨⟨h1, h2⟩, h3⟩
+    exact ⟨h1, h2, fun p hp t ht => h3 hp ⟨t, ht⟩⟩
+
+/-- **Exact inclusion–exclusion (Legendre).** The alternating sum over subsets `E ⊆ P` of the
+one-sided counts is the sifted count. -/
+theorem legendre_identity {k : ℕ} (A P : Finset ℕ) (Q r : ℕ) (j : ℕ → Fin k) (X : ℕ) :
+    ∑ E ∈ P.powerset, (-1 : ℝ) ^ E.card
+        * (((range X).filter (SieveCond k A E Q r j)).card : ℝ)
+      = (((range X).filter (SiftedCond k A P Q r j)).card : ℝ) := by
+  classical
+  have hind : ∀ (Φ : ℕ → Prop) (_ : DecidablePred Φ),
+      (((range X).filter Φ).card : ℝ) = ∑ n ∈ range X, if Φ n then (1 : ℝ) else 0 := by
+    intro Φ _
+    rw [Finset.sum_boole]
+  rw [hind (SiftedCond k A P Q r j) inferInstance]
+  have hL : ∑ E ∈ P.powerset, (-1 : ℝ) ^ E.card
+        * (((range X).filter (SieveCond k A E Q r j)).card : ℝ)
+      = ∑ n ∈ range X, ∑ E ∈ P.powerset,
+          (-1 : ℝ) ^ E.card * (if SieveCond k A E Q r j n then (1 : ℝ) else 0) := by
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun E _ => ?_
+    rw [hind (SieveCond k A E Q r j) inferInstance, Finset.mul_sum]
+  rw [hL]
+  refine Finset.sum_congr rfl fun n _ => ?_
+  by_cases hbase : n % Q = r ∧ ∀ p ∈ A, p ∣ n + (j p).val + 1
+  · have h1 : ∀ E ∈ P.powerset, (-1 : ℝ) ^ E.card
+        * (if SieveCond k A E Q r j n then (1 : ℝ) else 0)
+        = if E ⊆ hitSet k P n then (-1 : ℝ) ^ E.card else 0 := by
+      intro E hEp
+      have hE : E ⊆ P := Finset.mem_powerset.1 hEp
+      by_cases hsub : E ⊆ hitSet k P n
+      · rw [if_pos hsub, if_pos ((sieveCond_iff_subset A E P Q r j n hE).2 ⟨hbase, hsub⟩),
+          mul_one]
+      · rw [if_neg hsub, if_neg (fun hc =>
+          hsub ((sieveCond_iff_subset A E P Q r j n hE).1 hc).2), mul_zero]
+    rw [Finset.sum_congr rfl h1, ← Finset.sum_filter]
+    have h2 : P.powerset.filter (fun E => E ⊆ hitSet k P n) = (hitSet k P n).powerset := by
+      ext E
+      simp only [Finset.mem_filter, Finset.mem_powerset]
+      exact ⟨fun h => h.2, fun h => ⟨h.trans (Finset.filter_subset _ _), h⟩⟩
+    rw [h2]
+    have h3 : ∑ E ∈ (hitSet k P n).powerset, (-1 : ℝ) ^ E.card
+        = ((if hitSet k P n = ∅ then (1 : ℤ) else 0 : ℤ) : ℝ) := by
+      rw [← Finset.sum_powerset_neg_one_pow_card]
+      push_cast
+      rfl
+    rw [h3]
+    by_cases hemp : hitSet k P n = ∅
+    · rw [if_pos hemp, if_pos ((siftedCond_iff_empty A P Q r j n).2 ⟨hbase, hemp⟩)]
+      norm_num
+    · rw [if_neg hemp,
+        if_neg (fun hc => hemp ((siftedCond_iff_empty A P Q r j n).1 hc).2)]
+      norm_num
+  · have hz : ∀ E ∈ P.powerset, (-1 : ℝ) ^ E.card
+        * (if SieveCond k A E Q r j n then (1 : ℝ) else 0) = 0 := by
+      intro E _
+      rw [if_neg (fun hc => hbase ⟨hc.1, hc.2.1⟩), mul_zero]
+    rw [Finset.sum_congr rfl hz, Finset.sum_const_zero,
+      if_neg (fun hc => hbase ⟨hc.1, hc.2.1⟩)]
+
+/-- The alternating main term telescopes into the Euler product `∏_{p ∈ P} (1 − k/p)`. -/
+private lemma legendre_main_term {k : ℕ} (A P : Finset ℕ) (Q : ℕ) (X : ℕ) :
+    ∑ E ∈ P.powerset, (-1 : ℝ) ^ E.card * ((X : ℝ) * ((k ^ E.card : ℕ) : ℝ)
+        / ((Q : ℝ) * ((∏ p ∈ A, p : ℕ) : ℝ) * ((∏ p ∈ E, p : ℕ) : ℝ)))
+      = (X : ℝ) / ((Q : ℝ) * ((∏ p ∈ A, p : ℕ) : ℝ)) * ∏ p ∈ P, (1 - (k : ℝ) / (p : ℝ)) := by
+  have hPe : ∏ p ∈ P, (1 - (k : ℝ) / (p : ℝ)) = ∑ E ∈ P.powerset, ∏ p ∈ E, (-(k : ℝ) / (p : ℝ)) := by
+    rw [← Finset.prod_one_add]
+    exact Finset.prod_congr rfl fun p _ => by ring
+  rw [hPe, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun E _ => ?_
+  have hprod : ∏ p ∈ E, (-(k : ℝ) / (p : ℝ))
+      = (-1 : ℝ) ^ E.card * ((k ^ E.card : ℕ) : ℝ) / ((∏ p ∈ E, p : ℕ) : ℝ) := by
+    rw [Finset.prod_div_distrib, Finset.prod_const]
+    push_cast
+    rw [neg_pow]
+  rw [hprod]
+  ring
+
+/-- `∑_{E ⊆ P} k^{#E} = (1+k)^{#P}`. -/
+private lemma sum_powerset_pow_card (k : ℕ) (P : Finset ℕ) :
+    ∑ E ∈ P.powerset, ((k ^ E.card : ℕ) : ℝ) = ((1 + k : ℕ) : ℝ) ^ P.card := by
+  have h := (Finset.prod_one_add (f := fun _ : ℕ => (k : ℝ)) P).symm
+  rw [show ((1 + k : ℕ) : ℝ) ^ P.card = ∏ _p ∈ P, (1 + (k : ℝ)) by
+    rw [Finset.prod_const]; push_cast; ring, ← h]
+  refine Finset.sum_congr rfl fun E _ => ?_
+  rw [Finset.prod_const]
+  push_cast
+  ring
+
+/-- **The Legendre sieve for the radical shifts.**  With `A` (assigned) and `P` (sieve) disjoint
+sets of primes all `> k`, `Q > 0` coprime to every prime of `A ∪ P`, and `r < Q`, the number of
+`n < X` with `n ≡ r (mod Q)`, `p ∣ n + (j p) + 1` for every `p ∈ A`, and **no** `p ∈ P` dividing
+any `n + t + 1` (`t < k`), is
+
+    X / (Q D) · ∏_{p ∈ P} (1 − k/p)   up to an error of at most  (1+k)^{#P},
+
+where `D = ∏_{p ∈ A} p`.  This is the *exact* (untruncated) Legendre sieve: the error is
+unconditional but useless unless `#P` is small, which is precisely what Brun's truncation of the
+inclusion–exclusion is for.  See the scope note at the end of the file. -/
+theorem legendre_sieve_count {k : ℕ} (hk : 1 ≤ k) (A P : Finset ℕ) (Q r : ℕ) (j : ℕ → Fin k)
+    (hA : ∀ p ∈ A, p.Prime) (hAk : ∀ p ∈ A, k < p) (hP : ∀ p ∈ P, p.Prime)
+    (hPk : ∀ p ∈ P, k < p) (hAP : Disjoint A P) (hQ : 0 < Q) (hr : r < Q)
+    (hQcop : ∀ p ∈ A ∪ P, Nat.Coprime Q p) (X : ℕ) :
+    |(((range X).filter (SiftedCond k A P Q r j)).card : ℝ)
+        - (X : ℝ) / ((Q : ℝ) * ((∏ p ∈ A, p : ℕ) : ℝ)) * ∏ p ∈ P, (1 - (k : ℝ) / (p : ℝ))|
+      ≤ ((1 + k : ℕ) : ℝ) ^ P.card := by
+  classical
+  rw [← legendre_identity A P Q r j X, ← legendre_main_term A P Q X, ← Finset.sum_sub_distrib]
+  calc |∑ E ∈ P.powerset, ((-1 : ℝ) ^ E.card
+          * (((range X).filter (SieveCond k A E Q r j)).card : ℝ)
+        - (-1 : ℝ) ^ E.card * ((X : ℝ) * ((k ^ E.card : ℕ) : ℝ)
+            / ((Q : ℝ) * ((∏ p ∈ A, p : ℕ) : ℝ) * ((∏ p ∈ E, p : ℕ) : ℝ))))|
+      ≤ ∑ E ∈ P.powerset, |(-1 : ℝ) ^ E.card
+          * (((range X).filter (SieveCond k A E Q r j)).card : ℝ)
+        - (-1 : ℝ) ^ E.card * ((X : ℝ) * ((k ^ E.card : ℕ) : ℝ)
+            / ((Q : ℝ) * ((∏ p ∈ A, p : ℕ) : ℝ) * ((∏ p ∈ E, p : ℕ) : ℝ)))| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ E ∈ P.powerset, ((k ^ E.card : ℕ) : ℝ) := by
+        refine Finset.sum_le_sum fun E hEp => ?_
+        have hE : E ⊆ P := Finset.mem_powerset.1 hEp
+        have hbound := radical_sieve_count hk A E Q r j hA hAk
+          (fun p hp => hP p (hE hp)) (fun p hp => hPk p (hE hp)) (hAP.mono_right hE) hQ hr
+          (fun p hp => hQcop p (by
+            rcases Finset.mem_union.1 hp with h | h
+            · exact Finset.mem_union_left _ h
+            · exact Finset.mem_union_right _ (hE h))) X
+        rw [← mul_sub, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul]
+        exact hbound
+    _ = ((1 + k : ℕ) : ℝ) ^ P.card := sum_powerset_pow_card k P
+
 /-! ### Numeric anchors
 
 `k = 2`, `Q = 2`, `r = 0`, `A = {3}` with shift `0`, `E = {5}`: the two admissible classes
@@ -433,19 +609,31 @@ example : ((range 20).filter (SieveCond 2 {3} ∅ 2 0 (fun _ => 0))).card = 3 :=
 
 example : ((range 20).filter (SieveCond 2 ∅ {3, 5} 2 0 (fun _ => 0))).card = 3 := by decide
 
+/-- Sifted anchor: `A = {3}`, `P = {5}`, `X = 20`.  The `A`-count is `3` (`n = 2, 8, 14`), the
+`E = {5}` count is `2` (`n = 8, 14`), so inclusion–exclusion gives `3 − 2 = 1`.  The main term is
+`20/(2·3)·(1 − 2/5) = 2` and the bound `(1+2)^1 = 3`. -/
+example : ((range 20).filter (SiftedCond 2 {3} {5} 2 0 (fun _ => 0))).card = 1 := by decide
+
 /-! ### Scope of this result
 
-For the radical tuple sieve, `E` ranges over the subsets of the *unassigned* primes in the
-sieve range: an inclusion-exclusion / Selberg weight over those subsets is what converts the
-one-sided divisibility count above into a count of `n` whose shifted values `n + t + 1`
-(`t < k`) have no unassigned prime factor in the range.  The assigned primes `p ∈ A` need no
-exclusion because the shift `j p` is prescribed, so their local condition is a single class
-and contributes the factor `1/p` exactly; only the sieve primes contribute the `k` choices,
-giving the main density `ρ / (Q D e)` with `ρ = k^{#E}`.
+`E` ranges over the subsets of the *unassigned* (sieve) primes `P` in the sieve range, and
+`legendre_identity` is the exact inclusion–exclusion that turns the one-sided divisibility
+counts into the sifted count: `n` whose shifted values `n + t + 1` (`t < k`) have **no** prime
+factor in `P`.  The assigned primes `p ∈ A` need no exclusion because the shift `j p` is
+prescribed, so their local condition is a single residue class and contributes the factor
+`1/p` exactly; only the sieve primes contribute the `k` choices, which is why the main density
+is `ρ / (Q D e)` with `ρ = k^{#E}` per subset, and why the assembled Euler factor is
+`1 − k/p` at the sieve primes and `1/p` at the assigned ones.
 
-**Remaining obligation.** This is a one-sided local count.  The two-sided fundamental lemma of
-the sieve (upper *and* lower bounds for the sifted count, with the error term summed over all
-`E` in the sieve range) is *not* proved here.
+**Remaining obligation.** `legendre_sieve_count` is the *untruncated* Legendre sieve: its
+error `(1+k)^{#P}` is unconditional but exceeds the main term as soon as `#P` is large, which
+is the classical defect of Legendre's sieve.  The **two-sided fundamental lemma** — upper
+*and* lower bounds for the sifted count with a *usable* error — is still open here.  The next
+step is Brun's truncation: restrict the alternating sum to `#E ≤ 2h`, for which the Bonferroni
+inequalities give one-sided bounds with error `∑_{#E = 2h+1} k^{#E} ≤ (k log z)^{2h}/(2h)!`
+in place of `(1+k)^{#P}`.  Every per-subset term needed for that is already supplied by
+`radical_sieve_count`; what is missing is the Bonferroni inequality itself (a truncated
+version of `Finset.sum_powerset_neg_one_pow_card`) and the tail estimate.
 -/
 
 end NormalNumbers.PrimeModel.Radical
