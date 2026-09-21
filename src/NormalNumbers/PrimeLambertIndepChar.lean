@@ -883,4 +883,73 @@ theorem momentComparison_of_le_one {q : ℤ} (C : Chain q) (M : ℕ → ℕ)
   refine momentComparison_of_bound C M (fun _ => 1) (fun _ => zero_le_one) hB ?_
   simpa using h
 
+/-! ### The sharp bound: only the *active* primes count
+
+`X_p(n) ≠ 0` forces `p` to divide one of the `|support|·(J−K)` arguments, so the number of active
+primes is at most `∑_{a,i} ω(n + (i+1)d_a − s_a) ≤ ∑_{a,i} log₂|·|` — a bound depending on the
+configuration and the window only, **not** on the sieve cutoff.  This is what removes the tension
+recorded in `PENDING_WORK.md`.  The one genuine hypothesis is that no argument vanishes. -/
+
+/-- The active primes are covered by the prime factors of the arguments. -/
+theorem card_activePrimes_le {c : TConfig} {K J : ℕ} {S : Finset ℕ} (hS : ∀ p ∈ S, p.Prime)
+    {n : ℤ} (hne : ∀ a ∈ c.support, ∀ i ∈ Ico K J, n + ((i : ℤ) + 1) * a.1 - a.2 ≠ 0) :
+    (activePrimes c K J S n).card
+      ≤ ∑ x ∈ c.support ×ˢ Ico K J,
+          Nat.log 2 (n + ((x.2 : ℤ) + 1) * x.1.1 - x.1.2).natAbs := by
+  classical
+  have hsub : activePrimes c K J S n ⊆ (c.support ×ˢ Ico K J).biUnion
+      (fun x => (n + ((x.2 : ℤ) + 1) * x.1.1 - x.1.2).natAbs.primeFactors) := by
+    intro p hp
+    rw [activePrimes, Finset.mem_filter] at hp
+    obtain ⟨hpS, a, ha, i, hi, hdvd⟩ := hp
+    refine Finset.mem_biUnion.mpr ⟨(a, i), Finset.mem_product.mpr ⟨ha, hi⟩, ?_⟩
+    refine Nat.mem_primeFactors.mpr ⟨hS p hpS, ?_, Int.natAbs_ne_zero.mpr (hne a ha i hi)⟩
+    exact Int.natCast_dvd_natCast.mp (Int.dvd_natAbs.mpr hdvd)
+  refine le_trans (Finset.card_le_card hsub) ?_
+  refine le_trans (Finset.card_biUnion_le) ?_
+  refine Finset.sum_le_sum (fun x hx => ?_)
+  rw [Finset.mem_product] at hx
+  exact card_primeFactors_le_log _ (Int.natAbs_ne_zero.mpr (hne x.1 hx.1 x.2 hx.2))
+
+/-- The sharp uniform bound on the small-prime sum: `∑_{a,i} log₂|arg| · ‖c‖₁ 2^{−K}`. -/
+noncomputable def activeBound {q : ℤ} (C : Chain q) (N : ℕ) (n : ℤ) : ℝ :=
+  (∑ x ∈ (C.c N).support ×ˢ Ico (C.K N) (C.S N).J,
+      (Nat.log 2 (n + ((x.2 : ℤ) + 1) * x.1.1 - x.1.2).natAbs : ℝ))
+    * (l1 (C.c N) / 2 ^ (C.K N))
+
+/-- **The sharp pointwise bound.**  No dependence on the sieve cutoff. -/
+theorem abs_smallSum_le_active {q : ℤ} (C : Chain q) (N : ℕ) (n : ℤ)
+    (hne : ∀ a ∈ (C.c N).support, ∀ i ∈ Ico (C.K N) (C.S N).J,
+      n + ((i : ℤ) + 1) * a.1 - a.2 ≠ 0) :
+    |smallSum C N n| ≤ activeBound C N n := by
+  unfold smallSum activeBound
+  refine (abs_classSum_le_card _ _ _ _ _).trans ?_
+  refine mul_le_mul_of_nonneg_right ?_ (div_nonneg (l1_nonneg _) (by positivity))
+  have := card_activePrimes_le (c := C.c N) (K := C.K N) (J := (C.S N).J)
+    (S := (C.S N).small) (fun p hp => (C.S N).prime_small p hp) hne
+  calc ((activePrimes (C.c N) (C.K N) (C.S N).J (C.S N).small n).card : ℝ)
+      ≤ ((∑ x ∈ (C.c N).support ×ˢ Ico (C.K N) (C.S N).J,
+            Nat.log 2 (n + ((x.2 : ℤ) + 1) * x.1.1 - x.1.2).natAbs : ℕ) : ℝ) := by
+        exact_mod_cast this
+    _ = ∑ x ∈ (C.c N).support ×ˢ Ico (C.K N) (C.S N).J,
+          (Nat.log 2 (n + ((x.2 : ℤ) + 1) * x.1.1 - x.1.2).natAbs : ℝ) := by
+        push_cast; rfl
+
+/-- **The sub-unit criterion, sharp form.**  If every argument is nonzero and `2^K` beats the
+window's total `log₂`-mass times `‖c‖₁`, the sample sum is bounded by `1` — and then
+`MomentComparison` costs only `sampleDiscrepancy → 0` and `IndepMomentSmall` is free, with **no**
+constraint linking `K` to the sieve cutoff. -/
+theorem abs_smallSum_le_one_of_pow_le {q : ℤ} (C : Chain q) (N : ℕ) (n : ℤ)
+    (hne : ∀ a ∈ (C.c N).support, ∀ i ∈ Ico (C.K N) (C.S N).J,
+      n + ((i : ℤ) + 1) * a.1 - a.2 ≠ 0)
+    (hK : (∑ x ∈ (C.c N).support ×ˢ Ico (C.K N) (C.S N).J,
+        (Nat.log 2 (n + ((x.2 : ℤ) + 1) * x.1.1 - x.1.2).natAbs : ℝ)) * l1 (C.c N)
+      ≤ 2 ^ (C.K N)) :
+    |smallSum C N n| ≤ 1 := by
+  refine (abs_smallSum_le_active C N n hne).trans ?_
+  unfold activeBound
+  rw [mul_div_assoc']
+  rw [div_le_one (by positivity)]
+  exact hK
+
 end NormalNumbers.PrimeLambert
