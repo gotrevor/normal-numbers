@@ -530,6 +530,102 @@ theorem exists_re_sdExponent_le_neg_one (h : ℤ) (hh : h ≠ 0) :
         · rw [if_neg hj]; exact hall j
     _ = -1 := by rw [Finset.sum_ite_eq' (Finset.Icc 1 k) t (fun _ => (-1:ℝ))]; simp [hmem]
 
+/-! ### Reducing the shift-free node to the ODD class alone
+
+`omega_{>2}` is blind to the factor `2`, so halving is an exact bijection between the even residues
+below `M` and ALL residues below `⌈M/2⌉`:
+
+  `E(M) = E(⌈M/2⌉) + O(⌈M/2⌉)`  (`classOmegaSum_zero_eq`).
+
+Iterating `V` times expresses the even class as `Σ_{v≤V} O(⌈M/2^v⌉) + E(⌈M/2^V⌉)`; taking
+`2^V ≈ √M` makes the remainder `≤ √M + 1`, negligible against the node's budget.  So the whole
+shift-free node is carried by the ODD-class summatory function alone — the primitive
+Landau–Selberg–Delange object. -/
+
+/-- `⌈M/2⌉`, written so that `2*m < M ↔ m < halfCeil M` for `M ≥ 1`. -/
+def halfCeil (M : ℕ) : ℕ := (M - 1) / 2 + 1
+
+lemma lt_halfCeil_iff {M m : ℕ} (hM : 1 ≤ M) : m < halfCeil M ↔ 2 * m < M := by
+  rw [halfCeil]; omega
+
+lemma omegaAbove_two_double' (m : ℕ) : omegaAbove 2 (2 * m) = omegaAbove 2 m := by
+  rcases Nat.eq_zero_or_pos m with hm | hm
+  · subst hm; rfl
+  · exact omegaAbove_two_double m (by omega)
+
+/-- **Halving is exact.**  The even class below `M` is everything below `⌈M/2⌉`. -/
+lemma classOmegaSum_zero_eq (z : ℂ) {M : ℕ} (hM : 1 ≤ M) :
+    classOmegaSum z 0 M = classOmegaSum z 0 (halfCeil M) + classOmegaSum z 1 (halfCeil M) := by
+  classical
+  have hbij : classOmegaSum z 0 M
+      = ∑ m ∈ Finset.range (halfCeil M), z ^ omegaAbove 2 m := by
+    rw [classOmegaSum]
+    refine Finset.sum_nbij' (fun n => n / 2) (fun m => 2 * m) ?_ ?_ ?_ ?_ ?_
+    · intro n hn
+      rw [Finset.mem_filter, Finset.mem_range] at hn
+      rw [Finset.mem_range, lt_halfCeil_iff hM]
+      omega
+    · intro m hm
+      rw [Finset.mem_range, lt_halfCeil_iff hM] at hm
+      rw [Finset.mem_filter, Finset.mem_range]
+      omega
+    · intro n hn
+      rw [Finset.mem_filter, Finset.mem_range] at hn
+      omega
+    · intro m _
+      omega
+    · intro n hn
+      rw [Finset.mem_filter, Finset.mem_range] at hn
+      have h2 : 2 * (n / 2) = n := by omega
+      rw [← omegaAbove_two_double' (n / 2), h2]
+  rw [hbij, classOmegaSum, classOmegaSum, ← Finset.sum_filter_add_sum_filter_not
+    (Finset.range (halfCeil M)) (fun n => n % 2 = 0)]
+  congr 1
+  refine Finset.sum_congr (Finset.filter_congr (fun n _ => ?_)) (fun _ _ => rfl)
+  constructor <;> intro hh <;> omega
+
+/-- The `v`-th iterated halving of `M`. -/
+def halfIter (M v : ℕ) : ℕ := halfCeil^[v] M
+
+@[simp] lemma halfIter_zero (M : ℕ) : halfIter M 0 = M := rfl
+
+lemma halfIter_succ (M v : ℕ) : halfIter M (v + 1) = halfCeil (halfIter M v) := by
+  rw [halfIter, halfIter, Function.iterate_succ_apply']
+
+lemma one_le_halfCeil (M : ℕ) : 1 ≤ halfCeil M := by rw [halfCeil]; omega
+
+lemma one_le_halfIter {M : ℕ} (hM : 1 ≤ M) (v : ℕ) : 1 ≤ halfIter M v := by
+  cases v with
+  | zero => simpa using hM
+  | succ v => rw [halfIter_succ]; exact one_le_halfCeil _
+
+/-- `2^v · ⌈M/2^v⌉ ≤ M + 2^v − 1`. -/
+lemma halfIter_bound {M : ℕ} (hM : 1 ≤ M) (v : ℕ) : 2 ^ v * halfIter M v + 1 ≤ M + 2 ^ v := by
+  induction v with
+  | zero => simp
+  | succ v ih =>
+      have hY : 1 ≤ halfIter M v := one_le_halfIter hM v
+      have hstep : 2 * halfCeil (halfIter M v) ≤ halfIter M v + 1 := by
+        rw [halfCeil]; omega
+      have := Nat.mul_le_mul_left (2 ^ v) hstep
+      rw [halfIter_succ]
+      have hpow : (2:ℕ) ^ (v + 1) = 2 ^ v * 2 := by rw [pow_succ]
+      rw [hpow]
+      nlinarith [ih, this, Nat.one_le_two_pow (n := v)]
+
+/-- **Unrolling the halving recursion.**  The even class is a finite sum of ODD-class sums at the
+halved scales, plus an even-class remainder at scale `⌈M/2^V⌉`. -/
+lemma classOmegaSum_zero_unroll (z : ℂ) {M : ℕ} (hM : 1 ≤ M) (V : ℕ) :
+    classOmegaSum z 0 M
+      = (∑ v ∈ Finset.Icc 1 V, classOmegaSum z 1 (halfIter M v))
+        + classOmegaSum z 0 (halfIter M V) := by
+  induction V with
+  | zero => simp
+  | succ V ih =>
+      rw [Finset.sum_Icc_succ_top (by omega : 1 ≤ V + 1), ih,
+        classOmegaSum_zero_eq z (one_le_halfIter hM V), ← halfIter_succ]
+      ring
+
 end NormalNumbers.G4
 
 #print axioms NormalNumbers.G4.isNormal_G4_of_shiftSplit

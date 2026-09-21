@@ -98,10 +98,31 @@ def run_modes(h, kmax, lmax):
               f"  |c'_k|={abs(qs[-1][0]):.4f}  parity site={abs(Qe_s):.4f} prefix={abs(Qe_p):.4f}")
         sys.stdout.flush()
 
+# Mode 3 (22:0x EDT, handoff request): is the parity-class constant clause sharp?
+#   dev(M) = R_s(M, even)/R_s(M, odd) - 1.  Under the node dev(M) = O(1/log M): print dev * log M (bounded, flat)
+#   versus dev itself (would tend to a constant != 0 if the class constants differ).
+def run_parity(h, kmax, lmax):
+    L = (1 << lmax) + kmax + 2
+    om = omega_rough(L)
+    n = 1 << lmax
+    Ms = [1 << l for l in range(14, lmax + 1, 2)]
+    par = (np.arange(n) % 2 == 0)
+    prod = np.ones(n, dtype=np.complex128)
+    print(f"=== h={h}: parity-class deviation dev = R_even/R_odd - 1, and dev*log M (want: bounded, flat) ===")
+    for k in range(1, kmax + 1):
+        prod *= np.exp(2j * math.pi * h * om[k:k + n].astype(np.float64) / 4**k)
+        Re = np.cumsum(np.where(par, prod, 0)); R = np.cumsum(prod)
+        cells = []
+        for M in Ms:
+            dev = Re[M-1] / (R[M-1] - Re[M-1]) - 1
+            cells.append(f"2^{int(math.log2(M))}: |dev|={abs(dev):.4f} |dev|logM={abs(dev)*math.log(M):.3f}")
+        print(f"k={k}  " + " | ".join(cells))
+        sys.stdout.flush()
+
 if __name__ == "__main__":
     lmax = int(sys.argv[1]) if len(sys.argv) > 1 else 24
     kmax = int(sys.argv[2]) if len(sys.argv) > 2 else 5
     hs = [int(x) for x in sys.argv[3].split(",")] if len(sys.argv) > 3 else [1, 3, 5]
     mode = sys.argv[4] if len(sys.argv) > 4 else "prefix"
     for h in hs:
-        (run_modes if mode == "modes" else run)(h, kmax, lmax)
+        {"modes": run_modes, "parity": run_parity}.get(mode, run)(h, kmax, lmax)
