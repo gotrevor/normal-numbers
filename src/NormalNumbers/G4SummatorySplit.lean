@@ -762,6 +762,160 @@ lemma sum_halfIter_sub_le {M : ℕ} (hM : 1 ≤ M) (V : ℕ) :
   rw [abs_le]
   constructor <;> nlinarith [hlow, hhigh]
 
+/-! ### The main-term assembly -/
+
+lemma halfIter_le_self {M : ℕ} (hM : 1 ≤ M) (v : ℕ) : halfIter M v ≤ M := by
+  induction v with
+  | zero => simp
+  | succ v ih =>
+      have h1 : 1 ≤ halfIter M v := one_le_halfIter hM v
+      have : halfCeil (halfIter M v) ≤ halfIter M v := by rw [halfCeil]; omega
+      rw [halfIter_succ]
+      omega
+
+lemma sum_range_le_sq (V : ℕ) : ∑ v ∈ Finset.Icc 1 V, (v:ℝ) ≤ (V:ℝ)^2 := by
+  calc ∑ v ∈ Finset.Icc 1 V, (v:ℝ) ≤ ∑ _v ∈ Finset.Icc 1 V, (V:ℝ) :=
+        Finset.sum_le_sum (fun v hv => by
+          have := (Finset.mem_Icc.mp hv).2
+          exact_mod_cast this)
+    _ = (V:ℝ) * V := by simp [Nat.card_Icc]
+    _ = (V:ℝ)^2 := by ring
+
+/-- **The main terms assemble.**  `Σ_{v=1}^{V} sdMain c κ ⌈M/2^v⌉ = sdMain c κ M` up to the two
+errors: the scale-sum defect `M 2^{-V} + V`, and the `(log ⌈M/2^v⌉)^κ` vs `(log M)^κ` deviation,
+which carries a factor `‖κ‖` and is therefore geometrically small in the site index. -/
+lemma main_sum_diff (c κ : ℂ) {M V : ℕ} (hM : 8 ≤ M) (hκ : ‖κ‖ ≤ 2)
+    (hV : (V:ℝ) * Real.log 2 ≤ Real.log M / 4) :
+    ‖(∑ v ∈ Finset.Icc 1 V, sdMain c κ (halfIter M v)) - sdMain c κ M‖
+      ≤ ‖c‖/2 * Real.log M ^ κ.re
+          * (4 * ‖κ‖ * Real.log 2 / Real.log M * (2*(M:ℝ) + (V:ℝ)^2)
+             + ((M:ℝ) * ((1:ℝ)/2)^V + V)) := by
+  have hM1 : 1 ≤ M := by omega
+  set L : ℝ := Real.log M with hLdef
+  have hL1 : 1 ≤ L := one_le_log_of_eight hM
+  have hLpos : 0 < L := lt_of_lt_of_le one_pos hL1
+  have hlog2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  -- the scale factor at each level
+  set y : ℕ → ℝ := fun v => (L - Real.log (halfIter M v)) / L with hydef
+  have hXpos : ∀ v, (0:ℝ) < (halfIter M v : ℝ) := fun v => by
+    exact_mod_cast one_le_halfIter hM1 v
+  have hlogle : ∀ v, Real.log (halfIter M v) ≤ L :=
+    fun v => Real.log_le_log (hXpos v) (by exact_mod_cast halfIter_le_self hM1 v)
+  have hy0 : ∀ v, 0 ≤ y v := fun v => by
+    rw [hydef]; exact div_nonneg (by linarith [hlogle v]) hLpos.le
+  have hyv : ∀ v, y v ≤ (v:ℝ) * Real.log 2 / L := by
+    intro v
+    have h := log_halfIter_ge hM1 v
+    rw [hydef, div_le_div_iff_of_pos_right hLpos]
+    linarith
+  have hysmall : ∀ v ∈ Finset.Icc 1 V, y v ≤ 1/4 := by
+    intro v hv
+    have hvV : (v:ℝ) ≤ (V:ℝ) := by exact_mod_cast (Finset.mem_Icc.mp hv).2
+    have h1 : (v:ℝ) * Real.log 2 ≤ L/4 := by nlinarith [hV, hlog2.le]
+    calc y v ≤ (v:ℝ) * Real.log 2 / L := hyv v
+      _ ≤ (L/4)/L := by gcongr
+      _ = 1/4 := by field_simp
+  have hterm : ∀ v ∈ Finset.Icc 1 V, sdMain c κ (halfIter M v)
+      = c/2 * ((L : ℝ) : ℂ)^κ * ((halfIter M v : ℝ) : ℂ) * (((1 - y v : ℝ)) : ℂ)^κ := by
+    intro v hv
+    have hy4 := hysmall v hv
+    have hpos : (0:ℝ) < 1 - y v := by linarith
+    have hfac : Real.log (halfIter M v) = L * (1 - y v) := by
+      rw [hydef]; field_simp; ring
+    rw [sdMain, hfac, ofReal_mul_cpow hLpos hpos]
+    push_cast
+    ring
+  set W : ℕ → ℂ := fun v => (((1 - y v : ℝ)) : ℂ)^κ with hWdef
+  have e1 : ∑ v ∈ Finset.Icc 1 V, sdMain c κ (halfIter M v)
+      = c/2 * ((L : ℝ) : ℂ)^κ
+        * ∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ) * W v := by
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl (fun v hv => by rw [hterm v hv]; ring)
+  have e2 : sdMain c κ M = c/2 * ((L : ℝ) : ℂ)^κ * (M : ℂ) := by rw [sdMain]; ring
+  have ebracket :
+      (∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ) * W v) - (M : ℂ)
+        = (∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ) * (W v - 1))
+          + ((∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ)) - (M : ℂ)) := by
+    have hd : ∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ) * (W v - 1)
+        = (∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ) * W v)
+          - ∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ) := by
+      rw [← Finset.sum_sub_distrib]
+      exact Finset.sum_congr rfl (fun v _ => by ring)
+    rw [hd]; ring
+  have hdiff : (∑ v ∈ Finset.Icc 1 V, sdMain c κ (halfIter M v)) - sdMain c κ M
+      = c/2 * ((L : ℝ) : ℂ)^κ
+        * ((∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ) * (W v - 1))
+           + ((∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ)) - (M : ℂ))) := by
+    rw [e1, e2, ← mul_sub, ← ebracket]
+  -- bound the two bracket pieces
+  have hW : ∀ v ∈ Finset.Icc 1 V, ‖W v - 1‖ ≤ 4 * (‖κ‖ * y v) := by
+    intro v hv
+    have hy4 := hysmall v hv
+    exact norm_ofReal_one_sub_cpow_sub_one_le (y v) (hy0 v) (by linarith) κ (by nlinarith [hy0 v])
+  have hB1 : ‖∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ) * (W v - 1)‖
+      ≤ 4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2) := by
+    have hstep : ∀ v ∈ Finset.Icc 1 V,
+        ‖((halfIter M v : ℝ) : ℂ) * (W v - 1)‖
+          ≤ 4 * ‖κ‖ * Real.log 2 / L * ((v:ℝ) * ((M:ℝ) * ((1:ℝ)/2)^v + 1)) := by
+      intro v hv
+      rw [norm_mul, Complex.norm_real, Real.norm_eq_abs,
+        abs_of_nonneg (le_of_lt (hXpos v))]
+      have h1 : ‖W v - 1‖ ≤ 4 * (‖κ‖ * ((v:ℝ) * Real.log 2 / L)) := by
+        refine le_trans (hW v hv) ?_
+        have := hyv v
+        nlinarith [norm_nonneg κ]
+      have h2 : (halfIter M v : ℝ) ≤ (M:ℝ) * ((1:ℝ)/2)^v + 1 := by
+        have := halfIter_le_div hM1 v
+        rw [div_pow, one_pow] at *
+        calc (halfIter M v : ℝ) ≤ (M:ℝ)/2^v + 1 := this
+          _ = (M:ℝ) * (1/2^v) + 1 := by ring
+      have hXnn : (0:ℝ) ≤ (halfIter M v : ℝ) := (hXpos v).le
+      have hRnn : (0:ℝ) ≤ 4 * (‖κ‖ * ((v:ℝ) * Real.log 2 / L)) := by positivity
+      have hprod : (halfIter M v : ℝ) * ‖W v - 1‖
+          ≤ ((M:ℝ) * ((1:ℝ)/2)^v + 1) * (4 * (‖κ‖ * ((v:ℝ) * Real.log 2 / L))) :=
+        mul_le_mul h2 h1 (norm_nonneg _) (by positivity)
+      calc (halfIter M v : ℝ) * ‖W v - 1‖
+          ≤ ((M:ℝ) * ((1:ℝ)/2)^v + 1) * (4 * (‖κ‖ * ((v:ℝ) * Real.log 2 / L))) := hprod
+        _ = 4 * ‖κ‖ * Real.log 2 / L * ((v:ℝ) * ((M:ℝ) * ((1:ℝ)/2)^v + 1)) := by
+            field_simp
+    refine le_trans (norm_sum_le _ _) ?_
+    refine le_trans (Finset.sum_le_sum hstep) ?_
+    rw [← Finset.mul_sum]
+    have hcoef : (0:ℝ) ≤ 4 * ‖κ‖ * Real.log 2 / L := by positivity
+    refine mul_le_mul_of_nonneg_left ?_ hcoef
+    have hsplit : ∑ v ∈ Finset.Icc 1 V, ((v:ℝ) * ((M:ℝ) * ((1:ℝ)/2)^v + 1))
+        = (M:ℝ) * (∑ v ∈ Finset.Icc 1 V, (v:ℝ) * ((1:ℝ)/2)^v)
+          + ∑ v ∈ Finset.Icc 1 V, (v:ℝ) := by
+      rw [Finset.mul_sum, ← Finset.sum_add_distrib]
+      exact Finset.sum_congr rfl (fun v _ => by ring)
+    rw [hsplit]
+    have h1 := geom_half_weighted_le V
+    have h2 := sum_range_le_sq V
+    have hMnn : (0:ℝ) ≤ (M:ℝ) := Nat.cast_nonneg _
+    nlinarith
+  have hB2 : ‖(∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ)) - (M : ℂ)‖
+      ≤ (M:ℝ) * ((1:ℝ)/2)^V + V := by
+    have hcast : (∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ)) - (M : ℂ)
+        = (((∑ v ∈ Finset.Icc 1 V, (halfIter M v : ℝ)) - (M:ℝ) : ℝ) : ℂ) := by
+      push_cast
+      ring
+    rw [hcast, Complex.norm_real, Real.norm_eq_abs]
+    exact sum_halfIter_sub_le hM1 V
+  rw [hdiff, norm_mul, norm_mul, norm_div, norm_ofReal_cpow hLpos]
+  have hnorm2 : ‖(2:ℂ)‖ = 2 := by norm_num
+  rw [hnorm2]
+  have hbr : ‖(∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ) * (W v - 1))
+        + ((∑ v ∈ Finset.Icc 1 V, ((halfIter M v : ℝ) : ℂ)) - (M : ℂ))‖
+      ≤ 4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2) + ((M:ℝ) * ((1:ℝ)/2)^V + V) :=
+    le_trans (norm_add_le _ _) (add_le_add hB1 hB2)
+  have hLre : (0:ℝ) ≤ L ^ κ.re := Real.rpow_nonneg hLpos.le _
+  have hcnn : (0:ℝ) ≤ ‖c‖ / 2 := by positivity
+  calc ‖c‖ / 2 * L ^ κ.re * ‖_‖ ≤ ‖c‖ / 2 * L ^ κ.re *
+        (4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2) + ((M:ℝ) * ((1:ℝ)/2)^V + V)) := by
+        exact mul_le_mul_of_nonneg_left hbr (by positivity)
+    _ = ‖c‖ / 2 * L ^ κ.re *
+        (4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2) + ((M:ℝ) * ((1:ℝ)/2)^V + V)) := rfl
+
 /-! ### The primitive node: the ODD class alone -/
 
 /-- **The primitive Landau–Selberg–Delange node.**  One multiplicative function `n ↦ z_k^{ω_{>2}(n)}`,
