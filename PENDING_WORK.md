@@ -8797,3 +8797,24 @@ missing, and the sandwich `∫dL/(L log L) = ∞` vs density `1/log L → 0` clo
 All its consumers are now proved, so it is the single remaining obligation of
 `exists_sparse_normal_of_KMT_quant`.  Explicit choices are in its docstring; `exists_block` (now
 proved) supplies the blocks.
+
+## Radical sieve — CRT counting layer (2026-09-21, `PrimeModelRadicalCRT.lean`)
+
+**Done.** `radical_sieve_count` gives the exact one-sided local count at assigned (`A`) and
+sieve (`E`) primes with error `≤ ρ = k^{#E}`, and the class count `ρ` is *proved*
+(`radical_sieve_admissible_card`) via a general CRT class-count lemma
+`card_filter_range_prod` and the distinctness of the `k` negative shifts mod `p > k`
+(`card_filter_shift`).  Reusable generic transfer: `abs_card_filter_periodic_sub_le`.
+
+**Remaining obligation on this path (the crux):** the **two-sided fundamental lemma of the
+sieve** for the radical tuple problem — upper *and* lower bounds for the sifted count
+`#{n < X : no unassigned prime of the sieve range divides any n+t+1, t < k}`, with the error
+`∑_E ρ(E)` summed over all `E` in the range.  `radical_sieve_count` supplies exactly the
+per-`E` term; what is missing is (a) a sieve weight (Brun pure sieve with truncation level
+`2h`, or Selberg `λ_d`) over subsets `E` of the unassigned primes below the sieve limit `z`,
+and (b) control of the accumulated error `∑_{#E ≤ 2h} k^{#E}` against the main term
+`∏_{p ≤ z}(1 − k/p)`.  **Next attack:** formalize Brun's pure sieve in the dimension-`k`
+setting — truncated inclusion–exclusion over `E ⊆ P(z)` with `#E ≤ 2h`, error
+`(k log z)^{2h}/(2h)!` — reusing `radical_sieve_count` verbatim for each `E`.  The assigned
+primes need no exclusion (prescribed shift ⇒ single class ⇒ exact factor `1/p`), which is why
+`A` enters the density as `1/D` and only `E` carries the `k` choices.
