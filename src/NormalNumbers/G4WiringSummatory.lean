@@ -698,20 +698,256 @@ lemma neg_bound_le_re {z : ℂ} {K : ℝ} (hz : ‖z‖ ≤ K) : -K ≤ z.re := 
   have h2 := abs_le.mp (le_trans h1 hz)
   linarith [h2.1]
 
-/-- **Elementary tail regime (open, elementary).**  For `j > windowJ N` the node says nothing, but
-nothing is needed: `4^j ≥ 4^{windowJ N} ≳ (log₂ N)²` while `ω_{>2}(n+j) ≤ log₂(2N+j)`, so every
-`roughPhase h j n` is within `O(1/log N)` of `1`; hence `parityDisc N j (roughPhase h j)` — which
-vanishes identically when the phase is constant — is `O(N²/log N)`, and `‖fullSiteMean N h j‖ ≥ 1/2`
-in the same range.
+/-! ### The tail regime `j > windowJ N` (elementary) -/
 
-MISSING (purely elementary, no analytic input): the two inequalities
-`‖parityDisc N j r‖ ≤ N² · sup_n ‖r n − 1‖` and
-`sup_{n ∈ [N,2N)} ‖roughPhase h j n − 1‖ ≤ 4π|h| · (log₂(2N) + j) / 4^j ≤ C / log N` for
-`j > windowJ N`, using `omegaR_le_log` and `Nat.lt_pow_succ_log_self`. -/
+lemma omegaAbove_le_log (m : ℕ) : omegaAbove 2 m ≤ Nat.log 2 m := by
+  have h := omegaR_eq_omegaLe_add_omegaAbove 2 m
+  have h2 := omegaR_le_log m
+  have hR : ((omegaAbove 2 m : ℕ) : ℝ) ≤ ((Nat.log 2 m : ℕ) : ℝ) := by
+    have h3 := Nat.cast_nonneg (α := ℝ) (omegaLe 2 m)
+    linarith
+  exact_mod_cast hR
+
+lemma nat_log_two_mul_pow (x j : ℕ) (hx : x ≠ 0) :
+    Nat.log 2 (x * 2 ^ j) = Nat.log 2 x + j := by
+  induction j with
+  | zero => simp
+  | succ j ih =>
+      have hne : x * 2 ^ j ≠ 0 := by positivity
+      have : x * 2 ^ (j+1) = (x * 2 ^ j) * 2 := by ring
+      rw [this, Nat.log_mul_base (by norm_num) hne, ih]
+      omega
+
+/-- **The tail arithmetic.**  For `j > windowJ N` the site scale `4^j` dwarfs `log₂(2N+j)`. -/
+lemma tail_log_le (N j : ℕ) (hN : 2 ≤ N) (hj : windowJ N < j) :
+    Nat.log 2 N * Nat.log 2 (2*N + j) ≤ 4 ^ j := by
+  set Λ : ℕ := Nat.log 2 N with hΛ
+  set W : ℕ := windowJ N with hW
+  have hΛ1 : 1 ≤ Λ := by
+    rw [hΛ]
+    exact Nat.log_pos (by norm_num) hN
+  have hj1 : 1 ≤ j := by omega
+  -- `Λ < 2^W`
+  have hWΛ : Λ < 2 ^ W := by
+    rw [hW, windowJ, ← hΛ]
+    exact Nat.lt_pow_succ_log_self (by norm_num) Λ
+  have hWj : W ≤ j - 1 := by omega
+  have hΛlt : Λ < 2 ^ (j-1) := lt_of_lt_of_le hWΛ (Nat.pow_le_pow_right (by norm_num) hWj)
+  have hjlt : j ≤ 2 ^ (j - 1) := by
+    have := Nat.lt_two_pow_self (n := j - 1)
+    omega
+  have hsq : 2 ^ (j-1) * 2 ^ (j-1) = 4 ^ (j-1) := by
+    rw [← pow_add, show (4:ℕ) = 2^2 from by norm_num, ← pow_mul]
+    congr 1
+    omega
+  have h4 : 4 ^ j = 4 * 4 ^ (j-1) := by
+    rw [← pow_succ']
+    congr 1
+    omega
+  -- `log₂(2N+j) ≤ Λ + 1 + j`
+  have hbound : Nat.log 2 (2*N + j) ≤ Λ + 1 + j := by
+    have hle : 2*N + j ≤ (2*N) * 2 ^ j := by
+      have h1 : j + 1 ≤ 2 ^ j := Nat.lt_two_pow_self
+      have h2 : 1 ≤ 2 ^ j := Nat.one_le_two_pow
+      nlinarith [h1, h2, hN]
+    calc Nat.log 2 (2*N + j) ≤ Nat.log 2 ((2*N) * 2 ^ j) := Nat.log_mono_right hle
+      _ = Nat.log 2 (2*N) + j := nat_log_two_mul_pow (2*N) j (by omega)
+      _ ≤ Λ + 1 + j := by
+          have : Nat.log 2 (2*N) = Λ + 1 := by
+            rw [hΛ, show 2*N = N*2 from by ring, Nat.log_mul_base (by norm_num) (by omega)]
+          omega
+  calc Λ * Nat.log 2 (2*N + j) ≤ Λ * (Λ + 1 + j) := Nat.mul_le_mul_left _ hbound
+    _ = Λ * (Λ + 1) + Λ * j := by ring
+    _ ≤ 2 * (2 ^ (j-1) * 2 ^ (j-1)) + 2 ^ (j-1) * 2 ^ (j-1) := by
+        have h1 : Λ * (Λ + 1) ≤ 2 * (2 ^ (j-1) * 2 ^ (j-1)) := by nlinarith [hΛlt, hΛ1]
+        have h2 : Λ * j ≤ 2 ^ (j-1) * 2 ^ (j-1) := Nat.mul_le_mul (by omega) hjlt
+        omega
+    _ = 3 * 4 ^ (j-1) := by rw [hsq]; ring
+    _ ≤ 4 ^ j := by rw [h4]; omega
+
+/-- `parityDisc` of a phase uniformly close to `1` is small. -/
+lemma norm_parityDisc_tail (N j : ℕ) (r : ℕ → ℂ) (ε : ℝ) (hε : 0 ≤ ε)
+    (hr : ∀ n ∈ Finset.Ico N (2*N), ‖r n - 1‖ ≤ ε) :
+    ‖parityDisc N j r‖ ≤ 2 * (N:ℝ)^2 * ε := by
+  classical
+  set S : Finset ℕ := Finset.Ico N (2*N) with hSdef
+  set en : ℕ := (S.filter (fun n => 2 ∣ n + j)).card with hen
+  set on : ℕ := (S.filter (fun n => ¬ 2 ∣ n + j)).card with hon
+  have hcards : en + on = N := by
+    rw [hen, hon, Finset.card_filter_add_card_filter_not, hSdef, Nat.card_Ico]
+    omega
+  have hshift : ∀ (T : Finset ℕ), T ⊆ S →
+      (∑ n ∈ T, r n) = (∑ n ∈ T, (r n - 1)) + (T.card : ℂ) := by
+    intro T hT
+    rw [Finset.sum_sub_distrib]
+    simp
+  have hEbound : ∀ (T : Finset ℕ), T ⊆ S → ‖∑ n ∈ T, (r n - 1)‖ ≤ (T.card : ℝ) * ε := by
+    intro T hT
+    refine (norm_sum_le _ _).trans ?_
+    calc ∑ n ∈ T, ‖r n - 1‖ ≤ ∑ _n ∈ T, ε := Finset.sum_le_sum (fun n hn => hr n (hT hn))
+      _ = (T.card : ℝ) * ε := by rw [Finset.sum_const, nsmul_eq_mul]
+  have hsube : S.filter (fun n => 2 ∣ n + j) ⊆ S := Finset.filter_subset _ _
+  have hsubo : S.filter (fun n => ¬ 2 ∣ n + j) ⊆ S := Finset.filter_subset _ _
+  have hid : parityDisc N j r
+      = (on : ℂ) * (∑ n ∈ S.filter (fun n => 2 ∣ n + j), (r n - 1))
+        - (en : ℂ) * (∑ n ∈ S.filter (fun n => ¬ 2 ∣ n + j), (r n - 1)) := by
+    rw [parityDisc, ← hSdef, hshift _ hsube, hshift _ hsubo, ← hen, ← hon]
+    ring
+  rw [hid]
+  refine (norm_sub_le _ _).trans ?_
+  rw [norm_mul, norm_mul, Complex.norm_natCast, Complex.norm_natCast]
+  have h1 : (on : ℝ) * ‖∑ n ∈ S.filter (fun n => 2 ∣ n + j), (r n - 1)‖
+      ≤ (on : ℝ) * ((en : ℝ) * ε) :=
+    mul_le_mul_of_nonneg_left (hEbound _ hsube) (Nat.cast_nonneg _)
+  have h2 : (en : ℝ) * ‖∑ n ∈ S.filter (fun n => ¬ 2 ∣ n + j), (r n - 1)‖
+      ≤ (en : ℝ) * ((on : ℝ) * ε) :=
+    mul_le_mul_of_nonneg_left (hEbound _ hsubo) (Nat.cast_nonneg _)
+  have hcR : (en : ℝ) + (on : ℝ) = (N : ℝ) := by exact_mod_cast hcards
+  have hnn : (0:ℝ) ≤ (en:ℝ) ∧ (0:ℝ) ≤ (on:ℝ) := ⟨Nat.cast_nonneg _, Nat.cast_nonneg _⟩
+  have hbound : (en:ℝ) * (on:ℝ) ≤ (N:ℝ)^2 := by
+    nlinarith [hnn.1, hnn.2, hcR, sq_nonneg ((en:ℝ) - (on:ℝ))]
+  have hprod := mul_le_mul_of_nonneg_right hbound hε
+  nlinarith [h1, h2, hprod]
+
+set_option maxHeartbeats 1000000 in
+/-- **The tail regime is elementary.**  For `j > windowJ N` the node says nothing, but nothing is
+needed: `4^j ≥ 4^{windowJ N} ≳ (log₂ N)²` while `ω_{>2}(n+j) ≤ log₂(2N+j)`, so every
+`roughPhase h j n` is within `O(1/log N)` of `1`; `parityDisc` of a constant phase vanishes, and
+`‖fullSiteMean N h j‖ ≥ 1/2` in the same range. -/
 theorem parityDisc_tail_small (h : ℤ) : ∃ C : ℝ, 0 ≤ C ∧ ∀ᶠ N : ℕ in atTop,
     ∀ j, windowJ N < j → ‖parityDisc N j (roughPhase h j)‖
       ≤ C / Real.log N * ((N:ℝ)^2 * ‖fullSiteMean N h j‖) := by
-  sorry
+  have hpi : (0:ℝ) < Real.pi := Real.pi_pos
+  set K : ℝ := 4 * Real.pi * |(h:ℝ)| with hK
+  have hKnn : (0:ℝ) ≤ K := by rw [hK]; positivity
+  refine ⟨8 * K + 1, by positivity, ?_⟩
+  have hlog : ∀ᶠ N : ℕ in atTop, (4 * K + 1 : ℝ) ≤ Real.log N := by
+    have := Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+    exact this.eventually_ge_atTop _
+  filter_upwards [eventually_ge_atTop 2, hlog] with N hN2 hNlog
+  intro j hj
+  have hN0 : 0 < N := by omega
+  have hNR : (0:ℝ) < N := by exact_mod_cast hN0
+  set L : ℝ := Real.log N with hLdef
+  have hL1 : (1:ℝ) ≤ L := by linarith [hKnn]
+  have hL0 : (0:ℝ) < L := by linarith
+  set Λ : ℕ := Nat.log 2 N with hΛdef
+  have hΛ1 : 1 ≤ Λ := Nat.log_pos (by norm_num) hN2
+  have hΛR : (1:ℝ) ≤ (Λ:ℝ) := by exact_mod_cast hΛ1
+  set Ω : ℕ := Nat.log 2 (2*N + j) with hΩdef
+  set ε : ℝ := K * (Ω:ℝ) / (4:ℝ)^j with hεdef
+  have h4pos : (0:ℝ) < (4:ℝ)^j := by positivity
+  have hε0 : (0:ℝ) ≤ ε := by rw [hεdef]; positivity
+  -- the tail arithmetic
+  have htail := tail_log_le N j hN2 hj
+  have htailR : (Λ:ℝ) * (Ω:ℝ) ≤ (4:ℝ)^j := by
+    have : ((Λ * Ω : ℕ) : ℝ) ≤ ((4^j : ℕ) : ℝ) := by exact_mod_cast htail
+    push_cast at this
+    exact this
+  have hLΛ : L ≤ 2 * (Λ:ℝ) := by
+    have hlt : N < 2 ^ (Λ + 1) := Nat.lt_pow_succ_log_self (by norm_num) N
+    have hleR : (N:ℝ) ≤ (2:ℝ) ^ (Λ + 1) := by
+      have : ((N:ℕ):ℝ) ≤ ((2 ^ (Λ+1) : ℕ) : ℝ) := by exact_mod_cast hlt.le
+      push_cast at this
+      exact this
+    have hlogle : L ≤ Real.log ((2:ℝ) ^ (Λ+1)) := Real.log_le_log hNR hleR
+    rw [Real.log_pow] at hlogle
+    have h2 := Real.log_two_lt_d9
+    push_cast at hlogle
+    nlinarith [hlogle, h2, hΛR]
+  have hεL : ε ≤ 2 * K / L := by
+    rw [hεdef]
+    have hratio : (Ω:ℝ) / (4:ℝ)^j ≤ 1 / (Λ:ℝ) := by
+      rw [div_le_div_iff₀ h4pos (by linarith)]
+      nlinarith [htailR]
+    have h1 : K * (Ω:ℝ) / (4:ℝ)^j = K * ((Ω:ℝ) / (4:ℝ)^j) := by ring
+    rw [h1]
+    have h2 : K * ((Ω:ℝ) / (4:ℝ)^j) ≤ K * (1 / (Λ:ℝ)) :=
+      mul_le_mul_of_nonneg_left hratio hKnn
+    have h3 : K * (1 / (Λ:ℝ)) ≤ 2 * K / L := by
+      rw [mul_one_div, div_le_div_iff₀ (by linarith) hL0]
+      nlinarith [hLΛ, hKnn]
+    linarith
+  have hεhalf : ε ≤ 1/2 := by
+    refine hεL.trans ?_
+    rw [div_le_iff₀ hL0]
+    nlinarith [hNlog, hKnn, hL0]
+  -- the two phase bounds
+  have hΩmono : ∀ n ∈ Finset.Ico N (2*N), Nat.log 2 (n + j) ≤ Ω := by
+    intro n hn
+    have := (Finset.mem_Ico.mp hn).2
+    exact Nat.log_mono_right (by omega)
+  have hrough : ∀ n ∈ Finset.Ico N (2*N), ‖roughPhase h j n - 1‖ ≤ ε := by
+    intro n hn
+    rw [roughPhase, ← ePhase_zero]
+    refine (norm_ePhase_sub _ _).trans ?_
+    have hΩn : (omegaAbove 2 (n + j) : ℝ) ≤ (Ω:ℝ) := by
+      have := le_trans (omegaAbove_le_log (n+j)) (hΩmono n hn)
+      exact_mod_cast this
+    have habs : |(h:ℝ) * (omegaAbove 2 (n+j) : ℝ) / (4:ℝ)^j - 0|
+        = |(h:ℝ)| * (omegaAbove 2 (n+j) : ℝ) / (4:ℝ)^j := by
+      rw [sub_zero, abs_div, abs_of_pos h4pos, abs_mul, Nat.abs_cast]
+    rw [habs, hεdef, hK]
+    have hrw : 4 * Real.pi * (|(h:ℝ)| * (omegaAbove 2 (n+j) : ℝ) / (4:ℝ)^j)
+        = (4 * Real.pi * |(h:ℝ)| * (omegaAbove 2 (n+j) : ℝ)) / (4:ℝ)^j := by ring
+    rw [hrw, div_le_div_iff_of_pos_right h4pos]
+    nlinarith [hΩn, abs_nonneg ((h:ℝ)), hpi]
+  have hfullp : ∀ n ∈ Finset.Ico N (2*N),
+      ‖ePhase ((h:ℝ) * omegaR (n + j) / (4:ℝ)^j) - 1‖ ≤ ε := by
+    intro n hn
+    rw [← ePhase_zero]
+    refine (norm_ePhase_sub _ _).trans ?_
+    have hΩn : omegaR (n + j) ≤ (Ω:ℝ) := by
+      refine (omegaR_le_log (n+j)).trans ?_
+      exact_mod_cast hΩmono n hn
+    have hnn : (0:ℝ) ≤ omegaR (n + j) := omegaR_nonneg _
+    have habs : |(h:ℝ) * omegaR (n+j) / (4:ℝ)^j - 0|
+        = |(h:ℝ)| * omegaR (n+j) / (4:ℝ)^j := by
+      rw [sub_zero, abs_div, abs_of_pos h4pos, abs_mul, abs_of_nonneg hnn]
+    rw [habs, hεdef, hK]
+    have hrw : 4 * Real.pi * (|(h:ℝ)| * omegaR (n+j) / (4:ℝ)^j)
+        = (4 * Real.pi * |(h:ℝ)| * omegaR (n+j)) / (4:ℝ)^j := by ring
+    rw [hrw, div_le_div_iff_of_pos_right h4pos]
+    nlinarith [hΩn, abs_nonneg ((h:ℝ)), hpi]
+  -- the site mean is close to 1
+  have hFclose : ‖fullSiteMean N h j - 1‖ ≤ ε := by
+    have hcard : ((Finset.Ico N (2*N)).card : ℂ) = (N:ℂ) := by
+      rw [Nat.card_Ico, show 2*N - N = N from by omega]
+    have hNc : (N:ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hN0.ne'
+    have hid : fullSiteMean N h j - 1
+        = (∑ n ∈ Finset.Ico N (2*N), (ePhase ((h:ℝ) * omegaR (n + j) / (4:ℝ)^j) - 1)) / (N:ℂ) := by
+      rw [Finset.sum_sub_distrib, Finset.sum_const, nsmul_eq_mul, mul_one, hcard, fullSiteMean]
+      field_simp
+    rw [hid, norm_div, Complex.norm_natCast, div_le_iff₀ hNR]
+    refine (norm_sum_le _ _).trans ?_
+    calc ∑ n ∈ Finset.Ico N (2*N), ‖ePhase ((h:ℝ) * omegaR (n + j) / (4:ℝ)^j) - 1‖
+        ≤ ∑ _n ∈ Finset.Ico N (2*N), ε := Finset.sum_le_sum hfullp
+      _ = (N:ℝ) * ε := by
+          rw [Finset.sum_const, nsmul_eq_mul, Nat.card_Ico, show 2*N - N = N from by omega]
+      _ = ε * (N:ℝ) := by ring
+  have hFlow : (1:ℝ)/2 ≤ ‖fullSiteMean N h j‖ := by
+    have h1 : ‖(1:ℂ)‖ - ‖fullSiteMean N h j‖ ≤ ‖(1:ℂ) - fullSiteMean N h j‖ :=
+      norm_sub_norm_le _ _
+    rw [norm_one, norm_sub_rev] at h1
+    linarith [hFclose, hεhalf]
+  -- assemble
+  have hpd : ‖parityDisc N j (roughPhase h j)‖ ≤ 2 * (N:ℝ)^2 * ε :=
+    norm_parityDisc_tail N j _ ε hε0 hrough
+  refine hpd.trans ?_
+  have hRHS : (8*K+1) / L * ((N:ℝ)^2 * (1/2)) ≤ (8*K+1) / L * ((N:ℝ)^2 * ‖fullSiteMean N h j‖) := by
+    refine mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hFlow (by positivity)) ?_
+    positivity
+  refine le_trans ?_ hRHS
+  have h1 : 2 * (N:ℝ)^2 * ε ≤ 2 * (N:ℝ)^2 * (2*K/L) :=
+    mul_le_mul_of_nonneg_left hεL (by positivity)
+  refine h1.trans ?_
+  have h2 : 2 * (N:ℝ)^2 * (2*K/L) = (4*K) / L * (N:ℝ)^2 := by ring
+  have h3 : (8*K+1) / L * ((N:ℝ)^2 * (1/2)) = ((8*K+1)/2) / L * (N:ℝ)^2 := by ring
+  rw [h2, h3]
+  have h4 : (4*K) / L ≤ ((8*K+1)/2) / L := by
+    rw [div_le_div_iff_of_pos_right hL0]
+    linarith
+  exact mul_le_mul_of_nonneg_right h4 (by positivity)
 
 /-! ### Leaf 4–6: the wirings -/
 
