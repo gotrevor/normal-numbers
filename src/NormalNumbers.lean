@@ -392,4 +392,5 @@ import NormalNumbers.PrimeModelRadicalMoment
 import NormalNumbers.PrimeModelRadicalCRT
 import NormalNumbers.PrimeModelBrunLower
 import NormalNumbers.PrimeModelPrimeDimension
+import NormalNumbers.PrimeModelBrunCount
 import NormalNumbers.PrimeModelLowerTransfer
