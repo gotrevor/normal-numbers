@@ -1180,6 +1180,73 @@ lemma halfDepth_log_le {M : ℕ} (hM1 : 1 ≤ M) (hM : 512 ≤ Nat.log 2 M) :
   have hl2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
   nlinarith [h3, h2, hl2.le]
 
+/-- `⌊log₂ M⌋ · log 2 ≤ log M` gives a lower bound on `log M` from a lower bound on `⌊log₂ M⌋`. -/
+lemma log_ge_of_natLog_ge {M : ℕ} (hM : 1 ≤ M) (hΛ : 512 ≤ Nat.log 2 M) :
+    128 ≤ Real.log M := by
+  have h1 : ((2:ℝ)) ^ (Nat.log 2 M) ≤ (M : ℝ) := by
+    have := Nat.pow_log_le_self 2 (show M ≠ 0 by omega)
+    exact_mod_cast this
+  have h2 : Real.log ((2:ℝ) ^ (Nat.log 2 M)) ≤ Real.log M :=
+    Real.log_le_log (by positivity) h1
+  rw [Real.log_pow] at h2
+  have hl2 : (1:ℝ)/2 ≤ Real.log 2 := by
+    have := Real.log_two_gt_d9; linarith
+  have hΛr : (512:ℝ) ≤ (Nat.log 2 M : ℝ) := by exact_mod_cast hΛ
+  nlinarith [h2, hl2, hΛr]
+
+/-- **The geometric remainder is polylog-small.**  `2^{halfDepth M} ≥ (log M / 4)^{10}`. -/
+lemma halfDepth_geom_le {M : ℕ} (hM1 : 1 ≤ M) (hΛ : 512 ≤ Nat.log 2 M)
+    (hL : 128 ≤ Real.log M) :
+    (M:ℝ) * ((1:ℝ)/2)^(halfDepth M) ≤ (M:ℝ) / (256 * Real.log M ^ 6) := by
+  set L : ℝ := Real.log M with hLdef
+  set Λ : ℕ := Nat.log 2 M with hΛdef
+  set a : ℕ := Nat.log 2 Λ with hadef
+  have hLpos : 0 < L := by linarith
+  have hMnn : (0:ℝ) ≤ (M:ℝ) := Nat.cast_nonneg _
+  -- `Λ ≥ L − 1 ≥ L/2`
+  have hΛL : L - 1 ≤ (Λ:ℝ) := log_le_natLog_two_add_one hM1
+  have hΛhalf : L / 2 ≤ (Λ:ℝ) := by linarith
+  -- `2^a > Λ/2`
+  have hapow : (Λ:ℝ) / 2 ≤ (2:ℝ) ^ a := by
+    have h1 : Λ < 2 ^ (a + 1) := Nat.lt_pow_succ_log_self (by norm_num) Λ
+    have h2 : (Λ:ℝ) < (2:ℝ) ^ (a + 1) := by exact_mod_cast h1
+    have h3 : ((2:ℝ)) ^ (a + 1) = 2 * (2:ℝ) ^ a := by rw [pow_succ]; ring
+    linarith [h2, h3.le, h3.ge]
+  have hL4 : L / 4 ≤ (2:ℝ) ^ a := by linarith
+  have hL4pos : (0:ℝ) < L / 4 := by linarith
+  -- `(1/2)^{10a} ≤ 4^10 / L^10`
+  have hgeom : ((1:ℝ)/2)^(halfDepth M) ≤ (4:ℝ)^10 / L ^ 10 := by
+    have hid : ((1:ℝ)/2)^(halfDepth M) = 1 / ((2:ℝ) ^ a) ^ 10 := by
+      rw [halfDepth, ← hΛdef, ← hadef, div_pow, one_pow, ← pow_mul]
+      congr 2
+      omega
+    rw [hid]
+    have h1 : (L / 4) ^ 10 ≤ ((2:ℝ) ^ a) ^ 10 := pow_le_pow_left₀ hL4pos.le hL4 10
+    have h2 : (0:ℝ) < (L / 4) ^ 10 := by positivity
+    have h3 : 1 / (((2:ℝ) ^ a) ^ 10) ≤ 1 / ((L/4) ^ 10) := one_div_le_one_div_of_le h2 h1
+    have h4 : (1:ℝ) / ((L/4) ^ 10) = (4:ℝ)^10 / L ^ 10 := by
+      rw [div_pow]; field_simp
+    linarith [h3, h4.le, h4.ge]
+  -- combine
+  have hfinal : (4:ℝ)^10 / L ^ 10 ≤ 1 / (256 * L ^ 6) := by
+    have h2 : (128:ℝ)^4 ≤ L ^ 4 := pow_le_pow_left₀ (by norm_num) hL 4
+    have h3 : (0:ℝ) < L ^ 6 := by positivity
+    have h10 : (0:ℝ) < L ^ 10 := by positivity
+    rw [div_le_div_iff₀ h10 (by positivity)]
+    nlinarith [h2, h3]
+  calc (M:ℝ) * ((1:ℝ)/2)^(halfDepth M) ≤ (M:ℝ) * ((4:ℝ)^10 / L ^ 10) :=
+        mul_le_mul_of_nonneg_left hgeom hMnn
+    _ ≤ (M:ℝ) * (1 / (256 * L ^ 6)) := mul_le_mul_of_nonneg_left hfinal hMnn
+    _ = (M:ℝ) / (256 * L ^ 6) := by ring
+
+/-- `halfDepth M ≤ 15 log M`. -/
+lemma halfDepth_le_log {M : ℕ} (hM1 : 1 ≤ M) (hΛ : 512 ≤ Nat.log 2 M) :
+    (halfDepth M : ℝ) ≤ 15 * Real.log M := by
+  have h1 := halfDepth_le hΛ
+  have h2 := natLog_two_le_two_log hM1
+  have h3 : (4 * halfDepth M : ℝ) ≤ (Nat.log 2 M : ℝ) := by exact_mod_cast h1
+  linarith
+
 /-! ### The primitive node: the ODD class alone -/
 
 /-- **The primitive Landau–Selberg–Delange node.**  One multiplicative function `n ↦ z_k^{ω_{>2}(n)}`,
