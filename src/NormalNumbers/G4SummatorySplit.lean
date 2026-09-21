@@ -916,6 +916,90 @@ lemma main_sum_diff (c κ : ℂ) {M V : ℕ} (hM : 8 ≤ M) (hκ : ‖κ‖ ≤ 
     _ = ‖c‖ / 2 * L ^ κ.re *
         (4 * ‖κ‖ * Real.log 2 / L * (2*(M:ℝ) + (V:ℝ)^2) + ((M:ℝ) * ((1:ℝ)/2)^V + V)) := rfl
 
+/-! ### The error-term assembly -/
+
+/-- On the retained range `v ≤ V` the halved scale keeps three quarters of the logarithm. -/
+lemma log_halfIter_ge_three_quarters {M V v : ℕ} (hM : 8 ≤ M) (hv : v ∈ Finset.Icc 1 V)
+    (hV : (V:ℝ) * Real.log 2 ≤ Real.log M / 4) :
+    3 / 4 * Real.log M ≤ Real.log (halfIter M v) := by
+  have hM1 : 1 ≤ M := by omega
+  have hvV : (v:ℝ) ≤ (V:ℝ) := by exact_mod_cast (Finset.mem_Icc.mp hv).2
+  have hlog2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have h := log_halfIter_ge hM1 v
+  nlinarith [hV, hlog2.le]
+
+/-- **The error terms assemble.**  The node's errors at the halved scales sum to the node's error
+at scale `M`, up to an absolute factor. -/
+lemma err_sum_le {A : ℝ} (hA : 0 ≤ A) {r : ℝ} (hr2 : -2 ≤ r) (hr0 : r ≤ 0) {M V : ℕ}
+    (hM : 8 ≤ M) (hV : (V:ℝ) * Real.log 2 ≤ Real.log M / 4) :
+    ∑ v ∈ Finset.Icc 1 V,
+        A / Real.log (halfIter M v) * ((halfIter M v : ℝ) * Real.log (halfIter M v) ^ r)
+      ≤ 4 * A / Real.log M * ((M:ℝ) + V) * Real.log M ^ r := by
+  have hM1 : 1 ≤ M := by omega
+  set L : ℝ := Real.log M with hLdef
+  have hL1 : 1 ≤ L := one_le_log_of_eight hM
+  have hLpos : 0 < L := lt_of_lt_of_le one_pos hL1
+  have hLr : (0:ℝ) < L ^ r := Real.rpow_pos_of_pos hLpos _
+  have hstep : ∀ v ∈ Finset.Icc 1 V,
+      A / Real.log (halfIter M v) * ((halfIter M v : ℝ) * Real.log (halfIter M v) ^ r)
+        ≤ 4 * A / L * ((M:ℝ) * ((1:ℝ)/2)^v + 1) * L ^ r := by
+    intro v hv
+    have hlow := log_halfIter_ge_three_quarters hM hv hV
+    have hlpos : (0:ℝ) < Real.log (halfIter M v) := by linarith
+    have hXpos : (0:ℝ) < (halfIter M v : ℝ) := by exact_mod_cast one_le_halfIter hM1 v
+    have hXle : (halfIter M v : ℝ) ≤ (M:ℝ) * ((1:ℝ)/2)^v + 1 := by
+      have := halfIter_le_div hM1 v
+      rw [div_pow, one_pow]
+      calc (halfIter M v : ℝ) ≤ (M:ℝ)/2^v + 1 := this
+        _ = (M:ℝ) * (1/2^v) + 1 := by ring
+    -- `1/ℓ ≤ 2/L`
+    have hinv : 1 / Real.log (halfIter M v) ≤ 2 / L := by
+      have h1 : (0:ℝ) < L / 2 := by linarith
+      have h2 : L / 2 ≤ Real.log (halfIter M v) := by linarith
+      have h3 := one_div_le_one_div_of_le h1 h2
+      have h4 : (1:ℝ) / (L / 2) = 2 / L := by field_simp
+      linarith [h3, h4.le, h4.ge]
+    -- `ℓ^r ≤ 2 L^r`
+    have hpow : Real.log (halfIter M v) ^ r ≤ 2 * L ^ r := by
+      have h34 : (0:ℝ) < 3 / 4 * L := by linarith
+      have h1 : Real.log (halfIter M v) ^ r ≤ (3 / 4 * L) ^ r :=
+        Real.rpow_le_rpow_of_nonpos h34 hlow hr0
+      have h2 : (3 / 4 * L : ℝ) ^ r = (3/4 : ℝ) ^ r * L ^ r :=
+        Real.mul_rpow (by norm_num) hLpos.le
+      have h3 : (3/4 : ℝ) ^ r ≤ (3/4 : ℝ) ^ (-2 : ℝ) :=
+        Real.rpow_le_rpow_of_exponent_ge (by norm_num) (by norm_num) hr2
+      have h4 : (3/4 : ℝ) ^ (-2 : ℝ) = 16/9 := by
+        rw [show (-2 : ℝ) = ((-2 : ℤ) : ℝ) by norm_num, Real.rpow_intCast]
+        norm_num
+      rw [h2] at h1
+      nlinarith [hLr, h1, h3, h4.le, h4.ge]
+    have hXnn : (0:ℝ) ≤ (M:ℝ) * ((1:ℝ)/2)^v + 1 := by positivity
+    have hlr : (0:ℝ) ≤ Real.log (halfIter M v) ^ r := (Real.rpow_pos_of_pos hlpos _).le
+    calc A / Real.log (halfIter M v) * ((halfIter M v : ℝ) * Real.log (halfIter M v) ^ r)
+        = A * (1 / Real.log (halfIter M v))
+            * ((halfIter M v : ℝ) * Real.log (halfIter M v) ^ r) := by ring
+      _ ≤ A * (2 / L) * (((M:ℝ) * ((1:ℝ)/2)^v + 1) * (2 * L ^ r)) := by
+          have h1 : A * (1 / Real.log (halfIter M v)) ≤ A * (2 / L) :=
+            mul_le_mul_of_nonneg_left hinv hA
+          have h2 : (halfIter M v : ℝ) * Real.log (halfIter M v) ^ r
+              ≤ ((M:ℝ) * ((1:ℝ)/2)^v + 1) * (2 * L ^ r) :=
+            mul_le_mul hXle hpow hlr hXnn
+          have hA2 : (0:ℝ) ≤ A * (2 / L) := by positivity
+          have hnn : (0:ℝ) ≤ (halfIter M v : ℝ) * Real.log (halfIter M v) ^ r := by positivity
+          exact mul_le_mul h1 h2 hnn hA2
+      _ = 4 * A / L * ((M:ℝ) * ((1:ℝ)/2)^v + 1) * L ^ r := by field_simp; ring
+  refine le_trans (Finset.sum_le_sum hstep) ?_
+  have hE : ∀ v : ℕ, 4 * A / L * ((M:ℝ) * ((1:ℝ)/2)^v + 1) * L ^ r
+      = (4 * A / L * L ^ r * (M:ℝ)) * ((1:ℝ)/2)^v + (4 * A / L * L ^ r) := fun v => by ring
+  rw [Finset.sum_congr rfl (fun v _ => hE v), Finset.sum_add_distrib, Finset.sum_const,
+    ← Finset.mul_sum, geom_half_sum]
+  have hcard : (Finset.Icc 1 V).card = V := by simp [Nat.card_Icc]
+  rw [hcard, nsmul_eq_mul]
+  have hc : (0:ℝ) ≤ 4 * A / L * L ^ r := by positivity
+  have hg : (0:ℝ) ≤ ((1:ℝ)/2)^V := by positivity
+  have hMnn : (0:ℝ) ≤ (M:ℝ) := Nat.cast_nonneg _
+  nlinarith [mul_nonneg (mul_nonneg hc hMnn) hg, hc, hg, hMnn, hLr]
+
 /-! ### The primitive node: the ODD class alone -/
 
 /-- **The primitive Landau–Selberg–Delange node.**  One multiplicative function `n ↦ z_k^{ω_{>2}(n)}`,
