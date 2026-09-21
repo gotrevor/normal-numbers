@@ -1,4 +1,5 @@
 import NormalNumbers.PrimeLambertMoments
+import NormalNumbers.PrimeLambertLarge
 
 /-!
 # The CRT factorization of the independent model's characteristic function
@@ -349,18 +350,6 @@ single residue class `n ≡ s_a − (i+1) d_a (mod p)`.  A residue hit by no pai
 residue hit by exactly one pair `(a₀, i₀)` gives `X_p = c(a₀)/2^{i₀+1}`.  So the local defect at
 such a prime is the explicit sine `sin²(π q c(a₀) 2^{−(i₀+1)})`. -/
 
-/-- A residue hit by no `(a,i)` has `X_p = 0`. -/
-theorem primePart_eq_zero {c : TConfig} {K J p : ℕ} {n : ℤ}
-    (h : ∀ a ∈ c.support, ∀ i ∈ Ico K J, ¬ (p : ℤ) ∣ n + ((i : ℤ) + 1) * a.1 - a.2) :
-    primePart c K J p n = 0 := by
-  unfold primePart Finsupp.sum
-  refine Finset.sum_eq_zero (fun a ha => ?_)
-  dsimp only
-  have : ∑ i ∈ Ico K J,
-      (if (p : ℤ) ∣ n + ((i : ℤ) + 1) * a.1 - a.2 then (1 : ℝ) / 2 ^ (i + 1) else 0) = 0 :=
-    Finset.sum_eq_zero (fun i hi => if_neg (h a ha i hi))
-  rw [this, mul_zero]
-
 /-- A residue hit by exactly one `(a₀,i₀)` has `X_p = c(a₀)/2^{i₀+1}`. -/
 theorem primePart_eq_single {c : TConfig} {K J p : ℕ} {n : ℤ} {a₀ : ℕ × ℤ} {i₀ : ℕ}
     (ha₀ : a₀ ∈ c.support) (hi₀ : i₀ ∈ Ico K J)
@@ -402,7 +391,8 @@ theorem norm_localChar_le_of_single {q : ℤ} (C : Chain q) (N : ℕ) {p : ℕ} 
     ‖localChar C N p‖
       ≤ 1 - Real.sin (Real.pi * (q * ((C.c N) a₀ : ℝ) / 2 ^ (i₀ + 1))) ^ 2 / p := by
   have hbd := norm_localChar_le_one_sub_sin C N hp hu hv huv
-  rw [primePart_eq_single ha₀ hi₀ hhit hother, primePart_eq_zero hfree] at hbd
+  rw [primePart_eq_single ha₀ hi₀ hhit hother,
+    primePart_eq_zero _ _ _ _ _ (by rintro ⟨a, ha, i, hi, hd⟩; exact hfree a ha i hi hd)] at hbd
   refine hbd.trans (le_of_eq ?_)
   congr 3
   ring
@@ -599,5 +589,62 @@ theorem indepCharDecay_of_separating {q : ℤ} (C : Chain q)
     exact div_nonneg (siteDefect_nonneg _ _ _) (Nat.cast_nonneg p)
   · intro N p hp
     exact norm_localChar_le_of_separating C N (ha₀ N) (hi₀ N) (hsep N p hp)
+
+/-! ### `IndepMomentSmall` by the same local machinery
+
+`|S_N| ≤ #small · ‖c‖₁ 2^{−K}` pointwise (`abs_classSum_le_card`), so every moment of the
+independent model is bounded by that power and `IndepMomentSmall` becomes an explicit growth
+condition on `M_N` against `#small · ‖c‖₁ 2^{−K}` — the draft's `M_N ≫ V_N`, with no model
+computation left. -/
+
+/-- The uniform pointwise bound on the small-prime sum. -/
+noncomputable def momentBound {q : ℤ} (C : Chain q) (N : ℕ) : ℝ :=
+  ((C.S N).small.card : ℝ) * (l1 (C.c N) / 2 ^ (C.K N))
+
+lemma momentBound_nonneg {q : ℤ} (C : Chain q) (N : ℕ) : 0 ≤ momentBound C N := by
+  unfold momentBound
+  exact mul_nonneg (Nat.cast_nonneg _) (div_nonneg (l1_nonneg _) (by positivity))
+
+theorem abs_smallSum_le {q : ℤ} (C : Chain q) (N : ℕ) (n : ℤ) :
+    |smallSum C N n| ≤ momentBound C N := by
+  unfold smallSum momentBound
+  refine (abs_classSum_le_card _ _ _ _ _).trans ?_
+  have hc : ((activePrimes (C.c N) (C.K N) (C.S N).J (C.S N).small n).card : ℝ)
+      ≤ ((C.S N).small.card : ℝ) := by
+    have := Finset.card_filter_le (C.S N).small
+      (fun p => ∃ a ∈ (C.c N).support, ∃ i ∈ Ico (C.K N) (C.S N).J,
+        (p : ℤ) ∣ n + ((i : ℤ) + 1) * a.1 - a.2)
+    exact_mod_cast this
+  exact mul_le_mul_of_nonneg_right hc (div_nonneg (l1_nonneg _) (by positivity))
+
+/-- Every moment of the independent model is bounded by the pointwise bound to that power. -/
+theorem abs_rIndepAvg_pow_le {q : ℤ} (C : Chain q) (N M : ℕ) :
+    |rIndepAvg C N (fun x => x ^ M)| ≤ momentBound C N ^ M := by
+  have hmod : 0 < modulus C N := modulus_pos C N
+  have hcard : (0:ℝ) < ((range (modulus C N)).card : ℝ) := by
+    rw [Finset.card_range]; exact_mod_cast hmod
+  unfold rIndepAvg ravg
+  rw [abs_div, abs_of_pos hcard, div_le_iff₀ hcard]
+  calc |∑ r ∈ range (modulus C N), smallSum C N (r : ℤ) ^ M|
+      ≤ ∑ r ∈ range (modulus C N), |smallSum C N (r : ℤ) ^ M| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ r ∈ range (modulus C N), momentBound C N ^ M := by
+        refine Finset.sum_le_sum (fun r _ => ?_)
+        rw [abs_pow]
+        exact pow_le_pow_left₀ (abs_nonneg _) (abs_smallSum_le C N _) M
+    _ = momentBound C N ^ M * ((range (modulus C N)).card : ℝ) := by
+        rw [Finset.sum_const, nsmul_eq_mul]; ring
+
+/-- **`IndepMomentSmall` from an explicit growth condition.** -/
+theorem indepMomentSmall_of_growth {q : ℤ} (C : Chain q) (M : ℕ → ℕ)
+    (h : Tendsto (fun N => (2 * Real.pi * |(q : ℝ)|) ^ M N / ((M N).factorial : ℝ)
+      * momentBound C N ^ M N) atTop (𝓝 0)) :
+    IndepMomentSmall C M := by
+  refine squeeze_zero_norm (fun N => ?_) h
+  have hcoeff : (0:ℝ) ≤ (2 * Real.pi * |(q : ℝ)|) ^ M N / ((M N).factorial : ℝ) := by
+    have := Real.pi_pos; positivity
+  simp only [Int.cast_abs]
+  rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg hcoeff]
+  exact mul_le_mul_of_nonneg_left (abs_rIndepAvg_pow_le C N (M N)) hcoeff
 
 end NormalNumbers.PrimeLambert
