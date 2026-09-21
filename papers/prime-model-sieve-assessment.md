@@ -1,6 +1,25 @@
 # Sieve bottleneck assessment
 
-Ren / Codex, 2026-09-20.  Paper-level assessment, not a Lean theorem.
+Ren / Codex, 2026-09-20; status updated 2026-09-21.
+
+## Formalization status
+
+The lower-sieve core is now proved and integrated in
+[PrimeModelBrunLower.lean](../src/NormalNumbers/PrimeModelBrunLower.lean),
+`brun_lower_fundamental` (main commit `6bbc27f`).  It supplies coefficient
+bounds, support at level y^s, the pointwise minorant, and relative model error
+at most `2 exp(-s/2)`, under the explicit tail-product `Dimension` hypothesis
+and the elementary size/density assumptions below.  The hypothesis is not yet
+instantiated for our prime density.  Arithmetic/probability assembly and the
+selected-prime theorem remain open.
+
+The Lean theorem uses integer y and floored cutoffs.  For the application use
+Y=floor(x^epsilon), s=log R/log Y; then s>=1/(4epsilon), preserving the desired
+error rate.  Checking its size assumptions in the target regime remains part
+of assembly.  The proof replaces the factorial/Stirling step below by the
+generating-product estimate `x^n e_n(g) <= product(1+x*g) <= exp(x*sum g)`.
+It sums over all prefix lengths, obtaining a slightly coarser geometric bound
+that still implies the stated error.  The original paper derivation follows.
 
 ## Verdict
 
@@ -15,8 +34,8 @@ this is not a claim that none exists anywhere.
 There is, however, a smaller sufficient target: **a specialized lower Brun
 sieve**.  The two-sided requirement in earlier notes was stronger than needed.
 Below is an explicit finite-set construction and coarse quantitative estimate.
-Recommendation: prove this core next; do not launch more peripheral assembly
-laps first.  Confidence in the paper route: 85%; formal effort remains uncertain.
+That core has now been proved.  Next: discharge its dimension hypothesis by
+the crude-prime-sum route below, then assemble the lower counting estimates.
 
 ## Lower probabilities suffice
 
@@ -111,8 +130,7 @@ The already-proved CRT count supplies each remainder.  Further assembly still
 needs the radical-state predicate equivalence, retained-state cardinality,
 the sum of sieve remainders, interval dimension estimate, phase decay and
 constant bookkeeping.  The **weight construction plus its relative-error
-bound** is the next decisive milestone; none of those other components should
-be substituted for it in a success report.
+bound** milestone is now complete; the remaining components above are not.
 
 ## Evidence and sources
 
@@ -147,7 +165,7 @@ exp(c)<=1/(1-c).  No sharp numerical analysis is needed.
 
 ### Finite controls
 
-The incumbent `prime_model_certificate.py test` now has 43 passing CLI tests.
+The incumbent `prime_model_certificate.py test` now has 44 passing CLI tests.
 New `brun-lower` controls exhaust every bad subset for a small explicit prime
 set.  For primes2,3,5,7 and even cutoffs3,2, the largest supported divisor is42,
 V=8/35, and the lower model sum is23/105: relative deficit1/24.  These exact
@@ -163,4 +181,4 @@ remains the stronger paper-level black-box alternative already audited.
 An ordinary single Bonferroni truncation is not a substitute: a fixed degree
 limits support, but total local density can grow with log log y, so its relative
 error is not uniformly small.  The shrinking ordered-prime cutoffs are essential
-to the proposed proof, and should be the focus of the next review/formalization.
+to the completed core proof.
