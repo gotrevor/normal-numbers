@@ -1,5 +1,35 @@
 # PENDING WORK
 
+## 2026-09-21 — crux advance: the summatory node split (`G4SummatorySplit.lean`)
+
+The sole analytic input of the G4 window law off the Chowla sector, `RoughSummatory h`, has been
+**split into one open piece and one classical piece**:
+
+* `RoughSummatoryPrefix h` — the *multi-shift* clause: Selberg-Delange for
+  `sum_{m<M} prod_{j=1}^{k} z_j^{omega_{>2}(m+j)}`, a correlation of `k` multiplicative functions at
+  `k` distinct shifts, uniformly for `k <= windowJ M`.  **This is now the crux.**
+* `SDShiftFree h` — the singleton clause with the shift *removed*: LSD for the single function
+  `n |-> z_k^{omega_{>2}(n)}` on each parity class.  Classical (Tenenbaum II.5.3, Euler factor at 2
+  split off).
+
+`roughSummatory_of_split` and `isNormal_G4_of_shiftSplit` are axiom-clean; shift removal costs `2k`,
+absorbed by `shift_cost_small` (the node budget carries `4^{-k}` and `4^k <= 4(log_2 M)^2` on the
+window range).
+
+**Next attack on the crux.**  Two routes, in order of promise:
+1. *Dimension reduction.*  `|z_j - 1| <= 2 pi |h| 4^{-j}` and `omega_{>2}(n) = O(log log M)` pointwise
+   off a thin set, so for `4^j >> log log M` the factor is `1 + O(4^{-j} log log M)` *pointwise*.
+   Truncating the product at `j0 = log_4 log log M` should reduce the multi-shift clause to a
+   correlation of only `j0` factors, at the cost of an error the node's `C/log M` budget must absorb
+   — check that first, it is the decisive computation.
+2. If (1) holds, the residual is a `j0`-fold shifted correlation with `j0 -> infinity` very slowly;
+   the natural formal input is a Nair-Tenenbaum / fundamental-lemma upper bound plus a main term
+   from the `k`-dimensional Selberg-Delange of Tenenbaum II.5 Thm 3 applied to the product
+   Dirichlet series, whose singularity exponent is exactly `sdExponent h (Icc 1 k)`.
+
+Also still owed (from `HANDOFF-2026-09-20-summatory-node.md`): a sharper numerical probe of the
+equal-constants-on-both-parity-classes clause (see that handoff's "sharper test" section).
+
 ## 2026-09-20 — campaign B has reached its pre-registered FINISH LINE
 
 Both terminating conditions of the 2026-09-16 CURRENT DIRECTIVE are met:
