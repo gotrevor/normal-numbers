@@ -465,7 +465,9 @@ Lean: `PrimeModelKMTFixedH.lean`, `PrimeModelFamilyL4.lean` (`isNormal_subsetLam
 `window_bound_regime_h` depend only on `[propext, Classical.choice, Quot.sound]` (verified
 2026-09-22).
 
-**Reusable consumer (Astra, mail 20260922T190707Z), to add once the above lands:**
+**Reusable consumer (Astra, mail 20260922T190707Z), PROVED** (`PrimeModelFamilyConsumer.lean`,
+`isNormal_subsetLambert_of_freshMassZero`, `FreshMassZero P := Tendsto (recipSumIoc P (yI N) (2N))
+(𝓝 0)`, with `freshMassZero_of_sparseL4o`; axiom-clean 2026-09-22):
 `DivergentRecip P → Tendsto (fun N => recipSumIoc P (yI N) (2N)) atTop (𝓝 0) → IsNormal 4
 (subsetLambert P 4)` — no density hypothesis anywhere else; every density class is then a
 dominated-Abel corollary.
@@ -482,8 +484,8 @@ so every late fresh window meets at most one block, of index `n → ∞`, and
 `recipSumIoc P y_N (2N) ≤ C/n → 0`.  The reusable consumer above therefore gives normality for
 this `P`.  The invariant of the route is the **reciprocal mass in the moving cutoff window**, not
 pointwise relative density; in particular the conclusion reaches prime sets outside the
-density-zero class of KMT's hypothesis.  (Paper-level; formalising the consumer is the next Lean
-step, the example is not to be formalised now.)
+density-zero class of KMT's hypothesis.  (The consumer is formalised, `isNormal_subsetLambert_of_freshMassZero`; the example itself is
+paper-level and not formalised.)
 
 **Barrier of the route now, with an explicit example (Astra, mail 20260922T190915Z; refereed by
 fable).**  Let `w = L₄`, `F(u) = u/w(u)`; for large `u`, `F'(u) = 1/w − 1/(w² log u · L₂u · L₃u) ∈

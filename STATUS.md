@@ -43,6 +43,9 @@ carry the digit-character criterion, both directions, as the dual of `equidistri
 > **`(π_P(x)/π(x))·log log log log x → 0` and divergent Σ1/p ⇒ normal** (paper Part VI).  Covers
 > every `π/(L₃)^β`, `β > 0`, and `π/(L₄)^γ`, `γ > 1`.  Barrier: density `≍ 1/L₄`, with an explicit
 > density-zero divergent set on which the fresh-mass criterion fails (Part VI).
+> **Abstract consumer PROVED**: `PrimeModelFamilyConsumer.isNormal_subsetLambert_of_freshMassZero` —
+> divergent Σ1/p plus `recipSumIoc P (yI N) (2N) → 0` ⇒ normal, **no density hypothesis**; reaches
+> sets of limsup relative density 1 (prime-bursts example, Part VI).
 
 > **DEEP REFLECTION lap — 2026-09-16.**  Build 🟢 **9085 jobs**, re-verified.  `src/` = the two
 > pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**; **math-axiom count 0** — there is no

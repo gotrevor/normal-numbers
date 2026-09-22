@@ -88,6 +88,8 @@ IsNormal 4 (subsetLambert P 4)`, `SparseL4o P := Tendsto (π_P x/π x · L₄ x)
 plus `sparseL4o_of_sparseIterPow` (subsumes Parts III–V).  Paper Part VI.  **Exact remaining
 obstacle**: relative density `≍ 1/L₄` — the fresh mass in `(N^ε, N]` is `≍ δ·log(1/ε) ≍ δ·L₄` and
 the sieve forces `log(1/ε) ≳ 2L₄`; Astra's explicit density-zero divergent set (Part VI) has fresh
-mass bounded below, so these majorants cannot vanish there.  Next Lean step (not done): the
-abstract consumer `DivergentRecip P → Tendsto (recipSumIoc P (yI N) (2N)) (𝓝 0) → IsNormal …`,
-which reaches sets of limsup relative density 1 (prime-bursts example, Part VI).
+mass bounded below, so these majorants cannot vanish there.  DONE the same evening: the
+abstract consumer `PrimeModelFamilyConsumer.isNormal_subsetLambert_of_freshMassZero :
+FreshMassZero P → DivergentRecip P → IsNormal 4 (subsetLambert P 4)` (axiom-clean), which
+reaches sets of limsup relative density 1 (prime-bursts example, Part VI).  The route's
+invariant is fresh reciprocal mass in the cutoff window, not density.
