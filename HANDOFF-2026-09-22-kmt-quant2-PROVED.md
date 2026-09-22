@@ -70,3 +70,10 @@ transfer needs `L₃·L₄·√δ → 0`: any exponent `> 2` works, `2` fails by
 for relative-density-zero alone:** the transfer error `E1 = 4k·recipSumIoc S y x` (expected number
 of unmodelled large-prime hits in a window of length `k ≈ log₄ S_P(N)`), tight in L¹; beating it
 means modelling the primes in `(y, x]`, KMT's own Prop. 4.3 machinery.
+
+## Addendum 3 (2026-09-22): every exponent `β > 2`
+
+`PrimeModelFamilyIter.isNormal_subsetLambert_of_sparseIterPow (hβ : 2 < β) : SparseIterPow P β →
+DivergentRecip P → IsNormal 4 (subsetLambert P 4)`, `SparseIterPow P β := ∀ᶠ x, π_P(x)·(L₃x)^β ≤ π(x)`
+(real `β`).  Axiom-clean.  Module `PrimeModelFamilyIterPow`; paper Part V.  This is the exact
+frontier of the schedule family (`β = 2` fails by one `log`).

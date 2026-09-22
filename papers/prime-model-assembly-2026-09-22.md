@@ -413,6 +413,21 @@ Lean: `PrimeModelFamilyIterMass.lean`, `PrimeModelFamilyIter.lean`
 schedule family is the transfer error `E1 = 4k·recipSumIoc S y x` itself (tight in `L¹`), i.e.
 modelling the primes in `(y, x]`.
 
+## Part V: every exponent `β > 2` (2026-09-22, PROVED)
+
+The exponent enters only through the transfer term and the `2N` fresh-mass bound.  With
+`SparseIterPow P β := ∀ᶠ x, π_P(x)·(L₃x)^β ≤ π(x)` (real `β`), the Part IV argument gives
+`δ = 2^β/(L₃N)^β`, transfer `≤ C_β · L₄N · (L₃N)^{1−β/2} → 0` for `β > 2`, and
+`recipSumIoc P y_N (2N) ≤ 81·2^β·(L₃N)^{1−β} ≤ 1` eventually for `β > 1`.  Everything else is
+reused verbatim from Part IV.
+
+**Theorem (Part V).**  `2 < β → SparseIterPow P β → DivergentRecip P → IsNormal 4 (subsetLambert P 4)`.
+Lean: `PrimeModelFamilyIterPow.lean` (`isNormal_subsetLambert_of_sparseIterPow`).  Status: sorry-free,
+axioms `[propext, Classical.choice, Quot.sound]` (verified 2026-09-22).
+
+This is the exact frontier of the schedule family: at `β = 2` the transfer term is `≍ L₄N`, which
+does not vanish, and no other parameter of the schedule can absorb a `log`.
+
 ## Lean plan (Part II)
 
 | Module | Content |

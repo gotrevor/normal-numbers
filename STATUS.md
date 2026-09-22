@@ -34,7 +34,9 @@ carry the digit-character criterion, both directions, as the dual of `equidistri
 > `ε = J^{-4}`); `π_P ≈ π/L₄` still fails.  **Exponent 3 also PROVED** the same day:
 > `PrimeModelFamilyIter.isNormal_subsetLambert_of_sparseIter3` (`π_P·(log log log x)^3 ≤ π`),
 > schedule `J₁ = ⌊L₃N⌋₊`, `ε = J₁^{-4}`, `J = min(J₁, ⌊S_P(y)/8⌋₊)`; paper Part IV.  Frontier of
-> this schedule family: any exponent `> 2` on `L₃`; below that only the transfer error `E1` is left.
+> this schedule family: any exponent `> 2` on `L₃` — **PROVED as a theorem**
+> (`isNormal_subsetLambert_of_sparseIterPow`, real `β > 2`, paper Part V); below that only the
+> transfer error `E1` is left.
 
 > **DEEP REFLECTION lap — 2026-09-16.**  Build 🟢 **9085 jobs**, re-verified.  `src/` = the two
 > pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**; **math-axiom count 0** — there is no
