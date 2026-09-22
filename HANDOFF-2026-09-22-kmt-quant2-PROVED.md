@@ -49,3 +49,13 @@ current L¹ tail criterion cannot both vanish in this growth regime (a condition
 obstruction, assuming a genuine counting law `π_P ~ π/L₄`; not a constructed counterexample).
 Astra's centered-in-probability consumer (mail 20260922T175904Z) only relaxes `4^J ≫ S` to
 `4^J ≫ √S`, which does not escape the regime; see the paper's Part II closing section.
+
+## Addendum (later 2026-09-22): sharper family theorem
+
+`PrimeModelFamilySharp.isNormal_subsetLambert_of_sparseIter : SparseIter P → DivergentRecip P →
+IsNormal 4 (subsetLambert P 4)` with `SparseIter P := ∀ᶠ x, π_P(x)·(log log log x)^5 ≤ π(x)`,
+and `sparseIter_of_sparse : Sparse P → SparseIter P`.  Axiom-clean.  Mechanism: consume
+`window_bound_regime` (polynomial constants) directly, schedule `J_N = min(⌊L₃N⌋₊, ⌊S_P(y_N)/8⌋₊)`,
+tail paid by the crude `∑_{p≤2N}1/p ≤ 12L₂N + 21`.  Modules `PrimeModelFamilySharpMass`,
+`PrimeModelFamilySharp`; paper Part III.  Next step if wanted: `ε = J^{-4}` schedule → exponent
+`2+η` (needs `y_N` lemmas with `P`-dependent `ε`).

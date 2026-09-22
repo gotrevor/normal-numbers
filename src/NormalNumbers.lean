@@ -403,4 +403,6 @@ import NormalNumbers.PrimeModelParameters
 import NormalNumbers.PrimeModelKMT
 import NormalNumbers.PrimeModelDensityMass
 import NormalNumbers.PrimeModelFamily
+import NormalNumbers.PrimeModelFamilySharpMass
+import NormalNumbers.PrimeModelFamilySharp
 import NormalNumbers.G4PrefixDecayAudit

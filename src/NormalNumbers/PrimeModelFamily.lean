@@ -49,7 +49,7 @@ noncomputable def JN (N : ℕ) : ℕ :=
 
 /-! #### Real-analysis helpers -/
 
-private theorem log_nat_tendsto : Tendsto (fun N : ℕ => Real.log N) atTop atTop :=
+theorem log_nat_tendsto : Tendsto (fun N : ℕ => Real.log N) atTop atTop :=
   Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
 
 theorem L2_tendsto : Tendsto L2 atTop atTop :=
@@ -58,20 +58,20 @@ theorem L2_tendsto : Tendsto L2 atTop atTop :=
 theorem L3_tendsto : Tendsto L3 atTop atTop :=
   Real.tendsto_log_atTop.comp L2_tendsto
 
-private theorem L3_eq (N : ℕ) : L3 N = Real.log (L2 N) := rfl
+theorem L3_eq (N : ℕ) : L3 N = Real.log (L2 N) := rfl
 
-private theorem logN_gt_one {N : ℕ} (hN : 3 ≤ N) : 1 < Real.log N := by
+theorem logN_gt_one {N : ℕ} (hN : 3 ≤ N) : 1 < Real.log N := by
   have h3 : Real.exp 1 < (N : ℝ) := by
     have : (3 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
     linarith [Real.exp_one_lt_d9]
   calc (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
     _ < Real.log N := Real.log_lt_log (Real.exp_pos 1) h3
 
-private theorem L2_pos {N : ℕ} (hN : 3 ≤ N) : 0 < L2 N :=
+theorem L2_pos {N : ℕ} (hN : 3 ≤ N) : 0 < L2 N :=
   Real.log_pos (logN_gt_one hN)
 
 /-- `log N ≥ 1 + L₂ + L₂²/2`. -/
-private theorem quad_bound {N : ℕ} (hN : 3 ≤ N) :
+theorem quad_bound {N : ℕ} (hN : 3 ≤ N) :
     1 + L2 N + (L2 N) ^ 2 / 2 ≤ Real.log N := by
   have h0 : (0 : ℝ) < Real.log N := lt_trans zero_lt_one (logN_gt_one hN)
   have hexp : Real.exp (L2 N) = Real.log N := Real.exp_log h0
@@ -79,7 +79,7 @@ private theorem quad_bound {N : ℕ} (hN : 3 ≤ N) :
   rwa [hexp] at this
 
 /-- `log t ≤ 2√t − 2` for `t > 0`. -/
-private theorem log_le_sqrt {t : ℝ} (ht : 0 < t) : Real.log t ≤ 2 * Real.sqrt t - 2 := by
+theorem log_le_sqrt {t : ℝ} (ht : 0 < t) : Real.log t ≤ 2 * Real.sqrt t - 2 := by
   have hs : 0 < Real.sqrt t := Real.sqrt_pos.mpr ht
   have hsq : Real.sqrt t * Real.sqrt t = t := Real.mul_self_sqrt ht.le
   have h1 : Real.log (Real.sqrt t) ≤ Real.sqrt t - 1 := Real.log_le_sub_one_of_pos hs
@@ -90,7 +90,7 @@ private theorem log_le_sqrt {t : ℝ} (ht : 0 < t) : Real.log t ≤ 2 * Real.sqr
   linarith
 
 /-- The arithmetic consequences of `L₂ ≥ 2500`. -/
-private theorem L3_bounds {N : ℕ} (hL : 2500 ≤ L2 N) :
+theorem L3_bounds {N : ℕ} (hL : 2500 ≤ L2 N) :
     1 ≤ L3 N ∧ L3 N ≤ L2 N / 2 ∧ 42 + 24 * L3 N ≤ L2 N := by
   have hpos : 0 < L2 N := by linarith
   have hs : (50 : ℝ) ≤ Real.sqrt (L2 N) := by
@@ -108,7 +108,7 @@ private theorem L3_bounds {N : ℕ} (hL : 2500 ≤ L2 N) :
 /-! #### The schedule facts -/
 
 /-- All the `y_N` facts, from `3 ≤ N` and `L₂ N ≥ 2500`. -/
-private theorem yN_core {N : ℕ} (hN : 3 ≤ N) (hL : 2500 ≤ L2 N) :
+theorem yN_core {N : ℕ} (hN : 3 ≤ N) (hL : 2500 ≤ L2 N) :
     2 ≤ yN N ∧ yN N ≤ N ∧ Real.log N / L2 N ≤ Real.log (yN N) ∧
       L2 N / 2 ≤ Real.log (Real.log (yN N)) ∧ Real.log N - 1 ≤ (yN N : ℝ) := by
   obtain ⟨hL3one, hL3half, -⟩ := L3_bounds hL
@@ -213,7 +213,7 @@ theorem yN_tendsto : Tendsto yN atTop atTop := by
   have : (b : ℝ) ≤ (yN N : ℝ) := by linarith
   exact_mod_cast this
 
-private theorem recipSumLe_nonneg (x : ℕ) : 0 ≤ recipSumLe P x :=
+theorem recipSumLe_nonneg (x : ℕ) : 0 ≤ recipSumLe P x :=
   Finset.sum_nonneg fun p _ => by positivity
 
 theorem JN_le_L3 : ∀ᶠ N : ℕ in atTop, (JN P N : ℝ) ≤ L3 N / 24 := by
@@ -232,7 +232,7 @@ theorem JN_le_mass (N : ℕ) : 8 * (JN P N : ℝ) ≤ recipSumLe P (yN N) := by
   linarith
 
 /-- The accumulated mass along the schedule tends to infinity. -/
-private theorem mass_tendsto (hP : DivergentRecip P) :
+theorem mass_tendsto (hP : DivergentRecip P) :
     Tendsto (fun N : ℕ => recipSumLe P (yN N)) atTop atTop :=
   (recipSumLe_tendsto_atTop P hP).comp yN_tendsto
 
@@ -248,7 +248,7 @@ theorem JN_tendsto (hP : DivergentRecip P) : Tendsto (JN P) atTop atTop := by
 /-! ### The mass bounds along the schedule -/
 
 /-- The dominated-Abel bound, uniformly in the upper endpoint. -/
-private theorem fresh_bound (hS : Sparse P) : ∀ᶠ N : ℕ in atTop, ∀ M : ℕ, yN N ≤ M →
+theorem fresh_bound (hS : Sparse P) : ∀ᶠ N : ℕ in atTop, ∀ M : ℕ, yN N ≤ M →
     recipSumIoc P (yN N) M
       ≤ (2 / L2 N) * (9 + 12 * Real.log (Real.log M / Real.log (yN N))) := by
   obtain ⟨x₀, hx₀⟩ := Filter.eventually_atTop.mp hS
@@ -353,11 +353,11 @@ theorem fresh_mass_two (hS : Sparse P) : ∀ᶠ N : ℕ in atTop,
 
 /-! ### The four limits -/
 
-private theorem tendsto_log_div_rpow {r : ℝ} (hr : 0 < r) :
+theorem tendsto_log_div_rpow {r : ℝ} (hr : 0 < r) :
     Tendsto (fun t : ℝ => Real.log t / t ^ r) atTop (𝓝 0) :=
   (isLittleO_log_rpow_atTop hr).tendsto_div_nhds_zero
 
-private theorem C₁_pos (k : ℕ) : (0 : ℝ) < C₁ k := Real.exp_pos _
+theorem C₁_pos (k : ℕ) : (0 : ℝ) < C₁ k := Real.exp_pos _
 
 /-- Term 1: `C₁(J) √log(1/ε) √(2 recipSumIoc) → 0`. -/
 theorem term_one (hS : Sparse P) (hP : DivergentRecip P) :
@@ -459,7 +459,7 @@ theorem term_two (hP : DivergentRecip P) :
       _ ≤ Real.exp (- (recipSumLe P (yN N) / 2)) := Real.exp_le_exp.mpr (by linarith)
 
 /-- `c (log t)² ≤ t^r` eventually, for any `r, c > 0`. -/
-private theorem eventually_sq_log_le {r c : ℝ} (hr : 0 < r) (hc : 0 < c) :
+theorem eventually_sq_log_le {r c : ℝ} (hr : 0 < r) (hc : 0 < c) :
     ∀ᶠ t : ℝ in atTop, c * (Real.log t) ^ 2 ≤ t ^ r := by
   have h := tendsto_log_div_rpow (r := r / 2) (by linarith)
   have h2 : Tendsto (fun t : ℝ => (Real.log t / t ^ (r / 2)) * (Real.log t / t ^ (r / 2)))
@@ -543,7 +543,7 @@ theorem term_three (hP : DivergentRecip P) :
   exact Real.exp_le_exp.mpr (by linarith)
 
 /-- `L₃(2N) ≤ L₃(N) + 1` eventually. -/
-private theorem L3_two_le : ∀ᶠ N : ℕ in atTop, L3 (2 * N) ≤ L3 N + 1 := by
+theorem L3_two_le : ∀ᶠ N : ℕ in atTop, L3 (2 * N) ≤ L3 N + 1 := by
   filter_upwards [eventually_ge_atTop 3, L2_tendsto.eventually_ge_atTop 2500] with N hN hL
   have hpos : 0 < L2 N := by linarith
   have hlogN : 1 < Real.log N := logN_gt_one hN

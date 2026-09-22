@@ -26,6 +26,12 @@ carry the digit-character criterion, both directions, as the dual of `equidistri
 > records the growth regime where relative-density-zero alone fails on this route (L¹ tail
 > criterion vs correlation majorant coupling, `π_P ~ π/L₄`; conditional obstruction, not a
 > constructed counterexample).  Paper M1/M2 misprints corrected after Astra's audit 2026-09-22.
+> **Sharper family theorem PROVED** (same day): `PrimeModelFamilySharp.isNormal_subsetLambert_of_sparseIter`
+> — hypothesis weakened to `π_P(x)·(log log log x)^5 ≤ π(x)` eventually, by consuming the
+> polynomial-constant `window_bound_regime` directly instead of the frozen `KMT_quant₂` shape;
+> the tail is then paid for by the crude total mass `∑_{p≤2N} 1/p ≤ 12 L₂N + 21`, no density
+> input.  Paper Part III.  Frontier of this schedule family: exponent `> 4` on `L₃` (`> 2` with
+> `ε = J^{-4}`, not done); `π_P ≈ π/L₄` still fails.
 
 > **DEEP REFLECTION lap — 2026-09-16.**  Build 🟢 **9085 jobs**, re-verified.  `src/` = the two
 > pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**; **math-axiom count 0** — there is no

@@ -327,6 +327,61 @@ still forces `J ≳ log L₂N`, and with `ℓ = log(1/ε)`, `v = L₄N`, vanishi
 `ℓ − 2 log J → ∞`, so a fresh term `≳ ℓ/√v` still diverges.  A consumer that beats the `√S`
 scale, or a head/tail coupling estimate, is what is missing.
 
+## Part III: the frozen shape, not the tail, was the bottleneck (2026-09-22, PROVED)
+
+**Observation.**  `window_bound_regime` (the bound actually proved in `PrimeModelKMT`, valid in
+`Regime x k ε`) reads
+
+    ‖windowMeanS S k h x‖ ≤ 24k · √log(1/ε) · √(2 recipSumIoc S y x)
+                          + e^{3k} · exp(−recipSumLe S y)
+                          + (2k² + 2k e^{20} + 4 + 2·4^k) · exp(−1/(8k²ε)),
+
+with **polynomial** constants; the frozen `KMT_quant₂` shape absorbs `24k` into `C₁ k = e^{4k}`
+and `2·4^k + …` into `C₂ k = exp(e^{k+7})`.  It was `C₁ = e^{4k}` that forced `J_N ≤ L₃N/24` in
+Part II, and hence forced the tail to be paid for by the *density* input (M2).  Consuming
+`window_bound_regime` directly, the schedule can take `J_N ≈ L₃N`, so `4^{J_N} ≈ (L₂N)^{log 4}`
+beats the **crude** total mass `S_P(2N) ≤ ∑_{p ≤ 2N} 1/p ≤ 12 L₂N + 21` with no density input,
+and the density hypothesis is needed only for the transfer term.
+
+**Hypothesis.**  `SparseIter P := ∀ᶠ x, π_P(x) · (log log log x)^5 ≤ π(x)`.  `Sparse P →
+SparseIter P` since `(L₃x)^5 ≤ L₂x` eventually.
+
+**Schedule.**  `ε_N = 2/L₂N`, `y_N = ⌊N^{ε_N}⌋₊` (unchanged), `J_N := min(⌊L₃N⌋₊, ⌊S_P(y_N)/8⌋₊)`.
+
+**Mass bounds.**  (crude) `S_P(N) ≤ 12 L₂N + 21` for `N ≥ 3` (`primeRecipSum_le` at `v = 2`,
+prime `2` contributes `≤ 1`, `−log log 2 ≤ 1`).  (fresh) On `(y_N, M+1]`, `L₃t ≥ L₃(y_N) ≥ L₃N −
+log 2 ≥ L₃N/2`, so `π_P(t) ≤ 32 π(t)/(L₃N)^5`; (M1') gives `recipSumIoc P y_N N ≤ (32/u^5)(9 +
+12u) ≤ 672/u^4` (`u = L₃N`) and `recipSumIoc P y_N (2N) ≤ 1` eventually.
+
+**The four limits** (`t = L₂N`, `u = L₃N = log t`, `J = J_N ≤ u`):
+1. Transfer: `24J √log(1/ε) √(2R) ≤ 24u · √u · √(1344/u^4) ≤ 900/√u → 0`.
+2. Old mass: `e^{3J} e^{−S} ≤ e^{−5S/8} → 0` (`8J ≤ S`, `S → ∞` by divergence alone).
+3. Sieve: coefficient `≤ e^{22} 4^u = e^{22} t^{log 4}`, exponent `−t/(16J²) ≤ −t/(16u²)`;
+   product `= exp(22 + u log 4 − t/(16u²)) ≤ exp(−√t) → 0`.
+4. Tail: branch `J = ⌊u⌋₊`: `4^J ≥ t^{log 4}/4`, numerator `≤ 12(t+1) + 33 + 5u ≤ 30t`, ratio
+   `≤ 120 t^{1 − log 4} → 0` (`log 4 > 1`).  Branch `J = ⌊S/8⌋₊`: `S_P(2N) ≤ S + 1 ≤ 8J + 9`,
+   ratio `≤ (13J + 21)/4^J → 0`.
+
+**Regime.**  `Regime N J_N ε_N` eventually: `1/L₂ < 2/L₂`, and `2/L₂ ≤ 1/(7680 J)` iff
+`15360 J ≤ L₂`, true since `J ≤ L₃`.
+
+**Theorem (Part III).**  `SparseIter P → DivergentRecip P → IsNormal 4 (subsetLambert P 4)`.
+Lean: `PrimeModelFamilySharpMass.lean` (hypothesis, schedule, mass bounds) and
+`PrimeModelFamilySharp.lean` (limits, regime, assembly, `isNormal_subsetLambert_of_sparseIter`).
+Status: both modules sorry-free; `isNormal_subsetLambert_of_sparseIter` and `sparseIter_of_sparse`
+depend only on `[propext, Classical.choice, Quot.sound]` (verified 2026-09-22).
+
+**Where the frontier sits on this schedule family.**  The transfer term needs
+`J · log(1/ε) · √δ(N^ε) → 0` with `J ≈ log₄ S_P(N)` forced by the truncation.  With `ε = 2/L₂`
+that is `L₃² √δ → 0`: any exponent `> 4` on `L₃` works.  With `ε = J^{−4}` (admissible since
+`J^{−4} ≥ L₃^{−4} > 1/L₂`) one gets `log(1/ε) = 4 log J ≈ 4 L₄`, sieve exponent `−J²/8` against
+coefficient `e^{22} 4^J`, and the requirement drops to `L₃ · L₄ · √δ → 0`: exponent `2 + η`.
+That variant needs the `y_N` lemmas redone with `P`-dependent `ε` (not done).  The `L₄` regime
+`δ = 1/L₄` still fails both (`L₃²/√L₄`, `L₃L₄/√L₄` diverge), consistent with the conditional
+obstruction above.  The transfer error `E1 = 4k · recipSumIoc S y x` counts the expected number
+of unmodelled large-prime hits in the window and is tight in `L¹`; going below it means modelling
+the primes in `(y, x]`, which is KMT's own Prop. 4.3 machinery, not a schedule change.
+
 ## Lean plan (Part II)
 
 | Module | Content |
