@@ -1,5 +1,34 @@
 # PENDING WORK
 
+## 2026-09-22 (lap G5c-g) — the route correction is IN; four leaves left
+
+`freshMassTwo_graded` is **PROVED** (one-step chain `(N,2N] ⊆ (⌊√(2N)⌋, 2N]`, mass `≤ ε_N`),
+`tailOK_graded` is **PROVED**, and the schedule was retied as the paper has it:
+
+* `JG N = min (J1 N) ⌊recipSumLe P N / 8⌋₊` — the **full** mass `S_N = S_P(N)` (Astra §8),
+  not the mass below the bottom cutoff.  `JG_le_mass` is now `8 J_N ≤ S_P(N)`.
+* `termE5` is taken at the **near-top** cutoff `y_{cIdx}`, `cIdx = min (log₄|h|) (J−1)`, which
+  is legitimate because `window_bound_schedule` now exposes `j₀ ≤ log₄|h|`
+  (`exists_site_re_nonpos_le`, lap G5c-e/f).  `yG_antitone` does the comparison.
+* `yBotG` survives only as the uniform lower end used by `epsG` and `yBotG_le_yG`.
+
+### The four remaining leaves in `PrimeModelFamilyGraded.lean`
+
+1. **`termE5_tendsto (hS) (hP) (h)`** — now the paper's (8.6).  With `c = cIdx P h N` bounded:
+   `∑_{p ∈ midPrimes(2J, y_0), p ≤ y_c} 1/p = S_P(y_c) − S_P(2J)`, and
+   `S_P(y_c) ≥ S_P(N) − S_P(y_c, N) ≥ 8J − ε_N(c + 2log₂u_N + 1)` by the **short** root chain
+   (`recipSumIoc_le_rootChain` at `Z = yBotG N`, `y = y_c`, length `c + 2log₂u_N + 1` since
+   `log N / log y_c = 2^c/a_N = 2^c u_N²`), while `S_P(2J) ≤ 1 + log(2J)` (Mertens).  So the
+   exponent is `≥ 8J − 1 − log 2J − o(1)` and the term is `≤ e^{2J} e^{−(8J−1−log 2J−o(1))}`
+   `≤ e^{−5J} → 0` for `J` large.  **Do this first** — it is the last structurally new estimate.
+2. **`termE1_tendsto`** — the same short root chain at each site: `S_P(y_j,N) ≤ ε_N(j + 2log₂u_N + 1)`;
+   sum against `4^{−j−1}` and use `ε_N log u_N ≤ ε_N log(1/ε_N)/2 → 0` (`u_N ≤ ε_N^{−1/2}`).
+3. **`termE4c_tendsto`** — `log R ≤ (540+8u_N)/u_N² · log N`, `(2J)# ≤ 4^{2J}`,
+   `∏_j ⌊T_j⌋ ≤ N^{0.22}`; product `N^{−1+o(1)}`.
+4. **`schedule_admissible`** — the eleven pointwise clauses; `hybot` is `yBotG_le_yG` (proved),
+   `hmono` is `yG_antitone` (proved).  `hcutlo` needs `L ≥ 2`, `hcut2` needs
+   `2^{−L} log yBot ∈ [log 2, 2 log 2]`.
+
 ## 2026-09-22 (lap G5c-e) — ROUTE FINDING: the contracting site index is bounded
 
 `src/NormalNumbers/PrimeModelSiteIndexBound.lean` (NEW, sorry-free, axiom-clean) proves

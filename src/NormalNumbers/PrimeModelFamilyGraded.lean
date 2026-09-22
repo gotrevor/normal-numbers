@@ -83,8 +83,12 @@ noncomputable def aG (N : ℕ) : ℝ := 1 / ((uG P N : ℝ)) ^ 2
 /-- The site cutoffs `y_j = ⌊N^{a_N 2^{−j}}⌋`. -/
 noncomputable def yG (N j : ℕ) : ℕ := ⌊(N : ℝ) ^ (aG P N * (1 / 2) ^ j)⌋₊
 
-/-- The number of sites, `J_N = min(⌊L₃N⌋, ⌊S_P(yBot)/8⌋)`. -/
-noncomputable def JG (N : ℕ) : ℕ := min (J1 N) ⌊recipSumLe P (yBotG N) / 8⌋₊
+/-- The number of sites, `J_N = min(⌊L₃N⌋, ⌊S_N/8⌋)` with `S_N = S_P(N)` the **full** mass up
+to `N` (Astra §8: `S_N = S_P(0,N)`).  Tying `J` to the full mass — rather than to the mass below
+the bottom cutoff — is what the bounded contracting site index (`exists_site_re_nonpos_le`)
+buys: leg E5 collects its contraction at the *near-top* cutoff `y_{c(h)}`, and the mass above
+that cutoff is `O(ε_N log u_N) = o(1)` by a **short** root chain. -/
+noncomputable def JG (N : ℕ) : ℕ := min (J1 N) ⌊recipSumLe P N / 8⌋₊
 
 /-- The Markov thresholds `T_j = N^{2^{−j/2}/16}`. -/
 noncomputable def TG (N j : ℕ) : ℝ := (N : ℝ) ^ ((1 / 16) * Real.sqrt ((1 / 2) ^ j))
@@ -365,11 +369,27 @@ noncomputable def termE4c (N : ℕ) : ℝ :=
     * (gradedLevel Finset.univ (fun b : Fin (JG P N) => (b : ℕ) + 1) (uuG P N)
         (fun b : Fin (JG P N) => ((yG P N b : ℕ) : ℝ))) ^ 2 / N
 
-/-- E5, the phase contraction, at the uniform bottom cutoff. -/
-noncomputable def termE5 (N : ℕ) : ℝ :=
+/-- The index of the contracting site, clipped to the site range: `c(h) = log₄|h|`, and
+`min` with `J − 1` because the schedule only has `J` sites.  `exists_site_re_nonpos_le` says the
+site that Theorem A's leg E5 contracts at has index `≤ c(h)`, hence `≤ cIdx`, hence its cutoff
+**dominates** `y_{cIdx}`. -/
+noncomputable def cIdx (h : ℤ) (N : ℕ) : ℕ := min (Nat.log 4 h.natAbs) (JG P N - 1)
+
+/-- E5, the phase contraction, at the **near-top** cutoff `y_{c(h)}`. -/
+noncomputable def termE5 (h : ℤ) (N : ℕ) : ℝ :=
   Real.exp (2 * JG P N)
     * Real.exp (- ∑ p ∈ (midPrimes P (2 * JG P N) (yG P N 0)).filter
-        (fun p => p ≤ yBotG N), (1 : ℝ) / (p : ℝ))
+        (fun p => p ≤ yG P N (cIdx P h N)), (1 : ℝ) / (p : ℝ))
+
+/-- The site cutoffs decrease with the index. -/
+theorem yG_antitone {N : ℕ} (hN : 1 ≤ N) {i j : ℕ} (hij : i ≤ j) :
+    yG P N j ≤ yG P N i := by
+  have hN1 : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+  refine Nat.floor_le_floor (Real.rpow_le_rpow_of_exponent_le hN1 ?_)
+  have hpow : ((1 : ℝ) / 2) ^ j ≤ ((1 : ℝ) / 2) ^ i :=
+    pow_le_pow_of_le_one (by norm_num) (by norm_num) hij
+  have ha : (0 : ℝ) ≤ aG P N := by rw [aG]; positivity
+  exact mul_le_mul_of_nonneg_left hpow ha
 
 /-! ## Admissibility of the schedule (open leaf) -/
 
@@ -401,23 +421,27 @@ collected below `yBot N`. -/
 theorem windowMean_le_terms (h : ℤ) : ∀ᶠ N : ℕ in atTop,
     (∀ hh : NontrivialWindow (JG P N) h, 0 < N →
       ‖windowMeanS P (JG P N) h N‖
-        ≤ termE1 P h N + (termE4a P N + termE4b P N + termE4c P N) + termE5 P N) := by
-  filter_upwards [schedule_admissible P] with N hadm
+        ≤ termE1 P h N + (termE4a P N + termE4b P N + termE4c P N) + termE5 P h N) := by
+  filter_upwards [schedule_admissible P, eventually_ge_atTop 1] with N hadm hN1
   obtain ⟨hk, hmono, hmy, hylog, hloin, hlotop, hcutlo, hcut2, hT1, hT, hybot⟩ := hadm
   intro hntw hN
-  obtain ⟨j₀, -, hbound⟩ := window_bound_schedule P (k := JG P N) (L := LG N) hk
+  obtain ⟨j₀, hjb, hbound⟩ := window_bound_schedule P (k := JG P N) (L := LG N) hk
     (fun j => yG P N j) hmono hmy hylog (loG P N) hloin hlotop hcutlo hcut2
     (uuG P N) hT1 hT h hntw N hN
 
   rw [termE1, termE4a, termE4b, termE4c, termE5]
   refine hbound.trans (add_le_add (le_refl _) ?_)
   refine mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr (neg_le_neg ?_)) (by positivity)
-  have hsub : ((midPrimes P (2 * JG P N) (yG P N 0)).filter (fun p => p ≤ yBotG N))
+  have hjc : (j₀ : ℕ) ≤ cIdx P h N := by
+    rw [cIdx]
+    exact le_min hjb (by omega)
+  have hyc : yG P N (cIdx P h N) ≤ yG P N (j₀ : ℕ) := yG_antitone P hN1 hjc
+  have hsub : ((midPrimes P (2 * JG P N) (yG P N 0)).filter (fun p => p ≤ yG P N (cIdx P h N)))
       ⊆ ((midPrimes P (2 * JG P N) (yG P N 0)).filter
         (fun p => p ≤ yG P N (j₀ : ℕ))) := by
     intro p hp
     rw [Finset.mem_filter] at hp ⊢
-    exact ⟨hp.1, le_trans hp.2 (hybot j₀)⟩
+    exact ⟨hp.1, le_trans hp.2 hyc⟩
   exact Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p _ _ => by positivity)
 
 /-! ## The five limits (open leaves) -/
@@ -617,7 +641,8 @@ theorem termE4c_tendsto (hP : DivergentRecip P) : Tendsto (termE4c P) atTop (�
 
 /-- **Open leaf G5c-6 (E5).**  `J_N ≤ S_P(yBot N)/8` and `S_P(2J) = O(log log J)` give
 `∑_{p ∈ P ∩ (2J, yBot]} 1/p ≥ 8J − O(log log J) ≥ 2J + 5J`, so the term is `≤ e^{−5J} → 0`. -/
-theorem termE5_tendsto (hP : DivergentRecip P) : Tendsto (termE5 P) atTop (𝓝 0) := by
+theorem termE5_tendsto (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) (h : ℤ) :
+    Tendsto (termE5 P h) atTop (𝓝 0) := by
   sorry
 
 /-! ## Theorem C′ -/
@@ -630,16 +655,16 @@ theorem JG_le_L3 : ∀ᶠ N : ℕ in atTop, (JG P N : ℝ) ≤ L3 N := by
   have h3 : (JG P N : ℝ) ≤ ((J1 N : ℕ) : ℝ) := by exact_mod_cast JG_le_J1 P N
   linarith
 
-theorem JG_le_mass (N : ℕ) : 8 * (JG P N : ℝ) ≤ recipSumLe P (yBotG N) := by
-  have hS := recipSumLe_nonneg P (yBotG N)
-  have h1 : JG P N ≤ ⌊recipSumLe P (yBotG N) / 8⌋₊ := min_le_right _ _
-  have h2 : ((⌊recipSumLe P (yBotG N) / 8⌋₊ : ℕ) : ℝ) ≤ recipSumLe P (yBotG N) / 8 :=
+theorem JG_le_mass (N : ℕ) : 8 * (JG P N : ℝ) ≤ recipSumLe P N := by
+  have hS := recipSumLe_nonneg P N
+  have h1 : JG P N ≤ ⌊recipSumLe P N / 8⌋₊ := min_le_right _ _
+  have h2 : ((⌊recipSumLe P N / 8⌋₊ : ℕ) : ℝ) ≤ recipSumLe P N / 8 :=
     Nat.floor_le (by positivity)
-  have h3 : (JG P N : ℝ) ≤ ((⌊recipSumLe P (yBotG N) / 8⌋₊ : ℕ) : ℝ) := by exact_mod_cast h1
+  have h3 : (JG P N : ℝ) ≤ ((⌊recipSumLe P N / 8⌋₊ : ℕ) : ℝ) := by exact_mod_cast h1
   linarith
 
 /-- In the first branch of the `min`, `J_N ≥ L₃N − 1`. -/
-theorem JG_lower {N : ℕ} (hcase : J1 N ≤ ⌊recipSumLe P (yBotG N) / 8⌋₊) (hL : 0 ≤ L3 N) :
+theorem JG_lower {N : ℕ} (hcase : J1 N ≤ ⌊recipSumLe P N / 8⌋₊) (hL : 0 ≤ L3 N) :
     L3 N - 1 ≤ (JG P N : ℝ) := by
   have h : JG P N = J1 N := min_eq_left hcase
   rw [h]
@@ -665,15 +690,15 @@ theorem yBotG_le_self : ∀ᶠ N : ℕ in atTop, yBotG N ≤ N := by
 
 theorem JG_tendsto (hP : DivergentRecip P) : Tendsto (JG P) atTop atTop := by
   have hA : Tendsto J1 atTop atTop := J1_tendsto
-  have hB : Tendsto (fun N : ℕ => ⌊recipSumLe P (yBotG N) / 8⌋₊) atTop atTop :=
+  have hB : Tendsto (fun N : ℕ => ⌊recipSumLe P N / 8⌋₊) atTop atTop :=
     tendsto_nat_floor_atTop.comp
-      (((recipSumLe_tendsto_atTop P hP).comp yBotG_tendsto).atTop_div_const (by norm_num))
+      ((recipSumLe_tendsto_atTop P hP).atTop_div_const (by norm_num))
   refine tendsto_atTop.mpr fun b => ?_
   filter_upwards [hA.eventually_ge_atTop b, hB.eventually_ge_atTop b] with N h1 h2
   exact le_min h1 h2
 
 /-- The graded twin of `tail_fresh`: the two-branch argument of the `min` in `JG`. -/
-theorem tail_graded (hfm : ∀ᶠ N : ℕ in atTop, recipSumIoc P (yBotG N) (2 * N) ≤ 1)
+theorem tail_graded (hfm : ∀ᶠ N : ℕ in atTop, recipSumIoc P N (2 * N) ≤ 1)
     (hP : DivergentRecip P) :
     Tendsto (fun N : ℕ => (recipSumLe P (2 * N) + 5 * (JG P N : ℝ) + 12) / (4 : ℝ) ^ JG P N)
       atTop (𝓝 0) := by
@@ -709,7 +734,7 @@ theorem tail_graded (hfm : ∀ᶠ N : ℕ in atTop, recipSumIoc P (yBotG N) (2 *
   have hpow0 : (0 : ℝ) < (4 : ℝ) ^ (JG P N) := by positivity
   have hfnn : (0 : ℝ) ≤ (13 * (JG P N : ℝ) + 21) / (4 : ℝ) ^ (JG P N) := by positivity
   have hgnn : (0 : ℝ) ≤ 120 * (L2 N) ^ (-ρ) := by positivity
-  rcases le_total (J1 N) (⌊recipSumLe P (yBotG N) / 8⌋₊) with hcase | hcase
+  rcases le_total (J1 N) (⌊recipSumLe P N / 8⌋₊) with hcase | hcase
   · have hJlow : L3 N - 1 ≤ (JG P N : ℝ) := JG_lower P hcase (by linarith)
     have hpow : (L2 N) ^ Real.log 4 / 4 ≤ (4 : ℝ) ^ (JG P N) := by
       have h1 : (4 : ℝ) ^ (JG P N) = (4 : ℝ) ^ ((JG P N : ℕ) : ℝ) := (Real.rpow_natCast 4 _).symm
@@ -754,14 +779,14 @@ theorem tail_graded (hfm : ∀ᶠ N : ℕ in atTop, recipSumIoc P (yBotG N) (2 *
       field_simp
       norm_num
     linarith [hstep, hfin.le, hfin.ge, hfnn]
-  · have hJeq : JG P N = ⌊recipSumLe P (yBotG N) / 8⌋₊ := min_eq_right hcase
-    have hSlt : recipSumLe P (yBotG N) < 8 * (JG P N : ℝ) + 8 := by
-      have := Nat.lt_floor_add_one (recipSumLe P (yBotG N) / 8)
+  · have hJeq : JG P N = ⌊recipSumLe P N / 8⌋₊ := min_eq_right hcase
+    have hSlt : recipSumLe P N < 8 * (JG P N : ℝ) + 8 := by
+      have := Nat.lt_floor_add_one (recipSumLe P N / 8)
       rw [← hJeq] at this
       linarith
     have hsplit : recipSumLe P (2 * N)
-        = recipSumLe P (yBotG N) + recipSumIoc P (yBotG N) (2 * N) :=
-      recipSumLe_add_recipSumIoc P (le_trans hyN (by omega))
+        = recipSumLe P N + recipSumIoc P N (2 * N) :=
+      recipSumLe_add_recipSumIoc P (by omega)
     have hnum : recipSumLe P (2 * N) + 5 * (JG P N : ℝ) + 12 ≤ 13 * (JG P N : ℝ) + 21 := by
       rw [hsplit]; linarith
     have hstep : (recipSumLe P (2 * N) + 5 * (JG P N : ℝ) + 12) / (4 : ℝ) ^ (JG P N)
@@ -769,18 +794,31 @@ theorem tail_graded (hfm : ∀ᶠ N : ℕ in atTop, recipSumIoc P (yBotG N) (2 *
       div_le_div_of_nonneg_right hnum hpow0.le
     linarith [hstep, hgnn]
 
-/-- **Open leaf G5c-7a (the residual tail crux).**  The mass of `P` on `(yBot N, 2N]` is
-eventually `≤ 1`.  This is the ONE place where the square-root criterion does not obviously
-suffice: the root chain (`recipSumIoc_le_rootChain`) from `yBot N = N^{(1/L₃N)2^{-J₁N}}` costs
-`K_N = ⌈log₂(log 2N / log yBot N)⌉ ≍ J₁N ≍ L₃N` halvings, so it only gives
-`ε_N · L₃N`, and `ε_N → 0` alone does not make that tend to `0`.  Note the bound is needed only
-in the SECOND branch of the `min` in `JG` (where `J_N = ⌊S_P(yBot)/8⌋ < J₁N`); in the first
-branch `4^{J_N} ≈ (L₂N)^{log 4}` already beats the crude `S_P(2N) ≤ 12 L₂(2N) + 21`.
-See `PENDING_WORK.md` for the two candidate repairs (a shorter bottom chain, or a branch-2
-comparison of `S_P(yBot)` against `L₃N`). -/
+/-- **PROVED** (was the residual tail crux).  The mass of `P` on `(N, 2N]` is eventually `≤ 1`.
+This is a **one-step** root chain: `(N, 2N] ⊆ (⌊√(2N)⌋, 2N]`, so the mass is at most
+`r_P(2N) ≤ ε_N → 0`.  The earlier version of this lemma asked for the mass on `(yBot N, 2N]`,
+which needs `≍ L₃N` halvings and is NOT implied by `ε_N → 0`; retying `JG` to the full mass
+`S_P(N)` — legitimate because leg E5's contracting site index is bounded
+(`exists_site_re_nonpos_le`) — replaces it by this. -/
 theorem freshMassTwo_graded (hS : SqrtFreshMassZero P) :
-    ∀ᶠ N : ℕ in atTop, recipSumIoc P (yBotG N) (2 * N) ≤ 1 := by
-  sorry
+    ∀ᶠ N : ℕ in atTop, recipSumIoc P N (2 * N) ≤ 1 := by
+  filter_upwards [(epsG_tendsto P hS yBotG_tendsto).eventually
+      (gt_mem_nhds (show (0 : ℝ) < 1 by norm_num)),
+    yBotG_tendsto.eventually_ge_atTop 4, yBotG_le_self, eventually_ge_atTop 2] with N h1 h4 hyN hN2
+  have hsq : Nat.sqrt (2 * N) ≤ N := by
+    by_contra hc
+    have h1 : N + 1 ≤ Nat.sqrt (2 * N) := by omega
+    have h2 : (N + 1) ^ 2 ≤ Nat.sqrt (2 * N) ^ 2 := Nat.pow_le_pow_left h1 2
+    have h3 := Nat.sqrt_le' (2 * N)
+    nlinarith
+  have hmono : recipSumIoc P N (2 * N) ≤ recipSumIoc P (Nat.sqrt (2 * N)) (2 * N) := by
+    unfold recipSumIoc
+    refine Finset.sum_le_sum_of_subset_of_nonneg
+      (Finset.filter_subset_filter _ (Finset.Ioc_subset_Ioc_left hsq)) ?_
+    exact fun p _ _ => by positivity
+  have hyb : yBotG N ≤ 2 * N := le_trans hyN (by omega)
+  have := recipSumIoc_le_epsG P N h4 hyb
+  linarith
 
 theorem tailOK_graded (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
     TailOK P (JG P) := by
@@ -796,11 +834,11 @@ theorem kmt_along_graded (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
   intro h hh
   refine tendsto_zero_iff_norm_tendsto_zero.mpr ?_
   have hsum : Tendsto (fun N : ℕ =>
-      termE1 P h N + (termE4a P N + termE4b P N + termE4c P N) + termE5 P N)
+      termE1 P h N + (termE4a P N + termE4b P N + termE4c P N) + termE5 P h N)
       atTop (𝓝 0) := by
     have := ((termE1_tendsto P hS hP h).add
       (((termE4a_tendsto P hS hP).add (termE4b_tendsto P hS hP)).add (termE4c_tendsto P hP))).add
-      (termE5_tendsto P hP)
+      (termE5_tendsto P hS hP h)
     simpa using this
   refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _)) ?_ hsum
   filter_upwards [windowMean_le_terms P h, eventually_gt_atTop 0,
