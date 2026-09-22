@@ -416,6 +416,7 @@ import NormalNumbers.PrimeModelFamilyIterPow
 import NormalNumbers.PrimeModelKMTFixedH
 import NormalNumbers.PrimeModelKMTGraded
 import NormalNumbers.PrimeModelKMTGradedModel
+import NormalNumbers.PrimeModelTheoremA
 import NormalNumbers.PrimeModelFamilyL4
 import NormalNumbers.PrimeModelFamilyConsumer
 import NormalNumbers.PrimeModelBlockSieve
