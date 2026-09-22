@@ -27,9 +27,9 @@ Grading the cutoffs by site changes the estimate, not the schedule:
 - **§4** records the exact inequality by which the repo's `Dimension` hypothesis returns the
   common cutoff (`k_B ≥ k(1 − o(1))`, hence `s ≥ 80 k_B`), and why the nested `brunCut` sieve is
   the wrong tool even though it can be adapted.
-- **§5, two tiers**: the barrier set closes (Astra's schedule), and the density class improves
-  from `π_P/π = o(1/L₄)` to roughly `o(1/L₆)`; but any *fixed* number of tiers leaves a log,
-  coming from the union bound over the shifts sharing a cutoff.  The exact chain is written out.
+- **§5, two tiers**: the barrier set closes (Astra's schedule), and the density class these
+  majorants reach improves from `π_P/π = o(1/L₄)` to roughly `o(1/L₆)`; the remaining log comes
+  from the union bound over the shifts sharing a cutoff.  The exact chain is written out.
 - **Theorem C (§6)**, the geometric `k`-tier schedule `ε_j = ε₁ 2^{1−j}` with *graded box sides*
   `θ_j = ε_j (Λ₀ + j)`: the shift union bound is paid by the geometric decay, not by `log k`, and
   the conclusion is
@@ -41,11 +41,12 @@ Grading the cutoffs by site changes the estimate, not the schedule:
   (`ε_j = u^{−2} 2^{−j}`, `T_j = N^{2^{−j/2}/16}`, their §8, equations (8.1)-(8.6), refereed by me
   2026-09-22T20:3xZ): two schedules consuming the same new finite lemma, not two proofs of the
   lemma.
-- **The new floor (§8)** is the first-site fresh mass `R(N^{ε₁}, N)` with `ε₁ → 0` forced by the
-  sieve's relative error.  For positive relative density it is `≍ δ · log(1/ε₁) → ∞ · δ`, so the
-  graded route ends exactly at relative density zero; going further needs a sieve with vanishing
-  relative error at bounded level ratio, which the fundamental lemma forbids, i.e. it needs
-  modelling of the large primes, not another cutoff schedule.
+- **The restriction of this estimate (§8)** is the first-site fresh-mass *majorant*
+  `R(N^{ε₁}, N)` with `ε₁ → 0` forced by the sieve's relative error.  For a set with positive
+  limiting relative density it is `≍ δ · log(1/ε₁)` and does not vanish.  That is a proved
+  restriction of the displayed majorant, not a necessity for a given `P` or for its phase
+  observable; the broader density-class frontier is left open (the prime-burst example of
+  Part VI, limsup density `1`, passes the geometric transfer sum, §8).
 
 ## 1. Setting and notation
 
@@ -147,7 +148,7 @@ radical) into `∏_j [1, ⌊T_j⌋]`; this is `retainedBox_card_le` with a per-s
 
 **Lemma B.**  Let `U` be a finite set of primes with class counts `d_p ≥ 1`, `2 d_p ≤ p`,
 partitioned into bands `U^{(j)} ⊆ (y_{j+1}, y_j]` on which `d_p = d_j` is constant
-(`j = 1..k`), and let `u_j ≥ 1`.  Then there is `λ : 𝒫(U) → {−1, 0, 1}` with
+(`j = 1..k`), and let `u_j ≥ 1` be integers (so every `r_{j,l}` below is an even integer).  Then there is `λ : 𝒫(U) → {−1, 0, 1}` with
 
 1. `λ(E) ≠ 0 ⟹ ∏_{p∈E} p ≤ R`, `log R = ∑_j (128 d_j + 4u_j + 14) log y_j`;
 2. for every `B ⊆ U`: `∑_{E ⊆ B} λ(E) ≤ [B = ∅]`;
@@ -193,15 +194,17 @@ Block mass: `B_{j,l} ⊆ (v, v²]` with `v = y_j^{2^{−l−1}}`; for `v ≥ 2`,
 `λ ≤ d_j(1/2 + 1/3) ≤ 8 d_j` too (edge case for the record).  Since `λ ↦ e^{2λ}(eλ/(r+1))^{r+1}` is
 increasing on `[0, (r+1)/e]` and `8 d_j ≤ (r+1)/e`:
 
-    D̄_{j,l} := E[D]/V ≤ e^{16 d} (8e d/(r+1))^{r+1} ≤ e^{16 d} (e/8)^{64 d} (e/8)^{2u+2l+5}
-              = e^{(16 − 69.1) d} · e^{−1.079 (2u + 2l + 5)} ≤ e^{−u_j − l − 2}.
+    D̄_{j,l} := E[D]/V ≤ e^{16 d} (8e d/(r+1))^{r+1} ≤ e^{16 d} (1/2)^{r+1}
+              ≤ exp( 16 d − (64 d + 2u_j + 2l + 5)/2 ) ≤ e^{−u_j − l − 2},
+
+using `e < 4` (so `8ed/(r+1) ≤ 8ed/(64d) < 1/2`) and `log 2 ≥ 1/2`.
 
 Then `E[U] ≥ V` (`U ≥ I`) and `E[U] ≤ V + E[D] = V(1 + D̄)` (`U − I ≤ D`), so
 
     E[L] ≥ ∏V − ∑_b V_b D̄_b ∏_{b'≠b} V_{b'} (1 + D̄_{b'}) ≥ ∏V · (1 − (∑_b D̄_b) e^{∑_b D̄_b}),
 
-and `∑_b D̄_b ≤ ∑_j ∑_{l≥0} e^{−u_j − l − 2} = 0.214 ∑_j e^{−u_j}`.  With `∑_j e^{−u_j} ≤ 1`,
-`e^{0.214} = 1.24`, so `η ≤ 0.27 ∑_j e^{−u_j}`.  Property 3, since `E[L] = ∑_E λ(E) ∏_E g_p`.  ∎
+and `∑_b D̄_b ≤ ∑_j ∑_{l≥0} e^{−u_j − l − 2} ≤ 0.215 ∑_j e^{−u_j}` (`e^{−2}/(1 − e^{−1}) < 0.215`).
+With `∑_j e^{−u_j} ≤ 1`, `e^{0.215} < 1.25`, so `η ≤ 0.27 ∑_j e^{−u_j} ≤ 0.3 ∑_j e^{−u_j}`.  Property 3, since `E[L] = ∑_E λ(E) ∏_E g_p`.  ∎
 
 *What I checked and found nothing wrong with* (Astra, mail `20260922T200044Z`): the telescoping
 inequality, the coefficient bound, the disjoint supports, the `0.34` ratio, the `e^{−u−l−2}`
@@ -221,16 +224,16 @@ instance (`{7,11}` with `d = 2`, `{13,17}` with `d = 1`) gives the exact `8640` 
 The repo's `brun_lower_fundamental` takes an arbitrary density `g` but certifies it through
 `Dimension U g y K k_B`: `∏_{p ∈ U, p > t}(1 − g_p)^{−1} ≤ K (log y/log max(2,t))^{k_B}` for all
 `1 ≤ t ≤ y`, and then needs `s ≥ 80 k_B` (`hs80`) and `s ≥ 40 log K + 4` (`hsA`), with
-`s = log R / log y`.  For a two-band density (`k/p` below `y_tail`, `m/p` above) and any
-`t < y_tail`, by `(1 − x)^{−1} ≥ e^{x}`,
-
-    ∏_{p > t}(1 − g_p)^{−1} ≥ exp( k ∑_{t < p ≤ y_tail} 1/p ) = (log y_tail / log t)^{k} · e^{−O(k/log t)}
-
-(Mertens), while the certificate's right side is `K (log y_head/log t)^{k_B}` with
-`log y_head / log y_tail = k`.  Taking `t = 2` (or any fixed `t`) and letting `log y_tail → ∞`
-forces `k_B ≥ k (1 − o(1))`, hence `s ≥ 80 k (1 − o(1))`: the common-cutoff restriction on
-`y_head`, unchanged.  Unequal box sides do not touch this; it is the *single exponent* of the
-certificate that carries the dimension of the smallest primes up to the largest cutoff.
+`s = log R / log y`.  The correct, scoped statement: **using the existing sufficient certificate**
+`prime_density_dimension` (`k_B = 24k`, `K = 4^k e^{16k}`) at `y = y_head` for a two-band density
+(`k/p` below `y_tail`, `m/p` above) re-imposes `log R = s log y_head ≥ 1920 k log y_head`, the
+common-cutoff restriction unchanged; unequal box sides do not touch it.  The single exponent of
+the certificate carries the dimension of the smallest primes up to the largest cutoff.  (As an
+illustration of why a *uniform-in-`P`* certificate cannot do better: when `U` contains all primes
+in `(2k, y_tail]`, `∏_{t<p≤y_tail}(1 − k/p)^{−1} ≥ exp(k ∑_{t<p≤y_tail} 1/p)` grows like
+`(log y_tail/log t)^{k}` by Mertens, which no `K (log y_head/log t)^{k_B}` with `k_B ≪ k` and
+controlled `log K` matches for fixed `t` as `y_tail → ∞`.  For a sparse `P` the set `U` is smaller
+and this lower bound need not hold; it is an illustration, not the claim.)
 
 The nested `brunCut` sieve itself can be adapted (a fast phase of cutoffs from `y_head` to
 `y_tail` at shrink rate `1/(480 m)`, then a stall ladder of `≈ 200 k` cutoffs at height `y_tail`
@@ -252,11 +255,13 @@ Theorem A with Lemma B (two bands) gives the constraints
 - transfer `→ 0`: `δ* (9 + 12 log(2/ε_h)) + 4^{−m} δ* (9 + 12 log(2/ε_t)) → 0`
   (dominated Abel `recipSumIoc_le_of_dominated'` at each cutoff).
 
-The third bullet with the second requires `ε_h ≤ 1/(16 m (log m + 22))` and
-`ε_t ≤ 1/(16 k (log k + 22))`, so `log(1/ε_t) ≥ L₄N + O(1)` **regardless of the sieve** (this is
-the union bound over the `k − m` shifts that share `y_tail`).  These are requirements of the
-present positive upper majorants, not arithmetic necessities: a density *upper* envelope never
-lower-bounds the fresh mass (Astra, mail `20260922T202126Z`).  The transfer bound is then
+With the budget split `m θ_h ≤ 1/8`, `(k − m) θ_t ≤ 1/8` (a schedule choice), the third bullet
+requires `ε_h ≤ 1/(16 m (log m + 22))` and `ε_t ≤ 1/(16 (k − m)(log k + 22))`; with the whole
+`1/4` given to one side the constants halve.  Either way `log(1/ε_t) ≥ log(k − m) + O(1)`, which
+is `L₄N + O(1)` for `m ≤ k/2`, **regardless of the sieve** (the union bound over the `k − m` shifts
+that share `y_tail`).  These are requirements of the displayed positive upper majorants, not
+arithmetic necessities: a density *upper* envelope never lower-bounds the fresh mass (Astra,
+mails `20260922T202126Z`, `20260922T202457Z`).  The transfer bound is then
 
     ≍ δ* [ log m  +  4^{−m} L₄N ].
 
@@ -264,8 +269,9 @@ If `δ* L₄N → 0` take `m = j₀`: that is Part VI's `SparseL4o` class, recov
 best `m` is `≈ log₄(δ* L₄N)` and the criterion is `δ* · log log(δ* L₄N) → 0`, i.e. roughly
 `π_P/π = o(1/L₆)`; `π_P/π ≍ 1/L₆` fails it.  So two tiers are a genuine saving (two iterated logs,
 and the explicit barrier set `π_P/π ~ 1/L₄` closes, as in Astra's schedule with `m = ⌊√L₄⌋`,
-`ε_h = m^{−4}`, `ε_t = J^{−4}`), and any fixed number of tiers stops at some `L_r`.  The log comes
-from a *shared cutoff*, so it is removed by not sharing: §6.
+`ε_h = m^{−4}`, `ε_t = J^{−4}`).  The log comes from a *shared cutoff* through the union bound;
+whether every fixed number of tiers stops at some `L_r` is not proved here and is not needed:
+the cutoffs are simply not shared in §6.
 
 ## 6. Theorem C: the geometric `k`-tier schedule, arbitrary relative density zero
 
@@ -288,8 +294,9 @@ from a *shared cutoff*, so it is removed by not sharing: §6.
 - *Sieve defect.*  `∑_j e^{−u_j} ≤ e^{−u}/(e − 1) ≤ 1`, so E4b `≤ 0.6 · 0.58 e^{−u} ≤ e^{−u} → 0`.
 - *Transfer.*  Put `δ*_N := sup_{t > N^{1/L₂N}} π_P(t)/π(t)`, a `P`-dependent but
   `u`-independent quantity (this breaks the circularity `ε₁ ↔ u ↔ δ*`).  `y_k ≥ N^{1/L₂N}` holds
-  once `2^{k} ≤ 2 ε₁ L₂N`, i.e. (with `k ≤ L₃N`, `2^{L₃N} = (L₂N)^{log 2}`) once
-  `u ≤ (L₂N)^{0.3}/64 − 70`.  Then for every `j`, `recipSumIoc_le_of_dominated'` gives
+  eventually under `u ≤ (L₂N)^{0.3}/64 − 70`: then `ε₁ ≥ 1/(2 (L₂N)^{0.3})` and, with `k ≤ L₃N`,
+  `ε_k ≥ (L₂N)^{−0.3 − log 2} ≥ 2/L₂N` eventually since `0.3 + log 2 < 1`; the factor `2` pays for
+  the floor in `y_k = ⌊N^{ε_k}⌋₊` (Astra's margin, mail `20260922T202126Z`).  Then for every `j`, `recipSumIoc_le_of_dominated'` gives
   `R(y_j, N) ≤ δ*_N (9 + 12 log(log N/log y_j)) ≤ δ*_N (9 + 12 log(2/ε₁) + 12 (j−1) log 2)`, and
 
       ∑_j a_j · 2R(y_j, N) ≤ 8π|h| δ*_N [ (9 + 12 log(2/ε₁))/3 + 12 log 2 ∑_j (j−1) 4^{−j} ]
@@ -314,8 +321,8 @@ once Astra replies; not formalised.)
 
 **Abstract form.**  For any `u_N → ∞` with `u_N ≤ (L₂N)^{0.3}/64 − 70`, the only `P`-dependent
 input is `∑_j 4^{−j} R(y_j^{(N)}, 2N) → 0` along the schedule (plus `DivergentRecip`); relative
-density zero is the natural sufficient condition, and `FreshMassZero` (single cutoff) is the
-special case `u` bounded.  Whether the prime-burst example of Part VI survives the geometric
+density zero is the natural sufficient condition.  The single-cutoff consumer `FreshMassZero`
+is a different theorem with its own schedule; no inclusion between the two is asserted.  Whether the prime-burst example of Part VI survives the geometric
 family is not settled here; it is not needed for Theorem C.
 
 ## 7. Lean ledger: what would generalise (no launch proposed)
@@ -337,16 +344,22 @@ input beyond Lemma B's combinatorics.
 
 ## 8. Attack surface and the new floor
 
-Open for Astra (mail `20260922T201128Z`): (i) the box grading `∑ θ_j ≤ 1/4` against the
-complement, and the `P`-independent lower cutoff `N^{1/L₂N}`; (ii) that tiers `j < j₀` contribute
-exactly `1` to the model, so E5's exponent is `S_P(2k, y_{j₀})`; (iii) the block-edge details in
-Lemma B.
+Settled by Astra (mails `20260922T202126Z`, `20260922T202457Z`): the box grading and the lower
+cutoff (with the eventual margin now in §6), tiers `j < j₀` contribute exactly `1`, the last block
+of each band is clipped at `2k` so `block_le_eight` applies with `v ≥ 2`.  Astra's six
+corrections of the first draft (scope of the floor, the `Dimension` illustration, the two-tier
+constants, integer `u_j` and the exponent arithmetic, the abstract-form inclusion, the floor of
+`y_k`) are all incorporated above.
 
-**The floor of the graded route.**  The sieve's relative error is `e^{−u}` and the level is
-`N^{(556 + 8u) ε₁}`, so `u → ∞` forces `ε₁ → 0` and the first-site fresh mass `R(N^{ε₁}, N)` is
-`≍ δ log(1/ε₁)` for a set of relative density `δ`.  It vanishes iff `δ → 0` (Theorem C), and for
-positive relative density it does not vanish for any admissible `ε₁`.  No cutoff schedule
-changes this: a lower sieve at bounded level ratio has relative error bounded below (the
-fundamental lemma is sharp there).  Positive-density prime sets therefore need the large primes
-`(y₁, N]` modelled, i.e. KMT's own Proposition 4.3 machinery, which is a different estimate, not a
-different schedule.  Relative density zero is the exact reach of "grade the cutoffs".
+**The restriction of this majorant.**  The sieve's relative error is `e^{−u}` and the level is
+`N^{(556 + 8u) ε₁}`, so `u → ∞` forces `ε₁ → 0`, and the first-site fresh-mass majorant
+`R(N^{ε₁}, N)` is `≍ δ log(1/ε₁)` for a set of positive limiting relative density `δ`: this
+estimate cannot vanish there.  This is a statement about the displayed sufficient majorant only
+(Astra, mail `20260922T202457Z`); no necessity for a given `P`, and no "large primes must be
+modelled" theorem, is proved here.  The broader frontier is open.  In the other direction the
+mechanism reaches past density zero: for the prime-burst set of Part VI (all primes in
+`⋃_n [a_n, b_n]`, blocks of reciprocal mass `≍ 1/n` at `t = L₂x ≈ exp(n²)`), each site-`j` window
+`(y_j, 2N]` has `t`-length `log(2/ε_j) + O(1) ≤ log(2/ε₁) + 0.7 L₃N + O(1) ≪ 2n e^{n²}`, the gap
+between consecutive block starts, so every late window meets at most one block, of index
+`n → ∞`, and `∑_j 4^{−j} R(y_j, 2N) ≤ (C/n) ∑_j 4^{−j} → 0`.  (My argument, not yet refereed by
+Astra; not needed for Theorem C.)
