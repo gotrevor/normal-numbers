@@ -4,6 +4,17 @@ Prepared 2026-09-22 by Ren/Codex for Trevor's expiring-token allocation.
 This is a research brief, not authorization for unattended Fable treadmills.
 Fable reasons and referees; Opus/low performs bounded proof/probe tasks.
 
+## Confirmed token deadline
+
+Trevor confirmed expiry: **2026-09-23 05:00 EDT (09:00 UTC)**.
+Capacity: substantial, exact amount unspecified.  The deadline takes priority
+over the earlier "tomorrow" phrasing: use the remaining window, not a session
+starting after expiry.  Front-load invention and independent refutation;
+leave time for surviving candidates to reach an Opus proof/probe result.
+Use the final portion for integrating results and preserving exact remaining
+claims.  Percentages below allocate available reasoning, not fixed wall time.
+No additional launch authorization is inferred from this deadline update.
+
 ## Opening finding: the old PrefixDecay node is false
 
 Read src/NormalNumbers/G4PrefixDecayAudit.lean first.
