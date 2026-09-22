@@ -132,3 +132,83 @@ Not re-derived: `brun_lower_three` inside `PrimeModelBrunLower.lean` (the Brun c
 host-verified.  That single theorem is the only analytic input in the whole chain that no reader
 re-derived today; its statement is the fundamental lemma of sieve theory in a crude-constant
 form, and every consumer uses it with hypotheses that hold with room to spare.
+
+## Addendum 2 (2026-09-22, at Trevor's direction): `brun_lower_three` re-derived by hand
+
+Scope: the one analytic input no reader had re-derived, `Brun.brun_lower_three` in
+`PrimeModelBrunLower.lean`, plus its dimension instance `prime_density_dimension` and the
+Mertens-type input `primeRecipSum_le`.  Read-only; every inequality below is my own derivation,
+checked afterwards against the Lean proof's steps.  **No defect.**
+
+**Statement (exact).**  `k ≥ 1`, `K ≥ 1`, `y ≥ e²`, `40 log K + 4 ≤ s`, `U ⊆ [0, y]`,
+`0 ≤ g < 1` on `U`, `Dimension U g y K k` (for all real `1 ≤ t ≤ y`:
+`∏_{p∈U, p>t}(1−g_p)^{−1} ≤ K (log y/ log max(2,t))^k`).  Conclusion:
+`(1 − 2e^{−s/2}) ∏_U(1−g) ≤ Σ_E λ_E ∏_E g`, with `λ_E = (−1)^{|E|}[Adm E]`, `Adm` = every
+element at an even position from the top (rank `2j`) is `≤ Y_j`, `Y_j = y` for `j ≤ J = ⌊s/4⌋`
+and `Y_j = ⌊y^{α^{j−J}}⌋` for `j > J`, `α = 1 − 1/(20k)`.  Note: **property (3) does not use
+`s ≥ 80k`**; only the support bound (property (1)) does.  The assembly passes both.
+
+**1. First-failure decomposition** (`sum_not_adm_eq`).  A non-admissible `E` has a largest
+failing element `q₀`; let `F = {p ∈ E : p ≥ q₀}`.  Then `F` is a *first failed prefix*:
+`q₀ = min F` fails its cutoff, no element of `F` above `q₀` fails, and `|F|` is even (the rank of
+`q₀` in `F` is `|F| − 1`, odd).  Ranks inside `F` equal ranks inside `E` (rank counts elements
+above), so `F` is determined by `E`, and `E = F ⊔ S` with `S ⊆ below(B, F)`.  Conversely
+`F ⊔ S` for any `S` below `F` is non-admissible with the same `F` (its top failure is still `q₀`).
+Hence for any `f`:
+`Σ_{E⊆B, ¬Adm}(−1)^{|E|}∏_E f = Σ_{F FirstFail} (−1)^{|F|}∏_F f · Σ_{S⊆below}(−1)^{|S|}∏_S f
+ = Σ_F ∏_F f · ∏_{p∈B, p<min F}(1 − f_p)` (`|F|` even).  With `f = 1` each block is
+`[below = ∅] ≥ 0`, giving the minorant `Σ_{E⊆B} λ_E ≤ [B = ∅]` (property (2)); with `f = g`,
+`V − M = Σ_F ∏_F g ∏_{p<min F}(1−g_p) ≥ 0` (`defect_eq`).
+
+**2. Structure of a first failed prefix** (`firstFail_struct`).  `|F| = 2m`; failing at position
+`m` needs `q₀ > Y_m`; for `m ≤ J`, `Y_m = y ≥ q₀`, impossible, so `m > J`, `ℓ := m − J ≥ 1`, and
+`q₀ ≥ ⌊y^{α^ℓ}⌋ + 1 > t_ℓ := y^{α^ℓ}`.  **Cutoff floors go the right way**: the floor only
+lowers the cutoff, so failure implies `q₀ > t_ℓ` (real), which is what the tail bound uses; for
+property (1) the floor is `≤ y^{α^{j−J}}`, which is what the support bound uses.
+
+**3. Dimension bound** (`dim_prod_le`, `dim_sum_le`).  At `t = t_ℓ ∈ [1, y]`:
+`log y/log max(2, t_ℓ) ≤ log y/log t_ℓ = α^{−ℓ}`, so
+`∏_{p>t_ℓ}(1−g)^{−1} ≤ K α^{−kℓ} = e^{A+Bℓ}`, `A = log K`, `B = −k log α ≤ 1/19`
+(from `−log(1−u) ≤ u/(1−u)`, `u = 1/(20k)`); and `Σ_{p>t_ℓ} g ≤ log ∏(1−g)^{−1} ≤ A + Bℓ`.
+
+**4. Per-block estimate** (`block_le`).  Fix `n = 2m`, `ℓ = m − J`.  For `F` in the block,
+`∏_{p<min F}(1−g) = V / ∏_{p≥min F}(1−g) ≤ V ∏_{p>t_ℓ}(1−g)^{−1} ≤ V e^{T}`, `T := A + Bℓ`,
+and `F ⊆ W_ℓ := U ∩ (t_ℓ, ∞)`.  So the block is `≤ V e^{T} e_n(W_ℓ; g)`.  Elementary symmetric
+bound: `x^n e_n ≤ ∏_{W}(1 + x g) ≤ exp(x Σ_W g) ≤ e^{xT}`, `x = n/T`: `e_n ≤ (eT/n)^n`.
+Constants: `40A + 4 ≤ s < 4J + 4` gives `A < J/10`; `Bℓ ≤ ℓ/19 < ℓ/10`; so
+`T < (J + ℓ)/10 = n/20`.  Hence block `≤ V e^{n/20} (e/20)^n = V (e^{1/20} e/20)^n ≤ V (1/4)^n`
+(`e^{1/20}e/20 = 0.143`; the Lean lemma `exp_const_le` certifies `≤ 1/4`, with margin `1.75×`).
+
+**5. Geometric tail** (`geom_tail_le`, assembly).  Blocks exist only for `n ≥ 2J + 2`:
+`Σ_{n≥2J+2}(1/4)^n = (1/4)^{2J+2}·(4/3) = (1/16)^J/12 ≤ e^{−2J}/12 ≤ e^{2}e^{−s/2}/12 ≤ (16/12)e^{−s/2}
+< 2e^{−s/2}`, using `1/16 ≤ e^{−2}`, `2J > s/2 − 2`, `e² ≤ 16`.  So `V − M ≤ 2e^{−s/2}V`.  ∎
+
+**6. Support level** (`prod_le_rpow_of_adm`, needs `s ≥ 80k`).  In an admissible `E`
+(decreasing `p₁ > p₂ > …`), `p_{2j} ≤ Y_j ≤ y^{α^{j−J}}` and `p_{2j+1} < p_{2j}`, `p₁ ≤ y`, so
+`log ∏E / log y ≤ 1 + 2Σ_{j≥1} expo_j ≤ 1 + 2(J + α/(1−α)) = 2J + 40k − 1 ≤ s/2 + 40k − 1 ≤ s`
+iff `s ≥ 80k − 2`; the hypothesis `s ≥ 80k` covers it.  (`sum_expo_le`: `Σ expo ≤ J + 20k − 1`.)
+
+**7. Dimension instance** (`prime_density_dimension`: `g = h/p`, `U ⊆` primes in `(h, y]`,
+`K = 4^h e^{16h}`, `k = 24h`).  Split at `2h`.  Small primes: `∏_{h<p≤2h} p/(p−h) ≤
+∏_{h<m≤2h} m/(m−h) = C(2h, h) ≤ 4^h` (each factor `≥ 1`, so restricting to primes only helps).
+Large primes: `u = h/p ≤ 1/2` gives `(1−u)^{−1} ≤ e^{2u}`, so the product is
+`≤ exp(2h Σ_{max(v,2h)<p≤y} 1/p) ≤ exp(2h(8 + 12 log(log y/log v))) = e^{16h} L^{24h}`,
+`L = log y/log max(2,t)`, using `primeRecipSum_le`.  Product: `4^h e^{16h} L^{24h}`.  Exact.
+
+**8. Mertens-type input** (`primeRecipSum_le`): `Σ_{v<p≤y} 1/p ≤ 8 + 12 log(log y/log v)` for
+`2 ≤ v ≤ y`, from blocks `[v^{2^i}, v^{2^{i+1}}]` each `≤ 8` (`block_le_eight`, a Chebyshev
+upper bound; the true value is `log 2 + o(1)`), `n = ⌈log₂ L⌉ ≤ log₂L + 1` blocks, and
+`8/log 2 = 11.54 ≤ 12`.  I did not re-derive `block_le_eight` from Chebyshev; it is a crude
+constant with a factor `> 10` of room.
+
+**Hypothesis chain into the consumer** (`brun_sifted_count_lower` → `prime_density_brun_lower`
+→ `brun_lower_fundamental`): `s ≥ 1920h = 80·(24h)`; `hsA` identical with `K = 4^h e^{16h}`;
+`y ≥ e²`; `U` primes in `(h, y]` so `g ∈ [0,1)`; `Dimension` from §7 (needs `y ≥ 2`).  All met.
+In the assembly `s = σ = log x/(4 log y) ≥ 1/(4ε) ≥ 1920k` under `ε ≤ 1/(7680k)`, and
+`40 log(4^k e^{16k}) + 4 = 40k(log 4 + 16) + 4 ≈ 695k + 4 ≤ 1920k`.  Room everywhere.
+
+**Verdict.**  `brun_lower_three` is a correct crude-constant fundamental lemma of the Brun
+sieve, and its Lean proof follows the derivation above step for step (`T ≤ n/20`,
+`e^{1/20}e/20 ≤ 1/4`, `(1/16)^J ≤ e^{−2J}`, `e² ≤ 16`).  With this, every analytic input of the
+sparse-NN chain has now been re-derived by at least one reader; the only remaining
+not-re-derived lemma is the Chebyshev block constant `block_le_eight`.
