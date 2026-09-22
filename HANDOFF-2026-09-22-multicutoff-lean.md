@@ -1,4 +1,4 @@
-# HANDOFF 2026-09-22 — Pair A multicutoff formalisation (laps 0–4 done)
+# HANDOFF 2026-09-22 — Pair A multicutoff formalisation (laps 0–5 done)
 
 Branch `wip/g5-prime-subset`.  Running `KICKOFF-2026-09-22-multicutoff-lean.md` under the
 2026-09-22 17:12 EDT attended override.  New modules only; no existing statement touched;
@@ -150,3 +150,60 @@ The abstract (non-arithmetic) half of Lemma B is now complete: laps 4–6 are th
 instantiation, where `g_p = d_p/p`, blocks are `U^{(j)} ∩ (y_j^{2^{-l-1}}, y_j^{2^{-l}}]`, and
 `block_le_eight` (`PrimeModelPrimeDimension`) supplies the `λ ≤ 8d` hypothesis of
 `block_defect_le`.
+
+---
+
+## Laps 4e–4i — Lemma B closed end to end, and lap 5
+
+### Lap 4e — `src/NormalNumbers/PrimeModelBlockWeightsReal.lean`
+- `sum_powerset_coefU_real`, `sum_powerset_coefD_real`: the real powerset forms of the block
+  Bonferroni polynomial and its defect, identified with `esymmAlt` / `esymmOn`.
+- `blockLam_expand_real`: the expansion of `blockLam` against a **real** weight.
+- `blockLam_model_lower`: `∑_{E⊆U} λ(E) ∏_E g ≥ (1 − 0.3T) ∏_U (1 − g)` from
+  `model_defect_eta` + `esymmAlt_bonferroni`, with `Db i = e_{r_i+1}/V_i`.  No probability.
+- `gradedDeg d u (j,l) = 64 d_j + 2 u_j + 2l + 4` (even), and `blockLam_model_lower_graded`:
+  the same bound on the graded schedule, with the `0.215 T` hypothesis discharged by
+  `block_defect_le` + `sum_block_defect_le`.  Only inputs: per-block mass `≤ 8 d_j`, `g ≤ 1/2`.
+
+### Lap 4g–4h — `src/NormalNumbers/PrimeModelBlockFamily.lean`
+- `cut y j l = y_j^{2^{-l}}`, `cut_sq`, `cut_antitone`, `one_le_cut`, `cut_eq_exp`.
+- `gradedBlock U y (j,l) = U^{(j)} ∩ (cut y j (l+1), cut y j l]`; `gradedBlock_disjoint`
+  (levels by the cutoff chain, shifts by hypothesis), `gradedBlock_mass_le`
+  (`PrimeDensity.block_le_eight` gives `∑ 1/p ≤ 8`, so `∑ g ≤ 8 d_j`).
+- `gradedBlock_model_lower`: Lemma B's model bound with **no abstract block hypotheses**.
+- `gradedBlock_level_le`: **the support level**.  `blockLam_support` caps each trace at
+  `r+1`, `prod_le_of_block_bounds` turns that into `∏_{p∈E} p ≤ ∏_{j,l} ⌊cut⌋^{r+1}`, and the
+  geometric `level_sum_le` collapses it to `∏_j y_j^{128 d_j + 4 u_j + 14}`.
+
+### Lap 4i — `src/NormalNumbers/PrimeModelGradedLemmaB.lean`
+- `gradedLevel t d u y = ∏_j y_j^{128 d_j + 4 u_j + 14}`, `one_le_gradedLevel`.
+- **`graded_brun_lower`** — *Lemma B as the paper states it*:
+
+      #{n < X : SiftedCondD A W d_p j_p Q r}
+        ≥ X/(Q ∏_A p) · (1 − 0.3 T) ∏_{p ∈ W} (1 − d_p/p) − R²
+
+  for `W = ⋃_{j∈t, l<L} gradedBlock U y (j,l)`, `T = ∑_j e^{−u_j} ≤ 1`, `R = gradedLevel`.
+  Hypotheses are elementary: `y_j ≥ 1`, disjoint prime sets `U^{(j)}`, `2 d_p ≤ p`,
+  `d_p ≤ d_j` on `U^{(j)}`, cutoffs `≥ 2`, plus the usual `A`/`Q`/coprimality data.
+  This joins `BrunGraded.graded_sifted_count_lower` to the combinatorial/model half.
+
+### Lap 5 — `src/NormalNumbers/PrimeModelRadicalStateGraded.lean`
+- `retainedBoxG k p T` with a **per-shift** threshold `T : Fin k → ℝ`;
+  `retainedBoxG_card_le : #box ≤ ∏_j ⌊T_j⌋₊` (still independent of `#ι`).
+- `sum_compl_retainedBoxG_le`, `radical_box_tailG` (per-shift Markov exponent `α_j` and
+  budget `A_j`), and `radical_box_tailG_exp20`: tail `≤ ∑_j e^{20} / T_j^{1/(2 log y_j)}`
+  with the arithmetic budget discharged by `radical_moment_budget`.
+
+All sorry-free; `lake build` green; every headline `[propext, Classical.choice, Quot.sound]`.
+
+## Next, in order
+
+1. Kickoff lap 6 — **Theorem A**, the graded `windowMeanLe`: per-site E1 from
+   `sum_omegaGt_shift_le`, graded model expectation with `A_{d_p}`, `A_j = 0` for `j < j₀`,
+   `E5 = e^k exp(−S_P(2k, y_{j₀}))`, `Q = primorial (2k)`.  Inputs now available:
+   `graded_brun_lower` (main term) and `radical_box_tailG_exp20` (tail).
+2. Kickoff lap 7 — **Theorem C′**, the headline
+   `isNormal_subsetLambert_of_sqrtFreshMassZero`, via `isNormal_subsetLambert_of_KMT_along`
+   (`G4WiringSparse`), mirroring `PrimeModelFamilyConsumer.lean`.  Schedule: Astra §8/§11.
+
+Nothing refuted: every paper step checked so far went through as stated or better.
