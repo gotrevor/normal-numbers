@@ -411,4 +411,5 @@ import NormalNumbers.PrimeModelFamilyIterPow
 import NormalNumbers.PrimeModelKMTFixedH
 import NormalNumbers.PrimeModelFamilyL4
 import NormalNumbers.PrimeModelFamilyConsumer
+import NormalNumbers.PrimeModelSqrtFresh
 import NormalNumbers.G4PrefixDecayAudit
