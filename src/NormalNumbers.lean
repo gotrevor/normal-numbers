@@ -405,4 +405,6 @@ import NormalNumbers.PrimeModelDensityMass
 import NormalNumbers.PrimeModelFamily
 import NormalNumbers.PrimeModelFamilySharpMass
 import NormalNumbers.PrimeModelFamilySharp
+import NormalNumbers.PrimeModelFamilyIterMass
+import NormalNumbers.PrimeModelFamilyIter
 import NormalNumbers.G4PrefixDecayAudit

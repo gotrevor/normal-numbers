@@ -59,3 +59,14 @@ and `sparseIter_of_sparse : Sparse P → SparseIter P`.  Axiom-clean.  Mechanism
 tail paid by the crude `∑_{p≤2N}1/p ≤ 12L₂N + 21`.  Modules `PrimeModelFamilySharpMass`,
 `PrimeModelFamilySharp`; paper Part III.  Next step if wanted: `ε = J^{-4}` schedule → exponent
 `2+η` (needs `y_N` lemmas with `P`-dependent `ε`).
+
+## Addendum 2 (2026-09-22): exponent 3
+
+`PrimeModelFamilyIter.isNormal_subsetLambert_of_sparseIter3 : SparseIter3 P → DivergentRecip P →
+IsNormal 4 (subsetLambert P 4)`, `SparseIter3 P := ∀ᶠ x, π_P(x)·(log log log x)^3 ≤ π(x)`.
+Axiom-clean.  `ε = J₁^{-4}` with `J₁ = ⌊L₃N⌋₊` (P-independent) makes `log(1/ε) ≤ 4L₄N`, so the
+transfer needs `L₃·L₄·√δ → 0`: any exponent `> 2` works, `2` fails by a log.  Modules
+`PrimeModelFamilyIterMass`, `PrimeModelFamilyIter`; paper Part IV.  **Exact remaining obstacle
+for relative-density-zero alone:** the transfer error `E1 = 4k·recipSumIoc S y x` (expected number
+of unmodelled large-prime hits in a window of length `k ≈ log₄ S_P(N)`), tight in L¹; beating it
+means modelling the primes in `(y, x]`, KMT's own Prop. 4.3 machinery.

@@ -382,6 +382,37 @@ obstruction above.  The transfer error `E1 = 4k · recipSumIoc S y x` counts the
 of unmodelled large-prime hits in the window and is tight in `L¹`; going below it means modelling
 the primes in `(y, x]`, which is KMT's own Prop. 4.3 machinery, not a schedule change.
 
+## Part IV: `ε = J₁^{-4}`, exponent 3 (2026-09-22, PROVED)
+
+The Part III transfer term carried `log(1/ε_N) ≈ L₃N` because `ε_N = 2/L₂N`.  The sieve term only
+needs `ε ≪ 1/J³` (`exp(−1/(8J²ε))` against the coefficient `e^{22}4^J`), so `ε` can be as large
+as `J₁^{-4}` with `J₁ := ⌊L₃N⌋₊` (`P`-independent, which breaks the circularity `ε ↔ J ↔ S_P(y)`).
+
+**Definitions.**  `L₄N = log L₃N`, `J₁N = ⌊L₃N⌋₊`, `ε_N = 1/(J₁N)^4`, `y_N = ⌊N^{ε_N}⌋₊`,
+`J_N = min(J₁N, ⌊S_P(y_N)/8⌋₊)`.  Hypothesis `SparseIter3 P := ∀ᶠ x, π_P(x)·(L₃x)^3 ≤ π(x)`
+(`SparseIter → SparseIter3` trivially).
+
+**Facts.**  Eventually `2/L₂N ≤ ε_N ≤ 1/(7680 J₁N)` (from `2L₃⁴ ≤ L₂` and `J₁³ ≥ 7680`),
+`1/L₂N < ε_N < 1/2`, `log(1/ε_N) = 4 log J₁ ≤ 4L₄N`; `y_N ≥ y_N^{(III)}` so the `yN_core` facts
+transfer by monotonicity, and `log N/log y_N ≤ 2J₁⁴` (`⌊x⌋₊ ≥ x/2`, `ε_N log N ≥ 2`).
+Fresh mass: density on `(y_N, M+1]` is `≤ 8/(L₃N)^3`; `recipSumIoc P y_N N ≤ (8/u³)(21 + 48v)`
+(`u = L₃N`, `v = L₄N`), and `recipSumIoc P y_N (2N) ≤ 1` eventually.
+
+**Limits.**  Transfer `≤ 24u · √(4v) · √(1104v/u³) ≤ 1600 v/√u → 0`.  Old mass as before.
+Sieve: exponent `−J₁⁴/(8J²) ≤ −J₁²/8`, coefficient `≤ e^{22}4^{J₁}`, product `≤ e^{−J₁}` once
+`J₁ ≥ 40`.  Tail as in Part III.  Regime as before with `ε_N ≤ 1/(7680J₁) ≤ 1/(7680J)`.
+
+**Theorem (Part IV).**  `SparseIter3 P → DivergentRecip P → IsNormal 4 (subsetLambert P 4)`.
+Lean: `PrimeModelFamilyIterMass.lean`, `PrimeModelFamilyIter.lean`
+(`isNormal_subsetLambert_of_sparseIter3`).  Status: both modules sorry-free; the theorem and
+`sparseIter3_of_sparseIter` depend only on `[propext, Classical.choice, Quot.sound]` (verified
+2026-09-22).
+
+**Frontier of the route.**  The transfer requirement is now `L₃ · L₄ · √δ → 0`, so any exponent
+`> 2` on `L₃` works and `2` itself fails by a `log`.  Below that, the only lever left in this
+schedule family is the transfer error `E1 = 4k·recipSumIoc S y x` itself (tight in `L¹`), i.e.
+modelling the primes in `(y, x]`.
+
 ## Lean plan (Part II)
 
 | Module | Content |

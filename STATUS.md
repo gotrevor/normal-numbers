@@ -31,7 +31,10 @@ carry the digit-character criterion, both directions, as the dual of `equidistri
 > polynomial-constant `window_bound_regime` directly instead of the frozen `KMT_quant₂` shape;
 > the tail is then paid for by the crude total mass `∑_{p≤2N} 1/p ≤ 12 L₂N + 21`, no density
 > input.  Paper Part III.  Frontier of this schedule family: exponent `> 4` on `L₃` (`> 2` with
-> `ε = J^{-4}`, not done); `π_P ≈ π/L₄` still fails.
+> `ε = J^{-4}`); `π_P ≈ π/L₄` still fails.  **Exponent 3 also PROVED** the same day:
+> `PrimeModelFamilyIter.isNormal_subsetLambert_of_sparseIter3` (`π_P·(log log log x)^3 ≤ π`),
+> schedule `J₁ = ⌊L₃N⌋₊`, `ε = J₁^{-4}`, `J = min(J₁, ⌊S_P(y)/8⌋₊)`; paper Part IV.  Frontier of
+> this schedule family: any exponent `> 2` on `L₃`; below that only the transfer error `E1` is left.
 
 > **DEEP REFLECTION lap — 2026-09-16.**  Build 🟢 **9085 jobs**, re-verified.  `src/` = the two
 > pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**; **math-axiom count 0** — there is no
