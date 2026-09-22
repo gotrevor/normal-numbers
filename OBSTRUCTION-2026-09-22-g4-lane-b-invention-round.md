@@ -14,7 +14,8 @@ candidate (§2) is a reduction that halves the site schedule and corrects probe 
 cancellation.  The h-resonance arithmetic of the brief is verified (§1).  Nothing here changes the status of
 `EventualPrefixDecay`: still open, still 🔴, with the class of the obstruction now written down (§3–§4).  ⚠️ Tier:
 §1, §2, §3b, §3c are proved (paper) and probe-checked; **§3a–§3d and §4 are a difficulty *diagnosis*, not a Maze-row
-refutation** (referee, §6).  Gate for any future candidate: `h = 2`, `k = 2` (§6-ii).
+refutation** (referee, §6).  Calibration test for any future candidate: `h = 2`, `k = 2` (§6-ii) — a *calibration*, not a logical
+gate (Astra 17:44Z: `EventualPrefixDecay` starts at `k₀`, `WindowDecayK` speaks only at scheduled `k`).
 
 Notation.  `T_k(m) = Σ_{j=1}^{k} ω(m+j)/4^j` (= `truncTail k m`), `F_{h,k}(m) = e(h T_k(m)) = ∏_{j≤k} z_j^{ω(m+j)}`,
 `z_j = e(h/4^j)`, `S(h,k,M) = Σ_{m<M} F_{h,k}(m)` (= `fullPrefixSum h k M`), `windowK M = ⌊log₂⌊log₂⌊log₂ M⌋⌋⌋ + 1`,
@@ -94,7 +95,9 @@ schedule.
 **2c. Lean shape (not built this round).**  Frozen input `TuranKubiliusShift : ∃ C, ∀ M j, j ≤ M →
 Σ_{m<M} (omegaR (m+j+1) − loglog M)² ≤ C · M · loglog M` (or with the window mean); theorem
 `norm_fullPrefixSum_sub_rot_le` with the explicit bound above; corollary: `EventualPrefixDecay h` may be weakened to
-`k ≤ windowK' M := ⌈½ log₄ (h² log log M)⌉ + A`.  Cost: TK second moment is the only real work (needs
+`k ≤ windowK' M := ⌈½ log₄ (h² log log M)⌉ + A(M)` with **any `A(M) → ∞`** (e.g. `⌈log₄ log log log M⌉`).
+⚠️ A fixed `A` gives error `O(1/A)`, not `o(1)` — Astra's correction, 2026-09-22 17:44Z; the two-limit form
+(`A → ∞` after `M → ∞`) is what the `∀ ε, ∀ᶠ M` quantifier structure of `EventualPrefixDecay` delivers for free.  Cost: TK second moment is the only real work (needs
 `Σ_{p≤x} 1/p ≤ log log x + O(1)` and the two-prime CRT count; the repo has the one-prime first moment
 `sum_omegaR_add_le`).  One to two Opus/low laps.  **Not fired**: a schedule change with no new node is a rung, not
 a lap objective, per the brief.
