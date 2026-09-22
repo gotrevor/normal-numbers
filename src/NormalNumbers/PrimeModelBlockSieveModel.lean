@@ -198,4 +198,127 @@ theorem factorial_mul_esymmOn_le (g : α → ℝ) (hg : ∀ p, 0 ≤ g p) :
           rw [Finset.sum_insert ha, esymmOn_insert g ha m, mul_add]
           linarith
 
+
+/-! ### `n! ≥ (n/e)^n` and the per-block defect -/
+
+/-- `n^n ≤ n! e^n`, i.e. `n! ≥ (n/e)^n`.  Induction via `(1 + 1/n)^n ≤ e`. -/
+theorem pow_self_le_factorial_mul_exp : ∀ n : ℕ,
+    (n : ℝ) ^ n ≤ (n.factorial : ℝ) * Real.exp n := by
+  intro n
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      rcases Nat.eq_zero_or_pos n with rfl | hn
+      · simp
+      · have hnr : (0:ℝ) < n := by exact_mod_cast hn
+        -- `(n+1)^n ≤ n^n e`
+        have hstep : ((n : ℝ) + 1) ^ n ≤ (n : ℝ) ^ n * Real.exp 1 := by
+          have h1 : (1 + 1 / (n:ℝ)) ^ n ≤ Real.exp 1 := by
+            have hb : (1 + 1 / (n:ℝ)) ≤ Real.exp (1 / (n:ℝ)) := by
+              have := Real.add_one_le_exp (1 / (n:ℝ)); linarith
+            have hbn : (0:ℝ) ≤ 1 + 1 / (n:ℝ) := by positivity
+            calc (1 + 1 / (n:ℝ)) ^ n ≤ (Real.exp (1 / (n:ℝ))) ^ n := by
+                  exact pow_le_pow_left₀ hbn hb n
+              _ = Real.exp ((n:ℝ) * (1 / (n:ℝ))) := by
+                  rw [← Real.exp_nat_mul]
+              _ = Real.exp 1 := by
+                  rw [mul_one_div, div_self (ne_of_gt hnr)]
+          have hid : ((n:ℝ) + 1) ^ n = (n:ℝ) ^ n * (1 + 1 / (n:ℝ)) ^ n := by
+            rw [← mul_pow]
+            congr 1
+            field_simp
+          rw [hid]
+          exact mul_le_mul_of_nonneg_left h1 (by positivity)
+        have hfac : (((n+1).factorial : ℝ)) = ((n:ℝ) + 1) * (n.factorial : ℝ) := by
+          rw [Nat.factorial_succ]; push_cast; ring
+        have hexp : Real.exp ((n:ℝ) + 1) = Real.exp n * Real.exp 1 := by
+          rw [← Real.exp_add]
+        have hnn : (0:ℝ) ≤ (n:ℝ) ^ n := by positivity
+        have hexppos : (0:ℝ) < Real.exp 1 := Real.exp_pos _
+        push_cast
+        calc ((n:ℝ) + 1) ^ (n + 1) = ((n:ℝ) + 1) * ((n:ℝ) + 1) ^ n := by ring
+          _ ≤ ((n:ℝ) + 1) * ((n:ℝ) ^ n * Real.exp 1) := by
+              exact mul_le_mul_of_nonneg_left hstep (by positivity)
+          _ ≤ ((n:ℝ) + 1) * (((n.factorial : ℝ) * Real.exp n) * Real.exp 1) := by
+              refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+              exact mul_le_mul_of_nonneg_right ih hexppos.le
+          _ = (((n+1).factorial : ℝ)) * Real.exp ((n:ℝ) + 1) := by
+              rw [hfac, hexp]; ring
+      
+/-- `e/8 ≤ e^{−1}` (i.e. `e² ≤ 8`), the numerical step behind `8ed/(r+1) ≤ 1/2`. -/
+theorem exp_one_div_eight_le : Real.exp 1 / 8 ≤ Real.exp (-1) := by
+  have h : Real.exp 1 < 2.7182818286 := Real.exp_one_lt_d9
+  have hpos : (0:ℝ) < Real.exp 1 := Real.exp_pos _
+  have hsq : Real.exp 1 * Real.exp 1 ≤ 8 := by nlinarith
+  rw [Real.exp_neg, inv_eq_one_div, div_le_div_iff₀ (by norm_num) hpos]
+  linarith
+
+/-- **The per-block defect bound** (Fable §3): with `g ≤ 1/2` on the block, block mass
+`≤ 8d` and the even degree `r = 64d + 2u + 2l + 4`, the defect `e_{r+1}(g)` is at most
+`e^{−u−l−2}` times the block's model density `∏ (1 − g)`. -/
+theorem block_defect_le {d u l : ℕ} (hd : 1 ≤ d) (g : α → ℝ) (B : Finset α)
+    (hg0 : ∀ p, 0 ≤ g p) (hg1 : ∀ p ∈ B, g p ≤ 1 / 2)
+    (hmass : ∑ p ∈ B, g p ≤ 8 * d) :
+    esymmOn g B (64 * d + 2 * u + 2 * l + 5)
+      ≤ Real.exp (-(u:ℝ) - l - 2) * ∏ p ∈ B, (1 - g p) := by
+  set n : ℕ := 64 * d + 2 * u + 2 * l + 5 with hn
+  set lam : ℝ := ∑ p ∈ B, g p with hlam
+  have hlam0 : 0 ≤ lam := Finset.sum_nonneg fun p _ => hg0 p
+  have hnr : (64 * (d:ℝ)) ≤ (n:ℝ) := by rw [hn]; push_cast; linarith
+  have hd1 : (1:ℝ) ≤ (d:ℝ) := by exact_mod_cast hd
+  have hnpos : (0:ℝ) < (n:ℝ) := by linarith
+  -- (1) the model density dominates `exp (−2λ)`
+  have hV : Real.exp (-(2 * lam)) ≤ ∏ p ∈ B, (1 - g p) := by
+    have hprod : (∏ p ∈ B, Real.exp (-(2 * g p))) = Real.exp (-(2 * lam)) := by
+      rw [← Real.exp_sum, hlam, Finset.mul_sum, Finset.sum_neg_distrib]
+    rw [← hprod]
+    exact Finset.prod_le_prod (fun p _ => (Real.exp_pos _).le)
+      (fun p hp => exp_neg_two_mul_le_one_sub (hg0 p) (hg1 p hp))
+  -- (2) the factorial bound, then `λ ≤ n/8`
+  have hfac := factorial_mul_esymmOn_le g hg0 B n
+  have hfacpos : (0:ℝ) < (n.factorial : ℝ) := by exact_mod_cast n.factorial_pos
+  have hlamn : lam ≤ (n:ℝ) / 8 := by
+    have : (8 : ℝ) * d ≤ (n:ℝ) / 8 := by linarith
+    exact hmass.trans this
+  have hfacge : ((n:ℝ) / Real.exp 1) ^ n ≤ (n.factorial : ℝ) := by
+    have h := pow_self_le_factorial_mul_exp n
+    have hexppos : (0:ℝ) < Real.exp 1 := Real.exp_pos _
+    rw [div_pow, div_le_iff₀ (by positivity)]
+    calc (n:ℝ) ^ n ≤ (n.factorial : ℝ) * Real.exp n := h
+      _ = (n.factorial : ℝ) * (Real.exp 1) ^ n := by
+          rw [← Real.exp_nat_mul]; ring_nf
+  -- (3) `e_n ≤ λ^n / n! ≤ (e/8)^n ≤ e^{−n}`
+  have hstep : esymmOn g B n ≤ (Real.exp (-1)) ^ n := by
+    have he : esymmOn g B n ≤ lam ^ n / (n.factorial : ℝ) := by
+      rw [le_div_iff₀ hfacpos]
+      calc esymmOn g B n * (n.factorial : ℝ) = (n.factorial : ℝ) * esymmOn g B n := by ring
+        _ ≤ lam ^ n := hfac
+    have hnum : lam ^ n ≤ ((n:ℝ) / 8) ^ n := pow_le_pow_left₀ hlam0 hlamn n
+    have hden : ((n:ℝ) / Real.exp 1) ^ n ≤ (n.factorial : ℝ) := hfacge
+    have hdiv : lam ^ n / (n.factorial : ℝ) ≤ ((n:ℝ) / 8) ^ n / ((n:ℝ) / Real.exp 1) ^ n := by
+      have hp : (0:ℝ) < ((n:ℝ) / Real.exp 1) ^ n := by positivity
+      exact div_le_div₀ (by positivity) hnum hp hden
+    have hid : ((n:ℝ) / 8) ^ n / ((n:ℝ) / Real.exp 1) ^ n = (Real.exp 1 / 8) ^ n := by
+      rw [← div_pow]
+      congr 1
+      field_simp
+    have hmono : (Real.exp 1 / 8) ^ n ≤ (Real.exp (-1)) ^ n :=
+      pow_le_pow_left₀ (by positivity) exp_one_div_eight_le n
+    calc esymmOn g B n ≤ lam ^ n / (n.factorial : ℝ) := he
+      _ ≤ ((n:ℝ) / 8) ^ n / ((n:ℝ) / Real.exp 1) ^ n := hdiv
+      _ = (Real.exp 1 / 8) ^ n := hid
+      _ ≤ (Real.exp (-1)) ^ n := hmono
+  -- (4) numerics: `e^{−n} ≤ e^{−u−l−2} e^{−16 d} ≤ e^{−u−l−2} exp(−2λ)`
+  have hexpn : (Real.exp (-1)) ^ n = Real.exp (-(n:ℝ)) := by
+    rw [← Real.exp_nat_mul]; ring_nf
+  have hcount : -(n:ℝ) ≤ (-(u:ℝ) - l - 2) + (-(2 * lam)) := by
+    have h2 : 2 * lam ≤ 16 * (d:ℝ) := by linarith
+    rw [hn]; push_cast; linarith
+  calc esymmOn g B n ≤ (Real.exp (-1)) ^ n := hstep
+    _ = Real.exp (-(n:ℝ)) := hexpn
+    _ ≤ Real.exp ((-(u:ℝ) - l - 2) + (-(2 * lam))) := Real.exp_le_exp.2 hcount
+    _ = Real.exp (-(u:ℝ) - l - 2) * Real.exp (-(2 * lam)) := Real.exp_add _ _
+    _ ≤ Real.exp (-(u:ℝ) - l - 2) * ∏ p ∈ B, (1 - g p) :=
+        mul_le_mul_of_nonneg_left hV (Real.exp_pos _).le
+
 end NormalNumbers.PrimeModel.BlockSieve
