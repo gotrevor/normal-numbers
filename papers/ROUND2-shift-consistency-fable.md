@@ -92,9 +92,13 @@ later carry (Astra section 3).  I checked this and the rest of Astra's argument;
 
 ## 3. Theorem: the scheduled means are the Weyl sums of the prescribed orbit
 
-Take Astra's background: `A_i = 3 + N_i`, `N_i ~ Pois(lambda_i)` independent, `lambda_i = log log(i + e^e)`, and
-fix a realization in the probability-one set of Astra's sections 4-8.  Fix ANY `x_0 in [0,1)` and let `W` be
-(2.1).
+**Fix `x_0 in [0,1)` FIRST.**  Then take Astra's background: `A_i = 3 + N_i`, `N_i ~ Pois(lambda_i)` independent,
+`lambda_i = log log(i + e^e)`, and fix a realization in the probability-one set that Astra's sections 4-8 produce
+for this `x_0` (the proof below runs with the digits `d` of `x_0` as a fixed deterministic input).  Let `W` be
+(2.1).  The quantifier order matters: the theorem says *for every `x_0`, almost every background works*, not
+that one background works for all `x_0`.  The stronger claim is false (Astra, 20:24Z): given a background,
+choose `d_n in {0,1}` with `d_n = C_{n+1} mod 2`; then `W_{n+1} = 4C_n - C_{n+1} + d_n` is always even, which destroys
+(P).  Those digits define a legitimate `x_0`, chosen after the background.
 
 **Theorem 3.1.**  As `M -> infinity` through all integers:
 
@@ -129,13 +133,15 @@ Astra's (7.1).  QED.
 
 (c) A `mu`-generic `x_0` for a times-4-invariant ergodic probability `mu`: the scheduled mean tends to
     `mu-hat(h)`.  Astra's Riesz measure `mu = prod_{r>=0}(1 + delta cos(2 pi 4^r x)) dx` is times-4-invariant with
-    `mu-hat(h) = (delta/2)^{s(h)}` (`s` = number of nonzero signed base-4 digits, zero if none).  The Riesz note
-    proves invariance, NOT ergodicity, and Birkhoff plus invariance does not supply a point whose orbit
-    averages converge to `mu` itself.  So the embedding of the Riesz table is **conditional on choosing a
-    `mu`-generic point** (ergodicity of this Riesz product would give one almost surely; standard for Riesz
-    products, confidence 80%, not proved here).  Unconditionally: by the ergodic decomposition some component
-    has a nonzero `h = 1` coefficient, so generic points with nonzero scheduled limits exist.  (Astra's
-    caution (a), 20:11Z, accepted.)
+    `mu-hat(h) = (delta/2)^{s(h)}` (`s` = number of nonzero signed base-4 digits, zero if none).  It is also
+    times-4-**mixing**, hence ergodic (Astra, 20:24Z): for fixed integers `u, v` and all large `n`,
+    `mu-hat(u + 4^n v) = mu-hat(u) mu-hat(v)`, because signed-digit decoding of `u + 4^n v` reads off the digits
+    of `u` below position `n` (terminating there if `u` is representable, hitting the forbidden residue 2 before
+    `n` if not, in which case both sides vanish) and the digits of `v` above; so `int e(ux) e(v 4^n x) dmu ->
+    mu-hat(u) mu-hat(v)`, and trigonometric-polynomial density gives mixing.  Birkhoff then supplies a point
+    generic for all integer characters simultaneously.  Choosing that `x_0` first and an independent good
+    background second embeds the exact Riesz table (`rho^{s(h)}`, zero at `h = 2`) into a one-sequence,
+    overlapping-window, every-`M` model, unconditionally.
 
 (d) A normal `x_0`: the scheduled means tend to 0 for every `h != 0`.  So a sequence with the identical summary
     package can equally well satisfy scheduled decay.  The package carries no information about which case
@@ -167,8 +173,10 @@ over shifted windows: the repo's `sum_window_omegaR_le` (G4WindowK.lean) gives `
 handled as in Astra's (7.1).  (Checked against the Lean statement, not just its docstring.)
 
 Consequently **`WindowDecayK h` is equivalent to dyadic Weyl decay of the orbit `{4^n G}` at frequency `h`**,
-which (summing dyadic blocks) is equivalent to `(1/N) sum_{n<N} e(h 4^n G) -> 0`, i.e. to normality of `G` at
-frequency `h`.  The repo proves the direction `WindowDecayK -> IsNormal` (`isNormal_G4_of_windowDecayK`); the
+which is equivalent to `(1/N) sum_{n<N} e(h 4^n G) -> 0`, i.e. to normality of `G` at frequency `h`: with
+`S(N) = sum_{n<N} e(h 4^n G)` and `S(2m) - S(m) = o(m)`, take `m = floor(N/2)`, so `S(N) = S(m) + o(N) + O(1)`, iterate a
+fixed number `r` of halvings and bound the last prefix by `N/2^r`; `N -> infinity` first, then `r -> infinity`
+(Astra, 20:24Z; no exceptional-scale averaging enters).  The repo proves the direction `WindowDecayK -> IsNormal` (`isNormal_G4_of_windowDecayK`); the
 proposition is the converse.  So the window ladder `PrefixDecay -> EventualPrefixDecay -> WindowDecayK ->
 IsNormal` collapses at its last rung: the scheduled window mean is the Weyl sum of the target, rotated by a
 deterministic unimodular factor and perturbed by `o(1)`.
@@ -180,11 +188,15 @@ Two consequences for how the crux should be read.
   is the sharp version of the same fact with the second moment in place of the first.  Below that threshold
   the window mean is a genuinely different object (section 6).
 
-- **`EventualPrefixDecay h` is the conjunction of two independent statements**: normality of `G` at `h`
-  (the rungs `k >= (1/2) log_4 L + A`) and fixed-`k` Elliott-type decay for `k_0 <= k < (1/2) log_4 L + A` (the
-  `k = 2` calibration is its first case).  Theorem 3.1 shows the second, strengthened to total variation and
-  augmented by every summary in the assembly, does not imply the first.  I expect the first does not imply the
-  second either (a `W` with `W_n = 0 mod 4` throughout and a normal orbit would witness it; not constructed).
+- **`EventualPrefixDecay h` splits at the threshold** into normality of `G` at `h` (the rungs `k >= a(M) :=
+  (1/2) log_4 L + A`, by Candidate A's rotation) and a lower-range requirement: decay **uniformly over all
+  `k_0 <= k < a(M)`**, for all large `M`.  The lower range is NOT "fixed-`k` decay": pointwise decay at each fixed
+  `k` plus orbit normality does not supply uniformity over the growing intermediate range (Astra, 20:24Z).
+  What Theorem 3.1 establishes is the one direction that matters here: pointwise fixed-`k` summaries, even
+  in total variation and with every other summary added, do not imply the scheduled rung.  Whether orbit
+  normality implies the uniform lower-range requirement is not settled either way; a witness would be a `W`
+  with `W_n = 0 mod 4` throughout and a normal orbit (not constructed, and by the quantifier remark above it
+  would have to be built with its orbit fixed first).
 
 ## 5. Retraction
 
@@ -209,7 +221,9 @@ equidistribution of `N_J mod 4^J` in total variation, and the two are not to be 
 This is equivalent to normality at `h` (up to `O(|h| 4^{-J})`), so it is not a reduction.  Its value is that it
 names the object no summary reaches: `N_J mod 4^J` couples the leading residues `omega(n+1) mod 4`,
 `omega(n+2) mod 16`, ... with the carry `C^omega_{n+J} mod 4^J`, where `4^J = 4^A sqrt(L)` is a slowly growing
-multiple of the standard deviation `sqrt(L/15)` of the carry.  For fixed `J` the carry is spread over all of
+multiple of the standard-deviation scale of the carry: `sqrt(L/15)` in the independent model, and for `omega`
+itself of order `sqrt(L)` by Minkowski over the geometric weights with the shifted Turan-Kubilius bound
+(`<= sqrt(L)/3`; the value `1/15` is the model's, not a proved arithmetic variance).  For fixed `J` the carry is spread over all of
 `Z/4^J` (that is why fixed prefixes cancel in every model); at `J = (1/2) log_4 L + A` it is concentrated on a
 `4^{-A}` fraction of the residues
 and the leading residues have to do the work; above that the carry is frozen and nothing changes.
@@ -237,8 +251,8 @@ mod-`4^J` residue condition implying integrality of every intermediate carry by 
 than my own whole-tail Erdos-Turan route.  (iii) reverse filtration: `Y_n` is `F_{n+1}`-measurable,
 `E(Z_n | F_{n+J+2}) = 0`, `Z_{n+J+1}` is `F_{n+J+2}`-measurable; iterated conditional Hoeffding gives Azuma; the
 constant 32 is loose.  (iv) union over `2^{|S_M|}` subsets with `t = M^{-1/8}`: summable.  (v) recentering and
-dyadic passage: correct.  (vi) infinite remainder of (7.1): correct.  Arithmetic spot checks: `Var(N^2) =
-lambda + 2 lambda^2`; `4^K in (a^2, 4a^2]`.  **No defect found.**  Astra's file is not modified.
+dyadic passage: correct.  (vi) infinite remainder of (7.1): correct.  Arithmetic spot checks: `Var((N - lambda)^2)
+= lambda + 2 lambda^2`; `4^K in (a^2, 4a^2]`.  **No defect found.**  Astra's file is not modified.
 
 ## 8. Probe 15 (`probes/carry_lift.py`)
 
@@ -274,8 +288,9 @@ scale, a different quantifier, and no correction mechanism for a one-sequence ve
 uniformity (one-site root-of-unity decay at `4^{J+1}`-th roots) but the smoothing step needs small
 **translation** TV for that lattice law, which root-of-unity decay plus a CLT do not give; a local limit
 estimate would.  So "smoothed-`omega` singletons" is **conditional on translation smoothness of the
-`omega(U)`-law**, not claimed.  The singleton law of `W` in the theorem is the 4-point smoothing of
-`Pois(L) + 3`, at TV distance `O(1/sqrt L)` from `Pois(L)`.  Nothing against G4
+`omega(U)`-law**, not claimed.  The singleton law of `W` in the theorem is, asymptotically, the 4-point smoothing
+of `Pois(L) + 3` (exactly: (2.3) with `J = 1`, whose carry-residue factor is only approximately uniform and whose
+mean drifts), at TV distance `O(1/sqrt L)` from `Pois(L)`.  Nothing against G4
 normality; the Riesz note and Astra's file are unchanged.  No formalization launch is warranted: the theorem
 is a countermodel, not a node of the conjecture graph, and the exact reformulation of section 4 is a
 one-line identity a future lap can state as a Lean lemma if a consumer wants the converse direction.
