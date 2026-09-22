@@ -350,6 +350,134 @@ theorem epsG_mul_uG_sq_le (N : ℕ) : epsG P N * ((uG P N : ℕ) : ℝ) ^ 2 ≤ 
           rw [mul_pow, pow_two (Real.sqrt (epsG P N)), hsq]; ring
       _ ≤ 1 := h2
 
+/-- **The short root chain at site `j`.**  `log N / log y_j ≤ 2^{j+1} u_N²`, so the chain from
+`y_j` up to `N` needs at most `j + 2 + 2 log₂ u_N` halvings, and with `ε_N ≤ u_N^{−2}` the fresh
+mass above `y_j` is at most `(j + 2 + 2 log₂ u_N)/u_N²`.  This is the estimate that the BOTTOM
+cutoff cannot supply (there the chain is `≍ L₃N` long); it is available at every site because the
+site exponents are `a_N 2^{-j}` with `a_N = u_N^{-2}`. -/
+theorem recipSumIoc_yG_le (hS : SqrtFreshMassZero P) : ∀ᶠ N : ℕ in atTop,
+    ∀ j : ℕ, j ≤ J1 N →
+      recipSumIoc P (yG P N j) N
+        ≤ ((j : ℝ) + 2 + 2 * Real.log ((uG P N : ℕ) : ℝ) / Real.log 2)
+            / ((uG P N : ℕ) : ℝ) ^ 2 := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  filter_upwards [yBotG_le_yG_nat P hS, yBotG_tendsto.eventually_ge_atTop 4,
+    (uG_tendsto P hS yBotG_tendsto).eventually_ge_atTop 2, eventually_ge_atTop 16]
+    with N hyb hy4 hu2 hN16 j hj
+  have hu2r : (2 : ℝ) ≤ ((uG P N : ℕ) : ℝ) := by exact_mod_cast hu2
+  have hNr : (16 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN16
+  have hN0 : (0 : ℝ) < (N : ℝ) := by linarith
+  have hlogN : (0 : ℝ) < Real.log N := Real.log_pos (by linarith)
+  have hy4' : 4 ≤ yG P N j := le_trans hy4 (hyb j hj)
+  have hy4r : (4 : ℝ) ≤ ((yG P N j : ℕ) : ℝ) := by exact_mod_cast hy4'
+  -- the real cutoff `x` and its logarithm `A`
+  set e : ℝ := aG P N * (1 / 2) ^ j with hedef
+  have haG : aG P N = 1 / ((uG P N : ℕ) : ℝ) ^ 2 := rfl
+  have hapos : (0 : ℝ) < aG P N := by rw [haG]; positivity
+  have hepos : (0 : ℝ) < e := by rw [hedef]; positivity
+  set x : ℝ := (N : ℝ) ^ e with hxdef
+  have hxpos : (0 : ℝ) < x := Real.rpow_pos_of_pos hN0 _
+  have hyx : ((yG P N j : ℕ) : ℝ) ≤ x := Nat.floor_le hxpos.le
+  have hxhalf : x / 2 ≤ ((yG P N j : ℕ) : ℝ) := by
+    have h1 : x - 1 < ((yG P N j : ℕ) : ℝ) := by
+      have := Nat.lt_floor_add_one x
+      simpa [yG, hxdef, hedef] using (by linarith [Nat.lt_succ_floor x, Nat.lt_floor_add_one x] :
+        x - 1 < ((⌊x⌋₊ : ℕ) : ℝ))
+    have h2 : (2 : ℝ) ≤ x := by linarith [hy4r, hyx]
+    linarith
+  set A : ℝ := e * Real.log N with hAdef
+  have hlogx : Real.log x = A := by rw [hxdef, Real.log_rpow hN0, hAdef]
+  have hlogy_le : Real.log (yG P N j) ≤ A := by
+    rw [← hlogx]; exact Real.log_le_log (by linarith) hyx
+  have hlogy_ge : A - Real.log 2 ≤ Real.log (yG P N j) := by
+    have h := Real.log_le_log (by positivity) hxhalf
+    rw [Real.log_div (ne_of_gt hxpos) (by norm_num), hlogx] at h
+    linarith
+  have hlog4 : Real.log 4 ≤ Real.log (yG P N j) := Real.log_le_log (by norm_num) hy4r
+  have hlog4eq : Real.log 4 = 2 * Real.log 2 := by
+    rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow]; push_cast; ring
+  have hApos : 2 * Real.log 2 ≤ A := by linarith
+  have hlogy_half : A / 2 ≤ Real.log (yG P N j) := by linarith
+  have hlogypos : (0 : ℝ) < Real.log (yG P N j) := by linarith
+  -- `y_j < N`
+  have hyN : yG P N j < N := by
+    have he4 : e ≤ 1 / 4 := by
+      rw [hedef, haG]
+      have h1 : ((1 : ℝ) / 2) ^ j ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+      have h2 : (4 : ℝ) ≤ ((uG P N : ℕ) : ℝ) ^ 2 := by nlinarith
+      have : (1 : ℝ) / ((uG P N : ℕ) : ℝ) ^ 2 ≤ 1 / 4 :=
+        one_div_le_one_div_of_le (by norm_num) h2
+      nlinarith [pow_nonneg (show (0:ℝ) ≤ 1/2 by norm_num) j,
+        one_div_nonneg.mpr (show (0:ℝ) ≤ ((uG P N : ℕ) : ℝ) ^ 2 by positivity)]
+    have hxlt : x < (N : ℝ) := by
+      have h1 : x ≤ (N : ℝ) ^ ((1 : ℝ) / 4) :=
+        Real.rpow_le_rpow_of_exponent_le (by linarith) he4
+      have h2 : (N : ℝ) ^ ((1 : ℝ) / 4) < (N : ℝ) ^ (1 : ℝ) :=
+        Real.rpow_lt_rpow_of_exponent_lt (by linarith) (by norm_num)
+      rw [Real.rpow_one] at h2
+      linarith
+    have : ((yG P N j : ℕ) : ℝ) < (N : ℝ) := lt_of_le_of_lt hyx hxlt
+    exact_mod_cast this
+  -- the chain
+  have hchain := SqrtFresh.recipSumIoc_le_rootChain P (ρ := epsG P N) (epsG_nonneg P N)
+    (Z := yBotG N) (y := yG P N j) (M := N) (by omega) (hyb j hj) hyN
+    (fun q hq => recipSumIoc_le_epsG P N hy4 hq)
+  -- the chain length
+  set K : ℕ := ⌈Real.log (Real.log N / Real.log (yG P N j)) / Real.log 2⌉₊ with hKdef
+  set B : ℝ := ((j : ℝ) + 1) + 2 * Real.log ((uG P N : ℕ) : ℝ) / Real.log 2 with hBdef
+  have hBnn : (0 : ℝ) ≤ B := by
+    have : (0 : ℝ) ≤ Real.log ((uG P N : ℕ) : ℝ) := Real.log_nonneg (by linarith)
+    have hj0 : (0 : ℝ) ≤ (j : ℝ) := Nat.cast_nonneg j
+    rw [hBdef]; positivity
+  have hratio : Real.log N / Real.log (yG P N j) ≤ 2 * 2 ^ j * ((uG P N : ℕ) : ℝ) ^ 2 := by
+    rw [div_le_iff₀ hlogypos]
+    have h1 : A / 2 ≤ Real.log (yG P N j) := hlogy_half
+    have hA : A = Real.log N / (2 ^ j * ((uG P N : ℕ) : ℝ) ^ 2) := by
+      rw [hAdef, hedef, haG]
+      have h2 : ((1 : ℝ) / 2) ^ j = 1 / 2 ^ j := by rw [div_pow, one_pow]
+      rw [h2]
+      field_simp
+    have hden : (0 : ℝ) < 2 ^ j * ((uG P N : ℕ) : ℝ) ^ 2 := by positivity
+    rw [hA, div_div, div_le_iff₀ (by positivity)] at h1
+    linarith
+  have hKle : (K : ℝ) ≤ B + 1 := by
+    have hpos : (0 : ℝ) < Real.log N / Real.log (yG P N j) := by positivity
+    have hlogratio : Real.log (Real.log N / Real.log (yG P N j))
+        ≤ Real.log (2 * 2 ^ j * ((uG P N : ℕ) : ℝ) ^ 2) := Real.log_le_log hpos hratio
+    have heval : Real.log (2 * 2 ^ j * ((uG P N : ℕ) : ℝ) ^ 2)
+        = ((j : ℝ) + 1) * Real.log 2 + 2 * Real.log ((uG P N : ℕ) : ℝ) := by
+      rw [Real.log_mul (by positivity) (by positivity), Real.log_mul (by norm_num) (by positivity),
+        Real.log_pow, Real.log_pow]
+      push_cast; ring
+    have ht : Real.log (Real.log N / Real.log (yG P N j)) / Real.log 2 ≤ B := by
+      rw [div_le_iff₀ hlog2, hBdef]
+      rw [heval] at hlogratio
+      have : 2 * Real.log ((uG P N : ℕ) : ℝ) / Real.log 2 * Real.log 2
+          = 2 * Real.log ((uG P N : ℕ) : ℝ) := by field_simp
+      nlinarith [hlogratio, this]
+    have hyle : Real.log (yG P N j) ≤ Real.log N :=
+      Real.log_le_log (by linarith) (by exact_mod_cast hyN.le)
+    have h0t : (0 : ℝ) ≤ Real.log (Real.log N / Real.log (yG P N j)) / Real.log 2 := by
+      refine div_nonneg (Real.log_nonneg ?_) hlog2.le
+      rw [le_div_iff₀ hlogypos]
+      linarith
+    have hKlt : (K : ℝ)
+        < Real.log (Real.log N / Real.log (yG P N j)) / Real.log 2 + 1 := by
+      rw [hKdef]; exact Nat.ceil_lt_add_one h0t
+    linarith
+  -- assemble
+  have hfinal : recipSumIoc P (yG P N j) N ≤ epsG P N * (B + 1) := by
+    refine hchain.trans ?_
+    exact mul_le_mul_of_nonneg_left hKle (epsG_nonneg P N)
+  have hBC : B + 1 = (j : ℝ) + 2 + 2 * Real.log ((uG P N : ℕ) : ℝ) / Real.log 2 := by
+    rw [hBdef]; ring
+  rw [hBC] at hfinal
+  refine hfinal.trans ?_
+  rw [le_div_iff₀ (by positivity)]
+  have hC : (0 : ℝ) ≤ (j : ℝ) + 2 + 2 * Real.log ((uG P N : ℕ) : ℝ) / Real.log 2 := by
+    rw [← hBC]; linarith
+  nlinarith [epsG_mul_uG_sq_le P N, hC, epsG_nonneg P N]
+
 /-! ### Two elementary numeric lemmas -/
 
 private theorem one_add_div_four_sq_le (j : ℕ) : (1 + (j : ℝ) / 4) ^ 2 ≤ 2 ^ j := by
