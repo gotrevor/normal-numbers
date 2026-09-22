@@ -209,4 +209,58 @@ theorem blockLam_model_lower (s : Finset ι) (B : ι → Finset α) (r : ι → 
             * ∏ i ∈ s.erase i₀, esymmAlt g (B i) (r i) := by
         simp only [hUdef, hVDb]
 
+/-! ### The graded schedule: blocks indexed by `(shift, level)` -/
+
+/-- The truncation degree of the block at shift `j`, level `l` (Fable §3 / Astra §4). -/
+def gradedDeg {κ : Type*} (d u : κ → ℕ) : κ × ℕ → ℕ :=
+  fun q => 64 * d q.1 + 2 * u q.1 + 2 * q.2 + 4
+
+theorem gradedDeg_even {κ : Type*} (d u : κ → ℕ) (q : κ × ℕ) : Even (gradedDeg d u q) := by
+  rw [gradedDeg]
+  exact ⟨32 * d q.1 + u q.1 + q.2 + 2, by ring⟩
+
+/-- **Lemma B on the graded schedule.**  Blocks `B (j, l)` for `j ∈ t`, `l < L`, pairwise
+disjoint, each of mass `∑_{p ∈ B(j,l)} g p ≤ 8 d_j`, with local densities `g ≤ 1/2`.  Then the
+signed subset sum of the graded weight is at least `(1 − 0.3 T)` times the model density, with
+`T = ∑_j e^{−u_j}`.  This is the form the arithmetic sieve consumes. -/
+theorem blockLam_model_lower_graded {κ : Type*} [DecidableEq κ]
+    (t : Finset κ) (L : ℕ) (d u : κ → ℕ) (hd : ∀ j, 1 ≤ d j)
+    (B : κ × ℕ → Finset α) (g : α → ℝ)
+    (hg0 : ∀ p, 0 ≤ g p) (hg1 : ∀ p, g p ≤ 1 / 2)
+    (hdisj : ∀ q ∈ t ×ˢ Finset.range L, ∀ q' ∈ t ×ˢ Finset.range L, q ≠ q' →
+      Disjoint (B q) (B q'))
+    (hmass : ∀ q ∈ t ×ˢ Finset.range L, ∑ p ∈ B q, g p ≤ 8 * (d q.1 : ℝ))
+    (hT1 : ∑ j ∈ t, Real.exp (-(u j : ℝ)) ≤ 1) :
+    (1 - 0.3 * ∑ j ∈ t, Real.exp (-(u j : ℝ)))
+        * ∏ p ∈ (t ×ˢ Finset.range L).biUnion B, (1 - g p)
+      ≤ ∑ E ∈ ((t ×ˢ Finset.range L).biUnion B).powerset,
+          (blockLam (t ×ˢ Finset.range L) B (gradedDeg d u) E : ℝ) * ∏ p ∈ E, g p := by
+  classical
+  set s : Finset (κ × ℕ) := t ×ˢ Finset.range L with hs
+  set T : ℝ := ∑ j ∈ t, Real.exp (-(u j : ℝ)) with hT
+  have hT0 : 0 ≤ T := Finset.sum_nonneg fun j _ => (Real.exp_pos _).le
+  have hVpos : ∀ q : κ × ℕ, (0:ℝ) < ∏ p ∈ B q, (1 - g p) :=
+    fun q => Finset.prod_pos fun p _ => by linarith [hg1 p]
+  -- per-block relative defect `≤ e^{−u_j − l − 2}`
+  have hper : ∀ q ∈ s,
+      esymmOn g (B q) (gradedDeg d u q + 1) / ∏ p ∈ B q, (1 - g p)
+        ≤ Real.exp (-(u q.1 : ℝ) - q.2 - 2) := by
+    intro q hq
+    have hb := block_defect_le (d := d q.1) (u := u q.1) (l := q.2) (hd q.1) g (B q)
+      hg0 (fun p _ => hg1 p) (hmass q hq)
+    rw [div_le_iff₀ (hVpos q)]
+    calc esymmOn g (B q) (gradedDeg d u q + 1)
+        = esymmOn g (B q) (64 * d q.1 + 2 * u q.1 + 2 * q.2 + 5) := rfl
+      _ ≤ Real.exp (-(u q.1 : ℝ) - q.2 - 2) * ∏ p ∈ B q, (1 - g p) := hb
+      _ = Real.exp (-(u q.1 : ℝ) - q.2 - 2) * ∏ p ∈ B q, (1 - g p) := rfl
+  have hsum : ∑ q ∈ s, esymmOn g (B q) (gradedDeg d u q + 1) / ∏ p ∈ B q, (1 - g p)
+      ≤ 0.215 * T := by
+    calc ∑ q ∈ s, esymmOn g (B q) (gradedDeg d u q + 1) / ∏ p ∈ B q, (1 - g p)
+        ≤ ∑ q ∈ s, Real.exp (-(u q.1 : ℝ) - q.2 - 2) := Finset.sum_le_sum hper
+      _ = ∑ j ∈ t, ∑ l ∈ Finset.range L, Real.exp (-(u j : ℝ) - l - 2) := by
+          rw [hs, Finset.sum_product]
+      _ ≤ 0.215 * T := sum_block_defect_le t u L
+  exact blockLam_model_lower s B (gradedDeg d u) hdisj
+    (fun q _ => gradedDeg_even d u q) g hg0 hg1 hsum hT0 hT1
+
 end NormalNumbers.PrimeModel.BlockSieve
