@@ -100,6 +100,68 @@ noncomputable def loG (N : ℕ) : Fin (JG P N) → ℕ :=
 /-- The graded tier weights `u_b = u_N + b`: this is what removes the factor `J` from E4b. -/
 noncomputable def uuG (N : ℕ) : Fin (JG P N) → ℕ := fun b => uG P N + (b : ℕ)
 
+/-! ## The bottom cutoff diverges -/
+
+/-- `2 log t ≤ t^{3/10}` eventually. -/
+private theorem two_log_le_rpow : ∀ᶠ t : ℝ in atTop, 2 * Real.log t ≤ t ^ (3 / 10 : ℝ) := by
+  have h := tendsto_log_div_rpow (r := (3 / 10 : ℝ)) (by norm_num)
+  filter_upwards [h.eventually (gt_mem_nhds (show (0 : ℝ) < 1 / 2 by norm_num)),
+    eventually_gt_atTop (0 : ℝ)] with t ht htp
+  have hp : (0 : ℝ) < t ^ (3 / 10 : ℝ) := Real.rpow_pos_of_pos htp _
+  rw [div_lt_iff₀ hp] at ht
+  linarith
+
+/-- `ε_N ≤ a_min(N)`: the bottom cutoff of the graded schedule is **above** the classical
+`y_N = N^{2/L₂N}`.  Indeed `a_min = (L₃N)^{-1} 2^{-J₁N} ≥ (L₃N)^{-1}(L₂N)^{-log 2}`, and
+`(L₂N)^{1-log 2}` beats `2 L₃N = 2 log L₂N` because `1 - log 2 > 3/10`. -/
+theorem epsN_le_aMinG : ∀ᶠ N : ℕ in atTop, epsN N ≤ aMinG N := by
+  filter_upwards [L2_tendsto.eventually two_log_le_rpow,
+    L2_tendsto.eventually_ge_atTop (1 : ℝ),
+    L3_tendsto.eventually_ge_atTop (1 : ℝ)] with N hlog hL2 hL3
+  set t : ℝ := L2 N with htdef
+  have hL3eq : L3 N = Real.log t := rfl
+  have ht0 : (0 : ℝ) < t := by linarith
+  have hlt0 : (0 : ℝ) < Real.log t := by rw [← hL3eq]; linarith
+  -- `2 log t ≤ t^{1 - log 2}`
+  have hlog2 : Real.log 2 ≤ 7 / 10 := le_of_lt (lt_trans Real.log_two_lt_d9 (by norm_num))
+  have hstep : (t : ℝ) ^ (3 / 10 : ℝ) ≤ t ^ ((1 : ℝ) - Real.log 2) :=
+    Real.rpow_le_rpow_of_exponent_le hL2 (by linarith)
+  have key : 2 * Real.log t ≤ t ^ ((1 : ℝ) - Real.log 2) := le_trans hlog hstep
+  -- `t^{1 - log 2} = t * t^{-log 2}`
+  have hsplit : t ^ ((1 : ℝ) - Real.log 2) = t * t ^ (-Real.log 2) := by
+    rw [sub_eq_add_neg, Real.rpow_add ht0, Real.rpow_one]
+  have key' : 2 * Real.log t ≤ t * t ^ (-Real.log 2) := by rw [← hsplit]; exact key
+  -- `(1/2)^{J₁N} ≥ (1/2)^{L₃N} = t^{-log 2}`
+  have hJ1 : ((J1 N : ℕ) : ℝ) ≤ Real.log t := by
+    rw [← hL3eq]; exact Nat.floor_le (by linarith)
+  have hpow : t ^ (-Real.log 2) ≤ (1 / 2 : ℝ) ^ (J1 N) := by
+    have h1 : ((1 : ℝ) / 2) ^ (Real.log t) ≤ ((1 : ℝ) / 2) ^ ((J1 N : ℕ) : ℝ) :=
+      Real.rpow_le_rpow_of_exponent_ge (by norm_num) (by norm_num) hJ1
+    have h2 : ((1 : ℝ) / 2) ^ (Real.log t) = t ^ (-Real.log 2) := by
+      rw [Real.rpow_def_of_pos (by norm_num : (0:ℝ) < 1/2),
+        Real.rpow_def_of_pos ht0, Real.log_div one_ne_zero two_ne_zero, Real.log_one]
+      ring_nf
+    rw [← h2, ← Real.rpow_natCast ((1:ℝ)/2) (J1 N)]
+    exact h1
+  -- assemble
+  have hA : (0 : ℝ) < t ^ (-Real.log 2) := Real.rpow_pos_of_pos ht0 _
+  have hmain : epsN N ≤ (1 / L3 N) * t ^ (-Real.log 2) := by
+    rw [epsN, ← htdef, hL3eq, div_le_iff₀ ht0]
+    have hrw : (1 / Real.log t * t ^ (-Real.log 2)) * t
+        = (t ^ (-Real.log 2) * t) / Real.log t := by field_simp
+    rw [hrw, le_div_iff₀ hlt0]
+    nlinarith [key']
+  refine hmain.trans ?_
+  rw [aMinG]
+  exact mul_le_mul_of_nonneg_left hpow (by positivity)
+
+/-- The bottom cutoff diverges. -/
+theorem yBotG_tendsto : Tendsto yBotG atTop atTop := by
+  refine tendsto_atTop_mono' atTop ?_ yN_tendsto
+  filter_upwards [epsN_le_aMinG, eventually_ge_atTop 1] with N hle hN
+  have hN1 : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+  exact Nat.floor_le_floor (Real.rpow_le_rpow_of_exponent_le hN1 hle)
+
 /-! ## The fresh-mass surrogate -/
 
 /-- The square-root fresh mass is uniformly bounded: `r_P(q) ≤ 8 + 12 log 3` for `q ≥ 4`.
@@ -307,8 +369,53 @@ theorem termE4a_tendsto (hP : DivergentRecip P) : Tendsto (termE4a P) atTop (�
 
 /-- **Open leaf G5c-4 (E4b).**  `∑_b e^{−(u_N + b)} ≤ 1.6 e^{−u_N} → 0` — no `J` factor,
 because the tier weights are graded. -/
-theorem termE4b_tendsto (hP : DivergentRecip P) : Tendsto (termE4b P) atTop (𝓝 0) := by
-  sorry
+theorem sum_uuG_le (N : ℕ) :
+    ∑ b : Fin (JG P N), Real.exp (-(uuG P N b : ℝ))
+      ≤ 1.6 * Real.exp (-(uG P N : ℝ)) := by
+  have he1 : (2.7182818283 : ℝ) < Real.exp 1 := Real.exp_one_gt_d9
+  have hr0 : (0 : ℝ) < Real.exp (-1) := Real.exp_pos _
+  have hrval : Real.exp (-1) < 3 / 8 := by
+    rw [Real.exp_neg, inv_lt_comm₀ (Real.exp_pos _) (by norm_num)]
+    linarith
+  have hr1 : Real.exp (-1) < 1 := by linarith
+  have hsplit : ∑ b : Fin (JG P N), Real.exp (-(uuG P N b : ℝ))
+      = Real.exp (-(uG P N : ℝ)) * ∑ b ∈ Finset.range (JG P N), (Real.exp (-1)) ^ b := by
+    rw [Finset.mul_sum]
+    rw [show (∑ b : Fin (JG P N), Real.exp (-(uuG P N b : ℝ)))
+        = ∑ b : Fin (JG P N), Real.exp (-((uG P N + (b : ℕ) : ℕ) : ℝ)) from rfl,
+      Fin.sum_univ_eq_sum_range (fun i => Real.exp (-((uG P N + i : ℕ) : ℝ))) (JG P N)]
+    refine Finset.sum_congr rfl fun b _ => ?_
+    rw [← Real.exp_nat_mul, ← Real.exp_add]
+    push_cast
+    ring_nf
+  rw [hsplit]
+  have hgeom : ∑ b ∈ Finset.range (JG P N), (Real.exp (-1)) ^ b ≤ 1.6 := by
+    have hg := geom_sum_mul (Real.exp (-1)) (JG P N)
+    have hpow : (0 : ℝ) ≤ (Real.exp (-1)) ^ (JG P N) := by positivity
+    have hsum0 : (0 : ℝ) ≤ ∑ b ∈ Finset.range (JG P N), (Real.exp (-1)) ^ b :=
+      Finset.sum_nonneg fun b _ => by positivity
+    nlinarith [hg, hpow, hsum0, hrval]
+  calc Real.exp (-(uG P N : ℝ)) * ∑ b ∈ Finset.range (JG P N), (Real.exp (-1)) ^ b
+      ≤ Real.exp (-(uG P N : ℝ)) * 1.6 :=
+        mul_le_mul_of_nonneg_left hgeom (Real.exp_pos _).le
+    _ = 1.6 * Real.exp (-(uG P N : ℝ)) := by ring
+
+theorem termE4b_tendsto (hS : SqrtFreshMassZero P) (_hP : DivergentRecip P) :
+    Tendsto (termE4b P) atTop (𝓝 0) := by
+  have hu : Tendsto (fun N : ℕ => Real.exp (-(uG P N : ℝ))) atTop (𝓝 0) := by
+    have h1 : Tendsto (fun N : ℕ => -((uG P N : ℕ) : ℝ)) atTop atBot :=
+      tendsto_neg_atTop_atBot.comp
+        (tendsto_natCast_atTop_atTop.comp (uG_tendsto P hS yBotG_tendsto))
+    exact Real.tendsto_exp_atBot.comp h1
+  refine squeeze_zero (fun N => ?_) (fun N => ?_)
+    (by simpa using hu.const_mul (0.96 : ℝ))
+  · rw [termE4b]
+    have : (0 : ℝ) ≤ ∑ b : Fin (JG P N), Real.exp (-(uuG P N b : ℝ)) :=
+      Finset.sum_nonneg fun b _ => (Real.exp_pos _).le
+    linarith
+  · rw [termE4b]
+    have := sum_uuG_le P N
+    nlinarith [(Real.exp_pos (-(uG P N : ℝ))).le]
 
 /-- **Open leaf G5c-5 (E4c).**  `log R ≤ (540 + 8u_N)/u_N² · log N`, so
 `R² ≤ N^{2(540+8u_N)/u_N²} = N^{o(1)}`; with `(2J)# ≤ 4^{2J} = N^{o(1)}` and
@@ -341,7 +448,7 @@ theorem kmt_along_graded (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
       termE1 P h N + (termE4a P N + termE4b P N + termE4c P N) + termE5 P N)
       atTop (𝓝 0) := by
     have := ((termE1_tendsto P hS hP h).add
-      (((termE4a_tendsto P hP).add (termE4b_tendsto P hP)).add (termE4c_tendsto P hP))).add
+      (((termE4a_tendsto P hP).add (termE4b_tendsto P hS hP)).add (termE4c_tendsto P hP))).add
       (termE5_tendsto P hP)
     simpa using this
   refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _)) ?_ hsum
