@@ -4,6 +4,16 @@ Ren / Codex, 2026-09-20; status updated 2026-09-21.
 
 ## Formalization status
 
+Latest advance: `brun_sifted_count_lower` in
+[PrimeModelBrunCount.lean](../src/NormalNumbers/PrimeModelBrunCount.lean)
+now proves the actual arithmetic lower count, with error R^2, from the CRT
+and prime-density sieve theorems (main `3a15d2c`).  No analytic premise is
+left beyond the explicit parameter inequalities.  [The square-remainder
+audit](prime-model-square-remainder.md) explains why this coarser bound
+suffices for the frozen target; the two error-absorption inequalities are
+proved in `PrimeModelErrorBudget.lean`.  Remaining: identify radical atoms,
+bound retained-state cardinality, assemble phase decay and target constants.
+
 The lower-sieve core is now proved and integrated in
 [PrimeModelBrunLower.lean](../src/NormalNumbers/PrimeModelBrunLower.lean),
 `brun_lower_fundamental` (main commit `6bbc27f`).  It supplies coefficient

@@ -2,10 +2,17 @@
 
 **Sieve reassessment:** [the current assessment](prime-model-sieve-assessment.md)
 shows that lower retained-probability estimates alone suffice by normalization.
-It gives an explicit candidate lower Brun construction with the required rate.
-The two-sided interface discussed below remains sufficient, but is stronger
-than necessary.  Next decisive milestone: prove the lower weights, support and
-relative error together, not another conditional assembly theorem.
+The explicit lower Brun construction, support and relative error are proved
+in `PrimeModelBrunLower.lean`; `PrimeModelPrimeDimension.lean` discharges its
+density hypothesis for k/p.  `PrimeModelLowerTransfer.lean` proves lower-only
+probability-to-phase transfer.  The two-sided interface discussed below is
+historical and stronger than necessary, not a remaining proof requirement.
+The arithmetic lower count is proved in `PrimeModelBrunCount.lean`
+(`brun_sifted_count_lower`, main commit `3a15d2c`).
+[The square-remainder audit](prime-model-square-remainder.md) shows that
+R^2 suffices; the sharper divisor-sum estimate below is also no longer needed.
+The remaining application work includes actual-state identification,
+retained-state cardinality, phase decay and final parameter assembly.
 
 Formalized in `src/NormalNumbers/PrimeModelRadical.lean`, namespace
 `NormalNumbers.PrimeModel.Radical`.  Sorry-free, axioms
