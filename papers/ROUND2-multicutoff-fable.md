@@ -219,7 +219,7 @@ paper bound `1.23e−2`), and two brute-force arithmetic counts over a full peri
 one block `{7,11,13,17}` with two classes gives minorant `7409 ≤ 7425` exact, and the graded
 instance (`{7,11}` with `d = 2`, `{13,17}` with `d = 1`) gives the exact `8640` on both sides.
 
-## 4. Where the common cutoff reappears: the `Dimension` inequality
+## 4. Where the common cutoff reappears: the `Dimension` certificate
 
 The repo's `brun_lower_fundamental` takes an arbitrary density `g` but certifies it through
 `Dimension U g y K k_B`: `∏_{p ∈ U, p > t}(1 − g_p)^{−1} ≤ K (log y/log max(2,t))^{k_B}` for all
@@ -243,7 +243,7 @@ I derived this first; it works but re-engineers the whole defect analysis.  Lemm
 charges each band its own level (`128 d_j log y_j`, the "effective dimension" `∑_j d_j log y_j /
 log y₁` made explicit), and avoids `Dimension` entirely.  Recommendation: Lemma B.
 
-## 5. Two tiers: what they buy, and the exact log they cannot remove
+## 5. Two tiers: what they buy, and the log these majorants leave
 
 Sites `≤ m` at `y_head = N^{ε_h}`, sites `> m` at `y_tail = N^{ε_t}`; boxes `T_head = N^{θ_h}`
 (shifts `≤ m`), `T_tail = N^{θ_t}` (shifts `> m`); `δ* := sup_{t ≥ y_tail} π_P(t)/π(t)`.
@@ -267,7 +267,7 @@ mails `20260922T202126Z`, `20260922T202457Z`).  The transfer bound is then
 
 If `δ* L₄N → 0` take `m = j₀`: that is Part VI's `SparseL4o` class, recovered.  Otherwise the
 best `m` is `≈ log₄(δ* L₄N)` and the criterion is `δ* · log log(δ* L₄N) → 0`, i.e. roughly
-`π_P/π = o(1/L₆)`; `π_P/π ≍ 1/L₆` fails it.  So two tiers are a genuine saving (two iterated logs,
+`π_P/π = o(1/L₆)`; `π_P/π ≍ 1/L₆` fails these majorants.  So two tiers are a genuine saving (two iterated logs,
 and the explicit barrier set `π_P/π ~ 1/L₄` closes, as in Astra's schedule with `m = ⌊√L₄⌋`,
 `ε_h = m^{−4}`, `ε_t = J^{−4}`).  The log comes from a *shared cutoff* through the union bound;
 whether every fixed number of tiers stops at some `L_r` is not proved here and is not needed:
