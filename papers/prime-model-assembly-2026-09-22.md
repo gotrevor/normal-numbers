@@ -202,3 +202,109 @@ It does **not** say anything about `G₄` itself or any classical constant.
 | `PrimeModelJointLaw` | empirical law, mass one, fibre-sum identity, lower atoms from Brun, E4 |
 | `PrimeModelParameters` | F1–F5, E2, E3 and the absorption inequalities (pure real analysis) |
 | `PrimeModelKMT` | `KMT_quant₂_of_primeModel`, growth lemmas, `exists_sparse_normal_unconditional` |
+
+---
+
+# Part II: the family theorem
+
+Ren (Fable), 2026-09-22, after the assembly above.  **Status: complete paper argument
+for the stated hypothesis; exact failure regime recorded for the weaker hypothesis.**
+
+## Target
+
+**Theorem (family).**  Let `P` be a set of primes with
+
+    (D)  ∃ x₀, ∀ x ≥ x₀ :  π_P(x) ≤ π(x) / log log x,        (π_P(x) = #{p < x : p ∈ P})
+    (∞)  ∑_{p ∈ P} 1/p = ∞.
+
+Then `IsNormal 4 (subsetLambert P 4)`.
+
+The proof is `isNormal_subsetLambert_of_KMT_along P J` for an explicit schedule `J_N`
+built from the **actual accumulated mass** `S_P(y_N) = recipSumLe P y_N`, never from an
+assumed lower divergence rate.  Inputs: `KMT_quant₂ C₁ C₂` (Part I, `C₁ = e^{4k}`,
+`C₂ = exp(e^{k+7})`) and the existing `tail_error_L1`.
+
+## Two analytic lemmas from (D)
+
+**(M1) Dominated Abel summation.**  If `π_P(t) ≤ δ · π(t)` for every integer `t ∈ [y, N]`,
+then
+
+    recipSumIoc P y N  ≤  δ · ( ∑_{y<p≤N} 1/p + 1 ).
+
+Proof: with `a_n = 1_P(n)`, `A = π_P`, `f(n) = 1/n`, summation by parts gives
+`∑_{y<n≤N} a_n f(n) = A(N+1) f(N) − A(y+1) f(y+1) + ∑_{y<n<N} A(n+1)(f(n) − f(n+1))`.
+Every `A(·)` is `≤ δ π(·)` and every coefficient is `≥ 0` except the dropped term, so the sum
+is `≤ δ` times the same expression for `1_prime`, which equals `∑_{y<p≤N} 1/p + π(y+1)/(y+1)
+≤ ∑_{y<p≤N} 1/p + 1`.  Combined with `primeRecipSum_le` (`∑_{y<p≤N} 1/p ≤ 8 + 12 log(log N/log y)`):
+
+    recipSumIoc P y N ≤ δ · (9 + 12 log(log N / log y)).                          (M1')
+
+**(M2) Accumulated mass.**  Under (D), for all large `N`,
+
+    recipSumLe P N ≤ C_P + 34 · log₂ log log N,
+
+`C_P` a constant depending on `P` (its mass below `a_{i₀}`).  Proof: cut at
+`a_i := ⌊exp exp 2^i⌋₊`.  On `[a_i, ∞)`, (D) gives `δ_i = 1/(2^i − 1)` (since
+`log log t ≥ 2^i − o(1)` there), and `log a_{i+1}/log a_i ≤ 2 exp(2^i)`, so (M1') on
+`(a_i, a_{i+1}]` gives `≤ (9 + 12(2^i + 1))/(2^i − 1) ≤ 34` for `i ≥ 1`.  There are at most
+`log₂ log log N + 1` ranges below `N`.
+
+## Schedule
+
+For `N` large (`log log N > 4`), put
+
+    ε_N := 2 / log log N,      y_N := ⌊N^{ε_N}⌋₊,
+    J_N := min( ⌊(log log log N)/24⌋₊ ,  ⌊ S_P(y_N) / 8 ⌋₊ ).
+
+`J_N → ∞`: the first entry by growth, the second by (∞) and `y_N → ∞`.  The frozen
+`ε`-window holds: `1/log log N < ε_N < 1/2`.  Note `log log y_N ≥ (1/2) log log N` for large
+`N` (`y_N ≥ N^{ε_N}/2`, `ε_N log N = 2 log N/log log N`).
+
+## Verification of the four terms (all at `k = J_N`, `x = N`, `ε = ε_N`)
+
+Write `L₂ = log log N`, `L₃ = log log log N`, `S = S_P(y_N)`.  From `J_N ≤ L₃/24`:
+`e^{4J} ≤ L₂^{1/6}`, `4^{J} ≤ L₂^{0.06}`.  From `J_N ≤ S/8`: `e^{4J} ≤ e^{S/2}`.
+
+1. **Fresh mass** (`C₁ √log(1/ε) √(2 recipSumIoc)`): by (M1') with `y = y_N`, `δ = 1/log log y_N
+   ≤ 2/L₂` and `log(1/ε_N) = log(L₂/2) ≤ L₃`:
+   `recipSumIoc P y_N N ≤ (2/L₂)(9 + 12 L₃)`, so the term is
+   `≤ L₂^{1/6} · √L₃ · √((4/L₂)(9 + 12L₃)) ≤ 10 · L₃ · L₂^{1/6 − 1/2} → 0`.
+2. **Old mass** (`C₁ exp(−recipSumLe P y_N)`): `≤ e^{S/2} e^{−S} = e^{−S/2} → 0` by (∞).
+3. **Sieve** (`C₂ exp(−1/(8J²ε))`): `1/(8J²ε_N) = L₂/(16 J²) ≥ L₂/(16 L₃²)` and
+   `log C₂ = e^{J+7} ≤ e^7 L₂^{1/24}`, so the term is `≤ exp(e^7 L₂^{1/24} − L₂/(16L₃²)) → 0`.
+4. **Tail** (`(recipSumLe P (2N) + 5J + 12)/4^J`, `tail_error_L1`): by (M2),
+   `recipSumLe P (2N) ≤ C_P + 34 log₂ L₂(2N) ≤ C_P + 35 L₃`.  Then
+   `(C_P + 35L₃ + 5J + 12)/4^J`.  Case `J_N = ⌊L₃/24⌋₊`: `4^J ≥ 4^{L₃/24 − 1} = L₂^{0.057}/4`,
+   and `L₃/L₂^{0.057} → 0`.  Case `J_N = ⌊S/8⌋₊ < ⌊L₃/24⌋₊`: then `S < L₃/3 + 8` and also
+   `recipSumLe P (2N) = S + recipSumIoc P y_N (2N) ≤ S + 1 ≤ 8J + 9` (item 1's bound at
+   `2N`), so the tail is `≤ (13J + 21)/4^J → 0`.  In both cases `→ 0` because `J_N → ∞`.
+
+Hence `KMT_along P J_N` and `TailOK P J_N`, and the wiring theorem gives normality.  Every
+step is uniform in `P` except the two constants `x₀` and `C_P`, which enter only through
+"for all large `N`".
+
+## Why relative density zero alone does not close on this route
+
+Suppose only `π_P(x) = o(π(x))`, say `π_P(t) ≈ π(t)/L₄(t)` (`L₄ = log log log log`).  Then the
+accumulated mass is `S_P(N) ≈ L₂(N)/L₄(N)` (integrate `1/(t log t L₄(t))`), while the local
+relative density at any scale `N^{ε}` with `ε ≥ 1/L₂N` is `δ ≈ 1/L₄(N)`.  The tail forces
+`4^{J} ≫ S_P(N)`, i.e. `J ≳ log L₂N`; the fresh-mass term is `≥ √(log(1/ε) · δ · log(1/ε))
+≳ log(1/ε) · √δ`, and `log(1/ε) ≥ log 2` is bounded below **even with `C₁ = O(1)`**, while the
+sieve term needs `log(1/ε) ≳ J` unless `C₂` is bounded.  With our `C₁ = e^{4k}` the fresh-mass
+term is `≳ e^{4J}√δ ≈ (L₂N)^{c}/√(L₄N) → ∞`.  Even with `C₁, C₂ = O(1)` one still needs
+`log(1/ε)·√δ → 0` against the tail's `J ≳ log S_P(N)`; the route's requirement is
+
+    log log S_P(N) · √δ(N^{ε_N}) → 0   (at the very least),
+
+which `S_P ≈ L₂/L₄`, `δ ≈ 1/L₄` violates (`L₄ · L₄^{−1/2} → ∞`).  The obstruction is the
+coupling of the **L¹ tail** (needs `J` large against the accumulated mass) with the
+**correlation bound** (needs `J` small against the local density); it is not a defect of the
+sieve constants.  A proof of the density-zero family theorem needs a different treatment of
+the tail (not L¹ against `4^{−J}`), which we do not have.
+
+## Lean plan (Part II)
+
+| Module | Content |
+|---|---|
+| `PrimeModelDensityMass` | (M1) dominated Abel summation; (M1'); (M2) via the `a_i` ranges |
+| `PrimeModelFamily` | schedule `ε_N`, `y_N`, `J_N`; the four limits; `KMT_along`, `TailOK`; `isNormal_subsetLambert_of_density` |

@@ -401,4 +401,6 @@ import NormalNumbers.PrimeModelPhaseFactor
 import NormalNumbers.PrimeModelJointLaw
 import NormalNumbers.PrimeModelParameters
 import NormalNumbers.PrimeModelKMT
+import NormalNumbers.PrimeModelDensityMass
+import NormalNumbers.PrimeModelFamily
 import NormalNumbers.G4PrefixDecayAudit

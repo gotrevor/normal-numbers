@@ -45,7 +45,7 @@ lemma norm_testF_le (k y : ℕ) (h : ℤ) (Q : ℕ) (t : JointState k (midPrimes
   exact mul_le_one₀ (norm_residuePhase_le S k h _) (norm_nonneg _) (norm_statePhase_le S k y h _)
 
 /-- `W_y = ∑_t empLaw t · testF t` (phase factorisation + fibre-sum identity). -/
-theorem windowMeanLe_eq_sum (k y : ℕ) (hk : 1 ≤ k) (h : ℤ) (x : ℕ) (hx : 0 < x) :
+theorem windowMeanLe_eq_sum (k y : ℕ) (hk : 1 ≤ k) (hky : k ≤ y) (h : ℤ) (x : ℕ) (hx : 0 < x) :
     windowMeanLe S y k h x
       = ∑ t : JointState k (midPrimes S k y) (primorial k),
           (empLaw (midPrimes S k y) (primorial k) x t : ℂ) * testF S k y h (primorial k) t := by
@@ -55,7 +55,7 @@ theorem windowMeanLe_eq_sum (k y : ℕ) (hk : 1 ≤ k) (h : ℤ) (x : ℕ) (hx :
   congr 1
   refine Finset.sum_congr rfl (fun n _ => ?_)
   show (∏ j : Fin k, zPhase h k j ^ omegaLe S y (n + j.val + 1)) = _
-  rw [phase_factorisation S k y hk h n]
+  rw [phase_factorisation S k y hk hky h n]
   rfl
 
 /-- The model expectation factorises: `∑_t jointModel t · testF t = (avg residue) · ∏_i (1 + A/p_i)`. -/
@@ -127,7 +127,7 @@ theorem window_bound_regime {k x : ℕ} {ε : ℝ} (h : ℤ) (hntw : NontrivialW
   haveI : NeZero Q := ⟨hQpos.ne'⟩
   -- the three pieces
   have hE1 := windowMean_sub_windowMeanLe_le S y k h x hx1
-  have hWy := windowMeanLe_eq_sum S k y hk h x hx0
+  have hWy := windowMeanLe_eq_sum S k y hk (k_le_yOf hR) h x hx0
   have hE5 := norm_model_expectation_le S k y hk h hntw Q
   have hP' : ∀ p ∈ P, Nat.Prime p ∧ k < p ∧ p ≤ y := fun p hp => by
     obtain ⟨h1, _, h3, h4⟩ := (mem_midPrimes S).mp hp
