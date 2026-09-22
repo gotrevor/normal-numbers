@@ -1,5 +1,10 @@
 # DIRECTION — normal-numbers 🧭
 
+2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically
+one).  See `G4PrefixDecayAudit.lean` for the proved counterexample and the
+still-open replacement `EventualPrefixDecay`; [next Fable brief](papers/FABLE-NEXT-SESSION.md)
+is the research plan, not a new unattended campaign authorization.
+
 ## Attended operator override: 2026-09-20 22:43 EDT — `windowK` / `PrefixDecay` LAP (DONE, one lap)
 
 **Result (2026-09-21):** `src/NormalNumbers/G4WindowK.lean` is **sorry-free**, all 14 ratified statements

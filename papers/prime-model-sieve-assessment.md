@@ -4,6 +4,12 @@ Ren / Codex, 2026-09-20; status updated 2026-09-21.
 
 ## Formalization status
 
+State/count bridge now proved in `PrimeModelRadicalState.lean` (main
+`4e3be3f`): exact actual-state/sifted-predicate equivalence, equality of
+model mass with the sieve density, and retained cardinality <=floor(T)^k
+for the existing retainedBox.  Remaining application work is joint-law
+assembly, phase decay and target parameter/constants bookkeeping.
+
 Latest advance: `brun_sifted_count_lower` in
 [PrimeModelBrunCount.lean](../src/NormalNumbers/PrimeModelBrunCount.lean)
 now proves the actual arithmetic lower count, with error R^2, from the CRT
