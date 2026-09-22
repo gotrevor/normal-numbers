@@ -144,3 +144,25 @@ Fable at `191023Z`): density `≍ 1/L₄`.  On the schedule `ε = J₁^{−4}`, 
 below when `π_P/π ≍ 1/L₄`; the tail and sieve majorants pin `ε` to this window (`J ≥ c log t` from the tail, `J²ε → 0` from
 the sieve), so no schedule move helps.  The abstract consumer `FreshMassZero P := recipSumIoc P (yI N) (2N) → 0`
 (Astra `190707Z`, in progress as `PrimeModelFamilyConsumer.lean`) is the right statement of what the route proves.
+
+## Addendum B (~19:30Z): axiom sweep over the headline declarations — verification gap closed
+
+Trevor's instruction: close the verification gap with the existing audit mechanism, no further mathematical review.
+Tool: `lean-axiom-gate --exact` (allows ONLY `propext`, `Classical.choice`, `Quot.sound`), imports
+`PrimeModelKMTFixedH`, `PrimeModelFamilyL4`, `PrimeModelFamilyConsumer`, at HEAD `bbe447f` of `wip/g5-prime-subset`
+(contains the a86a0d8 family and the ab71135 consumer).  Declaration list and verbatim output:
+**`AUDIT-2026-09-22-axiom-sweep.txt`** (this repo, root).  Result: **14/14 ✓**, every target exactly
+`[Classical.choice, Quot.sound, propext]`, exit 0.  Targets (all under `NormalNumbers.PrimeModel`):
+`KMT.window_bound_regime`, `KMT.window_bound_regime_h`, `KMT.windowMean_sub_windowMeanLe_le_h`,
+`KMT.KMT_quant₂_primeModel`, `KMT.exists_sparse_normal_unconditional`, `Family.isNormal_subsetLambert_of_sparse`,
+`FamilySharp.isNormal_subsetLambert_of_sparseIter`, `FamilyIter.isNormal_subsetLambert_of_sparseIter3`,
+`FamilyIter.sparseIterPow_three_iff`, `FamilyIter.isNormal_subsetLambert_of_sparseIterPow`,
+`FamilyIter.sparseL4o_of_sparseIterPow`, `FamilyIter.isNormal_subsetLambert_of_sparseL4o`,
+`FamilyIter.isNormal_subsetLambert_of_freshMassZero`, `FamilyIter.freshMassZero_of_sparseL4o`.
+Operational note for the next sweep: the tool's default import set includes the second lib target `Comparator`, which is
+not built, so every target reports "NO axiom info" unless modules are passed with `--import`; and in zsh a
+space-separated target list must be expanded with `${=T}`.
+
+Closing state.  Astra's `20260922T192103Z` answered the sole open hypothesis question (no hidden hypothesis on `P`;
+`Regime` + `NontrivialWindow` suffice; `k ≤ y` from `k_le_yOf`).  The substantive outcome of the lane is the family
+theorem and its independently checked proof; the `1/L₄` example limits these majorants, not normality.

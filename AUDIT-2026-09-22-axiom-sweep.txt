@@ -1,0 +1,35 @@
+# Axiom sweep, G4-lane Fable (independent reviewer), 2026-09-22T19:30:19Z
+# repo: normal-numbers branch wip/g5-prime-subset HEAD bbe447f (contains a86a0d8 family + ab71135 consumer)
+# tool: lean-axiom-gate --exact (allow ONLY propext, Classical.choice, Quot.sound)
+# imports: NormalNumbers.PrimeModelKMTFixedH NormalNumbers.PrimeModelFamilyL4 NormalNumbers.PrimeModelFamilyConsumer (the default root set includes the unbuilt Comparator lib; first run failed on it)
+# targets (14), all under NormalNumbers.PrimeModel:
+#   KMT.window_bound_regime
+#   KMT.window_bound_regime_h
+#   KMT.windowMean_sub_windowMeanLe_le_h
+#   KMT.KMT_quant₂_primeModel
+#   KMT.exists_sparse_normal_unconditional
+#   Family.isNormal_subsetLambert_of_sparse
+#   FamilySharp.isNormal_subsetLambert_of_sparseIter
+#   FamilyIter.isNormal_subsetLambert_of_sparseIter3
+#   FamilyIter.sparseIterPow_three_iff
+#   FamilyIter.isNormal_subsetLambert_of_sparseIterPow
+#   FamilyIter.sparseL4o_of_sparseIterPow
+#   FamilyIter.isNormal_subsetLambert_of_sparseL4o
+#   FamilyIter.isNormal_subsetLambert_of_freshMassZero
+#   FamilyIter.freshMassZero_of_sparseL4o
+# --- lean-axiom-gate output ---
+✓ NormalNumbers.PrimeModel.KMT.window_bound_regime — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.KMT.window_bound_regime_h — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.KMT.windowMean_sub_windowMeanLe_le_h — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.KMT.KMT_quant₂_primeModel — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.KMT.exists_sparse_normal_unconditional — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.Family.isNormal_subsetLambert_of_sparse — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.FamilySharp.isNormal_subsetLambert_of_sparseIter — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.FamilyIter.isNormal_subsetLambert_of_sparseIter3 — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.FamilyIter.sparseIterPow_three_iff — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.FamilyIter.isNormal_subsetLambert_of_sparseIterPow — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.FamilyIter.sparseL4o_of_sparseIterPow — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.FamilyIter.isNormal_subsetLambert_of_sparseL4o — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.FamilyIter.isNormal_subsetLambert_of_freshMassZero — [Classical.choice, Quot.sound, propext]
+✓ NormalNumbers.PrimeModel.FamilyIter.freshMassZero_of_sparseL4o — [Classical.choice, Quot.sound, propext]
+exit=0
