@@ -279,3 +279,237 @@ By linearity this is mixing for trigonometric polynomials.  Density in L2(mu), C
 This produces one deterministic overlapping-window sequence satisfying (P), (V), and the Gaussian law, with scheduled means exactly the earlier note's limiting table: rho at h=1,4; zero at h=2; rho^2 at h=3,12.  Prefix limits give the same dyadic limits by subtraction.  The simpler zero-orbit theorem has coefficient 1 at all h and was already sufficient for the brief.
 
 The extension review and elementary mixing proof were sent in `agent-mail/shift-consistency/20260922T202456Z-astra-shift-consistency-66ac94e2-ee34-443c-a053-7df65054c937.md`.  Fable owns its presentation of the general orbit theorem; the present section records Astra's quantifier counterexample and the complete Riesz argument.
+
+## 12. Continuation: the sharp growing-window threshold
+
+The zero-orbit construction can be chosen to satisfy the following stronger theorem, simultaneously for ALL deterministic integer schedules 1<=J(M)<=K(M).  Write Q=4^J and
+
+    D_M(J)=TV(empirical law of (W_{n+1},...,W_{n+J}), n<M,
+              Pois(L_M)^{tensor J}).
+
+Then
+
+    D_M(J(M))->0  if and only if  4^{J(M)}/sqrt(L_M)->0.    (12.1)
+
+If 4^{J(M)}/sqrt(L_M)->infinity, then D_M(J(M))->1.  At the transition, whenever Q/sqrt(L_M)->c in (0,infinity),
+
+    liminf D_M(J(M)) >= (1/2) exp(-2 pi^2/(15c^2)) > 0.    (12.2)
+
+These statements hold at every large integer M, not only at powers of two or on a favorable subsequence; they hold on dyadic averaging intervals as well.  The same realization supports every schedule because the empirical estimates below are uniform over all J<=K(M).  This is separate from the false interchange of orbit/background quantifiers in section 11: the orbit here is fixed to zero throughout.
+
+A more informative identity holds uniformly over all 1<=J<=K(M).  Let qemp_{M,J} be the empirical distribution of C_{n+J} modulo Q for n<M.  Then
+
+    D_M(J)=TV(qemp_{M,J}, Uniform(Z/QZ))+o(1),              (12.3)
+
+where the o(1) is uniform in J.  Thus the entire growing-block TV defect of this model is asymptotically its terminal carry residue defect.  This is a theorem about the constructed independent-background model, not an identity for arbitrary arithmetic sequences.
+
+### 12a. The exact finite TV identity
+
+Use the notation of section 2, and put D(w)=product_i ptilde_i(w_i), with ptilde_i=s_i/4.  For every residue r modulo Q,
+
+    sum_{w:r(w,d)=r} D(w)=1/Q.                             (12.4)
+
+One proof is to apply (2.1) with the terminal carry equal to the fixed nonnegative integer r: its total probability is 1, so sum_{w:r(w,d)=r} product_i s_i(w_i)=1.  Dividing by 4^J proves (12.4).  This also follows from the independent uniform base-4 digit introduced by each four-point smoothing.
+
+For ANY two probability laws q,q' on Z/QZ define
+
+    nu_q(w)=Q q(r(w,d))D(w).
+
+Equation (12.4) says nu_q is a probability measure and gives the exact isometry
+
+    TV(nu_q,nu_q')=TV(q,q').                               (12.5)
+
+In particular the finite block law from (2.1) satisfies
+
+    TV(law(W),product_i ptilde_i)=TV(q,Uniform(Z/QZ)).       (12.6)
+
+The previous bound eta/2 was only an upper bound on the right side.  This exact identity isolates the residue obstruction without losing the rest of the joint law.
+
+### 12b. Remove the artificial logarithmic margin
+
+The crude root-of-unity estimate (3.1) multiplied the worst mode by H-1.  Instead, with H=4Q and a=lambda/(2Q^2), sum all modes:
+
+    max_r |H P(Pois(lambda)=r mod H)-1|
+      <= sum_{k=1}^{H-1} exp[-lambda(1-cos(2 pi k/H))]
+      <= 2 sum_{k>=1} exp(-a k^2)
+      <= 2 exp(-a)/(1-exp(-3a)).                           (12.7)
+
+Indeed, 1-cos(2 pi k/H)>=8 min(k,H-k)^2/H^2, and k^2>=1+3(k-1) for k>=1.  The same bound applies to Q times the residue law of floor((3+Pois(lambda)+c)/4), uniformly in the later carry c, by summing its four preimages.  Therefore the conditional block TV estimate is now
+
+    TV(law(W-block | later tail), tensor_i Pois(lambda_i))
+      <= exp(-a)/(1-exp(-3a)) + 6 sum_i lambda_i^{-1/2}.    (12.8)
+
+It tends to zero throughout Q=o(sqrt(lambda)) and J=O(log lambda).  No extra factor log lambda in the condition on Q is needed.
+
+## 13. Empirical factorization, uniform in the growing block length
+
+This supplies the all-M and simultaneous-schedule part of (12.3).  Work on one probability-one event, intersected with those already used above.  Set B_M=floor((log(M+2))^2), t_M=M^{-1/8}, and for each J<=K(M) use the state box S_{M,J}={0,...,B_M}^J.
+
+Since K(M)=O(log L_M),
+
+    max_{J<=K(M)} |S_{M,J}|=exp(O(L_M log L_M))=M^{o(1)}.
+
+For each J, apply the reverse-martingale bound (5.2) to every indicator of a subset of S_{M,J}.  A union bound over these subsets AND every J<=K(M) is summable: its logarithm is at most
+
+    log(2K(M)(K(M)+1))
+      + O(exp(O(L_M log L_M))) - M^{3/4}/(32(K(M)+1)),
+
+which tends to minus infinity faster than a positive power of M.  Thus almost surely the empirical W-block law differs, on every event inside S_{M,J}, from the average of its conditional laws by at most t_M, simultaneously for all these J and all large M.
+
+Write q_{n,J}(r) for the conditional distribution of C_{n+J} mod Q given F_{n+J+2}.  It is random but measurable in that later tail.  Formula (2.1) gives the conditional W-block law exactly as
+
+    Q q_{n,J}(r(w,0)) D_{n,J}(w),
+
+where D_{n,J} is the product of the four-point smoothed laws of 3+Pois(lambda_{n+i}), 1<=i<=J.  Define D_{L,J} by replacing every lambda_{n+i} with L=L_M.
+
+The actual W blocks lie inside S_{M,J} eventually, uniformly in J<=K, by the logarithmic envelope.  The conditional laws put vanishing mass outside that box uniformly: each is bounded above pointwise by Q D_{n,J}, Q=O(L^2), while the Poisson means are at most L+o(1), and B_M is much larger.  For example exponential Markov at parameter 1 bounds this outside mass by
+
+    Q J exp(6+(e-1)(L+o(1))-B_M),
+
+which tends to zero uniformly.  The same bound applies to any law Q q(r(w,0))D_{L,J}(w).  Hence the finite-state concentration extends to full TV with an error tending to zero uniformly.
+
+Let qbar_{M,J}=(1/M)sum_{n<M}q_{n,J}.  Replacing D_{n,J} by D_{L,J} in the averaged conditional law costs o(1), uniformly in J.  Explicitly, the TV cost at n is at most Q TV(D_{n,J},D_{L,J}).  For n<M/log M the crude contribution is at most Q/log M=o(1).  For the other n, Poisson coupling and contraction under smoothing give
+
+    TV(D_{n,J},D_{L,J}) <= J max_i |lambda_{n+i}-L|
+                              = O(J L/log M).
+
+Thus the bulk cost is O(Q J L/log M)=o(1), uniformly for Q<=4^K=O(L^2).  Consequently
+
+    TV(empirical W-block law, nu_{qbar_{M,J}})=o(1)         (13.1)
+
+uniformly in J, with nu now built from D_{L,J} and d=0.
+
+It remains to identify qbar empirically; no stationarity is assumed.  For every subset R of Z/QZ,
+
+    1_{C_{n+J} mod Q in R} - q_{n,J}(R)
+
+is a bounded reverse martingale difference: it is F_{n+J+1}-measurable and has conditional mean zero given F_{n+J+2}.  Apply Hoeffding to n=0,...,M-1 and take the union over all 2^Q subsets and all J<=K(M), again at tolerance t_M.  This is summable because Q=O(L^2)=M^{o(1)}.  It proves
+
+    max_{J<=K(M)} TV(qemp_{M,J},qbar_{M,J})->0.             (13.2)
+
+Using the exact isometry (12.5), equations (13.1)-(13.2) imply
+
+    max_{J<=K(M)} TV(empirical W-block law,nu_{qemp_{M,J}})->0.
+
+Finally TV(D_{L,J},Pois(L)^{tensor J})<=6J/sqrt(L)=o(1) uniformly for J<=K(M).  Equation (12.5) with q'=Uniform then proves (12.3).
+
+For Q=o(sqrt L), (12.7) bounds each conditional q_{n,J} on the bulk n>=M/log M, and the first M/log M indices have vanishing mass.  Equations (13.2) and (12.3) therefore prove the sufficient half of (12.1).  These estimates are simultaneous for all J, so this is one realization for every subcritical schedule, not an uncountable intersection of schedule-specific probability-one events.
+
+## 14. The transition coefficient and maximal separation above it
+
+### 14a. The empirical carry CLT
+
+The Gaussian result in section 8 and the scheduled tail bound imply
+
+    empirical law of (C_n-L_M/3)/sqrt(L_M), n<M,
+         converges weakly to N(0,1/15).                    (14.1)
+
+Indeed T_{K(M)}(n)=C_n-4^{-K(M)}C_{n+K(M)}.  The empirical L1 norm of their difference, divided by sqrt L, is O(sqrt L/4^K)=o(1), by (7.1).  The centering constants differ by L 4^{-K}/3, also negligible after division by sqrt L.  This proves (14.1) from the already established whole-window CLT.
+
+For any bounded test, shifting n to n+J changes its empirical average by at most 2J/M times the sup norm.  Thus (14.1) holds uniformly for the shifted carry samples C_{n+J}, J<=K(M).  Characteristic functions of weakly convergent probability measures converge uniformly on each compact frequency interval: truncate |z| at a fixed R using tightness, use the Lipschitz bound there, then use a finite frequency net.  This elementary observation permits a moving frequency below.
+
+### 14b. A nonzero transition Fourier coefficient
+
+For Q=4^J, telescoping gives the exact identity
+
+    e(L/(3Q)) (1/M)sum_{n<M} e(T_J(n))
+      = (1/M)sum_{n<M} e(-(C_{n+J}-L/3)/Q).
+
+For every fixed c0>0, (14.1) therefore gives, uniformly over all J<=K(M) with Q>=c0 sqrt L,
+
+    e(L/(3Q)) (1/M)sum_{n<M} e(T_J(n))
+      = exp(-2 pi^2 L/(15Q^2)) + o(1).                    (14.2)
+
+This is a statement about the rotated COMPLEX mean.  Without the rotation, its modulus has the displayed asymptotic, but its argument need not converge.
+
+Under the independent product Pois(L) law, the corresponding Fourier mean has modulus at most exp(-L): the first coordinate already contributes exp(L(i-1)), and all other factors have modulus at most one.  Since expectations of a modulus-one test differ by at most twice TV,
+
+    D_M(J) >= (1/2) exp(-2 pi^2 L/(15Q^2)) - o(1)           (14.3)
+
+uniformly in that same range.  This proves (12.2).  If D_M(J(M))->0 but Q/sqrt L fails to tend to zero, take a subsequence with Q>=c0 sqrt L; (14.3) contradicts the alleged TV convergence.  This proves necessity in (12.1), including oscillating schedules.
+
+### 14c. TV tends to one in the supercritical range
+
+Assume Q/sqrt L->infinity.  Set eps_M=(sqrt L/Q)^{1/2}->0 and consider the arc on R/Z centered at -L/(3Q), of radius eps_M.  By (14.1) and tightness, the empirical W phase T_J mod 1 belongs to this arc with probability tending to 1: leaving the corresponding interval on the real line requires
+
+    |C_{n+J}-L/3|/sqrt L > eps_M Q/sqrt L
+                               =(Q/sqrt L)^{1/2}->infinity.
+
+Under the product Poisson law the phase lies on the Q-point grid.  Every nonconstant Fourier coefficient on that grid has modulus at most exp(-L): for 0<q<Q, its first nontrivial site is v_4(q)+1<=J and has cosine at most zero.  Fourier inversion gives
+
+    TV(law of product-Poisson phase,Uniform(Q-grid))
+          <= (Q-1)exp(-L)/2=o(1),                         (14.4)
+
+since Q<=4^K=O(L^2).  The uniform grid puts at most 2eps_M+2/Q=o(1) mass in the chosen arc.  Its preimage under the block-phase map is consequently an event with empirical W probability tending to 1 and product Poisson probability tending to 0.  Hence D_M(J(M))->1.
+
+For dyadic averages the empirical carry CLT follows by subtracting prefix empirical measures, recentering from L_{2M} to L_M, and using L_{2M}-L_M->0; shifts J<=K(M) still cost O(K/M).  The reverse-martingale and factorization estimates in section 13 also apply directly to n=M,...,2M-1, with the same cardinality bounds and with lambda_{n+i}=L_M+o(1) uniformly.  Thus (12.1)-(12.3), (14.2), and maximal separation all hold dyadically as stated.
+
+## 15. What the continuation adds, and does not add
+
+The first theorem left a gap between fixed blocks and the scheduled block.  The continuation locates it sharply in this countermodel: indistinguishability persists for every growing block with 4^J=o(sqrt(loglog M)); a nonzero Fourier coefficient appears at the fluctuation scale; the full TV distance tends to its maximal value above that scale.  The actual repository schedule has 4^K comparable to L^2, well into the last range.
+
+The terminal carry is not just one detectable statistic here: (12.3) identifies its residue TV with the entire block TV, up to a uniform vanishing error.  That exact transfer relies on independence and lattice smoothing of the artificially chosen background.  It supplies no corresponding conditional factorization for omega and no signed arithmetic estimate.  The result strengthens the countermodel's scope while keeping that distinction explicit.
+
+## 16. Exact transition profile: a wrapped Gaussian
+
+The lower bound (12.2) can be sharpened to an exact limit.  For c in (0,infinity), define the wrapped-normal density on R/Z
+
+    g_c(x)=sum_{k in Z} exp(-2 pi^2 k^2/(15c^2)) e(kx)
+          =c sqrt(15/(2 pi)) sum_{m in Z} exp(-15c^2(x+m)^2/2),
+
+and its distance from the uniform circle law
+
+    F(c)=(1/2) integral_0^1 |g_c(x)-1| dx.                 (16.1)
+
+For any schedule 1<=J(M)<=K(M) with 4^{J(M)}/sqrt(L_M)->c,
+
+    D_M(J(M))->F(c).                                      (16.2)
+
+In particular F(c)>0 for every c>0 (its first Fourier coefficient is nonzero), F(c)->0 as c decreases to zero, and F(c)->1 as c tends to infinity.  Together with sections 12-14, this describes the full transition from indistinguishable blocks to maximally separated blocks.  The Gaussian variance is 1/(15c^2) before wrapping.  The rotating mean affects the location of its peak, but not its TV distance from uniform.
+
+### 16a. Four Fourier modes control a floored Poisson input
+
+For Q>=2 and 0<=k<Q, put d_Q(k)=min(k,Q-k).  For N~Pois(lambda) and any fixed integer a,
+
+    |E e(k floor((N+a)/4)/Q)|
+         <=4 exp[-lambda d_Q(k)^2/(2Q^2)].                (16.3)
+
+Here is the finite Fourier proof, avoiding any unproved local limit theorem.  The function
+
+    f(m)=e(k floor((m+a)/4)/Q)
+
+on Z/(4Q)Z satisfies f(m+4)=e(k/Q)f(m).  Its discrete Fourier expansion therefore uses only the four frequencies ell=k+sQ modulo 4Q, s=0,1,2,3.  Each normalized Fourier coefficient has absolute value at most 1.  At every such ell, the distance to 0 modulo 4Q is at least d_Q(k).  The Poisson transform and 1-cos(2 pi ell/(4Q))>=8 dist(ell,4QZ)^2/(4Q)^2 give (16.3).  The constant 4 is harmless; the important feature is summable Gaussian decay in the frequency k at the critical scale, uniformly in the conditioned later carry a.
+
+### 16b. Upgrade the empirical CLT to a residue local limit
+
+Let Q/sqrt L->c, theta_M=L/(3Q), and qemp=qemp_{M,J}.  Then
+
+    max_{0<=r<Q} |Q qemp(r)-g_c(r/Q-theta_M)| ->0.          (16.4)
+
+The weak CLT alone would NOT imply this local conclusion.  Its missing high-frequency control is supplied by (16.3), plus the empirical conditional-law concentration in section 13.
+
+More explicitly, (13.2) supplies TV(qemp,qbar)<=t_M eventually, uniformly in J.  Multiplying the induced bound on a Fourier coefficient by the number Q of coefficients still gives O(Q t_M)=o(1).  For the conditional q_{n,J}, equation (16.3) applies with lambda=lambda_{n+J+1}, because the later carry is conditioned and fixed.  Discard n<M/log M; their total contribution to the SUM of Fourier magnitudes is at most Q/log M=o(1).  On the remaining indices lambda/L->1 uniformly, and Q/sqrt L->c.  For all large M this bounds each signed frequency k, |k|<=Q/2, by
+
+    4 exp(-k^2/(4(c+1)^2)),
+
+a summable bound independent of M.  Thus the aggregate contribution from |k|>R tends uniformly to zero as R tends to infinity, after M tends to infinity.
+
+For each fixed k, the empirical carry CLT (14.1) gives
+
+    e(-k theta_M) sum_r qemp(r)e(kr/Q)
+          -> exp(-2 pi^2 k^2/(15c^2)).                    (16.5)
+
+Fourier inversion on Z/QZ, first restricted to |k|<=R and then using the summable tail bound above, proves (16.4), uniformly in r.  The Fourier tail of g_c itself is absolutely summable.  This proves a residue local limit using the conditional Poisson input, not by upgrading a weak CLT without justification.
+
+It follows that
+
+    TV(qemp,Uniform(Z/QZ))
+       -(1/(2Q))sum_{r=0}^{Q-1}|g_c(r/Q-theta_M)-1| ->0.
+
+The translated-grid Riemann sums converge to (16.1) uniformly in theta_M, by uniform continuity of g_c on the circle.  Combine this with (12.3) to obtain (16.2).  All concentration estimates and the carry CLT have the same dyadic versions, so the identical profile holds on M<=n<2M.
+
+As c decreases to zero, the nonconstant Fourier series of g_c tends uniformly to zero, giving F(c)->0.  As c tends to infinity, its Gaussian periodization places probability tending to 1 in an arc of length tending to zero, giving F(c)->1.  No numerical fitting or additional arithmetic assumption enters this transition profile.
+
+### Continuation review scope
+
+Sections 12-16 are Astra's continuation after Trevor's instruction to continue.  The earlier referee exchange covers sections 1-11; the continuation has been sent separately for independent review.  Until that review arrives, do not describe the sharper threshold, empirical TV identity, or exact transition profile as independently checked.
