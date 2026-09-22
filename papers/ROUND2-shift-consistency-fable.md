@@ -160,8 +160,9 @@ With `truncTail K n = T_K(n)` and `fullWindowMean N K h = (1/N) sum_{N<=n<2N} e(
         <= 2 pi |h| 4^{-K} ( (1/N) sum_{N<=n<2N} sum_{j>=1} omega(n+K+j)/4^j + 1 ).
 
 At `K = windowK N` the right side is `O(|h| loglog N / 4^K) = O(|h| / loglog N)` by the first moment of `omega`
-over shifted windows (the repo's `sum_window_omegaR_le` family supplies `(1/N) sum_{N<=n<2N} omega(n+j) <=
-loglog N + O(1)` uniformly for `j <= N`; the `j > N` part of the geometric sum is handled as in Astra's (7.1)).
+over shifted windows: the repo's `sum_window_omegaR_le` (G4WindowK.lean) gives `(1/N) sum_{N<=n<2N} omega(n+j+1)
+<= log_2(4 (log 4N + 1)) = O(loglog N)` uniformly for `j + 1 <= 2N`; the `j > N` part of the geometric sum is
+handled as in Astra's (7.1).  (Checked against the Lean statement, not just its docstring.)
 
 Consequently **`WindowDecayK h` is equivalent to dyadic Weyl decay of the orbit `{4^n G}` at frequency `h`**,
 which (summing dyadic blocks) is equivalent to `(1/N) sum_{n<N} e(h 4^n G) -> 0`, i.e. to normality of `G` at
