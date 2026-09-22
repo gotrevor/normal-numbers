@@ -1,4 +1,4 @@
-# HANDOFF 2026-09-22 — Pair A multicutoff formalisation (laps 0–2 done)
+# HANDOFF 2026-09-22 — Pair A multicutoff formalisation (laps 0–4 done)
 
 Branch `wip/g5-prime-subset`.  Running `KICKOFF-2026-09-22-multicutoff-lean.md` under the
 2026-09-22 17:12 EDT attended override.  New modules only; no existing statement touched;
@@ -57,24 +57,94 @@ Deviations in the defect chain (both simplifications):
 - `e/8 ≤ e^{−1}` replaces the paper's `e < 4` **and** `log 2 ≥ 1/2` pair; the remaining numeric
   step is the integer inequality `64d+2u+2l+5 ≥ 16d+u+l+2`.
 
+
+### Lap 3 — `src/NormalNumbers/PrimeModelBlockLevel.lean`
+- `prod_le_of_block_bounds` : `|E ∩ B_i| ≤ m_i`, `B_i` topped by `w_i ≥ 1` ⟹
+  `∏_{p∈E} p ≤ ∏_i w_i^{m_i}`.
+- `sum_half_pow`, `sum_mul_half_pow` : exact finite identities
+  `∑_{l<L}2^{−l} = 2 − 2·2^{−L}`, `∑_{l<L} l 2^{−l} = 2 − (2L+2)2^{−L}`.
+- `level_sum_le` : `∑_{l<L}(64d+2u+2l+5)2^{−l} ≤ 128 d + 4u + 14`.
+
+Deviation: Fable derives `128d+4u+12` and then adds a separate `log y₁` for the defect block's
+extra prime.  Giving **every** block its uniform trace bound `r_i+1` (which is what the
+coefficient rule hands you anyway) gives `128d+4u+14` in one geometric sum, no special case.
+
+### Lap 4 — the graded arithmetic sieve
+`src/NormalNumbers/PrimeModelRadicalCRTGraded.lean`
+- `SieveCondD` (shift `< d p` at each sieve prime, plain `j p < p` at assigned primes),
+  `card_sieve_graded`, `radical_sieve_admissible_card_graded` (exactly `∏_{p∈E} d p` classes),
+  `radical_sieve_count_graded` (`|count − X ∏d/(Q D e)| ≤ ∏ d`).
+  The CRT infrastructure of `PrimeModelRadicalCRT` is uniform in the local counts and is reused
+  verbatim; only the local condition and the product of local counts change.
+
+`src/NormalNumbers/PrimeModelBrunCountGraded.lean`
+- `SiftedCondD`, `hitUD`, `weighted_counts_le_sifted_graded`,
+  `brun_remainder_le_square_graded` (`∑_E |λ E| ∏_{p∈E} d p ≤ R²`, using `d p ≤ p`),
+  `main_term_factor_graded`, and
+- **`graded_sifted_count_lower`** :
+  `#{n<X : SiftedCondD} ≥ X/(Q ∏_A p) · ∑_{E⊆U} λ(E) ∏_{p∈E}(d p/p) − R²`.
+
+  The weights are **abstract** here: the arithmetic needs only (i) minorisation, (ii) `|λ|≤1`,
+  (iii) support level `R`.  That is the interface the combinatorial half supplies.
+
+`src/NormalNumbers/PrimeModelBlockWeights.lean` — the explicit weights
+- `coefU`, `coefD`, `lamMain`, `lamDef`, **`blockLam`**;
+  `sum_powerset_coefU/coefD` (powerset form of `bonfPoly`/`defectPoly`).
+- `blockLam_expand` : `∑_{E⊆U} λ(E)∏_{p∈E}x_p = ∏_i U_i − ∑_i D_i ∏_{j≠i} U_j`.
+- `blockLam_abs_le_one` (i), `blockLam_support` (iii), `blockLam_minorant` (ii).
+
+  So **Lemma B is proved end to end for one concrete `λ`**.  `blockLam_abs_le_one` goes by the
+  trichotomy on the excess set `T = {i : |E∩B_i| > r_i}` (`|T|=0` main term only, `|T|=1` that
+  block's defect only, `|T|≥2` everything zero) — this is where Fable's asserted "supports are
+  disjoint" is actually discharged.
+
+`src/NormalNumbers/PrimeModelBlockSieveModel.lean` (lap 4d)
+- `esymmAlt`, `esymmAlt_empty`, `esymmAlt_insert`
+  (`P_{r+1}(insert a B) = P_{r+1}(B) − g_a P_r(B)`), and
+- `esymmAlt_bonferroni` : even truncations `≥ ∏(1−g)`, odd truncations `≤`.  Induction on `B`
+  with all `r` in the motive and **both parities together** — forced, since the step at one
+  parity consumes the IH at the other.  This supplies `model_defect_eta`'s hypotheses
+  `V ≤ E[U]` and `E[U] ≤ V(1+D̄)` for the real weights, with **no probability theory**: Fable's
+  "product measure, blocks independent" is discharged as algebra on symmetric functions.
+
+## Where the pieces meet
+
+    laps 1,3,4c  →  (minorise, |λ|≤1, level R)  →  graded_sifted_count_lower   [arithmetic]
+    laps 2,4d    →  (V ≤ E[U] ≤ V(1+D̄), D̄ ≤ e^{−u−l−2}, ∑D̄ ≤ 0.215T)
+                 →  model_defect_eta : ∑_E λ ∏g ≥ (1 − 0.3T) ∏(1−g)          [model]
+
+The only missing link between them is the **ring-generic form of `blockLam_expand`**: it is
+currently stated for `x : α → ℤ`, and the model side needs `x = g : α → ℝ`.  `coefU`/`coefD` are
+ℤ-valued and `prod_sum_powerset_disjoint` is already stated over an arbitrary commutative ring,
+so this is a re-statement with `(blockLam … : ℝ)` casts, not new mathematics.
+
+## Next, in order
+
+1. `blockLam_expand` over `ℝ` (as above); then
+   `∑_{E⊆U} λ(E)∏_{p∈E} g_p ≥ (1 − 0.3T) ∏_{p∈U}(1 − g_p)` by `model_defect_eta` +
+   `esymmAlt_bonferroni` + `block_defect_le`.  Combined with `graded_sifted_count_lower` this is
+   **Lemma B as the paper states it**, in arithmetic form.
+2. Instantiate the block family: `B_{j,l} = U^{(j)} ∩ (y_j^{2^{−l−1}}, y_j^{2^{−l}}]`,
+   `g_p = d_p/p`; `block_le_eight` (`PrimeModelPrimeDimension`) gives the `λ ≤ 8d` hypothesis of
+   `block_defect_le`, and `2 d_p ≤ p` gives `g ≤ 1/2`.
+3. Kickoff lap 5 (per-shift box, `retainedBox`, `radical_box_tail_exp20`).
+4. Kickoff lap 6 — **Theorem A**, the graded `windowMeanLe`.
+5. Kickoff lap 7 — **Theorem C′**, the headline
+   `isNormal_subsetLambert_of_sqrtFreshMassZero`, through
+   `isNormal_subsetLambert_of_KMT_along` (`G4WiringSparse`), mirroring
+   `PrimeModelFamilyConsumer.lean`.  Schedule: Astra §8/§11.
+
+## State
+
+Branch `wip/g5-prime-subset`.  Working tree clean; every listed module is sorry-free and the
+full `lake build` is green (9140 jobs).  No existing statement was edited;
+`PrimeModelBrunLower.lean` untouched.  Nothing in the paper has been refuted — every step
+checked so far went through as stated or better, and all five recorded deviations are
+simplifications.
+
 ## Nothing refuted
 
 Every paper step checked so far went through as stated or better.  No inequality failed.
-
-## Next (kickoff laps 3–7)
-
-3. Support level `log R = ∑_j (128 d_j + 4u_j + 14) log y_j`; the geometric identity
-   `∑_{l≥0}(64d+2u+2l+4)2^{−l} = 128d+4u+12` plus the defect block's one extra prime.
-   With `prod_sum_powerset_disjoint` this is a bound on `∏_{p∈E} p` for each admissible
-   profile, i.e. `∑_i (r_i + 1) log(top of block i)`.
-4. Per-prime class counts (`SieveCond`/`SiftedCond`, `radical_sieve_count`, remainder `≤ R²`).
-5. Per-shift box (`retainedBox`, `radical_box_tail_exp20`).
-6. **Theorem A** (graded `windowMeanLe`).
-7. **Theorem C′** = the headline
-   `isNormal_subsetLambert_of_sqrtFreshMassZero`, through
-   `isNormal_subsetLambert_of_KMT_along` (`G4WiringSparse`), mirroring
-   `PrimeModelFamilyConsumer.lean`.  Schedule: Astra §8/§11 (`y_j = ⌊N^{u_N^{-2} 2^{-j}}⌋`,
-   `Z_N = ⌈exp √log N⌉`, `ρ_N = sup_{q≥Z_N} r_P(q)`, `u_N = ⌊min(√w, ρ_N^{−1/2})⌋`).
 
 The abstract (non-arithmetic) half of Lemma B is now complete: laps 4–6 are the arithmetic
 instantiation, where `g_p = d_p/p`, blocks are `U^{(j)} ∩ (y_j^{2^{-l-1}}, y_j^{2^{-l}}]`, and
