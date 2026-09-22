@@ -13,6 +13,19 @@ notes: `DESIGN-2026-09-20-t3c-verdict.md`, `DESIGN-2026-09-20-walsh-weyl-bridge.
 The frontier beside the register: `Walsh.lean` (base two) and `WalshBase.lean` (every base)
 carry the digit-character criterion, both directions, as the dual of `equidistributed_of_weyl`.
 
+> **Sparse-prime normality PROVED unconditionally (2026-09-22, Fable session).**  The frozen
+> `KMT_quant₂ C₁ C₂` (`C₁ k = exp 4k`, `C₂ k = exp(exp(k+7))`) is a theorem,
+> `PrimeModelKMT.KMT_quant₂_primeModel`, assembled from the prime model (lower Brun sieve →
+> radical joint law → phase contraction at the least nontrivial site), and
+> `exists_sparse_normal_unconditional : ∃ S, DivergentRecip S ∧ IsNormal 4 (subsetLambert S 4)`
+> is axiom-clean (`[propext, Classical.choice, Quot.sound]`, main `e222677`).  Says nothing about
+> `G₄` or any classical constant.  Spec + audit: `papers/prime-model-assembly-2026-09-22.md`.
+> **Family theorem also PROVED**: `PrimeModelFamily.isNormal_subsetLambert_of_sparse` — every
+> prime set with `π_P(x) log log x ≤ π(x)` eventually and divergent Σ1/p has a normal base-4
+> Lambert constant, axiom-clean, schedule built from the actual accumulated mass.  The paper
+> records the exact regime where relative-density-zero alone fails on this route (L¹ tail vs
+> local density coupling, `π_P ≈ π/L₄`).
+
 > **DEEP REFLECTION lap — 2026-09-16.**  Build 🟢 **9085 jobs**, re-verified.  `src/` = the two
 > pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**; **math-axiom count 0** — there is no
 > axiom ledger to chip on this project, so the reflection's job is *route*, not debt.

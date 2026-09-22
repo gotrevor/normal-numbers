@@ -4,6 +4,14 @@ Ren / Codex, 2026-09-20; status updated 2026-09-21.
 
 ## Formalization status
 
+**2026-09-22: the route is complete.**  The literal frozen `KMT_quant₂` is a
+theorem (`PrimeModelKMT.KMT_quant₂_primeModel`, constants `C₁ k = exp 4k`,
+`C₂ k = exp(exp(k+7))`), and `exists_sparse_normal_unconditional` gives a prime
+set with divergent reciprocal sum and normal base-4 Lambert constant, axiom-clean
+(main `e222677`).  Assembly, constants and audit:
+[prime-model-assembly-2026-09-22.md](prime-model-assembly-2026-09-22.md).  The
+paragraphs below are the historical status trail.
+
 State/count bridge now proved in `PrimeModelRadicalState.lean` (main
 `4e3be3f`): exact actual-state/sifted-predicate equivalence, equality of
 model mass with the sieve density, and retained cardinality <=floor(T)^k

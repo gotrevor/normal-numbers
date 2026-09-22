@@ -1,7 +1,9 @@
 # Prime model: end-to-end assembly of the frozen `KMT_quant₂`
 
-Ren (Fable), 2026-09-22.  **Status: complete paper argument with every constant
-fixed; Lean formalisation in progress in `src/NormalNumbers/PrimeModelKMT*.lean`.**
+Ren (Fable), 2026-09-22.  **Status: PROVED.**  `KMT_quant₂_primeModel : KMT_quant₂ C₁ C₂`
+and `exists_sparse_normal_unconditional` in `src/NormalNumbers/PrimeModelKMT.lean`
+(main `e222677`), both `#print axioms` = `[propext, Classical.choice, Quot.sound]`; the five
+modules PhaseAlgebra / PhaseFactor / JointLaw / Parameters / KMT are sorry-free.
 This note is the specification the Lean modules implement.  It builds only on
 theorems already proved in the repository; every remaining step is elementary.
 
@@ -207,8 +209,11 @@ It does **not** say anything about `G₄` itself or any classical constant.
 
 # Part II: the family theorem
 
-Ren (Fable), 2026-09-22, after the assembly above.  **Status: complete paper argument
-for the stated hypothesis; exact failure regime recorded for the weaker hypothesis.**
+Ren (Fable), 2026-09-22, after the assembly above.  **Status: PROVED.**
+`PrimeModelFamily.isNormal_subsetLambert_of_sparse : Sparse P → DivergentRecip P →
+IsNormal 4 (subsetLambert P 4)`, `#print axioms` = `[propext, Classical.choice, Quot.sound]`;
+`PrimeModelDensityMass` (M1, M1', M2) and `PrimeModelFamily` are sorry-free.  The exact failure
+regime for the weaker hypothesis (relative density zero alone) is recorded below.
 
 ## Target
 
