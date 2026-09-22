@@ -290,3 +290,18 @@ correlation decay plus the tail/TK summaries can give `EventualPrefixDecay`**; t
 relation `4T_k(n) − T_{k−1}(n+1) = ω(n+1)` (shift consistency across rows) and multiplicativity.  The countermodel is the
 classical enemy in disguise: a Riesz product is the standard `×4`-invariant singular law, so the summaries cannot rule
 out the orbit law being Riesz-like.  Not an arithmetic counterexample; `G₄` normality untouched.
+
+## 9. Correction (2026-09-22, round two, Pair B) — shift consistency is NOT a missing ingredient
+
+The last paragraph of §8 named "the exact orbit relation `4T_k(n) − T_{k−1}(n+1) = ω(n+1)` (shift consistency
+across rows)" as an input the Riesz countermodel lacked.  Withdrawn.  That relation holds for *every*
+nonnegative integer sequence (it is the base-4 tail identity, `papers/ROUND2-shift-consistency-fable.md`
+Lemma 1.1), and the round-two carry lift `W_{n+1} = 4C_n − C_{n+1} + d_n` — one deterministic sequence,
+overlapping windows, ordinary averages at every `M` — satisfies it exactly together with fixed-prefix Poisson
+laws in total variation, uniform second moments, the whole-window Gaussian limit, and a scheduled Fourier mean
+tending to **1** at every frequency (Astra's complete proof: `papers/ROUND2-shift-consistency-astra.md`; the
+prescribed-orbit generalization and the exact reformulation `WindowDecayK h ⟺ normality of G4 at h`:
+the Fable file, Theorem 3.1 and Proposition 4.1).  What survives of §8 is the sharpening of the sweep's item 2,
+now with a one-sequence witness.  The remaining distinction from `G₄` is arithmetic only: the joint law of the
+carries `⌊Σ_j ω(n+J+j)/4^j⌋ mod 4^J` with the leading residues at `J ≈ ½ log₄ log log M` (Fable file §6).
+Probe 15: `probes/carry_lift.py`, data `probes/data-2026-09-22-carry-lift.txt`.
