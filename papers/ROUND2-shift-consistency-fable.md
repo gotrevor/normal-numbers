@@ -204,8 +204,10 @@ Two consequences for how the crux should be read.
 
   where `W'` is the lift of the orbit shifted by `a` with carries `E`, so `W >= 0`, mean `L`, orbit of `W`
   equal to the orbit of `x_0` (Lemma 1.1), hence scheduled decay at every `h != 0`; but `4^a` divides every
-  `W_{n+j}`, so `T_k(n)` is an integer and `e(h T_k(n)) = 1` for every `k <= a(M)` in the bulk of `n < M` (the `a`
-  transitions cost `o(1)`).  The lower range fails at every `k` up to the threshold while the orbit is normal.
+  `W_{n+j}`, so `T_k(n)` is an integer and `e(h T_k(n)) = 1` for every `k <= a(M)` in the bulk of `n < M`.  At an index
+  where `a` steps up, `r_{n+1} = 4 r_n + d_n` still holds but the `4^a d_{n-a}` term is absent, so `W_{n+1} = 4^{a+1}
+  (E_n - E_{n+1})`; restart the background there with `E_{n+1} = 0` to keep `W >= 0`.  Transitions are rare, so
+  they and the windows crossing them cost `o(1)`.  The lower range fails at every `k` up to the threshold while the orbit is normal.
   The price is (V): `W` lives on the lattice `4^a Z` with `4^a = 4^A sqrt(L)`, so its variance is `asymp 4^a L`,
   not `(1+o(1)) L`, and no sequence on that lattice with mean `L` can have variance `(1+o(1)) L`.  So: with the
   summary package weakened by dropping (V), `EventualPrefixDecay h` is strictly stronger than normality at `h`;
