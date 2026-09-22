@@ -1,5 +1,56 @@
 # PENDING WORK
 
+## 2026-09-22 (lap G5c-d) — leaf status after four closed leaves
+
+CLOSED this run (all `lake build` green, in `src/NormalNumbers/PrimeModelFamilyGraded.lean`):
+`yBotG_tendsto` (+ `epsN_le_aMinG`), `termE4b_tendsto` (+ `sum_uuG_le`),
+`termE4a_tendsto` (+ `yBotG_le_yG`, `aG_ge_invL3`, `one_add_div_four_le_sqrt`,
+`geom_sum_le_two`), `JG_tendsto` (+ `JG_le_L3`, `JG_le_mass`, `JG_lower`, `yBotG_le_self`),
+and `tail_graded` / `tailOK_graded` MODULO one new, sharper leaf:
+
+### ⚠️ NEW CRUX: `freshMassTwo_graded`
+
+`∀ᶠ N, recipSumIoc P (yBotG N) (2N) ≤ 1`.  `tail_graded` is otherwise a verbatim port of
+`tail_fresh`, and this is the single spot where `FreshMassZero` was used there.  It is NOT a
+routine port:
+
+* The root chain from `yBot N = ⌊N^{(1/L₃N)2^{−J₁N}}⌋` costs
+  `K_N = ⌈log₂(log 2N / log yBot N)⌉ = J₁N + log₂L₃N + O(1) ≍ L₃N` halvings,
+  so `recipSumIoc_le_rootChain` only yields `ε_N · L₃N`, and `ε_N → 0` does not control that.
+* The bound is needed ONLY in the second branch of the `min` in `JG` (`J_N = ⌊S_P(yBot)/8⌋ < J₁N`).
+  In the first branch `4^{J_N} ≥ (L₂N)^{log 4}/4` already beats the crude
+  `S_P(2N) ≤ 12 L₂(2N) + 21` — that branch is fully proved.
+* So the true obligation is the weaker: in branch 2,
+  `(S_P(yBot,2N) + 13 J_N + 20)/4^{J_N} → 0` with `J_N = ⌊S_P(yBot N)/8⌋ → ∞`.
+
+Two candidate repairs, in order of promise:
+1. **Shorten the bottom chain.**  `TailOK` only needs `4^{J} ≫ S_P(2N) ≍ L₂N`, i.e. `J ≳ L₃N/log 4`.
+   Nothing forces `2^{−J₁N}` in `aMinG`: `JG ≤ J1` is used only through `yBotG ≤ y_j`.  Replacing
+   `J1 N` by `⌈L₃N/log 2⌉`-free data, or grading the chain as `∑_j 4^{−j}` does for E1, may bring
+   `K_N` down to `O(log u_N)`.
+2. **Branch-2 comparison.**  In branch 2 use the crude `S_P(2N) ≤ 12 L₂(2N) + 21` only when
+   `J_N ≥ 0.73 L₃N`, and the root chain otherwise; the gap is the regime
+   `log_4 L₂N ≫ J_N ≫ 1`, where `S_P(yBot) ≍ 8J_N` is small, i.e. `P` has almost no mass below
+   `yBot`.  Show that this regime contradicts `DivergentRecip` + `SqrtFreshMassZero`, or adjust
+   the `/8` in `JG`.
+
+### Still open (unchanged estimates)
+
+1. **`schedule_admissible`** — the eleven pointwise clauses.  `hcutlo` needs `L ≥ 2`
+   (`⌊t²⌋^{1/4} ≤ ⌊t⌋` for `t ≥ 2`, which is why `LG = max 2 …`), `hcut2` needs
+   `2^{−L} log yBot ∈ [log 2, 2 log 2]`.  `hybot` is now PROVED (`yBotG_le_yG`).
+2. **`termE1_tendsto`** — root chain: `S_P(y_j,N) ≤ ε_N(j + 2log₂u_N + 1)`; sum against
+   `4^{−j−1}` and use `ε_N log u_N ≤ ε_N log(1/ε_N)/2 → 0`.
+3. **`termE4c_tendsto`** — `log R ≤ (540+8u_N)/u_N² · log N`, `(2J)# ≤ 4^{2J}`,
+   `∏_j ⌊T_j⌋ ≤ N^{0.22}`; product is `N^{−1+o(1)}`.
+4. **`termE5_tendsto`** — `8J ≤ S_P(yBot)` (`JG_le_mass`, PROVED) and `S_P(2J) = O(log log J)`
+   give the exponent `≥ 5J`.
+
+Suggested order: `freshMassTwo_graded` (the crux) → E5 → E1 → E4c → `schedule_admissible`.
+
+---
+
+
 ## 2026-09-22 — G5c: Theorem C′ is stated and wired; the open leaves are the five term limits
 
 `src/NormalNumbers/PrimeModelFamilyGraded.lean` (this lap) holds **Theorem C′**,

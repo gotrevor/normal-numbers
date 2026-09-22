@@ -624,13 +624,172 @@ theorem termE5_tendsto (hP : DivergentRecip P) : Tendsto (termE5 P) atTop (𝓝 
 
 /-- **Open leaf G5c-7.**  The tail along the graded schedule: the `min` in `JG` is the same
 device as `JI`, so `tail_fresh`'s two-branch argument applies with `yBotG` in place of `yI`. -/
-theorem tailOK_graded (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
-    TailOK P (JG P) := by
+theorem JG_le_L3 : ∀ᶠ N : ℕ in atTop, (JG P N : ℝ) ≤ L3 N := by
+  filter_upwards [L3_tendsto.eventually_ge_atTop 0] with N hL
+  have h2 : ((J1 N : ℕ) : ℝ) ≤ L3 N := Nat.floor_le (by linarith)
+  have h3 : (JG P N : ℝ) ≤ ((J1 N : ℕ) : ℝ) := by exact_mod_cast JG_le_J1 P N
+  linarith
+
+theorem JG_le_mass (N : ℕ) : 8 * (JG P N : ℝ) ≤ recipSumLe P (yBotG N) := by
+  have hS := recipSumLe_nonneg P (yBotG N)
+  have h1 : JG P N ≤ ⌊recipSumLe P (yBotG N) / 8⌋₊ := min_le_right _ _
+  have h2 : ((⌊recipSumLe P (yBotG N) / 8⌋₊ : ℕ) : ℝ) ≤ recipSumLe P (yBotG N) / 8 :=
+    Nat.floor_le (by positivity)
+  have h3 : (JG P N : ℝ) ≤ ((⌊recipSumLe P (yBotG N) / 8⌋₊ : ℕ) : ℝ) := by exact_mod_cast h1
+  linarith
+
+/-- In the first branch of the `min`, `J_N ≥ L₃N − 1`. -/
+theorem JG_lower {N : ℕ} (hcase : J1 N ≤ ⌊recipSumLe P (yBotG N) / 8⌋₊) (hL : 0 ≤ L3 N) :
+    L3 N - 1 ≤ (JG P N : ℝ) := by
+  have h : JG P N = J1 N := min_eq_left hcase
+  rw [h]
+  have h2 : L3 N < ((J1 N : ℕ) : ℝ) + 1 := Nat.lt_floor_add_one (L3 N)
+  linarith
+
+/-- The bottom cutoff is below `N`: `a_min ≤ 1`. -/
+theorem yBotG_le_self : ∀ᶠ N : ℕ in atTop, yBotG N ≤ N := by
+  filter_upwards [L3_tendsto.eventually_ge_atTop (1 : ℝ), eventually_ge_atTop 1]
+    with N hL3 hN
+  have hN1 : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+  have ha1 : aMinG N ≤ 1 := by
+    rw [aMinG]
+    have h1 : (1 / L3 N) ≤ 1 := by
+      rw [div_le_one (by linarith)]; linarith
+    have h2 : ((1 : ℝ) / 2) ^ (J1 N) ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+    nlinarith [pow_nonneg (show (0:ℝ) ≤ 1/2 by norm_num) (J1 N)]
+  have : ((N : ℝ)) ^ aMinG N ≤ (N : ℝ) ^ (1 : ℝ) :=
+    Real.rpow_le_rpow_of_exponent_le hN1 ha1
+  rw [Real.rpow_one] at this
+  have hfl : ⌊((N : ℝ)) ^ aMinG N⌋₊ ≤ ⌊(N : ℝ)⌋₊ := Nat.floor_le_floor this
+  simpa [yBotG] using hfl
+
+theorem JG_tendsto (hP : DivergentRecip P) : Tendsto (JG P) atTop atTop := by
+  have hA : Tendsto J1 atTop atTop := J1_tendsto
+  have hB : Tendsto (fun N : ℕ => ⌊recipSumLe P (yBotG N) / 8⌋₊) atTop atTop :=
+    tendsto_nat_floor_atTop.comp
+      (((recipSumLe_tendsto_atTop P hP).comp yBotG_tendsto).atTop_div_const (by norm_num))
+  refine tendsto_atTop.mpr fun b => ?_
+  filter_upwards [hA.eventually_ge_atTop b, hB.eventually_ge_atTop b] with N h1 h2
+  exact le_min h1 h2
+
+/-- The graded twin of `tail_fresh`: the two-branch argument of the `min` in `JG`. -/
+theorem tail_graded (hfm : ∀ᶠ N : ℕ in atTop, recipSumIoc P (yBotG N) (2 * N) ≤ 1)
+    (hP : DivergentRecip P) :
+    Tendsto (fun N : ℕ => (recipSumLe P (2 * N) + 5 * (JG P N : ℝ) + 12) / (4 : ℝ) ^ JG P N)
+      atTop (𝓝 0) := by
+  set ρ : ℝ := Real.log 4 - 1 with hρdef
+  have hlog4 : 1 < Real.log 4 :=
+    (Real.lt_log_iff_exp_lt (by norm_num)).mpr (by linarith [Real.exp_one_lt_d9])
+  have hρ0 : 0 < ρ := by rw [hρdef]; linarith
+  have hf : Tendsto (fun N : ℕ => (13 * (JG P N : ℝ) + 21) / (4 : ℝ) ^ (JG P N))
+      atTop (𝓝 0) := by
+    have h1 := tendsto_pow_const_div_const_pow_of_one_lt 1 (by norm_num : (1 : ℝ) < 4)
+    have h0 := tendsto_pow_const_div_const_pow_of_one_lt 0 (by norm_num : (1 : ℝ) < 4)
+    have hsum : Tendsto
+        (fun n : ℕ => 13 * ((n : ℝ) ^ 1 / (4 : ℝ) ^ n) + 21 * ((n : ℝ) ^ 0 / (4 : ℝ) ^ n))
+        atTop (𝓝 0) := by
+      simpa using (h1.const_mul (13 : ℝ)).add (h0.const_mul (21 : ℝ))
+    refine Tendsto.congr (fun N => ?_) (hsum.comp (JG_tendsto P hP))
+    simp only [Function.comp_apply, pow_one, pow_zero]
+    ring
+  have hgt : Tendsto (fun N : ℕ => 120 * (L2 N) ^ (-ρ)) atTop (𝓝 0) := by
+    have h1 : Tendsto (fun N : ℕ => (L2 N) ^ (-ρ)) atTop (𝓝 0) := by
+      have := (tendsto_rpow_neg_atTop hρ0).comp L2_tendsto
+      simpa [Function.comp_def] using this
+    simpa using h1.const_mul (120 : ℝ)
+  refine squeeze_zero' (Eventually.of_forall fun N => ?_) ?_ (by simpa using hf.add hgt)
+  · have := recipSumLe_nonneg P (2 * N)
+    positivity
+  filter_upwards [eventually_ge_atTop 3, L2_tendsto.eventually_ge_atTop 2500, JG_le_L3 P,
+    yBotG_le_self, hfm] with N hN hL hJle hyN hfm2
+  obtain ⟨hu1, hu2, -⟩ := L3_bounds hL
+  have ht0 : 0 < L2 N := by linarith
+  have hulog : L3 N = Real.log (L2 N) := L3_eq N
+  have hrp : (0 : ℝ) < (L2 N) ^ (-ρ) := Real.rpow_pos_of_pos ht0 _
+  have hpow0 : (0 : ℝ) < (4 : ℝ) ^ (JG P N) := by positivity
+  have hfnn : (0 : ℝ) ≤ (13 * (JG P N : ℝ) + 21) / (4 : ℝ) ^ (JG P N) := by positivity
+  have hgnn : (0 : ℝ) ≤ 120 * (L2 N) ^ (-ρ) := by positivity
+  rcases le_total (J1 N) (⌊recipSumLe P (yBotG N) / 8⌋₊) with hcase | hcase
+  · have hJlow : L3 N - 1 ≤ (JG P N : ℝ) := JG_lower P hcase (by linarith)
+    have hpow : (L2 N) ^ Real.log 4 / 4 ≤ (4 : ℝ) ^ (JG P N) := by
+      have h1 : (4 : ℝ) ^ (JG P N) = (4 : ℝ) ^ ((JG P N : ℕ) : ℝ) := (Real.rpow_natCast 4 _).symm
+      have h2 : (4 : ℝ) ^ (L3 N - 1) ≤ (4 : ℝ) ^ ((JG P N : ℕ) : ℝ) :=
+        Real.rpow_le_rpow_of_exponent_le (by norm_num) (by linarith)
+      have h3 : (4 : ℝ) ^ (L3 N - 1) = (L2 N) ^ Real.log 4 / 4 := by
+        rw [Real.rpow_sub (by norm_num), Real.rpow_one]
+        congr 1
+        rw [Real.rpow_def_of_pos (by norm_num : (0:ℝ) < 4), Real.rpow_def_of_pos ht0, hulog]
+        congr 1
+        ring
+      rw [h1, ← h3]; exact h2
+    have hL2two : L2 (2 * N) ≤ L2 N + 1 := by
+      have hlogN : 1 < Real.log N := logN_gt_one hN
+      have hlog2 : Real.log 2 ≤ 1 := by
+        have := Real.log_le_sub_one_of_pos (by norm_num : (0:ℝ) < 2); linarith
+      have hlog2pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+      have hcast : ((2 * N : ℕ) : ℝ) = 2 * (N : ℝ) := by push_cast; ring
+      have hNne : ((N : ℝ)) ≠ 0 := by
+        have h3 : (3 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+        exact ne_of_gt (by linarith)
+      have hlog2N : Real.log ((2 * N : ℕ) : ℝ) = Real.log 2 + Real.log N := by
+        rw [hcast, Real.log_mul (by norm_num) hNne]
+      have hlog2Npos : 0 < Real.log ((2 * N : ℕ) : ℝ) := by rw [hlog2N]; linarith
+      have h1 : Real.log ((2 * N : ℕ) : ℝ) ≤ 2 * Real.log N := by rw [hlog2N]; linarith
+      have h2 : L2 (2 * N) ≤ Real.log (2 * Real.log N) := Real.log_le_log hlog2Npos h1
+      rw [Real.log_mul (by norm_num) (by linarith)] at h2
+      have h4 : Real.log (Real.log N) = L2 N := rfl
+      linarith [h2, h4.le, h4.ge]
+    have hcrude : recipSumLe P (2 * N) ≤ 12 * L2 (2 * N) + 21 :=
+      NormalNumbers.PrimeModel.FamilySharp.recipSumLe_le_crude P (by omega)
+    have hnum : recipSumLe P (2 * N) + 5 * (JG P N : ℝ) + 12 ≤ 30 * L2 N := by
+      have h5 : (JG P N : ℝ) ≤ L3 N := hJle
+      linarith
+    have h30 : (0 : ℝ) ≤ 30 * L2 N := by linarith
+    have hstep : (recipSumLe P (2 * N) + 5 * (JG P N : ℝ) + 12) / (4 : ℝ) ^ (JG P N)
+        ≤ (30 * L2 N) / ((L2 N) ^ Real.log 4 / 4) :=
+      div_le_div₀ h30 hnum (by positivity) hpow
+    have hfin : (30 * L2 N) / ((L2 N) ^ Real.log 4 / 4) = 120 * (L2 N) ^ (-ρ) := by
+      rw [hρdef, show -(Real.log 4 - 1) = 1 - Real.log 4 by ring, Real.rpow_sub ht0,
+        Real.rpow_one]
+      field_simp
+      norm_num
+    linarith [hstep, hfin.le, hfin.ge, hfnn]
+  · have hJeq : JG P N = ⌊recipSumLe P (yBotG N) / 8⌋₊ := min_eq_right hcase
+    have hSlt : recipSumLe P (yBotG N) < 8 * (JG P N : ℝ) + 8 := by
+      have := Nat.lt_floor_add_one (recipSumLe P (yBotG N) / 8)
+      rw [← hJeq] at this
+      linarith
+    have hsplit : recipSumLe P (2 * N)
+        = recipSumLe P (yBotG N) + recipSumIoc P (yBotG N) (2 * N) :=
+      recipSumLe_add_recipSumIoc P (le_trans hyN (by omega))
+    have hnum : recipSumLe P (2 * N) + 5 * (JG P N : ℝ) + 12 ≤ 13 * (JG P N : ℝ) + 21 := by
+      rw [hsplit]; linarith
+    have hstep : (recipSumLe P (2 * N) + 5 * (JG P N : ℝ) + 12) / (4 : ℝ) ^ (JG P N)
+        ≤ (13 * (JG P N : ℝ) + 21) / (4 : ℝ) ^ (JG P N) :=
+      div_le_div_of_nonneg_right hnum hpow0.le
+    linarith [hstep, hgnn]
+
+/-- **Open leaf G5c-7a (the residual tail crux).**  The mass of `P` on `(yBot N, 2N]` is
+eventually `≤ 1`.  This is the ONE place where the square-root criterion does not obviously
+suffice: the root chain (`recipSumIoc_le_rootChain`) from `yBot N = N^{(1/L₃N)2^{-J₁N}}` costs
+`K_N = ⌈log₂(log 2N / log yBot N)⌉ ≍ J₁N ≍ L₃N` halvings, so it only gives
+`ε_N · L₃N`, and `ε_N → 0` alone does not make that tend to `0`.  Note the bound is needed only
+in the SECOND branch of the `min` in `JG` (where `J_N = ⌊S_P(yBot)/8⌋ < J₁N`); in the first
+branch `4^{J_N} ≈ (L₂N)^{log 4}` already beats the crude `S_P(2N) ≤ 12 L₂(2N) + 21`.
+See `PENDING_WORK.md` for the two candidate repairs (a shorter bottom chain, or a branch-2
+comparison of `S_P(yBot)` against `L₃N`). -/
+theorem freshMassTwo_graded (hS : SqrtFreshMassZero P) :
+    ∀ᶠ N : ℕ in atTop, recipSumIoc P (yBotG N) (2 * N) ≤ 1 := by
   sorry
 
-theorem JG_tendsto (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
-    Tendsto (JG P) atTop atTop := by
-  sorry
+theorem tailOK_graded (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
+    TailOK P (JG P) := by
+  rw [TailOK]
+  refine squeeze_zero' (Eventually.of_forall (fun N => ?_)) ?_
+    (tail_graded P (freshMassTwo_graded P hS) hP)
+  · exact div_nonneg (Finset.sum_nonneg fun _ _ => abs_nonneg _) (Nat.cast_nonneg N)
+  · filter_upwards [eventually_ge_atTop 1] with N hN
+    exact tail_error_L1 P (JG P N) N hN
 
 theorem kmt_along_graded (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
     KMT_along P (JG P) := by
@@ -645,7 +804,7 @@ theorem kmt_along_graded (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
     simpa using this
   refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _)) ?_ hsum
   filter_upwards [windowMean_le_terms P h, eventually_gt_atTop 0,
-    (JG_tendsto P hS hP).eventually_ge_atTop (h.natAbs + 1)] with N hb hN hJ
+    (JG_tendsto P hP).eventually_ge_atTop (h.natAbs + 1)] with N hb hN hJ
   exact hb ⟨h.natAbs + 1, by omega, hJ, nontrivial_site hh⟩ hN
 
 /-- **Theorem C′** (Astra §11 / Fable §9): vanishing square-root fresh reciprocal mass plus a
