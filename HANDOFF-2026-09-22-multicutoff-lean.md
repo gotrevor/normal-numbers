@@ -162,20 +162,100 @@ Structural facts proved, not assumed:
    `e^{k}` (from `p > 2k`).  Same asymptotics; the `2k` split is available via
    `phase_factorisationGM` if the sharper constant is ever wanted.
 
-## Next, in order
+## Next, in order — **SUPERSEDED 2026-09-22 by the review lap.  Do not follow item 1.**
 
-1. **Finish lap 6**: feed `empLaw_lower_atom_graded` into `window_bound_graded`'s `hlower` to get
-   a hypothesis-free Theorem A.  Needs the schedule bookkeeping: `P = midPrimes S (2k) Y`,
-   `Q = primorial (2k)` (use `phase_factorisationGM` with `m = 2k`, and re-run
-   `windowMeanLeG_eq_sum` / `model_expectation_eqG` / `norm_model_expectation_le_graded` at that
-   split — they are stated at `m = k` today), plus `hcover`:
-   `⋃_{j,l} gradedBlock UU yy (j,l) = stateU P s`, which holds with one tier
-   `κ = Unit`, `UU () = stateU P s`, `yy () = Y`, and `L ≥ log₂(log Y / log (2k))` levels.
-2. **Kickoff lap 7 — Theorem C′**, the headline
-   `isNormal_subsetLambert_of_sqrtFreshMassZero`, via `isNormal_subsetLambert_of_KMT_along`
-   (`G4WiringSparse`), mirroring `PrimeModelFamilyConsumer.lean`.  Schedule: Astra §8/§11;
-   `ρ_N := sup_{q ≥ Z_N} r_P(q)`, `u_N`, `J_N`, then `KMT_along` + `TailOK` (`tail_fresh` shape).
-   Lap 0's `PrimeModelSqrtFresh.lean` already supplies the root chain and both implications.
+The original item 1 ("feed `empLaw_lower_atom_graded` into `window_bound_graded`'s `hlower` with
+one tier `κ = Unit`, `UU () = stateU P s`, `yy () = Y`") is **refuted**.  See
+`DIRECTION.md` → CURRENT DIRECTIVE and `PENDING_WORK.md` top for the two-line refutation and the
+G1–G5 decomposition that replaces it.  Item 2 (lap 7, Theorem C′) is unchanged and is still the
+target; it is now reached through G1–G5 rather than through the constant class count.
 
-Nothing in the paper has been refuted.  Every step checked so far went through as stated or
-better; all recorded deviations are simplifications or conservative constant losses.
+---
+
+# Lap 7 opening — REVIEW + the graded-state regrade (G1–G3 landed)
+
+Branch `wip/g5-prime-subset`, HEAD `415acfb`.  Working tree clean, `lake build` 🟢 **9155 jobs**.
+`src/` holds exactly the two pre-existing off-campaign `sorry`s
+(`PrimeLambertOscillation.phaseOscillation`, `MahlerDriftOne.exists_prime_nonresidue`) — the
+multicutoff campaign is sorry-free.
+
+## The review lap's finding (commit `a11e006`)
+
+Closing Theorem A's `hlower` at the **constant** class count `dpK k` cannot reach Theorem C′.
+Two independent walls:
+
+1. **Brun support level.**  `graded_brun_lower`'s `hdpj : ∀ j, ∀ p ∈ U j, dp p ≤ d j` forces
+   `d_j ≥ k` in *every* tier, including the top one, which carries the largest `log y`.  So
+   `log R ≥ 128 k log y₀`; `R² ≤ x^{1-δ}` pins `a := log y₀/log N ≤ 1/(2048 J)`; the root chain
+   (Astra 11.3) at `y₀` then costs `≥ 11 + log₂ J`, and the transfer term is `≍ ρ_N log J`.
+   `TailOK` pins `J ≍ min(L₃N, S_N/8)` — `J` cannot be capped without breaking the tail — so this
+   is `ρ_N · L₄N`, which `ρ_N → 0` does **not** control.
+2. **E4a Markov range.**  Lap 6e's recorded "harmless" deviation (moment over the full range
+   `≤ Y`) gives `∑_{j<J} e^{20}/T_j^{1/(2 log Y)}`; since `log T_j / log Y → 0` as `j` grows, the
+   terms tend to `e^{20}` and the sum diverges like `J e^{20}`.  `∑_j log T_j ≤ ½ log N` (the CRT
+   remainder) cannot rescue it.
+
+Both vanish exactly when the class count and the Markov range are **graded by band**, as Astra
+§4/§8 has them.  The arithmetic half needs no change: `graded_brun_lower` already takes an
+arbitrary `dp : ℕ → ℕ`.
+
+Two structural facts keep the regrade cheap — both now machine-checked:
+
+* the graded model is the pushforward of the ungraded one **with the same model expectation**
+  (`Radical.radical_phase_productG_eq`), because `zSee p j = 1` above the cutoff.  So leg E5 and
+  the whole phase algebra transfer **verbatim**;
+* the graded law lives on the **same** state type `ι → Option (Fin k)` with dead shifts zeroed,
+  so `sum_pi_prod`, `retainedBox_card_le` and `retainedBoxG_card_le` are reused verbatim.
+
+## Landed this lap (all sorry-free, all headlines `[propext, Classical.choice, Quot.sound]`)
+
+| leaf | file | headline |
+|---|---|---|
+| review | `DIRECTION.md`, `PENDING_WORK.md`, `STATUS.md` | CURRENT DIRECTIVE + G1–G5 + axiom ledger (`a11e006`) |
+| **G1** | `PrimeModelRadicalGraded.lean` | `radical_site_momentG`, `radical_phase_productG_eq` (`6ba7df3`) |
+| **G2** | `PrimeModelRadicalTailGraded.lean` | `radical_box_tailGG_exp20` (`9d38e11`) |
+| **G3** | `PrimeModelJointGraded.lean` | `actual_stateG_sifted_iff`, `state_model_densityG`, `empLawG_lower_atom` (`415acfb`) |
+
+* **G1** — `localWeightG k d q` gives a prime only its own `d` of the `k` shifts.
+  `radical_site_momentG` : the shift-`j₀` moment is `∏_{i : j₀ < d_i}(1 + q_i(t_i−1))`, the
+  product running **only over the primes that site sees**.  Plus `radical_mass_oneG`,
+  `weightG_nonneg`, `radical_mult_productG`, `radical_phase_productG` and the prime forms.
+  `d ≤ k` is needed exactly once, for `localWeightG_sum`.
+* **G2** — closes wall 2.  `radical_box_tailGG_exp20` reaches the sharp exponent
+  `1/(2 log y_j)` and needs only `p i ≤ y_j` for site `j`'s **own** primes, not a single `Y`
+  dominating the family (Astra (8.4)).  The budget is discharged by `radical_moment_budget` on
+  the *subtype* of live primes (`Finset.sum_subtype` bridges), so no Finset-indexed restatement
+  of the Mertens budget was needed.
+* **G3** — closes wall 1.  `truncState`/`IsGraded`/`actualStateG`; `actual_stateG_sifted_iff` and
+  `state_model_densityG` (graded twins of the two `RadicalState` headlines); `empLawG`,
+  `jointModelG` with mass one, nonnegativity, graded box tail; and `empLawG_lower_atom`, the
+  per-atom estimate at a band-dependent `dp`.  Two hypotheses came out cleaner than in the
+  constant-count version: `2 · dp p ≤ p` is a hypothesis on `dp` (so the prime set needs only
+  `k < q` here; the caller still supplies the `2k` clip when building `dp`), and `hkdd` is gone.
+
+## Next, in order (G4, then G5)
+
+1. **G4** `PrimeModelTheoremAGraded.lean` — Theorem A on the graded state, with no `hlower`:
+   * `statePhaseG S k y Y h (truncState k dp P s) = statePhaseG S k y Y h s`, where
+     `dp q = #{j : q ≤ y_j}` (use `PhaseFactor.exists_prefix_count`, which already gives that the
+     seen-set is an initial segment).  `zSee k y h q j = 1` for `q > y_j`, so the truncated
+     assignments contribute the factor `1` — this is the empirical-side transfer identity.
+   * hence `windowMeanLeG = ∑_g empLawG(g) · testFG(g)` (rewrite the fibres of
+     `windowMeanLeG_eq_sum` through `actualStateG`).
+   * model side: `∑_g jointModelG(g) testFG(g) = ∑_t jointModel(t) testFG(t)` — both equal
+     `((∑_r residuePhase)/Q) · ∏_p (1 + A_{d_p}/p)`; G1's `radical_phase_productG_eq` is the
+     lemma, applied with `z i = zSee k y h (i : ℕ)`.  **So `norm_model_expectation_le_graded`
+     (leg E5) is reused as it stands.**
+   * graded E4: `finite_phase_of_lower_atoms` is already generic in the index Finset, so
+     `joint_phase_errorG`'s proof carries over with `empLawG`/`jointModelG`/`radical_box_tailGG_exp20`
+     in place of the ungraded three.
+2. **G5** `PrimeModelFamilyGraded.lean` — lap 7, Theorem C′.  Schedule (Astra §8/§11):
+   `Z_N = ⌈exp √(log N)⌉`, `ρ_N = sup_{q ≥ Z_N} r_P(q)`, `u_N = ⌊min(√w, ρ_N^{-1/2})⌋`,
+   `J = min(⌊w⌋, ⌊S_N/8⌋)`, `y_j = ⌊N^{u^{-2} 2^{-j}}⌋`, `T_j = N^{2^{-j/2}/16}`; tiers
+   `UU b = P ∩ (y_b, y_{b-1}]`, `yy b = y_{b-1}`, `dd b = b` (each band is exactly ONE dyadic
+   block, `cut yy b 1 = y_{b-1}^{1/2}`, so the upper tiers' `l ≥ 1` blocks are empty and `L` is
+   set by the bottom tier).  Then `KMT_along` + `TailOK` (`tail_fresh` shape) and the headline
+   through `isNormal_subsetLambert_of_KMT_along`.
+
+Nothing in the paper has been refuted.  The only correction is to the *formalisation plan*: lap
+6e's E4a deviation and the one-tier `hlower` plan were both recorded as harmless and are not.
