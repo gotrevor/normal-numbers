@@ -203,6 +203,14 @@ inequality, the coefficient bound, the disjoint supports, the `0.34` ratio, the 
 per-block defect, the `128 d + 4u + 12` level exponent.  Two edge details are now pinned above
 (the `v < 2` block, and `g ≤ 1/2` via `Q = primorial(2k)`).
 
+*Probe with hand controls*: `probes/block_sieve.py` (self-checking, exit 1 on failure) verifies
+the Bonferroni pair identities exhaustively (`b ≤ 12`, even `r ≤ 10`), the telescoping minorant
+and the coefficient rule on every hit pattern of four block configurations, the two-block model
+defect against the hand values `E[L] = 0.43032 ≤ ∏V = 0.43046721` (relative defect `3.42e−4`,
+paper bound `1.23e−2`), and two brute-force arithmetic counts over a full period `M = 17017`:
+one block `{7,11,13,17}` with two classes gives minorant `7409 ≤ 7425` exact, and the graded
+instance (`{7,11}` with `d = 2`, `{13,17}` with `d = 1`) gives the exact `8640` on both sides.
+
 ## 4. Where the common cutoff reappears: the `Dimension` inequality
 
 The repo's `brun_lower_fundamental` takes an arbitrary density `g` but certifies it through
