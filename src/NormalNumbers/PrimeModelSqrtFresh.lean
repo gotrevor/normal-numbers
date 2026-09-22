@@ -173,6 +173,63 @@ theorem sqrtFreshMassZero_of_freshMassZero (hF : FreshMassZero P) : SqrtFreshMas
 theorem sqrtFreshMassZero_of_relDensityZero
     (h : Tendsto (fun t : ℕ => (piP P t : ℝ) / (t.primesBelow.card : ℝ)) atTop (𝓝 0)) :
     SqrtFreshMassZero P := by
-  sorry
+  have hlog3 : (0:ℝ) < Real.log 3 := Real.log_pos (by norm_num)
+  set C : ℝ := 9 + 12 * Real.log 3 with hC
+  have hCpos : 0 < C := by rw [hC]; linarith
+  refine tendsto_order.2 ⟨fun a ha => ?_, fun a ha => ?_⟩
+  · exact Eventually.of_forall fun N => lt_of_lt_of_le ha (recipSumIoc_nonneg P _ _)
+  · set δ : ℝ := a / (2 * C) with hδ
+    have hδpos : 0 < δ := by rw [hδ]; positivity
+    obtain ⟨T, hT⟩ := eventually_atTop.1 ((tendsto_order.1 h).2 δ hδpos)
+    filter_upwards [eventually_ge_atTop ((T + 3) ^ 2)] with N hN
+    have hs : T + 3 ≤ Nat.sqrt N := by
+      have h1 : Nat.sqrt ((T + 3) ^ 2) ≤ Nat.sqrt N := Nat.sqrt_le_sqrt hN
+      rwa [Nat.sqrt_eq'] at h1
+    set s : ℕ := Nat.sqrt N with hsdef
+    have hs2 : 2 ≤ s := by omega
+    have hsN : s ≤ N := Nat.sqrt_le_self N
+    have hdom : ∀ t, s < t → t ≤ N + 1 → (piP P t : ℝ) ≤ δ * (t.primesBelow.card : ℝ) := by
+      intro t hts _
+      have hTt : T ≤ t := by omega
+      have hpi : (0:ℝ) < (t.primesBelow.card : ℝ) := by
+        have hmem : 2 ∈ Nat.primesBelow t := by
+          rw [Nat.mem_primesBelow]
+          exact ⟨by omega, Nat.prime_two⟩
+        exact_mod_cast Finset.card_pos.2 ⟨2, hmem⟩
+      have hlt := hT t hTt
+      rw [div_lt_iff₀ hpi] at hlt
+      exact hlt.le
+    have key := recipSumIoc_le_of_dominated' P hδpos.le hs2 hsN hdom
+    -- the Mertens ratio on `(⌊√N⌋, N]` is at most `3`
+    have hcube : N ≤ s ^ 3 := by
+      have hlt : N < (s + 1) ^ 2 := Nat.lt_succ_sqrt' N
+      nlinarith [hs2, hlt]
+    have hsr : (2:ℝ) ≤ (s:ℝ) := by exact_mod_cast hs2
+    have hslog : 0 < Real.log s := Real.log_pos (by linarith)
+    have hNr : (4:ℝ) ≤ (N:ℝ) := by
+      have : (4:ℕ) ≤ N := by nlinarith [hs2, hsN, Nat.sqrt_le' N]
+      exact_mod_cast this
+    have hNlog : 0 < Real.log N := Real.log_pos (by linarith)
+    have hcube' : (N:ℝ) ≤ (s:ℝ) ^ 3 := by exact_mod_cast hcube
+    have hlogN : Real.log N ≤ 3 * Real.log s := by
+      have h1 : Real.log N ≤ Real.log ((s:ℝ) ^ 3) :=
+        Real.log_le_log (by linarith) hcube'
+      rwa [Real.log_pow] at h1
+      
+    have hratio : Real.log N / Real.log s ≤ 3 := by
+      rw [div_le_iff₀ hslog]; linarith
+    have hratiopos : 0 < Real.log N / Real.log s := by positivity
+    have hlogratio : Real.log (Real.log N / Real.log s) ≤ Real.log 3 :=
+      Real.log_le_log hratiopos hratio
+    have hfinal : δ * (9 + 12 * Real.log (Real.log N / Real.log s)) ≤ δ * C := by
+      refine mul_le_mul_of_nonneg_left ?_ hδpos.le
+      rw [hC]; linarith
+    have hhalf : δ * C = a / 2 := by rw [hδ]; field_simp
+    have : recipSumIoc P s N ≤ a / 2 := by rw [← hhalf]; exact key.trans hfinal
+    linarith
 
 end NormalNumbers.PrimeModel.SqrtFresh
+
+#print axioms NormalNumbers.PrimeModel.SqrtFresh.recipSumIoc_le_rootChain
+#print axioms NormalNumbers.PrimeModel.SqrtFresh.sqrtFreshMassZero_of_freshMassZero
+#print axioms NormalNumbers.PrimeModel.SqrtFresh.sqrtFreshMassZero_of_relDensityZero
