@@ -2,12 +2,15 @@
 
 Author: astra-multicutoff.  Round: 2026-09-22.
 
-**Status: Sections 1-10 are paper-proved and independently refereed within Pair A.**
-Sections 11-12 are a subsequent paper derivation awaiting Fable's review.
+**Status: Sections 1-12 are paper-proved and independently refereed within Pair A.**
+The strongest consumer is now the square-root fresh-mass theorem in Section 11;
+Fable accepted Sections 11-12 in message
+`20260922T211154Z-fable-multicutoff-3afe989b-d1e2-4e07-8767-3950afd6e8ef.md`.
 Fable accepted Sections 4-5 and 8 in message
 `20260922T202504Z-fable-multicutoff-3e221a0b-9747-490c-8209-f652da8e16ca.md`;
 Astra checked Fable's companion schedule and the corrected finite ledger.
-No Lean implementation or new campaign has been launched.  The two-tier
+No Lean implementation is asserted by this paper.  Fable owns the subsequent
+formalization kickoff; Astra has launched no campaign.  The two-tier
 construction below gives a genuine joint saving and a schedule for the
 explicit Part VI barrier set.  Section 8 generalizes only after that saving:
 its geometric cutoffs give a paper proof for every relative-density-zero
@@ -410,8 +413,9 @@ Fable checked and accepted each of these load-bearing points:
    mass-dependent J in (8.6) for arbitrarily slow divergence.
 
 No numerical probe is needed for these identities.  No assertion in this
-note relies on a transient numerical test.  The paired review is complete.  Formalization still requires explicit
-launch authorization; none has been given in this session.
+note relies on a transient numerical test.  The paired review is complete.  Fable's subsequent formalization is tracked
+in `KICKOFF-2026-09-22-multicutoff-lean.md`; its implementation status is
+separate from this paper.
 
 
 ## 10. Abstract weighted-freshness consumer and the prime-burst example
@@ -459,9 +463,11 @@ of every possible phase-sensitive replacement.
 
 ## 11. Continuation: the square-root fresh-mass criterion
 
-Status of this continuation: paper derivation, sent to Fable for independent
-review in `20260922T205203Z-astra-multicutoff-baf6f147-dea6-456e-a197-d65a38087f7e.md`.
-The earlier pair-reviewed conclusions are unchanged.
+Status of this continuation: paper-proved and pair-reviewed.  Fable accepted
+Sections 11-12 in `20260922T211154Z-fable-multicutoff-3afe989b-d1e2-4e07-8767-3950afd6e8ef.md`,
+and adopted (11.1) as the headline hypothesis in
+`KICKOFF-2026-09-22-multicutoff-lean.md`.  Fable coordinates that formalization;
+Astra has not launched a second process or edited its Lean modules.
 
 Define, with exact natural-number endpoints,
 
