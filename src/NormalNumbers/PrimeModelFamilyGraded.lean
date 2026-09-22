@@ -306,13 +306,12 @@ theorem aG_ge_invL3 {N : ℕ} (hL3 : 0 < L3 N) (hu : 1 ≤ uG P N) : 1 / L3 N �
   exact one_div_le_one_div_of_le (by nlinarith) (uG_sq_le_L3 P hL3.le)
 
 /-- Every site cutoff dominates the bottom cutoff — the uniform lower end of the schedule. -/
-theorem yBotG_le_yG (hS : SqrtFreshMassZero P) : ∀ᶠ N : ℕ in atTop,
-    ∀ j : Fin (JG P N), yBotG N ≤ yG P N (j : ℕ) := by
+theorem yBotG_le_yG_nat (hS : SqrtFreshMassZero P) : ∀ᶠ N : ℕ in atTop,
+    ∀ j : ℕ, j ≤ J1 N → yBotG N ≤ yG P N j := by
   filter_upwards [L3_tendsto.eventually_gt_atTop (0 : ℝ),
     (uG_tendsto P hS yBotG_tendsto).eventually_ge_atTop 1,
-    eventually_ge_atTop 1] with N hL3 hu hN j
+    eventually_ge_atTop 1] with N hL3 hu hN j hj
   have hN1 : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
-  have hj : (j : ℕ) ≤ J1 N := le_trans (le_of_lt j.2) (JG_le_J1 P N)
   have hexp : aMinG N ≤ aG P N * (1 / 2) ^ (j : ℕ) := by
     rw [aMinG]
     have h1 : (1 / L3 N) * (1 / 2 : ℝ) ^ (J1 N) ≤ aG P N * (1 / 2 : ℝ) ^ (J1 N) :=
@@ -322,6 +321,34 @@ theorem yBotG_le_yG (hS : SqrtFreshMassZero P) : ∀ᶠ N : ℕ in atTop,
         (pow_le_pow_of_le_one (by norm_num) (by norm_num) hj) (aG_pos P hu).le
     linarith
   exact Nat.floor_le_floor (Real.rpow_le_rpow_of_exponent_le hN1 hexp)
+
+theorem yBotG_le_yG (hS : SqrtFreshMassZero P) : ∀ᶠ N : ℕ in atTop,
+    ∀ j : Fin (JG P N), yBotG N ≤ yG P N (j : ℕ) := by
+  filter_upwards [yBotG_le_yG_nat P hS] with N h j
+  exact h (j : ℕ) (le_trans (le_of_lt j.2) (JG_le_J1 P N))
+
+/-- `ε_N u_N² ≤ 1`: this is what the `ε_N^{−1/2}` branch of `u_N` is for. -/
+theorem epsG_mul_uG_sq_le (N : ℕ) : epsG P N * ((uG P N : ℕ) : ℝ) ^ 2 ≤ 1 := by
+  rcases eq_or_lt_of_le (epsG_nonneg P N) with heq | hpos
+  · rw [← heq]; simp
+  · have hu : ((uG P N : ℕ) : ℝ) ≤ invEpsG P N := by
+      rw [uG]
+      exact le_trans (Nat.floor_le (le_min (Real.sqrt_nonneg _) (invEpsG_nonneg P N)))
+        (min_le_right _ _)
+    rw [invEpsG, if_neg (not_le.mpr hpos)] at hu
+    have hsp : 0 < Real.sqrt (epsG P N) := Real.sqrt_pos.mpr hpos
+    have hsq : Real.sqrt (epsG P N) * Real.sqrt (epsG P N) = epsG P N :=
+      Real.mul_self_sqrt (le_of_lt hpos)
+    have h1 : ((uG P N : ℕ) : ℝ) * Real.sqrt (epsG P N) ≤ 1 := by
+      rw [le_div_iff₀ hsp] at hu
+      linarith
+    have h0 : (0 : ℝ) ≤ ((uG P N : ℕ) : ℝ) := Nat.cast_nonneg _
+    have h2 : (((uG P N : ℕ) : ℝ) * Real.sqrt (epsG P N)) ^ 2 ≤ 1 :=
+      pow_le_one₀ (by positivity) h1
+    calc epsG P N * ((uG P N : ℕ) : ℝ) ^ 2
+        = (((uG P N : ℕ) : ℝ) * Real.sqrt (epsG P N)) ^ 2 := by
+          rw [mul_pow, pow_two (Real.sqrt (epsG P N)), hsq]; ring
+      _ ≤ 1 := h2
 
 /-! ### Two elementary numeric lemmas -/
 
