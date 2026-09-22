@@ -1,5 +1,51 @@
 # PENDING WORK
 
+## 2026-09-22 — G5c: Theorem C′ is stated and wired; the open leaves are the five term limits
+
+`src/NormalNumbers/PrimeModelFamilyGraded.lean` (this lap) holds **Theorem C′**,
+`isNormal_subsetLambert_of_sqrtFreshMassZero`, wired through
+`isNormal_subsetLambert_of_KMT_along`.  Everything structural is proved; the schedule's
+*numeric* obligations are the open leaves.  Landed in this chain, all axiom-clean:
+
+| leaf | file | headline |
+|---|---|---|
+| G4 | `PrimeModelTheoremAGraded.lean` | `KMT.window_bound_gradedG` (graded law, split at `k`) |
+| G4′ | `PrimeModelTheoremAGradedM.lean` | `KMT.window_bound_gradedGM` (split at `m = 2k`) |
+| G5a | `PrimeModelGradedTiers.lean` | `BlockSieve.empLawG_lower_atom_bands` (tiers eliminated) |
+| G5b | `PrimeModelWindowSchedule.lean` | `KMT.window_bound_schedule` (no model/sieve hypothesis) |
+| G5c | `PrimeModelFamilyGraded.lean` | `windowMean_le_terms`, `kmt_along_graded`, **Theorem C′** |
+
+### The open leaves (all in `PrimeModelFamilyGraded.lean`)
+
+1. **`schedule_admissible`** — the eleven pointwise clauses of `window_bound_schedule` for the
+   Astra §8/§11 schedule.  All floors/rpow bookkeeping; the two that need care are
+   `hcutlo` (needs `L ≥ 2`: `⌊t²⌋^{1/4} ≤ ⌊t⌋` for `t ≥ 2`, which is why `LG = max 2 …`) and
+   `hcut2` (`2 ≤ y_b^{2^{−L}}`, from `2^{−L} log yBot ∈ [log 2, 2 log 2]`).
+2. **`termE1_tendsto`** — root chain: `S_P(y_j,N) ≤ ε_N(j + 2log₂u_N + 1)`; sum against
+   `4^{−j−1}` and use `ε_N log u_N ≤ ε_N log(1/ε_N)/2 → 0` (this is what `u_N ≤ ε_N^{−1/2}` is
+   for).
+3. **`termE4a_tendsto`** — `log T_j/(2 log y_j) = 2^{j/2}u_N²/32`, so the sum is
+   `2e^{20}∑_j exp(−2^{j/2}u_N²/32) ≤ 2e^{20}·2·exp(−u_N²/32) → 0`.
+4. **`termE4b_tendsto`** — `∑_b e^{−(u_N+b)} ≤ 1.6 e^{−u_N} → 0`.  Needs only `u_N → ∞`; the
+   grading of the tier weights is what removes the `J` factor.
+5. **`termE4c_tendsto`** — `log R ≤ (540+8u_N)/u_N² · log N` (from `∑_b (b+1)2^{−b} = 4`,
+   `∑_b 2^{−b} ≤ 2`), `(2J)# ≤ 4^{2J}`, `∏_j ⌊T_j⌋ ≤ N^{(1/16)/(1−2^{−1/2})} ≤ N^{0.22}`;
+   product is `N^{−1+o(1)}`.
+6. **`termE5_tendsto`** — `8J ≤ S_P(yBot)` and `S_P(2J) = O(log log J)` give the exponent
+   `≥ 5J`, so the term is `≤ e^{−5J} → 0`.
+7. **`tailOK_graded`**, **`JG_tendsto`** — verbatim the `tail_fresh` / `JI_tendsto` two-branch
+   arguments of `PrimeModelFamilyConsumer` / `PrimeModelFamilyIterMass` with `yBotG` for `yI`
+   and `JG` for `JI`.
+
+The arithmetic of each leaf is checked on paper (the table below); nothing in the paper is
+refuted.  The ONE structural deviation from the paper's schedule, forced and recorded: the tier
+weights are **graded**, `u_b = u_N + b`, not constant.  With a constant `u` the defect term is
+`J e^{−u}` and `TailOK` pins `J ≍ L₃N`, so `ρ_N → 0` alone cannot kill it; with `u_b = u_N + b`
+the geometric sum is `1.6 e^{−u_N}` and the extra level cost is `∑_b 4b·2^{−b} log y_b = O(a log N)`,
+absorbed into the same `540` constant.
+
+---
+
 ## 2026-09-22 — ROUTE CORRECTION: Theorem C′ needs the **graded joint state**
 
 Review lap on `KICKOFF-2026-09-22-multicutoff-lean.md` (laps 0–6 landed; Theorem A
