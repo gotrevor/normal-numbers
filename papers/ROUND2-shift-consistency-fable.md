@@ -129,11 +129,13 @@ Astra's (7.1).  QED.
 
 (c) A `mu`-generic `x_0` for a times-4-invariant ergodic probability `mu`: the scheduled mean tends to
     `mu-hat(h)`.  Astra's Riesz measure `mu = prod_{r>=0}(1 + delta cos(2 pi 4^r x)) dx` is times-4-invariant with
-    `mu-hat(h) = (delta/2)^{s(h)}` (`s` = number of nonzero signed base-4 digits, zero if none).  If it is ergodic,
-    which is the standard situation for Riesz products and is not re-derived here (confidence 80%), its generic
-    points embed the whole Riesz table into a one-sequence, overlapping-window, every-`M` model; even without
-    ergodicity, since `mu-hat(1) = delta/2 != 0` some ergodic component has a nonzero `h = 1` coefficient, so
-    generic points with nonzero scheduled limits exist.
+    `mu-hat(h) = (delta/2)^{s(h)}` (`s` = number of nonzero signed base-4 digits, zero if none).  The Riesz note
+    proves invariance, NOT ergodicity, and Birkhoff plus invariance does not supply a point whose orbit
+    averages converge to `mu` itself.  So the embedding of the Riesz table is **conditional on choosing a
+    `mu`-generic point** (ergodicity of this Riesz product would give one almost surely; standard for Riesz
+    products, confidence 80%, not proved here).  Unconditionally: by the ergodic decomposition some component
+    has a nonzero `h = 1` coefficient, so generic points with nonzero scheduled limits exist.  (Astra's
+    caution (a), 20:11Z, accepted.)
 
 (d) A normal `x_0`: the scheduled means tend to 0 for every `h != 0`.  So a sequence with the identical summary
     package can equally well satisfy scheduled decay.  The package carries no information about which case
@@ -199,14 +201,17 @@ correction is appended to that note.  What survives of section 8 is the sharpeni
 Write `N_J(n) = floor(4^J T_inf(n)) = sum_{i=1}^J 4^{J-i} omega(n+i) + C^omega_{n+J}` (Lemma 2.1 applied to
 `omega`).  Then `e(h N_J(n)/4^J) = e(h T_inf(n)) e(-h {4^J T_inf(n)}/4^J) = e(h X_n)(1 + O(|h|/4^J))`, so:
 
-**The target at frequency `h` is equidistribution of `N_J(n) mod 4^J` at frequency `h`, for `J = J(M) = (1/2)
-log_4 L_M + A(M)` with any `A -> infinity`, in ordinary average over `n < M` at every large `M`.**
+**The target at frequency `h` is the vanishing of the single Fourier coefficient `(1/M) sum_{n<M} e(h N_J(n)/4^J)`,
+for `J = J(M) = (1/2) log_4 L_M + A(M)` with any `A -> infinity`, in ordinary average over `n < M` at every large
+`M`.**  This is one frequency at a time, as the Weyl criterion demands; it is strictly weaker than
+equidistribution of `N_J mod 4^J` in total variation, and the two are not to be identified (Astra's caution (b)).
 
 This is equivalent to normality at `h` (up to `O(|h| 4^{-J})`), so it is not a reduction.  Its value is that it
 names the object no summary reaches: `N_J mod 4^J` couples the leading residues `omega(n+1) mod 4`,
-`omega(n+2) mod 16`, ... with the carry `C^omega_{n+J} mod 4^J`, where `4^J asymp A sqrt(L)` is comparable to
-the standard deviation `sqrt(L/15)` of the carry.  For fixed `J` the carry is spread over all of `Z/4^J` (that
-is why fixed prefixes cancel in every model); at `J = (1/2) log_4 L + A` it is concentrated on `O(A)` residues
+`omega(n+2) mod 16`, ... with the carry `C^omega_{n+J} mod 4^J`, where `4^J = 4^A sqrt(L)` is a slowly growing
+multiple of the standard deviation `sqrt(L/15)` of the carry.  For fixed `J` the carry is spread over all of
+`Z/4^J` (that is why fixed prefixes cancel in every model); at `J = (1/2) log_4 L + A` it is concentrated on a
+`4^{-A}` fraction of the residues
 and the leading residues have to do the work; above that the carry is frozen and nothing changes.
 Theorem 3.1 is the witness that fixed-`J` laws, singleton laws, second moments, the whole-window Gaussian
 limit, exact shift consistency, and (via (c)) any prescribed limiting phase law are jointly silent about
@@ -260,11 +265,17 @@ bound.  Readings (`data-2026-09-22-carry-lift.txt`):
 
 ## 9. Scope
 
-Not an arithmetic sequence; no exact `omega` marginals (the singleton law of `W` is the 4-point smoothing of
-the background's law, at TV distance `O(1/sqrt L)`; a background of independent copies of the `omega(U)`-law
-would give "smoothed `omega` law" singletons by the same proof, since every step uses only one-site
-root-of-unity decay at `4^{J+1}`-th roots and bounded shifts, but Astra's section-7 exact-marginal correction
-is not available on one sequence because it would alter the joint law with the carries); nothing against G4
+Not an arithmetic sequence.  On the brief's stretch target, exact `omega` singleton marginals, two facts
+(Astra, 20:11Z): (i) in the **empirical** reading - the histogram of `W_1..W_M` equals that of `omega(1)..omega(M)`
+for every large `M` - subtracting the `M` and `M-1` histograms forces `W_M = omega(M)` eventually, so that reading
+admits no alternative sequence at all; the Riesz note's exact marginals are probability marginals at each
+scale, a different quantifier, and no correction mechanism for a one-sequence version has been established.
+(ii) Replacing the Poisson background by independent copies of the `omega(U)`-law keeps the residue
+uniformity (one-site root-of-unity decay at `4^{J+1}`-th roots) but the smoothing step needs small
+**translation** TV for that lattice law, which root-of-unity decay plus a CLT do not give; a local limit
+estimate would.  So "smoothed-`omega` singletons" is **conditional on translation smoothness of the
+`omega(U)`-law**, not claimed.  The singleton law of `W` in the theorem is the 4-point smoothing of
+`Pois(L) + 3`, at TV distance `O(1/sqrt L)` from `Pois(L)`.  Nothing against G4
 normality; the Riesz note and Astra's file are unchanged.  No formalization launch is warranted: the theorem
 is a countermodel, not a node of the conjecture graph, and the exact reformulation of section 4 is a
 one-line identity a future lap can state as a Lean lemma if a consumer wants the converse direction.
