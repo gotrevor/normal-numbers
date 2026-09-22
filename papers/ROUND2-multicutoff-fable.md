@@ -365,3 +365,48 @@ window meets at most one block, of index `n → ∞`, and `∑_j 4^{−j} R(y_j,
 → 0`.  Here `u` must be chosen directly (e.g. `u = ⌊√(L₃N)⌋`), not through the density
 envelope, since `δ* = 1` for this set.  (Refereed by Astra, mail `20260922T202951Z`, who states
 the abstract weighted consumer `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0` in their §10.)
+
+## 9. Square-root fresh mass: the consumer's exact reach (Astra §11, refereed)
+
+Astra's continuation (`papers/ROUND2-multicutoff-astra.md` §11, mail `20260922T205203Z`) replaces
+the density hypothesis of Theorem C by the cutoff-free criterion
+
+    r_P(N) := S_P(⌊√N⌋, N) → 0        (SqrtFreshMassZero).
+
+Refereed and accepted (my reply mail of 2026-09-22 ~21:10Z lists the six checks).  The one finite
+ingredient is the **root chain**: for integers `M > y ≥ 2`, `Z ≤ y`, and `r_P(q) ≤ ρ` for all
+integers `q ≥ Z`,
+
+    S_P(y, M) ≤ ρ ⌈log₂(log M / log y)⌉.
+
+Proof: `M₀ = M`, `M_{l+1} = ⌊√M_l⌋`, stop at the first `M_L ≤ y`; the intervals `(M_{l+1}, M_l]`
+telescope exactly onto a superset of `(y, M]`, each is `r_P(M_l)` with `M_l > y ≥ Z`, and
+`M_K ≤ M^{2^{−K}} ≤ y` for `K = ⌈log₂(log M/log y)⌉` since floors only decrease.
+
+**Theorem C′.**  *If `r_P(N) → 0` and `∑_{p∈P} 1/p = ∞`, then `IsNormal 4 (subsetLambert P 4)`.*
+The §6 ledger goes through with one line changed.  Put `Z_N := ⌈exp √(log N)⌉`,
+`ρ_N := sup_{q ≥ Z_N} r_P(q)` (finite since `r_P ≤ log 2 + o(1)`, positive by divergence, `→ 0`),
+and `u_N := max(1, min(⌊ρ_N^{−1/2}⌋₊, ⌊(L₂N)^{0.3}/64⌋₊ − 70))`.  *Transfer* becomes: `y_k ≥ Z_N`
+eventually (as in §6, `ε_k ≥ 2/L₂N`), `log y_j ≥ ε_j log N / 2`, so the root chain gives
+`R(y_j, 2N) ≤ ρ_N (3 + j + log₂(1/ε₁))` and
+
+    ∑_j a_j · 2R(y_j, 2N) ≤ 8π|h| ρ_N [ (3 + log₂(4448 + 64u))/3 + 4/9 ] → 0,
+
+because `ρ_N log u_N ≤ (1/2) ρ_N log(1/ρ_N) → 0`.  *Old mass* uses the same chain for
+`S_P(y_{j₀}, y₁) ≤ ρ_N (j₀ + 2)`.  Every other line of §6 is unchanged.  Astra's §8/§11 schedule
+proves the same theorem with its own constants; either may be formalised.
+
+**Reach.**  Relative density zero `⇒ r_P → 0` (dominated Abel on `(⌊√N⌋, N]`: `≤ δ(9 + 12 log 2)`),
+the old `FreshMassZero ⇒ r_P → 0` (`yI(N) ≤ ⌊√N⌋` eventually), and the Part VI barrier set
+separates the two, so the inclusion left open in §0 is now settled in the direction
+`FreshMassZero ⊊ SqrtFreshMassZero`.  Conversely any schedule of the geometric family with
+`u ≥ 1` has `y₁ ≤ ⌊√N⌋`, hence `r_P(N) ≤ 4 F_N`: `r_P → 0` is the exact reach of the weighted
+consumer (Astra 11.3), not a necessary condition for normality.  Astra's §12 shows the global
+`S_P(N) = o(L₂N)` does **not** suffice for this consumer (width-1 bursts in `t = L₂x`).
+
+**Formalisation target** (authorised by Trevor 2026-09-22; `KICKOFF-2026-09-22-multicutoff-lean.md`):
+
+    def SqrtFreshMassZero (P : ℕ → Prop) [DecidablePred P] : Prop :=
+      Tendsto (fun N : ℕ => recipSumIoc P (Nat.sqrt N) N) atTop (𝓝 0)
+    theorem isNormal_subsetLambert_of_sqrtFreshMassZero :
+      SqrtFreshMassZero P → DivergentRecip P → IsNormal 4 (subsetLambert P 4)

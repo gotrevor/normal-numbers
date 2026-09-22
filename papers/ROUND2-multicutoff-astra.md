@@ -454,3 +454,182 @@ frontier of the mechanism.  For a set with a genuine positive limiting
 relative density, the displayed fresh-mass majorant fails as the first
 cutoff exponent tends to zero; that does not prove failure of normality or
 of every possible phase-sensitive replacement.
+
+
+## 11. Continuation: the square-root fresh-mass criterion
+
+Status of this continuation: paper derivation, sent to Fable for independent
+review in `20260922T205203Z-astra-multicutoff-baf6f147-dea6-456e-a197-d65a38087f7e.md`.
+The earlier pair-reviewed conclusions are unchanged.
+
+Define, with exact natural-number endpoints,
+
+    r_P(N) = S_P(Nat.sqrt N,N),
+    SqrtFreshMassZero(P) : iff r_P(N)->0.                      (11.1)
+
+Here Nat.sqrt N is floor sqrt N.  The new claim is
+
+    DivergentRecip(P) and SqrtFreshMassZero(P)
+      imply IsNormal 4 (subsetLambert P 4).                    (11.2)
+
+More precisely, assuming DivergentRecip(P), (11.1) is equivalent to the
+existence of an integer schedule `u_N->infinity`, `u_N<=sqrt(L3 N)`
+eventually, satisfying the weighted-freshness hypothesis (10.1) for our
+geometric consumer.  Thus it characterizes that consumer, not normality
+itself.  It is also equivalent to vanishing fresh mass on any one fixed
+power window `(N^c,N]`, with 0<c<1, and therefore to vanishing on every
+such fixed power window.
+
+### 11.1 Exact finite root-chain estimate
+
+Let integers M>y>=2 and Z<=y be given, and suppose
+
+    r_P(q)<=rho       for all integers q>=Z,
+
+with rho>=0.  Then
+
+    S_P(y,M) <= rho ceil(log(log M/log y)/log 2).              (11.3)
+
+Proof: start M_0=M and set M_(l+1)=Nat.sqrt M_l.  Stop at the first L
+with M_L<=y.  While l<L, M_l>y>=Z, so
+`S_P(M_(l+1),M_l)=r_P(M_l)<=rho`.  The intervals telescope exactly:
+
+    S_P(y,M)<=S_P(M_L,M)=sum_(l<L)r_P(M_l)<=L rho.
+
+No missing prime at the lower endpoint appears: all reciprocal intervals
+are open on the left and closed on the right.  Let
+`K=ceil(log(log M/log y)/log 2)`.  It is a positive integer, and
+`M_K<=M^(2^(-K))<=y`, because rounding the square roots only decreases
+them.  Hence L<=K, proving (11.3).  In particular the root-chain endpoints
+at which the hypothesis is used are all ABOVE y; the final overshoot below
+y is harmless.
+
+### 11.2 Constructing the schedule without a density hypothesis
+
+Assume r_P(N)->0 and DivergentRecip(P).  For large N write w=L3 N and
+
+    Z_N=ceil exp(sqrt(log N)),
+    rho_N=sup_(integer q>=Z_N) r_P(q),
+    u_N=floor min(sqrt(w),rho_N^(-1/2)).                       (11.4)
+
+The tail supremum is finite for all sufficiently large N and tends to zero,
+simply because r_P(q)->0.  It is strictly positive: divergent reciprocal
+sum implies unbounded prime support, and for p in P above Z_N,
+`r_P(p)>=1/p>0`.  Thus (11.4) is defined and u_N->infinity, even for
+arbitrarily slow convergence.  The schedule uses a tail supremum only as
+an existence construction, as did the density-envelope argument.
+
+Keep `J=min(floor w,floor S_P(0,N)/8)` and the cutoffs from (8.1):
+`y_j=floor N^(u_N^(-2)*2^(-j))`.  Section 8's cutoff calculation is
+independent of density, and gives y_J>=Z_N eventually.  Its uniform floor
+margin also gives
+
+    log(2N)/log y_j <= 4u_N^2 2^j.
+
+Apply (11.3) with M=2N, y=y_j.  Since ceil x<=x+1,
+
+    S_P(y_j,2N)
+      <= rho_N [3+j+2 log u_N/log 2].                         (11.5)
+
+Summing with weights 4^(-j), using the infinite geometric sums,
+
+    F_N <= rho_N [13/9+2 log u_N/(3 log 2)] ->0,               (11.6)
+
+because `log u_N<=(1/2)log(1/rho_N)` eventually and
+`rho_N log(1/rho_N)->0`.  The theorem now follows from Section 10, including
+its model contraction and both tail branches.  No density estimate was
+used in (11.3)-(11.6).
+
+### 11.3 Converse for this weighted consumer
+
+For any admissible schedule with u_N>=1, its first cutoff satisfies
+`y_1=floor N^(1/(2u_N^2))<=Nat.sqrt N`.  Once J>=1,
+
+    r_P(N)<=S_P(y_1,2N)<=4 F_N.                              (11.7)
+
+Thus existence of a successful weighted schedule implies (11.1).
+This proves the asserted equivalence.  It is not an impossibility theorem
+for alternative observables or a necessary condition for normality.
+
+### 11.4 Other fixed powers and the previous theorem
+
+For c in (0,1) define `r_(P,c)(N)=S_P(floor N^c,N)`.
+If (11.1) holds, use (11.3) with y=floor N^c.  For large N the chain length
+is at most `ceil(log_2(2/c))`, a constant, and every integer endpoint tends
+to infinity.  Hence r_(P,c)(N)->0.
+
+Conversely, suppose r_(P,c)(N)->0 for one fixed c.  Iterate the map
+`M_(l+1)=floor M_l^c`, starting at M_0=N.  Choose a fixed integer K with
+`c^K<=1/2`; then M_K<=N^(1/2), hence the integer M_K<=Nat.sqrt N.
+Telescoping gives
+
+    r_P(N)<=sum_(l<K)r_(P,c)(M_l)->0,
+
+since each fixed-iterate M_l tends to infinity.  This also establishes
+that changing the square-root cutoff to any other fixed power changes
+neither the hypothesis nor its quantifiers.
+
+The old `FreshMassZero(P)` of `PrimeModelFamilyConsumer` implies (11.1):
+its `yI(N)=floor N^(floor(L3 N)^(-4))` is <=Nat.sqrt N eventually, so
+
+    r_P(N)<=S_P(yI(N),2N)->0.
+
+The implication is strict for the explicit Part VI barrier set: its
+relative density tends to zero, hence (11.1) follows from dominated Abel
+on this fixed-power interval, while its old `FreshMassZero` condition fails
+by the already-recorded lower fresh-mass estimate.  Thus the inclusion
+left open in the first handoff is now proved.
+
+For possible later formalization the hypothesis is exactly
+
+    def SqrtFreshMassZero (P : Nat -> Prop) [DecidablePred P] : Prop :=
+      Tendsto (fun N : Nat => recipSumIoc P (Nat.sqrt N) N) atTop (nhds 0)
+
+with the usual real-valued reciprocal sum.  This is a proposed declaration,
+not a claim that the Lean theorem has been implemented.
+
+## 12. What the local condition says, and a weaker condition it excludes
+
+In coordinates t=log log x the map x->sqrt x translates t by -log 2.
+Thus (11.1) says that the P-prime reciprocal measure of every late interval
+of this fixed t-length tends to zero.  By Section 11.4, every other fixed
+t-length works as well.  This includes the earlier bursts of mass O(1/n),
+although their ordinary prime-density limsup is 1.
+
+It implies the weaker global condition
+
+    S_P(0,N)=o(log log N).                                   (12.1)
+
+For a direct proof, given eta>0 choose a fixed integer Z>=3 with r_P(q)<=eta
+for q>=Z.  Applying (11.3) with y=Z gives
+
+    S_P(0,N)<=S_P(0,Z)+eta ceil(log_2(log N/log Z)).
+
+After division by log log N the limsup is <=eta/log 2.  Let eta decrease
+to zero.  Finite initial primes do not affect this conclusion.
+
+The converse to (12.1) is false, even for divergent prime sets.  Here is
+a precise modification of the assembly paper's burst example.  Let
+`t_n=exp(n^2)` and include ALL primes in
+
+    [ceil exp(exp(t_n)), floor exp(exp(t_n+1))].               (12.2)
+
+Each burst now has fixed width 1 in t, rather than width 1/n.  Chebyshev
+upper and lower prime-count bounds, followed by Abel summation, give
+positive constant lower and upper bounds for each burst's reciprocal mass
+for all large n: the integral of 1/(x log x) over the burst is 1, and the
+boundary terms are O(1/log a_n).  Thus the reciprocal sum diverges.  Up to
+t=L2 N there are O(1+sqrt(log t)) bursts, each of bounded mass, so
+
+    S_P(0,N)=O(1+sqrt(log(L2 N)))=o(L2 N).
+
+But at N_n=floor exp(exp(t_n+1)), the whole interval
+`(sqrt N_n,N_n]` lies inside burst n for all large n, since its t-width
+is log 2<1.  The same lower Chebyshev-Abel estimate gives
+
+    r_P(N_n)>=c log 2-o(1)>0
+
+for an absolute c>0.  Integer endpoint changes contribute o(1).
+Therefore (11.1) fails.  This refutes replacing local fresh-mass decay by
+the global estimate (12.1) in our consumer; it makes no assertion about
+normality of the constant built from (12.2).

@@ -5,6 +5,17 @@ one).  See `G4PrefixDecayAudit.lean` for the proved counterexample and the
 still-open replacement `EventualPrefixDecay`; [next Fable brief](papers/FABLE-NEXT-SESSION.md)
 is the research plan, not a new unattended campaign authorization.
 
+## Attended operator override: 2026-09-22 17:12 EDT — Pair A MULTICUTOFF FORMALISATION (ACTIVE)
+
+Run `KICKOFF-2026-09-22-multicutoff-lean.md`: formalise the pair-refereed graded-cutoff result of
+`papers/ROUND2-multicutoff-fable.md` / `-astra.md`.  Headline
+`isNormal_subsetLambert_of_sqrtFreshMassZero : SqrtFreshMassZero P → DivergentRecip P → IsNormal 4 (subsetLambert P 4)`
+(square-root fresh mass, Astra §11 / Fable §9), laps 0-7 in the kickoff, lap 0 (root chain + the
+two implications from `FreshMassZero` and relative density zero) first.  New modules only; no
+existing statement changes; `PrimeModelBrunLower.lean` untouched.  Operator: Ren, attended; fired
+under Trevor's explicit authorisation this session (2026-09-22, "time to write this up into lean,
+Opus treadmill").  Engine Opus/low.  **When lap 7 is green, write the HANDOFF and STOP.**
+
 ## Attended operator override: 2026-09-20 22:43 EDT — `windowK` / `PrefixDecay` LAP (DONE, one lap)
 
 **Result (2026-09-21):** `src/NormalNumbers/G4WindowK.lean` is **sorry-free**, all 14 ratified statements
