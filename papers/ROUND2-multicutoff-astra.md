@@ -2,11 +2,14 @@
 
 Author: astra-multicutoff.  Round: 2026-09-22.
 
-**Status: paper derivation complete, awaiting the paired independent review.**
+**Status: paper-proved and independently refereed within Pair A.**
+Fable accepted Sections 4-5 and 8 in message
+`20260922T202504Z-fable-multicutoff-3e221a0b-9747-490c-8209-f652da8e16ca.md`;
+Astra checked Fable's companion schedule and the corrected finite ledger.
 No Lean implementation or new campaign has been launched.  The two-tier
 construction below gives a genuine joint saving and a schedule for the
 explicit Part VI barrier set.  Section 8 generalizes only after that saving:
-its geometric cutoffs give a candidate proof for every relative-density-zero
+its geometric cutoffs give a paper proof for every relative-density-zero
 prime set with divergent reciprocal sum.  The exact new finite lemma is
 Sections 3-5, not an assumed independence of site marginals.
 
@@ -279,7 +282,7 @@ fixed h.  The ordinary full-tail error also tends to zero, since
     [S_P(2N)+5J+12]/4^J = O((t+w)/t^(log 4)) ->0.
 
 This supplies the paper-level normality conclusion for the explicit
-barrier set, provided the independent review accepts the finite lemma.
+barrier set.  The independent review accepted the finite lemma.
 It does not derive any cancellation for the full set of primes.
 
 ## 7. Why the saving is real, and its remaining two-tier limitation
@@ -297,7 +300,7 @@ two-tier saving and uses the same lower-weight construction.
 
 ## 8. Geometric many-tier consumer, including arbitrary slow divergence
 
-Candidate theorem, with a complete paper argument below:
+Theorem, with a complete paper proof and paired review:
 
     pi_P(x)/pi(x) ->0 and sum_(p in P)1/p=infinity
       imply IsNormal 4 (subsetLambert P 4).
@@ -318,7 +321,7 @@ Choose eventually-positive integer parameters
     T_j=N^(2^(-j/2)/16).                                      (8.1)
 
 Both J and u tend to infinity, even for arbitrarily slow reciprocal
- divergence.  The stray choice of rates here is a paper existence
+divergence.  The choice of rates here is a paper existence
 schedule, not a claim of computability from a density-zero predicate.
 
 **Cutoff range.**  Since u^2<=w and J<=w,
@@ -389,12 +392,12 @@ Again the ratio tends to zero.  Ties satisfy either case.
 
 Together the window mean tends to zero for each fixed nonzero integer h,
 and the repository's existing ordinary-prefix tail and Weyl wiring give
-the candidate theorem.  These are ordinary prefix means for every large
+the theorem.  These are ordinary prefix means for every large
 N, not logarithmic averages or a subsequence.
 
 ## 9. Independent-review targets and handoff
 
-The load-bearing new checks for Fable are:
+Fable checked and accepted each of these load-bearing points:
 
 1. The sign and coefficient support of the product upper-minus-defects
    construction (4.2).  This is where multiplying two negative lower
@@ -406,5 +409,48 @@ The load-bearing new checks for Fable are:
    mass-dependent J in (8.6) for arbitrarily slow divergence.
 
 No numerical probe is needed for these identities.  No assertion in this
-note relies on a transient numerical test.  A formalization request must
-wait for the paired review and explicit launch authorization.
+note relies on a transient numerical test.  The paired review is complete.  Formalization still requires explicit
+launch authorization; none has been given in this session.
+
+
+## 10. Abstract weighted-freshness consumer and the prime-burst example
+
+The density envelope is only one way to choose u.  More generally take
+any integer u_N->infinity with u_N<=sqrt(L3 N), and use (8.1) with
+`J=min(floor L3 N,floor S_N/8)`.  If
+
+    F_N=sum_(j=1)^J 4^(-j) S_P(y_j,2N) ->0,                   (10.1)
+
+then the same proof gives normality.  The joint ledger (8.2)-(8.4) uses no
+density assumption.  Transfer is bounded by a fixed-h constant times F_N;
+for each fixed j_0, `S_P(y_(j_0),N)<=4^(j_0) F_N`, yielding (8.6).
+Also `S_P(N,2N)<=S_P(y_1,2N)<=4F_N`, which is all the mass-limited tail
+branch needs.  Thus (10.1) is the actual hypothesis of this consumer.
+
+For the assembly paper's prime-burst example, set u_N=floor sqrt(L3 N).
+Recall its blocks in t=L2 x coordinates start at `t_n=exp(n^2)` and have
+length 1/n and reciprocal mass O(1/n); their prime-density limsup is 1.
+For our entire largest fresh interval (y_J,2N], in t=L2 N coordinates,
+
+    L2(2N)-L2(y_J) <= 2 log u_N+J log 2+O(1)=O(log t).
+
+For all large t the interval therefore meets at most one burst.  To see
+this quantitatively, successive starts have exact gap
+
+    t_(n+1)-t_n=exp(n^2)[exp(2n+1)-1],
+
+which is much larger than log t_(n+1)=(n+1)^2.  An interval of length
+C log t containing both starts would have t close to t_(n+1), and would
+contradict that gap.  The tiny burst widths and rounding errors do not
+change the conclusion.  If a burst is met its index tends to infinity,
+since the left endpoint in t coordinates tends to infinity.  Consequently
+`S_P(y_J,2N)<=C/n` there, and F_N<=C/(3n)->0; when no burst is met F_N=0.
+The geometric consumer therefore also covers the prime-burst example.
+
+For this application u is chosen directly, not from the density envelope:
+that envelope is identically 1 for this example and would not give u->infinity.
+The theorem for relative density zero is a sufficient class, not the exact
+frontier of the mechanism.  For a set with a genuine positive limiting
+relative density, the displayed fresh-mass majorant fails as the first
+cutoff exponent tends to zero; that does not prove failure of normality or
+of every possible phase-sensitive replacement.
