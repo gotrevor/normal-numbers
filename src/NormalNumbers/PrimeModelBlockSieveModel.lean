@@ -414,4 +414,88 @@ theorem model_defect_eta (s : Finset ι) (V Ub Db : ι → ℝ) {T : ℝ}
   have hVprod : 0 < ∏ i ∈ s, V i := Finset.prod_pos hV
   nlinarith [hVprod, hmain, heta]
 
+
+/-! ### Bonferroni for the alternating elementary symmetric sums -/
+
+/-- `∑_{k ≤ r} (−1)^k e_k(g)`, the truncated expansion of `∏ (1 − g)`. -/
+noncomputable def esymmAlt (g : α → ℝ) (B : Finset α) (r : ℕ) : ℝ :=
+  ∑ k ∈ Finset.range (r + 1), (-1) ^ k * esymmOn g B k
+
+@[simp] theorem esymmAlt_zero (g : α → ℝ) (B : Finset α) : esymmAlt g B 0 = 1 := by
+  simp [esymmAlt]
+
+theorem esymmAlt_succ (g : α → ℝ) (B : Finset α) (r : ℕ) :
+    esymmAlt g B (r + 1) = esymmAlt g B r + (-1) ^ (r + 1) * esymmOn g B (r + 1) := by
+  rw [esymmAlt, esymmAlt, Finset.sum_range_succ]
+
+@[simp] theorem esymmAlt_empty (g : α → ℝ) (r : ℕ) : esymmAlt g (∅ : Finset α) r = 1 := by
+  induction r with
+  | zero => simp
+  | succ m ih => rw [esymmAlt_succ, ih, esymmOn_empty_succ]; ring
+
+/-- The insertion recursion: `P_{r+1}(insert a B) = P_{r+1}(B) − g a · P_r(B)`. -/
+theorem esymmAlt_insert (g : α → ℝ) {a : α} {B : Finset α} (ha : a ∉ B) (r : ℕ) :
+    esymmAlt g (insert a B) (r + 1) = esymmAlt g B (r + 1) - g a * esymmAlt g B r := by
+  induction r with
+  | zero =>
+      rw [esymmAlt_succ, esymmAlt_succ, esymmOn_insert g ha 0, esymmAlt_zero, esymmAlt_zero,
+        esymmOn_zero]
+      ring
+  | succ m ih =>
+      rw [esymmAlt_succ, ih, esymmOn_insert g ha (m + 1), esymmAlt_succ, esymmAlt_succ]
+      simp only [show 1 + m = m + 1 from by omega, show 2 + m = m + 2 from by omega,
+        esymmAlt_succ g B m]
+      ring
+
+/-- **Bonferroni for `∏(1 − g)`**: the even truncations are upper bounds and the odd truncations
+are lower bounds.  Proof by induction on `B` with all `r` in the motive, using
+`P_r(insert a B) = P_r(B) − g_a P_{r−1}(B)` and the two parities together. -/
+theorem esymmAlt_bonferroni (g : α → ℝ) (hg0 : ∀ p, 0 ≤ g p) (hg1 : ∀ p, g p ≤ 1) :
+    ∀ (B : Finset α) (r : ℕ),
+      (Even r → ∏ p ∈ B, (1 - g p) ≤ esymmAlt g B r) ∧
+      (¬ Even r → esymmAlt g B r ≤ ∏ p ∈ B, (1 - g p)) := by
+  classical
+  intro B
+  induction B using Finset.induction with
+  | empty =>
+      intro r
+      simp
+  | insert a B ha ih =>
+      intro r
+      have hprodnn : 0 ≤ ∏ p ∈ B, (1 - g p) :=
+        Finset.prod_nonneg fun p _ => by linarith [hg1 p]
+      have hprodle : ∏ p ∈ B, (1 - g p) ≤ 1 := by
+        calc ∏ p ∈ B, (1 - g p) ≤ ∏ _p ∈ B, (1:ℝ) :=
+              Finset.prod_le_prod (fun p _ => by linarith [hg1 p]) (fun p _ => by
+                linarith [hg0 p])
+          _ = 1 := by simp
+      have hga0 : 0 ≤ g a := hg0 a
+      have hga1 : g a ≤ 1 := hg1 a
+      match r with
+      | 0 =>
+          refine ⟨fun _ => ?_, fun h => absurd (by simp : Even 0) h⟩
+          rw [esymmAlt_zero, Finset.prod_insert ha]
+          nlinarith [hprodnn, hprodle]
+      | (m + 1) =>
+          rw [esymmAlt_insert g ha m, Finset.prod_insert ha]
+          obtain ⟨ih1, ih2⟩ := ih (m + 1)
+          obtain ⟨ih3, ih4⟩ := ih m
+          constructor
+          · intro hev
+            have hm : ¬ Even m := by
+              rcases Nat.even_or_odd m with h | h
+              · exact absurd (by simpa [Nat.even_add_one] using hev) (by simp [h])
+              · simp [Nat.not_even_iff_odd]; exact h
+            have h1 := ih1 hev
+            have h2 := ih4 hm
+            nlinarith [hga0, h1, h2]
+          · intro hodd
+            have hm : Even m := by
+              rcases Nat.even_or_odd m with h | h
+              · exact h
+              · exact absurd (by simpa [Nat.even_add_one, Nat.not_even_iff_odd] using h) hodd
+            have h1 := ih2 hodd
+            have h2 := ih3 hm
+            nlinarith [hga0, h1, h2]
+
 end NormalNumbers.PrimeModel.BlockSieve
