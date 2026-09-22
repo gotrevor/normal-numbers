@@ -403,6 +403,7 @@ import NormalNumbers.PrimeModelPhaseAlgebraGraded
 import NormalNumbers.PrimeModelPhaseFactor
 import NormalNumbers.PrimeModelPhaseFactorGraded
 import NormalNumbers.PrimeModelJointLaw
+import NormalNumbers.PrimeModelJointLawGraded
 import NormalNumbers.PrimeModelParameters
 import NormalNumbers.PrimeModelKMT
 import NormalNumbers.PrimeModelDensityMass
