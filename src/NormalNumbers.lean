@@ -387,6 +387,7 @@ import NormalNumbers.G4WiringSummatory
 import NormalNumbers.G4SummatorySplit
 import NormalNumbers.PrimeModelComplement
 import NormalNumbers.PrimeModelRadical
+import NormalNumbers.PrimeModelRadicalGraded
 import NormalNumbers.PrimeModelRadicalTail
 import NormalNumbers.PrimeModelRadicalMoment
 import NormalNumbers.PrimeModelRadicalCRT
