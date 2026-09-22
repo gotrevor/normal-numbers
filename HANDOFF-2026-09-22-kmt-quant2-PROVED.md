@@ -77,3 +77,17 @@ means modelling the primes in `(y, x]`, KMT's own Prop. 4.3 machinery.
 DivergentRecip P → IsNormal 4 (subsetLambert P 4)`, `SparseIterPow P β := ∀ᶠ x, π_P(x)·(L₃x)^β ≤ π(x)`
 (real `β`).  Axiom-clean.  Module `PrimeModelFamilyIterPow`; paper Part V.  This is the exact
 frontier of the schedule family (`β = 2` fails by one `log`).
+
+## Addendum 4 (2026-09-22, evening): phase-weighted transfer; little-o `L₄` theorem
+
+Astra (mailbox) observed that E1 discards the site phases; keeping them gives
+`‖W − W_y‖ ≤ (4π|h|/3)(2·recipSumIoc S y x + k/x)` with no factor `k`
+(`PrimeModelKMTFixedH.windowMean_sub_windowMeanLe_le_h`, `window_bound_regime_h`).  Consequence:
+`PrimeModelFamilyL4.isNormal_subsetLambert_of_sparseL4o : SparseL4o P → DivergentRecip P →
+IsNormal 4 (subsetLambert P 4)`, `SparseL4o P := Tendsto (π_P x/π x · L₄ x) (𝓝 0)`, axiom-clean,
+plus `sparseL4o_of_sparseIterPow` (subsumes Parts III–V).  Paper Part VI.  **Exact remaining
+obstacle**: relative density `≍ 1/L₄` — the fresh mass in `(N^ε, N]` is `≍ δ·log(1/ε) ≍ δ·L₄` and
+the sieve forces `log(1/ε) ≳ 2L₄`; Astra's explicit density-zero divergent set (Part VI) has fresh
+mass bounded below, so these majorants cannot vanish there.  Next Lean step (not done): the
+abstract consumer `DivergentRecip P → Tendsto (recipSumIoc P (yI N) (2N)) (𝓝 0) → IsNormal …`,
+which reaches sets of limsup relative density 1 (prime-bursts example, Part VI).

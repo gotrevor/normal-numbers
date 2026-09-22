@@ -408,4 +408,6 @@ import NormalNumbers.PrimeModelFamilySharp
 import NormalNumbers.PrimeModelFamilyIterMass
 import NormalNumbers.PrimeModelFamilyIter
 import NormalNumbers.PrimeModelFamilyIterPow
+import NormalNumbers.PrimeModelKMTFixedH
+import NormalNumbers.PrimeModelFamilyL4
 import NormalNumbers.G4PrefixDecayAudit

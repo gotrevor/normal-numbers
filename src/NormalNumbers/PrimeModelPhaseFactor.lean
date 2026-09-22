@@ -128,7 +128,7 @@ private lemma card_filter_dvd_le {p : ℕ} (hp : 0 < p) (j x : ℕ) :
 
 /-- For each shift `j < k`, the total number of `S`-prime factors above `y` of the `x` values
 `n + j + 1` (`n < x`) is at most `2x ∑_{y<p≤x} 1/p + k`. -/
-private lemma sum_omegaGt_shift_le (y k x j : ℕ) (hj : j < k) :
+lemma sum_omegaGt_shift_le (y k x j : ℕ) (hj : j < k) :
     (∑ n ∈ Finset.range x, (omegaGt S y (n + j + 1) : ℝ))
       ≤ 2 * x * recipSumIoc S y x + k := by
   classical

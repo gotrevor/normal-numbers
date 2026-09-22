@@ -309,8 +309,10 @@ which `S_P ≈ L₂/L₄`, `δ ≈ 1/L₄` violates (`L₄ · L₄^{−1/2} → 
 coupling of the **L¹ tail criterion** (needs `J` large against the accumulated mass) with the
 **correlation majorant** (needs `J` small against the local density); it is not a defect of the
 sieve constants.  Precisely: *the current correlation majorant and the current tail criterion
-cannot both vanish in this growth regime.*  This is a **conditional growth-regime
-obstruction**, not a constructed counterexample: the lower bound on the fresh mass
+cannot both vanish in this growth regime.*  At the time of writing this was a **conditional growth-regime
+obstruction**; Part VI now records Astra's explicit construction of such a set (so the caveat
+below is discharged), and also shows that the `L¹`-tail/`√S` analysis here is not the true
+bottleneck of the route — the coarse E1 was.  Original text: the lower bound on the fresh mass
 (`recipSumIoc P y_N N ≳ log(1/ε)/L₄`, uniformly over the admissible `ε`) is asserted for a
 regularly thinned set with a genuine counting law `π_P(x) ~ π(x)/L₄(x)` (Abel summation over
 `[N^ε, N]`), and does not follow from an upper density envelope alone.  A sharper head/tail
@@ -427,6 +429,81 @@ axioms `[propext, Classical.choice, Quot.sound]` (verified 2026-09-22).
 
 This is the exact frontier of the schedule family: at `β = 2` the transfer term is `≍ L₄N`, which
 does not vanish, and no other parameter of the schedule can absorb a `log`.
+
+## Part VI: phase-weighted transfer, and the little-o `L₄` family theorem (2026-09-22, PROVED)
+
+**Astra's observation (mail 20260922T190221Z).**  E1 (`windowMean_sub_windowMeanLe_le`) bounds each
+site by `‖z^{a+c} − z^a‖ ≤ 2c`, discarding the phase.  Keeping it, `‖z_j^{a+c} − z_j^a‖ ≤ c‖z_j − 1‖ ≤
+c · 4π|h|/4^{j+1}` and `∑_j 4π|h|/4^{j+1} ≤ 4π|h|/3`, so with the existing per-shift count
+`∑_{n<x} ω_{>y}(n+j+1) ≤ 2xR + k`:
+
+    ‖W − W_y‖ ≤ (4π|h|/3) · (2 · recipSumIoc S y x + k/x).
+
+The window length **disappears** from the fresh-mass coefficient, at the price of a factor `|h|`.
+Since `KMT_along` is a fixed-`h` statement (`∀ h ≠ 0, Tendsto in N`), this is exactly what the
+wiring consumes; the frozen `KMT_quant₂` (uniform in `h`) stays as it is.  Referee check (fable):
+E1 enters `window_bound_regime` only through the Cauchy–Schwarz step; the other `k`-dependences
+(`e^{2k}` in the model bound → old-mass term, absorbed by `8J ≤ S`; `2k e^{20}`, `4`, `2Q⌊T⌋^k` in
+the empirical→model transfer → sieve term; exact phase factorisation and residue factor) never
+multiply the fresh mass.  So Parts III–V's "frontier" `β > 2` was an artefact of the coarse E1.
+
+**Fixed-`h` window bound** (`window_bound_regime_h`, same `Regime`):
+
+    ‖W‖ ≤ (4π|h|/3)(2R + k/x) + e^{3k} e^{−S(y)} + (2k² + 2k e^{20} + 4 + 2·4^k) e^{−1/(8k²ε)}.
+
+**Family theorem, little-o form.**  Schedule of Part IV unchanged.  Hypothesis
+`SparseL4o P := (π_P(x)/π(x)) · L₄x → 0`.  For `t > y_N`, `L₄t ≥ L₄N/2` (from `L₃t ≥ L₃N − log 2`),
+so for every `η > 0` the relative density on `(y_N, 2N+1]` is eventually `≤ 2η/L₄N`, and dominated
+Abel with log-ratio `≤ 2 + 4L₄N` gives `recipSumIoc P y_N (2N) ≤ (2η/v)(33 + 48v) ≤ 162η`
+eventually; `η` arbitrary gives `recipSumIoc P y_N N → 0` and `≤ 1` to `2N`.  With
+`term_two_iter3`, `term_three_iter3`, `regime_iter3` and the Part IV tail argument:
+
+**Theorem (Part VI).**  `SparseL4o P → DivergentRecip P → IsNormal 4 (subsetLambert P 4)`.
+Covers every `π_P ≤ π/(L₃)^β` (`β > 0`), every `π_P ≤ π/(L₄)^γ` (`γ > 1`), and `π/(L₄ log L₄)`.
+Lean: `PrimeModelKMTFixedH.lean`, `PrimeModelFamilyL4.lean` (`isNormal_subsetLambert_of_sparseL4o`,
+`sparseL4o_of_sparseIterPow`).  Status: sorry-free; the theorem, the subsumption lemma and
+`window_bound_regime_h` depend only on `[propext, Classical.choice, Quot.sound]` (verified
+2026-09-22).
+
+**Reusable consumer (Astra, mail 20260922T190707Z), to add once the above lands:**
+`DivergentRecip P → Tendsto (fun N => recipSumIoc P (yI N) (2N)) atTop (𝓝 0) → IsNormal 4
+(subsetLambert P 4)` — no density hypothesis anywhere else; every density class is then a
+dominated-Abel corollary.
+
+**The abstract consumer is not a density theorem (Astra, mail 20260922T191228Z; refereed by
+fable).**  In `t = L₂x` coordinates put `t_n = exp(n²)`, `a_n = ⌈exp exp t_n⌉`, `b_n = ⌊exp exp(t_n +
+1/n)⌋`, and let `P` contain **all** primes in `⋃_n [a_n, b_n]`.  Each block has reciprocal mass
+`≍ 1/n` (Chebyshev + Abel: `∫ du/(u log u)` over the block is `1/n + o(1/n)`, boundary terms
+`O(1/log a_n)`), so `∑_{p∈P} 1/p = ∞`.  At `x = b_n + 1`, `π_P(x) ≥ π(x) − π(a_n)` and
+`π(a_n)/π(b_n) → 0` (since `a_n/b_n = exp(−exp(t_n)(e^{1/n} − 1)) → 0`), so `limsup π_P/π = 1`:
+**no density-zero property at all**.  Yet the fresh window `[y_N, 2N]` has `t`-length
+`4 log J₁ + o(1) = O(log log t)`, while consecutive block starts are `exp((n+1)²) − exp(n²)` apart,
+so every late fresh window meets at most one block, of index `n → ∞`, and
+`recipSumIoc P y_N (2N) ≤ C/n → 0`.  The reusable consumer above therefore gives normality for
+this `P`.  The invariant of the route is the **reciprocal mass in the moving cutoff window**, not
+pointwise relative density; in particular the conclusion reaches prime sets outside the
+density-zero class of KMT's hypothesis.  (Paper-level; formalising the consumer is the next Lean
+step, the example is not to be formalised now.)
+
+**Barrier of the route now, with an explicit example (Astra, mail 20260922T190915Z; refereed by
+fable).**  Let `w = L₄`, `F(u) = u/w(u)`; for large `u`, `F'(u) = 1/w − 1/(w² log u · L₂u · L₃u) ∈
+(0,1)`.  Enumerate the primes `p_n` and put `p_n ∈ P` (for `n > n₀`) iff `⌊F(n)⌋ − ⌊F(n−1)⌋ = 1`
+(the difference is `0` or `1` since `0 < F' < 1`).  Then `π_P(x) = ⌊F(π(x))⌋ − ⌊F(n₀)⌋`, and
+Chebyshev's `π(x) ≍ x/log x` gives `L₄(π(x))/L₄(x) → 1`, so `π_P(x)/π(x) ~ 1/L₄(x)`: relative
+density zero.  Abel summation gives `π_P(u) ≍ u/(log u · L₄u)`, `S_P(x) ≍ L₂x/L₄x → ∞`
+(divergent), and, uniformly for `1/L₂N < ε < 1/2` with `y = ⌊N^ε⌋₊`, `ℓ = log(1/ε)`, `v = L₄N`:
+`recipSumIoc P y N ≥ c∫_y^N du/(u log u L₄u) − C/(log y · L₄y) ≥ c'ℓ/v − o(1/v) ≍ ℓ/v`
+(`L₄u ~ v` on `[y, N]` because `L₂y = L₂N − ℓ + o(1)` and `ℓ ≤ log L₂N`; the boundary term is
+`o(1/v)` because `log y ≥ log N/(2L₂N)`).  With `ε = J₁^{-4}`, `ℓ = 4 log J₁ ~ 4v`, so the fresh
+mass stays bounded below: the Part VI sufficient criterion **fails** for this explicit
+density-zero divergent set.  More generally, for any schedule using the present old/sieve/tail
+majorants: the tail forces `4^J ≫ S_P(2N) ≍ L₂N/v`, so `J ≥ c log L₂N`; the sieve forces
+`J²ε → 0`, so `ℓ ≥ 2 log J − O(1) ≥ 2v − O(1)`; hence `B_h · R ≍ ℓ/v ≥ 2 − o(1)` cannot vanish for
+fixed `h ≠ 0`.  This is a failure of these majorants for this set, not a statement about its
+normality.  (Not formalised; a paper construction.)  The model
+handles primes `≤ y = N^{ε}` with `ε ≈ L₃^{-4}`; the fresh mass in `(y, N]` is `≍ δ · log(1/ε)
+≍ δ · L₄`, and nothing in this schedule family can shrink `log(1/ε)` below `≍ L₄` (the sieve needs
+`ε ≪ J^{-3}`, `J ≈ log S_P ≈ L₃`).
 
 ## Lean plan (Part II)
 

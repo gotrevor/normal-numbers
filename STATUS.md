@@ -37,6 +37,12 @@ carry the digit-character criterion, both directions, as the dual of `equidistri
 > this schedule family: any exponent `> 2` on `L₃` — **PROVED as a theorem**
 > (`isNormal_subsetLambert_of_sparseIterPow`, real `β > 2`, paper Part V); below that only the
 > transfer error `E1` is left.
+> **Superseded the same evening** (Astra's phase-weighted E1, refereed): the window length never
+> needed to multiply the fresh mass.  `PrimeModelKMTFixedH.window_bound_regime_h` (fixed `h`,
+> coefficient `4π|h|/3`) and `PrimeModelFamilyL4.isNormal_subsetLambert_of_sparseL4o`:
+> **`(π_P(x)/π(x))·log log log log x → 0` and divergent Σ1/p ⇒ normal** (paper Part VI).  Covers
+> every `π/(L₃)^β`, `β > 0`, and `π/(L₄)^γ`, `γ > 1`.  Barrier: density `≍ 1/L₄`, with an explicit
+> density-zero divergent set on which the fresh-mass criterion fails (Part VI).
 
 > **DEEP REFLECTION lap — 2026-09-16.**  Build 🟢 **9085 jobs**, re-verified.  `src/` = the two
 > pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**; **math-axiom count 0** — there is no
