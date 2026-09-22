@@ -321,4 +321,97 @@ theorem block_defect_le {d u l : ℕ} (hd : 1 ≤ d) (g : α → ℝ) (B : Finse
     _ ≤ Real.exp (-(u:ℝ) - l - 2) * ∏ p ∈ B, (1 - g p) :=
         mul_le_mul_of_nonneg_left hV (Real.exp_pos _).le
 
+
+/-! ### Summing the defects over the schedule -/
+
+/-- A finite geometric sum with ratio `r ∈ [0,1)` is at most `1/(1−r)`. -/
+theorem geom_sum_le_inv_one_sub {r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) (L : ℕ) :
+    ∑ i ∈ Finset.range L, r ^ i ≤ 1 / (1 - r) := by
+  have hne : r ≠ 1 := ne_of_lt hr1
+  have hpos : 0 < 1 - r := by linarith
+  have hid : ∑ i ∈ Finset.range L, r ^ i = (1 - r ^ L) / (1 - r) := by
+    rw [geom_sum_eq hne]
+    field_simp
+    ring
+  rw [hid, div_le_div_iff₀ hpos hpos]
+  nlinarith [pow_nonneg hr0 L]
+
+/-- **The defect sum over the graded schedule**: `∑_j ∑_{l < L} e^{−u_j − l − 2} ≤ 0.215 ∑_j e^{−u_j}`
+(`e^{−2}/(1 − e^{−1}) < 0.215`). -/
+theorem sum_block_defect_le {κ : Type*} (t : Finset κ) (u : κ → ℕ) (L : ℕ) :
+    ∑ j ∈ t, ∑ l ∈ Finset.range L, Real.exp (-(u j : ℝ) - l - 2)
+      ≤ 0.215 * ∑ j ∈ t, Real.exp (-(u j : ℝ)) := by
+  have he1 : Real.exp (-1) < 1 := by
+    rw [Real.exp_lt_one_iff]; norm_num
+  have he0 : (0:ℝ) ≤ Real.exp (-1) := (Real.exp_pos _).le
+  -- `e^{-2} / (1 - e^{-1}) ≤ 0.215`
+  have hlow : (0.36787944 : ℝ) < Real.exp (-1) := by
+    have h := Real.exp_one_lt_d9
+    have h2 := Real.exp_one_gt_d9
+    rw [Real.exp_neg, lt_inv_comm₀ (by norm_num) (Real.exp_pos 1)]
+    nlinarith
+  have hhigh : Real.exp (-1) < 0.36787945 := by
+    have h2 := Real.exp_one_gt_d9
+    rw [Real.exp_neg, inv_lt_comm₀ (Real.exp_pos 1) (by norm_num)]
+    nlinarith
+  have hkey : Real.exp (-2 : ℝ) * (1 / (1 - Real.exp (-1))) ≤ 0.215 := by
+    have hsq : Real.exp (-2 : ℝ) = Real.exp (-1) * Real.exp (-1) := by
+      rw [← Real.exp_add]; norm_num
+    have hpos : (0:ℝ) < 1 - Real.exp (-1) := by linarith
+    rw [hsq, mul_one_div, div_le_iff₀ hpos]
+    nlinarith
+  set c : ℝ := Real.exp (-2 : ℝ) * (1 / (1 - Real.exp (-1))) with hc
+  have hper : ∀ j ∈ t, (∑ l ∈ Finset.range L, Real.exp (-(u j : ℝ) - l - 2))
+      ≤ Real.exp (-(u j : ℝ)) * c := by
+    intro j _
+    have hterm : ∀ l ∈ Finset.range L, Real.exp (-(u j : ℝ) - l - 2)
+        = Real.exp (-(u j : ℝ)) * Real.exp (-2 : ℝ) * (Real.exp (-1)) ^ l := by
+      intro l _
+      rw [← Real.exp_nat_mul, ← Real.exp_add, ← Real.exp_add]
+      congr 1
+      ring
+    rw [Finset.sum_congr rfl hterm, ← Finset.mul_sum, hc, mul_assoc]
+    refine mul_le_mul_of_nonneg_left ?_ (Real.exp_pos _).le
+    exact mul_le_mul_of_nonneg_left (geom_sum_le_inv_one_sub he0 he1 L) (Real.exp_pos _).le
+  have hnn : 0 ≤ ∑ j ∈ t, Real.exp (-(u j : ℝ)) :=
+    Finset.sum_nonneg fun j _ => (Real.exp_pos _).le
+  calc ∑ j ∈ t, ∑ l ∈ Finset.range L, Real.exp (-(u j : ℝ) - l - 2)
+      ≤ ∑ j ∈ t, Real.exp (-(u j : ℝ)) * c := Finset.sum_le_sum hper
+    _ = (∑ j ∈ t, Real.exp (-(u j : ℝ))) * c := by rw [Finset.sum_mul]
+    _ ≤ (∑ j ∈ t, Real.exp (-(u j : ℝ))) * 0.215 := mul_le_mul_of_nonneg_left hkey hnn
+    _ = 0.215 * ∑ j ∈ t, Real.exp (-(u j : ℝ)) := by ring
+
+/-- `S e^S ≤ 0.3 T` when `S ≤ 0.215 T` and `0 ≤ T ≤ 1` (`e^{0.215} < 1.28`). -/
+theorem eta_bound {S T : ℝ} (hS : 0 ≤ S) (hST : S ≤ 0.215 * T) (hT0 : 0 ≤ T) (hT1 : T ≤ 1) :
+    S * Real.exp S ≤ 0.3 * T := by
+  have hS215 : S ≤ 0.215 := by nlinarith
+  have hexp : Real.exp S ≤ 1 / (1 - 0.215) := by
+    have h1 : 1 - S ≤ Real.exp (-S) := by
+      have := Real.add_one_le_exp (-S); linarith
+    have hpos : (0:ℝ) < 1 - S := by linarith
+    have h2 : Real.exp S ≤ 1 / (1 - S) := by
+      rw [le_div_iff₀ hpos]
+      have hmul : Real.exp S * (1 - S) ≤ Real.exp S * Real.exp (-S) :=
+        mul_le_mul_of_nonneg_left h1 (Real.exp_pos S).le
+      rw [← Real.exp_add] at hmul
+      simpa using hmul
+    refine h2.trans ?_
+    rw [div_le_div_iff₀ hpos (by norm_num)]
+    linarith
+  nlinarith [Real.exp_pos S]
+
+/-- **Lemma B, property 3** in packaged abstract form: `E[L] ≥ (1 − 0.3 T) ∏ V`, where
+`T = ∑_j e^{−u_j} ≤ 1` controls the total relative defect. -/
+theorem model_defect_eta (s : Finset ι) (V Ub Db : ι → ℝ) {T : ℝ}
+    (hV : ∀ i ∈ s, 0 < V i) (hDb : ∀ i ∈ s, 0 ≤ Db i)
+    (hlow : ∀ i ∈ s, V i ≤ Ub i) (hhigh : ∀ i ∈ s, Ub i ≤ V i * (1 + Db i))
+    (hsum : ∑ i ∈ s, Db i ≤ 0.215 * T) (hT0 : 0 ≤ T) (hT1 : T ≤ 1) :
+    (1 - 0.3 * T) * (∏ i ∈ s, V i)
+      ≤ (∏ i ∈ s, Ub i) - ∑ i ∈ s, (V i * Db i) * ∏ j ∈ s.erase i, Ub j := by
+  have hmain := model_defect s V Ub Db hV hDb hlow hhigh
+  have hSnn : 0 ≤ ∑ i ∈ s, Db i := Finset.sum_nonneg hDb
+  have heta := eta_bound hSnn hsum hT0 hT1
+  have hVprod : 0 < ∏ i ∈ s, V i := Finset.prod_pos hV
+  nlinarith [hVprod, hmain, heta]
+
 end NormalNumbers.PrimeModel.BlockSieve
