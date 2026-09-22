@@ -140,3 +140,5 @@ theorem graded_brun_lower
   simpa [hg] using sub_le_sub_right this (R ^ 2)
 
 end NormalNumbers.PrimeModel.BlockSieve
+
+#print axioms NormalNumbers.PrimeModel.BlockSieve.graded_brun_lower

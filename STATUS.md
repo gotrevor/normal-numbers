@@ -1,5 +1,84 @@
 # STATUS — normal-numbers 📊
 
+**Active campaign: Pair A multicutoff — Theorem C′, the square-root fresh-mass normality
+criterion.** · **Build**: 🟢 green (9152 jobs) · **Updated**: multicutoff review lap (lap 7
+opening) · 2026-09-22 · HEAD `6a49d1c` · branch `wip/g5-prime-subset`
+
+## Where it stands (multicutoff campaign)
+
+Laps 0–6 of `KICKOFF-2026-09-22-multicutoff-lean.md` are landed, sorry-free and trust-triple
+clean: the root chain (`SqrtFresh.recipSumIoc_le_rootChain`, Astra 11.3) with both implications
+into `SqrtFreshMassZero`; Lemma B end-to-end for a concrete weight
+(`BlockSieve.graded_brun_lower`); and **Theorem A**, the graded finite window bound
+(`KMT.window_bound_graded`), with its five legs proved and one hypothesis `hlower` (the per-atom
+sieve lower bound) still open.  The target is Theorem C′,
+`isNormal_subsetLambert_of_sqrtFreshMassZero`.
+
+**This review lap's finding (ROUTE CORRECTION).**  The planned way of closing `hlower` — the
+constant class count `dpK k` on one tier — is **arithmetically dead**: it forces the Brun support
+level `log R ≥ 128 k log y_0`, hence the top cutoff exponent `a ≤ 1/(2048 J)`, hence a transfer
+term `≍ ρ_N log J ≍ ρ_N·L₄N`, which `ρ_N → 0` does not control; and the ungraded E4a of lap 6e
+(Markov moment over the full prime range) makes `∑_{j<J} e^{20}/T_j^{1/(2 log Y)}` diverge like
+`J e^{20}`.  Theorem C′ needs the **graded joint state**: class count `d_p = #{j : p ≤ y_j}`.
+Two structural facts make the regrade cheap — the graded model is the *pushforward* of the
+ungraded one with the **same** model expectation (so E5 / the phase algebra are reusable
+verbatim), and `statePhaseG` is graded-measurable.  The arithmetic half (`graded_brun_lower`)
+already takes an arbitrary `dp`.  Decomposition into G1–G5: `PENDING_WORK.md` top.
+
+## What's happened (multicutoff campaign, newest first)
+
+- **2026-09-22 (review lap, lap 7 opening)** — ROUTE CORRECTION recorded (above); the
+  one-tier/constant-`dpK` plan of `HANDOFF-2026-09-22-multicutoff-lean.md` "Next #1" is refuted
+  and replaced by the graded-state decomposition G1–G5 in `PENDING_WORK.md`; `DIRECTION.md`
+  CURRENT DIRECTIVE set.  Ground truth re-derived: `lake build` 🟢 9152 jobs, `window_bound_graded`,
+  `graded_brun_lower`, `empLaw_lower_atom_graded`, `recipSumIoc_le_rootChain`,
+  `sqrtFreshMassZero_of_freshMassZero`, `sqrtFreshMassZero_of_relDensityZero` all trust-triple;
+  `src/` holds exactly the two pre-existing off-campaign `sorry`s
+  (`PrimeLambertOscillation.phaseOscillation`, `MahlerDriftOne.exists_prime_nonresidue`).
+- **2026-09-22 (laps 0–6)** — root chain + `SqrtFreshMassZero` (lap 0); block-Bonferroni sieve,
+  product-model defect, support level, graded CRT counts, graded retained box (laps 1–5);
+  **Theorem A** assembled with all five legs (lap 6).  Nothing in the paper refuted; all recorded
+  deviations were simplifications or conservative constant losses — **except** lap 6e's E4a
+  deviation, which this review lap upgrades to a blocker (see above).
+
+## Outstanding (multicutoff campaign)
+
+### Short-term (mirrors PENDING_WORK top)
+G1 graded local weight + per-shift site moment → G2 graded box tail → G3 graded state, graded
+`state_model_density`, graded per-atom lower bound → G4 graded E4 + hypothesis-free Theorem A →
+G5 the schedule and Theorem C′.  Cheap on-path fallback when a leaf stalls:
+`isNormal_subsetLambert_of_sqrtFreshMass_rate` (rated square-root fresh mass through the EXISTING
+ungraded consumer).
+
+### To completion
+Theorem C′ sorry-free and trust-triple, with the `Statement.lean`-style audit surface for
+`SqrtFreshMassZero` / `DivergentRecip` / `IsNormal 4 (subsetLambert P 4)`.
+
+## Axiom ledger — multicutoff campaign (real `#print axioms`, this lap, 9152 jobs)
+
+| headline theorem | paper claim | `#print axioms` shows | verdict |
+|---|---|---|---|
+| `SqrtFresh.recipSumIoc_le_rootChain` | Astra (11.3), the exact finite root chain — UNCONDITIONAL | trust triple | 🟢 clean |
+| `SqrtFresh.sqrtFreshMassZero_of_freshMassZero` | Astra §11.4 (`FreshMassZero ⇒ (11.1)`) | trust triple | 🟢 clean |
+| `SqrtFresh.sqrtFreshMassZero_of_relDensityZero` | Astra §11.4 (relative density zero ⇒ (11.1)) | trust triple | 🟢 clean |
+| `BlockSieve.graded_brun_lower` | Lemma B, arithmetic form (Fable §3 / Astra §4) | trust triple | 🟢 clean |
+| `BlockSieve.empLaw_lower_atom_graded` | per-atom lower bound at the CONSTANT class count | trust triple | 🟢 clean, but **off-route** for C′ (see the correction) |
+| `KMT.window_bound_graded` | **Theorem A**, the graded finite window bound (Fable §2) | trust triple | 🟢 clean; carries hypothesis `hlower`, to be discharged by G3/G4 |
+| `isNormal_subsetLambert_of_sqrtFreshMassZero` | **Theorem C′** (Fable §9 / Astra §11) | not yet stated | ⛔ the target |
+
+Math-axiom count for the campaign: **0** (no `axiom` declarations; the trust base is
+`propext, Classical.choice, Quot.sound` throughout).
+
+## Pointers (multicutoff)
+`KICKOFF-2026-09-22-multicutoff-lean.md` · `papers/ROUND2-multicutoff-fable.md` ·
+`papers/ROUND2-multicutoff-astra.md` · `HANDOFF-2026-09-22-multicutoff-lean.md` ·
+`PENDING_WORK.md` (G1–G5) · `DIRECTION.md` (CURRENT DIRECTIVE)
+
+---
+
+# (below: the G4 disjunctivity campaign — CLOSED; kept as the durable overview of that work)
+
+
 ## 🗺️ The maze map — read before proposing a route
 
 `src/NormalNumbers/Maze.lean` is the register of routes **walked and closed**: 116 halls, 10

@@ -1,5 +1,73 @@
 # PENDING WORK
 
+## 2026-09-22 — ROUTE CORRECTION: Theorem C′ needs the **graded joint state**
+
+Review lap on `KICKOFF-2026-09-22-multicutoff-lean.md` (laps 0–6 landed; Theorem A
+`KMT.window_bound_graded` assembled with a hypothesis `hlower`).  The handoff's plan for closing
+`hlower` — one tier `κ = Unit`, constant class count `dpK k` — is **refuted**.  See
+`DIRECTION.md` → CURRENT DIRECTIVE for the two-line refutation.  Summary of the arithmetic:
+
+| constraint | with constant `d_p = k` | with graded `d_p = #{j : p ≤ y_j}` |
+|---|---|---|
+| Brun level `log R / log N` | `≥ 128 k a` (top band dominates) | `a ∑_b (128 b + 4u + 14)2^{-b} ≤ a(270+4u)` |
+| forced top exponent `a` | `≤ 1/(2048 J)` | `u^{-2}`, `u → ∞` free |
+| root chain at site `j` | `≥ 11 + log₂ J + j` | `2 + 2log₂ u + j` |
+| transfer `∑_j 4^{-j}·2S_P(y_j,2N)` | `≍ ρ_N log J ≍ ρ_N L₄N` ✗ | `≍ ρ_N log u ≤ ρ_N log(1/ρ_N)/2 → 0` ✓ |
+| E4a `∑_{j<J} e^{20}/T_j^{α_j}` | `α = 1/(2 log Y)`: terms → `e^{20}`, sum `≍ J e^{20}` ✗ | `α_j = 1/(2 log y_j)`: `∑ e^{20}e^{-u²2^{j/2}/32} → 0` ✓ |
+
+`TailOK` pins `J ≍ min(L₃N, S_N/8)`, so `J` cannot be capped to rescue the first column, and
+`∑_j log T_j ≤ ½ log N` (CRT remainder) cannot rescue the second.  Both walls are structural.
+
+**The good news.**  The whole *arithmetic* half is already graded: `graded_brun_lower` takes an
+arbitrary `dp : ℕ → ℕ` with `hdpj : ∀ j, ∀ p ∈ U j, dp p ≤ d j`, and with the geometric schedule
+each band is exactly ONE dyadic block (`cut y j 1 = y_j^{1/2}`), so the tier data is
+`UU b = P ∩ (y_b, y_{b-1}]`, `yy b = y_{b-1}`, `dd b = b`.  Only the *state* side is ungraded.
+
+**Two structural facts that make the regrade cheap** (both checked on paper this lap, to be
+machine-checked):
+
+1. *The graded model is the pushforward of the ungraded one, and the model expectation is
+   unchanged.*  In `model_expectation_eqG` the local factor is
+   `1 + (∑_{j<k}(zSee_{ij} − 1))/p_i = 1 − d_i/p_i + (1/p_i)∑_{j<d_i} zPhase_j`, because
+   `zSee k y h p j = 1` whenever `p > y_j`.  So **E5 and the phase algebra need no change at
+   all** — `norm_model_expectation_le_graded` is reusable verbatim.
+2. *`statePhaseG` is graded-measurable*: `statePhaseG (truncState d s) = statePhaseG s`, same
+   reason.  So the empirical side transfers by rewriting the fibres, not by a new factorisation.
+
+### The named leaves (each a green node)
+
+- **G1** `PrimeModelRadicalGraded.lean` — `localWeightG (d k : ℕ) (q : ℝ) : Option (Fin k) → ℝ`
+  (`none ↦ 1 − d q`, `some j ↦ if j < d then q else 0`), `weightG k dp q`.  Leaves:
+  `localWeightG_sum` (`= 1`), `weightG_nonneg` (needs `d_i q_i ≤ 1`), `radical_mass_oneG`,
+  `radical_phase_productG` (local factor `1 − d_i q_i + q_i ∑_{j<d_i} z_{ij}`),
+  **`radical_site_momentG`**: `∑_s weightG(s)·∏_{i : s i = j} t_i = ∏_{i : j < d_i}(1 + q_i(t_i − 1))`
+  — the product is over the primes the site actually sees.  All four go through `sum_pi_prod`.
+- **G2** `PrimeModelRadicalTailGraded.lean` — `radical_box_tailGG`: `∑_{s ∉ retainedBoxG} weightG
+  ≤ ∑_j exp(A j)/T_j^{α_j}`, then discharge `A j ≤ 20` at `α_j = 1/(2 log y_j)` with
+  `radical_moment_budget` applied to the subfamily `{i : j < d_i}` (all of whose primes are `≤ y_j`).
+  `retainedBoxG_card_le` is over the full state type and is reused verbatim.
+- **G3** `PrimeModelJointGraded.lean` — `truncState`, `actualStateG = truncState ∘ actualState`,
+  `jointModelG`, `empLawG`; mass one / nonneg for both; graded `actual_state_sifted_iff`
+  (`SiftedCondD A U dp jp Q r n ↔ n % Q = r ∧ actualStateG n = s`); graded `state_model_density`;
+  **`empLawG_lower_atom`** off `graded_brun_lower` at band-dependent `dp`.
+- **G4** `PrimeModelTheoremAGraded.lean` — graded E4 (`finite_phase_of_lower_atoms` is already
+  generic), the two transfer identities (`∑_g ν̃ F = ∑_t ν F` from fact 2; `∑_g μ̃ F = ∑_t μ F`
+  from fact 1 — both sides are the same explicit product), then Theorem A restated with no
+  `hlower`.
+- **G5** `PrimeModelFamilyGraded.lean` — lap 7: `Z_N`, `ρ_N`, `u_N`, `J_N`, the schedule
+  `y_j = ⌊N^{u^{-2}2^{-j}}⌋`, `T_j = N^{2^{-j/2}/16}`, then `KMT_along` + `TailOK` and the headline.
+
+### Cheap on-path node worth taking when a leaf stalls
+
+`isNormal_subsetLambert_of_sqrtFreshMass_rate` : `(fun N => ρ_N · L₄ N) → 0` (a *rated* square-root
+fresh mass) `→ DivergentRecip P → IsNormal 4 (subsetLambert P 4)`, by feeding the lap-0 root chain
+`recipSumIoc_le_rootChain` into the EXISTING ungraded `isNormal_subsetLambert_of_freshMassZero`
+(`yI N = ⌊N^{(L₃N)^{-4}}⌋`, chain length `≍ 4 log₂ L₃N`).  This is the exact theorem the ungraded
+machinery can reach, and it makes the `L₄N` factor in the refutation above a machine-checked
+statement rather than a paper remark.
+
+---
+
 ## 2026-09-21 — crux advance: the summatory node split (`G4SummatorySplit.lean`)
 
 The sole analytic input of the G4 window law off the Chowla sector, `RoughSummatory h`, has been

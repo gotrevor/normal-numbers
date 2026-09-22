@@ -104,3 +104,5 @@ theorem sum_siteBudget_const_le (h : ℤ) (k : ℕ) (R : ℝ) (hR : 0 ≤ R) :
   exact mul_le_mul_of_nonneg_right (sum_siteBudget_le h k) hR
 
 end NormalNumbers.PrimeModel.KMT
+
+#print axioms NormalNumbers.PrimeModel.KMT.window_bound_graded

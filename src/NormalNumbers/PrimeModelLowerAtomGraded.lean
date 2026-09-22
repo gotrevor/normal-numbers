@@ -148,3 +148,5 @@ theorem empLaw_lower_atom_graded {k : ℕ} (hk : 1 ≤ k) {P : Finset ℕ} {Q x 
   exact hbrun
 
 end NormalNumbers.PrimeModel.BlockSieve
+
+#print axioms NormalNumbers.PrimeModel.BlockSieve.empLaw_lower_atom_graded
