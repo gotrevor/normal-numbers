@@ -110,3 +110,25 @@ Part I's `C₂(k) = exp(exp(k+7))` exists only to make R1 and the sieve coeffici
 family theorems consume `window_bound_regime` directly.  The paper says this (Part III); a reader
 who starts from the frozen statement alone will misjudge the reach by two logs, as the lane's own
 "β > 2 frontier" episode shows.  Worth one sentence at the top of Part I.
+
+## Addendum (later 2026-09-22): the sieve layer's skeleton, re-derived
+
+`brun_sifted_count_lower` is the standard lower-bound sieve assembly, and its skeleton I did
+re-derive: with weights `λ` satisfying `Σ_{E⊆B} λ_E ≤ [B = ∅]` for every `B ⊆ U`
+(`weighted_counts_le_sifted`, the minorant property, swap-sums proof), the sifted count is
+`≥ Σ_E λ_E · #{n : SieveCond(E)}`; `radical_sieve_count` replaces each count by
+`X·h^{|E|}/(Q∏A∏E) ± h^{|E|}` (for `p > h` the `h` shifted classes mod `p` are distinct, so
+`SieveCond(E)` is `h^{|E|}` CRT-disjoint classes mod `Q∏A∏E`, each counted to within one);
+`brun_remainder_le_square` bounds the remainder by `R²` because `h^{|E|} ≤ ∏_{p∈E} p ≤ R`
+(every `p > h`) and at most `R` distinct squarefree products are `≤ R`; and
+`prime_density_brun_lower` supplies the main-term inequality
+`(1 − 2e^{−s/2}) ∏_U (1 − h/p) ≤ Σ_E λ_E ∏_E (h/p)`.  Hypothesis chain checked:
+`s ≥ 1920h = 80·(24h)`, `K = 4^h e^{16h}`, `hsA` identical, `g = h/p ∈ [0,1)` from `p > h`,
+`U ⊆ (h, y]`, `y ≥ e²`.  The dimension instance `24h`, `K = 4^h e^{16h}` is the crude-Mertens
+shape consistent with `primeRecipSum_le`'s `8 + 12 log(·)`.
+
+Not re-derived: `brun_lower_three` inside `PrimeModelBrunLower.lean` (the Brun cut
+`brunCut k s y` with geometric cutoffs and the `2e^{−s/2}` relative error), about 1200 lines,
+host-verified.  That single theorem is the only analytic input in the whole chain that no reader
+re-derived today; its statement is the fundamental lemma of sieve theory in a crude-constant
+form, and every consumer uses it with hypotheses that hold with room to spare.
