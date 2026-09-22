@@ -105,9 +105,97 @@ variable {α : Type*} [DecidableEq α]
 noncomputable def esymmOn (g : α → ℝ) (B : Finset α) (k : ℕ) : ℝ :=
   ∑ E ∈ B.powersetCard k, ∏ p ∈ E, g p
 
+theorem esymmOn_nonneg (g : α → ℝ) (hg : ∀ p, 0 ≤ g p) (B : Finset α) (k : ℕ) :
+    0 ≤ esymmOn g B k :=
+  Finset.sum_nonneg fun E _ => Finset.prod_nonneg fun p _ => hg p
+
+@[simp] theorem esymmOn_zero (g : α → ℝ) (B : Finset α) : esymmOn g B 0 = 1 := by
+  simp [esymmOn]
+
+@[simp] theorem esymmOn_empty_succ (g : α → ℝ) (k : ℕ) : esymmOn g ∅ (k + 1) = 0 := by
+  have h : (∅ : Finset α).powersetCard (k + 1) = ∅ :=
+    Finset.powersetCard_eq_empty.2 (by simp)
+  simp [esymmOn, h]
+
+/-- Pascal-type recursion for the elementary symmetric sums. -/
+theorem esymmOn_insert (g : α → ℝ) {a : α} {B : Finset α} (ha : a ∉ B) (k : ℕ) :
+    esymmOn g (insert a B) (k + 1) = esymmOn g B (k + 1) + g a * esymmOn g B k := by
+  classical
+  have hdisj : Disjoint (Finset.powersetCard (k + 1) B)
+      ((Finset.powersetCard k B).image (insert a)) := by
+    rw [Finset.disjoint_right]
+    intro E hE hE'
+    rw [Finset.mem_image] at hE
+    obtain ⟨F, _, rfl⟩ := hE
+    rw [Finset.mem_powersetCard] at hE'
+    exact ha (hE'.1 (Finset.mem_insert_self a F))
+  have hinj : Set.InjOn (insert a) (Finset.powersetCard k B : Set (Finset α)) := by
+    intro E hE F hF hEF
+    simp only [Finset.mem_coe, Finset.mem_powersetCard] at hE hF
+    have h1 : (insert a E).erase a = E := Finset.erase_insert (fun h => ha (hE.1 h))
+    have h2 : (insert a F).erase a = F := Finset.erase_insert (fun h => ha (hF.1 h))
+    rw [← h1, ← h2, hEF]
+  unfold esymmOn
+  rw [Finset.powersetCard_succ_insert ha, Finset.sum_union hdisj,
+    Finset.sum_image (f := fun E => ∏ p ∈ E, g p) hinj]
+  congr 1
+  rw [Finset.mul_sum]
+  refine Finset.sum_congr rfl fun E hE => ?_
+  rw [Finset.mem_powersetCard] at hE
+  have hnot : a ∉ E := fun h => ha (hE.1 h)
+  rw [Finset.prod_insert hnot]
+
+/-- Two-term binomial minorant: `(x + y)^{k+1} ≥ y^{k+1} + (k+1) x y^k` for `x, y ≥ 0`. -/
+theorem add_pow_ge_two_terms {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) :
+    ∀ k : ℕ, y ^ (k + 1) + (k + 1 : ℝ) * x * y ^ k ≤ (x + y) ^ (k + 1) := by
+  intro k
+  induction k with
+  | zero => simp; linarith
+  | succ k ih =>
+      have hyk : 0 ≤ y ^ k := pow_nonneg hy k
+      have hxy : 0 ≤ x + y := by linarith
+      have hstep : (x + y) ^ (k + 2) = (x + y) * (x + y) ^ (k + 1) := by ring
+      have h1 : (x + y) * (y ^ (k + 1) + (k + 1 : ℝ) * x * y ^ k)
+          ≤ (x + y) * (x + y) ^ (k + 1) := mul_le_mul_of_nonneg_left ih hxy
+      have hexp : (x + y) * (y ^ (k + 1) + (k + 1 : ℝ) * x * y ^ k)
+          = y ^ (k + 2) + ((k + 1 : ℝ) + 1) * x * y ^ (k + 1)
+            + (k + 1 : ℝ) * x ^ 2 * y ^ k := by ring
+      have hlast : 0 ≤ (k + 1 : ℝ) * x ^ 2 * y ^ k := by positivity
+      have : y ^ (k + 2) + ((k + 1 : ℝ) + 1) * x * y ^ (k + 1) ≤ (x + y) ^ (k + 2) := by
+        rw [hstep]; linarith [h1, hexp ▸ h1]
+      convert this using 3 <;> push_cast <;> ring
+
 /-- **The factorial bound**: `k! · e_k(g) ≤ (∑_B g)^k` for a nonnegative weight. -/
 theorem factorial_mul_esymmOn_le (g : α → ℝ) (hg : ∀ p, 0 ≤ g p) :
     ∀ (B : Finset α) (k : ℕ), (k.factorial : ℝ) * esymmOn g B k ≤ (∑ p ∈ B, g p) ^ k := by
-  sorry
+  classical
+  intro B
+  induction B using Finset.induction with
+  | empty =>
+      intro k
+      cases k with
+      | zero => simp
+      | succ m => simp
+  | insert a B ha ih =>
+      intro k
+      cases k with
+      | zero => simp
+      | succ m =>
+          have hS' : 0 ≤ ∑ p ∈ B, g p := Finset.sum_nonneg fun p _ => hg p
+          have hga : 0 ≤ g a := hg a
+          have hem : 0 ≤ esymmOn g B m := esymmOn_nonneg g hg B m
+          have hfac : ((m + 1).factorial : ℝ) = (m + 1 : ℝ) * (m.factorial : ℝ) := by
+            rw [Nat.factorial_succ]; push_cast; ring
+          have hA : ((m + 1).factorial : ℝ) * esymmOn g B (m + 1) ≤ (∑ p ∈ B, g p) ^ (m + 1) :=
+            ih (m + 1)
+          have hB : ((m + 1).factorial : ℝ) * (g a * esymmOn g B m)
+              ≤ (m + 1 : ℝ) * g a * (∑ p ∈ B, g p) ^ m := by
+            rw [hfac]
+            have hmul := mul_le_mul_of_nonneg_left (ih m)
+              (show (0:ℝ) ≤ ((m:ℝ) + 1) * g a by positivity)
+            nlinarith [hmul]
+          have hbin := add_pow_ge_two_terms hga hS' m
+          rw [Finset.sum_insert ha, esymmOn_insert g ha m, mul_add]
+          linarith
 
 end NormalNumbers.PrimeModel.BlockSieve
