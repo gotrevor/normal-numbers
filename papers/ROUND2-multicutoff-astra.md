@@ -2,7 +2,8 @@
 
 Author: astra-multicutoff.  Round: 2026-09-22.
 
-**Status: paper-proved and independently refereed within Pair A.**
+**Status: Sections 1-10 are paper-proved and independently refereed within Pair A.**
+Sections 11-12 are a subsequent paper derivation awaiting Fable's review.
 Fable accepted Sections 4-5 and 8 in message
 `20260922T202504Z-fable-multicutoff-3e221a0b-9747-490c-8209-f652da8e16ca.md`;
 Astra checked Fable's companion schedule and the corrected finite ledger.
