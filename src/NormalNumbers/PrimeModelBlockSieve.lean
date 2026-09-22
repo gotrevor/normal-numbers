@@ -79,10 +79,11 @@ theorem bonfPartial_sub_le (b : ℕ) {r : ℕ} (hr : Even r) :
 /-! ### The telescoping minorant -/
 
 variable {ι : Type*} [DecidableEq ι]
+variable {R : Type*} [CommRing R] [LinearOrder R] [IsStrictOrderedRing R]
 
 /-- **Telescoping**: `∏ U − ∏ I ≤ ∑_i (U i − I i) ∏_{j ≠ i} U j` when `0 ≤ I i ≤ U i`.
 This replaces the invalid "product of lower sieves". -/
-theorem prod_sub_prod_le (s : Finset ι) (U I : ι → ℝ)
+theorem prod_sub_prod_le (s : Finset ι) (U I : ι → R)
     (hI : ∀ i ∈ s, 0 ≤ I i) (hIU : ∀ i ∈ s, I i ≤ U i) :
     (∏ i ∈ s, U i) - (∏ i ∈ s, I i) ≤ ∑ i ∈ s, (U i - I i) * ∏ j ∈ s.erase i, U j := by
   classical
@@ -99,7 +100,7 @@ theorem prod_sub_prod_le (s : Finset ι) (U I : ι → ℝ)
         have h1 : 0 ≤ U i - I i := by linarith [hIU' i hi]
         have h2 : 0 ≤ ∏ j ∈ s.erase i, U j :=
           Finset.prod_nonneg fun j hj => hUnn j (Finset.mem_of_mem_erase hj)
-        positivity
+        exact mul_nonneg h1 h2
       have key := ih hI' hIU'
       -- rewrite both sides over `insert a s`
       rw [Finset.prod_insert ha, Finset.prod_insert ha, Finset.sum_insert ha]
@@ -130,7 +131,7 @@ theorem prod_sub_prod_le (s : Finset ι) (U I : ι → ℝ)
       linarith
 
 /-- The packaged minorant: with defects `D i ≥ U i − I i`, `∏ U − ∑ D_i ∏_{j≠i} U_j ≤ ∏ I`. -/
-theorem prod_le_prod_of_defect (s : Finset ι) (U I D : ι → ℝ)
+theorem prod_le_prod_of_defect (s : Finset ι) (U I D : ι → R)
     (hI : ∀ i ∈ s, 0 ≤ I i) (hIU : ∀ i ∈ s, I i ≤ U i)
     (hD : ∀ i ∈ s, U i - I i ≤ D i) :
     (∏ i ∈ s, U i) - ∑ i ∈ s, D i * ∏ j ∈ s.erase i, U j ≤ ∏ i ∈ s, I i := by
@@ -142,6 +143,81 @@ theorem prod_le_prod_of_defect (s : Finset ι) (U I D : ι → ℝ)
     exact mul_le_mul_of_nonneg_right (hD i hi)
       (Finset.prod_nonneg fun j hj => hUnn j (Finset.mem_of_mem_erase hj))
   have := prod_sub_prod_le s U I hI hIU
+  linarith
+
+
+/-! ### The polynomial form: subset sums of a 0/1 weight -/
+
+variable {α : Type*} [DecidableEq α]
+
+/-- The number of `p ∈ B` that are "hit" (`x p = 1`). -/
+def hitCount (x : α → ℤ) (B : Finset α) : ℕ := (B.filter (fun p => x p = 1)).card
+
+/-- For a `0/1`-valued weight, the elementary symmetric sum of degree `i` over `B` counts the
+`i`-subsets of the hit set: `∑_{E ⊆ B, |E| = i} ∏_{p ∈ E} x p = C(b, i)`. -/
+theorem sum_powersetCard_prod (x : α → ℤ) (hx : ∀ p, x p = 0 ∨ x p = 1) (B : Finset α) (i : ℕ) :
+    ∑ E ∈ B.powersetCard i, ∏ p ∈ E, x p = ((hitCount x B).choose i : ℤ) := by
+  classical
+  set S : Finset α := B.filter (fun p => x p = 1) with hS
+  have hterm : ∀ E ∈ B.powersetCard i, (∏ p ∈ E, x p) = if E ⊆ S then 1 else 0 := by
+    intro E hE
+    rw [Finset.mem_powersetCard] at hE
+    by_cases hsub : E ⊆ S
+    · rw [if_pos hsub]
+      refine Finset.prod_eq_one fun p hp => ?_
+      have := hsub hp
+      rw [hS, Finset.mem_filter] at this
+      exact this.2
+    · rw [if_neg hsub]
+      obtain ⟨p, hpE, hpS⟩ := Finset.not_subset.1 hsub
+      refine Finset.prod_eq_zero hpE ?_
+      rcases hx p with h | h
+      · exact h
+      · exact absurd (by rw [hS, Finset.mem_filter]; exact ⟨hE.1 hpE, h⟩) hpS
+  rw [Finset.sum_congr rfl hterm, Finset.sum_boole]
+  have hfil : (B.powersetCard i).filter (fun E => E ⊆ S) = S.powersetCard i := by
+    ext E
+    simp only [Finset.mem_filter, Finset.mem_powersetCard]
+    constructor
+    · rintro ⟨⟨_, hcard⟩, hsub⟩; exact ⟨hsub, hcard⟩
+    · rintro ⟨hsub, hcard⟩
+      exact ⟨⟨hsub.trans (Finset.filter_subset _ _), hcard⟩, hsub⟩
+  rw [hfil, Finset.card_powersetCard]
+  rfl
+
+/-- The `r`-th Bonferroni partial sum in polynomial form. -/
+def bonfPoly (x : α → ℤ) (B : Finset α) (r : ℕ) : ℤ :=
+  ∑ i ∈ Finset.range (r + 1), (-1) ^ i * ∑ E ∈ B.powersetCard i, ∏ p ∈ E, x p
+
+/-- The defect in polynomial form. -/
+def defectPoly (x : α → ℤ) (B : Finset α) (r : ℕ) : ℤ :=
+  ∑ E ∈ B.powersetCard (r + 1), ∏ p ∈ E, x p
+
+theorem bonfPoly_eq (x : α → ℤ) (hx : ∀ p, x p = 0 ∨ x p = 1) (B : Finset α) (r : ℕ) :
+    bonfPoly x B r = bonfPartial (hitCount x B) r := by
+  unfold bonfPoly bonfPartial
+  exact Finset.sum_congr rfl fun i _ => by rw [sum_powersetCard_prod x hx B i]
+
+theorem defectPoly_eq (x : α → ℤ) (hx : ∀ p, x p = 0 ∨ x p = 1) (B : Finset α) (r : ℕ) :
+    defectPoly x B r = ((hitCount x B).choose (r + 1) : ℤ) :=
+  sum_powersetCard_prod x hx B (r + 1)
+
+/-- **Lemma B, property 2 (pointwise)**: the graded block minorant never exceeds the exact
+indicator that no block is hit. -/
+theorem blockMinorant_le (s : Finset ι) (B : ι → Finset α) (r : ι → ℕ)
+    (hr : ∀ i ∈ s, Even (r i)) (x : α → ℤ) (hx : ∀ p, x p = 0 ∨ x p = 1) :
+    (∏ i ∈ s, bonfPoly x (B i) (r i))
+        - ∑ i ∈ s, defectPoly x (B i) (r i) * ∏ j ∈ s.erase i, bonfPoly x (B j) (r j)
+      ≤ ∏ i ∈ s, bonfIndic (hitCount x (B i)) := by
+  classical
+  have hU : ∀ i, bonfPoly x (B i) (r i) = bonfPartial (hitCount x (B i)) (r i) :=
+    fun i => bonfPoly_eq x hx (B i) (r i)
+  have hD : ∀ i, defectPoly x (B i) (r i) = ((hitCount x (B i)).choose (r i + 1) : ℤ) :=
+    fun i => defectPoly_eq x hx (B i) (r i)
+  simp only [hU, hD]
+  refine prod_le_prod_of_defect s _ _ _ (fun i _ => bonfIndic_nonneg _)
+    (fun i hi => bonfIndic_le_bonfPartial _ (hr i hi)) (fun i hi => ?_)
+  have := bonfPartial_sub_le (hitCount x (B i)) (hr i hi)
   linarith
 
 end NormalNumbers.PrimeModel.BlockSieve
