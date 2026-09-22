@@ -477,7 +477,7 @@ fable).**  In `t = L₂x` coordinates put `t_n = exp(n²)`, `a_n = ⌈exp exp t_
 1/n)⌋`, and let `P` contain **all** primes in `⋃_n [a_n, b_n]`.  Each block has reciprocal mass
 `≍ 1/n` (Chebyshev + Abel: `∫ du/(u log u)` over the block is `1/n + o(1/n)`, boundary terms
 `O(1/log a_n)`), so `∑_{p∈P} 1/p = ∞`.  At `x = b_n + 1`, `π_P(x) ≥ π(x) − π(a_n)` and
-`π(a_n)/π(b_n) → 0` (since `a_n/b_n = exp(−exp(t_n)(e^{1/n} − 1)) → 0`), so `limsup π_P/π = 1`:
+`π(a_n)/π(b_n) → 0` (since `a_n/b_n ~ exp(−exp(t_n)(e^{1/n} − 1)) → 0`, up to the floor/ceiling), so `limsup π_P/π = 1`:
 **no density-zero property at all**.  Yet the fresh window `[y_N, 2N]` has `t`-length
 `4 log J₁ + o(1) = O(log log t)`, while consecutive block starts are `exp((n+1)²) − exp(n²)` apart,
 so every late fresh window meets at most one block, of index `n → ∞`, and
