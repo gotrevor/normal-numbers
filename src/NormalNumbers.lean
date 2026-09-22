@@ -415,6 +415,7 @@ import NormalNumbers.PrimeModelFamilyL4
 import NormalNumbers.PrimeModelFamilyConsumer
 import NormalNumbers.PrimeModelBlockSieve
 import NormalNumbers.PrimeModelBlockLevel
+import NormalNumbers.PrimeModelBlockWeights
 import NormalNumbers.PrimeModelBlockSieveModel
 import NormalNumbers.PrimeModelSqrtFresh
 import NormalNumbers.G4PrefixDecayAudit
