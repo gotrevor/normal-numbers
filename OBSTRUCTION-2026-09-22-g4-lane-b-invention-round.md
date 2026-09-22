@@ -12,7 +12,9 @@ coefficients: they act only on the *tail* sites, which are provably deterministi
 sites as a fully general two-point Elliott instance at natural density on all scales (§3).  The one surviving
 candidate (§2) is a reduction that halves the site schedule and corrects probe 13's reading; it is not
 cancellation.  The h-resonance arithmetic of the brief is verified (§1).  Nothing here changes the status of
-`EventualPrefixDecay`: still open, still 🔴, with the class of the obstruction now written down (§3–§4).
+`EventualPrefixDecay`: still open, still 🔴, with the class of the obstruction now written down (§3–§4).  ⚠️ Tier:
+§1, §2, §3b, §3c are proved (paper) and probe-checked; **§3a–§3d and §4 are a difficulty *diagnosis*, not a Maze-row
+refutation** (referee, §6).  Gate for any future candidate: `h = 2`, `k = 2` (§6-ii).
 
 Notation.  `T_k(m) = Σ_{j=1}^{k} ω(m+j)/4^j` (= `truncTail k m`), `F_{h,k}(m) = e(h T_k(m)) = ∏_{j≤k} z_j^{ω(m+j)}`,
 `z_j = e(h/4^j)`, `S(h,k,M) = Σ_{m<M} F_{h,k}(m)` (= `fullPrefixSum h k M`), `windowK M = ⌊log₂⌊log₂⌊log₂ M⌋⌋⌋ + 1`,
@@ -85,7 +87,7 @@ shows the gap is the rotation: at `N = 2²⁴`, `h = 1`, `K = 2`: `|W_K − W_J|
 **Does A change the difficulty class?  No.**  `K(M) → ∞` still, and the sites it keeps (`4^j ≲ |h|√(log log M)`)
 are exactly the non-pretentious ones.  A is a cleaner interface (`EventualPrefixDecay` with a half-log schedule and
 a rotation), i.e. "another conditional diagram", and by the brief that alone is not the deliverable.  It is
-recorded because (i) it falsifies a written reading of probe 13, (ii) it is the sharp statement of *which* sites are
+recorded because (i) it corrects a written reading of probe 13, (ii) it is the sharp statement of *which* sites are
 random, which §3 needs, (iii) it is a bounded, classical, formalizable lemma if a later lap wants the half-log
 schedule.
 
@@ -176,6 +178,67 @@ functions would be new mathematics and would not yet give `G₄` (`K(M) → ∞`
 that it is *equivalent* to a named conjecture (two-point Elliott at natural density for a pair with `𝔻² ≍ log log`)
 would be the honest closing of the route.
 
-## 6. Adversarial review (fresh Opus, negative inventory first)
+## 6. Adversarial review (fresh Opus, negative inventory first) — verdicts
 
-_(appended below when the review returns)_
+Referee read the audit, `G4WindowK.lean`, the sweep, the summatory-split handoff, probe 13 data and the brief before
+the candidates.  Condensed:
+
+- **A: SURVIVES WITH CORRECTION, consequence cosmetic.**  Identity and bound correct; no circularity (triangle
+  inequality + TK only).  Corrections accepted: (1) the centering constant is immaterial (`μ` enters only through a
+  phase of size `|h|μ 4^{−K}`; the window mean is the self-calibrating choice); (2) TK uniformity in the shift is a
+  non-issue (`windowK M ≤ 5` for every `M < 10^{10^{10}}`; a shift by `j` perturbs the TK sum by `O(j log M)`);
+  (3) resonance is absorbed by `|h|`, so the threshold `4^K ≍ A|h|√log log M` is **not uniform in `h`** — harmless
+  for Weyl (one `h` at a time), fatal if a future step needs a range of `h`.  Strongest objection: the repo already
+  has `‖W_J − W_K‖ ≪ |h| (log log M) 4^{−K}` (`norm_fullWindowMean_sub_le` + `geom_tail_le` + `sum_window_omegaR_le`,
+  the `L1bd` column of probe 13); A replaces `log log M` by `√log log M`, i.e. `K ≈ windowK/4`, same growth class,
+  never the fixed-`k` Ingham–Estermann regime.  Two cautions to carry: the probe validates the *reduction*, not the
+  *rate* (observed modulus gaps sit 2–3 orders below A's bound); and **A escapes the "pointwise truncation refuted"
+  verdict of `HANDOFF-2026-09-21-summatory-split.md` only because `PrefixDecay`'s budget is `εM` — against the SD
+  node's own budget `M (log M)^{Re κ}` A is still over by `log log M`.**
+- **B: SURVIVES as a heuristic diagnosis, NOT as a verdict; no counterexample found.**  Closest natural-density
+  all-scale results are one-non-pretentious-factor: Topacoğullari 1506.02608 (`τ_z(n) τ(n−h)`), Lau 2509.07556
+  (`d_k(n) d(n+h)`) — the second factor is `τ`, pretentious.  Klurman 1603.08453, KMT 2304.05344, Elliott–Kish
+  1405.7132: pretentious hypotheses or full-upper-log-density scale sets.  Overreach flagged: "every decomposition
+  returns `pa+1 = qb`" quantifies over *methods* and is not provable; the fibre argument uses the smooth/rough
+  factorisation the repo froze as `SmoothRoughDecoupling` (mildly circular as an obstruction); `(1,1)` is one fibre
+  of a Poisson(`log 1/ε`) family.  **File as diagnosis, not as a Maze-row refutation** — done (see BLUF).
+- **Best attack on `k = 2`, and where it fails:** hyperbola/dispersion with `z^ω = 1 ∗ μ²(z−1)^ω` at the *second*
+  site needs `z_1^ω` in progressions on average over `d` with weights `|z_2 − 1|^{ω(d)}` — fine when `|z − 1| < 1`,
+  but at the leading site `|i − 1| = √2 > 1` the demand becomes a dimension-`√2` BV beyond `x^{1/2}`, which
+  Granville–Shao/Drappeau-type BV for 1-bounded multiplicative functions does not deliver.  Type II: none (same
+  linear part).  Joint CLT: precision `o(1)`, not `(log)^{−c}`, and its error terms *are* the correlation.
+- **Resonance arithmetic**: independently recomputed, agrees to all printed digits (`𝔻² = 0.01529, 0.001717, 0.24168,
+  0.02745`).  Caveat added by the referee: Tao-type two-point theorems need only *one* non-pretentious factor, which
+  site 1 supplies, so the product diagnostic is weak — **the blocker is the averaging mode, not pretentiousness.**
+- **Trivial-frequency identities**: correct; `k₀(4^a h') = a + k₀(h')`; "`4 ∤ h` WLOG" now cited from §1a.
+- **Missed**: (i) the slack — conjecturally `|S| ≪ M/log M` (from `exists_re_sdExponent_le_neg_one`) while the node
+  asks only `εM`, so a method losing `(log M)^{0.99}` would do; neither candidate looks there.  (ii) Calibration
+  gate: for `h ≡ 2 (mod 4)`, `z_1 = −1` exactly — **test every candidate on `h = 2`, `k = 2` first**,
+  `Σ (−1)^{ω(n+1)} e(1/8)^{ω(n+2)} = o(M)` on all scales; if it cannot do that, it cannot do `PrefixDecay`.
+
+## 7. Response to the review, and the closing verdict
+
+**On the slack (6-i).**  The slack does not help, and the reason is the same as the obstruction.  The only
+large-loss tool that works at natural density on *all* scales is one-site Halász (no shifts).  Every multi-site
+argument (Matomäki–Radziwiłł–Tao, Tao's entropy decrement, TT 2512.01739) starts with the substitution `m+1 = pa`,
+`p ∈ (P, Q]`, which is legal at natural density with a Turán–Kubilius loss `M/√H`, `H = Σ_{p∈(P,Q]} 1/p` (so `Q = P^{A}`
+with `A = e^{1/ε²}`, fine).  After it, the sum is `Σ_p Σ_{a ≤ M/p} f_1(a) f_1(p) f_2(pa+1) …`, i.e. a family of sums at
+the **different scales `M/p`**, and Cauchy–Schwarz in `a` controls only their *average over `p`*.  That is exactly why
+these methods output "almost all scales" (or, with `1/m` weights that make `m ↦ pm` measure-preserving,
+logarithmic averages).  A large loss buys nothing here: the defect is that a single bad sub-scale `M/p` is invisible
+to the average, and normality needs every scale (§3c).  So the slack is real and unusable by any method that passes
+through the `p`-substitution, which is every known multi-site method.  (Confidence 80% that no known method avoids
+the substitution.)
+
+**On A vs the SD budget (6-A).**  Recorded verbatim above.  A is filed as a rung for the `εM`-budget node only.
+
+**On B's tier (6-B).**  Accepted: §3 is a *diagnosis* of the difficulty class, and its fibre exhibit assumes the
+smooth/rough split.  It is not a Maze row and must not be written as one.  What *is* rigorous in §3: §3b (the
+`n^{±it}` pair) and §3c (the `λ ∗ g` identity and the dyadic-block argument that exceptional scales break normality).
+
+**Closing verdict for Lane B (this round).**  No new cancellation mechanism; the geometric coefficients act only on
+sites that are provably deterministic (A) and on the character of the rough vector, never on the averaging mode.
+The gate for any future candidate is `h = 2`, `k = 2` at natural density on every scale.  `EventualPrefixDecay`
+stays 🔴.  No Opus lap fired: A is a rung (schedule/rotation) with a classical input, not a node; the brief says a
+cleaner conditional wrapper alone is not the deliverable.  If a later session wants the half-log schedule, §2c is the
+kickoff.
