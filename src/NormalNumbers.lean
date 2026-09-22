@@ -402,6 +402,7 @@ import NormalNumbers.PrimeModelPhaseAlgebra
 import NormalNumbers.PrimeModelPhaseAlgebraGraded
 import NormalNumbers.PrimeModelPhaseFactor
 import NormalNumbers.PrimeModelPhaseFactorGraded
+import NormalNumbers.PrimeModelPhaseFactorSplit
 import NormalNumbers.PrimeModelJointLaw
 import NormalNumbers.PrimeModelJointLawGraded
 import NormalNumbers.PrimeModelParameters
