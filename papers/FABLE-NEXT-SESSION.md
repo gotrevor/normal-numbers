@@ -59,6 +59,12 @@ exact counterexample growth regime, not another unsupported claim.
 
 ## Lane B: G4, genuinely new cancellation
 
+**Status 2026-09-22 (Ren/Fable, one invention + one adversarial round):** no new mechanism; verdict and negative
+inventory in `OBSTRUCTION-2026-09-22-g4-lane-b-invention-round.md` (probe 14 `probes/rotation_and_resonance.py`).
+Resonance arithmetic below verified.  Surviving reduction: tail sites with `16^j >> h^2 loglog M` are deterministic
+(Turan-Kubilius), so the window is `K ~ (1/2) log_4 loglog M` with a unimodular rotation - a rung, not a node,
+not fired.  Gate for any future candidate: `h = 2, k = 2` at natural density on every scale.
+
 Use EventualPrefixDecay or the schedule-only WindowDecayK, not PrefixDecay.
 The first concrete question is whether the geometric coefficients allow a
 shifted-correlation estimate unavailable for arbitrary Elliott correlations.
