@@ -54,7 +54,7 @@ open NormalNumbers.PrimeLambert NormalNumbers.G4 NormalNumbers.G4Sparse
 open NormalNumbers.PrimeModel.Params NormalNumbers.PrimeModel.KMT
 open NormalNumbers.PrimeModel.Family NormalNumbers.PrimeModel.FamilyIter
 open NormalNumbers.PrimeModel.SqrtFresh NormalNumbers.PrimeModel.BlockSieve
-open NormalNumbers.PrimeModel.PhaseFactor
+open NormalNumbers.PrimeModel.PhaseFactor NormalNumbers.PrimeModel.DensityMass
 
 variable (P : ℕ → Prop) [DecidablePred P]
 
@@ -99,6 +99,119 @@ noncomputable def loG (N : ℕ) : Fin (JG P N) → ℕ :=
 
 /-- The graded tier weights `u_b = u_N + b`: this is what removes the factor `J` from E4b. -/
 noncomputable def uuG (N : ℕ) : Fin (JG P N) → ℕ := fun b => uG P N + (b : ℕ)
+
+/-! ## The fresh-mass surrogate -/
+
+/-- The square-root fresh mass is uniformly bounded: `r_P(q) ≤ 8 + 12 log 3` for `q ≥ 4`.
+(`q ≤ ⌊√q⌋³`, so the Mertens ratio on `(⌊√q⌋, q]` is at most `3`.) -/
+theorem recipSumIoc_sqrt_le {q : ℕ} (hq : 4 ≤ q) :
+    recipSumIoc P (Nat.sqrt q) q ≤ 8 + 12 * Real.log 3 := by
+  classical
+  set s : ℕ := Nat.sqrt q with hsdef
+  have hs2 : 2 ≤ s := by
+    have h1 : Nat.sqrt 4 ≤ Nat.sqrt q := Nat.sqrt_le_sqrt hq
+    have h2 : Nat.sqrt 4 = 2 := by norm_num
+    omega
+  have hsq : s ≤ q := Nat.sqrt_le_self q
+  have hset : (Finset.Iic q).filter (fun p => Nat.Prime p ∧ ((s : ℝ)) < (p : ℝ))
+      = (Finset.Ioc s q).filter Nat.Prime := by
+    ext p
+    simp only [Finset.mem_filter, Finset.mem_Iic, Finset.mem_Ioc, Nat.cast_lt]
+    tauto
+  have h1 : recipSumIoc P s q ≤ ∑ p ∈ (Finset.Ioc s q).filter Nat.Prime, (1 : ℝ) / p := by
+    rw [recipSumIoc]
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun p _ _ => by positivity)
+    intro p hp
+    rw [Finset.mem_filter] at hp ⊢
+    exact ⟨hp.1, hp.2.1⟩
+  have key := NormalNumbers.PrimeModel.PrimeDensity.primeRecipSum_le (s : ℝ)
+    (by exact_mod_cast hs2) q (by exact_mod_cast hsq)
+  rw [hset] at key
+  -- the ratio `log q / log s ≤ 3`
+  have hcube : q ≤ s ^ 3 := by
+    have hlt : q < (s + 1) ^ 2 := Nat.lt_succ_sqrt' q
+    nlinarith [hs2, hlt]
+  have hsr : (2 : ℝ) ≤ (s : ℝ) := by exact_mod_cast hs2
+  have hslog : 0 < Real.log s := Real.log_pos (by linarith)
+  have hqr : (4 : ℝ) ≤ (q : ℝ) := by exact_mod_cast hq
+  have hqlog : 0 < Real.log q := Real.log_pos (by linarith)
+  have hcube' : (q : ℝ) ≤ (s : ℝ) ^ 3 := by exact_mod_cast hcube
+  have hlogq : Real.log q ≤ 3 * Real.log s := by
+    have h2 : Real.log q ≤ Real.log ((s : ℝ) ^ 3) := Real.log_le_log (by linarith) hcube'
+    rwa [Real.log_pow] at h2
+  have hratio : Real.log q / Real.log s ≤ 3 := by rw [div_le_iff₀ hslog]; linarith
+  have hratiopos : 0 < Real.log q / Real.log s := by positivity
+  have hlogratio : Real.log (Real.log q / Real.log s) ≤ Real.log 3 :=
+    Real.log_le_log hratiopos hratio
+  linarith
+
+theorem epsG_nonneg (N : ℕ) : 0 ≤ epsG P N := by
+  rw [epsG]
+  exact Real.iSup_nonneg (fun q => recipSumIoc_nonneg P _ _)
+
+theorem bddAbove_sqrtFresh (N : ℕ) (h4 : 4 ≤ yBotG N) :
+    BddAbove (Set.range fun q : {q : ℕ // yBotG N ≤ q} =>
+      recipSumIoc P (Nat.sqrt (q : ℕ)) (q : ℕ)) := by
+  refine ⟨8 + 12 * Real.log 3, ?_⟩
+  rintro x ⟨q, rfl⟩
+  exact recipSumIoc_sqrt_le P (le_trans h4 q.2)
+
+/-- `ε_N` dominates every square-root fresh mass above the bottom cutoff. -/
+theorem recipSumIoc_le_epsG (N : ℕ) (h4 : 4 ≤ yBotG N) {q : ℕ} (hq : yBotG N ≤ q) :
+    recipSumIoc P (Nat.sqrt q) q ≤ epsG P N := by
+  rw [epsG]
+  exact le_ciSup (bddAbove_sqrtFresh P N h4) (⟨q, hq⟩ : {q : ℕ // yBotG N ≤ q})
+
+theorem epsG_le {N : ℕ} {ε : ℝ}
+    (hε : ∀ q, yBotG N ≤ q → recipSumIoc P (Nat.sqrt q) q ≤ ε) : epsG P N ≤ ε := by
+  rw [epsG]
+  haveI : Nonempty {q : ℕ // yBotG N ≤ q} := ⟨⟨yBotG N, le_rfl⟩⟩
+  exact ciSup_le (fun q => hε (q : ℕ) q.2)
+
+theorem epsG_tendsto (hS : SqrtFreshMassZero P) (hy : Tendsto yBotG atTop atTop) :
+    Tendsto (epsG P) atTop (𝓝 0) := by
+  refine NormedAddGroup.tendsto_nhds_zero.mpr fun ε hε => ?_
+  obtain ⟨T, hT⟩ := eventually_atTop.1 ((tendsto_order.1 hS).2 (ε / 2) (by linarith))
+  filter_upwards [hy.eventually_ge_atTop T] with N hN
+  have hle : epsG P N ≤ ε / 2 := epsG_le P (fun q hq => (hT q (le_trans hN hq)).le)
+  rw [Real.norm_eq_abs, abs_of_nonneg (epsG_nonneg P N)]
+  linarith
+
+/-- **`u_N → ∞`.**  Both branches of the `min` diverge: `√(L₃N) → ∞`, and `ε_N → 0` makes
+`ε_N^{−1/2} → ∞` (with the degenerate `ε_N = 0` routed to the first branch). -/
+theorem uG_tendsto (hS : SqrtFreshMassZero P) (hy : Tendsto yBotG atTop atTop) :
+    Tendsto (uG P) atTop atTop := by
+  rw [tendsto_atTop]
+  intro M
+  have hεpos : (0 : ℝ) < 1 / ((M : ℝ) + 1) ^ 2 := by positivity
+  filter_upwards [L3_tendsto.eventually_ge_atTop (((M : ℝ) + 1) ^ 2),
+    (epsG_tendsto P hS hy).eventually (gt_mem_nhds hεpos)] with N h1' h2
+  have h1 : (M : ℝ) + 1 ≤ Real.sqrt (L3 N) := by
+    rw [show ((M : ℝ) + 1) = Real.sqrt (((M : ℝ) + 1) ^ 2) from
+      (Real.sqrt_sq (by positivity)).symm]
+    exact Real.sqrt_le_sqrt h1'
+  have hkey : ((M : ℝ) + 1) ≤ min (Real.sqrt (L3 N)) (invEpsG P N) := by
+    refine le_min h1 ?_
+    rw [invEpsG]
+    split
+    · exact h1
+    · rename_i hpos
+      have hp : 0 < epsG P N := lt_of_le_of_ne (epsG_nonneg P N) (by
+        intro hc; exact hpos (le_of_eq hc.symm))
+      rw [le_div_iff₀ (Real.sqrt_pos.mpr hp)]
+      have hsq : Real.sqrt (epsG P N) ≤ 1 / ((M : ℝ) + 1) := by
+        have hb : epsG P N ≤ (1 / ((M : ℝ) + 1)) ^ 2 := by
+          rw [div_pow, one_pow]
+          exact h2.le
+        calc Real.sqrt (epsG P N) ≤ Real.sqrt ((1 / ((M : ℝ) + 1)) ^ 2) :=
+              Real.sqrt_le_sqrt hb
+          _ = 1 / ((M : ℝ) + 1) := Real.sqrt_sq (by positivity)
+      have hM1 : (0 : ℝ) < (M : ℝ) + 1 := by positivity
+      calc ((M : ℝ) + 1) * Real.sqrt (epsG P N) ≤ ((M : ℝ) + 1) * (1 / ((M : ℝ) + 1)) :=
+            mul_le_mul_of_nonneg_left hsq hM1.le
+        _ = 1 := by field_simp
+  rw [uG]
+  exact Nat.le_floor (by linarith)
 
 /-! ## The five terms -/
 
