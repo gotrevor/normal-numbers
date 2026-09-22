@@ -110,3 +110,37 @@ on the branch; the axiom print covers them.  The Collatz Fable's end-to-end revi
 - The paper's Part IV "density `≤ 8/(L₃N)³`" is the `β = 3` instance of `2^β/u^β` ✓.
 - Nothing in the proof depends on `2 ∈ P` or on `P` avoiding small primes; small primes sit in the residue factor of
   Part I (per Astra's Part I audit).
+
+## Addendum A (same day, ~19:20Z): the superseding theorem at a86a0d8, `isNormal_subsetLambert_of_sparseL4o`
+
+Audited with the same method (read-only; `PrimeModelKMTFixedH.lean`, `PrimeModelFamilyL4.lean`).  **No defect.**
+
+**A.1 Phase-weighted transfer** (`windowMean_sub_windowMeanLe_le_h`).  Per site, `‖z_j^{a+c} − z_j^a‖ = ‖z_j^c − 1‖ ≤ c‖z_j − 1‖`
+(`norm_pow_sub_one_le`, telescoping) and `‖z_j − 1‖ = ‖e(h/4^{j+1}) − e(0)‖ ≤ 4π|h|/4^{j+1}` (`norm_ePhase_sub`, Lipschitz `4π`);
+the window product telescopes (`norm_prod_sub_prod_le`, unit-modulus factors) with `c = ω_{>y}(n+j+1)`; the per-shift count
+`∑_{n<x} ω_{>y}(n+j+1) ≤ 2x·recipSumIoc S y x + k` (`sum_omegaGt_shift_le`: primes in `(y, x]` hit `≤ x/p + 1 ≤ 2x/p` values,
+primes in `(x, x+k]` hit one each, at most `k` of them); `∑_{j<k} 4^{−(j+1)} ≤ 1/3`.  Result
+`‖W − W_y‖ ≤ (4π|h|/3)(2R + k/x)`, **no factor `k` on the fresh mass**, `h` fixed.  Exactly Astra's lemma
+(`20260922T190221Z`, `190418Z`).  `window_bound_regime_h` swaps only this term into `window_bound_regime`; the model,
+sieve and old-mass terms are untouched.
+
+**A.2 Hypothesis and domination.**  `SparseL4o P := (π_P(x)/π(x))·L₄x → 0` (real quotient; `π(x) ≥ 1` for `x ≥ 3`).
+For `η > 0`: eventually `π_P(t) < η π(t)/L₄t` for `t ≥ x₀`; on `(y_N, M+1]`, `L₄t ≥ L₄N/2` (`L4_half_le`: `L₃t ≥ L₃N − 1`
+and `log(u − 1) ≥ log u − 1` for `u ≥ 2.7`), so `π_P(t) ≤ (2η/L₄N) π(t)`, and Abel gives
+`R(y_N, M) ≤ (2η/L₄N)(9 + 12 log(log M/log y_N))`.
+
+**A.3 Limits** (`v = L₄N ≥ 1`).  `R(y_N, N) ≤ (2η/v)(21 + 48v) = 42η/v + 96η ≤ 138η`; with `η = ε/200` this is `< ε`
+(`fresh_mass_L4o`).  `R(y_N, 2N) ≤ (2η/v)(33 + 48v) ≤ 162η`; with `η = 1/400` this is `≤ 0.405 < 1` (`fresh_mass_two_L4o`),
+which is all the mass-limited tail branch needs.  Transfer `(4π|h|/3)(2R + J/N) → 0` since `J ≤ L₃N ≤ log N` and
+`log N/N → 0`.  Old-mass, sieve, regime, nontrivial-window and the tail's cap branch are reused verbatim from Parts
+IV–V (`term_two_iter3`, `term_three_iter3`, `regime_iter3`, `tail` with `fresh_mass_two_L4o`).  `h` enters only through
+the coefficient `4π|h|/3` and `NontrivialWindow`, both fine for the fixed-`h` `KMT_along`.
+
+**A.4 Subsumption.**  `sparseL4o_of_sparseIterPow (β > 0)`: `(π_P/π)·L₄ ≤ L₄/L₃^β = log u/u^β → 0` ✓.  So the `β > 2`
+theorem of the main audit is a corollary, and so is every `π_P ≤ π/(L₄)^γ`, `γ > 1`, and `π/(L₄ log L₄)`.
+
+**A.5 What remains the barrier of this route** (agreeing with Astra's `190915Z` construction, refereed by the sparse-NN
+Fable at `191023Z`): density `≍ 1/L₄`.  On the schedule `ε = J₁^{−4}`, `log(1/ε) ≈ 4L₄N`, so `R ≍ (density)·L₄N` is bounded
+below when `π_P/π ≍ 1/L₄`; the tail and sieve majorants pin `ε` to this window (`J ≥ c log t` from the tail, `J²ε → 0` from
+the sieve), so no schedule move helps.  The abstract consumer `FreshMassZero P := recipSumIoc P (yI N) (2N) → 0`
+(Astra `190707Z`, in progress as `PrimeModelFamilyConsumer.lean`) is the right statement of what the route proves.
