@@ -245,3 +245,37 @@ A precise obstruction to one reading of the stretch target is worth separating f
 Therefore W_M=omega(M) eventually.  Exact every-prefix empirical marginals would force the actual arithmetic sequence, apart from a finite initial segment; that is fundamentally stronger than the triangular note's exact equality of probability marginals at each separate scale.  Our theorem supplies asymptotic empirical TV, not this exact histogram equality.  Exact probability marginals under an auxiliary random-sequence law are another possible interpretation, for which no correction mechanism is supplied here.
 
 Likewise replacing the Poisson background by copies of the omega(U) distribution requires not only root-of-unity decay but small TV under bounded integer translations.  A weak central limit theorem alone does not imply that lattice smoothness.  No such unproved replacement is used above.
+
+## 11. Prescribed orbits: quantifier order and the original Riesz table
+
+Fable's extension replaces zero digits by the base-4 digits d_n of a prescribed x in [0,1), keeping the same background carries and setting
+
+    W_{n+1}=4C_n-C_{n+1}+d_n.
+
+For EACH fixed deterministic x, the proof of sections 2-6 applies with these deterministic digits.  Almost every background, with x already fixed, yields (P), (V), the tail bound, and the Gaussian limit, while
+
+    T_k(n)=C_n+{4^n x}-4^{-k}(C_{n+k}+{4^{n+k}x}).
+
+Consequently its scheduled empirical Fourier mean differs from the ordinary orbit mean of e(h4^n x) by O_h(L_M/4^{K(M)}), both on prefixes and dyadic intervals.  This proves: for every prescribed x there EXISTS a suitable deterministic W.
+
+The order cannot be reversed to claim one full-probability set of backgrounds working for all x simultaneously.  For any realized background, choose d_n in {0,1} with d_n=C_{n+1} mod 2, and let x have exactly those base-4 digits.  The resulting W is always even.  Its singleton TV distance from Pois(L_M) is at least the latter's odd probability, which tends to 1/2.  Such digits define a legitimate orbit, but it was selected after observing the background.  This counterexample corrects the initial preamble of Fable's extension; it does not affect the zero-orbit theorem or the fixed-prescribed-orbit extension.
+
+The original Riesz Fourier table can be embedded unconditionally.  Let mu be the invariant circle measure from the earlier note, with
+
+    a(m)=integral e(mx) dmu(x)=rho^{s(m)}
+
+if m has a finite signed-base-4 expansion with digits {-1,0,1}, and a(m)=0 otherwise.  Here 0<rho<1/2 and s(m) counts nonzero digits.  For any fixed integers u,v,
+
+    a(u+4^r v)=a(u)a(v) for every sufficiently large r.    (11.1)
+
+To prove it, decode the least signed digit by the residue modulo 4: residues 0,1,3 force digits 0,1,-1; residue 2 forbids representability.  Subtract that digit and divide by 4.  For an integer this procedure either reaches 0 in finitely many steps or hits the forbidden residue: away from 0 and the terminal cases +/-1, absolute value strictly decreases.  Choose r larger than the number of steps needed for u.  Decoding u+4^r v follows precisely the same low-digit decisions.  If u fails, the sum fails at the same step.  If u succeeds, its low digits are removed, zeros fill the gap, and the remaining integer is v.  Representability and the number of nonzero digits therefore factor exactly as (11.1) states, including negative u and v.
+
+With T(x)=4x mod 1, equation (11.1) says
+
+    integral e(ux) e(v T^r x) dmu -> a(u)a(v).
+
+By linearity this is mixing for trigonometric polynomials.  Density in L2(mu), Cauchy-Schwarz, and invariance extend it to L2 observables.  Thus mu is mixing and in particular ergodic.  The ergodic theorem supplies a point x generic for all integer characters simultaneously (intersect their countably many full-measure sets).  Choose such a deterministic x FIRST; then choose a good independent background for that x as above.
+
+This produces one deterministic overlapping-window sequence satisfying (P), (V), and the Gaussian law, with scheduled means exactly the earlier note's limiting table: rho at h=1,4; zero at h=2; rho^2 at h=3,12.  Prefix limits give the same dyadic limits by subtraction.  The simpler zero-orbit theorem has coefficient 1 at all h and was already sufficient for the brief.
+
+The extension review and elementary mixing proof were sent in `agent-mail/shift-consistency/20260922T202456Z-astra-shift-consistency-66ac94e2-ee34-443c-a053-7df65054c937.md`.  Fable owns its presentation of the general orbit theorem; the present section records Astra's quantifier counterexample and the complete Riesz argument.
