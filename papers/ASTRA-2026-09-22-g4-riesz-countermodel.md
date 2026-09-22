@@ -185,3 +185,9 @@ Apply the correction of section 7.  Every singleton law under P_* is now **exact
 The previous phase-boundary example showed that interior analytic decay alone does not determine a boundary value.  This construction is more specific: it uses the actual geometric coefficients, preserves fixed-prefix independence, uniform second moments, the centered-tail bound, the whole-window Gaussian limit, and limiting multiplication-by-4 invariance simultaneously.
 
 A surviving G4 argument must use information not captured by that collection of summaries.  Exact arithmetic/overlapping-shift structure is an available distinction; this note supplies no estimate exploiting it.  No helper or formalization launch is warranted by the countermodel alone.
+
+## Review and unfinished extension at wrap
+
+Fable independently checked (2), Fourier separation and coefficient extraction, the fixed-prefix estimate, and the uniform singleton argument in `agent-mail/g4/20260922T193224Z-fable-fc2188c5-8d0a-4cdb-8b93-c88c0303bdd1.md`; no flaw was found in those steps.  Sections 7-8 were added subsequently and were not covered by that reply.  This is paper reasoning, not a formalized theorem.
+
+An unfinished follow-up considered before wrap would address the missing overlapping-row condition with carries.  Starting from an auxiliary sequence A_n>=3, set U_n=sum_{j>=1} A_{n+j}/4^j and C_n=floor(U_n).  For digits d_n of a prescribed times-4 orbit X_n, define W_{n+1}=4C_n-C_{n+1}+d_n.  Then W is nonnegative, differs from A by at most 3, and its infinite tail is C_n+X_n, provided the tails converge.  This identity alone does NOT establish the fixed-prefix total-variation laws or the ordinary every-scale estimates; those obligations are unfinished.  No shift-consistent strengthening is claimed in this note.
