@@ -157,4 +157,100 @@ theorem blockLam_expand (s : Finset ι) (B : ι → Finset α) (r : ι → ℕ)
   congr 1
   exact Finset.sum_congr rfl hdef
 
+
+/-! ### Property 2: `|λ| ≤ 1` by disjoint supports -/
+
+theorem lamMain_eq_zero_of {s : Finset ι} {B : ι → Finset α} {r : ι → ℕ} {E : Finset α}
+    {i : ι} (hi : i ∈ s) (hcard : ¬ (E ∩ B i).card ≤ r i) : lamMain s B r E = 0 :=
+  Finset.prod_eq_zero hi (by rw [coefU, if_neg hcard])
+
+theorem lamDef_eq_zero_of {s : Finset ι} {B : ι → Finset α} {r : ι → ℕ} {E : Finset α}
+    {i₀ i : ι} (hi : i ∈ s.erase i₀) (hcard : ¬ (E ∩ B i).card ≤ r i) :
+    lamDef s B r i₀ E = 0 := by
+  rw [lamDef, Finset.prod_eq_zero hi (by rw [coefU, if_neg hcard]), mul_zero]
+
+theorem lamDef_eq_zero_of_card_ne {s : Finset ι} {B : ι → Finset α} {r : ι → ℕ} {E : Finset α}
+    {i₀ : ι} (hcard : (E ∩ B i₀).card ≠ r i₀ + 1) : lamDef s B r i₀ E = 0 := by
+  rw [lamDef, coefD, if_neg hcard, zero_mul]
+
+theorem abs_lamMain_le_one (s : Finset ι) (B : ι → Finset α) (r : ι → ℕ) (E : Finset α) :
+    |lamMain s B r E| ≤ 1 := by
+  rw [lamMain, abs_prod]
+  calc ∏ i ∈ s, |coefU (r i) (E ∩ B i)| ≤ ∏ _i ∈ s, (1:ℤ) :=
+        Finset.prod_le_prod (fun i _ => abs_nonneg _) (fun i _ => coefU_abs_le _ _)
+    _ = 1 := by simp
+
+theorem abs_lamDef_le_one (s : Finset ι) (B : ι → Finset α) (r : ι → ℕ) (i₀ : ι)
+    (E : Finset α) : |lamDef s B r i₀ E| ≤ 1 := by
+  rw [lamDef, abs_mul, abs_prod]
+  have h1 : ∏ i ∈ s.erase i₀, |coefU (r i) (E ∩ B i)| ≤ 1 := by
+    calc ∏ i ∈ s.erase i₀, |coefU (r i) (E ∩ B i)| ≤ ∏ _i ∈ s.erase i₀, (1:ℤ) :=
+          Finset.prod_le_prod (fun i _ => abs_nonneg _) (fun i _ => coefU_abs_le _ _)
+      _ = 1 := by simp
+  have h2 : (0:ℤ) ≤ ∏ i ∈ s.erase i₀, |coefU (r i) (E ∩ B i)| :=
+    Finset.prod_nonneg fun i _ => abs_nonneg _
+  calc |coefD (r i₀) (E ∩ B i₀)| * ∏ i ∈ s.erase i₀, |coefU (r i) (E ∩ B i)|
+      ≤ 1 * 1 := mul_le_mul (coefD_abs_le _ _) h1 h2 (by norm_num)
+    _ = 1 := by ring
+
+/-- **`|λ(E)| ≤ 1`.**  The `1 + |s|` terms have disjoint supports: `λ_main` needs every trace
+`≤ r_i`, and `λ_{i₀}` needs the trace at `i₀` to be exactly `r_{i₀} + 1` and every other trace
+`≤ r_i`.  So at most one of them is nonzero at any `E`. -/
+theorem blockLam_abs_le_one (s : Finset ι) (B : ι → Finset α) (r : ι → ℕ) (E : Finset α) :
+    |blockLam s B r E| ≤ 1 := by
+  classical
+  set T : Finset ι := s.filter (fun i => ¬ (E ∩ B i).card ≤ r i) with hT
+  rcases Finset.eq_empty_or_nonempty T with hTe | ⟨i₁, hi₁⟩
+  · -- every trace is admissible: only the main term survives
+    have hall : ∀ i ∈ s, (E ∩ B i).card ≤ r i := by
+      intro i hi
+      by_contra hc
+      exact Finset.notMem_empty i (hTe ▸ Finset.mem_filter.2 ⟨hi, hc⟩)
+    have hzero : ∀ i₀ ∈ s, lamDef s B r i₀ E = 0 := by
+      intro i₀ hi₀
+      exact lamDef_eq_zero_of_card_ne (by have := hall i₀ hi₀; omega)
+    rw [blockLam, Finset.sum_congr rfl hzero, Finset.sum_const_zero, sub_zero]
+    exact abs_lamMain_le_one s B r E
+  · have hi₁s : i₁ ∈ s := (Finset.mem_filter.1 hi₁).1
+    have hi₁c : ¬ (E ∩ B i₁).card ≤ r i₁ := (Finset.mem_filter.1 hi₁).2
+    have hmain0 : lamMain s B r E = 0 := lamMain_eq_zero_of hi₁s hi₁c
+    rcases Finset.eq_singleton_or_nontrivial hi₁ with hTs | hTn
+    · -- exactly one excess block: only its defect term survives
+      have honly : ∀ i₀ ∈ s, i₀ ≠ i₁ → lamDef s B r i₀ E = 0 := by
+        intro i₀ hi₀ hne
+        exact lamDef_eq_zero_of (Finset.mem_erase.2 ⟨fun h => hne h.symm, hi₁s⟩) hi₁c
+      have hsum : ∑ i₀ ∈ s, lamDef s B r i₀ E = lamDef s B r i₁ E := by
+        refine Finset.sum_eq_single_of_mem i₁ hi₁s ?_
+        intro i₀ hi₀ hne
+        exact honly i₀ hi₀ hne
+      rw [blockLam, hmain0, hsum, zero_sub, abs_neg]
+      exact abs_lamDef_le_one s B r i₁ E
+    · -- two or more excess blocks: everything vanishes
+      have hzero : ∀ i₀ ∈ s, lamDef s B r i₀ E = 0 := by
+        intro i₀ _
+        obtain ⟨i₂, hi₂, hne⟩ := hTn.exists_ne i₀
+        have hi₂s : i₂ ∈ s := (Finset.mem_filter.1 hi₂).1
+        have hi₂c : ¬ (E ∩ B i₂).card ≤ r i₂ := (Finset.mem_filter.1 hi₂).2
+        exact lamDef_eq_zero_of (Finset.mem_erase.2 ⟨hne, hi₂s⟩) hi₂c
+      rw [blockLam, hmain0, Finset.sum_congr rfl hzero, Finset.sum_const_zero, sub_zero]
+      simp
+
+/-! ### Property 3: the support -/
+
+/-- **The support condition**: a nonzero coefficient has every trace `≤ r_i + 1`. -/
+theorem blockLam_support (s : Finset ι) (B : ι → Finset α) (r : ι → ℕ) (E : Finset α)
+    {i : ι} (hi : i ∈ s) (hne : blockLam s B r E ≠ 0) : (E ∩ B i).card ≤ r i + 1 := by
+  classical
+  by_contra hc
+  push_neg at hc
+  have hcard : ¬ (E ∩ B i).card ≤ r i := by omega
+  have hmain0 : lamMain s B r E = 0 := lamMain_eq_zero_of hi hcard
+  have hzero : ∀ i₀ ∈ s, lamDef s B r i₀ E = 0 := by
+    intro i₀ _
+    by_cases hii : i₀ = i
+    · subst hii
+      exact lamDef_eq_zero_of_card_ne (by omega)
+    · exact lamDef_eq_zero_of (Finset.mem_erase.2 ⟨fun h => hii h.symm, hi⟩) hcard
+  exact hne (by rw [blockLam, hmain0, Finset.sum_congr rfl hzero, Finset.sum_const_zero, sub_zero])
+
 end NormalNumbers.PrimeModel.BlockSieve
