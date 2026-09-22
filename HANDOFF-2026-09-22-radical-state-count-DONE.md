@@ -1,6 +1,6 @@
 # Handoff: 2026-09-22 — radical state identification + retained count (KICKOFF discharged)
 
-**Branch**: `wip/g5-prime-subset` · Build: `lake build` green (9117 jobs) · 0 `sorry` in the new module.
+**Branch**: `wip/g5-prime-subset` · **HEAD**: `4e3be3f` · Build: `lake build` green (9117 jobs) · 0 `sorry` in the new module.
 
 `KICKOFF-radical-state-count.md` is discharged.  New module
 `src/NormalNumbers/PrimeModelRadicalState.lean` (namespace
