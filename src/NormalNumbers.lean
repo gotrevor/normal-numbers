@@ -390,6 +390,7 @@ import NormalNumbers.PrimeModelRadical
 import NormalNumbers.PrimeModelRadicalTail
 import NormalNumbers.PrimeModelRadicalMoment
 import NormalNumbers.PrimeModelRadicalCRT
+import NormalNumbers.PrimeModelRadicalState
 import NormalNumbers.PrimeModelBrunLower
 import NormalNumbers.PrimeModelPrimeDimension
 import NormalNumbers.PrimeModelBrunCount
