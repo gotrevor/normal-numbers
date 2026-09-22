@@ -37,6 +37,10 @@ Grading the cutoffs by site changes the estimate, not the schedule:
       π_P(t)/π(t) → 0   and   ∑_{p∈P} 1/p = ∞   ⟹   IsNormal 4 (subsetLambert P 4).
 
   This is KMT's density class, reached without modelling any prime above `y₁ = N^{ε₁}`.
+  Astra reached the same conclusion independently with a different schedule
+  (`ε_j = u^{−2} 2^{−j}`, `T_j = N^{2^{−j/2}/16}`, their §8, equations (8.1)-(8.6), refereed by me
+  2026-09-22T20:3xZ): two schedules consuming the same new finite lemma, not two proofs of the
+  lemma.
 - **The new floor (§8)** is the first-site fresh mass `R(N^{ε₁}, N)` with `ε₁ → 0` forced by the
   sieve's relative error.  For positive relative density it is `≍ δ · log(1/ε₁) → ∞ · δ`, so the
   graded route ends exactly at relative density zero; going further needs a sieve with vanishing
@@ -114,7 +118,8 @@ others `≤ 1`).  `|A_j| ≤ 2j ≤ 2k` and `∑_{p > 2k} 1/p² ≤ 1/(2k)`.  Wi
 
 (The old `e^{2k}` was `e^{3k}` after adding `recipSumLe ≤ ∑_{p∈P} + k`; here the primes `≤ 2k`
 are in `Q`, and `S_P(2k, y_{j₀}) ≥ S_P(y₁) − S_P(2k) − R(y_{j₀}, y₁)` with
-`S_P(2k) ≤ 12 L₂(2k) + 21` by `recipSumLe_le_crude`.)
+`S_P(2k) ≤ 12 L₂(2k) + 21` by `recipSumLe_le_crude`, or the fully elementary
+`S_P(2k) ≤ 1 + log(2k)`; either is `o(k)`.)
 
 **E4.**  For `(r, s) ∈ Fin Q × B` let `A_s` be the assigned primes, `D := ∏_{A_s} p`, `U_s` the
 unassigned ones with class counts `d_p`.  Lemma B gives weights `λ` on subsets of `U_s` with
@@ -247,9 +252,11 @@ Theorem A with Lemma B (two bands) gives the constraints
 - transfer `→ 0`: `δ* (9 + 12 log(2/ε_h)) + 4^{−m} δ* (9 + 12 log(2/ε_t)) → 0`
   (dominated Abel `recipSumIoc_le_of_dominated'` at each cutoff).
 
-The third bullet with the second forces `ε_h ≤ 1/(16 m (log m + 22))` and
+The third bullet with the second requires `ε_h ≤ 1/(16 m (log m + 22))` and
 `ε_t ≤ 1/(16 k (log k + 22))`, so `log(1/ε_t) ≥ L₄N + O(1)` **regardless of the sieve** (this is
-the union bound over the `k − m` shifts that share `y_tail`).  The transfer is then
+the union bound over the `k − m` shifts that share `y_tail`).  These are requirements of the
+present positive upper majorants, not arithmetic necessities: a density *upper* envelope never
+lower-bounds the fresh mass (Astra, mail `20260922T202126Z`).  The transfer bound is then
 
     ≍ δ* [ log m  +  4^{−m} L₄N ].
 
