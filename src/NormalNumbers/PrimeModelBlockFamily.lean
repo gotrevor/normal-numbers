@@ -138,4 +138,84 @@ theorem gradedBlock_model_lower
     exact gradedBlock_mass_le U y (fun j => le_trans zero_le_one (hy j)) g hg0 d q
       (hprime q.1) (hgle q.1) (hcut q.1 hq.1 q.2 hq.2)
 
+/-! ### The support level -/
+
+theorem one_le_cut {y : κ → ℝ} (j : κ) (hy : 1 ≤ y j) (l : ℕ) : (1:ℝ) ≤ cut y j l := by
+  have h := Real.rpow_le_rpow_of_exponent_le hy (show (0:ℝ) ≤ (1:ℝ)/2 ^ l by positivity)
+  rwa [Real.rpow_zero] at h
+
+theorem cut_eq_exp {y : κ → ℝ} (j : κ) (hy : 1 ≤ y j) (l : ℕ) :
+    cut y j l = Real.exp (((1:ℝ)/2 ^ l) * Real.log (y j)) := by
+  rw [cut, Real.rpow_def_of_pos (by linarith : (0:ℝ) < y j)]
+  ring_nf
+
+/-- **The support level** (Fable §3, Astra §4): a nonzero graded coefficient is supported on
+squarefree products of size at most `∏_j y_j^{128 d_j + 4 u_j + 14}`.  The geometric level sum
+`∑_{l} (64 d + 2u + 2l + 5) 2^{−l} ≤ 128 d + 4u + 14` is `BlockLevel.level_sum_le`. -/
+theorem gradedBlock_level_le (t : Finset κ) (L : ℕ) (d u : κ → ℕ)
+    (U : κ → Finset ℕ) (y : κ → ℝ) (hy : ∀ j, 1 ≤ y j)
+    (hU : ∀ j j', j ≠ j' → Disjoint (U j) (U j'))
+    {E : Finset ℕ} (hE : E ⊆ (t ×ˢ Finset.range L).biUnion (gradedBlock U y))
+    (hne : blockLam (t ×ˢ Finset.range L) (gradedBlock U y) (gradedDeg d u) E ≠ 0) :
+    ((∏ p ∈ E, p : ℕ) : ℝ)
+      ≤ Real.exp (∑ j ∈ t, (128 * (d j : ℝ) + 4 * u j + 14) * Real.log (y j)) := by
+  classical
+  set s : Finset (κ × ℕ) := t ×ˢ Finset.range L with hs
+  set B : κ × ℕ → Finset ℕ := gradedBlock U y with hB
+  set m : κ × ℕ → ℕ := fun q => gradedDeg d u q + 1 with hm
+  set w : κ × ℕ → ℕ := fun q => ⌊cut y q.1 q.2⌋₊ with hw
+  have hlogy : ∀ j, 0 ≤ Real.log (y j) := fun j => Real.log_nonneg (hy j)
+  have hcut1 : ∀ q : κ × ℕ, (1:ℝ) ≤ cut y q.1 q.2 := fun q => one_le_cut q.1 (hy q.1) q.2
+  have hwle : ∀ q : κ × ℕ, ((w q : ℝ)) ≤ cut y q.1 q.2 := fun q =>
+    Nat.floor_le (by linarith [hcut1 q])
+  -- the integer bound from the block structure
+  have hnat : ∏ p ∈ E, p ≤ ∏ q ∈ s, (w q) ^ (m q) := by
+    refine prod_le_of_block_bounds s B w m
+      (fun q _ q' _ hne' => gradedBlock_disjoint U y hy hU q q' hne') ?_ ?_ hE ?_
+    · intro q _ p hp
+      simp only [hB, gradedBlock, Finset.mem_filter] at hp
+      exact Nat.le_floor hp.2.2
+    · intro q _
+      exact Nat.one_le_iff_ne_zero.2 (by
+        have : 1 ≤ w q := Nat.le_floor (by exact_mod_cast hcut1 q)
+        omega)
+    · intro q hq
+      exact blockLam_support s B (gradedDeg d u) E hq hne
+  -- cast and bound each factor by an exponential
+  have hstep : ∀ q ∈ s, ((w q : ℝ)) ^ (m q)
+      ≤ Real.exp (((m q : ℝ) * ((1:ℝ)/2 ^ q.2)) * Real.log (y q.1)) := by
+    intro q _
+    calc ((w q : ℝ)) ^ (m q) ≤ (cut y q.1 q.2) ^ (m q) :=
+          pow_le_pow_left₀ (by positivity) (hwle q) _
+      _ = Real.exp (((1:ℝ)/2 ^ q.2) * Real.log (y q.1)) ^ (m q) := by
+          rw [cut_eq_exp q.1 (hy q.1) q.2]
+      _ = Real.exp (((m q : ℝ) * ((1:ℝ)/2 ^ q.2)) * Real.log (y q.1)) := by
+          rw [← Real.exp_nat_mul]
+          congr 1
+          ring
+  have hprod : ((∏ p ∈ E, p : ℕ) : ℝ)
+      ≤ ∏ q ∈ s, Real.exp (((m q : ℝ) * ((1:ℝ)/2 ^ q.2)) * Real.log (y q.1)) := by
+    calc ((∏ p ∈ E, p : ℕ) : ℝ) ≤ ((∏ q ∈ s, (w q) ^ (m q) : ℕ) : ℝ) := by exact_mod_cast hnat
+      _ = ∏ q ∈ s, ((w q : ℝ)) ^ (m q) := by push_cast; rfl
+      _ ≤ _ := Finset.prod_le_prod (fun q _ => by positivity) hstep
+  refine hprod.trans ?_
+  rw [← Real.exp_sum]
+  refine Real.exp_le_exp.2 ?_
+  rw [hs, Finset.sum_product]
+  refine Finset.sum_le_sum fun j _ => ?_
+  have hlevel : ∑ l ∈ Finset.range L, ((m (j, l) : ℝ) * ((1:ℝ)/2 ^ l))
+      ≤ 128 * (d j : ℝ) + 4 * u j + 14 := by
+    have h := level_sum_le (d j) (u j) L
+    refine le_trans (le_of_eq ?_) h
+    refine Finset.sum_congr rfl fun l _ => ?_
+    have hmv : m (j, l) = 64 * d j + 2 * u j + 2 * l + 5 := rfl
+    rw [hmv]
+    push_cast
+    rw [div_pow, one_pow]
+  calc ∑ l ∈ Finset.range L, ((m (j, l) : ℝ) * ((1:ℝ)/2 ^ l)) * Real.log (y j)
+      = (∑ l ∈ Finset.range L, ((m (j, l) : ℝ) * ((1:ℝ)/2 ^ l))) * Real.log (y j) := by
+        rw [Finset.sum_mul]
+    _ ≤ (128 * (d j : ℝ) + 4 * u j + 14) * Real.log (y j) :=
+        mul_le_mul_of_nonneg_right hlevel (hlogy j)
+
 end NormalNumbers.PrimeModel.BlockSieve
