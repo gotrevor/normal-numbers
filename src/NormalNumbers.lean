@@ -426,6 +426,7 @@ import NormalNumbers.PrimeModelBlockWeights
 import NormalNumbers.PrimeModelBlockWeightsReal
 import NormalNumbers.PrimeModelBlockFamily
 import NormalNumbers.PrimeModelGradedLemmaB
+import NormalNumbers.PrimeModelLowerAtomGraded
 import NormalNumbers.PrimeModelRadicalStateGraded
 import NormalNumbers.PrimeModelBlockSieveModel
 import NormalNumbers.PrimeModelSqrtFresh
