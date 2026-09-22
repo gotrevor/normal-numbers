@@ -194,9 +194,22 @@ Two consequences for how the crux should be read.
   `k` plus orbit normality does not supply uniformity over the growing intermediate range (Astra, 20:24Z).
   What Theorem 3.1 establishes is the one direction that matters here: pointwise fixed-`k` summaries, even
   in total variation and with every other summary added, do not imply the scheduled rung.  Whether orbit
-  normality implies the uniform lower-range requirement is not settled either way; a witness would be a `W`
-  with `W_n = 0 mod 4` throughout and a normal orbit (not constructed, and by the quantifier remark above it
-  would have to be built with its orbit fixed first).
+  normality implies the uniform lower-range requirement is settled in the negative WITHOUT the second-moment
+  summary, and open with it.  Witness (orbit fixed first, as the quantifier remark requires): let `x_0` be
+  normal with digits `d`, let `a = a(n)` grow slowly, and write `r_n` for the `a`-digit block numeral
+  `d_{n-a} ... d_{n-1}`, so `r_{n+1} = 4 r_n + d_n - 4^a d_{n-a}`.  Put `C_n = 4^a E_n + r_n` with `E` the carries of
+  an independent Poisson background of mean `L/4^a` (at least 3).  Then
+
+      W_{n+1} = 4 C_n - C_{n+1} + d_n = 4^a (4 E_n - E_{n+1} + d_{n-a}) = 4^a W'_{n+1},
+
+  where `W'` is the lift of the orbit shifted by `a` with carries `E`, so `W >= 0`, mean `L`, orbit of `W`
+  equal to the orbit of `x_0` (Lemma 1.1), hence scheduled decay at every `h != 0`; but `4^a` divides every
+  `W_{n+j}`, so `T_k(n)` is an integer and `e(h T_k(n)) = 1` for every `k <= a(M)` in the bulk of `n < M` (the `a`
+  transitions cost `o(1)`).  The lower range fails at every `k` up to the threshold while the orbit is normal.
+  The price is (V): `W` lives on the lattice `4^a Z` with `4^a = 4^A sqrt(L)`, so its variance is `asymp 4^a L`,
+  not `(1+o(1)) L`, and no sequence on that lattice with mean `L` can have variance `(1+o(1)) L`.  So: with the
+  summary package weakened by dropping (V), `EventualPrefixDecay h` is strictly stronger than normality at `h`;
+  with (V) kept, whether it is strictly stronger remains open.
 
 ## 5. Retraction
 
