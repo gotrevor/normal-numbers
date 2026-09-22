@@ -275,6 +275,74 @@ theorem uG_tendsto (hS : SqrtFreshMassZero P) (hy : Tendsto yBotG atTop atTop) :
   rw [uG]
   exact Nat.le_floor (by linarith)
 
+/-! ## Schedule facts used by the term estimates -/
+
+theorem JG_le_J1 (N : ℕ) : JG P N ≤ J1 N := min_le_left _ _
+
+theorem invEpsG_nonneg (N : ℕ) : 0 ≤ invEpsG P N := by
+  rw [invEpsG]; split
+  · exact Real.sqrt_nonneg _
+  · positivity
+
+theorem uG_sq_le_L3 {N : ℕ} (hL3 : 0 ≤ L3 N) : ((uG P N : ℕ) : ℝ) ^ 2 ≤ L3 N := by
+  have h1 : ((uG P N : ℕ) : ℝ) ≤ Real.sqrt (L3 N) := by
+    rw [uG]
+    exact le_trans (Nat.floor_le (le_min (Real.sqrt_nonneg _) (invEpsG_nonneg P N)))
+      (min_le_left _ _)
+  have h0 : (0 : ℝ) ≤ ((uG P N : ℕ) : ℝ) := Nat.cast_nonneg _
+  nlinarith [Real.sq_sqrt hL3, Real.sqrt_nonneg (L3 N)]
+
+theorem aG_pos {N : ℕ} (hu : 1 ≤ uG P N) : 0 < aG P N := by
+  have : (1 : ℝ) ≤ ((uG P N : ℕ) : ℝ) := by exact_mod_cast hu
+  rw [aG]; positivity
+
+theorem aG_ge_invL3 {N : ℕ} (hL3 : 0 < L3 N) (hu : 1 ≤ uG P N) : 1 / L3 N ≤ aG P N := by
+  have hu1 : (1 : ℝ) ≤ ((uG P N : ℕ) : ℝ) := by exact_mod_cast hu
+  rw [aG]
+  exact one_div_le_one_div_of_le (by nlinarith) (uG_sq_le_L3 P hL3.le)
+
+/-- Every site cutoff dominates the bottom cutoff — the uniform lower end of the schedule. -/
+theorem yBotG_le_yG (hS : SqrtFreshMassZero P) : ∀ᶠ N : ℕ in atTop,
+    ∀ j : Fin (JG P N), yBotG N ≤ yG P N (j : ℕ) := by
+  filter_upwards [L3_tendsto.eventually_gt_atTop (0 : ℝ),
+    (uG_tendsto P hS yBotG_tendsto).eventually_ge_atTop 1,
+    eventually_ge_atTop 1] with N hL3 hu hN j
+  have hN1 : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+  have hj : (j : ℕ) ≤ J1 N := le_trans (le_of_lt j.2) (JG_le_J1 P N)
+  have hexp : aMinG N ≤ aG P N * (1 / 2) ^ (j : ℕ) := by
+    rw [aMinG]
+    have h1 : (1 / L3 N) * (1 / 2 : ℝ) ^ (J1 N) ≤ aG P N * (1 / 2 : ℝ) ^ (J1 N) :=
+      mul_le_mul_of_nonneg_right (aG_ge_invL3 P hL3 hu) (by positivity)
+    have h2 : (aG P N) * (1 / 2 : ℝ) ^ (J1 N) ≤ aG P N * (1 / 2 : ℝ) ^ (j : ℕ) :=
+      mul_le_mul_of_nonneg_left
+        (pow_le_pow_of_le_one (by norm_num) (by norm_num) hj) (aG_pos P hu).le
+    linarith
+  exact Nat.floor_le_floor (Real.rpow_le_rpow_of_exponent_le hN1 hexp)
+
+/-! ### Two elementary numeric lemmas -/
+
+private theorem one_add_div_four_sq_le (j : ℕ) : (1 + (j : ℝ) / 4) ^ 2 ≤ 2 ^ j := by
+  induction j with
+  | zero => norm_num
+  | succ n ih =>
+    have hn : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+    have h2 : (0 : ℝ) < (2 : ℝ) ^ n := by positivity
+    push_cast
+    rw [show ((2 : ℝ)) ^ (n + 1) = 2 * 2 ^ n from by ring]
+    nlinarith [ih, hn, sq_nonneg ((n : ℝ) / 4)]
+
+private theorem one_add_div_four_le_sqrt (j : ℕ) : 1 + (j : ℝ) / 4 ≤ Real.sqrt (2 ^ j) := by
+  have h := Real.sqrt_le_sqrt (one_add_div_four_sq_le j)
+  rwa [Real.sqrt_sq (by positivity)] at h
+
+private theorem geom_sum_le_two {r : ℝ} (hr0 : 0 ≤ r) (hr : r ≤ 1 / 2) (n : ℕ) :
+    ∑ i ∈ Finset.range n, r ^ i ≤ 2 := by
+  have hg := geom_sum_mul r n
+  have hpow : (0 : ℝ) ≤ r ^ n := by positivity
+  have hs : (0 : ℝ) ≤ ∑ i ∈ Finset.range n, r ^ i :=
+    Finset.sum_nonneg fun i _ => by positivity
+  nlinarith [hg, hpow, hs]
+
 /-! ## The five terms -/
 
 /-- E1, the per-site transfer error. -/
@@ -364,8 +432,132 @@ theorem termE1_tendsto (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) (h : �
 /-- **Open leaf G5c-3 (E4a).**  `log T_j / (2 log y_j) = 2^{j/2} u_N²/32`, so the sum is
 `2 e^{20} ∑_j exp(−2^{j/2} u_N²/32) → 0`.  This is the term the ungraded Markov range made
 diverge like `J e^{20}`. -/
-theorem termE4a_tendsto (hP : DivergentRecip P) : Tendsto (termE4a P) atTop (𝓝 0) := by
-  sorry
+theorem termE4a_le (hS : SqrtFreshMassZero P) : ∀ᶠ N : ℕ in atTop,
+    termE4a P N ≤ 4 * Real.exp 20 * Real.exp (-(((uG P N : ℕ) : ℝ) ^ 2 / 32)) := by
+  have hlog3 : (1 : ℝ) ≤ Real.log 3 := by
+    have h1 : Real.exp 1 ≤ 3 := le_of_lt (lt_trans Real.exp_one_lt_d9 (by norm_num))
+    have h2 := Real.log_le_log (Real.exp_pos 1) h1
+    rwa [Real.log_exp] at h2
+  filter_upwards [yBotG_le_yG P hS, yBotG_tendsto.eventually_ge_atTop 3,
+    (uG_tendsto P hS yBotG_tendsto).eventually_ge_atTop 10,
+    L3_tendsto.eventually_gt_atTop (0 : ℝ), eventually_ge_atTop 3] with N hyb hyb3 hu hL3 hN3
+  have hNr : (3 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN3
+  have hN0 : (0 : ℝ) < (N : ℝ) := by linarith
+  have hN1 : (1 : ℝ) ≤ (N : ℝ) := by linarith
+  have hlogN : (1 : ℝ) ≤ Real.log N := le_trans hlog3 (Real.log_le_log (by norm_num) hNr)
+  have hu1 : 1 ≤ uG P N := by omega
+  have hu10' : (10 : ℝ) ≤ ((uG P N : ℕ) : ℝ) := by exact_mod_cast hu
+  set u : ℝ := ((uG P N : ℕ) : ℝ) with hudef
+  have hu10 : (10 : ℝ) ≤ u := hu10'
+  have hapos : 0 < aG P N := aG_pos P hu1
+  have haGval : aG P N = 1 / u ^ 2 := rfl
+  -- the geometric ratio
+  set r : ℝ := Real.exp (-(u ^ 2 / 128)) with hrdef
+  have hr0 : (0 : ℝ) ≤ r := (Real.exp_pos _).le
+  have hrhalf : r ≤ 1 / 2 := by
+    rw [hrdef, show (1 : ℝ) / 2 = Real.exp (Real.log (1 / 2)) from
+      (Real.exp_log (by norm_num)).symm]
+    refine Real.exp_le_exp.mpr ?_
+    have hl2 : Real.log ((1 : ℝ) / 2) = -Real.log 2 := by
+      rw [Real.log_div one_ne_zero two_ne_zero, Real.log_one]; ring
+    have hlog2 : Real.log 2 ≤ 7 / 10 := le_of_lt (lt_trans Real.log_two_lt_d9 (by norm_num))
+    rw [hl2]
+    nlinarith
+  -- the per-site bound
+  have hterm : ∀ j : Fin (JG P N),
+      Real.exp 20 / (TG N (j : ℕ)) ^ (1 / (2 * Real.log (yG P N (j : ℕ))))
+        ≤ Real.exp 20 * Real.exp (-(u ^ 2 / 32)) * r ^ (j : ℕ) := by
+    intro j
+    have hy3 : 3 ≤ yG P N (j : ℕ) := le_trans hyb3 (hyb j)
+    have hy3r : (3 : ℝ) ≤ ((yG P N (j : ℕ) : ℕ) : ℝ) := by exact_mod_cast hy3
+    have hylog : (1 : ℝ) ≤ Real.log (yG P N (j : ℕ)) :=
+      le_trans hlog3 (Real.log_le_log (by norm_num) hy3r)
+    -- upper bound on `log y_j`
+    set A : ℝ := aG P N * (1 / 2) ^ (j : ℕ) * Real.log N with hAdef
+    have hyub : Real.log (yG P N (j : ℕ)) ≤ A := by
+      have hfl : ((yG P N (j : ℕ) : ℕ) : ℝ) ≤ (N : ℝ) ^ (aG P N * (1 / 2) ^ (j : ℕ)) :=
+        Nat.floor_le (Real.rpow_nonneg hN0.le _)
+      have := Real.log_le_log (by linarith) hfl
+      rwa [Real.log_rpow hN0, ← hAdef] at this
+    have hA1 : (1 : ℝ) ≤ A := le_trans hylog hyub
+    -- the Markov threshold is ≥ 1 and the exponent comparison
+    have hTexp : (0 : ℝ) ≤ (1 / 16) * Real.sqrt ((1 / 2) ^ (j : ℕ)) := by positivity
+    have hT1 : (1 : ℝ) ≤ TG N (j : ℕ) := Real.one_le_rpow hN1 hTexp
+    have hexpo : 1 / (2 * A) ≤ 1 / (2 * Real.log (yG P N (j : ℕ))) :=
+      one_div_le_one_div_of_le (by linarith) (by linarith)
+    have hTmono : (TG N (j : ℕ)) ^ (1 / (2 * A))
+        ≤ (TG N (j : ℕ)) ^ (1 / (2 * Real.log (yG P N (j : ℕ)))) :=
+      Real.rpow_le_rpow_of_exponent_le hT1 hexpo
+    -- evaluate `T_j^{1/(2A)}`
+    have hp : (0 : ℝ) < (2 : ℝ) ^ (j : ℕ) := by positivity
+    have hinv : ((1 : ℝ) / 2) ^ (j : ℕ) = ((2 : ℝ) ^ (j : ℕ))⁻¹ := by
+      rw [div_pow, one_pow, ← one_div, one_div]
+    have hsqrt : Real.sqrt ((1 / 2 : ℝ) ^ (j : ℕ)) * 2 ^ (j : ℕ) = Real.sqrt (2 ^ (j : ℕ)) := by
+      have hsp : (0 : ℝ) < Real.sqrt ((2 : ℝ) ^ (j : ℕ)) := Real.sqrt_pos.mpr hp
+      have hsq : Real.sqrt ((2 : ℝ) ^ (j : ℕ)) * Real.sqrt ((2 : ℝ) ^ (j : ℕ)) = 2 ^ (j : ℕ) :=
+        Real.mul_self_sqrt hp.le
+      have hrw : Real.sqrt (((2 : ℝ) ^ (j : ℕ))⁻¹) * 2 ^ (j : ℕ)
+          = (Real.sqrt ((2 : ℝ) ^ (j : ℕ)))⁻¹
+            * (Real.sqrt ((2 : ℝ) ^ (j : ℕ)) * Real.sqrt ((2 : ℝ) ^ (j : ℕ))) := by
+        rw [Real.sqrt_inv, hsq]
+      rw [hinv, hrw, ← mul_assoc, inv_mul_cancel₀ (ne_of_gt hsp), one_mul]
+    have hval : (TG N (j : ℕ)) ^ (1 / (2 * A))
+        = Real.exp (u ^ 2 * Real.sqrt (2 ^ (j : ℕ)) / 32) := by
+      rw [TG, ← Real.rpow_mul hN0.le, Real.rpow_def_of_pos hN0]
+      congr 1
+      rw [hAdef, haGval, ← hsqrt, hinv]
+      have hu0 : (0 : ℝ) < u := by linarith
+      have hlogNpos : (0 : ℝ) < Real.log N := by linarith
+      field_simp
+      ring
+    -- assemble
+    have hlow : Real.exp (u ^ 2 * (1 + (j : ℕ) / 4) / 32)
+        ≤ (TG N (j : ℕ)) ^ (1 / (2 * Real.log (yG P N (j : ℕ)))) := by
+      refine le_trans ?_ hTmono
+      rw [hval]
+      refine Real.exp_le_exp.mpr ?_
+      have := one_add_div_four_le_sqrt (j : ℕ)
+      nlinarith [sq_nonneg u]
+    have hpos : (0 : ℝ) < Real.exp (u ^ 2 * (1 + (j : ℕ) / 4) / 32) := Real.exp_pos _
+    have hstep : Real.exp 20 / (TG N (j : ℕ)) ^ (1 / (2 * Real.log (yG P N (j : ℕ))))
+        ≤ Real.exp 20 / Real.exp (u ^ 2 * (1 + (j : ℕ) / 4) / 32) :=
+      div_le_div_of_nonneg_left (Real.exp_pos _).le hpos hlow
+    refine hstep.trans (le_of_eq ?_)
+    rw [hrdef, ← Real.exp_nat_mul, ← Real.exp_add, ← Real.exp_sub]
+    ring_nf
+    rw [Real.exp_add]
+  -- sum up
+  rw [termE4a]
+  have hsum : ∑ j : Fin (JG P N),
+      Real.exp 20 / (TG N (j : ℕ)) ^ (1 / (2 * Real.log (yG P N (j : ℕ))))
+      ≤ ∑ j : Fin (JG P N), (Real.exp 20 * Real.exp (-(u ^ 2 / 32))) * r ^ (j : ℕ) :=
+    Finset.sum_le_sum fun j _ => by simpa [mul_assoc] using hterm j
+  have hgeo : ∑ j : Fin (JG P N), (Real.exp 20 * Real.exp (-(u ^ 2 / 32))) * r ^ (j : ℕ)
+      ≤ (Real.exp 20 * Real.exp (-(u ^ 2 / 32))) * 2 := by
+    rw [← Finset.mul_sum]
+    refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+    rw [Fin.sum_univ_eq_sum_range (fun i => r ^ i) (JG P N)]
+    exact geom_sum_le_two hr0 hrhalf _
+  nlinarith [hsum, hgeo, Real.exp_pos (20 : ℝ), Real.exp_pos (-(u ^ 2 / 32))]
+
+theorem termE4a_tendsto (hS : SqrtFreshMassZero P) (_hP : DivergentRecip P) :
+    Tendsto (termE4a P) atTop (𝓝 0) := by
+  have hu : Tendsto (fun N : ℕ => Real.exp (-(((uG P N : ℕ) : ℝ) ^ 2 / 32))) atTop (𝓝 0) := by
+    have h0 : Tendsto (fun N : ℕ => ((uG P N : ℕ) : ℝ)) atTop atTop :=
+      tendsto_natCast_atTop_atTop.comp (uG_tendsto P hS yBotG_tendsto)
+    have hsq : Tendsto (fun N : ℕ => ((uG P N : ℕ) : ℝ) ^ 2) atTop atTop :=
+      tendsto_atTop_mono' atTop
+        (by filter_upwards [h0.eventually_ge_atTop 1] with N hN; nlinarith) h0
+    have h1 : Tendsto (fun N : ℕ => -(((uG P N : ℕ) : ℝ) ^ 2 / 32)) atTop atBot :=
+      tendsto_neg_atTop_atBot.comp (hsq.atTop_div_const (by norm_num))
+    exact Real.tendsto_exp_atBot.comp h1
+  refine squeeze_zero' (Eventually.of_forall fun N => ?_) (termE4a_le P hS)
+    (by simpa using hu.const_mul (4 * Real.exp 20))
+  rw [termE4a]
+  refine mul_nonneg (by norm_num) (Finset.sum_nonneg fun j _ => ?_)
+  have hT : (0 : ℝ) ≤ (TG N (j : ℕ)) ^ (1 / (2 * Real.log (yG P N (j : ℕ)))) := by
+    rw [TG]; positivity
+  exact div_nonneg (Real.exp_pos _).le hT
 
 /-- **Open leaf G5c-4 (E4b).**  `∑_b e^{−(u_N + b)} ≤ 1.6 e^{−u_N} → 0` — no `J` factor,
 because the tier weights are graded. -/
@@ -448,7 +640,7 @@ theorem kmt_along_graded (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
       termE1 P h N + (termE4a P N + termE4b P N + termE4c P N) + termE5 P N)
       atTop (𝓝 0) := by
     have := ((termE1_tendsto P hS hP h).add
-      (((termE4a_tendsto P hP).add (termE4b_tendsto P hS hP)).add (termE4c_tendsto P hP))).add
+      (((termE4a_tendsto P hS hP).add (termE4b_tendsto P hS hP)).add (termE4c_tendsto P hP))).add
       (termE5_tendsto P hP)
     simpa using this
   refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _)) ?_ hsum
