@@ -23,8 +23,9 @@ carry the digit-character criterion, both directions, as the dual of `equidistri
 > **Family theorem also PROVED**: `PrimeModelFamily.isNormal_subsetLambert_of_sparse` — every
 > prime set with `π_P(x) log log x ≤ π(x)` eventually and divergent Σ1/p has a normal base-4
 > Lambert constant, axiom-clean, schedule built from the actual accumulated mass.  The paper
-> records the exact regime where relative-density-zero alone fails on this route (L¹ tail vs
-> local density coupling, `π_P ≈ π/L₄`).
+> records the growth regime where relative-density-zero alone fails on this route (L¹ tail
+> criterion vs correlation majorant coupling, `π_P ~ π/L₄`; conditional obstruction, not a
+> constructed counterexample).  Paper M1/M2 misprints corrected after Astra's audit 2026-09-22.
 
 > **DEEP REFLECTION lap — 2026-09-16.**  Build 🟢 **9085 jobs**, re-verified.  `src/` = the two
 > pre-expedition forbidden-drift `sorry`s; **zero `axiom`s**; **math-axiom count 0** — there is no

@@ -44,4 +44,8 @@ Paper Part II has the verification of all four terms.
 **Exact obstacle for the stronger target (relative density zero alone):** the L¹ tail forces
 `4^{J} ≫ S_P(N)` while the correlation bound forces (even with bounded constants)
 `log log S_P(N) · √δ(N^{ε_N}) → 0`; a set with `π_P ≈ π/L₄` has `S_P ≈ L₂/L₄`, `δ ≈ 1/L₄` and
-violates it.  Not a constants problem; the tail needs a non-L¹ treatment.
+violates it.  Not a constants problem.  Precisely: the current correlation majorant and the
+current L¹ tail criterion cannot both vanish in this growth regime (a conditional growth-regime
+obstruction, assuming a genuine counting law `π_P ~ π/L₄`; not a constructed counterexample).
+Astra's centered-in-probability consumer (mail 20260922T175904Z) only relaxes `4^J ≫ S` to
+`4^J ≫ √S`, which does not escape the regime; see the paper's Part II closing section.

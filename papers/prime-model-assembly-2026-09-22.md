@@ -231,8 +231,9 @@ assumed lower divergence rate.  Inputs: `KMT_quant₂ C₁ C₂` (Part I, `C₁ 
 
 ## Two analytic lemmas from (D)
 
-**(M1) Dominated Abel summation.**  If `π_P(t) ≤ δ · π(t)` for every integer `t ∈ [y, N]`,
-then
+**(M1) Dominated Abel summation.**  If `π_P(t) ≤ δ · π(t)` for every integer `t` with
+`y < t ≤ N+1` (note `π_P(t)` counts `p < t`, so the endpoint `N+1` is needed: with `t ∈ [y,N]`
+the statement is false, e.g. `y=2, N=3, P={3}, δ=0`), then
 
     recipSumIoc P y N  ≤  δ · ( ∑_{y<p≤N} 1/p + 1 ).
 
@@ -246,13 +247,16 @@ is `≤ δ` times the same expression for `1_prime`, which equals `∑_{y<p≤N}
 
 **(M2) Accumulated mass.**  Under (D), for all large `N`,
 
-    recipSumLe P N ≤ C_P + 34 · log₂ log log N,
+    recipSumLe P N ≤ C_P + 100 · log log log N,
 
 `C_P` a constant depending on `P` (its mass below `a_{i₀}`).  Proof: cut at
 `a_i := ⌊exp exp 2^i⌋₊`.  On `[a_i, ∞)`, (D) gives `δ_i = 1/(2^i − 1)` (since
 `log log t ≥ 2^i − o(1)` there), and `log a_{i+1}/log a_i ≤ 2 exp(2^i)`, so (M1') on
-`(a_i, a_{i+1}]` gives `≤ (9 + 12(2^i + 1))/(2^i − 1) ≤ 34` for `i ≥ 1`.  There are at most
-`log₂ log log N + 1` ranges below `N`.
+`(a_i, a_{i+1}]` gives `≤ (9 + 12(2^i + 1))/(2^i − 1)`, which is `45` at `i = 1` and `≤ 23` for
+`i ≥ 2`; a uniform `≤ 45` suffices.  There are at most `log₂ log log N + 1 ≤ 2 L₃ + 1` ranges
+below `N` for large `N`, giving the stated `100 · L₃` (the constant `100` is what
+`recipSumLe_le_of_sparse` proves; an earlier draft of this paper printed `34 log₂ L₂`, which
+fails at `i = 1` — corrected 2026-09-22 after Astra's audit).
 
 ## Schedule
 
@@ -278,8 +282,8 @@ Write `L₂ = log log N`, `L₃ = log log log N`, `S = S_P(y_N)`.  From `J_N ≤
 3. **Sieve** (`C₂ exp(−1/(8J²ε))`): `1/(8J²ε_N) = L₂/(16 J²) ≥ L₂/(16 L₃²)` and
    `log C₂ = e^{J+7} ≤ e^7 L₂^{1/24}`, so the term is `≤ exp(e^7 L₂^{1/24} − L₂/(16L₃²)) → 0`.
 4. **Tail** (`(recipSumLe P (2N) + 5J + 12)/4^J`, `tail_error_L1`): by (M2),
-   `recipSumLe P (2N) ≤ C_P + 34 log₂ L₂(2N) ≤ C_P + 35 L₃`.  Then
-   `(C_P + 35L₃ + 5J + 12)/4^J`.  Case `J_N = ⌊L₃/24⌋₊`: `4^J ≥ 4^{L₃/24 − 1} = L₂^{0.057}/4`,
+   `recipSumLe P (2N) ≤ C_P + 100 L₃(2N) ≤ C_P + 101 L₃`.  Then
+   `(C_P + 101 L₃ + 5J + 12)/4^J`.  Case `J_N = ⌊L₃/24⌋₊`: `4^J ≥ 4^{L₃/24 − 1} = L₂^{0.057}/4`,
    and `L₃/L₂^{0.057} → 0`.  Case `J_N = ⌊S/8⌋₊ < ⌊L₃/24⌋₊`: then `S < L₃/3 + 8` and also
    `recipSumLe P (2N) = S + recipSumIoc P y_N (2N) ≤ S + 1 ≤ 8J + 9` (item 1's bound at
    `2N`), so the tail is `≤ (13J + 21)/4^J → 0`.  In both cases `→ 0` because `J_N → ∞`.
@@ -302,10 +306,26 @@ term is `≳ e^{4J}√δ ≈ (L₂N)^{c}/√(L₄N) → ∞`.  Even with `C₁, 
     log log S_P(N) · √δ(N^{ε_N}) → 0   (at the very least),
 
 which `S_P ≈ L₂/L₄`, `δ ≈ 1/L₄` violates (`L₄ · L₄^{−1/2} → ∞`).  The obstruction is the
-coupling of the **L¹ tail** (needs `J` large against the accumulated mass) with the
-**correlation bound** (needs `J` small against the local density); it is not a defect of the
-sieve constants.  A proof of the density-zero family theorem needs a different treatment of
-the tail (not L¹ against `4^{−J}`), which we do not have.
+coupling of the **L¹ tail criterion** (needs `J` large against the accumulated mass) with the
+**correlation majorant** (needs `J` small against the local density); it is not a defect of the
+sieve constants.  Precisely: *the current correlation majorant and the current tail criterion
+cannot both vanish in this growth regime.*  This is a **conditional growth-regime
+obstruction**, not a constructed counterexample: the lower bound on the fresh mass
+(`recipSumIoc P y_N N ≳ log(1/ε)/L₄`, uniformly over the admissible `ε`) is asserted for a
+regularly thinned set with a genuine counting law `π_P(x) ~ π(x)/L₄(x)` (Abel summation over
+`[N^ε, N]`), and does not follow from an upper density envelope alone.  A sharper head/tail
+coupling estimate remains a logical possibility; failure of a sufficient majorant is not a
+theorem-level necessity.
+
+**Centered-in-probability consumer (Astra, 2026-09-22 mail).**  A weaker wiring lemma is
+immediate: if `R_N = T_N − A_N` (full tail minus truncated head) satisfies, for every `η > 0`,
+`(1/N)#{n < N : dist(R_N(n) − c_N, ℤ) > η} → 0` for some deterministic centering `c_N`, and the
+head Fourier mean tends to `0` for each fixed `h ≠ 0`, then so does the full Fourier mean, via
+`|Mean e(hT_N) − e(hc_N) Mean e(hA_N)| ≤ 2B_N(η) + 2π|h|η`.  But centering at the usual
+square-root fluctuation scale only relaxes `4^J ≫ S` to `4^J ≫ √S`; in the regime above either
+still forces `J ≳ log L₂N`, and with `ℓ = log(1/ε)`, `v = L₄N`, vanishing sieve error forces
+`ℓ − 2 log J → ∞`, so a fresh term `≳ ℓ/√v` still diverges.  A consumer that beats the `√S`
+scale, or a head/tail coupling estimate, is what is missing.
 
 ## Lean plan (Part II)
 
