@@ -246,6 +246,16 @@ Theorem 3.1 is the witness that fixed-`J` laws, singleton laws, second moments, 
 limit, exact shift consistency, and (via (c)) any prescribed limiting phase law are jointly silent about
 `N_J mod 4^J` at that `J`.
 
+**Sharp version (Astra, sections 12-16 of the companion file, refereed by me 21:40Z, no defect).**  In the
+zero-orbit model, for ANY schedule `1 <= J(M) <= K(M)` the empirical `J`-block TV to `Pois(L)^J` tends to 0 iff
+`4^J/sqrt(L) -> 0`, tends to 1 if the ratio tends to infinity, and tends to `F(c) = (1/2) int_0^1 |g_c - 1|` (wrapped
+Gaussian of variance `1/(15c^2)`) when `4^J/sqrt L -> c`; moreover the whole block TV equals the terminal carry's
+residue TV to uniform, up to `o(1)` uniform in `J` (an exact finite isometry: each residue class carries exactly
+`1/4^J` of the smoothed product mass).  So the threshold named above is exact, one realization serves every
+schedule, and the transition is located at `4^A = c`.  Consistent with Candidate A's tail determinism: the
+same scale `4^J asymp sqrt L` at which the block law separates from Poisson is the scale above which the
+scheduled phase freezes.
+
 What an arithmetic input would have to say: the distribution of the carry
 `floor(sum_{j>=1} omega(n+J+j)/4^j)` modulo `q asymp sqrt(L)`, jointly with `omega(n+1) mod 4` and the next few
 residues, at natural density on every scale.  The Kubilius model and joint Erdos-Kac at shifts give the joint
