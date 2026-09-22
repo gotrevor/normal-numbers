@@ -400,6 +400,7 @@ import NormalNumbers.PrimeModelBrunCountGraded
 import NormalNumbers.PrimeModelErrorBudget
 import NormalNumbers.PrimeModelLowerTransfer
 import NormalNumbers.PrimeModelPhaseAlgebra
+import NormalNumbers.PrimeModelSiteIndexBound
 import NormalNumbers.PrimeModelPhaseAlgebraGraded
 import NormalNumbers.PrimeModelPhaseFactor
 import NormalNumbers.PrimeModelPhaseFactorGraded

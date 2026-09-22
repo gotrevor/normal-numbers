@@ -1,5 +1,40 @@
 # PENDING WORK
 
+## 2026-09-22 (lap G5c-e) — ROUTE FINDING: the contracting site index is bounded
+
+`src/NormalNumbers/PrimeModelSiteIndexBound.lean` (NEW, sorry-free, axiom-clean) proves
+
+    exists_site_re_nonpos_le : NontrivialWindow k h →
+      ∃ j : Fin k, (j : ℕ) ≤ Nat.log 4 h.natAbs ∧ (zPhase h k j).re ≤ 0
+
+i.e. the site `j₀` whose phase contracts (Theorem A leg E5) has an index bounded by `log₄|h|`
+— **a constant for fixed `h`, uniform in `N`**.  (The construction in
+`PhaseAlgebra.exists_site_re_nonpos` returns `Nat.find hex − 1`, and
+`Nat.find hex ≤ log₄|h| + 1` because `|h/4^j| ∈ (0,1)` once `4^j > |h|`.)
+
+**Why this is route-decisive.**  `windowMean_le_terms` currently discards `j₀` by monotonicity
+down to `yBot N`, which is what forces `freshMassTwo_graded` — a fresh-mass bound whose root
+chain from `yBot N` costs `≍ L₃N` halvings and is therefore NOT implied by `ε_N → 0`.  With the
+index bound, `y_{j₀} ≥ y_{c(h)} = ⌊N^{a_N 2^{-c(h)}}⌋` is a **near-top** cutoff, whose chain to
+`N` is only `c(h) + 2 log₂ u_N` halvings: `S_P(y_{j₀}, N) ≤ ε_N(c(h) + 2 log₂ u_N + 1) → 0`,
+exactly the `o(1)` that Astra §8 (8.5)–(8.6) uses.  Then `J_N` may be tied to the **full** mass
+`S_P(N)` (Astra: `S_N = S_P(0,N)`, NOT the mass below the bottom cutoff), and
+
+* the tail branch becomes the paper's: `S_P(2N) = S_P(N) + S_P(N,2N) < 8J + 8 + ε_N`, where
+  `S_P(N,2N) ≤ recipSumIoc P (√(2N)) (2N) ≤ ε_N` is a **one-step** root chain;
+* E5 becomes `S_P(2J, y_{j₀}) ≥ S_N − S_P(y_{j₀},N) − (1 + log 2J) ≥ 8J − 1 − log 2J − o(1)`.
+
+**Next attack (in order).**
+1. Thread the index bound through the `∃ j₀` of the graded Theorem A chain:
+   `PrimeModelKMTGradedModel.norm_model_expectation_le_graded` →
+   `PrimeModelTheoremAGraded` (l.307) → `PrimeModelTheoremAGradedM` (ll.133, 241) →
+   `PrimeModelWindowSchedule.window_bound_schedule` (l.84).  Each is a conjunct added to the
+   existential; the proofs pass `exists_site_re_nonpos_le` instead of `exists_site_re_nonpos`.
+2. Rewrite `windowMean_le_terms` to bound E5 at `y_{min(c(h), k-1)}` instead of `yBot N`.
+3. Redefine `JG N = min (J1 N) ⌊recipSumLe P N / 8⌋₊` (full mass, per Astra §8) and delete
+   `freshMassTwo_graded`; `tail_graded`'s branch 2 then needs only `S_P(N,2N) ≤ ε_N`.
+4. `termE5_tendsto` off the new E5 shape.
+
 ## 2026-09-22 (lap G5c-d) — leaf status after four closed leaves
 
 CLOSED this run (all `lake build` green, in `src/NormalNumbers/PrimeModelFamilyGraded.lean`):
