@@ -405,7 +405,7 @@ theorem windowMean_le_terms (h : ℤ) : ∀ᶠ N : ℕ in atTop,
   filter_upwards [schedule_admissible P] with N hadm
   obtain ⟨hk, hmono, hmy, hylog, hloin, hlotop, hcutlo, hcut2, hT1, hT, hybot⟩ := hadm
   intro hntw hN
-  obtain ⟨j₀, hbound⟩ := window_bound_schedule P (k := JG P N) (L := LG N) hk
+  obtain ⟨j₀, -, hbound⟩ := window_bound_schedule P (k := JG P N) (L := LG N) hk
     (fun j => yG P N j) hmono hmy hylog (loG P N) hloin hlotop hcutlo hcut2
     (uuG P N) hT1 hT h hntw N hN
 

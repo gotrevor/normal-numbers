@@ -1,4 +1,5 @@
 import NormalNumbers.PrimeModelTheoremAGraded
+import NormalNumbers.PrimeModelSiteIndexBound
 import NormalNumbers.PrimeModelPhaseFactorSplit
 
 /-!
@@ -130,7 +131,7 @@ theorem model_expectation_eqGM (k m : ℕ) (y : Fin k → ℕ) (Y : ℕ) (h : �
 theorem norm_model_expectation_le_gradedM (k m : ℕ) (y : Fin k → ℕ) (Y : ℕ) (hk : 1 ≤ k)
     (hkm : k ≤ m) (h : ℤ) (hntw : NontrivialWindow k h) (Q : ℕ) [NeZero Q]
     (hmono : ∀ i j : Fin k, i ≤ j → y j ≤ y i) :
-    ∃ j₀ : Fin k,
+    ∃ j₀ : Fin k, (j₀ : ℕ) ≤ Nat.log 4 h.natAbs ∧
       ‖∑ t : JointState k (midPrimes S m Y) Q,
           (jointModel (Fin Q) k (primeRecip (primeOf (midPrimes S m Y))) t : ℂ)
             * testFGM S k m y Y h Q t‖
@@ -138,8 +139,8 @@ theorem norm_model_expectation_le_gradedM (k m : ℕ) (y : Fin k → ℕ) (Y : �
             * Real.exp (- ∑ p ∈ (midPrimes S m Y).filter (fun p => p ≤ y j₀),
                 (1 : ℝ) / (p : ℝ)) := by
   classical
-  obtain ⟨j₀, hj₀⟩ := exists_site_re_nonpos k h hntw
-  refine ⟨j₀, ?_⟩
+  obtain ⟨j₀, hjb, hj₀⟩ := exists_site_re_nonpos_le k h hntw
+  refine ⟨j₀, hjb, ?_⟩
   rw [model_expectation_eqGM S k m y Y h Q, norm_mul]
   set P : Finset ℕ := midPrimes S m Y with hP
   set p : {q // q ∈ P} → ℕ := primeOf P with hp
@@ -238,7 +239,7 @@ theorem window_bound_gradedGM (k m : ℕ) (y : Fin k → ℕ) (Y : ℕ) (hk : 1 
           (fun i : {q // q ∈ midPrimes S m Y} => dp (i : ℕ))
           (primeRecip (primeOf (midPrimes S m Y))) t - Rsq / x
         ≤ empLawG (midPrimes S m Y) (primorial m) x k dp t) :
-    ∃ j₀ : Fin k,
+    ∃ j₀ : Fin k, (j₀ : ℕ) ≤ Nat.log 4 h.natAbs ∧
       ‖windowMeanS S k h x‖
         ≤ (∑ j : Fin k, siteBudget h j.val * (2 * recipSumIoc S (y j) x + (k : ℝ) / x))
           + (2 * (∑ j : Fin k, Real.exp 20 / (T j) ^ (1 / (2 * Real.log (y j))))
@@ -268,7 +269,7 @@ theorem window_bound_gradedGM (k m : ℕ) (y : Fin k → ℕ) (Y : ℕ) (hk : 1 
     hQpos hx hT hη hRsq hlower
     (testFGM S k m y Y h Q) (norm_testFGM_le S k m y Y h Q)
   have hmodel := sum_jointModelGM_testFG_eq S k m y Y h Q dp hdpk hdp
-  obtain ⟨j₀, hE5'⟩ := norm_model_expectation_le_gradedM S k m y Y hk hkm h hntw Q hmono
+  obtain ⟨j₀, hjb, hE5'⟩ := norm_model_expectation_le_gradedM S k m y Y hk hkm h hntw Q hmono
   set MG : ℂ := ∑ t : JointState k P Q,
       (jointModelG (Fin Q) k (fun i : {q // q ∈ P} => dp (i : ℕ))
         (primeRecip (primeOf P)) t : ℂ) * testFGM S k m y Y h Q t with hMG
@@ -277,7 +278,7 @@ theorem window_bound_gradedGM (k m : ℕ) (y : Fin k → ℕ) (Y : ℕ) (hk : 1 
   have hE5 : ‖MG‖ ≤ Real.exp (2 * k)
       * Real.exp (- ∑ p ∈ P.filter (fun p => p ≤ y j₀), (1 : ℝ) / (p : ℝ)) := by
     rw [hmodel]; exact hE5'
-  refine ⟨j₀, ?_⟩
+  refine ⟨j₀, hjb, ?_⟩
   have htri : ‖windowMeanS S k h x‖
       ≤ ‖windowMeanS S k h x - windowMeanLeG S k y h x‖ + ‖EG - MG‖ + ‖MG‖ := by
     calc ‖windowMeanS S k h x‖

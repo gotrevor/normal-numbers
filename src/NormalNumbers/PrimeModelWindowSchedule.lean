@@ -81,7 +81,7 @@ theorem window_bound_schedule {k L : ℕ} (hk : 1 ≤ k)
     (uu : Fin k → ℕ) (hT1 : ∑ b : Fin k, Real.exp (-(uu b : ℝ)) ≤ 1)
     {T : Fin k → ℝ} (hT : ∀ j, 1 ≤ T j)
     (h : ℤ) (hntw : NontrivialWindow k h) (x : ℕ) (hx : 0 < x) :
-    ∃ j₀ : Fin k,
+    ∃ j₀ : Fin k, (j₀ : ℕ) ≤ Nat.log 4 h.natAbs ∧
       ‖windowMeanS S k h x‖
         ≤ (∑ j : Fin k, siteBudget h j.val * (2 * recipSumIoc S (y j) x + (k : ℝ) / x))
           + (2 * (∑ j : Fin k, Real.exp 20 / (T j) ^ (1 / (2 * Real.log (y j))))
