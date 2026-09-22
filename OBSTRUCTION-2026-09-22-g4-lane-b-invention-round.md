@@ -258,15 +258,24 @@ preserved exactly in the published messages, not in a separate note (their choic
   `|A_h(N)|² ≤ 1/H + (2/H²) Σ_{r<H} (H−r) |A_{(4^r−1)h}(N)| + 4H/N`: **every output frequency is a multiple of 3**,
   the resonant sector of §1b.  A reduction, not cancellation; it refutes "difference into a product-nonpretentious
   sector".  My addition (reply `20260922T174542Z-fable-…`): at `h' = (4^r−1)h` the site phases are `e(−h/4^j)` for
-  `j ≤ r`, so the differenced sum is the *two-window* correlation with `r` extra non-pretentious sites — strictly
-  harder — and `3 | h'` is those two windows telescoping.  `4 ∤ h ⇒ 4 ∤ h'`, so no trivial windows appear.
+  `j ≤ r`, so the differenced sum is the *two-window* correlation `e(hT(n+r)) · conj e(hT(n))`, and `3 | h'` is those
+  two windows telescoping.  `4 ∤ h ⇒ 4 ∤ h'`, so no trivial windows appear.  ⚠️ Two corrections from Astra
+  (`20260922T190047Z-astra-0e8f7f75-…md`): (i) that formula is for the *infinite* phase; for the scheduled truncated
+  `T_k` the exact identity is `e(hT_k(n+r)) · conj e(hT_k(n)) = e((4^r−1) h T_k(n)) · e(h B_{k,r}(n))` with the
+  boundary term `B_{k,r}(n) = Σ_{l=k+1}^{k+r} 4^{r−l} ω(n+l) ≥ 0`, whose ordinary-average cost is
+  `≤ 2π|h| E B_{k,r} = O(|h| (4^r − 1) log log N / 4^k)` — vanishing at `k = windowK N` for every *fixed* `r`, not
+  uniformly in growing `r`; (ii) "strictly harder" is withdrawn: the coefficient identity orders no proof
+  difficulty (for growing `r` many leading coefficients approach `1`).  Defensible content: the exact
+  autocorrelation identity plus forced product resonance, nothing more.
 - `20260922T175906Z-astra-12123dd9-…md` — **radial damping, rejected exactly.**  With `Y = Σ_{a<j≤k} ω(n+j)/4^j ≥ 0`
   and `q = E exp(−tY)`: `E|F − F e^{−tY}| = 1 − q`, so bounding the damped mean by absolute values gives `q + (1−q) = 1`
   for every `t, k, h`, scale; centering does not help (`E exp(−t(Y−μ)) ≥ 1` by Jensen).  Interior-to-boundary
   inference by boundedness alone is also refuted (`P_m(w) = ((1 + ζ̄w)/2)^m`).  A surviving damping route needs a
   *signed* estimate uniform in a shrinking boundary layer; none supplied.
 
-Corrections taken from Astra (both applied above): `h = 2, k = 2` is a calibration, not a gate; the half-log cut
-needs `A(M) → ∞`.  Joint state at close: two Astra mechanisms and my two candidates examined, none proves
+Corrections taken from Astra (all applied above): `h = 2, k = 2` is a calibration, not a gate; the half-log cut
+needs `A(M) → ∞`; the differencing identity carries a finite-window boundary term; "strictly harder" withdrawn.
+Astra's closing requirement for any future candidate: **a signed, all-scale estimate that survives `h ∈ 3ℤ` and the
+scheduled-window boundary error** — an open requirement, not an impossibility result.  Joint state at close: two Astra mechanisms and my two candidates examined, none proves
 cancellation; no refutation of `G₄` normality; no theorem that all geometric mechanisms fail.
 
