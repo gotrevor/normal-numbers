@@ -24,9 +24,9 @@ Grading the cutoffs by site changes the estimate, not the schedule:
   re-derived every inequality; it holds.  The product-of-lower-sieves trap is avoided by the
   telescoping inequality `∏U − ∑_l D_l ∏_{b≠l} U_b ≤ ∏ I`, which needs only the even/odd
   Bonferroni pair.
-- **§4** records the exact inequality by which the repo's `Dimension` hypothesis returns the
-  common cutoff (`k_B ≥ k(1 − o(1))`, hence `s ≥ 80 k_B`), and why the nested `brunCut` sieve is
-  the wrong tool even though it can be adapted.
+- **§4** records where the common cutoff reappears: the existing sufficient `Dimension`
+  certificate (`k_B = 24k` at `y_head`) re-imposes `log R ≥ 1920 k log y_head`; the nested
+  `brunCut` sieve is the wrong tool even though it can be adapted.
 - **§5, two tiers**: the barrier set closes (Astra's schedule), and the density class these
   majorants reach improves from `π_P/π = o(1/L₄)` to roughly `o(1/L₆)`; the remaining log comes
   from the union bound over the shifts sharing a cutoff.  The exact chain is written out.
@@ -38,8 +38,8 @@ Grading the cutoffs by site changes the estimate, not the schedule:
 
   This is KMT's density class, reached without modelling any prime above `y₁ = N^{ε₁}`.
   Astra reached the same conclusion independently with a different schedule
-  (`ε_j = u^{−2} 2^{−j}`, `T_j = N^{2^{−j/2}/16}`, their §8, equations (8.1)-(8.6), refereed by me
-  2026-09-22T20:3xZ): two schedules consuming the same new finite lemma, not two proofs of the
+  (`ε_j = u^{−2} 2^{−j}`, `T_j = N^{2^{−j/2}/16}`, their §8, equations (8.1)-(8.6), refereed by me,
+  mail `20260922T202504Z`): two schedules consuming the same new finite lemma, not two proofs of the
   lemma.
 - **The restriction of this estimate (§8)** is the first-site fresh-mass *majorant*
   `R(N^{ε₁}, N)` with `ε₁ → 0` forced by the sieve's relative error.  For a set with positive
@@ -359,7 +359,9 @@ estimate cannot vanish there.  This is a statement about the displayed sufficien
 modelled" theorem, is proved here.  The broader frontier is open.  In the other direction the
 mechanism reaches past density zero: for the prime-burst set of Part VI (all primes in
 `⋃_n [a_n, b_n]`, blocks of reciprocal mass `≍ 1/n` at `t = L₂x ≈ exp(n²)`), each site-`j` window
-`(y_j, 2N]` has `t`-length `log(2/ε_j) + O(1) ≤ log(2/ε₁) + 0.7 L₃N + O(1) ≪ 2n e^{n²}`, the gap
-between consecutive block starts, so every late window meets at most one block, of index
-`n → ∞`, and `∑_j 4^{−j} R(y_j, 2N) ≤ (C/n) ∑_j 4^{−j} → 0`.  (My argument, not yet refereed by
-Astra; not needed for Theorem C.)
+`(y_j, 2N]` has `t`-length `log(2/ε_j) + O(1) ≤ log(2/ε₁) + 0.7 L₃N + O(1) = O(log t)`, while
+consecutive block starts are `exp((n+1)²) − exp(n²) = e^{n²}(e^{2n+1} − 1)` apart, so every late
+window meets at most one block, of index `n → ∞`, and `∑_j 4^{−j} R(y_j, 2N) ≤ (C/n) ∑_j 4^{−j}
+→ 0`.  Here `u` must be chosen directly (e.g. `u = ⌊√(L₃N)⌋`), not through the density
+envelope, since `δ* = 1` for this set.  (Refereed by Astra, mail `20260922T202951Z`, who states
+the abstract weighted consumer `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0` in their §10.)
