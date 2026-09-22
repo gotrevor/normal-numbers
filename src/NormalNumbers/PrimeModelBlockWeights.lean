@@ -253,4 +253,81 @@ theorem blockLam_support (s : Finset ι) (B : ι → Finset α) (r : ι → ℕ)
     · exact lamDef_eq_zero_of (Finset.mem_erase.2 ⟨fun h => hii h.symm, hi⟩) hcard
   exact hne (by rw [blockLam, hmain0, Finset.sum_congr rfl hzero, Finset.sum_const_zero, sub_zero])
 
+
+/-! ### Property 4: the minorant property -/
+
+/-- The `0/1` indicator of a finite set. -/
+def indic (S : Finset α) : α → ℤ := fun p => if p ∈ S then 1 else 0
+
+theorem indic_zero_or_one (S : Finset α) (p : α) : indic S p = 0 ∨ indic S p = 1 := by
+  unfold indic; split <;> simp
+
+theorem prod_indic (S E : Finset α) : (∏ p ∈ E, indic S p) = if E ⊆ S then 1 else 0 := by
+  classical
+  by_cases h : E ⊆ S
+  · rw [if_pos h]
+    exact Finset.prod_eq_one fun p hp => by rw [indic, if_pos (h hp)]
+  · rw [if_neg h]
+    obtain ⟨p, hpE, hpS⟩ := Finset.not_subset.1 h
+    exact Finset.prod_eq_zero hpE (by rw [indic, if_neg hpS])
+
+theorem hitCount_indic (S B : Finset α) : hitCount (indic S) B = (B ∩ S).card := by
+  classical
+  unfold hitCount
+  congr 1
+  ext p
+  simp only [Finset.mem_filter, Finset.mem_inter]
+  constructor
+  · rintro ⟨hpB, hp⟩
+    refine ⟨hpB, ?_⟩
+    by_contra hc
+    rw [indic, if_neg hc] at hp
+    exact zero_ne_one hp
+  · rintro ⟨hpB, hpS⟩
+    exact ⟨hpB, by rw [indic, if_pos hpS]⟩
+
+/-- **Lemma B property 2 for the explicit weights**: `∑_{E ⊆ S} λ(E) ≤ [S = ∅]` for every
+subset `S` of the sieve primes.  Evaluate the expansion at the indicator of `S`. -/
+theorem blockLam_minorant (s : Finset ι) (B : ι → Finset α) (r : ι → ℕ)
+    (hdisj : ∀ i ∈ s, ∀ j ∈ s, i ≠ j → Disjoint (B i) (B j)) (hr : ∀ i ∈ s, Even (r i))
+    {S : Finset α} (hS : S ⊆ s.biUnion B) :
+    ∑ E ∈ S.powerset, blockLam s B r E ≤ if S = ∅ then 1 else 0 := by
+  classical
+  set x : α → ℤ := indic S with hx
+  -- the expansion, evaluated at the indicator, is the subset sum over `S`
+  have hleft : ∑ E ∈ (s.biUnion B).powerset, blockLam s B r E * ∏ p ∈ E, x p
+      = ∑ E ∈ S.powerset, blockLam s B r E := by
+    rw [Finset.sum_congr rfl (fun E _ => by rw [hx, prod_indic S E] :
+      ∀ E ∈ (s.biUnion B).powerset, blockLam s B r E * ∏ p ∈ E, x p
+        = blockLam s B r E * (if E ⊆ S then 1 else 0))]
+    rw [← Finset.sum_filter_of_ne (fun E hE h => by
+      by_contra hc
+      rw [if_neg hc, mul_zero] at h
+      exact h rfl)]
+    have hset : (s.biUnion B).powerset.filter (fun E => E ⊆ S) = S.powerset := by
+      ext E
+      simp only [Finset.mem_filter, Finset.mem_powerset]
+      exact ⟨fun h => h.2, fun h => ⟨h.trans hS, h⟩⟩
+    rw [hset]
+    exact Finset.sum_congr rfl fun E _ => by rw [if_pos (Finset.mem_powerset.1 ‹_›), mul_one]
+  -- the pointwise minorant
+  have hright := blockMinorant_le s B r hr x (fun p => by rw [hx]; exact indic_zero_or_one S p)
+  have hind : (∏ i ∈ s, bonfIndic (hitCount x (B i))) = if S = ∅ then 1 else 0 := by
+    by_cases hSe : S = ∅
+    · rw [if_pos hSe]
+      refine Finset.prod_eq_one fun i _ => ?_
+      rw [hx, hitCount_indic, hSe]
+      simp [bonfIndic]
+    · rw [if_neg hSe]
+      obtain ⟨p, hp⟩ := Finset.nonempty_iff_ne_empty.2 hSe
+      obtain ⟨i, hi, hpi⟩ := Finset.mem_biUnion.1 (hS hp)
+      refine Finset.prod_eq_zero hi ?_
+      rw [hx, hitCount_indic, bonfIndic, if_neg]
+      intro hc
+      have hemp : B i ∩ S = ∅ := Finset.card_eq_zero.1 hc
+      exact Finset.notMem_empty p (hemp ▸ Finset.mem_inter.2 ⟨hpi, hp⟩)
+    
+  rw [← hleft, ← hind]
+  exact le_trans (le_of_eq (blockLam_expand s B r hdisj x)) hright
+
 end NormalNumbers.PrimeModel.BlockSieve
