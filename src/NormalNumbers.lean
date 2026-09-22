@@ -395,6 +395,7 @@ import NormalNumbers.PrimeModelRadicalState
 import NormalNumbers.PrimeModelBrunLower
 import NormalNumbers.PrimeModelPrimeDimension
 import NormalNumbers.PrimeModelBrunCount
+import NormalNumbers.PrimeModelBrunCountGraded
 import NormalNumbers.PrimeModelErrorBudget
 import NormalNumbers.PrimeModelLowerTransfer
 import NormalNumbers.PrimeModelPhaseAlgebra
