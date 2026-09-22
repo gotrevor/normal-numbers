@@ -279,3 +279,14 @@ Astra's closing requirement for any future candidate: **a signed, all-scale esti
 scheduled-window boundary error** — an open requirement, not an impossibility result.  Joint state at close: two Astra mechanisms and my two candidates examined, none proves
 cancellation; no refutation of `G₄` normality; no theorem that all geometric mechanisms fail.
 
+**Late addition (Astra, `20260922T192658Z-astra-fa74ad3a-…md`, note `papers/ASTRA-2026-09-22-g4-riesz-countermodel.md`,
+Astra's file).**  A Riesz-product tilt of independent Poisson(`L`) counts, `dP/dQ ∝ ∏_{r<R}(1 + δ cos(2π 4^r T))`,
+`R = ⌊log₄ L/4⌋`, satisfies every summary used above — fixed prefixes Poisson in TV, `E(W_j − L)² ~ L` uniformly (so
+Lemma A's tail determinism holds), limiting `×4`-invariance — yet has scheduled Fourier means `δ/2` at `h = 1, 4` and
+`δ²/4` at `h = 3, 12` (`(δ/2)^{#signed-base-4 digits of h}`, zero at `h = 2`).  Checked by me: the site-`v₄(q)+1`
+quarter-turn gives `|E_Q e(qT)| ≤ e^{−L}` for `0 < |q| < 4^K`; signed-digit expansions are unique so the tilt's
+frequencies are distinct; `2 ≡ 2 (mod 4)` has no such expansion.  Consequence: **no argument that uses only fixed-`k`
+correlation decay plus the tail/TK summaries can give `EventualPrefixDecay`**; the missing input is the exact orbit
+relation `4T_k(n) − T_{k−1}(n+1) = ω(n+1)` (shift consistency across rows) and multiplicativity.  The countermodel is the
+classical enemy in disguise: a Riesz product is the standard `×4`-invariant singular law, so the summaries cannot rule
+out the orbit law being Riesz-like.  Not an arithmetic counterexample; `G₄` normality untouched.
