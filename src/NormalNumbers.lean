@@ -396,4 +396,9 @@ import NormalNumbers.PrimeModelPrimeDimension
 import NormalNumbers.PrimeModelBrunCount
 import NormalNumbers.PrimeModelErrorBudget
 import NormalNumbers.PrimeModelLowerTransfer
+import NormalNumbers.PrimeModelPhaseAlgebra
+import NormalNumbers.PrimeModelPhaseFactor
+import NormalNumbers.PrimeModelJointLaw
+import NormalNumbers.PrimeModelParameters
+import NormalNumbers.PrimeModelKMT
 import NormalNumbers.G4PrefixDecayAudit
