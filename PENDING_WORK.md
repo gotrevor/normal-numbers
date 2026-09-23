@@ -9143,3 +9143,14 @@ while the modulus is a tower, the route has a second, more serious gap and `Inde
 `y ≈ exp(exp(4^K))` demand is where to look.  The remaining side condition to discharge along the
 way: no argument `n+(i+1)d_a−s_a` vanishes, for `n` ranging over the sample AND over the residues
 `0 ≤ r < modulus` (the latter is where it can fail, at `≤ |support|(J−K)` residues).
+
+## 2026-09-23 — Theorem C′ audit surface LANDED
+
+`src/NormalNumbers/PrimeModelGradedStatement.lean`:
+`audit_isNormal_subsetLambert_of_sqrtFreshMassZero` restates the headline with every
+abbreviation unwound (`IsNormal`/`IsNormalSequence`/`digitOf`, `subsetLambert`/`omegaS`,
+`SqrtFreshMassZero`/`recipSumIoc`, `DivergentRecip`) — the bridge is `rfl` on the tsum.
+`#print axioms` = `[propext, Classical.choice, Quot.sound]`.  This closes item 1 of
+`HANDOFF-2026-09-23-theoremC-COMPLETE.md`'s "next steps"; the campaign's hygiene is now
+complete.  Remaining next steps there: (2) Astra §10 abstract consumer
+`F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`; (3) the two off-campaign designated-open `sorry`s.
