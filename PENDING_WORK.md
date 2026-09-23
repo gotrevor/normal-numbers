@@ -35,6 +35,11 @@ two pre-existing off-campaign `sorry`s.  See `HANDOFF-2026-09-23-theoremC-COMPLE
    `(2^{2^n}, 2^{2^{n+2}}]` with `n = ⌊log₂⌊log₂⌊√N⌋⌋⌋ → ∞` (`sqrt_window_subset`, via
    `N < (⌊√N⌋+1)²`).  This is precisely the hypothesis Astra §10 verifies for its prime-burst
    example, so Theorem C′ already covers that example and §10 is not needed for it.
+   **Upgraded the same day to an EQUIVALENCE** (`dblBlockMass_tendsto_iff`): the block
+   `(2^{2^n}, 2^{2^{n+2}}]` is exactly TWO root-chain steps wide (`log M / log y = 4`, so
+   `⌈log 4 / log 2⌉ = 2`), whence `dblBlockMass P n ≤ 2 ρ` by `recipSumIoc_le_rootChain`
+   (`dblBlockMass_le_of_bound`).  So the double-exponential block mass vanishing is not a
+   convenient sufficient condition but a *reformulation* of `SqrtFreshMassZero`.
 
 1d. **Independent faithfulness cross-check: DONE 2026-09-23** —
    the ENGLISH statement of Theorem C′ (never our Lean) was handed to an independent

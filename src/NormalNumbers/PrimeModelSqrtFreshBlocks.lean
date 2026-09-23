@@ -116,6 +116,64 @@ theorem sqrtFreshMassZero_of_dblBlockMass
     _ ≤ recipSumIoc P (2 ^ 2 ^ dblIdx N) (2 ^ 2 ^ (dblIdx N + 2)) := recipSumIoc_mono_right P hup
     _ = dblBlockMass P (dblIdx N) := rfl
 
+/-! ### The converse: the criterion is an equivalence -/
+
+/-- The block `(2^{2^n}, 2^{2^{n+2}}]` is exactly **two** root-chain steps wide, so its mass is
+at most `2 ρ` whenever the square-root fresh mass is `≤ ρ` from `2^{2^n}` on. -/
+theorem dblBlockMass_le_of_bound {ρ : ℝ} (hρ : 0 ≤ ρ) {n : ℕ}
+    (h : ∀ q, 2 ^ 2 ^ n ≤ q → recipSumIoc P (Nat.sqrt q) q ≤ ρ) :
+    dblBlockMass P n ≤ 2 * ρ := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hy2 : 2 ≤ (2 : ℕ) ^ 2 ^ n := by
+    calc (2 : ℕ) = 2 ^ 1 := by norm_num
+      _ ≤ 2 ^ 2 ^ n := Nat.pow_le_pow_right (by norm_num) (Nat.one_le_two_pow)
+  have hM : (2 : ℕ) ^ 2 ^ n < 2 ^ 2 ^ (n + 2) := by
+    refine Nat.pow_lt_pow_right (by norm_num) ?_
+    exact Nat.pow_lt_pow_right (by norm_num) (by omega)
+  have key := recipSumIoc_le_rootChain P hρ hy2 (le_refl _) hM h
+  -- the chain length is exactly `⌈log 4 / log 2⌉ = 2`
+  have hlogy : Real.log ((2 ^ 2 ^ n : ℕ) : ℝ) = (2 ^ n : ℝ) * Real.log 2 := by
+    push_cast [Real.log_pow]
+    ring
+  have hlogM : Real.log ((2 ^ 2 ^ (n + 2) : ℕ) : ℝ) = (2 ^ (n + 2) : ℝ) * Real.log 2 := by
+    push_cast [Real.log_pow]
+    ring
+  have hratio : Real.log ((2 ^ 2 ^ (n + 2) : ℕ) : ℝ) / Real.log ((2 ^ 2 ^ n : ℕ) : ℝ) = 4 := by
+    rw [hlogy, hlogM]
+    have hp : (2 : ℝ) ^ (n + 2) = 4 * 2 ^ n := by ring
+    rw [hp]
+    field_simp
+  have hceil : ⌈Real.log (Real.log ((2 ^ 2 ^ (n + 2) : ℕ) : ℝ)
+      / Real.log ((2 ^ 2 ^ n : ℕ) : ℝ)) / Real.log 2⌉₊ = 2 := by
+    rw [hratio]
+    have h4 : Real.log 4 = 2 * Real.log 2 := by
+      rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow]
+      push_cast; ring
+    rw [h4, mul_div_assoc, div_self (ne_of_gt hlog2), mul_one]
+    exact Nat.ceil_ofNat 2
+  rw [dblBlockMass]
+  calc recipSumIoc P (2 ^ 2 ^ n) (2 ^ 2 ^ (n + 2)) ≤ ρ * (⌈_⌉₊ : ℝ) := key
+    _ = 2 * ρ := by rw [hceil]; push_cast; ring
+
+/-- **The criterion is an equivalence.** -/
+theorem dblBlockMass_tendsto_iff :
+    Tendsto (dblBlockMass P) atTop (𝓝 0) ↔ SqrtFreshMassZero P := by
+  refine ⟨sqrtFreshMassZero_of_dblBlockMass P, fun hS => ?_⟩
+  refine NormedAddGroup.tendsto_nhds_zero.mpr fun ε hε => ?_
+  obtain ⟨T, hT⟩ := eventually_atTop.1 ((tendsto_order.1 hS).2 (ε / 4) (by linarith))
+  have hTle : ∃ n₀ : ℕ, T ≤ 2 ^ 2 ^ n₀ := by
+    refine ⟨T, le_trans (le_of_lt Nat.lt_two_pow_self) ?_⟩
+    exact Nat.pow_le_pow_right (by norm_num) (le_of_lt Nat.lt_two_pow_self)
+  obtain ⟨n₀, hn₀⟩ := hTle
+  filter_upwards [eventually_ge_atTop n₀] with n hn
+  have hmono : (2 : ℕ) ^ 2 ^ n₀ ≤ 2 ^ 2 ^ n :=
+    Nat.pow_le_pow_right (by norm_num) (Nat.pow_le_pow_right (by norm_num) hn)
+  have hb := dblBlockMass_le_of_bound P (ρ := ε / 4) (by linarith)
+    (n := n) (fun q hq => (hT q (by omega)).le)
+  have hnn : 0 ≤ dblBlockMass P n := recipSumIoc_nonneg P _ _
+  rw [Real.norm_eq_abs, abs_of_nonneg hnn]
+  linarith
+
 /-- **Theorem C′ off the block criterion.** -/
 theorem isNormal_subsetLambert_of_dblBlockMass
     (h : Tendsto (dblBlockMass P) atTop (𝓝 0)) (hP : DivergentRecip P) :
