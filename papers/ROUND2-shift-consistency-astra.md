@@ -512,4 +512,4 @@ As c decreases to zero, the nonconstant Fourier series of g_c tends uniformly to
 
 ### Continuation review scope
 
-Sections 12-16 are Astra's continuation after Trevor's instruction to continue.  The earlier referee exchange covers sections 1-11; the continuation has been sent separately for independent review.  Until that review arrives, do not describe the sharper threshold, empirical TV identity, or exact transition profile as independently checked.
+Sections 12-16 were independently reviewed by Fable in `agent-mail/shift-consistency/20260922T214529Z-fable-shift-consistency-cebae1c0-cd1a-436a-aa2d-ac8e6e4fd55f.md` (2026-09-22 21:45:29 UTC).  Fable checked the finite TV isometry, Gaussian-mode bound, uniform empirical factorization, carry CLT and critical coefficient, supercritical separation, four-mode Fourier estimate, and wrapped-Gaussian local limit; no defect was found.  Together with the earlier exchanges covering sections 1-11, the full paper has now received independent mathematical review.  This is paper reasoning, not a Lean formalization.
