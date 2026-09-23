@@ -36,6 +36,21 @@ two pre-existing off-campaign `sorry`s.  See `HANDOFF-2026-09-23-theoremC-COMPLE
    `N < (⌊√N⌋+1)²`).  This is precisely the hypothesis Astra §10 verifies for its prime-burst
    example, so Theorem C′ already covers that example and §10 is not needed for it.
 
+1d. **Independent faithfulness cross-check: DONE 2026-09-23** —
+   the ENGLISH statement of Theorem C′ (never our Lean) was handed to an independent
+   auto-formalizer; its rendering is archived at
+   `archive/findings/ARISTOTLE-2026-09-23-theoremC-prose-formalization.lean` (input:
+   `…-prose-input.md`).  It differs from our audit surface in three places, all reconciled
+   in `src/NormalNumbers/PrimeModelGradedCrossCheck.lean` (sorry-free, trust triple):
+   (i) `Real.sqrt N < p` over `Icc 1 N` vs `Nat.sqrt N < p` over `Ioc (√N) N` — the index
+   sets are EQUAL (`freshWindow_eq`; both say `N < p²`); (ii) `¬Summable` over the subtype
+   `{p // p.Prime ∧ P p}` vs our indicator form (`divergentRecip_iff_subtype`);
+   (iii) occurrence counting by start position `i < n` vs by suffixes of the first `n`
+   digits — these differ by at most `|w|` out of `n`, so the frequency limits agree (a
+   remark, not a theorem, since the finite counts genuinely differ).
+   `isNormal_subsetLambert_crossCheckForm` derives our headline from the independently
+   written hypotheses verbatim.  No faithfulness defect found.
+
 2. **Astra §10 abstract consumer** `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0 ⇒ normal`.  Strictly
    weaker than `SqrtFreshMassZero` and the same schedule; only the E1 leg
    (`termE1_tendsto`, which currently spends the root chain) needs re-running against `F_N`
