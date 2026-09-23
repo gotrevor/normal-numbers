@@ -93,9 +93,14 @@ noncomputable def JG (N : ℕ) : ℕ := min (J1 N) ⌊recipSumLe P N / 8⌋₊
 /-- The Markov thresholds `T_j = N^{2^{−j/2}/16}`. -/
 noncomputable def TG (N j : ℕ) : ℝ := (N : ℝ) ^ ((1 / 16) * Real.sqrt ((1 / 2) ^ j))
 
-/-- The level count of the dyadic block family. -/
+/-- The level count of the dyadic block family, `L_N = ⌊log₂ log₂ y_{J−1}⌋` clipped at `2`.
+It must be read off the **bottom site cutoff** `y_{J−1}`, not off `yBotG`: admissibility pins
+`L` from both sides — `2^L ≤ log₂ y_{J−1}` (else some band's dyadic chain drops below `2`) and
+`2^{L+1} > log₂ y_{J−1}` (else the bottom band's chain never descends to `2J`).  `yBotG` is far
+below `y_{J−1}` when the `min` in `JG` is taken at the mass branch, and the second clause then
+fails; this is the one place where the uniform lower end cannot be used. -/
 noncomputable def LG (N : ℕ) : ℕ :=
-  max 2 ⌊Real.log (Real.log (yBotG N) / Real.log 2) / Real.log 2⌋₊
+  max 2 ⌊Real.log (Real.log (yG P N (JG P N - 1)) / Real.log 2) / Real.log 2⌋₊
 
 /-- The band floors: `lo b = y_{b+1}`, and `2J` on the bottom band. -/
 noncomputable def loG (N : ℕ) : Fin (JG P N) → ℕ :=
@@ -552,58 +557,6 @@ theorem yG_antitone {N : ℕ} (hN : 1 ≤ N) {i j : ℕ} (hij : i ≤ j) :
   have ha : (0 : ℝ) ≤ aG P N := by rw [aG]; positivity
   exact mul_le_mul_of_nonneg_left hpow ha
 
-/-! ## Admissibility of the schedule (open leaf) -/
-
-/-- **Open leaf G5c-1.**  The schedule is pointwise admissible for `window_bound_schedule`.
-Every clause is an inequality between the explicit schedule functions above; none involves the
-model or the sieve.  See `PENDING_WORK.md` for the sub-leaves. -/
-theorem schedule_admissible : ∀ᶠ N : ℕ in atTop,
-    1 ≤ JG P N
-    ∧ (∀ i j : Fin (JG P N), i ≤ j → yG P N j ≤ yG P N i)
-    ∧ (∀ j : Fin (JG P N), 2 * JG P N ≤ yG P N j)
-    ∧ (∀ j : Fin (JG P N), 2 ≤ Real.log (yG P N j))
-    ∧ (∀ (b : Fin (JG P N)) (hb : (b : ℕ) + 1 < JG P N),
-        loG P N b = yG P N ((b : ℕ) + 1))
-    ∧ (∀ b : Fin (JG P N), (b : ℕ) + 1 = JG P N → loG P N b = 2 * JG P N)
-    ∧ (∀ b : Fin (JG P N),
-        cut (fun b : Fin (JG P N) => ((yG P N b : ℕ) : ℝ)) b (LG N) ≤ (loG P N b : ℝ))
-    ∧ (∀ b : Fin (JG P N),
-        2 ≤ cut (fun b : Fin (JG P N) => ((yG P N b : ℕ) : ℝ)) b (LG N))
-    ∧ (∑ b : Fin (JG P N), Real.exp (-(uuG P N b : ℝ)) ≤ 1)
-    ∧ (∀ j : Fin (JG P N), 1 ≤ TG N j)
-    ∧ (∀ j : Fin (JG P N), yBotG N ≤ yG P N j) := by
-  sorry
-
-/-! ## The pointwise window bound on the schedule -/
-
-/-- The graded window bound, with the `j₀`-dependence of E5 removed by monotonicity: every site
-cutoff dominates `yBot N`, so the contraction collected below `y_{j₀}` is at least the one
-collected below `yBot N`. -/
-theorem windowMean_le_terms (h : ℤ) : ∀ᶠ N : ℕ in atTop,
-    (∀ hh : NontrivialWindow (JG P N) h, 0 < N →
-      ‖windowMeanS P (JG P N) h N‖
-        ≤ termE1 P h N + (termE4a P N + termE4b P N + termE4c P N) + termE5 P h N) := by
-  filter_upwards [schedule_admissible P, eventually_ge_atTop 1] with N hadm hN1
-  obtain ⟨hk, hmono, hmy, hylog, hloin, hlotop, hcutlo, hcut2, hT1, hT, hybot⟩ := hadm
-  intro hntw hN
-  obtain ⟨j₀, hjb, hbound⟩ := window_bound_schedule P (k := JG P N) (L := LG N) hk
-    (fun j => yG P N j) hmono hmy hylog (loG P N) hloin hlotop hcutlo hcut2
-    (uuG P N) hT1 hT h hntw N hN
-
-  rw [termE1, termE4a, termE4b, termE4c, termE5]
-  refine hbound.trans (add_le_add (le_refl _) ?_)
-  refine mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr (neg_le_neg ?_)) (by positivity)
-  have hjc : (j₀ : ℕ) ≤ cIdx P h N := by
-    rw [cIdx]
-    exact le_min hjb (by omega)
-  have hyc : yG P N (cIdx P h N) ≤ yG P N (j₀ : ℕ) := yG_antitone P hN1 hjc
-  have hsub : ((midPrimes P (2 * JG P N) (yG P N 0)).filter (fun p => p ≤ yG P N (cIdx P h N)))
-      ⊆ ((midPrimes P (2 * JG P N) (yG P N 0)).filter
-        (fun p => p ≤ yG P N (j₀ : ℕ))) := by
-    intro p hp
-    rw [Finset.mem_filter] at hp ⊢
-    exact ⟨hp.1, le_trans hp.2 hyc⟩
-  exact Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p _ _ => by positivity)
 
 /-! ## The five limits (open leaves) -/
 
@@ -1324,6 +1277,277 @@ theorem tailOK_graded (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
   · filter_upwards [eventually_ge_atTop 1] with N hN
     exact tail_error_L1 P (JG P N) N hN
 
+/-! ## Admissibility of the schedule -/
+
+/-- `⌊t²⌋^{1/c} ≤ ⌊t⌋` once `t ≥ 4` and `c ≥ 4`: one dyadic cut of a band's cutoff lands below
+the next site cutoff.  The `c ≥ 4` (i.e. `L ≥ 2`) is what absorbs the two floors. -/
+private theorem cut_le_next {t c : ℝ} (ht : 4 ≤ t) (hc : 4 ≤ c) :
+    ((⌊t ^ (2 : ℕ)⌋₊ : ℕ) : ℝ) ^ ((1 : ℝ) / c) ≤ ((⌊t⌋₊ : ℕ) : ℝ) := by
+  have ht0 : (0 : ℝ) < t := by linarith
+  have ht1 : (1 : ℝ) ≤ t := by linarith
+  have hc0 : (0 : ℝ) < c := by linarith
+  have hsq : ((⌊t ^ (2 : ℕ)⌋₊ : ℕ) : ℝ) ≤ t ^ (2 : ℕ) := Nat.floor_le (by positivity)
+  have h1 : ((⌊t ^ (2 : ℕ)⌋₊ : ℕ) : ℝ) ^ ((1 : ℝ) / c) ≤ (t ^ (2 : ℕ)) ^ ((1 : ℝ) / c) :=
+    Real.rpow_le_rpow (by positivity) hsq (by positivity)
+  have h2 : (t ^ (2 : ℕ)) ^ ((1 : ℝ) / c) = t ^ ((2 : ℝ) / c) := by
+    rw [← Real.rpow_natCast t 2, ← Real.rpow_mul ht0.le]
+    congr 1
+    push_cast
+    ring
+  have hexp : (2 : ℝ) / c ≤ (1 : ℝ) / 2 := by
+    rw [div_le_iff₀ hc0]; linarith
+  have h3 : t ^ ((2 : ℝ) / c) ≤ t ^ ((1 : ℝ) / 2) :=
+    Real.rpow_le_rpow_of_exponent_le ht1 hexp
+  have h5 : Real.sqrt t ≤ t / 2 := by
+    rw [show t / 2 = Real.sqrt ((t / 2) ^ 2) from (Real.sqrt_sq (by linarith)).symm]
+    exact Real.sqrt_le_sqrt (by nlinarith)
+  have h6 : t - 1 ≤ ((⌊t⌋₊ : ℕ) : ℝ) := by linarith [Nat.lt_floor_add_one t]
+  calc ((⌊t ^ (2 : ℕ)⌋₊ : ℕ) : ℝ) ^ ((1 : ℝ) / c) ≤ (t ^ (2 : ℕ)) ^ ((1 : ℝ) / c) := h1
+    _ = t ^ ((2 : ℝ) / c) := h2
+    _ ≤ t ^ ((1 : ℝ) / 2) := h3
+    _ = Real.sqrt t := (Real.sqrt_eq_rpow t).symm
+    _ ≤ t / 2 := h5
+    _ ≤ t - 1 := by linarith
+    _ ≤ ((⌊t⌋₊ : ℕ) : ℝ) := h6
+
+/-- **The cut depth is pinned from both sides.**  `L_N ≥ 2`, and
+`2^{L_N} ≤ log₂ y_{J−1} < 2^{L_N + 1}`.  The lower bound keeps every band's dyadic chain above
+`2` (`hcut2`); the upper bound makes the bottom band's chain descend below `4 ≤ 2J`
+(`hcutlo` at `b = J−1`).  Both hold because `L_N` is read off `y_{J−1}` itself. -/
+theorem LG_spec (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) : ∀ᶠ N : ℕ in atTop,
+    (4 : ℝ) ≤ (2 : ℝ) ^ (LG P N)
+    ∧ (2 : ℝ) ^ (LG P N) * Real.log 2 ≤ Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ)
+    ∧ Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) < 2 * ((2 : ℝ) ^ (LG P N)) * Real.log 2 := by
+  filter_upwards [yBotG_le_yG_nat P hS, yBotG_tendsto.eventually_ge_atTop 16,
+    (JG_tendsto P hP).eventually_ge_atTop 2] with N hybot hy16 hJ2
+  have hJ1le : JG P N ≤ J1 N := JG_le_J1 P N
+  have hy16' : 16 ≤ yG P N (JG P N - 1) := le_trans hy16 (hybot _ (by omega))
+  have hyb16 : (16 : ℝ) ≤ ((yG P N (JG P N - 1) : ℕ) : ℝ) := by exact_mod_cast hy16'
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlog16 : Real.log (16 : ℝ) = 4 * Real.log 2 := by
+    rw [show (16 : ℝ) = 2 ^ (4 : ℕ) by norm_num, Real.log_pow]; push_cast; ring
+  have hlog4 : Real.log (4 : ℝ) = 2 * Real.log 2 := by
+    rw [show (4 : ℝ) = 2 ^ (2 : ℕ) by norm_num, Real.log_pow]; push_cast; ring
+  have hlogyb : 4 * Real.log 2 ≤ Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) := by
+    rw [← hlog16]; exact Real.log_le_log (by norm_num) hyb16
+  have hW4 : (4 : ℝ) ≤ Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2 := by
+    rw [le_div_iff₀ hlog2]; linarith
+  have hW0 : (0 : ℝ) < Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2 := by linarith
+  have hlogW : 2 * Real.log 2
+      ≤ Real.log (Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2) := by
+    rw [← hlog4]; exact Real.log_le_log (by norm_num) hW4
+  have hratio : (2 : ℝ)
+      ≤ Real.log (Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2) / Real.log 2 := by
+    rw [le_div_iff₀ hlog2]; linarith
+  have hfl2 : 2 ≤ ⌊Real.log (Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2)
+      / Real.log 2⌋₊ := Nat.le_floor (by exact_mod_cast hratio)
+  have hLeq : LG P N = ⌊Real.log (Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2)
+      / Real.log 2⌋₊ := max_eq_right hfl2
+  have hL2 : 2 ≤ LG P N := le_max_left 2 _
+  have hpowdef : ((2 : ℝ)) ^ (LG P N) = Real.exp (Real.log 2 * ((LG P N : ℕ) : ℝ)) := by
+    rw [← Real.rpow_natCast (2 : ℝ) (LG P N), Real.rpow_def_of_pos (by norm_num)]
+  have hLle : ((LG P N : ℕ) : ℝ)
+      ≤ Real.log (Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2) / Real.log 2 := by
+    rw [hLeq]; exact Nat.floor_le (by linarith)
+  have hLlt : Real.log (Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2) / Real.log 2
+      < ((LG P N : ℕ) : ℝ) + 1 := by
+    rw [hLeq]; exact Nat.lt_floor_add_one _
+  refine ⟨?_, ?_, ?_⟩
+  · calc (4 : ℝ) = (2 : ℝ) ^ (2 : ℕ) := by norm_num
+      _ ≤ (2 : ℝ) ^ (LG P N) := pow_le_pow_right₀ (by norm_num) hL2
+  · have h1 : Real.log 2 * ((LG P N : ℕ) : ℝ)
+        ≤ Real.log (Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2) := by
+      rw [le_div_iff₀ hlog2] at hLle; linarith
+    have h2 : (2 : ℝ) ^ (LG P N)
+        ≤ Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2 := by
+      rw [hpowdef]
+      calc Real.exp (Real.log 2 * ((LG P N : ℕ) : ℝ))
+          ≤ Real.exp (Real.log (Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2)) :=
+            Real.exp_le_exp.mpr h1
+        _ = _ := Real.exp_log hW0
+    rw [le_div_iff₀ hlog2] at h2; linarith
+  · have h1 : Real.log (Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2)
+        < Real.log 2 * (((LG P N : ℕ) : ℝ) + 1) := by
+      rw [div_lt_iff₀ hlog2] at hLlt; linarith
+    have hexp : Real.exp (Real.log 2 * (((LG P N : ℕ) : ℝ) + 1)) = 2 * (2 : ℝ) ^ (LG P N) := by
+      rw [mul_add, mul_one, Real.exp_add, hpowdef, Real.exp_log (by norm_num : (0 : ℝ) < 2)]
+      ring
+    have h2 : Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2
+        < 2 * ((2 : ℝ) ^ (LG P N)) := by
+      calc Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2
+          = Real.exp (Real.log (Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) / Real.log 2)) :=
+            (Real.exp_log hW0).symm
+        _ < Real.exp (Real.log 2 * (((LG P N : ℕ) : ℝ) + 1)) := Real.exp_lt_exp.mpr h1
+        _ = _ := hexp
+    rw [div_lt_iff₀ hlog2] at h2; linarith
+
+
+/-- **Leaf G5c-1 — PROVED.**  The schedule is pointwise admissible for
+`window_bound_schedule`.  Every clause is an inequality between the explicit schedule functions;
+none involves the model or the sieve.  The two substantive ones are the dyadic-cut clauses, and
+they are what pins `LG` to the **bottom site cutoff** (see `LG_spec`). -/
+theorem schedule_admissible (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
+    ∀ᶠ N : ℕ in atTop,
+    1 ≤ JG P N
+    ∧ (∀ i j : Fin (JG P N), i ≤ j → yG P N j ≤ yG P N i)
+    ∧ (∀ j : Fin (JG P N), 2 * JG P N ≤ yG P N j)
+    ∧ (∀ j : Fin (JG P N), 2 ≤ Real.log (yG P N j))
+    ∧ (∀ (b : Fin (JG P N)) (hb : (b : ℕ) + 1 < JG P N),
+        loG P N b = yG P N ((b : ℕ) + 1))
+    ∧ (∀ b : Fin (JG P N), (b : ℕ) + 1 = JG P N → loG P N b = 2 * JG P N)
+    ∧ (∀ b : Fin (JG P N),
+        cut (fun b : Fin (JG P N) => ((yG P N b : ℕ) : ℝ)) b (LG P N) ≤ (loG P N b : ℝ))
+    ∧ (∀ b : Fin (JG P N),
+        2 ≤ cut (fun b : Fin (JG P N) => ((yG P N b : ℕ) : ℝ)) b (LG P N))
+    ∧ (∑ b : Fin (JG P N), Real.exp (-(uuG P N b : ℝ)) ≤ 1)
+    ∧ (∀ j : Fin (JG P N), 1 ≤ TG N j)
+    ∧ (∀ j : Fin (JG P N), yBotG N ≤ yG P N j) := by
+  filter_upwards [yBotG_le_yG_nat P hS, yBotG_le_yG P hS,
+    yBotG_tendsto.eventually_ge_atTop 16, twoJ1_lt_yBotG,
+    (JG_tendsto P hP).eventually_ge_atTop 2,
+    (uG_tendsto P hS yBotG_tendsto).eventually_ge_atTop 1,
+    LG_spec P hS hP, eventually_ge_atTop 1]
+    with N hybotn hybotf hy16 htwoJ hJ2 hu1 hLs hN1
+  obtain ⟨hL4, hLlo, hLhi⟩ := hLs
+  have hJ1le : JG P N ≤ J1 N := JG_le_J1 P N
+  have hN1r : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN1
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hJ2r : (2 : ℝ) ≤ ((JG P N : ℕ) : ℝ) := by exact_mod_cast hJ2
+  have hmono' : ∀ i j : ℕ, i ≤ j → yG P N j ≤ yG P N i := fun i j hij =>
+    yG_antitone P hN1 hij
+  have hy16j : ∀ j : ℕ, j ≤ J1 N → 16 ≤ yG P N j := fun j hj => le_trans hy16 (hybotn j hj)
+  have hy16r : ∀ j : ℕ, j ≤ J1 N → (16 : ℝ) ≤ ((yG P N j : ℕ) : ℝ) := by
+    intro j hj; exact_mod_cast hy16j j hj
+  have hlog16 : Real.log (16 : ℝ) = 4 * Real.log 2 := by
+    rw [show (16 : ℝ) = 2 ^ (4 : ℕ) by norm_num, Real.log_pow]; push_cast; ring
+  have hlogy : ∀ j : ℕ, j ≤ J1 N → 4 * Real.log 2 ≤ Real.log ((yG P N j : ℕ) : ℝ) := by
+    intro j hj
+    rw [← hlog16]
+    exact Real.log_le_log (by norm_num) (hy16r j hj)
+  refine ⟨by omega, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · exact fun i j hij => hmono' _ _ (Fin.le_def.mp hij)
+  · intro j
+    have h1 := hybotn (j : ℕ) (by omega)
+    omega
+  · intro j
+    have := hlogy (j : ℕ) (by omega)
+    linarith [Real.log_two_gt_d9]
+  · intro b hb
+    simp only [loG, if_pos hb]
+  · intro b hb
+    simp only [loG, if_neg (by omega : ¬ ((b : ℕ) + 1 < JG P N))]
+  · -- `hcutlo`: the dyadic chain of band `b` reaches below `lo b`
+    intro b
+    by_cases hb : (b : ℕ) + 1 < JG P N
+    · simp only [loG, if_pos hb, cut]
+      have hj1 : (b : ℕ) + 1 ≤ J1 N := by omega
+      have ht16 : (16 : ℝ) ≤ (N : ℝ) ^ (aG P N * ((1 : ℝ) / 2) ^ ((b : ℕ) + 1)) := by
+        refine le_trans (hy16r _ hj1) ?_
+        exact Nat.floor_le (by positivity)
+      have hsq : (N : ℝ) ^ (aG P N * ((1 : ℝ) / 2) ^ (b : ℕ))
+          = ((N : ℝ) ^ (aG P N * ((1 : ℝ) / 2) ^ ((b : ℕ) + 1))) ^ (2 : ℕ) := by
+        rw [← Real.rpow_natCast ((N : ℝ) ^ (aG P N * ((1 : ℝ) / 2) ^ ((b : ℕ) + 1))) 2,
+          ← Real.rpow_mul (by positivity)]
+        congr 1
+        push_cast
+        ring
+      have hyj : yG P N (b : ℕ)
+          = ⌊((N : ℝ) ^ (aG P N * ((1 : ℝ) / 2) ^ ((b : ℕ) + 1))) ^ (2 : ℕ)⌋₊ := by
+        simp only [yG]; rw [hsq]
+      have hyj1 : yG P N ((b : ℕ) + 1)
+          = ⌊(N : ℝ) ^ (aG P N * ((1 : ℝ) / 2) ^ ((b : ℕ) + 1))⌋₊ := rfl
+      rw [hyj, hyj1]
+      exact cut_le_next (by linarith) hL4
+    · have hbe : (b : ℕ) = JG P N - 1 := by omega
+      have hlo : loG P N b = 2 * JG P N := by simp only [loG, if_neg hb]
+      rw [hlo]
+      simp only [cut, hbe]
+      refine le_of_lt ?_
+      have hyb0 : (0 : ℝ) < ((yG P N (JG P N - 1) : ℕ) : ℝ) := by
+        have := hy16r (JG P N - 1) (by omega); linarith
+      have hlog4 : Real.log (4 : ℝ) = 2 * Real.log 2 := by
+        rw [show (4 : ℝ) = 2 ^ (2 : ℕ) by norm_num, Real.log_pow]; push_cast; ring
+      have hlt : Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) * ((1 : ℝ) / 2 ^ (LG P N))
+          < Real.log 4 := by
+        rw [hlog4, mul_one_div, div_lt_iff₀ (by positivity)]
+        linarith
+      calc ((yG P N (JG P N - 1) : ℕ) : ℝ) ^ ((1 : ℝ) / 2 ^ (LG P N))
+          = Real.exp (Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ) * ((1 : ℝ) / 2 ^ (LG P N))) :=
+            Real.rpow_def_of_pos hyb0 _
+        _ < Real.exp (Real.log 4) := Real.exp_lt_exp.mpr hlt
+        _ = 4 := Real.exp_log (by norm_num)
+        _ ≤ ((2 * JG P N : ℕ) : ℝ) := by push_cast; linarith
+  · -- `hcut2`: the dyadic chain never drops below `2`
+    intro b
+    simp only [cut]
+    have hyb0 : (0 : ℝ) < ((yG P N (b : ℕ) : ℕ) : ℝ) := by
+      have := hy16r (b : ℕ) (by omega); linarith
+    have hmo : ((yG P N (JG P N - 1) : ℕ) : ℝ) ≤ ((yG P N (b : ℕ) : ℕ) : ℝ) := by
+      have : yG P N (JG P N - 1) ≤ yG P N (b : ℕ) := hmono' _ _ (by omega)
+      exact_mod_cast this
+    have hlogmo : Real.log ((yG P N (JG P N - 1) : ℕ) : ℝ)
+        ≤ Real.log ((yG P N (b : ℕ) : ℕ) : ℝ) := by
+      refine Real.log_le_log ?_ hmo
+      have := hy16r (JG P N - 1) (by omega); linarith
+    have hge : Real.log 2
+        ≤ Real.log ((yG P N (b : ℕ) : ℕ) : ℝ) * ((1 : ℝ) / 2 ^ (LG P N)) := by
+      rw [mul_one_div, le_div_iff₀ (by positivity)]
+      linarith
+    calc (2 : ℝ) = Real.exp (Real.log 2) := (Real.exp_log (by norm_num)).symm
+      _ ≤ Real.exp (Real.log ((yG P N (b : ℕ) : ℕ) : ℝ) * ((1 : ℝ) / 2 ^ (LG P N))) :=
+          Real.exp_le_exp.mpr hge
+      _ = _ := (Real.rpow_def_of_pos hyb0 _).symm
+  · -- `∑_b e^{−u_b} ≤ 1`
+    have hs := sum_uuG_le P N
+    have hue : Real.exp (-((uG P N : ℕ) : ℝ)) ≤ Real.exp (-1) := by
+      refine Real.exp_le_exp.mpr ?_
+      have : (1 : ℝ) ≤ ((uG P N : ℕ) : ℝ) := by exact_mod_cast hu1
+      linarith
+    have hprod : Real.exp (-1 : ℝ) * Real.exp 1 = 1 := by
+      rw [← Real.exp_add]; norm_num
+    have hpos : (0 : ℝ) < Real.exp (-1 : ℝ) := Real.exp_pos _
+    have hbound : Real.exp (-1 : ℝ) ≤ 0.625 := by
+      nlinarith [Real.exp_one_gt_d9, hprod, hpos]
+    linarith
+  · intro j
+    have hnn : (0 : ℝ) ≤ (1 / 16 : ℝ) * Real.sqrt (((1 : ℝ) / 2) ^ (j : ℕ)) := by positivity
+    have := Real.rpow_le_rpow_of_exponent_le hN1r hnn
+    rw [Real.rpow_zero] at this
+    simpa [TG] using this
+  · exact hybotf
+
+/-! ## The pointwise window bound on the schedule -/
+
+/-- The graded window bound, with the `j₀`-dependence of E5 removed by monotonicity: every site
+cutoff dominates `yBot N`, so the contraction collected below `y_{j₀}` is at least the one
+collected below `yBot N`. -/
+theorem windowMean_le_terms (hS : SqrtFreshMassZero P) (hP : DivergentRecip P)
+    (h : ℤ) : ∀ᶠ N : ℕ in atTop,
+    (∀ hh : NontrivialWindow (JG P N) h, 0 < N →
+      ‖windowMeanS P (JG P N) h N‖
+        ≤ termE1 P h N + (termE4a P N + termE4b P N + termE4c P N) + termE5 P h N) := by
+  filter_upwards [schedule_admissible P hS hP, eventually_ge_atTop 1] with N hadm hN1
+  obtain ⟨hk, hmono, hmy, hylog, hloin, hlotop, hcutlo, hcut2, hT1, hT, hybot⟩ := hadm
+  intro hntw hN
+  obtain ⟨j₀, hjb, hbound⟩ := window_bound_schedule P (k := JG P N) (L := LG P N) hk
+    (fun j => yG P N j) hmono hmy hylog (loG P N) hloin hlotop hcutlo hcut2
+    (uuG P N) hT1 hT h hntw N hN
+
+  rw [termE1, termE4a, termE4b, termE4c, termE5]
+  refine hbound.trans (add_le_add (le_refl _) ?_)
+  refine mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr (neg_le_neg ?_)) (by positivity)
+  have hjc : (j₀ : ℕ) ≤ cIdx P h N := by
+    rw [cIdx]
+    exact le_min hjb (by omega)
+  have hyc : yG P N (cIdx P h N) ≤ yG P N (j₀ : ℕ) := yG_antitone P hN1 hjc
+  have hsub : ((midPrimes P (2 * JG P N) (yG P N 0)).filter (fun p => p ≤ yG P N (cIdx P h N)))
+      ⊆ ((midPrimes P (2 * JG P N) (yG P N 0)).filter
+        (fun p => p ≤ yG P N (j₀ : ℕ))) := by
+    intro p hp
+    rw [Finset.mem_filter] at hp ⊢
+    exact ⟨hp.1, le_trans hp.2 hyc⟩
+  exact Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p _ _ => by positivity)
+
 theorem kmt_along_graded (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
     KMT_along P (JG P) := by
   intro h hh
@@ -1336,7 +1560,7 @@ theorem kmt_along_graded (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) :
       (termE5_tendsto P hS hP h)
     simpa using this
   refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _)) ?_ hsum
-  filter_upwards [windowMean_le_terms P h, eventually_gt_atTop 0,
+  filter_upwards [windowMean_le_terms P hS hP h, eventually_gt_atTop 0,
     (JG_tendsto P hP).eventually_ge_atTop (h.natAbs + 1)] with N hb hN hJ
   exact hb ⟨h.natAbs + 1, by omega, hJ, nontrivial_site hh⟩ hN
 

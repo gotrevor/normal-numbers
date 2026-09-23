@@ -1,33 +1,47 @@
 # PENDING WORK
 
-## 2026-09-22 (lap G5c-g) — the route correction is IN; four leaves left
+## 2026-09-23 (lap G5c-k/l) — ONE leaf left: `termE4c_tendsto`
 
-`freshMassTwo_graded` is **PROVED** (one-step chain `(N,2N] ⊆ (⌊√(2N)⌋, 2N]`, mass `≤ ε_N`),
-`tailOK_graded` is **PROVED**, and the schedule was retied as the paper has it:
+`termE5_tendsto` and `schedule_admissible` are both **PROVED** and trust-triple clean.  Theorem C′
+(`isNormal_subsetLambert_of_sqrtFreshMassZero`) now depends on `sorryAx` through exactly one
+declaration, `termE4c_tendsto` in `src/NormalNumbers/PrimeModelFamilyGraded.lean` (l. ~927).
 
-* `JG N = min (J1 N) ⌊recipSumLe P N / 8⌋₊` — the **full** mass `S_N = S_P(N)` (Astra §8),
-  not the mass below the bottom cutoff.  `JG_le_mass` is now `8 J_N ≤ S_P(N)`.
-* `termE5` is taken at the **near-top** cutoff `y_{cIdx}`, `cIdx = min (log₄|h|) (J−1)`, which
-  is legitimate because `window_bound_schedule` now exposes `j₀ ≤ log₄|h|`
-  (`exists_site_re_nonpos_le`, lap G5c-e/f).  `yG_antitone` does the comparison.
-* `yBotG` survives only as the uniform lower end used by `epsG` and `yBotG_le_yG`.
+### The remaining leaf
 
-### The four remaining leaves in `PrimeModelFamilyGraded.lean`
+**`termE4c_tendsto (hP : DivergentRecip P) : Tendsto (termE4c P) atTop (𝓝 0)`**, where
 
-1. **`termE5_tendsto (hS) (hP) (h)`** — now the paper's (8.6).  With `c = cIdx P h N` bounded:
-   `∑_{p ∈ midPrimes(2J, y_0), p ≤ y_c} 1/p = S_P(y_c) − S_P(2J)`, and
-   `S_P(y_c) ≥ S_P(N) − S_P(y_c, N) ≥ 8J − ε_N(c + 2log₂u_N + 1)` by the **short** root chain
-   (`recipSumIoc_le_rootChain` at `Z = yBotG N`, `y = y_c`, length `c + 2log₂u_N + 1` since
-   `log N / log y_c = 2^c/a_N = 2^c u_N²`), while `S_P(2J) ≤ 1 + log(2J)` (Mertens).  So the
-   exponent is `≥ 8J − 1 − log 2J − o(1)` and the term is `≤ e^{2J} e^{−(8J−1−log 2J−o(1))}`
-   `≤ e^{−5J} → 0` for `J` large.  **Do this first** — it is the last structurally new estimate.
-2. **`termE1_tendsto`** — the same short root chain at each site: `S_P(y_j,N) ≤ ε_N(j + 2log₂u_N + 1)`;
-   sum against `4^{−j−1}` and use `ε_N log u_N ≤ ε_N log(1/ε_N)/2 → 0` (`u_N ≤ ε_N^{−1/2}`).
-3. **`termE4c_tendsto`** — `log R ≤ (540+8u_N)/u_N² · log N`, `(2J)# ≤ 4^{2J}`,
-   `∏_j ⌊T_j⌋ ≤ N^{0.22}`; product `N^{−1+o(1)}`.
-4. **`schedule_admissible`** — the eleven pointwise clauses; `hybot` is `yBotG_le_yG` (proved),
-   `hmono` is `yG_antitone` (proved).  `hcutlo` needs `L ≥ 2`, `hcut2` needs
-   `2^{−L} log yBot ∈ [log 2, 2 log 2]`.
+    termE4c N = 2 · (2J)# · (∏_{j<J} ⌊T_j⌋) · R_N² / N,
+    R_N = gradedLevel univ (fun b => b+1) (uuG P N) (fun b => y_b).
+
+Attack (Astra §4 constants):
+* `log R_N = ∑_{b<J} (128(b+1) + 4u_b + 14) · log y_b` with `u_b = u_N + b`, `log y_b = a_N 2^{−b} log N`,
+  `a_N = u_N^{−2}`.  So `log R_N ≤ a_N log N · ∑_b (128b + 132 + 4u_N + 4b) 2^{−b}
+  ≤ a_N log N (4u_N + 132 + 132·∑_b b 2^{−b}) ≤ a_N log N (4u_N + 396) = (4u_N+396)/u_N² · log N`,
+  which is `o(log N)` — the `∑_b (b+1)2^{−b} = 4` identity of the handoff, with the constants
+  re-derived from the actual `gradedLevel`.
+* `(2J)# ≤ 4^{2J}` (`primorial_le_four_pow`, check the exact mathlib/repo name) and `J ≤ L₃N`, so
+  `log (2J)# ≤ 2J log 4 = O(L₃N) = o(log N)`.
+* `∏_{j<J} ⌊T_j⌋ ≤ ∏_j N^{2^{−j/2}/16} = N^{(1/16)∑_j 2^{−j/2}} ≤ N^{(1/16)·(1/(1−2^{−1/2}))}
+  ≤ N^{0.22}`.
+* Product is `N^{−1 + 0.22 + o(1)} → 0`.
+
+Useful already-proved: `uG_tendsto`, `aG_ge_invL3`, `JG_le_L3`, `yG_le_self`, `geom_sum_le_two`,
+`one_add_div_four_le_sqrt`.  The shape to match is `termE4a_le` (l. ~745), which does the same
+`N^{...}` bookkeeping for the Markov leg.
+
+### Landed 2026-09-23
+
+* **`termE5_tendsto`** (Astra 8.6) — the phase contraction at the near-top cutoff.  New
+  prerequisites `twoJ1_lt_yBotG`, `yG_le_self`.
+* **`schedule_admissible`** — all eleven clauses.  ROUTE FINDING: `LG` had to be **redefined**
+  off the bottom *site* cutoff `y_{J−1}` instead of `yBotG`.  With `L` read off `yBotG` the clause
+  `cut y_{J−1} L ≤ 2J` is FALSE whenever the `min` in `JG` is taken at the mass branch: then
+  `log y_{J−1} / log yBotG ≍ (L₃N/u_N²)·2^{J₁N−J_N}` is unbounded, while `2^L ≍ log₂ yBotG`, so the
+  bottom band's dyadic chain stops far above `2J`.  Reading `L` off `y_{J−1}` pins it from both
+  sides at once (`LG_spec`): `2^L ≤ log₂ y_{J−1} < 2^{L+1}` gives `hcut2` (chain stays `≥ 2`) and
+  `hcutlo` (bottom chain lands below `4 ≤ 2J`) simultaneously.  New helpers: `cut_le_next`
+  (`⌊t²⌋^{1/c} ≤ ⌊t⌋` for `t ≥ 4`, `c ≥ 4` — this is why `LG` is clipped at `2`), `LG_spec`.
+  `schedule_admissible` and `windowMean_le_terms` gained the hypotheses `hS`, `hP`.
 
 ## 2026-09-22 (lap G5c-e) — ROUTE FINDING: the contracting site index is bounded
 
