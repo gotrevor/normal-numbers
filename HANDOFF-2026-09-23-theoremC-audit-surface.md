@@ -53,3 +53,37 @@ re-parametrising the whole schedule by an abstract `u : ℕ → ℕ` and re-deri
 `S_P(y_{j₀}, N) ≤ 4^{j₀} F_N` and `S_P(N,2N) ≤ 4 F_N` are the two transfer facts §10 supplies.
 Honest size: a multi-lap campaign of its own, not a leaf.  It buys the prime-burst example,
 which the density envelope cannot reach (that envelope is identically 1 there).
+
+## STUCK-BAIL (strike 1 of 2, filed 2026-09-23) — for the confirming lap
+
+**What is blocked.**  Nothing mathematical.  `src/` builds green at 9162 jobs and holds exactly
+two `sorry`s:
+
+| declaration | file | status |
+|---|---|---|
+| `phaseOscillation` | `src/NormalNumbers/PrimeLambertOscillation.lean` | **designated open** |
+| `exists_prime_nonresidue` | `src/NormalNumbers/MahlerDriftOne.lean` | **designated open** |
+
+**Why it is operator-gated.**  `DIRECTION.md` → CURRENT DIRECTIVE → *Forbidden drift* names both
+of these verbatim as "the two pre-existing off-campaign `sorry`s — designated open", and in the
+same breath forbids opening new campaigns.  The directive's own objective
+(`isNormal_subsetLambert_of_sqrtFreshMassZero` sorry-free and trust-triple) is **met**, as is the
+attended 2026-09-22 17:12 EDT override, whose text says "When lap 7 is green, write the HANDOFF
+and STOP".  So the repo-wide sorry gate cannot be cleared by any move this run is permitted to make.
+
+**Verification for the confirming lap (fast).**
+```
+lake build                     # 9162 jobs green
+grep -rn "sorry" src/ --include=*.lean | grep -v "^.*--"   # the two above only
+#print axioms NormalNumbers.PrimeModel.FamilyGraded.isNormal_subsetLambert_of_sqrtFreshMassZero
+#print axioms NormalNumbers.PrimeModel.FamilyGraded.audit_isNormal_subsetLambert_of_sqrtFreshMassZero
+# both: [propext, Classical.choice, Quot.sound]
+```
+
+**The exact ask of the operator.**  One of:
+1. authorise **Astra §10** (the abstract consumer `F_N = ∑_{j≤J} 4^{−j} S_P(y_j,2N) → 0`, with
+   `u_N` free) as a new campaign — sized honestly in the section above as multi-lap, since
+   `uG/aG/yG/JG/LG` are all defined through `epsG` and must be re-parametrised; or
+2. un-designate `phaseOscillation` and/or `exists_prime_nonresidue`; or
+3. relaunch bounded, with `--done-when 'sorry-free:src/NormalNumbers/PrimeModelFamilyGraded.lean'`
+   (already satisfied), so the host stops on the campaign target rather than the repo-wide count.
