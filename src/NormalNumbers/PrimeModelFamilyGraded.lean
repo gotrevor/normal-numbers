@@ -283,6 +283,12 @@ theorem uG_tendsto (hS : SqrtFreshMassZero P) (hy : Tendsto yBotG atTop atTop) :
 
 theorem JG_le_J1 (N : ℕ) : JG P N ≤ J1 N := min_le_left _ _
 
+theorem JG_le_L3 : ∀ᶠ N : ℕ in atTop, (JG P N : ℝ) ≤ L3 N := by
+  filter_upwards [L3_tendsto.eventually_ge_atTop 0] with N hL
+  have h2 : ((J1 N : ℕ) : ℝ) ≤ L3 N := Nat.floor_le (by linarith)
+  have h3 : (JG P N : ℝ) ≤ ((J1 N : ℕ) : ℝ) := by exact_mod_cast JG_le_J1 P N
+  linarith
+
 theorem invEpsG_nonneg (N : ℕ) : 0 ≤ invEpsG P N := by
   rw [invEpsG]; split
   · exact Real.sqrt_nonneg _
@@ -604,9 +610,182 @@ theorem windowMean_le_terms (h : ℤ) : ∀ᶠ N : ℕ in atTop,
 /-- **Open leaf G5c-2 (E1).**  `∑_j a_j (2 S_P(y_j, N) + J/N) → 0`: the root chain
 (`SqrtFresh.recipSumIoc_le_rootChain`) gives `S_P(y_j, N) ≤ ε_N (j + 2 log₂ u_N + 1)`, and
 `u_N ≤ ε_N^{−1/2}` makes `ε_N log u_N → 0`. -/
+private theorem two_add_le_two_pow (j : ℕ) : ((j : ℝ) + 2) ≤ 2 ^ (j + 1) := by
+  induction j with
+  | zero => norm_num
+  | succ n ih =>
+    have h2 : (0 : ℝ) < (2 : ℝ) ^ (n + 1) := by positivity
+    push_cast
+    rw [show ((2 : ℝ)) ^ (n + 1 + 1) = 2 * 2 ^ (n + 1) from by ring]
+    push_cast at ih
+    linarith
+
+private theorem sum_half_succ_le (k : ℕ) : ∑ j ∈ Finset.range k, ((1 : ℝ) / 2) ^ (j + 1) ≤ 1 := by
+  have h := sum_geometric_two_le k
+  calc ∑ j ∈ Finset.range k, ((1 : ℝ) / 2) ^ (j + 1)
+      = (1 / 2) * ∑ j ∈ Finset.range k, ((1 : ℝ) / 2) ^ j := by
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun j _ => by rw [pow_succ]; ring
+    _ ≤ (1 / 2) * 2 := by linarith
+    _ = 1 := by norm_num
+
+/-- The site weights absorb the growing chain length: `∑_j 4^{−j−1}(j + 2 + 2L) ≤ 1 + 2L`. -/
+private theorem sum_quarter_weight_le {L : ℝ} (hL : 0 ≤ L) (k : ℕ) :
+    ∑ j ∈ Finset.range k, ((1 : ℝ) / 4) ^ (j + 1) * ((j : ℝ) + 2 + 2 * L) ≤ 1 + 2 * L := by
+  have hterm : ∀ j ∈ Finset.range k,
+      ((1 : ℝ) / 4) ^ (j + 1) * ((j : ℝ) + 2 + 2 * L) ≤ (1 + 2 * L) * ((1 : ℝ) / 2) ^ (j + 1) := by
+    intro j _
+    have hq : ((1 : ℝ) / 4) ^ (j + 1) = ((1 : ℝ) / 2) ^ (j + 1) * ((1 : ℝ) / 2) ^ (j + 1) := by
+      rw [← mul_pow]; norm_num
+    have hp : (0 : ℝ) < ((1 : ℝ) / 2) ^ (j + 1) := by positivity
+    have hinv : ((1 : ℝ) / 2) ^ (j + 1) * (2 : ℝ) ^ (j + 1) = 1 := by
+      rw [← mul_pow]; norm_num
+    have h1 : ((1 : ℝ) / 4) ^ (j + 1) * ((j : ℝ) + 2)
+        ≤ ((1 : ℝ) / 2) ^ (j + 1) := by
+      rw [hq]
+      calc ((1 : ℝ) / 2) ^ (j + 1) * ((1 : ℝ) / 2) ^ (j + 1) * ((j : ℝ) + 2)
+          ≤ ((1 : ℝ) / 2) ^ (j + 1) * ((1 : ℝ) / 2) ^ (j + 1) * 2 ^ (j + 1) :=
+            mul_le_mul_of_nonneg_left (two_add_le_two_pow j) (by positivity)
+        _ = ((1 : ℝ) / 2) ^ (j + 1) := by rw [mul_assoc, hinv, mul_one]
+    have h2 : ((1 : ℝ) / 4) ^ (j + 1) * (2 * L) ≤ ((1 : ℝ) / 2) ^ (j + 1) * (2 * L) := by
+      refine mul_le_mul_of_nonneg_right ?_ (by linarith)
+      rw [hq]
+      nlinarith [hp, pow_le_one₀ (show (0:ℝ) ≤ 1/2 by norm_num) (show (1:ℝ)/2 ≤ 1 by norm_num)
+        (n := j + 1)]
+    nlinarith [h1, h2]
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [← Finset.mul_sum]
+  nlinarith [sum_half_succ_le k, hL,
+    Finset.sum_nonneg (fun j (_ : j ∈ Finset.range k) =>
+      pow_nonneg (show (0:ℝ) ≤ 1/2 by norm_num) (j + 1))]
+
+/-- `J_N / N → 0`. -/
+theorem JG_div_tendsto (hP : DivergentRecip P) :
+    Tendsto (fun N : ℕ => (JG P N : ℝ) / N) atTop (𝓝 0) := by
+  have hlogdiv : Tendsto (fun N : ℕ => Real.log N / (N : ℝ)) atTop (𝓝 0) := by
+    have h1 := (tendsto_log_div_rpow (r := (1 : ℝ)) (by norm_num)).comp
+      (tendsto_natCast_atTop_atTop (R := ℝ))
+    simpa [Function.comp_def] using h1
+  refine squeeze_zero' (Eventually.of_forall fun N => ?_) ?_ hlogdiv
+  · positivity
+  filter_upwards [JG_le_L3 P, L2_tendsto.eventually_ge_atTop (1 : ℝ),
+    eventually_ge_atTop 3] with N hJ hL2 hN3
+  have hNr : (3 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN3
+  have hlogN : (0 : ℝ) < Real.log N := Real.log_pos (by linarith)
+  have hL2le : L2 N ≤ Real.log N := by
+    have h := Real.log_le_sub_one_of_pos hlogN
+    have : L2 N = Real.log (Real.log N) := rfl
+    rw [this]; linarith
+  have hL3le : L3 N ≤ L2 N := by
+    rw [L3_eq N]
+    have h := Real.log_le_sub_one_of_pos (show (0 : ℝ) < L2 N by linarith)
+    linarith
+  exact div_le_div_of_nonneg_right (by linarith) (Nat.cast_nonneg N)
+
 theorem termE1_tendsto (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) (h : ℤ) :
     Tendsto (termE1 P h) atTop (𝓝 0) := by
-  sorry
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  -- the majorant
+  set g : ℕ → ℝ := fun N =>
+    8 * Real.pi * |(h : ℝ)|
+        * ((1 + 2 * (Real.log ((uG P N : ℕ) : ℝ) / Real.log 2)) / ((uG P N : ℕ) : ℝ) ^ 2)
+      + (4 * Real.pi * |(h : ℝ)| / 3) * ((JG P N : ℝ) / N) with hgdef
+  have hgt : Tendsto g atTop (𝓝 0) := by
+    have hE : ∀ t : ℝ, 0 ≤ t → t ^ (2 : ℝ) = t ^ (2 : ℕ) := by
+      intro t ht
+      rw [← Real.rpow_natCast t 2]
+      norm_num
+    have hf : Tendsto (fun t : ℝ => (1 + 2 * (Real.log t / Real.log 2)) / t ^ 2)
+        atTop (𝓝 0) := by
+      have h1 := tendsto_rpow_neg_atTop (show (0 : ℝ) < 2 by norm_num)
+      have h2 := (tendsto_log_div_rpow (r := (2 : ℝ)) (by norm_num)).const_mul
+        (2 / Real.log 2)
+      have h3 : Tendsto
+          (fun t : ℝ => t ^ (-(2 : ℝ)) + (2 / Real.log 2) * (Real.log t / t ^ (2 : ℝ)))
+          atTop (𝓝 0) := by simpa using h1.add h2
+      refine h3.congr' ?_
+      filter_upwards [eventually_gt_atTop (0 : ℝ)] with t ht
+      rw [Real.rpow_neg ht.le, hE t ht.le]
+      field_simp
+    have hu : Tendsto (fun N : ℕ => ((uG P N : ℕ) : ℝ)) atTop atTop :=
+      tendsto_natCast_atTop_atTop.comp (uG_tendsto P hS yBotG_tendsto)
+    have hA := (hf.comp hu).const_mul (8 * Real.pi * |(h : ℝ)|)
+    have hB := (JG_div_tendsto P hP).const_mul (4 * Real.pi * |(h : ℝ)| / 3)
+    have := hA.add hB
+    simpa [hgdef, Function.comp_def] using this
+  refine squeeze_zero' (Eventually.of_forall fun N => ?_) ?_ hgt
+  · rw [termE1]
+    refine Finset.sum_nonneg fun j _ => mul_nonneg (siteBudget_nonneg h _) ?_
+    have := recipSumIoc_nonneg P (yG P N (j : ℕ)) N
+    positivity
+  filter_upwards [recipSumIoc_yG_le P hS,
+    (uG_tendsto P hS yBotG_tendsto).eventually_ge_atTop 2] with N hchain hu2
+  have hu2r : (2 : ℝ) ≤ ((uG P N : ℕ) : ℝ) := by exact_mod_cast hu2
+  set u : ℝ := ((uG P N : ℕ) : ℝ) with hudef
+  set L : ℝ := Real.log u / Real.log 2 with hLdef
+  have hL0 : (0 : ℝ) ≤ L := by
+    rw [hLdef]
+    exact div_nonneg (Real.log_nonneg (by linarith)) hlog2.le
+  have hupos : (0 : ℝ) < u := by linarith
+  -- per-site bound
+  have hsite : ∀ j : Fin (JG P N),
+      siteBudget h (j : ℕ) * (2 * recipSumIoc P (yG P N (j : ℕ)) N + (JG P N : ℝ) / N)
+        ≤ 8 * Real.pi * |(h : ℝ)| * (((1 : ℝ) / 4) ^ ((j : ℕ) + 1)
+            * (((j : ℕ) : ℝ) + 2 + 2 * L)) / u ^ 2
+          + siteBudget h (j : ℕ) * ((JG P N : ℝ) / N) := by
+    intro j
+    have hj : (j : ℕ) ≤ J1 N := le_trans (le_of_lt j.2) (JG_le_J1 P N)
+    have hR := hchain (j : ℕ) hj
+    have hb : siteBudget h (j : ℕ) = 4 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ ((j : ℕ) + 1) := rfl
+    have hRC : recipSumIoc P (yG P N (j : ℕ)) N
+        ≤ (((j : ℕ) : ℝ) + 2 + 2 * L) / u ^ 2 := by
+      rw [hLdef]
+      have : ((j : ℕ) : ℝ) + 2 + 2 * (Real.log u / Real.log 2)
+          = ((j : ℕ) : ℝ) + 2 + 2 * Real.log u / Real.log 2 := by ring
+      rw [this]
+      exact hR
+    have hc : (0 : ℝ) ≤ 8 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ ((j : ℕ) + 1) := by positivity
+    have hkey := mul_le_mul_of_nonneg_left hRC hc
+    have e1 : 4 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ ((j : ℕ) + 1)
+          * (2 * recipSumIoc P (yG P N (j : ℕ)) N + (JG P N : ℝ) / N)
+        = 8 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ ((j : ℕ) + 1)
+            * recipSumIoc P (yG P N (j : ℕ)) N
+          + 4 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ ((j : ℕ) + 1) * ((JG P N : ℝ) / N) := by
+      ring
+    have e2 : 8 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ ((j : ℕ) + 1)
+          * ((((j : ℕ) : ℝ) + 2 + 2 * L) / u ^ 2)
+        = 8 * Real.pi * |(h : ℝ)| * (((1 : ℝ) / 4) ^ ((j : ℕ) + 1)
+            * (((j : ℕ) : ℝ) + 2 + 2 * L)) / u ^ 2 := by ring
+    rw [hb, e1]
+    linarith [hkey, e2.le, e2.ge]
+  refine le_trans (Finset.sum_le_sum (fun j _ => hsite j)) ?_
+  rw [Finset.sum_add_distrib]
+  have hS1 : ∑ j : Fin (JG P N), 8 * Real.pi * |(h : ℝ)| * (((1 : ℝ) / 4) ^ ((j : ℕ) + 1)
+        * (((j : ℕ) : ℝ) + 2 + 2 * L)) / u ^ 2
+      ≤ 8 * Real.pi * |(h : ℝ)| * ((1 + 2 * L) / u ^ 2) := by
+    have hrw : ∑ j : Fin (JG P N), 8 * Real.pi * |(h : ℝ)| * (((1 : ℝ) / 4) ^ ((j : ℕ) + 1)
+          * (((j : ℕ) : ℝ) + 2 + 2 * L)) / u ^ 2
+        = (8 * Real.pi * |(h : ℝ)| / u ^ 2)
+            * ∑ j ∈ Finset.range (JG P N), ((1 : ℝ) / 4) ^ (j + 1) * ((j : ℝ) + 2 + 2 * L) := by
+      rw [Finset.mul_sum, Fin.sum_univ_eq_sum_range
+        (fun i => 8 * Real.pi * |(h : ℝ)| * (((1 : ℝ) / 4) ^ (i + 1)
+          * ((i : ℝ) + 2 + 2 * L)) / u ^ 2) (JG P N)]
+      exact Finset.sum_congr rfl fun i _ => by ring
+    rw [hrw]
+    have hsum := sum_quarter_weight_le hL0 (JG P N)
+    have hc : (0 : ℝ) ≤ 8 * Real.pi * |(h : ℝ)| / u ^ 2 := by positivity
+    have h1 := mul_le_mul_of_nonneg_left hsum hc
+    have h2 : 8 * Real.pi * |(h : ℝ)| / u ^ 2 * (1 + 2 * L)
+        = 8 * Real.pi * |(h : ℝ)| * ((1 + 2 * L) / u ^ 2) := by ring
+    linarith [h1, h2.le, h2.ge]
+  have hS2 : ∑ j : Fin (JG P N), siteBudget h (j : ℕ) * ((JG P N : ℝ) / N)
+      ≤ (4 * Real.pi * |(h : ℝ)| / 3) * ((JG P N : ℝ) / N) := by
+    rw [← Finset.sum_mul]
+    exact mul_le_mul_of_nonneg_right (sum_siteBudget_le h (JG P N)) (by positivity)
+  rw [hgdef]
+  have hbridge : 8 * Real.pi * |(h : ℝ)| * ((1 + 2 * (Real.log u / Real.log 2)) / u ^ 2)
+      = 8 * Real.pi * |(h : ℝ)| * ((1 + 2 * L) / u ^ 2) := by rw [hLdef]
+  linarith [hS1, hS2, hbridge.le, hbridge.ge]
 
 /-- **Open leaf G5c-3 (E4a).**  `log T_j / (2 log y_j) = 2^{j/2} u_N²/32`, so the sum is
 `2 e^{20} ∑_j exp(−2^{j/2} u_N²/32) → 0`.  This is the term the ungraded Markov range made
@@ -804,12 +983,6 @@ theorem termE5_tendsto (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) (h : �
 
 /-- **Open leaf G5c-7.**  The tail along the graded schedule: the `min` in `JG` is the same
 device as `JI`, so `tail_fresh`'s two-branch argument applies with `yBotG` in place of `yI`. -/
-theorem JG_le_L3 : ∀ᶠ N : ℕ in atTop, (JG P N : ℝ) ≤ L3 N := by
-  filter_upwards [L3_tendsto.eventually_ge_atTop 0] with N hL
-  have h2 : ((J1 N : ℕ) : ℝ) ≤ L3 N := Nat.floor_le (by linarith)
-  have h3 : (JG P N : ℝ) ≤ ((J1 N : ℕ) : ℝ) := by exact_mod_cast JG_le_J1 P N
-  linarith
-
 theorem JG_le_mass (N : ℕ) : 8 * (JG P N : ℝ) ≤ recipSumLe P N := by
   have hS := recipSumLe_nonneg P N
   have h1 : JG P N ≤ ⌊recipSumLe P N / 8⌋₊ := min_le_right _ _
