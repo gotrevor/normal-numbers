@@ -973,12 +973,6 @@ theorem termE4b_tendsto (hS : SqrtFreshMassZero P) (_hP : DivergentRecip P) :
 theorem termE4c_tendsto (hP : DivergentRecip P) : Tendsto (termE4c P) atTop (𝓝 0) := by
   sorry
 
-/-- **Open leaf G5c-6 (E5).**  `J_N ≤ S_P(yBot N)/8` and `S_P(2J) = O(log log J)` give
-`∑_{p ∈ P ∩ (2J, yBot]} 1/p ≥ 8J − O(log log J) ≥ 2J + 5J`, so the term is `≤ e^{−5J} → 0`. -/
-theorem termE5_tendsto (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) (h : ℤ) :
-    Tendsto (termE5 P h) atTop (𝓝 0) := by
-  sorry
-
 /-! ## Theorem C′ -/
 
 /-- **Open leaf G5c-7.**  The tail along the graded schedule: the `min` in `JG` is the same
@@ -1024,6 +1018,179 @@ theorem JG_tendsto (hP : DivergentRecip P) : Tendsto (JG P) atTop atTop := by
   refine tendsto_atTop.mpr fun b => ?_
   filter_upwards [hA.eventually_ge_atTop b, hB.eventually_ge_atTop b] with N h1 h2
   exact le_min h1 h2
+
+/-! ### E5: the phase contraction at the near-top cutoff -/
+
+/-- The bottom cutoff eventually dominates twice the site count.  `y_bot ≥ y_N ≥ log N − 1`
+(`yN_core`, through `epsN_le_aMinG`), while `2 J₁N ≤ 2 L₃N ≤ L₂N < log N − 1` because
+`L₂N + 1 < exp(L₂N) = log N`. -/
+theorem twoJ1_lt_yBotG : ∀ᶠ N : ℕ in atTop, 2 * J1 N < yBotG N := by
+  filter_upwards [epsN_le_aMinG, eventually_ge_atTop 3,
+    L2_tendsto.eventually_ge_atTop (2500 : ℝ)] with N hle hN3 hL
+  obtain ⟨-, -, -, -, hyNlog⟩ := yN_core hN3 hL
+  obtain ⟨hL3one, hL3half, -⟩ := L3_bounds hL
+  have hN3r : (3 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN3
+  have hN1 : (1 : ℝ) ≤ (N : ℝ) := by linarith
+  have hyNle : yN N ≤ yBotG N :=
+    Nat.floor_le_floor (Real.rpow_le_rpow_of_exponent_le hN1 hle)
+  have hlogN : (0 : ℝ) < Real.log N := Real.log_pos (by linarith)
+  have hL2pos : (0 : ℝ) < L2 N := by linarith
+  have hexp : Real.exp (L2 N) = Real.log N := Real.exp_log hlogN
+  have hgt : L2 N + 1 < Real.log N := by
+    rw [← hexp]; exact Real.add_one_lt_exp (ne_of_gt hL2pos)
+  have hJ1le : ((J1 N : ℕ) : ℝ) ≤ L3 N := by
+    simp only [J1]; exact Nat.floor_le (by linarith)
+  have hyb : ((yN N : ℕ) : ℝ) ≤ ((yBotG N : ℕ) : ℝ) := by exact_mod_cast hyNle
+  have hfin : ((2 * J1 N : ℕ) : ℝ) < ((yBotG N : ℕ) : ℝ) := by push_cast; linarith
+  exact_mod_cast hfin
+
+/-- Every site cutoff is below `N`: the exponent `a_N 2^{−j}` is at most `1`. -/
+theorem yG_le_self (hS : SqrtFreshMassZero P) : ∀ᶠ N : ℕ in atTop, ∀ j : ℕ, yG P N j ≤ N := by
+  filter_upwards [(uG_tendsto P hS yBotG_tendsto).eventually_ge_atTop 1,
+    eventually_ge_atTop 1] with N hu hN j
+  have hN1 : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+  have hu1 : (1 : ℝ) ≤ ((uG P N : ℕ) : ℝ) := by exact_mod_cast hu
+  have husq : (1 : ℝ) ≤ ((uG P N : ℕ) : ℝ) ^ 2 := by nlinarith
+  have ha1 : aG P N ≤ 1 := by
+    rw [aG, div_le_one (by linarith)]; linarith
+  have hnn : (0 : ℝ) ≤ aG P N := by rw [aG]; positivity
+  have hhalf0 : (0 : ℝ) ≤ ((1 : ℝ) / 2) ^ j :=
+    pow_nonneg (by norm_num) j
+  have hhalf : ((1 : ℝ) / 2) ^ j ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+  have hexp : aG P N * ((1 : ℝ) / 2) ^ j ≤ 1 := by nlinarith
+  have hstep : ((N : ℝ)) ^ (aG P N * ((1 : ℝ) / 2) ^ j) ≤ (N : ℝ) ^ (1 : ℝ) :=
+    Real.rpow_le_rpow_of_exponent_le hN1 hexp
+  rw [Real.rpow_one] at hstep
+  have hfl : ⌊((N : ℝ)) ^ (aG P N * ((1 : ℝ) / 2) ^ j)⌋₊ ≤ ⌊(N : ℝ)⌋₊ := Nat.floor_le_floor hstep
+  simpa [yG] using hfl
+
+/-- **Leaf G5c-6 (E5) — PROVED.**  Astra (8.6).  At the near-top cutoff `y_c`,
+`c = cIdx P h N ≤ log₄|h|`:
+
+    ∑_{p ∈ P, 2J < p ≤ y_c} 1/p = S_P(y_c) − S_P(2J)
+                                = (S_P(N) − S_P(y_c,N)) − S_P(2J)
+                                ≥ 8J − 1 − (12 L₂(2J) + 21),
+
+from `JG_le_mass` (`8J ≤ S_P(N)`), the **short** root chain `recipSumIoc_yG_le`
+(`S_P(y_c,N) ≤ (c + 2 + 2 log₂ u_N)/u_N² ≤ 1` once `u_N ≥ log₄|h| + 5`) and Mertens
+(`FamilySharp.recipSumLe_le_crude`).  With `L₂(2J) ≤ log(2J)` this gives
+
+    E5 ≤ e^{2J} · e^{−8J + 22 + 12 log 2J} = e^{22} (2J)^{12} / (e^6)^J → 0.
+
+The `e^{22}` and the twelfth power are pure slack; the point is that the linear term `−6J`
+survives, which is exactly what tying `J_N` to the **full** mass `S_P(N)` bought. -/
+theorem termE5_tendsto (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) (h : ℤ) :
+    Tendsto (termE5 P h) atTop (𝓝 0) := by
+  have he6 : (1 : ℝ) < Real.exp 6 := by
+    have := Real.add_one_lt_exp (show (6 : ℝ) ≠ 0 by norm_num)
+    linarith
+  have hmaj : Tendsto
+      (fun m : ℕ => Real.exp 22 * (2 * (m : ℝ)) ^ 12 / (Real.exp 6) ^ m) atTop (𝓝 0) := by
+    have h1 := tendsto_pow_const_div_const_pow_of_one_lt 12 he6
+    have h2 : Tendsto
+        (fun m : ℕ => (Real.exp 22 * 2 ^ 12) * ((m : ℝ) ^ 12 / (Real.exp 6) ^ m))
+        atTop (𝓝 0) := by simpa using h1.const_mul (Real.exp 22 * 2 ^ 12)
+    refine h2.congr fun m => ?_
+    rw [mul_pow]; ring
+  refine squeeze_zero' (Eventually.of_forall fun N => ?_) ?_ (hmaj.comp (JG_tendsto P hP))
+  · simp only [termE5]; positivity
+  filter_upwards [recipSumIoc_yG_le P hS, yBotG_le_yG_nat P hS, twoJ1_lt_yBotG,
+    yG_le_self P hS, (JG_tendsto P hP).eventually_ge_atTop 2,
+    (uG_tendsto P hS yBotG_tendsto).eventually_ge_atTop (Nat.log 4 h.natAbs + 5),
+    eventually_ge_atTop 1] with N hchain hybot htwoJ hyself hJ2 hu hN1
+  -- the index of the contracting site
+  have hJ1le : JG P N ≤ J1 N := JG_le_J1 P N
+  have hcJ : cIdx P h N ≤ JG P N - 1 := min_le_right _ _
+  have hcC0 : cIdx P h N ≤ Nat.log 4 h.natAbs := min_le_left _ _
+  have hcJ1 : cIdx P h N ≤ J1 N := by omega
+  have hy0 : yG P N (cIdx P h N) ≤ yG P N 0 := yG_antitone P hN1 (Nat.zero_le _)
+  have h2Jy : 2 * JG P N ≤ yG P N (cIdx P h N) := by
+    have := hybot (cIdx P h N) hcJ1
+    omega
+  have hycN : yG P N (cIdx P h N) ≤ N := hyself _
+  -- the index set of E5 is the mass on `(2J, y_c]`
+  have hset : ((midPrimes P (2 * JG P N) (yG P N 0)).filter
+      (fun p => p ≤ yG P N (cIdx P h N)))
+      = (Finset.Ioc (2 * JG P N) (yG P N (cIdx P h N))).filter (fun p => p.Prime ∧ P p) := by
+    ext p
+    simp only [Finset.mem_filter, mem_midPrimes, Finset.mem_Ioc]
+    constructor
+    · rintro ⟨⟨hp, hPp, hlt, -⟩, hle⟩
+      exact ⟨⟨hlt, hle⟩, hp, hPp⟩
+    · rintro ⟨⟨hlt, hle⟩, hp, hPp⟩
+      exact ⟨⟨hp, hPp, hlt, le_trans hle hy0⟩, hle⟩
+  have hsum : ∑ p ∈ ((midPrimes P (2 * JG P N) (yG P N 0)).filter
+      (fun p => p ≤ yG P N (cIdx P h N))), (1 : ℝ) / (p : ℝ)
+      = recipSumIoc P (2 * JG P N) (yG P N (cIdx P h N)) := by
+    rw [hset]; rfl
+  -- numeric preliminaries
+  have hJ2r : (2 : ℝ) ≤ ((JG P N : ℕ) : ℝ) := by exact_mod_cast hJ2
+  have h2Jgt : (1 : ℝ) < ((2 * JG P N : ℕ) : ℝ) := by push_cast; linarith
+  have hlog2J : (0 : ℝ) < Real.log ((2 * JG P N : ℕ) : ℝ) := Real.log_pos h2Jgt
+  have hL2le : L2 (2 * JG P N) ≤ Real.log ((2 * JG P N : ℕ) : ℝ) := by
+    have := Real.log_le_sub_one_of_pos hlog2J
+    simp only [L2]
+    linarith
+  have hcrude : recipSumLe P (2 * JG P N) ≤ 12 * L2 (2 * JG P N) + 21 :=
+    NormalNumbers.PrimeModel.FamilySharp.recipSumLe_le_crude P (by omega)
+  -- the short root chain kills the mass above `y_c`
+  have htail : recipSumIoc P (yG P N (cIdx P h N)) N ≤ 1 := by
+    have hu5 : ((Nat.log 4 h.natAbs : ℕ) : ℝ) + 5 ≤ ((uG P N : ℕ) : ℝ) := by
+      have : ((Nat.log 4 h.natAbs + 5 : ℕ) : ℝ) ≤ ((uG P N : ℕ) : ℝ) := by exact_mod_cast hu
+      push_cast at this; linarith
+    have hC0nn : (0 : ℝ) ≤ ((Nat.log 4 h.natAbs : ℕ) : ℝ) := Nat.cast_nonneg _
+    have hu5' : (5 : ℝ) ≤ ((uG P N : ℕ) : ℝ) := by linarith
+    have hu0 : (0 : ℝ) ≤ ((uG P N : ℕ) : ℝ) := by linarith
+    have hcr : ((cIdx P h N : ℕ) : ℝ) ≤ ((Nat.log 4 h.natAbs : ℕ) : ℝ) := by exact_mod_cast hcC0
+    have hulog : Real.log ((uG P N : ℕ) : ℝ) ≤ ((uG P N : ℕ) : ℝ) - 1 :=
+      Real.log_le_sub_one_of_pos (by linarith)
+    have hlog2 : (0.6931471803 : ℝ) < Real.log 2 := Real.log_two_gt_d9
+    have hdiv : 2 * Real.log ((uG P N : ℕ) : ℝ) / Real.log 2 ≤ 3 * ((uG P N : ℕ) : ℝ) := by
+      rw [div_le_iff₀ (by linarith)]
+      nlinarith [mul_nonneg hu0 (by linarith : (0 : ℝ) ≤ Real.log 2 - 0.6931471803)]
+    have hsq : 5 * ((uG P N : ℕ) : ℝ) ≤ ((uG P N : ℕ) : ℝ) ^ 2 := by nlinarith
+    refine (hchain _ hcJ1).trans ?_
+    rw [div_le_one (by nlinarith)]
+    linarith
+  have hmass : 8 * ((JG P N : ℕ) : ℝ) ≤ recipSumLe P N := JG_le_mass P N
+  have hsplit1 : recipSumLe P (yG P N (cIdx P h N))
+      = recipSumLe P (2 * JG P N) + recipSumIoc P (2 * JG P N) (yG P N (cIdx P h N)) :=
+    recipSumLe_add_recipSumIoc P h2Jy
+  have hsplit2 : recipSumLe P N
+      = recipSumLe P (yG P N (cIdx P h N)) + recipSumIoc P (yG P N (cIdx P h N)) N :=
+    recipSumLe_add_recipSumIoc P hycN
+  have hSigma : 8 * ((JG P N : ℕ) : ℝ) - 22 - 12 * Real.log ((2 * JG P N : ℕ) : ℝ)
+      ≤ recipSumIoc P (2 * JG P N) (yG P N (cIdx P h N)) := by linarith
+  -- assemble
+  simp only [Function.comp_apply, termE5]
+  rw [hsum]
+  have hstep : Real.exp (-recipSumIoc P (2 * JG P N) (yG P N (cIdx P h N)))
+      ≤ Real.exp (-(8 * ((JG P N : ℕ) : ℝ) - 22
+          - 12 * Real.log ((2 * JG P N : ℕ) : ℝ))) :=
+    Real.exp_le_exp.mpr (by linarith)
+  have hxpos : (0 : ℝ) < 2 * ((JG P N : ℕ) : ℝ) := by linarith
+  have hlogpow : Real.exp (12 * Real.log (2 * ((JG P N : ℕ) : ℝ)))
+      = (2 * ((JG P N : ℕ) : ℝ)) ^ (12 : ℕ) := by
+    rw [show (12 : ℝ) * Real.log (2 * ((JG P N : ℕ) : ℝ))
+        = Real.log ((2 * ((JG P N : ℕ) : ℝ)) ^ (12 : ℕ)) by rw [Real.log_pow]; push_cast; ring]
+    exact Real.exp_log (pow_pos hxpos 12)
+  have hfact : Real.exp (2 * ((JG P N : ℕ) : ℝ))
+      * Real.exp (-(8 * ((JG P N : ℕ) : ℝ) - 22
+          - 12 * Real.log ((2 * JG P N : ℕ) : ℝ)))
+      = Real.exp 22 * (2 * ((JG P N : ℕ) : ℝ)) ^ 12 / (Real.exp 6) ^ (JG P N) := by
+    have hx : ((2 * JG P N : ℕ) : ℝ) = 2 * ((JG P N : ℕ) : ℝ) := by push_cast; ring
+    rw [hx, ← Real.exp_add,
+      show 2 * ((JG P N : ℕ) : ℝ) + -(8 * ((JG P N : ℕ) : ℝ) - 22
+          - 12 * Real.log (2 * ((JG P N : ℕ) : ℝ)))
+        = (22 + 12 * Real.log (2 * ((JG P N : ℕ) : ℝ))) - ((JG P N : ℕ) : ℝ) * 6 by ring,
+      Real.exp_sub, Real.exp_add, hlogpow, Real.exp_nat_mul]
+  calc Real.exp (2 * ((JG P N : ℕ) : ℝ))
+        * Real.exp (-recipSumIoc P (2 * JG P N) (yG P N (cIdx P h N)))
+      ≤ Real.exp (2 * ((JG P N : ℕ) : ℝ))
+        * Real.exp (-(8 * ((JG P N : ℕ) : ℝ) - 22
+            - 12 * Real.log ((2 * JG P N : ℕ) : ℝ))) :=
+        mul_le_mul_of_nonneg_left hstep (Real.exp_pos _).le
+    _ = _ := hfact
 
 /-- The graded twin of `tail_fresh`: the two-branch argument of the `min` in `JG`. -/
 theorem tail_graded (hfm : ∀ᶠ N : ℕ in atTop, recipSumIoc P N (2 * N) ≤ 1)
