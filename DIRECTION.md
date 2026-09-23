@@ -40,7 +40,18 @@ one).  See `G4PrefixDecayAudit.lean` for the proved counterexample and the
 still-open replacement `EventualPrefixDecay`; [next Fable brief](papers/FABLE-NEXT-SESSION.md)
 is the research plan, not a new unattended campaign authorization.
 
-## Attended operator override: 2026-09-22 17:12 EDT — Pair A MULTICUTOFF FORMALISATION (ACTIVE)
+## Attended operator override: 2026-09-22 17:12 EDT — Pair A MULTICUTOFF FORMALISATION (DONE, one run of 8 laps)
+
+**Result (2026-09-22 21:10 EDT, verified on the host):** `isNormal_subsetLambert_of_sqrtFreshMassZero`
+is sorry-free with axioms `[propext, Classical.choice, Quot.sound]`; so are the lap-0 nodes
+(`recipSumIoc_le_rootChain`, `sqrtFreshMassZero_of_freshMassZero`, `sqrtFreshMassZero_of_relDensityZero`),
+Astra §10's `geomFreshMass_tendsto`, the double-exponential block equivalence `dblBlockMass_tendsto_iff`,
+and the NL→Lean cross-check forms.  Pure addition: 34 new files, no existing statement changed,
+`PrimeModelBrunLower.lean` untouched.  Nothing in either paper refuted; one tacit step made explicit
+(the contracting site index is `≤ log₄|h|`, `PrimeModelSiteIndexBound.lean`).  The run halted itself
+on a confirmed stuck-bail naming three doors that each need an operator decision (Astra §10 consumer
+over a free `u`, a two-sided Mertens campaign, or un-designating a legacy sorry) - see
+`HANDOFF-2026-09-23-theoremC-reach-and-crosscheck.md`.  **No active override.**
 
 Run `KICKOFF-2026-09-22-multicutoff-lean.md`: formalise the pair-refereed graded-cutoff result of
 `papers/ROUND2-multicutoff-fable.md` / `-astra.md`.  Headline

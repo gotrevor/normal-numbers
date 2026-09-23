@@ -396,7 +396,7 @@ because `ρ_N log u_N ≤ (1/2) ρ_N log(1/ρ_N) → 0`.  *Old mass* uses the sa
 `S_P(y_{j₀}, y₁) ≤ ρ_N (j₀ + 2)`.  Every other line of §6 is unchanged.  Astra's §8/§11 schedule
 proves the same theorem with its own constants; either may be formalised.
 
-**Reach.**  Relative density zero `⇒ r_P → 0` (dominated Abel on `(⌊√N⌋, N]`: `≤ δ(9 + 12 log 2)`),
+**Reach.**  Relative density zero `⇒ r_P → 0` (dominated Abel on `(⌊√N⌋, N]`: `≤ δ(9 + 12 log 3)`, since `N ≤ ⌊√N⌋³` for `N ≥ 4`; Astra's floor correction, mail `20260922T211510Z`, and the Lean proof in `PrimeModelSqrtFresh.lean`),
 the old `FreshMassZero ⇒ r_P → 0` (`yI(N) ≤ ⌊√N⌋` eventually), and the Part VI barrier set
 separates the two, so the inclusion left open in §0 is now settled in the direction
 `FreshMassZero ⊊ SqrtFreshMassZero`.  Conversely any schedule of the geometric family with
@@ -410,3 +410,13 @@ consumer (Astra 11.3), not a necessary condition for normality.  Astra's §12 sh
       Tendsto (fun N : ℕ => recipSumIoc P (Nat.sqrt N) N) atTop (𝓝 0)
     theorem isNormal_subsetLambert_of_sqrtFreshMassZero :
       SqrtFreshMassZero P → DivergentRecip P → IsNormal 4 (subsetLambert P 4)
+
+**Formalised (2026-09-22, Opus treadmill, one run of 8 laps, verified on the host):**
+`isNormal_subsetLambert_of_sqrtFreshMassZero` in `src/NormalNumbers/PrimeModelFamilyGraded.lean`
+is sorry-free on `[propext, Classical.choice, Quot.sound]`, together with the root chain, both
+implications into `SqrtFreshMassZero`, Astra §10's `F_N → 0`, and the double-exponential block
+equivalence (`PrimeModelSqrtFreshBlocks.lean`), which shows the §10 prime-burst example already
+satisfies the headline hypothesis.  Nothing in either paper was refuted; the one tacit step made
+explicit is the bound `j₀ ≤ log₄|h|` on Theorem A's contracting site
+(`PrimeModelSiteIndexBound.lean`), without which the old-mass term sits at the bottom cutoff and
+needs a root chain of length `≍ L₃N`.  Ledger: `HANDOFF-2026-09-23-theoremC-reach-and-crosscheck.md`.
