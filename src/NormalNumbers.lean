@@ -441,4 +441,5 @@ import NormalNumbers.PrimeModelGradedTiers
 import NormalNumbers.PrimeModelWindowSchedule
 import NormalNumbers.PrimeModelFamilyGraded
 import NormalNumbers.PrimeModelGeometricMass
+import NormalNumbers.PrimeModelSqrtFreshBlocks
 import NormalNumbers.PrimeModelGradedStatement

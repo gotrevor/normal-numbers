@@ -27,6 +27,15 @@ two pre-existing off-campaign `sorry`s.  See `HANDOFF-2026-09-23-theoremC-COMPLE
    schedule re-parametrised over a freely chosen `u : ℕ → ℕ` (`uG` currently reads `epsG`);
    that is the multi-lap re-parametrisation, still unauthorised.
 
+1c. **Double-exponential block criterion: DONE 2026-09-23** —
+   `src/NormalNumbers/PrimeModelSqrtFreshBlocks.lean` (sorry-free, trust triple).
+   `dblBlockMass P n = S_P(2^{2^n}, 2^{2^{n+2}})`; `sqrtFreshMassZero_of_dblBlockMass` and
+   `isNormal_subsetLambert_of_dblBlockMass`.  The point: in `t = log log x` coordinates the
+   window `(√N, N]` has CONSTANT length `log 2`, so it always sits inside one block
+   `(2^{2^n}, 2^{2^{n+2}}]` with `n = ⌊log₂⌊log₂⌊√N⌋⌋⌋ → ∞` (`sqrt_window_subset`, via
+   `N < (⌊√N⌋+1)²`).  This is precisely the hypothesis Astra §10 verifies for its prime-burst
+   example, so Theorem C′ already covers that example and §10 is not needed for it.
+
 2. **Astra §10 abstract consumer** `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0 ⇒ normal`.  Strictly
    weaker than `SqrtFreshMassZero` and the same schedule; only the E1 leg
    (`termE1_tendsto`, which currently spends the root chain) needs re-running against `F_N`
