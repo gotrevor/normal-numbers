@@ -1,8 +1,8 @@
 # STATUS — normal-numbers 📊
 
-**Active campaign: Pair A multicutoff — Theorem C′, the square-root fresh-mass normality
-criterion.** · **Build**: 🟢 green (9161 jobs) · **Updated**: review lap, laps G5c-a…j landed ·
-2026-09-23 · HEAD `109e0e4` · branch `wip/g5-prime-subset`
+**Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
+· **Build**: 🟢 green (9161 jobs) · **Updated**: 2026-09-23, campaign complete · HEAD `3523f8d`
+· branch `wip/g5-prime-subset`
 
 ## Where it stands (multicutoff campaign)
 
@@ -10,10 +10,10 @@ Laps 0–7 of `KICKOFF-2026-09-22-multicutoff-lean.md` are landed and the headli
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is **fully assembled and compiling**: the root chain,
 Lemma B, the graded joint state, hypothesis-free Theorem A (`KMT.window_bound_schedule`), the
 explicit Astra §8 schedule, and the squeeze `kmt_along_graded` + `tailOK_graded`.  `tailOK_graded`
-— the tail crux of the last two laps — is **PROVED**.  What remains is three numeric leaves in
-`src/NormalNumbers/PrimeModelFamilyGraded.lean`: `termE5_tendsto`, `schedule_admissible`,
-`termE4c_tendsto`.  The headline's `#print axioms` is trust-triple + `sorryAx`, and `sorryAx`
-enters through exactly those three.
+— the tail crux of the last two laps — is **PROVED**.  What remains is **nothing**: the last three leaves
+(`termE5_tendsto`, `schedule_admissible`, `termE4c_tendsto`) closed on 2026-09-23, and
+`#print axioms isNormal_subsetLambert_of_sqrtFreshMassZero` is the bare trust triple.  `src/`
+holds only the two pre-existing off-campaign `sorry`s.
 
 **The route finding that got us here** (laps G5c-e…i, both kept): Theorem A's contracting site
 `j₀` has index `≤ log₄|h|`, a constant for fixed `h` uniform in `N`
@@ -24,13 +24,15 @@ enters through exactly those three.
 
 ## What's happened (multicutoff campaign, newest first)
 
+- **2026-09-23 (laps G5c-k/l/m) — THEOREM C′ PROVED.**  `termE5_tendsto` (Astra 8.6),
+  `schedule_admissible` (all eleven clauses) and `termE4c_tendsto` all landed sorry-free, and the
+  headline is trust-triple clean.  ROUTE FINDING in the middle one: the cut depth `LG` must be
+  read off the bottom **site** cutoff `y_{J−1}`, not off `yBotG` — the two dyadic-cut clauses pin
+  `2^L` from both sides and `yBotG` is unboundedly far below `y_{J−1}` on the mass branch of
+  `JG`'s `min`, where `hcutlo` then fails.  `LG` redefined; `LG_spec`, `cut_le_next`,
+  `twoJ1_lt_yBotG`, `yG_le_self`, `log_ge_sq` are the new helpers.
 - **2026-09-23 (review lap)** — direction KEPT, priority narrowed to the three remaining leaves,
-  E5 first (`DIRECTION.md` → CURRENT DIRECTIVE refreshed).  Ground truth re-derived: `lake build`
-  🟢 9161 jobs; `kmt_along_graded`'s five term limits are 3-of-5 clean (`termE1_tendsto`,
-  `termE4a_tendsto`, `termE4b_tendsto` trust-triple), `tailOK_graded` and
-  `KMT.window_bound_schedule` trust-triple; the headline is trust-triple + `sorryAx`.  `src/`
-  holds the three campaign leaves plus the two pre-existing off-campaign `sorry`s
-  (`PrimeLambertOscillation.phaseOscillation`, `MahlerDriftOne.exists_prime_nonresidue`).
+  E5 first (`DIRECTION.md` → CURRENT DIRECTIVE refreshed); ground truth re-derived at 9161 jobs.
 - **2026-09-22/23 (laps G5c-a…j)** — the schedule and Theorem C′.  Landed: `yBotG_tendsto`,
   `termE4b_tendsto`, `termE4a_tendsto`, `JG_tendsto`, `tail_graded`, the site-index bound (new
   file, route finding), the route correction (`JG` retied to `S_P(N)`, E5 at `y_{cIdx}`,
@@ -50,19 +52,17 @@ enters through exactly those three.
 ## Outstanding (multicutoff campaign)
 
 ### Short-term (mirrors PENDING_WORK top)
-1. `termE5_tendsto` — Astra (8.6); exponent `≥ 8J − 1 − log 2J − o(1)` off `recipSumIoc_yG_le`,
-   `JG_le_mass`, Mertens; term `≤ e^{−5J} → 0`.
-2. `schedule_admissible` — eleven pointwise clauses; `hybot`/`hmono` already proved, `hcutlo`
-   needs `L ≥ 2`, `hcut2` needs `2^{−L} log yBot ∈ [log 2, 2 log 2]`.
-3. `termE4c_tendsto` — `log R ≤ (540+8u_N)/u_N²·log N`, `(2J)# ≤ 4^{2J}`, `∏⌊T_j⌋ ≤ N^{0.22}`.
+1. `Statement.lean`-style audit surface for `SqrtFreshMassZero` / `DivergentRecip` /
+   `IsNormal 4 (subsetLambert P 4)` — the only piece of the campaign's own hygiene not yet done.
+2. The abstract Astra §10 consumer `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0` — strictly weaker
+   hypothesis, same schedule; only the E1 leg needs re-running.
 
 ### Long-term
-The `Statement.lean`-style audit surface for `SqrtFreshMassZero` / `DivergentRecip` /
-`IsNormal 4 (subsetLambert P 4)`, and the abstract Astra §10 consumer
-`F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`.
+Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
+`MahlerDriftOne.exists_prime_nonresidue`.
 
 ### To completion
-Theorem C′ sorry-free and trust-triple.
+Theorem C′ is done.  The campaign's remaining work is the audit surface and the §10 consumer.
 
 ## Axiom ledger — multicutoff campaign (real `#print axioms`, 2026-09-23, 9161 jobs)
 
@@ -76,15 +76,17 @@ Theorem C′ sorry-free and trust-triple.
 | `SiteIndexBound.exists_site_re_nonpos_le` | closes the Astra §8 gap (`j₀ ≤ log₄\|h\|`) | trust triple | 🟢 clean |
 | `FamilyGraded.tailOK_graded` | the `TailOK` half of Theorem C′ | trust triple | 🟢 clean |
 | `FamilyGraded.termE1_tendsto` / `termE4a_` / `termE4b_` | (8.2)/(8.3)/(8.4) | trust triple | 🟢 clean |
-| `FamilyGraded.isNormal_subsetLambert_of_sqrtFreshMassZero` | **Theorem C′** (Fable §9 / Astra §11) — UNCOND | trust triple + `sorryAx` | ⛔ 3 open leaves (E5, admissibility, E4c) |
+| `FamilyGraded.termE5_tendsto` / `schedule_admissible` / `termE4c_tendsto` | (8.6), §8 admissibility, (8.7) | trust triple | 🟢 clean |
+| `FamilyGraded.kmt_along_graded` | the `KMT_along` half of Theorem C′ | trust triple | 🟢 clean |
+| `FamilyGraded.isNormal_subsetLambert_of_sqrtFreshMassZero` | **Theorem C′** (Fable §9 / Astra §11) — UNCOND | trust triple | 🟢 **clean — PROVED** |
 
 Math-axiom count for the campaign: **0** (no `axiom` declarations anywhere; the trust base is
-`propext, Classical.choice, Quot.sound` throughout).  The only debt is the three `sorry` leaves,
-all of them finite numeric estimates with the ingredients already in kernel.
+`propext, Classical.choice, Quot.sound` throughout, and every headline reaches it with no
+`sorryAx`).  There is no debt left in this campaign.
 
 ## Pointers (multicutoff)
 `KICKOFF-2026-09-22-multicutoff-lean.md` · `papers/ROUND2-multicutoff-fable.md` ·
-`papers/ROUND2-multicutoff-astra.md` · `HANDOFF-2026-09-23-graded-theoremC-leaves.md` ·
+`papers/ROUND2-multicutoff-astra.md` · `HANDOFF-2026-09-23-theoremC-COMPLETE.md` ·
 `PENDING_WORK.md` · `DIRECTION.md` (CURRENT DIRECTIVE)
 
 ---

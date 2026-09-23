@@ -1,47 +1,36 @@
 # PENDING WORK
 
-## 2026-09-23 (lap G5c-k/l) — ONE leaf left: `termE4c_tendsto`
+## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 
-`termE5_tendsto` and `schedule_admissible` are both **PROVED** and trust-triple clean.  Theorem C′
-(`isNormal_subsetLambert_of_sqrtFreshMassZero`) now depends on `sorryAx` through exactly one
-declaration, `termE4c_tendsto` in `src/NormalNumbers/PrimeModelFamilyGraded.lean` (l. ~927).
+`isNormal_subsetLambert_of_sqrtFreshMassZero` is sorry-free and
+`[propext, Classical.choice, Quot.sound]`.  All three leaves closed this run: `termE5_tendsto`,
+`schedule_admissible` (with the `LG` route correction), `termE4c_tendsto`.  `src/` holds only the
+two pre-existing off-campaign `sorry`s.  See `HANDOFF-2026-09-23-theoremC-COMPLETE.md`.
 
-### The remaining leaf
+### Open items, highest value first
 
-**`termE4c_tendsto (hP : DivergentRecip P) : Tendsto (termE4c P) atTop (𝓝 0)`**, where
+1. **Audit surface for Theorem C′.**  A `Statement.lean`-style unwound statement of
+   `SqrtFreshMassZero P`, `DivergentRecip P` and `IsNormal 4 (subsetLambert P 4)`, so the
+   headline can be read without chasing definitions.  This repo gates every headline that way;
+   Theorem C′ does not have one yet.  Model: the existing `G4WeightStatement`.
+2. **Astra §10 abstract consumer** `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0 ⇒ normal`.  Strictly
+   weaker than `SqrtFreshMassZero` and the same schedule; only the E1 leg
+   (`termE1_tendsto`, which currently spends the root chain) needs re-running against `F_N`
+   directly.  Everything else (`schedule_admissible`, E4a/E4b/E4c, E5, `tailOK_graded`) is
+   hypothesis-free in `N` and reusable verbatim.
+3. **Off-campaign, designated open** (do not touch without an override):
+   `PrimeLambertOscillation.phaseOscillation`, `MahlerDriftOne.exists_prime_nonresidue`.
 
-    termE4c N = 2 · (2J)# · (∏_{j<J} ⌊T_j⌋) · R_N² / N,
-    R_N = gradedLevel univ (fun b => b+1) (uuG P N) (fun b => y_b).
+### Route findings worth keeping
 
-Attack (Astra §4 constants):
-* `log R_N = ∑_{b<J} (128(b+1) + 4u_b + 14) · log y_b` with `u_b = u_N + b`, `log y_b = a_N 2^{−b} log N`,
-  `a_N = u_N^{−2}`.  So `log R_N ≤ a_N log N · ∑_b (128b + 132 + 4u_N + 4b) 2^{−b}
-  ≤ a_N log N (4u_N + 132 + 132·∑_b b 2^{−b}) ≤ a_N log N (4u_N + 396) = (4u_N+396)/u_N² · log N`,
-  which is `o(log N)` — the `∑_b (b+1)2^{−b} = 4` identity of the handoff, with the constants
-  re-derived from the actual `gradedLevel`.
-* `(2J)# ≤ 4^{2J}` (`primorial_le_four_pow`, check the exact mathlib/repo name) and `J ≤ L₃N`, so
-  `log (2J)# ≤ 2J log 4 = O(L₃N) = o(log N)`.
-* `∏_{j<J} ⌊T_j⌋ ≤ ∏_j N^{2^{−j/2}/16} = N^{(1/16)∑_j 2^{−j/2}} ≤ N^{(1/16)·(1/(1−2^{−1/2}))}
-  ≤ N^{0.22}`.
-* Product is `N^{−1 + 0.22 + o(1)} → 0`.
-
-Useful already-proved: `uG_tendsto`, `aG_ge_invL3`, `JG_le_L3`, `yG_le_self`, `geom_sum_le_two`,
-`one_add_div_four_le_sqrt`.  The shape to match is `termE4a_le` (l. ~745), which does the same
-`N^{...}` bookkeeping for the Markov leg.
-
-### Landed 2026-09-23
-
-* **`termE5_tendsto`** (Astra 8.6) — the phase contraction at the near-top cutoff.  New
-  prerequisites `twoJ1_lt_yBotG`, `yG_le_self`.
-* **`schedule_admissible`** — all eleven clauses.  ROUTE FINDING: `LG` had to be **redefined**
-  off the bottom *site* cutoff `y_{J−1}` instead of `yBotG`.  With `L` read off `yBotG` the clause
-  `cut y_{J−1} L ≤ 2J` is FALSE whenever the `min` in `JG` is taken at the mass branch: then
-  `log y_{J−1} / log yBotG ≍ (L₃N/u_N²)·2^{J₁N−J_N}` is unbounded, while `2^L ≍ log₂ yBotG`, so the
-  bottom band's dyadic chain stops far above `2J`.  Reading `L` off `y_{J−1}` pins it from both
-  sides at once (`LG_spec`): `2^L ≤ log₂ y_{J−1} < 2^{L+1}` gives `hcut2` (chain stays `≥ 2`) and
-  `hcutlo` (bottom chain lands below `4 ≤ 2J`) simultaneously.  New helpers: `cut_le_next`
-  (`⌊t²⌋^{1/c} ≤ ⌊t⌋` for `t ≥ 4`, `c ≥ 4` — this is why `LG` is clipped at `2`), `LG_spec`.
-  `schedule_admissible` and `windowMean_le_terms` gained the hypotheses `hS`, `hP`.
+* **The contracting site index is bounded** (`exists_site_re_nonpos_le`, lap G5c-e):
+  `j₀ ≤ log₄|h|`, a constant for fixed `h` uniform in `N`.  This is what lets leg E5 collect its
+  contraction at a *near-top* cutoff, hence lets `J_N` be tied to the full mass `S_P(N)`.
+  Astra §8 uses `j₀` fixed tacitly.
+* **The cut depth must be read off `y_{J−1}`** (lap G5c-l): the two dyadic-cut clauses pin `2^L`
+  from both sides, and `yBotG` is too far below `y_{J−1}` on the mass branch of `JG`'s `min`.
+* **The constant class count is arithmetically dead** (2026-09-22 review): `log R ≥ 128k log y_0`
+  forces a transfer term `≍ ρ_N·L₄N`, and the ungraded E4a diverges like `J e^{20}`.
 
 ## 2026-09-22 (lap G5c-e) — ROUTE FINDING: the contracting site index is bounded
 
