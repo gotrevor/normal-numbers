@@ -13,6 +13,20 @@ two pre-existing off-campaign `sorry`s.  See `HANDOFF-2026-09-23-theoremC-COMPLE
    `SqrtFreshMassZero P`, `DivergentRecip P` and `IsNormal 4 (subsetLambert P 4)`, so the
    headline can be read without chasing definitions.  This repo gates every headline that way;
    Theorem C′ does not have one yet.  Model: the existing `G4WeightStatement`.
+1b. **Astra §10, implication half: DONE 2026-09-23** —
+   `src/NormalNumbers/PrimeModelGeometricMass.lean` (sorry-free, trust triple) defines
+   `geomFreshMass P N = ∑_{j=1}^{J_N} 4^{−j} S_P(y_j, 2N)` (Astra (10.1) on the graded
+   schedule) and proves `geomFreshMass_tendsto : SqrtFreshMassZero P → F_N → 0`, with the
+   quantitative form `geomFreshMass_le : F_N ≤ 2(3 + 2 log₂ u_N)/u_N² + 2 S_P(⌊√(2N)⌋, 2N)`.
+   The mechanism: the geometric weight absorbs the root-chain length, since `j ≤ 2^j` turns
+   `4^{−j}(j + 2 + 2 log₂ u_N)` into `2^{−j}(3 + 2 log₂ u_N)`; the doubling step is the
+   one-step chain `S_P(N,2N) ≤ S_P(⌊√(2N)⌋, 2N)` (`sqrt_two_mul_le` is unconditional).
+   So C′'s hypothesis is *at least as strong* as §10's, i.e. §10 remains a genuine
+   generalisation and nothing was lost by proving C′ first.  What is still open is the
+   converse direction — the §10 *consumer* (normality from (10.1) alone) — which needs the
+   schedule re-parametrised over a freely chosen `u : ℕ → ℕ` (`uG` currently reads `epsG`);
+   that is the multi-lap re-parametrisation, still unauthorised.
+
 2. **Astra §10 abstract consumer** `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0 ⇒ normal`.  Strictly
    weaker than `SqrtFreshMassZero` and the same schedule; only the E1 leg
    (`termE1_tendsto`, which currently spends the root chain) needs re-running against `F_N`
