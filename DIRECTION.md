@@ -2,39 +2,37 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective.**  `isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′, Fable §9 / Astra §11):
-`SqrtFreshMassZero P → DivergentRecip P → IsNormal 4 (subsetLambert P 4)`.
+**Objective.**  `isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′, Fable §9 / Astra §11)
+SORRY-FREE and trust-triple.  The whole chain is assembled and green; the headline's `sorryAx`
+comes from exactly **three** leaves, all in `src/NormalNumbers/PrimeModelFamilyGraded.lean`.
 
-**Mandated next move (2026-09-22 review lap, ROUTE CORRECTION).**  Build the **graded joint
-state** — the class count `d_p = #{j : p ≤ y_j}` must be *band-dependent* in the sieve, not the
-constant `k`.  Modules, in order: `PrimeModelRadicalGraded` (graded local weight `localWeightG`,
-`weightG`: mass, nonneg, phase product, per-shift site moment over `{i : j < d_i}` only) →
-`PrimeModelRadicalTailGraded` (graded box tail with `α_j = 1/(2 log y_j)`) →
-`PrimeModelJointGraded` (`jointModelG`, `empLawG`, `truncState`, graded `actual_state_sifted_iff`,
-graded `state_model_density`, graded per-atom lower bound off `graded_brun_lower`) →
-`PrimeModelTheoremAGraded` (graded E4 + Theorem A on the graded state) → lap 7, the schedule.
+**Mandated next move (2026-09-23 review lap — direction KEPT, priority sharpened).**
+Close the three leaves, hardest first:
+1. **`termE5_tendsto`** (l. ~980) — Astra (8.6), the last structurally NEW estimate and the only
+   one whose feasibility is in real doubt.  Everything it needs is already proved:
+   `recipSumIoc_yG_le` (short root chain at any `j ≤ J1 N`), `JG_le_mass` (`8J ≤ S_P(N)`),
+   Mertens (`primeRecipSum_le` / `recipSumLe_le_crude`), `cIdx ≤ J−1 ≤ J1 N`.
+2. **`schedule_admissible`** (l. ~575) — eleven pointwise clauses, two already proved
+   (`yBotG_le_yG`, `yG_antitone`); bookkeeping, no new mathematics.
+3. **`termE4c_tendsto`** (l. ~974) — `N^{-1+o(1)}`; arithmetic of the support level.
 
-**Forbidden drift.**  Do NOT instantiate Theorem A's `hlower` at the constant class count
-`dpK k` with one tier (`κ = Unit`, `UU () = stateU P s`, `yy () = Y`), as
-`HANDOFF-2026-09-22-multicutoff-lean.md` "Next, in order #1" proposes.  That route is
-**arithmetically dead** — see the refutation below.  Do not open new off-path files; do not touch
-`PrimeModelBrunLower.lean`, `papers/`, Pair B files, or any existing statement.
+**Forbidden drift.**  Do NOT open new campaigns, do NOT touch `PrimeLambertOscillation` or
+`MahlerDriftOne` (the two pre-existing off-campaign `sorry`s — designated open), do NOT edit
+`PrimeModelBrunLower.lean`, `papers/`, or Pair B files.  Do NOT weaken any existing statement to
+make a leaf close; a leaf that resists gets a named sub-`sorry` IN `src/`, never a relocation.
+No constant-class-count route (refuted 2026-09-22, see below).
 
-**Why (the refutation, 2026-09-22).**  With a constant class count the Brun support level obeys
-`log R ≥ 128 k · log y_0` (the hypothesis `hdpj : dp p ≤ d j` forces `d_j ≥ k` in *every* tier,
-including the top one, which carries the largest `log y`).  `R² ≤ x^{1-δ}` then forces
-`a := log y_0 / log N ≤ 1/(2048 J)`, so the root chain (Astra 11.3) costs
-`⌈log₂(log 2N / log y_0)⌉ ≥ 11 + log₂ J` and the transfer term is `≍ ρ_N log J`.  The tail
-`TailOK` pins `J ≍ min(L₃N, S_N/8)`, so this is `ρ_N · L₄N`, which `ρ_N → 0` does **not** control.
-Independently, the ungraded E4a of lap 6e (Markov moment over the full range `≤ Y`, recorded there
-as a harmless deviation — **it is not**) gives `∑_{j<J} e^{20}/T_j^{1/(2 log Y)}`, whose terms tend
-to `e^{20}` as `j` grows, so the sum diverges like `J e^{20}`.  Both walls disappear exactly when
-the class count and the Markov range are graded by band, as Astra §4/§8 has them.  The good news:
-`graded_brun_lower` already takes an arbitrary `dp : ℕ → ℕ` with `hdpj`, so the whole arithmetic
-half of Lemma B needs no change — only the *state* side does.
+**Why.**  The graded route's route-decisive question — whether the fresh-mass surrogate `ε_N → 0`
+alone can drive the schedule — was settled affirmatively by the bounded contracting site index
+(`exists_site_re_nonpos_le`, lap G5c-e) plus the short root chain (`recipSumIoc_yG_le`, lap G5c-i).
+E5 is where that finding is finally cashed: if the exponent `8J − 1 − log 2J − o(1)` does not
+materialise in Lean, the schedule constants (the `8` in `JG`, the `2J` floor) need retuning and
+that is a redesign.  Nothing else open can force a pivot.
 
 **Directive history.**
-- 2026-09-22 (lap 7 review): set the above.  Supersedes the handoff's "one tier `κ = Unit`" plan.
+- 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
+- 2026-09-23 (review lap): route KEPT and vindicated (5/8 leaves closed, tail crux resolved);
+  narrowed to the three remaining leaves of `PrimeModelFamilyGraded.lean`, E5 first.
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically
