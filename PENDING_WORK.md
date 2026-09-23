@@ -46,8 +46,11 @@ two pre-existing off-campaign `sorry`s.  See `HANDOFF-2026-09-23-theoremC-COMPLE
    sets are EQUAL (`freshWindow_eq`; both say `N < p²`); (ii) `¬Summable` over the subtype
    `{p // p.Prime ∧ P p}` vs our indicator form (`divergentRecip_iff_subtype`);
    (iii) occurrence counting by start position `i < n` vs by suffixes of the first `n`
-   digits — these differ by at most `|w|` out of `n`, so the frequency limits agree (a
-   remark, not a theorem, since the finite counts genuinely differ).
+   digits — now a THEOREM, not a remark: `src/NormalNumbers/OccurrenceCountEquiv.lean`
+   (sorry-free, trust triple) proves `countOccurrences ≤ occStart ≤ countOccurrences + |w|`
+   and hence `tendsto_occStart_iff`, and
+   `isNormal_subsetLambert_crossCheckForm_occStart` states the headline in the independent
+   convention.  All three differences are now machine-checked equivalences.
    `isNormal_subsetLambert_crossCheckForm` derives our headline from the independently
    written hypotheses verbatim.  No faithfulness defect found.
 

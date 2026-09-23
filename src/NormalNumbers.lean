@@ -443,4 +443,5 @@ import NormalNumbers.PrimeModelFamilyGraded
 import NormalNumbers.PrimeModelGeometricMass
 import NormalNumbers.PrimeModelSqrtFreshBlocks
 import NormalNumbers.PrimeModelGradedCrossCheck
+import NormalNumbers.OccurrenceCountEquiv
 import NormalNumbers.PrimeModelGradedStatement

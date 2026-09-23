@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.PrimeModelGradedStatement
+import NormalNumbers.OccurrenceCountEquiv
 
 /-!
 # Faithfulness cross-check for Theorem C′ (independent NL → Lean rendering)
@@ -23,9 +24,10 @@ module records:
 2. *divergence*: it wrote `¬ Summable` over the subtype `{p // p.Prime ∧ P p}`, we write
    `¬ Summable` of the indicator on `ℕ` (`divergentRecip_iff_subtype`);
 3. *the occurrence count*: it counted start positions `i < n` whose digit block matches, we
-   count suffixes of the first `n` digits carrying `w` as a prefix.  The two differ by at most
-   `|w| = O(1)` positions out of `n`, so the frequency limits agree; this one is a remark, not a
-   theorem, because the two counts are literally different finite numbers.
+   count suffixes of the first `n` digits carrying `w` as a prefix.  These are literally
+   different finite numbers, but they differ by at most `|w| = O(1)` out of `n`, so the
+   frequency limits agree — proved in `OccurrenceCountEquiv.lean` (`tendsto_occStart_iff`)
+   and cashed here as `isNormal_subsetLambert_crossCheckForm_occStart`.
 
 `isNormal_subsetLambert_crossCheckForm` then derives our headline from the independently written
 hypotheses verbatim, which is the actual content of the cross-check.
@@ -94,5 +96,21 @@ theorem isNormal_subsetLambert_crossCheckForm
   isNormal_subsetLambert_of_sqrtFreshMassZero P
     ((sqrtFreshMassZero_iff_crossCheck P).1 hfresh)
     ((divergentRecip_iff_subtype P).1 hdiv)
+
+
+/-- **The cross-check in the independent counting convention.**  Same hypotheses, and the
+conclusion stated with `occStart` — occurrences counted by *start position* `i < n`, reading
+digits past the end of the prefix — rather than by suffixes of the first `n` digits. -/
+theorem isNormal_subsetLambert_crossCheckForm_occStart
+    (hfresh : Tendsto (fun N : ℕ => ∑ p ∈ (Finset.Icc 1 N).filter
+        (fun p => Nat.Prime p ∧ P p ∧ Real.sqrt N < p), (1 : ℝ) / p) atTop (𝓝 0))
+    (hdiv : ¬ Summable (fun p : {p : ℕ // Nat.Prime p ∧ P p} => (1 : ℝ) / (p : ℕ))) :
+    ∀ w : List ℕ, w ≠ [] → (∀ d ∈ w, d < 4) →
+      Tendsto (fun n : ℕ =>
+          (occStart w (digitOf 4 (Int.fract (subsetLambert P 4))) n : ℝ) / n)
+        atTop (𝓝 (((4 : ℝ) ^ w.length)⁻¹)) := by
+  intro w hw hd
+  exact (tendsto_occStart_iff w hw _ _).2
+    (isNormal_subsetLambert_crossCheckForm P hfresh hdiv w hw hd)
 
 end NormalNumbers.PrimeModel.FamilyGraded
