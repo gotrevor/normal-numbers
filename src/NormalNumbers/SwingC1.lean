@@ -420,6 +420,53 @@ theorem stateLaw_of_hWindow (b : ℕ) (hb : 3 ≤ b) (L : ℕ) (h : HWindow b L)
 theorem hState_of_hWindow (h : ∀ b, 3 ≤ b → ∀ L, HWindow b L) : HState :=
   fun b hb L => stateLaw_of_hWindow b hb L (h b hb L)
 
+/-! ### Truncating the carry to finite depth -/
+
+lemma omegaTail_nonneg (b : ℕ) (hb : 2 ≤ b) (N : ℕ) : 0 ≤ omegaTail b N :=
+  tsum_nonneg fun k => by positivity
+
+lemma omegaCarry_nonneg (b : ℕ) (hb : 2 ≤ b) (N : ℕ) : 0 ≤ omegaCarry b N :=
+  Int.floor_nonneg.mpr (omegaTail_nonneg b hb N)
+
+/-- **Carry truncation, exactly.**  `c_N` is its own depth-`K` truncation `⌊Σ_{k≤K} ω(N+k)b^{-k}⌋
+= H/b^K` plus `c_{N+K}/b^K` plus an explicit `0` or `1`.  So the error made by truncating the
+carry at depth `K` is at most `c_{N+K}/b^K + 1`: once `b^K` exceeds `c_{N+K} ≈ log log N / (b−1)`
+the truncation is exact up to a single unit.  This is the quantitative form of the depth needed by
+the character-sum leaf `hWindowCharAll`. -/
+theorem omegaCarry_eq_trunc_add (b : ℕ) (hb : 2 ≤ b) (K N : ℕ) :
+    ∃ e : ℤ, 0 ≤ e ∧ e ≤ 1 ∧
+      omegaCarry b N
+        = omegaHead b K N / (b : ℤ) ^ K + omegaCarry b (N + K) / (b : ℤ) ^ K + e := by
+  set M : ℤ := (b : ℤ) ^ K with hMdef
+  have hMpos : (0 : ℤ) < M := by
+    have : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (by omega : 0 < b)
+    rw [hMdef]; positivity
+  have hMne : M ≠ 0 := ne_of_gt hMpos
+  set H : ℤ := omegaHead b K N with hHdef
+  set c : ℤ := omegaCarry b (N + K) with hcdef
+  have hc0 : 0 ≤ c := omegaCarry_nonneg b hb (N + K)
+  have hW : omegaCarry b N = (H + c) / M := by
+    rw [omegaCarry_eq_windowVal_div b hb K N, omegaWindowVal, hHdef, hcdef, hMdef]
+  have hsplit : H + c = M * (H / M + c / M) + (H % M + c % M) := by
+    have h1 := Int.mul_ediv_add_emod H M
+    have h2 := Int.mul_ediv_add_emod c M
+    linarith [h1, h2, mul_add M (H / M) (c / M)]
+  have hr1 := Int.emod_nonneg H hMne
+  have hr2 := Int.emod_nonneg c hMne
+  have hr1' := Int.emod_lt_of_pos H hMpos
+  have hr2' := Int.emod_lt_of_pos c hMpos
+  refine ⟨(H % M + c % M) / M, Int.ediv_nonneg (by linarith) (le_of_lt hMpos), ?_, ?_⟩
+  · have : (H % M + c % M) / M ≤ (2 * M - 2) / M := by
+      exact Int.ediv_le_ediv hMpos (by linarith)
+    refine this.trans ?_
+    have h2 : (2 * M - 2) / M ≤ 1 := by
+      rw [Int.ediv_le_iff_le_mul hMpos]
+      linarith
+    exact h2
+  · rw [hW, hsplit, add_comm (M * (H / M + c / M)) (H % M + c % M),
+      Int.add_mul_ediv_left _ _ hMne]
+    ring
+
 /-! ### Finite Fourier: the character-sum form of the hypothesis -/
 
 /-- A primitive `M`-th root of unity. -/
