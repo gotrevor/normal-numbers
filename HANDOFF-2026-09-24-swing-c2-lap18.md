@@ -195,3 +195,40 @@ Two options, in order of preference:
    and mathlib already supplies the diagonalised quadratic form, which is the hard part).
 2. Pick `P` = *all* primes in `(N,Y]` of the class and bound the incidences by the FULL
    progression count (no sieve) — refuted above (overshoots by `log²`), so only (1) is live.
+
+## Lap 18f — CORRECTION: the linear threshold made the leaves unprovable; geometric fixes it
+
+### The defect (mine, laps 18b–18e)
+`carry_le_of_tau_le` used the *linear* threshold `τ(N+1+k) ≤ A·(k+1)`.  Every implication built
+on it is sound, but the resulting leaves were quantitatively hopeless:
+
+* the trivial bound `τ(m) ≤ 2√m` only overtakes a linear threshold at `k ≈ √N ≈ 2^{a/2}√Y`, so
+  `kb` — the number of shifts needing sieve input — was `≈ 2√(2^a Y)`;
+* `TauMomentPrimesShift` then demanded a per-shift exceptional density `≤ 1/(2(kb+1))`, i.e.
+  `≤ 1/(4√(2^a Y))`, while the truth is `≈ log(2^a Y)/b^K`.  **The old leaves were FALSE**, by a
+  factor `√(2^a Y)/b^K` — astronomically.
+
+### The fix: a geometric threshold
+`carry_le_of_tau_geom` (**proved**): `τ(N+1+k) ≤ A·(k+1)·2^k` for all `k` ⟹ `carry b τ N ≤ 3A`.
+The constant is `b/(b−2)² ≤ 3`, attained at `b = 3` — the worst base, and the reason `b ≥ 3` is
+exactly the right hypothesis.  Two gains, and the second is the decisive one:
+
+1. the trivial bound now takes over at `k ≈ log₂√N`, so `kb = log₂(√X+1)+2` instead of `2√X`;
+2. **the per-shift densities may decay like `2^{-k}`, so the union bound over shifts CONVERGES
+   and costs nothing at all** (`sum_le_of_geom_bound`: `4·2^k·B_k ≤ C` for all `k` implies every
+   partial sum of `B` is `≤ C/2`, by the induction `4·2^n·T_n + 2C ≤ 2C·2^n`).
+
+`kb` has therefore vanished from the budget entirely.
+
+### Re-derived chain (all implications re-proved against the new thresholds)
+    CarryLeaf  ⟸ TauMomentPrimes            τ(2^a p+K+1+k) ≤ (b^K/4)(k+1)2^k, all k
+               ⟸ TauMomentPrimesShift       4·2^k·|Bad_k| ≤ |P|
+               ⟸ ShiftedDivisorIncidence    8·Inc_k ≤ (b^K/4)(k+1)|P|
+`CarryLeaf` now also carries `2 ≤ K` (needed for `b^K ≥ 4`, so that `b^K/4 ≥ 1`); `SurvivorLeaf`
+supplies `K ≥ 110`.
+
+### The budget, checked
+`Inc_k ≈ ½|P|·C·log(2^a Y)` and `log(2^a Y) ≤ 4b^{K/2}`, so the requirement is
+`64·C·b^{K/2} ≤ b^K`, i.e. `64C ≤ b^{K/2}`.  With `K ≥ 110`, `b ≥ 3` that is `64C ≤ 3^55`.
+**The `2^k` cancels out of the incidence requirement**, so the same inequality is asked at every
+shift.  This is now comfortably true and is exactly Brun–Titchmarsh summed over `d ≤ Y^{0.6}`.

@@ -488,6 +488,90 @@ theorem carry_lt_of_tau_le (b : ℕ) (hb : 3 ≤ b) (N A : ℕ) (hA : 0 < A)
   have hA' : (1 : ℤ) ≤ (A : ℤ) := by exact_mod_cast hA
   omega
 
+/-- **The carry bound with a GEOMETRIC threshold.**  If `τ(N+1+k) ≤ A·(k+1)·2^k` for every `k`,
+then `carry b τ N ≤ 3A` (for `b ≥ 3`; the constant is `b/(b−2)² ≤ 3`, attained at `b = 3`).
+
+This is the form the crux actually needs.  With the *linear* threshold of `carry_le_of_tau_le`
+the trivial bound `τ(m) ≤ 2√m` only takes over at `k ≈ √N`, so a union bound over shifts costs a
+factor `√N` and destroys the budget.  With the geometric threshold it takes over at
+`k ≈ log₂ √N`, and — more importantly — the *per-shift* exceptional densities may be allowed to
+decay like `2^{-k}`, so the union bound over shifts converges and costs nothing at all. -/
+theorem carry_le_of_tau_geom (b : ℕ) (hb : 3 ≤ b) (N A : ℕ)
+    (h : ∀ k : ℕ, tau (N + 1 + k) ≤ A * (k + 1) * 2 ^ k) :
+    carry b tau N ≤ 3 * (A : ℤ) := by
+  set s : ℝ := 2 / (b : ℝ) with hs
+  have hb3 : (3 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hbpos : (0 : ℝ) < (b : ℝ) := by linarith
+  have hspos : 0 < s := by rw [hs]; positivity
+  have hslt : s < 1 := by rw [hs, div_lt_one hbpos]; linarith
+  have hnorm : ‖s‖ < 1 := by rwa [Real.norm_eq_abs, abs_of_pos hspos]
+  have hsum0 : Summable (fun n : ℕ => (n : ℝ) * s ^ n) := by
+    have h := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1 hnorm
+    simpa using h
+  have hgsum : Summable (fun k : ℕ => ((k : ℝ) + 1) * s ^ k) := by
+    have h := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1 hnorm
+    have h2 : Summable (fun k : ℕ => s ^ k) := summable_geometric_of_norm_lt_one hnorm
+    have := h.add h2
+    refine this.congr fun k => ?_
+    simp [add_mul]
+  have hval : (∑' n : ℕ, (n : ℝ) * s ^ n) = s / (1 - s) ^ 2 :=
+    tsum_coe_mul_geometric_of_norm_lt_one hnorm
+  have hshift : (∑' k : ℕ, ((k : ℝ) + 1) * s ^ (k + 1)) = s / (1 - s) ^ 2 := by
+    rw [← hval, hsum0.tsum_eq_zero_add]
+    simp
+  have hgval : (∑' k : ℕ, ((k : ℝ) + 1) * s ^ k) = 1 / (1 - s) ^ 2 := by
+    have hfac : (∑' k : ℕ, ((k : ℝ) + 1) * s ^ (k + 1))
+        = s * ∑' k : ℕ, ((k : ℝ) + 1) * s ^ k := by
+      rw [← tsum_mul_left]
+      refine tsum_congr fun k => ?_
+      ring
+    rw [hfac] at hshift
+    have hne : (1 : ℝ) - s ≠ 0 := by
+      have : (0 : ℝ) < 1 - s := by linarith
+      exact ne_of_gt this
+    refine mul_left_cancel₀ (ne_of_gt hspos) ?_
+    rw [hshift]
+    field_simp
+  have hdom : ∀ k : ℕ, (tau (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)
+      ≤ ((A : ℝ) / (b : ℝ)) * (((k : ℝ) + 1) * s ^ k) := by
+    intro k
+    have h2 : (tau (N + 1 + k) : ℝ) ≤ (A : ℝ) * ((k : ℝ) + 1) * 2 ^ k := by
+      have h1 := h k
+      have : ((tau (N + 1 + k) : ℕ) : ℝ) ≤ ((A * (k + 1) * 2 ^ k : ℕ) : ℝ) := by
+        exact_mod_cast h1
+      push_cast at this
+      linarith
+    have hpow : (0 : ℝ) < (b : ℝ) ^ (k + 1) := by positivity
+    have hsk : s ^ k = 2 ^ k / (b : ℝ) ^ k := by rw [hs, div_pow]
+    rw [div_le_iff₀ hpow, hsk]
+    have hbk : (0 : ℝ) < (b : ℝ) ^ k := by positivity
+    have hexp : (b : ℝ) ^ (k + 1) = (b : ℝ) ^ k * (b : ℝ) := by ring
+    field_simp [hexp]
+    nlinarith [h2, hbk, Nat.cast_nonneg (α := ℝ) A]
+  have hsummableT : Summable (fun k : ℕ => (tau (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)) :=
+    Summable.of_nonneg_of_le (fun k => by positivity) hdom (hgsum.mul_left _)
+  have hTle : (∑' k : ℕ, (tau (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)) ≤ 3 * (A : ℝ) := by
+    have hle := hsummableT.tsum_le_tsum hdom (hgsum.mul_left ((A : ℝ) / (b : ℝ)))
+    refine hle.trans ?_
+    rw [tsum_mul_left, hgval]
+    have h1s : (1 : ℝ) - s = ((b : ℝ) - 2) / (b : ℝ) := by
+      rw [hs]; field_simp
+    have hb2 : (0 : ℝ) < (b : ℝ) - 2 := by linarith
+    have hAnn : (0 : ℝ) ≤ (A : ℝ) := Nat.cast_nonneg A
+    have heq : (A : ℝ) / (b : ℝ) * (1 / (1 - s) ^ 2)
+        = (A : ℝ) * (b : ℝ) / ((b : ℝ) - 2) ^ 2 := by
+      rw [h1s]
+      field_simp
+    rw [heq, div_le_iff₀ (by positivity)]
+    nlinarith [mul_nonneg hAnn (mul_nonneg (by linarith : (0:ℝ) ≤ (b : ℝ) - 3)
+      (by linarith : (0:ℝ) ≤ 3 * (b : ℝ) - 4))]
+  have hfl : ((carry b tau N : ℤ) : ℝ)
+      ≤ ∑' k : ℕ, (tau (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1) := by
+    unfold carry
+    exact Int.floor_le _
+  have : ((carry b tau N : ℤ) : ℝ) ≤ ((3 * (A : ℤ) : ℤ) : ℝ) := by push_cast; linarith
+  exact_mod_cast this
+
 /-- The shifts `k` at which `carry_le_of_tau_le` needs real input are only those with
 `2·√(N+1+k) > A·(k+1)`; everywhere else `τ(m) ≤ 2√m` already gives the hypothesis. -/
 theorem tau_le_of_sqrt_small (N A k : ℕ) (h : 2 * Nat.sqrt (N + 1 + k) ≤ A * (k + 1)) :
@@ -1491,7 +1575,7 @@ The `N` parameter is capped by `b^{K/2}`: the prime only has to avoid the finite
 values (`p ≠ 2`, `p > ℓ`), NOT to be arbitrarily large — and indeed it must not be, since the
 carry grows with `log p`. -/
 def CarryLeaf (b : ℕ) : Prop :=
-  ∀ K M r a N : ℕ, 1 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
+  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
     M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
     ∃ p : ℕ, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ carry b tau (2 ^ a * p + K) < (b : ℤ) ^ K
 
@@ -1568,96 +1652,117 @@ theorem card_large_tau_le (M r X T : ℕ) (hM : 0 < M) (hr : Nat.Coprime r M) :
     rw [Finset.sum_const, smul_eq_mul, Nat.mul_comm]
   omega
 
-/-- **The remaining, genuinely analytic, half of `CarryLeaf`.**  The first moment of `τ`
-restricted to the primes of a progression, in the *family* form that `carry_le_of_tau_le`
-consumes: one prime `p` of the progression at which the divisor function is `≤ b^K·(k+1)` at
-EVERY shift `2^a p + K + 1 + k` simultaneously.
+/-! ### The crux, decomposed with a GEOMETRIC threshold
 
-The family form (rather than one shift at a time) is forced: the carry is a series, so a
-single-shift existence statement cannot be union-bounded.  The counting statement behind it is
+Lap 18b–18e used the linear threshold `A·(k+1)`.  That is sound but useless: the trivial bound
+`τ(m) ≤ 2√m` only overtakes a linear threshold at `k ≈ √N`, so a union bound over shifts costs a
+factor `√N ≈ 2^{a/2}√Y` and swamps the budget `b^K`.  With the geometric threshold
+`A·(k+1)·2^k` (`carry_le_of_tau_geom`) two things improve at once: the trivial bound takes over
+at `k ≈ log₂√N`, and — decisively — the *per-shift exceptional densities may decay like `2^{-k}`*,
+so the union bound over shifts converges and costs NOTHING.  The budget then has the full factor
+`b^K` against `log(2^a Y)` of slack. -/
 
-    #{p ≤ Y : p prime, p ≡ r (M), τ(2^a p + K+1+k) > b^K·(k+1)}  ≪  π(Y;M,r)·log(2^a Y)/(b^K(k+1))
+/-- `k ≤ 2^(k-1)` for `k ≥ 1`. -/
+theorem le_two_pow_pred {k : ℕ} (hk : 1 ≤ k) : k ≤ 2 ^ (k - 1) := by
+  have := Nat.lt_two_pow_self (n := k - 1)
+  omega
 
-(Brun–Titchmarsh / Selberg upper-bound sieve for the shifted divisor function along primes),
-summed over `k`.  The sum converges comfortably: `log(2^a Y) ≈ b^{K/2}` while the thresholds
-grow linearly in `k` and the trivial bound `τ(m) ≤ 2√m` already covers every
-`k ≥ 2√(2^a p)/b^K`, so only `O(b^{K/2})` shifts need input and the total exceptional density is
-`≪ b^{K/2}·b^{K/2}/b^K·Σ_k (k+1)^{-1}`-controlled.  A Linnik-type lower bound
-`π(Y;M,r) ≫ Y/(φ(M) log Y)` at `Y = M^{O(1)}` makes the family non-empty.
+/-- **The geometric union bound.**  If `4·2^k·B k ≤ C` for every `k`, then every partial sum of
+`B` is at most `C/2`.  This is what makes the union over shifts free. -/
+theorem sum_le_of_geom_bound (B : ℕ → ℕ) (C : ℕ) (h : ∀ k, 4 * 2 ^ k * B k ≤ C) (n : ℕ) :
+    2 * ∑ k ∈ Finset.range n, B k ≤ C := by
+  have key : ∀ m : ℕ, 4 * 2 ^ m * (∑ k ∈ Finset.range m, B k) + 2 * C ≤ 2 * C * 2 ^ m := by
+    intro m
+    induction m with
+    | zero => simp
+    | succ m ih =>
+      have hb := h m
+      have hexp : (2 : ℕ) ^ (m + 1) = 2 * 2 ^ m := by ring
+      rw [Finset.sum_range_succ]
+      calc 4 * 2 ^ (m + 1) * ((∑ k ∈ Finset.range m, B k) + B m) + 2 * C
+          = 2 * (4 * 2 ^ m * (∑ k ∈ Finset.range m, B k) + 2 * C)
+              + 2 * (4 * 2 ^ m * B m) - 2 * C := by
+            rw [hexp]; ring_nf; omega
+        _ ≤ 2 * (2 * C * 2 ^ m) + 2 * C - 2 * C := by omega
+        _ = 2 * C * 2 ^ (m + 1) := by rw [hexp]; ring_nf; omega
+  have hn := key n
+  have hpos : 0 < (2 : ℕ) ^ n := Nat.pow_pos (by norm_num : 0 < 2)
+  have h2 : 2 ^ n * (4 * ∑ k ∈ Finset.range n, B k) ≤ 2 ^ n * (2 * C) := by
+    have : 4 * 2 ^ n * (∑ k ∈ Finset.range n, B k) ≤ 2 * C * 2 ^ n := by omega
+    calc 2 ^ n * (4 * ∑ k ∈ Finset.range n, B k)
+        = 4 * 2 ^ n * (∑ k ∈ Finset.range n, B k) := by ring
+      _ ≤ 2 * C * 2 ^ n := this
+      _ = 2 ^ n * (2 * C) := by ring
+  have := Nat.le_of_mul_le_mul_left h2 hpos
+  omega
 
-Neither ingredient is in mathlib; both are `🟡` project-scale.  `card_large_tau_le` above is the
-same first moment over the FULL progression and IS proved — the open content is exactly the
-restriction to primes. -/
+/-- **The remaining, genuinely analytic, half of `CarryLeaf`.**  One prime `p` of the progression
+at which the divisor function obeys the *geometric* threshold `(b^K/4)·(k+1)·2^k` at EVERY shift
+`2^a p + K + 1 + k` simultaneously.  `carry_le_of_tau_geom` then gives
+`carry ≤ 3·(b^K/4) < b^K`. -/
 def TauMomentPrimes (b : ℕ) : Prop :=
-  ∀ K M r a N : ℕ, 1 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
+  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
     M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
     ∃ p : ℕ, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧
-      ∀ k : ℕ, tau (2 ^ a * p + K + 1 + k) ≤ b ^ K * (k + 1)
+      ∀ k : ℕ, tau (2 ^ a * p + K + 1 + k) ≤ b ^ K / 4 * (k + 1) * 2 ^ k
 
-/-- **Single-shift form of the sieve input.**  This is `TauMomentPrimes` with the "for all `k`
-simultaneously" replaced by a *per-shift density* bound, which is what a sieve actually delivers:
-in a family `P` of primes of the progression, the `k`-th exceptional set occupies at most a
-`1/(2(kb+1))` fraction, where `kb = 2√(2^a Y + K)` is the number of shifts that the trivial
-bound `τ(m) ≤ 2√m` does not already handle.
-
-`tauMomentPrimes_of_shift` below turns this into `TauMomentPrimes` by a union bound.  The point
-of the reduction is that the surviving obligation is now a SINGLE shifted-divisor estimate along
-primes of an arithmetic progression — i.e. exactly Brun–Titchmarsh applied to
-`SwingC2Moment.tau_shift_sum_le` — with no series and no simultaneity left in it. -/
+/-- **Per-shift density form.**  The `k`-th exceptional set is allowed to occupy a `2^{-k}/4`
+fraction of `P`; `sum_le_of_geom_bound` then sums these to `≤ |P|/2 < |P|`. -/
 def TauMomentPrimesShift (b : ℕ) : Prop :=
-  ∀ K M r a N : ℕ, 1 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
+  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
     M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
     ∃ Y : ℕ, ∃ P : Finset ℕ,
       (∀ p ∈ P, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ p ≤ Y) ∧ 0 < P.card ∧
-      ∀ k : ℕ, 2 * (2 * Nat.sqrt (2 ^ a * Y + K) + 1) *
-          (P.filter (fun p => b ^ K * (k + 1) < tau (2 ^ a * p + K + 1 + k))).card ≤ P.card
+      ∀ k : ℕ, 4 * 2 ^ k *
+          (P.filter (fun p => b ^ K / 4 * (k + 1) * 2 ^ k < tau (2 ^ a * p + K + 1 + k))).card
+        ≤ P.card
 
 /-- **The sieve input, in its final single-inequality form.**  For one family `P` of primes of
-the progression and one shift `e = K+1+k`, the total number of *divisor incidences*
+the progression and one shift `e = K+1+k`, the number of *divisor incidences*
 
-    Σ_{d ≤ √(2^a Y + e)} #{p ∈ P : d ∣ 2^a p + e}
+    Inc_k = Σ_{d ≤ √(2^a Y + e)} #{p ∈ P : d ∣ 2^a p + e}
 
-is at most `b^K(k+1)|P| / (4(kb+1))`, where `kb = 2√(2^a Y + K)`.
+satisfies `8·Inc_k ≤ (b^K/4)·(k+1)·|P|`.  Note the `2^k` has cancelled: the requirement is the
+same at every shift, and it is exactly "the average of `τ(2^a p + e)` over the primes `p` of the
+progression is `≪ b^K`", with `b^K` exponentially larger than the truth `≍ log(2^a Y)`.
 
-This is exactly what Brun–Titchmarsh gives: each inner count is `π(Y; lcm(d,M), ·)` — the primes
-of `P` in one residue class modulo `lcm(d, M)` — and
-`π(Y;q,·) ≪ Y/(φ(q) log(Y/q))` summed over `d ≤ Y^{0.6}` yields `≪ |P|·log(2^a Y)`, against a
-budget `b^K(k+1)|P|/(4(kb+1))` with `kb ≈ 2^{a/2}√Y` and `b^K` exponentially larger than
-`log(2^a Y)`.  (An *integer* count of the incidences does NOT suffice: it overshoots `|P|` by
-`log²`.  The gain of one logarithm from the sieve is load-bearing.) -/
+Each inner count is `#(P ∩ one class mod lcm(d,M))`, i.e. `π(Y;q,·)`, so this is
+Brun–Titchmarsh summed over `d ≤ Y^{0.6}`.  (An *integer* count of the incidences does NOT
+suffice — it overshoots `|P|` by `log²`; the one logarithm the sieve gains is load-bearing.) -/
 def ShiftedDivisorIncidence (b : ℕ) : Prop :=
-  ∀ K M r a N : ℕ, 1 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
+  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
     M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
     ∃ Y : ℕ, ∃ P : Finset ℕ,
       (∀ p ∈ P, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ p ≤ Y) ∧ 0 < P.card ∧
       ∀ k : ℕ,
-        4 * (2 * Nat.sqrt (2 ^ a * Y + K) + 1) *
-            (∑ d ∈ Finset.Icc 1 (Nat.sqrt (2 ^ a * Y + (K + 1 + k))),
+        8 * (∑ d ∈ Finset.Icc 1 (Nat.sqrt (2 ^ a * Y + (K + 1 + k))),
               (P.filter (fun p => d ∣ 2 ^ a * p + (K + 1 + k))).card)
-          ≤ b ^ K * (k + 1) * P.card
+          ≤ b ^ K / 4 * (k + 1) * P.card
 
-/-- **Markov + the hyperbola reduction turn the incidence bound into the density bound.**
-Nothing analytic is left: `TauMomentPrimesShift` follows from `ShiftedDivisorIncidence` by
-`SwingC2Moment.tau_shift_sum_le` and one cancellation. -/
+/-- **Markov + the hyperbola reduction give the density bound.**  Nothing analytic is left. -/
 theorem tauMomentPrimesShift_of_incidence (b : ℕ) (hb : 3 ≤ b)
     (h : ShiftedDivisorIncidence b) : TauMomentPrimesShift b := by
   classical
   intro K M r a N hK hM hr ha hMb hN
   obtain ⟨Y, P, hPmem, hPcard, hinc⟩ := h K M r a N hK hM hr ha hMb hN
   refine ⟨Y, P, hPmem, hPcard, fun k => ?_⟩
-  set kb : ℕ := 2 * Nat.sqrt (2 ^ a * Y + K) with hkb
   set e : ℕ := K + 1 + k with he
-  set T : ℕ := b ^ K * (k + 1) with hT
+  set T : ℕ := b ^ K / 4 * (k + 1) * 2 ^ k with hT
+  have hbK4 : 4 ≤ b ^ K := by
+    calc (4 : ℕ) ≤ 9 := by norm_num
+      _ = 3 ^ 2 := by norm_num
+      _ ≤ b ^ 2 := Nat.pow_le_pow_left hb 2
+      _ ≤ b ^ K := Nat.pow_le_pow_right (by omega) hK
+  have hApos : 0 < b ^ K / 4 := Nat.div_pos hbK4 (by norm_num)
   have hTpos : 0 < T := by
-    have : 0 < b ^ K := Nat.pow_pos (by omega : 0 < b)
-    positivity
+    have h1 : 0 < (2 : ℕ) ^ k := Nat.pow_pos (by norm_num : 0 < 2)
+    rw [hT]; positivity
   set Bad : Finset ℕ := P.filter (fun p => T < tau (2 ^ a * p + K + 1 + k)) with hBad
-  -- Markov over the exceptional set
   have hmarkov : T * Bad.card ≤ ∑ p ∈ P, tau (2 ^ a * p + e) := by
     have h1 : ∑ _p ∈ Bad, T ≤ ∑ p ∈ Bad, tau (2 ^ a * p + e) := by
       refine Finset.sum_le_sum fun p hp => ?_
       rw [hBad, Finset.mem_filter] at hp
-      have := hp.2
+      have h2 := hp.2
       rw [show 2 ^ a * p + e = 2 ^ a * p + K + 1 + k by rw [he]; ring]
       omega
     have h2 : ∑ p ∈ Bad, tau (2 ^ a * p + e) ≤ ∑ p ∈ P, tau (2 ^ a * p + e) :=
@@ -1665,41 +1770,43 @@ theorem tauMomentPrimesShift_of_incidence (b : ℕ) (hb : 3 ≤ b)
     have h3 : ∑ _p ∈ Bad, T = T * Bad.card := by
       rw [Finset.sum_const, smul_eq_mul, Nat.mul_comm]
     omega
-  -- the hyperbola reduction
   have hhyp : ∑ p ∈ P, tau (2 ^ a * p + e)
       ≤ 2 * ∑ d ∈ Finset.Icc 1 (Nat.sqrt (2 ^ a * Y + e)),
           (P.filter (fun p => d ∣ 2 ^ a * p + e)).card :=
     SwingC2Moment.tau_shift_sum_le (2 ^ a) e Y P (fun p hp => (hPmem p hp).2.2.2)
   have hinck := hinc k
-  -- combine
-  have hkey : 2 * (kb + 1) * (T * Bad.card) ≤ T * P.card := by
-    calc 2 * (kb + 1) * (T * Bad.card)
-        ≤ 2 * (kb + 1) * (2 * ∑ d ∈ Finset.Icc 1 (Nat.sqrt (2 ^ a * Y + e)),
-            (P.filter (fun p => d ∣ 2 ^ a * p + e)).card) := by
-          refine Nat.mul_le_mul_left _ (le_trans hmarkov hhyp)
-      _ = 4 * (kb + 1) * (∑ d ∈ Finset.Icc 1 (Nat.sqrt (2 ^ a * Y + e)),
+  have hkey : T * (4 * 2 ^ k * Bad.card) ≤ T * P.card := by
+    calc T * (4 * 2 ^ k * Bad.card)
+        = 4 * 2 ^ k * (T * Bad.card) := by ring
+      _ ≤ 4 * 2 ^ k * (2 * ∑ d ∈ Finset.Icc 1 (Nat.sqrt (2 ^ a * Y + e)),
+            (P.filter (fun p => d ∣ 2 ^ a * p + e)).card) :=
+          Nat.mul_le_mul_left _ (le_trans hmarkov hhyp)
+      _ = 2 ^ k * (8 * ∑ d ∈ Finset.Icc 1 (Nat.sqrt (2 ^ a * Y + e)),
             (P.filter (fun p => d ∣ 2 ^ a * p + e)).card) := by ring
-      _ ≤ T * P.card := hinck
-  have hfinal : 2 * (kb + 1) * Bad.card ≤ P.card := by
-    have hrw : 2 * (kb + 1) * (T * Bad.card) = T * (2 * (kb + 1) * Bad.card) := by ring
-    rw [hrw] at hkey
-    exact Nat.le_of_mul_le_mul_left hkey hTpos
-  exact hfinal
+      _ ≤ 2 ^ k * (b ^ K / 4 * (k + 1) * P.card) := Nat.mul_le_mul_left _ hinck
+      _ = T * P.card := by rw [hT]; ring
+  exact Nat.le_of_mul_le_mul_left hkey hTpos
 
-/-- **The union bound over shifts is discharged.**  Only `O(√(2^a Y))` shifts need sieve input;
-beyond them `τ(m) ≤ 2√m` suffices because the threshold `b^K(k+1)` grows with `k`. -/
+/-- **The union bound over shifts is discharged, and it is free.**  Beyond
+`kb = log₂(√X + 1) + 2` shifts the trivial bound `τ(m) ≤ 2√m` already beats the geometric
+threshold; the remaining exceptional sets sum to `≤ |P|/2 < |P|` by `sum_le_of_geom_bound`. -/
 theorem tauMomentPrimes_of_shift (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimesShift b) :
     TauMomentPrimes b := by
   classical
   intro K M r a N hK hM hr ha hMb hN
   obtain ⟨Y, P, hPmem, hPcard, hdens⟩ := h K M r a N hK hM hr ha hMb hN
   set X : ℕ := 2 ^ a * Y + K with hX
-  set kb : ℕ := 2 * Nat.sqrt X with hkb
-  have hbK : 3 ≤ b ^ K := by
-    calc (3 : ℕ) ≤ b := hb
-      _ = b ^ 1 := (pow_one b).symm
+  set S : ℕ := Nat.sqrt X + 1 with hS
+  set kb : ℕ := Nat.log 2 S + 2 with hkb
+  have hbK4 : 4 ≤ b ^ K := by
+    calc (4 : ℕ) ≤ 9 := by norm_num
+      _ = 3 ^ 2 := by norm_num
+      _ ≤ b ^ 2 := Nat.pow_le_pow_left hb 2
       _ ≤ b ^ K := Nat.pow_le_pow_right (by omega) hK
-  have htriv : ∀ p ∈ P, ∀ k : ℕ, kb ≤ k → tau (2 ^ a * p + K + 1 + k) ≤ b ^ K * (k + 1) := by
+  have hApos : 0 < b ^ K / 4 := Nat.div_pos hbK4 (by norm_num)
+  -- beyond `kb` the trivial divisor bound already gives the threshold
+  have htriv : ∀ p ∈ P, ∀ k : ℕ, kb ≤ k →
+      tau (2 ^ a * p + K + 1 + k) ≤ b ^ K / 4 * (k + 1) * 2 ^ k := by
     intro p hp k hkbk
     obtain ⟨-, -, -, hpY⟩ := hPmem p hp
     have hle : 2 ^ a * p + K + 1 + k ≤ X + (1 + k) := by
@@ -1710,29 +1817,31 @@ theorem tauMomentPrimes_of_shift (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimesSh
     have h2 : Nat.sqrt (2 ^ a * p + K + 1 + k) ≤ Nat.sqrt (X + (1 + k)) :=
       Nat.sqrt_le_sqrt hle
     have h3 : Nat.sqrt (X + (1 + k)) ≤ Nat.sqrt X + (1 + k) := sqrt_add_le X (1 + k)
-    have h4 : 3 * (k + 1) ≤ b ^ K * (k + 1) := Nat.mul_le_mul_right _ hbK
-    have h5 : tau (2 ^ a * p + K + 1 + k) ≤ 3 * (k + 1) := by omega
-    exact le_trans h5 h4
+    -- `S + k ≤ 2^k` for `k ≥ kb`
+    have hSlt : S ≤ 2 ^ (Nat.log 2 S + 1) := le_of_lt (Nat.lt_pow_succ_log_self (by norm_num) S)
+    have hk1 : 1 ≤ k := by omega
+    have hmono : (2 : ℕ) ^ (Nat.log 2 S + 1) ≤ 2 ^ (k - 1) :=
+      Nat.pow_le_pow_right (by norm_num) (by omega)
+    have hkk : k ≤ 2 ^ (k - 1) := le_two_pow_pred hk1
+    have hsplit : (2 : ℕ) ^ (k - 1) + 2 ^ (k - 1) = 2 ^ k := by
+      have : k - 1 + 1 = k := by omega
+      calc (2 : ℕ) ^ (k - 1) + 2 ^ (k - 1) = 2 ^ (k - 1 + 1) := by ring
+        _ = 2 ^ k := by rw [this]
+    have hgoal : 2 * Nat.sqrt X + 2 + 2 * k ≤ 2 * 2 ^ k := by omega
+    have h4 : 1 * (2 * 2 ^ k) ≤ b ^ K / 4 * (k + 1) * 2 ^ k := by
+      have : 2 * 2 ^ k ≤ (k + 1) * 2 ^ k := Nat.mul_le_mul_right _ (by omega)
+      calc 1 * (2 * 2 ^ k) = 2 * 2 ^ k := by ring
+        _ ≤ (k + 1) * 2 ^ k := this
+        _ ≤ b ^ K / 4 * ((k + 1) * 2 ^ k) := Nat.le_mul_of_pos_left _ hApos
+        _ = b ^ K / 4 * (k + 1) * 2 ^ k := by ring
+    omega
   set Bad : ℕ → Finset ℕ := fun k =>
-    P.filter (fun p => b ^ K * (k + 1) < tau (2 ^ a * p + K + 1 + k)) with hBad
-  have hdens' : ∀ k : ℕ, 2 * (kb + 1) * (Bad k).card ≤ P.card := fun k => hdens k
-  set U : Finset ℕ := (Finset.range (kb + 1)).biUnion Bad with hU
-  have hsum : (∑ k ∈ Finset.range (kb + 1), (Bad k).card) * (2 * (kb + 1))
-      ≤ (kb + 1) * P.card := by
-    rw [Finset.sum_mul]
-    calc ∑ k ∈ Finset.range (kb + 1), (Bad k).card * (2 * (kb + 1))
-        ≤ ∑ _k ∈ Finset.range (kb + 1), P.card := by
-          refine Finset.sum_le_sum fun k _ => ?_
-          calc (Bad k).card * (2 * (kb + 1)) = 2 * (kb + 1) * (Bad k).card := by ring
-            _ ≤ P.card := hdens' k
-      _ = (kb + 1) * P.card := by rw [Finset.sum_const, Finset.card_range, smul_eq_mul]
-  have hsum2 : 2 * ∑ k ∈ Finset.range (kb + 1), (Bad k).card ≤ P.card := by
-    have hfac : (∑ k ∈ Finset.range (kb + 1), (Bad k).card) * (2 * (kb + 1))
-        = (kb + 1) * (2 * ∑ k ∈ Finset.range (kb + 1), (Bad k).card) := by ring
-    rw [hfac] at hsum
-    exact Nat.le_of_mul_le_mul_left hsum (by omega)
+    P.filter (fun p => b ^ K / 4 * (k + 1) * 2 ^ k < tau (2 ^ a * p + K + 1 + k)) with hBad
+  have hdens' : ∀ k : ℕ, 4 * 2 ^ k * (Bad k).card ≤ P.card := fun k => hdens k
+  set U : Finset ℕ := (Finset.range kb).biUnion Bad with hU
   have hUcard : U.card < P.card := by
-    have h1 : U.card ≤ ∑ k ∈ Finset.range (kb + 1), (Bad k).card := Finset.card_biUnion_le
+    have h1 : U.card ≤ ∑ k ∈ Finset.range kb, (Bad k).card := Finset.card_biUnion_le
+    have h2 := sum_le_of_geom_bound (fun k => (Bad k).card) P.card hdens' kb
     omega
   obtain ⟨p, hpP, hpU⟩ : ∃ p ∈ P, p ∉ U := by
     by_contra hcon
@@ -1742,24 +1851,31 @@ theorem tauMomentPrimes_of_shift (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimesSh
   refine ⟨p, hpN, hpp, hpr, fun k => ?_⟩
   rcases Nat.lt_or_ge k kb with hk1 | hk1
   · have hnb : p ∉ Bad k := fun hmem => hpU (Finset.mem_biUnion.2
-      ⟨k, Finset.mem_range.2 (by omega), hmem⟩)
+      ⟨k, Finset.mem_range.2 hk1, hmem⟩)
     simp only [hBad, Finset.mem_filter, not_and, not_lt] at hnb
     exact hnb hpP
   · exact htriv p hpP k hk1
 
-/-- **`CarryLeaf` now follows from `TauMomentPrimes` by pure analysis.**  The whole of the
-carry side is discharged by `carry_lt_of_tau_le`; what is left is exactly the divisor-function
-input along the primes of one progression. -/
+/-- **`CarryLeaf` follows from `TauMomentPrimes` by pure analysis** (`carry_le_of_tau_geom`). -/
 theorem carryLeaf_of_tauMomentPrimes (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimes b) :
     CarryLeaf b := by
   intro K M r a N hK hM hr ha hMb hN
   obtain ⟨p, hpN, hpp, hpr, hk⟩ := h K M r a N hK hM hr ha hMb hN
   refine ⟨p, hpN, hpp, hpr, ?_⟩
-  have hApos : 0 < b ^ K := Nat.pow_pos (by omega : 0 < b)
-  have := carry_lt_of_tau_le b hb (2 ^ a * p + K) (b ^ K) hApos (fun k => by
-    have := hk k
-    rwa [show 2 ^ a * p + K + 1 + k = 2 ^ a * p + K + 1 + k from rfl] at this)
-  simpa using this
+  have hbK4 : 4 ≤ b ^ K := by
+    calc (4 : ℕ) ≤ 9 := by norm_num
+      _ = 3 ^ 2 := by norm_num
+      _ ≤ b ^ 2 := Nat.pow_le_pow_left hb 2
+      _ ≤ b ^ K := Nat.pow_le_pow_right (by omega) hK
+  have hle := carry_le_of_tau_geom b hb (2 ^ a * p + K) (b ^ K / 4) hk
+  have hq : 4 * (b ^ K / 4) ≤ b ^ K := by
+    rw [Nat.mul_comm]; exact Nat.div_mul_le_self _ _
+  have hqpos : 1 ≤ b ^ K / 4 := Nat.one_le_div_iff (by norm_num) |>.2 hbK4
+  have hint : (3 : ℤ) * ((b ^ K / 4 : ℕ) : ℤ) < ((b ^ K : ℕ) : ℤ) := by
+    have : 3 * (b ^ K / 4) < b ^ K := by omega
+    exact_mod_cast this
+  have hcast : ((b ^ K : ℕ) : ℤ) = (b : ℤ) ^ K := by push_cast; ring
+  omega
 
 /-- **The one open obligation on the headline path.**  A SINGLE shifted-divisor estimate along
 the primes of one arithmetic progression: Brun–Titchmarsh applied to
