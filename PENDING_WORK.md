@@ -10351,3 +10351,30 @@ model — `SwingC1Pair.lean` already gives `periodMean_pair_tendsto_zero` uncond
 the object to decouple is a *product of two phases at different frequencies* (`t/b` on both
 factors but at disjoint `ω`-arguments), so the small-prime CRT factorisation applies to each
 factor separately.
+
+## pd-prove lap 27 — leaf (D) at first order: NO SINGLE PRIME OBSTRUCTS
+
+`src/NormalNumbers/PairDecoupleFirstOrder.lean`.  `abs_sum_pairPeriodicTerm_le`:
+
+`|Σ_{n<R} (θ^{(r)}_{pn} − θ^{(r)}_{qn})| ≤ 1/(b−1)` for every prime `r ∤ pq`,
+**uniformly in `r` AND `R`** — no sieve, no period condition, no cut.
+
+Mechanism: `θ^{(r)}_N = Σ_{k : r ∣ N+1+k} b^{−(k+1)}/(1−b^{−r})` (`sum_range_primePeriodicTerm_mul`),
+and lap 19's two-sided residue count forces the `p`- and `q`-counts to differ by at most one for
+every `k` (`abs_card_filter_dvd_sub_le_one`); the `b`-adic weights then sum to `1/(b−1)`.
+
+**Why this is on the crux.**  Ren's worry, and leaf (D), locate the difficulty in the primes
+`r ≍ N`, where the periodic model has period `≫ R`.  This says the LINEAR term of any such prime
+contributes `O(1/R)` to the pair mean, so summing over all `O(R/log R)` relevant primes gives
+`O(1/log R) → 0`.  Whatever obstructs leaf (D) is therefore a genuinely **multilinear**
+interaction of two or more large primes — the single-prime horn is closed.
+
+**Honest correction to the lap-26 record.**  `WeightDecouple` is not easier than the crux: given
+`TwoPointElliott`, `weightDecouple_of_twoPointWeighted` and `twoPointWeighted_of_split` make them
+equivalent.  The value of that split is the *shape* (model × defect), not a weakening.
+
+**Next attack.**  Push lap 27 to pairs: bound `|Σ_{n<R} (θ^{(r)}θ^{(r')})_{pn,qn}|` for two
+distinct large primes `r ≠ r'` by the same exact-count device, using the CRT count
+`#{n<R : rr' ∣ …} = R/(rr') + O(1)` (`card_filter_dvd_le_coprime` already covers composite
+moduli).  If the bilinear term is also `O(1)` uniformly, the expansion
+`∏_r (μ_r + ψ_r)` is controlled to second order, and the obstruction is pushed to order 3.
