@@ -456,3 +456,4 @@ import NormalNumbers.SwingC1CRT
 import NormalNumbers.SwingC1Model
 import NormalNumbers.SwingC1Depth
 import NormalNumbers.SwingC1Delange
+import NormalNumbers.SwingC1Pair

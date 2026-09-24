@@ -9552,3 +9552,45 @@ because the difference has no `r`-independent drift).
 | Elliott → Delange + `ShiftIndep` | **PROVED** (this lap) |
 | `DelangeMean` | known theorem (Selberg–Delange), not in mathlib |
 | `ShiftIndep` | open; reduces by Daboussi–Kátai to a periodic-model computation |
+
+## 2026-09-24 — swing-c1 lap 31: the Daboussi–Kátai pair factors, CRT half proved
+
+`src/NormalNumbers/SwingC1Pair.lean` (new).  Also a refactor: the Mertens engine of leaf (M) is
+now the general `prod_tendsto_zero_of_norm_le` in `SwingC1Model.lean`, shared by both uses.
+
+Proved, sorry-free:
+* `pairLocalFactor b t r p q = (1/r) Σ_{s<r} e( t·(b^{ps mod r} − b^{qs mod r})/(b^r − 1) )`,
+  `norm_pairLocalFactor_le_one`;
+* `primePeriodicTerm_mul_mod` — `b^{pn mod r}` depends on `n` only through `n mod r`;
+* `periodMean_phase_truncPairTail` — **the CRT factorisation**: over one full period
+  `Q = Π_{r≤P} r`, `periodMean (e(t·(θ^{(P)}_{pn} − θ^{(P)}_{qn}))) = Π_{r≤P} pairLocalFactor`;
+* `prod_pairLocalFactor_tendsto_zero`, `periodMean_pair_tendsto_zero` — the Mertens consequence,
+  from the one open leaf below.
+
+### The one new open leaf (named `sorry` IN `src/`)
+
+`norm_pairLocalFactor_le : ∃ c > 0, ∀ᶠ r prime, ‖pairLocalFactor b t r p q‖ ≤ 1 − c/r`.
+
+Mechanism fully worked out in its docstring, and it is `norm_localFactor_le` (PROVED) plus ONE
+pigeonhole: with `s_j := p⁻¹(r−1−j) mod r` the first exponent is `r−1−j` (so its term tends to
+`t b^{−1−j}`), and the second exponent `c_j := qp⁻¹(r−1−j) mod r` runs over an AP of nonzero step,
+so at most `i+1` of the `j ∈ [i, 2i+2]` can land in the top window `(r−2−i, r)`; any other `j`
+makes the second term `≤ b^{−1}` times the first, and then the `s = 0` vector `1` and the `s_j`
+vector are a FIXED `δ > 0` apart.  `norm_add_le_of_norm_sub_ge` finishes exactly as before.
+(`c_j = r−1−j` is impossible: it forces `r ∣ q−p`.)
+
+**Next lap: prove `norm_pairLocalFactor_le`.**  Needed ingredients, none exotic:
+`ZMod r` invertibility of `p, q` (`ZMod.inv_mul_of_unit` / `Nat.Coprime` + `Nat.chineseRemainder`
+not needed — just `(p : ZMod r)⁻¹`), the distinctness of the `c_j` (injectivity of
+`x ↦ qp⁻¹ x` on `ZMod r`), and a `Finset.card` pigeonhole on the `i+1`-element top window.
+
+### Remaining route summary (all in `src/`, all named)
+
+```
+conjC1  ⇐  HWindowChar/HDepth  ⇐  weylMean → 0
+        ⇐  DelangeMean (known: Selberg–Delange, not in mathlib)
+         + ShiftIndep  ⇐  Daboussi–Kátai  ⇐  mean_n e(t(θ_{pn} − θ_{qn})) → 0
+                                           ⇐  periodMean_pair_tendsto_zero  [model, PROVED
+                                              modulo norm_pairLocalFactor_le]
+                                            + the natural-density-vs-period gap (leaf (D))
+```

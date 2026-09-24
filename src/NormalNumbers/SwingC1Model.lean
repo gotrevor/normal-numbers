@@ -346,13 +346,14 @@ theorem norm_localFactor_le (b : ℕ) (hb : 2 ≤ b) (h : ℝ) (hh : h ≠ 0) :
   exact hsum
 
 set_option maxHeartbeats 1600000 in
-/-- **Leaf (M)(c).**  Mertens: `Σ_p 1/p = ∞`, so `Π_{p ≤ P}(1 − c/p) → 0`, hence the model term
-vanishes as the cut `P → ∞`.  This is the statement that the small primes alone already
-randomise the orbit — the only *unconditional* source of randomness in the whole route. -/
-theorem prod_localFactor_tendsto_zero (b : ℕ) (hb : 2 ≤ b) (h : ℝ) (hh : h ≠ 0) :
-    Tendsto (fun P => ‖∏ p ∈ primesLe P, localFactor b h p‖) atTop (𝓝 0) := by
+/-- **Mertens drives any `1 − c/p` product to zero.**  If a family of local factors is bounded by
+`1` everywhere and by `1 − c/p` for all large primes, its partial products over the primes `≤ P`
+tend to `0` — because `Σ_p 1/p = ∞`.  This is the shared engine of leaf (M) and of the pair
+factors of `SwingC1Pair.lean`. -/
+theorem prod_tendsto_zero_of_norm_le (F : ℕ → ℂ) (hF1 : ∀ p : ℕ, 0 < p → ‖F p‖ ≤ 1)
+    {c : ℝ} (hc : 0 < c) (hev : ∀ᶠ p : ℕ in atTop, p.Prime → ‖F p‖ ≤ 1 - c / p) :
+    Tendsto (fun P => ‖∏ p ∈ primesLe P, F p‖) atTop (𝓝 0) := by
   classical
-  obtain ⟨c, hc, hev⟩ := norm_localFactor_le b hb h hh
   obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp hev
   set g : ℕ → ℝ := Set.indicator {p | p.Prime} (fun n => (1 : ℝ) / n) with hg_def
   have hgnn : ∀ n, 0 ≤ g n := by
@@ -374,22 +375,21 @@ theorem prod_localFactor_tendsto_zero (b : ℕ) (hb : 2 ≤ b) (h : ℝ) (hh : h
     rw [hSS_def, primesLe, Finset.sum_filter]
     exact Finset.sum_congr rfl fun n _ => hgval n
   -- the product bound
-  have hbound : ∀ P : ℕ, ‖∏ p ∈ primesLe P, localFactor b h p‖
+  have hbound : ∀ P : ℕ, ‖∏ p ∈ primesLe P, F p‖
       ≤ Real.exp (-(c * (SS (P + 1) - C))) := by
     intro P
     set v : ℕ → ℝ := fun p => if N ≤ p then -(c / p) else 0 with hv_def
-    have hstep : ‖∏ p ∈ primesLe P, localFactor b h p‖
+    have hstep : ‖∏ p ∈ primesLe P, F p‖
         ≤ ∏ p ∈ primesLe P, Real.exp (v p) := by
       rw [norm_prod]
       refine Finset.prod_le_prod (fun p _ => norm_nonneg _) (fun p hp => ?_)
       by_cases hpN : N ≤ p
-      · have h1 : ‖localFactor b h p‖ ≤ 1 - c / p := hN p hpN (prime_of_mem_primesLe hp)
+      · have h1 : ‖F p‖ ≤ 1 - c / p := hN p hpN (prime_of_mem_primesLe hp)
         have h2 : 1 - c / (p : ℝ) ≤ Real.exp (-(c / p)) := by
           have := Real.add_one_le_exp (-(c / (p : ℝ)))
           linarith
         rw [hv_def]; simp only [if_pos hpN]; linarith
-      · have h1 : ‖localFactor b h p‖ ≤ 1 :=
-          norm_localFactor_le_one b h p (prime_of_mem_primesLe hp).pos
+      · have h1 : ‖F p‖ ≤ 1 := hF1 p (prime_of_mem_primesLe hp).pos
         rw [hv_def]; simp only [if_neg hpN, Real.exp_zero]; exact h1
     have hprodexp : ∏ p ∈ primesLe P, Real.exp (v p) = Real.exp (∑ p ∈ primesLe P, v p) :=
       (Real.exp_sum _ _).symm
@@ -420,7 +420,7 @@ theorem prod_localFactor_tendsto_zero (b : ℕ) (hb : 2 ≤ b) (h : ℝ) (hh : h
     have hTge : SS (P + 1) - C
         ≤ ∑ p ∈ (primesLe P).filter (fun p => N ≤ p), (1 : ℝ) / p := by
       linarith [hsplit, hsmall]
-    calc ‖∏ p ∈ primesLe P, localFactor b h p‖
+    calc ‖∏ p ∈ primesLe P, F p‖
         ≤ ∏ p ∈ primesLe P, Real.exp (v p) := hstep
       _ = Real.exp (∑ p ∈ primesLe P, v p) := hprodexp
       _ = Real.exp (-(c * ∑ p ∈ (primesLe P).filter (fun p => N ≤ p), (1 : ℝ) / p)) := by
@@ -441,6 +441,15 @@ theorem prod_localFactor_tendsto_zero (b : ℕ) (hb : 2 ≤ b) (h : ℝ) (hh : h
   have h3 : Tendsto (fun P : ℕ => Real.exp (-(c * (SS (P + 1) - C)))) atTop (𝓝 0) :=
     Real.tendsto_exp_atBot.comp (tendsto_neg_atTop_atBot.comp h2)
   exact squeeze_zero (fun P => norm_nonneg _) hbound h3
+
+/-- **Leaf (M)(c).**  Mertens: `Σ_p 1/p = ∞`, so `Π_{p ≤ P}(1 − c/p) → 0`, hence the model term
+vanishes as the cut `P → ∞`.  This is the statement that the small primes alone already
+randomise the orbit — the only *unconditional* source of randomness in the whole route. -/
+theorem prod_localFactor_tendsto_zero (b : ℕ) (hb : 2 ≤ b) (h : ℝ) (hh : h ≠ 0) :
+    Tendsto (fun P => ‖∏ p ∈ primesLe P, localFactor b h p‖) atTop (𝓝 0) := by
+  obtain ⟨c, hc, hev⟩ := norm_localFactor_le b hb h hh
+  exact prod_tendsto_zero_of_norm_le (localFactor b h)
+    (fun p hp => norm_localFactor_le_one b h p hp) hc hev
 
 /-- **Leaf (M), assembled.**  The model term of the split vanishes. -/
 theorem periodMean_tendsto_zero (b : ℕ) (hb : 2 ≤ b) (h : ℝ) (hh : h ≠ 0) :
