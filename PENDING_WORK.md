@@ -10289,3 +10289,28 @@ log-iterate mismatch is fundamental — `log log y = log log R − log log log R
    obstruction primes `r ≍ N` interact with `p, q` only through `pn+1+k`.
 3. Directive item 3 (`K = 1`, Tao 2016) remains untouched; the variance dichotomy from lap 21 is
    the stated prerequisite.
+
+## pd-prove laps 23–24 (2026-09-24)
+
+* **Lap 23** — `pairDecorrAvgSum_le_vdC`: van der Corput averaged over the multipliers
+  (Cauchy–Schwarz pushes the mean inside the square root).  New leaf `PairShiftCorrAvg`;
+  capstone `conjC1_of_delange_kataiAvg_pairShiftCorrAvg`.
+* **Lap 24 — DIRECTIVE ITEM 3 (`K = 1`), attacked and REFRAMED, not refuted.**
+  `src/NormalNumbers/PairDecoupleOneDigit.lean`.  The recorded obstruction to `K = 1` was
+  `E|pairTail − digitTrunc₁| ≍ b^{−1}√(log log R) → ∞`.  That obstruction belongs to
+  *approximating*.  The carry recursion gives an **exact** one-digit peel
+  (`shiftPairTail_peel`, `phase_shiftPairTail_peel`) with no error term, and hence
+  `pairDecorr_iff_twoPointWeighted`: the crux **is** a two-point correlation of `ζ^ω`,
+  `ζ = e(t/b)`, along `pn+1`, `qn+1`, twisted by the bounded weight
+  `peelWeight = e((t/b)·(θ_{pn+1} − θ_{qn+1}))` — an equivalence, proved from an identity.
+
+  **Status change.**  `K = 1` is not blocked by an unbounded truncation error.  It is blocked by
+  the *weight*.  Tao 2016 is exactly the case `peelWeight ≡ 1` in logarithmic average.
+
+  **Next attack on this horn.**  (i) The weight is itself a pair phase at frequency `t/b`, so the
+  peel iterates: `TwoPointWeighted b p q t` has the same shape with `t ↦ t/b`.  Look for a
+  contraction/bootstrap in `t` (the frequency shrinks each peel, and `e(s·x) → 1` as `s → 0`);
+  the previous lap's verdict that "the bootstrap runs the wrong way" applies to the *amplitude*
+  `A(s)`, not necessarily to a two-variable functional.  (ii) Pair the peel with the averaged
+  framework (laps 22–23): a two-point weighted correlation *averaged over `p, q`* is the closest
+  target to Matomäki–Radziwiłł–Tao.
