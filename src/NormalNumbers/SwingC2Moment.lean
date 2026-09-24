@@ -312,4 +312,33 @@ theorem card_shift_dvd_le (c e M r Y d : ℕ) (hd : 0 < d) (hM : 0 < M)
     · show x % M = y % M
       rw [hxm, hym]
 
+/-- Summing `card_shift_dvd_le` over `d ≤ D`: the crude incidence bound.  Valid only for the
+divisors `d` coprime to `c` and to `M`; see the `SwingC2` docstring of
+`ShiftedDivisorIncidence` for why the remaining divisors are the hard part. -/
+theorem sum_card_shift_dvd_le (c e M r Y D : ℕ) (hM : 0 < M)
+    (hcop : ∀ d ∈ Finset.Icc 1 D, Nat.Coprime c d ∧ Nat.Coprime d M) :
+    ∑ d ∈ Finset.Icc 1 D,
+        ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card
+      ≤ (Y / M) * (Nat.log 2 D + 2) + D := by
+  classical
+  have hstep : ∀ d ∈ Finset.Icc 1 D,
+      ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card
+        ≤ Y / M / d + 1 := by
+    intro d hd
+    obtain ⟨h1, h2⟩ := hcop d hd
+    have hd0 : 0 < d := (Finset.mem_Icc.1 hd).1
+    have := card_shift_dvd_le c e M r Y d hd0 hM h1 h2
+    have hdiv : Y / M / d = Y / (d * M) := by
+      rw [Nat.div_div_eq_div_mul, Nat.mul_comm M d]
+    omega
+  calc ∑ d ∈ Finset.Icc 1 D,
+        ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card
+      ≤ ∑ d ∈ Finset.Icc 1 D, (Y / M / d + 1) := Finset.sum_le_sum hstep
+    _ = (∑ d ∈ Finset.Icc 1 D, Y / M / d) + D := by
+        rw [Finset.sum_add_distrib, Finset.sum_const, Nat.card_Icc, smul_eq_mul, mul_one]
+        omega
+    _ ≤ (Y / M) * (Nat.log 2 D + 2) + D := by
+        have := sum_div_le_log (Y / M) D
+        omega
+
 end SwingC2Moment

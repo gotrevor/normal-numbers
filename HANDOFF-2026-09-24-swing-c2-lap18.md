@@ -309,3 +309,43 @@ they give `≈ 3b^{K/2} ≪ b^K`.  **The crude integer count now has exponential
 
 So `ShiftedDivisorIncidence` is reduced to: `card_shift_dvd_le` (proved) summed over `d`, plus a
 lower bound on `#{p ≤ Y prime, p ≡ r (M)}` — nothing else.
+
+## Lap 18i — the crude per-`d` route has a FATAL gcd loss; what that leaves
+
+### Landed
+`SwingC2Moment.sum_card_shift_dvd_le` (sorry-free): summing `card_shift_dvd_le` over `d ≤ D`,
+
+    Σ_{d ≤ D} #{n ≤ Y : n ≡ r (M), d ∣ c n + e}  ≤  (Y/M)(log₂ D + 2) + D,
+
+**for the `d` coprime to both `c` and `M`**.  That side condition is exactly where the route
+breaks, and the break is quantitative.
+
+### The obstruction (new, and it re-instates the sieve)
+For `d` with `g = gcd(d, M) > 1` the set `{n ≤ Y : n ≡ r (M), d ∣ cn+e}` is a class modulo
+`lcm(M, d/gcd(d,c))`, not `dM`, so the count is larger by `g`.  Summing:
+
+    Σ_{d ≤ D} gcd(d,M)/d  ≈  #{g ∣ M : g ≤ D} · log D.
+
+Here `D ≈ 2^{b^{K/4}}` exceeds `M ≈ 2^{bK⁴}`, so *every* divisor of `M` is `≤ D` and the factor
+is `τ(M) = (b+1)^{#kill primes} ≈ b^{K²}` — exponentially past the `b^K` budget.
+**So the incidence sum cannot be bounded term by term over `d`.**
+
+There is a saving structure, and it is worth pursuing next lap: a kill prime `q ∣ M` divides
+`2^a p + e` only if `q ∣ n₀ + ℓ + e` (because `2^a r ≡ n₀+ℓ (mod M)`), i.e. only if `q` divides
+ONE fixed integer, which at most `log M / log(min q)` of them do.  The compatible `g` are
+products of those few primes.  Exploiting this means bounding the incidence sum
+`Σ_{d} #{p ∈ P : d ∣ 2^a p + e}` **as a whole** — which is the first moment again, i.e. exactly
+what Brun–Titchmarsh does.
+
+### Where the crux stands
+`shiftedDivisorIncidence_holds` remains the single open leaf.  Two inputs are now known to be
+*both* necessary:
+1. a first-moment bound for `Σ_{p ≤ Y, p≡r(M)} τ(2^a p + e)` that is NOT term-by-term in `d`
+   (Brun–Titchmarsh / Selberg — mathlib has `BoundingSieve` and the Λ² diagonalisation, and
+   stops before the optimal-`λ` choice);
+2. a counting LOWER bound for `π(Y;M,r)` (Siegel–Walfisz/Linnik).  Lap 18h refuted the
+   divergence-only shortcut, so this cannot be dodged.
+
+Proved and reusable towards (1): `tau_shift_sum_le`, `card_shift_dvd_le`,
+`sum_card_shift_dvd_le`, `card_divisors_le_two_mul_small`, `card_le_of_mod_eq`,
+`sum_div_le_log`, `tau_sum_AP_le_log`, `card_large_tau_le`.
