@@ -518,6 +518,7 @@ import NormalNumbers.TwoPointDelange
 import NormalNumbers.TwoPointDelangeTail
 import NormalNumbers.TwoPointDepthPeel
 import NormalNumbers.TwoPointShiftLocal
+import NormalNumbers.TwoPointDepthInvariance
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
