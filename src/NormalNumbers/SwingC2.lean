@@ -1140,64 +1140,128 @@ theorem killModulus_le (b L : ℕ) : killModulus b L ≤ 2 ^ (b * (L + 5) ^ 4) :
     _ ≤ ((L + 5) ^ 2 * (L + 5) ^ 2) * b := Nat.mul_le_mul_right _ (Nat.mul_le_mul hNL hNL2)
     _ = b * (L + 5) ^ 4 := by ring
 
-/-- **A pad length that beats the modulus.**  `K = 4ℓ + 44` makes the budget `b^K` exceed
-`log₂` of the kill modulus for the window length `L = ℓ + K`. -/
+/-- **A pad length that beats the modulus.**  `K = 10ℓ + 100` makes the budget `b^{K/2}` exceed
+`log₂` of the kill modulus for the window length `L = ℓ + K`.  The square-root in the exponent is
+slack the analytic leaf needs: it must place a Dirichlet prime of size `M^{O(1)}` inside the
+progression, so it needs `log M` to be a *small power* of the budget, not merely below it. -/
 theorem exists_pad_budget (b ℓ : ℕ) (hb : 3 ≤ b) :
-    ∃ K : ℕ, 1 ≤ K ∧ killModulus b (ℓ + K) ≤ 2 ^ (b ^ K) := by
-  refine ⟨4 * ℓ + 44, by omega, (killModulus_le b _).trans (Nat.pow_le_pow_right (by norm_num) ?_)⟩
-  have hrw : ℓ + (4 * ℓ + 44) + 5 = 5 * ℓ + 49 := by omega
-  rw [hrw]
+    ∃ K : ℕ, 10 * ℓ + 100 ≤ K ∧ killModulus b (ℓ + K) ≤ 2 ^ (b ^ (K / 2)) := by
+  refine ⟨10 * ℓ + 100, le_refl _,
+    (killModulus_le b _).trans (Nat.pow_le_pow_right (by norm_num) ?_)⟩
+  have hrw : ℓ + (10 * ℓ + 100) + 5 = 11 * ℓ + 105 := by omega
+  have hK2 : (10 * ℓ + 100) / 2 = 5 * ℓ + 50 := by omega
+  rw [hrw, hK2]
   have h4 : (ℓ + 1) < 3 ^ (ℓ + 1) := Nat.lt_pow_self (by norm_num)
-  have hchain : (5 * ℓ + 49) ^ 4 ≤ 3 ^ (4 * ℓ + 43) := by
-    calc (5 * ℓ + 49) ^ 4 ≤ (49 * (ℓ + 1)) ^ 4 := Nat.pow_le_pow_left (by omega) 4
-      _ = 49 ^ 4 * (ℓ + 1) ^ 4 := by ring
-      _ ≤ 3 ^ 15 * (3 ^ (ℓ + 1)) ^ 4 :=
+  have hchain : (11 * ℓ + 105) ^ 4 ≤ 3 ^ (5 * ℓ + 49) := by
+    calc (11 * ℓ + 105) ^ 4 ≤ (105 * (ℓ + 1)) ^ 4 := Nat.pow_le_pow_left (by omega) 4
+      _ = 105 ^ 4 * (ℓ + 1) ^ 4 := by ring
+      _ ≤ 3 ^ 17 * (3 ^ (ℓ + 1)) ^ 4 :=
           Nat.mul_le_mul (by norm_num) (Nat.pow_le_pow_left h4.le 4)
-      _ = 3 ^ (4 * ℓ + 19) := by rw [← pow_mul, ← pow_add]; ring_nf
-      _ ≤ 3 ^ (4 * ℓ + 43) := Nat.pow_le_pow_right (by norm_num) (by omega)
-  have hb3 : (3 : ℕ) ^ (4 * ℓ + 43) ≤ b ^ (4 * ℓ + 43) := Nat.pow_le_pow_left (by omega) _
-  calc b * (5 * ℓ + 49) ^ 4 ≤ b * b ^ (4 * ℓ + 43) := Nat.mul_le_mul_left _ (hchain.trans hb3)
-    _ = b ^ (4 * ℓ + 44) := by rw [← pow_succ']
+      _ = 3 ^ (4 * ℓ + 21) := by rw [← pow_mul, ← pow_add]; ring_nf
+      _ ≤ 3 ^ (5 * ℓ + 49) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  have hb3 : (3 : ℕ) ^ (5 * ℓ + 49) ≤ b ^ (5 * ℓ + 49) := Nat.pow_le_pow_left (by omega) _
+  calc b * (11 * ℓ + 105) ^ 4 ≤ b * b ^ (5 * ℓ + 49) :=
+        Nat.mul_le_mul_left _ (hchain.trans hb3)
+    _ = b ^ (5 * ℓ + 50) := by rw [← pow_succ']
 
 /-! ### 4. The crux leaf -/
 
-/-- **THE CRUX (2026-09-24, after (K1) was discharged).**  Everything in `ConstructionInputs`
-except the *survivor* slot is now a theorem (`exists_kill_progression`): the slot-killing
-conditions (K1) hold on a full residue class `n ≡ n₀ (mod M)`, `M = killModulus b (ℓ+K)`, whose
-survivor entry `n + ℓ` is coprime to `M`, and whose size satisfies `M ≤ 2^{b^K}`
+/-- **The parity of the window is the parity of the survivor.**  For an EVEN base every slot but
+`ℓ−1` carries a weight divisible by `b`, so the window value is `≡ τ(n+ℓ) (mod 2)`; and `τ(m)` is
+odd exactly when `m` is a perfect square.  So for even `b` a construction with a single survivor
+can only reach an ODD target `t` if the survivor entry `n+ℓ` is a square — a quadratic-residue
+condition on the kill progression.
+
+This is *not* an obstruction to `ConjC2`: a target `t` of length `ℓ` is the target `t·b` of
+length `ℓ+1` (`subLeafA_of_constructionInputsB`), and `t·b` is even.  So it suffices to realise
+the targets divisible by `b`, which is what `ConstructionInputsB` asks. -/
+def ConstructionInputsB (b : ℕ) : Prop :=
+  ∀ ℓ, 1 ≤ ℓ → ∀ t : ℕ, t < b ^ ℓ → b ∣ t → ∃ n K : ℕ,
+    (∀ j, j < ℓ + K → j ≠ ℓ - 1 → ((b : ℤ) ^ (j + 1) ∣ (tau (n + 1 + j) : ℤ))) ∧
+    ((tau (n + ℓ) : ℤ) ≡ (t : ℤ) [ZMOD (b : ℤ) ^ ℓ]) ∧
+    carry b tau (n + (ℓ + K)) < (b : ℤ) ^ K
+
+theorem constructionInputsB_of_constructionInputs (b : ℕ) (h : ConstructionInputs b) :
+    ConstructionInputsB b := fun ℓ hℓ t ht _ => h ℓ hℓ t ht
+
+/-- **One extra digit removes the parity constraint.**  Realising the length-`ℓ+1` target `t·b`
+realises the length-`ℓ` target `t`, because `(t·b)·b^{K} = t·b^{K+1}` and the window lengths agree:
+`(ℓ+1)+K = ℓ+(K+1)`.  The carry bound even improves (`b^K ≤ b^{K+1}`). -/
+theorem subLeafA_of_constructionInputsB (b : ℕ) (hb : 3 ≤ b) (h : ConstructionInputsB b) :
+    SubLeafA b := by
+  intro ℓ hℓ t ht
+  have hb2 : 2 ≤ b := by omega
+  have hbz : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (show 0 < b by omega)
+  have htb : t * b < b ^ (ℓ + 1) := by
+    have h1 : t * b < b ^ ℓ * b := mul_lt_mul_of_pos_right ht (by omega : 0 < b)
+    calc t * b < b ^ ℓ * b := h1
+      _ = b ^ (ℓ + 1) := (pow_succ b ℓ).symm
+  obtain ⟨n, K, hkill, hsurv, hcarry⟩ := h (ℓ + 1) (by omega) (t * b) htb ⟨t, by ring⟩
+  have he : ℓ + (K + 1) = (ℓ + 1) + K := by omega
+  refine ⟨n, K + 1, ?_, ?_⟩
+  · rw [he]
+    refine hcarry.trans_le ?_
+    rw [pow_succ]
+    nlinarith [pow_pos hbz K]
+  · have hp := paddedSum_of_construction b (ℓ + 1) K (t * b) hb2 (by omega) n htb hkill hsurv
+    rw [he, hp]
+    push_cast
+    ring
+
+/-- **THE CRUX (2026-09-24, after (K1) was discharged).**  Everything in the construction except
+the *survivor* slot is now a theorem (`exists_kill_progression`): the slot-killing conditions
+(K1) hold on a full residue class `n ≡ n₀ (mod M)`, `M = killModulus b (ℓ+K)`, whose survivor
+entry `n + ℓ` is coprime to the odd modulus `M`, and whose size satisfies `M ≤ 2^{b^{K/2}}`
 (`killModulus_le`, `exists_pad_budget`).  What is left is to find a member of that class at
 which BOTH
 
 * **(K2)** `τ(n+ℓ) ≡ t (mod b^ℓ)` — one application of Dirichlet: take `n+ℓ = 2^a·p` with
   `p ≡ (n₀+ℓ)·2^{−a} (mod M)` prime (legitimate since `M` is odd and `n₀+ℓ` is coprime to it);
-  then `τ(n+ℓ) = 2(a+1)`, and `b` being odd makes `2` invertible mod `b^ℓ`, so `a` can be chosen
-  to hit any `t`.  Qualitative Dirichlet suffices for this half alone.
-* **(K3)** `carry b τ (n+ℓ+K) < b^K` — an almost-all divisor bound.  Note `carry ≤ Σ_k τ(n+L+k)/b^k`,
-  whose AVERAGE over the progression is `≍ log M ≤ b^K` by the budget hypothesis.  A first moment
-  therefore suffices *if* one may average over the whole progression.
+  then `τ(n+ℓ) = 2(a+1)`, which runs over every residue mod `b^ℓ` for odd `b` and over every
+  EVEN residue for even `b` — whence the parity hypothesis `2 ∣ b → 2 ∣ t`.  Qualitative
+  Dirichlet suffices for this half alone.
+* **(K3)** `carry b τ (n+ℓ+K) < b^K` — an almost-all divisor bound.  `carry ≤ Σ_k τ(n+L+k)/b^k`,
+  whose AVERAGE over a full progression is `≍ log M ≤ b^{K/2} ≪ b^K`.  A first moment therefore
+  suffices *if* one may average over the whole progression.
 
 hold at the **same** `n`.  That is the difficulty: (K2) confines `n` to the prime-indexed
-subfamily `{2^a p − ℓ}`, which has density `≍ 1/(φ(M) log)` inside the class, so the first moment
-for (K3) has to be run over that subfamily — a Brun–Titchmarsh (upper bound) plus Linnik-type
-(lower bound) input, not a bare divisor average.
+subfamily `{2^a p − ℓ}`, of density `≍ 1/(φ(M) log)` inside the class, so the first moment for
+(K3) has to be run over that subfamily — a Brun–Titchmarsh (upper bound) plus Linnik-type (lower
+bound) input, not a bare divisor average.  The budget is deliberately `b^{K/2}`, leaving the
+whole range `[M², 2^{b^K}]` free for the prime.
 
-**Why an almost-all bound is unavoidable** (recorded 2026-09-24, a structural finding): any
-mechanism producing `b^{j+1} ∣ τ(n+1+j)` for all `j < L` forces `≥ L²/2` prime-power constraints
-(a prime `q` can serve slots `j ≡ j₀ (mod q^b)` only, so small primes contribute `O(L)`
-incidences in total), hence `log n ≳ L² log L`.  The worst-case divisor bound at that size is
+**Why an almost-all bound is unavoidable** (structural finding, 2026-09-24): any mechanism
+producing `b^{j+1} ∣ τ(n+1+j)` for all `j < L` needs `≳ L²/2` prime-power constraints — a prime
+`q` can serve slots `j ≡ j₀ (mod q^b)` only, so primes below `L^{1/b}` contribute `O(L)`
+incidences in total — hence `log n ≳ L² log L`.  The worst-case divisor bound at that size is
 `exp(Θ(L²))`, which exceeds the budget `b^K ≤ b^L = exp(Θ(L))` for every admissible `K`.  So no
-pointwise bound on `τ` can close (K3); only a statement about typical values can. -/
+POINTWISE bound on `τ` can close (K3); only a statement about typical values can. -/
 def SurvivorLeaf (b : ℕ) : Prop :=
-  ∀ ℓ K M n₀ t : ℕ, 1 ≤ ℓ → 0 < M → Nat.Coprime 2 M → Nat.Coprime (n₀ + ℓ) M →
-    t < b ^ ℓ → M ≤ 2 ^ (b ^ K) →
+  ∀ ℓ K M n₀ t : ℕ, 1 ≤ ℓ → 10 * ℓ + 100 ≤ K → 0 < M → Nat.Coprime 2 M →
+    Nat.Coprime (n₀ + ℓ) M → t < b ^ ℓ → (2 ∣ b → 2 ∣ t) → M ≤ 2 ^ (b ^ (K / 2)) →
     ∃ n : ℕ, n ≡ n₀ [MOD M] ∧ ((tau (n + ℓ) : ℤ) ≡ (t : ℤ) [ZMOD (b : ℤ) ^ ℓ]) ∧
       carry b tau (n + (ℓ + K)) < (b : ℤ) ^ K
 
-/-- **(K1) + the survivor leaf give the whole construction.**  This is the reduction the lap-17
-CRT work buys: `ConstructionInputs` — and hence `SubLeafA`, `WindowShape`, `WindowPrescribable`
-and `ConjC2` — now rests on `SurvivorLeaf` alone. -/
-theorem constructionInputs_of_survivorLeaf (b : ℕ) (hb : 3 ≤ b) (h : SurvivorLeaf b) :
-    ConstructionInputs b := by
+/-- **(K1) + the survivor leaf give the construction for the targets `ConjC2` needs.**  This is
+the reduction the lap-17 CRT work buys: `SubLeafA`, `WindowShape`, `WindowPrescribable` and
+`ConjC2` now rest on `SurvivorLeaf` alone. -/
+theorem constructionInputsB_of_survivorLeaf (b : ℕ) (hb : 3 ≤ b) (h : SurvivorLeaf b) :
+    ConstructionInputsB b := by
+  intro ℓ hℓ t ht hbt
+  obtain ⟨K, hK1, hKbud⟩ := exists_pad_budget b ℓ hb
+  obtain ⟨n₀, hcop, hkill⟩ :=
+    exists_kill_progression b (ℓ + K) (ℓ - 1) (by omega) (by omega) (by omega)
+  have hrw : n₀ + 1 + (ℓ - 1) = n₀ + ℓ := by omega
+  rw [hrw] at hcop
+  obtain ⟨n, hn, hsurv, hcarry⟩ :=
+    h ℓ K (killModulus b (ℓ + K)) n₀ t hℓ hK1 (killModulus_pos _ _)
+      (coprime_two_killModulus _ _) hcop ht (fun hd => hd.trans hbt) hKbud
+  exact ⟨n, K, hkill n hn, hsurv, hcarry⟩
+
+/-- The same reduction for an ODD base, where no parity constraint is needed and the full
+`ConstructionInputs` follows. -/
+theorem constructionInputs_of_survivorLeaf (b : ℕ) (hb : 3 ≤ b) (hodd : ¬ 2 ∣ b)
+    (h : SurvivorLeaf b) : ConstructionInputs b := by
   intro ℓ hℓ t ht
   obtain ⟨K, hK1, hKbud⟩ := exists_pad_budget b ℓ hb
   obtain ⟨n₀, hcop, hkill⟩ :=
@@ -1205,21 +1269,33 @@ theorem constructionInputs_of_survivorLeaf (b : ℕ) (hb : 3 ≤ b) (h : Survivo
   have hrw : n₀ + 1 + (ℓ - 1) = n₀ + ℓ := by omega
   rw [hrw] at hcop
   obtain ⟨n, hn, hsurv, hcarry⟩ :=
-    h ℓ K (killModulus b (ℓ + K)) n₀ t hℓ (killModulus_pos _ _)
-      (coprime_two_killModulus _ _) hcop ht hKbud
+    h ℓ K (killModulus b (ℓ + K)) n₀ t hℓ hK1 (killModulus_pos _ _)
+      (coprime_two_killModulus _ _) hcop ht (fun hd => absurd hd hodd) hKbud
   exact ⟨n, K, hkill n hn, hsurv, hcarry⟩
 
-/-- **The one open obligation of the swing.**  See `SurvivorLeaf` for the full status note:
-(K2) is qualitative Dirichlet, (K3) is a first moment for `τ`, and the open part is running the
-two together on the same `n`. -/
+/-- **The one open obligation on the headline path.**  See `SurvivorLeaf` for the full status
+note: (K2) is qualitative Dirichlet, (K3) is a first moment for `τ`, and what is open is running
+the two together on the same `n`. -/
 theorem survivorLeaf_holds (b : ℕ) (hb : 3 ≤ b) : SurvivorLeaf b := by
   sorry
 
-theorem constructionInputs_hold (b : ℕ) (hb : 3 ≤ b) : ConstructionInputs b :=
-  constructionInputs_of_survivorLeaf b hb (survivorLeaf_holds b hb)
+/-- **The even-base survivor, off the headline path.**  `ConstructionInputs` in its unrestricted
+form asks for ODD targets too, which for an even base forces the survivor entry `n+ℓ` to be a
+perfect square (`ConstructionInputsB`'s docstring).  That needs the kill progression to be built
+from primes `q` at which `ℓ−1−j` is a quadratic residue — available by quadratic reciprocity plus
+Dirichlet, but a second layer that `ConjC2` does not require.  Disclosed open; the headline chain
+goes through `ConstructionInputsB`. -/
+theorem constructionInputs_even (b : ℕ) (hb : 3 ≤ b) (heven : 2 ∣ b) : ConstructionInputs b := by
+  sorry
+
+theorem constructionInputs_hold (b : ℕ) (hb : 3 ≤ b) : ConstructionInputs b := by
+  by_cases he : 2 ∣ b
+  · exact constructionInputs_even b hb he
+  · exact constructionInputs_of_survivorLeaf b hb he (survivorLeaf_holds b hb)
 
 theorem subLeafA_holds (b : ℕ) (hb : 3 ≤ b) : SubLeafA b :=
-  subLeafA_of_constructionInputs b hb (constructionInputs_hold b hb)
+  subLeafA_of_constructionInputsB b hb (constructionInputsB_of_survivorLeaf b hb
+    (survivorLeaf_holds b hb))
 
 /-- **THE CRUX.**  For `b ≥ 3`, the divisor-count windows realise every residue mod `b^ℓ`:
 for every `ℓ ≥ 1` and every `t < b^ℓ` there is an `n` with
