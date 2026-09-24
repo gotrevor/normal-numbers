@@ -1581,6 +1581,96 @@ theorem conjC1_iff_hOrbit : ConjC1 ↔ ∀ b, 3 ≤ b → HOrbit b := by
     fun h b hb => (hOrbit_iff_hAutoCorr b (by omega)).mp (h b hb)⟩
 
 
+/-! #### The Weyl bridge at INTEGER frequency
+
+`ζ_{b−1}^{j·A_n} = e(j·b^n x/(b−1)) · e(−j·t_n/(b−1))` exactly, since `A_n = b^n x − t_n`.  Taking the
+lag-`L` difference, the two denominators `b − 1` combine with `b^L − 1`, and
+
+    (b^L − 1)/(b − 1) = 1 + b + ⋯ + b^{L−1} =: σ_L  ∈ ℕ,
+
+so the denominator disappears completely:
+
+    ζ_{b−1}^{j(A_{n+L} − A_n)}  =  e(j·σ_L·b^n·x) · e(−j(t_{n+L} − t_n)/(b−1)).
+
+The first factor is a classical Weyl exponential at the INTEGER frequency `j·σ_L`, exactly the shape
+the repo's `G4WiringCRT` layer controls (`fullWindowMean`, `WindowDecay`, `isNormal_G4_of_windowDecay`);
+the second is a unimodular twist depending only on the fractional parts.  This supersedes the old
+bridge `zetaRoot_windowVal_eq`, whose frequencies were the non-integral `a/b^L`. -/
+
+/-- `σ_L = 1 + b + ⋯ + b^{L−1}`, the integer `(b^L − 1)/(b − 1)`. -/
+def geomNat (b L : ℕ) : ℕ := ∑ i ∈ range L, b ^ i
+
+lemma sub_one_mul_geomNat (b : ℕ) (L : ℕ) :
+    ((b : ℤ) - 1) * (geomNat b L : ℤ) = (b : ℤ) ^ L - 1 := by
+  induction L with
+  | zero => simp [geomNat]
+  | succ L ih =>
+      rw [geomNat, Finset.sum_range_succ, ← geomNat]
+      push_cast
+      rw [mul_add, ih]
+      ring
+
+/-- **`ζ_{b−1}^{j·⌊b^n x⌋` splits into a Weyl exponential and a tail twist.** -/
+theorem zetaRoot_floor_eq (b : ℕ) (hb : 2 ≤ b) (j n : ℕ) :
+    zetaRoot (b - 1) ^ ((j : ℤ) * ⌊primeLambertAtBase b * (b : ℝ) ^ n⌋)
+      = Complex.exp (2 * Real.pi * Complex.I *
+            ((j : ℂ) * (((b : ℝ) ^ n * primeLambertAtBase b : ℝ) : ℂ)) / ((b : ℂ) - 1))
+        * Complex.exp (-(2 * Real.pi * Complex.I *
+            ((j : ℂ) * ((Int.fract (primeLambertAtBase b * (b : ℝ) ^ n) : ℝ) : ℂ))
+              / ((b : ℂ) - 1))) := by
+  have hqz : (((b - 1 : ℕ)) : ℂ) = (b : ℂ) - 1 := by
+    rw [Nat.cast_sub (by omega : 1 ≤ b)]; norm_num
+  have hqne : ((b : ℂ)) - 1 ≠ 0 := by
+    rw [← hqz]
+    have : ((b - 1 : ℕ)) ≠ 0 := by omega
+    exact_mod_cast this
+  set y : ℝ := primeLambertAtBase b * (b : ℝ) ^ n with hy
+  have hfl : ((⌊y⌋ : ℤ) : ℂ) = ((y : ℝ) : ℂ) - ((Int.fract y : ℝ) : ℂ) := by
+    have := congrArg (fun r : ℝ => (r : ℂ)) (Int.self_sub_fract y)
+    push_cast at this ⊢
+    linear_combination -this
+  rw [zetaRoot_zpow, ← Complex.exp_add, hqz]
+  congr 1
+  have hyC : ((y : ℝ) : ℂ) = (((b : ℝ) ^ n * primeLambertAtBase b : ℝ) : ℂ) := by
+    rw [hy]; push_cast; ring
+  push_cast
+  rw [hfl, hyC]
+  field_simp
+  push_cast
+  ring
+
+/-- **The leaf's character sum is a Weyl sum at the integer frequency `j·σ_L`, twisted.** -/
+theorem zetaRoot_floor_diff_eq (b : ℕ) (hb : 2 ≤ b) (j L n : ℕ) :
+    zetaRoot (b - 1) ^ ((j : ℤ) * (⌊primeLambertAtBase b * (b : ℝ) ^ (n + L)⌋
+        - ⌊primeLambertAtBase b * (b : ℝ) ^ n⌋))
+      = Complex.exp (2 * Real.pi * Complex.I *
+            ((j * geomNat b L : ℕ) : ℂ) * (((b : ℝ) ^ n * primeLambertAtBase b : ℝ) : ℂ))
+        * Complex.exp (-(2 * Real.pi * Complex.I * (j : ℂ) *
+            ((((Int.fract (primeLambertAtBase b * (b : ℝ) ^ (n + L))
+              - Int.fract (primeLambertAtBase b * (b : ℝ) ^ n) : ℝ)) : ℂ)) / ((b : ℂ) - 1))) := by
+  have hqz : (((b - 1 : ℕ)) : ℂ) = (b : ℂ) - 1 := by
+    rw [Nat.cast_sub (by omega : 1 ≤ b)]; norm_num
+  have hqne : ((b : ℂ)) - 1 ≠ 0 := by
+    rw [← hqz]
+    have : ((b - 1 : ℕ)) ≠ 0 := by omega
+    exact_mod_cast this
+  have hgeo : ((b : ℂ)) ^ L - 1 = ((b : ℂ) - 1) * ((geomNat b L : ℕ) : ℂ) := by
+    have := congrArg (fun z : ℤ => (z : ℂ)) (sub_one_mul_geomNat b L)
+    push_cast at this ⊢
+    linear_combination -this
+  rw [mul_sub, zpow_sub₀ (zetaRoot_ne_zero (b - 1)), zetaRoot_floor_eq b hb j (n + L),
+    zetaRoot_floor_eq b hb j n]
+  rw [← Complex.exp_add, ← Complex.exp_add, ← Complex.exp_sub, ← Complex.exp_add]
+  congr 1
+  have hpow : (((b : ℝ) ^ (n + L) * primeLambertAtBase b : ℝ) : ℂ)
+      = ((b : ℂ)) ^ L * (((b : ℝ) ^ n * primeLambertAtBase b : ℝ) : ℂ) := by
+    push_cast; rw [pow_add]; ring
+  rw [hpow]
+  push_cast
+  field_simp
+  ring_nf
+  linear_combination (j : ℂ) * ((b : ℂ)) ^ n * ((primeLambertAtBase b : ℝ) : ℂ) * hgeo
+
 /-! #### Carry inertness: the leaf's whole content sits where `ω` reaches `b − 1`
 
 `c_N = ⌊Σ_{k≥1} ω(N+k) b^{−k}⌋` is IDENTICALLY ZERO as long as `ω` stays `≤ b − 2` on the tail,
