@@ -500,6 +500,7 @@ import NormalNumbers.TwoPointKataiRearrange
 import NormalNumbers.TwoPointKataiAssemble
 import NormalNumbers.TwoPointGramChain
 import NormalNumbers.TwoPointGramArith
+import NormalNumbers.TwoPointGramBudget
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
