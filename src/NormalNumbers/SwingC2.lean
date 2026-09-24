@@ -1419,27 +1419,27 @@ theorem killModulus_le (b L : ℕ) : killModulus b L ≤ 2 ^ (b * (L + 5) ^ 4) :
     _ ≤ ((L + 5) ^ 2 * (L + 5) ^ 2) * b := Nat.mul_le_mul_right _ (Nat.mul_le_mul hNL hNL2)
     _ = b * (L + 5) ^ 4 := by ring
 
-/-- **A pad length that beats the modulus.**  `K = 10ℓ + 100` makes the budget `b^{K/2}` exceed
+/-- **A pad length that beats the modulus.**  `K = 10ℓ + 100` makes the budget `b^{K/4}` exceed
 `log₂` of the kill modulus for the window length `L = ℓ + K`.  The square-root in the exponent is
 slack the analytic leaf needs: it must place a Dirichlet prime of size `M^{O(1)}` inside the
 progression, so it needs `log M` to be a *small power* of the budget, not merely below it. -/
 theorem exists_pad_budget (b ℓ : ℕ) (hb : 3 ≤ b) :
-    ∃ K : ℕ, 10 * ℓ + 100 ≤ K ∧ killModulus b (ℓ + K) ≤ 2 ^ (b ^ (K / 2)) := by
-  refine ⟨10 * ℓ + 100, le_refl _,
+    ∃ K : ℕ, 10 * ℓ + 100 ≤ K ∧ killModulus b (ℓ + K) ≤ 2 ^ (b ^ (K / 4)) := by
+  refine ⟨20 * ℓ + 200, by omega,
     (killModulus_le b _).trans (Nat.pow_le_pow_right (by norm_num) ?_)⟩
-  have hrw : ℓ + (10 * ℓ + 100) + 5 = 11 * ℓ + 105 := by omega
-  have hK2 : (10 * ℓ + 100) / 2 = 5 * ℓ + 50 := by omega
+  have hrw : ℓ + (20 * ℓ + 200) + 5 = 21 * ℓ + 205 := by omega
+  have hK2 : (20 * ℓ + 200) / 4 = 5 * ℓ + 50 := by omega
   rw [hrw, hK2]
   have h4 : (ℓ + 1) < 3 ^ (ℓ + 1) := Nat.lt_pow_self (by norm_num)
-  have hchain : (11 * ℓ + 105) ^ 4 ≤ 3 ^ (5 * ℓ + 49) := by
-    calc (11 * ℓ + 105) ^ 4 ≤ (105 * (ℓ + 1)) ^ 4 := Nat.pow_le_pow_left (by omega) 4
-      _ = 105 ^ 4 * (ℓ + 1) ^ 4 := by ring
-      _ ≤ 3 ^ 17 * (3 ^ (ℓ + 1)) ^ 4 :=
+  have hchain : (21 * ℓ + 205) ^ 4 ≤ 3 ^ (5 * ℓ + 49) := by
+    calc (21 * ℓ + 205) ^ 4 ≤ (205 * (ℓ + 1)) ^ 4 := Nat.pow_le_pow_left (by omega) 4
+      _ = 205 ^ 4 * (ℓ + 1) ^ 4 := by ring
+      _ ≤ 3 ^ 20 * (3 ^ (ℓ + 1)) ^ 4 :=
           Nat.mul_le_mul (by norm_num) (Nat.pow_le_pow_left h4.le 4)
-      _ = 3 ^ (4 * ℓ + 21) := by rw [← pow_mul, ← pow_add]; ring_nf
+      _ = 3 ^ (4 * ℓ + 24) := by rw [← pow_mul, ← pow_add]; ring_nf
       _ ≤ 3 ^ (5 * ℓ + 49) := Nat.pow_le_pow_right (by norm_num) (by omega)
   have hb3 : (3 : ℕ) ^ (5 * ℓ + 49) ≤ b ^ (5 * ℓ + 49) := Nat.pow_le_pow_left (by omega) _
-  calc b * (11 * ℓ + 105) ^ 4 ≤ b * b ^ (5 * ℓ + 49) :=
+  calc b * (21 * ℓ + 205) ^ 4 ≤ b * b ^ (5 * ℓ + 49) :=
         Nat.mul_le_mul_left _ (hchain.trans hb3)
     _ = b ^ (5 * ℓ + 50) := by rw [← pow_succ']
 
@@ -1490,7 +1490,7 @@ theorem subLeafA_of_constructionInputsB (b : ℕ) (hb : 3 ≤ b) (h : Constructi
 /-- **THE CRUX (2026-09-24, after (K1) was discharged).**  Everything in the construction except
 the *survivor* slot is now a theorem (`exists_kill_progression`): the slot-killing conditions
 (K1) hold on a full residue class `n ≡ n₀ (mod M)`, `M = killModulus b (ℓ+K)`, whose survivor
-entry `n + ℓ` is coprime to the odd modulus `M`, and whose size satisfies `M ≤ 2^{b^{K/2}}`
+entry `n + ℓ` is coprime to the odd modulus `M`, and whose size satisfies `M ≤ 2^{b^{K/4}}`
 (`killModulus_le`, `exists_pad_budget`).  What is left is to find a member of that class at
 which BOTH
 
@@ -1500,13 +1500,13 @@ which BOTH
   EVEN residue for even `b` — whence the parity hypothesis `2 ∣ b → 2 ∣ t`.  Qualitative
   Dirichlet suffices for this half alone.
 * **(K3)** `carry b τ (n+ℓ+K) < b^K` — an almost-all divisor bound.  `carry ≤ Σ_k τ(n+L+k)/b^k`,
-  whose AVERAGE over a full progression is `≍ log M ≤ b^{K/2} ≪ b^K`.  A first moment therefore
+  whose AVERAGE over a full progression is `≍ log M ≤ b^{K/4} ≪ b^K`.  A first moment therefore
   suffices *if* one may average over the whole progression.
 
 hold at the **same** `n`.  That is the difficulty: (K2) confines `n` to the prime-indexed
 subfamily `{2^a p − ℓ}`, of density `≍ 1/(φ(M) log)` inside the class, so the first moment for
 (K3) has to be run over that subfamily — a Brun–Titchmarsh (upper bound) plus Linnik-type (lower
-bound) input, not a bare divisor average.  The budget is deliberately `b^{K/2}`, leaving the
+bound) input, not a bare divisor average.  The budget is deliberately `b^{K/4}`, leaving the
 whole range `[M², 2^{b^K}]` free for the prime.
 
 **Why an almost-all bound is unavoidable** (structural finding, 2026-09-24): any mechanism
@@ -1517,7 +1517,7 @@ incidences in total — hence `log n ≳ L² log L`.  The worst-case divisor bou
 POINTWISE bound on `τ` can close (K3); only a statement about typical values can. -/
 def SurvivorLeaf (b : ℕ) : Prop :=
   ∀ ℓ K M n₀ t : ℕ, 1 ≤ ℓ → 10 * ℓ + 100 ≤ K → 0 < M → Nat.Coprime 2 M →
-    Nat.Coprime (n₀ + ℓ) M → t < b ^ ℓ → (2 ∣ b → 2 ∣ t) → M ≤ 2 ^ (b ^ (K / 2)) →
+    Nat.Coprime (n₀ + ℓ) M → t < b ^ ℓ → (2 ∣ b → 2 ∣ t) → M ≤ 2 ^ (b ^ (K / 4)) →
     ∃ n : ℕ, n ≡ n₀ [MOD M] ∧ ((tau (n + ℓ) : ℤ) ≡ (t : ℤ) [ZMOD (b : ℤ) ^ ℓ]) ∧
       carry b tau (n + (ℓ + K)) < (b : ℤ) ^ K
 
@@ -1558,8 +1558,8 @@ single arithmetic progression `p ≡ r (mod M)` one must find one — of moderat
 required to be large — at which the divisor function stays small just past `2^a·p`, in the
 precise sense `Σ_{k≥1} τ(2^a p + K + k)/b^k < b^K`.
 
-The hypotheses are exactly what the construction supplies: `M ≤ 2^{b^{K/2}}` and `a ≤ b^{K/2}`,
-so `log(2^a·p) ≈ a + log p` is `O(b^{K/2})` as soon as `p` is polynomial in `M` — i.e. `≪ b^K`,
+The hypotheses are exactly what the construction supplies: `M ≤ 2^{b^{K/4}}` and `a ≤ b^{K/4}`,
+so `log(2^a·p) ≈ a + log p` is `O(b^{K/4})` as soon as `p` is polynomial in `M` — i.e. `≪ b^K`,
 the budget.  Heuristically the first moment already closes it: the average of `τ(m)` for
 `m ≍ 2^a p` is `≍ log(2^a p) ≪ b^K`, so the exceptional set has density `≪ log/b^K`.  Making
 that rigorous ALONG THE PRIMES of the progression is a Brun–Titchmarsh (upper-bound sieve, for
@@ -1571,12 +1571,12 @@ be `0`; `probes/swingc2_carryleaf_K0.py` shows that for `b = 3` the carry is `�
 admissible datum (`a ≤ 1`, `M ≤ 2`, `N ≤ 1`) and every prime `p < 4000`, so the `K = 0` instance
 is false.  The only consumer (`SurvivorLeaf`) supplies `K ≥ 110`.
 
-The `N` parameter is capped by `b^{K/2}`: the prime only has to avoid the finitely many small
+The `N` parameter is capped by `b^{K/4}`: the prime only has to avoid the finitely many small
 values (`p ≠ 2`, `p > ℓ`), NOT to be arbitrarily large — and indeed it must not be, since the
 carry grows with `log p`. -/
 def CarryLeaf (b : ℕ) : Prop :=
-  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
-    M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
+  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 4) →
+    M ≤ 2 ^ (b ^ (K / 4)) → N ≤ b ^ (K / 4) →
     ∃ p : ℕ, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ carry b tau (2 ^ a * p + K) < (b : ℤ) ^ K
 
 /-- **(K2) + the carry leaf give the survivor leaf.**  The whole of `SurvivorLeaf` except the
@@ -1584,16 +1584,16 @@ size of the divisor function along one progression of primes is now a theorem. -
 theorem survivorLeaf_of_carryLeaf (b : ℕ) (hb : 3 ≤ b) (h : CarryLeaf b) : SurvivorLeaf b := by
   intro ℓ K M n₀ t hℓ hK hM h2M hcop ht hpar hbud
   obtain ⟨a, r, ha, hrcop, hall⟩ := exists_survivor_data b ℓ M n₀ t hb hℓ hM h2M hcop ht hpar
-  have hK2 : ℓ ≤ K / 2 := by omega
-  have hK21 : 1 ≤ K / 2 := by omega
+  have hK2 : ℓ ≤ K / 4 := by omega
+  have hK21 : 1 ≤ K / 4 := by omega
   have hpowmono : ∀ i j : ℕ, i ≤ j → b ^ i ≤ b ^ j := fun i j hij =>
     Nat.pow_le_pow_right (by omega) hij
-  have haK : a ≤ b ^ (K / 2) := le_of_lt (lt_of_lt_of_le ha (hpowmono ℓ (K / 2) hK2))
-  have hNK : max 2 ℓ ≤ b ^ (K / 2) := by
+  have haK : a ≤ b ^ (K / 4) := le_of_lt (lt_of_lt_of_le ha (hpowmono ℓ (K / 4) hK2))
+  have hNK : max 2 ℓ ≤ b ^ (K / 4) := by
     refine max_le ?_ ?_
     · calc (2 : ℕ) ≤ b := by omega
         _ = b ^ 1 := (pow_one b).symm
-        _ ≤ b ^ (K / 2) := hpowmono 1 (K / 2) hK21
+        _ ≤ b ^ (K / 4) := hpowmono 1 (K / 4) hK21
     · exact le_trans hK2 (le_of_lt (Nat.lt_pow_self (by omega)))
   obtain ⟨p, hpN, hpp, hpr, hpc⟩ := h K M r a (max 2 ℓ) (by omega) hM hrcop haK hbud hNK
   have hp2 : p ≠ 2 := by
@@ -1633,7 +1633,7 @@ theorem tau_sum_AP (M r X : ℕ) (hM : 0 < M) (hr : Nat.Coprime r M) :
   SwingC2Moment.tau_sum_AP_le_log M r X hM hr
 
 /-- **Exceptional set.**  At most `2((X/M)(log₂√X+2)+√X)/T` of the `n ≤ X` in the class have
-`τ(n) ≥ T`.  For `T ≍ b^K` and `X` polynomial in `M ≤ 2^{b^{K/2}}` the right side is `≪ X/M`, so
+`τ(n) ≥ T`.  For `T ≍ b^K` and `X` polynomial in `M ≤ 2^{b^{K/4}}` the right side is `≪ X/M`, so
 almost every element of the progression is good — this is the statement `CarryLeaf` needs, except
 that `CarryLeaf` must land on a PRIME. -/
 theorem card_large_tau_le (M r X T : ℕ) (hM : 0 < M) (hr : Nat.Coprime r M) :
@@ -1701,16 +1701,16 @@ at which the divisor function obeys the *geometric* threshold `(b^K/4)·(k+1)·2
 `2^a p + K + 1 + k` simultaneously.  `carry_le_of_tau_geom` then gives
 `carry ≤ 3·(b^K/4) < b^K`. -/
 def TauMomentPrimes (b : ℕ) : Prop :=
-  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
-    M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
+  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 4) →
+    M ≤ 2 ^ (b ^ (K / 4)) → N ≤ b ^ (K / 4) →
     ∃ p : ℕ, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧
       ∀ k : ℕ, tau (2 ^ a * p + K + 1 + k) ≤ b ^ K / 4 * (k + 1) * 2 ^ k
 
 /-- **Per-shift density form.**  The `k`-th exceptional set is allowed to occupy a `2^{-k}/4`
 fraction of `P`; `sum_le_of_geom_bound` then sums these to `≤ |P|/2 < |P|`. -/
 def TauMomentPrimesShift (b : ℕ) : Prop :=
-  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
-    M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
+  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 4) →
+    M ≤ 2 ^ (b ^ (K / 4)) → N ≤ b ^ (K / 4) →
     ∃ Y : ℕ, ∃ P : Finset ℕ,
       (∀ p ∈ P, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ p ≤ Y) ∧ 0 < P.card ∧
       ∀ k : ℕ, 4 * 2 ^ k *
@@ -1730,8 +1730,8 @@ Each inner count is `#(P ∩ one class mod lcm(d,M))`, i.e. `π(Y;q,·)`, so thi
 Brun–Titchmarsh summed over `d ≤ Y^{0.6}`.  (An *integer* count of the incidences does NOT
 suffice — it overshoots `|P|` by `log²`; the one logarithm the sieve gains is load-bearing.) -/
 def ShiftedDivisorIncidence (b : ℕ) : Prop :=
-  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
-    M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
+  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 4) →
+    M ≤ 2 ^ (b ^ (K / 4)) → N ≤ b ^ (K / 4) →
     ∃ Y : ℕ, ∃ P : Finset ℕ,
       (∀ p ∈ P, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ p ≤ Y) ∧ 0 < P.card ∧
       ∀ k : ℕ,

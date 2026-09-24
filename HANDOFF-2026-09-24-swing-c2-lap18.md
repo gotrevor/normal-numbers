@@ -279,3 +279,33 @@ argument is an averaging one.  Candidate routes, in order of cheapness:
 3. Replace the prime `p` in `exists_survivor_data` by a family with an ELEMENTARY counting lower
    bound in an AP (squarefree numbers with prescribed `ω`, say).  Costs a redesign of (K2) but
    removes analytic number theory from the path altogether.
+
+## Lap 18h — parameters tightened to `K/4`; the divergence shortcut REFUTED
+
+### 1. Refutation: `Σ_{p ≡ r (M)} 1/p = ∞` (mathlib `PrimesInAP`) does NOT suffice
+The tempting shortcut is to run the averaging with the weight `1/p`, so that only divergence of
+`Σ 1/p` over the class is needed and no density is required.  It fails, and quantitatively:
+
+    Σ_{p ≤ Y, p ≡ r (M)} τ(2^a p + e)/p  ≍  (1/φ(M))·(log Y)²/2      (avg τ ≍ log(2^a Y)),
+    Σ_{p ≤ Y, p ≡ r (M)} 1/p             ≍  (1/φ(M))·log log Y.
+
+The bad set's weight, `≍ (log Y)²/(2T)`, therefore OVERTAKES the total weight `≍ log log Y` once
+`Y > exp(exp(T))`, for any FIXED threshold `T = b^K`.  So the averaging must be carried out at
+one fixed scale `Y`, and a counting lower bound for `π(Y;M,r)` at that scale is unavoidable.
+Route 1 of lap 18g is dead; routes 2 (Siegel–Walfisz/Linnik) and 3 (replace the prime by a
+family with an elementary count in an AP) remain.
+
+### 2. Parameters tightened from `K/2` to `K/4` — the slack is now real
+`exists_pad_budget` now returns `K = 20ℓ + 200` (still `≥ 10ℓ+100`, so `SurvivorLeaf` is
+unaffected) and proves the SHARPER budget `killModulus b (ℓ+K) ≤ 2^(b^(K/4))`; the chain is the
+same one, with `105 → 205` and `3^17 → 3^20`.  `SurvivorLeaf`, `CarryLeaf`, `TauMomentPrimes`,
+`TauMomentPrimesShift` and `ShiftedDivisorIncidence` now all read `a ≤ b^(K/4)`,
+`M ≤ 2^(b^(K/4))`, `N ≤ b^(K/4)`, and every implication re-proved unchanged.
+
+**Why this matters.**  The incidence requirement is `32·log D·log Y ≤ b^K` with
+`log D ≈ (a + log Y)/2` and `log Y ≈ a + 2 log M`.  At `K/2` these give `b^{K/2}·b^{K/2} = b^K`
+— critical, failing by a constant, which is what killed the no-sieve route in lap 18g.  At `K/4`
+they give `≈ 3b^{K/2} ≪ b^K`.  **The crude integer count now has exponential room.**
+
+So `ShiftedDivisorIncidence` is reduced to: `card_shift_dvd_le` (proved) summed over `d`, plus a
+lower bound on `#{p ≤ Y prime, p ≡ r (M)}` — nothing else.
