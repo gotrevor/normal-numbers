@@ -10411,3 +10411,20 @@ already recorded as fundamental), or (ii) the entropy-decrement machinery of Tao
 the only known method for exactly this obstruction.  Formalising the *statement* of (ii)'s input
 (an averaged two-point correlation in logarithmic average) against `TwoPointWeightedAvg` is the
 cheapest next concrete step.
+
+## pd-prove lap 29 — the exact peel reaches the RATIFIED target's own leaf
+
+`src/NormalNumbers/PairDecoupleShiftPeel.lean`.  Laps 24–25 removed `K → ∞` from the *unshifted*
+crux `PairDecorr`; this lap does it for `ShiftCorrSmall`, which is the leaf of the ratified
+`pairDecouple_all` (via `shiftCorrSmall_iff_multiElliott`).
+
+* `shiftPairDiff_eq_digitTrunc_add` — exact at every `K`, no error term.
+* `phase_shiftPairDiff_factor` — the `4K`-point product times one unit-modulus weight.
+* `shiftCorrSmall_iff_shiftTwoPointWeighted` — an EQUIVALENCE at every fixed `K`, with no
+  `AdmissibleTrunc` hypothesis.
+* `multiElliott_of_shiftTwoPointWeighted`, `shiftCorr_all_of_shiftTwoPointWeighted`,
+  `pairDecouple_all_of_shiftTwoPointWeighted` — a new sufficient condition for the RATIFIED
+  target in which the depth is fixed and may be `1`.
+
+So both cruxes (shifted and unshifted) now live at depth `1`, and `AdmissibleTrunc` /
+`log_b log log R` is dead weight on both branches.

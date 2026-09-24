@@ -465,5 +465,6 @@ import NormalNumbers.PairDecoupleMertens
 import NormalNumbers.PairDecoupleAvg
 import NormalNumbers.PairDecoupleOneDigit
 import NormalNumbers.PairDecoupleFirstOrder
+import NormalNumbers.PairDecoupleShiftPeel
 import NormalNumbers.PairDecoupleTwoPoint
 import NormalNumbers.PairDecoupleProve
