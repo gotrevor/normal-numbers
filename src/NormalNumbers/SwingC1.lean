@@ -1671,6 +1671,138 @@ theorem zetaRoot_floor_diff_eq (b : ℕ) (hb : 2 ≤ b) (j L n : ℕ) :
   ring_nf
   linear_combination (j : ℂ) * ((b : ℂ)) ^ n * ((primeLambertAtBase b : ℝ) : ℂ) * hgeo
 
+/-! #### The block spectrum of the mod-`(b−1)` statistic is FULL — no sparse-frequency route
+
+`stateLaw_of_hAutoCorr` expands the `ZMod (b−1)`-statistic in characters of `ZMod (b−1)`.  One might
+hope instead to expand the test function `v ↦ ζ_{b−1}^{jv}` on the block alphabet `ZMod (b^L)` and
+find that only a few block frequencies `a` matter — that would let the integer-frequency Weyl bridge
+`zetaRoot_floor_diff_eq` close using finitely many Weyl sums.  It cannot: EVERY one of the `b^L`
+coefficients is nonzero.  Concretely, with `w = ζ_{b−1}^{j}·ζ_{b^L}^{−a}`,
+
+    Σ_{v < b^L} ζ_{b−1}^{jv} ζ_{b^L}^{−av}  =  (ζ_{b−1}^{j} − 1)/(w − 1)  ≠  0,
+
+for every `a`, because `gcd(b−1, b^L) = 1` keeps `w ≠ 1` while `w^{b^L} = ζ_{b−1}^{j}` (using
+`b^L ≡ 1 mod b−1`).  So no finite or sparse set of block frequencies carries the statistic, and any
+route that needs only finitely many Weyl frequencies is dead. -/
+
+/-- `ζ_{b−1}^{j}·ζ_{b^L}^{−a} = ζ_{(b−1)b^L}^{j b^L − a(b−1)}`: a common denominator for the two
+coprime moduli. -/
+lemma zetaRoot_mul_eq (b : ℕ) (hb : 2 ≤ b) (L a j v : ℕ) :
+    zetaRoot (b - 1) ^ ((j : ℤ) * (v : ℤ)) * zetaRoot (b ^ L) ^ (-((a : ℤ) * (v : ℤ)))
+      = zetaRoot ((b - 1) * b ^ L) ^
+          (((j : ℤ) * ((b : ℤ) ^ L) - (a : ℤ) * ((b : ℤ) - 1)) * (v : ℤ)) := by
+  have hq : ((b - 1 : ℕ) : ℂ) = (b : ℂ) - 1 := by
+    rw [Nat.cast_sub (by omega : 1 ≤ b)]; norm_num
+  have hqne : ((b : ℂ)) - 1 ≠ 0 := by
+    rw [← hq]
+    have : ((b - 1 : ℕ)) ≠ 0 := by omega
+    exact_mod_cast this
+  have hbne : ((b : ℂ)) ^ L ≠ 0 := by
+    have : ((b : ℂ)) ≠ 0 := by exact_mod_cast (by omega : b ≠ 0)
+    positivity
+  rw [zetaRoot_zpow, zetaRoot_zpow, zetaRoot_zpow, ← Complex.exp_add]
+  congr 1
+  push_cast
+  rw [hq]
+  field_simp
+  ring
+
+/-- **The block spectrum is full.**  For every block frequency `a`, the mod-`(b−1)` test function's
+coefficient on the `ZMod (b^L)` character `a` is nonzero. -/
+theorem sum_zetaRoot_mixed_ne_zero (b : ℕ) (hb : 3 ≤ b) (L j a : ℕ)
+    (hj : 0 < j) (hjq : j < b - 1) :
+    (∑ v ∈ range (b ^ L),
+      zetaRoot (b - 1) ^ ((j : ℤ) * (v : ℤ)) * zetaRoot (b ^ L) ^ (-((a : ℤ) * (v : ℤ)))) ≠ 0 := by
+  classical
+  set q := b - 1 with hqd
+  have hqpos : 0 < q := by omega
+  set Q := q * b ^ L with hQd
+  have hQpos : 0 < Q := by
+    have : 0 < b ^ L := Nat.pow_pos (by omega)
+    exact Nat.mul_pos hqpos this
+  set e : ℤ := (j : ℤ) * ((b : ℤ) ^ L) - (a : ℤ) * ((b : ℤ) - 1) with hed
+  set w : ℂ := zetaRoot Q ^ e with hwd
+  have hQz : ((Q : ℕ) : ℤ) = ((b : ℤ) - 1) * (b : ℤ) ^ L := by
+    rw [hQd, hqd]
+    push_cast [Nat.cast_sub (by omega : 1 ≤ b)]
+    ring
+  -- `w ≠ 1`
+  have hw1 : w ≠ 1 := by
+    rw [hwd]
+    intro hcon
+    obtain ⟨c, hc⟩ := (zetaRoot_zpow_eq_one_iff Q hQpos e).mp hcon
+    -- reduce mod `b − 1`
+    have hdvd : ((b : ℤ) - 1) ∣ e := by
+      refine ⟨(b : ℤ) ^ L * c, ?_⟩
+      rw [hc, hQz]; ring
+    have hgeo := sub_one_mul_geomNat b L
+    have hdj : ((b : ℤ) - 1) ∣ (j : ℤ) := by
+      obtain ⟨d, hd⟩ := hdvd
+      refine ⟨d + (a : ℤ) - (j : ℤ) * (geomNat b L : ℤ), ?_⟩
+      have : (j : ℤ) * ((b : ℤ) ^ L) - (a : ℤ) * ((b : ℤ) - 1) = ((b : ℤ) - 1) * d := by
+        rw [← hed]; exact hd
+      linear_combination this + (j : ℤ) * hgeo
+    have hjz : (0 : ℤ) < (j : ℤ) := by exact_mod_cast hj
+    have hjq' : (j : ℤ) < ((b : ℤ) - 1) := by
+      have : (j : ℤ) < ((q : ℕ) : ℤ) := by exact_mod_cast (by omega : j < q)
+      rw [hqd] at this
+      push_cast [Nat.cast_sub (by omega : 1 ≤ b)] at this
+      linarith
+    have := Int.le_of_dvd hjz hdj
+    linarith
+  -- `w^{b^L} = ζ_{b−1}^j`
+  have hqC : ((q : ℕ) : ℂ) = (b : ℂ) - 1 := by
+    rw [hqd, Nat.cast_sub (by omega : 1 ≤ b)]; norm_num
+  have hQC : ((Q : ℕ) : ℂ) = ((b : ℂ) - 1) * (b : ℂ) ^ L := by
+    have := congrArg (fun z : ℤ => (z : ℂ)) hQz
+    push_cast at this ⊢
+    linear_combination this
+  have hqne : ((b : ℂ)) - 1 ≠ 0 := by
+    rw [← hqC]
+    have : ((q : ℕ)) ≠ 0 := by omega
+    exact_mod_cast this
+  have hbne : ((b : ℂ)) ^ L ≠ 0 := by
+    have : ((b : ℂ)) ≠ 0 := by exact_mod_cast (by omega : b ≠ 0)
+    positivity
+  -- the two moduli share the exponent `j·b^L` over the common denominator `Q`
+  have hqQ : zetaRoot q ^ ((j : ℤ)) = zetaRoot Q ^ ((j : ℤ) * ((b : ℤ) ^ L)) := by
+    rw [zetaRoot_zpow, zetaRoot_zpow]
+    congr 1
+    rw [hqC, hQC]
+    push_cast
+    field_simp
+  have hwpow : w ^ (b ^ L) = zetaRoot q ^ ((j : ℤ)) := by
+    have h1 : w ^ (b ^ L) = zetaRoot Q ^ (e * ((b : ℤ) ^ L)) := by
+      rw [hwd, ← zpow_natCast (zetaRoot Q ^ e) (b ^ L), ← zpow_mul]
+      congr 1
+    obtain ⟨c, hc⟩ : ((Q : ℕ) : ℤ) ∣ (e * ((b : ℤ) ^ L) - (j : ℤ) * ((b : ℤ) ^ L)) := by
+      refine ⟨(j : ℤ) * (geomNat b L : ℤ) - (a : ℤ), ?_⟩
+      rw [hQz, hed]
+      linear_combination (-(j : ℤ) * ((b : ℤ) ^ L)) * (sub_one_mul_geomNat b L)
+    have hsplit : e * ((b : ℤ) ^ L)
+        = (j : ℤ) * ((b : ℤ) ^ L) + ((Q : ℕ) : ℤ) * c := by linear_combination hc
+    rw [h1, hqQ, hsplit, zpow_add₀ (zetaRoot_ne_zero Q),
+      zpow_mul (zetaRoot Q) (((Q : ℕ)) : ℤ) c,
+      (zetaRoot_zpow_eq_one_iff Q hQpos (((Q : ℕ)) : ℤ)).mpr dvd_rfl, one_zpow, mul_one]
+  -- `ζ_{b−1}^j ≠ 1`
+  have hzj : zetaRoot q ^ ((j : ℤ)) ≠ 1 := by
+    intro hcon
+    obtain ⟨c, hc⟩ := (zetaRoot_zpow_eq_one_iff q hqpos (j : ℤ)).mp hcon
+    have hjz : (0 : ℤ) < (j : ℤ) := by exact_mod_cast hj
+    have hjq' : (j : ℤ) < ((q : ℕ) : ℤ) := by exact_mod_cast (by omega : j < q)
+    have := Int.le_of_dvd hjz ⟨c, hc⟩
+    omega
+  -- geometric sum
+  have hsum : (∑ v ∈ range (b ^ L),
+      zetaRoot (b - 1) ^ ((j : ℤ) * (v : ℤ)) * zetaRoot (b ^ L) ^ (-((a : ℤ) * (v : ℤ))))
+      = (w ^ (b ^ L) - 1) / (w - 1) := by
+    rw [← geom_sum_eq hw1]
+    refine Finset.sum_congr rfl fun v _ => ?_
+    rw [zetaRoot_mul_eq b (by omega) L a j v, hwd,
+      ← zpow_natCast (zetaRoot Q ^ e) v, ← zpow_mul]
+  rw [hsum, hwpow]
+  exact div_ne_zero (sub_ne_zero.mpr hzj) (sub_ne_zero.mpr hw1)
+
 /-! #### Carry inertness: the leaf's whole content sits where `ω` reaches `b − 1`
 
 `c_N = ⌊Σ_{k≥1} ω(N+k) b^{−k}⌋` is IDENTICALLY ZERO as long as `ω` stays `≤ b − 2` on the tail,
