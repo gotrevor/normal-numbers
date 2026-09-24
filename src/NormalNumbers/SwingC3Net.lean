@@ -315,4 +315,105 @@ theorem exists_slot_assignment : ∀ (L : ℕ) (S : Finset ℕ) (d : ℕ → ℕ
           rw [this]
           exact hf'count j hj1 (by omega)
 
+/-! ### The prime supply
+
+The steering needs `K = (b−1)·L` primes in `(L, P]`, and the *remainder* bound of
+`tailSmall_head_rem` needs `π(P)` to stay linear in `L`.  Taking `P` minimal gives both: the
+window holds exactly `K` primes, so `π(P) ≤ L + K`. -/
+
+lemma piCount_le (L : ℕ) : piCount L ≤ L := by
+  classical
+  unfold piCount
+  have hsub : (range (L + 1)).filter Nat.Prime ⊆ Finset.Icc 2 L := by
+    intro p hp
+    simp only [Finset.mem_filter, mem_range] at hp
+    exact Finset.mem_Icc.2 ⟨hp.2.two_le, by omega⟩
+  calc ((range (L + 1)).filter Nat.Prime).card ≤ (Finset.Icc 2 L).card :=
+        Finset.card_le_card hsub
+    _ = L + 1 - 2 := by rw [Nat.card_Icc]
+    _ ≤ L := by omega
+
+/-- There are arbitrarily many primes above any bound. -/
+lemma exists_prime_window_aux (L : ℕ) : ∀ K : ℕ,
+    ∃ P, L ≤ P ∧ K ≤ ((Finset.Ioc L P).filter Nat.Prime).card := by
+  classical
+  intro K
+  induction K with
+  | zero => exact ⟨L, le_refl L, Nat.zero_le _⟩
+  | succ K ih =>
+      obtain ⟨P, hLP, hcard⟩ := ih
+      obtain ⟨q, hqP, hq⟩ := Nat.exists_infinite_primes (P + 1)
+      refine ⟨q, by omega, ?_⟩
+      have hsub : insert q ((Finset.Ioc L P).filter Nat.Prime)
+          ⊆ (Finset.Ioc L q).filter Nat.Prime := by
+        intro x hx
+        rcases Finset.mem_insert.1 hx with rfl | hx
+        · exact Finset.mem_filter.2 ⟨Finset.mem_Ioc.2 ⟨by omega, le_refl _⟩, hq⟩
+        · simp only [Finset.mem_filter, Finset.mem_Ioc] at hx ⊢
+          exact ⟨⟨hx.1.1, by omega⟩, hx.2⟩
+      have hnot : q ∉ (Finset.Ioc L P).filter Nat.Prime := by
+        simp only [Finset.mem_filter, Finset.mem_Ioc]
+        rintro ⟨⟨-, h⟩, -⟩
+        omega
+      calc K + 1 ≤ ((Finset.Ioc L P).filter Nat.Prime).card + 1 := by omega
+        _ = (insert q ((Finset.Ioc L P).filter Nat.Prime)).card :=
+            (Finset.card_insert_of_notMem hnot).symm
+        _ ≤ _ := Finset.card_le_card hsub
+
+/-- **The prime window.**  For every `L` and `K` there is a `P ≥ L` with exactly `K` primes in
+`(L, P]`, hence `π(P) ≤ L + K`. -/
+theorem exists_prime_window (L K : ℕ) :
+    ∃ P, L ≤ P ∧ ((Finset.Ioc L P).filter Nat.Prime).card = K ∧ piCount P ≤ L + K := by
+  classical
+  have hex : ∃ P, L ≤ P ∧ K ≤ ((Finset.Ioc L P).filter Nat.Prime).card :=
+    exists_prime_window_aux L K
+  obtain ⟨hLP, hge⟩ := Nat.find_spec hex
+  have hmin : ∀ m, m < Nat.find hex →
+      ¬ (L ≤ m ∧ K ≤ ((Finset.Ioc L m).filter Nat.Prime).card) :=
+    fun m hm => Nat.find_min hex hm
+  have hle : ((Finset.Ioc L (Nat.find hex)).filter Nat.Prime).card ≤ K := by
+    rcases eq_or_lt_of_le hLP with hPL | hPL
+    · have hempty : (Finset.Ioc L (Nat.find hex)).filter Nat.Prime = ∅ := by
+        rw [← hPL]; simp
+      rw [hempty]; simp
+    · have hlt : ((Finset.Ioc L (Nat.find hex - 1)).filter Nat.Prime).card < K := by
+        by_contra hcon
+        exact hmin (Nat.find hex - 1) (by omega) ⟨by omega, by omega⟩
+      have hsub : (Finset.Ioc L (Nat.find hex)).filter Nat.Prime
+          ⊆ insert (Nat.find hex) ((Finset.Ioc L (Nat.find hex - 1)).filter Nat.Prime) := by
+        intro x hx
+        simp only [Finset.mem_filter, Finset.mem_Ioc] at hx
+        rcases eq_or_lt_of_le hx.1.2 with rfl | hxP
+        · exact Finset.mem_insert_self _ _
+        · refine Finset.mem_insert_of_mem ?_
+          simp only [Finset.mem_filter, Finset.mem_Ioc]
+          exact ⟨⟨hx.1.1, by omega⟩, hx.2⟩
+      calc ((Finset.Ioc L (Nat.find hex)).filter Nat.Prime).card
+          ≤ (insert (Nat.find hex)
+              ((Finset.Ioc L (Nat.find hex - 1)).filter Nat.Prime)).card :=
+            Finset.card_le_card hsub
+        _ ≤ ((Finset.Ioc L (Nat.find hex - 1)).filter Nat.Prime).card + 1 :=
+            Finset.card_insert_le _ _
+        _ ≤ K := by omega
+  refine ⟨Nat.find hex, hLP, le_antisymm hle hge, ?_⟩
+  have hpi : piCount (Nat.find hex)
+      ≤ piCount L + ((Finset.Ioc L (Nat.find hex)).filter Nat.Prime).card := by
+    unfold piCount
+    have hsub : (range (Nat.find hex + 1)).filter Nat.Prime
+        ⊆ ((range (L + 1)).filter Nat.Prime)
+            ∪ ((Finset.Ioc L (Nat.find hex)).filter Nat.Prime) := by
+      intro x hx
+      simp only [Finset.mem_filter, mem_range, Finset.mem_union, Finset.mem_Ioc] at hx ⊢
+      rcases le_or_gt x L with h | h
+      · exact Or.inl ⟨by omega, hx.2⟩
+      · exact Or.inr ⟨⟨h, by omega⟩, hx.2⟩
+    calc ((range (Nat.find hex + 1)).filter Nat.Prime).card
+        ≤ (((range (L + 1)).filter Nat.Prime)
+            ∪ ((Finset.Ioc L (Nat.find hex)).filter Nat.Prime)).card :=
+          Finset.card_le_card hsub
+      _ ≤ _ := Finset.card_union_le _ _
+  have hpl := piCount_le L
+  have := le_antisymm hle hge
+  omega
+
 end NormalNumbers
