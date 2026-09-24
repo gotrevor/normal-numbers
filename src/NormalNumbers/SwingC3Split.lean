@@ -85,4 +85,60 @@ theorem omegaCarry_succ_split {b : ℕ} (hb : 2 ≤ b) (P k : ℕ) :
     omegaCarry b k = (omegaSmall P (k + 1) + omegaLarge P (k + 1) + omegaCarry b (k + 1)) / b := by
   rw [omegaSmall_add_omegaLarge]; exact omegaCarry_succ hb k
 
+/-! ### The tail splits, and the small half is a periodic ROTATION
+
+This is the correct form of the route.  The digit window of `G_b` at `n` is determined by the
+orbit point `T_b(n) mod 1`, and `T_b(n) = tailSmall P b n + tailLarge P b n` with `tailSmall`
+**periodic modulo `Q`**.  So along `n ≡ a (mod Q)` the orbit point is the large-prime tail
+*rotated by the constant* `tailSmall P b a`.  Choosing `ω_{≤P}(a+j) = k_j` for `j = 1, …, ℓ` by
+CRT puts that constant at `∑_{j≤ℓ} k_j b^{−j} + (tail)`, and the head runs over EVERY multiple of
+`b^{−ℓ}`.  Rotating any fixed law by all `b^ℓ` multiples of `b^{−ℓ}` gives every length-`ℓ`
+cylinder positive mass — so every word occurs at positive density, whatever the law of
+`tailLarge` is. -/
+
+/-- The small-prime half of the tail. -/
+noncomputable def tailSmall (P b n : ℕ) : ℝ :=
+  ∑' i : ℕ, (omegaSmall P (n + i + 1) : ℝ) / (b : ℝ) ^ (i + 1)
+
+/-- The large-prime half of the tail. -/
+noncomputable def tailLarge (P b n : ℕ) : ℝ :=
+  ∑' i : ℕ, (omegaLarge P (n + i + 1) : ℝ) / (b : ℝ) ^ (i + 1)
+
+lemma summable_tailSmall {b : ℕ} (hb : 2 ≤ b) (P n : ℕ) :
+    Summable (fun i : ℕ => (omegaSmall P (n + i + 1) : ℝ) / (b : ℝ) ^ (i + 1)) := by
+  refine Summable.of_nonneg_of_le (fun i => by positivity) (fun i => ?_)
+    (G4.summable_tailB hb n)
+  have : (omegaSmall P (n + i + 1) : ℝ) ≤ omegaR (n + i + 1) := by
+    rw [omegaR, cardDistinctFactors_eq_card_primeFactors]
+    exact_mod_cast Finset.card_filter_le _ _
+  gcongr
+
+lemma summable_tailLarge {b : ℕ} (hb : 2 ≤ b) (P n : ℕ) :
+    Summable (fun i : ℕ => (omegaLarge P (n + i + 1) : ℝ) / (b : ℝ) ^ (i + 1)) := by
+  refine Summable.of_nonneg_of_le (fun i => by positivity) (fun i => ?_)
+    (G4.summable_tailB hb n)
+  have : (omegaLarge P (n + i + 1) : ℝ) ≤ omegaR (n + i + 1) := by
+    rw [omegaR, cardDistinctFactors_eq_card_primeFactors]
+    exact_mod_cast Finset.card_filter_le _ _
+  gcongr
+
+/-- **The tail splits.** -/
+theorem tailB_eq_small_add_large {b : ℕ} (hb : 2 ≤ b) (P n : ℕ) :
+    G4.tailB b n = tailSmall P b n + tailLarge P b n := by
+  rw [tailSmall, tailLarge, ← Summable.tsum_add (summable_tailSmall hb P n)
+    (summable_tailLarge hb P n), G4.tailB]
+  refine tsum_congr fun i => ?_
+  have hsum := omegaSmall_add_omegaLarge P (n + i + 1)
+  have : omegaR (n + i + 1)
+      = (omegaSmall P (n + i + 1) : ℝ) + (omegaLarge P (n + i + 1) : ℝ) := by
+    rw [omegaR, ← Nat.cast_add, hsum]
+  rw [this, add_div]
+
+/-- **The small half is `Q`-periodic**: it is a constant rotation along each class mod `Q`. -/
+theorem tailSmall_congr {b P Q n n' : ℕ} (hQ : ∀ p ≤ P, p.Prime → p ∣ Q)
+    (h : n ≡ n' [MOD Q]) : tailSmall P b n = tailSmall P b n' := by
+  refine tsum_congr fun i => ?_
+  congr 2
+  exact omegaSmall_congr_of_modEq (by omega) (by omega) hQ (h.add_right (i + 1))
+
 end NormalNumbers
