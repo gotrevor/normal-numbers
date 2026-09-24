@@ -1530,6 +1530,69 @@ theorem coprime_killModulus_shift {b L j₀ n e : ℕ}
   omega
 
 
+/-- If every prime of `G` occurs to the first power, `τ(G) ≤ 2^{ω(G)}`. -/
+theorem card_divisors_le_two_pow {G : ℕ} (hG : G ≠ 0)
+    (h : ∀ q ∈ G.primeFactors, G.factorization q ≤ 1) :
+    G.divisors.card ≤ 2 ^ G.primeFactors.card := by
+  rw [Nat.card_divisors hG]
+  calc ∏ q ∈ G.primeFactors, (G.factorization q + 1)
+      ≤ ∏ _q ∈ G.primeFactors, 2 :=
+        Finset.prod_le_prod' (fun q hq => by have := h q hq; omega)
+    _ = 2 ^ G.primeFactors.card := by rw [Finset.prod_const]
+
+/-- **The gcd loss of one shift, evaluated for the kill modulus.**  Combining the third and
+fourth conclusions of `exists_kill_progression'`: every prime of `gcd(M, n+1+j₀+e)` lies in
+`(L+2, j₀+e]`, and each occurs to the first power (as long as `j₀+e < (L+3)²`), so
+
+    `τ(gcd(M, n+1+j₀+e)) ≤ 2^{(j₀+e) − (L+2)}`.
+
+For the survivor datum `j₀ = ℓ−1`, `e = K+1+k`, `L = ℓ+K` this reads `τ ≤ 2^{k−2}` — strictly
+less than the `2^k` that the geometric threshold of `TauMomentPrimesShift` already carries.
+This is the exact form of the loss that laps 18i–18j could only bound by `τ(M)` or `2^{ω(M)}`. -/
+theorem card_divisors_gcd_shift_le (b L j₀ n e : ℕ)
+    (hprime : ∀ q : ℕ, q.Prime → q ∣ killModulus b L → q ∣ n + 1 + j₀ + e → q ≤ j₀ + e)
+    (hsq : ∀ q : ℕ, q.Prime → q ∣ killModulus b L → j₀ + e < q * q →
+      ¬ (q * q ∣ n + 1 + j₀ + e))
+    (hlt : j₀ + e < (L + 3) * (L + 3)) :
+    (Nat.gcd (killModulus b L) (n + 1 + j₀ + e)).divisors.card
+      ≤ 2 ^ (j₀ + e - (L + 2)) := by
+  classical
+  set M : ℕ := killModulus b L with hM
+  set G : ℕ := Nat.gcd M (n + 1 + j₀ + e) with hG
+  have hMpos : 0 < M := killModulus_pos b L
+  have hGpos : 0 < G := Nat.gcd_pos_of_pos_left _ hMpos
+  have hGne : G ≠ 0 := by omega
+  have hGM : G ∣ M := Nat.gcd_dvd_left _ _
+  have hGs : G ∣ n + 1 + j₀ + e := Nat.gcd_dvd_right _ _
+  -- every prime of `G` lies in `(L+2, j₀+e]`
+  have hmem : ∀ q ∈ G.primeFactors, q ∈ Finset.Icc (L + 3) (j₀ + e) := by
+    intro q hq
+    have hqp : q.Prime := Nat.prime_of_mem_primeFactors hq
+    have hqG : q ∣ G := Nat.dvd_of_mem_primeFactors hq
+    have h1 : L + 2 < q := lt_of_prime_dvd_killModulus (b := b) hqp (hqG.trans hGM)
+    have h2 : q ≤ j₀ + e := hprime q hqp (hqG.trans hGM) (hqG.trans hGs)
+    exact Finset.mem_Icc.2 ⟨by omega, h2⟩
+  have hcard : G.primeFactors.card ≤ j₀ + e - (L + 2) := by
+    have h1 : G.primeFactors.card ≤ (Finset.Icc (L + 3) (j₀ + e)).card :=
+      Finset.card_le_card hmem
+    rw [Nat.card_Icc] at h1
+    omega
+  -- each prime occurs to the first power
+  have hv : ∀ q ∈ G.primeFactors, G.factorization q ≤ 1 := by
+    intro q hq
+    by_contra hcon
+    have hqp : q.Prime := Nat.prime_of_mem_primeFactors hq
+    have hqG : q ∣ G := Nat.dvd_of_mem_primeFactors hq
+    have h1 : L + 2 < q := lt_of_prime_dvd_killModulus (b := b) hqp (hqG.trans hGM)
+    have hsq2 : q ^ 2 ∣ G :=
+      (Nat.Prime.pow_dvd_iff_le_factorization hqp hGne).2 (by omega)
+    have hsq3 : q * q ∣ n + 1 + j₀ + e := by
+      have : q * q ∣ G := by rw [show q * q = q ^ 2 by ring]; exact hsq2
+      exact this.trans hGs
+    have hq2 : (L + 3) * (L + 3) ≤ q * q := Nat.mul_le_mul (by omega) (by omega)
+    exact hsq q hqp (hqG.trans hGM) (by omega) hsq3
+  exact le_trans (card_divisors_le_two_pow hGne hv) (Nat.pow_le_pow_right (by norm_num) hcard)
+
 /-- **The kill modulus is only exponential in a polynomial**: `log₂ (killModulus b L) ≤ b(L+5)⁴`.
 This is the quantitative payoff of using many small exponents: with one prime per slot at
 exponent `b^{j+1}−1` the modulus would be `exp(b^{L+1})`, which exceeds every pad budget `b^K`,
