@@ -1,8 +1,78 @@
 # STATUS — normal-numbers 📊
 
+**Live campaign: the Delange slot** (`KICKOFF-2026-09-24-delange-slot.md`) — twisted means of
+`z^{ω_{>P}}` vanish.  *(Previous campaign — Pair A multicutoff, Theorem C′ — PROVED and closed;
+its overview is kept below.)*
+· **Build**: 🟢 green (8707 jobs, `NormalNumbers.DelangeSlotCheck`) · **Updated**: 2026-09-24
+review lap · HEAD `36e2625` · branch `wip/delange-slot`
+
+## Where it stands (Delange slot)
+
+The route is Levin–Fainleib, not Halász (`DESIGN-2026-09-24-delange-route.md`): the von-Mangoldt
+identity turns `∑_{n≤N} h n log n` into `z ∑_d Λ d S(N/d) + O(N)`, the hyperbola transposes that
+onto `∑_k h k ψ(N/k)`, PNT replaces `ψ(N/k)` by `N/k`, and discrete Abel summation closes the
+loop into the recursion `(log N − z) σ N = z Ψ N + O(1)`, which forces `σ N → 0` exactly because
+`Re z < 1`.  **Five of the seven links are proved** (L1, L3, L5, L6 and — the hardest analysis —
+**L7**, `recursion_tendsto_zero`, trust-triple clean).  Two are open: **L4** (the crux: extract
+`|ψ(x) − x| ≪ x/(log x)²` from the vendored `PNTPort.MediumPNT` and sum it over the hyperbola in
+budget `O(N)`) and **L2** (routine).  Both headline statements in `DelangeSlot.lean` are still
+`sorry`; nothing else in `src/` regressed.
+
+## What's happened (Delange slot, newest first)
+
+- **2026-09-24 (review lap)** — direction RE-SET from the closed multicutoff campaign to the
+  operator's Delange kickoff; crux named as **L4** with a four-step decomposition written into
+  `DIRECTION.md` → CURRENT DIRECTIVE and `PENDING_WORK.md`.  Chain arithmetic re-checked end to
+  end on paper: L2+L3+L4+L5+L6 feed `recursion_tendsto_zero` exactly, so L4 is the only
+  route-decisive obligation.  `#print axioms recursion_tendsto_zero` = trust triple, re-run.
+- **2026-09-24 (lap L7)** — `recursion_tendsto_zero` PROVED and axiom-clean: the sharp
+  telescoping `∑_{3≤n≤N} 1/(n log n) ≤ loglog N − loglog 2` (a dyadic bound would break
+  `Re z > 0.69`), second-order absorption in the one-step modulus bound, discrete Gronwall, and
+  the two tail estimates.
+- **2026-09-24 (lap PNTPort)** — PrimeNumberTheoremAnd's `MediumPNT` import closure (14 files,
+  ~12k lines) vendored on v4.33.1 with **no math edits**; `#print axioms MediumPNT` clean.
+- **2026-09-24 (lap Identity)** — `DelangeSlotIdentity.lean` sorry-free: the general Dirichlet
+  swap (mathlib's is specialised to convolutions and does not apply — `h` is not multiplicative
+  across a non-coprime factorisation), the von-Mangoldt identity, and the two prime-power shift
+  rules.
+
+## Outstanding (Delange slot)
+
+### Short-term (mirrors PENDING_WORK top)
+1. **L4** `exists_L4` — the crux.  `∑_{k≤N} |ψ(⌊N/k⌋) − ⌊N/k⌋| ≤ C N` from `MediumPNT`.
+2. **L2** `exists_L2` — `∑_{d} Λ d/d^{3/2} < ∞` for the `p ∣ m` correction plus the fixed-`P` block.
+3. Assembly ⟹ `omegaLarge_mean_tendsto_zero`.
+4. Rung 2: the twist `e(jm/Q)`, via smooth×rough splitting and Dirichlet characters.
+
+### Long-term
+Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
+`MahlerDriftOne.exists_prime_nonresidue`.
+
+### To completion
+Both ratified statements of `DelangeSlot.lean` proved, `#print axioms` = trust triple.
+
+## Axiom ledger — Delange slot (real `#print axioms`, 2026-09-24)
+
+| headline theorem | paper claim | `#print axioms` shows | verdict |
+|---|---|---|---|
+| `DelangeSlot.recursion_tendsto_zero` (L7) | the recursion forces decay — UNCOND | trust triple | 🟢 clean |
+| `PNTPort.MediumPNT` | PNT with `exp(−c(log x)^{1/10})` saving — UNCOND | trust triple | 🟢 clean (vendored, no math edits) |
+| `DelangeSlot.omegaLarge_mean_tendsto_zero` | untwisted Delange — UNCOND | `sorryAx` (via L2, L4) | 🟡 open — L4 is the crux |
+| `DelangeSlot.twisted_omegaLarge_mean_tendsto_zero` | the Leaf-B slot — UNCOND | `sorryAx` | 🟡 open — rung 2, after rung 1 |
+
+Math-axiom count for this campaign: **0** (no `axiom` declarations; the two open headlines carry
+disclosed on-path `sorry`s, not axioms).
+
+## Pointers (Delange slot)
+`KICKOFF-2026-09-24-delange-slot.md` · `DESIGN-2026-09-24-delange-route.md` ·
+`HANDOFF-2026-09-24-delange-slot-L7-proved.md` · `PENDING_WORK.md` · `DIRECTION.md`
+
+---
+
+# (below: the Pair A multicutoff campaign — CLOSED; kept as the durable overview of that work)
+
 **Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
-· **Build**: 🟢 green (9161 jobs) · **Updated**: 2026-09-23, campaign complete · HEAD `3523f8d`
-· branch `wip/g5-prime-subset`
+· **Build**: 🟢 green (9161 jobs) · HEAD `3523f8d` · branch `wip/g5-prime-subset`
 
 ## Where it stands (multicutoff campaign)
 

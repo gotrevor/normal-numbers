@@ -2,37 +2,49 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective.**  `isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′, Fable §9 / Astra §11)
-SORRY-FREE and trust-triple.  The whole chain is assembled and green; the headline's `sorryAx`
-comes from exactly **three** leaves, all in `src/NormalNumbers/PrimeModelFamilyGraded.lean`.
+**Objective.**  `KICKOFF-2026-09-24-delange-slot.md` (operator, supersedes the multicutoff
+directive, which is COMPLETE): prove `omegaLarge_mean_tendsto_zero` and
+`twisted_omegaLarge_mean_tendsto_zero` in `src/NormalNumbers/DelangeSlot.lean`, statements
+unchanged.
 
-**Mandated next move (2026-09-23 review lap — direction KEPT, priority sharpened).**
-Close the three leaves, hardest first:
-1. **`termE5_tendsto`** (l. ~980) — Astra (8.6), the last structurally NEW estimate and the only
-   one whose feasibility is in real doubt.  Everything it needs is already proved:
-   `recipSumIoc_yG_le` (short root chain at any `j ≤ J1 N`), `JG_le_mass` (`8J ≤ S_P(N)`),
-   Mertens (`primeRecipSum_le` / `recipSumLe_le_crude`), `cIdx ≤ J−1 ≤ J1 N`.
-2. **`schedule_admissible`** (l. ~575) — eleven pointwise clauses, two already proved
-   (`yBotG_le_yG`, `yG_antitone`); bookkeeping, no new mathematics.
-3. **`termE4c_tendsto`** (l. ~974) — `N^{-1+o(1)}`; arithmetic of the support level.
+**Mandated next move (2026-09-24 review lap — route KEPT, crux named).**  The Levin–Fainleib
+chain L1–L7 (`DESIGN-2026-09-24-delange-route.md`) is arithmetically closed on paper and L1,
+L3, L5, L6, L7 are PROVED.  The single route-decisive obligation is **L4**, `exists_L4` in
+`src/NormalNumbers/DelangeSlotAnalytic.lean`, which reduces to
 
-**Forbidden drift.**  Do NOT open new campaigns, do NOT touch `PrimeLambertOscillation` or
-`MahlerDriftOne` (the two pre-existing off-campaign `sorry`s — designated open), do NOT edit
-`PrimeModelBrunLower.lean`, `papers/`, or Pair B files.  Do NOT weaken any existing statement to
-make a leaf close; a leaf that resists gets a named sub-`sorry` IN `src/`, never a relocation.
-No constant-class-count route (refuted 2026-09-22, see below).
+>  `∑_{k ≤ N} |ψ(⌊N/k⌋) − ⌊N/k⌋| ≤ C · N`.
 
-**Why.**  The graded route's route-decisive question — whether the fresh-mass surrogate `ε_N → 0`
-alone can drive the schedule — was settled affirmatively by the bounded contracting site index
-(`exists_site_re_nonpos_le`, lap G5c-e) plus the short root chain (`recipSumIoc_yG_le`, lap G5c-i).
-E5 is where that finding is finally cashed: if the exponent `8J − 1 − log 2J − o(1)` does not
-materialise in Lean, the schedule constants (the `8` in `JG`, the `2J` floor) need retuning and
-that is a redesign.  Nothing else open can force a pivot.
+Attack it in this decomposition (write each as a named lemma in a new
+`src/NormalNumbers/DelangeSlotPNT.lean`):
+1. `|Δ n| ≤ C₀ · n / (log n)²` for `n ≥ n₁`, from `PNTPort.MediumPNT`
+   (`exp(−c(log x)^{1/10})·(log x)² → 0`).
+2. the uniform small-range bound `|Δ n| ≤ ψ(n₁) + n₁` for `n ≤ n₁` (monotonicity of `ψ`, no
+   `Finset.sup'`).
+3. the telescoping tail `∑_{k ≤ K} 1/(k·(log(N/k))²) ≤ 2/v_K + 1/(K v_K²)` with
+   `v_k = log N − log k`, by induction on `K`, off `log(1+1/k) ≥ 1/(k+1)`.
+4. splice: quotient `< n₁` costs `≤ (ψ(n₁)+n₁)·N` on ≤ N terms; quotient `≥ n₁` runs 1+3.
+
+Only after L4 lands: **L2** (routine, `∑_d Λ d/(d·rad-ish) < ∞` plus the fixed-`P` block), then
+the assembly into `recursion_tendsto_zero`, then rung 2 (the twist).
+
+**Forbidden drift.**  Do NOT change any ratified statement, binder or definition in
+`DelangeSlot.lean`.  Do NOT open a Halász campaign (operator: "let others do the legwork for
+general").  Do NOT edit `papers/`, `agent-mail/`, `Maze.lean`, other KICKOFFs, or any file of
+the closed multicutoff campaign.  Do NOT retry the two refuted sub-routes recorded in
+`HANDOFF-2026-09-24-delange-slot-L7-proved.md` (plain `Δ = o(x)` PNT; the Selberg-`Λ₂` variant).
+
+**Why.**  L4 is the only step whose feasibility is in real doubt: it is where a *quantitative*
+PNT has to be extracted from the vendored `MediumPNT` and summed over the hyperbola.  If the
+`O(N)` budget cannot be met in Lean, the whole Levin–Fainleib route has to be replaced (by
+Selberg–Delange via `L(s,χ)^z`, kickoff route (a)), so it decides the architecture.  Everything
+else in the chain is either proved or bookkeeping.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
 - 2026-09-23 (review lap): route KEPT and vindicated (5/8 leaves closed, tail crux resolved);
   narrowed to the three remaining leaves of `PrimeModelFamilyGraded.lean`, E5 first.
+- 2026-09-24 (review lap): multicutoff campaign CLOSED (Theorem C′ trust-triple).  Directive
+  re-set to the operator's Delange slot; crux named as **L4** with a four-step decomposition.
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically

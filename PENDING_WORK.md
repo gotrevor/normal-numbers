@@ -1,5 +1,48 @@
 # PENDING WORK
 
+## 2026-09-24 — LIVE CAMPAIGN: the Delange slot (`KICKOFF-2026-09-24-delange-slot.md`)
+
+Route: Levin–Fainleib (`DESIGN-2026-09-24-delange-route.md`).  L1/L3/L5/L6/L7 proved.
+
+### Open items, highest value first
+
+**1. L4 — THE CRUX.**  `exists_L4` in `src/NormalNumbers/DelangeSlotAnalytic.lean`.
+Reduces to `∑_{k ∈ Ioc 0 N} |Δ(N/k)| ≤ C·N`, `Δ n = psiN n − n`.  Decomposition (new file
+`src/NormalNumbers/DelangeSlotPNT.lean`):
+  (a) `pnt_quantitative`: `∃ C₀ n₁, ∀ n ≥ n₁, |Δ n| ≤ C₀ · n/(log n)²`.  From `MediumPNT`
+      via `(log x)² · exp(−c (log x)^{1/10}) → 0` (substitute `u = (log x)^{1/10}`, then it is
+      `u^{20} e^{−cu} → 0`).
+  (b) `delta_small`: `∀ n ≤ n₁, |Δ n| ≤ psiN n₁ + n₁` — monotonicity of `psiN`, no `Finset.sup'`.
+  (c) `telescope`: for `v k = log N − log k` positive and antitone with `v k − v (k+1) ≥ 1/(k+1)`,
+      `∑_{k ∈ Ioc 0 K} 1/(k (v k)²) ≤ 2/(v K) + 1/(K (v K)²)`, by induction on `K`.
+      Step inequality: `1/(k v_k²) ≤ 2(1/v_{k+1} − 1/v_k)`, using `k+1 ≤ 2k` and `v_{k+1} ≤ v_k`.
+      The needed `log(1+1/k) ≥ 1/(k+1)` is `Real.log_le_sub_one_of_pos` at `x = k/(k+1)`.
+  (d) `sum_abs_delta_le`: split `Ioc 0 N` by whether `N/k < n₁`.  Small-quotient part: ≤ N terms
+      each ≤ `psiN n₁ + n₁`.  Large-quotient part: `k ≤ N/n₁`, and `⌊N/k⌋ ≥ (N/k)/2` gives
+      `log⌊N/k⌋ ≥ ½ log(N/k)` once `N/k ≥ 4`, so the term is `≤ 4C₀ (N/k)/(log(N/k))²`; apply (c).
+Budget check (paper): `∑_{k≤N/n₁} (N/k)/(log(N/k))² ≍ N ∫_{log n₁}^{log N} du/u² ≤ N/log n₁`. ✓
+
+**2. L2** — routine.  `exists_L2`.  Large primes: the `T_p` correction costs
+`∑_{d=p^j ≤ N} Λ d · (N/d)/p ≤ N ∑_{d≥2} (log d)/d^{3/2}` (use `p ≥ d^{1/2}` for `j ≥ 2`,
+`p = d` for `j = 1`), convergent.  Small primes `p ≤ P`: the whole block is
+`2N ∑_{p≤P} log p/(p−1) = O_P(N)`.
+
+**3. Assembly** — L2+L3+L4+L5 ⟹ `S N log N = z N m N + O_P(N)`; with L6 that is literally the
+hypothesis of `recursion_tendsto_zero`, giving `omegaLarge_mean_tendsto_zero`.
+
+**4. Rung 2** — the twist `e(jm/Q)`: split `m = s·t` (`P`-smooth × `P`-rough), reduce to residue
+classes of `t` mod `Q' ∣ Q`, expand in Dirichlet characters, rerun the machinery on `χ·h`
+(the Λ-identity holds verbatim).
+
+### Refuted, do not retry
+* plain PNT (`Δ = o(x)`) — the `k ≤ √N` range needs `|Δ(x)| ≪ x/log x`, the `k > √N` range needs
+  `∫ δ(y) dy/y < ∞`.
+* the Selberg-`Λ₂` variant — needs `θ₁` and `ψ₁₁` separately (coefficients `z` vs `z²`) and only
+  their sum is elementary.
+* full Halász — out of scope by operator decision.
+
+---
+
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is sorry-free and
