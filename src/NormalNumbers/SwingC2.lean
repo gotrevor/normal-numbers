@@ -1072,6 +1072,30 @@ theorem exists_survivor_exponent (b ℓ t : ℕ) (hb : 3 ≤ b) (hℓ : 1 ≤ �
   rw [hcastT]
   exact hTmod
 
+/-- **The exponent is free to be LARGE.**  The exponent equation `2(a+1) ≡ t (mod b^ℓ)` only
+pins `a` modulo `b^ℓ`, so `a` may be pushed above any prescribed bound `A` at the cost of
+`a < (A+1)·b^ℓ`.  This matters for the 2-adic reduction `tau_shift_two_adic`: the shifts
+`e = K+1+k` must satisfy `e < 2^a`, which fails outright for the small exponents the bare
+equation returns.  The budget `a ≤ b^{K/4}` leaves room for `A` as large as `b^{K/4 − ℓ − 1}`. -/
+theorem exists_survivor_exponent_large (b ℓ t A : ℕ) (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ) (ht : t < b ^ ℓ)
+    (hpar : 2 ∣ b → 2 ∣ t) :
+    ∃ a : ℕ, A ≤ a ∧ a < (A + 1) * b ^ ℓ ∧
+      (2 * ((a : ℤ) + 1)) ≡ (t : ℤ) [ZMOD (b : ℤ) ^ ℓ] := by
+  obtain ⟨a₀, ha₀, hmod⟩ := exists_survivor_exponent b ℓ t hb hℓ ht hpar
+  have hbl : 1 ≤ b ^ ℓ := Nat.one_le_pow _ _ (by omega)
+  refine ⟨a₀ + A * b ^ ℓ, ?_, ?_, ?_⟩
+  · have : A * 1 ≤ A * b ^ ℓ := Nat.mul_le_mul_left A hbl
+    omega
+  · have : (A + 1) * b ^ ℓ = A * b ^ ℓ + b ^ ℓ := by ring
+    omega
+  · have hcast : ((a₀ + A * b ^ ℓ : ℕ) : ℤ) = (a₀ : ℤ) + (A : ℤ) * (b : ℤ) ^ ℓ := by
+      push_cast; ring
+    rw [hcast]
+    refine Int.ModEq.trans ?_ hmod
+    refine Int.ModEq.symm ?_
+    refine Int.modEq_iff_dvd.2 ⟨2 * (A : ℤ), ?_⟩
+    ring
+
 /-- **(K2), discharged.**  In an odd progression `n ≡ n₀ (mod M)` whose survivor entry is coprime
 to `M`, there are an exponent `a < b^ℓ` and a residue `r` coprime to `M` such that EVERY odd
 prime `p ≡ r (mod M)` makes `2^a·p` land in the progression with `τ(2^a·p) ≡ t (mod b^ℓ)`.
@@ -1118,6 +1142,52 @@ theorem exists_survivor_data (b ℓ M n₀ t : ℕ) (hb : 3 ≤ b) (hℓ : 1 ≤
     · rw [tau_two_pow_mul_prime hp hp2]
       push_cast
       exact haT
+
+/-- **(K2) with a large exponent.**  Same as `exists_survivor_data`, but the exponent `a` may
+be pushed above any prescribed `A` — which is what the 2-adic reduction of the shifts needs
+(`exists_survivor_exponent_large`). -/
+theorem exists_survivor_data_large (b ℓ M n₀ t A : ℕ) (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ) (hM : 0 < M)
+    (h2M : Nat.Coprime 2 M) (hcop : Nat.Coprime (n₀ + ℓ) M) (ht : t < b ^ ℓ)
+    (hpar : 2 ∣ b → 2 ∣ t) :
+    ∃ a r : ℕ, A ≤ a ∧ a < (A + 1) * b ^ ℓ ∧ Nat.Coprime r M ∧
+      ∀ p : ℕ, p.Prime → p ≠ 2 → p ≡ r [MOD M] →
+        (2 ^ a * p ≡ n₀ + ℓ [MOD M]) ∧
+        ((tau (2 ^ a * p) : ℤ) ≡ (t : ℤ) [ZMOD (b : ℤ) ^ ℓ]) := by
+  obtain ⟨a, haA, ha, haT⟩ := exists_survivor_exponent_large b ℓ t A hb hℓ ht hpar
+  have hModd : ¬ 2 ∣ M := (Nat.Prime.coprime_iff_not_dvd Nat.prime_two).mp h2M
+  set c := (M + 1) / 2 with hc
+  have h2cM : 2 * c = M + 1 := by omega
+  have hccop : Nat.Coprime c M := by
+    have hd1 : Nat.gcd c M ∣ M + 1 := by
+      rw [← h2cM]; exact Dvd.dvd.mul_left (Nat.gcd_dvd_left c M) 2
+    have hd2 : Nat.gcd c M ∣ M := Nat.gcd_dvd_right c M
+    have : Nat.gcd c M ∣ 1 := by
+      have := Nat.dvd_sub hd1 hd2
+      simpa using this
+    exact Nat.dvd_one.mp this
+  have h2c : 2 * c ≡ 1 [MOD M] := by
+    rw [h2cM]
+    exact ((Nat.modEq_iff_dvd' (by omega)).mpr ⟨1, by omega⟩).symm
+  have hpowc : 2 ^ a * c ^ a ≡ 1 [MOD M] := by
+    have := h2c.pow a
+    rwa [mul_pow, one_pow] at this
+  set X := (n₀ + ℓ) * c ^ a with hX
+  have hXcop : Nat.Coprime X M := Nat.Coprime.mul_left hcop (Nat.Coprime.pow_left _ hccop)
+  refine ⟨a, X % M, haA, ha, ?_, ?_⟩
+  · have h1 : Nat.gcd M X = 1 := (Nat.coprime_comm.mp hXcop)
+    rw [Nat.gcd_rec] at h1
+    exact h1
+  · intro p hp hp2 hpr
+    constructor
+    · calc 2 ^ a * p ≡ 2 ^ a * (X % M) [MOD M] := Nat.ModEq.mul_left _ hpr
+        _ ≡ 2 ^ a * X [MOD M] := Nat.ModEq.mul_left _ (Nat.mod_modEq X M)
+        _ = (n₀ + ℓ) * (2 ^ a * c ^ a) := by rw [hX]; ring
+        _ ≡ (n₀ + ℓ) * 1 [MOD M] := Nat.ModEq.mul_left _ hpowc
+        _ = n₀ + ℓ := by ring
+    · rw [tau_two_pow_mul_prime hp hp2]
+      push_cast
+      exact haT
+
 
 /-! ### 3l. (K1): the kill progression is a single residue class
 
