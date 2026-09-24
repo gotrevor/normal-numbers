@@ -403,7 +403,125 @@ theorem carry_le_sqrt (b : ℕ) (hb : 3 ≤ b) (N : ℕ) :
   have : (2 * (s : ℝ) + 2) = ((2 * (s : ℤ) + 2 : ℤ) : ℝ) := by push_cast; ring
   rw [this, Int.floor_intCast]
 
+
+/-! ### 3c. The padding reduction: the crux becomes a congruence on `τ` -/
+
+/-- The in-window part of `windowNum`. -/
+def paddedSum (b : ℕ) (w : ℕ → ℕ) (n L : ℕ) : ℤ :=
+  ∑ j ∈ range L, (w (n + 1 + j) : ℤ) * (b : ℤ) ^ (L - 1 - j)
+
+theorem windowNum_eq (b : ℕ) (w : ℕ → ℕ) (n L : ℕ) :
+    windowNum b w n L = paddedSum b w n L + carry b w (n + L) := rfl
+
+/-- Dropping the last `K` digits of a floor is integer division by `b^K`. -/
+theorem floor_mul_pow_div (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (m K : ℕ) :
+    ⌊x * (b : ℝ) ^ m⌋ = ⌊x * (b : ℝ) ^ (m + K)⌋ / (b : ℤ) ^ K := by
+  have hb0 : (0 : ℝ) < (b : ℝ) := by
+    have : (2 : ℝ) ≤ b := by exact_mod_cast hb
+    linarith
+  have hne : ((b : ℝ) ^ K) ≠ 0 := by positivity
+  have h : x * (b : ℝ) ^ m = (x * (b : ℝ) ^ (m + K)) / ((b ^ K : ℕ) : ℝ) := by
+    push_cast
+    rw [pow_add]
+    field_simp
+  rw [h, Int.floor_div_natCast]
+  push_cast
+  ring_nf
+
+/-- The carry is nonnegative. -/
+theorem carry_nonneg (b : ℕ) (hb : 2 ≤ b) (w : ℕ → ℕ) (hw : ∀ m, w m ≤ m) (N : ℕ) :
+    0 ≤ carry b w N := by
+  have hb0 : (0 : ℝ) < (b : ℝ) := by
+    have : (2 : ℝ) ≤ b := by exact_mod_cast hb
+    linarith
+  refine Int.le_floor.mpr ?_
+  have hs := ((summable_lambert b hb w hw).mul_right ((b : ℝ) ^ (N + 1))).comp_injective
+    (add_left_injective 0)
+  push_cast
+  refine tsum_nonneg fun k => by positivity
+
+/-- **Sub-leaf A.**  The purely congruential residue of the crux: for every target `t < b^ℓ`
+there is a position `n` and a pad length `K`, long enough to swallow the carry
+(`2√(n+ℓ+K) + 2 < b^K`, cf. `carry_le_sqrt`), at which the `ℓ+K` divisor counts
+`τ(n+1), …, τ(n+ℓ+K)` weight-sum to `t·b^K` modulo `b^{ℓ+K}`.
+
+No real analysis, no carries: this is a statement about the divisor function on an interval of
+length `ℓ+K` in residue classes modulo powers of `b`. -/
+def SubLeafA (b : ℕ) : Prop :=
+  ∀ ℓ, 1 ≤ ℓ → ∀ t : ℕ, t < b ^ ℓ → ∃ n K : ℕ,
+    2 * Nat.sqrt (n + (ℓ + K)) + 2 < (b : ℤ) ^ K ∧
+    paddedSum b tau n (ℓ + K) % (b : ℤ) ^ (ℓ + K) = (t : ℤ) * (b : ℤ) ^ K
+
+/-- **The padding reduction.**  Sub-leaf A implies the crux. -/
+theorem windowPrescribable_of_subLeafA (b : ℕ) (hb : 3 ≤ b) (h : SubLeafA b) :
+    WindowPrescribable b tau := by
+  have hb2 : 2 ≤ b := by omega
+  have hbpos : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (show 0 < b by omega)
+  intro ℓ hℓ t ht0 htlt
+  lift t to ℕ using ht0 with t₀
+  have ht₀ : t₀ < b ^ ℓ := by exact_mod_cast htlt
+  obtain ⟨n, K, hK, hP⟩ := h ℓ hℓ t₀ ht₀
+  set L := ℓ + K with hL
+  set x : ℝ := lambertVal b tau with hx
+  have hbK : (0 : ℤ) < (b : ℤ) ^ K := by positivity
+  have hbL : (0 : ℤ) < (b : ℤ) ^ L := by positivity
+  -- the carry at the right end of the padded window
+  set C : ℤ := carry b tau (n + L) with hC
+  have hC0 : 0 ≤ C := carry_nonneg b hb2 tau tau_le_self _
+  have hCK : C < (b : ℤ) ^ K := lt_of_le_of_lt (carry_le_sqrt b hb (n + L)) (by
+    have : (2 : ℤ) * (Nat.sqrt (n + L) : ℤ) + 2 < (b : ℤ) ^ K := hK
+    linarith)
+  -- the padded window value
+  have hV : ⌊x * (b : ℝ) ^ (n + L)⌋ % (b : ℤ) ^ L = (t₀ : ℤ) * (b : ℤ) ^ K + C := by
+    rw [floor_lambertVal_emod b hb2 tau tau_le_self n L, windowNum_eq]
+    have hsmall : 0 ≤ (t₀ : ℤ) * (b : ℤ) ^ K + C ∧ (t₀ : ℤ) * (b : ℤ) ^ K + C < (b : ℤ) ^ L := by
+      constructor
+      · positivity
+      · have h1 : (t₀ : ℤ) ≤ (b : ℤ) ^ ℓ - 1 := by
+          have : (t₀ : ℤ) < (b : ℤ) ^ ℓ := by exact_mod_cast ht₀
+          omega
+        have h2 : (t₀ : ℤ) * (b : ℤ) ^ K ≤ ((b : ℤ) ^ ℓ - 1) * (b : ℤ) ^ K :=
+          mul_le_mul_of_nonneg_right h1 hbK.le
+        have h3 : ((b : ℤ) ^ ℓ - 1) * (b : ℤ) ^ K = (b : ℤ) ^ L - (b : ℤ) ^ K := by
+          rw [hL, pow_add]; ring
+        omega
+    calc (paddedSum b tau n L + C) % (b : ℤ) ^ L
+        = ((paddedSum b tau n L % (b : ℤ) ^ L) + C) % (b : ℤ) ^ L := by
+          exact (Int.emod_add_emod _ _ _).symm
+      _ = ((t₀ : ℤ) * (b : ℤ) ^ K + C) % (b : ℤ) ^ L := by rw [hP]
+      _ = (t₀ : ℤ) * (b : ℤ) ^ K + C := Int.emod_eq_of_lt hsmall.1 hsmall.2
+  -- read off the top `ℓ` digits
+  refine ⟨n, ?_⟩
+  rw [← floor_lambertVal_emod b hb2 tau tau_le_self n ℓ]
+  rw [floor_mul_pow_div b hb2 x (n + ℓ) K, show n + ℓ + K = n + L from by omega]
+  obtain ⟨q, hq⟩ : ∃ q : ℤ, ⌊x * (b : ℝ) ^ (n + L)⌋
+      = (b : ℤ) ^ L * q + ((t₀ : ℤ) * (b : ℤ) ^ K + C) := by
+    refine ⟨⌊x * (b : ℝ) ^ (n + L)⌋ / (b : ℤ) ^ L, ?_⟩
+    have hmd := Int.emod_def ⌊x * (b : ℝ) ^ (n + L)⌋ ((b : ℤ) ^ L)
+    rw [hV] at hmd
+    omega
+  rw [hq]
+  have hdivK : ((b : ℤ) ^ L * q + ((t₀ : ℤ) * (b : ℤ) ^ K + C)) / (b : ℤ) ^ K
+      = (b : ℤ) ^ ℓ * q + (t₀ : ℤ) := by
+    have hrw : (b : ℤ) ^ L * q + ((t₀ : ℤ) * (b : ℤ) ^ K + C)
+        = C + (b : ℤ) ^ K * ((b : ℤ) ^ ℓ * q + (t₀ : ℤ)) := by
+      rw [hL, pow_add]; ring
+    rw [hrw, Int.add_mul_ediv_left _ _ (ne_of_gt hbK), Int.ediv_eq_zero_of_lt hC0 hCK, zero_add]
+  rw [hdivK, add_comm, Int.add_mul_emod_self_left]
+  exact Int.emod_eq_of_lt (by positivity) (by exact_mod_cast ht₀)
+
 /-! ### 4. The crux leaf -/
+
+/-- **THE CRUX, after the 2026-09-24 padding reduction.**  `SubLeafA b` is the only open
+obligation behind `ConjC2`.  It is a pure statement about the divisor function on a short
+interval in residue classes modulo powers of `b`; `windowPrescribable_of_subLeafA` shows it
+suffices, and `floor_lambertVal_emod` read backwards shows it is essentially necessary.
+
+Status 2026-09-24: **open**.  The attack is `tau_transport_frozen`: on a progression freezing the
+valuations at the primes of a dilation `D`, `τ(D·m)` is a fixed rational multiple of `τ(m)`, so
+the G4 frame's translation action is replaced by multiplication by `τ(D)` on `ℤ/b^{ℓ+K}`. -/
+theorem subLeafA_holds (b : ℕ) (hb : 3 ≤ b) : SubLeafA b := by
+  sorry
 
 /-- **THE CRUX.**  For `b ≥ 3`, the divisor-count windows realise every residue mod `b^ℓ`:
 for every `ℓ ≥ 1` and every `t < b^ℓ` there is an `n` with
@@ -421,8 +539,8 @@ transport `tau_transport_frozen`, which is exact only on a progression freezing 
 the primes of the dilation `D` — a congruence modulo `rad(D)^T`, not `rad D`.  The next attack is
 to rebuild the G4 frame over that finer modulus and check whether the `Σ_p p^{−T}` exceptional
 density is affordable in the §4D remainder budget. -/
-theorem tau_windowPrescribable (b : ℕ) (hb : 3 ≤ b) : WindowPrescribable b tau := by
-  sorry
+theorem tau_windowPrescribable (b : ℕ) (hb : 3 ≤ b) : WindowPrescribable b tau :=
+  windowPrescribable_of_subLeafA b hb (subLeafA_holds b hb)
 
 end NormalNumbers.SwingC2
 

@@ -67,3 +67,33 @@ if the carry is `< b^K` it can only disturb the low `K` digits, so the top `ℓ`
 Next lap: state Sub-leaf A in `src/` as a named `Prop` and prove
 `tau_windowPrescribable` **from** it (that reduction is finite arithmetic and should go through);
 `tau_windowPrescribable` then stops being the crux and A becomes it.
+
+## Lap 3 addendum (green): the padding reduction is PROVED
+
+`src/NormalNumbers/SwingC2.lean` now has exactly ONE `sorry`, and it is no longer about a real
+number at all:
+
+    ConjC2  ⟸  tau_windowPrescribable  ⟸  SubLeafA b       (windowPrescribable_of_subLeafA)
+
+**`SubLeafA b`** (`b ≥ 3`): for every `ℓ ≥ 1` and `t < b^ℓ` there are `n, K` with
+
+    2·√(n+ℓ+K) + 2 < b^K   and   Σ_{j<ℓ+K} τ(n+1+j)·b^{ℓ+K−1−j} ≡ t·b^K  (mod b^{ℓ+K}).
+
+New proved machinery: `paddedSum`, `windowNum_eq`, `floor_mul_pow_div`, `carry_nonneg`,
+`windowPrescribable_of_subLeafA`.  The padding argument: the low `K` digits are set to zero, the
+carry (`carry_le_sqrt`: `≤ 2√N+2 < b^K`) can only occupy those, and integer division by `b^K`
+recovers the target in the top `ℓ` digits.
+
+**Where the crux now is.**  `SubLeafA` is pure multiplicative number theory — divisor counts in an
+interval of length `ℓ+K`, weighted by powers of `b`, modulo `b^{ℓ+K}`.  The pad `K` must grow like
+`½ log_b n`, which is the one non-classical feature (the interval length is not fixed).
+
+**Next attack.** Two independent probes worth running before more Lean:
+1. numeric (`probes/`): for `b = 3`, small `ℓ`, search `n ≤ 10^7` for each target `t` — does the
+   padded window already hit every residue with `K = 3,4,5`?  If yes, `SubLeafA` is very likely
+   true and the search shows what `n` looks like (smooth? prime-power-heavy?).
+2. structural: use `tau_transport_frozen` with `D = p^a` to move a solution `n` to `p^a·n`,
+   multiplying the whole padded sum by `(a+1)` modulo `b^{ℓ+K}` — if `gcd(a+1, b) = 1` this is an
+   invertible action on `ℤ/b^{ℓ+K}`, and the orbit of ONE realisable value under all such `a`
+   would give a large subgroup of realisable targets.  That is the most promising route: it turns
+   "hit every residue" into "hit one residue + generate the group".
