@@ -460,3 +460,4 @@ import NormalNumbers.SwingC1Pair
 import NormalNumbers.SwingC1Katai
 import NormalNumbers.SwingC1Head
 import NormalNumbers.SwingC1Weyl
+import NormalNumbers.SwingC1Decouple

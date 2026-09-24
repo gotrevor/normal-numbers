@@ -9757,3 +9757,41 @@ prime truncation is refuted; the depth reduction turns it into a `2L`-point Elli
 Probes, in order: (1) does the route survive logarithmic averaging, where the two-point case is
 a known theorem (Tao 2015)?  (2) can `PairDecorr` be routed into the weaker `hAutoCorrAll`
 instead of full normality, lowering what must be proved?
+
+## swing-c1 lap 35 — leaf (D) split into (proved model) + (named defect)
+
+New file `src/NormalNumbers/SwingC1Decouple.lean`, sorry-free, `#print axioms` clean.
+
+`conjC1_of_delange_katai_decouple` : `KataiOrthogonality` → `DelangeMean` → `PairDecouple` →
+`ConjC1`.  The first two are KNOWN theorems; **`PairDecouple` is the only open input, and it is
+strictly smaller than `PairDecorr`** because the model half is now a proved theorem of this
+development rather than a hypothesis.
+
+The split (`pairDecorr_of_pairDecouple`), at cut `P` with `Q = Π_{r≤P} r`:
+`e(t(θ_{pn} − θ_{qn})) = A(n)·B(n)` with `A` exactly `Q`-periodic
+(`truncPairTail_add_mul_primorial`) and `B` the large-prime remainder; then
+`‖mean_{n<QR} AB‖ ≤ ‖periodMean A Q‖ + pairDefect b P p q t R` and
+`‖periodMean A Q‖ = ‖Π_{r≤P} pairLocalFactor‖ → 0` **unconditionally** (lap 32).
+Ragged `N` handled by `norm_fullMean_le_of_mul`; the `P → ∞` / `R → ∞` diagonal is done
+explicitly with an `ε/4` budget.
+
+**Also refuted this lap (a probe, recorded so it is not retried).**  The hope that the weaker
+leaf `hAutoCorrAll` (fixed modulus `b−1`) is CHEAPER than normality does not survive contact:
+by casting out `b−1`, `Σ_{i≤L} d_{n+i} ≡ V_L(n) = ⌊b^L·u_n⌋ (mod b−1)`, so
+`corrSum b j L N = mean_n ζ_{b−1}^{j⌊b^L u_n⌋}`, i.e. the Cesàro mean of a STEP function of the
+orbit point with `b^L` pieces (its integral is `b^{−L}` because `b ≡ 1 mod b−1`, which is the
+source of the `b^{−L}` in `HAutoCorr`).  A step function has slowly decaying Fourier
+coefficients, so ANY Fourier route to it needs all frequencies — exactly what normality needs.
+`hAutoCorrAll` is a weaker STATEMENT but not a cheaper TARGET; the normality-strength route of
+`SwingC1Weyl.lean` costs nothing extra.
+
+**NEXT:** `PairDecouple`.  Its content is that the primes `> P` do not conspire with the residues
+mod `Q = Π_{r≤P} r`.  Probes, in order:
+1. Expand `B` itself by the prime-periodic form and apply `norm_fullMean_mul_le_periodMean_add_defect`
+   a second time at a higher cut `P'`: this turns the defect at cut `P` into a defect at cut `P'`
+   plus a product of local factors over `(P, P']`, which also → 0.  If the iteration telescopes,
+   the defect is controlled by a limit of products over disjoint prime ranges.  **This is the one
+   genuinely new idea available and should be tried first.**
+2. A second-moment (large sieve) bound on `Σ_{c<Q} ‖progMean B Q R c − fullMean B‖²`, which by
+   Cauchy–Schwarz controls `pairDefect`; the frequencies involved are `a/Q` with `Q ≫ N`, which
+   is where the obstruction bites — record the exact regime where it fails.
