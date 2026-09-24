@@ -1,4 +1,5 @@
 import NormalNumbers.PrimeLambertFour
+import NormalNumbers.CastingOutCount
 import NormalNumbers.Disjunctive
 
 /-!
@@ -108,7 +109,52 @@ noncomputable def normalCastLaw (b L r : ℕ) : ℝ :=
 theorem normalCastLaw_closed (b L r : ℕ) (hb : 3 ≤ b) (hr : r < b - 1) :
     normalCastLaw b L r =
       1 / ((b : ℝ) - 1) + ((b : ℝ) ^ L)⁻¹ * ((if r = 0 then (b : ℝ) - 1 else 0) - 1) / ((b : ℝ) - 1) := by
-  sorry
+  classical
+  obtain ⟨q, rfl⟩ : ∃ q, b = q + 1 := ⟨b - 1, by omega⟩
+  have hq : 2 ≤ q := by omega
+  have hq1 : 1 ≤ q := by omega
+  haveI : NeZero q := ⟨by omega⟩
+  have hqr : q + 1 - 1 = q := by omega
+  rw [hqr] at hr
+  -- the filter is the `sumCount` fibre at `(r : ZMod q)`
+  have hfilter : (univ.filter (fun v : Fin L → Fin (q + 1) => (∑ i, (v i : ℕ)) % q = r))
+      = (univ.filter (fun v : Fin L → Fin (q + 1) =>
+          (∑ i, ((v i : ℕ) : ZMod q)) = ((r : ℕ) : ZMod q))) := by
+    refine Finset.filter_congr ?_
+    intro v _
+    have hcast : (∑ i, (((v i : ℕ)) : ZMod q)) = (((∑ i, (v i : ℕ)) : ℕ) : ZMod q) := by
+      push_cast; ring
+    rw [hcast, ZMod.natCast_eq_natCast_iff', Nat.mod_eq_of_lt hr]
+  have hcnt : ((univ.filter (fun v : Fin L → Fin (q + 1) => (∑ i, (v i : ℕ)) % (q + 1 - 1) = r)).card)
+      = sumCount (q + 1) q L ((r : ℕ) : ZMod q) := by
+    rw [hqr, hfilter]; rfl
+  have he : (if ((r : ℕ) : ZMod q) = 0 then 1 else 0) = (if r = 0 then 1 else 0) := by
+    by_cases h : r = 0
+    · simp [h]
+    · have : ((r : ℕ) : ZMod q) ≠ 0 := by
+        intro hzero
+        have := congrArg ZMod.val hzero
+        rw [ZMod.val_natCast, Nat.mod_eq_of_lt hr, ZMod.val_zero] at this
+        exact h this
+      simp [h, this]
+  have hclosed := sumCount_closed q hq1 L ((r : ℕ) : ZMod q)
+  rw [he] at hclosed
+  -- move to ℝ
+  have hR : (sumCount (q + 1) q L ((r : ℕ) : ZMod q) : ℝ)
+      = (((q : ℝ) + 1) ^ L - 1 + q * (if r = 0 then 1 else 0)) / q := by
+    have := congrArg (fun n : ℕ => (n : ℝ)) hclosed
+    push_cast at this
+    have hqR : (0 : ℝ) < q := by positivity
+    field_simp
+    linarith [this]
+  unfold normalCastLaw
+  rw [hcnt, hR]
+  have hqR : (0 : ℝ) < q := by exact_mod_cast (by omega : 0 < q)
+  have hpow : (0 : ℝ) < ((q : ℝ) + 1) ^ L := by positivity
+  have hb1 : ((q : ℕ) + 1 : ℝ) - 1 = (q : ℝ) := by ring
+  push_cast
+  rw [hb1]
+  by_cases h : r = 0 <;> simp [h] <;> field_simp <;> ring
 
 /-- Frequency of windows of length `L` whose digit sum is `≡ r (mod b−1)`, among `n < N`. -/
 noncomputable def castFreq (b : ℕ) (x : ℝ) (L r N : ℕ) : ℝ :=
