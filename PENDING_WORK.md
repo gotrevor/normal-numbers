@@ -10255,3 +10255,37 @@ Elliott correlation in one variable along the forms `p(i+j)+1+k`, `q(i+j)+1+k`, 
 
 **Still open, unchanged:** `multiElliott_all` (the `sorry`).  Next: the Mertens depth
 refinement (a), then `wip/pd-refute`'s band engine, then the hunt for `K = 1`.
+
+## pd-prove lap 22 (2026-09-24) — the averaged Kátai/BSZ route
+
+**Advance on the crux.**  The open leaf was `PairDecorr` ⟺ `MultiElliott` (Elliott for a growing
+number of forms; open even logarithmically).  Lap 22 weakens the *criterion* rather than the leaf:
+`src/NormalNumbers/PairDecoupleAvg.lean` states Kátai/BSZ in its true **averaged** form
+(`KataiOrthogonalityAvg`), certifies it implies the all-pairs form the chain used
+(`kataiOrthogonality_of_avg`), and re-runs the swing.  Consequences:
+
+* `pairMeanAvgZero_of_large_pairs` — **only multipliers above an arbitrary threshold matter.**
+* `conjC1_of_delange_kataiAvg_pairDecorrLarge` — `ConjC1` from Delange + averaged BSZ + orbit
+  decorrelation for distinct primes `p, q > W`.
+
+**Why route-decisive.**  `PairDecorrAvg` is the multiplier-averaged form of the correlation.
+Averaged Chowla/Elliott is a *theorem* (Matomäki–Radziwiłł–Tao, ANT 9 (2015)), unlike the
+pointwise conjecture.  The leaf moved out of the "open even in log average" class.
+
+**Route already understood, not to be re-derived.**  `SwingC1Periodic/Model/Pair.lean` already
+contain the exact CRT decomposition `θ_N = Σ_r b^{N mod r}/(b^r − 1)`, the pair local factors,
+`norm_pairLocalFactor_le` (`≤ 1 − c/r`) and `periodMean_pair_tendsto_zero`.  The periodic MODEL
+term is unconditional; the wall is leaf (D): period `exp(P)` vs range `N`, equivalently the primes
+`r ≍ N`.  Do not re-derive this; do not spend the triangle inequality on `Σ_{r>y} 1/r` (the
+log-iterate mismatch is fundamental — `log log y = log log R − log log log R` for every admissible
+`y`).
+
+**Next attack (in order).**
+1. Reduce `PairDecorrLarge`/`PairDecorrAvg` to an *averaged* multi-point Elliott correlation, in
+   the shape `PairDecoupleElliott.MultiElliott` but averaged over `p, q` — then check it against
+   MRT 2015 (averaged Chowla) and Tao–Teräväinen's averaged Elliott.
+2. Cross-check whether the BSZ average can be taken with `p, q` in a *dyadic* range `(w, 2w]`
+   (Kátai's own form), which would let the two multipliers be comparable — relevant because the
+   obstruction primes `r ≍ N` interact with `p, q` only through `pn+1+k`.
+3. Directive item 3 (`K = 1`, Tao 2016) remains untouched; the variance dichotomy from lap 21 is
+   the stated prerequisite.
