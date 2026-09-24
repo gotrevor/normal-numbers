@@ -10330,3 +10330,24 @@ to make the discarded digits *small*.  They are no longer needed: the depth may 
 **Remaining crux, sharpest form.**  `TwoPointWeighted b p q t` = `MultiElliottWeighted b p q 1 t`:
 `E_{n<R} ζ^{ω(pn+1)} conj ζ^{ω(qn+1)} · e((t/b)(θ_{pn+1} − θ_{qn+1})) → 0`, `ζ = e(t/b)`
 nontrivial.  Unweighted = Tao 2016 (log average).  The weight is the whole remaining gap.
+
+## pd-prove lap 26 — the crux split into a PUBLISHED theorem plus one decoupling
+
+`src/NormalNumbers/PairDecoupleTwoPoint.lean`.  The `K = 1` leaf
+`E_n ζ^{ω(pn+1)} conj ζ^{ω(qn+1)} W(n) → 0` splits into
+
+* `TwoPointElliott b p q t` — the UNWEIGHTED two-point correlation.  For non-pretentious `ζ^ω`
+  along two distinct multipliers this is Tao, Forum Math. Pi **4** (2016), in logarithmic average.
+* `WeightDecouple b p q t` — the leading digit decouples from the rest of the tail.
+
+`twoPointWeighted_of_split`, `pairDecorr_of_split`,
+`conjC1_of_delange_katai_twoPoint_decouple`.  The converse half
+`weightDecouple_of_twoPointWeighted` certifies the split hides no extra strength.
+
+**THE CRUX IS NOW `WeightDecouple`** — and note its shape: mean of a product minus product of
+means, which is exactly what `SwingC1CRT.lean`'s model × defect machinery is built for, and the
+same shape as the C3 swing's Leaf B.  Next attack: try to prove `WeightDecouple` by the periodic
+model — `SwingC1Pair.lean` already gives `periodMean_pair_tendsto_zero` unconditionally, and here
+the object to decouple is a *product of two phases at different frequencies* (`t/b` on both
+factors but at disjoint `ω`-arguments), so the small-prime CRT factorisation applies to each
+factor separately.

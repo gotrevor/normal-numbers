@@ -464,4 +464,5 @@ import NormalNumbers.SwingC1Decouple
 import NormalNumbers.PairDecoupleMertens
 import NormalNumbers.PairDecoupleAvg
 import NormalNumbers.PairDecoupleOneDigit
+import NormalNumbers.PairDecoupleTwoPoint
 import NormalNumbers.PairDecoupleProve
