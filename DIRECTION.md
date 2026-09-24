@@ -2,49 +2,58 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective (branch `wip/swing-c3`, operator kickoff
-`KICKOFF-2026-09-24-swing-c3.md`, which supersedes the previous directive).**
+**Objective (branch `wip/swing-c3`, operator kickoff `KICKOFF-2026-09-24-swing-c3.md`).**
 `ConjC3` — `G_b` is RICH (every word at positive lower density) for every `b ≥ 3`.
-`conjC3` is assembled and green; its `sorryAx` comes from exactly **two** leaves in
-`src/NormalNumbers/SwingC3Rotation.lean`.
+`CastingOut.conjC3_via_weylLambert : ConjC3` rests on **ONE** named `sorry`,
+`weylLambertTwist_holds` (`SwingC3Leaf.lean`), plus the ratified arc-form leaf
+`tailLargeDecouple_holds` kept open per the kickoff addendum.  Leaf A (`exists_rotationCover`)
+is PROVED; the crux is the twisted Weyl sum
 
-**Mandated next move (2026-09-24 review lap — route KEPT, crux re-sited).**
-The route is the ROTATION route: `G_b = S_P + L_P` with `S_P` **rational** (small-prime
-Lambert, digits periodic mod `Q = ∏_{p≤P} p`) and `L_P` the large-prime Lambert number; the
-orbit of `G_b` is `fract(orbit S_P n + orbit L_P n)`, a rational rotation of the orbit of `L_P`.
-Work the leaves hardest-first:
-1. **`tailLargeDecouple_holds`** (Leaf B, `SwingC3Rotation.lean` l. ~243) — THE CRUX.  The
-   empirical law of `orbit L_P` is the same on every class mod `Q`.  Equivalent (because
-   `fract(tailLarge P b (n+1)) = fract(b · tailLarge P b n)`, so class `r+1` is the `×b` image
-   of class `r`) to: **every limit of the `×b^Q`-empirical measures of `L_P` is `×b`-invariant.**
-   Decompose it; do not restate it.  Exactly-CRT finite-dimensional decoupling is free; the
-   obstruction is the `loglog N` unbounded tail (`E[∑_{p>K} c_p] ≍ loglog N − loglog K`), so
-   naive truncation at any `K ≤ N^{o(1)}` fails.  Any lap that names a NEW handle on that tail,
-   or refutes one, is a successful lap.
-2. **`exists_rotationCover`** (Leaf A, l. ~228) — CRT/net bookkeeping; certain to be true.
-   Construction written out in its docstring.  On-path, closable, but it is NOT the crux.
+    (1/N) ∑_{n<N} e(jn/Q)·e(h·b^n·∑_{p>P} 1/(b^p−1)) → 0,   0 < j < Q,
 
-**Forbidden drift.**  Do NOT edit `CastingOut.lean`, `CastingOutCount.lean`,
-`CastingOutLambert.lean`, `Maze.lean`, `papers/`, `agent-mail/`, other KICKOFFs, or the two
-designated-open off-campaign `sorry`s (`PrimeLambertOscillation`, `MahlerDriftOne`).  Do NOT
-delete or weaken a ratified statement to make the file sorry-free (kickoff addendum).  Do NOT
-re-try the four refuted routes (effective disjunctivity / exact `ω`-prescription / `ω mod b`
-alone / sharpening the §5 schedule) — see `HANDOFF-2026-09-24-swing-c3.md`.  Never use `axiom`;
-a named conditional `…_of_H` beside the open headline is the expected end state.
+equivalently (laps 5–15) class-independence of the `×b` orbit of `L_P` mod `Q`.
 
-**Why.**  The route-decisive question is whether the rotation route needs anything beyond
-class-independence.  It does not — `isRich_of_rotationRoute` is machine-checked from
-`RotationCover` + `TailLargeDecouple` alone, with NO limit law and NO exact grid.  So the whole
-swing now stands or falls on Leaf B, and Leaf B is a statement about a single real number's
-orbit, not about `ω mod b` (Selberg–Delange) or about `ω(n), ω(n+1)` jointly (Chowla).  That
-re-siting is what makes the crux attackable.
+**Mandated next move (2026-09-24 lap-16 review — route KEPT, METHOD PIVOTED).**
+Lap 16 proved the sharpest possible period term (`SwingC3Var`: total variation replaces the
+period, `Q·(1+16|h|/(b−1))^{π(K)}` in place of `Q·∏_{P<p≤K}p`) and in doing so established that
+the whole **"truncate at `K`, bound the discarded tail in `L¹`"** family is DEAD: that tail's
+mass is `≍ N(loglog N − loglog K)`, and no admissible `K` makes it `o(N)` (Rankin / smooth-number
+refinements buy `loglog → logloglog` at best, still unbounded).  So the next laps must produce
+**cancellation inside the tail** — keep the SIGNS of the per-prime factors:
+1. **The signed product.**  `w_p := (1/p)∑_{r<p}(e(h·tailPrimeTerm b p r) − 1)` has `Re w_p < 0`
+   and `p·w_p → w := ∑_{d≥1}(e(hb^{−d}) − 1)`; the heuristic `∏_{P<p≤K}(1+w_p) ≍ (log K)^{Re w}`
+   with `−Re w = ∑_{d≥1}(1−cos(2πhb^{−d}))` REPRODUCES the measured decay (`b=3,h=1`: predicted
+   `a = 1.76`, measured `≈ 1.9`).  Formalize `w_p`, the exact mean, and the product shape: that is
+   the Selberg–Delange skeleton the proof must acquire.
+2. **The literature siting.**  `tailLarge P b n = ∑_{m≥1} b^{−m}·ω_{>P}(n+m)` (put this exact
+   identity in `src/`) turns the crux into a correlation of the multiplicative functions `z^{ω}`
+   at the shifts `1..D` with `D → ∞` slowly: Elliott-conjecture territory.  A named conditional
+   `conjC3_of_H` with `H` such a correlation statement IS a legitimate deliverable (kickoff).
+3. `tailLargeDecouple_holds` stays a `sorry` (kickoff addendum); do not restate it.
+
+**Forbidden drift.**  Do NOT spend further laps improving the truncation level `K`, the period
+term, or the `L¹` pricing of the tail — lap 16 proved that family cannot close the gap.  Do NOT
+edit `CastingOut.lean`, `CastingOutCount.lean`, `CastingOutLambert.lean`, `Maze.lean`, `papers/`,
+`agent-mail/`, other KICKOFFs, or the two designated-open off-campaign `sorry`s
+(`PrimeLambertOscillation`, `MahlerDriftOne`).  Do NOT delete or weaken a ratified statement to
+make a file sorry-free.  Do NOT re-try the refuted routes (prime subsets; effective
+disjunctivity; exact `ω`-prescription; `ω mod b` alone; sharpening the §5 schedule).  Never use
+`axiom`.
+
+**Why.**  Every lap since lap 5 has been optimizing one of the two terms of the master
+inequality; lap 16 closed the first term (best possible for the method) and refuted the second's
+whole family.  Continuing to tune `K` is now provably wasted.  The only mechanism that can
+produce the true `(log N)^{−a}` decay is the signed per-prime product — the same mechanism
+Selberg–Delange uses for a single multiplicative function — and the obstruction to importing it
+is the SHIFTS, which is exactly Elliott.  Naming that honestly (item 2) and building the signed
+skeleton (item 1) is the only non-circular path left.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route (Theorem C′).  DONE 2026-09-23.
 - 2026-09-23 (review lap): Theorem C′ narrowed to three leaves, E5 first.  DONE same day.
-- 2026-09-24 (review lap): **superseded by the swing-c3 kickoff.**  Objective is `ConjC3`;
-  crux re-sited from `largeTailLaw_holds` (one fat sorry) to `tailLargeDecouple_holds`
-  (Leaf B) after the covering glue was proved at the weaker hypothesis.
+- 2026-09-24 (review lap): superseded by the swing-c3 kickoff; crux re-sited to Leaf B.
+- 2026-09-24 (lap-16 review): route KEPT, METHOD PIVOTED — truncation/`L¹` family refuted,
+  signed per-prime product + Elliott siting mandated.
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically

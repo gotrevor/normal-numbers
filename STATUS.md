@@ -1,24 +1,39 @@
 # STATUS — normal-numbers 📊
 
-**Active campaign: the C3 swing — `ConjC3` (`G_b` is RICH) — crux re-sited to ONE analytic leaf.**
-· **Build**: 🟢 green (9180 jobs) · **Updated**: 2026-09-24 review lap · HEAD `61017f2`
+**Active campaign: the C3 swing — `ConjC3` (`G_b` is RICH) — ONE named analytic leaf left.**
+· **Build**: 🟢 green (9197 jobs) · **Updated**: lap 16 · 2026-09-24 · HEAD `1c48626`
 · branch `wip/swing-c3` · previous campaign (Theorem C′) COMPLETE, kept below
 
 ## Where it stands (C3 swing)
 
-`conjC3 : ConjC3` is assembled and compiling, and the *whole* covering argument that turns the
-hypotheses into `IsRich` is machine-checked (`isRich_of_rotationRoute`, trust triple).  The
-structural finding of this branch: `G_b = S_P + L_P` where `S_P = ∑_n ω_{≤P}(n) b^{−n}` is
-**rational** (its digit stream is periodic mod `Q = ∏_{p≤P} p`) and `L_P = ∑_n ω_{>P}(n) b^{−n}`;
-so `orbit b G_b n = fract(orbit b S_P n + orbit b L_P n)` is a *rational rotation* of the orbit of
-`L_P`, with the rotation constant depending only on `n mod Q`.  Richness then follows from two
-things and nothing else: the `Q` rotation constants form a `len`-**net** (Leaf A, arithmetic), and
-the orbit of `L_P` has the **same empirical law on every class mod `Q`** (Leaf B, analytic).  Two
-open `sorry`s in `src/`, both in `SwingC3Rotation.lean`, plus the two pre-existing designated-open
-off-campaign ones.
+`CastingOut.conjC3_via_weylLambert : ConjC3` is assembled and rests on **one** named `sorry`:
+`weylLambertTwist_holds`.  Everything else on the route is machine-checked to the trust triple —
+the covering argument (`isRich_of_rotationRoute`), Leaf A (`exists_rotationCover`, PROVED), the
+reduction to a single explicit constant (`largeLambert_eq_tsum` : `L_P = ∑_{p>P} 1/(b^p−1)`), and
+the audit surface `audit_conjC3_of_weylLambertTwist` with every abbreviation unwound.  The crux
+is the twisted Weyl sum `(1/N)∑_{n<N} e(jn/Q)·e(h·b^n·L_P) → 0` for `0 < j < Q`, which is exactly
+class-independence of the `×b` orbit of `L_P` modulo `Q`.  Aristotle, given only the prose,
+produced a structurally identical formalization (faithfulness PASSED) and judged the general case
+research-level.  Lap 16 closed the period side of the master inequality as far as the method
+allows and **refuted the whole truncation/`L¹` family**: the way forward is signed cancellation
+in the prime tail (Selberg–Delange skeleton) and an honest Elliott-type conditional.
 
 ## What's happened (C3 swing, newest first)
 
+- **2026-09-24 (lap 16, review) — THE PERIOD TERM IS CLOSED; the truncation family is REFUTED.**
+  `SwingC3Var.norm_sum_addChar_prod_le` (axiom-clean): for `p`-periodic factors `g_p` on a finite
+  set of pairwise-coprime moduli coprime to `Q`, and ANY ambient progression `n ≡ a [MOD m]`,
+  `‖∑_{n<N,n≡a[m]} e(jn/Q)∏g_p(n)‖ ≤ Q·∏(1 + V_p)` with `V_p = ∑_{r<p}‖g_p(r)−1‖` — uniform in
+  `N`, and **free of the period `∏p`**.  Proof: peel one prime, refine the progression by CRT,
+  base case an AP character sum `≤ Q`.  At the crux's summand `V_p ≤ 16|h|/(b−1)` — the EXACT
+  complete-period mass of `sum_range_tailPrimeTerm_period`, a constant independent of `p` — so the
+  master inequality's period `Q∏_{P<p≤K}p ≈ Qe^K` becomes `Q(1+16|h|/(b−1))^{π(K)}`
+  (`norm_sum_addChar_tailLarge_le_var`; `var_pow_le_primePeriod` machine-checks it is never
+  worse).  Window widens `K ≲ log N` → `K ≲ log N·loglog N`.  **And that settles the method**:
+  the discarded mass is `≍ N(loglog N − loglog K)` and stays unbounded for every admissible `K`
+  (Rankin/smooth refinements buy only `loglog → logloglog`), so no `L¹` treatment of the tail can
+  ever close the gap.  Recorded with the signed alternative: `∏_p(1+w_p)`, `Re w_p<0`, predicts
+  the measured decay `(log N)^{−a}`, `a = ∑_{d≥1}(1−cos 2πhb^{−d})` (`b=3,h=1`: 1.76 vs ≈1.9).
 - **2026-09-24 (review lap) — CRUX RE-SITED, covering glue PROVED.**  `largeTailLaw_holds` (one
   fat sorry demanding a genuine *limit law* on an exact `b^{−ℓ}` grid) replaced by the strictly
   weaker pair `RotationCover` + `TailLargeDecouple`, with `isRich_of_rotationRoute` sorry-free.
@@ -41,14 +56,16 @@ off-campaign ones.
 ## Outstanding (C3 swing)
 
 ### Short-term (mirrors PENDING_WORK top)
-1. **`tailLargeDecouple_holds` (Leaf B) — THE CRUX.**  Decompose; the obstruction to name and
-   beat is the `loglog N` unbounded tail `∑_{p>K} c_p(n)`, `E ≍ (loglog N − loglog K)/(b−1)`,
-   which defeats truncation at any `K ≤ N^{o(1)}` (exact-CRT decoupling of finite divisibility
-   patterns is free — `gcd(p, Q) = 1` — so ALL the difficulty is this tail).
-2. **`exists_rotationCover` (Leaf A).**  CRT + prime counting; construction written out in the
-   docstring.  Certain to be true; on-path; not the crux.
-3. Formalise `G_b = S_P + L_P` and `fract (tailLarge P b n) = orbit b L_P n` as named lemmas —
-   they are what makes both leaves readable, and Leaf B's dynamical form is stated through them.
+1. **`weylLambertTwist_holds` — THE CRUX.**  Attack the SIGNED product: define
+   `w_p = (1/p)∑_{r<p}(e(h·tailPrimeTerm b p r) − 1)`, prove `p·w_p → ∑_{d≥1}(e(hb^{−d})−1)` and
+   `Re w_p < 0`, and build the Selberg–Delange skeleton `∏_{P<p≤K}(1+w_p) ≍ (log K)^{Re w}`.
+   FORBIDDEN: more truncation/`K`-tuning (lap 16 refuted the family).
+2. **The `ω`-bridge.**  Put `tailLarge P b n = ∑_{m≥1} b^{−m}·ω_{>P}(n+m)` in `src/` as a named
+   exact identity: it converts the crux into a correlation of `z^{ω}` at the shifts `1..D`, i.e.
+   Elliott territory, and is the prerequisite for a literature-checkable `conjC3_of_H`.
+3. `SwingC3Convergent.setTail_addChar_tendsto` — the convergent-case assembly (both halves are
+   proved; only the ε-bookkeeping remains).  Isolates the sole missing input as the DIVERGENCE of
+   `∑_p 1/p`.  Cheap, on-path, but NOT the crux.
 
 ### Long-term
 Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
@@ -56,26 +73,28 @@ Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
 target) is REFUTED as a route to `ConjC3` but remains of independent interest.
 
 ### To completion
-`ConjC3` = Leaf A + Leaf B.  Leaf A is a finite construction.  Leaf B is the open frontier.
+`ConjC3` = `weylLambertTwist_holds`, and nothing else.  That statement is at the Elliott frontier
+(shifted correlations of `z^{ω}`); an honest end state for the swing is the headline kept open
+beside a named conditional `conjC3_of_H`.
 
-## Axiom ledger — C3 swing (real `#print axioms`, 2026-09-24, 9180 jobs)
+## Axiom ledger — C3 swing (real `#print axioms`, 2026-09-24 lap 16, 9197 jobs)
 
 | headline theorem | paper claim | `#print axioms` shows | verdict |
 |---|---|---|---|
-| `CastingOut.isRichUpper_of_isRich` | rung: lower density ⇒ upper density | trust triple | 🟢 clean |
-| `CastingOut.isRich_of_rotationRoute` | **the covering argument** — `RotationCover` + `TailLargeDecouple` ⇒ `IsRich` | trust triple | 🟢 **clean — PROVED** |
-| `CastingOut.isRich_of_largeTailLaw` | the same, from the stronger limit-law hypothesis | trust triple | 🟢 clean |
-| `CastingOut.density_lower_of_decouple` | the numerical core of the covering argument | trust triple | 🟢 clean |
-| `Split.exists_crt_pattern` / `fract_add_mem_cylinder_iff` / `exists_shift_mem_cylinder` / `orbit_eq_rotation` | the rotation engine | trust triple | 🟢 clean |
-| `CastingOut.exists_rotationCover` | **Leaf A** — CRT/net bookkeeping, certainly true | `sorryAx` | 🟡 open leaf; elementary, on-path |
-| `CastingOut.tailLargeDecouple_holds` | **Leaf B** — class-independence of `orbit L_P` | `sorryAx` | 🟡 **THE CRUX**; sieve/dynamics-grade, current frontier |
-| `CastingOut.conjC3` | **`ConjC3`** (`G_b` rich, `b ≥ 3`) — a CONJECTURE, open in the literature | `sorryAx` (via the two leaves) | 🟡 open by design; a moonshot swing's expected end state |
-| `CastingOut.isRichUpper_primeLambertAtBase` | rung above `ConjC3` | `sorryAx` (via `conjC3`) | 🟡 same |
+| `CastingOut.conjC3_of_weylLambertTwist` | **the swing's main target** — a twisted Weyl bound ⇒ `ConjC3` | trust triple | 🟢 **clean — PROVED** |
+| `CastingOut.audit_conjC3_of_weylLambertTwist` | the same, every abbreviation unwound (audit surface) | trust triple | 🟢 clean |
+| `CastingOut.isRich_of_rotationRoute` | the covering argument: `RotationCover` + `TailLargeDecouple` ⇒ `IsRich` | trust triple | 🟢 clean |
+| `CastingOut.exists_rotationCover` | **Leaf A** — CRT/net bookkeeping | trust triple | 🟢 **clean — PROVED (was open)** |
+| `NormalNumbers.norm_sum_addChar_tailLarge_le_var` | master inequality, sharpened period term (lap 16) | trust triple | 🟢 clean |
+| `NormalNumbers.norm_sum_addChar_prod_le` | total variation replaces the period | trust triple | 🟢 clean |
+| `CastingOut.weylLambertTwist_holds` | **THE CRUX** — the twisted Weyl sum tends to `0` | `sorryAx` | 🟡 open leaf; Elliott-frontier (shifted correlations of `z^ω`); current frontier, next prerequisite = the signed product `∏(1+w_p)` |
+| `CastingOut.tailLargeDecouple_holds` | the ratified arc-form leaf, kept per the kickoff addendum | `sorryAx` | 🟡 open by ratification; lap 4 showed the arc form is unreachable from Fourier |
+| `CastingOut.conjC3_via_weylLambert` | **`ConjC3`** (`G_b` rich, `b ≥ 3`) — a CONJECTURE, open in the literature | `sorryAx` (via `weylLambertTwist_holds` alone) | 🟡 open by design; a moonshot swing's expected end state |
 
 Math-axiom count for the swing: **0** `axiom` declarations (the kickoff forbids them); the open
-obligations are **2** disclosed `sorry`s, both named leaves in `src/`.  No `🔴`: `ConjC3` is not
-claimed unconditionally anywhere — `conjC3` is itself the open target, and every *proved* theorem
-on the branch reaches the bare trust triple.
+obligations are **2** disclosed `sorry`s, both named leaves in `src/`, and `ConjC3` now depends on
+exactly ONE of them.  No `🔴`: `ConjC3` is not claimed unconditionally anywhere, and every
+*proved* theorem on the branch reaches the bare trust triple.
 
 ## Pointers (C3 swing)
 `KICKOFF-2026-09-24-swing-c3.md` · `CONJECTURES-2026-09-23-casting-out-and-rungs.md` ·

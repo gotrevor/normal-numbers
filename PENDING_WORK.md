@@ -9701,3 +9701,80 @@ Given `ε`, pick `K` with `recipTail(S,K)` small (`tendsto_sum_nat_add` applied 
 fixed.  That yields **`setTail_addChar_tendsto`: unconditional for any set of primes coprime to
 `Q` with `∑_{p∈S} 1/p < ∞`** — closing the machinery end to end and isolating the sole missing
 input for `ConjC3` as exactly the DIVERGENCE of `∑_p 1/p`.
+
+### lap 16 (review lap) — the period term is CLOSED, and the truncation family is REFUTED
+
+**Review verdict.**  Route KEPT (the crux is `weylLambertTwist_holds`, i.e. class-independence of
+the `×b` orbit of `L_P`), METHOD PIVOTED.  No registered route trigger has fired.  Direction check:
+laps 5–15 all optimized one of the two terms of the master inequality; this lap closes the first
+as far as the method can go and proves the second's family cannot be closed at all.
+
+#### 1. NEW THEOREM — total variation replaces the period (`src/NormalNumbers/SwingC3Var.lean`)
+
+    norm_sum_addChar_prod_le :
+      ‖∑_{n<N, n≡a [MOD m]} e(jn/Q) · ∏_{p∈F} g_p(n)‖  ≤  Q · ∏_{p∈F} (1 + V_p),
+      V_p = ∑_{r<p} ‖g_p(r) − 1‖,
+
+for `g_p` `p`-periodic, `F` pairwise coprime, every `p ∈ F` coprime to `Q` and to `m`, `m` coprime
+to `Q`, `0 < j < Q`.  Uniform in `N`; **the period `∏_{p∈F} p` does not appear**.
+
+*Proof (elementary, no analytic input).*  Induct on `F`, carrying an arbitrary ambient progression:
+* base `F = ∅`: `‖∑_{n<N, n≡a [m]} e(jn/Q)‖ ≤ Q` — the AP indicator is `m`-periodic, so the complete
+  sum over `m·Q` vanishes (`sum_addChar_mul_periodic_eq_zero`) and the stub carries exactly `Q`
+  nonzero terms (`Nat.count_modEq_card`).  This needed a sharper stub lemma,
+  `norm_sum_range_le_sum_norm_period` (`‖∑_{n<N}g‖ ≤ ∑_{n<L}‖g‖`, not `≤ L·sup‖g‖`);
+* step: `g_q = 1 + (g_q − 1)`; the `1` reproduces `F∖{q}`; the remainder splits over `n % q = r`,
+  and CRT (`Nat.chineseRemainder`, `Nat.modEq_and_modEq_iff_modEq_mul`) refines `n ≡ a [MOD m]` to
+  `n ≡ c [MOD m·q]`, so the induction hypothesis applies to each fibre at total cost `V_q`.
+
+At the crux's summand `g_p(n) = e(h·tailPrimeTerm b p n)` the variation is the **exact** complete
+period mass already proved in lap 12: `V_p ≤ 16|h|·∑_{r<p} tailPrimeTerm b p r = 16|h|/(b−1)`,
+a CONSTANT, independent of `p`.  Hence
+
+    norm_sum_addChar_tailTrunc_le_var :
+      ‖∑_{n<N} e(jn/Q)·e(h·tailTrunc_K)‖ ≤ Q·(1 + 16|h|/(b−1))^{π(K)−π(P)}
+
+in place of lap 7's `Q·∏_{P<p≤K} p ≈ Q e^K`, and `norm_sum_addChar_tailLarge_le_var` is the master
+inequality with that first term.  `var_pow_le_primePeriod` machine-checks the new term is never
+worse (once `P ≥ 16|h|/(b−1)`).  Effect: the usable truncation widens from `K ≲ log N` to
+`K ≲ log N·loglog N` — exponential in `π(K) ≈ K/log K` rather than in `K`.  All axiom-clean.
+
+#### 2. REFUTATION — no `L¹` treatment of the prime tail can close the crux
+
+The mass term is `16|h|·∑_{n<N}(tailLarge − tailTrunc_K) ≍ N·∑_{K<p≤N} 1/p ≍ N(loglog N − loglog K)`
+(lap 10's `sum_range_tailTrunc_sub_le` prices it exactly).  For the bound to be `o(N)` one needs
+`loglog K ~ loglog N`, i.e. `K = N^{1−o(1)}`.  Three escapes were checked and all fail:
+
+* **widening `K` by improving the period term** — item 1 is already the best the method gives, and
+  `loglog(log N·loglog N) = loglog N − O(logloglog N)`, so the mass is unchanged;
+* **subset expansion with signs dropped** — writing `e(hφ) = ∏(1+u_p) = ∑_{T}∏_{p∈T}u_p` and using
+  per-`T` the better of the period bound (`Q c^{|T|}`, `c = ∑_{d≥1}min(2,2π|h|b^{−d})`) and the mass
+  bound (`∏_{p∈T}c/p`) gives, for `∏_T p ≤ N/Q`, the Landau-type total `(Q/N)∑_{d≤N/Q}c^{ω(d)} ≍
+  (log N)^{c−1}` — `o(1)` only when `c < 1`, i.e. only for `|h| ≲ b/6`, and the complementary
+  `∏_T p > N/Q` part is `≍ (log N)^{c}`, never small.  So the expansion does not survive either;
+* **Rankin / smooth-number tail trimming** — `M^{−δ}∏(1+c p^{δ−1})` optimizes to
+  `e^{−β}(log N)^{c e^β}`, which is `≥ 1` for every `β ≥ 0`; restricting the primes to `p ≤ N^{1/u}`
+  and paying Dickman `ρ(u)` reduces the residual mass from `loglog N` only to `≍ logloglog N`.
+
+**Conclusion (recorded as refuted): the tail must be treated WITH ITS SIGNS.**  Absolute values
+cost `∏_p(1+|w_p|)` where cancellation would give `∏_p(1+w_p)`, and the whole decay lives in the
+difference.  Every further lap that tunes `K`, the period, or the `L¹` pricing is wasted.
+
+#### 3. The signed skeleton (next attack), and the honest literature siting
+
+Per-prime exact mean (to be formalized): `w_p := (1/p)∑_{r<p}(e(h·tailPrimeTerm b p r) − 1)`, so
+`p·w_p → w := ∑_{d≥1}(e(h b^{−d}) − 1)` and `Re w = −∑_{d≥1}(1 − cos(2π h b^{−d})) < 0`.  Under the
+CRT-independence heuristic `∏_{P<p≤K}(1+w_p) ≍ (log K/log P)^{Re w}`, i.e. decay `(log N)^{−a}`
+with `a = ∑_{d≥1}(1−cos 2π h b^{−d})`.  **Numerical check: `b=3, h=1` gives `a = 1.76`; lap 11's
+probe measured `a ≈ 1.9`.**  So the signed product is quantitatively the right skeleton, and the
+`h ↦ hb` invariance `|A_N(h,j)| = |A_N(hb,j)| + O(1/N)` (from `φ(n+1) = bφ(n) − ω_{>P}(n+1)`)
+matches `a(hb) = a(h)` exactly — WLOG `b ∤ h`.
+
+Siting: `tailLarge P b n = ∑_{m≥1} b^{−m}·ω_{>P}(n+m)` exactly (each `p` contributes `b^{−m}` for
+every `m` with `p | n+m`).  So the crux is a correlation of the multiplicative functions
+`n ↦ z_m^{ω(n)}`, `z_m = e(h b^{−m})`, at the shifts `m = 1..D` — and `D` must grow (truncating the
+window at fixed `D` leaves `b^{−D}·loglog N → ∞`).  Each `z_m^{ω}` is non-pretentious
+(`∑_p (1−Re z_m)/p = ∞`), so this is exactly Elliott's conjecture with a slowly growing number of
+shifts; known unconditionally only for one shift (Selberg–Delange) and, under logarithmic
+averaging, for two (Tao) and odd orders (Tao–Teräväinen).  A `conjC3_of_H` with `H` that
+correlation statement is the swing's remaining legitimate deliverable.
