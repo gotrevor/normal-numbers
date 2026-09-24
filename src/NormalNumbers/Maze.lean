@@ -11,6 +11,7 @@ import NormalNumbers.G4EntropyDiagonal
 import NormalNumbers.G4RowVariance
 import NormalNumbers.G4RowMassOptimal
 import NormalNumbers.G4WiringSparse
+import NormalNumbers.StonehamSixFailure
 import NormalNumbers.Walsh
 import NormalNumbers.WalshBase
 
@@ -228,6 +229,16 @@ see `DESIGN-2026-09-20-t3c-verdict.md`. -/
 theorem hall_t3c_block5_true_run_is_one :
     6 * (2 ^ 146 - 3 ^ 92) ≤ 2 ^ 146 ∧ 2 ^ 146 < 36 * (2 ^ 146 - 3 ^ 92) := by
   constructor <;> norm_num
+
+/-- **HALL: α₂,₃ abelian-normal in base 6** (`refuted`, 2026-09-23).
+The "natural separation" hope was that `α₂,₃`, normal in base 2, would still be
+abelian-normal in base 6 — a weaker statistic surviving the base change.  It does not: the
+base-6 expansion carries forced zero blocks on `(3ᵐ, 1.16·3ᵐ]`, because there the head
+`6ᵖ·Σ_{k≤m}` is an integer divisible by 6 while the tail `6ᵖ·Σ_{k>m}` is below 1.  A block
+of `0.1·3ᵐ` forced zeros pushes freq(0) at `N = 1.1·3ᵐ` up to `8/33 > 1/6`, so `α₂,₃` is not
+even **simply** normal in base 6, let alone abelian-normal.  (Bailey–Borwein 2012 proved
+base-6 non-normality first; this is that mechanism, formalized.) -/
+alias hall_stoneham_six_abelian := NormalNumbers.Failures.not_simplyNormal_six_stoneham23
 
 /-! ## 3. Tier `frozen` — precise statements, undischarged
 
@@ -867,7 +878,22 @@ def register : List Hall := [
    "Cap base-6 digit runs at the critical slice via the two-log separation engine",
    .provableEmpty, .kernel,
    "The cap exceeds 16000 while the true run is 0 or 1 in every block computed; provable in one wiring lap, and worthless",
-   "theorem hall_t3c_block5_true_run_is_one", "2026-09-20"⟩
+   "theorem hall_t3c_block5_true_run_is_one", "2026-09-20"⟩,
+  ⟨"alpha_{2,3} abelian-normal in base 6",
+   "Hope that the base-2-normal Stoneham constant is still abelian-normal in base 6, giving a natural separation",
+   .refuted, .kernel,
+   "The base-6 expansion has forced zero gaps on (3^m, 1.16*3^m], so freq(0) reaches 8/33 > 1/6 and it is not even simply normal",
+   "alias hall_stoneham_six_abelian", "2026-09-23"⟩,
+  ⟨"x3 abelian lifting",
+   "Hope that abelian-normality of x and of 3x together force genuine normality of x",
+   .parked, .frozen,
+   "The hexSwap example does not refute it (3*xi is not abelian: probe z about 84 at L = 1), but a dimension count makes a single multiplier implausible; the odd-multiplier version is open",
+   "Failures.TimesThreeLifting", "2026-09-23"⟩,
+  ⟨"uniform casting-out law (C1 draft)",
+   "Assume a normal number's window digit sum is uniform mod b-1",
+   .falseAsStated, .cited,
+   "The true law is 1/(b-1) + b^{-L}((b-1)[r=0]-1)/(b-1), which is uniform only in the L to infinity limit",
+   "branch wip/casting-out: CastingOut.not_castUniform_of_isNormal", "2026-09-23"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
