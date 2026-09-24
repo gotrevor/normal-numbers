@@ -12,6 +12,7 @@ import NormalNumbers.G4RowVariance
 import NormalNumbers.G4RowMassOptimal
 import NormalNumbers.G4WiringSparse
 import NormalNumbers.StonehamSixFailure
+import NormalNumbers.CastingOut
 import NormalNumbers.Walsh
 import NormalNumbers.WalshBase
 
@@ -239,6 +240,13 @@ of `0.1·3ᵐ` forced zeros pushes freq(0) at `N = 1.1·3ᵐ` up to `8/33 > 1/6`
 even **simply** normal in base 6, let alone abelian-normal.  (Bailey–Borwein 2012 proved
 base-6 non-normality first; this is that mechanism, formalized.) -/
 alias hall_stoneham_six_abelian := NormalNumbers.Failures.not_simplyNormal_six_stoneham23
+
+/-- **HALL: uniform casting-out law (C1 draft)** (`falseAsStated`, 2026-09-23).
+The first draft of C1 asked that window digit sums of `G4` be uniform mod `b − 1`.  No normal
+number satisfies that: each digit value contributes `ζ^d` summing to `1`, not `0`, so the
+normal law is `1/(b−1) + b^{−L}((b−1)[r=0] − 1)/(b−1)` (in base 3 a digit is even with
+probability 2/3).  C1 was restated as `CastingOut.CastLaw`. -/
+alias hall_uniform_casting_out := NormalNumbers.CastingOut.not_castUniform_of_isNormal
 
 /-! ## 3. Tier `frozen` — precise statements, undischarged
 
@@ -891,9 +899,9 @@ def register : List Hall := [
    "Failures.TimesThreeLifting", "2026-09-23"⟩,
   ⟨"uniform casting-out law (C1 draft)",
    "Assume a normal number's window digit sum is uniform mod b-1",
-   .falseAsStated, .cited,
+   .falseAsStated, .kernel,
    "The true law is 1/(b-1) + b^{-L}((b-1)[r=0]-1)/(b-1), which is uniform only in the L to infinity limit",
-   "branch wip/casting-out: CastingOut.not_castUniform_of_isNormal", "2026-09-23"⟩
+   "alias hall_uniform_casting_out", "2026-09-23"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
