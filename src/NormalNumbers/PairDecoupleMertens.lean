@@ -1323,4 +1323,68 @@ theorem turan_AP (y a e R : ℕ) :
   rw [← hG, ← hS] at h1 h2
   nlinarith [h1, h2, hS0]
 
+/-! ### Turán at a usable cut
+
+`turan_AP`'s error terms are `O(π(y)²)`, so the cut must satisfy `π(y)² = o(R)`.  The fourth
+root does it: `y = ⌊R^{1/4}⌋` gives `π(y)² ≤ (y+1)² ≤ 4√R`. -/
+
+lemma card_goodPrimes_le (y a : ℕ) : #(goodPrimes y a) ≤ y + 1 := by
+  classical
+  calc #(goodPrimes y a) ≤ #(Nat.primesBelow (y + 1)) :=
+        Finset.card_le_card (Finset.filter_subset _ _)
+    _ ≤ y + 1 := card_primesBelow_le (y + 1)
+
+private lemma quarter_root_sq_le (R : ℕ) (hR : 1 ≤ R) :
+    (Nat.sqrt (Nat.sqrt R) + 1) ^ 2 ≤ 4 * Nat.sqrt R := by
+  have hy1 : 1 ≤ Nat.sqrt (Nat.sqrt R) := by
+    have h1 : 1 ≤ Nat.sqrt R := by
+      rw [Nat.le_sqrt]; simpa using hR
+    rw [Nat.le_sqrt]; simpa using h1
+  set y := Nat.sqrt (Nat.sqrt R) with hy
+  have hy2 : y ^ 2 ≤ Nat.sqrt R := Nat.sqrt_le' (Nat.sqrt R)
+  have hy3 : y * y ≤ Nat.sqrt R := by nlinarith [hy2]
+  nlinarith [hy1, hy3]
+
+/-- **Turán at the fourth-root cut.**  The error terms are `O(√R)`, hence `o(R)`: the mean
+square deviation of `ω` along the progression is `R·S + O(√R·(1+S))` with
+`S = Σ_{p ≤ R^{1/4}} 1/p = log log R + O(1)`. -/
+theorem turan_AP_quarter (a e R : ℕ) (hR : 1 ≤ R) :
+    ∑ i ∈ range R, ((omegaGood (Nat.sqrt (Nat.sqrt R)) a e i : ℝ)
+        - ∑ p ∈ goodPrimes (Nat.sqrt (Nat.sqrt R)) a, (p : ℝ)⁻¹) ^ 2
+      ≤ (R : ℝ) * (∑ p ∈ goodPrimes (Nat.sqrt (Nat.sqrt R)) a, (p : ℝ)⁻¹)
+        + 4 * (Nat.sqrt R : ℝ)
+        + 2 * (Nat.sqrt R : ℝ)
+        + 4 * (∑ p ∈ goodPrimes (Nat.sqrt (Nat.sqrt R)) a, (p : ℝ)⁻¹) * (Nat.sqrt R : ℝ) := by
+  classical
+  set y := Nat.sqrt (Nat.sqrt R) with hy
+  set G := goodPrimes y a with hG
+  set S : ℝ := ∑ p ∈ G, (p : ℝ)⁻¹ with hS
+  have hS0 : 0 ≤ S := by rw [hS]; exact Finset.sum_nonneg fun p _ => by positivity
+  have hcard : (#G : ℝ) ≤ ((y + 1 : ℕ) : ℝ) := by
+    have := card_goodPrimes_le y a
+    rw [hG]; exact_mod_cast this
+  have hcard0 : (0 : ℝ) ≤ (#G : ℝ) := by positivity
+  have hsq : (#G : ℝ) ^ 2 ≤ 4 * (Nat.sqrt R : ℝ) := by
+    have h1 : ((#G : ℕ) : ℝ) ^ 2 ≤ (((y + 1) ^ 2 : ℕ) : ℝ) := by
+      have : (#G) ^ 2 ≤ (y + 1) ^ 2 := Nat.pow_le_pow_left (card_goodPrimes_le y a) 2
+      exact_mod_cast this
+    have h2 : (((y + 1) ^ 2 : ℕ) : ℝ) ≤ ((4 * Nat.sqrt R : ℕ) : ℝ) := by
+      have := quarter_root_sq_le R hR
+      rw [hy]; exact_mod_cast this
+    push_cast at h1 h2 ⊢
+    linarith
+  have hs1 : (1 : ℝ) ≤ (Nat.sqrt R : ℝ) := by
+    have : 1 ≤ Nat.sqrt R := by rw [Nat.le_sqrt]; simpa using hR
+    exact_mod_cast this
+  have hys : (y : ℝ) ≤ (Nat.sqrt R : ℝ) := by
+    have : y ≤ Nat.sqrt R := by rw [hy]; exact Nat.sqrt_le_self _
+    exact_mod_cast this
+  have hlin : (#G : ℝ) ≤ 2 * (Nat.sqrt R : ℝ) := by
+    have : ((y + 1 : ℕ) : ℝ) = (y : ℝ) + 1 := by push_cast; ring
+    rw [this] at hcard
+    linarith
+  have h := turan_AP y a e R
+  rw [← hG, ← hS] at h
+  nlinarith [h, hsq, hlin, hS0]
+
 end NormalNumbers.PairDecouple
