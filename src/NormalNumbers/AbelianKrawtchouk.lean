@@ -75,4 +75,92 @@ theorem sum_powersetCard_neg_one_pow (L j : ℕ) {W : Finset ℕ} (hW : W ⊆ ra
   · simp [h]
   · simp [h, Ne.symm h]
 
+/-- `(-1)^|A ∩ S|` as a product over `S`. -/
+theorem neg_one_pow_inter_eq_prod (A S : Finset ℕ) :
+    (-1 : ℝ) ^ (A ∩ S).card = ∏ i ∈ S, (if i ∈ A then (-1 : ℝ) else 1) := by
+  rw [Finset.prod_ite_mem, Finset.prod_const, Finset.inter_comm S A]
+
+/-- **Orthogonality of the parity characters on the discrete cube.** -/
+theorem sum_powerset_orth (L : ℕ) {T W : Finset ℕ} (hT : T ⊆ range L) (hW : W ⊆ range L) :
+    ∑ S ∈ (range L).powerset, (-1 : ℝ) ^ (T ∩ S).card * (-1) ^ (W ∩ S).card
+      = if T = W then (2 : ℝ) ^ L else 0 := by
+  have key : ∀ S : Finset ℕ, (-1 : ℝ) ^ (T ∩ S).card * (-1) ^ (W ∩ S).card
+      = (-1 : ℝ) ^ ((symmDiff T W) ∩ S).card := by
+    intro S
+    rw [neg_one_pow_inter_eq_prod, neg_one_pow_inter_eq_prod, neg_one_pow_inter_eq_prod,
+      ← Finset.prod_mul_distrib]
+    refine Finset.prod_congr rfl (fun i _ => ?_)
+    by_cases h1 : i ∈ T <;> by_cases h2 : i ∈ W <;>
+      simp [Finset.mem_symmDiff, h1, h2]
+  rw [Finset.sum_congr rfl (fun S _ => key S)]
+  by_cases hTW : T = W
+  · subst hTW
+    simp [Finset.card_powerset]
+  · rw [if_neg hTW]
+    refine NormalNumbers.Walsh.sum_neg_one_pow_inter_eq_zero ?_ ?_
+    · rw [Finset.nonempty_iff_ne_empty]
+      intro h
+      exact hTW (symmDiff_eq_bot.mp h)
+    · intro i hi
+      rw [Finset.mem_symmDiff] at hi
+      rcases hi with ⟨h, _⟩ | ⟨h, _⟩
+      · exact hT h
+      · exact hW h
+
+/-- Grading the powerset of `range L` by cardinality. -/
+theorem sum_powerset_graded (L : ℕ) (f : Finset ℕ → ℝ) :
+    ∑ T ∈ (range L).powerset, f T
+      = ∑ j ∈ range (L + 1), ∑ T ∈ (range L).powersetCard j, f T := by
+  simpa using Finset.sum_powerset (range L) f
+
+/-- `∑_w kraw L j w * choose L w = 0` for `1 ≤ j`: the symmetrized character has mean zero. -/
+theorem sum_kraw_mul_choose (L j : ℕ) (hj : 1 ≤ j) :
+    ∑ w ∈ range (L + 1), kraw L j w * (L.choose w : ℝ) = 0 := by
+  have h1 : ∀ w ∈ range (L + 1), kraw L j w * (L.choose w : ℝ)
+      = ∑ T ∈ (range L).powersetCard w, kraw L j T.card := by
+    intro w _
+    rw [Finset.sum_congr rfl (fun T hT => by
+      rw [(Finset.mem_powersetCard.mp hT).2]), Finset.sum_const, Finset.card_powersetCard,
+      Finset.card_range, nsmul_eq_mul, mul_comm]
+  rw [Finset.sum_congr rfl h1]
+  rw [← sum_powerset_graded]
+  have h2 : ∀ T ∈ (range L).powerset, kraw L j T.card
+      = ∑ S ∈ (range L).powersetCard j, (-1 : ℝ) ^ (S ∩ T).card := by
+    intro T hT
+    exact (sum_powersetCard_neg_one_pow L j (Finset.mem_powerset.mp hT)).symm
+  rw [Finset.sum_congr rfl h2, Finset.sum_comm]
+  refine Finset.sum_eq_zero (fun S hS => ?_)
+  obtain ⟨hSL, hScard⟩ := Finset.mem_powersetCard.mp hS
+  exact NormalNumbers.Walsh.sum_neg_one_pow_inter_eq_zero
+    (Finset.card_pos.mp (by omega)) hSL
+
+/-- **Inversion.**  The weight-`w` indicator expands in the symmetrized characters. -/
+theorem sum_kraw_mul_sum (L w : ℕ) {W : Finset ℕ} (hW : W ⊆ range L) :
+    ∑ j ∈ range (L + 1), kraw L w j *
+        (∑ S ∈ (range L).powersetCard j, (-1 : ℝ) ^ (S ∩ W).card)
+      = if W.card = w then (2 : ℝ) ^ L else 0 := by
+  have h1 : ∀ j ∈ range (L + 1), kraw L w j *
+      (∑ S ∈ (range L).powersetCard j, (-1 : ℝ) ^ (S ∩ W).card)
+      = ∑ S ∈ (range L).powersetCard j, kraw L w S.card * (-1 : ℝ) ^ (S ∩ W).card := by
+    intro j _
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl (fun S hS => by rw [(Finset.mem_powersetCard.mp hS).2])
+  rw [Finset.sum_congr rfl h1, ← sum_powerset_graded]
+  have h2 : ∀ S ∈ (range L).powerset, kraw L w S.card * (-1 : ℝ) ^ (S ∩ W).card
+      = ∑ T ∈ (range L).powersetCard w, (-1 : ℝ) ^ (T ∩ S).card * (-1 : ℝ) ^ (W ∩ S).card := by
+    intro S hS
+    rw [← sum_powersetCard_neg_one_pow L w (Finset.mem_powerset.mp hS), Finset.sum_mul,
+      Finset.inter_comm S W]
+  rw [Finset.sum_congr rfl h2, Finset.sum_comm]
+  have h3 : ∀ T ∈ (range L).powersetCard w,
+      ∑ S ∈ (range L).powerset, (-1 : ℝ) ^ (T ∩ S).card * (-1 : ℝ) ^ (W ∩ S).card
+        = if T = W then (2 : ℝ) ^ L else 0 := by
+    intro T hT
+    exact sum_powerset_orth L (Finset.mem_powersetCard.mp hT).1 hW
+  rw [Finset.sum_congr rfl h3, Finset.sum_ite_eq' ((range L).powersetCard w) W
+    (fun _ => (2 : ℝ) ^ L)]
+  by_cases h : W.card = w
+  · rw [if_pos (Finset.mem_powersetCard.mpr ⟨hW, h⟩), if_pos h]
+  · rw [if_neg (fun hm => h (Finset.mem_powersetCard.mp hm).2), if_neg h]
+
 end NormalNumbers.Abelian
