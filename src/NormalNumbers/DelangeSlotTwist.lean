@@ -133,4 +133,76 @@ theorem coprimeClass_tendsto_zero {Q' : ℕ} (hQ' : 0 < Q') {b : ℕ} (hb : Nat.
   simpa using hlim.const_mul ((Nat.totient Q' : ℂ))⁻¹
 
 
+/-! ### Step 4: a general residue class reindexes to a unit class -/
+
+section Reindex
+
+variable {Q : ℕ}
+
+/-- **The reindexing.**  With `e = gcd(a,Q)`, `Q' = Q/e`, `b = a/e`, the map `m ↦ m/e` is a
+bijection from `{m ≤ N : m ≡ a [Q]}` onto `{m' ≤ N/e : m' ≡ b [Q']}`, and `gcd(b,Q') = 1`.
+This is the step that removes any need for induction on `Q`. -/
+theorem classSum_reindex (hQ : 0 < Q) {a : ℕ} (ha : a < Q) (F : ℕ → ℂ) (N : ℕ) :
+    ∑ m ∈ (Ioc 0 N).filter (fun m => m % Q = a), F m
+      = ∑ m' ∈ (Ioc 0 (N / Nat.gcd a Q)).filter
+            (fun m' => m' % (Q / Nat.gcd a Q) = (a / Nat.gcd a Q) % (Q / Nat.gcd a Q)),
+          F (Nat.gcd a Q * m') := by
+  classical
+  set e : ℕ := Nat.gcd a Q with he
+  have he0 : 0 < e := Nat.gcd_pos_of_pos_right a hQ
+  have heQ : e ∣ Q := Nat.gcd_dvd_right a Q
+  have hea : e ∣ a := Nat.gcd_dvd_left a Q
+  set Q' : ℕ := Q / e with hQ'def
+  set b : ℕ := a / e with hbdef
+  have hQfac : Q = e * Q' := (Nat.mul_div_cancel' heQ).symm
+  have hafac : a = e * b := (Nat.mul_div_cancel' hea).symm
+  have hQ'0 : 0 < Q' := Nat.div_pos (Nat.le_of_dvd hQ heQ) he0
+  have hbQ' : b < Q' := by
+    have : e * b < e * Q' := by rw [← hafac, ← hQfac]; exact ha
+    exact lt_of_mul_lt_mul_left this (Nat.zero_le e)
+  have hbmod : b % Q' = b := Nat.mod_eq_of_lt hbQ'
+  -- divisibility of members of the class
+  have hdvd : ∀ m : ℕ, m % Q = a → e ∣ m := by
+    intro m hm
+    have := Nat.div_add_mod m Q
+    rw [hm] at this
+    exact this ▸ Dvd.dvd.add (Dvd.dvd.mul_right heQ _) hea
+  have hmodkey : ∀ m₁ : ℕ, (e * m₁) % Q = e * (m₁ % Q') := by
+    intro m₁; rw [hQfac, Nat.mul_mod_mul_left]
+  refine Finset.sum_nbij' (fun m => m / e) (fun m' => e * m') ?_ ?_ ?_ ?_ ?_
+  · intro m hm
+    obtain ⟨hm1, hm2⟩ := Finset.mem_filter.1 hm
+    obtain ⟨hm0, hmN⟩ := Finset.mem_Ioc.1 hm1
+    have hed : e ∣ m := hdvd m hm2
+    refine Finset.mem_filter.2 ⟨Finset.mem_Ioc.2 ⟨?_, Nat.div_le_div_right hmN⟩, ?_⟩
+    · exact Nat.div_pos (Nat.le_of_dvd hm0 hed) he0
+    · rw [hbmod]
+      obtain ⟨m₁, rfl⟩ := hed
+      rw [Nat.mul_div_cancel_left _ he0]
+      have := hmodkey m₁
+      rw [hm2, hafac] at this
+      exact (Nat.eq_of_mul_eq_mul_left he0 this).symm
+  · intro m' hm'
+    obtain ⟨hm1, hm2⟩ := Finset.mem_filter.1 hm'
+    obtain ⟨hm0, hmN⟩ := Finset.mem_Ioc.1 hm1
+    rw [hbmod] at hm2
+    refine Finset.mem_filter.2 ⟨Finset.mem_Ioc.2 ⟨Nat.mul_pos he0 hm0, ?_⟩, ?_⟩
+    · rw [mul_comm]
+      exact (Nat.le_div_iff_mul_le he0).1 hmN
+    · rw [hmodkey m', hm2, ← hafac]
+  · intro m hm
+    exact Nat.mul_div_cancel' (hdvd m (Finset.mem_filter.1 hm).2)
+  · intro m' _
+    exact Nat.mul_div_cancel_left _ he0
+  · intro m hm
+    rw [Nat.mul_div_cancel' (hdvd m (Finset.mem_filter.1 hm).2)]
+
+/-- `gcd(a/e, Q/e) = 1` where `e = gcd(a,Q)`. -/
+lemma coprime_div_gcd (hQ : 0 < Q) (a : ℕ) :
+    Nat.Coprime (a / Nat.gcd a Q) (Q / Nat.gcd a Q) :=
+  Nat.coprime_div_gcd_div_gcd (Nat.gcd_pos_of_pos_right a hQ)
+
+end Reindex
+
+
 end NormalNumbers.DelangeSlot
