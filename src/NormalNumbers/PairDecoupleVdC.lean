@@ -295,4 +295,47 @@ theorem largeDecay_of_shiftCorr (b p q : ℕ) (t : ℝ) (h : ShiftCorrSmall b p 
   linarith
 
 
+/-! ### The correlation is itself a phase sum of a prime-periodic difference
+
+`shiftCorr` is bilinear in `u`, but for a unimodular phase `u = e(t·X)` the product
+`u(i+j)·conj u(i+j')` collapses to the single phase `e(t·(X(…+jQ) − X(…+j'Q)))`.  So the crux is
+again an exponential sum of a function of `n` which is a sum of `r`-periodic terms — the
+`SwingC1Pair` machinery applies verbatim, with `pairLocalFactor` replaced by a SHIFTED local
+factor. -/
+
+lemma phase_mul_conj_phase (x y : ℝ) :
+    phase x * (starRingEnd ℂ) (phase y) = phase (x - y) := by
+  rw [conj_phase, ← phase_add]
+  congr 1
+
+/-- The shifted difference of the large-prime part. -/
+noncomputable def shiftPairDiff (b P p q : ℕ) (c j j' i : ℕ) : ℝ :=
+  pairRemainder b P p q (c + (i + j) * primorialLe P)
+    - pairRemainder b P p q (c + (i + j') * primorialLe P)
+
+/-- **The crux as a single exponential sum.** -/
+theorem shiftCorr_largeProg (b P p q : ℕ) (t : ℝ) (c R j j' : ℕ) :
+    shiftCorr (largeProg b P p q t c) R j j'
+      = ‖∑ i ∈ range R, phase (t * shiftPairDiff b P p q c j j' i)‖ := by
+  rw [shiftCorr]
+  congr 1
+  refine Finset.sum_congr rfl fun i _ => ?_
+  show phase (t * pairRemainder b P p q (c + (i + j) * primorialLe P))
+      * (starRingEnd ℂ) (phase (t * pairRemainder b P p q (c + (i + j') * primorialLe P)))
+      = phase (t * shiftPairDiff b P p q c j j' i)
+  rw [phase_mul_conj_phase, shiftPairDiff, mul_sub]
+
+/-- `shiftPairDiff` is the pair difference of the large-prime tail at a FIXED shift: with
+`H = (j − j')·Q` it is `X(n) − X(n + H)` up to relabelling, and each prime `r > P` contributes
+an `r`-periodic term.  Restated for the record: only finitely many primes divide `H`, so the
+Mertens divergence that drives every model term in this development survives the shift. -/
+theorem shiftPairDiff_eq (b P p q : ℕ) (c j j' i : ℕ) :
+    shiftPairDiff b P p q c j j' i
+      = pairTail b p q (c + (i + j) * primorialLe P)
+        - truncPairTail b P p q (c + (i + j) * primorialLe P)
+        - (pairTail b p q (c + (i + j') * primorialLe P)
+          - truncPairTail b P p q (c + (i + j') * primorialLe P)) := by
+  rw [shiftPairDiff, pairRemainder, pairRemainder]
+
+
 end NormalNumbers.CastingOut

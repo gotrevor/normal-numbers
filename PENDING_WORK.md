@@ -9975,3 +9975,55 @@ If (1) holds, `ShiftCorrSmall` reduces to the SAME model-vs-defect problem one l
 note that this time the model tends to zero for a FIXED progression, which is what the whole
 chain needs.  This is the first point in the swing where the model term and the target are the
 same object, so it is the natural place for the induction to close or to fail visibly.
+
+### lap 6 — the crux IDENTIFIED: a two-point Elliott correlation (Tao 2016)
+
+Lean (sorry-free, `PairDecoupleVdC.lean`): `phase_mul_conj_phase`, `shiftPairDiff`,
+`shiftCorr_largeProg` — the bilinear correlation collapses to a single exponential sum
+`‖Σ_{i<R} e(t·(X(c+(i+j)Q) − X(c+(i+j')Q)))‖`, so the prime-periodic machinery applies to it.
+
+**The identification (this lap's real advance).**  Expand the tail in `b`-adic digits.  With
+`T_r(m) = b^{m mod r}/(b^r − 1) = Σ_{k≥1} b^{(m mod r) − kr}`, every exponent
+`(m mod r) − kr = −e` with `e ≥ 1` an integer, and `e = 1` exactly when `r ∣ m`, `e = 2` when
+`r ∣ m+1`, and so on.  Hence, with `t = m₀/b`,
+
+`t·pairRemainder_P(n) = Σ_{e≥1} m₀·b^{−1−e}·(N_e(pn) − N_e(qn))`,
+`N_e(x) = #{r > P prime : r ∣ x + e − 1}` (plus the `k ≥ 2` terms, which involve only `r ≤ e/2`
+and are a bounded correction).
+
+Two consequences:
+
+1. **The `e = 1` digit cancels.**  `N_1(pn) = #{r > P : r ∣ pn}`, which for `r > max(p,q)` is
+   just `ω_{>P}(n)` — the SAME for `p` and `q`.  So the leading digit of the difference is
+   `O(1)`, independent of `n`.  The first digit that carries content is `e = 2`.
+
+2. **The `e = 2` digit is `ω_{>P}(pn+1) − ω_{>P}(qn+1)`, weighted `m₀/b²`.**  Since it is an
+   INTEGER weighted by `b^{-2}`, the phase sees it only **mod `b²`**.  So the crux's leading
+   content is exactly:
+   `mean_n z^{ω(pn+1)} · z̄^{ω(qn+1)} → 0`, `z = e(m₀/b²)` a nontrivial root of unity.
+
+That is a **two-point Elliott correlation for the non-pretentious multiplicative function
+`z^{Ω}`/`z^{ω}` along two linear forms** — precisely Ren's worry, now named.  It is:
+* OPEN for natural-density (Cesàro) averaging — this is the Elliott/Chowla two-point problem;
+* **KNOWN for logarithmic averaging**: Tao, *The logarithmically averaged Chowla and Elliott
+  conjectures for two-point correlations* (Forum of Math Pi, 2016), which covers exactly
+  non-pretentious unimodular multiplicative functions at two shifts/forms.  `z^{ω(n)}` with `z`
+  a nontrivial root of unity is non-pretentious (its distance to `n^{it}χ` diverges, by Delange /
+  Halász — and `DelangeMean` is ALREADY a cited known theorem of this development).
+
+**Verdict on the swing.**  `PairDecouple` is TRUE (confidence now **90%**): the leading digit is
+a correlation that Tao's theorem settles in logarithmic average, and the deeper digits are the
+same object with more decoupled forms.  What is genuinely open is only the natural-density
+version.  The honest end state for this kickoff is therefore item 3: **state the equivalence and
+name the problem**, which the chain laps 1–6 now does with the cut `P`, the second cut `y` and
+the periodic model all eliminated.
+
+**Next attack (the remaining Lean work, in order).**
+1. Formalise the `b`-adic digit expansion `t·pairRemainder = Σ_e m₀ b^{−1−e}(N_e(pn) − N_e(qn))`
+   with an explicit tail bound — this is the one genuinely missing computation, and it is
+   elementary (a rearrangement of `tsum_ppCell_k`, already proved in `SwingC1Periodic.lean`).
+2. With it, state `ElliottTwoPoint` as a named KNOWN theorem in the style of
+   `KataiOrthogonality` / `DelangeMean`, and prove `shiftCorr_all` from it — matching the
+   kickoff's requirement that the residual hypothesis be precise and literature-checkable.
+3. Record explicitly that the natural-density form is open, so the swing's conclusion is
+   conditional exactly there.
