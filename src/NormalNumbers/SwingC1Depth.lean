@@ -1,4 +1,5 @@
 import NormalNumbers.SwingC1Model
+import NormalNumbers.G4Irrational
 
 /-!
 # The truncation depth: replacing `θ_n` by its finite-depth window
@@ -140,5 +141,189 @@ theorem depthBound_tendsto_zero_of_pow_div_atTop (b : ℕ) (hb : 2 ≤ b) (h : �
   have hB : ((Nat.log 2 (M + L M) : ℝ) + 1) ≠ 0 := by positivity
   rw [depthBound, inv_div]
   field_simp
+
+/-! ### The tail is never an integer (irrationality of `G₄_b`) -/
+
+/-- `b^N · G₄_b` splits as the integer head plus the tail `θ_N`. -/
+lemma primeLambert_mul_pow (b : ℕ) (hb : 2 ≤ b) (N : ℕ) :
+    primeLambertAtBase b * (b : ℝ) ^ N
+      = ((∑ m ∈ range (N + 1), omegaNat m * b ^ (N - m) : ℕ) : ℝ) + omegaTail b N := by
+  have hb0 : (0 : ℝ) < b := by
+    have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  have hs := summable_lambert b hb omegaNat omegaNat_le
+  have hsN : Summable (fun m : ℕ => (omegaNat m : ℝ) / (b : ℝ) ^ m * (b : ℝ) ^ N) :=
+    hs.mul_right _
+  rw [primeLambertAtBase_eq_lambertVal_omegaNat, lambertVal, ← tsum_mul_right,
+    ← Summable.sum_add_tsum_nat_add (N + 1) hsN]
+  congr 1
+  · push_cast
+    refine Finset.sum_congr rfl fun m hm => ?_
+    have hmN : m ≤ N := by
+      have := Finset.mem_range.mp hm; omega
+    have hsplit : (b : ℝ) ^ N = (b : ℝ) ^ m * (b : ℝ) ^ (N - m) := by
+      rw [← pow_add]; congr 1; omega
+    rw [hsplit]
+    field_simp
+  · rw [omegaTail]
+    exact tsum_congr fun k => omegaTail_term b hb N k
+
+/-- **The tail is never an integer.**  Immediate from the irrationality of `G₄_b` (`b ≥ 3`,
+`G4.irrational_primeLambertAtBase`).  This is what makes leaf (B) of the crux — the carry
+overflow — discharge unconditionally: for every `n` the depth can be pushed past the overflow. -/
+theorem fract_omegaTail_pos (b : ℕ) (hb : 3 ≤ b) (N : ℕ) : 0 < Int.fract (omegaTail b N) := by
+  rcases lt_or_eq_of_le (Int.fract_nonneg (omegaTail b N)) with h | h
+  · exact h
+  · exfalso
+    have hint : omegaTail b N = ((⌊omegaTail b N⌋ : ℤ) : ℝ) := by
+      have := Int.self_sub_fract (omegaTail b N)
+      rw [← h] at this
+      linarith [this]
+    have hsplit := primeLambert_mul_pow b (by omega) N
+    rw [hint] at hsplit
+    have hrat : primeLambertAtBase b * (b : ℝ) ^ N
+        = (((∑ m ∈ range (N + 1), omegaNat m * b ^ (N - m) : ℕ) : ℤ)
+            + ⌊omegaTail b N⌋ : ℤ) := by
+      rw [hsplit]; push_cast; ring
+    have hirr : Irrational (primeLambertAtBase b) := G4.irrational_primeLambertAtBase hb
+    have hirr2 : Irrational (primeLambertAtBase b * ((b ^ N : ℕ) : ℝ)) :=
+      hirr.mul_natCast (by positivity)
+    rw [Nat.cast_pow] at hirr2
+    exact hirr2.ne_int _ hrat
+
+/-! ### Leaf (B) of the crux, discharged: an explicit depth profile with NO bad set -/
+
+/-- The truncation at depth `K` is exact at `n` as soon as the depth-`K` remainder
+`θ_{n+L+K}/b^K` fits inside the fractional part of `θ_{n+L}`. -/
+theorem windowVal_eq_trunc_of_tail_le (b : ℕ) (hb : 2 ≤ b) (L K n : ℕ)
+    (hK : omegaTail b (n + L + K) / (b : ℝ) ^ K ≤ Int.fract (omegaTail b (n + L))) :
+    omegaWindowVal b L n = windowValTrunc b L K n := by
+  have hb0 : (0 : ℝ) < b := by
+    have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  have hbK : (0 : ℝ) < (b : ℝ) ^ K := by positivity
+  set H : ℤ := omegaHead b K (n + L) with hH
+  set θ : ℝ := omegaTail b (n + L) with hθ
+  set δ : ℝ := omegaTail b (n + L + K) / (b : ℝ) ^ K with hδ
+  have hδ0 : 0 ≤ δ := by
+    rw [hδ]
+    exact div_nonneg (omegaTail_nonneg b hb _) (le_of_lt hbK)
+  have hreal : ((H : ℝ)) / (b : ℝ) ^ K = θ - δ := by
+    have hpow := omegaTail_pow b hb K (n + L)
+    rw [← hH, ← hθ] at hpow
+    rw [hδ]
+    field_simp
+    linarith [hpow]
+  -- the integer division is the floor
+  have hediv : H / (b : ℤ) ^ K = ⌊((H : ℝ)) / (b : ℝ) ^ K⌋ := by
+    have h1 : ⌊((H : ℝ)) / ((b ^ K : ℕ) : ℝ)⌋ = ⌊((H : ℝ))⌋ / ((b ^ K : ℕ) : ℤ) :=
+      Int.floor_div_natCast _ _
+    rw [Int.floor_intCast] at h1
+    rw [show ((b : ℝ)) ^ K = ((b ^ K : ℕ) : ℝ) by push_cast; ring,
+      h1, show (((b ^ K : ℕ)) : ℤ) = (b : ℤ) ^ K by push_cast; ring]
+  -- the floor is unchanged
+  have hfloor : ⌊θ - δ⌋ = ⌊θ⌋ := by
+    refine Int.floor_eq_iff.mpr ⟨?_, ?_⟩
+    · have hfr : Int.fract θ = θ - (⌊θ⌋ : ℝ) := Int.self_sub_floor θ ▸ rfl
+      linarith [hK, hfr]
+    · have h1 : Int.fract θ < 1 := Int.fract_lt_one θ
+      have hfr : Int.fract θ = θ - (⌊θ⌋ : ℝ) := Int.self_sub_floor θ ▸ rfl
+      linarith
+  rw [omegaWindowVal, windowValTrunc, ← hH, omegaCarry_eq_floor, ← hθ, hediv, hreal, hfloor]
+
+/-- For every `n` there are arbitrarily large exact depths. -/
+theorem exists_good_depth (b : ℕ) (hb : 3 ≤ b) (L n K₀ : ℕ) :
+    ∃ K, K₀ ≤ K ∧
+      omegaTail b (n + L + K) / (b : ℝ) ^ K ≤ Int.fract (omegaTail b (n + L)) := by
+  have hb2 : 2 ≤ b := by omega
+  have hb0 : (0 : ℝ) < b := by
+    have : (3 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  have hb1 : (1 : ℝ) < (b : ℝ) := by
+    have : (3 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  set ε : ℝ := Int.fract (omegaTail b (n + L)) with hε
+  have hεpos : 0 < ε := fract_omegaTail_pos b hb (n + L)
+  set r : ℝ := 1 / (b : ℝ) with hr
+  have hr0 : (0 : ℝ) ≤ r := by rw [hr]; positivity
+  have hr1 : r < 1 := by rw [hr, div_lt_one hb0]; exact hb1
+  have hrn : ‖r‖ < 1 := by rw [Real.norm_eq_abs, abs_of_nonneg hr0]; exact hr1
+  set c : ℕ := n + L + 2 with hc
+  -- the comparison sequence tends to zero
+  have hsum : Summable (fun K : ℕ => ((c : ℝ) + K) * r ^ K) := by
+    have h1 : Summable (fun K : ℕ => (c : ℝ) * r ^ K) :=
+      (summable_geometric_of_lt_one hr0 hr1).mul_left _
+    have h2 : Summable (fun K : ℕ => (K : ℝ) * r ^ K) :=
+      (hasSum_coe_mul_geometric_of_norm_lt_one hrn).summable
+    exact (h1.add h2).congr fun K => by ring
+  have htend : Tendsto (fun K : ℕ => ((c : ℝ) + K) * r ^ K) atTop (𝓝 0) :=
+    hsum.tendsto_atTop_zero
+  have hev := (NormedAddCommGroup.tendsto_nhds_zero.mp htend) ε hεpos
+  obtain ⟨K, hK0, hKlt⟩ := (hev.and (Filter.eventually_ge_atTop K₀)).exists
+  refine ⟨K, hKlt, ?_⟩
+  have hnn : (0 : ℝ) ≤ ((c : ℝ) + K) * r ^ K := by positivity
+  have hK0' : ((c : ℝ) + K) * r ^ K < ε := by
+    rw [Real.norm_eq_abs, abs_of_nonneg hnn] at hK0
+    exact hK0
+  -- and it dominates the remainder
+  have hbK : (0 : ℝ) < (b : ℝ) ^ K := by positivity
+  have hnum : omegaTail b (n + L + K) ≤ (c : ℝ) + K := by
+    have h1 : omegaTail b (n + L + K) ≤ (Nat.log 2 (n + L + K + 1) : ℝ) + 1 :=
+      omegaTail_le_log b hb2 (n + L + K)
+    have h2 : Nat.log 2 (n + L + K + 1) ≤ n + L + K + 1 := Nat.log_le_self _ _
+    have h3 : ((Nat.log 2 (n + L + K + 1) : ℝ)) ≤ ((n + L + K + 1 : ℕ) : ℝ) := by
+      exact_mod_cast h2
+    have h4 : (((n + L + K + 1 : ℕ)) : ℝ) + 1 = (c : ℝ) + K := by
+      rw [hc]; push_cast; ring
+    linarith
+  have hpowr : r ^ K = 1 / (b : ℝ) ^ K := by rw [hr, div_pow, one_pow]
+  calc omegaTail b (n + L + K) / (b : ℝ) ^ K
+      ≤ ((c : ℝ) + K) / (b : ℝ) ^ K := by
+        exact div_le_div_of_nonneg_right hnum (le_of_lt hbK) |>.trans (le_of_eq rfl)
+    _ = ((c : ℝ) + K) * r ^ K := by rw [hpowr]; ring
+    _ ≤ ε := le_of_lt hK0'
+
+open Classical in
+/-- **The explicit exact-depth profile.**  `goodDepth b L n` is a depth `≥ n` at which the
+window-value truncation at `n` is EXACT. -/
+noncomputable def goodDepth (b L n : ℕ) : ℕ :=
+  if h : ∃ K, n ≤ K ∧
+      omegaTail b (n + L + K) / (b : ℝ) ^ K ≤ Int.fract (omegaTail b (n + L))
+    then h.choose else n
+
+theorem goodDepth_spec (b : ℕ) (hb : 3 ≤ b) (L n : ℕ) :
+    n ≤ goodDepth b L n ∧ omegaWindowVal b L n = windowValTrunc b L (goodDepth b L n) n := by
+  have hex : ∃ K, n ≤ K ∧
+      omegaTail b (n + L + K) / (b : ℝ) ^ K ≤ Int.fract (omegaTail b (n + L)) :=
+    exists_good_depth b hb L n n
+  have hgd : goodDepth b L n = hex.choose := by
+    rw [goodDepth]
+    exact dif_pos hex
+  obtain ⟨h1, h2⟩ := hex.choose_spec
+  rw [hgd]
+  exact ⟨h1, windowVal_eq_trunc_of_tail_le b (by omega) L _ n h2⟩
+
+/-- **Leaf (B) of the crux is UNCONDITIONAL.**  At the profile `goodDepth` the bad set is EMPTY,
+so the carry-overflow density is identically zero. -/
+theorem hCarryOverflowAt_goodDepth (b : ℕ) (hb : 3 ≤ b) (L : ℕ) :
+    HCarryOverflowAt b L (goodDepth b L) := by
+  have hzero : ∀ N : ℕ, carryBadCount b L (goodDepth b L) N = 0 := by
+    intro N
+    rw [carryBadCount, Finset.card_eq_zero, Finset.filter_eq_empty_iff]
+    intro n _
+    simp only [not_not]
+    exact (goodDepth_spec b hb L n).2
+  rw [HCarryOverflowAt]
+  refine Filter.Tendsto.congr (fun N => ?_) (tendsto_const_nhds (x := (0 : ℝ)))
+  rw [hzero N]
+  simp
+
+/-- **The crux now has exactly ONE leaf.**  `HDepth b L` — hence the whole C1 chain — follows
+from the joint-equidistribution leaf (A) ALONE, at the explicit depth profile `goodDepth b L`.
+Leaf (B), the carry overflow, is discharged unconditionally by `hCarryOverflowAt_goodDepth`. -/
+theorem hDepth_of_hTruncDecay (b : ℕ) (hb : 3 ≤ b) (L : ℕ)
+    (h : HTruncDecayAt b L (goodDepth b L)) : HDepth b L := by
+  refine ⟨goodDepth b L, ?_, h, hCarryOverflowAt_goodDepth b hb L⟩
+  refine tendsto_atTop_mono (fun n => (goodDepth_spec b hb L n).1) tendsto_id
 
 end NormalNumbers.CastingOut

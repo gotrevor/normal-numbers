@@ -9397,3 +9397,58 @@ copies of the multiplicative function `z^ω`**.  Literature status, honestly:
    question for the route and is the next lap's target.**
 3. Leaf (D) stays parked: the `model × decoupling` axis is now the *second* handle, not the
    primary one.  Leaf (M) remains fully proved and is reusable there.
+
+## 2026-09-24 — swing-c1 lap 29: **leaf (B) of the crux is DISCHARGED — one leaf left**
+
+`HDepth b L` (the `hDepthAll` crux of `SwingC1.lean`) was a CONJUNCTION: a depth profile `κ → ∞`
+with (A) `HTruncDecayAt` (joint equidistribution) **and** (B) `HCarryOverflowAt` (the truncation is
+wrong only on a density-zero set).  **(B) is now proved unconditionally**, in
+`src/NormalNumbers/SwingC1Depth.lean`, all sorry-free and axiom-clean:
+
+```
+hDepth_of_hTruncDecay : 3 ≤ b → HTruncDecayAt b L (goodDepth b L) → HDepth b L
+```
+
+So the C1 chain now rests on leaf (A) ALONE, at one explicit depth profile.
+
+### How (B) died
+
+The bad event was thought to need equidistribution of `H_K(n+L) mod b^K`.  It does not, because
+the depth may be chosen **per `n`**:
+
+* `windowVal_eq_trunc_of_tail_le` — the depth-`K` truncation is EXACT at `n` as soon as
+  `θ_{n+L+K}/b^K ≤ fract(θ_{n+L})`.  (From `omegaTail_pow`: `H_K/b^K = θ_{n+L} − θ_{n+L+K}/b^K`,
+  and `⌊x − δ⌋ = ⌊x⌋` when `0 ≤ δ ≤ fract x`.  No arithmetic input at all.)
+* `fract_omegaTail_pos` — `fract(θ_N) > 0` for every `N`, because `θ_N ∈ ℤ` would make
+  `b^N·G₄_b ∈ ℤ`, contradicting `G4.irrational_primeLambertAtBase` (`b ≥ 3`, already in the repo,
+  axiom-clean).  New bridge lemma `primeLambert_mul_pow`: `b^N·G₄_b = (integer head) + θ_N`.
+* `exists_good_depth` — since `θ_M ≤ log₂(M+1)+1` (`omegaTail_le_log`), the remainder
+  `θ_{n+L+K}/b^K ≤ (n+L+2+K)·b^{−K} → 0`, so exact depths `K ≥ K₀` exist for EVERY `K₀`.
+* `goodDepth b L n` := such a `K ≥ n`; `hCarryOverflowAt_goodDepth`: the bad set is **empty**, so
+  `carryBadCount ≡ 0`.
+
+Note the trade: `goodDepth` is not slowly growing (it is `≥ n`), so leaf (A) at this profile is the
+full-strength joint statement — but (A) was already the open leaf, and the conjunction is now a
+single hypothesis.  A slowly-growing profile is still available if (A) ever needs one: any
+`κ n ≥ ` the least exact depth works, and `exists_good_depth` bounds that least depth by
+`O(log_b log n)` since `(n+L+2+K)b^{−K} < fract(θ_{n+L})` holds once `b^K ≳ n/fract(θ)`.
+⚠️ that last bound is `O(log_b n)`, NOT `O(log_b log n)`, because `fract(θ_{n+L})` has no known
+lower bound — an effective irrationality measure for `G₄_b` would give one.  Recorded as the
+one quantitative gap in an otherwise complete leaf (B).
+
+### Where the crux stands now
+
+Single open leaf: `HTruncDecayAt b L κ` = for `0 < a < b^L`,
+`mean_{n<N} ζ_{b^L}^{a·windowValTrunc b L (κ n) n} → 0`, i.e. the joint equidistribution of
+`ω(n+1), …, ω(n+L+κ n)` at the frequencies `a/b^L`.  Equivalently (lap 28) the finite-depth Weyl
+correlations `mean_{n<M} Π_i z_i^{ω(n+1+i)}`.
+
+### Next attack
+
+1. The `L = 1`, depth-`1` case: `mean_{n<N} ζ_b^{a·ω(n)} → 0` for `b ∤ a` — **Delange's theorem**.
+   State it as a named Prop in `src/` and see how much of `HTruncDecayAt` it already gives (the
+   `κ n = 0` slice).  Then the question is purely "does the depth-`0` decay survive the deeper
+   coordinates", which is lap 28's decisive question.
+2. An effective irrationality measure for `G₄_b` would (a) make `goodDepth` explicitly
+   `O(log_b log n)` and (b) give a quantitative form of leaf (B).  `MahlerPrime*` in this repo is
+   exactly that machinery — worth checking whether it applies to `primeLambertAtBase`.
