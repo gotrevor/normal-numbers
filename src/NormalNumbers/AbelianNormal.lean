@@ -233,6 +233,18 @@ theorem sum_fun4 (f : (Fin 4 → Fin 2) → ℚ) :
   refine Finset.sum_congr rfl (fun d _ => ?_)
   congr 1
 
+theorem forall_fun2 {P : (Fin 2 → Fin 2) → Prop} (h : ∀ a b : Fin 2, P ![a, b]) :
+    ∀ u, P u := by
+  intro u
+  have hu : u = ![u 0, u 1] := by funext i; fin_cases i <;> rfl
+  rw [hu]; exact h _ _
+
+@[simp] theorem snoc_two (a b c : Fin 2) : Fin.snoc ![a, b] c = ![a, b, c] := by
+  funext i; fin_cases i <;> rfl
+
+@[simp] theorem cons_two (a b c : Fin 2) : Fin.cons a ![b, c] = ![a, b, c] := by
+  funext i; fin_cases i <;> rfl
+
 theorem forall_fun3 {P : (Fin 3 → Fin 2) → Prop} (h : ∀ a b c : Fin 2, P ![a, b, c]) :
     ∀ u, P u := by
   intro u
@@ -259,7 +271,57 @@ def AbelianUpTo {L : ℕ} (p : WordFreq L) : Prop :=
 /-- At length 3, stationarity and abelian balance force the uniform word measure. -/
 theorem rigid_three (p : WordFreq 3) (hst : Stationary p) (hab : AbelianUpTo p) :
     p = fun _ => (1 : ℚ) / 8 := by
-  sorry
+  have a00 := hab 0 0 (by norm_num) (by norm_num)
+  rw [Finset.sum_filter, sum_fun3] at a00
+  norm_num +decide [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
+    Matrix.tail_cons, Nat.choose, Fin.sum_univ_two, prefixOnes] at a00
+  have a10 := hab 1 0 (by norm_num) (by norm_num)
+  rw [Finset.sum_filter, sum_fun3] at a10
+  norm_num +decide [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
+    Matrix.tail_cons, Nat.choose, Fin.sum_univ_two, prefixOnes] at a10
+  have a11 := hab 1 1 (by norm_num) (by norm_num)
+  rw [Finset.sum_filter, sum_fun3] at a11
+  norm_num +decide [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
+    Matrix.tail_cons, Nat.choose, Fin.sum_univ_two, prefixOnes] at a11
+  have a20 := hab 2 0 (by norm_num) (by norm_num)
+  rw [Finset.sum_filter, sum_fun3] at a20
+  norm_num +decide [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
+    Matrix.tail_cons, Nat.choose, Fin.sum_univ_two, prefixOnes] at a20
+  have a21 := hab 2 1 (by norm_num) (by norm_num)
+  rw [Finset.sum_filter, sum_fun3] at a21
+  norm_num +decide [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
+    Matrix.tail_cons, Nat.choose, Fin.sum_univ_two, prefixOnes] at a21
+  have a22 := hab 2 2 (by norm_num) (by norm_num)
+  rw [Finset.sum_filter, sum_fun3] at a22
+  norm_num +decide [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
+    Matrix.tail_cons, Nat.choose, Fin.sum_univ_two, prefixOnes] at a22
+  have a30 := hab 3 0 (by norm_num) (by norm_num)
+  rw [Finset.sum_filter, sum_fun3] at a30
+  norm_num +decide [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
+    Matrix.tail_cons, Nat.choose, Fin.sum_univ_two, prefixOnes] at a30
+  have a31 := hab 3 1 (by norm_num) (by norm_num)
+  rw [Finset.sum_filter, sum_fun3] at a31
+  norm_num +decide [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
+    Matrix.tail_cons, Nat.choose, Fin.sum_univ_two, prefixOnes] at a31
+  have a32 := hab 3 2 (by norm_num) (by norm_num)
+  rw [Finset.sum_filter, sum_fun3] at a32
+  norm_num +decide [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
+    Matrix.tail_cons, Nat.choose, Fin.sum_univ_two, prefixOnes] at a32
+  have a33 := hab 3 3 (by norm_num) (by norm_num)
+  rw [Finset.sum_filter, sum_fun3] at a33
+  norm_num +decide [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
+    Matrix.tail_cons, Nat.choose, Fin.sum_univ_two, prefixOnes] at a33
+  have hs : ∀ a b : Fin 2, ∑ x : Fin 2, p (Fin.snoc ![a, b] x) = ∑ x : Fin 2, p (Fin.cons x ![a, b]) :=
+    fun a b => hst ![a, b]
+  have s00 := hs 0 0
+  have s01 := hs 0 1
+  have s10 := hs 1 0
+  have s11 := hs 1 1
+  simp only [Fin.sum_univ_two, snoc_two, cons_two] at s00 s01 s10 s11
+  funext w
+  revert w
+  refine forall_fun3 (fun a b c => ?_)
+  fin_cases a <;> fin_cases b <;> fin_cases c <;> simp only [Fin.zero_eta, Fin.mk_one, Fin.isValue] <;> linarith
 
 /-- The length-4 witness: uniform `1/16`, perturbed by `±1/16` on the eight words with
 `w 1 ≠ w 2`, with the sign given by the parity of `w 0 + w 1 + w 3`. -/
