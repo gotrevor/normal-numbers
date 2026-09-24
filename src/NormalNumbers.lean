@@ -463,3 +463,4 @@ import NormalNumbers.SwingC1Weyl
 import NormalNumbers.SwingC1Decouple
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
+import NormalNumbers.PairDecoupleAttacks

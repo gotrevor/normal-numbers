@@ -1,8 +1,98 @@
 # STATUS — normal-numbers 📊
 
+**Active campaign: the C1 swing.  `conjC1_of_delange_katai_decouple` is PROVED; `PairDecouple`
+is its one open input, and this worktree attacks it from the refutation side.**
+· **Build**: 🟢 green (9189 jobs) · **Updated**: lap 1 of pd-refute · 2026-09-24 · branch
+`wip/pd-refute` · **Pair A multicutoff (Theorem C′): COMPLETE, see the section below**
+
+## Where it stands (C1 swing — the live campaign)
+
+`conjC1_of_delange_katai_decouple` (`SwingC1Decouple.lean`) derives `ConjC1` from two *named
+known theorems* (`KataiOrthogonality` = Kátai 1986 / Daboussi–Delange 1974; `DelangeMean` =
+Delange 1969) plus one open arithmetic input, `PairDecouple b p q t`: the large-prime remainder
+of the pair difference `θ_{pn} − θ_{qn}` equidistributes in progressions to the small-prime
+modulus `Q = primorialLe P`.  Everything else in the swing, including the model term
+`∏_{r≤P} pairLocalFactor → 0` (Mertens + a residue-pigeonhole separation bound), is proved.
+
+Two worktrees run at `PairDecouple`: `wip/pd-prove` (positive) and `wip/pd-refute` (this one).
+After lap 1 of the refutation side the frozen statement has **no soft spot**: its whole boundary
+checklist is discharged as theorems, and `not_pairDecouple_of_pairCorr_ge` shows refuting
+`PairDecouple` is *equivalent* to refuting `PairDecorr` itself.  Numerics (exact `ω`, `N ≤ 2e5`,
+five hand-computed controls) show every certified lower bound decaying.  **Confidence that
+`PairDecouple` is TRUE: 92%.**
+
+## What's happened (C1 swing, newest first)
+
+- **2026-09-24 (pd-refute lap 1, review lap)** — the refutation checklist DISCHARGED.  Two new
+  sorry-free modules.  `PairDecoupleLower.lean`: the test-function certificate
+  `norm_test_le_pairDefect` (every mean-zero `χ` on `ℤ/Q` bounds `pairDefect` BELOW — with
+  `χ = e(−ac/Q)` these are `Q−1` computable refutation certificates), the twist identity
+  `progMean_pairRemainder`, the finitary two-sided pin
+  `‖fullMean f (QR)‖ ≤ 2·pairDefect + ‖∏ pairLocalFactor‖`, and the entry point
+  `not_pairDecouple_of_pairCorr_ge`.  Plus the degenerate cases: `P < 2 ⇒ pairDefect ≡ 0`;
+  `pairLocalFactor = 1` EXACTLY when `p ≡ q (mod r)` (so lap 32's `∀ᶠ r` cannot be dropped);
+  and when `primorialLe P ∣ p − q` the model half is exactly `1`, so the split is VACUOUS there
+  and `pairDefect` is the raw class deviation.  `PairDecoupleAttacks.lean`: all six kickoff
+  attacks closed as theorems (constant shifts, `n = 0`, a prime pinned on a class — the CRT
+  reason, `no_prime_dvd_class_beyond_cut`).  `probes/pair_defect.py` + three data files; the
+  band decomposition is the mechanism: every fixed prime band's class deviation decays at the
+  CRT rate `O(y/R)` (exactly `0` when the residues equidistribute exactly), the intermediate
+  truncations are *worse* than the full remainder, and no band shows a floor.
+  See `FINDINGS-2026-09-24-pd-refute.md`.
+- **2026-09-24 (swing-c1 laps 32–35)** — the swing's conditional theorem proved.
+  `norm_pairLocalFactor_le` (residue pigeonhole, unconditional pair side), `ShiftIndep` →
+  `PairDecorr`, the `weylMean` wiring, and leaf (D) split into a proved model term plus
+  `PairDecouple`.  Four route refutations recorded: prime truncation, zero drift, the
+  `hAutoCorrAll` "weaker leaf", the fixed-modulus Fourier route.
+  See `HANDOFF-2026-09-24-swing-c1-laps32-35.md`.
+
+## Outstanding (C1 swing)
+
+### Short-term (mirrors PENDING_WORK top)
+1. **Decide `PairDecouple`.**  Refutation side: the only regime no CRT argument reaches is the
+   primes `r ≍ N` (`Q` is fixed before `R → ∞`).  Next probe: condition the class deviation on
+   `P⁺(pn+1)` above/below `√N`.  Positive side: `wip/pd-prove`.
+2. `hDepthAll` (`SwingC1.lean` l. 920) and `hAutoCorrAll` (l. 2201) — the two ratified swing
+   `sorry`s, untouched by design.
+
+### Long-term
+Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
+`MahlerDriftOne.exists_prime_nonresidue`.
+
+### To completion
+`ConjC1` unconditional needs `PairDecouple` proved (or the split redesigned if it is false), and
+then the two known theorems formalized — each a separate mathlib-scale project, so the honest
+end state of the swing is the conditional theorem plus a proved `PairDecouple`.
+
+## Axiom ledger — C1 swing (real `#print axioms`, 2026-09-24, 9189 jobs)
+
+| headline theorem | paper claim | `#print axioms` shows | verdict |
+|---|---|---|---|
+| `conjC1_of_delange_katai_decouple` | conditional: `ConjC1` from Kátai + Delange + `PairDecouple` — stated CONDITIONALLY | trust triple | 🟢 clean (hypotheses are named `Prop`s, not `axiom`s) |
+| `prod_pairLocalFactor_tendsto_zero` | the model term, UNCOND | trust triple | 🟢 clean |
+| `norm_pairLocalFactor_le` | separation bound, UNCOND | trust triple | 🟢 clean |
+| `pairDecorr_of_pairDecouple` | leaf (D) reduction | trust triple | 🟢 clean |
+| `norm_fullMean_pairTail_le` / `not_pairDecouple_of_pairCorr_ge` | the refutation engine (new) | trust triple | 🟢 clean |
+| `pairDefect_eq_classDev_of_congr` / `pairDefect_tendsto_zero_of_lt_two` / `pairDefect_two_of_odd` | the degenerate cases (new) | trust triple | 🟢 clean |
+| `classDeviation_perturb` / `no_prime_dvd_class_beyond_cut` | the discharged attacks (new) | trust triple | 🟢 clean |
+| `not_pairDecouple_all` | **the refutation target** — ratified, deliberately open | `sorryAx` | 🟡 open by design; an open named `sorry` is an acceptable end state per the kickoff |
+
+Math-axiom count: **0** — there are no `axiom` declarations anywhere in this repo; every input is
+a named hypothesis on a conditional theorem.  `src/` open `sorry`s: **4** — `SwingC1.hDepthAll`,
+`SwingC1.hAutoCorrAll` (ratified swing leaves), `not_pairDecouple_all` (this worktree's target),
+plus the two designated-open off-campaign ones (`PrimeLambertOscillation`, `MahlerDriftOne`).
+
+## Pointers (C1 swing)
+`KICKOFF-2026-09-24-pd-refute.md` · `FINDINGS-2026-09-24-pd-refute.md` ·
+`HANDOFF-2026-09-24-swing-c1-laps32-35.md` · `probes/data-2026-09-24-pair-defect*.txt` ·
+`PENDING_WORK.md` · `DIRECTION.md` (CURRENT DIRECTIVE)
+
+---
+
+# (below: Pair A, the multicutoff campaign — COMPLETE 2026-09-23)
+
 **Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
-· **Build**: 🟢 green (9161 jobs) · **Updated**: 2026-09-23, campaign complete · HEAD `3523f8d`
-· branch `wip/g5-prime-subset`
+· `#print axioms isNormal_subsetLambert_of_sqrtFreshMassZero` = trust triple.
 
 ## Where it stands (multicutoff campaign)
 

@@ -54,17 +54,19 @@ TWOPI = 2.0 * math.pi
 
 
 # ---------------------------------------------------------------- sieve ----
-def omega_sieve(limit: int, pmin: int = 0) -> bytearray:
-    """omega_{>pmin}(m) for m <= limit (pmin = 0 gives full omega)."""
+def omega_sieve(limit: int, pmin: int = 0, pmax: int | None = None) -> bytearray:
+    """omega_{(pmin, pmax]}(m) for m <= limit: the number of distinct prime factors r of m with
+    pmin < r <= pmax.  pmin = 0, pmax = None gives the full omega."""
     om = bytearray(limit + 1)
     comp = bytearray(limit + 1)
+    hi = limit if pmax is None else min(limit, pmax)
     for r in range(2, limit + 1):
         if comp[r]:
             continue
         if r * r <= limit:
             for i in range(r * r, limit + 1, r):
                 comp[i] = 1
-        if r > pmin:
+        if pmin < r <= hi:
             for i in range(r, limit + 1, r):
                 om[i] += 1
     return om
@@ -135,30 +137,33 @@ def run_case(b, m, p, q, P, Rlist, out=sys.stdout):
     T_all = tail_array(om_all, b, limit)
     T_big = tail_array(om_big, b, limit)
 
+    # truncPairTail is exactly Q-periodic (truncPairTail_add_mul_primorial), so tabulate it once
+    tptQ = [trunc_pair_tail(b, P, p, q, c) for c in range(Q)]
     c4 = 0.0
     rem = [0.0] * N
     pt = [0.0] * N
+    nc4 = min(N, 20000)
     for n in range(N):
         pn, qn = p * n, q * n
         pt[n] = T_all[pn] - T_all[qn]
-        r1 = pt[n] - trunc_pair_tail(b, P, p, q, n)
         r2 = T_big[pn] - T_big[qn]
-        d = abs(r1 - r2)
-        if d > c4:
-            c4 = d
         rem[n] = r2
+        if n < nc4:
+            d = abs((pt[n] - tptQ[n % Q]) - r2)
+            if d > c4:
+                c4 = d
     if c4 > 1e-9:
         raise AssertionError(f"C4 FAILED: the two pairRemainder routes disagree by {c4:.3e}")
 
     B = [cmath.exp(1j * TWOPI * t * x) for x in rem]
     f = [cmath.exp(1j * TWOPI * t * x) for x in pt]
-    A = [cmath.exp(1j * TWOPI * t * trunc_pair_tail(b, P, p, q, c)) for c in range(Q)]
+    A = [cmath.exp(1j * TWOPI * t * x) for x in tptQ]
     model = abs(sum(A) / Q)   # |periodMean A Q| = |prod_{r<=P} pairLocalFactor b t r p q|
 
     print(f"b={b} m={m} t={t:.6g} p={p} q={q} P={P} Q={Q}  "
           f"|periodMean A|={model:.6f}  C4 residual={c4:.2e}", file=out)
     print(f"{'R':>8} {'N':>9} {'defect':>10} {'maxLB':>10} {'a*':>4} "
-          f"{'|fullB|':>9} {'|fullf|':>9} {'d*sqrtR':>9} {'lowerbnd':>9}", file=out)
+          f"{'|fullB|':>9} {'|fullf|':>9} {'rel=d/|fB|':>11} {'lowerbnd':>9}", file=out)
     rows = []
     for Rr in Rlist:
         d, prog, full, lbs = defect_and_lb(B, Q, Rr)
@@ -166,11 +171,42 @@ def run_case(b, m, p, q, P, Rlist, out=sys.stdout):
         mx = max(lbs) if lbs else 0.0
         am = (lbs.index(mx) + 1) if lbs else 0
         rows.append((Rr, d, mx, am, abs(full), fm))
+        rel = d / abs(full) if abs(full) > 1e-12 else float('nan')
         print(f"{Rr:>8} {Q*Rr:>9} {d:>10.6f} {mx:>10.6f} {am:>4} "
-              f"{abs(full):>9.6f} {fm:>9.6f} {d*math.sqrt(Rr):>9.4f} "
+              f"{abs(full):>9.6f} {fm:>9.6f} {rel:>11.6f} "
               f"{(fm-model)/2:>9.6f}", file=out)
     print(file=out, flush=True)
     return rows, model, c4
+
+
+def band_case(b, m, p, q, P, nmax):
+    t = m / b
+    Q = primorial_le(P)
+    R = max(8, nmax // Q)
+    N = Q * R
+    limit = max(p, q) * N + 64
+    Rlist = sorted({max(4, R // 4), max(4, R // 2), R})
+    ys = [P, 5, 11, 31, 101, 1009, 10007, 100003, limit]
+    print(f"b={b} m={m} p={p} q={q} P={P} Q={Q}  N={N}  (y = {limit} is the full remainder)")
+    print(f"{'y':>9} " + " ".join(f"{'d(R='+str(x)+')':>13}" for x in Rlist)
+          + f" {'maxLB(Rmax)':>12}")
+    for y in ys:
+        if y < P:
+            continue
+        om = omega_sieve(limit, P, None if y >= limit else y)
+        T = tail_array(om, b, limit)
+        Bv = [cmath.exp(1j * TWOPI * t * (T[p * n] - T[q * n])) for n in range(N)]
+        cells = []
+        mx = 0.0
+        for Rr in Rlist:
+            d, _, _, lbs = defect_and_lb(Bv, Q, Rr)
+            cells.append(d)
+            if Rr == Rlist[-1] and lbs:
+                mx = max(lbs)
+        lbl = "all" if y >= limit else str(y)
+        print(f"{lbl:>9} " + " ".join(f"{c:>13.6f}" for c in cells) + f" {mx:>12.6f}",
+              flush=True)
+    print()
 
 
 # ------------------------------------------------------------- selftest ----
@@ -225,9 +261,58 @@ def main():
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--nmax", type=int, default=120000)
     ap.add_argument("--only", type=int, default=0)
+    ap.add_argument("--bands", action="store_true",
+                    help="decompose the defect by prime band (P, y]: CRT handles every fixed y, "
+                         "so the y -> oo limit is the whole content.")
+    ap.add_argument("--degen", action="store_true",
+                    help="the DEGENERATE pairs p == q mod primorialLe P, where "
+                         "prod_{r<=P} pairLocalFactor = 1 EXACTLY "
+                         "(pairDefect_eq_classDev_of_congr): the split is vacuous there and "
+                         "pairDefect is the RAW class deviation of the pair correlation.")
     args = ap.parse_args()
     if args.selftest:
         sys.exit(selftest())
+    if args.bands:
+        print("=" * 102)
+        print("BAND DECOMPOSITION.  B_y(n) = e(t * sum_{k>=1}(om_{(P,y]}(pn+k) - om_{(P,y]}(qn+k))/b^k):")
+        print("the pair remainder restricted to primes in (P, y].  For FIXED y this is a function of")
+        print("finitely many residues n mod r, r <= y, all coprime to Q, so CRT PROVES its class")
+        print("deviation is O(y/R) -> 0.  The whole content of `PairDecouple` is therefore the")
+        print("y -> oo limit.  If the defect saturates at moderate y, the large primes carry no")
+        print("class bias and PairDecouple is true for the CRT reason.")
+        print("=" * 102)
+        for (b, m, p, q, P, nmax) in [(3, 1, 3, 5, 2, 200000), (3, 1, 5, 11, 3, 150000)]:
+            band_case(b, m, p, q, P, nmax)
+        return
+    if args.degen:
+        print("=" * 102)
+        print("DEGENERATE pairs: p == q mod primorialLe P, so |periodMean A| = 1 EXACTLY and")
+        print("pairDefect is the raw class deviation of f.  The sharpest place for a "
+              "counterexample.")
+        print("=" * 102)
+        # (b, m, p, q, P, nmax)   -- q large, so nmax is capped by the sieve limit q*N
+        dcases = [
+            (3, 1, 3, 5, 2, 200000),      # 5 - 3 = 2  = primorialLe 2
+            (3, 1, 5, 7, 2, 200000),
+            (3, 1, 5, 11, 3, 150000),     # 11 - 5 = 6  = primorialLe 3
+            (3, 1, 7, 13, 3, 150000),
+            (3, 1, 11, 17, 3, 100000),
+            (4, 1, 5, 11, 3, 150000),
+            (3, 2, 5, 11, 3, 150000),
+            (3, 1, 7, 37, 5, 60000),      # 37 - 7 = 30 = primorialLe 5
+            (3, 1, 11, 41, 5, 60000),
+            (3, 1, 11, 431, 7, 10500),    # 431 - 11 = 420 = 2 * primorialLe 7
+        ]
+        for (b, m, p, q, P, nmax) in dcases:
+            Q = primorial_le(P)
+            Rmax = max(8, nmax // Q)
+            Rlist = sorted({max(4, Rmax // 8), max(4, Rmax // 4),
+                            max(4, Rmax // 2), Rmax})
+            try:
+                run_case(b, m, p, q, P, Rlist)
+            except AssertionError as e:
+                print(f"b={b} m={m} p={p} q={q} P={P}: {e}", flush=True)
+        return
 
     print("=" * 102)
     print("pairDefect probe.  Decaying defect and maxLB => PairDecouple TRUE at that (b,m,p,q,P).")

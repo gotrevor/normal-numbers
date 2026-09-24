@@ -2,38 +2,49 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective.**  `isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′, Fable §9 / Astra §11)
-SORRY-FREE and trust-triple.  The whole chain is assembled and green; the headline's `sorryAx`
-comes from exactly **three** leaves, all in `src/NormalNumbers/PrimeModelFamilyGraded.lean`.
+**Objective (worktree `wip/pd-refute`).**  `KICKOFF-2026-09-24-pd-refute.md`, which supersedes
+this file for this branch: decide `PairDecouple b p q t` — the sole open input of
+`conjC1_of_delange_katai_decouple` — from the REFUTATION side.  Target
+`not_pairDecouple_all` (`src/NormalNumbers/PairDecoupleRefute.lean`, ratified, open `sorry`).
 
-**Mandated next move (2026-09-23 review lap — direction KEPT, priority sharpened).**
-Close the three leaves, hardest first:
-1. **`termE5_tendsto`** (l. ~980) — Astra (8.6), the last structurally NEW estimate and the only
-   one whose feasibility is in real doubt.  Everything it needs is already proved:
-   `recipSumIoc_yG_le` (short root chain at any `j ≤ J1 N`), `JG_le_mass` (`8J ≤ S_P(N)`),
-   Mertens (`primeRecipSum_le` / `recipSumLe_le_crude`), `cIdx ≤ J−1 ≤ J1 N`.
-2. **`schedule_admissible`** (l. ~575) — eleven pointwise clauses, two already proved
-   (`yBotG_le_yG`, `yG_antitone`); bookkeeping, no new mathematics.
-3. **`termE4c_tendsto`** (l. ~974) — `N^{-1+o(1)}`; arithmetic of the support level.
+**Mandated next move (2026-09-24 review lap — direction KEPT, refocused onto the one unreached
+regime).**  The kickoff's boundary checklist is DISCHARGED: all six attacks are now theorems
+saying they cannot work (`PairDecoupleAttacks.lean`), and `not_pairDecouple_of_pairCorr_ge`
+shows refuting `PairDecouple` is *equivalent* to refuting `PairDecorr` — the frozen statement
+has no soft spot.  So:
+1. **The only unreached regime is the primes `r ≍ N`.**  `Q` is fixed before `R → ∞`, so CRT
+   provably handles every fixed prime band (`no_prime_dvd_class_beyond_cut`, and the band probe
+   confirms `O(y/R)`).  Next probe: condition the class deviation on `P⁺(pn+1)` above/below `√N`.
+   If the bias is not in the large-`P⁺` part, `PairDecouple` is numerically settled.
+2. **Work the degenerate family** `primorialLe P ∣ p − q`, where the proved model term is exactly
+   `1` and `pairDefect` is the raw class deviation (`pairDefect_eq_classDev_of_congr`).  Anything
+   found there is a counterexample to `PairDecorr` itself.
+3. Do NOT re-attack the six closed boundary cases, and do NOT attack Selberg–Delange or the Kátai
+   criterion inside this swing (named known theorems, separate mathlib-scale projects).
 
-**Forbidden drift.**  Do NOT open new campaigns, do NOT touch `PrimeLambertOscillation` or
-`MahlerDriftOne` (the two pre-existing off-campaign `sorry`s — designated open), do NOT edit
-`PrimeModelBrunLower.lean`, `papers/`, or Pair B files.  Do NOT weaken any existing statement to
-make a leaf close; a leaf that resists gets a named sub-`sorry` IN `src/`, never a relocation.
-No constant-class-count route (refuted 2026-09-22, see below).
+**Forbidden drift.**  Never delete, rename or weaken `not_pairDecouple_all`; an open named
+`sorry` there is an acceptable end state.  Do not edit `SwingC1*.lean`, `CastingOut*.lean`,
+`Maze.lean`, `papers/`, `agent-mail/`, other KICKOFFs.  New helpers go in
+`src/NormalNumbers/PairDecouple*.lean` only.  Probes go in `probes/` with a hand-computed
+known-answer control.
 
-**Why.**  The graded route's route-decisive question — whether the fresh-mass surrogate `ε_N → 0`
-alone can drive the schedule — was settled affirmatively by the bounded contracting site index
-(`exists_site_re_nonpos_le`, lap G5c-e) plus the short root chain (`recipSumIoc_yG_le`, lap G5c-i).
-E5 is where that finding is finally cashed: if the exponent `8J − 1 − log 2J − o(1)` does not
-materialise in Lean, the schedule constants (the `8` in `JG`, the `2J` floor) need retuning and
-that is a redesign.  Nothing else open can force a pivot.
+**Why.**  The C1 swing's conditional theorem is proved and `PairDecouple` is its single
+remaining input, so its truth value is route-decisive for the whole swing: if it is FALSE the
+`SwingC1Decouple` split has to be redesigned; if TRUE the swing's only debt is a named
+arithmetic input.  This lap's evidence (band decomposition + six discharged attacks) puts
+`PairDecouple` at ~92% TRUE, which means the *positive* worktree is on the right route and the
+refutation worktree's remaining value is to kill the last unreached regime or find the
+conspiracy there.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
 - 2026-09-23 (review lap): route KEPT and vindicated (5/8 leaves closed, tail crux resolved);
-  narrowed to the three remaining leaves of `PrimeModelFamilyGraded.lean`, E5 first.
-
+  narrowed to the three remaining leaves of `PrimeModelFamilyGraded.lean`, E5 first.  **Pair A
+  campaign COMPLETE 2026-09-23** (Theorem C′ trust-triple); this directive's objective moved to
+  the C1 swing.
+- 2026-09-24 (review lap, `wip/pd-refute`): objective = decide `PairDecouple` from the refutation
+  side per `KICKOFF-2026-09-24-pd-refute.md`; boundary checklist discharged as theorems, focus
+  narrowed to the `r ≍ N` regime and the degenerate `primorialLe P ∣ p−q` family.
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically
 one).  See `G4PrefixDecayAudit.lean` for the proved counterexample and the

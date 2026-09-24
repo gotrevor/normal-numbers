@@ -1,5 +1,64 @@
 # PENDING WORK
 
+## 2026-09-24 — pd-refute lap 1: the `PairDecouple` boundary checklist is DISCHARGED
+
+Target `not_pairDecouple_all` (`src/NormalNumbers/PairDecoupleRefute.lean`) — still an open
+ratified `sorry`, correctly so: **no counterexample found, and now a proof that the obvious
+places to look are empty.**  Full account: `FINDINGS-2026-09-24-pd-refute.md`.
+Confidence `PairDecouple` is TRUE: **92%** (Ren's prior was 85%).
+
+### What landed (both modules sorry-free, trust triple)
+
+`src/NormalNumbers/PairDecoupleLower.lean`
+* `norm_test_le_classDeviation` / `norm_test_le_pairDefect` — every mean-zero `χ` on `ℤ/Q` with
+  `‖χ‖ ≤ 1` bounds `pairDefect` BELOW.  `χ(c) = e(−ac/Q)` gives `Q−1` computable refutation
+  certificates; `probes/pair_defect.py` scans them (column `maxLB`).
+* `progMean_pairRemainder` — **the twist.**  On the class `c` the truncation is the constant
+  `truncPairTail c`, so `progMean B Q R c = conj(A c)·progMean f Q R c`.  `PairDecouple` therefore
+  says: the only `c`-dependence of the class means of the pair correlation `f` is the
+  deterministic model factor `A(c)`.
+* `norm_fullMean_pairTail_le` — `‖fullMean f (QR)‖ ≤ 2·pairDefect + ‖∏_{r≤P} pairLocalFactor‖`,
+  finitary; and `not_pairDecouple_of_pairCorr_ge`, the refuter's entry point (no hypothesis on
+  `P`; the cut comes from the proved model decay).
+* Degenerate cases: `P < 2 ⇒ pairDefect ≡ 0`; `pairLocalFactor = 1` EXACTLY when `p ≡ q (mod r)`;
+  `primorialLe P ∣ p − q ⇒` the model term is exactly `1` and `pairDefect` is the RAW class
+  deviation; `P = 2` with `p,q` odd ⇒ `pairDefect = ‖progMean f 2 R 0 − progMean f 2 R 1‖/2`.
+
+`src/NormalNumbers/PairDecoupleAttacks.lean` — all six kickoff attacks as theorems:
+`classDeviation_phase_add_primePeriodicTerm_self` (constant shifts), `classDeviation_perturb`
+(`n = 0` and any finite exceptional set, `≤ 4n₀/(QR)`), `no_prime_dvd_class_beyond_cut` (**the CRT
+reason**: a prime pinned on a class divides `pQ`, hence `= p` or `≤ P`).
+
+### Open items, highest value first
+
+1. **The one unreached regime: primes `r ≍ N`.**  `Q` is fixed *before* `R → ∞`, so CRT provably
+   handles every fixed prime band, and the band probe confirms the `O(y/R)` rate.  Nothing above
+   rules out a conspiracy between `n mod Q` and the largest prime factor of `pn+k`.
+   **Next probe**: split `n < QR` by `P⁺(pn+1)` above/below `√N` and compute each part's class
+   deviation.  If the bias is not in the large-`P⁺` part, `PairDecouple` is numerically settled;
+   if it is, that is the first real lead for a refutation.
+2. **The degenerate family `primorialLe P ∣ p − q`** (`(5,11)` at `P=3`, `(7,37)` at `P=5`,
+   `(11,431)` at `P=7`, all verified in Lean).  There the proved model half is exactly `1`, so
+   anything found is a counterexample to `PairDecorr` itself — the highest-leverage place to look.
+3. **Scan `m`.**  `t = m/b`, `b ∤ m`.  `m = 4, b = 3` already collapses the correlation
+   (`|fullf| = 0.0024` at `N = 1.2e5`) while the *relative* deviation stays ~0.015.  A scan tests
+   whether some `m` makes the relative deviation grow rather than decay.
+4. Do NOT re-attack the six closed boundary cases, and do NOT attack Selberg–Delange or the Kátai
+   criterion inside this swing (named known theorems; each a separate mathlib-scale project).
+
+### Refuted this lap (do not retry)
+
+* **"The frozen statement has a boundary bug."**  It does not.  `P < 2` is trivially true, the
+  `n = 0` term is harmless, the `progMean`/`fullMean` indexing is consistent
+  (`fullMean_eq_periodMean_progMean`), and constant phases cancel.  Six theorems say so.
+* **"Refuting `PairDecouple` might be cheaper than refuting `PairDecorr`."**  It is not:
+  `not_pairDecouple_of_pairCorr_ge` plus `pairDecorr_of_pairDecouple` make the two equivalent.
+* **"A prime truncation at a moderate cut `y` exposes the bias."**  The band data show the
+  opposite: intermediate truncations have a class deviation 4–5× LARGER than the full remainder.
+  The truncation manufactures bias; it does not reveal it.  (Quantifies lap 33's finding.)
+
+---
+
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is sorry-free and
