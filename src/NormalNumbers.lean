@@ -506,6 +506,7 @@ import NormalNumbers.TwoPointGramL2
 import NormalNumbers.TwoPointGramFrobenius
 import NormalNumbers.TwoPointGramDiag
 import NormalNumbers.TwoPointGramForced
+import NormalNumbers.TwoPointGramSufficient
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
