@@ -2148,6 +2148,47 @@ theorem sum_card_shift_dvd_le_gcd (c e M r Y D G : ℕ) (hM : 0 < M) (hG : G ≠
     _ = G.divisors.card * ((Y / M) * (Nat.log 2 D + 2) + D) := by
         rw [Finset.sum_const, smul_eq_mul]
 
+/-- **The gcd that occurs always divides `gcd(M, c·r+e)`.**  Sharper than
+`filter_shift_eq_empty`, which only handled the prime level: if `g = gcd(d,M)` then `g ∣ M`
+and, from `g ∣ d ∣ c·n+e` together with `n ≡ r (mod g)`, also `g ∣ c·r+e`. -/
+theorem gcd_dvd_gcd_shift {c e M r Y d : ℕ}
+    (hne : ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).Nonempty) :
+    Nat.gcd d M ∣ Nat.gcd M (c * r + e) := by
+  classical
+  obtain ⟨n, hn⟩ := hne
+  rw [Finset.mem_filter] at hn
+  obtain ⟨-, hnm, hdvd⟩ := hn
+  set g : ℕ := Nat.gcd d M with hg
+  have hgM : g ∣ M := Nat.gcd_dvd_right d M
+  have hgd : g ∣ d := Nat.gcd_dvd_left d M
+  have hg1 : g ∣ c * n + e := hgd.trans hdvd
+  have hnr : n ≡ r [MOD M] := hnm
+  have hg2 : g ∣ c * r + e := by
+    have h1 : c * n ≡ c * r [MOD g] := (Nat.ModEq.of_dvd hgM hnr).mul_left c
+    have h2 : c * n + e ≡ c * r + e [MOD g] := h1.add_right e
+    have h3 : (c * n + e) % g = 0 := Nat.mod_eq_zero_of_dvd hg1
+    have h4 : (c * r + e) % g = 0 := by
+      have := h2
+      unfold Nat.ModEq at this
+      omega
+    exact Nat.dvd_iff_mod_eq_zero.2 h4
+  exact Nat.dvd_gcd hgM hg2
+
+/-- **The crude incidence bound, fully general.**  No hypothesis on `M` at all: the loss over
+the coprime case is `τ(gcd(M, c·r+e))`, and nothing else. -/
+theorem sum_card_shift_dvd_le_gcd' (c e M r Y D : ℕ) (hM : 0 < M)
+    (hcd : ∀ d ∈ Finset.Icc 1 D, Nat.Coprime c d) :
+    ∑ d ∈ Finset.Icc 1 D,
+        ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card
+      ≤ (Nat.gcd M (c * r + e)).divisors.card * ((Y / M) * (Nat.log 2 D + 2) + D) := by
+  classical
+  refine sum_card_shift_dvd_le_gcd c e M r Y D _ hM ?_ hcd ?_
+  · have : 0 < Nat.gcd M (c * r + e) := Nat.gcd_pos_of_pos_left _ hM
+    omega
+  · intro d _ hnd
+    by_contra hcon
+    exact hnd (gcd_dvd_gcd_shift (Finset.nonempty_iff_ne_empty.2 hcon))
+
 /-! ### The shifted first moment for a GENERAL shift, and its exceptional set
 
 Combining the 2-adic reduction with `tau_shift_sum_AP_odd`: for any shift `e` with
