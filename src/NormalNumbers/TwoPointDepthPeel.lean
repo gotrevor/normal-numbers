@@ -214,4 +214,59 @@ theorem tendsto_peelBound_id (b : ℕ) (hb : 2 ≤ b) (p q : ℕ) (t : ℝ) :
     exact h3.congr fun M => by ring
   refine squeeze_zero (fun M => peelBound_nonneg b p q M M t hb) hmaj hzero
 
+/-! ### The reduction is an EQUIVALENCE
+
+`pairDecorr_of_unweighted` is not merely sufficient: the weight-removal bound is symmetric, so a
+schedule meeting the budget makes the unweighted `2K(M)`-point correlation *equal* to the crux in
+the limit.  Hence the fixed-pair leaf and the unweighted growing-depth Elliott correlation are the
+SAME problem — no route lies strictly between them. -/
+
+/-- The converse direction: the crux forces the unweighted means to vanish. -/
+theorem multiElliottGrowing_of_pairDecorr (b : ℕ) (hb : 2 ≤ b) (t : ℝ) (K : ℕ → ℕ)
+    {p q : ℕ} (hp : p.Prime) (hq : q.Prime) (hpq : p ≠ q)
+    (hbud : Tendsto (fun M => peelBound b p q (K M) M t) atTop (𝓝 0))
+    (hcrux : PairDecorr b t) : MultiElliottGrowing b p q t K := by
+  have hmain : Tendsto (fun M =>
+      fullMean (fun n => phase (t * pairTail b p q n)) M) atTop (𝓝 0) := by
+    simpa [pairTail] using hcrux p q hp hq hpq
+  have hdiff : Tendsto (fun M =>
+      fullMean (fun n => phase (t * digitTrunc b p q (K M) n)) M
+        - fullMean (fun n => phase (t * pairTail b p q n)) M) atTop (𝓝 0) := by
+    rw [tendsto_zero_iff_norm_tendsto_zero]
+    refine squeeze_zero' (Filter.Eventually.of_forall fun M => norm_nonneg _)
+      (Filter.Eventually.of_forall fun M => ?_) hbud
+    rw [norm_sub_rev]
+    exact norm_fullMean_sub_le b hb t p q (K M) M
+  have hsum : Tendsto (fun M =>
+      fullMean (fun n => phase (t * digitTrunc b p q (K M) n)) M) atTop (𝓝 0) := by
+    have h0 := hdiff.add hmain
+    rw [add_zero] at h0
+    exact h0.congr fun M => by ring
+  refine hsum.congr fun M => ?_
+  refine congrArg (fun z => z / (M : ℂ)) (Finset.sum_congr rfl fun n _ => ?_)
+  exact phase_digitTrunc b t p q (K M) n
+
+/-- **THE WEIGHT-FREE SURFACE, AS AN EQUIVALENCE.**  For any depth schedule `K` meeting the
+carry budget, the fixed-pair crux `PairDecorr b t` is *equivalent* to the vanishing of the
+**unweighted** `2K(M)`-point root-of-unity correlations along `pn+1+k`, `qn+1+k`.
+
+This is the honest statement of the route's depth: the leaf is neither weaker nor stronger than a
+growing-length Elliott correlation for the completely multiplicative function `ζ^ω` — the object
+Elliott's conjecture (and Tao 2016, MRT 2015 in their averaged/logarithmic forms) is about. -/
+theorem pairDecorr_iff_unweighted (b : ℕ) (hb : 2 ≤ b) (t : ℝ) (K : ℕ → ℕ)
+    (hbud : ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q →
+      Tendsto (fun M => peelBound b p q (K M) M t) atTop (𝓝 0)) :
+    PairDecorr b t ↔
+      ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → MultiElliottGrowing b p q t K := by
+  constructor
+  · intro h p q hp hq hpq
+    exact multiElliottGrowing_of_pairDecorr b hb t K hp hq hpq (hbud p q hp hq hpq) h
+  · exact pairDecorr_of_unweighted b hb t K hbud
+
+/-- The equivalence at the certified schedule `K(M) = M`. -/
+theorem pairDecorr_iff_unweighted_id (b : ℕ) (hb : 2 ≤ b) (t : ℝ) :
+    PairDecorr b t ↔
+      ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → MultiElliottGrowing b p q t id :=
+  pairDecorr_iff_unweighted b hb t id fun p q _ _ _ => tendsto_peelBound_id b hb p q t
+
 end NormalNumbers.CastingOut
