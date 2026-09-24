@@ -509,6 +509,7 @@ import NormalNumbers.TwoPointGramForced
 import NormalNumbers.TwoPointGramSufficient
 import NormalNumbers.TwoPointDeficit
 import NormalNumbers.TwoPointPairing
+import NormalNumbers.TwoPointPairingRigidity
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
