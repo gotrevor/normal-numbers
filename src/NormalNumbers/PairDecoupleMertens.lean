@@ -71,6 +71,86 @@ lemma card_filter_dvd_le (p a e R : ℕ) (hp : p.Prime) (hpa : ¬ p ∣ a) :
     · exact (key j i hij.symm hj.2 hi.2 h).symm
   · simp
 
+/-- **A modulus coprime to `a` hits at most `R/d + 1` terms.**  Same argument as
+`card_filter_dvd_le`, with primality of `p` replaced by coprimality of `d` to `a`: the solutions
+of `d ∣ a i + e` form one residue class mod `d`. -/
+lemma card_filter_dvd_le_coprime (d a e R : ℕ) (hd : 0 < d) (hda : Nat.Coprime d a) :
+    #{i ∈ range R | d ∣ a * i + e} ≤ R / d + 1 := by
+  classical
+  refine le_trans (Finset.card_le_card_of_injOn (t := range (R / d + 1)) (fun i => i / d) ?_ ?_) ?_
+  · intro i hi
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range, Finset.mem_coe] at hi ⊢
+    exact Nat.lt_succ_of_le (Nat.div_le_div_right hi.1.le)
+  · intro i hi j hj hij
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range] at hi hj
+    have key : ∀ u v : ℕ, u / d = v / d → d ∣ a * u + e → d ∣ a * v + e → v ≤ u → u = v := by
+      intro u v huv hu hv hvu
+      have hdvd : d ∣ a * (u - v) := by
+        have : d ∣ (a * u + e) - (a * v + e) := Nat.dvd_sub hu hv
+        have heq : (a * u + e) - (a * v + e) = a * (u - v) := by
+          rw [Nat.mul_sub]; omega
+        rwa [heq] at this
+      have hdv : d ∣ u - v := (Nat.Coprime.dvd_of_dvd_mul_left hda hdvd)
+      have hlt : u - v < d := by
+        have hu' := Nat.div_add_mod u d
+        have hv' := Nat.div_add_mod v d
+        have hmu := Nat.mod_lt u hd
+        have hmv := Nat.mod_lt v hd
+        rw [huv] at hu'
+        omega
+      have : u - v = 0 := by
+        rcases Nat.eq_zero_or_pos (u - v) with h | h
+        · exact h
+        · exact absurd (Nat.le_of_dvd h hdv) (by omega)
+      omega
+    rcases le_total j i with h | h
+    · exact key i j hij hi.2 hj.2 h
+    · exact (key j i hij.symm hj.2 hi.2 h).symm
+  · simp
+
+/-- **A modulus coprime to `a` hits at least `⌊R/d⌋` terms.**  The solutions form exactly one
+residue class mod `d`, and the class meets `[0, R)` at least `⌊R/d⌋` times. -/
+lemma card_filter_dvd_ge (d a e R : ℕ) (hd : 0 < d) (hda : Nat.Coprime d a) :
+    R / d ≤ #{i ∈ range R | d ∣ a * i + e} := by
+  classical
+  haveI : NeZero d := ⟨by omega⟩
+  -- one solution `r < d`
+  have hunit : IsUnit ((a : ℕ) : ZMod d) := (ZMod.isUnit_iff_coprime a d).mpr hda.symm
+  obtain ⟨u, hu⟩ := hunit
+  obtain ⟨x, hx⟩ : ∃ x : ZMod d, (a : ZMod d) * x + (e : ZMod d) = 0 :=
+    ⟨-((u⁻¹ : (ZMod d)ˣ) : ZMod d) * (e : ZMod d), by
+      have h1 : ((u : ZMod d)) * ((↑u⁻¹ : ZMod d)) = 1 := by
+        rw [← Units.val_mul, mul_inv_cancel, Units.val_one]
+      rw [← hu]
+      linear_combination (-(e : ZMod d)) * h1⟩
+  set r : ℕ := (x : ZMod d).val with hr
+  have hrd : r < d := ZMod.val_lt x
+  have hdvd : d ∣ a * r + e := by
+    have : ((a * r + e : ℕ) : ZMod d) = 0 := by
+      push_cast
+      rw [hr, ZMod.natCast_val, ZMod.cast_id]
+      exact hx
+    exact (ZMod.natCast_eq_zero_iff _ _).mp this
+  refine le_trans (le_of_eq (Finset.card_range (R / d)).symm) ?_
+  refine Finset.card_le_card_of_injOn (fun s => r + s * d) ?_ ?_
+  · intro s hs
+    have hs' : s < R / d := by simpa using hs
+    have hlt : r + s * d < R := by
+      have h1 : (s + 1) * d ≤ (R / d) * d := Nat.mul_le_mul_right d hs'
+      have h3 : (R / d) * d ≤ R := Nat.div_mul_le_self R d
+      have h2 : (s + 1) * d = s * d + d := by ring
+      omega
+    have hdd : d ∣ a * (r + s * d) + e := by
+      have h1 : d ∣ a * (s * d) := ⟨a * s, by ring⟩
+      have heq : a * (r + s * d) + e = (a * r + e) + a * (s * d) := by ring
+      rw [heq]; exact Nat.dvd_add hdvd h1
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_range]
+    exact ⟨hlt, hdd⟩
+  · intro s _ s' _ hss
+    dsimp only at hss
+    have : s * d = s' * d := by omega
+    exact Nat.eq_of_mul_eq_mul_right hd this
+
 /-- A prime dividing the modulus can divide every term. -/
 lemma card_filter_dvd_le_card (p a e R : ℕ) :
     #{i ∈ range R | p ∣ a * i + e} ≤ R := by
