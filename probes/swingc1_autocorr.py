@@ -106,8 +106,61 @@ def carry_activation(bmax=12):
     return rows
 
 
+def marginal_control(b=3, NMAX=4_000_000, depth=48, seed=11):
+    """**The correct control for C1 numerics**, and a FALSE-ALARM guard.
+
+    At b = 3 the digit frequencies of G4_3 are nowhere near (1/3,1/3,1/3) at
+    reachable N: at N = 4e6 they are about (0.325, 0.386, 0.289), and
+    mean_n (-1)^{d_{n+1}} sits near 0.23 against the predicted 1/3, stable over
+    2.5 decades.  Read naively that looks like a REFUTATION of ConjC1.  It is not.
+
+    The control: block-shuffle omega within dyadic blocks (destroying all
+    arithmetic correlations while preserving the local marginal), or resample iid
+    from omega's own marginal.  Both controls have uniform digits in the limit --
+    the resulting number is a.s. normal -- so their column MUST tend to 1/3.  It
+    doesn't either: it sits near 0.27.  So ~3/4 of the apparent deficit is a
+    finite-N artefact of omega's MARGINAL (mean omega is only ~2.95 at m ~ 4e6,
+    far too small to spread evenly mod 3), not of arithmetic structure.  The
+    genuine arithmetic residue is the real-minus-control gap, ~ -0.040, and both
+    columns rise together past N = 1e6.
+
+    Moral: never compare C1 numerics against the uniform-digit model directly.
+    Compare against the same-marginal random model, which carries the identical
+    finite-N bias.
+    """
+    import random
+    lim = NMAX + depth + 10
+    w = omega_sieve(lim)
+    random.seed(seed)
+    w2 = w[:]
+    lo = 2
+    while lo < len(w2):
+        hi = min(2 * lo, len(w2))
+        blk = w2[lo:hi]
+        random.shuffle(blk)
+        w2[lo:hi] = blk
+        lo = hi
+    assert sorted(w2[2:]) == sorted(w[2:]), "shuffle must preserve the multiset"
+
+    def digits(ws):
+        c = carries(b, ws, NMAX + 5, depth)
+        return [(ws[n + 1] + c[n + 1] - b * c[n]) for n in range(NMAX)]
+
+    dr, ds = digits(w), digits(w2)
+    assert all(0 <= x < b for x in dr), "carrying must produce base-b digits"
+    print(f"\n=== marginal control, b = {b} (the shuffled column MUST tend to 1/3) ===")
+    print("    N      real mean   shuffled mean   avg omega   gap(real-shuf)")
+    for N in [10**5, 3 * 10**5, 10**6, 2 * 10**6, NMAX]:
+        mr = sum((-1) ** x for x in dr[:N]) / N
+        ms = sum((-1) ** x for x in ds[:N]) / N
+        aw = sum(w[2:N + 2]) / N
+        print(f"{N:>9}  {mr:+.5f}     {ms:+.5f}      {aw:.3f}       {mr - ms:+.5f}")
+    print("  prediction 0.33333")
+
+
 if __name__ == "__main__":
     carry_activation()
+    marginal_control()
     print("""
 VERDICT (2026-09-24).  This probe CANNOT test `HAutoCorr` numerically, and that
 is the deliverable:

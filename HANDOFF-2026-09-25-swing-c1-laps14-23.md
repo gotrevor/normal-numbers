@@ -77,6 +77,24 @@ order and `b^{−L}` decay (`b=3`: `0.224, 0.054, 0.016` vs `1/3, 1/9, 1/27`), o
 as the `(log N)^{−c}` discrepancy of `ω` mod `q` predicts.  **No computation at feasible `N`
 separates the leaf from its negation.**
 
+## ⚠️ FALSE-ALARM GUARD: the `b=3` numerics look like a refutation and are NOT one
+
+`probes/swingc1_autocorr.py::marginal_control`.  At `b=3` the digit frequencies of `G4_3` are nowhere
+near `(1/3,1/3,1/3)` at reachable `N` — at `N=4·10⁶` they are `(0.325, 0.386, 0.289)` and
+`mean_n (−1)^{d_{n+1}} ≈ 0.23` against the predicted `1/3`, STABLE over 2.5 decades.  Read naively
+that refutes `ConjC1`.  It does not.
+
+The control: block-shuffle `ω` within dyadic blocks (kills all arithmetic correlation, preserves the
+local marginal), or resample iid from `ω`'s own marginal.  Both controls have uniform digits in the
+limit (the resulting number is a.s. normal), so their column MUST tend to `1/3`.  It doesn't either —
+it sits near `0.27`.  So ~3/4 of the apparent deficit is a finite-`N` artefact of `ω`'s MARGINAL
+(mean `ω ≈ 2.95` at `m ≈ 4·10⁶`, far too small to spread evenly mod 3), not of arithmetic structure.
+The genuine arithmetic residue is the real-minus-control gap, `≈ −0.040`, and both columns RISE
+together past `N = 10⁶` (real `0.2233 → 0.2306`, shuffled `0.2620 → 0.2705`).
+
+**Never compare C1 numerics against the uniform-digit model directly.**  Compare against the
+same-marginal random model, which carries the identical finite-`N` bias.
+
 ## Exact next moves
 
 1. The leaf `hAutoCorrAll` is an Elliott-type wall; expect to narrow, not clear.  The one structural
