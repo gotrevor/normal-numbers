@@ -31,3 +31,14 @@ EXACTLY which such statement it needs.
   the same "large primes decouple from the small-prime class" shape.
 - Build `lake build NormalNumbers.<your module>` (warm tree; never run `lake exe cache get`).  Commit each
   green step.  Each HANDOFF names the crux and gives a confidence that PairDecouple is TRUE.
+
+## ADDENDUM (Ren, 2026-09-24): the refute run finished; reuse its engine
+
+`wip/pd-refute` found no counterexample (its confidence that PairDecouple is true: 93%) and PROVED
+the CRT half.  `PairDecoupleBand.lean` decomposes `pairRemainder b P = bandPairTail b P y +
+pairRemainder b y`, and every bounded band `(P, y]` decouples EXACTLY (`classDeviation ≤ 4(R mod
+M)/R`, `0` when `M ∣ R`).  So the whole crux is the primes `r ≍ N`.  Cherry-pick or copy
+`PairDecoupleBand.lean`, `PairDecoupleLower.lean`, `PairDecoupleAttacks.lean`
+(`git-ro show wip/pd-refute:<path>`) instead of re-deriving.  Handoff:
+`git-ro show wip/pd-refute:HANDOFF-2026-09-24-pd-refute-lap1.md`.  Probes there are stdlib-only
+(no uv/PyPI egress in the box).
