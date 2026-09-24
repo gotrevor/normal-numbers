@@ -1554,6 +1554,109 @@ theorem coprime_killModulus_shift {b L j₀ n e : ℕ}
   omega
 
 
+/-- The kill modulus carries each prime to exponent at most `b`. -/
+theorem factorization_killModulus_le (b L q : ℕ) :
+    (killModulus b L).factorization q ≤ b := by
+  classical
+  set N : ℕ := (L - 1) * L with hN
+  by_cases hq : q.Prime
+  · have hne : ∀ k ∈ Finset.range N, killPrime L k ^ b ≠ 0 := by
+      intro k _
+      have := Nat.pow_pos (n := b) (killPrime_prime L k).pos
+      omega
+    have hfac : (killModulus b L).factorization q
+        = ∑ k ∈ Finset.range N, (killPrime L k ^ b).factorization q := by
+      rw [killModulus, Nat.factorization_prod hne]
+      simp
+    have hterm : ∀ k ∈ Finset.range N,
+        (killPrime L k ^ b).factorization q = if killPrime L k = q then b else 0 := by
+      intro k _
+      rw [Nat.factorization_pow]
+      simp only [Finsupp.smul_apply, smul_eq_mul]
+      rw [Nat.Prime.factorization (killPrime_prime L k)]
+      by_cases h : killPrime L k = q
+      · simp [h]
+      · simp [Finsupp.single_apply, h]
+    have hcard : ((Finset.range N).filter (fun k => killPrime L k = q)).card ≤ 1 := by
+      refine Finset.card_le_one.2 (fun x hx y hy => ?_)
+      simp only [Finset.mem_filter] at hx hy
+      exact killPrime_injective L (hx.2.trans hy.2.symm)
+    rw [hfac, Finset.sum_congr rfl hterm, ← Finset.sum_filter, Finset.sum_const,
+      smul_eq_mul]
+    calc ((Finset.range N).filter (fun k => killPrime L k = q)).card * b
+        ≤ 1 * b := Nat.mul_le_mul_right b hcard
+      _ = b := by ring
+  · rw [Nat.factorization_eq_zero_of_not_prime _ hq]
+    exact Nat.zero_le _
+
+/-- **The gcd of a shift divides the SQUARE of the window product.**  The `b`-free bound, valid
+at every shift: `v_q(gcd) ≤ v_q(M) = b` and, for `j ≤ b−1`, `q^j` dividing the shifted value
+already divides the window value `(1+j₀+e) − c`, so `v_q(gcd) ≤ v_q((1+j₀+e)−c) + 1`, hence
+`≤ 2·v_q((1+j₀+e)−c)`.  Consequently `τ(gcd) ≤ gcd ≤ (∏_{c≤L} ((1+j₀+e)−c))²`. -/
+theorem gcd_shift_dvd_window_sq (b L j₀ n e : ℕ) (hb : 2 ≤ b) (hle : L < 1 + j₀ + e)
+    (hcon : ∀ q : ℕ, q.Prime → q ∣ killModulus b L →
+      ∃ c : ℕ, 1 ≤ c ∧ c ≤ L ∧ ∀ j : ℕ, j ≤ b - 1 → q ^ j ∣ n + 1 + j₀ + e →
+        q ^ j ∣ (1 + j₀ + e) - c) :
+    Nat.gcd (killModulus b L) (n + 1 + j₀ + e)
+      ∣ (∏ c ∈ Finset.Icc 1 L, ((1 + j₀ + e) - c)) ^ 2 := by
+  classical
+  set M : ℕ := killModulus b L with hM
+  set S : ℕ := n + 1 + j₀ + e with hS
+  set G : ℕ := Nat.gcd M S with hG
+  set P : ℕ := ∏ c ∈ Finset.Icc 1 L, ((1 + j₀ + e) - c) with hP
+  have hMpos : 0 < M := killModulus_pos b L
+  have hGpos : 0 < G := Nat.gcd_pos_of_pos_left _ hMpos
+  have hPpos : 0 < P := by
+    refine Finset.prod_pos fun c hc => ?_
+    have := (Finset.mem_Icc.1 hc).2
+    omega
+  refine (Nat.factorization_le_iff_dvd (by omega) (by positivity)).1 ?_
+  intro q
+  by_cases hq : q.Prime
+  · by_cases hv : G.factorization q = 0
+    · rw [hv]; exact Nat.zero_le _
+    · -- `q ∣ G`, so `q ∣ M`
+      have hqG : q ∣ G := by
+        by_contra hcon2
+        exact hv (Nat.factorization_eq_zero_of_not_dvd hcon2)
+      have hqM : q ∣ M := hqG.trans (Nat.gcd_dvd_left _ _)
+      obtain ⟨c, hc1, hcL, hcj⟩ := hcon q hq hqM
+      set D : ℕ := (1 + j₀ + e) - c with hD
+      have hDpos : 0 < D := by omega
+      set v : ℕ := G.factorization q with hvdef
+      have hvb : v ≤ b := le_trans
+        (Nat.factorization_le_iff_dvd (by omega) (by omega) |>.2 (Nat.gcd_dvd_left _ _) q)
+        (factorization_killModulus_le b L q)
+      have hqS : q ^ v ∣ S := (Nat.Prime.pow_dvd_iff_le_factorization hq (by omega)).2
+        (le_trans (le_of_eq hvdef.symm) (by
+          exact (Nat.factorization_le_iff_dvd (by omega) (by omega) |>.2
+            (Nat.gcd_dvd_right _ _) q)))
+      have hw : v ≤ 2 * D.factorization q := by
+        rcases Nat.lt_or_ge v b with hlt | hge
+        · have h1 : q ^ v ∣ D := hcj v (by omega) hqS
+          have h2 : v ≤ D.factorization q :=
+            (Nat.Prime.pow_dvd_iff_le_factorization hq (by omega)).1 h1
+          omega
+        · have hb1 : q ^ (b - 1) ∣ S :=
+            dvd_trans (pow_dvd_pow q (by omega)) hqS
+          have h1 : q ^ (b - 1) ∣ D := hcj (b - 1) (by omega) hb1
+          have h2 : b - 1 ≤ D.factorization q :=
+            (Nat.Prime.pow_dvd_iff_le_factorization hq (by omega)).1 h1
+          omega
+      -- `v_q(D) ≤ v_q(P)` since `D` is one of the factors
+      have hDP : D ∣ P := by
+        rw [hP, hD]
+        exact Finset.dvd_prod_of_mem _ (Finset.mem_Icc.2 ⟨hc1, hcL⟩)
+      have hDPf : D.factorization q ≤ P.factorization q :=
+        (Nat.factorization_le_iff_dvd (by omega) (by omega) |>.2 hDP) q
+      have hPsq : (P ^ 2).factorization q = 2 * P.factorization q := by
+        rw [Nat.factorization_pow]
+        simp [Nat.mul_comm]
+      rw [hPsq]
+      omega
+  · rw [Nat.factorization_eq_zero_of_not_prime _ hq]
+    exact Nat.zero_le _
+
 /-- If every prime of `G` occurs to the first power, `τ(G) ≤ 2^{ω(G)}`. -/
 theorem card_divisors_le_two_pow {G : ℕ} (hG : G ≠ 0)
     (h : ∀ q ∈ G.primeFactors, G.factorization q ≤ 1) :
