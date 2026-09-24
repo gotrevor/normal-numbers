@@ -467,6 +467,35 @@ theorem omegaCarry_eq_trunc_add (b : ℕ) (hb : 2 ≤ b) (K N : ℕ) :
       Int.add_mul_ediv_left _ _ hMne]
     ring
 
+/-- The depth-`K` truncation of the window value: a function of `ω(n+1), …, ω(n+L+K)` only. -/
+noncomputable def windowValTrunc (b L K n : ℕ) : ℤ :=
+  omegaHead b L n + omegaHead b K (n + L) / (b : ℤ) ^ K
+
+/-- **Finite-window approximation of the window value.**  `omegaWindowVal` differs from its
+depth-`K` truncation — which involves only `ω(n+1), …, ω(n+L+K)` — by `c_{n+L+K}/b^K` plus `0`
+or `1`. -/
+theorem omegaWindowVal_eq_trunc_add (b : ℕ) (hb : 2 ≤ b) (L K n : ℕ) :
+    ∃ e : ℤ, 0 ≤ e ∧ e ≤ 1 ∧
+      omegaWindowVal b L n
+        = windowValTrunc b L K n + omegaCarry b (n + L + K) / (b : ℤ) ^ K + e := by
+  obtain ⟨e, he0, he1, he⟩ := omegaCarry_eq_trunc_add b hb K (n + L)
+  exact ⟨e, he0, he1, by rw [omegaWindowVal, he, windowValTrunc]; ring⟩
+
+/-- Once the depth `K` is large enough that `b^K` exceeds the carry `c_{n+L+K}` (which is of size
+`≈ log log n / (b−1)`), the window value is its finite-window truncation up to a single unit. -/
+theorem omegaWindowVal_sub_trunc_le_one (b : ℕ) (hb : 2 ≤ b) (L K n : ℕ)
+    (hsmall : omegaCarry b (n + L + K) < (b : ℤ) ^ K) :
+    omegaWindowVal b L n - windowValTrunc b L K n = 0 ∨
+      omegaWindowVal b L n - windowValTrunc b L K n = 1 := by
+  obtain ⟨e, he0, he1, he⟩ := omegaWindowVal_eq_trunc_add b hb L K n
+  have hbK : (0 : ℤ) < (b : ℤ) ^ K := by
+    have : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (by omega : 0 < b)
+    positivity
+  have hz : omegaCarry b (n + L + K) / (b : ℤ) ^ K = 0 :=
+    Int.ediv_eq_zero_of_lt (omegaCarry_nonneg b hb _) hsmall
+  rw [he, hz]
+  omega
+
 /-! ### Finite Fourier: the character-sum form of the hypothesis -/
 
 /-- A primitive `M`-th root of unity. -/
