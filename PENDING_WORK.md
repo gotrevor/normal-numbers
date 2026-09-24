@@ -9413,3 +9413,18 @@ So the lever is not truncation depth but the *sparsity of near-hits*: `b^{n mod 
    each within `O(b^{−d_p(n)})` of `1`), the crux becomes a correlation of a *multiplicative-in-p*
    near-one product with `e(jn/Q)`; the `d_p(n)` are the CRT-independent coordinates.
 3. Keep `tailLargeDecouple_holds` (arc form) open per the kickoff addendum; it is the wrong leaf.
+
+### lap 5b — free truncation, proved (`SwingC3Closed.lean`, axiom-clean)
+
+`tailLarge_sub_truncate_mem_Icc`:
+`tailLarge P b n − ∑_{p ≤ K} tailPrimeSummand b P n p ∈ [0, 2·bⁿ/b^K]`,
+plus `sum_tailPrimeSummand_range` rewriting that truncation as `∑_{p ∈ Ioc P K prime} b^{n%p}/(b^p−1)`,
+and the geometric majorant `tailPrimeSummand_le : … ≤ 2 bⁿ (1/b)^p` with
+`summable_tailPrimeSummand`.
+
+**This separates the two things the `loglog` obstruction was conflating.**  The directive's
+`E[∑_{p>K} c_p] ≍ loglog N − loglog K` is a statement about the MEAN over `n < N`, and it bites
+only for `K ≤ N`.  POINTWISE there is no obstruction at all: `p > n ⇒ n mod p = n`, so the tail
+beyond `K` is `≤ 2b^{n−K}`.  Hence for `n < N`, truncating at `K = 2N` is free to within `b^{−N}`.
+The real cost of truncation is therefore **not accuracy but period**: the truncated function has
+period `∏_{P<p≤K} p ≈ e^K`, and it is that, not the discarded mass, that must be fought.

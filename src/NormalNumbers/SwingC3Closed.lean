@@ -166,4 +166,131 @@ theorem tailLarge_eq_tsum {b : ℕ} (hb : 2 ≤ b) (P n : ℕ) :
     _ = ∑' p, ∑' i, f i p := (huncurry.tsum_comm' hrowS hcolS).symm
     _ = _ := tsum_congr hcol
 
+/-! ### Free truncation: the tail beyond `K` is exponentially small once `K > n`
+
+The `loglog` obstruction (`DIRECTION.md`: `E[∑_{p>K} c_p] ≍ loglog N − loglog K`) is a statement
+about the *mean over `n < N`* of the discarded mass, and it bites only for `K ≤ N`.  Pointwise
+the closed form gives something much stronger: `n mod p = n` as soon as `p > n`, so the `p`-term
+is `≤ 2 b^{n−p}` and the whole tail beyond `K` is `≤ 2 b^{n−K}`.  So for a sum over `n < N`,
+truncating at `K = 2N` is FREE — the price of the truncation is not accuracy but the *period*
+`∏_{P<p≤2N} p` of the truncated function.  This pins exactly where the difficulty lives. -/
+
+/-- The summand of the closed form, as a function of `p` alone. -/
+noncomputable def tailPrimeSummand (b P n p : ℕ) : ℝ :=
+  if P < p ∧ p.Prime then tailPrimeTerm b p n else 0
+
+theorem tailPrimeSummand_nonneg {b : ℕ} (hb : 2 ≤ b) (P n p : ℕ) :
+    0 ≤ tailPrimeSummand b P n p := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  rw [tailPrimeSummand]
+  split_ifs with hp
+  · have hp2 : 2 ≤ p := hp.2.two_le
+    have : (1 : ℝ) < (b : ℝ) ^ p := one_lt_pow₀ (by linarith) (by omega)
+    rw [tailPrimeTerm]
+    positivity
+  · exact le_rfl
+
+/-- **The geometric majorant.**  `b^{n mod p}/(b^p − 1) ≤ 2 b^n (1/b)^p`. -/
+theorem tailPrimeSummand_le {b : ℕ} (hb : 2 ≤ b) (P n p : ℕ) :
+    tailPrimeSummand b P n p ≤ 2 * (b : ℝ) ^ n * ((b : ℝ)⁻¹) ^ p := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hb0 : (0 : ℝ) < b := by linarith
+  rw [tailPrimeSummand]
+  split_ifs with hp
+  · have hp2 : 2 ≤ p := hp.2.two_le
+    have hbp : (2 : ℝ) ≤ (b : ℝ) ^ p := by
+      calc (2:ℝ) ≤ (b:ℝ) ^ 1 := by simpa using hbR
+        _ ≤ (b:ℝ) ^ p := pow_le_pow_right₀ (by linarith) (by omega)
+    have hnum : (b : ℝ) ^ (n % p) ≤ (b : ℝ) ^ n :=
+      pow_le_pow_right₀ (by linarith) (Nat.mod_le n p)
+    have hden : (0:ℝ) < (b : ℝ) ^ p - 1 := by linarith
+    have hhalf : (b : ℝ) ^ p / 2 ≤ (b : ℝ) ^ p - 1 := by linarith
+    have hpos : (0:ℝ) < (b : ℝ) ^ p / 2 := by linarith
+    rw [tailPrimeTerm, inv_pow]
+    calc (b : ℝ) ^ (n % p) / ((b : ℝ) ^ p - 1)
+        ≤ (b : ℝ) ^ n / ((b : ℝ) ^ p / 2) := by gcongr
+      _ = 2 * (b : ℝ) ^ n * ((b : ℝ) ^ p)⁻¹ := by field_simp
+  · positivity
+
+theorem summable_tailPrimeSummand {b : ℕ} (hb : 2 ≤ b) (P n : ℕ) :
+    Summable (tailPrimeSummand b P n) := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  refine Summable.of_nonneg_of_le (fun p => tailPrimeSummand_nonneg hb P n p)
+    (fun p => tailPrimeSummand_le hb P n p) ?_
+  exact ((summable_geometric_of_lt_one (r := (b : ℝ)⁻¹) (by positivity)
+    (by rw [inv_lt_one_iff₀]; right; linarith)).mul_left _)
+
+theorem tailLarge_eq_tsum' {b : ℕ} (hb : 2 ≤ b) (P n : ℕ) :
+    tailLarge P b n = ∑' p : ℕ, tailPrimeSummand b P n p :=
+  tailLarge_eq_tsum hb P n
+
+/-- **Free truncation.**  Cutting the closed form off at `K` loses a nonnegative amount that is
+at most `2 b^{n−K}` — exponentially small as soon as `K` exceeds `n`.  (The `loglog N` tail
+obstruction is about the MEAN over `n < N` with `K ≤ N`; pointwise there is no obstruction.) -/
+theorem tailLarge_sub_truncate_mem_Icc {b : ℕ} (hb : 2 ≤ b) (P n K : ℕ) :
+    tailLarge P b n - ∑ p ∈ Finset.range (K + 1), tailPrimeSummand b P n p
+      ∈ Set.Icc (0 : ℝ) (2 * (b : ℝ) ^ n / (b : ℝ) ^ K) := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hb0 : (0 : ℝ) < b := by linarith
+  have hS := summable_tailPrimeSummand hb P n
+  have hsplit := hS.sum_add_tsum_nat_add (K + 1)
+  have hkey : tailLarge P b n - ∑ p ∈ Finset.range (K + 1), tailPrimeSummand b P n p
+      = ∑' i : ℕ, tailPrimeSummand b P n (i + (K + 1)) := by
+    rw [tailLarge_eq_tsum' hb P n, ← hsplit]; ring
+  rw [hkey]
+  constructor
+  · exact tsum_nonneg (fun i => tailPrimeSummand_nonneg hb P n _)
+  · have hgeo : Summable (fun i : ℕ => 2 * (b : ℝ) ^ n * ((b : ℝ)⁻¹) ^ (i + (K + 1))) := by
+      refine ((summable_geometric_of_lt_one (r := (b : ℝ)⁻¹) (by positivity)
+        (by rw [inv_lt_one_iff₀]; right; linarith)).mul_left
+          (2 * (b : ℝ) ^ n * ((b : ℝ)⁻¹) ^ (K + 1))).congr (fun i => ?_)
+      rw [pow_add]; ring
+    have hle : ∑' i : ℕ, tailPrimeSummand b P n (i + (K + 1))
+        ≤ ∑' i : ℕ, 2 * (b : ℝ) ^ n * ((b : ℝ)⁻¹) ^ (i + (K + 1)) :=
+      Summable.tsum_le_tsum (fun i => tailPrimeSummand_le hb P n _)
+        (hS.comp_injective (add_left_injective (K + 1))) hgeo
+    refine hle.trans ?_
+    have hval : ∑' i : ℕ, 2 * (b : ℝ) ^ n * ((b : ℝ)⁻¹) ^ (i + (K + 1))
+        = 2 * (b : ℝ) ^ n * ((b : ℝ)⁻¹) ^ (K + 1) * (1 - (b : ℝ)⁻¹)⁻¹ := by
+      rw [show (fun i : ℕ => 2 * (b : ℝ) ^ n * ((b : ℝ)⁻¹) ^ (i + (K + 1)))
+          = fun i : ℕ => (2 * (b : ℝ) ^ n * ((b : ℝ)⁻¹) ^ (K + 1)) * ((b : ℝ)⁻¹) ^ i from
+        funext fun i => by rw [pow_add]; ring]
+      rw [tsum_mul_left, tsum_geometric_of_lt_one (by positivity)
+        (by rw [inv_lt_one_iff₀]; right; linarith)]
+    rw [hval]
+    have hb1 : (1:ℝ) ≤ (b : ℝ) - 1 := by linarith
+    have hLHS : 2 * (b : ℝ) ^ n * ((b : ℝ)⁻¹) ^ (K + 1) * (1 - (b : ℝ)⁻¹)⁻¹
+        = 2 * (b : ℝ) ^ n / ((b : ℝ) ^ K * ((b : ℝ) - 1)) := by
+      rw [inv_pow, pow_succ]
+      have hbne : (b : ℝ) ≠ 0 := by linarith
+      have hbne1 : (b : ℝ) - 1 ≠ 0 := by linarith
+      have hbK : ((b : ℝ) ^ K) ≠ 0 := by positivity
+      field_simp
+    rw [hLHS, div_le_div_iff₀ (by positivity) (by positivity)]
+    nlinarith [mul_pos (pow_pos hb0 n) (pow_pos hb0 K), pow_pos hb0 n, pow_pos hb0 K]
+
+/-- The truncation, written as a sum over the primes in `(P, K]`. -/
+theorem sum_tailPrimeSummand_range (b P n K : ℕ) :
+    ∑ p ∈ Finset.range (K + 1), tailPrimeSummand b P n p
+      = ∑ p ∈ (Finset.Ioc P K).filter Nat.Prime, tailPrimeTerm b p n := by
+  classical
+  have hsub : Finset.Ioc P K ⊆ Finset.range (K + 1) := by
+    intro p hp
+    simp only [Finset.mem_Ioc] at hp
+    simp only [Finset.mem_range]
+    omega
+  rw [← Finset.sum_subset hsub, Finset.sum_filter]
+  · exact Finset.sum_congr rfl fun p hp => by
+      simp only [Finset.mem_Ioc] at hp
+      rw [tailPrimeSummand]
+      by_cases hpp : p.Prime
+      · rw [if_pos ⟨hp.1, hpp⟩, if_pos hpp]
+      · rw [if_neg (fun hc => hpp hc.2), if_neg hpp]
+  · intro p hp hnot
+    simp only [Finset.mem_range] at hp
+    simp only [Finset.mem_Ioc] at hnot
+    rw [tailPrimeSummand, if_neg]
+    rintro ⟨h1, -⟩
+    exact hnot ⟨h1, by omega⟩
+
 end NormalNumbers
