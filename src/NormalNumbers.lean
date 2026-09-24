@@ -495,6 +495,7 @@ import NormalNumbers.TwoPointKataiSharp
 import NormalNumbers.TwoPointKataiGap
 import NormalNumbers.TwoPointHonestChain
 import NormalNumbers.TwoPointKataiCS
+import NormalNumbers.TwoPointTuranKubilius
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
