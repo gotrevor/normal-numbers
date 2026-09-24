@@ -5,7 +5,7 @@
 Target `not_pairDecouple_all` (`src/NormalNumbers/PairDecoupleRefute.lean`) — still an open
 ratified `sorry`, correctly so: **no counterexample found, and now a proof that the obvious
 places to look are empty.**  Full account: `FINDINGS-2026-09-24-pd-refute.md`.
-Confidence `PairDecouple` is TRUE: **92%** (Ren's prior was 85%).
+Confidence `PairDecouple` is TRUE: **93%** (Ren's prior was 85%).
 
 ### What landed (both modules sorry-free, trust triple)
 
