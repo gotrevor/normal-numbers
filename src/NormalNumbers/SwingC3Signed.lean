@@ -213,4 +213,101 @@ theorem sum_range_ee_tailTrunc_eq {b : ℕ} (P K : ℕ) (h : ℤ) :
     _ = (primePeriod P K : ℂ) * ∏ p ∈ F, primeFactor b p h := by
         rw [Finset.prod_mul_distrib, hper', Nat.cast_prod]
 
+/-! ### The decay of one Euler factor
+
+`primeFactor` is a mean of `p` unit vectors, of which all but `O(1)` are within `O(b^{−p})` of
+`1`.  Writing `Σ_p = ∑_{r<p} ‖1 − z_r‖²` (`= 2∑_r (1 − cos 2π h c_p(r))`, the quantity whose limit
+is the measured decay exponent) and `T_p = ∑_{r<p} ‖1 − z_r‖ ≤ 16|h|/(b−1)` (an absolute constant,
+by the exact complete-period mass), the real part of the sum is exactly `p − Σ_p/2` and the
+imaginary part is at most `T_p`, so
+
+    ‖primeFactor b p h‖² ≤ 1 − Σ_p/p + 2·(16|h|/(b−1))²/p².
+
+Since `Σ_p` is bounded below by its top term — which tends to `2(1 − cos 2πh/b) > 0` when `b ∤ h` —
+this is `≤ 1 − c/p` for all large `p`, and `∑_p 1/p` diverges. -/
+
+/-- For a unit vector, `Re z = 1 − ‖1 − z‖²/2`. -/
+theorem re_of_norm_one {z : ℂ} (hz : ‖z‖ = 1) : z.re = 1 - ‖1 - z‖ ^ 2 / 2 := by
+  have h1 : ‖(1 : ℂ) - z‖ ^ 2 = ((1 : ℂ) - z).re ^ 2 + ((1 : ℂ) - z).im ^ 2 := by
+    rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply]; ring
+  have h2 : ‖z‖ ^ 2 = z.re ^ 2 + z.im ^ 2 := by
+    rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply]; ring
+  rw [hz] at h2
+  simp only [Complex.sub_re, Complex.sub_im, Complex.one_re, Complex.one_im] at h1
+  nlinarith [h1, h2]
+
+/-- **The one-factor estimate.**  `Σ_p` is the second moment of the deviations from `1`, `T_p`
+their first moment; the factor's modulus squared loses `Σ_p/p` and pays only `2T_p²/p²`. -/
+theorem norm_primeFactor_sq_le {b p : ℕ} (hb : 2 ≤ b) (hp : 0 < p) (h : ℤ) :
+    ‖primeFactor b p h‖ ^ 2
+      ≤ 1 - (∑ r ∈ range p, ‖1 - ee (((h : ℝ) * tailPrimeTerm b p r : ℝ) : ℂ)‖ ^ 2) / p
+        + 2 * (16 * |(h : ℝ)| / ((b : ℝ) - 1)) ^ 2 / p ^ 2 := by
+  classical
+  have hpR : (0 : ℝ) < p := by exact_mod_cast hp
+  set z : ℕ → ℂ := fun r => ee (((h : ℝ) * tailPrimeTerm b p r : ℝ) : ℂ) with hzdef
+  have hznorm : ∀ r, ‖z r‖ = 1 := fun r => norm_ee_real _
+  set S : ℂ := ∑ r ∈ range p, z r with hS
+  set Sig : ℝ := ∑ r ∈ range p, ‖1 - z r‖ ^ 2 with hSig
+  set T : ℝ := ∑ r ∈ range p, ‖1 - z r‖ with hT
+  have hSignn : 0 ≤ Sig := Finset.sum_nonneg fun r _ => by positivity
+  have hTnn : 0 ≤ T := Finset.sum_nonneg fun r _ => norm_nonneg _
+  -- the real part is exact
+  have hre : S.re = (p : ℝ) - Sig / 2 := by
+    rw [hS, Complex.re_sum]
+    rw [Finset.sum_congr rfl (fun r _ => re_of_norm_one (hznorm r))]
+    rw [Finset.sum_sub_distrib, ← Finset.sum_div, ← hSig]
+    simp
+  -- the imaginary part is controlled by the first moment
+  have him : |S.im| ≤ T := by
+    rw [hS, Complex.im_sum]
+    refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+    refine Finset.sum_le_sum fun r _ => ?_
+    have h1 : |(z r).im| = |((1 : ℂ) - z r).im| := by
+      simp [Complex.sub_im, abs_neg]
+    rw [h1]
+    exact Complex.abs_im_le_norm _
+  -- the second moment is at most twice the first
+  have hSigT : Sig ≤ 2 * T := by
+    rw [hSig, hT, Finset.mul_sum]
+    refine Finset.sum_le_sum fun r _ => ?_
+    have h2 : ‖(1 : ℂ) - z r‖ ≤ 2 := by
+      calc ‖(1 : ℂ) - z r‖ ≤ ‖(1 : ℂ)‖ + ‖z r‖ := norm_sub_le _ _
+        _ = 2 := by rw [hznorm r]; norm_num
+    nlinarith [norm_nonneg ((1 : ℂ) - z r)]
+  -- the first moment is an absolute constant
+  have hT0 : T ≤ 16 * |(h : ℝ)| / ((b : ℝ) - 1) := by
+    have := sum_range_norm_ee_tailPrimeTerm_sub_one_le hb hp h
+    refine le_trans (le_of_eq ?_) this
+    rw [hT]
+    exact Finset.sum_congr rfl fun r _ => norm_sub_rev _ _
+  -- assemble
+  have hnorm2 : ‖S‖ ^ 2 = S.re ^ 2 + S.im ^ 2 := by
+    rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply]; ring
+  have hsq : ‖S‖ ^ 2 ≤ ((p : ℝ) - Sig / 2) ^ 2 + T ^ 2 := by
+    rw [hnorm2, hre]
+    have : S.im ^ 2 ≤ T ^ 2 := by
+      nlinarith [him, abs_nonneg S.im, sq_abs S.im]
+    linarith
+  have hfac : ‖primeFactor b p h‖ ^ 2 = ‖S‖ ^ 2 / (p : ℝ) ^ 2 := by
+    rw [primeFactor, ← hS, norm_div, Complex.norm_natCast, div_pow]
+  rw [hfac]
+  have hT0nn : (0 : ℝ) ≤ 16 * |(h : ℝ)| / ((b : ℝ) - 1) := by
+    have hbR : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    exact div_nonneg (by positivity) (by linarith)
+  have hstep : ‖S‖ ^ 2 / (p : ℝ) ^ 2
+      ≤ 1 - Sig / p + 2 * (16 * |(h : ℝ)| / ((b : ℝ) - 1)) ^ 2 / (p : ℝ) ^ 2 := by
+    rw [div_le_iff₀ (by positivity)]
+    have hTsq : T ^ 2 ≤ (16 * |(h : ℝ)| / ((b : ℝ) - 1)) ^ 2 := by nlinarith [hTnn, hT0]
+    have hSigsq : Sig ^ 2 / 4 ≤ T ^ 2 := by nlinarith [hSigT, hSignn, hTnn]
+    have hexp : (1 - Sig / p + 2 * (16 * |(h : ℝ)| / ((b : ℝ) - 1)) ^ 2 / (p : ℝ) ^ 2)
+        * (p : ℝ) ^ 2
+        = (p : ℝ) ^ 2 - Sig * p + 2 * (16 * |(h : ℝ)| / ((b : ℝ) - 1)) ^ 2 := by
+      field_simp
+    rw [hexp]
+    have : ((p : ℝ) - Sig / 2) ^ 2 + T ^ 2 = (p : ℝ) ^ 2 - Sig * p + Sig ^ 2 / 4 + T ^ 2 := by
+      ring
+    nlinarith [hsq, hTsq, hSigsq]
+  exact hstep
+
 end NormalNumbers
+

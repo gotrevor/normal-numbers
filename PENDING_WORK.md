@@ -9815,3 +9815,23 @@ the *incomplete*-sum half — i.e. the Euler product must be shown to govern `�
 `N ≪ ∏_{P<p≤K} p`, which is where lap 16's variation bound plugs in.  Note the numerical
 calibration: `A → a(h) = ∑_{d≥1}(1−cos 2πhb^{−d})`, giving `(log N)^{−a}`; `b=3,h=1` predicts
 `1.76` against the measured `≈ 1.9`.
+
+### lap 18 — the one-factor estimate (`SwingC3Signed`, axiom-clean)
+
+`norm_primeFactor_sq_le` : with `z_r = e(h·tailPrimeTerm b p r)`, `Σ_p = ∑_{r<p}‖1−z_r‖²`,
+
+    ‖primeFactor b p h‖²  ≤  1 − Σ_p/p + 2·(16|h|/(b−1))²/p².
+
+Proof: `Re ∑ z_r = p − Σ_p/2` **exactly** (`re_of_norm_one`: a unit vector has
+`Re z = 1 − ‖1−z‖²/2`), `|Im ∑ z_r| ≤ T_p = ∑‖1−z_r‖`, and `T_p ≤ 16|h|/(b−1)` is lap 16's
+constant (the exact complete-period mass).  Then `‖S‖² = (Re S)² + (Im S)²` and `Σ_p² /4 ≤ T_p²`.
+
+Remaining for the complete-period half of the crux:
+1. `Σ_p ≥ ‖1 − e(h·b^{p−1}/(b^p−1))‖²` (one term of a nonneg sum), and
+2. `‖1 − e(x)‖² = 2(1 − cos 2πx) ≥ 16‖x‖²` (distance to `ℤ`), from mathlib's
+   `Real.cos_le_one_sub_mul_cos_sq : |x| ≤ π → cos x ≤ 1 − 2x²/π²` after reducing `x` mod 1;
+   with `x = h·b^{p−1}/(b^p−1) = h/b + h/(b(b^p−1))` and `b ∤ h`, `‖x‖ ≥ 1/(2b)` once
+   `b^p ≥ 2|h|+1`, so `Σ_p ≥ 4/b²` for all large `p`.
+3. Hence `‖primeFactor b p h‖² ≤ 1 − 2/(b²p)` for `p ≥ p₀(b,h)`, and `∑_p 1/p` diverges, so
+   `∏_{P<p≤K}‖primeFactor b p h‖ → 0` as `K → ∞`: the complete-period mean of the truncated
+   phase vanishes, unconditionally.
