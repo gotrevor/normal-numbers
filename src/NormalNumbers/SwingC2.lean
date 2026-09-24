@@ -1720,6 +1720,83 @@ theorem card_divisors_gcd_shift_le (b L j₀ n e : ℕ)
     exact hsq q hqp (hqG.trans hGM) (by omega) hsq3
   exact le_trans (card_divisors_le_two_pow hGne hv) (Nat.pow_le_pow_right (by norm_num) hcard)
 
+/-- `8t² + 12t ≤ 2^t` for `t ≥ 20`: the crossover estimate for the large-shift regime. -/
+theorem eight_sq_add_le_two_pow : ∀ t : ℕ, 20 ≤ t → 8 * t * t + 12 * t ≤ 2 ^ t := by
+  intro t ht
+  induction t, ht using Nat.le_induction with
+  | base => norm_num
+  | succ n hn ih =>
+    have hstep : 16 * n + 20 ≤ 8 * n * n + 12 * n := by nlinarith
+    have hpow : (2 : ℕ) ^ (n + 1) = 2 ^ n + 2 ^ n := by ring
+    have hexp : 8 * (n + 1) * (n + 1) + 12 * (n + 1) = (8 * n * n + 12 * n) + (16 * n + 20) := by
+      ring
+    omega
+
+/-- **The gcd loss at EVERY shift, in one inequality.**  Writing the shift as `j₀+e = L+k`,
+
+    `τ(gcd(killModulus b L, n+1+j₀+e)) ≤ 2^k`.
+
+Two regimes: for `k ≤ L²` the gcd is squarefree with `≤ k−2` prime factors
+(`card_divisors_gcd_shift_le`); beyond that it divides the square of the window product
+(`gcd_shift_dvd_window_sq`), so `τ ≤ (L+k)^{2L}`, and `2L(log₂(L+k)+1) ≤ k` there.  Both are
+below the `2^k` that the geometric threshold of `TauMomentPrimesShift` already carries. -/
+theorem card_divisors_gcd_shift_le_two_pow (b L j₀ n e : ℕ) (hb : 2 ≤ b) (hL : 64 ≤ L)
+    (hle : L < 1 + j₀ + e)
+    (h3 : ∀ q : ℕ, q.Prime → q ∣ killModulus b L → q ∣ n + 1 + j₀ + e → q ≤ j₀ + e)
+    (h4 : ∀ q : ℕ, q.Prime → q ∣ killModulus b L → j₀ + e < q * q →
+      ¬ (q * q ∣ n + 1 + j₀ + e))
+    (h5 : ∀ q : ℕ, q.Prime → q ∣ killModulus b L →
+      ∃ c : ℕ, 1 ≤ c ∧ c ≤ L ∧ ∀ j : ℕ, j ≤ b - 1 → q ^ j ∣ n + 1 + j₀ + e →
+        q ^ j ∣ (1 + j₀ + e) - c) :
+    (Nat.gcd (killModulus b L) (n + 1 + j₀ + e)).divisors.card ≤ 2 ^ (j₀ + e - L) := by
+  classical
+  set m : ℕ := j₀ + e with hm
+  rcases Nat.lt_or_ge m ((L + 3) * (L + 3)) with hcase | hcase
+  · -- squarefree regime
+    refine le_trans (card_divisors_gcd_shift_le b L j₀ n e h3 h4 (by omega)) ?_
+    exact Nat.pow_le_pow_right (by norm_num) (by omega)
+  · -- window-square regime
+    set G : ℕ := Nat.gcd (killModulus b L) (n + 1 + j₀ + e) with hG
+    set P : ℕ := ∏ c ∈ Finset.Icc 1 L, ((1 + j₀ + e) - c) with hP
+    have hGpos : 0 < G := Nat.gcd_pos_of_pos_left _ (killModulus_pos b L)
+    have hPpos : 0 < P := by
+      refine Finset.prod_pos fun c hc => ?_
+      have := (Finset.mem_Icc.1 hc).2
+      omega
+    have hdvd : G ∣ P ^ 2 := gcd_shift_dvd_window_sq b L j₀ n e hb (by omega) h5
+    have hGle : G ≤ P ^ 2 := Nat.le_of_dvd (by positivity) hdvd
+    -- `P ≤ m ^ L`
+    have hPle : P ≤ m ^ L := by
+      calc P ≤ ∏ _c ∈ Finset.Icc 1 L, m := by
+            refine Finset.prod_le_prod' fun c hc => ?_
+            have := (Finset.mem_Icc.1 hc).1
+            omega
+        _ = m ^ L := by rw [Finset.prod_const, Nat.card_Icc]; simp
+    set t : ℕ := Nat.log 2 m with ht
+    have hmpos : 0 < m := by nlinarith
+    have hmlt : m < 2 ^ (t + 1) := Nat.lt_pow_succ_log_self (by norm_num) m
+    have hkey : 2 * L * (t + 1) ≤ m - L := by
+      rcases Nat.lt_or_ge (2 * (t + 1)) L with hsmall | hbig
+      · -- `t+1 < L/2`: then `2L(t+1) < L²`
+        have h1 : 2 * L * (t + 1) = L * (2 * (t + 1)) := by ring
+        have h2 : L * (2 * (t + 1)) ≤ L * L := Nat.mul_le_mul_left _ (by omega)
+        have h3 : (L + 3) * (L + 3) = L * L + 6 * L + 9 := by ring
+        omega
+      · -- `t+1 ≥ L/2`, so `t ≥ 20` and `L ≤ 4t`
+        have ht20 : 20 ≤ t := by omega
+        have hL4t : L ≤ 4 * t := by omega
+        have hpow := eight_sq_add_le_two_pow t ht20
+        have hmge : 2 ^ t ≤ m := Nat.pow_log_le_self 2 (by omega)
+        have h1 : 2 * L * (t + 1) + L ≤ 8 * t * t + 12 * t := by nlinarith
+        omega
+    calc G.divisors.card ≤ G := Nat.card_divisors_le_self G
+      _ ≤ P ^ 2 := hGle
+      _ ≤ (m ^ L) ^ 2 := Nat.pow_le_pow_left hPle 2
+      _ = m ^ (2 * L) := by rw [← pow_mul]; ring_nf
+      _ ≤ (2 ^ (t + 1)) ^ (2 * L) := Nat.pow_le_pow_left (by omega) _
+      _ = 2 ^ ((t + 1) * (2 * L)) := by rw [← pow_mul]
+      _ ≤ 2 ^ (m - L) := Nat.pow_le_pow_right (by norm_num) (by nlinarith)
+
 /-- **The kill modulus is only exponential in a polynomial**: `log₂ (killModulus b L) ≤ b(L+5)⁴`.
 This is the quantitative payoff of using many small exponents: with one prime per slot at
 exponent `b^{j+1}−1` the modulus would be `exp(b^{L+1})`, which exceeds every pad budget `b^K`,
