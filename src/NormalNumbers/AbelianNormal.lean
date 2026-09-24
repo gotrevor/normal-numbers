@@ -199,6 +199,52 @@ abbrev WordFreq (L : ℕ) := (Fin L → Fin 2) → ℚ
 def prefixOnes {L : ℕ} (w : Fin L → Fin 2) (k : ℕ) : ℕ :=
   ((univ : Finset (Fin L)).filter (fun i : Fin L => i.val < k ∧ w i = 1)).card
 
+/-- Splitting a sum over binary words by the first letter. -/
+theorem sum_fun_cons {n : ℕ} (f : (Fin (n + 1) → Fin 2) → ℚ) :
+    ∑ w : Fin (n + 1) → Fin 2, f w = ∑ a : Fin 2, ∑ u : Fin n → Fin 2, f (Fin.cons a u) := by
+  refine ((Fintype.sum_equiv (Fin.consEquiv (fun _ : Fin (n + 1) => Fin 2))
+    (fun x => f (Fin.cons x.1 x.2)) f (fun _ => rfl)).symm).trans ?_
+  exact Fintype.sum_prod_type _
+
+theorem sum_fun_zero (f : (Fin 0 → Fin 2) → ℚ) : ∑ w : Fin 0 → Fin 2, f w = f ![] := by
+  simp only [Fintype.sum_unique]
+  congr 1
+
+theorem sum_fun3 (f : (Fin 3 → Fin 2) → ℚ) :
+    ∑ w : Fin 3 → Fin 2, f w
+      = ∑ a : Fin 2, ∑ b : Fin 2, ∑ c : Fin 2, f ![a, b, c] := by
+  rw [sum_fun_cons]
+  refine Finset.sum_congr rfl (fun a _ => ?_)
+  rw [sum_fun_cons]
+  refine Finset.sum_congr rfl (fun b _ => ?_)
+  rw [sum_fun_cons]
+  refine Finset.sum_congr rfl (fun c _ => ?_)
+  rw [sum_fun_zero]
+  congr 1
+
+theorem sum_fun4 (f : (Fin 4 → Fin 2) → ℚ) :
+    ∑ w : Fin 4 → Fin 2, f w
+      = ∑ a : Fin 2, ∑ b : Fin 2, ∑ c : Fin 2, ∑ d : Fin 2, f ![a, b, c, d] := by
+  rw [sum_fun_cons]
+  refine Finset.sum_congr rfl (fun a _ => ?_)
+  rw [sum_fun3]
+  refine Finset.sum_congr rfl (fun b _ => ?_)
+  refine Finset.sum_congr rfl (fun c _ => ?_)
+  refine Finset.sum_congr rfl (fun d _ => ?_)
+  congr 1
+
+theorem forall_fun3 {P : (Fin 3 → Fin 2) → Prop} (h : ∀ a b c : Fin 2, P ![a, b, c]) :
+    ∀ u, P u := by
+  intro u
+  have hu : u = ![u 0, u 1, u 2] := by funext i; fin_cases i <;> rfl
+  rw [hu]; exact h _ _ _
+
+@[simp] theorem snoc_three (a b c d : Fin 2) : Fin.snoc ![a, b, c] d = ![a, b, c, d] := by
+  funext i; fin_cases i <;> rfl
+
+@[simp] theorem cons_three (a b c d : Fin 2) : Fin.cons a ![b, c, d] = ![a, b, c, d] := by
+  funext i; fin_cases i <;> rfl
+
 /-- Shift-invariance: the `(L-1)`-prefix and `(L-1)`-suffix marginals agree. -/
 def Stationary {L : ℕ} (p : WordFreq (L + 1)) : Prop :=
   ∀ u : Fin L → Fin 2,
@@ -215,10 +261,32 @@ theorem rigid_three (p : WordFreq 3) (hst : Stationary p) (hab : AbelianUpTo p) 
     p = fun _ => (1 : ℚ) / 8 := by
   sorry
 
+/-- The length-4 witness: uniform `1/16`, perturbed by `±1/16` on the eight words with
+`w 1 ≠ w 2`, with the sign given by the parity of `w 0 + w 1 + w 3`. -/
+def sepWord : (Fin 4 → Fin 2) → ℚ := fun w =>
+  if w 1 = w 2 then 1 / 16
+  else if ((w 0).val + (w 1).val + (w 3).val) % 2 = 1 then 2 / 16 else 0
+
 /-- At length 4, abelian balance does not force uniformity. -/
 theorem separation_four :
     ∃ p : WordFreq 4, (∀ w, 0 ≤ p w) ∧ Stationary p ∧ AbelianUpTo p ∧
       p ≠ fun _ => (1 : ℚ) / 16 := by
-  sorry
+  refine ⟨sepWord, ?_, ?_, ?_, ?_⟩
+  · intro w
+    unfold sepWord
+    split_ifs <;> norm_num
+  · refine forall_fun3 (fun a b c => ?_)
+    fin_cases a <;> fin_cases b <;> fin_cases c <;>
+      norm_num [Stationary, Fin.sum_univ_two, sepWord, Matrix.cons_val_zero, Matrix.cons_val_one,
+        Matrix.head_cons, Matrix.cons_val_two, Matrix.cons_val_three, Matrix.tail_cons]
+  · intro k j hk hj
+    interval_cases k <;> interval_cases j <;>
+      rw [Finset.sum_filter, sum_fun4] <;>
+      norm_num +decide [Nat.choose, Fin.sum_univ_two, prefixOnes, sepWord, Matrix.cons_val_zero, Matrix.cons_val_one,
+        Matrix.head_cons, Matrix.cons_val_two, Matrix.cons_val_three, Matrix.tail_cons]
+  · intro h
+    have := congrFun h ![0, 0, 1, 0]
+    norm_num [sepWord, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
+      Matrix.cons_val_two, Matrix.cons_val_three, Matrix.tail_cons] at this
 
 end NormalNumbers.Abelian
