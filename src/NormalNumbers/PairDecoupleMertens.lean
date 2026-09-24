@@ -1107,4 +1107,220 @@ theorem shiftCorrSmall_iff_multiElliottLLAbove (b : ℕ) (hb : 2 ≤ b) (p q : �
     ShiftCorrSmall b p q t ↔ MultiElliottLLAbove b p q t :=
   (shiftCorrSmall_iff_multiElliottLL b hb p q t hp hq).trans (multiElliottLL_iff_above b p q t)
 
+/-! ### Turán's inequality along an arithmetic progression
+
+The variance counterpart of `sum_omegaNat_AP_le`.  The mean bound says the average of `ω` along
+`i ↦ a i + e` is `log log R + O(1)`; Turán says the average SQUARED deviation is `O(log log R)`,
+so `ω` is concentrated at its mean up to `sqrt(log log R)`.  That is the quantitative content of
+the dichotomy behind the depth question: the discarded tail is either small (truncation wins) or
+genuinely fluctuating (and then it is its own equidistribution problem). -/
+
+/-- The primes `≤ y` coprime to the modulus `a`. -/
+def goodPrimes (y a : ℕ) : Finset ℕ := {p ∈ Nat.primesBelow (y + 1) | ¬ p ∣ a}
+
+/-- `ω` along the progression, restricted to `goodPrimes`. -/
+def omegaGood (y a e i : ℕ) : ℕ := #{p ∈ goodPrimes y a | p ∣ a * i + e}
+
+lemma prime_of_mem_goodPrimes {y a p : ℕ} (hp : p ∈ goodPrimes y a) : p.Prime := by
+  rw [goodPrimes, Finset.mem_filter, Nat.mem_primesBelow] at hp
+  exact hp.1.2
+
+lemma not_dvd_of_mem_goodPrimes {y a p : ℕ} (hp : p ∈ goodPrimes y a) : ¬ p ∣ a := by
+  rw [goodPrimes, Finset.mem_filter] at hp
+  exact hp.2
+
+/-- Double counting for an arbitrary set of moduli. -/
+lemma sum_card_filter_dvd' (T : Finset ℕ) (a e R : ℕ) :
+    ∑ i ∈ range R, #{p ∈ T | p ∣ a * i + e} = ∑ p ∈ T, #{i ∈ range R | p ∣ a * i + e} := by
+  classical
+  simp only [Finset.card_filter]
+  exact Finset.sum_comm
+
+/-- **The mean is pinned from below.** -/
+lemma sum_omegaGood_ge (y a e R : ℕ) :
+    (R : ℝ) * (∑ p ∈ goodPrimes y a, (p : ℝ)⁻¹) - (#(goodPrimes y a) : ℝ)
+      ≤ ∑ i ∈ range R, (omegaGood y a e i : ℝ) := by
+  classical
+  have hswap : ∑ i ∈ range R, (omegaGood y a e i : ℝ)
+      = ∑ p ∈ goodPrimes y a, (#{i ∈ range R | p ∣ a * i + e} : ℝ) := by
+    have h := sum_card_filter_dvd' (goodPrimes y a) a e R
+    simp only [omegaGood]
+    exact_mod_cast congrArg (fun n : ℕ => (n : ℝ)) h
+  rw [hswap]
+  have hper : ∀ p ∈ goodPrimes y a,
+      (R : ℝ) * (p : ℝ)⁻¹ - 1 ≤ (#{i ∈ range R | p ∣ a * i + e} : ℝ) := by
+    intro p hp
+    have hprime := prime_of_mem_goodPrimes hp
+    have hcop : Nat.Coprime p a := (Nat.Prime.coprime_iff_not_dvd hprime).mpr
+      (not_dvd_of_mem_goodPrimes hp)
+    have h := card_filter_dvd_ge p a e R hprime.pos hcop
+    have hcast : ((R / p : ℕ) : ℝ) ≤ (#{i ∈ range R | p ∣ a * i + e} : ℝ) := by exact_mod_cast h
+    have hp0 : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hprime.pos
+    have hlt0 : R < p * (R / p) + p := by
+      have h1 := Nat.div_add_mod R p
+      have h2 := Nat.mod_lt R hprime.pos
+      omega
+    have hlt : (R : ℝ) < (p : ℝ) * ((R / p : ℕ) : ℝ) + (p : ℝ) := by exact_mod_cast hlt0
+    have hpinv : (p : ℝ) * (p : ℝ)⁻¹ = 1 := by field_simp
+    have hdiv : (R : ℝ) * (p : ℝ)⁻¹ - 1 ≤ ((R / p : ℕ) : ℝ) := by
+      nlinarith [hlt, hp0, hpinv, inv_pos.mpr hp0]
+    linarith
+  calc (R : ℝ) * (∑ p ∈ goodPrimes y a, (p : ℝ)⁻¹) - (#(goodPrimes y a) : ℝ)
+      = ∑ p ∈ goodPrimes y a, ((R : ℝ) * (p : ℝ)⁻¹ - 1) := by
+        rw [Finset.sum_sub_distrib, ← Finset.mul_sum, Finset.sum_const, nsmul_eq_mul, mul_one]
+    _ ≤ _ := Finset.sum_le_sum hper
+
+/-- Two distinct good primes: the pair count. -/
+lemma card_filter_dvd_pair_le (y a e R p p' : ℕ) (hp : p ∈ goodPrimes y a)
+    (hp' : p' ∈ goodPrimes y a) (hne : p ≠ p') :
+    (#{i ∈ range R | p ∣ a * i + e ∧ p' ∣ a * i + e} : ℝ)
+      ≤ (R : ℝ) * (p : ℝ)⁻¹ * (p' : ℝ)⁻¹ + 1 := by
+  classical
+  have hpp := prime_of_mem_goodPrimes hp
+  have hpp' := prime_of_mem_goodPrimes hp'
+  have hcop : Nat.Coprime p p' := (Nat.coprime_primes hpp hpp').mpr hne
+  have hseq : {i ∈ range R | p ∣ a * i + e ∧ p' ∣ a * i + e}
+      = {i ∈ range R | p * p' ∣ a * i + e} := by
+    refine Finset.filter_congr fun i _ => ?_
+    constructor
+    · rintro ⟨h1, h2⟩; exact Nat.Coprime.mul_dvd_of_dvd_of_dvd hcop h1 h2
+    · intro h
+      exact ⟨dvd_trans (Dvd.intro p' rfl) h, dvd_trans (Dvd.intro_left p rfl) h⟩
+  rw [hseq]
+  have hcopa : Nat.Coprime (p * p') a :=
+    Nat.Coprime.mul ((Nat.Prime.coprime_iff_not_dvd hpp).mpr (not_dvd_of_mem_goodPrimes hp))
+      ((Nat.Prime.coprime_iff_not_dvd hpp').mpr (not_dvd_of_mem_goodPrimes hp'))
+  have h := card_filter_dvd_le_coprime (p * p') a e R (Nat.mul_pos hpp.pos hpp'.pos) hcopa
+  have hcast : (#{i ∈ range R | p * p' ∣ a * i + e} : ℝ) ≤ ((R / (p * p') : ℕ) : ℝ) + 1 := by
+    exact_mod_cast h
+  have hp0 : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hpp.pos
+  have hp'0 : (0 : ℝ) < (p' : ℝ) := by exact_mod_cast hpp'.pos
+  have hdiv : ((R / (p * p') : ℕ) : ℝ) ≤ (R : ℝ) / ((p : ℝ) * (p' : ℝ)) := by
+    have := Nat.cast_div_le (α := ℝ) (m := R) (n := p * p')
+    push_cast at this
+    exact this
+  have heq : (R : ℝ) / ((p : ℝ) * (p' : ℝ)) = (R : ℝ) * (p : ℝ)⁻¹ * (p' : ℝ)⁻¹ := by
+    field_simp
+  linarith [hcast, hdiv, heq ▸ hdiv]
+
+/-- Single good prime: the count. -/
+lemma card_filter_dvd_good_le (y a e R p : ℕ) (hp : p ∈ goodPrimes y a) :
+    (#{i ∈ range R | p ∣ a * i + e} : ℝ) ≤ (R : ℝ) * (p : ℝ)⁻¹ + 1 := by
+  have hpp := prime_of_mem_goodPrimes hp
+  have h := card_filter_dvd_le p a e R hpp (not_dvd_of_mem_goodPrimes hp)
+  have hcast : (#{i ∈ range R | p ∣ a * i + e} : ℝ) ≤ ((R / p : ℕ) : ℝ) + 1 := by exact_mod_cast h
+  have hdiv : ((R / p : ℕ) : ℝ) ≤ (R : ℝ) / (p : ℝ) := Nat.cast_div_le
+  rw [div_eq_mul_inv] at hdiv
+  linarith
+
+/-- **The second moment.** -/
+lemma sum_omegaGood_sq_le (y a e R : ℕ) :
+    ∑ i ∈ range R, ((omegaGood y a e i : ℝ)) ^ 2
+      ≤ (R : ℝ) * (∑ p ∈ goodPrimes y a, (p : ℝ)⁻¹) ^ 2 + (#(goodPrimes y a) : ℝ) ^ 2
+        + (R : ℝ) * (∑ p ∈ goodPrimes y a, (p : ℝ)⁻¹) + (#(goodPrimes y a) : ℝ) := by
+  classical
+  set G := goodPrimes y a with hG
+  set S : ℝ := ∑ p ∈ G, (p : ℝ)⁻¹ with hS
+  have hpt : ∀ i : ℕ, ((omegaGood y a e i : ℝ)) ^ 2
+      = ∑ p ∈ G, ∑ p' ∈ G,
+          (if p ∣ a * i + e then (1 : ℝ) else 0) * (if p' ∣ a * i + e then (1 : ℝ) else 0) := by
+    intro i
+    have h1 : (omegaGood y a e i : ℝ) = ∑ p ∈ G, (if p ∣ a * i + e then (1 : ℝ) else 0) := by
+      rw [omegaGood, ← hG, Finset.card_filter]
+      push_cast
+      exact Finset.sum_congr rfl fun p _ => by split <;> simp
+    rw [h1, sq, Finset.sum_mul_sum]
+  have key : ∑ i ∈ range R, ((omegaGood y a e i : ℝ)) ^ 2
+      = ∑ p ∈ G, ∑ p' ∈ G, (#{i ∈ range R | p ∣ a * i + e ∧ p' ∣ a * i + e} : ℝ) := by
+    calc ∑ i ∈ range R, ((omegaGood y a e i : ℝ)) ^ 2
+        = ∑ i ∈ range R, ∑ p ∈ G, ∑ p' ∈ G,
+            (if p ∣ a * i + e then (1 : ℝ) else 0)
+              * (if p' ∣ a * i + e then (1 : ℝ) else 0) :=
+          Finset.sum_congr rfl fun i _ => hpt i
+      _ = ∑ p ∈ G, ∑ p' ∈ G, ∑ i ∈ range R,
+            (if p ∣ a * i + e then (1 : ℝ) else 0)
+              * (if p' ∣ a * i + e then (1 : ℝ) else 0) := by
+          rw [Finset.sum_comm]
+          exact Finset.sum_congr rfl fun p _ => Finset.sum_comm
+      _ = _ := by
+          refine Finset.sum_congr rfl fun p _ => Finset.sum_congr rfl fun p' _ => ?_
+          rw [Finset.card_filter]
+          push_cast
+          refine Finset.sum_congr rfl fun i _ => ?_
+          by_cases h1 : p ∣ a * i + e <;> by_cases h2 : p' ∣ a * i + e <;> simp [h1, h2]
+  rw [key]
+  -- split off the diagonal
+  have hrow : ∀ p ∈ G, ∑ p' ∈ G, (#{i ∈ range R | p ∣ a * i + e ∧ p' ∣ a * i + e} : ℝ)
+      ≤ ((R : ℝ) * (p : ℝ)⁻¹ + 1) + ((R : ℝ) * (p : ℝ)⁻¹ * S + (#G : ℝ)) := by
+    intro p hp
+    have hdiag : (#{i ∈ range R | p ∣ a * i + e ∧ p ∣ a * i + e} : ℝ)
+        ≤ (R : ℝ) * (p : ℝ)⁻¹ + 1 := by
+      have heq : {i ∈ range R | p ∣ a * i + e ∧ p ∣ a * i + e}
+          = {i ∈ range R | p ∣ a * i + e} := by
+        refine Finset.filter_congr fun i _ => ?_
+        exact ⟨fun h => h.1, fun h => ⟨h, h⟩⟩
+      rw [heq]
+      exact card_filter_dvd_good_le y a e R p hp
+    have hoff : ∑ p' ∈ G.erase p, (#{i ∈ range R | p ∣ a * i + e ∧ p' ∣ a * i + e} : ℝ)
+        ≤ (R : ℝ) * (p : ℝ)⁻¹ * S + (#G : ℝ) := by
+      have hb : ∀ p' ∈ G.erase p,
+          (#{i ∈ range R | p ∣ a * i + e ∧ p' ∣ a * i + e} : ℝ)
+            ≤ (R : ℝ) * (p : ℝ)⁻¹ * (p' : ℝ)⁻¹ + 1 := by
+        intro p' hp'
+        exact card_filter_dvd_pair_le y a e R p p' hp (Finset.mem_of_mem_erase hp')
+          (fun h => (Finset.ne_of_mem_erase hp') h.symm)
+      refine (Finset.sum_le_sum hb).trans ?_
+      rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul, mul_one, ← Finset.mul_sum]
+      have hsub : ∑ p' ∈ G.erase p, (p' : ℝ)⁻¹ ≤ S := by
+        rw [hS]
+        exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.erase_subset _ _)
+          (fun i _ _ => by positivity)
+      have hcard : ((#(G.erase p) : ℕ) : ℝ) ≤ (#G : ℝ) := by
+        have := Finset.card_erase_le (a := p) (s := G)
+        exact_mod_cast this
+      have hR0 : (0 : ℝ) ≤ (R : ℝ) * (p : ℝ)⁻¹ := by positivity
+      nlinarith [hsub, hcard, hR0]
+    have := Finset.add_sum_erase G
+      (fun p' => (#{i ∈ range R | p ∣ a * i + e ∧ p' ∣ a * i + e} : ℝ)) hp
+    linarith [this ▸ (add_le_add hdiag hoff)]
+  refine (Finset.sum_le_sum hrow).trans ?_
+  rw [Finset.sum_add_distrib, Finset.sum_add_distrib, Finset.sum_add_distrib]
+  have e0 : ∑ p ∈ G, ((R : ℝ) * (p : ℝ)⁻¹) = (R : ℝ) * S := by rw [← Finset.mul_sum, ← hS]
+  have e1 : ∑ p ∈ G, ((R : ℝ) * (p : ℝ)⁻¹ * S) = (R : ℝ) * S * S := by
+    rw [← Finset.sum_mul, e0]
+  have e2 : ∑ _p ∈ G, ((#G : ℕ) : ℝ) = (#G : ℝ) * (#G : ℝ) := by
+    rw [Finset.sum_const, nsmul_eq_mul]
+  have e3 : ∑ _p ∈ G, (1 : ℝ) = (#G : ℝ) := by rw [Finset.sum_const, nsmul_eq_mul, mul_one]
+  rw [e0, e1, e2, e3]
+  have hsq : S ^ 2 = S * S := sq S
+  have hcs : (#G : ℝ) ^ 2 = (#G : ℝ) * (#G : ℝ) := sq _
+  linarith
+
+/-- **TURÁN'S INEQUALITY ALONG AN ARITHMETIC PROGRESSION.**  The mean square deviation of
+`ω` (restricted to the primes `≤ y` coprime to the modulus) from its mean `S = Σ_{p ≤ y} 1/p`
+is at most `R·S + O(π(y)²)`.  With `y` a small power of `R` this says: along the progression,
+`ω` sticks to `log log R` within `O(sqrt(log log R))`.
+
+This is the quantitative form of the depth dichotomy.  The truncation discards a tail whose
+typical size is `sqrt(log log R)/b^K`; Turán is what makes "typical" a theorem. -/
+theorem turan_AP (y a e R : ℕ) :
+    ∑ i ∈ range R, ((omegaGood y a e i : ℝ) - ∑ p ∈ goodPrimes y a, (p : ℝ)⁻¹) ^ 2
+      ≤ (R : ℝ) * (∑ p ∈ goodPrimes y a, (p : ℝ)⁻¹)
+        + (#(goodPrimes y a) : ℝ) ^ 2 + (#(goodPrimes y a) : ℝ)
+        + 2 * (∑ p ∈ goodPrimes y a, (p : ℝ)⁻¹) * (#(goodPrimes y a) : ℝ) := by
+  classical
+  set G := goodPrimes y a with hG
+  set S : ℝ := ∑ p ∈ G, (p : ℝ)⁻¹ with hS
+  have hS0 : 0 ≤ S := by
+    rw [hS]; exact Finset.sum_nonneg fun p _ => by positivity
+  have hexp : ∀ i : ℕ, ((omegaGood y a e i : ℝ) - S) ^ 2
+      = ((omegaGood y a e i : ℝ)) ^ 2 - 2 * S * (omegaGood y a e i : ℝ) + S ^ 2 := by
+    intro i; ring
+  rw [Finset.sum_congr rfl (fun i _ => hexp i), Finset.sum_add_distrib, Finset.sum_sub_distrib,
+    ← Finset.mul_sum, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  have h1 := sum_omegaGood_sq_le y a e R
+  have h2 := sum_omegaGood_ge y a e R
+  rw [← hG, ← hS] at h1 h2
+  nlinarith [h1, h2, hS0]
+
 end NormalNumbers.PairDecouple
