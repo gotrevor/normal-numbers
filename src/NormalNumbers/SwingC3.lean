@@ -274,9 +274,69 @@ theorem isRich_of_omegaCarryRich {b : ℕ} (hb : 2 ≤ b) (h : OmegaCarryRich b)
   congr 2
   exact Finset.filter_congr fun n _ => (occursAt_primeLambertAtBase_iff hb w n).symm
 
+/-! ### Splitting off the carry
+
+The carry `omegaCarry b k = ⌊∑_{j≥1} ω(k+j) b^{−j}⌋` is not independent of the `ω(n+j+1)`, so it
+cannot simply be averaged out.  What the argument actually needs is far less than independence:
+only that **one** residue class `g` of the carry survives jointly with every prescribed residue
+vector for `ω`.  That is `OmegaCarryJoint`, and `omegaCarryRich_of_joint` shows it suffices —
+the word `w` is then realised by solving `r j + g ≡ w_j (mod b)` for the `ω`-residues.
+
+Why `∃ g` and not `∀ g` is the right ask: the carry has size `≈ (log log k)/(b−1) → ∞`, so its
+residue is not constant, and pigeonhole already gives *some* class of positive upper density;
+`OmegaCarryJoint` asks only that one such class be compatible with arbitrary `ω`-residues.
+The two ingredients behind it are (a) joint Erdős–Kac for the `ℓ` shifts `ω(n+1), …, ω(n+ℓ)`
+(classical, via the Kubilius model), and (b) the fact that `omegaCarry b (n+j+1)` is a tail
+functional and hence *measurable with respect to the far future* of the `ω`-sequence, which is
+what should decouple it from the `ℓ`-window. -/
+
+open Classical in
+/-- **The carry-joint leaf.**  Some residue class `g` of the carry is compatible, at positive
+lower density, with every prescribed residue vector for `ω` on a window of length `ℓ`. -/
+def OmegaCarryJoint (b : ℕ) : Prop :=
+  ∀ ℓ : ℕ, ∃ g : ℕ, ∀ r : ℕ → ℕ, ∃ c : ℝ, 0 < c ∧
+    ∀ᶠ N in atTop, c * N ≤ (((range N).filter (fun n =>
+      (∀ j < ℓ, omegaCarry b (n + j + 1) % b = g) ∧
+      (∀ j < ℓ, ArithmeticFunction.cardDistinctFactors (n + j + 1) % b = r j))).card : ℝ)
+
+/-- **The reduction.**  Solving `r j ≡ w_j − g (mod b)` turns the carry-joint leaf into
+`OmegaCarryRich`. -/
+theorem omegaCarryRich_of_joint {b : ℕ} (hb : 2 ≤ b) (h : OmegaCarryJoint b) :
+    OmegaCarryRich b := by
+  classical
+  intro w hw
+  obtain ⟨g, hg⟩ := h w.length
+  obtain ⟨c, hc, hev⟩ := hg (fun j => (w.getD j 0 + b - g % b) % b)
+  refine ⟨c, hc, ?_⟩
+  filter_upwards [hev] with N hN
+  refine hN.trans ?_
+  have hsub : ((range N).filter (fun n =>
+      (∀ j < w.length, omegaCarry b (n + j + 1) % b = g) ∧
+      (∀ j < w.length, ArithmeticFunction.cardDistinctFactors (n + j + 1) % b
+        = (w.getD j 0 + b - g % b) % b)))
+      ⊆ (range N).filter (fun n => ∀ j, ∀ hj : j < w.length,
+        (ArithmeticFunction.cardDistinctFactors (n + j + 1) + omegaCarry b (n + j + 1)) % b
+          = w[j]) := by
+    intro n hn
+    rw [mem_filter] at hn ⊢
+    refine ⟨hn.1, fun j hj => ?_⟩
+    obtain ⟨hcar, hom⟩ := hn.2
+    have hwj : w.getD j 0 = w[j] := List.getD_eq_getElem _ _ hj
+    have hwlt : w[j] < b := hw _ (List.getElem_mem hj)
+    have hgb : g % b < b := Nat.mod_lt _ (by omega)
+    rw [Nat.add_mod, hom j hj, hcar j hj, hwj]
+    have hd := Nat.div_add_mod g b
+    rw [Nat.mod_add_mod]
+    have hrw : w[j] + b - g % b + g = w[j] + b * (g / b) + b := by omega
+    rw [hrw, Nat.add_mod_right, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hwlt]
+  exact_mod_cast Nat.cast_le.2 (Finset.card_le_card hsub)
+
 /-- **Open.**  The crux after the 2026-09-24 lap; see the note above. -/
-theorem omegaCarryRich_holds (b : ℕ) (hb : 3 ≤ b) : OmegaCarryRich b := by
+theorem omegaCarryJoint_holds (b : ℕ) (hb : 3 ≤ b) : OmegaCarryJoint b := by
   sorry
+
+theorem omegaCarryRich_holds (b : ℕ) (hb : 3 ≤ b) : OmegaCarryRich b :=
+  omegaCarryRich_of_joint (by omega) (omegaCarryJoint_holds b hb)
 
 theorem conjC3 : ConjC3 := fun b hb =>
   isRich_of_omegaCarryRich (by omega) (omegaCarryRich_holds b hb)
