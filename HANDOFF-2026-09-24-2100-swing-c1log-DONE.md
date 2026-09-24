@@ -1,6 +1,8 @@
 # HANDOFF 2026-09-24 — swing at C1-log: target met, verdict recorded
 
-Branch `wip/swing-c1log`.  `src/NormalNumbers/SwingC1Log.lean` **sorry-free**, axiom-clean
+Branch `wip/swing-c1log`, HEAD `11394fb` (this doc renamed on top of it).
+Worktree `~/src/nn-c1log`.  Never pushed (host pushes).
+  `src/NormalNumbers/SwingC1Log.lean` **sorry-free**, axiom-clean
 (`propext, Classical.choice, Quot.sound` only), `lake build` green.
 
 ## What landed
