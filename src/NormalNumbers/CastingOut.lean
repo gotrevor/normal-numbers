@@ -35,7 +35,41 @@ noncomputable def windowDigitSum (b : ℕ) (x : ℝ) (n L : ℕ) : ℕ :=
 theorem windowDigitSum_modEq (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (n L : ℕ) :
     (windowDigitSum b x n L : ℤ) ≡ ⌊x * (b : ℝ) ^ (n + L)⌋ - ⌊x * (b : ℝ) ^ n⌋
       [ZMOD ((b : ℤ) - 1)] := by
-  sorry
+  have hfr : ∀ k : ℕ, ⌊Int.fract x * (b:ℝ)^k⌋ = ⌊x * (b:ℝ)^k⌋ - ⌊x⌋ * (b:ℤ)^k := by
+    intro k
+    have h : Int.fract x * (b:ℝ)^k = x * (b:ℝ)^k - ((⌊x⌋ * (b:ℤ)^k : ℤ) : ℝ) := by
+      push_cast [Int.fract]; ring
+    rw [h, Int.floor_sub_intCast]
+  have hstep : ∀ k : ℕ, ((digitOf b (Int.fract x) k : ℤ))
+      ≡ ⌊Int.fract x * (b:ℝ)^(k+1)⌋ - ⌊Int.fract x * (b:ℝ)^k⌋ [ZMOD ((b:ℤ)-1)] := by
+    intro k
+    rw [floor_mul_pow_succ b hb _ (Int.fract_nonneg x) k]
+    exact Int.modEq_iff_dvd.mpr ⟨⌊Int.fract x * (b:ℝ)^k⌋, by ring⟩
+  have hmain : ∀ L : ℕ, ((windowDigitSum b x n L : ℤ))
+      ≡ ⌊Int.fract x * (b:ℝ)^(n+L)⌋ - ⌊Int.fract x * (b:ℝ)^n⌋ [ZMOD ((b:ℤ)-1)] := by
+    intro L
+    induction L with
+    | zero => simp [windowDigitSum]
+    | succ L ih =>
+        have e : (windowDigitSum b x n (L+1) : ℤ)
+            = (windowDigitSum b x n L : ℤ) + (digitOf b (Int.fract x) (n+L) : ℤ) := by
+          simp [windowDigitSum, Finset.sum_range_succ]
+        rw [e]
+        have := (ih.add (hstep (n+L)))
+        have h2 : (⌊Int.fract x * (b:ℝ)^(n+L)⌋ - ⌊Int.fract x * (b:ℝ)^n⌋)
+            + (⌊Int.fract x * (b:ℝ)^(n+L+1)⌋ - ⌊Int.fract x * (b:ℝ)^(n+L)⌋)
+            = ⌊Int.fract x * (b:ℝ)^(n+(L+1))⌋ - ⌊Int.fract x * (b:ℝ)^n⌋ := by
+          rw [show n + (L+1) = n + L + 1 by omega]; ring
+        rw [← h2]
+        exact this
+  have h := hmain L
+  rw [hfr (n+L), hfr n] at h
+  refine h.trans ?_
+  refine Int.modEq_iff_dvd.mpr ?_
+  have hd : ((b:ℤ) - 1) ∣ ((b:ℤ)^L - 1) := by
+    simpa using sub_dvd_pow_sub_pow (b:ℤ) 1 L
+  obtain ⟨c, hc⟩ := hd
+  exact ⟨⌊x⌋ * (b:ℤ)^n * c, by rw [pow_add]; linear_combination (⌊x⌋ * (b:ℤ)^n) * hc⟩
 
 /-- The real number `Σ_m w(m)/bᵐ`. -/
 noncomputable def lambertVal (b : ℕ) (w : ℕ → ℕ) : ℝ := ∑' m : ℕ, (w m : ℝ) / (b : ℝ) ^ m
