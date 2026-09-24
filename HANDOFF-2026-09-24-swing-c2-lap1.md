@@ -127,3 +127,29 @@ residue.
 with one realised value this generates the multiplicative subgroup, and the additive part comes
 from shifting `n`.  The `ℓ=3, t=12` gap at `K=6` is a good adversarial test case for any proposed
 mechanism.
+
+## Lap 5 addendum (green): the route back to an ADDITIVE weight
+
+The §2 obstruction says `τ` is outside the additive class because `e(τ(n)/q)` is not multiplicative
+(whereas `e(ω(n)/q)` is — that is precisely why Selberg–Delange/G4 works for `ω` and not for `τ`).
+
+**The escape, now proved as algebra in `src/`:**
+
+* `tau_of_squarefree` : `s` squarefree ⟹ `τ(s) = 2^{ω(s)}`.
+* `tau_primePow_mul_squarefree` : `τ(p^a·s) = (a+1)·2^{ω(s)}` for `s` squarefree, `p ∤ s`.
+
+So on the locus `n = p^a·s` (squarefree cofactor — positive density, and a *fixed* `p`,`a` is a CRT
+condition), `τ(n) mod b^L` is determined by `a` together with `ω(s) mod ord_{b^L}(2)`.  `ω` is
+ADDITIVE: this is exactly the weight `G4Transport` and `G4WeightInterface` were built for.  The
+free factor `(a+1)` supplies the residues the cyclic group `⟨2⟩ ≤ (ℤ/b^L)^×` cannot reach (e.g.
+`0 mod 3`, which `2^ω` never hits) — so both obstructions are covered.
+
+**Concrete shape of the next lemma (next lap's target).**  Pick primes `q_0,…,q_{L−1}` and
+exponents `a_0,…,a_{L−1}`; by CRT fix `n` so that `q_j^{a_j} ‖ n+1+j` for every `j`.  On the
+positive-density subset where each cofactor is squarefree,
+
+    paddedSum b τ n L  ≡  Σ_{j<L} (a_j+1)·2^{ω(s_j)}·b^{L−1−j}   (mod b^L),
+
+and the only remaining freedom to control is the vector `(ω(s_j) mod ord)` — an additive-weight
+prescription on `L` consecutive integers in a fixed progression.  State that as `SubLeafB` and
+prove `subLeafA_of_subLeafB`; `SubLeafB` is then the crux, and it is in the G4 category.
