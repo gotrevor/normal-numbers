@@ -584,6 +584,51 @@ theorem subLeafA_of_subLeafB (b : ℕ) (h : SubLeafB b) : SubLeafA b := by
   · refine Finset.sum_congr rfl fun j hj => ?_
     rw [tau_of_structured (hstruct j (Finset.mem_range.mp hj))]
 
+
+/-! ### 3f. No LOCAL obstruction: the structured target system is algebraically free -/
+
+/-- **The structured window system has no algebraic obstruction.**  For every base `b ≥ 2`, every
+window length `L ≥ 1` and every target `t`, the shape `Σ_j (a_j+1)·2^{e_j}·b^{L−1−j}` realises `t`
+modulo `b^L` — already with all `e_j = 0` and a single free exponent in the last slot.
+
+Consequence for the swing: **nothing in `SubLeafB` is blocked by congruence algebra.**  The whole
+difficulty is *arithmetic realisability* — making one window of `L` CONSECUTIVE integers carry the
+required exponent vector — not the residues themselves.  In particular a proof needs only ONE slot
+whose prime-power exponent is free; the other `L−1` slots may contribute whatever they like. -/
+theorem structuredTarget_unobstructed (b : ℕ) (hb : 2 ≤ b) (L : ℕ) (hL : 1 ≤ L) (t : ℤ) :
+    ∃ a e : ℕ → ℕ,
+      (∑ j ∈ range L, (((a j + 1) * 2 ^ (e j) : ℕ) : ℤ) * (b : ℤ) ^ (L - 1 - j))
+        % (b : ℤ) ^ L = t % (b : ℤ) ^ L := by
+  classical
+  have hbL : (0 : ℤ) < (b : ℤ) ^ L := by
+    have : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (show 0 < b by omega)
+    positivity
+  set S₀ : ℤ := ∑ j ∈ range L, (b : ℤ) ^ (L - 1 - j) with hS₀
+  set A : ℕ := ((t - S₀) % (b : ℤ) ^ L).toNat with hA
+  have hAcast : (A : ℤ) = (t - S₀) % (b : ℤ) ^ L :=
+    Int.toNat_of_nonneg (Int.emod_nonneg _ (ne_of_gt hbL))
+  refine ⟨fun j => if j = L - 1 then A else 0, fun _ => 0, ?_⟩
+  have hterm : ∀ j ∈ range L,
+      ((((if j = L - 1 then A else 0) + 1) * 2 ^ (0 : ℕ) : ℕ) : ℤ) * (b : ℤ) ^ (L - 1 - j)
+        = (if j = L - 1 then (A : ℤ) else 0) * (b : ℤ) ^ (L - 1 - j) + (b : ℤ) ^ (L - 1 - j) := by
+    intro j _
+    by_cases h : j = L - 1 <;> simp [h] <;> ring
+  rw [Finset.sum_congr rfl hterm, Finset.sum_add_distrib, ← hS₀]
+  have hpick : (∑ j ∈ range L, (if j = L - 1 then (A : ℤ) else 0) * (b : ℤ) ^ (L - 1 - j))
+      = (A : ℤ) := by
+    rw [Finset.sum_eq_single (L - 1)]
+    · simp
+    · intro j _ hj; simp [hj]
+    · intro h; exact absurd (Finset.mem_range.mpr (by omega)) h
+  rw [hpick]
+  have hmod : (A : ℤ) % (b : ℤ) ^ L = (t - S₀) % (b : ℤ) ^ L := by
+    rw [hAcast, Int.emod_emod_of_dvd _ dvd_rfl]
+  have : (A : ℤ) + S₀ ≡ (t - S₀) + S₀ [ZMOD (b : ℤ) ^ L] := Int.ModEq.add_right S₀ hmod
+  have h2 : S₀ + (A : ℤ) ≡ t [ZMOD (b : ℤ) ^ L] := by
+    simpa [add_comm, sub_add_cancel] using this
+  rw [add_comm]
+  exact h2
+
 /-! ### 4. The crux leaf -/
 
 /-- **THE CRUX (2026-09-24, after the structured reduction).**  The single open obligation behind
