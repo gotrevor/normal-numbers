@@ -233,3 +233,41 @@ factor `a+1` alone canNOT reach every residue — the `2^{ω(s)}` factors must s
 `⟨2⟩ ≤ (ℤ/b^L)^×` has index `φ(b^L)/ord(2)`.  **That index is the next quantity to compute**: if
 `2` is a primitive root mod `b^L` (true for `b = 3` and many `L`), `⟨2⟩` covers all units and only
 the non-unit residues need the `(a+1)` factors.  Probe that next.
+
+## Lap 9 addendum (green): the CRT construction is REFUTED — and why
+
+Lap 8 said "a proof needs only one controllable slot".  The natural construction is:
+
+> By CRT fix `n` so that `q_j^{a_j} ‖ n+1+j` for distinct primes `q_j`.  Then
+> `τ(n+1+j) = (a_j+1)·τ(u_j)`.  Choose `a_j + 1 ≡ 0 (mod b^{j+1})` to kill slot `j`, leaving one
+> distinguished slot `n+L = 2^a·p` (`p` prime, Dirichlet) contributing `2(a+1)`; solve
+> `2(a+1) ≡ t·b^K (mod b^L)`, which is possible for every ODD `b` since `2` is then invertible.
+
+**This is refuted by the pad constraint**, now proved as `lt_pow_two_mul_of_pad`:
+
+    2√(n+L) + 2 < b^K   ⟹   n + L < b^{2K}.
+
+The construction needs `a_j + 1 ≡ 0 mod b^{j+1}`, hence `a_j ≥ b^{j+1} − 1`, hence
+`n ≥ ∏_j q_j^{a_j} ≥ 2^{b^L}` — doubly exponential in `L`, while the pad allows only `n < b^{2K}`.
+The two requirements diverge; no choice of `K` reconciles them.  **Route closed.**
+
+**What `lt_pow_two_mul_of_pad` tells us positively.**  `SubLeafA`/`SubLeafB` are *finite* search
+problems: for each `(ℓ, K)` the witness must live in `[0, b^{2K})`, a space of size `b^{2K}` against
+`b^ℓ` targets, `ℓ < K`.  So the counting is comfortable (`b^{2K}` positions, `b^{ℓ}` targets, hit
+rate `≈ b^{−ℓ−K}` gives `≈ b^{K−ℓ}` expected hits per target) — matching the probe, where hits were
+plentiful.  The crux is therefore an EQUIDISTRIBUTION statement at scale `n ≤ b^{2K}` for a modulus
+`b^{ℓ+K}` — i.e. modulus ≈ √(range).  That is exactly the "square-root barrier" regime: one needs
+the weighted divisor window equidistributed to modulus `X^{1/2}` over `n ≤ X`.
+
+**Next attack (concrete and literature-anchored).**  Divisor function in arithmetic progressions to
+modulus `q ≈ X^{1/2}` is the classical hard range (Selberg/Hooley/Linnik give `q ≤ X^{2/3}` for
+`τ` in APs on average; individual moduli near `X^{1/2}` are reachable by Weil for `τ` — see
+Heath-Brown, "The divisor function in arithmetic progressions").  The next lap should state the
+needed input in that language — a `τ`-in-APs estimate to modulus `X^{1/2+ε}` — as `SubLeafC`, and
+prove `SubLeafB` (or `SubLeafA` directly) from it.  That makes the crux a *named, checkable*
+analytic-number-theory statement rather than an unanalysed sorry.
+
+Alternatively, relax the pad: the padding was a convenience (`windowPrescribable_of_subLeafA`), and
+a version of the reduction that tracks the carry instead of zeroing it would remove the
+`n < b^{2K}` coupling entirely and re-open the CRT route.  **That is the highest-value next move**:
+`floor_lambertVal_emod` already gives the exact identity with the carry present.

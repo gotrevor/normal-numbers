@@ -629,6 +629,28 @@ theorem structuredTarget_unobstructed (b : ℕ) (hb : 2 ≤ b) (L : ℕ) (hL : 1
   rw [add_comm]
   exact h2
 
+
+/-! ### 3g. The pad constraint is a SEARCH BOUND — and it refutes the CRT route
+
+The carry-free form of the crux buys its cleanliness at a price: `2√(n+L)+2 < b^K` bounds the
+window position by the square of the modulus.  So `SubLeafA`/`SubLeafB` are not "find `n` anywhere";
+they are "find `n` in `[0, b^{2K})`", a *finite* search whose size is only the square of the number
+of targets' modulus.  This kills the obvious construction (recorded here so it is not retried). -/
+
+/-- **The search bound.**  The pad hypothesis of `SubLeafA` forces `n + L < (b^K)^2`. -/
+theorem lt_pow_two_mul_of_pad {b K m : ℕ} (h : 2 * (Nat.sqrt m : ℤ) + 2 < (b : ℤ) ^ K) :
+    m < b ^ (2 * K) := by
+  have hN : (2 : ℕ) * Nat.sqrt m + 2 < b ^ K := by
+    have hcast : ((2 * Nat.sqrt m + 2 : ℕ) : ℤ) < ((b ^ K : ℕ) : ℤ) := by push_cast; linarith
+    exact_mod_cast hcast
+  have h1 : Nat.sqrt m + 1 ≤ b ^ K := by omega
+  have h2 : m < (Nat.sqrt m + 1) * (Nat.sqrt m + 1) := by
+    have := Nat.lt_succ_sqrt m
+    simpa [Nat.succ_eq_add_one] using this
+  calc m < (Nat.sqrt m + 1) * (Nat.sqrt m + 1) := h2
+    _ ≤ b ^ K * b ^ K := Nat.mul_le_mul h1 h1
+    _ = b ^ (2 * K) := by rw [← pow_add]; ring_nf
+
 /-! ### 4. The crux leaf -/
 
 /-- **THE CRUX (2026-09-24, after the structured reduction).**  The single open obligation behind
