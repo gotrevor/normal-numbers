@@ -499,6 +499,7 @@ import NormalNumbers.TwoPointTuranKubilius
 import NormalNumbers.TwoPointKataiRearrange
 import NormalNumbers.TwoPointKataiAssemble
 import NormalNumbers.TwoPointGramChain
+import NormalNumbers.TwoPointGramArith
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
