@@ -405,6 +405,95 @@ theorem carry_le_sqrt (b : ℕ) (hb : 3 ≤ b) (N : ℕ) :
   rw [this, Int.floor_intCast]
 
 
+/-- **The carry bound in its usable, pointwise form.**  If `τ(N+1+k) ≤ A·(k+1)` for every
+`k`, then the carry into position `N` is at most `A` — in fact at most `3A/4`, which is why no
+constant is lost.  `carry_le_sqrt` is the instance `A = 2√N + 2`.
+
+This is the plumbing that turns a *family* of divisor bounds at the shifts `N+1+k` into the
+single inequality `carry b tau N < b^K` that `CarryLeaf` asks for.  Note the shape of the
+hypothesis: the threshold is allowed to GROW linearly in `k`, and since `τ(m) ≤ 2√m` the
+hypothesis is automatic for every `k ≥ 2√N/A`.  So only `O(√N/A)` shifts need real input. -/
+theorem carry_le_of_tau_le (b : ℕ) (hb : 3 ≤ b) (N A : ℕ)
+    (h : ∀ k : ℕ, tau (N + 1 + k) ≤ A * (k + 1)) :
+    4 * carry b tau N ≤ 3 * (A : ℤ) := by
+  set r : ℝ := (b : ℝ)⁻¹ with hr
+  have hb3 : (3 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hrpos : 0 < r := by rw [hr]; positivity
+  have hrlt : r < 1 := by rw [hr]; rw [inv_lt_one_iff₀]; right; linarith
+  have hnorm : ‖r‖ < 1 := by rwa [Real.norm_eq_abs, abs_of_pos hrpos]
+  have hsum0 : Summable (fun n : ℕ => (n : ℝ) * r ^ n) := by
+    have h := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1 hnorm
+    simpa using h
+  have hshiftsum : Summable (fun k : ℕ => ((k : ℝ) + 1) * r ^ (k + 1)) := by
+    have h := hsum0.comp_injective (add_left_injective 1)
+    refine h.congr fun k => ?_
+    simp [Function.comp]
+  have hval : (∑' n : ℕ, (n : ℝ) * r ^ n) = r / (1 - r) ^ 2 :=
+    tsum_coe_mul_geometric_of_norm_lt_one hnorm
+  have hshift : (∑' k : ℕ, ((k : ℝ) + 1) * r ^ (k + 1)) = r / (1 - r) ^ 2 := by
+    rw [← hval, hsum0.tsum_eq_zero_add]
+    simp
+  have hcmp : r / (1 - r) ^ 2 ≤ 3 / 4 := by
+    have hbpos : (0 : ℝ) < (b : ℝ) := by linarith
+    have hone : (2 : ℝ) / 3 ≤ 1 - r := by
+      rw [hr]
+      have : (b : ℝ)⁻¹ ≤ 1 / 3 := by
+        rw [inv_le_comm₀ hbpos (by norm_num)]; linarith
+      linarith
+    have hrle : r ≤ 1 / 3 := by
+      rw [hr, inv_le_comm₀ hbpos (by norm_num)]; linarith
+    have hsq : (2 / 3 : ℝ) ^ 2 ≤ (1 - r) ^ 2 := by nlinarith
+    rw [div_le_iff₀ (by nlinarith)]
+    nlinarith
+  have hdom : ∀ k : ℕ, (tau (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)
+      ≤ (A : ℝ) * (((k : ℝ) + 1) * r ^ (k + 1)) := by
+    intro k
+    have h2 : (tau (N + 1 + k) : ℝ) ≤ (A : ℝ) * ((k : ℝ) + 1) := by
+      have := h k
+      have : ((tau (N + 1 + k) : ℕ) : ℝ) ≤ ((A * (k + 1) : ℕ) : ℝ) := by exact_mod_cast this
+      push_cast at this
+      linarith
+    have hpow : (0 : ℝ) < (b : ℝ) ^ (k + 1) := by positivity
+    have hrp : r ^ (k + 1) = ((b : ℝ) ^ (k + 1))⁻¹ := by rw [hr, inv_pow]
+    rw [div_le_iff₀ hpow, hrp]
+    field_simp
+    linarith
+  have hsummableT : Summable (fun k : ℕ => (tau (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)) :=
+    Summable.of_nonneg_of_le (fun k => by positivity) hdom (hshiftsum.mul_left _)
+  have hTle : (∑' k : ℕ, (tau (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)) ≤ 3 / 4 * (A : ℝ) := by
+    have hle := hsummableT.tsum_le_tsum hdom (hshiftsum.mul_left (A : ℝ))
+    refine hle.trans ?_
+    rw [tsum_mul_left, hshift]
+    nlinarith [hcmp, Nat.cast_nonneg (α := ℝ) A]
+  have hfl : ((carry b tau N : ℤ) : ℝ)
+      ≤ ∑' k : ℕ, (tau (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1) := by
+    unfold carry
+    exact Int.floor_le _
+  have hreal : (4 : ℝ) * ((carry b tau N : ℤ) : ℝ) ≤ 3 * (A : ℝ) := by linarith
+  exact_mod_cast hreal
+
+/-- `carry ≤ A` form of `carry_le_of_tau_le`. -/
+theorem carry_le_of_tau_le' (b : ℕ) (hb : 3 ≤ b) (N A : ℕ)
+    (h : ∀ k : ℕ, tau (N + 1 + k) ≤ A * (k + 1)) :
+    carry b tau N ≤ (A : ℤ) := by
+  have h4 := carry_le_of_tau_le b hb N A h
+  have hA : (0 : ℤ) ≤ (A : ℤ) := Int.natCast_nonneg A
+  omega
+
+/-- **Strict** form: the `3/4` slack in `carry_le_of_tau_le` makes the bound strict. -/
+theorem carry_lt_of_tau_le (b : ℕ) (hb : 3 ≤ b) (N A : ℕ) (hA : 0 < A)
+    (h : ∀ k : ℕ, tau (N + 1 + k) ≤ A * (k + 1)) :
+    carry b tau N < (A : ℤ) := by
+  have h4 := carry_le_of_tau_le b hb N A h
+  have hA' : (1 : ℤ) ≤ (A : ℤ) := by exact_mod_cast hA
+  omega
+
+/-- The shifts `k` at which `carry_le_of_tau_le` needs real input are only those with
+`2·√(N+1+k) > A·(k+1)`; everywhere else `τ(m) ≤ 2√m` already gives the hypothesis. -/
+theorem tau_le_of_sqrt_small (N A k : ℕ) (h : 2 * Nat.sqrt (N + 1 + k) ≤ A * (k + 1)) :
+    tau (N + 1 + k) ≤ A * (k + 1) :=
+  le_trans (tau_le_two_mul_sqrt (by omega)) h
+
 /-! ### 3c. The padding reduction: the crux becomes a congruence on `τ` -/
 
 /-- The in-window part of `windowNum`. -/
@@ -1474,24 +1563,54 @@ theorem card_large_tau_le (M r X T : ℕ) (hM : 0 < M) (hr : Nat.Coprime r M) :
     rw [Finset.sum_const, smul_eq_mul, Nat.mul_comm]
   omega
 
-/-- **The remaining, genuinely analytic, half of `CarryLeaf`.**  The same first moment, but
-along the primes of the progression: for `gcd(r,M)=1` there are primes `p ∈ (N, Y]` with
-`p ≡ r (mod M)` at which `τ(c·p + e)` is `≤ T`, provided the trivial budget holds.
+/-- **The remaining, genuinely analytic, half of `CarryLeaf`.**  The first moment of `τ`
+restricted to the primes of a progression, in the *family* form that `carry_le_of_tau_le`
+consumes: one prime `p` of the progression at which the divisor function is `≤ b^K·(k+1)` at
+EVERY shift `2^a p + K + 1 + k` simultaneously.
 
-This is a Brun–Titchmarsh (Selberg upper-bound sieve) statement for `Σ_{p ≤ Y, p ≡ r (M)}
-τ(c p + e) ≪ π(Y;M,r)·log(cY)` together with a Linnik-type lower bound
-`π(Y;M,r) ≫ Y/(φ(M) log Y)` for `Y = M^{O(1)}`.  Neither is in mathlib; both are `🟡`
-project-scale.  `card_large_tau_le` above is the corresponding statement over the full
-progression and IS proved — the open content is exactly the restriction to primes. -/
-def TauMomentPrimes : Prop :=
-  ∀ c e N M r T : ℕ, 0 < c → 0 < M → Nat.Coprime r M →
-    2 * ((Nat.log 2 M + 1) * (Nat.log 2 c + Nat.log 2 M + 4)) ≤ T →
-    N ≤ T →
-    ∃ p : ℕ, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ tau (c * p + e) ≤ T
+The family form (rather than one shift at a time) is forced: the carry is a series, so a
+single-shift existence statement cannot be union-bounded.  The counting statement behind it is
 
-/-- **The one open obligation on the headline path.**  See `CarryLeaf`. -/
-theorem carryLeaf_holds (b : ℕ) (hb : 3 ≤ b) : CarryLeaf b := by
+    #{p ≤ Y : p prime, p ≡ r (M), τ(2^a p + K+1+k) > b^K·(k+1)}  ≪  π(Y;M,r)·log(2^a Y)/(b^K(k+1))
+
+(Brun–Titchmarsh / Selberg upper-bound sieve for the shifted divisor function along primes),
+summed over `k`.  The sum converges comfortably: `log(2^a Y) ≈ b^{K/2}` while the thresholds
+grow linearly in `k` and the trivial bound `τ(m) ≤ 2√m` already covers every
+`k ≥ 2√(2^a p)/b^K`, so only `O(b^{K/2})` shifts need input and the total exceptional density is
+`≪ b^{K/2}·b^{K/2}/b^K·Σ_k (k+1)^{-1}`-controlled.  A Linnik-type lower bound
+`π(Y;M,r) ≫ Y/(φ(M) log Y)` at `Y = M^{O(1)}` makes the family non-empty.
+
+Neither ingredient is in mathlib; both are `🟡` project-scale.  `card_large_tau_le` above is the
+same first moment over the FULL progression and IS proved — the open content is exactly the
+restriction to primes. -/
+def TauMomentPrimes (b : ℕ) : Prop :=
+  ∀ K M r a N : ℕ, 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) → M ≤ 2 ^ (b ^ (K / 2)) →
+    N ≤ b ^ (K / 2) →
+    ∃ p : ℕ, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧
+      ∀ k : ℕ, tau (2 ^ a * p + K + 1 + k) ≤ b ^ K * (k + 1)
+
+/-- **`CarryLeaf` now follows from `TauMomentPrimes` by pure analysis.**  The whole of the
+carry side is discharged by `carry_lt_of_tau_le`; what is left is exactly the divisor-function
+input along the primes of one progression. -/
+theorem carryLeaf_of_tauMomentPrimes (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimes b) :
+    CarryLeaf b := by
+  intro K M r a N hM hr ha hMb hN
+  obtain ⟨p, hpN, hpp, hpr, hk⟩ := h K M r a N hM hr ha hMb hN
+  refine ⟨p, hpN, hpp, hpr, ?_⟩
+  have hApos : 0 < b ^ K := Nat.pow_pos (by omega : 0 < b)
+  have := carry_lt_of_tau_le b hb (2 ^ a * p + K) (b ^ K) hApos (fun k => by
+    have := hk k
+    rwa [show 2 ^ a * p + K + 1 + k = 2 ^ a * p + K + 1 + k from rfl] at this)
+  simpa using this
+
+/-- **The one open obligation on the headline path.**  See `TauMomentPrimes`: the first moment
+of `τ` along the primes of an arithmetic progression.  The full-progression version
+(`card_large_tau_le`) is proved; only the restriction to primes is open. -/
+theorem tauMomentPrimes_holds (b : ℕ) (hb : 3 ≤ b) : TauMomentPrimes b := by
   sorry
+
+theorem carryLeaf_holds (b : ℕ) (hb : 3 ≤ b) : CarryLeaf b :=
+  carryLeaf_of_tauMomentPrimes b hb (tauMomentPrimes_holds b hb)
 
 theorem survivorLeaf_holds (b : ℕ) (hb : 3 ≤ b) : SurvivorLeaf b :=
   survivorLeaf_of_carryLeaf b hb (carryLeaf_holds b hb)

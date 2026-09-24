@@ -41,19 +41,33 @@ Sanity anchor: `M=5, r=1, X=100` gives LHS `92`, RHS `132` (`#eval`-checked).
   `Σ_{p ≤ Y, p≡r(M)} τ(cp+e)`, plus a Linnik lower bound for `π(Y;M,r)` so the family is
   non-empty).  Neither ingredient is in mathlib.
 
+## Also landed (lap 18b): the carry side is now PURE PLUMBING, and it is discharged
+
+* `carry_le_of_tau_le` / `carry_le_of_tau_le'` / `carry_lt_of_tau_le` — **if `τ(N+1+k) ≤ A·(k+1)`
+  for every `k`, then `4·carry b τ N ≤ 3A`, hence `carry < A` for `A > 0`.**  The `3/4` comes from
+  `r/(1−r)² ≤ 3/4` at `b ≥ 3`, so no constant is lost.  `carry_le_sqrt` is the instance
+  `A = 2√N+2`.  Note the hypothesis threshold GROWS linearly in `k`, and `τ(m) ≤ 2√m`
+  (`tau_le_of_sqrt_small`) already gives it for every `k ≥ 2√N/A`: only `O(√N/A)` shifts need
+  real input.
+* `TauMomentPrimes b` — restated in the **family** form this forces (a single-shift existence
+  statement cannot be union-bounded across a series): one prime `p` of the progression with
+  `τ(2^a p + K + 1 + k) ≤ b^K·(k+1)` for ALL `k` at once.
+* `carryLeaf_of_tauMomentPrimes` — **proved**.  `CarryLeaf` is no longer open: `carryLeaf_holds`
+  is now a theorem modulo `tauMomentPrimes_holds`.
+
+So `src/NormalNumbers/SwingC2.lean`'s headline-path `sorry` has MOVED from `carryLeaf_holds`
+(a mix of analysis and number theory) to `tauMomentPrimes_holds` (pure analytic number theory,
+a named literature statement).  The analysis is gone.
+
 ## The crux now
 
-**`carryLeaf_holds` still `sorry`, and the gap is exactly `TauMomentPrimes`** — no longer "a
-first moment along a progression" (proved) but "the transfer of that first moment from the
-integers of a progression to its primes".
+**`tauMomentPrimes_holds` is the single headline-path `sorry`**, and its content is exactly
+"the transfer of the first moment of `τ` from the integers of a progression to its primes",
+in the family form (Brun–Titchmarsh upper bound per shift + Linnik lower bound for
+`π(Y;M,r)`, union-bounded over the `O(b^{K/2})` undamped shifts).
 
 Next actions:
-1. `carryLeaf_of_tauMomentPrimes` — the plumbing: the carry `Σ_{k≥1} τ(2^a p + K + k)/b^k` is a
-   series, so one needs `TauMomentPrimes` simultaneously for the `O(K)` shifts `e = K+k` that
-   are not damped by `b^{-k}` (for `k ≥ log_b(2^a p)` the trivial bound `τ(m) ≤ m` suffices).
-   A union bound over those `O(b^{K/2})` shifts costs a factor that the density `≪ log/T` can
-   absorb; make that explicit.  This is bookkeeping, not new mathematics — worth landing.
-2. Attack `TauMomentPrimes`.  The cheapest honest route is NOT the sieve but the escape recorded
+1. Attack `TauMomentPrimes`.  The cheapest honest route is NOT the sieve but the escape recorded
    in lap 17 §2: if (K2) could be met by a congruence rather than by a prime, `card_large_tau_le`
    alone closes `CarryLeaf`.  Escapes (i) force the cofactor `= 1` by size and (ii) two surviving
    slots are still unrefuted and are route-decisive.
