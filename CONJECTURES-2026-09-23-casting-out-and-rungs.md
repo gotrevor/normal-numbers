@@ -83,3 +83,19 @@ family, and naming it is the finding.  Confidence: true ~95%; reachable with cur
   variance).  But the dimension count is ~2(L+1) linear constraints against ~2^L freedom, so a
   single q is probably false (~20%).  The all-odd-q version is plausibly true (~70%) and may be
   classical, via Fourier inversion over odd multipliers.  Parked pending a literature check.
+
+## C4 (2026-09-24) Abelian normality at prescribed window lengths
+
+**Probe finding** (`probes/abelian_window_sets.py`, exact integer ranks).  Take the order-(k−1)
+Markov perturbations of the uniform binary measure.  For k = 6 and k = 8, a set S ⊆ {1..k} is the
+EXACT set of window lengths where the sequence is abelian iff S = ∅ or 1 ∈ S.  The one forced
+implication is "abelian at any L ⇒ abelian at 1": the mean of Binomial(L, ½) forces digit density
+½.  Every other pattern is realizable.  Examples: abelian at 4 but not at 2 or 3; abelian at
+{1, 3, 5} only; abelian at 1..6 but not at 7.
+A generic small perturbation inside W_S has full support, so an order-(k−1) Markov chain realizes
+it, and a.e. sample path (or a deterministic typical concatenation) gives an explicit sequence.
+
+**Conjecture C4.**  For EVERY S ⊆ ℕ₊ with 1 ∈ S (infinite S included), some binary sequence is
+abelian-normal at exactly the lengths in S.  Finite S follows from the probe mechanism.  Infinite
+S needs a limit of perturbations whose depth-k corrections don't disturb the lengths already
+settled.  Confidence ~75%.
