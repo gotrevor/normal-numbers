@@ -457,3 +457,5 @@ import NormalNumbers.SwingC1Model
 import NormalNumbers.SwingC1Depth
 import NormalNumbers.SwingC1Delange
 import NormalNumbers.SwingC1Pair
+import NormalNumbers.SwingC1Katai
+import NormalNumbers.SwingC1Head

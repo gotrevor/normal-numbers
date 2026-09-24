@@ -9624,3 +9624,90 @@ mass (`OBSTRUCTION-2026-09-24-periodic-approximant.md`).  Next attack: the pair 
 no `r`-independent drift (`sum_primePeriodicTerm_period` cancels between `p` and `q`), so the
 decoupling defect for the DIFFERENCE should be estimable where it is not for the single tail.
 Formalize that cancellation first: `∑_{s<r} (ppt b r (p*s) − ppt b r (q*s)) = 0`.
+
+## swing-c1 lap 33 — `ShiftIndep` discharged into `PairDecorr`; leaf (D) is now the sole crux
+
+New file `src/NormalNumbers/SwingC1Katai.lean` (sorry-free).  Also added to `SwingC1Pair.lean`:
+`sum_primePeriodicTerm_mul_period` and `sum_pairTerm_period`.
+
+### What landed
+
+* `KataiOrthogonality` — the Daboussi–Kátai orthogonality criterion (Kátai 1986; Daboussi–Delange
+  1974; multiplicative BSZ) as a named hypothesis: a KNOWN theorem, not in mathlib.
+* `PairDecorr b t` — `mean_n e(t(θ_{pn} − θ_{qn})) → 0` for distinct primes `p ≠ q`.
+* `phase_omegaNat_multiplicative` — `e(t·ω(·))` is multiplicative (via `Nat.primeFactors_mul`
+  and `Nat.Coprime.disjoint_primeFactors`, with the `m = 0`/`n = 0` corner cases).
+* `tendsto_fullMean_shift` — a bounded sequence's Cesàro mean is shift-invariant in the limit
+  (reusable; the DK conclusion is over `n`, `ShiftIndep` is over `n+1`).
+* `shiftIndep_of_pairDecorr : KataiOrthogonality → DelangeMean t → PairDecorr b t → ShiftIndep b t`.
+* `sum_pairTerm_period` — **the pair difference has EXACTLY zero drift over a full period**,
+  for every `r` and hence every cut `P`.  Contrast the single tail, whose period mean
+  `1/(r(b−1))` sums to the divergent Mertens drift.
+
+So the crux of `conjC1` is now exactly **leaf (D) = `PairDecorr b (h/b)`**, plus the two KNOWN
+theorems `DelangeMean` (Delange 1969) and `KataiOrthogonality`.  `PairDecorr` contains no
+multiplicative function at all: it is a pure statement about the orbit `θ` at multiplicatively
+shifted indices, whose periodic-model form is already unconditional (`periodMean_pair_tendsto_zero`).
+
+### Route analysis for leaf (D) — the prime-truncation route is REFUTED, quantitatively
+
+Attempted this lap and rejected, with the numbers:
+* truncate the prime expansion at cut `y`: the discarded tail has mean
+  `Σ_{y<r≤N} 1/(r(b−1)) ≈ (log log N − log log y)/(b−1)`, so it is `o(1)` only for
+  `y = N^{1−o(1)}`;
+* the joint period is `Q_y = e^{(1+o(1))y}`, usable only for `Q_y ≤ N`, i.e. `y ≤ log N`;
+* at `y = log N` the discarded tail has mean `≈ log log N → ∞`.  The two requirements are
+  incompatible — this is the quantitative form of `OBSTRUCTION-2026-09-24-periodic-approximant.md`,
+  now checked for the PAIR difference too.
+* The zero-drift cancellation (`sum_pairTerm_period`) does NOT rescue it: the *variance* of
+  `θ_{pn} − θ_{qn}` is `Σ_r Var(g_r) ≍ Σ_{r≤N} 1/r ≍ log log N`, which still diverges.  Zero
+  drift removes the first moment, not the second.
+* Also refuted: splitting `n = a + Q_P m` and summing the large-prime factor over `m` — the
+  large-prime factor has modulus `1`, so the bound collapses to `mean_a |f_P(a)| = 1`.
+
+### What leaf (D) really is, and the next attack
+
+Via the depth reduction (`norm_fullMean_phase_sub_head`, lap 28) the integrand is, up to `o(1)`,
+`Π_{k≤L} f_k(pn+k) · Π_{k≤L} \bar f_k(qn+k)` with `f_k(m) = e(t b^{−k} ω(m))` multiplicative and
+`L = L(N) → ∞` slowly.  That is a `2L`-point correlation of multiplicative functions at shifted
+linear forms — Elliott/Chowla territory, known unconditionally only in LOGARITHMIC density and
+only for two points (Tao 2015; Tao–Teräväinen).  So leaf (D) is a genuine multi-year wall and
+should be narrowed, not cleared.
+
+**Concrete next probes, in order:**
+1. *Logarithmic density.*  `conjC1`'s `CastLaw` is a natural-density statement, but if the
+   route can be run with logarithmically averaged means throughout, the two-point case becomes
+   a KNOWN theorem.  Check whether `fullMean` can be replaced by a logarithmic mean everywhere
+   upstream (`SwingC1Delange`, `SwingC1Depth`) without breaking the depth truncation — the
+   depth bound is pointwise, so it should survive.  This is the single highest-value probe.
+2. *Reduce `L` to 2.*  The depth-`L` product is an iterated ONE-step twist
+   (`phase_omegaTail_factor`).  Iterating `shiftIndep_of_pairDecorr` `L` times might reduce the
+   `2L`-point correlation to `L` applications of a TWO-point statement.
+3. Van der Corput in `n` converts `PairDecorr` into additive-shift correlations of `ω`; record
+   whether that is better or worse than the multiplicative shifts.
+
+### lap 33 addendum — the Delange/Kátai chain was DANGLING; the wiring is the next target
+
+Audit finding this lap: `grep -rn weylMean src/` matches ONLY `SwingC1Delange.lean` and
+`SwingC1Head.lean`.  Nothing in `SwingC1.lean` consumes `weylMean`, so the whole
+Delange → Kátai → PairDecorr chain is not yet connected to the headline's open leaves
+(`hAutoCorrAll` at l. 2201, `hDepthAll` at l. 920).
+
+The bridge exists mathematically and the repo has every piece:
+* `omegaTail_pow` : `b^L·θ_n = omegaHead b L n + θ_{n+L}`, so
+  `omegaWindowVal b L n = ⌊b^L·θ_n⌋` and hence `≡ ⌊b^L·fract θ_n⌋ (mod b^L)`;
+* `WeylCriterion.lean`'s `equidistributed_of_weyl` turns `weylMean b k → 0` for all nonzero
+  integers `k` into `Equidistributed (fun n => Int.fract (omegaTail b n))`;
+* the window character sum is then a STEP function of the orbit point, constant `ζ_{b^L}^{a v}`
+  on `[v/b^L, (v+1)/b^L)`, and `Σ_{v<b^L} ζ_{b^L}^{a v} = 0` for `b^L ∤ a`;
+* so `HWindowChar b L` for every `L`, i.e. `hWindowCharAll`, hence `hWindowAll`,
+  `hState_of_blockRoute`, `ConjC1`.
+
+**NEXT LAP: build `src/NormalNumbers/SwingC1Weyl.lean`** with
+`weylMean_eq_fourierMean`, `equidistributed_of_weylMean`, `omegaWindowVal_eq_floor`,
+`sum_zetaRoot_pow_eq_zero`, `hWindowChar_of_equidistributed`.  A WIP draft is at
+`/tmp/SwingC1Weyl.lean.wip` (not committed; the last two proofs were unfinished).
+
+⚠️ Note this route proves normality of `G₄_b`, which is STRICTLY STRONGER than `ConjC1`.
+`hAutoCorrAll` (fixed modulus `b−1`) stays the weaker leaf that `conjC1` actually rests on.
+Recorded so a later lap does not mistake the block route for the minimal one.

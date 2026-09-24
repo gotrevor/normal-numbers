@@ -88,6 +88,58 @@ theorem periodMean_phase_truncPairTail (b P p q : ℕ) (t : ℝ) :
     Nat.cast_prod, ← Finset.prod_div_distrib]
   rfl
 
+/-! ### The pair difference has exactly zero drift -/
+
+/-- Multiplying the index by a unit mod `r` permutes the residues, so the full-period sum of
+`primePeriodicTerm b r (p·s)` is the same `1/(b−1)` as for `p = 1`. -/
+lemma sum_primePeriodicTerm_mul_period (b : ℕ) (hb : 2 ≤ b) (r p : ℕ) (hr : r.Prime)
+    (hp : ¬ (r ∣ p)) :
+    ∑ s ∈ range r, primePeriodicTerm b r (p * s) = 1 / ((b : ℝ) - 1) := by
+  classical
+  haveI : Fact r.Prime := ⟨hr⟩
+  haveI : NeZero r := ⟨hr.pos.ne'⟩
+  have hpne : (p : ZMod r) ≠ 0 := fun h => hp ((ZMod.natCast_eq_zero_iff p r).mp h)
+  set pinv : ℕ := ((p : ZMod r)⁻¹).val with hpinv
+  rw [← sum_primePeriodicTerm_period b hb r hr]
+  refine Finset.sum_nbij' (i := fun s => (p * s) % r) (j := fun u => (pinv * u) % r)
+    ?_ ?_ ?_ ?_ ?_
+  · intro a _; exact Finset.mem_range.mpr (Nat.mod_lt _ hr.pos)
+  · intro a _; exact Finset.mem_range.mpr (Nat.mod_lt _ hr.pos)
+  · intro a ha
+    rw [Finset.mem_range] at ha
+    have hc : ((pinv * ((p * a) % r) : ℕ) : ZMod r) = ((a : ℕ) : ZMod r) := by
+      push_cast
+      rw [ZMod.natCast_mod, hpinv, ZMod.natCast_val, ZMod.cast_id]
+      push_cast
+      field_simp
+    have h2 : (pinv * ((p * a) % r)) % r = a % r := by
+      rw [← ZMod.val_natCast r, ← ZMod.val_natCast r a, hc]
+    rw [h2, Nat.mod_eq_of_lt ha]
+  · intro a ha
+    rw [Finset.mem_range] at ha
+    have hc : ((p * ((pinv * a) % r) : ℕ) : ZMod r) = ((a : ℕ) : ZMod r) := by
+      push_cast
+      rw [ZMod.natCast_mod, hpinv]
+      push_cast
+      rw [ZMod.natCast_val, ZMod.cast_id]
+      field_simp
+    have h2 : (p * ((pinv * a) % r)) % r = a % r := by
+      rw [← ZMod.val_natCast r, ← ZMod.val_natCast r a, hc]
+    rw [h2, Nat.mod_eq_of_lt ha]
+  · intro a _
+    rw [primePeriodicTerm, primePeriodicTerm, if_pos hr, if_pos hr, Nat.mod_mod_of_dvd _ dvd_rfl]
+
+/-- **The pair difference has exactly zero drift over a full period.**  Contrast
+`sum_primePeriodicTerm_period`, where the single tail's period mean is `1/(r(b−1))` and summing
+over `r ≤ P` gives the divergent Mertens drift `≍ (log log P)/(b−1)` recorded in
+`OBSTRUCTION-2026-09-24-periodic-approximant.md`.  For the DIFFERENCE the drift cancels exactly,
+for every `r` and hence for every cut `P`. -/
+theorem sum_pairTerm_period (b : ℕ) (hb : 2 ≤ b) (r p q : ℕ) (hr : r.Prime)
+    (hp : ¬ (r ∣ p)) (hq : ¬ (r ∣ q)) :
+    ∑ s ∈ range r, (primePeriodicTerm b r (p * s) - primePeriodicTerm b r (q * s)) = 0 := by
+  rw [Finset.sum_sub_distrib, sum_primePeriodicTerm_mul_period b hb r p hr hp,
+    sum_primePeriodicTerm_mul_period b hb r q hr hq, sub_self]
+
 /-! ### Geometry and residue selection for the separation bound -/
 
 lemma phase_im (x : ℝ) : (phase x).im = Real.sin (2 * Real.pi * x) := by
