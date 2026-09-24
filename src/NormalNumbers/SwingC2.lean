@@ -1290,10 +1290,12 @@ the modulus, so it remains free to be prescribed by a Dirichlet prime.
 Mechanism: at slot `j ≠ j₀` we pin `v_q(n+1+j) = b−1` at `L` distinct primes `q`, so
 `b^L ∣ τ(n+1+j)` (`pow_card_dvd_tau`), which is more than the `b^{j+1}` the slot needs; all the
 pinning conditions are congruences to pairwise coprime moduli `q^b` (`exists_pin_progression`). -/
-theorem exists_kill_progression (b L j₀ : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L) (hj₀ : j₀ < L) :
+theorem exists_kill_progression' (b L j₀ : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L) (hj₀ : j₀ < L) :
     ∃ n₀ : ℕ, Nat.Coprime (n₀ + 1 + j₀) (killModulus b L) ∧
-      ∀ n : ℕ, n ≡ n₀ [MOD killModulus b L] →
-        ∀ j, j < L → j ≠ j₀ → ((b : ℤ) ^ (j + 1) ∣ (tau (n + 1 + j) : ℤ)) := by
+      (∀ n : ℕ, n ≡ n₀ [MOD killModulus b L] →
+        ∀ j, j < L → j ≠ j₀ → ((b : ℤ) ^ (j + 1) ∣ (tau (n + 1 + j) : ℤ))) ∧
+      (∀ n : ℕ, n ≡ n₀ [MOD killModulus b L] → ∀ e : ℕ, L < 1 + j₀ + e →
+        ∀ q : ℕ, q.Prime → q ∣ killModulus b L → q ∣ n + 1 + j₀ + e → q ≤ j₀ + e) := by
   classical
   set sl : ℕ → ℕ := fun s => if s < j₀ then s else s + 1 with hsl
   set c : ℕ → ℕ := fun k => 1 + sl (k / L) with hc
@@ -1314,7 +1316,7 @@ theorem exists_kill_progression (b L j₀ : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L) (
       simp only [hsl]
       split <;> omega
     exact key (k / L) hdiv
-  refine ⟨n₀, ?_, ?_⟩
+  refine ⟨n₀, ?_, ?_, ?_⟩
   · rw [hmod]
     refine Nat.Coprime.prod_right fun k hk => Nat.Coprime.pow_right _ ?_
     have hkN : k < (L - 1) * L := Finset.mem_range.mp hk
@@ -1373,6 +1375,63 @@ theorem exists_kill_progression (b L j₀ : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L) (
       rwa [hcard] at this
     have hstep : b ^ (j + 1) ∣ b ^ L := pow_dvd_pow b (by omega)
     exact_mod_cast Int.natCast_dvd_natCast.2 (hstep.trans hdvdL)
+  · intro n hn e he q hqp hqM hqd
+    rw [hmod] at hqM
+    obtain ⟨k, hk, hqk⟩ := (Nat.Prime.prime hqp).exists_mem_finset_dvd hqM
+    have hkN : k < (L - 1) * L := Finset.mem_range.mp hk
+    have hq_eq : q = killPrime L k :=
+      (Nat.prime_dvd_prime_iff_eq hqp (killPrime_prime L k)).1
+        (Nat.Prime.dvd_of_dvd_pow hqp hqk)
+    obtain ⟨hc1, hcL, -⟩ := hck k hkN
+    have hpin : (n + c k).factorization (killPrime L k) = b - 1 := hn₀ n hn k hkN
+    have hne0 : n + c k ≠ 0 := by omega
+    have hqdvd : killPrime L k ∣ n + c k :=
+      (Nat.Prime.dvd_iff_one_le_factorization (killPrime_prime L k) hne0).2 (by omega)
+    have hqd' : killPrime L k ∣ n + (1 + j₀ + e) := by
+      rw [hq_eq] at hqd
+      rw [show n + (1 + j₀ + e) = n + 1 + j₀ + e by ring]
+      exact hqd
+    have hd : killPrime L k ∣ (n + (1 + j₀ + e)) - (n + c k) := Nat.dvd_sub hqd' hqdvd
+    rw [Nat.add_sub_add_left] at hd
+    have hle := Nat.le_of_dvd (by omega) hd
+    rw [hq_eq]
+    omega
+
+/-- **The kill progression, in the form the rest of the file consumes.** -/
+theorem exists_kill_progression (b L j₀ : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L) (hj₀ : j₀ < L) :
+    ∃ n₀ : ℕ, Nat.Coprime (n₀ + 1 + j₀) (killModulus b L) ∧
+      ∀ n : ℕ, n ≡ n₀ [MOD killModulus b L] →
+        ∀ j, j < L → j ≠ j₀ → ((b : ℤ) ^ (j + 1) ∣ (tau (n + 1 + j) : ℤ)) := by
+  obtain ⟨n₀, h1, h2, -⟩ := exists_kill_progression' b L j₀ hb hL hj₀
+  exact ⟨n₀, h1, h2⟩
+
+/-- Every prime factor of the kill modulus exceeds `L + 2`. -/
+theorem lt_of_prime_dvd_killModulus {b L q : ℕ} (hqp : q.Prime) (hq : q ∣ killModulus b L) :
+    L + 2 < q := by
+  classical
+  obtain ⟨k, -, hqk⟩ := (Nat.Prime.prime hqp).exists_mem_finset_dvd hq
+  have hq_eq : q = killPrime L k :=
+    (Nat.prime_dvd_prime_iff_eq hqp (killPrime_prime L k)).1
+      (Nat.Prime.dvd_of_dvd_pow hqp hqk)
+  rw [hq_eq]
+  exact lt_killPrime L k
+
+/-- **The near shifts are coprime to the kill modulus.**  This is the structural fact that
+rescues the incidence sum from the `2^{ω(M)}` gcd loss (lap-18j finding 6): with `M` the kill
+modulus and `n` in the kill class, `gcd(M, n+1+j₀+e) = 1` for every shift `e` with
+`L < 1+j₀+e` and `j₀+e ≤ L+2`.  The point is that a kill prime `q` assigned to slot `c k ≤ L`
+divides `n + c k`, so if it also divided `n+1+j₀+e` it would divide the *positive* difference
+`1+j₀+e − c k ≤ j₀+e`, forcing `q ≤ j₀+e ≤ L+2` — impossible, since every kill prime
+exceeds `L+2`.  For larger `e` the same argument caps the prime factors of the gcd by `j₀+e`,
+which is what bounds the divisor loss by a function of the shift alone. -/
+theorem coprime_killModulus_shift {b L j₀ n e : ℕ}
+    (h : ∀ q : ℕ, q.Prime → q ∣ killModulus b L → q ∣ n + 1 + j₀ + e → q ≤ j₀ + e)
+    (hsmall : j₀ + e ≤ L + 2) : Nat.Coprime (killModulus b L) (n + 1 + j₀ + e) := by
+  by_contra hcon
+  obtain ⟨q, hqp, hq1, hq2⟩ := Nat.Prime.not_coprime_iff_dvd.1 hcon
+  have h1 := h q hqp hq1 hq2
+  have h2 := lt_of_prime_dvd_killModulus (b := b) hqp hq1
+  omega
 
 
 /-- **The kill modulus is only exponential in a polynomial**: `log₂ (killModulus b L) ≤ b(L+5)⁴`.
