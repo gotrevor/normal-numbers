@@ -191,4 +191,24 @@ theorem omegaCarry_sandwich_log {b : ℕ} (hb : 2 ≤ b) (k J : ℕ) (hk : 1 ≤
   rw [hsplit] at hle
   linarith
 
+/-! ### The carry recursion: `G_b`'s digits are a base-`b` adder automaton driven by `ω` -/
+
+/-- `carryHead b k 1 = ω(k+1)/b`. -/
+@[simp] lemma carryHead_one (b k : ℕ) : carryHead b k 1 = omegaR (k + 1) / (b : ℝ) := by
+  simp [carryHead]
+
+/-- **The carry recursion.**  Together with `digitOf_primeLambertAtBase` this says: the digit
+stream of `G_b` is exactly the output of the base-`b` addition automaton run right-to-left on
+the input stream `ω(1), ω(2), …`, with `omegaCarry b k` the carry state at position `k`. -/
+theorem omegaCarry_succ {b : ℕ} (hb : 2 ≤ b) (k : ℕ) :
+    omegaCarry b k = (ArithmeticFunction.cardDistinctFactors (k + 1) + omegaCarry b (k + 1)) / b := by
+  have hsplit := tailB_split hb k 1
+  rw [carryHead_one, pow_one] at hsplit
+  have hT : G4.tailB b k = ((ArithmeticFunction.cardDistinctFactors (k + 1) : ℝ)
+      + G4.tailB b (k + 1)) / (b : ℝ) := by
+    rw [hsplit, omegaR]; ring
+  rw [omegaCarry, hT, Nat.floor_div_natCast, omegaCarry]
+  congr 1
+  rw [add_comm, Nat.floor_add_natCast (tailB_nonneg hb _), add_comm]
+
 end NormalNumbers

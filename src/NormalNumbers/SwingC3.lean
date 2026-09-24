@@ -295,8 +295,23 @@ much better than it looks: `SwingC3Carry.tailB_split` splits the tail EXACTLY as
 `< 1`: the carry is a function of the SHORT window `ω(k+1), …, ω(k+J)` up to one unit, not of
 the far future.  So the whole length-`ℓ` digit window at `n` is a function of `ω` on
 `[n+1, n+ℓ+O(log log n)]` — an iterated-logarithmically short window, deep inside the Kubilius
-regime (which tolerates windows up to `n^{o(1)}`).  What is still missing is the last unit of ambiguity in the sandwich (the near-integer
-exceptional set) and the joint law itself. -/
+regime (which tolerates windows up to `n^{o(1)}`).  `SwingC3Carry.omegaCarry_succ` makes this exact rather than approximate:
+`omegaCarry b k = (ω(k+1) + omegaCarry b (k+1)) / b`, so the digit stream of `G_b` is literally
+the output of the base-`b` addition automaton run right-to-left on the input stream
+`ω(1), ω(2), …`, with `omegaCarry` the carry state.
+
+**Route refuted this lap.**  The automaton form tempts one to reduce the crux to prescribing the
+`ω(n+j+1)` *exactly* on a fixed-length window (then the carry recursion determines the digits
+outright, given one incoming carry value).  That route is dead: by Landau, `#{n ≤ N : ω(n) = k}
+∼ N (log log N)^{k−1} / ((k−1)! log N)`, so every EXACT value of `ω` has density zero, and a
+fixed exact vector can never carry positive density.  The prescription must stay modular — which
+is why `OmegaCarryJoint` couples `ω`-residues to a carry residue rather than to carry values,
+and why it cannot be weakened to a pure statement about `ω mod b` alone: the carry recursion
+`(ω + c) / b` sees `ω div b`, not just `ω mod b`.
+
+What is still missing is the joint law itself: equidistribution of `ω mod b` is already
+Selberg–Delange-grade (the generating Dirichlet series is `ζ(s)^z G(s,z)`), so this leaf is not
+elementary and is the right place for the campaign's next analytic investment. -/
 
 open Classical in
 /-- **The carry-joint leaf.**  Some residue class `g` of the carry is compatible, at positive
