@@ -511,6 +511,7 @@ import NormalNumbers.TwoPointDeficit
 import NormalNumbers.TwoPointPairing
 import NormalNumbers.TwoPointPairingRigidity
 import NormalNumbers.TwoPointBlockRotation
+import NormalNumbers.TwoPointGramDiagonal
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower

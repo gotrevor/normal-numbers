@@ -1,10 +1,67 @@
 # STATUS — normal-numbers 📊
 
-**Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
-· **Build**: 🟢 green (9161 jobs) · **Updated**: 2026-09-23, campaign complete · HEAD `3523f8d`
-· branch `wip/g5-prime-subset`
+**ACTIVE (branch `wip/twopoint-avg`): the C1 casting-out swing.  `ConjC1` now follows from
+Delange's theorem plus the single node `PairDecorr` — the cited Kátai/BSZ hypothesis is GONE.**
+· **Build**: 🟢 green (9282 jobs) · **Updated**: lap 24 · 2026-09-24 · HEAD after `dfaa5c7`
+· On `master`/Pair A: Theorem C′ (`isNormal_subsetLambert_of_sqrtFreshMassZero`) PROVED and
+  trust-triple, 2026-09-23.
 
-## Where it stands (multicutoff campaign)
+## Where it stands (ACTIVE: C1 / twopoint campaign, branch `wip/twopoint-avg`)
+
+`KICKOFF-2026-09-24-twopoint-bet.md` bets on the averaged weighted two-point leaf of C1.  Laps
+1–10 proved the **Kátai/BSZ inequality itself** in kernel (`katai_master`, `katai_mean_sq`) — it is
+a theorem here, not a citation.  Laps 11–12 rewired C1 onto the growing-`w` arithmetic leaf
+`twoPointGramSum b t (w N) N = o(N·L(w N)²)`.  Laps 13–23 priced four attacks on that leaf against
+the *trivial* bound and refuted three of them as estimation strategies.
+
+**Lap 24 (review lap) corrected the laps-13–23 framing.**  The cutoff `w` is existentially
+quantified, so the leaf only has to hold at ONE cutoff per `N`; diagonalising
+(`exists_slow_cutoff`), fixed-pair `o(N)` decorrelation already closes it.  So the whole
+uniform-in-`(p,q,w)` saving programme of laps 15–23 is **sufficient but far from necessary**, and
+the wrap-2 claim "per-pair decorrelation does not imply the leaf" is **false** — the implication is
+now a theorem (`twoPointPairGramSmall_of_fixedPair`).  Cashing it:
+**`conjC1_of_delange_pairDecorr` : Delange + `PairDecorr` ⟹ `ConjC1`**, with NO cited Kátai
+hypothesis — strictly sharper than `conjC1_of_delange_katai` (`SwingC1Weyl.lean`).
+
+Where that leaves the bet: `PairDecorr b t` for a fixed pair `p ≠ q` is
+`E_m e(t(θ_{pm} − θ_{qm})) → 0`, which by `pairDecorr_iff_twoPointWeighted` **is** a
+natural-density weighted two-point Elliott correlation.  That is a **named open problem** (Tao
+2016 gives it in *logarithmic* average only).  The leaf is therefore no harder than Elliott-2pt at
+natural density, and — by `tendsto_maxRecipSum_div_sq` — strictly weaker than it, with no known
+route in between.
+
+## What's happened (C1 / twopoint campaign, newest first)
+
+- **2026-09-24 (lap 24, review lap) — THE DIAGONAL CORRECTION.**  `TwoPointGramDiagonal.lean`:
+  `exists_slow_cutoff` (diagonalisation, no uniformity in `w` needed),
+  `twoPointPairGramSmall_of_fixedPair`, `truncSum_div_tendsto_of_twoPointWeighted`, and three
+  Kátai-free reductions of C1 — `conjC1_of_delange_pairwiseTwoPoint`,
+  `conjC1_of_delange_twoPointElliott_weightDecouple`, `conjC1_of_delange_pairDecorr`.  All
+  trust-triple.  Direction REVISED: stop chasing a uniform per-pair saving; the target is the
+  fixed-pair statement, and the honest read is that this route is Elliott-equivalent in practice.
+- **2026-09-24 (laps 11–23)** — `katai_mean_sq` (the Kátai step as a theorem), the leaf unfolded
+  to arithmetic (`kataiPairGram_eq`), and four routes priced: trivial estimates insufficient by an
+  unbounded factor; `ℓ¹` averaging no gain; `ℓ²`/fourth moment needs an exact `≥ N²/8` evaluation;
+  rotation pairing rigid for constant `z`, live for a pointwise gap.
+- **2026-09-24 (laps 1–10)** — the Kátai/BSZ inequality assembled end-to-end in kernel
+  (`TwoPointKataiAssemble.lean`); the repo's cited `KataiOrthogonalityAvg` shown to OVERSTATE the
+  literature; the fixed-`w` quantifier worry refuted as an *argument* (`TwoPointWorry.lean`) and
+  then shown not to be where a proof comes from (probe: the arithmetic table is not asynchronous).
+
+## Axiom ledger — C1 / twopoint campaign (real `#print axioms`, 2026-09-24, 9282 jobs)
+
+| headline | paper claim | `#print axioms` | math axioms |
+|---|---|---|---|
+| `conjC1_of_delange_pairDecorr` | C1 is conjectural (Fable C1) | `[propext, Classical.choice, Quot.sound]` | **0** — hypotheses only: `DelangeMean` (🟡 proven, Selberg–Delange, project-scale) and `PairDecorr` (🔴 open: natural-density two-point Elliott for `ζ^ω`) |
+| `conjC1_of_delange_twoPointGram` | as above | trust triple | 0 — `DelangeMean` 🟡 + the growing-`w` leaf 🔴 |
+| `katai_mean_sq` | Kátai 1986 / BSZ 2013 | trust triple | **0 — DISCHARGED** (was the cited `KataiOrthogonality`) |
+| `twoPointWeightedAvg_all` (`TwoPointBet.lean`) | the bet's ratified target | `sorryAx` | open `sorry`, disclosed; 🔴 reduces to fixed-pair Elliott |
+
+🔴 here is honest: C1 is a *conjecture* in Fable, so a route resting on an open two-point Elliott
+statement is not a straying unconditional theorem — it is the conjecture's true depth, now
+measured.  The 🟡 `DelangeMean` is the live debt worth chipping (Selberg–Delange for `ζ^ω`).
+
+## Where it stands (multicutoff campaign — DONE, `master`/Pair A)
 
 Laps 0–7 of `KICKOFF-2026-09-22-multicutoff-lean.md` are landed and the headline
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is **fully assembled and compiling**: the root chain,

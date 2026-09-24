@@ -2,6 +2,57 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
+**Scope: branch `wip/twopoint-avg`** — the C1 casting-out swing of
+`KICKOFF-2026-09-24-twopoint-bet.md`.  (The Theorem C′ directive below is the `master`/Pair A
+directive and is NOT active in this worktree; Theorem C′ is proved and trust-triple.)
+
+**Objective.**  Decide the C1 route: either prove `PairDecorr b t` for a fixed pair of distinct
+primes, or pin the route's depth to a named open problem with a theorem in `src/`.
+
+**Mandated next move (2026-09-24 lap-24 review — direction REVISED).**
+1. **STOP the uniform-saving programme of laps 15–23.**  `exists_slow_cutoff`
+   (`TwoPointGramDiagonal.lean`) proves that the growing-`w` leaf needs NO uniformity in `w`:
+   fixed-pair `o(N)` decorrelation already closes it.  A uniform per-pair saving
+   `δ ≍ L(w)²/π(w)` is *sufficient and far from necessary*, so `TwoPointDeficit`/`TwoPointPairing`/
+   `TwoPointBlockRotation` are off-path unless they yield a FIXED-PAIR statement.
+2. **Attack the fixed pair.**  The crux is now exactly
+   `E_{m≤M} e(t(omegaTail_b(pm) − omegaTail_b(qm))) → 0`, `p ≠ q` fixed primes.  Iterate the peel
+   `phase_shiftPairTail_peel` to `K ≈ log_b log M` (the remainder is `O(b^{-K} log M) = o(1)`,
+   since `omegaTail b n = O(log n)`): the phase becomes the FINITE sum
+   `Σ_{j=1}^{K} (t/b^j)(ω(pm+j) − ω(qm+j))`.  Formalise that truncation first — it is the one
+   prerequisite every route needs and it is elementary.
+3. **Then the sieve/variance read.**  Restricted to prime factors in `(J, z]`, the summands are
+   jointly CRT-independent (primes `> K` divide at most one shift), variance `≍ log log z → ∞`, so
+   the phase mean is `(log z)^{-c}`.  The obstruction is the LARGE-prime part, which is where this
+   becomes Elliott.  A lap that PINS that obstruction as a theorem (an implication
+   `fixed-pair leaf ↔ named open statement`, or a proof that the small-prime part alone suffices)
+   is a success.
+
+**Forbidden drift.**  Do NOT delete, rename or weaken `twoPointWeightedAvg_all`.  Do NOT edit
+`PairDecouple*.lean`, `SwingC1*.lean`, `CastingOut*.lean`, `Maze.lean`, `papers/`, `agent-mail/`,
+other KICKOFFs.  New code in `src/NormalNumbers/TwoPoint*.lean` only.  Do NOT re-price the trivial
+bound, the `ℓ¹` route, the `ℓ²`/fourth-moment route or the constant-`z` rotation pairing — all four
+are already priced in kernel (laps 13–23) and three are refuted as strategies.  Do NOT spend a lap
+on the *uniform* saving.
+
+**Why.**  Laps 13–23 spent eleven laps on a strictly stronger statement than the leaf requires,
+because the budget computation `M(w)/L(w)² → ∞` was read as a lower bound on the *leaf* rather
+than on the *trivial-bound strategy*.  The diagonal reduction closes that gap in one theorem and
+re-points the campaign at the only obligation that can still force a redesign: whether the
+fixed-pair correlation is reachable without Elliott.  If it is not, the honest deliverable is the
+equivalence, which the kickoff explicitly counts as success.
+
+**Directive history.**
+- 2026-09-22 (lap 7 review): graded joint state route (master/Pair A).
+- 2026-09-23 (review lap): route KEPT; narrowed to the three leaves of `PrimeModelFamilyGraded`.
+- 2026-09-24 (lap-24 review, branch `wip/twopoint-avg`): C1 swing REVISED — uniform-saving
+  programme retired by `exists_slow_cutoff`; target is the fixed-pair correlation, via the finite
+  `K ≈ log_b log M` peel.
+
+---
+
+## CURRENT DIRECTIVE — `master` / Pair A (Theorem C′; NOT active in `wip/twopoint-avg`)
+
 **Objective.**  `isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′, Fable §9 / Astra §11)
 SORRY-FREE and trust-triple.  The whole chain is assembled and green; the headline's `sorryAx`
 comes from exactly **three** leaves, all in `src/NormalNumbers/PrimeModelFamilyGraded.lean`.

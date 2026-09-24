@@ -1,5 +1,74 @@
 # PENDING WORK
 
+## 2026-09-24 (lap 24, review lap) — **the diagonal correction**: the C1 leaf needs no uniformity
+
+**Landed** (`src/NormalNumbers/TwoPointGramDiagonal.lean`, all trust-triple):
+`exists_slow_cutoff`, `twoPointGramSum_nonneg`, `gramRatio_tendsto_of_fixedPair`,
+`twoPointPairGramSmall_of_fixedPair`, `truncSum_div_tendsto_of_twoPointWeighted`,
+`conjC1_of_delange_pairwiseTwoPoint`, `conjC1_of_delange_twoPointElliott_weightDecouple`,
+**`conjC1_of_delange_pairDecorr`**.
+
+**The correction.**  `HANDOFF-twopoint-2026-09-24-SESSION-WRAP-2.md` records
+"per-pair decorrelation does not imply the leaf (the budget is too small)".  That is FALSE.  The
+cutoff `w` in `PairGramSmallGrowing` is *existentially* quantified, so the leaf has to hold at only
+ONE cutoff per `N`.  For a fixed `w` the pair sum is a finite sum of `o(N)` terms and `L(w)² ≥ 1/4`
+is a positive constant, so the ratio already tends to `0`; a stair diagonalisation then produces
+`w(N) → ∞` with `w(N)² ≤ N`.  The budget computation `M(w)/L(w)² → ∞`
+(`tendsto_maxRecipSum_div_sq`) bounds the *trivial-bound strategy* from below, not the leaf.
+
+**Consequence for the plan.**  Laps 15–23 (ℓ², Frobenius, Diag, Forced, Sufficient, Deficit,
+Pairing, Rigidity, BlockRotation) were all producing a **uniform-in-`(p,q,w)`** per-pair saving
+`δ ≍ L(w)²/π(w)`.  That is sufficient and far from necessary, and it is *stronger* than the
+fixed-pair `o(1)` the diagonal route consumes.  Those files stay in `src/` (they are sorry-free and
+the pricing is real), but they are **off-path** unless a route through them yields a fixed-pair
+statement.
+
+### Open items, highest value first
+
+1. **THE CRUX — the fixed-pair correlation.**  `PairDecorr b t` for ONE pair of distinct primes:
+   `E_{m≤M} e(t(omegaTail_b(pm) − omegaTail_b(qm))) → 0`.  Equivalent (`pairDecorr_iff_twoPointWeighted`)
+   to `TwoPointWeighted b p q t`, i.e. natural-density two-point Elliott for `ζ^ω` along `pm+1`,
+   `qm+1`, twisted by `peelWeight`.  With `conjC1_of_delange_pairDecorr` this is now the ONLY
+   non-Delange input to C1.
+
+2. **Next brick: the finite `K`-peel.**  `omegaTail b n = O(log n)` (from `omegaNat m ≤ log₂ m`), so
+   iterating `phase_shiftPairTail_peel` `K` times leaves a remainder
+   `(t/b^K)·shiftPairTail b p q K K m` of size `O(b^{-K} log(pM))`.  Taking `K = K(M) ≈ log_b log M`
+   makes it `o(1)` **uniformly in `m ≤ M`**, so
+
+       e(t(omegaTail(pm) − omegaTail(qm))) = e(Σ_{j=1}^{K} (t/b^j)(ω(pm+j) − ω(qm+j))) + o(1).
+
+   This is elementary, is the prerequisite for every remaining route, and is NOT yet in `src/`.
+   (`peelWeightAt` in `PairDecoupleOneDigit.lean` is the `K`-fold weight already; what is missing is
+   the quantitative remainder bound with `K` growing.)  **Do this first.**
+
+3. **Then the sieve/variance read, and where it breaks.**  With the finite form in hand: for prime
+   factors in `(J, z]` the events `p ∣ pm+j` are jointly CRT-independent across `j ≤ K < J`, the
+   variance of `Σ_j b^{-j}(ω_{(J,z]}(pm+j) − ω_{(J,z]}(qm+j))` is `≍ log log z → ∞`, and the phase
+   mean of the small-prime part is `(log z / log J)^{-c}` with
+   `c = Σ_j (1 − cos(2π t/b^j)) > 0`.  The obstruction is the LARGE-prime part
+   `ω_{>z}`: it is unbounded for `z = M^{o(1)}` (mean `≍ log(log M/log z)`) and for `z = √M` it is
+   `∈ {0,1}` but then the small part is no longer CRT-tractable.  **Formalising either horn as a
+   theorem is a successful lap**: (a) small-prime part alone `→ 0` with a rate, or (b) the
+   implication "fixed-pair leaf ⟸ a two-point Elliott statement at shift `≤ K`", naming the problem.
+
+4. **The 🟡 debt: `DelangeMean`.**  Selberg–Delange for `ζ^ω`: `E_{n≤N} e(t ω(n)) → 0` at rate
+   `(log N)^{Re e(t) − 1}`.  This is the only *proven* input C1 still cites.  Chippable
+   independently of the crux; `PNTPort/` already has Wiener–Ikehara scaffolding.
+
+5. **Refuted / priced, do not re-open** (all kernel-grounded, laps 13–23): trivial per-pair
+   estimates (insufficient by an unbounded factor); `ℓ¹` averaging over multipliers (no gain);
+   `ℓ²`/fourth moment (needs exact evaluation of a `≥ N²/8` quantity); rotation pairing with a
+   *constant* `z` (forces `σ = id`).  Pointwise-gap rotation (`TwoPointBlockRotation`) is still live
+   but is a *uniform* route, hence now low priority — see the correction above.
+
+6. **`twoPointWeightedAvg_all` (`TwoPointBet.lean`) stays an open, disclosed `sorry`.**  Ratified;
+   never to be deleted, renamed or weakened.  It is implied by item 1 via
+   `avgShape_of_forall_tendsto` (`TwoPointWorry.lean`).
+
+---
+
+
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is sorry-free and
