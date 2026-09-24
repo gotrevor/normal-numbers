@@ -80,13 +80,100 @@ noncomputable def lambertVal (b : ℕ) (w : ℕ → ℕ) : ℝ := ∑' m : ℕ, 
 noncomputable def carry (b : ℕ) (w : ℕ → ℕ) (N : ℕ) : ℤ :=
   ⌊∑' k : ℕ, (w (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)⌋
 
+/-- With at most linear weights the Lambert series converges in every base `b ≥ 2`. -/
+theorem summable_lambert (b : ℕ) (hb : 2 ≤ b) (w : ℕ → ℕ) (hw : ∀ m, w m ≤ m) :
+    Summable (fun m : ℕ => (w m : ℝ) / (b : ℝ) ^ m) := by
+  have hb' : (1 : ℝ) < b := by exact_mod_cast hb
+  have hnorm : ‖(1 / (b : ℝ))‖ < 1 := by
+    rw [Real.norm_eq_abs, abs_of_nonneg (by positivity), div_lt_one (by linarith)]
+    exact hb'
+  have h := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1 hnorm
+  refine Summable.of_nonneg_of_le (fun m => by positivity) (fun m => ?_) h
+  have hwm : (w m : ℝ) ≤ m := by exact_mod_cast hw m
+  have hbm : (0 : ℝ) < (b : ℝ) ^ m := by positivity
+  have hrw : (m : ℝ) ^ 1 * (1 / (b : ℝ)) ^ m = (m : ℝ) / (b : ℝ) ^ m := by
+    rw [pow_one, div_pow, one_pow]
+    ring
+  rw [hrw]
+  gcongr
+
+/-- The floor of `b^N · Σ w(m)/bᵐ` splits as the integer head plus the carry. -/
+theorem floor_lambertVal_mul_pow (b : ℕ) (hb : 2 ≤ b) (w : ℕ → ℕ) (hw : ∀ m, w m ≤ m) (N : ℕ) :
+    ⌊lambertVal b w * (b : ℝ) ^ N⌋
+      = ((∑ m ∈ range (N + 1), w m * b ^ (N - m) : ℕ) : ℤ) + carry b w N := by
+  have hb0 : (0 : ℝ) < b := by
+    have : (2 : ℝ) ≤ b := by exact_mod_cast hb
+    linarith
+  have hs := summable_lambert b hb w hw
+  have hsN : Summable (fun m : ℕ => (w m : ℝ) / (b : ℝ) ^ m * (b : ℝ) ^ N) := hs.mul_right _
+  have hx : lambertVal b w * (b : ℝ) ^ N
+      = ∑' m : ℕ, ((w m : ℝ) / (b : ℝ) ^ m * (b : ℝ) ^ N) := by
+    rw [lambertVal, tsum_mul_right]
+  rw [hx, ← Summable.sum_add_tsum_nat_add (N + 1) hsN]
+  have hhead : ∑ m ∈ range (N + 1), ((w m : ℝ) / (b : ℝ) ^ m * (b : ℝ) ^ N)
+      = (((∑ m ∈ range (N + 1), w m * b ^ (N - m) : ℕ) : ℤ) : ℝ) := by
+    push_cast
+    refine Finset.sum_congr rfl fun m hm => ?_
+    have hmN : m ≤ N := Nat.lt_succ_iff.mp (Finset.mem_range.mp hm)
+    have hpow : (b : ℝ) ^ m * (b : ℝ) ^ (N - m) = (b : ℝ) ^ N := pow_mul_pow_sub _ hmN
+    have hbm : ((b : ℝ) ^ m) ≠ 0 := by positivity
+    rw [← hpow]
+    field_simp
+  have htail : ∑' k : ℕ, ((w (k + (N + 1)) : ℝ) / (b : ℝ) ^ (k + (N + 1)) * (b : ℝ) ^ N)
+      = ∑' k : ℕ, (w (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1) := by
+    refine tsum_congr fun k => ?_
+    rw [show k + (N + 1) = N + 1 + k by omega]
+    rw [show N + 1 + k = N + (k + 1) by omega, pow_add]
+    have h1 : ((b : ℝ) ^ N) ≠ 0 := by positivity
+    have h2 : ((b : ℝ) ^ (k + 1)) ≠ 0 := by positivity
+    field_simp
+  rw [hhead, htail, Int.floor_intCast_add]
+  rfl
+
 /-- **Carries only at the ends.**  For a Lambert-type value with at most linear weights. -/
 theorem windowDigitSum_lambert_modEq (b : ℕ) (hb : 2 ≤ b) (w : ℕ → ℕ) (hw : ∀ m, w m ≤ m)
     (n L : ℕ) :
     (windowDigitSum b (lambertVal b w) n L : ℤ) ≡
       (∑ m ∈ Ioc n (n + L), (w m : ℤ)) + carry b w (n + L) - carry b w n
       [ZMOD ((b : ℤ) - 1)] := by
-  sorry
+  have hdvd : ∀ j : ℕ, ((b : ℤ) - 1) ∣ ((b : ℤ) ^ j - 1) := by
+    intro j; simpa using sub_dvd_pow_sub_pow (b : ℤ) 1 j
+  -- the integer head is congruent to the plain weight sum
+  have hhead : ∀ N : ℕ, ((∑ m ∈ range (N + 1), w m * b ^ (N - m) : ℕ) : ℤ)
+      ≡ ∑ m ∈ range (N + 1), (w m : ℤ) [ZMOD ((b : ℤ) - 1)] := by
+    intro N
+    refine Int.modEq_iff_dvd.mpr ?_
+    push_cast
+    rw [← Finset.sum_sub_distrib]
+    refine Finset.dvd_sum ?_
+    intro m _
+    obtain ⟨c, hc⟩ := hdvd (N - m)
+    exact ⟨-(w m : ℤ) * c, by rw [show (w m : ℤ) - (w m : ℤ) * (b : ℤ) ^ (N - m)
+      = -((w m : ℤ) * ((b : ℤ) ^ (N - m) - 1)) by ring, hc]; ring⟩
+  have hfloor : ∀ N : ℕ, ⌊lambertVal b w * (b : ℝ) ^ N⌋
+      ≡ (∑ m ∈ range (N + 1), (w m : ℤ)) + carry b w N [ZMOD ((b : ℤ) - 1)] := by
+    intro N
+    rw [floor_lambertVal_mul_pow b hb w hw N]
+    exact (hhead N).add_right _
+  have hmain := windowDigitSum_modEq b hb (lambertVal b w) n L
+  refine hmain.trans ?_
+  have h1 := hfloor (n + L)
+  have h2 := hfloor n
+  have hsub := h1.sub h2
+  refine hsub.trans ?_
+  have hsplit : (∑ m ∈ range (n + L + 1), (w m : ℤ)) - (∑ m ∈ range (n + 1), (w m : ℤ))
+      = ∑ m ∈ Ioc n (n + L), (w m : ℤ) := by
+    have hIoc : Finset.Ioc n (n + L) = Finset.Ico (n + 1) (n + L + 1) := by
+      ext m; simp only [Finset.mem_Ioc, Finset.mem_Ico]; omega
+    rw [hIoc, Finset.range_eq_Ico, Finset.range_eq_Ico,
+      ← Finset.sum_Ico_consecutive (fun m => (w m : ℤ)) (Nat.zero_le (n + 1))
+        (by omega : n + 1 ≤ n + L + 1)]
+    ring
+  rw [← hsplit]
+  exact Int.ModEq.refl _ |>.trans (by rw [show (∑ m ∈ range (n + L + 1), (w m : ℤ))
+    + carry b w (n + L) - ((∑ m ∈ range (n + 1), (w m : ℤ)) + carry b w n)
+    = ((∑ m ∈ range (n + L + 1), (w m : ℤ)) - ∑ m ∈ range (n + 1), (w m : ℤ))
+      + carry b w (n + L) - carry b w n by ring])
 
 /-- `G4_b` is the Lambert value of `ω`. -/
 theorem primeLambertAtBase_eq_lambertVal (b : ℕ) :
