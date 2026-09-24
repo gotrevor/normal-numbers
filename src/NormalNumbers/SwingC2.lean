@@ -839,6 +839,262 @@ theorem factorization_eq_of_modEq {q a m : ℕ} (hq : q.Prime) (hm : m ≠ 0)
   rw [hw, Nat.factorization_mul (by positivity) hune]
   simp [Nat.Prime.factorization_pow hq, Nat.factorization_eq_zero_of_not_dvd hu]
 
+
+/-! ### 3l. (K1): the kill progression is a single residue class
+
+The slot-killing conditions of `ConstructionInputs` are pure congruences.  For each slot `j` we
+pin the valuation of `n+1+j` at `L` *distinct* primes to be exactly `b−1`; each such prime
+contributes a factor `(b−1)+1 = b` to `τ(n+1+j)`, so `b^L ∣ τ(n+1+j)`, which is more than the
+`b^{j+1}` that slot needs.  Every condition is a congruence to a prime-power modulus `q^b`, the
+moduli are pairwise coprime, so CRT collapses the whole system to one residue class.
+
+**The design point (2026-09-24).**  Using `L` primes at exponent `b−1` rather than ONE prime at
+exponent `b^{j+1}−1` keeps the modulus at `exp(O(b L⁴))` instead of `exp(b^{L+1})`.  Since the
+pad budget `b^K` is itself exponential in `L`, this is what makes the remaining analytic
+condition (K3) a statement about the *average* of `τ` (which is `≍ log M = poly(L) ≪ b^K`)
+rather than about its normal order. -/
+
+/-- If `m` has valuation exactly `b−1` at each of the primes of a finset `S`, then `b^{|S|}`
+divides `τ(m)`: each such prime contributes the factor `(b−1)+1 = b` to `τ(m) = ∏ (v_p+1)`. -/
+theorem pow_card_dvd_tau {b m : ℕ} (hb : 2 ≤ b) (hm : m ≠ 0) (S : Finset ℕ)
+    (hS : ∀ q ∈ S, q.Prime ∧ m.factorization q = b - 1) :
+    b ^ S.card ∣ tau m := by
+  classical
+  have hsub : S ⊆ m.primeFactors := by
+    intro q hq
+    have hqv := (hS q hq).2
+    rw [← Nat.support_factorization]
+    exact Finsupp.mem_support_iff.2 (by omega)
+  have hprod : ∏ q ∈ S, (m.factorization q + 1) = b ^ S.card := by
+    rw [Finset.prod_congr rfl (fun q hq => by rw [(hS q hq).2]; omega : ∀ q ∈ S,
+      m.factorization q + 1 = b), Finset.prod_const]
+  rw [tau, Nat.card_divisors hm, ← hprod]
+  exact Finset.prod_dvd_prod_of_subset _ _ _ hsub
+
+/-- The next prime after `x`, from Bertrand's postulate: `x < nextPrime x ≤ 2x + 2`. -/
+noncomputable def nextPrime (x : ℕ) : ℕ :=
+  (Nat.exists_prime_lt_and_le_two_mul (x + 1) (Nat.succ_ne_zero x)).choose
+
+theorem nextPrime_prime (x : ℕ) : (nextPrime x).Prime :=
+  (Nat.exists_prime_lt_and_le_two_mul (x + 1) (Nat.succ_ne_zero x)).choose_spec.1
+
+theorem lt_nextPrime (x : ℕ) : x < nextPrime x :=
+  lt_trans (Nat.lt_succ_self x)
+    (Nat.exists_prime_lt_and_le_two_mul (x + 1) (Nat.succ_ne_zero x)).choose_spec.2.1
+
+theorem nextPrime_le (x : ℕ) : nextPrime x ≤ 2 * x + 2 := by
+  have h := (Nat.exists_prime_lt_and_le_two_mul (x + 1) (Nat.succ_ne_zero x)).choose_spec.2.2
+  have he : nextPrime x
+      = (Nat.exists_prime_lt_and_le_two_mul (x + 1) (Nat.succ_ne_zero x)).choose := rfl
+  rw [he]; omega
+
+/-- A strictly increasing sequence of primes, all greater than `B`. -/
+noncomputable def bigPrime (B : ℕ) : ℕ → ℕ
+  | 0 => nextPrime B
+  | k + 1 => nextPrime (bigPrime B k)
+
+theorem bigPrime_prime (B k : ℕ) : (bigPrime B k).Prime := by
+  cases k <;> exact nextPrime_prime _
+
+theorem lt_bigPrime (B k : ℕ) : B < bigPrime B k := by
+  induction k with
+  | zero => exact lt_nextPrime B
+  | succ k ih => exact ih.trans (lt_nextPrime _)
+
+theorem bigPrime_strictMono (B : ℕ) : StrictMono (bigPrime B) :=
+  strictMono_nat_of_lt_succ fun _ => lt_nextPrime _
+
+theorem bigPrime_injective (B : ℕ) : Function.Injective (bigPrime B) :=
+  (bigPrime_strictMono B).injective
+
+/-- The Bertrand recursion doubles at each step: `bigPrime B k + 2 ≤ 2^{k+1}·(B+2)`. -/
+theorem bigPrime_le (B k : ℕ) : bigPrime B k + 2 ≤ 2 ^ (k + 1) * (B + 2) := by
+  induction k with
+  | zero =>
+    have := nextPrime_le B
+    simp only [bigPrime, pow_one]
+    omega
+  | succ k ih =>
+    have h := nextPrime_le (bigPrime B k)
+    have : bigPrime B (k + 1) = nextPrime (bigPrime B k) := rfl
+    rw [this]
+    calc nextPrime (bigPrime B k) + 2 ≤ 2 * (bigPrime B k + 2) := by omega
+      _ ≤ 2 * (2 ^ (k + 1) * (B + 2)) := by omega
+      _ = 2 ^ (k + 1 + 1) * (B + 2) := by ring
+
+
+/-- Pinning a valuation is a congruence: `n + c ≡ q^{b−1} (mod q^b)` forces `v_q(n+c) = b−1`. -/
+theorem factorization_shift_of_modEq {b q c n : ℕ} (hb : 2 ≤ b) (hq : q.Prime)
+    (h : n + c ≡ q ^ (b - 1) [MOD q ^ b]) : (n + c).factorization q = b - 1 := by
+  have hb1 : b - 1 + 1 = b := by omega
+  have hq2 : 2 ≤ q := hq.two_le
+  have hpos : 0 < q ^ (b - 1) := Nat.pow_pos (by omega)
+  have hne : n + c ≠ 0 := by
+    intro h0
+    rw [h0] at h
+    have hlt : q ^ (b - 1) < q ^ b := Nat.pow_lt_pow_right (by omega) (by omega)
+    have h2 : (0 : ℕ) % q ^ b = q ^ (b - 1) % q ^ b := h
+    rw [Nat.zero_mod, Nat.mod_eq_of_lt hlt] at h2
+    omega
+  exact factorization_eq_of_modEq hq hne (by rw [hb1]; exact h)
+
+/-- **The CRT core of (K1).**  For a sequence of distinct primes `Q` and arbitrary shifts `c`,
+the conditions `v_{Q k}(n + c k) = b − 1` for `k < N` hold simultaneously on a full residue
+class modulo `∏_{k<N} (Q k)^b`. -/
+theorem exists_pin_progression {b : ℕ} (hb : 2 ≤ b) (Q c : ℕ → ℕ)
+    (hQp : ∀ k, (Q k).Prime) (hQinj : Function.Injective Q) (N : ℕ) :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n ≡ n₀ [MOD ∏ k ∈ range N, Q k ^ b] →
+      ∀ k, k < N → (n + c k).factorization (Q k) = b - 1 := by
+  induction N with
+  | zero => exact ⟨0, fun n _ k hk => absurd hk (by omega)⟩
+  | succ N ih =>
+    obtain ⟨n₀, hn₀⟩ := ih
+    set q := Q N with hq
+    have hqp : q.Prime := hQp N
+    have hq2 : 2 ≤ q := hqp.two_le
+    have hqb : 0 < q ^ b := Nat.pow_pos (by omega)
+    set n₁ := q ^ (b - 1) + q ^ b * (c N + 1) - c N with hn₁
+    have hn₁c : n₁ + c N = q ^ (b - 1) + q ^ b * (c N + 1) := by
+      have h1 : c N + 1 ≤ q ^ b * (c N + 1) := Nat.le_mul_of_pos_left _ hqb
+      omega
+    have hcop : Nat.Coprime (∏ k ∈ range N, Q k ^ b) (q ^ b) := by
+      refine Nat.Coprime.prod_left (fun k hk => ?_)
+      have hkN : k < N := Finset.mem_range.mp hk
+      have hne : Q k ≠ q := by
+        intro hcon
+        have := hQinj (hcon.trans hq)
+        omega
+      exact Nat.Coprime.pow _ _ ((Nat.coprime_primes (hQp k) hqp).2 hne)
+    obtain ⟨m, hm1, hm2⟩ := Nat.chineseRemainder hcop n₀ n₁
+    refine ⟨m, fun n hn k hk => ?_⟩
+    rw [Finset.prod_range_succ] at hn
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hk with hk' | hk'
+    · exact hn₀ n ((hn.of_dvd (dvd_mul_right _ _)).trans hm1) k hk'
+    · subst hk'
+      refine factorization_shift_of_modEq hb hqp ?_
+      have h1 : n ≡ n₁ [MOD q ^ b] := (hn.of_dvd (dvd_mul_left _ _)).trans hm2
+      have h2 : n + c k ≡ n₁ + c k [MOD q ^ b] := h1.add_right _
+      refine h2.trans ?_
+      rw [hn₁c]
+      exact ((Nat.modEq_iff_dvd' (Nat.le_add_right _ _)).mpr ⟨c k + 1, by omega⟩).symm
+
+
+
+/-- The primes used by the kill progression for a window of `L` slots: distinct primes above
+`L+2`, so none of them divides two different window entries, nor the survivor. -/
+noncomputable def killPrime (L k : ℕ) : ℕ := bigPrime (L + 2) k
+
+theorem killPrime_prime (L k : ℕ) : (killPrime L k).Prime := bigPrime_prime _ _
+
+theorem lt_killPrime (L k : ℕ) : L + 2 < killPrime L k := lt_bigPrime _ _
+
+theorem killPrime_injective (L : ℕ) : Function.Injective (killPrime L) := bigPrime_injective _
+
+/-- The CRT modulus of the kill progression: one prime power `q^b` for each of the `(L−1)·L`
+pinned valuations (`L` primes for each of the `L−1` killed slots). -/
+noncomputable def killModulus (b L : ℕ) : ℕ := ∏ k ∈ range ((L - 1) * L), killPrime L k ^ b
+
+theorem killModulus_pos (b L : ℕ) : 0 < killModulus b L :=
+  Finset.prod_pos fun k _ => Nat.pow_pos (killPrime_prime L k).pos
+
+theorem coprime_two_killModulus (b L : ℕ) : Nat.Coprime 2 (killModulus b L) := by
+  refine Nat.Coprime.prod_right fun k _ => Nat.Coprime.pow_right _ ?_
+  refine (Nat.coprime_primes Nat.prime_two (killPrime_prime L k)).2 ?_
+  have := lt_killPrime L k
+  omega
+
+/-- **(K1): the slot-killing conditions hold on a full residue class.**  For a window of `L`
+slots with survivor `j₀` there is a residue `n₀` modulo `killModulus b L` such that *every* `n`
+in that class kills every slot except `j₀` — and the survivor entry `n + 1 + j₀` is coprime to
+the modulus, so it remains free to be prescribed by a Dirichlet prime.
+
+Mechanism: at slot `j ≠ j₀` we pin `v_q(n+1+j) = b−1` at `L` distinct primes `q`, so
+`b^L ∣ τ(n+1+j)` (`pow_card_dvd_tau`), which is more than the `b^{j+1}` the slot needs; all the
+pinning conditions are congruences to pairwise coprime moduli `q^b` (`exists_pin_progression`). -/
+theorem exists_kill_progression (b L j₀ : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L) (hj₀ : j₀ < L) :
+    ∃ n₀ : ℕ, Nat.Coprime (n₀ + 1 + j₀) (killModulus b L) ∧
+      ∀ n : ℕ, n ≡ n₀ [MOD killModulus b L] →
+        ∀ j, j < L → j ≠ j₀ → ((b : ℤ) ^ (j + 1) ∣ (tau (n + 1 + j) : ℤ)) := by
+  classical
+  set sl : ℕ → ℕ := fun s => if s < j₀ then s else s + 1 with hsl
+  set c : ℕ → ℕ := fun k => 1 + sl (k / L) with hc
+  obtain ⟨n₀, hn₀⟩ :=
+    exists_pin_progression hb (killPrime L) c (killPrime_prime L) (killPrime_injective L)
+      ((L - 1) * L)
+  have hmod : killModulus b L = ∏ k ∈ range ((L - 1) * L), killPrime L k ^ b := rfl
+  have hck : ∀ k, k < (L - 1) * L → 1 ≤ c k ∧ c k ≤ L ∧ c k ≠ 1 + j₀ := by
+    intro k hk
+    have hdiv : k / L < L - 1 := by
+      by_contra hcon
+      push_neg at hcon
+      have h1 : (L - 1) * L ≤ k / L * L := Nat.mul_le_mul_right _ hcon
+      have h2 : k / L * L ≤ k := Nat.div_mul_le_self k L
+      omega
+    have key : ∀ d : ℕ, d < L - 1 → 1 ≤ 1 + sl d ∧ 1 + sl d ≤ L ∧ 1 + sl d ≠ 1 + j₀ := by
+      intro d hd
+      simp only [hsl]
+      split <;> omega
+    exact key (k / L) hdiv
+  refine ⟨n₀, ?_, ?_⟩
+  · rw [hmod]
+    refine Nat.Coprime.prod_right fun k hk => Nat.Coprime.pow_right _ ?_
+    have hkN : k < (L - 1) * L := Finset.mem_range.mp hk
+    obtain ⟨hc1, hcL, hcne⟩ := hck k hkN
+    have hqp : (killPrime L k).Prime := killPrime_prime L k
+    have hqL : L + 2 < killPrime L k := lt_killPrime L k
+    have hpin : (n₀ + c k).factorization (killPrime L k) = b - 1 :=
+      hn₀ n₀ (Nat.ModEq.refl _) k hkN
+    have hne0 : n₀ + c k ≠ 0 := by omega
+    have hqdvd : killPrime L k ∣ n₀ + c k :=
+      (Nat.Prime.dvd_iff_one_le_factorization hqp hne0).2 (by omega)
+    rw [Nat.coprime_comm]
+    refine (Nat.Prime.coprime_iff_not_dvd hqp).2 fun hdvd => ?_
+    have hdvd' : killPrime L k ∣ n₀ + (1 + j₀) := by rwa [← add_assoc]
+    rcases Nat.lt_or_ge (c k) (1 + j₀) with hlt | hge
+    · have hd : killPrime L k ∣ (n₀ + (1 + j₀)) - (n₀ + c k) := Nat.dvd_sub hdvd' hqdvd
+      rw [Nat.add_sub_add_left] at hd
+      have := Nat.le_of_dvd (by omega) hd
+      omega
+    · have hd : killPrime L k ∣ (n₀ + c k) - (n₀ + (1 + j₀)) := Nat.dvd_sub hqdvd hdvd'
+      rw [Nat.add_sub_add_left] at hd
+      have := Nat.le_of_dvd (by omega) hd
+      omega
+  · intro n hn j hj hjne
+    obtain ⟨s, hsL, hslj⟩ : ∃ s, s < L - 1 ∧ sl s = j := by
+      by_cases h : j < j₀
+      · exact ⟨j, by omega, by simp only [hsl, if_pos h]⟩
+      · refine ⟨j - 1, by omega, ?_⟩
+        have h1 : ¬ (j - 1 < j₀) := by omega
+        simp only [hsl, if_neg h1]
+        omega
+    set S : Finset ℕ := (range L).image (fun i => killPrime L (s * L + i)) with hS
+    have hcard : S.card = L := by
+      rw [hS, Finset.card_image_of_injective _ (fun i i' hii => by
+        have := killPrime_injective L hii; omega), Finset.card_range]
+    have hne0 : n + 1 + j ≠ 0 := by omega
+    have hmem : ∀ q ∈ S, q.Prime ∧ (n + 1 + j).factorization q = b - 1 := by
+      intro q hqS
+      obtain ⟨i, hi, rfl⟩ := Finset.mem_image.mp hqS
+      have hi' : i < L := Finset.mem_range.mp hi
+      have hkN : s * L + i < (L - 1) * L := by
+        have h1 : (s + 1) * L ≤ (L - 1) * L := Nat.mul_le_mul_right _ (by omega)
+        have h2 : (s + 1) * L = s * L + L := by ring
+        omega
+      have hdiv : (s * L + i) / L = s := by
+        have he : s * L + i = i + L * s := by ring
+        rw [he, Nat.add_mul_div_left _ _ (by omega : 0 < L), Nat.div_eq_of_lt hi', Nat.zero_add]
+      have hcv : c (s * L + i) = 1 + j := by simp only [hc, hdiv, hslj]
+      have hpin := hn₀ n hn (s * L + i) hkN
+      rw [hcv] at hpin
+      refine ⟨killPrime_prime L _, ?_⟩
+      rw [show n + 1 + j = n + (1 + j) by ring]
+      exact hpin
+    have hdvdL : b ^ L ∣ tau (n + 1 + j) := by
+      have := pow_card_dvd_tau hb hne0 S hmem
+      rwa [hcard] at this
+    have hstep : b ^ (j + 1) ∣ b ^ L := pow_dvd_pow b (by omega)
+    exact_mod_cast Int.natCast_dvd_natCast.2 (hstep.trans hdvdL)
+
 /-! ### 4. The crux leaf -/
 
 /-- **THE CRUX (2026-09-24, after the construction reduction).**  The single open obligation
