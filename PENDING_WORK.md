@@ -10378,3 +10378,36 @@ distinct large primes `r ≠ r'` by the same exact-count device, using the CRT c
 `#{n<R : rr' ∣ …} = R/(rr') + O(1)` (`card_filter_dvd_le_coprime` already covers composite
 moduli).  If the bilinear term is also `O(1)` uniformly, the expansion
 `∏_r (μ_r + ψ_r)` is controlled to second order, and the obstruction is pushed to order 3.
+
+## pd-prove lap 28 — the two reductions COMPOSE; and one sub-approach REFUTED
+
+**New (sorry-free).**  `twoPointAvgSum`, `TwoPointWeightedAvg`,
+`pairDecorrAvgSum_eq_twoPointAvgSum`, `pairDecorrAvg_iff_twoPointWeightedAvg`,
+`conjC1_of_delange_kataiAvg_twoPointWeightedAvg` (in `PairDecoupleTwoPoint.lean`).
+
+The multiplier-averaging (laps 22–23) and the exact `K = 1` peel (laps 24–25) commute, because the
+second is an identity.  **The sharpest statement this development reaches:**
+
+> `ConjC1` follows from Delange's theorem, the averaged Kátai/BSZ criterion, and:
+> for every `b ≥ 3` and `b ∤ m`, the mean over ordered pairs of distinct primes `p, q ≤ w` of
+> `‖E_{n<N} ζ^{ω(pn+1)} conj ζ^{ω(qn+1)} · e((t/b)(θ_{pn+1} − θ_{qn+1}))‖` is `< ε`
+> for all large `w` and then all large `N`.   (`t = m/b`, `ζ = e(t/b)`.)
+
+No `K → ∞`, no truncation error, no pointwise limit over pairs.
+
+**REFUTED this lap (do not re-attempt): the term-by-term product expansion of leaf (D).**
+Writing `e(t(θ_{pn}−θ_{qn})) = ∏_r h_r(n mod r)` and expanding `∏_r(μ_r + ψ_r)` over subsets `S`
+of primes cannot work.  Every subset term with `d_S ≤ R` has exact period mean `0`, but bounding
+the remainder term-by-term costs the ℓ¹ mass `∏_{r∈S}‖ψ_r‖₁ ≈ ∏_{r∈S} C/r`, and
+`Σ_S ∏_{r∈S}(C/r) = ∏_{r≤X}(1 + C/r) ≈ (log X)^C`, while the gain from the model is only
+`∏_r|μ_r| ≈ (log X)^{−c}` with `c < C` always.  Any term-by-term ℓ¹ bound must lose, because the
+full product has modulus `1` pointwise — all the cancellation is *between* the terms.  Lap 27's
+uniform `O(1)` bound is the `|S| = 1` case and is genuinely useful; the `|S| = 2` analogue is true
+by the same CRT count but useless, since there are `≍ (R/log R)²` pairs.
+
+**Next attack.**  With the term-by-term route closed, the remaining candidates for leaf (D) are
+(i) a Kubilius-model / fundamental-lemma treatment (loses `Σ_{r>y}1/r`, log-iterate mismatch —
+already recorded as fundamental), or (ii) the entropy-decrement machinery of Tao 2016, which is
+the only known method for exactly this obstruction.  Formalising the *statement* of (ii)'s input
+(an averaged two-point correlation in logarithmic average) against `TwoPointWeightedAvg` is the
+cheapest next concrete step.

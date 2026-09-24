@@ -128,4 +128,61 @@ theorem weightDecouple_of_twoPointWeighted (b p q : ℕ) (t : ℝ)
   rw [WeightDecouple]
   simpa using hAW.sub hprod
 
+/-! ### The sharpest form the development reaches: averaged over the multipliers AND `K = 1`
+
+Laps 22–23 replaced every pointwise limit over pairs `(p, q)` by a mean over `p, q ≤ w`
+(the true Kátai/BSZ input); laps 24–25 replaced the `2K`-point correlation, `K → ∞`, by an exact
+two-point one.  The two commute, because the second is an *identity*: the averaged leaf may be
+written directly on the weighted two-point correlation. -/
+
+/-- The averaged weighted two-point correlation. -/
+noncomputable def twoPointAvgSum (b : ℕ) (t : ℝ) (w N : ℕ) : ℝ :=
+  (∑ p ∈ primesLe w, ∑ q ∈ primesLe w,
+      if p = q then 0 else
+        ‖fullMean (fun n => twoPointFactor b p q t n * peelWeight b p q t n) N‖)
+    / ((primesLe w).card : ℝ) ^ 2
+
+lemma pairDecorrAvgSum_eq_twoPointAvgSum (b : ℕ) (hb : 2 ≤ b) (t : ℝ) (w N : ℕ) :
+    pairDecorrAvgSum b t w N = twoPointAvgSum b t w N := by
+  have hpt : ∀ p q n : ℕ, phase (t * (omegaTail b (p * n) - omegaTail b (q * n)))
+      = twoPointFactor b p q t n * peelWeight b p q t n := by
+    intro p q n
+    have h := pairPhase_eq_twoPoint b hb t p q n
+    rw [pairTail] at h
+    rw [h, twoPointFactor]
+  unfold pairDecorrAvgSum twoPointAvgSum
+  congr 1
+  refine Finset.sum_congr rfl fun p _ => Finset.sum_congr rfl fun q _ => ?_
+  by_cases hpq : p = q
+  · simp [hpq]
+  · simp only [if_neg hpq]
+    congr 2
+    funext n
+    exact hpt p q n
+
+/-- **THE SHARPEST LEAF.**  An average over ordered pairs of distinct prime multipliers `p, q ≤ w`
+of a weighted TWO-point correlation.  Every pointwise limit and every `K → ∞` has been removed. -/
+def TwoPointWeightedAvg (b : ℕ) (t : ℝ) : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∀ᶠ w : ℕ in atTop, ∀ᶠ N : ℕ in atTop, twoPointAvgSum b t w N < ε
+
+theorem pairDecorrAvg_iff_twoPointWeightedAvg (b : ℕ) (hb : 2 ≤ b) (t : ℝ) :
+    PairDecorrAvg b t ↔ TwoPointWeightedAvg b t := by
+  have key : ∀ w N : ℕ, pairDecorrAvgSum b t w N = twoPointAvgSum b t w N :=
+    fun w N => pairDecorrAvgSum_eq_twoPointAvgSum b hb t w N
+  constructor
+  · intro h ε hε
+    exact (h ε hε).mono fun w hw => hw.mono fun N hN => by rwa [key w N] at hN
+  · intro h ε hε
+    exact (h ε hε).mono fun w hw => hw.mono fun N hN => by rwa [key w N]
+
+/-- **THE SWING, ON THE SHARPEST LEAF.**  `ConjC1` from Delange's theorem, the averaged
+Kátai/BSZ criterion, and an averaged weighted two-point correlation. -/
+theorem conjC1_of_delange_kataiAvg_twoPointWeightedAvg (hDK : KataiOrthogonalityAvg)
+    (hD : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) → DelangeMean (((m : ℤ) : ℝ) / b))
+    (hP : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) →
+      TwoPointWeightedAvg b (((m : ℤ) : ℝ) / b)) :
+    ConjC1 :=
+  conjC1_of_delange_kataiAvg_pairDecorrAvg hDK hD fun b hb m hm hdvd =>
+    (pairDecorrAvg_iff_twoPointWeightedAvg b (by omega) _).mpr (hP b hb m hm hdvd)
+
 end NormalNumbers.CastingOut
