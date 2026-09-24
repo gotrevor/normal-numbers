@@ -420,19 +420,192 @@ theorem stateLaw_of_hWindow (b : ℕ) (hb : 3 ≤ b) (L : ℕ) (h : HWindow b L)
 theorem hState_of_hWindow (h : ∀ b, 3 ≤ b → ∀ L, HWindow b L) : HState :=
   fun b hb L => stateLaw_of_hWindow b hb L (h b hb L)
 
-/-- **THE OPEN LEAF.**  All of C1, with every digit, floor and real number eliminated:
+/-! ### Finite Fourier: the character-sum form of the hypothesis -/
 
-  `Σ_{i<L} ω(n+1+i)·b^{L-1-i} + c_{n+L}`  is equidistributed mod `b^L`,
+/-- A primitive `M`-th root of unity. -/
+noncomputable def zetaRoot (M : ℕ) : ℂ := Complex.exp (2 * Real.pi * Complex.I / M)
 
-where `c_N = ⌊Σ_{k≥1} ω(N+k) b^{−k}⌋`.  The conditioning is BOUNDED (`omegaCarry_eq_windowVal_div`
-shows the unbounded part of the carry is the quotient `b^L·c_n`, which dies mod `b−1`), so this
-needs no growing truncation depth.
+lemma zetaRoot_ne_zero (M : ℕ) : zetaRoot M ≠ 0 := Complex.exp_ne_zero _
 
-Since `ω(n+L)` enters with coefficient `b^0 = 1` and `c_{n+L}` depends only on
-`ω(n+L+1), ω(n+L+2), …`, it suffices that `ω(N) mod b^L` be equidistributed and asymptotically
-independent of the `ω` values at other arguments — a Delange/Elliott-type input.  Open. -/
-theorem hWindowAll : ∀ b, 3 ≤ b → ∀ L, HWindow b L := by
+lemma zetaRoot_zpow (M : ℕ) (k : ℤ) :
+    zetaRoot M ^ k = Complex.exp ((k : ℂ) * (2 * Real.pi * Complex.I / M)) := by
+  rw [zetaRoot, ← Complex.exp_int_mul]
+
+lemma zetaRoot_zpow_eq_one_iff (M : ℕ) (hM : 0 < M) (k : ℤ) :
+    zetaRoot M ^ k = 1 ↔ (M : ℤ) ∣ k := by
+  have hMC : ((M : ℂ)) ≠ 0 := by exact_mod_cast (by omega : M ≠ 0)
+  have hpi : (2 * (Real.pi : ℂ) * Complex.I) ≠ 0 := by
+    simp [Complex.ext_iff, Real.pi_ne_zero]
+  rw [zetaRoot_zpow, Complex.exp_eq_one_iff]
+  constructor
+  · rintro ⟨n, hn⟩
+    refine ⟨n, ?_⟩
+    field_simp at hn
+    exact_mod_cast hn
+  · rintro ⟨n, rfl⟩
+    refine ⟨n, ?_⟩
+    push_cast
+    field_simp
+
+/-- **Orthogonality.**  `Σ_{a<M} ζ^{ak} = M` if `M ∣ k`, else `0`. -/
+lemma sum_zetaRoot_zpow (M : ℕ) (hM : 0 < M) (k : ℤ) :
+    ∑ a ∈ range M, zetaRoot M ^ ((a : ℤ) * k) = if (M : ℤ) ∣ k then (M : ℂ) else 0 := by
+  have hx : ∀ a : ℕ, zetaRoot M ^ ((a : ℤ) * k) = (zetaRoot M ^ k) ^ a := by
+    intro a
+    rw [mul_comm, zpow_mul, zpow_natCast]
+  rw [Finset.sum_congr rfl fun a _ => hx a]
+  by_cases hd : (M : ℤ) ∣ k
+  · rw [if_pos hd, (zetaRoot_zpow_eq_one_iff M hM k).mpr hd]
+    simp
+  · rw [if_neg hd]
+    have hne : zetaRoot M ^ k ≠ 1 := fun h => hd ((zetaRoot_zpow_eq_one_iff M hM k).mp h)
+    rw [geom_sum_eq hne]
+    have hMk : (zetaRoot M ^ k) ^ M = 1 := by
+      rw [← zpow_natCast (zetaRoot M ^ k) M, ← zpow_mul]
+      exact (zetaRoot_zpow_eq_one_iff M hM _).mpr ⟨k, by ring⟩
+    rw [hMk, sub_self, zero_div]
+
+/-- The normalised character sum of the window value at frequency `a / b^L`. -/
+noncomputable def windowCharSum (b L a N : ℕ) : ℂ :=
+  (∑ n ∈ range N, zetaRoot (b ^ L) ^ ((a : ℤ) * omegaWindowVal b L n)) / N
+
+/-- **H, Weyl form.**  All nontrivial `b^L`-th-root-of-unity character sums of the `ω`-side
+window value have mean zero.  This is the shape in which the literature states Elliott/Kátai-type
+inputs: `ζ^{a·(Σ ω(n+1+i) b^{L-1-i} + c_{n+L})}` is a correlation of additively-twisted
+`ω`-values in a short window. -/
+def HWindowChar (b L : ℕ) : Prop :=
+  ∀ a, 0 < a → a < b ^ L → Tendsto (windowCharSum b L a) atTop (𝓝 0)
+
+theorem hWindow_of_hWindowChar (b : ℕ) (hb : 2 ≤ b) (L : ℕ) (h : HWindowChar b L) :
+    HWindow b L := by
+  classical
+  set M := b ^ L with hM
+  have hMpos : 0 < M := by positivity
+  have hMC : ((M : ℂ)) ≠ 0 := by exact_mod_cast (by omega : M ≠ 0)
+  have hMR : ((M : ℕ) : ℝ) = (b : ℝ) ^ L := by rw [hM]; push_cast; ring
+  have hMz : ((M : ℤ)) = (b : ℤ) ^ L := by rw [hM]; push_cast; ring
+  have hMzpos : (0 : ℤ) < (M : ℤ) := by exact_mod_cast hMpos
+  -- the character sum only sees the residue
+  have hres : ∀ a n : ℕ, zetaRoot M ^ ((a : ℤ) * omegaWindowVal b L n)
+      = zetaRoot M ^ ((a : ℤ) * (windowResidue b L n : ℤ)) := by
+    intro a n
+    have h0 := Int.emod_nonneg (omegaWindowVal b L n) (by positivity : ((b : ℤ) ^ L) ≠ 0)
+    have he : ((windowResidue b L n : ℕ) : ℤ) = omegaWindowVal b L n % (b : ℤ) ^ L :=
+      Int.toNat_of_nonneg h0
+    obtain ⟨d, hd⟩ : ((M : ℤ)) ∣ (omegaWindowVal b L n - (windowResidue b L n : ℤ)) := by
+      rw [he, hMz]
+      exact ⟨omegaWindowVal b L n / (b : ℤ) ^ L, by rw [Int.emod_def]; ring⟩
+    have hsplit : (a : ℤ) * omegaWindowVal b L n
+        = (a : ℤ) * (windowResidue b L n : ℤ) + (M : ℤ) * ((a : ℤ) * d) := by
+      have hw : omegaWindowVal b L n = (windowResidue b L n : ℤ) + (M : ℤ) * d := by omega
+      rw [hw]; ring
+    rw [hsplit, zpow_add₀ (zetaRoot_ne_zero M), zpow_mul (zetaRoot M) (M : ℤ) ((a : ℤ) * d),
+      (zetaRoot_zpow_eq_one_iff M hMpos (M : ℤ)).mpr dvd_rfl, one_zpow, mul_one]
+  intro v hv
+  have hvz : (v : ℤ) < (M : ℤ) := by exact_mod_cast hv
+  -- indicator via orthogonality
+  have hind : ∀ n : ℕ, ((if windowResidue b L n = v then (1 : ℂ) else 0))
+      = (M : ℂ)⁻¹ * ∑ a ∈ range M, zetaRoot M ^ ((a : ℤ) * ((windowResidue b L n : ℤ) - v)) := by
+    intro n
+    rw [sum_zetaRoot_zpow M hMpos]
+    have hlt : ((windowResidue b L n : ℕ) : ℤ) < (M : ℤ) := by
+      exact_mod_cast windowResidue_lt b hb L n
+    by_cases he : windowResidue b L n = v
+    · rw [if_pos he, if_pos (by rw [he]; simp)]
+      field_simp
+    · have hnd : ¬ ((M : ℤ) ∣ ((windowResidue b L n : ℤ) - (v : ℤ))) := by
+        intro hdvd
+        have habs : |((windowResidue b L n : ℤ) - (v : ℤ))| < (M : ℤ) := by
+          rw [abs_lt]
+          constructor <;> [skip; skip] <;> omega
+        exact he (by have := Int.eq_zero_of_abs_lt_dvd hdvd habs; omega)
+      rw [if_neg he, if_neg hnd, mul_zero]
+  -- the count, in ℂ
+  have hcount : ∀ N : ℕ, ((((range N).filter (fun n => windowResidue b L n = v)).card : ℂ))
+      = ∑ a ∈ range M, ((M : ℂ)⁻¹ * (zetaRoot M ^ (-((a : ℤ) * (v : ℤ)))) *
+          ∑ n ∈ range N, zetaRoot M ^ ((a : ℤ) * omegaWindowVal b L n)) := by
+    intro N
+    have h1 : ((((range N).filter (fun n => windowResidue b L n = v)).card : ℂ))
+        = ∑ n ∈ range N, (if windowResidue b L n = v then (1 : ℂ) else 0) := by
+      rw [← Finset.sum_filter]
+      simp
+    rw [h1, Finset.sum_congr rfl fun n _ => hind n, ← Finset.mul_sum, Finset.sum_comm,
+      Finset.mul_sum]
+    refine Finset.sum_congr rfl fun a _ => ?_
+    rw [Finset.mul_sum, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    have hexp : (a : ℤ) * ((windowResidue b L n : ℤ) - (v : ℤ))
+        = -((a : ℤ) * (v : ℤ)) + (a : ℤ) * (windowResidue b L n : ℤ) := by ring
+    rw [hres a n, hexp, zpow_add₀ (zetaRoot_ne_zero M), mul_assoc]
+  -- per-frequency limits
+  have hw0 : ∀ N : ℕ, 0 < N → windowCharSum b L 0 N = 1 := by
+    intro N hN
+    have hNC : ((N : ℂ)) ≠ 0 := by exact_mod_cast (by omega : N ≠ 0)
+    simp only [windowCharSum, Nat.cast_zero, zero_mul, zpow_zero, Finset.sum_const,
+      Finset.card_range, nsmul_eq_mul, mul_one]
+    exact div_self hNC
+  have hterm : ∀ a ∈ range M, Tendsto (fun N : ℕ => (M : ℂ)⁻¹ *
+      (zetaRoot M ^ (-((a : ℤ) * (v : ℤ)))) * windowCharSum b L a N) atTop
+      (𝓝 (if a = 0 then ((M : ℂ)⁻¹) else 0)) := by
+    intro a ha
+    rcases eq_or_ne a 0 with rfl | ha0
+    · rw [if_pos rfl]
+      refine Filter.Tendsto.congr' ?_ (tendsto_const_nhds (x := ((M : ℂ)⁻¹)))
+      filter_upwards [Filter.eventually_gt_atTop 0] with N hN
+      rw [hw0 N hN]
+      simp
+    · rw [if_neg ha0]
+      have hlim0 := h a (Nat.pos_of_ne_zero ha0) (by rw [← hM]; exact Finset.mem_range.mp ha)
+      simpa using hlim0.const_mul ((M : ℂ)⁻¹ * (zetaRoot M ^ (-((a : ℤ) * (v : ℤ)))))
+  have hsum : Tendsto (fun N : ℕ => ∑ a ∈ range M, ((M : ℂ)⁻¹ *
+      (zetaRoot M ^ (-((a : ℤ) * (v : ℤ)))) * windowCharSum b L a N)) atTop
+      (𝓝 (∑ a ∈ range M, (if a = 0 then ((M : ℂ)⁻¹) else 0))) :=
+    tendsto_finsetSum _ hterm
+  have heq : (∑ a ∈ range M, (if a = 0 then ((M : ℂ)⁻¹) else 0)) = (M : ℂ)⁻¹ := by
+    rw [Finset.sum_ite_eq' (range M) 0 (fun _ => ((M : ℂ)⁻¹))]
+    simp [hMpos]
+  rw [heq] at hsum
+  -- assemble in ℂ, then descend to ℝ
+  have hrw : ∀ N : ℕ,
+      (((((range N).filter (fun n => windowResidue b L n = v)).card : ℝ) / N : ℝ) : ℂ)
+        = ∑ a ∈ range M, ((M : ℂ)⁻¹ * (zetaRoot M ^ (-((a : ℤ) * (v : ℤ)))) *
+            windowCharSum b L a N) := by
+    intro N
+    push_cast
+    rw [hcount N, Finset.sum_div]
+    refine Finset.sum_congr rfl fun a _ => ?_
+    simp only [windowCharSum, ← hM]
+    ring
+  have hC : Tendsto (fun N : ℕ =>
+      (((((range N).filter (fun n => windowResidue b L n = v)).card : ℝ) / N : ℝ) : ℂ))
+      atTop (𝓝 (((((M : ℕ) : ℝ)⁻¹ : ℝ)) : ℂ)) := by
+    rw [show (fun N : ℕ =>
+        (((((range N).filter (fun n => windowResidue b L n = v)).card : ℝ) / N : ℝ) : ℂ)) = _
+      from funext hrw]
+    simpa using hsum
+  have hfin := (Complex.continuous_re.tendsto ((((M : ℕ) : ℝ)⁻¹ : ℝ) : ℂ)).comp hC
+  simp only [Function.comp_def, Complex.ofReal_re] at hfin
+  rw [hMR] at hfin
+  exact hfin
+
+/-- **THE OPEN LEAF.**  All of C1, with every digit, floor and real number eliminated, in the
+form the literature uses: for each base `b ≥ 3`, each window length `L` and each nontrivial
+frequency `a/b^L`,
+
+  `(1/N) Σ_{n<N} ζ^{a·(Σ_{i<L} ω(n+1+i) b^{L-1-i} + c_{n+L})} → 0`,   `ζ = e^{2πi/b^L}`,
+
+where `c_N = ⌊Σ_{k≥1} ω(N+k) b^{−k}⌋`.  The conditioning is BOUNDED
+(`omegaCarry_eq_windowVal_div`: the unbounded part of the carry is `b^L·c_n`, which dies mod
+`b−1`), so no growing truncation depth is needed.
+
+`ω(n+L)` enters the exponent with coefficient `b^0 = 1`, and `c_{n+L}` depends only on
+`ω(n+L+1), ω(n+L+2), …`; so equidistribution of `ω(N) mod b^L` asymptotically independent of the
+`ω` values at the other arguments already suffices — a Delange/Elliott-type input.  Open. -/
+theorem hWindowCharAll : ∀ b, 3 ≤ b → ∀ L, HWindowChar b L := by
   sorry
+
+theorem hWindowAll : ∀ b, 3 ≤ b → ∀ L, HWindow b L :=
+  fun b hb L => hWindow_of_hWindowChar b (by omega) L (hWindowCharAll b hb L)
 
 theorem hState : HState := hState_of_hWindow hWindowAll
 
