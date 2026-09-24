@@ -90,9 +90,30 @@ is now the highest-value probe.
   single slot, so the tail IS uniformly small; prove decoupling for the surrogate exactly; then
   measure what the truncation costs in the covering step.  If the covering survives a bounded
   surrogate, the `loglog` tail is *not* an obstruction and Leaf B is finite-dimensional.
-- **B4 (refutation probe).**  Numerically test class-dependence directly: for `b = 4`, `P` small,
-  compare the empirical histogram of `orbit L_P` on `n ≡ r (mod Q)` across `r`.  A visible,
-  persistent class-dependence would REFUTE the route and is a first-class deliverable.
+- **B4 (refutation probe).**  ✅ **RUN 2026-09-24 — DOES NOT REFUTE; it CONFIRMS the route and
+  CONFIRMS the Selberg–Delange pricing.**  Probes `probes/swingc3_b4_class_dependence.py`
+  (histogram TV) and `probes/swingc3_b4_fourier.py` (Fourier defect); data in
+  `probes/data-2026-09-24-swingc3-b4-class-dependence.txt`.  Both have hand-computed
+  known-answer checks (`tailLarge 3 4 0` head `= 17/16384`).
+  * The class defect is REAL at finite `N` and decays far slower than the `N^{-1/2}` noise
+    floor (worst/floor grows `3.4 → 7.9 → 13.3` as `N` runs `10^5 → 10^6 → 4·10^6`), so any
+    proof must be a `log`-power argument — a `sqrt`-cancellation/sieve heuristic is ruled out.
+  * It DOES decay: `max_r |avg_{n≡r} e(h y_n) − avg_n e(h y_n)| ~ (log N)^{−a}` with
+    `a ≈ 1.86` (`b=4, h=1`), `a ≈ 2.70` (`b=4, h=3`), `a ≈ 2.82` (`b=3, h=1`).
+  * **The decisive measurement.**  The *global* mean `|avg_n e(h y_n)|` itself decays like
+    `(log N)^{−a₀}` with `a₀ ≈ 0.84` for `b=4, h=1` — i.e. `(log N)^{Re z − 1}`, `z = e(h/b)`,
+    exactly Selberg–Delange (`Re e(1/4) = 0`).  The class defect carries `a ≈ 1.86 ≈ a₀ + 1`:
+    **the non-principal characters mod `Q` beat the principal one by exactly ONE power of
+    `log`**, which is precisely the 2026-09-24 pricing note's prediction, now measured.
+  So Leaf B is (numerically) TRUE, and is SD-with-characters grade.  The live route is the
+  Weyl/Erdős–Turán reduction below.
+- **B6 (NEW, the on-path move).**  `src/NormalNumbers/WeylCriterion.lean` already has the full
+  trapezoid-squeeze Weyl criterion (`cgood_all`, `trapUp`/`trapLo`, `equidistributed_of_weyl`).
+  Generalise it from a Cesàro mean to a *signed weight* `w n = 1_{n≡r (Q)} − 1/Q`, giving:
+  `TailLargeDecouple b P Q` follows from the single Fourier hypothesis
+  `∀ h ≠ 0, (1/N)∑_{n<N} w n · e(h · tailLarge P b n) → 0`.  That is a precise,
+  literature-checkable arithmetic statement (the `h=0` case is free), so
+  `tailLargeDecouple_of_weyl` is exactly the `…_of_H` conditional the kickoff asks for.
 - **B5 (invariance route).**  ❌ **REFUTED 2026-09-24** (`src/NormalNumbers/SwingC3B5.lean`,
   `not_orbitDecouple_periodicWitness`, trust-triple clean).  The dynamics contribute *nothing*
   beyond `λ_r = T_*^r λ_0`: the class-`r` empirical measures of ANY `×b` orbit satisfy that
