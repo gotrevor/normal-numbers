@@ -467,4 +467,159 @@ lemma abs_norm_sum_phase_sub_le_sum (t : ℝ) (R : ℕ) (X Y : ℕ → ℝ) :
   ring_nf
   exact le_refl _
 
+/-! ### The four progressions
+
+`p·(c + (i+j)Q) + K = (pQ)·i + (p(c+jQ) + K)`: each of the four carries in the truncation error
+runs along an arithmetic progression, with modulus `pQ` or `qQ` and an offset carrying the depth
+`K`.  So the mean bound applies four times. -/
+
+private lemma prog_arg (p c j Q K i : ℕ) :
+    p * (c + (i + j) * Q) + K = p * Q * i + (p * (c + j * Q) + K) := by ring
+
+/-- The truncation error along the progression, summed: four progression carries. -/
+theorem sum_abs_trunc_le_sum (b p q P c j j' K R : ℕ) (hb : 2 ≤ b) :
+    ∑ i ∈ range R, |(pairTail b p q (c + (i + j) * primorialLe P)
+          - pairTail b p q (c + (i + j') * primorialLe P))
+        - shiftDigitTrunc b p q (primorialLe P) c j j' K i|
+      ≤ ((∑ i ∈ range R,
+            omegaTail b (p * primorialLe P * i + (p * (c + j * primorialLe P) + K)))
+        + (∑ i ∈ range R,
+            omegaTail b (q * primorialLe P * i + (q * (c + j * primorialLe P) + K)))
+        + (∑ i ∈ range R,
+            omegaTail b (p * primorialLe P * i + (p * (c + j' * primorialLe P) + K)))
+        + (∑ i ∈ range R,
+            omegaTail b (q * primorialLe P * i + (q * (c + j' * primorialLe P) + K))))
+        / (b : ℝ) ^ K := by
+  set Q := primorialLe P with hQ
+  have hbp : (0 : ℝ) < (b : ℝ) ^ K := by
+    have : (0 : ℝ) < (b : ℝ) := by
+      have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+      linarith
+    positivity
+  have hpt : ∀ i ∈ range R, |(pairTail b p q (c + (i + j) * Q)
+        - pairTail b p q (c + (i + j') * Q)) - shiftDigitTrunc b p q Q c j j' K i|
+      ≤ (omegaTail b (p * Q * i + (p * (c + j * Q) + K))
+          + omegaTail b (q * Q * i + (q * (c + j * Q) + K))
+          + omegaTail b (p * Q * i + (p * (c + j' * Q) + K))
+          + omegaTail b (q * Q * i + (q * (c + j' * Q) + K))) / (b : ℝ) ^ K := by
+    intro i _
+    have h1 := abs_pairTail_sub_digitTrunc_le_omegaTail b hb p q K (c + (i + j) * Q)
+    have h2 := abs_pairTail_sub_digitTrunc_le_omegaTail b hb p q K (c + (i + j') * Q)
+    rw [prog_arg p c j Q K i, prog_arg q c j Q K i] at h1
+    rw [prog_arg p c j' Q K i, prog_arg q c j' Q K i] at h2
+    rw [shiftDigitTrunc]
+    have hsplit : (pairTail b p q (c + (i + j) * Q) - pairTail b p q (c + (i + j') * Q))
+        - (digitTrunc b p q K (c + (i + j) * Q) - digitTrunc b p q K (c + (i + j') * Q))
+        = (pairTail b p q (c + (i + j) * Q) - digitTrunc b p q K (c + (i + j) * Q))
+          - (pairTail b p q (c + (i + j') * Q) - digitTrunc b p q K (c + (i + j') * Q)) := by
+      ring
+    rw [hsplit]
+    refine (abs_sub _ _).trans ?_
+    have hrw : (omegaTail b (p * Q * i + (p * (c + j * Q) + K))
+          + omegaTail b (q * Q * i + (q * (c + j * Q) + K))
+          + omegaTail b (p * Q * i + (p * (c + j' * Q) + K))
+          + omegaTail b (q * Q * i + (q * (c + j' * Q) + K))) / (b : ℝ) ^ K
+        = (omegaTail b (p * Q * i + (p * (c + j * Q) + K))
+            + omegaTail b (q * Q * i + (q * (c + j * Q) + K))) / (b : ℝ) ^ K
+          + (omegaTail b (p * Q * i + (p * (c + j' * Q) + K))
+            + omegaTail b (q * Q * i + (q * (c + j' * Q) + K))) / (b : ℝ) ^ K := by
+      ring
+    rw [hrw]
+    linarith
+  calc ∑ i ∈ range R, |(pairTail b p q (c + (i + j) * Q)
+          - pairTail b p q (c + (i + j') * Q)) - shiftDigitTrunc b p q Q c j j' K i|
+      ≤ ∑ i ∈ range R, (omegaTail b (p * Q * i + (p * (c + j * Q) + K))
+          + omegaTail b (q * Q * i + (q * (c + j * Q) + K))
+          + omegaTail b (p * Q * i + (p * (c + j' * Q) + K))
+          + omegaTail b (q * Q * i + (q * (c + j' * Q) + K))) / (b : ℝ) ^ K := by
+        rw [← Finset.sum_div]
+        exact le_trans (Finset.sum_le_sum hpt) (by rw [Finset.sum_div])
+    _ = _ := by
+        rw [← Finset.sum_div]
+        congr 1
+        rw [Finset.sum_add_distrib, Finset.sum_add_distrib, Finset.sum_add_distrib]
+
+/-! ### The truncation error at `log log` depth -/
+
+/-- **The truncation error along the progression is `O(R log log R / b^K)`.**  Compare
+`PairDecoupleElliott.abs_shiftCorr_sub_trunc_le`, whose numerator is `O(R log R)`. -/
+theorem sum_abs_trunc_le_logLog (b p q P c j j' K R : ℕ) (hb : 2 ≤ b)
+    (hpQ : p * primorialLe P ≠ 0) (hqQ : q * primorialLe P ≠ 0)
+    (h1 : p * primorialLe P + (p * (c + j * primorialLe P) + K) + 2 ≤ R)
+    (h2 : q * primorialLe P + (q * (c + j * primorialLe P) + K) + 2 ≤ R)
+    (h3 : p * primorialLe P + (p * (c + j' * primorialLe P) + K) + 2 ≤ R)
+    (h4 : q * primorialLe P + (q * (c + j' * primorialLe P) + K) + 2 ≤ R) :
+    ∑ i ∈ range R, |(pairTail b p q (c + (i + j) * primorialLe P)
+          - pairTail b p q (c + (i + j') * primorialLe P))
+        - shiftDigitTrunc b p q (primorialLe P) c j j' K i|
+      ≤ (2 * (R : ℝ) * (4 * Real.log (Nat.log 2 R) + 11
+              + (omegaNat (p * primorialLe P) : ℝ))
+          + 2 * (R : ℝ) * (4 * Real.log (Nat.log 2 R) + 11
+              + (omegaNat (q * primorialLe P) : ℝ))) / (b : ℝ) ^ K := by
+  have hbp : (0 : ℝ) < (b : ℝ) ^ K := by
+    have : (0 : ℝ) < (b : ℝ) := by
+      have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+      linarith
+    positivity
+  refine (sum_abs_trunc_le_sum b p q P c j j' K R hb).trans ?_
+  refine (div_le_div_iff_of_pos_right hbp).mpr ?_
+  have b1 := sum_omegaTail_AP_le' b (p * primorialLe P) (p * (c + j * primorialLe P) + K) R
+    hb hpQ h1
+  have b2 := sum_omegaTail_AP_le' b (q * primorialLe P) (q * (c + j * primorialLe P) + K) R
+    hb hqQ h2
+  have b3 := sum_omegaTail_AP_le' b (p * primorialLe P) (p * (c + j' * primorialLe P) + K) R
+    hb hpQ h3
+  have b4 := sum_omegaTail_AP_le' b (q * primorialLe P) (q * (c + j' * primorialLe P) + K) R
+    hb hqQ h4
+  linarith
+
+/-- **The shifted correlation is uniformly close to its `K`-digit truncation, with a
+`log log R` numerator.**  This is the depth refinement: the error is negligible as soon as
+`b^K ≫ log log R`, i.e. for `K ≍ log_b log log R`, where `PairDecoupleElliott` needed
+`K ≍ log_b log R`. -/
+theorem abs_shiftCorr_sub_trunc_le_logLog (b : ℕ) (hb : 2 ≤ b) (p q : ℕ) (t : ℝ)
+    (P c j j' K R : ℕ)
+    (hpQ : p * primorialLe P ≠ 0) (hqQ : q * primorialLe P ≠ 0)
+    (h1 : p * primorialLe P + (p * (c + j * primorialLe P) + K) + 2 ≤ R)
+    (h2 : q * primorialLe P + (q * (c + j * primorialLe P) + K) + 2 ≤ R)
+    (h3 : p * primorialLe P + (p * (c + j' * primorialLe P) + K) + 2 ≤ R)
+    (h4 : q * primorialLe P + (q * (c + j' * primorialLe P) + K) + 2 ≤ R) :
+    |shiftCorr (largeProg b P p q t c) R j j' / R
+        - ‖∑ i ∈ range R, phase (t * shiftDigitTrunc b p q (primorialLe P) c j j' K i)‖ / R|
+      ≤ 4 * Real.pi * |t| * (2 * (4 * Real.log (Nat.log 2 R) + 11
+              + (omegaNat (p * primorialLe P) : ℝ))
+          + 2 * (4 * Real.log (Nat.log 2 R) + 11
+              + (omegaNat (q * primorialLe P) : ℝ))) / (b : ℝ) ^ K := by
+  set Q := primorialLe P with hQ
+  have hR : 2 ≤ R := by omega
+  have hRR : (0 : ℝ) < R := by exact_mod_cast (show 0 < R by omega)
+  have hbp : (0 : ℝ) < (b : ℝ) ^ K := by
+    have : (0 : ℝ) < (b : ℝ) := by
+      have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+      linarith
+    positivity
+  have hrw : shiftCorr (largeProg b P p q t c) R j j'
+      = ‖∑ i ∈ range R, phase (t * (pairTail b p q (c + (i + j) * Q)
+          - pairTail b p q (c + (i + j') * Q)))‖ := by
+    rw [shiftCorr_largeProg]
+    congr 1
+    exact Finset.sum_congr rfl fun i _ => by rw [shiftPairDiff_eq_pairTail]
+  have hmain := abs_norm_sum_phase_sub_le_sum t R
+    (fun i => pairTail b p q (c + (i + j) * Q) - pairTail b p q (c + (i + j') * Q))
+    (fun i => shiftDigitTrunc b p q Q c j j' K i)
+  have hsum := sum_abs_trunc_le_logLog b p q P c j j' K R hb hpQ hqQ h1 h2 h3 h4
+  have hpi : (0 : ℝ) ≤ 4 * Real.pi * |t| := by positivity
+  rw [hrw, ← sub_div, abs_div, abs_of_pos hRR, div_le_iff₀ hRR]
+  refine hmain.trans ?_
+  have hstep : 4 * Real.pi * |t| * ∑ i ∈ range R,
+      |(pairTail b p q (c + (i + j) * Q) - pairTail b p q (c + (i + j') * Q))
+        - shiftDigitTrunc b p q Q c j j' K i|
+      ≤ 4 * Real.pi * |t| * ((2 * (R : ℝ) * (4 * Real.log (Nat.log 2 R) + 11
+              + (omegaNat (p * Q) : ℝ))
+          + 2 * (R : ℝ) * (4 * Real.log (Nat.log 2 R) + 11
+              + (omegaNat (q * Q) : ℝ))) / (b : ℝ) ^ K) :=
+    mul_le_mul_of_nonneg_left hsum hpi
+  refine hstep.trans (le_of_eq ?_)
+  field_simp
+
 end NormalNumbers.PairDecouple
