@@ -2538,14 +2538,18 @@ theorem tauMomentPrimesShift_of_incidence (b : ℕ) (hb : 3 ≤ b)
       _ = T * P.card := by rw [hT]; ring
   exact Nat.le_of_mul_le_mul_left hkey hTpos
 
-/-- **The union bound over shifts is discharged, and it is free.**  Beyond
-`kb = log₂(√X + 1) + 2` shifts the trivial bound `τ(m) ≤ 2√m` already beats the geometric
-threshold; the remaining exceptional sets sum to `≤ |P|/2 < |P|` by `sum_le_of_geom_bound`. -/
-theorem tauMomentPrimes_of_shift (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimesShift b) :
-    TauMomentPrimes b := by
+/-- **The pigeonhole at the heart of the shift route, extracted.**  Given a family `P` of
+primes of the progression whose per-shift exceptional sets occupy at most a `2^{-k}/4`
+fraction, some member of `P` obeys the geometric threshold at EVERY shift simultaneously. -/
+theorem exists_good_prime_of_density (b K M r a N Y : ℕ) (P : Finset ℕ) (hb : 3 ≤ b)
+    (hK : 2 ≤ K)
+    (hPmem : ∀ p ∈ P, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ p ≤ Y) (hPcard : 0 < P.card)
+    (hdens : ∀ k : ℕ, 4 * 2 ^ k *
+        (P.filter (fun p => b ^ K / 4 * (k + 1) * 2 ^ k < tau (2 ^ a * p + K + 1 + k))).card
+      ≤ P.card) :
+    ∃ p : ℕ, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧
+      ∀ k : ℕ, tau (2 ^ a * p + K + 1 + k) ≤ b ^ K / 4 * (k + 1) * 2 ^ k := by
   classical
-  intro K M r a N hK hM hr ha hMb hN
-  obtain ⟨Y, P, hPmem, hPcard, hdens⟩ := h K M r a N hK hM hr ha hMb hN
   set X : ℕ := 2 ^ a * Y + K with hX
   set S : ℕ := Nat.sqrt X + 1 with hS
   set kb : ℕ := Nat.log 2 S + 2 with hkb
@@ -2606,6 +2610,15 @@ theorem tauMomentPrimes_of_shift (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimesSh
     simp only [hBad, Finset.mem_filter, not_and, not_lt] at hnb
     exact hnb hpP
   · exact htriv p hpP k hk1
+
+/-- **The union bound over shifts is discharged, and it is free.**  Beyond
+`kb = log₂(√X + 1) + 2` shifts the trivial bound `τ(m) ≤ 2√m` already beats the geometric
+threshold; the remaining exceptional sets sum to `≤ |P|/2 < |P|` by `sum_le_of_geom_bound`. -/
+theorem tauMomentPrimes_of_shift (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimesShift b) :
+    TauMomentPrimes b := by
+  intro K M r a N hK hM hr ha hMb hN
+  obtain ⟨Y, P, hPmem, hPcard, hdens⟩ := h K M r a N hK hM hr ha hMb hN
+  exact exists_good_prime_of_density b K M r a N Y P hb hK hPmem hPcard hdens
 
 /-- **`CarryLeaf` follows from `TauMomentPrimes` by pure analysis** (`carry_le_of_tau_geom`). -/
 theorem carryLeaf_of_tauMomentPrimes (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimes b) :
