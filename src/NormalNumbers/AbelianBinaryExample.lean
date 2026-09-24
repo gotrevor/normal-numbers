@@ -94,6 +94,103 @@ theorem nibCount_binomial (lo hi t : ℕ) (hlo : lo ≤ 4) (hhi : hi ≤ 4) :
     rw [h0, h1]
     simp
 
+/-! ### The window law over a block of hex digits
+
+A length-`L` bit window starting at bit `r` of a hex word splits into: a contiguous bit
+interval of the first nibble, then whole nibbles, then a contiguous prefix of the last.  Each
+piece is Binomial by `nibCount_binomial`, the nibbles are independent, and Vandermonde
+convolves them into Binomial(`L`, 1/2). -/
+
+/-- One-count of the length-`L` bit window at offset `r` of the hex word `v`. -/
+def winPc (r L : ℕ) (v : List ℕ) : ℕ := ∑ i ∈ Finset.range L, bitOfWord v r i
+
+/-- How many `S`-digit hex words give window one-count `j`. -/
+def winCountK (r L S j : ℕ) : ℕ :=
+  ∑ k ∈ Finset.range (16 ^ S), if winPc r L (wordOf 16 S k) = j then 1 else 0
+
+/-- Splitting an indicator of a sum over the antidiagonal. -/
+lemma indicator_add_eq (a b j : ℕ) :
+    (if a + b = j then (1 : ℕ) else 0)
+      = ∑ p ∈ antidiagonal j,
+          (if a = p.1 then (1 : ℕ) else 0) * (if b = p.2 then 1 else 0) := by
+  have hpt : ∀ p : ℕ × ℕ,
+      (if a = p.1 then (1 : ℕ) else 0) * (if b = p.2 then 1 else 0)
+        = if (a, b) = p then 1 else 0 := by
+    intro p
+    by_cases h1 : a = p.1 <;> by_cases h2 : b = p.2 <;>
+      simp [Prod.ext_iff, h1, h2]
+  rw [Finset.sum_congr rfl fun p _ => hpt p, Finset.sum_ite_eq]
+  by_cases h : a + b = j
+  · rw [if_pos h, if_pos (mem_antidiagonal.mpr h)]
+  · rw [if_neg h, if_neg (fun hc => h (mem_antidiagonal.mp hc))]
+
+/-- Reindexing `range (b ^ (S+1))` by leading digit and tail. -/
+lemma sum_range_pow_succ_split (b S : ℕ) (hb : 0 < b) (f : ℕ → ℕ) :
+    ∑ k ∈ Finset.range (b ^ (S + 1)), f k
+      = ∑ t ∈ Finset.range b, ∑ k ∈ Finset.range (b ^ S), f (t * b ^ S + k) := by
+  have hbS : 0 < b ^ S := pow_pos hb S
+  rw [← Finset.sum_product']
+  refine Finset.sum_nbij' (fun k => (k / b ^ S, k % b ^ S))
+    (fun p : ℕ × ℕ => p.1 * b ^ S + p.2) ?_ ?_ ?_ ?_ ?_
+  · intro k hk
+    rw [Finset.mem_range, pow_succ] at hk
+    rw [Finset.mem_product, Finset.mem_range, Finset.mem_range]
+    exact ⟨Nat.div_lt_of_lt_mul (by omega), Nat.mod_lt _ hbS⟩
+  · intro p hp
+    rw [Finset.mem_product, Finset.mem_range, Finset.mem_range] at hp
+    rw [Finset.mem_range, pow_succ]
+    calc p.1 * b ^ S + p.2 < p.1 * b ^ S + b ^ S := by omega
+      _ = (p.1 + 1) * b ^ S := by ring
+      _ ≤ b * b ^ S := Nat.mul_le_mul_right _ hp.1
+      _ = b ^ S * b := by ring
+  · intro k _
+    exact Nat.div_add_mod' k (b ^ S)
+  · intro p hp
+    rw [Finset.mem_product, Finset.mem_range, Finset.mem_range] at hp
+    have h1 : (p.1 * b ^ S + p.2) / b ^ S = p.1 := by
+      rw [Nat.mul_comm p.1, Nat.mul_add_div hbS, Nat.div_eq_of_lt hp.2, Nat.add_zero]
+    have h2 : (p.1 * b ^ S + p.2) % b ^ S = p.2 := by
+      rw [Nat.mul_comm p.1, Nat.mul_add_mod, Nat.mod_eq_of_lt hp.2]
+    rw [Prod.ext_iff]
+    exact ⟨h1, h2⟩
+  · intro k _
+    rw [Nat.div_add_mod' k (b ^ S)]
+
+/-- The cons decomposition of a window one-count. -/
+lemma winPc_cons (r L t : ℕ) (w : List ℕ) (hr : r < 4) :
+    winPc r L (t :: w) = nibPc t r (r + min L (4 - r)) + winPc 0 (L - min L (4 - r)) w := by
+  set m := min L (4 - r) with hm
+  have hmL : m ≤ L := min_le_left _ _
+  have hm4 : r + m ≤ 4 := by omega
+  have hsplit : ∑ i ∈ Finset.range L, bitOfWord (t :: w) r i
+      = (∑ i ∈ Finset.range m, bitOfWord (t :: w) r i)
+        + ∑ i ∈ Finset.range (L - m), bitOfWord (t :: w) r (m + i) := by
+    have := Finset.sum_range_add (f := fun i => bitOfWord (t :: w) r i) m (L - m)
+    rw [show m + (L - m) = L from by omega] at this
+    exact this
+  have hhead : ∑ i ∈ Finset.range m, bitOfWord (t :: w) r i = nibPc t r (r + m) := by
+    rw [nibPc, Finset.sum_Ico_eq_sum_range]
+    simp only [Nat.add_sub_cancel_left]
+    refine Finset.sum_congr rfl fun i hi => ?_
+    have hi' : i < m := Finset.mem_range.mp hi
+    rw [bitOfWord_eq_swapBit]
+    have h1 : (r + i) / 4 = 0 := Nat.div_eq_of_lt (by omega)
+    have h2 : (r + i) % 4 = r + i := Nat.mod_eq_of_lt (by omega)
+    rw [h1, h2]
+    rfl
+  have htail : ∑ i ∈ Finset.range (L - m), bitOfWord (t :: w) r (m + i)
+      = winPc 0 (L - m) w := by
+    rcases Nat.eq_zero_or_pos (L - m) with h0 | h0
+    · rw [h0]; simp [winPc]
+    have hmeq : m = 4 - r := by omega
+    rw [winPc]
+    refine Finset.sum_congr rfl fun i hi => ?_
+    rw [bitOfWord_eq_swapBit, bitOfWord_eq_swapBit]
+    have h1 : (r + (m + i)) / 4 = (0 + i) / 4 + 1 := by omega
+    have h2 : (r + (m + i)) % 4 = (0 + i) % 4 := by omega
+    rw [h1, h2, List.getD_cons_succ]
+  rw [winPc, hsplit, hhead, htail]
+
 /-- The four-bit window predicate for `[0,0,1,1]`, as a function of the offset and the hex pair. -/
 def isZZOO (r : ℕ) (v : List ℕ) : Prop :=
   ∀ j < 4, bitOfWord v r j = (wordOf 2 4 3).getD j 0
