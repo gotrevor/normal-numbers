@@ -333,6 +333,22 @@ half is now done: `SwingC3Split.exists_crt_pattern` produces, for any assignment
 primes in each slot (the primes exceed `ℓ`, so each divides at most one window entry and the
 slots are independent).  `OmegaLargeDecouple` is what is left.
 
+**The argument in full, for the next lap.**  `orbit_eq_fract_tailB` says the orbit point is
+`fract (T_b n)`, and `orbit_eq_rotation` says that along `n ≡ a (mod Q)` it is
+`fract (θ(a) + tailLarge P b n)` with `θ(a) = tailSmall P b a`.  A word `w` of length `ℓ` occurs
+at `n` exactly when that point lies in `w`'s cylinder, an interval of length `b^{−ℓ}`
+(`occursAt_iff_orbit_mem`).  Let `μ_a` be the limit law of `fract (tailLarge P b n)` along the
+class.  Then the density of occurrences of `w` is `(1/Q) ∑_a μ_a(I_w − θ(a))`.  Under
+`OmegaLargeDecouple` (`μ_a = μ` for all `a`) and with the `θ(a)` running over all `b^ℓ`
+multiples of `b^{−ℓ}` — which `exists_crt_pattern` delivers — the translates `I_w − θ(a)`
+partition the circle, so the sum is `μ(circle) = 1 > 0` for EVERY `w`.  Positive lower density
+for every word, i.e. `IsRich`, with no knowledge of `μ` at all.
+
+One bookkeeping caveat to handle next lap: `θ(a)` is controlled only through the head
+`∑_{j ≤ ℓ} ω_{≤P}(a+j) b^{−j}`; the slots `j > ℓ` contribute an uncontrolled `O(π(P) b^{−ℓ})`.
+Prescribing `ℓ' > ℓ` slots instead, and fixing `a` modulo `∏_{p ≤ ℓ'} p` so the primes too small
+to be steered contribute a constant, reduces the uncontrolled part below `b^{−ℓ}`.
+
 **The route is confirmed numerically** (`probes/g4_rotation_route.py`, base 4, `N = 4·10⁶`,
 `P`-primes `{5,7,11,13}`, `Q = 5005`, `ℓ = 4`).  The globally rare word `(1,1,1,1)` has
 frequency `2.3·10⁻⁴` overall — sixteen times below the uniform `4⁻⁴ = 3.9·10⁻³` — yet reaches

@@ -181,4 +181,26 @@ theorem exists_crt_pattern (L : ℕ) (S : Finset ℕ) (hS : ∀ p ∈ S, p.Prime
   · rintro rfl
     exact hzero
 
+/-! ### The orbit IS the tail, mod one
+
+`orbit b G_b n = fract (T_b n)`, so combining with `tailB_eq_small_add_large` the orbit point
+along `n ≡ a (mod Q)` is literally `fract (θ(a) + tailLarge P b n)` with `θ(a) = tailSmall P b a`
+a constant.  This is the exact sense in which the small primes act by rotation. -/
+
+open PrimeLambert in
+/-- The orbit point of `G_b` at `n` is the fractional part of the tail. -/
+theorem orbit_eq_fract_tailB {b : ℕ} (hb : 2 ≤ b) (n : ℕ) :
+    orbit b (primeLambertAtBase b) n = Int.fract (G4.tailB b n) := by
+  rw [G4.tailB_eq hb n, orbit, mul_comm]
+  exact (Int.fract_sub_natCast _ _).symm
+
+open PrimeLambert in
+/-- **The rotation form of the orbit.**  Along the class `n ≡ a (mod Q)` the orbit point is the
+large-prime tail rotated by the constant `tailSmall P b a`. -/
+theorem orbit_eq_rotation {b : ℕ} (hb : 2 ≤ b) {P Q : ℕ} (hQ : ∀ p ≤ P, p.Prime → p ∣ Q)
+    {a n : ℕ} (h : n ≡ a [MOD Q]) :
+    orbit b (primeLambertAtBase b) n = Int.fract (tailSmall P b a + tailLarge P b n) := by
+  rw [orbit_eq_fract_tailB hb n, tailB_eq_small_add_large hb P n,
+    tailSmall_congr (b := b) hQ h]
+
 end NormalNumbers
