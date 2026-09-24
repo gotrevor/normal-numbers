@@ -406,3 +406,30 @@ Everything in the chain above `(K1)+(K2)+(K3)` is now machine-checked.  The file
 is still `subLeafB_holds`; **the next lap should re-route `subLeafA_holds` through
 `paddedSum_of_construction`**, replacing `SubLeafB` by the three named conditions, which are
 strictly more tractable (two are congruence/Dirichlet, one is a standard almost-all estimate).
+
+## Lap 15 (green): crux re-routed through the construction
+
+`subLeafA_holds` no longer goes via `SubLeafB`; it goes via `subLeafA_of_constructionInputs`
+(proved), and the file's single `sorry` is now **`constructionInputs_hold`**:
+
+    ConjC2 ⟸ … ⟸ SubLeafA b ⟸ ConstructionInputs b
+      ≡  ∀ ℓ ≥ 1, ∀ t < b^ℓ, ∃ n K:
+           (K1) ∀ j < ℓ+K, j ≠ ℓ−1 → b^{j+1} ∣ τ(n+1+j)
+           (K2) τ(n+ℓ) ≡ t   (mod b^ℓ)
+           (K3) carry b τ (n+ℓ+K) < b^K
+
+`SubLeafB`, `subLeafA_of_subLeafB`, `Structured`, `tau_of_structured` and all the anchors remain
+proved in `src/` — that route is kept, merely no longer the one the headline uses.
+
+**This is the best statement of the crux the run produced.**  (K1) and (K2) are congruence and
+Dirichlet conditions; (K3) is a standard almost-all divisor estimate.  None of the three is an
+equidistribution statement about `τ` — which is what lap 10 wrongly claimed was unavoidable.
+
+**Immediate next steps, in order:**
+1. **(K1) in Lean.**  `Nat.chineseRemainder` over distinct primes `q_j` with moduli
+   `q_j^{a_j+1}`; `b^{j+1} ∣ τ(n+1+j)` then follows from `τ(q^a·u) = (a+1)τ(u)`
+   (`tau_primePow_mul_squarefree` generalises — a coprime version `tau_mul_coprime` plus
+   `Nat.card_divisors` on `q^a` is enough, no squarefreeness needed).
+2. **(K2) in Lean.**  Needs Dirichlet on primes in APs.  Check `G4MertensAP`, `G4Progression`,
+   `PrimeNumberTheoremAnd` (a dependency!) for an existing statement before writing one.
+3. **(K3)** stays a named hypothesis until 1–2 land.

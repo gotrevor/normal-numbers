@@ -774,31 +774,45 @@ theorem paddedSum_of_construction (b ℓ K t : ℕ) (hb : 2 ≤ b) (hℓ : 1 ≤
     rw [hL, pow_add]; ring
   omega
 
+
+/-- **The three construction conditions.**  `(K1)` kill every slot but `ℓ−1` by a CRT choice of
+prime-power valuations; `(K2)` make the surviving divisor count hit the target; `(K3)` keep the
+carry inside the pad.  `subLeafA_of_constructionInputs` shows these suffice for `SubLeafA`, hence
+for `ConjC2`. -/
+def ConstructionInputs (b : ℕ) : Prop :=
+  ∀ ℓ, 1 ≤ ℓ → ∀ t : ℕ, t < b ^ ℓ → ∃ n K : ℕ,
+    (∀ j, j < ℓ + K → j ≠ ℓ - 1 → ((b : ℤ) ^ (j + 1) ∣ (tau (n + 1 + j) : ℤ))) ∧
+    ((tau (n + ℓ) : ℤ) ≡ (t : ℤ) [ZMOD (b : ℤ) ^ ℓ]) ∧
+    carry b tau (n + (ℓ + K)) < (b : ℤ) ^ K
+
+theorem subLeafA_of_constructionInputs (b : ℕ) (hb : 3 ≤ b) (h : ConstructionInputs b) :
+    SubLeafA b := by
+  intro ℓ hℓ t ht
+  obtain ⟨n, K, hkill, hsurv, hcarry⟩ := h ℓ hℓ t ht
+  exact ⟨n, K, hcarry, paddedSum_of_construction b ℓ K t (by omega) hℓ n ht hkill hsurv⟩
+
 /-! ### 4. The crux leaf -/
 
-/-- **THE CRUX (2026-09-24, after the structured reduction).**  The single open obligation behind
-`ConjC2`.  Every divisor count in the window has been replaced by `(a_j+1)·2^{ω(s_j)}`, so the
-statement lives entirely in the ADDITIVE category: one must prescribe, modulo `b^{ℓ+K}`, a
-weighted sum of `2^{ω(s_j)}` over `L = ℓ+K` consecutive integers whose non-squarefree parts are
-single prime powers `q_j^{a_j}` fixed by CRT.
+/-- **THE CRUX (2026-09-24, after the construction reduction).**  The single open obligation
+behind `ConjC2`.  It is the conjunction of three conditions on one window position, all of them
+standard in shape:
 
-Status: **open**.  Empirically true and comfortably so (`probes/swingc2_window.py`; the anchors
-`subLeafA_three_one`, `subLeafA_three_two` verify `SubLeafA 3` for `ℓ ≤ 2` in the kernel).
-The `(a_j+1)` factors supply the residues outside `⟨2⟩ ≤ (ℤ/b^L)^×`; the `ω(s_j)` supply the rest,
-and `e(ω(·)/q)` IS multiplicative, so Selberg–Delange / the G4 Fourier control applies to it. -/
-theorem subLeafB_holds (b : ℕ) (hb : 3 ≤ b) : SubLeafB b := by
+* **(K1)** `b^{j+1} ∣ τ(n+1+j)` for every slot `j ≠ ℓ−1`.  Produced by CRT: force
+  `q_j^{a_j} ‖ n+1+j` with `a_j + 1 ≡ 0 (mod b^{j+1})` and distinct primes `q_j`.  Congruences only.
+* **(K2)** `τ(n+ℓ) ≡ t (mod b^ℓ)`.  Take `n+ℓ = r^e·p` with `p` prime: `τ = 2(e+1)`, and for ODD
+  `b` the `2` is invertible mod `b^ℓ`, so a suitable `e` exists.  `p` lies in an arithmetic
+  progression — **Dirichlet**, and only ONE prime is needed (`paddedSum_of_construction`).
+* **(K3)** `carry b τ (n+ℓ+K) < b^K`.  An almost-all divisor bound: `log n ≈ b^L` makes the carry
+  `≈ b^{0.693 L}`, so `K > 0.693 L` suffices, and `L` is free by `subLeafAAt_mono`.
+
+Status: **open**, but no longer analytic in character — (K1) and (K2) are congruence/Dirichlet, and
+only (K3) needs an estimate, of a completely standard kind.  Empirically confirmed by
+`probes/swingc2_window.py` and by the kernel anchors `subLeafA_three_one`, `subLeafA_three_two`. -/
+theorem constructionInputs_hold (b : ℕ) (hb : 3 ≤ b) : ConstructionInputs b := by
   sorry
 
-/-- **THE CRUX, after the 2026-09-24 padding reduction.**  `SubLeafA b` is the only open
-obligation behind `ConjC2`.  It is a pure statement about the divisor function on a short
-interval in residue classes modulo powers of `b`; `windowPrescribable_of_subLeafA` shows it
-suffices, and `floor_lambertVal_emod` read backwards shows it is essentially necessary.
-
-Status 2026-09-24: **open**.  The attack is `tau_transport_frozen`: on a progression freezing the
-valuations at the primes of a dilation `D`, `τ(D·m)` is a fixed rational multiple of `τ(m)`, so
-the G4 frame's translation action is replaced by multiplication by `τ(D)` on `ℤ/b^{ℓ+K}`. -/
 theorem subLeafA_holds (b : ℕ) (hb : 3 ≤ b) : SubLeafA b :=
-  subLeafA_of_subLeafB b (subLeafB_holds b hb)
+  subLeafA_of_constructionInputs b hb (constructionInputs_hold b hb)
 
 /-- **THE CRUX.**  For `b ≥ 3`, the divisor-count windows realise every residue mod `b^ℓ`:
 for every `ℓ ≥ 1` and every `t < b^ℓ` there is an `n` with
