@@ -326,9 +326,11 @@ For `d` with `g = gcd(d, M) > 1` the set `{n ≤ Y : n ≡ r (M), d ∣ cn+e}` i
 
     Σ_{d ≤ D} gcd(d,M)/d  ≈  #{g ∣ M : g ≤ D} · log D.
 
-Here `D ≈ 2^{b^{K/4}}` exceeds `M ≈ 2^{bK⁴}`, so *every* divisor of `M` is `≤ D` and the factor
-is `τ(M) = (b+1)^{#kill primes} ≈ b^{K²}` — exponentially past the `b^K` budget.
-**So the incidence sum cannot be bounded term by term over `d`.**
+Here `D ≈ 2^{b^{K/4}}` exceeds `M ≈ 2^{bK⁴}`, so *every* divisor of `M` is `≤ D` and the naive
+factor is `τ(M) = (b+1)^{#kill primes} ≈ b^{K²}` — exponentially past the `b^K` budget.
+
+**CORRECTED (lap 18j).**  That `τ(M)` is far too pessimistic: what enters is `τ(gcd(m,M))`, not
+`τ(M)`, and `gcd(m,M)` is tiny.  See `dvd_of_dvd_shift` below.
 
 There is a saving structure, and it is worth pursuing next lap: a kill prime `q ∣ M` divides
 `2^a p + e` only if `q ∣ n₀ + ℓ + e` (because `2^a r ≡ n₀+ℓ (mod M)`), i.e. only if `q` divides
@@ -349,3 +351,42 @@ what Brun–Titchmarsh does.
 Proved and reusable towards (1): `tau_shift_sum_le`, `card_shift_dvd_le`,
 `sum_card_shift_dvd_le`, `card_divisors_le_two_mul_small`, `card_le_of_mod_eq`,
 `sum_div_le_log`, `tau_sum_AP_le_log`, `card_large_tau_le`.
+
+## Lap 18j — the gcd loss is much smaller than lap 18i claimed (`dvd_of_dvd_shift`)
+
+`SwingC2.dvd_of_dvd_shift` (**proved**):
+
+    q ∣ M,  p ≡ r [MOD M],  2^a r ≡ n [MOD M],  q ∣ 2^a p + e   ⟹   q ∣ n + e.
+
+So a prime of the modulus divides the shifted value only if it divides ONE fixed integer `n + e`
+— the divisibility does not depend on `p` at all; within the progression it either always holds
+or never does.
+
+**Quantitative consequence.**  In the construction `n = n₀ + ℓ` and, modulo the kill prime `q`
+assigned to slot `j`, `n ≡ ℓ−1−j`.  For the shift `e = K+1+k` the condition is therefore
+
+    q ∣ (ℓ−1−j) + K + 1 + k,
+
+i.e. `q` divides one of only `ℓ` integers, each `≤ ℓ+K+1+k`.  Every kill prime exceeds `ℓ+K+2`,
+so a shift `k` is affected only when `k ≥ q − ℓ − K`, and then
+`ω := #{offending kill primes} ≤ ℓ·log(ℓ+K+1+k)/log(ℓ+K)`, whence the loss factor is `2^ω`, not
+`τ(M) = (b+1)^{#kill primes}`.
+
+**Budget with the corrected loss.**  The requirement becomes `6·b^{K/2}·2^ω ≤ b^K/32`, i.e.
+`2^ω ≤ b^{K/2}/192` — so up to `ω ≈ (K/2)·log₂b` offending primes are affordable.  The crude
+worst-case bound above gives `ω ≲ ℓK log b/(4 log K) ≈ K² log b/(80 log K)`, which exceeds the
+allowance by a factor `≈ K/log K`.  **Borderline, and the gap is a factor `K/log K` — not the
+exponential factor lap 18i feared.**
+
+### The two live routes for lap 19
+1. **Close the `K/log K` gap by a better `ω` bound.**  The crude bound assumes every one of the
+   `ℓ` integers `K+1+k+i` is a product of many kill primes simultaneously; averaging over `k`
+   (each `q` offends on one class mod `q`, and there are only `L² ≈ K²` kill primes against
+   `kb ≈ b^{K/4}` shifts) shows the typical `ω` is `0`.  A per-shift worst-case bound is what is
+   missing; a "for all but `K²` shifts, `ω = 0`" statement would suffice, since those exceptional
+   shifts can be absorbed by the `2^{-k}` slack in `TauMomentPrimesShift`.  **This is the cheapest
+   remaining move and it is elementary.**
+2. Brun–Titchmarsh (bounds the incidence sum as a whole, sidestepping the issue entirely).
+
+Either way the second, independent input — a counting lower bound for `π(Y;M,r)` — is still
+required (lap 18h refuted the divergence-only dodge).

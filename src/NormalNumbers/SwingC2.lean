@@ -1717,6 +1717,30 @@ def TauMomentPrimesShift (b : ℕ) : Prop :=
           (P.filter (fun p => b ^ K / 4 * (k + 1) * 2 ^ k < tau (2 ^ a * p + K + 1 + k))).card
         ≤ P.card
 
+/-- **The gcd structure of the incidence sum.**  A prime `q` dividing the modulus `M` can divide
+the shifted value `2^a p + e` only if it divides the single fixed integer `n + e`, where `n` is
+the survivor residue (`2^a r ≡ n [MOD M]`).  In particular the divisibility does not depend on
+`p` at all: within the progression it either always holds or never does.
+
+This is what rescues the incidence sum from the `τ(M)` loss.  In the `SwingC2` construction
+`n = n₀ + ℓ` and, modulo a kill prime `q` assigned to slot `j`, `n ≡ ℓ−1−j`; so for the shift
+`e = K+1+k` the condition reads `q ∣ (ℓ−1−j) + K+1+k` — `q` must divide one of only `ℓ`
+integers, each of size `≤ ℓ+K+1+k`.  Since every kill prime exceeds `ℓ+K+2`, only the shifts
+with `k ≥ q − ℓ − K` are affected at all, and `gcd(2^a p + e, M)` is a product of at most
+`ℓ·log(ℓ+K+1+k)/log(ℓ+K)` kill primes rather than a divisor of all of `M`. -/
+theorem dvd_of_dvd_shift {q M a e p r n : ℕ} (hq : q ∣ M) (hp : p ≡ r [MOD M])
+    (hr : 2 ^ a * r ≡ n [MOD M]) (h : q ∣ 2 ^ a * p + e) : q ∣ n + e := by
+  have hpq : p ≡ r [MOD q] := Nat.ModEq.of_dvd hq hp
+  have hrq : 2 ^ a * r ≡ n [MOD q] := Nat.ModEq.of_dvd hq hr
+  have h1 : 2 ^ a * p ≡ 2 ^ a * r [MOD q] := Nat.ModEq.mul_left _ hpq
+  have h2 : 2 ^ a * p + e ≡ n + e [MOD q] := (h1.trans hrq).add_right e
+  have h3 : (2 ^ a * p + e) % q = 0 := Nat.mod_eq_zero_of_dvd h
+  have h4 : (n + e) % q = 0 := by
+    have := h2
+    unfold Nat.ModEq at this
+    omega
+  exact Nat.dvd_iff_mod_eq_zero.2 h4
+
 /-- **The sieve input, in its final single-inequality form.**  For one family `P` of primes of
 the progression and one shift `e = K+1+k`, the number of *divisor incidences*
 
