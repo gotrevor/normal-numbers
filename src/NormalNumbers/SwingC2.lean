@@ -791,6 +791,54 @@ theorem subLeafA_of_constructionInputs (b : ℕ) (hb : 3 ≤ b) (h : Constructio
   obtain ⟨n, K, hkill, hsurv, hcarry⟩ := h ℓ hℓ t ht
   exact ⟨n, K, hcarry, paddedSum_of_construction b ℓ K t (by omega) hℓ n ht hkill hsurv⟩
 
+
+/-! ### 3k. (K1) pointwise: the valuation at one prime divides `τ` -/
+
+/-- If `q^a ‖ m` then `a + 1 ∣ τ(m)`.  This is the mechanism behind condition (K1): a CRT choice
+of `a` with `b^{j+1} ∣ a + 1` forces `b^{j+1} ∣ τ(n+1+j)`, killing that slot
+(`paddedSum_single`). -/
+theorem succ_factorization_dvd_tau {q m : ℕ} (hq : q.Prime) (hm : m ≠ 0) :
+    (m.factorization q + 1) ∣ tau m := by
+  classical
+  rcases Nat.eq_zero_or_pos (m.factorization q) with h0 | hpos
+  · simp [h0]
+  · have hmem : q ∈ m.primeFactors := by
+      rw [← Nat.support_factorization]
+      exact Finsupp.mem_support_iff.2 (by omega)
+    rw [tau, Nat.card_divisors hm]
+    exact Finset.dvd_prod_of_mem (fun p => m.factorization p + 1) hmem
+
+/-- The (K1) slot condition in the form the CRT step will supply it. -/
+theorem pow_dvd_tau_of_factorization {b j q m : ℕ} (hq : q.Prime) (hm : m ≠ 0)
+    (h : b ^ (j + 1) ∣ (m.factorization q + 1)) : (b : ℤ) ^ (j + 1) ∣ (tau m : ℤ) := by
+  have : b ^ (j + 1) ∣ tau m := h.trans (succ_factorization_dvd_tau hq hm)
+  exact_mod_cast Int.natCast_dvd_natCast.2 this
+
+
+/-- `m ≡ q^a (mod q^{a+1})` pins the valuation: `v_q(m) = a`.  This is how the CRT step delivers
+the exponents of (K1). -/
+theorem factorization_eq_of_modEq {q a m : ℕ} (hq : q.Prime) (hm : m ≠ 0)
+    (h : m ≡ q ^ a [MOD q ^ (a + 1)]) : m.factorization q = a := by
+  have hq2 : 2 ≤ q := hq.two_le
+  have hqa : 0 < q ^ a := Nat.pow_pos (by omega)
+  have hlt : q ^ a < q ^ (a + 1) := Nat.pow_lt_pow_right (by omega) (by omega)
+  have hmod : m % q ^ (a + 1) = q ^ a := by
+    rw [Nat.ModEq] at h
+    rw [h, Nat.mod_eq_of_lt hlt]
+  obtain ⟨w, hw⟩ : ∃ w, m = q ^ a * (q * w + 1) := by
+    refine ⟨m / q ^ (a + 1), ?_⟩
+    have := Nat.div_add_mod m (q ^ (a + 1))
+    rw [hmod] at this
+    calc m = q ^ (a + 1) * (m / q ^ (a + 1)) + q ^ a := this.symm
+      _ = q ^ a * (q * (m / q ^ (a + 1)) + 1) := by rw [pow_succ]; ring
+  have hu : ¬ q ∣ (q * w + 1) := by
+    intro hdvd
+    have : q ∣ 1 := (Nat.dvd_add_right ⟨w, rfl⟩).mp hdvd
+    exact absurd (Nat.le_of_dvd one_pos this) (by omega)
+  have hune : q * w + 1 ≠ 0 := by omega
+  rw [hw, Nat.factorization_mul (by positivity) hune]
+  simp [Nat.Prime.factorization_pow hq, Nat.factorization_eq_zero_of_not_dvd hu]
+
 /-! ### 4. The crux leaf -/
 
 /-- **THE CRUX (2026-09-24, after the construction reduction).**  The single open obligation

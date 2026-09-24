@@ -433,3 +433,26 @@ equidistribution statement about `τ` — which is what lap 10 wrongly claimed w
 2. **(K2) in Lean.**  Needs Dirichlet on primes in APs.  Check `G4MertensAP`, `G4Progression`,
    `PrimeNumberTheoremAnd` (a dependency!) for an existing statement before writing one.
 3. **(K3)** stays a named hypothesis until 1–2 land.
+
+## Lap 16 (green): (K1) machinery — valuation ⟹ divisibility of `τ`
+
+Three new proved lemmas, the pointwise half of condition (K1):
+
+* `succ_factorization_dvd_tau` : `q` prime, `m ≠ 0` ⟹ `v_q(m) + 1 ∣ τ(m)`
+  (the factor `v_q(m)+1` literally appears in `Nat.card_divisors`'s product).
+* `pow_dvd_tau_of_factorization` : if `b^{j+1} ∣ v_q(m) + 1` then `(b:ℤ)^{j+1} ∣ (τ m : ℤ)` —
+  exactly the hypothesis `paddedSum_single` / `paddedSum_of_construction` consume.
+* `factorization_eq_of_modEq` : `m ≡ q^a (mod q^{a+1})` ⟹ `v_q(m) = a` — the bridge from a CRT
+  congruence to a valuation.
+
+So (K1) is now reduced to a purely congruential existence statement: find `n` with
+`n+1+j ≡ q_j^{a_j} (mod q_j^{a_j+1})` for every slot `j ≠ ℓ−1`, where `a_j + 1 = b^{j+1}`.
+
+**Tooling located**: `Nat.chineseRemainderOfFinset` (Mathlib/Data/Nat/ChineseRemainder.lean) takes
+a `Finset ι`, moduli `s i ≠ 0` pairwise coprime, and returns `k` with `k ≡ a i [MOD s i]` for all
+`i ∈ t`.  With `q_j` distinct primes and `s j = q_j^{a_j+1}` the coprimality hypothesis is
+`Nat.Coprime.pow` of `(Nat.coprime_primes _ _).2`.  Next lap assembles that into
+
+    exists_kill_window : ∃ n, ∀ j < ℓ+K, j ≠ ℓ−1 → (b:ℤ)^(j+1) ∣ (tau (n+1+j) : ℤ)
+
+which discharges (K1) of `ConstructionInputs` outright, leaving only (K2) Dirichlet and (K3) carry.
