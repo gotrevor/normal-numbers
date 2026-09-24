@@ -515,6 +515,7 @@ import NormalNumbers.TwoPointGramDiagonal
 import NormalNumbers.TwoPointKataiFree
 import NormalNumbers.TwoPointGrowingCut
 import NormalNumbers.TwoPointDelange
+import NormalNumbers.TwoPointDelangeTail
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
