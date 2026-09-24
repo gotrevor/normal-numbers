@@ -41,8 +41,11 @@ below `C·b^L` at which `w` occurs, which is a positive proportion of `C·b^L`. 
 /-- **Effective disjunctivity at rate `C`**: every base-`b` word `u` occurs at some position
 `< C · b^{|u|}`.  This is the optimal rate: there are `b^{|u|}` words to fit in, so no rate
 below `b^{|u|}` is possible for all of them. -/
-def EffDisjRate (b : ℕ) (x : ℝ) (C : ℕ) : Prop :=
-  ∀ u : List ℕ, (∀ d ∈ u, d < b) → ∃ n < C * b ^ u.length, OccursAt b x u n
+def EffDisj (b : ℕ) (x : ℝ) (R : ℕ → ℕ) : Prop :=
+  ∀ u : List ℕ, (∀ d ∈ u, d < b) → ∃ n < R u.length, OccursAt b x u n
+
+/-- Effective disjunctivity at the **optimal rate** `C·b^L`. -/
+def EffDisjRate (b : ℕ) (x : ℝ) (C : ℕ) : Prop := EffDisj b x (fun L => C * b ^ L)
 
 open PowerBase in
 /-- The big-endian value of `wordOf b m k` is `k` (for `k < bᵐ`). -/
@@ -96,6 +99,38 @@ lemma suffix_eq_of_occursAt {b : ℕ} {x : ℝ} {w v v' : List ℕ} {n : ℕ}
   simp only [Nat.add_sub_cancel_left] at e1 e2
   rw [← e1, ← e2]
 
+open Classical in
+/-- **The counting core of the amplification.**  Under a first-occurrence rate `R`, the
+`bᵐ` extensions `w ++ v` with `|v| = m` all occur below `R (|w| + m)`, at *distinct* positions
+(the position determines the digits, hence `v`).  So `w` itself occurs at `≥ bᵐ` positions
+below `R (|w| + m)`.  This is the only place effectivity is used, and it is sharp: it is what
+forces the rate `O(b^L)` in `isRich_of_effDisjRate` — a rate `C·L·b^L` yields occurrence
+density `≍ 1/L → 0` at the horizon and no lower-density conclusion at all. -/
+theorem card_occ_ge_of_effDisj {b : ℕ} (hb : 2 ≤ b) {x : ℝ} {R : ℕ → ℕ} (h : EffDisj b x R)
+    (w : List ℕ) (hw : ∀ d ∈ w, d < b) (m N : ℕ) (hN : R (w.length + m) ≤ N) :
+    b ^ m ≤ (((range N).filter (fun n => OccursAt b x w n) : Finset ℕ)).card := by
+  classical
+  have hb0 : 0 < b := by omega
+  have hex : ∀ k : ℕ, ∃ n, n < R (w.length + m) ∧
+      OccursAt b x (w ++ PowerBase.wordOf b m k) n := by
+    intro k
+    have hdig : ∀ d ∈ w ++ PowerBase.wordOf b m k, d < b := by
+      intro d hd
+      rcases List.mem_append.1 hd with hd | hd
+      · exact hw d hd
+      · exact PowerBase.wordOf_lt b m k hb0 d hd
+    obtain ⟨n, hn, hocc⟩ := h _ hdig
+    exact ⟨n, by simpa using hn, hocc⟩
+  choose f hf hfocc using hex
+  refine le_trans (le_of_eq (card_range (b ^ m)).symm) ?_
+  refine Finset.card_le_card_of_injOn f (fun k hk => ?_) (fun k hk k' hk' hkk => ?_)
+  · exact mem_filter.2 ⟨mem_range.2 (lt_of_lt_of_le (hf k) hN), occursAt_of_append (hfocc k)⟩
+  · rw [coe_range, Set.mem_Iio] at hk hk'
+    have h1 := hfocc k
+    have h2 := hfocc k'
+    rw [hkk] at h1
+    exact wordOf_injOn b hb0 hk hk' (suffix_eq_of_occursAt (by simp) h1 h2)
+
 /-- **Amplification.**  An effective first-occurrence bound at the optimal rate `C·b^L`
 upgrades one occurrence per word into positive *lower* density for every word: `IsRich`. -/
 theorem isRich_of_effDisjRate (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (C : ℕ) (hC : 0 < C)
@@ -106,32 +141,9 @@ theorem isRich_of_effDisjRate (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (C : ℕ) (hC :
   refine ⟨1 / (C * (b : ℝ) ^ (ℓ + 1)), by positivity, ?_⟩
   have hb0 : 0 < b := by omega
   have hbR : (1 : ℝ) < b := by exact_mod_cast hb
-  -- the extension count at scale `m`
   have key : ∀ m N : ℕ, C * b ^ (ℓ + m) ≤ N →
-      b ^ m ≤ ((range N).filter (fun n => OccursAt b x w n)).card := by
-    intro m N hN
-    -- pick, for each `k < bᵐ`, an occurrence of `w ++ wordOf b m k`
-    have hex : ∀ k : ℕ, ∃ n, n < C * b ^ (ℓ + m) ∧ OccursAt b x (w ++ PowerBase.wordOf b m k) n := by
-      intro k
-      have hdig : ∀ d ∈ w ++ PowerBase.wordOf b m k, d < b := by
-        intro d hd
-        rcases List.mem_append.1 hd with hd | hd
-        · exact hw d hd
-        · exact PowerBase.wordOf_lt b m k hb0 d hd
-      obtain ⟨n, hn, hocc⟩ := h _ hdig
-      exact ⟨n, by simpa [hℓ] using hn, hocc⟩
-    choose f hf hfocc using hex
-    refine le_trans (le_of_eq (card_range (b ^ m)).symm) ?_
-    refine Finset.card_le_card_of_injOn f (fun k hk => ?_) (fun k hk k' hk' hkk => ?_)
-    · refine mem_filter.2 ⟨mem_range.2 (lt_of_lt_of_le (hf k) hN), ?_⟩
-      exact occursAt_of_append (hfocc k)
-    · rw [coe_range, Set.mem_Iio] at hk hk'
-      have h1 := hfocc k
-      have h2 := hfocc k'
-      rw [hkk] at h1
-      have : PowerBase.wordOf b m k = PowerBase.wordOf b m k' :=
-        suffix_eq_of_occursAt (by simp) h1 h2
-      exact wordOf_injOn b hb0 hk hk' this
+      b ^ m ≤ ((range N).filter (fun n => OccursAt b x w n)).card :=
+    fun m N hN => card_occ_ge_of_effDisj hb h w hw m N (by simpa [hℓ] using hN)
   -- for `N` large take the largest admissible `m`
   filter_upwards [eventually_ge_atTop (C * b ^ ℓ)] with N hN
   set P : ℕ → Prop := fun m => C * b ^ (ℓ + m) ≤ N with hP
@@ -180,6 +192,25 @@ with `ω(n)` asymptotically `N(log log n, log log n)`, whose mod-`b` discrepancy
 frequencies drifting `0.088 → 0.114 → 0.145` towards `1/4` for digit `1` as `N` runs
 `2·10⁵ → 10⁶ → 5·10⁶`.  That heuristic predicts `N(b,ℓ) = b^{ℓ(1+o(1))}` — enough for
 `IsRichUpper`-type rates but *not* obviously for the clean `O_b(b^ℓ)` of `effDisjG4`.
+
+Is the optimal rate the right ask?  It is forced: `card_occ_ge_of_effDisj` is sharp, and any
+rate `C·L·b^L` (what a *random* sequence has, by coupon collector) gives occurrence density
+`≍ 1/L` at the horizon, hence lower density `0`.  So `effDisjG4` is exactly the de-Bruijn-like
+efficiency `N(b,L) = O_b(b^L)`, strictly stronger than what a normal number has.
+`probes/g4_first_occurrence.py` measures `N(4,L)/4^L` in the first `2·10⁷` digits of `G₄`:
+
+    L        1     2     3     4     5     6     7
+    N/4^L  7.2   411   288   451   747   930   952
+
+— still climbing at `L = 7`, and already two orders of magnitude above the coupon-collector
+value `L·log 4 ≈ 10`, because the Erdős–Kac bias makes the rarest length-`L` word have
+probability `≈ (q_N)^L` with `4 q_N ≈ 0.58` at `N = 10⁶`.  The self-consistent model
+`H = 4^L (4 q_H)^{-L}` with `1 − 4 q_H ≍ (log H)^{−π²/8}` predicts the ratio saturating and then
+decaying back to the normal value `≍ L`, so `effDisjG4` as stated is *not* supported by the
+numerics.  **Verdict for this lap**: effectivity of first occurrence is not a route to `ConjC3`
+unless `G₄` is de-Bruijn-efficient, which it empirically is not; `ConjC3` is irreducibly a
+counting statement, and the next attack is the Erdős–Kac one (positive density of `n` with
+`ω(n+j) + carry ≡ w_j (mod b)` for `j < ℓ`), not a sharpening of the §5 schedule.
 -/
 
 /-- The effective form of the G4 disjunctivity theorem: for each base there is a constant `C_b`
