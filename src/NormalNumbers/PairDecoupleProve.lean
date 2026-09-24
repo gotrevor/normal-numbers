@@ -1,4 +1,4 @@
-import NormalNumbers.PairDecoupleVdC
+import NormalNumbers.PairDecoupleDigits
 
 /-!
 # PairDecouple — the PROOF direction

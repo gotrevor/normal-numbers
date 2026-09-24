@@ -10027,3 +10027,41 @@ the periodic model all eliminated.
    kickoff's requirement that the residual hypothesis be precise and literature-checkable.
 3. Record explicitly that the natural-density form is open, so the swing's conclusion is
    conditional exactly there.
+
+### lap 7 — the digit form, machine-checked; and a CORRECTION to lap 6
+
+New file `src/NormalNumbers/PairDecoupleDigits.lean` (sorry-free):
+* `phase_nat_mul`, `digitRoot b t k = e(t·b^{−(k+1)})`.
+* `phase_digit` — one digit of the pair phase IS a root-of-unity correlation:
+  `e(t·(ω(pn+1+k) − ω(qn+1+k))·b^{−(k+1)}) = ζ_k^{ω(pn+1+k)}·conj(ζ_k^{ω(qn+1+k)})`.
+* `phase_digitTrunc` — hence the truncated pair phase is a product of `2K` such factors.
+* `pairTail_eq_tsum_digit` — `pairTail = Σ'_k (ω(pn+1+k) − ω(qn+1+k))·b^{−(k+1)}`.
+
+Note the digit expansion needed NO new computation: `omegaTail` is *defined* in `SwingC1.lean`
+as exactly this `b`-adic digit sum.  That confirms lap 6's derivation at the primitive level.
+
+**⚠️ CORRECTION to lap 6.**  Lap 6 called the crux a *two-point* Elliott correlation and raised
+confidence to 90%.  That is right only for the LEADING digit.  `phase_digitTrunc` makes the true
+shape machine-checked: the mean of a product of `2K` root-of-unity powers of `ω` along the `2K`
+forms `pn+1+k`, `qn+1+k` — a **`2K`-point Elliott correlation**.  Tao (2016) settles the
+two-point log-averaged case only; multi-point Elliott is open even logarithmically.  The digit
+weights decay like `b^{−k}`, but `ω` is unbounded (mean `≍ log log R`), so `K` cannot be held
+fixed: `K ≳ log log log R`.  **Revised confidence that `PairDecouple` is TRUE: 85%** — still
+high (the heuristic and every finite model support it) but the literature does NOT supply it,
+even conditionally on a single named published theorem.
+
+**Consequence for the kickoff's item 3.**  The honest equivalence to name is:
+`PairDecouple` ⟸ multi-point Elliott for `ζ^ω` along the shifted forms `pn+j`, `qn+j`
+(Cesàro-averaged), with the number of shifts growing like `log log log R`.  That is an open
+problem, and the chain laps 1–7 reduces the C1 swing to it with the cut `P`, the second cut `y`,
+the periodic model and the `L¹` losses all eliminated.
+
+**Next attack.**
+1. Prove the truncation error bound `|pairTail − digitTrunc K| ≤ Σ_{k≥K}(ω(pn+1+k)+ω(qn+1+k))
+   b^{−(k+1)}` and its mean bound, so `ShiftCorrSmall` reduces *in Lean* to the `2K`-point
+   correlation with an explicit `K(R)`.  `SwingC1.lean` already carries the `(A+k)·b^{−(k+1)}`
+   style bounds this needs (see its lines ~520–550, 2035–2045).
+2. Then state `MultiElliott` as a named open hypothesis (house style: a hypothesis, never an
+   `axiom`) and prove `shiftCorr_all` from it.  That completes the kickoff's item 3: the swing
+   becomes `ConjC1 ⟸ Kátai + Delange + MultiElliott`, all three precise and literature-checkable,
+   the first two known and the third named-open.
