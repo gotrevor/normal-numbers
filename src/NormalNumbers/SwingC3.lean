@@ -289,12 +289,13 @@ The two ingredients behind it are (a) joint Erdős–Kac for the `ℓ` shifts `�
 (classical, via the Kubilius model), and (b) the locality of the carry.  On (b) the situation is
 much better than it looks: `SwingC3Carry.tailB_split` splits the tail EXACTLY as
 `T_b(k) = carryHead b k J + b^{−J} T_b(k+J)`, and `tailB_le` bounds `T_b(m) ≤ m + 2`, so
-`omegaCarry_sandwich` pins `omegaCarry b k` between `⌊carryHead b k J⌋` and
-`carryHead b k J + (k+J+2)/b^J`.  Taking `J = O(log_b k)` makes the unseen remainder `< 1`: the
-carry is a function of the SHORT window `ω(k+1), …, ω(k+J)` up to one unit, not of the far
-future.  So the whole length-`ℓ` digit window at `n` is a function of `ω` on
-`[n+1, n+ℓ+O(log n)]` — a window shorter than any power of `n`, which is exactly the Kubilius
-regime.  What is still missing is the last unit of ambiguity in the sandwich (the near-integer
+`tailB_le_log` sharpens this to `T_b(m) ≤ log₂ m + 2` (from `ω(n) ≤ log₂ n`), so
+`omegaCarry_sandwich_log` pins `omegaCarry b k` between `⌊carryHead b k J⌋` and
+`carryHead b k J + (log₂(k+J)+2)/b^J`.  Taking `J = O(log_b log k)` makes the unseen remainder
+`< 1`: the carry is a function of the SHORT window `ω(k+1), …, ω(k+J)` up to one unit, not of
+the far future.  So the whole length-`ℓ` digit window at `n` is a function of `ω` on
+`[n+1, n+ℓ+O(log log n)]` — an iterated-logarithmically short window, deep inside the Kubilius
+regime (which tolerates windows up to `n^{o(1)}`).  What is still missing is the last unit of ambiguity in the sandwich (the near-integer
 exceptional set) and the joint law itself. -/
 
 open Classical in
