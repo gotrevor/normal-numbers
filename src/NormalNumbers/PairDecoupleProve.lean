@@ -66,4 +66,53 @@ theorem pairDecouple_all : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ 
   intro b hb m hm hdvd p q hp hq hpq
   exact pairDecouple_of_largeDecay b p q _ (largeDecay_all b hb m hm hdvd p q hp hq hpq)
 
+/-! ### The swing, recomposed: `ConjC1 ⟸ Kátai + Delange + MultiElliott`
+
+This is the kickoff's item 3.  All three inputs are now precise, literature-checkable statements:
+
+* `KataiOrthogonality` — the Daboussi–Kátai / Bourgain–Sarnak–Ziegler orthogonality criterion
+  (a known theorem; a mathlib-scale formalization of its own).
+* `DelangeMean` — `(1/N) Σ_{n ≤ N} e(t·ω(n)) → 0` for `t = m/b`, `b ∤ m`: Delange /
+  Selberg–Delange (a known theorem).
+* `MultiElliott` — Elliott's conjecture for a growing number of linear forms: OPEN.
+-/
+
+/-- **The C1 swing, with the open leaf named.**  `ConjC1` follows from two known theorems and
+one open conjecture, and by `shiftCorrSmall_iff_multiElliott` the third input is not merely
+sufficient but *equivalent* to the leaf this route must clear. -/
+theorem conjC1_of_delange_katai_multiElliott (hDK : KataiOrthogonality)
+    (hD : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) → DelangeMean (((m : ℤ) : ℝ) / b))
+    (hME : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) →
+      ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → MultiElliott b p q (((m : ℤ) : ℝ) / b)) :
+    ConjC1 :=
+  conjC1_of_delange_katai_decouple hDK hD fun b hb m hm hdvd p q hp hq hpq =>
+    pairDecouple_of_largeDecay b p q _ (largeDecay_of_shiftCorr b p q _
+      (shiftCorrSmall_of_multiElliott b (by omega) p q _ (hME b hb m hm hdvd p q hp hq hpq)))
+
+/-! ### The shorter route: no prime cut at all -/
+
+lemma primesLe_zero : primesLe 0 = ∅ := by decide
+
+lemma primorialLe_zero : primorialLe 0 = 1 := by
+  rw [primorialLe, primesLe_zero, Finset.prod_empty]
+
+/-- `PairShiftCorr` is `ShiftCorrSmall` at the empty cut: the van der Corput route needs no
+prime cut, no periodic model and no primorial. -/
+lemma pairShiftCorr_of_shiftCorrSmall (b p q : ℕ) (t : ℝ) (h : ShiftCorrSmall b p q t) :
+    PairShiftCorr b p q t := by
+  intro j j' hjj
+  have h0 := h 0 0 j j' hjj
+  have heq : largeProg b 0 p q t 0 = fun i => phase (t * pairTail b p q i) := by
+    funext i
+    rw [largeProg, primorialLe_zero, pairRemainder, truncPairTail, primesLe_zero]
+    simp
+  rwa [heq] at h0
+
+/-- **`PairDecorr` from `MultiElliott` with no prime cut.**  The C1 swing's leaf (D) discharged
+without `PairDecouple`, the cut `P`, or the periodic model. -/
+theorem pairDecorr_of_multiElliott (b : ℕ) (hb : 2 ≤ b) (t : ℝ)
+    (h : ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → MultiElliott b p q t) : PairDecorr b t :=
+  pairDecorr_of_pairShiftCorr b t fun p q hp hq hpq =>
+    pairShiftCorr_of_shiftCorrSmall b p q t (shiftCorrSmall_of_multiElliott b hb p q t (h p q hp hq hpq))
+
 end NormalNumbers.CastingOut

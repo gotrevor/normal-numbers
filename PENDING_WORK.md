@@ -10091,3 +10091,83 @@ invented to supply.
 2. With it, `PairShiftCorr` reduces in Lean to the `2K`-point root-of-unity correlation at
    `K = K(R) ≍ log log log R`, which is then stated as the named open hypothesis `MultiElliott`.
    That closes the kickoff's item 3 in machine-checked form.
+
+### lap 9 (review lap) — the crux is PROVED EQUIVALENT to a multi-point Elliott correlation
+
+New file `src/NormalNumbers/PairDecoupleElliott.lean`, sorry-free, every declaration
+`#print axioms` = `[propext, Classical.choice, Quot.sound]`.
+
+**The advance on the crux.**  Lap 8 left the identification as a one-directional heuristic
+("the truncated phase *is* a `2K`-point correlation").  Lap 9 makes it a two-sided theorem:
+
+```
+shiftCorrSmall_iff_multiElliott :  ShiftCorrSmall b p q t  ↔  MultiElliott b p q t     (2 ≤ b)
+```
+
+so the reduction gives **nothing** away — `MultiElliott` is not merely sufficient for the crux,
+it is equivalent to it.  Consequently `multiElliott_all` (the single on-campaign `sorry`) is the
+honest statement of what the C1 swing is missing, and no cheaper route through this leaf exists.
+
+**Three ingredients, all new and all reusable.**
+
+1. `norm_phase_sub_one_le'` / `norm_phase_sub_phase_le` — `‖e(u) − 1‖ ≤ 4π|u|` with NO smallness
+   side condition (the repo's `norm_phase_sub_one_le` needed `2π|u| ≤ 1`).
+2. `tsum_digit_shift` — the digits beyond `K` are **exactly** `b^{−K}·omegaTail b (N+K)`.  This
+   is why the crude pointwise `ω(m) ≤ log₂ m` (`omegaTail_le_log`, already in `SwingC1.lean`)
+   suffices and the Mertens mean of `ω` is NOT needed for the reduction — it is needed only to
+   make `K` small.  Corollaries: `abs_pairTail_sub_digitTrunc_le_omegaTail` and the uniform
+   `abs_pairTail_sub_digitTrunc_le_crude` on an initial segment.
+3. `shiftPairDiff_eq_pairTail` — **the cut `P` cancels out of the shifted difference entirely.**
+   Both arguments `c+(i+j)Q`, `c+(i+j')Q` lie in the same class mod `Q = primorialLe P` and
+   `truncPairTail` is exactly `Q`-periodic, so the shifted difference of the *remainder* equals
+   the shifted difference of the *full* pair tail.  `P` survives only inside the modulus.  This
+   is what lets one statement (`MultiElliott`) cover every cut at once.
+
+**The named leaf.**  `MultiElliott b p q t := ∃ K, AdmissibleTrunc b K ∧ MultiElliottAt b p q t K`
+with `AdmissibleTrunc b K := ((R) + (K R) + 1)/b^{K R} → 0` (so `K R = R` qualifies,
+`admissibleTrunc_id`; existentially quantified so the hypothesis is as WEAK as possible).
+Unfolded through `phase_digitTrunc` it is Elliott's conjecture for `4K(R)` linear forms and the
+non-pretentious multiplicative functions `ζ_k^ω`, `ζ_k = e(t/b^{k+1})`.  One form:
+Selberg–Delange.  Two forms: Tao, Forum Math. Pi **4** (2016), in logarithmic average.
+`K → ∞`: OPEN, even logarithmically.
+
+**Kickoff item 3, delivered.**  `conjC1_of_delange_katai_multiElliott` (trust-triple clean):
+
+```
+ConjC1  ⟸  KataiOrthogonality  +  DelangeMean  +  MultiElliott
+```
+
+all three precise and literature-checkable, the first two known theorems.  Also
+`pairDecorr_of_multiElliott`: the same conclusion with **no prime cut at all**, via
+`pairShiftCorr_of_shiftCorrSmall` (`ShiftCorrSmall` at `P = 0`, where `primorialLe 0 = 1`).
+
+**Refuted / recorded this lap (do not re-derive).**
+
+* The Gaussian hope — "`pairTail` has SD `≍ √(log log R) → ∞`, so its phase must average to 0" —
+  is exactly the independence-over-primes model already in the repo (`∏_r pairLocalFactor`, each
+  `≤ 1 − c/r`).  It supplies no new information: the whole difficulty is model-vs-density, not
+  the size of the model.
+* Taking the truncation depth `K` FIXED cannot work under any splitting of the prime range.
+  The discarded digits have `E|·| ≍ b^{−K}(log log R − log log y)`; making that `o(1)` needs
+  `y = R^{1−o(1)}`, where the band/CRT modulus `e^{(1+o(1))y}` is vastly larger than `R`.  The
+  two requirements are disjoint (this is the lap-1 refutation, re-derived at the digit level and
+  now with `wip/pd-refute`'s band theorem confirming the other side).
+* Fourier duality on the class decomposition (`Σ_{ξ≠0}|Ê[G·e(ξn/Q)]|²`) returns exactly
+  `PairDecouple` itself — the "orthogonality to rational phases of small-prime denominator"
+  reformulation is circular.  Recorded so it is not re-walked.
+
+**Next attack (in priority order — see `DIRECTION.md` → CURRENT DIRECTIVE).**
+
+1. **Sharpen `K`.**  Replace `omegaTail_le_log` by the Mertens mean `Σ_{m≤X} ω(m) ≤ X(log log X
+   + C)` in the truncation bound, giving an admissible `K(R) ≍ log_b log log R`.  Then
+   `MultiElliott` is a `log log log R`-point statement.  This is the precondition for importing
+   anything partial from the literature.
+2. **Harvest the band engine** from `wip/pd-refute` (`PairDecoupleBand.lean` etc.: bounded prime
+   bands decouple EXACTLY, `classDeviation ≤ 4(R mod M)/R`).  Combined with the digit
+   truncation, the `K` retained digits should only need their LARGE-prime part
+   (`ω_{>y}(pn+1+k)`), a strictly weaker correlation than `MultiElliott`.  Name that leaf and
+   prove the implication.
+3. **Reach `K = 1`.**  The only route that closes the whole thing against a published theorem.
+   Needs a device that handles the tail digits by *structure* rather than by *size*: a periodic
+   model for them, a second van der Corput in the digit index, or a logarithmic average in which
+   the tail's own equidistribution can be used.  Every attempt gets recorded here.

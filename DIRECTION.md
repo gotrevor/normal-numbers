@@ -2,37 +2,59 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective.**  `isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′, Fable §9 / Astra §11)
-SORRY-FREE and trust-triple.  The whole chain is assembled and green; the headline's `sorryAx`
-comes from exactly **three** leaves, all in `src/NormalNumbers/PrimeModelFamilyGraded.lean`.
+**Scope note.**  This worktree is `wip/pd-prove`.  `KICKOFF-2026-09-24-pd-prove.md` (+ its Ren
+ADDENDUM) is the operator objective and outranks everything here; this section records the
+route decisions made on top of it.
 
-**Mandated next move (2026-09-23 review lap — direction KEPT, priority sharpened).**
-Close the three leaves, hardest first:
-1. **`termE5_tendsto`** (l. ~980) — Astra (8.6), the last structurally NEW estimate and the only
-   one whose feasibility is in real doubt.  Everything it needs is already proved:
-   `recipSumIoc_yG_le` (short root chain at any `j ≤ J1 N`), `JG_le_mass` (`8J ≤ S_P(N)`),
-   Mertens (`primeRecipSum_le` / `recipSumLe_le_crude`), `cIdx ≤ J−1 ≤ J1 N`.
-2. **`schedule_admissible`** (l. ~575) — eleven pointwise clauses, two already proved
-   (`yBotG_le_yG`, `yG_antitone`); bookkeeping, no new mathematics.
-3. **`termE4c_tendsto`** (l. ~974) — `N^{-1+o(1)}`; arithmetic of the support level.
+**Objective.**  `pairDecouple_all` (`src/NormalNumbers/PairDecoupleProve.lean`) — the sole open
+input of the C1 swing `conjC1_of_delange_katai_decouple`.  Prove it, or pin EXACTLY the open
+statement it needs.
 
-**Forbidden drift.**  Do NOT open new campaigns, do NOT touch `PrimeLambertOscillation` or
-`MahlerDriftOne` (the two pre-existing off-campaign `sorry`s — designated open), do NOT edit
-`PrimeModelBrunLower.lean`, `papers/`, or Pair B files.  Do NOT weaken any existing statement to
-make a leaf close; a leaf that resists gets a named sub-`sorry` IN `src/`, never a relocation.
-No constant-class-count route (refuted 2026-09-22, see below).
+**State (lap 9 review, 2026-09-24).**  The second half of the kickoff is now DONE and
+machine-checked: `shiftCorrSmall_iff_multiElliott` proves the crux is *equivalent* to
+`MultiElliott` — Elliott's conjecture for a growing number of linear forms — and
+`conjC1_of_delange_katai_multiElliott` states the swing as `ConjC1 ⟸ Kátai + Delange +
+MultiElliott`, trust-triple clean.  `src/` open `sorry`s: 5 (one on-campaign:
+`multiElliott_all`).
 
-**Why.**  The graded route's route-decisive question — whether the fresh-mass surrogate `ε_N → 0`
-alone can drive the schedule — was settled affirmatively by the bounded contracting site index
-(`exists_site_re_nonpos_le`, lap G5c-e) plus the short root chain (`recipSumIoc_yG_le`, lap G5c-i).
-E5 is where that finding is finally cashed: if the exponent `8J − 1 − log 2J − o(1)` does not
-materialise in Lean, the schedule constants (the `8` in `JG`, the `2J` floor) need retuning and
-that is a redesign.  Nothing else open can force a pivot.
+**Mandated next move — ATTACK, do not polish.**  The equivalence is a *floor*, not a
+destination.  Work the crux in this order:
+1. **Sharpen the truncation depth** to `K(R) ≍ log_b log log R` (needs
+   `Σ_{m ≤ X} ω(m) ≤ X(log log X + C)`, i.e. Mertens; see `HANDOFF-2026-09-16-mertensAP.md`).
+   That is what makes `MultiElliott` a `log log log R`-point statement rather than an
+   `R`-point one, and it is the precondition for any partial result from the literature.
+2. **Harvest `wip/pd-refute`'s engine** (`PairDecoupleBand.lean`, `PairDecoupleLower.lean`,
+   `PairDecoupleAttacks.lean`) — bounded prime bands decouple EXACTLY there.  Combine with the
+   digit truncation: after the band cut, the `K` digits only need their LARGE-prime part, which
+   is a strictly weaker correlation than full `MultiElliott`.  Name that weaker leaf.
+3. **Try to reach `K = 1`.**  The one route that would close the whole thing with a published
+   theorem (Tao 2016, two-point Elliott in log average).  Blocked at present by
+   `E|pairTail − digitTrunc_1| ≍ b^{-1}√(log log R) → ∞`; any device that makes the tail digits
+   *structured* rather than *small* (a periodic model for them, a second van der Corput in the
+   digit index, or a logarithmic average that lets the tail be handled by its own equidistribution)
+   is a genuine attempt and must be recorded as tried-and-refuted if it fails.
+
+**Forbidden drift.**  Do NOT re-attempt: the mass route (`TopMassVanishing`), the iterated `L¹`
+split, or any bound that spends the triangle inequality on `Σ_{r>y} 1/r` (all refuted, laps 1–3).
+Do NOT edit `SwingC1*.lean`, `CastingOut*.lean`, `Maze.lean`, `papers/`, `agent-mail/`, other
+KICKOFFs.  Do NOT weaken or rename `pairDecouple_all`.  Never `axiom`; named hypotheses only.
+Do NOT treat "state the equivalence and stop" as the end state — the kickoff allows it, but a lap
+that only re-words the leaf is not a successful lap.
+
+**Why.**  The route-decisive question was whether the crux is a *genuine* open problem or an
+artefact of the reduction.  `shiftCorrSmall_iff_multiElliott` settles it: it is genuine, and it
+is exactly one named conjecture.  The remaining leverage is entirely in (a) how many points the
+conjecture needs and (b) whether the band/CRT half removes the small primes from those points.
+
+**Confidence that `PairDecouple` is TRUE: 88%** (Ren 70% → pd-prove 85% → pd-refute 93%; this
+lap's equivalence neither raises nor lowers it, the band theorem does).
 
 **Directive history.**
-- 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
-- 2026-09-23 (review lap): route KEPT and vindicated (5/8 leaves closed, tail crux resolved);
-  narrowed to the three remaining leaves of `PrimeModelFamilyGraded.lean`, E5 first.
+- 2026-09-22 (lap 7 review): graded joint state route (Theorem C′ campaign).
+- 2026-09-23 (review lap): Theorem C′ narrowed to three leaves — campaign since COMPLETED.
+- 2026-09-24 (pd-prove lap 9 review): directive re-pointed at the C1 swing's `pairDecouple_all`;
+  crux proved EQUIVALENT to `MultiElliott`; next move = sharpen `K`, harvest the band engine,
+  hunt for a two-point reduction.
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically

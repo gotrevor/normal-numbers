@@ -1,5 +1,98 @@
 # STATUS — normal-numbers 📊
 
+**C1 swing (`ConjC1`, the ω-Lambert constant `G4_b`): the sole open input is now ONE named
+conjecture.** · **Build**: 🟢 green (9191 jobs) · **Updated**: pd-prove lap 9 · 2026-09-24 ·
+branch `wip/pd-prove` · HEAD after this lap
+· *(the Pair A multicutoff campaign's own overview is kept below, unchanged)*
+
+## Where it stands (C1 swing / PairDecouple campaign)
+
+`conjC1_of_delange_katai_decouple` reduces `ConjC1` to three inputs: Kátai–Daboussi
+orthogonality, Delange's mean value theorem, and `PairDecouple` — the last being the only one
+that is not a known theorem.  Laps 1–8 of `wip/pd-prove` pushed `PairDecouple` through a prime
+split, a variance step and van der Corput to the shifted-decorrelation leaf `ShiftCorrSmall`,
+and identified the `b`-adic digit form.  **Lap 9 closed the identification into an equivalence**:
+`shiftCorrSmall_iff_multiElliott` proves the crux is *exactly* `MultiElliott` — Elliott's
+conjecture for `4K(R)` linear forms with `K(R) → ∞`, for the non-pretentious multiplicative
+functions `ζ_k^ω`.  One form is Selberg–Delange; two forms is Tao (Forum Math. Pi 4, 2016) in
+logarithmic average; `K → ∞` is open.  The swing is now stated in that shape,
+`conjC1_of_delange_katai_multiElliott`, trust-triple clean.
+
+The sibling worktree `wip/pd-refute` found **no counterexample** and proved the CRT half (every
+bounded prime band decouples exactly), so the live question is one-sided: prove it.
+
+## What's happened (C1 swing campaign, newest first)
+
+- **2026-09-24 (pd-prove lap 9, review lap) — THE CRUX IS ONE NAMED CONJECTURE.**  New
+  `PairDecoupleElliott.lean`: the phase is globally 4π-Lipschitz; the digits beyond `K` are
+  exactly `b^{-K}·omegaTail` at the shifted point (`tsum_digit_shift`), giving a two-sided
+  uniform truncation bound along any progression; the cut `P` cancels out of the shifted
+  difference entirely (`shiftPairDiff_eq_pairTail`).  Hence
+  `shiftCorrSmall_iff_multiElliott` — an EQUIVALENCE, so the reduction gives nothing away — and
+  the recomposed swing `conjC1_of_delange_katai_multiElliott`, plus the cut-free route
+  `pairDecorr_of_multiElliott`.  `pairDecouple_all`'s single `sorry` is now `multiElliott_all`,
+  documented with the state of the art.
+- **2026-09-24 (pd-prove laps 1–8)** — prime-range split with exact-CRT middle range; the mass
+  route (`TopMassVanishing`) REFUTED (top range mass → 4/π); the iterated split REFUTED (the
+  residual is only bounded by `2^k`, so no `L¹` route closes this crux); `L²`/variance to
+  `TopCorrSmall`; **van der Corput proved from scratch** (`norm_mean_le_vdC`,
+  `tendsto_mean_of_shiftCorr`) which removes the second cut entirely; the `b`-adic digit form
+  (`phase_digitTrunc`).
+- **2026-09-24 (pd-refute lap 1, sibling worktree)** — no counterexample; `PairDecoupleBand.lean`
+  proves every bounded prime band decouples EXACTLY (`classDeviation ≤ 4(R mod M)/R`, `0` when
+  `M ∣ R`); six boundary attacks closed as theorems; confidence `PairDecouple` TRUE raised to 93%.
+- **2026-09-24 (swing-c1 laps 32–35)** — `conjC1_of_delange_katai_decouple` proved;
+  `PairDecouple` isolated as the sole open input; `norm_pairLocalFactor_le` proved, so the pair
+  side's model half is unconditional.
+
+## Outstanding (C1 swing campaign)
+
+### Short-term (mirrors PENDING_WORK top)
+1. Sharpen the admissible truncation depth to `K(R) ≍ log_b log log R` (needs `Σ_{m≤X} ω(m) ≪
+   X log log X`), so `MultiElliott` is a `log log log R`-point statement, not an `R`-point one.
+2. Harvest `wip/pd-refute`'s band engine and combine it with the digit truncation: name the
+   strictly weaker leaf in which the `K` digits only need their LARGE-prime part.
+3. Hunt for a reduction to `K = 1` (the two-point case Tao 2016 settles logarithmically).
+
+### Long-term
+`KataiOrthogonality` and `DelangeMean` are known theorems carried as named hypotheses; each is a
+mathlib-scale formalization in its own right and is deliberately not attacked inside this swing.
+Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
+`MahlerDriftOne.exists_prime_nonresidue`; and `SwingC1.lean`'s `hDepthAll` / `hAutoCorrAll`.
+
+### To completion
+`ConjC1` unconditional needs all three of: Kátai (known, unformalized), Delange (known,
+unformalized), `MultiElliott` (OPEN).  The honest end state of *this* campaign is the conditional
+theorem, now achieved, plus whatever of the open leaf can be chipped.
+
+## Axiom ledger — C1 swing (real `#print axioms`, 2026-09-24, 9191 jobs)
+
+| headline theorem | paper claim | `#print axioms` shows | verdict |
+|---|---|---|---|
+| `conjC1_of_delange_katai_decouple` | `ConjC1` ⟸ Kátai + Delange + `PairDecouple` — COND | trust triple | 🟢 clean (conditional by design) |
+| `conjC1_of_delange_katai_multiElliott` | `ConjC1` ⟸ Kátai + Delange + `MultiElliott` — COND | trust triple | 🟢 clean (conditional by design) |
+| `shiftCorrSmall_iff_multiElliott` | the crux IS the multi-point Elliott correlation | trust triple | 🟢 clean |
+| `norm_mean_le_vdC` / `tendsto_mean_of_shiftCorr` | van der Corput, from scratch | trust triple | 🟢 clean |
+| `norm_pairLocalFactor_le` | the pair model half, unconditional | trust triple | 🟢 clean |
+| `pairDecouple_all` | `PairDecouple` for all `b, m, p, q` — UNCOND target | trust triple **+ `sorryAx`** | 🔴 one open leaf: `multiElliott_all` |
+
+Math-axiom count for this campaign: **0** `axiom` declarations.  The one 🔴 is an *open
+conjecture* carried as a named `sorry` on a theorem whose unconditional form is the campaign's
+target — flagged, not normalized: `shiftCorrSmall_iff_multiElliott` certifies it cannot be routed
+around.  `KataiOrthogonality` and `DelangeMean` are 🟡 (proved, project-scale) but appear as
+*hypotheses*, never as axioms, so they do not enter any `#print axioms`.
+
+## Pointers (C1 swing)
+`KICKOFF-2026-09-24-pd-prove.md` (+ ADDENDUM) · `HANDOFF-2026-09-24-pd-prove-lap9.md` ·
+`HANDOFF-2026-09-24-pd-prove-laps1-8.md` · `PENDING_WORK.md` · `DIRECTION.md` (CURRENT DIRECTIVE) ·
+sibling: `git show wip/pd-refute:HANDOFF-2026-09-24-pd-refute-lap1.md`
+
+---
+
+# (below: the Pair A multicutoff campaign — COMPLETE; kept as the durable overview of that work)
+
+# STATUS — normal-numbers 📊
+
 **Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
 · **Build**: 🟢 green (9161 jobs) · **Updated**: 2026-09-23, campaign complete · HEAD `3523f8d`
 · branch `wip/g5-prime-subset`
