@@ -159,6 +159,18 @@ orthogonality of the additive characters mod `Q` (`sum_ee_div`, proved here from
 and `Complex.exp_eq_one_iff`).  This is the form a number theorist checks: a multiplicative
 function twisted by an additive character.
 
+**The free/content boundary, pinned** (`src/NormalNumbers/SwingC3Free.lean`, all trust-triple
+clean):
+* `addCharTail_h_eq_zero` — the `h = 0` case of `AddCharTail` is a geometric sum, PROVED.  So
+  the whole content sits at `h ≠ 0`, i.e. in the tail factor, never in the character.
+* `card_modEq_sub_div_le` / `card_modEq_crt_sub_div_le` /
+  `card_modEq_class_pattern_sub_div_le` — the exact statement of "large primes do not see small
+  ones", PROVED: if every prime factor of `Q` is `≤ P` and `D` is any product of primes `> P`,
+  then `#{n<N : n ≡ r (Q), n ≡ a (D)}` differs from `N/(QD)` by **at most 1**.  No sieve, no
+  level of distribution, no asymptotics.  This is *all* the CRT gives, and the error is `O(1)`
+  PER PATTERN, so the obstruction is now purely a statement about how many patterns `tailLarge`
+  needs (`≍ loglog N`), not about whether any one of them decouples.
+
 **What is still open** is `H` alone, and `H` is exactly the Selberg–Delange-with-characters
 quantity the B4 probe measured at `(log N)^{−1.86}`.  The ratified headline `conjC3`
 (`SwingC3.lean`) still routes through `tailLargeDecouple_holds` and stays `sorry` — as the
