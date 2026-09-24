@@ -428,15 +428,106 @@ lemma omegaTail_nonneg (b : ℕ) (hb : 2 ≤ b) (N : ℕ) : 0 ≤ omegaTail b N 
 lemma omegaCarry_nonneg (b : ℕ) (hb : 2 ≤ b) (N : ℕ) : 0 ≤ omegaCarry b N :=
   Int.floor_nonneg.mpr (omegaTail_nonneg b hb N)
 
+lemma omegaNat_le_log (m : ℕ) (hm : m ≠ 0) : omegaNat m ≤ Nat.log 2 m := by
+  refine Nat.le_log_of_pow_le (by norm_num) ?_
+  calc 2 ^ m.primeFactors.card ≤ ∏ p ∈ m.primeFactors, p :=
+        Finset.pow_card_le_prod _ _ _ (fun p hp => (Nat.prime_of_mem_primeFactors hp).two_le)
+    _ ≤ m := Nat.le_of_dvd (Nat.pos_of_ne_zero hm) (Nat.prod_primeFactors_dvd m)
+
+/-- `Σ_{k≥0} (1/2)^{k+1} = 1`. -/
+private lemma tsum_half_succ : ∑' k : ℕ, ((1 : ℝ) / 2) ^ (k + 1) = 1 := by
+  have hgeo := tsum_geometric_of_lt_one (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num : (1:ℝ)/2 < 1)
+  calc ∑' k : ℕ, ((1 : ℝ) / 2) ^ (k + 1)
+      = ∑' k : ℕ, (1/2 : ℝ) * ((1 : ℝ) / 2) ^ k := tsum_congr fun k => by ring
+    _ = (1/2 : ℝ) * ∑' k : ℕ, ((1 : ℝ) / 2) ^ k := tsum_mul_left
+    _ = 1 := by rw [hgeo]; norm_num
+
+/-- `Σ_{k≥0} k·(1/2)^{k+1} = 1`. -/
+private lemma tsum_half_succ_mul : ∑' k : ℕ, (k : ℝ) * ((1 : ℝ) / 2) ^ (k + 1) = 1 := by
+  have h := tsum_coe_mul_geometric_of_norm_lt_one (𝕜 := ℝ) (r := (1:ℝ)/2)
+    (by rw [Real.norm_eq_abs]; norm_num)
+  calc ∑' k : ℕ, (k : ℝ) * ((1 : ℝ) / 2) ^ (k + 1)
+      = ∑' k : ℕ, (1/2 : ℝ) * ((k : ℝ) * ((1 : ℝ) / 2) ^ k) := tsum_congr fun k => by ring
+    _ = (1/2 : ℝ) * ∑' k : ℕ, (k : ℝ) * ((1 : ℝ) / 2) ^ k := tsum_mul_left
+    _ = 1 := by rw [h]; norm_num
+
+/-- **The carry is `O(log N)`.**  `Σ_{k≥1} ω(N+k) b^{−k} ≤ log₂(N+1) + 1`, from
+`ω(m) ≤ log₂ m` and `N+1+k ≤ (N+1)·2^k`.  This pins the depth a truncation of the carry needs:
+`b^K` must beat `log₂ N`, i.e. `K ≳ log_b log N`. -/
+theorem omegaTail_le_log (b : ℕ) (hb : 2 ≤ b) (N : ℕ) :
+    omegaTail b N ≤ (Nat.log 2 (N + 1) : ℝ) + 1 := by
+  set A := Nat.log 2 (N + 1) with hA
+  have hterm : ∀ k : ℕ, (omegaNat (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)
+      ≤ ((A : ℝ) + k) * ((1 : ℝ) / 2) ^ (k + 1) := by
+    intro k
+    have hne : N + 1 + k ≠ 0 := by omega
+    have hlog : omegaNat (N + 1 + k) ≤ Nat.log 2 (N + 1 + k) :=
+      omegaNat_le_log (N + 1 + k) hne
+    have hk : k < 2 ^ k := Nat.lt_two_pow_self
+    have ht : 1 ≤ 2 ^ k := Nat.one_le_two_pow
+    have h4 : N ≤ N * 2 ^ k := Nat.le_mul_of_pos_right N (by positivity)
+    have h3 : N + 1 + k ≤ (N + 1) * 2 ^ k := by
+      calc N + 1 + k = N + (k + 1) := by omega
+        _ ≤ N * 2 ^ k + 2 ^ k := by omega
+        _ = (N + 1) * 2 ^ k := by ring
+    have h2 : N + 1 < 2 ^ (A + 1) := Nat.lt_pow_succ_log_self (by norm_num) (N + 1)
+    have hlt : N + 1 + k < 2 ^ (A + k + 1) := by
+      calc N + 1 + k ≤ (N + 1) * 2 ^ k := h3
+        _ < 2 ^ (A + 1) * 2 ^ k := by
+            exact (Nat.mul_lt_mul_right (by positivity)).mpr h2
+        _ = 2 ^ (A + k + 1) := by rw [← pow_add]; congr 1; omega
+    have hloglt : Nat.log 2 (N + 1 + k) < A + k + 1 := Nat.log_lt_of_lt_pow hne hlt
+    have h1 : omegaNat (N + 1 + k) ≤ A + k := by omega
+    have hnum : (omegaNat (N + 1 + k) : ℝ) ≤ (A : ℝ) + k := by exact_mod_cast h1
+    have hden : (2 : ℝ) ^ (k + 1) ≤ (b : ℝ) ^ (k + 1) := by
+      refine pow_le_pow_left₀ (by norm_num) ?_ _
+      exact_mod_cast hb
+    have hrhs : ((A : ℝ) + k) * ((1 : ℝ) / 2) ^ (k + 1) = ((A : ℝ) + k) / (2 : ℝ) ^ (k + 1) := by
+      rw [div_pow, one_pow]; ring
+    rw [hrhs]
+    gcongr
+  have hsum1 : Summable (fun k : ℕ => (A : ℝ) * ((1 : ℝ) / 2) ^ (k + 1)) := by
+    refine Summable.mul_left _ ?_
+    exact (summable_geometric_of_lt_one (by norm_num) (by norm_num)).comp_injective
+      (add_left_injective 1) |>.congr fun k => rfl
+  have hsum2 : Summable (fun k : ℕ => (k : ℝ) * ((1 : ℝ) / 2) ^ (k + 1)) := by
+    have h := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1
+      (by rw [Real.norm_eq_abs]; norm_num : ‖(1:ℝ)/2‖ < 1)
+    have h2 := h.mul_left ((1:ℝ)/2)
+    refine h2.congr fun k => ?_
+    rw [pow_one]
+    ring
+  have hsumg : Summable (fun k : ℕ => ((A : ℝ) + k) * ((1 : ℝ) / 2) ^ (k + 1)) := by
+    refine (hsum1.add hsum2).congr fun k => ?_
+    ring
+  have hle := Summable.tsum_le_tsum hterm (summable_omegaTail b hb N) hsumg
+  refine hle.trans (le_of_eq ?_)
+  have : ∑' k : ℕ, ((A : ℝ) + k) * ((1 : ℝ) / 2) ^ (k + 1)
+      = (∑' k : ℕ, (A : ℝ) * ((1 : ℝ) / 2) ^ (k + 1))
+        + ∑' k : ℕ, (k : ℝ) * ((1 : ℝ) / 2) ^ (k + 1) := by
+    rw [← Summable.tsum_add hsum1 hsum2]
+    exact tsum_congr fun k => by ring
+  rw [this, tsum_mul_left, tsum_half_succ, tsum_half_succ_mul, mul_one]
+
+/-- `c_N ≤ log₂(N+1) + 1`. -/
+theorem omegaCarry_le_log (b : ℕ) (hb : 2 ≤ b) (N : ℕ) :
+    omegaCarry b N ≤ (Nat.log 2 (N + 1) : ℤ) + 1 := by
+  rw [omegaCarry_eq_floor]
+  have h1 : (⌊omegaTail b N⌋ : ℤ) ≤ ⌊((Nat.log 2 (N + 1) : ℝ) + 1)⌋ :=
+    Int.floor_le_floor (omegaTail_le_log b hb N)
+  refine h1.trans (le_of_eq ?_)
+  rw [show ((Nat.log 2 (N + 1) : ℝ) + 1) = (((Nat.log 2 (N + 1) : ℤ) + 1 : ℤ) : ℝ) by push_cast; ring,
+    Int.floor_intCast]
+
 /-- **Carry truncation, exactly.**  `c_N` is its own depth-`K` truncation `⌊Σ_{k≤K} ω(N+k)b^{-k}⌋
 = H/b^K` plus `c_{N+K}/b^K` plus an explicit `0` or `1`.  So the error made by truncating the
 carry at depth `K` is at most `c_{N+K}/b^K + 1`: once `b^K` exceeds `c_{N+K} ≈ log log N / (b−1)`
 the truncation is exact up to a single unit.  This is the quantitative form of the depth needed by
 the character-sum leaf `hWindowCharAll`. -/
 theorem omegaCarry_eq_trunc_add (b : ℕ) (hb : 2 ≤ b) (K N : ℕ) :
-    ∃ e : ℤ, 0 ≤ e ∧ e ≤ 1 ∧
-      omegaCarry b N
-        = omegaHead b K N / (b : ℤ) ^ K + omegaCarry b (N + K) / (b : ℤ) ^ K + e := by
+    omegaCarry b N
+      = omegaHead b K N / (b : ℤ) ^ K + omegaCarry b (N + K) / (b : ℤ) ^ K
+        + (omegaHead b K N % (b : ℤ) ^ K + omegaCarry b (N + K) % (b : ℤ) ^ K) / (b : ℤ) ^ K := by
   set M : ℤ := (b : ℤ) ^ K with hMdef
   have hMpos : (0 : ℤ) < M := by
     have : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (by omega : 0 < b)
@@ -444,28 +535,32 @@ theorem omegaCarry_eq_trunc_add (b : ℕ) (hb : 2 ≤ b) (K N : ℕ) :
   have hMne : M ≠ 0 := ne_of_gt hMpos
   set H : ℤ := omegaHead b K N with hHdef
   set c : ℤ := omegaCarry b (N + K) with hcdef
-  have hc0 : 0 ≤ c := omegaCarry_nonneg b hb (N + K)
   have hW : omegaCarry b N = (H + c) / M := by
     rw [omegaCarry_eq_windowVal_div b hb K N, omegaWindowVal, hHdef, hcdef, hMdef]
   have hsplit : H + c = M * (H / M + c / M) + (H % M + c % M) := by
     have h1 := Int.mul_ediv_add_emod H M
     have h2 := Int.mul_ediv_add_emod c M
     linarith [h1, h2, mul_add M (H / M) (c / M)]
-  have hr1 := Int.emod_nonneg H hMne
-  have hr2 := Int.emod_nonneg c hMne
-  have hr1' := Int.emod_lt_of_pos H hMpos
-  have hr2' := Int.emod_lt_of_pos c hMpos
-  refine ⟨(H % M + c % M) / M, Int.ediv_nonneg (by linarith) (le_of_lt hMpos), ?_, ?_⟩
-  · have : (H % M + c % M) / M ≤ (2 * M - 2) / M := by
-      exact Int.ediv_le_ediv hMpos (by linarith)
-    refine this.trans ?_
-    have h2 : (2 * M - 2) / M ≤ 1 := by
-      rw [Int.ediv_le_iff_le_mul hMpos]
-      linarith
-    exact h2
-  · rw [hW, hsplit, add_comm (M * (H / M + c / M)) (H % M + c % M),
-      Int.add_mul_ediv_left _ _ hMne]
-    ring
+  rw [hW, hsplit, add_comm (M * (H / M + c / M)) (H % M + c % M),
+    Int.add_mul_ediv_left _ _ hMne]
+  ring
+
+/-- The truncation defect is between `0` and `1`. -/
+theorem trunc_defect_mem (b : ℕ) (hb : 2 ≤ b) (K N : ℕ) :
+    0 ≤ (omegaHead b K N % (b : ℤ) ^ K + omegaCarry b (N + K) % (b : ℤ) ^ K) / (b : ℤ) ^ K ∧
+      (omegaHead b K N % (b : ℤ) ^ K + omegaCarry b (N + K) % (b : ℤ) ^ K) / (b : ℤ) ^ K ≤ 1 := by
+  have hMpos : (0 : ℤ) < (b : ℤ) ^ K := by
+    have : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (by omega : 0 < b)
+    positivity
+  have hMne : ((b : ℤ) ^ K) ≠ 0 := ne_of_gt hMpos
+  have hr1 := Int.emod_nonneg (omegaHead b K N) hMne
+  have hr2 := Int.emod_nonneg (omegaCarry b (N + K)) hMne
+  have hr1' := Int.emod_lt_of_pos (omegaHead b K N) hMpos
+  have hr2' := Int.emod_lt_of_pos (omegaCarry b (N + K)) hMpos
+  refine ⟨Int.ediv_nonneg (by linarith) (le_of_lt hMpos), ?_⟩
+  refine (Int.ediv_le_ediv hMpos (by linarith : _ ≤ 2 * (b : ℤ) ^ K - 2)).trans ?_
+  rw [Int.ediv_le_iff_le_mul hMpos]
+  linarith
 
 /-- The depth-`K` truncation of the window value: a function of `ω(n+1), …, ω(n+L+K)` only. -/
 noncomputable def windowValTrunc (b L K n : ℕ) : ℤ :=
@@ -475,26 +570,46 @@ noncomputable def windowValTrunc (b L K n : ℕ) : ℤ :=
 depth-`K` truncation — which involves only `ω(n+1), …, ω(n+L+K)` — by `c_{n+L+K}/b^K` plus `0`
 or `1`. -/
 theorem omegaWindowVal_eq_trunc_add (b : ℕ) (hb : 2 ≤ b) (L K n : ℕ) :
-    ∃ e : ℤ, 0 ≤ e ∧ e ≤ 1 ∧
-      omegaWindowVal b L n
-        = windowValTrunc b L K n + omegaCarry b (n + L + K) / (b : ℤ) ^ K + e := by
-  obtain ⟨e, he0, he1, he⟩ := omegaCarry_eq_trunc_add b hb K (n + L)
-  exact ⟨e, he0, he1, by rw [omegaWindowVal, he, windowValTrunc]; ring⟩
+    omegaWindowVal b L n
+      = windowValTrunc b L K n + omegaCarry b (n + L + K) / (b : ℤ) ^ K
+        + (omegaHead b K (n + L) % (b : ℤ) ^ K
+            + omegaCarry b (n + L + K) % (b : ℤ) ^ K) / (b : ℤ) ^ K := by
+  have he := omegaCarry_eq_trunc_add b hb K (n + L)
+  rw [omegaWindowVal, he, windowValTrunc]
+  ring
 
-/-- Once the depth `K` is large enough that `b^K` exceeds the carry `c_{n+L+K}` (which is of size
-`≈ log log n / (b−1)`), the window value is its finite-window truncation up to a single unit. -/
-theorem omegaWindowVal_sub_trunc_le_one (b : ℕ) (hb : 2 ≤ b) (L K n : ℕ)
+/-- **The bad event, explicitly.**  Once the depth `K` is large enough that `b^K` exceeds the
+carry `c_{n+L+K}` — by `omegaCarry_le_log` it is enough that `b^K > log₂(n+L+K+1) + 1` — the
+depth-`K` truncation of the window value is wrong at `n` **exactly** when the depth-`K` head
+overflows:  `H_K(n+L) mod b^K + c_{n+L+K} ≥ b^K`.  This is the precise arithmetic event whose
+density Leaf B must control. -/
+theorem windowVal_ne_trunc_iff (b : ℕ) (hb : 2 ≤ b) (L K n : ℕ)
     (hsmall : omegaCarry b (n + L + K) < (b : ℤ) ^ K) :
-    omegaWindowVal b L n - windowValTrunc b L K n = 0 ∨
-      omegaWindowVal b L n - windowValTrunc b L K n = 1 := by
-  obtain ⟨e, he0, he1, he⟩ := omegaWindowVal_eq_trunc_add b hb L K n
-  have hbK : (0 : ℤ) < (b : ℤ) ^ K := by
+    omegaWindowVal b L n ≠ windowValTrunc b L K n
+      ↔ (b : ℤ) ^ K ≤ omegaHead b K (n + L) % (b : ℤ) ^ K + omegaCarry b (n + L + K) := by
+  have hMpos : (0 : ℤ) < (b : ℤ) ^ K := by
     have : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (by omega : 0 < b)
     positivity
-  have hz : omegaCarry b (n + L + K) / (b : ℤ) ^ K = 0 :=
-    Int.ediv_eq_zero_of_lt (omegaCarry_nonneg b hb _) hsmall
-  rw [he, hz]
-  omega
+  have hc0 := omegaCarry_nonneg b hb (n + L + K)
+  have hcz : omegaCarry b (n + L + K) / (b : ℤ) ^ K = 0 :=
+    Int.ediv_eq_zero_of_lt hc0 hsmall
+  have hcm : omegaCarry b (n + L + K) % (b : ℤ) ^ K = omegaCarry b (n + L + K) :=
+    Int.emod_eq_of_lt hc0 hsmall
+  have he := omegaWindowVal_eq_trunc_add b hb L K n
+  rw [hcz, hcm, add_zero] at he
+  set r : ℤ := omegaHead b K (n + L) % (b : ℤ) ^ K + omegaCarry b (n + L + K) with hr
+  have hr0 : 0 ≤ r := by
+    have := Int.emod_nonneg (omegaHead b K (n + L)) (ne_of_gt hMpos)
+    omega
+  constructor
+  · intro hne
+    by_contra hlt
+    push_neg at hlt
+    exact hne (by rw [he, Int.ediv_eq_zero_of_lt hr0 hlt, add_zero])
+  · intro hge hEq
+    have : r / (b : ℤ) ^ K = 0 := by omega
+    have h1 : 1 ≤ r / (b : ℤ) ^ K := (Int.le_ediv_iff_mul_le hMpos).mpr (by linarith)
+    omega
 
 /-! ### Finite Fourier: the character-sum form of the hypothesis -/
 

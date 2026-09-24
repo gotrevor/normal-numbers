@@ -82,6 +82,27 @@ for almost all `n`, the truncation fails at almost every `n`, and the bad-set de
 `carryBadCount` now take `κ` rather than a constant.  The window at `n` is
 `ω(n+1), …, ω(n+L+κ n)` — still local, but of slowly growing length.
 
+## Lap 9: the carry is `O(log N)`, and Leaf B's bad event is now explicit
+
+* `omegaTail_le_log` / **`omegaCarry_le_log`** — `c_N ≤ log₂(N+1) + 1`, from `ω(m) ≤ log₂ m`,
+  `N+1+k ≤ (N+1)·2^k`, and `Σ_{k≥0}(1/2)^{k+1} = 1`, `Σ_{k≥0} k(1/2)^{k+1} = 1`.  So the
+  admissible depth is `b^K > log₂(n+L+K+1) + 1`, i.e. `K ≳ log_b log n` — a REAL bound, not the
+  heuristic `log log`.
+* `omegaCarry_eq_trunc_add` is now stated with the defect EXPLICIT (no existential):
+  `c_N = H/b^K + c_{N+K}/b^K + (H mod b^K + c_{N+K} mod b^K)/b^K`, with `trunc_defect_mem`
+  saying the last term is `0` or `1`.
+* **`windowVal_ne_trunc_iff`** — at an admissible depth, the depth-`K` truncation is wrong at `n`
+  **exactly** when
+
+      H_K(n+L) mod b^K + c_{n+L+K}  ≥  b^K,    H_K(N) = Σ_{i<K} ω(N+1+i) b^{K-1-i}.
+
+  Leaf B is therefore not a vague "truncation error" statement any more: it is the density of one
+  explicit arithmetic overflow event, whose expected size is `c/b^K ≈ log₂ n / b^K`.
+
+  Honest downgrade: this event is still an equidistribution statement (about `H_K mod b^K`), so
+  Leaf B is NOT elementary in the sense lap 7 claimed — it is of the same *nature* as Leaf A, only
+  one-sided (an upper bound on one tail event, not decay of every character).
+
 ## Exact next moves
 
 1. The structural slack to exploit: `ω(n+L)` enters the exponent with coefficient `b^0 = 1`, while
