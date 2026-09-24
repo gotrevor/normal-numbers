@@ -158,4 +158,85 @@ theorem tailSmall_head_rem {b : ℕ} (hb : 2 ≤ b) (P n L : ℕ) :
     field_simp
     ring
 
+/-! ### CRT steering with a prescribed residue on the small primes
+
+`SwingC3Split.exists_crt_pattern` steers the primes `> L`.  The primes `≤ L` can divide two of
+`a+1, …, a+L` and cannot be steered, but they can be PINNED: fixing `a` modulo `R = ∏_{p ≤ L} p`
+makes their contribution to each window slot a constant, independent of the steering. -/
+
+/-- `exists_crt_pattern` with an extra congruence `a ≡ a₀ [MOD R]`, `R` coprime to every
+steering prime. -/
+theorem exists_crt_pattern_mod (L : ℕ) (S : Finset ℕ) (hS : ∀ p ∈ S, p.Prime)
+    (hSL : ∀ p ∈ S, L < p) (f : ℕ → ℕ) (hf1 : ∀ p ∈ S, 1 ≤ f p) (hfL : ∀ p ∈ S, f p ≤ L)
+    (R : ℕ) (hR : 0 < R) (hcop : ∀ p ∈ S, ¬ p ∣ R) (a₀ : ℕ) :
+    ∃ a : ℕ, a ≡ a₀ [MOD R] ∧ ∀ p ∈ S, ∀ j, 1 ≤ j → j ≤ L → (p ∣ a + j ↔ j = f p) := by
+  classical
+  obtain ⟨a₁, ha₁⟩ := exists_crt_pattern L S hS hSL f hf1 hfL
+  set D : ℕ := ∏ p ∈ S, p with hD
+  have hDR : Nat.Coprime D R := by
+    rw [hD]
+    refine Nat.Coprime.prod_left fun p hp => ?_
+    exact (Nat.Prime.coprime_iff_not_dvd (hS p hp)).2 (hcop p hp)
+  obtain ⟨a, haD, haR⟩ := Nat.chineseRemainder hDR a₁ a₀
+  refine ⟨a, haR, fun p hp j hj1 hjL => ?_⟩
+  have hpD : p ∣ D := Finset.dvd_prod_of_mem _ hp
+  have hmod : a ≡ a₁ [MOD p] := Nat.ModEq.of_dvd hpD haD
+  have hshift : a + j ≡ a₁ + j [MOD p] := hmod.add_right j
+  have : p ∣ a + j ↔ p ∣ a₁ + j := by
+    constructor
+    · intro hdvd
+      exact (Nat.modEq_zero_iff_dvd).1 (hshift.symm.trans ((Nat.modEq_zero_iff_dvd).2 hdvd))
+    · intro hdvd
+      exact (Nat.modEq_zero_iff_dvd).1 (hshift.trans ((Nat.modEq_zero_iff_dvd).2 hdvd))
+  rw [this]
+  exact ha₁ p hp j hj1 hjL
+
+/-! ### The steered window count -/
+
+lemma omegaSmall_eq_card_filter {P m : ℕ} (hm : m ≠ 0) :
+    omegaSmall P m = ((range (P + 1)).filter (fun p => p.Prime ∧ p ∣ m)).card := by
+  classical
+  unfold omegaSmall
+  congr 1
+  ext p
+  simp only [Finset.mem_filter, Nat.mem_primeFactors, mem_range]
+  constructor
+  · rintro ⟨⟨hp, hpm, -⟩, hle⟩; exact ⟨by omega, hp, hpm⟩
+  · rintro ⟨hlt, hp, hpm⟩; exact ⟨⟨hp, hpm, hm⟩, by omega⟩
+
+/-- **The steered window count.**  If every prime `≤ L` divides `a` (i.e. `a ≡ 0` modulo the
+primorial of `L`) and the primes in `(L, P]` are steered by `f`, then for each window slot
+`j ∈ [1, L]` the small-prime count at `a+j` is a constant depending only on `j`, plus the number
+of steering primes assigned to slot `j`. -/
+theorem omegaSmall_steered {P L a j : ℕ} {f : ℕ → ℕ} (S : Finset ℕ) (hLP : L ≤ P)
+    (hSdef : ∀ p, p ∈ S ↔ (L < p ∧ p ≤ P ∧ p.Prime))
+    (hRa : ∀ p, p ≤ L → p.Prime → p ∣ a)
+    (hsteer : ∀ p ∈ S, ∀ i, 1 ≤ i → i ≤ L → (p ∣ a + i ↔ i = f p))
+    (hj1 : 1 ≤ j) (hjL : j ≤ L) :
+    omegaSmall P (a + j)
+      = ((range (L + 1)).filter (fun p => p.Prime ∧ p ∣ j)).card
+        + (S.filter (fun p => f p = j)).card := by
+  classical
+  have hkey : (range (P + 1)).filter (fun p => p.Prime ∧ p ∣ (a + j))
+      = ((range (L + 1)).filter (fun p => p.Prime ∧ p ∣ j)) ∪ (S.filter (fun p => f p = j)) := by
+    ext p
+    simp only [Finset.mem_union, Finset.mem_filter, mem_range]
+    constructor
+    · rintro ⟨hpP, hp, hdvd⟩
+      rcases le_or_gt p L with hle | hgt
+      · exact Or.inl ⟨by omega, hp, (Nat.dvd_add_right (hRa p hle hp)).1 hdvd⟩
+      · have hpS : p ∈ S := (hSdef p).2 ⟨hgt, by omega, hp⟩
+        exact Or.inr ⟨hpS, ((hsteer p hpS j hj1 hjL).1 hdvd).symm⟩
+    · rintro (⟨hpL, hp, hdvd⟩ | ⟨hpS, hfp⟩)
+      · exact ⟨by omega, hp, (Nat.dvd_add_right (hRa p (by omega) hp)).2 hdvd⟩
+      · obtain ⟨hgt, hleP, hp⟩ := (hSdef p).1 hpS
+        exact ⟨by omega, hp, (hsteer p hpS j hj1 hjL).2 hfp.symm⟩
+  have hdisj : Disjoint ((range (L + 1)).filter (fun p => p.Prime ∧ p ∣ j))
+      (S.filter (fun p => f p = j)) := by
+    refine Finset.disjoint_left.2 fun p hp hp' => ?_
+    simp only [Finset.mem_filter, mem_range] at hp hp'
+    obtain ⟨hgt, -, -⟩ := (hSdef p).1 hp'.1
+    omega
+  rw [omegaSmall_eq_card_filter (by omega), hkey, Finset.card_union_of_disjoint hdisj]
+
 end NormalNumbers
