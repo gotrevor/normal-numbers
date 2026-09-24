@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.CastingOut
 import NormalNumbers.SwingC3Split
 import NormalNumbers.SwingC3Lambert
+import NormalNumbers.SwingC3Cover
 
 /-!
 # The rotation route to `ConjC3`, split into two named leaves
@@ -231,8 +232,8 @@ theorem isRich_of_rotationRoute {b : ℕ} (hb : 2 ≤ b) (H : RotationRoute b) :
 
 Both are stated at full strength and neither is used anywhere else. -/
 
-/-- **Leaf A — open (arithmetic/CRT bookkeeping).**  The steering classes exist and their
-rotations cover any arc.
+/-- **Leaf A — PROVED** (`SwingC3Cover.exists_rotationCover_core`).  The steering classes exist
+and their rotations cover any arc.
 
 *The construction.*  Fix `ℓ'` with `b^{ℓ'} ≫ ℓ' / len`.  Let `R = ∏_{p ≤ ℓ'+1} p` and let `S`
 be the set of primes in `(ℓ'+1, P]`, where `P` is chosen so that `|S| = (b−1)·ℓ'`.  Put
@@ -252,8 +253,8 @@ theorem exists_rotationCover (b : ℕ) (hb : 2 ≤ b) (α len : ℝ) (hα : 0 �
       (∀ p, p ≤ P → p.Prime → p ∣ Q) ∧
       (∀ p, p.Prime → p ∣ Q → p ≤ P) ∧
       (∀ k, k < M → ∀ k', k' < M → a k ≡ a k' [MOD Q] → k = k') ∧
-      RotationCover b P M a α len := by
-  sorry
+      RotationCover b P M a α len :=
+  exists_rotationCover_core hb α len hα hlen hαlen
 
 /-- **Leaf B — open (the analytic crux).**  Every prime factor of `Q` is `≤ P`, and
 `tailLarge P b` is built only from primes `> P`; so the class of `n` mod `Q` and the value of
