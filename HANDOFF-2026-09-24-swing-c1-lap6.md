@@ -135,6 +135,24 @@ require the carry factor `ζ^{a c_{n+1}}` to satisfy the prime-pair condition
 `(1/N) Σ_n f(pn) conj(f(qn)) → 0`, a statement about carries at `pn` and `qn` with no visible
 handle.  Both directions dead-end on the shift.
 
+## Lap 13: bridge to the repo's existing Weyl machinery
+
+`floor_mul_pow_eq_windowVal`: `⌊x·b^{n+L}⌋ = b^L·(head up to n) + omegaWindowVal b L n` — the
+window value IS the low `L` base-`b` digits of `x = G4_b`.  Hence
+
+**`zetaRoot_windowVal_eq`**:
+    ζ_{b^L}^{a·omegaWindowVal b L n}  =  e(a·bⁿ·x) · e(−a·fract(b^{n+L}x)/b^L).
+
+The first factor is the classical Weyl exponential of `x` — exactly the object of
+`G4WiringCRT` (`fullWindowMean`, `WindowDecay`, `CRTConstant`, `isNormal_G4_of_windowDecay`).
+The second depends only on the tail beyond position `n+L`, and has modulus `1`.
+
+Consequence worth acting on: for FIXED `a` the twist is `1 + O(a/b^L)`, so the C1 character sum at
+frequency `a` and large `L` IS a Weyl sum of `x`, and the repo's `WindowDecay h` hypotheses bear
+on it directly.  **The difficulty is concentrated in the frequencies `a` comparable to `b^L`** —
+i.e. in the low-order digits of the window, not the high-order ones.  That is a sharper statement
+of where C1 is hard than "it is Elliott".
+
 ## Exact next moves
 
 1. The structural slack to exploit: `ω(n+L)` enters the exponent with coefficient `b^0 = 1`, while

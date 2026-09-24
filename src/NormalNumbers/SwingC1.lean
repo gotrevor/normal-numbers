@@ -122,6 +122,35 @@ lemma sum_Ioc_omegaNat (n L : ℕ) :
 def omegaHead (b L n : ℕ) : ℤ :=
   ∑ i ∈ range L, (omegaNat (n + 1 + i) : ℤ) * (b : ℤ) ^ (L - 1 - i)
 
+lemma omegaHead_succ (b L n : ℕ) :
+    omegaHead b (L + 1) n = (b : ℤ) * omegaHead b L n + (omegaNat (n + 1 + L) : ℤ) := by
+  rw [omegaHead, omegaHead, Finset.sum_range_succ, Finset.mul_sum]
+  have hcongr : ∀ i ∈ range L, (b : ℤ) * ((omegaNat (n + 1 + i) : ℤ) * (b : ℤ) ^ (L - 1 - i))
+      = (omegaNat (n + 1 + i) : ℤ) * (b : ℤ) ^ (L + 1 - 1 - i) := by
+    intro i hi
+    have hiL : i < L := Finset.mem_range.mp hi
+    rw [show L + 1 - 1 - i = (L - 1 - i) + 1 by omega, pow_succ]
+    ring
+  rw [Finset.sum_congr rfl hcongr]
+  simp
+
+/-- `Σ_{m ∈ (n, n+L]} ω(m)·b^{n+L−m} = omegaHead b L n`. -/
+lemma sum_Ioc_omegaNat_pow (b n L : ℕ) :
+    ∑ m ∈ Finset.Ioc n (n + L), (omegaNat m : ℤ) * (b : ℤ) ^ (n + L - m) = omegaHead b L n := by
+  induction L with
+  | zero => simp [omegaHead]
+  | succ L ih =>
+      rw [show n + (L + 1) = (n + L) + 1 by omega, Finset.sum_Ioc_succ_top (by omega),
+        omegaHead_succ]
+      rw [← ih, Finset.mul_sum]
+      rw [show n + L + 1 - (n + L + 1) = 0 by omega, pow_zero, mul_one]
+      congr 1
+      · refine Finset.sum_congr rfl fun m hm => ?_
+        have hm' := Finset.mem_Ioc.mp hm
+        rw [show n + L + 1 - m = (n + L - m) + 1 by omega, pow_succ]
+        ring
+      · rw [show n + L + 1 = n + 1 + L by omega]
+
 /-- The integer the length-`L` window of `G4_b` at `n` reads off, before reduction mod `b^L`:
 `Σ_{i<L} ω(n+1+i) b^{L-1-i} + c_{n+L}`.  By `omegaCarry_eq_windowVal_div` its quotient by `b^L`
 is `c_n`, so its residue mod `b^L` is exactly the window word. -/
@@ -139,18 +168,7 @@ lemma omegaTail_pow (b : ℕ) (hb : 2 ≤ b) (L n : ℕ) :
       rw [this, ih, mul_add, hstep]
       have hhead : ((omegaHead b (L + 1) n : ℤ) : ℝ)
           = (b : ℝ) * ((omegaHead b L n : ℤ) : ℝ) + (omegaNat (n + 1 + L) : ℝ) := by
-        have : omegaHead b (L + 1) n
-            = (b : ℤ) * omegaHead b L n + (omegaNat (n + 1 + L) : ℤ) := by
-          rw [omegaHead, omegaHead, Finset.sum_range_succ, Finset.mul_sum]
-          have : ∀ i ∈ range L, (b : ℤ) * ((omegaNat (n + 1 + i) : ℤ) * (b : ℤ) ^ (L - 1 - i))
-              = (omegaNat (n + 1 + i) : ℤ) * (b : ℤ) ^ (L + 1 - 1 - i) := by
-            intro i hi
-            have hiL : i < L := Finset.mem_range.mp hi
-            rw [show L + 1 - 1 - i = (L - 1 - i) + 1 by omega, pow_succ]
-            ring
-          rw [Finset.sum_congr rfl this]
-          simp
-        rw [this]; push_cast; ring
+        rw [omegaHead_succ]; push_cast; ring
       rw [hhead, show n + (L + 1) = n + L + 1 by omega]
       ring
 
@@ -903,6 +921,85 @@ theorem hDepthAll : ∀ b, 3 ≤ b → ∀ L, HDepth b L := by
 
 theorem hWindowCharAll : ∀ b, 3 ≤ b → ∀ L, HWindowChar b L :=
   fun b hb L => hWindowChar_of_hDepth b L (hDepthAll b hb L)
+
+/-! ### Bridge to the classical Weyl sums of `x` itself
+
+The C1 character sums are the Weyl sums `(1/N) Σ e(a·bⁿ·x)` twisted by a factor that depends only
+on the tail `fract(b^{n+L}x)`.  This is what connects the present chain to the repo's existing
+`G4WiringCRT` machinery (`fullWindowMean`, `WindowDecay`, `isNormal_G4_of_windowDecay`). -/
+
+/-- `⌊x·b^{n+L}⌋ = b^L·(head up to n) + omegaWindowVal`: the window value IS the low `L` digits. -/
+theorem floor_mul_pow_eq_windowVal (b : ℕ) (hb : 2 ≤ b) (L n : ℕ) :
+    ⌊primeLambertAtBase b * (b : ℝ) ^ (n + L)⌋
+      = (b : ℤ) ^ L * ((∑ m ∈ range (n + 1), omegaNat m * b ^ (n - m) : ℕ) : ℤ)
+        + omegaWindowVal b L n := by
+  rw [primeLambertAtBase_eq_lambertVal_omegaNat b,
+    floor_lambertVal_mul_pow b hb omegaNat omegaNat_le (n + L)]
+  have hsplit : ((∑ m ∈ range (n + L + 1), omegaNat m * b ^ (n + L - m) : ℕ) : ℤ)
+      = (b : ℤ) ^ L * ((∑ m ∈ range (n + 1), omegaNat m * b ^ (n - m) : ℕ) : ℤ)
+        + omegaHead b L n := by
+    rw [← sum_Ioc_omegaNat_pow b n L]
+    have hIoc : Finset.Ioc n (n + L) = Finset.Ico (n + 1) (n + L + 1) := by
+      ext m; simp only [Finset.mem_Ioc, Finset.mem_Ico]; omega
+    push_cast
+    rw [hIoc, Finset.range_eq_Ico,
+      ← Finset.sum_Ico_consecutive (fun m => (omegaNat m : ℤ) * (b : ℤ) ^ (n + L - m))
+        (Nat.zero_le (n + 1)) (by omega : n + 1 ≤ n + L + 1), ← Finset.range_eq_Ico,
+      Finset.mul_sum]
+    congr 1
+    refine Finset.sum_congr rfl fun m hm => ?_
+    have hmn : m ≤ n := Nat.lt_succ_iff.mp (Finset.mem_range.mp hm)
+    rw [show n + L - m = L + (n - m) by omega, pow_add]
+    ring
+  rw [hsplit, omegaWindowVal, omegaCarry, add_assoc]
+
+/-- **The C1 characters are twisted Weyl sums of `x`.**
+
+    ζ_{b^L}^{a·omegaWindowVal b L n}  =  e(a·bⁿ·x) · e(−a·fract(b^{n+L}x)/b^L),
+
+`x = G4_b`.  The first factor is the classical Weyl exponential whose averages the repo's
+`G4WiringCRT` layer studies (`fullWindowMean`, `WindowDecay`, `isNormal_G4_of_windowDecay`); the
+second depends only on the tail beyond position `n+L` and is bounded by `1` in modulus.  For a
+FIXED frequency `a` the twist is `1 + O(a/b^L)`, so C1 at large `L` and small `a` is a Weyl
+statement; the difficulty is concentrated in the frequencies `a` comparable to `b^L`. -/
+theorem zetaRoot_windowVal_eq (b : ℕ) (hb : 2 ≤ b) (L a n : ℕ) :
+    zetaRoot (b ^ L) ^ ((a : ℤ) * omegaWindowVal b L n)
+      = Complex.exp (2 * Real.pi * Complex.I *
+            ((a : ℂ) * ((b : ℝ) ^ n * primeLambertAtBase b)))
+        * Complex.exp (-(2 * Real.pi * Complex.I *
+            ((a : ℂ) * (Int.fract (primeLambertAtBase b * (b : ℝ) ^ (n + L)) : ℝ)
+              / ((b : ℝ) ^ L)))) := by
+  have hb0 : (0 : ℝ) < b := by
+    have : (2 : ℝ) ≤ b := by exact_mod_cast hb
+    linarith
+  have hbL : ((b : ℂ)) ^ L ≠ 0 := by
+    have : ((b : ℂ)) ≠ 0 := by exact_mod_cast (by omega : b ≠ 0)
+    positivity
+  set y : ℝ := primeLambertAtBase b * (b : ℝ) ^ (n + L) with hy
+  set S : ℕ := ∑ m ∈ range (n + 1), omegaNat m * b ^ (n - m) with hS
+  have hfloor := floor_mul_pow_eq_windowVal b hb L n
+  have hWR : ((omegaWindowVal b L n : ℤ) : ℝ) = (y - Int.fract y) - (b : ℝ) ^ L * (S : ℝ) := by
+    have h1 : ((⌊y⌋ : ℤ) : ℝ) = y - Int.fract y := (Int.self_sub_fract y).symm
+    have h2 : ((⌊y⌋ : ℤ) : ℝ)
+        = (b : ℝ) ^ L * (S : ℝ) + ((omegaWindowVal b L n : ℤ) : ℝ) := by
+      rw [hy] at h1 ⊢
+      exact_mod_cast congrArg (fun z : ℤ => (z : ℝ)) hfloor
+    rw [← h1]
+    linarith [h2]
+  have hWC : ((omegaWindowVal b L n : ℤ) : ℂ)
+      = ((y : ℝ) : ℂ) - ((Int.fract y : ℝ) : ℂ) - ((b : ℂ)) ^ L * (S : ℂ) := by
+    have := congrArg (fun r : ℝ => (r : ℂ)) hWR
+    push_cast at this ⊢
+    linear_combination this
+  have hyC : ((y : ℝ) : ℂ) = ((b : ℂ)) ^ L * (((b : ℝ) ^ n * primeLambertAtBase b : ℝ) : ℂ) := by
+    rw [hy]; push_cast; rw [pow_add]; ring
+  rw [zetaRoot_zpow, ← Complex.exp_add, Complex.exp_eq_exp_iff_exists_int]
+  refine ⟨-((a : ℤ) * (S : ℤ)), ?_⟩
+  push_cast
+  rw [hWC, hyC]
+  push_cast
+  field_simp
+  ring
 
 /-! ### The minimal open case `L = 1`
 
