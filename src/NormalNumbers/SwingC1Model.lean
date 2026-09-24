@@ -345,12 +345,102 @@ theorem norm_localFactor_le (b : ℕ) (hb : 2 ≤ b) (h : ℝ) (hh : h ≠ 0) :
   rw [this]
   exact hsum
 
+set_option maxHeartbeats 1600000 in
 /-- **Leaf (M)(c).**  Mertens: `Σ_p 1/p = ∞`, so `Π_{p ≤ P}(1 − c/p) → 0`, hence the model term
 vanishes as the cut `P → ∞`.  This is the statement that the small primes alone already
 randomise the orbit — the only *unconditional* source of randomness in the whole route. -/
 theorem prod_localFactor_tendsto_zero (b : ℕ) (hb : 2 ≤ b) (h : ℝ) (hh : h ≠ 0) :
     Tendsto (fun P => ‖∏ p ∈ primesLe P, localFactor b h p‖) atTop (𝓝 0) := by
-  sorry
+  classical
+  obtain ⟨c, hc, hev⟩ := norm_localFactor_le b hb h hh
+  obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp hev
+  set g : ℕ → ℝ := Set.indicator {p | p.Prime} (fun n => (1 : ℝ) / n) with hg_def
+  have hgnn : ∀ n, 0 ≤ g n := by
+    intro n
+    rw [hg_def]
+    exact Set.indicator_nonneg (fun m _ => by positivity) n
+  have hgval : ∀ n : ℕ, g n = if n.Prime then (1 : ℝ) / n else 0 := by
+    intro n
+    rw [hg_def, Set.indicator_apply]
+    simp
+  have hdiv : Tendsto (fun n => ∑ i ∈ range n, g i) atTop atTop :=
+    (not_summable_iff_tendsto_nat_atTop_of_nonneg hgnn).mp
+      (by rw [hg_def]; exact not_summable_one_div_on_primes)
+  set SS : ℕ → ℝ := fun n => ∑ i ∈ range n, g i with hSS_def
+  set C : ℝ := SS N with hC_def
+  -- the partial sum of prime reciprocals up to `P` is exactly `SS (P+1)`
+  have hSSeq : ∀ P : ℕ, SS (P + 1) = ∑ p ∈ primesLe P, (1 : ℝ) / p := by
+    intro P
+    rw [hSS_def, primesLe, Finset.sum_filter]
+    exact Finset.sum_congr rfl fun n _ => hgval n
+  -- the product bound
+  have hbound : ∀ P : ℕ, ‖∏ p ∈ primesLe P, localFactor b h p‖
+      ≤ Real.exp (-(c * (SS (P + 1) - C))) := by
+    intro P
+    set v : ℕ → ℝ := fun p => if N ≤ p then -(c / p) else 0 with hv_def
+    have hstep : ‖∏ p ∈ primesLe P, localFactor b h p‖
+        ≤ ∏ p ∈ primesLe P, Real.exp (v p) := by
+      rw [norm_prod]
+      refine Finset.prod_le_prod (fun p _ => norm_nonneg _) (fun p hp => ?_)
+      by_cases hpN : N ≤ p
+      · have h1 : ‖localFactor b h p‖ ≤ 1 - c / p := hN p hpN (prime_of_mem_primesLe hp)
+        have h2 : 1 - c / (p : ℝ) ≤ Real.exp (-(c / p)) := by
+          have := Real.add_one_le_exp (-(c / (p : ℝ)))
+          linarith
+        rw [hv_def]; simp only [if_pos hpN]; linarith
+      · have h1 : ‖localFactor b h p‖ ≤ 1 :=
+          norm_localFactor_le_one b h p (prime_of_mem_primesLe hp).pos
+        rw [hv_def]; simp only [if_neg hpN, Real.exp_zero]; exact h1
+    have hprodexp : ∏ p ∈ primesLe P, Real.exp (v p) = Real.exp (∑ p ∈ primesLe P, v p) :=
+      (Real.exp_sum _ _).symm
+    have hsumv : ∑ p ∈ primesLe P, v p
+        = -(c * ∑ p ∈ (primesLe P).filter (fun p => N ≤ p), (1 : ℝ) / p) := by
+      rw [Finset.sum_filter, Finset.mul_sum, ← Finset.sum_neg_distrib]
+      refine Finset.sum_congr rfl fun p _ => ?_
+      by_cases hpN : N ≤ p
+      · rw [hv_def]; simp only [if_pos hpN]; rw [mul_one_div]
+      · rw [hv_def]; simp only [if_neg hpN]; ring
+    -- the small primes drop at most `C`
+    have hsmall : ∑ p ∈ (primesLe P).filter (fun p => ¬ N ≤ p), (1 : ℝ) / p ≤ C := by
+      have heq : ∑ p ∈ (primesLe P).filter (fun p => ¬ N ≤ p), (1 : ℝ) / p
+          = ∑ p ∈ (primesLe P).filter (fun p => ¬ N ≤ p), g p := by
+        refine Finset.sum_congr rfl fun x hx => ?_
+        simp only [Finset.mem_filter] at hx
+        rw [hgval, if_pos (prime_of_mem_primesLe hx.1)]
+      rw [heq, hC_def, hSS_def]
+      refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun i _ _ => hgnn i)
+      intro x hx
+      simp only [Finset.mem_filter] at hx
+      obtain ⟨-, hx2⟩ := hx
+      exact Finset.mem_range.mpr (by omega)
+    have hsplit : ∑ p ∈ (primesLe P).filter (fun p => N ≤ p), (1 : ℝ) / p
+        + ∑ p ∈ (primesLe P).filter (fun p => ¬ N ≤ p), (1 : ℝ) / p
+        = SS (P + 1) := by
+      rw [hSSeq P, Finset.sum_filter_add_sum_filter_not]
+    have hTge : SS (P + 1) - C
+        ≤ ∑ p ∈ (primesLe P).filter (fun p => N ≤ p), (1 : ℝ) / p := by
+      linarith [hsplit, hsmall]
+    calc ‖∏ p ∈ primesLe P, localFactor b h p‖
+        ≤ ∏ p ∈ primesLe P, Real.exp (v p) := hstep
+      _ = Real.exp (∑ p ∈ primesLe P, v p) := hprodexp
+      _ = Real.exp (-(c * ∑ p ∈ (primesLe P).filter (fun p => N ≤ p), (1 : ℝ) / p)) := by
+          rw [hsumv]
+      _ ≤ Real.exp (-(c * (SS (P + 1) - C))) := by
+          apply Real.exp_le_exp.mpr
+          have : c * (SS (P + 1) - C)
+              ≤ c * ∑ p ∈ (primesLe P).filter (fun p => N ≤ p), (1 : ℝ) / p :=
+            mul_le_mul_of_nonneg_left hTge hc.le
+          linarith
+  -- and the bound tends to zero
+  have h1 : Tendsto (fun P : ℕ => SS (P + 1)) atTop atTop :=
+    hdiv.comp (tendsto_add_atTop_nat 1)
+  have h2 : Tendsto (fun P : ℕ => c * (SS (P + 1) - C)) atTop atTop := by
+    have h1' : Tendsto (fun P : ℕ => SS (P + 1) - C) atTop atTop := by
+      simpa [sub_eq_add_neg] using tendsto_atTop_add_const_right atTop (-C) h1
+    exact Filter.Tendsto.const_mul_atTop hc h1'
+  have h3 : Tendsto (fun P : ℕ => Real.exp (-(c * (SS (P + 1) - C)))) atTop (𝓝 0) :=
+    Real.tendsto_exp_atBot.comp (tendsto_neg_atTop_atBot.comp h2)
+  exact squeeze_zero (fun P => norm_nonneg _) hbound h3
 
 /-- **Leaf (M), assembled.**  The model term of the split vanishes. -/
 theorem periodMean_tendsto_zero (b : ℕ) (hb : 2 ≤ b) (h : ℝ) (hh : h ≠ 0) :

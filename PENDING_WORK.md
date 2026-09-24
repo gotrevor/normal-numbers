@@ -9294,3 +9294,47 @@ mechanism: the CRT small-prime randomness is exactly what makes `ω`'s variance 
 
 The Elliott localisation (`corrSum_eq_elliott`, `not_hAutoCorr_of_carryNegligible`) stays on the
 record; it is the ω-side picture of the same object and both remain true.
+
+## 2026-09-24 — swing-c1 lap 27: **leaf (M) is DONE** (`SwingC1Model.lean` sorry-free)
+
+The `model × decoupling` split's model term now vanishes **unconditionally**:
+
+```
+periodMean_tendsto_zero :  ‖periodMean (n ↦ e(h·θ^{(P)}_n)) (primorialLe P)‖ → 0   (h ≠ 0, b ≥ 2)
+```
+
+axioms `[propext, Classical.choice, Quot.sound]`.  Chain, all sorry-free:
+* `periodMean_phase_truncTail` (CRT factorisation, lap 26);
+* `norm_localFactor_le` — `∃ c>0, ∀ᶠ p prime, ‖localFactor b h p‖ ≤ 1 − c/p`.  Proof: pick `i`
+  with `b^(1+i) > 2|h|`, set `t = h/b^(1+i)` so `0 < |t| < 1/2`, `δ := ‖e(t)−1‖ > 0`.  The EXACT
+  identity `h·b^{p−1−i}/(b^p−1) − t = t/(b^p−1)` plus `b^p − 1 ≥ p` puts the `s = p−1−i` summand
+  within `4πM/p` of `e(t)` and the `s = 0` summand within `4πM/p` of `1`; they are `δ/2` apart,
+  and two unit vectors `δ/2` apart have `‖z+w‖ ≤ 2 − δ²/16` (parallelogram law).  `c = δ²/16`.
+* `prod_localFactor_tendsto_zero` — `1 − c/p ≤ exp(−c/p)` and
+  `not_summable_one_div_on_primes` (mathlib) via `not_summable_iff_tendsto_nat_atTop_of_nonneg`.
+
+New sorry-free helpers in `SwingC1Model.lean`: `norm_add_le_of_norm_sub_ge`,
+`norm_phase_sub_phase`, `norm_phase_sub_one_le`, `phase_ne_one`.
+
+### The crux is now exactly leaf (D)
+
+`norm_fullMean_mul_le_periodMean_add_defect` (lap 26, sorry-free) + leaf (M) reduce the Weyl sum
+of the `G₄_b` orbit to the **decoupling defect**
+
+```
+mean_{c < Q} ‖ progMean B Q R c − fullMean B (QR) ‖     with B(n) = e(h·ρ^{(P)}_n),
+ρ^{(P)}_n = Σ_{p > P} b^{n mod p}/(b^p − 1),  Q = Π_{p ≤ P} p.
+```
+
+i.e. *the large primes do not see the small-prime residue class*.  Next attack, in order:
+1. State (D) as a named Prop in `src/NormalNumbers/SwingC1Model.lean` (or a new
+   `SwingC1Decouple.lean`) and prove the assembly `(M) ∧ (D) → Weyl sums → 0`, using
+   `A·B = e(h·θ)` (`phase_add` + `truncTail` / remainder split) and `R = ⌊N/Q⌋` with an `O(Q/N)`
+   edge correction.
+2. Cheap sub-case worth probing FIRST: the trivial bound `‖ρ^{(P)}_n‖ ≤ Σ_{p>P} b^{−?}` is NOT
+   small (each term is `b^{n mod p}/(b^p−1) ≤ 1/(b−1)`), so (D) genuinely needs equidistribution,
+   not a tail estimate.  But the *`P`-truncated* version — replace `ρ` by `Σ_{P<p≤P'}` for a
+   second cut `P'` — is a finite CRT computation and is exactly `periodMean` again over the
+   modulus `Π_{P<p≤P'} p`, coprime to `Q`.  So (D) for the two-block truncation is PROVABLE by
+   the same `sum_range_prod_mod` lemma; the only real content left is the `p > P'` tail, whose
+   contribution is `≤ Σ_{p>P'} 1/(b−1)·(period mismatch)`.  **This is the next lap's target.**
