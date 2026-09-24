@@ -1,4 +1,4 @@
-import NormalNumbers.PairDecoupleSplit
+import NormalNumbers.PairDecoupleVdC
 
 /-!
 # PairDecouple — the PROOF direction
@@ -25,19 +25,14 @@ with the small primes *removed* from the integrand, so no periodic factor is lef
 Progress so far (`PairDecoupleSplit.lean`): the primes `> P` split at a second cut `y`, the
 middle range `(P, y]` is handled unconditionally by exact CRT with defect `O(Π_{P<r≤y} r / R)`,
 and the whole remaining content is the range `> y`. -/
-theorem topCorr_all : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) →
-    ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → TopCorrSmall b p q (((m : ℤ) : ℝ) / b) := by
+theorem shiftCorr_all : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) →
+    ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → ShiftCorrSmall b p q (((m : ℤ) : ℝ) / b) := by
   sorry
 
 theorem largeDecay_all : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) →
     ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → LargeDecay b p q (((m : ℤ) : ℝ) / b) := by
   intro b hb m hm hdvd p q hp hq hpq
-  have hbpos : (0 : ℝ) < (b : ℝ) := by
-    have : (3 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
-    linarith
-  have hmR : ((m : ℤ) : ℝ) ≠ 0 := Int.cast_ne_zero.mpr hm
-  exact largeDecay_of_topCorr b p q _ (by omega) (div_ne_zero hmR (ne_of_gt hbpos)) hp hq hpq
-    (topCorr_all b hb m hm hdvd p q hp hq hpq)
+  exact largeDecay_of_shiftCorr b p q _ (shiftCorr_all b hb m hm hdvd p q hp hq hpq)
 
 theorem pairDecouple_all : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) →
     ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → PairDecouple b p q (((m : ℤ) : ℝ) / b) := by

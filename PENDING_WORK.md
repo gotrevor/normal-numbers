@@ -9937,3 +9937,41 @@ triangle-inequality factor (laps 1–3 refuted both `L¹` routes).  `TopCorrSmal
    the same Mertens engine that proved the model term.
 2. If the shifted local factor fails to be bounded away from `1`, record the failing residue
    configuration; that is the honest equivalence to an open correlation problem.
+
+### lap 5 — van der Corput: the crux is `ShiftCorrSmall`, the Kátai hypothesis format
+
+New file `src/NormalNumbers/PairDecoupleVdC.lean` (sorry-free):
+
+* `norm_sum_shift_sub` — shifting a window of length `R` by `j` costs at most `2j`.
+* `shiftCorr`, `offDiagShift`.
+* **`norm_mean_le_vdC`** — the van der Corput inequality, proved from scratch (mathlib has
+  none):  for `‖u‖ ≤ 1`, any `R, K > 0`,
+  `‖mean_{i<R} u‖ ≤ √(1/K + offDiagShift(u,R,K)/(K²R)) + 2K/R`.
+* `largeProg`, `ShiftCorrSmall`, `largeDecay_of_shiftCorr`.
+
+`PairDecoupleProve`'s single sorry is now `shiftCorr_all`.
+
+**Why this supersedes lap 4's `TopCorrSmall`.**  Van der Corput removes the second cut `y`
+entirely.  Its shifts are SMALL and FREE (`j, j' < K`, `K` chosen by the caller) instead of
+multiples of the middle-prime modulus `M`, and its correlation sums have the FULL length `R`
+instead of only `M`.  The diagonal cost `1/K` is paid before `R → ∞`, so it is free.
+
+**The crux now reads**: for fixed `P`, `c`, and fixed `j ≠ j'`,
+`(1/R)·|Σ_{i<R} e(t·(X(c+iQ+jQ) − X(c+iQ+j'Q)))| → 0`, where `X = pairRemainder b P p q` is the
+large-prime part of `θ_{pn} − θ_{qn}`.  This is verbatim the shape of the Daboussi–Kátai /
+Bourgain–Sarnak–Ziegler hypothesis that `SwingC1Katai.lean` already carries as a known theorem.
+
+**Next attack.**  The shifted difference `X(n) − X(n+H)` (`H = (j−j')Q` fixed, nonzero) is again
+a sum of prime-periodic terms: `Σ_{r>P} [T_r(pn) − T_r(pn+pH)] − [T_r(qn) − T_r(qn+qH)]`, each
+`r`-periodic.  So the whole `SwingC1Pair` machinery applies verbatim with `pairLocalFactor`
+replaced by a SHIFTED local factor
+`(1/r) Σ_{s<r} e(t·[(T_r(ps) − T_r(ps+pH)) − (T_r(qs) − T_r(qs+qH))])`.
+Two things to check, in order:
+1. the shifted local factor is `≤ 1 − c/r` for all large primes `r ∤ H` — the pigeonhole of
+   `norm_pairLocalFactor_le` should adapt, now with FOUR residues in play instead of two;
+2. the primes `r ∣ H` are finitely many (`H` is fixed!), so they cannot spoil the Mertens
+   divergence.
+If (1) holds, `ShiftCorrSmall` reduces to the SAME model-vs-defect problem one level down — but
+note that this time the model tends to zero for a FIXED progression, which is what the whole
+chain needs.  This is the first point in the swing where the model term and the target are the
+same object, so it is the natural place for the induction to close or to fail visibly.
