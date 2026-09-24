@@ -9233,3 +9233,64 @@ Refuted this session, do not redo: naive carry-independence
 (`OBSTRUCTION-2026-09-24-periodic-approximant.md`), sparse block-frequency reduction
 (`sum_zetaRoot_mixed_ne_zero`).  Numerics cannot test the leaf at feasible `N`
 (`probes/swingc1_autocorr.py`; the carry is identically zero for `b ≥ 8` below the `b`-th primorial).
+
+---
+
+## 2026-09-24 (swing-c1, lap 26) — NEW DECOMPOSITION OF THE CRUX: model × decoupling
+
+`src/NormalNumbers/SwingC1Periodic.lean` (sorry-free) proves
+
+  `fract(b^n · G4_b) = fract( Σ_p b^{n mod p} / (b^p − 1) )`      `fract_orbit_eq_fract_tsum`
+
+i.e. **the ×b-orbit of `G4_b` is Besicovitch almost periodic with the primes as periods.**
+This replaces the ω/carry picture by residues and opens an attack that is NOT the Elliott
+correlation wall.  Write `θ_n = Σ_p b^{n mod p}/(b^p−1)`, fix `P`, put `Q = Π_{p≤P} p` and split
+
+  `θ_n = θ_n^{(P)} + ρ_n^{(P)}`,  `θ^{(P)}` the primes `≤ P` (exactly `Q`-periodic),
+                                   `ρ^{(P)}` the primes `> P`.
+
+Put `A(n) = e(h θ_n^{(P)})` (Q-periodic) and `B(n) = e(h ρ_n^{(P)})`.  Splitting `n < N` into
+residue classes mod `Q` (exact when `Q ∣ N`) gives the IDENTITY
+
+  `(1/N) Σ_{n<N} e(h θ_n) = Â₀ · γ̄ + (1/Q) Σ_{c<Q} A(c) Δ(c)`
+
+with `Â₀ = (1/Q) Σ_{c<Q} A(c)`, `γ(c) = (Q/N) Σ_{n≡c (Q)} B(n)`, `γ̄ = (1/N) Σ_n B(n)`,
+`Δ = γ − γ̄`.  Hence the triangle bound
+
+  `|(1/N) Σ_{n<N} e(h θ_n)| ≤ |Â₀| + (1/Q) Σ_{c<Q} |Δ(c)|`.
+
+So the Weyl sum (hence normality of `G4_b`, hence `ConjC1`) follows from TWO named leaves:
+
+**(M) the model leaf.**  `Â₀ = (1/Q) Σ_{c<Q} e(h θ_c^{(P)}) → 0` as `P → ∞`, for each `h ≠ 0`.
+  This is ELEMENTARY and should be provable.  By CRT the residues `(c mod p)_{p≤P}` are jointly
+  uniform over one period, so `Â₀` FACTORISES:
+      `Â₀ = Π_{p ≤ P} ( (1/p) Σ_{s<p} e( h b^s / (b^p − 1) ) )`
+  and each factor has modulus `≤ 1 − c_h/p` with `c_h > 0` depending only on `h, b`
+  (the `s = p−1, p−2, …` terms contribute the fixed roots `e(h/b), e(h/b²), …`, which are not
+  all `1`).  Then `Π_{p≤P}(1 − c_h/p) ≍ (log P)^{−c_h} → 0` by Mertens.  No open input.
+
+**(D) the decoupling leaf.**  `(1/Q) Σ_{c<Q} |γ(c) − γ̄| → 0` along a suitable `P = P(N) → ∞`.
+  "The large-prime part of the orbit is equidistributed in progressions to the small-prime
+  modulus `Q`."  This is the residual crux, and it is a DIFFERENT statement from the Elliott
+  correlations: it asks only that `B` does not see the small-prime residues, not that `B`
+  equidistributes mod 1.
+
+Why this is a genuine narrowing: the previous localisation (`corrSum_eq_elliott`) put the whole
+difficulty in the natural-density Elliott correlations of `f_j(m) = ζ^{j ω(m)}`, an open
+conjecture with no accessible sub-case.  (M) is fully provable and supplies ALL the randomness;
+(D) is a progression-equidistribution statement for a fixed slowly growing modulus, the shape
+that Siegel–Walfisz / Bombieri–Vinogradov arguments address.  The route is also the natural
+mechanism: the CRT small-prime randomness is exactly what makes `ω`'s variance grow, and the
+`(log P)^{−c_h}` decay of (M) matches Delange's `(log N)^{−δ}` rate.
+
+### Attack order (next laps)
+1. Formalise the splitting identity and the triangle bound (pure finite averaging — no analysis).
+   `weyl_le_model_add_decoupling`.  Named leaves `ModelDecay b h` and `Decoupling b h`.
+2. Prove **(M)**: (a) the CRT factorisation over one period, (b) `|factor| ≤ 1 − c_h/p`,
+   (c) Mertens divergence ⟹ product → 0.  (a) needs `ZMod.chineseRemainder` + a product-of-sums
+   expansion; (b) is a finite root-of-unity estimate; (c) needs `Σ_p 1/p = ∞` (check mathlib /
+   the repo's own Mertens layer).
+3. Only then attack (D).  Record any refutation of (D) as a deliverable.
+
+The Elliott localisation (`corrSum_eq_elliott`, `not_hAutoCorr_of_carryNegligible`) stays on the
+record; it is the ω-side picture of the same object and both remain true.
