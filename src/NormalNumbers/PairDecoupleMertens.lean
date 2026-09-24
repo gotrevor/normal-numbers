@@ -256,4 +256,152 @@ theorem sum_omegaNat_AP_le_logLog (a e R : ℕ) (ha : a ≠ 0) (he : 0 < e) (hR 
   have hR0 : (0 : ℝ) ≤ (R : ℝ) := by positivity
   nlinarith [h1, h2, h3]
 
+/-! ### From `ω` to `omegaTail`
+
+The carry `omegaTail b N = Σ_{k≥0} ω(N+1+k) b^{−(k+1)}` is a geometric average of shifts of `ω`,
+so the mean bound transfers term by term: the shift `k` costs only `+k` in the `log_R` term, and
+`Σ_k k·b^{−(k+1)} ≤ 1`. -/
+
+private lemma tsum_half_succ' : ∑' k : ℕ, ((1 : ℝ) / 2) ^ (k + 1) = 1 := by
+  have hgeo := tsum_geometric_of_lt_one (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num : (1:ℝ)/2 < 1)
+  calc ∑' k : ℕ, ((1 : ℝ) / 2) ^ (k + 1)
+      = ∑' k : ℕ, (1/2 : ℝ) * ((1 : ℝ) / 2) ^ k := tsum_congr fun k => by ring
+    _ = (1/2 : ℝ) * ∑' k : ℕ, ((1 : ℝ) / 2) ^ k := tsum_mul_left
+    _ = 1 := by rw [hgeo]; norm_num
+
+private lemma tsum_half_succ_mul' : ∑' k : ℕ, (k : ℝ) * ((1 : ℝ) / 2) ^ (k + 1) = 1 := by
+  have h := tsum_coe_mul_geometric_of_norm_lt_one (𝕜 := ℝ) (r := (1:ℝ)/2)
+    (by rw [Real.norm_eq_abs]; norm_num)
+  calc ∑' k : ℕ, (k : ℝ) * ((1 : ℝ) / 2) ^ (k + 1)
+      = ∑' k : ℕ, (1/2 : ℝ) * ((k : ℝ) * ((1 : ℝ) / 2) ^ k) := tsum_congr fun k => by ring
+    _ = (1/2 : ℝ) * ∑' k : ℕ, (k : ℝ) * ((1 : ℝ) / 2) ^ k := tsum_mul_left
+    _ = 1 := by rw [h]; norm_num
+
+private lemma summable_affine_half (A B : ℝ) :
+    Summable (fun k : ℕ => (A + B * (k : ℝ)) * ((1 : ℝ) / 2) ^ (k + 1)) := by
+  have hsum1 : Summable (fun k : ℕ => A * ((1 : ℝ) / 2) ^ (k + 1)) := by
+    refine Summable.mul_left _ ?_
+    exact (summable_geometric_of_lt_one (by norm_num) (by norm_num)).comp_injective
+      (add_left_injective 1) |>.congr fun k => rfl
+  have hsum2 : Summable (fun k : ℕ => (k : ℝ) * ((1 : ℝ) / 2) ^ (k + 1)) := by
+    have h := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1
+      (by rw [Real.norm_eq_abs]; norm_num : ‖(1:ℝ)/2‖ < 1)
+    have h2 := h.mul_left ((1:ℝ)/2)
+    refine h2.congr fun k => ?_
+    rw [pow_one]; ring
+  refine (hsum1.add (hsum2.mul_left B)).congr fun k => ?_
+  ring
+
+private lemma tsum_affine_half (A B : ℝ) :
+    ∑' k : ℕ, (A + B * (k : ℝ)) * ((1 : ℝ) / 2) ^ (k + 1) = A + B := by
+  have hsum1 : Summable (fun k : ℕ => A * ((1 : ℝ) / 2) ^ (k + 1)) := by
+    refine Summable.mul_left _ ?_
+    exact (summable_geometric_of_lt_one (by norm_num) (by norm_num)).comp_injective
+      (add_left_injective 1) |>.congr fun k => rfl
+  have hsum2 : Summable (fun k : ℕ => (k : ℝ) * ((1 : ℝ) / 2) ^ (k + 1)) := by
+    have h := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1
+      (by rw [Real.norm_eq_abs]; norm_num : ‖(1:ℝ)/2‖ < 1)
+    have h2 := h.mul_left ((1:ℝ)/2)
+    refine h2.congr fun k => ?_
+    rw [pow_one]; ring
+  calc ∑' k : ℕ, (A + B * (k : ℝ)) * ((1 : ℝ) / 2) ^ (k + 1)
+      = ∑' k : ℕ, (A * ((1 : ℝ) / 2) ^ (k + 1)
+          + B * ((k : ℝ) * ((1 : ℝ) / 2) ^ (k + 1))) := tsum_congr fun k => by ring
+    _ = (∑' k : ℕ, A * ((1 : ℝ) / 2) ^ (k + 1))
+          + ∑' k : ℕ, B * ((k : ℝ) * ((1 : ℝ) / 2) ^ (k + 1)) :=
+        (hsum1.tsum_add (hsum2.mul_left B))
+    _ = A + B := by
+        rw [tsum_mul_left, tsum_mul_left, tsum_half_succ', tsum_half_succ_mul']; ring
+
+/-- The shift costs only `+k` in the `log_R` term. -/
+private lemma natLog_shift_le (R X k : ℕ) (hR : 2 ≤ R) (hX : X ≠ 0) :
+    Nat.log R (X + k) ≤ Nat.log R X + k := by
+  set L := Nat.log R X with hL
+  have h1 : X < R ^ (L + 1) := Nat.lt_pow_succ_log_self (by omega) X
+  have h2 : X + k ≤ X * 2 ^ k := by
+    have hk : k + 1 ≤ 2 ^ k := Nat.lt_two_pow_self
+    have hX1 : 1 ≤ X := by omega
+    calc X + k ≤ X * (k + 1) := by nlinarith
+      _ ≤ X * 2 ^ k := Nat.mul_le_mul_left X hk
+  have h3 : X * 2 ^ k ≤ X * R ^ k := by
+    exact Nat.mul_le_mul_left X (Nat.pow_le_pow_left hR k)
+  have h4 : X + k < R ^ (L + 1 + k) := by
+    calc X + k ≤ X * R ^ k := h2.trans h3
+      _ < R ^ (L + 1) * R ^ k := by
+          exact (Nat.mul_lt_mul_right (by positivity)).mpr h1
+      _ = R ^ (L + 1 + k) := by rw [← pow_add]
+  have := Nat.log_lt_of_lt_pow (show X + k ≠ 0 by omega) h4
+  omega
+
+/-- **The mean of the carry `omegaTail` along an arithmetic progression is `O(R log log R)`.** -/
+theorem sum_omegaTail_AP_le (b a e R : ℕ) (hb : 2 ≤ b) (ha : a ≠ 0) (hR : 2 ≤ R) :
+    ∑ i ∈ range R, NormalNumbers.CastingOut.omegaTail b (a * i + e)
+      ≤ (R : ℝ) * (4 * Real.log (Nat.log 2 R) + 5 + (omegaNat a : ℝ)
+            + (Nat.log R (a * R + e + 1) : ℝ)) + 2 * (R : ℝ) + 1 := by
+  classical
+  set M0 : ℝ := 4 * Real.log (Nat.log 2 R) + 5 + (omegaNat a : ℝ)
+    + (Nat.log R (a * R + e + 1) : ℝ) with hM0
+  set A : ℝ := (R : ℝ) * M0 + (R : ℝ) + 1 with hA
+  -- interchange the finite sum with the series
+  have hswap : ∑ i ∈ range R, NormalNumbers.CastingOut.omegaTail b (a * i + e)
+      = ∑' k : ℕ, ∑ i ∈ range R,
+          (omegaNat (a * i + e + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1) := by
+    rw [Summable.tsum_finsetSum
+      (fun i _ => NormalNumbers.CastingOut.summable_omegaTail b hb (a * i + e))]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [NormalNumbers.CastingOut.omegaTail]
+  rw [hswap]
+  -- the majorant
+  have hterm : ∀ k : ℕ, (∑ i ∈ range R, (omegaNat (a * i + e + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1))
+      ≤ (A + (R : ℝ) * (k : ℝ)) * ((1 : ℝ) / 2) ^ (k + 1) := by
+    intro k
+    have hmean := sum_omegaNat_AP_le_logLog a (e + 1 + k) R ha (by omega) hR
+    have hlog : Nat.log R (a * R + (e + 1 + k)) ≤ Nat.log R (a * R + e + 1) + k := by
+      have := natLog_shift_le R (a * R + e + 1) k hR (by omega)
+      have heq : a * R + (e + 1 + k) = (a * R + e + 1) + k := by omega
+      rw [heq]; exact this
+    have hlogR : (Nat.log R (a * R + (e + 1 + k)) : ℝ) ≤ (Nat.log R (a * R + e + 1) : ℝ) + k := by
+      have : ((Nat.log R (a * R + (e + 1 + k)) : ℕ) : ℝ)
+          ≤ ((Nat.log R (a * R + e + 1) + k : ℕ) : ℝ) := by exact_mod_cast hlog
+      push_cast at this; linarith
+    have hR0 : (0 : ℝ) ≤ (R : ℝ) := by positivity
+    have hnum : ∑ i ∈ range R, (omegaNat (a * i + (e + 1 + k)) : ℝ) ≤ A + (R : ℝ) * (k : ℝ) := by
+      rw [hA, hM0]
+      nlinarith [hmean, hlogR]
+    have hcongr : ∑ i ∈ range R, (omegaNat (a * i + e + 1 + k) : ℝ)
+        = ∑ i ∈ range R, (omegaNat (a * i + (e + 1 + k)) : ℝ) := by
+      refine Finset.sum_congr rfl fun i _ => ?_
+      congr 2
+      omega
+    have hden : (0 : ℝ) < (b : ℝ) ^ (k + 1) := by
+      have : (0 : ℝ) < (b : ℝ) := by
+        have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+        linarith
+      positivity
+    have hpow : ((1 : ℝ) / 2) ^ (k + 1) = 1 / (2 : ℝ) ^ (k + 1) := by
+      rw [div_pow, one_pow]
+    have hden2 : (2 : ℝ) ^ (k + 1) ≤ (b : ℝ) ^ (k + 1) := by
+      refine pow_le_pow_left₀ (by norm_num) ?_ _
+      exact_mod_cast hb
+    have hnn : 0 ≤ ∑ i ∈ range R, (omegaNat (a * i + e + 1 + k) : ℝ) :=
+      Finset.sum_nonneg fun i _ => by positivity
+    rw [← Finset.sum_div, hcongr, hpow]
+    have hApos : 0 ≤ A + (R : ℝ) * (k : ℝ) := by
+      have hnn' : 0 ≤ ∑ i ∈ range R, (omegaNat (a * i + (e + 1 + k)) : ℝ) :=
+        Finset.sum_nonneg fun i _ => by positivity
+      linarith [hnum, hnn']
+    have h2pos : (0 : ℝ) < (2 : ℝ) ^ (k + 1) := by positivity
+    calc (∑ i ∈ range R, (omegaNat (a * i + (e + 1 + k)) : ℝ)) / (b : ℝ) ^ (k + 1)
+        ≤ (A + (R : ℝ) * (k : ℝ)) / (b : ℝ) ^ (k + 1) := by gcongr
+      _ ≤ (A + (R : ℝ) * (k : ℝ)) * (1 / (2 : ℝ) ^ (k + 1)) := by
+          rw [div_eq_mul_one_div]
+          exact mul_le_mul_of_nonneg_left (one_div_le_one_div_of_le h2pos hden2) hApos
+  have hsumL : Summable (fun k : ℕ =>
+      ∑ i ∈ range R, (omegaNat (a * i + e + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)) := by
+    exact summable_sum (fun i _ => NormalNumbers.CastingOut.summable_omegaTail b hb (a * i + e))
+  have hle := Summable.tsum_le_tsum hterm hsumL (summable_affine_half A (R : ℝ))
+  refine hle.trans (le_of_eq ?_)
+  rw [tsum_affine_half A (R : ℝ), hA]
+  ring
+
 end NormalNumbers.PairDecouple
