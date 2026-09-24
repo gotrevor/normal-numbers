@@ -700,6 +700,35 @@ theorem subLeafAAt_mono (b : ℕ) (hb : 1 ≤ b) {ℓ ℓ' : ℕ} (hle : ℓ' �
     rw [pow_add]
     ring
 
+
+/-! ### 3i. Killing slots: the single-surviving-slot identity
+
+If the divisor count in slot `j` is divisible by `b^{j+1}`, that slot contributes nothing modulo
+`b^L` (its weight is `b^{L−1−j}`, and `b^{j+1}·b^{L−1−j} = b^L`).  Since the exponent `a` in
+`q^a ‖ m` contributes the factor `a+1` to `τ(m)`, such a slot is produced by a CRT condition
+`a_j + 1 ≡ 0 (mod b^{j+1})`.  This is the algebraic core of the construction described in the
+handoff: kill every slot but one, and let the survivor carry the target. -/
+theorem paddedSum_single (b n L j₀ : ℕ) (hj₀ : j₀ < L)
+    (h : ∀ j, j < L → j ≠ j₀ → ((b : ℤ) ^ (j + 1) ∣ (tau (n + 1 + j) : ℤ))) :
+    paddedSum b tau n L % (b : ℤ) ^ L
+      = ((tau (n + 1 + j₀) : ℤ) * (b : ℤ) ^ (L - 1 - j₀)) % (b : ℤ) ^ L := by
+  have hdvd : ((b : ℤ) ^ L) ∣
+      (paddedSum b tau n L - (tau (n + 1 + j₀) : ℤ) * (b : ℤ) ^ (L - 1 - j₀)) := by
+    unfold paddedSum
+    rw [← Finset.sum_erase_add (range L) _ (Finset.mem_range.mpr hj₀)]
+    simp only [add_sub_cancel_right]
+    refine Finset.dvd_sum fun j hj => ?_
+    have hmem := Finset.mem_erase.mp hj
+    have hne : j ≠ j₀ := hmem.1
+    have hlt : j < L := Finset.mem_range.mp hmem.2
+    obtain ⟨k, hk⟩ := h j hlt hne
+    have hL : (j + 1) + (L - 1 - j) = L := by omega
+    refine ⟨k, ?_⟩
+    rw [hk, mul_right_comm, ← pow_add, hL]
+  have hmod : paddedSum b tau n L ≡ (tau (n + 1 + j₀) : ℤ) * (b : ℤ) ^ (L - 1 - j₀)
+      [ZMOD (b : ℤ) ^ L] := Int.ModEq.symm (Int.modEq_iff_dvd.mpr (by simpa using hdvd))
+  exact hmod
+
 /-! ### 4. The crux leaf -/
 
 /-- **THE CRUX (2026-09-24, after the structured reduction).**  The single open obligation behind

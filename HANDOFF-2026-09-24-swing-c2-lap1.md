@@ -344,3 +344,37 @@ quantity to control is the honest digit window of `E_b` and the pad digits need 
 value below `b^K`, not zero.
 
 Open obligation is unchanged (`subLeafB_holds`, one `sorry`); the chain above it is all proved.
+
+## Lap 13 (green): **RETRACTION of the lap-9/10 refutation** — the CRT route is alive
+
+The lap-9/10 argument "CRT construction is refuted" used `τ(m) ≤ 2√m`, a WORST-CASE bound, where
+only an ALMOST-ALL bound is needed.  Redone with the normal order `τ(m) ≈ (log m)^{log 2}`:
+
+* CRT construction: choose distinct primes `q_j` and exponents with `a_j + 1 ≡ 0 (mod b^{j+1})`,
+  and force `q_j^{a_j} ‖ n+1+j` for every slot `j ≠ j₀`.  Each such slot then contributes `0`
+  modulo `b^L` — this is now proved in `src/` as **`paddedSum_single`**:
+
+      (∀ j < L, j ≠ j₀ → b^{j+1} ∣ τ(n+1+j))  ⟹
+        paddedSum b τ n L ≡ τ(n+1+j₀)·b^{L−1−j₀}   (mod b^L).
+
+* Size: `a_j ≈ b^{j+1}` forces `log n ≈ b^L`.
+* Carry: for ALMOST ALL `n` in the CRT class, `τ` near `n` is `≈ (log n)^{log 2} ≈ b^{0.693 L}`, so
+  `carry ≈ b^{0.693L}`.  The requirement `carry < b^K` is then `K > 0.693 L`, i.e. `ℓ < 0.307 L` —
+  **satisfiable**, since `ℓ` is fixed and `L` may be taken large (and `subLeafAAt_mono`, lap 11,
+  says any sequence `ℓ → ∞` suffices, so there is no tension).
+* Survivor slot: take `n+1+j₀ = 2^e·p` with `p` prime, so `τ = 2(e+1)` is EXACTLY known and `e` is
+  free.  `n` lies in a fixed class mod an odd modulus `Q`, so `p` ranges over an arithmetic
+  progression — **Dirichlet**.  For odd `b`, `2` is invertible mod `b^L`, so `2(e+1)` sweeps every
+  residue: the target `t` is reachable.
+
+**Verdict: the crux is NOT irreducibly analytic.**  For odd `b ≥ 3` the construction reduces
+`ConjC2` to (i) CRT, (ii) Dirichlet on primes in APs, (iii) an almost-all divisor bound
+`τ(m) ≪ (log m)^{1+ε}` on a positive-density set — all standard.  Lap 10's "recorded verdict" is
+hereby **withdrawn**; it was an artefact of using a worst-case bound.
+
+**Next lap: build this in Lean.**  `paddedSum_single` is the algebra.  Needed next:
+1. the CRT step producing `n` with `q_j^{a_j} ‖ n+1+j` for `j ≠ j₀` (mathlib `Nat.chineseRemainder`);
+2. the survivor `n+1+j₀ = 2^e p` via Dirichlet (`Nat.setOf_prime_and_eq_mod_infinite` / mathlib's
+   Dirichlet) — check what the repo already has (`G4MertensAP`, `G4Progression`);
+3. the almost-all carry bound.
+Formalise (1)+(2) first; (3) is the only genuinely analytic input and can be a named hypothesis.
