@@ -454,3 +454,4 @@ import NormalNumbers.SwingC3
 import NormalNumbers.SwingC3B5
 import NormalNumbers.SwingC3Weyl
 import NormalNumbers.SwingC3ContGlue
+import NormalNumbers.SwingC3AddChar

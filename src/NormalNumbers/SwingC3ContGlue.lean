@@ -267,7 +267,7 @@ additive character; the `j`-slot expansion turns it into `∑_{t≤x} χ(t) z^{�
 (`probes/swingc3_b4_fourier.py`) measured the left side decaying like `(log N)^{−1.86}` for
 `b = 4, h = 1`. -/
 def WeylTailHypothesis (b : ℕ) : Prop :=
-  ∀ (P Q r : ℕ) (θ : ℝ) (h : ℤ),
+  ∀ (P Q r : ℕ) (θ : ℝ) (h : ℤ), 0 < Q →
     Tendsto (wFourierMean (fun n => θ + tailLarge P b n) (classWeight r Q) h) atTop (𝓝 0)
 
 theorem rotationRouteC_of_weyl {b : ℕ} (hb : 2 ≤ b) (H : WeylTailHypothesis b) :
@@ -276,7 +276,7 @@ theorem rotationRouteC_of_weyl {b : ℕ} (hb : 2 ≤ b) (H : WeylTailHypothesis 
   obtain ⟨P, Q, M, a, hQ0, hM0, hQP, hPQ, hinj, hcov⟩ :=
     exists_rotationCover_core hb α len hα hlen hαlen
   exact ⟨P, Q, M, a, hQ0, hM0, hQP, hinj, hcov,
-    tailLargeDecoupleC_of_weyl b P Q (fun r θ h => H P Q r θ h)⟩
+    tailLargeDecoupleC_of_weyl b P Q (fun r θ h => H P Q r θ h hQ0)⟩
 
 /-- **The `…_of_H` conditional the swing kickoff names as its main target.**  `G_b` is rich,
 given only the exponential-sum hypothesis `H`.  Leaf A is proved, the covering glue is proved,

@@ -149,6 +149,16 @@ may be replaced by a continuous bump `0 ≤ g ≤ 1` supported in the arc, and L
 at any scale, so the covering runs on the middle quarter where `g ≡ 1`.  No squeeze, no
 equidistribution.
 
+**Sharpened 2026-09-24, same lap** (`src/NormalNumbers/SwingC3AddChar.lean`):
+`conjC3_of_addCharTail : (∀ b, 3 ≤ b → AddCharTail b) → ConjC3`, also trust-triple clean, where
+
+`AddCharTail b : ∀ P Q j h, 0 < j < Q → (1/N) ∑_{n<N} e(jn/Q)·e(h·tailLarge P b n) → 0`.
+
+The rotation `θ` factors out as a unimodular constant and the class indicator is expanded by
+orthogonality of the additive characters mod `Q` (`sum_ee_div`, proved here from `geom_sum_eq`
+and `Complex.exp_eq_one_iff`).  This is the form a number theorist checks: a multiplicative
+function twisted by an additive character.
+
 **What is still open** is `H` alone, and `H` is exactly the Selberg–Delange-with-characters
 quantity the B4 probe measured at `(log N)^{−1.86}`.  The ratified headline `conjC3`
 (`SwingC3.lean`) still routes through `tailLargeDecouple_holds` and stays `sorry` — as the
