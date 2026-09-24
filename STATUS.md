@@ -83,7 +83,8 @@ around.  `KataiOrthogonality` and `DelangeMean` are 🟡 (proved, project-scale)
 *hypotheses*, never as axioms, so they do not enter any `#print axioms`.
 
 ## Pointers (C1 swing)
-`KICKOFF-2026-09-24-pd-prove.md` (+ ADDENDUM) · `HANDOFF-2026-09-24-pd-prove-lap9.md` ·
+`KICKOFF-2026-09-24-pd-prove.md` (+ ADDENDUM) · `HANDOFF-2026-09-24-pd-prove-lap10.md` ·
+`HANDOFF-2026-09-24-pd-prove-lap9.md` ·
 `HANDOFF-2026-09-24-pd-prove-laps1-8.md` · `PENDING_WORK.md` · `DIRECTION.md` (CURRENT DIRECTIVE) ·
 sibling: `git show wip/pd-refute:HANDOFF-2026-09-24-pd-refute-lap1.md`
 
