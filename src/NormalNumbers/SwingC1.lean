@@ -339,6 +339,29 @@ theorem normalCastLaw_eq_residue_count (b L r : ℕ) (hb : 3 ≤ b) (hr : r < b 
   rw [hpow]
   by_cases h : r = 0 <;> simp [h] <;> field_simp <;> ring
 
+/-! ### Numerical anchors for the model side
+
+`normalCastLaw_eq_residue_count` says the length-`L` digit-sum law mod `b−1` equals the count of
+residues in `[0, b^L)`.  These are the two sides evaluated independently by the kernel. -/
+
+example : ((Finset.range (3 ^ 1)).filter (fun v => v % 2 = 0)).card
+    = (Finset.univ.filter (fun v : Fin 1 → Fin 3 => (∑ i, (v i : ℕ)) % 2 = 0)).card := by decide
+
+example : ((Finset.range (3 ^ 3)).filter (fun v => v % 2 = 1)).card
+    = (Finset.univ.filter (fun v : Fin 3 → Fin 3 => (∑ i, (v i : ℕ)) % 2 = 1)).card := by decide
+
+example : ((Finset.range (4 ^ 2)).filter (fun v => v % 3 = 2)).card
+    = (Finset.univ.filter (fun v : Fin 2 → Fin 4 => (∑ i, (v i : ℕ)) % 3 = 2)).card := by decide
+
+example : ((Finset.range (5 ^ 2)).filter (fun v => v % 4 = 0)).card
+    = (Finset.univ.filter (fun v : Fin 2 → Fin 5 => (∑ i, (v i : ℕ)) % 4 = 0)).card := by decide
+
+/-- The bias is real: at `b = 3, L = 3` the residue `0` is hit 14 times out of 27 and the residue
+`1` only 13 — `normalCastLaw` is NOT uniform, which is why `CastUniform` was the wrong target. -/
+example : ((Finset.range (3 ^ 3)).filter (fun v => v % 2 = 0)).card = 14 := by decide
+
+example : ((Finset.range (3 ^ 3)).filter (fun v => v % 2 = 1)).card = 13 := by decide
+
 /-! ### The window residue and the equidistribution hypothesis -/
 
 /-- The window word of `G4_b` at `n`, as a natural number in `[0, b^L)`. -/
