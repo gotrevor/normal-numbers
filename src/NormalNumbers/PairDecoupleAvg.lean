@@ -372,6 +372,173 @@ theorem conjC1_of_delange_kataiAvg_pairDecorrAvg (hDK : KataiOrthogonalityAvg)
         (hP b hb m hm hdvd))
 
 
+
+/-! ### Van der Corput, averaged over the multipliers
+
+`norm_mean_le_vdC` is fully quantitative and uniform in the sequence, so it can be averaged over
+the pairs `(p, q)`: Cauchy–Schwarz (`sq_sum_le_card_mul_sum_sq`) pushes the average inside the
+square root.  The result reduces the averaged leaf `PairDecorrAvg` to an averaged *shifted*
+correlation — the averaged form of the multi-point Elliott correlation. -/
+
+/-- The averaged off-diagonal shifted correlation of the pair phases, normalised exactly as van
+der Corput needs it. -/
+noncomputable def avgOffDiag (b : ℕ) (t : ℝ) (w R K : ℕ) : ℝ :=
+  (∑ p ∈ primesLe w, ∑ q ∈ primesLe w,
+      offDiagShift (fun i => phase (t * pairTail b p q i)) R K)
+    / (((primesLe w).card : ℝ) ^ 2 * (K : ℝ) ^ 2 * R)
+
+lemma avgOffDiag_nonneg (b : ℕ) (t : ℝ) (w R K : ℕ) : 0 ≤ avgOffDiag b t w R K := by
+  refine div_nonneg (Finset.sum_nonneg fun p _ => Finset.sum_nonneg fun q _ =>
+    offDiagShift_nonneg _ _ _) (by positivity)
+
+/-- **Van der Corput, averaged over the multipliers.** -/
+theorem pairDecorrAvgSum_le_vdC (b : ℕ) (t : ℝ) (w R K : ℕ) (hw : 2 ≤ w) (hR : 0 < R)
+    (hK : 0 < K) :
+    pairDecorrAvgSum b t w R
+      ≤ Real.sqrt (1 / (K : ℝ) + avgOffDiag b t w R K) + 2 * (K : ℝ) / R := by
+  classical
+  set C : ℝ := ((primesLe w).card : ℝ) with hCdef
+  have hC : (0 : ℝ) < C := by
+    rw [hCdef]; exact_mod_cast card_primesLe_pos hw
+  have hRR : (0 : ℝ) < R := by exact_mod_cast hR
+  have hKR : (0 : ℝ) < K := by exact_mod_cast hK
+  set A : ℕ → ℕ → ℝ := fun p q =>
+    1 / (K : ℝ) + offDiagShift (fun i => phase (t * pairTail b p q i)) R K / ((K : ℝ) ^ 2 * R)
+    with hA
+  have hAnn : ∀ p q, 0 ≤ A p q := by
+    intro p q
+    have h0 := offDiagShift_nonneg (fun i => phase (t * pairTail b p q i)) R K
+    have h1 : (0:ℝ) ≤ 1 / (K : ℝ) := by positivity
+    have h2 : (0:ℝ) ≤ offDiagShift (fun i => phase (t * pairTail b p q i)) R K
+        / ((K : ℝ) ^ 2 * R) := div_nonneg h0 (by positivity)
+    rw [hA]; dsimp only; linarith
+  set SS : ℝ := ∑ p ∈ primesLe w, ∑ q ∈ primesLe w, Real.sqrt (A p q) with hSS
+  set SA : ℝ := ∑ p ∈ primesLe w, ∑ q ∈ primesLe w, A p q with hSA
+  have hSAnn : 0 ≤ SA := Finset.sum_nonneg fun p _ => Finset.sum_nonneg fun q _ => hAnn p q
+  have hSSnn : 0 ≤ SS :=
+    Finset.sum_nonneg fun p _ => Finset.sum_nonneg fun q _ => Real.sqrt_nonneg _
+  -- the per-pair van der Corput bound
+  have hstep : ∀ p q : ℕ,
+      (if p = q then (0 : ℝ) else
+        ‖fullMean (fun n => phase (t * (omegaTail b (p * n) - omegaTail b (q * n)))) R‖)
+        ≤ Real.sqrt (A p q) + 2 * (K : ℝ) / R := by
+    intro p q
+    have hnn : 0 ≤ Real.sqrt (A p q) + 2 * (K : ℝ) / R := by positivity
+    by_cases hpq : p = q
+    · rw [if_pos hpq]; exact hnn
+    · rw [if_neg hpq]
+      have hmain := norm_mean_le_vdC (fun i => phase (t * pairTail b p q i)) R K hR hK
+        (fun n => le_of_eq (norm_phase _))
+      have heq : fullMean (fun n => phase (t * (omegaTail b (p * n) - omegaTail b (q * n)))) R
+          = (∑ i ∈ range R, phase (t * pairTail b p q i)) / (R : ℂ) := rfl
+      rw [heq]
+      exact hmain
+  have hsum : (∑ p ∈ primesLe w, ∑ q ∈ primesLe w,
+      (if p = q then (0 : ℝ) else
+        ‖fullMean (fun n => phase (t * (omegaTail b (p * n) - omegaTail b (q * n)))) R‖))
+      ≤ SS + C ^ 2 * (2 * (K : ℝ) / R) := by
+    have hrow : ∀ p : ℕ, ∑ q ∈ primesLe w, (Real.sqrt (A p q) + 2 * (K : ℝ) / R)
+        = (∑ q ∈ primesLe w, Real.sqrt (A p q)) + C * (2 * (K : ℝ) / R) := by
+      intro p
+      rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul, ← hCdef]
+    calc (∑ p ∈ primesLe w, ∑ q ∈ primesLe w,
+          (if p = q then (0 : ℝ) else
+            ‖fullMean (fun n => phase (t * (omegaTail b (p*n) - omegaTail b (q*n)))) R‖))
+        ≤ ∑ p ∈ primesLe w, ∑ q ∈ primesLe w, (Real.sqrt (A p q) + 2 * (K : ℝ) / R) :=
+          Finset.sum_le_sum fun p _ => Finset.sum_le_sum fun q _ => hstep p q
+      _ = ∑ p ∈ primesLe w, ((∑ q ∈ primesLe w, Real.sqrt (A p q)) + C * (2 * (K : ℝ) / R)) :=
+          Finset.sum_congr rfl fun p _ => hrow p
+      _ = SS + C ^ 2 * (2 * (K : ℝ) / R) := by
+          rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul, ← hCdef, ← hSS]
+          ring
+  -- Cauchy–Schwarz
+  have hCS : SS ^ 2 ≤ C ^ 2 * SA := by
+    have h := sq_sum_le_card_mul_sum_sq (s := (primesLe w) ×ˢ (primesLe w))
+      (f := fun x : ℕ × ℕ => Real.sqrt (A x.1 x.2))
+    have hcard : ((((primesLe w) ×ˢ (primesLe w)).card : ℕ) : ℝ) = C ^ 2 := by
+      rw [Finset.card_product, hCdef]; push_cast; ring
+    have hsq : ∀ x : ℕ × ℕ, Real.sqrt (A x.1 x.2) ^ 2 = A x.1 x.2 := fun x =>
+      Real.sq_sqrt (hAnn x.1 x.2)
+    rw [hcard] at h
+    simp only [hsq] at h
+    rwa [Finset.sum_product, Finset.sum_product, ← hSS, ← hSA] at h
+  have hSSle : SS ≤ C * Real.sqrt SA := by
+    have hnn2 : 0 ≤ C * Real.sqrt SA := by positivity
+    have h1 : SS ^ 2 ≤ (C * Real.sqrt SA) ^ 2 := by
+      rw [mul_pow, Real.sq_sqrt hSAnn]; exact hCS
+    have h2 := Real.sqrt_le_sqrt h1
+    rwa [Real.sqrt_sq hSSnn, Real.sqrt_sq hnn2] at h2
+  -- identify `SA / C^2`
+  have hSAval : SA / C ^ 2 = 1 / (K : ℝ) + avgOffDiag b t w R K := by
+    have h1 : SA = C ^ 2 * (1 / (K : ℝ))
+        + (∑ p ∈ primesLe w, ∑ q ∈ primesLe w,
+            offDiagShift (fun i => phase (t * pairTail b p q i)) R K) / ((K : ℝ) ^ 2 * R) := by
+      have hrow : ∀ p : ℕ, ∑ q ∈ primesLe w, A p q
+          = C * (1 / (K : ℝ))
+            + (∑ q ∈ primesLe w,
+                offDiagShift (fun i => phase (t * pairTail b p q i)) R K) / ((K : ℝ) ^ 2 * R) := by
+        intro p
+        rw [hA]
+        simp only
+        rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul, ← hCdef, ← Finset.sum_div]
+      rw [hSA, Finset.sum_congr rfl (fun p _ => hrow p), Finset.sum_add_distrib,
+        Finset.sum_const, nsmul_eq_mul, ← hCdef, ← Finset.sum_div]
+      ring
+    rw [h1, avgOffDiag, ← hCdef]
+    field_simp
+  have hsd : Real.sqrt (SA / C ^ 2) = Real.sqrt SA / C := by
+    rw [Real.sqrt_div hSAnn, Real.sqrt_sq hC.le]
+  rw [pairDecorrAvgSum, ← hCdef, div_le_iff₀ (by positivity : (0:ℝ) < C ^ 2)]
+  have hkey : Real.sqrt (1 / (K : ℝ) + avgOffDiag b t w R K) * C ^ 2 = C * Real.sqrt SA := by
+    rw [← hSAval, hsd]; field_simp
+  nlinarith [hsum, hSSle, hkey, hC]
+
+/-- **THE AVERAGED SHIFTED LEAF.**  The averaged form of the multi-point correlation: only the
+*mean over pairs of distinct primes* of the van der Corput off-diagonal has to be small. -/
+def PairShiftCorrAvg (b : ℕ) (t : ℝ) : Prop :=
+  ∀ K : ℕ, 0 < K → ∀ ε : ℝ, 0 < ε →
+    ∀ᶠ w : ℕ in atTop, ∀ᶠ R : ℕ in atTop, avgOffDiag b t w R K < ε
+
+theorem pairDecorrAvg_of_pairShiftCorrAvg (b : ℕ) (t : ℝ) (h : PairShiftCorrAvg b t) :
+    PairDecorrAvg b t := by
+  intro ε hε
+  obtain ⟨K, hK8⟩ := exists_nat_gt (8 / ε ^ 2)
+  have hKpos : 0 < K := by
+    by_contra hcon
+    have hK0 : K = 0 := by omega
+    rw [hK0] at hK8
+    have : (0:ℝ) < 8 / ε ^ 2 := by positivity
+    simp at hK8; linarith
+  have hKR : (0 : ℝ) < K := by exact_mod_cast hKpos
+  have hdiag : 1 / (K : ℝ) < ε ^ 2 / 8 := by
+    rw [div_lt_iff₀ (by positivity : (0:ℝ) < ε ^ 2)] at hK8
+    rw [div_lt_div_iff₀ hKR (by norm_num : (0:ℝ) < 8)]
+    linarith
+  filter_upwards [h K hKpos (ε ^ 2 / 8) (by positivity), Filter.eventually_ge_atTop 2]
+    with w hw hw2
+  obtain ⟨R₁, hR₁⟩ := exists_nat_gt (4 * (K : ℝ) / ε)
+  filter_upwards [hw, Filter.eventually_gt_atTop (max R₁ 0)] with R hR hRgt
+  have hRpos : 0 < R := by omega
+  have hRR : (0 : ℝ) < R := by exact_mod_cast hRpos
+  have h2K : 2 * (K : ℝ) / R < ε / 2 := by
+    have hlt : 4 * (K : ℝ) / ε < (R : ℝ) := by
+      refine lt_trans hR₁ ?_
+      have : R₁ < R := by omega
+      exact_mod_cast this
+    rw [div_lt_iff₀ hε] at hlt
+    rw [div_lt_iff₀ hRR]
+    linarith
+  have hsq : Real.sqrt (1 / (K : ℝ) + avgOffDiag b t w R K) < ε / 2 := by
+    have hlt : 1 / (K : ℝ) + avgOffDiag b t w R K < (ε / 2) ^ 2 := by
+      have he : (ε / 2) ^ 2 = ε ^ 2 / 8 + ε ^ 2 / 8 := by ring
+      rw [he]; linarith
+    have hnn : 0 ≤ 1 / (K : ℝ) + avgOffDiag b t w R K := by
+      have := avgOffDiag_nonneg b t w R K; positivity
+    have := Real.sqrt_lt_sqrt hnn hlt
+    rwa [Real.sqrt_sq (by positivity)] at this
+  have := pairDecorrAvgSum_le_vdC b t w R K hw2 hRpos hKpos
+  linarith
+
 /-! ### The crux, restated for LARGE primes only
 
 This is the payoff of the averaged criterion: the swing never needs the orbit difference to
@@ -410,5 +577,17 @@ theorem conjC1_of_delange_kataiAvg_pairDecorrLarge (hDK : KataiOrthogonalityAvg)
     ConjC1 :=
   conjC1_of_delange_kataiAvg_pairDecorrAvg hDK hD fun b hb m hm hdvd =>
     pairDecorrAvg_of_pairDecorrLarge b _ (hP b hb m hm hdvd)
+
+/-- **THE SWING ON THE AVERAGED SHIFTED LEAF.**  The weakest form this development reaches:
+`ConjC1` from Delange's theorem, the *averaged* Kátai/BSZ criterion, and the requirement that the
+van der Corput off-diagonal be small only **on average over the pairs of distinct prime
+multipliers**.  Every pointwise limit has been replaced by a mean over `p, q ≤ w`. -/
+theorem conjC1_of_delange_kataiAvg_pairShiftCorrAvg (hDK : KataiOrthogonalityAvg)
+    (hD : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) → DelangeMean (((m : ℤ) : ℝ) / b))
+    (hP : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) →
+      PairShiftCorrAvg b (((m : ℤ) : ℝ) / b)) :
+    ConjC1 :=
+  conjC1_of_delange_kataiAvg_pairDecorrAvg hDK hD fun b hb m hm hdvd =>
+    pairDecorrAvg_of_pairShiftCorrAvg b _ (hP b hb m hm hdvd)
 
 end NormalNumbers.CastingOut
