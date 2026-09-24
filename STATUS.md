@@ -2,7 +2,7 @@
 
 **ACTIVE (branch `wip/twopoint-avg`): the C1 casting-out swing.  `ConjC1` now follows from
 Delange's theorem plus the single node `PairDecorr` — the cited Kátai/BSZ hypothesis is GONE.**
-· **Build**: 🟢 green (9284 jobs) · **Updated**: lap 26 · 2026-09-24 · HEAD after `dfaa5c7`
+· **Build**: 🟢 green (9285 jobs) · **Updated**: lap 27 · 2026-09-24 · HEAD after `dfaa5c7`
 · On `master`/Pair A: Theorem C′ (`isNormal_subsetLambert_of_sqrtFreshMassZero`) PROVED and
   trust-triple, 2026-09-23.
 
@@ -32,6 +32,13 @@ route in between.
 
 ## What's happened (C1 / twopoint campaign, newest first)
 
+- **2026-09-24 (lap 27) — CHIPPING THE 🟡 `DelangeMean`.**  `TwoPointDelange.lean` (sorry-free):
+  the Dirichlet kernel `h_z = μ * z^ω` with `sum_delangeKernel_divisors` (powerset expansion), the
+  exact hyperbola identity `sum_zpow_omega_eq`, the EQUALITY
+  `‖1 + (z−1)r‖² = 1 − 2(1−Re z)(r − r²)`, the Euler-product decay
+  `prod_delangeLocal_tendsto_zero`, and the assembly `delangeMean_of_kernel`.  The debt is now two
+  named `Prop`s: `DelangeKernelMean` (truncated sum vs Euler product) and `DelangeKernelTail`
+  (`Σ μ²(n)‖z−1‖^{ω(n)} = o(N)`, true exactly for `‖z−1‖ < 1`, reachable from `turanKubilius`).
 - **2026-09-24 (lap 26) — THE SMALL-PRIME HALF OF LEAF (D), UNCONDITIONALLY.**
   `TwoPointGrowingCut.lean`: at the growing cut `primeCut R = ⌊log₄ R⌋/2` (period `≤ √R`),
   **`truncPair_fullMean_tendsto_zero`** gives `E_{n<R} e(t(θ^{(primeCut R)}_{pn} − θ^{(primeCut R)}_{qn})) → 0`

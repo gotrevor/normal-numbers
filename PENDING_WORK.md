@@ -23,6 +23,32 @@ fixed-pair `o(1)` the diagonal route consumes.  Those files stay in `src/` (they
 the pricing is real), but they are **off-path** unless a route through them yields a fixed-pair
 statement.
 
+### Lap 27 addendum — chipping the 🟡 `DelangeMean`: the elementary skeleton
+
+`src/NormalNumbers/TwoPointDelange.lean` (trust-triple, **sorry-free**).  With `z = e(t)` a `b`-th
+root of unity `≠ 1`:
+
+| lemma | content |
+|---|---|
+| `delangeKernel z n` | `h_z = μ * z^ω`: `(z−1)^{ω(n)}` on squarefree `n`, else `0` |
+| **`sum_delangeKernel_divisors`** | `Σ_{n∣m} h_z(n) = z^{ω(m)}` — the powerset expansion `((z−1)+1)^{ω(m)}` |
+| **`sum_zpow_omega_eq`** | hyperbola: `Σ_{m≤N} z^{ω(m)} = Σ_{n≤N} h_z(n)·⌊N/n⌋` (exact) |
+| **`norm_delangeLocal_sq`** | `‖1 + (z−1)r‖² = 1 − 2(1−Re z)(r − r²)` — an EQUALITY |
+| **`prod_delangeLocal_tendsto_zero`** | `‖Π_{p≤P}(1+(z−1)/p)‖ → 0` (Mertens; same engine as leaf (M)) |
+| **`delangeMean_of_kernel`** | `DelangeKernelMean z` + `DelangeKernelTail z` ⇒ `DelangeMean t` |
+
+**The two residues, named as `Prop`s (no `sorry` anywhere):**
+1. `DelangeKernelMean z` : `Σ_{n≤N} h_z(n)/n → 0`.  The *product* version is now a theorem; the gap
+   is a Wirsing/Levin–Fainleib comparison of a truncated multiplicative sum with its Euler product.
+2. `DelangeKernelTail z` : `Σ_{n≤N} μ²(n)‖z−1‖^{ω(n)} = o(N)`.  **TRUE exactly when `‖z−1‖ < 1`**
+   (then `w^{ω(n)} ≤ w^K + [ω(n) ≤ K]` and `#{n≤N : ω(n) ≤ K} = o(N)` by `turanKubilius`);
+   FALSE for `‖z−1‖ ≥ 1`, where Halász / Selberg–Delange over `PNTPort.ZetaBounds`
+   (`ZetaNoZerosOn1Line`, `ZetaZeroFree9`) is required.
+
+**Next brick (highest value):** close `DelangeKernelTail` for `‖z−1‖ < 1` via `turanKubilius`.
+That gives `DelangeMean t` unconditionally for `‖t‖_{ℝ/ℤ} < 1/6` once
+`DelangeKernelMean` is also closed there — a genuine partial discharge of the 🟡 axiom.
+
 ### Lap 26 addendum — the small-prime half of leaf (D), UNCONDITIONALLY
 
 `src/NormalNumbers/TwoPointGrowingCut.lean` (trust-triple).  `primeCut R = ⌊log₄ R⌋ / 2`, so
