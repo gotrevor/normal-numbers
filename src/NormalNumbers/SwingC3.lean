@@ -404,15 +404,127 @@ theorem omegaCarryRich_of_joint {b : ℕ} (hb : 2 ≤ b) (h : OmegaCarryJoint b)
     rw [hrw, Nat.add_mod_right, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hwlt]
   exact_mod_cast Nat.cast_le.2 (Finset.card_le_card hsub)
 
-/-- **Open.**  The crux after the 2026-09-24 lap; see the note above. -/
-theorem omegaCarryJoint_holds (b : ℕ) (hb : 3 ≤ b) : OmegaCarryJoint b := by
+/-- The `ω`-residue route's leaf, kept as a proved conditional (`omegaCarryRich_of_joint`).
+`conjC3` no longer goes through it: the rotation route below reaches `IsRich` from a strictly
+weaker input, since it never has to identify any law.  See `SwingC3Split.lean`. -/
+theorem omegaCarryRich_of_carryJoint {b : ℕ} (hb : 2 ≤ b) (h : OmegaCarryJoint b) :
+    OmegaCarryRich b := omegaCarryRich_of_joint hb h
+
+
+/-! ## `ConjC3` from a limit law for the large-prime tail
+
+This packages the rotation route as a single hypothesis.  For each word length `ℓ` it asks for
+a modulus `Q`, a family of residue classes `a 0, …, a (b^ℓ − 1)` that are distinct mod `Q` (the
+`b^ℓ` steerings produced by `SwingC3Split.exists_crt_pattern`), and a limit law `μ` on the
+`b^ℓ` cylinders with total mass `1`, such that along the class `a k` a word `v` occurs with
+density `μ((val v + k) mod b^ℓ) / Q`.  The `+ k` is the rotation: class `a k` shifts the law by
+`k·b^{−ℓ}` (`SwingC3Split.fract_add_mem_cylinder_iff`).
+
+No property of `μ` beyond `∑ μ = 1` is used.  That is the whole point: the argument never
+identifies the law of the large-prime tail, it only needs the SAME law in every class. -/
+
+open Classical in
+/-- **The limit-law leaf.**  See `SwingC3Split` for the construction of the classes and the
+covering lemma that makes the rotation sweep all of them. -/
+def LargeTailLaw (b : ℕ) : Prop :=
+  ∀ ℓ : ℕ, ∃ (Q : ℕ) (a : ℕ → ℕ) (μ : ℕ → ℝ), 0 < Q ∧
+    (∀ k < b ^ ℓ, ∀ k' < b ^ ℓ, a k ≡ a k' [MOD Q] → k = k') ∧
+    (∑ u ∈ range (b ^ ℓ), μ u = 1) ∧
+    ∀ v : List ℕ, v.length = ℓ → (∀ d ∈ v, d < b) → ∀ k < b ^ ℓ,
+      Tendsto (fun N => (((range N).filter (fun n => n ≡ a k [MOD Q] ∧
+          OccursAt b (primeLambertAtBase b) v n)).card : ℝ) / N)
+        atTop (𝓝 (μ ((blockNatVal b v + k) % b ^ ℓ) / Q))
+
+/-- Rotating the index by `k` permutes the `b^ℓ` cylinders, so the rotated masses still sum
+to `1`. -/
+lemma sum_rotate {M V : ℕ} (hM : 0 < M) (μ : ℕ → ℝ) :
+    ∑ k ∈ range M, μ ((V + k) % M) = ∑ u ∈ range M, μ u := by
+  refine Finset.sum_nbij' (fun k => (V + k) % M) (fun u => (u + (M - V % M)) % M)
+    (fun k _ => mem_range.2 (Nat.mod_lt _ hM)) (fun u _ => mem_range.2 (Nat.mod_lt _ hM))
+    (fun k hk => ?_) (fun u hu => ?_) (fun k _ => rfl)
+  · rw [mem_range] at hk
+    have h1 : (V + k) % M + (M - V % M) ≡ V + k + (M - V % M) [MOD M] :=
+      Nat.ModEq.add_right _ (Nat.mod_modEq _ _)
+    have h2 : (V + k + (M - V % M)) % M = k % M := by
+      have hV : V % M < M := Nat.mod_lt _ hM
+      have hd := Nat.div_add_mod V M
+      have : V + k + (M - V % M) = k + M * (V / M) + M := by omega
+      rw [this, Nat.add_mod_right, Nat.add_mul_mod_self_left]
+    rw [show ((V + k) % M + (M - V % M)) % M = (V + k + (M - V % M)) % M from h1, h2,
+      Nat.mod_eq_of_lt hk]
+  · rw [mem_range] at hu
+    have hV : V % M < M := Nat.mod_lt _ hM
+    have hd := Nat.div_add_mod V M
+    have h1 : (V + (u + (M - V % M)) % M) % M = (V + (u + (M - V % M))) % M :=
+      Nat.ModEq.add_left V (Nat.mod_modEq _ M)
+    have h2 : V + (u + (M - V % M)) = u + M * (V / M) + M := by omega
+    rw [h1, h2, Nat.add_mod_right, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hu]
+
+/-- **`IsRich` from the limit law.**  The `b^ℓ` classes are disjoint, their occurrence densities
+are the rotated masses `μ((val v + k) mod b^ℓ)/Q`, and those sum to `1/Q > 0`. -/
+theorem isRich_of_largeTailLaw {b : ℕ} (hb : 2 ≤ b) (h : LargeTailLaw b) :
+    IsRich b (primeLambertAtBase b) := by
+  classical
+  intro v hv
+  obtain ⟨Q, a, μ, hQ, hinj, hsum, hlim⟩ := h v.length
+  set M := b ^ v.length with hM
+  have hM0 : 0 < M := Nat.pow_pos (by omega)
+  -- the per-class counting functions
+  set f : ℕ → ℕ → ℝ := fun k N =>
+    (((range N).filter (fun n => n ≡ a k [MOD Q] ∧
+      OccursAt b (primeLambertAtBase b) v n)).card : ℝ) / N with hf
+  have hlim' : ∀ k ∈ range M, Tendsto (f k) atTop (𝓝 (μ ((blockNatVal b v + k) % M) / Q)) :=
+    fun k hk => hlim v rfl hv k (mem_range.1 hk)
+  have hsumlim : Tendsto (fun N => ∑ k ∈ range M, f k N) atTop
+      (𝓝 (∑ k ∈ range M, μ ((blockNatVal b v + k) % M) / Q)) :=
+    tendsto_finsetSum _ hlim'
+  have hval : ∑ k ∈ range M, μ ((blockNatVal b v + k) % M) / Q = 1 / Q := by
+    rw [← Finset.sum_div, sum_rotate hM0, hsum]
+  rw [hval] at hsumlim
+  have hQR : (0 : ℝ) < Q := by exact_mod_cast hQ
+  refine ⟨1 / (2 * Q), by positivity, ?_⟩
+  -- eventually the sum of the class densities exceeds `1/(2Q)`
+  have hev : ∀ᶠ N in atTop, 1 / (2 * (Q : ℝ)) < ∑ k ∈ range M, f k N := by
+    have hlt : 1 / (2 * (Q : ℝ)) < 1 / Q := by
+      rw [div_lt_div_iff₀ (by positivity) hQR]; linarith
+    exact Filter.Tendsto.eventually_const_lt hlt hsumlim
+  filter_upwards [hev, eventually_gt_atTop 0] with N hN hN0
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN0
+  -- the classes are disjoint, so their counts add up inside the full count
+  have hcard : ∑ k ∈ range M, (((range N).filter (fun n => n ≡ a k [MOD Q] ∧
+      OccursAt b (primeLambertAtBase b) v n)).card)
+      ≤ ((range N).filter (fun n => OccursAt b (primeLambertAtBase b) v n)).card := by
+    rw [← Finset.card_biUnion]
+    · refine Finset.card_le_card fun n hn => ?_
+      rw [Finset.mem_biUnion] at hn
+      obtain ⟨k, -, hk⟩ := hn
+      rw [mem_filter] at hk ⊢
+      exact ⟨hk.1, hk.2.2⟩
+    · intro k hk k' hk' hne
+      refine Finset.disjoint_left.2 fun n hn hn' => ?_
+      rw [mem_filter] at hn hn'
+      exact hne (hinj k (mem_range.1 hk) k' (mem_range.1 hk')
+        (hn.2.1.symm.trans hn'.2.1))
+  have hcardR : ∑ k ∈ range M, f k N
+      ≤ (((range N).filter (fun n => OccursAt b (primeLambertAtBase b) v n)).card : ℝ) / N := by
+    rw [hf]
+    simp only
+    rw [← Finset.sum_div]
+    gcongr
+    exact_mod_cast hcard
+  have hfin := lt_of_lt_of_le hN hcardR
+  rw [lt_div_iff₀ hNR] at hfin
+  exact hfin.le
+
+/-- **Open.**  The crux after the 2026-09-24 lap.  Everything else on the path to `ConjC3` is
+proved; see the module notes above and `SwingC3Split.lean` for the construction of the classes,
+the CRT steering of the rotation constants, and the covering lemma.  What is missing is only
+that the large-prime tail has a limit law which is the SAME in every steering class. -/
+theorem largeTailLaw_holds (b : ℕ) (hb : 3 ≤ b) : LargeTailLaw b := by
   sorry
 
-theorem omegaCarryRich_holds (b : ℕ) (hb : 3 ≤ b) : OmegaCarryRich b :=
-  omegaCarryRich_of_joint (by omega) (omegaCarryJoint_holds b hb)
-
 theorem conjC3 : ConjC3 := fun b hb =>
-  isRich_of_omegaCarryRich (by omega) (omegaCarryRich_holds b hb)
+  isRich_of_largeTailLaw (by omega) (largeTailLaw_holds b hb)
 
 /-- Rung: `G4_b` is upper-rich. -/
 theorem isRichUpper_primeLambertAtBase (b : ℕ) (hb : 3 ≤ b) :

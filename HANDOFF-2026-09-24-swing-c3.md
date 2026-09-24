@@ -6,7 +6,7 @@ Kickoff: `KICKOFF-2026-09-24-swing-c3.md`.  Target file `src/NormalNumbers/Swing
 
 ## What the crux IS now
 
-`omegaCarryJoint_holds` in `SwingC3.lean`.  Everything else on the path to `ConjC3` is proved.
+`largeTailLaw_holds` in `SwingC3.lean`.  Everything else on the path to `ConjC3` is proved.
 The live attack is the **rotation route**, and its single open input is
 
 > **`OmegaLargeDecouple`** — the limit law of `fract (tailLarge P b n)` along `n ≡ a (mod Q)`
@@ -28,7 +28,8 @@ Status: **open, but sieve-grade, not Selberg–Delange-grade.**  It is a decoupl
 | `fract_add_mem_cylinder_iff`, `exists_shift_mem_cylinder`: rotations cover the circle | `SwingC3Split` | proved |
 | `card_occ_ge_of_effDisj`, `isRich_of_effDisjRate` | `SwingC3` | proved (route refuted, see below) |
 | `occursAt_primeLambertAtBase_iff`, `isRich_of_omegaCarryRich`, `omegaCarryRich_of_joint` | `SwingC3` | proved |
-| `omegaCarryJoint_holds` | `SwingC3` | **sorry** |
+| `sum_rotate`, `isRich_of_largeTailLaw`: `LargeTailLaw b → IsRich b G_b` | `SwingC3` | proved |
+| `largeTailLaw_holds` | `SwingC3` | **sorry** |
 
 ## The argument, end to end
 
@@ -52,7 +53,10 @@ Covering, not partition, is what is needed: a sum of masses dominates the mass o
    `#{n < N : n ≡ a [MOD Q] ∧ fract(tailLarge P b n) ∈ I_{ℓ,w}} / N` converges to `μ ℓ w / Q`
    with `∑_{w < b^ℓ} μ ℓ w = 1`.  Genuine limits (not liminf) are required: with liminf only,
    mass can slosh between classes and `∑_k liminf` need not reach `1`.
-3. Derive `omegaCarryJoint_holds` (or, more directly, `IsRich`) from 1 + 2.
+3. `LargeTailLaw` is now STATED in Lean and `isRich_of_largeTailLaw` is PROVED, so `conjC3`
+   routes through it and the only remaining obligation is `largeTailLaw_holds`.  Producing it
+   means: build the classes with `exists_crt_pattern` (with the `θ` bookkeeping of item 1) and
+   supply the limit law — the genuinely analytic step.
 
 ## Refuted routes (do not re-try)
 
