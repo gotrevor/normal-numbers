@@ -77,3 +77,50 @@ Next actions:
 
 `omega` fails on a goal `2^(k+1) - 2^k = 2^k` when other `2^j`-shaped atoms are in context;
 `rw [pow_succ]; generalize (2:ℕ)^k = z; omega` works.
+
+## Lap 18c — the crux is now a KNOWN, mathlib-adjacent statement (route settled)
+
+### 1. The CRT/Dirichlet escape from the sieve is circular — refuted quantitatively
+One could hope to force `τ(2^a p + c)` small by *congruence conditions on `p`* (making
+`2^a p + c` free of primes `< z`, then Dirichlet).  To get `τ ≤ b^K` from
+`τ ≤ 2^{ω} ≤ 2^{log m/log z}` with `log m ≈ a·log 2 ≈ b^ℓ` one needs
+`log z ≥ b^ℓ log 2/(K log b)`, i.e. `z ≈ m^{1/K}` — and the primorial `∏_{q<z} q ≈ e^z` is then
+*doubly* exponentially larger than `m`, so the Dirichlet prime lands far beyond the budget.
+**A sieve (not CRT) is unavoidable.**  Recorded as refuted.
+
+### 2. The sizes work out, and the required input is Brun–Titchmarsh for APs
+With `a ≈ b^ℓ/2`, `M ≤ 2^{b^{5ℓ+50}}` and `Y = M^3` (Linnik range):
+* `2^a ≪ Y`, so `√(2^a Y) ≈ 2^{a/2} Y^{1/2} ≤ Y^{0.6}` — the hyperbola divisors stay at a
+  level of distribution the sieve covers;
+* the average `Σ_{p≤Y,p≡r(M)} τ(2^a p+e) ≈ π(Y;M,r)·log(2^a Y) ≈ π(Y;M,r)·b^{K/2}`, against the
+  threshold `b^K`.  **Slack of a full factor `b^{K/2}`** — comfortable, and it survives the union
+  bound over the `O(b^{K/2})` undamped shifts.
+* An *integer* count of the divisor sum does NOT suffice: it exceeds `π(Y;M,r)` by `log²`.  The
+  gain of one `log` from `π(Y;q,·) ≪ Y/(φ(q)log(Y/q))` is exactly what is load-bearing.
+
+So `TauMomentPrimes` reduces to **Brun–Titchmarsh in arithmetic progressions**,
+`π(Y;q,a) ≤ 2Y/(φ(q)·log(Y/q))` uniformly for `q ≤ Y^{0.6}`, plus Linnik for non-emptiness.
+
+### 3. Assets found in the dependency tree (NOT previously used by this repo)
+* `Mathlib/NumberTheory/SelbergSieve.lean` — the **general Selberg sieve** is in mathlib.
+* `PrimeNumberTheoremAnd/BrunTitchmarsh.lean` — Brun–Titchmarsh for primes in an **interval**
+  (`primesBetween_le`), built on that Selberg sieve (`primeInterSieve`, `boudingSum_ge`,
+  `siftedSum_le`).  The AP case is the same instantiation with the sifting set
+  `{n ∈ (0,Y] : n ≡ r (M)}` and `multSum` scaled by `1/M`.
+This downgrades the crux from "project-scale, not in mathlib" to **"instantiate an existing
+formalized Selberg sieve"** — bounded, and the single highest-value next lap.
+
+### 4. Landed this sub-lap
+`SwingC2Moment.tau_shift_sum_le` (sorry-free): the hyperbola reduction in the shifted, sparse
+form the crux actually needs —
+`Σ_{n ∈ P} τ(c n + e) ≤ 2 Σ_{d ≤ √(cY+e)} #{n ∈ P : d ∣ c n + e}` for any `P ⊆ [0,Y]`.
+Taking `P` = the primes of a class mod `M` makes each inner count exactly `π(Y; lcm(d,M), ·)`,
+so **this is the last elementary step before the sieve**.
+
+### Next lap, precisely
+1. `primesBetween`-style instantiation of `SelbergSieve` for the progression `n ≡ r (M)` →
+   `brunTitchmarshAP : π(Y;q,a) ≤ C·Y/(φ(q)·log(Y/q))`.  Copy `primeInterSieve`.
+2. Assemble: `tau_shift_sum_le` + (1) ⇒ the single-shift moment; union-bound over shifts
+   (thresholds `b^K(k+1)`, only `O(b^{K/2})` undamped) ⇒ `TauMomentPrimes`.
+3. Linnik lower bound at `Y = M^3` for non-emptiness (mathlib has Dirichlet but not Linnik;
+   a named leaf).

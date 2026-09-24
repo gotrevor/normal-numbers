@@ -227,4 +227,48 @@ theorem tau_sum_AP_le_log (M r X : ℕ) (hM : 0 < M) (hr : Nat.Coprime r M) :
       ≤ (X / M) * (Nat.log 2 (Nat.sqrt X) + 2) := sum_div_le_log _ _
   omega
 
+/-! ### The shifted, sparse hyperbola reduction
+
+`tau_sum_AP_le` above is the special case `c = 1, e = 0, P = ` the whole progression.  For
+`SwingC2.TauMomentPrimes` the argument of `τ` is `c·p + e` with `c = 2^a` and `p` running over
+the PRIMES of a progression, so the sum is over a sparse set and the shift is nonzero.  The
+hyperbola step survives verbatim and is proved here for an arbitrary index set `P`; the sieve
+enters afterwards, and only as a bound on the inner counts
+`#{n ∈ P : d ∣ c·n + e}` — which for `P` the primes of a class mod `M` is exactly
+`π(Y; lcm(d,M), ·)`, i.e. Brun–Titchmarsh. -/
+theorem tau_shift_sum_le (c e Y : ℕ) (P : Finset ℕ) (hP : ∀ n ∈ P, n ≤ Y) :
+    ∑ n ∈ P, (c * n + e).divisors.card
+      ≤ 2 * ∑ d ∈ Finset.Icc 1 (Nat.sqrt (c * Y + e)),
+          (P.filter (fun n => d ∣ c * n + e)).card := by
+  classical
+  have step1 : ∀ n ∈ P, (c * n + e).divisors.card
+      ≤ 2 * ((Finset.Icc 1 (Nat.sqrt (c * Y + e))).filter (fun d => d ∣ c * n + e)).card := by
+    intro n hn
+    rcases Nat.eq_zero_or_pos (c * n + e) with h0 | hpos
+    · simp [h0]
+    refine le_trans (card_divisors_le_two_mul_small _ (by omega)) ?_
+    refine Nat.mul_le_mul_left 2 (Finset.card_le_card ?_)
+    intro d hd
+    rw [Finset.mem_filter, Nat.mem_divisors] at hd
+    obtain ⟨⟨hdvd, -⟩, hle⟩ := hd
+    rw [Finset.mem_filter, Finset.mem_Icc]
+    refine ⟨⟨?_, ?_⟩, hdvd⟩
+    · rcases Nat.eq_zero_or_pos d with hd0 | hd0
+      · rw [hd0] at hdvd
+        exact absurd (Nat.eq_zero_of_zero_dvd hdvd) (by omega)
+      · exact hd0
+    · refine le_trans hle (Nat.sqrt_le_sqrt ?_)
+      exact Nat.add_le_add_right (Nat.mul_le_mul_left c (hP n hn)) e
+  have step2 :
+      ∑ n ∈ P, ((Finset.Icc 1 (Nat.sqrt (c * Y + e))).filter (fun d => d ∣ c * n + e)).card
+        = ∑ d ∈ Finset.Icc 1 (Nat.sqrt (c * Y + e)),
+            (P.filter (fun n => d ∣ c * n + e)).card := by
+    simp only [Finset.card_filter]
+    exact Finset.sum_comm
+  calc ∑ n ∈ P, (c * n + e).divisors.card
+      ≤ ∑ n ∈ P, 2 * ((Finset.Icc 1 (Nat.sqrt (c * Y + e))).filter
+          (fun d => d ∣ c * n + e)).card := Finset.sum_le_sum step1
+    _ = 2 * ∑ d ∈ Finset.Icc 1 (Nat.sqrt (c * Y + e)),
+          (P.filter (fun n => d ∣ c * n + e)).card := by rw [← Finset.mul_sum, step2]
+
 end SwingC2Moment
