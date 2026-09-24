@@ -198,4 +198,113 @@ theorem corrQ_le {Q : ℕ} (hQ : Q ≠ 0) (X : ℕ) :
         have := Nat.pow_log_le_self p hX0
         exact_mod_cast this
 
+
+/-- The correction summed over the hyperbola is `O_Q(N)` — the sharp `log` (not `log²`) in
+`corrQ_le` is exactly what makes this fit the chain's budget. -/
+lemma sum_corrQ_le {Q : ℕ} (hQ : Q ≠ 0) (N : ℕ) :
+    ∑ k ∈ Ioc 0 N, corrQ Q (N / k) ≤ (Q.primeFactors.card : ℝ) * N := by
+  have hw : (0:ℝ) ≤ (Q.primeFactors.card : ℝ) := by positivity
+  calc ∑ k ∈ Ioc 0 N, corrQ Q (N / k)
+      ≤ ∑ k ∈ Ioc 0 N, (Q.primeFactors.card : ℝ) * Real.log ((N:ℝ) / k) := by
+        refine Finset.sum_le_sum fun k hk ↦ ?_
+        obtain ⟨hk0, hkN⟩ := mem_Ioc.1 hk
+        have hkR : (0:ℝ) < k := by exact_mod_cast hk0
+        have h1 : 1 ≤ N / k := Nat.one_le_div_iff hk0 |>.2 hkN
+        have hdivR : (1:ℝ) ≤ ((N / k : ℕ) : ℝ) := by exact_mod_cast h1
+        have hle : ((N / k : ℕ) : ℝ) ≤ (N:ℝ) / k := Nat.cast_div_le
+        refine (corrQ_le hQ (N / k)).trans ?_
+        exact mul_le_mul_of_nonneg_left
+          (Real.log_le_log (by linarith) hle) hw
+    _ = (Q.primeFactors.card : ℝ) * ∑ k ∈ Ioc 0 N, Real.log ((N:ℝ) / k) := by
+        rw [Finset.mul_sum]
+    _ ≤ (Q.primeFactors.card : ℝ) * N :=
+        mul_le_mul_of_nonneg_left (sum_log_div_le N) hw
+
+/-- **The principal branch.**  `∑_{n ≤ N, gcd(n,Q)=1} z^{ω_{>P}(n)} = o(N)` for unimodular
+`z ≠ 1`.  This is rung 1 rerun with the coprimality restriction: the chain is the same, the
+only new input is that `ψ(·,χ₀)` differs from `ψ` by `O_Q(log x)`, hence by `O_Q(N)` after
+summing over the hyperbola. -/
+theorem sigmaMeang_chiZero_tendsto_zero {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) (P : ℕ)
+    {Q : ℕ} (hQ : Q ≠ 0) :
+    Tendsto (fun N : ℕ => sigmaMeang (chiZero Q) z P N) atTop (𝓝 0) := by
+  set χ : ℕ → ℂ := chiZero Q with hχdef
+  have hmul : ∀ a b : ℕ, χ (a * b) = χ a * χ b := chiZero_mul Q
+  have hχ : ∀ n, ‖χ n‖ ≤ 1 := norm_chiZero_le Q
+  obtain ⟨C2, hC2⟩ := exists_L2g (χ := χ) (z := z) (P := P) hmul hχ hz
+  obtain ⟨C4, hC4⟩ := exists_L4g (χ := χ) (z := z) (P := P) hχ hz
+  set W : ℝ := (Q.primeFactors.card : ℝ) with hW
+  have hre : z.re < 1 := by
+    by_contra hcon
+    push_neg at hcon
+    have hsq : z.re ^ 2 + z.im ^ 2 = 1 := by
+      have h1 : Complex.normSq z = 1 := by rw [Complex.normSq_eq_norm_sq, hz]; norm_num
+      simpa [Complex.normSq_apply, sq] using h1
+    have hre1 : z.re = 1 := by nlinarith [sq_nonneg z.im]
+    have him : z.im = 0 := by nlinarith
+    exact hz1 (Complex.ext (by simpa using hre1) (by simpa using him))
+  refine recursion_tendsto_zero hz hre (1 + C2 + C4 + W) (fun k => sigmaMeang χ z P k)
+    (fun k => norm_sigmaMeang_le hχ hz k) (fun N hN ↦ ?_)
+  have hN0 : 0 < N := by lia
+  have hNR : (0:ℝ) < N := by exact_mod_cast hN0
+  have hNC : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.2 hN0.ne'
+  set A : ℂ := ∑ n ∈ Ioc 0 N, gfun χ z P n * (Real.log n : ℂ) with hA
+  -- the correction term
+  set E : ℂ := ∑ k ∈ Ioc 0 N, gfun χ z P k * ((corrQ Q (N / k) : ℝ) : ℂ) with hE
+  have hEle : ‖E‖ ≤ W * N := by
+    refine (norm_sum_le _ _).trans ?_
+    refine le_trans (Finset.sum_le_sum fun k _ ↦ ?_) (sum_corrQ_le hQ N)
+    rw [norm_mul, Complex.norm_real, Real.norm_eq_abs,
+      abs_of_nonneg (corrQ_nonneg Q (N / k))]
+    exact mul_le_of_le_one_left (corrQ_nonneg Q (N / k)) (norm_gfun_le hχ hz k)
+  have hpsisplit : ∑ k ∈ Ioc 0 N, gfun χ z P k * psiChar χ (N / k)
+      = (∑ k ∈ Ioc 0 N, gfun χ z P k * (psiN (N / k) : ℂ)) - E := by
+    rw [hE, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun k _ ↦ ?_
+    rw [hχdef, psiChar_chiZero_eq]
+    push_cast
+    ring
+  have key : ‖Sgsum χ z P N * (Real.log N : ℂ) - z * ((N : ℂ) * mSumg χ z P N)‖
+      ≤ (1 + C2 + C4 + W) * N := by
+    have hsplit : Sgsum χ z P N * (Real.log N : ℂ) - z * ((N : ℂ) * mSumg χ z P N)
+        = -(A - Sgsum χ z P N * (Real.log N : ℂ))
+          + (A - z * ∑ d ∈ Ioc 0 N, (Λ d : ℂ) * χ d * Sgsum χ z P (N / d))
+          + z * ((∑ k ∈ Ioc 0 N, gfun χ z P k * (psiN (N / k) : ℂ)) - (N : ℂ) * mSumg χ z P N)
+          - z * E := by
+      rw [sum_Lambda_mul_Sgsum, hpsisplit]; ring
+    rw [hsplit]
+    calc ‖-(A - Sgsum χ z P N * (Real.log N : ℂ))
+            + (A - z * ∑ d ∈ Ioc 0 N, (Λ d : ℂ) * χ d * Sgsum χ z P (N / d))
+            + z * ((∑ k ∈ Ioc 0 N, gfun χ z P k * (psiN (N / k) : ℂ))
+                - (N : ℂ) * mSumg χ z P N) - z * E‖
+        ≤ ‖-(A - Sgsum χ z P N * (Real.log N : ℂ))
+            + (A - z * ∑ d ∈ Ioc 0 N, (Λ d : ℂ) * χ d * Sgsum χ z P (N / d))
+            + z * ((∑ k ∈ Ioc 0 N, gfun χ z P k * (psiN (N / k) : ℂ))
+                - (N : ℂ) * mSumg χ z P N)‖ + ‖z * E‖ := norm_sub_le _ _
+      _ ≤ (‖-(A - Sgsum χ z P N * (Real.log N : ℂ))
+            + (A - z * ∑ d ∈ Ioc 0 N, (Λ d : ℂ) * χ d * Sgsum χ z P (N / d))‖
+          + ‖z * ((∑ k ∈ Ioc 0 N, gfun χ z P k * (psiN (N / k) : ℂ))
+                - (N : ℂ) * mSumg χ z P N)‖) + ‖z * E‖ := by
+            gcongr; exact norm_add_le _ _
+      _ ≤ ((‖-(A - Sgsum χ z P N * (Real.log N : ℂ))‖
+            + ‖A - z * ∑ d ∈ Ioc 0 N, (Λ d : ℂ) * χ d * Sgsum χ z P (N / d)‖)
+          + ‖z * ((∑ k ∈ Ioc 0 N, gfun χ z P k * (psiN (N / k) : ℂ))
+                - (N : ℂ) * mSumg χ z P N)‖) + ‖z * E‖ := by
+            gcongr; exact norm_add_le _ _
+      _ ≤ (((N:ℝ) + C2 * N) + C4 * N) + W * N := by
+            rw [norm_neg, norm_mul, norm_mul, hz, one_mul, one_mul]
+            gcongr
+            · exact norm_sum_gfun_mul_log_sub hχ hz N
+            · exact hC2 N
+            · exact hC4 N
+      _ = (1 + C2 + C4 + W) * N := by ring
+  have hdiv : ((Real.log N : ℂ) - z) * sigmaMeang χ z P N
+      - z * ∑ k ∈ Ico 1 N, sigmaMeang χ z P k / ((k : ℂ) + 1)
+      = (Sgsum χ z P N * (Real.log N : ℂ) - z * ((N : ℂ) * mSumg χ z P N)) / (N : ℂ) := by
+    have hS : sigmaMeang χ z P N * (N:ℂ) = Sgsum χ z P N := by rw [sigmaMeang]; field_simp
+    rw [mSumg_eq]
+    field_simp [sigmaMeang]
+    linear_combination (Real.log N : ℂ) * hS
+  rw [hdiv, norm_div, Complex.norm_natCast, div_le_iff₀ hNR]
+  exact key
+
 end NormalNumbers.DelangeSlot
