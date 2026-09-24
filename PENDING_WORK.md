@@ -9795,3 +9795,46 @@ mod `Q = Π_{r≤P} r`.  Probes, in order:
 2. A second-moment (large sieve) bound on `Σ_{c<Q} ‖progMean B Q R c − fullMean B‖²`, which by
    Cauchy–Schwarz controls `pairDefect`; the frequencies involved are `a/Q` with `Q ≫ N`, which
    is where the obstruction bites — record the exact regime where it fails.
+
+## 2026-09-24 — pd-prove lap 1: prime-range split; crux narrowed to `LargeDecay`
+
+New file `src/NormalNumbers/PairDecoupleSplit.lean` (sorry-free, axioms clean).
+
+**Advance on the crux.**  `PairDecouple b p q t` is no longer the open leaf; `pairDecouple_all`
+is now PROVED from a single new obligation `largeDecay_all` (`PairDecoupleProve.lean`).
+
+* **Range split.**  `pairRemainder_split`: at cuts `P ≤ y`, `pairRemainder b P = midPairTail b P y
+  + pairRemainder b y`, so `B = B_mid · B_top`.
+* **The middle range is unconditional** (kickoff item 1).  `midDefect_le`: with
+  `M = Π_{P<r≤y} r`, `midDefect ≤ 4M/R`.  Pure exact CRT — new reusable lemmas
+  `sum_range_mul_of_periodic`, `norm_fullMean_sub_periodMean_le` (Cesàro vs period mean, `2T/N`),
+  `sum_range_shift_coprime` (a coprime progression sweeps every residue once),
+  `norm_progMean_sub_periodMean_le`.
+* **The split inequality.**  `pairDefect_le`: `pairDefect_P(R) ≤ midDefect_{P,y}(R)
+  + 2·topMass_y(QR)`.  Both cuts free; the tension between them IS leaf (D).
+* **Two leaves with `P` eliminated**, both reductions proved:
+  `pairDecouple_of_topMass` (from `TopMassVanishing`) and
+  `pairDecouple_of_largeDecay` (from `LargeDecay`).
+
+**REFUTED (recorded, not formalized): `TopMassVanishing`.**  For fixed `y`, the number of prime
+factors of `pn+1+j` exceeding `y` is `≍ log log N − log log y → ∞`, each contributing `≍ b^{-1-j}`
+to the remainder; so `t·pairRemainder b y` is spread mod 1 and `topMass_y(N) → 4/π`, not `0`.
+The mass route therefore cannot close leaf (D).  Quantitatively: `midDefect` needs
+`Π_{P<r≤y} r = o(R)`, i.e. `y ≲ log N`, while a small top mass needs `y = N^{1-o(1)}` — the two
+requirements are disjoint.  This is the `OBSTRUCTION-2026-09-24-periodic-approximant.md` gap made
+exact, and it confirms Ren's worry sits in the range `(N^{o(1)}, N^{1-o(1)})`.
+
+**The divergence is the engine, not the obstruction.**  The same computation that kills
+`TopMassVanishing` is precisely why `LargeDecay` should be TRUE: with the small primes removed,
+the model mean over `r > P` is `Π_{r>P}(1 − c/r) = 0`.  Confidence that `PairDecouple` is TRUE:
+**80%** (up from 70% — the split shows the small primes contribute nothing beyond exact CRT, so
+no Hardy–Littlewood/Chowla statement about *joint* forms is needed for them; what remains is a
+single-form equidistribution of a large-prime phase).
+
+**Next attack.**  `largeDecay_all`.  Smallest probe: fix `P`, `c`; show
+`progMean (e(t·pairRemainder b P)) Q R c → 0` by iterating the split at `y` with
+`Π_{P<r≤y} r ≤ R^{1/2}` and getting a *quantitative* decay `exp(−c·Σ_{P<r≤y} 1/r)
+= (log y / log P)^{-c}` from `norm_pairLocalFactor_le`, against a defect at cut `y`.  With
+`y ≍ log R` that is `(log log R)^{-c} → 0` — SLOW but convergent.  The open point is whether the
+cut-`y` defect can be held below it; that is the first genuinely quantitative question of this
+swing, and unlike the mass route it is not obviously out of reach.
