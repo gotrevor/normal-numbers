@@ -1769,6 +1769,119 @@ theorem mean_digitChar_of_hAutoCorr (b : ℕ) (h : HAutoCorr b) (j : ℕ)
   have h1 := (hFactorizes_iff_hAutoCorr b).mpr h j hj hjq 1
   simpa using h1
 
+/-! #### The exact split: a MULTIPLICATIVE function times a telescoping carry boundary term
+
+Mod `b − 1` the digit recursion `d_{n+1} = ω(n+1) + c_{n+1} − b·c_n` reads
+`d_{n+1} ≡ ω(n+1) + c_{n+1} − c_n`, so with
+
+    f_j(m) := ζ_{b−1}^{j·ω(m)}      (unimodular, MULTIPLICATIVE: `omegaChar_mul_of_coprime`)
+    g_j(m) := ζ_{b−1}^{j·c_m}       (the carry character, |g| = 1)
+
+we get `D_j(n) = f_j(n+1)·g_j(n+1)·g_j(n)⁻¹`, and in the `L`-fold product the carry factors
+TELESCOPE, leaving only a boundary term:
+
+    ∏_{i<L} D_j(n+i)  =  (∏_{i<L} f_j(n+1+i)) · g_j(n+L) · g_j(n)⁻¹.
+
+This is the sharpest localisation of the leaf against the literature.  `f_j` is exactly the kind of
+object Elliott's conjecture is about: a modulus-one multiplicative function with `f_j(p) = ζ_{b−1}^j`
+constant and `≠ 1`, i.e. the `ω`-analogue of `λ(n) = (−1)^{Ω(n)}`.  Its ONE-point mean vanishes by
+Delange/Halász, and its shifted correlations `Σ_n ∏_{i<L} f_j(n+1+i)` are precisely the Elliott
+correlations — known to vanish in logarithmic density for `L = 2` (Tao, 2015) and for odd `L`
+(Tao–Teräväinen), but NOT in natural density, which is what `ConjC1` needs.
+
+So the leaf is `Elliott correlations of an explicit multiplicative function` × `a carry boundary
+term`.  Note the two cannot be separated: by `not_hAutoCorr_of_carryNegligible` the `f`-part alone
+would give `0`, while the leaf needs `b^{−L}`, so the boundary term `g_j(n+L)g_j(n)⁻¹` is not a
+harmless factor — it is where the whole answer comes from, and `g` is not independent of `f`
+(`c_n` is a function of `ω(n+1), ω(n+2), …`). -/
+
+/-- `f_j(m) = ζ_{b−1}^{j·ω(m)}`, a unimodular multiplicative function. -/
+noncomputable def omegaChar (b j m : ℕ) : ℂ :=
+  zetaRoot (b - 1) ^ ((j : ℤ) * (omegaNat m : ℤ))
+
+/-- `g_j(m) = ζ_{b−1}^{j·c_m}`, the carry character. -/
+noncomputable def carryChar (b j m : ℕ) : ℂ :=
+  zetaRoot (b - 1) ^ ((j : ℤ) * omegaCarry b m)
+
+lemma norm_omegaChar (b j m : ℕ) : ‖omegaChar b j m‖ = 1 := norm_zetaRoot_zpow _ _
+
+lemma norm_carryChar (b j m : ℕ) : ‖carryChar b j m‖ = 1 := norm_zetaRoot_zpow _ _
+
+lemma omegaChar_ne_zero (b j m : ℕ) : omegaChar b j m ≠ 0 := by
+  rw [omegaChar]; exact zpow_ne_zero _ (zetaRoot_ne_zero _)
+
+lemma carryChar_ne_zero (b j m : ℕ) : carryChar b j m ≠ 0 := by
+  rw [carryChar]; exact zpow_ne_zero _ (zetaRoot_ne_zero _)
+
+/-- **`f_j` is multiplicative**, because `ω` is additive on coprime arguments.  This is what makes
+the leaf an Elliott-type statement rather than a generic correlation statement. -/
+theorem omegaChar_mul_of_coprime (b j m m' : ℕ) (hm : m ≠ 0) (hm' : m' ≠ 0)
+    (h : Nat.Coprime m m') :
+    omegaChar b j (m * m') = omegaChar b j m * omegaChar b j m' := by
+  have hadd : omegaNat (m * m') = omegaNat m + omegaNat m' := by
+    rw [omegaNat, omegaNat, omegaNat, h.primeFactors_mul,
+      Finset.card_union_of_disjoint h.disjoint_primeFactors]
+  rw [omegaChar, omegaChar, omegaChar, hadd]
+  push_cast
+  rw [mul_add, zpow_add₀ (zetaRoot_ne_zero (b - 1))]
+
+/-- **The split.**  `D_j(n) = f_j(n+1)·g_j(n+1)·g_j(n)⁻¹`. -/
+theorem digitChar_eq (b j n : ℕ) :
+    digitChar b j n = omegaChar b j (n + 1) * carryChar b j (n + 1) * (carryChar b j n)⁻¹ := by
+  have hcs : castSum b (n + 1) - castSum b n
+      = (omegaNat (n + 1) : ℤ) + omegaCarry b (n + 1) - omegaCarry b n := by
+    rw [castSum, castSum, Finset.sum_range_succ]
+    ring
+  rw [digitChar, hcs, omegaChar, carryChar, carryChar, ← zpow_neg,
+    ← zpow_add₀ (zetaRoot_ne_zero (b - 1)), ← zpow_add₀ (zetaRoot_ne_zero (b - 1))]
+  congr 1
+  ring
+
+lemma prod_omegaChar (b j L n : ℕ) :
+    (∏ i ∈ range L, omegaChar b j (n + 1 + i))
+      = zetaRoot (b - 1) ^ ((j : ℤ) * ∑ i ∈ range L, (omegaNat (n + 1 + i) : ℤ)) := by
+  induction L with
+  | zero => simp
+  | succ L ih =>
+      rw [Finset.prod_range_succ, ih, omegaChar, ← zpow_add₀ (zetaRoot_ne_zero (b - 1)),
+        Finset.sum_range_succ]
+      congr 1
+      ring
+
+/-- **The carry telescopes.**  The `L`-fold correland is an Elliott correlation of the
+multiplicative `f_j`, times a single carry boundary term. -/
+theorem prod_digitChar_eq_omega_mul_boundary (b j L n : ℕ) :
+    (∏ i ∈ range L, digitChar b j (n + i))
+      = (∏ i ∈ range L, omegaChar b j (n + 1 + i))
+          * carryChar b j (n + L) * (carryChar b j n)⁻¹ := by
+  have hsum : (∑ m ∈ range (n + L + 1), (omegaNat m : ℤ))
+      - (∑ m ∈ range (n + 1), (omegaNat m : ℤ))
+      = ∑ i ∈ range L, (omegaNat (n + 1 + i) : ℤ) := by
+    have hsum0 : (∑ m ∈ range (n + L + 1), (omegaNat m : ℤ))
+        - (∑ m ∈ range (n + 1), (omegaNat m : ℤ))
+        = ∑ m ∈ Finset.Ioc n (n + L), (omegaNat m : ℤ) := by
+      have hIoc : Finset.Ioc n (n + L) = Finset.Ico (n + 1) (n + L + 1) := by
+        ext m; simp only [Finset.mem_Ioc, Finset.mem_Ico]; omega
+      rw [hIoc, Finset.range_eq_Ico, Finset.range_eq_Ico,
+        ← Finset.sum_Ico_consecutive (fun m => (omegaNat m : ℤ))
+          (Nat.zero_le (n + 1)) (by omega : n + 1 ≤ n + L + 1)]
+      ring
+    rw [hsum0, sum_Ioc_omegaNat]
+  rw [prod_digitChar, prod_omegaChar, carryChar, carryChar, ← zpow_neg,
+    ← zpow_add₀ (zetaRoot_ne_zero (b - 1)), ← zpow_add₀ (zetaRoot_ne_zero (b - 1))]
+  congr 1
+  rw [castSum, castSum]
+  linear_combination (j : ℤ) * hsum
+
+/-- The leaf, as an Elliott correlation with a carry boundary term. -/
+theorem corrSum_eq_elliott (b j L N : ℕ) :
+    corrSum b j L N
+      = (∑ n ∈ range N, (∏ i ∈ range L, omegaChar b j (n + 1 + i))
+            * carryChar b j (n + L) * (carryChar b j n)⁻¹) / N := by
+  rw [corrSum_eq_mean_prod]
+  congr 1
+  exact Finset.sum_congr rfl fun n _ => prod_digitChar_eq_omega_mul_boundary b j L n
+
 /-! #### The block spectrum of the mod-`(b−1)` statistic is FULL — no sparse-frequency route
 
 `stateLaw_of_hAutoCorr` expands the `ZMod (b−1)`-statistic in characters of `ZMod (b−1)`.  One might
