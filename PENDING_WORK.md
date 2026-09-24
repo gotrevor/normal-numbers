@@ -9428,3 +9428,39 @@ only for `K ≤ N`.  POINTWISE there is no obstruction at all: `p > n ⇒ n mod 
 beyond `K` is `≤ 2b^{n−K}`.  Hence for `n < N`, truncating at `K = 2N` is free to within `b^{−N}`.
 The real cost of truncation is therefore **not accuracy but period**: the truncated function has
 period `∏_{P<p≤K} p ≈ e^K`, and it is that, not the discarded mass, that must be fought.
+
+## 2026-09-24 lap 6 (swing-c3) — THE CRUX IS AN INCOMPLETE-SUM PROBLEM
+
+`src/NormalNumbers/SwingC3Period.lean`, axiom-clean, green.
+
+* `sum_addChar_mul_periodic_eq_zero` — for `f` of period `M`, `gcd(M,Q)=1`, `0<j<Q`:
+  `∑_{n < M·Q} e(jn/Q)·f(n) = 0`, **exactly**.  (Proof: reindex `n = s + M t`; the inner
+  `∑_{t<Q} e(jMt/Q)` vanishes because `Q ∤ jM`.)
+* `primePeriod P K = ∏_{P<p≤K} p`, `tailTrunc b P K n = ∑_{P<p≤K} b^{n%p}/(b^p−1)`,
+  `tailTrunc_add_period` (exact periodicity), `coprime_primePeriod` (coprime to `Q` whenever
+  every prime factor of `Q` is `≤ P` — the standing setup `Q = ∏_{p≤P} p`).
+* `sum_addChar_tailTrunc_eq_zero` — the two combined: over a full period the crux's sum is `0`.
+
+**Verdict this lap.**  `AddCharTail` has no structural obstruction: over a complete period the
+cancellation is perfect, free and exact.  Combined with lap 5b (truncation at `K = 2N` costs
+`≤ b^{−N}` pointwise), the crux is *precisely*:
+
+> a sum of length `N` of a function whose complete-period cancellation is exact,
+> but whose period `∏_{P<p≤2N} p ≈ e^{2N}` is astronomically longer than `N`.
+
+So the crux is an **incomplete-sum / short-interval** problem, not a cancellation problem.
+That changes what to look for: not a new source of cancellation (Selberg–Delange, Chowla,
+sieve), but a device that lets a short interval see the complete cancellation — large sieve,
+Erdős–Turán, Weyl differencing, or a *multiplicatively structured* truncation `K` with a period
+that `N` can actually reach.
+
+### Next attack (lap 7)
+1. **Two-scale truncation.**  Split `(P, 2N]` at `K₀` with `∏_{P<p≤K₀} p ≤ N`: the low part is
+   genuinely periodic within reach (complete sums available, `K₀ ≈ log N`), and the high part
+   `(K₀, 2N]` is a sum of terms each `≤ b^{−d_p(n)}` which is `> b^{−J}` for only a `J/p`
+   fraction of `n`.  Formalize: `#{n<N : d_p(n) ≤ J} ≤ N J/p + J`, hence
+   `∑_{n<N} (tailLarge − tailTrunc_{K₀})(n) ≤ N·∑_{K₀<p≤2N} 1/((b−1)p)` — the loglog bound, now
+   as a PROVED `src/` lemma rather than a heuristic.  That makes the obstruction machine-checked
+   and gives the exact budget any handle must beat.
+2. The reduction leaf `addCharTail_of_trunc : (∀ K, truncated version) → AddCharTail` via the
+   `2b^{n−K}` bound and `|e(x) − e(y)| ≤ 2π|x−y|`.

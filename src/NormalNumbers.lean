@@ -457,3 +457,4 @@ import NormalNumbers.SwingC3ContGlue
 import NormalNumbers.SwingC3AddChar
 import NormalNumbers.SwingC3Free
 import NormalNumbers.SwingC3Closed
+import NormalNumbers.SwingC3Period
