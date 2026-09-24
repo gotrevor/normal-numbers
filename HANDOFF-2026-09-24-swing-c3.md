@@ -1,5 +1,11 @@
 # HANDOFF 2026-09-24 — swing at C3 (branch `wip/swing-c3`)
 
+**Checkpoint.**  Branch `wip/swing-c3`, HEAD `a1c8c42`, working tree CLEAN, nothing to push
+(host pushes).  `lake build NormalNumbers.SwingC3` green; exactly one `sorry` in `src`,
+`SwingC3.lean:524` (`largeTailLaw_holds`).  The three seeded stub theorems
+(`isRichUpper_of_isRich`, `isRichUpper_primeLambertAtBase`, `conjC3`) are all present with their
+original statements — the first proved outright, the other two proved from the single open leaf.
+
 Kickoff: `KICKOFF-2026-09-24-swing-c3.md`.  Target file `src/NormalNumbers/SwingC3.lean`
 (+ helpers `SwingC3Digits.lean`, `SwingC3Carry.lean`, `SwingC3Split.lean`).
 `lake build NormalNumbers.SwingC3` green throughout; **one** `sorry` in `src`.
