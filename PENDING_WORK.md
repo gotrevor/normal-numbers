@@ -9904,3 +9904,36 @@ level-1 obstruction forbade.
 **Next attack.**  Expand `topDefectL2` into the diagonal + off-diagonal pair sum and name the
 off-diagonal leaf.  That leaf is a shifted pair correlation of the large-prime phase; the
 diagonal contributes exactly `1/S`.
+
+### lap 4 — diagonal + off-diagonal; the crux is now a bilinear correlation
+
+New (sorry-free): `norm_sq_re`, `offDiagCorr`, `meanSq_progMean_le`, `topDefectL2_le`,
+`TopCorrSmall`, `largeDecay_of_topCorr`.
+
+`meanSq_progMean_le`: for `‖W‖ ≤ 1`,
+`mean_{d<M} ‖progMean W M S d‖² ≤ 1/S + offDiagCorr(W,M,S)/(M S²)`, where
+`offDiagCorr = Σ_{s ≠ s'} ‖Σ_{d<M} W(d+sM)·conj W(d+s'M)‖`.  The diagonal is exactly `1/S`.
+
+Chained with lap 3, the C1 swing's ONLY open input is now `TopCorrSmall`
+(`PairDecoupleProve.topCorr_all`, the single remaining sorry): the large-prime phase
+`e(t·pairRemainder_y(c+iQ))` has small correlation with its own shifts by multiples of
+`M = Π_{P<r≤y} r`.
+
+**Why this is the right place to be.**  Every earlier form of the crux was `L¹` and paid a
+triangle-inequality factor (laps 1–3 refuted both `L¹` routes).  `TopCorrSmall` is bilinear:
+* no triangle-inequality loss;
+* `M` is free and may be taken far below the sample size `M·S` (forbidden at level 1);
+* the shape `Σ_n W(n)·conj W(n + shift)` is exactly the hypothesis format of the
+  Daboussi–Kátai / Bourgain–Sarnak–Ziegler criterion, which this development already CITES as a
+  known theorem (`KataiOrthogonality`, `SwingC1Katai.lean`).
+
+**Next attack.**  Two candidates, in order:
+1. Identify `offDiagCorr` for the top range with a `pairLocalFactor`-style Euler product over the
+   primes `> y` at the SHIFT `(s−s')M`: for a prime `r > y` the pair
+   `(pn+…, p(n+hM)+…)` sees two independent residues mod `r` unless `r ∣ hM`, and `r ∤ M` for
+   `r > y`.  So the shifted correlation should factor as `Π_{r>y} (a shifted local factor)`, and
+   the separation bound of `SwingC1Pair.lean` should apply verbatim to it.  **This is the route
+   that could actually CLOSE the swing** — it would make the top range's decay unconditional by
+   the same Mertens engine that proved the model term.
+2. If the shifted local factor fails to be bounded away from `1`, record the failing residue
+   configuration; that is the honest equivalence to an open correlation problem.

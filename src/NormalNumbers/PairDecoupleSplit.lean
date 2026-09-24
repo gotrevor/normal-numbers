@@ -780,6 +780,127 @@ theorem topDefectL2_eq (b P y p q : ℕ) (t : ℝ) (c S : ℕ) (hS : 0 < S) :
   rw [topDefectL2, ← hMdef, hfull]
   exact sum_norm_sub_mean_sq Z M hM
 
+/-! ### Diagonal + off-diagonal: the crux as a shifted correlation
+
+Expanding the mean square of the progression means, the diagonal contributes exactly `1/S` and
+everything else is a sum of **correlations at a shift**,
+`C(s,s') = Σ_{d<M} W(d+sM)·conj W(d+s'M)`.  This is the classical shape: the crux has become a
+bilinear/correlation statement about the large-prime phase, which is the regime where Kátai's
+criterion and Bourgain–Sarnak–Ziegler operate — and there is no triangle-inequality loss. -/
+
+private lemma norm_sq_re (u : ℂ) : ‖u‖ ^ 2 = (u * (starRingEnd ℂ) u).re := by
+  rw [Complex.sq_norm, Complex.mul_conj]; simp
+
+/-- The off-diagonal correlation sum of `W` at scale `M` over `S` blocks. -/
+noncomputable def offDiagCorr (W : ℕ → ℂ) (M S : ℕ) : ℝ :=
+  ∑ s ∈ range S, ∑ s' ∈ range S,
+    if s = s' then 0
+    else ‖∑ d ∈ range M, W (d + s * M) * (starRingEnd ℂ) (W (d + s' * M))‖
+
+lemma offDiagCorr_nonneg (W : ℕ → ℂ) (M S : ℕ) : 0 ≤ offDiagCorr W M S := by
+  rw [offDiagCorr]
+  refine Finset.sum_nonneg fun s _ => Finset.sum_nonneg fun s' _ => ?_
+  by_cases h : s = s' <;> simp [h]
+
+/-- **Diagonal + off-diagonal.**  The mean square of the progression means is `1/S` plus the
+normalised off-diagonal correlation. -/
+theorem meanSq_progMean_le (W : ℕ → ℂ) (M S : ℕ) (hM : 0 < M) (hS : 0 < S)
+    (hW : ∀ n, ‖W n‖ ≤ 1) :
+    (∑ d ∈ range M, ‖progMean W M S d‖ ^ 2) / M
+      ≤ 1 / S + offDiagCorr W M S / ((M : ℝ) * S ^ 2) := by
+  classical
+  have hMR : (0 : ℝ) < M := by exact_mod_cast hM
+  have hSR : (0 : ℝ) < S := by exact_mod_cast hS
+  set U : ℕ → ℂ := fun d => ∑ s ∈ range S, W (d + s * M) with hU
+  set C : ℕ → ℕ → ℂ := fun s s' => ∑ d ∈ range M,
+    W (d + s * M) * (starRingEnd ℂ) (W (d + s' * M)) with hC
+  have hexp : ∀ d, ‖U d‖ ^ 2
+      = ∑ s ∈ range S, ∑ s' ∈ range S, (W (d + s * M) * (starRingEnd ℂ) (W (d + s' * M))).re := by
+    intro d
+    rw [norm_sq_re, hU]
+    simp only [map_sum]
+    rw [Finset.sum_mul_sum, Complex.re_sum]
+    exact Finset.sum_congr rfl fun s _ => Complex.re_sum _ _
+  have hsum : ∑ d ∈ range M, ‖U d‖ ^ 2
+      = ∑ s ∈ range S, ∑ s' ∈ range S, (C s s').re := by
+    rw [Finset.sum_congr rfl (fun d _ => hexp d)]
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun s _ => ?_
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun s' _ => ?_
+    rw [hC, Complex.re_sum]
+  have hCnorm : ∀ s s', ‖C s s'‖ ≤ (M : ℝ) := by
+    intro s s'
+    rw [hC]
+    refine (norm_sum_le _ _).trans ?_
+    calc ∑ d ∈ range M, ‖W (d + s * M) * (starRingEnd ℂ) (W (d + s' * M))‖
+        ≤ ∑ _d ∈ range M, (1 : ℝ) := by
+          refine Finset.sum_le_sum fun d _ => ?_
+          rw [norm_mul, RCLike.norm_conj]
+          nlinarith [hW (d + s * M), hW (d + s' * M), norm_nonneg (W (d + s * M)),
+            norm_nonneg (W (d + s' * M))]
+      _ = M := by simp
+  have hbound : ∀ s ∈ range S, ∀ s' ∈ range S,
+      (C s s').re ≤ (if s = s' then (M : ℝ) else 0)
+        + (if s = s' then 0 else ‖C s s'‖) := by
+    intro s _ s' _
+    by_cases h : s = s'
+    · simp only [if_pos h, add_zero]
+      exact le_trans (Complex.re_le_norm _) (hCnorm s s')
+    · simp only [if_neg h, zero_add]
+      exact Complex.re_le_norm _
+  have hfin : ∑ s ∈ range S, ∑ s' ∈ range S, (C s s').re ≤ (S : ℝ) * M + offDiagCorr W M S := by
+    calc ∑ s ∈ range S, ∑ s' ∈ range S, (C s s').re
+        ≤ ∑ s ∈ range S, ∑ s' ∈ range S,
+            ((if s = s' then (M : ℝ) else 0) + (if s = s' then 0 else ‖C s s'‖)) :=
+          Finset.sum_le_sum fun s hs => Finset.sum_le_sum fun s' hs' => hbound s hs s' hs'
+      _ = (S : ℝ) * M + offDiagCorr W M S := by
+          rw [offDiagCorr]
+          simp only [Finset.sum_add_distrib]
+          have hd : ∑ x ∈ range S, ∑ x' ∈ range S, (if x = x' then (M : ℝ) else 0)
+              = (S : ℝ) * M := by
+            rw [Finset.sum_congr rfl
+              (fun s _ => Finset.sum_ite_eq (range S) s (fun _ => (M : ℝ)))]
+            rw [Finset.sum_congr rfl (fun x hx => if_pos hx)]
+            rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+          rw [hd, hC]
+  have hmain : ∑ d ∈ range M, ‖progMean W M S d‖ ^ 2
+      = (∑ d ∈ range M, ‖U d‖ ^ 2) / (S : ℝ) ^ 2 := by
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun d _ => ?_
+    rw [progMean, norm_div, Complex.norm_natCast, div_pow]
+  rw [hmain, div_div]
+  rw [div_le_iff₀ (by positivity)]
+  have h1 : (1 / (S:ℝ) + offDiagCorr W M S / ((M : ℝ) * S ^ 2)) * ((S:ℝ) ^ 2 * M)
+      = (S : ℝ) * M + offDiagCorr W M S := by field_simp
+  rw [h1, hsum]
+  exact hfin
+
+/-- **The crux as a correlation bound.**  Combining `topDefectL2_eq` with the diagonal split. -/
+theorem topDefectL2_le (b P y p q : ℕ) (t : ℝ) (c S : ℕ) (hS : 0 < S) :
+    topDefectL2 b P y p q t c S
+      ≤ 1 / S + offDiagCorr (topProg b P y p q t c) (midModulus P y) S
+          / ((midModulus P y : ℝ) * S ^ 2) := by
+  have hM : 0 < midModulus P y := midModulus_pos P y
+  have h1 := topDefectL2_eq b P y p q t c S hS
+  have h2 := meanSq_progMean_le (topProg b P y p q t c) (midModulus P y) S hM hS
+    (fun n => le_of_eq (norm_phase _))
+  have h3 : (0:ℝ) ≤ ‖fullMean (topProg b P y p q t c) (midModulus P y * S)‖ ^ 2 := by positivity
+  rw [h1]
+  linarith
+
+/-- **LEAF (C): the off-diagonal correlation.**  At arbitrarily large middle cuts `y`, the
+large-prime phase along a progression has small correlation with its own shifts by multiples of
+`M = Π_{P<r≤y} r`.
+
+This is the final named form of the C1 swing's only open input.  It is a genuinely bilinear
+statement — no triangle-inequality loss, and `M` is a free parameter which may be taken far
+below the sample size `M·S`.  Both features were unavailable at every earlier stage. -/
+def TopCorrSmall (b p q : ℕ) (t : ℝ) : Prop :=
+  ∀ P c : ℕ, ∀ ε > 0, ∀ Y : ℕ, ∃ y ≥ Y, ∀ᶠ S in atTop,
+    offDiagCorr (topProg b P y p q t c) (midModulus P y) S
+      < ε * (midModulus P y : ℝ) * S ^ 2
+
 /-- **`LargeDecay` from the variance.**  The `L²` entry point: it suffices that the top range's
 progression means have small variance about their mean. -/
 theorem largeDecay_of_topDefectL2 (b p q : ℕ) (t : ℝ) (hb : 2 ≤ b) (ht : t ≠ 0)
@@ -794,6 +915,32 @@ theorem largeDecay_of_topDefectL2 (b p q : ℕ) (t : ℝ) (hb : 2 ≤ b) (ht : t
   have h2 : Real.sqrt (topDefectL2 b P y p q t c S) < Real.sqrt (ε ^ 2) :=
     Real.sqrt_lt_sqrt (topDefectL2_nonneg _ _ _ _ _ _ _ _) hS
   rw [Real.sqrt_sq hε.le] at h2
+  linarith
+
+theorem largeDecay_of_topCorr (b p q : ℕ) (t : ℝ) (hb : 2 ≤ b) (ht : t ≠ 0)
+    (hp : p.Prime) (hq : q.Prime) (hpq : p ≠ q) (h : TopCorrSmall b p q t) :
+    LargeDecay b p q t := by
+  refine largeDecay_of_topDefectL2 b p q t hb ht hp hq hpq (fun P c ε hε Y => ?_)
+  obtain ⟨y, hyY, hy⟩ := h P c (ε / 2) (by linarith) Y
+  refine ⟨y, hyY, ?_⟩
+  have hM : 0 < midModulus P y := midModulus_pos P y
+  have hMR : (0:ℝ) < midModulus P y := by exact_mod_cast hM
+  obtain ⟨S₁, hS₁⟩ := exists_nat_gt (2 / ε)
+  filter_upwards [hy, Filter.eventually_gt_atTop S₁, Filter.eventually_gt_atTop 0]
+    with S hS hS1 hSpos
+  have hSR : (0:ℝ) < S := by exact_mod_cast hSpos
+  have hdiag : 1 / (S:ℝ) < ε / 2 := by
+    have : (2:ℝ) / ε < (S:ℝ) := lt_trans hS₁ (by exact_mod_cast hS1)
+    rw [div_lt_iff₀ hSR]
+    rw [div_lt_iff₀ hε] at this
+    linarith
+  have hoff : offDiagCorr (topProg b P y p q t c) (midModulus P y) S
+      / ((midModulus P y : ℝ) * S ^ 2) < ε / 2 := by
+    rw [div_lt_iff₀ (by positivity)]
+    calc offDiagCorr (topProg b P y p q t c) (midModulus P y) S
+        < ε / 2 * (midModulus P y : ℝ) * S ^ 2 := hS
+      _ = ε / 2 * ((midModulus P y : ℝ) * S ^ 2) := by ring
+  have := topDefectL2_le b P y p q t c S hSpos
   linarith
 
 end NormalNumbers.CastingOut
