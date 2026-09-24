@@ -383,6 +383,7 @@ import NormalNumbers.G4WiringRough
 import NormalNumbers.Maze
 import NormalNumbers.Walsh
 import NormalNumbers.AbelianNormal
+import NormalNumbers.AbelianBinaryExample
 import NormalNumbers.WalshBase
 import NormalNumbers.G4WiringSummatory
 import NormalNumbers.G4SummatorySplit
