@@ -450,3 +450,4 @@ import NormalNumbers.OccurrenceCountEquiv
 import NormalNumbers.PrimeModelGradedStatement
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
+import NormalNumbers.SwingC3
