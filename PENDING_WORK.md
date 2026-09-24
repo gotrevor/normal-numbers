@@ -9200,3 +9200,25 @@ abbreviation unwound (`IsNormal`/`IsNormalSequence`/`digitOf`, `subsetLambert`/`
 `HANDOFF-2026-09-23-theoremC-COMPLETE.md`'s "next steps"; the campaign's hygiene is now
 complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`; (3) the two off-campaign designated-open `sorry`s.
+
+## 2026-09-24 — swing at C1-log (branch `wip/swing-c1log`)
+
+`src/NormalNumbers/SwingC1Log.lean` is sorry-free.  What it now contains:
+
+- `digitOf_lambertVal` (SwingC1LogCarry): exact, modulus-free `d_n = w(n+1) + c_{n+1} − b·c_n`.
+- `carry_unbounded`, `carry_correction_unbounded`: the carry correction `ω(n+1) − d_n` is
+  unbounded ⇒ no fixed-depth arithmetic input can determine the digits.
+- `castLawLog_one_iff`: the `L = 1` rung IS log-simple-normality up to merging `0` with `b−1`.
+- `castLawLog_of_castLaw` (via `SwingC1LogAbel`: Toeplitz + Abel summation), `conjC1Log_of_conjC1`,
+  `castLawLog_one_of_H`.
+
+**Crux, restated.**  `ConjC1Log` needs `K`-point logarithmic correlations of `z^ω` with
+`K ≍ log log log X → ∞` and uniformity beating `b^{−K}`.  Published results (Tao 2016 two-point;
+Tao–Teräväinen 2019 odd order) are fixed-`k` and leave even `k ≥ 4` open.  **Verdict: not covered.**
+
+**Next attack.**  The only route that would shorten the gap is to replace `ω` by a bounded
+surrogate: e.g. prove `CastLawLog` for the truncated weight `ω_y(m) = #{p ∣ m : p ≤ y}`… no, still
+unbounded.  The honest next probe is `min(ω(m), M)` for fixed `M`: then the carry IS bounded, the
+digit depends on `≤ K(M)` shifts, and fixed-`K` log-Elliott applies.  Formalize
+`castLawLog_of_boundedWeight` and measure (probe) how far `Σ min(ω,M)/b^m` is from `G4_b` in
+digit statistics — that isolates exactly what the unboundedness of `ω` costs.

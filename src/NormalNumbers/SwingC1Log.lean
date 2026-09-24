@@ -1,4 +1,5 @@
 import NormalNumbers.SwingC1LogCarry
+import NormalNumbers.SwingC1LogAbel
 
 /-!
 # Swing at C1, logarithmic density
@@ -190,17 +191,71 @@ theorem castLawLog_one_of_simplyNormalLog (b : ℕ) (hb : 3 ≤ b) (x : ℝ)
 /-- Natural density implies logarithmic density (partial summation).  Sanity bridge. -/
 theorem castLawLog_of_castLaw (b : ℕ) (x : ℝ) (L : ℕ) (h : CastLaw b x L) :
     CastLawLog b x L := by
-  sorry
+  classical
+  intro r hr
+  set a : ℕ → ℝ := fun n => if windowDigitSum b x n L % (b - 1) = r then (1 : ℝ) else 0 with ha
+  have hnum : ∀ N : ℕ,
+      ∑ n ∈ (range N).filter (fun n => windowDigitSum b x n L % (b - 1) = r), (1 : ℝ) / (n + 1)
+        = ∑ n ∈ range N, a n / (n + 1) := by
+    intro N
+    rw [Finset.sum_filter]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    simp only [ha]
+    split <;> simp
+  have hden : ∀ N : ℕ,
+      ((((range N).filter (fun n => windowDigitSum b x n L % (b - 1) = r)).card : ℝ))
+        = ∑ n ∈ range N, a n := by
+    intro N
+    simp only [ha, Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const,
+      nsmul_eq_mul, mul_one]
+  have h' : Tendsto (fun N => (∑ n ∈ range N, a n) / N) atTop (𝓝 (normalCastLaw b L r)) := by
+    refine (h r hr).congr fun N => ?_
+    rw [castFreq, hden N]
+  have := tendsto_logAvg_of_tendsto_avg a (normalCastLaw b L r) h'
+  refine this.congr fun N => ?_
+  rw [castFreqLog, hnum N]
 
-/-- First rung: single digits (`L = 1`).  By `castLawLog_one_iff` this is log-simple-normality of
-`G4_b` up to the `0 ↔ b−1` merge, so it is NOT a corollary of the published two-point (Tao 2016)
-or odd-order (Tao–Teräväinen 2019) logarithmic Elliott theorems: those control correlations of a
-FIXED number of shifts, whereas by `digitOf_lambertVal` the digit at `n` is
-`ω(n+1) + c_{n+1} − b·c_n` with `c_n = ⌊Σ_k ω(n+k) b^{−k}⌋` depending on `≍ log log n` shifts. -/
-theorem castLawLog_one (b : ℕ) (hb : 3 ≤ b) : CastLawLog b (primeLambertAtBase b) 1 := by
-  sorry
+/-- **The `L = 1` rung, conditionally.**  `H` = log-simple-normality of `G4_b`.  By
+`castLawLog_one_iff` this hypothesis is (bar the single `0 ↔ b−1` degree of freedom) also
+NECESSARY, so it is the honest input, not a convenient over-assumption. -/
+theorem castLawLog_one_of_H (b : ℕ) (hb : 3 ≤ b)
+    (H : SimplyNormalLog b (primeLambertAtBase b)) :
+    CastLawLog b (primeLambertAtBase b) 1 :=
+  castLawLog_one_of_simplyNormalLog b hb _ H
 
-theorem conjC1Log : ConjC1Log := by
-  sorry
+/-- **C1-log, conditionally on the natural-density C1.**  Partial summation only; this is the
+sanity direction (natural density is the harder hypothesis), recorded so the log rung is never
+mistaken for a strengthening. -/
+theorem conjC1Log_of_conjC1 (H : ConjC1) : ConjC1Log :=
+  fun b hb L => castLawLog_of_castLaw b _ L (H b hb L)
+
+/-!
+## Verdict of the swing (2026-09-24)
+
+**Which log-correlations does `L = 1` need?**  By `digitOf_lambertVal` the digit is
+`d_n = ω(n+1) + c_{n+1} − b·c_n` with `c_N = ⌊Σ_{k≥1} ω(N+k) b^{−k}⌋`.  So the residue
+`d_n mod (b−1)` is `ω(n+1) + c_{n+1} − c_n`, and `c_N` is a FLOOR of a `b`-adically weighted
+window of `ω` at `N+1, N+2, …`.  Truncating that window at depth `K` costs
+`Σ_{k>K} ω(N+k) b^{−k}`, whose average over `N ≤ X` is `≍ (log log X)·b^{−K}`.  Hence the depth
+must satisfy `b^{−K} log log X → 0`, i.e. `K ≍ log log log X → ∞`: the needed input is a
+`K`-point log-correlation of `z^ω` (`z` a `b^K`-th root of unity) with `K` GROWING and with an
+error term uniform in `K` beating `b^{−K}`.
+
+**Is that covered by the published logarithmic results?**  No, for two independent reasons.
+1. *Growing `K`.*  Tao (2016, two-point logarithmic Chowla/Elliott) and Tao–Teräväinen (2019,
+   odd-order logarithmic Elliott; structure of logarithmically averaged correlations) are
+   statements at a FIXED number of shifts, with no uniformity as the number of shifts grows.
+   `carry_correction_unbounded` is the machine-checked form of the obstruction: the correction
+   `ω(n+1) − d_n = b·c_n − c_{n+1}` is UNBOUNDED, so no fixed-depth truncation of the carry is
+   admissible and no fixed-`k` correlation theorem can be the input.
+2. *Parity.*  Even at fixed `k`, what is needed is the `k`-point statement for every `k`, and the
+   published odd-order theorem leaves `k` EVEN, `k ≥ 4`, open.
+
+**And `L = 1` is not a small target.**  `castLawLog_one_iff`: the rung is exactly log-simple
+normality of `G4_b` up to merging the digits `0` and `b−1` — `b − 1` of the `b` digit frequencies
+pinned.  So C1-log at its first rung is the simple-normality problem for the prime-Lambert
+constant itself, in logarithmic density.  The swing lands as a REFUTATION of the hope that
+published log-Elliott carries C1: it does not, and the gap is not a technicality.
+-/
 
 end NormalNumbers.CastingOut
