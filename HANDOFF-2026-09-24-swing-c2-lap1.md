@@ -47,3 +47,23 @@ density `≤ Σ_{p∣D} p^{−T}`.  Special case `e ≡ 0`: `τ(Dm) = τ(D)τ(m)
 `τ(D)` on the torus can play the role translation-by-`ω(D)/(b−1)` played in `G4Transport`
 (it is an expanding endomorphism of `ℝ/ℤ`, so the Fourier side changes character: characters are
 permuted, not translated).  That is the route-decisive question.
+
+## Lap 2 addendum (same file, green)
+
+* `tau_le_two_mul_sqrt` : `τ(m) ≤ 2⌊√m⌋` (divisors pair across `√m`).
+* `sqrt_add_le` : `√(N+j) ≤ √N + j`.
+* **`carry_le_sqrt`** : for `b ≥ 3`, `carry b τ N ≤ 2√N + 2`.
+
+Why this is the route-decisive ingredient: it makes the *padding* reduction available.  Prescribe
+a window of length `ℓ + K` whose low `K` digits are `0` and whose top `ℓ` digits are the target;
+if the carry is `< b^K` it can only disturb the low `K` digits, so the top `ℓ` digits survive.
+`carry_le_sqrt` says `K = ⌈log_b(2√N + 3)⌉` suffices — i.e. `K ≍ (1/2)log_b N`, which GROWS with
+`N`.  So the reduction is not to a fixed-length residue prescription but to:
+
+> **Sub-leaf A.**  For every `b ≥ 3`, `ℓ`, and target `t`, there are `n` and `K` with
+> `b^K > 2√(n+ℓ+K) + 2` such that `τ(n+1+j) ≡ ρ_j (mod b^{j+1})` for `j < ℓ+K`, where the `ρ_j`
+> encode "top `ℓ` digits `= t`, next `K` digits `= 0`".
+
+Next lap: state Sub-leaf A in `src/` as a named `Prop` and prove
+`tau_windowPrescribable` **from** it (that reduction is finite arithmetic and should go through);
+`tau_windowPrescribable` then stops being the crux and A becomes it.

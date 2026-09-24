@@ -284,6 +284,125 @@ theorem tau_transport_frozen {D m : ℕ} (hD : D ≠ 0) (hm : m ≠ 0) (e : ℕ 
       rfl
   rw [h1, h2]; ring
 
+
+/-! ### 3b. The carry is small: `τ(m) ≤ 2√m` -/
+
+/-- Divisors pair off across `√m`, so `τ(m) ≤ 2⌊√m⌋`. -/
+theorem tau_le_two_mul_sqrt {m : ℕ} (hm : m ≠ 0) : tau m ≤ 2 * Nat.sqrt m := by
+  classical
+  set S : Finset ℕ := Finset.Icc 1 (Nat.sqrt m) with hS
+  have hcover : m.divisors ⊆ S ∪ S.image (fun d => m / d) := by
+    intro d hd
+    rcases Nat.mem_divisors.mp hd with ⟨hdvd, -⟩
+    have hd0 : d ≠ 0 := by
+      rintro rfl; exact hm (Nat.eq_zero_of_zero_dvd hdvd)
+    by_cases hle : d ≤ Nat.sqrt m
+    · exact Finset.mem_union_left _ (Finset.mem_Icc.mpr ⟨Nat.one_le_iff_ne_zero.mpr hd0, hle⟩)
+    · -- then `m / d ≤ √m` and `d = m / (m / d)`
+      have hq0 : m / d ≠ 0 := by
+        have hdm : d ≤ m := Nat.le_of_dvd (Nat.pos_of_ne_zero hm) hdvd
+        have := Nat.div_pos hdm (Nat.pos_of_ne_zero hd0)
+        omega
+      have hqle : m / d ≤ Nat.sqrt m := by
+        by_contra hc
+        push_neg at hc
+        have h1 : Nat.sqrt m + 1 ≤ d := by omega
+        have h2 : Nat.sqrt m + 1 ≤ m / d := by omega
+        have hmul : d * (m / d) = m := Nat.mul_div_cancel' hdvd
+        have : (Nat.sqrt m + 1) * (Nat.sqrt m + 1) ≤ m := by
+          calc (Nat.sqrt m + 1) * (Nat.sqrt m + 1) ≤ d * (m / d) := Nat.mul_le_mul h1 h2
+            _ = m := hmul
+        have hlt := Nat.lt_succ_sqrt m
+        simp only [Nat.succ_eq_add_one] at hlt
+        omega
+      refine Finset.mem_union_right _ (Finset.mem_image.mpr ⟨m / d, ?_, ?_⟩)
+      · exact Finset.mem_Icc.mpr ⟨Nat.one_le_iff_ne_zero.mpr hq0, hqle⟩
+      · exact Nat.div_div_self hdvd hm
+  calc tau m ≤ (S ∪ S.image (fun d => m / d)).card := Finset.card_le_card hcover
+    _ ≤ S.card + (S.image (fun d => m / d)).card := Finset.card_union_le _ _
+    _ ≤ S.card + S.card := by
+        exact Nat.add_le_add_left Finset.card_image_le _
+    _ = 2 * Nat.sqrt m := by rw [hS, Nat.card_Icc]; omega
+
+
+/-- `√(N+j) ≤ √N + j`. -/
+theorem sqrt_add_le (N j : ℕ) : Nat.sqrt (N + j) ≤ Nat.sqrt N + j := by
+  have hN := Nat.lt_succ_sqrt N
+  have h2 : N + j < (Nat.sqrt N + j + 1) ^ 2 := by nlinarith [Nat.zero_le j]
+  exact Nat.le_of_lt_succ (Nat.sqrt_lt'.mpr h2)
+
+/-- **The carry is `O(√N)`.**  `τ(m) ≤ 2√m` makes the carry into position `N` at most
+`2√N + 2` for every base `b ≥ 3`.  This is what lets a window be padded on the right with `K`
+zero digits that absorb the carry, `K ≈ log_b √N`. -/
+theorem carry_le_sqrt (b : ℕ) (hb : 3 ≤ b) (N : ℕ) :
+    carry b tau N ≤ 2 * (Nat.sqrt N : ℤ) + 2 := by
+  set s : ℕ := Nat.sqrt N with hs
+  set r : ℝ := (b : ℝ)⁻¹ with hr
+  have hb3 : (3 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hrpos : 0 < r := by rw [hr]; positivity
+  have hrlt : r < 1 := by rw [hr]; rw [inv_lt_one_iff₀]; right; linarith
+  have hnorm : ‖r‖ < 1 := by rwa [Real.norm_eq_abs, abs_of_pos hrpos]
+  -- the comparison series
+  have hsum0 : Summable (fun n : ℕ => (n : ℝ) * r ^ n) := by
+    have h := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1 hnorm
+    simpa using h
+  have hshiftsum : Summable (fun k : ℕ => ((k : ℝ) + 1) * r ^ (k + 1)) := by
+    have h := hsum0.comp_injective (add_left_injective 1)
+    refine h.congr fun k => ?_
+    simp [Function.comp]
+  have hval : (∑' n : ℕ, (n : ℝ) * r ^ n) = r / (1 - r) ^ 2 :=
+    tsum_coe_mul_geometric_of_norm_lt_one hnorm
+  have hshift : (∑' k : ℕ, ((k : ℝ) + 1) * r ^ (k + 1)) = r / (1 - r) ^ 2 := by
+    rw [← hval, hsum0.tsum_eq_zero_add]
+    simp
+  -- the bound on the comparison sum
+  have hcmp : r / (1 - r) ^ 2 ≤ 3 / 4 := by
+    have h1 : (1 : ℝ) - r = 1 - (b : ℝ)⁻¹ := by rw [hr]
+    have hbpos : (0 : ℝ) < (b : ℝ) := by linarith
+    have hone : (2 : ℝ) / 3 ≤ 1 - r := by
+      rw [hr]
+      have : (b : ℝ)⁻¹ ≤ 1 / 3 := by
+        rw [inv_le_comm₀ hbpos (by norm_num)]; linarith
+      linarith
+    have hrle : r ≤ 1 / 3 := by
+      rw [hr, inv_le_comm₀ hbpos (by norm_num)]; linarith
+    have hsq : (2 / 3 : ℝ) ^ 2 ≤ (1 - r) ^ 2 := by nlinarith
+    rw [div_le_iff₀ (by nlinarith)]
+    nlinarith
+  -- termwise domination
+  set T : ℝ := ∑' k : ℕ, (tau (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1) with hT
+  have hdom : ∀ k : ℕ, (tau (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)
+      ≤ (2 * (s : ℝ) + 2) * (((k : ℝ) + 1) * r ^ (k + 1)) := by
+    intro k
+    have h1 : tau (N + 1 + k) ≤ 2 * (s + (1 + k)) := by
+      refine le_trans (tau_le_two_mul_sqrt (by omega)) ?_
+      have h := sqrt_add_le N (1 + k)
+      rw [show N + (1 + k) = N + 1 + k from by omega] at h
+      omega
+    have h2 : (tau (N + 1 + k) : ℝ) ≤ 2 * ((s : ℝ) + (1 + k)) := by exact_mod_cast h1
+    have h3 : 2 * ((s : ℝ) + (1 + k)) ≤ (2 * (s : ℝ) + 2) * ((k : ℝ) + 1) := by
+      have : (0 : ℝ) ≤ (s : ℝ) * k := by positivity
+      nlinarith [Nat.cast_nonneg (α := ℝ) k, Nat.cast_nonneg (α := ℝ) s]
+    have hpow : (0 : ℝ) < (b : ℝ) ^ (k + 1) := by positivity
+    have hrp : r ^ (k + 1) = ((b : ℝ) ^ (k + 1))⁻¹ := by rw [hr, inv_pow]
+    rw [div_le_iff₀ hpow, hrp]
+    field_simp
+    nlinarith [h2, h3]
+  have hsummableT : Summable (fun k : ℕ => (tau (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)) := by
+    exact Summable.of_nonneg_of_le (fun k => by positivity) hdom (hshiftsum.mul_left _)
+  have hTle : T ≤ 2 * (s : ℝ) + 2 := by
+    have h := hsummableT.tsum_le_tsum hdom (hshiftsum.mul_left (2 * (s : ℝ) + 2))
+    rw [hT]
+    refine h.trans ?_
+    rw [tsum_mul_left, hshift]
+    nlinarith [hcmp, Nat.cast_nonneg (α := ℝ) s]
+  have : carry b tau N ≤ ⌊(2 * (s : ℝ) + 2)⌋ := by
+    unfold carry
+    exact Int.floor_le_floor hTle
+  refine this.trans ?_
+  have : (2 * (s : ℝ) + 2) = ((2 * (s : ℤ) + 2 : ℤ) : ℝ) := by push_cast; ring
+  rw [this, Int.floor_intCast]
+
 /-! ### 4. The crux leaf -/
 
 /-- **THE CRUX.**  For `b ≥ 3`, the divisor-count windows realise every residue mod `b^ℓ`:
