@@ -268,15 +268,173 @@ theorem conjC1_iff_hState : ConjC1 ↔ HState := by
 
 theorem conjC1_of_hState : HState → ConjC1 := conjC1_iff_hState.mpr
 
-/-- **THE OPEN LEAF.**  After `conjC1_iff_hState` this is all of C1: no digits, no floors of
-`bᴺ·x`, no real numbers except the carry sequence `c_N = ⌊Σ_{k≥1} ω(N+k) b^{−k}⌋`, which
-`omegaCarry_rec` shows is generated from `ω` by ordinary carrying.
+/-! ### The finite count: `normalCastLaw` is the residue count in `[0, b^L)` -/
 
-Open.  Known to be false-in-general for arbitrary weights (see `not_castUniform_of_isNormal`
-for the shape of the target law), and expected to need joint equidistribution of the `ω` values
-in short windows — an Elliott-type input. -/
-theorem hState : HState := by
+lemma filter_mod_range_mul (q m r : ℕ) (hq : 0 < q) (hr : r < q) :
+    (range (q * m)).filter (fun v => v % q = r) = (range m).image (fun a => q * a + r) := by
+  ext v
+  simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_image]
+  constructor
+  · rintro ⟨hv, hmod⟩
+    refine ⟨v / q, ?_, ?_⟩
+    · exact Nat.div_lt_of_lt_mul (by omega)
+    · have hd := Nat.div_add_mod v q
+      omega
+  · rintro ⟨a, ha, rfl⟩
+    refine ⟨?_, by simp [Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hr]⟩
+    have : q * a + q ≤ q * m := by
+      have : a + 1 ≤ m := ha
+      calc q * a + q = q * (a + 1) := by ring
+        _ ≤ q * m := Nat.mul_le_mul_left q this
+    omega
+
+lemma card_filter_mod_range_mul (q m r : ℕ) (hq : 0 < q) (hr : r < q) :
+    ((range (q * m)).filter (fun v => v % q = r)).card = m := by
+  rw [filter_mod_range_mul q m r hq hr, Finset.card_image_of_injective _ (by
+    intro a₁ a₂ h; simp only at h
+    exact Nat.eq_of_mul_eq_mul_left hq (by omega)), Finset.card_range]
+
+/-- `#{v < q·m + 1 : v ≡ r mod q} = m + [r = 0]`. -/
+lemma card_filter_mod_range_mul_succ (q m r : ℕ) (hq : 0 < q) (hr : r < q) :
+    ((range (q * m + 1)).filter (fun v => v % q = r)).card = m + (if r = 0 then 1 else 0) := by
+  classical
+  rw [Finset.range_add_one, Finset.filter_insert]
+  by_cases h : q * m % q = r
+  · have hr0 : r = 0 := by
+      rw [Nat.mul_mod_right] at h; omega
+    rw [if_pos h, Finset.card_insert_of_notMem (by simp), card_filter_mod_range_mul q m r hq hr,
+      if_pos hr0]
+  · have hr0 : r ≠ 0 := by
+      intro h0; exact h (by rw [Nat.mul_mod_right, h0])
+    rw [if_neg h, card_filter_mod_range_mul q m r hq hr, if_neg hr0]
+    omega
+
+/-- **`normalCastLaw` is a residue count.**  The law of the digit sum of `L` iid uniform base-`b`
+digits mod `b−1` is just the proportion of `v ∈ [0, b^L)` with `v ≡ r (mod b−1)` — casting out
+nines turns the word count into an interval count. -/
+theorem normalCastLaw_eq_residue_count (b L r : ℕ) (hb : 3 ≤ b) (hr : r < b - 1) :
+    normalCastLaw b L r
+      = ((((range (b ^ L)).filter (fun v => v % (b - 1) = r)).card : ℝ)) / (b : ℝ) ^ L := by
+  classical
+  obtain ⟨q, rfl⟩ : ∃ q, b = q + 1 := ⟨b - 1, by omega⟩
+  have hq : 0 < q := by omega
+  have hqr : q + 1 - 1 = q := by omega
+  rw [hqr] at hr ⊢
+  -- `q ∣ (q+1)^L − 1`
+  obtain ⟨m, hm⟩ : ∃ m, (q + 1) ^ L = q * m + 1 := by
+    induction L with
+    | zero => exact ⟨0, by simp⟩
+    | succ L ih =>
+        obtain ⟨m, hm⟩ := ih
+        exact ⟨q * m + m + 1, by rw [pow_succ, hm]; ring⟩
+  rw [hm, card_filter_mod_range_mul_succ q m r hq hr]
+  rw [normalCastLaw_closed (q + 1) L r hb hr]
+  have hqR : (0 : ℝ) < q := by exact_mod_cast hq
+  have hpow : ((q : ℝ) + 1) ^ L = q * m + 1 := by
+    have := congrArg (fun n : ℕ => (n : ℝ)) hm
+    push_cast at this
+    linarith
+  have hpos : (0 : ℝ) < ((q : ℝ) + 1) ^ L := by positivity
+  push_cast
+  rw [hpow]
+  by_cases h : r = 0 <;> simp [h] <;> field_simp <;> ring
+
+/-! ### The window residue and the equidistribution hypothesis -/
+
+/-- The window word of `G4_b` at `n`, as a natural number in `[0, b^L)`. -/
+noncomputable def windowResidue (b L n : ℕ) : ℕ := (omegaWindowVal b L n % (b : ℤ) ^ L).toNat
+
+lemma windowResidue_lt (b : ℕ) (hb : 2 ≤ b) (L n : ℕ) : windowResidue b L n < b ^ L := by
+  have hp : (0 : ℤ) < (b : ℤ) ^ L := by positivity
+  have h := Int.emod_lt_of_pos (omegaWindowVal b L n) hp
+  have h0 := Int.emod_nonneg (omegaWindowVal b L n) (ne_of_gt hp)
+  have : ((windowResidue b L n : ℕ) : ℤ) = omegaWindowVal b L n % (b : ℤ) ^ L :=
+    Int.toNat_of_nonneg h0
+  have hlt : ((windowResidue b L n : ℕ) : ℤ) < ((b ^ L : ℕ) : ℤ) := by push_cast; omega
+  exact_mod_cast hlt
+
+lemma castState_eq_windowResidue (b : ℕ) (hb : 2 ≤ b) (L n : ℕ) :
+    castState b L n = ((windowResidue b L n : ℕ) : ZMod (b - 1)) := by
+  have hp : (0 : ℤ) < (b : ℤ) ^ L := by positivity
+  have h0 := Int.emod_nonneg (omegaWindowVal b L n) (ne_of_gt hp)
+  have he : ((omegaWindowVal b L n % (b : ℤ) ^ L).toNat : ℤ)
+      = omegaWindowVal b L n % (b : ℤ) ^ L := Int.toNat_of_nonneg h0
+  rw [castState_eq_windowVal_emod b hb L n]
+  conv_lhs => rw [← he]
+  rw [windowResidue]
+  norm_cast
+
+/-- **H (equidistribution of the window word).**  The `ω`-side window value
+`Σ_{i<L} ω(n+1+i) b^{L-1-i} + c_{n+L}` is equidistributed modulo `b^L`. -/
+def HWindow (b L : ℕ) : Prop :=
+  ∀ v < b ^ L, Tendsto
+    (fun N => (((range N).filter (fun n => windowResidue b L n = v)).card : ℝ) / N)
+    atTop (𝓝 (((b : ℝ) ^ L)⁻¹))
+
+/-- **The model lemma.**  Equidistribution of the window word mod `b^L` gives C1 at length `L`,
+with no error term: casting out `b−1` turns the residue count into `normalCastLaw`. -/
+theorem stateLaw_of_hWindow (b : ℕ) (hb : 3 ≤ b) (L : ℕ) (h : HWindow b L) : StateLaw b L := by
+  classical
+  intro r hr
+  set t : Finset ℕ := (range (b ^ L)).filter (fun v => v % (b - 1) = r) with ht
+  have hfib : ∀ N : ℕ,
+      ((range N).filter (fun n => castState b L n = ((r : ℕ) : ZMod (b - 1)))).card
+        = ∑ v ∈ t, ((range N).filter (fun n => windowResidue b L n = v)).card := by
+    intro N
+    have hset : (range N).filter (fun n => castState b L n = ((r : ℕ) : ZMod (b - 1)))
+        = (range N).filter (fun n => windowResidue b L n % (b - 1) = r) := by
+      refine Finset.filter_congr fun n _ => ?_
+      rw [castState_eq_windowResidue b (by omega) L n, ZMod.natCast_eq_natCast_iff',
+        Nat.mod_eq_of_lt hr]
+    rw [hset, Finset.card_eq_sum_card_fiberwise (f := fun n => windowResidue b L n) (t := t) ?_]
+    · refine Finset.sum_congr rfl fun v hv => ?_
+      congr 1
+      ext n
+      simp only [Finset.mem_filter, Finset.mem_range]
+      have hvt := (Finset.mem_filter.mp (ht ▸ hv)).2
+      constructor
+      · rintro ⟨⟨hn, _⟩, hw⟩; exact ⟨hn, hw⟩
+      · rintro ⟨hn, hw⟩; exact ⟨⟨hn, by rw [hw]; exact hvt⟩, hw⟩
+    · intro n hn
+      refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (windowResidue_lt b (by omega) L n), ?_⟩
+      exact (Finset.mem_filter.mp hn).2
+  have hsum : ∀ N : ℕ, stateFreq b L ((r : ℕ) : ZMod (b - 1)) N
+      = ∑ v ∈ t, (((range N).filter (fun n => windowResidue b L n = v)).card : ℝ) / N := by
+    intro N
+    rw [stateFreq, hfib N]
+    push_cast
+    rw [Finset.sum_div]
+  have hlim : Tendsto (fun N => ∑ v ∈ t,
+      (((range N).filter (fun n => windowResidue b L n = v)).card : ℝ) / N) atTop
+      (𝓝 (∑ _v ∈ t, ((b : ℝ) ^ L)⁻¹)) :=
+    tendsto_finsetSum _ fun v hv => h v (Finset.mem_range.mp (Finset.mem_filter.mp (ht ▸ hv)).1)
+  have hfun : (stateFreq b L ((r : ℕ) : ZMod (b - 1)))
+      = fun N => ∑ v ∈ t, (((range N).filter (fun n => windowResidue b L n = v)).card : ℝ) / N :=
+    funext hsum
+  have hval : normalCastLaw b L r = ∑ _v ∈ t, ((b : ℝ) ^ L)⁻¹ := by
+    rw [normalCastLaw_eq_residue_count b L r hb hr, ← ht, Finset.sum_const, nsmul_eq_mul]
+    ring
+  rw [hfun, hval]
+  exact hlim
+
+theorem hState_of_hWindow (h : ∀ b, 3 ≤ b → ∀ L, HWindow b L) : HState :=
+  fun b hb L => stateLaw_of_hWindow b hb L (h b hb L)
+
+/-- **THE OPEN LEAF.**  All of C1, with every digit, floor and real number eliminated:
+
+  `Σ_{i<L} ω(n+1+i)·b^{L-1-i} + c_{n+L}`  is equidistributed mod `b^L`,
+
+where `c_N = ⌊Σ_{k≥1} ω(N+k) b^{−k}⌋`.  The conditioning is BOUNDED (`omegaCarry_eq_windowVal_div`
+shows the unbounded part of the carry is the quotient `b^L·c_n`, which dies mod `b−1`), so this
+needs no growing truncation depth.
+
+Since `ω(n+L)` enters with coefficient `b^0 = 1` and `c_{n+L}` depends only on
+`ω(n+L+1), ω(n+L+2), …`, it suffices that `ω(N) mod b^L` be equidistributed and asymptotically
+independent of the `ω` values at other arguments — a Delange/Elliott-type input.  Open. -/
+theorem hWindowAll : ∀ b, 3 ≤ b → ∀ L, HWindow b L := by
   sorry
+
+theorem hState : HState := hState_of_hWindow hWindowAll
 
 theorem conjC1 : ConjC1 := conjC1_of_hState hState
 
