@@ -2,7 +2,7 @@
 
 **ACTIVE (branch `wip/twopoint-avg`): the C1 casting-out swing.  `ConjC1` now follows from
 Delange's theorem plus the single node `PairDecorr` — the cited Kátai/BSZ hypothesis is GONE.**
-· **Build**: 🟢 green (9282 jobs) · **Updated**: lap 24 · 2026-09-24 · HEAD after `dfaa5c7`
+· **Build**: 🟢 green (9283 jobs) · **Updated**: lap 25 · 2026-09-24 · HEAD after `dfaa5c7`
 · On `master`/Pair A: Theorem C′ (`isNormal_subsetLambert_of_sqrtFreshMassZero`) PROVED and
   trust-triple, 2026-09-23.
 
@@ -32,6 +32,12 @@ route in between.
 
 ## What's happened (C1 / twopoint campaign, newest first)
 
+- **2026-09-24 (lap 25) — THE KÁTAI-FREE CHAIN, END TO END.**  `TwoPointKataiFree.lean`:
+  `conjC1_of_delange_decouple`, `…_largeDecay`, `…_shiftCorr`, **`conjC1_of_delange_multiElliott`**.
+  Every headline of the swing loses its cited `KataiOrthogonality`.  **`ConjC1` now rests on exactly
+  two inputs**: `DelangeMean` (🟡 proven) and `MultiElliott` (🔴 open, and *equivalent* to the leaf).
+  Two escape hatches closed: `WeightDecouple` is the whole crux, not an easier piece; and the
+  elementary small/large-prime split cannot be tuned (leaf (D)'s tension re-derived).
 - **2026-09-24 (lap 24, review lap) — THE DIAGONAL CORRECTION.**  `TwoPointGramDiagonal.lean`:
   `exists_slow_cutoff` (diagonalisation, no uniformity in `w` needed),
   `twoPointPairGramSmall_of_fixedPair`, `truncSum_div_tendsto_of_twoPointWeighted`, and three
@@ -54,6 +60,7 @@ route in between.
 |---|---|---|---|
 | `conjC1_of_delange_pairDecorr` | C1 is conjectural (Fable C1) | `[propext, Classical.choice, Quot.sound]` | **0** — hypotheses only: `DelangeMean` (🟡 proven, Selberg–Delange, project-scale) and `PairDecorr` (🔴 open: natural-density two-point Elliott for `ζ^ω`) |
 | `conjC1_of_delange_twoPointGram` | as above | trust triple | 0 — `DelangeMean` 🟡 + the growing-`w` leaf 🔴 |
+| `conjC1_of_delange_multiElliott` | C1 is conjectural | trust triple | 0 — `DelangeMean` 🟡 + `MultiElliott` 🔴 (open, *equivalent* to the leaf).  **The sharpest form: two inputs, nothing else cited.** |
 | `katai_mean_sq` | Kátai 1986 / BSZ 2013 | trust triple | **0 — DISCHARGED** (was the cited `KataiOrthogonality`) |
 | `twoPointWeightedAvg_all` (`TwoPointBet.lean`) | the bet's ratified target | `sorryAx` | open `sorry`, disclosed; 🔴 reduces to fixed-pair Elliott |
 

@@ -23,6 +23,36 @@ fixed-pair `o(1)` the diagonal route consumes.  Those files stay in `src/` (they
 the pricing is real), but they are **off-path** unless a route through them yields a fixed-pair
 statement.
 
+### Lap 25 addendum — the Kátai-free chain, end to end
+
+`src/NormalNumbers/TwoPointKataiFree.lean` (trust-triple) pushes `conjC1_of_delange_pairDecorr`
+down the repo's existing proof direction, so EVERY headline of the C1 swing loses its
+`KataiOrthogonality` hypothesis:
+
+| new | supersedes | remaining hypotheses |
+|---|---|---|
+| `conjC1_of_delange_decouple` | `conjC1_of_delange_katai_decouple` | Delange + `PairDecouple` (leaf D) |
+| `conjC1_of_delange_largeDecay` | — | Delange + `LargeDecay` |
+| `conjC1_of_delange_shiftCorr` | — | Delange + `ShiftCorrSmall` |
+| `conjC1_of_delange_multiElliott` | `conjC1_of_delange_katai_multiElliott` | Delange + `MultiElliott` |
+
+**`ConjC1` now rests on exactly two inputs**: `DelangeMean` (🟡 proven) and `MultiElliott`
+(🔴 open, and *equivalent* to the leaf by `shiftCorrSmall_iff_multiElliott`).  Nothing else is
+cited.  The two routes bracket the same crux: `MultiElliott` (`4K` forms, unweighted) and
+`TwoPointWeighted` (2 forms, weighted, `pairDecorr_iff_twoPointWeighted`) are both equivalent to it.
+
+**Refuted this lap as an escape hatch:** `WeightDecouple` is NOT an easier sub-problem.  Given
+`TwoPointElliott`, `E[X]·E[Y] → 0` automatically, so `WeightDecouple ⟺ TwoPointWeighted` — the
+whole crux (`weightDecouple_of_twoPointWeighted` + `twoPointWeighted_of_split` already witness
+both directions).  Do not spend a lap hoping the decoupling is cheap.
+
+**Refuted this lap as an escape hatch (2):** the elementary small-prime/large-prime split cannot be
+tuned.  For `z = R^δ` the large part satisfies `ω_{>z}(m) ≤ 1/δ` (bounded, good) but the periodic
+modulus `∏_{ℓ≤z} ℓ ≈ e^z` dwarfs `R`, so the period mean is not the density mean; for `z ≈ θ log R`
+the modulus is `R^{O(θ)}` (good) but `ω_{>z}(m) ≈ log R/log log R` (unbounded).  This is exactly the
+repo's leaf (D) tension, re-derived independently; `periodMean_pair_tendsto_zero`
+(`SwingC1Pair.lean`, sorry-free) is the periodic side and it is already unconditional.
+
 ### Open items, highest value first
 
 1. **THE CRUX — the fixed-pair correlation.**  `PairDecorr b t` for ONE pair of distinct primes:
