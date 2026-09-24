@@ -9200,3 +9200,24 @@ abbreviation unwound (`IsNormal`/`IsNormalSequence`/`digitOf`, `subsetLambert`/`
 `HANDOFF-2026-09-23-theoremC-COMPLETE.md`'s "next steps"; the campaign's hygiene is now
 complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`; (3) the two off-campaign designated-open `sorry`s.
+
+## swing-c1 (2026-09-25, laps 14–23) — the C1 crux
+
+See `HANDOFF-2026-09-25-swing-c1-laps14-23.md`.  `src/NormalNumbers/SwingC1.lean` has exactly two
+sorries, both named leaves of the open headline `conjC1 : ConjC1`:
+
+* **`hAutoCorrAll`** — THE leaf.  `ConjC1` is now EXACTLY equivalent to it (`conjC1_iff_hAutoCorr`),
+  and to four further forms (`HFloorCorr`, `HOrbit`, `HFactorizes`, `HState`), all proved both ways.
+  In its literature-shaped form (`conjC1_iff_hFactorizes`) it says the unimodular digit character
+  `D_j(n) = ζ_{b−1}^{j d_{n+1}}` has factorizing multiple correlations,
+  `mean ∏_{i<L} D_j(n+i) → (1/b)^L`.  Elliott/Chowla-type: `L=1` is Delange, `L ≥ 2` is open.
+  **Next attack:** bound the total variation of the twist `e(−j(t_{n+L}−t_n)/(b−1))` (a function of
+  `t_n` alone) against `WindowDecay`, noting `sum_zetaRoot_mixed_ne_zero` caps what that can give.
+* **`hDepthAll`** — the SUPERSEDED stronger route (modulus `b^{κ n}`, implies block normality).
+  Kept on the record.  Do not attack, do not delete.
+
+Refuted this session, do not redo: naive carry-independence
+(`not_hAutoCorr_of_carryNegligible`), periodic CRT approximants
+(`OBSTRUCTION-2026-09-24-periodic-approximant.md`), sparse block-frequency reduction
+(`sum_zetaRoot_mixed_ne_zero`).  Numerics cannot test the leaf at feasible `N`
+(`probes/swingc1_autocorr.py`; the carry is identically zero for `b ≥ 8` below the `b`-th primorial).

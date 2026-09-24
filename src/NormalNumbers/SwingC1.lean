@@ -1288,6 +1288,60 @@ theorem corrSum_eq_sum_stateFreq (b : ℕ) (hb : 3 ≤ b) (j L N : ℕ) :
   rw [nsmul_eq_mul]
   ring
 
+/-- **The model's Fourier transform.**  `normalCastLaw b L ·`, transformed at a nontrivial
+character of `ZMod (b−1)`, is exactly `b^{−L}`.  This is the identity that FORCES the leaf's
+constant, and it is proved from `normalCastLaw_closed` alone — a purely finite, combinatorial
+statement about `L` independent uniform base-`b` digits.  `mean_zetaRoot_block` derives the same
+constant a second, independent way, as the mean value of the test function over `[0,1)`. -/
+theorem fourier_normalCastLaw (b : ℕ) (hb : 3 ≤ b) (L j : ℕ) (hj : 0 < j) (hjq : j < b - 1) :
+    (∑ r ∈ range (b - 1),
+        ((normalCastLaw b L r : ℝ) : ℂ) * zetaRoot (b - 1) ^ ((j : ℤ) * (r : ℤ)))
+      = ((b : ℂ))⁻¹ ^ L := by
+  classical
+  set q := b - 1 with hq
+  have hqpos : 0 < q := by omega
+  have hqC : ((q : ℂ)) ≠ 0 := by exact_mod_cast (by omega : q ≠ 0)
+  have hbC : ((b : ℂ)) ≠ 0 := by exact_mod_cast (by omega : b ≠ 0)
+  have hqC' : ((b : ℂ)) - 1 = (q : ℂ) := by
+    have : ((q : ℕ) : ℂ) = ((b - 1 : ℕ) : ℂ) := by rw [hq]
+    rw [this, Nat.cast_sub (by omega : 1 ≤ b)]; norm_num
+  have hgeom : (∑ r ∈ range q, zetaRoot q ^ ((j : ℤ) * (r : ℤ))) = 0 := by
+    have hswap : (∑ r ∈ range q, zetaRoot q ^ ((j : ℤ) * (r : ℤ)))
+        = ∑ r ∈ range q, zetaRoot q ^ ((r : ℤ) * (j : ℤ)) :=
+      Finset.sum_congr rfl fun r _ => by rw [mul_comm]
+    rw [hswap, sum_zetaRoot_zpow q hqpos, if_neg]
+    intro hdvd
+    have := Int.le_of_dvd (by exact_mod_cast hj) hdvd
+    omega
+  have hcl : ∀ r ∈ range q, ((normalCastLaw b L r : ℝ) : ℂ)
+      = (q : ℂ)⁻¹ + ((b : ℂ) ^ L)⁻¹ * ((if r = 0 then (q : ℂ) else 0) - 1) * (q : ℂ)⁻¹ := by
+    intro r hr
+    have hrq : r < b - 1 := by rw [← hq]; exact Finset.mem_range.mp hr
+    rw [normalCastLaw_closed b L r hb hrq]
+    push_cast
+    rw [← hqC']
+    rcases eq_or_ne r 0 with rfl | hr0
+    · norm_num
+      ring
+    · norm_num [hr0]
+      ring
+  rw [Finset.sum_congr rfl fun r hr => by rw [hcl r hr]]
+  have hexp : ∀ r ∈ range q,
+      ((q : ℂ)⁻¹ + ((b : ℂ) ^ L)⁻¹ * ((if r = 0 then (q : ℂ) else 0) - 1) * (q : ℂ)⁻¹)
+        * zetaRoot q ^ ((j : ℤ) * (r : ℤ))
+      = ((q : ℂ)⁻¹ - ((b : ℂ) ^ L)⁻¹ * (q : ℂ)⁻¹) * zetaRoot q ^ ((j : ℤ) * (r : ℤ))
+        + (if r = 0 then ((b : ℂ) ^ L)⁻¹ else 0) := by
+    intro r _
+    rcases eq_or_ne r 0 with rfl | hr0
+    · rw [if_pos rfl, if_pos rfl]
+      simp only [Nat.cast_zero, mul_zero, zpow_zero]
+      field_simp
+      ring
+    · rw [if_neg hr0, if_neg hr0]; ring
+  rw [Finset.sum_congr rfl hexp, Finset.sum_add_distrib, ← Finset.mul_sum, hgeom, mul_zero,
+    zero_add, Finset.sum_ite_eq' (range q) 0 (fun _ => ((b : ℂ) ^ L)⁻¹),
+    if_pos (Finset.mem_range.mpr hqpos), inv_pow]
+
 /-- **The converse.**  `StateLaw` at every `L` gives the autocorrelation spectrum. -/
 theorem hAutoCorr_of_stateLaw (b : ℕ) (hb : 3 ≤ b) (h : ∀ L, StateLaw b L) : HAutoCorr b := by
   classical
@@ -1319,34 +1373,8 @@ theorem hAutoCorr_of_stateLaw (b : ℕ) (hb : 3 ≤ b) (h : ∀ L, StateLaw b L)
   -- evaluate
   have hval : (∑ r ∈ range q, ((normalCastLaw b L r : ℝ) : ℂ) * zetaRoot q ^ ((jj : ℤ) * (r : ℤ)))
       = ((b : ℂ))⁻¹ ^ L := by
-    have hcl : ∀ r ∈ range q, ((normalCastLaw b L r : ℝ) : ℂ)
-        = (q : ℂ)⁻¹ + ((b : ℂ) ^ L)⁻¹ * ((if r = 0 then (q : ℂ) else 0) - 1) * (q : ℂ)⁻¹ := by
-      intro r hr
-      have hrq : r < b - 1 := by rw [← hq]; exact Finset.mem_range.mp hr
-      rw [normalCastLaw_closed b L r hb hrq]
-      push_cast
-      rw [← hqC']
-      rcases eq_or_ne r 0 with rfl | hr0
-      · norm_num
-        ring
-      · norm_num [hr0]
-        ring
-    rw [Finset.sum_congr rfl fun r hr => by rw [hcl r hr]]
-    have hexp : ∀ r ∈ range q,
-        ((q : ℂ)⁻¹ + ((b : ℂ) ^ L)⁻¹ * ((if r = 0 then (q : ℂ) else 0) - 1) * (q : ℂ)⁻¹)
-          * zetaRoot q ^ ((jj : ℤ) * (r : ℤ))
-        = ((q : ℂ)⁻¹ - ((b : ℂ) ^ L)⁻¹ * (q : ℂ)⁻¹) * zetaRoot q ^ ((jj : ℤ) * (r : ℤ))
-          + (if r = 0 then ((b : ℂ) ^ L)⁻¹ else 0) := by
-      intro r _
-      rcases eq_or_ne r 0 with rfl | hr0
-      · rw [if_pos rfl, if_pos rfl]
-        simp only [Nat.cast_zero, mul_zero, zpow_zero]
-        field_simp
-        ring
-      · rw [if_neg hr0, if_neg hr0]; ring
-    rw [Finset.sum_congr rfl hexp, Finset.sum_add_distrib, ← Finset.mul_sum, hgeom, mul_zero,
-      zero_add, Finset.sum_ite_eq' (range q) 0 (fun _ => ((b : ℂ) ^ L)⁻¹),
-      if_pos (Finset.mem_range.mpr hqpos), inv_pow]
+    rw [hq]
+    exact fourier_normalCastLaw b hb L jj hjj hjjq
   rw [hval] at hsum
   exact Filter.Tendsto.congr (fun N => (corrSum_eq_sum_stateFreq b hb jj L N).symm) hsum
 
