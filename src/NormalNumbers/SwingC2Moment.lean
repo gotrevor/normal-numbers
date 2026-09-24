@@ -271,4 +271,45 @@ theorem tau_shift_sum_le (c e Y : ℕ) (P : Finset ℕ) (hP : ∀ n ∈ P, n ≤
     _ = 2 * ∑ d ∈ Finset.Icc 1 (Nat.sqrt (c * Y + e)),
           (P.filter (fun n => d ∣ c * n + e)).card := by rw [← Finset.mul_sum, step2]
 
+/-! ### The integer count behind one divisor incidence
+
+`#{n ≤ Y : n ≡ r (mod M), d ∣ c·n + e}` is at most `Y/(dM) + 1` whenever `gcd(c,d) = 1` and
+`gcd(d,M) = 1`: two such `n` differ by a multiple of `d` (cancel `c`) and of `M`, hence of `dM`.
+With `c = 2^a` the first condition says only that `d` is odd, and `d ∣ 2^a n + e` with
+`gcd(n,M) = 1` forces the second whenever `gcd(e,M) = 1`.
+
+This is the *integer* count.  Replacing it by the count of PRIMES in the same class is the
+Brun–Titchmarsh step; the integer count alone is what a `ShiftedDivisorIncidence` proof would
+use if the family `P` were all of the progression rather than its primes. -/
+theorem card_shift_dvd_le (c e M r Y d : ℕ) (hd : 0 < d) (hM : 0 < M)
+    (hcd : Nat.Coprime c d) (hdM : Nat.Coprime d M) :
+    ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card
+      ≤ Y / (d * M) + 1 := by
+  classical
+  refine card_le_of_mod_eq (m := d * M) (X := Y) (Nat.mul_pos hd hM) _ ?_ ?_
+  · intro x hx
+    rw [Finset.mem_filter, Finset.mem_Icc] at hx
+    exact hx.1.2
+  · intro x hx y hy
+    rw [Finset.mem_filter, Finset.mem_Icc] at hx hy
+    obtain ⟨-, hxm, hxd⟩ := hx
+    obtain ⟨-, hym, hyd⟩ := hy
+    refine (Nat.modEq_and_modEq_iff_modEq_mul hdM).1 ⟨?_, ?_⟩
+    · -- `d ∣ c*x + e` and `d ∣ c*y + e` give `d ∣ c*(x-y)`, hence `x ≡ y [MOD d]`
+      have hkey : ∀ u v : ℕ, u ≤ v → d ∣ c * u + e → d ∣ c * v + e → u % d = v % d := by
+        intro u v huv hu hv
+        have hsub : d ∣ (c * v + e) - (c * u + e) := Nat.dvd_sub hv hu
+        have hmul : c * (v - u) = c * v - c * u := Nat.mul_sub c v u
+        have hcuv : c * u ≤ c * v := Nat.mul_le_mul_left c huv
+        have he : (c * v + e) - (c * u + e) = (v - u) * c := by
+          rw [Nat.mul_comm (v - u) c, hmul]; omega
+        rw [he] at hsub
+        have hdvu : d ∣ v - u := Nat.Coprime.dvd_of_dvd_mul_right hcd.symm hsub
+        exact (Nat.modEq_iff_dvd' huv).2 hdvu
+      rcases Nat.le_total x y with hxy | hxy
+      · exact hkey x y hxy hxd hyd
+      · exact (hkey y x hxy hyd hxd).symm
+    · show x % M = y % M
+      rw [hxm, hym]
+
 end SwingC2Moment

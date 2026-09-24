@@ -232,3 +232,50 @@ supplies `K ≥ 110`.
 `64·C·b^{K/2} ≤ b^K`, i.e. `64C ≤ b^{K/2}`.  With `K ≥ 110`, `b ≥ 3` that is `64C ≤ 3^55`.
 **The `2^k` cancels out of the incidence requirement**, so the same inequality is asked at every
 shift.  This is now comfortably true and is exactly Brun–Titchmarsh summed over `d ≤ Y^{0.6}`.
+
+## Lap 18g — the integer-count workhorse, and the decisive open question for lap 19
+
+### Landed
+`SwingC2Moment.card_shift_dvd_le` (sorry-free):
+
+    gcd(c,d) = 1, gcd(d,M) = 1  ⟹  #{n ≤ Y : n ≡ r (M), d ∣ c n + e} ≤ Y/(dM) + 1.
+
+Two such `n` differ by a multiple of `d` (cancel `c`, using `gcd(c,d)=1`) and of `M`, hence of
+`dM`.  With `c = 2^a` the first hypothesis says only that `d` is odd.  This is the *integer*
+count behind one divisor incidence; Brun–Titchmarsh is the statement that replaces it by the
+count of PRIMES.
+
+### The decisive question for lap 19: can the sieve be avoided entirely?
+With the geometric threshold the budget has real slack, so it is worth re-asking whether the
+crude integer count suffices.  Summing `card_shift_dvd_le` over `d ≤ D = √(2^a Y + e)`:
+
+    Inc_k  ≲  (Y/M)·log D  +  D.
+
+Compare with the requirement `8·Inc_k ≤ (b^K/4)(k+1)|P|` and `|P| ≈ Y/(φ(M)log Y)`:
+* main term: needs `32·log D·log Y ≤ b^K` (using `φ(M) ≤ M`);
+* error term: needs `D ≲ b^K·Y/(M log Y)`, i.e. `Y ≳ 2^a M²` — satisfiable by taking `Y` large,
+  since `Y` is existentially quantified in the leaf.
+
+With the leaf's CURRENT hypotheses (`a ≤ b^{K/2}`, `M ≤ 2^{b^{K/2}}`) the main term is
+`log D·log Y ≈ b^{K/2}·b^{K/2} = b^K` — **exactly critical, fails by a constant**.  But those
+hypotheses are the weak forms lap 17 chose for convenience.  The TRUE values are
+`a < b^ℓ ≤ b^{K/10}` (from `exists_survivor_exponent` with `K = 10ℓ+100`) and
+`log₂ M ≤ b(ℓ+5)^4 ≤ b·K^4` (from `killModulus_le`), which give
+`log D·log Y ≈ b^{K/10}·b^{K/10} = b^{K/5} ≪ b^K` — **enormous slack, and no sieve needed.**
+
+So lap 19's first move is to tighten `a ≤ b^(K/10)` and `M ≤ 2^(b^(K/10))` (or `2^(b·K^4)`)
+through `SurvivorLeaf` → `CarryLeaf` → … → `ShiftedDivisorIncidence`, re-proving the supply side
+from `killModulus_le` and `exists_pad_budget`.  If that goes through, `ShiftedDivisorIncidence`
+needs only `card_shift_dvd_le` plus a LOWER bound on `|P| = #{p ≤ Y prime, p ≡ r (M)}`.
+
+### What is then irreducibly left
+A lower bound for `π(Y;M,r)`.  Dirichlet (`Nat.forall_exists_prime_gt_and_modEq`, in mathlib) is
+qualitative and does NOT suffice: the family must have a counting lower bound, because the
+argument is an averaging one.  Candidate routes, in order of cheapness:
+1. mathlib's `PrimesInAP` proves `Σ_{p ≡ r (M)} 1/p = ∞`; a weighted (`1/p`) version of the
+   averaging argument might run off divergence alone, avoiding any explicit density.  **Check
+   this first — it would make the whole crux mathlib-complete.**
+2. Siegel–Walfisz / Linnik — not in mathlib, project-scale.
+3. Replace the prime `p` in `exists_survivor_data` by a family with an ELEMENTARY counting lower
+   bound in an AP (squarefree numbers with prescribed `ω`, say).  Costs a redesign of (K2) but
+   removes analytic number theory from the path altogether.
