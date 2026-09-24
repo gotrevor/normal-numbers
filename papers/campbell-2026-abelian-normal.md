@@ -5,8 +5,7 @@ J. M. Campbell, *Abelian-normal decimal expansions*, arXiv:2603.04396 (v2).  PDF
 
 ## Coverage
 
-Read: abstract, the definition, Theorem 1 statement and the opening of its proof.  Not read: the
-full proof or the construction's details.
+Read in full (8 pp), 2026-09-23.
 
 ## What it says
 
@@ -45,3 +44,15 @@ Consequences:
   Base 3 is free already at L = 2 (dimension 1: cyclic flow 0→1→2→0).
 - Lean: `src/NormalNumbers/AbelianNormal.lean` (headline iff, `rigid_three`, `separation_four`);
   kickoff `KICKOFF-2026-09-23-abelian-normal.md`.
+
+## The paper vs our base-2 facts (read in full 2026-09-23)
+
+- Base 10 only.  Construction: base-100 Champernowne, each symbol split into two decimal digits,
+  with the cyclic swap 10→01, 21→12, 02→20 (the base-3 cyclic flow our probe found at L = 2).
+  Position marginals stay uniform and reversed pairs share a monomial, so every window's
+  digit-count generating function averages to `S(z)^m`; `01` gets frequency 3/200 ≠ 1/100.
+- Proof device: the commutative generating polynomial `S(z)^m`.  Specialized to base 2
+  (`z₀ = 1, z₁ = t`) it is the Binomial window law; our parity form is the same symmetrization.
+- NOT in the paper: base 2, rigidity through L = 3, the L = 4 separating measure, the Walsh
+  criterion, or any binary abelian-normal non-normal example (the cyclic swap needs 3 digits).
+  Closes by asking whether π and e are abelian-normal.  AI disclosure: GPT-5.6 Pro.
