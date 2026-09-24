@@ -1997,6 +1997,53 @@ theorem tau_shift_sum_AP_odd (a u M r Y : ℕ) (ha : 1 ≤ a) (hM : 0 < M) (hu :
   rw [h3]
   exact le_trans h1 (Nat.mul_le_mul_left 2 h2)
 
+/-! ### The incidence count with NO coprimality to the modulus: the `lcm` form
+
+`SwingC2Moment.card_shift_dvd_le` needs `gcd(d,M) = 1` only to turn "congruent mod `d` and mod
+`M`" into "congruent mod `dM`".  The honest statement needs no hypothesis at all: two solutions
+are congruent modulo `lcm(d,M)`, so the count is `Y/lcm(d,M) + 1 = Y·gcd(d,M)/(dM) + 1`.
+
+This is the form in which the gcd loss becomes *visible and payable*: summing over `d ≤ D`,
+the loss over the coprime case is exactly `Σ_d gcd(d,M)/d`, and `filter_shift_eq_empty`
+restricts the gcds that occur to divisors of the `M`-part of `2^a r + e` — which, for the kill
+modulus, `exists_kill_progression'` caps by the shift. -/
+theorem card_shift_dvd_le_lcm (c e M r Y d : ℕ) (hd : 0 < d) (hM : 0 < M)
+    (hcd : Nat.Coprime c d) :
+    ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card
+      ≤ Y / (Nat.lcm d M) + 1 := by
+  classical
+  have hlcm : 0 < Nat.lcm d M := Nat.pos_of_ne_zero (Nat.lcm_ne_zero (by omega) (by omega))
+  refine SwingC2Moment.card_le_of_mod_eq (m := Nat.lcm d M) (X := Y) hlcm _ ?_ ?_
+  · intro x hx
+    rw [Finset.mem_filter, Finset.mem_Icc] at hx
+    exact hx.1.2
+  · -- two solutions are congruent modulo `d` and modulo `M`, hence modulo `lcm`
+    have hkey : ∀ x y : ℕ, x ≤ y →
+        (x ∈ (Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)) →
+        (y ∈ (Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)) →
+        x % Nat.lcm d M = y % Nat.lcm d M := by
+      intro x y hxy hx hy
+      rw [Finset.mem_filter, Finset.mem_Icc] at hx hy
+      obtain ⟨-, hxm, hxd⟩ := hx
+      obtain ⟨-, hym, hyd⟩ := hy
+      have hdd : d ∣ y - x := by
+        have hsub : d ∣ (c * y + e) - (c * x + e) := Nat.dvd_sub hyd hxd
+        have hmul : c * (y - x) = c * y - c * x := Nat.mul_sub c y x
+        have hcxy : c * x ≤ c * y := Nat.mul_le_mul_left c hxy
+        have he : (c * y + e) - (c * x + e) = (y - x) * c := by
+          rw [Nat.mul_comm (y - x) c, hmul]; omega
+        rw [he] at hsub
+        exact Nat.Coprime.dvd_of_dvd_mul_right hcd.symm hsub
+      have hMd : M ∣ y - x := by
+        refine (Nat.modEq_iff_dvd' hxy).1 ?_
+        show x % M = y % M
+        rw [hxm, hym]
+      exact (Nat.modEq_iff_dvd' hxy).2 (Nat.lcm_dvd hdd hMd)
+    intro x hx y hy
+    rcases Nat.le_total x y with h | h
+    · exact hkey x y h hx hy
+    · exact (hkey y x h hy hx).symm
+
 /-! ### The shifted first moment for a GENERAL shift, and its exceptional set
 
 Combining the 2-adic reduction with `tau_shift_sum_AP_odd`: for any shift `e` with
