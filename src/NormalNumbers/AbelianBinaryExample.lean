@@ -1,5 +1,6 @@
 import NormalNumbers.AbelianNormal
 import NormalNumbers.AbelianBlockDensity
+import NormalNumbers.AbelianIntervalBinomial
 import NormalNumbers.PowerBaseReal
 
 /-!
@@ -33,12 +34,11 @@ def xiBits (c : ℕ → ℕ) (n : ℕ) : ℕ := hexSwap (c (n / 4)) / 2 ^ (3 - n
 
 
 /-- Bit `i` of the window at offset `r` inside a hex word `v`, read through `hexSwap`. -/
-def bitOfWord (v : List ℕ) (r i : ℕ) : ℕ :=
-  hexSwap (v.getD ((r + i) / 4) 0) / 2 ^ (3 - (r + i) % 4) % 2
+def bitOfWord (v : List ℕ) (r i : ℕ) : ℕ := bitW hexSwap v r i
 
 lemma xiBits_eq_bitOfWord (c : ℕ → ℕ) (S n i : ℕ) (h : (n % 4 + i) / 4 < S) :
     xiBits c (n + i) = bitOfWord (blk c S (n / 4)) (n % 4) i := by
-  unfold xiBits bitOfWord
+  unfold xiBits bitOfWord bitW
   rw [blk_getD c S (n / 4) _ h]
   have h1 : (n + i) / 4 = n / 4 + (n % 4 + i) / 4 := by omega
   have h2 : (n + i) % 4 = (n % 4 + i) % 4 := by omega
@@ -53,7 +53,57 @@ instance (r : ℕ) (v : List ℕ) : Decidable (isZZOO r v) := Nat.decidableBallL
 /-- The construction is abelian-normal in base two. -/
 theorem isAbelianNormalTwo_xiBits (c : ℕ → ℕ) (hc16 : ∀ m, c m < 16)
     (hc : IsNormalSequence 16 c) : IsAbelianNormalTwo (xiBits c) := by
-  sorry
+  classical
+  have hbin : HBinom hexSwap := by
+    intro r m i hr hm hrm hi
+    have hm4 : m ≤ 4 := by omega
+    interval_cases r <;> interval_cases m <;> interval_cases i <;> first | rfl | decide | omega
+  intro L j hj
+  -- the window one-count is a function of the offset and the next `L+1` hex digits
+  have hones : ∀ n : ℕ, onesCount (xiBits c) L n = onesW hexSwap L (n % 4) (blk c (L + 1) (n / 4)) := by
+    intro n
+    unfold onesCount onesW NormalNumbers.Walsh.windowSet
+    congr 1
+    refine Finset.filter_congr (fun i hi => ?_)
+    rw [Finset.mem_range] at hi
+    rw [show bitW hexSwap (blk c (L + 1) (n / 4)) (n % 4) i
+        = xiBits c (n + i) from (xiBits_eq_bitOfWord c (L + 1) n i (by omega)).symm]
+  have hfreq : ∀ N : ℕ, onesFreq (xiBits c) L j N
+      = (((range N).filter
+          (fun n => onesW hexSwap L (n % 4) (blk c (L + 1) (n / 4)) = j)).card : ℝ) / N := by
+    intro N
+    rw [onesFreq]
+    have hset : (range N).filter (fun n => onesCount (xiBits c) L n = j)
+        = (range N).filter (fun n => onesW hexSwap L (n % 4) (blk c (L + 1) (n / 4)) = j) :=
+      Finset.filter_congr (fun n _ => by rw [hones n])
+    rw [hset]
+  have hmain := tendsto_blockEvent c (L + 1) (fun r v => onesW hexSwap L r v = j) hc16 hc
+  have hinner : ∀ r : ℕ, (∑ k ∈ range (16 ^ (L + 1)),
+      if onesW hexSwap L r (wordOf 16 (L + 1) k) = j then (1 : ℝ) else 0)
+      = (wordCount hexSwap L r (L + 1) j : ℝ) := by
+    intro r
+    rw [wordCount, Nat.cast_sum]
+    exact Finset.sum_congr rfl (fun k _ => by split <;> simp)
+  have hwc : ∀ r ∈ range 4, (wordCount hexSwap L r (L + 1) j : ℝ)
+      = 16 ^ (L + 1) * (L.choose j : ℝ) / 2 ^ L := by
+    intro r hr
+    have h := two_pow_mul_wordCount hexSwap hbin L r (L + 1) j (Finset.mem_range.mp hr)
+      (by have := Finset.mem_range.mp hr; omega)
+    have hR : ((2 : ℝ) ^ L) * (wordCount hexSwap L r (L + 1) j : ℝ)
+        = 16 ^ (L + 1) * (L.choose j : ℝ) := by exact_mod_cast congrArg (fun x : ℕ => (x : ℝ)) h
+    field_simp at hR ⊢
+    linarith [hR]
+  have hval : (∑ r ∈ range 4, ∑ k ∈ range (16 ^ (L + 1)),
+      if onesW hexSwap L r (wordOf 16 (L + 1) k) = j then (1 : ℝ) else 0) / (4 * 16 ^ (L + 1))
+      = (L.choose j : ℝ) / 2 ^ L := by
+    rw [Finset.sum_congr rfl (fun r hr => by rw [hinner r, hwc r hr]), Finset.sum_const,
+      Finset.card_range, nsmul_eq_mul]
+    have h16 : ((16 : ℝ) ^ (L + 1)) ≠ 0 := by positivity
+    have h2 : ((2 : ℝ) ^ L) ≠ 0 := by positivity
+    field_simp
+    ring
+  rw [hval] at hmain
+  exact hmain.congr (fun N => (hfreq N).symm)
 
 /-- The construction is not normal in base two: `0011` has limiting frequency `5/64`. -/
 theorem not_isNormalSequence_xiBits (c : ℕ → ℕ) (hc16 : ∀ m, c m < 16)
