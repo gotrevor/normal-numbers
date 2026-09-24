@@ -9629,3 +9629,23 @@ bound `‖∑_{n<N}‖ ≤ L` when `L ≫ N`.  Any sub-trivial bound on an incom
 differencing in the CRT coordinates `(n mod p)_p` — immediately widens the usable range of `K`
 and is the ONLY remaining structural handle.  The master inequality is the frame such a bound
 would plug into: replace `((primePeriod P K * Q : ℕ) : ℝ)` by whatever the improved bound gives.
+
+### lap 13 — the audit surface for the swing's conditional (`SwingC3Statement.lean`)
+
+`CastingOut.audit_conjC3_of_weylLambertTwist` restates lap 9's conditional with EVERY
+abbreviation unwound — no `ConjC3`, `IsRich`, `OccursAt`, `digitOf`, `primeLambertAtBase`,
+`WeylLambertTwist`, `largeLambert` or `ee`.  An auditor reads only
+`ArithmeticFunction.cardDistinctFactors`, `Complex.exp`, two `tsum`s, `⌊·⌋`, `Int.fract` and a
+`Finset.card` density:
+
+> If for every `b ≥ 3`, `P`, `Q > 0`, `0 < j < Q`, `h : ℤ`,
+>   `(1/N) ∑_{n<N} exp(2πi·jn/Q)·exp(2πi·h·b^n·∑_{p>P prime} 1/(b^p−1)) → 0`,
+> then for every `b ≥ 3` the number `∑_n ω(n) b^{−n}` is rich in base `b`.
+
+Axiom-clean.  (Gotcha for future laps: `IsRich` is stated under `open Classical in`, so its
+`Finset.filter` carries `Classical.propDecidable`; an unwound restatement whose predicate is
+genuinely decidable picks a DIFFERENT instance and is not defeq.  Bridge with
+`Finset.filter_congr (fun _ _ => Iff.rfl)` after `congr 2`.)
+
+Also submitted the PROSE of the hypothesis to Aristotle for an independent NL→Lean faithfulness
+check (project `0f29092b-9d0a-4c2e-bcd2-4e803c070db9`); result to be compared next lap.
