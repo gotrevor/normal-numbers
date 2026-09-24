@@ -1,6 +1,6 @@
 # Handoff: casting out `b − 1` — KICKOFF complete, `CastingOut.lean` sorry-free
 
-**Date**: 2026-09-24 · **Branch**: `wip/casting-out` · Kickoff: `KICKOFF-2026-09-23-casting-out.md`
+**Date**: 2026-09-24 · **Branch**: `wip/casting-out` · **HEAD**: `daebd03` (clean tree) · Kickoff: `KICKOFF-2026-09-23-casting-out.md`
 
 ## Status
 
@@ -60,7 +60,22 @@ fibre empty for free, matching `Nat.divisors 0 = ∅`.
 - `simp` normalises `if (0 : ℕ) = 0` to `if True`, so `rw [if_pos rfl]` fails after it — let
   `norm_num` finish the whole hypothesis instead of hand-reducing the `if`.
 
-## Next
+## Next (exact)
 
-Nothing is owed on this kickoff. The repo's standing campaign (`DIRECTION.md`, Theorem C′ and the
-three `PrimeModelFamilyGraded.lean` leaves) is untouched and remains the live thread.
+1. Nothing is owed on this kickoff; `box done --green` was signalled and accepted. The branch
+   `wip/casting-out` is clean at `daebd03` and has **not** been pushed (no egress from the box) —
+   the host pushes.
+2. New files added this lap, both sorry-free and imported by `CastingOut.lean`:
+   `src/NormalNumbers/CastingOutCount.lean` (the `ZMod q` convolution count) and
+   `src/NormalNumbers/CastingOutLambert.lean` (the divisor Lambert series).
+3. Resume point for the next session: open `DIRECTION.md` and confirm the CURRENT
+   DIRECTIVE, which is untouched by this lap — Theorem C′ and the three
+   `src/NormalNumbers/PrimeModelFamilyGraded.lean` leaves, hardest first: `termE5_tendsto`
+   (~l.980, route-decisive) → `schedule_admissible` (~l.575) → `termE4c_tendsto` (~l.974).
+4. If C1/C2/C3 are ever to be *attacked* rather than stated, the ladder is now explicit in Lean:
+   `isDisjunctive_base` ⟸ `IsDisjunctive` ⟸ `IsRich` (C3) ⟸ `IsNormal`, and C1 follows from
+   normality of `G4_b` via `conjC1_conjC3_of_normal`. C2 is the one genuinely independent target;
+   `erdosBorweinAtBase_eq_lambertVal` now puts it in the same Lambert-value shape as `G4`, so
+   `windowDigitSum_lambert_modEq` applies to it verbatim (`w m = d(m)` does **not** satisfy
+   `w m ≤ m` for `m = 1`? it does: `d(1) = 1 ≤ 1`; the hypothesis holds for all `m ≥ 1`, and
+   `d(0) = 0`, so the bridge is usable as stated).
