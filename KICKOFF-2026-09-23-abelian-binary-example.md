@@ -16,8 +16,7 @@ Math: `DESIGN-2026-09-23-binary-abelian-nonnormal.md`; exact numbers:
    function of at most two consecutive hex digits of `c`, whose joint frequencies tend to `1/256`
    by normality of `c` (`PowerBaseLimit.tendsto_winCount_wordOf` or the `IsNormalSequence`
    definition on length-2 words).  The offset-`r` limit is a finite sum over 256 hex pairs —
-   `decide`/`native_decide`.  Average of the four offsets: `(0 + 5/64·… )` — use the probe's
-   exact per-offset values.
+   `decide`/`native_decide`.  Per-offset limits (exact, offsets r = 0..3): `1/8, 1/16, 1/16, 1/16`; average `5/64`.
 2. `isAbelianNormalTwo_xiBits` — the finite core: for every offset `r < 4` and length `L`,
    `#{v ∈ (Fin 16)^s : ones(bits r..r+L-1 of hexSwap-blocks v) = j} = 16^s · choose L j / 2^L`
    with `s` = blocks touched.  Prove it by: (a) the 10 in-block intervals are Binomial under the
