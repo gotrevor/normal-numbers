@@ -107,7 +107,9 @@ is now the highest-value probe.
     `log`**, which is precisely the 2026-09-24 pricing note's prediction, now measured.
   So Leaf B is (numerically) TRUE, and is SD-with-characters grade.  The live route is the
   Weyl/Erdős–Turán reduction below.
-- **B6 (NEW, the on-path move).**  `src/NormalNumbers/WeylCriterion.lean` already has the full
+- **B6.**  ✅ **DONE 2026-09-24** — see the block immediately below; the conditional
+  `conjC3_of_weylHypothesis` is proved and trust-triple clean.
+- **B6 (statement of record).**  `src/NormalNumbers/WeylCriterion.lean` already has the full
   trapezoid-squeeze Weyl criterion (`cgood_all`, `trapUp`/`trapLo`, `equidistributed_of_weyl`).
   Generalise it from a Cesàro mean to a *signed weight* `w n = 1_{n≡r (Q)} − 1/Q`, giving:
   `TailLargeDecouple b P Q` follows from the single Fourier hypothesis
@@ -124,6 +126,33 @@ is now the highest-value probe.
   `OrbitDecouple b Q x` is FALSE for every `b ≥ 2`, `Q ≥ 2`.  Since
   `tailLargeDecouple_iff_orbitDecouple` identifies Leaf B with `OrbitDecouple b Q (L_P)`,
   **every** proof of Leaf B must use arithmetic of `ω_{>P}`.  Live attacks: B2, B3, B4.
+
+### ✅ THE SWING'S MAIN TARGET IS LANDED (2026-09-24)
+
+`NormalNumbers.CastingOut.conjC3_of_weylHypothesis : (∀ b, 3 ≤ b → WeylTailHypothesis b) → ConjC3`
+in `src/NormalNumbers/SwingC3ContGlue.lean`, **axioms `[propext, Classical.choice, Quot.sound]`
+— no `sorryAx`.**  `H = WeylTailHypothesis b` is
+
+`∀ P Q r θ h,  (1/N) ∑_{n<N} (1_{n ≡ r (Q)} − 1/Q) · e(h·(θ + tailLarge P b n)) → 0`.
+
+Everything else on the route is machine-checked: Leaf A (`exists_rotationCover_core`), the
+signed-weight Weyl criterion (`wgood_all`/`wgood_real`), the reduction
+(`tailLargeDecoupleC_of_weyl`), and the continuous-test-function covering glue
+(`isRich_of_rotationRouteC`).
+
+**The structural move that made it work.**  The arc form of Leaf B cannot be reached from a
+Fourier hypothesis: for a SIGNED weight the trapezoid squeeze costs
+`(1/N)∑(trapUp − trapLo)(u_k)`, and controlling that is equidistribution of the `L_P` orbit —
+i.e. normality, i.e. circular.  So **move the glue, not the leaf**:
+`density_lower_of_decouple` only uses a LOWER bound on the class counts, so the arc indicator
+may be replaced by a continuous bump `0 ≤ g ≤ 1` supported in the arc, and Leaf A supplies a net
+at any scale, so the covering runs on the middle quarter where `g ≡ 1`.  No squeeze, no
+equidistribution.
+
+**What is still open** is `H` alone, and `H` is exactly the Selberg–Delange-with-characters
+quantity the B4 probe measured at `(log N)^{−1.86}`.  The ratified headline `conjC3`
+(`SwingC3.lean`) still routes through `tailLargeDecouple_holds` and stays `sorry` — as the
+kickoff addendum requires.
 
 ### Not to be re-tried (refuted, this branch)
 Effective disjunctivity (`N(4,L)/4^L` still climbing at `L = 7`, probe
