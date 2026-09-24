@@ -36,3 +36,11 @@ Worktree `~/src/nn-c3`, branch `wip/swing-c3`.  Opus/low.  Target file `src/Norm
 - Build: `lake build NormalNumbers.SwingC3` (warm tree; never run `lake exe cache get`).  Proof tier:
   `native_decide` and boosts are fine.  Commit each green step.  Each lap's HANDOFF says what the
   crux IS now: which leaf, what it needs, and whether that is known, open, or refuted.
+
+## ⚠️ ADDENDUM (Ren, 2026-09-24): never delete a ratified theorem
+
+The swing's ratified theorems (the headline `conj…` and every `theorem` in the seeded stub) must
+STAY in the file until proved.  Deleting, renaming or re-stating one to make the file sorry-free is
+a failure, not completion (the c1log swing did this and was reverted).  An open headline is the
+expected end state of a moonshot swing.  Put conditional versions (`…_of_H`) BESIDE it, and keep
+the headline as a `sorry`.
