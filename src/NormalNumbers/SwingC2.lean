@@ -2051,7 +2051,8 @@ the coprime bound.  The total loss is therefore exactly the NUMBER of gcds that 
 `filter_shift_eq_empty` those are confined to the divisors of any `G` that the `M`-part of
 `c·r + e` divides. -/
 theorem sum_card_shift_dvd_le_gcd (c e M r Y D G : ℕ) (hM : 0 < M) (hG : G ≠ 0)
-    (hcd : ∀ d ∈ Finset.Icc 1 D, Nat.Coprime c d)
+    (hcd : ∀ d ∈ Finset.Icc 1 D, Nat.Coprime c d ∨
+      (Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e) = ∅)
     (hvan : ∀ d ∈ Finset.Icc 1 D, ¬ (Nat.gcd d M ∣ G) →
       (Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e) = ∅) :
     ∑ d ∈ Finset.Icc 1 D,
@@ -2102,12 +2103,17 @@ theorem sum_card_shift_dvd_le_gcd (c e M r Y D G : ℕ) (hM : 0 < M) (hG : G ≠
         have h3 : g * Nat.lcm d M = g * ((d / g) * M) := by
           rw [← Nat.mul_assoc, h2, ← hgd]; exact h1
         exact Nat.eq_of_mul_eq_mul_left hgp h3
-      have := card_shift_dvd_le_lcm c e M r Y d (by omega) hM (hcd d (Finset.mem_Icc.2 ⟨hd1, hdD⟩))
-      rw [hlcm] at this
-      have hdiv : Y / ((d / g) * M) = Y / M / (d / g) := by
-        rw [Nat.div_div_eq_div_mul, Nat.mul_comm M (d / g)]
-      rw [hdiv] at this
-      exact this
+      rcases hcd d (Finset.mem_Icc.2 ⟨hd1, hdD⟩) with hco | hem
+      · have := card_shift_dvd_le_lcm c e M r Y d (by omega) hM hco
+        rw [hlcm] at this
+        have hdiv : Y / ((d / g) * M) = Y / M / (d / g) := by
+          rw [Nat.div_div_eq_div_mul, Nat.mul_comm M (d / g)]
+        rw [hdiv] at this
+        exact this
+      · rw [hF]
+        simp only
+        rw [hem]
+        simp
     have hinj : Set.InjOn (fun d => d / g) ↑B := by
       intro x hx y hy hxy
       simp only [Finset.coe_filter, hB, hA, Set.mem_ofPred_eq, Finset.mem_filter] at hx hy
@@ -2177,7 +2183,8 @@ theorem gcd_dvd_gcd_shift {c e M r Y d : ℕ}
 /-- **The crude incidence bound, fully general.**  No hypothesis on `M` at all: the loss over
 the coprime case is `τ(gcd(M, c·r+e))`, and nothing else. -/
 theorem sum_card_shift_dvd_le_gcd' (c e M r Y D : ℕ) (hM : 0 < M)
-    (hcd : ∀ d ∈ Finset.Icc 1 D, Nat.Coprime c d) :
+    (hcd : ∀ d ∈ Finset.Icc 1 D, Nat.Coprime c d ∨
+      (Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e) = ∅) :
     ∑ d ∈ Finset.Icc 1 D,
         ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card
       ≤ (Nat.gcd M (c * r + e)).divisors.card * ((Y / M) * (Nat.log 2 D + 2) + D) := by
@@ -2292,6 +2299,104 @@ theorem card_large_tau_shift_le (a e M r Y T : ℕ) (he : 0 < e) (hea : e < 2 ^ 
   have h3 : ∑ _n ∈ S, T = T * S.card := by
     rw [Finset.sum_const, smul_eq_mul, Nat.mul_comm]
   omega
+
+/-- **The shifted first moment along a progression, with NO hypothesis on the modulus.**  The
+odd case; the loss over the coprime case is exactly `τ(gcd(M, 2^a r + u))`. -/
+theorem tau_shift_sum_AP_odd_gcd (a u M r Y : ℕ) (ha : 1 ≤ a) (hM : 0 < M) (hu : ¬ 2 ∣ u) :
+    ∑ n ∈ SwingC2Moment.apSet M r Y, tau (2 ^ a * n + u)
+      ≤ 2 * ((Nat.gcd M (2 ^ a * r + u)).divisors.card *
+          ((Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ a * Y + u)) + 2)
+            + Nat.sqrt (2 ^ a * Y + u))) := by
+  classical
+  set D : ℕ := Nat.sqrt (2 ^ a * Y + u) with hD
+  have hmem : ∀ n ∈ SwingC2Moment.apSet M r Y, n ≤ Y := by
+    intro n hn
+    rw [SwingC2Moment.apSet, Finset.mem_filter, Finset.mem_Icc] at hn
+    exact hn.1.2
+  have h1 := SwingC2Moment.tau_shift_sum_le (2 ^ a) u Y (SwingC2Moment.apSet M r Y) hmem
+  have hfil : ∀ d : ℕ, (SwingC2Moment.apSet M r Y).filter (fun n => d ∣ 2 ^ a * n + u)
+      = (Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ 2 ^ a * n + u) := by
+    intro d
+    rw [SwingC2Moment.apSet, Finset.filter_filter]
+  have hcd : ∀ d ∈ Finset.Icc 1 D, Nat.Coprime (2 ^ a) d ∨
+      (Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ 2 ^ a * n + u) = ∅ := by
+    intro d _
+    by_cases hdodd : 2 ∣ d
+    · exact Or.inr (filter_shift_eq_empty_even ha hu hdodd)
+    · exact Or.inl (Nat.Coprime.pow_left _
+        ((Nat.Prime.coprime_iff_not_dvd Nat.prime_two).2 hdodd))
+  have h2 : ∑ d ∈ Finset.Icc 1 D,
+      ((SwingC2Moment.apSet M r Y).filter (fun n => d ∣ 2 ^ a * n + u)).card
+        ≤ (Nat.gcd M (2 ^ a * r + u)).divisors.card * ((Y / M) * (Nat.log 2 D + 2) + D) := by
+    simp only [hfil]
+    exact sum_card_shift_dvd_le_gcd' (2 ^ a) u M r Y D hM hcd
+  have h3 : ∑ n ∈ SwingC2Moment.apSet M r Y, tau (2 ^ a * n + u)
+      = ∑ n ∈ SwingC2Moment.apSet M r Y, (2 ^ a * n + u).divisors.card := rfl
+  rw [h3]
+  exact le_trans h1 (Nat.mul_le_mul_left 2 h2)
+
+/-- **The shifted first moment, general shift, general modulus — no hypotheses left.**  For any
+`0 < e < 2^a` and any `M > 0`,
+
+    `Σ_{n ≤ Y, n ≡ r (M)} τ(2^a n + e) ≤ (log₂ e + 1)·τ(gcd(M, 2^a r + e))·2((Y/M)(log₂D+2)+D)`.
+
+Both loss factors are explicit functions of the SHIFT and of one fixed integer; neither
+involves `ω(M)` or `τ(M)`.  This is the final elementary form of the first moment: the whole
+of the crux except the passage from the integers of the progression to its primes. -/
+theorem tau_shift_sum_AP_gen (a e M r Y : ℕ) (he : 0 < e) (hea : e < 2 ^ a) (hM : 0 < M) :
+    ∑ n ∈ SwingC2Moment.apSet M r Y, tau (2 ^ a * n + e)
+      ≤ (Nat.log 2 e + 1) * ((Nat.gcd M (2 ^ a * r + e)).divisors.card *
+          (2 * ((Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ a * Y + e)) + 2)
+                  + Nat.sqrt (2 ^ a * Y + e)))) := by
+  classical
+  obtain ⟨v, u, hsplit, hodd, hva, hle, hupos, hue, hfac⟩ := tau_shift_two_adic' a e he hea
+  set c : ℕ := a - v with hc
+  have hc1 : 1 ≤ c := by omega
+  have hcv : 2 ^ v * (2 ^ c * r) = 2 ^ a * r := by
+    rw [← Nat.mul_assoc, ← pow_add]
+    congr 2
+    omega
+  have hdvd : 2 ^ c * r + u ∣ 2 ^ a * r + e := by
+    refine ⟨2 ^ v, ?_⟩
+    rw [Nat.mul_comm (2 ^ c * r + u) (2 ^ v), Nat.mul_add, hcv, hsplit]
+  -- the gcd of the odd part divides the gcd of the whole
+  have hgdvd : Nat.gcd M (2 ^ c * r + u) ∣ Nat.gcd M (2 ^ a * r + e) :=
+    Nat.dvd_gcd (Nat.gcd_dvd_left _ _) ((Nat.gcd_dvd_right _ _).trans hdvd)
+  have hgne : Nat.gcd M (2 ^ a * r + e) ≠ 0 := by
+    have : 0 < Nat.gcd M (2 ^ a * r + e) := Nat.gcd_pos_of_pos_left _ hM
+    omega
+  have hgcard : (Nat.gcd M (2 ^ c * r + u)).divisors.card
+      ≤ (Nat.gcd M (2 ^ a * r + e)).divisors.card :=
+    Finset.card_le_card (Nat.divisors_subset_of_dvd hgne hgdvd)
+  have hmain := tau_shift_sum_AP_odd_gcd c u M r Y hc1 hM hodd
+  have hmono : Nat.sqrt (2 ^ c * Y + u) ≤ Nat.sqrt (2 ^ a * Y + e) := by
+    refine Nat.sqrt_le_sqrt ?_
+    have h1 : (2 : ℕ) ^ c ≤ 2 ^ a := Nat.pow_le_pow_right (by norm_num) (by omega)
+    have h2 : 2 ^ c * Y ≤ 2 ^ a * Y := Nat.mul_le_mul_right Y h1
+    omega
+  have hlogmono : Nat.log 2 (Nat.sqrt (2 ^ c * Y + u)) ≤ Nat.log 2 (Nat.sqrt (2 ^ a * Y + e)) :=
+    Nat.log_mono_right hmono
+  have hvlog : v ≤ Nat.log 2 e := (Nat.le_log_iff_pow_le (by norm_num) (by omega)).2 hle
+  have hsum : ∑ n ∈ SwingC2Moment.apSet M r Y, tau (2 ^ a * n + e)
+      = (v + 1) * ∑ n ∈ SwingC2Moment.apSet M r Y, tau (2 ^ c * n + u) := by
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl fun n _ => hfac n
+  rw [hsum]
+  refine Nat.mul_le_mul (by omega) (le_trans hmain ?_)
+  have hbody : (Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ c * Y + u)) + 2) + Nat.sqrt (2 ^ c * Y + u)
+      ≤ (Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ a * Y + e)) + 2) + Nat.sqrt (2 ^ a * Y + e) := by
+    have h1 : (Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ c * Y + u)) + 2)
+        ≤ (Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ a * Y + e)) + 2) :=
+      Nat.mul_le_mul_left _ (by omega)
+    omega
+  calc 2 * ((Nat.gcd M (2 ^ c * r + u)).divisors.card *
+        ((Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ c * Y + u)) + 2) + Nat.sqrt (2 ^ c * Y + u)))
+      ≤ 2 * ((Nat.gcd M (2 ^ a * r + e)).divisors.card *
+        ((Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ a * Y + e)) + 2) + Nat.sqrt (2 ^ a * Y + e))) :=
+        Nat.mul_le_mul_left 2 (Nat.mul_le_mul hgcard hbody)
+    _ = (Nat.gcd M (2 ^ a * r + e)).divisors.card *
+        (2 * ((Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ a * Y + e)) + 2)
+              + Nat.sqrt (2 ^ a * Y + e))) := by ring
 
 /-- **The sieve input, in its final single-inequality form.**  For one family `P` of primes of
 the progression and one shift `e = K+1+k`, the number of *divisor incidences*
