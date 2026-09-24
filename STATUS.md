@@ -1,7 +1,93 @@
 # STATUS — normal-numbers 📊
 
+**Active campaign: the C3 swing — `ConjC3` (`G_b` is RICH) — crux re-sited to ONE analytic leaf.**
+· **Build**: 🟢 green (9180 jobs) · **Updated**: 2026-09-24 review lap · HEAD `61017f2`
+· branch `wip/swing-c3` · previous campaign (Theorem C′) COMPLETE, kept below
+
+## Where it stands (C3 swing)
+
+`conjC3 : ConjC3` is assembled and compiling, and the *whole* covering argument that turns the
+hypotheses into `IsRich` is machine-checked (`isRich_of_rotationRoute`, trust triple).  The
+structural finding of this branch: `G_b = S_P + L_P` where `S_P = ∑_n ω_{≤P}(n) b^{−n}` is
+**rational** (its digit stream is periodic mod `Q = ∏_{p≤P} p`) and `L_P = ∑_n ω_{>P}(n) b^{−n}`;
+so `orbit b G_b n = fract(orbit b S_P n + orbit b L_P n)` is a *rational rotation* of the orbit of
+`L_P`, with the rotation constant depending only on `n mod Q`.  Richness then follows from two
+things and nothing else: the `Q` rotation constants form a `len`-**net** (Leaf A, arithmetic), and
+the orbit of `L_P` has the **same empirical law on every class mod `Q`** (Leaf B, analytic).  Two
+open `sorry`s in `src/`, both in `SwingC3Rotation.lean`, plus the two pre-existing designated-open
+off-campaign ones.
+
+## What's happened (C3 swing, newest first)
+
+- **2026-09-24 (review lap) — CRUX RE-SITED, covering glue PROVED.**  `largeTailLaw_holds` (one
+  fat sorry demanding a genuine *limit law* on an exact `b^{−ℓ}` grid) replaced by the strictly
+  weaker pair `RotationCover` + `TailLargeDecouple`, with `isRich_of_rotationRoute` sorry-free.
+  Two findings: (i) **covering, not partition, and a net, not a grid** — the θ-bookkeeping
+  obstruction of the previous handoff (slots `j > ℓ` contribute an uncontrolled `O(π(P)b^{−ℓ})`)
+  evaporates once the rotations are only required to be a `len`-net; (ii) **`fract(tailLarge P b n)
+  = orbit b L_P n`** (since `tailLarge(n+1) = b·tailLarge(n) − ω_{>P}(n+1)`), so Leaf B is a
+  statement about the `×b` orbit of a single real number, and — because class `r+1` is the `×b`
+  image of class `r` — is *equivalent* to: every limit of the `×b^Q`-empirical measures of `L_P` is
+  `×b`-invariant.  That is neither Selberg–Delange (`ω mod b`) nor Chowla (`ω(n), ω(n+1)` jointly).
+- **2026-09-24 (swing laps 1–6)** — digit formula for `G_b` (`SwingC3Digits`), the exact carry
+  recursion and its `O(log_b log k)` window bound (`SwingC3Carry`), the small/large prime split
+  with `tailSmall` periodic (`SwingC3Split`), CRT steering `exists_crt_pattern`, the rotation
+  partition engine `fract_add_mem_cylinder_iff` / `exists_shift_mem_cylinder`, and
+  `isRich_of_largeTailLaw`.  Four routes REFUTED and recorded (effective disjunctivity — with the
+  numeric probe `N(4,L)/4^L` still climbing at `L = 7`; exact `ω`-prescription — Landau; `ω mod b`
+  alone — the carry reads `ω div b`; sharpening the §5 schedule — it is contradiction-from-total-
+  omission, one occurrence only).
+
+## Outstanding (C3 swing)
+
+### Short-term (mirrors PENDING_WORK top)
+1. **`tailLargeDecouple_holds` (Leaf B) — THE CRUX.**  Decompose; the obstruction to name and
+   beat is the `loglog N` unbounded tail `∑_{p>K} c_p(n)`, `E ≍ (loglog N − loglog K)/(b−1)`,
+   which defeats truncation at any `K ≤ N^{o(1)}` (exact-CRT decoupling of finite divisibility
+   patterns is free — `gcd(p, Q) = 1` — so ALL the difficulty is this tail).
+2. **`exists_rotationCover` (Leaf A).**  CRT + prime counting; construction written out in the
+   docstring.  Certain to be true; on-path; not the crux.
+3. Formalise `G_b = S_P + L_P` and `fract (tailLarge P b n) = orbit b L_P n` as named lemmas —
+   they are what makes both leaves readable, and Leaf B's dynamical form is stated through them.
+
+### Long-term
+Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
+`MahlerDriftOne.exists_prime_nonresidue`.  Effective disjunctivity `N(b,ℓ)` (a `DIRECTION.md`
+target) is REFUTED as a route to `ConjC3` but remains of independent interest.
+
+### To completion
+`ConjC3` = Leaf A + Leaf B.  Leaf A is a finite construction.  Leaf B is the open frontier.
+
+## Axiom ledger — C3 swing (real `#print axioms`, 2026-09-24, 9180 jobs)
+
+| headline theorem | paper claim | `#print axioms` shows | verdict |
+|---|---|---|---|
+| `CastingOut.isRichUpper_of_isRich` | rung: lower density ⇒ upper density | trust triple | 🟢 clean |
+| `CastingOut.isRich_of_rotationRoute` | **the covering argument** — `RotationCover` + `TailLargeDecouple` ⇒ `IsRich` | trust triple | 🟢 **clean — PROVED** |
+| `CastingOut.isRich_of_largeTailLaw` | the same, from the stronger limit-law hypothesis | trust triple | 🟢 clean |
+| `CastingOut.density_lower_of_decouple` | the numerical core of the covering argument | trust triple | 🟢 clean |
+| `Split.exists_crt_pattern` / `fract_add_mem_cylinder_iff` / `exists_shift_mem_cylinder` / `orbit_eq_rotation` | the rotation engine | trust triple | 🟢 clean |
+| `CastingOut.exists_rotationCover` | **Leaf A** — CRT/net bookkeeping, certainly true | `sorryAx` | 🟡 open leaf; elementary, on-path |
+| `CastingOut.tailLargeDecouple_holds` | **Leaf B** — class-independence of `orbit L_P` | `sorryAx` | 🟡 **THE CRUX**; sieve/dynamics-grade, current frontier |
+| `CastingOut.conjC3` | **`ConjC3`** (`G_b` rich, `b ≥ 3`) — a CONJECTURE, open in the literature | `sorryAx` (via the two leaves) | 🟡 open by design; a moonshot swing's expected end state |
+| `CastingOut.isRichUpper_primeLambertAtBase` | rung above `ConjC3` | `sorryAx` (via `conjC3`) | 🟡 same |
+
+Math-axiom count for the swing: **0** `axiom` declarations (the kickoff forbids them); the open
+obligations are **2** disclosed `sorry`s, both named leaves in `src/`.  No `🔴`: `ConjC3` is not
+claimed unconditionally anywhere — `conjC3` is itself the open target, and every *proved* theorem
+on the branch reaches the bare trust triple.
+
+## Pointers (C3 swing)
+`KICKOFF-2026-09-24-swing-c3.md` · `CONJECTURES-2026-09-23-casting-out-and-rungs.md` ·
+`src/NormalNumbers/Maze.lean` (~120 closed halls) · newest `HANDOFF-2026-09-24-swing-c3*.md` ·
+`PENDING_WORK.md` · `DIRECTION.md` (CURRENT DIRECTIVE)
+
+---
+
+# (below: the Pair A multicutoff campaign — COMPLETE 2026-09-23; kept as its durable overview)
+
 **Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
-· **Build**: 🟢 green (9161 jobs) · **Updated**: 2026-09-23, campaign complete · HEAD `3523f8d`
+· **Build**: 🟢 green (9161 jobs) · 2026-09-23, campaign complete · HEAD `3523f8d`
 · branch `wip/g5-prime-subset`
 
 ## Where it stands (multicutoff campaign)

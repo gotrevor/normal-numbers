@@ -1,5 +1,79 @@
 # PENDING WORK
 
+## 2026-09-24 — the C3 swing (branch `wip/swing-c3`): crux = **Leaf B**
+
+`conjC3 : ConjC3` is assembled; `isRich_of_rotationRoute` (the entire covering argument) is
+sorry-free.  Exactly two open leaves, both `src/NormalNumbers/SwingC3Rotation.lean`.
+
+### The structure, in one paragraph
+
+`G_b = S_P + L_P`, `S_P = ∑_n ω_{≤P}(n) b^{−n}` **rational** (digits periodic mod
+`Q = ∏_{p≤P} p`), `L_P = ∑_n ω_{>P}(n) b^{−n}`.  Hence
+`orbit b G_b n = fract(orbit b S_P n + orbit b L_P n)` and `orbit b S_P n` depends only on
+`n mod Q`: the orbit of `G_b` is the orbit of `L_P` **rotated by one of `Q` constants**.  A word
+`w` occurs at `n` iff the orbit point is in `w`'s cylinder `I_w`.  If the `Q` rotation constants
+form a `|I_w|`-net (Leaf A) and the orbit of `L_P` has the same empirical law on every class mod
+`Q` (Leaf B), the `Q` rotated copies COVER the circle, so the occurrence density is `≥ 1/(2Q)`.
+That last implication is the proved part.
+
+### Leaf A — `exists_rotationCover` (elementary; on-path; NOT the crux)
+
+Construction is written out in the docstring: pick `ℓ'` with `b^{ℓ'} ≫ ℓ'/len`, `P` minimal with
+`(b−1)ℓ'` primes in `(ℓ'+1, P]`, `Q = ∏_{p≤P} p`; steer `ω_{≤P}(a+j) = c_j + k_j` for `j ≤ ℓ'` by
+`exists_crt_pattern` (window `ℓ'+1`, unused primes dumped into slot `ℓ'+1`) plus a fixed residue
+mod `∏_{p≤ℓ'+1} p`.  The head then runs over every multiple of `b^{−ℓ'}` and the uncontrolled
+remainder is `≤ π(P)·b^{−ℓ'}/(b−1) ≤ (bℓ'+1)b^{−ℓ'}/(b−1)`, below the net spacing.
+**Missing Lean pieces**: (a) `exists_crt_pattern'` — the same CRT statement with an extra
+`a ≡ a₀ [MOD R]` clause, `R` coprime to `∏_{p∈S} p`; (b) `tailSmall` computed from a prescribed
+window (head + remainder bound); (c) "a `δ`-perturbed `b^{−ℓ'}`-grid meets every arc of length
+`> b^{−ℓ'} + δ`"; (d) enough primes in `(L, P]` (Bertrand-grade).
+
+### Leaf B — `tailLargeDecouple_holds` — **THE CRUX**
+
+Statement: for every class `r` mod `Q`, rotation `θ` and arc,
+`#{n<N : n ≡ r, fract(θ + tailLarge P b n) ∈ arc} − (1/Q)#{n<N : … } = o(N)`.
+
+**Two exact facts, both cheap, that frame it.**
+1. `tailLarge P b (n+1) = b·tailLarge P b n − ω_{>P}(n+1)`, hence
+   `fract(tailLarge P b n) = orbit b L_P n`.  So class `r+1` is the `×b` image of class `r`, and
+   Leaf B **⟺ every limit of the `×b^Q`-empirical measures of `L_P` is `×b`-invariant.**
+2. `tailLarge P b n = ∑_{p>P} b^{−j₀(n,p)}/(1−b^{−p})` with `j₀(n,p) = least j ≥ 1, p ∣ n+j`
+   (so each summand depends only on `n mod p`, and `gcd(p,Q) = 1`).  Hence the density of any
+   FINITE divisibility pattern `p_i ∣ n+j_i` inside a class mod `Q` is **exactly** `1/(Q∏p_i)`:
+   the finite-dimensional decoupling is free, by CRT, with no sieve at all.
+
+**The one obstruction, named.**  The functional is not a continuous function of finitely many of
+those indicators: `E_n[∑_{p>K} c_p(n)] ≍ (loglog N − loglog K)/(b−1)`, which → ∞ for any
+`K ≤ N^{o(1)}`, while exact periodicity of the truncation `∑_{P<p≤K} c_p` costs a modulus
+`D ≈ e^K` and therefore needs `K ≤ (1−ε)log N`.  So *truncate-and-CRT does not close*, and the
+gap is exactly the unbounded `loglog` tail — the same tail that makes `G_b`'s normality hard.
+
+**Attack list for the next laps** (each is a lap-sized, falsifiable probe):
+- **B1 (formalise the frame).**  Define `smallLambert P b`, `largeLambert P b`; prove
+  `primeLambertAtBase b = smallLambert + largeLambert`, `fract (tailLarge P b n) = orbit b
+  (largeLambert P b) n`, and `orbit b (smallLambert P b) n` is `Q`-periodic.  Restate Leaf B
+  dynamically.  This is pure bookkeeping and it makes every later lap cheaper.
+- **B2 (one-sided suffices).**  The glue only uses `A_k ≥ (1/Q)B_k − o(N)`.  Weaken
+  `TailLargeDecouple` to that one-sided form and check whether the boundary-of-arc term (which is
+  what the two-sided form pays for) disappears.
+- **B3 (bounded surrogate).**  Replace `ω_{>P}` by `min(ω_{>P}, m)` or by a bounded 0/1 read of a
+  single slot, so the tail IS uniformly small; prove decoupling for the surrogate exactly; then
+  measure what the truncation costs in the covering step.  If the covering survives a bounded
+  surrogate, the `loglog` tail is *not* an obstruction and Leaf B is finite-dimensional.
+- **B4 (refutation probe).**  Numerically test class-dependence directly: for `b = 4`, `P` small,
+  compare the empirical histogram of `orbit L_P` on `n ≡ r (mod Q)` across `r`.  A visible,
+  persistent class-dependence would REFUTE the route and is a first-class deliverable.
+- **B5 (invariance route).**  Prove `×b`-invariance of the limit measures directly from
+  `y_{n+1} = T y_n` plus a quantitative recurrence, rather than from arithmetic.
+
+### Not to be re-tried (refuted, this branch)
+Effective disjunctivity (`N(4,L)/4^L` still climbing at `L = 7`, probe
+`probes/g4_first_occurrence.py`); exact prescription of `ω` on a window (Landau: density zero);
+any statement about `ω mod b` alone (the carry recursion reads `ω div b`); sharpening the §5
+schedule (`isDisjunctive_base` is contradiction-from-total-omission: one occurrence, no density).
+
+---
+
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is sorry-free and

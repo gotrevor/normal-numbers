@@ -2,37 +2,49 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective.**  `isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′, Fable §9 / Astra §11)
-SORRY-FREE and trust-triple.  The whole chain is assembled and green; the headline's `sorryAx`
-comes from exactly **three** leaves, all in `src/NormalNumbers/PrimeModelFamilyGraded.lean`.
+**Objective (branch `wip/swing-c3`, operator kickoff
+`KICKOFF-2026-09-24-swing-c3.md`, which supersedes the previous directive).**
+`ConjC3` — `G_b` is RICH (every word at positive lower density) for every `b ≥ 3`.
+`conjC3` is assembled and green; its `sorryAx` comes from exactly **two** leaves in
+`src/NormalNumbers/SwingC3Rotation.lean`.
 
-**Mandated next move (2026-09-23 review lap — direction KEPT, priority sharpened).**
-Close the three leaves, hardest first:
-1. **`termE5_tendsto`** (l. ~980) — Astra (8.6), the last structurally NEW estimate and the only
-   one whose feasibility is in real doubt.  Everything it needs is already proved:
-   `recipSumIoc_yG_le` (short root chain at any `j ≤ J1 N`), `JG_le_mass` (`8J ≤ S_P(N)`),
-   Mertens (`primeRecipSum_le` / `recipSumLe_le_crude`), `cIdx ≤ J−1 ≤ J1 N`.
-2. **`schedule_admissible`** (l. ~575) — eleven pointwise clauses, two already proved
-   (`yBotG_le_yG`, `yG_antitone`); bookkeeping, no new mathematics.
-3. **`termE4c_tendsto`** (l. ~974) — `N^{-1+o(1)}`; arithmetic of the support level.
+**Mandated next move (2026-09-24 review lap — route KEPT, crux re-sited).**
+The route is the ROTATION route: `G_b = S_P + L_P` with `S_P` **rational** (small-prime
+Lambert, digits periodic mod `Q = ∏_{p≤P} p`) and `L_P` the large-prime Lambert number; the
+orbit of `G_b` is `fract(orbit S_P n + orbit L_P n)`, a rational rotation of the orbit of `L_P`.
+Work the leaves hardest-first:
+1. **`tailLargeDecouple_holds`** (Leaf B, `SwingC3Rotation.lean` l. ~243) — THE CRUX.  The
+   empirical law of `orbit L_P` is the same on every class mod `Q`.  Equivalent (because
+   `fract(tailLarge P b (n+1)) = fract(b · tailLarge P b n)`, so class `r+1` is the `×b` image
+   of class `r`) to: **every limit of the `×b^Q`-empirical measures of `L_P` is `×b`-invariant.**
+   Decompose it; do not restate it.  Exactly-CRT finite-dimensional decoupling is free; the
+   obstruction is the `loglog N` unbounded tail (`E[∑_{p>K} c_p] ≍ loglog N − loglog K`), so
+   naive truncation at any `K ≤ N^{o(1)}` fails.  Any lap that names a NEW handle on that tail,
+   or refutes one, is a successful lap.
+2. **`exists_rotationCover`** (Leaf A, l. ~228) — CRT/net bookkeeping; certain to be true.
+   Construction written out in its docstring.  On-path, closable, but it is NOT the crux.
 
-**Forbidden drift.**  Do NOT open new campaigns, do NOT touch `PrimeLambertOscillation` or
-`MahlerDriftOne` (the two pre-existing off-campaign `sorry`s — designated open), do NOT edit
-`PrimeModelBrunLower.lean`, `papers/`, or Pair B files.  Do NOT weaken any existing statement to
-make a leaf close; a leaf that resists gets a named sub-`sorry` IN `src/`, never a relocation.
-No constant-class-count route (refuted 2026-09-22, see below).
+**Forbidden drift.**  Do NOT edit `CastingOut.lean`, `CastingOutCount.lean`,
+`CastingOutLambert.lean`, `Maze.lean`, `papers/`, `agent-mail/`, other KICKOFFs, or the two
+designated-open off-campaign `sorry`s (`PrimeLambertOscillation`, `MahlerDriftOne`).  Do NOT
+delete or weaken a ratified statement to make the file sorry-free (kickoff addendum).  Do NOT
+re-try the four refuted routes (effective disjunctivity / exact `ω`-prescription / `ω mod b`
+alone / sharpening the §5 schedule) — see `HANDOFF-2026-09-24-swing-c3.md`.  Never use `axiom`;
+a named conditional `…_of_H` beside the open headline is the expected end state.
 
-**Why.**  The graded route's route-decisive question — whether the fresh-mass surrogate `ε_N → 0`
-alone can drive the schedule — was settled affirmatively by the bounded contracting site index
-(`exists_site_re_nonpos_le`, lap G5c-e) plus the short root chain (`recipSumIoc_yG_le`, lap G5c-i).
-E5 is where that finding is finally cashed: if the exponent `8J − 1 − log 2J − o(1)` does not
-materialise in Lean, the schedule constants (the `8` in `JG`, the `2J` floor) need retuning and
-that is a redesign.  Nothing else open can force a pivot.
+**Why.**  The route-decisive question is whether the rotation route needs anything beyond
+class-independence.  It does not — `isRich_of_rotationRoute` is machine-checked from
+`RotationCover` + `TailLargeDecouple` alone, with NO limit law and NO exact grid.  So the whole
+swing now stands or falls on Leaf B, and Leaf B is a statement about a single real number's
+orbit, not about `ω mod b` (Selberg–Delange) or about `ω(n), ω(n+1)` jointly (Chowla).  That
+re-siting is what makes the crux attackable.
 
 **Directive history.**
-- 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
-- 2026-09-23 (review lap): route KEPT and vindicated (5/8 leaves closed, tail crux resolved);
-  narrowed to the three remaining leaves of `PrimeModelFamilyGraded.lean`, E5 first.
+- 2026-09-22 (lap 7 review): graded joint state route (Theorem C′).  DONE 2026-09-23.
+- 2026-09-23 (review lap): Theorem C′ narrowed to three leaves, E5 first.  DONE same day.
+- 2026-09-24 (review lap): **superseded by the swing-c3 kickoff.**  Objective is `ConjC3`;
+  crux re-sited from `largeTailLaw_holds` (one fat sorry) to `tailLargeDecouple_holds`
+  (Leaf B) after the covering glue was proved at the weaker hypothesis.
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically
