@@ -17,7 +17,9 @@ noncomputable def IsRichUpper (b : ℕ) (x : ℝ) : Prop :=
     ∃ᶠ N in atTop, c * N ≤ (((range N).filter (fun n => OccursAt b x w n)).card : ℝ)
 
 theorem isRichUpper_of_isRich (b : ℕ) (x : ℝ) (h : IsRich b x) : IsRichUpper b x := by
-  sorry
+  intro w hw
+  obtain ⟨c, hc, hev⟩ := h w hw
+  exact ⟨c, hc, hev.frequently⟩
 
 /-- Rung: `G4_b` is upper-rich. -/
 theorem isRichUpper_primeLambertAtBase (b : ℕ) (hb : 3 ≤ b) :
