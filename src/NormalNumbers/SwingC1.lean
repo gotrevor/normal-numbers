@@ -108,6 +108,109 @@ noncomputable def castState (b L n : ℕ) : ZMod (b - 1) :=
 noncomputable def stateFreq (b L : ℕ) (r : ZMod (b - 1)) (N : ℕ) : ℝ :=
   (((range N).filter (fun n => castState b L n = r)).card : ℝ) / N
 
+lemma sum_Ioc_omegaNat (n L : ℕ) :
+    ∑ m ∈ Finset.Ioc n (n + L), (omegaNat m : ℤ)
+      = ∑ i ∈ range L, (omegaNat (n + 1 + i) : ℤ) := by
+  induction L with
+  | zero => simp
+  | succ L ih =>
+      rw [show n + (L + 1) = (n + L) + 1 by omega, Finset.sum_Ioc_succ_top (by omega), ih,
+        Finset.sum_range_succ]
+      ring_nf
+
+/-- The `ω`-head of the length-`L` window at `n`: `Σ_{i<L} ω(n+1+i) b^{L-1-i}`. -/
+def omegaHead (b L n : ℕ) : ℤ :=
+  ∑ i ∈ range L, (omegaNat (n + 1 + i) : ℤ) * (b : ℤ) ^ (L - 1 - i)
+
+/-- The integer the length-`L` window of `G4_b` at `n` reads off, before reduction mod `b^L`:
+`Σ_{i<L} ω(n+1+i) b^{L-1-i} + c_{n+L}`.  By `omegaCarry_eq_windowVal_div` its quotient by `b^L`
+is `c_n`, so its residue mod `b^L` is exactly the window word. -/
+noncomputable def omegaWindowVal (b L n : ℕ) : ℤ := omegaHead b L n + omegaCarry b (n + L)
+
+/-- `b^L · tail_n = head + tail_{n+L}`: the `L`-step form of `omegaTail_rec`. -/
+lemma omegaTail_pow (b : ℕ) (hb : 2 ≤ b) (L n : ℕ) :
+    (b : ℝ) ^ L * omegaTail b n = ((omegaHead b L n : ℤ) : ℝ) + omegaTail b (n + L) := by
+  induction L with
+  | zero => simp [omegaHead]
+  | succ L ih =>
+      have hstep := omegaTail_rec b hb (n + L)
+      have : (b : ℝ) ^ (L + 1) * omegaTail b n = (b : ℝ) * ((b : ℝ) ^ L * omegaTail b n) := by
+        rw [pow_succ]; ring
+      rw [this, ih, mul_add, hstep]
+      have hhead : ((omegaHead b (L + 1) n : ℤ) : ℝ)
+          = (b : ℝ) * ((omegaHead b L n : ℤ) : ℝ) + (omegaNat (n + 1 + L) : ℝ) := by
+        have : omegaHead b (L + 1) n
+            = (b : ℤ) * omegaHead b L n + (omegaNat (n + 1 + L) : ℤ) := by
+          rw [omegaHead, omegaHead, Finset.sum_range_succ, Finset.mul_sum]
+          have : ∀ i ∈ range L, (b : ℤ) * ((omegaNat (n + 1 + i) : ℤ) * (b : ℤ) ^ (L - 1 - i))
+              = (omegaNat (n + 1 + i) : ℤ) * (b : ℤ) ^ (L + 1 - 1 - i) := by
+            intro i hi
+            have hiL : i < L := Finset.mem_range.mp hi
+            rw [show L + 1 - 1 - i = (L - 1 - i) + 1 by omega, pow_succ]
+            ring
+          rw [Finset.sum_congr rfl this]
+          simp
+        rw [this]; push_cast; ring
+      rw [hhead, show n + (L + 1) = n + L + 1 by omega]
+      ring
+
+lemma omegaWindowVal_eq_floor (b : ℕ) (hb : 2 ≤ b) (L n : ℕ) :
+    omegaWindowVal b L n = ⌊(b : ℝ) ^ L * omegaTail b n⌋ := by
+  rw [omegaWindowVal, omegaTail_pow b hb L n, Int.floor_intCast_add, omegaCarry_eq_floor]
+
+/-- **The carry is the quotient.**  `c_n = ⌊(Σ_{i<L} ω(n+1+i) b^{L-1-i} + c_{n+L}) / b^L⌋`;
+for `L = 1` this is `omegaCarry_rec`. -/
+theorem omegaCarry_eq_windowVal_div (b : ℕ) (hb : 2 ≤ b) (L n : ℕ) :
+    omegaCarry b n = omegaWindowVal b L n / (b : ℤ) ^ L := by
+  have hb0 : (0 : ℝ) < b := by
+    have : (2 : ℝ) ≤ b := by exact_mod_cast hb
+    linarith
+  have hbne : ((b : ℝ) ^ L) ≠ 0 := by positivity
+  have h := Int.floor_div_natCast ((b : ℝ) ^ L * omegaTail b n) (b ^ L)
+  push_cast at h
+  rw [mul_comm ((b : ℝ) ^ L) (omegaTail b n), mul_div_assoc, div_self hbne, mul_one] at h
+  rw [omegaWindowVal_eq_floor b hb L n, mul_comm ((b : ℝ) ^ L) (omegaTail b n)]
+  exact h
+
+/-- **The window word is an `ω`-object.**  `castState b L n` is the residue mod `b − 1` of
+`omegaWindowVal b L n mod b^L` — a bounded function of `ω(n+1), …, ω(n+L)` and `c_{n+L} mod b^L`.
+(The unbounded part of the carry cancels: `b^L ≡ 1 mod b−1`.) -/
+theorem castState_eq_windowVal_emod (b : ℕ) (hb : 2 ≤ b) (L n : ℕ) :
+    castState b L n = ((omegaWindowVal b L n % (b : ℤ) ^ L : ℤ) : ZMod (b - 1)) := by
+  have hcast : ((b - 1 : ℕ) : ℤ) = (b : ℤ) - 1 := by
+    have : 1 ≤ b := by omega
+    push_cast [Nat.cast_sub this]; ring
+  have hq : ∀ j : ℕ, ((b : ℤ) - 1) ∣ ((b : ℤ) ^ j - 1) := fun j => by
+    simpa using sub_dvd_pow_sub_pow (b : ℤ) 1 j
+  set S : ℤ := ∑ m ∈ Finset.Ioc n (n + L), (omegaNat m : ℤ) with hS
+  set c : ℤ := omegaCarry b n with hc
+  -- the window residue, written out
+  have hV : omegaWindowVal b L n % (b : ℤ) ^ L
+      = omegaHead b L n + omegaCarry b (n + L) - (b : ℤ) ^ L * c := by
+    rw [Int.emod_def, ← omegaCarry_eq_windowVal_div b hb L n, omegaWindowVal, hc]
+  -- head ≡ plain ω-sum
+  have hre : S = ∑ i ∈ range L, (omegaNat (n + 1 + i) : ℤ) := by
+    rw [hS]; exact sum_Ioc_omegaNat n L
+  obtain ⟨u, hu⟩ : ((b : ℤ) - 1) ∣ (S - omegaHead b L n) := by
+    rw [hre, omegaHead, ← Finset.sum_sub_distrib]
+    refine Finset.dvd_sum fun i _ => ?_
+    obtain ⟨w, hw⟩ := hq (L - 1 - i)
+    exact ⟨-(omegaNat (n + 1 + i) : ℤ) * w, by
+      rw [show (omegaNat (n + 1 + i) : ℤ) - (omegaNat (n + 1 + i) : ℤ) * (b : ℤ) ^ (L - 1 - i)
+        = -((omegaNat (n + 1 + i) : ℤ) * ((b : ℤ) ^ (L - 1 - i) - 1)) by ring, hw]; ring⟩
+  obtain ⟨w, hw⟩ := hq L
+  have hmain : S + omegaCarry b (n + L) - c
+      ≡ omegaWindowVal b L n % (b : ℤ) ^ L [ZMOD ((b : ℤ) - 1)] := by
+    refine Int.modEq_iff_dvd.mpr ⟨-u - c * w, ?_⟩
+    rw [hV, mul_sub, mul_neg, ← hu]
+    have : (b : ℤ) ^ L = ((b : ℤ) - 1) * w + 1 := by linarith
+    rw [this]; ring
+  have hZ : ((S + omegaCarry b (n + L) - c : ℤ) : ZMod (b - 1))
+      = ((omegaWindowVal b L n % (b : ℤ) ^ L : ℤ) : ZMod (b - 1)) :=
+    (ZMod.intCast_eq_intCast_iff _ _ (b - 1)).mpr (by rw [hcast]; exact hmain)
+  rw [hS, hc] at hZ
+  simpa [castState, omegaCarry] using hZ
+
 /-- The window digit sum of `G4_b`, pushed into `ZMod (b−1)`, **is** `castState`. -/
 theorem windowDigitSum_cast_eq_castState (b : ℕ) (hb : 2 ≤ b) (L n : ℕ) :
     ((windowDigitSum b (primeLambertAtBase b) n L : ℕ) : ZMod (b - 1)) = castState b L n := by
