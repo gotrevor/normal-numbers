@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.CastingOut
 import NormalNumbers.G4WeightInterface
+import NormalNumbers.SwingC2Moment
 
 /-!
 # Swing at C2: the Erdős–Borwein constant is disjunctive
@@ -1435,6 +1436,58 @@ theorem survivorLeaf_of_carryLeaf (b : ℕ) (hb : 3 ≤ b) (h : CarryLeaf b) : S
   · have he : 2 ^ a * p - ℓ + (ℓ + K) = 2 ^ a * p + K := by omega
     rw [he]
     exact hpc
+
+/-! ### The elementary half of `CarryLeaf`: the first moment of `τ` along a progression
+
+`SwingC2Moment.tau_sum_AP_le_log` is a full theorem: over the FULL progression `n ≡ r (mod M)`,
+`n ≤ X`, with `gcd(r,M) = 1`,
+
+    Σ τ(n) ≤ 2·( (X/M)·(log₂ √X + 2) + √X ).
+
+Restated here for `tau`, together with the exceptional-set (Markov) form that `CarryLeaf` wants.
+The gap that remains is exactly the transfer of this first moment from the integers of the
+progression to its PRIMES (`TauMomentPrimes` below). -/
+
+/-- First moment of `tau` over `{n ≤ X : n ≡ r (mod M)}`, `gcd(r,M) = 1`. -/
+theorem tau_sum_AP (M r X : ℕ) (hM : 0 < M) (hr : Nat.Coprime r M) :
+    ∑ n ∈ SwingC2Moment.apSet M r X, tau n
+      ≤ 2 * ((X / M) * (Nat.log 2 (Nat.sqrt X) + 2) + Nat.sqrt X) :=
+  SwingC2Moment.tau_sum_AP_le_log M r X hM hr
+
+/-- **Exceptional set.**  At most `2((X/M)(log₂√X+2)+√X)/T` of the `n ≤ X` in the class have
+`τ(n) ≥ T`.  For `T ≍ b^K` and `X` polynomial in `M ≤ 2^{b^{K/2}}` the right side is `≪ X/M`, so
+almost every element of the progression is good — this is the statement `CarryLeaf` needs, except
+that `CarryLeaf` must land on a PRIME. -/
+theorem card_large_tau_le (M r X T : ℕ) (hM : 0 < M) (hr : Nat.Coprime r M) :
+    T * ((SwingC2Moment.apSet M r X).filter (fun n => T ≤ tau n)).card
+      ≤ 2 * ((X / M) * (Nat.log 2 (Nat.sqrt X) + 2) + Nat.sqrt X) := by
+  classical
+  refine le_trans ?_ (tau_sum_AP M r X hM hr)
+  have h1 : ∑ n ∈ (SwingC2Moment.apSet M r X).filter (fun n => T ≤ tau n), T
+      ≤ ∑ n ∈ (SwingC2Moment.apSet M r X).filter (fun n => T ≤ tau n), tau n :=
+    Finset.sum_le_sum (fun n hn => (Finset.mem_filter.1 hn).2)
+  have h2 : ∑ n ∈ (SwingC2Moment.apSet M r X).filter (fun n => T ≤ tau n), tau n
+      ≤ ∑ n ∈ SwingC2Moment.apSet M r X, tau n :=
+    Finset.sum_le_sum_of_subset (Finset.filter_subset _ _)
+  have h3 : ∑ _n ∈ (SwingC2Moment.apSet M r X).filter (fun n => T ≤ tau n), T
+      = T * ((SwingC2Moment.apSet M r X).filter (fun n => T ≤ tau n)).card := by
+    rw [Finset.sum_const, smul_eq_mul, Nat.mul_comm]
+  omega
+
+/-- **The remaining, genuinely analytic, half of `CarryLeaf`.**  The same first moment, but
+along the primes of the progression: for `gcd(r,M)=1` there are primes `p ∈ (N, Y]` with
+`p ≡ r (mod M)` at which `τ(c·p + e)` is `≤ T`, provided the trivial budget holds.
+
+This is a Brun–Titchmarsh (Selberg upper-bound sieve) statement for `Σ_{p ≤ Y, p ≡ r (M)}
+τ(c p + e) ≪ π(Y;M,r)·log(cY)` together with a Linnik-type lower bound
+`π(Y;M,r) ≫ Y/(φ(M) log Y)` for `Y = M^{O(1)}`.  Neither is in mathlib; both are `🟡`
+project-scale.  `card_large_tau_le` above is the corresponding statement over the full
+progression and IS proved — the open content is exactly the restriction to primes. -/
+def TauMomentPrimes : Prop :=
+  ∀ c e N M r T : ℕ, 0 < c → 0 < M → Nat.Coprime r M →
+    2 * ((Nat.log 2 M + 1) * (Nat.log 2 c + Nat.log 2 M + 4)) ≤ T →
+    N ≤ T →
+    ∃ p : ℕ, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ tau (c * p + e) ≤ T
 
 /-- **The one open obligation on the headline path.**  See `CarryLeaf`. -/
 theorem carryLeaf_holds (b : ℕ) (hb : 3 ≤ b) : CarryLeaf b := by

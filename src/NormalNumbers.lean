@@ -451,3 +451,4 @@ import NormalNumbers.PrimeModelGradedStatement
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
 import NormalNumbers.SwingC2
+import NormalNumbers.SwingC2Moment
