@@ -239,4 +239,80 @@ theorem omegaSmall_steered {P L a j : ℕ} {f : ℕ → ℕ} (S : Finset ℕ) (h
     omega
   rw [omegaSmall_eq_card_filter (by omega), hkey, Finset.card_union_of_disjoint hdisj]
 
+/-! ### Block assignment: the steering digits
+
+To put `d j` steering primes into window slot `j+1`, split the available primes into blocks of
+the prescribed sizes.  The leftover primes go into the dummy slot `L+1`, which lies outside the
+controlled window. -/
+
+/-- **Block assignment.**  A finset splits into blocks of prescribed sizes (plus a leftover
+block `L+1` and an overflow label `L+2`) as soon as the sizes fit. -/
+theorem exists_slot_assignment : ∀ (L : ℕ) (S : Finset ℕ) (d : ℕ → ℕ),
+    (∑ i ∈ range L, d i) ≤ S.card →
+      ∃ f : ℕ → ℕ, (∀ p ∈ S, 1 ≤ f p ∧ f p ≤ L + 1) ∧
+        ∀ j, 1 ≤ j → j ≤ L → (S.filter (fun p => f p = j)).card = d (j - 1) := by
+  classical
+  intro L
+  induction L with
+  | zero =>
+      intro S d _
+      exact ⟨fun _ => 1, fun p _ => ⟨le_refl 1, le_refl 1⟩, fun j hj1 hj0 => absurd hj1 (by omega)⟩
+  | succ L ih =>
+      intro S d hcard
+      have hsplit : ∑ i ∈ range (L + 1), d i = (∑ i ∈ range L, d i) + d L :=
+        Finset.sum_range_succ _ _
+      have hdL : d L ≤ S.card := by omega
+      obtain ⟨T, hTS, hTcard⟩ := Finset.exists_subset_card_eq hdL
+      have hcard' : (∑ i ∈ range L, d i) ≤ (S \ T).card := by
+        rw [Finset.card_sdiff_of_subset hTS, hTcard]
+        omega
+      obtain ⟨f', hf'range, hf'count⟩ := ih (S \ T) d hcard'
+      refine ⟨fun p => if p ∈ T then L + 1 else (if f' p = L + 1 then L + 2 else f' p), ?_, ?_⟩
+      · intro p hp
+        by_cases hpT : p ∈ T
+        · simp [hpT]
+        · have hp' : p ∈ S \ T := Finset.mem_sdiff.2 ⟨hp, hpT⟩
+          obtain ⟨h1, h2⟩ := hf'range p hp'
+          by_cases hf : f' p = L + 1 <;> simp [hpT, hf] <;> omega
+      · intro j hj1 hjL
+        rcases eq_or_lt_of_le hjL with hjeq | hjlt
+        · -- the new block: exactly `T`
+          have : S.filter (fun p => (if p ∈ T then L + 1 else
+              (if f' p = L + 1 then L + 2 else f' p)) = j) = T := by
+            ext p
+            simp only [Finset.mem_filter]
+            constructor
+            · rintro ⟨hpS, hval⟩
+              by_contra hpT
+              rw [if_neg hpT] at hval
+              have hp' : p ∈ S \ T := Finset.mem_sdiff.2 ⟨hpS, hpT⟩
+              obtain ⟨h1, h2⟩ := hf'range p hp'
+              by_cases hf : f' p = L + 1
+              · rw [if_pos hf] at hval; omega
+              · rw [if_neg hf] at hval; omega
+            · intro hpT
+              exact ⟨hTS hpT, by rw [if_pos hpT]; omega⟩
+          rw [this, hTcard]
+          congr 1
+          omega
+        · -- an old block, untouched
+          have : S.filter (fun p => (if p ∈ T then L + 1 else
+              (if f' p = L + 1 then L + 2 else f' p)) = j)
+              = (S \ T).filter (fun p => f' p = j) := by
+            ext p
+            simp only [Finset.mem_filter, Finset.mem_sdiff]
+            constructor
+            · rintro ⟨hpS, hval⟩
+              by_cases hpT : p ∈ T
+              · rw [if_pos hpT] at hval; omega
+              · rw [if_neg hpT] at hval
+                by_cases hf : f' p = L + 1
+                · rw [if_pos hf] at hval; omega
+                · rw [if_neg hf] at hval; exact ⟨⟨hpS, hpT⟩, hval⟩
+            · rintro ⟨⟨hpS, hpT⟩, hval⟩
+              refine ⟨hpS, ?_⟩
+              rw [if_neg hpT, if_neg (by omega : ¬ f' p = L + 1), hval]
+          rw [this]
+          exact hf'count j hj1 (by omega)
+
 end NormalNumbers
