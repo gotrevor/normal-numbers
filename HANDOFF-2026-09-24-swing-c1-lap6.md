@@ -16,8 +16,8 @@ conjC1            (ratified statement, kept per the kickoff addendum)
  ← hWindowChar_of_leaves:
       hTruncDecayAll       HTruncDecay b L     ← SORRY (Leaf A: FINITE-window joint
                                                  equidistribution of ω(n+1),…,ω(n+L+K))
-      hCarryOverflowAll    HCarryOverflow b L  ← SORRY (Leaf B: the depth-K carry truncation
-                                                 is wrong on a set of density → 0)
+      hCarryOverflowAll    HCarryOverflow b L  ← SORRY (Leaf B: SOME depth profile κ n → ∞
+                                                 makes the truncation wrong on a null set)
 ```
 `norm_windowCharSum_sub_trunc` is the glue: `‖charSum − charSumTrunc‖ ≤ 2·badCount/N`.
 
@@ -70,6 +70,17 @@ up to a single unit.
   `(αΩ(n), βΩ(n+1))` u.d. mod 1 (which need `α, β` irrational) do not apply; the rational case is
   exactly the residue-class case, where only Delange's one-coordinate theorem is available.
 * Verdict: **open**, and specifically an asymptotic-independence statement, not a new estimate.
+
+## REFUTATION (lap 8): the constant-depth truncation is FALSE
+
+The first draft of Leaf B asked for a CONSTANT depth `K` with bad-set density `≤ ε`.  That is
+false.  By `omegaWindowVal_eq_trunc_add` the depth-`K` truncation is off by
+`c_{n+L+K}/b^K + e`, and `c_N ≈ log log N/(b−1) → ∞`; so for every fixed `K`, `c_{n+L+K}/b^K ≥ 1`
+for almost all `n`, the truncation fails at almost every `n`, and the bad-set density tends to
+**1**, not 0.  Both leaves are therefore stated with a DEPTH PROFILE `κ : ℕ → ℕ`, `κ → ∞`
+(`κ n ≳ log_b log log n` is what the estimate asks for); `windowCharSumTrunc` and
+`carryBadCount` now take `κ` rather than a constant.  The window at `n` is
+`ω(n+1), …, ω(n+L+κ n)` — still local, but of slowly growing length.
 
 ## Exact next moves
 
