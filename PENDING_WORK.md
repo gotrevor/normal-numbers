@@ -9203,7 +9203,7 @@ complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 
 ## swing-c1 (2026-09-25, laps 14–23) — the C1 crux
 
-See `HANDOFF-2026-09-25-swing-c1-laps14-23.md`.  `src/NormalNumbers/SwingC1.lean` has exactly two
+See `HANDOFF-2026-09-25-swing-c1-laps14-25.md`.  `src/NormalNumbers/SwingC1.lean` has exactly two
 sorries, both named leaves of the open headline `conjC1 : ConjC1`:
 
 * **`hAutoCorrAll`** — THE leaf.  `ConjC1` is now EXACTLY equivalent to it (`conjC1_iff_hAutoCorr`),
@@ -9215,6 +9215,18 @@ sorries, both named leaves of the open headline `conjC1 : ConjC1`:
   `t_n` alone) against `WindowDecay`, noting `sum_zetaRoot_mixed_ne_zero` caps what that can give.
 * **`hDepthAll`** — the SUPERSEDED stronger route (modulus `b^{κ n}`, implies block normality).
   Kept on the record.  Do not attack, do not delete.
+
+Localised (lap 24): `corrSum_eq_elliott` splits the leaf as `Elliott correlations of the explicit
+multiplicative f_j(m) = ζ_{b−1}^{jω(m)}` × `an inseparable carry boundary term`.  Two named gaps to
+the known theorems: the boundary term (which carries the entire answer — the f-part alone gives 0),
+and natural vs logarithmic density (Tao's L=2 and Tao–Teräväinen's odd-L results are logarithmic).
+
+⚠️ **FALSE-ALARM GUARD (lap 25).**  The `b=3` numerics look like a refutation of `ConjC1` and are not
+one: `mean_n (−1)^{d_{n+1}} ≈ 0.23` vs predicted `1/3`, stable over 2.5 decades.  But the
+block-shuffled / iid same-marginal control — which MUST tend to `1/3` — sits at `0.27`, so ~3/4 of the
+deficit is a finite-`N` artefact of `ω`'s marginal (mean `ω ≈ 2.95` at `4·10⁶`).  Both columns rise
+together past `10⁶`.  Never compare C1 numerics against the uniform-digit model; use
+`probes/swingc1_autocorr.py::marginal_control`.
 
 Refuted this session, do not redo: naive carry-independence
 (`not_hAutoCorr_of_carryNegligible`), periodic CRT approximants

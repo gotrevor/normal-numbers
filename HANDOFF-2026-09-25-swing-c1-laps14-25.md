@@ -1,6 +1,7 @@
-# Handoff — swing at C1, laps 14–23 (the crux reformulated and named)
+# Handoff — swing at C1, laps 14–25 (the crux reformulated, named, and localised)
 
-**Branch** `wip/swing-c1` · **file** `src/NormalNumbers/SwingC1.lean` (~2090 lines)
+**Branch** `wip/swing-c1` · **HEAD** `6915005` · tree clean, NOT pushed
+**File** `src/NormalNumbers/SwingC1.lean` (~2200 lines)
 **Build**: full `lake build` green, 9176 jobs.  **Sorries in the file: exactly two**, both named
 leaves of the headline: `hDepthAll` (superseded route, kept on the record) and `hAutoCorrAll`
 (THE leaf).  Everything else is `[propext, Classical.choice, Quot.sound]` — no `native_decide`,
@@ -32,7 +33,21 @@ With `T(n) := Σ_{m≤n} ω(m) + c_n` and `A_n := ⌊b^n·G4_b⌋` and `t_n := f
    (`zetaRoot_floor_diff_eq`)
    `ζ_{b−1}^{j(A_{n+L}−A_n)} = e(j·σ_L·b^n·x) · e(−j(t_{n+L}−t_n)/(b−1))`:
    a Weyl exponential at an **integer** frequency times a unimodular twist.
-5. **Telescoping ⇒ the Elliott shape** (`prod_digitChar`, `corrSum_eq_mean_prod`): with
+5. **The exact split (lap 24).**  Mod `b−1` the digit recursion loses its `b`:
+   `d_{n+1} ≡ ω(n+1) + c_{n+1} − c_n`.  With `f_j(m) = ζ_{b−1}^{j·ω(m)}` (unimodular and
+   MULTIPLICATIVE, `omegaChar_mul_of_coprime`) and `g_j(m) = ζ_{b−1}^{j·c_m}`, the carry factors
+   TELESCOPE (`digitChar_eq`, `prod_digitChar_eq_omega_mul_boundary`, `corrSum_eq_elliott`):
+   `∏_{i<L} D_j(n+i) = (∏_{i<L} f_j(n+1+i)) · g_j(n+L) · g_j(n)⁻¹`.
+   `f_j(p) = ζ_{b−1}^j` is constant and `≠ 1`, so `f_j` is the `ω`-analogue of `λ(n) = (−1)^{Ω(n)}`:
+   its one-point mean vanishes by Delange/Halász, and its shifted correlations ARE the Elliott
+   correlations — known in LOGARITHMIC density for `L = 2` (Tao 2015) and odd `L`
+   (Tao–Teräväinen), but NOT in natural density, which is what `ConjC1` needs.  The two factors are
+   inseparable: by `not_hAutoCorr_of_carryNegligible` the `f`-part alone gives `0` while the leaf
+   needs `b^{−L}`, and `g` is not independent of `f` (`c_n` is a function of `ω(n+1), ω(n+2), …`).
+   **This is the sharpest localisation the leaf has: two named gaps to the known theorems — the
+   inseparable carry boundary term, and natural vs logarithmic density.**
+
+6. **Telescoping ⇒ the Elliott shape** (`prod_digitChar`, `corrSum_eq_mean_prod`): with
    `D_j(n) = ζ_{b−1}^{j·d_{n+1}}`,
    `ζ_{b−1}^{j(T(n+L)−T(n))} = ∏_{i<L} D_j(n+i)`, so C1 says exactly that the multiple correlations
    of the unimodular sequence `D_j` factorize as powers of its own mean `1/b`.
@@ -97,11 +112,17 @@ same-marginal random model, which carries the identical finite-`N` bias.
 
 ## Exact next moves
 
-1. The leaf `hAutoCorrAll` is an Elliott-type wall; expect to narrow, not clear.  The one structural
-   direction not yet exhausted: the twist factor in item 4,
-   `e(−j(t_{n+L}−t_n)/(b−1))`, is a function of `t_n` ALONE (since `t_{n+L} = fract(b^L t_n)`).
-   Quantifying its total variation against the repo's `WindowDecay` is the only remaining route from
-   the leaf to existing repo machinery — but note refutation 3 caps what that can give.
+1. The leaf `hAutoCorrAll` is an Elliott-type wall; expect to narrow, not clear.  Two live threads,
+   in priority order:
+   * **(a)** Attack the natural-vs-logarithmic gap in item 5.  The known Elliott results (Tao,
+     Tao–Teräväinen) give the `f`-part in logarithmic density; `ConjC1` needs natural.  Formalising
+     `HAutoCorrLog` and the (true, and standard) implication `HAutoCorr → HAutoCorrLog` would mark
+     the gap precisely in Lean; upgrading log → natural is the genuinely hard half and is where a
+     new idea is needed.
+   * **(b)** The twist factor in item 4, `e(−j(t_{n+L}−t_n)/(b−1))`, is a function of `t_n` ALONE
+     (since `t_{n+L} = fract(b^L t_n)`).  Quantifying its total variation against the repo's
+     `WindowDecay` is the only route from the leaf to existing repo machinery — but refutation 3
+     caps what that can give, so expect a partial result at best.
 2. Do NOT re-attack via normality of `G4_b`: `conjC1_conjC3_of_normal` (in `CastingOut.lean`) already
    records that route, and normality is the repo's own open headline.  Item 3 above now makes the
    gap between C1 and normality precise: normality is equidistribution against ALL
