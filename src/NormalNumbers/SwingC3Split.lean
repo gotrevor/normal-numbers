@@ -203,4 +203,82 @@ theorem orbit_eq_rotation {b : ℕ} (hb : 2 ≤ b) {P Q : ℕ} (hQ : ∀ p ≤ P
   rw [orbit_eq_fract_tailB hb n, tailB_eq_small_add_large hb P n,
     tailSmall_congr (b := b) hQ h]
 
+/-! ### The partition engine: rotating a cylinder by all `k/M` tiles the circle
+
+This is the combinatorial heart of the rotation route.  Whatever the law of the large-prime
+tail, rotating a fixed cylinder of length `1/M` by the `M` shifts `k/M` sweeps every point of
+the circle exactly once — so summing the rotated masses gives the total mass `1`, and every
+cylinder inherits positive density. -/
+
+/-- A shifted fractional part lands in the cylinder `[w/M, (w+1)/M)` exactly when the shift
+matches the residue. -/
+theorem fract_add_mem_cylinder_iff {M : ℕ} (hM : 0 < M) (w k : ℕ) (hw : w < M)
+    {y : ℝ} (hy : 0 ≤ y) (hy1 : y < 1) :
+    Int.fract (y + (k : ℝ) / M) ∈ Set.Ico ((w : ℝ) / M) (((w : ℝ) + 1) / M)
+      ↔ ((⌊y * M⌋).toNat + k) % M = w := by
+  have hM0 : (0 : ℝ) < (M : ℝ) := by exact_mod_cast hM
+  set m : ℕ := (⌊y * M⌋).toNat with hmdef
+  have hfl : (⌊y * (M : ℝ)⌋) = (m : ℤ) := by
+    rw [hmdef, Int.toNat_of_nonneg (Int.floor_nonneg.2 (by positivity))]
+  set z : ℝ := y + (k : ℝ) / M with hz
+  have hzM : z * M = y * M + k := by rw [hz]; field_simp
+  -- `⌊z⌋` is the integer quotient of `m + k` by `M`
+  have hfz : (⌊z⌋ : ℤ) = ((m + k : ℕ) : ℤ) / (M : ℤ) := by
+    have : z = (y * M + k) / M := by rw [← hzM]; field_simp
+    rw [this, Int.floor_div_natCast]
+    congr 1
+    rw [Int.floor_add_natCast, hfl]
+    push_cast; ring
+  -- the scaled fractional part has floor `(m + k) % M`
+  have hfloor : ⌊(M : ℝ) * Int.fract z⌋ = ((m + k : ℕ) : ℤ) % (M : ℤ) := by
+    rw [Int.fract, mul_sub, mul_comm (M : ℝ) z, hzM]
+    rw [show (y * M + k) - (M : ℝ) * (⌊z⌋ : ℤ) = (y * M) + ((k : ℤ) - (M : ℤ) * ⌊z⌋ : ℤ) by
+      push_cast; ring]
+    rw [Int.floor_add_intCast, hfl, hfz, Int.emod_def]
+    push_cast; ring
+  constructor
+  · rintro ⟨h1, h2⟩
+    rw [div_le_iff₀ hM0] at h1
+    rw [lt_div_iff₀ hM0] at h2
+    have hfe : ⌊(M : ℝ) * Int.fract z⌋ = (w : ℤ) := by
+      rw [Int.floor_eq_iff]
+      rw [mul_comm]
+      push_cast
+      exact ⟨h1, h2⟩
+    rw [hfloor] at hfe
+    rw [← Int.natCast_mod] at hfe
+    exact_mod_cast hfe
+  · intro h
+    have hfe : ⌊(M : ℝ) * Int.fract z⌋ = (w : ℤ) := by
+      rw [hfloor, ← Int.natCast_mod, h]
+    rw [Int.floor_eq_iff] at hfe
+    obtain ⟨h1, h2⟩ := hfe
+    rw [mul_comm] at h1 h2
+    push_cast at h1 h2
+    refine ⟨?_, ?_⟩
+    · rw [div_le_iff₀ hM0]; linarith
+    · rw [lt_div_iff₀ hM0]; linarith
+
+/-- **Every point is swept.**  For `y ∈ [0,1)` some shift `k < M` puts `y + k/M` into the
+cylinder `[w/M, (w+1)/M)`.  Covering is all the route needs — the rotated masses then sum to at
+least the measure of the whole circle, so every cylinder gets positive mass whatever the law. -/
+theorem exists_shift_mem_cylinder {M : ℕ} (hM : 0 < M) (w : ℕ) (hw : w < M)
+    {y : ℝ} (hy : 0 ≤ y) (hy1 : y < 1) :
+    ∃ k < M, Int.fract (y + (k : ℝ) / M)
+      ∈ Set.Ico ((w : ℝ) / M) (((w : ℝ) + 1) / M) := by
+  set m : ℕ := (⌊y * M⌋).toNat with hmdef
+  have hs : m % M < M := Nat.mod_lt _ hM
+  have hmod : ∀ k : ℕ, (m + k) % M = (m % M + k) % M := fun k => by
+    conv_lhs => rw [Nat.add_mod]
+    conv_rhs => rw [Nat.add_mod]
+    rw [Nat.mod_mod_of_dvd _ dvd_rfl]
+  rcases le_or_gt (m % M) w with hle | hgt
+  · refine ⟨w - m % M, by omega, ?_⟩
+    rw [fract_add_mem_cylinder_iff hM w _ hw hy hy1, hmod]
+    rw [show m % M + (w - m % M) = w from by omega, Nat.mod_eq_of_lt hw]
+  · refine ⟨w + M - m % M, by omega, ?_⟩
+    rw [fract_add_mem_cylinder_iff hM w _ hw hy hy1, hmod]
+    rw [show m % M + (w + M - m % M) = w + M from by omega, Nat.add_mod_right,
+      Nat.mod_eq_of_lt hw]
+
 end NormalNumbers

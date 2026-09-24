@@ -341,8 +341,12 @@ at `n` exactly when that point lies in `w`'s cylinder, an interval of length `b^
 class.  Then the density of occurrences of `w` is `(1/Q) ∑_a μ_a(I_w − θ(a))`.  Under
 `OmegaLargeDecouple` (`μ_a = μ` for all `a`) and with the `θ(a)` running over all `b^ℓ`
 multiples of `b^{−ℓ}` — which `exists_crt_pattern` delivers — the translates `I_w − θ(a)`
-partition the circle, so the sum is `μ(circle) = 1 > 0` for EVERY `w`.  Positive lower density
-for every word, i.e. `IsRich`, with no knowledge of `μ` at all.
+COVER the circle, so the sum is at least `μ(circle) = 1 > 0` for EVERY `w`.  Positive lower
+density for every word, i.e. `IsRich`, with no knowledge of `μ` at all.  Note only covering is
+needed, not a partition: a sum of masses always dominates the mass of the union.  That covering
+is now proved — `SwingC3Split.exists_shift_mem_cylinder`, with
+`fract_add_mem_cylinder_iff` (`fract (y + k/M) ∈ [w/M,(w+1)/M) ↔ (⌊yM⌋ + k) % M = w`) as its
+arithmetic core.
 
 One bookkeeping caveat to handle next lap: `θ(a)` is controlled only through the head
 `∑_{j ≤ ℓ} ω_{≤P}(a+j) b^{−j}`; the slots `j > ℓ` contribute an uncontrolled `O(π(P) b^{−ℓ})`.
