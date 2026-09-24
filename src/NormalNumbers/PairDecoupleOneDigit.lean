@@ -135,4 +135,112 @@ theorem conjC1_of_delange_katai_twoPointWeighted (hDK : KataiOrthogonality)
   conjC1_of_delange_katai hDK hD fun b hb m hm hdvd =>
     (pairDecorr_iff_twoPointWeighted b (by omega) _).mpr (hP b hb m hm hdvd)
 
+/-! ### The `K`-fold peel: an EXACT factorisation at every depth
+
+Iterating the peel gives, for **every** `K` and with no error term,
+
+`pairTail = digitTrunc_K + b^{−K}·(θ_{pn+K} − θ_{qn+K})`,
+
+so the pair phase is the `2K`-point root-of-unity product times a unit-modulus weight.  In
+particular the leaf needs **no admissibility condition on `K`**: the depth may be held FIXED
+(`K = 1` included), and the whole `AdmissibleTrunc` / `log_b log log R` apparatus — which existed
+only to make the discarded digits *small* — is bypassed. -/
+
+/-- **The exact `K`-digit decomposition.**  Proved by induction from the one-digit peel alone. -/
+theorem pairTail_eq_digitTrunc_add (b : ℕ) (hb : 2 ≤ b) (p q K n : ℕ) :
+    pairTail b p q n
+      = digitTrunc b p q K n + shiftPairTail b p q K K n / (b : ℝ) ^ K := by
+  have hb0 : (0 : ℝ) < (b : ℝ) := by
+    have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  induction K with
+  | zero => simp [digitTrunc, shiftPairTail_zero]
+  | succ K ih =>
+      have hpeel := shiftPairTail_peel b hb p q K K n
+      have hd : digitTrunc b p q (K + 1) n
+          = digitTrunc b p q K n
+            + ((omegaNat (p * n + 1 + K) : ℝ) - (omegaNat (q * n + 1 + K) : ℝ))
+              / (b : ℝ) ^ (K + 1) := by
+        rw [digitTrunc, digitTrunc, Finset.sum_range_succ]
+      have he1 : p * n + K + 1 = p * n + 1 + K := by omega
+      have he2 : q * n + K + 1 = q * n + 1 + K := by omega
+      rw [he1, he2] at hpeel
+      rw [ih, hd]
+      have hbK : ((b : ℝ) ^ K) ≠ 0 := by positivity
+      field_simp
+      linear_combination ((b:ℝ)^K) * hpeel
+
+/-- The unit-modulus weight left by the `K`-fold peel. -/
+noncomputable def peelWeightAt (b p q K : ℕ) (t : ℝ) (n : ℕ) : ℂ :=
+  phase (t / (b : ℝ) ^ K * shiftPairTail b p q K K n)
+
+lemma norm_peelWeightAt (b p q K : ℕ) (t : ℝ) (n : ℕ) : ‖peelWeightAt b p q K t n‖ = 1 :=
+  norm_phase _
+
+lemma peelWeightAt_one (b p q : ℕ) (t : ℝ) (n : ℕ) :
+    peelWeightAt b p q 1 t n = peelWeight b p q t n := by
+  rw [peelWeightAt, peelWeight, pow_one]
+
+/-- **The pair phase factorises EXACTLY at every depth.**  `2K` root-of-unity powers of `ω` along
+the forms `pn+1+k`, `qn+1+k`, times one unit-modulus weight. -/
+theorem phase_pairTail_factor (b : ℕ) (hb : 2 ≤ b) (t : ℝ) (p q K n : ℕ) :
+    phase (t * pairTail b p q n)
+      = (∏ k ∈ range K, (digitRoot b t k ^ omegaNat (p * n + 1 + k)
+          * (starRingEnd ℂ) (digitRoot b t k ^ omegaNat (q * n + 1 + k))))
+        * peelWeightAt b p q K t n := by
+  have hb0 : (0 : ℝ) < (b : ℝ) := by
+    have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  have hsplit : t * pairTail b p q n
+      = t * digitTrunc b p q K n + t / (b : ℝ) ^ K * shiftPairTail b p q K K n := by
+    rw [pairTail_eq_digitTrunc_add b hb p q K n]
+    field_simp
+  rw [hsplit, phase_add, phase_digitTrunc, peelWeightAt]
+
+/-- **THE LEAF AT FIXED DEPTH `K`.**  A `2K`-point Elliott correlation twisted by one
+unit-modulus weight.  `K = 1` is `TwoPointWeighted`. -/
+def MultiElliottWeighted (b p q K : ℕ) (t : ℝ) : Prop :=
+  Tendsto (fun R => fullMean (fun n =>
+    (∏ k ∈ range K, (digitRoot b t k ^ omegaNat (p * n + 1 + k)
+      * (starRingEnd ℂ) (digitRoot b t k ^ omegaNat (q * n + 1 + k))))
+      * peelWeightAt b p q K t n) R) atTop (𝓝 0)
+
+/-- **The crux, at EVERY fixed depth, as an equivalence.**  No admissibility hypothesis on `K`:
+the identity is exact, so depth `1` is as good as depth `R`. -/
+theorem pairDecorr_iff_multiElliottWeighted (b : ℕ) (hb : 2 ≤ b) (t : ℝ) (K : ℕ) :
+    PairDecorr b t ↔
+      ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → MultiElliottWeighted b p q K t := by
+  have hcongr : ∀ p q : ℕ, ∀ R : ℕ,
+      fullMean (fun n => phase (t * (omegaTail b (p * n) - omegaTail b (q * n)))) R
+        = fullMean (fun n =>
+            (∏ k ∈ range K, (digitRoot b t k ^ omegaNat (p * n + 1 + k)
+              * (starRingEnd ℂ) (digitRoot b t k ^ omegaNat (q * n + 1 + k))))
+              * peelWeightAt b p q K t n) R := by
+    intro p q R
+    refine congrArg (fun z => z / (R : ℂ)) (Finset.sum_congr rfl fun n _ => ?_)
+    dsimp only
+    rw [← phase_pairTail_factor b hb t p q K n, pairTail]
+  constructor
+  · intro h p q hp hq hpq
+    exact ((h p q hp hq hpq).congr (hcongr p q))
+  · intro h p q hp hq hpq
+    exact ((h p q hp hq hpq).congr fun R => (hcongr p q R).symm)
+
+/-- **All depths are equivalent.**  A direct corollary: whatever depth the literature can reach,
+it reaches the crux. -/
+theorem multiElliottWeighted_depth_indep (b : ℕ) (hb : 2 ≤ b) (t : ℝ) (K L : ℕ)
+    (h : ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → MultiElliottWeighted b p q K t) :
+    ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → MultiElliottWeighted b p q L t :=
+  (pairDecorr_iff_multiElliottWeighted b hb t L).mp
+    ((pairDecorr_iff_multiElliottWeighted b hb t K).mpr h)
+
+/-- **The swing at any fixed depth.** -/
+theorem conjC1_of_delange_katai_multiElliottWeighted (K : ℕ) (hDK : KataiOrthogonality)
+    (hD : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) → DelangeMean (((m : ℤ) : ℝ) / b))
+    (hP : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) →
+      ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → MultiElliottWeighted b p q K (((m : ℤ) : ℝ) / b)) :
+    ConjC1 :=
+  conjC1_of_delange_katai hDK hD fun b hb m hm hdvd =>
+    (pairDecorr_iff_multiElliottWeighted b (by omega) _ K).mpr (hP b hb m hm hdvd)
+
 end NormalNumbers.CastingOut

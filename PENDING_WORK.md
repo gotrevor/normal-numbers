@@ -10314,3 +10314,19 @@ log-iterate mismatch is fundamental — `log log y = log log R − log log log R
   `A(s)`, not necessarily to a two-variable functional.  (ii) Pair the peel with the averaged
   framework (laps 22–23): a two-point weighted correlation *averaged over `p, q`* is the closest
   target to Matomäki–Radziwiłł–Tao.
+
+## pd-prove lap 25 — the depth is FREE
+
+`pairTail_eq_digitTrunc_add`: `pairTail = digitTrunc_K + b^{−K}(θ_{pn+K} − θ_{qn+K})` for every
+`K`, proved by induction from the one-digit peel alone.  Hence `phase_pairTail_factor` (exact
+factorisation at every depth) and `pairDecorr_iff_multiElliottWeighted`: for **every fixed `K`**,
+the crux is equivalent to a `2K`-point correlation twisted by one unit-modulus weight.
+`multiElliottWeighted_depth_indep` — all depths are equivalent.
+
+**Consequence for the directive.**  `AdmissibleTrunc` and the `log_b log log R` depth existed only
+to make the discarded digits *small*.  They are no longer needed: the depth may be held fixed at
+`K = 1`.  Directive item 1 (sharpen the depth) is therefore superseded, not merely improved.
+
+**Remaining crux, sharpest form.**  `TwoPointWeighted b p q t` = `MultiElliottWeighted b p q 1 t`:
+`E_{n<R} ζ^{ω(pn+1)} conj ζ^{ω(qn+1)} · e((t/b)(θ_{pn+1} − θ_{qn+1})) → 0`, `ζ = e(t/b)`
+nontrivial.  Unweighted = Tao 2016 (log average).  The weight is the whole remaining gap.
