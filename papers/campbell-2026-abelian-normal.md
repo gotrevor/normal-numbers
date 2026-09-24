@@ -35,9 +35,13 @@ parity correlations to vanish; normality asks for each one.  Base b: the same wi
 `WalshBase` characters of (ℤ/b)^k averaged over coordinate permutations.
 
 Consequences:
-- **k = 2 carries no extra content in base 2**: in any binary word #01 and #10 differ by at most 1,
-  so the abelian class {01,10} splits evenly for free.  A base-2 abelian-normal, non-normal
-  sequence must break a pattern class at k ≥ 3 (e.g. freq(010) ≠ freq(001)).  In base b ≥ 3 the
-  analogue fails already at k = 2 (cyclic flows 0→1→2→0 make freq(01) ≠ freq(10)).
-- Candidate Lean node: `isAbelianNormal_two_iff_symParityMean` as a corollary of the Walsh
-  machinery, plus an explicit base-2 separating example (k = 3 imbalance) as a control.
+- **Base 2 is rigid through length 3, free from length 4** (exact linear-algebra probe 2026-09-23,
+  stationarity + abelian balance at every length ≤ L, solution-space dimension ignoring
+  positivity): L=2: 0, L=3: 0, L=4: 1, L=5: 5, L=6: 16, L=7: 42.  k = 2 is free for the reason
+  that #01 and #10 differ by at most 1; k = 3 is then forced by marginal consistency
+  (p(00x) = p(x00) pins p(001) = p(100) = 1/8, hence p(010)).  ⚠️ Ren's first version of this
+  note said "cheat at k ≥ 3"; the probe refuted it.  The L = 4 direction: +ε on
+  0011, 0100, 1010, 1101 and −ε on 0010, 0101, 1011, 1100 (ε = 1/16 kills the second four).
+  Base 3 is free already at L = 2 (dimension 1: cyclic flow 0→1→2→0).
+- Lean: `src/NormalNumbers/AbelianNormal.lean` (headline iff, `rigid_three`, `separation_four`);
+  kickoff `KICKOFF-2026-09-23-abelian-normal.md`.

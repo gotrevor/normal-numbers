@@ -382,6 +382,7 @@ import NormalNumbers.G4WiringSparse
 import NormalNumbers.G4WiringRough
 import NormalNumbers.Maze
 import NormalNumbers.Walsh
+import NormalNumbers.AbelianNormal
 import NormalNumbers.WalshBase
 import NormalNumbers.G4WiringSummatory
 import NormalNumbers.G4SummatorySplit
