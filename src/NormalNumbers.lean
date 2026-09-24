@@ -492,6 +492,7 @@ import NormalNumbers.TwoPointWorry
 import NormalNumbers.TwoPointGrowing
 import NormalNumbers.TwoPointKataiQuant
 import NormalNumbers.TwoPointKataiSharp
+import NormalNumbers.TwoPointKataiGap
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
