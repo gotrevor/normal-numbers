@@ -904,6 +904,44 @@ theorem hDepthAll : ∀ b, 3 ≤ b → ∀ L, HDepth b L := by
 theorem hWindowCharAll : ∀ b, 3 ≤ b → ∀ L, HWindowChar b L :=
   fun b hb L => hWindowChar_of_hDepth b L (hDepthAll b hb L)
 
+/-! ### The minimal open case `L = 1`
+
+Everything above is uniform in `L`.  At `L = 1` the window value is just `ω(n+1) + c_{n+1}` and
+the modulus is `b`, so the open statement reads as compactly as it ever will. -/
+
+@[simp] lemma omegaHead_one (b n : ℕ) : omegaHead b 1 n = (omegaNat (n + 1) : ℤ) := by
+  simp [omegaHead]
+
+lemma omegaWindowVal_one (b n : ℕ) :
+    omegaWindowVal b 1 n = (omegaNat (n + 1) : ℤ) + omegaCarry b (n + 1) := by
+  rw [omegaWindowVal, omegaHead_one]
+
+/-- **The first open case of C1, fully explicit.**  If for every `0 < a < b`
+
+    (1/N) Σ_{n<N} e^{2πi·a·(ω(n+1) + c_{n+1})/b}  →  0,      c_N = ⌊Σ_{k≥1} ω(N+k) b^{−k}⌋,
+
+then `G4_b` has the normal casting-out law at window length `1`.  Here `ζ^{a·ω(n+1)}` is a
+multiplicative function of modulus one with `ζ^{a·ω(p)} = ζ^a ≠ 1`, whose own mean value is `0`
+by Delange; the whole difficulty is the SHIFT `n ↦ n+1` together with the carry factor. -/
+theorem castLaw_one_of_charSum (b : ℕ) (hb : 3 ≤ b)
+    (h : ∀ a, 0 < a → a < b →
+      Tendsto (fun N => (∑ n ∈ range N,
+        zetaRoot b ^ ((a : ℤ) * ((omegaNat (n + 1) : ℤ) + omegaCarry b (n + 1)))) / N)
+        atTop (𝓝 0)) :
+    CastLaw b (primeLambertAtBase b) 1 := by
+  refine (castLaw_iff_stateLaw b (by omega) 1).mpr
+    (stateLaw_of_hWindow b hb 1 (hWindow_of_hWindowChar b (by omega) 1 ?_))
+  intro a ha haL
+  rw [pow_one] at haL
+  have hfun : windowCharSum b 1 a = fun N => (∑ n ∈ range N,
+      zetaRoot b ^ ((a : ℤ) * ((omegaNat (n + 1) : ℤ) + omegaCarry b (n + 1)))) / N := by
+    funext N
+    rw [windowCharSum, pow_one]
+    congr 1
+    exact Finset.sum_congr rfl fun n _ => by rw [omegaWindowVal_one]
+  rw [hfun]
+  exact h a ha haL
+
 theorem hWindowAll : ∀ b, 3 ≤ b → ∀ L, HWindow b L :=
   fun b hb L => hWindow_of_hWindowChar b (by omega) L (hWindowCharAll b hb L)
 

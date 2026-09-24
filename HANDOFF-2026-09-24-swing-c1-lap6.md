@@ -117,6 +117,24 @@ Literature map of the two clauses:
   e.g. "Uniform distribution of polynomially-defined additive functions to varying moduli"
   (arXiv 2401.04199), not the classical fixed-`q` theory.
 
+## Lap 11–12: anchors, the `L = 1` case, and a REFUTED sub-approach
+
+* Six `decide` anchors check the two sides of `normalCastLaw_eq_residue_count` independently
+  (interval count vs digit-vector count) at `(b,L) = (3,1), (3,3), (4,2), (5,2)`, plus the bias
+  witness `14/27` vs `13/27` at `b=3, L=3` that makes `CastUniform` false.
+* **`castLaw_one_of_charSum`** — the first open case of C1, fully explicit:  if for every
+  `0 < a < b`, `(1/N) Σ_{n<N} e^{2πi a(ω(n+1) + c_{n+1})/b} → 0`, then `CastLaw b G4_b 1`.
+
+**Refuted sub-approach (record it; do not retry).**  Kátai / Bourgain–Sarnak–Ziegler
+orthogonality does NOT reach this.  The natural split is
+`ζ^{a·ω(n+1)} · ζ^{a·c_{n+1}}`, where the first factor IS a modulus-one multiplicative function
+with `g(p) = ζ^a ≠ 1` (so its own mean value is `0`, by Delange/Halász).  But KBSZ needs the
+multiplicative factor evaluated at `n`, and ours sits at the SHIFT `n+1`; the shift is exactly
+what turns a Delange statement into an Elliott one.  Applying KBSZ the other way round would
+require the carry factor `ζ^{a c_{n+1}}` to satisfy the prime-pair condition
+`(1/N) Σ_n f(pn) conj(f(qn)) → 0`, a statement about carries at `pn` and `qn` with no visible
+handle.  Both directions dead-end on the shift.
+
 ## Exact next moves
 
 1. The structural slack to exploit: `ω(n+L)` enters the exponent with coefficient `b^0 = 1`, while
