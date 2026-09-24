@@ -18,6 +18,17 @@ That last implication is the proved part.
 
 ### Leaf A — `exists_rotationCover` (elementary; on-path; NOT the crux)
 
+**Landed 2026-09-24 (`src/NormalNumbers/SwingC3Net.lean`, sorry-free):**
+`exists_grid_mem_Ico` (an exact `1/m`-grid coset meets every arc of length `> 1/m`),
+`exists_perturbed_grid_mem_Ico` (the same after shifting each grid point forward by `≤ ε`,
+at a cost of `ε` of arc length — this is the lemma that makes "net, not grid" work),
+`piCount`, `omegaSmall_le_piCount`, and `tailSmall_head_rem` (the window head plus a remainder
+in `[0, π(P)·b^{−L}/(b−1)]`).  **Still missing**: `exists_crt_pattern` with an extra
+`a ≡ a₀ [MOD R]` clause (`R` coprime to `∏_{p∈S} p`); the count
+`ω_{≤P}(a+j) = #{p ≤ L+1 : p ∣ j} + d_j` under that steering; enough primes in `(L+1, P]`;
+and the choice of `ℓ'` with `b^{ℓ'} > (bℓ'+2)/len`.
+
+
 Construction is written out in the docstring: pick `ℓ'` with `b^{ℓ'} ≫ ℓ'/len`, `P` minimal with
 `(b−1)ℓ'` primes in `(ℓ'+1, P]`, `Q = ∏_{p≤P} p`; steer `ω_{≤P}(a+j) = c_j + k_j` for `j ≤ ℓ'` by
 `exists_crt_pattern` (window `ℓ'+1`, unused primes dumped into slot `ℓ'+1`) plus a fixed residue
@@ -47,6 +58,22 @@ those indicators: `E_n[∑_{p>K} c_p(n)] ≍ (loglog N − loglog K)/(b−1)`, w
 `K ≤ N^{o(1)}`, while exact periodicity of the truncation `∑_{P<p≤K} c_p` costs a modulus
 `D ≈ e^K` and therefore needs `K ≤ (1−ε)log N`.  So *truncate-and-CRT does not close*, and the
 gap is exactly the unbounded `loglog` tail — the same tail that makes `G_b`'s normality hard.
+
+**2026-09-24 pricing correction (IMPORTANT — supersedes "sieve-grade, not Selberg–Delange-grade"
+in `HANDOFF-2026-09-24-swing-c3.md`).**  Reduce Leaf B by additive characters mod `Q`:
+decoupling holds iff for every `j ≢ 0 (mod Q)` and every `h ≠ 0`,
+`(1/N)∑_{n<N} e(jn/Q)·e(h·tailLarge P b n) = o(1)` (Erdős–Turán turns the exponential sums back
+into arcs).  Keep only the `j = 1` slot of the tail: `e(h·ω_{>P}(n+1)/b) = z^{ω_{>P}(n+1)}` with
+`z = e(h/b)` a `b`-th root of unity, so the sum is `∑_{m≤N} e(jm/Q) z^{ω_{>P}(m)}` — a
+**multiplicative function twisted by an additive character**.  Splitting `m = s·t` into its
+`P`-smooth and `P`-rough parts, `t` is automatically coprime to `Q` (`Q` is `P`-smooth), so
+`e(jst/Q)` expands in **Dirichlet characters mod `Q`**, and the non-principal terms must beat the
+main term — that is `∑_{t≤x} χ(t) z^{ω(t)}`, i.e. **Selberg–Delange with characters**
+(`L(s,χ)^z`), gaining one power of `log`.  So the natural route to Leaf B is SD-grade, NOT merely
+fundamental-lemma-grade.  (Consistent with the dynamical form: decoupling ⟺ `μ̂(h) = μ̂(bh)` for
+all `h`, i.e. the limit measure of the `×b^Q`-empirical measures of `L_P` is `×b`-invariant.)
+Mathlib has no Selberg–Delange, so B3 below — *find a route that avoids identifying anything* —
+is now the highest-value probe.
 
 **Attack list for the next laps** (each is a lap-sized, falsifiable probe):
 - **B1 (formalise the frame).**  Define `smallLambert P b`, `largeLambert P b`; prove
