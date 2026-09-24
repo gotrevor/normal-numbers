@@ -9266,7 +9266,7 @@ complete.  Remaining next steps there: (2) Astra §10 abstract consumer
    quantitative zero-free region** — qualitative `o(x)` suffices.
 2. `psiChar_littleO` (PROVED, modulo 3) — `ψ(x,χ) = o(x)` from PNT in APs, by grouping into
    residue classes; `∑_{a<q} χ a = 0` kills the main term.
-3. `psiAP_tendsto` — **THE OPEN LEAF.**  `ψ(X;q,a)/X → 1/φ(q)` for `gcd(a,q)=1`.
+3. `psiAP_tendsto` — **PROVED 2026-09-24, axiom-clean** (see below).  Was:  `ψ(X;q,a)/X → 1/φ(q)` for `gcd(a,q)=1`.
    *Attack:* it is a PORT, not a new theorem.  `vonMangoldt.residueClass a` is NONNEGATIVE (this
    is why the reduction goes through residue classes and not directly through the complex
    `ψ(x,χ)`), and mathlib already has the exact analytic input — `LFunctionResidueClassAux`,
@@ -9286,3 +9286,14 @@ complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 twisted sums.  `j ↦ jd` permutes `ℤ/Q` for `gcd(d,Q)=1`, so Cauchy–Schwarz does close a system —
 but squaring destroys the phase of `z`, and the resulting inequality `W(N) log N ≲ ∑_d Λ d
 W(N/d)/d` is an identity-strength relation with no gain.  `Re z < 1` can only be used linearly.
+
+**Update (same day).**  `psiAP_tendsto` is **DISCHARGED and axiom-clean**.  `Wiener.lean` was
+vendored into `src/PNTPort/Wiener.lean` (blueprint attributes stripped, imports repointed); it
+needed exactly two mathlib-drift repairs — a `fun_prop` failure on `𝐞 ∘ Multiplicative.ofAdd`
+(fixed by rewriting through the `rfl`-level `𝐞 y = cexp (2πy·I)`) and an `ae`-membership goal
+(fixed with `mem_ae_iff` + `Measure.restrict_apply'`).  `WeakPNT_AP` then gives `ψ(X;q,a)`
+directly, modulo the `cumsum`/`Ioc` index shift.  The vendored dead branch
+`prelim_decay_2/3`/`decay_alt` (upstream `sorry`s, nothing depends on them) was removed.
+
+Remaining for rung 2: items 4 (principal-character branch) and 5 (Fourier reduction of the
+additive twist), plus instantiating `psiChar_littleO` at a genuine `DirichletCharacter`.

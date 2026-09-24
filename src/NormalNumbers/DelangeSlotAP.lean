@@ -1,4 +1,5 @@
 import NormalNumbers.DelangeSlotChar
+import PNTPort.Wiener
 
 /-!
 # Rung 2, layer 2: `ψ(x,χ) = o(x)` from the prime number theorem in arithmetic progressions
@@ -68,7 +69,38 @@ the intended source, and its support files (`Fourier`, `Sobolev`, `SmoothExisten
 already vendored in `src/PNTPort/`.  See the file header. -/
 theorem psiAP_tendsto {q a : ℕ} (hq : 0 < q) (ha : Nat.Coprime a q) (haq : a < q) :
     Tendsto (fun X : ℕ => psiAP q a X / X) atTop (𝓝 (1 / (Nat.totient q : ℝ))) := by
-  sorry
+  classical
+  set f : ℕ → ℝ := fun n => if n % q = a then Λ n else 0 with hf
+  have hcum : ∀ X : ℕ, cumsum f (X + 1) = psiAP q a X := by
+    intro X
+    have hset : Finset.range (X + 1) = insert 0 (Finset.Ioc 0 X) := by
+      ext i; simp
+    rw [cumsum, hset, Finset.sum_insert (by simp), psiAP, Finset.sum_filter]
+    simp [hf]
+  have h := WeakPNT_AP (q := q) (a := a) hq ha haq
+  have h1 : Tendsto (fun X : ℕ => psiAP q a X / ((X : ℝ) + 1)) atTop
+      (𝓝 (1 / (Nat.totient q : ℝ))) := by
+    have := h.comp (Filter.tendsto_add_atTop_nat 1)
+    refine this.congr fun X ↦ ?_
+    simp only [Function.comp_apply]
+    rw [← hf, hcum X]
+    push_cast
+    ring
+  have h2 : Tendsto (fun X : ℕ => ((X : ℝ) + 1) / X) atTop (𝓝 1) := by
+    have : Tendsto (fun X : ℕ => 1 + (X : ℝ)⁻¹) atTop (𝓝 (1 + 0)) :=
+      tendsto_const_nhds.add (tendsto_inv_atTop_zero.comp tendsto_natCast_atTop_atTop)
+    rw [add_zero] at this
+    refine this.congr' ?_
+    filter_upwards [eventually_gt_atTop 0] with X hX
+    have : (0:ℝ) < X := by exact_mod_cast hX
+    field_simp
+  have h3 := h1.mul h2
+  rw [mul_one] at h3
+  refine h3.congr' ?_
+  filter_upwards [eventually_gt_atTop 0] with X hX
+  have hX0 : (0:ℝ) < X := by exact_mod_cast hX
+  have hX1 : ((X:ℝ) + 1) ≠ 0 := by positivity
+  field_simp
 
 /-- **`ψ(x,χ) = o(x)` for a `q`-periodic `χ` supported on the units with `∑_a χ a = 0`.**
 The principal character is exactly the one excluded by `hsum`. -/
