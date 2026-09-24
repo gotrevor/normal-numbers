@@ -149,4 +149,88 @@ theorem sum_range_tailTrunc_sub_le {b : ℕ} (hb : 2 ≤ b) (P K K' N : ℕ) :
     _ ≤ _ := Finset.sum_le_sum fun p hp =>
         sum_range_tailPrimeTerm_le hb (Finset.mem_filter.1 hp).2.pos N
 
+/-! ### The master inequality: the whole crux as two competing explicit terms -/
+
+/-- `e(·)` is Lipschitz: `‖e(x) − e(y)‖ ≤ 16|x − y|`. -/
+theorem norm_ee_sub_ee_le (x y : ℝ) : ‖ee (x : ℂ) - ee (y : ℂ)‖ ≤ 16 * |x - y| := by
+  have hd : ee (x : ℂ) - ee (y : ℂ) = ee (y : ℂ) * (ee (((x - y : ℝ)) : ℂ) - 1) := by
+    rw [mul_sub, mul_one, ← ee_add]
+    congr 2
+    push_cast
+    ring
+  have hz : ‖(2 * (Real.pi : ℂ) * Complex.I * ((x - y : ℝ) : ℂ))‖ = 2 * Real.pi * |x - y| := by
+    rw [show (2 * (Real.pi : ℂ) * Complex.I * ((x - y : ℝ) : ℂ))
+        = ((2 * Real.pi * (x - y) : ℝ) : ℂ) * Complex.I by push_cast; ring,
+      norm_mul, Complex.norm_I, mul_one, Complex.norm_real, Real.norm_eq_abs, abs_mul,
+      abs_of_pos (by positivity : (0:ℝ) < 2 * Real.pi)]
+  rcases le_or_gt |x - y| (1/8 : ℝ) with hcase | hcase
+  · have h1 : ‖(2 * (Real.pi : ℂ) * Complex.I * ((x - y : ℝ) : ℂ))‖ ≤ 1 := by
+      rw [hz]
+      nlinarith [Real.pi_le_four, abs_nonneg (x - y)]
+    have h2 := Complex.norm_exp_sub_one_le h1
+    rw [hd, norm_mul, norm_ee_real]
+    rw [one_mul, ee]
+    calc ‖Complex.exp (2 * (Real.pi : ℂ) * Complex.I * ((x - y : ℝ) : ℂ)) - 1‖
+        ≤ 2 * ‖(2 * (Real.pi : ℂ) * Complex.I * ((x - y : ℝ) : ℂ))‖ := h2
+      _ = 4 * Real.pi * |x - y| := by rw [hz]; ring
+      _ ≤ 16 * |x - y| := by nlinarith [Real.pi_le_four, abs_nonneg (x - y)]
+  · calc ‖ee (x : ℂ) - ee (y : ℂ)‖ ≤ ‖ee (x : ℂ)‖ + ‖ee (y : ℂ)‖ := norm_sub_le _ _
+      _ = 2 := by rw [norm_ee_real, norm_ee_real]; norm_num
+      _ ≤ 16 * |x - y| := by linarith
+
+/-- The truncation defect is nonnegative. -/
+theorem tailLarge_sub_tailTrunc_nonneg {b : ℕ} (hb : 2 ≤ b) (P K n : ℕ) :
+    0 ≤ tailLarge P b n - tailTrunc b P K n := by
+  have h := (tailLarge_sub_truncate_mem_Icc hb P n K).1
+  rwa [sum_tailPrimeSummand_range b P n K, ← tailTrunc] at h
+
+/-- **THE MASTER INEQUALITY.**  For every truncation level `K`, the crux's twisted sum is
+controlled by exactly two competing terms: the PERIOD `∏_{P<p≤K} p · Q` (which the complete-sum
+cancellation pays for, and which must be `≪ N`), and the DISCARDED MASS
+`∑_{n<N}(tailLarge − tailTrunc_K)(n)` (priced by `sum_range_tailTrunc_sub_le` at
+`≍ N·∑_{p>K} 1/p`, and which must be `≪ N`).  `ConjC3` is the assertion that some `K = K(N)`
+makes both small; laps 7–10 show the first forces `K ≲ log N` and the second `K ≳ N`. -/
+theorem norm_sum_addChar_tailLarge_le {b P K Q j : ℕ} (hb : 2 ≤ b) (hQ : 0 < Q)
+    (hQP : ∀ p : ℕ, p.Prime → p ∣ Q → p ≤ P) (hj0 : 0 < j) (hjQ : j < Q) (h : ℤ) (N : ℕ) :
+    ‖∑ n ∈ range N, ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+        * ee (((h : ℝ) * tailLarge P b n : ℝ) : ℂ)‖
+      ≤ ((primePeriod P K * Q : ℕ) : ℝ)
+        + 16 * |(h : ℝ)| * ∑ n ∈ range N, (tailLarge P b n - tailTrunc b P K n) := by
+  classical
+  set A : ℂ := ∑ n ∈ range N, ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+    * ee (((h : ℝ) * tailTrunc b P K n : ℝ) : ℂ) with hA
+  have hsplit : ∑ n ∈ range N, ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+      * ee (((h : ℝ) * tailLarge P b n : ℝ) : ℂ)
+      = A + ∑ n ∈ range N, ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+        * (ee (((h : ℝ) * tailLarge P b n : ℝ) : ℂ)
+          - ee (((h : ℝ) * tailTrunc b P K n : ℝ) : ℂ)) := by
+    rw [hA, ← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun n _ => by ring
+  have hAbd := norm_sum_addChar_tailTrunc_le (b := b) (K := K) hQ hQP hj0 hjQ h N
+  have hDbd : ‖∑ n ∈ range N, ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+      * (ee (((h : ℝ) * tailLarge P b n : ℝ) : ℂ)
+        - ee (((h : ℝ) * tailTrunc b P K n : ℝ) : ℂ))‖
+      ≤ 16 * |(h : ℝ)| * ∑ n ∈ range N, (tailLarge P b n - tailTrunc b P K n) := by
+    calc ‖∑ n ∈ range N, ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+        * (ee (((h : ℝ) * tailLarge P b n : ℝ) : ℂ)
+          - ee (((h : ℝ) * tailTrunc b P K n : ℝ) : ℂ))‖
+        ≤ ∑ n ∈ range N, ‖ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+            * (ee (((h : ℝ) * tailLarge P b n : ℝ) : ℂ)
+              - ee (((h : ℝ) * tailTrunc b P K n : ℝ) : ℂ))‖ := norm_sum_le _ _
+      _ ≤ ∑ n ∈ range N, 16 * |(h : ℝ)| * (tailLarge P b n - tailTrunc b P K n) := by
+          refine Finset.sum_le_sum fun n _ => ?_
+          rw [norm_mul, norm_ee_real, one_mul]
+          refine le_trans (norm_ee_sub_ee_le _ _) ?_
+          have hnn := tailLarge_sub_tailTrunc_nonneg hb P K n
+          have habs : |(h : ℝ) * tailLarge P b n - (h : ℝ) * tailTrunc b P K n|
+              = |(h : ℝ)| * (tailLarge P b n - tailTrunc b P K n) := by
+            rw [← mul_sub, abs_mul, abs_of_nonneg hnn]
+          rw [habs]
+          ring_nf
+          exact le_rfl
+      _ = 16 * |(h : ℝ)| * ∑ n ∈ range N, (tailLarge P b n - tailTrunc b P K n) := by
+          rw [← Finset.mul_sum]
+  rw [hsplit]
+  exact le_trans (norm_add_le _ _) (by linarith)
+
 end NormalNumbers

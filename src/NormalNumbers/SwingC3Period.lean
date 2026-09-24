@@ -215,13 +215,12 @@ theorem norm_sum_range_le_of_period {L : ℕ} (hL : 0 < L) (g : ℕ → ℂ) (hg
 
 open Filter Topology
 
-/-- **`AddCharTail` for the truncated tail.**  For every fixed `K`, the twisted average of the
-truncated large-prime tail tends to `0`.  The full crux is the uniformity of this in `K`. -/
-theorem addCharTailTrunc_tendsto {b P K Q j : ℕ} (hQ : 0 < Q)
-    (hQP : ∀ p : ℕ, p.Prime → p ∣ Q → p ≤ P) (hj0 : 0 < j) (hjQ : j < Q) (h : ℤ) :
-    Tendsto (fun N : ℕ =>
-      (∑ n ∈ range N, ee (((j : ℝ) * n / Q : ℝ) : ℂ)
-        * ee (((h : ℝ) * tailTrunc b P K n : ℝ) : ℂ)) / N) atTop (𝓝 0) := by
+/-- **The quantitative truncated bound.**  The twisted sum of the truncated tail is bounded by
+its period, uniformly in `N`. -/
+theorem norm_sum_addChar_tailTrunc_le {b P K Q j : ℕ} (hQ : 0 < Q)
+    (hQP : ∀ p : ℕ, p.Prime → p ∣ Q → p ≤ P) (hj0 : 0 < j) (hjQ : j < Q) (h : ℤ) (N : ℕ) :
+    ‖∑ n ∈ range N, ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+        * ee (((h : ℝ) * tailTrunc b P K n : ℝ) : ℂ)‖ ≤ ((primePeriod P K * Q : ℕ) : ℝ) := by
   set L : ℕ := primePeriod P K * Q with hLdef
   have hL : 0 < L := Nat.mul_pos (primePeriod_pos P K) hQ
   set g : ℕ → ℂ := fun n => ee (((j : ℝ) * n / Q : ℝ) : ℂ)
@@ -250,12 +249,23 @@ theorem addCharTailTrunc_tendsto {b P K Q j : ℕ} (hQ : 0 < Q)
     intro n
     rw [hgdef]
     simp only [norm_mul, norm_ee_real, mul_one, le_refl]
-  have hbd : ∀ N : ℕ, ‖(∑ n ∈ range N, g n) / N‖ ≤ (L : ℝ) / N := by
+  exact norm_sum_range_le_of_period hL g hgper hzero hnorm N
+
+/-- **`AddCharTail` for the truncated tail.**  For every fixed `K`, the twisted average of the
+truncated large-prime tail tends to `0`.  The full crux is the uniformity of this in `K`. -/
+theorem addCharTailTrunc_tendsto {b P K Q j : ℕ} (hQ : 0 < Q)
+    (hQP : ∀ p : ℕ, p.Prime → p ∣ Q → p ≤ P) (hj0 : 0 < j) (hjQ : j < Q) (h : ℤ) :
+    Tendsto (fun N : ℕ =>
+      (∑ n ∈ range N, ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+        * ee (((h : ℝ) * tailTrunc b P K n : ℝ) : ℂ)) / N) atTop (𝓝 0) := by
+  set L : ℕ := primePeriod P K * Q with hLdef
+  have hbd : ∀ N : ℕ, ‖(∑ n ∈ range N, ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+      * ee (((h : ℝ) * tailTrunc b P K n : ℝ) : ℂ)) / N‖ ≤ (L : ℝ) / N := by
     intro N
     rw [norm_div, Complex.norm_natCast]
     rcases Nat.eq_zero_or_pos N with rfl | hN
     · simp
-    · have hnum := norm_sum_range_le_of_period hL g hgper hzero hnorm N
+    · have hnum := norm_sum_addChar_tailTrunc_le (b := b) (K := K) hQ hQP hj0 hjQ h N
       have hNR : (0:ℝ) < N := by exact_mod_cast hN
       gcongr
   refine squeeze_zero_norm hbd ?_

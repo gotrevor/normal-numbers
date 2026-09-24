@@ -9603,3 +9603,29 @@ machine-checked facts around it, the exact missing window, and the numerics.
 
 `src/` swing sorries: 2 (`tailLargeDecouple_holds`, the ratified arc-form leaf kept per the
 kickoff addendum; and `weylLambertTwist_holds`, the live crux).  The rise is the decomposition.
+
+### lap 12 — THE MASTER INEQUALITY (`SwingC3Mean.lean`, axiom-clean)
+
+`norm_sum_addChar_tailLarge_le` : for EVERY truncation level `K`,
+
+    ‖∑_{n<N} e(jn/Q)·e(h·tailLarge P b n)‖
+        ≤  (∏_{P<p≤K} p)·Q   +   16|h| · ∑_{n<N}(tailLarge − tailTrunc_K)(n)
+
+The entire crux is now one inequality with two explicit, competing terms:
+* the **period** `∏_{P<p≤K} p · Q`, paid for by exact complete-period cancellation
+  (`norm_sum_addChar_tailTrunc_le`, extracted this lap as a standalone quantitative lemma) — it
+  must be `≪ N`, which forces `K ≲ log N`;
+* the **discarded mass**, priced exactly by `sum_range_tailTrunc_sub_le` at
+  `≤ ∑_{K<p≤K'}(N/p+1)/(b−1)` — it must be `≪ N`, which forces `K ≳ N`.
+
+`ConjC3` is precisely the assertion that some `K = K(N)` makes both small.  Everything in the
+swing now reduces to beating ONE of those two terms, and both are machine-checked.  Supporting:
+`norm_ee_sub_ee_le` (`‖e(x)−e(y)‖ ≤ 16|x−y|`) and `tailLarge_sub_tailTrunc_nonneg`.
+
+### Next attack (lap 13)
+Only the first term admits improvement: `norm_sum_addChar_tailTrunc_le` uses the TRIVIAL stub
+bound `‖∑_{n<N}‖ ≤ L` when `L ≫ N`.  Any sub-trivial bound on an incomplete sum of the
+`L`-periodic unimodular `g` — e.g. via the large sieve over the moduli `p ∈ (P,K]`, or Weyl
+differencing in the CRT coordinates `(n mod p)_p` — immediately widens the usable range of `K`
+and is the ONLY remaining structural handle.  The master inequality is the frame such a bound
+would plug into: replace `((primePeriod P K * Q : ℕ) : ℝ)` by whatever the improved bound gives.
