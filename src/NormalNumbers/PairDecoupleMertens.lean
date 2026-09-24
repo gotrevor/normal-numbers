@@ -868,4 +868,163 @@ theorem pairMultiElliottLL_of_multiElliottLL (b p q : ℕ) (t : ℝ) (h : MultiE
   have := h 0 0 j j' hjj
   rwa [primorialLe_zero] at this
 
+/-! ### The small primes cancel out of the retained digits
+
+Directive item 2, in a stronger form than the band route: the small-prime part of `ω` is
+*exactly* periodic — `#{r ≤ y : r ∣ m}` depends only on `m mod ∏_{r ≤ y} r` — and both shifted
+arguments of `shiftDigitTrunc` lie in the same class modulo `Q = primorialLe P`.  So the
+contribution of every prime `≤ P` cancels identically, and the retained digits carry only the
+LARGE-prime counts `ω_{>P}`. -/
+
+/-- `ω` restricted to the primes `≤ y`. -/
+def omegaBelow (y m : ℕ) : ℕ := #{r ∈ m.primeFactors | r ≤ y}
+
+/-- `ω` restricted to the primes `> y`. -/
+def omegaAbove (y m : ℕ) : ℕ := #{r ∈ m.primeFactors | ¬ r ≤ y}
+
+lemma omegaNat_eq_below_add_above (y m : ℕ) :
+    omegaNat m = omegaBelow y m + omegaAbove y m := by
+  classical
+  rw [omegaNat, omegaBelow, omegaAbove]
+  exact (Finset.card_filter_add_card_filter_not (s := m.primeFactors) (p := fun r => r ≤ y)).symm
+
+/-- **The small-prime count is periodic.**  If every prime `r ≤ y` divides the modulus `d`, and
+`m ≡ m'` modulo `d`, then `ω_{≤y}(m) = ω_{≤y}(m')`. -/
+lemma omegaBelow_eq_of_dvd_sub (y d m m' : ℕ) (hm : m ≠ 0) (hm' : m' ≠ 0)
+    (hle : m' ≤ m) (hd : d ∣ m - m')
+    (hdiv : ∀ r : ℕ, r.Prime → r ≤ y → r ∣ d) :
+    omegaBelow y m = omegaBelow y m' := by
+  classical
+  have key : ∀ r : ℕ, r.Prime → r ≤ y → (r ∣ m ↔ r ∣ m') := by
+    intro r hr hry
+    have hrd : r ∣ m - m' := dvd_trans (hdiv r hr hry) hd
+    constructor
+    · intro h
+      have : r ∣ m - (m - m') := Nat.dvd_sub h hrd
+      rwa [Nat.sub_sub_self hle] at this
+    · intro h
+      have : r ∣ m' + (m - m') := Nat.dvd_add h hrd
+      rwa [Nat.add_sub_cancel' hle] at this
+  rw [omegaBelow, omegaBelow]
+  congr 1
+  ext r
+  simp only [Finset.mem_filter, Nat.mem_primeFactors]
+  constructor
+  · rintro ⟨⟨hr, hrm, -⟩, hry⟩
+    exact ⟨⟨hr, (key r hr hry).mp hrm, hm'⟩, hry⟩
+  · rintro ⟨⟨hr, hrm, -⟩, hry⟩
+    exact ⟨⟨hr, (key r hr hry).mpr hrm, hm⟩, hry⟩
+
+/-- The `K`-digit truncation built from the LARGE-prime counts only. -/
+noncomputable def digitTruncAbove (y b p q K n : ℕ) : ℝ :=
+  ∑ k ∈ range K, (((omegaAbove y (p * n + 1 + k) : ℝ) - omegaAbove y (q * n + 1 + k))
+    / (b : ℝ) ^ (k + 1))
+
+/-- The large-prime shifted truncation along the progression. -/
+noncomputable def shiftDigitTruncAbove (y b p q Q c j j' K i : ℕ) : ℝ :=
+  digitTruncAbove y b p q K (c + (i + j) * Q) - digitTruncAbove y b p q K (c + (i + j') * Q)
+
+/-- The two arguments of the shifted truncation are congruent modulo `Q`, hence modulo every
+prime `≤ P`. -/
+private lemma small_prime_dvd_diff (P p c j j' Q i k : ℕ) (hQ : Q = primorialLe P)
+    (hjj : j' ≤ j) :
+    primorialLe P ∣ (p * (c + (i + j) * Q) + 1 + k) - (p * (c + (i + j') * Q) + 1 + k) := by
+  have hdvd : primorialLe P ∣ Q := by rw [hQ]
+  have heq : (p * (c + (i + j) * Q) + 1 + k) - (p * (c + (i + j') * Q) + 1 + k)
+      = p * Q * (j - j') := by
+    have h1 : (i + j') * Q ≤ (i + j) * Q := Nat.mul_le_mul_right Q (by omega)
+    have h2 : p * (c + (i + j) * Q) = p * c + p * ((i + j) * Q) := by ring
+    have h3 : p * (c + (i + j') * Q) = p * c + p * ((i + j') * Q) := by ring
+    have h4 : p * ((i + j) * Q) - p * ((i + j') * Q) = p * Q * (j - j') := by
+      rw [← Nat.mul_sub, ← Nat.sub_mul]
+      have : i + j - (i + j') = j - j' := by omega
+      rw [this]; ring
+    have h5 : p * ((i + j') * Q) ≤ p * ((i + j) * Q) := Nat.mul_le_mul_left p h1
+    omega
+  rw [heq]
+  exact Dvd.dvd.mul_right (Dvd.dvd.mul_left hdvd p) _
+
+/-- **The small-prime part of a retained digit is the same at both shifts.** -/
+private lemma omegaBelow_shift_eq (P p c j j' Q i k : ℕ) (hQ : Q = primorialLe P) :
+    omegaBelow P (p * (c + (i + j) * Q) + 1 + k)
+      = omegaBelow P (p * (c + (i + j') * Q) + 1 + k) := by
+  have main : ∀ u v : ℕ, v ≤ u →
+      omegaBelow P (p * (c + (i + u) * Q) + 1 + k)
+        = omegaBelow P (p * (c + (i + v) * Q) + 1 + k) := by
+    intro u v huv
+    refine omegaBelow_eq_of_dvd_sub P (primorialLe P) _ _ (by omega) (by omega) ?_
+      (small_prime_dvd_diff P p c u v Q i k hQ huv) ?_
+    · have h1 : (i + v) * Q ≤ (i + u) * Q := Nat.mul_le_mul_right Q (by omega)
+      have h2 : p * (c + (i + v) * Q) ≤ p * (c + (i + u) * Q) :=
+        Nat.mul_le_mul_left p (by omega)
+      omega
+    · intro r hr hrP
+      refine dvd_primorialLe ?_
+      rw [primesLe, Finset.mem_filter, Finset.mem_range]
+      exact ⟨by omega, hr⟩
+  rcases le_total j' j with h | h
+  · exact main j j' h
+  · exact (main j' j h).symm
+
+/-- **THE RETAINED DIGITS ONLY SEE THE LARGE PRIMES.**  Every prime `≤ P` cancels identically
+out of the shifted truncation: the two arguments are congruent modulo `primorialLe P`, and the
+small-prime count is exactly periodic with that period.  So the leaf's correlation involves only
+`ω` restricted to the primes `> P` — a strictly weaker correlation than the full one. -/
+theorem shiftDigitTrunc_eq_above (b p q P c j j' K i : ℕ) :
+    shiftDigitTrunc b p q (primorialLe P) c j j' K i
+      = shiftDigitTruncAbove P b p q (primorialLe P) c j j' K i := by
+  set Q := primorialLe P with hQ
+  rw [shiftDigitTrunc, shiftDigitTruncAbove, digitTrunc, digitTrunc, digitTruncAbove,
+    digitTruncAbove, ← Finset.sum_sub_distrib, ← Finset.sum_sub_distrib]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  have hp := omegaBelow_shift_eq P p c j j' Q i k hQ
+  have hq := omegaBelow_shift_eq P q c j j' Q i k hQ
+  have hep : ∀ u : ℕ, (omegaNat (p * (c + (i + u) * Q) + 1 + k) : ℝ)
+      = (omegaBelow P (p * (c + (i + u) * Q) + 1 + k) : ℝ)
+        + (omegaAbove P (p * (c + (i + u) * Q) + 1 + k) : ℝ) := by
+    intro u
+    have := omegaNat_eq_below_add_above P (p * (c + (i + u) * Q) + 1 + k)
+    exact_mod_cast congrArg (fun n : ℕ => (n : ℝ)) this
+  have heq : ∀ u : ℕ, (omegaNat (q * (c + (i + u) * Q) + 1 + k) : ℝ)
+      = (omegaBelow P (q * (c + (i + u) * Q) + 1 + k) : ℝ)
+        + (omegaAbove P (q * (c + (i + u) * Q) + 1 + k) : ℝ) := by
+    intro u
+    have := omegaNat_eq_below_add_above P (q * (c + (i + u) * Q) + 1 + k)
+    exact_mod_cast congrArg (fun n : ℕ => (n : ℝ)) this
+  have hpR : (omegaBelow P (p * (c + (i + j) * Q) + 1 + k) : ℝ)
+      = (omegaBelow P (p * (c + (i + j') * Q) + 1 + k) : ℝ) := by exact_mod_cast hp
+  have hqR : (omegaBelow P (q * (c + (i + j) * Q) + 1 + k) : ℝ)
+      = (omegaBelow P (q * (c + (i + j') * Q) + 1 + k) : ℝ) := by exact_mod_cast hq
+  rw [hep j, hep j', heq j, heq j']
+  rw [hpR, hqR]
+  ring
+
+/-- **The leaf in large-prime form.**  Same statement as `MultiElliottLL`, with `ω` replaced
+throughout by `ω_{>P}`: the small primes have been removed from the correlation, not estimated
+away. -/
+def MultiElliottLLAbove (b p q : ℕ) (t : ℝ) : Prop :=
+  ∀ P c j j' : ℕ, j ≠ j' →
+    Filter.Tendsto (fun R : ℕ =>
+        ‖∑ i ∈ range R,
+            phase (t * shiftDigitTruncAbove P b p q (primorialLe P) c j j' (depthLL b R) i)‖ / R)
+      Filter.atTop (𝓝 0)
+
+theorem multiElliottLL_iff_above (b p q : ℕ) (t : ℝ) :
+    MultiElliottLL b p q t ↔ MultiElliottLLAbove b p q t := by
+  constructor
+  · intro h P c j j' hjj
+    have := h P c j j' hjj
+    simpa only [shiftDigitTrunc_eq_above] using this
+  · intro h P c j j' hjj
+    have := h P c j j' hjj
+    simpa only [← shiftDigitTrunc_eq_above] using this
+
+/-- **The crux is exactly a LARGE-PRIME multi-point Elliott correlation at `log log log`
+depth.**  This is directive item 2 discharged in its strong form: for every small-prime cut `P`
+the leaf sees only the primes above `P`. -/
+theorem shiftCorrSmall_iff_multiElliottLLAbove (b : ℕ) (hb : 2 ≤ b) (p q : ℕ) (t : ℝ)
+    (hp : p ≠ 0) (hq : q ≠ 0) :
+    ShiftCorrSmall b p q t ↔ MultiElliottLLAbove b p q t :=
+  (shiftCorrSmall_iff_multiElliottLL b hb p q t hp hq).trans (multiElliottLL_iff_above b p q t)
+
 end NormalNumbers.PairDecouple
