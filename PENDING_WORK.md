@@ -9498,3 +9498,33 @@ The gap is the diagonal: the proved rate needs `∏_{P<p≤K} p = e^{(1+o(1))K} 
    so `∏ ≤ N` forces `|S| log(min S) ≤ log N`, hence `∑_{p∈S} 1/p ≤ log N/(min S · log(min S))`,
    which is `o(1)` unless `min S ≲ log N`.  **This is a genuine refutation of the "pick a better
    prime subset" escape** — formalize it as a probe/lemma next lap.
+
+### lap 8 — REFUTED: no prime subset escapes the window (`SwingC3Subset.lean`, axiom-clean)
+
+`sum_inv_le_of_prod_le` : `S` a finite set of integers `≥ m ≥ 2` with `∏_{p∈S} p ≤ N` satisfies
+
+    ∑_{p ∈ S} 1/p  ≤  log N / (m · log m)          (and `|S| ≤ log N / log m`).
+
+**Why this kills a whole family of escapes.**  Lap 7 left `ConjC3` in the window
+`log N ≪ K ≪ N`, where the complete-period cancellation is unusable because
+`∏_{P<p≤K} p ≈ e^K > N`.  The obvious repair is to use a cleverer SUBSET `S` of primes: the
+period `∏_{p∈S} p` need only be `≤ N`, and what must be captured is the harmonic weight
+`∑_{p∈S} 1/p` (the `p`-term of the closed form has mean `1/((b−1)p)` over its period).  The
+lemma says the two are in unavoidable tension: a usable period forces `∑_{p∈S} 1/p = o(1)` as
+soon as the smallest prime of `S` exceeds `log N`.  Sharp: `S` = primes in `(m, 2m]` gives
+`∏ ≈ e^{2m}`, `∑ 1/p ≈ log 2/log m`.
+
+So the escape must come from somewhere OTHER than the choice of period.  Remaining candidates,
+in order of promise:
+1. **Partial cancellation inside an incomplete period** (large sieve / Erdős–Turán / Weyl
+   differencing) — i.e. beat the trivial `‖∑_{n<N}‖ ≤ L` of `norm_sum_range_le_of_period` when
+   `L ≫ N`.  This is where the problem really is.
+2. **Expand the high tail** `e(h·R_K) = ∏_{p>K}(1 + η_p)`, `η_p` `p`-periodic with
+   `‖η_p‖_1 ≍ |h|/((b−1)p)`.  Every expansion term indexed by a set `S` with
+   `primePeriod P K · ∏_{p∈S} p ≤ N` has EXACT complete-period cancellation (lap 6 applies
+   verbatim: the period is still coprime to `Q`).  Lap 8's lemma bounds which `S` survive.
+   Bookkeeping this gives `limsup ≤ C·log(log 2N/log p*)` with `p* ≈ N^{1/2}` — a CONSTANT, not
+   `o(1)`.  Worth formalizing the `limsup ≤ C` statement: a bounded-limsup version of the crux
+   is strictly more than is currently known and may be enough for a WEAKER but nontrivial
+   richness statement (only finitely many words excluded).
+3. The named leaf `AddCharTailUniform` + `addCharTail_of_uniform` (still to be pinned in `src/`).
