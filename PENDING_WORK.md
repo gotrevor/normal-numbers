@@ -10171,3 +10171,51 @@ all three precise and literature-checkable, the first two known theorems.  Also
    Needs a device that handles the tail digits by *structure* rather than by *size*: a periodic
    model for them, a second van der Corput in the digit index, or a logarithmic average in which
    the tail's own equidistribution can be used.  Every attempt gets recorded here.
+
+### lap 10 — the leaf sharpened twice: logarithmic depth, and no progression
+
+Both moves *weaken the hypothesis*, so both strengthen every conditional theorem downstream.
+
+**(a) The admissible truncation depth drops from `K ≍ log_b R` to `K ≍ log_b log R`.**
+`AdmissibleTrunc b K` is now
+
+```
+((log₂(R+1)) + (log₂(K R + 1)) + 1) / b^{K R} → 0
+```
+
+(was `(R + K R + 1)/b^{K R} → 0`).  The enabling estimate is
+`abs_pairTail_sub_digitTrunc_le_log`: `omegaTail` is `O(log)` not `O(id)`
+(`omegaTail_le_log`, already in `SwingC1.lean` from `ω(m) ≤ log₂ m`), and the progression's
+multiplicative constants cost only an ADDITIVE constant inside a logarithm — formalised via the
+new `natLog_two_mul_le : log₂(a·c) ≤ log₂ a + log₂ c + 1`.  Since `MultiElliott` is
+`∃ K, AdmissibleTrunc b K ∧ …`, loosening admissibility makes MORE depths qualify, i.e. makes
+`MultiElliott` **weaker**; the reduction `MultiElliott → ShiftCorrSmall` still holds because the
+truncation error is now bounded logarithmically for every admissible `K`.
+The remaining gap to the true `K ≍ log_b log log R` is exactly one Mertens estimate
+(`Σ_{m≤X} ω(m) ≤ X(log log X + C)`), still open as lap work.
+
+**(b) The swing needs the correlation only along `ℤ` — no modulus, no class.**
+`shiftPairDiff_eq_pairTail` (lap 9) showed the cut `P` cancels; combining it with
+`largeProg_zero` (`primorialLe 0 = 1`, `primesLe_zero`) gives the minimal leaf
+
+```
+PairMultiElliott b p q t :=
+  ∃ K, AdmissibleTrunc b K ∧ ∀ j ≠ j',
+    (1/R)‖Σ_{i<R} e(t·(digitTrunc_{K R}(i+j) − digitTrunc_{K R}(i+j')))‖ → 0
+```
+
+with `pairShiftCorr_iff_pairMultiElliott` (again an EQUIVALENCE) and
+
+```
+conjC1_of_delange_katai_pairMultiElliott :
+  KataiOrthogonality → DelangeMean → PairMultiElliott → ConjC1        (trust-triple clean)
+```
+
+`pairMultiElliott_of_multiElliott` records that this is strictly weaker than the `MultiElliott`
+form, which is in turn what the ratified `pairDecouple_all` route needs.  So the development now
+carries THREE nested conditional theorems, and the weakest one asks only for a `4K`-point
+Elliott correlation in one variable along the forms `p(i+j)+1+k`, `q(i+j)+1+k`, `p(i+j')+1+k`,
+`q(i+j')+1+k`, `k < K(R) ≍ log_b log R`.
+
+**Still open, unchanged:** `multiElliott_all` (the `sorry`).  Next: the Mertens depth
+refinement (a), then `wip/pd-refute`'s band engine, then the hunt for `K = 1`.

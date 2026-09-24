@@ -91,28 +91,39 @@ theorem conjC1_of_delange_katai_multiElliott (hDK : KataiOrthogonality)
 
 /-! ### The shorter route: no prime cut at all -/
 
-lemma primesLe_zero : primesLe 0 = ∅ := by decide
-
-lemma primorialLe_zero : primorialLe 0 = 1 := by
-  rw [primorialLe, primesLe_zero, Finset.prod_empty]
-
 /-- `PairShiftCorr` is `ShiftCorrSmall` at the empty cut: the van der Corput route needs no
 prime cut, no periodic model and no primorial. -/
 lemma pairShiftCorr_of_shiftCorrSmall (b p q : ℕ) (t : ℝ) (h : ShiftCorrSmall b p q t) :
     PairShiftCorr b p q t := by
   intro j j' hjj
   have h0 := h 0 0 j j' hjj
-  have heq : largeProg b 0 p q t 0 = fun i => phase (t * pairTail b p q i) := by
-    funext i
-    rw [largeProg, primorialLe_zero, pairRemainder, truncPairTail, primesLe_zero]
-    simp
-  rwa [heq] at h0
+  rwa [largeProg_zero] at h0
 
-/-- **`PairDecorr` from `MultiElliott` with no prime cut.**  The C1 swing's leaf (D) discharged
-without `PairDecouple`, the cut `P`, or the periodic model. -/
+/-- **`PairDecorr` from `MultiElliott` with no prime cut.** -/
 theorem pairDecorr_of_multiElliott (b : ℕ) (hb : 2 ≤ b) (t : ℝ)
     (h : ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → MultiElliott b p q t) : PairDecorr b t :=
   pairDecorr_of_pairShiftCorr b t fun p q hp hq hpq =>
-    pairShiftCorr_of_shiftCorrSmall b p q t (shiftCorrSmall_of_multiElliott b hb p q t (h p q hp hq hpq))
+    pairShiftCorr_of_shiftCorrSmall b p q t
+      (shiftCorrSmall_of_multiElliott b hb p q t (h p q hp hq hpq))
+
+/-- **`PairDecorr` from the MINIMAL leaf.**  `PairMultiElliott` asks for the `4K`-point
+correlation only along `ℤ` itself — no small-prime modulus, no residue class. -/
+theorem pairDecorr_of_pairMultiElliott (b : ℕ) (hb : 2 ≤ b) (t : ℝ)
+    (h : ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → PairMultiElliott b p q t) : PairDecorr b t :=
+  pairDecorr_of_pairShiftCorr b t fun p q hp hq hpq =>
+    pairShiftCorr_of_pairMultiElliott b hb p q t (h p q hp hq hpq)
+
+/-- **The C1 swing on the MINIMAL leaf.**  The weakest form of the conditional theorem this
+development reaches: `ConjC1` from two known theorems plus a `4K`-point Elliott correlation in
+ONE variable.  Strictly weaker hypothesis than `conjC1_of_delange_katai_multiElliott`, which in
+turn is strictly weaker than the `PairDecouple` route
+(`pairMultiElliott_of_multiElliott`). -/
+theorem conjC1_of_delange_katai_pairMultiElliott (hDK : KataiOrthogonality)
+    (hD : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) → DelangeMean (((m : ℤ) : ℝ) / b))
+    (hME : ∀ b : ℕ, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ ((b : ℤ) ∣ m) →
+      ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → PairMultiElliott b p q (((m : ℤ) : ℝ) / b)) :
+    ConjC1 :=
+  conjC1_of_delange_katai hDK hD fun b hb m hm hdvd =>
+    pairDecorr_of_pairMultiElliott b (by omega) _ (hME b hb m hm hdvd)
 
 end NormalNumbers.CastingOut
