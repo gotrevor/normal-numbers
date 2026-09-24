@@ -99,3 +99,21 @@ it, and a.e. sample path (or a deterministic typical concatenation) gives an exp
 abelian-normal at exactly the lengths in S.  Finite S follows from the probe mechanism.  Infinite
 S needs a limit of perturbations whose depth-k corrections don't disturb the lengths already
 settled.  Confidence ~75%.
+
+## Status after the 2026-09-24 swings (merged to `wip/g5-prime-subset`, all builds green)
+
+Each headline is kept as an open theorem.  Every bridge below is axiom-clean; the named leaf is
+the only open input.
+- **C1** ⟸ Kátai/BSZ (known) + Delange (known) + `PairDecouple`, via `conjC1_of_delange_katai_decouple`.
+  `PairDecouple`: refute run 93% true, no counterexample, CRT half PROVED for every bounded band
+  (`PairDecoupleBand`).  Prove run reduced it EXACTLY (depth K = 1) to a weighted TWO-point
+  correlation averaged over prime multipliers.  That is Chowla/Elliott-type: Tao 2016 does it
+  unweighted in LOG density; MRT 2015 averages over shifts, not multipliers.  Open.
+- **C1-log**: the L = 1 rung is log-simple-normality up to merging digits 0 and b−1
+  (`castLawLog_one_iff`).  Published log-Elliott (fixed shifts) does not cover the growing-K need.
+- **C2** ⟸ `PrimeDensityAP` (primes in APs, modulus ≈ exp((log Y)^θ): the Siegel-zero range)
+  + two plumbing leaves + one even-base leaf.
+- **C3** ⟸ `weylLambertTwist_holds`, an INCOMPLETE twisted exponential sum (complete-period
+  version proved; L¹ truncation family refuted).  Leaf A (covering) PROVED.  Its one-slot piece,
+  the Delange slot (`DelangeSlot.twisted_omegaLarge_mean_tendsto_zero`), is PROVED, including
+  PNT in APs in-kernel via the vendored PNT+ MediumPNT chain (`src/PNTPort`).

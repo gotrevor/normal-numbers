@@ -1,0 +1,56 @@
+known-answer check OK: tailLarge(3,4,0) head = 0.00103759765625 = 17/16384
+b=4 P=3 Q=6 bins=16 trunc=26
+  N=   100000  noise floor ~ 0.0310
+    r=0  n_r=   16667  TV(class, global) = 0.05458   ratio-to-floor  1.76
+    r=1  n_r=   16667  TV(class, global) = 0.02395   ratio-to-floor  0.77
+    r=2  n_r=   16667  TV(class, global) = 0.02140   ratio-to-floor  0.69
+    r=3  n_r=   16667  TV(class, global) = 0.05284   ratio-to-floor  1.71
+    r=4  n_r=   16666  TV(class, global) = 0.10181   ratio-to-floor  3.29
+    r=5  n_r=   16666  TV(class, global) = 0.10582   ratio-to-floor  3.42
+    worst TV 0.10582   worst/floor  3.42
+  N=  1000000  noise floor ~ 0.0098
+    r=0  n_r=  166667  TV(class, global) = 0.04624   ratio-to-floor  4.72
+    r=1  n_r=  166667  TV(class, global) = 0.01606   ratio-to-floor  1.64
+    r=2  n_r=  166667  TV(class, global) = 0.01411   ratio-to-floor  1.44
+    r=3  n_r=  166667  TV(class, global) = 0.03754   ratio-to-floor  3.83
+    r=4  n_r=  166666  TV(class, global) = 0.07116   ratio-to-floor  7.26
+    r=5  n_r=  166666  TV(class, global) = 0.07714   ratio-to-floor  7.87
+    worst TV 0.07714   worst/floor  7.87
+  N=  4000000  noise floor ~ 0.0049
+    r=0  n_r=  666667  TV(class, global) = 0.03983   ratio-to-floor  8.13
+    r=1  n_r=  666667  TV(class, global) = 0.01233   ratio-to-floor  2.52
+    r=2  n_r=  666667  TV(class, global) = 0.01163   ratio-to-floor  2.37
+    r=3  n_r=  666667  TV(class, global) = 0.02953   ratio-to-floor  6.03
+    r=4  n_r=  666666  TV(class, global) = 0.05822   ratio-to-floor 11.88
+    r=5  n_r=  666666  TV(class, global) = 0.06496   ratio-to-floor 13.26
+    worst TV 0.06496   worst/floor 13.26
+
+known-answer check OK: tailLarge(3,4,0) head = 17/16384
+
+=== b=4  P=3  Q=6 ===
+  N=   100000  h=1  max_r D_h = 0.13353   (|global mean| = 0.51654)
+  N=   100000  h=2  max_r D_h = 0.03693   (|global mean| = 0.01055)
+  N=   100000  h=3  max_r D_h = 0.13261   (|global mean| = 0.31474)
+  N=   600000  h=1  max_r D_h = 0.10319   (|global mean| = 0.46016)
+  N=   600000  h=2  max_r D_h = 0.00731   (|global mean| = 0.00905)
+  N=   600000  h=3  max_r D_h = 0.09050   (|global mean| = 0.25859)
+  N=  3600000  h=1  max_r D_h = 0.08061   (|global mean| = 0.41097)
+  N=  3600000  h=2  max_r D_h = 0.00432   (|global mean| = 0.00469)
+  N=  3600000  h=3  max_r D_h = 0.06384   (|global mean| = 0.21479)
+  h=1: fit D ~ (log N)^-a  =>  a = 1.86
+  h=2: fit D ~ (log N)^-a  =>  a = 7.92
+  h=3: fit D ~ (log N)^-a  =>  a = 2.70
+
+=== b=3  P=2  Q=2 ===
+  N=   100000  h=1  max_r D_h = 0.02871   (|global mean| = 0.21719)
+  N=   100000  h=2  max_r D_h = 0.01155   (|global mean| = 0.04997)
+  N=   100000  h=3  max_r D_h = 0.02872   (|global mean| = 0.21719)
+  N=   600000  h=1  max_r D_h = 0.01953   (|global mean| = 0.16945)
+  N=   600000  h=2  max_r D_h = 0.00553   (|global mean| = 0.03160)
+  N=   600000  h=3  max_r D_h = 0.01954   (|global mean| = 0.16945)
+  N=  3600000  h=1  max_r D_h = 0.01339   (|global mean| = 0.13330)
+  N=  3600000  h=2  max_r D_h = 0.00252   (|global mean| = 0.02139)
+  N=  3600000  h=3  max_r D_h = 0.01339   (|global mean| = 0.13330)
+  h=1: fit D ~ (log N)^-a  =>  a = 2.82
+  h=2: fit D ~ (log N)^-a  =>  a = 5.62
+  h=3: fit D ~ (log N)^-a  =>  a = 2.82

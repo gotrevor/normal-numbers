@@ -1,0 +1,7 @@
+import NormalNumbers.DelangeSlotRecursion
+import NormalNumbers.DelangeSlotAnalytic
+import NormalNumbers.DelangeSlot
+#print axioms NormalNumbers.DelangeSlot.exists_L2
+#print axioms NormalNumbers.DelangeSlot.exists_L4
+#print axioms NormalNumbers.DelangeSlot.omegaLarge_mean_tendsto_zero
+#print axioms NormalNumbers.DelangeSlot.twisted_omegaLarge_mean_tendsto_zero

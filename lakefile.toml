@@ -20,3 +20,7 @@ name = "NormalNumbers"
 name = "Comparator"
 srcDir = ".."
 globs = ["Comparator.+"]
+
+[[lean_lib]]
+name = "PNTPort"
+globs = ["PNTPort.+"]
