@@ -1,4 +1,5 @@
 import NormalNumbers.DelangeSlotAnalytic
+import NormalNumbers.DelangeSlotTwist
 
 /-!
 # The Leaf-B slot: twisted means of `z^{ω_{>P}}` vanish (Delange type)
@@ -36,6 +37,13 @@ theorem twisted_omegaLarge_mean_tendsto_zero (P Q : ℕ) (hQ : 0 < Q) (j : ℤ) 
     Tendsto (fun N : ℕ =>
         (∑ m ∈ Icc 1 N, exp (2 * π * I * j * m / Q) * z ^ omegaLarge P m) / (N : ℂ))
       atTop (𝓝 0) := by
-  sorry
+  have hEq : ∀ N : ℕ,
+      (∑ m ∈ Icc 1 N, exp (2 * π * I * j * m / Q) * z ^ omegaLarge P m) / (N : ℂ)
+        = (∑ m ∈ Ioc 0 N, Complex.exp (2 * Real.pi * Complex.I * j * m / Q) * hfun z P m)
+            / (N : ℂ) := by
+    intro N
+    rw [show Finset.Icc 1 N = Finset.Ioc 0 N from Finset.ext fun x => by simp [Nat.succ_le_iff]]
+    rfl
+  simpa only [hEq] using twisted_tendsto_zero hQ j hz hz1 P
 
 end NormalNumbers.DelangeSlot

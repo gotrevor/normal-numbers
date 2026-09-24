@@ -205,4 +205,90 @@ lemma coprime_div_gcd (hQ : 0 < Q) (a : ℕ) :
 end Reindex
 
 
+/-! ### Step 5: a general residue class is `o(N)` -/
+
+theorem classSum_tendsto_zero {Q : ℕ} (hQ : 0 < Q) {a : ℕ} (ha : a < Q) {z : ℂ}
+    (hz : ‖z‖ = 1) (hz1 : z ≠ 1) (P : ℕ) :
+    Tendsto (fun N : ℕ =>
+        (∑ m ∈ (Ioc 0 N).filter (fun m => m % Q = a), hfun z P m) / (N : ℂ)) atTop (𝓝 0) := by
+  classical
+  set e : ℕ := Nat.gcd a Q with he
+  have he0 : 0 < e := Nat.gcd_pos_of_pos_right a hQ
+  set Q' : ℕ := Q / e with hQ'def
+  set b : ℕ := a / e with hbdef
+  have hQ'0 : 0 < Q' := Nat.div_pos (Nat.le_of_dvd hQ (Nat.gcd_dvd_right a Q)) he0
+  have hb : Nat.Coprime b Q' := Nat.coprime_div_gcd_div_gcd he0
+  set num : ℕ → ℂ := fun y =>
+    ∑ m' ∈ (Ioc 0 y).filter (fun m' => m' % Q' = b % Q'), hfun z P (e * m') with hnum
+  have hG : Tendsto (fun y : ℕ => num y / (y : ℂ)) atTop (𝓝 0) :=
+    coprimeClass_tendsto_zero hQ'0 hb hz hz1 P he0.ne'
+  have hdivTop : Tendsto (fun N : ℕ => N / e) atTop atTop :=
+    tendsto_atTop_atTop.2 fun c => ⟨c * e, fun n hn => (Nat.le_div_iff_mul_le he0).2 hn⟩
+  have hcomp : Tendsto (fun N : ℕ => ‖num (N / e) / ((N / e : ℕ) : ℂ)‖) atTop (𝓝 0) := by
+    have := (hG.comp hdivTop)
+    simpa using this.norm
+  refine squeeze_zero_norm (fun N => ?_) hcomp
+  have heq : ∑ m ∈ (Ioc 0 N).filter (fun m => m % Q = a), hfun z P m = num (N / e) :=
+    classSum_reindex hQ ha (hfun z P) N
+  rw [heq]
+  rcases Nat.eq_zero_or_pos (N / e) with hy | hy
+  · have : num (N / e) = 0 := by rw [hnum, hy]; simp
+    simp [this]
+  · have hyN : (N / e) ≤ N := Nat.div_le_self _ _
+    have hN0 : 0 < N := lt_of_lt_of_le hy hyN
+    rw [norm_div, norm_div, Complex.norm_natCast, Complex.norm_natCast]
+    refine div_le_div_of_nonneg_left (norm_nonneg _) (by exact_mod_cast hy) ?_
+    exact_mod_cast hyN
+
+/-! ### Step 6: the headline -/
+
+/-- The additive twist is constant on residue classes mod `Q`. -/
+lemma exp_twist_of_mod {Q : ℕ} (hQ : 0 < Q) (j : ℤ) {m a : ℕ} (hm : m % Q = a) :
+    Complex.exp (2 * Real.pi * Complex.I * j * m / Q)
+      = Complex.exp (2 * Real.pi * Complex.I * j * a / Q) := by
+  obtain ⟨k, hk⟩ : ∃ k : ℕ, m = Q * k + a :=
+    ⟨m / Q, by rw [← hm]; exact (Nat.div_add_mod m Q).symm⟩
+  subst hk
+  have hQ0 : (Q : ℂ) ≠ 0 := Nat.cast_ne_zero.2 hQ.ne'
+  have hsplit : 2 * (Real.pi : ℂ) * Complex.I * j * ((Q * k + a : ℕ) : ℂ) / Q
+      = ((j * k : ℤ) : ℂ) * (2 * (Real.pi : ℂ) * Complex.I)
+        + 2 * (Real.pi : ℂ) * Complex.I * j * (a : ℂ) / Q := by
+    push_cast
+    field_simp
+  rw [hsplit, Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, one_mul]
+
+theorem twisted_tendsto_zero {Q : ℕ} (hQ : 0 < Q) (j : ℤ) {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1)
+    (P : ℕ) :
+    Tendsto (fun N : ℕ =>
+        (∑ m ∈ Ioc 0 N, Complex.exp (2 * Real.pi * Complex.I * j * m / Q) * hfun z P m) / (N : ℂ))
+      atTop (𝓝 0) := by
+  classical
+  have hmaps : ∀ N : ℕ, ∀ m ∈ Ioc 0 N, m % Q ∈ range Q := fun _ m _ ↦
+    mem_range.2 (Nat.mod_lt _ hQ)
+  have hrw : ∀ N : ℕ,
+      (∑ m ∈ Ioc 0 N, Complex.exp (2 * Real.pi * Complex.I * j * m / Q) * hfun z P m) / (N : ℂ)
+      = ∑ a ∈ range Q, Complex.exp (2 * Real.pi * Complex.I * j * a / Q)
+          * ((∑ m ∈ (Ioc 0 N).filter (fun m => m % Q = a), hfun z P m) / (N : ℂ)) := by
+    intro N
+    rw [← Finset.sum_fiberwise_of_maps_to (hmaps N)
+      (fun m => Complex.exp (2 * Real.pi * Complex.I * j * m / Q) * hfun z P m),
+      Finset.sum_div]
+    refine Finset.sum_congr rfl fun a _ ↦ ?_
+    have hcls : ∀ m ∈ (Ioc 0 N).filter (fun m => m % Q = a),
+        Complex.exp (2 * Real.pi * Complex.I * j * m / Q) * hfun z P m
+          = Complex.exp (2 * Real.pi * Complex.I * j * a / Q) * hfun z P m := fun m hm => by
+      rw [exp_twist_of_mod hQ j (Finset.mem_filter.1 hm).2]
+    rw [Finset.sum_congr rfl hcls, ← Finset.mul_sum]
+    exact mul_div_assoc _ _ _
+  simp only [hrw]
+  have hlim : Tendsto (fun N : ℕ => ∑ a ∈ range Q,
+      Complex.exp (2 * Real.pi * Complex.I * j * a / Q)
+        * ((∑ m ∈ (Ioc 0 N).filter (fun m => m % Q = a), hfun z P m) / (N : ℂ)))
+      atTop (𝓝 (∑ _a ∈ range Q, (0 : ℂ))) := by
+    refine tendsto_finsetSum _ fun a ha ↦ ?_
+    have := classSum_tendsto_zero hQ (mem_range.1 ha) (z := z) hz hz1 P
+    simpa using this.const_mul (Complex.exp (2 * Real.pi * Complex.I * j * a / Q))
+  simpa using hlim
+
+
 end NormalNumbers.DelangeSlot
