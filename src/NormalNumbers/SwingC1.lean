@@ -1671,6 +1671,76 @@ theorem zetaRoot_floor_diff_eq (b : ℕ) (hb : 2 ≤ b) (j L n : ℕ) :
   ring_nf
   linear_combination (j : ℂ) * ((b : ℂ)) ^ n * ((primeLambertAtBase b : ℝ) : ℂ) * hgeo
 
+/-! #### The crux, named: the digit character has factorizing multiple correlations
+
+Put `D_j(n) := ζ_{b−1}^{j·d_{n+1}} = ζ_{b−1}^{j(T(n+1) − T(n))}`, a unimodular sequence (`d_{n+1}` is
+the `(n+1)`-st base-`b` digit of `G4_b`).  Telescoping `T` turns the lag-`L` correlation into an
+`L`-fold shifted PRODUCT:
+
+    ζ_{b−1}^{j(T(n+L) − T(n))}  =  ∏_{i < L} D_j(n + i),
+
+so the leaf says exactly that the `L`-fold multiple correlation of `D_j` equals the `L`-th power of
+its own mean `1/b`:
+
+    lim_N (1/N) Σ_{n<N} ∏_{i<L} D_j(n+i)  =  (1/b)^L  =  (lim_N (1/N) Σ_{n<N} D_j(n))^L.
+
+That is precisely the shape of the Chowla/Elliott-type hypotheses: a unimodular arithmetic sequence
+whose multiple correlations factorize as products of one-point means.  The `L = 1` case fixes the
+mean at `1/b`; every `L ≥ 2` is an independence-across-shifts assertion.  Recording this is the
+kickoff's step 4: the leaf IS an Elliott-type statement, not a weaker classical one — the
+one-coordinate mean is Delange's theorem, but the factorization over shifts is open. -/
+
+/-- `D_j(n) = ζ_{b−1}^{j·d_{n+1}}`, the character of the `(n+1)`-st base-`b` digit of `G4_b`. -/
+noncomputable def digitChar (b j n : ℕ) : ℂ :=
+  zetaRoot (b - 1) ^ ((j : ℤ) * (castSum b (n + 1) - castSum b n))
+
+lemma norm_digitChar (b j n : ℕ) : ‖digitChar b j n‖ = 1 := norm_zetaRoot_zpow _ _
+
+/-- **Telescoping.**  The lag-`L` correland is the `L`-fold shifted product of `D_j`. -/
+theorem prod_digitChar (b j L n : ℕ) :
+    (∏ i ∈ range L, digitChar b j (n + i))
+      = zetaRoot (b - 1) ^ ((j : ℤ) * (castSum b (n + L) - castSum b n)) := by
+  induction L with
+  | zero => simp
+  | succ L ih =>
+      rw [Finset.prod_range_succ, ih, digitChar,
+        ← zpow_add₀ (zetaRoot_ne_zero (b - 1))]
+      congr 1
+      rw [show n + L + 1 = n + (L + 1) by omega]
+      ring
+
+/-- **The leaf is a multiple-correlation statement.**  `corrSum` is the mean of the `L`-fold
+shifted product of the unimodular sequence `D_j`. -/
+theorem corrSum_eq_mean_prod (b j L N : ℕ) :
+    corrSum b j L N = (∑ n ∈ range N, ∏ i ∈ range L, digitChar b j (n + i)) / N := by
+  rw [corrSum]
+  congr 1
+  exact (Finset.sum_congr rfl fun n _ => prod_digitChar b j L n).symm
+
+/-- The Chowla/Elliott-shaped form of the leaf: all multiple correlations of `D_j` factorize. -/
+def HFactorizes (b : ℕ) : Prop :=
+  ∀ j, 0 < j → j < b - 1 → ∀ L,
+    Tendsto (fun N => (∑ n ∈ range N, ∏ i ∈ range L, digitChar b j (n + i)) / N)
+      atTop (𝓝 (((b : ℂ))⁻¹ ^ L))
+
+theorem hFactorizes_iff_hAutoCorr (b : ℕ) : HFactorizes b ↔ HAutoCorr b := by
+  constructor <;> intro h j hj hjq L
+  · exact Filter.Tendsto.congr (fun N => (corrSum_eq_mean_prod b j L N).symm) (h j hj hjq L)
+  · exact Filter.Tendsto.congr (fun N => corrSum_eq_mean_prod b j L N) (h j hj hjq L)
+
+/-- **`ConjC1` ⟺ the digit character's multiple correlations factorize.** -/
+theorem conjC1_iff_hFactorizes : ConjC1 ↔ ∀ b, 3 ≤ b → HFactorizes b := by
+  rw [conjC1_iff_hAutoCorr]
+  exact ⟨fun h b hb => (hFactorizes_iff_hAutoCorr b).mpr (h b hb),
+    fun h b hb => (hFactorizes_iff_hAutoCorr b).mp (h b hb)⟩
+
+/-- The `L = 1` instance: the digit character's own mean is `1/b`.  (One-coordinate case.) -/
+theorem mean_digitChar_of_hAutoCorr (b : ℕ) (h : HAutoCorr b) (j : ℕ)
+    (hj : 0 < j) (hjq : j < b - 1) :
+    Tendsto (fun N => (∑ n ∈ range N, digitChar b j n) / N) atTop (𝓝 (((b : ℂ))⁻¹)) := by
+  have h1 := (hFactorizes_iff_hAutoCorr b).mpr h j hj hjq 1
+  simpa using h1
+
 /-! #### The block spectrum of the mod-`(b−1)` statistic is FULL — no sparse-frequency route
 
 `stateLaw_of_hAutoCorr` expands the `ZMod (b−1)`-statistic in characters of `ZMod (b−1)`.  One might
