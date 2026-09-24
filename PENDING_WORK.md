@@ -9711,3 +9711,49 @@ The bridge exists mathematically and the repo has every piece:
 ⚠️ Note this route proves normality of `G₄_b`, which is STRICTLY STRONGER than `ConjC1`.
 `hAutoCorrAll` (fixed modulus `b−1`) stays the weaker leaf that `conjC1` actually rests on.
 Recorded so a later lap does not mistake the block route for the minimal one.
+
+## swing-c1 lap 34 — the wiring is DONE: `conjC1_of_delange_katai`
+
+New file `src/NormalNumbers/SwingC1Weyl.lean`, sorry-free, `#print axioms` clean.  The
+Delange/Kátai chain is no longer dangling — it now reaches `ConjC1`.
+
+**The swing's main conditional theorem** (the KICKOFF's stated target):
+
+```
+theorem conjC1_of_delange_katai (hDK : KataiOrthogonality)
+    (hD : ∀ b, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ (b ∣ m) → DelangeMean (m/b))
+    (hP : ∀ b, 3 ≤ b → ∀ m : ℤ, m ≠ 0 → ¬ (b ∣ m) → PairDecorr b (m/b)) :
+    ConjC1
+```
+
+`KataiOrthogonality` and `DelangeMean` are KNOWN theorems (Kátai 1986 / Daboussi–Delange 1974;
+Delange 1969), neither in mathlib.  **`PairDecorr` is the ONLY open input.**
+
+The chain, all in Lean: `PairDecorr` → (`shiftIndep_of_pairDecorr`) `ShiftIndep` →
+(`weylMean_tendsto_zero_of`) `weylMean b m → 0` for `b ∤ m` →
+(`weylMean_tendsto_zero_of_coprime`) for every nonzero `m` →
+(`equidistributed_of_weylMean`, Weyl's criterion) `Equidistributed (fract ∘ omegaTail b)` →
+(`hWindowChar_of_equidistributed`) `HWindowChar b L` for every `L` → `HWindow` → `HState` →
+`ConjC1`.
+
+New pieces this lap:
+* `weylMean_eq_fourierMean` — the Weyl mean at an INTEGER frequency is the repo's `fourierMean`
+  of the orbit, so `WeylCriterion.lean` applies verbatim.
+* `omegaWindowVal_sub_floor` — the window value and the digit block of the orbit point differ by
+  a multiple of `b^L`; this is what makes the window character sum a STEP function of the orbit.
+* `sum_zetaRoot_pow_eq_zero`, `mem_Ico_div_iff` — the finite half.
+* `weylMean_mul_b` / `weylMean_tendsto_zero_of_coprime` — frequencies divisible by `b` reduce by
+  one orbit step (the peeled `ω`-digit is an integer, so it contributes phase `1`), so the
+  hypotheses need only be assumed for `b ∤ m`, where Delange's theorem is actually true.
+
+⚠️ Recorded honestly: this route proves NORMALITY of `G₄_b` in base `b`, strictly stronger than
+`ConjC1`.  `hAutoCorrAll` (fixed modulus `b−1`) stays the weaker leaf that the ratified
+`conjC1 := conjC1_of_hAutoCorr hAutoCorrAll` in `SwingC1.lean` rests on, and that `sorry` is
+untouched per the kickoff addendum.  A later lap may try to route `PairDecorr` into
+`hAutoCorrAll` directly and so avoid proving normality.
+
+**NEXT:** leaf (D) `PairDecorr` is the whole remaining content.  See lap 33's route analysis:
+prime truncation is refuted; the depth reduction turns it into a `2L`-point Elliott correlation.
+Probes, in order: (1) does the route survive logarithmic averaging, where the two-point case is
+a known theorem (Tao 2015)?  (2) can `PairDecorr` be routed into the weaker `hAutoCorrAll`
+instead of full normality, lowering what must be proved?
