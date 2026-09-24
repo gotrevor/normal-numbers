@@ -258,4 +258,14 @@ constant itself, in logarithmic density.  The swing lands as a REFUTATION of the
 published log-Elliott carries C1: it does not, and the gap is not a technicality.
 -/
 
+/-- First rung: single digits (`L = 1`).  RATIFIED headline, restored 2026-09-24 after the swing
+deleted it.  Open: by `castLawLog_one_iff` it is log-simple-normality of `G4_b` up to merging `0`
+with `b − 1`; needs growing-`K` log-Elliott (see HANDOFF-2026-09-24-2100-swing-c1log-DONE.md). -/
+theorem castLawLog_one (b : ℕ) (hb : 3 ≤ b) : CastLawLog b (primeLambertAtBase b) 1 := by
+  sorry
+
+/-- **C1-log**, ratified headline (restored).  Open. -/
+theorem conjC1Log : ConjC1Log := by
+  sorry
+
 end NormalNumbers.CastingOut
