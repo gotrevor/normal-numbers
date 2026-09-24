@@ -2044,6 +2044,110 @@ theorem card_shift_dvd_le_lcm (c e M r Y d : ℕ) (hd : 0 < d) (hM : 0 < M)
     · exact hkey x y h hx hy
     · exact (hkey y x h hy hx).symm
 
+/-- **The incidence sum with the gcd loss made explicit.**  Summing `card_shift_dvd_le_lcm`
+over `d ≤ D`, fibred by `g = gcd(d,M)`: on the fibre `gcd(d,M) = g` the count is
+`Y/((d/g)·M) + 1`, and `d ↦ d/g` is injective into `[1,D]`, so each fibre contributes at most
+the coprime bound.  The total loss is therefore exactly the NUMBER of gcds that occur, and by
+`filter_shift_eq_empty` those are confined to the divisors of any `G` that the `M`-part of
+`c·r + e` divides. -/
+theorem sum_card_shift_dvd_le_gcd (c e M r Y D G : ℕ) (hM : 0 < M) (hG : G ≠ 0)
+    (hcd : ∀ d ∈ Finset.Icc 1 D, Nat.Coprime c d)
+    (hvan : ∀ d ∈ Finset.Icc 1 D, ¬ (Nat.gcd d M ∣ G) →
+      (Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e) = ∅) :
+    ∑ d ∈ Finset.Icc 1 D,
+        ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card
+      ≤ G.divisors.card * ((Y / M) * (Nat.log 2 D + 2) + D) := by
+  classical
+  set F : ℕ → ℕ := fun d =>
+    ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card with hF
+  set A : Finset ℕ := (Finset.Icc 1 D).filter (fun d => Nat.gcd d M ∣ G) with hA
+  -- outside `A` every term vanishes
+  have hsplit : ∑ d ∈ Finset.Icc 1 D, F d = ∑ d ∈ A, F d := by
+    rw [hA, eq_comm, ← Finset.sum_filter_add_sum_filter_not (Finset.Icc 1 D)
+      (fun d => Nat.gcd d M ∣ G) F]
+    have : ∑ d ∈ (Finset.Icc 1 D).filter (fun d => ¬ (Nat.gcd d M ∣ G)), F d = 0 := by
+      refine Finset.sum_eq_zero fun d hd => ?_
+      rw [Finset.mem_filter] at hd
+      rw [hF]
+      simp only
+      rw [hvan d hd.1 hd.2]
+      simp
+    omega
+  -- the fibres of `d ↦ gcd d M`
+  have hmaps : ∀ d ∈ A, Nat.gcd d M ∈ G.divisors := by
+    intro d hd
+    rw [hA, Finset.mem_filter] at hd
+    exact Nat.mem_divisors.2 ⟨hd.2, hG⟩
+  have hfib := Finset.sum_fiberwise_of_maps_to hmaps F
+  -- each fibre is at most the coprime bound
+  have hinner : ∀ g ∈ G.divisors, ∑ d ∈ A.filter (fun d => Nat.gcd d M = g), F d
+      ≤ (Y / M) * (Nat.log 2 D + 2) + D := by
+    intro g _
+    set B : Finset ℕ := A.filter (fun d => Nat.gcd d M = g) with hB
+    have hgpos : ∀ d ∈ B, 0 < g := by
+      intro d hd
+      rw [hB, Finset.mem_filter, hA, Finset.mem_filter, Finset.mem_Icc] at hd
+      have := hd.1.1.1
+      rw [← hd.2]
+      exact Nat.gcd_pos_of_pos_left M (by omega)
+    have hstep : ∀ d ∈ B, F d ≤ Y / M / (d / g) + 1 := by
+      intro d hd
+      have hgp := hgpos d hd
+      rw [hB, Finset.mem_filter, hA, Finset.mem_filter, Finset.mem_Icc] at hd
+      obtain ⟨⟨⟨hd1, hdD⟩, -⟩, hgd⟩ := hd
+      have hgdvd : g ∣ d := by rw [← hgd]; exact Nat.gcd_dvd_left d M
+      have hlcm : Nat.lcm d M = (d / g) * M := by
+        have h1 : Nat.gcd d M * Nat.lcm d M = d * M := Nat.gcd_mul_lcm d M
+        have h2 : g * (d / g) = d := Nat.mul_div_cancel' hgdvd
+        have h3 : g * Nat.lcm d M = g * ((d / g) * M) := by
+          rw [← Nat.mul_assoc, h2, ← hgd]; exact h1
+        exact Nat.eq_of_mul_eq_mul_left hgp h3
+      have := card_shift_dvd_le_lcm c e M r Y d (by omega) hM (hcd d (Finset.mem_Icc.2 ⟨hd1, hdD⟩))
+      rw [hlcm] at this
+      have hdiv : Y / ((d / g) * M) = Y / M / (d / g) := by
+        rw [Nat.div_div_eq_div_mul, Nat.mul_comm M (d / g)]
+      rw [hdiv] at this
+      exact this
+    have hinj : Set.InjOn (fun d => d / g) ↑B := by
+      intro x hx y hy hxy
+      simp only [Finset.coe_filter, hB, hA, Set.mem_ofPred_eq, Finset.mem_filter] at hx hy
+      have hgx : g ∣ x := by rw [← hx.2]; exact Nat.gcd_dvd_left x M
+      have hgy : g ∣ y := by rw [← hy.2]; exact Nat.gcd_dvd_left y M
+      have hgp : 0 < g := by
+        have hx1 : 1 ≤ x := (Finset.mem_Icc.1 hx.1.1).1
+        rw [← hx.2]; exact Nat.gcd_pos_of_pos_left M (by omega)
+      simp only at hxy
+      have h1 : g * (x / g) = x := Nat.mul_div_cancel' hgx
+      have h2 : g * (y / g) = y := Nat.mul_div_cancel' hgy
+      rw [← h1, ← h2, hxy]
+    have hsub : B.image (fun d => d / g) ⊆ Finset.Icc 1 D := by
+      intro x hx
+      obtain ⟨d, hd, rfl⟩ := Finset.mem_image.1 hx
+      have hgp := hgpos d hd
+      rw [hB, Finset.mem_filter, hA, Finset.mem_filter, Finset.mem_Icc] at hd
+      obtain ⟨⟨⟨hd1, hdD⟩, -⟩, hgd⟩ := hd
+      have hgdvd : g ∣ d := by rw [← hgd]; exact Nat.gcd_dvd_left d M
+      refine Finset.mem_Icc.2 ⟨?_, ?_⟩
+      · exact Nat.one_le_div_iff hgp |>.2 (Nat.le_of_dvd (by omega) hgdvd)
+      · exact le_trans (Nat.div_le_self d g) hdD
+    calc ∑ d ∈ B, F d ≤ ∑ d ∈ B, (Y / M / (d / g) + 1) := Finset.sum_le_sum hstep
+      _ = ∑ x ∈ B.image (fun d => d / g), (Y / M / x + 1) :=
+          (Finset.sum_image (f := fun x => Y / M / x + 1)
+            (fun x hx y hy hxy => hinj hx hy hxy)).symm
+      _ ≤ ∑ x ∈ Finset.Icc 1 D, (Y / M / x + 1) :=
+          Finset.sum_le_sum_of_subset hsub
+      _ = (∑ x ∈ Finset.Icc 1 D, Y / M / x) + D := by
+          rw [Finset.sum_add_distrib, Finset.sum_const, Nat.card_Icc, smul_eq_mul, mul_one]
+          omega
+      _ ≤ (Y / M) * (Nat.log 2 D + 2) + D := by
+          have := SwingC2Moment.sum_div_le_log (Y / M) D
+          omega
+  calc ∑ d ∈ Finset.Icc 1 D, F d = ∑ d ∈ A, F d := hsplit
+    _ = ∑ g ∈ G.divisors, ∑ d ∈ A.filter (fun d => Nat.gcd d M = g), F d := hfib.symm
+    _ ≤ ∑ _g ∈ G.divisors, ((Y / M) * (Nat.log 2 D + 2) + D) := Finset.sum_le_sum hinner
+    _ = G.divisors.card * ((Y / M) * (Nat.log 2 D + 2) + D) := by
+        rw [Finset.sum_const, smul_eq_mul]
+
 /-! ### The shifted first moment for a GENERAL shift, and its exceptional set
 
 Combining the 2-adic reduction with `tau_shift_sum_AP_odd`: for any shift `e` with
