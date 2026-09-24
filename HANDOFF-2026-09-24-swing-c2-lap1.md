@@ -271,3 +271,32 @@ Alternatively, relax the pad: the padding was a convenience (`windowPrescribable
 a version of the reduction that tracks the carry instead of zeroing it would remove the
 `n < b^{2K}` coupling entirely and re-open the CRT route.  **That is the highest-value next move**:
 `floor_lambertVal_emod` already gives the exact identity with the carry present.
+
+## Lap 10 addendum (green): the search bound was SELF-INFLICTED — pad hypothesis weakened
+
+Lap 9's refutation of the CRT route rested on `n + L < b^{2K}`, which came from `SubLeafA`'s pad
+hypothesis being stated with the *crude sufficient condition* `2√(n+L)+2 < b^K` rather than the
+thing actually needed.  What the padding argument uses is only
+
+    carry b τ (n + ℓ + K)  <  b^K,
+
+and `carry_le_sqrt` is merely one way to certify it.  `SubLeafA` and `SubLeafB` are now stated with
+that honest hypothesis; `carry_le_sqrt` is kept as the certificate and `padOK` uses it to discharge
+the anchors (`subLeafA_three_one/two`, `subLeafB_three_one_*` all still kernel-check).
+
+**Effect on the refutation.**  `lt_pow_two_mul_of_pad` is still true and still stands as a limit on
+*√-certified* windows, but it no longer constrains `SubLeafA` itself.  The real constraint is
+
+    K  ≳  log_b (carry at n+L)  ≈  log_b τ_max(n)  ≈  log n / (log log n · log b),
+
+since `τ(m) = m^{o(1)}` (not `m^{1/2}`).  So the admissible window position now satisfies roughly
+`log n ≲ K log b · log log n` — still sub-doubly-exponential, so the CRT construction (which needs
+`log n ≈ b^L`) remains refuted, but by a much finer margin and for a structural reason:
+
+> **Recorded verdict.**  Any construction that pins `n` by congruences to a modulus of size `b^L`
+> forces `log n ≳ b^L`, while the carry forces `b^K ≳ τ(n) = exp((1+o(1))log n/log log n)`, i.e.
+> `K ≳ b^L / (log log n · log b)`.  Since `K < L`, this is impossible.  **Explicit CRT-style
+> construction of the window is refuted for every base.**  The crux is irreducibly a counting /
+> equidistribution statement about `τ`-windows, not a construction.
+
+That is the sharpest statement this run produced about what a proof of `ConjC2` must look like.

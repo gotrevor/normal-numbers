@@ -449,7 +449,7 @@ No real analysis, no carries: this is a statement about the divisor function on 
 length `ℓ+K` in residue classes modulo powers of `b`. -/
 def SubLeafA (b : ℕ) : Prop :=
   ∀ ℓ, 1 ≤ ℓ → ∀ t : ℕ, t < b ^ ℓ → ∃ n K : ℕ,
-    2 * Nat.sqrt (n + (ℓ + K)) + 2 < (b : ℤ) ^ K ∧
+    carry b tau (n + (ℓ + K)) < (b : ℤ) ^ K ∧
     paddedSum b tau n (ℓ + K) % (b : ℤ) ^ (ℓ + K) = (t : ℤ) * (b : ℤ) ^ K
 
 /-- **The padding reduction.**  Sub-leaf A implies the crux. -/
@@ -468,9 +468,7 @@ theorem windowPrescribable_of_subLeafA (b : ℕ) (hb : 3 ≤ b) (h : SubLeafA b)
   -- the carry at the right end of the padded window
   set C : ℤ := carry b tau (n + L) with hC
   have hC0 : 0 ≤ C := carry_nonneg b hb2 tau tau_le_self _
-  have hCK : C < (b : ℤ) ^ K := lt_of_le_of_lt (carry_le_sqrt b hb (n + L)) (by
-    have : (2 : ℤ) * (Nat.sqrt (n + L) : ℤ) + 2 < (b : ℤ) ^ K := hK
-    linarith)
+  have hCK : C < (b : ℤ) ^ K := hK
   -- the padded window value
   have hV : ⌊x * (b : ℝ) ^ (n + L)⌋ % (b : ℤ) ^ L = (t₀ : ℤ) * (b : ℤ) ^ K + C := by
     rw [floor_lambertVal_emod b hb2 tau tau_le_self n L, windowNum_eq]
@@ -566,7 +564,7 @@ multiplicative weight appears — the unknown is a vector of `ω`-values on `L` 
 integers, which is the category `G4Transport` / `G4WeightInterface` were built for. -/
 def SubLeafB (b : ℕ) : Prop :=
   ∀ ℓ, 1 ≤ ℓ → ∀ t : ℕ, t < b ^ ℓ → ∃ n K : ℕ, ∃ q a s : ℕ → ℕ,
-    2 * (Nat.sqrt (n + (ℓ + K)) : ℤ) + 2 < (b : ℤ) ^ K ∧
+    carry b tau (n + (ℓ + K)) < (b : ℤ) ^ K ∧
     (∀ j < ℓ + K, Structured (n + 1 + j) (q j) (a j) (s j)) ∧
     (∑ j ∈ range (ℓ + K),
         (((a j + 1) * 2 ^ ((s j).primeFactors.card) : ℕ) : ℤ) * (b : ℤ) ^ (ℓ + K - 1 - j))
@@ -696,45 +694,55 @@ density is affordable in the §4D remainder budget. -/
 theorem tau_windowPrescribable (b : ℕ) (hb : 3 ≤ b) : WindowPrescribable b tau :=
   windowPrescribable_of_subLeafA b hb (subLeafA_holds b hb)
 
+/-- Helper for the base-3 anchors: the carry at `n+6` is below `3^5 = 243` whenever
+`2√(n+6)+2 < 243`, i.e. for every `n ≤ 14634`. -/
+theorem padOK (N : ℕ) (h : 2 * Nat.sqrt N + 2 < 243 := by native_decide) :
+    carry 3 tau N < (3 : ℤ) ^ 5 := by
+  refine lt_of_le_of_lt (carry_le_sqrt 3 (by norm_num) N) ?_
+  have h' : ((2 * Nat.sqrt N + 2 : ℕ) : ℤ) < ((243 : ℕ) : ℤ) := by exact_mod_cast h
+  push_cast at h'
+  norm_num
+  linarith
+
 /-! ### 5. Non-vacuity anchors for `SubLeafA` (base 3, `ℓ ≤ 2`) -/
 
 /-- `SubLeafA 3` at `ℓ = 1`: every base-3 digit is realised by a padded divisor window
 (`K = 5`; witnesses found by `probes/swingc2_window.py`). -/
 theorem subLeafA_three_one (t : ℕ) (ht : t < 3) : ∃ n K : ℕ,
-    2 * (Nat.sqrt (n + (1 + K)) : ℤ) + 2 < (3 : ℤ) ^ K ∧
+    carry 3 tau (n + (1 + K)) < (3 : ℤ) ^ K ∧
     paddedSum 3 tau n (1 + K) % (3 : ℤ) ^ (1 + K) = (t : ℤ) * (3 : ℤ) ^ K := by
   interval_cases t
-  · exact ⟨1830, 5, by native_decide, by native_decide⟩
-  · exact ⟨1022, 5, by native_decide, by native_decide⟩
-  · exact ⟨1342, 5, by native_decide, by native_decide⟩
+  · exact ⟨1830, 5, padOK _, by native_decide⟩
+  · exact ⟨1022, 5, padOK _, by native_decide⟩
+  · exact ⟨1342, 5, padOK _, by native_decide⟩
 
 /-- `SubLeafA 3` at `ℓ = 2`: all nine base-3 words of length two are realised (`K = 5`). -/
 theorem subLeafA_three_two (t : ℕ) (ht : t < 9) : ∃ n K : ℕ,
-    2 * (Nat.sqrt (n + (2 + K)) : ℤ) + 2 < (3 : ℤ) ^ K ∧
+    carry 3 tau (n + (2 + K)) < (3 : ℤ) ^ K ∧
     paddedSum 3 tau n (2 + K) % (3 : ℤ) ^ (2 + K) = (t : ℤ) * (3 : ℤ) ^ K := by
   interval_cases t
-  · exact ⟨1829, 5, by native_decide, by native_decide⟩
-  · exact ⟨1021, 5, by native_decide, by native_decide⟩
-  · exact ⟨1341, 5, by native_decide, by native_decide⟩
-  · exact ⟨14405, 5, by native_decide, by native_decide⟩
-  · exact ⟨4322, 5, by native_decide, by native_decide⟩
-  · exact ⟨2709, 5, by native_decide, by native_decide⟩
-  · exact ⟨2501, 5, by native_decide, by native_decide⟩
-  · exact ⟨2637, 5, by native_decide, by native_decide⟩
-  · exact ⟨5236, 5, by native_decide, by native_decide⟩
+  · exact ⟨1829, 5, padOK _, by native_decide⟩
+  · exact ⟨1021, 5, padOK _, by native_decide⟩
+  · exact ⟨1341, 5, padOK _, by native_decide⟩
+  · exact ⟨14405, 5, padOK _, by native_decide⟩
+  · exact ⟨4322, 5, padOK _, by native_decide⟩
+  · exact ⟨2709, 5, padOK _, by native_decide⟩
+  · exact ⟨2501, 5, padOK _, by native_decide⟩
+  · exact ⟨2637, 5, padOK _, by native_decide⟩
+  · exact ⟨5236, 5, padOK _, by native_decide⟩
 
 /-! ### 6. `SubLeafB` witnesses (base 3, `ℓ = 1`) -/
 
 /-- `SubLeafB 3` witness at `ℓ = 1`, `t = 0` (`n = 2109`, `K = 5`): all six window entries are
 `q^a·s` with `s` squarefree.  Found by `probes/swingc2_window.py`. -/
 theorem subLeafB_three_one_0 : ∃ n K : ℕ, ∃ q a s : ℕ → ℕ,
-    2 * (Nat.sqrt (n + (1 + K)) : ℤ) + 2 < (3 : ℤ) ^ K ∧
+    carry 3 tau (n + (1 + K)) < (3 : ℤ) ^ K ∧
     (∀ j < 1 + K, Structured (n + 1 + j) (q j) (a j) (s j)) ∧
     (∑ j ∈ range (1 + K),
         (((a j + 1) * 2 ^ ((s j).primeFactors.card) : ℕ) : ℤ) * (3 : ℤ) ^ (1 + K - 1 - j))
         % (3 : ℤ) ^ (1 + K) = (0 : ℤ) * (3 : ℤ) ^ K := by
   refine ⟨2109, 5, fun j => [3, 2, 2, 2, 3, 3].getD j 2, fun j => [0, 0, 6, 0, 0, 2].getD j 0,
-    fun j => [2110, 2111, 33, 2113, 2114, 235].getD j 1, by native_decide, ?_, by native_decide⟩
+    fun j => [2110, 2111, 33, 2113, 2114, 235].getD j 1, padOK _, ?_, by native_decide⟩
   intro j hj
   interval_cases j <;>
     exact ⟨by norm_num, by native_decide, by decide, by norm_num⟩
@@ -742,13 +750,13 @@ theorem subLeafB_three_one_0 : ∃ n K : ℕ, ∃ q a s : ℕ → ℕ,
 /-- `SubLeafB 3` witness at `ℓ = 1`, `t = 1` (`n = 1022`, `K = 5`): all six window entries are
 `q^a·s` with `s` squarefree.  Found by `probes/swingc2_window.py`. -/
 theorem subLeafB_three_one_1 : ∃ n K : ℕ, ∃ q a s : ℕ → ℕ,
-    2 * (Nat.sqrt (n + (1 + K)) : ℤ) + 2 < (3 : ℤ) ^ K ∧
+    carry 3 tau (n + (1 + K)) < (3 : ℤ) ^ K ∧
     (∀ j < 1 + K, Structured (n + 1 + j) (q j) (a j) (s j)) ∧
     (∑ j ∈ range (1 + K),
         (((a j + 1) * 2 ^ ((s j).primeFactors.card) : ℕ) : ℤ) * (3 : ℤ) ^ (1 + K - 1 - j))
         % (3 : ℤ) ^ (1 + K) = (1 : ℤ) * (3 : ℤ) ^ K := by
   refine ⟨1022, 5, fun j => [2, 2, 5, 3, 2, 2].getD j 2, fun j => [0, 10, 2, 3, 0, 2].getD j 0,
-    fun j => [1023, 1, 41, 38, 1027, 257].getD j 1, by native_decide, ?_, by native_decide⟩
+    fun j => [1023, 1, 41, 38, 1027, 257].getD j 1, padOK _, ?_, by native_decide⟩
   intro j hj
   interval_cases j <;>
     exact ⟨by norm_num, by native_decide, by decide, by norm_num⟩
@@ -756,13 +764,13 @@ theorem subLeafB_three_one_1 : ∃ n K : ℕ, ∃ q a s : ℕ → ℕ,
 /-- `SubLeafB 3` witness at `ℓ = 1`, `t = 2` (`n = 1342`, `K = 5`): all six window entries are
 `q^a·s` with `s` squarefree.  Found by `probes/swingc2_window.py`. -/
 theorem subLeafB_three_one_2 : ∃ n K : ℕ, ∃ q a s : ℕ → ℕ,
-    2 * (Nat.sqrt (n + (1 + K)) : ℤ) + 2 < (3 : ℤ) ^ K ∧
+    carry 3 tau (n + (1 + K)) < (3 : ℤ) ^ K ∧
     (∀ j < 1 + K, Structured (n + 1 + j) (q j) (a j) (s j)) ∧
     (∑ j ∈ range (1 + K),
         (((a j + 1) * 2 ^ ((s j).primeFactors.card) : ℕ) : ℤ) * (3 : ℤ) ^ (1 + K - 1 - j))
         % (3 : ℤ) ^ (1 + K) = (2 : ℤ) * (3 : ℤ) ^ K := by
   refine ⟨1342, 5, fun j => [2, 2, 2, 3, 2, 2].getD j 2, fun j => [0, 6, 0, 0, 0, 2].getD j 0,
-    fun j => [1343, 21, 1345, 1346, 1347, 337].getD j 1, by native_decide, ?_, by native_decide⟩
+    fun j => [1343, 21, 1345, 1346, 1347, 337].getD j 1, padOK _, ?_, by native_decide⟩
   intro j hj
   interval_cases j <;>
     exact ⟨by norm_num, by native_decide, by decide, by norm_num⟩
