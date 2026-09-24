@@ -1355,6 +1355,122 @@ theorem conjC1_iff_hAutoCorr : ConjC1 ↔ ∀ b, 3 ≤ b → HAutoCorr b := by
   refine ⟨fun h b hb => hAutoCorr_of_stateLaw b hb fun L => ?_, conjC1_of_hAutoCorr⟩
   exact (castLaw_iff_stateLaw b (by omega) L).mp (h b hb L)
 
+/-! #### The carry is ESSENTIAL: a refutation of the naive independence heuristic
+
+The natural first guess for the leaf is "`ω` is uniformly distributed mod `b − 1` (Delange 1969),
+and is asymptotically independent of its own carry sequence, so the carry can be dropped".  That
+guess is WRONG, and provably so: dropping the carry leaves the `ω`-only correlation
+
+    (1/N) Σ_{n<N} ζ_{b−1}^{j·Σ_{m ∈ (n,n+L]} ω(m)},
+
+whose limit is `0` for every nontrivial `j` — for `L = 1` that IS Delange's theorem.  But the leaf
+demands `b^{−L} ≠ 0`.  So at least one of the two naive clauses fails, and since the `ω`-only clause
+at `L = 1` is a theorem of Delange, it is the independence clause that must fail:
+`c_{n+1} − c_n` is NOT divisible by `b − 1` on a density-one set.
+
+Mechanistically this is forced: `c_n = ⌊(ω(n+1) + c_{n+1})/b⌋` is itself a function of `ω(n+1)`, so
+`ω(n+1)` and `c_n` can never be independent.  The entire gap between the naive `0` and the true
+`b^{−L}` is that coupling, which is why `ConjC1` is not a corollary of Delange. -/
+
+/-- The `ω`-only correlation: `castState` with the carry difference deleted. -/
+noncomputable def corrSumOmega (b j L N : ℕ) : ℂ :=
+  (∑ n ∈ range N,
+    zetaRoot (b - 1) ^ ((j : ℤ) * ∑ m ∈ Finset.Ioc n (n + L), (omegaNat m : ℤ))) / N
+
+/-- How often the carry difference is not annihilated by the modulus `b − 1`. -/
+noncomputable def carryDiffBadCount (b L N : ℕ) : ℕ :=
+  ((range N).filter
+    (fun n => ¬ (((b : ℤ) - 1) ∣ (omegaCarry b (n + L) - omegaCarry b n)))).card
+
+/-- The naive independence clause: the carry difference vanishes mod `b − 1` on a density-one set. -/
+def CarryNegligible (b L : ℕ) : Prop :=
+  Tendsto (fun N => (carryDiffBadCount b L N : ℝ) / N) atTop (𝓝 0)
+
+/-- Deleting the carry changes the correlation by at most twice the bad-set frequency. -/
+theorem norm_corrSum_sub_omega (b : ℕ) (hb : 3 ≤ b) (j L N : ℕ) :
+    ‖corrSum b j L N - corrSumOmega b j L N‖
+      ≤ 2 * (carryDiffBadCount b L N : ℝ) / N := by
+  classical
+  set q := b - 1 with hq
+  have hqz : ((q : ℤ)) = (b : ℤ) - 1 := by
+    rw [hq]; push_cast [Nat.cast_sub (by omega : 1 ≤ b)]; ring
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp [corrSum, corrSumOmega, carryDiffBadCount]
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  have hqpos : 0 < q := by omega
+  -- off the bad set the two characters agree
+  have hoff : ∀ n : ℕ, (((b : ℤ) - 1) ∣ (omegaCarry b (n + L) - omegaCarry b n)) →
+      zetaRoot q ^ ((j : ℤ) * (castSum b (n + L) - castSum b n))
+        = zetaRoot q ^ ((j : ℤ) * ∑ m ∈ Finset.Ioc n (n + L), (omegaNat m : ℤ)) := by
+    intro n hdvd
+    obtain ⟨c, hc⟩ := hdvd
+    have hsum : (∑ m ∈ range (n + L + 1), (omegaNat m : ℤ))
+        - (∑ m ∈ range (n + 1), (omegaNat m : ℤ))
+        = ∑ m ∈ Finset.Ioc n (n + L), (omegaNat m : ℤ) := by
+      have hIoc : Finset.Ioc n (n + L) = Finset.Ico (n + 1) (n + L + 1) := by
+        ext m; simp only [Finset.mem_Ioc, Finset.mem_Ico]; omega
+      rw [hIoc, Finset.range_eq_Ico, Finset.range_eq_Ico,
+        ← Finset.sum_Ico_consecutive (fun m => (omegaNat m : ℤ))
+          (Nat.zero_le (n + 1)) (by omega : n + 1 ≤ n + L + 1)]
+      ring
+    have hsplit : (j : ℤ) * (castSum b (n + L) - castSum b n)
+        = (j : ℤ) * (∑ m ∈ Finset.Ioc n (n + L), (omegaNat m : ℤ)) + (q : ℤ) * ((j : ℤ) * c) := by
+      rw [castSum, castSum, hqz]
+      linear_combination (j : ℤ) * hsum + (j : ℤ) * hc
+    rw [hsplit, zpow_add₀ (zetaRoot_ne_zero q), zpow_mul (zetaRoot q) (q : ℤ) ((j : ℤ) * c),
+      (zetaRoot_zpow_eq_one_iff q hqpos (q : ℤ)).mpr dvd_rfl, one_zpow, mul_one]
+  have hdiff : corrSum b j L N - corrSumOmega b j L N
+      = (∑ n ∈ range N, (zetaRoot q ^ ((j : ℤ) * (castSum b (n + L) - castSum b n))
+          - zetaRoot q ^ ((j : ℤ) * ∑ m ∈ Finset.Ioc n (n + L), (omegaNat m : ℤ)))) / N := by
+    rw [corrSum, corrSumOmega, ← sub_div, Finset.sum_sub_distrib]
+  rw [hdiff, norm_div, Complex.norm_natCast, div_le_div_iff_of_pos_right hNR]
+  refine (norm_sum_le _ _).trans ?_
+  have hterm : ∀ n ∈ range N,
+      ‖zetaRoot q ^ ((j : ℤ) * (castSum b (n + L) - castSum b n))
+        - zetaRoot q ^ ((j : ℤ) * ∑ m ∈ Finset.Ioc n (n + L), (omegaNat m : ℤ))‖
+      ≤ (if ¬ (((b : ℤ) - 1) ∣ (omegaCarry b (n + L) - omegaCarry b n)) then (2 : ℝ) else 0) := by
+    intro n _
+    by_cases hd : ((b : ℤ) - 1) ∣ (omegaCarry b (n + L) - omegaCarry b n)
+    · rw [if_neg (by simpa using hd), hoff n hd, sub_self, norm_zero]
+    · rw [if_pos hd]
+      refine (norm_sub_le _ _).trans ?_
+      rw [norm_zetaRoot_zpow, norm_zetaRoot_zpow]
+      norm_num
+  refine (Finset.sum_le_sum hterm).trans ?_
+  rw [Finset.sum_ite, Finset.sum_const, Finset.sum_const]
+  simp only [mul_zero, add_zero, nsmul_eq_mul]
+  rw [carryDiffBadCount, mul_comm]
+
+/-- **The naive route is refuted.**  If the carry difference were negligible mod `b − 1` AND the
+`ω`-only correlations vanished, the leaf would be FALSE.  Since the `ω`-only clause at `L = 1` is
+Delange's theorem, it is the negligibility of the carry that fails. -/
+theorem not_hAutoCorr_of_carryNegligible (b : ℕ) (hb : 3 ≤ b) (L : ℕ)
+    (hneg : CarryNegligible b L)
+    (homega : ∀ j, 0 < j → j < b - 1 → Tendsto (corrSumOmega b j L) atTop (𝓝 0)) :
+    ¬ HAutoCorr b := by
+  intro h
+  have hj1 : (0 : ℕ) < 1 := one_pos
+  have hj1' : (1 : ℕ) < b - 1 := by omega
+  -- corrSum → 0
+  have hzero : Tendsto (corrSum b 1 L) atTop (𝓝 0) := by
+    have hsq : Tendsto (fun N => corrSum b 1 L N - corrSumOmega b 1 L N) atTop (𝓝 0) := by
+      rw [NormedAddGroup.tendsto_nhds_zero]
+      intro ε hε
+      have hb2 := (NormedAddGroup.tendsto_nhds_zero.mp hneg) (ε / 4) (by linarith)
+      filter_upwards [hb2] with N hN
+      have hbd := norm_corrSum_sub_omega b hb 1 L N
+      have hN' : (carryDiffBadCount b L N : ℝ) / N ≤ ε / 4 := le_of_lt (by simpa using hN)
+      have : 2 * (carryDiffBadCount b L N : ℝ) / N ≤ 2 * (ε / 4) := by
+        rw [mul_div_assoc]; linarith
+      linarith
+    have := hsq.add (homega 1 hj1 hj1')
+    simpa using this
+  -- but HAutoCorr says it tends to b^{-L} ≠ 0
+  have hlim := h 1 hj1 hj1' L
+  have heq : (0 : ℂ) = ((b : ℂ))⁻¹ ^ L := tendsto_nhds_unique hzero hlim
+  have hbC : ((b : ℂ)) ≠ 0 := by exact_mod_cast (by omega : b ≠ 0)
+  exact (pow_ne_zero L (inv_ne_zero hbC)) heq.symm
+
 /-- **THE LEAF.**  Open.  For each base `b ≥ 3` and each nontrivial character `j` of
 `ZMod (b−1)`, the unit-modulus sequence `u(n) = ζ_{b−1}^{j·(Σ_{m≤n} ω(m) + c_n)}` has lag-`L`
 autocorrelation exactly `b^{−L}`.
