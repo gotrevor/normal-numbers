@@ -729,6 +729,51 @@ theorem paddedSum_single (b n L j₀ : ℕ) (hj₀ : j₀ < L)
       [ZMOD (b : ℤ) ^ L] := Int.ModEq.symm (Int.modEq_iff_dvd.mpr (by simpa using hdvd))
   exact hmod
 
+
+/-! ### 3j. The construction lemma: ONE Dirichlet condition suffices
+
+Put the surviving slot at `j₀ = ℓ − 1`, whose weight is exactly `b^{L−1−(ℓ−1)} = b^K`.  Then the
+whole target is carried by a SINGLE divisor count:
+
+    paddedSum ≡ τ(n+ℓ)·b^K  (mod b^L),   and   τ(n+ℓ) ≡ t (mod b^ℓ)  suffices.
+
+This is what makes the construction feasible: it needs *one* integer of controlled shape
+(`n+ℓ = r^e·p`, giving `τ = 2(e+1)`, solvable for every `t` when `b` is odd since `2` is then
+invertible mod `b^ℓ`), not `ℓ` simultaneous ones — so Dirichlet suffices and Dickson is not needed.
+-/
+theorem paddedSum_of_construction (b ℓ K t : ℕ) (hb : 2 ≤ b) (hℓ : 1 ≤ ℓ) (n : ℕ)
+    (ht : t < b ^ ℓ)
+    (hkill : ∀ j, j < ℓ + K → j ≠ ℓ - 1 → ((b : ℤ) ^ (j + 1) ∣ (tau (n + 1 + j) : ℤ)))
+    (hsurv : (tau (n + ℓ) : ℤ) ≡ (t : ℤ) [ZMOD (b : ℤ) ^ ℓ]) :
+    paddedSum b tau n (ℓ + K) % (b : ℤ) ^ (ℓ + K) = (t : ℤ) * (b : ℤ) ^ K := by
+  have hbpos : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (show 0 < b by omega)
+  set L := ℓ + K with hL
+  have hj₀ : ℓ - 1 < L := by omega
+  have hidx : n + 1 + (ℓ - 1) = n + ℓ := by omega
+  have hw : L - 1 - (ℓ - 1) = K := by omega
+  have h1 := paddedSum_single b n L (ℓ - 1) hj₀ hkill
+  rw [hidx, hw] at h1
+  rw [h1]
+  -- `τ(n+ℓ)·b^K ≡ t·b^K (mod b^{ℓ+K})`
+  have h2 : (tau (n + ℓ) : ℤ) * (b : ℤ) ^ K ≡ (t : ℤ) * (b : ℤ) ^ K [ZMOD (b : ℤ) ^ L] := by
+    obtain ⟨d, hd⟩ := Int.modEq_iff_dvd.mp hsurv
+    refine Int.modEq_iff_dvd.mpr ⟨d, ?_⟩
+    have : (t : ℤ) * (b : ℤ) ^ K - (tau (n + ℓ) : ℤ) * (b : ℤ) ^ K
+        = ((t : ℤ) - (tau (n + ℓ) : ℤ)) * (b : ℤ) ^ K := by ring
+    rw [this, hd, hL, pow_add]
+    ring
+  rw [h2]
+  refine Int.emod_eq_of_lt (by positivity) ?_
+  have h3 : (t : ℤ) ≤ (b : ℤ) ^ ℓ - 1 := by
+    have : (t : ℤ) < (b : ℤ) ^ ℓ := by exact_mod_cast ht
+    omega
+  have hbK : (0 : ℤ) < (b : ℤ) ^ K := by positivity
+  have h4 : (t : ℤ) * (b : ℤ) ^ K ≤ ((b : ℤ) ^ ℓ - 1) * (b : ℤ) ^ K :=
+    mul_le_mul_of_nonneg_right h3 hbK.le
+  have h5 : ((b : ℤ) ^ ℓ - 1) * (b : ℤ) ^ K = (b : ℤ) ^ L - (b : ℤ) ^ K := by
+    rw [hL, pow_add]; ring
+  omega
+
 /-! ### 4. The crux leaf -/
 
 /-- **THE CRUX (2026-09-24, after the structured reduction).**  The single open obligation behind

@@ -378,3 +378,31 @@ hereby **withdrawn**; it was an artefact of using a worst-case bound.
    Dirichlet) — check what the repo already has (`G4MertensAP`, `G4Progression`);
 3. the almost-all carry bound.
 Formalise (1)+(2) first; (3) is the only genuinely analytic input and can be a named hypothesis.
+
+## Lap 14 (green): the construction lemma — **one** Dirichlet condition, not `ℓ` of them
+
+A trap avoided: putting the surviving slot at `j₀ = 0` controls only the TOP digit, so one would
+need `ℓ` survivors — i.e. `ℓ` simultaneous primes in progressions, which is DICKSON and hopeless.
+
+Put the survivor at `j₀ = ℓ − 1` instead.  Its weight is exactly `b^{L−1−(ℓ−1)} = b^K`, so the
+entire `ℓ`-digit target is carried by ONE divisor count.  Proved in `src/` as
+**`paddedSum_of_construction`**:
+
+    (∀ j < ℓ+K, j ≠ ℓ−1 → b^{j+1} ∣ τ(n+1+j))   and   τ(n+ℓ) ≡ t  (mod b^ℓ)
+      ⟹  paddedSum b τ n (ℓ+K) % b^{ℓ+K} = t·b^K.
+
+That is precisely the second conjunct of `SubLeafA`.  So `SubLeafA` — hence `ConjC2` — now needs
+only, for each `ℓ ≥ 1` and `t < b^ℓ`, a position `n` and pad `K` with:
+
+* **(K1) kill** — `b^{j+1} ∣ τ(n+1+j)` for every slot `j ≠ ℓ−1`.  CRT: force `q_j^{a_j} ‖ n+1+j`
+  with `a_j + 1 ≡ 0 (mod b^{j+1})`, distinct primes `q_j`.  Pure congruences.
+* **(K2) survivor** — `τ(n+ℓ) ≡ t (mod b^ℓ)`.  Take `n+ℓ = r^e·p`, `p` prime, `r` a prime not among
+  the `q_j`: then `τ = 2(e+1)`, and for ODD `b` the factor `2` is invertible mod `b^ℓ`, so a
+  suitable `e` exists.  `p` runs over an arithmetic progression — **Dirichlet, one prime only.**
+* **(K3) carry** — `carry b τ (n+ℓ+K) < b^K`.  Almost-all divisor bound; `K ≈ L` is admissible
+  (lap 13), and lap 11 (`subLeafAAt_mono`) lets `L` be as large as needed.
+
+Everything in the chain above `(K1)+(K2)+(K3)` is now machine-checked.  The file's single `sorry`
+is still `subLeafB_holds`; **the next lap should re-route `subLeafA_holds` through
+`paddedSum_of_construction`**, replacing `SubLeafB` by the three named conditions, which are
+strictly more tractable (two are congruence/Dirichlet, one is a standard almost-all estimate).
