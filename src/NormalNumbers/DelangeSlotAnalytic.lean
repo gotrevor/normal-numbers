@@ -1,5 +1,6 @@
 import NormalNumbers.DelangeSlotPNT
 import NormalNumbers.DelangeSlotPrimePow
+import NormalNumbers.DelangeSlotRecursion
 
 /-!
 # Rung 1 of the Delange slot: the analytic chain
@@ -253,6 +254,76 @@ theorem sigmaMean_tendsto_zero_of_recursion {z : ℂ} (hz : ‖z‖ = 1) (hz1 : 
       ‖((Real.log N : ℂ) - z) * sigmaMean z P N
         - z * ∑ k ∈ Ico 1 N, sigmaMean z P k / (k + 1 : ℂ)‖ ≤ C) :
     Tendsto (fun N : ℕ => sigmaMean z P N) atTop (𝓝 0) := by
-  sorry
+  have hre : z.re < 1 := by
+    by_contra hcon
+    push_neg at hcon
+    have hsq : z.re ^ 2 + z.im ^ 2 = 1 := by
+      have h1 : Complex.normSq z = 1 := by
+        rw [Complex.normSq_eq_norm_sq, hz]; norm_num
+      simpa [Complex.normSq_apply, sq] using h1
+    have hre1 : z.re = 1 := by nlinarith [sq_nonneg z.im]
+    have him : z.im = 0 := by nlinarith
+    exact hz1 (Complex.ext (by simpa using hre1) (by simpa using him))
+  exact recursion_tendsto_zero hz hre C (fun k => sigmaMean z P k)
+    (fun k => norm_sigmaMean_le hz P k) hrec
+
+
+
+/-- **Assembly of rung 1.**  L2+L3+L4+L5 chained: `S N log N = z N m N + O_P(N)`. -/
+theorem exists_recursion_bound (z : ℂ) (hz : ‖z‖ = 1) (P : ℕ) :
+    ∃ C : ℝ, ∀ N : ℕ, 2 ≤ N →
+      ‖((Real.log N : ℂ) - z) * sigmaMean z P N
+        - z * ∑ k ∈ Ico 1 N, sigmaMean z P k / ((k : ℂ) + 1)‖ ≤ C := by
+  obtain ⟨C2, hC2⟩ := exists_L2 z hz P
+  obtain ⟨C4, hC4⟩ := exists_L4 z hz P
+  refine ⟨1 + C2 + C4, fun N hN ↦ ?_⟩
+  have hN0 : 0 < N := by omega
+  have hNR : (0:ℝ) < N := by exact_mod_cast hN0
+  have hNC : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.2 hN0.ne'
+  -- the un-normalised bound
+  set A : ℂ := ∑ n ∈ Ioc 0 N, hfun z P n * (Real.log n : ℂ) with hA
+  have e2 : ‖A - z * ∑ d ∈ Ioc 0 N, (Λ d : ℂ) * Ssum z P (N / d)‖ ≤ C2 * N := hC2 N
+  have e4 : ‖(∑ k ∈ Ioc 0 N, hfun z P k * (psiN (N / k) : ℂ)) - (N : ℂ) * mSum z P N‖
+      ≤ C4 * N := hC4 N
+  have e5 : ‖A - Ssum z P N * (Real.log N : ℂ)‖ ≤ N := norm_sum_hfun_mul_log_sub hz P N
+  have key : ‖Ssum z P N * (Real.log N : ℂ) - z * ((N : ℂ) * mSum z P N)‖
+      ≤ (1 + C2 + C4) * N := by
+    have hz4 : ‖z * ((∑ k ∈ Ioc 0 N, hfun z P k * (psiN (N / k) : ℂ)) - (N : ℂ) * mSum z P N)‖
+        ≤ C4 * N := by rw [norm_mul, hz, one_mul]; exact e4
+    have hsplit : Ssum z P N * (Real.log N : ℂ) - z * ((N : ℂ) * mSum z P N)
+        = -(A - Ssum z P N * (Real.log N : ℂ))
+          + (A - z * ∑ d ∈ Ioc 0 N, (Λ d : ℂ) * Ssum z P (N / d))
+          + z * ((∑ k ∈ Ioc 0 N, hfun z P k * (psiN (N / k) : ℂ)) - (N : ℂ) * mSum z P N) := by
+      rw [sum_Lambda_mul_Ssum]; ring
+    rw [hsplit]
+    calc ‖_‖ ≤ ‖-(A - Ssum z P N * (Real.log N : ℂ))
+          + (A - z * ∑ d ∈ Ioc 0 N, (Λ d : ℂ) * Ssum z P (N / d))‖
+        + ‖z * ((∑ k ∈ Ioc 0 N, hfun z P k * (psiN (N / k) : ℂ)) - (N : ℂ) * mSum z P N)‖ :=
+          norm_add_le _ _
+      _ ≤ (‖-(A - Ssum z P N * (Real.log N : ℂ))‖
+          + ‖A - z * ∑ d ∈ Ioc 0 N, (Λ d : ℂ) * Ssum z P (N / d)‖)
+        + ‖z * ((∑ k ∈ Ioc 0 N, hfun z P k * (psiN (N / k) : ℂ)) - (N : ℂ) * mSum z P N)‖ := by
+          gcongr; exact norm_add_le _ _
+      _ ≤ ((N:ℝ) + C2 * N) + C4 * N := by
+          rw [norm_neg]; gcongr
+      _ = (1 + C2 + C4) * N := by ring
+  -- normalise
+  have hdiv : ((Real.log N : ℂ) - z) * sigmaMean z P N
+      - z * ∑ k ∈ Ico 1 N, sigmaMean z P k / ((k : ℂ) + 1)
+      = (Ssum z P N * (Real.log N : ℂ) - z * ((N : ℂ) * mSum z P N)) / (N : ℂ) := by
+    have hS : sigmaMean z P N * (N:ℂ) = Ssum z P N := by rw [sigmaMean]; field_simp
+    rw [mSum_eq]
+    field_simp [sigmaMean]
+    linear_combination (Real.log N : ℂ) * hS
+  rw [hdiv, norm_div, Complex.norm_natCast, div_le_iff₀ hNR]
+  calc ‖Ssum z P N * (Real.log N : ℂ) - z * ((N : ℂ) * mSum z P N)‖
+      ≤ (1 + C2 + C4) * N := key
+    _ = (1 + C2 + C4) * N := rfl
+
+/-- **Rung 1, normalised form.**  `σ N → 0`. -/
+theorem sigmaMean_tendsto_zero {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) (P : ℕ) :
+    Tendsto (fun N : ℕ => sigmaMean z P N) atTop (𝓝 0) := by
+  obtain ⟨C, hC⟩ := exists_recursion_bound z hz P
+  exact sigmaMean_tendsto_zero_of_recursion hz hz1 P C hC
 
 end NormalNumbers.DelangeSlot

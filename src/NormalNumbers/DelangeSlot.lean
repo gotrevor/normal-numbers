@@ -1,4 +1,4 @@
-import Mathlib
+import NormalNumbers.DelangeSlotAnalytic
 
 /-!
 # The Leaf-B slot: twisted means of `z^{ω_{>P}}` vanish (Delange type)
@@ -21,13 +21,14 @@ open Finset Filter Topology Complex Real
 
 namespace NormalNumbers.DelangeSlot
 
-/-- `ω_{>P}(m)`: the number of distinct prime factors of `m` exceeding `P`. -/
-def omegaLarge (P m : ℕ) : ℕ := (m.primeFactors.filter (fun p => P < p)).card
-
 /-- **Untwisted Delange.**  `Q = 1` case, the first rung. -/
 theorem omegaLarge_mean_tendsto_zero (P : ℕ) (z : ℂ) (hz : ‖z‖ = 1) (hz1 : z ≠ 1) :
     Tendsto (fun N : ℕ => (∑ m ∈ Icc 1 N, z ^ omegaLarge P m) / (N : ℂ)) atTop (𝓝 0) := by
-  sorry
+  have hEq : ∀ N : ℕ, (∑ m ∈ Icc 1 N, z ^ omegaLarge P m) / (N : ℂ) = sigmaMean z P N := by
+    intro N
+    rw [sigmaMean, Ssum]
+    congr 1
+  simpa only [hEq] using sigmaMean_tendsto_zero hz hz1 P
 
 /-- **The Leaf-B slot.**  Twisted by an additive character mod `Q`. -/
 theorem twisted_omegaLarge_mean_tendsto_zero (P Q : ℕ) (hQ : 0 < Q) (j : ℤ) (z : ℂ)
