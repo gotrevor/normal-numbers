@@ -129,6 +129,54 @@ theorem periodMean_phase_truncTail (b P : ℕ) (h : ℝ) :
     Nat.cast_prod, ← Finset.prod_div_distrib]
   rfl
 
+/-! ### Elementary geometry of unit vectors and phases -/
+
+/-- Two unit vectors a fixed distance apart have a short sum:
+`‖z‖ = ‖w‖ = 1`, `d ≤ ‖z − w‖` gives `‖z + w‖ ≤ 2 − d²/4`. -/
+lemma norm_add_le_of_norm_sub_ge {z w : ℂ} (hz : ‖z‖ = 1) (hw : ‖w‖ = 1)
+    {d : ℝ} (hd0 : 0 ≤ d) (hd : d ≤ ‖z - w‖) : ‖z + w‖ ≤ 2 - d ^ 2 / 4 := by
+  have hpar : ‖z + w‖ ^ 2 + ‖z - w‖ ^ 2 = 2 * (‖z‖ ^ 2 + ‖w‖ ^ 2) :=
+    parallelogram_law_with_norm ℝ z w
+  rw [hz, hw] at hpar
+  have hsub2 : ‖z - w‖ ≤ 2 := by
+    calc ‖z - w‖ ≤ ‖z‖ + ‖w‖ := norm_sub_le _ _
+      _ = 2 := by rw [hz, hw]; ring
+  have hd2 : d ≤ 2 := le_trans hd hsub2
+  have hsq : ‖z + w‖ * ‖z + w‖ ≤ 4 - d * d := by nlinarith [norm_nonneg (z - w)]
+  nlinarith [norm_nonneg (z + w)]
+
+lemma norm_phase_sub_phase (x y : ℝ) : ‖phase x - phase y‖ = ‖phase (x - y) - 1‖ := by
+  have : phase x - phase y = phase y * (phase (x - y) - 1) := by
+    rw [mul_sub, mul_one, ← phase_add]; ring_nf
+  rw [this, norm_mul, norm_phase, one_mul]
+
+/-- `‖e(u) − 1‖ ≤ 4π|u|` whenever `2π|u| ≤ 1`. -/
+lemma norm_phase_sub_one_le {u : ℝ} (hu : 2 * Real.pi * |u| ≤ 1) :
+    ‖phase u - 1‖ ≤ 4 * Real.pi * |u| := by
+  have hz : ‖(2 * (Real.pi : ℂ) * Complex.I * (u : ℂ))‖ = 2 * Real.pi * |u| := by
+    rw [norm_mul, norm_mul, norm_mul]
+    simp [Complex.norm_I, abs_of_pos Real.pi_pos]
+  have := Complex.norm_exp_sub_one_le (x := 2 * (Real.pi : ℂ) * Complex.I * (u : ℂ))
+    (by rw [hz]; exact hu)
+  rw [hz] at this
+  calc ‖phase u - 1‖ = ‖Complex.exp (2 * (Real.pi : ℂ) * Complex.I * (u : ℂ)) - 1‖ := rfl
+    _ ≤ 2 * (2 * Real.pi * |u|) := this
+    _ = 4 * Real.pi * |u| := by ring
+
+/-- `e(t) ≠ 1` for `0 < |t| < 1`. -/
+lemma phase_ne_one {t : ℝ} (ht0 : t ≠ 0) (ht1 : |t| < 1) : phase t ≠ 1 := by
+  intro hcon
+  rw [phase, Complex.exp_eq_one_iff] at hcon
+  obtain ⟨n, hn⟩ := hcon
+  have h2 : ((t : ℂ)) = (n : ℂ) := by field_simp at hn; linear_combination hn
+  have ht : t = (n : ℝ) := by exact_mod_cast h2
+  rcases eq_or_ne n 0 with rfl | hn0
+  · simp [ht] at ht0
+  · have : (1 : ℝ) ≤ |(n : ℝ)| := by
+      rw [← Int.cast_abs]
+      exact_mod_cast Int.one_le_abs (by omega)
+    rw [ht] at ht1; linarith
+
 /-! ### The two remaining steps of leaf (M) -/
 
 /-- **Leaf (M)(b).**  Each local factor is an average of `p` unit vectors that are not all equal,
@@ -141,7 +189,161 @@ Then `‖(1/p)Σ z_s‖ ≤ 1 − δ²/(4p)` because `‖z₁ + z₂‖ ≤ √(
 theorem norm_localFactor_le (b : ℕ) (hb : 2 ≤ b) (h : ℝ) (hh : h ≠ 0) :
     ∃ c : ℝ, 0 < c ∧ ∀ᶠ p : ℕ in atTop,
       p.Prime → ‖localFactor b h p‖ ≤ 1 - c / p := by
-  sorry
+  classical
+  have hb1 : (1 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  have hbpos : (0 : ℝ) < (b : ℝ) := by linarith
+  have hπ : (0 : ℝ) < Real.pi := Real.pi_pos
+  -- a fixed nonzero frequency `t` with `|t| < 1/2`
+  obtain ⟨i, hi⟩ := pow_unbounded_of_one_lt (2 * |h|) hb1
+  have hbi : (2 : ℝ) * |h| < (b : ℝ) ^ (1 + i) := by
+    have : (b : ℝ) ^ i ≤ (b : ℝ) ^ (1 + i) :=
+      pow_le_pow_right₀ hb1.le (by omega)
+    linarith
+  set t : ℝ := h / (b : ℝ) ^ (1 + i) with ht_def
+  have hbiPos : (0 : ℝ) < (b : ℝ) ^ (1 + i) := by positivity
+  have ht0 : t ≠ 0 := by
+    rw [ht_def]; exact div_ne_zero hh (ne_of_gt hbiPos)
+  have habs : |t| = |h| / (b : ℝ) ^ (1 + i) := by
+    rw [ht_def, abs_div, abs_of_pos hbiPos]
+  have ht_half : |t| < 1 / 2 := by
+    rw [habs, div_lt_iff₀ hbiPos]; linarith
+  -- the separation `δ`
+  set δ : ℝ := ‖phase t - 1‖ with hδ_def
+  have hδpos : 0 < δ := by
+    rw [hδ_def, norm_pos_iff, sub_ne_zero]
+    exact phase_ne_one ht0 (by linarith [ht_half, abs_nonneg t])
+  refine ⟨δ ^ 2 / 16, by positivity, ?_⟩
+  set M : ℝ := |t| + |h| + 1 with hM_def
+  have hMpos : 0 < M := by
+    have := abs_nonneg t; have := abs_nonneg h; rw [hM_def]; linarith
+  obtain ⟨N₀, hN₀⟩ := exists_nat_gt (64 * Real.pi * M / δ + 2 * Real.pi * M)
+  refine Filter.eventually_atTop.mpr ⟨max N₀ (i + 2), fun p hp hpp => ?_⟩
+  have hpN : N₀ ≤ p := le_trans (le_max_left _ _) hp
+  have hpi2 : i + 2 ≤ p := le_trans (le_max_right _ _) hp
+  have hppos : 0 < p := by omega
+  have hpR : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hppos
+  have hbig : 64 * Real.pi * M / δ + 2 * Real.pi * M < (p : ℝ) :=
+    lt_of_lt_of_le hN₀ (by exact_mod_cast hpN)
+  have hMd : 0 ≤ 64 * Real.pi * M / δ := by positivity
+  have hM2 : 0 ≤ 2 * Real.pi * M := by positivity
+  have hbig1 : 64 * Real.pi * M / δ < (p : ℝ) := by linarith
+  have hbig2 : 2 * Real.pi * M < (p : ℝ) := by linarith
+  -- `b^p − 1 ≥ p`
+  set K : ℝ := (b : ℝ) ^ p - 1 with hK_def
+  have hpowb : ((p : ℝ) + 1) ≤ (b : ℝ) ^ p := by
+    have h1 : (p : ℝ) + 1 ≤ (2 : ℝ) ^ p := by
+      have := Nat.lt_two_pow_self (n := p)
+      have : (p : ℝ) + 1 ≤ ((2 ^ p : ℕ) : ℝ) := by exact_mod_cast Nat.succ_le_of_lt this
+      simpa using this
+    have h2 : (2 : ℝ) ^ p ≤ (b : ℝ) ^ p :=
+      pow_le_pow_left₀ (by norm_num) (by exact_mod_cast hb) p
+    linarith
+  have hKp : (p : ℝ) ≤ K := by rw [hK_def]; linarith
+  have hKpos : (0 : ℝ) < K := lt_of_lt_of_le hpR hKp
+  have hKne : (b : ℝ) ^ p - 1 ≠ 0 := by rw [← hK_def]; exact ne_of_gt hKpos
+  -- the two terms of the local average
+  set s₁ : ℕ := p - 1 - i with hs1_def
+  have hs1lt : s₁ < p := by omega
+  have hs1ne : (0 : ℕ) ≠ s₁ := by omega
+  have hterm : ∀ s : ℕ, s < p → primePeriodicTerm b p s = (b : ℝ) ^ s / K := by
+    intro s hs
+    rw [primePeriodicTerm, if_pos hpp, Nat.mod_eq_of_lt hs, hK_def]
+  -- the top term is close to `e(t)`
+  have hpowsplit : (b : ℝ) ^ s₁ = (b : ℝ) ^ p / (b : ℝ) ^ (1 + i) := by
+    rw [eq_div_iff (ne_of_gt hbiPos), ← pow_add]
+    congr 1
+    omega
+  have hdiff1 : h * primePeriodicTerm b p s₁ - t = t / K := by
+    rw [hterm s₁ hs1lt, ht_def, hpowsplit, hK_def]
+    field_simp
+    ring
+  -- quantitative closeness
+  have hclose : ∀ x : ℝ, |x| ≤ M → ‖phase (x / K) - 1‖ ≤ δ / 4 := by
+    intro x hx
+    have hxK : |x / K| ≤ M / (p : ℝ) := by
+      rw [abs_div, abs_of_pos hKpos, div_le_div_iff₀ hKpos hpR]
+      nlinarith [abs_nonneg x, hMpos, hpR, hKp, hx]
+    have hkey2 : 2 * Real.pi * (M / (p : ℝ)) ≤ 1 := by
+      have e : 2 * Real.pi * (M / (p : ℝ)) = (2 * Real.pi * M) / (p : ℝ) := by ring
+      rw [e, div_le_one hpR]; linarith
+    have hkey4 : 4 * Real.pi * (M / (p : ℝ)) ≤ δ / 4 := by
+      have e : 4 * Real.pi * (M / (p : ℝ)) = (4 * Real.pi * M) / (p : ℝ) := by ring
+      rw [e, div_le_div_iff₀ hpR (by norm_num : (0:ℝ) < 4)]
+      have hpd : 64 * Real.pi * M < δ * (p : ℝ) := by
+        rw [div_lt_iff₀ hδpos] at hbig1; linarith
+      nlinarith [hMpos, Real.pi_pos]
+    have hm2 : 2 * Real.pi * |x / K| ≤ 2 * Real.pi * (M / (p : ℝ)) :=
+      mul_le_mul_of_nonneg_left hxK (by positivity)
+    have hm4 : 4 * Real.pi * |x / K| ≤ 4 * Real.pi * (M / (p : ℝ)) :=
+      mul_le_mul_of_nonneg_left hxK (by positivity)
+    have := norm_phase_sub_one_le (u := x / K) (by linarith)
+    linarith
+  have hMt : |t| ≤ M := by rw [hM_def]; linarith [abs_nonneg h]
+  have hMh : |h| ≤ M := by rw [hM_def]; linarith [abs_nonneg t]
+  set z₁ : ℂ := phase (h * primePeriodicTerm b p s₁) with hz1_def
+  set z₀ : ℂ := phase (h * primePeriodicTerm b p 0) with hz0_def
+  have hc1 : ‖z₁ - phase t‖ ≤ δ / 4 := by
+    rw [hz1_def, norm_phase_sub_phase, hdiff1]; exact hclose t hMt
+  have hc0 : ‖z₀ - 1‖ ≤ δ / 4 := by
+    have hp0 : phase 0 = 1 := by simp [phase]
+    have hzz : z₀ - 1 = phase (h * primePeriodicTerm b p 0) - phase 0 := by
+      rw [hz0_def, hp0]
+    rw [hzz, norm_phase_sub_phase, sub_zero, hterm 0 hppos]
+    have : h * ((b : ℝ) ^ 0 / K) = h / K := by
+      rw [pow_zero, mul_one_div]
+    rw [this]; exact hclose h hMh
+  -- separation
+  have hsep : δ / 2 ≤ ‖z₁ - z₀‖ := by
+    have htri : δ ≤ ‖phase t - z₁‖ + ‖z₁ - z₀‖ + ‖z₀ - 1‖ := by
+      have he : phase t - 1 = (phase t - z₁) + (z₁ - z₀) + (z₀ - 1) := by ring
+      calc δ = ‖phase t - 1‖ := hδ_def
+        _ = ‖(phase t - z₁) + (z₁ - z₀) + (z₀ - 1)‖ := by rw [he]
+        _ ≤ ‖(phase t - z₁) + (z₁ - z₀)‖ + ‖z₀ - 1‖ := norm_add_le _ _
+        _ ≤ ‖phase t - z₁‖ + ‖z₁ - z₀‖ + ‖z₀ - 1‖ := by
+            have := norm_add_le (phase t - z₁) (z₁ - z₀); linarith
+    have : ‖phase t - z₁‖ = ‖z₁ - phase t‖ := norm_sub_rev _ _
+    linarith [hc1, hc0, this]
+  have hpair : ‖z₁ + z₀‖ ≤ 2 - δ ^ 2 / 16 := by
+    have := norm_add_le_of_norm_sub_ge (z := z₁) (w := z₀) (norm_phase _) (norm_phase _)
+      (d := δ / 2) (by linarith) hsep
+    calc ‖z₁ + z₀‖ ≤ 2 - (δ / 2) ^ 2 / 4 := this
+      _ = 2 - δ ^ 2 / 16 := by ring
+  -- split the sum
+  have hsub : ({0, s₁} : Finset ℕ) ⊆ range p := by
+    intro x hx
+    simp only [Finset.mem_insert, Finset.mem_singleton] at hx
+    rcases hx with rfl | rfl
+    · exact Finset.mem_range.mpr hppos
+    · exact Finset.mem_range.mpr hs1lt
+  have hcard : (range p \ ({0, s₁} : Finset ℕ)).card = p - 2 := by
+    rw [Finset.card_sdiff, Finset.inter_eq_left.mpr hsub, Finset.card_range, Finset.card_insert_of_notMem (by simpa using hs1ne),
+      Finset.card_singleton]
+  have hrest : ‖∑ s ∈ range p \ ({0, s₁} : Finset ℕ), phase (h * primePeriodicTerm b p s)‖
+      ≤ ((p : ℝ) - 2) := by
+    calc ‖∑ s ∈ range p \ ({0, s₁} : Finset ℕ), phase (h * primePeriodicTerm b p s)‖
+        ≤ ∑ s ∈ range p \ ({0, s₁} : Finset ℕ), ‖phase (h * primePeriodicTerm b p s)‖ :=
+          norm_sum_le _ _
+      _ = ((p - 2 : ℕ) : ℝ) := by simp [hcard]
+      _ = ((p : ℝ) - 2) := by
+          have : (2 : ℕ) ≤ p := by omega
+          rw [Nat.cast_sub this]; norm_num
+  have hsum : ‖∑ s ∈ range p, phase (h * primePeriodicTerm b p s)‖ ≤ (p : ℝ) - δ ^ 2 / 16 := by
+    rw [← Finset.sum_sdiff hsub, Finset.sum_pair hs1ne]
+    calc ‖(∑ s ∈ range p \ ({0, s₁} : Finset ℕ), phase (h * primePeriodicTerm b p s))
+            + (phase (h * primePeriodicTerm b p 0) + phase (h * primePeriodicTerm b p s₁))‖
+        ≤ ‖∑ s ∈ range p \ ({0, s₁} : Finset ℕ), phase (h * primePeriodicTerm b p s)‖
+            + ‖phase (h * primePeriodicTerm b p 0) + phase (h * primePeriodicTerm b p s₁)‖ :=
+          norm_add_le _ _
+      _ ≤ ((p : ℝ) - 2) + (2 - δ ^ 2 / 16) := by
+          have hcomm : ‖z₀ + z₁‖ = ‖z₁ + z₀‖ := by rw [add_comm]
+          rw [← hz0_def, ← hz1_def]
+          linarith [hrest, hpair, hcomm]
+      _ = (p : ℝ) - δ ^ 2 / 16 := by ring
+  rw [localFactor, norm_div, Complex.norm_natCast, div_le_iff₀ hpR]
+  have : (1 - δ ^ 2 / 16 / (p : ℝ)) * (p : ℝ) = (p : ℝ) - δ ^ 2 / 16 := by
+    field_simp
+  rw [this]
+  exact hsum
 
 /-- **Leaf (M)(c).**  Mertens: `Σ_p 1/p = ∞`, so `Π_{p ≤ P}(1 − c/p) → 0`, hence the model term
 vanishes as the cut `P → ∞`.  This is the statement that the small primes alone already
