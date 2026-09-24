@@ -1,6 +1,7 @@
 import NormalNumbers.CastingOut
 import NormalNumbers.PowerBaseCount
 import NormalNumbers.SwingC3Split
+import NormalNumbers.SwingC3Rotation
 
 /-!
 # Swing at C3: `G4` is rich (every word at positive lower density)
@@ -516,15 +517,18 @@ theorem isRich_of_largeTailLaw {b : ℕ} (hb : 2 ≤ b) (h : LargeTailLaw b) :
   rw [lt_div_iff₀ hNR] at hfin
   exact hfin.le
 
-/-- **Open.**  The crux after the 2026-09-24 lap.  Everything else on the path to `ConjC3` is
-proved; see the module notes above and `SwingC3Split.lean` for the construction of the classes,
-the CRT steering of the rotation constants, and the covering lemma.  What is missing is only
-that the large-prime tail has a limit law which is the SAME in every steering class. -/
-theorem largeTailLaw_holds (b : ℕ) (hb : 3 ≤ b) : LargeTailLaw b := by
-  sorry
+/-! ### Superseded by the weaker pair of leaves in `SwingC3Rotation.lean`
+
+`LargeTailLaw` asks for two things the covering argument does not need: *genuine limits* (so
+the analytic leaf would have to identify something) and rotation constants sitting *exactly* on
+the grid `b^{−ℓ}·ℤ` (which the slots `j > ℓ` spoil).  `SwingC3Rotation.lean` splits the
+obligation into `RotationCover` (a `len`-net of rotation constants — arithmetic, CRT) and
+`TailLargeDecouple` (the class-independence of the large-prime tail — no limit asserted), and
+`ConjC3` now routes through those.  `isRich_of_largeTailLaw` above stays as the proved record
+that the stronger hypothesis also suffices. -/
 
 theorem conjC3 : ConjC3 := fun b hb =>
-  isRich_of_largeTailLaw (by omega) (largeTailLaw_holds b hb)
+  isRich_of_rotationRoute (by omega) (rotationRoute_holds b (by omega))
 
 /-- Rung: `G4_b` is upper-rich. -/
 theorem isRichUpper_primeLambertAtBase (b : ℕ) (hb : 3 ≤ b) :
