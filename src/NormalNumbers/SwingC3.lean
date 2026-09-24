@@ -327,8 +327,11 @@ of `tailLarge` is** — the argument never identifies it.  The single input need
     `OmegaLargeDecouple`: the law of `tailLarge P b n` along `n ≡ a (mod Q)` is asymptotically
     independent of the class `a`,
 
-fundamental-lemma-of-the-sieve territory rather than Selberg–Delange.  That, plus the CRT
-prescription lemma, is the work for the next lap.
+fundamental-lemma-of-the-sieve territory rather than Selberg–Delange.  The CRT prescription
+half is now done: `SwingC3Split.exists_crt_pattern` produces, for any assignment of primes
+`> ℓ` to window slots, a residue `a` whose window `a+1, …, a+ℓ` has exactly the prescribed
+primes in each slot (the primes exceed `ℓ`, so each divides at most one window entry and the
+slots are independent).  `OmegaLargeDecouple` is what is left.
 
 **The route is confirmed numerically** (`probes/g4_rotation_route.py`, base 4, `N = 4·10⁶`,
 `P`-primes `{5,7,11,13}`, `Q = 5005`, `ℓ = 4`).  The globally rare word `(1,1,1,1)` has

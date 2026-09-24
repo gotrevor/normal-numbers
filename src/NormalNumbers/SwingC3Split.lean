@@ -141,4 +141,44 @@ theorem tailSmall_congr {b P Q n n' : ℕ} (hQ : ∀ p ≤ P, p.Prime → p ∣ 
   congr 2
   exact omegaSmall_congr_of_modEq (by omega) (by omega) hQ (h.add_right (i + 1))
 
+/-! ### CRT prescription: an explicit residue class realising any divisibility pattern
+
+The rotation argument needs to place a prescribed number of small primes into each window slot.
+Since every prime used is `> L`, it can divide at most one of `a+1, …, a+L`, so the slots are
+independent and CRT solves them simultaneously. -/
+
+/-- **CRT prescription.**  Given distinct primes all exceeding `L` and an assignment `f` sending
+each to a window slot in `[1, L]`, there is a residue `a` for which the primes dividing `a + j`
+are exactly those assigned to slot `j`. -/
+theorem exists_crt_pattern (L : ℕ) (S : Finset ℕ) (hS : ∀ p ∈ S, p.Prime)
+    (hSL : ∀ p ∈ S, L < p) (f : ℕ → ℕ) (hf1 : ∀ p ∈ S, 1 ≤ f p) (hfL : ∀ p ∈ S, f p ≤ L) :
+    ∃ a : ℕ, ∀ p ∈ S, ∀ j, 1 ≤ j → j ≤ L → (p ∣ a + j ↔ j = f p) := by
+  classical
+  have hs : ∀ p ∈ S, (id p : ℕ) ≠ 0 := fun p hp => (hS p hp).pos.ne'
+  have pp : Set.Pairwise (S : Set ℕ) (Function.onFun Nat.Coprime (id : ℕ → ℕ)) := by
+    intro p hp q hq hne
+    exact (Nat.coprime_primes (hS p hp) (hS q hq)).2 hne
+  obtain ⟨a, ha⟩ := Nat.chineseRemainderOfFinset (fun p => p - f p) id S hs pp
+  refine ⟨a, fun p hp j hj1 hjL => ?_⟩
+  have hfp : f p ≤ p := le_trans (hfL p hp) (hSL p hp).le
+  have hzero : p ∣ a + f p := by
+    have h1 : a ≡ p - f p [MOD p] := ha p hp
+    have h2 : a + f p ≡ (p - f p) + f p [MOD p] := h1.add_right _
+    have h3 : (p - f p) + f p = p := by omega
+    rw [h3] at h2
+    have : a + f p ≡ 0 [MOD p] := h2.trans (Nat.modEq_zero_iff_dvd.2 dvd_rfl)
+    exact Nat.modEq_zero_iff_dvd.1 this
+  constructor
+  · intro hdvd
+    have e1 : a + j ≡ 0 [MOD p] := Nat.modEq_zero_iff_dvd.2 hdvd
+    have e2 : a + f p ≡ 0 [MOD p] := Nat.modEq_zero_iff_dvd.2 hzero
+    have e3 : a + j ≡ a + f p [MOD p] := e1.trans e2.symm
+    have e4 : j ≡ f p [MOD p] := Nat.ModEq.add_left_cancel' a e3
+    have hjp : j < p := lt_of_le_of_lt hjL (hSL p hp)
+    have hfpp : f p < p := lt_of_le_of_lt (hfL p hp) (hSL p hp)
+    unfold Nat.ModEq at e4
+    rwa [Nat.mod_eq_of_lt hjp, Nat.mod_eq_of_lt hfpp] at e4
+  · rintro rfl
+    exact hzero
+
 end NormalNumbers
