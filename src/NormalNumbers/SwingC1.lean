@@ -1227,6 +1227,134 @@ theorem stateLaw_of_hAutoCorr (b : ℕ) (hb : 3 ≤ b) (h : HAutoCorr b) (L : �
 theorem conjC1_of_hAutoCorr (h : ∀ b, 3 ≤ b → HAutoCorr b) : ConjC1 :=
   conjC1_of_hState fun b hb L => stateLaw_of_hAutoCorr b hb (h b hb) L
 
+/-! #### The leaf is EXACT: `HAutoCorr` is equivalent to `ConjC1`
+
+Expanding the autocorrelation over the fibres of `castState` turns `corrSum` into the finite
+Fourier transform of `stateFreq`, so `StateLaw` gives the autocorrelation back.  Hence no strength
+whatever is lost in passing to `HAutoCorr`: it is `ConjC1`, re-coordinatised. -/
+
+/-- `corrSum` is the finite Fourier transform of `stateFreq`, for every `N`. -/
+theorem corrSum_eq_sum_stateFreq (b : ℕ) (hb : 3 ≤ b) (j L N : ℕ) :
+    corrSum b j L N
+      = ∑ r ∈ range (b - 1), (stateFreq b L ((r : ℕ) : ZMod (b - 1)) N : ℂ) *
+          zetaRoot (b - 1) ^ ((j : ℤ) * (r : ℤ)) := by
+  classical
+  let q : ℕ := b - 1
+  have hq : q = b - 1 := rfl
+  have hqpos : 0 < q := by omega
+  haveI : NeZero q := ⟨by omega⟩
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp [corrSum, stateFreq]
+  have hNC : ((N : ℂ)) ≠ 0 := by exact_mod_cast (by omega : N ≠ 0)
+  set D : ℕ → ℤ := fun n => castSum b (n + L) - castSum b n with hD
+  have hcs : corrSum b j L N
+      = (∑ n ∈ range N, zetaRoot q ^ ((j : ℤ) * D n)) / N := by rw [corrSum, hD]
+  -- the fibre map
+  have hmaps : ∀ n ∈ range N, (castState b L n).val ∈ range q :=
+    fun n _ => Finset.mem_range.mpr (ZMod.val_lt _)
+  have hval : ∀ (r : ℕ), r < q → ∀ n : ℕ,
+      ((castState b L n).val = r ↔ castState b L n = ((r : ℕ) : ZMod q)) := by
+    intro r hr n
+    constructor
+    · intro h; rw [← h, ZMod.natCast_val, ZMod.cast_id]
+    · intro h; rw [h, ZMod.val_natCast_of_lt hr]
+  -- on a fibre the character is constant
+  have hconst : ∀ (r : ℕ), r < q → ∀ n : ℕ, castState b L n = ((r : ℕ) : ZMod q) →
+      zetaRoot q ^ ((j : ℤ) * D n) = zetaRoot q ^ ((j : ℤ) * (r : ℤ)) := by
+    intro r hr n hn
+    have hdvd : ((q : ℤ)) ∣ (D n - (r : ℤ)) := by
+      have : ((D n : ℤ) : ZMod q) = ((r : ℤ) : ZMod q) := by
+        rw [← castState_eq_castSum_sub b L n] at *
+        rw [hn]; push_cast; ring
+      rw [ZMod.intCast_eq_intCast_iff, Int.modEq_iff_dvd] at this
+      exact (dvd_sub_comm).mp this
+    obtain ⟨c, hc⟩ := hdvd
+    rw [show (j : ℤ) * D n = (j : ℤ) * (r : ℤ) + (q : ℤ) * ((j : ℤ) * c) by
+      have : D n = (r : ℤ) + (q : ℤ) * c := by omega
+      rw [this]; ring, zpow_add₀ (zetaRoot_ne_zero q),
+      zpow_mul (zetaRoot q) (q : ℤ) ((j : ℤ) * c),
+      (zetaRoot_zpow_eq_one_iff q hqpos (q : ℤ)).mpr dvd_rfl, one_zpow, mul_one]
+  have hfib := Finset.sum_fiberwise_of_maps_to hmaps
+    (fun n => zetaRoot q ^ ((j : ℤ) * D n))
+  rw [hcs, ← hfib, Finset.sum_div]
+  refine Finset.sum_congr rfl fun r hr => ?_
+  have hrq : r < q := Finset.mem_range.mp hr
+  have hfilt : (range N).filter (fun n => (castState b L n).val = r)
+      = (range N).filter (fun n => castState b L n = ((r : ℕ) : ZMod q)) :=
+    Finset.filter_congr fun n _ => by simpa using (hval r hrq n)
+  rw [hfilt, Finset.sum_congr rfl (fun n hn =>
+    hconst r hrq n (Finset.mem_filter.mp hn).2), Finset.sum_const, stateFreq]
+  push_cast
+  rw [nsmul_eq_mul]
+  ring
+
+/-- **The converse.**  `StateLaw` at every `L` gives the autocorrelation spectrum. -/
+theorem hAutoCorr_of_stateLaw (b : ℕ) (hb : 3 ≤ b) (h : ∀ L, StateLaw b L) : HAutoCorr b := by
+  classical
+  set q := b - 1 with hq
+  have hqpos : 0 < q := by omega
+  have hqC : ((q : ℂ)) ≠ 0 := by exact_mod_cast (by omega : q ≠ 0)
+  have hbC : ((b : ℂ)) ≠ 0 := by exact_mod_cast (by omega : b ≠ 0)
+  have hqC' : ((b : ℂ)) - 1 = (q : ℂ) := by
+    have : ((q : ℕ) : ℂ) = ((b - 1 : ℕ) : ℂ) := by rw [hq]
+    rw [this, Nat.cast_sub (by omega : 1 ≤ b)]; norm_num
+  intro jj hjj hjjq L
+  -- the nontrivial character sums to zero
+  have hgeom : (∑ r ∈ range q, zetaRoot q ^ ((jj : ℤ) * (r : ℤ))) = 0 := by
+    have hswap : (∑ r ∈ range q, zetaRoot q ^ ((jj : ℤ) * (r : ℤ)))
+        = ∑ r ∈ range q, zetaRoot q ^ ((r : ℤ) * (jj : ℤ)) :=
+      Finset.sum_congr rfl fun r _ => by rw [mul_comm]
+    rw [hswap, sum_zetaRoot_zpow q hqpos, if_neg]
+    intro hdvd
+    have := Int.le_of_dvd (by exact_mod_cast hjj) hdvd
+    omega
+  -- termwise limits
+  have hterm : ∀ r ∈ range q, Tendsto (fun N : ℕ =>
+      ((stateFreq b L ((r : ℕ) : ZMod q) N : ℂ) * zetaRoot q ^ ((jj : ℤ) * (r : ℤ)))) atTop
+      (𝓝 (((normalCastLaw b L r : ℝ) : ℂ) * zetaRoot q ^ ((jj : ℤ) * (r : ℤ)))) := by
+    intro r hr
+    have hlim := h L r (by rw [← hq]; exact Finset.mem_range.mp hr)
+    exact (Complex.continuous_ofReal.tendsto _ |>.comp hlim).mul tendsto_const_nhds
+  have hsum := tendsto_finsetSum _ hterm
+  -- evaluate
+  have hval : (∑ r ∈ range q, ((normalCastLaw b L r : ℝ) : ℂ) * zetaRoot q ^ ((jj : ℤ) * (r : ℤ)))
+      = ((b : ℂ))⁻¹ ^ L := by
+    have hcl : ∀ r ∈ range q, ((normalCastLaw b L r : ℝ) : ℂ)
+        = (q : ℂ)⁻¹ + ((b : ℂ) ^ L)⁻¹ * ((if r = 0 then (q : ℂ) else 0) - 1) * (q : ℂ)⁻¹ := by
+      intro r hr
+      have hrq : r < b - 1 := by rw [← hq]; exact Finset.mem_range.mp hr
+      rw [normalCastLaw_closed b L r hb hrq]
+      push_cast
+      rw [← hqC']
+      rcases eq_or_ne r 0 with rfl | hr0
+      · norm_num
+        ring
+      · norm_num [hr0]
+        ring
+    rw [Finset.sum_congr rfl fun r hr => by rw [hcl r hr]]
+    have hexp : ∀ r ∈ range q,
+        ((q : ℂ)⁻¹ + ((b : ℂ) ^ L)⁻¹ * ((if r = 0 then (q : ℂ) else 0) - 1) * (q : ℂ)⁻¹)
+          * zetaRoot q ^ ((jj : ℤ) * (r : ℤ))
+        = ((q : ℂ)⁻¹ - ((b : ℂ) ^ L)⁻¹ * (q : ℂ)⁻¹) * zetaRoot q ^ ((jj : ℤ) * (r : ℤ))
+          + (if r = 0 then ((b : ℂ) ^ L)⁻¹ else 0) := by
+      intro r _
+      rcases eq_or_ne r 0 with rfl | hr0
+      · rw [if_pos rfl, if_pos rfl]
+        simp only [Nat.cast_zero, mul_zero, zpow_zero]
+        field_simp
+        ring
+      · rw [if_neg hr0, if_neg hr0]; ring
+    rw [Finset.sum_congr rfl hexp, Finset.sum_add_distrib, ← Finset.mul_sum, hgeom, mul_zero,
+      zero_add, Finset.sum_ite_eq' (range q) 0 (fun _ => ((b : ℂ) ^ L)⁻¹),
+      if_pos (Finset.mem_range.mpr hqpos), inv_pow]
+  rw [hval] at hsum
+  exact Filter.Tendsto.congr (fun N => (corrSum_eq_sum_stateFreq b hb jj L N).symm) hsum
+
+/-- **`ConjC1` ⟺ the fixed-modulus autocorrelation leaf.**  The reduction is EXACT. -/
+theorem conjC1_iff_hAutoCorr : ConjC1 ↔ ∀ b, 3 ≤ b → HAutoCorr b := by
+  refine ⟨fun h b hb => hAutoCorr_of_stateLaw b hb fun L => ?_, conjC1_of_hAutoCorr⟩
+  exact (castLaw_iff_stateLaw b (by omega) L).mp (h b hb L)
+
 /-- **THE LEAF.**  Open.  For each base `b ≥ 3` and each nontrivial character `j` of
 `ZMod (b−1)`, the unit-modulus sequence `u(n) = ζ_{b−1}^{j·(Σ_{m≤n} ω(m) + c_n)}` has lag-`L`
 autocorrelation exactly `b^{−L}`.
