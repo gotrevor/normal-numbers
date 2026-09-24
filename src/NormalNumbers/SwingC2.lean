@@ -452,43 +452,28 @@ def SubLeafA (b : ℕ) : Prop :=
     carry b tau (n + (ℓ + K)) < (b : ℤ) ^ K ∧
     paddedSum b tau n (ℓ + K) % (b : ℤ) ^ (ℓ + K) = (t : ℤ) * (b : ℤ) ^ K
 
-/-- **The padding reduction.**  Sub-leaf A implies the crux. -/
-theorem windowPrescribable_of_subLeafA (b : ℕ) (hb : 3 ≤ b) (h : SubLeafA b) :
+/-- **What the padding argument actually needs.**  Only that the length-`ℓ+K` window value is
+`t·b^K + c` for SOME `c ∈ [0, b^K)` — no bound on the carry, and no condition on `paddedSum`
+separately.  `SubLeafA` is the special case `c = carry` (`windowShape_of_subLeafA`), which is
+strictly stronger; an analytic proof may target this weaker statement instead. -/
+def WindowShape (b : ℕ) : Prop :=
+  ∀ ℓ, 1 ≤ ℓ → ∀ t : ℕ, t < b ^ ℓ → ∃ n K : ℕ, ∃ c : ℤ, 0 ≤ c ∧ c < (b : ℤ) ^ K ∧
+    windowNum b tau n (ℓ + K) % (b : ℤ) ^ (ℓ + K) = (t : ℤ) * (b : ℤ) ^ K + c
+
+theorem windowPrescribable_of_windowShape (b : ℕ) (hb : 3 ≤ b) (h : WindowShape b) :
     WindowPrescribable b tau := by
   have hb2 : 2 ≤ b := by omega
   have hbpos : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (show 0 < b by omega)
   intro ℓ hℓ t ht0 htlt
   lift t to ℕ using ht0 with t₀
   have ht₀ : t₀ < b ^ ℓ := by exact_mod_cast htlt
-  obtain ⟨n, K, hK, hP⟩ := h ℓ hℓ t₀ ht₀
+  obtain ⟨n, K, C, hC0, hCK, hW⟩ := h ℓ hℓ t₀ ht₀
   set L := ℓ + K with hL
   set x : ℝ := lambertVal b tau with hx
   have hbK : (0 : ℤ) < (b : ℤ) ^ K := by positivity
   have hbL : (0 : ℤ) < (b : ℤ) ^ L := by positivity
-  -- the carry at the right end of the padded window
-  set C : ℤ := carry b tau (n + L) with hC
-  have hC0 : 0 ≤ C := carry_nonneg b hb2 tau tau_le_self _
-  have hCK : C < (b : ℤ) ^ K := hK
-  -- the padded window value
   have hV : ⌊x * (b : ℝ) ^ (n + L)⌋ % (b : ℤ) ^ L = (t₀ : ℤ) * (b : ℤ) ^ K + C := by
-    rw [floor_lambertVal_emod b hb2 tau tau_le_self n L, windowNum_eq]
-    have hsmall : 0 ≤ (t₀ : ℤ) * (b : ℤ) ^ K + C ∧ (t₀ : ℤ) * (b : ℤ) ^ K + C < (b : ℤ) ^ L := by
-      constructor
-      · positivity
-      · have h1 : (t₀ : ℤ) ≤ (b : ℤ) ^ ℓ - 1 := by
-          have : (t₀ : ℤ) < (b : ℤ) ^ ℓ := by exact_mod_cast ht₀
-          omega
-        have h2 : (t₀ : ℤ) * (b : ℤ) ^ K ≤ ((b : ℤ) ^ ℓ - 1) * (b : ℤ) ^ K :=
-          mul_le_mul_of_nonneg_right h1 hbK.le
-        have h3 : ((b : ℤ) ^ ℓ - 1) * (b : ℤ) ^ K = (b : ℤ) ^ L - (b : ℤ) ^ K := by
-          rw [hL, pow_add]; ring
-        omega
-    calc (paddedSum b tau n L + C) % (b : ℤ) ^ L
-        = ((paddedSum b tau n L % (b : ℤ) ^ L) + C) % (b : ℤ) ^ L := by
-          exact (Int.emod_add_emod _ _ _).symm
-      _ = ((t₀ : ℤ) * (b : ℤ) ^ K + C) % (b : ℤ) ^ L := by rw [hP]
-      _ = (t₀ : ℤ) * (b : ℤ) ^ K + C := Int.emod_eq_of_lt hsmall.1 hsmall.2
-  -- read off the top `ℓ` digits
+    rw [floor_lambertVal_emod b hb2 tau tau_le_self n L]; exact hW
   refine ⟨n, ?_⟩
   rw [← floor_lambertVal_emod b hb2 tau tau_le_self n ℓ]
   rw [floor_mul_pow_div b hb2 x (n + ℓ) K, show n + ℓ + K = n + L from by omega]
@@ -507,6 +492,39 @@ theorem windowPrescribable_of_subLeafA (b : ℕ) (hb : 3 ≤ b) (h : SubLeafA b)
     rw [hrw, Int.add_mul_ediv_left _ _ (ne_of_gt hbK), Int.ediv_eq_zero_of_lt hC0 hCK, zero_add]
   rw [hdivK, add_comm, Int.add_mul_emod_self_left]
   exact Int.emod_eq_of_lt (by positivity) (by exact_mod_cast ht₀)
+
+/-- `SubLeafA` is the `c = carry` case of `WindowShape`. -/
+theorem windowShape_of_subLeafA (b : ℕ) (hb : 3 ≤ b) (h : SubLeafA b) : WindowShape b := by
+  have hb2 : 2 ≤ b := by omega
+  have hbpos : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (show 0 < b by omega)
+  intro ℓ hℓ t₀ ht₀
+  obtain ⟨n, K, hK, hP⟩ := h ℓ hℓ t₀ ht₀
+  set L := ℓ + K with hL
+  have hbK : (0 : ℤ) < (b : ℤ) ^ K := by positivity
+  refine ⟨n, K, carry b tau (n + L), carry_nonneg b hb2 tau tau_le_self _, hK, ?_⟩
+  set C : ℤ := carry b tau (n + L) with hC
+  have hC0 : 0 ≤ C := carry_nonneg b hb2 tau tau_le_self _
+  rw [windowNum_eq]
+  have hsmall : 0 ≤ (t₀ : ℤ) * (b : ℤ) ^ K + C ∧ (t₀ : ℤ) * (b : ℤ) ^ K + C < (b : ℤ) ^ L := by
+    constructor
+    · positivity
+    · have h1 : (t₀ : ℤ) ≤ (b : ℤ) ^ ℓ - 1 := by
+        have : (t₀ : ℤ) < (b : ℤ) ^ ℓ := by exact_mod_cast ht₀
+        omega
+      have h2 : (t₀ : ℤ) * (b : ℤ) ^ K ≤ ((b : ℤ) ^ ℓ - 1) * (b : ℤ) ^ K :=
+        mul_le_mul_of_nonneg_right h1 hbK.le
+      have h3 : ((b : ℤ) ^ ℓ - 1) * (b : ℤ) ^ K = (b : ℤ) ^ L - (b : ℤ) ^ K := by
+        rw [hL, pow_add]; ring
+      omega
+  calc (paddedSum b tau n L + C) % (b : ℤ) ^ L
+      = ((paddedSum b tau n L % (b : ℤ) ^ L) + C) % (b : ℤ) ^ L :=
+        (Int.emod_add_emod _ _ _).symm
+    _ = ((t₀ : ℤ) * (b : ℤ) ^ K + C) % (b : ℤ) ^ L := by rw [hP]
+    _ = (t₀ : ℤ) * (b : ℤ) ^ K + C := Int.emod_eq_of_lt hsmall.1 hsmall.2
+
+theorem windowPrescribable_of_subLeafA (b : ℕ) (hb : 3 ≤ b) (h : SubLeafA b) :
+    WindowPrescribable b tau :=
+  windowPrescribable_of_windowShape b hb (windowShape_of_subLeafA b hb h)
 
 
 /-! ### 3d. The route back to an ADDITIVE weight: `τ = (a+1)·2^ω` on the squarefree locus

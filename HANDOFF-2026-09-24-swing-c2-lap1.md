@@ -321,3 +321,26 @@ needs `b^K ≳ τ_max(X) = X^{o(1)}`, i.e. `K ≳ log X/(log log X · log b)`.  
 `K ≳ 2L/log log X → 0` relative to `L`, so `K ≈ L` is comfortably admissible and the expected
 witness count is `b^{L}`.  The shape is consistent — no barrier at the counting level, which is
 what the probe already showed empirically.
+
+## Lap 12 addendum (green): `WindowShape` — the carry condition is removable
+
+Correction to an over-strong intermediate.  `SubLeafA` demands `paddedSum ≡ t·b^K` AND
+`carry < b^K`.  The padding argument only ever uses that the *window value* has the shape
+
+    windowNum b τ n (ℓ+K)  ≡  t·b^K + c   (mod b^{ℓ+K})   for SOME c ∈ [0, b^K).
+
+That is `WindowShape b`, now in `src/` with `windowPrescribable_of_windowShape` proved.
+`SubLeafA` is its `c = carry` case (`windowShape_of_subLeafA`), so the old route is preserved
+(`windowPrescribable_of_subLeafA` is now a two-line composition) while the analytic target is
+strictly weaker:
+
+    ConjC2 ⟸ WindowPrescribable ⟸ WindowShape ⟸ SubLeafA ⟸ SubLeafB
+
+**Why this matters.**  `WindowShape` has NO carry-size hypothesis at all — the `n < b^{2K}`-style
+coupling that killed the CRT route (laps 9–10) is absent from it.  An argument that controls the
+window value directly (rather than `paddedSum` and the carry separately) is not subject to that
+obstruction.  This re-opens explicit-construction attacks at the `WindowShape` level, where the
+quantity to control is the honest digit window of `E_b` and the pad digits need only be *some*
+value below `b^K`, not zero.
+
+Open obligation is unchanged (`subLeafB_holds`, one `sorry`); the chain above it is all proved.
