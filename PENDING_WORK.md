@@ -9547,3 +9547,38 @@ per `P`** — a classical twisted-Weyl-sum question about the base-`b` prime-cha
 `∑_{p>P} 1/(b^p − 1)`, fully literature-checkable, with no arithmetic function in sight.
 (Chain: `conjC3_of_weylLambertTwist → conjC3_of_addCharTail → conjC3_of_weylHypothesis → ConjC3`,
 every link machine-checked, `#print axioms` clean.)
+
+### lap 10 — the obstruction budget, PROVED (`SwingC3Mean.lean`, axiom-clean)
+
+Four handoffs have leaned on the pricing "the `p`-term has mean `1/((b−1)p)` over its period, so
+cutting at `K` discards mean mass `≍ ∑_{p>K} 1/p`".  It is now a theorem, not a heuristic.
+
+* `sum_range_le_of_periodic_nonneg` : nonneg `L`-periodic `f` has
+  `∑_{n<N} f(n) ≤ (N/L + 1)·∑_{m<L} f(m)` (via `sum_range_eq_mod_add_nsmul`, the exact periodic
+  decomposition `∑_{n<N} = ∑_{n<N%L} + (N/L)·complete`, now stated for any `AddCommGroup`).
+* `sum_range_tailPrimeTerm_period` : the complete-period sum of `b^{n mod p}/(b^p−1)` is
+  **exactly `1/(b−1)`** (a geometric sum — the `b^p−1` cancels perfectly).
+* `sum_range_tailPrimeTerm_le` : `∑_{n<N} b^{n mod p}/(b^p−1) ≤ (N/p + 1)/(b−1)`.
+* `sum_range_tailTrunc_sub_le` : `∑_{n<N}(tailTrunc_{K'} − tailTrunc_K)(n)
+  ≤ ∑_{K<p≤K'} (N/p + 1)/(b−1)` — **the exact budget any attack on the window must beat.**
+
+`sum_range_periodic_shift` was generalized from `ℂ` to any `AddCommGroup` on the way.
+
+### State of the swing after lap 10
+`ConjC3` ⟸ `WeylLambertTwist` (lap 9, axiom-clean): `(1/N)∑_{n<N} e(jn/Q)·e(h·b^n·L_P) → 0` for
+the explicit `L_P = ∑_{p>P} 1/(b^p−1)`.  Around it, machine-checked:
+* complete-period cancellation is exact and free (lap 6);
+* every fixed truncation already tends to `0`, with rate `≤ (∏_{P<p≤K}p)·Q/N` (lap 7);
+* truncation at `K ≥ 2N` is free pointwise (lap 5b);
+* no prime SUBSET escapes the window `log N ≪ K ≪ N` (lap 8, refutation);
+* the discarded mass in the window is exactly `∑_{K<p≤K'}(N/p+1)/(b−1)` (lap 10).
+
+### Next attack (lap 11)
+The only structurally untried handle left is **partial cancellation inside an incomplete period**:
+beat `norm_sum_range_le_of_period`'s trivial `‖∑_{n<N}‖ ≤ L` when `L ≫ N`.  Concretely, formalize
+the product expansion `e(h·R_K) = ∏_{K<p}(1 + η_p)`, `η_p` `p`-periodic with `∑_{m<p}|η_p(m)| ≤
+2π|h|/(b−1)` (now immediate from `sum_range_tailPrimeTerm_period`), and observe that EVERY
+expansion term indexed by a prime set `S` with `primePeriod P K · ∏_{p∈S} p · Q ≤ N` inherits lap
+6's exact cancellation verbatim.  Bookkeeping the survivors gives a *bounded* limsup — strictly
+more than is known now, and possibly enough for a weaker richness statement (all but finitely
+many words).

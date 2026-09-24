@@ -460,3 +460,4 @@ import NormalNumbers.SwingC3Closed
 import NormalNumbers.SwingC3Period
 import NormalNumbers.SwingC3Subset
 import NormalNumbers.SwingC3Lambert2
+import NormalNumbers.SwingC3Mean

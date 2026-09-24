@@ -156,7 +156,8 @@ kills it.  So **`AddCharTail` holds for every fixed truncation `K`**, and the cr
 uniformity of that convergence as `K → ∞` with `N`. -/
 
 /-- Shifting the window of a complete period does not change the sum. -/
-theorem sum_range_periodic_shift {L : ℕ} (g : ℕ → ℂ) (hg : ∀ n, g (n + L) = g n) (a : ℕ) :
+theorem sum_range_periodic_shift {M : Type*} [AddCommGroup M] {L : ℕ} (g : ℕ → M)
+    (hg : ∀ n, g (n + L) = g n) (a : ℕ) :
     ∑ m ∈ range L, g (a + m) = ∑ m ∈ range L, g m := by
   induction a with
   | zero => simp
@@ -173,8 +174,7 @@ theorem sum_range_periodic_shift {L : ℕ} (g : ℕ → ℂ) (hg : ∀ n, g (n +
     rw [h1]
     simp only [add_zero] at h2
     rw [h4] at h3
-    rw [h2] at h3
-    linear_combination h3
+    exact add_right_cancel (h2.symm.trans h3)
 
 /-- Adding one full period to the range does not change the sum, when the complete sum is `0`. -/
 theorem sum_range_add_period {L : ℕ} (g : ℕ → ℂ) (hg : ∀ n, g (n + L) = g n)
