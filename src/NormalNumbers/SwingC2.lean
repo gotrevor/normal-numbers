@@ -542,6 +542,33 @@ density is affordable in the §4D remainder budget. -/
 theorem tau_windowPrescribable (b : ℕ) (hb : 3 ≤ b) : WindowPrescribable b tau :=
   windowPrescribable_of_subLeafA b hb (subLeafA_holds b hb)
 
+/-! ### 5. Non-vacuity anchors for `SubLeafA` (base 3, `ℓ ≤ 2`) -/
+
+/-- `SubLeafA 3` at `ℓ = 1`: every base-3 digit is realised by a padded divisor window
+(`K = 5`; witnesses found by `probes/swingc2_window.py`). -/
+theorem subLeafA_three_one (t : ℕ) (ht : t < 3) : ∃ n K : ℕ,
+    2 * (Nat.sqrt (n + (1 + K)) : ℤ) + 2 < (3 : ℤ) ^ K ∧
+    paddedSum 3 tau n (1 + K) % (3 : ℤ) ^ (1 + K) = (t : ℤ) * (3 : ℤ) ^ K := by
+  interval_cases t
+  · exact ⟨1830, 5, by native_decide, by native_decide⟩
+  · exact ⟨1022, 5, by native_decide, by native_decide⟩
+  · exact ⟨1342, 5, by native_decide, by native_decide⟩
+
+/-- `SubLeafA 3` at `ℓ = 2`: all nine base-3 words of length two are realised (`K = 5`). -/
+theorem subLeafA_three_two (t : ℕ) (ht : t < 9) : ∃ n K : ℕ,
+    2 * (Nat.sqrt (n + (2 + K)) : ℤ) + 2 < (3 : ℤ) ^ K ∧
+    paddedSum 3 tau n (2 + K) % (3 : ℤ) ^ (2 + K) = (t : ℤ) * (3 : ℤ) ^ K := by
+  interval_cases t
+  · exact ⟨1829, 5, by native_decide, by native_decide⟩
+  · exact ⟨1021, 5, by native_decide, by native_decide⟩
+  · exact ⟨1341, 5, by native_decide, by native_decide⟩
+  · exact ⟨14405, 5, by native_decide, by native_decide⟩
+  · exact ⟨4322, 5, by native_decide, by native_decide⟩
+  · exact ⟨2709, 5, by native_decide, by native_decide⟩
+  · exact ⟨2501, 5, by native_decide, by native_decide⟩
+  · exact ⟨2637, 5, by native_decide, by native_decide⟩
+  · exact ⟨5236, 5, by native_decide, by native_decide⟩
+
 end NormalNumbers.SwingC2
 
 namespace NormalNumbers.CastingOut

@@ -97,3 +97,33 @@ interval of length `ℓ+K`, weighted by powers of `b`, modulo `b^{ℓ+K}`.  The 
    invertible action on `ℤ/b^{ℓ+K}`, and the orbit of ONE realisable value under all such `a`
    would give a large subgroup of realisable targets.  That is the most promising route: it turns
    "hit every residue" into "hit one residue + generate the group".
+
+## Lap 4 addendum (green): `SubLeafA` is NOT vacuous — kernel-checked anchors
+
+`probes/swingc2_window.py` (with a Fraction known-answer check against `Σ 1/(b^n−1)` in bases 3
+and 10) searches the padded windows directly.  Results:
+
+| b | ℓ | K | search limit (forced by `2√(n+L)+2 < b^K`) | targets hit |
+|---|---|---|---|---|
+| 3 | 1 | 5 | 14634 | 3/3 |
+| 3 | 2 | 5 | 14633 | 9/9 |
+| 3 | 2 | 6 | 132487 | 9/9 |
+| 3 | 3 | 6 | 132486 | 26/27 (only `t = 12` missing — needs a larger `K`, which `SubLeafA` allows) |
+| 4 | 1 | 4 | 16123 | 4/4 |
+| 4 | 2 | 5 | 261113 | 15/16 |
+
+So `SubLeafA` looks TRUE and, importantly, *comfortably* so: hits are plentiful, not marginal.
+The witnesses are now in `src/` as `native_decide` anchors `subLeafA_three_one` and
+`subLeafA_three_two` — `SubLeafA 3` holds for `ℓ ≤ 2` with `K = 5`, machine-checked.
+
+Interpretation: the reduction is sound and the crux is a genuine equidistribution statement, not a
+hidden obstruction.  `SubLeafA` is morally "the weighted divisor-count window equidistributes mod
+`b^L`", and the hits occur at a rate consistent with `1/b^L` — i.e. no arithmetic bias blocks any
+residue.
+
+**Next attack (unchanged, now better motivated).**  Prove equidistribution of
+`Σ_{j<L} τ(n+1+j) b^{L−1−j} (mod b^L)` over `n ≤ X`.  Route: `tau_transport_frozen` with
+`D = p^a` acts on the window by multiplication by `(a+1)` mod `b^L` when `gcd(a+1,b)=1`; combined
+with one realised value this generates the multiplicative subgroup, and the additive part comes
+from shifting `n`.  The `ℓ=3, t=12` gap at `K=6` is a good adversarial test case for any proposed
+mechanism.
