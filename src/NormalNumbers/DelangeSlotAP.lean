@@ -10,7 +10,9 @@ prime number theorem in arithmetic progressions,
 
   `ψ(x; q, a) = ∑_{d ≤ x, d ≡ a (q)} Λ d  ~  x / φ(q)`   for `gcd(a,q) = 1`,
 
-which is the **named open leaf** `psiAP_tendsto` below.  Everything else here is proved.
+which is `psiAP_tendsto` below, now proved: a one-step corollary of PNT+'s `WeakPNT_AP`
+(`PrimeNumberTheoremAnd/Wiener.lean`, vendored as `src/PNTPort/Wiener.lean`), which is the same
+statement with `N+1` for `N`.  Not new: see `docs/lit-search-2026-09-24-pnt-in-aps.md`.
 
 ## Why this is the right leaf (route note, 2026-09-24)
 
