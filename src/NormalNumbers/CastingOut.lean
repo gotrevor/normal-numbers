@@ -290,7 +290,19 @@ theorem castLaw_of_isNormal (b : ℕ) (hb : 3 ≤ b) (x : ℝ) (hx : IsNormal b 
 /-- **The first draft of C1 was false**: no normal number has uniform window digit sums. -/
 theorem not_castUniform_of_isNormal (b : ℕ) (hb : 3 ≤ b) (x : ℝ) (hx : IsNormal b x) (L : ℕ)
     (hL : 1 ≤ L) : ¬ CastUniform b x L := by
-  sorry
+  intro hu
+  have hr0 : 0 < b - 1 := by omega
+  have h1 := hu 0 hr0
+  have h2 := castLaw_of_isNormal b hb x hx L 0 hr0
+  have heq : (1 : ℝ) / ((b : ℝ) - 1) = normalCastLaw b L 0 := tendsto_nhds_unique h1 h2
+  rw [normalCastLaw_closed b L 0 hb hr0] at heq
+  have hbR : (3 : ℝ) ≤ b := by exact_mod_cast hb
+  have hpow : (0 : ℝ) < ((b : ℝ) ^ L)⁻¹ := by positivity
+  norm_num at heq
+  rcases heq with (⟨hb0, -⟩ | hb2) | hb1
+  · omega
+  · linarith
+  · linarith
 
 /-- **C1.**  `G4_b` has the casting-out law of a normal number, every base `b ≥ 3`, every `L`. -/
 def ConjC1 : Prop := ∀ b, 3 ≤ b → ∀ L, CastLaw b (primeLambertAtBase b) L
@@ -372,7 +384,8 @@ theorem isDisjunctive_of_isRich (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (hx : IsRich 
 
 /-- C1 and C3 both sit below normality of `G4`. -/
 theorem conjC1_conjC3_of_normal (h : ∀ b, 3 ≤ b → IsNormal b (primeLambertAtBase b)) :
-    ConjC1 ∧ ConjC3 := by
-  sorry
+    ConjC1 ∧ ConjC3 :=
+  ⟨fun b hb L => castLaw_of_isNormal b hb _ (h b hb) L,
+   fun b hb => isRich_of_isNormal b (by omega) _ (h b hb)⟩
 
 end NormalNumbers.CastingOut
