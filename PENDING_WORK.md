@@ -9677,3 +9677,27 @@ The `+1` stub of `sum_range_tailPrimeTerm_le` is absorbed for `p ≤ N` because 
 (this is the trick that avoids needing `π(N) = o(N)`), and for `p > N` only the geometric part
 survives, summing to `≤ 2/(b−1)` — bounded, hence `o(N)`.  Total:
 `∑_{n<N}(setTail − setTrunc_K) ≤ 2N·T_K/(b−1) + 2/(b−1)` with `T_K = ∑_{p∈S,p>K} 1/p`.
+
+### lap 15 — the convergent-case machinery, both halves proved
+
+`SwingC3Convergent.lean` (green, no sorries).  Everything for an ARBITRARY set `S` of primes:
+
+**Mass side.**  `sum_range_setSummand_le` — the key per-prime bound
+`∑_{n<N} setSummand ≤ [S p]·2(N/p)/(b−1) + [N<p]·2b^N(1/b)^p`, whose point is that the `+1` stub
+is absorbed into `N/p` when `p ≤ N` (no prime-counting input needed) and only a geometric term
+survives for `p > N`.  Aggregated by `sum_range_defect_le`:
+`∑_{n<N}(setTail − setTrunc_K) ≤ 2N·recipTail(S,K)/(b−1) + 2/(b−1)`, **uniformly in `K`** —
+the second term is an absolute constant, hence `o(N)`.  With `recipTail_antitone` and
+`summable_recipTail_summand`.
+
+**Period side.**  `setTrunc_add_period`, `coprime_setPeriod`, `sum_addChar_setTrunc_eq_zero`
+(exact complete-period vanishing), `norm_sum_addChar_setTrunc_le` (`≤ setPeriod·Q`), and the
+master inequality `norm_sum_addChar_setTail_le`.
+
+### Next attack (lap 16): the assembly
+Combine the two: `‖∑_{n<N}‖/N ≤ setPeriod(S,K)·Q/N + 16|h|(2·recipTail(S,K)/(b−1) + 2/((b−1)N))`.
+Given `ε`, pick `K` with `recipTail(S,K)` small (`tendsto_sum_nat_add` applied to
+`p ↦ [S p]/p`, after rewriting `recipTail S K = ∑'_i (…)(i+K+1)`), then let `N → ∞` with `K`
+fixed.  That yields **`setTail_addChar_tendsto`: unconditional for any set of primes coprime to
+`Q` with `∑_{p∈S} 1/p < ∞`** — closing the machinery end to end and isolating the sole missing
+input for `ConjC3` as exactly the DIVERGENCE of `∑_p 1/p`.
