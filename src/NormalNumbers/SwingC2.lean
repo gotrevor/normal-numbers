@@ -546,7 +546,58 @@ theorem tau_primePow_mul_squarefree {p a s : ℕ} (hp : p.Prime) (hs : Squarefre
       Nat.Prime.factorization_pow hp]
     simp
 
+
+/-! ### 3e. `SubLeafB`: the crux inside the ADDITIVE category -/
+
+/-- `m = q^a · s` with `q` prime, `s` squarefree and `q ∤ s`: the locus on which
+`τ(m) = (a+1)·2^{ω(s)}` (`tau_primePow_mul_squarefree`).  Every `m` whose non-squarefree part is
+supported at a single prime is of this shape; such `m` have positive density. -/
+def Structured (m q a s : ℕ) : Prop :=
+  q.Prime ∧ Squarefree s ∧ ¬ q ∣ s ∧ m = q ^ a * s
+
+theorem tau_of_structured {m q a s : ℕ} (h : Structured m q a s) :
+    tau m = (a + 1) * 2 ^ s.primeFactors.card := by
+  obtain ⟨hq, hs, hqs, rfl⟩ := h
+  exact tau_primePow_mul_squarefree hq hs hqs
+
+/-- **`SubLeafB`.**  `SubLeafA` with the divisor counts replaced by their structured form: the
+window is prescribed using only the exponents `a_j` and the ADDITIVE weights `ω(s_j)`.  No
+multiplicative weight appears — the unknown is a vector of `ω`-values on `L` consecutive
+integers, which is the category `G4Transport` / `G4WeightInterface` were built for. -/
+def SubLeafB (b : ℕ) : Prop :=
+  ∀ ℓ, 1 ≤ ℓ → ∀ t : ℕ, t < b ^ ℓ → ∃ n K : ℕ, ∃ q a s : ℕ → ℕ,
+    2 * (Nat.sqrt (n + (ℓ + K)) : ℤ) + 2 < (b : ℤ) ^ K ∧
+    (∀ j < ℓ + K, Structured (n + 1 + j) (q j) (a j) (s j)) ∧
+    (∑ j ∈ range (ℓ + K),
+        (((a j + 1) * 2 ^ ((s j).primeFactors.card) : ℕ) : ℤ) * (b : ℤ) ^ (ℓ + K - 1 - j))
+        % (b : ℤ) ^ (ℓ + K) = (t : ℤ) * (b : ℤ) ^ K
+
+/-- The structured window computes the padded divisor window. -/
+theorem subLeafA_of_subLeafB (b : ℕ) (h : SubLeafB b) : SubLeafA b := by
+  intro ℓ hℓ t ht
+  obtain ⟨n, K, q, a, s, hK, hstruct, hsum⟩ := h ℓ hℓ t ht
+  refine ⟨n, K, hK, ?_⟩
+  rw [show paddedSum b tau n (ℓ + K)
+      = ∑ j ∈ range (ℓ + K),
+          (((a j + 1) * 2 ^ ((s j).primeFactors.card) : ℕ) : ℤ) * (b : ℤ) ^ (ℓ + K - 1 - j) from ?_]
+  · exact hsum
+  · refine Finset.sum_congr rfl fun j hj => ?_
+    rw [tau_of_structured (hstruct j (Finset.mem_range.mp hj))]
+
 /-! ### 4. The crux leaf -/
+
+/-- **THE CRUX (2026-09-24, after the structured reduction).**  The single open obligation behind
+`ConjC2`.  Every divisor count in the window has been replaced by `(a_j+1)·2^{ω(s_j)}`, so the
+statement lives entirely in the ADDITIVE category: one must prescribe, modulo `b^{ℓ+K}`, a
+weighted sum of `2^{ω(s_j)}` over `L = ℓ+K` consecutive integers whose non-squarefree parts are
+single prime powers `q_j^{a_j}` fixed by CRT.
+
+Status: **open**.  Empirically true and comfortably so (`probes/swingc2_window.py`; the anchors
+`subLeafA_three_one`, `subLeafA_three_two` verify `SubLeafA 3` for `ℓ ≤ 2` in the kernel).
+The `(a_j+1)` factors supply the residues outside `⟨2⟩ ≤ (ℤ/b^L)^×`; the `ω(s_j)` supply the rest,
+and `e(ω(·)/q)` IS multiplicative, so Selberg–Delange / the G4 Fourier control applies to it. -/
+theorem subLeafB_holds (b : ℕ) (hb : 3 ≤ b) : SubLeafB b := by
+  sorry
 
 /-- **THE CRUX, after the 2026-09-24 padding reduction.**  `SubLeafA b` is the only open
 obligation behind `ConjC2`.  It is a pure statement about the divisor function on a short
@@ -556,8 +607,8 @@ suffices, and `floor_lambertVal_emod` read backwards shows it is essentially nec
 Status 2026-09-24: **open**.  The attack is `tau_transport_frozen`: on a progression freezing the
 valuations at the primes of a dilation `D`, `τ(D·m)` is a fixed rational multiple of `τ(m)`, so
 the G4 frame's translation action is replaced by multiplication by `τ(D)` on `ℤ/b^{ℓ+K}`. -/
-theorem subLeafA_holds (b : ℕ) (hb : 3 ≤ b) : SubLeafA b := by
-  sorry
+theorem subLeafA_holds (b : ℕ) (hb : 3 ≤ b) : SubLeafA b :=
+  subLeafA_of_subLeafB b (subLeafB_holds b hb)
 
 /-- **THE CRUX.**  For `b ≥ 3`, the divisor-count windows realise every residue mod `b^ℓ`:
 for every `ℓ ≥ 1` and every `t < b^ℓ` there is an `n` with

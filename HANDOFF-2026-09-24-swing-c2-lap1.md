@@ -153,3 +153,30 @@ positive-density subset where each cofactor is squarefree,
 and the only remaining freedom to control is the vector `(ω(s_j) mod ord)` — an additive-weight
 prescription on `L` consecutive integers in a fixed progression.  State that as `SubLeafB` and
 prove `subLeafA_of_subLeafB`; `SubLeafB` is then the crux, and it is in the G4 category.
+
+## Lap 6 addendum (green): the crux is now INSIDE the additive category
+
+Chain, all machine-checked except the last link:
+
+    ConjC2 ⟸ tau_windowPrescribable ⟸ SubLeafA b ⟸ SubLeafB b        (subLeafA_of_subLeafB)
+
+`Structured m q a s` := `q` prime ∧ `s` squarefree ∧ `q ∤ s` ∧ `m = q^a·s`; on it
+`tau_of_structured` gives `τ(m) = (a+1)·2^{ω(s)}`.  `SubLeafB b` asks for a window position `n`,
+pad `K`, and a structured factorisation of each of the `L = ℓ+K` consecutive integers, with
+
+    Σ_{j<L} (a_j+1)·2^{ω(s_j)}·b^{L−1−j} ≡ t·b^K   (mod b^L).
+
+**Why this is the right place to stand.**  No multiplicative weight is left.  The unknowns are
+(i) the exponents `a_j`, free integers fixed by a CRT choice of `q_j^{a_j} ‖ n+1+j`, and
+(ii) `ω(s_j)`, an ADDITIVE weight on `L` consecutive integers — and `e(ω(·)/q)` is multiplicative,
+so Selberg–Delange and the whole G4 Fourier control (`G4Transport`, `G4WeightInterface`,
+`PrimeLambertIndepChar`, `G4Mertens`) apply to it, unlike to `τ` itself.
+
+Note `Structured` is a real restriction (`36 = 2^2·3^2` is not structured), but the structured
+integers have positive density, and CRT lets one *choose* `q_j, a_j` per window slot.
+
+**Next lap.** Prove `subLeafB_holds` for the easiest slice first: fix all `a_j = 0` except one slot
+`j₀`, so all other `s_j = n+1+j` are squarefree and contribute `2^{ω}`, and the single slot `j₀`
+carries the `(a+1)` factor needed to reach residues `≡ 0 mod b`.  The remaining input is a joint
+prescription of `ω` on `L−1` consecutive squarefree integers mod `ord_{b^L}(2)` — compare
+`G4WiringCRT` and `PrimeLambertIndepChar`, which already do joint `ω`-residue work.
