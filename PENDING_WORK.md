@@ -9649,3 +9649,31 @@ genuinely decidable picks a DIFFERENT instance and is not defeq.  Bridge with
 
 Also submitted the PROSE of the hypothesis to Aristotle for an independent NL→Lean faithfulness
 check (project `0f29092b-9d0a-4c2e-bcd2-4e803c070db9`); result to be compared next lap.
+
+### lap 14 — Aristotle faithfulness check PASSED; the convergent-case theorem begun
+
+**Faithfulness (independent NL→Lean).**  Aristotle was given only the PROSE of the swing's
+conditional (never the Lean).  Its independent formalization matches `WeylLambertTwist`
+structurally: `eChar x = exp(2πix)`, `lambertTail b P = ∑_{p>P prime} 1/(b^p−1)`,
+`weylAvg b P Q j h N = (1/N)∑_{n<N} e(jn/Q)·e(h·L(b,P)·b^n)`, quantified over `b ≥ 3`, `P`,
+`Q > 0`, `0 < j < Q`, `h : ℤ`.  **So lap 9's Lean statement is a faithful rendering of the prose.**
+It also, independently: (a) proved the summability of `L(b,P)`; (b) proved exactly the `h = 0`
+case and nothing more — the same sub-case lap 4 found elementary (`addCharTail_h_eq_zero`);
+(c) judged the general case research-level ("Elliott-conjecture territory, Tao–Teräväinen") and
+left it `sorry`.  That is independent corroboration of both the statement and the difficulty.
+
+**`SwingC3Convergent.lean` (started, green).**  The generalisation of the closed-form machinery
+to an ARBITRARY set `S` of primes: `setSummand`, `setTail`, `setTrunc`, `setPeriod`, with
+nonnegativity, the geometric majorant, summability, and `setTail_sub_setTrunc(_nonneg)`.
+
+Target: `setTail_addChar_tendsto` — for any set `S` of primes coprime to `Q` with
+`∑_{p∈S} 1/p < ∞`, the twisted Weyl sum of `L_S` tends to `0` **unconditionally**.  That closes
+the machinery end-to-end and isolates the single missing input for `ConjC3` as exactly the
+DIVERGENCE of `∑_p 1/p`, nothing else.
+
+The bookkeeping that makes it work (worked out this lap, to implement next):
+`∑_{n<N} setSummand S b n p ≤ [S p]·2(N/p)/(b−1) + [N < p]·2 b^N (1/b)^p`.
+The `+1` stub of `sum_range_tailPrimeTerm_le` is absorbed for `p ≤ N` because `1 ≤ N/p` there
+(this is the trick that avoids needing `π(N) = o(N)`), and for `p > N` only the geometric part
+survives, summing to `≤ 2/(b−1)` — bounded, hence `o(N)`.  Total:
+`∑_{n<N}(setTail − setTrunc_K) ≤ 2N·T_K/(b−1) + 2/(b−1)` with `T_K = ∑_{p∈S,p>K} 1/p`.

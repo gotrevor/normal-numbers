@@ -463,3 +463,4 @@ import NormalNumbers.SwingC3Lambert2
 import NormalNumbers.SwingC3Mean
 import NormalNumbers.SwingC3Leaf
 import NormalNumbers.SwingC3Statement
+import NormalNumbers.SwingC3Convergent
