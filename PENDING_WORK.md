@@ -23,6 +23,30 @@ fixed-pair `o(1)` the diagonal route consumes.  Those files stay in `src/` (they
 the pricing is real), but they are **off-path** unless a route through them yields a fixed-pair
 statement.
 
+### Lap 26 addendum — the small-prime half of leaf (D), UNCONDITIONALLY
+
+`src/NormalNumbers/TwoPointGrowingCut.lean` (trust-triple).  `primeCut R = ⌊log₄ R⌋ / 2`, so
+`primorialLe (primeCut R) ≤ 4^{primeCut R} ≤ √R` (`primorial_le_four_pow`).  Then:
+
+**`truncPair_fullMean_tendsto_zero`** — for every `b ≥ 2`, `t ≠ 0`, distinct primes `p ≠ q`:
+`E_{n<R} e(t(θ^{(primeCut R)}_{pn} − θ^{(primeCut R)}_{qn})) → 0`, **with no hypothesis**.
+Mechanism: period mean `= Π_{r ≤ primeCut R} pairLocalFactor → 0` (Mertens + the separation bound,
+`periodMean_pair_tendsto_zero`), Cesàro/period defect `≤ 2Q/R ≤ 2/Q → 0`.
+
+This is the honest natural-density statement, not a periodic model — the repo previously had the
+model term only at a FIXED cut, where the density mean converges to the nonzero constant
+`Π_{r≤P} pairLocalFactor`.
+
+**What is left, named:** `PairDecoupleGrowing b p q t` — the defect between the full pair mean and
+its `primeCut R` truncation — with `pairDecorr_of_pairDecoupleGrowing` and
+`conjC1_of_delange_pairDecoupleGrowing`.  The model term is no longer an obligation at all.
+
+**Why this cannot be closed by a triangle inequality (recorded, do not retry):** at `P ≍ log R` the
+large-prime remainder has `E_{n<R}|pairRemainder| ≍ log(log R/log P) ≍ log log R → ∞`.  So
+`PairDecoupleGrowing` is irreducibly a *cancellation* statement.  That is the precise shape of the
+parity-type obstruction at leaf (D), and it is why the shift-cut route (`MultiElliott`) buys an
+`o(1)` tail at the price of a `4K`-point correlation.
+
 ### Lap 25 addendum — the Kátai-free chain, end to end
 
 `src/NormalNumbers/TwoPointKataiFree.lean` (trust-triple) pushes `conjC1_of_delange_pairDecorr`

@@ -513,6 +513,7 @@ import NormalNumbers.TwoPointPairingRigidity
 import NormalNumbers.TwoPointBlockRotation
 import NormalNumbers.TwoPointGramDiagonal
 import NormalNumbers.TwoPointKataiFree
+import NormalNumbers.TwoPointGrowingCut
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower

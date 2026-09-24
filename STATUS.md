@@ -2,7 +2,7 @@
 
 **ACTIVE (branch `wip/twopoint-avg`): the C1 casting-out swing.  `ConjC1` now follows from
 Delange's theorem plus the single node `PairDecorr` — the cited Kátai/BSZ hypothesis is GONE.**
-· **Build**: 🟢 green (9283 jobs) · **Updated**: lap 25 · 2026-09-24 · HEAD after `dfaa5c7`
+· **Build**: 🟢 green (9284 jobs) · **Updated**: lap 26 · 2026-09-24 · HEAD after `dfaa5c7`
 · On `master`/Pair A: Theorem C′ (`isNormal_subsetLambert_of_sqrtFreshMassZero`) PROVED and
   trust-triple, 2026-09-23.
 
@@ -32,6 +32,14 @@ route in between.
 
 ## What's happened (C1 / twopoint campaign, newest first)
 
+- **2026-09-24 (lap 26) — THE SMALL-PRIME HALF OF LEAF (D), UNCONDITIONALLY.**
+  `TwoPointGrowingCut.lean`: at the growing cut `primeCut R = ⌊log₄ R⌋/2` (period `≤ √R`),
+  **`truncPair_fullMean_tendsto_zero`** gives `E_{n<R} e(t(θ^{(primeCut R)}_{pn} − θ^{(primeCut R)}_{qn})) → 0`
+  with NO hypothesis — the honest natural-density mean, not a periodic model.  What remains is named
+  `PairDecoupleGrowing` (`pairDecorr_of_pairDecoupleGrowing`,
+  `conjC1_of_delange_pairDecoupleGrowing`): the model term is no longer an obligation.  Recorded: the
+  remainder has `L¹` mass `≍ log log R → ∞` at that cut, so leaf (D) is irreducibly a *cancellation*
+  statement — no triangle inequality can close it.
 - **2026-09-24 (lap 25) — THE KÁTAI-FREE CHAIN, END TO END.**  `TwoPointKataiFree.lean`:
   `conjC1_of_delange_decouple`, `…_largeDecay`, `…_shiftCorr`, **`conjC1_of_delange_multiElliott`**.
   Every headline of the swing loses its cited `KataiOrthogonality`.  **`ConjC1` now rests on exactly
@@ -61,6 +69,7 @@ route in between.
 | `conjC1_of_delange_pairDecorr` | C1 is conjectural (Fable C1) | `[propext, Classical.choice, Quot.sound]` | **0** — hypotheses only: `DelangeMean` (🟡 proven, Selberg–Delange, project-scale) and `PairDecorr` (🔴 open: natural-density two-point Elliott for `ζ^ω`) |
 | `conjC1_of_delange_twoPointGram` | as above | trust triple | 0 — `DelangeMean` 🟡 + the growing-`w` leaf 🔴 |
 | `conjC1_of_delange_multiElliott` | C1 is conjectural | trust triple | 0 — `DelangeMean` 🟡 + `MultiElliott` 🔴 (open, *equivalent* to the leaf).  **The sharpest form: two inputs, nothing else cited.** |
+| `truncPair_fullMean_tendsto_zero` | — (new, unconditional) | trust triple | **0 — THEOREM, no hypotheses**: the small-prime half of leaf (D) at natural density |
 | `katai_mean_sq` | Kátai 1986 / BSZ 2013 | trust triple | **0 — DISCHARGED** (was the cited `KataiOrthogonality`) |
 | `twoPointWeightedAvg_all` (`TwoPointBet.lean`) | the bet's ratified target | `sorryAx` | open `sorry`, disclosed; 🔴 reduces to fixed-pair Elliott |
 
