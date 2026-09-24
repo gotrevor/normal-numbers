@@ -9477,3 +9477,78 @@ hCarryOverflowAt_of_orbitNonConc : OrbitNonConc b L κ → HCarryOverflowAt b L 
 and it is the right target for an effective-irrationality attack (`MahlerPrime*`).  So the crux
 decomposes as **leaf (A) at a slow profile + `OrbitNonConc` at the same profile**, with
 `goodDepth` showing the fast-profile endpoint is exactly the undecomposed statement.
+
+## 2026-09-24 — swing-c1 lap 30: **Elliott → Delange + one decorrelation**
+
+`src/NormalNumbers/SwingC1Delange.lean`, sorry-free, axiom-clean:
+
+```
+weylMean_tendsto_zero_of : 2 ≤ b → DelangeMean (h/b) → ShiftIndep b (h/b)
+                             → (fun N => weylMean b h N) → 0
+```
+
+Lap 28 labelled the crux "Elliott-hard" because the depth-`L` product looked like an
+unstructured correlation of `L` shifts.  **That label was too pessimistic.**  The object obeys an
+EXACT one-step recursion (`omegaTail_rec`, already in the repo):
+
+```
+b·θ_n = ω(n+1) + θ_{n+1}   ⟹   e(h·θ_n) = e((h/b)·ω(n+1)) · e((h/b)·θ_{n+1})
+```
+
+(`phase_omegaTail_factor`).  So the whole Weyl sum vanishes given only:
+
+* **`DelangeMean (h/b)`** — `mean_{n<N} e((h/b)·ω(n+1)) → 0`.  This is **Delange's theorem**
+  (1969): `Σ_{n≤N} z^{ω(n)} ∼ C_z N (log N)^{z−1}`, so the mean is `≍ (log N)^{cos(2πh/b) − 1} → 0`
+  whenever `e(h/b) ≠ 1`, i.e. `b ∤ h`.  KNOWN, by Selberg–Delange; **not in mathlib**.
+  (For `b ∣ h` the factor is trivial and one reduces `h` to `h/b` — note `weylMean b h` at
+  `h = b h'` is a shift of `weylMean b h'`, so WLOG `b ∤ h`.)
+* **`ShiftIndep b (h/b)`** — the single decorrelation
+  `mean_n e(t ω(n+1))e(t θ_{n+1}) − (mean_n e(t ω(n+1)))(mean_n e(t θ_{n+1})) → 0`.
+
+This is a strictly and substantially weaker pair than Elliott's conjecture.
+
+### Why `ShiftIndep` is the right target, and the next lap's move
+
+`ShiftIndep` is exactly what the **Daboussi–Kátai orthogonality criterion** (the multiplicative
+form of Bourgain–Sarnak–Ziegler) supplies: for bounded `a_n`, `mean_n f(n) a_n → 0` for every
+non-pretentious multiplicative `f`, `|f| ≤ 1`, **provided**
+
+```
+mean_{n<N} a_{pn} · conj(a_{qn}) → 0   for all distinct primes p ≠ q.
+```
+
+Here `f(n) = e((h/b)ω(n))` (non-pretentious for `b ∤ h`, by Delange) and `a_n = e((h/b)θ_n)`, so
+the criterion's hypothesis is
+
+```
+mean_{n<N} e((h/b)(θ_{pn} − θ_{qn})) → 0,   p ≠ q prime.
+```
+
+**That is directly attackable by the prime-periodic form** (`SwingC1Periodic.lean`): `θ_m` depends
+on `m` only through the residues `(m mod r)_{r prime}`, so `θ_{pn} − θ_{qn}` is an explicit
+function of `(n mod r)_r`, and the pair map `n ↦ (pn mod r, qn mod r)` is an explicit bijection on
+each `ℤ/r` for `r ∤ pq`.  Concretely the local factor at `r` becomes
+
+```
+(1/r) Σ_{s<r} e( t·(b^{ps mod r} − b^{qs mod r})/(b^r − 1) )
+```
+
+which is the SAME shape as `localFactor` — and `norm_localFactor_le` /
+`prod_localFactor_tendsto_zero` (leaf (M), already PROVED) is exactly the machinery that bounds
+such a product away from `1` and drives it to `0`.  **Next lap: define `pairLocalFactor`, prove the
+analogue of `norm_localFactor_le` for it, and thereby the BSZ hypothesis in the periodic model.**
+The remaining gap is then the same natural-density-vs-period gap as before — but now for a
+DIFFERENCE, where the two-variable structure gives extra room (the `r = O(log N)` primes suffice
+because the difference has no `r`-independent drift).
+
+### Status of the leaves after this lap
+
+| leaf | status |
+|---|---|
+| (M) model term `Π_p localFactor → 0` | **PROVED** (laps 26–27) |
+| finite-depth reduction, depth `≍ log_b log₂ M` | **PROVED** (lap 28) |
+| leaf (B) carry overflow, exact-depth endpoint | **PROVED**; `HDepth ↔ HWindowChar` (lap 29) |
+| leaf (B) at a slow profile = `OrbitNonConc` | stated + reduced (lap 29) |
+| Elliott → Delange + `ShiftIndep` | **PROVED** (this lap) |
+| `DelangeMean` | known theorem (Selberg–Delange), not in mathlib |
+| `ShiftIndep` | open; reduces by Daboussi–Kátai to a periodic-model computation |
