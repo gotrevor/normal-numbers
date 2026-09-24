@@ -2,16 +2,24 @@
 
 **Date**: 2026-09-24 · **Branch**: `wip/swing-c1` · Kickoff: `KICKOFF-2026-09-24-swing-c1.md`
 **File**: `src/NormalNumbers/SwingC1.lean` · full `lake build` green (9176 jobs)
-**Open obligations in the file**: exactly one — `hWindowCharAll`.
+**Open obligations in the file**: exactly two — `hTruncDecayAll` (Leaf A, the Elliott core) and
+`hCarryOverflowAll` (Leaf B, carry overflow).  The count went 1 → 2 by DECOMPOSITION, which is the
+kickoff's definition of progress.
 
 ## What the crux IS now
 
 ```
 conjC1            (ratified statement, kept per the kickoff addendum)
- ← hState                    HState            (digit-free density form)
- ← hWindowAll                HWindow b L       (equidistribution of the window value mod b^L)
- ← hWindowCharAll            HWindowChar b L   ← THE ONLY SORRY
+ ← hState              HState            (digit-free density form)
+ ← hWindowAll          HWindow b L       (equidistribution of the window value mod b^L)
+ ← hWindowCharAll      HWindowChar b L   (Weyl form)
+ ← hWindowChar_of_leaves:
+      hTruncDecayAll       HTruncDecay b L     ← SORRY (Leaf A: FINITE-window joint
+                                                 equidistribution of ω(n+1),…,ω(n+L+K))
+      hCarryOverflowAll    HCarryOverflow b L  ← SORRY (Leaf B: the depth-K carry truncation
+                                                 is wrong on a set of density → 0)
 ```
+`norm_windowCharSum_sub_trunc` is the glue: `‖charSum − charSumTrunc‖ ≤ 2·badCount/N`.
 
 `HWindowChar b L`: for every `b ≥ 3`, `L`, and every `0 < a < b^L`,
 

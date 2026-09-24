@@ -545,6 +545,54 @@ lemma sum_zetaRoot_zpow (M : ℕ) (hM : 0 < M) (k : ℤ) :
 noncomputable def windowCharSum (b L a N : ℕ) : ℂ :=
   (∑ n ∈ range N, zetaRoot (b ^ L) ^ ((a : ℤ) * omegaWindowVal b L n)) / N
 
+lemma norm_zetaRoot_zpow (M : ℕ) (k : ℤ) : ‖zetaRoot M ^ k‖ = 1 := by
+  rw [zetaRoot_zpow, Complex.norm_exp]
+  have : (((k : ℂ) * (2 * (Real.pi : ℂ) * Complex.I / (M : ℂ))).re) = 0 := by
+    simp [Complex.div_re, Complex.mul_re, Complex.mul_im, Complex.normSq]
+  rw [this, Real.exp_zero]
+
+/-- The depth-`K` truncated character sum: a correlation of `ω(n+1), …, ω(n+L+K)` only. -/
+noncomputable def windowCharSumTrunc (b L K a N : ℕ) : ℂ :=
+  (∑ n ∈ range N, zetaRoot (b ^ L) ^ ((a : ℤ) * windowValTrunc b L K n)) / N
+
+/-- How often the depth-`K` truncation of the window value is wrong at all. -/
+noncomputable def carryBadCount (b L K N : ℕ) : ℕ :=
+  ((range N).filter (fun n => omegaWindowVal b L n ≠ windowValTrunc b L K n)).card
+
+/-- **Truncation error bound.**  The exact and the depth-`K` character sums differ by at most
+twice the frequency of `n` at which the truncation is wrong. -/
+theorem norm_windowCharSum_sub_trunc (b L K a N : ℕ) :
+    ‖windowCharSum b L a N - windowCharSumTrunc b L K a N‖
+      ≤ 2 * (carryBadCount b L K N : ℝ) / N := by
+  classical
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp [windowCharSum, windowCharSumTrunc, carryBadCount]
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  have hNC : ((N : ℂ)) ≠ 0 := by exact_mod_cast (by omega : N ≠ 0)
+  have hdiff : windowCharSum b L a N - windowCharSumTrunc b L K a N
+      = (∑ n ∈ range N, (zetaRoot (b ^ L) ^ ((a : ℤ) * omegaWindowVal b L n)
+          - zetaRoot (b ^ L) ^ ((a : ℤ) * windowValTrunc b L K n))) / N := by
+    rw [windowCharSum, windowCharSumTrunc, ← sub_div, Finset.sum_sub_distrib]
+  rw [hdiff, norm_div, Complex.norm_natCast]
+  rw [div_le_div_iff_of_pos_right hNR]
+  refine (norm_sum_le _ _).trans ?_
+  have hterm : ∀ n ∈ range N,
+      ‖zetaRoot (b ^ L) ^ ((a : ℤ) * omegaWindowVal b L n)
+        - zetaRoot (b ^ L) ^ ((a : ℤ) * windowValTrunc b L K n)‖
+      ≤ (if omegaWindowVal b L n ≠ windowValTrunc b L K n then (2 : ℝ) else 0) := by
+    intro n _
+    by_cases he : omegaWindowVal b L n = windowValTrunc b L K n
+    · rw [if_neg (by simpa using he), he, sub_self, norm_zero]
+    · rw [if_pos he]
+      refine (norm_sub_le _ _).trans ?_
+      rw [norm_zetaRoot_zpow, norm_zetaRoot_zpow]
+      norm_num
+  refine (Finset.sum_le_sum hterm).trans ?_
+  rw [Finset.sum_ite, Finset.sum_const, Finset.sum_const]
+  simp only [smul_eq_mul, mul_zero, add_zero, nsmul_eq_mul]
+  rw [carryBadCount]
+  rw [mul_comm]
+
 /-- **H, Weyl form.**  All nontrivial `b^L`-th-root-of-unity character sums of the `ω`-side
 window value have mean zero.  This is the shape in which the literature states Elliott/Kátai-type
 inputs: `ζ^{a·(Σ ω(n+1+i) b^{L-1-i} + c_{n+L})}` is a correlation of additively-twisted
@@ -664,21 +712,55 @@ theorem hWindow_of_hWindowChar (b : ℕ) (hb : 2 ≤ b) (L : ℕ) (h : HWindowCh
   rw [hMR] at hfin
   exact hfin
 
-/-- **THE OPEN LEAF.**  All of C1, with every digit, floor and real number eliminated, in the
-form the literature uses: for each base `b ≥ 3`, each window length `L` and each nontrivial
-frequency `a/b^L`,
+/-- **Leaf A (the Elliott core).**  Every nontrivial character sum of the FINITE-window
+truncation `windowValTrunc b L K n = Σ_{i<L} ω(n+1+i) b^{L-1-i} + H_K(n+L)/b^K`, which depends
+only on `ω(n+1), …, ω(n+L+K)`, has mean zero.  This is the joint-equidistribution input: the
+one-coordinate case is Delange (1969) — `ω` is uniformly distributed mod every `q ≥ 2` because
+`ω(p) = 1` and `Σ_p 1/p = ∞` — and the joint version over the shifts is open. -/
+def HTruncDecay (b L : ℕ) : Prop :=
+  ∀ K a, 0 < a → a < b ^ L → Tendsto (windowCharSumTrunc b L K a) atTop (𝓝 0)
 
-  `(1/N) Σ_{n<N} ζ^{a·(Σ_{i<L} ω(n+1+i) b^{L-1-i} + c_{n+L})} → 0`,   `ζ = e^{2πi/b^L}`,
+/-- **Leaf B (carry overflow).**  Deep truncations of the carry are wrong only on a set of small
+density.  By `omegaWindowVal_sub_trunc_le_one` the truncation can only fail where
+`b^K ≤ c_{n+L+K}` or where the depth-`K` head overflows, and `c_{n+L+K} ≈ log log n/(b−1)`, so the
+bad set has density `≈ c/b^K → 0`.  Strictly more elementary than Leaf A. -/
+def HCarryOverflow (b L : ℕ) : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∃ K : ℕ, ∀ᶠ N in atTop, (carryBadCount b L K N : ℝ) / N ≤ ε
 
-where `c_N = ⌊Σ_{k≥1} ω(N+k) b^{−k}⌋`.  The conditioning is BOUNDED
-(`omegaCarry_eq_windowVal_div`: the unbounded part of the carry is `b^L·c_n`, which dies mod
-`b−1`), so no growing truncation depth is needed.
+/-- **The split.**  Leaf A + Leaf B ⟹ the Weyl form of C1 at length `L`. -/
+theorem hWindowChar_of_leaves (b L : ℕ) (hA : HTruncDecay b L) (hB : HCarryOverflow b L) :
+    HWindowChar b L := by
+  intro a ha haL
+  rw [NormedAddCommGroup.tendsto_nhds_zero]
+  intro ε hε
+  obtain ⟨K, hK⟩ := hB (ε / 4) (by linarith)
+  have h1 := (NormedAddCommGroup.tendsto_nhds_zero.mp (hA K a ha haL)) (ε / 4) (by linarith)
+  filter_upwards [h1, hK] with N hN1 hN2
+  have hbd := norm_windowCharSum_sub_trunc b L K a N
+  have h2 : 2 * (carryBadCount b L K N : ℝ) / N ≤ 2 * (ε / 4) := by
+    rw [mul_div_assoc]
+    linarith
+  have hsplit : windowCharSum b L a N
+      = (windowCharSum b L a N - windowCharSumTrunc b L K a N)
+        + windowCharSumTrunc b L K a N := by ring
+  rw [hsplit]
+  refine (norm_add_le _ _).trans_lt ?_
+  linarith
 
-`ω(n+L)` enters the exponent with coefficient `b^0 = 1`, and `c_{n+L}` depends only on
-`ω(n+L+1), ω(n+L+2), …`; so equidistribution of `ω(N) mod b^L` asymptotically independent of the
-`ω` values at the other arguments already suffices — a Delange/Elliott-type input.  Open. -/
-theorem hWindowCharAll : ∀ b, 3 ≤ b → ∀ L, HWindowChar b L := by
+/-- **THE ELLIOTT LEAF.**  Open: joint equidistribution of `ω` over the shifts
+`n+1, …, n+L+K`, at the rational frequencies `a/b^L`.  (Delange 1969 gives the one-coordinate
+case.  The Kátai-type `(αΩ(n), βΩ(n+1))` results need IRRATIONAL frequencies and so do not
+apply here.) -/
+theorem hTruncDecayAll : ∀ b, 3 ≤ b → ∀ L, HTruncDecay b L := by
   sorry
+
+/-- **THE CARRY LEAF.**  Open, but elementary in character: the density of `n` at which the
+depth-`K` truncation of `c_{n+L}` is wrong tends to `0` as `K → ∞`. -/
+theorem hCarryOverflowAll : ∀ b, 3 ≤ b → ∀ L, HCarryOverflow b L := by
+  sorry
+
+theorem hWindowCharAll : ∀ b, 3 ≤ b → ∀ L, HWindowChar b L :=
+  fun b hb L => hWindowChar_of_leaves b L (hTruncDecayAll b hb L) (hCarryOverflowAll b hb L)
 
 theorem hWindowAll : ∀ b, 3 ≤ b → ∀ L, HWindow b L :=
   fun b hb L => hWindow_of_hWindowChar b (by omega) L (hWindowCharAll b hb L)
