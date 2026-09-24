@@ -1,5 +1,28 @@
 # PENDING WORK
 
+## 2026-09-24 — KICKOFF-2026-09-23-failures: **DONE**
+
+`src/NormalNumbers/StonehamSixFailure.lean` is **sorry-free** and axiom-clean
+(`propext, Classical.choice, Quot.sound` only), and `Maze.lean` carries the three new rows.
+
+* `stoneham23_digit_six_eq_zero` — forced base-6 zeros on `[3^m, 11·3^m/10)` for `m ≥ 2`.
+  Head `6^p·Σ_{k≤m}` is the integer `Σ_j 2^{p−3^{j+1}}·3^{p−(j+1)}` with both exponents `≥ 1`,
+  hence `6 ∣` it; the tail is `< 1` via the purely integer margin
+  `two_mul_six_pow_lt_two_pow : 2·6^p < 2^{3^{m+1}}`, proved by taking 10th powers and using
+  `6^10 = 60466176 < 67108864 = 2^26` together with `10p ≤ 11·3^m`.  (That 10th-power trick
+  is the reusable bit: it replaces `log₂ 6 ≈ 2.585` with one `norm_num` fact.)
+* `countOccurrences_zero_eq_card` — `countOccurrences [0] ((range n).map s) = #{i < n | s i = 0}`;
+  generally useful, currently local to this file.
+* `not_simplyNormal_six_stoneham23` — two-scale contradiction at `N₁ = 3^m`, `N₂ = 11·3^m/10`
+  with `ε = 1/100`; the forced block contributes `N₂ − N₁` zeros, pushing freq(0) to `8/33`.
+* `not_isNormal_six_stoneham23`, `oddMultiplierLifting_of_timesThree` — immediate.
+
+**Still open from this kickoff's neighbourhood** (not in scope, recorded for the next lap):
+`TimesThreeLifting` is PARKED/frozen — no proof and no refutation; the hexSwap example does
+not refute it.  `OddMultiplierLifting` is the plausible (~70%) version and now provably
+follows from it; a literature sweep for the all-odd-multiplier statement is the cheap next
+move.
+
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is sorry-free and
