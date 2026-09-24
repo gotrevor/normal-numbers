@@ -9200,3 +9200,35 @@ abbreviation unwound (`IsNormal`/`IsNormalSequence`/`digitOf`, `subsetLambert`/`
 `HANDOFF-2026-09-23-theoremC-COMPLETE.md`'s "next steps"; the campaign's hygiene is now
 complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`; (3) the two off-campaign designated-open `sorry`s.
+
+## SwingC2 (branch wip/swing-c2) — lap 20, 2026-09-24
+
+The crux is decomposed into ONE arithmetic hypothesis.  `src/NormalNumbers/SwingC2.lean`
+now holds 4 `sorry`s: the two NEW named leaves below, the pre-existing
+`shiftedDivisorIncidence_holds` (superseded by the new route, kept per the kickoff's
+never-delete rule), and `constructionInputs_even` (off path, the QR layer).
+
+**Proved this lap (all `#print axioms`-clean, 11 green commits):**
+`exists_kill_progression'` (shift-gcd structure), `lt_of_prime_dvd_killModulus`,
+`coprime_killModulus_shift`, `filter_shift_eq_empty`, `sum_card_shift_dvd_le'`,
+`tau_two_pow_mul_odd`, `tau_shift_two_adic`/`'`, `filter_shift_eq_empty_even`,
+`sum_card_shift_dvd_le_odd`, `tau_shift_sum_AP_odd`, `tau_shift_sum_AP`,
+`card_large_tau_shift_le`, `card_shift_dvd_le_lcm`, `sum_card_shift_dvd_le_gcd`,
+`gcd_dvd_gcd_shift`, `sum_card_shift_dvd_le_gcd'`, `tau_shift_sum_AP_odd_gcd`,
+**`tau_shift_sum_AP_gen`**, `exists_survivor_exponent_large`, `exists_survivor_data_large`.
+
+**Next attack, in order:**
+1. `survivorLeaf_of_struct` — pure bookkeeping over facts already in the kernel.  The gcd
+   bound `τ(gcd(M, 2^a r + K+1+k)) ≤ 2^k`: by `exists_kill_progression'` every prime of the
+   gcd is `≤ j₀+e = L+k`; kill primes exceed `L+2` and `L+k < (L+2)²`, so each such prime
+   IS one of the `≤ k−2` window values in `[L+3, L+k]`, and `v_q = 1` because
+   `v_q(n₀+c_k) = b−1 ≥ 2` while the offset has `v_q = 1`.  Hence `ω ≤ k−2`, `τ ≤ 2^{k−2}`.
+   The 2-adic room comes from `exists_survivor_data_large` with `A = ⌈log₂(b^{K/4})⌉`.
+2. `tauMomentPrimesShiftStruct_of_primeDensity` — Markov on `tau_shift_sum_AP_gen`, union
+   over shifts by `sum_le_of_geom_bound`, pigeonhole against `PrimeDensityAP`.  Budget:
+   `b^K ≥ 32(log₂e+1)2^k(log₂D+2)B²` with `B = b^{K/4}`, clears by `b^{K/4}`.
+3. `PrimeDensityAP` itself — see its docstring.  NOT a consequence of anything
+   unconditional: the budget caps `log₂ Y` at `b^{K/2}` while `log₂ M` is polynomial in `K`,
+   so `M` is never polylog in `Y` and a Landau–Siegel zero cannot be excluded.  Either
+   formalize the classical zero-free region, or redesign (K2) so the survivor comes from a
+   family with an ELEMENTARY count in an AP.
