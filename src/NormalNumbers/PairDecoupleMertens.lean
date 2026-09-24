@@ -800,4 +800,72 @@ theorem tendsto_shiftCorr_sub_trunc_depthLL (b p q P c j j' : ℕ) (hb : 2 ≤ b
   refine hbound.trans (le_of_eq ?_)
   rw [meanTruncNum]
 
+/-! ### The leaf, restated at the sharpened depth
+
+`PairDecoupleElliott`'s `AdmissibleTrunc` asks for `b^{K R} ≫ log R`, which `depthLL` does NOT
+satisfy — that is exactly the point of the mean bound.  So the equivalence is re-proved here
+directly from the capstone, at the sharpened depth. -/
+
+/-- **The multi-point Elliott correlation at depth `log_b log log R`.**  Through
+`phase_digitTrunc` this is Elliott's conjecture for `4·depthLL b R = O(log log log R)` linear
+forms — one `log` better than `MultiElliottAt`. -/
+def MultiElliottLL (b p q : ℕ) (t : ℝ) : Prop :=
+  ∀ P c j j' : ℕ, j ≠ j' →
+    Filter.Tendsto (fun R : ℕ =>
+        ‖∑ i ∈ range R,
+            phase (t * shiftDigitTrunc b p q (primorialLe P) c j j' (depthLL b R) i)‖ / R)
+      Filter.atTop (𝓝 0)
+
+/-- **THE LEAF AT `log log log` DEPTH, AS AN EQUIVALENCE.** -/
+theorem shiftCorrSmall_iff_multiElliottLL (b : ℕ) (hb : 2 ≤ b) (p q : ℕ) (t : ℝ)
+    (hp : p ≠ 0) (hq : q ≠ 0) :
+    ShiftCorrSmall b p q t ↔ MultiElliottLL b p q t := by
+  have hpQ : ∀ P : ℕ, p * primorialLe P ≠ 0 := fun P =>
+    Nat.mul_ne_zero hp (primorialLe_pos P).ne'
+  have hqQ : ∀ P : ℕ, q * primorialLe P ≠ 0 := fun P =>
+    Nat.mul_ne_zero hq (primorialLe_pos P).ne'
+  constructor
+  · intro h P c j j' hjj
+    have hA := h P c j j' hjj
+    have hD := tendsto_shiftCorr_sub_trunc_depthLL b p q P c j j' hb t (hpQ P) (hqQ P)
+    have hsum : Filter.Tendsto (fun R : ℕ =>
+        shiftCorr (largeProg b P p q t c) R j j' / R
+          + |shiftCorr (largeProg b P p q t c) R j j' / R
+            - ‖∑ i ∈ range R,
+                phase (t * shiftDigitTrunc b p q (primorialLe P) c j j' (depthLL b R) i)‖ / R|)
+        Filter.atTop (𝓝 0) := by simpa using hA.add hD
+    refine squeeze_zero (fun R => ?_) (fun R => ?_) hsum
+    · exact div_nonneg (norm_nonneg _) (Nat.cast_nonneg R)
+    · linarith [neg_abs_le (shiftCorr (largeProg b P p q t c) R j j' / R
+          - ‖∑ i ∈ range R,
+              phase (t * shiftDigitTrunc b p q (primorialLe P) c j j' (depthLL b R) i)‖ / R)]
+  · intro h P c j j' hjj
+    have hB := h P c j j' hjj
+    have hD := tendsto_shiftCorr_sub_trunc_depthLL b p q P c j j' hb t (hpQ P) (hqQ P)
+    have hsum : Filter.Tendsto (fun R : ℕ =>
+        ‖∑ i ∈ range R,
+            phase (t * shiftDigitTrunc b p q (primorialLe P) c j j' (depthLL b R) i)‖ / R
+          + |shiftCorr (largeProg b P p q t c) R j j' / R
+            - ‖∑ i ∈ range R,
+                phase (t * shiftDigitTrunc b p q (primorialLe P) c j j' (depthLL b R) i)‖ / R|)
+        Filter.atTop (𝓝 0) := by simpa using hB.add hD
+    refine squeeze_zero (fun R => ?_) (fun R => ?_) hsum
+    · exact div_nonneg (shiftCorr_nonneg _ _ _ _) (Nat.cast_nonneg R)
+    · linarith [le_abs_self (shiftCorr (largeProg b P p q t c) R j j' / R
+          - ‖∑ i ∈ range R,
+              phase (t * shiftDigitTrunc b p q (primorialLe P) c j j' (depthLL b R) i)‖ / R)]
+
+/-- The minimal leaf at the sharpened depth: one variable, no progression, no modulus. -/
+def PairMultiElliottLL (b p q : ℕ) (t : ℝ) : Prop :=
+  ∀ j j' : ℕ, j ≠ j' →
+    Filter.Tendsto (fun R : ℕ =>
+        ‖∑ i ∈ range R, phase (t * shiftDigitTrunc b p q 1 0 j j' (depthLL b R) i)‖ / R)
+      Filter.atTop (𝓝 0)
+
+theorem pairMultiElliottLL_of_multiElliottLL (b p q : ℕ) (t : ℝ) (h : MultiElliottLL b p q t) :
+    PairMultiElliottLL b p q t := by
+  intro j j' hjj
+  have := h 0 0 j j' hjj
+  rwa [primorialLe_zero] at this
+
 end NormalNumbers.PairDecouple
