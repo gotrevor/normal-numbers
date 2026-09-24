@@ -326,4 +326,69 @@ theorem hDepth_of_hTruncDecay (b : ℕ) (hb : 3 ≤ b) (L : ℕ)
   refine ⟨goodDepth b L, ?_, h, hCarryOverflowAt_goodDepth b hb L⟩
   refine tendsto_atTop_mono (fun n => (goodDepth_spec b hb L n).1) tendsto_id
 
+/-! ### ⚠️ Honest correction: the depth-profile split of the crux is VACUOUS
+
+`goodDepth` makes the truncation exact, but it is `≥ n`, so `windowValTrunc b L (goodDepth b L n) n`
+depends on `ω(n+1), …, ω(n+L+goodDepth n)` — i.e. on everything.  Consequently
+`HTruncDecayAt b L (goodDepth b L)` is *literally the same statement* as `HWindowChar b L`, and the
+reduction `hDepth_of_hTruncDecay` combined with `hWindowChar_of_hDepth` proves only
+
+`HDepth b L ↔ HWindowChar b L`   (`hDepth_iff_hWindowChar`, below).
+
+That is a genuine structural fact — **the carry is not where any of the difficulty lives**, and the
+whole "choose the depth profile cleverly" line of attack is refuted — but it is NOT a weakening of
+the crux.  To be *useful* a profile `κ` must be SLOWLY GROWING, and then leaf (B) needs
+`density{n < N : fract(θ_{n+L}) < Λ_N/b^{κ n}} → 0`: a quantitative non-concentration of the very
+orbit under study at `0`.  That, not the exactness, is the real content of leaf (B), and it is
+strictly weaker than leaf (A) (one-sided, at one point, at scale `1/b^κ`).
+-/
+
+/-- **The depth-profile split is vacuous.**  `HDepth` and `HWindowChar` are equivalent. -/
+theorem hDepth_iff_hWindowChar (b : ℕ) (hb : 3 ≤ b) (L : ℕ) :
+    HDepth b L ↔ HWindowChar b L := by
+  refine ⟨hWindowChar_of_hDepth b L, fun h => hDepth_of_hTruncDecay b hb L ?_⟩
+  intro a ha haL
+  have heq : ∀ N : ℕ, windowCharSumTrunc b L (goodDepth b L) a N = windowCharSum b L a N := by
+    intro N
+    rw [windowCharSumTrunc, windowCharSum]
+    congr 1
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [(goodDepth_spec b hb L n).2]
+  exact (h a ha haL).congr fun N => (heq N).symm
+
+/-! ### Leaf (B) in its honest, useful form -/
+
+/-- **Non-concentration of the orbit at `0`.**  The orbit `fract(θ_{n+L})` is below the depth-`κ n`
+remainder only on a density-zero set.  This — not exactness — is the real content of leaf (B) for a
+slowly growing depth profile, and it is a strictly one-sided, single-point, scale-`b^{−κ}`
+statement, far weaker than leaf (A). -/
+def OrbitNonConc (b L : ℕ) (κ : ℕ → ℕ) : Prop :=
+  Tendsto (fun N => ((((range N).filter (fun n =>
+      Int.fract (omegaTail b (n + L))
+        < omegaTail b (n + L + κ n) / (b : ℝ) ^ (κ n))).card : ℝ)) / N) atTop (𝓝 0)
+
+/-- Non-concentration gives leaf (B) at the SAME profile — for any profile, however slow. -/
+theorem hCarryOverflowAt_of_orbitNonConc (b : ℕ) (hb : 2 ≤ b) (L : ℕ) (κ : ℕ → ℕ)
+    (h : OrbitNonConc b L κ) : HCarryOverflowAt b L κ := by
+  classical
+  have hsub : ∀ N : ℕ, carryBadCount b L κ N
+      ≤ ((range N).filter (fun n =>
+          Int.fract (omegaTail b (n + L))
+            < omegaTail b (n + L + κ n) / (b : ℝ) ^ (κ n))).card := by
+    intro N
+    refine Finset.card_le_card ?_
+    intro n hn
+    rw [Finset.mem_filter] at hn ⊢
+    refine ⟨hn.1, ?_⟩
+    by_contra hcon
+    push_neg at hcon
+    exact hn.2 (windowVal_eq_trunc_of_tail_le b hb L (κ n) n hcon)
+  rw [HCarryOverflowAt]
+  refine squeeze_zero (fun N => by positivity) (fun N => ?_) h
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp
+  · have hNr : (0 : ℝ) < N := by exact_mod_cast hN
+    refine div_le_div_of_nonneg_right ?_ (le_of_lt hNr) |>.trans (le_of_eq rfl)
+    exact_mod_cast hsub N
+
 end NormalNumbers.CastingOut

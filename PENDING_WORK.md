@@ -9452,3 +9452,28 @@ correlations `mean_{n<M} Π_i z_i^{ω(n+1+i)}`.
 2. An effective irrationality measure for `G₄_b` would (a) make `goodDepth` explicitly
    `O(log_b log n)` and (b) give a quantitative form of leaf (B).  `MahlerPrime*` in this repo is
    exactly that machinery — worth checking whether it applies to `primeLambertAtBase`.
+
+### ⚠️ Same-lap correction (honest): the depth-profile split is VACUOUS
+
+`goodDepth` is `≥ n`, so `windowValTrunc b L (goodDepth n) n` depends on all of
+`ω(n+1), …, ω(n+L+goodDepth n)`, and `HTruncDecayAt b L (goodDepth b L)` is *literally*
+`HWindowChar b L`.  So the honest content of lap 29 is
+
+```
+hDepth_iff_hWindowChar : 3 ≤ b → (HDepth b L ↔ HWindowChar b L)
+```
+
+a genuine structural fact — **the carry is not where any of the difficulty lives, and the
+"choose the depth profile cleverly" line of attack is refuted** — but NOT a weakening of the crux.
+Leaf (B) is only non-trivial for a *slowly growing* profile, and there its real content is stated
+and reduced:
+
+```
+OrbitNonConc b L κ : density{n < N : fract(θ_{n+L}) < θ_{n+L+κ n}/b^{κ n}} → 0
+hCarryOverflowAt_of_orbitNonConc : OrbitNonConc b L κ → HCarryOverflowAt b L κ   (any κ)
+```
+
+`OrbitNonConc` is one-sided, at a single point, at scale `b^{−κ}` — strictly weaker than leaf (A),
+and it is the right target for an effective-irrationality attack (`MahlerPrime*`).  So the crux
+decomposes as **leaf (A) at a slow profile + `OrbitNonConc` at the same profile**, with
+`goodDepth` showing the fast-profile endpoint is exactly the undecomposed statement.
