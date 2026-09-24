@@ -168,9 +168,124 @@ def CastLaw (b : ℕ) (x : ℝ) (L : ℕ) : Prop :=
 def CastUniform (b : ℕ) (x : ℝ) (L : ℕ) : Prop :=
   ∀ r < b - 1, Tendsto (castFreq b x L r) atTop (𝓝 (1 / ((b : ℝ) - 1)))
 
+/-- Cylinder frequencies: every length-`k` word of a normal number has frequency `b^{-k}`,
+in the unclipped `MatchesAt` count. -/
+theorem tendsto_matchesAt_freq (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (hx : IsNormal b x)
+    (w : List ℕ) (hw0 : w ≠ []) (hw : ∀ d ∈ w, d < b) :
+    Tendsto (fun N => ((((range N).filter
+        (MatchesAt (digitOf b (Int.fract x)) w)).card : ℝ)) / N) atTop
+      (𝓝 ((b : ℝ) ^ w.length)⁻¹) := by
+  classical
+  set s := digitOf b (Int.fract x) with hs
+  have hbnd := fun n => card_filter_matchesAt_le s w hw0 n
+  exact tendsto_div_of_bounded_diff (C := w.length)
+    (fun n => (hbnd n).1) (fun n => (hbnd n).2) (hx w hw0 hw)
+
 theorem castLaw_of_isNormal (b : ℕ) (hb : 3 ≤ b) (x : ℝ) (hx : IsNormal b x) (L : ℕ) :
     CastLaw b x L := by
-  sorry
+  classical
+  intro r hr
+  set s := digitOf b (Int.fract x) with hs
+  set q := b - 1 with hq
+  have hb2 : 2 ≤ b := by omega
+  rcases Nat.eq_zero_or_pos L with hL0 | hLpos
+  · subst hL0
+    have hval : ∀ n, windowDigitSum b x n 0 = 0 := by intro n; simp [windowDigitSum]
+    have hlaw : normalCastLaw b 0 r = (if r = 0 then 1 else 0) := by
+      unfold normalCastLaw
+      by_cases h : r = 0 <;> simp [h, Nat.zero_mod, eq_comm]
+    rw [hlaw]
+    refine Tendsto.congr' ?_ (tendsto_const_nhds (x := (if r = 0 then (1:ℝ) else 0)))
+    filter_upwards [eventually_gt_atTop 0] with N hN
+    have hNR : (N : ℝ) ≠ 0 := by positivity
+    unfold castFreq
+    by_cases h : r = 0
+    · subst h
+      have : ((range N).filter (fun n => windowDigitSum b x n 0 % q = 0)) = range N := by
+        apply Finset.filter_true_of_mem; intro n _; simp [hval n]
+      rw [this, Finset.card_range, if_pos rfl, div_self hNR]
+    · have : ((range N).filter (fun n => windowDigitSum b x n 0 % q = r)) = ∅ := by
+        apply Finset.filter_false_of_mem; intro n _; simp [hval n]; exact fun hc => h hc.symm
+      rw [this]
+      simp [h]
+  -- L ≥ 1
+  set W : Finset (Fin L → Fin b) :=
+    univ.filter (fun v : Fin L → Fin b => (∑ i, (v i : ℕ)) % q = r) with hW
+  have hblt : ∀ n i : ℕ, s (n + i) < b := fun n i => digitOf_lt b hb2 _ _
+  set f : ℕ → (Fin L → Fin b) := fun n i => ⟨s (n + i), hblt n i⟩ with hf
+  set wv : (Fin L → Fin b) → List ℕ := fun v => List.ofFn (fun i : Fin L => (v i : ℕ)) with hwv
+  have hlen : ∀ v, (wv v).length = L := by intro v; simp [hwv]
+  have hmatch : ∀ (v : Fin L → Fin b) (n : ℕ), MatchesAt s (wv v) n ↔ f n = v := by
+    intro v n
+    constructor
+    · intro h
+      funext i
+      have := h i.val (by rw [hlen]; exact i.isLt)
+      have h2 : (wv v).getD i.val 0 = (v i : ℕ) := by
+        simp [hwv, List.getD_eq_getElem?_getD, List.getElem?_ofFn, i.isLt]
+      rw [h2] at this
+      exact Fin.ext this
+    · intro h j hj
+      rw [hlen] at hj
+      have := congrFun h ⟨j, hj⟩
+      have h2 : (wv v).getD j 0 = (v ⟨j, hj⟩ : ℕ) := by
+        simp [hwv, List.getD_eq_getElem?_getD, List.getElem?_ofFn, hj]
+      rw [h2, ← this]
+  have hws : ∀ n, windowDigitSum b x n L = ∑ i, ((f n i : ℕ)) := by
+    intro n
+    have h := Fin.sum_univ_eq_sum_range (fun i => s (n + i)) L
+    rw [windowDigitSum, ← h]
+  have hcard : ∀ N, ((range N).filter (fun n => windowDigitSum b x n L % q = r)).card
+      = ∑ v ∈ W, ((range N).filter (fun n => MatchesAt s (wv v) n)).card := by
+    intro N
+    rw [Finset.card_eq_sum_card_fiberwise (f := f) (t := W)
+      (fun n hn => by
+        have hn2 := (Finset.mem_filter.mp hn).2
+        rw [hW]
+        refine Finset.mem_filter.mpr ⟨mem_univ _, ?_⟩
+        rw [← hws n]
+        exact hn2)]
+    refine Finset.sum_congr rfl ?_
+    intro v hv
+    congr 1
+    ext n
+    simp only [Finset.mem_filter, Finset.mem_range]
+    constructor
+    · rintro ⟨⟨hn, -⟩, hfv⟩
+      exact ⟨hn, (hmatch v n).2 hfv⟩
+    · rintro ⟨hn, hm⟩
+      have hfv := (hmatch v n).1 hm
+      refine ⟨⟨hn, ?_⟩, hfv⟩
+      rw [hws n, hfv]
+      simpa [hW] using (Finset.mem_filter.mp hv).2
+  have hfreq : ∀ v : Fin L → Fin b,
+      Tendsto (fun N => ((((range N).filter (MatchesAt s (wv v))).card : ℝ)) / N) atTop
+        (𝓝 ((b : ℝ) ^ L)⁻¹) := by
+    intro v
+    have hne : wv v ≠ [] := List.ne_nil_of_length_pos (by rw [hlen]; exact hLpos)
+    have hdlt : ∀ d ∈ wv v, d < b := by
+      intro d hd
+      rw [hwv, List.mem_ofFn] at hd
+      obtain ⟨i, rfl⟩ := hd
+      exact (v i).isLt
+    have h := tendsto_matchesAt_freq b hb2 x hx (wv v) hne hdlt
+    rwa [hlen, ← hs] at h
+  have hsum : Tendsto (fun N => ∑ v ∈ W,
+      ((((range N).filter (MatchesAt s (wv v))).card : ℝ)) / N) atTop
+      (𝓝 (∑ _v ∈ W, ((b : ℝ) ^ L)⁻¹)) :=
+    tendsto_finsetSum _ (fun v _ => hfreq v)
+  have hlaw : normalCastLaw b L r = ∑ _v ∈ W, ((b : ℝ) ^ L)⁻¹ := by
+    rw [Finset.sum_const, nsmul_eq_mul]
+    unfold normalCastLaw
+    rw [hW, hq]
+    ring
+  rw [hlaw]
+  refine hsum.congr ?_
+  intro N
+  unfold castFreq
+  rw [hcard N, ← Finset.sum_div]
+  push_cast
+  ring
 
 /-- **The first draft of C1 was false**: no normal number has uniform window digit sums. -/
 theorem not_castUniform_of_isNormal (b : ℕ) (hb : 3 ≤ b) (x : ℝ) (hx : IsNormal b x) (L : ℕ)
