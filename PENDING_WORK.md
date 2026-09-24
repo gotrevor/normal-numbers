@@ -9874,3 +9874,33 @@ anything.
    Turán variance.  The frequencies are `a/M` with `M ≤ S` available — unlike level 1, `M` is
    now a FREE parameter that may be taken far below the sample size, which is exactly the
    regime the level-1 obstruction forbade.
+
+### lap 3 — probe 1 refuted; the crux moved into `L²`
+
+**REFUTED: iterating the split cannot close the crux.**  The level-`k` bound is
+`‖mean‖_k ≤ model_k + defect_k` with `defect_k ≤ 2·‖mean‖_{k+1}` — the factor `2` is the
+triangle inequality (a defect is a mean of *differences* of means).  Unrolling,
+`N_P ≤ Σ_{j<k} 2^j model_j + 2^k N_{y_k}`.  The models are free (one may take
+`Σ_{y_j<r≤y_{j+1}} 1/r` as large as desired, so `2^j model_j` is summable) but the residual
+`2^k N_{y_k}` is bounded only by `2^k`.  The iteration turns a mean into a mean of sub-means and
+never gains absolute smallness.  This is the same failure as the mass route, and it is
+structural: any `L¹` route pays the triangle inequality.
+
+**New (sorry-free, in `PairDecoupleSplit.lean`):**
+* `mean_le_sqrt_mean_sq`, `topDefectL2`, `topDefect_le_sqrt_topDefectL2` — Cauchy–Schwarz.
+* `sum_norm_sub_mean_sq` — the bias–variance identity over `ℂ`.
+* `topDefectL2_eq` — hence
+  `topDefectL2 = mean_d ‖progMean_d‖² − ‖fullMean‖²`.
+* `largeDecay_of_topDefectL2` — the whole swing now follows from a VARIANCE bound.
+
+**The crux, current form.**  Bound `mean_{d<M} ‖progMean (topProg) M S d‖²` for the top range
+`e(t·pairRemainder_y)` along a progression, where `M = Π_{P<r≤y} r` is a FREE parameter.
+Expanding the square turns this into a pair-correlation sum
+`mean_{i,i'} e(t(X(c+iQ) − X(c+i'Q)))` restricted to `i ≡ i' mod M` — i.e. the SAME object at a
+shift, which is precisely where Kátai/BSZ-style bilinear input enters.  Unlike the `L¹` routes
+there is no triangle-inequality loss, and `M` may be taken far below the sample size, which the
+level-1 obstruction forbade.
+
+**Next attack.**  Expand `topDefectL2` into the diagonal + off-diagonal pair sum and name the
+off-diagonal leaf.  That leaf is a shifted pair correlation of the large-prime phase; the
+diagonal contributes exactly `1/S`.

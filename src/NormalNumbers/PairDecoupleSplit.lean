@@ -534,6 +534,51 @@ theorem norm_progMean_le_model_add_topDefect (b P y p q : ℕ) (t : ℝ) (c S : 
       = topDefect b P y p q t c S := by rw [topDefect, hBt', hMdef]
   rw [this]
 
+/-! ### Into the second moment
+
+**Probe 1 (iterating the split) is REFUTED as a closure route.**  The level-`k` bound has the
+shape `‖mean‖ ≤ model_k + defect_k` and `defect_k ≤ 2·‖mean‖_{k+1}` (a defect is a mean of
+differences of means, and the triangle inequality costs a factor `2`).  Unrolling gives
+`N_P ≤ Σ_{j<k} 2^j·model_j + 2^k·N_{y_k}`.  The models are free — `Σ_{y_j<r≤y_{j+1}} 1/r` may be
+made as large as one likes, so `2^j·model_j` is summable — but the residual `2^k·N_{y_k}` is only
+bounded by `2^k`, and nothing in the iteration makes `N` small.  The iteration converts a mean
+into a mean of sub-means and never gains absolute smallness.  The factor `2` is exactly the
+triangle inequality, so the fix is to leave the `L¹` world.
+
+That is what this section sets up: `topDefect` is dominated by the square root of a **variance**,
+where the loss disappears and the large sieve / Turán machinery applies. -/
+
+private lemma mean_le_sqrt_mean_sq (a : ℕ → ℝ) (M : ℕ) (hM : 0 < M) (ha : ∀ d, 0 ≤ a d) :
+    (∑ d ∈ range M, a d) / M ≤ Real.sqrt ((∑ d ∈ range M, (a d) ^ 2) / M) := by
+  have hMR : (0 : ℝ) < M := by exact_mod_cast hM
+  have hnn : 0 ≤ (∑ d ∈ range M, a d) / M := by
+    have : 0 ≤ ∑ d ∈ range M, a d := Finset.sum_nonneg fun d _ => ha d
+    positivity
+  have h := sq_sum_le_card_mul_sum_sq (s := range M) (f := a)
+  rw [Finset.card_range] at h
+  have key : ((∑ d ∈ range M, a d) / M) ^ 2 ≤ (∑ d ∈ range M, (a d) ^ 2) / M := by
+    rw [div_pow, div_le_div_iff₀ (by positivity) hMR]
+    nlinarith [h]
+  calc (∑ d ∈ range M, a d) / M
+      = Real.sqrt (((∑ d ∈ range M, a d) / M) ^ 2) := (Real.sqrt_sq hnn).symm
+    _ ≤ _ := Real.sqrt_le_sqrt key
+
+/-- The `L²` form of the level-2 defect: the VARIANCE of the top range's progression means
+around their common mean. -/
+noncomputable def topDefectL2 (b P y p q : ℕ) (t : ℝ) (c S : ℕ) : ℝ :=
+  (∑ d ∈ range (midModulus P y),
+      ‖progMean (topProg b P y p q t c) (midModulus P y) S d
+        - fullMean (topProg b P y p q t c) (midModulus P y * S)‖ ^ 2) / midModulus P y
+
+lemma topDefectL2_nonneg (b P y p q : ℕ) (t : ℝ) (c S : ℕ) :
+    0 ≤ topDefectL2 b P y p q t c S := by rw [topDefectL2]; positivity
+
+/-- **Cauchy–Schwarz: the defect is at most the root of the variance.** -/
+theorem topDefect_le_sqrt_topDefectL2 (b P y p q : ℕ) (t : ℝ) (c S : ℕ) :
+    topDefect b P y p q t c S ≤ Real.sqrt (topDefectL2 b P y p q t c S) := by
+  rw [topDefect, topDefectL2]
+  exact mean_le_sqrt_mean_sq _ (midModulus P y) (midModulus_pos P y) (fun d => norm_nonneg _)
+
 /-! ### Two reductions of leaf (D), with the cut `P` eliminated -/
 
 /-- **Leaf (T), the mass form.**  At arbitrarily large cuts `y`, the top range's phase
@@ -689,6 +734,66 @@ theorem largeDecay_of_topDefect (b p q : ℕ) (t : ℝ) (hb : 2 ≤ b) (ht : t �
     linarith
   rw [hprogf R]
   rw [← hSdef] at hsplit
+  linarith
+
+/-- **Bias–variance.**  The variance of a family about its own mean is the mean of the squares
+minus the square of the mean.  This is the form the large sieve attacks: `topDefectL2` is
+`mean_d ‖progMean_d‖² − ‖fullMean‖²`, so the whole crux becomes an upper bound for the mean
+square of the top range's progression means. -/
+theorem sum_norm_sub_mean_sq (z : ℕ → ℂ) (M : ℕ) (hM : 0 < M) :
+    (∑ d ∈ range M, ‖z d - (∑ e ∈ range M, z e) / (M : ℂ)‖ ^ 2) / M
+      = (∑ d ∈ range M, ‖z d‖ ^ 2) / M - ‖(∑ e ∈ range M, z e) / (M : ℂ)‖ ^ 2 := by
+  have hMc : ((M : ℂ)) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  have hMR : (0 : ℝ) < M := by exact_mod_cast hM
+  set m : ℂ := (∑ e ∈ range M, z e) / (M : ℂ) with hm
+  have hsum : ∑ e ∈ range M, z e = (M : ℂ) * m := by rw [hm]; field_simp
+  have hexp : ∑ d ∈ range M, ‖z d - m‖ ^ 2
+      = (∑ d ∈ range M, ‖z d‖ ^ 2) + (M : ℝ) * ‖m‖ ^ 2
+        - 2 * (((∑ d ∈ range M, z d) * (starRingEnd ℂ) m).re) := by
+    have hstep : ∀ d ∈ range M, ‖z d - m‖ ^ 2
+        = ‖z d‖ ^ 2 + ‖m‖ ^ 2 - 2 * ((z d * (starRingEnd ℂ) m).re) := by
+      intro d _
+      rw [Complex.sq_norm, Complex.sq_norm, Complex.sq_norm, Complex.normSq_sub]
+    rw [Finset.sum_congr rfl hstep]
+    rw [Finset.sum_sub_distrib, Finset.sum_add_distrib, Finset.sum_const, Finset.card_range,
+      nsmul_eq_mul, ← Finset.mul_sum, ← Complex.re_sum, ← Finset.sum_mul]
+  have hre : (((∑ d ∈ range M, z d) * (starRingEnd ℂ) m).re) = (M : ℝ) * ‖m‖ ^ 2 := by
+    rw [hsum, mul_assoc, Complex.mul_conj, Complex.sq_norm]
+    simp
+  rw [hexp, hre]
+  field_simp
+  ring
+
+/-- **The crux as a mean square.**  `topDefectL2` is the mean square of the top range's
+progression means minus the square of their mean.  Since the second term is `≥ 0`, it suffices
+to bound `mean_d ‖progMean_d‖²` — a pair-correlation sum over the top range. -/
+theorem topDefectL2_eq (b P y p q : ℕ) (t : ℝ) (c S : ℕ) (hS : 0 < S) :
+    topDefectL2 b P y p q t c S
+      = (∑ d ∈ range (midModulus P y),
+          ‖progMean (topProg b P y p q t c) (midModulus P y) S d‖ ^ 2) / midModulus P y
+        - ‖fullMean (topProg b P y p q t c) (midModulus P y * S)‖ ^ 2 := by
+  set M := midModulus P y with hMdef
+  have hM : 0 < M := midModulus_pos P y
+  set Z : ℕ → ℂ := fun d => progMean (topProg b P y p q t c) M S d with hZ
+  have hfull : fullMean (topProg b P y p q t c) (M * S) = (∑ e ∈ range M, Z e) / (M : ℂ) := by
+    rw [fullMean_eq_periodMean_progMean _ M S hM hS, periodMean]
+  rw [topDefectL2, ← hMdef, hfull]
+  exact sum_norm_sub_mean_sq Z M hM
+
+/-- **`LargeDecay` from the variance.**  The `L²` entry point: it suffices that the top range's
+progression means have small variance about their mean. -/
+theorem largeDecay_of_topDefectL2 (b p q : ℕ) (t : ℝ) (hb : 2 ≤ b) (ht : t ≠ 0)
+    (hp : p.Prime) (hq : q.Prime) (hpq : p ≠ q)
+    (h : ∀ P c : ℕ, ∀ ε > 0, ∀ Y : ℕ, ∃ y ≥ Y, ∀ᶠ S in atTop, topDefectL2 b P y p q t c S < ε) :
+    LargeDecay b p q t := by
+  refine largeDecay_of_topDefect b p q t hb ht hp hq hpq (fun P c ε hε Y => ?_)
+  obtain ⟨y, hyY, hy⟩ := h P c (ε ^ 2) (by positivity) Y
+  refine ⟨y, hyY, ?_⟩
+  filter_upwards [hy] with S hS
+  have h1 := topDefect_le_sqrt_topDefectL2 b P y p q t c S
+  have h2 : Real.sqrt (topDefectL2 b P y p q t c S) < Real.sqrt (ε ^ 2) :=
+    Real.sqrt_lt_sqrt (topDefectL2_nonneg _ _ _ _ _ _ _ _) hS
+  rw [Real.sqrt_sq hε.le] at h2
   linarith
 
 end NormalNumbers.CastingOut
