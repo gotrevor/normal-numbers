@@ -75,4 +75,60 @@ theorem pairTail_eq_tsum_digit (b : ℕ) (hb : 2 ≤ b) (p q n : ℕ) :
   rw [pairTail, omegaTail, omegaTail, ← h1.tsum_sub h2]
   exact tsum_congr fun k => by ring
 
+/-! ### The truncation error -/
+
+private lemma summable_digit (b : ℕ) (hb : 2 ≤ b) (p q n : ℕ) :
+    Summable (fun k : ℕ => ((omegaNat (p * n + 1 + k) : ℝ) - omegaNat (q * n + 1 + k))
+      / (b : ℝ) ^ (k + 1)) := by
+  have h1 := summable_omegaTail b hb (p * n)
+  have h2 := summable_omegaTail b hb (q * n)
+  exact (h1.sub h2).congr fun k => by ring
+
+/-- **The digit truncation error is exactly the tail of the digit series.** -/
+theorem pairTail_sub_digitTrunc (b : ℕ) (hb : 2 ≤ b) (p q K n : ℕ) :
+    pairTail b p q n - digitTrunc b p q K n
+      = ∑' k : ℕ, (((omegaNat (p * n + 1 + (k + K)) : ℝ) - omegaNat (q * n + 1 + (k + K)))
+          / (b : ℝ) ^ ((k + K) + 1)) := by
+  have hsum := summable_digit b hb p q n
+  have h := Summable.sum_add_tsum_nat_add (f := fun k : ℕ =>
+    ((omegaNat (p * n + 1 + k) : ℝ) - omegaNat (q * n + 1 + k)) / (b : ℝ) ^ (k + 1)) K hsum
+  rw [pairTail_eq_tsum_digit b hb p q n, digitTrunc, ← h]
+  ring
+
+/-- **The truncation error is bounded by the tail `ω`-mass.**  Everything beyond digit `K` is
+controlled by `Σ_{k ≥ K} (ω(pn+1+k) + ω(qn+1+k))·b^{−(k+1)}`. -/
+theorem norm_pairTail_sub_digitTrunc_le (b : ℕ) (hb : 2 ≤ b) (p q K n : ℕ)
+    (hmass : Summable (fun k : ℕ => ((omegaNat (p * n + 1 + (k + K)) : ℝ)
+      + omegaNat (q * n + 1 + (k + K))) / (b : ℝ) ^ ((k + K) + 1))) :
+    |pairTail b p q n - digitTrunc b p q K n|
+      ≤ ∑' k : ℕ, (((omegaNat (p * n + 1 + (k + K)) : ℝ) + omegaNat (q * n + 1 + (k + K)))
+          / (b : ℝ) ^ ((k + K) + 1)) := by
+  rw [pairTail_sub_digitTrunc b hb p q K n]
+  have hsum : Summable (fun k : ℕ => ((omegaNat (p * n + 1 + (k + K)) : ℝ)
+      - omegaNat (q * n + 1 + (k + K))) / (b : ℝ) ^ ((k + K) + 1)) :=
+    (summable_nat_add_iff (f := fun k : ℕ =>
+      ((omegaNat (p * n + 1 + k) : ℝ) - omegaNat (q * n + 1 + k)) / (b : ℝ) ^ (k + 1)) K).mpr
+      (summable_digit b hb p q n)
+  have habs := hsum.abs
+  have step1 : |∑' k : ℕ, ((omegaNat (p * n + 1 + (k + K)) : ℝ)
+      - omegaNat (q * n + 1 + (k + K))) / (b : ℝ) ^ ((k + K) + 1)|
+      ≤ ∑' k : ℕ, |((omegaNat (p * n + 1 + (k + K)) : ℝ)
+        - omegaNat (q * n + 1 + (k + K))) / (b : ℝ) ^ ((k + K) + 1)| := by
+    have h := norm_tsum_le_tsum_norm (f := fun k : ℕ =>
+      ((omegaNat (p * n + 1 + (k + K)) : ℝ) - omegaNat (q * n + 1 + (k + K)))
+        / (b : ℝ) ^ ((k + K) + 1)) (by simp only [Real.norm_eq_abs]; exact habs)
+    simp only [Real.norm_eq_abs] at h
+    exact h
+  refine step1.trans (Summable.tsum_le_tsum (fun k => ?_) habs hmass)
+  have h1 : (0:ℝ) ≤ (omegaNat (p * n + 1 + (k + K)) : ℝ) := by positivity
+  have h2 : (0:ℝ) ≤ (omegaNat (q * n + 1 + (k + K)) : ℝ) := by positivity
+  rw [abs_div, abs_of_nonneg (by positivity : (0:ℝ) ≤ (b : ℝ) ^ ((k + K) + 1))]
+  have hbp : (0:ℝ) < (b : ℝ) ^ ((k + K) + 1) := by
+    have : (0:ℝ) < (b:ℝ) := by
+      have : (2:ℝ) ≤ (b:ℝ) := by exact_mod_cast hb
+      linarith
+    positivity
+  rw [div_le_div_iff_of_pos_right hbp, abs_sub_le_iff]
+  constructor <;> linarith
+
 end NormalNumbers.CastingOut

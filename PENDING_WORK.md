@@ -10065,3 +10065,29 @@ the periodic model and the `L¹` losses all eliminated.
    `axiom`) and prove `shiftCorr_all` from it.  That completes the kickoff's item 3: the swing
    becomes `ConjC1 ⟸ Kátai + Delange + MultiElliott`, all three precise and literature-checkable,
    the first two known and the third named-open.
+
+### lap 8 — the van der Corput criterion, abstracted; `PairDecorr` with NO prime cut
+
+New (sorry-free):
+* `tendsto_mean_of_shiftCorr` (`PairDecoupleVdC.lean`) — the abstract criterion: a bounded
+  sequence whose shifted correlations are all `o(R)` has mean `→ 0`.  `largeDecay_of_shiftCorr`
+  is now a three-line corollary.
+* **`pairDecorr_of_pairShiftCorr`** — `PairDecorr` follows from `PairShiftCorr` DIRECTLY:
+  no `PairDecouple`, no cut `P`, no second cut `y`, no periodic model, no primorial.  This is
+  the shortest route through the swing that exists in this development:
+  `ConjC1 ⟸ Kátai + Delange + PairShiftCorr`.
+* `pairTail_sub_digitTrunc`, `norm_pairTail_sub_digitTrunc_le` (`PairDecoupleDigits.lean`) —
+  the digit truncation error is exactly the tail of the digit series, bounded by the tail
+  `ω`-mass `Σ_{k≥K}(ω(pn+1+k) + ω(qn+1+k))·b^{−(k+1)}`.
+
+The ratified target `pairDecouple_all` is untouched and still proved from `shiftCorr_all`;
+`pairDecorr_of_pairShiftCorr` is an ADDITIONAL, shorter route to what `PairDecouple` was
+invented to supply.
+
+**Next attack.**
+1. Mean bound for the tail `ω`-mass: `(1/R)Σ_{n<R} Σ_{k≥K}(ω(pn+1+k)+ω(qn+1+k))b^{−(k+1)}
+   ≪ b^{−K}·log log R`.  Needs `Σ_{m≤X} ω(m) = X log log X + O(X)` — a Mertens-type input; the
+   repo has `mertensAP` work (`HANDOFF-2026-09-16-mertensAP.md`) worth checking for reuse.
+2. With it, `PairShiftCorr` reduces in Lean to the `2K`-point root-of-unity correlation at
+   `K = K(R) ≍ log log log R`, which is then stated as the named open hypothesis `MultiElliott`.
+   That closes the kickoff's item 3 in machine-checked form.

@@ -209,14 +209,11 @@ def ShiftCorrSmall (b p q : ℕ) (t : ℝ) : Prop :=
   ∀ P c j j' : ℕ, j ≠ j' →
     Tendsto (fun R => shiftCorr (largeProg b P p q t c) R j j' / R) atTop (𝓝 0)
 
-theorem largeDecay_of_shiftCorr (b p q : ℕ) (t : ℝ) (h : ShiftCorrSmall b p q t) :
-    LargeDecay b p q t := by
-  intro P c
-  set Q := primorialLe P with hQdef
-  set u : ℕ → ℂ := largeProg b P p q t c with hu
-  have hunorm : ∀ n, ‖u n‖ ≤ 1 := fun n => le_of_eq (norm_phase _)
-  have hprog : ∀ R, progMean (fun n => phase (t * pairRemainder b P p q n)) Q R c
-      = (∑ i ∈ range R, u i) / (R : ℂ) := fun R => rfl
+/-- **The van der Corput criterion.**  A bounded sequence whose shifted correlations are all
+`o(R)` has mean tending to `0`.  This is the abstract form of everything in this file. -/
+theorem tendsto_mean_of_shiftCorr (u : ℕ → ℂ) (hunorm : ∀ n, ‖u n‖ ≤ 1)
+    (h : ∀ j j' : ℕ, j ≠ j' → Tendsto (fun R => shiftCorr u R j j' / R) atTop (𝓝 0)) :
+    Tendsto (fun R => (∑ i ∈ range R, u i) / (R : ℂ)) atTop (𝓝 0) := by
   rw [NormedAddGroup.tendsto_nhds_zero]
   intro ε hε
   obtain ⟨K, hK8⟩ := exists_nat_gt (8 / ε ^ 2)
@@ -242,7 +239,7 @@ theorem largeDecay_of_shiftCorr (b p q : ℕ) (t : ℝ) (h : ShiftCorrSmall b p 
         show Tendsto (fun R => if j = j' then (0:ℝ) else shiftCorr u R j j' / R) atTop (𝓝 0) by
           by_cases hjj : j = j'
           · simpa [hjj] using tendsto_const_nhds (x := (0:ℝ)) (f := atTop (α := ℕ))
-          · simpa [hjj] using h P c j j' hjj)
+          · simpa [hjj] using h j j' hjj)
       simpa using this
     have hs := tendsto_finsetSum (range K) hterm
     simp only [Finset.sum_const_zero] at hs
@@ -291,9 +288,30 @@ theorem largeDecay_of_shiftCorr (b p q : ℕ) (t : ℝ) (h : ShiftCorrSmall b p 
       positivity
     have := Real.sqrt_lt_sqrt hnn hlt
     rwa [Real.sqrt_sq (by positivity)] at this
-  rw [hprog R]
   linarith
 
+
+
+theorem largeDecay_of_shiftCorr (b p q : ℕ) (t : ℝ) (h : ShiftCorrSmall b p q t) :
+    LargeDecay b p q t := by
+  intro P c
+  exact tendsto_mean_of_shiftCorr (largeProg b P p q t c)
+    (fun n => le_of_eq (norm_phase _)) (fun j j' hjj => h P c j j' hjj)
+
+/-- **`PairDecorr` directly, with no prime cut at all.**  Van der Corput applies to the pair
+phase itself: if `e(t·pairTail)` decorrelates from its own shifts, the swing's leaf (D) is
+discharged without `PairDecouple`, without the cut `P`, and without the periodic model. -/
+def PairShiftCorr (b p q : ℕ) (t : ℝ) : Prop :=
+  ∀ j j' : ℕ, j ≠ j' →
+    Tendsto (fun R => shiftCorr (fun i => phase (t * pairTail b p q i)) R j j' / R) atTop (𝓝 0)
+
+theorem pairDecorr_of_pairShiftCorr (b : ℕ) (t : ℝ)
+    (h : ∀ p q : ℕ, p.Prime → q.Prime → p ≠ q → PairShiftCorr b p q t) :
+    PairDecorr b t := by
+  intro p q hp hq hpq
+  have := tendsto_mean_of_shiftCorr (fun i => phase (t * pairTail b p q i))
+    (fun n => le_of_eq (norm_phase _)) (h p q hp hq hpq)
+  exact this
 
 /-! ### The correlation is itself a phase sum of a prime-periodic difference
 
