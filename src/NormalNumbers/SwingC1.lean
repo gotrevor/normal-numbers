@@ -828,36 +828,34 @@ theorem hWindow_of_hWindowChar (b : ℕ) (hb : 2 ≤ b) (L : ℕ) (h : HWindowCh
   rw [hMR] at hfin
   exact hfin
 
-/-- **Leaf A (the Elliott core).**  For every depth profile `κ → ∞`, every nontrivial character
-sum of the truncation `windowValTrunc b L (κ n) n` — which at `n` depends only on
-`ω(n+1), …, ω(n+L+κ n)` — has mean zero.  This is the joint-equidistribution input: the
-one-coordinate case is Delange (1969) — `ω` is uniformly distributed mod every `q ≥ 2` because
-`ω(p) = 1` and `Σ_p 1/p = ∞` — and the joint version over the shifts is open. -/
-def HTruncDecay (b L : ℕ) : Prop :=
-  ∀ κ : ℕ → ℕ, Tendsto κ atTop atTop →
-    ∀ a, 0 < a → a < b ^ L → Tendsto (windowCharSumTrunc b L κ a) atTop (𝓝 0)
+/-- **Leaf A at depth profile `κ`.**  Every nontrivial character sum of the truncation
+`windowValTrunc b L (κ n) n` — which at `n` depends only on `ω(n+1), …, ω(n+L+κ n)` — has mean
+zero.  This is the joint-equidistribution input: the one-coordinate case is Delange (1969), `ω` is
+uniformly distributed mod every `q ≥ 2` because `ω(p) = 1` and `Σ_p 1/p = ∞`; the joint version
+over the shifts is open. -/
+def HTruncDecayAt (b L : ℕ) (κ : ℕ → ℕ) : Prop :=
+  ∀ a, 0 < a → a < b ^ L → Tendsto (windowCharSumTrunc b L κ a) atTop (𝓝 0)
 
-/-- **Leaf B (carry overflow).**  Some depth profile `κ → ∞` makes the truncation wrong on a set
-of density `0`.
+/-- **Leaf B at depth profile `κ`.**  The depth-`κ n` truncation is wrong on a density-zero set.
+By `windowVal_ne_trunc_iff` the bad event at an admissible depth is exactly the overflow
+`H_{κ n}(n+L) mod b^{κ n} + c_{n+L+κ n} ≥ b^{κ n}`; by `omegaCarry_le_log` the carry there is
+`≤ log₂(·)+1`, so the depth must satisfy `b^{κ n} ≳ log n`, i.e. `κ n ≳ log_b log n`. -/
+def HCarryOverflowAt (b L : ℕ) (κ : ℕ → ℕ) : Prop :=
+  Tendsto (fun N => (carryBadCount b L κ N : ℝ) / N) atTop (𝓝 0)
 
-⚠️ **The constant-`κ` version of this leaf is FALSE**, and that is why `κ` is a function.  By
-`omegaWindowVal_eq_trunc_add` the truncation at constant depth `K` is off by
-`c_{n+L+K}/b^K + e`; but `c_N ≈ log log N/(b−1) → ∞`, so for every fixed `K` the term
-`c_{n+L+K}/b^K` is eventually `≥ 1` for almost all `n`, and the bad-set density tends to `1`, not
-`0`.  The depth must grow: `κ n ≳ log_b log log n`. -/
-def HCarryOverflow (b L : ℕ) : Prop :=
-  ∃ κ : ℕ → ℕ, Tendsto κ atTop atTop ∧
-    Tendsto (fun N => (carryBadCount b L κ N : ℝ) / N) atTop (𝓝 0)
+/-- **The single leaf, in its weakest useful form.**  There EXISTS one depth profile `κ → ∞` that
+serves both purposes at once.  This is strictly weaker than asking Leaf A for every `κ`. -/
+def HDepth (b L : ℕ) : Prop :=
+  ∃ κ : ℕ → ℕ, Tendsto κ atTop atTop ∧ HTruncDecayAt b L κ ∧ HCarryOverflowAt b L κ
 
-/-- **The split.**  Leaf A + Leaf B ⟹ the Weyl form of C1 at length `L`. -/
-theorem hWindowChar_of_leaves (b L : ℕ) (hA : HTruncDecay b L) (hB : HCarryOverflow b L) :
-    HWindowChar b L := by
-  obtain ⟨κ, hκ, hbad⟩ := hB
+/-- **The split.**  One good depth profile ⟹ the Weyl form of C1 at length `L`. -/
+theorem hWindowChar_of_hDepth (b L : ℕ) (h : HDepth b L) : HWindowChar b L := by
+  obtain ⟨κ, _, hA, hB⟩ := h
   intro a ha haL
   rw [NormedAddCommGroup.tendsto_nhds_zero]
   intro ε hε
-  have hbad' := (NormedAddCommGroup.tendsto_nhds_zero.mp hbad) (ε / 4) (by linarith)
-  have h1 := (NormedAddCommGroup.tendsto_nhds_zero.mp (hA κ hκ a ha haL)) (ε / 4) (by linarith)
+  have hbad' := (NormedAddCommGroup.tendsto_nhds_zero.mp hB) (ε / 4) (by linarith)
+  have h1 := (NormedAddCommGroup.tendsto_nhds_zero.mp (hA a ha haL)) (ε / 4) (by linarith)
   filter_upwards [h1, hbad'] with N hN1 hN2
   have hbd := norm_windowCharSum_sub_trunc b L κ a N
   have hN2' : (carryBadCount b L κ N : ℝ) / N ≤ ε / 4 := le_of_lt (by simpa using hN2)
@@ -870,20 +868,18 @@ theorem hWindowChar_of_leaves (b L : ℕ) (hA : HTruncDecay b L) (hB : HCarryOve
   refine (norm_add_le _ _).trans_lt ?_
   linarith
 
-/-- **THE ELLIOTT LEAF.**  Open: joint equidistribution of `ω` over the shifts
-`n+1, …, n+L+κ n`, at the rational frequencies `a/b^L`.  (Delange 1969 gives the one-coordinate
-case.  The Kátai-type `(αΩ(n), βΩ(n+1))` results need IRRATIONAL frequencies and so do not
-apply here.) -/
-theorem hTruncDecayAll : ∀ b, 3 ≤ b → ∀ L, HTruncDecay b L := by
-  sorry
+/-- **THE LEAF.**  Open.  Asks for one slowly growing depth profile `κ n ≳ log_b log n` such that
+(A) the finite-window correlations of `ω(n+1), …, ω(n+L+κ n)` at the rational frequencies `a/b^L`
+have mean zero, and (B) the head `H_{κ n}(n+L)` overflows mod `b^{κ n}` only on a null set.
 
-/-- **THE CARRY LEAF.**  Open: a depth profile `κ n ≳ log_b log log n` at which the truncation of
-`c_{n+L}` is wrong on a density-zero set. -/
-theorem hCarryOverflowAll : ∀ b, 3 ≤ b → ∀ L, HCarryOverflow b L := by
+(A) is the joint/Elliott branch of the literature; (B) is the *varying-moduli* branch, since the
+modulus `b^{κ n}` grows with `n`.  Delange (1969) settles the one-coordinate, fixed-modulus case.
+A CONSTANT `κ` cannot work — see the warning on `omegaWindowVal_eq_trunc_add` and the handoff. -/
+theorem hDepthAll : ∀ b, 3 ≤ b → ∀ L, HDepth b L := by
   sorry
 
 theorem hWindowCharAll : ∀ b, 3 ≤ b → ∀ L, HWindowChar b L :=
-  fun b hb L => hWindowChar_of_leaves b L (hTruncDecayAll b hb L) (hCarryOverflowAll b hb L)
+  fun b hb L => hWindowChar_of_hDepth b L (hDepthAll b hb L)
 
 theorem hWindowAll : ∀ b, 3 ≤ b → ∀ L, HWindow b L :=
   fun b hb L => hWindow_of_hWindowChar b (by omega) L (hWindowCharAll b hb L)

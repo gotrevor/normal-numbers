@@ -14,10 +14,10 @@ conjC1            (ratified statement, kept per the kickoff addendum)
  ← hWindowAll          HWindow b L       (equidistribution of the window value mod b^L)
  ← hWindowCharAll      HWindowChar b L   (Weyl form)
  ← hWindowChar_of_leaves:
-      hTruncDecayAll       HTruncDecay b L     ← SORRY (Leaf A: FINITE-window joint
-                                                 equidistribution of ω(n+1),…,ω(n+L+K))
-      hCarryOverflowAll    HCarryOverflow b L  ← SORRY (Leaf B: SOME depth profile κ n → ∞
-                                                 makes the truncation wrong on a null set)
+      hDepthAll   HDepth b L   ← THE SORRY:  ∃ κ → ∞ with
+          (A) HTruncDecayAt b L κ    — finite-window correlations of ω(n+1),…,ω(n+L+κ n)
+                                        at the rational frequencies a/b^L have mean zero
+          (B) HCarryOverflowAt b L κ — H_{κ n}(n+L) overflows mod b^{κ n} on a null set
 ```
 `norm_windowCharSum_sub_trunc` is the glue: `‖charSum − charSumTrunc‖ ≤ 2·badCount/N`.
 
@@ -102,6 +102,20 @@ for almost all `n`, the truncation fails at almost every `n`, and the bad-set de
   Honest downgrade: this event is still an equidistribution statement (about `H_K mod b^K`), so
   Leaf B is NOT elementary in the sense lap 7 claimed — it is of the same *nature* as Leaf A, only
   one-sided (an upper bound on one tail event, not decay of every character).
+
+## Lap 10: the leaf, in its weakest useful form
+
+`HDepth b L := ∃ κ → ∞, HTruncDecayAt b L κ ∧ HCarryOverflowAt b L κ`.  Sharing ONE `κ` between
+the two clauses is strictly weaker than lap 8's "(A) for every `κ`" ∧ "(B) for some `κ`", and it
+is all `hWindowChar_of_hDepth` needs.  Back to a single named sorry, `hDepthAll`, but a weaker
+one.
+
+Literature map of the two clauses:
+* (A) joint / fixed-modulus branch — Delange 1969 settles one coordinate; the joint version over
+  shifts is the open Elliott-type input.
+* (B) **varying-moduli** branch: the modulus `b^{κ n}` grows with `n`, so this is the regime of
+  e.g. "Uniform distribution of polynomially-defined additive functions to varying moduli"
+  (arXiv 2401.04199), not the classical fixed-`q` theory.
 
 ## Exact next moves
 
