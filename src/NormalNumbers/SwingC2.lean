@@ -1365,7 +1365,10 @@ theorem exists_kill_progression' (b L j₀ : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L) 
       (∀ n : ℕ, n ≡ n₀ [MOD killModulus b L] →
         ∀ j, j < L → j ≠ j₀ → ((b : ℤ) ^ (j + 1) ∣ (tau (n + 1 + j) : ℤ))) ∧
       (∀ n : ℕ, n ≡ n₀ [MOD killModulus b L] → ∀ e : ℕ, L < 1 + j₀ + e →
-        ∀ q : ℕ, q.Prime → q ∣ killModulus b L → q ∣ n + 1 + j₀ + e → q ≤ j₀ + e) := by
+        ∀ q : ℕ, q.Prime → q ∣ killModulus b L → q ∣ n + 1 + j₀ + e → q ≤ j₀ + e) ∧
+      (3 ≤ b → ∀ n : ℕ, n ≡ n₀ [MOD killModulus b L] → ∀ e : ℕ, L < 1 + j₀ + e →
+        ∀ q : ℕ, q.Prime → q ∣ killModulus b L → j₀ + e < q * q →
+          ¬ (q * q ∣ n + 1 + j₀ + e)) := by
   classical
   set sl : ℕ → ℕ := fun s => if s < j₀ then s else s + 1 with hsl
   set c : ℕ → ℕ := fun k => 1 + sl (k / L) with hc
@@ -1386,7 +1389,7 @@ theorem exists_kill_progression' (b L j₀ : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L) 
       simp only [hsl]
       split <;> omega
     exact key (k / L) hdiv
-  refine ⟨n₀, ?_, ?_, ?_⟩
+  refine ⟨n₀, ?_, ?_, ?_, ?_⟩
   · rw [hmod]
     refine Nat.Coprime.prod_right fun k hk => Nat.Coprime.pow_right _ ?_
     have hkN : k < (L - 1) * L := Finset.mem_range.mp hk
@@ -1466,13 +1469,36 @@ theorem exists_kill_progression' (b L j₀ : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L) 
     have hle := Nat.le_of_dvd (by omega) hd
     rw [hq_eq]
     omega
+  · intro hb3 n hn e he q hqp hqM hqsq hcon
+    rw [hmod] at hqM
+    obtain ⟨k, hk, hqk⟩ := (Nat.Prime.prime hqp).exists_mem_finset_dvd hqM
+    have hkN : k < (L - 1) * L := Finset.mem_range.mp hk
+    have hq_eq : q = killPrime L k :=
+      (Nat.prime_dvd_prime_iff_eq hqp (killPrime_prime L k)).1
+        (Nat.Prime.dvd_of_dvd_pow hqp hqk)
+    obtain ⟨hc1, hcL, -⟩ := hck k hkN
+    have hpin : (n + c k).factorization (killPrime L k) = b - 1 := hn₀ n hn k hkN
+    have hne0 : n + c k ≠ 0 := by omega
+    -- `q^2 ∣ n + c k`, because the valuation there is `b − 1 ≥ 2`
+    have hsq : killPrime L k ^ 2 ∣ n + c k := by
+      refine (Nat.Prime.pow_dvd_iff_le_factorization (killPrime_prime L k) hne0).2 ?_
+      rw [hpin]; omega
+    have hsq' : q * q ∣ n + c k := by
+      rw [hq_eq, show killPrime L k * killPrime L k = killPrime L k ^ 2 by ring]
+      exact hsq
+    have hqd' : q * q ∣ n + (1 + j₀ + e) := by
+      rw [show n + (1 + j₀ + e) = n + 1 + j₀ + e by ring]; exact hcon
+    have hd : q * q ∣ (n + (1 + j₀ + e)) - (n + c k) := Nat.dvd_sub hqd' hsq'
+    rw [Nat.add_sub_add_left] at hd
+    have hle := Nat.le_of_dvd (by omega) hd
+    omega
 
 /-- **The kill progression, in the form the rest of the file consumes.** -/
 theorem exists_kill_progression (b L j₀ : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L) (hj₀ : j₀ < L) :
     ∃ n₀ : ℕ, Nat.Coprime (n₀ + 1 + j₀) (killModulus b L) ∧
       ∀ n : ℕ, n ≡ n₀ [MOD killModulus b L] →
         ∀ j, j < L → j ≠ j₀ → ((b : ℤ) ^ (j + 1) ∣ (tau (n + 1 + j) : ℤ)) := by
-  obtain ⟨n₀, h1, h2, -⟩ := exists_kill_progression' b L j₀ hb hL hj₀
+  obtain ⟨n₀, h1, h2, -, -⟩ := exists_kill_progression' b L j₀ hb hL hj₀
   exact ⟨n₀, h1, h2⟩
 
 /-- Every prime factor of the kill modulus exceeds `L + 2`. -/
