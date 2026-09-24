@@ -84,6 +84,27 @@ We did not find the three-way conjunction written down anywhere, but that is not
 claim that it is new: the implication may well be routine and simply unstated, and a
 search of formalization repositories says nothing about the paper literature.
 
+## A binary sequence that is abelian-normal but not normal
+
+A sequence is **abelian-normal** when every length-`L` window's *count of ones* has the
+Binomial(`L`, 1/2) law in the limit, which is what a normal sequence gives, while the order of
+the digits inside the window is not constrained.  Normal implies abelian-normal.  The converse
+fails, including in base 2:
+
+```lean
+theorem exists_abelianNormal_not_normal :
+    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ IsAbelianNormalTwo s ∧ ¬ IsNormalSequence 2 s
+```
+
+in [`src/NormalNumbers/AbelianBinaryExample.lean`](src/NormalNumbers/AbelianBinaryExample.lean)
+(definitions in `AbelianNormal.lean`), with the usual three axioms only.  The construction takes a
+base-16 normal sequence, applies the digit swap `2→3, 5→4, B→A, C→D`, and reads the result in
+binary, four bits per hex digit.  The swap keeps the one-count law of every sub-interval of a
+4-bit block, so window one-counts stay binomial, but the block `0011` occurs with frequency 5/64
+instead of 1/16.  It adapts Campbell's base-10 construction (arXiv:2603.04396), whose pair swap
+has no base-2 analogue at block length 2.  Write-up:
+[`DESIGN-2026-09-23-binary-abelian-nonnormal.md`](DESIGN-2026-09-23-binary-abelian-nonnormal.md).
+
 ## How this was built
 
 Most of the Lean here was written by Claude (Claude Code) working under my direction,
