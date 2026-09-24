@@ -147,12 +147,67 @@ noncomputable def IsRich (b : ℕ) (x : ℝ) : Prop :=
 /-- **C3.**  `G4_b` is rich in every base `b ≥ 3`. -/
 def ConjC3 : Prop := ∀ b, 3 ≤ b → IsRich b (primeLambertAtBase b)
 
+/-- `OccursAt` is the real-number face of the sequence-level `MatchesAt`. -/
+theorem occursAt_iff_matchesAt (b : ℕ) (x : ℝ) (w : List ℕ) (n : ℕ) :
+    OccursAt b x w n ↔ MatchesAt (digitOf b (Int.fract x)) w n := by
+  constructor
+  · intro h j hj
+    simpa [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hj] using h j hj
+  · intro h j hj
+    simpa [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hj] using h j hj
+
 theorem isRich_of_isNormal (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (hx : IsNormal b x) : IsRich b x := by
-  sorry
+  classical
+  intro w hw
+  by_cases hw0 : w = []
+  · subst w
+    refine ⟨1, one_pos, ?_⟩
+    filter_upwards with N
+    have : ((range N).filter (fun n => OccursAt b x [] n)) = range N := by
+      apply Finset.filter_true_of_mem
+      intro n _
+      intro j hj
+      simp at hj
+    rw [this]
+    simp
+  · set s := digitOf b (Int.fract x) with hs
+    have hfreq := hx w hw0 hw
+    have hbnd := fun n => card_filter_matchesAt_le s w hw0 n
+    have h2 : Tendsto (fun N => (((range N).filter (MatchesAt s w)).card : ℝ) / N) atTop
+        (𝓝 ((b : ℝ) ^ w.length)⁻¹) :=
+      tendsto_div_of_bounded_diff (C := w.length)
+        (fun n => (hbnd n).1) (fun n => (hbnd n).2) hfreq
+    have hL : (0:ℝ) < ((b : ℝ) ^ w.length)⁻¹ := by
+      have : (0:ℝ) < b := by exact_mod_cast (show 0 < b by omega)
+      positivity
+    refine ⟨((b : ℝ) ^ w.length)⁻¹ / 2, by positivity, ?_⟩
+    have hev := (tendsto_order.1 h2).1 (((b : ℝ) ^ w.length)⁻¹ / 2) (by linarith)
+    filter_upwards [hev, eventually_gt_atTop 0] with N hN hN0
+    have hNpos : (0:ℝ) < N := by exact_mod_cast hN0
+    have heq : ((range N).filter (fun n => OccursAt b x w n))
+        = ((range N).filter (MatchesAt s w)) := by
+      apply Finset.filter_congr
+      intro n _
+      simp [occursAt_iff_matchesAt b x w n, hs]
+    rw [heq]
+    rw [lt_div_iff₀ hNpos] at hN
+    linarith
 
 theorem isDisjunctive_of_isRich (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (hx : IsRich b x) :
     IsDisjunctive b x := by
-  sorry
+  classical
+  rw [isDisjunctive_iff_forall_occursAt b hb x]
+  intro w hw
+  obtain ⟨c, hc, hev⟩ := hx w hw
+  obtain ⟨N, hN, hN0⟩ := (hev.and (eventually_gt_atTop 0)).exists
+  have hNpos : (0:ℝ) < N := by exact_mod_cast hN0
+  have : (0:ℝ) < (((range N).filter (fun n => OccursAt b x w n)).card : ℝ) := by
+    have := hN
+    nlinarith
+  have hcard : 0 < ((range N).filter (fun n => OccursAt b x w n)).card := by
+    exact_mod_cast this
+  obtain ⟨n, hn⟩ := Finset.card_pos.mp hcard
+  exact ⟨n, (Finset.mem_filter.mp hn).2⟩
 
 /-- C1 and C3 both sit below normality of `G4`. -/
 theorem conjC1_conjC3_of_normal (h : ∀ b, 3 ≤ b → IsNormal b (primeLambertAtBase b)) :
