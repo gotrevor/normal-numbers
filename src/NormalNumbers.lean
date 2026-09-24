@@ -488,6 +488,7 @@ import NormalNumbers.PairDecoupleFirstOrder
 import NormalNumbers.PairDecoupleShiftPeel
 import NormalNumbers.PairDecoupleTwoPoint
 import NormalNumbers.TwoPointBet
+import NormalNumbers.TwoPointWorry
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
