@@ -9253,3 +9253,36 @@ abbreviation unwound (`IsNormal`/`IsNormalSequence`/`digitOf`, `subsetLambert`/`
 `HANDOFF-2026-09-23-theoremC-COMPLETE.md`'s "next steps"; the campaign's hygiene is now
 complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`; (3) the two off-campaign designated-open `sorry`s.
+
+## 2026-09-24 — Delange slot rung 2 (the twist): crux and attack
+
+**Rung 1 is DONE** (`omegaLarge_mean_tendsto_zero`, axiom-clean, commit `8868051`).
+
+**Rung 2 decomposition** (`DelangeSlotChar.lean`, `DelangeSlotAP.lean`):
+
+1. `Sgsum_tendsto_zero_of_psi_littleO` (PROVED) — for `g = χ·z^{ω_{>P}}` with `χ` completely
+   multiplicative, `‖χ‖ ≤ 1`: `ψ(x,χ) = o(x)` ⟹ mean of `g` → 0.  *Structural find:* for
+   NON-PRINCIPAL `χ` there is no main term, hence no recursion (no L6/L7/`mSum`) and hence **no
+   quantitative zero-free region** — qualitative `o(x)` suffices.
+2. `psiChar_littleO` (PROVED, modulo 3) — `ψ(x,χ) = o(x)` from PNT in APs, by grouping into
+   residue classes; `∑_{a<q} χ a = 0` kills the main term.
+3. `psiAP_tendsto` — **THE OPEN LEAF.**  `ψ(X;q,a)/X → 1/φ(q)` for `gcd(a,q)=1`.
+   *Attack:* it is a PORT, not a new theorem.  `vonMangoldt.residueClass a` is NONNEGATIVE (this
+   is why the reduction goes through residue classes and not directly through the complex
+   `ψ(x,χ)`), and mathlib already has the exact analytic input — `LFunctionResidueClassAux`,
+   `continuousOn_LFunctionResidueClassAux`, `eqOn_LFunctionResidueClassAux` in
+   `Mathlib/NumberTheory/LSeries/PrimesInAP.lean`.  Missing piece: a Lean Wiener–Ikehara for
+   nonnegative coefficients.  Source: `WienerIkeharaTheorem''` in
+   `~/src/reservoir/AlexKontorovich/PrimeNumberTheoremAnd/PrimeNumberTheoremAnd/Wiener.lean`;
+   its support files (`Fourier`, `Sobolev`, `SmoothExistence`) are ALREADY vendored in
+   `src/PNTPort/`, so vendoring `Wiener.lean` is the next concrete step.
+4. Principal-character branch — still to write.  `ψ(x,χ₀) = ψ(x) − O_Q(ω(Q)·log x)`, and
+   `∑_{k≤N} log(N/k) ≤ N` (`sum_log_div_le`, proved), so the correction is `O_Q(N)`; then rerun
+   rung 1's L4/L6/L7 on `gfun` (their proofs only used `‖h k‖ ≤ 1`, so they generalise for free).
+5. Fourier reduction of the additive twist `e(jm/Q)` to Dirichlet characters — split `m = a·b`
+   with `a ∣ Q^∞`, `gcd(b,Q)=1`; still to write.
+
+**Refuted this lap.**  The L²/Parseval route on the vector `(T_r)_{r mod Q}` of additively
+twisted sums.  `j ↦ jd` permutes `ℤ/Q` for `gcd(d,Q)=1`, so Cauchy–Schwarz does close a system —
+but squaring destroys the phase of `z`, and the resulting inequality `W(N) log N ≲ ∑_d Λ d
+W(N/d)/d` is an identity-strength relation with no gain.  `Re z < 1` can only be used linearly.
