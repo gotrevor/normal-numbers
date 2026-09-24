@@ -191,6 +191,85 @@ lemma winPc_cons (r L t : ℕ) (w : List ℕ) (hr : r < 4) :
     rw [h1, h2, List.getD_cons_succ]
   rw [winPc, hsplit, hhead, htail]
 
+/-- The convolution step: a sum of an indicator of a sum of two independent statistics. -/
+lemma sum_sum_indicator_add (A B : Finset ℕ) (f g : ℕ → ℕ) (j : ℕ) :
+    ∑ t ∈ A, ∑ k ∈ B, (if f t + g k = j then (1 : ℕ) else 0)
+      = ∑ p ∈ antidiagonal j,
+          (∑ t ∈ A, if f t = p.1 then (1 : ℕ) else 0) *
+            (∑ k ∈ B, if g k = p.2 then (1 : ℕ) else 0) := by
+  have step : ∀ t ∈ A, ∑ k ∈ B, (if f t + g k = j then (1 : ℕ) else 0)
+      = ∑ p ∈ antidiagonal j,
+          (if f t = p.1 then (1 : ℕ) else 0) * ∑ k ∈ B, (if g k = p.2 then (1 : ℕ) else 0) := by
+    intro t _
+    rw [Finset.sum_congr rfl fun k (_ : k ∈ B) => indicator_add_eq (f t) (g k) j,
+      Finset.sum_comm]
+    exact Finset.sum_congr rfl fun p _ => (Finset.mul_sum _ _ _).symm
+  rw [Finset.sum_congr rfl step, Finset.sum_comm]
+  refine Finset.sum_congr rfl fun p _ => ?_
+  rw [Finset.sum_mul]
+
+/-- **The window law.**  Among the `16^S` hex words of length `S`, the number whose length-`L`
+bit window at offset `r` carries `j` ones is `16^S · C(L, j) / 2^L`. -/
+theorem winCountK_binomial (S : ℕ) : ∀ r L j : ℕ, r < 4 → r + L ≤ 4 * S →
+    winCountK r L S j * 2 ^ L = 16 ^ S * L.choose j := by
+  induction S with
+  | zero =>
+      intro r L j hr hrL
+      obtain rfl : L = 0 := by omega
+      simp only [winCountK, pow_zero, Finset.sum_range_one, winPc, Finset.range_zero,
+        Finset.sum_empty, one_mul]
+      cases j with
+      | zero => simp
+      | succ j => simp
+  | succ S ih =>
+      intro r L j hr hrL
+      set m := min L (4 - r) with hm
+      have hmL : m ≤ L := min_le_left _ _
+      have hm4 : r + m ≤ 4 := by omega
+      have htail : 0 + (L - m) ≤ 4 * S := by
+        rcases le_or_gt L (4 - r) with h | h
+        · have : m = L := by omega
+          omega
+        · have : m = 4 - r := by omega
+          omega
+      -- split off the leading hex digit
+      have hsplit : winCountK r L (S + 1) j
+          = ∑ t ∈ Finset.range 16, ∑ k ∈ Finset.range (16 ^ S),
+              if nibPc t r (r + m) + winPc 0 (L - m) (wordOf 16 S k) = j then 1 else 0 := by
+        rw [winCountK, sum_range_pow_succ_split 16 S (by norm_num)]
+        refine Finset.sum_congr rfl fun t ht => ?_
+        refine Finset.sum_congr rfl fun k hk => ?_
+        rw [wordOf_cons 16 S k t (by norm_num) (Finset.mem_range.mp hk) (Finset.mem_range.mp ht),
+          winPc_cons r L t _ hr]
+      rw [hsplit, sum_sum_indicator_add]
+      -- identify the two factors
+      have hfac1 : ∀ a : ℕ, (∑ t ∈ Finset.range 16, if nibPc t r (r + m) = a then (1 : ℕ) else 0)
+          = nibCount r (r + m) a := by
+        intro a; rw [nibCount, Finset.card_filter]
+      have hfac2 : ∀ b : ℕ,
+          (∑ k ∈ Finset.range (16 ^ S), if winPc 0 (L - m) (wordOf 16 S k) = b then (1 : ℕ) else 0)
+            = winCountK 0 (L - m) S b := fun b => rfl
+      rw [Finset.sum_congr rfl fun p (_ : p ∈ antidiagonal j) => by
+        rw [hfac1 p.1, hfac2 p.2]]
+      -- multiply by 2^L and apply the nibble law, the induction hypothesis and Vandermonde
+      have hLm : m + (L - m) = L := by omega
+      have hpow : (2 : ℕ) ^ L = 2 ^ m * 2 ^ (L - m) := by rw [← pow_add, hLm]
+      have hkey : ∀ p ∈ antidiagonal j,
+          nibCount r (r + m) p.1 * winCountK 0 (L - m) S p.2 * 2 ^ L
+            = 16 ^ (S + 1) * (m.choose p.1 * (L - m).choose p.2) := by
+        intro p _
+        have h1 : nibCount r (r + m) p.1 * 2 ^ m = 16 * m.choose p.1 := by
+          have := nibCount_binomial r (r + m) p.1 (by omega) hm4
+          rwa [Nat.add_sub_cancel_left] at this
+        have h2 : winCountK 0 (L - m) S p.2 * 2 ^ (L - m) = 16 ^ S * (L - m).choose p.2 :=
+          ih 0 (L - m) p.2 (by norm_num) htail
+        calc nibCount r (r + m) p.1 * winCountK 0 (L - m) S p.2 * 2 ^ L
+            = (nibCount r (r + m) p.1 * 2 ^ m) * (winCountK 0 (L - m) S p.2 * 2 ^ (L - m)) := by
+              rw [hpow]; ring
+          _ = (16 * m.choose p.1) * (16 ^ S * (L - m).choose p.2) := by rw [h1, h2]
+          _ = 16 ^ (S + 1) * (m.choose p.1 * (L - m).choose p.2) := by ring
+      rw [Finset.sum_mul, Finset.sum_congr rfl hkey, ← Finset.mul_sum, ← Nat.add_choose_eq, hLm]
+
 /-- The four-bit window predicate for `[0,0,1,1]`, as a function of the offset and the hex pair. -/
 def isZZOO (r : ℕ) (v : List ℕ) : Prop :=
   ∀ j < 4, bitOfWord v r j = (wordOf 2 4 3).getD j 0
