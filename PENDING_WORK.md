@@ -9464,3 +9464,37 @@ that `N` can actually reach.
    and gives the exact budget any handle must beat.
 2. The reduction leaf `addCharTail_of_trunc : (∀ K, truncated version) → AddCharTail` via the
    `2b^{n−K}` bound and `|e(x) − e(y)| ≤ 2π|x−y|`.
+
+### lap 7 — the crux holds for EVERY fixed truncation (`SwingC3Period.lean`, axiom-clean)
+
+`addCharTailTrunc_tendsto` : for every fixed `K`,
+`(1/N) ∑_{n<N} e(jn/Q)·e(h·tailTrunc b P K n) → 0`.
+
+Proved quantitatively, not softly: `norm_sum_range_le_of_period` shows a unimodular `L`-periodic
+summand with vanishing complete sum has `‖∑_{n<N}‖ ≤ L` for ALL `N` (the sum over `range N`
+equals the sum over `range (N % L)` — `sum_range_eq_sum_mod`, via `sum_range_periodic_shift`
+and `sum_range_add_period`).  With `L = primePeriod P K · Q`.
+
+**So the crux `AddCharTail` is now exactly a UNIFORMITY statement**, and its two ends are both
+machine-checked:
+* fixed `K`, `N → ∞`: **proved** (this lap), with rate `≤ (∏_{P<p≤K} p)·Q / N`;
+* `K ≥ 2N`: the truncation error is `≤ b^{−N}` pointwise (lap 5b), i.e. free.
+The gap is the diagonal: the proved rate needs `∏_{P<p≤K} p = e^{(1+o(1))K} ≪ N`, i.e.
+`K ≲ log N`, while freeness needs `K ≳ N`.  **The whole of `ConjC3` now sits in that window
+`log N ≪ K ≪ N`** — a completely explicit, single-parameter gap.
+
+### Next attack (lap 8)
+1. Pin the gap as a NAMED leaf in `src/`: `AddCharTailUniform b : ∀ P Q j h, 0<j<Q → ∀ ε>0,
+   ∃ K₀, ∀ K ≥ K₀, limsup_N |…| ≤ ε` and prove `addCharTail_of_uniform`.  Then `ConjC3` rests on
+   one statement about one window.
+2. Attack the window itself: the mass in `(K, 2N]` is `∑_{K<p≤2N} b^{n mod p}/(b^p−1)`, whose
+   mean is `≍ loglog N − loglog K`.  With `K = (log N)^A` the mean is `≍ log(1/A)+…` — bounded
+   for `A` large!  I.e. taking `K = (log N)^A` makes the discarded mass `O_A(1)` (not `o(1)`,
+   but bounded), while `∏_{P<p≤K} p = e^{O((log N)^A)}` — still too big.  Record: the trade is
+   `mean discarded ≍ log(log N/log K)` vs `period ≍ e^K`; every `K` fails one side.  The escape
+   must therefore NOT be a product of all primes up to `K`: use a SUBSET of primes (a period
+   `∏_{p ∈ S} p ≤ N` with `S ⊆ (P, 2N]` of large `∑_{p∈S} 1/p`) — many primes near `N` have tiny
+   product-of-a-few but large `∑1/p`?  No: `∑_{p∈S} 1/p ≤ |S|/min S` and `∏_{p∈S} p ≥ (min S)^{|S|}`,
+   so `∏ ≤ N` forces `|S| log(min S) ≤ log N`, hence `∑_{p∈S} 1/p ≤ log N/(min S · log(min S))`,
+   which is `o(1)` unless `min S ≲ log N`.  **This is a genuine refutation of the "pick a better
+   prime subset" escape** — formalize it as a probe/lemma next lap.

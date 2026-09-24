@@ -147,4 +147,118 @@ theorem sum_addChar_tailTrunc_eq_zero {b P K Q j : ℕ} (hQ : 0 < Q)
   sum_addChar_mul_periodic_eq_zero (primePeriod_pos P K) hQ (coprime_primePeriod hQP) hj0 hjQ
     _ (fun n => by rw [tailTrunc_add_period])
 
+/-! ### Incomplete sums: every truncation of the crux already tends to zero
+
+A complete-period sum vanishing is only useful if the incomplete sum inherits it.  For an
+`L`-periodic summand whose complete sum is `0`, the sum over `range N` equals the sum over
+`range (N % L)` — a stub of length `< L`.  With `L = primePeriod P K · Q` fixed, dividing by `N`
+kills it.  So **`AddCharTail` holds for every fixed truncation `K`**, and the crux is exactly the
+uniformity of that convergence as `K → ∞` with `N`. -/
+
+/-- Shifting the window of a complete period does not change the sum. -/
+theorem sum_range_periodic_shift {L : ℕ} (g : ℕ → ℂ) (hg : ∀ n, g (n + L) = g n) (a : ℕ) :
+    ∑ m ∈ range L, g (a + m) = ∑ m ∈ range L, g m := by
+  induction a with
+  | zero => simp
+  | succ a ih =>
+    rw [← ih]
+    have h1 : ∑ m ∈ range L, g (a + 1 + m) = ∑ m ∈ range L, g (a + (m + 1)) := by
+      refine Finset.sum_congr rfl fun m _ => ?_
+      congr 1; omega
+    have h2 : ∑ m ∈ range (L + 1), g (a + m)
+        = (∑ m ∈ range L, g (a + (m + 1))) + g (a + 0) := Finset.sum_range_succ' _ _
+    have h3 : ∑ m ∈ range (L + 1), g (a + m) = (∑ m ∈ range L, g (a + m)) + g (a + L) :=
+      Finset.sum_range_succ _ _
+    have h4 : g (a + L) = g a := hg a
+    rw [h1]
+    simp only [add_zero] at h2
+    rw [h4] at h3
+    rw [h2] at h3
+    linear_combination h3
+
+/-- Adding one full period to the range does not change the sum, when the complete sum is `0`. -/
+theorem sum_range_add_period {L : ℕ} (g : ℕ → ℂ) (hg : ∀ n, g (n + L) = g n)
+    (hzero : ∑ m ∈ range L, g m = 0) (N : ℕ) :
+    ∑ n ∈ range (N + L), g n = ∑ n ∈ range N, g n := by
+  rw [Finset.sum_range_add, sum_range_periodic_shift g hg N, hzero, add_zero]
+
+/-- **The incomplete sum is a stub.** -/
+theorem sum_range_eq_sum_mod {L : ℕ} (hL : 0 < L) (g : ℕ → ℂ) (hg : ∀ n, g (n + L) = g n)
+    (hzero : ∑ m ∈ range L, g m = 0) (N : ℕ) :
+    ∑ n ∈ range N, g n = ∑ n ∈ range (N % L), g n := by
+  induction N using Nat.strong_induction_on with
+  | _ N ih =>
+    by_cases hNL : N < L
+    · rw [Nat.mod_eq_of_lt hNL]
+    · have hsub : N - L + L = N := by omega
+      have hrec := ih (N - L) (by omega)
+      have hmod : (N - L) % L = N % L := by
+        conv_rhs => rw [← hsub]
+        rw [Nat.add_mod_right]
+      calc ∑ n ∈ range N, g n = ∑ n ∈ range ((N - L) + L), g n := by rw [hsub]
+        _ = ∑ n ∈ range (N - L), g n := sum_range_add_period g hg hzero _
+        _ = ∑ n ∈ range ((N - L) % L), g n := hrec
+        _ = ∑ n ∈ range (N % L), g n := by rw [hmod]
+
+/-- **The quantitative incomplete-sum bound.**  A unimodular `L`-periodic summand with vanishing
+complete sum has `‖∑_{n<N}‖ ≤ L`, uniformly in `N`. -/
+theorem norm_sum_range_le_of_period {L : ℕ} (hL : 0 < L) (g : ℕ → ℂ) (hg : ∀ n, g (n + L) = g n)
+    (hzero : ∑ m ∈ range L, g m = 0) (hnorm : ∀ n, ‖g n‖ ≤ 1) (N : ℕ) :
+    ‖∑ n ∈ range N, g n‖ ≤ (L : ℝ) := by
+  rw [sum_range_eq_sum_mod hL g hg hzero N]
+  calc ‖∑ n ∈ range (N % L), g n‖ ≤ ∑ n ∈ range (N % L), ‖g n‖ := norm_sum_le _ _
+    _ ≤ ∑ _n ∈ range (N % L), (1 : ℝ) := Finset.sum_le_sum fun n _ => hnorm n
+    _ = ((N % L : ℕ) : ℝ) := by simp
+    _ ≤ (L : ℝ) := by exact_mod_cast (Nat.mod_lt _ hL).le
+
+/-! ### Consequence: the crux holds for every fixed truncation -/
+
+open Filter Topology
+
+/-- **`AddCharTail` for the truncated tail.**  For every fixed `K`, the twisted average of the
+truncated large-prime tail tends to `0`.  The full crux is the uniformity of this in `K`. -/
+theorem addCharTailTrunc_tendsto {b P K Q j : ℕ} (hQ : 0 < Q)
+    (hQP : ∀ p : ℕ, p.Prime → p ∣ Q → p ≤ P) (hj0 : 0 < j) (hjQ : j < Q) (h : ℤ) :
+    Tendsto (fun N : ℕ =>
+      (∑ n ∈ range N, ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+        * ee (((h : ℝ) * tailTrunc b P K n : ℝ) : ℂ)) / N) atTop (𝓝 0) := by
+  set L : ℕ := primePeriod P K * Q with hLdef
+  have hL : 0 < L := Nat.mul_pos (primePeriod_pos P K) hQ
+  set g : ℕ → ℂ := fun n => ee (((j : ℝ) * n / Q : ℝ) : ℂ)
+    * ee (((h : ℝ) * tailTrunc b P K n : ℝ) : ℂ) with hgdef
+  have hgper : ∀ n, g (n + L) = g n := by
+    intro n
+    have h1 : tailTrunc b P K (n + L) = tailTrunc b P K n := by
+      refine tailTrunc_congr ?_
+      have hdvdL : primePeriod P K ∣ L := ⟨Q, hLdef⟩
+      have hdvd : primePeriod P K ∣ (n + L) - n := by simpa using hdvdL
+      exact ((Nat.modEq_iff_dvd' (Nat.le_add_right n L)).2 hdvd).symm
+    have h2 : ee (((j : ℝ) * ((n + L : ℕ) : ℝ) / Q : ℝ) : ℂ)
+        = ee (((j : ℝ) * n / Q : ℝ) : ℂ) := by
+      have hQR : (Q : ℝ) ≠ 0 := by positivity
+      have hreal : ((j : ℝ) * ((n + L : ℕ) : ℝ) / Q : ℝ)
+          = ((j : ℝ) * n / Q : ℝ) + ((((j * primePeriod P K : ℕ) : ℤ) : ℝ)) := by
+        rw [hLdef]
+        push_cast
+        field_simp
+      rw [hreal, Complex.ofReal_add, Complex.ofReal_intCast, ee_add, ee_int, mul_one]
+    rw [hgdef]
+    simp only
+    rw [h1, h2]
+  have hzero : ∑ m ∈ range L, g m = 0 := sum_addChar_tailTrunc_eq_zero hQ hQP hj0 hjQ h
+  have hnorm : ∀ n, ‖g n‖ ≤ 1 := by
+    intro n
+    rw [hgdef]
+    simp only [norm_mul, norm_ee_real, mul_one, le_refl]
+  have hbd : ∀ N : ℕ, ‖(∑ n ∈ range N, g n) / N‖ ≤ (L : ℝ) / N := by
+    intro N
+    rw [norm_div, Complex.norm_natCast]
+    rcases Nat.eq_zero_or_pos N with rfl | hN
+    · simp
+    · have hnum := norm_sum_range_le_of_period hL g hgper hzero hnorm N
+      have hNR : (0:ℝ) < N := by exact_mod_cast hN
+      gcongr
+  refine squeeze_zero_norm hbd ?_
+  simpa using (tendsto_const_div_atTop_nhds_zero_nat (L : ℝ))
+
 end NormalNumbers
