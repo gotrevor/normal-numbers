@@ -9594,3 +9594,33 @@ conjC1  ⇐  HWindowChar/HDepth  ⇐  weylMean → 0
                                               modulo norm_pairLocalFactor_le]
                                             + the natural-density-vs-period gap (leaf (D))
 ```
+
+## swing-c1 lap 32 — `norm_pairLocalFactor_le` PROVED; `SwingC1Pair.lean` sorry-free
+
+The only open leaf of the Daboussi–Kátai pair side is closed.  `#print axioms` clean
+(`propext, Classical.choice, Quot.sound`).  Full `lake build` green, 9182 jobs.
+
+**Correction to lap 31's plan.**  The pigeonhole as written in the lap-31 handoff does not
+close: requiring `c_j ≤ r − 2 − J` makes the bad set grow with the window top `J`, so the
+count `J − i + 1 > J + 1` is impossible.  The fix is to drop the "second term is `b^{-1}` times
+the first" framing entirely and only ask for `c_j ≠ a_j` and `max(a_j, c_j) ≤ r − 1 − i`:
+* lower bound on `|b^{a} − b^{c}|` needs only `a ≠ c` (then `≥ b^{max}(1 − 1/b) ≥ b^{max}/2`);
+* upper bound needs only `max ≤ r − 1 − i`.
+Bad set is then `{c_j ∈ [r−i, r−1]}`, of size `≤ i`, against a window of size `i + 3`.  Recorded
+in the theorem's docstring.
+
+**Second simplification.**  `norm_localFactor_le` needed a quantitative `O(1/p)` approximation
+of BOTH vectors because neither was exactly known.  Here the `s = 0` summand is *exactly* `1`
+(`p·0 = q·0 = 0`), so only the `s_j` summand needs an estimate, and that estimate needs only a
+two-sided bound on `|arg|` by fixed constants — no `r`-dependent error at all.  New reusable
+pieces: `phase_im`, `abs_sin_le_norm_phase_sub_one` (`‖e(x)−1‖ ≥ |sin 2πx|`),
+`sin_le_abs_sin_of_le_abs`, `norm_pairLocalFactor_le_of_sep`.
+
+**Where the crux is now.**  Both the single (`periodMean_tendsto_zero`) and the pair
+(`periodMean_pair_tendsto_zero`) model terms are unconditional theorems.  The one remaining
+honest gap on the Daboussi–Kátai route is **leaf (D): natural density vs. one full period** —
+the primorial period `exp((1+o(1))P)` vastly exceeds any `N` for which the cut `P` captures the
+mass (`OBSTRUCTION-2026-09-24-periodic-approximant.md`).  Next attack: the pair difference has
+no `r`-independent drift (`sum_primePeriodicTerm_period` cancels between `p` and `q`), so the
+decoupling defect for the DIFFERENCE should be estimable where it is not for the single tail.
+Formalize that cancellation first: `∑_{s<r} (ppt b r (p*s) − ppt b r (q*s)) = 0`.
