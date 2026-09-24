@@ -1,5 +1,6 @@
 import NormalNumbers.CastingOut
 import NormalNumbers.PowerBaseCount
+import NormalNumbers.SwingC3Digits
 
 /-!
 # Swing at C3: `G4` is rich (every word at positive lower density)
@@ -218,18 +219,67 @@ with every length-`L` word occurring before position `C_b · b^L`. -/
 def EffDisjG4 : Prop :=
   ∀ b, 3 ≤ b → ∃ C : ℕ, 0 < C ∧ EffDisjRate b (primeLambertAtBase b) C
 
-/-- **The crux after the 2026-09-24 lap.**  Open.  See the module note above: the existing
-`isDisjunctive_base` gives this with `C` doubly exponential in `L`, which is useless here. -/
-theorem effDisjG4_holds : EffDisjG4 := by
-  sorry
-
-/-- **`ConjC3` from effectivity** — unconditional content of this lap. -/
+/-- **`ConjC3` from effectivity** — true, but by the measurement above `EffDisjG4` is itself
+false for `G₄`, so this reduction is recorded as a *refuted* route, not as the crux. -/
 theorem conjC3_of_effDisj (h : EffDisjG4) : ConjC3 := by
   intro b hb
   obtain ⟨C, hC, hrate⟩ := h b hb
   exact isRich_of_effDisjRate b (by omega) _ C hC hrate
 
-theorem conjC3 : ConjC3 := conjC3_of_effDisj effDisjG4_holds
+/-! ## The live decomposition: `ConjC3` as a statement about `ω` and its carries
+
+`SwingC3Digits.digitOf_primeLambertAtBase` makes the digits arithmetic:
+digit `n` of `G_b` is `(ω(n+1) + omegaCarry b (n+1)) % b`.  So a word `w` occurs at `n` exactly
+when `ℓ` consecutive congruences hold, and `ConjC3` becomes a pure counting problem about the
+additive function `ω` perturbed by a tail carry — `OmegaCarryRich` below.  This is the crux
+after the 2026-09-24 lap, and unlike `EffDisjG4` it is *believed true*: `ω(n)` is asymptotically
+`N(log log n, log log n)` (Erdős–Kac), jointly over the `ℓ` shifts, so each residue
+`ω(n+1+j) mod b` equidistributes with discrepancy `≍ (log n)^{−2π²/b²}` and the `ℓ` shifts
+decorrelate.  The two real obstacles are (i) Erdős–Kac is a CLT, giving equidistribution of
+`ω mod b` only at that slowly-decaying discrepancy — enough for positive density but not
+uniform in `ℓ` — and (ii) `omegaCarry b k` is a functional of the whole tail `ω(k+1), ω(k+2), …`
+and so is *not* independent of the `ω(n+1+j)`; it must be frozen on a positive-density set
+before the Erdős–Kac input can be applied.
+-/
+
+open Classical in
+/-- `w` occurs at `n` in `G_b` iff `ℓ` consecutive `ω`-plus-carry congruences hold. -/
+theorem occursAt_primeLambertAtBase_iff {b : ℕ} (hb : 2 ≤ b) (w : List ℕ) (n : ℕ) :
+    OccursAt b (primeLambertAtBase b) w n ↔
+      ∀ j, ∀ hj : j < w.length,
+        (ArithmeticFunction.cardDistinctFactors (n + j + 1)
+          + omegaCarry b (n + j + 1)) % b = w[j] := by
+  unfold OccursAt
+  refine forall_congr' fun j => forall_congr' fun hj => ?_
+  rw [digitOf_primeLambertAtBase hb (n + j)]
+
+open Classical in
+/-- **The crux.**  The `ω`-plus-carry residue sequence in base `b` hits every word on a set of
+positions of positive lower density. -/
+def OmegaCarryRich (b : ℕ) : Prop :=
+  ∀ w : List ℕ, (∀ d ∈ w, d < b) → ∃ c : ℝ, 0 < c ∧
+    ∀ᶠ N in atTop, c * N ≤ (((range N).filter (fun n => ∀ j, ∀ hj : j < w.length,
+      (ArithmeticFunction.cardDistinctFactors (n + j + 1)
+        + omegaCarry b (n + j + 1)) % b = w[j])).card : ℝ)
+
+/-- The reduction of `ConjC3` to the `ω`-plus-carry counting statement. -/
+theorem isRich_of_omegaCarryRich {b : ℕ} (hb : 2 ≤ b) (h : OmegaCarryRich b) :
+    IsRich b (primeLambertAtBase b) := by
+  classical
+  intro w hw
+  obtain ⟨c, hc, hev⟩ := h w hw
+  refine ⟨c, hc, ?_⟩
+  filter_upwards [hev] with N hN
+  refine hN.trans (le_of_eq ?_)
+  congr 2
+  exact Finset.filter_congr fun n _ => (occursAt_primeLambertAtBase_iff hb w n).symm
+
+/-- **Open.**  The crux after the 2026-09-24 lap; see the note above. -/
+theorem omegaCarryRich_holds (b : ℕ) (hb : 3 ≤ b) : OmegaCarryRich b := by
+  sorry
+
+theorem conjC3 : ConjC3 := fun b hb =>
+  isRich_of_omegaCarryRich (by omega) (omegaCarryRich_holds b hb)
 
 /-- Rung: `G4_b` is upper-rich. -/
 theorem isRichUpper_primeLambertAtBase (b : ℕ) (hb : 3 ≤ b) :
