@@ -393,6 +393,147 @@ theorem pairDefect_le (b P y p q : ℕ) (t : ℝ) (R : ℕ) (hPy : P ≤ y) (hR 
     div_le_div_iff_of_pos_right hQR]
   linarith [hsum]
 
+/-! ### The middle range's own model: CRT factorisation and Mertens decay
+
+The `midDefect` bound above is `O(M/R)` and so is useless once `y` grows with `R`.  The two
+theorems here give the *other* handle on the middle range — the one that survives growing `y`:
+its period mean factorises over the primes of `(P, y]`, and that product tends to `0` as
+`y → ∞` with `P` FIXED.  This is what makes a progression-level attack on `LargeDecay`
+quantitative: the model factor is `exp(−c·Σ_{P<r≤y} 1/r)`, and `Σ_{P<r≤y} 1/r → ∞`. -/
+
+/-- **CRT factorisation of the middle range.** -/
+theorem periodMean_phase_midPairTail (b P y p q : ℕ) (t : ℝ) :
+    periodMean (fun n => phase (t * midPairTail b P y p q n)) (midModulus P y)
+      = ∏ r ∈ primesIoc P y, pairLocalFactor b t r p q := by
+  classical
+  have hA : ∀ n : ℕ, phase (t * midPairTail b P y p q n)
+      = ∏ r ∈ primesIoc P y,
+          phase (t * (primePeriodicTerm b r (p * (n % r))
+            - primePeriodicTerm b r (q * (n % r)))) := by
+    intro n
+    rw [midPairTail, Finset.mul_sum, phase_sum]
+    refine Finset.prod_congr rfl fun r _ => ?_
+    rw [primePeriodicTerm_mul_mod b r p n, primePeriodicTerm_mul_mod b r q n]
+  have hcop : ((primesIoc P y : Finset ℕ) : Set ℕ).Pairwise Nat.Coprime := by
+    intro x hx y' hy hne
+    exact (Nat.coprime_primes (prime_of_mem_primesIoc hx) (prime_of_mem_primesIoc hy)).mpr hne
+  have hpos : ∀ r ∈ primesIoc P y, 0 < r := fun r hr => (prime_of_mem_primesIoc hr).pos
+  rw [periodMean, midModulus, Finset.sum_congr rfl (fun n _ => hA n),
+    sum_range_prod_mod
+      (fun r s => phase (t * (primePeriodicTerm b r (p * s) - primePeriodicTerm b r (q * s))))
+      (primesIoc P y) hpos hcop,
+    Nat.cast_prod, ← Finset.prod_div_distrib]
+  rfl
+
+/-- **Mertens over a half-infinite range.**  With the low cut `P` FIXED, the product of pair
+local factors over `(P, y]` still tends to `0` as `y → ∞`: deleting finitely many primes does
+not affect the divergence of `Σ 1/r`. -/
+theorem prod_pairLocalFactor_Ioc_tendsto_zero (b : ℕ) (hb : 2 ≤ b) (t : ℝ) (ht : t ≠ 0)
+    (p q : ℕ) (hp : p.Prime) (hq : q.Prime) (hpq : p ≠ q) (P : ℕ) :
+    Tendsto (fun y => ‖∏ r ∈ primesIoc P y, pairLocalFactor b t r p q‖) atTop (𝓝 0) := by
+  classical
+  obtain ⟨c, hc, hev⟩ := norm_pairLocalFactor_le b hb t ht p q hp hq hpq
+  set F : ℕ → ℂ := fun r => if P < r then pairLocalFactor b t r p q else 1 with hF
+  have hF1 : ∀ r : ℕ, 0 < r → ‖F r‖ ≤ 1 := by
+    intro r hr
+    rw [hF]
+    by_cases h : P < r
+    · simp only [if_pos h]; exact norm_pairLocalFactor_le_one b t r p q hr
+    · simp [h]
+  have hFev : ∀ᶠ r : ℕ in atTop, r.Prime → ‖F r‖ ≤ 1 - c / r := by
+    filter_upwards [hev, Filter.eventually_gt_atTop P] with r hr hrP hrp
+    rw [hF]; simp only [if_pos hrP]; exact hr hrp
+  have hmain := prod_tendsto_zero_of_norm_le F hF1 hc hFev
+  refine (hmain.congr' ?_)
+  filter_upwards [Filter.eventually_ge_atTop P] with y hy
+  congr 1
+  have hsub : primesLe P ⊆ primesLe y := primesLe_subset hy
+  rw [← Finset.prod_sdiff hsub]
+  have h1 : ∏ r ∈ primesLe y \ primesLe P, F r = ∏ r ∈ primesIoc P y, pairLocalFactor b t r p q := by
+    rw [primesIoc]
+    refine Finset.prod_congr rfl fun r hr => ?_
+    have hrP : P < r := by
+      rw [Finset.mem_sdiff, primesLe, Finset.mem_filter, Finset.mem_range] at hr
+      by_contra hcon
+      exact hr.2 (Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), hr.1.2⟩)
+    rw [hF]; simp [hrP]
+  have h2 : ∏ r ∈ primesLe P, F r = 1 := by
+    refine Finset.prod_eq_one fun r hr => ?_
+    have hrP : ¬ P < r := by
+      rw [primesLe, Finset.mem_filter, Finset.mem_range] at hr
+      omega
+    rw [hF]; simp [hrP]
+  rw [h1, h2, mul_one]
+
+/-! ### The progression-level model bound — the attack on `LargeDecay`
+
+Everything above is assembled here.  Along a FIXED progression `c mod Q` to the small-prime
+modulus, split the primes `> P` at `y`: the middle range is again an exactly periodic factor
+(period `M`, and `gcd(Q, M) = 1`, so the progression still sweeps every residue mod `M`), and
+its period mean is the CRT product `Π_{P<r≤y} pairLocalFactor`, which tends to `0` as `y → ∞`
+with `P` fixed.  Hence
+
+`‖progMean B Q (M·S) c‖ ≤ ‖Π_{P<r≤y} pairLocalFactor‖ + topDefect_y(c, S)`,
+
+with the first term `≤ exp(−c·Σ_{P<r≤y} 1/r) → 0`.  The whole of `LargeDecay` — and therefore
+of `PairDecouple`, and therefore of the C1 swing — is now the single quantity `topDefect`. -/
+
+/-- The top range, restricted to the progression `c mod Q`. -/
+noncomputable def topProg (b P y p q : ℕ) (t : ℝ) (c : ℕ) : ℕ → ℂ :=
+  fun i => phase (t * pairRemainder b y p q (c + i * primorialLe P))
+
+/-- The level-2 decoupling defect: the top range against the MIDDLE-prime modulus `M`, inside
+one progression to the small-prime modulus `Q`. -/
+noncomputable def topDefect (b P y p q : ℕ) (t : ℝ) (c S : ℕ) : ℝ :=
+  (∑ d ∈ range (midModulus P y),
+      ‖progMean (topProg b P y p q t c) (midModulus P y) S d
+        - fullMean (topProg b P y p q t c) (midModulus P y * S)‖) / midModulus P y
+
+/-- **The progression-level model bound.**  The iterated split, one level up. -/
+theorem norm_progMean_le_model_add_topDefect (b P y p q : ℕ) (t : ℝ) (c S : ℕ)
+    (hPy : P ≤ y) (hS : 0 < S) :
+    ‖progMean (fun n => phase (t * pairRemainder b P p q n)) (primorialLe P)
+        (midModulus P y * S) c‖
+      ≤ ‖∏ r ∈ primesIoc P y, pairLocalFactor b t r p q‖ + topDefect b P y p q t c S := by
+  classical
+  set Q := primorialLe P with hQdef
+  have hQ : 0 < Q := primorialLe_pos P
+  set M := midModulus P y with hMdef
+  have hM : 0 < M := midModulus_pos P y
+  set gm : ℕ → ℂ := fun n => phase (t * midPairTail b P y p q n) with hgm
+  have hgmper : ∀ n, gm (n + M) = gm n := by
+    intro n
+    show phase (t * midPairTail b P y p q (n + M)) = _
+    rw [hMdef, midPairTail_add_modulus]
+  set A' : ℕ → ℂ := fun i => gm (c + i * Q) with hA'
+  set Bt' : ℕ → ℂ := topProg b P y p q t c with hBt'
+  have hA'per : ∀ d r : ℕ, A' (d + r * M) = A' d := by
+    intro d r
+    show gm (c + (d + r * M) * Q) = gm (c + d * Q)
+    rw [show c + (d + r * M) * Q = (c + d * Q) + M * (r * Q) by ring,
+      periodic_add_mul gm M hgmper]
+  have hA'norm : ∀ i, ‖A' i‖ ≤ 1 := fun i => le_of_eq (norm_phase _)
+  have hBt'norm : ∀ i, ‖Bt' i‖ ≤ 1 := fun i => le_of_eq (norm_phase _)
+  have hmul : ∀ i : ℕ, phase (t * pairRemainder b P p q (c + i * Q)) = A' i * Bt' i := by
+    intro i
+    rw [pairRemainder_split b P y p q (c + i * Q) hPy, mul_add, phase_add]
+    rfl
+  have heq : progMean (fun n => phase (t * pairRemainder b P p q n)) Q (M * S) c
+      = fullMean (fun i => A' i * Bt' i) (M * S) := by
+    rw [progMean, fullMean]
+    exact congrArg (fun z => z / ((M * S : ℕ) : ℂ)) (Finset.sum_congr rfl fun i _ => hmul i)
+  rw [heq]
+  refine (norm_fullMean_mul_le_periodMean_add_defect A' Bt' M S hM hS hA'per hA'norm
+    hBt'norm).trans ?_
+  have hmodel : periodMean A' M = ∏ r ∈ primesIoc P y, pairLocalFactor b t r p q := by
+    rw [periodMean, hA']
+    rw [sum_range_shift_coprime gm M Q c hM (coprime_primorial_midModulus P y) hgmper]
+    rw [← periodMean, hMdef, hgm, periodMean_phase_midPairTail]
+  rw [hmodel]
+  have : (∑ d ∈ range M, ‖progMean Bt' M S d - fullMean Bt' (M * S)‖) / M
+      = topDefect b P y p q t c S := by rw [topDefect, hBt', hMdef]
+  rw [this]
+
 /-! ### Two reductions of leaf (D), with the cut `P` eliminated -/
 
 /-- **Leaf (T), the mass form.**  At arbitrarily large cuts `y`, the top range's phase
@@ -480,5 +621,74 @@ theorem pairDecouple_of_largeDecay (b p q : ℕ) (t : ℝ) (h : LargeDecay b p q
     simp only [Finset.sum_const_zero] at hs
     simpa using hs.div_const ((Q : ℝ))
   simpa [pairDefect, hB, hQdef] using this
+
+/-- **`LargeDecay` is exactly the vanishing of `topDefect`.**  If, for every low cut `P` and
+every progression `c`, the level-2 defect can be made small at arbitrarily large middle cuts `y`,
+then the large-prime phase decays along every progression — hence `PairDecouple` by
+`pairDecouple_of_largeDecay`, hence the C1 swing.
+
+This is the sharpest available restatement of the crux: no small primes remain in the integrand,
+the model factor is explicit and quantitative (`exp(−c·Σ_{P<r≤y} 1/r)`), and `topDefect` is a
+mean over one middle-prime period of the deviation of the TOP range's progression means. -/
+theorem largeDecay_of_topDefect (b p q : ℕ) (t : ℝ) (hb : 2 ≤ b) (ht : t ≠ 0)
+    (hp : p.Prime) (hq : q.Prime) (hpq : p ≠ q)
+    (h : ∀ P c : ℕ, ∀ ε > 0, ∀ Y : ℕ, ∃ y ≥ Y, ∀ᶠ S in atTop, topDefect b P y p q t c S < ε) :
+    LargeDecay b p q t := by
+  intro P c
+  rw [NormedAddGroup.tendsto_nhds_zero]
+  intro ε hε
+  set Q := primorialLe P with hQdef
+  set f : ℕ → ℂ := fun i => phase (t * pairRemainder b P p q (c + i * Q)) with hf
+  have hfnorm : ∀ i, ‖f i‖ ≤ 1 := fun i => le_of_eq (norm_phase _)
+  have hprogf : ∀ R, progMean (fun n => phase (t * pairRemainder b P p q n)) Q R c
+      = fullMean f R := fun R => rfl
+  -- the model factor at all large middle cuts
+  obtain ⟨Y₀, hY₀⟩ := Filter.eventually_atTop.mp
+    ((NormedAddGroup.tendsto_nhds_zero.mp
+      (prod_pairLocalFactor_Ioc_tendsto_zero b hb t ht p q hp hq hpq P)) (ε / 4) (by linarith))
+  obtain ⟨y, hyY, hy⟩ := h P c (ε / 4) (by linarith) (max P Y₀)
+  have hyP : P ≤ y := le_trans (le_max_left _ _) hyY
+  have hmodel : ‖∏ r ∈ primesIoc P y, pairLocalFactor b t r p q‖ < ε / 4 := by
+    have h0 := hY₀ y (le_trans (le_max_right _ _) hyY)
+    rw [Real.norm_eq_abs] at h0
+    exact lt_of_abs_lt h0
+  obtain ⟨S₀, hS₀⟩ := Filter.eventually_atTop.mp hy
+  set M := midModulus P y with hMdef
+  have hM : 0 < M := midModulus_pos P y
+  obtain ⟨R₁, hR₁⟩ := exists_nat_gt (4 * (M : ℝ) / ε)
+  refine Filter.eventually_atTop.mpr ⟨max (M * (S₀ + 1) + M) (R₁ + 1), fun R hR => ?_⟩
+  have hRpos : 0 < R := by
+    have := le_trans (le_max_left _ _) hR
+    have : 0 < M * (S₀ + 1) + M := by positivity
+    omega
+  have hRR : (0 : ℝ) < R := by exact_mod_cast hRpos
+  set S := R / M with hSdef
+  have hSge : S₀ ≤ S := by
+    have hb1 : M * (S₀ + 1) + M ≤ R := le_trans (le_max_left _ _) hR
+    have hb3 : (M * (S₀ + 1)) / M ≤ R / M := Nat.div_le_div_right (by omega)
+    rw [Nat.mul_div_cancel_left _ hM] at hb3
+    omega
+  have hSpos : 0 < S := by
+    have hb1 : M * (S₀ + 1) + M ≤ R := le_trans (le_max_left _ _) hR
+    have hb3 : (M * (S₀ + 1)) / M ≤ R / M := Nat.div_le_div_right (by omega)
+    rw [Nat.mul_div_cancel_left _ hM] at hb3
+    omega
+  have htail : (M : ℝ) / R < ε / 4 := by
+    have hR1 : (R₁ : ℝ) < (R : ℝ) := by
+      have := le_trans (le_max_right _ _) hR
+      exact_mod_cast (by omega : R₁ < R)
+    have hlt : 4 * (M : ℝ) / ε < (R : ℝ) := lt_trans hR₁ hR1
+    rw [div_lt_iff₀ hRR]
+    rw [div_lt_iff₀ hε] at hlt
+    linarith
+  have hsplit := norm_fullMean_le_of_mul f hfnorm M R hM hRpos
+  have hcore : ‖fullMean f (M * S)‖ < ε / 2 := by
+    have h1 := norm_progMean_le_model_add_topDefect b P y p q t c S hyP hSpos
+    rw [hprogf (M * S)] at h1
+    have h2 : topDefect b P y p q t c S < ε / 4 := hS₀ S hSge
+    linarith
+  rw [hprogf R]
+  rw [← hSdef] at hsplit
+  linarith
 
 end NormalNumbers.CastingOut

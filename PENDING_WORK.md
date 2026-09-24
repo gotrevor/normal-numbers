@@ -9838,3 +9838,39 @@ single-form equidistribution of a large-prime phase).
 `y ≍ log R` that is `(log log R)^{-c} → 0` — SLOW but convergent.  The open point is whether the
 cut-`y` defect can be held below it; that is the first genuinely quantitative question of this
 swing, and unlike the mass route it is not obviously out of reach.
+
+### lap 2 — the iterated split, at the progression level; crux is now `topDefect`
+
+`PairDecoupleSplit.lean` (still sorry-free) gains the level-2 machinery:
+
+* `periodMean_phase_midPairTail` — the middle range has its OWN CRT factorisation:
+  `periodMean (e(t·midPairTail)) M = Π_{r ∈ (P,y]} pairLocalFactor b t r p q`.
+* `prod_pairLocalFactor_Ioc_tendsto_zero` — with `P` FIXED, that product → `0` as `y → ∞`
+  (Mertens on a half-infinite range; deleting finitely many primes preserves divergence).
+* `norm_progMean_le_model_add_topDefect` — **the iterated split** (handoff probe 1), done one
+  level up, INSIDE a progression `c mod Q`:
+  `‖progMean B Q (M·S) c‖ ≤ ‖Π_{P<r≤y} pairLocalFactor‖ + topDefect_y(c,S)`.
+  Uses `gcd(Q, M) = 1` so the progression still sweeps every residue mod `M`.
+* `largeDecay_of_topDefect` — hence `LargeDecay`, hence `PairDecouple`, hence the swing.
+
+`PairDecoupleProve.lean` now carries ONE sorry, `topDefect_all`, and `pairDecouple_all` /
+`largeDecay_all` are proved from it.
+
+**Why this is the sharpest form so far.**  Compared with the original `PairDecouple`:
+the small primes `≤ P` are gone from the integrand (absorbed by the exact-CRT sweep), the model
+factor is explicit and QUANTITATIVE — `≤ exp(−c·Σ_{P<r≤y} 1/r)` with `c` from
+`norm_pairLocalFactor_le` — and the residual `topDefect` compares progressions to the
+MIDDLE-prime modulus `M` only.  The order of limits is now `S → ∞` first, then `y → ∞`, with
+`P` fixed: the model is free to be taken as small as wanted before the defect is asked for
+anything.
+
+**Next attack.**  `topDefect_all`.  Two concrete probes:
+1. Iterate once more: `topDefect` has exactly the shape the level-1 bound had, so the third-level
+   split gives a product over `(y, z]`.  Check whether the iteration is a CONTRACTION — i.e.
+   whether the level-`k` defect is bounded by (level-`k+1` model) + (level-`k+1` defect) with
+   models whose product over disjoint ranges telescopes to `0`.  If yes, the crux closes by a
+   diagonal argument; if no, the failure mode is the thing to record.
+2. Second moment: bound `Σ_{d<M} ‖progMean − fullMean‖²` for the top range by a large-sieve /
+   Turán variance.  The frequencies are `a/M` with `M ≤ S` available — unlike level 1, `M` is
+   now a FREE parameter that may be taken far below the sample size, which is exactly the
+   regime the level-1 obstruction forbade.
