@@ -1095,25 +1095,128 @@ theorem exists_kill_progression (b L j₀ : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L) (
     have hstep : b ^ (j + 1) ∣ b ^ L := pow_dvd_pow b (by omega)
     exact_mod_cast Int.natCast_dvd_natCast.2 (hstep.trans hdvdL)
 
+
+/-- **The kill modulus is only exponential in a polynomial**: `log₂ (killModulus b L) ≤ b(L+5)⁴`.
+This is the quantitative payoff of using many small exponents: with one prime per slot at
+exponent `b^{j+1}−1` the modulus would be `exp(b^{L+1})`, which exceeds every pad budget `b^K`,
+`K ≤ L`.  Here `log M` is polynomial in `L` while `b^K` is exponential, so the budget wins. -/
+theorem killModulus_le (b L : ℕ) : killModulus b L ≤ 2 ^ (b * (L + 5) ^ 4) := by
+  have hkp : ∀ k, killPrime L k ≤ 2 ^ (k + L + 5) := by
+    intro k
+    have h1 : bigPrime (L + 2) k + 2 ≤ 2 ^ (k + 1) * (L + 4) := by
+      have h := bigPrime_le (L + 2) k
+      have he : L + 2 + 2 = L + 4 := by omega
+      rwa [he] at h
+    have hkpe : killPrime L k = bigPrime (L + 2) k := rfl
+    have h2 : L + 4 ≤ 2 ^ (L + 4) := (Nat.lt_pow_self (by norm_num)).le
+    calc killPrime L k ≤ 2 ^ (k + 1) * (L + 4) := by rw [hkpe]; omega
+      _ ≤ 2 ^ (k + 1) * 2 ^ (L + 4) := Nat.mul_le_mul_left _ h2
+      _ = 2 ^ (k + L + 5) := by rw [← pow_add]; ring_nf
+  set N := (L - 1) * L with hN
+  have hstep : killModulus b L ≤ 2 ^ (∑ k ∈ range N, (k + L + 5) * b) := by
+    calc killModulus b L = ∏ k ∈ range N, killPrime L k ^ b := rfl
+      _ ≤ ∏ k ∈ range N, (2 ^ (k + L + 5)) ^ b :=
+          Finset.prod_le_prod' fun k _ => Nat.pow_le_pow_left (hkp k) b
+      _ = ∏ k ∈ range N, 2 ^ ((k + L + 5) * b) := by
+          exact Finset.prod_congr rfl fun k _ => by rw [← pow_mul]
+      _ = 2 ^ (∑ k ∈ range N, (k + L + 5) * b) := Finset.prod_pow_eq_pow_sum _ _ _
+  refine hstep.trans (Nat.pow_le_pow_right (by norm_num) ?_)
+  -- the exponent: `∑_{k<N} (k+L+5)·b ≤ N·(N+L+5)·b ≤ (L+5)⁴·b`
+  have hsum : ∑ k ∈ range N, (k + L + 5) * b ≤ N * ((N + L + 5) * b) := by
+    refine (Finset.sum_le_card_nsmul _ _ ((N + L + 5) * b) fun k hk => ?_).trans_eq ?_
+    · have : k < N := Finset.mem_range.mp hk
+      exact Nat.mul_le_mul_right _ (by omega)
+    · simp [Finset.card_range, smul_eq_mul]
+  refine hsum.trans ?_
+  have hNL : N ≤ (L + 5) ^ 2 := by
+    have h1 : N ≤ L * L := by rw [hN]; exact Nat.mul_le_mul_right _ (by omega)
+    have h2 : (L + 5) ^ 2 = L * L + 10 * L + 25 := by ring
+    omega
+  have hNL2 : N + L + 5 ≤ (L + 5) ^ 2 := by
+    have h1 : N ≤ L * L := by rw [hN]; exact Nat.mul_le_mul_right _ (by omega)
+    have h2 : (L + 5) ^ 2 = L * L + 10 * L + 25 := by ring
+    omega
+  calc N * ((N + L + 5) * b) = (N * (N + L + 5)) * b := by ring
+    _ ≤ ((L + 5) ^ 2 * (L + 5) ^ 2) * b := Nat.mul_le_mul_right _ (Nat.mul_le_mul hNL hNL2)
+    _ = b * (L + 5) ^ 4 := by ring
+
+/-- **A pad length that beats the modulus.**  `K = 4ℓ + 44` makes the budget `b^K` exceed
+`log₂` of the kill modulus for the window length `L = ℓ + K`. -/
+theorem exists_pad_budget (b ℓ : ℕ) (hb : 3 ≤ b) :
+    ∃ K : ℕ, 1 ≤ K ∧ killModulus b (ℓ + K) ≤ 2 ^ (b ^ K) := by
+  refine ⟨4 * ℓ + 44, by omega, (killModulus_le b _).trans (Nat.pow_le_pow_right (by norm_num) ?_)⟩
+  have hrw : ℓ + (4 * ℓ + 44) + 5 = 5 * ℓ + 49 := by omega
+  rw [hrw]
+  have h4 : (ℓ + 1) < 3 ^ (ℓ + 1) := Nat.lt_pow_self (by norm_num)
+  have hchain : (5 * ℓ + 49) ^ 4 ≤ 3 ^ (4 * ℓ + 43) := by
+    calc (5 * ℓ + 49) ^ 4 ≤ (49 * (ℓ + 1)) ^ 4 := Nat.pow_le_pow_left (by omega) 4
+      _ = 49 ^ 4 * (ℓ + 1) ^ 4 := by ring
+      _ ≤ 3 ^ 15 * (3 ^ (ℓ + 1)) ^ 4 :=
+          Nat.mul_le_mul (by norm_num) (Nat.pow_le_pow_left h4.le 4)
+      _ = 3 ^ (4 * ℓ + 19) := by rw [← pow_mul, ← pow_add]; ring_nf
+      _ ≤ 3 ^ (4 * ℓ + 43) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  have hb3 : (3 : ℕ) ^ (4 * ℓ + 43) ≤ b ^ (4 * ℓ + 43) := Nat.pow_le_pow_left (by omega) _
+  calc b * (5 * ℓ + 49) ^ 4 ≤ b * b ^ (4 * ℓ + 43) := Nat.mul_le_mul_left _ (hchain.trans hb3)
+    _ = b ^ (4 * ℓ + 44) := by rw [← pow_succ']
+
 /-! ### 4. The crux leaf -/
 
-/-- **THE CRUX (2026-09-24, after the construction reduction).**  The single open obligation
-behind `ConjC2`.  It is the conjunction of three conditions on one window position, all of them
-standard in shape:
+/-- **THE CRUX (2026-09-24, after (K1) was discharged).**  Everything in `ConstructionInputs`
+except the *survivor* slot is now a theorem (`exists_kill_progression`): the slot-killing
+conditions (K1) hold on a full residue class `n ≡ n₀ (mod M)`, `M = killModulus b (ℓ+K)`, whose
+survivor entry `n + ℓ` is coprime to `M`, and whose size satisfies `M ≤ 2^{b^K}`
+(`killModulus_le`, `exists_pad_budget`).  What is left is to find a member of that class at
+which BOTH
 
-* **(K1)** `b^{j+1} ∣ τ(n+1+j)` for every slot `j ≠ ℓ−1`.  Produced by CRT: force
-  `q_j^{a_j} ‖ n+1+j` with `a_j + 1 ≡ 0 (mod b^{j+1})` and distinct primes `q_j`.  Congruences only.
-* **(K2)** `τ(n+ℓ) ≡ t (mod b^ℓ)`.  Take `n+ℓ = r^e·p` with `p` prime: `τ = 2(e+1)`, and for ODD
-  `b` the `2` is invertible mod `b^ℓ`, so a suitable `e` exists.  `p` lies in an arithmetic
-  progression — **Dirichlet**, and only ONE prime is needed (`paddedSum_of_construction`).
-* **(K3)** `carry b τ (n+ℓ+K) < b^K`.  An almost-all divisor bound: `log n ≈ b^L` makes the carry
-  `≈ b^{0.693 L}`, so `K > 0.693 L` suffices, and `L` is free by `subLeafAAt_mono`.
+* **(K2)** `τ(n+ℓ) ≡ t (mod b^ℓ)` — one application of Dirichlet: take `n+ℓ = 2^a·p` with
+  `p ≡ (n₀+ℓ)·2^{−a} (mod M)` prime (legitimate since `M` is odd and `n₀+ℓ` is coprime to it);
+  then `τ(n+ℓ) = 2(a+1)`, and `b` being odd makes `2` invertible mod `b^ℓ`, so `a` can be chosen
+  to hit any `t`.  Qualitative Dirichlet suffices for this half alone.
+* **(K3)** `carry b τ (n+ℓ+K) < b^K` — an almost-all divisor bound.  Note `carry ≤ Σ_k τ(n+L+k)/b^k`,
+  whose AVERAGE over the progression is `≍ log M ≤ b^K` by the budget hypothesis.  A first moment
+  therefore suffices *if* one may average over the whole progression.
 
-Status: **open**, but no longer analytic in character — (K1) and (K2) are congruence/Dirichlet, and
-only (K3) needs an estimate, of a completely standard kind.  Empirically confirmed by
-`probes/swingc2_window.py` and by the kernel anchors `subLeafA_three_one`, `subLeafA_three_two`. -/
-theorem constructionInputs_hold (b : ℕ) (hb : 3 ≤ b) : ConstructionInputs b := by
+hold at the **same** `n`.  That is the difficulty: (K2) confines `n` to the prime-indexed
+subfamily `{2^a p − ℓ}`, which has density `≍ 1/(φ(M) log)` inside the class, so the first moment
+for (K3) has to be run over that subfamily — a Brun–Titchmarsh (upper bound) plus Linnik-type
+(lower bound) input, not a bare divisor average.
+
+**Why an almost-all bound is unavoidable** (recorded 2026-09-24, a structural finding): any
+mechanism producing `b^{j+1} ∣ τ(n+1+j)` for all `j < L` forces `≥ L²/2` prime-power constraints
+(a prime `q` can serve slots `j ≡ j₀ (mod q^b)` only, so small primes contribute `O(L)`
+incidences in total), hence `log n ≳ L² log L`.  The worst-case divisor bound at that size is
+`exp(Θ(L²))`, which exceeds the budget `b^K ≤ b^L = exp(Θ(L))` for every admissible `K`.  So no
+pointwise bound on `τ` can close (K3); only a statement about typical values can. -/
+def SurvivorLeaf (b : ℕ) : Prop :=
+  ∀ ℓ K M n₀ t : ℕ, 1 ≤ ℓ → 0 < M → Nat.Coprime 2 M → Nat.Coprime (n₀ + ℓ) M →
+    t < b ^ ℓ → M ≤ 2 ^ (b ^ K) →
+    ∃ n : ℕ, n ≡ n₀ [MOD M] ∧ ((tau (n + ℓ) : ℤ) ≡ (t : ℤ) [ZMOD (b : ℤ) ^ ℓ]) ∧
+      carry b tau (n + (ℓ + K)) < (b : ℤ) ^ K
+
+/-- **(K1) + the survivor leaf give the whole construction.**  This is the reduction the lap-17
+CRT work buys: `ConstructionInputs` — and hence `SubLeafA`, `WindowShape`, `WindowPrescribable`
+and `ConjC2` — now rests on `SurvivorLeaf` alone. -/
+theorem constructionInputs_of_survivorLeaf (b : ℕ) (hb : 3 ≤ b) (h : SurvivorLeaf b) :
+    ConstructionInputs b := by
+  intro ℓ hℓ t ht
+  obtain ⟨K, hK1, hKbud⟩ := exists_pad_budget b ℓ hb
+  obtain ⟨n₀, hcop, hkill⟩ :=
+    exists_kill_progression b (ℓ + K) (ℓ - 1) (by omega) (by omega) (by omega)
+  have hrw : n₀ + 1 + (ℓ - 1) = n₀ + ℓ := by omega
+  rw [hrw] at hcop
+  obtain ⟨n, hn, hsurv, hcarry⟩ :=
+    h ℓ K (killModulus b (ℓ + K)) n₀ t hℓ (killModulus_pos _ _)
+      (coprime_two_killModulus _ _) hcop ht hKbud
+  exact ⟨n, K, hkill n hn, hsurv, hcarry⟩
+
+/-- **The one open obligation of the swing.**  See `SurvivorLeaf` for the full status note:
+(K2) is qualitative Dirichlet, (K3) is a first moment for `τ`, and the open part is running the
+two together on the same `n`. -/
+theorem survivorLeaf_holds (b : ℕ) (hb : 3 ≤ b) : SurvivorLeaf b := by
   sorry
+
+theorem constructionInputs_hold (b : ℕ) (hb : 3 ≤ b) : ConstructionInputs b :=
+  constructionInputs_of_survivorLeaf b hb (survivorLeaf_holds b hb)
 
 theorem subLeafA_holds (b : ℕ) (hb : 3 ≤ b) : SubLeafA b :=
   subLeafA_of_constructionInputs b hb (constructionInputs_hold b hb)
