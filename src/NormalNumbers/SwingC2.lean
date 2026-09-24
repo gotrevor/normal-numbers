@@ -1800,6 +1800,67 @@ theorem dvd_of_dvd_shift {q M a e p r n : ℕ} (hq : q ∣ M) (hp : p ≡ r [MOD
     omega
   exact Nat.dvd_iff_mod_eq_zero.2 h4
 
+/-- **The non-coprime divisors contribute nothing.**  If the modulus `M` is coprime to the
+single fixed integer `c·r + e`, then no `d` sharing a factor with `M` can divide `c·n + e` for
+any `n` of the progression: `dvd_of_dvd_shift` transports the divisibility from `n` to `r`.
+
+Combined with `coprime_killModulus_shift`, this is what removes the `2^{ω(M)}` loss from the
+incidence sum (lap-18j finding 6): for the near shifts the *whole* range of divisors `d` is
+effectively coprime to `M`, without any hypothesis on `d`. -/
+theorem filter_shift_eq_empty {c e M r Y d : ℕ}
+    (hcop : Nat.Coprime M (c * r + e)) (hdM : ¬ Nat.Coprime d M) :
+    (Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e) = ∅ := by
+  classical
+  rw [Finset.filter_eq_empty_iff]
+  intro n _ hn
+  obtain ⟨hnm, hdvd⟩ := hn
+  obtain ⟨q, hqp, hqd, hqM⟩ := Nat.Prime.not_coprime_iff_dvd.1 hdM
+  have hq1 : q ∣ c * n + e := hqd.trans hdvd
+  have hnr : n ≡ r [MOD M] := hnm
+  have hq2 : q ∣ c * r + e := by
+    have h1 : c * n ≡ c * r [MOD q] := (Nat.ModEq.of_dvd hqM hnr).mul_left c
+    have h2 : c * n + e ≡ c * r + e [MOD q] := h1.add_right e
+    have h3 : (c * n + e) % q = 0 := Nat.mod_eq_zero_of_dvd hq1
+    have h4 : (c * r + e) % q = 0 := by
+      have := h2
+      unfold Nat.ModEq at this
+      omega
+    exact Nat.dvd_iff_mod_eq_zero.2 h4
+  have hone : q = 1 :=
+    Nat.Coprime.eq_one_of_dvd (Nat.Coprime.coprime_dvd_left hqM hcop) hq2
+  exact hqp.one_lt.ne' hone
+
+/-- **The crude incidence bound, with the `gcd(d,M)` hypothesis removed.**  Only coprimality of
+`d` with `c` is still required (for `c = 2^a` that is just "`d` odd"); the interaction with `M`
+is now handled by `filter_shift_eq_empty` from the single hypothesis `gcd(M, c·r+e) = 1`. -/
+theorem sum_card_shift_dvd_le' (c e M r Y D : ℕ) (hM : 0 < M)
+    (hcM : Nat.Coprime M (c * r + e)) (hcd : ∀ d ∈ Finset.Icc 1 D, Nat.Coprime c d) :
+    ∑ d ∈ Finset.Icc 1 D,
+        ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card
+      ≤ (Y / M) * (Nat.log 2 D + 2) + D := by
+  classical
+  have hstep : ∀ d ∈ Finset.Icc 1 D,
+      ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card
+        ≤ Y / M / d + 1 := by
+    intro d hd
+    have hd0 : 0 < d := (Finset.mem_Icc.1 hd).1
+    by_cases hdM : Nat.Coprime d M
+    · have := SwingC2Moment.card_shift_dvd_le c e M r Y d hd0 hM (hcd d hd) hdM
+      have hdiv : Y / M / d = Y / (d * M) := by
+        rw [Nat.div_div_eq_div_mul, Nat.mul_comm M d]
+      omega
+    · rw [filter_shift_eq_empty hcM hdM]
+      simp
+  calc ∑ d ∈ Finset.Icc 1 D,
+        ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ c * n + e)).card
+      ≤ ∑ d ∈ Finset.Icc 1 D, (Y / M / d + 1) := Finset.sum_le_sum hstep
+    _ = (∑ d ∈ Finset.Icc 1 D, Y / M / d) + D := by
+        rw [Finset.sum_add_distrib, Finset.sum_const, Nat.card_Icc, smul_eq_mul, mul_one]
+        omega
+    _ ≤ (Y / M) * (Nat.log 2 D + 2) + D := by
+        have := SwingC2Moment.sum_div_le_log (Y / M) D
+        omega
+
 /-- **The sieve input, in its final single-inequality form.**  For one family `P` of primes of
 the progression and one shift `e = K+1+k`, the number of *divisor incidences*
 
