@@ -29,11 +29,43 @@ Confidence `PairDecouple` is TRUE: **92%** (Ren's prior was 85%).
 (`n = 0` and any finite exceptional set, `≤ 4n₀/(QR)`), `no_prime_dvd_class_beyond_cut` (**the CRT
 reason**: a prime pinned on a class divides `pQ`, hence `= p` or `≤ P`).
 
+### 2026-09-24 (later the same lap) — the CRT half of `PairDecouple` is PROVED
+
+`src/NormalNumbers/PairDecoupleBand.lean` (sorry-free, trust triple).  The crux is now DECOMPOSED:
+
+> `pairRemainder b P p q n = bandPairTail b P y p q n + pairRemainder b y p q n`   (`P ≤ y`)
+> `phase (t·pairRemainder b P) = phase (t·band) · phase (t·pairRemainder b y)`
+
+and the band factor's class deviation is **proved** to vanish:
+
+`classDeviation (phase (t·bandPairTail b P y p q ·)) (primorialLe P) R ≤ 4·(R mod M)/R`,
+`M = bandModulus P y = ∏_{P<r≤y} r`  — in particular **exactly `0` when `M ∣ R`**.
+
+The mechanism, arithmetic-free: `bandModulus P y` is **coprime** to `Q = primorialLe P`
+(disjoint prime sets), and a function with two coprime periods is constant
+(`const_of_coprime_periods`), so `H c = ∑_{s<M} B(c+sQ)` — which is `Q`-periodic by telescoping
+and `M`-periodic termwise — does not depend on `c` (`sum_class_period_const`).  That is the exact
+CRT content of the whole `SwingC1Decouple` split, with no primes in it.
+
+**The theorem predicts the probe.**  `data-2026-09-24-pair-defect-bands.txt` shows rows of clean
+zeros exactly where `M ∣ R` (e.g. `p=5, q=11, P=3, y=5`: the band is the single prime `5`, and
+`5 ∣ R`) — that is `classDeviation_bandPairTail_eq_zero`, measured.
+
+**Consequence for the refutation search**: a counterexample must be produced by the tail beyond
+EVERY fixed `y`, i.e. by the primes `r ≍ N`.  Nothing bounded can do it.
+
+**The tension, stated exactly.**  Making the tail factor uniformly near `1` needs
+`y ≳ max(p,q)·N` (below that the primes just above `pn` contribute `≍ b^{-gap}`, not `o(1)`);
+but then `M = bandModulus P y = e^{(1+o(1))y} ≫ R`, so the `4(R mod M)/R` bound is vacuous.  The
+crude rate is very lossy (the probe's band deviation at `y = 10^5` is `0.05`, not `4M/R`), so the
+positive route needs an *incomplete-period exponential-sum* bound for the band factor, not this
+counting bound.  That is `wip/pd-prove`'s job.
+
 ### Open items, highest value first
 
-1. **The one unreached regime: primes `r ≍ N`.**  `Q` is fixed *before* `R → ∞`, so CRT provably
-   handles every fixed prime band, and the band probe confirms the `O(y/R)` rate.  Nothing above
-   rules out a conspiracy between `n mod Q` and the largest prime factor of `pn+k`.
+1. **The one unreached regime: primes `r ≍ N`.**  Now a THEOREM that nothing else can do it
+   (`classDeviation_bandPairTail_le`).  Nothing rules out a conspiracy between `n mod Q` and the
+   largest prime factor of `pn+k`.
    **Next probe**: split `n < QR` by `P⁺(pn+1)` above/below `√N` and compute each part's class
    deviation.  If the bias is not in the large-`P⁺` part, `PairDecouple` is numerically settled;
    if it is, that is the first real lead for a refutation.
@@ -65,6 +97,38 @@ reason**: a prime pinned on a class divides `pQ`, hence `= p` or `≤ P`).
 `[propext, Classical.choice, Quot.sound]`.  All three leaves closed this run: `termE5_tendsto`,
 `schedule_admissible` (with the `LG` route correction), `termE4c_tendsto`.  `src/` holds only the
 two pre-existing off-campaign `sorry`s.  See `HANDOFF-2026-09-23-theoremC-COMPLETE.md`.
+
+### 2026-09-24 (later the same lap) — the CRT half of `PairDecouple` is PROVED
+
+`src/NormalNumbers/PairDecoupleBand.lean` (sorry-free, trust triple).  The crux is now DECOMPOSED:
+
+> `pairRemainder b P p q n = bandPairTail b P y p q n + pairRemainder b y p q n`   (`P ≤ y`)
+> `phase (t·pairRemainder b P) = phase (t·band) · phase (t·pairRemainder b y)`
+
+and the band factor's class deviation is **proved** to vanish:
+
+`classDeviation (phase (t·bandPairTail b P y p q ·)) (primorialLe P) R ≤ 4·(R mod M)/R`,
+`M = bandModulus P y = ∏_{P<r≤y} r`  — in particular **exactly `0` when `M ∣ R`**.
+
+The mechanism, arithmetic-free: `bandModulus P y` is **coprime** to `Q = primorialLe P`
+(disjoint prime sets), and a function with two coprime periods is constant
+(`const_of_coprime_periods`), so `H c = ∑_{s<M} B(c+sQ)` — which is `Q`-periodic by telescoping
+and `M`-periodic termwise — does not depend on `c` (`sum_class_period_const`).  That is the exact
+CRT content of the whole `SwingC1Decouple` split, with no primes in it.
+
+**The theorem predicts the probe.**  `data-2026-09-24-pair-defect-bands.txt` shows rows of clean
+zeros exactly where `M ∣ R` (e.g. `p=5, q=11, P=3, y=5`: the band is the single prime `5`, and
+`5 ∣ R`) — that is `classDeviation_bandPairTail_eq_zero`, measured.
+
+**Consequence for the refutation search**: a counterexample must be produced by the tail beyond
+EVERY fixed `y`, i.e. by the primes `r ≍ N`.  Nothing bounded can do it.
+
+**The tension, stated exactly.**  Making the tail factor uniformly near `1` needs
+`y ≳ max(p,q)·N` (below that the primes just above `pn` contribute `≍ b^{-gap}`, not `o(1)`);
+but then `M = bandModulus P y = e^{(1+o(1))y} ≫ R`, so the `4(R mod M)/R` bound is vacuous.  The
+crude rate is very lossy (the probe's band deviation at `y = 10^5` is `0.05`, not `4M/R`), so the
+positive route needs an *incomplete-period exponential-sum* bound for the band factor, not this
+counting bound.  That is `wip/pd-prove`'s job.
 
 ### Open items, highest value first
 
