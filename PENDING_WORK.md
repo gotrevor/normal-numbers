@@ -9338,3 +9338,62 @@ i.e. *the large primes do not see the small-prime residue class*.  Next attack, 
    modulus `Π_{P<p≤P'} p`, coprime to `Q`.  So (D) for the two-block truncation is PROVABLE by
    the same `sum_range_prod_mod` lemma; the only real content left is the `p > P'` tail, whose
    contribution is `≤ Σ_{p>P'} 1/(b−1)·(period mismatch)`.  **This is the next lap's target.**
+
+## 2026-09-24 — swing-c1 lap 28: two-block truncation REFUTED; the finite-depth reduction proved
+
+### Refutation of last lap's plan (recorded as a deliverable)
+
+The "two-block truncation of (D)" plan above is **dead**, for a reason already proved in the repo:
+`sum_primePeriodicTerm_period` says the mean of the `p`-th prime-periodic summand over one full
+period is **exactly `1/(b−1)`, for every prime `p`, with no decay**.  So the large-prime remainder
+`ρ^{(P)}_n = Σ_{p>P} b^{n mod p}/(b^p−1)` is not small in sup norm, in `L¹`, or in any norm, for
+any cut `P` — truncating the PRIME expansion is uniformly good only at a cut `P' ≥ 2M` (where
+`n mod p = n` makes the tail `O(b^{−M})`), and at that cut the joint period `Π_{p≤P'} p ≈ e^{2M}`
+exceeds `M`, so `periodMean` is unavailable.  The two requirements are incompatible.  Leaf (D) is
+therefore unavoidable in the `model × decoupling` frame, and it is a genuine equidistribution
+statement, not a tail estimate.
+
+### What replaces it: truncate in `k`, not in `p`  (`src/NormalNumbers/SwingC1Depth.lean`, sorry-free)
+
+The `ω`-expansion `θ_n = Σ_{k≥1} ω(n+k) b^{−k}` DOES admit a good truncation, because
+`omegaTail_le_log : θ_N ≤ log₂(N+1) + 1` bounds the tail (already in `SwingC1.lean`).  With
+`omegaTail_pow` (`b^L θ_n = omegaHead b L n + θ_{n+L}`, head an integer) this gives, all
+sorry-free and axiom-clean:
+
+* `norm_phase_omegaTail_sub_head` — `‖e(h θ_n) − e(h·H_L(n)/b^L)‖ ≤ 4π·D` for `n < M`;
+* `norm_fullMean_phase_sub_head` — the same for the Weyl MEAN over `n < M`;
+* `depthBound_tendsto_zero_of_pow_div_atTop` — `D = |h|(log₂(M+L)+1)/b^L → 0` exactly when
+  `b^{L(M)}` beats `log₂ M`.
+
+**So the crux is now pinned to a precise finite-depth statement.**  For every `h ≠ 0` and any
+schedule with `b^{L(M)}/log₂ M → ∞` (i.e. `L(M) ≍ 2 log_b log₂ M`),
+
+```
+mean_{n<M} e(h θ_n) → 0   ⟺   mean_{n<M} Π_{i<L(M)} z_i^{ω(n+1+i)} → 0,
+                               z_i = e(h·b^{−1−i}).
+```
+
+That is hypothesis `H` with its depth fixed: **a correlation of `L(M) ≍ log_b log₂ M` shifted
+copies of the multiplicative function `z^ω`**.  Literature status, honestly:
+* `L = 1` is **Delange's theorem** (`mean_{n≤M} z^{ω(n)} ≍ (log M)^{Re z − 1} → 0` for `z ≠ 1`) —
+  known, not in mathlib (needs Selberg–Delange).
+* `L` fixed `≥ 2` is a shifted correlation of two non-pretentious multiplicative functions —
+  Elliott-type, open in general, though `z^ω` is far more structured than a generic
+  multiplicative function.
+* `L = L(M) → ∞` is what we actually need.  Depth `L` bounded is **refuted**, not merely
+  unproven: `omegaTail_le_log` is sharp in order (`θ_N ≍ log log N` on average), so a bounded
+  depth leaves an error that does not vanish.
+
+### Next attack, in order
+
+1. **`L = 1`, unconditionally.**  Formalize the *statement* `mean_{n<M} z^{ω(n)} → 0` for
+   `z` a root of unity `≠ 1` as a named Prop in `src/`, and prove `conjC1_of_H` from the depth-`L`
+   version.  The `L = 1` case is where a real mathlib-scale sub-project (Selberg–Delange) lives.
+2. **Try to collapse `L` to 1** using the `phase`-product structure: `Π_{i<L} z_i^{ω(n+1+i)}` with
+   `z_i = e(h b^{−1−i})` has rapidly-trivialising factors — quantify how much of the decay the
+   `i = 0` factor alone supplies, and whether the remaining factors can be absorbed into an error
+   by a second-moment/variance argument rather than by an independence assumption.  If that works
+   the whole route needs only Delange, and `H` stops being Elliott-hard.  **This is the decisive
+   question for the route and is the next lap's target.**
+3. Leaf (D) stays parked: the `model × decoupling` axis is now the *second* handle, not the
+   primary one.  Leaf (M) remains fully proved and is reusable there.

@@ -454,3 +454,4 @@ import NormalNumbers.SwingC1
 import NormalNumbers.SwingC1Periodic
 import NormalNumbers.SwingC1CRT
 import NormalNumbers.SwingC1Model
+import NormalNumbers.SwingC1Depth
