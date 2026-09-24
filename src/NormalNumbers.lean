@@ -465,3 +465,4 @@ import NormalNumbers.SwingC3Leaf
 import NormalNumbers.SwingC3Statement
 import NormalNumbers.SwingC3Convergent
 import NormalNumbers.SwingC3Var
+import NormalNumbers.SwingC3Signed

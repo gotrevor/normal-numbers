@@ -9778,3 +9778,40 @@ window at fixed `D` leaves `b^{−D}·loglog N → ∞`).  Each `z_m^{ω}` is no
 shifts; known unconditionally only for one shift (Selberg–Delange) and, under logarithmic
 averaging, for two (Tao) and odd orders (Tao–Teräväinen).  A `conjC3_of_H` with `H` that
 correlation statement is the swing's remaining legitimate deliverable.
+
+### lap 17 — the signed skeleton: the EXACT Euler product (`src/NormalNumbers/SwingC3Signed.lean`)
+
+Directive item 1.  All axiom-clean.
+
+* `sum_filter_prod_eq_prod` — **CRT, in the only form the swing needs**: for `p`-periodic factors
+  `g_p` over a finite pairwise-coprime `F`, all coprime to an ambient modulus `m`,
+  `∑_{n < m·∏_F p, n ≡ a [MOD m]} ∏_{p∈F} g_p(n) = ∏_{p∈F} ∑_{r<p} g_p(r)`.  Same
+  peel-one-prime-and-refine-the-progression induction as lap 16's variation bound; base case is
+  `card_filter_modEq_range` (an AP mod `m` meets `range m` exactly once).  No `ZMod` plumbing.
+* `primeFactor b p h := (1/p)∑_{r<p} e(h·tailPrimeTerm b p r)` — the Euler factor; `w_p = factor−1`.
+  `norm_primeFactor_le_one` (a mean of unit vectors).
+* `sum_range_ee_tailTrunc_eq` — **THE EULER PRODUCT**:
+
+      (1/∏_{P<p≤K} p) ∑_{n < ∏_{P<p≤K} p} e(h·tailTrunc b P K n) = ∏_{P<p≤K} primeFactor b p h.
+
+  Exact, CRT-only.  This is the object lap 16's refutation says the crux must be reached through.
+
+### Next attack (lap 18): the decay of the Euler product
+
+With `x_r = h·b^r/(b^p−1)`, `A_p = ∑_{r<p}(1−cos 2πx_r) ≥ 0`, `B_p = ∑_{r<p} sin 2πx_r`:
+
+    primeFactor b p h = (1 − A_p/p) + i·B_p/p,
+    ‖primeFactor‖² = 1 − 2A_p/p + (A_p² + B_p²)/p².
+
+Bounds to prove (all elementary, geometric series + `1−cos t ≤ t²/2`, `|sin t| ≤ t`):
+`A_p ≤ 6π²h²/(b²−1)`, `|B_p| ≤ 2π|h|/(b−1)` (uniform in `p`), and `A_p ≥ 1 − cos(2π h b^{p−1}/(b^p−1))`
+which tends to `1 − cos(2πh/b) > 0` for `b ∤ h`.  Hence for `p ≥ p₀(b,h)`,
+`‖primeFactor b p h‖² ≤ 1 − A/p` with `A = A(b,h) > 0`, and since `∑_p 1/p` diverges,
+
+    ∏_{P<p≤K} ‖primeFactor b p h‖ → 0   as  K → ∞.
+
+That is the complete-period half of the crux, unconditionally.  The remaining gap is then purely
+the *incomplete*-sum half — i.e. the Euler product must be shown to govern `∑_{n<N}` with
+`N ≪ ∏_{P<p≤K} p`, which is where lap 16's variation bound plugs in.  Note the numerical
+calibration: `A → a(h) = ∑_{d≥1}(1−cos 2πhb^{−d})`, giving `(log N)^{−a}`; `b=3,h=1` predicts
+`1.76` against the measured `≈ 1.9`.
