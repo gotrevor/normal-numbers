@@ -44,6 +44,56 @@ lemma xiBits_eq_bitOfWord (c : ℕ → ℕ) (S n i : ℕ) (h : (n % 4 + i) / 4 <
   have h2 : (n + i) % 4 = (n % 4 + i) % 4 := by omega
   rw [h1, h2]
 
+/-! ### The nibble law
+
+`hexSwap` is not injective, so the *whole* nibble is not uniform — that is exactly what breaks
+normality.  What survives is the statistic that abelian normality reads: for **every**
+contiguous interval of bit positions inside a nibble (the full nibble included), the one-count
+of `hexSwap d` over that interval, as `d` ranges uniformly over `{0,…,15}`, is
+Binomial(`len`, 1/2).  For a proper interval this holds because the four swaps
+`2↔3, 5↔4, 11↔10, 12↔13` move each digit only within its own 2-bit quadrant *and* within its
+own 2-bit residue class; for the full nibble it holds because the swaps pair up popcounts
+`{1,2} ↦ {2,2}`, `{1,2} ↦ {1,1}`, `{2,3} ↦ {2,2}`, `{2,3} ↦ {3,3}`, which preserves the
+multiset `{1,1,2,2,2,2,3,3}`. -/
+
+/-- Bit `p` (most significant first) of `hexSwap d`. -/
+def swapBit (d p : ℕ) : ℕ := hexSwap d / 2 ^ (3 - p) % 2
+
+lemma bitOfWord_eq_swapBit (v : List ℕ) (r i : ℕ) :
+    bitOfWord v r i = swapBit (v.getD ((r + i) / 4) 0) ((r + i) % 4) := rfl
+
+lemma swapBit_le_one (d p : ℕ) : swapBit d p ≤ 1 :=
+  Nat.lt_succ_iff.mp (Nat.mod_lt _ (by norm_num))
+
+/-- One-count of `hexSwap d` over the bit positions `[lo, hi)`. -/
+def nibPc (d lo hi : ℕ) : ℕ := ∑ p ∈ Finset.Ico lo hi, swapBit d p
+
+/-- How many hex digits have one-count `t` over the bit window `[lo, hi)`. -/
+def nibCount (lo hi t : ℕ) : ℕ :=
+  ((Finset.range 16).filter fun d => nibPc d lo hi = t).card
+
+lemma nibPc_le (d lo hi : ℕ) : nibPc d lo hi ≤ hi - lo := by
+  calc nibPc d lo hi ≤ ∑ _p ∈ Finset.Ico lo hi, 1 :=
+        Finset.sum_le_sum fun p _ => swapBit_le_one d p
+    _ = hi - lo := by simp
+
+/-- **The nibble law.**  Over every contiguous bit window of a nibble, the swapped one-count is
+Binomial(`hi - lo`, 1/2).  Checked by `decide` on the 125 relevant `(lo, hi, t)` triples. -/
+theorem nibCount_binomial (lo hi t : ℕ) (hlo : lo ≤ 4) (hhi : hi ≤ 4) :
+    nibCount lo hi t * 2 ^ (hi - lo) = 16 * (hi - lo).choose t := by
+  by_cases ht : t ≤ 4
+  · have key : ∀ a < 5, ∀ b < 5, ∀ c < 5,
+        nibCount a b c * 2 ^ (b - a) = 16 * (b - a).choose c := by decide
+    exact key lo (by omega) hi (by omega) t (by omega)
+  · have h0 : nibCount lo hi t = 0 := by
+      rw [nibCount, Finset.card_eq_zero, Finset.filter_eq_empty_iff]
+      intro d _
+      have := nibPc_le d lo hi
+      omega
+    have h1 : (hi - lo).choose t = 0 := Nat.choose_eq_zero_of_lt (by omega)
+    rw [h0, h1]
+    simp
+
 /-- The four-bit window predicate for `[0,0,1,1]`, as a function of the offset and the hex pair. -/
 def isZZOO (r : ℕ) (v : List ℕ) : Prop :=
   ∀ j < 4, bitOfWord v r j = (wordOf 2 4 3).getD j 0
