@@ -9384,3 +9384,32 @@ abbreviation unwound (`IsNormal`/`IsNormalSequence`/`digitOf`, `subsetLambert`/`
 `HANDOFF-2026-09-23-theoremC-COMPLETE.md`'s "next steps"; the campaign's hygiene is now
 complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`; (3) the two off-campaign designated-open `sorry`s.
+
+## 2026-09-24 lap 5 (swing-c3) — the closed form of `tailLarge` (advance on the crux)
+
+`src/NormalNumbers/SwingC3Closed.lean`, axiom-clean, green:
+
+    tailLarge P b n  =  ∑_{p > P prime}  b^{n mod p} / (b^p − 1)      (`tailLarge_eq_tsum`)
+
+Lap 4's next-attack #2, landed.  Cross-checked numerically in exact rationals
+(`probes/swingc3_closed_form.py`).
+
+**What it buys the crux (`AddCharTail`).**  `tailLarge` is now visibly a sum of functions each
+**periodic with a prime period `p > P`** (`tailPrimeTerm_congr`), while the twist `e(jn/Q)` has
+period `Q` supported on primes `≤ P`.  Every period is coprime to `Q`.
+
+**It also re-derives the truncation obstruction quantitatively.**  The mean of the `p`-term over
+a period is `(1/p)∑_{m<p} b^m/(b^p−1) = 1/((b−1)p)`, so truncating at `K` discards mean mass
+`≍ ∑_{K<p≤N} 1/((b−1)p) ≍ log(log N / log K)/(b−1)` — the obstruction the handoffs recorded, now
+exact.  Conversely `p > n+1 ⇒ n mod p = n`, so the term is `≤ b^{n−p}`: truncation at `K ≥ 2N` is
+FREE (error `≪ b^{−N}`), the cost is that the truncated sum's period `∏_{P<p≤2N} p ≫ N`.
+So the lever is not truncation depth but the *sparsity of near-hits*: `b^{n mod p}/(b^p−1)
+≈ b^{−d_p(n)}` with `d_p(n) = p − n mod p`, which is `≤ J` for only a `J/p` fraction of `n`.
+
+### Next attack (lap 6)
+1. Formalize the free truncation: `|tailLarge P b n − ∑_{p ∈ Ioc P K, p prime} tailPrimeTerm b p n|
+   ≤ 2 b^{n−K}` for `K > n` — turns the crux into a finite sum for each `N`.
+2. With `e(h·tailLarge) = ∏_p e(h·tailPrimeTerm)` (an infinite product of `p`-periodic factors,
+   each within `O(b^{−d_p(n)})` of `1`), the crux becomes a correlation of a *multiplicative-in-p*
+   near-one product with `e(jn/Q)`; the `d_p(n)` are the CRT-independent coordinates.
+3. Keep `tailLargeDecouple_holds` (arc form) open per the kickoff addendum; it is the wrong leaf.
