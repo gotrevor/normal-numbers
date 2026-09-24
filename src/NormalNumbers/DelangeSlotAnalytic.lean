@@ -1,5 +1,4 @@
-import NormalNumbers.DelangeSlotIdentity
-import PNTPort.MediumPNT
+import NormalNumbers.DelangeSlotPNT
 
 /-!
 # Rung 1 of the Delange slot: the analytic chain
@@ -12,10 +11,10 @@ The plan of record (`DESIGN-2026-09-24-delange-route.md`), in seven steps.  Writ
 | L1 | `A N = ∑_{d≤N} Λ d ∑_{m≤N/d} h (d m)` | proved (`sum_hfun_mul_log`) |
 | L2 | `‖A N − z ∑_{d≤N} Λ d · S (N/d)‖ ≤ C_P · N` | open |
 | L3 | `∑_{d≤N} Λ d · S (N/d) = ∑_{k≤N} h k · ψ (N/k)` | proved |
-| L4 | `‖∑_{k≤N} h k ψ(N/k) − N · m N‖ ≤ C · N` | open (consumes `MediumPNT`) |
+| L4 | `‖∑_{k≤N} h k ψ(N/k) − N · m N‖ ≤ C · N` | **proved** (consumes `MediumPNT`, see `DelangeSlotPNT`) |
 | L5 | `‖A N − S N · log N‖ ≤ N` | proved |
-| L6 | `m N = σ N + ∑_{k<N} σ k / (k+1)`, `σ k = S k / k` | open (discrete Abel) |
-| L7 | the recursion `(log N − z) σ N = z Ψ N + O(1)` forces `σ N → 0` | open |
+| L6 | `m N = σ N + ∑_{k<N} σ k / (k+1)`, `σ k = S k / k` | proved (discrete Abel) |
+| L7 | the recursion `(log N − z) σ N = z Ψ N + O(1)` forces `σ N → 0` | proved (`DelangeSlotRecursion`) |
 
 L2+L3+L4+L5 give `S N · log N = z · N · m N + O_P(N)`; L6 turns that into a closed complex
 linear recursion in `σ`, and L7 solves it with the integrating factor `∏(1 + z/(n log n))`,
@@ -25,9 +24,6 @@ whose modulus is `(log N)^{Re z}`.  `Re z < 1` is exactly what makes `σ N → 0
 open Finset ArithmeticFunction Filter Topology
 
 namespace NormalNumbers.DelangeSlot
-
-/-- `ψ x = ∑_{d ≤ x} Λ d`, as a function of a natural cutoff. -/
-noncomputable def psiN (x : ℕ) : ℝ := ∑ d ∈ Ioc 0 x, Λ d
 
 /-- `m N = ∑_{k ≤ N} h k / k`. -/
 noncomputable def mSum (z : ℂ) (P N : ℕ) : ℂ := ∑ k ∈ Ioc 0 N, hfun z P k / k
@@ -132,7 +128,20 @@ theorem exists_L2 (z : ℂ) (hz : ‖z‖ = 1) (P : ℕ) :
 theorem exists_L4 (z : ℂ) (hz : ‖z‖ = 1) (P : ℕ) :
     ∃ C : ℝ, ∀ N : ℕ,
       ‖(∑ k ∈ Ioc 0 N, hfun z P k * (psiN (N / k) : ℂ)) - (N : ℂ) * mSum z P N‖ ≤ C * N := by
-  sorry
+  obtain ⟨C, hC0, hC⟩ := exists_sum_psi_sub_le
+  refine ⟨C, fun N ↦ ?_⟩
+  have hrw : (∑ k ∈ Ioc 0 N, hfun z P k * (psiN (N / k) : ℂ)) - (N : ℂ) * mSum z P N
+      = ∑ k ∈ Ioc 0 N, hfun z P k * ((psiN (N / k) - (N : ℝ) / (k : ℝ) : ℝ) : ℂ) := by
+    rw [mSum, Finset.mul_sum, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun k hk ↦ ?_
+    have hk0 : 0 < k := (mem_Ioc.1 hk).1
+    have hkC : (k : ℂ) ≠ 0 := Nat.cast_ne_zero.2 hk0.ne'
+    push_cast
+    field_simp
+  rw [hrw]
+  refine (norm_sum_le _ _).trans ?_
+  refine le_trans (Finset.sum_le_sum (fun k _ ↦ ?_)) (hC N)
+  rw [norm_mul, norm_hfun_le hz, one_mul, Complex.norm_real, Real.norm_eq_abs]
 
 /-- **L6.**  Discrete Abel summation for `m N`. -/
 lemma Ssum_succ (z : ℂ) (P N : ℕ) : Ssum z P (N + 1) = Ssum z P N + hfun z P (N + 1) := by

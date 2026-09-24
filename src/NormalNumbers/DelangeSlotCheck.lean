@@ -1,2 +1,5 @@
 import NormalNumbers.DelangeSlotRecursion
+import NormalNumbers.DelangeSlotAnalytic
 #print axioms NormalNumbers.DelangeSlot.recursion_tendsto_zero
+#print axioms NormalNumbers.DelangeSlot.exists_sum_abs_deltaN_le
+#print axioms NormalNumbers.DelangeSlot.exists_L4
