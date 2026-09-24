@@ -1997,6 +1997,110 @@ theorem tau_shift_sum_AP_odd (a u M r Y : ℕ) (ha : 1 ≤ a) (hM : 0 < M) (hu :
   rw [h3]
   exact le_trans h1 (Nat.mul_le_mul_left 2 h2)
 
+/-! ### The shifted first moment for a GENERAL shift, and its exceptional set
+
+Combining the 2-adic reduction with `tau_shift_sum_AP_odd`: for any shift `e` with
+`0 < e < 2^a` and `gcd(M, 2^a r + e) = 1`, the first moment of `τ(2^a n + e)` along the
+progression is the unshifted bound times `log₂ e + 1`.  Nothing here is analytic and nothing
+is lost to the modulus. -/
+
+/-- The 2-adic split of a shift, uniform in `n`. -/
+theorem tau_shift_two_adic' (a e : ℕ) (he : 0 < e) (hea : e < 2 ^ a) :
+    ∃ v u : ℕ, e = 2 ^ v * u ∧ ¬ 2 ∣ u ∧ v < a ∧ 2 ^ v ≤ e ∧ 0 < u ∧ u ≤ e ∧
+      ∀ n : ℕ, tau (2 ^ a * n + e) = (v + 1) * tau (2 ^ (a - v) * n + u) := by
+  classical
+  set v : ℕ := e.factorization 2 with hv
+  set u : ℕ := e / 2 ^ v with hu
+  have hne : e ≠ 0 := by omega
+  have hsplit : 2 ^ v * u = e := Nat.ordProj_mul_ordCompl_eq_self e 2
+  have hodd : ¬ 2 ∣ u := Nat.not_dvd_ordCompl Nat.prime_two hne
+  have hupos : 0 < u := Nat.ordCompl_pos 2 hne
+  have hle : (2 : ℕ) ^ v ≤ e := Nat.le_of_dvd he (Nat.ordProj_dvd e 2)
+  have hva : v < a := by
+    by_contra hcon
+    have : (2 : ℕ) ^ a ≤ 2 ^ v := Nat.pow_le_pow_right (by norm_num) (by omega)
+    omega
+  have hue : u ≤ e := by
+    have h1 : 1 * u ≤ 2 ^ v * u := Nat.mul_le_mul_right u Nat.one_le_two_pow
+    omega
+  refine ⟨v, u, hsplit.symm, hodd, hva, hle, hupos, hue, fun n => ?_⟩
+  have hfac : 2 ^ a * n + e = 2 ^ v * (2 ^ (a - v) * n + u) := by
+    have h1 : (2 : ℕ) ^ v * (2 ^ (a - v) * n) = 2 ^ a * n := by
+      rw [← Nat.mul_assoc, ← pow_add]
+      congr 2
+      omega
+    rw [Nat.mul_add, h1, hsplit]
+  have hoddm : ¬ 2 ∣ 2 ^ (a - v) * n + u := by
+    intro hcon
+    have h2 : (2 : ℕ) ∣ 2 ^ (a - v) * n :=
+      Dvd.dvd.mul_right (dvd_pow_self 2 (by omega : a - v ≠ 0)) n
+    exact hodd (by omega)
+  rw [hfac, tau_two_pow_mul_odd hoddm]
+
+/-- **The shifted first moment along the progression, for a general shift.** -/
+theorem tau_shift_sum_AP (a e M r Y : ℕ) (he : 0 < e) (hea : e < 2 ^ a) (hM : 0 < M)
+    (hcM : Nat.Coprime M (2 ^ a * r + e)) :
+    ∑ n ∈ SwingC2Moment.apSet M r Y, tau (2 ^ a * n + e)
+      ≤ (Nat.log 2 e + 1) *
+          (2 * ((Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ a * Y + e)) + 2)
+                  + Nat.sqrt (2 ^ a * Y + e))) := by
+  classical
+  obtain ⟨v, u, hsplit, hodd, hva, hle, hupos, hue, hfac⟩ := tau_shift_two_adic' a e he hea
+  set c : ℕ := a - v with hc
+  have hc1 : 1 ≤ c := by omega
+  have hcv : 2 ^ v * (2 ^ c * r) = 2 ^ a * r := by
+    rw [← Nat.mul_assoc, ← pow_add]
+    congr 2
+    omega
+  have hdvd : 2 ^ c * r + u ∣ 2 ^ a * r + e := by
+    refine ⟨2 ^ v, ?_⟩
+    rw [Nat.mul_comm (2 ^ c * r + u) (2 ^ v), Nat.mul_add, hcv, hsplit]
+  have hcM' : Nat.Coprime M (2 ^ c * r + u) := Nat.Coprime.coprime_dvd_right hdvd hcM
+  have hmain := tau_shift_sum_AP_odd c u M r Y hc1 hM hodd hcM'
+  have hmono : Nat.sqrt (2 ^ c * Y + u) ≤ Nat.sqrt (2 ^ a * Y + e) := by
+    refine Nat.sqrt_le_sqrt ?_
+    have h1 : (2 : ℕ) ^ c ≤ 2 ^ a := Nat.pow_le_pow_right (by norm_num) (by omega)
+    have h2 : 2 ^ c * Y ≤ 2 ^ a * Y := Nat.mul_le_mul_right Y h1
+    omega
+  have hlogmono : Nat.log 2 (Nat.sqrt (2 ^ c * Y + u)) ≤ Nat.log 2 (Nat.sqrt (2 ^ a * Y + e)) :=
+    Nat.log_mono_right hmono
+  have hvlog : v ≤ Nat.log 2 e := (Nat.le_log_iff_pow_le (by norm_num) (by omega)).2 hle
+  have hsum : ∑ n ∈ SwingC2Moment.apSet M r Y, tau (2 ^ a * n + e)
+      = (v + 1) * ∑ n ∈ SwingC2Moment.apSet M r Y, tau (2 ^ c * n + u) := by
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl fun n _ => hfac n
+  rw [hsum]
+  refine Nat.mul_le_mul (by omega) (le_trans hmain ?_)
+  have h1 : (Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ c * Y + u)) + 2)
+      ≤ (Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ a * Y + e)) + 2) :=
+    Nat.mul_le_mul_left _ (by omega)
+  omega
+
+/-- **The exceptional set of a general shift, over the integers of the progression.**  This is
+the integer-level statement that `TauMomentPrimesShift` needs; the ONLY thing still missing on
+the headline path is the transfer from these integers to the PRIMES of the progression. -/
+theorem card_large_tau_shift_le (a e M r Y T : ℕ) (he : 0 < e) (hea : e < 2 ^ a) (hM : 0 < M)
+    (hcM : Nat.Coprime M (2 ^ a * r + e)) :
+    T * ((SwingC2Moment.apSet M r Y).filter
+          (fun n => T ≤ tau (2 ^ a * n + e))).card
+      ≤ (Nat.log 2 e + 1) *
+          (2 * ((Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ a * Y + e)) + 2)
+                  + Nat.sqrt (2 ^ a * Y + e))) := by
+  classical
+  refine le_trans ?_ (tau_shift_sum_AP a e M r Y he hea hM hcM)
+  set S : Finset ℕ := (SwingC2Moment.apSet M r Y).filter
+    (fun n => T ≤ tau (2 ^ a * n + e)) with hS
+  have h1 : ∑ _n ∈ S, T ≤ ∑ n ∈ S, tau (2 ^ a * n + e) := by
+    refine Finset.sum_le_sum (fun n hn => ?_)
+    simp only [hS, Finset.mem_filter] at hn
+    exact hn.2
+  have h2 : ∑ n ∈ S, tau (2 ^ a * n + e)
+      ≤ ∑ n ∈ SwingC2Moment.apSet M r Y, tau (2 ^ a * n + e) :=
+    Finset.sum_le_sum_of_subset (by rw [hS]; exact Finset.filter_subset _ _)
+  have h3 : ∑ _n ∈ S, T = T * S.card := by
+    rw [Finset.sum_const, smul_eq_mul, Nat.mul_comm]
+  omega
+
 /-- **The sieve input, in its final single-inequality form.**  For one family `P` of primes of
 the progression and one shift `e = K+1+k`, the number of *divisor incidences*
 
