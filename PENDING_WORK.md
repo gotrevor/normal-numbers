@@ -1,5 +1,41 @@
 # PENDING WORK
 
+## 2026-09-24 — pd-prove laps 11-16: the truncation depth is now `log_b log log R`
+
+`src/NormalNumbers/PairDecoupleMertens.lean` (new, sorry-free, every declaration trust-triple
+clean) carries directive item 1 from prerequisite to capstone:
+
+| declaration | content |
+|---|---|
+| `card_filter_dvd_le` | a prime coprime to the modulus meets `<= R/p + 1` terms of `a i + e` |
+| `card_largePrimeFactors_le` | `y^card <= prod of the large prime factors <= m` |
+| `sum_omegaNat_AP_le` | `Sum_{i<R} omega(a i+e) <= R Sum_{p<=y} 1/p + pi(y) + R omega(a) + R log_y(aR+e)` |
+| `sum_omegaNat_AP_le_logLog` | the same at `y = R`, via the tree's dyadic Chebyshev `G4.sum_inv_primes_Ioc_le` |
+| `sum_omegaTail_AP_le` / `_le'` | the same for the CARRY `omegaTail`; `'` discharges the `log_R` term under `a+e+2 <= R` |
+| `abs_norm_sum_phase_sub_le_sum` | the per-`i` phase comparison (replaces the uniform-`E` one) |
+| `sum_abs_trunc_le_logLog` | the four progressions of the truncation error, bounded |
+| `abs_shiftCorr_sub_trunc_le_logLog` | the correlation-level bound, numerator `O(log log R)` |
+| `depthLL`, `tendsto_meanTruncErr_depthLL` | an explicit depth `~ log_b log log R` at which the error vanishes |
+| `eventually_depthLL_add_le` | the depth is sublinear, so the hypotheses hold eventually |
+| `tendsto_shiftCorr_sub_trunc_depthLL` | **capstone**: at that depth the truncation is asymptotically exact |
+
+Consequence for the crux: the leaf `MultiElliott` is an Elliott correlation in
+`O(log log log R)` linear forms, not `O(log log R)`.  `PairDecoupleElliott`'s
+`AdmissibleTrunc` route is untouched and still valid; this is the sharpened parallel track.
+
+### Next attacks on the crux, highest value first
+
+1. **Restate the leaf at `depthLL`.**  `shiftCorrSmall_iff_multiElliott` is proved for any
+   `AdmissibleTrunc` depth; instantiate the equivalence at `K = depthLL b` and record the leaf
+   as a `log log log R`-point correlation.  Mechanical given the capstone.
+2. **Directive item 2** — harvest `wip/pd-refute`'s band engine and ask whether the retained
+   `depthLL` digits can be cut to their LARGE-prime part.  Lap 10's warning stands: the band
+   theorem is about the periodic factor alone.
+3. **Directive item 3** — `K = 1` (Tao 2016).  Still blocked by
+   `E|pairTail - digitTrunc_1| ~ b^{-1} sqrt(log log R)`.  The unexplored lead is the
+   self-similarity `pairTail = digitTrunc_K + b^{-K} pairTail_{K,K}` and a bootstrap on
+   `A(s) := limsup_R sup_{a,a'} |E_{n<R} e(s pairTail_{a,a'}(n))|`.
+
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is sorry-free and

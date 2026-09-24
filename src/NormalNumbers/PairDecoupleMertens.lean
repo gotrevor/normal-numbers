@@ -740,4 +740,64 @@ theorem tendsto_meanTruncErr_depthLL (b p q P : ℕ) (hb : 2 ≤ b) (t : ℝ) :
           rw [hg]
           field_simp
 
+/-! ### The depth is sublinear, so lap 14's hypotheses hold eventually -/
+
+private lemma four_mul_le_two_pow (L : ℕ) (hL : 4 ≤ L) : 4 * L ≤ 2 ^ L := by
+  induction L, hL using Nat.le_induction with
+  | base => norm_num
+  | succ L hL ih =>
+      have h2 : 2 ^ (L + 1) = 2 * 2 ^ L := by ring
+      omega
+
+/-- `depthLL` is `O(log log log R)`, hence eventually below any linear budget. -/
+lemma eventually_depthLL_add_le (b M : ℕ) (hb : 2 ≤ b) :
+    ∀ᶠ R : ℕ in Filter.atTop, depthLL b R + M ≤ R := by
+  filter_upwards [Filter.eventually_ge_atTop (2 ^ (M + 5))] with R hR
+  set L : ℕ := Nat.log 2 R with hL
+  have hR0 : R ≠ 0 := by
+    have : 0 < 2 ^ (M + 5) := by positivity
+    omega
+  have hLge : M + 5 ≤ L := by
+    have : Nat.log 2 (2 ^ (M + 5)) ≤ L := Nat.log_mono_right hR
+    rwa [Nat.log_pow (by norm_num)] at this
+  have hpow : 2 ^ L ≤ R := Nat.pow_log_le_self 2 hR0
+  -- `depthLL b R ≤ 2L + 4`
+  set v : ℕ := Nat.log 2 L with hv
+  have hdepth : depthLL b R ≤ 2 * L + 4 := by
+    have h1 : Nat.log b ((v + 1) * (v + 1)) ≤ Nat.log 2 ((v + 1) * (v + 1)) :=
+      Nat.log_anti_left (by norm_num) hb
+    have h2 : Nat.log 2 ((v + 1) * (v + 1)) ≤ Nat.log 2 (v + 1) + Nat.log 2 (v + 1) + 1 :=
+      natLog_two_mul_le (by omega) (by omega)
+    have h3 : Nat.log 2 (v + 1) ≤ v + 1 := Nat.log_le_self 2 _
+    have h4 : v ≤ L := Nat.log_le_self 2 L
+    have hsq : (v + 1) ^ 2 = (v + 1) * (v + 1) := by ring
+    rw [depthLL, ← hL, ← hv, hsq]
+    omega
+  have hlin : 2 * L + 4 + M ≤ 4 * L := by omega
+  have := four_mul_le_two_pow L (by omega)
+  omega
+
+/-! ### The capstone
+
+Everything together: at depth `depthLL b R ≍ log_b log log R`, the shifted correlation and its
+digit truncation agree in the limit. -/
+
+/-- **The `log log log`-depth truncation is asymptotically exact.** -/
+theorem tendsto_shiftCorr_sub_trunc_depthLL (b p q P c j j' : ℕ) (hb : 2 ≤ b) (t : ℝ)
+    (hpQ : p * primorialLe P ≠ 0) (hqQ : q * primorialLe P ≠ 0) :
+    Filter.Tendsto (fun R : ℕ =>
+        |shiftCorr (largeProg b P p q t c) R j j' / R
+          - ‖∑ i ∈ range R,
+              phase (t * shiftDigitTrunc b p q (primorialLe P) c j j' (depthLL b R) i)‖ / R|)
+      Filter.atTop (𝓝 0) := by
+  refine squeeze_zero' (Filter.Eventually.of_forall fun R => abs_nonneg _) ?_
+    (tendsto_meanTruncErr_depthLL b p q P hb t)
+  filter_upwards [eventually_depthLL_add_le b (p * primorialLe P + p * (c + j * primorialLe P)
+    + q * primorialLe P + q * (c + j * primorialLe P) + p * (c + j' * primorialLe P)
+    + q * (c + j' * primorialLe P) + 2) hb] with R hR
+  have hbound := abs_shiftCorr_sub_trunc_le_logLog b hb p q t P c j j' (depthLL b R) R
+    hpQ hqQ (by omega) (by omega) (by omega) (by omega)
+  refine hbound.trans (le_of_eq ?_)
+  rw [meanTruncNum]
+
 end NormalNumbers.PairDecouple
