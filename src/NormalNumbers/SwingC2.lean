@@ -840,6 +840,111 @@ theorem factorization_eq_of_modEq {q a m : ℕ} (hq : q.Prime) (hm : m ≠ 0)
   simp [Nat.Prime.factorization_pow hq, Nat.factorization_eq_zero_of_not_dvd hu]
 
 
+
+/-! ### 3m. (K2): the survivor value is a theorem
+
+The survivor entry is taken of the shape `n + ℓ = 2^a·p` with `p` an odd prime, so that
+`τ(n+ℓ) = 2(a+1)` — which runs over every residue mod `b^ℓ` when `b` is odd and over every EVEN
+residue when `b` is even.  The modulus `M` being odd makes `2^a` invertible mod `M` (explicitly:
+`(M+1)/2` inverts `2`), so the progression condition `n ≡ n₀ (mod M)` collapses to a single
+congruence on `p` — one application of Dirichlet's theorem on primes in arithmetic progressions.
+-/
+
+/-- `τ(2^a) = a + 1`. -/
+theorem tau_two_pow (a : ℕ) : tau (2 ^ a) = a + 1 := by
+  rw [tau, Nat.divisors_prime_pow Nat.prime_two, Finset.card_map, Finset.card_range]
+
+/-- `τ(p) = 2` for a prime `p`. -/
+theorem tau_prime {p : ℕ} (hp : p.Prime) : tau p = 2 := by
+  rw [tau, Nat.Prime.divisors hp, Finset.card_pair (Ne.symm hp.ne_one)]
+
+/-- **The survivor shape.**  `τ(2^a·p) = 2(a+1)` for an odd prime `p`. -/
+theorem tau_two_pow_mul_prime {a p : ℕ} (hp : p.Prime) (hp2 : p ≠ 2) :
+    tau (2 ^ a * p) = 2 * (a + 1) := by
+  have hcop : Nat.Coprime (2 ^ a) p :=
+    Nat.Coprime.pow_left _ ((Nat.coprime_primes Nat.prime_two hp).2 (Ne.symm hp2))
+  rw [tau_mul_coprime hcop, tau_two_pow, tau_prime hp]
+  ring
+
+/-- **The exponent equation.**  `2(a+1) ≡ t (mod b^ℓ)` is solvable with `a < b^ℓ` exactly when
+`t` is even or `b` is odd — the parity condition of `SurvivorLeaf`. -/
+theorem exists_survivor_exponent (b ℓ t : ℕ) (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ) (ht : t < b ^ ℓ)
+    (hpar : 2 ∣ b → 2 ∣ t) :
+    ∃ a : ℕ, a < b ^ ℓ ∧ (2 * ((a : ℤ) + 1)) ≡ (t : ℤ) [ZMOD (b : ℤ) ^ ℓ] := by
+  have hN3 : 3 ≤ b ^ ℓ := by
+    calc 3 ≤ b := hb
+      _ = b ^ 1 := (pow_one b).symm
+      _ ≤ b ^ ℓ := Nat.pow_le_pow_right (by omega) hℓ
+  have hcast : (b : ℤ) ^ ℓ = ((b ^ ℓ : ℕ) : ℤ) := by push_cast; ring
+  obtain ⟨T, hT2, hTle, hTeven, hTmod⟩ :
+      ∃ T : ℕ, 2 ≤ T ∧ T ≤ 2 * b ^ ℓ ∧ 2 ∣ T ∧
+        (T : ℤ) ≡ (t : ℤ) [ZMOD ((b ^ ℓ : ℕ) : ℤ)] := by
+    by_cases h0 : t = 0
+    · refine ⟨2 * b ^ ℓ, by omega, by omega, ⟨b ^ ℓ, rfl⟩, ?_⟩
+      rw [h0]
+      push_cast
+      exact Int.modEq_iff_dvd.mpr ⟨-2, by ring⟩
+    · by_cases he : 2 ∣ t
+      · exact ⟨t, by omega, by omega, he, Int.ModEq.refl _⟩
+      · have hbo : ¬ 2 ∣ b := fun hb2 => he (hpar hb2)
+        have hNo : ¬ 2 ∣ b ^ ℓ := fun hd => hbo (Nat.Prime.dvd_of_dvd_pow Nat.prime_two hd)
+        refine ⟨t + b ^ ℓ, by omega, by omega, by omega, ?_⟩
+        push_cast
+        exact Int.modEq_iff_dvd.mpr ⟨-1, by ring⟩
+  refine ⟨T / 2 - 1, by omega, ?_⟩
+  have hAT : 2 * ((T / 2 - 1) + 1) = T := by omega
+  rw [hcast]
+  have hcastT : (2 * (((T / 2 - 1 : ℕ) : ℤ) + 1)) = (T : ℤ) := by exact_mod_cast hAT
+  rw [hcastT]
+  exact hTmod
+
+/-- **(K2), discharged.**  In an odd progression `n ≡ n₀ (mod M)` whose survivor entry is coprime
+to `M`, there are an exponent `a < b^ℓ` and a residue `r` coprime to `M` such that EVERY odd
+prime `p ≡ r (mod M)` makes `2^a·p` land in the progression with `τ(2^a·p) ≡ t (mod b^ℓ)`.
+Dirichlet then supplies arbitrarily large such `p`; choosing one with a small tail carry is all
+that `SurvivorLeaf` still needs (`CarryLeaf`). -/
+theorem exists_survivor_data (b ℓ M n₀ t : ℕ) (hb : 3 ≤ b) (hℓ : 1 ≤ ℓ) (hM : 0 < M)
+    (h2M : Nat.Coprime 2 M) (hcop : Nat.Coprime (n₀ + ℓ) M) (ht : t < b ^ ℓ)
+    (hpar : 2 ∣ b → 2 ∣ t) :
+    ∃ a r : ℕ, a < b ^ ℓ ∧ Nat.Coprime r M ∧
+      ∀ p : ℕ, p.Prime → p ≠ 2 → p ≡ r [MOD M] →
+        (2 ^ a * p ≡ n₀ + ℓ [MOD M]) ∧
+        ((tau (2 ^ a * p) : ℤ) ≡ (t : ℤ) [ZMOD (b : ℤ) ^ ℓ]) := by
+  obtain ⟨a, ha, haT⟩ := exists_survivor_exponent b ℓ t hb hℓ ht hpar
+  have hModd : ¬ 2 ∣ M := (Nat.Prime.coprime_iff_not_dvd Nat.prime_two).mp h2M
+  set c := (M + 1) / 2 with hc
+  have h2cM : 2 * c = M + 1 := by omega
+  have hccop : Nat.Coprime c M := by
+    have hd1 : Nat.gcd c M ∣ M + 1 := by
+      rw [← h2cM]; exact Dvd.dvd.mul_left (Nat.gcd_dvd_left c M) 2
+    have hd2 : Nat.gcd c M ∣ M := Nat.gcd_dvd_right c M
+    have : Nat.gcd c M ∣ 1 := by
+      have := Nat.dvd_sub hd1 hd2
+      simpa using this
+    exact Nat.dvd_one.mp this
+  have h2c : 2 * c ≡ 1 [MOD M] := by
+    rw [h2cM]
+    exact ((Nat.modEq_iff_dvd' (by omega)).mpr ⟨1, by omega⟩).symm
+  have hpowc : 2 ^ a * c ^ a ≡ 1 [MOD M] := by
+    have := h2c.pow a
+    rwa [mul_pow, one_pow] at this
+  set X := (n₀ + ℓ) * c ^ a with hX
+  have hXcop : Nat.Coprime X M := Nat.Coprime.mul_left hcop (Nat.Coprime.pow_left _ hccop)
+  refine ⟨a, X % M, ha, ?_, ?_⟩
+  · have h1 : Nat.gcd M X = 1 := (Nat.coprime_comm.mp hXcop)
+    rw [Nat.gcd_rec] at h1
+    exact h1
+  · intro p hp hp2 hpr
+    constructor
+    · calc 2 ^ a * p ≡ 2 ^ a * (X % M) [MOD M] := Nat.ModEq.mul_left _ hpr
+        _ ≡ 2 ^ a * X [MOD M] := Nat.ModEq.mul_left _ (Nat.mod_modEq X M)
+        _ = (n₀ + ℓ) * (2 ^ a * c ^ a) := by rw [hX]; ring
+        _ ≡ (n₀ + ℓ) * 1 [MOD M] := Nat.ModEq.mul_left _ hpowc
+        _ = n₀ + ℓ := by ring
+    · rw [tau_two_pow_mul_prime hp hp2]
+      push_cast
+      exact haT
+
 /-! ### 3l. (K1): the kill progression is a single residue class
 
 The slot-killing conditions of `ConstructionInputs` are pure congruences.  For each slot `j` we
@@ -1273,11 +1378,70 @@ theorem constructionInputs_of_survivorLeaf (b : ℕ) (hb : 3 ≤ b) (hodd : ¬ 2
       (coprime_two_killModulus _ _) hcop ht (fun hd => absurd hd hodd) hKbud
   exact ⟨n, K, hkill n hn, hsurv, hcarry⟩
 
-/-- **The one open obligation on the headline path.**  See `SurvivorLeaf` for the full status
-note: (K2) is qualitative Dirichlet, (K3) is a first moment for `τ`, and what is open is running
-the two together on the same `n`. -/
-theorem survivorLeaf_holds (b : ℕ) (hb : 3 ≤ b) : SurvivorLeaf b := by
+/-- **The residual analytic leaf, in its sharpest form.**  After (K1) (`exists_kill_progression`)
+and (K2) (`exists_survivor_data`), the ONLY thing still missing is this: among the primes of a
+single arithmetic progression `p ≡ r (mod M)` one must find one — of moderate size, `p` is not
+required to be large — at which the divisor function stays small just past `2^a·p`, in the
+precise sense `Σ_{k≥1} τ(2^a p + K + k)/b^k < b^K`.
+
+The hypotheses are exactly what the construction supplies: `M ≤ 2^{b^{K/2}}` and `a ≤ b^{K/2}`,
+so `log(2^a·p) ≈ a + log p` is `O(b^{K/2})` as soon as `p` is polynomial in `M` — i.e. `≪ b^K`,
+the budget.  Heuristically the first moment already closes it: the average of `τ(m)` for
+`m ≍ 2^a p` is `≍ log(2^a p) ≪ b^K`, so the exceptional set has density `≪ log/b^K`.  Making
+that rigorous ALONG THE PRIMES of the progression is a Brun–Titchmarsh (upper-bound sieve, for
+`Σ_{p ≤ Y, p ≡ r} τ(2^a p + c)`) plus a Linnik-type lower bound (to have enough primes below
+`Y = M^{O(1)}`).  Both are `🟡` project-scale, neither is in mathlib.
+
+The `N` parameter is capped by `b^{K/2}`: the prime only has to avoid the finitely many small
+values (`p ≠ 2`, `p > ℓ`), NOT to be arbitrarily large — and indeed it must not be, since the
+carry grows with `log p`. -/
+def CarryLeaf (b : ℕ) : Prop :=
+  ∀ K M r a N : ℕ, 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) → M ≤ 2 ^ (b ^ (K / 2)) →
+    N ≤ b ^ (K / 2) →
+    ∃ p : ℕ, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ carry b tau (2 ^ a * p + K) < (b : ℤ) ^ K
+
+/-- **(K2) + the carry leaf give the survivor leaf.**  The whole of `SurvivorLeaf` except the
+size of the divisor function along one progression of primes is now a theorem. -/
+theorem survivorLeaf_of_carryLeaf (b : ℕ) (hb : 3 ≤ b) (h : CarryLeaf b) : SurvivorLeaf b := by
+  intro ℓ K M n₀ t hℓ hK hM h2M hcop ht hpar hbud
+  obtain ⟨a, r, ha, hrcop, hall⟩ := exists_survivor_data b ℓ M n₀ t hb hℓ hM h2M hcop ht hpar
+  have hK2 : ℓ ≤ K / 2 := by omega
+  have hK21 : 1 ≤ K / 2 := by omega
+  have hpowmono : ∀ i j : ℕ, i ≤ j → b ^ i ≤ b ^ j := fun i j hij =>
+    Nat.pow_le_pow_right (by omega) hij
+  have haK : a ≤ b ^ (K / 2) := le_of_lt (lt_of_lt_of_le ha (hpowmono ℓ (K / 2) hK2))
+  have hNK : max 2 ℓ ≤ b ^ (K / 2) := by
+    refine max_le ?_ ?_
+    · calc (2 : ℕ) ≤ b := by omega
+        _ = b ^ 1 := (pow_one b).symm
+        _ ≤ b ^ (K / 2) := hpowmono 1 (K / 2) hK21
+    · exact le_trans hK2 (le_of_lt (Nat.lt_pow_self (by omega)))
+  obtain ⟨p, hpN, hpp, hpr, hpc⟩ := h K M r a (max 2 ℓ) hM hrcop haK hbud hNK
+  have hp2 : p ≠ 2 := by
+    have : 2 < p := lt_of_le_of_lt (le_max_left 2 ℓ) hpN
+    omega
+  have hpℓ : ℓ < p := lt_of_le_of_lt (le_max_right 2 ℓ) hpN
+  obtain ⟨hmod, htau⟩ := hall p hpp hp2 hpr
+  have hge : ℓ ≤ 2 ^ a * p := by
+    calc ℓ ≤ p := hpℓ.le
+      _ = 1 * p := (one_mul p).symm
+      _ ≤ 2 ^ a * p := Nat.mul_le_mul_right _ (Nat.one_le_two_pow)
+  refine ⟨2 ^ a * p - ℓ, ?_, ?_, ?_⟩
+  · refine Nat.ModEq.add_right_cancel' ℓ ?_
+    rw [Nat.sub_add_cancel hge]
+    exact hmod
+  · rw [Nat.sub_add_cancel hge]
+    exact htau
+  · have he : 2 ^ a * p - ℓ + (ℓ + K) = 2 ^ a * p + K := by omega
+    rw [he]
+    exact hpc
+
+/-- **The one open obligation on the headline path.**  See `CarryLeaf`. -/
+theorem carryLeaf_holds (b : ℕ) (hb : 3 ≤ b) : CarryLeaf b := by
   sorry
+
+theorem survivorLeaf_holds (b : ℕ) (hb : 3 ≤ b) : SurvivorLeaf b :=
+  survivorLeaf_of_carryLeaf b hb (carryLeaf_holds b hb)
 
 /-- **The even-base survivor, off the headline path.**  `ConstructionInputs` in its unrestricted
 form asks for ODD targets too, which for an even base forces the survivor entry `n+ℓ` to be a
