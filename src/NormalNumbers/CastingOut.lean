@@ -1,5 +1,6 @@
 import NormalNumbers.PrimeLambertFour
 import NormalNumbers.CastingOutCount
+import NormalNumbers.CastingOutLambert
 import NormalNumbers.Disjunctive
 
 /-!
@@ -90,7 +91,8 @@ theorem windowDigitSum_lambert_modEq (b : ℕ) (hb : 2 ≤ b) (w : ℕ → ℕ) 
 /-- `G4_b` is the Lambert value of `ω`. -/
 theorem primeLambertAtBase_eq_lambertVal (b : ℕ) :
     primeLambertAtBase b = lambertVal b (fun m => m.primeFactors.card) := by
-  sorry
+  unfold primeLambertAtBase lambertVal
+  exact tsum_congr fun n => by rw [omegaR_eq]
 
 /-- The **Erdős–Borwein constant** in base `b`: `Σ_{n≥1} 1/(bⁿ − 1)`. -/
 noncomputable def erdosBorweinAtBase (b : ℕ) : ℝ := ∑' n : ℕ, 1 / ((b : ℝ) ^ (n + 1) - 1)
@@ -98,7 +100,8 @@ noncomputable def erdosBorweinAtBase (b : ℕ) : ℝ := ∑' n : ℕ, 1 / ((b : 
 /-- `Σ_{n≥1} 1/(bⁿ−1) = Σ_m d(m)/bᵐ` (Lambert series of the divisor count). -/
 theorem erdosBorweinAtBase_eq_lambertVal (b : ℕ) (hb : 2 ≤ b) :
     erdosBorweinAtBase b = lambertVal b (fun m => m.divisors.card) := by
-  sorry
+  unfold erdosBorweinAtBase lambertVal
+  exact tsum_one_div_pow_sub_one hb
 
 /-- The law of the digit sum of `L` independent uniform base-`b` digits, modulo `b − 1`. -/
 noncomputable def normalCastLaw (b L r : ℕ) : ℝ :=
