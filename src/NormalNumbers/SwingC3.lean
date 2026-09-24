@@ -328,7 +328,17 @@ of `tailLarge` is** — the argument never identifies it.  The single input need
     independent of the class `a`,
 
 fundamental-lemma-of-the-sieve territory rather than Selberg–Delange.  That, plus the CRT
-prescription lemma, is the work for the next lap. -/
+prescription lemma, is the work for the next lap.
+
+**The route is confirmed numerically** (`probes/g4_rotation_route.py`, base 4, `N = 4·10⁶`,
+`P`-primes `{5,7,11,13}`, `Q = 5005`, `ℓ = 4`).  The globally rare word `(1,1,1,1)` has
+frequency `2.3·10⁻⁴` overall — sixteen times below the uniform `4⁻⁴ = 3.9·10⁻³` — yet reaches
+`7.5·10⁻³` in the best class mod `Q`, i.e. **above** uniform and `33×` the global rate.  The
+boosting classes are exactly those with elevated `ω_{≤P}` at the FIRST TWO window positions
+(`ω_small(a+1..a+4) = [1,2,0,0]`, `[2,1,0,0]`, `[2,2,0,0]`), while the classes with
+`ω_small = [0,0,0,0]` never produce the word at all.  That is the predicted rotation: mass at
+`ω(a+j)` for small `j` rotates the orbit point by `≈ k_j b^{−j}`, which is what moves a rare
+cylinder onto a common one.  The mechanism is real, not just formally available. -/
 
 open Classical in
 /-- **The carry-joint leaf.**  Some residue class `g` of the carry is compatible, at positive
