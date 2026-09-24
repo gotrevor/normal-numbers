@@ -1,3 +1,12 @@
+
+## Delange slot (KICKOFF-2026-09-24) — CLOSED 2026-09-24
+
+Both ratified theorems in `src/NormalNumbers/DelangeSlot.lean` are PROVED and axiom-clean
+(`[propext, Classical.choice, Quot.sound]`); the file is sorry-free.  L4 (`exists_L4`, the
+route-decisive crux named by the directive) is discharged in `DelangeSlotPNT.lean`; rung 2
+lands in `DelangeSlotTwist.lean`.  See `HANDOFF-2026-09-24-delange-slot-BOTH-PROVED.md`.
+Nothing open in this slot.  Downstream consumer: `TailLargeDecouple` (C3 swing,
+`SwingC3Rotation.lean`) — wiring it needs a separate kickoff.
 # PENDING WORK
 
 ## 2026-09-24 — LIVE CAMPAIGN: the Delange slot (`KICKOFF-2026-09-24-delange-slot.md`)
