@@ -404,4 +404,67 @@ theorem sum_omegaTail_AP_le (b a e R : ℕ) (hb : 2 ≤ b) (ha : a ≠ 0) (hR : 
   rw [tsum_affine_half A (R : ℝ), hA]
   ring
 
+/-! ### The asymptotic form
+
+For `R` past the parameters of the progression the `log_R` term is bounded by `3`, because
+`aR + e + 1 ≤ R² + R ≤ R³`.  So the mean of the carry along a progression is eventually
+`R·(4 log log₂ R + C)` with `C` depending only on the modulus. -/
+
+private lemma natLog_le_three (R a e : ℕ) (hR : a + e + 2 ≤ R) : Nat.log R (a * R + e + 1) ≤ 3 := by
+  have hR2 : 2 ≤ R := by omega
+  have hle : a * R + e + 1 ≤ R * R + R := by
+    have h1 : a * R ≤ R * R := Nat.mul_le_mul_right R (by omega)
+    omega
+  have hlt : a * R + e + 1 < R ^ 4 := by
+    have h2 : R * R + R < R ^ 4 := by
+      have h3 : R ^ 4 = R * R * (R * R) := by ring
+      have h4 : R * R + R ≤ R * R * 2 := by nlinarith
+      have hRR : 4 ≤ R * R := by nlinarith
+      have h5 : R * R * 2 < R * R * (R * R) := by nlinarith
+      omega
+    omega
+  have := Nat.log_lt_of_lt_pow (show a * R + e + 1 ≠ 0 by omega) hlt
+  omega
+
+/-- **The mean of the carry along a progression, in closed form.**  Once `R` exceeds the
+parameters of the progression the only `R`-dependence left is `log log R`.  Stated with the
+hypothesis `a + e + 2 ≤ R` rather than as a filter statement, because in the application the
+offset `e` carries the truncation depth `K(R)` and so moves with `R`. -/
+theorem sum_omegaTail_AP_le' (b a e R : ℕ) (hb : 2 ≤ b) (ha : a ≠ 0) (hR : a + e + 2 ≤ R) :
+    ∑ i ∈ range R, NormalNumbers.CastingOut.omegaTail b (a * i + e)
+      ≤ (R : ℝ) * (4 * Real.log (Nat.log 2 R) + 11 + (omegaNat a : ℝ)) := by
+  have hR2 : 2 ≤ R := by omega
+  have h := sum_omegaTail_AP_le b a e R hb ha hR2
+  have hlog : (Nat.log R (a * R + e + 1) : ℝ) ≤ 3 := by
+    have := natLog_le_three R a e hR
+    exact_mod_cast this
+  have hR1 : (1 : ℝ) ≤ (R : ℝ) := by exact_mod_cast (show 1 ≤ R by omega)
+  nlinarith [h, hlog, hR1]
+
+/-- The filter form, for a truncation depth that does not move with `R`. -/
+theorem sum_omegaTail_AP_le_eventually (b a e : ℕ) (hb : 2 ≤ b) (ha : a ≠ 0) :
+    ∀ᶠ R : ℕ in Filter.atTop, ∑ i ∈ range R,
+        NormalNumbers.CastingOut.omegaTail b (a * i + e)
+      ≤ (R : ℝ) * (4 * Real.log (Nat.log 2 R) + 11 + (omegaNat a : ℝ)) := by
+  filter_upwards [Filter.eventually_ge_atTop (a + e + 2)] with R hRge
+  exact sum_omegaTail_AP_le' b a e R hb ha hRge
+
+/-! ### The summed phase comparison
+
+`PairDecoupleElliott`'s comparison spends a *uniform* bound `E` on `|X i − Y i|`; the mean input
+needs the sum instead.  This is the same proof with the last step left unsummed. -/
+
+lemma abs_norm_sum_phase_sub_le_sum (t : ℝ) (R : ℕ) (X Y : ℕ → ℝ) :
+    |‖∑ i ∈ range R, phase (t * X i)‖ - ‖∑ i ∈ range R, phase (t * Y i)‖|
+      ≤ 4 * Real.pi * |t| * ∑ i ∈ range R, |X i - Y i| := by
+  refine (abs_norm_sub_norm_le _ _).trans ?_
+  rw [← Finset.sum_sub_distrib]
+  refine (norm_sum_le _ _).trans ?_
+  rw [Finset.mul_sum]
+  refine Finset.sum_le_sum fun i _ => ?_
+  refine (norm_phase_sub_phase_le _ _).trans ?_
+  rw [show t * X i - t * Y i = t * (X i - Y i) by ring, abs_mul]
+  ring_nf
+  exact le_refl _
+
 end NormalNumbers.PairDecouple
