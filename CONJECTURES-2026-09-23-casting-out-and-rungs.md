@@ -7,8 +7,16 @@ authorizes a campaign: these are nodes for the conjecture graph, not laps.
 
 ## C1 🎯 Casting-out equidistribution for G4 (an abelian statistic, carries only at the ends)
 
-**Conjecture.** For every `b ≥ 3` and `L ≥ 1`, the digit sums of the length-`L` windows of
-`G4_b = Σ_p 1/(bᵖ−1)` in base `b` are equidistributed mod `b−1`.
+**Conjecture (corrected the same night).** For every `b ≥ 3` and `L ≥ 1`, the digit sums of the
+length-`L` windows of `G4_b = Σ_p 1/(bᵖ−1)` in base `b` have, mod `b−1`, the law they have for a
+NORMAL number: `P(r) = 1/(b−1) + b^{−L}((b−1)[r=0] − 1)/(b−1)`.  ⚠️ The first draft said
+"equidistributed mod b−1", which is **false**: every digit value `d<b` gives `ζ^d` summing to 1,
+not 0, so in base 3 one digit is even with probability 2/3.  Formalized as
+`CastingOut.not_castUniform_of_isNormal` (branch `wip/casting-out`).  The Elliott reduction
+survives: if consecutive `ω` values are jointly equidistributed mod `b^K(b−1)`, the series
+behaves like one with iid uniform-mod-Q coefficients, whose digits are iid uniform.  The
+carries are what supply the `b^{−L}` correction.  Caveat: `ω ≈ log log N` is unbounded, so the
+truncation depth `K` must grow slowly, and a fixed-K hypothesis is not enough.
 
 **The exact reduction (elementary, verified).**  For any real `x`, window digits satisfy
 `Σ d_i ≡ ⌊b^{n+L}x⌋ − ⌊bⁿx⌋ (mod b−1)`.  For `x = Σ ω(m) b^(−m)`:
