@@ -649,6 +649,39 @@ theorem lt_pow_two_mul_of_pad {b K m : ℕ} (h : 2 * (Nat.sqrt m : ℤ) + 2 < (b
     _ ≤ b ^ K * b ^ K := Nat.mul_le_mul h1 h1
     _ = b ^ (2 * K) := by rw [← pow_add]; ring_nf
 
+
+/-! ### 3h. `SubLeafA` is monotone in the word length -/
+
+/-- `SubLeafA` at one fixed word length `ℓ`. -/
+def SubLeafAAt (b ℓ : ℕ) : Prop :=
+  ∀ t : ℕ, t < b ^ ℓ → ∃ n K : ℕ,
+    carry b tau (n + (ℓ + K)) < (b : ℤ) ^ K ∧
+    paddedSum b tau n (ℓ + K) % (b : ℤ) ^ (ℓ + K) = (t : ℤ) * (b : ℤ) ^ K
+
+theorem subLeafA_iff (b : ℕ) : SubLeafA b ↔ ∀ ℓ, 1 ≤ ℓ → SubLeafAAt b ℓ := Iff.rfl
+
+/-- **Longer words are harder.**  A witness for a word of length `ℓ` also witnesses every shorter
+word: enlarge the pad by `ℓ − ℓ'` and the same window works.  So `SubLeafA b` follows from
+`SubLeafAAt b ℓ` along ANY sequence `ℓ → ∞` — one never has to treat small `ℓ` separately, and a
+proof may choose whichever `ℓ` (e.g. `ℓ` a power of `b`) is most convenient. -/
+theorem subLeafAAt_mono (b : ℕ) (hb : 1 ≤ b) {ℓ ℓ' : ℕ} (hle : ℓ' ≤ ℓ)
+    (h : SubLeafAAt b ℓ) : SubLeafAAt b ℓ' := by
+  intro t' ht'
+  have hbpos : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (show 0 < b by omega)
+  have ht : t' * b ^ (ℓ - ℓ') < b ^ ℓ := by
+    have hbp : 0 < b ^ (ℓ - ℓ') := Nat.pow_pos (by omega)
+    calc t' * b ^ (ℓ - ℓ') < b ^ ℓ' * b ^ (ℓ - ℓ') := by
+          exact Nat.mul_lt_mul_of_lt_of_le ht' le_rfl hbp
+      _ = b ^ ℓ := by rw [← pow_add]; congr 1; omega
+  obtain ⟨n, K, hcarry, hsum⟩ := h _ ht
+  refine ⟨n, K + (ℓ - ℓ'), ?_, ?_⟩
+  · rw [show ℓ' + (K + (ℓ - ℓ')) = ℓ + K from by omega]
+    refine hcarry.trans_le (pow_le_pow_right₀ (by exact_mod_cast hb) (by omega))
+  · rw [show ℓ' + (K + (ℓ - ℓ')) = ℓ + K from by omega, hsum]
+    push_cast
+    rw [pow_add]
+    ring
+
 /-! ### 4. The crux leaf -/
 
 /-- **THE CRUX (2026-09-24, after the structured reduction).**  The single open obligation behind

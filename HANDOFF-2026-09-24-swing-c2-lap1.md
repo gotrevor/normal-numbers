@@ -300,3 +300,24 @@ since `τ(m) = m^{o(1)}` (not `m^{1/2}`).  So the admissible window position now
 > equidistribution statement about `τ`-windows, not a construction.
 
 That is the sharpest statement this run produced about what a proof of `ConjC2` must look like.
+
+## Lap 11 addendum (green): `SubLeafA` is monotone in the word length
+
+`SubLeafAAt b ℓ` isolates one word length; `subLeafA_iff` says `SubLeafA b ↔ ∀ ℓ ≥ 1, SubLeafAAt b ℓ`.
+
+**`subLeafAAt_mono`** (proved): `ℓ' ≤ ℓ` and `SubLeafAAt b ℓ` ⟹ `SubLeafAAt b ℓ'`.  A witness for a
+long word also witnesses every shorter one — enlarge the pad by `ℓ − ℓ'` and reuse the same window,
+which only *weakens* the carry requirement.
+
+Why this matters for the attack: `SubLeafA b` now follows from `SubLeafAAt b ℓ` along **any**
+sequence `ℓ → ∞`.  A proof may therefore choose the most convenient word lengths (e.g. `ℓ` a power
+of `b`, or `ℓ` matched to a Weil/Kloosterman modulus) and never has to treat small `ℓ` separately.
+This is exactly the freedom an equidistribution argument wants, given lap 10's verdict that the
+crux must be a counting statement.
+
+**Counting heuristic, recorded for the next lap.**  With `L = ℓ+K` the requirement is ONE linear
+condition mod `b^L` on the window, so over `n ≤ X` one expects `X·b^{−L}` witnesses.  The carry
+needs `b^K ≳ τ_max(X) = X^{o(1)}`, i.e. `K ≳ log X/(log log X · log b)`.  Taking `X = b^{2L}` gives
+`K ≳ 2L/log log X → 0` relative to `L`, so `K ≈ L` is comfortably admissible and the expected
+witness count is `b^{L}`.  The shape is consistent — no barrier at the counting level, which is
+what the probe already showed empirically.
