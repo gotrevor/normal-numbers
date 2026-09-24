@@ -1909,6 +1909,94 @@ theorem sum_card_shift_dvd_le' (c e M r Y D : ℕ) (hM : 0 < M)
         have := SwingC2Moment.sum_div_le_log (Y / M) D
         omega
 
+/-! ### The shifted first moment over a progression, with no side conditions
+
+The three ingredients now combine.  Along the progression `n ≡ r (mod M)` with `u` ODD and
+`gcd(M, 2^a r + u) = 1`:
+
+* the even `d` contribute nothing, because `2^a n + u` is odd (`filter_shift_eq_empty_even`);
+* the `d` sharing a factor with `M` contribute nothing (`filter_shift_eq_empty`);
+* every surviving `d` is counted by `SwingC2Moment.card_shift_dvd_le`.
+
+So the shifted first moment obeys the SAME bound as the unshifted one — no `τ(M)` and no
+`2^{ω(M)}` loss anywhere. -/
+
+/-- Even divisors of an odd shifted value contribute nothing. -/
+theorem filter_shift_eq_empty_even {a u M r Y d : ℕ} (ha : 1 ≤ a) (hu : ¬ 2 ∣ u)
+    (hd : 2 ∣ d) :
+    (Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ 2 ^ a * n + u) = ∅ := by
+  classical
+  rw [Finset.filter_eq_empty_iff]
+  intro n _ hn
+  obtain ⟨-, hdvd⟩ := hn
+  have h2 : (2 : ℕ) ∣ 2 ^ a * n + u := hd.trans hdvd
+  have h3 : (2 : ℕ) ∣ 2 ^ a * n :=
+    Dvd.dvd.mul_right (dvd_pow_self 2 (by omega : a ≠ 0)) n
+  exact hu (by omega)
+
+/-- **The crude incidence bound with NO side condition on the divisors.** -/
+theorem sum_card_shift_dvd_le_odd (a u M r Y D : ℕ) (ha : 1 ≤ a) (hM : 0 < M)
+    (hu : ¬ 2 ∣ u) (hcM : Nat.Coprime M (2 ^ a * r + u)) :
+    ∑ d ∈ Finset.Icc 1 D,
+        ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ 2 ^ a * n + u)).card
+      ≤ (Y / M) * (Nat.log 2 D + 2) + D := by
+  classical
+  have hstep : ∀ d ∈ Finset.Icc 1 D,
+      ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ 2 ^ a * n + u)).card
+        ≤ Y / M / d + 1 := by
+    intro d hd
+    have hd0 : 0 < d := (Finset.mem_Icc.1 hd).1
+    by_cases hdodd : 2 ∣ d
+    · rw [filter_shift_eq_empty_even ha hu hdodd]; simp
+    · by_cases hdM : Nat.Coprime d M
+      · have hcd : Nat.Coprime (2 ^ a) d :=
+          Nat.Coprime.pow_left _ ((Nat.Prime.coprime_iff_not_dvd Nat.prime_two).2 hdodd)
+        have := SwingC2Moment.card_shift_dvd_le (2 ^ a) u M r Y d hd0 hM hcd hdM
+        have hdiv : Y / M / d = Y / (d * M) := by
+          rw [Nat.div_div_eq_div_mul, Nat.mul_comm M d]
+        omega
+      · rw [filter_shift_eq_empty hcM hdM]; simp
+  calc ∑ d ∈ Finset.Icc 1 D,
+        ((Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ 2 ^ a * n + u)).card
+      ≤ ∑ d ∈ Finset.Icc 1 D, (Y / M / d + 1) := Finset.sum_le_sum hstep
+    _ = (∑ d ∈ Finset.Icc 1 D, Y / M / d) + D := by
+        rw [Finset.sum_add_distrib, Finset.sum_const, Nat.card_Icc, smul_eq_mul, mul_one]
+        omega
+    _ ≤ (Y / M) * (Nat.log 2 D + 2) + D := by
+        have := SwingC2Moment.sum_div_le_log (Y / M) D
+        omega
+
+/-- **The shifted first moment along the progression, unconditional on the divisor range.**
+This is the full-progression analogue of `tau_sum_AP` for the shifted values `2^a n + u`,
+`u` odd and coprime-compatible with `M`.  It is the elementary engine the crux needs: the only
+thing still missing afterwards is the transfer from the integers of the progression to its
+PRIMES. -/
+theorem tau_shift_sum_AP_odd (a u M r Y : ℕ) (ha : 1 ≤ a) (hM : 0 < M) (hu : ¬ 2 ∣ u)
+    (hcM : Nat.Coprime M (2 ^ a * r + u)) :
+    ∑ n ∈ SwingC2Moment.apSet M r Y, tau (2 ^ a * n + u)
+      ≤ 2 * ((Y / M) * (Nat.log 2 (Nat.sqrt (2 ^ a * Y + u)) + 2)
+              + Nat.sqrt (2 ^ a * Y + u)) := by
+  classical
+  set D : ℕ := Nat.sqrt (2 ^ a * Y + u) with hD
+  have hmem : ∀ n ∈ SwingC2Moment.apSet M r Y, n ≤ Y := by
+    intro n hn
+    rw [SwingC2Moment.apSet, Finset.mem_filter, Finset.mem_Icc] at hn
+    exact hn.1.2
+  have h1 := SwingC2Moment.tau_shift_sum_le (2 ^ a) u Y (SwingC2Moment.apSet M r Y) hmem
+  have hfil : ∀ d : ℕ, (SwingC2Moment.apSet M r Y).filter (fun n => d ∣ 2 ^ a * n + u)
+      = (Finset.Icc 1 Y).filter (fun n => n % M = r % M ∧ d ∣ 2 ^ a * n + u) := by
+    intro d
+    rw [SwingC2Moment.apSet, Finset.filter_filter]
+  have h2 : ∑ d ∈ Finset.Icc 1 D,
+      ((SwingC2Moment.apSet M r Y).filter (fun n => d ∣ 2 ^ a * n + u)).card
+        ≤ (Y / M) * (Nat.log 2 D + 2) + D := by
+    simp only [hfil]
+    exact sum_card_shift_dvd_le_odd a u M r Y D ha hM hu hcM
+  have h3 : ∑ n ∈ SwingC2Moment.apSet M r Y, tau (2 ^ a * n + u)
+      = ∑ n ∈ SwingC2Moment.apSet M r Y, (2 ^ a * n + u).divisors.card := rfl
+  rw [h3]
+  exact le_trans h1 (Nat.mul_le_mul_left 2 h2)
+
 /-- **The sieve input, in its final single-inequality form.**  For one family `P` of primes of
 the progression and one shift `e = K+1+k`, the number of *divisor incidences*
 
