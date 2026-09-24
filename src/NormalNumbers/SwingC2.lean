@@ -656,6 +656,50 @@ theorem subLeafA_three_two (t : ℕ) (ht : t < 9) : ∃ n K : ℕ,
   · exact ⟨2637, 5, by native_decide, by native_decide⟩
   · exact ⟨5236, 5, by native_decide, by native_decide⟩
 
+/-! ### 6. `SubLeafB` witnesses (base 3, `ℓ = 1`) -/
+
+/-- `SubLeafB 3` witness at `ℓ = 1`, `t = 0` (`n = 2109`, `K = 5`): all six window entries are
+`q^a·s` with `s` squarefree.  Found by `probes/swingc2_window.py`. -/
+theorem subLeafB_three_one_0 : ∃ n K : ℕ, ∃ q a s : ℕ → ℕ,
+    2 * (Nat.sqrt (n + (1 + K)) : ℤ) + 2 < (3 : ℤ) ^ K ∧
+    (∀ j < 1 + K, Structured (n + 1 + j) (q j) (a j) (s j)) ∧
+    (∑ j ∈ range (1 + K),
+        (((a j + 1) * 2 ^ ((s j).primeFactors.card) : ℕ) : ℤ) * (3 : ℤ) ^ (1 + K - 1 - j))
+        % (3 : ℤ) ^ (1 + K) = (0 : ℤ) * (3 : ℤ) ^ K := by
+  refine ⟨2109, 5, fun j => [3, 2, 2, 2, 3, 3].getD j 2, fun j => [0, 0, 6, 0, 0, 2].getD j 0,
+    fun j => [2110, 2111, 33, 2113, 2114, 235].getD j 1, by native_decide, ?_, by native_decide⟩
+  intro j hj
+  interval_cases j <;>
+    exact ⟨by norm_num, by native_decide, by decide, by norm_num⟩
+
+/-- `SubLeafB 3` witness at `ℓ = 1`, `t = 1` (`n = 1022`, `K = 5`): all six window entries are
+`q^a·s` with `s` squarefree.  Found by `probes/swingc2_window.py`. -/
+theorem subLeafB_three_one_1 : ∃ n K : ℕ, ∃ q a s : ℕ → ℕ,
+    2 * (Nat.sqrt (n + (1 + K)) : ℤ) + 2 < (3 : ℤ) ^ K ∧
+    (∀ j < 1 + K, Structured (n + 1 + j) (q j) (a j) (s j)) ∧
+    (∑ j ∈ range (1 + K),
+        (((a j + 1) * 2 ^ ((s j).primeFactors.card) : ℕ) : ℤ) * (3 : ℤ) ^ (1 + K - 1 - j))
+        % (3 : ℤ) ^ (1 + K) = (1 : ℤ) * (3 : ℤ) ^ K := by
+  refine ⟨1022, 5, fun j => [2, 2, 5, 3, 2, 2].getD j 2, fun j => [0, 10, 2, 3, 0, 2].getD j 0,
+    fun j => [1023, 1, 41, 38, 1027, 257].getD j 1, by native_decide, ?_, by native_decide⟩
+  intro j hj
+  interval_cases j <;>
+    exact ⟨by norm_num, by native_decide, by decide, by norm_num⟩
+
+/-- `SubLeafB 3` witness at `ℓ = 1`, `t = 2` (`n = 1342`, `K = 5`): all six window entries are
+`q^a·s` with `s` squarefree.  Found by `probes/swingc2_window.py`. -/
+theorem subLeafB_three_one_2 : ∃ n K : ℕ, ∃ q a s : ℕ → ℕ,
+    2 * (Nat.sqrt (n + (1 + K)) : ℤ) + 2 < (3 : ℤ) ^ K ∧
+    (∀ j < 1 + K, Structured (n + 1 + j) (q j) (a j) (s j)) ∧
+    (∑ j ∈ range (1 + K),
+        (((a j + 1) * 2 ^ ((s j).primeFactors.card) : ℕ) : ℤ) * (3 : ℤ) ^ (1 + K - 1 - j))
+        % (3 : ℤ) ^ (1 + K) = (2 : ℤ) * (3 : ℤ) ^ K := by
+  refine ⟨1342, 5, fun j => [2, 2, 2, 3, 2, 2].getD j 2, fun j => [0, 6, 0, 0, 0, 2].getD j 0,
+    fun j => [1343, 21, 1345, 1346, 1347, 337].getD j 1, by native_decide, ?_, by native_decide⟩
+  intro j hj
+  interval_cases j <;>
+    exact ⟨by norm_num, by native_decide, by decide, by norm_num⟩
+
 end NormalNumbers.SwingC2
 
 namespace NormalNumbers.CastingOut
