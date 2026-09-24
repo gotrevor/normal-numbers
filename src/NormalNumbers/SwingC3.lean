@@ -1,6 +1,6 @@
 import NormalNumbers.CastingOut
 import NormalNumbers.PowerBaseCount
-import NormalNumbers.SwingC3Carry
+import NormalNumbers.SwingC3Split
 
 /-!
 # Swing at C3: `G4` is rich (every word at positive lower density)
@@ -309,9 +309,23 @@ is why `OmegaCarryJoint` couples `ω`-residues to a carry residue rather than to
 and why it cannot be weakened to a pure statement about `ω mod b` alone: the carry recursion
 `(ω + c) / b` sees `ω div b`, not just `ω mod b`.
 
-What is still missing is the joint law itself: equidistribution of `ω mod b` is already
-Selberg–Delange-grade (the generating Dirichlet series is `ζ(s)^z G(s,z)`), so this leaf is not
-elementary and is the right place for the campaign's next analytic investment. -/
+**The softer route (next attack), set up in `SwingC3Split.lean`.**  Equidistribution of
+`ω mod b` is Selberg–Delange-grade, but the crux may not need it.  Split
+`ω = ω_{≤P} + ω_{>P}`.  The small part is periodic (`omegaSmall_congr_of_modEq`), so along an
+arithmetic progression `n ≡ a (mod Q)`, `Q = ∏_{p ≤ P} p`, the vector
+`(ω_{≤P}(n+1), …, ω_{≤P}(n+L))` is a CONSTANT determined by `a`, and by CRT with primes `> L`
+(so no prime divides two window entries) that constant can be made an ARBITRARY vector of
+counts.  Since the digit window is the adder automaton run on `ω_{≤P} + ω_{>P}`
+(`omegaCarry_succ_split`), moving `a` translates the digit window by an arbitrary amount while
+leaving the `ω_{>P}` input untouched.  The digit-window law is then a mixture, over `a`, of
+*shifted copies of one law*, and every word picks up positive density — **without ever
+identifying that law**.  The single input this needs is
+
+    `OmegaLargeDecouple`: the joint law of `(ω_{>P}(n+1), …, ω_{>P}(n+L))` along `n ≡ a (mod Q)`
+    is asymptotically independent of `a`,
+
+fundamental-lemma-of-the-sieve territory rather than Selberg–Delange.  That is the leaf for the
+next lap. -/
 
 open Classical in
 /-- **The carry-joint leaf.**  Some residue class `g` of the carry is compatible, at positive
