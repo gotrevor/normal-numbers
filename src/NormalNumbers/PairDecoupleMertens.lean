@@ -27,7 +27,7 @@ above the cut `y`, of which each single term has at most `log_y` many
 tree) into the first term at `y = R` gives the `log log R` shape — `sum_omegaNat_AP_le_logLog`.
 -/
 
-open Finset NormalNumbers.CastingOut
+open Finset Topology NormalNumbers.CastingOut
 
 namespace NormalNumbers.PairDecouple
 
@@ -621,5 +621,123 @@ theorem abs_shiftCorr_sub_trunc_le_logLog (b : ℕ) (hb : 2 ≤ b) (p q : ℕ) (
     mul_le_mul_of_nonneg_left hsum hpi
   refine hstep.trans (le_of_eq ?_)
   field_simp
+
+/-! ### A `log log log` admissible depth
+
+With the `log log R` numerator in hand, a depth `K(R) ≍ log_b log log R` already kills the
+truncation error.  `depthLL` is such a depth, written so that `b ^ depthLL b R` exceeds
+`(log₂ log₂ R + 1)²` while `depthLL b R` itself is `O(log log log R)`. -/
+
+/-- `Nat.log b` tends to infinity. -/
+lemma tendsto_natLog_atTop (b : ℕ) (hb : 2 ≤ b) :
+    Filter.Tendsto (fun n : ℕ => Nat.log b n) Filter.atTop Filter.atTop := by
+  refine Filter.tendsto_atTop_atTop.mpr fun M => ⟨b ^ M, fun n hn => ?_⟩
+  have h : Nat.log b (b ^ M) ≤ Nat.log b n := Nat.log_mono_right hn
+  rwa [Nat.log_pow (by omega)] at h
+
+/-- `log m ≤ (log₂ m + 1) log 2`. -/
+lemma log_le_natLog_succ (m : ℕ) : Real.log m ≤ ((Nat.log 2 m : ℝ) + 1) * Real.log 2 := by
+  rcases Nat.eq_zero_or_pos m with rfl | hm
+  · simp only [Nat.cast_zero, Real.log_zero, Nat.log_zero_right, Nat.cast_zero, zero_add, one_mul]
+    exact (Real.log_pos (by norm_num)).le
+  have hlt : m < 2 ^ (Nat.log 2 m + 1) := Nat.lt_pow_succ_log_self (by norm_num) m
+  have hR : (m : ℝ) ≤ (2 : ℝ) ^ (Nat.log 2 m + 1) := by
+    have : ((m : ℕ) : ℝ) ≤ ((2 ^ (Nat.log 2 m + 1) : ℕ) : ℝ) := by exact_mod_cast hlt.le
+    push_cast at this; exact this
+  have hm0 : (0 : ℝ) < m := by exact_mod_cast hm
+  calc Real.log m ≤ Real.log ((2 : ℝ) ^ (Nat.log 2 m + 1)) := Real.log_le_log hm0 hR
+    _ = ((Nat.log 2 m : ℝ) + 1) * Real.log 2 := by rw [Real.log_pow]; push_cast; ring
+
+/-- The `log log log` truncation depth. -/
+def depthLL (b R : ℕ) : ℕ := Nat.log b ((Nat.log 2 (Nat.log 2 R) + 1) ^ 2) + 1
+
+/-- The depth is what it claims: `b ^ depthLL b R > (log₂ log₂ R + 1)²`. -/
+lemma pow_depthLL_gt (b R : ℕ) (hb : 2 ≤ b) :
+    ((Nat.log 2 (Nat.log 2 R) + 1 : ℕ) : ℝ) ^ 2 < (b : ℝ) ^ depthLL b R := by
+  have h : (Nat.log 2 (Nat.log 2 R) + 1) ^ 2 < b ^ depthLL b R :=
+    Nat.lt_pow_succ_log_self (by omega) _
+  have : (((Nat.log 2 (Nat.log 2 R) + 1) ^ 2 : ℕ) : ℝ) < ((b ^ depthLL b R : ℕ) : ℝ) := by
+    exact_mod_cast h
+  push_cast at this
+  push_cast
+  exact this
+
+/-- The numerator of the mean truncation error. -/
+noncomputable def meanTruncNum (p q P : ℕ) (t : ℝ) (R : ℕ) : ℝ :=
+  4 * Real.pi * |t| * (2 * (4 * Real.log (Nat.log 2 R) + 11
+        + (omegaNat (p * primorialLe P) : ℝ))
+      + 2 * (4 * Real.log (Nat.log 2 R) + 11 + (omegaNat (q * primorialLe P) : ℝ)))
+
+/-- **The mean truncation error vanishes at depth `log_b log log R`.** -/
+theorem tendsto_meanTruncErr_depthLL (b p q P : ℕ) (hb : 2 ≤ b) (t : ℝ) :
+    Filter.Tendsto (fun R : ℕ => meanTruncNum p q P t R / (b : ℝ) ^ depthLL b R)
+      Filter.atTop (𝓝 0) := by
+  set C₁ : ℝ := 4 * Real.pi * |t| * 16 with hC₁
+  set C₂ : ℝ := 4 * Real.pi * |t| * (2 * (11 + (omegaNat (p * primorialLe P) : ℝ))
+      + 2 * (11 + (omegaNat (q * primorialLe P) : ℝ))) with hC₂
+  have hC₁0 : 0 ≤ C₁ := by rw [hC₁]; positivity
+  have hC₂0 : 0 ≤ C₂ := by rw [hC₂]; positivity
+  -- the majorant in `u = log₂ log₂ R`
+  set g : ℕ → ℝ := fun n => C₁ / ((n : ℝ) + 1) + C₂ / (((n : ℝ) + 1) ^ 2) with hg
+  have hgt : Filter.Tendsto g Filter.atTop (𝓝 0) := by
+    have hden : Filter.Tendsto (fun n : ℕ => ((n : ℝ) + 1)) Filter.atTop Filter.atTop :=
+      Filter.tendsto_atTop_add_const_right _ 1 tendsto_natCast_atTop_atTop
+    have hden2 : Filter.Tendsto (fun n : ℕ => ((n : ℝ) + 1) ^ 2) Filter.atTop Filter.atTop := by
+      refine Filter.tendsto_atTop_mono (fun n => ?_) hden
+      have : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+      nlinarith
+    have h1 : Filter.Tendsto (fun n : ℕ => C₁ / ((n : ℝ) + 1)) Filter.atTop (𝓝 0) :=
+      Filter.Tendsto.div_atTop tendsto_const_nhds hden
+    have h2 : Filter.Tendsto (fun n : ℕ => C₂ / (((n : ℝ) + 1) ^ 2)) Filter.atTop (𝓝 0) :=
+      Filter.Tendsto.div_atTop tendsto_const_nhds hden2
+    simpa [hg] using h1.add h2
+  have hu : Filter.Tendsto (fun R : ℕ => Nat.log 2 (Nat.log 2 R)) Filter.atTop Filter.atTop :=
+    (tendsto_natLog_atTop 2 le_rfl).comp (tendsto_natLog_atTop 2 le_rfl)
+  have hcomp : Filter.Tendsto (fun R : ℕ => g (Nat.log 2 (Nat.log 2 R))) Filter.atTop (𝓝 0) :=
+    hgt.comp hu
+  refine squeeze_zero (fun R => ?_) (fun R => ?_) hcomp
+  · have hden : (0 : ℝ) < (b : ℝ) ^ depthLL b R := by
+      have : (0 : ℝ) < (b : ℝ) := by
+        have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+        linarith
+      positivity
+    have hnum : 0 ≤ meanTruncNum p q P t R := by
+      rw [meanTruncNum]
+      have h1 : 0 ≤ Real.log (Nat.log 2 R) := Real.log_natCast_nonneg _
+      positivity
+    positivity
+  · set u : ℕ := Nat.log 2 (Nat.log 2 R) with hu'
+    have hden : (0 : ℝ) < (b : ℝ) ^ depthLL b R := by
+      have : (0 : ℝ) < (b : ℝ) := by
+        have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+        linarith
+      positivity
+    have hu1 : (0 : ℝ) < (u : ℝ) + 1 := by positivity
+    have hnumle : meanTruncNum p q P t R ≤ C₁ * ((u : ℝ) + 1) + C₂ := by
+      have hlog := log_le_natLog_succ (Nat.log 2 R)
+      have hl2 : Real.log 2 ≤ 1 := by linarith [Real.log_two_lt_d9]
+      have hlog' : Real.log (Nat.log 2 R) ≤ (u : ℝ) + 1 := by
+        refine hlog.trans ?_
+        rw [← hu']
+        nlinarith [hu1]
+      rw [meanTruncNum, hC₁, hC₂]
+      nlinarith [hlog', Real.pi_pos, abs_nonneg t]
+    have hdenge : ((u : ℝ) + 1) ^ 2 ≤ (b : ℝ) ^ depthLL b R := by
+      have := pow_depthLL_gt b R hb
+      rw [← hu'] at this
+      push_cast at this ⊢
+      linarith
+    have hA0 : 0 ≤ meanTruncNum p q P t R := by
+      rw [meanTruncNum]
+      have h1 : 0 ≤ Real.log (Nat.log 2 R) := Real.log_natCast_nonneg _
+      positivity
+    have hu2 : (0 : ℝ) < ((u : ℝ) + 1) ^ 2 := by positivity
+    calc meanTruncNum p q P t R / (b : ℝ) ^ depthLL b R
+        ≤ (C₁ * ((u : ℝ) + 1) + C₂) / ((u : ℝ) + 1) ^ 2 := by
+          rw [div_le_div_iff₀ hden hu2]
+          nlinarith [hnumle, hdenge, hA0, hu2, hC₁0, hC₂0, hu1]
+      _ = g u := by
+          rw [hg]
+          field_simp
 
 end NormalNumbers.PairDecouple
