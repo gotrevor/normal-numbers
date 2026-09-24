@@ -165,17 +165,106 @@ theorem stoneham23_digit_six_eq_zero :
   rw [hcast, ← hpdef, hfl, Int.toNat_natCast]
   omega
 
+/-- Single-digit occurrence counts are residue counts over `range n`. -/
+theorem countOccurrences_zero_eq_card (s : ℕ → ℕ) (n : ℕ) :
+    countOccurrences [0] ((List.range n).map s)
+      = ((Finset.range n).filter fun i => s i = 0).card := by
+  classical
+  have hset : ((Finset.range (n + 1)).filter
+        fun i => i + ([0] : List ℕ).length ≤ n ∧ MatchesAt s [0] i)
+      = ((Finset.range n).filter fun i => s i = 0) := by
+    ext i
+    simp only [Finset.mem_filter, Finset.mem_range, List.length_cons, List.length_nil,
+      MatchesAt, Nat.zero_add]
+    constructor
+    · rintro ⟨-, h1, h2⟩
+      exact ⟨by omega, by simpa using h2 0 (by norm_num)⟩
+    · rintro ⟨h1, h2⟩
+      refine ⟨by omega, by omega, fun j hj => ?_⟩
+      obtain rfl : j = 0 := by omega
+      simpa using h2
+  rw [countOccurrences_range_map, hset]
+
 /-- **α₂,₃ is not simply normal in base 6**: the frequency of the digit `0` does not tend to
 `1/6`. -/
 theorem not_simplyNormal_six_stoneham23 :
     ¬ Tendsto (fun n : ℕ =>
         (countOccurrences [0] ((List.range n).map (digitOf 6 (Int.fract stoneham23))) : ℝ) / n)
       atTop (𝓝 (1 / 6)) := by
-  sorry
+  classical
+  intro hlim
+  obtain ⟨M, hM⟩ := stoneham23_digit_six_eq_zero
+  set s : ℕ → ℕ := digitOf 6 (Int.fract stoneham23) with hs
+  set Z : ℕ → ℕ := fun n => ((Finset.range n).filter fun i => s i = 0).card with hZ
+  have hcount : ∀ n, countOccurrences [0] ((List.range n).map s) = Z n := fun n =>
+    countOccurrences_zero_eq_card s n
+  rw [Metric.tendsto_atTop] at hlim
+  obtain ⟨K, hK⟩ := hlim (1 / 100) (by norm_num)
+  set m : ℕ := max (max K 100) M with hm
+  have hmM : m ≥ M := le_max_right _ _
+  have hm3 : m < 3 ^ m := Nat.lt_pow_self (by norm_num)
+  set n1 : ℕ := 3 ^ m with hn1
+  set n2 : ℕ := 11 * 3 ^ m / 10 with hn2
+  have hK100 : max K 100 ≤ m := le_max_left _ _
+  have hn1K : K ≤ n1 := by omega
+  have hn1_100 : 100 ≤ n1 := by omega
+  have hn12 : n1 ≤ n2 := by omega
+  have hn2K : K ≤ n2 := le_trans hn1K hn12
+  -- forced zeros on `[n1, n2)`
+  have hforced : ∀ i, i ∈ Finset.Ico n1 n2 → s i = 0 := by
+    intro i hi
+    rw [Finset.mem_Ico] at hi
+    exact hM m hmM i hi.1 hi.2
+  have hstep : Z n1 + (n2 - n1) ≤ Z n2 := by
+    have hdisj : Disjoint ((Finset.range n1).filter fun i => s i = 0) (Finset.Ico n1 n2) := by
+      rw [Finset.disjoint_left]
+      intro a ha hb
+      rw [Finset.mem_filter, Finset.mem_range] at ha
+      rw [Finset.mem_Ico] at hb
+      omega
+    have hsub : ((Finset.range n1).filter fun i => s i = 0) ∪ (Finset.Ico n1 n2)
+        ⊆ (Finset.range n2).filter fun i => s i = 0 := by
+      intro a ha
+      rw [Finset.mem_union] at ha
+      rw [Finset.mem_filter, Finset.mem_range]
+      rcases ha with ha | ha
+      · rw [Finset.mem_filter, Finset.mem_range] at ha
+        exact ⟨by omega, ha.2⟩
+      · rw [Finset.mem_Ico] at ha
+        exact ⟨ha.2, hforced a (Finset.mem_Ico.mpr ha)⟩
+    have := Finset.card_le_card hsub
+    rwa [Finset.card_union_of_disjoint hdisj, Nat.card_Ico] at this
+  -- the two frequency estimates
+  have h1 := hK n1 hn1K
+  have h2 := hK n2 hn2K
+  rw [Real.dist_eq, abs_lt] at h1 h2
+  simp only [hcount] at h1 h2
+  have hn1R : (0:ℝ) < n1 := by positivity
+  have hn2R : (0:ℝ) < n2 := by
+    have : (0:ℕ) < n2 := by omega
+    exact_mod_cast this
+  have e1 : (1/6 - 1/100) * (n1:ℝ) < (Z n1 : ℝ) := by
+    have hx : (1/6 - 1/100 : ℝ) < (Z n1 : ℝ) / n1 := by linarith [h1.1]
+    rwa [lt_div_iff₀ hn1R] at hx
+  have e2 : (Z n2 : ℝ) < (1/6 + 1/100) * (n2:ℝ) := by
+    have hx : (Z n2 : ℝ) / n2 < (1/6 + 1/100 : ℝ) := by linarith [h2.2]
+    rwa [div_lt_iff₀ hn2R] at hx
+  have e3 : (Z n1 : ℝ) + ((n2:ℝ) - n1) ≤ (Z n2 : ℝ) := by
+    have : (Z n1 + (n2 - n1) : ℕ) ≤ Z n2 := hstep
+    have hc := (Nat.cast_le (α := ℝ)).2 this
+    push_cast [Nat.cast_sub hn12] at hc
+    linarith
+  have hgap : 10 * n2 + 10 > 11 * n1 := by omega
+  have hgapR : 10 * (n2:ℝ) + 10 > 11 * (n1:ℝ) := by exact_mod_cast hgap
+  have h100 : (100:ℝ) ≤ (n1:ℝ) := by exact_mod_cast hn1_100
+  linarith
 
 /-- Hence not normal in base 6 (Bailey–Borwein 2012). -/
 theorem not_isNormal_six_stoneham23 : ¬ IsNormal 6 stoneham23 := by
-  sorry
+  intro hn
+  refine not_simplyNormal_six_stoneham23 ?_
+  have := hn [0] (by simp) (by intro d hd; simp only [List.mem_singleton] at hd; omega)
+  simpa using this
 
 /-- **×3 abelian lifting (PARKED, ~20%).** -/
 def TimesThreeLifting : Prop :=
@@ -188,6 +277,11 @@ def OddMultiplierLifting : Prop :=
     IsNormal 2 x
 
 theorem oddMultiplierLifting_of_timesThree (h : TimesThreeLifting) : OddMultiplierLifting := by
-  sorry
+  intro x hx
+  have h1 := hx 1 ⟨0, by norm_num⟩
+  have h3 := hx 3 ⟨1, by norm_num⟩
+  rw [Nat.cast_one, one_mul] at h1
+  rw [show ((3 : ℕ) : ℝ) = 3 from by norm_num] at h3
+  exact h x h1 h3
 
 end NormalNumbers.Failures
