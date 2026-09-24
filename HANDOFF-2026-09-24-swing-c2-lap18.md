@@ -159,3 +159,39 @@ for `|P| > 0`.
 ### Chain as it stands
     ConjC2 ⟸ … ⟸ SurvivorLeaf ⟸ CarryLeaf ⟸ TauMomentPrimes ⟸ TauMomentPrimesShift   ← OPEN
 with every `⟸` a machine-checked implication.
+
+## Lap 18e — Markov step discharged; the crux is now a pure counting inequality
+
+`ShiftedDivisorIncidence b` (new, the last link): for one family `P` of primes of the
+progression and one shift `e = K+1+k`,
+
+    4(kb+1) · Σ_{d ≤ √(2^a Y + e)} #{p ∈ P : d ∣ 2^a p + e}  ≤  b^K (k+1) · |P|,
+    kb = 2√(2^a Y + K).
+
+`tauMomentPrimesShift_of_incidence` — **proved** (Markov over the exceptional set, then
+`SwingC2Moment.tau_shift_sum_le`, then one cancellation of `T = b^K(k+1)`).
+
+So the sole open obligation on the headline path, `shiftedDivisorIncidence_holds`, contains
+**no divisor function, no carry, no series and no `τ` at all** — it is a statement about how
+often the primes of one arithmetic progression are hit by the residue classes
+`2^a p ≡ −e (mod d)`.  Each inner count is `#(P ∩ one class mod lcm(d,M))`, i.e. `π(Y;q,·)`,
+and the inequality is precisely Brun–Titchmarsh summed over `d`, against a budget that has
+`b^K` against `log(2^a Y)` — exponential slack.
+
+### Final chain (every `⟸` machine-checked)
+    ConjC2 ⟸ tau_windowPrescribable ⟸ WindowPrescribable ⟸ WindowShape ⟸ SubLeafA
+          ⟸ ConstructionInputsB ⟸ SurvivorLeaf ⟸ CarryLeaf ⟸ TauMomentPrimes
+          ⟸ TauMomentPrimesShift ⟸ ShiftedDivisorIncidence     ← the only OPEN leaf
+
+### Next lap
+Build the Selberg-sieve instantiation for a progression.  Mathlib's `SelbergSieve.lean` stops at
+the Λ² diagonalisation (`lambdaSquared_mainSum_eq_diag_quad_form`); the missing half — the
+choice of the optimal `λ`, `selbergBoundingSum`, `siftedSum_le` — exists in
+`PrimeNumberTheoremAnd/Mathlib/NumberTheory/Sieve/Selberg.lean` (already downloaded under
+`.lake/packages`, but NOT a declared dependency of this repo, and built against a different
+mathlib rev — do not add the require blindly; vendor or reprove).
+Two options, in order of preference:
+1. Reprove the Selberg optimisation on top of mathlib's `BoundingSieve` (bounded: ~500 lines,
+   and mathlib already supplies the diagonalised quadratic form, which is the hard part).
+2. Pick `P` = *all* primes in `(N,Y]` of the class and bound the incidences by the FULL
+   progression count (no sieve) — refuted above (overshoots by `log²`), so only (1) is live.

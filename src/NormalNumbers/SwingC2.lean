@@ -1612,6 +1612,80 @@ def TauMomentPrimesShift (b : ℕ) : Prop :=
       ∀ k : ℕ, 2 * (2 * Nat.sqrt (2 ^ a * Y + K) + 1) *
           (P.filter (fun p => b ^ K * (k + 1) < tau (2 ^ a * p + K + 1 + k))).card ≤ P.card
 
+/-- **The sieve input, in its final single-inequality form.**  For one family `P` of primes of
+the progression and one shift `e = K+1+k`, the total number of *divisor incidences*
+
+    Σ_{d ≤ √(2^a Y + e)} #{p ∈ P : d ∣ 2^a p + e}
+
+is at most `b^K(k+1)|P| / (4(kb+1))`, where `kb = 2√(2^a Y + K)`.
+
+This is exactly what Brun–Titchmarsh gives: each inner count is `π(Y; lcm(d,M), ·)` — the primes
+of `P` in one residue class modulo `lcm(d, M)` — and
+`π(Y;q,·) ≪ Y/(φ(q) log(Y/q))` summed over `d ≤ Y^{0.6}` yields `≪ |P|·log(2^a Y)`, against a
+budget `b^K(k+1)|P|/(4(kb+1))` with `kb ≈ 2^{a/2}√Y` and `b^K` exponentially larger than
+`log(2^a Y)`.  (An *integer* count of the incidences does NOT suffice: it overshoots `|P|` by
+`log²`.  The gain of one logarithm from the sieve is load-bearing.) -/
+def ShiftedDivisorIncidence (b : ℕ) : Prop :=
+  ∀ K M r a N : ℕ, 1 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
+    M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
+    ∃ Y : ℕ, ∃ P : Finset ℕ,
+      (∀ p ∈ P, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ p ≤ Y) ∧ 0 < P.card ∧
+      ∀ k : ℕ,
+        4 * (2 * Nat.sqrt (2 ^ a * Y + K) + 1) *
+            (∑ d ∈ Finset.Icc 1 (Nat.sqrt (2 ^ a * Y + (K + 1 + k))),
+              (P.filter (fun p => d ∣ 2 ^ a * p + (K + 1 + k))).card)
+          ≤ b ^ K * (k + 1) * P.card
+
+/-- **Markov + the hyperbola reduction turn the incidence bound into the density bound.**
+Nothing analytic is left: `TauMomentPrimesShift` follows from `ShiftedDivisorIncidence` by
+`SwingC2Moment.tau_shift_sum_le` and one cancellation. -/
+theorem tauMomentPrimesShift_of_incidence (b : ℕ) (hb : 3 ≤ b)
+    (h : ShiftedDivisorIncidence b) : TauMomentPrimesShift b := by
+  classical
+  intro K M r a N hK hM hr ha hMb hN
+  obtain ⟨Y, P, hPmem, hPcard, hinc⟩ := h K M r a N hK hM hr ha hMb hN
+  refine ⟨Y, P, hPmem, hPcard, fun k => ?_⟩
+  set kb : ℕ := 2 * Nat.sqrt (2 ^ a * Y + K) with hkb
+  set e : ℕ := K + 1 + k with he
+  set T : ℕ := b ^ K * (k + 1) with hT
+  have hTpos : 0 < T := by
+    have : 0 < b ^ K := Nat.pow_pos (by omega : 0 < b)
+    positivity
+  set Bad : Finset ℕ := P.filter (fun p => T < tau (2 ^ a * p + K + 1 + k)) with hBad
+  -- Markov over the exceptional set
+  have hmarkov : T * Bad.card ≤ ∑ p ∈ P, tau (2 ^ a * p + e) := by
+    have h1 : ∑ _p ∈ Bad, T ≤ ∑ p ∈ Bad, tau (2 ^ a * p + e) := by
+      refine Finset.sum_le_sum fun p hp => ?_
+      rw [hBad, Finset.mem_filter] at hp
+      have := hp.2
+      rw [show 2 ^ a * p + e = 2 ^ a * p + K + 1 + k by rw [he]; ring]
+      omega
+    have h2 : ∑ p ∈ Bad, tau (2 ^ a * p + e) ≤ ∑ p ∈ P, tau (2 ^ a * p + e) :=
+      Finset.sum_le_sum_of_subset (by rw [hBad]; exact Finset.filter_subset _ _)
+    have h3 : ∑ _p ∈ Bad, T = T * Bad.card := by
+      rw [Finset.sum_const, smul_eq_mul, Nat.mul_comm]
+    omega
+  -- the hyperbola reduction
+  have hhyp : ∑ p ∈ P, tau (2 ^ a * p + e)
+      ≤ 2 * ∑ d ∈ Finset.Icc 1 (Nat.sqrt (2 ^ a * Y + e)),
+          (P.filter (fun p => d ∣ 2 ^ a * p + e)).card :=
+    SwingC2Moment.tau_shift_sum_le (2 ^ a) e Y P (fun p hp => (hPmem p hp).2.2.2)
+  have hinck := hinc k
+  -- combine
+  have hkey : 2 * (kb + 1) * (T * Bad.card) ≤ T * P.card := by
+    calc 2 * (kb + 1) * (T * Bad.card)
+        ≤ 2 * (kb + 1) * (2 * ∑ d ∈ Finset.Icc 1 (Nat.sqrt (2 ^ a * Y + e)),
+            (P.filter (fun p => d ∣ 2 ^ a * p + e)).card) := by
+          refine Nat.mul_le_mul_left _ (le_trans hmarkov hhyp)
+      _ = 4 * (kb + 1) * (∑ d ∈ Finset.Icc 1 (Nat.sqrt (2 ^ a * Y + e)),
+            (P.filter (fun p => d ∣ 2 ^ a * p + e)).card) := by ring
+      _ ≤ T * P.card := hinck
+  have hfinal : 2 * (kb + 1) * Bad.card ≤ P.card := by
+    have hrw : 2 * (kb + 1) * (T * Bad.card) = T * (2 * (kb + 1) * Bad.card) := by ring
+    rw [hrw] at hkey
+    exact Nat.le_of_mul_le_mul_left hkey hTpos
+  exact hfinal
+
 /-- **The union bound over shifts is discharged.**  Only `O(√(2^a Y))` shifts need sieve input;
 beyond them `τ(m) ≤ 2√m` suffices because the threshold `b^K(k+1)` grows with `k`. -/
 theorem tauMomentPrimes_of_shift (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimesShift b) :
@@ -1692,8 +1766,11 @@ the primes of one arithmetic progression: Brun–Titchmarsh applied to
 `SwingC2Moment.tau_shift_sum_le`, plus a Linnik-type lower bound so that `P` is non-empty.
 Everything else on the path — the series, the simultaneity over shifts, the union bound, the
 full-progression first moment (`card_large_tau_le`) — is proved. -/
-theorem tauMomentPrimesShift_holds (b : ℕ) (hb : 3 ≤ b) : TauMomentPrimesShift b := by
+theorem shiftedDivisorIncidence_holds (b : ℕ) (hb : 3 ≤ b) : ShiftedDivisorIncidence b := by
   sorry
+
+theorem tauMomentPrimesShift_holds (b : ℕ) (hb : 3 ≤ b) : TauMomentPrimesShift b :=
+  tauMomentPrimesShift_of_incidence b hb (shiftedDivisorIncidence_holds b hb)
 
 theorem tauMomentPrimes_holds (b : ℕ) (hb : 3 ≤ b) : TauMomentPrimes b :=
   tauMomentPrimes_of_shift b hb (tauMomentPrimesShift_holds b hb)
