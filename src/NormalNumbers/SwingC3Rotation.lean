@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.CastingOut
 import NormalNumbers.SwingC3Split
+import NormalNumbers.SwingC3Lambert
 
 /-!
 # The rotation route to `ConjC3`, split into two named leaves
@@ -75,6 +76,33 @@ def TailLargeDecouple (b P Q : ℕ) : Prop :=
         - (((range N).filter (fun n =>
             Int.fract (θ + tailLarge P b n) ∈ Set.Ico α (α + len))).card : ℝ) / (Q : ℝ)) / N)
       atTop (𝓝 0)
+
+/-- **Leaf B is a statement about ONE real number's orbit.**  `fract (tailLarge P b n)` is
+literally `orbit b (L_P) n` (`SwingC3Lambert.fract_tailLarge_eq_orbit`), so `TailLargeDecouple`
+says: the `×b` orbit of the large-prime Lambert number `L_P` has the same empirical law on every
+residue class mod `Q`.  Combined with `SwingC3Lambert.orbit_succ_eq` — class `r+1` is the `×b`
+image of class `r` — this is equivalent to saying that every weak limit of the
+`×b^Q`-empirical measures of `L_P` is `×b`-invariant. -/
+theorem tailLargeDecouple_iff_orbit {b : ℕ} (hb : 2 ≤ b) (P Q : ℕ) :
+    TailLargeDecouple b P Q ↔
+    ∀ (r : ℕ) (θ α len : ℝ),
+      Tendsto (fun N : ℕ =>
+        ((((range N).filter (fun n => n ≡ r [MOD Q] ∧
+              Int.fract (θ + orbit b (largeLambert P b) n) ∈ Set.Ico α (α + len))).card : ℝ)
+          - (((range N).filter (fun n =>
+              Int.fract (θ + orbit b (largeLambert P b) n) ∈ Set.Ico α (α + len))).card : ℝ)
+            / (Q : ℝ)) / N)
+        atTop (𝓝 0) := by
+  classical
+  have key : ∀ (θ : ℝ) (n : ℕ), Int.fract (θ + tailLarge P b n)
+      = Int.fract (θ + orbit b (largeLambert P b) n) := by
+    intro θ n
+    rw [← fract_tailLarge_eq_orbit hb, fract_add_fract_right]
+  constructor
+  · intro h r θ α len
+    simpa only [key] using h r θ α len
+  · intro h r θ α len
+    simpa only [← key] using h r θ α len
 
 /-- The two leaves packaged for one arc. -/
 def RotationRoute (b : ℕ) : Prop :=
