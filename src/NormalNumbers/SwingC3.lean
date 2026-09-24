@@ -1,6 +1,6 @@
 import NormalNumbers.CastingOut
 import NormalNumbers.PowerBaseCount
-import NormalNumbers.SwingC3Digits
+import NormalNumbers.SwingC3Carry
 
 /-!
 # Swing at C3: `G4` is rich (every word at positive lower density)
@@ -286,9 +286,16 @@ Why `∃ g` and not `∀ g` is the right ask: the carry has size `≈ (log log k
 residue is not constant, and pigeonhole already gives *some* class of positive upper density;
 `OmegaCarryJoint` asks only that one such class be compatible with arbitrary `ω`-residues.
 The two ingredients behind it are (a) joint Erdős–Kac for the `ℓ` shifts `ω(n+1), …, ω(n+ℓ)`
-(classical, via the Kubilius model), and (b) the fact that `omegaCarry b (n+j+1)` is a tail
-functional and hence *measurable with respect to the far future* of the `ω`-sequence, which is
-what should decouple it from the `ℓ`-window. -/
+(classical, via the Kubilius model), and (b) the locality of the carry.  On (b) the situation is
+much better than it looks: `SwingC3Carry.tailB_split` splits the tail EXACTLY as
+`T_b(k) = carryHead b k J + b^{−J} T_b(k+J)`, and `tailB_le` bounds `T_b(m) ≤ m + 2`, so
+`omegaCarry_sandwich` pins `omegaCarry b k` between `⌊carryHead b k J⌋` and
+`carryHead b k J + (k+J+2)/b^J`.  Taking `J = O(log_b k)` makes the unseen remainder `< 1`: the
+carry is a function of the SHORT window `ω(k+1), …, ω(k+J)` up to one unit, not of the far
+future.  So the whole length-`ℓ` digit window at `n` is a function of `ω` on
+`[n+1, n+ℓ+O(log n)]` — a window shorter than any power of `n`, which is exactly the Kubilius
+regime.  What is still missing is the last unit of ambiguity in the sandwich (the near-integer
+exceptional set) and the joint law itself. -/
 
 open Classical in
 /-- **The carry-joint leaf.**  Some residue class `g` of the carry is compatible, at positive
