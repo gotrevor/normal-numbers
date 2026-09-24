@@ -1,4 +1,5 @@
 import NormalNumbers.DelangeSlotPNT
+import NormalNumbers.DelangeSlotPrimePow
 
 /-!
 # Rung 1 of the Delange slot: the analytic chain
@@ -9,7 +10,7 @@ The plan of record (`DESIGN-2026-09-24-delange-route.md`), in seven steps.  Writ
 | step | statement | status |
 |---|---|---|
 | L1 | `A N = ∑_{d≤N} Λ d ∑_{m≤N/d} h (d m)` | proved (`sum_hfun_mul_log`) |
-| L2 | `‖A N − z ∑_{d≤N} Λ d · S (N/d)‖ ≤ C_P · N` | open |
+| L2 | `‖A N − z ∑_{d≤N} Λ d · S (N/d)‖ ≤ C_P · N` | **proved** (see `DelangeSlotPrimePow`) |
 | L3 | `∑_{d≤N} Λ d · S (N/d) = ∑_{k≤N} h k · ψ (N/k)` | proved |
 | L4 | `‖∑_{k≤N} h k ψ(N/k) − N · m N‖ ≤ C · N` | **proved** (consumes `MediumPNT`, see `DelangeSlotPNT`) |
 | L5 | `‖A N − S N · log N‖ ≤ N` | proved |
@@ -121,7 +122,83 @@ theorem exists_L2 (z : ℂ) (hz : ‖z‖ = 1) (P : ℕ) :
     ∃ C : ℝ, ∀ N : ℕ,
       ‖(∑ n ∈ Ioc 0 N, hfun z P n * (Real.log n : ℂ))
         - z * ∑ d ∈ Ioc 0 N, (Λ d : ℂ) * Ssum z P (N / d)‖ ≤ C * N := by
-  sorry
+  classical
+  have hz1 : ‖z - 1‖ ≤ 2 := by
+    calc ‖z - 1‖ ≤ ‖z‖ + ‖(1:ℂ)‖ := norm_sub_le _ _
+      _ = 2 := by rw [hz]; norm_num
+  refine ⟨16 + 4 * ∑ n ∈ Icc 2 P, Real.log n / (n : ℝ), fun N ↦ ?_⟩
+  have hrw : (∑ n ∈ Ioc 0 N, hfun z P n * (Real.log n : ℂ))
+        - z * ∑ d ∈ Ioc 0 N, (Λ d : ℂ) * Ssum z P (N / d)
+      = ∑ d ∈ Ioc 0 N, (Λ d : ℂ) *
+          ((∑ m ∈ Ioc 0 (N / d), hfun z P (d * m)) - z * Ssum z P (N / d)) := by
+    rw [sum_hfun_mul_log, Finset.mul_sum, ← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl fun d _ ↦ by ring
+  rw [hrw]
+  refine (norm_sum_le _ _).trans ?_
+  have hterm : ∀ d ∈ Ioc 0 N,
+      ‖(Λ d : ℂ) * ((∑ m ∈ Ioc 0 (N / d), hfun z P (d * m)) - z * Ssum z P (N / d))‖
+        ≤ 2 * (Λ d * ((N / (d * d.minFac) : ℕ) : ℝ))
+          + 2 * (if d.minFac ≤ P then Λ d * ((N / d : ℕ) : ℝ) else 0) := by
+    intro d _
+    by_cases hdp : IsPrimePow d
+    · obtain ⟨k, hk0, _, hdk, _⟩ := primePow_spec hdp
+      have hp : d.minFac.Prime := Nat.minFac_prime hdp.ne_one
+      have hΛ0 : (0:ℝ) ≤ Λ d := vonMangoldt_nonneg
+      have hnormΛ : ‖(Λ d : ℂ)‖ = Λ d := by
+        rw [Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hΛ0]
+      rw [norm_mul, hnormΛ]
+      by_cases hP : P < d.minFac
+      · -- large prime: the `p ∣ m` correction
+        have hshift : ∑ m ∈ Ioc 0 (N / d), hfun z P (d * m)
+            = z * Ssum z P (N / d) - (z - 1) * Tsum z P d.minFac (N / d) := by
+          have h := sum_hfun_shift_large hp (j := k) (by omega) z hP (N / d)
+          rwa [hdk.symm] at h
+        have hTle : ‖Tsum z P d.minFac (N / d)‖ ≤ ((N / (d * d.minFac) : ℕ) : ℝ) := by
+          have h := norm_Tsum_le hz P d.minFac (N / d)
+          rwa [Nat.div_div_eq_div_mul] at h
+        have hbody : ‖(∑ m ∈ Ioc 0 (N / d), hfun z P (d * m)) - z * Ssum z P (N / d)‖
+            ≤ 2 * ((N / (d * d.minFac) : ℕ) : ℝ) := by
+          rw [hshift]
+          have : z * Ssum z P (N / d) - (z - 1) * Tsum z P d.minFac (N / d)
+              - z * Ssum z P (N / d) = -((z - 1) * Tsum z P d.minFac (N / d)) := by ring
+          rw [this, norm_neg, norm_mul]
+          exact mul_le_mul hz1 hTle (norm_nonneg _) (by norm_num)
+        have hextra : (0:ℝ) ≤ 2 * (if d.minFac ≤ P then Λ d * ((N / d : ℕ) : ℝ) else 0) := by
+          by_cases h : d.minFac ≤ P
+          · simp only [h, if_pos]
+            positivity
+          · simp [h]
+        nlinarith [mul_le_mul_of_nonneg_left hbody hΛ0, hextra]
+      · -- small prime: the whole block is `O_P(N)`
+        push_neg at hP
+        have hshift : ∑ m ∈ Ioc 0 (N / d), hfun z P (d * m) = Ssum z P (N / d) := by
+          have h := sum_hfun_shift_small hp (j := k) (by omega) z (P := P) (by omega) (N / d)
+          rwa [hdk.symm] at h
+        have hbody : ‖(∑ m ∈ Ioc 0 (N / d), hfun z P (d * m)) - z * Ssum z P (N / d)‖
+            ≤ 2 * ((N / d : ℕ) : ℝ) := by
+          rw [hshift]
+          have : Ssum z P (N / d) - z * Ssum z P (N / d) = -((z - 1) * Ssum z P (N / d)) := by
+            ring
+          rw [this, norm_neg, norm_mul]
+          exact mul_le_mul hz1 (norm_Ssum_le hz P (N / d)) (norm_nonneg _) (by norm_num)
+        have hfirst : (0:ℝ) ≤ 2 * (Λ d * ((N / (d * d.minFac) : ℕ) : ℝ)) := by positivity
+        simp only [hP, if_pos]
+        nlinarith [mul_le_mul_of_nonneg_left hbody hΛ0, hfirst]
+    · rw [vonMangoldt_eq_zero_iff.2 hdp]
+      by_cases h : d.minFac ≤ P <;> simp [h]
+  calc ∑ d ∈ Ioc 0 N,
+        ‖(Λ d : ℂ) * ((∑ m ∈ Ioc 0 (N / d), hfun z P (d * m)) - z * Ssum z P (N / d))‖
+      ≤ ∑ d ∈ Ioc 0 N, (2 * (Λ d * ((N / (d * d.minFac) : ℕ) : ℝ))
+          + 2 * (if d.minFac ≤ P then Λ d * ((N / d : ℕ) : ℝ) else 0)) :=
+        Finset.sum_le_sum hterm
+    _ = 2 * (∑ d ∈ Ioc 0 N, Λ d * ((N / (d * d.minFac) : ℕ) : ℝ))
+          + 2 * (∑ d ∈ Ioc 0 N, (if d.minFac ≤ P then Λ d * ((N / d : ℕ) : ℝ) else 0)) := by
+        rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.mul_sum]
+    _ ≤ 2 * (8 * (N : ℝ)) + 2 * (2 * (N : ℝ) * ∑ n ∈ Icc 2 P, Real.log n / (n : ℝ)) := by
+        have h1 := sum_vonMangoldt_mul_div_minFac_le N
+        have h2 := sum_vonMangoldt_smooth_le N P
+        linarith
+    _ = (16 + 4 * ∑ n ∈ Icc 2 P, Real.log n / (n : ℝ)) * N := by ring
 
 /-- **L4.**  `ψ (N/k) = N/k + Δ(N/k)` summed against `h`; consumes `PNTPort.MediumPNT` through
 `∑_{k ≤ N} |Δ(N/k)| = O(N)`. -/

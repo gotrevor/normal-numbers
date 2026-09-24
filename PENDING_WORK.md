@@ -6,7 +6,17 @@ Route: Levin–Fainleib (`DESIGN-2026-09-24-delange-route.md`).  L1/L3/L5/L6/L7 
 
 ### Open items, highest value first
 
-**1. L4 — THE CRUX.**  `exists_L4` in `src/NormalNumbers/DelangeSlotAnalytic.lean`.
+**DONE 2026-09-24 — L4 (`exists_L4`) and L2 (`exists_L2`) are PROVED, axiom-clean.**
+All seven links L1–L7 of the chain are now theorems.  Remaining: the wrapper
+`sigmaMean_tendsto_zero_of_recursion` (a one-liner off `recursion_tendsto_zero`, needs
+`z.re < 1` from `‖z‖ = 1 ∧ z ≠ 1`), then the assembly into `omegaLarge_mean_tendsto_zero`
+(divide the chain identity by `N`; `σ N → 0` IS the headline since
+`∑_{m ≤ N} z^{ω_{>P} m} / N = σ N`), then rung 2 (the twist).
+New files: `DelangeSlotPNT.lean` (L4's engine), `DelangeSlotPrimePow.lean` (L2's engine:
+the prime-power rectangle `d ↦ (minFac d, Nat.log (minFac d) d)`, the geometric series in the
+exponent, and `∑_{2≤n≤N} log n/n² ≤ 4` by a `√`-telescoping majorant).
+
+**1. L4 — THE CRUX (DONE).**  `exists_L4` in `src/NormalNumbers/DelangeSlotAnalytic.lean`.
 Reduces to `∑_{k ∈ Ioc 0 N} |Δ(N/k)| ≤ C·N`, `Δ n = psiN n − n`.  Decomposition (new file
 `src/NormalNumbers/DelangeSlotPNT.lean`):
   (a) `pnt_quantitative`: `∃ C₀ n₁, ∀ n ≥ n₁, |Δ n| ≤ C₀ · n/(log n)²`.  From `MediumPNT`
