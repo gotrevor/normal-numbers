@@ -459,3 +459,4 @@ import NormalNumbers.SwingC3Free
 import NormalNumbers.SwingC3Closed
 import NormalNumbers.SwingC3Period
 import NormalNumbers.SwingC3Subset
+import NormalNumbers.SwingC3Lambert2

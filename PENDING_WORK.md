@@ -9528,3 +9528,22 @@ in order of promise:
    is strictly more than is currently known and may be enough for a WEAKER but nontrivial
    richness statement (only finitely many words excluded).
 3. The named leaf `AddCharTailUniform` + `addCharTail_of_uniform` (still to be pinned in `src/`).
+
+### lap 9 — the swing's conditional in its SHARPEST form (`SwingC3Lambert2.lean`, axiom-clean)
+
+`largeLambert_eq_tsum` : **`largeLambert P b = ∑_{p > P prime} 1/(b^p − 1)`.**
+The repo already knew `fract (tailLarge P b n) = orbit b (largeLambert P b) n`; what was missing
+was what that constant *is*.  The `n = 0` case of the closed form supplies it: a Lambert series
+restricted to the large primes (at `P = 0`, the classical `∑_n ω(n) b^{−n} = ∑_p 1/(b^p − 1)`).
+
+`ee_tailLarge_eq_ee_orbit` : `e(h·tailLarge P b n) = e(h·L_P·b^n)` exactly.
+
+`CastingOut.conjC3_of_weylLambertTwist` : **`ConjC3` follows from `WeylLambertTwist`**, i.e. from
+
+    (1/N) ∑_{n<N} e(jn/Q) · e(h · b^n · ∑_{p>P} 1/(b^p − 1))  →  0   (0 < j < Q, h ≠ 0 free)
+
+This is the swing's headline conditional stated entirely in terms of **one explicit real constant
+per `P`** — a classical twisted-Weyl-sum question about the base-`b` prime-characteristic constant
+`∑_{p>P} 1/(b^p − 1)`, fully literature-checkable, with no arithmetic function in sight.
+(Chain: `conjC3_of_weylLambertTwist → conjC3_of_addCharTail → conjC3_of_weylHypothesis → ConjC3`,
+every link machine-checked, `#print axioms` clean.)
