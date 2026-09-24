@@ -1800,6 +1800,54 @@ theorem dvd_of_dvd_shift {q M a e p r n : ℕ} (hq : q ∣ M) (hp : p ≡ r [MOD
     omega
   exact Nat.dvd_iff_mod_eq_zero.2 h4
 
+/-! ### The 2-adic reduction of a shift
+
+`sum_card_shift_dvd_le'` still needs `Coprime (2^a) d`, i.e. `d` odd, and the shifts
+`e = K+1+k` are even half the time.  The fix is to factor the 2-part out of the shifted value
+ONCE, before the hyperbola reduction: with `e = 2^v u`, `u` odd and `v < a`,
+
+    `2^a n + e = 2^v (2^{a−v} n + u)`,  the second factor ODD,
+
+so `τ(2^a n + e) = (v+1)·τ(2^{a−v} n + u)` and every divisor of the odd part is odd.  The loss
+is `v + 1 ≤ log₂ e + 1`, negligible against the budget `b^K`. -/
+
+/-- `τ(2^v m) = (v+1) τ(m)` for odd `m`. -/
+theorem tau_two_pow_mul_odd {v m : ℕ} (hm : ¬ 2 ∣ m) : tau (2 ^ v * m) = (v + 1) * tau m := by
+  have hcop : Nat.Coprime (2 ^ v) m :=
+    Nat.Coprime.pow_left _ ((Nat.Prime.coprime_iff_not_dvd Nat.prime_two).2 hm)
+  rw [tau_mul_coprime hcop, tau_two_pow]
+
+/-- **The 2-adic reduction, packaged.**  Any shift `e` with `0 < e < 2^a` splits as `2^v u` with
+`u` odd and `v < a`, and the shifted value factors accordingly. -/
+theorem tau_shift_two_adic (a n e : ℕ) (he : 0 < e) (hea : e < 2 ^ a) :
+    ∃ v u : ℕ, e = 2 ^ v * u ∧ ¬ 2 ∣ u ∧ v < a ∧ 2 ^ v ≤ e ∧ 0 < u ∧
+      tau (2 ^ a * n + e) = (v + 1) * tau (2 ^ (a - v) * n + u) := by
+  classical
+  set v : ℕ := e.factorization 2 with hv
+  set u : ℕ := e / 2 ^ v with hu
+  have hne : e ≠ 0 := by omega
+  have hsplit : 2 ^ v * u = e := Nat.ordProj_mul_ordCompl_eq_self e 2
+  have hodd : ¬ 2 ∣ u := Nat.not_dvd_ordCompl Nat.prime_two hne
+  have hupos : 0 < u := Nat.ordCompl_pos 2 hne
+  have hdvd : (2 : ℕ) ^ v ∣ e := Nat.ordProj_dvd e 2
+  have hle : (2 : ℕ) ^ v ≤ e := Nat.le_of_dvd he hdvd
+  have hva : v < a := by
+    by_contra hcon
+    have : (2 : ℕ) ^ a ≤ 2 ^ v := Nat.pow_le_pow_right (by norm_num) (by omega)
+    omega
+  have hfac : 2 ^ a * n + e = 2 ^ v * (2 ^ (a - v) * n + u) := by
+    have h1 : (2 : ℕ) ^ v * (2 ^ (a - v) * n) = 2 ^ a * n := by
+      rw [← Nat.mul_assoc, ← pow_add]
+      congr 2
+      omega
+    rw [Nat.mul_add, h1, hsplit]
+  have hoddm : ¬ 2 ∣ 2 ^ (a - v) * n + u := by
+    intro hcon
+    have h2 : (2 : ℕ) ∣ 2 ^ (a - v) * n :=
+      Dvd.dvd.mul_right (dvd_pow_self 2 (by omega : a - v ≠ 0)) n
+    exact hodd (by omega)
+  exact ⟨v, u, hsplit.symm, hodd, hva, hle, hupos, by rw [hfac, tau_two_pow_mul_odd hoddm]⟩
+
 /-- **The non-coprime divisors contribute nothing.**  If the modulus `M` is coprime to the
 single fixed integer `c·r + e`, then no `d` sharing a factor with `M` can divide `c·n + e` for
 any `n` of the progression: `dvd_of_dvd_shift` transports the divisibility from `n` to `r`.
