@@ -76,6 +76,9 @@ Mathlib has no Selberg–Delange, so B3 below — *find a route that avoids iden
 is now the highest-value probe.
 
 **Attack list for the next laps** (each is a lap-sized, falsifiable probe):
+- **Leaf A.**  ✅ **DONE 2026-09-24** (`src/NormalNumbers/SwingC3Cover.lean`):
+  `exists_rotationCover` is sorry-free and trust-triple clean.  `ConjC3` now rests on Leaf B
+  alone.
 - **B1 (formalise the frame).**  Define `smallLambert P b`, `largeLambert P b`; prove
   `primeLambertAtBase b = smallLambert + largeLambert`, `fract (tailLarge P b n) = orbit b
   (largeLambert P b) n`, and `orbit b (smallLambert P b) n` is `Q`-periodic.  Restate Leaf B
@@ -90,8 +93,16 @@ is now the highest-value probe.
 - **B4 (refutation probe).**  Numerically test class-dependence directly: for `b = 4`, `P` small,
   compare the empirical histogram of `orbit L_P` on `n ≡ r (mod Q)` across `r`.  A visible,
   persistent class-dependence would REFUTE the route and is a first-class deliverable.
-- **B5 (invariance route).**  Prove `×b`-invariance of the limit measures directly from
-  `y_{n+1} = T y_n` plus a quantitative recurrence, rather than from arithmetic.
+- **B5 (invariance route).**  ❌ **REFUTED 2026-09-24** (`src/NormalNumbers/SwingC3B5.lean`,
+  `not_orbitDecouple_periodicWitness`, trust-triple clean).  The dynamics contribute *nothing*
+  beyond `λ_r = T_*^r λ_0`: the class-`r` empirical measures of ANY `×b` orbit satisfy that
+  relation, so a weak-`*` limit `λ_0` is `T^Q`-invariant, and Leaf B is exactly
+  "`λ_0` is `T`-invariant".  `T^Q`-invariance does not imply `T`-invariance, and the gap is
+  realised by an honest orbit: for `x = 1/(b^Q−1)` the orbit is periodic of period `Q`
+  (`orbit_periodicWitness : orbit b x n = x·b^{n mod Q}`), so `λ_0 = δ_x` and
+  `OrbitDecouple b Q x` is FALSE for every `b ≥ 2`, `Q ≥ 2`.  Since
+  `tailLargeDecouple_iff_orbitDecouple` identifies Leaf B with `OrbitDecouple b Q (L_P)`,
+  **every** proof of Leaf B must use arithmetic of `ω_{>P}`.  Live attacks: B2, B3, B4.
 
 ### Not to be re-tried (refuted, this branch)
 Effective disjunctivity (`N(4,L)/4^L` still climbing at `L = 7`, probe
