@@ -1355,6 +1355,65 @@ theorem conjC1_iff_hAutoCorr : ConjC1 ↔ ∀ b, 3 ≤ b → HAutoCorr b := by
   refine ⟨fun h b hb => hAutoCorr_of_stateLaw b hb fun L => ?_, conjC1_of_hAutoCorr⟩
   exact (castLaw_iff_stateLaw b (by omega) L).mp (h b hb L)
 
+/-! #### Carry inertness: the leaf's whole content sits where `ω` reaches `b − 1`
+
+`c_N = ⌊Σ_{k≥1} ω(N+k) b^{−k}⌋` is IDENTICALLY ZERO as long as `ω` stays `≤ b − 2` on the tail,
+because then the tail is at most `(b−2)/(b−1) < 1`.  Since `ω(m) ≥ t` first happens at the `t`-th
+primorial, base-`b` carrying is inert below roughly the `b`-th primorial — `6.5 · 10⁹` already at
+`b = 10`.  Combined with `not_hAutoCorr_of_carryNegligible` (the carry is what produces the leaf's
+`b^{−L}`), this says the leaf's entire content lives in the range where `ω` exceeds `b − 2`, and it
+is why `probes/swingc1_autocorr.py` cannot test `HAutoCorr` numerically at any feasible `N`. -/
+
+/-- If `ω ≤ B` on the tail beyond `N` then `Σ_{k≥1} ω(N+k) b^{−k} ≤ B/(b−1)`. -/
+theorem omegaTail_le_of_bound (b : ℕ) (hb : 2 ≤ b) (N B : ℕ)
+    (h : ∀ k : ℕ, omegaNat (N + 1 + k) ≤ B) :
+    omegaTail b N ≤ (B : ℝ) / ((b : ℝ) - 1) := by
+  have hbR : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hb0 : (0 : ℝ) < b := by linarith
+  have hinv : (1 : ℝ) / b < 1 := by
+    rw [div_lt_one hb0]; linarith
+  have hinv0 : (0 : ℝ) ≤ 1 / b := by positivity
+  have hg : Summable (fun k : ℕ => (B : ℝ) * ((1 : ℝ) / b) ^ (k + 1)) := by
+    refine Summable.mul_left _ ?_
+    exact ((summable_geometric_of_lt_one hinv0 hinv).mul_left ((1 : ℝ) / b)).congr
+      fun k => by rw [pow_succ]; ring
+  have hterm : ∀ k : ℕ, (omegaNat (N + 1 + k) : ℝ) / (b : ℝ) ^ (k + 1)
+      ≤ (B : ℝ) * ((1 : ℝ) / b) ^ (k + 1) := by
+    intro k
+    have hnum : (omegaNat (N + 1 + k) : ℝ) ≤ (B : ℝ) := by exact_mod_cast h k
+    rw [div_pow, one_pow, mul_one_div, div_le_div_iff_of_pos_right (by positivity)]
+    exact hnum
+  refine (Summable.tsum_le_tsum hterm (summable_omegaTail b hb N) hg).trans (le_of_eq ?_)
+  rw [tsum_mul_left]
+  have hgeo : (∑' k : ℕ, ((1 : ℝ) / b) ^ (k + 1)) = (1 : ℝ) / ((b : ℝ) - 1) := by
+    have h1 : (∑' k : ℕ, ((1 : ℝ) / b) ^ (k + 1))
+        = ((1 : ℝ) / b) * ∑' k : ℕ, ((1 : ℝ) / b) ^ k := by
+      rw [← tsum_mul_left]
+      exact tsum_congr fun k => by rw [pow_succ]; ring
+    rw [h1, tsum_geometric_of_lt_one hinv0 hinv]
+    have : (1 : ℝ) - 1 / b = ((b : ℝ) - 1) / b := by field_simp
+    rw [this]
+    field_simp
+  rw [hgeo]
+  ring
+
+/-- **Carry inertness.**  If `ω ≤ b − 2` on the whole tail beyond `N`, the carry at `N` is `0`. -/
+theorem omegaCarry_eq_zero_of_omega_le (b : ℕ) (hb : 2 ≤ b) (N : ℕ)
+    (h : ∀ k : ℕ, omegaNat (N + 1 + k) + 2 ≤ b) : omegaCarry b N = 0 := by
+  have hbR : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hb1 : (0 : ℝ) < (b : ℝ) - 1 := by linarith
+  have hle := omegaTail_le_of_bound b hb N (b - 2) (fun k => by have := h k; omega)
+  have hcast : ((b - 2 : ℕ) : ℝ) = (b : ℝ) - 2 := by
+    rw [Nat.cast_sub (by omega : 2 ≤ b)]; norm_num
+  rw [hcast] at hle
+  have hlt1 : omegaTail b N < 1 := by
+    refine hle.trans_lt ?_
+    rw [div_lt_one hb1]
+    linarith
+  have hge0 : (0 : ℝ) ≤ omegaTail b N := omegaTail_nonneg b hb N
+  rw [omegaCarry_eq_floor]
+  exact Int.floor_eq_zero_iff.mpr ⟨hge0, by simpa using hlt1⟩
+
 /-! #### The carry is ESSENTIAL: a refutation of the naive independence heuristic
 
 The natural first guess for the leaf is "`ω` is uniformly distributed mod `b − 1` (Delange 1969),
