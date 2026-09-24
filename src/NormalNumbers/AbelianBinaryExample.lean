@@ -276,10 +276,74 @@ def isZZOO (r : ℕ) (v : List ℕ) : Prop :=
 
 instance (r : ℕ) (v : List ℕ) : Decidable (isZZOO r v) := Nat.decidableBallLT _ _
 
+lemma bitOfWord_le_one (v : List ℕ) (r i : ℕ) : bitOfWord v r i ≤ 1 :=
+  Nat.lt_succ_iff.mp (Nat.mod_lt _ (by norm_num))
+
+lemma xiBits_lt_two (c : ℕ → ℕ) (m : ℕ) : xiBits c m < 2 := Nat.mod_lt _ (by norm_num)
+
+/-- The window one-count of `xiBits c` is the window one-count of the hex block. -/
+lemma onesCount_xiBits (c : ℕ → ℕ) (L n S : ℕ) (hS : ∀ i < L, (n % 4 + i) / 4 < S) :
+    onesCount (xiBits c) L n = winPc (n % 4) L (blk c S (n / 4)) := by
+  classical
+  rw [onesCount, Walsh.windowSet, winPc, Finset.card_filter]
+  refine Finset.sum_congr rfl fun i hi => ?_
+  rw [xiBits_eq_bitOfWord c S n i (hS i (Finset.mem_range.mp hi))]
+  have hb := bitOfWord_le_one (blk c S (n / 4)) (n % 4) i
+  by_cases h : bitOfWord (blk c S (n / 4)) (n % 4) i = 1
+  · rw [if_pos h, h]
+  · rw [if_neg h]; omega
+
 /-- The construction is abelian-normal in base two. -/
 theorem isAbelianNormalTwo_xiBits (c : ℕ → ℕ) (hc16 : ∀ m, c m < 16)
     (hc : IsNormalSequence 16 c) : IsAbelianNormalTwo (xiBits c) := by
-  sorry
+  classical
+  intro L j _
+  set S : ℕ := L / 4 + 2 with hSdef
+  have hSbound : ∀ r < 4, r + L ≤ 4 * S := by intro r hr; omega
+  have hSwin : ∀ n : ℕ, ∀ i < L, (n % 4 + i) / 4 < S := by
+    intro n i hi
+    have : n % 4 < 4 := Nat.mod_lt _ (by norm_num)
+    omega
+  -- the event is determined by the residue and the block
+  have hev : ∀ n : ℕ, (onesCount (xiBits c) L n = j)
+      ↔ winPc (n % 4) L (blk c S (n / 4)) = j := by
+    intro n; rw [onesCount_xiBits c L n S (hSwin n)]
+  have hlim := tendsto_blockEvent c S (fun r v => winPc r L v = j) hc16 hc
+  -- identify the limit
+  have hcast : ∀ r : ℕ, (∑ k ∈ Finset.range (16 ^ S),
+      if winPc r L (wordOf 16 S k) = j then (1 : ℝ) else 0) = (winCountK r L S j : ℝ) := by
+    intro r
+    rw [winCountK]
+    push_cast
+    rfl
+  have hval : ∀ r < 4, (winCountK r L S j : ℝ) = 16 ^ S * (L.choose j : ℝ) / 2 ^ L := by
+    intro r hr
+    have hnat := winCountK_binomial S r L j hr (hSbound r hr)
+    have : ((winCountK r L S j * 2 ^ L : ℕ) : ℝ) = ((16 ^ S * L.choose j : ℕ) : ℝ) := by
+      exact_mod_cast congrArg (fun x : ℕ => (x : ℝ)) hnat
+    push_cast at this
+    field_simp
+    linarith [this]
+  have hsum : (∑ r ∈ Finset.range 4, ∑ k ∈ Finset.range (16 ^ S),
+      if winPc r L (wordOf 16 S k) = j then (1 : ℝ) else 0)
+      = 4 * (16 ^ S * (L.choose j : ℝ) / 2 ^ L) := by
+    rw [Finset.sum_congr rfl fun r hr => by
+      rw [hcast r, hval r (Finset.mem_range.mp hr)]]
+    rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    norm_num
+  rw [hsum] at hlim
+  have h16 : (0 : ℝ) < 16 ^ S := by positivity
+  have h2L : (0 : ℝ) < 2 ^ L := by positivity
+  have hnorm : 4 * (16 ^ S * (L.choose j : ℝ) / 2 ^ L) / (4 * 16 ^ S)
+      = (L.choose j : ℝ) / 2 ^ L := by
+    field_simp
+  rw [hnorm] at hlim
+  have hfil : ∀ N : ℕ,
+      (Finset.range N).filter (fun n => winPc (n % 4) L (blk c S (n / 4)) = j)
+        = (Finset.range N).filter (fun n => onesCount (xiBits c) L n = j) :=
+    fun N => Finset.filter_congr fun n _ => (hev n).symm
+  refine hlim.congr fun N => ?_
+  rw [onesFreq, hfil N]
 
 /-- The construction is not normal in base two: `0011` has limiting frequency `5/64`. -/
 theorem not_isNormalSequence_xiBits (c : ℕ → ℕ) (hc16 : ∀ m, c m < 16)
