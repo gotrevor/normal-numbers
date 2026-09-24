@@ -453,3 +453,4 @@ import NormalNumbers.CastingOut
 import NormalNumbers.SwingC1
 import NormalNumbers.SwingC1Periodic
 import NormalNumbers.SwingC1CRT
+import NormalNumbers.SwingC1Model

@@ -150,4 +150,76 @@ theorem norm_fullMean_mul_le_periodMean_add_defect
     nlinarith [norm_nonneg (progMean B Q R c - β), hA c, norm_nonneg (A c)]
   linarith
 
+/-! ### The CRT factorisation of a period mean
+
+A function of `n` that is a product of factors each depending only on `n mod p`, `p` running
+over pairwise-coprime moduli, has a period mean that FACTORISES.  This is the mechanism behind
+leaf (M): over one full period the residues `(n mod p)_p` are jointly uniform.
+-/
+
+/-- **Two coprime moduli.**  `∑_{c < qQ} g(c mod q) h(c mod Q) = (∑_{a<q} g a)(∑_{b<Q} h b)`. -/
+theorem sum_range_mul_mod_mul (q Q : ℕ) (hq : 0 < q) (hQ : 0 < Q) (hcop : Nat.Coprime q Q)
+    (g h : ℕ → ℂ) :
+    ∑ c ∈ range (q * Q), g (c % q) * h (c % Q)
+      = (∑ a ∈ range q, g a) * (∑ b ∈ range Q, h b) := by
+  have hqQ : 0 < q * Q := Nat.mul_pos hq hQ
+  have hstep : ∑ c ∈ range (q * Q), g (c % q) * h (c % Q)
+      = ∑ x ∈ (range q) ×ˢ (range Q), g x.1 * h x.2 := by
+    refine Finset.sum_bij (fun c _ => (c % q, c % Q)) ?_ ?_ ?_ ?_
+    · intro c _
+      exact Finset.mem_product.mpr
+        ⟨Finset.mem_range.mpr (Nat.mod_lt _ hq), Finset.mem_range.mpr (Nat.mod_lt _ hQ)⟩
+    · intro c₁ h₁ c₂ h₂ heq
+      rw [Finset.mem_range] at h₁ h₂
+      have e1 : c₁ % q = c₂ % q := congrArg Prod.fst heq
+      have e2 : c₁ % Q = c₂ % Q := congrArg Prod.snd heq
+      have : c₁ % (q * Q) = c₂ % (q * Q) :=
+        (Nat.modEq_and_modEq_iff_modEq_mul hcop).mp ⟨e1, e2⟩
+      rwa [Nat.mod_eq_of_lt h₁, Nat.mod_eq_of_lt h₂] at this
+    · intro x hx
+      rw [Finset.mem_product, Finset.mem_range, Finset.mem_range] at hx
+      obtain ⟨k, hk1, hk2⟩ := Nat.chineseRemainder hcop x.1 x.2
+      refine ⟨k % (q * Q), Finset.mem_range.mpr (Nat.mod_lt _ hqQ), ?_⟩
+      have d1 : k % (q * Q) % q = k % q := Nat.mod_mod_of_dvd k (Dvd.intro Q rfl)
+      have d2 : k % (q * Q) % Q = k % Q := Nat.mod_mod_of_dvd k (Dvd.intro_left q rfl)
+      have e1 : k % (q * Q) % q = x.1 := by
+        rw [d1, hk1, Nat.mod_eq_of_lt hx.1]
+      have e2 : k % (q * Q) % Q = x.2 := by
+        rw [d2, hk2, Nat.mod_eq_of_lt hx.2]
+      exact Prod.ext e1 e2
+    · intro c _; rfl
+  rw [hstep, Finset.sum_product, Finset.sum_mul_sum]
+
+/-- **The CRT factorisation.**  For pairwise-coprime moduli `S`, a product of residue-functions
+sums over one full period `∏_{p∈S} p` to the product of the individual residue sums. -/
+theorem sum_range_prod_mod (f : ℕ → ℕ → ℂ) :
+    ∀ (S : Finset ℕ), (∀ p ∈ S, 0 < p) → (S : Set ℕ).Pairwise Nat.Coprime →
+      ∑ c ∈ range (∏ p ∈ S, p), ∏ p ∈ S, f p (c % p)
+        = ∏ p ∈ S, ∑ s ∈ range p, f p s := by
+  classical
+  refine Finset.induction ?_ ?_
+  · intro _ _; simp
+  · intro q T hqT ih hpos hcop
+    have hposT : ∀ p ∈ T, 0 < p := fun p hp => hpos p (Finset.mem_insert_of_mem hp)
+    have hcopT : (T : Set ℕ).Pairwise Nat.Coprime :=
+      Set.Pairwise.mono (by exact_mod_cast Finset.coe_subset.mpr (Finset.subset_insert q T)) hcop
+    have hq : 0 < q := hpos q (Finset.mem_insert_self q T)
+    set Q : ℕ := ∏ p ∈ T, p with hQdef
+    have hQ : 0 < Q := Finset.prod_pos hposT
+    have hqQ : Nat.Coprime q Q := by
+      refine Nat.Coprime.prod_right fun p hp => ?_
+      exact hcop (Finset.mem_insert_self q T) (Finset.mem_insert_of_mem hp)
+        (fun hEq => hqT (hEq ▸ hp))
+    have hprod : ∏ p ∈ insert q T, p = q * Q := Finset.prod_insert hqT
+    have hmod : ∀ c : ℕ, ∏ p ∈ insert q T, f p (c % p)
+        = f q (c % q) * ∏ p ∈ T, f p ((c % Q) % p) := by
+      intro c
+      rw [Finset.prod_insert hqT]
+      congr 1
+      refine Finset.prod_congr rfl fun p hp => ?_
+      rw [Nat.mod_mod_of_dvd c (Finset.dvd_prod_of_mem _ hp)]
+    rw [hprod, Finset.sum_congr rfl (fun c _ => hmod c),
+      sum_range_mul_mod_mul q Q hq hQ hqQ (fun a => f q a) (fun b => ∏ p ∈ T, f p (b % p)),
+      ih hposT hcopT, Finset.prod_insert hqT]
+
 end NormalNumbers.CastingOut
