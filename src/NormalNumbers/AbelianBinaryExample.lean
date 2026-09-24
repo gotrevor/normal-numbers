@@ -1,5 +1,6 @@
 import NormalNumbers.AbelianNormal
 import NormalNumbers.AbelianBlockDensity
+import NormalNumbers.PowerBaseReal
 
 /-!
 # A binary sequence that is abelian-normal but not normal
@@ -98,6 +99,14 @@ theorem not_isNormalSequence_xiBits (c : ℕ → ℕ) (hc16 : ∀ m, c m < 16)
 /-- **Separation.**  Some binary sequence is abelian-normal but not normal. -/
 theorem exists_abelianNormal_not_normal :
     ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ IsAbelianNormalTwo s ∧ ¬ IsNormalSequence 2 s := by
-  sorry
+  set c := digitOf 16 (Int.fract NormalNumbers.G4.Sched.fullRealW) with hcdef
+  have hc16 : ∀ m, c m < 16 := fun m => digitOf_lt 16 (by norm_num) _ m
+  have hc : IsNormalSequence 16 c := by
+    have h := NormalNumbers.G4.Sched.isNormal_two_pow_fullRealW 4 (by norm_num)
+    norm_num [IsNormal] at h
+    exact h
+  refine ⟨xiBits c, fun m => ?_, isAbelianNormalTwo_xiBits c hc16 hc,
+    not_isNormalSequence_xiBits c hc16 hc⟩
+  exact Nat.mod_lt _ (by norm_num)
 
 end NormalNumbers.Abelian
