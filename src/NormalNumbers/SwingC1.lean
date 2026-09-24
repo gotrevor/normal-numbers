@@ -1355,6 +1355,99 @@ theorem conjC1_iff_hAutoCorr : ConjC1 ↔ ∀ b, 3 ≤ b → HAutoCorr b := by
   refine ⟨fun h b hb => hAutoCorr_of_stateLaw b hb fun L => ?_, conjC1_of_hAutoCorr⟩
   exact (castLaw_iff_stateLaw b (by omega) L).mp (h b hb L)
 
+/-! #### `ω` disappears: the potential `T` is the integer part of the `×b` orbit
+
+Casting out nines on the integer `⌊b^n x⌋ = Σ_{m ≤ n} d_m b^{n−m}` gives `⌊b^n x⌋ ≡ Σ_{m≤n} d_m`
+mod `b − 1`, and the `d`'s telescope to `T`.  So
+
+    T(n)  ≡  ⌊b^n · G4_b⌋   (mod b − 1),
+
+and the leaf `HAutoCorr` can be stated with NO reference to `ω`, the carry, or the digits: it is a
+property of the integer parts of the `×b`-orbit of the single real number `G4_b`.  This is the form
+to hand to an auditor, and the form in which the hypothesis is comparable with the repo's Weyl-side
+objects (`floor_mul_pow_eq_windowVal`, `zetaRoot_windowVal_eq`). -/
+
+/-- `b ≡ 1` in `ZMod (b − 1)` — casting out nines, as a cast lemma. -/
+lemma natCast_base_eq_one (b : ℕ) (hb : 1 ≤ b) : ((b : ℕ) : ZMod (b - 1)) = 1 := by
+  obtain ⟨q, rfl⟩ : ∃ q, b = q + 1 := ⟨b - 1, by omega⟩
+  have : q + 1 - 1 = q := by omega
+  rw [this]
+  push_cast
+  rw [ZMod.natCast_self]
+  ring
+
+/-- **`T(n) ≡ ⌊b^n · G4_b⌋ (mod b − 1)`.**  The potential of the leaf is the integer part of the
+`×b`-orbit, cast out mod `b − 1`; every trace of `ω` and of the carry cancels. -/
+theorem castSum_cast_eq_floor (b : ℕ) (hb : 2 ≤ b) (n : ℕ) :
+    ((castSum b n : ℤ) : ZMod (b - 1))
+      = ((⌊primeLambertAtBase b * (b : ℝ) ^ n⌋ : ℤ) : ZMod (b - 1)) := by
+  have hfloor := floor_mul_pow_eq_windowVal b hb 0 n
+  simp only [Nat.add_zero, pow_zero, one_mul] at hfloor
+  have hw : omegaWindowVal b 0 n = omegaCarry b n := by
+    simp [omegaWindowVal, omegaHead]
+  rw [hw] at hfloor
+  rw [hfloor, castSum]
+  push_cast
+  -- `b^k ≡ 1`, so the positional sum collapses to the plain sum
+  have hb1 : ((b : ℕ) : ZMod (b - 1)) = 1 := natCast_base_eq_one b (by omega)
+  have hcollapse : ∀ m ∈ range (n + 1),
+      ((omegaNat m : ZMod (b - 1))) * ((b : ZMod (b - 1))) ^ (n - m)
+        = ((omegaNat m : ZMod (b - 1))) := by
+    intro m _
+    rw [show ((b : ℕ) : ZMod (b - 1)) = 1 from hb1, one_pow, mul_one]
+  rw [Finset.sum_congr rfl hcollapse]
+
+/-- The leaf, with `ω` eliminated: the correlation of `n ↦ ζ_{b−1}^{j·⌊b^n·G4_b⌋}`. -/
+noncomputable def floorCorrSum (b j L N : ℕ) : ℂ :=
+  (∑ n ∈ range N, zetaRoot (b - 1) ^
+    ((j : ℤ) * (⌊primeLambertAtBase b * (b : ℝ) ^ (n + L)⌋
+      - ⌊primeLambertAtBase b * (b : ℝ) ^ n⌋))) / N
+
+/-- **The two forms of the leaf agree, for every `N`.** -/
+theorem floorCorrSum_eq_corrSum (b : ℕ) (hb : 2 ≤ b) (j L N : ℕ) :
+    floorCorrSum b j L N = corrSum b j L N := by
+  have hqpos : 0 < b - 1 := by omega
+  rw [floorCorrSum, corrSum]
+  congr 1
+  refine Finset.sum_congr rfl fun n _ => ?_
+  -- the exponents agree mod `b − 1`
+  have hA := castSum_cast_eq_floor b hb (n + L)
+  have hB := castSum_cast_eq_floor b hb n
+  have hdvd : ((b - 1 : ℕ) : ℤ) ∣
+      ((⌊primeLambertAtBase b * (b : ℝ) ^ (n + L)⌋ - ⌊primeLambertAtBase b * (b : ℝ) ^ n⌋)
+        - (castSum b (n + L) - castSum b n)) := by
+    have : (((⌊primeLambertAtBase b * (b : ℝ) ^ (n + L)⌋
+        - ⌊primeLambertAtBase b * (b : ℝ) ^ n⌋)
+        - (castSum b (n + L) - castSum b n) : ℤ) : ZMod (b - 1)) = 0 := by
+      push_cast
+      rw [← hA, ← hB]
+      ring
+    exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp this
+  obtain ⟨c, hc⟩ := hdvd
+  have hsplit : (j : ℤ) * (⌊primeLambertAtBase b * (b : ℝ) ^ (n + L)⌋
+      - ⌊primeLambertAtBase b * (b : ℝ) ^ n⌋)
+      = (j : ℤ) * (castSum b (n + L) - castSum b n)
+        + ((b - 1 : ℕ) : ℤ) * ((j : ℤ) * c) := by
+    linear_combination (j : ℤ) * hc
+  rw [hsplit, zpow_add₀ (zetaRoot_ne_zero (b - 1)),
+    zpow_mul (zetaRoot (b - 1)) (((b - 1 : ℕ)) : ℤ) ((j : ℤ) * c),
+    (zetaRoot_zpow_eq_one_iff (b - 1) hqpos (((b - 1 : ℕ)) : ℤ)).mpr dvd_rfl, one_zpow, mul_one]
+
+/-- **The leaf in `x`-only form.**  `ConjC1` says exactly this about the `×b`-orbit of `G4_b`. -/
+def HFloorCorr (b : ℕ) : Prop :=
+  ∀ j, 0 < j → j < b - 1 → ∀ L, Tendsto (floorCorrSum b j L) atTop (𝓝 (((b : ℂ))⁻¹ ^ L))
+
+theorem hFloorCorr_iff_hAutoCorr (b : ℕ) (hb : 2 ≤ b) : HFloorCorr b ↔ HAutoCorr b := by
+  constructor <;> intro h j hj hjq L
+  · exact Filter.Tendsto.congr (fun N => floorCorrSum_eq_corrSum b hb j L N) (h j hj hjq L)
+  · exact Filter.Tendsto.congr (fun N => (floorCorrSum_eq_corrSum b hb j L N).symm) (h j hj hjq L)
+
+/-- **`ConjC1` ⟺ an `ω`-free statement about the `×b`-orbit of `G4_b`.** -/
+theorem conjC1_iff_hFloorCorr : ConjC1 ↔ ∀ b, 3 ≤ b → HFloorCorr b := by
+  rw [conjC1_iff_hAutoCorr]
+  exact ⟨fun h b hb => (hFloorCorr_iff_hAutoCorr b (by omega)).mpr (h b hb),
+    fun h b hb => (hFloorCorr_iff_hAutoCorr b (by omega)).mp (h b hb)⟩
+
 /-! #### Carry inertness: the leaf's whole content sits where `ω` reaches `b − 1`
 
 `c_N = ⌊Σ_{k≥1} ω(N+k) b^{−k}⌋` is IDENTICALLY ZERO as long as `ω` stays `≤ b − 2` on the tail,
