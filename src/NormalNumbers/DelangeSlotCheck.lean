@@ -1,0 +1,2 @@
+import NormalNumbers.DelangeSlotRecursion
+#print axioms NormalNumbers.DelangeSlot.recursion_tendsto_zero

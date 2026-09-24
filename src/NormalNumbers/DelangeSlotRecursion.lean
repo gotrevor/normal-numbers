@@ -285,12 +285,228 @@ lemma sum_d_bound {c : ℝ} (hc : 0 ≤ c) {N₀ N : ℕ} (h3 : 3 ≤ N₀) (hN 
   exact le_trans (mul_le_mul_of_nonneg_left hsub h2c)
     (mul_le_mul_of_nonneg_left (sum_one_div_mul_log_le hN) h2c)
 
+/-- `(A + B x) e^{-c x} → 0` for `c > 0`. -/
+lemma tendsto_linear_mul_exp_neg {A B c : ℝ} (hc : 0 < c) :
+    Tendsto (fun x : ℝ => (A + B * x) * Real.exp (-(c * x))) atTop (𝓝 0) := by
+  have hlin : Tendsto (fun x : ℝ => c * x) atTop atTop :=
+    Filter.Tendsto.const_mul_atTop hc tendsto_id
+  have h1 : Tendsto (fun x : ℝ => Real.exp (-(c * x))) atTop (𝓝 0) :=
+    Real.tendsto_exp_neg_atTop_nhds_zero.comp hlin
+  have h2 : Tendsto (fun x : ℝ => (c * x) * Real.exp (-(c * x))) atTop (𝓝 0) := by
+    have h := (Real.tendsto_pow_mul_exp_neg_atTop_nhds_zero 1).comp hlin
+    simpa [Function.comp_def] using h
+  have h3 := (h1.const_mul A).add (h2.const_mul (B / c))
+  simp only [mul_zero, add_zero] at h3
+  have heq : (fun x : ℝ => (A + B * x) * Real.exp (-(c * x)))
+      = fun x : ℝ => A * Real.exp (-(c * x)) + (B / c) * ((c * x) * Real.exp (-(c * x))) := by
+    funext x; field_simp
+  rw [heq]; exact h3
+
 /-- **L7.**  The recursion forces `σ N → 0`. -/
 theorem recursion_tendsto_zero {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z.re < 1) (C : ℝ) (σ : ℕ → ℂ)
     (hσ : ∀ k, ‖σ k‖ ≤ 1)
     (hrec : ∀ N : ℕ, 2 ≤ N →
       ‖((Real.log N : ℂ) - z) * σ N - z * ∑ k ∈ Ico 1 N, σ k / ((k : ℂ) + 1)‖ ≤ C) :
     Tendsto σ atTop (𝓝 0) := by
-  sorry
+  classical
+  set Ψ : ℕ → ℂ := fun N => ∑ k ∈ Ico 1 N, σ k / ((k : ℂ) + 1) with hΨ
+  set r : ℕ → ℝ := fun N => ‖Ψ N‖ with hr
+  have hC : 0 ≤ C := le_trans (norm_nonneg _) (hrec 2 le_rfl)
+  set β : ℝ := (max z.re 0 + 1) / 2 with hβdef
+  have hmax1 : max z.re 0 < 1 := max_lt hz1 one_pos
+  have hβ : max z.re 0 < β := by rw [hβdef]; linarith
+  have hβ1 : β < 1 := by rw [hβdef]; linarith
+  have hβ0 : 0 ≤ β := by
+    have : 0 ≤ max z.re 0 := le_max_right _ _
+    rw [hβdef]; linarith
+  -- the threshold
+  have hlogtop : Tendsto (fun n : ℕ => Real.log n) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have hev : ∀ᶠ n : ℕ in atTop,
+      (‖1 + z / (((n : ℂ) + 1) * ((Real.log n : ℂ) - z))‖
+          ≤ 1 + β / (((n : ℝ) + 1) * Real.log n)) ∧ (2 ≤ Real.log n) ∧ 3 ≤ n :=
+    (eventually_norm_one_add_le hz hβ).and
+      ((hlogtop.eventually_ge_atTop 2).and (eventually_ge_atTop 3))
+  obtain ⟨M₀, hM₀⟩ := Filter.eventually_atTop.1 hev
+  set M : ℕ := max M₀ 3 with hMdef
+  have hM3 : 3 ≤ M := le_max_right _ _
+  have hMprop : ∀ n, M ≤ n → (‖1 + z / (((n : ℂ) + 1) * ((Real.log n : ℂ) - z))‖
+      ≤ 1 + β / (((n : ℝ) + 1) * Real.log n)) ∧ (2 ≤ Real.log n) ∧ 3 ≤ n :=
+    fun n hn => hM₀ n (le_trans (le_max_left _ _) hn)
+  set q : ℕ → ℝ := fun n => 1 + β / (((n : ℝ) + 1) * Real.log n) with hq
+  set d : ℕ → ℝ := fun n => C / (((n : ℝ) + 1) * (Real.log n - 1)) with hd
+  -- basic positivity on the range
+  have hpos : ∀ n, M ≤ n → (0:ℝ) < ((n : ℝ) + 1) ∧ 2 ≤ Real.log n := by
+    intro n hn
+    refine ⟨by positivity, (hMprop n hn).2.1⟩
+  have hWne : ∀ n, M ≤ n → ((Real.log n : ℂ) - z) ≠ 0 ∧
+      Real.log n - 1 ≤ ‖(Real.log n : ℂ) - z‖ := by
+    intro n hn
+    have h2 : (2:ℝ) ≤ Real.log n := (hpos n hn).2
+    have hnorm : Real.log n - 1 ≤ ‖(Real.log n : ℂ) - z‖ := by
+      have := norm_sub_norm_le ((Real.log n : ℂ)) z
+      rw [hz, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (by linarith)] at this
+      exact this
+    refine ⟨?_, hnorm⟩
+    intro h
+    rw [h, norm_zero] at hnorm
+    linarith
+  -- the one-step inequality
+  have hstep : ∀ n, M ≤ n → r (n + 1) ≤ r n * q n + d n := by
+    intro n hn
+    obtain ⟨hWn, hWnorm⟩ := hWne n hn
+    have h1n : 1 ≤ n := le_trans (by lia) (hMprop n hn).2.2
+    have hn1C : ((n : ℂ) + 1) ≠ 0 := by
+      intro h
+      have := congrArg Complex.re h
+      simp at this
+      have : (0:ℝ) ≤ (n:ℝ) := Nat.cast_nonneg n
+      linarith
+    set W : ℂ := (Real.log n : ℂ) - z with hW
+    set E : ℂ := W * σ n - z * Ψ n with hE
+    have hEC : ‖E‖ ≤ C := hrec n (le_trans (by lia) (hMprop n hn).2.2)
+    have hsucc : Ψ (n + 1) = Ψ n * (1 + z / (((n : ℂ) + 1) * W)) + E / (((n : ℂ) + 1) * W) := by
+      have hs : Ψ (n + 1) = Ψ n + σ n / ((n : ℂ) + 1) := by
+        rw [hΨ]; simp only []
+        rw [Finset.sum_Ico_succ_top h1n]
+      rw [hs, hE]
+      field_simp
+      ring
+    have hcastn : ‖((n : ℂ) + 1)‖ = ((n : ℝ) + 1) := by
+      rw [show ((n:ℂ)+1) = ((((n:ℝ)+1) : ℝ) : ℂ) by push_cast; ring,
+        Complex.norm_real, Real.norm_eq_abs, abs_of_pos (by positivity)]
+    have h2n : (2:ℝ) ≤ Real.log n := (hpos n hn).2
+    have hb1 : ‖Ψ n * (1 + z / (((n : ℂ) + 1) * W))‖ ≤ r n * q n := by
+      rw [norm_mul]
+      exact mul_le_mul_of_nonneg_left (hMprop n hn).1 (norm_nonneg _)
+    have hb2 : ‖E / (((n : ℂ) + 1) * W)‖ ≤ d n := by
+      rw [norm_div, norm_mul, hcastn, hd]
+      simp only []
+      refine div_le_div₀ hC hEC ?_ ?_
+      · have h0 : (0:ℝ) < ((n:ℝ)+1) := by positivity
+        have h1 : (0:ℝ) < Real.log n - 1 := by linarith
+        positivity
+      · have h0 : (0:ℝ) < ((n:ℝ)+1) := by positivity
+        exact mul_le_mul_of_nonneg_left hWnorm h0.le
+    have : r (n + 1) ≤ ‖Ψ n * (1 + z / (((n : ℂ) + 1) * W))‖ + ‖E / (((n : ℂ) + 1) * W)‖ := by
+      rw [hr]; simp only []; rw [hsucc]; exact norm_add_le _ _
+    linarith
+
+  have hqge : ∀ n, M ≤ n → 1 ≤ q n := by
+    intro n hn
+    have h2 : (2:ℝ) ≤ Real.log n := (hpos n hn).2
+    have : (0:ℝ) ≤ β / (((n : ℝ) + 1) * Real.log n) := by
+      have : (0:ℝ) < ((n:ℝ)+1) * Real.log n := by
+        have : (0:ℝ) < ((n:ℝ)+1) := by positivity
+        nlinarith
+      positivity
+    rw [hq]; simp only []; linarith
+  have hdge : ∀ n, M ≤ n → 0 ≤ d n := by
+    intro n hn
+    have h2 : (2:ℝ) ≤ Real.log n := (hpos n hn).2
+    have hden : (0:ℝ) < ((n : ℝ) + 1) * (Real.log n - 1) := by
+      have h0 : (0:ℝ) < ((n:ℝ)+1) := by positivity
+      have h1 : (0:ℝ) < Real.log n - 1 := by linarith
+      positivity
+    rw [hd]; simp only []; positivity
+  have hgron := gronwall hstep hqge hdge (norm_nonneg _)
+  -- the limit
+  set c₂ : ℝ := Real.log (Real.log 2) with hc₂
+  set A : ℝ := r M with hA
+  have hA0 : 0 ≤ A := norm_nonneg _
+  set G : ℝ → ℝ := fun y =>
+      (2 * Real.exp (-c₂) * A + (2 * Real.exp (-c₂) * (2 * C)) * y) * Real.exp (-((1 - β) * y))
+      + (2 * Real.exp (-c₂) * C + 0 * y) * Real.exp (-(1 * y)) with hG
+  have hGtend : Tendsto G atTop (𝓝 0) := by
+    have h1 := tendsto_linear_mul_exp_neg (A := 2 * Real.exp (-c₂) * A)
+      (B := 2 * Real.exp (-c₂) * (2 * C)) (c := 1 - β) (by linarith)
+    have h2 := tendsto_linear_mul_exp_neg (A := 2 * Real.exp (-c₂) * C) (B := 0) (c := 1)
+      (by norm_num)
+    have := h1.add h2
+    simpa [hG] using this
+  have hytop : Tendsto (fun N : ℕ => Real.log (Real.log N) - c₂) atTop atTop := by
+    have : Tendsto (fun N : ℕ => Real.log (Real.log N)) atTop atTop :=
+      Real.tendsto_log_atTop.comp hlogtop
+    simpa [sub_eq_add_neg] using Filter.tendsto_atTop_add_const_right atTop (-c₂) this
+  refine squeeze_zero_norm' ?_ (hGtend.comp hytop)
+  filter_upwards [eventually_ge_atTop M] with N hN
+  obtain ⟨hWN, hWNnorm⟩ := hWne N hN
+  have h2 : (2:ℝ) ≤ Real.log N := (hpos N hN).2
+  have hN3 : 3 ≤ N := (hMprop N hN).2.2
+  set x : ℝ := Real.log (Real.log N) with hx
+  set y : ℝ := x - c₂ with hy
+  -- bound on r N
+  have hPb : ∏ n ∈ Ico M N, q n ≤ Real.exp (β * y) := by
+    have := prod_bound (β := β) hβ0 (N₀ := M) (N := N) hM3 hN3
+    simpa [hq, hx, hy, hc₂] using this
+  have hDb : ∑ n ∈ Ico M N, d n ≤ 2 * C * y := by
+    have := sum_d_bound (c := C) hC (N₀ := M) (N := N) hM3 hN3
+      (fun n hn => (hpos n hn).2)
+    simpa [hd, hx, hy, hc₂] using this
+  have hD0 : 0 ≤ ∑ n ∈ Ico M N, d n :=
+    Finset.sum_nonneg fun n hn => hdge n (mem_Ico.1 hn).1
+  have hP0 : (0:ℝ) ≤ ∏ n ∈ Ico M N, q n :=
+    le_trans zero_le_one (Finset.one_le_prod fun n hn => hqge n (mem_Ico.1 hn).1)
+  have hy0 : 0 ≤ y := by
+    have hcx : c₂ ≤ x := by
+      rw [hx, hc₂]
+      refine Real.log_le_log (Real.log_pos (by norm_num)) ?_
+      refine Real.log_le_log (by norm_num) ?_
+      exact_mod_cast le_trans (by norm_num) hN3
+    rw [hy]; linarith
+  have hrN : r N ≤ (A + 2 * C * y) * Real.exp (β * y) := by
+    refine le_trans (hgron N hN) ?_
+    refine mul_le_mul (by linarith) hPb hP0 ?_
+    nlinarith [hA0, hC, hy0]
+  -- bound on ‖σ N‖
+  have hσN : ‖σ N‖ ≤ (r N + C) / (Real.log N - 1) := by
+    have hWeq : σ N = (z * Ψ N + (((Real.log N : ℂ) - z) * σ N - z * Ψ N))
+        / ((Real.log N : ℂ) - z) := by
+      field_simp
+      ring
+    rw [hWeq, norm_div]
+    have hnum : ‖z * Ψ N + (((Real.log N : ℂ) - z) * σ N - z * Ψ N)‖ ≤ r N + C := by
+      refine le_trans (norm_add_le _ _) ?_
+      have h1 : ‖z * Ψ N‖ = r N := by rw [norm_mul, hz, one_mul]
+      have h2 : ‖((Real.log N : ℂ) - z) * σ N - z * Ψ N‖ ≤ C := hrec N (by lia)
+      linarith [h1.le, h1.ge]
+    have hden : (0:ℝ) < Real.log N - 1 := by linarith
+    exact div_le_div₀ (by positivity) hnum hden hWNnorm
+  -- assemble
+  have hexpx : Real.exp x = Real.log N := Real.exp_log (by linarith)
+  have hlogN : Real.log N - 1 ≥ Real.exp c₂ * Real.exp y / 2 := by
+    have : Real.exp c₂ * Real.exp y = Real.exp x := by
+      rw [← Real.exp_add, hy]; ring_nf
+    rw [this, hexpx]
+    linarith
+  have hfinal : (r N + C) / (Real.log N - 1) ≤ G y := by
+    have hden : (0:ℝ) < Real.log N - 1 := by linarith
+    have hnum0 : 0 ≤ r N + C := by positivity
+    have hexpc : (0:ℝ) < Real.exp c₂ := Real.exp_pos _
+    have hexpy : (0:ℝ) < Real.exp y := Real.exp_pos _
+    have hstep1 : (r N + C) / (Real.log N - 1)
+        ≤ (r N + C) / (Real.exp c₂ * Real.exp y / 2) := by
+      apply div_le_div_of_nonneg_left hnum0 (by positivity) hlogN
+    refine le_trans hstep1 ?_
+    have hrw : (r N + C) / (Real.exp c₂ * Real.exp y / 2)
+        = 2 * Real.exp (-c₂) * (r N + C) * Real.exp (-y) := by
+      rw [Real.exp_neg, Real.exp_neg]
+      field_simp
+    rw [hrw, hG]
+    simp only []
+    have hkey : (r N + C) * Real.exp (-y)
+        ≤ (A + 2 * C * y) * Real.exp (-((1 - β) * y)) + C * Real.exp (-(1 * y)) := by
+      have e1 : (A + 2 * C * y) * Real.exp (β * y) * Real.exp (-y)
+          = (A + 2 * C * y) * Real.exp (-((1 - β) * y)) := by
+        rw [mul_assoc, ← Real.exp_add, show β * y + -y = -((1 - β) * y) by ring]
+      calc (r N + C) * Real.exp (-y)
+          ≤ ((A + 2 * C * y) * Real.exp (β * y) + C) * Real.exp (-y) := by
+            have := Real.exp_pos (-y); nlinarith [hrN]
+        _ = (A + 2 * C * y) * Real.exp (β * y) * Real.exp (-y) + C * Real.exp (-y) := by ring
+        _ = (A + 2 * C * y) * Real.exp (-((1 - β) * y)) + C * Real.exp (-(1 * y)) := by
+            rw [e1]; ring_nf
+    have hpos2 : (0:ℝ) < 2 * Real.exp (-c₂) := by positivity
+    nlinarith [hkey, hpos2, Real.exp_pos (-((1-β)*y)), Real.exp_pos (-(1*y))]
+  exact le_trans hσN hfinal
 
 end NormalNumbers.DelangeSlot
