@@ -9582,3 +9582,24 @@ expansion term indexed by a prime set `S` with `primePeriod P K · ∏_{p∈S} p
 6's exact cancellation verbatim.  Bookkeeping the survivors gives a *bounded* limsup — strictly
 more than is known now, and possibly enough for a weaker richness statement (all but finitely
 many words).
+
+### lap 11 — the crux pinned as ONE named leaf, plus a decisive probe
+
+**Probe** `probes/swingc3_weyl_lambert_twist.py` (+ data file).  Evaluates the swing's sharpest
+conditional directly:  `(1/N)∑_{n<N} e(jn/Q)·e(h·L_P·b^n)`, computed from the digit stream
+`ω_{>P}` (exact, cheap), for seven parameter sets up to `N = 4·10^5`, with two hand-computed
+known-answer checks.  Result: decay `(log N)^{−a}`, `a ≈ 1.3–3.7`, **never plateauing**.
+
+For `h = 1` the fitted `a ≈ 1.86–2.00`.  That independently reproduces lap 4's B4 measurement
+(`a ≈ a₀ + 1` with `a₀ ≈ 0.84` the Selberg–Delange global rate) by a COMPLETELY different
+computational route — the explicit constant `L_P` instead of class-conditional averages.  So the
+probe is also a numerical cross-check of lap 9's `ee_tailLarge_eq_ee_orbit`.  The conditional
+looks true, and the decay is a `log`-power, confirming no sqrt-cancellation route exists.
+
+**Leaf** `src/NormalNumbers/SwingC3Leaf.lean`: `CastingOut.weylLambertTwist_holds` is the single
+named open `sorry` carrying the crux in its sharpest form, with a docstring listing the five
+machine-checked facts around it, the exact missing window, and the numerics.
+`conjC3_via_weylLambert : ConjC3` is proved from it alone.
+
+`src/` swing sorries: 2 (`tailLargeDecouple_holds`, the ratified arc-form leaf kept per the
+kickoff addendum; and `weylLambertTwist_holds`, the live crux).  The rise is the decomposition.
