@@ -1355,6 +1355,88 @@ theorem conjC1_iff_hAutoCorr : ConjC1 ↔ ∀ b, 3 ≤ b → HAutoCorr b := by
   refine ⟨fun h b hb => hAutoCorr_of_stateLaw b hb fun L => ?_, conjC1_of_hAutoCorr⟩
   exact (castLaw_iff_stateLaw b (by omega) L).mp (h b hb L)
 
+/-! #### The leaf is weak equidistribution of the `×b`-orbit against `b^L`-step functions
+
+`A_{n+L} = b^L A_n + W_n` with `W_n = ⌊b^L · fract(b^n x)⌋ ∈ [0, b^L)` the window word, and
+`b^L − 1 ≡ 0 (mod b−1)`, so
+
+    A_{n+L} − A_n  ≡  W_n  =  ⌊b^L · fract(b^n x)⌋   (mod b − 1).
+
+Hence the leaf is exactly: the orbit `t_n = fract(b^n x)` equidistributes against the `b^L`-step
+test functions `t ↦ ζ_{b−1}^{j·⌊b^L t⌋}`, whose mean value over `[0,1)` is
+
+    (1/b^L) Σ_{v < b^L} ζ_{b−1}^{jv}  =  b^{−L},
+
+because `Σ_{v < b^L} ζ_{b−1}^{jv} = 1`: the `b^L` terms are `(b^L − 1)/(b−1)` complete periods,
+which cancel, plus one leftover term `ζ^{j(b^L−1)} = 1`.  So the constant `b^{−L}` is not an
+artefact of the model — it is the integral of the test function, computed here independently of
+`normalCastLaw_closed`.  This also pins the leaf's exact strength: full normality of `G4_b` would be
+equidistribution against ALL Riemann-integrable test functions; the leaf needs only these. -/
+
+/-- `⌊m·y⌋ = m⌊y⌋ + ⌊m·fract y⌋` for a natural multiplier. -/
+lemma floor_nat_mul_eq (m : ℕ) (y : ℝ) :
+    ⌊(m : ℝ) * y⌋ = (m : ℤ) * ⌊y⌋ + ⌊(m : ℝ) * Int.fract y⌋ := by
+  have h : (m : ℝ) * y = (m : ℝ) * Int.fract y + (((m : ℤ) * ⌊y⌋ : ℤ) : ℝ) := by
+    rw [Int.fract]; push_cast; ring
+  rw [h, Int.floor_add_intCast, add_comm]
+
+/-- **The window word is the orbit's truncation.**  `A_{n+L} − b^L·A_n = ⌊b^L·fract(b^n x)⌋`. -/
+theorem floor_sub_eq_floor_fract (b : ℕ) (_hb : 2 ≤ b) (L n : ℕ) :
+    ⌊primeLambertAtBase b * (b : ℝ) ^ (n + L)⌋
+        - (b : ℤ) ^ L * ⌊primeLambertAtBase b * (b : ℝ) ^ n⌋
+      = ⌊((b : ℝ)) ^ L * Int.fract (primeLambertAtBase b * (b : ℝ) ^ n)⌋ := by
+  have hpow : primeLambertAtBase b * (b : ℝ) ^ (n + L)
+      = ((b ^ L : ℕ) : ℝ) * (primeLambertAtBase b * (b : ℝ) ^ n) := by
+    push_cast
+    rw [pow_add]
+    ring
+  rw [hpow, floor_nat_mul_eq (b ^ L) (primeLambertAtBase b * (b : ℝ) ^ n)]
+  push_cast
+  ring
+
+/-- `Σ_{v < b^L} ζ_{b−1}^{jv} = 1` for a nontrivial `j`: the complete periods cancel and one
+leftover term survives.  This is casting out nines in Fourier form. -/
+theorem sum_zetaRoot_range_pow (b : ℕ) (hb : 3 ≤ b) (L j : ℕ) (hj : 0 < j) (hjq : j < b - 1) :
+    (∑ v ∈ range (b ^ L), zetaRoot (b - 1) ^ ((j : ℤ) * (v : ℤ))) = 1 := by
+  classical
+  set q := b - 1 with hq
+  have hqpos : 0 < q := by omega
+  set z : ℂ := zetaRoot q ^ ((j : ℤ)) with hz
+  have hzpow : ∀ v : ℕ, zetaRoot q ^ ((j : ℤ) * (v : ℤ)) = z ^ v := by
+    intro v
+    rw [hz, ← zpow_natCast (zetaRoot q ^ ((j : ℤ))) v, ← zpow_mul]
+  have hzne : z ≠ 1 := by
+    rw [hz]
+    intro hcon
+    have := (zetaRoot_zpow_eq_one_iff q hqpos (j : ℤ)).mp hcon
+    obtain ⟨c, hc⟩ := this
+    have hjq' : (j : ℤ) < (q : ℤ) := by exact_mod_cast (by omega : j < q)
+    have hj' : (0 : ℤ) < (j : ℤ) := by exact_mod_cast hj
+    have hqz : (0 : ℤ) < (q : ℤ) := by exact_mod_cast hqpos
+    rcases lt_trichotomy c 0 with h | h | h
+    · nlinarith
+    · simp [h] at hc; omega
+    · nlinarith
+  -- `z^q = 1`, so `z^(b^L - 1) = 1` since `q ∣ b^L - 1`
+  have hzq : z ^ q = 1 := by
+    rw [hz, ← zpow_natCast (zetaRoot q ^ ((j : ℤ))) q, ← zpow_mul]
+    exact (zetaRoot_zpow_eq_one_iff q hqpos _).mpr ⟨(j : ℤ), by ring⟩
+  have hdvd : q ∣ b ^ L - 1 := by
+    rw [hq]
+    simpa only [one_pow] using Nat.sub_dvd_pow_sub_pow b 1 L
+  obtain ⟨m, hm⟩ := hdvd
+  have hbL : 1 ≤ b ^ L := Nat.one_le_pow _ _ (by omega)
+  have hsplit : b ^ L = (b ^ L - 1) + 1 := by omega
+  rw [Finset.sum_congr rfl fun v _ => hzpow v, hsplit, geom_sum_eq hzne, pow_succ,
+    show z ^ (b ^ L - 1) = 1 by rw [hm, pow_mul, hzq, one_pow], one_mul,
+    div_self (sub_ne_zero.mpr hzne)]
+
+/-- **The constant `b^{−L}` is the mean value of the test function.**  Model-free derivation. -/
+theorem mean_zetaRoot_block (b : ℕ) (hb : 3 ≤ b) (L j : ℕ) (hj : 0 < j) (hjq : j < b - 1) :
+    (((b : ℂ)) ^ L)⁻¹ * (∑ v ∈ range (b ^ L), zetaRoot (b - 1) ^ ((j : ℤ) * (v : ℤ)))
+      = ((b : ℂ))⁻¹ ^ L := by
+  rw [sum_zetaRoot_range_pow b hb L j hj hjq, mul_one, inv_pow]
+
 /-! #### `ω` disappears: the potential `T` is the integer part of the `×b` orbit
 
 Casting out nines on the integer `⌊b^n x⌋ = Σ_{m ≤ n} d_m b^{n−m}` gives `⌊b^n x⌋ ≡ Σ_{m≤n} d_m`
@@ -1447,6 +1529,57 @@ theorem conjC1_iff_hFloorCorr : ConjC1 ↔ ∀ b, 3 ≤ b → HFloorCorr b := by
   rw [conjC1_iff_hAutoCorr]
   exact ⟨fun h b hb => (hFloorCorr_iff_hAutoCorr b (by omega)).mpr (h b hb),
     fun h b hb => (hFloorCorr_iff_hAutoCorr b (by omega)).mp (h b hb)⟩
+
+/-- The orbit form of the leaf: the average of the `b^L`-step test function
+`t ↦ ζ_{b−1}^{j·⌊b^L t⌋}` along the orbit `t_n = fract(b^n·G4_b)`. -/
+noncomputable def orbitCorrSum (b j L N : ℕ) : ℂ :=
+  (∑ n ∈ range N, zetaRoot (b - 1) ^
+    ((j : ℤ) * ⌊((b : ℝ)) ^ L * Int.fract (primeLambertAtBase b * (b : ℝ) ^ n)⌋)) / N
+
+/-- **The orbit form equals the leaf, for every `N`.**  `A_{n+L} − A_n = (b^L−1)A_n + W_n` and
+`b − 1 ∣ b^L − 1`, so the long-range part of the orbit is annihilated by the modulus. -/
+theorem orbitCorrSum_eq_floorCorrSum (b : ℕ) (hb : 2 ≤ b) (j L N : ℕ) :
+    orbitCorrSum b j L N = floorCorrSum b j L N := by
+  have hqpos : 0 < b - 1 := by omega
+  rw [orbitCorrSum, floorCorrSum]
+  congr 1
+  refine Finset.sum_congr rfl fun n _ => ?_
+  set A : ℤ := ⌊primeLambertAtBase b * (b : ℝ) ^ n⌋ with hA
+  have hW := floor_sub_eq_floor_fract b hb L n
+  -- `b − 1 ∣ b^L − 1`
+  obtain ⟨m, hm⟩ : ((b : ℤ) - 1) ∣ ((b : ℤ) ^ L - 1) := by
+    simpa using sub_dvd_pow_sub_pow (b : ℤ) 1 L
+  have hqz : (((b - 1 : ℕ)) : ℤ) = (b : ℤ) - 1 := by
+    rw [Nat.cast_sub (by omega : 1 ≤ b)]; norm_num
+  have hsplit : (j : ℤ) * (⌊primeLambertAtBase b * (b : ℝ) ^ (n + L)⌋ - A)
+      = (j : ℤ) * ⌊((b : ℝ)) ^ L * Int.fract (primeLambertAtBase b * (b : ℝ) ^ n)⌋
+        + (((b - 1 : ℕ)) : ℤ) * ((j : ℤ) * (m * A)) := by
+    rw [hqz]
+    linear_combination (j : ℤ) * hW + (j : ℤ) * A * hm
+  rw [hsplit, zpow_add₀ (zetaRoot_ne_zero (b - 1)),
+    zpow_mul (zetaRoot (b - 1)) (((b - 1 : ℕ)) : ℤ) ((j : ℤ) * (m * A)),
+    (zetaRoot_zpow_eq_one_iff (b - 1) hqpos (((b - 1 : ℕ)) : ℤ)).mpr dvd_rfl, one_zpow, mul_one]
+
+/-- **The leaf as weak equidistribution.**  The `×b`-orbit of `G4_b` averages the `b^L`-step test
+functions `t ↦ ζ_{b−1}^{j·⌊b^L t⌋}` to their mean values `b^{−L}` (`mean_zetaRoot_block`).  Full
+normality of `G4_b` would be this for ALL Riemann-integrable test functions; `ConjC1` needs only
+these finitely many per `L`. -/
+def HOrbit (b : ℕ) : Prop :=
+  ∀ j, 0 < j → j < b - 1 → ∀ L, Tendsto (orbitCorrSum b j L) atTop (𝓝 (((b : ℂ))⁻¹ ^ L))
+
+theorem hOrbit_iff_hAutoCorr (b : ℕ) (hb : 2 ≤ b) : HOrbit b ↔ HAutoCorr b := by
+  have hcongr : ∀ j L N, orbitCorrSum b j L N = corrSum b j L N := fun j L N => by
+    rw [orbitCorrSum_eq_floorCorrSum b hb j L N, floorCorrSum_eq_corrSum b hb j L N]
+  constructor <;> intro h j hj hjq L
+  · exact Filter.Tendsto.congr (fun N => hcongr j L N) (h j hj hjq L)
+  · exact Filter.Tendsto.congr (fun N => (hcongr j L N).symm) (h j hj hjq L)
+
+/-- **`ConjC1` ⟺ weak equidistribution of the `×b`-orbit against `b^L`-step functions.** -/
+theorem conjC1_iff_hOrbit : ConjC1 ↔ ∀ b, 3 ≤ b → HOrbit b := by
+  rw [conjC1_iff_hAutoCorr]
+  exact ⟨fun h b hb => (hOrbit_iff_hAutoCorr b (by omega)).mpr (h b hb),
+    fun h b hb => (hOrbit_iff_hAutoCorr b (by omega)).mp (h b hb)⟩
+
 
 /-! #### Carry inertness: the leaf's whole content sits where `ω` reaches `b − 1`
 
