@@ -124,3 +124,38 @@ so **this is the last elementary step before the sieve**.
    (thresholds `b^K(k+1)`, only `O(b^{K/2})` undamped) ⇒ `TauMomentPrimes`.
 3. Linnik lower bound at `Y = M^3` for non-emptiness (mathlib has Dirichlet but not Linnik;
    a named leaf).
+
+## Lap 18d — a FALSE leaf caught by probe, and the union bound discharged
+
+### 1. `CarryLeaf` as stated in lap 17 was FALSE (at `K = 0`) — repaired
+At `K = 0` the budget is `b^0 = 1`, so the carry must be exactly `0`, while the side conditions
+collapse to `a ≤ 1`, `M ≤ 2`, `N ≤ 1`.  `probes/swingc2_carryleaf_K0.py` (known-answer checked)
+sweeps every admissible datum and every prime `p < 4000`: for `b = 3` the minimum carry is `1`,
+never `0`.  (For `b ≥ 4` the `K = 0` instance happens to hold — the failure is base-specific,
+which is why lap 17 did not notice it.)  `CarryLeaf` and `TauMomentPrimes` now carry `1 ≤ K`;
+the only consumer, `SurvivorLeaf`, supplies `K ≥ 110`, so nothing downstream changes.
+**No statement was weakened in substance — a false instance was removed.**
+
+### 2. The union bound over shifts is now a theorem
+`TauMomentPrimesShift` (new): the same data, but with the "for all `k` at once" replaced by a
+**per-shift density** bound — in a family `P` of primes of the progression the `k`-th exceptional
+set occupies at most a `1/(2(kb+1))` fraction, `kb = 2√(2^a Y + K)`.
+
+`tauMomentPrimes_of_shift` — **proved**.  Beyond `kb` shifts the trivial bound `τ(m) ≤ 2√m`
+already beats the threshold `b^K(k+1)` (this is where `b^K ≥ 3`, i.e. `K ≥ 1`, is used), so only
+`kb+1` exceptional sets can be non-empty; their total size is `≤ |P|/2 < |P|`, leaving a good
+prime.
+
+### The crux, finally in irreducible form
+`tauMomentPrimesShift_holds` is the single open obligation on the headline path, and it is now
+**one shifted-divisor estimate along the primes of one arithmetic progression** — no series, no
+simultaneity, no union bound left in it:
+
+    #{p ∈ P : τ(2^a p + K+1+k) > b^K(k+1)}  ≤  |P| / (2(kb+1)),     P ⊆ primes ≡ r (mod M),
+
+which is `SwingC2Moment.tau_shift_sum_le` (proved) + Brun–Titchmarsh for primes in APs + Linnik
+for `|P| > 0`.
+
+### Chain as it stands
+    ConjC2 ⟸ … ⟸ SurvivorLeaf ⟸ CarryLeaf ⟸ TauMomentPrimes ⟸ TauMomentPrimesShift   ← OPEN
+with every `⟸` a machine-checked implication.

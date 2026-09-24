@@ -1482,12 +1482,17 @@ that rigorous ALONG THE PRIMES of the progression is a Brun–Titchmarsh (upper-
 `Σ_{p ≤ Y, p ≡ r} τ(2^a p + c)`) plus a Linnik-type lower bound (to have enough primes below
 `Y = M^{O(1)}`).  Both are `🟡` project-scale, neither is in mathlib.
 
+**`1 ≤ K` is necessary, not cosmetic.**  At `K = 0` the budget is `b^0 = 1`, i.e. the carry must
+be `0`; `probes/swingc2_carryleaf_K0.py` shows that for `b = 3` the carry is `≥ 1` for EVERY
+admissible datum (`a ≤ 1`, `M ≤ 2`, `N ≤ 1`) and every prime `p < 4000`, so the `K = 0` instance
+is false.  The only consumer (`SurvivorLeaf`) supplies `K ≥ 110`.
+
 The `N` parameter is capped by `b^{K/2}`: the prime only has to avoid the finitely many small
 values (`p ≠ 2`, `p > ℓ`), NOT to be arbitrarily large — and indeed it must not be, since the
 carry grows with `log p`. -/
 def CarryLeaf (b : ℕ) : Prop :=
-  ∀ K M r a N : ℕ, 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) → M ≤ 2 ^ (b ^ (K / 2)) →
-    N ≤ b ^ (K / 2) →
+  ∀ K M r a N : ℕ, 1 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
+    M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
     ∃ p : ℕ, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ carry b tau (2 ^ a * p + K) < (b : ℤ) ^ K
 
 /-- **(K2) + the carry leaf give the survivor leaf.**  The whole of `SurvivorLeaf` except the
@@ -1506,7 +1511,7 @@ theorem survivorLeaf_of_carryLeaf (b : ℕ) (hb : 3 ≤ b) (h : CarryLeaf b) : S
         _ = b ^ 1 := (pow_one b).symm
         _ ≤ b ^ (K / 2) := hpowmono 1 (K / 2) hK21
     · exact le_trans hK2 (le_of_lt (Nat.lt_pow_self (by omega)))
-  obtain ⟨p, hpN, hpp, hpr, hpc⟩ := h K M r a (max 2 ℓ) hM hrcop haK hbud hNK
+  obtain ⟨p, hpN, hpp, hpr, hpc⟩ := h K M r a (max 2 ℓ) (by omega) hM hrcop haK hbud hNK
   have hp2 : p ≠ 2 := by
     have : 2 < p := lt_of_le_of_lt (le_max_left 2 ℓ) hpN
     omega
@@ -1584,18 +1589,97 @@ Neither ingredient is in mathlib; both are `🟡` project-scale.  `card_large_ta
 same first moment over the FULL progression and IS proved — the open content is exactly the
 restriction to primes. -/
 def TauMomentPrimes (b : ℕ) : Prop :=
-  ∀ K M r a N : ℕ, 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) → M ≤ 2 ^ (b ^ (K / 2)) →
-    N ≤ b ^ (K / 2) →
+  ∀ K M r a N : ℕ, 1 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
+    M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
     ∃ p : ℕ, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧
       ∀ k : ℕ, tau (2 ^ a * p + K + 1 + k) ≤ b ^ K * (k + 1)
+
+/-- **Single-shift form of the sieve input.**  This is `TauMomentPrimes` with the "for all `k`
+simultaneously" replaced by a *per-shift density* bound, which is what a sieve actually delivers:
+in a family `P` of primes of the progression, the `k`-th exceptional set occupies at most a
+`1/(2(kb+1))` fraction, where `kb = 2√(2^a Y + K)` is the number of shifts that the trivial
+bound `τ(m) ≤ 2√m` does not already handle.
+
+`tauMomentPrimes_of_shift` below turns this into `TauMomentPrimes` by a union bound.  The point
+of the reduction is that the surviving obligation is now a SINGLE shifted-divisor estimate along
+primes of an arithmetic progression — i.e. exactly Brun–Titchmarsh applied to
+`SwingC2Moment.tau_shift_sum_le` — with no series and no simultaneity left in it. -/
+def TauMomentPrimesShift (b : ℕ) : Prop :=
+  ∀ K M r a N : ℕ, 1 ≤ K → 0 < M → Nat.Coprime r M → a ≤ b ^ (K / 2) →
+    M ≤ 2 ^ (b ^ (K / 2)) → N ≤ b ^ (K / 2) →
+    ∃ Y : ℕ, ∃ P : Finset ℕ,
+      (∀ p ∈ P, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ p ≤ Y) ∧ 0 < P.card ∧
+      ∀ k : ℕ, 2 * (2 * Nat.sqrt (2 ^ a * Y + K) + 1) *
+          (P.filter (fun p => b ^ K * (k + 1) < tau (2 ^ a * p + K + 1 + k))).card ≤ P.card
+
+/-- **The union bound over shifts is discharged.**  Only `O(√(2^a Y))` shifts need sieve input;
+beyond them `τ(m) ≤ 2√m` suffices because the threshold `b^K(k+1)` grows with `k`. -/
+theorem tauMomentPrimes_of_shift (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimesShift b) :
+    TauMomentPrimes b := by
+  classical
+  intro K M r a N hK hM hr ha hMb hN
+  obtain ⟨Y, P, hPmem, hPcard, hdens⟩ := h K M r a N hK hM hr ha hMb hN
+  set X : ℕ := 2 ^ a * Y + K with hX
+  set kb : ℕ := 2 * Nat.sqrt X with hkb
+  have hbK : 3 ≤ b ^ K := by
+    calc (3 : ℕ) ≤ b := hb
+      _ = b ^ 1 := (pow_one b).symm
+      _ ≤ b ^ K := Nat.pow_le_pow_right (by omega) hK
+  have htriv : ∀ p ∈ P, ∀ k : ℕ, kb ≤ k → tau (2 ^ a * p + K + 1 + k) ≤ b ^ K * (k + 1) := by
+    intro p hp k hkbk
+    obtain ⟨-, -, -, hpY⟩ := hPmem p hp
+    have hle : 2 ^ a * p + K + 1 + k ≤ X + (1 + k) := by
+      have : 2 ^ a * p ≤ 2 ^ a * Y := Nat.mul_le_mul_left _ hpY
+      omega
+    have h1 : tau (2 ^ a * p + K + 1 + k) ≤ 2 * Nat.sqrt (2 ^ a * p + K + 1 + k) :=
+      tau_le_two_mul_sqrt (by omega)
+    have h2 : Nat.sqrt (2 ^ a * p + K + 1 + k) ≤ Nat.sqrt (X + (1 + k)) :=
+      Nat.sqrt_le_sqrt hle
+    have h3 : Nat.sqrt (X + (1 + k)) ≤ Nat.sqrt X + (1 + k) := sqrt_add_le X (1 + k)
+    have h4 : 3 * (k + 1) ≤ b ^ K * (k + 1) := Nat.mul_le_mul_right _ hbK
+    have h5 : tau (2 ^ a * p + K + 1 + k) ≤ 3 * (k + 1) := by omega
+    exact le_trans h5 h4
+  set Bad : ℕ → Finset ℕ := fun k =>
+    P.filter (fun p => b ^ K * (k + 1) < tau (2 ^ a * p + K + 1 + k)) with hBad
+  have hdens' : ∀ k : ℕ, 2 * (kb + 1) * (Bad k).card ≤ P.card := fun k => hdens k
+  set U : Finset ℕ := (Finset.range (kb + 1)).biUnion Bad with hU
+  have hsum : (∑ k ∈ Finset.range (kb + 1), (Bad k).card) * (2 * (kb + 1))
+      ≤ (kb + 1) * P.card := by
+    rw [Finset.sum_mul]
+    calc ∑ k ∈ Finset.range (kb + 1), (Bad k).card * (2 * (kb + 1))
+        ≤ ∑ _k ∈ Finset.range (kb + 1), P.card := by
+          refine Finset.sum_le_sum fun k _ => ?_
+          calc (Bad k).card * (2 * (kb + 1)) = 2 * (kb + 1) * (Bad k).card := by ring
+            _ ≤ P.card := hdens' k
+      _ = (kb + 1) * P.card := by rw [Finset.sum_const, Finset.card_range, smul_eq_mul]
+  have hsum2 : 2 * ∑ k ∈ Finset.range (kb + 1), (Bad k).card ≤ P.card := by
+    have hfac : (∑ k ∈ Finset.range (kb + 1), (Bad k).card) * (2 * (kb + 1))
+        = (kb + 1) * (2 * ∑ k ∈ Finset.range (kb + 1), (Bad k).card) := by ring
+    rw [hfac] at hsum
+    exact Nat.le_of_mul_le_mul_left hsum (by omega)
+  have hUcard : U.card < P.card := by
+    have h1 : U.card ≤ ∑ k ∈ Finset.range (kb + 1), (Bad k).card := Finset.card_biUnion_le
+    omega
+  obtain ⟨p, hpP, hpU⟩ : ∃ p ∈ P, p ∉ U := by
+    by_contra hcon
+    push_neg at hcon
+    exact absurd (Finset.card_le_card (fun x hx => hcon x hx)) (by omega)
+  obtain ⟨hpN, hpp, hpr, -⟩ := hPmem p hpP
+  refine ⟨p, hpN, hpp, hpr, fun k => ?_⟩
+  rcases Nat.lt_or_ge k kb with hk1 | hk1
+  · have hnb : p ∉ Bad k := fun hmem => hpU (Finset.mem_biUnion.2
+      ⟨k, Finset.mem_range.2 (by omega), hmem⟩)
+    simp only [hBad, Finset.mem_filter, not_and, not_lt] at hnb
+    exact hnb hpP
+  · exact htriv p hpP k hk1
 
 /-- **`CarryLeaf` now follows from `TauMomentPrimes` by pure analysis.**  The whole of the
 carry side is discharged by `carry_lt_of_tau_le`; what is left is exactly the divisor-function
 input along the primes of one progression. -/
 theorem carryLeaf_of_tauMomentPrimes (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimes b) :
     CarryLeaf b := by
-  intro K M r a N hM hr ha hMb hN
-  obtain ⟨p, hpN, hpp, hpr, hk⟩ := h K M r a N hM hr ha hMb hN
+  intro K M r a N hK hM hr ha hMb hN
+  obtain ⟨p, hpN, hpp, hpr, hk⟩ := h K M r a N hK hM hr ha hMb hN
   refine ⟨p, hpN, hpp, hpr, ?_⟩
   have hApos : 0 < b ^ K := Nat.pow_pos (by omega : 0 < b)
   have := carry_lt_of_tau_le b hb (2 ^ a * p + K) (b ^ K) hApos (fun k => by
@@ -1603,11 +1687,16 @@ theorem carryLeaf_of_tauMomentPrimes (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrim
     rwa [show 2 ^ a * p + K + 1 + k = 2 ^ a * p + K + 1 + k from rfl] at this)
   simpa using this
 
-/-- **The one open obligation on the headline path.**  See `TauMomentPrimes`: the first moment
-of `τ` along the primes of an arithmetic progression.  The full-progression version
-(`card_large_tau_le`) is proved; only the restriction to primes is open. -/
-theorem tauMomentPrimes_holds (b : ℕ) (hb : 3 ≤ b) : TauMomentPrimes b := by
+/-- **The one open obligation on the headline path.**  A SINGLE shifted-divisor estimate along
+the primes of one arithmetic progression: Brun–Titchmarsh applied to
+`SwingC2Moment.tau_shift_sum_le`, plus a Linnik-type lower bound so that `P` is non-empty.
+Everything else on the path — the series, the simultaneity over shifts, the union bound, the
+full-progression first moment (`card_large_tau_le`) — is proved. -/
+theorem tauMomentPrimesShift_holds (b : ℕ) (hb : 3 ≤ b) : TauMomentPrimesShift b := by
   sorry
+
+theorem tauMomentPrimes_holds (b : ℕ) (hb : 3 ≤ b) : TauMomentPrimes b :=
+  tauMomentPrimes_of_shift b hb (tauMomentPrimesShift_holds b hb)
 
 theorem carryLeaf_holds (b : ℕ) (hb : 3 ≤ b) : CarryLeaf b :=
   carryLeaf_of_tauMomentPrimes b hb (tauMomentPrimes_holds b hb)
