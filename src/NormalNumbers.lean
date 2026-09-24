@@ -503,6 +503,7 @@ import NormalNumbers.TwoPointGramArith
 import NormalNumbers.TwoPointGramBudget
 import NormalNumbers.TwoPointGramMarkov
 import NormalNumbers.TwoPointGramL2
+import NormalNumbers.TwoPointGramFrobenius
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
