@@ -186,6 +186,105 @@ lemma eventually_norm_one_add_le {z : ℂ} (hz : ‖z‖ = 1) {β : ℝ} (hβ : 
   rw [heq1, heq2] at this
   exact this
 
+/-- Discrete Gronwall: `r (n+1) ≤ r n · q n + d n` with `q ≥ 1`, `d ≥ 0` integrates to the
+product/sum bound. -/
+lemma gronwall {r d q : ℕ → ℝ} {N₀ : ℕ}
+    (hstep : ∀ n, N₀ ≤ n → r (n + 1) ≤ r n * q n + d n)
+    (hq : ∀ n, N₀ ≤ n → 1 ≤ q n) (hd : ∀ n, N₀ ≤ n → 0 ≤ d n) (hr0 : 0 ≤ r N₀) :
+    ∀ N, N₀ ≤ N → r N ≤ (r N₀ + ∑ n ∈ Ico N₀ N, d n) * ∏ n ∈ Ico N₀ N, q n := by
+  intro N hN
+  induction N, hN using Nat.le_induction with
+  | base => simp
+  | succ N hN ih =>
+    have hP1 : (1:ℝ) ≤ ∏ n ∈ Ico N₀ N, q n :=
+      Finset.one_le_prod fun n hn => hq n (mem_Ico.1 hn).1
+    have hP0 : (0:ℝ) ≤ ∏ n ∈ Ico N₀ N, q n := le_trans zero_le_one hP1
+    have hqN : 1 ≤ q N := hq N hN
+    have hdN : 0 ≤ d N := hd N hN
+    have hDsum : 0 ≤ ∑ n ∈ Ico N₀ N, d n :=
+      Finset.sum_nonneg fun n hn => hd n (mem_Ico.1 hn).1
+    have h1 : r (N + 1) ≤ ((r N₀ + ∑ n ∈ Ico N₀ N, d n) * ∏ n ∈ Ico N₀ N, q n) * q N + d N := by
+      refine le_trans (hstep N hN) ?_
+      have := mul_le_mul_of_nonneg_right ih (le_trans zero_le_one hqN)
+      linarith
+    rw [Finset.sum_Ico_succ_top hN, Finset.prod_Ico_succ_top hN]
+    have hPq : (1:ℝ) ≤ (∏ n ∈ Ico N₀ N, q n) * q N :=
+      le_trans hP1 (le_mul_of_one_le_right hP0 hqN)
+    have h2 : d N ≤ d N * ((∏ n ∈ Ico N₀ N, q n) * q N) := le_mul_of_one_le_right hdN hPq
+    nlinarith [h1, h2, hP0, hqN]
+
+/-- Every term of the two tail sums is dominated by `1/(n log n)` on `n ≥ 3`. -/
+lemma subset_Icc {N₀ N : ℕ} (h3 : 3 ≤ N₀) : Ico N₀ N ⊆ Icc 3 N := by
+  intro n hn
+  rw [mem_Ico] at hn
+  exact mem_Icc.2 ⟨le_trans h3 hn.1, hn.2.le⟩
+
+/-- The integrating factor is at most `(log N)^β`, up to the constant `(log 2)^{-β}`. -/
+lemma prod_bound {β : ℝ} (hβ : 0 ≤ β) {N₀ N : ℕ} (h3 : 3 ≤ N₀) (hN : 3 ≤ N) :
+    ∏ n ∈ Ico N₀ N, (1 + β / (((n : ℝ) + 1) * Real.log n))
+      ≤ Real.exp (β * (Real.log (Real.log N) - Real.log (Real.log 2))) := by
+  have hterm : ∀ n ∈ Ico N₀ N, (0:ℝ) ≤ 1 + β / (((n : ℝ) + 1) * Real.log n) := by
+    intro n hn
+    have h3n : 3 ≤ n := le_trans h3 (mem_Ico.1 hn).1
+    have : (0:ℝ) < Real.log n := Real.log_pos (by exact_mod_cast by lia : (1:ℝ) < (n:ℝ))
+    positivity
+  have hle : ∀ n ∈ Ico N₀ N, 1 + β / (((n : ℝ) + 1) * Real.log n)
+      ≤ Real.exp (β / (((n : ℝ) + 1) * Real.log n)) := fun n _ => by rw [add_comm]; exact Real.add_one_le_exp _
+  refine le_trans (Finset.prod_le_prod hterm hle) ?_
+  rw [← Real.exp_sum]
+  refine Real.exp_le_exp.2 ?_
+  have hdom : ∀ n ∈ Ico N₀ N, β / (((n : ℝ) + 1) * Real.log n) ≤ β * (1 / ((n : ℝ) * Real.log n)) := by
+    intro n hn
+    have h3n : 3 ≤ n := le_trans h3 (mem_Ico.1 hn).1
+    have hn1 : (1:ℝ) < (n:ℝ) := by exact_mod_cast by lia
+    have hlog : (0:ℝ) < Real.log n := Real.log_pos hn1
+    have hn0 : (0:ℝ) < (n:ℝ) := by linarith
+    rw [mul_one_div, div_le_div_iff₀ (by positivity) (by positivity)]
+    nlinarith [hlog, hn0]
+  refine le_trans (Finset.sum_le_sum hdom) ?_
+  rw [← Finset.mul_sum]
+  have hpos : ∀ n ∈ Icc 3 N, (0:ℝ) ≤ 1 / ((n : ℝ) * Real.log n) := by
+    intro n hn
+    have h3n : 3 ≤ n := (mem_Icc.1 hn).1
+    have hn1 : (1:ℝ) < (n:ℝ) := by exact_mod_cast by lia
+    have := Real.log_pos hn1
+    positivity
+  have hsub := Finset.sum_le_sum_of_subset_of_nonneg (subset_Icc (N := N) h3) (fun n hn _ => hpos n hn)
+  exact le_trans (mul_le_mul_of_nonneg_left hsub hβ)
+    (mul_le_mul_of_nonneg_left (sum_one_div_mul_log_le hN) hβ)
+
+/-- The inhomogeneous sum is `O(log log N)`. -/
+lemma sum_d_bound {c : ℝ} (hc : 0 ≤ c) {N₀ N : ℕ} (h3 : 3 ≤ N₀) (hN : 3 ≤ N)
+    (hlog : ∀ n : ℕ, N₀ ≤ n → 2 ≤ Real.log n) :
+    ∑ n ∈ Ico N₀ N, c / (((n : ℝ) + 1) * (Real.log n - 1))
+      ≤ 2 * c * (Real.log (Real.log N) - Real.log (Real.log 2)) := by
+  have hdom : ∀ n ∈ Ico N₀ N, c / (((n : ℝ) + 1) * (Real.log n - 1))
+      ≤ (2 * c) * (1 / ((n : ℝ) * Real.log n)) := by
+    intro n hn
+    have hn0' : N₀ ≤ n := (mem_Ico.1 hn).1
+    have h3n : 3 ≤ n := le_trans h3 hn0'
+    have hn1 : (1:ℝ) < (n:ℝ) := by exact_mod_cast by lia
+    have hL2 : 2 ≤ Real.log n := hlog n hn0'
+    have hn0 : (0:ℝ) < (n:ℝ) := by linarith
+    rw [mul_one_div, div_le_div_iff₀ (by nlinarith) (by nlinarith)]
+    have hA : c * ((n:ℝ) * Real.log n) ≤ 2 * c * (((n:ℝ) + 1) * (Real.log n - 1)) := by
+      have h1 : (n:ℝ) * Real.log n ≤ 2 * (((n:ℝ) + 1) * (Real.log n - 1)) := by
+        nlinarith [hn0, hL2]
+      nlinarith [hc, h1]
+    linarith [hA]
+  refine le_trans (Finset.sum_le_sum hdom) ?_
+  rw [← Finset.mul_sum]
+  have hpos : ∀ n ∈ Icc 3 N, (0:ℝ) ≤ 1 / ((n : ℝ) * Real.log n) := by
+    intro n hn
+    have h3n : 3 ≤ n := (mem_Icc.1 hn).1
+    have hn1 : (1:ℝ) < (n:ℝ) := by exact_mod_cast by lia
+    have := Real.log_pos hn1
+    positivity
+  have hsub := Finset.sum_le_sum_of_subset_of_nonneg (subset_Icc (N := N) h3) (fun n hn _ => hpos n hn)
+  have h2c : (0:ℝ) ≤ 2 * c := by linarith
+  exact le_trans (mul_le_mul_of_nonneg_left hsub h2c)
+    (mul_le_mul_of_nonneg_left (sum_one_div_mul_log_le hN) h2c)
+
 /-- **L7.**  The recursion forces `σ N → 0`. -/
 theorem recursion_tendsto_zero {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z.re < 1) (C : ℝ) (σ : ℕ → ℂ)
     (hσ : ∀ k, ‖σ k‖ ≤ 1)
