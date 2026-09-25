@@ -1,5 +1,94 @@
 # PENDING WORK
 
+## 2026-09-25 (review lap 40) — C3/MRT: the budget is repaired; resume the `K`-fold assembly
+
+**The defect this lap found and fixed.**  Lap 37's `prod_le_lcm_mul_pow` puts a factor `K^{K²}`
+into the `K`-fold rung.  `QuantDepthElliott` (the `Prop` the whole reduction is stated against)
+allows only a `b^{κD}` budget and asks `η` to beat every power of `llProxy ≍ log log N`.
+**That cannot pay for `K^{K²}`**, and the lap-39 handoff's claim that it can is arithmetically
+wrong:
+
+    (log log N)^m = exp(m · log log log N) ,  writing v = log log log N ;
+    D_N ≍ v , so D_N^{D_N²} = exp(Θ(v² log v)) ≫ exp(m v) for every fixed m.
+
+So the `D ≥ 3` assembly was, until this lap, aimed at a `Prop` that could not receive it.
+
+**The fix (`src/NormalNumbers/C3MrtBudget.lean`, sorry-free, trust triple).**
+
+* `QuantDepthElliottGen b` — the budget is a free `C : ℕ → ℝ`; the decay clause becomes the
+  JOINT vanishing `C(depthLL b N)·η(N) → 0`.
+* `weylLambertTwist_of_quantDepthElliottGen` — the widened `Prop` still closes the crux.
+* `quantDepthElliottGen_of_quantDepthElliott` — the old `Prop` implies the new one, so every
+  existing ledger row and consumer survives verbatim; nothing was weakened.
+* `budget_absorb` — **the route-decisive lemma**.  `C D ≤ exp(c(D+1)³)` together with
+  `η N ≤ A(log N)^{-a}`, `a > 0`, gives the joint vanishing.  Mechanism, with
+  `t = ⌊log₂(⌊log₂⌊log₂ N⌋⌋+1)⌋`: `D_N + 1 ≤ 2t+3` (`depthLL_le_triple_log`, uniform in `b ≥ 2`
+  because `Nat.log b ≤ Nat.log 2`) while `log log N ≥ (2^t − 2)·log 2`
+  (`log_log_ge_triple_log`).  Budget POLYNOMIAL in `t`, decay EXPONENTIAL in `t`.
+* `pow_self_sq_le_exp_cube` (`K^{K²} ≤ exp(K³)`) and `kfold_budget_le_exp_cube`
+  (`A₀·K^{K²}·b^{κK} ≤ exp((log A₀ + 1 + κ log b)(K+1)³)`) put lap 37's constant inside the cap.
+* `weylLambertTwist_of_kfold_bound` — **the endpoint the `D ≥ 3` campaign now aims at**:
+  a bound `‖depthAvg b P Q j h D N‖ ≤ A₀·D^{D²}·b^{κD}·η N` with `η N ≤ A(log N)^{-a}` closes
+  the crux outright.
+
+**What decay the route actually needs — the sharp answer (`budget_absorb_of_tIdx`).**
+Write `t_N = ⌊log₂(⌊log₂⌊log₂ N⌋⌋+1)⌋ ≍ log log log N`.  The schedule's depth is LINEAR in `t`
+(`D_N ≤ 2t+2`) and `log log N` is EXPONENTIAL in `t` (`≥ (2^t−2)log 2`).  Against a budget
+`exp(c(D+1)³)` the requirement is therefore exactly
+
+    η N ≤ exp(−t_N⁴)  ,  i.e.  η N ≤ exp(−C(log log log N)⁴) .
+
+That is **strictly stronger than every fixed power of `log log N`** — since
+`(log log N)^{-m} = exp(−m·t_N·log 2 + O(1))` is only LINEAR in `t_N` — but only
+*quasi-polynomially* so.  It is far weaker than the `(log N)^{-a}` that `budget_absorb`
+assumes.  So the honest ledger entry for the `D ≥ 3` route is:
+
+> the `K`-point log-Elliott saving must beat every power of `log log N`, by a
+> quasi-polynomial margin in `log log log N`.
+
+This is the sharpest characterisation the campaign has produced of the gap to the literature:
+quantitative log-Chowla/Elliott results of `(log log X)^{-c}` shape fall **just** short, by
+that quasi-polynomial margin, and nothing weaker than that margin is needed.  The `(log N)^{-a}`
+decay of `budget_absorb` is what the `D = 1` rung actually has (`C3MrtRungOne`,
+Selberg–Delange) and what `probes/swingc3_weyl_lambert_twist.py` measures for the leaf itself
+(`a ≈ 1.3–3.7`, never plateauing) — so the route has room to spare if the rate can be pushed
+that far.
+
+**The constant is `exp(Θ(K²))` intrinsically, not an artefact of lap 37's crude bound.**
+`gcd(d_i,d_j)` divides `j−i` and is itself POWERFUL (both `d_i,d_j` are, so every exponent in
+the gcd is `≥ 2`).  Splitting the tuple sum by the pairwise-gcd pattern replaces lap 37's
+`∏_{i<j}(j−i) ≈ K^{K²/2}` by `∏_{i<j} ∑_{g powerful, g ∣ j−i} 1/g ≤ ∏_p(1+2/p²)^{K²/2}`, i.e.
+`exp(Θ(K²))` — better, but still exponential in `K²`, because a positive proportion of the
+`K²/2` differences `j−i` are divisible by a square.  Improving lap 37's exponent is therefore
+worth at most a constant in the exponent and does NOT change the required decay class.  (Not
+formalised; recorded as the reason not to spend laps sharpening `prod_le_lcm_mul_pow`.)
+
+### Attack order from here
+
+1. `inner_sum_linear_forms` analogue at `K` points: reindex `n = L·k + a` (from
+   `joint_class_multi`), so `(n+i+1)/d_i = (L/d_i)k + (a+i+1)/d_i`; `filter_linear_lt_eq_range`
+   then applies verbatim with `L` for `d·e`.
+2. `multi_truncation_bound`: iterate `offset_truncation_bound_of_mass` `K` times; the error
+   telescopes to `≤ ∑_{i<K}(∏_{j<i} sqfWMass z_j)(1 + log(N+K))·bridgeTail z_i Y`.
+3. Pay lap 38's indexing debt: standardise on `Fin K` + `Finset.univ.lcm` (the convention
+   `joint_class_multi` / `nondegenerateForms_multi` already use) and restate
+   `prod_le_lcm_mul_pow` / `prod_div_lcm_le` over `Finset.univ` via the `ℕ → ℕ` extension.
+4. Per-tuple rung bound + ε-chase, mirroring laps 29–33, landing in
+   `weylLambertTwist_of_kfold_bound`'s shape.
+5. The uniformity-in-`D` question is now the ONLY remaining structural gap besides
+   log→natural density.  Do not restate `QuantDepthElliott`; it is superseded in practice by
+   `QuantDepthElliottGen` and kept for the ledger.
+
+### Refuted / settled — do not retry
+
+* The lap-39 estimate "`K^{K²}` is `(log log N)^{o(1)}`" — **false**, corrected above.
+* A `(log log N)^{-c}` decay does **not** absorb `K^{K²}` at `D_N ≍ log log log N` (computed
+  above).  Only a power of `log N` does.
+* Everything in the lap-39 session wrap's "Still refuted" list.
+
+---
+
+
 ## 2026-09-25 (review lap 18) — C3/MRT: the archimedean non-pretentiousness certificate
 
 **Where the crux stands.**  `weylLambertTwist_holds` (`SwingC3Leaf.lean`) is the one `sorry`

@@ -1,22 +1,31 @@
 # STATUS — normal-numbers 📊
 
 **Active campaign: C3/MRT — `ConjC3` reduced, axiom-clean, to a quantitative Elliott
-correlation; the `D = 2` rung now rests on two NAMED analytic inputs.**
-· **Build**: 🟢 green (9257 jobs) · **Updated**: lap 18 · 2026-09-25 · HEAD `ee66b76`
-· branch `wip/c3-mrt`
+correlation; the `D = 2` rung rests on two NAMED inputs, `D ≥ 3` on Tao–Teräväinen (published),
+and the correlation-decay class the route needs is now pinned exactly.**
+· **Build**: 🟢 green (9257 root jobs; 8976 on the `C3Mrt` tip `NormalNumbers.C3MrtBudget`)
+· **Updated**: lap 40 · 2026-09-25 · HEAD `afe493d` · branch `wip/c3-mrt`
 
 ## Where it stands
 
 The ratified crux is `CastingOut.weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`),
 the one `sorry` carrying `ConjC3`.  Laps 1–6 reduced it, sorry-free and axiom-clean, to
 `QuantDepthElliott` — a *quantitative* Elliott correlation with only `O(log log log N)` points —
-and PROVED its base rung `D = 1` in natural density from the repo's own Delange slot.  Laps 7–17
-built the whole `D = 2` log-averaged rung: the `ω → Ω` bridge, the CRT reindex to two linear
-forms with determinant exactly `1`, the harmonic-weight transfer, and the window stack; what
-survives is `Erdos67b.NonasymptoticLogElliott` (Tao, Forum Math. Pi 4 (2016), Thm 1.3 — the
-repo's ratified open bet) plus non-pretentiousness of `ζ^Ω` against every Dirichlet–archimedean
-twist.  Lap 17 proved the unramified (`t = 0`) half; lap 18 settled the archimedean half's exact
-shape and proved its key estimate.
+and PROVED its base rung `D = 1` in natural density (Delange).  Laps 7–33 built and closed the
+whole `D = 2` log-averaged rung on exactly TWO named inputs (the dependency's
+`NonasymptoticLogElliott`, and the Vinogradov–Korobov twisted-prime-sum saving), including the
+archimedean non-pretentiousness certificate.  Laps 35–39 showed the `D ≥ 3` input is
+**Tao–Teräväinen's published structure theorem**, not a new conjecture — the product phase
+`∏_{i<D} ζ_i = e(h·G_D/b^D)` is non-degenerate at every depth — and proved 5 of 7 `K`-fold
+assembly steps.
+
+Lap 40 repaired the reduction's own `Prop`.  Lap 37's `K^{K²}` does **not** fit the `b^{κD}`
+budget of `QuantDepthElliott` (the lap-39 claim that it does was arithmetically wrong).
+`C3MrtBudget.lean` widens the budget to a free `C` with joint vanishing, proves the old `Prop`
+implies the new one, and — the route-decisive part — pins the decay class the `D ≥ 3` route
+needs: `η N ≤ exp(−(log log log N)⁴)`, i.e. *beat every power of `log log N` by a
+quasi-polynomial margin*.  That is the sharpest statement yet of the distance to the
+literature.
 
 The prior campaign (Pair A multicutoff, Theorem C′
 `isNormal_subsetLambert_of_sqrtFreshMassZero`) is COMPLETE and trust-triple clean; its ledger is
@@ -24,6 +33,26 @@ kept below.
 
 ## What's happened (newest first)
 
+- **2026-09-25 (C3/MRT lap 40, review lap).**  ROUTE-DECISIVE.  Found and fixed a defect in the
+  reduction's own `Prop`: `QuantDepthElliott`'s `b^{κD}` budget cannot pay for the `K^{K²}` that
+  lap 37's `prod_le_lcm_mul_pow` puts into the `K`-fold rung (at `D_N ≍ v = log log log N`,
+  `D^{D²} = exp(Θ(v² log v))` while `(log log N)^m = exp(mv)`).  New `C3MrtBudget.lean`
+  (13 declarations, sorry-free, trust triple): `QuantDepthElliottGen` (free budget, joint
+  vanishing), `weylLambertTwist_of_quantDepthElliottGen`, `quantDepthElliottGen_of_quantDepthElliott`
+  (nothing weakened), `budget_absorb` (`exp(c(D+1)³)` budget × `(log N)^{-a}` decay),
+  `budget_absorb_of_tIdx` (**the sharp form**: the needed decay is `exp(−t_N⁴)`,
+  `t_N ≍ log log log N`), `kfold_budget_le_exp_cube`, and the campaign's new endpoint
+  `weylLambertTwist_of_kfold_bound`.  Mechanism: the depth is LINEAR in `t_N`, `log log N` is
+  EXPONENTIAL in it.
+- **2026-09-25 (C3/MRT laps 33–39).**  `rung_two_correlation` PROVED — the `D = 2` rung is done
+  in-kernel on its two named inputs.  `KPointLogElliott` named and shown equivalent at `K = 2`;
+  `ProductLogElliott` identified as Tao–Teräväinen; the `K`-fold bridge expansion, the
+  `∏ d ≤ lcm·K^{K²}` exchange, the tuple mass, the `K`-fold determinant `L(j−i)/(d_i d_j)` and
+  the `K`-fold CRT.  6 modules.
+- **2026-09-25 (C3/MRT laps 18–32).**  The archimedean non-pretentiousness certificate closed
+  (`range_one_certificate`, `range_two_certificate`, `nonPretentious_zOm`), then the whole
+  two-shift stack: truncation of both moduli, the joint inner sum, `pair_mass_le`,
+  `full_sum_bound`, `inner_pair_bound`, `two_shift_bound_of_rung`.
 - **2026-09-25 (C3/MRT lap 18, review lap).**  Direction redirected to the C3/MRT moonshot.
   The archimedean obligation's shape SETTLED: Elliott asks only for a CONSTANT
   `A ≤ dist`, and the new bridge makes `dist = mass(X) − Re(z·S)` with
@@ -43,23 +72,25 @@ kept below.
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-1. **Range 1 of the archimedean certificate** — assemble `window_mass_le` over the `O(T)` windows
-   that meet `[2, X]` when `|t| ≤ T/log X`, against the class-`1 (mod q)` Mertens lower bound.
-2. **Range 2** — state the single named Prop (the Vinogradov–Korobov constant saving) and
-   assemble `nonPretentious_zOm`.
-3. **The tuple sum** over coprime powerful pairs `d, e ≤ Y`, feeding
-   `initial_segment_bound_of_elliott`.
+1. **`inner_sum_linear_forms` at `K` points** — reindex `n = L·k + a` from `joint_class_multi`,
+   so `filter_linear_lt_eq_range` applies verbatim with `L` for `d·e`.
+2. **`multi_truncation_bound`** — iterate `offset_truncation_bound_of_mass` `K` times.
+3. **Lap 38's indexing debt** — standardise on `Fin K` + `Finset.univ.lcm`.
+4. **Per-tuple rung bound + ε-chase**, landing in `weylLambertTwist_of_kfold_bound`'s shape.
 
 ### Long-term
-`QuantDepthElliott` itself (quantitative Elliott at `≍ log log log N` points) — out of reach of
-current technology; the ratified success criterion is the EQUIVALENCE, not the proof.
+`QuantDepthElliottGen` itself (quantitative Elliott at `≍ log log log N` points, with a decay
+beating every power of `log log N` by a quasi-polynomial margin in `log log log N`) — out of
+reach of current technology; the ratified success criterion is the EQUIVALENCE, not the proof.
+The other structural gap is log-density → natural-density.
 Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
 `MahlerDriftOne.exists_prime_nonresidue`.  Also open from the previous campaign: the Theorem-C′
 audit surface and the Astra §10 consumer.
 
 ### To completion
-`weylLambertTwist_holds` needs `QuantDepthElliott`.  Nothing weaker is known to suffice, and the
-lap-3 argument shows a *qualitative fixed-`k`* Elliott provably cannot.
+`weylLambertTwist_holds` needs `QuantDepthElliottGen` (equivalently, a `K`-fold bound of
+`weylLambertTwist_of_kfold_bound`'s shape).  Nothing weaker is known to suffice, and the lap-3
+argument shows a *qualitative fixed-`k`* Elliott provably cannot.
 
 ## Axiom ledger — C3/MRT (real `#print axioms`, 2026-09-25, 9257 jobs)
 
@@ -72,6 +103,11 @@ lap-3 argument shows a *qualitative fixed-`k`* Elliott provably cannot.
 | `CastingOut.pretentiousDistSq_ge_class_sum` | non-pretentiousness of `ζ^Ω`, `t = 0` | trust triple | 🟢 clean |
 | `CastingOut.pretentiousDistSqToTwist_zOm_eq` / `_ge` | the archimedean bridge | trust triple | 🟢 clean |
 | `CastingOut.window_mass_le` | bounded mass of a resonance window | trust triple | 🟢 clean |
+| `CastingOut.rung_two_correlation` | the `D = 2` rung, PROVED on its two named inputs | trust triple | 🟢 clean (both inputs are explicit hypotheses) |
+| `CastingOut.nonPretentious_prod_depthRoot` | Tao–Teräväinen's hypothesis, discharged at every depth | trust triple | 🟢 clean |
+| `CastingOut.weylLambertTwist_of_quantDepthElliottGen` | the repaired reduction `QuantDepthElliottGen → crux` | trust triple | 🟢 clean |
+| `CastingOut.budget_absorb_of_tIdx` | the sharp decay class the `D ≥ 3` route needs | trust triple | 🟢 clean |
+| `CastingOut.weylLambertTwist_of_kfold_bound` | the `K`-fold endpoint the campaign aims at | trust triple | 🟢 clean |
 
 Math-axiom count for the C3/MRT campaign: **0** — no `axiom` declarations.  The debt is carried
 by *hypotheses*, which is the honest form: `QuantDepthElliott` (🔴 open: quantitative Elliott),
@@ -83,7 +119,8 @@ the same input as `Erdos67b.PolynomialHeightPrimeCorrelationBound`).  The 🔴 s
 strayed.
 
 ## Pointers (C3/MRT)
-`KICKOFF-2026-09-24-c3-mrt.md` · `HANDOFF-c3mrt-2026-09-25-lap18.md` ·
+`KICKOFF-2026-09-24-c3-mrt.md` · `HANDOFF-c3mrt-2026-09-25-lap40.md` (newest) ·
+`HANDOFF-c3mrt-2026-09-25-session-wrap-laps33-39.md` · `HANDOFF-c3mrt-2026-09-25-lap18.md` ·
 `HANDOFF-c3mrt-2026-09-25-lap8.md` (laps 7–17) ·
 `HANDOFF-c3mrt-2026-09-25-session-wrap.md` (laps 1–6) · `PENDING_WORK.md` ·
 `DIRECTION.md` (CURRENT DIRECTIVE) · `CONJECTURES-2026-09-23-casting-out-and-rungs.md`

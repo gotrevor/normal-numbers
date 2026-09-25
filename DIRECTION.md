@@ -2,50 +2,53 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective (2026-09-25 review lap — direction REDIRECTED from the completed Theorem-C′
-directive to the ratified C3/MRT moonshot, `KICKOFF-2026-09-24-c3-mrt.md`).**
-Drive `weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`) — the one `sorry`
-carrying `ConjC3` — by *narrowing the named analytic inputs* its reduction now rests on.
-The reduction itself is DONE and axiom-clean: `ConjC3 ⇐ QuantDepthElliott`
-(quantitative Elliott, `O(log log log N)` points), and the log-averaged `D = 2` rung
-`initial_segment_bound_of_elliott` ⇐ `Erdos67b.NonasymptoticLogElliott` + non-pretentiousness
-of `ζ^Ω` against every Dirichlet–Archimedean twist.
+**Objective (2026-09-25 review lap 40 — the C3/MRT moonshot continues; the lap-18 directive's
+mandated move is DONE).**  Drive `weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`)
+by *narrowing the named analytic inputs* its reduction rests on, and by keeping the reduction's
+own `Prop` (`QuantDepthElliott`) HONEST — wide enough to accept what the assembly actually
+produces.  Laps 18–21 closed the archimedean certificate; lap 33 proved the `D = 2` rung; laps
+35–39 reduced `D ≥ 3` to Tao–Teräväinen (a *published* theorem) plus the same VK input, with
+5 of 7 `K`-fold assembly steps proved.
 
-**Mandated next move.**  Close the ARCHIMEDEAN half of the non-pretentiousness certificate
-(`C3MrtArchimedean.lean`), which lap 17 left as the second named open input.  The 2026-09-25
-review settled its true shape; work it in this order:
-1. `pretentiousDistSq_zOm_ge_mass_sub_corr` — the `z`-free bridge
-   `dist ≥ (prime mass at X) − ‖∑_{p≤X} χ(p)p^{it}/p‖`.  Elementary, unconditional; it routes
-   ALL remaining analytic content into one classical object.
-2. **Range 1, `|t| ≤ T/log X`: prove it outright.**  Only `O(T)` resonance intervals
-   `t log p ∈ arg z + 2πℤ + (−ε,ε)` meet `[2,X]`, each of BOUNDED reciprocal mass by the
-   dependency's two-sided Mertens (`Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le`,
-   proved, error `mertensBound`); the surviving class-`1 mod q` primes give `≫ log log X`.
-3. **Range 2, `|t| ≥ T/log X`: name it once**, as the classical saving
-   `‖∑_{p≤X} χ(p)p^{it}/p‖ ≤ log log X − A` (i.e. `log|L(1+1/log X+it,χ)| ≤ log log X − A`),
-   the Vinogradov–Korobov log-derivative bound — the SAME input the dependency itself isolates
-   as `Erdos67b.PolynomialHeightPrimeCorrelationBound`.  Then assemble the `D = 2` rung on
-   exactly TWO named inputs, both of them the Erdős-67b project's own open analytic bets.
+**Mandated next move — the BUDGET, before any more assembly.**  Lap 37's
+`prod_le_lcm_mul_pow` introduces a constant `K^{K²}` into the `K`-fold rung.  The current
+`QuantDepthElliott` allows only a `b^{κD}` budget and demands `η` beat every power of
+`llProxy ≍ log log N`.  **That is not enough**: at `D_N ≍ log_b log log N` one has
+`D_N^{D_N²} = exp(Θ((log log log N)² · log log log log N))`, which BEATS every fixed power of
+`log log N`.  (The lap-39 handoff's "`(log log N)^{o(1)}`" is arithmetically wrong; corrected
+here.)  It is, however, comfortably beaten by `(log N)^{-a}` — the decay the `D = 1`
+Selberg–Delange rung actually has.  So, in `C3MrtBudget.lean` (new file, pure addition):
+1. `QuantDepthElliottGen b` — budget a free `C : ℕ → ℝ`, decay clause the JOINT vanishing
+   `C (depthLL b N) · η N → 0`.  Prove `weylLambertTwist_of_quantDepthElliottGen`.
+2. `quantDepthElliottGen_of_quantDepthElliott` — the old Prop implies the new one, so nothing
+   is weakened and the existing ledger row survives verbatim.
+3. `budget_absorb` — the route-decisive lemma: `C D ≤ exp(D³)` together with
+   `η N ≤ A (log N)^{-a}`, `a > 0`, gives the joint vanishing.  With
+   `pow_self_sq_le_exp_cube : (K:ℝ)^(K*K) ≤ exp((K:ℝ)³)` this covers lap 37's constant exactly.
+4. ONLY THEN resume the `K`-fold assembly (handoff steps 1–4: `inner_sum_linear_forms`
+   analogue, `multi_truncation_bound`, the `Fin K`/`Finset.univ.lcm` indexing debt, the
+   per-tuple rung + ε-chase).
 
-**Forbidden drift.**  Do NOT weaken, rename or delete `weylLambertTwist_holds` or `conjC3`.
-Do NOT retry the four refuted routes (smooth/rough Kubilius split; self-similar recursion;
-growing `P`; direct use of `unitCircleLogElliott`).  Do NOT chase an ELEMENTARY proof of the
-large-`|t|` correlation bound: the 2026-09-25 review showed the resonance-interval argument
-needs prime counting in intervals of length `p/|t|`, so for `|t| ≳ (log X)^K` it is
-short-interval-hard and the VK input is not an artefact.  New code in `C3Mrt*.lean` only;
-never import a `lean-proofs-latest` consumer into the `NormalNumbers` root.
+**Forbidden drift.**  Do NOT weaken, rename or delete `weylLambertTwist_holds` or `conjC3`; do
+NOT edit `QuantDepthElliott` itself (add `QuantDepthElliottGen` beside it).  Do NOT attack
+`TwistedPrimeSumSaving` (the named VK input) or re-open the refuted routes listed in the lap-39
+session wrap.  New code in `C3Mrt*.lean` only; never import a `lean-proofs-latest` consumer into
+the `NormalNumbers` root.  Build BOTH `lake build` and `lake build NormalNumbers.<C3Mrt tip>`.
 
-**Why.**  `QuantDepthElliott` is out of reach (quantitative Elliott at `≍ log log log N`
-points), so the ratified success criterion is an EQUIVALENCE with named open problems.  The
-archimedean certificate is the last input that is plausibly OURS to prove; every other
-mismatch was closed in laps 7–17.  Settling which part of it is elementary and which part is
-genuinely VK-strength is the route-decisive question, and Range 1 is the smallest probe of it.
+**Why.**  The ratified success criterion is an EQUIVALENCE with named open problems, so the
+value of this campaign is the *fidelity of the ledger*, not a proof of quantitative Elliott.  A
+ledger whose reduction `Prop` cannot absorb the constant its own assembly produces is a broken
+ledger — and lap 37 already produced that constant.  This is the one open obligation whose
+failure would force a redesign of the whole `D ≥ 3` route, so it is hardest-first, and it is
+settled by a small compiler-grounded probe.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.
 - 2026-09-23 (review lap): Theorem-C′ leaves, E5 first — COMPLETED 2026-09-23.
-- 2026-09-25 (review lap): REDIRECT to the C3/MRT moonshot; narrow the archimedean
-  non-pretentiousness input (Range 1 elementary, Range 2 named VK).
+- 2026-09-25 (lap 18 review): REDIRECT to the C3/MRT moonshot; narrow the archimedean
+  non-pretentiousness input — COMPLETED laps 18–21.
+- 2026-09-25 (lap 40 review): the `K^{K²}` BUDGET first (`C3MrtBudget.lean`), then resume the
+  `K`-fold assembly; the lap-39 "`(log log N)^{o(1)}`" estimate is corrected.
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically
 one).  See `G4PrefixDecayAudit.lean` for the proved counterexample and the
