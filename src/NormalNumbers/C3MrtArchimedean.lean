@@ -711,6 +711,84 @@ theorem range_one_certificate {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) (A T 
   rw [hK] at hdiv
   linarith
 
+
+/-! ## Range 1, uniformly over the moduli `q ≤ Q`
+
+Elliott's hypothesis quantifies over all moduli `q ≤ A` at once, so the finitely many
+thresholds `X₀(q)` must be merged.  Induction on `Q` does it: at each step one new modulus
+joins, and `max` of the two thresholds works.
+-/
+
+theorem range_one_certificate_uniform {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) (A T : ℝ) :
+    ∀ Q : ℕ, ∃ X₀ : ℕ, ∀ X : ℕ, X₀ ≤ X → ∀ q : ℕ, 0 < q → q ≤ Q →
+      ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ, |t| * Real.log X ≤ T →
+      A ≤ Erdos67b.pretentiousDistSqToTwist (Erdos67b.restrictToNat (zOmInt z)) χ t X := by
+  intro Q
+  induction Q with
+  | zero => exact ⟨0, fun X _ q hq hq0 => absurd (Nat.le_zero.1 hq0) hq.ne'⟩
+  | succ Q ih =>
+      obtain ⟨X₁, hX₁⟩ := ih
+      haveI : NeZero (Q + 1) := ⟨Nat.succ_ne_zero Q⟩
+      obtain ⟨X₂, hX₂⟩ := range_one_certificate hz hz1 A T (Q + 1)
+      refine ⟨max X₁ X₂, fun X hX q hq hqQ χ t hTle => ?_⟩
+      rcases Nat.lt_succ_iff_lt_or_eq.1 (Nat.lt_succ_of_le hqQ) with h | h
+      · exact hX₁ X (le_trans (le_max_left _ _) hX) q hq (Nat.lt_succ_iff.1 h) χ t hTle
+      · subst h; exact hX₂ X (le_trans (le_max_right _ _) hX) χ t hTle
+
+/-! ## Range 2: named once, and the assembly
+
+`TwistedPrimeSumSaving` is the classical saving in the twisted prime sum above the frequency
+threshold `T/log X`.  Equivalently `log|L(1 + 1/log X + it, χ)| ≤ log log X − A`: it IS the
+Vinogradov–Korobov log-derivative bound, and it is the SAME analytic input the Erdős-67b
+dependency itself isolates as `Erdos67b.PolynomialHeightPrimeCorrelationBound`.  The
+2026-09-25 review recorded why no elementary route reaches it: resonance counting past
+`|t| ≳ (log X)^K` needs primes in intervals of length `p/|t|`.  It is a NAMED OPEN INPUT, not
+a lemma to attack.
+
+The frequency ceiling `|t| ≤ A·X` is not cosmetic: by simultaneous approximation there are
+arbitrarily large `t` with `t·log p` near `0 (mod 2π)` for every `p ≤ X` at once, and for
+those the saving is false.  Elliott's hypothesis asks for exactly the bounded range. -/
+def TwistedPrimeSumSaving (A : ℕ) (T : ℝ) : Prop :=
+  ∃ X₀ : ℕ, ∀ X : ℕ, X₀ ≤ X → ∀ q : ℕ, 0 < q → q ≤ A →
+    ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ,
+      T / Real.log X ≤ |t| → |t| ≤ (A : ℝ) * X →
+      ‖twistPrimeSum χ t X‖ ≤ Erdos67b.PrimeEstimates.primeReciprocals X - A
+
+/-- **Range 2 closes in two lines** against the named saving. -/
+theorem range_two_certificate {z : ℂ} (hz : ‖z‖ = 1) {A : ℕ} {T : ℝ}
+    (hsave : TwistedPrimeSumSaving A T) :
+    ∃ X₀ : ℕ, ∀ X : ℕ, X₀ ≤ X → ∀ q : ℕ, 0 < q → q ≤ A →
+      ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ,
+        T / Real.log X ≤ |t| → |t| ≤ (A : ℝ) * X →
+        (A : ℝ) ≤ Erdos67b.pretentiousDistSqToTwist (Erdos67b.restrictToNat (zOmInt z)) χ t X := by
+  obtain ⟨X₀, hX₀⟩ := hsave
+  exact ⟨X₀, fun X hX q hq hqA χ t h1 h2 =>
+    le_trans (by linarith [hX₀ X hX q hq hqA χ t h1 h2])
+      (pretentiousDistSqToTwist_zOm_ge hz χ t X)⟩
+
+/-- **The archimedean non-pretentiousness certificate for `ζ^Ω`.**  Granting only the named
+Range-2 saving, `ζ^Ω` satisfies Elliott's hypothesis at level `A`: it is `A`-far from every
+Dirichlet–Archimedean twist `χ(n)·n^{it}` with modulus `q ≤ A` and frequency `|t| ≤ A·X`,
+for all large `X`.  Range 1 (`|t| ≤ T/log X`) is proved outright; Range 2 is the named
+Vinogradov–Korobov input. -/
+theorem nonPretentious_zOm {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) {A : ℕ} {T : ℝ}
+    (hsave : TwistedPrimeSumSaving A T) :
+    ∃ X₀ : ℕ, ∀ X : ℕ, X₀ ≤ X → ∀ q : ℕ, 0 < q → q ≤ A →
+      ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ, |t| ≤ (A : ℝ) * X →
+        (A : ℝ) ≤ Erdos67b.pretentiousDistSqToTwist (Erdos67b.restrictToNat (zOmInt z)) χ t X := by
+  obtain ⟨X₁, hX₁⟩ := range_one_certificate_uniform hz hz1 (A : ℝ) T A
+  obtain ⟨X₂, hX₂⟩ := range_two_certificate hz hsave
+  refine ⟨max 2 (max X₁ X₂), fun X hX q hq hqA χ t ht => ?_⟩
+  have hX2 : 2 ≤ X := le_trans (le_max_left _ _) hX
+  have hlog : 0 < Real.log X :=
+    Real.log_pos (by exact_mod_cast lt_of_lt_of_le one_lt_two hX2)
+  rcases le_or_gt (|t| * Real.log X) T with h | h
+  · exact hX₁ X (le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) hX) q hq hqA χ t h
+  · refine hX₂ X (le_trans (le_trans (le_max_right _ _) (le_max_right _ _)) hX) q hq hqA χ t
+      ?_ ht
+    rw [div_le_iff₀ hlog]
+    linarith [h]
+
 end CastingOut
 
 end NormalNumbers
@@ -723,3 +801,6 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.resonant_mass_le
 #print axioms NormalNumbers.CastingOut.range_one_mass_bound
 #print axioms NormalNumbers.CastingOut.range_one_certificate
+#print axioms NormalNumbers.CastingOut.range_one_certificate_uniform
+#print axioms NormalNumbers.CastingOut.range_two_certificate
+#print axioms NormalNumbers.CastingOut.nonPretentious_zOm
