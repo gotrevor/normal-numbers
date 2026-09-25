@@ -425,6 +425,312 @@ theorem exponent_tendsto_atBot_of_geom_slow {b : ℕ} (hb : 2 ≤ b) {c₀ θ : 
   linarith [hCstle, hsav]
 
 
+/-! ### Discharging the threshold data for the geometric profile
+
+The threshold is not a hypothesis: for every `θ < 1` it can be CONSTRUCTED.  The demand is
+`log log Athr K ≳ b^{θK} log K`, so at the diagonal level `K = D_N` it costs
+`(u_N log u_N)^θ log log u_N`, while the budget `log log a_N ≍ u_N·log 2` is a full power of
+`u_N` — the same `u^{1-θ}` margin that `exponent_tendsto_atBot_of_geom_slow` runs on. -/
+
+/-- The required `log log` of the threshold at level `K`. -/
+noncomputable def thrPhi (b M₀ : ℕ) (κ c₀ θ : ℝ) (K : ℕ) : ℝ :=
+  (b : ℝ) ^ (θ * K) * Real.log ((K : ℝ) + 2 + (M₀ : ℝ)) / (κ * c₀ * Real.log 2)
+
+/-- The explicit threshold: a double exponential in `thrPhi`. -/
+noncomputable def thrAthr (b M₀ : ℕ) (κ c₀ θ : ℝ) (K : ℕ) : ℕ :=
+  2 ^ (2 ^ ⌈thrPhi b M₀ κ c₀ θ K⌉₊)
+
+theorem two_le_thrAthr (b M₀ : ℕ) (κ c₀ θ : ℝ) (K : ℕ) : 2 ≤ thrAthr b M₀ κ c₀ θ K := by
+  rw [thrAthr]
+  calc (2 : ℕ) = 2 ^ 1 := by norm_num
+    _ ≤ 2 ^ (2 ^ ⌈thrPhi b M₀ κ c₀ θ K⌉₊) :=
+        Nat.pow_le_pow_right (by norm_num) Nat.one_le_two_pow
+
+/-- `2 log (thrAthr K) ≥ 2 ^ ⌈φ K⌉`. -/
+theorem pow_ceil_le_two_log_thrAthr (b M₀ : ℕ) (κ c₀ θ : ℝ) (K : ℕ) :
+    ((2 : ℝ) ^ ⌈thrPhi b M₀ κ c₀ θ K⌉₊) ≤ 2 * Real.log (thrAthr b M₀ κ c₀ θ K) := by
+  set g : ℕ := ⌈thrPhi b M₀ κ c₀ θ K⌉₊ with hg
+  have hcast : ((thrAthr b M₀ κ c₀ θ K : ℕ) : ℝ) = (2 : ℝ) ^ ((2 ^ g : ℕ)) := by
+    rw [thrAthr, ← hg]; push_cast; ring
+  rw [hcast, Real.log_pow]
+  have hlog2 : (0.6931471803 : ℝ) < Real.log 2 := Real.log_two_gt_d9
+  have hpow : ((2 : ℝ)) ^ g ≤ ((2 ^ g : ℕ) : ℝ) := by push_cast; ring_nf; exact le_rfl
+  have hp0 : (0 : ℝ) ≤ ((2 ^ g : ℕ) : ℝ) := Nat.cast_nonneg _
+  nlinarith [hpow, hlog2, hp0]
+
+theorem thrPhi_monotone {b M₀ : ℕ} (hb : 2 ≤ b) {κ c₀ θ : ℝ} (hκ : 0 < κ) (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) : Monotone (thrPhi b M₀ κ c₀ θ) := by
+  have hbR : (1 : ℝ) < (b : ℝ) := by
+    have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  intro K₁ K₂ hK
+  have hKR : (K₁ : ℝ) ≤ (K₂ : ℝ) := by exact_mod_cast hK
+  have h1 : (b : ℝ) ^ (θ * K₁) ≤ (b : ℝ) ^ (θ * K₂) := by
+    refine Real.rpow_le_rpow_of_exponent_le hbR.le ?_
+    nlinarith [hKR, hθ0]
+  have h2 : Real.log ((K₁ : ℝ) + 2 + (M₀ : ℝ)) ≤ Real.log ((K₂ : ℝ) + 2 + (M₀ : ℝ)) := by
+    refine Real.log_le_log (by positivity) (by linarith)
+  have h1pos : (0 : ℝ) < (b : ℝ) ^ (θ * K₁) := Real.rpow_pos_of_pos (by linarith) _
+  have hM0R : (0 : ℝ) ≤ (M₀ : ℝ) := Nat.cast_nonneg _
+  have hK1R : (0 : ℝ) ≤ (K₁ : ℝ) := Nat.cast_nonneg _
+  have h2pos : (0 : ℝ) ≤ Real.log ((K₁ : ℝ) + 2 + (M₀ : ℝ)) :=
+    Real.log_nonneg (by linarith)
+  rw [thrPhi, thrPhi]
+  refine div_le_div_of_nonneg_right ?_ (by positivity)
+  nlinarith [h1, h2, h1pos, h2pos]
+
+theorem thrAthr_monotone {b M₀ : ℕ} (hb : 2 ≤ b) {κ c₀ θ : ℝ} (hκ : 0 < κ) (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) : Monotone (thrAthr b M₀ κ c₀ θ) := by
+  intro K₁ K₂ hK
+  have h := Nat.ceil_mono (thrPhi_monotone (M₀ := M₀) hb hκ hc₀ hθ0 hK)
+  exact Nat.pow_le_pow_right (by norm_num) (Nat.pow_le_pow_right (by norm_num) h)
+
+/-- **Clause (ii): the threshold really does beat the required power.** -/
+theorem thrAthr_rpow_ge {b : ℕ} (hb : 2 ≤ b) {Q P : ℕ} {κ c₀ θ : ℝ} (hκ : 0 < κ) (hc₀ : 0 < c₀)
+    (K : ℕ) :
+    max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+      ≤ (2 * Real.log (thrAthr b (Q * primorial P) κ c₀ θ K)) ^ (κ * cKgeom c₀ θ b K) := by
+  set M₀ : ℕ := Q * primorial P with hM₀
+  set g : ℕ := ⌈thrPhi b M₀ κ c₀ θ K⌉₊ with hg
+  have hbR : (1 : ℝ) < (b : ℝ) := by
+    have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  have hb0 : (0 : ℝ) < (b : ℝ) := by linarith
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  set e : ℝ := κ * cKgeom c₀ θ b K with hedef
+  have he : 0 < e := by
+    rw [hedef, cKgeom]
+    have : (0 : ℝ) < (b : ℝ) ^ (-(θ * K)) := Real.rpow_pos_of_pos hb0 _
+    positivity
+  -- the target `T`
+  set T : ℝ := max (max 2 ((K : ℝ) + 1)) ((M₀ : ℕ) : ℝ) with hT
+  have hT1 : (1 : ℝ) ≤ T := le_trans (by norm_num) (le_trans (le_max_left _ _) (le_max_left _ _))
+  have hTle : T ≤ (K : ℝ) + 2 + (M₀ : ℝ) := by
+    have hM0 : (0 : ℝ) ≤ ((M₀ : ℕ) : ℝ) := Nat.cast_nonneg _
+    have hK0 : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg _
+    refine max_le (max_le (by linarith) (by linarith)) (by linarith)
+  -- the lower bound on the base
+  have hbase : ((2 : ℝ) ^ g) ≤ 2 * Real.log (thrAthr b M₀ κ c₀ θ K) :=
+    pow_ceil_le_two_log_thrAthr b M₀ κ c₀ θ K
+  have hbasepos : (0 : ℝ) < (2 : ℝ) ^ g := by positivity
+  have hstep1 : ((2 : ℝ) ^ g) ^ e
+      ≤ (2 * Real.log (thrAthr b M₀ κ c₀ θ K)) ^ e :=
+    Real.rpow_le_rpow hbasepos.le hbase he.le
+  -- the exponent arithmetic
+  have hgphi : thrPhi b M₀ κ c₀ θ K ≤ (g : ℝ) := Nat.le_ceil _
+  have hprod : (b : ℝ) ^ (θ * K) * (b : ℝ) ^ (-(θ * K)) = 1 := by
+    rw [← Real.rpow_add hb0]; simp
+  have hkey : Real.log T ≤ (g : ℝ) * e * Real.log 2 := by
+    have hden : (0 : ℝ) < κ * c₀ * Real.log 2 := by positivity
+    have hphi : (b : ℝ) ^ (θ * K) * Real.log ((K : ℝ) + 2 + (M₀ : ℝ))
+        ≤ (g : ℝ) * (κ * c₀ * Real.log 2) := by
+      rw [thrPhi, div_le_iff₀ hden] at hgphi
+      exact hgphi
+    have hmul : Real.log ((K : ℝ) + 2 + (M₀ : ℝ))
+        ≤ (g : ℝ) * (κ * c₀ * Real.log 2) * (b : ℝ) ^ (-(θ * K)) := by
+      have hbneg : (0 : ℝ) < (b : ℝ) ^ (-(θ * K)) := Real.rpow_pos_of_pos hb0 _
+      have := mul_le_mul_of_nonneg_right hphi hbneg.le
+      calc Real.log ((K : ℝ) + 2 + (M₀ : ℝ))
+          = (b : ℝ) ^ (θ * K) * (b : ℝ) ^ (-(θ * K))
+              * Real.log ((K : ℝ) + 2 + (M₀ : ℝ)) := by rw [hprod]; ring
+        _ = (b : ℝ) ^ (θ * K) * Real.log ((K : ℝ) + 2 + (M₀ : ℝ))
+              * (b : ℝ) ^ (-(θ * K)) := by ring
+        _ ≤ (g : ℝ) * (κ * c₀ * Real.log 2) * (b : ℝ) ^ (-(θ * K)) := this
+    have hTlog : Real.log T ≤ Real.log ((K : ℝ) + 2 + (M₀ : ℝ)) :=
+      Real.log_le_log (by linarith) hTle
+    have hid : (g : ℝ) * (κ * c₀ * Real.log 2) * (b : ℝ) ^ (-(θ * K))
+        = (g : ℝ) * e * Real.log 2 := by
+      rw [hedef, cKgeom]; ring
+    linarith [hTlog, hmul, hid.le, hid.ge]
+  have hstep2 : T ≤ ((2 : ℝ) ^ g) ^ e := by
+    have h1 : ((2 : ℝ) ^ g) ^ e = Real.exp ((g : ℝ) * e * Real.log 2) := by
+      rw [show ((2 : ℝ) ^ g) = (2 : ℝ) ^ ((g : ℕ) : ℝ) from (Real.rpow_natCast 2 g).symm,
+        ← Real.rpow_mul (by norm_num), Real.rpow_def_of_pos (by norm_num)]
+      congr 1
+      ring
+    rw [h1]
+    calc T = Real.exp (Real.log T) := (Real.exp_log (by linarith)).symm
+      _ ≤ Real.exp ((g : ℝ) * e * Real.log 2) := Real.exp_le_exp.2 hkey
+  exact le_trans hstep2 hstep1
+
+/-- `k + 1 ≤ 2 ^ k`. -/
+theorem add_one_le_two_pow : ∀ k : ℕ, k + 1 ≤ 2 ^ k := by
+  intro k
+  induction k with
+  | zero => norm_num
+  | succ n ih =>
+    have h1 : 1 ≤ 2 ^ n := Nat.one_le_two_pow
+    have h2 : 2 ^ (n + 1) = 2 ^ n * 2 := by rw [pow_succ]
+    omega
+
+/-- **The Nat reduction for clause (iii).**  A double-exponential threshold `2^{2^g}` clears the
+cut `N / 2^{u_N}` as soon as `g + 1 ≤ u_N`: then `2^g + u_N ≤ 2^{u_N} ≤ log₂ N`. -/
+theorem two_pow_two_pow_le_cut {N g : ℕ} (hN : 2 ≤ N)
+    (hg : g + 1 ≤ Nat.log 2 (Nat.log 2 N)) :
+    2 ^ (2 ^ g) ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N)) := by
+  set u : ℕ := Nat.log 2 (Nat.log 2 N) with hu
+  have hL : 2 ^ u ≤ Nat.log 2 N := two_pow_llLevel_le hN
+  have hstep : 2 ^ g + u ≤ 2 ^ u := by
+    have h1 : 2 ^ g ≤ 2 ^ (u - 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+    have h2 : u ≤ 2 ^ (u - 1) := by
+      have h := add_one_le_two_pow (u - 1)
+      omega
+    have h3 : 2 ^ (u - 1) + 2 ^ (u - 1) = 2 ^ u := by
+      have hu1 : (u - 1) + 1 = u := by omega
+      calc 2 ^ (u - 1) + 2 ^ (u - 1) = 2 ^ (u - 1) * 2 := by ring
+        _ = 2 ^ ((u - 1) + 1) := by rw [pow_succ]
+        _ = 2 ^ u := by rw [hu1]
+    omega
+  have hsum : 2 ^ g + u ≤ Nat.log 2 N := le_trans hstep hL
+  rw [Nat.le_div_iff_mul_le (by positivity)]
+  calc 2 ^ (2 ^ g) * 2 ^ u = 2 ^ (2 ^ g + u) := by rw [pow_add]
+    _ ≤ 2 ^ (Nat.log 2 N) := Nat.pow_le_pow_right (by norm_num) hsum
+    _ ≤ N := Nat.pow_log_le_self 2 (by omega)
+
+set_option maxHeartbeats 1000000 in
+/-- **The analytic step: `⌈φ(D_N)⌉ + 1 ≤ u_N` eventually.**  `φ` costs
+`b^{θ D_N}·log(D_N+2+M₀) ≍ (u log u)^θ · log log u`, while the budget is `u_N` itself; the margin
+is the same `u^{1-θ}` that `exponent_tendsto_atBot_of_geom_slow` runs on. -/
+theorem ceil_thrPhi_depthSlow_add_one_le {b : ℕ} (hb : 2 ≤ b) (M₀ : ℕ) {κ c₀ θ : ℝ}
+    (hκ : 0 < κ) (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1) :
+    ∀ᶠ N : ℕ in atTop,
+      ⌈thrPhi b M₀ κ c₀ θ (depthSlow b N)⌉₊ + 1 ≤ Nat.log 2 (Nat.log 2 N) := by
+  have hbR : (1 : ℝ) < (b : ℝ) := by
+    have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  have hb0 : (0 : ℝ) < (b : ℝ) := by linarith
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hM0 : (0 : ℝ) ≤ (M₀ : ℝ) := Nat.cast_nonneg _
+  set α : ℝ := 1 - θ with hαdef
+  have hαpos : 0 < α := by rw [hαdef]; linarith
+  set C' : ℝ := (b : ℝ) * ((M₀ : ℝ) + 3) / (κ * c₀ * Real.log 2) with hC'def
+  have hden : (0 : ℝ) < κ * c₀ * Real.log 2 := by positivity
+  have hdenne : κ * c₀ * Real.log 2 ≠ 0 := ne_of_gt hden
+  have hC'pos : 0 < C' := by rw [hC'def]; positivity
+  have huT : Tendsto (fun N : ℕ => Nat.log 2 (Nat.log 2 N)) atTop atTop :=
+    (PairDecouple.tendsto_natLog_atTop 2 le_rfl).comp
+      (PairDecouple.tendsto_natLog_atTop 2 le_rfl)
+  have htT : Tendsto (fun N : ℕ => Real.log ((Nat.log 2 (Nat.log 2 N) : ℝ) + 1)) atTop atTop :=
+    Real.tendsto_log_atTop.comp (tendsto_natCast_atTop_atTop.comp huT |>.atTop_add
+      tendsto_const_nhds)
+  have hR := (tendsto_exp_div_polyPow hαpos 2).comp htT
+  filter_upwards [huT.eventually_ge_atTop 3, hR.eventually_ge_atTop (C' + 1),
+    depthSlow_le_depthLL hb] with N hu3 hRN hSL
+  simp only [Function.comp_apply] at hRN
+  set u : ℕ := Nat.log 2 (Nat.log 2 N) with hudef
+  set y : ℝ := (u : ℝ) + 1 with hydef
+  set t : ℝ := Real.log y with htdef
+  set D : ℕ := depthSlow b N with hDdef
+  have hu1 : (3 : ℝ) ≤ (u : ℝ) := by exact_mod_cast hu3
+  have hy4 : (4 : ℝ) ≤ y := by rw [hydef]; linarith
+  have hypos : (0 : ℝ) < y := by linarith
+  have hllp : llProxy N = y := by rw [llProxy]
+  have ht0 : 0 ≤ t := by rw [htdef]; exact Real.log_nonneg (by linarith)
+  have hS1 : (1 : ℝ) ≤ 2 + 2 * t := by linarith
+  have hyθ : (0 : ℝ) < y ^ θ := Real.rpow_pos_of_pos hypos _
+  have hyθ1 : (1 : ℝ) ≤ y ^ θ := by
+    have h := Real.rpow_le_rpow_of_exponent_le (by linarith : (1 : ℝ) ≤ y) hθ0.le
+    rwa [Real.rpow_zero] at h
+  -- the two schedule inputs
+  have hDle : ((D : ℝ) + 1) ≤ 2 + 3 * t := by
+    have h1 := depthLL_succ_le_log hb N
+    rw [hllp, ← htdef] at h1
+    have h2 : ((D : ℝ)) ≤ ((PairDecouple.depthLL b N : ℝ)) := by exact_mod_cast hSL
+    linarith
+  have hpowD : (b : ℝ) ^ D ≤ (b : ℝ) * (y * (2 + 2 * t)) := by
+    have h2 := pow_depthSlow_le_log hb N
+    rw [hllp, ← htdef, ← hDdef] at h2
+    exact h2
+  -- `b^{θ D} ≤ b · y^θ · (2+2t)`: only the `y^θ` survives, and that is the whole point
+  have hrpowD : (b : ℝ) ^ (θ * (D : ℝ)) ≤ (b : ℝ) * (y ^ θ * (2 + 2 * t)) := by
+    have hsplit : (b : ℝ) ^ (θ * (D : ℝ)) = ((b : ℝ) ^ D) ^ θ := by
+      rw [show θ * (D : ℝ) = (D : ℝ) * θ from by ring, Real.rpow_mul hb0.le, Real.rpow_natCast]
+    have h1 : ((b : ℝ) ^ D) ^ θ ≤ ((b : ℝ) * (y * (2 + 2 * t))) ^ θ :=
+      Real.rpow_le_rpow (by positivity) hpowD hθ0.le
+    have h2 : ((b : ℝ) * (y * (2 + 2 * t))) ^ θ
+        = (b : ℝ) ^ θ * (y ^ θ * (2 + 2 * t) ^ θ) := by
+      rw [Real.mul_rpow hb0.le (by positivity), Real.mul_rpow hypos.le (by linarith)]
+    have h3 : (b : ℝ) ^ θ ≤ (b : ℝ) := by
+      have := Real.rpow_le_rpow_of_exponent_le hbR.le hθ.le
+      rwa [Real.rpow_one] at this
+    have h4 : (2 + 2 * t) ^ θ ≤ 2 + 2 * t := by
+      have := Real.rpow_le_rpow_of_exponent_le hS1 hθ.le
+      rwa [Real.rpow_one] at this
+    calc (b : ℝ) ^ (θ * (D : ℝ)) = ((b : ℝ) ^ D) ^ θ := hsplit
+      _ ≤ ((b : ℝ) * (y * (2 + 2 * t))) ^ θ := h1
+      _ = (b : ℝ) ^ θ * (y ^ θ * (2 + 2 * t) ^ θ) := h2
+      _ ≤ (b : ℝ) * (y ^ θ * (2 + 2 * t) ^ θ) :=
+          mul_le_mul_of_nonneg_right h3 (by positivity)
+      _ ≤ (b : ℝ) * (y ^ θ * (2 + 2 * t)) :=
+          mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left h4 hyθ.le) hb0.le
+  -- the log factor: `log(D+2+M₀) ≤ 2 + 3t + M₀`
+  have hlogDnn : (0 : ℝ) ≤ Real.log ((D : ℝ) + 2 + (M₀ : ℝ)) := by
+    refine Real.log_nonneg ?_
+    have : (0 : ℝ) ≤ (D : ℝ) := Nat.cast_nonneg _
+    linarith
+  have hlogD : Real.log ((D : ℝ) + 2 + (M₀ : ℝ)) ≤ 2 + 3 * t + (M₀ : ℝ) := by
+    have hpos : (0 : ℝ) < (D : ℝ) + 2 + (M₀ : ℝ) := by
+      have : (0 : ℝ) ≤ (D : ℝ) := Nat.cast_nonneg _
+      linarith
+    have h := Real.log_le_sub_one_of_pos hpos
+    linarith
+  -- the product, majorised by `C' · y^θ · (2+3t)²`
+  have hprod : (2 + 2 * t) * (2 + 3 * t + (M₀ : ℝ)) ≤ ((M₀ : ℝ) + 3) * (2 + 3 * t) ^ 2 := by
+    nlinarith [ht0, hM0, mul_nonneg ht0 hM0, sq_nonneg t,
+      mul_nonneg (mul_nonneg hM0 ht0) ht0]
+  have hA : (0 : ℝ) < (b : ℝ) * y ^ θ := by positivity
+  have hnum : (b : ℝ) ^ (θ * (D : ℝ)) * Real.log ((D : ℝ) + 2 + (M₀ : ℝ))
+      ≤ (b : ℝ) * ((M₀ : ℝ) + 3) * (y ^ θ * (2 + 3 * t) ^ 2) := by
+    have hstep1 := mul_le_mul hrpowD hlogD hlogDnn (by positivity)
+    calc (b : ℝ) ^ (θ * (D : ℝ)) * Real.log ((D : ℝ) + 2 + (M₀ : ℝ))
+        ≤ ((b : ℝ) * (y ^ θ * (2 + 2 * t))) * (2 + 3 * t + (M₀ : ℝ)) := hstep1
+      _ = ((b : ℝ) * y ^ θ) * ((2 + 2 * t) * (2 + 3 * t + (M₀ : ℝ))) := by ring
+      _ ≤ ((b : ℝ) * y ^ θ) * (((M₀ : ℝ) + 3) * (2 + 3 * t) ^ 2) :=
+          mul_le_mul_of_nonneg_left hprod hA.le
+      _ = (b : ℝ) * ((M₀ : ℝ) + 3) * (y ^ θ * (2 + 3 * t) ^ 2) := by ring
+  have hid : C' * (κ * c₀ * Real.log 2) = (b : ℝ) * ((M₀ : ℝ) + 3) := by
+    rw [hC'def]; field_simp
+  have hφle : thrPhi b M₀ κ c₀ θ D ≤ C' * (y ^ θ * (2 + 3 * t) ^ 2) := by
+    rw [thrPhi, div_le_iff₀ hden]
+    calc (b : ℝ) ^ (θ * (D : ℝ)) * Real.log ((D : ℝ) + 2 + (M₀ : ℝ))
+        ≤ (b : ℝ) * ((M₀ : ℝ) + 3) * (y ^ θ * (2 + 3 * t) ^ 2) := hnum
+      _ = C' * (κ * c₀ * Real.log 2) * (y ^ θ * (2 + 3 * t) ^ 2) := by rw [hid]
+      _ = C' * (y ^ θ * (2 + 3 * t) ^ 2) * (κ * c₀ * Real.log 2) := by ring
+  -- the exponential margin: `y^θ · exp(α t) = y`
+  have hyα : y ^ θ * Real.exp (α * t) = y := by
+    have h1 : Real.exp (α * t) = y ^ α := by
+      rw [Real.rpow_def_of_pos hypos, htdef]
+      congr 1
+      ring
+    have h2 : θ + α = 1 := by rw [hαdef]; ring
+    rw [h1, ← Real.rpow_add hypos, h2, Real.rpow_one]
+  have hRN' : (C' + 1) * (2 + 3 * t) ^ 2 ≤ Real.exp (α * t) := by
+    have hpos : (0 : ℝ) < (2 + 3 * t) ^ 2 := by positivity
+    rw [le_div_iff₀ hpos] at hRN
+    linarith
+  have hkey : thrPhi b M₀ κ c₀ θ D ≤ y - 2 := by
+    have hmul : y ^ θ * ((C' + 1) * (2 + 3 * t) ^ 2) ≤ y ^ θ * Real.exp (α * t) :=
+      mul_le_mul_of_nonneg_left hRN' hyθ.le
+    rw [hyα] at hmul
+    have hsq : (4 : ℝ) ≤ (2 + 3 * t) ^ 2 := by nlinarith [ht0]
+    have hbig : (2 : ℝ) ≤ y ^ θ * (2 + 3 * t) ^ 2 := by nlinarith [hyθ1, hsq]
+    have hexp : y ^ θ * ((C' + 1) * (2 + 3 * t) ^ 2)
+        = C' * (y ^ θ * (2 + 3 * t) ^ 2) + y ^ θ * (2 + 3 * t) ^ 2 := by ring
+    rw [hexp] at hmul
+    linarith [hφle]
+  -- conclude in ℕ
+  clear_value D t y u
+  have hcast : ((u - 1 : ℕ) : ℝ) = (u : ℝ) - 1 := by
+    have h1 : (1 : ℕ) ≤ u := by omega
+    rw [Nat.cast_sub h1, Nat.cast_one]
+  have hceil : ⌈thrPhi b M₀ κ c₀ θ D⌉₊ ≤ u - 1 := by
+    refine Nat.ceil_le.2 ?_
+    rw [hcast]
+    rw [hydef] at hkey
+    linarith
+  omega
+
 /-! ### The crux at `θ < 1` -/
 
 theorem tendsto_depthSlow {b : ℕ} (hb : 2 ≤ b) :
@@ -523,6 +829,28 @@ theorem kPointThresholdSlow_of_with {b Q P : ℕ} (hb : 2 ≤ b) {cK : ℕ → �
   filter_upwards [hAcut, depthSlow_le_depthLL hb] with N hcut hSL K hK
   exact hcut K (le_trans hK hSL)
 
+/-- **THE THRESHOLD DATA IS A THEOREM.**  For the geometric profile `c_K = c₀ b^{-θK}` with
+`θ < 1`, the threshold demanded by the slow schedule can be CONSTRUCTED:
+`Athr K = 2^(2^⌈φ K⌉)` with `φ K = b^{θK}·log(K+2+M₀)/(κ c₀ log 2)`.
+
+Clause (ii) holds by design (`thrAthr_rpow_ge`); clause (iii) — the cut
+`Athr(D_N) ≤ N/2^{u_N}` — is `ceil_thrPhi_depthSlow_add_one_le` plus `two_pow_two_pow_le_cut`,
+and it is exactly where `θ < 1` is spent a second time: the demand
+`log log Athr(D_N) ≍ (u log u)^θ log log u` must sit inside the budget `log log a_N ≍ u log 2`.
+
+So `weylLambertTwist_of_geom_slow`'s second hypothesis is not an assumption: the crux rests on
+the `K`-point correlation input ALONE. -/
+theorem kPointThresholdSlow_of_geom {b : ℕ} (hb : 2 ≤ b) (Q P : ℕ) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1) : KPointThresholdSlow b Q P (cKgeom c₀ θ b) := by
+  intro κ hκ hκ1
+  refine ⟨thrAthr b (Q * primorial P) κ c₀ θ, two_le_thrAthr b (Q * primorial P) κ c₀ θ,
+    fun K => thrAthr_rpow_ge hb hκ hc₀ K, ?_⟩
+  filter_upwards [ceil_thrPhi_depthSlow_add_one_le hb (Q * primorial P) hκ hc₀ hθ0 hθ,
+    Filter.eventually_ge_atTop 2] with N hceil hN K hK
+  refine le_trans (thrAthr_monotone hb hκ hc₀ hθ0 hK) ?_
+  rw [thrAthr]
+  exact two_pow_two_pow_le_cut hN hceil
+
 /-- The diagonal obligation, on the SLOW schedule. -/
 def DepthDiagonalSlow (b : ℕ) : Prop :=
   ∀ (P Q j : ℕ) (h : ℤ), 0 < Q → 0 < j → j < Q →
@@ -616,6 +944,23 @@ theorem conjC3_of_geom_slow {c₀ θ : ℝ} (hc₀ : 0 < c₀)
   conjC3_of_weylLambertTwist fun b hb =>
     weylLambertTwist_of_geom_slow hb hc₀ hθ0 hθ m (hin b hb) (hthr b hb)
 
+/-- **THE C3 CRUX FROM THE `K`-POINT INPUT ALONE.**  No threshold hypothesis: it is discharged
+by `kPointThresholdSlow_of_geom`.  Everything the crux still needs is the one open analytic
+statement `KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K`. -/
+theorem weylLambertTwist_of_geom_input {b : ℕ} (hb : 3 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K) :
+    WeylLambertTwist b :=
+  weylLambertTwist_of_geom_slow hb hc₀ hθ0 hθ m hin
+    fun P Q _ => kPointThresholdSlow_of_geom (by omega) Q P hc₀ hθ0 hθ
+
+/-- **`ConjC3` FROM THE `K`-POINT INPUT ALONE**, for every geometric decay rate `θ < 1`. -/
+theorem conjC3_of_geom_input {c₀ θ : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ b : ℕ, 3 ≤ b → ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K) :
+    ConjC3 :=
+  conjC3_of_weylLambertTwist fun b hb =>
+    weylLambertTwist_of_geom_input hb hc₀ hθ0 hθ m (hin b hb)
+
 #print axioms NormalNumbers.CastingOut.add_two_le_two_pow
 #print axioms NormalNumbers.CastingOut.natLog_add_two_le
 #print axioms NormalNumbers.CastingOut.natLog_mul_log_two_le
@@ -628,6 +973,11 @@ theorem conjC3_of_geom_slow {c₀ θ : ℝ} (hc₀ : 0 < c₀)
 #print axioms NormalNumbers.CastingOut.pow_depthSlow_le_log
 #print axioms NormalNumbers.CastingOut.tendsto_polyPow_sub_expDiv
 #print axioms NormalNumbers.CastingOut.exponent_tendsto_atBot_of_geom_slow
+#print axioms NormalNumbers.CastingOut.two_le_thrAthr
+#print axioms NormalNumbers.CastingOut.pow_ceil_le_two_log_thrAthr
+#print axioms NormalNumbers.CastingOut.thrPhi_monotone
+#print axioms NormalNumbers.CastingOut.thrAthr_monotone
+#print axioms NormalNumbers.CastingOut.thrAthr_rpow_ge
 #print axioms NormalNumbers.CastingOut.tendsto_depthSlow
 #print axioms NormalNumbers.CastingOut.depthAvg_dvd_tendsto_of_primitive_sched
 #print axioms NormalNumbers.CastingOut.depthAvg_gen_tendsto_of_geom_slow
@@ -637,6 +987,12 @@ theorem conjC3_of_geom_slow {c₀ θ : ℝ} (hc₀ : 0 < c₀)
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_geom_slow
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_geom_slow_of_with
 #print axioms NormalNumbers.CastingOut.conjC3_of_geom_slow
+#print axioms NormalNumbers.CastingOut.add_one_le_two_pow
+#print axioms NormalNumbers.CastingOut.two_pow_two_pow_le_cut
+#print axioms NormalNumbers.CastingOut.ceil_thrPhi_depthSlow_add_one_le
+#print axioms NormalNumbers.CastingOut.kPointThresholdSlow_of_geom
+#print axioms NormalNumbers.CastingOut.weylLambertTwist_of_geom_input
+#print axioms NormalNumbers.CastingOut.conjC3_of_geom_input
 
 end CastingOut
 
