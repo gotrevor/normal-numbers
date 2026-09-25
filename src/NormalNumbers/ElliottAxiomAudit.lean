@@ -21,6 +21,7 @@ import NormalNumbers.ElliottExpand
 import NormalNumbers.ElliottZetaPole
 import NormalNumbers.ElliottPrimePower
 import NormalNumbers.ElliottBridge
+import NormalNumbers.ElliottSliceCap
 import NormalNumbers.ElliottRestricted
 import NormalNumbers.ElliottScaleDescent
 import NormalNumbers.ElliottCaseB
@@ -259,3 +260,12 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottBridge.primePow_decomp
 #print axioms NormalNumbers.ElliottBridge.term_primePow
 #print axioms NormalNumbers.ElliottBridge.sum_complement_le
+
+-- lap 112: (c′-I) discharged end to end
+#print axioms NormalNumbers.ElliottSliceCap.exists_far_band_bound_le
+#print axioms NormalNumbers.ElliottSliceCap.exists_band_logDeriv_bound
+#print axioms NormalNumbers.ElliottSliceCap.norm_term_vonMangoldt
+#print axioms NormalNumbers.ElliottSliceCap.norm_slice_add_logDeriv_le
+#print axioms NormalNumbers.ElliottSliceCap.exists_sliceCapSmall
+#print axioms NormalNumbers.ElliottSliceCap.exists_shiftedMertensSmall
+#print axioms NormalNumbers.ElliottSliceCap.twoPointElliottLog_of_two_bands
