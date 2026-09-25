@@ -1,0 +1,89 @@
+import NormalNumbers.ElliottGenericGraphDecoupling
+import NormalNumbers.ElliottDilatedUpper
+
+/-!
+# The bridge: the generic CRT mean *is* the dilated Fourier mean
+
+`NormalNumbers.ElliottTwistedGraphCRT.pairTwistedMeanCRT_eq_pairTwistedPrimeGraphMean` is the join
+between the two halves of the graph argument: the lower-bound side's CRT mean and the upper-bound
+side's Fourier mean are the same number.  This file proves the same join for the generic edge
+family of `NormalNumbers.ElliottGenericGraph`, and then instantiates it at the `a`-dilated edge, so
+that `ElliottDilatedUpper`'s Fourier bound and `ElliottGenericGraphDecoupling`'s entropy bound
+speak about **one** object.
+
+Never edit dependency files; everything here is a new statement in `src/`.
+-/
+
+open scoped BigOperators ComplexConjugate
+open Finset
+
+namespace NormalNumbers.ElliottDilatedBridge
+
+open Erdos67b
+open NormalNumbers.ElliottGenericGraph
+open NormalNumbers.ElliottDilatedPairing
+
+noncomputable section
+
+/-- The generic graph mean in the Fourier side's shape: a sum over the active primes. -/
+def genPrimeGraphMean {H : ℕ} (w : ℕ → ℂ) (E : ℕ → Fin H → ℂ) (s : Finset ℕ) : ℂ :=
+  ∑ p ∈ s, w p * (p : ℂ)⁻¹ * ∑ j : Fin H, E p j
+
+/-- **The join, for an arbitrary edge family.**  Port of
+`NormalNumbers.ElliottTwistedGraph.pairTwistedMeanCRT_eq_pairTwistedPrimeGraphMean`. -/
+theorem genMeanCRT_eq_genPrimeGraphMean {H : ℕ} (w : ℕ → ℂ) (E : ℕ → Fin H → ℂ) (s : Finset ℕ)
+    (hs : s ⊆ Nat.primesLE H) :
+    genMeanCRT w E s = genPrimeGraphMean w E s := by
+  classical
+  calc
+    _ = ∑ p ∈ Nat.primesLE H, if p ∈ s then
+        (p : ℝ)⁻¹ • (w p * ∑ j : Fin H, E p j) else 0 :=
+      Finset.sum_coe_sort (Nat.primesLE H) _
+    _ = ∑ p ∈ s, (p : ℝ)⁻¹ • (w p * ∑ j : Fin H, E p j) := by
+      rw [← Finset.sum_filter]
+      congr 1
+      ext p
+      simp only [Finset.mem_filter]
+      exact ⟨fun hp ↦ hp.2, fun hp ↦ ⟨hs hp, hp⟩⟩
+    _ = _ := by
+      simp only [genPrimeGraphMean, Complex.real_smul, Complex.ofReal_inv,
+        Complex.ofReal_natCast]
+      exact Finset.sum_congr rfl fun p _ ↦ by ring
+
+/-- The `a`-dilated edge family, as a generic edge family. -/
+def dilatedEdgeFamily {H : ℕ} (b c : Fin H → ℂ) (α c₁ h : ℕ) : ℕ → Fin H → ℂ :=
+  fun p m ↦ dilatedPairShiftEdge b c α ((p * c₁ : ℕ) : ℤ) (p * h) m
+
+/-- **The dilated Fourier mean is the generic graph mean of the dilated edge family.** -/
+theorem genPrimeGraphMean_dilatedEdgeFamily {H : ℕ} (w : ℕ → ℂ) (b c : Fin H → ℂ)
+    (α c₁ h : ℕ) (s : Finset ℕ) :
+    genPrimeGraphMean w (dilatedEdgeFamily b c α c₁ h) s =
+      dilatedPairTwistedMean w b c α c₁ h s := rfl
+
+/-- **The join at the dilated edge.**  The CRT mean that the entropy/decoupling layer controls is
+literally the Fourier mean that `ElliottDilatedUpper` bounds. -/
+theorem genMeanCRT_dilatedEdgeFamily {H : ℕ} (w : ℕ → ℂ) (b c : Fin H → ℂ)
+    (α c₁ h : ℕ) (s : Finset ℕ) (hs : s ⊆ Nat.primesLE H) :
+    genMeanCRT w (dilatedEdgeFamily b c α c₁ h) s =
+      dilatedPairTwistedMean w b c α c₁ h s :=
+  (genMeanCRT_eq_genPrimeGraphMean w _ s hs).trans
+    (genPrimeGraphMean_dilatedEdgeFamily w b c α c₁ h s)
+
+/-- The dilated edge family is `1`-bounded whenever the two blocks are. -/
+theorem norm_dilatedEdgeFamily_le {H : ℕ} {b c : Fin H → ℂ} {B : ℝ} (hB : 0 ≤ B)
+    (hb : ∀ j, ‖b j‖ ≤ B) (hc : ∀ j, ‖c j‖ ≤ B) (α c₁ h : ℕ) (p : ℕ) (m : Fin H) :
+    ‖dilatedEdgeFamily b c α c₁ h p m‖ ≤ B ^ 2 := by
+  unfold dilatedEdgeFamily dilatedPairShiftEdge
+  have hsq : (0 : ℝ) ≤ B ^ 2 := by positivity
+  split_ifs
+  · rw [norm_mul, sq]
+    exact mul_le_mul (hb _) (hc _) (norm_nonneg _) hB
+  · simpa using hsq
+  · simpa using hsq
+
+end
+
+end NormalNumbers.ElliottDilatedBridge
+
+#print axioms NormalNumbers.ElliottDilatedBridge.genMeanCRT_dilatedEdgeFamily
+#print axioms NormalNumbers.ElliottDilatedBridge.norm_dilatedEdgeFamily_le

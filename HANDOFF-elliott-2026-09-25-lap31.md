@@ -120,14 +120,31 @@ Lap 28's prediction is confirmed in the kernel: no new entropy lemma was needed.
 **The whole lower-bound machinery is now available for an arbitrary edge family at a dilated
 length with an arbitrary per-prime residue shift, all sorry-free and axiom-clean.**
 
-## NEXT (lap 31 onwards)
+## Lap 31 — `ElliottDilatedBridge.lean` (new, zero sorry, trust triple): the two halves meet
 
-1. **Instantiate.**  Take `α` = the `a`-grouped alphabet (lap 28), `mkE m b p j =
-   dilatedPairShiftEdge (decode₁ b) (decode₂ b) a (p c₁) (p h) j`, and `Δ m` the CRT element with
-   `Δ ≡ ⌊p c₁ / a⌋ (mod p)`.  Then `genMeanCRT` is `dilatedPairTwistedMean` (up to the
-   `ElliottTwistedGraphCRT.pairTwistedMeanCRT_eq_pairTwistedPrimeGraphMean` step, which needs its
-   generic analogue — a short `Finset.sum_coe_sort` argument) and `genSum` at the shifted residue
-   is the sum of affine observables via `sum_dilatedPairShiftEdge_affineBlock`.
+`pairTwistedMeanCRT_eq_pairTwistedPrimeGraphMean` is the join between the lower-bound side's CRT
+mean and the upper-bound side's Fourier mean.  This file proves the same join generically and then
+instantiates it at the dilated edge:
+
+* `genPrimeGraphMean`, `genMeanCRT_eq_genPrimeGraphMean` (for `s ⊆ primesLE H`).
+* `dilatedEdgeFamily b c α c₁ h p m = dilatedPairShiftEdge b c α (p c₁) (p h) m`.
+* `genPrimeGraphMean_dilatedEdgeFamily` — **`rfl`**.
+* `genMeanCRT_dilatedEdgeFamily` — **the CRT mean that the entropy/decoupling layer controls is
+  literally the Fourier mean that `ElliottDilatedUpper` bounds.**
+* `norm_dilatedEdgeFamily_le` — the dilated edge family is `B²`-bounded, the hypothesis shape the
+  generic layer wants.
+
+So both halves of the crux now speak about one object, `dilatedPairTwistedMean`.
+
+## NEXT (lap 32 onwards)
+
+1. **`genSum` at the shifted residue = a sum of affine observables.**  The remaining
+   identification, the dilated analogue of
+   `ElliottTwistedGraphCorrelation.pairTwistedSum_sequenceBlock`: expand `genSum` by
+   `genCoordinate` (whose residue condition at `z - Δ` selects the block positions `j` with
+   `p ∣ n + 1 + j - ⌊p c₁/a⌋`) and feed `sum_dilatedPairShiftEdge_affineBlock`.
+2. Then the correlation-transfer rung with lap 26's
+   `norm_logProb_affineTwistedObservable_shift_sub_correlation_le`, and the contradiction.
 2. Combine with lap 26's `norm_logProb_affineTwistedObservable_shift_sub_correlation_le` for the
    correlation-transfer rung, then the entropy-selected scale and
    `exists_logProb_dyadic_*_lower`.
