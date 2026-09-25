@@ -309,3 +309,55 @@ multiplicativity).  Remaining ideas, in order:
    `D`-point correlation of `ζ^ω`'s expands as a finite-weight sum of `D`-point correlations of
    `ζ^Ω`'s along dilated shifts — and THOSE are in scope for `unitCircleLogElliott`/
    `NonasymptoticLogElliott` (log density).  Worth a careful attempt.
+
+---
+
+# lap 6 addendum — the `ω → Ω` bridge is BUILT
+
+`src/NormalNumbers/C3MrtOmegaBridge.lean` (axiom-clean, no `sorry`).
+
+Lap 4's blocker was that the dependency's log-Elliott needs
+`IsCompletelyMultiplicativeOnPositive`, and `z^ω` is merely multiplicative (`z^{ω(p²)} = z ≠ z²`)
+while `z^Ω` IS completely multiplicative.  Solving `z^ω = z^Ω ⋆ g` at prime powers gives
+`g(1)=1`, `g(p)=0`, `g(p^k)=z−z²` for `k ≥ 2`: **`g` is supported exactly on the POWERFUL
+numbers, with `g(d)=(z−z²)^{ω(d)}`.**  Now machine-checked:
+
+* `Powerful`, `powerful_one`, `not_powerful_prime`, `powerful_prime_pow`, `powerful_mul_iff`
+  (powerfulness is multiplicative on coprime factorisations).
+* `zOm z`, `zom z`, `sqfW z` as `ArithmeticFunction ℂ`, with `isMultiplicative_zOm`,
+  `isMultiplicative_zom`, `isMultiplicative_sqfW`, and `omegaNat_mul_of_coprime`.
+* `zOm_mul_sqfW_prime_pow` — the computation, via the telescoping identity
+  `(z−z²)∑_{j<m} z^j = z − z^{m+1}` (`geom_tel`), which cancels the `z^k` from the `j = 0` term.
+* **`zOm_mul_sqfW : zOm z * sqfW z = zom z`** — the bridge as an identity of arithmetic
+  functions, via `IsMultiplicative.eq_iff_eq_on_prime_powers`.
+* **`pow_omegaNat_eq_sum_divisors`** — the usable divisor-sum form:
+  `z^{ω(m)} = ∑_{d ∣ m} z^{Ω(d)} · [m/d powerful] (z−z²)^{ω(m/d)}`.
+
+## Why this matters, and what is left of the route
+
+Substituting the divisor sum into the `D`-point correlation expands it over tuples
+`(d_0,…,d_{D−1})` of powerful cofactors.  On each residue class `n ≡ a (mod L)`,
+`L = lcm(d_i)`, the arguments `(n+1+i)/d_i` become genuine **linear forms**
+`(L/d_i)k + (a+1+i)/d_i` in the progression variable `k`.  So every term is a `D`-point
+correlation of the **completely multiplicative** `ζ_i^{Ω}` along `D` linear forms — exactly the
+shape of `Erdos67b.NonasymptoticLogElliott`.  The tuple sum converges absolutely since
+`∑_{d powerful} |z−z²|^{ω(d)}/d ≤ ∏_p (1 + 2/(p(p−1))) < ∞`, so it truncates at `d_i ≤ Y` with a
+uniform `ε` tail.
+
+Remaining steps on this route, in order:
+1. `tsum_powerfulWeight_div_lt_top`: `∑_{d powerful} |z−z²|^{ω(d)}/d < ∞` (Euler product over
+   `p`, each factor `1 + |z−z²|·∑_{k≥2}p^{-k}`; `|z−z²| ≤ 2` for `‖z‖ = 1`).  Bounded work.
+2. The substitution/reindexing lemma: correlation of `ζ_i^ω` = absolutely convergent sum over
+   powerful tuples of correlations of `ζ_i^Ω` along linear forms in a progression.
+3. Then the dependency applies — but only for **2 points** and in **log density**.  So this
+   route yields the log-averaged `D = 2` rung, not the full crux (which needs
+   `D ≍ log log log N` points).  The kickoff accepts the log-averaged variant as a success.
+4. Also still needed for step 3: `ζ_i^{Ω}` must be non-pretentious in the dependency's
+   `pretentiousDistSqToTwist` sense — same certificate question as lap 5, but now for `Ω` in
+   place of `ω` (and `Ω` is the EASIER case: `ζ^Ω` at `p` is again the constant `ζ`).
+
+## NEXT (lap 7)
+
+Step 1 above (`∑_{d powerful} |g(d)|/d < ∞`), then step 2.  Both are bounded, concrete work with
+no open mathematics in them — the first genuinely unconditional progress toward a `D = 2` rung
+since lap 1.
