@@ -22,6 +22,31 @@ Note the hypothesis shape: the transfer is stated against the *abstract* lift pr
 `(u p * conj (g p)).re = ‖g p‖²`, which is exactly what `exists_cover_pair_ge` already exports.
 So `ElliottRandomize` and `ElliottPretentiousTransfer` compose with no glue.
 
+## Lap 56 (2026-09-25) — Case-B step 3, analytic half CLOSED: the ABSOLUTE squarefull tail
+
+New module `src/NormalNumbers/ElliottSquarefull.lean`, **zero sorry, trust triple**, in the audit
+surface.  Directive item 3's analytic half.
+
+* `geom_sum_Ico_two_le` — `∑_{2 ≤ k ≤ K} r^k ≤ r²/(1-r)`, uniform in the truncation `K`.
+* `local_factor_squarefull_le` — for nonneg multiplicative `f` with `f p = 0` at primes and
+  `f n ≤ 2/n`, the local factor `∑_{k ≤ K} f(p^k) ≤ 1 + 2/(p(p-1))`.  Vanishing at `p` is what
+  kills the `1/p` term.
+* **`sum_Icc_le_exp_two`** — `∑_{m ≤ Y} f m ≤ e²` for **every** such `f` and **every** `Y`.
+
+This is precisely the uniformity the refuted `v`-expansion lacked: there the local factor
+`1 + (1-‖g p‖)/(p-‖g p‖)` depends on `g` and can be large past any pre-chosen `D`; here the bound
+is absolute.  Built on the existing `ElliottEulerBound` scaffolding
+(`sum_Icc_le_euler_product`, `prod_le_exp_prime_sum`, `sum_primesBelow_inv_mul_pred_le_one`) —
+no new analytic infrastructure was needed.
+
+### NEXT — arithmetic half of item 3, then items 4, 5
+
+3b. `ElliottSquarefullConv.lean`: for unimodular multiplicative `U`, let `Ũ` be completely
+   multiplicative with `Ũ p = U p` and `u = U ⋆ (μ·Ũ)`.  Prove `u` multiplicative, `u p = 0`,
+   `‖u (p^k)‖ ≤ 2`, hence `fun n => ‖u n‖/n` satisfies exactly the hypotheses of
+   `sum_Icc_le_exp_two`.  Also `pretentiousDistSq Ũ χ X = pretentiousDistSq U χ X` (primes only),
+   so the transfer of lap 55 survives the expansion unchanged.
+
 ### NEXT (lap 56), unchanged order from lap 54 minus item 1
 
 2. Case A thin window off `ElliottHall.sum_Icc_dyadic_le` (supersedes `exists_caseA_threshold`;
