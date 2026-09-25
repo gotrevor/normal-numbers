@@ -74,8 +74,30 @@ formalised; recorded as the reason not to spend laps sharpening `prod_le_lcm_mul
    tuples with no solution.  Helpers: `univLcm_pos`, `shift_div_eq_linear_multi`,
    `joint_base_mod`.  `filter_linear_lt_eq_range` applies to the `j`-index set verbatim with
    `L` for `d·e`.
-2. `multi_truncation_bound`: iterate `offset_truncation_bound_of_mass` `K` times; the error
-   telescopes to `≤ ∑_{i<K}(∏_{j<i} sqfWMass z_j)(1 + log(N+K))·bridgeTail z_i Y`.
+2. `multi_truncation_bound` — **its quantitative heart is DONE (lap 42)**;
+   `src/NormalNumbers/C3MrtMultiMass.lean` (sorry-free, trust triple).
+   `joint_multi_harmonic_mass`: for `S ⊆ range M` carrying the consecutive block
+   `d_s ∣ n + m + s + 1` (`s < K`),
+
+       ∑_{n∈S} ‖F n‖ ≤ (m+1)/d_0 + (1 + log M)·K^{K²} / ∏_{s<K} d_s .
+
+   **The trap this avoids (record it).**  Bounding the joint mass by ONE congruence, `≍
+   (1+log N)/d_m`, makes the stage-`m` truncation error carry `∏_{j>m} sqfWPartial z_j Y`,
+   which GROWS like `Y^{(K−m−1)/2}` while `bridgeTail z_m Y` only decays like `Y^{−1/2}`; for
+   `K − m ≥ 3` the product DIVERGES and truncation is worthless.  Using the full joint modulus
+   (`joint_class_range` + `class_harmonic_mass` + lap 37's `prod_le_lcm_mul_pow`) puts the
+   `log`-carrying term against the CONVERGENT `∏_j sqfWMass z_j` instead, and leaves the head
+   `(a+1)⁻¹ ≤ (m+1)/d_0` free of `log N` — an `N`-independent constant the `1/log N`
+   normalisation kills.  This is the `K`-fold form of the lap-24 trap.
+   `joint_class_range` also **pays part of lap 38's indexing debt**: it is the `range K` /
+   `ℕ → ℕ` half of `joint_class_multi`, the convention `prod_le_lcm_mul_pow` and
+   `prod_div_lcm_le` use.
+   **What remains of step 2**: the telescope itself — induct on `K` peeling the LAST shift
+   (as `sum_pow_omega_multi_eq` does), feeding `joint_multi_harmonic_mass` as
+   `offset_truncation_bound_of_mass`'s `hmass` at each stage, giving
+
+       Err ≤ ∑_{m<K} [(m+1)·∏_{j>m} sqfWPartial z_j Y
+                       + (1+log N)·K^{K²}·∏_{j>m} sqfWMass z_j] · bridgeTail z_m Y .
 3. Pay lap 38's indexing debt: standardise on `Fin K` + `Finset.univ.lcm` (the convention
    `joint_class_multi` / `nondegenerateForms_multi` already use) and restate
    `prod_le_lcm_mul_pow` / `prod_div_lcm_le` over `Finset.univ` via the `ℕ → ℕ` extension.

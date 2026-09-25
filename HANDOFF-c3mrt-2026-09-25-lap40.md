@@ -141,3 +141,42 @@ an initial segment, verbatim with `L` in place of `d·e`.
 times over the `K` shifts; the error telescopes to
 `≤ ∑_{i<K}(∏_{j<i} sqfWMass z_j)·(1 + log(N+K))·bridgeTail z_i Y`.  Model:
 `two_shift_truncation_bound` (`C3MrtTwoShift`), which is the `K = 2` case.
+
+---
+
+## Lap 42 addendum — the quantitative heart of step 2
+
+`src/NormalNumbers/C3MrtMultiMass.lean` (new, sorry-free, trust triple; chain tip is now
+`lake build NormalNumbers.C3MrtBudget`, 8978 jobs).
+
+* `joint_class_range` — the `range K` / `ℕ → ℕ` half of `joint_class_multi`: if two points both
+  satisfy the block `d_i ∣ · + i + 1` (`i < K`) they are congruent mod `(range K).lcm d`.
+  This **pays part of lap 38's indexing debt** (it is the convention `prod_le_lcm_mul_pow` and
+  `prod_div_lcm_le` already use).
+* `joint_multi_harmonic_mass` — **the `K`-point `joint_progression_harmonic_mass`**.  For
+  `S ⊆ range M` carrying the consecutive block `d_s ∣ n + m + s + 1` (`s < K`):
+
+      ∑_{n∈S} ‖F n‖  ≤  (m+1)/d_0  +  (1 + log M)·K^{K²} / ∏_{s<K} d_s .
+
+### The trap it avoids — worth keeping
+
+Bounding the joint mass by ONE of its congruences (`≍ (1+log N)/d_m`, which is all a naive
+iteration of `offset_truncation_bound_of_mass` gives) makes the stage-`m` truncation error carry
+`∏_{j>m} sqfWPartial z_j Y`.  That product GROWS like `Y^{(K−m−1)/2}` (powerful numbers up to
+`Y` number `≍ √Y`) while `bridgeTail z_m Y` only decays like `Y^{−1/2}`.  For `K − m ≥ 3` the
+product **diverges in `Y`** and the truncation is worthless — the `K = 2` development never saw
+this because there `K − m ≤ 2`.
+
+Using the FULL joint modulus fixes it: the block is one class mod `L = lcm(d_s)`, so
+`class_harmonic_mass` gives `(a+1)⁻¹ + (1+log M)/L`, and lap 37's `prod_le_lcm_mul_pow` turns
+`1/L` into `K^{K²}/∏_s d_s`.  The `log`-carrying term now meets the CONVERGENT
+`∏_j sqfWMass z_j`, and the head `(a+1)⁻¹ ≤ (m+1)/d_0` carries no `log N` at all.  This is the
+`K`-fold form of the lap-24 trap, and it is the reason the telescope must be written against the
+joint modulus rather than shift by shift.
+
+**NEXT**: the telescope itself.  Induct on `K` peeling the LAST shift (as
+`sum_pow_omega_multi_eq` does), feeding `joint_multi_harmonic_mass` as
+`offset_truncation_bound_of_mass`'s `hmass` at each stage:
+
+    Err ≤ ∑_{m<K} [ (m+1)·∏_{j>m} sqfWPartial z_j Y
+                    + (1+log N)·K^{K²}·∏_{j>m} sqfWMass z_j ] · bridgeTail z_m Y .
