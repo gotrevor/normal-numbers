@@ -10612,3 +10612,43 @@ NEXT on the crux: with truncation refuted, the remaining honest attacks on `Dept
 (a) the free narrowing to `M > dyadicFactor` (lap 98 item 1), and (b) the `K`-fold Halász/Elliott
 input itself — i.e. accept that the open statement is a genuine large-`K` correlation bound and
 work on the ledger/writeup rather than expecting a reduction to collapse it.
+
+## lap 100 (2026-09-25) — the crux is ONE WEYL SUM, and its sharp (content-bearing) form
+
+`src/NormalNumbers/C3MrtPhaseForm.lean` (new; tip green at 9014, `lake build` green at 9257; all
+four declarations `[propext, Classical.choice, Quot.sound]`, no sorry).
+
+**(a) Reformulation — a second attack surface.**  `depthPhase b K n := ∑_{i<K} ω(n+i+1)/b^{i+1}`
+and `depth_prod_eq_ee_phase` give `∏_{i<K} e(h'/b^{i+1})^{ω(n+i+1)} = e(h'·depthPhase b K n)`.
+Hence `depthDyadicBound_iff_phase`:
+
+    DepthDyadicBound b h' κ cK CstK K  ↔  DepthPhaseBound b h' κ cK CstK K
+
+an **IFF**, not an implication.  So the open statement is NOT intrinsically a `K`-fold Elliott
+correlation: it is exactly the quantitative equidistribution mod 1 of the single real sequence
+`n ↦ h' · depthPhase b K n` along dyadic windows in arithmetic progressions.  The `K`-fold
+correlation shape is one route to it (TT's), and lap 99 showed that route cannot be shortened by
+truncation.  The Weyl form is a genuinely different attack surface: classical exponential-sum
+technology applies to it without any correlation decomposition.  Worth noting what `depthPhase`
+IS — the base-`b` digit tail weight of the prime Lambert constant, i.e. the very object
+`C3MrtShape.ee_tailDepth_eq_prod` introduced from the other direction.  The crux and the
+conjecture are the same equidistribution statement seen at two scales.
+
+**(b) Seventh free narrowing — the sharp form.**  `DepthDyadicBoundNT` adds the hypothesis
+`dyadicFactor cK CstK κ K N < M`, i.e. asks the bound only where lap 98 did not already prove it.
+`depthDyadicBound_of_nt` recovers the full statement by case split on
+`dyadic_ineq_of_trivial`; `conjC3_of_dyadic_input_nt` is the headline.  Every remaining instance
+now asserts cancellation strictly beyond the trivial estimate — the crux carries no free
+instances at all.
+
+Narrowing ledger, laps 90→100: threshold discharged → ω-powers → one explicit sequence →
+primitive levels → large `K` only → one explicit inequality → content-bearing range only, plus
+the Weyl-sum reformulation.  Refuted along the way: the `∀ i` weakening (92) and truncation (99).
+
+NEXT on the crux: attack `DepthPhaseBound` by exponential-sum methods (the point of (a)).  The
+first concrete probe: `depthPhase b K n` is a positive-coefficient linear form in
+`ω(n+1),…,ω(n+K)` with geometrically decaying weights, so its distribution is governed by the
+joint distribution of `ω` at consecutive shifts — the same wall, but now approachable by a
+van-der-Corput / Weyl-differencing argument on the PHASE rather than a correlation bound on the
+product.  Test whether one differencing step reduces the `K`-shift phase to a shorter one; if it
+does, that is the first genuine crack.
