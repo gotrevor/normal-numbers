@@ -83,3 +83,36 @@ to delete prescribed lengths — likely by a product/XOR of a de Bruijn word wit
 pattern. (b) Infinite `S` needs aperiodicity: concatenate `w_k^{R_k}` with `R_k` growing fast,
 where `w_k` is exact at all `L ≤ k`; boundary error is `O(1/R_k)` so every `L`-frequency
 converges.  `isAbelianAt_periodic_iff` is the stage-`k` input to that.
+
+## Lap 3 addendum
+**Generator family identified: the AP-defect processes.**  `probes/c4_ap_defect_family.py`
+(known-answer checked).  `P_{m}`: digits i.i.d. uniform except on one arithmetic progression of
+difference `m` (uniform random offset `θ ∈ [0,m)`), which carries a prescribed stationary pattern
+process `Q` with a random phase.  Then `c T = 0` unless all of `T` is congruent mod `m`, and
+`c T = (1/m)·c_Q(T/m)` when it is.  Consequences:
+
+* `F_j^{(m)}(L) = (1/m) ∑_{r<m} F_j^Q(n_r(L))`, `n_r(L) = #{i<L : i ≡ r mod m}`.  So `P_m` is
+  abelian at EVERY `L ≤ m` for free, whatever `Q` is.
+* **Renormalisation.**  If `m ∣ L` then every `n_r = L/m`, so `F_j^{(m)}(L) = F_j^Q(L/m)`:
+  `P_m` is abelian at `L` iff `Q` is abelian at `L/m`.  `G(P_m) ∩ mℕ = m · G(Q)`.  This is the
+  self-similar handle that should generate INFINITE `S`.
+* Mixtures `∑ α_m P_m` (α ≥ 0) are shift-invariant and `F_j` is linear in α, so the design
+  problem is a nonnegative linear program.
+
+**Sub-approach constrained (recorded, not fatal).**  With the *alternating* inner pattern
+`Q = 0101…`, `F_2^{(m)}(L) < 0` for EVERY `L > m` (verified for `m ≤ 5`, `L ≤ 12`).  Since mixture
+weights are nonnegative, a mixture of alternating AP-defects is abelian exactly on `[1, min{m :
+α_m > 0}]` — only initial segments.  Fix: the inner pattern is a free parameter; a mean-zero
+pattern with POSITIVE short autocorrelation (e.g. `000111`, `A(1) = 1/3`) gives `F_2 > 0` just
+above `m`.  Both signs are therefore available and the LP is not sign-degenerate.
+
+**Lean landed this lap** (green): `altSeq n = n % 2`, `onesCount_altSeq_ne_zero`,
+`not_isAbelianAt_altSeq`, `isAbelianAt_altSeq_one`, and **`c4_realizable_singleton_one`** — the
+first nontrivial instance of the crux, `S = {1}`, proved end-to-end through
+`isAbelianAt_periodic_iff`.  (The `L ≥ 2` failure uses `j = 0`: a window of length `≥ 2` of
+`0101…` always contains a one, so the weight-`0` frequency is `0 ≠ 2^{-L}`.)
+
+**Next attack.**  Formalize the AP-defect at scale `m` as a *sequence* operation:
+`interleave m Q t` = a normal sequence `t` overwritten on the AP `m ∣ n` by `Q`.  The
+renormalisation `G(interleave m Q t) ∩ mℕ = m · G(Q)` is the lemma to aim at; with `m = 2` it
+already gives infinitely many new `S` by recursion, which is the infinite-`S` crux.

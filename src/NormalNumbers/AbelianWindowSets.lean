@@ -387,6 +387,76 @@ theorem not_isAbelianAt_zero_fun (L : ℕ) (hL : 1 ≤ L) :
   rw [Nat.cast_one, div_eq_one_iff_eq (by positivity)] at heq
   linarith
 
+/-! ## The first witness: `S = {1}`, realized by the period-two sequence -/
+
+/-- The period-two sequence `0, 1, 0, 1, …`. -/
+def altSeq (n : ℕ) : ℕ := n % 2
+
+theorem altSeq_lt_two (n : ℕ) : altSeq n < 2 := Nat.mod_lt _ (by norm_num)
+
+theorem altSeq_periodic (n : ℕ) : altSeq (n + 2) = altSeq n := Nat.add_mod_right n 2
+
+/-- A window of length `≥ 2` of the alternating sequence always contains a one. -/
+theorem onesCount_altSeq_ne_zero (L r : ℕ) (hL : 2 ≤ L) : onesCount altSeq L r ≠ 0 := by
+  intro h
+  have hmem : ∀ i < L, altSeq (r + i) ≠ 1 := by
+    intro i hi hone
+    have : i ∈ windowSet altSeq L r := by
+      simp only [windowSet, Finset.mem_filter, Finset.mem_range]
+      exact ⟨hi, hone⟩
+    rw [onesCount, Finset.card_eq_zero] at h
+    simp [h] at this
+  rcases Nat.even_or_odd r with he | ho
+  · exact hmem 1 (by omega) (by
+      obtain ⟨c, hc⟩ := he
+      subst hc
+      simp [altSeq]
+      omega)
+  · exact hmem 0 (by omega) (by
+      obtain ⟨c, hc⟩ := ho
+      subst hc
+      simp [altSeq])
+
+/-- The alternating sequence is abelian at no length `L ≥ 2`. -/
+theorem not_isAbelianAt_altSeq (L : ℕ) (hL : 2 ≤ L) : ¬ IsAbelianAt altSeq L := by
+  intro h
+  have hk := (isAbelianAt_periodic_iff altSeq 2 (by norm_num) altSeq_periodic L).mp h 0
+    (Nat.zero_le _)
+  have hempty : (range 2).filter (fun r => onesCount altSeq L r = 0) = ∅ := by
+    refine Finset.filter_eq_empty_iff.mpr (fun r _ => ?_)
+    exact onesCount_altSeq_ne_zero L r hL
+  rw [hempty] at hk
+  simp only [Finset.card_empty, Nat.cast_zero, zero_div, Nat.choose_zero_right,
+    Nat.cast_one] at hk
+  have : (0 : ℝ) < 1 / 2 ^ L := by positivity
+  linarith
+
+/-- The alternating sequence IS abelian at length one. -/
+theorem isAbelianAt_altSeq_one : IsAbelianAt altSeq 1 := by
+  refine (isAbelianAt_periodic_iff altSeq 2 (by norm_num) altSeq_periodic 1).mpr (fun j hj => ?_)
+  interval_cases j
+  · have : (range 2).filter (fun r => onesCount altSeq 1 r = 0) = {0} := by decide
+    rw [this]
+    norm_num
+  · have : (range 2).filter (fun r => onesCount altSeq 1 r = 1) = {1} := by decide
+    rw [this]
+    norm_num
+
+/-- **`S = {1}` is realized.**  The first nontrivial instance of `c4_realizable_of_mem_one`. -/
+theorem c4_realizable_singleton_one :
+    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ L ∈ ({1} : Set ℕ)) := by
+  refine ⟨altSeq, altSeq_lt_two, fun L hL => ?_⟩
+  constructor
+  · intro h
+    by_contra hne
+    exact not_isAbelianAt_altSeq L (by
+      have : L ≠ 1 := by simpa using hne
+      omega) h
+  · intro hL1
+    have : L = 1 := by simpa using hL1
+    subst this
+    exact isAbelianAt_altSeq_one
+
 /-! ## Realizability: the hard branch
 
 The remaining obligation.  Written in the symmetrized coordinates of `AbelianNormal.lean`, for a
