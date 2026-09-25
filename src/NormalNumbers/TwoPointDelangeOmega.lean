@@ -730,4 +730,98 @@ theorem norm_delangeE_sub_toeplitz_le (N : ℕ) (v : ℂ) {Φ : ℝ}
         mul_le_mul_of_nonneg_left (sum_inv_sq_prime_le N) (mul_nonneg (norm_nonneg v) hΦnn)
     _ = ‖v‖ * Φ := by ring
 
+/-! ### Swapping the Toeplitz error: an explicit, SMALL weight
+
+`S(N/p;v) − S(N;v) = −Σ_{N/p < n ≤ N}` of the kernel, so exchanging the two sums turns the open
+core into a single sum over `n` against the weight
+
+    w_N(n) = Σ_{p ≤ N, N/p < n} 1/p ,
+
+which `sum_inv_prime_sdiff_le` bounds by `(log n + log 4 + 9)/(log N − log n)`.  So the weight is
+`O(log n/log(N/n))`: **tiny in the bulk** (`≈ 0.11` at `n = N^{0.1}`) and only reaching the full
+`log log N` for `n` within a bounded power of `N`.  The obligation is therefore a *short-interval*
+statement about the kernel near `n ≈ N`, not a global one. -/
+
+/-- The swapped weight `w_N(n) = Σ_{p ≤ N,  N/p < n} 1/p`. -/
+noncomputable def delangeW (N n : ℕ) : ℝ :=
+  ∑ p ∈ (primesLe N).filter (fun p => N / p < n), 1 / (p : ℝ)
+
+/-- **The swap.**  The Toeplitz error is a single kernel sum against `w_N`. -/
+theorem delangeToeplitz_swap (N : ℕ) (v : ℂ) :
+    ∑ p ∈ primesLe N, (1 / (p : ℂ)) * (delangeSv (N / p) v - delangeSv N v)
+      = - ∑ n ∈ Finset.Ioc 0 N,
+          ((if Squarefree n then v ^ omegaNat n else 0) / (n : ℂ)) * (delangeW N n : ℂ) := by
+  classical
+  have hdiff : ∀ p ∈ primesLe N,
+      delangeSv (N / p) v - delangeSv N v
+        = - ∑ n ∈ Finset.Ioc 0 N,
+            (if N / p < n then (if Squarefree n then v ^ omegaNat n else 0) / (n : ℂ) else 0) := by
+    intro p _
+    have hple : N / p ≤ N := Nat.div_le_self _ _
+    have hsplit : (Finset.Ioc 0 N).filter (fun n => N / p < n) = Finset.Ioc (N / p) N := by
+      ext n
+      simp only [Finset.mem_filter, Finset.mem_Ioc]
+      constructor
+      · rintro ⟨⟨-, h2⟩, h3⟩; exact ⟨h3, h2⟩
+      · rintro ⟨h1, h2⟩
+        exact ⟨⟨lt_of_le_of_lt (Nat.zero_le (N / p)) h1, h2⟩, h1⟩
+    rw [← Finset.sum_filter, hsplit]
+    have hcons := Finset.sum_Ioc_consecutive
+      (fun n => (if Squarefree n then v ^ omegaNat n else 0) / (n : ℂ))
+      (Nat.zero_le (N / p)) hple
+    rw [delangeSv, delangeSv, ← hcons]
+    ring
+  rw [Finset.sum_congr rfl (fun p hp => by rw [hdiff p hp])]
+  have hin : ∀ p : ℕ, (1 / (p : ℂ)) *
+      (- ∑ n ∈ Finset.Ioc 0 N,
+        (if N / p < n then (if Squarefree n then v ^ omegaNat n else 0) / (n : ℂ) else 0))
+      = - ∑ n ∈ Finset.Ioc 0 N,
+        (if N / p < n then (1 / (p : ℂ)) * ((if Squarefree n then v ^ omegaNat n else 0) / (n : ℂ))
+          else 0) := by
+    intro p
+    rw [mul_neg, Finset.mul_sum]
+    congr 1
+    exact Finset.sum_congr rfl fun n _ => by split <;> simp
+  rw [Finset.sum_congr rfl (fun p _ => hin p), Finset.sum_neg_distrib, Finset.sum_comm]
+  congr 1
+  refine Finset.sum_congr rfl fun n _ => ?_
+  rw [delangeW, Complex.ofReal_sum, Finset.mul_sum, ← Finset.sum_filter]
+  refine Finset.sum_congr rfl fun p _ => ?_
+  push_cast
+  ring
+
+/-- **The weight is small away from `n ≈ N`.**  `w_N(n) ≤ (log N + log 4 + 9 − log(N/n))/log(N/n)`,
+so for `n ≤ N^{δ}` it is `≤ δ/(1−δ) + O(1/log N)`. -/
+theorem delangeW_le {N n : ℕ} (hK : 2 ≤ N / n) :
+    delangeW N n
+      ≤ (Real.log N + Real.log 4 + 9 - Real.log (N / n : ℕ)) / Real.log (N / n : ℕ) := by
+  classical
+  set K : ℕ := N / n with hKdef
+  have hKN : K ≤ N := Nat.div_le_self _ _
+  have hn : 1 ≤ n := by
+    rcases Nat.eq_zero_or_pos n with h | h
+    · rw [h] at hKdef; simp at hKdef; omega
+    · exact h
+  have hnK : n * K ≤ N := by
+    rw [hKdef, Nat.mul_comm]; exact Nat.div_mul_le_self N n
+  have hsub : (primesLe N).filter (fun p => N / p < n) ⊆ primesLe N \ primesLe K := by
+    intro p hp
+    rw [Finset.mem_filter] at hp
+    obtain ⟨hpN, hlt⟩ := hp
+    have hpp := prime_of_mem_primesLe hpN
+    refine Finset.mem_sdiff.mpr ⟨hpN, ?_⟩
+    intro hmem
+    rw [primesLe, Finset.mem_filter, Finset.mem_range] at hmem
+    have hpK : p ≤ K := by omega
+    have hnp : n * p ≤ N := le_trans (Nat.mul_le_mul_left _ hpK) hnK
+    have hge : n ≤ N / p := (Nat.le_div_iff_mul_le hpp.pos).mpr hnp
+    exact absurd hlt (not_lt.mpr hge)
+  have hnn : ∀ p ∈ primesLe N \ primesLe K, (0 : ℝ) ≤ 1 / (p : ℝ) := by
+    intro p hp
+    have hpp := prime_of_mem_primesLe (Finset.mem_sdiff.mp hp).1
+    have : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    positivity
+  refine le_trans (Finset.sum_le_sum_of_subset_of_nonneg hsub fun p hp _ => hnn p hp) ?_
+  exact sum_inv_prime_sdiff_le hK hKN
+
 end NormalNumbers.CastingOut
