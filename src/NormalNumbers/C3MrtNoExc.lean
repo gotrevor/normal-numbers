@@ -289,6 +289,62 @@ theorem dyadic_sum_geometric {c : ℝ} (hc : 0 < c) :
     exact tendsto_natCast_atTop_atTop.const_mul_atTop (by linarith)
   exact (tendsto_rpow_neg_atTop hc).comp hbase
 
+/-! ### The TOP-DOWN dyadic stack
+
+A bottom-up dyadic decomposition `(2^{i-1}, 2^i]` of `[1, Y]` does **not** work here: the top
+window is only partially inside `[1, Y]`, and `TwoPointNaturalCorrelation*` bounds a *full*
+window `(N, 2N]`, never a sub-interval — so the partial top window would have to be bounded
+trivially, at cost `≍ Y`, destroying the whole estimate.
+
+The fix is to halve from the top: `N_k = Y / 2^k`, giving the levels `(N_{k+1}, N_k]`.  Each
+level *is* a full window up to at most one point, because
+`N_k ∈ {2·N_{k+1}, 2·N_{k+1} + 1}`.  The stray point costs `1` per level, i.e. `≪ log Y` in
+total, which is `o(Y)`.  These two lemmas are that decomposition. -/
+
+/-- **The top-down halving stack.**  `(0, N]` is the union of the levels
+`(N/2^{k+1}, N/2^k]`, `k < K`, together with the remaining head `(0, N/2^K]`. -/
+theorem sum_Ioc_halving_stack {A : Type*} [AddCommMonoid A] (F : ℕ → A) (N : ℕ) :
+    ∀ K : ℕ, ∑ n ∈ Finset.Ioc 0 N, F n
+      = (∑ n ∈ Finset.Ioc 0 (N / 2 ^ K), F n)
+        + ∑ k ∈ range K, ∑ n ∈ Finset.Ioc (N / 2 ^ (k + 1)) (N / 2 ^ k), F n := by
+  intro K
+  induction K with
+  | zero => simp
+  | succ K ih =>
+    have hle : N / 2 ^ (K + 1) ≤ N / 2 ^ K :=
+      Nat.div_le_div_left (Nat.pow_le_pow_right (by norm_num) (by omega)) (by positivity)
+    rw [Finset.sum_range_succ, ih,
+      ← Finset.sum_Ioc_consecutive F (Nat.zero_le (N / 2 ^ (K + 1))) hle]
+    abel
+
+/-- **Each level is a full window, up to one point.**  `N_k = N/2^k` satisfies
+`N_k ≤ 2·N_{k+1} + 1`, so the level `(N_{k+1}, N_k]` is contained in the full window
+`(N_{k+1}, 2·N_{k+1}]` together with at most the single point `2·N_{k+1}+1`. -/
+theorem level_le_double_succ (N k : ℕ) : N / 2 ^ k ≤ 2 * (N / 2 ^ (k + 1)) + 1 := by
+  have h : N / 2 ^ (k + 1) = N / 2 ^ k / 2 := by
+    rw [pow_succ, Nat.div_div_eq_div_mul]
+  rw [h]
+  omega
+
+/-- The level `(N/2^{k+1}, N/2^k]` always contains the full window `(N/2^{k+1}, 2·N/2^{k+1}]`. -/
+theorem double_le_level (N k : ℕ) : 2 * (N / 2 ^ (k + 1)) ≤ N / 2 ^ k := by
+  have h : N / 2 ^ (k + 1) = N / 2 ^ k / 2 := by rw [pow_succ, Nat.div_div_eq_div_mul]
+  rw [h]; omega
+
+/-- **The per-level bound.**  A level `(a, b]` with `2a ≤ b ≤ 2a+1` is the full window
+`(a, 2a]` plus at most one point, so a window bound `B` becomes `B + 1`. -/
+theorem norm_sum_level_le {F : ℕ → ℂ} (hF : ∀ n, ‖F n‖ ≤ 1) {a b : ℕ}
+    (hb1 : 2 * a ≤ b) (hb2 : b ≤ 2 * a + 1)
+    {B : ℝ} (hB : ‖∑ n ∈ Finset.Ioc a (2 * a), F n‖ ≤ B) :
+    ‖∑ n ∈ Finset.Ioc a b, F n‖ ≤ B + 1 := by
+  rcases Nat.eq_or_lt_of_le hb1 with h | h
+  · rw [← h]
+    linarith [hB, norm_nonneg (∑ n ∈ Finset.Ioc a (2 * a), F n)]
+  · have hbe : b = 2 * a + 1 := by omega
+    subst hbe
+    rw [Finset.sum_Ioc_succ_top (by omega)]
+    exact le_trans (norm_add_le _ _) (add_le_add hB (hF _))
+
 /-- **THE PAYOFF.**  Removing the exceptional set from TT Theorem 3.1(ii) discharges
 `LogToNaturalCorrelation 2` — the last open obligation of the `D = 2` layer.  With this, the
 `D = 2` row of the ledger is *equivalent to a named open problem in the literature*, and
@@ -305,6 +361,9 @@ theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
 #print axioms dyadic_sum_geometric
 #print axioms dyadic_window_bound_of_noExc
 #print axioms class_sum_split
+#print axioms sum_Ioc_halving_stack
+#print axioms double_le_level
+#print axioms norm_sum_level_le
 
 end CastingOut
 

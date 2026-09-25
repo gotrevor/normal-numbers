@@ -9727,3 +9727,36 @@ ingredients proved and in the file:
 Remaining care: choose `I = ⌈log₂(M J + r)⌉` so `2^I ≥ M J + r`, absorb the finitely many
 windows below `N₀` into a `J`-independent constant, and note `J ≍ 2^I/M` so dividing by `J`
 converts item 4's normalisation `/2^I` into `/J` up to the factor `M`, which is fixed.
+
+## Lap 68 (2026-09-25) — the bottom-up stack is WRONG; the top-down halving stack, proved
+
+**Design correction, found while assembling.**  The lap-64 plan said "dyadic windows
+`(2^{i−1}, 2^i]`".  That is wrong, and would have wasted the next several laps.
+`TwoPointNaturalCorrelation*` bounds a **full** window `(N, 2N]` and never a sub-interval, so
+in a bottom-up decomposition of `[1, Y]` the top window is only partially inside `[1, Y]` and
+has to be bounded trivially — at cost `≍ Y`, which destroys the entire estimate.  There is no
+way to patch this while decomposing from the bottom.
+
+**The fix: halve from the top.**  Put `N_k = Y / 2^k` and use the levels `(N_{k+1}, N_k]`.
+Each level *is* a full window up to at most one point, because
+`2·N_{k+1} ≤ N_k ≤ 2·N_{k+1} + 1` — a `Nat.div_div_eq_div_mul` fact.  The stray point costs `1`
+per level, i.e. `≪ log Y` in total, which is `o(Y)` and therefore free.
+
+Proved this lap (all `[propext, Classical.choice, Quot.sound]`):
+* `sum_Ioc_halving_stack` — `∑_{(0,N]} F = ∑_{(0, N/2^K]} F + ∑_{k<K} ∑_{(N/2^{k+1}, N/2^k]} F`.
+* `double_le_level` — `2·(N/2^{k+1}) ≤ N/2^k`.
+* `level_le_double_succ` — `N/2^k ≤ 2·(N/2^{k+1}) + 1`.
+* `norm_sum_level_le` — a window bound `B` plus one stray point gives `B + 1` on the level.
+
+**Still one `sorry`:** `logToNatural_two_of_noExc`.  Revised recipe, now that the geometry is
+right: with `Y = M·J + r`, take `K ≈ log₂ Y` levels down to a head `Y/2^K = O(1)`; bound level
+`k` by `dyadic_window_bound_of_noExc` at `N = N_{k+1}` (legal once `N_{k+1} ≥ N₀`, and the
+finitely many levels with `N_{k+1} < N₀` have total length `≤ 2N₀`, a `J`-independent constant)
+plus `1`; then `dyadic_sum_geometric` sums the stack after the reindex `i = K − k`.
+
+**Also to note:** `LogToNaturalCorrelation K` carries no `z 0 ≠ 1`, and is *false* without it
+(take `z ≡ 1`), so it is only ever usable through its log hypothesis.  The theorem being built
+therefore takes `z 0 ≠ 1` explicitly — which the consumer `depthAvg_tendsto_of_transfer`
+already has in hand as `hζ`.  A `LogToNaturalCorrelationNZ` predicate plus the one-line
+re-wiring of that consumer is a follow-up item, deliberately deferred until the analytic
+content lands.
