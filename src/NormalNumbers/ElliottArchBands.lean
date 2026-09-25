@@ -119,6 +119,21 @@ def ArchCorrModerate (K : ℝ) : Prop :=
   ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ X : ℕ, X₀ ≤ X → ∀ v : ℝ, 1 < |v| →
     ‖archCorr v X‖ ≤ Real.log (Real.log (|v| + 16)) + K
 
+/-- **Input (c′-II-a) at the exponent the in-repo zero-free region actually delivers.**
+
+Identical to `ArchCorrModerate` except for the absolute factor `9`.  The factor is inherited from
+`PNTPort.ZetaZeroFree9`'s region `σ ≥ 1 − A/(log|t|)^9`, and it is **free**: see
+`archCorrLargeShift_of_moderate9_and_nearMax`, which absorbs it by moving the height cut from
+`exp((log X)^{1−ν})` to `exp((log X)^{(1−ν)/9})`.  The far band was already Vinogradov, so widening
+it costs nothing.
+
+EP-1 provenance: **this is a THEOREM, not a cited input** —
+`ElliottSliceCapModerate.exists_dampedSeriesBoundModerate9` +
+`ElliottDamped.archCorrModerate9_of_dampedSeriesBound`. -/
+def ArchCorrModerate9 (K : ℝ) : Prop :=
+  ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ X : ℕ, X₀ ≤ X → ∀ v : ℝ, 1 < |v| →
+    ‖archCorr v X‖ ≤ 9 * Real.log (Real.log (|v| + 16)) + K
+
 /-- **Input (c′-II-b), THE WALL, and all that is left of it.**  A proportional saving, needed only
 on the near-maximal-height band `exp((log X)^{1-ν}) < |v| ≤ A²X`.  This is the sole place where
 `log log |v| ≍ log log X` and hence where the trivial bound on `ζ(1+it)` fails to save a
@@ -165,6 +180,62 @@ theorem archCorrLargeShift_of_moderate_and_nearMax {A : ℕ} {ν η₂ K₁ K₂
     have hmono : (1 - ν) * L ≤ (1 - min ν η₂) * L := by nlinarith
     linarith
   · -- near-maximal height: the wall
+    have hbound := hX₂ X hXX₂ v hcut hvA
+    have hmono : (1 - η₂) * L ≤ (1 - min ν η₂) * L := by nlinarith
+    linarith
+
+/-- **THE WALL, NARROWED — with the coefficient 9 absorbed.**
+
+Same conclusion as `archCorrLargeShift_of_moderate_and_nearMax`, from the factor-`9` moderate
+bound.  The *only* change is that the near-maximal-height hypothesis is taken at the shifted
+parameter `1 − (1−ν)/9`, i.e. the height cut moves from `exp((log X)^{1−ν})` to
+`exp((log X)^{(1−ν)/9})`.
+
+**Why the factor is free (EA-1 boundary check, verified at the extreme point before this was
+written).**  Below the cut, `log log(|v|+16) ≤ (1 − (1 − (1−ν)/9))·L = ((1−ν)/9)·L`, so
+`9·log log(|v|+16) ≤ (1−ν)·L` — *exactly* the same bound the unfactored version gets below its own
+cut, with equality at the cut itself.  The proportional saving `ν` therefore survives intact; what
+changes is only how much of the range is handed to `ArchCorrNearMaxHeight`.  Note
+`1 − (1−ν)/9 ∈ (8/9, 1)` for `ν ∈ (0,1)`, so the Vinogradov band is strictly wider — and it was
+already Vinogradov. -/
+theorem archCorrLargeShift_of_moderate9_and_nearMax {A : ℕ} {ν η₂ K₁ K₂ : ℝ}
+    (hν : 0 < ν) (hν1 : ν < 1) (hη₂ : 0 < η₂)
+    (hmod : ArchCorrModerate9 K₁)
+    (hmax : ArchCorrNearMaxHeight A (1 - (1 - ν) / 9) η₂ K₂) :
+    ArchCorrLargeShift A (min ν η₂) (|K₁| + |K₂|) := by
+  classical
+  obtain ⟨X₁, hX₁2, hX₁⟩ := hmod
+  obtain ⟨X₂, hX₂2, hX₂⟩ := hmax
+  obtain ⟨X₃, hX₃2, hX₃⟩ := exists_logLog_ge 0
+  refine ⟨max (max X₁ X₂) (max X₃ 2), le_trans (le_max_right _ _) (le_max_right _ _), ?_⟩
+  intro X hX v hv1 hvA
+  have hXX₁ : X₁ ≤ X := le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hX
+  have hXX₂ : X₂ ≤ X := le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) hX
+  have hXX₃ : X₃ ≤ X := le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) hX
+  set L : ℝ := Real.log (Real.log (X : ℝ)) with hL
+  have hL0 : (0 : ℝ) ≤ L := hX₃ X hXX₃
+  have hm : min ν η₂ ≤ ν := min_le_left _ _
+  have hm' : min ν η₂ ≤ η₂ := min_le_right _ _
+  have hK₁ : K₁ ≤ |K₁| := le_abs_self _
+  have hK₂ : K₂ ≤ |K₂| := le_abs_self _
+  have hK₁0 : (0 : ℝ) ≤ |K₁| := abs_nonneg _
+  have hK₂0 : (0 : ℝ) ≤ |K₂| := abs_nonneg _
+  rcases le_or_gt (|v| + 16) (heightCut (1 - (1 - ν) / 9) X) with hcut | hcut
+  · -- moderate height: the factor-9 bound still saves the proportion `ν`
+    have hbound := hX₁ X hXX₁ v hv1
+    have hpos : (0 : ℝ) < Real.log (|v| + 16) := Real.log_pos (by linarith [abs_nonneg v])
+    have hstep : Real.log (Real.log (|v| + 16)) ≤ (1 - (1 - (1 - ν) / 9)) * L := by
+      have h1 : Real.log (|v| + 16) ≤ Real.log (heightCut (1 - (1 - ν) / 9) X) :=
+        Real.log_le_log (by linarith [abs_nonneg v]) hcut
+      have := Real.log_le_log hpos h1
+      rwa [logLog_heightCut] at this
+    have hstep9 : 9 * Real.log (Real.log (|v| + 16)) ≤ (1 - ν) * L := by
+      have hsimp : (1 - (1 - (1 - ν) / 9)) * L = ((1 - ν) / 9) * L := by ring
+      rw [hsimp] at hstep
+      linarith
+    have hmono : (1 - ν) * L ≤ (1 - min ν η₂) * L := by nlinarith
+    linarith
+  · -- near-maximal height: the wall, on the widened band
     have hbound := hX₂ X hXX₂ v hcut hvA
     have hmono : (1 - η₂) * L ≤ (1 - min ν η₂) * L := by nlinarith
     linarith
@@ -344,6 +415,31 @@ theorem twoPointElliottLog_of_three_bands {b p q : ℕ} {t : ℝ} {K₀ K₁ K�
   · exact le_trans (min_le_right _ _) hη₂1
   · intro A
     exact archCorrLargeShift_of_moderate_and_nearMax hν hν1 hη₂ hmod (hmax A)
+
+/-- **THE LEDGER, WITH (c′-II-a) DISCHARGED.**  Same conclusion as
+`twoPointElliottLog_of_three_bands`, but taking the *proved* `ArchCorrModerate9` in place of the
+cited `ArchCorrModerate`, at the correspondingly widened Vinogradov band.
+
+| input | status |
+| --- | --- |
+| `ElliottCharRigidity.PrimeDensityAP A` | Mertens in progressions — reachable from the in-repo `G4MertensAP.mertensRate_residueClass` (T3) |
+| `ShiftedMertensSmall K₀` | **PROVED** (`ElliottSliceCap.exists_shiftedMertensSmall`, lap 112) |
+| `ArchCorrModerate9 K₁` | **PROVED** (`ElliottSliceCapModerate.exists_archCorrModerate9`, lap 117) |
+| `ArchCorrNearMaxHeight A (1−(1−ν)/9) η₂ K₂` | **Vinogradov–Korobov**, near-maximal height only — the designated cited axiom | -/
+theorem twoPointElliottLog_of_moderate9 {b p q : ℕ} {t : ℝ} {K₀ K₁ K₂ ν η₂ : ℝ}
+    (hp : 0 < p) (hq : 0 < q) (hpq : p ≠ q)
+    (hu : (NormalNumbers.CastingOut.phase (t / b)).re < 1)
+    (hν : 0 < ν) (hν1 : ν < 1) (hη₂ : 0 < η₂) (hη₂1 : η₂ ≤ 1)
+    (hdens : ∀ A : ℕ, ElliottCharRigidity.PrimeDensityAP A)
+    (hsmall : ShiftedMertensSmall K₀)
+    (hmod : ArchCorrModerate9 K₁)
+    (hmax : ∀ A : ℕ, ArchCorrNearMaxHeight A (1 - (1 - ν) / 9) η₂ K₂) :
+    NormalNumbers.ElliottTwoPointLog.TwoPointElliottLog b p q t := by
+  refine twoPointElliottLog_of_bands (η₁ := min ν η₂) (K₁ := |K₁| + |K₂|)
+    hp hq hpq hu (lt_min hν hη₂) ?_ hdens hsmall ?_
+  · exact le_trans (min_le_right _ _) hη₂1
+  · intro A
+    exact archCorrLargeShift_of_moderate9_and_nearMax hν hν1 hη₂ hmod (hmax A)
 
 end
 

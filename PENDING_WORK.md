@@ -11348,3 +11348,49 @@ Two edits, both scoped:
 
 Then `twoPointElliottLog_of_three_bands` needs re-stating with `ArchCorrModerate9`, and the open
 ledger drops to `PrimeDensityAP` (T3) + the cited `ArchCorrNearMaxHeight` (Vinogradov).
+
+## 🏁 2026-09-25 lap 117 — (c′-II-a) IS DISCHARGED.  THE LEDGER IS DOWN TO TWO.
+
+**`ElliottSliceCapModerate.exists_archCorrModerate9 : ∃ K, ArchCorrModerate9 K`** — proved,
+sorry-free, axiom-clean.  Input (c′-II-a) of the Elliott consumer is **no longer a cited classical
+statement**; its only analytic ingredient is the in-repo `PNTPort.LogDerivZetaBndUnif99`.
+
+**`ElliottSliceCapModerate.twoPointElliottLog_of_density_and_nearMax`** — `TwoPointElliottLog b p q t`
+from exactly **two** open inputs:
+
+| input | status |
+| --- | --- |
+| `ElliottCharRigidity.PrimeDensityAP A` | open, **not deep** — T3, reachable from the in-repo `G4MertensAP.mertensRate_residueClass` |
+| `ArchCorrNearMaxHeight A (1−(1−ν)/9) η₂ K₂` | open, **Vinogradov–Korobov** — the designated cited 🟠 axiom |
+
+`ShiftedMertensSmall` (lap 112) and `ArchCorrModerate9` (lap 117) are both discharged *inside* that
+call.  That is DIRECTION's stated objective for this campaign, minus T3.
+
+**The absorbing step, and its boundary check (EA-1, done before the Lean was written).**
+`ElliottArchBands.archCorrLargeShift_of_moderate9_and_nearMax` takes `ArchCorrNearMaxHeight` at the
+shifted parameter `1 − (1−ν)/9` — i.e. the height cut moves from `exp((log X)^{1−ν})` to
+`exp((log X)^{(1−ν)/9})`.  Below that cut `log log(|v|+16) ≤ ((1−ν)/9)·L`, so
+`9·log log(|v|+16) ≤ (1−ν)·L`: **exactly** the bound the unfactored version gets below its own cut,
+with equality *at* the cut.  So the proportional saving `ν` is unchanged; only the share of the
+range handed to Vinogradov grows (`1−(1−ν)/9 ∈ (8/9,1)`), and that band was already Vinogradov.
+The factor `9` is therefore free, as lap 112 predicted — now verified, not asserted.
+
+Note `ArchCorrModerate` and `twoPointElliottLog_of_three_bands` are **untouched**; the `9` versions
+sit alongside them.
+
+Audit: 9693 jobs, zero `sorryAx`, all new declarations on the trust triple.
+
+### NEXT LAP — T3, the last non-cited input: `ElliottCharRigidity.PrimeDensityAP`
+
+`def PrimeDensityAP (A : ℕ) : Prop` at `ElliottCharRigidity`:83 is a bare `Prop` with no theorem
+discharging it.  Ingredients, all in-repo (EP-1 provenance already done by lap 112):
+* `NormalNumbers.G4MertensAP.mertensRate_residueClass` — Mertens for a unit residue class, from
+  mathlib's `LSeries/PrimesInAP` + Chebyshev + Abel summation;
+* `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` — the two-sided bound for the
+  `primeMass` upper half;
+* uniformity over `q ≤ A` by a finite max.
+Read the exact shape of `PrimeDensityAP` first and check it at its boundary parameters (EA-1)
+before wiring — lap 92's refutation is the precedent.
+
+After T3 the ledger is **one** cited axiom, `ArchCorrNearMaxHeight` (Vinogradov's mean value
+theorem), which DIRECTION designates as the honest endpoint of this campaign.

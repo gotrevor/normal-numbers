@@ -1843,6 +1843,21 @@ theorem dampedSeriesBoundModerate9_of_sliceBound {C K : ℝ} (hK : 0 ≤ K) (hC 
     linarith [hpow ▸ hstep]
   linarith [hmain, hlogmono]
 
+/-- **(c′-II-a) AT EXPONENT 9, FROM THE ANALYTIC INPUT.**  The damping step is coefficient-blind,
+so this is `archCorrModerate_of_dampedSeriesBound` with the factor `9` carried through. -/
+theorem archCorrModerate9_of_dampedSeriesBound {K : ℝ} (h : DampedSeriesBoundModerate9 K) :
+    ArchCorrModerate9 (K + dampingCost) := by
+  obtain ⟨X₀, hX₀, h⟩ := h
+  refine ⟨X₀, hX₀, ?_⟩
+  intro X hXX₀ v hv1
+  have hX : 2 ≤ X := le_trans hX₀ hXX₀
+  have hd := h X X v hXX₀ le_rfl hv1
+  have hs := norm_archCorr_sub_dampedPrefix_le' hX v X le_rfl
+  calc ‖archCorr v X‖ ≤ ‖archCorr v X - dampedPrefix v X X‖ + ‖dampedPrefix v X X‖ := by
+        simpa [add_comm] using norm_le_norm_add_norm_sub' (archCorr v X) (dampedPrefix v X X)
+    _ ≤ dampingCost + (9 * Real.log (Real.log (|v| + 16)) + K) := by linarith
+    _ = 9 * Real.log (Real.log (|v| + 16)) + (K + dampingCost) := by ring
+
 end
 
 end NormalNumbers.ElliottDamped

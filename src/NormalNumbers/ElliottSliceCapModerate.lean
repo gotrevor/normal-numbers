@@ -145,6 +145,43 @@ theorem exists_dampedSeriesBoundModerate9 : ∃ K : ℝ, 0 ≤ K ∧ DampedSerie
   · exact dampedSeriesBoundModerate9_of_sliceBound (by linarith) hC0
       (sliceBoundModerate9_of_cap hK0 hcap)
 
+/-! ### (c′-II-a) DISCHARGED -/
+
+/-- **`ArchCorrModerate9` IS A THEOREM.**  Input (c′-II-a) of the Elliott consumer is no longer a
+cited classical statement: it is proved here, from the in-repo `PNTPort.LogDerivZetaBndUnif99`
+(de la Vallée Poussin) and nothing else.
+
+The absolute factor `9` is absorbed downstream by
+`ElliottArchBands.archCorrLargeShift_of_moderate9_and_nearMax`, which moves the height cut from
+`exp((log X)^{1−ν})` to `exp((log X)^{(1−ν)/9})`; the proportional saving `ν` is unchanged. -/
+theorem exists_archCorrModerate9 :
+    ∃ K : ℝ, NormalNumbers.ElliottArchBands.ArchCorrModerate9 K := by
+  obtain ⟨K, -, h⟩ := exists_dampedSeriesBoundModerate9
+  exact ⟨K + dampingCost, archCorrModerate9_of_dampedSeriesBound h⟩
+
+/-- **THE LEDGER IS DOWN TO TWO.**  `TwoPointElliottLog` now follows from exactly two open
+inputs:
+
+1. `ElliottCharRigidity.PrimeDensityAP A` — Mertens in arithmetic progressions.  **Not deep**, and
+   reachable from the in-repo `NormalNumbers.G4MertensAP.mertensRate_residueClass`; this is T3.
+2. `ElliottArchBands.ArchCorrNearMaxHeight A (1−(1−ν)/9) η₂ K₂` — **Vinogradov–Korobov**, on the
+   near-maximal-height band only.  This is the designated cited 🟠 axiom.
+
+Both `ShiftedMertensSmall` (lap 112) and `ArchCorrModerate9` (lap 117) are discharged inside this
+call, from `PNTPort.ZetaBounds` and mathlib alone. -/
+theorem twoPointElliottLog_of_density_and_nearMax {b p q : ℕ} {t : ℝ} {K₂ ν η₂ : ℝ}
+    (hp : 0 < p) (hq : 0 < q) (hpq : p ≠ q)
+    (hu : (NormalNumbers.CastingOut.phase (t / b)).re < 1)
+    (hν : 0 < ν) (hν1 : ν < 1) (hη₂ : 0 < η₂) (hη₂1 : η₂ ≤ 1)
+    (hdens : ∀ A : ℕ, NormalNumbers.ElliottCharRigidity.PrimeDensityAP A)
+    (hmax : ∀ A : ℕ,
+      NormalNumbers.ElliottArchBands.ArchCorrNearMaxHeight A (1 - (1 - ν) / 9) η₂ K₂) :
+    NormalNumbers.ElliottTwoPointLog.TwoPointElliottLog b p q t := by
+  obtain ⟨K₀, hsmall⟩ := exists_shiftedMertensSmall
+  obtain ⟨K₁, hmod⟩ := exists_archCorrModerate9
+  exact NormalNumbers.ElliottArchBands.twoPointElliottLog_of_moderate9
+    hp hq hpq hu hν hν1 hη₂ hη₂1 hdens hsmall hmod hmax
+
 end
 
 end NormalNumbers.ElliottSliceCapModerate

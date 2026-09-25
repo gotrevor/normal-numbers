@@ -291,3 +291,11 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottDamped.sliceBoundModerate9_of_cap
 #print axioms NormalNumbers.ElliottDamped.dampedSeriesBoundModerate9_of_sliceBound
 #print axioms NormalNumbers.ElliottSliceCapModerate.exists_dampedSeriesBoundModerate9
+
+-- Lap 117: (c′-II-a) DISCHARGED — `ArchCorrModerate9` is a theorem, and the open-input
+-- ledger of the Elliott consumer is down to TWO (`PrimeDensityAP` + Vinogradov).
+#print axioms NormalNumbers.ElliottDamped.archCorrModerate9_of_dampedSeriesBound
+#print axioms NormalNumbers.ElliottArchBands.archCorrLargeShift_of_moderate9_and_nearMax
+#print axioms NormalNumbers.ElliottArchBands.twoPointElliottLog_of_moderate9
+#print axioms NormalNumbers.ElliottSliceCapModerate.exists_archCorrModerate9
+#print axioms NormalNumbers.ElliottSliceCapModerate.twoPointElliottLog_of_density_and_nearMax
