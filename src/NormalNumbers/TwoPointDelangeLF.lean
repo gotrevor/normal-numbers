@@ -339,4 +339,74 @@ theorem norm_delangeS_mul_log_le (z : ℂ) (N : ℕ) :
     exact norm_add_le _ _
   linarith [hnorm, norm_delangeT_le z N, norm_delangeAbel_le z N]
 
+/-! ### The absolute companion `A(N)` is dominated by its Euler product
+
+`A(N) = Σ_{n≤N} μ²(n) u^{ω(n)}/n` appears in the recursion's error term.  Expanding
+`Π_{p≤N}(1 + u/p)` over subsets of `primesLe N` produces exactly the terms `u^{ω(n)}/n` for the
+squarefree `n` built from those primes — a superset of the `n ≤ N`, and all terms are nonnegative.
+So the bound is an inclusion of index sets, with no estimate anywhere. -/
+
+/-- Squarefree naturals are determined by their prime-factor sets. -/
+lemma primeFactors_injOn_squarefree :
+    Set.InjOn Nat.primeFactors {n : ℕ | n ≠ 0 ∧ Squarefree n} := by
+  rintro m ⟨hm0, hm⟩ n ⟨hn0, hn⟩ h
+  rw [← Nat.prod_primeFactors_of_squarefree hm, ← Nat.prod_primeFactors_of_squarefree hn, h]
+
+/-- **`A(N) ≤ Π_{p≤N}(1 + u/p)`.**  Pure index-set inclusion: no estimate is used. -/
+theorem delangeA_le_prod (z : ℂ) (N : ℕ) :
+    delangeA z N ≤ ∏ p ∈ primesLe N, (1 + ‖z - 1‖ / (p : ℝ)) := by
+  classical
+  set u : ℝ := ‖z - 1‖ with hu
+  have hu0 : 0 ≤ u := norm_nonneg _
+  -- the product, expanded over subsets
+  have hprod : ∏ p ∈ primesLe N, (1 + u / (p : ℝ))
+      = ∑ t ∈ (primesLe N).powerset, ∏ p ∈ t, (u / (p : ℝ)) := by
+    rw [Finset.prod_congr rfl (fun p (_ : p ∈ primesLe N) => add_comm (1 : ℝ) (u / (p : ℝ)))]
+    rw [Finset.prod_add]
+    simp
+  -- the sum, restricted to its support
+  have hsupp : delangeA z N
+      = ∑ n ∈ (Finset.Ioc 0 N).filter (fun n => Squarefree n), ‖delangeKernel z n‖ / (n : ℝ) := by
+    rw [delangeA, ← Finset.sum_filter_add_sum_filter_not (Finset.Ioc 0 N) (fun n => Squarefree n)]
+    have hzero : ∑ n ∈ (Finset.Ioc 0 N).filter (fun n => ¬ Squarefree n),
+        ‖delangeKernel z n‖ / (n : ℝ) = 0 := by
+      refine Finset.sum_eq_zero fun n hn => ?_
+      simp only [Finset.mem_filter] at hn
+      rw [norm_delangeKernel, if_neg hn.2, zero_div]
+    rw [hzero, add_zero]
+  -- reindex the sum by prime-factor sets
+  have hterm : ∀ n ∈ (Finset.Ioc 0 N).filter (fun n => Squarefree n),
+      ‖delangeKernel z n‖ / (n : ℝ) = ∏ p ∈ n.primeFactors, (u / (p : ℝ)) := by
+    intro n hn
+    simp only [Finset.mem_filter, Finset.mem_Ioc] at hn
+    have hn0 : n ≠ 0 := by omega
+    rw [norm_delangeKernel, if_pos hn.2, Finset.prod_div_distrib, Finset.prod_const,
+      ← Nat.cast_prod, Nat.prod_primeFactors_of_squarefree hn.2]
+    rfl
+  have hinj : ∀ x ∈ (Finset.Ioc 0 N).filter (fun n => Squarefree n),
+      ∀ y ∈ (Finset.Ioc 0 N).filter (fun n => Squarefree n),
+      x.primeFactors = y.primeFactors → x = y := by
+    intro m hm n hn h
+    simp only [Finset.mem_filter, Finset.mem_Ioc] at hm hn
+    exact primeFactors_injOn_squarefree ⟨by omega, hm.2⟩ ⟨by omega, hn.2⟩ h
+  have himg : ((Finset.Ioc 0 N).filter (fun n => Squarefree n)).image Nat.primeFactors
+      ⊆ (primesLe N).powerset := by
+    intro t ht
+    simp only [Finset.mem_image, Finset.mem_filter, Finset.mem_Ioc] at ht
+    obtain ⟨n, ⟨⟨hn1, hn2⟩, -⟩, rfl⟩ := ht
+    rw [Finset.mem_powerset]
+    intro p hp
+    have hpp := Nat.prime_of_mem_primeFactors hp
+    have hple : p ≤ N :=
+      le_trans (Nat.le_of_dvd (by omega) (Nat.dvd_of_mem_primeFactors hp)) hn2
+    simp only [primesLe, Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, hpp⟩
+  have hre : ∑ t ∈ ((Finset.Ioc 0 N).filter (fun n => Squarefree n)).image Nat.primeFactors,
+      (∏ p ∈ t, u / (p : ℝ))
+      = ∑ n ∈ (Finset.Ioc 0 N).filter (fun n => Squarefree n),
+          ∏ p ∈ n.primeFactors, u / (p : ℝ) := Finset.sum_image hinj
+  rw [hsupp, Finset.sum_congr rfl hterm, ← hre, hprod]
+  refine Finset.sum_le_sum_of_subset_of_nonneg himg fun t _ _ => ?_
+  exact Finset.prod_nonneg fun p _ => by positivity
+
 end NormalNumbers.CastingOut
