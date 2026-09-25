@@ -144,6 +144,118 @@ theorem rung_multi_of_named_inputs {K : ℕ} (hK : 0 < K) (helliott : KPointLogE
 #print axioms nondegenerateForms_of_tuple
 #print axioms rung_multi_of_named_inputs
 
+
+/-- **The `K`-point rung, uniformly over the admissible tuples below `Y`.**  The `K`-point
+`rung_two_uniform` (`C3MrtArchimedean`): `rung_multi_of_named_inputs` produces a base `A₀` and a
+starting exponent `i₀` that both depend on the tuple `(d, a)`, while the `ε`-chase
+(`multi_correlation_of_uniform_rung`) needs ONE `A` and ONE `I` serving every tuple at once.
+Both are extracted by `exists_common_threshold` over the finite index set
+
+    Fintype.piFinset (fun _ : Fin K => range (Y+1)) ×ˢ range (Y^K + 1)
+
+— admissible because `d i ≤ Y` for every `i` and `a < lcm d ≤ Y^K` (`univLcm_le_pow`).
+Degenerate tuples (some `d i = 0`, or `a` not in the joint class) get the dummy witness `2`;
+their branch of the conclusion is vacuous. -/
+theorem rung_multi_uniform {K : ℕ} (hK : 0 < K) (helliott : KPointLogElliott K)
+    (hsave : TwistedPrimeSumSavingAllLevels) (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1) (hz01 : z 0 ≠ 1)
+    (εr : ℝ) (hεr : 0 < εr) (Y : ℕ) :
+    ∃ A : ℕ, 2 ≤ A ∧ ∃ I : ℕ,
+      ∀ d : Fin K → ℕ, (∀ i, d i ≤ Y) → (∀ i, 0 < d i) →
+        (∃ n₀ : ℕ, ∀ i : Fin K, d i ∣ n₀ + (i : ℕ) + 1) →
+        ∀ a : ℕ, a < (Finset.univ : Finset (Fin K)).lcm d →
+          (∀ i : Fin K, d i ∣ a + (i : ℕ) + 1) → ∀ m : ℕ, I ≤ m →
+          ‖∑ j ∈ Finset.Ioc 0 (A ^ m), (Erdos67b.harmonicWeight j : ℂ) *
+              ∏ i : Fin K, zOmInt (z i)
+                (Erdos67b.integerAffine ((Finset.univ : Finset (Fin K)).lcm d / d i)
+                  (((a + (i : ℕ) + 1) / d i : ℕ) : ℤ) j)‖
+            ≤ (1 + Real.log ((A ^ I : ℕ) : ℝ)) + (m : ℝ) * (εr * Real.log A) := by
+  classical
+  set s : Finset ((Fin K → ℕ) × ℕ) :=
+    (Fintype.piFinset fun _ : Fin K => Finset.range (Y + 1)) ×ˢ Finset.range (Y ^ K + 1) with hs
+  have hmem : ∀ (d : Fin K → ℕ) (a : ℕ), (∀ i, d i ≤ Y) → (∀ i, 0 < d i) →
+      a < (Finset.univ : Finset (Fin K)).lcm d → ((d, a) : (Fin K → ℕ) × ℕ) ∈ s := by
+    intro d a hdY hdpos ha
+    have hle : (Finset.univ : Finset (Fin K)).lcm d ≤ Y ^ K := univLcm_le_pow d hdpos hdY
+    simp only [hs, Finset.mem_product, Fintype.mem_piFinset, Finset.mem_range]
+    exact ⟨fun i => Nat.lt_succ_of_le (hdY i), by omega⟩
+  -- the per-tuple bound, abbreviated
+  set B : (Fin K → ℕ) × ℕ → ℕ → ℕ → ℕ → Prop := fun p A i m =>
+    ‖∑ j ∈ Finset.Ioc 0 (A ^ m), (Erdos67b.harmonicWeight j : ℂ) *
+        ∏ k : Fin K, zOmInt (z k)
+          (Erdos67b.integerAffine ((Finset.univ : Finset (Fin K)).lcm p.1 / p.1 k)
+            (((p.2 + (k : ℕ) + 1) / p.1 k : ℕ) : ℤ) j)‖
+      ≤ (1 + Real.log ((A ^ i : ℕ) : ℝ)) + (m : ℝ) * (εr * Real.log A) with hB
+  have hBmono : ∀ (p : (Fin K → ℕ) × ℕ) (A i i' m : ℕ), 1 ≤ A → i ≤ i' →
+      B p A i m → B p A i' m := by
+    intro p A i i' m hA1 hii h
+    have : Real.log ((A ^ i : ℕ) : ℝ) ≤ Real.log ((A ^ i' : ℕ) : ℝ) := by
+      apply Real.log_le_log (by exact_mod_cast Nat.pos_of_ne_zero (by positivity))
+      exact_mod_cast Nat.pow_le_pow_right hA1 hii
+    rw [hB] at h ⊢
+    linarith
+  -- Step 1: a common base `A`.
+  obtain ⟨A₁, hA₁⟩ := exists_common_threshold s
+    (fun p A₀ => 2 ≤ A₀ ∧ ((∀ i, 0 < p.1 i) → (∀ i : Fin K, p.1 i ∣ p.2 + (i : ℕ) + 1) →
+      ∀ A : ℕ, A₀ ≤ A → ∃ i₀ : ℕ, ∀ m : ℕ, i₀ ≤ m → B p A i₀ m))
+    (by
+      intro p _ m n hmn hm
+      exact ⟨le_trans hm.1 hmn, fun h1 h2 A hA => hm.2 h1 h2 A (le_trans hmn hA)⟩)
+    (by
+      intro p _
+      by_cases h1 : ∀ i, 0 < p.1 i
+      · by_cases h2 : ∀ i : Fin K, p.1 i ∣ p.2 + (i : ℕ) + 1
+        · obtain ⟨A₀, hA₀2, hA₀⟩ := rung_multi_of_named_inputs hK helliott hsave z hz hz01
+            (fun i => (Finset.univ : Finset (Fin K)).lcm p.1 / p.1 i)
+            (fun i => ((p.2 + (i : ℕ) + 1) / p.1 i : ℕ))
+            (nondegenerateForms_of_tuple p.1 h1 h2) εr hεr
+          exact ⟨A₀, hA₀2, fun _ _ A hA => hA₀ A hA⟩
+        · exact ⟨2, le_rfl, fun _ h => absurd h h2⟩
+      · exact ⟨2, le_rfl, fun h _ => absurd h h1⟩)
+  set A : ℕ := max 2 A₁ with hAdef
+  have hA2 : 2 ≤ A := le_max_left _ _
+  have hA1A : A₁ ≤ A := le_max_right _ _
+  have hA1 : 1 ≤ A := by omega
+  -- Step 2: a common starting exponent `I`.
+  obtain ⟨I, hI⟩ := exists_common_threshold s
+    (fun p i => (∀ j, 0 < p.1 j) → (∀ j : Fin K, p.1 j ∣ p.2 + (j : ℕ) + 1) →
+      ∀ m : ℕ, i ≤ m → B p A i m)
+    (by
+      intro p _ i i' hii hi h1 h2 m hm
+      exact hBmono p A i i' m hA1 hii (hi h1 h2 m (le_trans hii hm)))
+    (by
+      intro p hp
+      by_cases h1 : ∀ j, 0 < p.1 j
+      · by_cases h2 : ∀ j : Fin K, p.1 j ∣ p.2 + (j : ℕ) + 1
+        · obtain ⟨i₀, hi₀⟩ := (hA₁ p hp).2 h1 h2 A hA1A
+          exact ⟨i₀, fun _ _ m hm => hi₀ m hm⟩
+        · exact ⟨0, fun _ h => absurd h h2⟩
+      · exact ⟨0, fun h => absurd h h1⟩)
+  refine ⟨A, hA2, I, fun d hdY hdpos _ a ha hadvd m hm => ?_⟩
+  exact hI (d, a) (hmem d a hdY hdpos ha) hdpos hadvd m hm
+
+#print axioms rung_multi_uniform
+
+
+/-- **The `K`-point correlation bound from the named inputs — the `D ≥ 3` rung.**  The `K`-point
+`rung_two_correlation`: composing the uniform rung with the `K`-fold `ε`-chase, the log-averaged
+`K`-point correlation of `z_i^{Ω}` at the consecutive shifts `n+1, …, n+K` is `o(log N)`, on
+`KPointLogElliott K` (= Tao–Teräväinen's product log-Elliott at `K` points) and
+`TwistedPrimeSumSavingAllLevels` (the Vinogradov–Korobov-type input) ALONE.
+
+This closes the `K`-fold assembly: every other ingredient of the `D ≥ 3` route is now a proved
+theorem of this repository. -/
+theorem rung_multi_correlation {K : ℕ} (hK : 0 < K) (helliott : KPointLogElliott K)
+    (hsave : TwistedPrimeSumSavingAllLevels) (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1) (hz01 : z 0 ≠ 1)
+    (ε : ℝ) (hε : 0 < ε) :
+    ∃ C : ℝ, ∃ N₀ : ℕ, ∀ N : ℕ, N₀ ≤ N →
+      ‖∑ n ∈ Finset.range N, ((((n : ℝ) + 1)⁻¹ : ℝ)) •
+          ∏ i : Fin K, (z i) ^ omegaNat (n + (i : ℕ) + 1)‖
+        ≤ C + ε * Real.log N :=
+  multi_correlation_of_uniform_rung hK z hz
+    (fun εr hεr Y => rung_multi_uniform hK helliott hsave z hz hz01 εr hεr Y) ε hε
+
+#print axioms rung_multi_correlation
+
 end CastingOut
 
 end NormalNumbers
