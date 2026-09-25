@@ -260,6 +260,14 @@ consumer of `KPointNoExcWith` / `Roots` / `Depth` / `AllWith` is therefore vacuo
 hypothesis is rethreaded onto `CastingOut.KPointNoExcAtWith`. -/
 alias hall_kpoint_noexc_false := NormalNumbers.CastingOut.not_kPointNoExcWith_const_one
 
+/-- **HALL: "the named open problem" `TwoPointNaturalCorrelationNoExc`** (`falseAsStated`,
+2026-09-25).  The `Prop` the whole `C3MrtNoExc` chain and the `D = 2` natural-density rung were
+stated over is not open: the constant-one witness refutes it, because its non-pretentiousness
+hypothesis is free (`hall_tt_nonpretentious_vacuous`).  Same for
+`KPointNaturalCorrelationNoExc 2` (`not_kPointNaturalCorrelationNoExc`). -/
+alias hall_two_point_noexc_false :=
+  NormalNumbers.CastingOut.not_twoPointNaturalCorrelationNoExc
+
 /-- **HALL: a Lebesgue-measured exceptional set of scales** (`vacuous`, 2026-09-25).
 `TwoPointNaturalCorrelation` charged its exceptional set `E ⊆ ℝ` by `∫_E t⁻¹` while asking the
 conclusion only at integer scales, so `E = ℕ ∩ [√X, X]` is free and the whole `Prop` is
@@ -935,6 +943,11 @@ def register : List Hall := [
    .falseAsStated, .kernel,
    "At K = 2 with both factors the constant 1, W = 1, shifts 1 and 2, X = exp L and N = ceil sqrt X the progression mean is exactly 1 while the claimed bound CstK 2 times L to the minus cK 2 tends to 0",
    "alias hall_kpoint_noexc_false; repaired input CastingOut.KPointNoExcAtWith", "2026-09-25"⟩,
+  ⟨"the named open problem TwoPointNaturalCorrelationNoExc",
+   "Carry the exceptional-set-free form of TT 3.1(ii) as the one named open input of the D = 2 rung",
+   .falseAsStated, .kernel,
+   "Its non-pretentiousness hypothesis is free, so the constant-one witness refutes it outright; the same holds for KPointNaturalCorrelationNoExc at K = 2",
+   "alias hall_two_point_noexc_false", "2026-09-25"⟩,
   ⟨"Lebesgue-measured exceptional set of scales",
    "Charge TT's exceptional set of scales by the Lebesgue integral of 1/t over a measurable subset of the reals",
    .vacuous, .kernel,

@@ -1,3 +1,33 @@
+## Lap 102 (2026-09-25) — RESTATEMENT run: the TT interface repaired, consumers re-audited
+
+Operator-scoped restatement lap (no crux advance).  New `src/NormalNumbers/C3MrtTTDefect.lean`.
+
+**(a) Defects machine-checked.**  `ttNonPretentious_trivial` (old `TTNonPretentious` holds for
+every 1-bounded `g`, witness `A = 1/L`), `not_kPointNoExcWith_const_one`,
+`not_kPointNaturalCorrelationNoExc`, `not_twoPointNaturalCorrelationNoExc` (the `D = 2` "named
+open problem" is FALSE), `twoPointNaturalCorrelation_trivially_true` (the Lebesgue-charged
+exceptional set is free).  Four new `Maze.lean` kernel rows.
+
+**(b) Faithful restatements + guards.**  `ttPretentiousSumChar` (Dirichlet characters),
+`TTNonPretentiousAt A` / `TTNonPretentiousUnif` (constant OUTSIDE `X, L`; conductors
+`q ≤ (log X)^{1/125}`; twists `|t| ≤ X²`), `TwoPointDyadicCorrelation` (exceptional set a
+`Finset` of dyadic scales, cost a fraction of `#(dyadicScales X)`), `KPointNoExcAtWith A`.
+Bridges `ttNonPretentious_of_At`, `kPointNoExcAtWith_of_with` (nothing weakened).  Guards
+`not_ttNonPretentiousUnif_one`, `not_ttNonPretentiousAt_one`, `const_one_not_faithful`,
+`full_exceptional_set_not_admissible` + `exists_L_cost_lt_one`.
+
+**(c) SURVIVORS table** — `HANDOFF-2026-09-25-tt-interface-restated.md`.  ~50 declarations across
+9 modules are VACUOUS (`conjC3_of_geom_input` included); the window/schedule/threshold algebra
+and `depthRoot` theory survive with content; the one genuine survivor on the analytic side is
+`ttNonPretentious_of_uniformResonantMass`, whose constant is *already* uniform in `X, L`.
+
+**Next attack.** ① Rethread `dyadic_window_bound_with` → … → `conjC3_of_geom_input` onto
+`KPointNoExcAtWith A` (the consumer must now SUPPLY `TTNonPretentiousAt A`, with `A` uniform in
+`b, h', X, L`).  ② Upgrade `ttNonPretentious_of_uniformResonantMass` to the faithful hypothesis:
+the missing content is Dirichlet characters `q > 1` and twists up to `X²`, not the constant.
+③ Re-read TT 3.1(ii)'s conclusion once more for the exact exceptional-set shape before freezing
+`TwoPointDyadicCorrelation` at general `K`.
+
 ## Lap 93 (2026-09-25) — the open input is RESTRICTED to the family the chain actually uses
 
 **New file `src/NormalNumbers/C3MrtRootsInput.lean` (12 declarations, all trust-triple clean).**

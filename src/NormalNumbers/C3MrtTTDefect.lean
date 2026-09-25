@@ -185,6 +185,39 @@ theorem not_kPointNoExcWith_const_one {cK CstK : ℕ → ℝ} (hc : 0 < cK 2) :
   linarith
 
 
+/-! ### §2b the same refutation reaches the two named open problems
+
+`KPointNaturalCorrelationNoExc 2` and `TwoPointNaturalCorrelationNoExc` — the `Prop`s the
+`D = 2` natural-density rung and the whole `C3MrtNoExc` chain are stated over — are refuted by
+the same constant-one witness.  So the ledger's "named open problem" was not open: it was
+false.  Both are repaired by swapping in `TTNonPretentiousAt`. -/
+
+theorem not_kPointNaturalCorrelationNoExc : ¬ KPointNaturalCorrelationNoExc 2 := by
+  intro h
+  obtain ⟨c, Cst, hc, _, hw⟩ := exists_with_of_kPointNoExc h
+  exact not_kPointNoExcWith_const_one (cK := fun _ => c) (CstK := fun _ => Cst) hc hw
+
+/-- The two-point form *is* the `K = 2` form: the missing direction of
+`twoPointNoExc_of_kPointNoExc`, available precisely because §1 makes the non-pretentiousness
+hypothesis free. -/
+theorem kPointNoExcWith_of_twoPointNoExc (h : TwoPointNaturalCorrelationNoExc) :
+    ∃ c Cst : ℝ, 0 < c ∧ 0 < Cst ∧ KPointNoExcWith (fun _ => c) (fun _ => Cst) 2 := by
+  obtain ⟨c, Cst, hc, hCst, hmain⟩ := h
+  refine ⟨c, Cst, hc, hCst, ?_⟩
+  intro g hmult hbd X L hX hL1 hLX _ N hN1 hN2 W b hsh hW hWL hshL hshinj
+  have hne : hsh 0 ≠ hsh 1 := fun hEq => by simpa using hshinj hEq
+  have hspec := hmain (g 0) (g 1) (hmult 0) (hmult 1) (hbd 0) (hbd 1) X L hX hL1 hLX
+    (ttNonPretentious_trivial (hbd 0) (by linarith)) N hN1 hN2 W b (hsh 0) (hsh 1) hW hWL
+    (hshL 0) (hshL 1) hne
+  refine le_trans (le_of_eq ?_) hspec
+  congr 2
+  exact Finset.sum_congr rfl fun n _ => Fin.prod_univ_two _
+
+theorem not_twoPointNaturalCorrelationNoExc : ¬ TwoPointNaturalCorrelationNoExc := by
+  intro h
+  obtain ⟨c, Cst, hc, _, hw⟩ := kPointNoExcWith_of_twoPointNoExc h
+  exact not_kPointNoExcWith_const_one (cK := fun _ => c) (CstK := fun _ => Cst) hc hw
+
 /-! ## §3 the exceptional set is free if it is the integers -/
 
 /-- **Defect 3 (Astro 2026-09-25).**  `TwoPointNaturalCorrelation` is **true**, and for the
@@ -409,6 +442,8 @@ theorem const_one_not_faithful {A : ℝ} {K : ℕ} {X L : ℝ} (hX : Real.exp 1 
 
 #print axioms ttNonPretentious_trivial
 #print axioms not_kPointNoExcWith_const_one
+#print axioms not_kPointNaturalCorrelationNoExc
+#print axioms not_twoPointNaturalCorrelationNoExc
 #print axioms twoPointNaturalCorrelation_trivially_true
 #print axioms not_ttNonPretentiousUnif_one
 #print axioms ttNonPretentious_of_At

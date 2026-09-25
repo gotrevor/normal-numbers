@@ -1,34 +1,26 @@
 # DIRECTION — normal-numbers 🧭
 
-## ⛔ HALT — DEFINITIONAL DEFECTS (2026-09-25, Astro review, confirmed by Ren) — OUTRANKS EVERYTHING BELOW
+## ⛔ HALT — DEFINITIONAL DEFECTS (2026-09-25, Astro review) — (a)-(c) NOW DONE
 
-The route's inputs are mis-stated; nothing built on them carries content until fixed.
+All four defects are machine-checked in `src/NormalNumbers/C3MrtTTDefect.lean`, the two damaged
+`Prop`s are restated faithfully with non-vacuity guards, and the consumer re-audit (SURVIVORS
+table) is in `HANDOFF-2026-09-25-tt-interface-restated.md`.
 
-1. **`TTNonPretentious` holds for EVERY `g`** (`C3MrtTTThm31.lean:90`).  `A` is existential
-   *after* `X, L` are fixed, so `A := exp(inf_t ttPretentiousSum g X t) / L` always works —
-   including `g = 1`.  TT (3.3) has an ABSOLUTE implied constant.
-2. **Consequently `KPointNoExcWith` and `TwoPointNaturalCorrelationNoExc` are FALSE**:
-   take every `g i = 1`; the progression-restricted mean is ≍ 1, not `≤ Cst·L^{-c}` for large
-   `L ≤ log X`.  So `conjC3_of_geom_input`, `logToNatural_two_of_noExc` and everything using
-   those Props as hypotheses are vacuous (hypothesis never holds).
-3. **The exceptional set is free if it is the integers** (`TwoPointNaturalCorrelation`): `E ⊆ ℝ`
-   is charged by `∫ t⁻¹`, so `E = ℕ ∩ [√X, X]` has measure 0 and excludes every scale `N`.
-   With (1), the with-exceptional-set Prop is trivially TRUE.  TT's exceptional set is a set of
-   scales measured by logarithmic density of the INTEGERS/dyadic scales, not Lebesgue measure.
+* `ttNonPretentious_trivial` / `ttNonPretentious_one` — the old `TTNonPretentious` is free.
+* `not_kPointNoExcWith_const_one`, `not_kPointNaturalCorrelationNoExc`,
+  `not_twoPointNaturalCorrelationNoExc` — the `K`-point input AND the `D = 2` "named open
+  problem" are FALSE, so every consumer listed in the SURVIVORS table is vacuous, including
+  `conjC3_of_geom_input`.
+* `twoPointNaturalCorrelation_trivially_true` — the Lebesgue-charged exceptional set is free.
+* Repairs: `TTNonPretentiousAt A` / `TTNonPretentiousUnif` (constant OUTSIDE `X, L`, Dirichlet
+  characters, twists `|t| ≤ X²`), `TwoPointDyadicCorrelation` (counting cost on dyadic scales),
+  `KPointNoExcAtWith A`.  Guards: `not_ttNonPretentiousUnif_one`, `not_ttNonPretentiousAt_one`,
+  `const_one_not_faithful`, `full_exceptional_set_not_admissible` + `exists_L_cost_lt_one`.
 
-4. **`ttPretentiousSum` is not TT's `M(g; X, Q)`**: TT takes the infimum over Dirichlet
-   characters of conductor `q ≤ Q` AND twists `|t| ≤ X` (paper:557-576); the Lean sum omits
-   characters and cuts `t` at `(log X)^(1/125)`.  Full source audit:
-   `~/src/normal-numbers/docs/REVIEW-2026-09-25-normal-numbers.md` lines 66-70.
-
-**First job of the next lap, before any other work:** (a) machine-check both witnesses as named
-refutation theorems (`ttNonPretentious_trivial`, `not_kPointNoExcWith_const_one`, the
-integer-exceptional-set triviality) and add `Maze.lean` rows aliased onto them; (b) restate
-`TTNonPretentious` with the constant OUTSIDE (uniform in `X, L`) and the exceptional set as a set
-of integer scales with a counting/log-density cost; (c) re-audit every consumer listed by
-`grep -rln "TTNonPretentious\|TwoPointNaturalCorrelation\|KPointNoExc" src` and report which
-results survive.  Do not advance the crux until (a)-(c) are done.
-
+**Next lap's first job:** rethread the chain from `KPointNoExcWith` onto `KPointNoExcAtWith A`
+bottom-up (`dyadic_window_bound_with` → `conjC3_of_geom_input`), and upgrade
+`ttNonPretentious_of_uniformResonantMass` to the faithful hypothesis (its constant is already
+uniform; the gap is characters `q > 1` and twists up to `X²`).  Details: handoff §"Next attack".
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
