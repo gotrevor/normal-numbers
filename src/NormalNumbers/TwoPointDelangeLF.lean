@@ -132,4 +132,105 @@ theorem sum_delangeKernel_mul_log (z : ℂ) (N : ℕ) :
       try ring
   rw [Finset.sum_congr rfl hinner, ← Finset.mul_sum, ← Finset.sum_filter, mul_assoc]
 
+/-! ### Removing the `p ∤ m` restriction, and the working inequality -/
+
+/-- The truncated kernel sum.  `DelangeKernelMean z` is exactly `delangeS z N → 0`. -/
+noncomputable def delangeS (z : ℂ) (N : ℕ) : ℂ :=
+  ∑ n ∈ Finset.Ioc 0 N, delangeKernel z n / (n : ℂ)
+
+/-- Its absolute companion `Σ_{n≤N} μ²(n) u^{ω(n)}/n`. -/
+noncomputable def delangeA (z : ℂ) (N : ℕ) : ℝ :=
+  ∑ n ∈ Finset.Ioc 0 N, ‖delangeKernel z n‖ / (n : ℝ)
+
+/-- The sum restricted to `m` coprime to `p`, as it appears in the Levin–Fainleib identity. -/
+noncomputable def delangeSrestr (z : ℂ) (p M : ℕ) : ℂ :=
+  ∑ m ∈ (Finset.Ioc 0 M).filter (fun m => ¬ p ∣ m), delangeKernel z m / (m : ℂ)
+
+/-- The `log`-weighted sum. -/
+noncomputable def delangeT (z : ℂ) (N : ℕ) : ℂ :=
+  ∑ n ∈ Finset.Ioc 0 N, delangeKernel z n * (Real.log n : ℂ) / (n : ℂ)
+
+lemma delangeA_nonneg (z : ℂ) (N : ℕ) : 0 ≤ delangeA z N :=
+  Finset.sum_nonneg fun n _ => by positivity
+
+lemma delangeA_mono (z : ℂ) {M N : ℕ} (h : M ≤ N) : delangeA z M ≤ delangeA z N := by
+  refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun n _ _ => by positivity)
+  exact Finset.Ioc_subset_Ioc_right h
+
+/-- **The restriction is a one-step recursion**, not a loss: removing `p ∤ m` costs exactly one
+more application of the same prime step, scaled by `(z−1)/p`. -/
+theorem delangeSrestr_rec (z : ℂ) {p : ℕ} (hp : p.Prime) (M : ℕ) :
+    delangeSrestr z p M = delangeS z M - ((z - 1) / (p : ℂ)) * delangeSrestr z p (M / p) := by
+  classical
+  have hpc : ((p : ℂ)) ≠ 0 := Nat.cast_ne_zero.mpr hp.pos.ne'
+  have hsplit : delangeS z M
+      = delangeSrestr z p M
+        + ∑ n ∈ (Finset.Ioc 0 M).filter (fun n => p ∣ n), delangeKernel z n / (n : ℂ) := by
+    rw [delangeS, delangeSrestr, add_comm]
+    exact (Finset.sum_filter_add_sum_filter_not _ (fun n => p ∣ n) _).symm
+  have hmul : ∑ n ∈ (Finset.Ioc 0 M).filter (fun n => p ∣ n), delangeKernel z n / (n : ℂ)
+      = ((z - 1) / (p : ℂ)) * delangeSrestr z p (M / p) := by
+    rw [sum_multiples_reindex p M hp.pos (fun n => delangeKernel z n / (n : ℂ))]
+    rw [delangeSrestr, Finset.sum_filter, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun j hj => ?_
+    simp only [Finset.mem_Ioc] at hj
+    have hj0 : j ≠ 0 := by omega
+    have hjc : ((j : ℂ)) ≠ 0 := Nat.cast_ne_zero.mpr hj0
+    rw [delangeKernel_prime_mul hp hj0]
+    by_cases hdvd : p ∣ j
+    · rw [if_pos hdvd, if_neg (not_not_intro hdvd)]
+      simp
+    · rw [if_neg hdvd, if_pos hdvd]
+      push_cast
+      field_simp
+      try ring
+  rw [hsplit, hmul]
+  ring
+
+/-- Removing the restriction costs at most `u/p · A(M)`. -/
+theorem norm_delangeSrestr_le (z : ℂ) {p : ℕ} (hp : p.Prime) (M : ℕ) :
+    ‖delangeSrestr z p M‖ ≤ ‖delangeS z M‖ + ‖z - 1‖ / (p : ℝ) * delangeA z M := by
+  classical
+  have hpR : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp.pos
+  have htail : ‖delangeSrestr z p (M / p)‖ ≤ delangeA z M := by
+    refine le_trans (norm_sum_le _ _) ?_
+    have hcongr : ∀ n : ℕ, ‖delangeKernel z n / (n : ℂ)‖ = ‖delangeKernel z n‖ / (n : ℝ) :=
+      fun n => by rw [norm_div, Complex.norm_natCast]
+    have h1 : ∑ m ∈ (Finset.Ioc 0 (M / p)).filter (fun m => ¬ p ∣ m),
+        ‖delangeKernel z m / (m : ℂ)‖ ≤ delangeA z (M / p) := by
+      rw [Finset.sum_congr rfl (fun n _ => hcongr n), delangeA]
+      exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+        (fun n _ _ => by positivity)
+    exact le_trans h1 (delangeA_mono z (Nat.div_le_self M p))
+  have hrec := delangeSrestr_rec z hp M
+  rw [hrec]
+  refine le_trans (norm_sub_le _ _) ?_
+  have hnorm : ‖((z - 1) / (p : ℂ)) * delangeSrestr z p (M / p)‖
+      = ‖z - 1‖ / (p : ℝ) * ‖delangeSrestr z p (M / p)‖ := by
+    rw [norm_mul, norm_div, Complex.norm_natCast]
+  rw [hnorm]
+  have hc : (0 : ℝ) ≤ ‖z - 1‖ / (p : ℝ) := by positivity
+  nlinarith [htail, hc]
+
+/-- **THE WORKING INEQUALITY.**  Levin–Fainleib, with the restriction removed and everything
+explicit: no `O(·)`, no hidden constant. -/
+theorem norm_delangeT_le (z : ℂ) (N : ℕ) :
+    ‖delangeT z N‖
+      ≤ ‖z - 1‖ * ∑ p ∈ primesLe N, Real.log p / (p : ℝ)
+          * (‖delangeS z (N / p)‖ + ‖z - 1‖ / (p : ℝ) * delangeA z (N / p)) := by
+  classical
+  rw [delangeT, sum_delangeKernel_mul_log z N, norm_mul]
+  refine mul_le_mul_of_nonneg_left ?_ (norm_nonneg _)
+  refine le_trans (norm_sum_le _ _) (Finset.sum_le_sum fun p hp => ?_)
+  have hpp := prime_of_mem_primesLe hp
+  have hpR : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hpp.pos
+  have hlog : (0 : ℝ) ≤ Real.log p := Real.log_nonneg (by exact_mod_cast hpp.one_lt.le)
+  rw [norm_mul, norm_div, Complex.norm_natCast, Complex.norm_real, Real.norm_eq_abs,
+    abs_of_nonneg hlog]
+  exact mul_le_mul_of_nonneg_left (norm_delangeSrestr_le z hpp (N / p)) (by positivity)
+
+/-- The named residue, restated on `delangeS`: this is literally `DelangeKernelMean`. -/
+theorem delangeKernelMean_iff (z : ℂ) :
+    DelangeKernelMean z ↔ Tendsto (fun N => delangeS z N) atTop (𝓝 0) := Iff.rfl
+
 end NormalNumbers.CastingOut
