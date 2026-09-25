@@ -1,5 +1,6 @@
 import NormalNumbers.ElliottTwoPointLog
 import NormalNumbers.ElliottZetaOmegaPretentious
+import NormalNumbers.ElliottTwistBootstrap
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
@@ -145,3 +146,5 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottZetaOmegaPretentious.exists_norm_twistCorr_sub_primeMass_le
 #print axioms NormalNumbers.ElliottZetaOmegaPretentious.exists_mertensOne
 #print axioms NormalNumbers.ElliottZetaOmegaPretentious.twoPointElliottLog_of_dichotomy
+#print axioms NormalNumbers.ElliottTwistBootstrap.twistDefect_pow_le
+#print axioms NormalNumbers.ElliottTwistBootstrap.exists_unimodular_twistDefect_le

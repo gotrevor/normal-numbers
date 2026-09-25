@@ -10485,3 +10485,35 @@ Remaining attack on the crux, unchanged in substance: (b) the `k`-th-power boots
 Archimedean `|∑_{p≤X} p^{-ikt}/p| ≈ M`; (c) that Archimedean bound for `1/log X ≪ |v| ≤ A·X`,
 which is the zero-free-region input and the same wall the dependency's
 `PolynomialHeightPrimeCorrelationBound` names.
+
+## Lap 88 (2026-09-25) — attack step (b) DONE: the power bootstrap
+
+New `src/NormalNumbers/ElliottTwistBootstrap.lean`, **zero sorry, trust triple**, in the audit
+surface.  This is the second of the three steps listed at lap 86 for cracking
+`TwistModulusDichotomy`.
+
+* `twistDefect w β X = ∑_{p≤X}(1 − Re(β̄ w_p))/p` — clustering of the twist values around a single
+  constant `β`; `twistDefect_eq_sub` : `= M − Re(β̄ C)`.
+* **`exists_unimodular_twistDefect_le`** — the dichotomy's hard alternative *failing* IS
+  clustering: if `‖C‖ ≥ (1−δ)M` then `β := C/‖C‖` is unimodular with `twistDefect ≤ δ·M`.
+  (This is the step that converts a statement about the *modulus* of `C` — the thing lap 86 found
+  the dependency does not control — into a pointwise statement one can bootstrap.)
+* **`twistDefect_pow_le`** — `Δ_k(β^k) ≤ k·√(2·Δ(β)·M)`.  Three elementary inequalities plus
+  Cauchy–Schwarz: `1 − Re z ≤ ‖1 − z‖`; `‖1 − b^k‖ ≤ k‖1 − b‖` (geometric factorisation,
+  `geom_sum_mul`); `‖1−b‖² ≤ 2(1 − Re b)` for `‖b‖ ≤ 1`; then
+  `∑ √(a_p)/p ≤ √(∑ a_p/p)·√M` via `Finset.sum_mul_sq_le_sq_mul_sq` with
+  `f p = √(a_p)/√p`, `g p = 1/√p`.
+
+**What this buys.** Take `k` = the order of `χ`.  Then `χ^k` is principal, so `w_p^k` is purely
+Archimedean at every `p ∤ q`, and the bootstrap says `∑_{p≤X} p^{-ikt}/p` is within `k√(2δ)·M` of
+`β^k·M`.  The crux is thereby reduced to a statement with **no character in it at all**:
+
+> (c) for `1/log X ≪ |v| ≤ A·X`, `|∑_{p≤X} p^{-iv}/p|` is bounded away from `M = log log X + O(1)`.
+
+That is the classical Archimedean prime correlation bound, and it is where the zero-free region
+enters — the same wall as the dependency's `PolynomialHeightPrimeCorrelationBound`.  Note the
+bootstrap's loss is `k√δ`, so step (c) must be quantitative enough to beat a *fixed* `k = ord χ ≤ φ(q) ≤ A`;
+that is fine, since `A` is fixed before `X → ∞`.
+
+Not yet written: the glue lemma `w_p^k = conj(χ^k(p)·p^{ikt})` (needs `DirichletCharacter` power
+API) and the statement of (c).  Next lap.
