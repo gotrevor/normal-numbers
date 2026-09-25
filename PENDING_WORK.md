@@ -11344,3 +11344,48 @@ which is already free and therefore useless; so no statement weaker than `O(log 
 And the constant is generous (`D` up to `62`).  That is precisely why the `t = 0` attack aims at
 the crude Siegel-free `L(1,χ) ≫ q^{-1/2}` and not at anything sharper: a crude rate is all the
 chain can use, and all it needs.  This closes off "find a cheaper archimedean input" as a route.
+
+## 2026-09-25 — DIRECTION ②.4 `UniformResonantMass`: the sketched route FAILS, and the repair
+
+`src/NormalNumbers/C3MrtURMLowHigh.lean` (new; 4 sorry-free lemmas + 1 disclosed sorry).
+
+**A refutation of the route as sketched.**  `C3MrtWindowMass` built the whole Brun–Titchmarsh
+toolkit for `UniformResonantMass` but never assembled it, and its own plan does not close.  Its
+`sum_exp_neg_le` docstring commits to the error tail costing `1 + 32|t|/π`, i.e. `O(|t|)`.  But
+`UniformResonantMass` allows `100δ(log log Y + log(2+|t|)) + C` with `C` chosen **before** `t`, so
+`O(|t|)` overshoots by an exponential.  The sketched assembly fails on its own error term — the
+same failure mode as laps 102/115, caught this time *before* being threaded into the chain.
+
+**The repair: split at a GROWING height.**  `lowHeight t = 8 log(2+|t|)`, in the variable `log p`,
+instead of an absolute constant:
+* **Low range** (`log p ≤ lowHeight t`) — no windows at all, just Mertens:
+  `lowResonantMass_le` gives `≤ log(lowHeight t) + 1 + mertensBound = O(log log(2+|t|))`, a whole
+  exponential below the budget's `100δ·log(2+|t|)`.  `log_lowHeight_le` (from the tangent-line
+  bound `log_le_eps_mul`) discharges the comparison for every fixed `δ > 0`, with the absorbing
+  constant depending only on `δ` — which `UniformResonantMass` permits.
+* **High range** — every window now starts at height `a ≥ 8 log(2+|t|)`, so its Brun–Titchmarsh
+  error carries `exp(−a/8) ≤ (2+|t|)⁻¹`.  Windows are spaced `2π/|t|` apart in `a`, so the tail
+  sums to `≲ (|t|/2π)·8·(2+|t|)⁻¹ ≤ 4/π = O(1)`.  **The `|t|` of the window count is cancelled by
+  the `(2+|t|)⁻¹` the raised starting height supplies** — which is precisely what an absolute
+  starting height cannot do.  This is the insight that makes ②.4 closable.
+
+`resonantMass_eq_low_add_high` + `uniformResonantMass_of_high` assemble the statement in the exact
+shape `UniformResonantMass` asks for.  Status: 4 declarations axiom-clean; the assembly carries
+`sorryAx` through exactly one disclosed leaf.
+
+**Next attack (the one open leaf, `highResonantMass_le`).**  Pure Brun–Titchmarsh bookkeeping —
+no further analytic input; every ingredient is already proved in `C3MrtWindowMass`:
+1. partition the high-range resonant primes by `windowIndexW` (`Finset.sum_fiberwise_of_maps_to`),
+   the index range from `abs_windowIndexW_le` with `T = |t| log Y`, giving `K`;
+2. per window `m`, `resonant_window_mass_le` at `a_m = (γ_m − δ)/|t|` — note `a_m ≥ lowHeight t`
+   holds *by the split*, which also supplies its `log 2 ≤ a` hypothesis for free;
+3. main terms: `sum_Icc_symm_le` + `sum_inv_gap_le` ⇒ `(32δ/π)(1 + log K) + O(δ)`, and
+   `log K ≤ log log Y + log(2+|t|) + O(1)`; `32/π < 11 < 50` leaves ample room;
+4. error terms: `window_err_le` + `sum_exp_neg_le` at `c = 2π/|t|` in the height variable, with
+   the `exp(−lowHeight t/8) ≤ (2+|t|)⁻¹` factor pulled out first — this is the step the old plan
+   got wrong, and pulling that factor out *before* summing is what fixes it.
+5. `2δ ≤ |t|` (the hypothesis of `resonant_window_mass_le`) needs the complementary case: when
+   `|t| < 2δ` the windows are long, and the two-sided Mertens
+   `Erdos67b.PrimeEstimates.reciprocalPrimeInterval_le_log_log_sub_add` replaces
+   Brun–Titchmarsh, giving `log((γ_m+δ)/(γ_m−δ)) ≤ 2δ/(γ_m−δ)` per window with the SAME harmonic
+   sum — so `sum_inv_gap_le` covers both cases and only the per-window tool changes.
