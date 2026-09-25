@@ -229,3 +229,10 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottDamped.logTail_term_le
 #print axioms NormalNumbers.ElliottDamped.tailNumeric_le
 #print axioms NormalNumbers.ElliottDamped.logTail_le
+
+/-! ### Mertens I discharges the harmonic clause with sharp constant 1 (lap 106) -/
+#print axioms NormalNumbers.ElliottDamped.integral_id_mul_exp_neg_Ioi
+#print axioms NormalNumbers.ElliottDamped.sum_log_rpow_le
+#print axioms NormalNumbers.ElliottDamped.norm_logWeightedSlice_le_trivial
+#print axioms NormalNumbers.ElliottDamped.sliceBoundSmall_of_cap
+#print axioms NormalNumbers.ElliottDamped.sliceBoundModerate_of_cap

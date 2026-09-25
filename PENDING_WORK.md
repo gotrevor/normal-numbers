@@ -23,6 +23,22 @@ endpoint `Z`, once `X ≥ 2²⁰`.  Sorry-free, in the audit surface, via `logTa
 `tailNumeric_le` (`s = X^{1/4} ≥ 32`, `log X ≤ 4(s−1)`, so the claim is `16s + 4C − 16 ≤ s²`).
 Both slice Props now carry `2²⁰ ≤ X` — the honest threshold the proof delivers.
 
+### ✅ Lap 106 — THE HARMONIC CLAUSE OF BOTH INPUTS IS A THEOREM (sharp constant 1)
+
+The `w ≥ T` clause never needed cancellation.  `sum_log_rpow_le`:
+`∑_{p≤Y} log p·p^{-1-a} ≤ 1/a + (log 4 + 4)` with the coefficient of `1/a` **exactly 1**, from
+Mertens I via `p^{-a} = a∫_{log p}^∞ e^{-as} ds` (finite-sum interchange, `integral_finsetSum`; the
+integrand bound is `∑_{p<e^s} log p/p ≤ s + C`, i.e. Mertens I again; the two elementary integrals
+`∫_0^∞ e^{-as}ds = 1/a` and `∫_0^∞ s e^{-as}ds = 1/a²` are `integral_exp_mul_Ioi` and
+`integral_rpow_mul_exp_neg_mul_rpow` with `Γ(2)=1`).  Since `a = δ+w ≥ w`, this is the harmonic
+clause outright: `norm_logWeightedSlice_le_trivial` + `sliceBoundSmall_of_cap` /
+`sliceBoundModerate_of_cap`.
+
+**So the remaining analytic input is exactly the CAP clause** (`SliceCapSmall` / `SliceCapModerate`,
+`w ≤ T`), and that is where cancellation is unavoidable: the trivial bound gives `1/δ = log X` while
+the clause asks for `1/|v|` (resp. `log|v|`).  Boundary check: at `w = T = |v|` the two clauses agree
+to a constant, so nothing is lost at the junction.
+
 **NEXT — the prime-power correction, then the pole bound.**  With the tail closed, the remaining gap
 between `logWeightedSlice` and `−ζ'/ζ(1+δ+w+iv)` is the prime powers:
 `∑_{p,j≥2} log p·p^{-jσ} ≤ 2∑_p log p·p^{-2σ} ≤ 2∑_{n≥2} log n·n^{-2} = O(1)` for `σ ≥ 1`

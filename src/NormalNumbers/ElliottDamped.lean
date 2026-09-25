@@ -1369,6 +1369,290 @@ theorem logTail_le {X Y Z : ℕ} (hX : 1048576 ≤ X) (hY : sliceCut X ≤ Y) {a
   have hnum := tailNumeric_le (X := (X : ℝ)) hXR
   linarith
 
+/-! ### Mertens I gives the harmonic clause with the SHARP constant `1` (lap 106)
+
+The `w ≥ T` clause of both slice inputs asks for `‖slice‖ ≤ w⁻¹ + K`, with the coefficient of `w⁻¹`
+exactly `1` — anything larger multiplies the eventual `log(1/|v|)` and destroys the consumer.  The
+observation of this lap is that **no cancellation is needed for it**: the trivial absolute bound is
+
+  `∑_{p≤Y} log p · p^{-1-a} ≤ 1/a + (log 4 + 4)`,
+
+with sharp constant `1`, and it follows from Mertens' *first* theorem by Abel summation in the form
+`p^{-a} = a∫_{log p}^∞ e^{-as} ds`: the interchange is a finite sum, and
+`∑_{p<e^s} log p/p ≤ s + (log 4 + 4)` is Mertens I.  Since `a = δ + w ≥ w`, this gives the harmonic
+clause outright.  Only the *cap* clause `w ≤ T` needs `ζ'/ζ` (there the trivial bound is `1/δ`,
+while the clause asks for `1/|v|`), and that is the whole remaining analytic input. -/
+
+/-- `∫_{s>c} e^{-as} ds = e^{-ac}/a`. -/
+theorem integral_exp_neg_mul_Ioi' {a c : ℝ} (ha : 0 < a) :
+    ∫ s in Set.Ioi c, Real.exp (-a * s) = Real.exp (-a * c) / a := by
+  have h := integral_exp_mul_Ioi (a := -a) (by linarith) c
+  rw [h]
+  field_simp
+
+/-- `∫_{s>0} s e^{-as} ds = 1/a²`. -/
+theorem integral_id_mul_exp_neg_Ioi {a : ℝ} (ha : 0 < a) :
+    ∫ s in Set.Ioi (0 : ℝ), s * Real.exp (-a * s) = 1 / a ^ 2 := by
+  have hcongr : ∀ s ∈ Set.Ioi (0 : ℝ),
+      s * Real.exp (-a * s) = s ^ (1 : ℝ) * Real.exp (-a * s ^ (1 : ℝ)) := by
+    intro s _; rw [Real.rpow_one]
+  rw [MeasureTheory.setIntegral_congr_fun measurableSet_Ioi hcongr,
+    integral_rpow_mul_exp_neg_mul_rpow (by norm_num) (by norm_num : (-1 : ℝ) < 1) ha]
+  rw [show ((1 : ℝ) + 1) / 1 = 2 by norm_num, show -((1 : ℝ) + 1) / 1 = -2 by norm_num,
+    Real.Gamma_two]
+  rw [show (-2 : ℝ) = -((2 : ℕ) : ℝ) by norm_num, Real.rpow_neg ha.le, Real.rpow_natCast]
+  simp [one_div]
+
+/-- `∫_{s>0} e^{-as}(s+C) ds = 1/a² + C/a`. -/
+theorem integral_exp_neg_mul_linear_Ioi {a C : ℝ} (ha : 0 < a) :
+    ∫ s in Set.Ioi (0 : ℝ), Real.exp (-a * s) * (s + C) = 1 / a ^ 2 + C / a := by
+  have hcongr : ∀ s ∈ Set.Ioi (0 : ℝ),
+      Real.exp (-a * s) * (s + C) = s * Real.exp (-a * s) + C * Real.exp (-a * s) := by
+    intro s _; ring
+  have hint1 : MeasureTheory.IntegrableOn (fun s : ℝ => s * Real.exp (-a * s))
+      (Set.Ioi (0 : ℝ)) := by
+    refine MeasureTheory.Integrable.of_integral_ne_zero ?_
+    rw [integral_id_mul_exp_neg_Ioi ha]
+    positivity
+  have hint2 : MeasureTheory.IntegrableOn (fun s : ℝ => C * Real.exp (-a * s))
+      (Set.Ioi (0 : ℝ)) := (exp_neg_integrableOn_Ioi 0 ha).const_mul C
+  rw [MeasureTheory.setIntegral_congr_fun measurableSet_Ioi hcongr,
+    MeasureTheory.integral_add hint1 hint2, integral_id_mul_exp_neg_Ioi ha,
+    MeasureTheory.integral_const_mul, integral_exp_neg_mul_Ioi' ha]
+  simp
+  ring
+
+/-- Integrability of the majorant. -/
+theorem integrableOn_exp_neg_mul_linear {a C : ℝ} (ha : 0 < a) :
+    MeasureTheory.IntegrableOn (fun s : ℝ => Real.exp (-a * s) * (s + C))
+      (Set.Ioi (0 : ℝ)) := by
+  have hcongr : ∀ s ∈ Set.Ioi (0 : ℝ),
+      Real.exp (-a * s) * (s + C) = s * Real.exp (-a * s) + C * Real.exp (-a * s) := by
+    intro s _; ring
+  have hint1 : MeasureTheory.IntegrableOn (fun s : ℝ => s * Real.exp (-a * s))
+      (Set.Ioi (0 : ℝ)) := by
+    refine MeasureTheory.Integrable.of_integral_ne_zero ?_
+    rw [integral_id_mul_exp_neg_Ioi ha]
+    positivity
+  have hint2 : MeasureTheory.IntegrableOn (fun s : ℝ => C * Real.exp (-a * s))
+      (Set.Ioi (0 : ℝ)) := (exp_neg_integrableOn_Ioi 0 ha).const_mul C
+  exact (MeasureTheory.integrableOn_congr_fun (hcongr) measurableSet_Ioi).mpr (hint1.add hint2)
+
+/-- **THE SHARP TRIVIAL BOUND.**  `∑_{p≤Y} log p·p^{-1-a} ≤ 1/a + (log 4 + 4)`, with the
+coefficient of `1/a` exactly `1`: Mertens I through `p^{-a} = a∫_{log p}^∞ e^{-as} ds`. -/
+theorem sum_log_rpow_le {Y : ℕ} {a : ℝ} (ha : 0 < a) :
+    ∑ p ∈ primesUpTo Y, Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - a)
+      ≤ 1 / a + (Real.log 4 + 4) := by
+  classical
+  set C : ℝ := Real.log 4 + 4 with hC
+  have hC0 : (0 : ℝ) ≤ C := by
+    have : (0 : ℝ) < Real.log 4 := Real.log_pos (by norm_num)
+    rw [hC]; linarith
+  set g : ℕ → ℝ → ℝ := fun p s =>
+    (Set.Ioi (Real.log (p : ℝ))).indicator (fun s => Real.exp (-a * s)) s * (Real.log (p : ℝ) / p)
+    with hg
+  have hterm : ∀ p ∈ primesUpTo Y,
+      (∫ s in Set.Ioi (0 : ℝ), g p s) = Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - a) / a := by
+    intro p hp
+    have hpp : p.Prime := (mem_primesUpTo.mp hp).1
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hppos : (0 : ℝ) < (p : ℝ) := by linarith
+    have hlogp : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by linarith)
+    have hinter : Set.Ioi (0 : ℝ) ∩ Set.Ioi (Real.log (p : ℝ)) = Set.Ioi (Real.log (p : ℝ)) := by
+      rw [Set.inter_eq_right]
+      exact Set.Ioi_subset_Ioi hlogp
+    rw [hg]
+    simp only
+    rw [MeasureTheory.integral_mul_const, MeasureTheory.setIntegral_indicator measurableSet_Ioi,
+      hinter, integral_exp_neg_mul_Ioi' ha]
+    have hexp : Real.exp (-a * Real.log (p : ℝ)) = (p : ℝ) ^ (-a) := by
+      rw [Real.rpow_def_of_pos hppos]; ring_nf
+    have hsplit : (p : ℝ) ^ (-(1 : ℝ) - a) = (p : ℝ) ^ (-a) * (p : ℝ)⁻¹ := by
+      rw [show -(1 : ℝ) - a = (-a) + (-1 : ℝ) by ring, Real.rpow_add hppos, Real.rpow_neg_one]
+    rw [hexp, hsplit]
+    field_simp
+  have hint : ∀ p ∈ primesUpTo Y, MeasureTheory.IntegrableOn (g p) (Set.Ioi (0 : ℝ)) := by
+    intro p _
+    refine MeasureTheory.Integrable.mul_const ?_ _
+    exact (exp_neg_integrableOn_Ioi 0 ha).indicator measurableSet_Ioi
+  have hswap : (∫ s in Set.Ioi (0 : ℝ), ∑ p ∈ primesUpTo Y, g p s)
+      = ∑ p ∈ primesUpTo Y, ∫ s in Set.Ioi (0 : ℝ), g p s :=
+    MeasureTheory.integral_finsetSum _ hint
+  -- Mertens I bounds the integrand
+  have hbound : ∀ s ∈ Set.Ioi (0 : ℝ),
+      ∑ p ∈ primesUpTo Y, g p s ≤ Real.exp (-a * s) * (s + C) := by
+    intro s hs
+    have hs0 : (0 : ℝ) < s := hs
+    have hexp0 : (0 : ℝ) < Real.exp (-a * s) := Real.exp_pos _
+    set N : ℕ := ⌊Real.exp s⌋₊ with hN
+    have hexps : (1 : ℝ) ≤ Real.exp s := by linarith [Real.add_one_le_exp s]
+    have hN1 : 1 ≤ N := Nat.le_floor (by exact_mod_cast hexps)
+    -- drop the primes above `N`, they carry indicator `0`
+    have hstep : ∀ p ∈ primesUpTo Y,
+        g p s ≤ (if p ≤ N then Real.exp (-a * s) * (Real.log (p : ℝ) / p) else 0) := by
+      intro p hp
+      have hpp : p.Prime := (mem_primesUpTo.mp hp).1
+      have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+      have hmass : 0 ≤ Real.log (p : ℝ) / (p : ℝ) := by
+        have : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by linarith)
+        positivity
+      by_cases hle : p ≤ N
+      · simp only [hle, if_true, hg]
+        rcases le_or_gt s (Real.log (p : ℝ)) with hsl | hsl
+        · have : (Set.Ioi (Real.log (p : ℝ))).indicator (fun s => Real.exp (-a * s)) s = 0 := by
+            refine Set.indicator_of_notMem ?_ _
+            simp only [Set.mem_Ioi]
+            linarith
+          rw [this, zero_mul]
+          positivity
+        · have : (Set.Ioi (Real.log (p : ℝ))).indicator (fun s => Real.exp (-a * s)) s
+              = Real.exp (-a * s) := Set.indicator_of_mem hsl _
+          rw [this]
+      · -- `p > N = ⌊e^s⌋₊` forces `s ≤ log p`, so the indicator vanishes
+        have hpgt : Real.exp s < (p : ℝ) := by
+          have h1 : Real.exp s < (N : ℝ) + 1 := Nat.lt_floor_add_one _
+          have h2 : (N : ℝ) + 1 ≤ (p : ℝ) := by
+            have : N + 1 ≤ p := by omega
+            exact_mod_cast this
+          linarith
+        have hsl : s ≤ Real.log (p : ℝ) := by
+          have := Real.log_le_log (Real.exp_pos s) hpgt.le
+          rwa [Real.log_exp] at this
+        simp only [hle, if_false, hg]
+        have : (Set.Ioi (Real.log (p : ℝ))).indicator (fun s => Real.exp (-a * s)) s = 0 := by
+          refine Set.indicator_of_notMem ?_ _
+          simp only [Set.mem_Ioi]
+          linarith
+        rw [this, zero_mul]
+    refine le_trans (Finset.sum_le_sum hstep) ?_
+    have hfilter : ∑ p ∈ primesUpTo Y,
+        (if p ≤ N then Real.exp (-a * s) * (Real.log (p : ℝ) / p) else 0)
+        = ∑ p ∈ (primesUpTo Y).filter (fun p => p ≤ N),
+            Real.exp (-a * s) * (Real.log (p : ℝ) / p) := by
+      rw [Finset.sum_filter]
+    rw [hfilter]
+    have hsubset : (primesUpTo Y).filter (fun p => p ≤ N) ⊆ primesUpTo N := by
+      intro p hp
+      rw [Finset.mem_filter] at hp
+      exact mem_primesUpTo.mpr ⟨(mem_primesUpTo.mp hp.1).1, hp.2⟩
+    have hmono : ∑ p ∈ (primesUpTo Y).filter (fun p => p ≤ N),
+          Real.exp (-a * s) * (Real.log (p : ℝ) / p)
+        ≤ ∑ p ∈ primesUpTo N, Real.exp (-a * s) * (Real.log (p : ℝ) / p) := by
+      refine Finset.sum_le_sum_of_subset_of_nonneg hsubset ?_
+      intro p hp _
+      have hpp : p.Prime := (mem_primesUpTo.mp hp).1
+      have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+      have : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by linarith)
+      positivity
+    refine le_trans hmono ?_
+    rw [← Finset.mul_sum]
+    have hmert : ∑ p ∈ primesUpTo N, Real.log (p : ℝ) / (p : ℝ) ≤ s + C := by
+      have h := sum_log_div_primesUpTo_le (X := N) hN1
+      have hlogN : Real.log (N : ℝ) ≤ s := by
+        have h1 : (N : ℝ) ≤ Real.exp s := Nat.floor_le (by positivity)
+        have := Real.log_le_log (by exact_mod_cast hN1) h1
+        rwa [Real.log_exp] at this
+      rw [hC]; linarith
+    exact mul_le_mul_of_nonneg_left hmert hexp0.le
+  -- assemble
+  have hintsum : MeasureTheory.IntegrableOn (fun s => ∑ p ∈ primesUpTo Y, g p s)
+      (Set.Ioi (0 : ℝ)) := by
+    refine MeasureTheory.integrable_finset_sum _ hint
+  have hle : (∫ s in Set.Ioi (0 : ℝ), ∑ p ∈ primesUpTo Y, g p s)
+      ≤ ∫ s in Set.Ioi (0 : ℝ), Real.exp (-a * s) * (s + C) := by
+    refine MeasureTheory.setIntegral_mono_on hintsum (integrableOn_exp_neg_mul_linear ha)
+      measurableSet_Ioi hbound
+  rw [hswap] at hle
+  rw [integral_exp_neg_mul_linear_Ioi (a := a) (C := C) ha] at hle
+  have hsumeq : ∑ p ∈ primesUpTo Y, (∫ s in Set.Ioi (0 : ℝ), g p s)
+      = (∑ p ∈ primesUpTo Y, Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - a)) / a := by
+    rw [Finset.sum_div]
+    exact Finset.sum_congr rfl hterm
+  rw [hsumeq, div_le_iff₀ ha] at hle
+  have : (1 / a ^ 2 + C / a) * a = 1 / a + C := by field_simp
+  linarith [this ▸ hle]
+
+/-- **THE TRIVIAL SLICE BOUND, SHARP.**  `‖slice‖ ≤ (δ+w)^{-1} + (log 4 + 4)`, with coefficient `1`:
+absolute values everywhere, `sum_log_rpow_le` for the resulting real series. -/
+theorem norm_logWeightedSlice_le_trivial {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) {w : ℝ}
+    (hw : 0 ≤ w) :
+    ‖logWeightedSlice v X Y w‖ ≤ ((Real.log (X : ℝ))⁻¹ + w)⁻¹ + (Real.log 4 + 4) := by
+  classical
+  have hXR : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+  set a : ℝ := (Real.log (X : ℝ))⁻¹ + w with ha
+  have ha0 : 0 < a := by rw [ha]; positivity
+  have hnorm : ‖logWeightedSlice v X Y w‖
+      ≤ ∑ p ∈ primesUpTo Y, Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - a) := by
+    rw [logWeightedSlice]
+    refine le_trans (norm_sum_le _ _) ?_
+    refine Finset.sum_le_sum ?_
+    intro p hp
+    have hpp : p.Prime := (mem_primesUpTo.mp hp).1
+    have hppos : 0 < p := hpp.pos
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hlogp : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by linarith)
+    have hexp : (-(1 : ℝ) - (Real.log (X : ℝ))⁻¹ - w) = -(1 : ℝ) - a := by rw [ha]; ring
+    rw [norm_mul, RCLike.norm_conj, norm_archimedeanTwist hppos v, one_mul, Complex.norm_real,
+      Real.norm_eq_abs, hexp, abs_of_nonneg (by positivity)]
+  simpa [one_div] using le_trans hnorm (sum_log_rpow_le (Y := Y) ha0)
+
+/-- **The cap clause alone is the remaining `ζ'/ζ` input, sub-unit band.**  The `w ≥ T` half of
+`SliceBoundSmall` is a *theorem* (`sum_log_rpow_le`); only `w ≤ T` needs cancellation, because there
+the trivial bound gives `1/δ = log X` while the clause asks for `1/|v|`. -/
+def SliceCapSmall (K : ℝ) : Prop :=
+  ∀ (X Y : ℕ) (v : ℝ), 1048576 ≤ X → sliceCut X ≤ Y → 0 < |v| → |v| ≤ 1 →
+    ∀ w ∈ Set.Icc (0 : ℝ) (max |v| (Real.log (X : ℝ))⁻¹),
+      ‖logWeightedSlice v X Y w‖ ≤ (max |v| (Real.log (X : ℝ))⁻¹)⁻¹ + K
+
+/-- **The cap clause alone, moderate band.** -/
+def SliceCapModerate (K : ℝ) : Prop :=
+  ∀ (X Y : ℕ) (v : ℝ), 1048576 ≤ X → sliceCut X ≤ Y → 1 < |v| →
+    ∀ w ∈ Set.Icc (0 : ℝ) (max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹),
+      ‖logWeightedSlice v X Y w‖ ≤ (max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹)⁻¹ + K
+
+/-- **HALF OF THE SUB-UNIT INPUT IS DISCHARGED.**  `SliceBoundSmall` follows from the cap clause
+alone. -/
+theorem sliceBoundSmall_of_cap {K : ℝ} (hK : 0 ≤ K) (h : SliceCapSmall K) :
+    SliceBoundSmall (K + (Real.log 4 + 4)) := by
+  intro X Y v hX hY hv0 hv1
+  have hX2 : 2 ≤ X := by omega
+  have hC0 : (0 : ℝ) ≤ Real.log 4 + 4 := by
+    have : (0 : ℝ) < Real.log 4 := Real.log_pos (by norm_num)
+    linarith
+  refine ⟨fun w hw => ?_, fun w hw => ?_⟩
+  · have := h X Y v hX hY hv0 hv1 w hw
+    linarith
+  · have hδT : (Real.log (X : ℝ))⁻¹ ≤ max |v| (Real.log (X : ℝ))⁻¹ := le_max_right _ _
+    have hXR2 : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX2
+    have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+    have hδpos : (0 : ℝ) < (Real.log (X : ℝ))⁻¹ := by positivity
+    have hw0 : 0 < w := lt_of_lt_of_le hδpos (le_trans hδT hw.1)
+    have htriv := norm_logWeightedSlice_le_trivial hX2 v Y hw0.le
+    have hmono : ((Real.log (X : ℝ))⁻¹ + w)⁻¹ ≤ w⁻¹ := inv_anti₀ hw0 (by linarith)
+    linarith
+
+/-- **HALF OF THE MODERATE INPUT IS DISCHARGED.** -/
+theorem sliceBoundModerate_of_cap {K : ℝ} (hK : 0 ≤ K) (h : SliceCapModerate K) :
+    SliceBoundModerate (K + (Real.log 4 + 4)) := by
+  intro X Y v hX hY hv1
+  have hX2 : 2 ≤ X := by omega
+  have hC0 : (0 : ℝ) ≤ Real.log 4 + 4 := by
+    have : (0 : ℝ) < Real.log 4 := Real.log_pos (by norm_num)
+    linarith
+  refine ⟨fun w hw => ?_, fun w hw => ?_⟩
+  · have := h X Y v hX hY hv1 w hw
+    linarith
+  · have hδT : (Real.log (X : ℝ))⁻¹
+        ≤ max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹ := le_max_right _ _
+    have hXR2 : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX2
+    have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+    have hδpos : (0 : ℝ) < (Real.log (X : ℝ))⁻¹ := by positivity
+    have hw0 : 0 < w := lt_of_lt_of_le hδpos (le_trans hδT hw.1)
+    have htriv := norm_logWeightedSlice_le_trivial hX2 v Y hw0.le
+    have hmono : ((Real.log (X : ℝ))⁻¹ + w)⁻¹ ≤ w⁻¹ := inv_anti₀ hw0 (by linarith)
+    linarith
+
 end
 
 end NormalNumbers.ElliottDamped
