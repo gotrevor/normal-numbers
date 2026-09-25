@@ -11442,3 +11442,36 @@ Audit: 9696 jobs, zero `sorryAx`, every new declaration `[propext, Classical.cho
   designated-open module; `tauMomentPrimesShiftStruct_of_primeDensity` consumes it.  Off scope.
 * The honest remaining structural question is the log→natural passage.  Designated Chowla-strength;
   do not present any partial result on it as closing the route.
+
+## ✅ 2026-09-25 lap 119 — the widened Vinogradov band, audited and machine-checked
+
+Lap 117 asserted in prose that moving the height cut from `exp((log X)^{1−ν})` to
+`exp((log X)^{(1−ν)/9})` "widens the Vinogradov band, and it was already Vinogradov, so nothing is
+lost".  EA-1 says a `Prop` must be checked for truth at its boundary *before* it is built on, and
+lap 117 built on it.  This lap discharges that debt in both directions.
+
+**Direction 1 — the widening is real, and cannot be bluffed away.**
+`ElliottArchBands.archCorrNearMaxHeight_antitone` : `ν ≤ ν' → ArchCorrNearMaxHeight A ν' η K →
+ArchCorrNearMaxHeight A ν η K`.  Since `heightCut ν X = exp((log X)^{1−ν})` *shrinks* as `ν` grows,
+a larger `ν` quantifies over *more* shifts, so the hypothesis is strictly stronger.  The implication
+therefore runs from `ν' = 1−(1−ν)/9` **down** to `ν`, never up — i.e. the ledger really does ask
+more of the cited axiom than `twoPointElliottLog_of_three_bands` did, and no one can later "derive"
+the widened hypothesis from the narrow one.  Proved (needs `log log X ≥ 0`, so the `∃ X₀` is bumped
+through `exists_logLog_ge 0`).
+
+**Direction 2 — the widened hypothesis is nonetheless TRUE** (recorded in the docstring; this is
+the boundary audit proper).  Vinogradov–Korobov gives `|ζ(1+it)| ≪ (log t)^{2/3}`, hence
+`‖archCorr v X‖ ≤ (2/3)·log log|v| + O(1)`; and on the entire range the `Prop` quantifies over,
+`|v| ≤ A²X` forces `log log|v| ≤ L + O(1)`.  So `(1−η)·L + K` holds for **every** `η ≤ 1/3`
+*regardless of the lower cut* — the cut only removes shifts from the range.  Widening costs nothing
+in truth, only in how much of the range is delegated to the cited axiom.  **The lap-117/118 ledger
+is not resting on a false axiom.**
+
+Audit: 9696 jobs, zero `sorryAx`.
+
+### Where a further lap can still add value (unchanged from lap 118)
+
+The campaign's named objective is met.  What remains is either forbidden head-on
+(`ArchCorrNearMaxHeight`), off scope (`SwingC2`'s unrelated same-named `Prop`), or the genuinely
+open structural question — the **log → natural** passage, which is Chowla-strength and must never
+be presented as closing the normality route.

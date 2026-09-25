@@ -310,3 +310,6 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottPrimeDensityAP.exists_modulus_bound
 #print axioms NormalNumbers.ElliottPrimeDensityAP.exists_primeDensityAP
 #print axioms NormalNumbers.ElliottLedger.twoPointElliottLog_of_nearMaxHeight
+
+-- Lap 119: the near-max band is antitone in the cut parameter (lap 117's prose, machine-checked).
+#print axioms NormalNumbers.ElliottArchBands.archCorrNearMaxHeight_antitone

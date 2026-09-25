@@ -441,6 +441,37 @@ theorem twoPointElliottLog_of_moderate9 {b p q : ℕ} {t : ℝ} {K₀ K₁ K₂ 
   · intro A
     exact archCorrLargeShift_of_moderate9_and_nearMax hν hν1 hη₂ hmod (hmax A)
 
+/-- **The near-max band is ANTITONE in the cut parameter.**  `heightCut ν X = exp((log X)^{1−ν})`
+shrinks as `ν` grows, so a larger `ν` quantifies over *more* shifts `v`: the hypothesis gets
+strictly stronger.
+
+This makes machine-checked what lap 117's prose asserted.  `archCorrLargeShift_of_moderate9_and_nearMax`
+needs `ArchCorrNearMaxHeight` at `1 − (1−ν)/9 > ν`, i.e. **strictly more** than the unfactored
+`archCorrLargeShift_of_moderate_and_nearMax` needs at `ν` — the Vinogradov band genuinely widens,
+and this lemma shows the implication runs the other way, so the widening cannot be bluffed away by
+citing the narrower statement.
+
+**EA-1: why the widened hypothesis is nonetheless TRUE.**  Vinogradov–Korobov gives
+`|ζ(1+it)| ≪ (log t)^{2/3}`, hence `‖archCorr v X‖ ≤ (2/3)·log log|v| + O(1)` — and on the whole
+range the `Prop` quantifies over, `|v| ≤ A²X` forces `log log|v| ≤ L + O(1)`.  So the bound
+`(1−η)·L + K` holds for **every** `η ≤ 1/3` *irrespective of the lower cut*: the cut only removes
+shifts from the range.  Widening the band from `ν` to `1 − (1−ν)/9` therefore costs nothing in
+truth, only in the size of the region delegated to the cited axiom. -/
+theorem archCorrNearMaxHeight_antitone {A : ℕ} {ν ν' η K : ℝ} (hνν : ν ≤ ν')
+    (hmax : ArchCorrNearMaxHeight A ν' η K) : ArchCorrNearMaxHeight A ν η K := by
+  obtain ⟨X₂, hX₂2, hX₂⟩ := hmax
+  obtain ⟨X₃, hX₃2, hX₃⟩ := exists_logLog_ge 0
+  refine ⟨max (max X₂ X₃) 2, le_max_right _ _, ?_⟩
+  intro X hX v hcut hvA
+  have hXX₂ : X₂ ≤ X := le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hX
+  have hXX₃ : X₃ ≤ X := le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) hX
+  have hL0 : (0 : ℝ) ≤ Real.log (Real.log (X : ℝ)) := hX₃ X hXX₃
+  have hmono : heightCut ν' X ≤ heightCut ν X := by
+    rw [heightCut, heightCut]
+    refine Real.exp_le_exp.mpr (Real.exp_le_exp.mpr ?_)
+    nlinarith
+  exact hX₂ X hXX₂ v (lt_of_le_of_lt hmono hcut) hvA
+
 end
 
 end NormalNumbers.ElliottArchBands
