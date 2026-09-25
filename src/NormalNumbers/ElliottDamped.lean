@@ -1605,6 +1605,32 @@ def SliceCapSmall (K : ℝ) : Prop :=
     ∀ w ∈ Set.Icc (0 : ℝ) (max |v| (Real.log (X : ℝ))⁻¹),
       ‖logWeightedSlice v X Y w‖ ≤ (max |v| (Real.log (X : ℝ))⁻¹)⁻¹ + K
 
+/-- The cap-band cutoff for the **moderate** band, at exponent `9`.
+
+`(sliceT9 X v)⁻¹ = min ((log(|v|+16))^9) (log X)` — the `log X` side is what the *trivial* bound
+`norm_logWeightedSlice_le_trivial` delivers, the `(log(|v|+16))^9` side is what the de la Vallée
+Poussin bound `ElliottZetaModerate.exists_moderate_logDeriv_bound` delivers.  Taking the `max` of
+the two reciprocals means each branch is covered by exactly one of them; see
+`ElliottSliceCapModerate.exists_sliceCapModerate9`.
+
+The exponent is `9` rather than `1` because the in-repo zero-free region
+(`PNTPort.ZetaZeroFree9`) is `σ ≥ 1 − A/(log|t|)^9`.  It costs an absolute factor `9` in the
+`log(1/T)` main term and nothing else. -/
+def sliceT9 (X : ℕ) (v : ℝ) : ℝ :=
+  max ((Real.log (|v| + 16)) ^ (9 : ℕ))⁻¹ (Real.log (X : ℝ))⁻¹
+
+/-- **The cap clause alone, moderate band, at exponent 9 and with a multiplicative constant.**
+
+The constant `C` is *forced*: in the branch `(log(|v|+16))^9 ≤ log X` the trivial bound (which
+gives `log X`) is too weak, and the dVP bound comes with a constant `C₀ > 1` that cannot be
+removed.  It is *free* at the consumer, because the cap band has length `sliceT9 X v`, so
+`∫₀^T (C·T⁻¹ + K) = C + K·T`: a multiplicative constant in the cap band is an additive constant
+in the integral. -/
+def SliceCapModerate9 (C K : ℝ) : Prop :=
+  ∀ (X Y : ℕ) (v : ℝ), 1048576 ≤ X → sliceCut X ≤ Y → 1 < |v| →
+    ∀ w ∈ Set.Icc (0 : ℝ) (sliceT9 X v),
+      ‖logWeightedSlice v X Y w‖ ≤ C * (sliceT9 X v)⁻¹ + K
+
 /-- **The cap clause alone, moderate band.** -/
 def SliceCapModerate (K : ℝ) : Prop :=
   ∀ (X Y : ℕ) (v : ℝ), 1048576 ≤ X → sliceCut X ≤ Y → 1 < |v| →

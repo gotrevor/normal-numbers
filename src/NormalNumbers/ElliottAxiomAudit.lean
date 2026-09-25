@@ -28,6 +28,7 @@ import NormalNumbers.ElliottCaseB
 import NormalNumbers.ElliottWindowTruncate
 import NormalNumbers.ElliottTruncAssemble
 import NormalNumbers.ElliottZetaModerate
+import NormalNumbers.ElliottSliceCapModerate
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -279,3 +280,7 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottZetaModerate.exists_moderate_logDeriv_bound
 #print axioms LogDerivZetaBndUnif99
 #print axioms ZetaZeroFree9
+
+-- Lap 115: the moderate-band CAP clause.
+#print axioms NormalNumbers.ElliottSliceCapModerate.sliceT9_le_one
+#print axioms NormalNumbers.ElliottSliceCapModerate.exists_sliceCapModerate9

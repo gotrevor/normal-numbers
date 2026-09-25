@@ -11259,3 +11259,46 @@ T2 step 2, exactly as scoped at the end of the lap-113 entry above: the moderate
 it verbatim and only the analytic input changes from `exists_band_logDeriv_bound` to
 `ElliottZetaModerate.exists_moderate_logDeriv_bound`.  The two-branch split on
 `max (log(|v|+16))^{-9} (log X)⁻¹` and the forced multiplicative constant are the only new content.
+
+## ✅ 2026-09-25 lap 115 — THE MODERATE CAP CLAUSE IS A THEOREM (`exists_sliceCapModerate9`)
+
+`src/NormalNumbers/ElliottSliceCapModerate.lean`, sorry-free, in the audit surface:
+
+* `ElliottDamped.sliceT9 X v := max ((log(|v|+16))^9)⁻¹ (log X)⁻¹`, so
+  `(sliceT9 X v)⁻¹ = min ((log(|v|+16))^9) (log X)`;
+* `sliceT9_le_one` : `sliceT9 X v ≤ 1` for `X ≥ 2²⁰` (both branches are reciprocals of reals `≥ 1`);
+* `ElliottDamped.SliceCapModerate9 C K` : the cap clause with a multiplicative constant;
+* **`exists_sliceCapModerate9 : ∃ C ≥ 1, ∃ K ≥ 0, SliceCapModerate9 C K`** — with
+  `C = max C₀ 1` and `K = (1 + ppCost) + (log 4 + 4)`.
+
+**The two-branch split, which is the whole content.**
+* `(log(|v|+16))^9 ≤ log X`: the min is `(log(|v|+16))^9`, and the dVP bound
+  `ElliottZetaModerate.exists_moderate_logDeriv_bound 3` covers it, through the band-agnostic
+  `ElliottSliceCap.norm_slice_add_logDeriv_le` (`‖slice + ζ'/ζ(sliceAbscissa)‖ ≤ 1 + ppCost`).
+  `Re s = 1 + δ + w ≤ 3` because `δ ≤ 1` and `w ≤ sliceT9 ≤ 1`; `|Im s| = |v| > 1` ✓.
+* otherwise the min is `log X`, and `norm_logWeightedSlice_le_trivial` alone covers it
+  (`((log X)⁻¹ + w)⁻¹ ≤ log X`) — **no `ζ'/ζ` at all in that branch.**
+
+EA-1 junction check (recorded, do not re-litigate): at `(log(|v|+16))^9 = log X` the branches give
+`C₀·log X + (1+ppCost)` and `log X + (log 4+4)`, both `≤ C·(sliceT9)⁻¹ + K`.  No gap.
+
+Audit: 9693 jobs, zero `sorryAx`, 160 audited Elliott declarations on the trust triple.
+
+### NEXT LAP — T2 step 3: carry the constant `C` through the integration
+
+The cap clause is done; the harmonic clause was done at lap 106 with coefficient exactly `1`.  What
+remains for `ArchCorrModerate` is the *integration*, and the one interface change it forces:
+
+1. **Generalize `ElliottDamped.norm_dampedPrefix_le_of_slice_le'` (`ElliottDamped`:843) from
+   `hcap : ‖slice‖ ≤ T⁻¹ + K` to `hcap : ‖slice‖ ≤ C·T⁻¹ + K`.**  The cap band is `[0,T]`, so this
+   changes the `∫` bound by the additive constant `C` only (`∫₀^T C·T⁻¹ = C`).  This is the single
+   edit; the harmonic half of that lemma is untouched.
+2. Then `SliceBoundModerate9`/`DampedSeriesBoundModerate9` with main term
+   `log(1/sliceT9) ≤ 9·log log(|v|+16)` (from `(sliceT9)⁻¹ ≤ (log(|v|+16))^9` and
+   `Real.log_pow`), i.e. the moderate input acquires the coefficient `9`.
+3. Then `ArchCorrModerate9 (9) K`, and `archCorrLargeShift_of_moderate_and_nearMax` absorbs the
+   `9` by moving the height cut `exp((log X)^{1−ν}) → exp((log X)^{(1−ν)/9})`.
+
+After that the open-input ledger of `twoPointElliottLog_of_three_bands` drops from four to two:
+`PrimeDensityAP` (T3, cheap, `G4MertensAP.mertensRate_residueClass`) and the designated cited
+`ArchCorrNearMaxHeight` (Vinogradov).
