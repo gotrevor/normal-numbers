@@ -522,6 +522,97 @@ theorem multi_not_isAbelianAt (q : ℕ) (gs : List (ℕ × ℕ)) (hq0 : 0 < q) (
     rw [hprod, Polynomial.mul_coeff_zero, hpow, hsplit]
     exact ne_of_lt (by nlinarith [hc0, hpos])
 
+/-! ## Dropping the distinct-arms hypothesis
+
+The nested-layer construction of item 4 puts layer `m`'s gadget at EVERY position `≡ o_m`
+(mod `Q_m`), so inside one block of the common period `q` the same arm `a_m` occurs `q / Q_m`
+times, and `multi_not_isAbelianAt`'s distinct-arms hypothesis fails.  The fix: stop asking for a
+single defective residue.  At most one gadget can be separated by an interval (`lo = p+1` and
+`hi = p+a+1` pin both `p` and `a`), so the constant term of EVERY segment factor is either the
+Binomial value or exactly `3/4` of it — never more.
+-/
+
+theorem prod_coeff_zero (s I : Finset ℕ) :
+    (∏ i ∈ s, (if i ∈ I then (1 + X : ℝ[X]) else 2)).coeff 0
+      = ∏ i ∈ s, (if i ∈ I then (1 : ℝ) else 2) := by
+  classical
+  rw [← Polynomial.constantCoeff_apply, map_prod]
+  refine Finset.prod_congr rfl (fun i _ => ?_)
+  by_cases hI : i ∈ I <;> simp [hI]
+
+/-- On the separating interval the gadget's own four positions contribute a factor `4`. -/
+theorem quadSet_const_coeff (p a : ℕ) (ha : 2 ≤ a) :
+    ∏ i ∈ quadSet p a,
+        (if i ∈ Finset.Ico (p + 1) (p + a + 1) then (1 : ℝ) else 2) = 4 := by
+  rw [prod_quadSet p a ha]
+  rw [if_neg (by rw [Finset.mem_Ico]; omega), if_pos (by rw [Finset.mem_Ico]; omega),
+    if_pos (by rw [Finset.mem_Ico]; omega), if_neg (by rw [Finset.mem_Ico]; omega)]
+  norm_num
+
+/-- The plain constant term, in closed form. -/
+theorem plain_coeff_zero (q : ℕ) (I : Finset ℕ) (hI : I ⊆ range q) :
+    (∏ i ∈ range q, (if i ∈ I then (1 + X : ℝ[X]) else 2)).coeff 0
+      = (2 : ℝ) ^ q / 2 ^ I.card := by
+  rw [prod_base_eq q I hI, Polynomial.coeff_C_mul, add_comm (1 : ℝ[X]) X,
+    Polynomial.coeff_X_add_one_pow]
+  simp
+
+/-- **The segment dichotomy.**  On an interval trace the multi-gadget block law has constant term
+either the Binomial value or exactly three quarters of it. -/
+theorem blockGf_coeff_dichotomy (q : ℕ) (gs : List (ℕ × ℕ)) (lo hi : ℕ)
+    (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup)
+    (hI : Finset.Ico lo hi ⊆ range q) :
+    (blockGf q (multiG q gs) (Finset.Ico lo hi)).coeff 0
+        = (2 : ℝ) ^ q / 2 ^ (hi - lo)
+      ∨ (blockGf q (multiG q gs) (Finset.Ico lo hi)).coeff 0
+        = 3 / 4 * ((2 : ℝ) ^ q / 2 ^ (hi - lo)) := by
+  classical
+  set I := Finset.Ico lo hi with hIdef
+  have hcardI : I.card = hi - lo := by rw [hIdef, Nat.card_Ico]
+  by_cases hsep : ∀ pa ∈ gs, Unsep I pa
+  · left
+    rw [blockGf_eq_plain q gs I hI hok hgs hnd hsep, plain_coeff_zero q I hI, hcardI]
+  · right
+    push_neg at hsep
+    obtain ⟨pa, hpa, hns⟩ := hsep
+    obtain ⟨p, a⟩ := pa
+    obtain ⟨ha, hq⟩ := hok (p, a) hpa
+    simp only at ha hq
+    -- the unseparated-pair disjunction fails, so `lo = p+1` and `hi = p+a+1`
+    have hpin : lo = p + 1 ∧ hi = p + a + 1 := by
+      by_contra hc
+      exact hns (by rw [hIdef]; exact sep_of_ne ha hc)
+    obtain ⟨rfl, rfl⟩ := hpin
+    -- every other gadget is unseparated, so the list collapses to this one
+    have hsepoth : ∀ qb ∈ gs, qb ≠ (p, a) → Unsep I qb := by
+      intro qb hqb hne
+      obtain ⟨p', a'⟩ := qb
+      obtain ⟨ha', hq'⟩ := hok (p', a') hqb
+      refine sep_of_ne ha' ?_
+      intro ⟨h1, h2⟩
+      exact hne (by simp only [Prod.mk.injEq]; omega)
+    have hred := blockGf_reduce q I hI gs.length gs rfl (p, a) hpa hok hgs hnd hsepoth
+    have hsplit : (∏ i ∈ range q, (if i ∈ I then (1 + X : ℝ[X]) else 2)).coeff 0
+        = (∏ i ∈ (range q) \ quadSet p a, (if i ∈ I then (1 + X : ℝ[X]) else 2)).coeff 0 * 4 := by
+      rw [prod_coeff_zero, prod_coeff_zero, ← Finset.prod_sdiff (quadSet_subset hq),
+        hIdef, quadSet_const_coeff p a ha]
+    have hcorr : ((X : ℝ[X]) ^ (if p + a ∈ I then 1 else 0)
+          - X ^ (if p + a + 1 ∈ I then 1 else 0))
+        * (X ^ (if p ∈ I then 1 else 0) - X ^ (if (p + 1 : ℕ) ∈ I then 1 else 0))
+        = -(X - 1) ^ 2 := by
+      rw [hIdef]
+      rw [if_pos (by rw [Finset.mem_Ico]; omega), if_neg (by rw [Finset.mem_Ico]; omega),
+        if_neg (by rw [Finset.mem_Ico]; omega), if_pos (by rw [Finset.mem_Ico]; omega)]
+      ring
+    have hsq : ((-(X - 1) ^ 2 : ℝ[X])).coeff 0 = -1 := by
+      rw [show ((X - 1 : ℝ[X])) ^ 2 = X ^ 2 - 2 * X + 1 by ring]
+      simp
+    rw [hred, blockGf_single q p a ha hq I hI, Polynomial.coeff_add, hcorr,
+      Polynomial.mul_coeff_zero, hsq, plain_coeff_zero q I hI, hcardI]
+    have h1 := plain_coeff_zero q I hI
+    rw [hcardI, hsplit] at h1
+    linarith
+
 /-! ## The layout: one gadget per excluded length -/
 
 /-- The total width consumed by a list of arms, each gadget getting `a + 2` positions. -/

@@ -519,7 +519,7 @@ theorem multiG_single (r d : ℕ) : multiG q [(p, a)] r d = gadBit q p a r d := 
     · simp [h3, h4]
     · rfl
 
-theorem prod_quadSet (ha : 2 ≤ a) (f : ℕ → ℝ[X]) :
+theorem prod_quadSet {M : Type*} [CommMonoid M] (ha : 2 ≤ a) (f : ℕ → M) :
     ∏ i ∈ quadSet p a, f i = f p * (f (p + 1) * (f (p + a) * f (p + a + 1))) := by
   rw [quadSet,
     Finset.prod_insert (by simp only [Finset.mem_insert, Finset.mem_singleton]; omega),
