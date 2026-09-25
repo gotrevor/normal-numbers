@@ -72,11 +72,34 @@ so the phase in `q` is still a **single** frequency `s = t₁ c₁ + t₂ c₂`,
 `fourth_moment_twistedPrimeGraphMultiplier_le_energy` and the whole large-frequency /
 Markov / entropy stack above it are untouched.
 
-## NEXT (lap 17)
+## Lap 17 (same session): the new Fourier lemma is PROVED
 
-1. Define the `a`-dilated bilinear pairing generalising `pairBlockPairing`, and port
-   `sum_pairBlockPairing_mul_phase` (orthogonality) to it — the identity displayed above.  This is
-   the one genuinely new Fourier lemma; everything downstream consumes it as a black box.
+`src/NormalNumbers/ElliottDilatedPairing.lean` (new, zero sorry).  Write `T = α*D`.
+
+* `dilatedPairShiftEdge b c α s σ m` — the `a`-dilated edge: block positions `m` in the residue
+  class `s (mod α)`, paired with `m + σ`.  (`α = 1, s = 0` is `pairShiftEdge`.)
+* `dilatedBlockPairing T D b c t u = b̂(t + u*D) * conj ĉ̄(t)` — the two blocks are transformed at
+  frequencies differing by `u*D`.  (`u = 0` is `pairBlockPairing`.)
+* **`sum_dilatedBlockPairing_mul_phase`** —
+  `∑_{t<T} ∑_{u<α} dilatedBlockPairing T D b c t u * e_T(t σ) * e_α(-u s) = T·α·∑_m dilatedPairShiftEdge …`,
+  under `H + σ ≤ T`.  The residue-class restriction costs exactly one extra frequency variable
+  ranging over `α` (a constant) values.
+* **`phase_mul_phase_eq_single_frequency`** — with `s = q c₁`, `σ = q(c₂−c₁)`,
+  `e_T(t σ) · e_α(−u s) = phase T (t(c₂−c₁) − u D c₁) q`: a **single** frequency in the prime `q`.
+  This is the load-bearing fact: the prime sum still produces `twistedPrimeGraphMultiplier` at one
+  frequency, so `fourth_moment_twistedPrimeGraphMultiplier_le_energy` and the Markov /
+  large-frequency / entropy layers above it are untouched.
+* Supporting: `phase_add_left`, `phase_dilate` (`e_α(u m) = e_T(u D m)`), `sum_phase_dvd`.
+
+All `#print axioms` = `[propext, Classical.choice, Quot.sound]`.
+
+## NEXT (lap 18)
+
+1. Re-base the sequence block at `a*(n+1)` and prove the analogue of
+   `pairTwistedSum_sequenceBlock` for the dilated edge, i.e. identify
+   `dilatedPairShiftEdge` on `finiteSequenceBlock`-style blocks with
+   `ElliottAffineGraph.affineTwistedObservable`.  The re-basing shift `q*c₁ ≤ P|c₁|` is absorbed by
+   the existing translation error `2j/(L·M)` (now with the constant `|c₁|`).
 2. Then re-run `ElliottTwistedGraphCorrelation` / `...Bounded` with the dilated pairing and the new
    edge estimate; `DilatedCMLogElliott` should fall out directly, and
    `ElliottDilatedSlice.dilatedSliceCMLogElliottGe` becomes dead weight (leave the file, retarget

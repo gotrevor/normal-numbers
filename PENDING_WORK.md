@@ -13,7 +13,14 @@ so the common dilation `a` is a pure spectator.
 `norm_logProb_affineTwistedObservable_sub_correlation_le` gives every translated edge mean `C/q`
 with the dependency's verbatim errors and no `a`-dependence at all.
 
-Remaining crux content = **one Fourier lemma**: the `a`-dilated bilinear pairing
+**Lap 17: that Fourier lemma is PROVED** — `src/NormalNumbers/ElliottDilatedPairing.lean`,
+`sum_dilatedBlockPairing_mul_phase` + `phase_mul_phase_eq_single_frequency`.  The residue-class
+restriction costs one extra frequency variable `u < a`, and the two phases still combine to a
+SINGLE frequency in the prime `q`, so the fourth-moment / entropy stack is untouched.
+Next: re-base `finiteSequenceBlock` at `a*(n+1)` and identify the dilated edge with
+`ElliottAffineGraph.affineTwistedObservable`.
+
+Superseded description of that lemma: the `a`-dilated bilinear pairing
 `sum_j b(a j + q c1) c(a j + q c2) e(t j/T) = sum_{t1,t2 : a(t1+t2) = -t} b^(t1) c^(t2) e((t1 c1 + t2 c2) q/T)`,
 generalising `ElliottTwistedGraph.pairBlockPairing` / `sum_pairBlockPairing_mul_phase`.  The phase
 in `q` is still a single frequency, so the fourth-moment / large-frequency / entropy stack above
