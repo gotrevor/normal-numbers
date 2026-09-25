@@ -46,7 +46,26 @@ equation returns `A(N) ≤ C'·L_N^{u'}`, `u' = u + ε(1+u) + …`, which is `< 
 because `u < 1`.  **Sharp exponent, no Mertens' 2nd** — the repo's `primeRecipSum_le` has constant
 12, which would have shrunk the discharged regime to `‖z−1‖ < 1/12`.
 
-**STATUS 2026-09-25 lap 54: brick 1 and brick 2 are LANDED** (`TwoPointDelangeScale.lean`,
+**STATUS 2026-09-25 lap 55: ALL THREE BRICKS LANDED — the 🟡 `DelangeMean` is DISCHARGED on
+`‖phase t − 1‖ < 1`** (`delangeMean_of_norm_lt_one`, trust triple).  Chain:
+`exists_delangeA_le_rpow` (brick 2) → `exists_norm_delangeAbel_le_rpow` (brick 3) →
+`delangeKernelMean_of_norm_lt_one` → `delangeMean_of_kernelMean` → `DelangeMean t`.
+Sanity-checked against Delange's own asymptotic: the route yields `‖S(N)‖ ≲ (log N)^{ϑ−1}` with
+`ϑ` just above `max(Re z, u')`, i.e. `(log N)^{Re z − 1 + o(1)}` — the right exponent.
+
+**NEXT (the payoff): wire the discharge into the `ConjC1` consumers.**  `conjC1_of_delange_*`
+takes `DelangeMean (m/b)` as a hypothesis; for `‖m/b‖_{ℝ/ℤ} < 1/6` that hypothesis is now a
+theorem, so those reductions lose it.  Needed: `‖phase t − 1‖ = 2|sin πt|` (or a sufficient
+numeric criterion) to turn `‖m/b‖ < 1/6` into `‖phase (m/b) − 1‖ < 1`.
+
+**BEYOND (the honest limit of the elementary method).**  `u = ‖z−1‖ ≥ 1` breaks BOTH halves:
+`DelangeKernelTail` is false there (`Σ μ²(n)u^{ω(n)} ≍ N` at `u = 1`) and brick 2 gives
+`u' ≥ 1`, so `A(N)` is no longer `o(log N)`.  That is exactly the classical Wirsing/Levin–Fainleib
+↔ Halász boundary.  Two routes past it, in order of cheapness: (i) replace
+`delangeMean_of_kernel`'s crude `⌊N/n⌋` defect bound by a Dirichlet-hyperbola split at `√N`, which
+may not need `Σ‖h‖ = o(N)` at all; (ii) Halász over `PNTPort.ZetaBounds`.
+
+**(superseded) STATUS lap 54: brick 1 and brick 2 are LANDED** (`TwoPointDelangeScale.lean`,
 sorry-free, trust triple).  Brick 2 is `exists_delangeA_le_rpow`:
 `‖z−1‖ < 1 → ∃ C u' N₀, 0 < C ∧ 0 ≤ u' ∧ u' < 1 ∧ 3 ≤ N₀ ∧ ∀ N ≥ N₀, A(N) ≤ C·(log N)^{u'}`,
 with `u' = ‖z−1‖ + (1−‖z−1‖²)/4` and NO Mertens input.  Only brick 3 remains.

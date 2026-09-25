@@ -360,4 +360,266 @@ theorem exists_delangeA_le_rpow {z : ℂ} (hu : ‖z - 1‖ < 1) :
   have hrp : (0 : ℝ) ≤ (Real.log (N : ℝ)) ^ (c - 1) := Real.rpow_nonneg (by linarith) _
   nlinarith [hcancel, hrp]
 
+
+/-! ### Brick 3: the discrete integrating factor
+
+The continuous argument multiplies `Abel` by `(log x)^{-z}` and reads off
+`‖Abel(N)‖ ≲ (log N)^{Re z} + (log N)^{u'}`.  Formalising *that* needs a second-order Taylor bound
+on `Complex.cpow`.  It is cheaper, and gives everything the closure needs, to fix ANY exponent
+`θ` strictly between `max(Re z, u')` and `1` and prove `‖Abel(N)‖ ≤ C·(log N)^θ` by induction.
+Then only a REAL `rpow` appears, and the two inputs are
+
+* `‖1 + z·s‖ ≤ 1 + s·Re z + s²/2`  — the sign `Re z < 1` enters here, and nowhere else;
+* `(1+s)^θ ≥ 1 + θs − s²`  — enough slack to absorb both `s²` terms.
+
+The step then needs exactly `19·A(N) + (3/2)·C·L^θ·s ≤ C·L^θ·(θ − Re z)`: the first summand from
+brick 2 by taking `C` large, the second because `s_N ≤ 1/N → 0`. -/
+
+/-- `‖1 + z·s‖ ≤ 1 + s·Re z + s²/2` for `‖z‖ = 1`, `s ≥ 0`.  An exact norm-square plus
+`(s·Re z + s²/2)² ≥ 0`. -/
+lemma norm_one_add_mul_ofReal_le {z : ℂ} (hz : ‖z‖ = 1) {s : ℝ} (hs : 0 ≤ s) :
+    ‖1 + z * (s : ℂ)‖ ≤ 1 + s * z.re + s ^ 2 / 2 := by
+  have hn : z.re * z.re + z.im * z.im = 1 := by
+    have h := Complex.normSq_eq_norm_sq z
+    rw [hz] at h
+    simp only [Complex.normSq_apply] at h
+    nlinarith [h]
+  have hreg : (-1 : ℝ) ≤ z.re := by nlinarith [hn, mul_self_nonneg z.im]
+  have hsq : ‖1 + z * (s : ℂ)‖ ^ 2 = 1 + 2 * s * z.re + s ^ 2 := by
+    rw [← Complex.normSq_eq_norm_sq]
+    simp only [Complex.normSq_apply, Complex.add_re, Complex.add_im, Complex.mul_re,
+      Complex.mul_im, Complex.one_re, Complex.one_im, Complex.ofReal_re, Complex.ofReal_im]
+    ring_nf
+    nlinarith [hn]
+  have hB : (0 : ℝ) ≤ 1 + s * z.re + s ^ 2 / 2 := by
+    nlinarith [mul_nonneg hs (show (0:ℝ) ≤ z.re + 1 by linarith), sq_nonneg (s - 1)]
+  have hle : ‖1 + z * (s : ℂ)‖ ^ 2 ≤ (1 + s * z.re + s ^ 2 / 2) ^ 2 := by
+    rw [hsq]
+    nlinarith [sq_nonneg (s * z.re + s ^ 2 / 2)]
+  have := Real.sqrt_le_sqrt hle
+  rwa [Real.sqrt_sq (norm_nonneg _), Real.sqrt_sq hB] at this
+
+/-- `(1+s)^θ ≥ 1 + θs − s²` for `s ≥ 0`, `0 ≤ θ ≤ 1`.  `exp x ≥ 1 + x` on top of
+`log(1+s) ≥ s − s²`. -/
+lemma one_add_rpow_ge {s θ : ℝ} (hs : 0 ≤ s) (hθ0 : 0 ≤ θ) (hθ1 : θ ≤ 1) :
+    1 + θ * s - s ^ 2 ≤ (1 + s) ^ θ := by
+  have hpos : (0 : ℝ) < 1 + s := by linarith
+  rw [Real.rpow_def_of_pos hpos]
+  have h1 := Real.add_one_le_exp (Real.log (1 + s) * θ)
+  have h2 := log_one_add_ge_sub_sq hs
+  have hA : θ * (s - s ^ 2) ≤ θ * Real.log (1 + s) := mul_le_mul_of_nonneg_left h2 hθ0
+  have hB : (0 : ℝ) ≤ (1 - θ) * s ^ 2 := mul_nonneg (by linarith) (sq_nonneg s)
+  nlinarith [h1, hA, hB]
+
+/-- **BRICK 3.**  `‖Abel(N)‖ ≤ C·(log N)^θ` for some `θ < 1`.  The exponent is not sharp — the
+integrating factor gives `max(Re z, u')` — and does not need to be. -/
+theorem exists_norm_delangeAbel_le_rpow {z : ℂ} (hz : ‖z‖ = 1) (hzne : z ≠ 1)
+    (hu1 : ‖z - 1‖ < 1) :
+    ∃ C θ : ℝ, ∃ N₀ : ℕ, 0 < C ∧ 0 ≤ θ ∧ θ < 1 ∧ 3 ≤ N₀ ∧
+      ∀ N, N₀ ≤ N → ‖delangeAbel z N‖ ≤ C * (Real.log (N : ℝ)) ^ θ := by
+  obtain ⟨C₁, u', M₀, hC1pos, hu'0, hu'1, hM03, hA⟩ := exists_delangeA_le_rpow hu1
+  have hre := re_lt_one_of_norm_one z hz hzne
+  have hn : z.re * z.re + z.im * z.im = 1 := by
+    have h := Complex.normSq_eq_norm_sq z
+    rw [hz] at h
+    simp only [Complex.normSq_apply] at h
+    nlinarith [h]
+  have hreg : (-1 : ℝ) ≤ z.re := by nlinarith [hn, mul_self_nonneg z.im]
+  -- the exponent, strictly between `max (Re z) u'` and `1`
+  obtain ⟨θ, hθdef⟩ : ∃ θ : ℝ, θ = (max z.re u' + 1) / 2 := ⟨_, rfl⟩
+  have hθu' : u' < θ := by rw [hθdef]; have := le_max_right z.re u'; linarith
+  have hθre : z.re < θ := by rw [hθdef]; have := le_max_left z.re u'; linarith
+  have hθ1 : θ < 1 := by
+    rw [hθdef]
+    have : max z.re u' < 1 := max_lt hre hu'1
+    linarith
+  have hθ0 : 0 ≤ θ := by rw [hθdef]; have := le_max_right z.re u'; linarith
+  obtain ⟨κ, hκdef⟩ : ∃ κ : ℝ, κ = θ - z.re := ⟨_, rfl⟩
+  have hκ : 0 < κ := by rw [hκdef]; linarith
+  have hθeq : θ = z.re + κ := by rw [hκdef]; ring
+  obtain ⟨N₀, hN0def⟩ : ∃ N₀ : ℕ, N₀ = max M₀ (max 3 ⌈(3 / κ : ℝ)⌉₊) := ⟨_, rfl⟩
+  have h03 : 3 ≤ N₀ := by
+    rw [hN0def]; exact le_trans (le_max_left 3 _) (le_max_right M₀ _)
+  have hM0N0 : M₀ ≤ N₀ := by rw [hN0def]; exact le_max_left _ _
+  have hs3 : ∀ m, N₀ ≤ m → logRatioStep m ≤ κ / 3 := by
+    intro m hm
+    have hm3 : 3 ≤ m := le_trans h03 hm
+    have hceil : (3 / κ : ℝ) ≤ (m : ℝ) := by
+      refine le_trans (Nat.le_ceil _) ?_
+      have hc : ⌈(3 / κ : ℝ)⌉₊ ≤ m := by
+        refine le_trans ?_ hm
+        rw [hN0def]
+        exact le_trans (le_max_right 3 _) (le_max_right M₀ _)
+      exact_mod_cast hc
+    have hκ3 : (0 : ℝ) < 3 / κ := by positivity
+    calc logRatioStep m ≤ 1 / (m : ℝ) := logRatioStep_le_inv hm3
+      _ ≤ 1 / (3 / κ) := one_div_le_one_div_of_le hκ3 hceil
+      _ = κ / 3 := by field_simp
+  -- the constant
+  obtain ⟨C, hCdef⟩ : ∃ C : ℝ, C = 38 * C₁ / κ + ‖delangeAbel z N₀‖ + 1 := ⟨_, rfl⟩
+  have hdivnn : (0 : ℝ) ≤ 38 * C₁ / κ := by positivity
+  have hCpos : 0 < C := by rw [hCdef]; linarith [norm_nonneg (delangeAbel z N₀)]
+  have hCA : ‖delangeAbel z N₀‖ ≤ C := by rw [hCdef]; linarith
+  have hCκ : 38 * C₁ ≤ C * κ := by
+    have hbase : 38 * C₁ / κ ≤ C := by rw [hCdef]; linarith [norm_nonneg (delangeAbel z N₀)]
+    calc 38 * C₁ = (38 * C₁ / κ) * κ := by field_simp
+      _ ≤ C * κ := mul_le_mul_of_nonneg_right hbase hκ.le
+  refine ⟨C, θ, N₀, hCpos, hθ0, hθ1, h03, ?_⟩
+  intro N hN
+  induction N, hN using Nat.le_induction with
+  | base =>
+      have hL := one_le_log_cast h03
+      have hone : (1 : ℝ) ≤ (Real.log (N₀ : ℝ)) ^ θ := by
+        calc (1 : ℝ) = (1 : ℝ) ^ θ := (Real.one_rpow θ).symm
+          _ ≤ (Real.log (N₀ : ℝ)) ^ θ := Real.rpow_le_rpow (by norm_num) hL hθ0
+      nlinarith [hCA, hone, hCpos]
+  | succ N hN ih =>
+      have hm3 : 3 ≤ N := le_trans h03 hN
+      have hm1 : 1 ≤ N := by omega
+      have hs0 := logRatioStep_nonneg hm3
+      have hL := one_le_log_cast hm3
+      have hLpos : (0 : ℝ) < Real.log (N : ℝ) := by linarith
+      have hPnn : (0 : ℝ) ≤ (Real.log (N : ℝ)) ^ θ := Real.rpow_nonneg hLpos.le _
+      -- the recursion
+      have hsplit : delangeAbel z (N + 1)
+          = delangeAbel z N
+            + ((Real.log ((N : ℝ) + 1) - Real.log (N : ℝ) : ℝ) : ℂ) * delangeS z N := by
+        rw [delangeAbel, delangeAbel, Finset.sum_Ico_succ_top hm1]
+      have hdelta : ((Real.log ((N : ℝ) + 1) - Real.log (N : ℝ) : ℝ) : ℂ)
+          = ((logRatioStep N : ℝ) : ℂ) * ((Real.log (N : ℝ) : ℝ) : ℂ) := by
+        rw [← Complex.ofReal_mul]
+        congr 1
+        rw [logRatioStep]
+        field_simp
+      have hrec : delangeAbel z (N + 1)
+          = delangeAbel z N * (1 + z * ((logRatioStep N : ℝ) : ℂ))
+            + ((logRatioStep N : ℝ) : ℂ)
+              * (delangeS z N * ((Real.log (N : ℝ) : ℝ) : ℂ) - z * delangeAbel z N) := by
+        rw [hsplit, hdelta]; ring
+      have hsc := delange_scale_equation hu1.le N
+      have hfac : (0 : ℝ) ≤ 1 + logRatioStep N * z.re + (logRatioStep N) ^ 2 / 2 := by
+        nlinarith [mul_nonneg hs0 (show (0:ℝ) ≤ z.re + 1 by linarith),
+          sq_nonneg (logRatioStep N - 1)]
+      have hnorm : ‖delangeAbel z (N + 1)‖
+          ≤ ‖delangeAbel z N‖ * (1 + logRatioStep N * z.re + (logRatioStep N) ^ 2 / 2)
+            + logRatioStep N * (19 * delangeA z N) := by
+        rw [hrec]
+        refine le_trans (norm_add_le _ _) ?_
+        rw [norm_mul, norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hs0]
+        exact add_le_add (mul_le_mul_of_nonneg_left (norm_one_add_mul_ofReal_le hz hs0)
+          (norm_nonneg _)) (mul_le_mul_of_nonneg_left hsc hs0)
+      -- the scalar step inequality
+      have hscalar : C * (1 + logRatioStep N * z.re + (logRatioStep N) ^ 2 / 2)
+            + logRatioStep N * (19 * C₁)
+          ≤ C * (1 + θ * logRatioStep N - (logRatioStep N) ^ 2) := by
+        rw [hθeq]
+        nlinarith [mul_nonneg hs0 (show (0:ℝ) ≤ C * κ / 2 - 19 * C₁ by linarith),
+          mul_nonneg (mul_nonneg hCpos.le hs0)
+            (show (0:ℝ) ≤ κ / 3 - logRatioStep N by linarith [hs3 N hN])]
+      have hAN : delangeA z N ≤ C₁ * (Real.log (N : ℝ)) ^ θ := by
+        refine le_trans (hA N (le_trans hM0N0 hN)) ?_
+        exact mul_le_mul_of_nonneg_left
+          (Real.rpow_le_rpow_of_exponent_le hL hθu'.le) hC1pos.le
+      have hcast : ((N + 1 : ℕ) : ℝ) = (N : ℝ) + 1 := by push_cast; ring
+      rw [hcast]
+      have hLsucc : (Real.log ((N : ℝ) + 1)) ^ θ
+          = (Real.log (N : ℝ)) ^ θ * (1 + logRatioStep N) ^ θ := by
+        rw [log_succ_eq_mul hm3, Real.mul_rpow hLpos.le (by linarith)]
+      rw [hLsucc]
+      have hber := one_add_rpow_ge hs0 hθ0 hθ1.le
+      calc ‖delangeAbel z (N + 1)‖
+          ≤ ‖delangeAbel z N‖ * (1 + logRatioStep N * z.re + (logRatioStep N) ^ 2 / 2)
+            + logRatioStep N * (19 * delangeA z N) := hnorm
+        _ ≤ (C * (Real.log (N : ℝ)) ^ θ)
+              * (1 + logRatioStep N * z.re + (logRatioStep N) ^ 2 / 2)
+            + logRatioStep N * (19 * (C₁ * (Real.log (N : ℝ)) ^ θ)) := by
+              refine add_le_add (mul_le_mul_of_nonneg_right ih hfac) ?_
+              exact mul_le_mul_of_nonneg_left (by linarith) hs0
+        _ ≤ (C * (Real.log (N : ℝ)) ^ θ)
+              * (1 + θ * logRatioStep N - (logRatioStep N) ^ 2) := by
+              nlinarith [mul_le_mul_of_nonneg_left hscalar hPnn]
+        _ ≤ (C * (Real.log (N : ℝ)) ^ θ) * ((1 + logRatioStep N) ^ θ) := by
+              exact mul_le_mul_of_nonneg_left hber (mul_nonneg hCpos.le hPnn)
+        _ = C * ((Real.log (N : ℝ)) ^ θ * (1 + logRatioStep N) ^ θ) := by ring
+
+
+/-! ### The closure: `DelangeKernelMean` on `0 < ‖z−1‖ < 1` -/
+
+lemma rpow_sub_one_mul {L : ℝ} (hL : 0 < L) (θ : ℝ) : L ^ θ = L ^ (θ - 1) * L := by
+  have h := (Real.rpow_add hL (θ - 1) 1).symm
+  rw [Real.rpow_one] at h
+  rw [h]
+  congr 1
+  ring
+
+/-- **THE DISCHARGE.**  `Σ_{n≤N} h_z(n)/n → 0` for every `z` on the unit circle with
+`z ≠ 1` and `‖z−1‖ < 1`, unconditionally.  Mechanism: the scale equation
+`‖S(N)·log N − z·Abel(N)‖ ≤ 19A(N)` with `‖Abel(N)‖ ≤ C(log N)^θ` (brick 3) and
+`A(N) ≤ C₁(log N)^{u'}` (brick 2) gives `‖S(N)‖ ≤ (C+19C₁)(log N)^{ϑ−1}` with `ϑ < 1`. -/
+theorem delangeKernelMean_of_norm_lt_one {z : ℂ} (hz : ‖z‖ = 1) (hzne : z ≠ 1)
+    (hu1 : ‖z - 1‖ < 1) : DelangeKernelMean z := by
+  obtain ⟨C₁, u', M₀, hC1pos, hu'0, hu'1, hM03, hA⟩ := exists_delangeA_le_rpow hu1
+  obtain ⟨C, θ, N₁, hCpos, hθ0, hθ1, hN13, hAbel⟩ :=
+    exists_norm_delangeAbel_le_rpow hz hzne hu1
+  obtain ⟨ϑ, hϑdef⟩ : ∃ ϑ : ℝ, ϑ = max θ u' := ⟨_, rfl⟩
+  have hϑ0 : 0 ≤ ϑ := by rw [hϑdef]; exact le_trans hθ0 (le_max_left _ _)
+  have hϑ1 : ϑ < 1 := by rw [hϑdef]; exact max_lt hθ1 hu'1
+  have hθϑ : θ ≤ ϑ := by rw [hϑdef]; exact le_max_left _ _
+  have hu'ϑ : u' ≤ ϑ := by rw [hϑdef]; exact le_max_right _ _
+  obtain ⟨N₂, hN2def⟩ : ∃ N₂ : ℕ, N₂ = max M₀ N₁ := ⟨_, rfl⟩
+  have hN23 : 3 ≤ N₂ := by rw [hN2def]; exact le_trans hM03 (le_max_left _ _)
+  -- the majorant
+  have hlim : Tendsto (fun N : ℕ => (C + 19 * C₁) * (Real.log (N : ℝ)) ^ (ϑ - 1)) atTop (𝓝 0) := by
+    have h1 : Tendsto (fun x : ℝ => x ^ (ϑ - 1)) atTop (𝓝 0) := by
+      have := tendsto_rpow_neg_atTop (show (0 : ℝ) < 1 - ϑ by linarith)
+      simpa [neg_sub] using this
+    have h2 : Tendsto (fun N : ℕ => Real.log (N : ℝ)) atTop atTop :=
+      Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+    simpa using (h1.comp h2).const_mul (C + 19 * C₁)
+  show Tendsto (fun N : ℕ => delangeS z N) atTop (𝓝 0)
+  rw [tendsto_zero_iff_norm_tendsto_zero]
+  refine squeeze_zero' (Filter.Eventually.of_forall fun N => norm_nonneg _) ?_ hlim
+  filter_upwards [Filter.eventually_ge_atTop N₂] with N hN
+  have hM0N : M₀ ≤ N := le_trans (by rw [hN2def]; exact le_max_left _ _) hN
+  have hN1N : N₁ ≤ N := le_trans (by rw [hN2def]; exact le_max_right _ _) hN
+  have hN3 : 3 ≤ N := le_trans hN23 hN
+  have hL := one_le_log_cast hN3
+  have hLpos : (0 : ℝ) < Real.log (N : ℝ) := by linarith
+  -- from the scale equation
+  have hsc := delange_scale_equation hu1.le N
+  have hsplit : ‖delangeS z N * ((Real.log (N : ℝ) : ℝ) : ℂ)‖
+      ≤ ‖z * delangeAbel z N‖ + 19 * delangeA z N := by
+    have h := norm_sub_norm_le (delangeS z N * ((Real.log (N : ℝ) : ℝ) : ℂ))
+      (z * delangeAbel z N)
+    linarith
+  have hlhs : ‖delangeS z N * ((Real.log (N : ℝ) : ℝ) : ℂ)‖
+      = ‖delangeS z N‖ * Real.log (N : ℝ) := by
+    rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hLpos.le]
+  have hzabel : ‖z * delangeAbel z N‖ = ‖delangeAbel z N‖ := by
+    rw [norm_mul, hz, one_mul]
+  -- the two rpow majorisations, at the common exponent `ϑ`
+  have h1 : ‖delangeAbel z N‖ ≤ C * (Real.log (N : ℝ)) ^ ϑ :=
+    le_trans (hAbel N hN1N)
+      (mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le hL hθϑ) hCpos.le)
+  have h2 : delangeA z N ≤ C₁ * (Real.log (N : ℝ)) ^ ϑ :=
+    le_trans (hA N hM0N)
+      (mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le hL hu'ϑ) hC1pos.le)
+  have hmain : ‖delangeS z N‖ * Real.log (N : ℝ)
+      ≤ ((C + 19 * C₁) * (Real.log (N : ℝ)) ^ (ϑ - 1)) * Real.log (N : ℝ) := by
+    have hstep : ‖delangeS z N‖ * Real.log (N : ℝ) ≤ (C + 19 * C₁) * (Real.log (N : ℝ)) ^ ϑ := by
+      rw [← hlhs]
+      rw [hzabel] at hsplit
+      linarith
+    calc ‖delangeS z N‖ * Real.log (N : ℝ) ≤ (C + 19 * C₁) * (Real.log (N : ℝ)) ^ ϑ := hstep
+      _ = ((C + 19 * C₁) * (Real.log (N : ℝ)) ^ (ϑ - 1)) * Real.log (N : ℝ) := by
+          rw [rpow_sub_one_mul hLpos ϑ]; ring
+  exact le_of_mul_le_mul_right hmain hLpos
+
+/-- **`DelangeMean t` — the 🟡 axiom, DISCHARGED on `‖phase t − 1‖ < 1`.**  The cited hypothesis
+of `SwingC1Delange.lean` is a theorem in this regime, with no analytic number theory: two exact
+hyperbola identities, Mertens' FIRST theorem, and elementary summation. -/
+theorem delangeMean_of_norm_lt_one (t : ℝ) (htne : phase t ≠ 1) (ht : ‖phase t - 1‖ < 1) :
+    DelangeMean t :=
+  delangeMean_of_kernelMean t ht (delangeKernelMean_of_norm_lt_one (norm_phase t) htne ht)
+
 end NormalNumbers.CastingOut
