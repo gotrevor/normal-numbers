@@ -85,6 +85,35 @@ and the harmonic-weight comparison `1/(qk+n₀) = (1/q)(1/k) + O(1/(qk²))`, who
 absolute constant times `∑_d ‖u d‖/d ≤ e²`.  Deliberately not stated as a lemma yet: the statement
 needs the restricted correlation, which is introduced at assembly.
 
+## Lap 59 (2026-09-25) — item 5 CLOSED: Case A in the THIN window
+
+New module `src/NormalNumbers/ElliottCaseAThin.lean`, **zero sorry, trust triple**, in the audit
+surface.  Directive item 5 done; `exists_caseA_threshold`'s regime hypothesis is now superseded.
+
+* `sum_window_le_transfer_ge` — the affine transfer landing in `[L, Y]` for **any** `L` that
+  lower-bounds the affine form on the window.  `ElliottCaseA.sum_window_le_transfer` is the `L = 1`
+  case; keeping `L` is the whole point.
+* `le_integerAffine_of_mem_window` — the concrete `L = a₁(⌊X/W⌋+1) − |b₁|`, from `X < Wn`.
+* **`norm_elliottLogCorrelation_le_caseA_thin`** — `‖corr‖ ≤ (a₁+|b₁|)·(⌊log₂(Y/L)⌋+1)·2·hallConst·
+  e^{1+B}·e^{−Σ_L} + |b₁|`, with **no hypothesis relating `W` to `X`**.
+
+**Why this was needed.**  The thick-window bound pays `log Y ≈ log X`, which swamps the target
+`ε log W` once `W` is small.  Keeping the range replaces `log Y` by the dyadic block count
+`⌊log₂(Y/L)⌋+1 ≈ log₂ W` — the right order.  Hall's inequality
+(`ElliottHall.sum_Icc_dyadic_le`, lap 53) is exactly what supplies a per-block bound strong enough
+for this; the crude Euler product cannot.
+
+One trap worth recording: `L` is defined by *nat* subtraction `a₁(⌊X/W⌋+1) − |b₁|`, so when
+`|b₁|` dominates it truncates to `0` and the cast inequality `↑(M−b) ≤ ↑M − ↑b` is **false**.
+The proof case-splits; in the truncated branch the bound is just `0 ≤ a₁n+b₁`, i.e. positivity.
+
+### NEXT — assembly of `nonasymptotic_of_affineCM`
+
+All five directive sub-steps of leaf 2 now have their load-bearing content proved:
+1 (cover, lap 54) · 2 (transfer, lap 55) · 3 (squarefull, laps 56–57) ·
+4 (progression arithmetic, lap 58) · 5 (Case A thin, lap 59).
+Open: the step-4 analytic reindexing, and the assembly itself.
+
 ### NEXT — item 5 (Case A thin window), then assembly
 
 ### NEXT — items 4, 5

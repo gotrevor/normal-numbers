@@ -2,6 +2,7 @@ import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
 import NormalNumbers.ElliottProgression
+import NormalNumbers.ElliottCaseAThin
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -55,6 +56,11 @@ edits; see the fidelity note in `STATUS.md`.
 -- leaf 2, Case B step 4: the progression substitution (arithmetic core)
 #print axioms NormalNumbers.ElliottProgression.integerAffine_progression
 #print axioms NormalNumbers.ElliottProgression.det_progression
+
+-- leaf 2, step 5: Case A in the THIN window (no regime hypothesis)
+#print axioms NormalNumbers.ElliottCaseAThin.sum_window_le_transfer_ge
+#print axioms NormalNumbers.ElliottCaseAThin.le_integerAffine_of_mem_window
+#print axioms NormalNumbers.ElliottCaseAThin.norm_elliottLogCorrelation_le_caseA_thin
 
 -- the dependency's proved special case
 #print axioms Erdos67b.unitCircleLogElliott
