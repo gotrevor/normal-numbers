@@ -91,3 +91,38 @@ pre-commit hook) does NOT typecheck any `C3Mrt*` module.  **Always also run
    `≍ (1 + log N)·(bridgeTail z₀ Y + bridgeTail z₁ Y)`.
 2. Then combine with `inner_sum_linear_forms` (CRT), `weight_transfer`, and
    `rung_two_of_named_inputs` to get the full `D = 2` correlation bound.
+
+## Lap 24 — the joint mass with BOTH gains (a quantitative trap, found and avoided)
+
+The naive iteration of `offset_truncation_bound_of_mass` **does not work**, and the reason is
+quantitative, not structural.  The second expansion's error is
+`∑_{d ≤ Y} ‖sqfW z₀ d‖ · (mass on the (d,e) progression) · ∑_{e > Y} ‖sqfW z₁ e‖`.  With the
+one-condition mass `B/e` this is `(∑_{d ≤ Y} ‖sqfW z₀ d‖) · B · bridgeTail z₁ Y`, and since
+`∑_{d ≤ Y} ‖sqfW z₀ d‖ ≍ Y^{1/2}` while `bridgeTail z₁ Y ≍ Y^{-1/2}`, the product is `O(1)` —
+an error of the same order `log N` as the main term.  **The truncation would buy nothing.**
+Only the weighted sum `∑_d ‖sqfW z₀ d‖/d`, which converges, is small enough, so the mass bound
+must carry the gain of BOTH divisibility conditions.
+
+Two new sorry-free, trust-triple results supply it:
+
+* **`class_harmonic_mass`** — any subset of `range M` inside one class `a (mod L)` has harmonic
+  mass `≤ (a+1)⁻¹ + (1 + log M)/L`.  Split at `n/L = 0` (the class's first element, `S0 ⊆ {a}`)
+  and inject `n ↦ n/L` into `Icc 1 (M/L)` on the rest.
+* **`joint_progression_harmonic_mass`** — for `d ∣ n+1`, `e ∣ n+2` the mass is
+  `≤ 2/e + (1 + log N)/(d·e)`.  The joint condition IS one class mod `de`
+  (`exists_joint_class`), giving the `1/(de)` main term; the head `(a+1)⁻¹` is NOT `O(1/(de))`
+  (`a` can be `≍ d`), but `e ∣ a + 2` gives `(a+1)⁻¹ ≤ 2/e`, and that term carries no `log N`,
+  so it contributes only an `N`-independent constant — absorbed by the quantifier order
+  `ε → Y → A → i₀ → N → ∞`, exactly as in laps 13 and 16.
+  Non-coprime `d, e` are free: the set is empty (`joint_progression_eq_empty_of_not_coprime`).
+
+So the two-shift truncation error will be
+`(1 + log N)·bridgeTail z₀ Y + (1 + log N)·M₀·bridgeTail z₁ Y + C(Y)`,
+`M₀ = ∑_d ‖sqfW z₀ d‖/d < ∞` (lap 7), `C(Y)` an `N`-independent constant.  That IS `o(log N)`
+after `Y` is chosen from `ε`.
+
+### NEXT
+Assemble `two_shift_truncation_bound` from `offset_truncation_bound_of_mass` (twice) with the
+mass hypotheses from `progression_harmonic_mass` (outer, `c = 1`) and
+`joint_progression_harmonic_mass` (inner, `c = 2`).  The inner application must be summed
+against `‖sqfW z₀ d‖` over `d ≤ Y`, which is where the `1/(de)` is spent.

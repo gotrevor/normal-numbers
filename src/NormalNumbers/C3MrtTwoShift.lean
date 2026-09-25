@@ -197,6 +197,150 @@ theorem progression_harmonic_mass {F : ℕ → ℂ} (hF : ∀ n : ℕ, ‖F n‖
         mul_le_mul_of_nonneg_left hharm (by positivity)
     _ = (c : ℝ) * (1 + Real.log (M + c)) / (e : ℝ) := by ring
 
+
+/-! ## The harmonic mass on a residue class, with the FULL modulus gain
+
+`progression_harmonic_mass` gives the gain `1/e` of one divisibility condition.  The two-shift
+error needs the gain of BOTH conditions at once, `1/(de)`, because the outer sum over `d ≤ Y`
+carries no decay of its own: `∑_{d ≤ Y} ‖sqfW z₀ d‖ ≍ Y^{1/2}` while `bridgeTail z₁ Y ≍
+Y^{-1/2}`, so their product is `O(1)` — not `o(1)`.  Only the weighted sum
+`∑_d ‖sqfW z₀ d‖/d`, which converges, is small enough.
+
+The joint condition `d ∣ n+1 ∧ e ∣ n+2` is a single class `a (mod de)` (`exists_joint_class`),
+so the mass is `(a+1)⁻¹ + (1 + log M)/(de)`: the `j = 0` term of the class, plus the harmonic
+tail with the full modulus.  The head is NOT `O(1/(de))` — `a` can be as small as `≍ d` — but
+`a + 2 ≥ e` bounds it by `2/e`, and `2/e` summed against `‖sqfW z₁ e‖` over `e > Y` is an
+`N`-independent constant, which the quantifier order `ε → Y → A → i₀ → N → ∞` absorbs.
+-/
+
+open scoped Classical in
+/-- **Harmonic mass on a residue class.**  Any subset of `range M` lying in one class
+`a (mod L)` has harmonic mass at most `(a+1)⁻¹ + (1 + log M)/L`: the class's first element, plus
+the harmonic tail at the full modulus. -/
+theorem class_harmonic_mass {F : ℕ → ℂ} (hF : ∀ n : ℕ, ‖F n‖ ≤ ((n : ℝ) + 1)⁻¹)
+    {S : Finset ℕ} {M : ℕ} (hS : ∀ n ∈ S, n < M) {L a : ℕ} (hL : 0 < L)
+    (hcl : ∀ n ∈ S, n % L = a) :
+    ∑ n ∈ S, ‖F n‖ ≤ ((a : ℝ) + 1)⁻¹ + (1 + Real.log M) / (L : ℝ) := by
+  classical
+  set ψ : ℕ → ℕ := fun n => n / L with hψ
+  set S0 := S.filter (fun n => ψ n = 0) with hS0
+  set S1 := S.filter (fun n => ψ n ≠ 0) with hS1
+  have hrec : ∀ n ∈ S, L * ψ n + a = n := by
+    intro n hn
+    have := hcl n hn
+    rw [hψ]
+    simpa [this] using (Nat.div_add_mod n L)
+  have hsplit : ∑ n ∈ S0, ‖F n‖ + ∑ n ∈ S1, ‖F n‖ = ∑ n ∈ S, ‖F n‖ :=
+    Finset.sum_filter_add_sum_filter_not S _ _
+  -- the head: `S0 ⊆ {a}`
+  have hhead : ∑ n ∈ S0, ‖F n‖ ≤ ((a : ℝ) + 1)⁻¹ := by
+    have hsub : S0 ⊆ {a} := by
+      intro n hn
+      obtain ⟨hnS, hz⟩ := Finset.mem_filter.1 hn
+      have := hrec n hnS
+      rw [hz, mul_zero, zero_add] at this
+      simp [this]
+    calc ∑ n ∈ S0, ‖F n‖ ≤ ∑ n ∈ S0, ((n : ℝ) + 1)⁻¹ := Finset.sum_le_sum fun n _ => hF n
+      _ ≤ ∑ n ∈ ({a} : Finset ℕ), ((n : ℝ) + 1)⁻¹ :=
+          Finset.sum_le_sum_of_subset_of_nonneg hsub (fun n _ _ => by positivity)
+      _ = ((a : ℝ) + 1)⁻¹ := by simp
+  -- the tail: inject `ψ` into `Icc 1 (M/L)`
+  have htail : ∑ n ∈ S1, ‖F n‖ ≤ (1 + Real.log M) / (L : ℝ) := by
+    have hLR : (0 : ℝ) < (L : ℝ) := by exact_mod_cast hL
+    have hmem : ∀ n ∈ S1, ψ n ∈ Finset.Icc 1 (M / L) := by
+      intro n hn
+      obtain ⟨hnS, hz⟩ := Finset.mem_filter.1 hn
+      refine Finset.mem_Icc.2 ⟨Nat.one_le_iff_ne_zero.2 hz, ?_⟩
+      exact Nat.div_le_div_right (hS n hnS).le
+    have hinj : Set.InjOn ψ (S1 : Set ℕ) := by
+      intro m hm n hn hmn
+      have h1 := hrec m (Finset.mem_filter.1 (Finset.mem_coe.1 hm)).1
+      have h2 := hrec n (Finset.mem_filter.1 (Finset.mem_coe.1 hn)).1
+      rw [hmn] at h1
+      omega
+    have hstep : ∀ n ∈ S1, ‖F n‖ ≤ (1 / (L : ℝ)) * ((ψ n : ℝ))⁻¹ := by
+      intro n hn
+      obtain ⟨hnS, hz⟩ := Finset.mem_filter.1 hn
+      have hpos : (0 : ℝ) < (ψ n : ℝ) := by
+        have := (Finset.mem_Icc.1 (hmem n hn)).1
+        exact_mod_cast this
+      have hge : (L : ℝ) * (ψ n : ℝ) ≤ (n : ℝ) + 1 := by
+        have h := hrec n hnS
+        have h2 : ((L * ψ n : ℕ) : ℝ) ≤ ((n : ℕ) : ℝ) := by
+          exact_mod_cast Nat.le.intro h
+        push_cast at h2 ⊢
+        linarith
+      refine (hF n).trans ?_
+      rw [one_div, ← mul_inv]
+      exact inv_anti₀ (by positivity) hge
+    refine le_trans (Finset.sum_le_sum hstep) ?_
+    rw [← Finset.mul_sum]
+    have himg : ∑ n ∈ S1, ((ψ n : ℝ))⁻¹ = ∑ m ∈ S1.image ψ, ((m : ℝ))⁻¹ :=
+      (Finset.sum_image (f := fun m : ℕ => ((m : ℝ))⁻¹) hinj).symm
+    rw [himg]
+    have hsub : S1.image ψ ⊆ Finset.Icc 1 (M / L) := by
+      intro m hm
+      obtain ⟨n, hn, rfl⟩ := Finset.mem_image.1 hm
+      exact hmem n hn
+    have hharm : ∑ m ∈ S1.image ψ, ((m : ℝ))⁻¹ ≤ 1 + Real.log M := by
+      refine le_trans (Finset.sum_le_sum_of_subset_of_nonneg hsub
+        (fun m _ _ => by positivity)) ?_
+      have h1 : ∑ m ∈ Finset.Icc 1 (M / L), ((m : ℝ))⁻¹ = ((harmonic (M / L) : ℚ) : ℝ) := by
+        rw [harmonic_eq_sum_Icc]; push_cast; rfl
+      rw [h1]
+      refine (harmonic_le_one_add_log (M / L)).trans ?_
+      have hle : ((M / L : ℕ) : ℝ) ≤ (M : ℝ) := by exact_mod_cast Nat.div_le_self M L
+      have hlog : (0 : ℝ) ≤ Real.log M := Real.log_natCast_nonneg M
+      rcases Nat.eq_zero_or_pos (M / L) with h0 | h0
+      · rw [show ((M / L : ℕ) : ℝ) = 0 by rw [h0]; norm_num, Real.log_zero]
+        linarith
+      · have : Real.log ((M / L : ℕ) : ℝ) ≤ Real.log M :=
+          Real.log_le_log (by exact_mod_cast h0) hle
+        linarith
+    calc (1 / (L : ℝ)) * ∑ m ∈ S1.image ψ, ((m : ℝ))⁻¹
+        ≤ (1 / (L : ℝ)) * (1 + Real.log M) :=
+          mul_le_mul_of_nonneg_left hharm (by positivity)
+      _ = (1 + Real.log M) / (L : ℝ) := by ring
+  linarith [hsplit, hhead, htail]
+
+
+open scoped Classical in
+/-- **The joint mass, with both gains.**  For the joint progression `d ∣ n+1`, `e ∣ n+2` the
+harmonic mass is at most `2/e + (1 + log N)/(d·e)`.  The `1/(de)` in the main term is what the
+outer `d`-sum needs (`∑_d ‖sqfW z₀ d‖/d` converges, `∑_d ‖sqfW z₀ d‖` does not); the head `2/e`
+carries no `log N`, so it contributes only an `N`-independent constant. -/
+theorem joint_progression_harmonic_mass {F : ℕ → ℂ} (hF : ∀ n : ℕ, ‖F n‖ ≤ ((n : ℝ) + 1)⁻¹)
+    (N : ℕ) {d e : ℕ} (hd : 0 < d) (he : 0 < e) :
+    ∑ n ∈ ((Finset.range N).filter (fun n => d ∣ n + 1)).filter (fun n => e ∣ n + 2), ‖F n‖
+      ≤ 2 / (e : ℝ) + (1 + Real.log N) / ((d : ℝ) * (e : ℝ)) := by
+  classical
+  have heR : (0 : ℝ) < (e : ℝ) := by exact_mod_cast he
+  have hdR : (0 : ℝ) < (d : ℝ) := by exact_mod_cast hd
+  have hlog : (0 : ℝ) ≤ Real.log N := Real.log_natCast_nonneg N
+  by_cases hco : Nat.Coprime d e
+  · obtain ⟨a, haL, hda, hea, hclass⟩ := exists_joint_class hd he hco
+    set T := ((Finset.range N).filter (fun n => d ∣ n + 1)).filter (fun n => e ∣ n + 2) with hT
+    have hSlt : ∀ n ∈ T, n < N := by
+      intro n hn
+      exact Finset.mem_range.1 (Finset.mem_filter.1 (Finset.mem_filter.1 hn).1).1
+    have hcl : ∀ n ∈ T, n % (d * e) = a := by
+      intro n hn
+      exact (hclass n).1 ⟨(Finset.mem_filter.1 (Finset.mem_filter.1 hn).1).2,
+        (Finset.mem_filter.1 hn).2⟩
+    have hmass := class_harmonic_mass hF hSlt (Nat.mul_pos hd he) hcl
+    -- the head `(a+1)⁻¹ ≤ 2/e`, because `e ∣ a + 2`
+    have hhead : ((a : ℝ) + 1)⁻¹ ≤ 2 / (e : ℝ) := by
+      have hae : e ≤ a + 2 := Nat.le_of_dvd (by omega) hea
+      have haeR : (e : ℝ) ≤ (a : ℝ) + 2 := by exact_mod_cast hae
+      rw [inv_eq_one_div, div_le_div_iff₀ (by positivity) heR]
+      have ha0 : (0 : ℝ) ≤ (a : ℝ) := Nat.cast_nonneg a
+      nlinarith
+    have hcast : ((d * e : ℕ) : ℝ) = (d : ℝ) * (e : ℝ) := by push_cast; ring
+    rw [hcast] at hmass
+    linarith
+  · rw [joint_progression_eq_empty_of_not_coprime hco, Finset.sum_empty]
+    positivity
+
 end CastingOut
 
 end NormalNumbers
@@ -204,3 +348,5 @@ end NormalNumbers
 -- axiom audit
 #print axioms NormalNumbers.CastingOut.offset_truncation_bound_of_mass
 #print axioms NormalNumbers.CastingOut.progression_harmonic_mass
+#print axioms NormalNumbers.CastingOut.class_harmonic_mass
+#print axioms NormalNumbers.CastingOut.joint_progression_harmonic_mass
