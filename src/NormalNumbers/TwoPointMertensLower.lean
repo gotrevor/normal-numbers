@@ -1,4 +1,5 @@
 import NormalNumbers.TwoPointDelangeLF
+import NormalNumbers.PrimeModelRadicalMoment
 
 /-!
 # Towards Mertens' first theorem in lower-bound form
@@ -313,5 +314,83 @@ theorem mertens_lower (N : ℕ) (hN : 1 ≤ N) :
     have := (div_le_div_iff_of_pos_right hNR).mpr hfinal
     nlinarith [hfinal, hNR]
   linarith [hdiv]
+
+/-! ### The sharp upper half
+
+`mertens_crude` gives `Σ_{p≤N} log p/p ≤ 4 log N`, whose constant `4` is useless for a Toeplitz
+normalisation.  The same `log(N!)` count run in the other direction gives the sharp constant:
+keep only the `k = 1` term of Legendre, use `⌊N/p⌋ ≥ N/p − 1`, and pay `θ(N) ≤ N log 4`
+(Chebyshev, `PrimeModelRadicalMoment.theta_le`). -/
+
+/-- **MERTENS' FIRST THEOREM, SHARP UPPER HALF.**  `Σ_{p≤N}(log p)/p ≤ log N + log 4`. -/
+theorem mertens_upper (N : ℕ) (hN : 1 ≤ N) :
+    ∑ p ∈ primesLe N, Real.log p / (p : ℝ) ≤ Real.log N + Real.log 4 := by
+  classical
+  have hNR : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  -- upper bound on `log(N!)`
+  have hupper : Real.log ((Nat.factorial N : ℕ) : ℝ) ≤ (N : ℝ) * Real.log N := by
+    rw [log_factorial_eq_sum N]
+    have hstep : ∀ n ∈ Finset.Icc 1 N, Real.log n ≤ Real.log N := by
+      intro n hn
+      simp only [Finset.mem_Icc] at hn
+      have h1 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn.1
+      exact Real.log_le_log h1 (by exact_mod_cast hn.2)
+    refine le_trans (Finset.sum_le_sum hstep) ?_
+    rw [Finset.sum_const, Nat.card_Icc, nsmul_eq_mul]
+    have : ((N + 1 - 1 : ℕ) : ℝ) = (N : ℝ) := by push_cast; ring
+    rw [this]
+  -- lower bound on `log(N!)` keeping only the `k = 1` Legendre term
+  have hlower : (N : ℝ) * (∑ p ∈ primesLe N, Real.log p / (p : ℝ))
+      - (N : ℝ) * Real.log 4 ≤ Real.log ((Nat.factorial N : ℕ) : ℝ) := by
+    rw [log_factorial_eq_prime_sum N]
+    have hterm : ∀ p ∈ primesLe N,
+        (N : ℝ) * (Real.log p / (p : ℝ)) - Real.log p
+          ≤ (((Nat.factorial N).factorization p : ℕ) : ℝ) * Real.log p := by
+      intro p hp
+      have hpp := prime_of_mem_primesLe hp
+      have hple : p ≤ N := by
+        rw [primesLe, Finset.mem_filter, Finset.mem_range] at hp
+        omega
+      have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+      have hlogp : (0 : ℝ) ≤ Real.log p := Real.log_nonneg (by linarith)
+      -- `v_p(N!) ≥ ⌊N/p⌋`
+      have hb : Nat.log p N < Nat.log p N + 1 := Nat.lt_succ_self _
+      have hleg := Nat.factorization_factorial hpp hb
+      have hmem : (1 : ℕ) ∈ Finset.Ico 1 (Nat.log p N + 1) := by
+        simp only [Finset.mem_Ico]
+        refine ⟨le_rfl, ?_⟩
+        have : 1 ≤ Nat.log p N := Nat.le_log_of_pow_le hpp.one_lt (by simpa using hple)
+        omega
+      have hge : N / p ≤ (Nat.factorial N).factorization p := by
+        rw [hleg]
+        have := Finset.single_le_sum (f := fun i => N / p ^ i)
+          (fun i _ => Nat.zero_le _) hmem
+        simpa using this
+      have hgeR : ((N / p : ℕ) : ℝ) ≤ (((Nat.factorial N).factorization p : ℕ) : ℝ) := by
+        exact_mod_cast hge
+      have hfl : (N : ℝ) / (p : ℝ) - 1 ≤ ((N / p : ℕ) : ℝ) := sub_one_le_cast_div N p hpp.pos
+      have hchain : (N : ℝ) / (p : ℝ) - 1 ≤ (((Nat.factorial N).factorization p : ℕ) : ℝ) := by
+        linarith
+      have := mul_le_mul_of_nonneg_right hchain hlogp
+      calc (N : ℝ) * (Real.log p / (p : ℝ)) - Real.log p
+          = ((N : ℝ) / (p : ℝ) - 1) * Real.log p := by ring
+        _ ≤ _ := this
+    have hsum := Finset.sum_le_sum hterm
+    rw [Finset.sum_sub_distrib, ← Finset.mul_sum] at hsum
+    have hth : ∑ p ∈ primesLe N, Real.log p ≤ (N : ℝ) * Real.log 4 := by
+      have hset : primesLe N = (Finset.Iic N).filter Nat.Prime := by
+        rw [primesLe, Nat.range_succ_eq_Iic]
+      rw [hset]
+      exact NormalNumbers.PrimeModel.Radical.theta_le N
+    have hrewrite : ∑ p ∈ primesLe N, (N : ℝ) * (Real.log p / (p : ℝ))
+        = (N : ℝ) * ∑ p ∈ primesLe N, Real.log p / (p : ℝ) := by
+      rw [Finset.mul_sum]
+    linarith [hsum, hth]
+  have hcomb : (N : ℝ) * (∑ p ∈ primesLe N, Real.log p / (p : ℝ))
+      ≤ (N : ℝ) * (Real.log N + Real.log 4) := by
+    have : (N : ℝ) * (∑ p ∈ primesLe N, Real.log p / (p : ℝ)) - (N : ℝ) * Real.log 4
+        ≤ (N : ℝ) * Real.log N := le_trans hlower hupper
+    nlinarith [this]
+  nlinarith [hcomb, hNR]
 
 end NormalNumbers.CastingOut
