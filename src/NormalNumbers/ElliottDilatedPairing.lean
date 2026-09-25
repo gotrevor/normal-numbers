@@ -549,6 +549,105 @@ theorem dilatedPairShiftEdge_affineBlock {H : ℕ} (f₁ f₂ : ℕ → ℂ) (a 
     ring
 
 
+/-! ## The edge sum as a sum along the progression -/
+
+/-- A block extended by zero off its index range. -/
+def blockExtend {H : ℕ} (b : Fin H → ℂ) : ℕ → ℂ :=
+  fun i ↦ if h : i < H then b ⟨i, h⟩ else 0
+
+theorem dilatedPairShiftEdge_eq_extend {H : ℕ} (b c : Fin H → ℂ) (α : ℕ) (s : ℤ) (σ : ℕ)
+    (m : Fin H) :
+    dilatedPairShiftEdge b c α s σ m =
+      if (α : ℤ) ∣ (m.1 : ℤ) - s then blockExtend b m.1 * blockExtend c (m.1 + σ) else 0 := by
+  by_cases hdvd : (α : ℤ) ∣ (m.1 : ℤ) - s
+  · rw [dilatedPairShiftEdge, if_pos hdvd, if_pos hdvd]
+    unfold blockExtend
+    rw [dif_pos m.2]
+    by_cases hm : m.1 + σ < H
+    · rw [dif_pos hm, dif_pos hm]
+    · rw [dif_neg hm, dif_neg hm, mul_zero]
+  · rw [dilatedPairShiftEdge, if_neg hdvd, if_neg hdvd]
+
+/-- **The dilated edge sum is a sum along the arithmetic progression `r, r+α, r+2α, …`**, where
+`r = s mod α`.  This is the reindexing that turns the graph side into a sum of affine pair
+observables (`dilatedPairShiftEdge_affineBlock`). -/
+theorem sum_dilatedPairShiftEdge_eq_progression {H : ℕ} (b c : Fin H → ℂ) {α : ℕ} (hα : 0 < α)
+    (s : ℤ) (σ : ℕ) :
+    (∑ m : Fin H, dilatedPairShiftEdge b c α s σ m) =
+      ∑ j ∈ (Finset.range H).filter (fun j ↦ α * j + (s % (α : ℤ)).toNat < H),
+        blockExtend b (α * j + (s % (α : ℤ)).toNat) *
+          blockExtend c (α * j + (s % (α : ℤ)).toNat + σ) := by
+  classical
+  set r : ℕ := (s % (α : ℤ)).toNat with hrdef
+  have hαZ : (0 : ℤ) < (α : ℤ) := by exact_mod_cast hα
+  have hmod_nonneg : 0 ≤ s % (α : ℤ) := Int.emod_nonneg s (by exact_mod_cast hα.ne')
+  have hrZ : (r : ℤ) = s % (α : ℤ) := by rw [hrdef, Int.toNat_of_nonneg hmod_nonneg]
+  have hrlt : r < α := by
+    have := Int.emod_lt_of_pos s hαZ
+    omega
+  -- the divisibility condition is a congruence on the block index
+  have hmem : ∀ i : ℕ, ((α : ℤ) ∣ (i : ℤ) - s) ↔ i % α = r := by
+    intro i
+    have hiff : ((α : ℤ) ∣ (i : ℤ) - s) ↔ s % (α : ℤ) = (i : ℤ) % (α : ℤ) :=
+      Iff.symm Int.modEq_iff_dvd
+    rw [hiff, ← hrZ, ← Int.natCast_mod]
+    constructor <;> intro hh <;> exact_mod_cast hh.symm
+  have hkey : ∀ i : ℕ, i % α = r → α * (i / α) + r = i := by
+    intro i hi
+    have := Nat.div_add_mod i α
+    omega
+  have hkey2 : ∀ i : ℕ, i % α = r → (i - r) / α = i / α := by
+    intro i hi
+    have h1 := hkey i hi
+    have : i - r = α * (i / α) := by omega
+    rw [this, Nat.mul_div_cancel_left _ hα]
+  calc
+    (∑ m : Fin H, dilatedPairShiftEdge b c α s σ m)
+        = ∑ i ∈ Finset.range H,
+            (if (α : ℤ) ∣ (i : ℤ) - s then blockExtend b i * blockExtend c (i + σ) else 0) := by
+          refine Eq.trans (Finset.sum_congr rfl fun m _ ↦
+            dilatedPairShiftEdge_eq_extend b c α s σ m) ?_
+          exact Fin.sum_univ_eq_sum_range (fun i ↦ if (α : ℤ) ∣ (i : ℤ) - s then
+              blockExtend b i * blockExtend c (i + σ) else 0) H
+    _ = ∑ i ∈ (Finset.range H).filter (fun i ↦ i % α = r),
+            blockExtend b i * blockExtend c (i + σ) := by
+          rw [Finset.sum_filter]
+          refine Finset.sum_congr rfl fun i _ ↦ ?_
+          by_cases hi : i % α = r
+          · rw [if_pos ((hmem i).mpr hi), if_pos hi]
+          · rw [if_neg (fun hd ↦ hi ((hmem i).mp hd)), if_neg hi]
+    _ = _ := by
+          refine Finset.sum_nbij' (i := fun i ↦ (i - r) / α) (j := fun j ↦ α * j + r)
+            ?_ ?_ ?_ ?_ ?_
+          · intro i hi
+            simp only [Finset.mem_filter, Finset.mem_range] at hi ⊢
+            obtain ⟨hiH, hir⟩ := hi
+            have h1 := hkey i hir
+            have h2 := hkey2 i hir
+            have h3 : i / α ≤ i := Nat.div_le_self i α
+            rw [h2]
+            exact ⟨lt_of_le_of_lt h3 hiH, by rw [h1]; exact hiH⟩
+          · intro j hj
+            simp only [Finset.mem_filter, Finset.mem_range] at hj ⊢
+            refine ⟨by omega, ?_⟩
+            rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hrlt]
+          · intro i hi
+            simp only [Finset.mem_filter, Finset.mem_range] at hi
+            obtain ⟨hiH, hir⟩ := hi
+            have h1 := hkey i hir
+            have h2 := hkey2 i hir
+            rw [h2]
+            exact h1
+          · intro j hj
+            simp only [Finset.mem_filter, Finset.mem_range] at hj
+            simp [Nat.mul_div_cancel_left _ hα]
+          · intro i hi
+            simp only [Finset.mem_filter, Finset.mem_range] at hi
+            obtain ⟨hiH, hir⟩ := hi
+            have h1 := hkey i hir
+            have h2 := hkey2 i hir
+            rw [h2, h1]
+
 end
 
 end NormalNumbers.ElliottDilatedPairing
