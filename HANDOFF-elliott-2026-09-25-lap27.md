@@ -37,9 +37,41 @@ base point *backwards*, but the dilated block bookkeeping produces edges at
   index still has mean `C/q`**, with the dependency's errors plus `2d/(L·M)`.  Hypothesis `d ≤ L`,
   free since `d ≤ q c₁ / a ≤ P|c₁| ≪ L`.
 
-## NEXT (lap 27 onwards)
+## Lap 27 — `ElliottGenericGraphCRT.lean` (new, zero sorry, trust triple)
 
-1. **The dilated CRT / decoupling layer.**  The remaining lower-bound chain is
+Route (b) of the decision below, taken and **landed for the CRT rung**: the whole CRT /
+concentration layer is now proved over an **arbitrary edge family** `E : ℕ → Fin H → ℂ` with
+`‖E p j‖ ≤ B²`.  Reading `ElliottTwistedGraphCRT` shows the edge enters in exactly two places (the
+coordinate norm bound, and the total `∑_j` in the mean), so the generalisation is free.
+
+* `genCoordinate`, `genObservable`, `genSum`, `genMeanCRT`; `norm_gen*_le`,
+  `sum_genCoordinate`, `crtComplexMean_genObservable`.
+* `gen_tail_card_mul_exp_le`, `exists_gen_exponential_tail` — the Hoeffding tail with the
+  dependency's own constant `c = ρ²/(64R²)`.
+* **Anchors `genCoordinate_pairShiftEdge`, `genSum_pairShiftEdge`, `genMeanCRT_pairShiftEdge` are
+  `rfl`**: the proved pure-shift layer is literally the instance
+  `E p j = pairShiftEdge b c (p*h) j`.  Nothing in `src/` was edited.
+
+**And the prime-dependent residue shift turns out to be free.**  The dilated layer needs the
+condition `z + (j+1) − d_p = 0` with `d_p = ⌊p c₁/a⌋`; that is the standard condition evaluated at
+`z − d_p`, and `z ↦ z − d_p` is a bijection of `ZMod p`.  So the shift is applied to the residue
+variable by the *caller* and never enters the layer.  Genericity in the edge was the only
+generalisation needed — this is the lap's main structural finding.
+
+## NEXT (lap 28 onwards)
+
+1. **The generic decoupling layer.**  Repeat lap 27 one rung up: `ElliottTwistedGraphDecoupling`
+   (`pairTwistedDiscrepancy`, `exists_logProb_pairTwisted_small_tail`,
+   `exists_logProb_pairTwisted_decoupling`) over `genSum`/`genMeanCRT`.  The entropy layer only
+   ever uses the discrepancy's boundedness (`norm_genSum_le` + `norm_genMeanCRT_le`, both proved)
+   and `exists_gen_exponential_tail` (proved).  The one real design point: the edge family must be
+   read off the finite-alphabet block, i.e. `E` becomes `(Fin H → α) → ℕ → Fin H → ℂ`.
+2. Then instantiate at `E p j = dilatedPairShiftEdge (affineBlock f₁) (affineBlock f₂) a (p c₁) (p h) j`
+   with residue variable `z − ⌊p c₁/a⌋`, and combine with
+   `sum_dilatedPairShiftEdge_affineBlock` + lap 26's edge-mean estimate.
+
+OLD PLAN (superseded by lap 27, kept for the reasoning):
+   **The dilated CRT / decoupling layer.**  The remaining lower-bound chain is
    `ElliottTwistedGraphCRT` → `Decoupling` → `Correlation`, all written for `pairShiftEdge`.
    The dilated coordinate is `∑_j if z + (j+1-d_q) = 0 then w q · dilatedPairShiftEdge … j`:
    the residue condition is *translated by `d_q = ⌊q c₁/a⌋`*, which is a bijection of `ZMod q`
