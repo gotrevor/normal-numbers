@@ -49,7 +49,24 @@ being paid down.
   **exactly** the object `ElliottDilatedUpper.exists_dilatedPairTwistedMean_small_of_fourier_first_moment`
   bounds above (join: `ElliottDilatedBridge.genMeanCRT_dilatedEdgeReindexed`).  So both halves of
   the crux are now inequalities about the same quantity.
-* **Next: step (iii)**, the entropy-selected scale.  Feed
+* **Step (iii)(a) done.**  `src/NormalNumbers/ElliottDilatedGrouped.lean` (new, zero sorry, trust
+  triple): `ungroupBlock (finiteSequenceBlock (groupSeq a f) m n) = affineBlock f a n (a*m)` —
+  lap 28's prediction in the kernel, and with NO positivity hypothesis on `a` (at `a = 0` both
+  sides are functions out of `Fin 0`).  So the entropy/rare-event layer is applied verbatim to the
+  grouped sequence `groupSeq a f k i = f (a k + i)` over the still-finite alphabet `Fin a → ·`, at
+  the ORDINARY base point.  Also proved there: `norm_dilatedEdgeReindexed_sub_le` (the dilated edge
+  perturbation, constant `2Bζ`, the dependency's), `norm_ungroupBlock_sub_le`,
+  `norm_blockExtend_sub_le`, `norm_groupSeq_le`.
+* **Next: step (iii)(b)**, the dilated `exists_logProb_bounded_pairTwisted_decoupling`.  Take
+  `α = (Fin a → ↥net) × (Fin a → ↥net)` with `Erdos67b.exists_finite_unitDisk_approximation`'s net
+  (finite, since `Fin a → finite` is finite), decodes `dᵢ : α → Fin a → ℂ`, and
+  `mkE m b p j = dilatedEdgeReindexed (ungroupBlock (d₁ ∘ b)) (ungroupBlock (d₂ ∘ b)) a c₁ h p j`;
+  the approximating sequence `A : ℕ → α` is chosen componentwise over the finite index `Fin a`.
+  The perturbation budget is the pure-shift one (`ζ = ε/(32 D)`, `D = 1/δ + 1`) because
+  `norm_dilatedEdgeReindexed_sub_le` has the same constant.  Needs generic
+  `norm_genSum_sub_le` / `norm_genMeanCRT_sub_le` / `norm_genDiscrepancyAt_sub_le`, which are the
+  `ElliottTwistedGraphBounded` lemmas with `pairShiftEdge` replaced by an arbitrary edge family.
+* **Then step (iii)(c)**, the entropy-selected scale.  Feed
   `ElliottGenericGraph.exists_logProb_gen_decoupling` the grouped alphabet of lap 28
   (`α = Fin a → β`, `G m = (F(am), …, F(am+a-1))`, so `affineBlock f a n (a*m)` is a function of
   `finiteSequenceBlock G m n`) with `Δ m = crtShift (a*m) (·*c₁/a)` and

@@ -1,5 +1,5 @@
 import NormalNumbers.ElliottDilatedSlice
-import NormalNumbers.ElliottDilatedMean
+import NormalNumbers.ElliottDilatedGrouped
 
 /-!
 # The live crux route: `DilatedCMLogElliott` from the `a`-dilated graph stack
