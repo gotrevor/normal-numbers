@@ -1,38 +1,58 @@
 # STATUS — normal-numbers 📊
 
-**Active campaign: Tao 2016 Thm 1.3, the general two-point log-Elliott theorem** (branch
-`wip/elliott-port`, worktree `nn-elliott`).  Pair A multicutoff (Theorem C′) is COMPLETE.
-· **Build**: 🟢 green (9569 jobs, `lake build NormalNumbers.ElliottAxiomAudit`) · **Updated**:
-DEEP REFLECTION lap 54 · 2026-09-25 · HEAD `6ffab31`
+**Tao 2016 Thm 1.3, the general two-point log-Elliott theorem — PROVED and axiom-clean.**
+(branch `wip/elliott-port`, worktree `nn-elliott`).  Pair A multicutoff (Theorem C′) is COMPLETE.
+· **Build**: 🟢 green (9257 jobs full `lake build`; 9593 for the audit surface) · **Updated**:
+review lap 83 · 2026-09-25 · HEAD `10954ca`
 
 ## Where it stands (Elliott campaign)
 
-**The crux is closed.**  `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott :
-Erdos67b.NonasymptoticLogElliott` is assembled from a three-rung ladder over the dependency's
-proved `Erdos67b.unitCircleLogElliott`; rungs 1 and 2 —
-`ElliottDilatedRung.dilatedCMLogElliott` (the `a`-dilated two-function graph/Fourier/entropy
-stack, ~20 files, laps 17–46) and `ElliottLadder.affineCM_of_dilatedCM` (Tao's full affine
-generality, free for completely multiplicative unimodular functions) — are **both proved and
-trust-triple**.  **Exactly one `sorry` remains in scope**, `ElliottLadder.nonasymptotic_of_affineCM`
-(`src/NormalNumbers/ElliottLadder.lean:297`): the passage from `1`-bounded to unimodular.  Its two
-halves are Case A (`Σ_X(g₁)` large — Hall's inequality, thick window **closed** at lap 51, thin
-window one lap away off `ElliottHall.sum_Icc_dyadic_le`) and Case B (`Σ_X(g₁)` bounded).  Lap 54's
-reflection **refuted** Case B's documented unimodularisation step and replaced it with an exact
-finite two-point randomisation; see `PENDING_WORK.md` → "Reflection — 2026-09-25" and
-`DIRECTION.md` → CURRENT DIRECTIVE.
+**Done.**  `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott`
+is a **theorem**, `#print axioms` = `[propext, Classical.choice, Quot.sound]`, and **no `sorry`
+remains anywhere in the Elliott scope**.  The ladder over the dependency's proved
+`Erdos67b.unitCircleLogElliott` is complete in all three rungs: the crux
+`ElliottDilatedRung.dilatedCMLogElliott` (the `a`-dilated two-function graph/Fourier/entropy stack,
+~20 files, laps 17–46), `ElliottLadder.affineCM_of_dilatedCM` (Tao's full affine generality, free
+for completely multiplicative unimodular functions), and `ElliottLeafTwo.nonasymptotic_of_affineCM`
+(the passage from `1`-bounded to unimodular), whose last open half `exists_caseB_threshold` landed
+at lap 83.
 
-**Statement-fidelity note (lap 54).**  `Erdos67b.IsMultiplicativeOnPositiveInt` carries **no
-coprimality hypothesis** (`∀ m n : ℕ, 0 < m → 0 < n → g (m*n) = g m * g n`), i.e. it is *complete*
-multiplicativity.  The dependency's `NonasymptoticLogElliott` is therefore Tao 2016 Thm 1.3
-**restricted to completely multiplicative** `g₁,g₂`, strictly weaker than the paper, which says
-"multiplicative".  The drift is the dependency's (its own docstring claims "exactly as in Tao's
-Theorem 1.3"); this repo never edits the dependency and the operator kickoff ratifies that `Prop`
-as the target, so the target is unchanged — but the headline should be *described* as the
-completely multiplicative case.  The corrected leaf-2 route never uses complete multiplicativity
-of `g_i`, so a `src/`-stated genuinely general form is a cheap stretch goal after the headline.
+The final assembly is a dichotomy on the Euler defect `Σ_L(g₁)` at the thin scale `L`, run on a
+window truncated from below at a `2^j`-th root of `W` (laps 71–82: without the truncation, Case A
+only sees the defect at `L ≈ a₁X/W` while Case B's pretentious transfer needs it at `≈ X`, and the
+gap `≈ log(log X/log L)` is unbounded when `W ≈ X`).  Case B itself (lap 83) is: zero-extension →
+unimodular two-point cover → deterministic pretentious transfer at scale `X` → two squarefull
+expansions (`u = uᵇ ⋆ cmExt u`, truncated at `D₁`, then at `D₂`) → `AffineCMLogElliott` on the
+doubly substituted pair, whose determinant is *exactly* `a₁b₂ − a₂b₁`.  The budget's apparent
+circularity is broken by choosing `D₁` and `D₂` **in order**.
+
+**Statement-fidelity note (unchanged, and now the only open fidelity item).**
+`Erdos67b.IsMultiplicativeOnPositiveInt` carries **no coprimality hypothesis**
+(`∀ m n : ℕ, 0 < m → 0 < n → g (m*n) = g m * g n`), i.e. it is *complete* multiplicativity.  The
+dependency's `NonasymptoticLogElliott` is therefore Tao 2016 Thm 1.3 **restricted to completely
+multiplicative** `g₁, g₂`, weaker than the paper, which says "multiplicative".  The drift is the
+dependency's; this repo never edits it and the operator kickoff ratifies that `Prop` as the target,
+so the headline stands — but it must be *described* as the completely multiplicative case.  The
+leaf-2 route never uses complete multiplicativity of the `gᵢ` (only coprime multiplicativity, via
+`ElliottZeroExt.coprime_mul_restrictToNat` and the cover), so a `src/`-stated genuinely general
+`NonasymptoticLogElliottMult` is the natural next target.
 
 ## What's happened (Elliott campaign, newest first)
 
+- **2026-09-25 (lap 83) — THE HEADLINE IS PROVED AND AXIOM-CLEAN.**  `exists_caseB_threshold`,
+  the last open obligation, is discharged in the new `ElliottCaseB.lean` (with `ElliottStageCost`
+  supplying the two expansion bricks in cost-shaped form).  `nonasymptoticLogElliott` now prints
+  the bare trust triple; the Elliott scope holds zero `sorry`.  The budget's circularity (the
+  inner truncation's coefficient and factor both depend on `D₁`) is broken by choosing `D₁`,
+  then `εt₂` from `D₁`, then `D₂`, then `ε''` — order is the whole trick.
+- **2026-09-25 (laps 71–82)** — Case B's **dichotomy-scale obstruction** found and repaired:
+  truncate the window from below at `truncRatio j X W`, costing `≤ (ε/2) log W` of harmonic mass
+  and forcing `X ≤ L''^(2^(j+2))`, so the transfer's `Σ_X − Σ_{L''}` is an absolute constant in
+  `ε`.  Nine new zero-sorry modules; the outer shell `nonasymptotic_of_affineCM` proved.
+- **2026-09-25 (laps 55–70)** — Case B's ingredients: the deterministic pretentious transfer,
+  the absolute squarefull tail (`e²`), the Rankin-shifted **uniform** tail (`exists_squarefull_tail`),
+  the progression substitution with exact determinant preservation, the restricted-correlation
+  reduction, and Case A's thin window (`exists_caseA_thin_threshold`) — Case A now covers all `W`.
 - **2026-09-25 (DEEP REFLECTION lap 54)** — crux CLOSED and verified; ROUTE VERDICT **CONTINUE**.
   Leaf 2's `‖g̃‖ = 1 ⋆ v` unimodularisation **REFUTED** (uniform-tail failure, explicit
   counterexample satisfying both Case B and non-pretentiousness) and replaced by an exact
@@ -63,43 +83,45 @@ of `g_i`, so a `src/`-stated genuinely general form is a cheap stretch goal afte
 ## Outstanding (Elliott campaign)
 
 ### Short-term (mirrors PENDING_WORK top)
-1. `ElliottRandomize.lean` — the two-point unimodular cover and `‖corr‖ ≤ max_ω ‖corr(U₁,U₂)‖`.
-2. `ElliottPretentiousTransfer.lean` — 1-bounded triangle inequality (constant 3) + the exact
-   identity `pretentiousDistSq g U X = ∑_{p≤X}(1−‖g p‖²)/p`.
-3. Case A thin window off `ElliottHall.sum_Icc_dyadic_le` (supersedes `exists_caseA_threshold`).
-4. `ElliottSquarefull.lean`, then `ElliottProgression.lean`, then assembly.
+1. **`NonasymptoticLogElliottMult`** — state Tao's Theorem 1.3 in `src/` for merely *multiplicative*
+   `g₁, g₂` (coprime multiplicativity only) and prove it.  This is a fidelity upgrade, not a
+   restatement: it is what the paper claims and what the dependency's `Prop` does not cover.  The
+   leaf-2 route already only uses coprime multiplicativity; the work is (a) a `src/`-stated `Prop`,
+   (b) checking every rung's use of `IsCompletelyMultiplicativeOnPositive` is on the *cover* `cmExt u`
+   (which stays completely multiplicative) and not on `gᵢ`.
+2. Downstream consumer named in the kickoff: `TwoPointElliottLog` for `ζ^{ω(pn+1)}`, C1's two-point
+   leaf.
 
 ### Long-term
-State and prove the genuinely general (merely multiplicative) form in `src/`, which the dependency's
-`Prop` does not cover.  Then the downstream use named in the kickoff: `TwoPointElliottLog` for
-`ζ^{ω(pn+1)}`, C1's two-point leaf.
+Nothing else in the Elliott scope.  The campaign's remaining value is downstream (C1) and in the
+fidelity upgrade above.
 
 ### To completion
-One leaf, six named files, ≈2500–3500 lines, ≈15–25 laps at this campaign's observed rate.
+The headline is complete.  The fidelity upgrade is ≈3–8 laps (mostly re-checking hypothesis use).
 
-## Axiom ledger — Elliott campaign (real `#print axioms`, lap 54, 2026-09-25, from `ElliottAxiomAudit`)
+## Axiom ledger — Elliott campaign (real `#print axioms`, lap 83, 2026-09-25, from `ElliottAxiomAudit`)
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 |---|---|---|---|
-| `ElliottGeneral.nonasymptoticLogElliott` | Tao 2016 Thm 1.3 (**CM case**, see fidelity note), unconditional | `[propext, sorryAx, Classical.choice, Quot.sound]` | 🔴-free but **sorry-gated** through ONE named leaf in `src/`; not yet a theorem |
+| `ElliottGeneral.nonasymptoticLogElliott` | Tao 2016 Thm 1.3 (**CM case**, see fidelity note), unconditional | `[propext, Classical.choice, Quot.sound]` | ✅ **PROVED**, trust triple, no `sorry` |
+| `ElliottLeafTwo.nonasymptotic_of_affineCM` | `1`-bounded multiplicative ⟸ CM unimodular | trust triple | ✅ (lap 82 shell, lap 83 Case B) |
+| `ElliottLeafTwo.exists_caseA_thin_threshold` | leaf 2, Case A (defect large), **all** windows | trust triple | ✅ (lap 70) |
+| `ElliottLeafTwo.exists_caseB_threshold` = `ElliottCaseB.exists_caseB_threshold` | leaf 2, Case B (defect small) | trust triple | ✅ (lap 83) |
 | `ElliottLadder.affineCM_of_dilatedCM` | Tao's affine reduction | trust triple | ✅ |
 | `ElliottDilatedRung.dilatedCMLogElliott` | **the crux** — two functions, common dilation | trust triple | ✅ (lap 46) |
-| `ElliottDilatedRung.dilatedNatShiftCMLogElliott` | crux leaf 1 | trust triple | ✅ |
-| `ElliottDilatedRung.dilatedNatShiftCMLogElliottMirror` | crux leaf 2 (mirror) | trust triple | ✅ |
+| `ElliottDilatedRung.dilatedNatShiftCMLogElliott` (+ mirror) | crux leaves 1, 2 | trust triple | ✅ |
 | `ElliottTwistedGraph.shiftCMLogElliott` | the two-function pure-shift case | trust triple | ✅ |
 | `ElliottTwoShift.twoShiftCMLogElliott` | two arbitrary integer shifts | trust triple | ✅ |
-| `ElliottCaseA.exists_caseA_threshold` | leaf 2, Case A thick window | trust triple | ✅ (lap 51) |
-| `ElliottCaseA.norm_elliottLogCorrelation_le_caseA` | leaf 2, master mean-value bound | trust triple | ✅ |
-| `ElliottHall.sum_Icc_normFun_le` | Halberstam–Richert density bound, instantiated | trust triple | ✅ (lap 52) |
-| `ElliottHall.sum_Icc_dyadic_le` | thin-window logarithmic sum | trust triple | ✅ (lap 53) |
-| `ElliottEulerBound.sum_Icc_le_log_mul_exp_neg_defect` | crude Euler/Mertens bound | trust triple | ✅ |
+| `ElliottRankin.exists_squarefull_tail_bound` | uniform squarefull tail (Rankin shift) | trust triple | ✅ (lap 62) |
+| `ElliottRandomize.exists_cover_pair_ge` | the exact two-point unimodular cover | trust triple | ✅ (lap 54+) |
+| `ElliottPretentiousTransfer.mrtNonpretentious_transfer` | the deterministic pretentious transfer | trust triple | ✅ (lap 55) |
+| `ElliottHall.sum_Icc_dyadic_le` | thin-window logarithmic sum (Halberstam–Richert) | trust triple | ✅ (lap 53) |
 | `Erdos67b.unitCircleLogElliott` (dependency) | the proved special case | trust triple | ✅ |
 
-Math-axiom count for the Elliott campaign: **0** (🟢 0 · 🟡 0 · 🟠 0 · 🔴 0).  No cited axioms
-anywhere; the one open item is a disclosed `sorry` in `src/`, the honest form for work in progress.
-The dependency `lean-proofs-latest` contributes no axioms of its own.  `#print axioms` certifies
-proofs, not statements — the statement anchor here is that the headline's *type* is the
-dependency's own `Prop`, which this repo never edits, plus the fidelity note above.
+Math-axiom count for the Elliott campaign: **0** (🟢 0 · 🟡 0 · 🟠 0 · 🔴 0), and now **0 open
+`sorry`** as well.  `#print axioms` certifies proofs, not statements — the statement anchor here is
+that the headline's *type* is the dependency's own `Prop`, which this repo never edits, plus the
+fidelity note above (the `Prop` is the completely multiplicative case of Tao's Theorem 1.3).
 
 ## Pointers (Elliott)
 

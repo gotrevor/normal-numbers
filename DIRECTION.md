@@ -2,80 +2,50 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective.**  `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott`
-sorry-free and trust-triple, on top of the dependency's proved `Erdos67b.unitCircleLogElliott`.
-Scope: operator run `KICKOFF-2026-09-24-elliott-general.md`, branch `wip/elliott-port`, files
-`src/NormalNumbers/Elliott*.lean` only.
+**Objective — ACHIEVED 2026-09-25 (lap 83), and the new objective that replaces it.**
+`NormalNumbers.ElliottGeneral.nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott` is
+**PROVED**: `#print axioms` = `[propext, Classical.choice, Quot.sound]`, zero `sorry` in the
+Elliott scope, full `lake build` green.  The kickoff's target is met.
 
-**State (2026-09-25 DEEP REFLECTION lap, lap 54).**  The crux is CLOSED:
-`ElliottDilatedRung.dilatedCMLogElliott` and `ElliottLadder.affineCM_of_dilatedCM` are both
-trust-triple.  **Exactly one `sorry` remains in scope**, `ElliottLadder.nonasymptotic_of_affineCM`
-(`src/NormalNumbers/ElliottLadder.lean:297`): `1`-bounded → unimodular, on completely
-multiplicative functions.  ROUTE VERDICT: **CONTINUE** (no registered trigger had fired) — but
-this lap REFUTED one documented step of leaf 2 and REPLACES it; see below.
+**THE OBJECTIVE NOW: close the one remaining *fidelity* gap.**  State and prove, in `src/`,
+`NormalNumbers.Elliott*.NonasymptoticLogElliottMult` — Tao 2016 Theorem 1.3 for **merely
+multiplicative** `g₁, g₂` (coprimality hypothesis: `Nat.Coprime m n → g(mn) = g m * g n`), which is
+what the paper actually claims.  The dependency's `IsMultiplicativeOnPositiveInt` has *no*
+coprimality hypothesis, so the proved headline is the **completely multiplicative** case; that is a
+real, documented drift and it is now the only thing between this repo and the paper's statement.
 
-**Mandated next move — leaf 2 on the CORRECTED route, hardest step first.**
+**Mandated next move, in order.**
+1. Add `src/NormalNumbers/ElliottMultStatement.lean`: a `src/`-owned `Prop`
+   `NonasymptoticLogElliottMult`, identical to the dependency's `NonasymptoticLogElliott` except
+   that `IsMultiplicativeOnPositiveInt gᵢ` is replaced by `gᵢ 1 = 1 ∧ ∀ m n, 0 < m → 0 < n →
+   Nat.Coprime m n → gᵢ (m*n) = gᵢ m * gᵢ n`.  Keep the dependency's `Prop` untouched and keep
+   `nonasymptoticLogElliott` exactly as it is.
+2. Audit the leaf-2 chain for where complete multiplicativity of `gᵢ` is actually consumed.  The
+   expectation from lap 83's proof is: **nowhere**.  `ElliottZeroExt.coprime_mul_restrictToNat`
+   and `ElliottRandomize.exists_cover_pair_ge` both want only coprime multiplicativity, and every
+   later use of `IsCompletelyMultiplicativeOnPositive` is on `cmExt u` (the *cover's* completely
+   multiplicative extension), never on `gᵢ`.  Case A's `normDivArith` multiplicativity is likewise
+   coprime-only.  If an actual use turns up, record it as a named obstruction before working around it.
+3. Prove `nonasymptoticLogElliottMult` by re-running the same `nonasymptotic_of_affineCM` assembly
+   with the weakened hypothesis.  Prefer *generalising the existing lemmas in place* (weaken
+   `IsMultiplicativeOnPositiveInt` to the coprime form where the proof allows) over copying files;
+   `nonasymptoticLogElliott` must keep compiling as a corollary.
+4. Only after that: the downstream consumer named in the kickoff (`TwoPointElliottLog` for
+   `ζ^{ω(pn+1)}`, C1's two-point leaf).
 
-0. *(refuted, do NOT build it)* The `|g̃| = 1 ⋆ v` **unimodularisation expansion is INVALID.**
-   Its truncation `∑_{d>D}|v(d)|/d ≤ ε` cannot hold with `D` chosen before `g₁`: take
-   `g₁ = λ·h` with `h` completely multiplicative, `h(p) = 0` exactly on a set `S` of primes all
-   `> D` with `∑_{p∈S} 1/p = C`.  Then `Σ_X(g₁) ≤ C` (Case B holds), `g₁` is non-pretentious
-   (`D(g₁,χn^{it};X)² ≥ D(λ,·)² − 2C → ∞`), yet `∑_{d>D}|v(d)|/d ≥ C` for every `D`.  A convergent
-   series with uniformly bounded sum does **not** have uniformly small tails across a family.
+**Forbidden drift.**  Do NOT delete, rename or weaken `nonasymptoticLogElliott`, and do not edit
+the dependency's `Prop` or `.lake/packages/lean-proofs-latest/`.  Do NOT reopen Theorem C′/
+multicutoff, `PrimeLambertOscillation`, `MahlerDriftOne`, `SwingC*`, `PairDecouple*`
+(designated-open, off scope).  Do NOT "tidy" the proved Elliott modules; they are the deliverable.
 
-1. **`ElliottRandomize.lean` — THE new crux of leaf 2, and the first thing to build.**  Replace the
-   unimodularisation by an EXACT finite two-point averaging:
-   for each prime power `p^k ≤ Y` put `z = g(p^k)`, `w(z) = if z = 0 then 1 else z/‖z‖`,
-   `Z_± = z ± i·√(1−‖z‖²)·w(z)`; both are **unimodular** and `(Z_+ + Z_-)/2 = z`.  Over
-   `Ω = ({p^k ≤ Y}) → Bool` (finite!) this builds unimodular **multiplicative** `U^ω` with
-   `avg_ω U^ω(m) = g(m)` for every `m ≤ Y` (`Finset.prod_univ_sum`), hence
-   `elliottLogCorrelation g₁ g₂ … = avg_{ω₁,ω₂} elliottLogCorrelation U₁^{ω₁} U₂^{ω₂} …` and
-   `‖corr(g₁,g₂)‖ ≤ max_ω ‖corr(U₁^{ω₁},U₂^{ω₂})‖`.
-   **Order matters**: randomise FIRST (multiplicative target — one moment per prime power, trivial),
-   expand to completely multiplicative SECOND.  Randomising a *completely* multiplicative target
-   needs `E[V^k] = r^k` for all `k`, whose only solution is the Poisson kernel — no finite support.
+**🚦 Route trigger (Elliott-mult, EM-1).**  If step 2's audit finds that complete multiplicativity
+of `gᵢ` *is* genuinely consumed somewhere in the chain (i.e. the mult form does NOT follow by
+weakening hypotheses), stop and write `ROUTE-ESCALATION-<date>.md` costing the alternative
+(expanding a merely multiplicative `g` as `g = h ⋆ (something supported on squarefull numbers)`
+before the cover, which is the same trick as `squarefullPart` one level up) — do not grind at it.
 
-2. **The pretentious transfer is DETERMINISTIC, not probabilistic.**
-   `Re(U(p)·conj g₁(p)) = ‖g₁(p)‖²` exactly for both signs, so
-   `pretentiousDistSq g₁ U X = ∑_{p≤X}(1−‖g₁(p)‖²)/p ≤ 2·Σ_X(g₁) ≤ 2D₀` in Case B, for EVERY `ω`.
-   Then a 1-bounded triangle inequality (prove it in `src/`; the dependency's
-   `Erdos67b.pretentiousDistSq_triangle_sq` needs all three arguments unimodular, which
-   `g₁` and `χ·n^{it}` are not) gives `MRTNonpretentious U₁ (A/3 − 2D₀) X`.  The constant-3 form
-   `1−Re(a·c̄) ≤ 3((1−Re(a·b̄)) + (1−Re(b·c̄)))` for `‖a‖,‖b‖,‖c‖ ≤ 1` follows from
-   `1−x² ≤ 2(1−x)` plus `‖a−c‖² ≤ 2(‖a−b‖²+‖b−c‖²)`.
-
-3. **Squarefull expansion** (unimodular multiplicative `U` → unimodular completely multiplicative
-   `Ũ`): `u = U ⋆ μŨ`, `u(p) = 0`, `‖u(p^k)‖ ≤ 2`, so `u` is supported on squarefull `d` and
-   `∑_d ‖u(d)‖/d ≤ ∏_p(1 + 2/(p(p−1))) ≤ e²` — an **absolute** bound, so the tail IS uniformly
-   small (this is the step the `v`-expansion fails).  `D(Ũ,·;X) = D(U,·;X)` exactly (primes only).
-
-4. **Progression substitution**: `d ∣ a₁n+b₁` ⟹ `n = q k + n₀`, new pair `(a₁/g, B₁; a₂q, B₂)` with
-   determinant `(a₁b₂−a₂b₁)/g ≠ 0`; weight `1/(qk+n₀) = 1/(qk) + O(1/q)` summing to a constant;
-   scale `X ↦ X/q`, ratio `W` preserved.  Feed `AffineCMLogElliott`.
-
-5. **Case A** (`Σ_Y(g₁) ≥ D₀`) is the other half and is nearly done: `exists_caseA_threshold`
-   (thick window) is proved; finish the **thin-window** version off `ElliottHall.sum_Icc_dyadic_le`
-   so Case A covers all `W`.  Do this only AFTER step 1 exists — it is the tractable half.
-
-**Forbidden drift.**  Do NOT build the `v`/unimodularisation expansion (refuted, item 0).  Do NOT
-work `DilatedSliceCMLogElliottGe` (dead).  Do NOT vendor or edit `.lake/packages/lean-proofs-latest/`.
-Do NOT delete, rename or weaken `nonasymptoticLogElliott`.  Do NOT reopen Theorem C′/multicutoff,
-`PrimeLambertOscillation`, `MahlerDriftOne`, `SwingC*`, `PairDecouple*` (designated-open, off scope).
-
-**🚦 Registered route trigger (Elliott, ET-1).**  If `ElliottRandomize`'s averaging identity
-(`‖corr(g₁,g₂)‖ ≤ max_ω ‖corr(U₁^{ω₁},U₂^{ω₂})‖` for 1-bounded multiplicative `g_i`) is **not** a
-proved trust-triple statement in `src/` by **lap 62**, the two-point route is in doubt: stop
-building on it, write `ROUTE-ESCALATION-<date>.md` re-costing (a) proving the crux directly for
-1-bounded (non-unimodular) completely multiplicative `f₁,f₂` via η-good primes at η-good dyadic
-scales, against (b) the Poisson-kernel randomisation with real measure theory.
-
-**Fidelity note (do not lose).**  `Erdos67b.IsMultiplicativeOnPositiveInt` has **no coprimality
-hypothesis** — it is *complete* multiplicativity.  So the dependency's `NonasymptoticLogElliott`
-is Tao 2016 Thm 1.3 **restricted to completely multiplicative** `g₁,g₂`, weaker than the paper's
-statement (Tao says "multiplicative").  The drift is the dependency's, and the kickoff ratifies
-its statement as the target, so the target stays — but STATUS.md must say so, and the corrected
-leaf-2 route above never uses complete multiplicativity of `g_i`, so a `src/`-stated genuinely
-general `NonasymptoticLogElliottMult` is a cheap stretch goal once the headline lands.
+**Trigger ET-1 (two-point cover by lap 62): CLEARED** — `ElliottRandomize.exists_cover_pair_ge`
+was proved and is trust-triple; the route it guarded carried the proof to completion.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
@@ -89,6 +59,9 @@ general `NonasymptoticLogElliottMult` is a cheap stretch goal once the headline 
 - 2026-09-25 (DEEP REFLECTION lap 54): crux CLOSED; verdict CONTINUE.  Leaf 2's **unimodularisation
   step REFUTED** and replaced by the exact two-point randomisation (multiplicative-first ordering);
   trigger ET-1 registered; fidelity note recorded (the dependency's Prop is the CM case of Thm 1.3).
+- 2026-09-25 (review lap 83): **HEADLINE PROVED AND AXIOM-CLEAN** (`exists_caseB_threshold` closed).
+  Objective replaced: the `src/`-stated genuinely *multiplicative* form `NonasymptoticLogElliottMult`,
+  the campaign's one remaining fidelity gap.  Trigger ET-1 cleared; trigger EM-1 registered.
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically

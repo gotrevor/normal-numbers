@@ -10,6 +10,9 @@ import NormalNumbers.ElliottDivisorTail
 import NormalNumbers.ElliottExpand
 import NormalNumbers.ElliottRestricted
 import NormalNumbers.ElliottScaleDescent
+import NormalNumbers.ElliottCaseB
+import NormalNumbers.ElliottWindowTruncate
+import NormalNumbers.ElliottTruncAssemble
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -71,7 +74,7 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottCaseAThin.div_le_four_mul
 #print axioms NormalNumbers.ElliottCaseAThin.natLog_mul_log_two_le
 
--- leaf 2, the assembly (gap-free itself; the three halves below carry sorryAx)
+-- leaf 2, the assembly (COMPLETE: every half below is trust-triple)
 #print axioms NormalNumbers.ElliottLeafTwo.nonasymptotic_of_affineCM
 
 -- the Rankin shift: ingredients for the uniformly small squarefull tail
@@ -106,6 +109,28 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottScaleDescent.pretentiousDistSq_descend
 #print axioms NormalNumbers.ElliottScaleDescent.mrtNonpretentious_descend
 #print axioms NormalNumbers.ElliottLeafTwo.exists_squarefull_tail
+
+-- leaf 2, the two halves of the dichotomy
+#print axioms NormalNumbers.ElliottLeafTwo.exists_caseA_thin_threshold
+#print axioms NormalNumbers.ElliottLeafTwo.exists_caseB_threshold
+#print axioms NormalNumbers.ElliottCaseB.exists_caseB_threshold
+
+-- leaf 2, Case B: the cost-shaped expansion steps and the threshold family
+#print axioms NormalNumbers.ElliottStageStep.norm_le_of_reduced
+#print axioms NormalNumbers.ElliottStageStep.norm_le_of_reduced_second
+#print axioms NormalNumbers.ElliottStageCost.norm_le_cost_first
+#print axioms NormalNumbers.ElliottStageCost.norm_le_cost_second
+#print axioms NormalNumbers.ElliottStageCost.mrtNonpretentious_cmExt
+#print axioms NormalNumbers.ElliottThresholdFamily.det_final
+#print axioms NormalNumbers.ElliottThresholdFamily.memberThreshold_spec
+#print axioms NormalNumbers.ElliottZeroExt.norm_sub_posExt_le
+#print axioms NormalNumbers.ElliottMertensIterate.reciprocalPrimeInterval_iter
+#print axioms NormalNumbers.ElliottMertensIterate.mrtNonpretentious_descend_iter
+
+-- leaf 2, the truncation of the window from below (the dichotomy-scale repair)
+#print axioms NormalNumbers.ElliottWindowTruncate.norm_le_truncated
+#print axioms NormalNumbers.ElliottTruncAssemble.discarded_mass_bound
+#print axioms NormalNumbers.ElliottTruncAssemble.X_le_thinScale_pow
 
 -- the dependency's proved special case
 #print axioms Erdos67b.unitCircleLogElliott

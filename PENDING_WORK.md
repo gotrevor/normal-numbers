@@ -10305,3 +10305,61 @@ holds, one of the two candidate cutoffs is already a fixed power of `X`.
 4. The ε-budget assembly itself (`ElliottStageStep` ×2 + `ElliottThresholdFamily`), with
    `A'' := min(A, W'')` (`MRTNonpretentious` is monotone downwards in `A`) and
    `A₀ ≥ max(3(T + 2D₀ + 2c₁ + mrtDescentCost + 1), D²(T'+4), A₀ᴬ², …)`.
+
+## Lap 83 (2026-09-25) — **CASE B PROVED; THE HEADLINE IS AXIOM-CLEAN**
+
+`NormalNumbers.ElliottGeneral.nonasymptoticLogElliott` now prints
+`[propext, Classical.choice, Quot.sound]`.  Zero `sorry` remains in the Elliott scope.
+Two new zero-sorry modules:
+
+| module | content |
+|---|---|
+| `ElliottStageCost` | `norm_le_cost_first` / `norm_le_cost_second` — `ElliottStageStep`'s two bricks instantiated at `L = thinScale` and passed through `logRatio_le`, so the truncation cost reads `(a+\|b\|)·(log W + κ)·εt` (a `log W` piece plus an absolute constant).  Also `logRatioConst_mono`, `isCM_cmExt`, `norm_cmExt_eq_one`, `pretentiousDistSq_congr` / `mrtNonpretentious_congr` / **`mrtNonpretentious_cmExt`** (non-pretentiousness depends only on prime values, so it passes from a cover `u` to `cmExt u` for free). |
+| `ElliottCaseB` | `progScale_le`, **`le_progScale`**, **`le_mul_progScale_add`** (the two-sided control of the progression scale), `sum_primesUpTo_eq_primeDefect` (the Case-B sum *is* the Euler defect), `integerAffine_le_of_mem`, **`budget_assemble`** (the ε-budget as pure real arithmetic), and **`exists_caseB_threshold`**. |
+
+### The one real idea of the lap: the budget's circularity is broken by ORDER
+
+The inner (second) expansion's truncation cost is
+`(a₂d₁ + \|a₂n₀₁+b₂\|)·(log W₁ + κ₂)·εt₂`, and it is multiplied by `D₁e²` when it passes back
+through the outer expansion's head bound.  So the tolerance `εt₂` must be small *in terms of `D₁`* —
+while `D₁` is itself produced by `exists_squarefull_tail` from a tolerance.  Reading this as one
+equation `εt ≲ ε/D(εt)³` makes it unsolvable (Rankin only gives `tail ≲ D^{-1/4}`).  It is not one
+equation: **the two expansions need not share a truncation point.**  Choose
+
+`εt₁ = ε/(8(C₁+1))` → `D₁` → `εt₂ = ε/(8(C₂+1)(D₁e²+1))` → `D₂` → `ε'' = ε/(8(D₁e²+1)(D₂e²+1))`,
+
+and take the threshold family at `D = max D₁ D₂`.  Then with `Pᵢ = Dᵢe²` the three `log W`
+coefficients `ε''P₁P₂`, `C₂εt₂P₁`, `C₁εt₁` are each `≤ ε/8`, and everything else is an absolute
+constant absorbed by `W ≥ exp(2·Cst/ε)`.
+
+### Scale bookkeeping that made it go through
+
+* `le_progScale`: `S ≤ (X−n₀)/d` as soon as `d(S+1) ≤ X`; used twice with
+  `Q = (D₁+1)((D₂+1)(S+1)+1) ≤ A₀` to get `S ≤ X₁` and `S ≤ X₂`.
+* `le_mul_progScale_add`: `X ≤ d(X₁+2)`; twice gives `X ≤ D₁D₂X₂ + 2D₁D₂ + 2D₁`, and with
+  `S = T + 2D₁D₂ + 4 ≤ X₂` that is `X ≤ X₂²` — exactly one `mrtNonpretentious_descend_iter` step
+  (`k = 1`) carries non-pretentiousness from `X` down to the doubly reduced scale `X₂`.
+* `A₂ := T = familyThreshold …` is a **fixed** natural, so `A₂ ≤ W₂ = min(min W X₁) X₂` is just
+  `T ≤ S`; that is why the threshold does not have to chase the shrinking window.
+
+### Traps recorded this lap — do NOT re-derive
+
+1. `Nat.primesLE X` and `Erdos67b.primesUpTo X` are *defeq* (`Finset.sum_congr rfl` unifies them),
+   but a membership hypothesis arrives in `Nat.primesLE` form: use
+   `simpa [Nat.primesLE, Nat.mem_primesBelow] using hp`, not `mem_primesUpTo`.
+2. `restrictToNat` has no equation lemma usable by `rw`; use `simp only [restrictToNat]`.
+3. `div_le_div_iff` does **not** exist in this mathlib.  For `c·(ε/(k(c+1))) ≤ ε/k` use the
+   `mul_le_mul_of_nonneg_left (show c ≤ c+1) … ` + `field_simp` shape instead of cross-multiplying.
+4. `le_or_lt` is not available; use `le_or_gt`.
+5. `Σ` is reserved notation — `hΣ` is not a legal identifier.
+6. `Int.natAbs_natCast` must be named explicitly (`simp` alone does not close
+   `((n : ℕ) : ℤ).natAbs = n` inside an `omega` chain).
+7. The assembly needs `set_option maxHeartbeats 1600000`.
+
+### NEXT (see `DIRECTION.md` CURRENT DIRECTIVE)
+
+The genuinely *multiplicative* form `NonasymptoticLogElliottMult`, stated in `src/`: the proved
+headline is the **completely multiplicative** case, because `IsMultiplicativeOnPositiveInt` has no
+coprimality hypothesis.  Nothing in the leaf-2 route consumes complete multiplicativity of `gᵢ`
+(the cover's `cmExt u` supplies it downstream), so the expected shape is a hypothesis weakening
+in place, not a new proof.
