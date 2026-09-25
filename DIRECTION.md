@@ -1,5 +1,30 @@
 # DIRECTION — normal-numbers 🧭
 
+## ⛔ HALT — DEFINITIONAL DEFECTS (2026-09-25, Astro review, confirmed by Ren) — OUTRANKS EVERYTHING BELOW
+
+The route's inputs are mis-stated; nothing built on them carries content until fixed.
+
+1. **`TTNonPretentious` holds for EVERY `g`** (`C3MrtTTThm31.lean:90`).  `A` is existential
+   *after* `X, L` are fixed, so `A := exp(inf_t ttPretentiousSum g X t) / L` always works —
+   including `g = 1`.  TT (3.3) has an ABSOLUTE implied constant.
+2. **Consequently `KPointNoExcWith` and `TwoPointNaturalCorrelationNoExc` are FALSE**:
+   take every `g i = 1`; the progression-restricted mean is ≍ 1, not `≤ Cst·L^{-c}` for large
+   `L ≤ log X`.  So `conjC3_of_geom_input`, `logToNatural_two_of_noExc` and everything using
+   those Props as hypotheses are vacuous (hypothesis never holds).
+3. **The exceptional set is free if it is the integers** (`TwoPointNaturalCorrelation`): `E ⊆ ℝ`
+   is charged by `∫ t⁻¹`, so `E = ℕ ∩ [√X, X]` has measure 0 and excludes every scale `N`.
+   With (1), the with-exceptional-set Prop is trivially TRUE.  TT's exceptional set is a set of
+   scales measured by logarithmic density of the INTEGERS/dyadic scales, not Lebesgue measure.
+
+**First job of the next lap, before any other work:** (a) machine-check both witnesses as named
+refutation theorems (`ttNonPretentious_trivial`, `not_kPointNoExcWith_const_one`, the
+integer-exceptional-set triviality) and add `Maze.lean` rows aliased onto them; (b) restate
+`TTNonPretentious` with the constant OUTSIDE (uniform in `X, L`) and the exceptional set as a set
+of integer scales with a counting/log-density cost; (c) re-audit every consumer listed by
+`grep -rln "TTNonPretentious\|TwoPointNaturalCorrelation\|KPointNoExc" src` and report which
+results survive.  Do not advance the crux until (a)-(c) are done.
+
+
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
 **Objective (2026-09-25 REVIEW lap 91 — direction KEPT, next move SET).**  Destination unchanged:
