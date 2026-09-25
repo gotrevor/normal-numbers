@@ -2,6 +2,8 @@ import NormalNumbers.ElliottTwoPointLog
 import NormalNumbers.ElliottZetaOmegaPretentious
 import NormalNumbers.ElliottTwistBootstrap
 import NormalNumbers.ElliottCharRigidity
+import NormalNumbers.ElliottArchimedeanRefuted
+import NormalNumbers.ElliottTwistRepair
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
@@ -158,3 +160,13 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottCharRigidity.eq_one_of_pow_eq_one_of_norm_lt
 #print axioms NormalNumbers.ElliottCharRigidity.exists_characterClusterRigidity
 #print axioms NormalNumbers.ElliottCharRigidity.twoPointElliottLog_of_archimedean_and_density
+
+/-! ### The refutation of input (c) (lap 92) -/
+#print axioms NormalNumbers.ElliottArchimedeanRefuted.not_archimedeanCorrelationBound
+
+/-! ### The repaired decomposition (lap 92) -/
+#print axioms NormalNumbers.ElliottTwistRepair.re_phase_mul_twistCorr_le
+#print axioms NormalNumbers.ElliottTwistRepair.twistAlmostRealDichotomy_of_old
+#print axioms NormalNumbers.ElliottTwistRepair.uniformlyNonPretentious_zetaOmega_of_almostReal
+#print axioms NormalNumbers.ElliottTwistRepair.twistAlmostRealDichotomy_of_inputs
+#print axioms NormalNumbers.ElliottTwistRepair.twoPointElliottLog_of_repaired_inputs

@@ -1,5 +1,74 @@
 # PENDING WORK
 
+## ⛔ 2026-09-25 (review lap 92) — INPUT (c) IS FALSE.  New attack path.
+
+**Read `ROUTE-ESCALATION-2026-09-25-archimedean.md` and `DIRECTION.md` CURRENT DIRECTIVE first.**
+
+`ElliottTwistBootstrap.ArchimedeanCorrelationBound A η` is **refuted in-kernel**
+(`ElliottArchimedeanRefuted.not_archimedeanCorrelationBound`, trust triple): its frequency range
+`1 < |v| log X` includes `v = 2/log X`, where all phases `v log p` stay in `[0,2]` and
+`Re ∑_{p≤X}p^{-iv}/p ≥ M(X) − 2 − 2C`.  So
+`ElliottCharRigidity.twoPointElliottLog_of_archimedean_and_density` is VACUOUS.  **Do not build on
+it; do not re-state input (c).**
+
+The live consumer is `ElliottTwistRepair.twoPointElliottLog_of_repaired_inputs`, on
+
+* **(c′)** `ArchimedeanCorrelationBoundAbove A η T` — `T X < |v| ≤ A²X → ‖archCorr v X‖ ≤ (1−η)M(X)`
+* **(e)** `SmallShiftAlmostReal A K T` — `|t| ≤ T X → AlmostRealTwist K χ t X`
+
+with `T X = (log X)^{-1+ε}` the honest threshold.
+
+### Attack path for (e) — DO THIS FIRST (it is the soft one)
+
+`AlmostRealTwist K χ t X := ∃ R, 0 ≤ R ∧ R ≤ M(X) ∧ ‖twistCorr χ t X − R‖ ≤ K`.
+
+Stage it; each stage is a separate lap-sized target and each can land independently.
+
+1. **e-NP (non-principal `χ`, `R = 0`).**  Need `‖∑_{p≤X} χ̄(p)p^{-it}/p‖ ≤ K_q` uniformly for
+   `|t| ≤ T X`.  Content: `log L(1+it, χ̄)` bounded, i.e. `L(1,χ) ≠ 0` plus continuity.  Survey
+   first: mathlib has Dirichlet's theorem on primes in APs, so `L(1,χ) ≠ 0` is available
+   (`DirichletCharacter.LFunction*`); and `BoundedGaps.BombieriVinogradov.Analytic.SiegelWalfisz`
+   carries the L-function machinery.  **Check whether a `∑_{p≤X} χ(p)/p = O(1)` statement already
+   exists somewhere in `BoundedGaps` / `Erdos67b` before deriving it.**
+2. **e-P-Im (principal `χ`, imaginary part).**  `|∑_{p≤X} sin(t log p)/p| ≤ K`.  Main term is
+   `Si(t log X) − Si(t log 2)`, *bounded absolutely*; the error is `O(1 + |t| log log X)` and
+   `|t| ≤ (log X)^{-1+ε}` makes `|t| log log X → 0`.  Needs Abel summation of `∑_{p≤u}1/p` against
+   `sin(t log u)`.
+3. **e-P-Re (principal `χ`, real part).**  `Re C = log(1/|t|) + O(1)`, and `0 ≤ log(1/|t|) ≤ M(X)`
+   up to `O(1)` — actually only the *containment in `[0, M(X)]` up to `K`* is needed, and
+   `Re C ≤ ‖C‖ ≤ M(X)` is free; the work is `Re C ≥ −K`.
+4. **The shared prerequisite: TWO-SIDED MERTENS.**  `∑_{p≤u}1/p = log log u + B + O(1/log u)`.
+   Only the lower half is currently used (`Erdos67b.characterTwistPrimeMass_mertens_lower`, via
+   `PrimeEstimates.mertensBound`).  **Hunt for the upper half / the `O(1/log u)` error form** in
+   `Erdos67b.PrimeEstimates`, `BoundedGaps.Maynard.PrimeMertens`,
+   `PrimeNumberTheoremAnd`, and `Util.MertensThird` (which proved `mertens_third_theorem`, a likely
+   source: Mertens III is `∏(1−1/p)^{-1} = e^γ log x(1+o(1))`, whose log is exactly what is wanted).
+
+### Attack path for (c′) — the long pole
+
+The zero-free-region site.  Do NOT expect to clear it.  Two recorded routes:
+
+* **(c′-VK)** cite it, as the dependency does with
+  `Erdos67b.PolynomialHeightPrimeCorrelationBound` (note: *that* `Prop` uses the range
+  `Y ≤ |v| ≤ T·Y^D` — it only claims polynomial height and deliberately avoids small `v`, which
+  independently confirms lap 92's diagnosis).
+* **(c′-vdC)** the unconditional probe worth a lap: if `∑_{p≤X}(1 − Re(γ̄ p^{-iv}))/p ≤ ηM` then
+  `n ↦ n^{iv}` is pretentious to the constant `γ`, which should force `|∑_{n≤X} n^{iv}| ≫_η X`;
+  but van der Corput on dyadic blocks gives `|∑_{n≤X} n^{iv}| ≪ X^{1/2} log X` for `1 ≪ |v| ≪ X²`
+  (second derivative of `v log u` is `v/u² ≍ X/N²` on `n ≍ N`).  Contradiction for all
+  `1 ≪ |v| ≤ A²X` — i.e. this would give (c′) **unconditionally on the whole upper range**, with
+  the only remaining band `T X ≤ |v| ≲ 1` handled by Mertens-with-error as in (e).
+  The uncertain half is the mean-value lower bound "pretentious to a constant ⟹ mean `≫ X`"
+  (Halász/Wirsing territory).  **Probe that first, on paper, before writing Lean.**
+
+### What is OFF the path now
+
+`CharacterClusterRigidity`, `PrimeDensityAP`, `exists_charDefect_le`, `NearTrivialTwist`,
+`TwistModulusDichotomy`.  All proved/stated and they stay in `src/`; `twistAlmostRealDichotomy_of_old`
+records that the old dichotomy implies the new one.  Do not spend laps on them.
+
+---
+
 ## Lap 55 (2026-09-25) — Case-B step 1 CLOSED: the pretentious transfer
 
 New module `src/NormalNumbers/ElliottPretentiousTransfer.lean`, **zero sorry, trust triple**,

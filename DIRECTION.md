@@ -2,50 +2,62 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective — ACHIEVED 2026-09-25 (lap 83), and the new objective that replaces it.**
-`NormalNumbers.ElliottGeneral.nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott` is
-**PROVED**: `#print axioms` = `[propext, Classical.choice, Quot.sound]`, zero `sorry` in the
-Elliott scope, full `lake build` green.  The kickoff's target is met.
+**Achieved and frozen.**  `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott` (lap 83) and the
+genuinely multiplicative form `…nonasymptoticLogElliottMult` (lap 84) are both **PROVED** and
+`#print axioms`-clean.  Tao 2016 Thm 1.3 is done; do not reopen it.
 
-**THE OBJECTIVE NOW: close the one remaining *fidelity* gap.**  State and prove, in `src/`,
-`NormalNumbers.Elliott*.NonasymptoticLogElliottMult` — Tao 2016 Theorem 1.3 for **merely
-multiplicative** `g₁, g₂` (coprimality hypothesis: `Nat.Coprime m n → g(mn) = g m * g n`), which is
-what the paper actually claims.  The dependency's `IsMultiplicativeOnPositiveInt` has *no*
-coprimality hypothesis, so the proved headline is the **completely multiplicative** case; that is a
-real, documented drift and it is now the only thing between this repo and the paper's statement.
+**THE OBJECTIVE NOW: make `TwoPointElliottLog` rest on TRUE classical inputs.**  Laps 85–91
+reduced it to two named `Prop`s, and lap 92 **refuted one of them in-kernel**
+(`ElliottArchimedeanRefuted.not_archimedeanCorrelationBound`: input (c)'s frequency range reached
+`|v| ≈ 1/log X`, where the claimed bound is false, so
+`ElliottCharRigidity.twoPointElliottLog_of_archimedean_and_density` is VACUOUS).  Lap 92 also
+landed the repair: `ElliottTwistRepair` re-derives the payoff
+(`twoPointElliottLog_of_repaired_inputs`) from two inputs split at an honest threshold function
+`T X = (log X)^{-1+ε}` — see `ROUTE-ESCALATION-2026-09-25-archimedean.md`.
 
 **Mandated next move, in order.**
-1. Add `src/NormalNumbers/ElliottMultStatement.lean`: a `src/`-owned `Prop`
-   `NonasymptoticLogElliottMult`, identical to the dependency's `NonasymptoticLogElliott` except
-   that `IsMultiplicativeOnPositiveInt gᵢ` is replaced by `gᵢ 1 = 1 ∧ ∀ m n, 0 < m → 0 < n →
-   Nat.Coprime m n → gᵢ (m*n) = gᵢ m * gᵢ n`.  Keep the dependency's `Prop` untouched and keep
-   `nonasymptoticLogElliott` exactly as it is.
-2. Audit the leaf-2 chain for where complete multiplicativity of `gᵢ` is actually consumed.  The
-   expectation from lap 83's proof is: **nowhere**.  `ElliottZeroExt.coprime_mul_restrictToNat`
-   and `ElliottRandomize.exists_cover_pair_ge` both want only coprime multiplicativity, and every
-   later use of `IsCompletelyMultiplicativeOnPositive` is on `cmExt u` (the *cover's* completely
-   multiplicative extension), never on `gᵢ`.  Case A's `normDivArith` multiplicativity is likewise
-   coprime-only.  If an actual use turns up, record it as a named obstruction before working around it.
-3. Prove `nonasymptoticLogElliottMult` by re-running the same `nonasymptotic_of_affineCM` assembly
-   with the weakened hypothesis.  Prefer *generalising the existing lemmas in place* (weaken
-   `IsMultiplicativeOnPositiveInt` to the coprime form where the proof allows) over copying files;
-   `nonasymptoticLogElliott` must keep compiling as a corollary.
-4. Only after that: the downstream consumer named in the kickoff (`TwoPointElliottLog` for
-   `ζ^{ω(pn+1)}`, C1's two-point leaf).
+1. **Discharge input (e) `ElliottTwistRepair.SmallShiftAlmostReal`** — the new soft pole, and the
+   only one that is fully classical with *no zero-free region*.  It is the whole small-shift band
+   `|t| ≤ T X`.  Two cases, both elementary in content:
+   * non-principal `χ`: `‖∑_{p≤X} χ̄(p)p^{-it}/p‖ = O_q(1)` (take `R = 0`), from `L(1,χ) ≠ 0`;
+   * principal `χ`: `C = log(1/|t|) + O(1)` with `log(1/|t|) ∈ [0, M(X)]`; the imaginary part is
+     the *bounded* sine integral `Si(t log X) − Si(t log 2)`.
+   **Survey before writing analysis**: the Lean cost is Abel summation against a TWO-SIDED Mertens
+   `∑_{p≤u}1/p = log log u + B + O(1/log u)`.  Only the lower bound
+   (`Erdos67b.characterTwistPrimeMass_mertens_lower`) is in use — hunt for the upper/two-sided form
+   in `Erdos67b.PrimeEstimates`, `BoundedGaps`, `PrimeNumberTheoremAnd` before deriving one.
+   Land it in stages if needed: first the non-principal case, then principal `Im`, then `Re`.
+2. **Then (c′) `ArchimedeanCorrelationBoundAbove`** — the long pole, unchanged in depth (this is
+   the zero-free-region site).  Narrow it; do not expect to clear it in one lap.  The recorded
+   unconditional alternative worth probing is van der Corput on `∑_{n≤X} n^{iv}` (see the
+   escalation doc §"new frontier" item 2), which would replace the zero-free region outright.
 
-**Forbidden drift.**  Do NOT delete, rename or weaken `nonasymptoticLogElliott`, and do not edit
-the dependency's `Prop` or `.lake/packages/lean-proofs-latest/`.  Do NOT reopen Theorem C′/
-multicutoff, `PrimeLambertOscillation`, `MahlerDriftOne`, `SwingC*`, `PairDecouple*`
-(designated-open, off scope).  Do NOT "tidy" the proved Elliott modules; they are the deliverable.
+**Forbidden drift.**  Do NOT delete, rename or weaken `nonasymptoticLogElliott`,
+`nonasymptoticLogElliottMult`, or anything in the proved leaf-2 chain; do not edit the dependency's
+`Prop`s or `.lake/packages/lean-proofs-latest/`.  Do NOT resurrect input (c)
+(`ArchimedeanCorrelationBound`) or build on `twoPointElliottLog_of_archimedean_and_density` — that
+statement is refuted and vacuous; the live consumer is
+`ElliottTwistRepair.twoPointElliottLog_of_repaired_inputs`.  `CharacterClusterRigidity` /
+`PrimeDensityAP` are now OFF the critical path — they are proved and stay, but do not spend laps
+on them.  Do NOT reopen Theorem C′/multicutoff, `PrimeLambertOscillation`, `MahlerDriftOne`,
+`SwingC*`, `PairDecouple*` (designated-open, off scope).
 
-**🚦 Route trigger (Elliott-mult, EM-1).**  If step 2's audit finds that complete multiplicativity
-of `gᵢ` *is* genuinely consumed somewhere in the chain (i.e. the mult form does NOT follow by
-weakening hypotheses), stop and write `ROUTE-ESCALATION-<date>.md` costing the alternative
-(expanding a merely multiplicative `g` as `g = h ⋆ (something supported on squarefull numbers)`
-before the cover, which is the same trick as `squarefullPart` one level up) — do not grind at it.
+**🚦 Route trigger (EA-1, fidelity of the remaining inputs).**  Every named classical `Prop` this
+campaign leans on must be **checked for truth at its boundary parameters before it is built on** —
+lap 92's refutation shows a plausible-looking statement can be false by one exponent.  Concretely:
+before any lap consumes a new input, it must either (a) exhibit the true asymptotic shape of both
+sides at the extreme end of every quantified range, or (b) prove a `¬` result and re-decompose.
+If a lap finds (e) or (c′) also false at some boundary, write
+`ROUTE-ESCALATION-<date>.md` and re-decompose — do not patch the constant and continue.
 
-**Trigger ET-1 (two-point cover by lap 62): CLEARED** — `ElliottRandomize.exists_cover_pair_ge`
-was proved and is trust-triple; the route it guarded carried the proof to completion.
+**Trigger EM-1 (complete multiplicativity consumed somewhere): CLEARED, lap 84** — it is consumed
+nowhere; the mult form followed by weakening hypotheses in place.
+**Trigger ET-1 (two-point cover by lap 62): CLEARED** — `ElliottRandomize.exists_cover_pair_ge`.
+
+**Build/green convention (do not "fix" this).**  The Elliott chain is NOT reachable from
+`src/NormalNumbers.lean`: adding it breaks the root build (`PrimeNumberTheoremAnd.Sobolev` clashes
+with `PNTPort.Sobolev`, `CS.deriv`).  Green therefore means BOTH
+`lake build` (9257 jobs) AND `lake build NormalNumbers.ElliottAxiomAudit` (9674 jobs).
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
@@ -62,6 +74,10 @@ was proved and is trust-triple; the route it guarded carried the proof to comple
 - 2026-09-25 (review lap 83): **HEADLINE PROVED AND AXIOM-CLEAN** (`exists_caseB_threshold` closed).
   Objective replaced: the `src/`-stated genuinely *multiplicative* form `NonasymptoticLogElliottMult`,
   the campaign's one remaining fidelity gap.  Trigger ET-1 cleared; trigger EM-1 registered.
+- 2026-09-25 (review lap 92): **input (c) REFUTED in-kernel**; `twoPointElliottLog_of_archimedean_and_density`
+  is vacuous.  Decomposition REVISED to `ElliottTwistRepair` ((c′) above a threshold + (e) below it);
+  rigidity/`PrimeDensityAP` dropped from the critical path; objective is now input (e) first, (c′) second.
+  Trigger EM-1 cleared; trigger EA-1 (boundary-truth audit of every cited input) registered.
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically

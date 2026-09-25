@@ -1,11 +1,32 @@
 # STATUS — normal-numbers 📊
 
-**Tao 2016 Thm 1.3, the general two-point log-Elliott theorem — PROVED and axiom-clean.**
-(branch `wip/elliott-port`, worktree `nn-elliott`).  Pair A multicutoff (Theorem C′) is COMPLETE.
-· **Build**: 🟢 green (9257 jobs full `lake build`; 9593 for the audit surface) · **Updated**:
-review lap 83 · 2026-09-25 · HEAD `10954ca`
+**Tao 2016 Thm 1.3, the general two-point log-Elliott theorem — PROVED and axiom-clean, in both
+the CM and the genuinely multiplicative form.**  (branch `wip/elliott-port`, worktree
+`nn-elliott`).  Pair A multicutoff (Theorem C′) is COMPLETE.  The live frontier is the *downstream
+consumer* `TwoPointElliottLog`, whose lap-91 reduction was **refuted in-kernel at lap 92** and
+re-decomposed.
+· **Build**: 🟢 green — BOTH `lake build` (9257 jobs) and `lake build NormalNumbers.ElliottAxiomAudit`
+(9674 jobs) are required; the Elliott chain is unreachable from `src/NormalNumbers.lean` because
+`PrimeNumberTheoremAnd.Sobolev` clashes with `PNTPort.Sobolev`. · **Updated**: review lap 92 ·
+2026-09-25 · HEAD `8d75c90`+
 
 ## Where it stands (Elliott campaign)
+
+**The live frontier, and lap 92's finding.**  The headline is done; the campaign's open work is
+the downstream consumer `TwoPointElliottLog` (`DIRECTION.md` item 4).  Laps 85–91 reduced it to two
+named classical `Prop`s, and **lap 92 proved one of them FALSE**:
+`ElliottArchimedeanRefuted.not_archimedeanCorrelationBound` refutes input (c)
+`ArchimedeanCorrelationBound A η` for every level `A ≥ 1` and every `η > 0`, because its frequency
+range `1 < |v| log X` reaches down to `|v| ≈ 1/log X`, where `‖∑_{p≤X}p^{-iv}/p‖ = M(X) + O(1)`.
+The witness is `v = 2/log X` and the proof is two elementary facts (`cos θ ≥ 1 − θ²/2`, Mertens I).
+Consequence: `ElliottCharRigidity.twoPointElliottLog_of_archimedean_and_density` is **vacuous**.
+Lap 92 also landed the repair, `ElliottTwistRepair`: the consumer never needed `C ≈ M(X)`, only
+`AlmostRealTwist` (`C` within `O(1)` of a real `R ∈ [0, M(X)]`), which is *true across the whole
+intermediate band* the corrected threshold opens up.  The payoff
+`twoPointElliottLog_of_repaired_inputs` now rests on (c′) an Archimedean bound **above** a threshold
+`T X = (log X)^{-1+ε}` and (e) `SmallShiftAlmostReal` **below** it.  The repair *removes*
+`CharacterClusterRigidity`, `PrimeDensityAP` and the de-twisting branch from the critical path.
+See `ROUTE-ESCALATION-2026-09-25-archimedean.md`.
 
 **Done.**  `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott`
 is a **theorem**, `#print axioms` = `[propext, Classical.choice, Quot.sound]`, and **no `sorry`
@@ -39,6 +60,19 @@ leaf-2 route never uses complete multiplicativity of the `gᵢ` (only coprime mu
 
 ## What's happened (Elliott campaign, newest first)
 
+- **2026-09-25 (review lap 92) — INPUT (c) REFUTED IN-KERNEL, AND REPAIRED.**  Two new
+  sorry-free, trust-triple modules.  `ElliottArchimedeanRefuted.not_archimedeanCorrelationBound`
+  kills the lap-91 reduction's Archimedean hypothesis (wrong frequency threshold by a factor
+  `(log X)^ε`), so `twoPointElliottLog_of_archimedean_and_density` was vacuous.
+  `ElliottTwistRepair` re-derives the payoff from `AlmostRealTwist` + a threshold-function split,
+  proves the old dichotomy implies the new one (nothing from laps 85–91 lost), and drops rigidity /
+  `PrimeDensityAP` from the critical path.  New frontier: input (e) `SmallShiftAlmostReal` (soft,
+  no zero-free region) then (c′) `ArchimedeanCorrelationBoundAbove` (the zero-free-region site).
+- **2026-09-25 (laps 84–91)** — fidelity gap CLOSED (`nonasymptoticLogElliottMult`, trigger EM-1
+  did not fire: complete multiplicativity is consumed nowhere), then the consumer built and its
+  hypothesis decomposed: `zetaOmegaInt`, `UniformlyNonPretentious`, `TwistModulusDichotomy`, the
+  power bootstrap `Δ_k ≤ k√(2ΔM)`, Euler killing the character, and rigidity from `PrimeDensityAP`.
+  (The decomposition's Archimedean input turned out false — see lap 92.)
 - **2026-09-25 (lap 83) — THE HEADLINE IS PROVED AND AXIOM-CLEAN.**  `exists_caseB_threshold`,
   the last open obligation, is discharged in the new `ElliottCaseB.lean` (with `ElliottStageCost`
   supplying the two expansion bricks in cost-shaped form).  `nonasymptoticLogElliott` now prints
@@ -83,23 +117,28 @@ leaf-2 route never uses complete multiplicativity of the `gᵢ` (only coprime mu
 ## Outstanding (Elliott campaign)
 
 ### Short-term (mirrors PENDING_WORK top)
-1. **`NonasymptoticLogElliottMult`** — state Tao's Theorem 1.3 in `src/` for merely *multiplicative*
-   `g₁, g₂` (coprime multiplicativity only) and prove it.  This is a fidelity upgrade, not a
-   restatement: it is what the paper claims and what the dependency's `Prop` does not cover.  The
-   leaf-2 route already only uses coprime multiplicativity; the work is (a) a `src/`-stated `Prop`,
-   (b) checking every rung's use of `IsCompletelyMultiplicativeOnPositive` is on the *cover* `cmExt u`
-   (which stays completely multiplicative) and not on `gᵢ`.
-2. Downstream consumer named in the kickoff: `TwoPointElliottLog` for `ζ^{ω(pn+1)}`, C1's two-point
-   leaf.
+1. **Input (e) `ElliottTwistRepair.SmallShiftAlmostReal`** — the new soft pole and the mandated next
+   target.  `|t| ≤ T X ⟹ AlmostRealTwist K χ t X`.  Non-principal `χ`: `‖C‖ = O_q(1)` from
+   `L(1,χ) ≠ 0`.  Principal `χ`: `C = log(1/|t|) + O(1)`, the imaginary part being the bounded
+   `Si(t log X)`.  Lean cost = Abel summation against a **two-sided** Mertens
+   `∑_{p≤u}1/p = log log u + B + O(1/log u)` — survey `Erdos67b.PrimeEstimates`, `BoundedGaps`,
+   `PrimeNumberTheoremAnd` for the upper half before deriving it.
+2. **Input (c′) `ElliottTwistRepair.ArchimedeanCorrelationBoundAbove`** — the long pole, the only
+   zero-free-region site.  Unconditional alternative to probe: van der Corput on `∑_{n≤X} n^{iv}`
+   (`X^{1/2} log X` on dyadic blocks for `1 ≪ |v| ≪ X²`) against a mean-value lower bound for a
+   function pretentious to a constant — this would replace the zero-free region outright.
+3. Boundary-truth audit (trigger EA-1) on every input before consuming it: lap 92 shows a
+   plausible-looking classical `Prop` can be false by one exponent.
 
 ### Long-term
-Nothing else in the Elliott scope.  The campaign's remaining value is downstream (C1) and in the
-fidelity upgrade above.
+The passage from the logarithmic average back to `TwoPointElliott`'s natural average (C1's actual
+leaf) is *not* known in general and is not attempted here.
 
 ### To completion
-The headline is complete.  The fidelity upgrade is ≈3–8 laps (mostly re-checking hypothesis use).
+(e) is ≈3–8 laps (mostly Abel summation + a two-sided Mertens). (c′) is open-ended: it is the same
+wall the dependency names as `Erdos67b.PolynomialHeightPrimeCorrelationBound` and does not prove.
 
-## Axiom ledger — Elliott campaign (real `#print axioms`, lap 83, 2026-09-25, from `ElliottAxiomAudit`)
+## Axiom ledger — Elliott campaign (real `#print axioms`, lap 92, 2026-09-25, from `ElliottAxiomAudit`)
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 |---|---|---|---|
@@ -117,9 +156,23 @@ The headline is complete.  The fidelity upgrade is ≈3–8 laps (mostly re-chec
 | `ElliottPretentiousTransfer.mrtNonpretentious_transfer` | the deterministic pretentious transfer | trust triple | ✅ (lap 55) |
 | `ElliottHall.sum_Icc_dyadic_le` | thin-window logarithmic sum (Halberstam–Richert) | trust triple | ✅ (lap 53) |
 | `Erdos67b.unitCircleLogElliott` (dependency) | the proved special case | trust triple | ✅ |
+| `ElliottGeneral.nonasymptoticLogElliottMult` | Tao 2016 Thm 1.3, **genuinely multiplicative**, unconditional | trust triple | ✅ **PROVED** (lap 84) — the fidelity gap, closed |
+| `ElliottArchimedeanRefuted.not_archimedeanCorrelationBound` | *refutation*: input (c) is false | trust triple | ✅ (lap 92) — a `¬` theorem, the honest kind of progress |
+| `ElliottTwistRepair.twoPointElliottLog_of_repaired_inputs` | C1's two-point leaf in log average | trust triple, **conditional on hypotheses (c′)+(e)** | 🟡 live frontier — the two `Prop`s below |
+| `ElliottTwistRepair.uniformlyNonPretentious_zetaOmega_of_almostReal` | the consumer, on the repaired dichotomy | trust triple | ✅ (lap 92) |
+| `ElliottTwistRepair.twistAlmostRealDichotomy_of_inputs` | dichotomy from (c′)+(e) | trust triple | ✅ (lap 92) |
+| `ElliottCharRigidity.twoPointElliottLog_of_archimedean_and_density` | *superseded* | trust triple, but **VACUOUS** — hypothesis (c) refuted | ⛔ do not build on it (lap 92) |
 
-Math-axiom count for the Elliott campaign: **0** (🟢 0 · 🟡 0 · 🟠 0 · 🔴 0), and now **0 open
-`sorry`** as well.  `#print axioms` certifies proofs, not statements — the statement anchor here is
+### The two open hypotheses of the live frontier (not axioms, not `sorry` — named `Prop`s)
+
+| input | statement | bucket |
+|---|---|---|
+| **(e)** `SmallShiftAlmostReal A K T` | `\|t\| ≤ T X → ∃ R ∈ [0,M(X)], ‖C − R‖ ≤ K` | 🟡 proven, project-scale — Mertens two-sided + `L(1,χ)≠0`; **next prerequisite = the upper half of two-sided Mertens, then Abel summation** |
+| **(c′)** `ArchimedeanCorrelationBoundAbove A η T` | `T X < \|v\| ≤ A²X → ‖archCorr v X‖ ≤ (1−η)M(X)` | 🟡 proven, project-scale (zero-free region at polynomial height; the dependency cites the same wall). **next prerequisite = probe the van der Corput route** |
+
+Math-axiom count for the Elliott campaign: **0** (🟢 0 · 🟡 0 · 🟠 0 · 🔴 0), and **0 open
+`sorry`** in the Elliott scope.  The two open obligations above are *hypotheses on a theorem*, never
+axioms — which is why lap 92's refutation could be a theorem rather than a retraction.  `#print axioms` certifies proofs, not statements — the statement anchor here is
 that the headline's *type* is the dependency's own `Prop`, which this repo never edits, plus the
 fidelity note above (the `Prop` is the completely multiplicative case of Tao's Theorem 1.3).
 
@@ -127,7 +180,7 @@ fidelity note above (the `Prop` is the completely multiplicative case of Tao's T
 
 `KICKOFF-2026-09-24-elliott-general.md` · newest baton `HANDOFF-elliott-2026-09-25-lap*.md` ·
 `PENDING_WORK.md` top section (Reflection — 2026-09-25) · `DIRECTION.md` CURRENT DIRECTIVE ·
-audit surface `src/NormalNumbers/ElliottAxiomAudit.lean`.
+audit surface `src/NormalNumbers/ElliottAxiomAudit.lean` · `ROUTE-ESCALATION-2026-09-25-archimedean.md`.
 
 ---
 
