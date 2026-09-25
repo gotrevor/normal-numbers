@@ -473,6 +473,153 @@ theorem top_down_weighted_tendsto {Φ : ℕ → ℝ} (h0 : ∀ a, 0 ≤ Φ a) {G
       simpa using geom_half_Ico_le 0 k₀
     nlinarith [hb1, hb2, hk₀, hε, hgeo]
 
+/-- **The class sum, normalised, tends to zero.**  The whole assembly: halving stack + per-level
+window bound + the top-down Toeplitz estimate. -/
+theorem class_sum_tendsto_of_noExc (h : TwoPointNaturalCorrelationNoExc)
+    {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1)
+    (hnp : ∀ X L : ℝ, 2 ≤ X → 1 ≤ L → L ≤ Real.log X →
+      TTNonPretentious (zOmegaNat z₀) X L)
+    {M : ℕ} (hM : 0 < M) (r : ℕ) :
+    Tendsto (fun Y : ℕ =>
+      ‖∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M),
+          z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2)‖ / (Y : ℝ)) atTop (𝓝 0) := by
+  classical
+  obtain ⟨c, Cst, hc, hCst, N₀, hwin⟩ := dyadic_window_bound_of_noExc h hz₀ hz₁ hnp
+  have hMR : (0 : ℝ) < (M : ℝ) := by exact_mod_cast hM
+  set F : ℕ → ℂ := fun n =>
+    if n % M = r % M then z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2) else 0 with hFdef
+  have hFnorm : ∀ n, ‖F n‖ ≤ 1 := by
+    intro n
+    simp only [hFdef]
+    by_cases hn : n % M = r % M
+    · simp only [if_pos hn, norm_mul, norm_pow, hz₀, hz₁, one_pow, mul_one, le_refl]
+    · simp [hn]
+  have hfilter : ∀ a b : ℕ,
+      ∑ n ∈ (Finset.Ioc a b).filter (fun n => n % M = r % M),
+        z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2) = ∑ n ∈ Finset.Ioc a b, F n := by
+    intro a b; simp only [hFdef]; rw [Finset.sum_filter]
+  set N₀' : ℕ := max N₀ 2 with hN₀'def
+  set Φ : ℕ → ℝ := fun a =>
+    if N₀' ≤ a ∧ (M : ℝ) ≤ (2 * Real.log a) ^ c then Cst * (2 * Real.log a) ^ (-c) / (M : ℝ)
+    else 1 with hΦdef
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hΦ0 : ∀ a, 0 ≤ Φ a := by
+    intro a
+    simp only [hΦdef]
+    split
+    · positivity
+    · norm_num
+  set G : ℝ := 1 + Cst * (2 * Real.log 2) ^ (-c) / (M : ℝ) with hGdef
+  have hGterm : (0 : ℝ) ≤ Cst * (2 * Real.log 2) ^ (-c) / (M : ℝ) := by positivity
+  have hΦG : ∀ a, Φ a ≤ G := by
+    intro a
+    simp only [hΦdef]
+    split
+    · rename_i hcond
+      have ha2 : 2 ≤ a := le_trans (le_max_right _ _) hcond.1
+      have haR : (2 : ℝ) ≤ (a : ℝ) := by exact_mod_cast ha2
+      have hla : Real.log 2 ≤ Real.log a := Real.log_le_log (by norm_num) haR
+      have hx : (0 : ℝ) < 2 * Real.log 2 := by linarith
+      have hy : (0 : ℝ) < 2 * Real.log a := by linarith
+      have hmono : (2 * Real.log 2) ^ c ≤ (2 * Real.log a) ^ c :=
+        Real.rpow_le_rpow hx.le (by linarith) hc.le
+      have hxc : (0 : ℝ) < (2 * Real.log 2) ^ c := Real.rpow_pos_of_pos hx c
+      have hinv : (2 * Real.log a) ^ (-c) ≤ (2 * Real.log 2) ^ (-c) := by
+        rw [Real.rpow_neg hx.le, Real.rpow_neg hy.le, inv_le_inv₀
+          (Real.rpow_pos_of_pos hy c) hxc]
+        exact hmono
+      have hstep : Cst * (2 * Real.log a) ^ (-c) ≤ Cst * (2 * Real.log 2) ^ (-c) :=
+        mul_le_mul_of_nonneg_left hinv hCst.le
+      have hdiv : Cst * (2 * Real.log a) ^ (-c) / (M : ℝ)
+          ≤ Cst * (2 * Real.log 2) ^ (-c) / (M : ℝ) :=
+        div_le_div_of_nonneg_right hstep hMR.le
+      rw [hGdef]; linarith
+    · rw [hGdef]; linarith
+  have hΦlim : Tendsto Φ atTop (𝓝 0) := by
+    have hbase : Tendsto (fun a : ℕ => 2 * Real.log a) atTop atTop :=
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).const_mul_atTop (by norm_num)
+    have hgo : Tendsto (fun a : ℕ => Cst * (2 * Real.log a) ^ (-c) / (M : ℝ)) atTop (𝓝 0) := by
+      have := ((tendsto_rpow_neg_atTop hc).comp hbase).const_mul Cst
+      have h2 := this.div_const (M : ℝ)
+      simpa using h2
+    refine hgo.congr' ?_
+    have hc1 : ∀ᶠ a : ℕ in atTop, N₀' ≤ a := Filter.eventually_atTop.2 ⟨N₀', fun a ha => ha⟩
+    have hc2 : ∀ᶠ a : ℕ in atTop, (M : ℝ) ≤ (2 * Real.log a) ^ c :=
+      ((tendsto_rpow_atTop hc).comp hbase).eventually_ge_atTop (M : ℝ)
+    filter_upwards [hc1, hc2] with a ha1 ha2
+    simp only [hΦdef]
+    rw [if_pos (And.intro ha1 ha2)]
+  -- the per-window bound
+  have hB : ∀ a : ℕ, ‖∑ n ∈ Finset.Ioc a (2 * a), F n‖ ≤ Φ a * (a : ℝ) := by
+    intro a
+    by_cases hcond : N₀' ≤ a ∧ (M : ℝ) ≤ (2 * Real.log a) ^ c
+    · have hspec := hwin a (le_trans (le_max_left _ _) hcond.1) M r hM hcond.2
+      rw [hfilter] at hspec
+      simp only [hΦdef, if_pos hcond]
+      refine le_trans hspec (le_of_eq ?_)
+      field_simp
+    · simp only [hΦdef, if_neg hcond, one_mul]
+      refine le_trans (norm_sum_le _ _) ?_
+      have h1 : ∑ n ∈ Finset.Ioc a (2 * a), ‖F n‖ ≤ ∑ _n ∈ Finset.Ioc a (2 * a), (1 : ℝ) :=
+        Finset.sum_le_sum fun n _ => hFnorm n
+      refine le_trans h1 ?_
+      rw [Finset.sum_const, Nat.card_Ioc, nsmul_eq_mul, mul_one]
+      have : (2 * a - a : ℕ) = a := by omega
+      rw [this]
+  -- the halving stack
+  have hstack : ∀ Y : ℕ, ‖∑ n ∈ Finset.Ioc 0 Y, F n‖
+      ≤ (∑ k ∈ range (Nat.log 2 Y + 1), Φ (Y / 2 ^ (k + 1)) * ((Y / 2 ^ (k + 1) : ℕ) : ℝ))
+        + ((Nat.log 2 Y + 1 : ℕ) : ℝ) := by
+    intro Y
+    have hhead : Y / 2 ^ (Nat.log 2 Y + 1) = 0 :=
+      Nat.div_eq_of_lt (Nat.lt_pow_succ_log_self (by norm_num) Y)
+    rw [sum_Ioc_halving_stack F Y (Nat.log 2 Y + 1), hhead]
+    simp only [Finset.Ioc_self, Finset.sum_empty, zero_add]
+    refine le_trans (norm_sum_le _ _) ?_
+    have hlev : ∀ k ∈ range (Nat.log 2 Y + 1),
+        ‖∑ n ∈ Finset.Ioc (Y / 2 ^ (k + 1)) (Y / 2 ^ k), F n‖
+          ≤ Φ (Y / 2 ^ (k + 1)) * ((Y / 2 ^ (k + 1) : ℕ) : ℝ) + 1 := fun k _ =>
+      norm_sum_level_le hFnorm (double_le_level Y k) (level_le_double_succ Y k) (hB _)
+    refine le_trans (Finset.sum_le_sum hlev) ?_
+    rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+  -- assembling the limit
+  have hmain := top_down_weighted_tendsto hΦ0 hΦG hΦlim (fun Y => Nat.log 2 Y + 1)
+  have hlogY : Tendsto (fun Y : ℕ => ((Nat.log 2 Y + 1 : ℕ) : ℝ) / (Y : ℝ)) atTop (𝓝 0) := by
+    have hlogdiv : Tendsto (fun Y : ℕ => (Real.log Y / Real.log 2 + 1) / (Y : ℝ))
+        atTop (𝓝 0) := by
+      have h1 : Tendsto (fun x : ℝ => Real.log x / x) atTop (𝓝 0) :=
+        Real.isLittleO_log_id_atTop.tendsto_div_nhds_zero
+      have h2 : Tendsto (fun Y : ℕ => Real.log Y / (Y : ℝ)) atTop (𝓝 0) :=
+        h1.comp tendsto_natCast_atTop_atTop
+      have h3 : Tendsto (fun Y : ℕ => (1 : ℝ) / (Y : ℝ)) atTop (𝓝 0) :=
+        tendsto_one_div_atTop_nhds_zero_nat
+      have h4 := (h2.div_const (Real.log 2)).add h3
+      simp only [zero_div, zero_add] at h4
+      refine h4.congr fun Y => ?_
+      field_simp
+    refine squeeze_zero' (Filter.Eventually.of_forall fun Y => by positivity)
+      (Filter.eventually_atTop.2 ⟨1, fun Y hY => ?_⟩) hlogdiv
+    have hY1 : (1 : ℝ) ≤ (Y : ℝ) := by exact_mod_cast hY
+    have hYpos : (0 : ℝ) < (Y : ℝ) := by linarith
+    refine div_le_div_of_nonneg_right ?_ hYpos.le
+    have hpow : (2 : ℕ) ^ Nat.log 2 Y ≤ Y := Nat.pow_log_le_self 2 (by omega)
+    have hpowR : ((2 : ℝ)) ^ (Nat.log 2 Y) ≤ (Y : ℝ) := by exact_mod_cast hpow
+    have hle : (Nat.log 2 Y : ℝ) * Real.log 2 ≤ Real.log Y := by
+      have := Real.log_le_log (by positivity) hpowR
+      rwa [Real.log_pow] at this
+    push_cast
+    rw [div_add' _ _ _ (ne_of_gt hlog2), le_div_iff₀ hlog2]
+    nlinarith [hle, hlog2]
+  have hsq : Tendsto (fun Y : ℕ =>
+      (∑ k ∈ range (Nat.log 2 Y + 1), Φ (Y / 2 ^ (k + 1)) * ((Y / 2 ^ (k + 1) : ℕ) : ℝ))
+        / (Y : ℝ) + ((Nat.log 2 Y + 1 : ℕ) : ℝ) / (Y : ℝ)) atTop (𝓝 0) := by
+    simpa using hmain.add hlogY
+  refine squeeze_zero' (Filter.Eventually.of_forall fun Y => by positivity)
+    (Filter.eventually_atTop.2 ⟨1, fun Y hY => ?_⟩) hsq
+  have hYpos : (0 : ℝ) < (Y : ℝ) := by exact_mod_cast hY
+  rw [hfilter, ← add_div]
+  exact div_le_div_of_nonneg_right (hstack Y) hYpos.le
+
 /-- **THE PAYOFF.**  Removing the exceptional set from TT Theorem 3.1(ii) discharges
 `LogToNaturalCorrelation 2` — the last open obligation of the `D = 2` layer.  With this, the
 `D = 2` row of the ledger is *equivalent to a named open problem in the literature*, and
@@ -494,6 +641,7 @@ theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
 #print axioms norm_sum_level_le
 #print axioms geom_half_Ico_le
 #print axioms top_down_weighted_tendsto
+#print axioms class_sum_tendsto_of_noExc
 
 end CastingOut
 

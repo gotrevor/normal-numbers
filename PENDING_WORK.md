@@ -9783,3 +9783,27 @@ What remains is purely the glue: define
 `Φ a = if N₀ ≤ a ∧ (M:ℝ) ≤ (2 log a)^c then Cst·(2 log a)^{-c}/M else 1`, check `Φ ≥ 0`,
 `Φ ≤ max 1 (Cst·(2 log N₀)^{-c}/M)` and `Φ → 0`, take `K Y = Nat.log 2 Y + 1` so the head
 `(0, Y/2^K]` is empty, and add the `K Y` stray points (`≍ log Y`, so `/Y → 0`).
+
+## Lap 70 (2026-09-25) — `class_sum_tendsto_of_noExc`: the assembly LANDS
+
+The analytic content of the `D = 2` layer is now proved end to end, sorry-free and trust-triple
+clean.  On `TwoPointNaturalCorrelationNoExc` (TT Thm 3.1(ii) without its exceptional set), for
+every modulus `M > 0` and residue `r`,
+
+    ‖∑_{0 < n ≤ Y,  n ≡ r (M)}  z₀^{ω(n+1)} z₁^{ω(n+2)}‖ / Y  →  0
+
+— a **natural**-density statement, not a logarithmic one.  Assembly: the halving stack
+(lap 68) → the per-level window bound `Φ(a)·a` with
+`Φ a = if N₀' ≤ a ∧ M ≤ (2 log a)^c then Cst(2 log a)^{-c}/M else 1` → the top-down Toeplitz
+estimate (lap 69).  `Φ` is nonnegative, bounded by `1 + Cst(2 log 2)^{-c}/M` (antitonicity of
+`x ↦ x^{-c}`, since every admissible `a ≥ 2`), and tends to `0`; the `≍ log₂ Y` stray points
+cost `(log₂ Y + 1)/Y → 0`, via `Real.isLittleO_log_id_atTop`.
+
+**One `sorry` left in the whole crux:** `logToNatural_two_of_noExc`, and it is now only
+index bookkeeping:
+
+    ‖∑_{m<J} F(M m + r)‖ / J  ≤  (r + 1)/J  +  (‖∑_{0<n≤Y} F'‖ / Y) · (M + r),   Y = M J + r − 1
+
+using `class_sum_split` (lap 66) for the head, `range Y = {0} ⊔ Ioc 0 (Y−1)` for the single
+extra point, `Y/J ≤ M + r`, and composing `class_sum_tendsto_of_noExc` with `J ↦ M J + r − 1`
+(which tends to `atTop`).  No analysis remains.
