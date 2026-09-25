@@ -11117,3 +11117,37 @@ concentrated in a single residue interval of width `≪ 1/|t|` mod `2π/|t|` —
 statement for `{t log p / 2π}` at scale `1/|t|`.  Formalize the reduction from a
 "no-concentration" hypothesis on `{t log p}` to `WideBlockPartial`, which converts the analytic
 debt into a statement about the *distribution of `log p`*, not about L-functions at all.
+
+## 2026-09-25 lap 114 — the last archimedean debt is now GEOMETRIC, not analytic
+
+* `normSq_add_of_norm_one`, `norm_add_le_of_sep` — `‖x+y‖² = 2 + 2 Re(x conj y)` on the unit
+  circle, so two unit vectors separated by `Re(x conj y) ≤ d` satisfy `‖x+y‖ ≤ √(2+2d) < 2`.
+* `norm_sum_le_of_pairing` — **the pairing bound.**  If `σ` maps `S` into `S` injectively and every
+  `p ∈ S` has `Re(u_p conj u_{σ p}) ≤ d`, then `σ` permutes `S`, so
+  `2 ∑_{p∈S} u_p = ∑_{p∈S}(u_p + u_{σ p})` and hence `‖∑ u_p‖ ≤ (√(2+2d)/2)·#S`.  A saving
+  `κ = 1 − √(2+2d)/2 > 0` for ANY `d < 1`.  No equidistribution, no L-function, no measure theory.
+  The trick that makes it cheap: an injective self-map of a finite set is a permutation, so no
+  enumeration of actual pairs is ever needed.
+* `twistUnit`, `goodSeg`, `norm_twistUnit`, `BlockPhasePairing d`,
+  `wideBlockPartial_of_phasePairing` — the reduction: a separated pairing on every initial segment
+  of every dyadic block gives `WideBlockPartial`, hence `WideBlockSaving` (lap 113), hence
+  `WideTwistSmall` (lap 112).  Primes dividing `q` are handled by `Finset.sum_subset` (the summand
+  vanishes there), so only the `χ`-surviving primes need pairing.
+* `conjC3_of_geom_input_pairing` — `ConjC3` from the faithful `K`-point input +
+  `UniformResonantMass` + `CharPrimeSumLogQ` + `BlockPhasePairing`.
+
+**Where the archimedean side stands after this lap.**  Nothing analytic is left in the wide range.
+`BlockPhasePairing` says only: among the primes of one dyadic block, one can injectively match each
+`p` to a partner whose twist phase `−t log p` differs from `p`'s by a bounded-away-from-zero angle.
+Since `|t| > (log X)^{1/125}` and `log p` sweeps an interval of length `log 2` in a block, the phases
+`t log p` sweep length `≫ 1`, so partners at angular distance `≍ 1` are abundant — the obstruction is
+now *constructing the matching*, which is combinatorics on the multiset `{t log p mod 2π}`, not an
+L-function estimate.
+
+**Next attack.**  Build the matching explicitly.  The cheapest construction: order the block's
+primes `p_1 < … < p_n`; consecutive `log p` gaps are `≍ 1/p ≍ 2^{-j}`, so `t·(log p_{i+1} − log p_i)
+≍ |t| 2^{-j}`.  When `|t| 2^{-j} ≳ 1` neighbouring primes are already separated, and `σ` = "shift by
+one within a maximal run" works (pair `p_i ↔ p_{i+1}` alternately, which is an injective self-map).
+When `|t| 2^{-j} ≪ 1`, instead pair `p_i ↔ p_{i+k}` with `k ≍ 2^j/|t|`, which needs only that the
+block contains `≥ 2k` primes — i.e. a lower bound on `#block`, available from Chebyshev.  Formalize
+the `|t| 2^{-j} ≳ 1` branch first: it needs no prime counting at all.

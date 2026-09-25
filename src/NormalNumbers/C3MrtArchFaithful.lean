@@ -1801,6 +1801,180 @@ theorem conjC3_of_geom_input_blockPartial {c₀ θ D κ₁ : ℝ} (hc₀ : 0 < c
 #print axioms conjC3_of_geom_input_blockPartial
 
 
+/-! ### A pairing with angular separation gives the saving outright
+
+`WideBlockPartial` asks for `‖∑ u_p‖ ≤ (1−κ)·#S` with `u_p` unimodular.  There is a completely
+elementary sufficient condition: an injective self-map `σ` of `S` whose partners are **angularly
+separated**.  Since `σ` then permutes `S`,
+
+    2 ∑_{p∈S} u_p = ∑_{p∈S} (u_p + u_{σ p}),   ‖u_p + u_{σ p}‖² = 2 + 2 Re(u_p conj u_{σ p}) ≤ 2 + 2d,
+
+so `‖∑ u_p‖ ≤ (√(2+2d)/2)·#S`: a saving `κ = 1 − √(2+2d)/2 > 0` for any `d < 1`.  No
+equidistribution, no L-function, no measure theory — only that partners do not point the same way.
+
+This is what turns the last archimedean debt into a statement about the *distribution of `log p`*.
+In the wide range `|t| > (log X)^{1/125}`, and `log p` sweeps an interval of length `log 2` across a
+dyadic block, so the phases `t log p` sweep length `≫ 1`: a separated matching is exactly what the
+geometry provides. -/
+
+theorem normSq_add_of_norm_one {x y : ℂ} (hx : ‖x‖ = 1) (hy : ‖y‖ = 1) :
+    Complex.normSq (x + y) = 2 + 2 * (x * (starRingEnd ℂ) y).re := by
+  have hx2 : Complex.normSq x = 1 := by rw [Complex.normSq_eq_norm_sq, hx]; norm_num
+  have hy2 : Complex.normSq y = 1 := by rw [Complex.normSq_eq_norm_sq, hy]; norm_num
+  simp only [Complex.normSq_apply, Complex.add_re, Complex.add_im, Complex.mul_re,
+    Complex.conj_re, Complex.conj_im] at hx2 hy2 ⊢
+  ring_nf
+  ring_nf at hx2 hy2
+  linarith
+
+/-- **Two separated unit vectors.** -/
+theorem norm_add_le_of_sep {x y : ℂ} (hx : ‖x‖ = 1) (hy : ‖y‖ = 1) {d : ℝ}
+    (hd : (x * (starRingEnd ℂ) y).re ≤ d) :
+    ‖x + y‖ ≤ Real.sqrt (2 + 2 * d) := by
+  have h1 : ‖x + y‖ ^ 2 = 2 + 2 * (x * (starRingEnd ℂ) y).re := by
+    rw [← Complex.normSq_eq_norm_sq]; exact normSq_add_of_norm_one hx hy
+  have h2 : ‖x + y‖ ^ 2 ≤ 2 + 2 * d := by rw [h1]; linarith
+  have h3 := Real.sqrt_le_sqrt h2
+  rwa [Real.sqrt_sq (norm_nonneg _)] at h3
+
+/-- **The pairing bound.**  An injective self-map of `S` with angularly separated partners forces a
+constant-fraction saving. -/
+theorem norm_sum_le_of_pairing {ι : Type*} [DecidableEq ι] {S : Finset ι} {u : ι → ℂ}
+    {σ : ι → ι} (hmaps : ∀ p ∈ S, σ p ∈ S)
+    (hinj : ∀ p ∈ S, ∀ p' ∈ S, σ p = σ p' → p = p')
+    (hnorm : ∀ p ∈ S, ‖u p‖ = 1) {d : ℝ}
+    (hd : ∀ p ∈ S, (u p * (starRingEnd ℂ) (u (σ p))).re ≤ d) :
+    ‖∑ p ∈ S, u p‖ ≤ Real.sqrt (2 + 2 * d) / 2 * (S.card : ℝ) := by
+  have hinj' : Set.InjOn σ ↑S := fun p hp p' hp' he => hinj p hp p' hp' he
+  have hsub : S.image σ ⊆ S := by
+    intro x hx
+    obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hx
+    exact hmaps p hp
+  have hcard : S.card ≤ (S.image σ).card := by
+    rw [Finset.card_image_of_injOn hinj']
+  have himg : S.image σ = S := Finset.eq_of_subset_of_card_le hsub hcard
+  have hperm : ∑ p ∈ S, u (σ p) = ∑ p ∈ S, u p := by
+    have hI : ∑ x ∈ S.image σ, u x = ∑ x ∈ S, u (σ x) :=
+      Finset.sum_image (fun p hp p' hp' he => hinj p hp p' hp' he)
+    rw [← hI, himg]
+  have hpair : ∀ p ∈ S, ‖u p + u (σ p)‖ ≤ Real.sqrt (2 + 2 * d) := fun p hp =>
+    norm_add_le_of_sep (hnorm p hp) (hnorm _ (hmaps p hp)) (hd p hp)
+  have hdouble : (2 : ℝ) * ‖∑ p ∈ S, u p‖ ≤ Real.sqrt (2 + 2 * d) * (S.card : ℝ) := by
+    have hid : ∑ p ∈ S, (u p + u (σ p)) = (2 : ℂ) * ∑ p ∈ S, u p := by
+      rw [Finset.sum_add_distrib, hperm]; ring
+    have h1 : ‖(2 : ℂ) * ∑ p ∈ S, u p‖ ≤ ∑ p ∈ S, ‖u p + u (σ p)‖ := by
+      rw [← hid]; exact norm_sum_le _ _
+    have h2 : ∑ p ∈ S, ‖u p + u (σ p)‖ ≤ ∑ _p ∈ S, Real.sqrt (2 + 2 * d) :=
+      Finset.sum_le_sum hpair
+    rw [Finset.sum_const, nsmul_eq_mul] at h2
+    rw [norm_mul] at h1
+    have h3 : ‖(2 : ℂ)‖ = (2 : ℝ) := by norm_num
+    rw [h3] at h1
+    calc (2 : ℝ) * ‖∑ p ∈ S, u p‖ ≤ ∑ p ∈ S, ‖u p + u (σ p)‖ := h1
+      _ ≤ (S.card : ℝ) * Real.sqrt (2 + 2 * d) := h2
+      _ = Real.sqrt (2 + 2 * d) * (S.card : ℝ) := by ring
+  linarith
+
+open scoped Classical in
+/-- The unimodular twist attached to a prime: `conj(χ(p)) p^{-it}`. -/
+noncomputable def twistUnit {q : ℕ} (χ : DirichletCharacter ℂ q) (t : ℝ) (p : ℕ) : ℂ :=
+  (starRingEnd ℂ) (χ (p : ZMod q)) * Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ))
+
+open scoped Classical in
+/-- The primes of an initial segment of a dyadic block at which `χ` does not vanish — the only
+ones the sum sees. -/
+noncomputable def goodSeg (X : ℝ) (q : ℕ) (χ : DirichletCharacter ℂ q) (j m : ℕ) : Finset ℕ :=
+  ((blockPrimes X j).filter (fun p => p < m)).filter (fun p : ℕ => χ ((p : ℕ) : ZMod q) ≠ 0)
+
+theorem norm_twistUnit {q : ℕ} {χ : DirichletCharacter ℂ q} {t : ℝ} {p : ℕ}
+    (hne : χ (p : ZMod q) ≠ 0) : ‖twistUnit χ t p‖ = 1 := by
+  have hqu : IsUnit ((p : ℕ) : ZMod q) := by
+    by_contra hc
+    exact hne (MulChar.map_nonunit _ hc)
+  have hnorm : ‖χ ((p : ℕ) : ZMod q)‖ = 1 := by
+    have h := DirichletCharacter.unit_norm_eq_one χ hqu.unit
+    rwa [IsUnit.unit_spec] at h
+  have hexp : ‖Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ))‖ = 1 := by
+    have he : Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ))
+        = Complex.exp (((-t * Real.log p : ℝ) : ℂ) * Complex.I) := by push_cast; ring_nf
+    rw [he, Complex.norm_exp_ofReal_mul_I]
+  rw [twistUnit, norm_mul, RCLike.norm_conj, hnorm, hexp, one_mul]
+
+/-- **The final archimedean debt, as a statement about `log p` alone.**  On every initial segment
+of every dyadic block, the primes at which `χ` survives admit an injective self-map whose partners'
+twist phases are separated: `Re(u_p conj u_{σ p}) ≤ d` with `d < 1`. -/
+def BlockPhasePairing (d : ℝ) : Prop :=
+  ∀ X : ℝ, 3 ≤ X → ∀ (q : ℕ) (χ : DirichletCharacter ℂ q),
+    (q : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) →
+    ∀ t : ℝ, Real.log X ^ ((1 : ℝ) / 125) < |t| → |t| ≤ X ^ 2 → ∀ j m : ℕ,
+      ∃ σ : ℕ → ℕ, (∀ p ∈ goodSeg X q χ j m, σ p ∈ goodSeg X q χ j m) ∧
+        (∀ p ∈ goodSeg X q χ j m, ∀ p' ∈ goodSeg X q χ j m, σ p = σ p' → p = p') ∧
+        (∀ p ∈ goodSeg X q χ j m,
+          (twistUnit χ t p * (starRingEnd ℂ) (twistUnit χ t (σ p))).re ≤ d)
+
+/-- **The reduction.**  A separated pairing on every segment gives `WideBlockPartial`, hence (laps
+112–113) `WideTwistSmall`, hence the whole wide twist range. -/
+theorem wideBlockPartial_of_phasePairing {d : ℝ} (hd : d < 1) (h : BlockPhasePairing d) :
+    WideBlockPartial (1 - Real.sqrt (2 + 2 * d) / 2) := by
+  classical
+  intro X hX q χ hqX t hwide ht j m
+  obtain ⟨σ, hmaps, hinj, hsep⟩ := h X hX q χ hqX t hwide ht j m
+  set S : Finset ℕ := (blockPrimes X j).filter (fun p => p < m) with hS
+  have hgood : goodSeg X q χ j m = S.filter (fun p : ℕ => χ ((p : ℕ) : ZMod q) ≠ 0) := rfl
+  have hsubset : goodSeg X q χ j m ⊆ S := by rw [hgood]; exact Finset.filter_subset _ _
+  have hsum : ∑ p ∈ S, twistUnit χ t p = ∑ p ∈ goodSeg X q χ j m, twistUnit χ t p := by
+    refine (Finset.sum_subset hsubset fun x _ hxn => ?_).symm
+    have hzero : χ ((x : ℕ) : ZMod q) = 0 := by
+      by_contra hc
+      exact hxn (by rw [hgood]; exact Finset.mem_filter.mpr ⟨‹x ∈ S›, hc⟩)
+    rw [twistUnit, hzero, map_zero, zero_mul]
+  have hbound := norm_sum_le_of_pairing (S := goodSeg X q χ j m) (u := twistUnit χ t)
+    hmaps hinj (fun p hp => norm_twistUnit (Finset.mem_filter.mp hp).2) hsep
+  have hcard : ((goodSeg X q χ j m).card : ℝ) ≤ (S.card : ℝ) := by
+    have := Finset.card_filter_le S (fun p : ℕ => χ ((p : ℕ) : ZMod q) ≠ 0)
+    rw [hgood]
+    exact_mod_cast this
+  have hs0 : (0 : ℝ) ≤ Real.sqrt (2 + 2 * d) / 2 := by positivity
+  have hfin : (1 : ℝ) - (1 - Real.sqrt (2 + 2 * d) / 2) = Real.sqrt (2 + 2 * d) / 2 := by ring
+  rw [hfin]
+  calc ‖∑ p ∈ S, twistUnit χ t p‖
+      = ‖∑ p ∈ goodSeg X q χ j m, twistUnit χ t p‖ := by rw [hsum]
+    _ ≤ Real.sqrt (2 + 2 * d) / 2 * ((goodSeg X q χ j m).card : ℝ) := hbound
+    _ ≤ Real.sqrt (2 + 2 * d) / 2 * (S.card : ℝ) := mul_le_mul_of_nonneg_left hcard hs0
+
+#print axioms norm_sum_le_of_pairing
+#print axioms wideBlockPartial_of_phasePairing
+
+
+/-- **`ConjC3` on the pairing debt.**  The whole archimedean side of the C3/MRT headline, reduced to
+its final shape: `UniformResonantMass` (the route's pre-existing input, `q = 1` narrow corner),
+`CharPrimeSumLogQ` (a `log`-sized conductor bound — classical and Siegel-free at `t = 0`), and
+`BlockPhasePairing` — a purely geometric statement: on every initial segment of every dyadic block,
+the surviving primes admit an injective self-map whose twist phases are separated. -/
+theorem conjC3_of_geom_input_pairing {c₀ θ D d : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1)
+    (m : ℕ)
+    (hin : ∀ A : ℝ, 0 < A → ∀ b : ℕ, 3 ≤ b → ∀ K,
+      KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hURM : UniformResonantMass)
+    (hD : 0 < D) (hD125 : 2 * D < 125) (hlog : CharPrimeSumLogQ D)
+    (hd0 : -1 ≤ d) (hd : d < 1) (hpair : BlockPhasePairing d) :
+    ConjC3 := by
+  have hs0 : 0 ≤ 2 + 2 * d := by linarith
+  have hslt : Real.sqrt (2 + 2 * d) < 2 := by
+    have h4 : Real.sqrt (2 + 2 * d) < Real.sqrt 4 := by
+      refine Real.sqrt_lt_sqrt hs0 (by linarith)
+    have : Real.sqrt 4 = 2 := by
+      rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]
+    linarith [h4, this.le, this.ge]
+  have hsge : 0 ≤ Real.sqrt (2 + 2 * d) := Real.sqrt_nonneg _
+  exact conjC3_of_geom_input_blockPartial hc₀ hθ0 hθ m hin hURM hD hD125 hlog
+    (by linarith : (0 : ℝ) < 1 - Real.sqrt (2 + 2 * d) / 2)
+    (by linarith : 1 - Real.sqrt (2 + 2 * d) / 2 ≤ 1)
+    (wideBlockPartial_of_phasePairing hd hpair)
+
+#print axioms conjC3_of_geom_input_pairing
+
+
 #print axioms ttPretentiousSumChar_eq
 #print axioms ttPretentiousSumChar_ge
 #print axioms archSupply_of_faithfulArchLower
