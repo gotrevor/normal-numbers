@@ -9620,3 +9620,39 @@ Does the consumer actually need every scale?  `depthAvg_tendsto_of_transfer` fee
 2. If NO: the `D = 2` row stays 🔴 and the honest ledger entry is "equivalent to removing the
    exceptional set from TT Thm 3.1", which TT state is out of reach — i.e. the C3 `D ≥ 2` route
    is pinned to a *named* open problem, which is the ratified deliverable.
+
+## Lap 64 (2026-09-25) — the `D = 2` layer pinned to a NAMED OPEN PROBLEM; crux decomposed
+
+`src/NormalNumbers/C3MrtNoExc.lean`.  Two proved, four disclosed `sorry`s **in `src/`** — the
+crux decomposition, not a regression.
+
+**Proved.**
+* `exceptional_set_can_pin_a_scale` — the black box cannot be pushed: `{N}` is a legitimate
+  exceptional set at *every* `X` (measurable, inside `[√X,X]`, logarithmic measure `0`).  So no
+  argument using only the *statement* of TT Thm 3.1 — varying `X`, intersecting over `X`,
+  Fubini — can produce a bound at a prescribed scale.  Together with lap 63's
+  `exceptional_scales_not_tendsto` this closes the question from both sides.
+* `TwoPointNaturalCorrelationNoExc` — TT Thm 3.1(ii) with `E = ∅`, i.e. **the named open
+  problem** (TT `:2997`: removing the exceptional set is not within current technology) — and
+  `twoPointNatural_of_noExc`, confirming it really is a strengthening.
+
+**The ledger claim now being built** (`logToNatural_two_of_noExc`):
+`TwoPointNaturalCorrelationNoExc → LogToNaturalCorrelation 2`.  If it lands, the `D = 2` layer
+of `ConjC3` is *implied by* removing the exceptional set from a published theorem and by nothing
+else — an equivalence with a named open problem, which is the ratified deliverable.
+
+**The four named sub-goals** (all `sorry`-disclosed in `src/`, attack in this order):
+1. `dyadic_window_bound_of_noExc` — one dyadic window at `X = N²`, `L = log X = 2 log N`
+   (`N = √X` is exactly the left endpoint, so the instantiation is legal).  Bookkeeping.
+2. `dyadic_decomposition` — the class below `M·J` as a disjoint union of dyadic windows plus a
+   bounded head.  Bookkeeping; the stated form may need adjusting at the endpoints.
+3. **`dyadic_sum_geometric`** — `∑_{i<I} 2^i (log 2^i)^{-c} ≤ D · 2^I (log 2^I)^{-c}`: the
+   geometric weight concentrates the stack on its top window, so the saving survives the sum
+   with only a constant loss.  The ONLY quantitative step; attack this first, it is the one that
+   could fail.
+4. Divide by `J`, let `J → ∞`, and note `L^{-c} → 0` because `L = 2 log N → ∞`.
+
+**Refuted / settled, do not re-chase.**  Deriving `LogToNaturalCorrelation 2` from
+`TwoPointNaturalCorrelation` *with* its exceptional set (laps 62–64: three independent
+arguments — the density-zero counterexample, the long-run counterexample, and the singleton
+pinning).
