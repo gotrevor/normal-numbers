@@ -1,7 +1,7 @@
 # STATUS — normal-numbers 📊
 
-**Live campaign: C4 — exact abelian window sets.  One open `sorry`: `c4_realizable_of_mem_one`.**
-· **Build**: 🟢 green (9262 jobs) · **Updated**: lap 15 review · 2026-09-25 · HEAD `7346109`
+**C4 — exact abelian window sets: PROVED.  `c4_realizable` is sorry-free and axiom-clean.**
+· **Build**: 🟢 green (9267 jobs) · **Updated**: lap 18 · 2026-09-25 · HEAD `ee38065`
 · branch `wip/c4-infinite` · (Pair A multicutoff / Theorem C′: PROVED and closed, below)
 
 ## Where it stands (C4)
@@ -12,8 +12,10 @@ lengths in `S`?  Necessity (`1 ∈ S` unless `S = ∅`) is proved; the witnesses
 All four are **single-block-length** witnesses, and lap 15 derived that class's ceiling: a
 `blockSeq` of period `q` has an **eventually `q`-periodic** abelian set.  So the crux —
 arbitrary `S ∋ 1`, e.g. `S = {1} ∪ {2^k}` — needs infinitely many scales in ONE sequence.  The
-route now mandated (`DIRECTION.md`) is nested gadget layers plus a sparse-perturbation limit
-transfer, decomposed into four items in `PENDING_WORK.md`.
+route mandated by `DIRECTION.md` — nested gadget layers plus a sparse-perturbation limit
+transfer — **carried all four items through on lap 18**.  `c4_realizable`: for every admissible
+`S` (i.e. `S = ∅` or `1 ∈ S`) there is a binary sequence abelian at exactly the lengths in `S`.
+Trust triple only.  The campaign's headline is CLOSED.
 
 ## What's happened (newest first)
 
@@ -61,12 +63,8 @@ transfer, decomposed into four items in `PENDING_WORK.md`.
 
 ## Outstanding
 
-### Short-term (mirrors PENDING_WORK top — C4)
-1. `AbelianWindowPerturb.lean`: `|onesFreq s L j N − onesFreq t L j N| ≤ L·diffCount/N` and the
-   3ε transfer.  The mechanism the multi-scale limit rests on.
-2. The single gadget at width `q` + the removal involution.
-3. The multi-gadget block law + interval geometry ⇒ finite-complement `S`.
-4. The layer layout (nested periods, pigeonhole offsets) + assembly ⇒ `c4_realizable_of_mem_one`.
+### Short-term (C4)
+None — items 1–4 are all DONE (laps 15–18).
 
 ### Long-term
 Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
@@ -74,9 +72,7 @@ Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
 `Statement.lean` audit surface for Theorem C′, and the abstract Astra §10 consumer.
 
 ### To completion (C4)
-Items 1–4 above.  Then `c4_realizable` is unconditional and the campaign's headline is closed;
-a counterexample stated as a theorem would also close it, but nothing found this lap points that
-way (confidence C4 is TRUE: high).
+Done.  C4 is TRUE and proved.
 
 ## Axiom ledger — C4 (real `#print axioms`, 2026-09-25, build 9262 jobs)
 
@@ -86,11 +82,13 @@ way (confidence C4 is TRUE: high).
 | `Abelian.c4_realizable_singleton_one` | `S = {1}` realized (`altSeq`) — UNCOND | trust triple | 🟢 clean |
 | `Abelian.c4_realizable_odd` | `S =` odd lengths realized — UNCOND | trust triple | 🟢 clean |
 | `Abelian.c4_realizable_compl_singleton` | `S = {L : L ≠ a}`, every `a ≥ 2` — UNCOND | trust triple | 🟢 clean |
-| `Abelian.c4_realizable_of_mem_one` | **C4 hard branch**: every `S ∋ 1` realized — UNCOND | trust triple **+ `sorryAx`** | 🔵 THE open crux (disclosed `sorry`, `AbelianWindowSets.lean:506`) |
-| `Abelian.c4_realizable` | **C4 (ratified headline)** — UNCOND | trust triple **+ `sorryAx`** | 🔵 open via the branch above |
+| `Abelian.c4_realizable_of_finite_compl` | every finite complement realized — UNCOND | trust triple | 🟢 clean |
+| `Abelian.c4_realizable_of_arms` | every injective arm family realized — UNCOND | trust triple | 🟢 clean |
+| `Abelian.c4_realizable_of_mem_one` | **C4 hard branch**: every `S ∋ 1` realized — UNCOND | trust triple | 🟢 clean |
+| `Abelian.c4_realizable` | **C4 (ratified headline)** — UNCOND | trust triple | 🟢 **PROVED** |
 
-Math-axiom count for C4: **0** — no `axiom` declarations; the only gap is the disclosed `sorry`
-on the crux, which is the campaign's whole objective (not debt to be cited).
+Math-axiom count for C4: **0** — no `axiom` declarations, no `sorry`.  (Both headline theorems
+now live at the end of `AbelianWindowBuild.lean`; the statements are unchanged.)
 
 ## Pointers
 `KICKOFF-2026-09-24-c4.md` · `DESIGN-2026-09-25-c4-rectangle.md` ·

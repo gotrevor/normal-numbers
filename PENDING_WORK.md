@@ -1,5 +1,14 @@
 # PENDING WORK
 
+**C4 is PROVED (2026-09-25, lap 18).**  `c4_realizable` is sorry-free and axiom-clean
+(`[propext, Classical.choice, Quot.sound]`); see `HANDOFF-c4-2026-09-25-lap18-PROVED.md`.
+Items 1-4 of the `DIRECTION.md` nested-layer route are all discharged.  Nothing is pending on
+this campaign.
+
+---
+
+# PENDING WORK
+
 ## 2026-09-25 (lap 15 review) — C4 (branch `wip/c4-infinite`): the crux and its decomposition
 
 **Crux:** `c4_realizable_of_mem_one` (`src/NormalNumbers/AbelianWindowSets.lean:506`) — the one
