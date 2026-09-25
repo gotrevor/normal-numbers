@@ -424,6 +424,168 @@ theorem exponent_tendsto_atBot_of_geom_slow {b : ℕ} (hb : 2 ≤ b) {c₀ θ : 
   rw [hfinal]
   linarith [hCstle, hsav]
 
+
+/-! ### The crux at `θ < 1` -/
+
+theorem tendsto_depthSlow {b : ℕ} (hb : 2 ≤ b) :
+    Tendsto (fun N : ℕ => depthSlow b N) atTop atTop := by
+  have harg : Tendsto (fun N : ℕ => slowArg b N) atTop atTop := by
+    refine tendsto_atTop_mono (fun N => ?_) (tendsto_slowW hb)
+    rw [slowArg]
+    exact Nat.le_mul_of_pos_left _ (Nat.succ_pos _)
+  have h := (PairDecouple.tendsto_natLog_atTop b hb).comp harg
+  exact tendsto_atTop_mono (fun N => Nat.le_succ _) h
+
+set_option maxHeartbeats 1600000 in
+/-- **The diagonal at any level below the SLOW schedule, from the geometric input, `θ < 1`.**
+Verbatim `C3MrtUnifK.depthAvg_gen_tendsto_of_geom` with the exponent estimate swapped for
+`exponent_tendsto_atBot_of_geom_slow`; nothing else in that assembly cares which schedule the
+levels sit under. -/
+theorem depthAvg_gen_tendsto_of_geom_slow {b Q : ℕ} (hb : 2 ≤ b) (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
+    {c₀ θ : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (KN : ℕ → ℕ) (hKN : ∀ N, 0 < KN N)
+    (hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ depthSlow b N)
+    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+    (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
+    (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * cKgeom c₀ θ b K))
+    (hAle : ∀ᶠ N : ℕ in atTop, Athr (KN N) ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N))) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j hh (KN N) N) atTop (𝓝 0) := by
+  have hb0 : 0 < b := by omega
+  have hk₀ : Tendsto (fun N : ℕ => Nat.log 2 (Nat.log 2 N)) atTop atTop :=
+    (PairDecouple.tendsto_natLog_atTop 2 le_rfl).comp
+      (PairDecouple.tendsto_natLog_atTop 2 le_rfl)
+  have hbase : ∀ᶠ N : ℕ in atTop,
+      0 < 2 * Real.log ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ) := by
+    filter_upwards [tendsto_cut_atTop.eventually_ge_atTop 2] with N hN
+    have h2 : (2 : ℝ) ≤ ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ) := by exact_mod_cast hN
+    have hlog : 0 < Real.log ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ) :=
+      Real.log_pos (by linarith)
+    linarith
+  have hrate := rate_tendsto_of_exponent (cK := cKgeom c₀ θ b) (CstK := CstKdeg m)
+    (fun K => CstKdeg_pos m K) (κ := κ) (M₀ := Q * primorial P) KN
+    (fun N => N / 2 ^ (Nat.log 2 (Nat.log 2 N))) hbase
+    (exponent_tendsto_atBot_of_geom_slow hb hc₀ hθ0 hθ hκ m KN hKle)
+  have hΦ := windowPhi_diag_tendsto (cK := cKgeom c₀ θ b) (CstK := CstKdeg m) (κ := κ)
+    (M₀ := Q * primorial P) KN (fun N => Athr (KN N))
+    (fun N => N / 2 ^ (Nat.log 2 (Nat.log 2 N)))
+    (fun N => hA2 _) (fun K => (CstKdeg_pos m K).le) hAle hrate
+  have hhalf : Tendsto (fun N : ℕ => (1 / 2 : ℝ) ^ (Nat.log 2 (Nat.log 2 N))) atTop (𝓝 0) :=
+    (tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)).comp hk₀
+  refine depthAvg_gen_tendsto_of_unif hQ P j hh (fun K => cKgeom_pos hc₀ hb0 K)
+    (fun K => CstKdeg_pos m K) KN hKN hin hκ hκ1 hnp Athr hA2 hAthr
+    (fun N => Nat.log 2 (Nat.log 2 N)) ?_
+  simpa using hΦ.add hhalf
+
+/-- **The divisible twist level, for an ARBITRARY divergent schedule.**  Schedule-generic form of
+`C3MrtUnifK.depthAvg_dvd_tendsto_of_primitive`, whose proof only ever used that the schedule
+eventually exceeds `v`. -/
+theorem depthAvg_dvd_tendsto_of_primitive_sched {b : ℕ} (hb : 2 ≤ b) (P Q j : ℕ) (h' : ℤ) (v : ℕ)
+    (Dsch : ℕ → ℕ) (hD : Tendsto Dsch atTop atTop)
+    (hprim : Tendsto (fun N : ℕ => depthAvg b P Q j h' (Dsch N - v) N) atTop (𝓝 0)) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j ((b : ℤ) ^ v * h') (Dsch N) N) atTop (𝓝 0) := by
+  have hb0 : 0 < b := by omega
+  have hshift : Tendsto (fun N : ℕ => 2 * (v : ℝ) / N) atTop (𝓝 0) := by
+    have := tendsto_one_div_atTop_nhds_zero_nat.const_mul (2 * (v : ℝ))
+    rw [mul_zero] at this
+    exact this.congr fun N => by ring
+  have hmaj : Tendsto (fun N : ℕ =>
+      ‖depthAvg b P Q j h' (Dsch N - v) N‖ + 2 * (v : ℝ) / N) atTop (𝓝 0) := by
+    simpa using hprim.norm.add hshift
+  refine squeeze_zero_norm' ?_ hmaj
+  filter_upwards [hD.eventually_ge_atTop v] with N hN
+  exact norm_depthAvg_dvd_le hb0 P Q j h' hN N
+
+/-- The diagonal obligation, on the SLOW schedule. -/
+def DepthDiagonalSlow (b : ℕ) : Prop :=
+  ∀ (P Q j : ℕ) (h : ℤ), 0 < Q → 0 < j → j < Q →
+    Tendsto (fun N : ℕ => depthAvg b P Q j h (depthSlow b N) N) atTop (𝓝 0)
+
+/-- **The crux from the slow diagonal.**  `weylLambertTwist_of_schedule` is parametric in the
+schedule, so the slow schedule plugs straight in: `eventually_depthSlow_add_le` for
+admissibility, `tendsto_LLbound_div_pow_depthSlow` for the mean-phase discard. -/
+theorem weylLambertTwist_of_depthDiagonalSlow {b : ℕ} (hb : 3 ≤ b) (H : DepthDiagonalSlow b) :
+    WeylLambertTwist b :=
+  weylLambertTwist_of_schedule hb (depthSlow b)
+    (eventually_depthSlow_add_le (by omega) 3)
+    (tendsto_LLbound_div_pow_depthSlow (by omega)) H
+
+/-- **`DepthDiagonalSlow b` FROM THE GEOMETRICALLY DEGRADING INPUT AT `θ < 1`.**  All twist
+levels, exactly as in `C3MrtUnifK.depthDiagonal_of_geom`. -/
+theorem depthDiagonalSlow_of_geom {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdOKWith b Q P (cKgeom c₀ θ b)) :
+    DepthDiagonalSlow b := by
+  intro P Q j hh hQ hj0 hjQ
+  have hb0 : 0 < b := by omega
+  rcases eq_or_ne hh 0 with rfl | hne
+  · exact depthAvg_zero_tendsto b P Q j hj0 hjQ
+  obtain ⟨v, h', hfac, hnd⟩ := exists_pow_mul_not_dvd hb hh hne
+  subst hfac
+  set z : ℂ := depthRoot b h' 0 with hzdef
+  have hznorm : ‖z‖ = 1 := norm_ee_real _
+  have hz1 : z ≠ 1 := depthRoot_ne_one_of_not_dvd hb0 hnd
+  set κ : ℝ := ttExponent z with hκdef
+  have hκ : 0 < κ := ttExponent_pos hznorm hz1
+  have hκ1 : κ ≤ 1 := ttExponent_le_one hznorm
+  have hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b h' 0)) X L :=
+    ttNonPretentious_zOmegaNat hznorm hz1 le_rfl
+  obtain ⟨Athr, hA2, hAthr, hAcut⟩ := hthr P Q hQ κ hκ hκ1
+  set KN : ℕ → ℕ := fun N => max 1 (depthSlow b N - v) with hKNdef
+  have hKN : ∀ N, 0 < KN N := fun N => lt_of_lt_of_le Nat.zero_lt_one (le_max_left _ _)
+  have hvN := (tendsto_depthSlow hb).eventually_ge_atTop (v + 1)
+  have hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ depthSlow b N := by
+    filter_upwards [hvN] with N hN
+    rw [hKNdef]; simp only; omega
+  have hKleLL : ∀ᶠ N : ℕ in atTop, KN N ≤ PairDecouple.depthLL b N := by
+    filter_upwards [hKle, depthSlow_le_depthLL hb] with N h1 h2
+    omega
+  have hKeq : ∀ᶠ N : ℕ in atTop, KN N = depthSlow b N - v := by
+    filter_upwards [hvN] with N hN
+    rw [hKNdef]; simp only; omega
+  have hAle : ∀ᶠ N : ℕ in atTop,
+      Athr (KN N) ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N)) := by
+    filter_upwards [hAcut, hKleLL] with N hcut hle
+    exact hcut _ hle
+  have hgen := depthAvg_gen_tendsto_of_geom_slow hb hQ P j h' hc₀ hθ0 hθ m KN hKN hKle hin
+    hκ hκ1 hnp Athr hA2 hAthr hAle
+  have hprim : Tendsto (fun N : ℕ =>
+      depthAvg b P Q j h' (depthSlow b N - v) N) atTop (𝓝 0) := by
+    refine hgen.congr' ?_
+    filter_upwards [hKeq] with N hN
+    rw [hN]
+  exact depthAvg_dvd_tendsto_of_primitive_sched hb P Q j h' v (depthSlow b)
+    (tendsto_depthSlow hb) hprim
+
+/-- **THE C3 CRUX FROM THE GEOMETRIC `K`-POINT INPUT, `θ < 1`.**  This supersedes
+`C3MrtUnifK.weylLambertTwist_of_geom`: the admissible decay rate for the `K`-point saving is
+widened from `θ < 1/2` to `θ < 1` — i.e. the input may lose a full factor `b^{-1}` per extra
+correlation point, near the `V^{-0.49J'}` shape TT Thm 3.3 actually produces — at the cost of
+slowing the depth schedule to `b^{D_N} ≍ log log N · log log log N`, which is the minimum the
+mean-phase discard permits. -/
+theorem weylLambertTwist_of_geom_slow {b : ℕ} (hb : 3 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdOKWith b Q P (cKgeom c₀ θ b)) :
+    WeylLambertTwist b :=
+  weylLambertTwist_of_depthDiagonalSlow hb
+    (depthDiagonalSlow_of_geom (by omega) hc₀ hθ0 hθ m hin hthr)
+
+/-- …and hence `ConjC3`, base by base. -/
+theorem conjC3_of_geom_slow {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ b : ℕ, 3 ≤ b → ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hthr : ∀ b : ℕ, 3 ≤ b → ∀ P Q : ℕ, 0 < Q →
+      KPointThresholdOKWith b Q P (cKgeom c₀ θ b)) :
+    ConjC3 :=
+  conjC3_of_weylLambertTwist fun b hb =>
+    weylLambertTwist_of_geom_slow hb hc₀ hθ0 hθ m (hin b hb) (hthr b hb)
+
 #print axioms NormalNumbers.CastingOut.add_two_le_two_pow
 #print axioms NormalNumbers.CastingOut.natLog_add_two_le
 #print axioms NormalNumbers.CastingOut.natLog_mul_log_two_le
@@ -436,6 +598,13 @@ theorem exponent_tendsto_atBot_of_geom_slow {b : ℕ} (hb : 2 ≤ b) {c₀ θ : 
 #print axioms NormalNumbers.CastingOut.pow_depthSlow_le_log
 #print axioms NormalNumbers.CastingOut.tendsto_polyPow_sub_expDiv
 #print axioms NormalNumbers.CastingOut.exponent_tendsto_atBot_of_geom_slow
+#print axioms NormalNumbers.CastingOut.tendsto_depthSlow
+#print axioms NormalNumbers.CastingOut.depthAvg_dvd_tendsto_of_primitive_sched
+#print axioms NormalNumbers.CastingOut.depthAvg_gen_tendsto_of_geom_slow
+#print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonalSlow
+#print axioms NormalNumbers.CastingOut.depthDiagonalSlow_of_geom
+#print axioms NormalNumbers.CastingOut.weylLambertTwist_of_geom_slow
+#print axioms NormalNumbers.CastingOut.conjC3_of_geom_slow
 
 end CastingOut
 
