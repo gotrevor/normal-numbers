@@ -5,7 +5,7 @@ This file is a **thin pointer**, never a second durable overview.
 * **Durable overview + axiom ledger** → `STATUS.md`
 * **Binding orders (altitude-lap owned, OUTRANKS every handoff)** → `DIRECTION.md` → CURRENT DIRECTIVE
 * **Latest strategic synthesis** → `REFLECTION-2026-09-16-campaignB.md`
-* **Newest dated baton** → `HANDOFF-2026-09-23-theoremC-reach-and-crosscheck.md`
+* **Newest dated baton** → `HANDOFF-c4-2026-09-25-lap18-PROVED.md`
 * **Open items / attack path** → `PENDING_WORK.md` (top section)
 * **Frozen plan + estimates** → `ROADMAP.md`
 
@@ -14,33 +14,66 @@ Discover the newest dated baton by glob rather than trusting this line:
 
 ---
 
-## ⛔ STUCK-BAIL CONFIRMED (strike 2, filed 2026-09-23) — run halts for the operator
+## 🎉 C4 IS PROVED (2026-09-25, lap 18, `ee38065`)
 
-**Full detail + the exact asks:** `HANDOFF-2026-09-23-theoremC-reach-and-crosscheck.md`.
+```
+#print axioms NormalNumbers.Abelian.c4_realizable
+  --> [propext, Classical.choice, Quot.sound]
+```
 
-**State.**  `lake build` 🟢 9166 jobs.  `DIRECTION.md` → CURRENT DIRECTIVE objective —
-`isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′) sorry-free and trust-triple — is
-**MET**, re-verified this run together with its audit surface and the lap-0 deliverables.
-`src/` holds exactly the two `sorry`s the directive designates open
-(`PrimeLambertOscillation.phaseOscillation`, `MahlerDriftOne.exists_prime_nonresidue`).
+`c4_realizable`: for every `S ⊆ {L ≥ 1}` with `S = ∅ ∨ 1 ∈ S` there is a binary sequence
+abelian-normal at **exactly** the window lengths in `S`.  With necessity
+(`abelianAt_one_of_abelianAt`, already clean) the C4 dichotomy is complete both ways.  All four
+items of `DIRECTION.md`'s nested-layer route are discharged; `lake build` 🟢 9267 jobs.
+Full detail: `HANDOFF-c4-2026-09-25-lap18-PROVED.md`.
 
-**On strike 1 (`b78b343`).**  Its facts were correct; its conclusion that nothing workable
-remained was not.  This run landed five additive, sorry-free, trust-triple nodes inside the
-ratified kickoff spec — Astra §10's `F_N → 0` from C′'s hypothesis, the double-exponential
-block criterion **and its converse** (so the block condition is a *reformulation* of
-`SqrtFreshMassZero`, and Astra §10's prime-burst example is already covered by C′), and an
-independent NL→Lean faithfulness cross-check whose three discrepancies are now all proved
-equivalences.  That in-spec ground is now genuinely worked out.
+**Note for anyone looking for the headline:** `c4_realizable` and `c4_realizable_of_mem_one`
+now live at the END of `src/NormalNumbers/AbelianWindowBuild.lean`, not in
+`AbelianWindowSets.lean`.  Statements byte-identical; the move was forced because the
+construction imports `Sets`.  A pointer comment sits where they used to be.
 
-**WHAT IS NEEDED FROM THE OPERATOR** — any one of:
-1. authorise the **Astra §10 consumer** with permission to generalise
-   `PrimeModelFamilyGraded.lean` **in place** over a supplied `u : ℕ → ℕ` (feasibility is now
-   known good: `hS` enters through exactly five derived facts, so the file is an interface,
-   not a weave — but `u_N` is read off `epsG`, and "no existing statement changes" would
-   otherwise force a parallel ~1800-line file);
-2. authorise a **Mertens campaign** (two-sided `∑_{p≤x} 1/p = log log x + O(1)`, absent from
-   mathlib), which is the sole blocker for every strictness/sharpness question about the
-   hypothesis;
-3. **un-designate** `phaseOscillation` and/or `exists_prime_nonresidue`.
+---
 
+## ⛔ STUCK-BAIL (strike 1, filed 2026-09-25) — needs a fresh lap to confirm or refute
 
+**WHAT IS BLOCKED.**  Not C4 — that is finished.  The *repo-wide self-stop gate*: it declines
+`box done` while `src/` holds any `sorry`, and 14 remain.
+
+**WHY IT IS OUTSIDE A LAP'S POWER.**  Every one of the 14 is designated-open or out-of-scope
+under the CURRENT DIRECTIVE in `DIRECTION.md`, which altitude laps own and a working lap may
+not edit:
+
+| file:line | directive clause that gates it |
+|---|---|
+| `SwingC1.lean:920,2201` · `SwingC1Log.lean:265,269` · `SwingC2.lean:2994,3003,3011,3032` · `SwingC3Leaf.lean:63` · `SwingC3Rotation.lean:272` | "Forbidden drift": *do NOT touch … the Swing/CF leaves* |
+| `PrimeLambertOscillation.lean:95` | designated-open off-campaign `sorry` |
+| `MahlerDriftOne.lean:380` | designated-open off-campaign `sorry` |
+| `PairDecoupleProve.lean:48` · `PairDecoupleRefute.lean:14` | a stated **conjecture** (a `Prop` that may be false — house style keeps it a `sorry`, not an `axiom`), and "New code only in `src/NormalNumbers/AbelianWindow*.lean`" |
+
+The directive governs a campaign that is now **over**, so no in-scope `sorry` exists to attack.
+
+**HONEST CAVEAT — read this before confirming.**  The previous strike-1 on this repo
+(`b78b343`, Theorem C′) had correct facts and a wrong conclusion: the confirming lap found real
+in-spec ground and the claim expired.  So do not confirm on the table alone.  There *is*
+legitimate in-spec work left here, namely C4 hygiene of the kind `STATUS.md` already lists for
+Theorem C′:
+* a `Statement.lean`-style **audit surface** for `c4_realizable` (plain restatement + the
+  necessity direction, so the headline can be read without the construction);
+* `native_decide` / `decide` **anchors** pinning small instances (`S = {1}`, `S =` odds,
+  `S = {L : L ≠ a}`) against the general theorem;
+* an independent **NL→Lean faithfulness cross-check** of the C4 statement (hand Aristotle the
+  prose, never the Lean, and compare).
+
+None of that is a `sorry`, so **none of it clears the gate** — which is exactly why this is a
+gate problem, not a work problem.  If you judge that hygiene worth a lap, do it and let the
+claim expire; but file the same bail afterwards, because the gate will still decline.
+
+**WHAT IS NEEDED FROM THE OPERATOR** — either:
+1. an **altitude/review lap** to write a new CURRENT DIRECTIVE naming the next target (the C4
+   one is spent); or
+2. a relaunch scoped with `--done-when 'sorry-free:src/NormalNumbers/AbelianWindow'`, so the
+   host stops on the C4 target instead of the whole repo; or
+3. **un-designate** some of the Swing/CF/Lambert/Mahler leaves so a lap may attack them.
+
+Fast verification: `grep -rn '^\s*sorry\s*$' src/` (14 hits, all tabled above), then
+`sed -n '/CURRENT DIRECTIVE/,/^## /p' DIRECTION.md` and read "Forbidden drift".
