@@ -54,3 +54,20 @@ Remaining for step 4: (i) the `K`-point `progression_sum_bound`/`inner_pair_boun
 `inner_sum_multi_forms`'s linear-form shape plus `KPointLogElliott K` into that per-tuple bound;
 (ii) the ε-chase (`truncB_tendsto`, `bridgeTail_tendsto`) into
 `weylLambertTwist_of_kfold_bound`'s shape.
+
+## Addendum — lap 46: step 4's generic analytic core
+
+`src/NormalNumbers/C3MrtMultiInner.lean` (sorry-free, trust triple).  The three ingredients of
+`inner_pair_bound` are blind to the number of shifts — they use only `‖G j‖ ≤ 1` — so they are
+now stated generically and are available at every `K`:
+
+* `inner_harmonic_le_generic` — peel `j = 0`, transfer `(Lj+a+1)^{-1} → L^{-1}j^{-1}`
+  (`weight_transfer`); cost `(a+1)^{-1} + 2/L`.
+* `window_gap_generic` — `(0, A^{⌊log_A J⌋}] → (0, J]` costs `1 + log A`.
+* `progression_sum_bound_generic` — their composition: the generic `progression_sum_bound`.
+
+What remains of step 4: `multi_rung_spelling` (identify `∑_{Icc 1 J} j^{-1} • ∏_i z_i^{Ω(c_i j +
+b_i)}` with `kPointLogCorrelation`'s spelling via `zOmInt_integerAffine`), then `inner_multi_bound`
+(feed `inner_sum_multi_forms` + `filter_linear_lt_eq_range` into the generic bound, giving
+`‖Inner d‖ ≤ 1 + (3 + R + log A)/L`, exactly `multi_full_sum_bound`'s hypothesis), then the
+ε-chase.
