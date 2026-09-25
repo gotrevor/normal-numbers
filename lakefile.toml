@@ -24,3 +24,12 @@ globs = ["Comparator.+"]
 [[lean_lib]]
 name = "PNTPort"
 globs = ["PNTPort.+"]
+
+
+# Alexeev's plby/lean-proofs (src/latest), via a fork bumped to our mathlib v4.33.1
+# (gotrevor/lean-proofs, branch mathlib-v4.33.1).  Erdős 67b: unit-circle log-Elliott + MRT.
+[[require]]
+name = "lean-proofs-latest"
+git = "https://github.com/gotrevor/lean-proofs.git"
+rev = "ff0f9f63d7175dfa07b44a9c6a7148ca60a61676"
+subDir = "src/latest"
