@@ -1,5 +1,6 @@
 import NormalNumbers.ElliottSliceCapModerate
 import NormalNumbers.ElliottPrimeDensityAP
+import NormalNumbers.ElliottZetaTheta
 
 /-!
 # THE LEDGER: `TwoPointElliottLog` from ONE cited classical axiom
@@ -44,6 +45,41 @@ theorem twoPointElliottLog_of_nearMaxHeight {b p q : ℕ} {t : ℝ} {K₂ ν η�
   NormalNumbers.ElliottSliceCapModerate.twoPointElliottLog_of_density_and_nearMax
     hp hq hpq hu hν hν1 hη₂ hη₂1
     (fun A => NormalNumbers.ElliottPrimeDensityAP.exists_primeDensityAP A) hmax
+
+/-- **THE CAMPAIGN, IN ONE STATEMENT.**  `TwoPointElliottLog b p q t` follows from a single
+standard analytic fact about the Riemann zeta function:
+
+> `ZetaLogDerivExponent θ` for some `θ < 1` — i.e. `‖ζ'/ζ(s)‖ ≪ (log(|Im s|+16))^θ` on
+> `1 ≤ Re s ≤ 3`, `|Im s| ≥ 1`.
+
+Nothing else is assumed.  `PrimeDensityAP`, `CharacterClusterRigidity`, `ShiftedMertensSmall`,
+`ArchCorrModerate` and `ArchCorrNearMaxHeight` are all discharged inside this call.
+
+**Where the repo stands against that threshold.**  `zetaLogDerivExponent_nine` proves the case
+`θ = 9`, from `PNTPort.ZetaZeroFree9` — *proved, in this repo, no axioms*.  Vinogradov–Korobov is
+the case `θ = 2/3`.  So the entire remaining debt of this campaign is the single quantitative gap
+
+> `9`  ⟶  `< 1`
+
+in the zero-free-region exponent, a statement a reader can check against the literature at a glance
+and which any future strengthening of `src/PNTPort/ZetaBounds.lean` discharges automatically.  That
+is a strictly better place to stand than a bespoke `Prop` about `archCorr`.
+
+**Still true, and still to be said.**  `TwoPointElliottLog` is the **logarithmic** average;
+`CastingOut.TwoPointElliott`, which the repo's normality route consumes, is the **natural**
+average, and the passage is a separate known-open Chowla-strength problem.  This does not close
+the normality route. -/
+theorem twoPointElliottLog_of_zetaExponent {b p q : ℕ} {t : ℝ} {θ : ℝ}
+    (hp : 0 < p) (hq : 0 < q) (hpq : p ≠ q)
+    (hu : (NormalNumbers.CastingOut.phase (t / b)).re < 1)
+    (hθ0 : 0 ≤ θ) (hθ1 : θ < 1)
+    (h : NormalNumbers.ElliottZetaTheta.ZetaLogDerivExponent θ) :
+    NormalNumbers.ElliottTwoPointLog.TwoPointElliottLog b p q t := by
+  obtain ⟨K, hK⟩ := NormalNumbers.ElliottZetaTheta.archCorrNearMaxHeight_of_exponent hθ0 h
+  refine twoPointElliottLog_of_nearMaxHeight (ν := 1/2) (η₂ := 1 - θ) (K₂ := K)
+    hp hq hpq hu (by norm_num) (by norm_num) (by linarith) (by linarith) ?_
+  intro A
+  exact hK A (1 - (1 - 1/2) / 9) (by norm_num)
 
 end
 

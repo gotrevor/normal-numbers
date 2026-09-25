@@ -29,6 +29,7 @@ import NormalNumbers.ElliottWindowTruncate
 import NormalNumbers.ElliottTruncAssemble
 import NormalNumbers.ElliottZetaModerate
 import NormalNumbers.ElliottSliceCapModerate
+import NormalNumbers.ElliottZetaTheta
 import NormalNumbers.ElliottLedger
 
 /-!
@@ -313,3 +314,12 @@ edits; see the fidelity note in `STATUS.md`.
 
 -- Lap 119: the near-max band is antitone in the cut parameter (lap 117's prose, machine-checked).
 #print axioms NormalNumbers.ElliottArchBands.archCorrNearMaxHeight_antitone
+
+-- Lap 120: the moderate chain made parametric in the zero-free-region exponent θ, and the
+-- bespoke wall axiom `ArchCorrNearMaxHeight` replaced by the standard `ZetaLogDerivExponent θ`.
+#print axioms NormalNumbers.ElliottZetaTheta.zetaLogDerivExponent_mono
+#print axioms NormalNumbers.ElliottZetaTheta.zetaLogDerivExponent_nine
+#print axioms NormalNumbers.ElliottZetaTheta.exists_sliceCapModerateTheta
+#print axioms NormalNumbers.ElliottZetaTheta.exists_archCorrModerateTheta
+#print axioms NormalNumbers.ElliottZetaTheta.archCorrNearMaxHeight_of_exponent
+#print axioms NormalNumbers.ElliottLedger.twoPointElliottLog_of_zetaExponent

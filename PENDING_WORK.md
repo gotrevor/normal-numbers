@@ -11475,3 +11475,67 @@ The campaign's named objective is met.  What remains is either forbidden head-on
 (`ArchCorrNearMaxHeight`), off scope (`SwingC2`'s unrelated same-named `Prop`), or the genuinely
 open structural question — the **log → natural** passage, which is Chowla-strength and must never
 be presented as closing the normality route.
+
+## 🔑🔑 2026-09-25 lap 120 — THE BESPOKE WALL AXIOM IS GONE.  THE DEBT IS ONE EXPONENT.
+
+**`ElliottLedger.twoPointElliottLog_of_zetaExponent`** : `TwoPointElliottLog b p q t` from a
+**single standard analytic fact about `ζ`** —
+
+> `ZetaLogDerivExponent θ` for some `θ < 1`, i.e. `‖ζ'/ζ(s)‖ ≪ (log(|Im s|+16))^θ`
+> on `1 ≤ Re s ≤ 3`, `|Im s| ≥ 1`.
+
+Nothing else.  `PrimeDensityAP`, `CharacterClusterRigidity`, `ShiftedMertensSmall`,
+`ArchCorrModerate` **and `ArchCorrNearMaxHeight`** are all discharged inside that call.
+
+### What happened, and why it was possible
+
+Reading laps 113–117 back, the exponent `9` entered in **exactly one place** —
+`log(1/T) = θ·log log(|v|+16)` — while every other ingredient (`norm_slice_add_logDeriv_le`,
+`sum_log_rpow_le`, `norm_logWeightedSlice_le_trivial`, `integral_le_const_add_log_add_const`) is
+exponent-blind.  So the whole chain is parametric in `θ`.  `src/NormalNumbers/ElliottZetaTheta.lean`
+makes it so: `sliceTheta`, `SliceCapModerateTheta`, `SliceBoundModerateTheta`,
+`DampedSeriesBoundModerateTheta`, `ArchCorrModerateTheta`, each a transcription of the `9`-version
+with `θ` in place of `9` (real `rpow`).
+
+**`archCorrNearMaxHeight_of_exponent`** is the payoff: `ZetaLogDerivExponent θ` implies
+`ArchCorrNearMaxHeight A ν (1−θ) K` for **every** `A` and **every** cut `ν < 1`, `K` uniform.
+The mechanism — and this is the part worth remembering — is that **the lower cut is irrelevant**:
+the saving comes entirely from the range bound `|v| ≤ A²X`, which forces
+`log log(|v|+16) ≤ log 2 + L`, so `θ·log log(|v|+16) + K₁ ≤ θ·L + (θ log 2 + K₁)` on the *whole*
+band.  The cut appears only to force `|v| > 1` (via `heightCut ν X ≥ 17`).  This is lap 119's prose
+audit, now a theorem.
+
+### Why this is strictly better provenance
+
+`ArchCorrNearMaxHeight` is a bespoke `Prop` about `archCorr` that a reader must take on faith as
+"being Vinogradov".  `ZetaLogDerivExponent θ` is the **same shape** as the in-repo, already-proved
+`PNTPort.LogDerivZetaBndUnif99`.  And `zetaLogDerivExponent_nine` **proves the case `θ = 9`**, so
+the parametric statement is not a vacuous generalisation — the repo owns an instance.
+Vinogradov–Korobov is the case `θ = 2/3`.  So the campaign's entire remaining debt is
+
+> the zero-free-region exponent, **`9` ⟶ anything `< 1`**
+
+— checkable against the literature at a glance, and discharged automatically by any future
+strengthening of `src/PNTPort/ZetaBounds.lean`.  `zetaLogDerivExponent_mono` records that larger
+`θ` is the weaker hypothesis, so citing the largest admissible `θ` is the honest thing to do.
+
+**EA-1 at the extreme** (in the docstring): at `|v| = A²X` the two sides are `θ(L + log 2) + K₁`
+against `θL + K`, equal at `K = θ log 2 + K₁` — the constant is sharp for this argument.
+
+Audit: 9697 jobs, zero `sorryAx`.
+
+### Refuted this lap (record, do not retry)
+
+**Averaging over `v` instead of a pointwise bound.**  Checked: `ArchCorrLargeShift` is consumed
+*pointwise* — `twistAlmostRealPropDichotomy_of_inputs` applies it at the single shift `t` of the
+character the dichotomy produces, not under any integral.  So mean-value theorems for `|ζ(1+it)|`
+(fourth moment, Carlson), which would sidestep Vinogradov, **cannot** be substituted.  ⛔
+
+### NEXT LAP
+
+The honest target is now narrow and concrete: **improve the exponent in `src/PNTPort/ZetaBounds.lean`
+below `1`**, or prove `ZetaLogDerivExponent θ` for some `θ < 1` directly.  That is Vinogradov's mean
+value theorem and remains a multi-year target — narrow it, do not file it as infeasible.  Note the
+chain needs only `θ < 1`, which is **weaker than Vinogradov's `2/3`**: any sub-linear bound
+`‖ζ'/ζ‖ ≪ (log t)^{1−ε}` suffices.  Whether that weaker statement has an easier proof than full
+Vinogradov is an open question worth a lap of literature reading.
