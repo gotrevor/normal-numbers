@@ -6,41 +6,50 @@
 `KICKOFF-2026-09-24-twopoint-bet.md`.  (The Theorem C′ directive below is the `master`/Pair A
 directive and is NOT active in this worktree; Theorem C′ is proved and trust-triple.)
 
-**Objective.**  Decide the C1 route: either prove `PairDecorr b t` for a fixed pair of distinct
-primes, or pin the route's depth to a named open problem with a theorem in `src/`.
+**Objective (2026-09-25 review lap — direction REVISED).**  Discharge the 🟡 `DelangeMean`
+hypothesis into a theorem on the regime `‖phase t − 1‖ < 1`.  The kickoff's own success criterion
+(C1 pinned to a named open problem by a theorem in `src/`) was MET at SESSION WRAP 4
+(`pairDecorr_iff_unweighted`, `multiElliottWeighted_iff_growing`); after
+`delangeKernelTail_of_norm_lt_one` and `conjC1_of_delange_multiElliott`, `ConjC1` rests on exactly
+two inputs, and `DelangeMean` is the only one that is not an open conjecture.  It is therefore the
+whole remaining debt of the swing.
 
-**Mandated next move (2026-09-24 lap-24 review — direction REVISED).**
-1. **STOP the uniform-saving programme of laps 15–23.**  `exists_slow_cutoff`
-   (`TwoPointGramDiagonal.lean`) proves that the growing-`w` leaf needs NO uniformity in `w`:
-   fixed-pair `o(N)` decorrelation already closes it.  A uniform per-pair saving
-   `δ ≍ L(w)²/π(w)` is *sufficient and far from necessary*, so `TwoPointDeficit`/`TwoPointPairing`/
-   `TwoPointBlockRotation` are off-path unless they yield a FIXED-PAIR statement.
-2. **Attack the fixed pair.**  The crux is now exactly
-   `E_{m≤M} e(t(omegaTail_b(pm) − omegaTail_b(qm))) → 0`, `p ≠ q` fixed primes.  Iterate the peel
-   `phase_shiftPairTail_peel` to `K ≈ log_b log M` (the remainder is `O(b^{-K} log M) = o(1)`,
-   since `omegaTail b n = O(log n)`): the phase becomes the FINITE sum
-   `Σ_{j=1}^{K} (t/b^j)(ω(pm+j) − ω(qm+j))`.  Formalise that truncation first — it is the one
-   prerequisite every route needs and it is elementary.
-3. **Then the sieve/variance read.**  Restricted to prime factors in `(J, z]`, the summands are
-   jointly CRT-independent (primes `> K` divide at most one shift), variance `≍ log log z → ∞`, so
-   the phase mean is `(log z)^{-c}`.  The obstruction is the LARGE-prime part, which is where this
-   becomes Elliott.  A lap that PINS that obstruction as a theorem (an implication
-   `fixed-pair leaf ↔ named open statement`, or a proof that the small-prime part alone suffices)
-   is a success.
+**Mandated next move: `DelangeKernelMean z` for `0 < ‖z−1‖ ≤ 1` by the SCALE route, three bricks.**
+The scale equation `delange_scale_equation` (lap 52, PROVED) is
+`‖S(N)·log N − z·Abel(N)‖ ≤ 19·A(N)`, with `Abel(N+1) − Abel(N) = δ_N·S(N)`, `δ_N = log(N+1)−log N`.
+Write `L_N = log N`, `s_N = δ_N/L_N`.
+1. **Tool (shared).**  `Σ_{N₀ ≤ m < N} s_m ≤ log L_N − log L_{N₀} + 1`, from `log(1+s) ≥ s − s²`
+   (`Real.log_le_sub_one_of_pos` twice) plus `Σ_{m≥3} s_m² ≤ Σ 1/m² ≤ 1`; and the Gronwall
+   `a_{m+1} ≤ a_m(1+c·s_m) ⟹ a_N ≤ a_{N₀}·e^c·(L_N/L_{N₀})^c`.
+2. **`A(N) ≤ C·(log N)^{u'}`, `u' < 1`, WITHOUT Mertens' second theorem.**  The structural
+   insight: `A = delangeA z` is itself a kernel sum, `A(N) = delangeS z' N` for the REAL
+   `z' = 1 + ‖z−1‖`, so the scale equation applies to `z'` and reads
+   `|A(N)·L_N − (1+u)·Ā(N)| ≤ 19A(N)` with `Ā(N) = Σ_{1≤m<N} δ_m A(m)` real.  Brick 1 then falls
+   out of tool 1 with the sharp exponent, and the `19` costs only an `ε` in `u'`.
+3. **The discrete integrating factor, WITHOUT `Complex.cpow`.**  Fix `θ` with
+   `max(Re z, u') < θ < 1` and prove `‖Abel(N)‖ ≤ C·L_N^θ` by induction on `N ≥ N₀`, from
+   `Abel(N+1) = Abel(N)(1 + z·s_N) + s_N·R(N)`, `‖1+zs‖ ≤ 1 + s·Re z + s²/2`, and
+   `(1+s)^θ ≥ 1 + θs − s²` (`Real.add_one_le_exp` + `log(1+s) ≥ s − s²`).  The scale equation then
+   returns `‖S(N)‖ ≤ (C + 19C₁)·L_N^{θ−1} → 0`.  Note `Re z = 1 − ‖z−1‖²/2 < 1` automatically.
 
 **Forbidden drift.**  Do NOT delete, rename or weaken `twoPointWeightedAvg_all`.  Do NOT edit
 `PairDecouple*.lean`, `SwingC1*.lean`, `CastingOut*.lean`, `Maze.lean`, `papers/`, `agent-mail/`,
-other KICKOFFs.  New code in `src/NormalNumbers/TwoPoint*.lean` only.  Do NOT re-price the trivial
-bound, the `ℓ¹` route, the `ℓ²`/fourth-moment route or the constant-`z` rotation pairing — all four
-are already priced in kernel (laps 13–23) and three are refuted as strategies.  Do NOT spend a lap
-on the *uniform* saving.
+other KICKOFFs.  New code in `src/NormalNumbers/TwoPoint*.lean` only.  Do NOT re-open the C1
+arithmetic leaf (`PairDecorr` / `MultiElliott` / `TwoPointWeightedAvg`): it is pinned as an
+equivalence with a named open problem, which the kickoff counts as success, and no cheap work
+exists there.  Do NOT retry: absolute majorisation of `E_N` (lap 49, refuted), the `‖·‖`-normed
+`v`-direction Gronwall (lap 35, refuted), the `ℓ¹`/`ℓ²`/rotation-pairing routes (laps 13–23), the
+uniform-in-`(p,q,w)` saving, `WeightDecouple` as an easier sub-problem.  Do NOT reach for
+Mertens' second theorem (`Σ_{p≤N}1/p = log log N + O(1)`): brick 2 above makes it unnecessary, and
+the repo's `primeRecipSum_le` has constant 12, which would shrink the regime to `‖z−1‖<1/12`.
 
-**Why.**  Laps 13–23 spent eleven laps on a strictly stronger statement than the leaf requires,
-because the budget computation `M(w)/L(w)² → ∞` was read as a lower bound on the *leaf* rather
-than on the *trivial-bound strategy*.  The diagonal reduction closes that gap in one theorem and
-re-points the campaign at the only obligation that can still force a redesign: whether the
-fixed-pair correlation is reachable without Elliott.  If it is not, the honest deliverable is the
-equivalence, which the kickoff explicitly counts as success.
+**Why.**  Two inputs remain under `ConjC1`; one is an open conjecture the paper itself states
+conditionally (legitimate 🔴), the other is a 1969 theorem of Delange (illegitimate 🟡 debt).  Laps
+43–52 drove the 🟡 from "two named `Prop`s" to "one conditional plus a proved scale equation", and
+the route-decisive question — whether the sign `Re(z−1)<0` survives to the closure step — is
+answered YES by the scale equation, whose multiplier has modulus exactly one.  What is left is
+bookkeeping of a kind this repo has done many times.  If brick 3's induction fails, the failure is
+visible in one lap and the fallback (a stated conditional, as at lap 48) already exists.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route (master/Pair A).
@@ -48,6 +57,9 @@ equivalence, which the kickoff explicitly counts as success.
 - 2026-09-24 (lap-24 review, branch `wip/twopoint-avg`): C1 swing REVISED — uniform-saving
   programme retired by `exists_slow_cutoff`; target is the fixed-pair correlation, via the finite
   `K ≈ log_b log M` peel.
+- 2026-09-25 (lap-53 review, branch `wip/twopoint-avg`): C1 objective MET at WRAP 4 (equivalence
+  with a named open problem); directive REVISED to the 🟡 `DelangeMean` discharge via the scale
+  route's three bricks, with `Complex.cpow` and Mertens' 2nd both designed out.
 
 ---
 

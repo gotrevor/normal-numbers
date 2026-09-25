@@ -1,5 +1,77 @@
 # PENDING WORK
 
+## 2026-09-25 (lap 53, review lap) — the 🟡 `DelangeMean` discharge, decomposed into three bricks
+
+**Direction REVISED** (see `DIRECTION.md` → CURRENT DIRECTIVE, which OUTRANKS every handoff).  The
+kickoff's success criterion (C1 pinned to a named open problem by a theorem in `src/`) was met at
+SESSION WRAP 4.  `ConjC1` now rests on exactly two inputs; one is a legitimate 🔴 (the paper states
+C1 conditionally, and all the candidate leaves are proved *equivalent*), the other is Delange's 1969
+**theorem** cited as a hypothesis.  That 🟡 is the whole remaining debt, and the objective.
+
+**State of the discharge.**  `delangeMean_of_kernelMean` (lap 28) reduces `DelangeMean t` on
+`‖phase t − 1‖ < 1` to the single residue `DelangeKernelMean z`, i.e. `S(N) := Σ_{n≤N} h_z(n)/n → 0`.
+Lap 52 proved the **scale equation**
+
+    delange_scale_equation :  ‖z−1‖ ≤ 1  →  ‖S(N)·log N − z·Abel(N)‖ ≤ 19·A(N)
+
+where `Abel(N) = Σ_{1≤m<N} δ_m·S(m)`, `δ_m = log(m+1) − log m`, `A(N) = delangeA z N = Σ_{n≤N}‖h(n)‖/n`.
+Also exact and already proved: `Abel(N+1) − Abel(N) = δ_N·S(N)` (unfold `delangeAbel`,
+`Finset.sum_Ico_succ_top`).  Write `L_N = log N`, `s_N = δ_N/L_N`.
+
+### Brick 1 — the shared telescoping tool (elementary, no primes)
+```
+sum_logStep_div_log_le :  3 ≤ N₀ → N₀ ≤ N →
+    ∑_{m ∈ Ico N₀ N} (log(m+1) − log m)/log m  ≤  log (log N) − log (log N₀) + 1
+```
+Proof: `log L_{m+1} − log L_m = log(1 + s_m)` because `L_{m+1} − L_m = δ_m` **exactly**; and
+`log(1+s) ≥ s/(1+s) ≥ s − s²` (two applications of `Real.log_le_sub_one_of_pos`), so
+`s_m ≤ (log L_{m+1} − log L_m) + s_m²`.  Then `Σ_{m≥3} s_m² ≤ Σ_{m≥3} 1/(m log m)² ≤ Σ 1/m² ≤ 1`.
+Companion: the Gronwall `a_{m+1} ≤ a_m(1 + c·s_m) ⟹ a_N ≤ a_{N₀}·e^{c}·(L_N/L_{N₀})^c` for `c ≥ 0`
+(via `1+x ≤ exp x` and `L^c = exp(c log L)`).
+
+### Brick 2 — `A(N) ≤ C·(log N)^{u'}` with `u' < 1`, WITHOUT Mertens' second theorem
+**The structural insight.**  `A` is itself a kernel sum: with `u = ‖z−1‖` and the REAL parameter
+`z' = ((1+u : ℝ) : ℂ)`, `delangeKernel z' n = (if Squarefree n then (u:ℂ)^{ω n} else 0)`, so
+`‖delangeKernel z n‖ = ‖delangeKernel z' n‖ = delangeKernel z' n` (real, ≥ 0) and hence
+
+    (delangeA z N : ℂ) = delangeS z' N ,   delangeA z' N = delangeA z N ,   ‖z' − 1‖ = u ≤ 1 .
+
+So `delange_scale_equation` applies at `z'` and, everything being real, reads
+
+    | A(N)·L_N − (1+u)·Ā(N) | ≤ 19·A(N),      Ā(N) := Σ_{1≤m<N} δ_m·A(m)  (real, ≥ 0).
+
+Hence `Ā(N+1) = Ā(N) + δ_N A(N) ≤ Ā(N)(1 + (1+u)·δ_N/(L_N − 19))`, and on `L_N ≥ 19(1+1/ε)` that is
+`≤ Ā(N)(1 + (1+u)(1+ε)s_N)`.  Brick 1's Gronwall gives `Ā(N) ≤ C·L_N^{(1+u)(1+ε)}` and the scale
+equation returns `A(N) ≤ C'·L_N^{u'}`, `u' = u + ε(1+u) + …`, which is `< 1` for suitable `ε`
+because `u < 1`.  **Sharp exponent, no Mertens' 2nd** — the repo's `primeRecipSum_le` has constant
+12, which would have shrunk the discharged regime to `‖z−1‖ < 1/12`.
+
+### Brick 3 — the discrete integrating factor, WITHOUT `Complex.cpow`
+Fix `θ` with `max(Re z, u') < θ < 1` (note `Re z = 1 − u²/2 < 1` automatically, and `u < 1` ⟹
+`Re z ∈ (1/2,1)`).  Prove by induction on `N ≥ N₀`:  `‖Abel(N)‖ ≤ C·L_N^θ`, from
+
+    Abel(N+1) = Abel(N)·(1 + z·s_N) + s_N·R(N),      R(N) := S(N)L_N − z·Abel(N),  ‖R(N)‖ ≤ 19A(N)
+
+together with
+* `‖1 + z·s‖ ≤ 1 + s·Re z + s²/2`  (`‖1+zs‖² = 1 + 2s·Re z + s²‖z‖²`, then `nlinarith`), and
+* `(1+s)^θ ≥ 1 + θ·s − s²`  (`Real.add_one_le_exp` on `exp(θ log(1+s))`, then `log(1+s) ≥ s − s²`),
+
+so the step needs exactly `19A(N) + (3/2)C L_N^θ s_N ≤ C L_N^θ (θ − Re z)`: the first summand by
+brick 2 with `C ≥ 38C₁/(θ−Re z)`, the second because `s_N ≤ 1/N`.  The scale equation then gives
+
+    ‖S(N)‖ ≤ (‖z‖·C·L_N^θ + 19·C₁·L_N^{u'}) / L_N ≤ (C + 19C₁)·L_N^{θ−1} → 0 ,
+
+i.e. **`DelangeKernelMean z` unconditionally for `0 < ‖z−1‖ ≤ 1`**, hence `DelangeMean t` for
+`‖phase t − 1‖ < 1` (i.e. `‖t‖_{ℝ/ℤ} < 1/6`), which is exactly the regime
+`delangeKernelTail_of_norm_lt_one` covers.
+
+### Do NOT retry (priced in kernel, recorded)
+Absolute majorisation of `E_N` (lap 49); the `‖·‖`-normed `v`-direction Gronwall (lap 35 — it norms
+a multiplier of modulus `u`, the scale route's multiplier is `z`, modulus exactly one); Mertens' 2nd
+as a prerequisite (brick 2 removes it); the C1 arithmetic leaf (pinned as an equivalence);
+`WeightDecouple` as an easier sub-problem; the uniform-in-`(p,q,w)` saving.
+
+
 ## 2026-09-24 (lap 24, review lap) — **the diagonal correction**: the C1 leaf needs no uniformity
 
 **Landed** (`src/NormalNumbers/TwoPointGramDiagonal.lean`, all trust-triple):

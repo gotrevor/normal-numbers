@@ -1,8 +1,10 @@
 # STATUS — normal-numbers 📊
 
-**ACTIVE (branch `wip/twopoint-avg`): the C1 casting-out swing.  `ConjC1` now follows from
-Delange's theorem plus the single node `PairDecorr` — the cited Kátai/BSZ hypothesis is GONE.**
-· **Build**: 🟢 green (9285 jobs) · **Updated**: lap 27 · 2026-09-24 · HEAD after `dfaa5c7`
+**ACTIVE (branch `wip/twopoint-avg`): the C1 casting-out swing.  `ConjC1` rests on exactly TWO
+inputs — `DelangeMean` (1969, the 🟡 debt now under attack) and one open two-point statement proved
+*equivalent* to the leaf.  The Kátai/BSZ hypothesis is GONE (it is a theorem here).**
+· **Build**: 🟢 green (8803 jobs for the Delange module; 9292 full) · **Updated**: lap 53 ·
+  2026-09-25 · HEAD `c7dca3e`
 · On `master`/Pair A: Theorem C′ (`isNormal_subsetLambert_of_sqrtFreshMassZero`) PROVED and
   trust-triple, 2026-09-23.
 
@@ -30,8 +32,43 @@ natural-density weighted two-point Elliott correlation.  That is a **named open 
 natural density, and — by `tendsto_maxRecipSum_div_sq` — strictly weaker than it, with no known
 route in between.
 
+**Lap 53 (review lap): the campaign's objective has MOVED, by success.**  Laps 28–42 cashed the
+kickoff's own success criterion — C1 is pinned to a named open problem *by theorems in `src/`*
+(`pairDecorr_iff_unweighted`, `multiElliottGrowing_schedule_invariant`,
+`multiElliottWeighted_iff_growing`), and `conjC1_of_delange_multiElliott` reduces `ConjC1` to two
+inputs and nothing else.  One of those two (`MultiElliott`) is an open conjecture on a theorem the
+paper itself states conditionally, so it is a legitimate 🔴 and there is no cheap work there.  The
+other, `DelangeMean`, is a 1969 *theorem* cited as a hypothesis — illegitimate 🟡 debt, and now the
+whole remaining obligation of the swing.  Laps 43–52 drove it from "two named `Prop`s" down to one
+conditional (`delangeKernelMean_of_errorBounded`) plus the **proved scale equation**
+`delange_scale_equation`; the 2026-09-25 directive names the three elementary bricks that close it
+on `‖z−1‖<1`, with `Complex.cpow` and Mertens' second theorem both designed out of the route.
+
 ## What's happened (C1 / twopoint campaign, newest first)
 
+- **2026-09-25 (lap 53, review lap) — DIRECTION REVISED: the 🟡 `DelangeMean` is now THE
+  objective.**  Ground truth re-derived at 8803 jobs; every C1 headline and every Delange node is
+  trust-triple (`[propext, Classical.choice, Quot.sound]`).  The kickoff's success criterion was met
+  at WRAP 4, so the directive moves off the arithmetic leaf and onto the axiom discharge.  Route
+  set, three bricks, both previously-feared dependencies designed away: the shared telescoping tool
+  `Σ s_m ≤ log log N + O(1)` (from `log(1+s) ≥ s−s²`), the **structural insight that
+  `delangeA z = delangeS (1+‖z−1‖)`** so the scale equation bounds its own error term with the sharp
+  exponent (no Mertens' 2nd, whose repo constant 12 would have shrunk the regime to `‖z−1‖<1/12`),
+  and a real-`rpow` induction `‖Abel(N)‖ ≤ C(log N)^θ` in place of a `Complex.cpow` integrating
+  factor.
+- **2026-09-25 (laps 43–52) — THE SCALE EQUATION.**  `TwoPointDelangeOmega.lean`:
+  `delangeOmegaT_eq` (the `ω`-weighted Levin–Fainleib identity, exact, no analytic input),
+  `hasDerivAt_delangeSv`, `norm_delangeSv_le` (continuous integrating factor),
+  `delangeKernelMean_of_errorBounded` (the `v`-route reduced to ONE uniform `O(1)` bound),
+  `delangeAbel_eq_hyperbola`, `sum_primeWeight_delangeS_eq`, and **`delange_scale_equation`**:
+  `‖z−1‖ ≤ 1 → ‖S(N)·log N − z·Abel(N)‖ ≤ 19·A(N)`.  Also Mertens' FIRST theorem both halves
+  (`mertens_lower`, `mertens_upper`, in `TwoPointMertensLower.lean`) and
+  `delangeKernelMean_of_converges`.  Two refutations recorded: absolute majorisation of `E_N` (the
+  weight sum `≍ (log N)^u → ∞` against an `O(1)` truth) and the `‖·‖`-normed `v`-direction Gronwall
+  (lap 35) — the scale route evades both because its multiplier `z` has modulus exactly one.
+- **2026-09-24/25 (laps 28–42) — C1 PINNED AS AN EQUIVALENCE.**  `pairDecorr_iff_unweighted`,
+  `multiElliottGrowing_schedule_invariant`, `multiElliottWeighted_iff_growing`,
+  `delangeKernelTail_of_norm_lt_one` (half the Delange discharge), `delangeMean_of_kernelMean`.
 - **2026-09-24 (lap 27) — CHIPPING THE 🟡 `DelangeMean`.**  `TwoPointDelange.lean` (sorry-free):
   the Dirichlet kernel `h_z = μ * z^ω` with `sum_delangeKernel_divisors` (powerset expansion), the
   exact hyperbola identity `sum_zpow_omega_eq`, the EQUALITY
@@ -69,7 +106,7 @@ route in between.
   literature; the fixed-`w` quantifier worry refuted as an *argument* (`TwoPointWorry.lean`) and
   then shown not to be where a proof comes from (probe: the arithmetic table is not asynchronous).
 
-## Axiom ledger — C1 / twopoint campaign (real `#print axioms`, 2026-09-24, 9282 jobs)
+## Axiom ledger — C1 / twopoint campaign (real `#print axioms`, 2026-09-25, 8803 jobs)
 
 | headline | paper claim | `#print axioms` | math axioms |
 |---|---|---|---|
@@ -78,11 +115,43 @@ route in between.
 | `conjC1_of_delange_multiElliott` | C1 is conjectural | trust triple | 0 — `DelangeMean` 🟡 + `MultiElliott` 🔴 (open, *equivalent* to the leaf).  **The sharpest form: two inputs, nothing else cited.** |
 | `truncPair_fullMean_tendsto_zero` | — (new, unconditional) | trust triple | **0 — THEOREM, no hypotheses**: the small-prime half of leaf (D) at natural density |
 | `katai_mean_sq` | Kátai 1986 / BSZ 2013 | trust triple | **0 — DISCHARGED** (was the cited `KataiOrthogonality`) |
+| `delangeMean_of_kernelMean` | Delange 1969 (the 🟡 being discharged) | trust triple | 0 — reduces `DelangeMean t` on `‖phase t−1‖<1` to the single residue `DelangeKernelMean` |
+| `delangeKernelTail_of_norm_lt_one` | — | trust triple | **0 — THEOREM**: half the Delange discharge, unconditional on `‖z−1‖<1` |
+| `delange_scale_equation` | — (new) | trust triple | **0 — THEOREM**: `‖S(N)log N − z·Abel(N)‖ ≤ 19A(N)`; the engine of the discharge |
 | `twoPointWeightedAvg_all` (`TwoPointBet.lean`) | the bet's ratified target | `sorryAx` | open `sorry`, disclosed; 🔴 reduces to fixed-pair Elliott |
+
+Math-axiom count for the C1 campaign: **0** `axiom` declarations.  The debt is carried as *named
+hypotheses*, which is why it is visible:
+
+| hypothesis | bucket | status |
+|---|---|---|
+| `DelangeMean t` (`SwingC1Delange.lean`) | 🟡 proven, project-scale (Delange 1969 / Selberg–Delange, not in mathlib) | **the active frontier.**  Half discharged (`delangeKernelTail_of_norm_lt_one`); the other half `DelangeKernelMean` has a designed three-brick route off `delange_scale_equation`.  Next prerequisite = brick 1, `Σ_{N₀≤m<N} δ_m/log m ≤ log log N + O(1)`. |
+| `MultiElliott` / `PairDecorr` / `TwoPointWeightedAvg` | 🔴 open conjecture (two-point Elliott at natural density) | **legitimate**: Fable states C1 conditionally, and all three are proved *equivalent* to each other and to the leaf.  Not debt to chip — the measured depth of the conjecture. |
+| `KataiOrthogonality(Avg)` | — | **DISCHARGED** to `katai_mean_sq` (a theorem here). |
 
 🔴 here is honest: C1 is a *conjecture* in Fable, so a route resting on an open two-point Elliott
 statement is not a straying unconditional theorem — it is the conjecture's true depth, now
-measured.  The 🟡 `DelangeMean` is the live debt worth chipping (Selberg–Delange for `ζ^ω`).
+measured.  The 🟡 `DelangeMean` is the live debt, and it is the campaign's current objective.
+
+## Outstanding (C1 / twopoint campaign)
+
+### Short-term (mirrors PENDING_WORK top / the 2026-09-25 CURRENT DIRECTIVE)
+1. **Brick 1** — the shared telescoping tool `Σ_{N₀ ≤ m < N} δ_m/log m ≤ log log N − log log N₀ + 1`
+   and the Gronwall `a_{m+1} ≤ a_m(1+c s_m) ⟹ a_N ≤ a_{N₀} e^c (L_N/L_{N₀})^c`.
+2. **Brick 2** — `delangeA z N ≤ C(log N)^{u'}`, `u' < 1`, via `delangeA z = delangeS (1+‖z−1‖)`
+   and the scale equation applied to the REAL parameter `z' = 1 + ‖z−1‖`.
+3. **Brick 3** — `‖delangeAbel z N‖ ≤ C(log N)^θ` for `max(Re z, u') < θ < 1`, by induction with
+   `‖1+zs‖ ≤ 1 + s Re z + s²/2` and `(1+s)^θ ≥ 1 + θs − s²`; then `DelangeKernelMean z`.
+
+### Long-term
+`DelangeMean t` for ALL `t` (i.e. `‖z−1‖ ≥ 1`) needs Halász/Selberg–Delange over the zero-free
+region — `PNTPort.ZetaBounds` is in-tree, so this is a real (large) target, not a wall.
+
+### To completion
+`ConjC1` unconditional is *not* reachable: it needs two-point Elliott at natural density, an open
+problem, and the equivalence is proved.  The completable target is `DelangeMean` on `‖t‖<1/6`,
+after which `conjC1_of_delange_multiElliott` becomes a clean single-hypothesis reduction of a
+conjecture to a conjecture.
 
 ## Where it stands (multicutoff campaign — DONE, `master`/Pair A)
 
