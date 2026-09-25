@@ -810,6 +810,76 @@ theorem card_dilatedLargeFrequencies_le {T D h c₁ α : ℕ} (s : Finset ℕ) (
   exact (le_div_iff₀ (by positivity : 0 < θ ^ 4)).mpr ((hsmall.trans hsum).trans hmoment)
 
 
+/-! ## The logarithmic-average layer -/
+
+open NormalNumbers.ElliottLadder in
+/-- Blocks re-based at `a*(n+1)` are `1`-bounded as soon as the sequence is. -/
+theorem norm_affineBlock_le_one {H : ℕ} {f : ℕ → ℂ} (hf : ∀ n : ℕ, 0 < n → ‖f n‖ ≤ 1)
+    (a n : ℕ) (i : Fin H) : ‖affineBlock f a n H i‖ ≤ 1 :=
+  norm_positiveIntExtension_le_one hf _
+
+open NormalNumbers.ElliottLadder in
+/-- **The logarithmic-average layer for the dilated mean.**  Port of
+`NormalNumbers.ElliottTwistedGraph.norm_logProb_pairTwistedPrimeGraphMean_le_of_fourier_first_moment`.
+As there, the Fourier first-moment hypothesis concerns the **first** block only; the only change is
+that it is required at the aliased frequencies `t + u*D`. -/
+theorem norm_logProb_dilatedPairTwistedMean_le_of_fourier_first_moment
+    {L U H T α D : ℕ} [NeZero T] [NeZero α] (hTD : T = α * D)
+    (hL : 0 < L) (hLU : L ≤ U)
+    (w : ℕ → ℂ) (F₁ F₂ : ℕ → ℂ) (a c₁ h : ℕ) (s : Finset ℕ)
+    (hHT : H ≤ T) (hT : ∀ p ∈ s, H + p * h ≤ T)
+    (hF₁ : ∀ n : ℕ, 0 < n → ‖F₁ n‖ ≤ 1) (hF₂ : ∀ n : ℕ, 0 < n → ‖F₂ n‖ ≤ 1)
+    {θ M Z : ℝ} (hθ : 0 ≤ θ) (hM : 0 ≤ M)
+    (hmult : ∀ x ∈ (Finset.range T) ×ˢ (Finset.range α),
+      ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖ ≤ M)
+    (hfirst : ∀ x ∈ dilatedLargeFrequencies T D h c₁ α s w θ,
+      logProbExpectation L U
+        (fun n ↦ ‖blockFourier T (affineBlock F₁ a n H) ((x.1 : ℤ) + (x.2 : ℤ) * D)‖) ≤ Z) :
+    ‖logProbExpectation L U (fun n ↦ dilatedPairTwistedMean w
+        (affineBlock F₁ a n H) (affineBlock F₂ a n H) α c₁ h s)‖ ≤
+      θ * H + ((H : ℝ) * M / ((T : ℝ) * α)) *
+        (dilatedLargeFrequencies T D h c₁ α s w θ).card * Z := by
+  classical
+  have hpoint (n : ℕ) : ‖dilatedPairTwistedMean w
+      (affineBlock F₁ a n H) (affineBlock F₂ a n H) α c₁ h s‖ ≤
+      θ * H + ((H : ℝ) * M / ((T : ℝ) * α)) *
+        ∑ x ∈ dilatedLargeFrequencies T D h c₁ α s w θ,
+          ‖blockFourier T (affineBlock F₁ a n H) ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ :=
+    norm_dilatedPairTwistedMean_le_largeFrequencies hTD w _ _ c₁ h s hHT hT
+      (norm_affineBlock_le_one hF₁ a n) (norm_affineBlock_le_one hF₂ a n) hθ hmult
+  have hweights : ∑ n : LogProbIndex L U, (logProbWeightNN L U n : ℝ) = 1 := by
+    exact_mod_cast sum_logProbWeightNN hL hLU
+  have hexpand : logProbExpectation L U (fun n ↦ θ * H + ((H : ℝ) * M / ((T : ℝ) * α)) *
+      ∑ x ∈ dilatedLargeFrequencies T D h c₁ α s w θ,
+        ‖blockFourier T (affineBlock F₁ a n H) ((x.1 : ℤ) + (x.2 : ℤ) * D)‖) =
+      θ * H + ((H : ℝ) * M / ((T : ℝ) * α)) *
+        ∑ x ∈ dilatedLargeFrequencies T D h c₁ α s w θ,
+          logProbExpectation L U
+            (fun n ↦ ‖blockFourier T (affineBlock F₁ a n H) ((x.1 : ℤ) + (x.2 : ℤ) * D)‖) := by
+    simp only [logProbExpectation, smul_eq_mul, mul_add, Finset.sum_add_distrib]
+    rw [← Finset.sum_mul, hweights, one_mul]
+    congr 1
+    simp_rw [mul_left_comm (logProbWeightNN L U _ : ℝ) ((H : ℝ) * M / ((T : ℝ) * α))]
+    rw [← Finset.mul_sum]
+    congr 1
+    simp only [Finset.mul_sum]
+    exact Finset.sum_comm
+  calc
+    _ ≤ logProbExpectation L U (fun n ↦ ‖dilatedPairTwistedMean w
+        (affineBlock F₁ a n H) (affineBlock F₂ a n H) α c₁ h s‖) :=
+      norm_logProbExpectation_le_expectation_norm _ _ _
+    _ ≤ logProbExpectation L U (fun n ↦ θ * H + ((H : ℝ) * M / ((T : ℝ) * α)) *
+        ∑ x ∈ dilatedLargeFrequencies T D h c₁ α s w θ,
+          ‖blockFourier T (affineBlock F₁ a n H) ((x.1 : ℤ) + (x.2 : ℤ) * D)‖) :=
+      logProbExpectation_mono _ _ (fun n _ ↦ hpoint n)
+    _ = _ := hexpand
+    _ ≤ θ * H + ((H : ℝ) * M / ((T : ℝ) * α)) *
+        ∑ _x ∈ dilatedLargeFrequencies T D h c₁ α s w θ, Z := by
+      gcongr
+      exact hfirst _ ‹_›
+    _ = _ := by rw [Finset.sum_const, nsmul_eq_mul]; ring
+
+
 end
 
 end NormalNumbers.ElliottDilatedPairing

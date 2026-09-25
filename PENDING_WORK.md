@@ -42,8 +42,11 @@ per-prime weight by a unimodular constant, leaving the shift h and frequency t w
 arithmetic bounds want them.  Hence `sum_fourth_dilatedTwistedMultiplier_le` (fourth moment <= a*B),
 `norm_dilatedTwistedMultiplier_le`, `card_dilatedLargeFrequencies_le` (Markov).  The dilated graph
 needs NO new arithmetic: the additive-energy input is used unchanged, a times.
-Next: port `norm_logProb_pairTwistedPrimeGraphMean_le_of_fourier_first_moment`, then
-`exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment`, to the dilated mean and identify the dilated edge with
+**Lap 24: the logarithmic-average layer** —
+`norm_logProb_dilatedPairTwistedMean_le_of_fourier_first_moment`, with the first-moment hypothesis
+on the FIRST block only (Tao's asymmetry preserved), now at the aliased frequencies `t + u*D`.
+Next: `exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment` for the dilated mean (same
+parameter choreography, N replaced by a*N; a is a constant so zeta absorbs it) and identify the dilated edge with
 `ElliottAffineGraph.affineTwistedObservable`.
 
 Superseded description of that lemma: the `a`-dilated bilinear pairing
