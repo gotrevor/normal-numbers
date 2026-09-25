@@ -1,3 +1,4 @@
+import NormalNumbers.ElliottTwoPointLog
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
@@ -135,3 +136,7 @@ edits; see the fidelity note in `STATUS.md`.
 
 -- the dependency's proved special case
 #print axioms Erdos67b.unitCircleLogElliott
+
+/-! ### The downstream consumer (`DIRECTION.md` item 4) -/
+#print axioms NormalNumbers.ElliottTwoPointLog.twoPointElliottLog_of_nonPretentious
+#print axioms NormalNumbers.ElliottTwoPointLog.isCoprimeMult_zetaOmegaInt

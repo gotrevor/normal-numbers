@@ -10392,3 +10392,28 @@ Why it was this cheap: Case A only ever feeds `g₁` through `normDivArith`, who
 through the *cover* `u`, and every complete-multiplicativity use downstream is on `cmExt u`, which
 is completely multiplicative by construction (`Finsupp.prod_add_index'`, no coprimality needed).
 The `gᵢ` themselves are only ever evaluated via `coprime_mul_restrictToNat`.
+
+## Lap 85 (2026-09-25) — `DIRECTION.md` item 4: the downstream consumer, stated and DERIVED
+
+New `src/NormalNumbers/ElliottTwoPointLog.lean`, **zero sorry, trust triple**, in the audit surface.
+
+* `zetaOmegaInt u : ℤ → ℂ` — `ζ^{ω(·)}`, `ζ = e(u)`, zero off the positive integers.
+  `isCoprimeMult_zetaOmegaInt` : it is `IsCoprimeMultOnPosInt`, off `ω(mn) = ω m + ω n` for coprime
+  `m, n` (`Nat.primeFactors_mul` + `Coprime.disjoint_primeFactors` + `card_union_of_disjoint`).
+  It is **not** completely multiplicative (`ω(p²) = 1`), which is precisely why lap 84's fidelity
+  upgrade was a prerequisite and not a cosmetic one: the dependency's `Prop` simply does not apply
+  to C1's two-point function.
+* `UniformlyNonPretentious g` — the Delange-side input as a named hypothesis
+  (`D(g, χ·n^{is}; X)² ≥ A` for all moduli `≤ A`, all `|s| ≤ AX`, all large `X`).  This is the
+  content of the `DelangeSlot*` / `TwoPointDelange*` stack, not re-proved here.
+* `TwoPointElliottLog b p q t` — the log-averaged two-point correlation of `ζ^{ω(pn+1)}` against
+  `conj ζ^{ω(qn+1)}` over `1 < n ≤ X`, normalised by `log X`, tending to `0`.
+* `twoPointElliottLog_of_nonPretentious` — the derivation from
+  `ElliottGeneral.nonasymptoticLogElliottMult`, for any `p ≠ q` (determinant `p·1 − q·1 = p − q`).
+
+Not done, and not claimed: the passage from the **logarithmic** average to `CastingOut.TwoPointElliott`'s
+**natural** average.  That is open in general (it is the Chowla-type gap), and the kickoff lists only
+the log form as following from Tao's theorem.  The honest next targets are therefore
+(a) discharging `UniformlyNonPretentious (zetaOmegaInt (t/b))` from the Delange stack, for `t/b ∉ ℤ`, and
+(b) the log→natural passage, which needs an extra input (e.g. a Tauberian/entropy argument) and
+should be scoped by an altitude lap before anyone grinds at it.
