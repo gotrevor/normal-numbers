@@ -186,6 +186,32 @@ same file is **`ErdosProblems.Erdos49.PNT.IEANTN.Mertens`**.
 uniformly; iterate over the blocks `(X^{2^k}, X^{2^{k+1}}]`, where the weight `p^{-1/log X} ≤
 exp(−2^k)` gives geometric decay.
 
+### ✅ Lap 98 — THE DAMPING STEP IS COMPLETE
+
+`archCorr v X` is now an *analytic* object up to an absolute constant.  All sorry-free, trust
+triple, in the audit surface:
+
+* `sum_primesInInterval_split`, `sum_primesUpTo_split` — additivity of prime sums at a cut.
+* `dampedBlock_le` — on a square block `(M,N]`, `N ≤ M²`, the damped weight is `≤ M^{-δ}` and the
+  mass `≤ log 2 + 2·mertensBound`.
+* `sum_exp_neg_two_pow_le` — `∑_{k<K} e^{-2^k} ≤ 1 − 2e^{-2^K}` (the invariant that makes the
+  induction go: the naive `≤ 1` does not close the step).
+* **`dampedTail_le`** — `∑_{X<p≤Y} p^{-1-1/log X} ≤ log 2 + 2·mertensBound` for **every** `Y`,
+  by iterating the block over `(X^{2^k}, X^{2^{k+1}}]` where the weight is `≤ e^{-2^k}`.
+* **`norm_archCorr_sub_dampedPrefix_le`** — the payoff:
+  `‖archCorr v X − ∑_{p≤Y} p^{-1-1/log X-iv}‖ ≤ (1 + (log 4+4)/log X) + (log 2 + 2·mertensBound)`
+  for every `Y ≥ X`, **uniformly in the frequency `v` and in `Y`**.
+
+**Next (lap 99).**  With the damping done, (c′-I)/(c′-II-a) are statements about
+`P(s) := ∑_p p^{-s}` at `s = 1 + 1/log X + iv`.  The remaining chain is:
+1. `P(s) = ∫_0^∞ (−ζ'/ζ)(s+w) dw + O(1)` via `1/log n = ∫_0^∞ n^{-w} dw` (the `O(1)` is the
+   prime-power correction `∑_{p,k≥2} 1/(k p^{kσ}) ≤ 2∑_p p^{-2σ}`, elementary).
+2. the `ζ'/ζ` bound on `σ > 1`: trivial `1/(σ−1)` always, `≍ 1/|s−1|` near the pole (mathlib has
+   `riemannZeta ≠ 0` on `Re ≥ 1`), `≍ log|v|` at height (dVP).
+3. the elementary integration `∫_0^∞ min(1/(δ+w), R) dw = log(1/(δR)) + O(1)`.
+Step 3 is pure calculus and is the right next Lean target — it is independent of the ζ input and
+turns whatever bound step 2 supplies into the two soft inputs directly.
+
 ### What is OFF the path now
 
 `CharacterClusterRigidity`, `PrimeDensityAP`, `exists_charDefect_le`, `NearTrivialTwist`,

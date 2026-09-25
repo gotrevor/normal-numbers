@@ -194,3 +194,6 @@ edits; see the fidelity note in `STATUS.md`.
 /-! ### The damping step towards (c′-I)/(c′-II-a) (lap 97) -/
 #print axioms NormalNumbers.ElliottDamped.sum_log_div_primesUpTo_le
 #print axioms NormalNumbers.ElliottDamped.norm_archCorr_sub_dampedArchCorr_le
+#print axioms NormalNumbers.ElliottDamped.dampedBlock_le
+#print axioms NormalNumbers.ElliottDamped.dampedTail_le
+#print axioms NormalNumbers.ElliottDamped.norm_archCorr_sub_dampedPrefix_le

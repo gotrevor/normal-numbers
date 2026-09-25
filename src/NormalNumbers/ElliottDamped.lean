@@ -130,6 +130,282 @@ theorem norm_archCorr_sub_dampedArchCorr_le {X : ℕ} (hX : 2 ≤ X) (v : ℝ) :
     rw [mul_add, hcancel, hδ]; field_simp
   linarith [hrw ▸ this]
 
+/-! ### The tail half: `∑_{p > X} p^{-1-1/log X} = O(1)` -/
+
+open Erdos67b.PrimeEstimates
+
+/-- A general prime interval splits additively at an interior point. -/
+theorem sum_primesInInterval_split {f : ℕ → ℝ} {X M Y : ℕ} (hXM : X ≤ M) (hMY : M ≤ Y) :
+    ∑ p ∈ primesInInterval X Y, f p
+      = (∑ p ∈ primesInInterval X M, f p) + ∑ p ∈ primesInInterval M Y, f p := by
+  classical
+  have hunion : primesInInterval X Y = primesInInterval X M ∪ primesInInterval M Y := by
+    ext p
+    simp only [Finset.mem_union, mem_primesInInterval]
+    constructor
+    · rintro ⟨h1, h2, h3⟩
+      by_cases hpM : p ≤ M
+      · exact Or.inl ⟨h1, hpM, h3⟩
+      · exact Or.inr ⟨by omega, h2, h3⟩
+    · rintro (⟨h1, h2, h3⟩ | ⟨h1, h2, h3⟩)
+      · exact ⟨h1, by omega, h3⟩
+      · exact ⟨by omega, h2, h3⟩
+  have hdisj : Disjoint (primesInInterval X M) (primesInInterval M Y) := by
+    refine Finset.disjoint_left.mpr ?_
+    intro p hp hp'
+    have h1 := (mem_primesInInterval.mp hp).2.1
+    have h2 := (mem_primesInInterval.mp hp').1
+    omega
+  rw [hunion, Finset.sum_union hdisj]
+
+/-- **One square block of the damped tail.**  On `(M, N]` with `N ≤ M²`, the damped weight is at
+most `M^{-δ}` and the reciprocal mass is at most `log 2 + 2·mertensBound`. -/
+theorem dampedBlock_le {X M N : ℕ} (hX : 2 ≤ X) (hM : 2 ≤ M) (hMN : M ≤ N) (hN : N ≤ M ^ 2) :
+    ∑ p ∈ primesInInterval M N, (p : ℝ) ^ (-(1 : ℝ) - (Real.log (X : ℝ))⁻¹)
+      ≤ (M : ℝ) ^ (-(Real.log (X : ℝ))⁻¹) * (Real.log 2 + 2 * PrimeEstimates.mertensBound) := by
+  classical
+  have hXR : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+  set δ : ℝ := (Real.log (X : ℝ))⁻¹ with hδ
+  have hδ0 : 0 < δ := by rw [hδ]; positivity
+  have hMR : (2 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM
+  have hMpos : (0 : ℝ) < (M : ℝ) := by linarith
+  -- termwise
+  have hterm : ∀ p ∈ primesInInterval M N,
+      (p : ℝ) ^ (-(1 : ℝ) - δ) ≤ (M : ℝ) ^ (-δ) * (p : ℝ)⁻¹ := by
+    intro p hp
+    have hpM : M < p := (mem_primesInInterval.mp hp).1
+    have hpR : (M : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpM.le
+    have hppos : (0 : ℝ) < (p : ℝ) := by linarith
+    have hsplit : (p : ℝ) ^ (-(1 : ℝ) - δ) = (p : ℝ) ^ (-δ) * (p : ℝ)⁻¹ := by
+      rw [show -(1 : ℝ) - δ = (-δ) + (-1 : ℝ) by ring, Real.rpow_add hppos, Real.rpow_neg_one]
+    have hmono : (p : ℝ) ^ (-δ) ≤ (M : ℝ) ^ (-δ) :=
+      Real.rpow_le_rpow_of_nonpos hMpos hpR (by linarith)
+    rw [hsplit]
+    exact mul_le_mul_of_nonneg_right hmono (by positivity)
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [← Finset.mul_sum]
+  have hmass : ∑ p ∈ primesInInterval M N, (p : ℝ)⁻¹
+      ≤ Real.log 2 + 2 * PrimeEstimates.mertensBound := by
+    have h := PrimeEstimates.reciprocalPrimeInterval_le_log_log_sub_add hM hMN
+    have hNR : (0 : ℝ) < (N : ℝ) := by
+      have : 2 ≤ N := le_trans hM hMN
+      exact_mod_cast (by omega : 0 < N)
+    have hlogM : 0 < Real.log (M : ℝ) := Real.log_pos (by linarith)
+    have hlogN : Real.log (N : ℝ) ≤ 2 * Real.log (M : ℝ) := by
+      have : (N : ℝ) ≤ (M : ℝ) ^ 2 := by exact_mod_cast hN
+      have := Real.log_le_log hNR this
+      rwa [Real.log_pow] at this
+      
+    have hstep : Real.log (Real.log (N : ℝ)) ≤ Real.log 2 + Real.log (Real.log (M : ℝ)) := by
+      have h1 : Real.log (Real.log (N : ℝ)) ≤ Real.log (2 * Real.log (M : ℝ)) := by
+        refine Real.log_le_log ?_ hlogN
+        have : 2 ≤ N := le_trans hM hMN
+        exact Real.log_pos (by exact_mod_cast (by omega : 1 < N))
+      rwa [Real.log_mul (by norm_num) (ne_of_gt hlogM)] at h1
+    exact le_trans h (by linarith)
+  have hpos : (0 : ℝ) ≤ (M : ℝ) ^ (-δ) := by positivity
+  exact mul_le_mul_of_nonneg_left hmass hpos
+
+/-- The damped tail over `(X, X^{2^K}]`, by induction on the number of square blocks. -/
+theorem dampedTail_blocks {X : ℕ} (hX : 2 ≤ X) :
+    ∀ K : ℕ, ∀ Y : ℕ, Y ≤ X ^ (2 ^ K) →
+      ∑ p ∈ primesInInterval X Y, (p : ℝ) ^ (-(1 : ℝ) - (Real.log (X : ℝ))⁻¹)
+        ≤ (Real.log 2 + 2 * PrimeEstimates.mertensBound)
+            * ∑ k ∈ Finset.range K, Real.exp (-(2 ^ k : ℝ)) := by
+  classical
+  have hXR : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+  set δ : ℝ := (Real.log (X : ℝ))⁻¹ with hδ
+  have hD0 : (0 : ℝ) ≤ Real.log 2 + 2 * PrimeEstimates.mertensBound := by
+    have := PrimeEstimates.mertensBound_nonneg
+    have : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+    linarith [PrimeEstimates.mertensBound_nonneg]
+  intro K
+  induction K with
+  | zero =>
+    intro Y hY
+    have hYX : Y ≤ X := by simpa using hY
+    have hempty : primesInInterval X Y = ∅ := by
+      refine Finset.eq_empty_of_forall_notMem ?_
+      intro p hp
+      have h1 := (mem_primesInInterval.mp hp).1
+      have h2 := (mem_primesInInterval.mp hp).2.1
+      omega
+    simp [hempty]
+  | succ K ih =>
+    intro Y hY
+    set M : ℕ := X ^ (2 ^ K) with hM
+    have hM2 : 2 ≤ M := by
+      rw [hM]
+      calc 2 ≤ X := hX
+        _ = X ^ 1 := (pow_one X).symm
+        _ ≤ X ^ (2 ^ K) := Nat.pow_le_pow_right (by omega) (Nat.one_le_two_pow)
+    have hXM : X ≤ M := by
+      rw [hM]
+      calc X = X ^ 1 := (pow_one X).symm
+        _ ≤ X ^ (2 ^ K) := Nat.pow_le_pow_right (by omega) (Nat.one_le_two_pow)
+    have hsum_nonneg : (0 : ℝ) ≤ Real.exp (-(2 ^ K : ℝ)) := (Real.exp_pos _).le
+    have hrange : ∑ k ∈ Finset.range (K + 1), Real.exp (-(2 ^ k : ℝ))
+        = (∑ k ∈ Finset.range K, Real.exp (-(2 ^ k : ℝ))) + Real.exp (-(2 ^ K : ℝ)) :=
+      Finset.sum_range_succ _ _
+    rcases le_or_gt Y M with hYM | hYM
+    · refine le_trans (ih Y hYM) ?_
+      rw [hrange]
+      nlinarith [hD0, hsum_nonneg]
+    · -- split at `M`
+      have hMY : M ≤ Y := hYM.le
+      rw [sum_primesInInterval_split (f := fun p => (p : ℝ) ^ (-(1 : ℝ) - δ)) hXM hMY]
+      have hYM2 : Y ≤ M ^ 2 := by
+        have : X ^ (2 ^ (K + 1)) = M ^ 2 := by
+          rw [hM, ← pow_mul, pow_succ]
+        omega
+      have hblock := dampedBlock_le (X := X) (M := M) (N := Y) hX hM2 hMY hYM2
+      have hMpow : (M : ℝ) ^ (-δ) ≤ Real.exp (-(2 ^ K : ℝ)) := by
+        have hMRpos : (0 : ℝ) < (M : ℝ) := by
+          have : (2 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM2
+          linarith
+        have hlogM : Real.log (M : ℝ) = (2 ^ K : ℝ) * Real.log (X : ℝ) := by
+          rw [hM]
+          push_cast [Real.log_pow]
+          ring
+        have : (M : ℝ) ^ (-δ) = Real.exp (-δ * Real.log (M : ℝ)) := by
+          rw [Real.rpow_def_of_pos hMRpos]; ring_nf
+        have hne : Real.log (X : ℝ) ≠ 0 := ne_of_gt hlogX
+        rw [this, hlogM, hδ]
+        refine Real.exp_le_exp.mpr (le_of_eq ?_)
+        field_simp
+      have hIH := ih M le_rfl
+      have : (M : ℝ) ^ (-δ) * (Real.log 2 + 2 * PrimeEstimates.mertensBound)
+          ≤ Real.exp (-(2 ^ K : ℝ)) * (Real.log 2 + 2 * PrimeEstimates.mertensBound) :=
+        mul_le_mul_of_nonneg_right hMpow hD0
+      rw [hrange]
+      nlinarith [hblock, hIH]
+
+/-- `∑_{k<K} e^{-2^k} ≤ 1`, uniformly in `K`; the doubly-exponential decay of the block weights. -/
+theorem sum_exp_neg_two_pow_le (K : ℕ) :
+    ∑ k ∈ Finset.range K, Real.exp (-(2 ^ k : ℝ)) ≤ 1 - 2 * Real.exp (-(2 ^ K : ℝ)) := by
+  induction K with
+  | zero =>
+    have h1 : (2 : ℝ) ≤ Real.exp 1 := by linarith [Real.add_one_le_exp (1 : ℝ)]
+    have h2 : Real.exp (-(2 ^ 0 : ℝ)) = (Real.exp 1)⁻¹ := by
+      norm_num [Real.exp_neg]
+    rw [Finset.sum_range_zero, h2]
+    have hpos : (0 : ℝ) < Real.exp 1 := Real.exp_pos 1
+    rw [inv_eq_one_div]
+    have : 2 * (1 / Real.exp 1) ≤ 1 := by
+      rw [mul_one_div, div_le_one hpos]; linarith
+    linarith
+  | succ K ih =>
+    have hstep : 2 * Real.exp (-(2 ^ (K + 1) : ℝ)) ≤ Real.exp (-(2 ^ K : ℝ)) := by
+      have h2 : (2 : ℝ) ≤ Real.exp ((2 : ℝ) ^ K) := by
+        have h1 : (1 : ℝ) ≤ (2 : ℝ) ^ K := one_le_pow₀ (by norm_num)
+        have := Real.add_one_le_exp ((2 : ℝ) ^ K)
+        linarith
+      have hpos : (0 : ℝ) < Real.exp (-(2 ^ (K + 1) : ℝ)) := Real.exp_pos _
+      have heq : Real.exp (-(2 ^ K : ℝ))
+          = Real.exp ((2 : ℝ) ^ K) * Real.exp (-(2 ^ (K + 1) : ℝ)) := by
+        rw [← Real.exp_add]
+        congr 1
+        push_cast
+        ring
+      rw [heq]
+      nlinarith
+    rw [Finset.sum_range_succ]
+    linarith [ih]
+
+/-- **THE DAMPED TAIL IS ABSOLUTELY BOUNDED.**  For every cutoff `Y`, the damped weight of the
+primes beyond `X` is at most `log 2 + 2·mertensBound`, uniformly in `X` and `Y`.  This is the
+second half of the damping step: with `norm_archCorr_sub_dampedArchCorr_le` it says that the sharp
+prefix `archCorr v X` is the full damped Dirichlet series up to an absolute constant. -/
+theorem dampedTail_le {X : ℕ} (hX : 2 ≤ X) (Y : ℕ) :
+    ∑ p ∈ primesInInterval X Y, (p : ℝ) ^ (-(1 : ℝ) - (Real.log (X : ℝ))⁻¹)
+      ≤ Real.log 2 + 2 * PrimeEstimates.mertensBound := by
+  have hD0 : (0 : ℝ) ≤ Real.log 2 + 2 * PrimeEstimates.mertensBound := by
+    have h1 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+    linarith [PrimeEstimates.mertensBound_nonneg]
+  have hYlt : Y < X ^ (2 ^ Y) := by
+    calc Y < 2 ^ Y := Nat.lt_two_pow_self
+      _ ≤ 2 ^ (2 ^ Y) := Nat.pow_le_pow_right (by omega) (Nat.le_of_lt Nat.lt_two_pow_self)
+      _ ≤ X ^ (2 ^ Y) := Nat.pow_le_pow_left hX _
+  have hYle : Y ≤ X ^ (2 ^ Y) := hYlt.le
+  have hmain := dampedTail_blocks hX Y Y hYle
+  have hgeom := sum_exp_neg_two_pow_le Y
+  have hexp : (0 : ℝ) < Real.exp (-(2 ^ Y : ℝ)) := Real.exp_pos _
+  nlinarith [hmain, hgeom]
+
+/-! ### The damping step, assembled -/
+
+theorem sum_primesUpTo_split {f : ℕ → ℂ} {X Y : ℕ} (hXY : X ≤ Y) :
+    ∑ p ∈ primesUpTo Y, f p
+      = (∑ p ∈ primesUpTo X, f p) + ∑ p ∈ primesInInterval X Y, f p := by
+  classical
+  have hunion : primesUpTo Y = primesUpTo X ∪ primesInInterval X Y := by
+    ext p
+    simp only [Finset.mem_union, mem_primesUpTo, mem_primesInInterval]
+    constructor
+    · rintro ⟨hp, hle⟩
+      by_cases hpX : p ≤ X
+      · exact Or.inl ⟨hp, hpX⟩
+      · exact Or.inr ⟨by omega, hle, hp⟩
+    · rintro (⟨hp, hle⟩ | ⟨h1, h2, h3⟩)
+      · exact ⟨hp, le_trans hle hXY⟩
+      · exact ⟨h3, h2⟩
+  have hdisj : Disjoint (primesUpTo X) (primesInInterval X Y) := by
+    refine Finset.disjoint_left.mpr ?_
+    intro p hp hp'
+    have h1 := (mem_primesUpTo.mp hp).2
+    have h2 := (mem_primesInInterval.mp hp').1
+    omega
+  rw [hunion, Finset.sum_union hdisj]
+
+/-- The damped prefix at cutoff `Y`, with the damping exponent still tuned to `X`. -/
+def dampedPrefix (v : ℝ) (X Y : ℕ) : ℂ :=
+  ∑ p ∈ primesUpTo Y,
+    (starRingEnd ℂ) (archimedeanTwist v p) *
+      (((p : ℝ) ^ (-(1 : ℝ) - (Real.log (X : ℝ))⁻¹) : ℝ) : ℂ)
+
+/-- **THE DAMPING STEP.**  The sharply cut-off Archimedean correlation at `X` equals the damped
+prime sum at *any* cutoff `Y ≥ X`, up to an absolute constant — uniformly in the frequency `v` and
+in `Y`.  This is what converts the combinatorial object `archCorr` into the analytic object
+`∑_p p^{-1-1/log X-iv}`, to which the `ζ'/ζ` route of the module docstring applies. -/
+theorem norm_archCorr_sub_dampedPrefix_le {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) (hXY : X ≤ Y) :
+    ‖archCorr v X - dampedPrefix v X Y‖
+      ≤ (1 + (Real.log 4 + 4) / Real.log (X : ℝ))
+        + (Real.log 2 + 2 * PrimeEstimates.mertensBound) := by
+  classical
+  set δ : ℝ := (Real.log (X : ℝ))⁻¹ with hδ
+  have hsplit : dampedPrefix v X Y = dampedArchCorr v X
+      + ∑ p ∈ primesInInterval X Y,
+          (starRingEnd ℂ) (archimedeanTwist v p) * (((p : ℝ) ^ (-(1 : ℝ) - δ) : ℝ) : ℂ) := by
+    rw [dampedPrefix, dampedArchCorr, hδ]
+    exact sum_primesUpTo_split hXY
+  have hblocknorm : ‖∑ p ∈ primesInInterval X Y,
+      (starRingEnd ℂ) (archimedeanTwist v p) * (((p : ℝ) ^ (-(1 : ℝ) - δ) : ℝ) : ℂ)‖
+      ≤ Real.log 2 + 2 * PrimeEstimates.mertensBound := by
+    refine le_trans (norm_sum_le _ _) ?_
+    have hterm : ∀ p ∈ primesInInterval X Y,
+        ‖(starRingEnd ℂ) (archimedeanTwist v p) * (((p : ℝ) ^ (-(1 : ℝ) - δ) : ℝ) : ℂ)‖
+          = (p : ℝ) ^ (-(1 : ℝ) - δ) := by
+      intro p hp
+      have hppos : 0 < p := (mem_primesInInterval.mp hp).2.2.pos
+      have hpR : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hppos
+      rw [norm_mul, RCLike.norm_conj, norm_archimedeanTwist hppos v, one_mul,
+        Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (by positivity)]
+    rw [Finset.sum_congr rfl hterm]
+    exact dampedTail_le hX Y
+  have := norm_archCorr_sub_dampedArchCorr_le hX v
+  calc ‖archCorr v X - dampedPrefix v X Y‖
+      = ‖(archCorr v X - dampedArchCorr v X)
+          - ∑ p ∈ primesInInterval X Y,
+              (starRingEnd ℂ) (archimedeanTwist v p) * (((p : ℝ) ^ (-(1 : ℝ) - δ) : ℝ) : ℂ)‖ := by
+        rw [hsplit]; ring_nf
+    _ ≤ ‖archCorr v X - dampedArchCorr v X‖
+          + ‖∑ p ∈ primesInInterval X Y,
+              (starRingEnd ℂ) (archimedeanTwist v p) * (((p : ℝ) ^ (-(1 : ℝ) - δ) : ℝ) : ℂ)‖ :=
+        norm_sub_le _ _
+    _ ≤ _ := by linarith
+
 end
 
 end NormalNumbers.ElliottDamped
