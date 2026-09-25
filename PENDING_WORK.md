@@ -9982,3 +9982,21 @@ window and both signs of `m`.
 Remaining: the window PARTITION (fibre the resonant primes over `windowIndex`, check each
 fibre satisfies the `hGw` of `resonant_window_mass_le` with `a = (γ_m−δ)/|t|`), the small-prime
 split at `P₁ = |t|^4`, and the dyadic-block sum of the BT error `6(1+a)³e^{−a/2}`.
+
+### Lap 77 — the `δ`-covering
+
+`exists_window_of_resonant_width`, `windowIndexW`, `windowIndexW_spec`, `abs_windowIndexW_le`:
+the `C3MrtArchimedean` covering redone at a free half-width `δ ≤ resEps z` (forced by lap 73).
+The gap `2δ ≤ |arg z − 2πm|` still comes from `two_resEps_le_abs_shift`; only the resonance
+threshold moves.  Each resonant prime now has a well-defined window index, bounded by
+`⌈(T + δ + π)/(2π)⌉` when `|t| log p ≤ T`.
+
+All four pieces of the assembly are now in place:
+  (i)  `resonant_window_mass_le`  — one fibre's mass,
+  (ii) `windowIndexW` + `abs_windowIndexW_le` — the fibration and its index range,
+  (iii) `sum_inv_gap_le` — the harmonic sum of the main terms,
+  (iv) `log_log_le_mul_log` — the small-prime absorption.
+Next lap: `Finset.sum_fiberwise_of_maps_to` over `Icc (−K) K`, checking the `hGw` of (i) with
+`a = (γ_m − δ)/|t|` on each fibre, plus the two side conditions (`a ≥ log 2` — this is exactly
+the small-prime split, since `a < log 2` forces `p ≤ exp((γ_m+δ)/|t|)` small; and the BT error
+tail).

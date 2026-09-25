@@ -218,3 +218,91 @@ theorem resonant_window_mass_le {t δ a : ℝ} (hδ0 : 0 < δ) (ht : 2 * δ ≤ 
     rw [div_le_div_iff₀ hapos (by positivity)]
     nlinarith [hwt, hapos, htpos]
   linarith
+
+/-! ## The `δ`-covering: a resonant prime lands in one window, and the index is bounded
+
+`C3MrtArchimedean` builds this at the fixed half-width `resEps z`.  The Brun–Titchmarsh route
+needs a free half-width `δ ≤ resEps z` (lap 73), so the covering is redone here; the gap
+`2·resEps z ≤ |arg z − 2πm|` still comes from `two_resEps_le_abs_shift`, and only the
+resonance threshold changes. -/
+
+/-- **The window, at half-width `δ`.**  A prime resonating to within `δ` lands in one of the
+windows `|t|·log p ∈ (γ_m − δ, γ_m + δ)`, `γ_m = |arg z − 2πm|`. -/
+theorem exists_window_of_resonant_width {z : ℂ} (hz : ‖z‖ = 1) {p : ℕ} (hp : 2 ≤ p) {t δ : ℝ}
+    (hδ : δ ≤ resEps z) (hres : |(primePhase z t p).arg| < δ) :
+    ∃ m : ℤ, |z.arg - 2 * π * m| - δ < |t| * Real.log p ∧
+             |t| * Real.log p < |z.arg - 2 * π * m| + δ := by
+  have hp0 : 0 < p := lt_of_lt_of_le (by norm_num) hp
+  obtain ⟨m, hm⟩ := exists_int_arg_primePhase hz hp0 t
+  have hL : 0 < Real.log p := Real.log_pos (by exact_mod_cast hp)
+  have hδ0 : 0 < δ := lt_of_le_of_lt (abs_nonneg _) hres
+  have hgap : 2 * δ ≤ |z.arg - 2 * π * m| :=
+    le_trans (by linarith) (two_resEps_le_abs_shift z m)
+  have hkey : |(z.arg - 2 * π * m) - t * Real.log p| < δ := by
+    have hc : (z.arg - 2 * π * m) - t * Real.log p = (primePhase z t p).arg := by
+      rw [← hm]; ring
+    rw [hc]; exact hres
+  have habs : |(|z.arg - 2 * π * m|) - |t| * Real.log p| < δ := by
+    rcases le_or_gt 0 t with hts | hts
+    · have hcpos : 0 < z.arg - 2 * π * m := by
+        by_contra hcon
+        push_neg at hcon
+        have h1 : |z.arg - 2 * π * m| = -(z.arg - 2 * π * m) := abs_of_nonpos hcon
+        have h2 := (abs_lt.1 hkey).1
+        have h3 : 0 ≤ t * Real.log p := mul_nonneg hts hL.le
+        rw [h1] at hgap
+        linarith
+      rw [abs_of_pos hcpos, abs_of_nonneg hts]
+      exact hkey
+    · have hcneg : z.arg - 2 * π * m < 0 := by
+        by_contra hcon
+        push_neg at hcon
+        have h1 : |z.arg - 2 * π * m| = z.arg - 2 * π * m := abs_of_nonneg hcon
+        have h2 := (abs_lt.1 hkey).2
+        have h3 : t * Real.log p < 0 := mul_neg_of_neg_of_pos hts hL
+        rw [h1] at hgap
+        linarith
+      rw [abs_of_neg hcneg, abs_of_neg hts]
+      have hrw : -(z.arg - 2 * π * m) - -t * Real.log p
+          = -((z.arg - 2 * π * m) - t * Real.log p) := by ring
+      rw [hrw, abs_neg]
+      exact hkey
+  have hsplit := abs_lt.1 habs
+  exact ⟨m, by linarith [hsplit.2], by linarith [hsplit.1]⟩
+
+open scoped Classical in
+/-- The index of the `δ`-window a prime falls into (junk value `0` if it is not resonant). -/
+noncomputable def windowIndexW (z : ℂ) (t δ : ℝ) (p : ℕ) : ℤ :=
+  if h : ∃ m : ℤ, |z.arg - 2 * π * m| - δ < |t| * Real.log p ∧
+                   |t| * Real.log p < |z.arg - 2 * π * m| + δ
+  then h.choose else 0
+
+theorem windowIndexW_spec {z : ℂ} (hz : ‖z‖ = 1) {p : ℕ} (hp : 2 ≤ p) {t δ : ℝ}
+    (hδ : δ ≤ resEps z) (hres : |(primePhase z t p).arg| < δ) :
+    |z.arg - 2 * π * windowIndexW z t δ p| - δ < |t| * Real.log p ∧
+      |t| * Real.log p < |z.arg - 2 * π * windowIndexW z t δ p| + δ := by
+  have hex := exists_window_of_resonant_width hz hp hδ hres
+  rw [windowIndexW, dif_pos hex]
+  exact hex.choose_spec
+
+/-- Only the indices `|m| ≤ (T + δ + π)/(2π)` occur among primes with `|t| log p ≤ T`. -/
+theorem abs_windowIndexW_le {z : ℂ} (hz : ‖z‖ = 1) {p : ℕ} (hp : 2 ≤ p) {t δ T : ℝ}
+    (hδ : δ ≤ resEps z) (hres : |(primePhase z t p).arg| < δ) (hT : |t| * Real.log p ≤ T) :
+    |windowIndexW z t δ p| ≤ (⌈(T + δ + π) / (2 * π)⌉₊ : ℤ) := by
+  set m := windowIndexW z t δ p with hm
+  obtain ⟨h1, _⟩ := windowIndexW_spec hz hp hδ hres
+  have hpi : (0 : ℝ) < π := Real.pi_pos
+  have hlow : 2 * π * |(m : ℝ)| - π ≤ |z.arg - 2 * π * m| := by
+    have h2 : |z.arg| ≤ π := Complex.abs_arg_le_pi z
+    have h3 := abs_sub_abs_le_abs_sub (2 * π * (m : ℝ)) z.arg
+    rw [abs_sub_comm] at h3
+    have h4 : |2 * π * (m : ℝ)| = 2 * π * |(m : ℝ)| := by
+      rw [abs_mul, abs_of_pos (by linarith : (0:ℝ) < 2 * π)]
+    linarith [h3, h4 ▸ h3]
+  have hfin : |(m : ℝ)| ≤ (T + δ + π) / (2 * π) := by
+    rw [le_div_iff₀ (by linarith : (0:ℝ) < 2 * π)]
+    nlinarith
+  have hceil : (T + δ + π) / (2 * π) ≤ ((⌈(T + δ + π) / (2 * π)⌉₊ : ℕ) : ℝ) := Nat.le_ceil _
+  have : |(m : ℝ)| ≤ ((⌈(T + δ + π) / (2 * π)⌉₊ : ℕ) : ℝ) := le_trans hfin hceil
+  rw [← Int.cast_abs] at this
+  exact_mod_cast this
