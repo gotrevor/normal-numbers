@@ -5,7 +5,7 @@ This file is a **thin pointer**, never a second durable overview.
 * **Durable overview + axiom ledger** → `STATUS.md`
 * **Binding orders (altitude-lap owned, OUTRANKS every handoff)** → `DIRECTION.md` → CURRENT DIRECTIVE
 * **Latest strategic synthesis** → `REFLECTION-2026-09-16-campaignB.md`
-* **Newest dated baton** → `HANDOFF-2026-09-23-theoremC-reach-and-crosscheck.md`
+* **Newest dated baton** → `HANDOFF-2026-09-25-4-block-route-refuted.md` (C3/MRT lap 115)
 * **Open items / attack path** → `PENDING_WORK.md` (top section)
 * **Frozen plan + estimates** → `ROADMAP.md`
 

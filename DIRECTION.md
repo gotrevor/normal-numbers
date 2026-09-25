@@ -1,81 +1,108 @@
 # DIRECTION — normal-numbers 🧭
 
-## ⛔ HALT — DEFINITIONAL DEFECTS (2026-09-25, Astro review) — (a)-(c) NOW DONE
+## ⛔ DEFECT LEDGER — the recurring failure mode of this route (updated lap 115)
 
-All four defects are machine-checked in `src/NormalNumbers/C3MrtTTDefect.lean`, the two damaged
-`Prop`s are restated faithfully with non-vacuity guards, and the consumer re-audit (SURVIVORS
-table) is in `HANDOFF-2026-09-25-tt-interface-restated.md`.
+The Astro review (2026-09-25) found three definitional defects in the formal TT interface.  The
+operator's restatement run — items (a)-(c) — is **DONE** and verified end to end (`25149e0`,
+`3a7e84a`; defects + restatements + guards in `src/NormalNumbers/C3MrtTTDefect.lean`, four
+`Maze.lean` rows, SURVIVORS table in `HANDOFF-2026-09-25-tt-interface-restated.md`), and laps
+103-114 rethreaded the whole chain onto the faithful hypotheses.
 
-* `ttNonPretentious_trivial` / `ttNonPretentious_one` — the old `TTNonPretentious` is free.
-* `not_kPointNoExcWith_const_one`, `not_kPointNaturalCorrelationNoExc`,
-  `not_twoPointNaturalCorrelationNoExc` — the `K`-point input AND the `D = 2` "named open
-  problem" are FALSE, so every consumer listed in the SURVIVORS table is vacuous, including
-  `conjC3_of_geom_input`.
-* `twoPointNaturalCorrelation_trivially_true` — the Lebesgue-charged exceptional set is free.
-* Repairs: `TTNonPretentiousAt A` / `TTNonPretentiousUnif` (constant OUTSIDE `X, L`, Dirichlet
-  characters, twists `|t| ≤ X²`), `TwoPointDyadicCorrelation` (counting cost on dyadic scales),
-  `KPointNoExcAtWith A`.  Guards: `not_ttNonPretentiousUnif_one`, `not_ttNonPretentiousAt_one`,
-  `const_one_not_faithful`, `full_exceptional_set_not_admissible` + `exists_L_cost_lt_one`.
+**Lap 115 found that the SAME defect class recurred in laps 112-114 — written AFTER the repair.**
+Each of those laps "reduced the debt to a cleaner statement", and each tightened it until it was
+FALSE:
 
-**Next lap's first job:** rethread the chain from `KPointNoExcWith` onto `KPointNoExcAtWith A`
-bottom-up (`dyadic_window_bound_with` → `conjC3_of_geom_input`), and upgrade
-`ttNonPretentious_of_uniformResonantMass` to the faithful hypothesis (its constant is already
-uniform; the gap is characters `q > 1` and twists up to `X²`).  Details: handoff §"Next attack".
+| lap | statement | refuted by | why |
+|---|---|---|---|
+| 112 | `WideBlockSaving κ` | `not_wideBlockSaving` | the **truncated top block** can be a singleton (`X = 16/5`, `⌈X²⌉₊ = 11`, `j = 3`, block `{11}`): its weighted sum has norm exactly its own mass. Structural — every truncation has such a top block. |
+| 113 | `WideBlockPartial κ` | `not_wideBlockPartial` | it demands the saving on every *initial segment* `p < m`; at `j = 1, m = 3` the segment is `{2}`. |
+| 114 | `BlockPhasePairing d` | `not_blockPhasePairing` | an injective self-map of a **singleton** is the identity, and `Re(u·conj u) = ‖u‖² = 1 > d`. |
+
+So `conjC3_of_geom_input_blocks`, `_blockPartial` and `_pairing` are **vacuous**.  The
+implications are still theorems and nothing was deleted; the repaired route is
+`WideBlockSavingBand` + `BlockBandCost` (`src/NormalNumbers/C3MrtBlockDefect.lean`), with
+`conjC3_of_geom_input_band` as the live headline on that side.
+
+**The lesson is a process one, and it is now binding — see the GUARD RULE below.**  Both defect
+rounds have the same shape: a statement was made *stronger* to look *cleaner*, and its degenerate
+cases (empty / singleton / truncated / constant-function) were never checked.  A reduction is only
+an advance if the thing it reduces to is still true.
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective (2026-09-25 REVIEW lap 91 — direction KEPT, next move SET).**  Destination unchanged:
-`ConjC3` as a *conditional theorem* on ONE named, honestly-labelled correlation input, with an
-honest ledger.  As of lap 90 that is DONE in the strong form:
+**Objective (2026-09-25 REVIEW lap 115 — direction KEPT, process REPAIRED).**  Destination
+unchanged: `ConjC3` as a *conditional theorem* on ONE named, honestly-labelled input, with an
+honest ledger.  The `K`-point side of that reduction is FINAL in shape
+(`KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K`, every `0 < θ < 1`).  What is still open on
+the *repo's* side is the **archimedean supply**: the headline currently rests on TWO named inputs,
+not one, and the whole remaining job is to discharge the second.
 
-    conjC3_of_geom_input : (∀ b ≥ 3, ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K) → ConjC3
+**① THE GUARD RULE (binding, all laps, no exceptions).**  Both defect rounds (lap 102, lap 115)
+happened because a reduction target was never tested on its degenerate cases.  From now on, a lap
+may not hand the chain a new `Prop` unless the SAME lap also lands, in the kernel:
 
-for EVERY `0 < θ < 1` — no threshold hypothesis, no schedule hypothesis, no budget layer.
-The threshold data was DISCHARGED this lap (`kPointThresholdSlow_of_geom`, `thrAthr K = 2^(2^⌈φ K⌉)`),
-refuting lap 89's guess that it fails.  So the ENTIRE headline now rests on the single open
-statement `KPointNoExcWith`.
+  * a **content locator** — the trivial/extremal instance, e.g. `wideBlockSavingBand_zero` (at
+    `κ = 0` the statement is exactly the trivial bound), so it is clear the content is elsewhere; and
+  * a **degenerate-case verdict** — for each of *empty*, *singleton*, *truncated/boundary*, and
+    *constant-function* configurations, either a proof that the statement survives it or a proof
+    that the configuration is excluded by the statement's own hypotheses
+    (`band_block_complete`, `witness_block_above_band`, `witness_block_below_band`).
 
-**Mandated next move — make that one statement ASSUME LESS.**  Four items, in order:
-1. `depthRoot_ne_one_of_not_dvd_all` — `depthRoot b h' i ≠ 1` for EVERY `i`, not just `i = 0`,
-   whenever `¬ b ∣ h'` (immediate: `b ∣ b^{i+1}`).
-2. `KPointNoExcAllWith cK CstK K` — `KPointNoExcWith` with the hypothesis `∃ i, TTNonPretentious
-   (g i)` replaced by `∀ i, TTNonPretentious (g i)`.  This is a STRICTLY WEAKER `Prop` to assume,
-   and ① shows the consumer can still meet it: in the C3 chain every factor is `zOmegaNat
-   (depthRoot b h' i)` with `depthRoot b h' i ≠ 1`, and `ttNonPretentious_zOmegaNat` is
-   unconditional.  Add `kPointNoExcAllWith_of_with` so nothing existing is weakened.
-3. Rethread `dyadic_window_bound_K` (and the `_with` twins in `C3MrtUnifK`),
-   `depthAvg_gen_tendsto_of_geom_slow`, `depthDiagonalSlow_of_geom`, and the headline
-   `weylLambertTwist_of_geom_input` / `conjC3_of_geom_input` onto the ALL form.
-4. `kPointNoExcWith_mono` — monotone down in `cK` and up in `CstK` (the hypotheses `W ≤ L^{cK}`,
-   `hsh i ≤ L^{cK}` tighten and the conclusion `≤ CstK·L^{-cK}` loosens together).  This pins the
-   ledger's honest reading: the geometric profile is EXACTLY a degradation-RATE hypothesis on the
-   per-`K` constants that `KPointNaturalCorrelationNoExc K` already supplies existentially.
+  A lap that reduces `P` to `Q` without these is NOT an advance and must be re-done.  Add a
+  `Maze.lean` row for every refutation.  Reductions themselves stay: never delete or weaken a
+  refuted statement's implication, only its use as a route.
 
-**Forbidden drift.**  Do NOT try to derive the `K ≥ 3` rung from the `K = 2` rung: TT state in
-print that triple correlations are "not within current technology" — source-refuted, not a lap to
-spend.  Do NOT re-attempt removing TT's exceptional set (`exceptional_set_can_pin_a_scale`,
-lap 80).  Do NOT build further fixed-`K` `Tendsto` statements (lap 87 F2), and do NOT revive the
-`QuantDepthElliottGen` budget layer (lap 87 F1).  Do NOT weaken, rename or delete
-`weylLambertTwist_holds`, `conjC3`, `KPointNaturalCorrelationNoExc`, `ProgressionLogRung` or
-anything in the existing `C3Mrt*` chain — pure addition only.  Build BOTH `lake build` and
-`lake build NormalNumbers.<tip>`.
+**② Mandated next move — finish the archimedean side, guarded.**  In order:
 
-**Ledger honesty (binding, unchanged).**  `KPointNaturalCorrelationNoExc K` — and therefore
-`KPointNoExcWith` / `KPointNoExcAllWith` — is 🔴 at EVERY `K`, `K = 2` included: it is TT
-Thm 3.1(ii) with the exceptional set of scales deleted, which TT say in print is out of reach.
-The faithful input is `TwoPointNaturalCorrelation` (`C3MrtTTThm31.lean`).  Never call the `K = 2`
-rung "published"; say "strictly stronger than published, disclosed".
+1. **`BlockBandCost` for the intended band.**  Purely arithmetic, no characters, no twists.
+   Top: the blocks above `Jtop X = log₂⌈X²⌉₊ − 1` contain only primes `p > (⌈X²⌉₊+1)/2`, so their
+   total mass is `≤ 2` (count `≤ n`, each term `< 2/n`).  Bottom: the blocks below `J X` are the
+   primes `< 2^{J X}`, so `small_prime_mass_le` gives `log(J X · log 2) + mertensBound`.  Deliver
+   `blockBandCost_holds` for a parametric `J`, with the `ε·log log X` slot used only where `J X`
+   actually grows.
+2. **Pin the bottom threshold IN THE KERNEL.**  `¬ WideBlockSavingBand (fun _ => J₀) Jtop κ` for
+   `J₀ ≤ 3`, by EXACT phase alignment on a two-prime block: blocks `j = 1,2,3` are `{2,3}`,
+   `{5,7}`, `{11,13}`, and at `t = 2π/log(p'/p)` the two twists coincide
+   (`exp(-it log p') = exp(-it log p)`), so the block sum has norm exactly its mass.  Take `X`
+   with `X² ≥ t` — the wide range permits `|t| ≤ X²`.  **This is the honest reason the threshold
+   must grow with `X`**, and it needs no equidistribution input.  It also re-confirms the guard
+   rule by construction.
+3. **`CharPrimeSumLogQ D` at `t = 0`** from `L(1,χ) ≫ q^{-1/2}` (elementary `f = 1 ∗ χ ≥ 0`;
+   mathlib has only the qualitative `DirichletCharacter.LFunction_apply_one_ne_zero`), or leave it
+   a cited classical bound with the citation in the ledger.
+4. **`UniformResonantMass`** — the route's pre-existing analytic input, unchanged by all of this.
+
+**Forbidden drift.**  Do NOT re-attempt `WideBlockSaving` / `WideBlockPartial` /
+`BlockPhasePairing` — refuted in the kernel, lap 115.  Do NOT delete them or their implications.
+Do NOT try to derive the `K ≥ 3` rung from the `K = 2` rung (TT: triple correlations are "not
+within current technology" — source-refuted).  Do NOT re-attempt removing TT's exceptional set
+(`exceptional_set_can_pin_a_scale`, lap 80).  Do NOT build further fixed-`K` `Tendsto` statements
+(lap 87 F2) and do NOT revive the `QuantDepthElliottGen` budget layer (lap 87 F1).  Do NOT weaken,
+rename or delete `weylLambertTwist_holds`, `conjC3`, `KPointNaturalCorrelationNoExc`,
+`ProgressionLogRung` or anything in the existing `C3Mrt*` chain — pure addition only.  Build BOTH
+`lake build` and `lake build NormalNumbers.<tip>`.
+
+**Ledger honesty (binding, unchanged).**  `KPointNoExcAtWith` / `KPointNoExcWith` is 🔴 at EVERY
+`K`, `K = 2` included: it is TT Thm 3.1(ii) with the exceptional set of scales deleted, which TT
+say in print is out of reach.  The faithful input is `TwoPointDyadicCorrelation`.  Never call the
+`K = 2` rung "published"; say "strictly stronger than published, disclosed".  And never call a
+reduction an advance before its target has passed ① — a vacuous hypothesis makes the ledger lie in
+the *opposite* direction, by making the headline look cheaper than it is.
 
 **Registered route triggers.**  🚦 **C3-T1** — if `ζ^ω` provably fails a hypothesis TT Thm 3.1
-needs, ESCALATE.  🚦 **C3-T4** — SERVED (lap 90: `conjC3_of_geom_input` is a theorem; the diagonal
-does close from an explicitly-uniform input).  Retired.  🚦 **C3-T5** — every lap's advance must be
-statable as "the headline now rests on strictly less"; if it cannot, it is leaf-work: stop and
-re-read this section.  🚦 **C3-T6** (new) — if SIX grind laps from 2026-09-25 produce no further
-narrowing of the `KPointNoExcWith` surface (weaker hypotheses, discharged rungs, or a proved
-reduction), declare the reduction FINAL and switch to the `Statement.lean` audit surface +
-ledger writeup: that is the ratified deliverable, not an unbounded grind.
+needs, ESCALATE.  🚦 **C3-T4** — SERVED (lap 90), retired.  🚦 **C3-T5** — every lap's advance must
+be statable as "the headline now rests on strictly less"; if it cannot, it is leaf-work.  A
+reduction onto a FALSE statement makes the headline rest on strictly MORE (it makes it rest on
+nothing), so it is negative progress, not zero.  🚦 **C3-T6 (reset lap 115, re-aimed)** — the
+clock now runs on the ARCHIMEDEAN surface, not the `K`-point surface (which is final in shape).
+If SIX grind laps from 2026-09-25 lap 115 produce no *guarded* narrowing of the archimedean
+supply, declare `UniformResonantMass + CharPrimeSumLogQ + WideBlockSavingBand` the FINAL named
+archimedean debt and switch to the `Statement.lean` audit surface + ledger writeup.  🚦 **C3-T7
+(new)** — if any lap lands a reduction that a later lap refutes, the refuting lap must also
+install the missing guard for the *class* of statement involved, not just the instance.
 
 **Directive history.**
+- 2026-09-25 (review lap 115): GUARD RULE installed; laps 112-114 refuted; archimedean band route + C3-T6 re-aimed, C3-T7 added.
 - 2026-09-22 (lap 7 review): graded joint state route.
 - 2026-09-23 (review lap): Theorem-C′ leaves, E5 first — COMPLETED 2026-09-23.
 - 2026-09-25 (lap 18 review): REDIRECT to the C3/MRT moonshot; narrow the archimedean

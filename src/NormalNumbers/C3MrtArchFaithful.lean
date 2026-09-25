@@ -1490,7 +1490,13 @@ theorem sum_blockMass_eq (X : ℝ) :
   exact lt_of_le_of_lt (Nat.log_le_self 2 p) hp'
 
 /-- **The one-block target.**  A constant-fraction saving on every dyadic block, in the wide
-twist range. -/
+twist range.
+
+⚠️ **REFUTED (lap 115): `not_wideBlockSaving` in `C3MrtBlockDefect.lean`.**  FALSE for every
+`κ > 0`, structurally: the truncated top block can be a singleton (`X = 16/5`, `⌈X²⌉₊ = 11`,
+`j = 3`, block `{11}`), whose weighted sum has norm exactly its own mass.  The implication
+`wideTwistSmall_of_blockSaving` below is still a theorem — but its hypothesis is false, so
+`conjC3_of_geom_input_blocks` is vacuous.  Use `WideBlockSavingBand` instead. -/
 def WideBlockSaving (κ : ℝ) : Prop :=
   ∀ X : ℝ, 3 ≤ X → ∀ (q : ℕ) (χ : DirichletCharacter ℂ q),
     (q : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) →
@@ -1575,6 +1581,8 @@ theorem twistedPrimeSumSmall_of_parts {κ₀ C₀ κ₁ C₁ : ℝ}
 corner), `CharPrimeSumLogQ` (a `log`-sized conductor bound — classical and Siegel-free at
 `t = 0`), and `WideBlockSaving` (a constant-fraction saving on each dyadic block in the wide twist
 range).  This is the tightest honest statement of the C3/MRT archimedean reduction. -/
+-- ⚠️ VACUOUS (lap 115): `WideBlockSaving` is FALSE (`not_wideBlockSaving`).
+-- The live statement is `conjC3_of_geom_input_band` in `C3MrtBlockDefect.lean`.
 theorem conjC3_of_geom_input_blocks {c₀ θ D κ₁ : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1)
     (m : ℕ)
     (hin : ∀ A : ℝ, 0 < A → ∀ b : ℕ, 3 ≤ b → ∀ K,
@@ -1688,7 +1696,12 @@ theorem blockPrimes_lt {X : ℝ} {j p : ℕ} (hp : p ∈ blockPrimes X j) : p < 
 /-- **The reciprocal-free block debt.**  A constant-fraction cancellation in the twisted character
 sum over every *initial segment* of a dyadic block of primes — no `1/p` weights and no `log log`
 anywhere.  This is a Vinogradov/Vaughan-shaped statement, and by `wideBlockSaving_of_partial` it
-implies `WideBlockSaving`, hence (lap 112) `WideTwistSmall`. -/
+implies `WideBlockSaving`, hence (lap 112) `WideTwistSmall`.
+
+⚠️ **REFUTED (lap 115): `not_wideBlockPartial` in `C3MrtBlockDefect.lean`.**  FALSE for every
+`κ > 0`: it demands the saving on *every* initial segment `p < m`, and at `X = 3`, `j = 1`,
+`m = 3` the segment is the singleton `{2}`, whose sum has norm exactly `1`.  The Abel transfer
+`wideBlockSaving_of_partial` is sound; what it consumes is not. -/
 def WideBlockPartial (κ : ℝ) : Prop :=
   ∀ X : ℝ, 3 ≤ X → ∀ (q : ℕ) (χ : DirichletCharacter ℂ q),
     (q : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) →
@@ -1787,6 +1800,8 @@ theorem wideBlockSaving_of_partial {κ : ℝ} (hκ : 0 ≤ 1 - κ) (h : WideBloc
 bound, classical and Siegel-free at `t = 0`), and `WideBlockPartial` — a constant-fraction
 cancellation in a twisted character sum over the initial segments of one dyadic block of primes,
 with no reciprocal weights and no `log log` anywhere. -/
+-- ⚠️ VACUOUS (lap 115): `WideBlockPartial` is FALSE (`not_wideBlockPartial`).
+-- The live statement is `conjC3_of_geom_input_band` in `C3MrtBlockDefect.lean`.
 theorem conjC3_of_geom_input_blockPartial {c₀ θ D κ₁ : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ)
     (hθ : θ < 1) (m : ℕ)
     (hin : ∀ A : ℝ, 0 < A → ∀ b : ℕ, 3 ≤ b → ∀ K,
@@ -1902,7 +1917,12 @@ theorem norm_twistUnit {q : ℕ} {χ : DirichletCharacter ℂ q} {t : ℝ} {p : 
 
 /-- **The final archimedean debt, as a statement about `log p` alone.**  On every initial segment
 of every dyadic block, the primes at which `χ` survives admit an injective self-map whose partners'
-twist phases are separated: `Re(u_p conj u_{σ p}) ≤ d` with `d < 1`. -/
+twist phases are separated: `Re(u_p conj u_{σ p}) ≤ d` with `d < 1`.
+
+⚠️ **REFUTED (lap 115): `not_blockPhasePairing` in `C3MrtBlockDefect.lean`.**  FALSE for every
+`d < 1`: on a singleton segment an injective self-map is forced to be the identity, and a unit
+vector is never separated from itself (`Re(u · conj u) = ‖u‖² = 1`).  The pairing *bound*
+`norm_sum_le_of_pairing` above is true and reusable; only this `Prop` is dead. -/
 def BlockPhasePairing (d : ℝ) : Prop :=
   ∀ X : ℝ, 3 ≤ X → ∀ (q : ℕ) (χ : DirichletCharacter ℂ q),
     (q : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) →
@@ -1951,6 +1971,8 @@ its final shape: `UniformResonantMass` (the route's pre-existing input, `q = 1` 
 `CharPrimeSumLogQ` (a `log`-sized conductor bound — classical and Siegel-free at `t = 0`), and
 `BlockPhasePairing` — a purely geometric statement: on every initial segment of every dyadic block,
 the surviving primes admit an injective self-map whose twist phases are separated. -/
+-- ⚠️ VACUOUS (lap 115): `BlockPhasePairing` is FALSE (`not_blockPhasePairing`).
+-- The live statement is `conjC3_of_geom_input_band` in `C3MrtBlockDefect.lean`.
 theorem conjC3_of_geom_input_pairing {c₀ θ D d : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1)
     (m : ℕ)
     (hin : ∀ A : ℝ, 0 < A → ∀ b : ℕ, 3 ≤ b → ∀ K,

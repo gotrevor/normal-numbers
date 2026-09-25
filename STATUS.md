@@ -1,35 +1,37 @@
 # STATUS — normal-numbers 📊
 
 **Active campaign: C3/MRT — `ConjC3` (richness of `∑_n ω(n)/bⁿ`, Tao–Teräväinen's Erdős-#69
-constant) is a sorry-free, axiom-clean CONDITIONAL THEOREM on ONE open statement: a `K`-point
-correlation input whose saving may degrade geometrically, `c_K = c₀ b^{-θK}`, for any `θ < 1`.
-Lap 90 discharged the last auxiliary hypothesis (the threshold data), so nothing else is assumed.**
-· **Build**: 🟢 green (9257 jobs; `C3Mrt` tip `NormalNumbers.C3MrtSlowSched`)
-· **Updated**: lap 91 · 2026-09-25 · HEAD `b7d9f45` · branch `wip/c3-mrt`
+constant) is a sorry-free, axiom-clean CONDITIONAL THEOREM.  As of lap 115 it rests on TWO named
+open inputs: (i) a `K`-point correlation input with a geometric saving profile, faithful to TT's
+implied-constant placement (`KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K`, every `0 < θ < 1`),
+and (ii) an ARCHIMEDEAN SUPPLY, now `UniformResonantMass` + `CharPrimeSumLogQ D` +
+`WideBlockSavingBand J Jtop κ` + `BlockBandCost J Jtop ε C`.  Discharging (ii) back to ONE input is
+the whole remaining job on the repo's side.**
+· **Build**: 🟢 green (9443 jobs; `C3Mrt` tip `NormalNumbers.C3MrtBlockDefect`)
+· **Updated**: lap 115 · 2026-09-25 · HEAD `556ae98` · branch `wip/c3-mrt`
 
 ## Where it stands
 
 The ratified crux is `CastingOut.weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`),
-the one campaign `sorry` carrying `ConjC3`.  Laps 1–59 built the completely-multiplicative
-route (kept, sorry-free); lap 60 escalated and re-anchored on **Tao–Teräväinen arXiv 2512.01739
-Theorem 3.1**; laps 61–86 built the whole new chain — `C3MrtTTThm31 → C3MrtMultChase →
-C3MrtNoExc → C3MrtTTPretentious → C3MrtWindowMass → C3MrtUniformMass → C3MrtKPointNoExc →
-C3MrtQuantKPoint` — sorry-free and with **zero `axiom` declarations**.  The archimedean half is
-now unconditional: `uniformResonantMass_holds` and `ttNonPretentious_zOmegaNat` (lap 83) supply
-TT's hypothesis (3.3) for `z^ω` with no hypothesis at all.  So the tower rests on exactly one
-named analytic input per point count, `KPointNaturalCorrelationNoExc K`, plus the bookkeeping
-`ProgressionLogRung K`.
+the one campaign `sorry` carrying `ConjC3`.  Laps 1–59 built the completely-multiplicative route
+(kept, sorry-free); lap 60 escalated and re-anchored on **Tao–Teräväinen arXiv 2512.01739
+Theorem 3.1**; laps 61–90 built the whole new chain and closed the reduction onto ONE input,
+`KPointNoExcWith`, at any geometric decay rate `θ < 1`.
 
-**Laps 88–90 closed the reduction.**  The crux `WeylLambertTwist b` follows from the `K`-point
-input at any geometric decay rate `θ < 1` (`weylLambertTwist_of_geom_input`), hence `ConjC3`
-(`conjC3_of_geom_input`).  Three hypotheses were removed on the way: the vacuous budget layer
-(lap 87 F1), the depth-schedule slack that capped `θ` at `1/2` (lap 89, `depthSlow b N` with
-`b^{D_N} ≍ u log u`), and — lap 90 — the threshold data itself, now CONSTRUCTED as
-`Athr K = 2^(2^⌈φ K⌉)`, `φ K = b^{θK}log(K+2+M₀)/(κ c₀ log 2)`
-(`kPointThresholdSlow_of_geom`), refuting lap 89's guess that it fails.  `θ < 1` is spent twice
-and symmetrically — on the saving (`u^{1-θ}(log u)^{-θ}` beating `log Cst = O(log u)^m`) and on
-the threshold (`(u log u)^θ log log u` fitting inside `log log a_N ≍ u log 2`) — which is why
-`θ = 1` is this route's structural boundary, not an artefact.
+**Then the interface turned out to be wrong, twice.**  Lap 102 (Astro's fidelity review)
+machine-checked three definitional defects: the old `TTNonPretentious` held for *every* 1-bounded
+`g` (its implied constant was inside the `∀ X L`), which made `KPointNoExcWith` — and the `D = 2`
+"named open problem" — outright FALSE, and the two-point form's Lebesgue-charged exceptional set was
+free.  Laps 103–111 rethreaded the entire chain onto faithful restatements (`TTNonPretentiousAt A`,
+`KPointNoExcAtWith A`, `TwoPointDyadicCorrelation`), which put the archimedean supply on the table
+as a second, previously-hidden open input, and narrowed it from Siegel-strength to a `log`-sized
+conductor bound plus a wide-twist saving.  **Lap 115 found the same defect class again in laps
+112–114**: each "cleaner" per-block reduction was tightened until it was false (singleton segments,
+singleton truncated top block), so `conjC3_of_geom_input_blocks` / `_blockPartial` / `_pairing` are
+vacuous.  The repair is `WideBlockSavingBand` (complete blocks in a band) + `BlockBandCost` (the
+discarded mass, a purely arithmetic obligation), with `conjC3_of_geom_input_band` as the live
+headline on that side — and a binding **GUARD RULE** in `DIRECTION.md` so no future reduction ships
+without its degenerate cases checked in the kernel.
 
 Honest destination: `ConjC3` will not be proved here.  The Weyl formulation is intrinsically an
 *unbounded*-point correlation, and TT state in print that even **three**-point correlations are
@@ -38,10 +40,23 @@ reach for similar reasons.  The ratified success criterion — the EQUIVALENCE, 
 available published anchor, with an honest ledger — is the endpoint, and it is in reach.
 
 The prior campaign (Pair A multicutoff, Theorem C′ `isNormal_subsetLambert_of_sqrtFreshMassZero`)
-is COMPLETE and trust-triple clean; its ledger is kept below.
+is COMPLETE; its overview is kept below.
 
 ## What's happened (newest first)
 
+- **2026-09-25 (C3/MRT laps 102–115, incl. REVIEW lap 115).**  Two rounds of interface repair.
+  (a) Lap 102 machine-checked Astro's three TT-interface defects and restated the damaged `Prop`s
+  faithfully with non-vacuity guards; laps 103–107 rethreaded the whole chain onto them, making the
+  archimedean supply a named second input (`conjC3_of_geom_input_at`).  (b) Laps 108–111 narrowed
+  that supply: no `X` on the right, `h'`-uniformity PROVED, the multiplier `z` eliminated, and the
+  narrow conductor debt de-escalated from Siegel to a classical `log`-sized bound
+  (`CharPrimeSumLogQ`).  (c) **Lap 115 refuted laps 112–114**: `WideBlockSaving`,
+  `WideBlockPartial` and `BlockPhasePairing` are all FALSE — singleton initial segments and a
+  singleton truncated top block — so three `conjC3_of_geom_input_*` variants are vacuous.  Repaired
+  as `WideBlockSavingBand` + `BlockBandCost` (`conjC3_of_geom_input_band`), with kernel guards, and
+  a binding GUARD RULE installed in `DIRECTION.md`: no reduction ships without a content locator and
+  a verdict on its empty / singleton / truncated / constant-function cases.  C3-T6 reset and
+  re-aimed at the archimedean surface; C3-T7 added.
 - **2026-09-25 (C3/MRT laps 88–90, + lap 91 REVIEW).**  The reduction is CLOSED onto one
   statement.  (a) `weylLambertTwist_of_geom` — the crux from a geometrically-degrading `K`-point
   input, `θ < 1/2` (lap 88).  (b) The SLOW depth schedule `depthSlow` (`b^{D_N} ≍ u_N log u_N`,
@@ -96,16 +111,18 @@ is COMPLETE and trust-triple clean; its ledger is kept below.
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-1. **`quantDepthElliottGen_forces_diagonal`** — the lap-87 finding in Lean; retires the budget
-   layer honestly and pins the real target.
-2. **`KPointNoExcWith (cK CstK : ℕ → ℝ) K`** + `kPointNoExc_of_with` — the `K`-point input with
-   its constants explicit in `K`.  Nothing weakened.
-3. **`progression_avg_le_of_window`** — the quantitative twin of
-   `progression_avg_tendsto_of_window` (head + two boundary points + `Y = MJ+r`).
-4. **`dyadic_window_bound_with` / `depthAvg_le_with`** — an explicit majorant
-   `B cK CstK K N` for `‖depthAvg b P Q j h K N‖`, with the `N₀(K)` threshold explicit.
-5. **`depthElliottLL_of_unif`** — the diagonal, hence `WeylLambertTwist b`, from ONE schedule-
-   compatibility hypothesis, plus a concrete sufficient decay profile.
+1. **`blockBandCost_holds`** — discharge `BlockBandCost` for the intended band.  Top: blocks above
+   `Jtop X = log₂⌈X²⌉₊ − 1` hold only primes `p > n/2` (`n = ⌈X²⌉₊+1`), so total mass `≤ 2`.
+   Bottom: `small_prime_mass_le` on the primes `< 2^{J X}` gives `log(J X·log 2) + mertensBound`.
+2. **Pin the bottom threshold in the kernel** — `¬ WideBlockSavingBand (fun _ => J₀) Jtop κ` for
+   `J₀ ≤ 3`, by EXACT two-prime phase alignment (`t = 2π/log(p'/p)`; blocks `j = 1,2,3` are `{2,3}`,
+   `{5,7}`, `{11,13}`).  No equidistribution input needed, and it is the honest reason the
+   threshold must grow with `X`.
+3. **`CharPrimeSumLogQ D` at `t = 0`** from `L(1,χ) ≫ q^{-1/2}` (elementary `f = 1 ∗ χ ≥ 0`;
+   mathlib has only the qualitative non-vanishing), or a cited classical bound in the ledger.
+4. **`UniformResonantMass`** — the route's pre-existing analytic input, untouched by the repairs.
+5. **`RootOrderCase` / `OneNonPretentious`** (lap 110) — the alternative, `z`-free route to
+   `FaithfulArchLower`; cheap, keep both.
 
 ### Long-term
 The `K ≥ 3` correlation input, and the removal of TT's exceptional set of scales.  TT state both
@@ -124,47 +141,57 @@ leaves residual s.d. `≍ b^{-K}√(log log N)`); lap 87 made the same point *in
 (the budget cannot manufacture uniformity).  The deliverable is the EQUIVALENCE plus the
 strongest published anchor, not a proof.
 
-## Axiom ledger — C3/MRT (real `#print axioms`, 2026-09-25 lap 91, 9257 jobs on the tip)
+## Axiom ledger — C3/MRT (real `#print axioms`, 2026-09-25 lap 115, 9443 jobs)
 
 | headline theorem | paper claim (uncond/cond) | `#print axioms` shows | verdict |
 |---|---|---|---|
 | `CastingOut.conjC3_via_weylLambert` | `ConjC3` — the repo's own CONJECTURE | trust triple + `sorryAx` | 🔴 via `weylLambertTwist_holds`, the ratified open crux (disclosed, not strayed) |
-| `CastingOut.conjC3_of_geom_input` | **`ConjC3` ⇐ the `K`-point input ALONE**, any `θ < 1` | trust triple | 🟢 clean — **this is the reduction, in final form** |
-| `CastingOut.weylLambertTwist_of_geom_input` | crux ⇐ the `K`-point input alone | trust triple | 🟢 clean |
-| `CastingOut.kPointThresholdSlow_of_geom` | the threshold data, CONSTRUCTED | trust triple | 🟢 clean — DISCHARGED lap 90 |
-| `CastingOut.weylLambertTwist_of_depthDiagonalSlow` | crux ⇐ the slow diagonal | trust triple | 🟢 clean |
-| `CastingOut.weylLambertTwist_of_depthElliottLL` | crux ⇐ the diagonal depth limit | trust triple | 🟢 clean — the `depthLL` predecessor |
-| `CastingOut.weylLambertTwist_of_quantDepthElliottGen` | crux ⇐ budgeted form | trust triple | 🟢 clean, but the `Prop` is **vacuously stronger** than the diagonal (lap 87 F1) |
-| `CastingOut.uniformResonantMass_holds` | the archimedean named input | trust triple | 🟢 clean — DISCHARGED lap 83 |
-| `CastingOut.ttNonPretentious_zOmegaNat` | TT (3.3) for `z^ω`, unconditional | trust triple | 🟢 clean |
-| `CastingOut.depthAvg_K_tendsto_of_noExc` | depth-`K` natural rung, every `K` | trust triple | 🟢 clean (both inputs explicit hypotheses) |
-| `CastingOut.twoPointNoExc_of_kPointNoExc` | `K = 2` gives back the old input | trust triple | 🟢 clean — nothing smuggled in |
-| `CastingOut.class_sum_le_of_window` | the quantitative Toeplitz step | trust triple | 🟢 clean |
-| `CastingOut.c3_two_point_natural_of_TT` | TT Thm 3.1(ii) instantiated at `z^ω` | trust triple | 🟢 clean |
+| `CastingOut.conjC3_of_geom_input_band` | **`ConjC3` ⇐ `KPointNoExcAtWith` + `UniformResonantMass` + `CharPrimeSumLogQ` + banded block saving + its cost** | trust triple | 🟢 clean — **the LIVE reduction** (lap 115) |
+| `CastingOut.conjC3_of_geom_input_at` | `ConjC3` ⇐ the faithful `K`-point input + `ArchSupply` | trust triple | 🟢 clean — the lap-103 repair, parametric in the archimedean hypothesis |
+| `CastingOut.conjC3_of_geom_input_lower` | `ConjC3` ⇐ `FaithfulArchLower` form | trust triple | 🟢 clean |
+| `CastingOut.conjC3_of_geom_input_blocks` | `ConjC3` ⇐ `WideBlockSaving` (lap 112) | trust triple | ⚠️ **VACUOUS** — `not_wideBlockSaving` (lap 115).  Kept; the implication is a theorem, the hypothesis is false |
+| `CastingOut.conjC3_of_geom_input_blockPartial` | `ConjC3` ⇐ `WideBlockPartial` (lap 113) | trust triple | ⚠️ **VACUOUS** — `not_wideBlockPartial` |
+| `CastingOut.conjC3_of_geom_input_pairing` | `ConjC3` ⇐ `BlockPhasePairing` (lap 114) | trust triple | ⚠️ **VACUOUS** — `not_blockPhasePairing` |
+| `CastingOut.conjC3_of_geom_input` | `ConjC3` ⇐ `KPointNoExcWith` alone (lap 90) | trust triple | ⚠️ **VACUOUS** — `not_kPointNoExcWith_const_one` (lap 102).  Superseded by `_at` |
+| `CastingOut.not_wideBlockSaving` / `not_wideBlockPartial` / `not_blockPhasePairing` | the three lap-112/113/114 statements are FALSE | trust triple | 🟢 clean — refutations, `Maze.lean` rows |
+| `CastingOut.wideTwistSmall_of_blockSavingBand` | band saving + band cost ⟹ `WideTwistSmall (κ−ε)` | trust triple | 🟢 clean — the repaired transfer |
+| `CastingOut.wideBlockSavingBand_zero` / `band_block_complete` | the guards on the repaired `Prop` | trust triple | 🟢 clean — GUARD RULE, instance ① |
+| `CastingOut.not_ttNonPretentiousUnif_one` / `const_one_not_faithful` | the faithful TT hypothesis is not free | trust triple | 🟢 clean — the lap-102 guards |
+| `CastingOut.uniformResonantMass_holds` | the archimedean named input (old form) | trust triple | 🟢 clean — but see the honesty note below: it supplied the *old*, vacuous `TTNonPretentious` |
 | `CastingOut.exceptional_set_can_pin_a_scale` | E-removal is NOT derivable | trust triple | 🟢 clean (a refutation) |
 | `CastingOut.depthAvg_one_tendsto` | rung `D = 1`, natural density (Selberg–Delange) | trust triple | 🟢 clean |
 | `CastingOut.rung_multi_correlation` | the `K`-fold assembly (old anchor, kept) | trust triple | 🟢 clean |
 
-**Math-axiom count for the C3/MRT campaign: 0** — no `axiom` declarations anywhere, and the
-whole `C3Mrt*` chain (45 files, 13 180 lines) is sorry-free.  The debt is carried by
-*hypotheses*, which is the honest form.  Graded:
+**Math-axiom count for the C3/MRT campaign: 0** — no `axiom` declarations anywhere, and the whole
+`C3Mrt*` chain (47 files) is sorry-free.  The debt is carried by *hypotheses*, which is the honest
+form.  Graded:
 
 | carried hypothesis | grade | status |
 |---|---|---|
-| `KPointNaturalCorrelationNoExc 2` | 🔴 | TT Thm 3.1(ii) **with the exceptional set of scales deleted**.  TT say in print this is out of reach.  NOT "the published theorem" — the faithful one is `TwoPointNaturalCorrelation`, which is stated in `C3MrtTTThm31.lean` and does *not* give a pointwise limit (`exceptional_set_can_pin_a_scale`). |
+| `KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K` | 🔴 | TT Thm 3.1(ii) **with the exceptional set of scales deleted**, in the faithful implied-constant placement.  TT say in print this is out of reach.  NOT "the published theorem" — the faithful one is `TwoPointDyadicCorrelation`.  Say "strictly stronger than published, disclosed". |
 | `KPointNaturalCorrelationNoExc K`, `K ≥ 3` | 🔴 | TT: a triple-correlation version "does not appear to be within current technology".  Generational; named and chipped opportunistically. |
-| uniformity in `K` of the above (lap 87 F2) | 🔴 | RESOLVED as a *shape*: `KPointNoExcWith cK CstK K` makes the constants explicit, and laps 88–90 prove the headline from the profile `cK = c₀b^{-θK}` (`θ < 1`), `CstK = exp((K+1)^m)`.  What remains is the input's CONTENT, not its uniformity. |
-| the threshold data `KPointThresholdSlow` | 🟢 | **DISCHARGED lap 90** (`kPointThresholdSlow_of_geom`) — no longer a hypothesis at all. |
-| `ProgressionLogRung K` | 🟡 | bookkeeping only (`rung_multi_correlation` is the case `M = 1, r = 0`); several files' worth, so it is named rather than inlined.  Current frontier for the *cheap* half of the debt. |
-| Tao–Teräväinen Thm 3.1 itself (faithful, with `E`) | 🟡 | **published** (arXiv 2512.01739), stated in Lean as `TwoPointNaturalCorrelation`; formalising its proof is project-scale. |
-| the Vinogradov–Korobov saving for `∑_{p≤X} χ(p)p^{it}/p` | 🟡 | proven in the literature; no longer load-bearing after lap 83. |
-| `Erdos67b.NonasymptoticLogElliott` (completely multiplicative) | 🟡 | still carried by the OLD `K`-fold stack, which stays in `src/` sorry-free as the completely-multiplicative route.  Off the spine since lap 60. |
+| `UniformResonantMass` | 🟡 | the route's pre-existing archimedean input.  `uniformResonantMass_holds` discharges the version that fed the *old* (vacuous) `TTNonPretentious`; under the faithful hypothesis it is again load-bearing.  Current frontier. |
+| `CharPrimeSumLogQ D` | 🟡 | a `log`-sized bound on the twisted prime sum in TT's narrow conductor range.  Classical and **Siegel-free at `t = 0`** (`L(1,χ) ≫ q^{-1/2}`); mathlib has only qualitative non-vanishing.  Next prerequisite = the elementary `f = 1 ∗ χ ≥ 0` argument. |
+| `WideBlockSavingBand J Jtop κ` | 🟡 | the wide-twist saving, on complete blocks in a band.  Guarded (`wideBlockSavingBand_zero`, `band_block_complete`).  Current frontier; next prerequisite = `blockBandCost_holds` and the two-prime alignment bound on `J`. |
+| `BlockBandCost J Jtop ε C` | 🟡 | purely arithmetic (Mertens below, a `p > n/2` count above).  Should be DISCHARGED next lap, not carried. |
+| Tao–Teräväinen Thm 3.1 itself (faithful, with `E`) | 🟡 | **published** (arXiv 2512.01739), stated in Lean as `TwoPointDyadicCorrelation`; formalising its proof is project-scale. |
+| `ProgressionLogRung K` | 🟡 | bookkeeping only (`rung_multi_correlation` is the case `M = 1, r = 0`). |
+| `Erdos67b.NonasymptoticLogElliott` (completely multiplicative) | 🟡 | still carried by the OLD `K`-fold stack, which stays in `src/` sorry-free.  Off the spine since lap 60. |
+
+⚠️ **Vacuity is a ledger hazard in the OPPOSITE direction from a missing axiom**: a false hypothesis
+makes the headline look *cheaper* than it is.  Three `conjC3_of_geom_input_*` variants and the
+lap-90 `conjC3_of_geom_input` are now known vacuous; only `_at`, `_lower` and `_band` carry content.
+The GUARD RULE in `DIRECTION.md` exists to stop this recurring.
 
 ## Pointers (C3/MRT)
-`DIRECTION.md` → CURRENT DIRECTIVE (**read first**; outranks everything) ·
-`ROUTE-ESCALATION-2026-09-25-c3mrt.md` · `PENDING_WORK.md` → "Review — lap 87" ·
-newest baton `HANDOFF-c3mrt-2026-09-25-lap87.md` (prev `…-lap86.md`) ·
+`DIRECTION.md` → DEFECT LEDGER + CURRENT DIRECTIVE (**read first**; outranks everything) ·
+`ROUTE-ESCALATION-2026-09-25-c3mrt.md` · `PENDING_WORK.md` → "Lap 115" ·
+newest baton `HANDOFF-2026-09-25-4-block-route-refuted.md`
+(prev `HANDOFF-2026-09-25-3-arch-debt-geometric.md`, `…-tt-interface-restated.md`) ·
 `KICKOFF-2026-09-24-c3-mrt.md` ·
+`src/NormalNumbers/C3MrtBlockDefect.lean` (refutations + repair) ·
+`src/NormalNumbers/C3MrtTTDefect.lean` (the lap-102 defects + restatements) ·
+`src/NormalNumbers/Maze.lean` (the kernel refutation rows) ·
 `papers/tao-teravainen-2025-quantitative-correlations.txt` · `papers/literature-review.md` ·
 `CONJECTURES-2026-09-23-casting-out-and-rungs.md`
 

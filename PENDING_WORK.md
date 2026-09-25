@@ -1,3 +1,60 @@
+## Lap 115 (2026-09-25, REVIEW) — laps 112-114 are REFUTED; the block route repaired and guarded
+
+**Finding.**  The archimedean "geometric endpoint" of laps 112-114 assumed a FALSE statement.  All
+three per-block hypotheses are now refuted in the kernel (`src/NormalNumbers/C3MrtBlockDefect.lean`,
+trust-triple clean, three `Maze.lean` rows), so `conjC3_of_geom_input_blocks`, `_blockPartial` and
+`_pairing` are **vacuous**:
+
+* `not_blockPhasePairing` (lap 114, every `d < 1`) — `X = 3, q = 1, t = 2, j = 1, m = 3` makes the
+  "initial segment" the SINGLETON `{2}`.  An injective self-map of a singleton is the identity, and
+  a unit vector is never separated from itself: `Re(u · conj u) = ‖u‖² = 1`.
+* `not_wideBlockPartial` (lap 113, every `κ > 0`) — same witness; the segment sum has norm exactly
+  `1` against a demanded `(1−κ)·1`.  Abel is sound, what it consumes is not.
+* `not_wideBlockSaving` (lap 112, every `κ > 0`) — **structural**, no segment parameter to abuse:
+  the truncated TOP block can be a singleton.  `X = 16/5`, `⌈X²⌉₊ = 11`, `j = 3`, block `{11}`,
+  weighted sum of norm exactly its own mass `1/11`.
+
+**Repair (same file).**  `WideBlockSavingBand J Jtop κ` — the saving asked only of *complete* blocks
+in a BAND `J X ≤ j ≤ Jtop X` — plus `BlockBandCost J Jtop ε C`, the mass discarded outside the
+band, which is a *purely arithmetic* obligation (no characters, no twists).
+`wideTwistSmall_of_blockSavingBand : band κ + cost ε ⟹ WideTwistSmall (κ − ε)`, and
+`conjC3_of_geom_input_band` is the live headline on that side.  Supporting:
+`norm_blockSum_le_mass` (the trivial bound), `sum_blockMass_le`, `dirichletChar_norm_le_one`,
+`dyadicPrimeBlockMass_nonneg`.
+
+**Guards (the new binding rule — see `DIRECTION.md` ① GUARD RULE).**  `wideBlockSavingBand_zero`
+(at `κ = 0` the statement IS the trivial bound, so all its content is `κ > 0`);
+`band_block_complete` (the intended `Jtop X = log₂⌈X²⌉₊ − 1` yields only complete blocks, so the
+lap-112 witness class is excluded by hypothesis); `witness_block_above_band`,
+`witness_block_below_band` (the §1 witnesses provably do not apply).
+
+**Why the bottom threshold cannot be a constant.**  A block at a *fixed* index holds finitely many
+primes; their `log p` are `ℚ`-independent, so a large twist drives all their phases into one arc
+(Kronecker), and the wide range permits `|t| ≤ X²`.  For a TWO-prime block this is exact and needs
+no equidistribution: at `t = 2π/log(p'/p)` the two twists coincide.  Blocks `j = 1,2,3` are
+`{2,3}`, `{5,7}`, `{11,13}` — so `J₀ ≤ 3` is exactly refutable, which is item ②2 of the directive.
+
+**Next attack** (directive order): ① `blockBandCost_holds` — top part: blocks above
+`Jtop X = log₂⌈X²⌉₊ − 1` hold only primes `p > n/2` (`n = ⌈X²⌉₊+1`), so mass `≤ 2`; bottom part:
+`small_prime_mass_le` on the primes `< 2^{J X}` gives `log(J X·log 2) + mertensBound`.  ② the exact
+two-prime alignment refutation of a constant threshold.  ③ `CharPrimeSumLogQ` at `t = 0` from
+`L(1,χ) ≫ q^{-1/2}`.  ④ `UniformResonantMass`.
+
+**Also recorded this lap:** the lap-108-114 ledger was missing from this file (the session-3 handoff
+pointed here for detail that was never written).  Restored below.
+
+## Laps 108-114 (2026-09-25) — the archimedean debt narrowed (112-114 now REFUTED, see lap 115)
+
+| lap | advance | status |
+|---|---|---|
+| 108 | `NonPrincipalLocalBound` — narrow non-principal debt with no `X` on the right.  `depthRoot_zero_emod` + `exists_uniform_narrow_const`: the `h'`-uniformity is a THEOREM (`ee` is 1-periodic ⇒ ≤ `b` values ⇒ `Finset.sup'`). | stands |
+| 109 | `TwistedPrimeSumSmall` unifies the narrow-non-principal and wide debts; `twistedPrimeSum_principal_zero` guards that the excluded corner must be excluded. | stands |
+| 110 | The multiplier `z` eliminated: `1 − Re(w^b) ≤ b²(1 − Re w)` ⇒ `ttPretentiousSumChar_pow_le`.  Debt becomes `OneNonPretentious` + the corner `RootOrderCase`. | stands (alternative route) |
+| 111 | De-escalation: in TT's range `log q ≤ (1/125)·log log X`, so a `log`-sized bound suffices (`CharPrimeSumLogQ`), classical at `t = 0`.  Corrected lap 110's Siegel claim. | stands |
+| 112 | Refuted the `log log(q(2+|t|))` route (scale-degenerate); reduced to `WideBlockSaving`. | the refutation stands; **`WideBlockSaving` is FALSE** (lap 115) |
+| 113 | Abel transfer `norm_sum_smul_le_of_partial_bound` — an initial-segment saving transfers to the `1/p`-weighted sum with the SAME constant. | the transfer stands; **`WideBlockPartial` is FALSE** (lap 115) |
+| 114 | The pairing bound `norm_sum_le_of_pairing` — an injective self-map of a finite set is a permutation, so separation gives `‖∑u‖ ≤ (√(2+2d)/2)#S`. | the bound stands and is reusable; **`BlockPhasePairing` is FALSE** (lap 115) |
+
 ## Lap 102 (2026-09-25) — RESTATEMENT run: the TT interface repaired, consumers re-audited
 
 Operator-scoped restatement lap (no crux advance).  New `src/NormalNumbers/C3MrtTTDefect.lean`.
