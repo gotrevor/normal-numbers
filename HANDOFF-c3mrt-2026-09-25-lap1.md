@@ -86,3 +86,43 @@ correlation length collapses from `N` to `log log N`.
    only, so it gives the log-averaged variant of rung 2, not the natural-density one.
 3. Extend the numerics: measure the fitted `a` against `∑_{i≥1}(1−cos(2πh/b^i))` directly
    (stdlib-only probe in `probes/`), which is a sharp falsifiable test of the mechanism.
+
+---
+
+# lap 2 addendum — the mean bound: required depth drops to `log log log N`
+
+`src/NormalNumbers/C3MrtMean.lean` (axiom-clean, no `sorry`).
+
+Lap 1 spent the **pointwise** truncation price `(log₂ n + D + 1)/((b−2)b^D)`, needing
+`b^{D_N} ≳ log N`, i.e. `D_N ≍ log_b log N` points.  But only the *mean* discarded phase is
+ever spent, and the mean of `ω` is `log log`, not `log`:
+
+* `tailLarge_sub_tailDepth_le_omegaTail` : `tailLarge − tailDepth ≤ omegaTail b (n+D) / b^D`
+  — the exact shape of the deep tail (pointwise, no crude `ω ≤ log₂` step).
+* `sum_range_deep_le` : `∑_{n<N}(tailLarge − tailDepth) ≤ N·LL(N)/b^D` for `D + 3 ≤ N`, where
+  `LLbound N = 4 log(log₂ N) + 11`.  Mertens input: the repo's own
+  `PairDecouple.sum_omegaTail_AP_le'`.
+* **`weylLambertTwist_of_schedule`** : for ANY depth schedule `Dsch` with
+  `∀ᶠ N, Dsch N + 3 ≤ N`, `LL(N)/b^{Dsch N} → 0`, and the `Dsch N`-point twisted correlations
+  `→ 0`, the crux `WeylLambertTwist b` follows.  Axioms
+  `[propext, Classical.choice, Quot.sound]`.  Subsumes `weylLambertTwist_of_depthElliott`.
+
+**Consequence.** `LL(N)/b^{D_N} → 0` needs only `b^{D_N} ≳ log log N`, so
+
+> **`D_N ≍ log_b log log N` correlation points suffice.**
+
+That is one whole `log` better than lap 1, and it materially changes the plausibility of the
+route: the number of Elliott points needed is now *triple*-logarithmic, e.g. `D_N ≤ 4` for all
+`N < 2^(2^81)` at `b = 3`.  A fixed-`k` Elliott with `k` in the single digits, plus an explicit
+`log log N`-sized budget, is a far more realistic target than uniformity in `k`.
+
+## NEXT (lap 3)
+
+1. Instantiate `weylLambertTwist_of_schedule` with the explicit schedule
+   `DschLL b N := Nat.clog b ((15*(Nat.log 2 (Nat.log 2 N) + 1))^2)`: needs
+   (a) `LL N ≤ 15*(Nat.log 2 (Nat.log 2 N) + 1)` (use `PairDecouple.log_le_natLog_succ`),
+   (b) `Nat.le_pow_clog` for `b^{DschLL} ≥ (…)^2`, (c) `∀ᶠ N, DschLL b N + 3 ≤ N`.
+   Result: a named Prop `DepthElliottLLL b` with only `log log log N` points.
+2. Then the real target: prove the `D`-point correlation `→ 0` for `D = 2` (and ideally uniformly
+   for `D ≤ k` with the `κ^D` constant), from `lean-proofs-latest`'s `unitCircleLogElliott`
+   (log density) or a Selberg–Delange product over the `D` shifts.
