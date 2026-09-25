@@ -1,4 +1,4 @@
-# HANDOFF c3-mrt 2026-09-25 — lap 21
+# HANDOFF c3-mrt 2026-09-25 — laps 21–22
 
 **Branch** `wip/c3-mrt` · working tree clean · `lake build` green (9257 jobs).
 Read first: `DIRECTION.md` → CURRENT DIRECTIVE (it outranks this file).
@@ -24,18 +24,30 @@ Diophantine approximation there are arbitrarily large `t` with `t·log p` near `
 every `p ≤ X` at once, so the saving is genuinely FALSE without a ceiling.  `NonasymptoticLogElliott`
 (`LogElliott.lean:411`) asks for precisely `|t| ≤ A·X`, so the shapes match.
 
+## Lap 22: the `D = 2` rung now rests on exactly TWO named inputs
+
+`rung_two_of_named_inputs` (same module, trust-triple, first compile): granting
+`Erdos67b.NonasymptoticLogElliott` **and** `TwistedPrimeSumSavingAllLevels`
+(`∀ A, ∃ T, TwistedPrimeSumSaving A T` — the level grows with the cutoff exponent, so the
+saving is needed at each level), the harmonic-weighted two-point correlation of `ζ₀^Ω` and
+`ζ₁^Ω` along a nondegenerate affine pair is `≤ (1 + log A^{i₀}) + m·ε·log A` on the initial
+segment, i.e. `o(log J)`.  **Nothing else is assumed** — the archimedean certificate is proved.
+
+The wiring was pure plumbing (the shapes were matched in lap 21 deliberately).  The one
+arithmetic point: `initial_segment_bound_of_elliott` wants non-pretentiousness at every cutoff
+`A^i` with `i > i₀`, while `nonPretentious_zOm` gives it for `X ≥ X₀`; take `i₀ = X₀` and use
+`A ≥ 2 ⟹ A^i ≥ 2^i > i > X₀` (`Nat.lt_two_pow_self` + `omega`).
+
+**This is the ratified success criterion met at the `D = 2` rung:** an equivalence with named
+open problems, both of them the Erdős-67b project's own open analytic bets.
+
 ## NEXT — resume here
 
-1. **Wire `nonPretentious_zOm` into `initial_segment_bound_of_elliott`** (`C3MrtRungTwo.lean`).
-   Check the argument order and the `0 < q` side condition against
-   `NonasymptoticLogElliott`'s hypothesis block (`q ≤ A`, `0 < q`, `|t| ≤ A·X`) — our statement
-   was shaped to it, so this should be plumbing.
-2. **The tuple sum over coprime powerful pairs `d, e ≤ Y`** — laps 8–13 supply weight transfer,
-   truncation and the window stack.
-3. **Then the `D = 2` rung rests on exactly TWO named literature inputs**, both of them the
-   Erdős-67b project's own open analytic bets: `Erdos67b.NonasymptoticLogElliott` and
-   `TwistedPrimeSumSaving` (= `Erdos67b.PolynomialHeightPrimeCorrelationBound`, i.e. VK).
-   That is the ratified success criterion: an equivalence with named open problems.
+1. **The tuple sum over coprime powerful pairs `d, e ≤ Y`** — laps 8–13 supply weight transfer,
+   truncation and the window stack.  This is what lifts the single-pair rung to `ConjC3`'s
+   `D = 2` obligation.
+2. Then re-examine what `weylLambertTwist_holds` still needs beyond the `D = 2` rung
+   (`QuantDepthElliott` at `≍ log log log N` points remains out of reach — see the directive).
 
 ## Still refuted — DO NOT RETRY
 Lap 18's two (resonance counting past `|t| ≳ (log X)^K` is short-interval-hard; crude

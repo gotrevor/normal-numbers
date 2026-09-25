@@ -789,6 +789,52 @@ theorem nonPretentious_zOm {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) {A : ℕ
     rw [div_le_iff₀ hlog]
     linarith [h]
 
+
+/-! ## The `D = 2` rung on exactly two named inputs
+
+`initial_segment_bound_of_elliott` (`C3MrtRungTwo.lean`) consumes the non-pretentiousness of
+`ζ^Ω` at the cutoffs `X = A^i`.  `nonPretentious_zOm` supplies it for all large `X`, so the
+only thing to arrange is that the segment starts late enough: `A ≥ 2` gives `A^i ≥ 2^i > i`,
+so `i > X₀` already forces `A^i > X₀`.
+-/
+
+/-- The Range-2 input, at every level `A` (the level grows with the cutoff exponent, so the
+saving must be available for each of them, with its own frequency threshold `T`). -/
+def TwistedPrimeSumSavingAllLevels : Prop :=
+  ∀ A : ℕ, ∃ T : ℝ, TwistedPrimeSumSaving A T
+
+/-- **The `D = 2` rung, conditional on exactly TWO named literature inputs.**  Granting
+`Erdos67b.NonasymptoticLogElliott` (log-averaged Elliott, the dependency's own open bet) and
+`TwistedPrimeSumSavingAllLevels` (Vinogradov–Korobov, the dependency's
+`PolynomialHeightPrimeCorrelationBound`), the harmonic-weighted two-point correlation of
+`ζ₀^Ω` and `ζ₁^Ω` along a nondegenerate affine pair is `o(log J)` on the initial segment.
+Nothing else is assumed: the archimedean certificate is proved here. -/
+theorem rung_two_of_named_inputs
+    (helliott : Erdos67b.NonasymptoticLogElliott)
+    (hsave : TwistedPrimeSumSavingAllLevels)
+    {d e b₀ b₁ : ℕ} (hd : 0 < d) (he : 0 < e)
+    (hdet : (e : ℤ) * (b₁ : ℤ) - (d : ℤ) * (b₀ : ℤ) ≠ 0)
+    {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1) (hz₀1 : z₀ ≠ 1)
+    (ε : ℝ) (hε : 0 < ε) :
+    ∃ A₀ : ℕ, 2 ≤ A₀ ∧ ∀ A : ℕ, A₀ ≤ A → ∃ i₀ : ℕ, ∀ m : ℕ, i₀ ≤ m →
+      ‖∑ j ∈ Finset.Ioc 0 (A ^ m),
+          (Erdos67b.harmonicWeight j : ℂ) * zOmInt z₀ (Erdos67b.integerAffine e (b₀ : ℤ) j) *
+            zOmInt z₁ (Erdos67b.integerAffine d (b₁ : ℤ) j)‖
+        ≤ (1 + Real.log (A ^ i₀ : ℕ)) + (m : ℝ) * (ε * Real.log A) := by
+  obtain ⟨A₀, hA₀2, hA₀⟩ :=
+    initial_segment_bound_of_elliott helliott hd he hdet z₀ z₁ hz₀ hz₁ ε hε
+  refine ⟨A₀, hA₀2, fun A hA => ?_⟩
+  obtain ⟨T, hT⟩ := hsave A
+  obtain ⟨X₀, hX₀⟩ := nonPretentious_zOm hz₀ hz₀1 hT
+  refine ⟨X₀, fun m hm => hA₀ A hA X₀ (fun i hi q hq hqA χ t ht => ?_) m hm⟩
+  have hA2 : 2 ≤ A := le_trans hA₀2 hA
+  -- `A^i ≥ 2^i > i > X₀`
+  have hpow : X₀ ≤ A ^ i := by
+    have h1 : i < 2 ^ i := Nat.lt_two_pow_self
+    have h2 : (2 : ℕ) ^ i ≤ A ^ i := Nat.pow_le_pow_left hA2 i
+    omega
+  exact hX₀ (A ^ i) hpow q hq hqA χ t (by exact_mod_cast ht)
+
 end CastingOut
 
 end NormalNumbers
@@ -804,3 +850,4 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.range_one_certificate_uniform
 #print axioms NormalNumbers.CastingOut.range_two_certificate
 #print axioms NormalNumbers.CastingOut.nonPretentious_zOm
+#print axioms NormalNumbers.CastingOut.rung_two_of_named_inputs
