@@ -10571,3 +10571,44 @@ on average; the K-point sum reduces to an `i₀`-point sum.  This does NOT colla
 (i₀ still grows), which is exactly lap 87's finding, but it may reduce the needed `K`-range to
 `K ≲ log_b log log N` — worth formalizing as the next narrowing, and it is the structural reason
 the route needs uniformity in `K` at all.
+
+## lap 99 (2026-09-25) — the TRUNCATION route, made quantitative and REFUTED
+
+`src/NormalNumbers/C3MrtTruncate.lean` (new; tip green at 9013, `lake build` green at 9257;
+all six declarations `[propext, Classical.choice, Quot.sound]`, no sorry).
+
+The hope after lap 92 ("the deep depth roots are almost pretentious, i.e. within `O(b^{-i})` of
+1") is that the deep factors of `∏_{i<K} e(h'/b^{i+1})^{ω(n+i+1)}` can be DISCARDED, truncating
+the `K`-point problem to an `i₀`-point one with `i₀ ≪ K`.  This lap makes that quantitative and
+the numbers refute it.
+
+PROVED this lap:
+* `norm_ee_sub_one_le` — `‖e(y) − 1‖ ≤ 4π|y|` for all real `y`, unconditionally (the large-`|y|`
+  branch via `‖e(y) − 1‖ ≤ 2`).
+* `depth_prod_eq_ee` — the depth product IS one additive character:
+  `∏_{i<K} e(h/b^{i+1})^{ω(n+i+1)} = e(∑_{i<K} ω(n+i+1)·h/b^{i+1})`.
+* `depth_prod_truncate_norm_le` — per `n`, truncating at `i₀ ≤ K` costs
+  `≤ 4π|h| ∑_{i₀≤i<K} ω(n+i+1)/b^{i+1}`.
+* `norm_sum_le_norm_sum_add`, `truncate_sum_le` — the same over any index set, symbolically.
+* `truncate_sum_explicit_le` — geometric tail collapsed, `ω ≤ log₂`:
+  cost `≤ 8π|h|·#S·log₂W·b^{−(i₀+1)}` when `n + K ≤ W` on `S`.
+* `dyadic_truncate_explicit_le` — the dyadic-window instance: cost
+  `≤ 8π|h|·N·log₂(2N+K)·b^{−(i₀+1)}`.
+
+**REFUTATION (do not retry).**  At the diagonal the target saving is
+`(2 log N)^{-κ c₀ b^{-θK}}`; with `b^K ≍ Λ := log log N` that is `≍ exp(−κc₀Λ^{1−θ})`.  The
+truncation cost above is `≍ N·(log log N)·b^{−i₀}`, which drops below the target only once
+`i₀ ≳ Λ^{1−θ}/log b`.  But the diagonal has `K ≍ log_b Λ`, and `Λ^{1−θ} ≫ log Λ` for EVERY
+`θ < 1`.  So the required truncation depth EXCEEDS `K` itself, exponentially.  The deep factors
+cannot be dropped at any depth below `K`, in either direction (the same estimate bounds
+`‖S_K − S_{i₀}‖` both ways).  Hence:
+ - lap 92's "the deep digits are almost pretentious" does NOT give "the deep digits are
+   negligible" — those are different statements, and only the first is true;
+ - the `K`-point problem does not reduce to a shallower one, which is the quantitative mechanism
+   behind lap 87's finding that fixed-`K` limits cannot reach the diagonal;
+ - genuine uniformity in `K` is not a convenience of this route but forced.
+
+NEXT on the crux: with truncation refuted, the remaining honest attacks on `DepthDyadicBound` are
+(a) the free narrowing to `M > dyadicFactor` (lap 98 item 1), and (b) the `K`-fold Halász/Elliott
+input itself — i.e. accept that the open statement is a genuine large-`K` correlation bound and
+work on the ledger/writeup rather than expecting a reduction to collapse it.
