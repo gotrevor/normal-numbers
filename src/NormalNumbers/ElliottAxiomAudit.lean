@@ -282,5 +282,12 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms ZetaZeroFree9
 
 -- Lap 115: the moderate-band CAP clause.
-#print axioms NormalNumbers.ElliottSliceCapModerate.sliceT9_le_one
+#print axioms NormalNumbers.ElliottDamped.sliceT9_le_one
 #print axioms NormalNumbers.ElliottSliceCapModerate.exists_sliceCapModerate9
+
+-- Lap 116: the moderate band integrated — (c′-II-a) up to the coefficient 9.
+#print axioms NormalNumbers.ElliottLogIntegral.integral_le_const_add_log_add_const
+#print axioms NormalNumbers.ElliottDamped.norm_dampedPrefix_le_of_slice_le_const
+#print axioms NormalNumbers.ElliottDamped.sliceBoundModerate9_of_cap
+#print axioms NormalNumbers.ElliottDamped.dampedSeriesBoundModerate9_of_sliceBound
+#print axioms NormalNumbers.ElliottSliceCapModerate.exists_dampedSeriesBoundModerate9

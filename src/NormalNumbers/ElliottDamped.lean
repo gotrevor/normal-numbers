@@ -883,6 +883,57 @@ theorem norm_dampedPrefix_le_of_slice_le' {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y 
     exact ((continuous_logWeightedSlice v X Y).norm).intervalIntegrable 0 1
   linarith [integral_norm_slice_Ioi_le hX v Y]
 
+/-- **The assembly with a multiplicative constant on the cap band** (lap 116).
+
+Same as `norm_dampedPrefix_le_of_slice_le'` but the cap clause reads `C·T⁻¹ + K`.  The cap band has
+length `T`, so the price is the additive `C` in the conclusion and nothing else — in particular the
+`log(1/T)` main term keeps the sharp coefficient `1` from the harmonic band (lap 106).  This is the
+form the *moderate* band needs, where the de la Vallée Poussin input carries an unknown constant. -/
+theorem norm_dampedPrefix_le_of_slice_le_const {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) {T C K : ℝ}
+    (hδT : (Real.log (X : ℝ))⁻¹ ≤ T) (hT1 : T ≤ 1) (hK : 0 ≤ K) (hC : 0 ≤ C)
+    (hcap : ∀ w ∈ Set.Icc (0 : ℝ) T, ‖logWeightedSlice v X Y w‖ ≤ C * T⁻¹ + K)
+    (hharm : ∀ w ∈ Set.Icc T 1, ‖logWeightedSlice v X Y w‖ ≤ w⁻¹ + K) :
+    ‖dampedPrefix v X Y‖ ≤ C + Real.log (1 / T) + K + tailCost := by
+  have hXR : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+  have hδ0 : 0 < (Real.log (X : ℝ))⁻¹ := by positivity
+  rw [dampedPrefix_eq_integral hX v Y]
+  refine le_trans (MeasureTheory.norm_integral_le_integral_norm _) ?_
+  have hunion : Set.Ioi (0 : ℝ) = Set.Ioc (0 : ℝ) 1 ∪ Set.Ioi (1 : ℝ) := by
+    ext w
+    simp only [Set.mem_Ioi, Set.mem_union, Set.mem_Ioc]
+    constructor
+    · intro hw
+      rcases le_or_gt w 1 with h | h
+      · exact Or.inl ⟨hw, h⟩
+      · exact Or.inr h
+    · rintro (⟨h1, _⟩ | h1)
+      · exact h1
+      · linarith
+  have hdisj : Disjoint (Set.Ioc (0 : ℝ) 1) (Set.Ioi (1 : ℝ)) := by
+    rw [Set.disjoint_left]
+    intro w hw hw'
+    have h1 : w ≤ 1 := hw.2
+    have h2 : (1 : ℝ) < w := hw'
+    linarith
+  have hsplit : (∫ w in Set.Ioi (0 : ℝ), ‖logWeightedSlice v X Y w‖)
+      = (∫ w in Set.Ioc (0 : ℝ) 1, ‖logWeightedSlice v X Y w‖)
+        + ∫ w in Set.Ioi (1 : ℝ), ‖logWeightedSlice v X Y w‖ := by
+    rw [hunion]
+    exact MeasureTheory.setIntegral_union hdisj measurableSet_Ioi
+      (integrableOn_norm_slice_Ioc v X Y) (integrableOn_norm_slice_Ioi hX v Y)
+  rw [hsplit]
+  have hfirst : (∫ w in Set.Ioc (0 : ℝ) 1, ‖logWeightedSlice v X Y w‖)
+      ≤ C + Real.log (1 / T) + K := by
+    have hI : (∫ w in Set.Ioc (0 : ℝ) 1, ‖logWeightedSlice v X Y w‖)
+        = ∫ w in (0 : ℝ)..1, ‖logWeightedSlice v X Y w‖ :=
+      (intervalIntegral.integral_of_le (by norm_num)).symm
+    rw [hI]
+    refine NormalNumbers.ElliottLogIntegral.integral_le_const_add_log_add_const
+      (δ := (Real.log (X : ℝ))⁻¹) hδ0 hδT hT1 hK hC ?_ (fun w _ => norm_nonneg _) hcap hharm
+    exact ((continuous_logWeightedSlice v X Y).norm).intervalIntegrable 0 1
+  linarith [integral_norm_slice_Ioi_le hX v Y]
+
 /-! ### The final shape of the two soft inputs: a bound on the slice -/
 
 /-- **The `ζ'/ζ` input, sub-unit band, in slice form.**  The slice is the truncated von Mangoldt
@@ -1631,6 +1682,30 @@ def SliceCapModerate9 (C K : ℝ) : Prop :=
     ∀ w ∈ Set.Icc (0 : ℝ) (sliceT9 X v),
       ‖logWeightedSlice v X Y w‖ ≤ C * (sliceT9 X v)⁻¹ + K
 
+/-- `sliceT9 X v ≤ 1` for `X ≥ 2²⁰`: both branches of the `max` are reciprocals of reals `≥ 1`
+(`(log(|v|+16))^9 ≥ (log 16)^9 ≥ 1` and `log X ≥ 1`). -/
+theorem sliceT9_le_one {X : ℕ} (hX : 1048576 ≤ X) (v : ℝ) : sliceT9 X v ≤ 1 := by
+  have hXR : (1048576 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hlogX1 : 1 ≤ Real.log (X : ℝ) := by
+    have h3 : Real.log 3 ≤ Real.log (X : ℝ) := Real.log_le_log (by norm_num) (by linarith)
+    have hexp : Real.exp 1 < 3 := by linarith [Real.exp_one_lt_d9]
+    have := Real.log_lt_log (Real.exp_pos 1) hexp
+    rw [Real.log_exp] at this
+    linarith
+  have hL : (1 : ℝ) ≤ Real.log (|v| + 16) := by
+    have h16 : (16 : ℝ) ≤ |v| + 16 := by linarith [abs_nonneg v]
+    have hmono := Real.log_le_log (by norm_num : (0:ℝ) < 16) h16
+    have he : (1 : ℝ) ≤ Real.log 16 := by
+      have hexp : Real.exp 1 < 16 := by linarith [Real.exp_one_lt_d9]
+      have := Real.log_lt_log (Real.exp_pos 1) hexp
+      rw [Real.log_exp] at this; linarith
+    linarith
+  have hpow : (1 : ℝ) ≤ (Real.log (|v| + 16)) ^ (9 : ℕ) := one_le_pow₀ hL
+  rw [sliceT9]
+  refine max_le ?_ ?_
+  · rw [inv_le_one_iff₀]; exact Or.inr hpow
+  · rw [inv_le_one_iff₀]; exact Or.inr hlogX1
+
 /-- **The cap clause alone, moderate band.** -/
 def SliceCapModerate (K : ℝ) : Prop :=
   ∀ (X Y : ℕ) (v : ℝ), 1048576 ≤ X → sliceCut X ≤ Y → 1 < |v| →
@@ -1678,6 +1753,95 @@ theorem sliceBoundModerate_of_cap {K : ℝ} (hK : 0 ≤ K) (h : SliceCapModerate
     have htriv := norm_logWeightedSlice_le_trivial hX2 v Y hw0.le
     have hmono : ((Real.log (X : ℝ))⁻¹ + w)⁻¹ ≤ w⁻¹ := inv_anti₀ hw0 (by linarith)
     linarith
+
+/-! ### The moderate band at exponent 9 (lap 116) -/
+
+/-- **The `ζ'/ζ` input, moderate band, at exponent 9 with a multiplicative cap constant.** -/
+def SliceBoundModerate9 (C K : ℝ) : Prop :=
+  ∀ (X Y : ℕ) (v : ℝ), 1048576 ≤ X → sliceCut X ≤ Y → 1 < |v| →
+    (∀ w ∈ Set.Icc (0 : ℝ) (sliceT9 X v),
+        ‖logWeightedSlice v X Y w‖ ≤ C * (sliceT9 X v)⁻¹ + K) ∧
+    (∀ w ∈ Set.Icc (sliceT9 X v) 1, ‖logWeightedSlice v X Y w‖ ≤ w⁻¹ + K)
+
+/-- The harmonic clause of the moderate-9 input is `sum_log_rpow_le` (lap 106, coefficient
+exactly `1`), so the whole input follows from the cap clause. -/
+theorem sliceBoundModerate9_of_cap {C K : ℝ} (hK : 0 ≤ K) (h : SliceCapModerate9 C K) :
+    SliceBoundModerate9 C (K + (Real.log 4 + 4)) := by
+  intro X Y v hX hY hv1
+  have hX2 : 2 ≤ X := by omega
+  have hC0 : (0 : ℝ) ≤ Real.log 4 + 4 := by
+    have : (0 : ℝ) < Real.log 4 := Real.log_pos (by norm_num)
+    linarith
+  refine ⟨fun w hw => ?_, fun w hw => ?_⟩
+  · have := h X Y v hX hY hv1 w hw
+    linarith
+  · have hδT : (Real.log (X : ℝ))⁻¹ ≤ sliceT9 X v := le_max_right _ _
+    have hXR2 : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX2
+    have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+    have hδpos : (0 : ℝ) < (Real.log (X : ℝ))⁻¹ := by positivity
+    have hw0 : 0 < w := lt_of_lt_of_le hδpos (le_trans hδT hw.1)
+    have htriv := norm_logWeightedSlice_le_trivial hX2 v Y hw0.le
+    have hmono : ((Real.log (X : ℝ))⁻¹ + w)⁻¹ ≤ w⁻¹ := inv_anti₀ hw0 (by linarith)
+    linarith
+
+/-- **The analytic input, moderate band, at exponent 9.**  The coefficient `9` is exactly
+`log(1/sliceT9) ≤ log ((log(|v|+16))^9) = 9·log log(|v|+16)`; it comes from the exponent in the
+in-repo zero-free region `PNTPort.ZetaZeroFree9`, and nothing else in the chain contributes to it
+(the harmonic band has coefficient exactly `1`, lap 106). -/
+def DampedSeriesBoundModerate9 (K : ℝ) : Prop :=
+  ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ (X Y : ℕ) (v : ℝ), X₀ ≤ X → X ≤ Y → 1 < |v| →
+    ‖dampedPrefix v X Y‖ ≤ 9 * Real.log (Real.log (|v| + 16)) + K
+
+/-- **(c′-II-a) REDUCED TO THE MODERATE-9 SLICE BOUND.** -/
+theorem dampedSeriesBoundModerate9_of_sliceBound {C K : ℝ} (hK : 0 ≤ K) (hC : 0 ≤ C)
+    (h : SliceBoundModerate9 C K) :
+    DampedSeriesBoundModerate9 (C + K + tailCost + cutCost) := by
+  refine ⟨1048576, by norm_num, ?_⟩
+  intro X Y v hX3 hXY hv1
+  have hX : 2 ≤ X := by omega
+  have hXR : (3 : ℝ) ≤ (X : ℝ) := by exact_mod_cast (by omega : 3 ≤ X)
+  have hlogX : 1 < Real.log (X : ℝ) := by
+    have h3 : Real.log 3 ≤ Real.log (X : ℝ) := Real.log_le_log (by norm_num) hXR
+    have : (1 : ℝ) < Real.log 3 := by
+      have hexp : Real.exp 1 < 3 := by linarith [Real.exp_one_lt_d9]
+      have := Real.log_lt_log (Real.exp_pos 1) hexp
+      rwa [Real.log_exp] at this
+    linarith
+  have hδ0 : 0 < (Real.log (X : ℝ))⁻¹ := by positivity
+  have hL : (1 : ℝ) < Real.log (|v| + 16) := by
+    have h17 : (17 : ℝ) ≤ |v| + 16 := by linarith
+    have hlog17 : Real.log 17 ≤ Real.log (|v| + 16) := Real.log_le_log (by norm_num) h17
+    have : (1 : ℝ) < Real.log 17 := by
+      have hexp : Real.exp 1 < 17 := by linarith [Real.exp_one_lt_d9]
+      have := Real.log_lt_log (Real.exp_pos 1) hexp
+      rwa [Real.log_exp] at this
+    linarith
+  have hL0 : 0 < Real.log (|v| + 16) := by linarith
+  set a : ℝ := (Real.log (|v| + 16)) ^ (9 : ℕ) with ha
+  have ha1 : (1 : ℝ) < a := one_lt_pow₀ hL (by norm_num)
+  have ha0 : 0 < a := by linarith
+  set T : ℝ := sliceT9 X v with hT
+  have hδT : (Real.log (X : ℝ))⁻¹ ≤ T := le_max_right _ _
+  have hLT : a⁻¹ ≤ T := le_max_left _ _
+  have hT0 : 0 < T := lt_of_lt_of_le (by positivity) hLT
+  have hT1 : T ≤ 1 := sliceT9_le_one hX3 v
+  set Y' : ℕ := max Y (sliceCut X) with hY'
+  have hXY' : X ≤ Y' := le_trans hXY (le_max_left _ _)
+  obtain ⟨hcap, hharm⟩ := h X Y' v hX3 (le_max_right _ _) hv1
+  have hmain0 := norm_dampedPrefix_le_of_slice_le_const hX v Y' hδT hT1 hK hC hcap hharm
+  have htr := norm_dampedPrefix_transfer hX v Y Y' hXY hXY'
+  have hmain : ‖dampedPrefix v X Y‖ ≤ C + Real.log (1 / T) + K + tailCost + cutCost := by
+    rw [cutCost] at *; linarith
+  have hlogmono : Real.log (1 / T) ≤ 9 * Real.log (Real.log (|v| + 16)) := by
+    have hstep : Real.log (1 / T) ≤ Real.log a := by
+      refine Real.log_le_log (by positivity) ?_
+      rw [div_le_iff₀ hT0]
+      have hid : a⁻¹ * a = 1 := by field_simp
+      nlinarith [hLT, ha0]
+    have hpow : Real.log a = 9 * Real.log (Real.log (|v| + 16)) := by
+      rw [ha, Real.log_pow]; norm_num
+    linarith [hpow ▸ hstep]
+  linarith [hmain, hlogmono]
 
 end
 

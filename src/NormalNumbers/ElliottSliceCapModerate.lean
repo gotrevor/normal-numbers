@@ -35,30 +35,6 @@ open NormalNumbers.ElliottPrimePower NormalNumbers.ElliottBridge
 
 noncomputable section
 
-/-- `sliceT9 X v ≤ 1` whenever `X ≥ 3`: both branches of the `max` are reciprocals of reals `≥ 1`
-(`(log(|v|+16))^9 ≥ (log 17)^9 ≥ 1` and `log X ≥ 1`). -/
-theorem sliceT9_le_one {X : ℕ} (hX : 1048576 ≤ X) (v : ℝ) : sliceT9 X v ≤ 1 := by
-  have hXR : (1048576 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
-  have hlogX1 : 1 ≤ Real.log (X : ℝ) := by
-    have h3 : Real.log 3 ≤ Real.log (X : ℝ) := Real.log_le_log (by norm_num) (by linarith)
-    have hexp : Real.exp 1 < 3 := by linarith [Real.exp_one_lt_d9]
-    have := Real.log_lt_log (Real.exp_pos 1) hexp
-    rw [Real.log_exp] at this
-    linarith
-  have hL : (1 : ℝ) ≤ Real.log (|v| + 16) := by
-    have h16 : (16 : ℝ) ≤ |v| + 16 := by linarith [abs_nonneg v]
-    have hmono := Real.log_le_log (by norm_num : (0:ℝ) < 16) h16
-    have he : (1 : ℝ) ≤ Real.log 16 := by
-      have hexp : Real.exp 1 < 16 := by linarith [Real.exp_one_lt_d9]
-      have := Real.log_lt_log (Real.exp_pos 1) hexp
-      rw [Real.log_exp] at this; linarith
-    linarith
-  have hpow : (1 : ℝ) ≤ (Real.log (|v| + 16)) ^ (9 : ℕ) := one_le_pow₀ hL
-  rw [sliceT9]
-  refine max_le ?_ ?_
-  · rw [inv_le_one_iff₀]; exact Or.inr hpow
-  · rw [inv_le_one_iff₀]; exact Or.inr hlogX1
-
 /-- **(c′-II-a) CAP CLAUSE IS A THEOREM.** -/
 theorem exists_sliceCapModerate9 : ∃ C ≥ (1 : ℝ), ∃ K ≥ (0 : ℝ), SliceCapModerate9 C K := by
   obtain ⟨C₀, hC₀, hmod⟩ := exists_moderate_logDeriv_bound 3
@@ -140,6 +116,34 @@ theorem exists_sliceCapModerate9 : ∃ C ≥ (1 : ℝ), ∃ K ≥ (0 : ℝ), Sli
       mul_le_mul_of_nonneg_right hCK hlogX0.le
     rw [one_mul] at hprod
     linarith [htriv, hle]
+
+
+
+/-! ### The whole moderate-band damped bound -/
+
+/-- **(c′-II-a) IS A THEOREM UP TO THE COEFFICIENT 9.**
+`‖dampedPrefix v X Y‖ ≤ 9·log log(|v|+16) + K` for all `X ≥ 2²⁰`, `X ≤ Y`, `|v| > 1`.
+
+Chain: cap clause (lap 115, this file) + harmonic clause (lap 106, coefficient exactly `1`)
+⟹ `SliceBoundModerate9` ⟹ `DampedSeriesBoundModerate9` through the constant-carrying integration
+`norm_dampedPrefix_le_of_slice_le_const` (lap 116).  **No axiom, no `sorry`**: the only analytic
+input is the in-repo `PNTPort.LogDerivZetaBndUnif99`. -/
+theorem exists_dampedSeriesBoundModerate9 : ∃ K : ℝ, 0 ≤ K ∧ DampedSeriesBoundModerate9 K := by
+  obtain ⟨C, hC1, K, hK0, hcap⟩ := exists_sliceCapModerate9
+  have hC0 : (0 : ℝ) ≤ C := by linarith
+  have hlog4 : (0:ℝ) ≤ Real.log 4 + 4 := by
+    have : (0:ℝ) < Real.log 4 := Real.log_pos (by norm_num)
+    linarith
+  refine ⟨C + (K + (Real.log 4 + 4)) + tailCost + cutCost, ?_, ?_⟩
+  · have h1 : (0:ℝ) ≤ tailCost := by
+      rw [tailCost]
+      have hl2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+      have hp := pSeriesThreeHalves_nonneg
+      positivity
+    have h2 := cutCost_nonneg
+    linarith
+  · exact dampedSeriesBoundModerate9_of_sliceBound (by linarith) hC0
+      (sliceBoundModerate9_of_cap hK0 hcap)
 
 end
 

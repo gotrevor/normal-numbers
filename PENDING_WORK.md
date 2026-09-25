@@ -11302,3 +11302,49 @@ remains for `ArchCorrModerate` is the *integration*, and the one interface chang
 After that the open-input ledger of `twoPointElliottLog_of_three_bands` drops from four to two:
 `PrimeDensityAP` (T3, cheap, `G4MertensAP.mertensRate_residueClass`) and the designated cited
 `ArchCorrNearMaxHeight` (Vinogradov).
+
+## ✅ 2026-09-25 lap 116 — (c′-II-a) IS A THEOREM UP TO THE COEFFICIENT 9
+
+**`ElliottSliceCapModerate.exists_dampedSeriesBoundModerate9`** :
+`∃ K ≥ 0`, for all `X ≥ 2²⁰`, `X ≤ Y`, `|v| > 1`,
+`‖dampedPrefix v X Y‖ ≤ 9·log log(|v|+16) + K`.  Sorry-free, axiom-clean, in the audit surface.
+**The only analytic input anywhere in it is the in-repo `PNTPort.LogDerivZetaBndUnif99`.**
+
+New this lap:
+* `ElliottLogIntegral.integral_le_const_add_log_add_const` — the cap band tolerates a
+  **multiplicative** constant for an **additive** price: cap clause `C·T⁻¹ + K`, harmonic clause
+  `w⁻¹ + K`, conclusion `C + log(1/T) + K`.  Because the cap band is `[0,T]`, `∫₀^T C·T⁻¹ = C`;
+  the `log(1/T)` main term comes entirely from the harmonic band and keeps lap 106's sharp
+  coefficient `1`.
+* `ElliottDamped.norm_dampedPrefix_le_of_slice_le_const` — the same generalization one level up.
+* `ElliottDamped.sliceT9_le_one` (moved here from `ElliottSliceCapModerate`),
+  `SliceBoundModerate9`, `sliceBoundModerate9_of_cap` (harmonic half = lap 106's
+  `sum_log_rpow_le`), `DampedSeriesBoundModerate9`, `dampedSeriesBoundModerate9_of_sliceBound`.
+
+**Where the `9` comes from, exactly one place:** `log(1/sliceT9) ≤ log((log(|v|+16))^9) =
+9·log log(|v|+16)` (`Real.log_pow`), and `sliceT9 ≥ ((log(|v|+16))^9)⁻¹` by `le_max_left`.  The
+exponent is inherited from `PNTPort.ZetaZeroFree9`'s region `σ ≥ 1 − A/(log|t|)^9`.  Nothing else
+in the chain contributes a coefficient.
+
+Audit: 9693 jobs, zero `sorryAx`.
+
+### NEXT LAP — T2 step 4, the last step: `ArchCorrModerate` with the coefficient 9
+
+Two edits, both scoped:
+
+1. **`ElliottDamped.archCorrModerate_of_dampedSeriesBound` has a `9`-analogue.**  The damping
+   step (`norm_archCorr_sub_dampedPrefix_le'`, cost `dampingCost`) is coefficient-blind, so
+   `archCorrModerate9_of_dampedSeriesBound : DampedSeriesBoundModerate9 K →
+   ArchCorrModerate9 (K + dampingCost)` is a copy of the existing proof with
+   `Real.log (Real.log (|v|+16))` replaced by `9 * Real.log (Real.log (|v|+16))`.
+   Define `ElliottArchBands.ArchCorrModerate9 (K)` alongside `ArchCorrModerate` — **do not modify
+   `ArchCorrModerate` itself**, other consumers take it.
+2. **`ElliottArchBands.archCorrLargeShift_of_moderate_and_nearMax` needs a `9`-variant.**  This is
+   the real content of the next lap: the height cut moves from `exp((log X)^{1−ν})` to
+   `exp((log X)^{(1−ν)/9})` so that `9·log log|v| ≤ (1−η)·log log X` still holds below the cut.
+   Check the arithmetic at the cut before writing Lean (EA-1): at `|v| = exp((log X)^{(1−ν)/9})`,
+   `9·log log(|v|+16) ≈ 9·((1−ν)/9)·log log X = (1−ν)·log log X`, so the proportional saving `ν`
+   survives intact — **that is why the exponent is free**, and it is the claim to verify first.
+
+Then `twoPointElliottLog_of_three_bands` needs re-stating with `ArchCorrModerate9`, and the open
+ledger drops to `PrimeDensityAP` (T3) + the cited `ArchCorrNearMaxHeight` (Vinogradov).
