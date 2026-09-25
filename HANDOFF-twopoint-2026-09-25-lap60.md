@@ -102,3 +102,54 @@ The 🟡 ledger of this swing is empty.  Remaining `sorry`s in `src/` outside th
 `SwingC2.lean` (×4), `SwingC3Leaf.lean`, `SwingC3Rotation.lean`, `PrimeLambertOscillation.lean`,
 `MahlerDriftOne.lean` (Linnik-strength, disclosed).  `SwingC1*.lean` and the ratified leaf are
 frozen by the directive.
+
+---
+
+## Checkpoint (end of lap 60)
+
+Branch `wip/twopoint-avg`, HEAD `e71155e`.  Working tree **clean**.  Eight green commits this lap,
+every one gated by the pre-commit `lake build` (9298 jobs).  No `sorry` introduced; every new
+declaration `#print axioms`-clean.
+
+New files: `src/NormalNumbers/TwoPointDelangeLevin.lean`, `src/NormalNumbers/TwoPointDelangeAll.lean`
+(both imported from `src/NormalNumbers.lean`).  No frozen file touched
+(`PairDecouple*`, `SwingC1*`, `CastingOut*`, `Maze.lean`, `papers/`, `agent-mail/`, KICKOFFs,
+`DIRECTION.md` all untouched); `twoPointWeightedAvg_all` untouched, as ratified.
+
+## NEXT SESSION — start here
+
+1. **`DelangeSlot.charSum_tendsto_zero` is an unexploited asset.**  It is proved and axiom-clean
+   and gives far more than `DelangeMean`: for any character-like `κ` mod `M` and any `P`,
+   `(1/N)∑_{n≤N} κ(n)·z^{ω_{>P}(n)} → 0`.  Nothing outside the `DelangeSlot` namespace consumes it.
+   That is exactly **Delange in arithmetic progressions, for the large-prime `ω`** — the engine the
+   C3 crux needs for its digit peel.  First move of the next lap: inventory what else in the tree
+   becomes unconditional once it is wired in (the same way `DelangeMean` did this lap).
+
+2. **The C3 crux, `SwingC3Leaf.weylLambertTwist_holds`** — the biggest open obligation now visible
+   outside the frozen C1 leaf.  It asks
+   `(1/N)∑_{n<N} e(jn/Q)·e(h·tailLarge P b n) → 0`, and `tailLarge P b n = ∑_{i≥1} ω_{>P}(n+i)b^{−i}`.
+   Peeling one digit gives `e(h·tail_n) = e((h/b)·ω_{>P}(n+1))·e((h/b)·tail_{n+1})`, and the first
+   factor times the periodic twist `e(jn/Q)` is **exactly an instance of item 1**.  So the natural
+   next lap is the structural reduction: `WeylLambertTwist` from `charSum_tendsto_zero` plus a
+   ShiftIndep-type decorrelation, putting C3 on the same footing as C1 and pinning its depth.
+   Caveat to test, not assume: the peel must grow (`K ≈ log_b log N`, since `tail_n = O(log n)`),
+   which is what makes C1's analogue a 🔴; check whether C3's twist changes that.
+
+3. **Alternative C3 route, possibly cheaper**: `SwingC3Rotation.tailLargeDecouple_holds` (disclosed
+   `sorry`, leaf B).  Leaf A is proved.  Leaf B says the distribution of `tailLarge P b n` does not
+   depend on `n mod Q` when every prime factor of `Q` is `≤ P`.  At finite level this is EXACT by
+   CRT (moduli `p > P` are coprime to `Q`); the whole content is the truncation, i.e. a Brun
+   fundamental-lemma / level-of-distribution argument.  The repo already has Brun material
+   (`KICKOFF-brun-lower-core.md`, `PrimeModelRadical*`).  Formalising the exact finite-level CRT
+   independence is a self-contained prerequisite worth one lap on its own.
+
+4. **Do NOT retry**: the pretentious ladder along the unit circle (refuted above); the claim that
+   `‖t‖ ≥ 1/6` needs Selberg–Delange/Halász (refuted twice over); anything on the frozen C1
+   arithmetic leaf, which `DIRECTION.md` forbids.
+
+## Confidence at checkpoint
+- `DelangeMean t` for all `t ∉ ℤ`: **DONE**, now by two independent kernel proofs.
+- `ConjC1` free of all cited-but-unproved theorems: **DONE**.
+- `twoPointWeightedAvg_all` TRUE: **90%**; provable with known techniques: **3%** (untouched).
+- C3 (`weylLambertTwist_holds`) provable with known techniques: **15%** — raised from "unmeasured"
+  because item 1 supplies its first peel outright.
