@@ -178,3 +178,40 @@ theorem exists_avoiding_offset (N Q : ℕ) (hQ : 0 < Q) (d : ℕ → ℕ) (S : �
   exact hoB (by
     rw [hBdef, Finset.mem_filter]
     exact ⟨hoQ, m, Finset.mem_range.mpr hm, hmem⟩)
+
+/-! ## The exact window law of a stage
+
+`multi_not_isAbelianAt'` only needs an inequality, but the limit transfer
+(`tendsto_onesFreq_of_linear_diff`) needs every stage to attain the SAME value `v`.  So for the
+excluded lengths we need the stage law exactly, not just a bound.  The computation is:
+the constant term of the window polynomial at a residue `r` is `(3/4)^{k(r)}` times the Binomial
+value, where `k(r)` counts the blocks whose trace separates a gadget of arm `L`.
+-/
+
+/-- **The exact constant term** of a window polynomial, given the set of defective blocks. -/
+theorem winGf_coeff_eq (q : ℕ) (hq0 : 0 < q) (gs : List (ℕ × ℕ))
+    (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup) (S L r : ℕ)
+    (hS : ∀ t < L, (r + t) / q < S) (D : Finset ℕ) (hD : D ⊆ range S)
+    (hdef : ∀ b ∈ D, (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q L r b d).coeff 0
+      = 3 / 4 * ((2 : ℝ) ^ q / 2 ^ segLen q L r b))
+    (hcln : ∀ b ∈ (range S) \ D,
+      (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q L r b d).coeff 0
+        = (2 : ℝ) ^ q / 2 ^ segLen q L r b) :
+    (winGf (multiG q gs) q (2 ^ q) S L r).coeff 0
+      = (3 / 4) ^ D.card * (((2 ^ q : ℕ) : ℝ) ^ S / 2 ^ L) := by
+  classical
+  have hB0 : 0 < 2 ^ q := by positivity
+  have hcast : ((2 ^ q : ℕ) : ℝ) = (2 : ℝ) ^ q := by push_cast; ring
+  have hcoeff : (winGf (multiG q gs) q (2 ^ q) S L r).coeff 0
+      = ∏ b ∈ range S,
+        (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q L r b d).coeff 0 := by
+    rw [winGf_eq_prod (multiG q gs) hB0 q S L r hS, ← Polynomial.constantCoeff_apply, map_prod]
+    rfl
+  have hprodv : ∏ b ∈ range S, ((2 : ℝ) ^ q / 2 ^ segLen q L r b)
+      = ((2 ^ q : ℕ) : ℝ) ^ S / 2 ^ L := by
+    rw [Finset.prod_div_distrib, Finset.prod_const, Finset.card_range,
+      Finset.prod_pow_eq_pow_sum, segLen_sum q L r S hS, hcast]
+  rw [hcoeff, ← Finset.prod_sdiff hD, Finset.prod_congr rfl hdef,
+    Finset.prod_congr rfl hcln, Finset.prod_mul_distrib, Finset.prod_const,
+    ← hprodv, ← Finset.prod_sdiff hD]
+  ring
