@@ -214,6 +214,77 @@ theorem norm_sum_Ioc_pow_le {A : ℕ} (hA : 1 ≤ A) (f : ℕ → ℂ) (m : ℕ)
   rw [h1] at this
   linarith
 
+/-! ### The head: windows below the non-pretentiousness threshold
+
+A correction forced by the actual definition of `pretentiousDistSqToTwist` (a sum over
+`p ≤ X` of terms `≤ 2/p`, hence of size `O(log log X)`): the Elliott hypothesis
+`A ≤ pretentiousDistSqToTwist f χ t X` **cannot hold at small `X`**.  For a fixed `A` it needs
+`log log X ≳ A`, i.e. `X ≥ A^{i₀}` for some threshold `i₀ = i₀(A)` — large, but fixed once `A`
+is.  So the lowest windows of the lap-14 stack are unusable.
+
+This costs nothing: the uncovered head `1 ≤ j ≤ A^{i₀}` has harmonic mass `≤ 1 + log(A^{i₀})`,
+a constant depending on `A` but **not** on `m`.  Against a main term `≍ m·log A` it is
+negligible, exactly like the `j = 1` point and the lap-13 weight-transfer constants.  The
+decomposition below therefore starts the stack at `i₀` instead of `0`.
+-/
+
+/-- The decomposition of an initial segment starting from an arbitrary level `i₀`. -/
+theorem sum_Ioc_pow_decomp_from {M : Type*} [AddCommMonoid M] (f : ℕ → M) (A : ℕ) (hA : 1 ≤ A)
+    (i₀ m : ℕ) (him : i₀ ≤ m) :
+    ∑ j ∈ Ioc 0 (A ^ m), f j
+      = ∑ j ∈ Ioc 0 (A ^ i₀), f j + ∑ i ∈ Icc (i₀ + 1) m, ∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j := by
+  induction m, him using Nat.le_induction with
+  | base => simp
+  | succ m him ih =>
+    have hpow : A ^ m ≤ A ^ (m + 1) := Nat.pow_le_pow_right hA (by omega)
+    rw [Finset.sum_Icc_succ_top (by omega), ← add_assoc, ← ih]
+    have hsplit : ∑ j ∈ Ioc 0 (A ^ m), f j + ∑ j ∈ Ioc (A ^ m) (A ^ (m + 1)), f j
+        = ∑ j ∈ Ioc 0 (A ^ (m + 1)), f j :=
+      Finset.sum_Ioc_consecutive f (Nat.zero_le _) hpow
+    rw [← hsplit, Nat.add_sub_cancel]
+
+/-- **The stacking bound with a head.**  If the head `1 ≤ j ≤ A^{i₀}` is bounded by `C` and
+every window above `i₀` contributes at most `B`, the initial segment `1 ≤ j ≤ A^m` is bounded
+by `C + m·B`. -/
+theorem norm_sum_Ioc_pow_le_from {A : ℕ} (hA : 1 ≤ A) (f : ℕ → ℂ) (i₀ m : ℕ) (him : i₀ ≤ m)
+    (C B : ℝ) (hB : 0 ≤ B)
+    (hhead : ‖∑ j ∈ Ioc 0 (A ^ i₀), f j‖ ≤ C)
+    (hwin : ∀ i ∈ Icc (i₀ + 1) m, ‖∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j‖ ≤ B) :
+    ‖∑ j ∈ Ioc 0 (A ^ m), f j‖ ≤ C + (m : ℝ) * B := by
+  rw [sum_Ioc_pow_decomp_from f A hA i₀ m him]
+  have hrest : ‖∑ i ∈ Icc (i₀ + 1) m, ∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j‖ ≤ (m : ℝ) * B := by
+    refine le_trans (norm_sum_le _ _) ?_
+    have hcard : (Icc (i₀ + 1) m).card ≤ m := by
+      rw [Nat.card_Icc]; omega
+    calc ∑ i ∈ Icc (i₀ + 1) m, ‖∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j‖
+        ≤ ∑ _i ∈ Icc (i₀ + 1) m, B := Finset.sum_le_sum hwin
+      _ = ((Icc (i₀ + 1) m).card : ℝ) * B := by
+          rw [Finset.sum_const, nsmul_eq_mul]
+      _ ≤ (m : ℝ) * B := by
+          refine mul_le_mul_of_nonneg_right ?_ hB
+          exact_mod_cast hcard
+  have := norm_add_le (∑ j ∈ Ioc 0 (A ^ i₀), f j)
+    (∑ i ∈ Icc (i₀ + 1) m, ∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j)
+  linarith
+
+/-- The head is bounded by its harmonic mass: a constant, independent of `m`. -/
+theorem norm_head_le {J : ℕ} (f : ℕ → ℂ) (K : ℝ)
+    (hf : ∀ j : ℕ, 0 < j → ‖f j‖ ≤ ((j : ℝ))⁻¹) :
+    ‖∑ j ∈ Ioc 0 J, f j‖ ≤ 1 + Real.log J := by
+  refine le_trans (norm_sum_le _ _) ?_
+  have hterm : ∀ j ∈ Ioc 0 J, ‖f j‖ ≤ ((j : ℝ))⁻¹ := by
+    intro j hj
+    rw [Finset.mem_Ioc] at hj
+    exact hf j hj.1
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  have hIcc : Ioc 0 J = Icc 1 J := by
+    ext j; rw [Finset.mem_Ioc, Finset.mem_Icc]; omega
+  rw [hIcc]
+  have h1 : ∑ j ∈ Icc 1 J, ((j : ℝ))⁻¹ = ((harmonic J : ℚ) : ℝ) := by
+    rw [harmonic_eq_sum_Icc]; push_cast; rfl
+  rw [h1]
+  exact harmonic_le_one_add_log J
+
 /-! ### The conditional rung
 
 Everything above is unconditional.  Here the named open input enters, and ONLY here:
@@ -241,46 +312,57 @@ theorem initial_segment_bound_of_elliott
     (hdet : (e : ℤ) * (b₁ : ℤ) - (d : ℤ) * (b₀ : ℤ) ≠ 0)
     (z₀ z₁ : ℂ) (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1)
     (ε : ℝ) (hε : 0 < ε) :
-    ∃ A₀ : ℕ, 2 ≤ A₀ ∧ ∀ A : ℕ, A₀ ≤ A →
-      (∀ X : ℕ, ∀ q : ℕ, 0 < q → q ≤ A → ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ,
-          |t| ≤ (A : ℝ) * X →
+    ∃ A₀ : ℕ, 2 ≤ A₀ ∧ ∀ A : ℕ, A₀ ≤ A → ∀ i₀ : ℕ,
+      (∀ i : ℕ, i₀ < i → ∀ q : ℕ, 0 < q → q ≤ A → ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ,
+          |t| ≤ (A : ℝ) * (A ^ i : ℕ) →
             (A : ℝ) ≤ Erdos67b.pretentiousDistSqToTwist
-              (Erdos67b.restrictToNat (zOmInt z₀)) χ t X) →
-      ∀ m : ℕ,
+              (Erdos67b.restrictToNat (zOmInt z₀)) χ t (A ^ i)) →
+      ∀ m : ℕ, i₀ ≤ m →
         ‖∑ j ∈ Ioc 0 (A ^ m),
             (Erdos67b.harmonicWeight j : ℂ) * zOmInt z₀ (Erdos67b.integerAffine e (b₀ : ℤ) j) *
               zOmInt z₁ (Erdos67b.integerAffine d (b₁ : ℤ) j)‖
-          ≤ 1 + (m : ℝ) * (ε * Real.log A) := by
+          ≤ (1 + Real.log (A ^ i₀ : ℕ)) + (m : ℝ) * (ε * Real.log A) := by
   obtain ⟨A₀, hA₀2, hA₀⟩ := helliott e d (b₀ : ℤ) (b₁ : ℤ) he hd hdet ε hε
-  refine ⟨A₀, hA₀2, fun A hA hpret m => ?_⟩
+  refine ⟨A₀, hA₀2, fun A hA i₀ hpret m him => ?_⟩
   have hA1 : 1 ≤ A := by omega
   set f : ℕ → ℂ := fun j =>
     (Erdos67b.harmonicWeight j : ℂ) * zOmInt z₀ (Erdos67b.integerAffine e (b₀ : ℤ) j) *
       zOmInt z₁ (Erdos67b.integerAffine d (b₁ : ℤ) j) with hf
-  have hwin : ∀ i ∈ Icc 1 m, ‖∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j‖ ≤ ε * Real.log A := by
+  have hwin : ∀ i ∈ Icc (i₀ + 1) m, ‖∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j‖ ≤ ε * Real.log A := by
     intro i hi
     rw [Finset.mem_Icc] at hi
+    have hi1 : 1 ≤ i := by omega
     have hWX : A ≤ A ^ i := by
       calc A = A ^ 1 := (pow_one A).symm
-        _ ≤ A ^ i := Nat.pow_le_pow_right hA1 hi.1
+        _ ≤ A ^ i := Nat.pow_le_pow_right hA1 hi1
     have hcorr : ∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j
         = Erdos67b.elliottLogCorrelation (zOmInt z₀) (zOmInt z₁) e d (b₀ : ℤ) (b₁ : ℤ) (A ^ i) A := by
-      rw [Erdos67b.elliottLogCorrelation, ← elliottLogWindow_pow (by omega) hi.1]
+      rw [Erdos67b.elliottLogCorrelation, ← elliottLogWindow_pow (by omega) hi1]
     rw [hcorr]
     exact hA₀ A (A ^ i) A hA (le_refl A) hWX (zOmInt z₀) (zOmInt z₁)
       (isMultiplicativeOnPositiveInt_zOmInt z₀) (isMultiplicativeOnPositiveInt_zOmInt z₁)
-      (norm_zOmInt_le_one hz₀) (norm_zOmInt_le_one hz₁) (hpret (A ^ i))
-  have hone : ‖f 1‖ ≤ 1 := by
+      (norm_zOmInt_le_one hz₀) (norm_zOmInt_le_one hz₁) (hpret i (by omega))
+  have hhead : ‖∑ j ∈ Ioc 0 (A ^ i₀), f j‖ ≤ 1 + Real.log (A ^ i₀ : ℕ) := by
+    refine norm_head_le f 0 ?_
+    intro j hj
     rw [hf]
     simp only []
     rw [norm_mul, norm_mul]
-    have h1 : ‖((Erdos67b.harmonicWeight 1 : ℝ) : ℂ)‖ = 1 := by
-      rw [Erdos67b.harmonicWeight]
-      norm_num
-    rw [h1, one_mul]
-    exact mul_le_one₀ (norm_zOmInt_le_one hz₀ _) (norm_nonneg _) (norm_zOmInt_le_one hz₁ _)
-  have := norm_sum_Ioc_pow_le hA1 f m (ε * Real.log A) hwin
-  linarith
+    have h1 : ‖((Erdos67b.harmonicWeight j : ℝ) : ℂ)‖ = ((j : ℝ))⁻¹ := by
+      rw [Erdos67b.harmonicWeight, Complex.norm_real, Real.norm_eq_abs,
+        abs_of_nonneg (by positivity)]
+    rw [h1]
+    calc ((j : ℝ))⁻¹ * ‖zOmInt z₀ (Erdos67b.integerAffine e (b₀ : ℤ) j)‖ *
+        ‖zOmInt z₁ (Erdos67b.integerAffine d (b₁ : ℤ) j)‖
+        ≤ ((j : ℝ))⁻¹ * 1 * 1 := by
+          gcongr
+          · exact norm_zOmInt_le_one hz₀ _
+          · exact norm_zOmInt_le_one hz₁ _
+      _ = ((j : ℝ))⁻¹ := by ring
+  have hBnn : (0 : ℝ) ≤ ε * Real.log A := by
+    have : (0 : ℝ) ≤ Real.log A := Real.log_natCast_nonneg A
+    positivity
+  exact norm_sum_Ioc_pow_le_from hA1 f i₀ m him _ _ hBnn hhead hwin
 
 end CastingOut
 

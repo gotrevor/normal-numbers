@@ -1,4 +1,4 @@
-# HANDOFF c3-mrt 2026-09-25 — laps 7–15
+# HANDOFF c3-mrt 2026-09-25 — laps 7–16
 
 Branch `wip/c3-mrt`.  `lake build` green at both commits; every new result axiom-clean
 `[propext, Classical.choice, Quot.sound]`, no `sorry`.  Pure addition (2 new modules).
@@ -184,6 +184,27 @@ constant on primes).
 Axiom-clean: `[propext, Classical.choice, Quot.sound]`.  Elliott is an explicit hypothesis, so
 nothing here rests on `sorryAx`.
 
+## Lap 16 — a REAL gap in lap 15, found by reading `pretentiousDistSq`, and closed
+
+`pretentiousDistSq f g X = ∑_{p ≤ X} (1 − Re(f(p)·conj g(p)))/p`, a sum of terms `≤ 2/p`, so
+its size is `O(log log X)`.  Therefore the Elliott hypothesis `A ≤ pretentiousDistSqToTwist … X`
+**cannot hold at small `X`**: for fixed `A` it needs `log log X ≳ A`, i.e. `X ≥ A^{i₀}` for a
+threshold `i₀ = i₀(A)`.  Lap 15 demanded it at every window including `X = A` — unsatisfiable.
+
+Fixed, and the fix is cheap:
+
+* `sum_Ioc_pow_decomp_from`, **`norm_sum_Ioc_pow_le_from`** — the window stack may start at any
+  level `i₀`, with the head `1 ≤ j ≤ A^{i₀}` bounded separately.
+* `norm_head_le` — the head's harmonic mass is `≤ 1 + log(A^{i₀})`: a constant depending on `A`
+  but **not on `m`**, hence negligible against the main term `≍ m·log A`.
+* `initial_segment_bound_of_elliott` restated: non-pretentiousness is now required only at the
+  scales `X = A^i` with `i > i₀`, and the conclusion is
+  `≤ (1 + log(A^{i₀})) + m·ε·log A`.
+
+This is the same pattern as the `j = 1` point (lap 14) and the weight-transfer constants
+(lap 13): everything below the threshold is an `N`-independent constant, absorbed because the
+quantifier order is `ε → Y → A → i₀ → N → ∞`.
+
 ## NEXT — resume here
 
 0. **Non-pretentiousness for `ζ^Ω`.**  Supply the remaining caller hypothesis:
@@ -192,6 +213,12 @@ nothing here rests on `sorryAx`.
    `ζ^{ω_{>P}}`) to `ζ^Ω`; on primes both equal `ζ`, so the prime-sum that `pretentiousDistSq`
    measures is literally the same object — this should be a re-statement, not new analysis.
    Read `ErdosProblems/Erdos67b/Pretentious.lean:60` for the exact definition first.
+   **Expect a `log log` ceiling** (lap 16): the achievable bound is
+   `dist ≥ c(ζ₀,q)·log log X − O(1)`, so the certificate must be stated as "for every `A` there
+   is `i₀` with the hypothesis holding at all `X = A^i`, `i > i₀`" — which is exactly the shape
+   `initial_segment_bound_of_elliott` now consumes.  The constant `c` is
+   `min over χ mod q ≤ A, t of the density of primes with χ(p)p^{it} ≉ ζ₀`, positive because a
+   Dirichlet character cannot equal a fixed constant on a density-1 set of primes.
 1. **Sum over the tuple.**  Combine `initial_segment_bound_of_elliott` over `d, e ≤ Y` with
    `sum_pow_omega_two_shift_eq_coprime` + `weight_transfer` + `bridge_truncation_bound_of_mass`.
    The per-pair constants (`1` from `j=1`, `2/L` from the weight transfer) sum to a `C(Y)`
