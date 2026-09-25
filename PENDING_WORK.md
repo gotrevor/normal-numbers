@@ -10000,3 +10000,23 @@ Next lap: `Finset.sum_fiberwise_of_maps_to` over `Icc (−K) K`, checking the `h
 `a = (γ_m − δ)/|t|` on each fibre, plus the two side conditions (`a ≥ log 2` — this is exactly
 the small-prime split, since `a < log 2` forces `p ≤ exp((γ_m+δ)/|t|)` small; and the BT error
 tail).
+
+### Lap 78 — the two summation bricks
+
+* `window_err_le` — `6(1+a)³/√(exp a) ≤ 10⁵·exp(−a/8)` for `a ≥ 0`.  The Brun–Titchmarsh error
+  of `resonant_window_mass_le` decays exponentially in the window HEIGHT.  Proved from
+  `exp x ≥ (1 + x/4)⁴` (four `Real.add_one_le_exp`s), no factorials.
+* `sum_Icc_symm_le` — `∑_{m ∈ [−K,K] ⊆ ℤ} f|m| ≤ 2 ∑_{j ≤ K} f j` for `f ≥ 0`, by fibering
+  over `Int.natAbs` (each fibre has ≤ 2 points).  This is the reindexing both the harmonic
+  main-term sum (`sum_inv_gap_le`, stated over `Icc 1 K ⊆ ℕ`) and the error sum need.
+
+**Design note recorded for the assembly.**  The small-prime cutoff is NOT `p ≥ 7`.  With
+`2δ ≤ |t|` one does get `a_m ≥ log 2` as soon as `p ≥ 7`, so `resonant_window_mass_le` applies;
+but its BT error term `≈ 10⁵ e^{−a/8}` summed over the `≈ |t| log Y` windows is `≈ C|t|`, which
+is NOT `O(δ log(2+|t|))`.  The cutoff must be at height `A₁ ≈ 8 log(C(1+|t|))`, i.e.
+`P₁ ≈ (C(1+|t|))⁸`:
+* windows below `A₁`: bound their total by the mass of ALL primes `p ≤ exp(A₁+1)`, which is
+  `log(A₁+1) + mertensBound ≈ log log|t|`, absorbed by `log_log_le_mul_log`;
+* windows above `A₁`: `∑ e^{−a_m/8} ≤ e^{−A₁/16}·∑ e^{−a_m/16}` and the second factor is a
+  geometric sum with ratio `e^{−π/(16|t|)}`, hence `≤ 1 + 32|t|/π`; `A₁ = 16 log(C(1+|t|))`
+  then makes the whole error `≤ 1`.

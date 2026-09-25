@@ -306,3 +306,83 @@ theorem abs_windowIndexW_le {z : ℂ} (hz : ‖z‖ = 1) {p : ℕ} (hp : 2 ≤ p
   have : |(m : ℝ)| ≤ ((⌈(T + δ + π) / (2 * π)⌉₊ : ℕ) : ℝ) := le_trans hfin hceil
   rw [← Int.cast_abs] at this
   exact_mod_cast this
+
+/-! ## Two bricks for summing over the window indices `m ∈ [−K, K]` -/
+
+/-- **Polynomial beats exponential, explicitly.**  The Brun–Titchmarsh error of
+`resonant_window_mass_le` decays exponentially in the window height:
+`6(1+a)³/√(exp a) ≤ 10⁵·exp(−a/8)`.  Proved from `exp x ≥ (1 + x/4)⁴`, i.e. four applications
+of `Real.add_one_le_exp`, with no factorials. -/
+theorem window_err_le {a : ℝ} (ha : 0 ≤ a) :
+    6 * (1 + a) ^ 3 / Real.sqrt (Real.exp a) ≤ 100000 * Real.exp (-(a / 8)) := by
+  have hsq : Real.sqrt (Real.exp a) = Real.exp (a / 2) := by
+    have h2 : (Real.exp (a / 2)) ^ 2 = Real.exp a := by
+      rw [sq, ← Real.exp_add]; ring_nf
+    rw [← h2, Real.sqrt_sq (Real.exp_pos _).le]
+  have hexp : (1 + 3 * a / 32) ^ 4 ≤ Real.exp (3 * a / 8) := by
+    have h1 : 3 * a / 32 + 1 ≤ Real.exp (3 * a / 32) := Real.add_one_le_exp _
+    have h2 : (1 + 3 * a / 32) ^ 4 ≤ (Real.exp (3 * a / 32)) ^ 4 := by
+      refine pow_le_pow_left₀ (by positivity) (by linarith) 4
+    calc (1 + 3 * a / 32) ^ 4 ≤ (Real.exp (3 * a / 32)) ^ 4 := h2
+      _ = Real.exp (3 * a / 8) := by rw [← Real.exp_nat_mul]; congr 1; ring
+  have hpoly : 6 * (1 + a) ^ 3 ≤ 100000 * (1 + 3 * a / 32) ^ 4 := by
+    have hb : (3 / 32 : ℝ) * (1 + a) ≤ 1 + 3 * a / 32 := by linarith
+    have hb0 : (0 : ℝ) ≤ (3 / 32 : ℝ) * (1 + a) := by positivity
+    have h4 : ((3 / 32 : ℝ) * (1 + a)) ^ 4 ≤ (1 + 3 * a / 32) ^ 4 :=
+      pow_le_pow_left₀ hb0 hb 4
+    have hcube : (1 + a) ^ 3 ≤ (1 + a) ^ 4 := by
+      refine pow_le_pow_right₀ (by linarith) (by norm_num)
+    have hval : ((3 / 32 : ℝ) * (1 + a)) ^ 4 = (81 / 1048576 : ℝ) * (1 + a) ^ 4 := by ring
+    rw [hval] at h4
+    nlinarith [h4, hcube, pow_nonneg (by linarith : (0:ℝ) ≤ 1 + a) 4]
+  rw [hsq, div_le_iff₀ (Real.exp_pos _)]
+  have hrw : 100000 * Real.exp (-(a / 8)) * Real.exp (a / 2) = 100000 * Real.exp (3 * a / 8) := by
+    rw [mul_assoc, ← Real.exp_add]
+    congr 2
+    ring
+  rw [hrw]
+  nlinarith [hexp, hpoly]
+
+/-- **Symmetric index sums.**  A sum over `m ∈ [−K, K] ⊆ ℤ` of a nonnegative function of `|m|`
+is at most twice the sum over `0 ≤ j ≤ K`: each fibre of `Int.natAbs` has at most two points. -/
+theorem sum_Icc_symm_le {K : ℕ} (f : ℝ → ℝ) (hf : ∀ x, 0 ≤ f x) :
+    ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ), f |(m : ℝ)|
+      ≤ 2 * ∑ j ∈ Finset.range (K + 1), f (j : ℝ) := by
+  classical
+  have hmaps : ∀ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ), m.natAbs ∈ Finset.range (K + 1) := by
+    intro m hm
+    rw [Finset.mem_Icc] at hm
+    rw [Finset.mem_range]
+    omega
+  rw [← Finset.sum_fiberwise_of_maps_to hmaps (fun m : ℤ => f |(m : ℝ)|)]
+  refine le_trans (Finset.sum_le_sum (g := fun j : ℕ => 2 * f (j : ℝ)) (fun j _ => ?_))
+    (le_of_eq (by rw [Finset.mul_sum]))
+  · show ∑ m ∈ (Finset.Icc (-(K : ℤ)) (K : ℤ)).filter (fun m => m.natAbs = j), f |(m : ℝ)|
+        ≤ 2 * f (j : ℝ)
+    have hsub : (Finset.Icc (-(K : ℤ)) (K : ℤ)).filter (fun m => m.natAbs = j)
+        ⊆ ({(j : ℤ), -(j : ℤ)} : Finset ℤ) := by
+      intro m hm
+      have hj : m.natAbs = j := (Finset.mem_filter.1 hm).2
+      simp only [Finset.mem_insert, Finset.mem_singleton]
+      omega
+    have hconst : ∀ m ∈ (Finset.Icc (-(K : ℤ)) (K : ℤ)).filter (fun m => m.natAbs = j),
+        f |(m : ℝ)| = f (j : ℝ) := by
+      intro m hm
+      have hj : m.natAbs = j := (Finset.mem_filter.1 hm).2
+      have habs : |m| = (j : ℤ) := by
+        have h1 : |m| = (m.natAbs : ℤ) := by
+          first
+            | exact Int.abs_eq_natAbs m
+            | exact (Int.natCast_natAbs m).symm
+            | exact (Int.cast_natAbs m).symm
+        rw [h1, hj]
+      congr 1
+      rw [← Int.cast_abs, habs]
+      norm_cast
+    rw [Finset.sum_congr rfl hconst, Finset.sum_const, nsmul_eq_mul]
+    have hcard : ((Finset.Icc (-(K : ℤ)) (K : ℤ)).filter (fun m => m.natAbs = j)).card ≤ 2 := by
+      refine le_trans (Finset.card_le_card hsub) ?_
+      exact le_trans (Finset.card_insert_le _ _) (by simp)
+    have : (((Finset.Icc (-(K : ℤ)) (K : ℤ)).filter (fun m => m.natAbs = j)).card : ℝ) ≤ 2 := by
+      exact_mod_cast hcard
+    exact mul_le_mul_of_nonneg_right this (hf _)
