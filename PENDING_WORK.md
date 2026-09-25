@@ -169,6 +169,33 @@ Recording the exponent arithmetic, since it is the whole reason the shift is leg
 local factor sums `∑_{k≥2} p^{-3k/4}`, whose leading term is `p^{-3/2}`, and `3/2 > 1`.  At
 `δ = 1/2` the leading term would be `p^{-1}` and the prime sum would diverge.
 
+## Lap 62 (2026-09-25) — `exists_squarefull_tail` PROVED: lap 60's obstruction is discharged
+
+`src/NormalNumbers/ElliottRankin.lean` completed; `ElliottLeafTwo.exists_squarefull_tail` is now a
+one-line consequence, **no longer a sorry**.  `src/` sorry count 3 → 2.
+
+* `shifted u n = ‖u n‖ / n^{3/4}`, multiplicative (`Real.mul_rpow`).
+* `five_div_three_le_rpow` / `rpow_neg_le` — `2^{-3/4} ≤ 3/5`, hence `1 − r ≥ 2/5`.  This is the
+  one numeric constant the shift needs and it is tight-ish: `(5/3)^4 = 625/81 ≈ 7.72` vs `2^3 = 8`.
+* `local_factor_shifted_le` — the shifted local factor is `≤ 1 + 5/(p√p)`.
+* **`sum_Icc_shifted_le`** — `∑_{d ≤ Y} ‖u d‖/d^{3/4} ≤ e^{11}`, absolutely.
+* `norm_div_le_shifted_div` — the Rankin step `‖u d‖/d = (‖u d‖/d^{3/4})/d^{1/4}`.
+* **`exists_squarefull_tail_bound`** — `∑_{D < d ≤ Y} ‖u d‖/d ≤ ε` with `D = ⌈(e^{11}/ε)^4⌉`,
+  for every unimodular multiplicative `U` and every `Y`.
+
+Implementation note worth keeping: writing the step as `shifted d / d^{1/4}` rather than
+`d^{-1/4} · shifted d` keeps **every** rpow exponent positive, which removes all the
+`Real.rpow_neg` friction; `gcongr` then closes the monotonicity in one call.
+
+### Where leaf 2 stands
+
+Two sorries remain, both in `src/NormalNumbers/ElliottLeafTwo.lean`:
+1. `exists_caseA_thin_threshold` — all ingredients proved (lap 59); remaining is the nat-division
+   estimate `Y/L ≤ c(a₁,b₁)·W` plus threshold bookkeeping mirroring
+   `ElliottCaseA.exists_caseA_threshold`.
+2. `exists_caseB_threshold` — all six itemised steps now name a proved lemma except the
+   window/weight reindexing of step 5 (`X ↦ X/q` at fixed ratio; `1/(qk+n₀)` versus `1/(qk)`).
+
 ### NEXT — assemble `exists_squarefull_tail`
 
 Remaining wiring, all of it now over proved lemmas:

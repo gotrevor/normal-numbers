@@ -1,6 +1,7 @@
 import NormalNumbers.ElliottCaseAThin
 import NormalNumbers.ElliottProgression
 import NormalNumbers.ElliottPretentiousTransfer
+import NormalNumbers.ElliottRankin
 
 /-!
 # Leaf 2: the assembly
@@ -22,7 +23,7 @@ two halves, with no gap at the junction.
 * `exists_caseB_threshold` — Case B: defect small ⟹ done, via cover + transfer + squarefull +
   progression.
 
-## The obstruction found while assembling (lap 60)
+## The obstruction found while assembling (lap 60) — now DISCHARGED (lap 62)
 
 Case B expands `U₁(a₁n+b₁) = ∑_{d₁ ∣ a₁n+b₁} u₁(d₁) Ũ₁((a₁n+b₁)/d₁)` and applies
 `AffineCMLogElliott` to each substituted pair `(a₁d₂, c₁; a₂d₁, c₂)`.  The determinant is preserved
@@ -41,7 +42,7 @@ is that here it *is* true, and for a concrete reason: the local factors `1 + 2/(
 absolute, so a Rankin shift is available —
 `∑_{d > D} ‖u d‖/d ≤ D^{−1/4} ∑_d ‖u d‖/d^{3/4}` and the shifted Euler product
 `∏_p (1 + ∑_{k ≥ 2} 2/p^{3k/4})` still converges, `3·2/4 = 3/2 > 1`.  So the obligation is real
-work but not a wall; it is stated below and disclosed.
+work but not a wall; it is stated below and **proved** in `NormalNumbers.ElliottRankin`.
 -/
 
 open scoped BigOperators
@@ -80,14 +81,15 @@ theorem exists_caseA_thin_threshold {a₁ : ℕ} (ha₁ : 0 < a₁) (b₁ : ℤ)
 
 /-! ## The new obligation: a UNIFORMLY small squarefull tail -/
 
-/-- **Open (identified lap 60).**  The squarefull tail is uniformly small, with the truncation
-point `D` chosen **before** the function `U`.
+/-- **PROVED (lap 62, `ElliottRankin.exists_squarefull_tail_bound`).**  The squarefull tail is
+uniformly small, with the truncation point `D` chosen **before** the function `U`.
 
 This does *not* follow from `ElliottSquarefullConv.sum_norm_squarefullPart_div_le_exp_two` (a bound
 on the total).  It is needed because `AffineCMLogElliott` hands out its threshold `A₀` per affine
 pair, and the substituted pairs `(a₁d₂, a₂d₁)` grow with `d₁,d₂`, so only finitely many may be
 used.  See this file's header for why it is nevertheless true: Rankin shift by `1/4`, the shifted
-local factors `1 + ∑_{k≥2} 2/p^{3k/4}` still having a convergent prime sum since `3/2 > 1`. -/
+local factors `1 + ∑_{k≥2} 2/p^{3k/4}` still having a convergent prime sum since `3/2 > 1`.
+That is exactly how it was proved. -/
 theorem exists_squarefull_tail {ε : ℝ} (hε : 0 < ε) :
     ∃ D : ℕ, 1 ≤ D ∧
       ∀ U : ℕ → ℂ, U 1 = 1 →
@@ -95,8 +97,8 @@ theorem exists_squarefull_tail {ε : ℝ} (hε : 0 < ε) :
         (∀ n : ℕ, 0 < n → ‖U n‖ = 1) →
         ∀ Y : ℕ,
           ∑ d ∈ Finset.Icc (D + 1) Y,
-              ‖NormalNumbers.ElliottSquarefullConv.squarefullPart U d‖ / (d : ℝ) ≤ ε := by
-  sorry
+              ‖NormalNumbers.ElliottSquarefullConv.squarefullPart U d‖ / (d : ℝ) ≤ ε :=
+  NormalNumbers.ElliottRankin.exists_squarefull_tail_bound hε
 
 /-! ## Half two: Case B (the defect is small) -/
 
@@ -111,7 +113,8 @@ Route, now fully itemised, every ingredient proved except the two disclosed obli
    using the small defect: `MRTNonpretentious u₁ A' X` with `(A' : ℝ) ≤ A/3 − 2D₀`.  *Proved.*
 3. `ElliottSquarefullConv.squarefullPart` — write `u_i = u_i' ⋆ cmExt u_i` with `cmExt u_i`
    unimodular **completely** multiplicative.  *Proved.*
-4. `exists_squarefull_tail` — truncate the `(d₁,d₂)` sum at `D`, uniformly in `u_i`.  *Open.*
+4. `exists_squarefull_tail` — truncate the `(d₁,d₂)` sum at `D`, uniformly in `u_i`.  *Proved*
+   (lap 62, by the Rankin shift).
 5. `ElliottProgression.integerAffine_progression` + `det_progression` — for each `(d₁,d₂) ≤ D`,
    substitute `n = d₁d₂k + n₀` and apply `AffineCMLogElliott` to the pair `(a₁d₂, c₁; a₂d₁, c₂)`,
    whose determinant is *exactly* `a₁b₂ − a₂b₁ ≠ 0`.  Arithmetic *proved*; the window/weight

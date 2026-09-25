@@ -71,6 +71,9 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottRankin.local_factor_geom_le
 #print axioms NormalNumbers.ElliottRankin.sum_Icc_inv_mul_sqrt_le
 #print axioms NormalNumbers.ElliottRankin.sum_primesBelow_inv_mul_sqrt_le
+#print axioms NormalNumbers.ElliottRankin.sum_Icc_shifted_le
+#print axioms NormalNumbers.ElliottRankin.exists_squarefull_tail_bound
+#print axioms NormalNumbers.ElliottLeafTwo.exists_squarefull_tail
 
 -- the dependency's proved special case
 #print axioms Erdos67b.unitCircleLogElliott

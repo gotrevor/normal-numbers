@@ -158,4 +158,233 @@ theorem sum_primesBelow_inv_mul_sqrt_le (Y : ℕ) :
     positivity
   exact le_trans (Finset.sum_le_sum_of_subset_of_nonneg hsub hnn) (sum_Icc_inv_mul_sqrt_le Y)
 
+/-! ## The shifted weight -/
+
+noncomputable section
+
+open NormalNumbers.ElliottSquarefullConv
+
+/-- `n ↦ ‖u n‖ / n^{3/4}`, the Rankin-shifted weight. -/
+def shifted (u : ArithmeticFunction ℂ) : ArithmeticFunction ℝ where
+  toFun n := if n = 0 then 0 else ‖u n‖ / (n : ℝ) ^ ((3 : ℝ) / 4)
+  map_zero' := by simp
+
+theorem shifted_apply (u : ArithmeticFunction ℂ) {n : ℕ} (hn : n ≠ 0) :
+    shifted u n = ‖u n‖ / (n : ℝ) ^ ((3 : ℝ) / 4) := by simp [shifted, hn]
+
+theorem shifted_nonneg (u : ArithmeticFunction ℂ) (n : ℕ) : 0 ≤ shifted u n := by
+  rcases eq_or_ne n 0 with rfl | hn
+  · simp [shifted]
+  · rw [shifted_apply u hn]
+    have : (0 : ℝ) ≤ (n : ℝ) ^ ((3 : ℝ) / 4) := Real.rpow_nonneg (by positivity) _
+    positivity
+
+theorem isMultiplicative_shifted {u : ArithmeticFunction ℂ} (hu : u.IsMultiplicative) :
+    (shifted u).IsMultiplicative := by
+  refine ⟨?_, fun {m n} hcop => ?_⟩
+  · rw [shifted_apply u one_ne_zero, hu.map_one]
+    norm_num
+  · rcases eq_or_ne m 0 with rfl | hm
+    · simp [shifted]
+    rcases eq_or_ne n 0 with rfl | hn
+    · simp [shifted]
+    rw [shifted_apply u (Nat.mul_ne_zero hm hn), shifted_apply u hm, shifted_apply u hn,
+      hu.map_mul_of_coprime hcop, norm_mul]
+    have hsplit : (((m * n : ℕ) : ℝ)) ^ ((3 : ℝ) / 4)
+        = (m : ℝ) ^ ((3 : ℝ) / 4) * (n : ℝ) ^ ((3 : ℝ) / 4) := by
+      push_cast
+      exact Real.mul_rpow (by positivity) (by positivity)
+    rw [hsplit]
+    field_simp
+
+/-- `2^{-3/4} ≤ 3/5`, i.e. `5/3 ≤ 2^{3/4}`: the only numeric constant the shift needs.
+It is genuinely tight-ish — `(5/3)^4 = 625/81 ≈ 7.72` against `2^3 = 8`. -/
+theorem five_div_three_le_rpow {x : ℝ} (hx : 2 ≤ x) : (5 : ℝ) / 3 ≤ x ^ ((3 : ℝ) / 4) := by
+  have h2 : ((2 : ℝ)) ^ ((3 : ℝ) / 4) ≤ x ^ ((3 : ℝ) / 4) :=
+    Real.rpow_le_rpow (by norm_num) hx (by norm_num)
+  refine le_trans ?_ h2
+  have hnn : (0 : ℝ) ≤ ((2 : ℝ)) ^ ((3 : ℝ) / 4) := Real.rpow_nonneg (by norm_num) _
+  have hpow : (((2 : ℝ)) ^ ((3 : ℝ) / 4)) ^ (4 : ℕ) = 8 := by
+    rw [← Real.rpow_natCast ((2 : ℝ) ^ ((3 : ℝ) / 4)) 4, ← Real.rpow_mul (by norm_num)]
+    rw [show ((3 : ℝ) / 4) * ((4 : ℕ) : ℝ) = ((3 : ℕ) : ℝ) by norm_num, Real.rpow_natCast]
+    norm_num
+  refine le_of_pow_le_pow_left₀ (n := 4) (by norm_num) hnn ?_
+  rw [hpow]
+  norm_num
+
+/-- The shifted local ratio is at most `3/5`, so `1 − r ≥ 2/5`. -/
+theorem rpow_neg_le {p : ℕ} (hp : 2 ≤ p) :
+    1 / (p : ℝ) ^ ((3 : ℝ) / 4) ≤ 3 / 5 := by
+  have hx : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hp
+  have h := five_div_three_le_rpow hx
+  have hpos : (0 : ℝ) < (p : ℝ) ^ ((3 : ℝ) / 4) :=
+    Real.rpow_pos_of_pos (by linarith) _
+  rw [div_le_div_iff₀ hpos (by norm_num)]
+  linarith
+
+/-- The shifted local factor is `≤ 1 + 5/(p√p)`. -/
+theorem local_factor_shifted_le {U : ℕ → ℂ} (hone : U 1 = 1)
+    (hmul : ∀ x y : ℕ, Nat.Coprime x y → U (x * y) = U x * U y)
+    (hU : ∀ n : ℕ, 0 < n → ‖U n‖ = 1)
+    {p : ℕ} (hpp : p.Prime) (K : ℕ) :
+    ∑ k ∈ Finset.range (K + 1), shifted (squarefullPart U) (p ^ k) ≤
+      1 + 5 * (1 / ((p : ℝ) * Real.sqrt (p : ℝ))) := by
+  have hf := isMultiplicative_shifted (isMultiplicative_squarefullPart U hone hmul)
+  have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+  set r : ℝ := 1 / (p : ℝ) ^ ((3 : ℝ) / 4) with hr
+  have hrpos : (0 : ℝ) < (p : ℝ) ^ ((3 : ℝ) / 4) := Real.rpow_pos_of_pos (by linarith) _
+  have hr0 : 0 ≤ r := by rw [hr]; positivity
+  have hr35 : r ≤ 3 / 5 := rpow_neg_le hpp.two_le
+  have hr1 : r < 1 := by linarith
+  have hprime0 : shifted (squarefullPart U) p = 0 := by
+    rw [shifted_apply _ hpp.ne_zero, squarefullPart_prime_eq_zero U hone hpp]
+    simp
+  have hbd : ∀ k : ℕ, shifted (squarefullPart U) (p ^ k) ≤ 2 * r ^ k := by
+    intro k
+    have hpk : (p ^ k : ℕ) ≠ 0 := pow_ne_zero k hpp.ne_zero
+    rw [shifted_apply _ hpk]
+    have hcast : (((p ^ k : ℕ) : ℝ)) ^ ((3 : ℝ) / 4) = ((p : ℝ) ^ ((3 : ℝ) / 4)) ^ k := by
+      push_cast
+      rw [← Real.rpow_natCast (p : ℝ) k, ← Real.rpow_mul (by positivity),
+        ← Real.rpow_natCast ((p : ℝ) ^ ((3 : ℝ) / 4)) k, ← Real.rpow_mul (by positivity)]
+      ring_nf
+    rw [hcast, hr, div_pow, one_pow,
+      show (2 : ℝ) * (1 / ((p : ℝ) ^ ((3 : ℝ) / 4)) ^ k)
+        = 2 / ((p : ℝ) ^ ((3 : ℝ) / 4)) ^ k by ring]
+    gcongr
+    exact norm_squarefullPart_prime_pow_le_two U hU hpp k
+  refine (local_factor_geom_le hf hpp hprime0 hr0 hr1 hbd K).trans ?_
+  have hrsq : r ^ 2 = 1 / ((p : ℝ) * Real.sqrt (p : ℝ)) := by
+    rw [hr, div_pow, one_pow]
+    congr 1
+    rw [← Real.rpow_natCast ((p : ℝ) ^ ((3 : ℝ) / 4)) 2, ← Real.rpow_mul (by positivity),
+      Real.sqrt_eq_rpow, ← Real.rpow_one_add' (by linarith) (by norm_num)]
+    norm_num
+  have h1r : (0 : ℝ) < 1 - r := by linarith
+  have hr2 : (0 : ℝ) ≤ r ^ 2 := by positivity
+  have hdiv : r ^ 2 / (1 - r) ≤ r ^ 2 / (2 / 5) := by
+    gcongr <;> linarith
+  have heq : r ^ 2 / ((2 : ℝ) / 5) = 5 / 2 * r ^ 2 := by ring
+  rw [← hrsq]
+  rw [heq] at hdiv
+  linarith
+
+/-- **The shifted total is absolutely bounded.**  `∑_{d ≤ Y} ‖u d‖/d^{3/4} ≤ e^{11}`, for every
+unimodular multiplicative `U` and every `Y`.  This is the Rankin-shifted analogue of lap 57's
+`e²` bound, and it is what converts a bounded total into a *uniformly small tail*. -/
+theorem sum_Icc_shifted_le (U : ℕ → ℂ) (hone : U 1 = 1)
+    (hmul : ∀ x y : ℕ, Nat.Coprime x y → U (x * y) = U x * U y)
+    (hU : ∀ n : ℕ, 0 < n → ‖U n‖ = 1) (Y : ℕ) :
+    ∑ d ∈ Finset.Icc 1 Y, shifted (squarefullPart U) d ≤ Real.exp 11 := by
+  classical
+  have hf := isMultiplicative_shifted (isMultiplicative_squarefullPart U hone hmul)
+  refine (sum_Icc_le_euler_product hf (shifted_nonneg _) Y).trans ?_
+  have hF0 : ∀ p ∈ Nat.primesBelow (Y + 1),
+      0 ≤ ∑ k ∈ Finset.range (Nat.log 2 Y + 1), shifted (squarefullPart U) (p ^ k) :=
+    fun p _ => Finset.sum_nonneg fun k _ => shifted_nonneg _ _
+  have hFle : ∀ p ∈ Nat.primesBelow (Y + 1),
+      ∑ k ∈ Finset.range (Nat.log 2 Y + 1), shifted (squarefullPart U) (p ^ k) ≤
+        1 + (fun q : ℕ => 5 * (1 / ((q : ℝ) * Real.sqrt (q : ℝ)))) p +
+          1 / ((p : ℝ) * ((p : ℝ) - 1)) := by
+    intro p hp
+    have hpp : p.Prime := (Nat.mem_primesBelow.mp hp).2
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have htailnn : (0 : ℝ) ≤ 1 / ((p : ℝ) * ((p : ℝ) - 1)) := by
+      have : (0 : ℝ) < (p : ℝ) - 1 := by linarith
+      positivity
+    have := local_factor_shifted_le hone hmul hU hpp (Nat.log 2 Y)
+    simp only
+    linarith
+  refine (prod_le_exp_prime_sum hF0 hFle).trans ?_
+  refine Real.exp_le_exp.mpr ?_
+  have hsum : ∑ p ∈ Nat.primesBelow (Y + 1),
+      (fun q : ℕ => 5 * (1 / ((q : ℝ) * Real.sqrt (q : ℝ)))) p ≤ 10 := by
+    simp only
+    rw [← Finset.mul_sum]
+    linarith [sum_primesBelow_inv_mul_sqrt_le Y]
+  linarith
+
+/-! ## The Rankin step and the uniform tail -/
+
+/-- **The Rankin step.**  `‖u d‖/d = (‖u d‖/d^{3/4}) / d^{1/4}`, so a lower bound on `d` converts
+the shifted weight into the unshifted one at a uniform discount. -/
+theorem norm_div_le_shifted_div {u : ArithmeticFunction ℂ} {d D : ℕ} (hd : D + 1 ≤ d) :
+    ‖u d‖ / (d : ℝ) ≤ shifted u d / ((D + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 4) := by
+  have hd1 : 1 ≤ d := by omega
+  have hdpos : (0 : ℝ) < (d : ℝ) := by exact_mod_cast hd1
+  have hDpos : (0 : ℝ) < ((D + 1 : ℕ) : ℝ) := by positivity
+  have hsplit : (d : ℝ) = (d : ℝ) ^ ((3 : ℝ) / 4) * (d : ℝ) ^ ((1 : ℝ) / 4) := by
+    rw [← Real.rpow_add hdpos]
+    norm_num
+  have h34 : (0 : ℝ) < (d : ℝ) ^ ((3 : ℝ) / 4) := Real.rpow_pos_of_pos hdpos _
+  have h14 : (0 : ℝ) < (d : ℝ) ^ ((1 : ℝ) / 4) := Real.rpow_pos_of_pos hdpos _
+  have hmono : ((D + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 4) ≤ (d : ℝ) ^ ((1 : ℝ) / 4) := by
+    refine Real.rpow_le_rpow hDpos.le ?_ (by norm_num)
+    exact_mod_cast hd
+  rw [shifted_apply u (by omega : d ≠ 0), div_div]
+  have hle : (d : ℝ) ^ ((3 : ℝ) / 4) * ((D + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 4) ≤ (d : ℝ) := by
+    calc (d : ℝ) ^ ((3 : ℝ) / 4) * ((D + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 4)
+        ≤ (d : ℝ) ^ ((3 : ℝ) / 4) * (d : ℝ) ^ ((1 : ℝ) / 4) := by gcongr
+      _ = (d : ℝ) := hsplit.symm
+  gcongr
+
+/-- **The uniformly small squarefull tail.**  For every `ε > 0` there is a truncation point `D`,
+depending on `ε` alone, with `∑_{D < d ≤ Y} ‖u d‖/d ≤ ε` for **every** unimodular multiplicative
+`U` and every `Y`.
+
+This is the obligation `NormalNumbers.ElliottLeafTwo.exists_squarefull_tail`, found while
+assembling leaf 2 at lap 60.  It is strictly stronger than lap 57's bound on the total, and it is
+the step at which the corrected route does what the refuted `v`-expansion could not. -/
+theorem exists_squarefull_tail_bound {ε : ℝ} (hε : 0 < ε) :
+    ∃ D : ℕ, 1 ≤ D ∧
+      ∀ U : ℕ → ℂ, U 1 = 1 →
+        (∀ x y : ℕ, Nat.Coprime x y → U (x * y) = U x * U y) →
+        (∀ n : ℕ, 0 < n → ‖U n‖ = 1) →
+        ∀ Y : ℕ,
+          ∑ d ∈ Finset.Icc (D + 1) Y, ‖squarefullPart U d‖ / (d : ℝ) ≤ ε := by
+  classical
+  set M : ℝ := Real.exp 11 / ε with hM
+  have hMpos : 0 < M := by rw [hM]; positivity
+  refine ⟨max 1 ⌈M ^ (4 : ℕ)⌉₊, le_max_left _ _, ?_⟩
+  intro U hone hmul hU Y
+  set D : ℕ := max 1 ⌈M ^ (4 : ℕ)⌉₊ with hD
+  have hDpos : (0 : ℝ) < ((D + 1 : ℕ) : ℝ) := by positivity
+  -- the discount factor is at least `M`
+  have hMle : M ≤ ((D + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 4) := by
+    have hge : M ^ (4 : ℕ) ≤ ((D + 1 : ℕ) : ℝ) := by
+      have h1 : (⌈M ^ (4 : ℕ)⌉₊ : ℝ) ≤ ((D + 1 : ℕ) : ℝ) := by
+        have : ⌈M ^ (4 : ℕ)⌉₊ ≤ D + 1 := le_trans (le_max_right 1 _) (by omega)
+        exact_mod_cast this
+      exact le_trans (Nat.le_ceil _) h1
+    have h2 : (M ^ (4 : ℕ)) ^ ((1 : ℝ) / 4) ≤ ((D + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 4) :=
+      Real.rpow_le_rpow (by positivity) hge (by norm_num)
+    refine le_trans (le_of_eq ?_) h2
+    rw [← Real.rpow_natCast M 4, ← Real.rpow_mul hMpos.le]
+    norm_num
+  -- the shifted total
+  have htot := sum_Icc_shifted_le U hone hmul hU Y
+  have hstep : ∑ d ∈ Finset.Icc (D + 1) Y, ‖squarefullPart U d‖ / (d : ℝ) ≤
+      ∑ d ∈ Finset.Icc (D + 1) Y,
+        shifted (squarefullPart U) d / ((D + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 4) := by
+    refine Finset.sum_le_sum fun d hd => ?_
+    exact norm_div_le_shifted_div (Finset.mem_Icc.mp hd).1
+  have hsub : ∑ d ∈ Finset.Icc (D + 1) Y, shifted (squarefullPart U) d ≤ Real.exp 11 := by
+    refine le_trans (Finset.sum_le_sum_of_subset_of_nonneg ?_
+      (fun i _ _ => shifted_nonneg _ i)) htot
+    intro d hd
+    obtain ⟨h1, h2⟩ := Finset.mem_Icc.mp hd
+    exact Finset.mem_Icc.mpr ⟨by omega, h2⟩
+  have hrp : (0 : ℝ) < ((D + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 4) := Real.rpow_pos_of_pos hDpos _
+  calc ∑ d ∈ Finset.Icc (D + 1) Y, ‖squarefullPart U d‖ / (d : ℝ)
+      ≤ ∑ d ∈ Finset.Icc (D + 1) Y,
+          shifted (squarefullPart U) d / ((D + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 4) := hstep
+    _ = (∑ d ∈ Finset.Icc (D + 1) Y, shifted (squarefullPart U) d)
+          / ((D + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 4) := by rw [Finset.sum_div]
+    _ ≤ Real.exp 11 / ((D + 1 : ℕ) : ℝ) ^ ((1 : ℝ) / 4) := by gcongr
+    _ ≤ Real.exp 11 / M := by
+        gcongr
+    _ = ε := by rw [hM]; field_simp
+
+end
+
 end NormalNumbers.ElliottRankin
