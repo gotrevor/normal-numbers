@@ -5,6 +5,7 @@ import NormalNumbers.ElliottProgression
 import NormalNumbers.ElliottCaseAThin
 import NormalNumbers.ElliottLeafTwo
 import NormalNumbers.ElliottRankin
+import NormalNumbers.ElliottReindex
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -75,6 +76,13 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottRankin.sum_primesBelow_inv_mul_sqrt_le
 #print axioms NormalNumbers.ElliottRankin.sum_Icc_shifted_le
 #print axioms NormalNumbers.ElliottRankin.exists_squarefull_tail_bound
+
+-- the progression reindexing: the analytic half of the Case-B substitution
+#print axioms NormalNumbers.ElliottReindex.progression_image
+#print axioms NormalNumbers.ElliottReindex.sum_progression_eq
+#print axioms NormalNumbers.ElliottReindex.norm_sum_sub_reindexed_le
+#print axioms NormalNumbers.ElliottSquarefullConv.squarefullPart_mul_cmExt
+#print axioms NormalNumbers.ElliottSquarefullConv.U_eq_sum_divisors
 #print axioms NormalNumbers.ElliottLeafTwo.exists_squarefull_tail
 
 -- the dependency's proved special case

@@ -203,6 +203,51 @@ theorem norm_squarefullPart_prime_pow_le_two (hU : ∀ n : ℕ, 0 < n → ‖U n
         ≤ ‖U (p ^ k)‖ + ‖U p * U (p ^ (k - 1))‖ := norm_sub_le _ _
       _ = 2 := by rw [norm_mul, h1, h2, h3]; norm_num
 
+/-! ## The reconstruction identity `U = u ⋆ Ũ` -/
+
+/-- `(μ · Ũ) ⋆ Ũ = 1` for the completely multiplicative `Ũ = cmExt U`: on a divisor pair
+`Ũ(d) Ũ(n/d) = Ũ(n)`, so the sum collapses to `Ũ(n) ∑_{d ∣ n} μ(d)`. -/
+theorem moebius_pmul_cmExt_mul_cmExt :
+    ((μ : ArithmeticFunction ℂ).pmul (cmExt U)) * cmExt U = 1 := by
+  ext n
+  rcases eq_or_ne n 0 with rfl | hn
+  · simp
+  have hstep : (((μ : ArithmeticFunction ℂ).pmul (cmExt U)) * cmExt U) n
+      = cmExt U n * ((μ * (ArithmeticFunction.zeta : ArithmeticFunction ℂ)) n) := by
+    rw [mul_apply_divisors, mul_apply_divisors, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun d hd => ?_
+    obtain ⟨hdvd, -⟩ := Nat.mem_divisors.mp hd
+    have hd0 : d ≠ 0 := by
+      rintro rfl
+      exact hn (Nat.eq_zero_of_zero_dvd hdvd)
+    have hq0 : n / d ≠ 0 := by
+      have := Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero hn) hdvd) (Nat.pos_of_ne_zero hd0)
+      omega
+    have hsplit : cmExt U d * cmExt U (n / d) = cmExt U n := by
+      rw [← cmExt_mul U hd0 hq0, Nat.mul_div_cancel' hdvd]
+    rw [ArithmeticFunction.pmul_apply, ArithmeticFunction.natCoe_apply,
+      ArithmeticFunction.zeta_apply, if_neg hq0]
+    push_cast
+    rw [mul_assoc, hsplit]
+    ring
+  rw [hstep, coe_moebius_mul_coe_zeta]
+  rcases eq_or_ne n 1 with rfl | hn1
+  · simp
+  · simp [hn1]
+
+/-- **The reconstruction identity.**  `U = u ⋆ Ũ`, with `u = squarefullPart U` supported on
+squarefull integers and `Ũ = cmExt U` completely multiplicative. -/
+theorem squarefullPart_mul_cmExt : squarefullPart U * cmExt U = toAF U := by
+  rw [squarefullPart, mul_comm ((μ : ArithmeticFunction ℂ).pmul (cmExt U)) (toAF U),
+    mul_assoc, moebius_pmul_cmExt_mul_cmExt, mul_one]
+
+/-- The pointwise form of the reconstruction identity. -/
+theorem U_eq_sum_divisors {n : ℕ} (hn : n ≠ 0) :
+    U n = ∑ d ∈ n.divisors, squarefullPart U d * cmExt U (n / d) := by
+  have := congrArg (fun f : ArithmeticFunction ℂ => f n) (squarefullPart_mul_cmExt U)
+  rw [mul_apply_divisors] at this
+  rw [← toAF_apply U hn, ← this]
+
 /-! ## The absolute tail bound -/
 
 /-- `n ↦ ‖u n‖ / n`, as an arithmetic function. -/
