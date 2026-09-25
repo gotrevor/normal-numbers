@@ -945,4 +945,177 @@ theorem sum_primeWeight_delangeS_eq (z : ℂ) (N : ℕ) :
   push_cast
   ring
 
+/-- `log ⌊x⌋ ≥ log x − log 2` for `x ≥ 1`, in the form needed: `N/n < 2·⌊N/n⌋`. -/
+lemma log_natDiv_ge {N n : ℕ} (hn : 1 ≤ n) (hnN : n ≤ N) :
+    Real.log N - Real.log n - Real.log 2 ≤ Real.log (N / n : ℕ) := by
+  have hK : 1 ≤ N / n := (Nat.one_le_div_iff hn).mpr hnN
+  have hKR : (1 : ℝ) ≤ ((N / n : ℕ) : ℝ) := by exact_mod_cast hK
+  have hnR : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+  have hdm := Nat.div_add_mod N n
+  have hmod : N % n < n := Nat.mod_lt _ hn
+  have hlt : N < n * (N / n + 1) := by
+    have hexp : n * (N / n + 1) = n * (N / n) + n := by ring
+    omega
+  have hltR : (N : ℝ) < (n : ℝ) * (((N / n : ℕ) : ℝ) + 1) := by exact_mod_cast hlt
+  have hdouble : (N : ℝ) < (n : ℝ) * (2 * ((N / n : ℕ) : ℝ)) := by nlinarith [hKR, hnR]
+  have hNpos : (0 : ℝ) < (N : ℝ) := by
+    have : 1 ≤ N := le_trans hn hnN
+    exact_mod_cast this
+  have := Real.log_le_log hNpos hdouble.le
+  rw [Real.log_mul (by linarith) (by positivity), Real.log_mul (by norm_num) (by linarith)] at this
+  linarith
+
+/-- **Brick 1: the Mertens comparison.**  The two hyperbola weights differ by at most `11`. -/
+theorem abs_mertens_sub_log_le {N n : ℕ} (hn : 1 ≤ n) (hnN : n ≤ N) :
+    |(∑ q ∈ primesLe (N / n), Real.log q / (q : ℝ)) - (Real.log N - Real.log n)| ≤ 11 := by
+  have hK : 1 ≤ N / n := (Nat.one_le_div_iff hn).mpr hnN
+  have hup := mertens_upper (N / n) hK
+  have hlo := mertens_lower (N / n) hK
+  have hKle : Real.log (N / n : ℕ) ≤ Real.log N - Real.log n := by
+    have hnR : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn
+    have hNpos : (0 : ℝ) < (N : ℝ) := by
+      have : 1 ≤ N := le_trans hn hnN
+      exact_mod_cast this
+    have h1 : ((N / n : ℕ) : ℝ) ≤ (N : ℝ) / (n : ℝ) := cast_div_le N n
+    have h2 : Real.log (N / n : ℕ) ≤ Real.log ((N : ℝ) / (n : ℝ)) := by
+      have hKpos : (0 : ℝ) < ((N / n : ℕ) : ℝ) := by exact_mod_cast hK
+      exact Real.log_le_log hKpos h1
+    rwa [Real.log_div (ne_of_gt hNpos) (ne_of_gt hnR)] at h2
+  have hKge := log_natDiv_ge hn hnN
+  have hlog4 : Real.log 4 ≤ 3 := by
+    have := Real.log_le_sub_one_of_pos (show (0:ℝ) < 4 by norm_num)
+    linarith
+  have hlog2 : Real.log 2 ≤ 1 := by
+    have := Real.log_le_sub_one_of_pos (show (0:ℝ) < 2 by norm_num)
+    linarith
+  rw [abs_le]
+  constructor <;> linarith
+
+/-- The restricted sum is dominated by the absolute sum. -/
+theorem norm_delangeSrestr_le_delangeA (z : ℂ) (p M : ℕ) :
+    ‖delangeSrestr z p M‖ ≤ delangeA z M := by
+  classical
+  refine le_trans (norm_sum_le _ _) ?_
+  have hterm : ∀ m ∈ (Finset.Ioc 0 M).filter (fun m => ¬ p ∣ m),
+      ‖delangeKernel z m / (m : ℂ)‖ = ‖delangeKernel z m‖ / (m : ℝ) := by
+    intro m _
+    rw [norm_div, Complex.norm_natCast]
+  rw [Finset.sum_congr rfl hterm, delangeA]
+  refine Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _) fun m _ _ => by positivity
+
+/-- `Σ_{p ≤ N} (log p)/p² ≤ 8`. -/
+theorem sum_log_div_sq_prime_le (N : ℕ) : ∑ p ∈ primesLe N, Real.log p / ((p : ℝ) ^ 2) ≤ 8 := by
+  classical
+  refine le_trans ?_ (sum_log_div_mul_pred_le N)
+  have hsub : primesLe N ⊆ Finset.Icc 2 N := by
+    intro p hp
+    have hpp := prime_of_mem_primesLe hp
+    rw [primesLe, Finset.mem_filter, Finset.mem_range] at hp
+    simp only [Finset.mem_Icc]
+    exact ⟨hpp.two_le, by omega⟩
+  have hstep : ∀ p ∈ primesLe N,
+      Real.log p / ((p : ℝ) ^ 2) ≤ Real.log p / ((p : ℝ) * ((p : ℝ) - 1)) := by
+    intro p hp
+    have hpp := prime_of_mem_primesLe hp
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hlogp : (0 : ℝ) ≤ Real.log p := Real.log_nonneg (by linarith)
+    rw [div_le_div_iff₀ (by positivity) (by nlinarith)]
+    nlinarith
+  refine le_trans (Finset.sum_le_sum hstep) ?_
+  refine Finset.sum_le_sum_of_subset_of_nonneg hsub fun n hn _ => ?_
+  simp only [Finset.mem_Icc] at hn
+  have hn2 : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn.1
+  have : (0 : ℝ) ≤ Real.log n := Real.log_nonneg (by linarith)
+  have hd : (0 : ℝ) < (n : ℝ) * ((n : ℝ) - 1) := by nlinarith
+  positivity
+
+/-- **Brick 2: THE SCALE EQUATION.**  `S(N)·log N = z·Abel(N) + R(N)` with `‖R(N)‖ ≤ 19·A(N)`,
+where `A(N) = Σ_{n≤N} ‖h(n)‖/n`.  Everything is elementary: two exact hyperbola identities, the
+Mertens bracket, and `Σ_p (log p)/p² ≤ 8`. -/
+theorem delange_scale_equation {z : ℂ} (hu : ‖z - 1‖ ≤ 1) (N : ℕ) :
+    ‖delangeS z N * (Real.log N : ℂ) - z * delangeAbel z N‖ ≤ 19 * delangeA z N := by
+  classical
+  have hAnn : 0 ≤ delangeA z N := delangeA_nonneg z N
+  -- (a) `S^{(p)} → S` inside the prime sum
+  have ha : ‖∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ))
+      * (delangeSrestr z p (N / p) - delangeS z (N / p))‖ ≤ 8 * delangeA z N := by
+    refine le_trans (norm_sum_le _ _) ?_
+    have hterm : ∀ p ∈ primesLe N,
+        ‖((Real.log p : ℂ) / (p : ℂ)) * (delangeSrestr z p (N / p) - delangeS z (N / p))‖
+          ≤ delangeA z N * (Real.log p / ((p : ℝ) ^ 2)) := by
+      intro p hp
+      have hpp := prime_of_mem_primesLe hp
+      have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+      have hlogp : (0 : ℝ) ≤ Real.log p := Real.log_nonneg (by linarith)
+      have hrec := delangeSrestr_rec z hpp (N / p)
+      rw [hrec]
+      have hcol : delangeS z (N / p) - ((z - 1) / (p : ℂ)) * delangeSrestr z p (N / p / p)
+          - delangeS z (N / p) = -(((z - 1) / (p : ℂ)) * delangeSrestr z p (N / p / p)) := by ring
+      rw [hcol, norm_mul, norm_neg, norm_mul, norm_div, norm_div, Complex.norm_natCast,
+        Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hlogp]
+      have hb := norm_delangeSrestr_le_delangeA z p (N / p / p)
+      have hmono : delangeA z (N / p / p) ≤ delangeA z N :=
+        delangeA_mono z (le_trans (Nat.div_le_self _ _) (Nat.div_le_self _ _))
+      have hppos : (0 : ℝ) < (p : ℝ) := by linarith
+      calc Real.log p / (p : ℝ) * (‖z - 1‖ / (p : ℝ) * ‖delangeSrestr z p (N / p / p)‖)
+          ≤ Real.log p / (p : ℝ) * (1 / (p : ℝ) * delangeA z N) := by
+            refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+            have h1 : ‖z - 1‖ / (p : ℝ) ≤ 1 / (p : ℝ) := by
+              rw [div_le_div_iff₀ hppos hppos]; nlinarith [hu, hppos]
+            have h2 : ‖delangeSrestr z p (N / p / p)‖ ≤ delangeA z N := le_trans hb hmono
+            have h3 : (0 : ℝ) ≤ ‖delangeSrestr z p (N / p / p)‖ := norm_nonneg _
+            nlinarith [h1, h2, h3, hAnn, (by positivity : (0:ℝ) ≤ 1 / (p : ℝ))]
+        _ = delangeA z N * (Real.log p / ((p : ℝ) ^ 2)) := by field_simp; try ring
+    refine le_trans (Finset.sum_le_sum hterm) ?_
+    rw [← Finset.mul_sum]
+    calc delangeA z N * ∑ p ∈ primesLe N, Real.log p / ((p : ℝ) ^ 2)
+        ≤ delangeA z N * 8 := mul_le_mul_of_nonneg_left (sum_log_div_sq_prime_le N) hAnn
+      _ = 8 * delangeA z N := by ring
+  -- (b) the Mertens comparison of the two hyperbola sums
+  have hb : ‖(∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+      - delangeAbel z N‖ ≤ 11 * delangeA z N := by
+    rw [sum_primeWeight_delangeS_eq, delangeAbel_eq_hyperbola, ← Finset.sum_sub_distrib]
+    refine le_trans (norm_sum_le _ _) ?_
+    have hterm : ∀ n ∈ Finset.Ioc 0 N,
+        ‖(delangeKernel z n / (n : ℂ))
+            * ((∑ q ∈ primesLe (N / n), Real.log q / (q : ℝ) : ℝ) : ℂ)
+          - (delangeKernel z n / (n : ℂ)) * ((Real.log N - Real.log n : ℝ) : ℂ)‖
+          ≤ 11 * (‖delangeKernel z n‖ / (n : ℝ)) := by
+      intro n hn
+      simp only [Finset.mem_Ioc] at hn
+      rw [← mul_sub, ← Complex.ofReal_sub, norm_mul, norm_div, Complex.norm_natCast,
+        Complex.norm_real, Real.norm_eq_abs]
+      have hm := abs_mertens_sub_log_le hn.1 hn.2
+      have hnn : (0 : ℝ) ≤ ‖delangeKernel z n‖ / (n : ℝ) := by positivity
+      nlinarith [hm, hnn, abs_nonneg ((∑ q ∈ primesLe (N / n), Real.log q / (q : ℝ))
+        - (Real.log N - Real.log n))]
+    refine le_trans (Finset.sum_le_sum hterm) ?_
+    rw [← Finset.mul_sum, delangeA]
+  -- assemble
+  have hid := delangeS_mul_log z N
+  have hT := delangeT_eq_prime_sum z N
+  have hsplit : ∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ))
+        * (delangeSrestr z p (N / p) - delangeS z (N / p))
+      = (∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeSrestr z p (N / p))
+        - ∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p) := by
+    rw [← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl fun p _ => by ring
+  have hdecomp : delangeS z N * (Real.log N : ℂ) - z * delangeAbel z N
+      = (z - 1) * (∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ))
+            * (delangeSrestr z p (N / p) - delangeS z (N / p)))
+        + (z - 1) * ((∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+            - delangeAbel z N) := by
+    rw [hid, hT, hsplit]
+    ring
+  rw [hdecomp]
+  refine le_trans (norm_add_le _ _) ?_
+  rw [norm_mul, norm_mul]
+  have h1 : ‖z - 1‖ * ‖∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ))
+      * (delangeSrestr z p (N / p) - delangeS z (N / p))‖ ≤ 1 * (8 * delangeA z N) :=
+    mul_le_mul hu ha (norm_nonneg _) (by norm_num)
+  have h2 : ‖z - 1‖ * ‖(∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+      - delangeAbel z N‖ ≤ 1 * (11 * delangeA z N) :=
+    mul_le_mul hu hb (norm_nonneg _) (by norm_num)
+  linarith
+
 end NormalNumbers.CastingOut
