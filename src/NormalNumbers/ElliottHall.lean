@@ -197,8 +197,156 @@ theorem sum_Icc_normFun_le {g : ℤ → ℂ} (hm : IsMultiplicativeOnPositiveInt
     _ = _ := by field_simp
 
 
+/-! ## Dyadic partial summation: the thin-window logarithmic sum -/
+
+/-- The pretentious defect grows with the scale (each term `1/p - ‖g p‖/p` is nonnegative). -/
+theorem primeDefect_mono {g : ℤ → ℂ} (hg : ∀ n : ℤ, ‖g n‖ ≤ 1) {L N : ℕ} (h : L ≤ N) :
+    primeDefect (normDivArith g) L ≤ primeDefect (normDivArith g) N := by
+  rw [primeDefect, primeDefect]
+  refine Finset.sum_le_sum_of_subset_of_nonneg ?_ ?_
+  · intro p hp
+    obtain ⟨hpL, hpp⟩ := Nat.mem_primesBelow.mp hp
+    exact Nat.mem_primesBelow.mpr ⟨by omega, hpp⟩
+  · intro p hp _
+    have hpp : p.Prime := (Nat.mem_primesBelow.mp hp).2
+    have hppos : (0 : ℝ) < p := by exact_mod_cast hpp.pos
+    rw [normDivArith_apply g hpp.pos]
+    rw [sub_nonneg, div_le_iff₀ hppos]
+    rw [inv_mul_cancel₀ (ne_of_gt hppos)]
+    exact hg _
+
+/-- One dyadic block contributes at most `2 · hallConst · e^{1+B} · e^{-Σ_L}`. -/
+theorem sum_dyadic_block_le {g : ℤ → ℂ} (hm : IsMultiplicativeOnPositiveInt g)
+    (hg : ∀ n : ℤ, ‖g n‖ ≤ 1) {L : ℕ} (hL : 1 ≤ L) (j : ℕ) :
+    ∑ m ∈ Finset.Icc (L * 2 ^ j) (L * 2 ^ (j + 1) - 1), normDivArith g m ≤
+      2 * hallConst * Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) *
+        Real.exp (-primeDefect (normDivArith g) L) := by
+  classical
+  set N : ℕ := L * 2 ^ (j + 1) with hN
+  set T : ℕ := L * 2 ^ j with hT
+  have hTpos : 0 < T := by rw [hT]; positivity
+  have hTr : (0 : ℝ) < T := by exact_mod_cast hTpos
+  have hN2 : 2 ≤ N := by
+    rw [hN, pow_succ]
+    have : 1 * 2 ≤ L * (2 ^ j * 2) := by
+      refine Nat.mul_le_mul hL ?_
+      have : 1 ≤ 2 ^ j := Nat.one_le_two_pow
+      omega
+    omega
+  have hNT : (N : ℝ) = 2 * T := by rw [hN, hT]; push_cast; ring
+  -- bound each term by `‖g m‖ / T`
+  have hstep : ∑ m ∈ Finset.Icc T (N - 1), normDivArith g m ≤
+      (T : ℝ)⁻¹ * ∑ m ∈ Finset.Icc 1 N, normFun g m := by
+    have h1 : ∀ m ∈ Finset.Icc T (N - 1), normDivArith g m ≤ (T : ℝ)⁻¹ * normFun g m := by
+      intro m hm'
+      obtain ⟨hmT, -⟩ := Finset.mem_Icc.mp hm'
+      have hmpos : 0 < m := by omega
+      have hmr : (0 : ℝ) < m := by exact_mod_cast hmpos
+      have hTm : (T : ℝ) ≤ m := by exact_mod_cast hmT
+      rw [normDivArith_apply g hmpos, ← normFun_apply g hmpos]
+      rw [div_le_iff₀ hmr, inv_mul_eq_div, div_mul_eq_mul_div, le_div_iff₀ hTr]
+      nlinarith [normFun_nonneg g m, hTm, hTr]
+    refine (Finset.sum_le_sum h1).trans ?_
+    rw [← Finset.mul_sum]
+    refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun i _ _ ↦ normFun_nonneg g i)
+    intro m hm'
+    obtain ⟨hmT, hmN⟩ := Finset.mem_Icc.mp hm'
+    exact Finset.mem_Icc.mpr ⟨by omega, by omega⟩
+  have hhall := sum_Icc_normFun_le hm hg hN2
+  have hdef : Real.exp (-primeDefect (normDivArith g) N) ≤
+      Real.exp (-primeDefect (normDivArith g) L) := by
+    apply Real.exp_le_exp.mpr
+    have : L ≤ N := by
+      rw [hN]
+      calc L = L * 1 := by ring
+        _ ≤ L * 2 ^ (j + 1) := Nat.mul_le_mul_left L Nat.one_le_two_pow
+    linarith [primeDefect_mono hg this]
+  calc ∑ m ∈ Finset.Icc T (N - 1), normDivArith g m
+      ≤ (T : ℝ)⁻¹ * ∑ m ∈ Finset.Icc 1 N, normFun g m := hstep
+    _ ≤ (T : ℝ)⁻¹ * (hallConst * Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) * (N : ℝ) *
+          Real.exp (-primeDefect (normDivArith g) N)) :=
+        mul_le_mul_of_nonneg_left hhall (by positivity)
+    _ ≤ (T : ℝ)⁻¹ * (hallConst * Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) * (N : ℝ) *
+          Real.exp (-primeDefect (normDivArith g) L)) := by
+        have hpos : (0 : ℝ) ≤ (T : ℝ)⁻¹ *
+            (hallConst * Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) * (N : ℝ)) := by
+          have := hallConst_pos
+          positivity
+        nlinarith [hdef, hpos, (Real.exp_pos (-primeDefect (normDivArith g) L)).le]
+    _ = _ := by rw [hNT]; field_simp
+
+
+/-- **The dyadic logarithmic sum.**  Over `L ≤ m ≤ Y` the logarithmic mean of `‖g‖` costs only the
+*number of dyadic blocks*, `⌊log₂(Y/L)⌋+1`, times `e^{-Σ_L}` — not `log Y`.
+
+This is what the crude Euler bound cannot give, and it is exactly the thin-window statement:
+with `L ≈ Y/W` the block count is `≈ log₂ W`. -/
+theorem sum_Icc_dyadic_le {g : ℤ → ℂ} (hm : IsMultiplicativeOnPositiveInt g)
+    (hg : ∀ n : ℤ, ‖g n‖ ≤ 1) {L Y : ℕ} (hL : 1 ≤ L) :
+    ∑ m ∈ Finset.Icc L Y, normDivArith g m ≤
+      ((Nat.log 2 (Y / L) + 1 : ℕ) : ℝ) *
+        (2 * hallConst * Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) *
+          Real.exp (-primeDefect (normDivArith g) L)) := by
+  classical
+  set J : ℕ := Nat.log 2 (Y / L) + 1 with hJ
+  set blk : ℕ → Finset ℕ := fun j ↦ Finset.Icc (L * 2 ^ j) (L * 2 ^ (j + 1) - 1) with hblk
+  have hsub : Finset.Icc L Y ⊆ (Finset.range J).biUnion blk := by
+    intro m hm'
+    obtain ⟨hmL, hmY⟩ := Finset.mem_Icc.mp hm'
+    have hmpos : 0 < m := by omega
+    have hqpos : 0 < m / L := Nat.one_le_div_iff (by omega) |>.mpr hmL
+    set j : ℕ := Nat.log 2 (m / L) with hj
+    have hlow : 2 ^ j ≤ m / L := Nat.pow_log_le_self 2 (by omega)
+    have hhigh : m / L < 2 ^ (j + 1) := Nat.lt_pow_succ_log_self (by norm_num) _
+    refine Finset.mem_biUnion.mpr ⟨j, Finset.mem_range.mpr ?_, ?_⟩
+    · have : m / L ≤ Y / L := Nat.div_le_div_right hmY
+      have := Nat.log_mono_right (b := 2) this
+      omega
+    · refine Finset.mem_Icc.mpr ⟨?_, ?_⟩
+      · calc L * 2 ^ j ≤ L * (m / L) := Nat.mul_le_mul_left L hlow
+          _ ≤ m := Nat.mul_div_le m L
+      · have h1 : m < L * (m / L + 1) := by
+          have := Nat.div_add_mod m L
+          have := Nat.mod_lt m (show 0 < L by omega)
+          nlinarith [Nat.div_add_mod m L, Nat.mod_lt m (show 0 < L by omega)]
+        have h2 : L * (m / L + 1) ≤ L * 2 ^ (j + 1) := Nat.mul_le_mul_left L (by omega)
+        omega
+  have hdisj : (↑(Finset.range J) : Set ℕ).PairwiseDisjoint blk := by
+    intro i _ k _ hik
+    rcases Nat.lt_or_ge i k with h | h
+    · refine Finset.disjoint_left.mpr fun m hmi hmk ↦ ?_
+      obtain ⟨-, hi2⟩ := Finset.mem_Icc.mp hmi
+      obtain ⟨hk1, -⟩ := Finset.mem_Icc.mp hmk
+      have hpow : L * 2 ^ (i + 1) ≤ L * 2 ^ k :=
+        Nat.mul_le_mul_left L (Nat.pow_le_pow_right (by norm_num) (by omega))
+      have : 0 < L * 2 ^ (i + 1) := by positivity
+      omega
+    · have hki : k < i := by omega
+      refine Finset.disjoint_left.mpr fun m hmi hmk ↦ ?_
+      obtain ⟨hi1, -⟩ := Finset.mem_Icc.mp hmi
+      obtain ⟨-, hk2⟩ := Finset.mem_Icc.mp hmk
+      have hpow : L * 2 ^ (k + 1) ≤ L * 2 ^ i :=
+        Nat.mul_le_mul_left L (Nat.pow_le_pow_right (by norm_num) (by omega))
+      have : 0 < L * 2 ^ (k + 1) := by positivity
+      omega
+  have hexpand : ∑ m ∈ (Finset.range J).biUnion blk, normDivArith g m =
+      ∑ j ∈ Finset.range J, ∑ m ∈ blk j, normDivArith g m :=
+    Finset.sum_biUnion hdisj
+  calc ∑ m ∈ Finset.Icc L Y, normDivArith g m
+      ≤ ∑ m ∈ (Finset.range J).biUnion blk, normDivArith g m :=
+        Finset.sum_le_sum_of_subset_of_nonneg hsub (fun i _ _ ↦ normDivArith_nonneg g i)
+    _ = ∑ j ∈ Finset.range J, ∑ m ∈ blk j, normDivArith g m := hexpand
+    _ ≤ ∑ _j ∈ Finset.range J, (2 * hallConst *
+          Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) *
+          Real.exp (-primeDefect (normDivArith g) L)) :=
+        Finset.sum_le_sum fun j _ ↦ sum_dyadic_block_le hm hg hL j
+    _ = _ := by rw [Finset.sum_const, nsmul_eq_mul, Finset.card_range]
+
+
 end
 
 end NormalNumbers.ElliottHall
 
 #print axioms NormalNumbers.ElliottHall.sum_Icc_normFun_le
+#print axioms NormalNumbers.ElliottHall.sum_Icc_dyadic_le

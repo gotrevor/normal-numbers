@@ -9806,3 +9806,26 @@ each block `≤ 2·hallConst·e^{1+B}·e^{-Σ}` (monotonicity of `Σ_t` in `t` i
 Hall bound at each `2T_j` and use `Σ_{2T_j} ≥ Σ` — careful: the defect *grows* with the scale, so
 use the defect at the smallest scale `Y/W`).  Total `≪ log W · e^{-Σ_{Y/W}}`.
 Then Case A's thin-window regime closes exactly like `exists_caseA_threshold`.
+
+### lap 53 — dyadic partial summation: the thin-window logarithmic sum
+
+`ElliottHall.sum_Icc_dyadic_le` (trust triple):
+`∑_{L ≤ m ≤ Y} ‖g m‖/m ≤ (⌊log₂(Y/L)⌋+1) · 2·hallConst·e^{1+B} · exp(-Σ_L)`.
+
+The cost is the **number of dyadic blocks**, not `log Y` — with `L ≈ Y/W` that is `≈ log₂ W`,
+which is exactly the thin-window statement the crude Euler bound cannot give.
+
+Supporting, same file: `primeDefect_mono` (the defect grows with the scale, since each term
+`1/p - ‖g p‖/p ≥ 0` — this is what lets every block be run at the *smallest* defect `Σ_L`) and
+`sum_dyadic_block_le` (one block `(T, 2T]` contributes `≤ 2·hallConst·e^{1+B}·e^{-Σ_L}`, by
+`1/m ≤ 1/T` plus the Hall density bound at `2T`).
+
+Blocks are indexed by `j = Nat.log 2 (m/L)`, the decomposition is a genuine partition
+(`Finset.sum_biUnion` with pairwise disjointness), and `Icc L Y` embeds in the union.
+
+**Next (lap 54): Case A's thin-window regime.**  Retrace lap 50's transfer keeping the window:
+the image of `elliottLogWindow X W` under `n ↦ a₁n+b₁` lies in `Icc L Y` with `L ≈ a₁X/W`,
+`Y = a₁X+|b₁|`, and `Y/L ≲ CW`, so the block count is `≤ log₂(CW)+1 ≪ log W` for `W` large.
+Then the threshold argument of `exists_caseA_threshold` applies verbatim, with **no** regime
+hypothesis — the Hall route covers *all* `W`, so it will supersede `exists_caseA_threshold`
+rather than complement it.
