@@ -708,6 +708,106 @@ theorem depthAvg_diag_tendsto_of_unif {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh :
   field_simp
   ring
 
+/-! ### Making the schedule hypothesis checkable -/
+
+/-- **Step 1: the profile's limit is a scalar rate.**  Once the scale `aN N` has passed the
+threshold `AN N`, the `min` and the `if` are inert and `windowPhi` is just its analytic branch. -/
+theorem windowPhi_diag_tendsto {cK CstK : ℕ → ℝ} {κ : ℝ} {M₀ : ℕ}
+    (KN AN aN : ℕ → ℕ) (hA2 : ∀ N, 2 ≤ AN N) (hC : ∀ K, 0 ≤ CstK K)
+    (hA : ∀ᶠ N : ℕ in atTop, AN N ≤ aN N)
+    (hrate : Tendsto (fun N : ℕ =>
+        CstK (KN N) * (2 * Real.log (aN N)) ^ (-(κ * cK (KN N))) / (M₀ : ℝ)) atTop (𝓝 0)) :
+    Tendsto (fun N : ℕ => windowPhi cK CstK κ (KN N) M₀ (AN N) (aN N)) atTop (𝓝 0) := by
+  refine squeeze_zero' (Filter.Eventually.of_forall
+    fun N => windowPhi_nonneg (hA2 N) (hC (KN N)) (aN N)) ?_ hrate
+  filter_upwards [hA] with N hN
+  unfold windowPhi
+  rw [if_neg (by omega)]
+  exact min_le_right _ _
+
+/-- **Step 2: the scalar rate is an exponent going to `-∞`.**  `Cst·x^{-e} = exp(log Cst − e log x)`,
+so the whole question is whether the constant's logarithm is beaten by the saving. -/
+theorem rate_tendsto_of_exponent {cK CstK : ℕ → ℝ} (hC : ∀ K, 0 < CstK K) {κ : ℝ} {M₀ : ℕ}
+    (KN aN : ℕ → ℕ)
+    (hbase : ∀ᶠ N : ℕ in atTop, 0 < 2 * Real.log (aN N))
+    (hexp : Tendsto (fun N : ℕ =>
+        Real.log (CstK (KN N)) - κ * cK (KN N) * Real.log (2 * Real.log (aN N)))
+      atTop atBot) :
+    Tendsto (fun N : ℕ =>
+        CstK (KN N) * (2 * Real.log (aN N)) ^ (-(κ * cK (KN N))) / (M₀ : ℝ)) atTop (𝓝 0) := by
+  have hexp0 : Tendsto (fun N : ℕ => Real.exp
+      (Real.log (CstK (KN N)) - κ * cK (KN N) * Real.log (2 * Real.log (aN N))))
+      atTop (𝓝 0) := Real.tendsto_exp_atBot.comp hexp
+  have hdiv := hexp0.div_const ((M₀ : ℝ))
+  rw [zero_div] at hdiv
+  refine hdiv.congr' ?_
+  filter_upwards [hbase] with N hN
+  rw [Real.exp_sub, Real.exp_log (hC (KN N)), Real.rpow_def_of_pos hN,
+    show Real.log (2 * Real.log (aN N)) * -(κ * cK (KN N))
+      = -(κ * cK (KN N) * Real.log (2 * Real.log (aN N))) from by ring, Real.exp_neg]
+  ring
+
+/-- **Step 3, the concrete profile: a `K`-UNIFORM input closes the crux.**  With the exponent and
+the constant independent of `K`, the exponent of Step 2 is `log Cst₀ − κc₀ log(2 log a) → −∞`
+outright: no arithmetic about the schedule is needed at all. -/
+theorem exponent_tendsto_atBot_of_uniform {c₀ Cst₀ : ℝ} (hc₀ : 0 < c₀) {κ : ℝ} (hκ : 0 < κ)
+    (KN aN : ℕ → ℕ) (haN : Tendsto aN atTop atTop) :
+    Tendsto (fun N : ℕ =>
+        Real.log ((fun _ : ℕ => Cst₀) (KN N))
+          - κ * (fun _ : ℕ => c₀) (KN N) * Real.log (2 * Real.log (aN N)))
+      atTop atBot := by
+  have h1 : Tendsto (fun N : ℕ => ((aN N : ℕ) : ℝ)) atTop atTop :=
+    tendsto_natCast_atTop_atTop.comp haN
+  have h2 : Tendsto (fun N : ℕ => Real.log (aN N)) atTop atTop :=
+    Real.tendsto_log_atTop.comp h1
+  have h3 : Tendsto (fun N : ℕ => 2 * Real.log (aN N)) atTop atTop :=
+    h2.const_mul_atTop (by norm_num)
+  have h4 : Tendsto (fun N : ℕ => Real.log (2 * Real.log (aN N))) atTop atTop :=
+    Real.tendsto_log_atTop.comp h3
+  have h5 : Tendsto (fun N : ℕ => κ * c₀ * Real.log (2 * Real.log (aN N))) atTop atTop :=
+    h4.const_mul_atTop (by positivity)
+  have h6 : Tendsto (fun N : ℕ => -(κ * c₀ * Real.log (2 * Real.log (aN N)))) atTop atBot :=
+    tendsto_neg_atTop_atBot.comp h5
+  have h7 := Filter.tendsto_atBot_add_const_left atTop (Real.log Cst₀) h6
+  exact h7.congr fun N => by simp [sub_eq_add_neg]
+
+/-- **The crux from a `K`-UNIFORM input, assembled.**  `KPointNoExcWith` with constants that do
+not degrade in `K` at all — the strongest shape of the named open problem — gives the diagonal
+for free, with no schedule arithmetic: the only remaining hypotheses are that the cut level and
+the cut scale both grow, and that the (fixed) threshold sequence is eventually passed. -/
+theorem depthAvg_diag_tendsto_of_uniform {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
+    {c₀ Cst₀ : ℝ} (hc₀ : 0 < c₀) (hCst₀ : 0 < Cst₀)
+    (hin : ∀ K, KPointNoExcWith (fun _ => c₀) (fun _ => Cst₀) K)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+    (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
+    (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * c₀))
+    (k₀ : ℕ → ℕ) (hk₀ : Tendsto k₀ atTop atTop)
+    (hscale : Tendsto (fun N : ℕ => N / 2 ^ k₀ N) atTop atTop)
+    (hAle : ∀ᶠ N : ℕ in atTop, Athr (PairDecouple.depthLL b N) ≤ N / 2 ^ k₀ N) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j hh (PairDecouple.depthLL b N) N) atTop (𝓝 0) := by
+  have hbase : ∀ᶠ N : ℕ in atTop, 0 < 2 * Real.log ((N / 2 ^ k₀ N : ℕ) : ℝ) := by
+    filter_upwards [hscale.eventually_ge_atTop 2] with N hN
+    have h2 : (2 : ℝ) ≤ ((N / 2 ^ k₀ N : ℕ) : ℝ) := by exact_mod_cast hN
+    have hlog : 0 < Real.log ((N / 2 ^ k₀ N : ℕ) : ℝ) := Real.log_pos (by linarith)
+    linarith
+  have hrate := rate_tendsto_of_exponent (cK := fun _ => c₀) (CstK := fun _ => Cst₀)
+    (fun _ => hCst₀) (κ := κ) (M₀ := Q * primorial P)
+    (fun N => PairDecouple.depthLL b N) (fun N => N / 2 ^ k₀ N) hbase
+    (exponent_tendsto_atBot_of_uniform hc₀ hκ (fun N => PairDecouple.depthLL b N)
+      (fun N => N / 2 ^ k₀ N) hscale)
+  have hΦ := windowPhi_diag_tendsto (cK := fun _ => c₀) (CstK := fun _ => Cst₀) (κ := κ)
+    (M₀ := Q * primorial P) (fun N => PairDecouple.depthLL b N)
+    (fun N => Athr (PairDecouple.depthLL b N)) (fun N => N / 2 ^ k₀ N)
+    (fun N => hA2 _) (fun _ => hCst₀.le) hAle hrate
+  have hhalf : Tendsto (fun N : ℕ => (1 / 2 : ℝ) ^ k₀ N) atTop (𝓝 0) :=
+    (tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)).comp hk₀
+  refine depthAvg_diag_tendsto_of_unif hQ P j hh (fun _ => hc₀) (fun _ => hCst₀) hin
+    hκ hκ1 hnp Athr hA2 hAthr k₀ ?_
+  simpa using hΦ.add hhalf
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -722,6 +822,8 @@ theorem depthAvg_diag_tendsto_of_unif {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh :
 #print axioms NormalNumbers.CastingOut.depthAvg_le_with
 #print axioms NormalNumbers.CastingOut.tendsto_natLog_shift_div
 #print axioms NormalNumbers.CastingOut.depthAvg_diag_tendsto_of_unif
+#print axioms NormalNumbers.CastingOut.rate_tendsto_of_exponent
+#print axioms NormalNumbers.CastingOut.depthAvg_diag_tendsto_of_uniform
 
 end CastingOut
 

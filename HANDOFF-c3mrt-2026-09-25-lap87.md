@@ -35,7 +35,7 @@ Thm 3.1(ii) with the exceptional set of scales deleted, which TT say is out of r
 *log*-measure by `Cst (log A)^{1-κc} ≫ 1`.  Same wall as log-Chowla ⇏ Chowla; TT's own Thm 1.3
 escapes it because *irrationality* needs only infinitely many good scales.
 
-## Landed this lap (`C3MrtUnifK.lean`, 23 declarations, all trust-triple clean)
+## Landed this lap (`C3MrtUnifK.lean`, 27 declarations, all trust-triple clean)
 
 * `quantDepthElliottGen_forces_diagonal`, `DepthDiagonal`, `weylLambertTwist_of_depthDiagonal`,
   `depthDiagonal_of_quantDepthElliottGen`.
@@ -77,18 +77,32 @@ escapes it because *irrationality* needs only infinitely many good scales.
   — the *schedule compatibility* of the profile, i.e. precisely the uniformity the per-`K`
   existential could not express (F2).  Composed with `weylLambertTwist_of_depthDiagonal` this
   closes the crux from a `K`-uniform input.
+* **The schedule hypothesis made checkable**, in three steps:
+  `windowPhi_diag_tendsto` (once the scale passes the threshold, the profile IS its analytic
+  branch), `rate_tendsto_of_exponent` (`Cst·x^{-e} = exp(log Cst − e log x)`, so the whole
+  question is whether the constant's log is beaten by the saving), and
+  `exponent_tendsto_atBot_of_uniform`.
+* **`depthAvg_diag_tendsto_of_uniform` — a `K`-UNIFORM input closes the crux outright**, with
+  NO schedule arithmetic: constants independent of `K` give
+  `log Cst₀ − κc₀ log(2 log a) → −∞` for free.  The only residual hypotheses are that the cut
+  level `k₀` and the cut scale `N/2^{k₀ N}` grow and eventually pass `Athr`.
 
 ## NEXT (in order)
 
 1. ~~`windowPhi`~~ — DONE this lap.
 2. ~~`depthAvg_le_with`~~ — DONE this lap.
 3. ~~`depthElliottLL_of_unif`~~ — DONE this lap (`depthAvg_diag_tendsto_of_unif`).
-4. **THE CONCRETE PROFILE — next lap's target.**  Make `hsched` *checkable* rather than
-   decorative: with `k₀ N = Nat.log 2 (Nat.log 2 N)` (so `2^{-k₀ N} ≍ 1/log₂ N → 0` and
-   `a = N/2^{k₀ N}`, `log a ≍ log N`), show that `cK K = c₀/(K+1)^m`, `CstK K = exp((K+1)^m)`
-   satisfies it, using `D_N = depthLL b N ≍ log_b log log N`:
-   `CstK D_N · (2 log a)^{-κ·cK D_N} = exp(O((lll N)^m) − κc₀·(ll N)/(lll N)^m) → 0`.
-   Needs: `Athr M₀ K` explicit and `Athr (depthLL b N) ≤ N/2^{k₀ N}` eventually.
+4. ~~The uniform-constant profile~~ — DONE this lap (`depthAvg_diag_tendsto_of_uniform`).
+5. **THE DEGRADING PROFILE — next lap's target**, and the realistic one.  Via
+   `rate_tendsto_of_exponent` the whole question is now ONE scalar limit:
+
+       Real.log (CstK D_N) − κ·cK D_N·Real.log (2 log (N/2^{k₀ N}))  →  −∞ ,   D_N = depthLL b N.
+
+   With `k₀ N = Nat.log 2 (Nat.log 2 N)` (so `2^{-k₀ N} ≍ 1/log₂ N → 0`, `log(N/2^{k₀ N}) ≍
+   log N`), `cK K = c₀/(K+1)^m` and `CstK K = exp((K+1)^m)` give
+   `exp(O((lll N)^m) − κc₀·(ll N)/(lll N)^m) → 0`, since `D_N + 1 = O(lll N)`
+   (`pow_depthLL_le : b^{D_N} ≤ b·llProxy N²`).  Needs, in Lean: an explicit `Athr` with
+   `Athr (depthLL b N) ≤ N/2^{k₀ N}` eventually, and `Tendsto (fun N => N/2^{k₀ N}) atTop atTop`.
    Arithmetic already
    checked (PENDING_WORK F2): `cK K = c₀γ^K` needs `γ > b^{-1/2}` (γ = 1/2 FAILS at b = 3,
    θ = 2log2/log3 ≈ 1.26 > 1); `cK K = c₀/K^m` is comfortable; `CstK K ≤ exp(K^m)` always
