@@ -93,3 +93,21 @@ correlation by
 `multi_bound_of_rung` (the `K`-fold `two_shift_bound_of_rung`), then choose `ε → Y → A → N`
 using `truncB_tendsto`/`bridgeTail_tendsto` and land in `weylLambertTwist_of_kfold_bound`'s
 shape.  Model: `rung_two_correlation` (`C3MrtArchimedean`, laps 29–33).
+
+## Addendum — lap 48: `multi_bound_of_rung` — the deterministic half of `D ≥ 3`, in ONE statement
+
+`multi_bound_of_rung` (`C3MrtMultiInner.lean`, sorry-free, trust triple).  The `K`-point
+`two_shift_bound_of_rung`: for every `K ≥ 1`, `Y`, `N`, `A ≥ 2`, granting only the `K`-point
+rung bound `R` on the Elliott window at every positive solvable tuple and admissible base point,
+
+    ‖∑_{n<N} harmW n ∏_{i<K} z_i^{ω(n+i+1)}‖
+      ≤ [ K·truncA z Y K + (1+log N)·K^{K²}·truncB z Y K ]
+        + [ ∏_i sqfWPartial z_i Y + (3 + R + log A)·K^{K²}·∏_i sqfWMass z_i ] .
+
+Degenerate tuples (a zero entry, or an unsolvable joint congruence) contribute nothing and need
+no rung bound.  This is the whole `K`-fold assembly modulo the quantifier chase.
+
+**NEXT — the ε-chase, the last piece.**  Choose `ε → Y → A → N` as in `rung_two_correlation`:
+`truncB_tendsto` makes `(1+log N)K^{K²}truncB ≤ ε·log N`; `∏ sqfWPartial` and `∏ sqfWMass` are
+`N`-independent constants once `Y` is fixed; `R` is supplied by `KPointLogElliott K` at
+`ε/(K^{K²}∏ sqfWMass)`.  Land in `weylLambertTwist_of_kfold_bound`.

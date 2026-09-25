@@ -236,6 +236,78 @@ theorem inner_multi_bound {K N A : ℕ} (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖
 #print axioms multi_rung_spelling
 #print axioms inner_multi_bound
 
+
+open scoped Classical in
+/-- **The `K`-fold correlation, bounded by the rung** — the `K`-point `two_shift_bound_of_rung`,
+and the deterministic half of the `D ≥ 3` assembly in one statement.  Truncation
+(`multi_truncation_bound`) plus tuple sum (`multi_full_sum_bound` fed by `inner_multi_bound`).
+
+Everything on the right is `N`-independent except the two flagged terms: `(1 + log N)·K^{K²}·
+truncB` (whose `truncB` is made small by choosing `Y` large, `truncB_tendsto`) and `R` (the
+rung's own bound, which is where the `ε·log N` lives).  The degenerate tuples — a zero entry, or
+an unsolvable joint congruence — contribute nothing and so need no rung bound. -/
+theorem multi_bound_of_rung {K : ℕ} (hK : 0 < K) (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1)
+    (Y N A : ℕ) (hA : 2 ≤ A) {R : ℝ} (hR0 : 0 ≤ R)
+    (hrung : ∀ d : Fin K → ℕ, (∀ i, 0 < d i) → (∃ n₀ : ℕ, ∀ i : Fin K, d i ∣ n₀ + (i : ℕ) + 1) →
+      ∀ a : ℕ, a < (Finset.univ : Finset (Fin K)).lcm d →
+        (∀ i : Fin K, d i ∣ a + (i : ℕ) + 1) →
+        ‖∑ j ∈ Finset.Ioc 0 (A ^ Nat.log A
+              ((N - 1 - a) / (Finset.univ : Finset (Fin K)).lcm d)),
+            (Erdos67b.harmonicWeight j : ℂ) *
+              ∏ i : Fin K, zOmInt (z i)
+                (Erdos67b.integerAffine ((Finset.univ : Finset (Fin K)).lcm d / d i)
+                  (((a + (i : ℕ) + 1) / d i : ℕ) : ℤ) j)‖ ≤ R) :
+    ‖∑ n ∈ range N, harmW n * ∏ i : Fin K, (z i) ^ omegaNat (n + (i : ℕ) + 1)‖
+      ≤ ((K : ℝ) * truncA z Y K + ((1 + Real.log N) * (K : ℝ) ^ (K * K)) * truncB z Y K)
+        + ((∏ i : Fin K, sqfWPartial (z i) Y)
+          + (3 + R + Real.log A) * ((K : ℝ) ^ (K * K) * ∏ i : Fin K, sqfWMass (z i))) := by
+  classical
+  have hF : ∀ n : ℕ, ‖harmW n‖ ≤ ((n : ℝ) + 1)⁻¹ := fun n => le_of_eq (norm_harmW n)
+  set Inner : (Fin K → ℕ) → ℂ := fun d =>
+    ∑ n ∈ (range N).filter (fun n => ∀ i : Fin K, d i ∣ n + (i : ℕ) + 1),
+      harmW n * ∏ i : Fin K, (z i) ^ ArithmeticFunction.cardFactors ((n + (i : ℕ) + 1) / d i)
+    with hInner
+  set sol : (Fin K → ℕ) → Prop := fun d =>
+    (∀ i, 0 < d i) ∧ ∃ n₀ : ℕ, ∀ i : Fin K, d i ∣ n₀ + (i : ℕ) + 1 with hsolDef
+  have htrunc := multi_truncation_bound z hz hF K N Y hK
+  have hlogA : 0 ≤ Real.log A := Real.log_natCast_nonneg A
+  have hfull := multi_full_sum_bound (K := K) z hz Y Inner
+    (R := 3 + R + Real.log A) (by linarith) sol
+    (fun d h => ⟨h.1, h.2⟩)
+    (fun d _ hns => by
+      rw [hInner]
+      simp only []
+      by_cases hpos : ∀ i, 0 < d i
+      · refine inner_sum_multi_empty d (fun hex => hns ⟨hpos, hex⟩) z harmW
+      · push_neg at hpos
+        obtain ⟨i, hi⟩ := hpos
+        have hi0 : d i = 0 := by omega
+        refine Finset.sum_eq_zero fun n hn => ?_
+        have := (Finset.mem_filter.1 hn).2 i
+        rw [hi0] at this
+        simp only [Nat.zero_dvd] at this
+        omega)
+    (fun d _ h => by
+      obtain ⟨hpos, n₀, hn₀⟩ := h
+      exact inner_multi_bound z hz d hpos hn₀ hA hR0 (hrung d hpos ⟨n₀, hn₀⟩))
+  have htri : ‖∑ n ∈ range N, harmW n * ∏ i : Fin K, (z i) ^ omegaNat (n + (i : ℕ) + 1)‖
+      ≤ ‖(∑ n ∈ range N, harmW n * ∏ i : Fin K, (z i) ^ omegaNat (n + (i : ℕ) + 1))
+          - ∑ d ∈ Fintype.piFinset (fun _ : Fin K => range (Y + 1)),
+              (∏ i : Fin K, sqfW (z i) (d i)) * Inner d‖
+        + ‖∑ d ∈ Fintype.piFinset (fun _ : Fin K => range (Y + 1)),
+              (∏ i : Fin K, sqfW (z i) (d i)) * Inner d‖ := by
+    have := norm_add_le
+      ((∑ n ∈ range N, harmW n * ∏ i : Fin K, (z i) ^ omegaNat (n + (i : ℕ) + 1))
+        - ∑ d ∈ Fintype.piFinset (fun _ : Fin K => range (Y + 1)),
+            (∏ i : Fin K, sqfW (z i) (d i)) * Inner d)
+      (∑ d ∈ Fintype.piFinset (fun _ : Fin K => range (Y + 1)),
+        (∏ i : Fin K, sqfW (z i) (d i)) * Inner d)
+    simpa using this
+  simp only [hInner] at hfull htri
+  linarith
+
+#print axioms multi_bound_of_rung
+
 end CastingOut
 
 end NormalNumbers
