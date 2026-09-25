@@ -44,6 +44,7 @@ open NormalNumbers.ElliottDilatedBridge
 open NormalNumbers.ElliottDilatedPairing
 open NormalNumbers.ElliottDilatedCorrelation
 open NormalNumbers.ElliottDilatedMean
+open NormalNumbers.ElliottDilatedWeight
 
 noncomputable section
 
@@ -179,8 +180,119 @@ theorem exists_logProb_dilatedMean_correlation_close
             ε / 2 * (H : ℕ) / Real.log ((H : ℕ) : ℝ) := add_le_add le_rfl hwin
     _ = ε * (H : ℕ) / Real.log ((H : ℕ) : ℝ) := by ring
 
+/-! ## The dilated lower bound -/
+
+/-- **Step (iii)(c), second half: a large affine correlation forces a large dilated graph mean.**
+Dilated analogue of `NormalNumbers.ElliottTwistedGraph.exists_logProb_dyadic_pairTwistedMean_lower`.
+
+The active prime block is the one the *upper* bound consumes, `dyadicPrimes (H/(4h+4))`: the dilated
+weight bound needs `4a + 4Ph ≤ H`, and at `P = H/(4h+4)` the leftover `4P ≥ 4a` supplies exactly
+that, because `H = a·m` with `m ≥ H₀ ≥ 4h+4`.  The dilation costs the factor `a` in the constant
+(`32a` instead of the dependency's `16`), which is free: `a` is fixed before `η`. -/
+theorem exists_logProb_dyadic_dilatedMean_lower
+    {η : ℝ} (hη : 0 < η) {a : ℕ} (ha : 0 < a) (c₁ : ℕ) {h : ℕ} (hh : 0 < h) (Hmin : ℕ) :
+    ∃ H₀ J L₀ : ℕ, ∃ W₀ : ℝ,
+      Hmin ≤ H₀ ∧ 2 ≤ H₀ ∧ a ≤ H₀ ∧ 0 < J ∧ 0 < L₀ ∧ 0 < W₀ ∧
+      ∀ L U : ℕ, 0 < L → 2 * L ≤ U → L₀ ≤ L → W₀ ≤ (logProbMassNN L U : ℝ) →
+      ∀ f₁ f₂ : ℕ → ℂ, IsCompletelyMultiplicativeOnPositive f₁ →
+        IsCompletelyMultiplicativeOnPositive f₂ →
+        (∀ n, 0 < n → ‖f₁ n‖ = 1) → (∀ n, 0 < n → ‖f₂ n‖ = 1) →
+        η ≤ ‖affineLogCorrelation L U f₁ f₂ a (c₁ : ℤ) ((c₁ + h : ℕ) : ℤ)‖ →
+      ∃ j : ℕ, j < J ∧
+        η * (a * entropyScale H₀ j : ℕ) /
+            (32 * a * Real.log ((a * entropyScale H₀ j : ℕ) : ℝ)) ≤
+          ‖logProbExpectation L U (fun n ↦
+            dilatedPairTwistedMean (pairTwist f₁ f₂)
+              (affineBlock f₁ a n (a * entropyScale H₀ j))
+              (affineBlock f₂ a n (a * entropyScale H₀ j)) a c₁ h
+              (PrimeEstimates.dyadicPrimes
+                (a * entropyScale H₀ j / (4 * h + 4))))‖ := by
+  classical
+  obtain ⟨P₀, hP₀, hweight⟩ := exists_dyadic_dilatedCorrelationWeight_lower
+  let K : ℕ := 4 * h + 4
+  have hK : 0 < K := by dsimp [K]; omega
+  have hKr : (0 : ℝ) < K := Nat.cast_pos.mpr hK
+  let δ : ℝ := 1 / (2 * K)
+  have hδ : 0 < δ := by dsimp [δ]; positivity
+  have har : (0 : ℝ) < a := Nat.cast_pos.mpr ha
+  obtain ⟨H₀, J, L₀, W₀, hmin, hH₀, hH₀a, hJ, hL₀, hW₀, hclose⟩ :=
+    exists_logProb_dilatedMean_correlation_close hδ
+      (show 0 < η / (32 * a) by positivity) ha c₁ h (max (max Hmin (K * P₀)) K)
+  refine ⟨H₀, J, L₀, W₀, ((le_max_left _ _).trans (le_max_left _ _)).trans hmin,
+    hH₀, hH₀a, hJ, hL₀, hW₀, ?_⟩
+  intro L U hL hU hLL hWM f₁ f₂ hm₁ hm₂ hu₁ hu₂ hcorr
+  obtain ⟨j, hj, hcl⟩ := hclose L U hL hU hLL hWM f₁ f₂ hm₁ hm₂ hu₁ hu₂
+  set m := entropyScale H₀ j with hmdef
+  have hmH₀ : H₀ ≤ m := le_entropyScale H₀ j
+  set H := a * m with hHdef
+  have hmH : m ≤ H := Nat.le_mul_of_pos_left m ha
+  have hH2 : 2 ≤ H := (hH₀.trans hmH₀).trans hmH
+  set P := H / K with hPdef
+  -- the scale bookkeeping
+  have hmK : K ≤ m := (((le_max_right _ _).trans hmin).trans hmH₀)
+  have hKP₀ : K * P₀ ≤ m := (((le_max_right _ _).trans (le_max_left _ _)).trans hmin).trans hmH₀
+  have hHK : K * P₀ ≤ H := hKP₀.trans hmH
+  have hPP : P₀ ≤ P := (Nat.le_div_iff_mul_le hK).mpr (by simpa only [mul_comm] using hHK)
+  have hP2 : 2 ≤ P := hP₀.trans hPP
+  have haP : a ≤ P := by
+    apply (Nat.le_div_iff_mul_le hK).mpr
+    calc a * K ≤ a * m := Nat.mul_le_mul_left a hmK
+      _ = H := hHdef.symm
+  have hdiv : P * K ≤ H := Nat.div_mul_le_self H K
+  have hPH : 2 * P ≤ H := by dsimp [K] at hdiv; nlinarith
+  have hstep : 4 * a + 4 * P * h ≤ H := by
+    have h1 : 4 * a ≤ 4 * P := by omega
+    dsimp [K] at hdiv
+    nlinarith
+  have hPlt : H < K * (P + 1) := Nat.lt_mul_div_succ H hK
+  have hscale : (H : ℝ) / (2 * K) ≤ P := by
+    apply (div_le_iff₀ (by positivity : (0 : ℝ) < 2 * K)).mpr
+    have hcast : (H : ℝ) < K * ((P : ℝ) + 1) := by exact_mod_cast hPlt
+    have hPr : (1 : ℝ) ≤ P := by exact_mod_cast (by omega : 1 ≤ P)
+    nlinarith
+  have hsprimes : PrimeEstimates.dyadicPrimes P ⊆ Nat.primesLE H := by
+    intro p hp
+    have hp' := PrimeEstimates.mem_primesInInterval.mp hp
+    exact Nat.mem_primesLE.mpr ⟨hp'.2.1.trans hPH, hp'.2.2⟩
+  have hs : ∀ p ∈ PrimeEstimates.dyadicPrimes P, δ * ((H : ℕ) : ℝ) ≤ p := by
+    intro p hp
+    have hPp := (PrimeEstimates.mem_primesInInterval.mp hp).1
+    calc δ * ((H : ℕ) : ℝ) = (H : ℝ) / (2 * K) := by dsimp [δ]; ring
+      _ ≤ P := hscale
+      _ ≤ p := by exact_mod_cast hPp.le
+  have hcl' := hcl (PrimeEstimates.dyadicPrimes P) hsprimes hs
+  -- the weight lower bound
+  have hw := hweight P hPP H a c₁ h ha hPH hstep
+  have hlogP : 0 < Real.log (P : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < P))
+  have hlogH : 0 < Real.log ((H : ℕ) : ℝ) :=
+    Real.log_pos (by exact_mod_cast (by omega : 1 < H))
+  have hlogle : Real.log (P : ℝ) ≤ Real.log ((H : ℕ) : ℝ) :=
+    Real.log_le_log (by positivity) (by exact_mod_cast (by omega : P ≤ H))
+  have hw' : ((H : ℕ) : ℝ) / (16 * a * Real.log ((H : ℕ) : ℝ)) ≤
+      dilatedCorrelationWeight H a c₁ h (PrimeEstimates.dyadicPrimes P) := by
+    refine le_trans ?_ hw
+    exact div_le_div_of_nonneg_left (by positivity) (by positivity) (by nlinarith)
+  have hw0 := dilatedCorrelationWeight_nonneg H a c₁ h (PrimeEstimates.dyadicPrimes P)
+  have hprod := mul_le_mul hw' hcorr hη.le hw0
+  have htri := norm_le_norm_add_norm_sub
+    (logProbExpectation L U (fun n ↦
+      dilatedPairTwistedMean (pairTwist f₁ f₂) (affineBlock f₁ a n H)
+        (affineBlock f₂ a n H) a c₁ h (PrimeEstimates.dyadicPrimes P)))
+    (dilatedCorrelationWeight H a c₁ h (PrimeEstimates.dyadicPrimes P) •
+      affineLogCorrelation L U f₁ f₂ a (c₁ : ℤ) ((c₁ + h : ℕ) : ℤ))
+  rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg hw0] at htri
+  refine ⟨j, hj, ?_⟩
+  have hbudget : ((H : ℕ) : ℝ) / (16 * a * Real.log ((H : ℕ) : ℝ)) * η =
+      η * ((H : ℕ) : ℝ) / (32 * a * Real.log ((H : ℕ) : ℝ)) +
+        η / (32 * a) * ((H : ℕ) : ℝ) / Real.log ((H : ℕ) : ℝ) := by
+    field_simp
+    ring
+  rw [hbudget] at hprod
+  linarith
+
 end
 
 end NormalNumbers.ElliottDilatedSelect
 
 #print axioms NormalNumbers.ElliottDilatedSelect.exists_logProb_dilatedMean_correlation_close
+#print axioms NormalNumbers.ElliottDilatedSelect.exists_logProb_dyadic_dilatedMean_lower
