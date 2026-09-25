@@ -11310,8 +11310,12 @@ mathlib has only the qualitative `LFunction_apply_one_ne_zero`).
 **Next attack on this item.**  `CharTailCancellation C` from `L(1,χ) ≫ q^{-1/2}`:
 1. `∑_{q<p≤Y} χ(p)/p = ∑_{p≤Y} χ(p)p^{-σ} + O(1)` at `σ = 1 + 1/log Y` (smoothing; the head
    subtraction is already `O(log log q)` by `norm_charHeadSum_le`);
-2. `∑_p χ(p)p^{-σ} = 𝓛(σ,χ) + O(1)` where `𝓛 = ∑_{p,k} χ(p^k)/(k p^{kσ})` — the `k ≥ 2` tail is
-   `≤ ∑_p ∑_{k≥2} 1/(k p^k) ≤ 1` (elementary, next leaf to formalize);
+2. `∑_p χ(p)p^{-σ} = 𝓛(σ,χ) + O(1)` where `𝓛 = ∑_{p,k} χ(p^k)/(k p^{kσ})` — **DONE**
+   (`primePower_tail_le_one`, sorry-free, axiom-clean): `∑_{p∈P} ∑_{k∈Ico 2 N} 1/(k p^k) ≤ 1`
+   for every finite prime set `P` and every truncation `N`, via `primePower_inner_le`
+   (`≤ p^{-2}`, geometric in `k`) and `prime_inv_sq_sum_le_one` (`∑_p p^{-2} ≤ 1`, by the
+   telescope `1/(n-1) − 1/n`; no `ζ(2)` needed).  So the step-1→3 passage costs `O(1)`
+   absolutely — uniformly in the prime set, the truncation and `σ ≥ 1`;
 3. `exp 𝓛 = L(σ,χ)` (Euler product; mathlib `DirichletCharacter.LSeries_eulerProduct`-family);
 4. `|Re 𝓛| ≤ |log‖L‖| ≤ (1/2) log q + O(log log q)` from the lower bound plus `‖L(1,χ)‖ ≪ log q`;
 5. `|Im 𝓛| ≪ log q` — the winding number of `arg L(σ,χ)` as `σ: ∞ → 1`.  **This is the one step

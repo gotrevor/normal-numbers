@@ -213,6 +213,113 @@ theorem charTailSum_singleton_le {X : ℝ} {q p : ℕ} (χ : DirichletCharacter 
   rw [div_le_one (by linarith)]
   linarith
 
+
+/-! ### Step 2 of the next attack: the `k ≥ 2` prime-power tail is `≤ 1`
+
+`PENDING_WORK.md` step 2: passing from `∑_p χ(p) p^{-σ}` to the Dirichlet-series logarithm
+`𝓛(σ,χ) = ∑_{p,k} χ(p^k)/(k p^{kσ})` costs only the `k ≥ 2` terms, and those are *absolutely*
+bounded — by `1`, independently of the primes involved, of how many there are, and of `σ ≥ 1`.
+Formalized here at `σ = 1` (the worst case) over an arbitrary finite prime set and an arbitrary
+truncation `N`, which is the form the chain consumes. -/
+
+/-- Geometric decay in `k`: for a prime-sized base `p ≥ 2`, the whole `k ≥ 2` tail weighs at most
+`p^{-2}`.  (The `1/k` is thrown away as `1/k ≤ 1/2`; the geometric ratio `1/p ≤ 1/2` then pays
+the remaining factor `2`.) -/
+theorem primePower_inner_le {p : ℕ} (hp : 2 ≤ p) (N : ℕ) :
+    ∑ k ∈ Finset.Ico 2 N, (1:ℝ)/((k:ℝ) * (p:ℝ)^k) ≤ 1/(p:ℝ)^2 := by
+  have hp2 : (2:ℝ) ≤ (p:ℝ) := by exact_mod_cast hp
+  have hp0 : (0:ℝ) < (p:ℝ) := by linarith
+  set r : ℝ := 1/(p:ℝ) with hr
+  have hr0 : 0 ≤ r := by positivity
+  have hrhalf : r ≤ 1/2 := by
+    rw [hr, div_le_div_iff₀ hp0 (by norm_num)]; linarith
+  rcases le_or_gt N 2 with hN | hN
+  · have he : Finset.Ico 2 N = (∅ : Finset ℕ) := Finset.Ico_eq_empty (by omega)
+    rw [he, Finset.sum_empty]
+    positivity
+  · rw [Finset.sum_Ico_eq_sum_range]
+    have key : ∀ i ∈ Finset.range (N - 2),
+        (1:ℝ)/(((2+i : ℕ) : ℝ) * (p:ℝ)^(2+i)) ≤ (1/2) * (r^2 * r^i) := by
+      intro i _
+      have hc : (((2+i : ℕ)) : ℝ) = 2 + (i:ℝ) := by push_cast; ring
+      have hpow : (0:ℝ) < (p:ℝ)^(2+i) := by positivity
+      have hrr : r^2 * r^i = 1/((p:ℝ)^(2+i)) := by
+        rw [hr, div_pow, div_pow, one_pow, one_pow, div_mul_div_comm, one_mul, pow_add]
+      rw [hc, hrr]
+      have hle : (2:ℝ) * (p:ℝ)^(2+i) ≤ (2 + (i:ℝ)) * (p:ℝ)^(2+i) := by
+        have : (0:ℝ) ≤ (i:ℝ) := Nat.cast_nonneg i
+        nlinarith
+      have h1 : (1:ℝ)/((2 + (i:ℝ)) * (p:ℝ)^(2+i)) ≤ 1/((2:ℝ) * (p:ℝ)^(2+i)) :=
+        one_div_le_one_div_of_le (by positivity) hle
+      have h2 : (1:ℝ)/((2:ℝ) * (p:ℝ)^(2+i)) = (1/2) * (1/((p:ℝ)^(2+i))) := by
+        field_simp
+      linarith [h1, h2.le, h2.ge]
+    refine (Finset.sum_le_sum key).trans ?_
+    rw [← Finset.mul_sum, ← Finset.mul_sum]
+    have hgeo : ∑ i ∈ Finset.range (N-2), r^i ≤ 2 := by
+      calc ∑ i ∈ Finset.range (N-2), r^i
+          ≤ ∑ i ∈ Finset.range (N-2), ((1:ℝ)/2)^i := by gcongr
+        _ ≤ 2 := sum_geometric_two_le _
+    have hr2 : (0:ℝ) ≤ r^2 := by positivity
+    have hstep : (1/2 : ℝ) * (r^2 * ∑ i ∈ Finset.range (N-2), r^i) ≤ (1/2) * (r^2 * 2) := by
+      have := mul_le_mul_of_nonneg_left hgeo hr2
+      nlinarith
+    calc (1/2 : ℝ) * (r^2 * ∑ i ∈ Finset.range (N-2), r^i) ≤ (1/2) * (r^2 * 2) := hstep
+      _ = r^2 := by ring
+      _ = 1/(p:ℝ)^2 := by rw [hr, div_pow]; norm_num
+
+/-- `∑_{p prime} p^{-2} ≤ 1`, over any finite set of primes, by comparison with the telescoping
+`1/(n-1) − 1/n`.  (No `ζ(2)` needed — the crude telescope already gives the clean constant.) -/
+theorem prime_inv_sq_sum_le_one {P : Finset ℕ} (hP : ∀ p ∈ P, Nat.Prime p) :
+    ∑ p ∈ P, (1:ℝ)/(p:ℝ)^2 ≤ 1 := by
+  have hsub : P ⊆ Finset.Ico 2 (P.sup id + 1) := by
+    intro p hp
+    have h2 : 2 ≤ p := (hP p hp).two_le
+    have : p ≤ P.sup id := Finset.le_sup (f := id) hp
+    simp only [Finset.mem_Ico]; omega
+  have hmono : ∑ p ∈ P, (1:ℝ)/(p:ℝ)^2
+      ≤ ∑ n ∈ Finset.Ico 2 (P.sup id + 1), (1:ℝ)/(n:ℝ)^2 := by
+    refine Finset.sum_le_sum_of_subset_of_nonneg hsub ?_
+    intro i _ _; positivity
+  refine hmono.trans ?_
+  set B := P.sup id + 1
+  rcases le_or_gt B 2 with hB | hB
+  · rw [Finset.Ico_eq_empty (by omega)]; norm_num
+  · rw [Finset.sum_Ico_eq_sum_range]
+    have key : ∀ i ∈ Finset.range (B - 2), (1:ℝ)/((((2+i : ℕ)) : ℝ))^2
+        ≤ (1/(1+(i:ℝ)) - 1/(2+(i:ℝ))) := by
+      intro i _
+      have h1 : (0:ℝ) < 1 + (i:ℝ) := by positivity
+      have h2 : (0:ℝ) < 2 + (i:ℝ) := by positivity
+      have hc : (((2+i : ℕ)) : ℝ) = 2 + (i:ℝ) := by push_cast; ring
+      have hrhs : 1/(1+(i:ℝ)) - 1/(2+(i:ℝ)) = 1/((1+(i:ℝ))*(2+(i:ℝ))) := by
+        field_simp; ring
+      rw [hc, hrhs]
+      have hle : (1+(i:ℝ))*(2+(i:ℝ)) ≤ (2+(i:ℝ))^2 := by nlinarith
+      exact one_div_le_one_div_of_le (by positivity) hle
+    refine (Finset.sum_le_sum key).trans ?_
+    have tel : ∑ i ∈ Finset.range (B-2), ((fun j : ℕ => 1/(1+(j:ℝ))) i
+        - (fun j : ℕ => 1/(1+(j:ℝ))) (i+1)) = 1/(1+((0:ℕ):ℝ)) - 1/(1+((B-2:ℕ):ℝ)) :=
+      Finset.sum_range_sub' (fun j : ℕ => 1/(1+(j:ℝ))) (B-2)
+    simp only at tel
+    have hrw : ∀ i : ℕ, (1/(1+(i:ℝ)) - 1/(2+(i:ℝ)))
+        = (1/(1+(i:ℝ)) - 1/(1+((i+1:ℕ):ℝ))) := by
+      intro i; push_cast; ring_nf
+    rw [Finset.sum_congr rfl (fun i _ => hrw i), tel]
+    have hnn : (0:ℝ) ≤ 1/(1+((B-2:ℕ):ℝ)) := by positivity
+    norm_num
+    linarith
+
+/-- **Step 2, assembled.**  The full `k ≥ 2` prime-power tail of the Dirichlet-series logarithm is
+bounded by `1` — absolutely, uniformly in the prime set and the truncation.  So passing from the
+prime sum `∑_p χ(p)/p` to `𝓛(1,χ)` costs `O(1)`, and the whole `t = 0` debt really is the
+`L(1,χ) ≫ q^{-1/2}` lower bound (`PENDING_WORK.md` steps 3–5). -/
+theorem primePower_tail_le_one {P : Finset ℕ} (hP : ∀ p ∈ P, Nat.Prime p) (N : ℕ) :
+    ∑ p ∈ P, ∑ k ∈ Finset.Ico 2 N, (1:ℝ)/((k:ℝ) * (p:ℝ)^k) ≤ 1 := by
+  refine le_trans (Finset.sum_le_sum ?_) (prime_inv_sq_sum_le_one hP)
+  intro p hp
+  exact primePower_inner_le (hP p hp).two_le N
+
 end CastingOut
 
 end NormalNumbers
