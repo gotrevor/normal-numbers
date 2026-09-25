@@ -1001,6 +1001,228 @@ theorem tendsto_degMinorant (m : ℕ) : Tendsto (fun u : ℕ => degMinorant m u)
   simp only [Function.comp_apply, degMinorant, Real.exp_log hpos]
   ring_nf
 
+/-- **The denominator: the depth level is a LOGARITHM of the double-log level.**
+`b^{D_N} ≤ b·(u_N+1)²` (`pow_depthLL_le`), so `D_N + 1 ≤ 2 + 3 log (u_N+1)`. -/
+theorem depthLL_succ_le_log {b : ℕ} (hb : 2 ≤ b) (N : ℕ) :
+    ((PairDecouple.depthLL b N : ℝ) + 1) ≤ 2 + 3 * Real.log (llProxy N) := by
+  have hb1 : (1 : ℝ) < b := by
+    have : (2 : ℝ) ≤ b := by exact_mod_cast hb
+    linarith
+  have hbpos : (0 : ℝ) < b := by linarith
+  have hlogb : 0 < Real.log b := Real.log_pos hb1
+  have hp1 : (1 : ℝ) ≤ llProxy N := one_le_llProxy N
+  have hlp : 0 ≤ Real.log (llProxy N) := Real.log_nonneg hp1
+  have hpow := pow_depthLL_le hb N
+  have hlog : (PairDecouple.depthLL b N : ℝ) * Real.log b
+      ≤ Real.log b + 2 * Real.log (llProxy N) := by
+    have hL : Real.log ((b : ℝ) ^ PairDecouple.depthLL b N)
+        ≤ Real.log ((b : ℝ) * llProxy N ^ 2) :=
+      Real.log_le_log (by positivity) hpow
+    rw [Real.log_pow, Real.log_mul (ne_of_gt hbpos) (by positivity),
+      Real.log_pow] at hL
+    push_cast at hL
+    linarith
+  -- `log b ≥ log 2 > 0.69`, so `2 / log b ≤ 3`
+  have hlog2 : (0.6931471803 : ℝ) < Real.log 2 := Real.log_two_gt_d9
+  have hb2 : Real.log 2 ≤ Real.log b := Real.log_le_log (by norm_num) (by exact_mod_cast hb)
+  have hkey : (PairDecouple.depthLL b N : ℝ) ≤ 1 + 3 * Real.log (llProxy N) := by
+    have h3 : (2 : ℝ) ≤ 3 * Real.log b := by nlinarith [hb2, hlog2]
+    nlinarith [hlog, hlp, hlogb, h3, mul_nonneg hlp hlogb.le]
+  linarith
+
+/-! The numerator: the cut scale `a_N = N / 2^{u_N}` satisfies `a_N² ≥ N`, so
+`2 log a_N ≥ log N`, and `log N ≥ 2^{u_N} log 2` makes `log log N` LINEAR in `u_N`. -/
+
+/-- The cut divisor is at most `log₂ N`. -/
+theorem two_pow_llLevel_le {N : ℕ} (hN : 2 ≤ N) :
+    2 ^ (Nat.log 2 (Nat.log 2 N)) ≤ Nat.log 2 N := by
+  have h0 : Nat.log 2 N ≠ 0 := by
+    have : 1 ≤ Nat.log 2 N := Nat.le_log_of_pow_le (by norm_num) (by simpa using hN)
+    omega
+  exact Nat.pow_log_le_self 2 h0
+
+/-- **The cut scale is at least `√N`.**  `a_N = N / 2^{u_N} ≥ N / log₂ N ≥ √N`, because
+`(log₂ N)³ ≤ 2^{log₂ N} ≤ N`. -/
+theorem le_sq_cut (N : ℕ) (hN : 1024 ≤ N) :
+    N ≤ (N / 2 ^ (Nat.log 2 (Nat.log 2 N))) ^ 2 := by
+  set L2 : ℕ := Nat.log 2 N with hL2
+  have hN2 : 2 ≤ N := by omega
+  have h1024 : 2 ^ 10 ≤ N := le_trans (by norm_num) hN
+  have hL10 : 10 ≤ L2 := Nat.le_log_of_pow_le (by norm_num) h1024
+  have hL0 : 0 < L2 := by omega
+  have hd := two_pow_llLevel_le hN2
+  have hdpos : 0 < 2 ^ (Nat.log 2 (Nat.log 2 N)) := pow_pos (by norm_num) _
+  have hqa : N / L2 ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N)) := Nat.div_le_div_left hd hdpos
+  -- `L2³ ≤ 2^{L2} ≤ N`
+  have hcube : L2 ^ 3 ≤ N := le_trans (cube_le_two_pow L2 hL10)
+    (Nat.pow_log_le_self 2 (by omega))
+  set q : ℕ := N / L2 with hq
+  have hmod : L2 * q + N % L2 = N := Nat.div_add_mod N L2
+  have hlt : N % L2 < L2 := Nat.mod_lt _ hL0
+  have hq1 : 1 ≤ q := by
+    rw [hq]
+    refine Nat.one_le_div_iff hL0 |>.2 ?_
+    exact Nat.log_le_self 2 N
+  have h2q : N ≤ 2 * (L2 * q) := by nlinarith
+  have h4 : 4 * L2 ^ 2 ≤ N := by nlinarith
+  have hqsq : N ≤ q ^ 2 := by nlinarith
+  exact le_trans hqsq (Nat.pow_le_pow_left hqa 2)
+
+/-- **The numerator is linear in the double-log level.**  `log (2 log a_N) ≥ (u_N - 2) log 2`. -/
+theorem log_two_log_cut_ge (N : ℕ) (hN : 1024 ≤ N) :
+    ((Nat.log 2 (Nat.log 2 N) : ℝ) - 2) * Real.log 2
+      ≤ Real.log (2 * Real.log ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ)) := by
+  set u : ℕ := Nat.log 2 (Nat.log 2 N) with hu
+  set a : ℕ := N / 2 ^ u with ha
+  have hlog2 : (0.6931471803 : ℝ) < Real.log 2 := Real.log_two_gt_d9
+  have hN2 : 2 ≤ N := by omega
+  -- `log N ≥ (log₂ N) log 2 ≥ 2^u log 2`
+  have hpowN : 2 ^ Nat.log 2 N ≤ N := Nat.pow_log_le_self 2 (by omega)
+  have hlogN : ((Nat.log 2 N : ℝ)) * Real.log 2 ≤ Real.log N := by
+    have h1 : Real.log ((2 : ℝ) ^ Nat.log 2 N) ≤ Real.log N := by
+      refine Real.log_le_log (by positivity) ?_
+      exact_mod_cast hpowN
+    rwa [Real.log_pow] at h1
+  have hu2 : ((2 : ℝ) ^ u) ≤ (Nat.log 2 N : ℝ) := by
+    have := two_pow_llLevel_le hN2
+    calc ((2 : ℝ) ^ u) = ((2 ^ u : ℕ) : ℝ) := by push_cast; ring
+      _ ≤ (Nat.log 2 N : ℝ) := by exact_mod_cast this
+  have hlogNge : (2 : ℝ) ^ u * Real.log 2 ≤ Real.log N := by
+    have := mul_le_mul_of_nonneg_right hu2 (le_of_lt (by linarith : (0:ℝ) < Real.log 2))
+    linarith
+  -- `2 log a ≥ log N`
+  have hsq : N ≤ a ^ 2 := le_sq_cut N hN
+  have hapos : (1 : ℝ) ≤ (a : ℝ) := by
+    have h1 : 1 ≤ a := by
+      rcases Nat.eq_zero_or_pos a with h0 | h0
+      · exfalso
+        rw [h0] at hsq
+        have h2 : N ≤ 0 := by simpa using hsq
+        omega
+      · exact h0
+    exact_mod_cast h1
+  have h2a : Real.log N ≤ 2 * Real.log (a : ℝ) := by
+    have h1 : Real.log (N : ℝ) ≤ Real.log (((a ^ 2 : ℕ) : ℝ)) := by
+      refine Real.log_le_log ?_ (by exact_mod_cast hsq)
+      have : (0 : ℝ) < (N : ℝ) := by positivity
+      linarith [this]
+    have h2 : Real.log (((a ^ 2 : ℕ) : ℝ)) = 2 * Real.log (a : ℝ) := by
+      push_cast; rw [Real.log_pow]; push_cast; ring
+    linarith [h1, h2.le, h2.ge]
+  -- put it together
+  have hNpos : (0 : ℝ) < Real.log N := by
+    have : (2 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN2
+    exact Real.log_pos (by linarith)
+  have hstep : Real.log (2 ^ u * Real.log 2) ≤ Real.log (2 * Real.log (a : ℝ)) := by
+    refine Real.log_le_log (by positivity) ?_
+    linarith
+  have hexpand : Real.log ((2 : ℝ) ^ u * Real.log 2)
+      = (u : ℝ) * Real.log 2 + Real.log (Real.log 2) := by
+    rw [Real.log_mul (by positivity) (by
+      have : (0 : ℝ) < Real.log 2 := by linarith
+      exact ne_of_gt this), Real.log_pow]
+  have hll : (-1 : ℝ) ≤ Real.log (Real.log 2) := by
+    have h1 : Real.log (Real.log 2) ≥ Real.log (0.6931471803 : ℝ) :=
+      Real.log_le_log (by norm_num) hlog2.le
+    have h2 : Real.log (0.6931471803 : ℝ) ≥ -1 := by
+      have : Real.exp (-1 : ℝ) ≤ (0.6931471803 : ℝ) := by
+        have h3 : Real.exp (-1 : ℝ) = 1 / Real.exp 1 := by
+          rw [Real.exp_neg]; ring
+        rw [h3]
+        rw [div_le_iff₀ (Real.exp_pos 1)]
+        nlinarith [Real.exp_one_gt_d9]
+      have h4 := Real.log_le_log (Real.exp_pos (-1)) this
+      rwa [Real.log_exp] at h4
+    linarith
+  have : ((u : ℝ) - 2) * Real.log 2 ≤ (u : ℝ) * Real.log 2 + Real.log (Real.log 2) := by
+    nlinarith [hll, hlog2]
+  linarith [hstep, hexpand.le, hexpand.ge]
+
+/-- **`hgrow` IS A THEOREM for the concrete cut `k₀ N = u_N = log₂ log₂ N`.**  The numerator is
+linear in `u_N`, the denominator a fixed power of `log u_N`; `tendsto_degMinorant` does the rest.
+This is the last hypothesis of `depthAvg_diag_tendsto_of_degrading` that was not free. -/
+theorem hgrow_of_schedule {b : ℕ} (hb : 2 ≤ b) (m : ℕ) :
+    Tendsto (fun N : ℕ =>
+        Real.log (2 * Real.log ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ))
+          / ((PairDecouple.depthLL b N : ℝ) + 1) ^ (2 * m)) atTop atTop := by
+  have hu : Tendsto (fun N : ℕ => Nat.log 2 (Nat.log 2 N)) atTop atTop :=
+    (PairDecouple.tendsto_natLog_atTop 2 le_rfl).comp
+      (PairDecouple.tendsto_natLog_atTop 2 le_rfl)
+  have hmin := (tendsto_degMinorant m).comp hu
+  refine tendsto_atTop_mono' atTop ?_ hmin
+  filter_upwards [Filter.eventually_ge_atTop 1024, hu.eventually_ge_atTop 2] with N hN hu2
+  set u : ℕ := Nat.log 2 (Nat.log 2 N) with hudef
+  have hnum := log_two_log_cut_ge N hN
+  have hden := depthLL_succ_le_log hb N
+  have hllp : llProxy N = (u : ℝ) + 1 := by rw [llProxy]
+  rw [hllp] at hden
+  have hA0 : (0 : ℝ) ≤ ((u : ℝ) - 2) * Real.log 2 := by
+    have h1 : (2 : ℝ) ≤ (u : ℝ) := by exact_mod_cast hu2
+    have h2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+    nlinarith
+  have hBpos : (0 : ℝ) < ((PairDecouple.depthLL b N : ℝ) + 1) ^ (2 * m) := by positivity
+  have hB'pos : (0 : ℝ) < (2 + 3 * Real.log ((u : ℝ) + 1)) ^ (2 * m) := by
+    have h1 : (1 : ℝ) ≤ (u : ℝ) + 1 := by
+      have h0 : (0 : ℝ) ≤ (u : ℝ) := Nat.cast_nonneg _
+      linarith
+    have h0 : 0 ≤ Real.log ((u : ℝ) + 1) := Real.log_nonneg h1
+    positivity
+  have hBB : ((PairDecouple.depthLL b N : ℝ) + 1) ^ (2 * m)
+      ≤ (2 + 3 * Real.log ((u : ℝ) + 1)) ^ (2 * m) :=
+    pow_le_pow_left₀ (by positivity) hden _
+  have hC0 : (0 : ℝ) ≤ Real.log (2 * Real.log ((N / 2 ^ u : ℕ) : ℝ)) := le_trans hA0 hnum
+  have hfirst : ((fun u : ℕ => degMinorant m u) ∘ fun N : ℕ => Nat.log 2 (Nat.log 2 N)) N
+      = ((u : ℝ) - 2) * Real.log 2 / (2 + 3 * Real.log ((u : ℝ) + 1)) ^ (2 * m) := rfl
+  rw [hfirst]
+  calc ((u : ℝ) - 2) * Real.log 2 / (2 + 3 * Real.log ((u : ℝ) + 1)) ^ (2 * m)
+      ≤ Real.log (2 * Real.log ((N / 2 ^ u : ℕ) : ℝ))
+          / (2 + 3 * Real.log ((u : ℝ) + 1)) ^ (2 * m) :=
+        div_le_div_of_nonneg_right hnum hB'pos.le
+    _ ≤ Real.log (2 * Real.log ((N / 2 ^ u : ℕ) : ℝ))
+          / ((PairDecouple.depthLL b N : ℝ) + 1) ^ (2 * m) :=
+        div_le_div_of_nonneg_left hC0 hBpos hBB
+
+/-- **The cut scale grows.**  `a_N ≥ √N`. -/
+theorem tendsto_cut_atTop :
+    Tendsto (fun N : ℕ => N / 2 ^ (Nat.log 2 (Nat.log 2 N))) atTop atTop := by
+  refine tendsto_atTop_atTop.2 fun M => ⟨max 1024 (M * M), fun N hN => ?_⟩
+  have h1 : 1024 ≤ N := le_trans (le_max_left _ _) hN
+  have h2 : M * M ≤ N := le_trans (le_max_right _ _) hN
+  have h3 := le_sq_cut N h1
+  by_contra hcon
+  push_neg at hcon
+  have h4 : (N / 2 ^ Nat.log 2 (Nat.log 2 N)) ^ 2 < M ^ 2 :=
+    Nat.pow_lt_pow_left hcon (by norm_num)
+  have h5 : M ^ 2 ≤ N := by rw [pow_two]; exact h2
+  linarith
+
+/-- **THE DIAGONAL FROM THE DEGRADING INPUT, NO SCHEDULE HYPOTHESIS.**  With the cut level
+`k₀ N = log₂ log₂ N` the comparison `hgrow` is discharged (`hgrow_of_schedule`), so the diagonal
+— and hence the C3 crux, via `weylLambertTwist_of_depthDiagonal` — follows from
+`KPointNoExcWith (cKdeg c₀ m) (CstKdeg m)`: the `K`-point correlation input with a saving
+exponent decaying like `K^{-m}` and a constant blowing up like `exp (K^m)`.
+
+The only hypotheses left are about the *threshold* sequence `Athr` of the input, which is where
+TT Thm 3.1's `X ≥ X₀(K)` lives; they say the threshold is eventually below `√N`, which is what a
+threshold depending on `K = O(log log log N)` always satisfies. -/
+theorem depthAvg_diag_tendsto_of_degrading_sched {b Q : ℕ} (hb : 2 ≤ b) (hQ : 0 < Q)
+    (P j : ℕ) (hh : ℤ) {c₀ : ℝ} (hc₀ : 0 < c₀) (m : ℕ)
+    (hin : ∀ K, KPointNoExcWith (cKdeg c₀ m) (CstKdeg m) K)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+    (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
+    (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * cKdeg c₀ m K))
+    (hAle : ∀ᶠ N : ℕ in atTop,
+        Athr (PairDecouple.depthLL b N) ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N))) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j hh (PairDecouple.depthLL b N) N) atTop (𝓝 0) :=
+  depthAvg_diag_tendsto_of_degrading hQ P j hh hc₀ m hin hκ hκ1 hnp Athr hA2 hAthr
+    (fun N => Nat.log 2 (Nat.log 2 N))
+    ((PairDecouple.tendsto_natLog_atTop 2 le_rfl).comp
+      (PairDecouple.tendsto_natLog_atTop 2 le_rfl))
+    tendsto_cut_atTop hAle (hgrow_of_schedule hb m)
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -1019,6 +1241,12 @@ theorem tendsto_degMinorant (m : ℕ) : Tendsto (fun u : ℕ => degMinorant m u)
 #print axioms NormalNumbers.CastingOut.depthAvg_diag_tendsto_of_uniform
 #print axioms NormalNumbers.CastingOut.exponent_tendsto_atBot_of_degrading
 #print axioms NormalNumbers.CastingOut.depthAvg_diag_tendsto_of_degrading
+#print axioms NormalNumbers.CastingOut.tendsto_degMinorant
+#print axioms NormalNumbers.CastingOut.depthLL_succ_le_log
+#print axioms NormalNumbers.CastingOut.le_sq_cut
+#print axioms NormalNumbers.CastingOut.log_two_log_cut_ge
+#print axioms NormalNumbers.CastingOut.hgrow_of_schedule
+#print axioms NormalNumbers.CastingOut.depthAvg_diag_tendsto_of_degrading_sched
 
 end CastingOut
 
