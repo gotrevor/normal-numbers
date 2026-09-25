@@ -25,7 +25,7 @@ Hence the same perturbation of `x` is simultaneously
 and `AbelianWindowPerturb.tendsto_onesFreq_of_linear_diff` transfers the limits.
 -/
 
-open Finset Polynomial
+open Finset Polynomial Filter Topology
 
 namespace NormalNumbers.Abelian
 
@@ -904,3 +904,89 @@ theorem blockFreq_at_arm {m n : ℕ} (hmn : m ≤ n) :
   rw [blockFreq_eq_coeff, hsum, hcv, hcast, hVdef, hqR2]
   field_simp
   ring
+
+/-! ## The verdicts for the limit sequence -/
+
+theorem blockOf_lt_two_pow (q : ℕ) (x : ℕ → ℕ) (hx : ∀ m, x m < 2) (j : ℕ) :
+    blockOf 2 q x j < 2 ^ q := by
+  have h := valOf_lt (B := 2) (by norm_num)
+    ((List.range q).map (fun t => x (q * j + t))) (by
+      intro e he
+      rw [List.mem_map] at he
+      obtain ⟨t, -, rfl⟩ := he
+      exact hx _)
+  rw [blockOf]
+  simpa using h
+
+theorem stage_lt_two (x : ℕ → ℕ) (n m : ℕ) : Ls.stage x n m < 2 :=
+  multiG_lt_two _ _ _ _
+
+theorem limSeq_lt_two (x : ℕ → ℕ) (m : ℕ) : Ls.limSeq x m < 2 := Ls.stage_lt_two x m m
+
+theorem eta_tendsto_zero :
+    Tendsto (fun n : ℕ => (3 : ℝ) / (16 * 2 ^ n)) atTop (𝓝 0) := by
+  have h2 : Tendsto (fun n : ℕ => ((2 : ℝ) ^ n)⁻¹) atTop (𝓝 0) :=
+    tendsto_inv_atTop_zero.comp (tendsto_pow_atTop_atTop_of_one_lt (by norm_num))
+  have h3 := h2.const_mul (3 / 16 : ℝ)
+  rw [mul_zero] at h3
+  refine h3.congr (fun n => ?_)
+  rw [div_eq_mul_inv, div_eq_mul_inv, mul_inv]
+  ring
+
+/-- **The limit sequence is abelian at every length that is not an arm.** -/
+theorem limSeq_isAbelianAt {x : ℕ → ℕ} (hx : ∀ m, x m < 2) (hnx : IsNormalSequence 2 x)
+    (L : ℕ) (hL : ∀ i, L ≠ Ls.arm i) : IsAbelianAt (Ls.limSeq x) L := by
+  intro j hj
+  refine tendsto_onesFreq_of_linear_diff (Ls.limSeq x) L j _ (fun n => Ls.stage x n)
+    (fun _ => 0) (fun n => 3 / (16 * 2 ^ n)) eta_tendsto_zero
+    (fun n => ?_) (fun n M => by simpa using Ls.diffCount_stage_le hx n M)
+  have hq0 : 0 < Ls.Q n := Ls.Qpos n
+  refine multi_isAbelianAt_of_notMem (Ls.Q n) (Ls.layerGads n) hq0 (Ls.layerGads_ok n)
+    (Ls.layerGads_sep n) (Ls.layerGads_nodup n) _
+    (blockOf_lt_two_pow (Ls.Q n) x hx) (isNormalSequence_pow (by norm_num) hq0 hx hnx) L
+    (fun pa hpa => ?_) j hj
+  rw [Ls.mem_layerGads] at hpa
+  obtain ⟨i, -, k, -, rfl⟩ := hpa
+  exact hL i
+
+/-- **The limit sequence is NOT abelian at any arm.** -/
+theorem limSeq_not_isAbelianAt {x : ℕ → ℕ} (hx : ∀ m, x m < 2) (hnx : IsNormalSequence 2 x)
+    (m : ℕ) : ¬ IsAbelianAt (Ls.limSeq x) (Ls.arm m) := by
+  set L := Ls.arm m with hLdef
+  set v : ℝ := (1 - 1 / (4 * Ls.Q m)) / 2 ^ L with hvdef
+  have hlim : Filter.Tendsto (onesFreq (Ls.limSeq x) L 0) Filter.atTop (𝓝 v) := by
+    refine tendsto_onesFreq_of_linear_diff (Ls.limSeq x) L 0 v (fun n => Ls.stage x (m + n))
+      (fun _ => 0) (fun n => 3 / (16 * 2 ^ n)) eta_tendsto_zero
+      (fun n => ?_) (fun n M => by
+        have h1 := Ls.diffCount_stage_le hx (m + n) M
+        have hp : (0 : ℝ) < 2 ^ n := by positivity
+        have hp2 : (0 : ℝ) < (2 : ℝ) ^ (m + n) := by positivity
+        have hmono : (2 : ℝ) ^ n ≤ 2 ^ (m + n) :=
+          pow_le_pow_right₀ (by norm_num) (by omega)
+        have hM : (0 : ℝ) ≤ M := Nat.cast_nonneg M
+        have hdiv : (3 : ℝ) / (16 * 2 ^ (m + n)) ≤ 3 / (16 * 2 ^ n) := by
+          apply div_le_div_of_nonneg_left (by norm_num) (by positivity)
+          nlinarith
+        have := mul_le_mul_of_nonneg_right hdiv hM
+        rw [zero_add]
+        linarith)
+    have hq0 : 0 < Ls.Q (m + n) := Ls.Qpos (m + n)
+    have h := tendsto_onesFreq_blockSeq (multiG (Ls.Q (m + n)) (Ls.layerGads (m + n)))
+      (blockOf 2 (Ls.Q (m + n)) x) (B := 2 ^ Ls.Q (m + n)) (by positivity) hq0
+      (blockOf_lt_two_pow (Ls.Q (m + n)) x hx)
+      (isNormalSequence_pow (by norm_num) hq0 hx hnx) L (Ls.Q (m + n) + L)
+      (by
+        have : Ls.Q (m + n) + L ≤ Ls.Q (m + n) * (Ls.Q (m + n) + L) :=
+          Nat.le_mul_of_pos_left _ hq0
+        omega) 0
+    rw [Ls.blockFreq_at_arm (by omega : m ≤ m + n)] at h
+    exact h
+  intro habs
+  have h0 := habs 0 (Nat.zero_le _)
+  rw [Nat.choose_zero_right, Nat.cast_one] at h0
+  have huniq := tendsto_nhds_unique hlim h0
+  have hQm : (0 : ℝ) < Ls.Q m := by exact_mod_cast Ls.Qpos m
+  have h2L : (0 : ℝ) < (2 : ℝ) ^ L := by positivity
+  rw [hvdef, div_eq_div_iff (by positivity) (by positivity)] at huniq
+  have : (0 : ℝ) < 1 / (4 * Ls.Q m) := by positivity
+  nlinarith [huniq, h2L, this]
