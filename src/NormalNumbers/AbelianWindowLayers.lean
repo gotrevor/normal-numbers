@@ -105,3 +105,76 @@ theorem blockSeq_multiG_eq_absGad (q : ℕ) (hq0 : 0 < q) (gs : List (ℕ × ℕ
           show q * j + (p + a) = P + a from by rw [hPdef]; omega]
       · rw [if_neg h2, if_neg (fun hc => h2 (e2.mpr hc)), hb r hrq, hm]
   · rw [if_neg (fun hc => ht (htrig.mp hc)), if_neg ht, hb r hrq, hm]
+
+/-! ## The offset pigeonhole
+
+Layer `n` occupies exactly FOUR residues modulo its period `Q_n` (the quadruple
+`{o_n, o_n+1, o_n+a_n, o_n+a_n+1}`), hence exactly four residues modulo every divisor of `Q_n`.
+So keeping layer `n` disjoint from layers `m < n` forbids at most `16` residue classes modulo
+each `Q_m`, i.e. at most `16 * (Q_n / Q_m)` values of `o_n` in `range Q_n`.  With periods growing
+at least geometrically from `Q_1 ≥ 64` the total is `< Q_n`, so a good offset always exists.
+-/
+
+/-- A residue class modulo a divisor `d` of `Q` meets `range Q` in at most `Q / d` points. -/
+theorem card_filter_mod_le (Q d c : ℕ) (hd : 0 < d) (hdvd : d ∣ Q) :
+    ((range Q).filter (fun o => o % d = c)).card ≤ Q / d := by
+  classical
+  rcases Nat.eq_zero_or_pos Q with rfl | hQ
+  · simp
+  have hQd : (Q - 1) / d + 1 = Q / d := by
+    obtain ⟨k, rfl⟩ := hdvd
+    have hk : 0 < k := by
+      rcases Nat.eq_zero_or_pos k with rfl | hk
+      · simp at hQ
+      · exact hk
+    rw [Nat.mul_div_cancel_left _ hd]
+    obtain ⟨t, rfl⟩ : ∃ t, k = t + 1 := ⟨k - 1, by omega⟩
+    have hmul : d * (t + 1) = d * t + d := by ring
+    have h1 : d * (t + 1) - 1 = d * t + (d - 1) := by omega
+    rw [h1, Nat.mul_add_div hd, Nat.div_eq_of_lt (by omega)]
+  rw [← Finset.card_range (Q / d)]
+  refine Finset.card_le_card_of_injOn (fun o => o / d) (fun o ho => ?_) (fun o ho o' ho' he => ?_)
+  · simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_range] at ho
+    obtain ⟨ho1, ho2⟩ := ho
+    simp only [Finset.mem_coe, Finset.mem_range]
+    rw [← hQd]
+    exact Nat.lt_succ_of_le (Nat.div_le_div_right (show o ≤ Q - 1 by omega))
+  · simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_range] at ho ho'
+    have h1 : d * (o / d) + o % d = o := Nat.div_add_mod o d
+    have h2 : d * (o' / d) + o' % d = o' := Nat.div_add_mod o' d
+    rw [ho.2] at h1
+    rw [ho'.2] at h2
+    simp only at he
+    rw [← h1, ← h2, he]
+
+/-- **The offset pigeonhole.**  If the forbidden residue classes are few, a good offset exists. -/
+theorem exists_avoiding_offset (N Q : ℕ) (hQ : 0 < Q) (d : ℕ → ℕ) (S : ℕ → Finset ℕ)
+    (hd : ∀ m < N, 0 < d m ∧ d m ∣ Q)
+    (hsum : ∑ m ∈ range N, (S m).card * (Q / d m) < Q) :
+    ∃ o, o < Q ∧ ∀ m < N, o % d m ∉ S m := by
+  classical
+  set B := (range Q).filter (fun o => ∃ m ∈ range N, o % d m ∈ S m) with hBdef
+  have hcov : B ⊆ (range N).biUnion
+      (fun m => (S m).biUnion (fun c => (range Q).filter (fun o => o % d m = c))) := by
+    intro o ho
+    rw [hBdef, Finset.mem_filter] at ho
+    obtain ⟨hoQ, m, hm, hmem⟩ := ho
+    exact Finset.mem_biUnion.mpr ⟨m, hm, Finset.mem_biUnion.mpr
+      ⟨o % d m, hmem, Finset.mem_filter.mpr ⟨hoQ, rfl⟩⟩⟩
+  have hcard : B.card < Q := by
+    refine lt_of_le_of_lt (le_trans (Finset.card_le_card hcov) ?_) hsum
+    refine le_trans (Finset.card_biUnion_le) (Finset.sum_le_sum (fun m hm => ?_))
+    obtain ⟨hdm, hdvd⟩ := hd m (Finset.mem_range.mp hm)
+    refine le_trans (Finset.card_biUnion_le) ?_
+    refine le_trans (Finset.sum_le_sum (fun c _ => card_filter_mod_le Q (d m) c hdm hdvd)) ?_
+    rw [Finset.sum_const, smul_eq_mul]
+  have hns : ¬ (range Q ⊆ B) := by
+    intro hs
+    have := Finset.card_le_card hs
+    rw [Finset.card_range] at this
+    omega
+  obtain ⟨o, hoQ, hoB⟩ := Finset.not_subset.mp hns
+  refine ⟨o, Finset.mem_range.mp hoQ, fun m hm hmem => ?_⟩
+  exact hoB (by
+    rw [hBdef, Finset.mem_filter]
+    exact ⟨hoQ, m, Finset.mem_range.mpr hm, hmem⟩)
