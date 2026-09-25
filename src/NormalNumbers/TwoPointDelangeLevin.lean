@@ -575,4 +575,134 @@ theorem exists_levin_scale_bound :
         linarith
     _ ≤ (CB + 33) * N := by ring_nf; linarith
 
+/-! ### Abel summation: `T(N) = M(N)/N + Ũ(N)` -/
+
+/-- `Ũ(N) = ∑_{1 ≤ m < N} M(m)/(m(m+1))`, the discrete `∫ m(σ) dσ`. -/
+noncomputable def uOm (z : ℂ) (N : ℕ) : ℂ :=
+  ∑ m ∈ Finset.Ico 1 N, mOm z m / ((m : ℂ) * ((m : ℂ) + 1))
+
+lemma uOm_succ (z : ℂ) {N : ℕ} (hN : 1 ≤ N) :
+    uOm z (N + 1) = uOm z N + mOm z N / ((N : ℂ) * ((N : ℂ) + 1)) := by
+  rw [uOm, uOm, Finset.sum_Ico_succ_top hN]
+
+lemma mOm_succ (z : ℂ) (N : ℕ) : mOm z (N + 1) = mOm z N + fOm z (N + 1) := by
+  rw [mOm, mOm, Finset.sum_Ioc_succ_top (Nat.zero_le N)]
+
+/-- **Abel summation.** -/
+theorem tOm_eq_of_pos (z : ℂ) : ∀ N : ℕ, 1 ≤ N → tOm z N = mOm z N / (N : ℂ) + uOm z N := by
+  intro N hN
+  induction N, hN using Nat.le_induction with
+  | base => simp [tOm, mOm, uOm]
+  | succ N hN ih =>
+      have hN0 : (N : ℂ) ≠ 0 := by
+        simp only [ne_eq, Nat.cast_eq_zero]; omega
+      have hN1 : ((N : ℂ) + 1) ≠ 0 := by
+        have : ((N : ℂ) + 1) = ((N + 1 : ℕ) : ℂ) := by push_cast; ring
+        rw [this]
+        simp only [ne_eq, Nat.cast_eq_zero]; omega
+      have htsucc : tOm z (N + 1) = tOm z N + fOm z (N + 1) / ((N : ℂ) + 1) := by
+        rw [tOm, tOm, Finset.sum_Ioc_succ_top (Nat.zero_le N)]
+        push_cast
+        ring
+      rw [htsucc, ih, uOm_succ z hN, mOm_succ]
+      push_cast
+      field_simp
+      ring
+
+/-! ### The recursion `Ũ(N+1) = Ũ(N)(1 + z·s_N) + s_N·E_N` -/
+
+/-- `s_N = 1/((N+1)·log N)`. -/
+noncomputable def invStep (N : ℕ) : ℝ := 1 / (((N : ℝ) + 1) * Real.log (N : ℝ))
+
+lemma invStep_nonneg {N : ℕ} (hN : 3 ≤ N) : 0 ≤ invStep N := by
+  have hL := one_le_log_cast hN
+  have hN0 : (0:ℝ) ≤ (N:ℝ) := Nat.cast_nonneg N
+  rw [invStep]
+  positivity
+
+/-- `s_N ≤ σ_N`: `1/(N+1) ≤ log(N+1) − log N`, from `log x ≤ x − 1` at `x = N/(N+1)`. -/
+lemma invStep_le_logRatioStep {N : ℕ} (hN : 3 ≤ N) : invStep N ≤ logRatioStep N := by
+  have hL := one_le_log_cast hN
+  have hNR : (3:ℝ) ≤ (N:ℝ) := by exact_mod_cast hN
+  have hkey : 1 / ((N:ℝ) + 1) ≤ Real.log ((N:ℝ) + 1) - Real.log (N:ℝ) := by
+    have hpos : (0:ℝ) < (N:ℝ) / ((N:ℝ) + 1) := by positivity
+    have h := Real.log_le_sub_one_of_pos hpos
+    rw [Real.log_div (by linarith) (by linarith)] at h
+    have hrw : (N:ℝ) / ((N:ℝ) + 1) - 1 = -(1 / ((N:ℝ) + 1)) := by
+      field_simp
+      ring
+    rw [hrw] at h
+    linarith
+  rw [invStep, logRatioStep, div_le_div_iff₀ (by positivity) (by linarith)]
+  have h1 : 0 ≤ Real.log ((N:ℝ)+1) - Real.log (N:ℝ) := by
+    have := Real.log_le_log (by linarith : (0:ℝ) < (N:ℝ)) (by linarith : (N:ℝ) ≤ (N:ℝ)+1)
+    linarith
+  calc (1:ℝ) * Real.log (N:ℝ)
+      = Real.log (N:ℝ) := by ring
+    _ ≤ (Real.log ((N:ℝ)+1) - Real.log (N:ℝ)) * (((N:ℝ)+1) * Real.log (N:ℝ)) := by
+        have h2 : 1 / ((N:ℝ)+1) * (((N:ℝ)+1) * Real.log (N:ℝ)) = Real.log (N:ℝ) := by
+          field_simp
+        nlinarith [mul_le_mul_of_nonneg_right hkey
+          (show (0:ℝ) ≤ ((N:ℝ)+1) * Real.log (N:ℝ) by positivity)]
+
+/-- **The normalised scale equation.**  `‖m(N)·log N − z·Ũ(N)‖ ≤ C` with `m(N) = M(N)/N`. -/
+theorem exists_mOm_scale :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ (z : ℂ), ‖z‖ = 1 → ∀ N : ℕ, 3 ≤ N →
+      ‖mOm z N / (N : ℂ) * ((Real.log (N:ℝ) : ℝ) : ℂ) - z * uOm z N‖ ≤ C := by
+  obtain ⟨C, hC0, hC⟩ := exists_levin_scale_bound
+  refine ⟨C + 1, by linarith, fun z hz N hN => ?_⟩
+  have hN1 : 1 ≤ N := by omega
+  have hNR : (3:ℝ) ≤ (N:ℝ) := by exact_mod_cast hN
+  have hNC : (N : ℂ) ≠ 0 := by simp only [ne_eq, Nat.cast_eq_zero]; omega
+  have hid : mOm z N / (N : ℂ) * ((Real.log (N:ℝ) : ℝ) : ℂ) - z * uOm z N
+      = (mOm z N * ((Real.log (N:ℝ) : ℝ) : ℂ) - z * (N:ℂ) * tOm z N) / (N:ℂ)
+          + z * (mOm z N / (N:ℂ)) := by
+    rw [tOm_eq_of_pos z N hN1]
+    field_simp
+    ring
+  rw [hid]
+  have hb1 : ‖(mOm z N * ((Real.log (N:ℝ) : ℝ) : ℂ) - z * (N:ℂ) * tOm z N) / (N:ℂ)‖ ≤ C := by
+    rw [norm_div, Complex.norm_natCast]
+    have hNpos : (0:ℝ) < (N:ℝ) := by linarith
+    rw [div_le_iff₀ hNpos]
+    exact hC z hz N
+  have hb2 : ‖z * (mOm z N / (N:ℂ))‖ ≤ 1 := by
+    rw [norm_mul, hz, one_mul, norm_div, Complex.norm_natCast]
+    have hNpos : (0:ℝ) < (N:ℝ) := by linarith
+    rw [div_le_one hNpos]
+    exact norm_mOm_le hz N
+  exact le_trans (norm_add_le _ _) (by linarith)
+
+/-- **The recursion.**  `Ũ(N+1) − Ũ(N)(1 + z·s_N)` has norm `≤ s_N·C` with `C` absolute. -/
+theorem exists_uOm_step :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ (z : ℂ), ‖z‖ = 1 → ∀ N : ℕ, 3 ≤ N →
+      ‖uOm z (N + 1) - uOm z N * (1 + z * ((invStep N : ℝ) : ℂ))‖ ≤ invStep N * C := by
+  obtain ⟨C, hC0, hC⟩ := exists_mOm_scale
+  refine ⟨C, hC0, fun z hz N hN => ?_⟩
+  have hN1 : 1 ≤ N := by omega
+  have hL := one_le_log_cast hN
+  have hNR : (3:ℝ) ≤ (N:ℝ) := by exact_mod_cast hN
+  have hNC : (N : ℂ) ≠ 0 := by simp only [ne_eq, Nat.cast_eq_zero]; omega
+  have hLC : ((Real.log (N:ℝ) : ℝ) : ℂ) ≠ 0 := by
+    simp only [ne_eq, Complex.ofReal_eq_zero]
+    linarith
+  have hN1C : ((N : ℂ) + 1) ≠ 0 := by
+    intro h
+    have h2 : (N : ℂ) = -1 := by linear_combination h
+    have hre : ((N : ℝ)) = -1 := by exact_mod_cast congrArg Complex.re h2
+    linarith
+  have hsC : ((invStep N : ℝ) : ℂ) = 1 / (((N:ℂ) + 1) * ((Real.log (N:ℝ) : ℝ) : ℂ)) := by
+    rw [invStep]
+    push_cast
+    ring
+  have hid : uOm z (N + 1) - uOm z N * (1 + z * ((invStep N : ℝ) : ℂ))
+      = ((invStep N : ℝ) : ℂ)
+        * (mOm z N / (N : ℂ) * ((Real.log (N:ℝ) : ℝ) : ℂ) - z * uOm z N) := by
+    rw [uOm_succ z hN1, hsC]
+    field_simp
+    ring
+  rw [hid, norm_mul, Complex.norm_real, Real.norm_eq_abs,
+    abs_of_nonneg (invStep_nonneg hN)]
+  exact mul_le_mul_of_nonneg_left (hC z hz N hN) (invStep_nonneg hN)
+
 end NormalNumbers.CastingOut
