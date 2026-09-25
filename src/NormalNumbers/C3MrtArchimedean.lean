@@ -436,6 +436,200 @@ theorem window_mass_le {z : ℂ} {t : ℝ} (ht : t ≠ 0) (m : ℤ) (heps : 0 < 
     rw [windowMassBound]
     linarith
 
+/-! ## Range 1: only `O(T)` windows meet `[2, X]`, so the resonance mass is a constant -/
+
+open scoped Classical in
+/-- The index of the resonance window a prime falls into (junk value `0` if it is not
+resonant). -/
+noncomputable def windowIndex (z : ℂ) (t : ℝ) (p : ℕ) : ℤ :=
+  if h : ∃ m : ℤ, |z.arg - 2 * π * m| - resEps z < |t| * Real.log p ∧
+                   |t| * Real.log p < |z.arg - 2 * π * m| + resEps z
+  then h.choose else 0
+
+theorem windowIndex_spec {z : ℂ} (hz : ‖z‖ = 1) {p : ℕ} (hp : 2 ≤ p) {t : ℝ}
+    (hres : |(primePhase z t p).arg| < resEps z) :
+    |z.arg - 2 * π * windowIndex z t p| - resEps z < |t| * Real.log p ∧
+      |t| * Real.log p < |z.arg - 2 * π * windowIndex z t p| + resEps z := by
+  have hex := exists_window_of_resonant hz hp hres
+  rw [windowIndex, dif_pos hex]
+  exact hex.choose_spec
+
+/-- The window count: with `|t| log p ≤ T` only the indices `|m| ≤ windowCount T z` occur. -/
+noncomputable def windowCount (T : ℝ) (z : ℂ) : ℕ := ⌈(T + resEps z + π) / (2 * π)⌉₊
+
+theorem abs_windowIndex_le {z : ℂ} (hz : ‖z‖ = 1) {p : ℕ} (hp : 2 ≤ p) {t : ℝ} {T : ℝ}
+    (hres : |(primePhase z t p).arg| < resEps z) (hT : |t| * Real.log p ≤ T) :
+    |windowIndex z t p| ≤ (windowCount T z : ℤ) := by
+  set m := windowIndex z t p with hm
+  obtain ⟨h1, _⟩ := windowIndex_spec hz hp hres
+  have hpi : (0 : ℝ) < π := Real.pi_pos
+  have hlow : 2 * π * |(m : ℝ)| - π ≤ |z.arg - 2 * π * m| := by
+    have h2 : |z.arg| ≤ π := Complex.abs_arg_le_pi z
+    have h3 := abs_sub_abs_le_abs_sub (2 * π * (m : ℝ)) z.arg
+    rw [abs_sub_comm] at h3
+    have h4 : |2 * π * (m : ℝ)| = 2 * π * |(m : ℝ)| := by
+      rw [abs_mul, abs_of_pos (by linarith : (0:ℝ) < 2 * π)]
+    linarith [h3, h4 ▸ h3]
+  have hbound : 2 * π * |(m : ℝ)| - π - resEps z < T := by linarith
+  have hfin : |(m : ℝ)| ≤ (T + resEps z + π) / (2 * π) := by
+    rw [le_div_iff₀ (by linarith : (0:ℝ) < 2 * π)]
+    nlinarith
+  have hceil : (T + resEps z + π) / (2 * π) ≤ (windowCount T z : ℝ) :=
+    Nat.le_ceil _
+  have : |(m : ℝ)| ≤ (windowCount T z : ℝ) := le_trans hfin hceil
+  rw [← Int.cast_abs] at this
+  exact_mod_cast this
+
+/-- **The Range-1 resonance bound.**  Under `|t| log p ≤ T` the resonant primes carry
+reciprocal mass at most `(2·windowCount + 1)·windowMassBound` — a constant depending on `T`
+and `z` only, and in particular **independent of `X` and of `t`**. -/
+theorem resonant_mass_le {z : ℂ} (hz : ‖z‖ = 1) {t : ℝ} (ht : t ≠ 0) (heps : 0 < resEps z)
+    {T : ℝ} {R : Finset ℕ} (hRp : ∀ p ∈ R, p.Prime)
+    (hRres : ∀ p ∈ R, |(primePhase z t p).arg| < resEps z)
+    (hRT : ∀ p ∈ R, |t| * Real.log p ≤ T) :
+    ∑ p ∈ R, (p : ℝ)⁻¹ ≤ (2 * (windowCount T z) + 1 : ℕ) * windowMassBound := by
+  classical
+  set M₀ := windowCount T z with hM₀
+  have hmaps : ∀ p ∈ R, windowIndex z t p ∈ Finset.Icc (-(M₀ : ℤ)) (M₀ : ℤ) := by
+    intro p hp
+    have h := abs_windowIndex_le hz (hRp p hp).two_le (hRres p hp) (hRT p hp)
+    rw [Finset.mem_Icc]
+    constructor <;> [linarith [abs_le.1 h |>.1]; linarith [abs_le.1 h |>.2]]
+  have hfiber := Finset.sum_fiberwise_of_maps_to hmaps (fun p : ℕ => (p : ℝ)⁻¹)
+  rw [← hfiber]
+  have hcard : ∀ m ∈ Finset.Icc (-(M₀ : ℤ)) (M₀ : ℤ),
+      ∑ p ∈ R with windowIndex z t p = m, (p : ℝ)⁻¹ ≤ windowMassBound := by
+    intro m _
+    refine window_mass_le ht m heps (fun p hp => hRp p (Finset.mem_filter.1 hp).1) ?_
+    intro p hp
+    obtain ⟨hpR, hpm⟩ := Finset.mem_filter.1 hp
+    have := windowIndex_spec hz (hRp p hpR).two_le (hRres p hpR)
+    rwa [hpm] at this
+  calc ∑ m ∈ Finset.Icc (-(M₀ : ℤ)) (M₀ : ℤ), ∑ p ∈ R with windowIndex z t p = m, (p : ℝ)⁻¹
+      ≤ ∑ _m ∈ Finset.Icc (-(M₀ : ℤ)) (M₀ : ℤ), windowMassBound := Finset.sum_le_sum hcard
+    _ = ((Finset.Icc (-(M₀ : ℤ)) (M₀ : ℤ)).card : ℝ) * windowMassBound := by
+        rw [Finset.sum_const, nsmul_eq_mul]
+    _ = (2 * M₀ + 1 : ℕ) * windowMassBound := by
+        have hc : (Finset.Icc (-(M₀ : ℤ)) (M₀ : ℤ)).card = 2 * M₀ + 1 := by
+          rw [Int.card_Icc]; omega
+        rw [hc]
+
+/-! ## Range 1: assembling the certificate -/
+
+/-- On a prime in the class `1 (mod q)` the twist is purely archimedean, so the pretentious
+term is exactly `(1 − Re (z·p^{−it}))/p`. -/
+theorem pretentiousTerm_class_eq (z : ℂ) {q : ℕ} (χ : DirichletCharacter ℂ q) (t : ℝ)
+    {p : ℕ} (hp : p.Prime) (hpq : (p : ZMod q) = 1) :
+    Erdos67b.pretentiousTerm (Erdos67b.restrictToNat (zOmInt z))
+        (Erdos67b.dirichletArchimedeanTwist χ t) p
+      = (1 - (primePhase z t p).re) / p := by
+  have hg : (starRingEnd ℂ) (Erdos67b.dirichletArchimedeanTwist χ t p) = archPhase t p := by
+    rw [Erdos67b.dirichletArchimedeanTwist, map_mul, hpq, map_one, map_one, one_mul,
+      conj_archimedeanTwist_eq]
+  rw [Erdos67b.pretentiousTerm, restrictToNat_zOmInt_prime hp, hg, primePhase]
+
+/-- Every pretentious term at a prime is nonnegative for a unimodular `ζ^Ω`. -/
+theorem pretentiousTerm_nonneg_prime {z : ℂ} (hz : ‖z‖ = 1) {q : ℕ}
+    (χ : DirichletCharacter ℂ q) (t : ℝ) {p : ℕ} (hp : p.Prime) :
+    0 ≤ Erdos67b.pretentiousTerm (Erdos67b.restrictToNat (zOmInt z))
+        (Erdos67b.dirichletArchimedeanTwist χ t) p := by
+  rw [Erdos67b.pretentiousTerm]
+  have hnorm : ‖Erdos67b.restrictToNat (zOmInt z) p
+      * (starRingEnd ℂ) (Erdos67b.dirichletArchimedeanTwist χ t p)‖ ≤ 1 := by
+    rw [norm_mul, RCLike.norm_conj, restrictToNat_zOmInt_prime hp, hz, one_mul]
+    exact Erdos67b.norm_dirichletArchimedeanTwist_le_one χ t hp.pos
+  have hre := le_trans (Complex.re_le_norm _) hnorm
+  have hp0 : (0 : ℝ) ≤ (p : ℝ) := Nat.cast_nonneg p
+  have : (0 : ℝ) ≤ 1 - (Erdos67b.restrictToNat (zOmInt z) p
+      * (starRingEnd ℂ) (Erdos67b.dirichletArchimedeanTwist χ t p)).re := by linarith
+  positivity
+
+/-- **The good primes deliver.**  Any set `G` of primes `≤ X` in the class `1 (mod q)` that
+avoids the resonance window contributes `(1 − cos ε)` times its reciprocal mass. -/
+theorem pretentiousDistSq_ge_sum_good {z : ℂ} (hz : ‖z‖ = 1) {q : ℕ}
+    (χ : DirichletCharacter ℂ q) (t : ℝ) (X : ℕ) {G : Finset ℕ}
+    (hGsub : G ⊆ Erdos67b.primesUpTo X)
+    (hGq : ∀ p ∈ G, (p : ZMod q) = 1)
+    (hGgood : ∀ p ∈ G, resEps z ≤ |(primePhase z t p).arg|) :
+    (1 - Real.cos (resEps z)) * ∑ p ∈ G, (p : ℝ)⁻¹
+      ≤ Erdos67b.pretentiousDistSqToTwist (Erdos67b.restrictToNat (zOmInt z)) χ t X := by
+  rw [Erdos67b.pretentiousDistSqToTwist, Erdos67b.pretentiousDistSq]
+  refine le_trans ?_ (Finset.sum_le_sum_of_subset_of_nonneg hGsub
+    (fun p hp _ => pretentiousTerm_nonneg_prime hz χ t (Erdos67b.mem_primesUpTo.1 hp).1))
+  rw [Finset.mul_sum]
+  refine Finset.sum_le_sum fun p hp => ?_
+  have hpp : p.Prime := (Erdos67b.mem_primesUpTo.1 (hGsub hp)).1
+  rw [pretentiousTerm_class_eq z χ t hpp (hGq p hp), div_eq_mul_inv]
+  exact mul_le_mul_of_nonneg_right (one_sub_re_primePhase_ge hz hpp.pos (hGgood p hp))
+    (by positivity)
+
+open scoped Classical in
+/-- The primes `≤ X` in the residue class `1 (mod q)`. -/
+noncomputable def classPrimes (q X : ℕ) : Finset ℕ :=
+  (Erdos67b.primesUpTo X).filter (fun p => (p : ZMod q) = 1)
+
+/-- **The Range-1 inequality.**  If every prime `p ≤ X` satisfies `|t|·log p ≤ T`, then the
+pretentious distance from `ζ^Ω` to `χ·n^{it}` is at least `(1 − cos ε)` times the class-`1
+(mod q)` prime mass, less an `X`-INDEPENDENT constant.  The constant depends only on `T` and
+`z`; the mass grows like `(1/φ(q))·log log X`.  This is the whole of the archimedean
+certificate below the `T/log X` threshold. -/
+theorem range_one_mass_bound {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) {q : ℕ}
+    (χ : DirichletCharacter ℂ q) (t : ℝ) {T : ℝ} (X : ℕ)
+    (hT : ∀ p ∈ Erdos67b.primesUpTo X, |t| * Real.log p ≤ T) :
+    (1 - Real.cos (resEps z))
+        * ((∑ p ∈ classPrimes q X, (p : ℝ)⁻¹)
+            - (2 * windowCount T z + 1 : ℕ) * windowMassBound)
+      ≤ Erdos67b.pretentiousDistSqToTwist (Erdos67b.restrictToNat (zOmInt z)) χ t X := by
+  classical
+  have heps : 0 < resEps z := resEps_pos hz hz1
+  set C := classPrimes q X with hC
+  set R := C.filter (fun p => |(primePhase z t p).arg| < resEps z) with hR
+  set G := C.filter (fun p => ¬ |(primePhase z t p).arg| < resEps z) with hG
+  have hCsub : C ⊆ Erdos67b.primesUpTo X := by
+    rw [hC, classPrimes]; exact Finset.filter_subset _ _
+  have hprime : ∀ p ∈ C, p.Prime := fun p hp => (Erdos67b.mem_primesUpTo.1 (hCsub hp)).1
+  have hsplit : ∑ p ∈ R, (p : ℝ)⁻¹ + ∑ p ∈ G, (p : ℝ)⁻¹ = ∑ p ∈ C, (p : ℝ)⁻¹ :=
+    Finset.sum_filter_add_sum_filter_not C _ _
+  -- the resonant part is a constant
+  have hRbound : ∑ p ∈ R, (p : ℝ)⁻¹ ≤ (2 * windowCount T z + 1 : ℕ) * windowMassBound := by
+    rcases eq_or_ne t 0 with rfl | ht
+    · have hempty : R = ∅ := by
+        rw [hR]
+        refine Finset.filter_false_of_mem fun p hp => ?_
+        have hph : primePhase z 0 p = z := by
+          rw [primePhase, archPhase, Complex.ofReal_zero, mul_zero, neg_zero,
+            Complex.cpow_zero, mul_one]
+        rw [hph]
+        have : 2 * resEps z ≤ |z.arg| := by rw [resEps]; linarith
+        push_neg
+        linarith
+      rw [hempty, Finset.sum_empty]
+      have : (0 : ℝ) ≤ windowMassBound := by
+        rw [windowMassBound]
+        have := Erdos67b.PrimeEstimates.mertensBound_nonneg
+        have h6 : (0 : ℝ) ≤ Real.log 6 := Real.log_nonneg (by norm_num)
+        linarith
+      positivity
+    · refine resonant_mass_le hz ht heps
+        (fun p hp => hprime p (Finset.mem_filter.1 hp).1) (fun p hp => (Finset.mem_filter.1 hp).2)
+        (fun p hp => hT p (hCsub (Finset.mem_filter.1 hp).1))
+  -- the good part delivers
+  have hGgood : ∀ p ∈ G, resEps z ≤ |(primePhase z t p).arg| := by
+    intro p hp
+    have := (Finset.mem_filter.1 hp).2
+    linarith [not_lt.1 this]
+  have hmain := pretentiousDistSq_ge_sum_good hz χ t X
+    (G := G) (fun p hp => hCsub (Finset.mem_filter.1 hp).1)
+    (fun p hp => (by
+      have := (Finset.mem_filter.1 hp).1
+      rw [hC, classPrimes, Finset.mem_filter] at this
+      exact this.2)) hGgood
+  have hcos : 0 ≤ 1 - Real.cos (resEps z) := by
+    have := Real.cos_le_one (resEps z); linarith
+  refine le_trans ?_ hmain
+  apply mul_le_mul_of_nonneg_left _ hcos
+  linarith
+
 end CastingOut
 
 end NormalNumbers
@@ -445,3 +639,5 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.pretentiousDistSqToTwist_zOm_ge
 #print axioms NormalNumbers.CastingOut.exists_window_of_resonant
 #print axioms NormalNumbers.CastingOut.window_mass_le
+#print axioms NormalNumbers.CastingOut.resonant_mass_le
+#print axioms NormalNumbers.CastingOut.range_one_mass_bound
