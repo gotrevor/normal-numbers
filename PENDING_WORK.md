@@ -1,3 +1,16 @@
+## Lap 88 (2026-09-25) — the crux is a theorem on the K-point input
+
+**Advance on the crux.**  `weylLambertTwist_of_degrading` / `weylLambertTwist_of_geom`: the C3 crux
+now follows from `KPointNoExcWith` with EXPLICIT degrading constants (polynomial `c₀/(K+1)^m` or
+geometric `c₀ b^{-θK}`, `θ < 1/2`) plus threshold data — the schedule comparison `hgrow` is
+DISCHARGED (`hgrow_of_schedule_le`), and both degenerate twist levels are closed
+(`depthAvg_zero_tendsto`, `depthAvg_dvd_tendsto_of_primitive`).  See
+`HANDOFF-c3mrt-2026-09-25-lap88.md`.
+
+**Next attack.**  `θ < 1/2` is an artefact of `b^{depthLL b N} ≍ (u_N+1)²` while the mean-phase
+discard needs only `b^{D_N} ≫ u_N`.  A slower schedule with `b^{D_N} ≍ u log u` should admit
+`θ < 1`.  Then: pin the `K`-dependence of a `K`-fold Pilatte decoupling (TT Thm 3.3, `V^{-0.49J'}`).
+
 # PENDING WORK
 
 ## Review — lap 87 (2026-09-25): the budget layer is VACUOUS; the obligation is the DIAGONAL
