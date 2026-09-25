@@ -167,4 +167,168 @@ theorem sum_fOm_log_eq (z : ℂ) (N : ℕ) :
   · have : ArithmeticFunction.vonMangoldt d = 0 := vonMangoldt_eq_zero_iff.2 hpp
     simp [this]
 
+
+/-! ### The defect sum is `O(N)` -/
+
+/-- `‖G(p,y)‖ ≤ y/p`: only the multiples of `p` contribute, each of modulus one. -/
+lemma norm_gOm_le {z : ℂ} (hz : ‖z‖ = 1) (p y : ℕ) (hp : 0 < p) :
+    ‖gOm z p y‖ ≤ (y : ℝ) / p := by
+  classical
+  have h1 : ‖gOm z p y‖ ≤ ∑ m ∈ Finset.Ioc 0 y, ‖(if p ∣ m then fOm z m else 0 : ℂ)‖ :=
+    norm_sum_le _ _
+  have h2 : ∀ m ∈ Finset.Ioc 0 y, ‖(if p ∣ m then fOm z m else 0 : ℂ)‖
+      ≤ (if p ∣ m then (1:ℝ) else 0) := by
+    intro m _
+    by_cases h : p ∣ m
+    · simpa [h] using norm_fOm_le hz m
+    · simp [h]
+  have h3 : ∑ m ∈ Finset.Ioc 0 y, (if p ∣ m then (1:ℝ) else 0)
+      = (((Finset.Ioc 0 y).filter (p ∣ ·)).card : ℝ) := by
+    rw [← Finset.sum_filter]
+    simp
+  have h4 : ((Finset.Ioc 0 y).filter (p ∣ ·)).card ≤ y / p := by
+    have : (Finset.Ioc 0 y).filter (p ∣ ·) ⊆ (Finset.Ioc 0 (y / p)).image (fun j => p * j) := by
+      intro m hm
+      simp only [Finset.mem_filter, Finset.mem_Ioc] at hm
+      obtain ⟨⟨hm0, hmy⟩, j, rfl⟩ := hm
+      refine Finset.mem_image.2 ⟨j, ?_, rfl⟩
+      simp only [Finset.mem_Ioc]
+      refine ⟨Nat.pos_of_mul_pos_left (by omega : 0 < p * j) , ?_⟩
+      exact (Nat.le_div_iff_mul_le hp).2 (by rw [Nat.mul_comm] at hmy; omega)
+    calc ((Finset.Ioc 0 y).filter (p ∣ ·)).card
+        ≤ ((Finset.Ioc 0 (y / p)).image (fun j => p * j)).card := Finset.card_le_card this
+      _ ≤ (Finset.Ioc 0 (y / p)).card := Finset.card_image_le
+      _ = y / p := by simp
+  calc ‖gOm z p y‖ ≤ _ := h1
+    _ ≤ ∑ m ∈ Finset.Ioc 0 y, (if p ∣ m then (1:ℝ) else 0) := Finset.sum_le_sum h2
+    _ = _ := h3
+    _ ≤ ((y / p : ℕ) : ℝ) := by exact_mod_cast h4
+    _ ≤ (y : ℝ) / p := Nat.cast_div_le
+
+
+/-- `log p / (p^k · p)`, the term of the prime-power regrouping. -/
+noncomputable def ppTerm (q : ℕ × ℕ) : ℝ :=
+  Real.log q.1 / ((q.1 : ℝ) ^ q.2 * (q.1 : ℝ))
+
+/-- `d ↦ (minFac d, v_{minFac d}(d))`, a bijection on the prime powers. -/
+def ppPair (d : ℕ) : ℕ × ℕ := (d.minFac, d.factorization d.minFac)
+
+lemma ppTerm_nonneg (q : ℕ × ℕ) : 0 ≤ ppTerm q := by
+  rcases Nat.eq_zero_or_pos q.1 with h | h
+  · simp [ppTerm, h]
+  · have h1 : (1:ℝ) ≤ (q.1 : ℝ) := by exact_mod_cast h
+    have h0 : (0:ℝ) < (q.1 : ℝ) := by linarith
+    have hl : 0 ≤ Real.log q.1 := Real.log_nonneg h1
+    rw [ppTerm]
+    positivity
+
+/-- The prime-power regrouping bound `∑_{d ≤ N} Λ(d)/(d·minFac d) ≤ 16`, the only arithmetic
+input to the defect estimate.  No Mertens' second theorem: the convergent series is
+`∑_p log p/p²` (`sum_log_div_sq_prime_le`, constant `8`). -/
+theorem sum_vonMangoldt_div_mul_minFac_le (N : ℕ) :
+    ∑ d ∈ Finset.Ioc 0 N,
+        ArithmeticFunction.vonMangoldt d / ((d : ℝ) * (d.minFac : ℝ)) ≤ 16 := by
+  classical
+  have hstep1 : ∑ d ∈ Finset.Ioc 0 N,
+      ArithmeticFunction.vonMangoldt d / ((d : ℝ) * (d.minFac : ℝ))
+      = ∑ d ∈ (Finset.Ioc 0 N).filter IsPrimePow,
+          ArithmeticFunction.vonMangoldt d / ((d : ℝ) * (d.minFac : ℝ)) := by
+    rw [Finset.sum_filter]
+    refine Finset.sum_congr rfl fun d _ => ?_
+    by_cases h : IsPrimePow d
+    · simp [h]
+    · simp [h, vonMangoldt_eq_zero_iff.2 h]
+  have hpow : ∀ d ∈ (Finset.Ioc 0 N).filter IsPrimePow,
+      (d.minFac) ^ (d.factorization d.minFac) = d := fun d hd =>
+    IsPrimePow.minFac_pow_factorization_eq (Finset.mem_filter.1 hd).2
+  have hinj : Set.InjOn ppPair ((Finset.Ioc 0 N).filter IsPrimePow) := by
+    intro a ha b hb hab
+    simp only [ppPair, Prod.mk.injEq] at hab
+    rw [← hpow a ha, ← hpow b hb, hab.2, hab.1]
+  have hstep2 : ∑ d ∈ (Finset.Ioc 0 N).filter IsPrimePow,
+        ArithmeticFunction.vonMangoldt d / ((d : ℝ) * (d.minFac : ℝ))
+      = ∑ q ∈ ((Finset.Ioc 0 N).filter IsPrimePow).image ppPair, ppTerm q := by
+    rw [Finset.sum_image hinj]
+    refine Finset.sum_congr rfl fun d hd => ?_
+    have hpp : IsPrimePow d := (Finset.mem_filter.1 hd).2
+    have hc : ((d.minFac : ℝ)) ^ (d.factorization d.minFac) = (d:ℝ) := by
+      exact_mod_cast congrArg (fun n : ℕ => (n : ℝ)) (hpow d hd)
+    rw [ppTerm, ppPair, vonMangoldt_apply, if_pos hpp]
+    simp only
+    rw [hc]
+  have hsub : ((Finset.Ioc 0 N).filter IsPrimePow).image ppPair
+      ⊆ primesLe N ×ˢ Finset.Ioc 0 N := by
+    intro q hq
+    obtain ⟨d, hd, rfl⟩ := Finset.mem_image.1 hq
+    have hpp : IsPrimePow d := (Finset.mem_filter.1 hd).2
+    have hdN : 0 < d ∧ d ≤ N := Finset.mem_Ioc.1 (Finset.mem_filter.1 hd).1
+    have hd1 : d ≠ 1 := hpp.ne_one
+    have hp : (d.minFac).Prime := Nat.minFac_prime hd1
+    have hk : 0 < d.factorization d.minFac := by
+      by_contra hc
+      have h0 : d.factorization d.minFac = 0 := by omega
+      rw [← hpow d hd, h0, pow_zero] at hd1
+      exact hd1 rfl
+    have h2 : 2 ^ (d.factorization d.minFac) ≤ d := by
+      calc 2 ^ (d.factorization d.minFac) ≤ (d.minFac) ^ (d.factorization d.minFac) :=
+            Nat.pow_le_pow_left hp.two_le _
+        _ = d := hpow d hd
+    have hlt := Nat.lt_two_pow_self (n := d.factorization d.minFac)
+    have hmf := Nat.minFac_le hdN.1
+    refine Finset.mem_product.2 ⟨Finset.mem_filter.2 ⟨Finset.mem_range.2 ?_, hp⟩,
+      Finset.mem_Ioc.2 ⟨hk, ?_⟩⟩
+    · simp only [ppPair]; omega
+    · simp only [ppPair]; omega
+  have hprod : ∑ q ∈ primesLe N ×ˢ Finset.Ioc 0 N, ppTerm q ≤ 16 := by
+    rw [Finset.sum_product]
+    have hinner : ∀ p ∈ primesLe N, ∑ k ∈ Finset.Ioc 0 N, ppTerm (p, k)
+        ≤ 2 * (Real.log p / (p : ℝ) ^ 2) := by
+      intro p hp
+      have hpp : p.Prime := prime_of_mem_primesLe hp
+      have hp2 : (2:ℝ) ≤ (p:ℝ) := by exact_mod_cast hpp.two_le
+      have hlog : 0 ≤ Real.log p := Real.log_nonneg (by linarith)
+      have hterm : ∀ k ∈ Finset.Ioc 0 N,
+          ppTerm (p, k) ≤ (Real.log p / (p:ℝ) ^ 2) * (1/2 : ℝ) ^ (k - 1) := by
+        intro k hk
+        obtain ⟨hk0, _⟩ := Finset.mem_Ioc.1 hk
+        have hpk : (p:ℝ) ^ 2 * 2 ^ (k - 1) ≤ (p:ℝ) ^ k * (p:ℝ) := by
+          have he : (p:ℝ) ^ k = (p:ℝ) * (p:ℝ) ^ (k - 1) := by
+            rw [← pow_succ']; congr 1; omega
+          have h2p : (2:ℝ) ^ (k-1) ≤ (p:ℝ) ^ (k-1) :=
+            pow_le_pow_left₀ (by norm_num) hp2 _
+          rw [he]
+          nlinarith [pow_nonneg (by norm_num : (0:ℝ) ≤ 2) (k-1), sq_nonneg ((p:ℝ))]
+        have hRHS : Real.log p / (p:ℝ)^2 * (1/2:ℝ)^(k-1)
+            = Real.log p / ((p:ℝ)^2 * 2^(k-1)) := by
+          rw [div_pow, one_pow]
+          field_simp
+        rw [ppTerm, hRHS]
+        simp only
+        gcongr
+        all_goals first | exact hlog | positivity
+      refine le_trans (Finset.sum_le_sum hterm) ?_
+      rw [← Finset.mul_sum]
+      have hgeo : ∑ k ∈ Finset.Ioc 0 N, (1/2 : ℝ) ^ (k - 1) ≤ 2 := by
+        have heq : ∑ k ∈ Finset.Ioc 0 N, (1/2 : ℝ) ^ (k - 1)
+            = ∑ j ∈ Finset.range N, (1/2 : ℝ) ^ j := by
+          refine Finset.sum_nbij' (fun k => k - 1) (fun j => j + 1) ?_ ?_ ?_ ?_ ?_
+          · intro k hk; simp only [Finset.mem_Ioc] at hk; simp only [Finset.mem_range]; omega
+          · intro j hj; simp only [Finset.mem_range] at hj; simp only [Finset.mem_Ioc]; omega
+          · intro k hk; simp only [Finset.mem_Ioc] at hk; omega
+          · intro j _; omega
+          · intro k _; rfl
+        rw [heq]; exact sum_geometric_two_le N
+      have hnn : 0 ≤ Real.log p / (p:ℝ) ^ 2 := by positivity
+      nlinarith [hnn, hgeo]
+    refine le_trans (Finset.sum_le_sum hinner) ?_
+    rw [← Finset.mul_sum]
+    have := sum_log_div_sq_prime_le N
+    linarith
+  calc ∑ d ∈ Finset.Ioc 0 N,
+        ArithmeticFunction.vonMangoldt d / ((d : ℝ) * (d.minFac : ℝ)) = _ := hstep1
+    _ = _ := hstep2
+    _ ≤ ∑ q ∈ primesLe N ×ˢ Finset.Ioc 0 N, ppTerm q :=
+        Finset.sum_le_sum_of_subset_of_nonneg hsub (fun q _ _ => ppTerm_nonneg q)
+    _ ≤ 16 := hprod
+
 end NormalNumbers.CastingOut
