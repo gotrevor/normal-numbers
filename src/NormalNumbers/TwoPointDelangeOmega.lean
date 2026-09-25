@@ -825,3 +825,124 @@ theorem delangeW_le {N n : ℕ} (hK : 2 ≤ N / n) :
   exact sum_inv_prime_sdiff_le hK hKN
 
 end NormalNumbers.CastingOut
+
+namespace NormalNumbers.CastingOut
+
+open Finset Filter Topology
+
+/-! ## A SECOND ROUTE: the scale equation
+
+The `v`-direction route above is stuck on one cancellation statement.  The *scale* direction is
+better, and the reason is arithmetic: the multiplier there is `1 + v = z`, which lies on the unit
+circle, while the trivial majorant `A(N) = Σ_{n≤N} μ²(n)u^{ω(n)}/n ≍ (log N)^u` is `o(log N)`
+exactly in the repo's regime `u = ‖z−1‖ < 1`.  Concretely, the two identities already in the tree,
+
+  * `delangeS_mul_log` :  `S(N)·log N = T(N) + Abel(N)`,
+  * `sum_delangeKernel_mul_log` (Levin–Fainleib) + `norm_delangeT_sub_primeSum_le` :
+    `T(N) = (z−1)·Σ_{p≤N}(log p/p)·S(N/p) + O(A(N))`,
+
+combine, once both sides are written as hyperbola sums over `n`, into
+
+    S(N)·log N  =  z · Abel(N)  +  R(N),        ‖R(N)‖ = O(A(N)) = O((log N)^u),
+
+because BOTH `Abel(N)` and `Σ_p (log p/p)S(N/p)` equal `Σ_{n≤N} (h(n)/n)·log(N/n)` up to `O(A(N))`
+— the first exactly, the second by Mertens (`mertens_lower`/`mertens_upper`, error `≤ 9`).
+
+With `σ = log N` and `Y = Abel`, that is the linear scale ODE `σ·Y' = z·Y + R`.  Its integrating
+factor is `σ^{-z}`, of modulus `σ^{-Re z} = σ^{-(1+Re(z−1))}`, so
+
+    ‖Y(σ)‖ ≲ σ^{Re z}·(C + ∫ ‖R‖τ^{-1-Re z} dτ) ≲ σ^{Re z} + σ^{u},
+    ‖S(N)‖ = ‖z·Y + R‖/σ ≲ σ^{Re z − 1} + σ^{u−1}  →  0
+
+for `Re z < 1` and `u < 1`.  **Both exponents are negative exactly in the repo's regime**, and
+— unlike every previous attempt — no bootstrap and no a priori bound on `‖S‖` is needed: the
+trivial `‖S‖ ≤ A` suffices throughout, because the sign is carried by the integrating factor
+`σ^{-z}` and never by a norm.  (Lap 35's refutation does not apply: it normed the multiplier of
+the `v`-direction equation, whose modulus is `u`; here the multiplier is `z`, of modulus one, and
+it is never normed.)
+
+This section builds that route.  Brick 1: both sides are hyperbola sums.
+-/
+
+/-- The Abel weights telescope on any initial segment. -/
+theorem sum_log_telescope_Ico {n N : ℕ} (hn : 1 ≤ n) (hnN : n ≤ N) :
+    ∑ m ∈ Finset.Ico n N, (Real.log ((m : ℝ) + 1) - Real.log (m : ℝ))
+      = Real.log N - Real.log n := by
+  have h1 := sum_log_telescope n
+  have h2 := sum_log_telescope N
+  have hcons := Finset.sum_Ico_consecutive
+    (fun m : ℕ => Real.log ((m : ℝ) + 1) - Real.log (m : ℝ)) hn hnN
+  linarith [hcons, h1, h2]
+
+/-- **Brick 1: `Abel` is a hyperbola sum.**  `Abel(N) = Σ_{n ≤ N} (h(n)/n)·log(N/n)`, exactly. -/
+theorem delangeAbel_eq_hyperbola (z : ℂ) (N : ℕ) :
+    delangeAbel z N
+      = ∑ n ∈ Finset.Ioc 0 N,
+          (delangeKernel z n / (n : ℂ)) * ((Real.log N - Real.log n : ℝ) : ℂ) := by
+  classical
+  rw [delangeAbel]
+  have hstep : ∀ m ∈ Finset.Ico 1 N,
+      ((Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) : ℝ) : ℂ) * delangeS z m
+        = ∑ n ∈ Finset.Ioc 0 N,
+            (if n ≤ m then ((Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) : ℝ) : ℂ)
+              * (delangeKernel z n / (n : ℂ)) else 0) := by
+    intro m hm
+    simp only [Finset.mem_Ico] at hm
+    rw [← Finset.sum_filter, delangeS, Finset.mul_sum]
+    refine Finset.sum_congr ?_ fun n _ => rfl
+    ext n
+    simp only [Finset.mem_filter, Finset.mem_Ioc]
+    omega
+  rw [Finset.sum_congr rfl hstep, Finset.sum_comm]
+  refine Finset.sum_congr rfl fun n hn => ?_
+  simp only [Finset.mem_Ioc] at hn
+  rw [← Finset.sum_filter]
+  have hset : (Finset.Ico 1 N).filter (fun m => n ≤ m) = Finset.Ico n N := by
+    ext m
+    simp only [Finset.mem_filter, Finset.mem_Ico]
+    omega
+  rw [hset, ← Finset.sum_mul, ← Complex.ofReal_sum, sum_log_telescope_Ico hn.1 hn.2]
+  ring
+
+/-- **Brick 2: the prime sum is a hyperbola sum too**, with the Mertens function as weight. -/
+theorem sum_primeWeight_delangeS_eq (z : ℂ) (N : ℕ) :
+    ∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p)
+      = ∑ n ∈ Finset.Ioc 0 N, (delangeKernel z n / (n : ℂ))
+          * ((∑ q ∈ primesLe (N / n), Real.log q / (q : ℝ) : ℝ) : ℂ) := by
+  classical
+  have hstep : ∀ p ∈ primesLe N,
+      ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p)
+        = ∑ n ∈ Finset.Ioc 0 N,
+            (if n ≤ N / p then ((Real.log p : ℂ) / (p : ℂ)) * (delangeKernel z n / (n : ℂ))
+              else 0) := by
+    intro p hp
+    have hple : N / p ≤ N := Nat.div_le_self _ _
+    rw [← Finset.sum_filter, delangeS, Finset.mul_sum]
+    refine Finset.sum_congr ?_ fun n _ => rfl
+    ext n
+    simp only [Finset.mem_filter, Finset.mem_Ioc]
+    omega
+  rw [Finset.sum_congr rfl hstep, Finset.sum_comm]
+  refine Finset.sum_congr rfl fun n hn => ?_
+  simp only [Finset.mem_Ioc] at hn
+  rw [← Finset.sum_filter]
+  have hset : (primesLe N).filter (fun p => n ≤ N / p) = primesLe (N / n) := by
+    ext p
+    simp only [Finset.mem_filter, primesLe, Finset.mem_range]
+    constructor
+    · rintro ⟨⟨-, hpp⟩, hle⟩
+      have h1 : n * p ≤ N := (Nat.le_div_iff_mul_le hpp.pos).mp hle
+      have h2 : p ≤ N / n := (Nat.le_div_iff_mul_le hn.1).mpr (by rw [Nat.mul_comm]; exact h1)
+      exact ⟨by omega, hpp⟩
+    · rintro ⟨hlt, hpp⟩
+      have hpd : p ≤ N / n := by omega
+      have h1 : p * n ≤ N := (Nat.le_div_iff_mul_le hn.1).mp hpd
+      have hpN : p ≤ N := le_trans (Nat.le_mul_of_pos_right p hn.1) h1
+      exact ⟨⟨by omega, hpp⟩,
+        (Nat.le_div_iff_mul_le hpp.pos).mpr (by rw [Nat.mul_comm]; exact h1)⟩
+  rw [hset, Complex.ofReal_sum, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun q _ => ?_
+  push_cast
+  ring
+
+end NormalNumbers.CastingOut
