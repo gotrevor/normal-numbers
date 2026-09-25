@@ -92,6 +92,7 @@ finite-alphabet sequence alone; the twist `w` and the active primes `s` are chos
 theorem exists_logProb_gen_small_tail
     {α : Type*} [Finite α] [Nonempty α] {a : ℕ} (ha : 0 < a)
     (mkE : (m : ℕ) → (Fin m → α) → ℕ → Fin (a * m) → ℂ)
+    (Δ : (m : ℕ) → ZMod (primeGraphModulus (a * m)))
     {B δ ρ κ : ℝ} (hB : 0 < B) (hδ : 0 < δ) (hρ : 0 < ρ) (hκ : 0 < κ)
     (hE : ∀ m b p j, ‖mkE m b p j‖ ≤ B ^ 2) (Hmin : ℕ) :
     ∃ H₀ J L₀ : ℕ, Hmin ≤ H₀ ∧ 2 ≤ H₀ ∧ a ≤ H₀ ∧ 0 < J ∧ 0 < L₀ ∧
@@ -102,7 +103,8 @@ theorem exists_logProb_gen_small_tail
           {n | ρ * (a * entropyScale H₀ j : ℕ) / Real.log ((a * entropyScale H₀ j : ℕ) : ℝ) ≤
             ‖genDiscrepancyAt w
                 (mkE (entropyScale H₀ j) (finiteSequenceBlock F (entropyScale H₀ j) n.1)) s
-                (n.1 : ZMod (primeGraphModulus (a * entropyScale H₀ j)))‖} ≤ κ := by
+                ((n.1 : ZMod (primeGraphModulus (a * entropyScale H₀ j))) -
+                  Δ (entropyScale H₀ j))‖} ≤ κ := by
   classical
   let _ := Fintype.ofFinite α
   obtain ⟨c, hc, H₁, hH₁, htail⟩ := exists_gen_exponential_tail hB hδ hρ
@@ -147,9 +149,23 @@ theorem exists_logProb_gen_small_tail
   have hlogm : 0 < Real.log (m : ℝ) := Real.log_pos (by exact_mod_cast (show 1 < m by omega))
   let E : (Fin m → α) → Finset (ZMod (primeGraphModulus H)) := fun b ↦
     Finset.univ.filter fun z ↦ ρ * H / Real.log (H : ℝ) ≤
-      ‖genDiscrepancyAt w (mkE m b) s z‖
+      ‖genDiscrepancyAt w (mkE m b) s (z - Δ m)‖
   have hrare : ∀ b, ((E b).card : ℝ) * Real.exp (c * H / Real.log H) ≤ primeGraphModulus H := by
     intro b
+    have hsub : (E b) ⊆ (Finset.univ.filter fun z : ZMod (primeGraphModulus H) ↦
+        ρ * H / Real.log (H : ℝ) ≤ ‖genDiscrepancyAt w (mkE m b) s z‖).map
+          ⟨fun z ↦ z + Δ m, add_left_injective _⟩ := by
+      intro z hz
+      simp only [E, Finset.mem_filter, Finset.mem_univ, true_and] at hz
+      simp only [Finset.mem_map, Finset.mem_filter, Finset.mem_univ, true_and,
+        Function.Embedding.coeFn_mk]
+      exact ⟨z - Δ m, hz, by ring⟩
+    have hcard : ((E b).card : ℝ) ≤ ((Finset.univ.filter fun z : ZMod (primeGraphModulus H) ↦
+        ρ * H / Real.log (H : ℝ) ≤ ‖genDiscrepancyAt w (mkE m b) s z‖).card : ℝ) := by
+      have := Finset.card_le_card hsub
+      rw [Finset.card_map] at this
+      exact_mod_cast this
+    refine le_trans (mul_le_mul_of_nonneg_right hcard (by positivity)) ?_
     exact htail H hHH₁ w (mkE m b) s hw (fun p jj ↦ hE m b p jj) hs
   have hprob := logProb_block_rare_event_le hL (by omega : L ≤ U) F E
     (show 0 < c * H / Real.log H by positivity) hrare hinfo hdef
@@ -175,7 +191,7 @@ theorem exists_logProb_gen_small_tail
       E (finiteSequenceBlock F m n.1)} =
       {n : LogProbIndex L U | ρ * (H : ℕ) / Real.log ((H : ℕ) : ℝ) ≤
         ‖genDiscrepancyAt w (mkE m (finiteSequenceBlock F m n.1)) s
-          (n.1 : ZMod (primeGraphModulus H))‖} := by
+          ((n.1 : ZMod (primeGraphModulus H)) - Δ m)‖} := by
     ext n
     change ((n.1 : ZMod (primeGraphModulus H)) ∈ E (finiteSequenceBlock F m n.1)) ↔ _
     simp only [E, Finset.mem_filter, Finset.mem_univ, true_and]
@@ -183,8 +199,80 @@ theorem exists_logProb_gen_small_tail
   rw [hset] at hfinal
   exact hfinal
 
+/-- **Port of `NormalNumbers.ElliottTwistedGraph.exists_logProb_pairTwisted_decoupling` to the
+generic block-level edge builder.**  Averaged decoupling with an arbitrarily small coefficient,
+uniformly over finite-alphabet sequences, all twists and all eligible prime subsets. -/
+theorem exists_logProb_gen_decoupling
+    {α : Type*} [Finite α] [Nonempty α] {a : ℕ} (ha : 0 < a)
+    (mkE : (m : ℕ) → (Fin m → α) → ℕ → Fin (a * m) → ℂ)
+    (Δ : (m : ℕ) → ZMod (primeGraphModulus (a * m)))
+    {B δ ε : ℝ} (hB : 0 < B) (hδ : 0 < δ) (hε : 0 < ε)
+    (hE : ∀ m b p j, ‖mkE m b p j‖ ≤ B ^ 2) (Hmin : ℕ) :
+    ∃ H₀ J L₀ : ℕ, Hmin ≤ H₀ ∧ 2 ≤ H₀ ∧ a ≤ H₀ ∧ 0 < J ∧ 0 < L₀ ∧
+      ∀ (L U : ℕ) (_hL : 0 < L) (_hU : 2 * L ≤ U), L₀ ≤ L →
+      ∀ F : ℕ → α, ∃ j < J, ∀ (w : ℕ → ℂ) (s : Finset ℕ),
+        (∀ p ∈ s, ‖w p‖ ≤ 1) → (∀ p ∈ s, δ * (a * entropyScale H₀ j : ℕ) ≤ p) →
+        ‖logProbExpectation L U (fun n ↦ genDiscrepancyAt w
+            (mkE (entropyScale H₀ j) (finiteSequenceBlock F (entropyScale H₀ j) n)) s
+            ((n : ZMod (primeGraphModulus (a * entropyScale H₀ j))) -
+              Δ (entropyScale H₀ j)))‖ ≤
+          ε * (a * entropyScale H₀ j : ℕ) / Real.log ((a * entropyScale H₀ j : ℕ) : ℝ) := by
+  classical
+  let R := primeGraphRadius B δ
+  have hR : 0 < R := primeGraphRadius_pos hB hδ
+  let ρ := ε / 2
+  let κ := ε / (16 * R)
+  have hρ : 0 < ρ := by dsimp [ρ]; positivity
+  have hκ : 0 < κ := by dsimp [κ]; positivity
+  have hcoef : ρ + 8 * R * κ = ε := by
+    dsimp [ρ, κ]; field_simp; ring
+  obtain ⟨Hprime, hprime⟩ := eventually_atTop.mp eventually_primeCounting_le_four_mul_div_log
+  obtain ⟨H₀, J, L₀, hmin, hH₀, hH₀a, hJ, hL₀, hselect⟩ :=
+    exists_logProb_gen_small_tail ha mkE Δ hB hδ hρ hκ hE (max Hmin Hprime)
+  refine ⟨H₀, J, L₀, (le_max_left _ _).trans hmin, hH₀, hH₀a, hJ, hL₀, ?_⟩
+  intro L U hL hU hLL F
+  obtain ⟨j, hj, htail⟩ := hselect L U hL hU hLL F
+  refine ⟨j, hj, ?_⟩
+  intro w s hw hs
+  set m := entropyScale H₀ j with hmdef
+  have hmH₀ : H₀ ≤ m := le_entropyScale H₀ j
+  set H := a * m with hHdef
+  have hmH : m ≤ H := Nat.le_mul_of_pos_left m ha
+  have hHlower : H₀ ≤ H := hmH₀.trans hmH
+  have hHpos : (0 : ℝ) < H := by
+    have : 0 < H := by rw [hHdef]; have : 0 < m := by omega
+                       positivity
+    exact_mod_cast this
+  have hlog : 0 < Real.log (H : ℝ) := Real.log_pos (by
+    exact_mod_cast (show 1 < H by have : 2 ≤ H := hH₀.trans hHlower; omega))
+  have hcount := hprime H (((le_max_right _ _).trans hmin).trans hHlower)
+  have hbound (n : LogProbIndex L U) :
+      ‖genDiscrepancyAt w (mkE m (finiteSequenceBlock F m n.1)) s
+        ((n.1 : ZMod (primeGraphModulus H)) - Δ m)‖ ≤
+        2 * (Nat.primeCounting H : ℝ) * R :=
+    norm_genDiscrepancyAt_le w _ s hB.le hδ hw (fun p jj ↦ hE m _ p jj) hs _
+  have hexp := norm_finiteExpectation_le_of_tail (logProbFiniteLaw L U hL (by omega))
+    (fun n ↦ genDiscrepancyAt w (mkE m (finiteSequenceBlock F m n.1)) s
+      ((n.1 : ZMod (primeGraphModulus H)) - Δ m))
+    (show 0 ≤ ρ * H / Real.log (H : ℝ) by positivity)
+    (show 0 ≤ 2 * (Nat.primeCounting H : ℝ) * R by positivity)
+    hbound (htail w s hw hs)
+  change ‖logProbExpectation L U (fun n ↦ genDiscrepancyAt w
+      (mkE m (finiteSequenceBlock F m n)) s
+      ((n : ZMod (primeGraphModulus H)) - Δ m))‖ ≤
+    ρ * H / Real.log (H : ℝ) + (2 * (Nat.primeCounting H : ℝ) * R) * κ at hexp
+  have hmul := mul_le_mul_of_nonneg_right hcount (show 0 ≤ 2 * R * κ by positivity)
+  apply hexp.trans
+  calc
+    ρ * H / Real.log (H : ℝ) + (2 * (Nat.primeCounting H : ℝ) * R) * κ ≤
+        (ρ + 8 * R * κ) * ((H : ℝ) / Real.log (H : ℝ)) := by
+      rw [mul_div_assoc]
+      nlinarith
+    _ = ε * H / Real.log (H : ℝ) := by rw [hcoef, mul_div_assoc]
+
 end
 
 end NormalNumbers.ElliottGenericGraph
 
 #print axioms NormalNumbers.ElliottGenericGraph.exists_logProb_gen_small_tail
+#print axioms NormalNumbers.ElliottGenericGraph.exists_logProb_gen_decoupling

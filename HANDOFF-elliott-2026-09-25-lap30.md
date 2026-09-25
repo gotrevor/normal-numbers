@@ -107,12 +107,30 @@ The entropy rung, ported with both widenings:
 
 Lap 28's prediction is confirmed in the kernel: no new entropy lemma was needed.
 
-## NEXT (lap 30 onwards)
+## Lap 30 — the averaged generic decoupling, and the residue shift is now a parameter
 
-1. **`exists_logProb_gen_decoupling`** — the averaged form, one short step above lap 29's tail:
-   copy `ElliottTwistedGraph.exists_logProb_pairTwisted_decoupling` verbatim, feeding
-   `norm_genDiscrepancyAt_le` (proved) to `norm_finiteExpectation_le_of_tail`.  Coefficients
-   `ρ = ε/2`, `κ = ε/(16R)` as there, at length `a*m`.
+* `exists_logProb_gen_small_tail` gained the parameter
+  `Δ : (m : ℕ) → ZMod (primeGraphModulus (a*m))`: the rare event is tested at `z - Δ m`.  This is
+  how the dilated graph's per-prime shifts `d_p = ⌊p c₁/a⌋` enter — by CRT they are a single
+  element of `ZMod (primeGraphModulus H)`.  The tail bound is unaffected because `z ↦ z + Δ m` is
+  injective, so the shifted rare set has the same cardinality.
+* `exists_logProb_gen_decoupling` — the averaged form, with the dependency's coefficients
+  `ρ = ε/2`, `κ = ε/(16R)` and budget `ρ + 8Rκ = ε`, at graph length `a*m`.
+
+**The whole lower-bound machinery is now available for an arbitrary edge family at a dilated
+length with an arbitrary per-prime residue shift, all sorry-free and axiom-clean.**
+
+## NEXT (lap 31 onwards)
+
+1. **Instantiate.**  Take `α` = the `a`-grouped alphabet (lap 28), `mkE m b p j =
+   dilatedPairShiftEdge (decode₁ b) (decode₂ b) a (p c₁) (p h) j`, and `Δ m` the CRT element with
+   `Δ ≡ ⌊p c₁ / a⌋ (mod p)`.  Then `genMeanCRT` is `dilatedPairTwistedMean` (up to the
+   `ElliottTwistedGraphCRT.pairTwistedMeanCRT_eq_pairTwistedPrimeGraphMean` step, which needs its
+   generic analogue — a short `Finset.sum_coe_sort` argument) and `genSum` at the shifted residue
+   is the sum of affine observables via `sum_dilatedPairShiftEdge_affineBlock`.
+2. Combine with lap 26's `norm_logProb_affineTwistedObservable_shift_sub_correlation_le` for the
+   correlation-transfer rung, then the entropy-selected scale and
+   `exists_logProb_dyadic_*_lower`.
 2. Then instantiate at `E p j = dilatedPairShiftEdge (affineBlock f₁) (affineBlock f₂) a (p c₁) (p h) j`
    with residue variable `z − ⌊p c₁/a⌋`, and combine with
    `sum_dilatedPairShiftEdge_affineBlock` + lap 26's edge-mean estimate.
