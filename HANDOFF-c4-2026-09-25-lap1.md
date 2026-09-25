@@ -241,3 +241,26 @@ Wiring toward the infinite witness.  All green.
 splittings already appear in `Zgf_succ`. (ii) `blockFreq sortedTable 2 8 (a+1) (2a+1) j =
 ((Wgf 0).coeff j + (Wgf 1).coeff j)/(2·8^{a+1})`. (iii) Even `L`: the analogous formulas with an
 edge bit at BOTH ends, failing at `j = 0` with `7` against `8`.
+
+## Lap 8 addendum — ODD HALF OF THE INFINITE WITNESS PROVED
+Green.  New in `AbelianWindowOdd.lean`:
+* `Wgf r L S := ∑_{k<8^S} X^{winOnes sortedTable 2 L r (wordOf 8 S k)}`, `edge_zero_gf`,
+  `edge_one_gf`.
+* **`Wgf_zero_odd : Wgf 0 (2a+1) (a+1) = Zgf a * (2 + 6X)`** (split off the LAST digit,
+  `wordOf_append`) and **`Wgf_one_odd : Wgf 1 (2a+1) (a+1) = (6 + 2X) * Zgf a`** (split off the
+  FIRST digit, `wordOf_cons`).
+* `coeff_Wgf`, `blockFreq_sorted : blockFreq sortedTable 2 8 S L j = ((Wgf 0 L S).coeff j +
+  (Wgf 1 L S).coeff j)/(2·8^S)`.
+* **`blockFreq_sorted_odd : blockFreq sortedTable 2 8 (a+1) (2a+1) j = C(2a+1,j)/2^{2a+1}`** —
+  the sum of the two offset gfs is `Zgf a·(8+8X) = C(8·2^a)(1+X)^{2a+1}`, and `8·2^a/(2·8^{a+1})
+  = 1/2^{2a+1}`.  Pascal's rule, in the kernel.
+* **`isAbelianAt_sorted_odd`** : for any base-8 normal `c`, `IsAbelianAt (blockSeq sortedTable c 2)
+  (2a+1)` for EVERY `a`.  So the witness is abelian at infinitely many lengths.
+
+**Remaining for the infinite witness.**  The even half: `¬ IsAbelianAt _ (2a)` for `a ≥ 1`.  Same
+route with an edge bit at BOTH ends:
+`Wgf 0 (2a) (a+1) = 8 · Zgf a` (last digit unused) and
+`Wgf 1 (2a) (a+1) = (6+2X) · Zgf (a-1) · (2+6X)`.
+At `j = 0` the numerator is `8·2^a + 12·2^{a-1} = 14·2^a` over `2·8^{a+1}`, i.e. `7/(8·4^a)`,
+against the required `C(2a,0)/2^{2a} = 8/(8·4^a)`.  Then
+`c4_realizable` for `S = {L : Odd L}` follows.
