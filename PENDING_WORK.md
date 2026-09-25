@@ -9964,3 +9964,21 @@ Everything downstream is unchanged.
 Remaining for `UniformResonantMass`: the window bookkeeping of step 3 (map each resonant prime
 `p > P₁` to its `windowIndex`, fit the fibre into `(P, P(1+w)]` with `P = exp((γ_m−δ)/|t|)`,
 apply `short_interval_mass_le`), then the dyadic-block treatment of the BT error tail (step 5).
+
+### Lap 76 — step 3: `resonant_window_mass_le`
+
+A set of primes confined to a window of length `2δ/|t|` in `log p`, starting at height
+`a ≥ log 2`, carries reciprocal mass at most `16δ/(|t|·a) + 6(1+a)³·exp(−a/2)`.  Proved from
+`short_interval_mass_le` plus `exp_sub_one_le_two_mul` (`exp x − 1 ≤ 2x` on `[0,1]`, from
+mathlib's `Real.exp_bound` at `n = 1`) — the conversion from an additive window in `log p` to a
+multiplicative window `(P, P(1+w)]` with `w ≤ 2·(2δ/|t|)`.  Hypothesis `2δ ≤ |t|` keeps `w`
+in the linear regime; the complementary range `|t| < 2δ` carries `O(1)` windows and is the
+existing `resonant_mass_le` (Range 1).
+
+At `a = (γ_m − δ)/|t|` the first term is `16δ/(γ_m − δ)`, which `sum_inv_gap_le` sums to
+`(32δ/π)(1 + log K)` over `1 ≤ m ≤ K` — inside the `100δ` budget with room for the `m = 0`
+window and both signs of `m`.
+
+Remaining: the window PARTITION (fibre the resonant primes over `windowIndex`, check each
+fibre satisfies the `hGw` of `resonant_window_mass_le` with `a = (γ_m−δ)/|t|`), the small-prime
+split at `P₁ = |t|^4`, and the dyadic-block sum of the BT error `6(1+a)³e^{−a/2}`.

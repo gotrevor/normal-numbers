@@ -148,3 +148,73 @@ theorem sum_inv_gap_le {δ : ℝ} (hδ0 : 0 ≤ δ) (hδ : δ ≤ π / 2) (K : �
       rfl
     rwa [heq] at h
   exact mul_le_mul_of_nonneg_left hharm (by positivity)
+
+/-- `exp x − 1 ≤ 2x` on `[0,1]`, from mathlib's `Real.exp_bound` at `n = 1`.  This converts a
+resonance window, which is an interval in `log p`, into a multiplicative window `(P, P(1+w)]`
+with `w` proportional to the window length. -/
+theorem exp_sub_one_le_two_mul {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    Real.exp x - 1 ≤ 2 * x := by
+  have habs : |x| ≤ 1 := abs_le.2 ⟨by linarith, hx1⟩
+  have h := Real.exp_bound habs (n := 1) (by norm_num)
+  simp only [Finset.range_one, Finset.sum_singleton, pow_zero, Nat.factorial_zero,
+    Nat.cast_one, div_one] at h
+  have hax : |x| = x := abs_of_nonneg hx0
+  rw [hax] at h
+  have h2 := (abs_le.1 h).2
+  norm_num at h2
+  linarith
+
+/-- **The resonance window mass.**  A set of primes confined to a window of length `2δ/|t|` in
+`log p`, starting at height `a ≥ log 2`, carries reciprocal mass at most
+`16δ/(|t|·a) + 6(1+a)³·exp(−a/2)`.
+
+The first term is the one that sums: with `a = (γ_m − δ)/|t|` it is `16δ/(γ_m − δ)`, and
+`sum_inv_gap_le` sums that over the windows.  The second is the Brun–Titchmarsh error, which
+decays in the *height* `a` and is handled by grouping windows into dyadic blocks in `log p`. -/
+theorem resonant_window_mass_le {t δ a : ℝ} (hδ0 : 0 < δ) (ht : 2 * δ ≤ |t|)
+    (ha : Real.log 2 ≤ a) {G : Finset ℕ} (hGp : ∀ p ∈ G, p.Prime)
+    (hGw : ∀ p ∈ G, a < Real.log p ∧ Real.log p < a + 2 * δ / |t|) :
+    ∑ p ∈ G, (p : ℝ)⁻¹ ≤ 16 * δ / (|t| * a) + 6 * (1 + a) ^ 3 / Real.sqrt (Real.exp a) := by
+  have htpos : (0 : ℝ) < |t| := by linarith
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hapos : (0 : ℝ) < a := by linarith
+  set x : ℝ := 2 * δ / |t| with hx
+  have hx0 : 0 < x := by rw [hx]; positivity
+  have hx1 : x ≤ 1 := by
+    rw [hx, div_le_one htpos]; linarith
+  set w : ℝ := Real.exp x - 1 with hw
+  have hw0 : 0 < w := by
+    rw [hw, sub_pos]
+    linarith [Real.add_one_le_exp x]
+  have hw2 : w ≤ 2 * x := exp_sub_one_le_two_mul hx0.le hx1
+  set P : ℝ := Real.exp a with hP
+  have hP2 : (2 : ℝ) ≤ P := by
+    rw [hP, show (2 : ℝ) = Real.exp (Real.log 2) by rw [Real.exp_log]; norm_num]
+    exact Real.exp_le_exp.2 ha
+  have hlogP : Real.log P = a := by rw [hP, Real.log_exp]
+  have hG : ∀ p ∈ G, p.Prime ∧ P < (p : ℝ) ∧ (p : ℝ) ≤ P * (1 + w) := by
+    intro p hp
+    obtain ⟨h1, h2⟩ := hGw p hp
+    have hppos : (0 : ℝ) < (p : ℝ) := by
+      have := (hGp p hp).pos
+      exact_mod_cast this
+    refine ⟨hGp p hp, ?_, ?_⟩
+    · rw [hP, ← Real.exp_log hppos]
+      exact Real.exp_lt_exp.2 h1
+    · have : (p : ℝ) < Real.exp (a + x) := by
+        rw [← Real.exp_log hppos]
+        exact Real.exp_lt_exp.2 h2
+      have heq : Real.exp (a + x) = P * (1 + w) := by
+        rw [hP, hw, Real.exp_add]; ring
+      linarith [heq ▸ this]
+  have hmain := short_interval_mass_le hP2 hw0 hG
+  rw [hlogP] at hmain
+  refine le_trans hmain ?_
+  have hwt : 4 * w * |t| ≤ 16 * δ := by
+    have hb : w * |t| ≤ 2 * x * |t| := by nlinarith [hw2, htpos]
+    have hc : 2 * x * |t| = 4 * δ := by rw [hx]; field_simp; ring
+    nlinarith [hb, hc]
+  have h1 : 4 * w / a ≤ 16 * δ / (|t| * a) := by
+    rw [div_le_div_iff₀ hapos (by positivity)]
+    nlinarith [hwt, hapos, htpos]
+  linarith
