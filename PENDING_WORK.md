@@ -46,6 +46,11 @@ equation returns `A(N) ≤ C'·L_N^{u'}`, `u' = u + ε(1+u) + …`, which is `< 
 because `u < 1`.  **Sharp exponent, no Mertens' 2nd** — the repo's `primeRecipSum_le` has constant
 12, which would have shrunk the discharged regime to `‖z−1‖ < 1/12`.
 
+**STATUS 2026-09-25 lap 54: brick 1 and brick 2 are LANDED** (`TwoPointDelangeScale.lean`,
+sorry-free, trust triple).  Brick 2 is `exists_delangeA_le_rpow`:
+`‖z−1‖ < 1 → ∃ C u' N₀, 0 < C ∧ 0 ≤ u' ∧ u' < 1 ∧ 3 ≤ N₀ ∧ ∀ N ≥ N₀, A(N) ≤ C·(log N)^{u'}`,
+with `u' = ‖z−1‖ + (1−‖z−1‖²)/4` and NO Mertens input.  Only brick 3 remains.
+
 ### Brick 3 — the discrete integrating factor, WITHOUT `Complex.cpow`
 Fix `θ` with `max(Re z, u') < θ < 1` (note `Re z = 1 − u²/2 < 1` automatically, and `u < 1` ⟹
 `Re z ∈ (1/2,1)`).  Prove by induction on `N ≥ N₀`:  `‖Abel(N)‖ ≤ C·L_N^θ`, from

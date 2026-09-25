@@ -189,4 +189,175 @@ theorem gronwall_le_rpow {c : ℝ} (hc : 0 ≤ c) {a : ℕ → ℝ} {N₀ : ℕ}
     _ = (a N₀ * Real.exp (c * (1 / ((N₀ : ℝ) - 1) - Real.log (Real.log (N₀ : ℝ)))))
           * (Real.log (N : ℝ)) ^ c := by ring
 
+
+/-! ### Brick 2: the error term `A(N)` is `O((log N)^{u'})` with `u' < 1`
+
+`delange_scale_equation`'s error term is `A(N) = Σ_{n≤N}‖h_z(n)‖/n`, and the classical route to
+`A(N) ≍ (log N)^u` is the Euler product plus **Mertens' second theorem** `Σ_{p≤N}1/p = log log N +
+O(1)`.  That is not needed here, and the repo's available form (`primeRecipSum_le`) has constant
+`12`, which would shrink the discharged regime to `‖z−1‖ < 1/12`.
+
+The structural observation: `A` is **itself a kernel sum**.  With `u = ‖z−1‖` and the *real*
+parameter `z' = 1 + u` one has `delangeKernel z' n = ‖delangeKernel z n‖`, hence
+
+    delangeS z' N = A(N),    delangeA z' N = A(N),    ‖z' − 1‖ = u ≤ 1,
+
+so the scale equation applies at `z'` and, everything now being real, reads
+
+    | A(N)·log N − (1+u)·Ā(N) | ≤ 19·A(N),      Ā(N) = Σ_{1≤m<N} δ_m·A(m) ≥ 0.
+
+Brick 1's Gronwall then gives the sharp exponent, with the `19` costing only an `ε`. -/
+
+lemma norm_ofReal_sub_one (z : ℂ) : ‖((1 + ‖z - 1‖ : ℝ) : ℂ) - 1‖ = ‖z - 1‖ := by
+  rw [show ((1 + ‖z - 1‖ : ℝ) : ℂ) - 1 = ((‖z - 1‖ : ℝ) : ℂ) by push_cast; ring,
+    Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _)]
+
+/-- **`h_{1+u} = ‖h_z‖`** pointwise: the absolute companion is a kernel in its own right. -/
+lemma delangeKernel_ofReal_abs (z : ℂ) (n : ℕ) :
+    delangeKernel ((1 + ‖z - 1‖ : ℝ) : ℂ) n
+      = ((if Squarefree n then ‖z - 1‖ ^ omegaNat n else 0 : ℝ) : ℂ) := by
+  unfold delangeKernel
+  split
+  · push_cast
+    ring
+  · simp
+
+lemma delangeS_ofReal_eq (z : ℂ) (N : ℕ) :
+    delangeS ((1 + ‖z - 1‖ : ℝ) : ℂ) N = ((delangeA z N : ℝ) : ℂ) := by
+  rw [delangeS, delangeA, Complex.ofReal_sum]
+  refine Finset.sum_congr rfl fun n _ => ?_
+  rw [delangeKernel_ofReal_abs, norm_delangeKernel, Complex.ofReal_div, Complex.ofReal_natCast]
+
+lemma delangeA_ofReal_eq (z : ℂ) (N : ℕ) :
+    delangeA ((1 + ‖z - 1‖ : ℝ) : ℂ) N = delangeA z N := by
+  rw [delangeA, delangeA]
+  refine Finset.sum_congr rfl fun n _ => ?_
+  rw [norm_delangeKernel, norm_delangeKernel, norm_ofReal_sub_one]
+
+/-- The real Abel transform of the absolute companion. -/
+noncomputable def delangeAbs (z : ℂ) (N : ℕ) : ℝ :=
+  ∑ m ∈ Finset.Ico 1 N, (Real.log ((m : ℝ) + 1) - Real.log (m : ℝ)) * delangeA z m
+
+lemma delangeAbs_nonneg (z : ℂ) (N : ℕ) : 0 ≤ delangeAbs z N := by
+  refine Finset.sum_nonneg fun m hm => ?_
+  simp only [Finset.mem_Ico] at hm
+  exact mul_nonneg (log_succ_sub_log_nonneg hm.1) (delangeA_nonneg z m)
+
+lemma delangeAbel_ofReal_eq (z : ℂ) (N : ℕ) :
+    delangeAbel ((1 + ‖z - 1‖ : ℝ) : ℂ) N = ((delangeAbs z N : ℝ) : ℂ) := by
+  rw [delangeAbel, delangeAbs, Complex.ofReal_sum]
+  refine Finset.sum_congr rfl fun m _ => ?_
+  rw [delangeS_ofReal_eq, Complex.ofReal_mul]
+
+/-- **THE SCALE EQUATION AT THE REAL PARAMETER `1+u`.**  A purely real inequality tying `A` to its
+own Abel transform — the scale equation bounding its own error term. -/
+theorem delangeA_scale_real {z : ℂ} (hu : ‖z - 1‖ ≤ 1) (N : ℕ) :
+    |delangeA z N * Real.log (N : ℝ) - (1 + ‖z - 1‖) * delangeAbs z N| ≤ 19 * delangeA z N := by
+  have hz' : ‖((1 + ‖z - 1‖ : ℝ) : ℂ) - 1‖ ≤ 1 := by rw [norm_ofReal_sub_one]; exact hu
+  have h := delange_scale_equation hz' N
+  rw [delangeS_ofReal_eq, delangeAbel_ofReal_eq, delangeA_ofReal_eq] at h
+  rw [show ((delangeA z N : ℝ) : ℂ) * ((Real.log (N : ℝ) : ℝ) : ℂ)
+        - ((1 + ‖z - 1‖ : ℝ) : ℂ) * ((delangeAbs z N : ℝ) : ℂ)
+      = ((delangeA z N * Real.log (N : ℝ) - (1 + ‖z - 1‖) * delangeAbs z N : ℝ) : ℂ) by
+    push_cast; ring] at h
+  rwa [Complex.norm_real, Real.norm_eq_abs] at h
+
+/-- **BRICK 2.**  For `‖z−1‖ < 1` the error term of the scale equation is `O((log N)^{u'})` with
+`u' < 1`, unconditionally and with no Mertens input. -/
+theorem exists_delangeA_le_rpow {z : ℂ} (hu : ‖z - 1‖ < 1) :
+    ∃ C u' : ℝ, ∃ N₀ : ℕ, 0 < C ∧ 0 ≤ u' ∧ u' < 1 ∧ 3 ≤ N₀ ∧
+      ∀ N, N₀ ≤ N → delangeA z N ≤ C * (Real.log (N : ℝ)) ^ u' := by
+  have hu0 : (0 : ℝ) ≤ ‖z - 1‖ := norm_nonneg _
+  obtain ⟨ε, hεdef⟩ : ∃ ε : ℝ, ε = (1 - ‖z - 1‖) / 4 := ⟨_, rfl⟩
+  have hε : 0 < ε := by rw [hεdef]; linarith
+  obtain ⟨c, hcdef⟩ : ∃ c : ℝ, c = (1 + ‖z - 1‖) * (1 + ε) := ⟨_, rfl⟩
+  have hc1 : 1 ≤ c := by rw [hcdef]; nlinarith
+  have hc0 : (0 : ℝ) ≤ c := by linarith
+  have hc2 : c < 2 := by
+    rw [hcdef, hεdef]
+    nlinarith [mul_pos (show (0:ℝ) < 1 - ‖z - 1‖ by linarith)
+      (show (0:ℝ) < 3 - ‖z - 1‖ by linarith)]
+  obtain ⟨B, hBdef⟩ : ∃ B : ℝ, B = 19 * (1 + ε) / ε := ⟨_, rfl⟩
+  obtain ⟨N₀, hN0def⟩ : ∃ N₀ : ℕ, N₀ = max 3 ⌈Real.exp B⌉₊ := ⟨_, rfl⟩
+  have h03 : 3 ≤ N₀ := by rw [hN0def]; exact le_max_left _ _
+  have hN0pos : (0 : ℝ) < (N₀ : ℝ) := by
+    have : 0 < N₀ := by omega
+    exact_mod_cast this
+  have hlogN₀ : B ≤ Real.log (N₀ : ℝ) := by
+    rw [Real.le_log_iff_exp_le hN0pos]
+    refine le_trans (Nat.le_ceil _) ?_
+    have : ⌈Real.exp B⌉₊ ≤ N₀ := by rw [hN0def]; exact le_max_right _ _
+    exact_mod_cast this
+  -- the key inequality: `A(m)·log m ≤ c·Ā(m)`
+  have hkey : ∀ m, N₀ ≤ m → delangeA z m * Real.log (m : ℝ) ≤ c * delangeAbs z m := by
+    intro m hm
+    have hmR : (N₀ : ℝ) ≤ (m : ℝ) := by exact_mod_cast hm
+    have hLB : B ≤ Real.log (m : ℝ) :=
+      le_trans hlogN₀ (Real.log_le_log hN0pos hmR)
+    have hAnn := delangeA_nonneg z m
+    have h1 : delangeA z m * Real.log (m : ℝ) - (1 + ‖z - 1‖) * delangeAbs z m
+        ≤ 19 * delangeA z m := (abs_le.1 (delangeA_scale_real hu.le m)).2
+    have hεL : 19 * (1 + ε) ≤ ε * Real.log (m : ℝ) := by
+      rw [hBdef] at hLB
+      calc 19 * (1 + ε) = (19 * (1 + ε) / ε) * ε := by field_simp
+        _ ≤ Real.log (m : ℝ) * ε := mul_le_mul_of_nonneg_right hLB hε.le
+        _ = ε * Real.log (m : ℝ) := by ring
+    have hL19 : Real.log (m : ℝ) ≤ (1 + ε) * (Real.log (m : ℝ) - 19) := by nlinarith [hεL]
+    have hAi : delangeA z m * (Real.log (m : ℝ) - 19) ≤ (1 + ‖z - 1‖) * delangeAbs z m := by
+      nlinarith [h1]
+    calc delangeA z m * Real.log (m : ℝ)
+        ≤ delangeA z m * ((1 + ε) * (Real.log (m : ℝ) - 19)) :=
+          mul_le_mul_of_nonneg_left hL19 hAnn
+      _ = (1 + ε) * (delangeA z m * (Real.log (m : ℝ) - 19)) := by ring
+      _ ≤ (1 + ε) * ((1 + ‖z - 1‖) * delangeAbs z m) :=
+          mul_le_mul_of_nonneg_left hAi (by linarith)
+      _ = c * delangeAbs z m := by rw [hcdef]; ring
+  -- the Gronwall recursion for `Ā`
+  have hstep : ∀ m, N₀ ≤ m → delangeAbs z (m + 1) ≤ delangeAbs z m * (1 + c * logRatioStep m) := by
+    intro m hm
+    have hm1 : 1 ≤ m := by omega
+    have hm3 : 3 ≤ m := le_trans h03 hm
+    have hL := one_le_log_cast hm3
+    have hsplit : delangeAbs z (m + 1)
+        = delangeAbs z m + (Real.log ((m : ℝ) + 1) - Real.log (m : ℝ)) * delangeA z m := by
+      rw [delangeAbs, delangeAbs, Finset.sum_Ico_succ_top hm1]
+    have hdelta : Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) = logRatioStep m * Real.log (m : ℝ) := by
+      rw [logRatioStep]
+      field_simp
+    rw [hsplit, hdelta]
+    have hk := hkey m hm
+    have hs0 := logRatioStep_nonneg hm3
+    calc delangeAbs z m + logRatioStep m * Real.log (m : ℝ) * delangeA z m
+        = delangeAbs z m + logRatioStep m * (delangeA z m * Real.log (m : ℝ)) := by ring
+      _ ≤ delangeAbs z m + logRatioStep m * (c * delangeAbs z m) := by
+          linarith [mul_le_mul_of_nonneg_left hk hs0]
+      _ = delangeAbs z m * (1 + c * logRatioStep m) := by ring
+  have hgr := gronwall_le_rpow hc0 h03 (fun m => delangeAbs_nonneg z m) hstep
+  obtain ⟨C₀, hC0def⟩ : ∃ C₀ : ℝ, C₀ = delangeAbs z N₀
+      * Real.exp (c * (1 / ((N₀ : ℝ) - 1) - Real.log (Real.log (N₀ : ℝ)))) := ⟨_, rfl⟩
+  have hC0nn : (0 : ℝ) ≤ C₀ := by
+    rw [hC0def]; exact mul_nonneg (delangeAbs_nonneg z N₀) (Real.exp_pos _).le
+  refine ⟨c * C₀ + 1, c - 1, N₀, ?_, by linarith, by linarith, h03, ?_⟩
+  · have := mul_nonneg hc0 hC0nn; linarith
+  intro N hN
+  have hm3 : 3 ≤ N := le_trans h03 hN
+  have hL := one_le_log_cast hm3
+  have hLpos : (0 : ℝ) < Real.log (N : ℝ) := by linarith
+  have h1 : delangeAbs z N ≤ C₀ * (Real.log (N : ℝ)) ^ c := by rw [hC0def]; exact hgr N hN
+  have h2 : delangeA z N * Real.log (N : ℝ) ≤ c * (C₀ * (Real.log (N : ℝ)) ^ c) :=
+    le_trans (hkey N hN) (mul_le_mul_of_nonneg_left h1 hc0)
+  have hrpow : (Real.log (N : ℝ)) ^ c = (Real.log (N : ℝ)) ^ (c - 1) * Real.log (N : ℝ) := by
+    have h := (Real.rpow_add hLpos (c - 1) 1).symm
+    rw [Real.rpow_one] at h
+    rw [h]
+    congr 1
+    ring
+  have hcancel : delangeA z N ≤ (c * C₀) * (Real.log (N : ℝ)) ^ (c - 1) := by
+    refine le_of_mul_le_mul_right ?_ hLpos
+    calc delangeA z N * Real.log (N : ℝ) ≤ c * (C₀ * (Real.log (N : ℝ)) ^ c) := h2
+      _ = (c * C₀) * ((Real.log (N : ℝ)) ^ (c - 1) * Real.log (N : ℝ)) := by rw [hrpow]; ring
+      _ = ((c * C₀) * (Real.log (N : ℝ)) ^ (c - 1)) * Real.log (N : ℝ) := by ring
+  have hrp : (0 : ℝ) ≤ (Real.log (N : ℝ)) ^ (c - 1) := Real.rpow_nonneg (by linarith) _
+  nlinarith [hcancel, hrp]
+
 end NormalNumbers.CastingOut
