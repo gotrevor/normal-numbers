@@ -1,14 +1,26 @@
-# HANDOFF elliott 2026-09-25 laps 25–26 — the dilated upper bound is assembled; the lower half is started
+# HANDOFF elliott 2026-09-25 laps 25–35 — the crux's lower-bound stack is built end to end
 
-Branch `wip/elliott-port`.  `lake build` green.
+Branch `wip/elliott-port`, HEAD `6e48c4c`.  Working tree clean.  `lake build` green (9257 jobs).
 Never `lake exe cache get`.  Never edit / vendor `.lake/packages/lean-proofs-latest/`.
 
-## Headline
+## Where the crux stands
 
 `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott`
-(Tao 2016, Thm 1.3).  Open leaves in `src/` unchanged: `dilatedSliceCMLogElliottGe`
-(`ElliottDilatedSlice.lean:220`, superseded/refuted route) and `nonasymptotic_of_affineCM`
-(`ElliottLadder.lean:297`).
+(Tao 2016, Thm 1.3).  Open leaves in `src/` are unchanged across this session:
+`dilatedSliceCMLogElliottGe` (`ElliottDilatedSlice.lean:220`, superseded route) and
+`nonasymptotic_of_affineCM` (`ElliottLadder.lean:297`).
+
+**Every rung of the `a`-dilated graph argument is now a proved, axiom-clean statement in `src/`,
+both halves, and they meet on one object (`dilatedPairTwistedMean`).**  New files this session:
+`ElliottDilatedUpper`, `ElliottDilatedLower`, `ElliottGenericGraphCRT`,
+`ElliottGenericGraphDecoupling`, `ElliottDilatedBridge`, `ElliottDilatedCorrelation` — all zero
+sorry, all `#print axioms` = the trust triple.  No previously-proved file was edited.
+
+The governing idea, confirmed in the kernel at every layer: **the common dilation `a` is a
+constant fixed before all parameters, so it is absorbed exactly the way the dependency absorbs its
+own constants.**  It costs a factor `a` in the fourth-moment constant (lap 25), a factor that
+*cancels* in the large-frequency budget (lap 25), a factor `2` in the entropy budget (lap 29), and
+a factor `a` in the correlation weight (lap 35).  Nowhere does it cost new mathematics.
 
 ## Lap 25 — `ElliottDilatedUpper.lean` (new, zero sorry, trust triple)
 
