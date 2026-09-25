@@ -214,6 +214,91 @@ theorem norm_dilatedEdgeReindexed_le {H : ℕ} {b c : Fin H → ℂ} {B : ℝ} (
   exact mul_le_mul (norm_blockExtend_le hB hb _) (norm_blockExtend_le hB hc _)
     (norm_nonneg _) hB
 
+/-! ## The dilated `pairTwistedSum_sequenceBlock`
+
+Putting laps 32 and 33 together: on the block re-based at `a(n+1)`, `genSum` of the reindexed
+dilated edge family, tested at the shifted residue, is a sum of genuine affine graph observables of
+the two sequences — the object whose mean lap 26 controls.
+-/
+
+open NormalNumbers.ElliottLadder NormalNumbers.ElliottAffineGraph in
+/-- The pointwise content of `sum_dilatedPairShiftEdge_affineBlock`: on the non-overflow range the
+reindexed dilated edge of the re-based blocks is the affine pair observable. -/
+theorem blockExtend_affineBlock_mul {H : ℕ} (f₁ f₂ : ℕ → ℂ) {a : ℕ} (ha : 0 < a)
+    (n q c₁ h j : ℕ) (hd : q * c₁ / a ≤ n + 1)
+    (hlt : a * j + (q * c₁) % a + q * h < H) :
+    blockExtend (affineBlock f₁ a n H) (a * j + (q * c₁) % a) *
+      blockExtend (affineBlock f₂ a n H) (a * j + (q * c₁) % a + q * h) =
+      pairObservable f₁ f₂ a ((q * c₁ : ℕ) : ℤ) ((q * (c₁ + h) : ℕ) : ℤ)
+        (n + 1 + j - q * c₁ / a) := by
+  classical
+  set r : ℕ := (q * c₁) % a with hrdef
+  set d : ℕ := (q * c₁) / a with hddef
+  have hrd : a * d + r = q * c₁ := Nat.div_add_mod (q * c₁) a
+  have hlt1 : a * j + r < H := by omega
+  have hdj : d ≤ n + 1 + j := le_trans hd (by omega)
+  have hidx : ((n + 1 + j - d : ℕ) : ℤ) = ((n + 1 + j : ℕ) : ℤ) - (d : ℤ) := by
+    push_cast [Nat.cast_sub hdj]
+    ring
+  have hcast : ((a : ℤ)) * (d : ℤ) + (r : ℤ) = ((q * c₁ : ℕ) : ℤ) := by exact_mod_cast hrd
+  simp only [blockExtend]
+  rw [dif_pos hlt1, dif_pos hlt, affineBlock, affineBlock, pairObservable]
+  congr 1
+  · congr 1
+    simp only [integerAffine]
+    rw [hidx]
+    push_cast
+    push_cast at hcast
+    linarith [hcast]
+  · congr 1
+    simp only [integerAffine]
+    rw [hidx]
+    push_cast
+    push_cast at hcast
+    linarith [hcast]
+
+open NormalNumbers.ElliottLadder NormalNumbers.ElliottAffineGraph in
+/-- **The dilated analogue of
+`NormalNumbers.ElliottTwistedGraph.pairTwistedSum_sequenceBlock`.** -/
+theorem genSum_dilatedEdgeReindexed_affineBlock {H : ℕ} (w : ℕ → ℂ) (f₁ f₂ : ℕ → ℂ) {a : ℕ}
+    (ha : 0 < a) (n c₁ h : ℕ) (s : Finset ℕ)
+    (hd : ∀ p : PrimeGraphIndex H, p.1 * c₁ / a ≤ n) :
+    genSum w (dilatedEdgeReindexed (affineBlock f₁ a n H) (affineBlock f₂ a n H) a c₁ h) s
+        ((n : ZMod (primeGraphModulus H)) - crtShift H (fun p ↦ p * c₁ / a)) =
+      ∑ p : PrimeGraphIndex H, if p.1 ∈ s then
+        ∑ j : Fin H, if a * j.1 + (p.1 * c₁) % a + p.1 * h < H then
+          affineTwistedObservable w f₁ f₂ a p.1 (c₁ : ℤ) ((c₁ + h : ℕ) : ℤ)
+            (n + (j.1 + 1) - p.1 * c₁ / a) else 0
+      else 0 := by
+  classical
+  rw [genSum_natCast_sub_crtShift w _ s (fun p ↦ p * c₁ / a) n hd]
+  refine Finset.sum_congr rfl fun p _ ↦ ?_
+  split_ifs with hp
+  · refine Finset.sum_congr rfl fun j _ ↦ ?_
+    by_cases hlt : a * j.1 + (p.1 * c₁) % a + p.1 * h < H
+    · rw [if_pos hlt]
+      have hpt := blockExtend_affineBlock_mul f₁ f₂ ha n p.1 c₁ h j.1
+        ((hd p).trans (by omega)) hlt
+      have hidx : n + 1 + j.1 - p.1 * c₁ / a = n + (j.1 + 1) - p.1 * c₁ / a := by
+        congr 1; omega
+      rw [hidx] at hpt
+      unfold affineTwistedObservable
+      by_cases hdvd : p.1 ∣ n + (j.1 + 1) - p.1 * c₁ / a
+      · rw [if_pos hdvd, if_pos hdvd]
+        have e1 : ((p.1 * c₁ : ℕ) : ℤ) = (p.1 : ℤ) * (c₁ : ℤ) := by push_cast; ring
+        have e2 : ((p.1 * (c₁ + h) : ℕ) : ℤ) = (p.1 : ℤ) * ((c₁ + h : ℕ) : ℤ) := by
+          push_cast; ring
+        rw [dilatedEdgeReindexed, hpt, e1, e2]
+      · rw [if_neg hdvd, if_neg hdvd]
+    · rw [if_neg hlt]
+      have hzero : dilatedEdgeReindexed (affineBlock f₁ a n H) (affineBlock f₂ a n H) a c₁ h
+          p.1 j = 0 := by
+        unfold dilatedEdgeReindexed blockExtend
+        rw [dif_neg hlt, mul_zero]
+      rw [hzero]
+      simp
+  · rfl
+
 end
 
 end NormalNumbers.ElliottDilatedBridge
@@ -225,3 +310,5 @@ end NormalNumbers.ElliottDilatedBridge
 
 #print axioms NormalNumbers.ElliottDilatedBridge.genMeanCRT_dilatedEdgeReindexed
 #print axioms NormalNumbers.ElliottDilatedBridge.norm_dilatedEdgeReindexed_le
+
+#print axioms NormalNumbers.ElliottDilatedBridge.genSum_dilatedEdgeReindexed_affineBlock

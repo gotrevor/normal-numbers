@@ -180,15 +180,35 @@ laps 27–32 apply unchanged.
   now for the family the CRT layer can actually use.
 * `norm_blockExtend_le`, `norm_dilatedEdgeReindexed_le` — the `B²` hypothesis shape.
 
-## NEXT (lap 34 onwards)
+## Lap 34 — the dilated `pairTwistedSum_sequenceBlock` is proved
 
-1. **The dilated `pairTwistedSum_sequenceBlock`.**  Instantiate `genSum_natCast_sub_crtShift` at
-   `E = dilatedEdgeReindexed (affineBlock f₁ a n H) (affineBlock f₂ a n H) a c₁ h`,
-   `d p = ⌊p c₁ / a⌋`, and identify the summand with
-   `affineTwistedObservable (pairTwist f₁ f₂) f₁ f₂ a p c₁ (c₁+h) (n + 1 + j − d p)` using the
-   term-level content of `sum_dilatedPairShiftEdge_affineBlock` (which should be extracted as a
-   pointwise lemma: `blockExtend (affineBlock f₁ …) (a j + r) · blockExtend (affineBlock f₂ …) (…)
-   = pairObservable f₁ f₂ a (p c₁) (p c₂) (n+1+j−d)` on the non-overflow range).
+* `blockExtend_affineBlock_mul` — the pointwise content of `sum_dilatedPairShiftEdge_affineBlock`:
+  on the non-overflow range, the reindexed dilated edge of the re-based blocks **is** the affine
+  pair observable at index `n + 1 + j − ⌊q c₁/a⌋`.
+* `genSum_dilatedEdgeReindexed_affineBlock` —
+
+```
+genSum w (dilatedEdgeReindexed (affineBlock f₁ a n H) (affineBlock f₂ a n H) a c₁ h) s
+    (n − crtShift H (fun p ↦ ⌊p c₁/a⌋))
+  = ∑_p [p ∈ s] ∑_{j : a j + r_p + p h < H}
+      affineTwistedObservable w f₁ f₂ a p c₁ (c₁+h) (n + (j+1) − ⌊p c₁/a⌋),
+```
+
+  under `⌊p c₁/a⌋ ≤ n` for every `p ≤ H`.  This is the dilated analogue of
+  `ElliottTwistedGraph.pairTwistedSum_sequenceBlock`, and the last identification the
+  correlation-transfer rung needs: lap 26 already controls the log-mean of exactly these
+  observables.
+
+## NEXT (lap 35 onwards)
+
+1. **The dilated correlation-transfer rung**: the analogue of
+   `ElliottTwistedGraphCorrelation.norm_logProb_pairTwistedGraph_sub_correlation_le`.  Take
+   `logProbExpectation` of `genSum_dilatedEdgeReindexed_affineBlock`, apply lap 26's
+   `norm_logProb_affineTwistedObservable_shift_sub_correlation_le` to each `(p, j)` term, and
+   collect: the correlation coefficient is `∑_p [p∈s] #{j : a j + r_p + p h < H} / p`, the dilated
+   analogue of `Erdos67b.primeGraphCorrelationWeight` (≈ `H/a` terms per prime instead of `H`).
+   Then `norm_logProb_..._sub_correlation_le` with the decoupling error, the entropy-selected
+   scale, and the contradiction.
 2. Then the correlation-transfer rung with lap 26's
    `norm_logProb_affineTwistedObservable_shift_sub_correlation_le`, and the contradiction.
 2. Combine with lap 26's `norm_logProb_affineTwistedObservable_shift_sub_correlation_le` for the
