@@ -9683,3 +9683,24 @@ Key reusability note: `Erdos67b.primeGraphCorrelationWeight` and
    mirroring `Erdos67b.exists_logPairCorrelation_small_of_fourier_first_moments`.
 3. Separately: audit the MRT side (`Erdos67b.mrtModulatedShortIntervalUnrestricted`) — it is applied
    to `f₁` alone, so it should need no change at all for the crux.
+
+## 2026-09-25 (lap 47) — leaf 2 step (a) landed: the crude Euler-product bound
+
+`src/NormalNumbers/ElliottEulerBound.lean`, trust triple:
+`sum_Icc_le_euler_product` — for nonnegative multiplicative `f : ArithmeticFunction ℝ`,
+`∑_{m ∈ Icc 1 Y} f m ≤ ∏_{p < Y+1} ∑_{k ≤ log₂ Y} f (p^k)`.
+
+Route (the reference corpus' `lean-primorial-sq-divisor-euler-product` recipe; mathlib has **no**
+partial-sum Euler expansion): every `1 ≤ m ≤ Y` divides `eulerModulus Y = ∏_{p ≤ Y} p^{log₂ Y}`
+(prime exponents of `m` are `≤ log₂ m ≤ log₂ Y`), and a *divisor* sum is evaluable —
+`↑ζ * f` is multiplicative, `coe_zeta_mul_apply` turns its value at the modulus into the divisor
+sum, `IsMultiplicative.map_prod` over the pairwise-coprime prime powers splits it, and
+`Nat.sum_divisors_prime_pow` gives the local factors.
+
+**Next on leaf 2, in order.**
+1. Specialize to `f m = h m / m` with `h` nonnegative multiplicative, `h ≤ 1`: the local factor is
+   `∑_{k ≤ K} h(p^k)/p^k ≤ 1 + h(p)/p + 1/(p(p-1))`, hence
+   `∏_{p ≤ Y} ≤ exp(∑_{p ≤ Y} h(p)/p + O(1))`, i.e. `≪ log Y · exp(-Σ_Y)` via Mertens.
+   (`Real.add_one_le_exp` + `Real.exp_sum`; Mertens is already available in the dependency.)
+2. That lands Case A's regime `log W ≥ θ log X` outright.
+3. Hall's inequality (Halberstam–Richert Thm 01) for the thin-window regime — still the hard core.
