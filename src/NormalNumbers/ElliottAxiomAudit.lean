@@ -1,6 +1,6 @@
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
-import NormalNumbers.ElliottRandomize
+import NormalNumbers.ElliottPretentiousTransfer
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -39,6 +39,11 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottRandomize.sum_cover
 #print axioms NormalNumbers.ElliottRandomize.sum_sum_elliottLogCorrelation_cover
 #print axioms NormalNumbers.ElliottRandomize.exists_cover_pair_ge
+
+-- leaf 2, Case B step 1: the pretentious transfer to the cover
+#print axioms NormalNumbers.ElliottPretentiousTransfer.pretentiousDistSq_triangle_bounded
+#print axioms NormalNumbers.ElliottPretentiousTransfer.pretentiousDistSq_cover_le
+#print axioms NormalNumbers.ElliottPretentiousTransfer.mrtNonpretentious_transfer
 
 -- the dependency's proved special case
 #print axioms Erdos67b.unitCircleLogElliott

@@ -1,5 +1,36 @@
 # PENDING WORK
 
+## Lap 55 (2026-09-25) — Case-B step 1 CLOSED: the pretentious transfer
+
+New module `src/NormalNumbers/ElliottPretentiousTransfer.lean`, **zero sorry, trust triple**,
+in the audit surface.  This discharges item 1 of the lap-54 NEXT list in full.
+
+* `one_sub_re_le_three` / `pretentiousTerm_triangle_bounded` /
+  `pretentiousDistSq_triangle_bounded` — the **1-bounded** pretentious triangle inequality with
+  constant `3`.  The dependency's `Erdos67b.pretentiousDistSq_triangle_sq` was unusable here:
+  it needs all three functions unimodular, but the middle-man `g₁` is only 1-bounded and the
+  target `χ·n^{it}` vanishes at `p ∣ q`.  Proof as designed at lap 54:
+  `1 − Re(ac̄) = [1 − (‖a‖²+‖c‖²)/2] + ‖a−c‖²/2 ≤ (u+v) + 2(u+v)`.
+* `pretentiousDistSq_cover_eq` — for **any** `u` that is a lift of `g` at every prime `≤ X`
+  (which every cover is, by `re_cover_prime_mul_conj`),
+  `pretentiousDistSq g u X = ∑_{p≤X}(1−‖g p‖²)/p`.  Deterministic: no `ω`, no Markov, no good event.
+* `pretentiousDistSq_cover_le` — `≤ 2 ∑_{p≤X}(1−‖g p‖)/p`, i.e. twice the Case-B sum.
+* `mrtNonpretentious_transfer` — `MRTNonpretentious g A X → MRTNonpretentious u A' X` for any
+  `A' ≤ A` with `(A':ℝ) ≤ A/3 − 2D₀`, where `D₀` bounds the Case-B sum.
+
+Note the hypothesis shape: the transfer is stated against the *abstract* lift property
+`(u p * conj (g p)).re = ‖g p‖²`, which is exactly what `exists_cover_pair_ge` already exports.
+So `ElliottRandomize` and `ElliottPretentiousTransfer` compose with no glue.
+
+### NEXT (lap 56), unchanged order from lap 54 minus item 1
+
+2. Case A thin window off `ElliottHall.sum_Icc_dyadic_le` (supersedes `exists_caseA_threshold`;
+   needs no regime hypothesis, so it covers all `W`).
+3. `ElliottSquarefull.lean`: `u = U ⋆ μŨ`, squarefull support, absolute tail `≤ e²`, truncation.
+4. `ElliottProgression.lean`: `d ∣ a₁n+b₁ ⟹ n = qk+n₀`; new pair `(a₁q, a₁n₀+b₁; a₂q, a₂n₀+b₂)`.
+5. Assembly of `nonasymptotic_of_affineCM`.
+
+
 ## Reflection — 2026-09-25 (DEEP REFLECTION lap 54, Elliott campaign)
 
 Ground truth re-derived this lap, not inherited: `lake build NormalNumbers.ElliottAxiomAudit`
