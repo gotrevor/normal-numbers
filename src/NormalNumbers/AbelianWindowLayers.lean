@@ -506,3 +506,173 @@ def limSeq (x : ℕ → ℕ) (m : ℕ) : ℕ := Ls.stage x m m
 
 theorem stage_eq_limSeq {x : ℕ → ℕ} (hx : ∀ m, x m < 2) {n m : ℕ} (hnm : m ≤ n) :
     Ls.stage x n m = Ls.limSeq x m := Ls.stage_eq_of_ge hx hnm
+
+/-! ## The difference density of a stage
+
+Stage `n` and the limit differ only at positions covered by a layer `i > n`.  Layer `i` occupies
+four residues modulo `Ls.Q i`, so it covers at most `4 * (M / Ls.Q i + 1)` positions below `M`;
+and by `hbig` it covers NONE when `Ls.Q i > 2 * M`.  Both cases are dominated by `12 * M / Ls.Q i`,
+and `Ls.Q i ≥ 64 * 2 ^ i` sums the tail to `12 * M / (64 * 2 ^ n)`.
+-/
+
+/-- Residues modulo `q` are sparse in `range M` — the non-divisor version of
+`card_filter_mod_le`. -/
+theorem card_filter_mod_le' (M q c : ℕ) (hq : 0 < q) :
+    ((range M).filter (fun m => m % q = c)).card ≤ M / q + 1 := by
+  classical
+  rw [← Finset.card_range (M / q + 1)]
+  refine Finset.card_le_card_of_injOn (fun m => m / q) (fun m hm => ?_) (fun m hm m' hm' he => ?_)
+  · simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_range] at hm
+    simp only [Finset.mem_coe, Finset.mem_range]
+    exact Nat.lt_succ_of_le (Nat.div_le_div_right (by omega))
+  · simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_range] at hm hm'
+    have h1 : q * (m / q) + m % q = m := Nat.div_add_mod m q
+    have h2 : q * (m' / q) + m' % q = m' := Nat.div_add_mod m' q
+    rw [hm.2] at h1
+    rw [hm'.2] at h2
+    simp only at he
+    rw [← h1, ← h2, he]
+
+theorem card_quadSet_le (p a : ℕ) : (quadSet p a).card ≤ 4 := by
+  rw [quadSet]
+  refine le_trans (Finset.card_insert_le _ _) (Nat.succ_le_succ ?_)
+  refine le_trans (Finset.card_insert_le _ _) (Nat.succ_le_succ ?_)
+  refine le_trans (Finset.card_insert_le _ _) (Nat.succ_le_succ ?_)
+  simp
+
+/-- A layer covers at most `4 * (M / Q + 1)` positions below `M`. -/
+theorem card_cover_le (i M : ℕ) :
+    ((range M).filter (fun m => m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i))).card
+      ≤ 4 * (M / Ls.Q i + 1) := by
+  classical
+  have hq := Ls.Qpos i
+  have hsub : (range M).filter (fun m => m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i))
+      ⊆ (quadSet (Ls.off i) (Ls.arm i)).biUnion
+        (fun c => (range M).filter (fun m => m % Ls.Q i = c)) := by
+    intro m hm
+    rw [Finset.mem_filter] at hm
+    exact Finset.mem_biUnion.mpr ⟨_, hm.2, Finset.mem_filter.mpr ⟨hm.1, rfl⟩⟩
+  refine le_trans (Finset.card_le_card hsub) ?_
+  refine le_trans Finset.card_biUnion_le ?_
+  refine le_trans (Finset.sum_le_sum (fun c _ => card_filter_mod_le' M (Ls.Q i) c hq)) ?_
+  rw [Finset.sum_const, smul_eq_mul]
+  exact Nat.mul_le_mul_right _ (card_quadSet_le _ _)
+
+/-- The real-valued uniform cover bound. -/
+theorem card_cover_real_le (i M : ℕ) :
+    (((range M).filter (fun m => m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i))).card : ℝ)
+      ≤ 12 * M / Ls.Q i := by
+  classical
+  have hq := Ls.Qpos i
+  have hqR : (0 : ℝ) < Ls.Q i := by exact_mod_cast hq
+  rcases Nat.lt_or_ge (2 * M) (Ls.Q i) with hbig | hsmall
+  · -- the layer reaches no position below `M` at all
+    have hempty : (range M).filter (fun m => m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i)) = ∅ := by
+      refine Finset.filter_eq_empty_iff.mpr (fun m hm hmem => ?_)
+      rw [Finset.mem_range] at hm
+      have hb := Ls.hbig i
+      have hfit := Ls.hfit i
+      rw [Nat.mod_eq_of_lt (by omega), mem_quadSet] at hmem
+      omega
+    rw [hempty]
+    simp only [Finset.card_empty, Nat.cast_zero]
+    positivity
+  · have hM : 0 < M := by
+      rcases Nat.eq_zero_or_pos M with rfl | h
+      · omega
+      · exact h
+    have hMR : (0 : ℝ) < M := by exact_mod_cast hM
+    have h1 : (((range M).filter (fun m => m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i))).card : ℝ)
+        ≤ 4 * ((M / Ls.Q i : ℕ) + 1) := by
+      have := Ls.card_cover_le i M
+      exact_mod_cast this
+    have h2 : (((M / Ls.Q i : ℕ) : ℝ)) ≤ (M : ℝ) / Ls.Q i := Nat.cast_div_le
+    have hdQ : ((M / Ls.Q i : ℕ) : ℝ) * Ls.Q i ≤ M := by
+      rw [← le_div_iff₀ hqR]; exact h2
+    have hQ2 : (Ls.Q i : ℝ) ≤ 2 * M := by exact_mod_cast hsmall
+    rw [le_div_iff₀ hqR]
+    nlinarith [h1, hdQ, hQ2, hqR]
+
+/-- The positions where stage `n` differs from the limit are covered by the later layers. -/
+theorem diff_subset {x : ℕ → ℕ} (hx : ∀ m, x m < 2) (n M : ℕ) :
+    (range M).filter (fun m => Ls.limSeq x m ≠ Ls.stage x n m)
+      ⊆ (Finset.Ico (n + 1) (n + 1 + M)).biUnion
+        (fun i => (range M).filter (fun m => m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i))) := by
+  classical
+  intro m hm
+  rw [Finset.mem_filter, Finset.mem_range] at hm
+  obtain ⟨hmM, hne⟩ := hm
+  -- some layer `i` with `n < i ≤ m` covers `m`
+  have hex : ∃ i, n < i ∧ i ≤ m ∧ m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i) := by
+    by_contra hc
+    push_neg at hc
+    refine hne ?_
+    by_cases h : ∃ i ≤ m, m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i)
+    · obtain ⟨i, hi, hmem⟩ := h
+      have hin : i ≤ n := by
+        by_contra hgt
+        exact absurd hmem (hc i (by omega) hi)
+      rw [limSeq, Ls.stage_eq_absGad hx hi hmem, Ls.stage_eq_absGad hx hin hmem]
+    · push_neg at h
+      have hall : ∀ i ≤ n, m % Ls.Q i ∉ quadSet (Ls.off i) (Ls.arm i) := by
+        intro i _
+        rcases Nat.lt_or_ge m i with h1 | h1
+        · exact Ls.notMem_quad_of_lt h1
+        · exact h i h1
+      rw [limSeq, Ls.stage_eq_self hx hall, Ls.stage_eq_self hx (fun i hi => h i hi)]
+  obtain ⟨i, hni, him, hmem⟩ := hex
+  refine Finset.mem_biUnion.mpr ⟨i, Finset.mem_Ico.mpr ⟨by omega, by omega⟩, ?_⟩
+  exact Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hmM, hmem⟩
+
+/-- **The difference density bound.**  `diffCount (limSeq) (stage n) M ≤ (3 / (16 * 2 ^ n)) * M`. -/
+theorem diffCount_stage_le {x : ℕ → ℕ} (hx : ∀ m, x m < 2) (n M : ℕ) :
+    (diffCount (Ls.limSeq x) (Ls.stage x n) M : ℝ) ≤ 3 / (16 * 2 ^ n) * M := by
+  classical
+  have hcard : (diffCount (Ls.limSeq x) (Ls.stage x n) M : ℝ)
+      ≤ ∑ i ∈ Finset.Ico (n + 1) (n + 1 + M),
+          (((range M).filter (fun m => m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i))).card : ℝ) := by
+    have h1 := Finset.card_le_card (Ls.diff_subset hx n M)
+    have h2 := Finset.card_biUnion_le (s := Finset.Ico (n + 1) (n + 1 + M))
+      (t := fun i => (range M).filter (fun m => m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i)))
+    have : diffCount (Ls.limSeq x) (Ls.stage x n) M
+        ≤ ∑ i ∈ Finset.Ico (n + 1) (n + 1 + M),
+            ((range M).filter (fun m => m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i))).card := by
+      rw [diffCount]; omega
+    exact_mod_cast this
+  have hterm : ∀ i ∈ Finset.Ico (n + 1) (n + 1 + M),
+      (((range M).filter (fun m => m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i))).card : ℝ)
+        ≤ 12 * M * (1 / 64) * (1 / 2 : ℝ) ^ i := by
+    intro i _
+    refine le_trans (Ls.card_cover_real_le i M) ?_
+    have hQ : (64 : ℝ) * 2 ^ i ≤ Ls.Q i := by exact_mod_cast Ls.Qgrow i
+    have hqR : (0 : ℝ) < Ls.Q i := by exact_mod_cast Ls.Qpos i
+    have hMR : (0 : ℝ) ≤ M := Nat.cast_nonneg M
+    have hpow : (0 : ℝ) < 2 ^ i := by positivity
+    rw [div_le_iff₀ hqR]
+    have hc : ((1 : ℝ) / 2) ^ i * 2 ^ i = 1 := by rw [← mul_pow]; norm_num
+    have hcpos : (0 : ℝ) < ((1 : ℝ) / 2) ^ i := by positivity
+    have hcQ : (64 : ℝ) ≤ ((1 : ℝ) / 2) ^ i * Ls.Q i := by nlinarith [hc, hQ, hcpos]
+    nlinarith [hcQ, hMR]
+  refine le_trans (le_trans hcard (Finset.sum_le_sum hterm)) ?_
+  rw [← Finset.mul_sum]
+  have hgeom : ∑ i ∈ Finset.Ico (n + 1) (n + 1 + M), (1 / 2 : ℝ) ^ i
+      ≤ (1 / 2 : ℝ) ^ n * 2 * (1 / 2) := by
+    rw [Finset.sum_Ico_eq_sum_range]
+    simp only [pow_add]
+    rw [← Finset.mul_sum]
+    have := sum_geometric_two_le M
+    have hp : (0 : ℝ) < (1 / 2 : ℝ) ^ n * (1 / 2 : ℝ) ^ 1 := by positivity
+    calc (1 / 2 : ℝ) ^ n * (1 / 2 : ℝ) ^ 1 * ∑ i ∈ range (n + 1 + M - (n + 1)), (1 / 2 : ℝ) ^ i
+        ≤ (1 / 2 : ℝ) ^ n * (1 / 2 : ℝ) ^ 1 * 2 := by
+          refine mul_le_mul_of_nonneg_left ?_ hp.le
+          simpa using sum_geometric_two_le (n + 1 + M - (n + 1))
+      _ = (1 / 2 : ℝ) ^ n * 2 * (1 / 2) := by ring
+  have hMR : (0 : ℝ) ≤ M := Nat.cast_nonneg M
+  have hpow : (0 : ℝ) < (1 / 2 : ℝ) ^ n := by positivity
+  have he : (3 : ℝ) / (16 * 2 ^ n) * M = 12 * M * (1 / 64) * ((1 / 2 : ℝ) ^ n * 2 * (1 / 2)) := by
+    have h2n : ((1 : ℝ) / 2) ^ n = 1 / 2 ^ n := by rw [div_pow, one_pow]
+    rw [h2n]
+    field_simp
+    ring
+  rw [he]
+  exact mul_le_mul_of_nonneg_left hgeom (by positivity)
