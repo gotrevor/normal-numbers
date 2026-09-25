@@ -142,6 +142,37 @@ theorem norm_le_of_reduced {U : ℕ → ℂ} (hone : U 1 = 1)
     exact mul_le_mul_of_nonneg_left hDe hMD
   linarith
 
+
+/-- **The expansion step, applied to the second argument.**  Identical to `norm_le_of_reduced`
+after `Erdos67b.elliottLogCorrelation_swap`: here `g` (the *first* function, with dilation `a₁`) is
+left alone and the second function `U` is expanded, so the reduced correlations keep `g` first and
+carry the new dilation `a₁d` on it. -/
+theorem norm_le_of_reduced_second {U : ℕ → ℂ} (hone : U 1 = 1)
+    (hmul : ∀ x y : ℕ, Nat.Coprime x y → U (x * y) = U x * U y)
+    (hU : ∀ n : ℕ, 0 < n → ‖U n‖ = 1)
+    {g : ℤ → ℂ} (hg : ∀ z : ℤ, ‖g z‖ ≤ 1)
+    (a₁ : ℕ) {a₂ : ℕ} (ha₂ : 0 < a₂) (b₁ b₂ : ℤ) {X W L D : ℕ}
+    (hW : 0 < W) (hL : 1 ≤ L) (hD : 1 ≤ D) (hDY : D ≤ a₂ * X + b₂.natAbs)
+    (hLY : L ≤ a₂ * X + b₂.natAbs)
+    (hLbd : ∀ n ∈ elliottLogWindow X W, 0 < integerAffine a₂ b₂ n →
+      (L : ℤ) ≤ integerAffine a₂ b₂ n)
+    {εt M : ℝ} (hεt : 0 ≤ εt) (hM : 0 ≤ M)
+    (htail : ∑ d ∈ Finset.Icc (D + 1) (a₂ * X + b₂.natAbs),
+      ‖squarefullPart U d‖ / (d : ℝ) ≤ εt)
+    (hbound : ∀ d ∈ Finset.Icc 1 D, ∀ n₀ ∈ Finset.range d,
+      ‖elliottLogCorrelation g (positiveIntExtension (fun k => cmExt U k))
+          (a₁ * d) a₂ ((a₁ : ℤ) * n₀ + b₁) (newShift a₂ b₂ d n₀)
+          (progScale X n₀ d) (min W (progScale X n₀ d))‖ ≤ M) :
+    ‖elliottLogCorrelation g (positiveIntExtension U) a₁ a₂ b₁ b₂ X W‖
+      ≤ (M + 4 * (D : ℝ)) * ((D : ℝ) * Real.exp 2)
+        + ((a₂ + b₂.natAbs : ℕ) : ℝ) *
+            ((1 + Real.log ((a₂ * X + b₂.natAbs : ℕ) : ℝ) - Real.log (L : ℝ)) * εt) := by
+  rw [elliottLogCorrelation_swap]
+  refine norm_le_of_reduced hone hmul hU hg ha₂ a₁ b₂ b₁ hW hL hD hDY hLY hLbd hεt hM htail ?_
+  intro d hd n₀ hn₀
+  rw [elliottLogCorrelation_swap]
+  exact hbound d hd n₀ hn₀
+
 end
 
 end NormalNumbers.ElliottStageStep
