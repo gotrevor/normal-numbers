@@ -271,6 +271,146 @@ theorem rect_key (ha : 2 ≤ a) (I : Finset ℕ) (d : ℕ) :
         = (X : ℝ[X]) ^ (if i ∈ I then bitw (a + 2) d i else 0))]
     ring
 
+theorem rectG_lt_two (r d : ℕ) : rectG a r d < 2 := by
+  rw [rectG]
+  split
+  · split
+    · exact bitw_lt_two _ _ _
+    · split <;> exact bitw_lt_two _ _ _
+  · exact bitw_lt_two _ _ _
+
+theorem prod_spos (ha : 2 ≤ a) (f : ℕ → ℝ[X]) :
+    ∏ i ∈ spos a, f i = f 0 * (f 1 * (f a * f (a + 1))) := by
+  rw [spos, Finset.prod_insert (by simp only [Finset.mem_insert, Finset.mem_singleton]; omega),
+    Finset.prod_insert (by simp only [Finset.mem_insert, Finset.mem_singleton]; omega),
+    Finset.prod_insert (by simp only [Finset.mem_singleton]; omega), Finset.prod_singleton]
+
+/-- The plain-bit window generating function. -/
+theorem rect_sum_plain (I : Finset ℕ) :
+    ∑ d ∈ range (2 ^ (a + 2)),
+        ∏ i ∈ range (a + 2), (X : ℝ[X]) ^ (if i ∈ I then bitw (a + 2) d i else 0)
+      = ∏ i ∈ range (a + 2), (if i ∈ I then (1 + X : ℝ[X]) else 2) := by
+  rw [sum_prod_bits (a + 2) (fun i b => (X : ℝ[X]) ^ (if i ∈ I then b else 0))]
+  refine Finset.prod_congr rfl (fun i _ => ?_)
+  by_cases hI : i ∈ I <;> simp [hI] <;> norm_num
+
+/-- **The segment generating function of the rectangle design.**  The correction factors as a
+product of two differences, one for the pair `{a, a+1}` and one for the pair `{0,1}`; it vanishes
+unless the segment contains exactly one of each pair. -/
+theorem vv_lt_two {ε : ℕ} (hε : ε < 2) (i : ℕ) : vv a ε i < 2 := by
+  rw [vv]
+  split
+  · omega
+  · split
+    · omega
+    · split <;> omega
+
+theorem rect_segGf (ha : 2 ≤ a) (I : Finset ℕ) (hI : I ⊆ range (a + 2)) :
+    ∑ d ∈ range (2 ^ (a + 2)), (X : ℝ[X]) ^ ((I.filter (fun u => rectG a u d = 1)).card)
+      = (∏ i ∈ range (a + 2), (if i ∈ I then (1 + X : ℝ[X]) else 2))
+        + (∏ i ∈ (range (a + 2)) \ spos a, (if i ∈ I then (1 + X : ℝ[X]) else 2))
+          * ((X ^ (if a ∈ I then 1 else 0) - X ^ (if a + 1 ∈ I then 1 else 0))
+             * (X ^ (if 0 ∈ I then 1 else 0) - X ^ (if (1 : ℕ) ∈ I then 1 else 0))) := by
+  classical
+  have hpow : ∀ d, (X : ℝ[X]) ^ ((I.filter (fun u => rectG a u d = 1)).card)
+      = ∏ i ∈ range (a + 2), (X : ℝ[X]) ^ (if i ∈ I then rectG a i d else 0) :=
+    fun d => pow_card_filter (a + 2) I hI (fun u => rectG a u d) (fun u => rectG_lt_two a u d)
+  rw [Finset.sum_congr rfl (fun d (_ : d ∈ range (2 ^ (a + 2))) => (hpow d).trans
+      (rect_key a ha I d)),
+    Finset.sum_add_distrib, Finset.sum_add_distrib, Finset.sum_sub_distrib,
+    Finset.sum_sub_distrib, rect_sum_plain a I,
+    rect_sum_forced a ha I _ _ (vv_lt_two a (by norm_num)),
+    rect_sum_forced a ha I _ _ (vv_lt_two a (by norm_num)),
+    rect_sum_forced a ha I _ _ (vv_lt_two a (by norm_num)),
+    rect_sum_forced a ha I _ _ (vv_lt_two a (by norm_num))]
+  have hv00 : vv a 0 0 = 0 := by simp [vv]
+  have hv01 : vv a 0 1 = 1 := by simp [vv]
+  have hv0a : vv a 0 a = 1 := by rw [vv, if_neg (by omega), if_neg (by omega), if_pos rfl]
+  have hv0b : vv a 0 (a + 1) = 0 := by
+    rw [vv, if_neg (by omega), if_neg (by omega), if_neg (by omega)]
+  have hw00 : ww a 0 0 = 0 := by simp [ww]
+  have hw01 : ww a 0 1 = 1 := by simp [ww]
+  have hw0a : ww a 0 a = 0 := by rw [ww, if_neg (by omega), if_neg (by omega), if_pos rfl]
+  have hw0b : ww a 0 (a + 1) = 1 := by
+    rw [ww, if_neg (by omega), if_neg (by omega), if_neg (by omega)]
+  have hv10 : vv a 1 0 = 1 := by simp [vv]
+  have hv11 : vv a 1 1 = 0 := by simp [vv]
+  have hv1a : vv a 1 a = 0 := by rw [vv, if_neg (by omega), if_neg (by omega), if_pos rfl]
+  have hv1b : vv a 1 (a + 1) = 1 := by
+    rw [vv, if_neg (by omega), if_neg (by omega), if_neg (by omega)]
+  have hw10 : ww a 1 0 = 1 := by simp [ww]
+  have hw11 : ww a 1 1 = 0 := by simp [ww]
+  have hw1a : ww a 1 a = 1 := by rw [ww, if_neg (by omega), if_neg (by omega), if_pos rfl]
+  have hw1b : ww a 1 (a + 1) = 0 := by
+    rw [ww, if_neg (by omega), if_neg (by omega), if_neg (by omega)]
+  rw [prod_spos a ha, prod_spos a ha, prod_spos a ha, prod_spos a ha,
+    hv00, hv01, hv0a, hv0b, hw00, hw01, hw0a, hw0b,
+    hv10, hv11, hv1a, hv1b, hw10, hw11, hw1a, hw1b]
+  simp only [ite_self, pow_zero, one_mul, mul_one]
+  ring
+
+/-- The base term is the exact Binomial generating function. -/
+theorem rect_base_eq (I : Finset ℕ) (hI : I ⊆ range (a + 2)) :
+    (∏ i ∈ range (a + 2), (if i ∈ I then (1 + X : ℝ[X]) else 2))
+      = C ((2 : ℝ) ^ (a + 2) / 2 ^ I.card) * (1 + X) ^ I.card := by
+  classical
+  rw [← Finset.prod_sdiff hI]
+  have h1 : ∏ i ∈ I, (if i ∈ I then (1 + X : ℝ[X]) else 2) = (1 + X) ^ I.card := by
+    rw [Finset.prod_congr rfl (fun i hi => if_pos hi), Finset.prod_const]
+  have h2 : ∏ i ∈ (range (a + 2)) \ I, (if i ∈ I then (1 + X : ℝ[X]) else 2)
+      = 2 ^ ((range (a + 2)) \ I).card := by
+    rw [Finset.prod_congr rfl (fun i hi => if_neg (Finset.mem_sdiff.mp hi).2), Finset.prod_const]
+  have hcard : ((range (a + 2)) \ I).card = (a + 2) - I.card := by
+    rw [Finset.card_sdiff, Finset.card_range, Finset.inter_eq_left.mpr hI]
+  have hle : I.card ≤ a + 2 := by
+    simpa using Finset.card_le_card hI
+  rw [h1, h2, hcard]
+  have hsplit : ((2 : ℝ) ^ (a + 2) / 2 ^ I.card) = 2 ^ ((a + 2) - I.card) := by
+    rw [div_eq_iff (by positivity), ← pow_add]
+    congr 1
+    omega
+  rw [hsplit, Polynomial.C_pow, Polynomial.C_ofNat]
+
+/-- **Every prefix and every suffix of the rectangle block law is Binomial.** -/
+theorem rect_binomSeg (ha : 2 ≤ a) : BinomSeg (rectG a) (a + 2) (2 ^ (a + 2)) := by
+  classical
+  intro lo hi hhi hps
+  have hI : Finset.Ico lo hi ⊆ range (a + 2) := by
+    intro i hi'
+    rw [Finset.mem_Ico] at hi'
+    rw [Finset.mem_range]
+    omega
+  have hzero : ((X : ℝ[X]) ^ (if a ∈ Finset.Ico lo hi then 1 else 0)
+      - X ^ (if a + 1 ∈ Finset.Ico lo hi then 1 else 0))
+      * (X ^ (if 0 ∈ Finset.Ico lo hi then 1 else 0)
+        - X ^ (if (1 : ℕ) ∈ Finset.Ico lo hi then 1 else 0)) = 0 := by
+    simp only [Finset.mem_Ico]
+    rcases hps with rfl | rfl
+    · by_cases h1 : hi ≤ 1
+      · have ha1 : ¬ (0 ≤ a ∧ a < hi) := by omega
+        have ha2 : ¬ (0 ≤ a + 1 ∧ a + 1 < hi) := by omega
+        rw [if_neg ha1, if_neg ha2, sub_self, zero_mul]
+      · have hb1 : (0 ≤ 0 ∧ 0 < hi) := by omega
+        have hb2 : (0 ≤ 1 ∧ (1 : ℕ) < hi) := by omega
+        rw [if_pos hb1, if_pos hb2, sub_self, mul_zero]
+    · by_cases h1 : lo ≤ a
+      · have ha1 : (lo ≤ a ∧ a < a + 2) := by omega
+        have ha2 : (lo ≤ a + 1 ∧ a + 1 < a + 2) := by omega
+        rw [if_pos ha1, if_pos ha2, sub_self, zero_mul]
+      · have hb1 : ¬ (lo ≤ 0 ∧ (0 : ℕ) < a + 2) := by omega
+        have hb2 : ¬ (lo ≤ 1 ∧ (1 : ℕ) < a + 2) := by omega
+        rw [if_neg hb1, if_neg hb2, sub_self, mul_zero]
+  rw [rect_segGf a ha _ hI, hzero, mul_zero, add_zero, rect_base_eq a _ hI,
+    Nat.card_Ico]
+  norm_num
+
+/-- **The rectangle sequence is abelian at every window length `L ≥ a + 2`.** -/
+theorem rect_isAbelianAt_ge (ha : 2 ≤ a) (c : ℕ → ℕ) (hcB : ∀ m, c m < 2 ^ (a + 2))
+    (hc : IsNormalSequence (2 ^ (a + 2)) c) (L : ℕ) (hL : a + 2 ≤ L) :
+    IsAbelianAt (blockSeq (rectG a) c (a + 2)) L :=
+  isAbelianAt_blockSeq_of_binomSeg (rectG a) c (by positivity) (by omega) hcB hc
+    (rect_binomSeg a ha) L hL
+
 end Rect
 
 end NormalNumbers.Abelian
