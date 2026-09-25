@@ -183,3 +183,63 @@ The only thing left is the multi-point bound itself.  Attack order:
    means, each `→ 0`, and the crux CLOSES.  **This is the highest-value lead**: the `D` shifts
    are `n+1,…,n+D` with `D` triple-logarithmic, an extremely short window, exactly the regime
    where sieve independence is strongest.
+
+---
+
+# lap 4 addendum — the crux is a LEGITIMATE Elliott instance (certified)
+
+`src/NormalNumbers/C3MrtElliottForm.lean` (axiom-clean, no `sorry`).
+
+For `QuantDepthElliott` to *be* an instance of Elliott's conjecture rather than a degenerate
+statement, the `f_i = ζ_i^{ω_{>P}}` must satisfy Elliott's hypotheses.  Now machine-checked:
+
+* `depthFun_mul_coprime` — each `f_i` is multiplicative on coprime arguments (via the repo's
+  `DelangeSlot.omegaLarge_mul_of_coprime` and the lap-1 bridge `omegaLarge_eq_delange`).
+* `norm_depthFun` — each `f_i` is unimodular.
+* `ee_tailDepth_eq_prod_depthFun` — the depth-`D` phase in Elliott normal form.
+* `re_depthRoot_lt_one`, `re_lt_one_of_norm_one`.
+* **`tendsto_principalDist_atTop`** — the non-pretentiousness witness:
+  `∑_{P<p≤x} (1 − Re ζ_0)/p → ∞`, from mathlib's `not_summable_one_div_on_primes`.  This is the
+  divergence Halász/Elliott needs, and it is exactly why the `D = 1` rung holds.
+
+## Two routes REFUTED this lap (recorded, do not retry)
+
+1. **Smooth/rough split (the sieve/Kubilius route).**  Split `ω_{>P} = ω_{(P,y]} + ω_{>y}`.
+   Sieve independence over the `D`-window needs `y^D ≤ N^{o(1)}`, which the triple-log `D`
+   satisfies with enormous room — but the discarded rough factor costs
+   `(1/N)∑_m |ζ^{ω_{>y}(m)} − 1| ≍ ∑_{y<p≤N} 1/p = log(log N / log y)`, and that is `o(1)` ONLY
+   for `y = N^{1−o(1)}`, where sieve independence dies.  This is precisely the obstruction that
+   makes Chowla hard; it is not circumvented by the short window.  (Compare the repo's
+   `PROBE-2026-09-20-smooth-rough-decoupling.md`.)
+2. **Self-similar recursion.**  `tailLarge` satisfies the exact recursion
+   `T(n) = (ω_{>P}(n+1) + T(n+1))/b`, so `e(tT(n)) = e((t/b)ω_{>P}(n+1))·e((t/b)T(n+1))`.
+   Iterating it *is* the depth truncation — it reproduces `ee_tailDepth_eq_prod` and nothing
+   more; the residual parameter `h/b^D` shrinks but the residual phase `e((h/b^D)T(n+D))` still
+   needs `b^D ≳ log log N`.  No new leverage, and the recursion is not a contraction on any
+   sum-level quantity because the scale-`t/b` object reappears with an extra one-point weight at
+   the SAME argument, i.e. it is its own shift.
+
+## Also determined (correcting lap 1)
+
+`Tao's Erdos67b.unitCircleLogElliott` in `lean-proofs-latest` is **not** instantiable here, for
+two independent reasons: (a) it is the `f(n)·conj f(n+h)` form (one function, conjugated), while
+our `D = 2` case has two *different* functions `ζ_0^{ω}, ζ_1^{ω}`; (b) it requires
+`IsCompletelyMultiplicativeOnPositive`, and `ζ^{ω}` is multiplicative but NOT completely
+multiplicative (`ω(p²) = 1`).  The general `NonasymptoticLogElliott` in the same file takes two
+functions but carries the same complete-multiplicativity hypothesis.  So the MRT/log-Elliott
+dependency does not reach this crux as it stands; a `ζ^{Ω}`-vs-`ζ^{ω}` bridge would be needed
+and there is none (they differ on the non-squarefree numbers, density `1 − 6/π² ≈ 0.39`).
+
+## NEXT (lap 5)
+
+1. Finish the non-pretentiousness certificate: the `χ` nonprincipal `t = 0` case, from the
+   repo's `WeakPNT_AP` (Dirichlet in APs).  This is bounded, concrete work and completes the
+   "legitimate Elliott instance" claim for all `t = 0` twists.
+2. State `QuantDepthElliott`'s `D = 2` case as its own named Prop and try the
+   Selberg–Delange product route directly: `∑_n χ(n) ζ_0^{ω(n+1)} ζ_1^{ω(n+2)}` — the
+   Dirichlet-series approach needs the *joint* generating function of `(ω(n+1), ω(n+2))`,
+   which is a two-variable shifted-convolution problem.  Expect this to be the real wall.
+3. If (2) walls, the honest end-state is the current chain plus the `D = 1` rung: `ConjC3` is
+   reduced, axiom-clean, to a quantitative Elliott correlation with `O(log log log N)` points,
+   a generous `b^{κD}` constant budget, certified-legitimate hypotheses, and the base rung
+   proved.  That IS the "equivalence with a named open problem" success criterion.
