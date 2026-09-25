@@ -8,9 +8,10 @@
     lake build                                 # 9257 jobs  (root)
     lake build NormalNumbers.C3MrtProgChase    # 8990 jobs  (old chain tip — still green)
     lake build NormalNumbers.C3MrtMultElliott  # 8914 jobs  ← NEW, the re-anchored route
+    lake build NormalNumbers.C3MrtMultRung     # 8927 jobs  ← NEW TIP of that route
 
-`C3MrtMultElliott` branches off `C3MrtKPoint`; it is not yet in the `ProgChase` chain, so build
-it explicitly until a consumer joins them.
+`C3MrtMultElliott` branches off `C3MrtKPoint`; `C3MrtMultRung` imports it and `C3MrtMultiRung`.
+Neither is in the `ProgChase` chain, so build the new tip explicitly until a consumer joins them.
 
 ## The crux
 
@@ -74,16 +75,47 @@ are now registered** in `DIRECTION.md`.
 
 ## NEXT — resume here
 
-1. **`progression_log_rung_class_mult`** — transcribe `multi_correlation_of_uniform_rung_prog`'s
-   ε-chase (`C3MrtProgChase.lean`) against `class_window_bound_of_mult`.  The old chase has to
-   carry `d`-tuples, `progLcm`, `sqfWMass` and `K^{K²}` through `M`; the new one carries **none**
-   of them, so `M = 1` and the `εr ↦ ε/2` bookkeeping collapses.  Output: lap 59's conclusion on
-   the merely-multiplicative anchor, with no budget.
-2. Then the weight bridge (`(m+1)⁻¹` vs `(n+1)⁻¹`, spelled out in `-lap59.md`) — still needed, and
-   now it is the *only* bookkeeping between the anchor and `ProgressionLogRung`.
-3. Then `TwoPointNaturalCorrelation` — TT Thm 3.1(ii) stated faithfully (natural dyadic averaging,
-   `L^{-c}`, `W ≤ L^c`, exceptional set of scales) — and the `D = 2` **natural-density** rung from
-   it, which discharges `LogToNaturalCorrelation` at `K = 2`.
+**Exactly ONE brick stands between the new anchor and lap 59's conclusion.**
+`progression_log_rung_class_mult`, from `rung_class_of_named_inputs_mult`:
+
+1. **Reindex.**  `n ≡ r (mod M₀)`, `n < N` ↔ `n = M₀·j + r`, `j < (N − r + M₀ − 1)/M₀`; then
+   `n + i + 1 = M₀·j + (r+i+1)`, which is *verbatim* the rung's argument.  `class_sum_reindex`
+   (lap 53) already does this bookkeeping.
+2. **The weight bridge** (old brick 4b, unchanged in shape, and now the ONLY bookkeeping item).
+   The rung carries `Erdos67b.harmonicWeight j = 1/j`; the target carries
+   `harmW n = (M₀ j + r + 1)⁻¹`.  The difference
+   `(M₀ j + r + 1)⁻¹ − M₀⁻¹ j⁻¹ = (M₀ − r − 1)/(M₀ j (M₀ j + r + 1))` is absolutely
+   `≤ (M₀ + r)/(M₀ j²)`, and `sum_inv_sq_le` (`C3MrtRungTwo:372`) is already in the repo.
+   `ε ↦ ε·M₀` absorbs the factor `M₀⁻¹`.
+3. **Choose `m`.**  `m = Nat.log A ((N − r)/M₀)`, exactly as in
+   `multi_correlation_of_uniform_rung_prog`'s `hrung` step (`C3MrtProgChase.lean:88–125`), giving
+   `m · log A ≤ log N`.  Note the old chase also has to carry `M = K^{K²}·∏ sqfWMass` through the
+   `ε/2` split — here `M = 1`, so that whole half collapses.
+
+Then, and only then:
+
+4. **`TwoPointNaturalCorrelation`** — TT Thm 3.1(ii) stated faithfully (1-bounded multiplicative,
+   natural dyadic averaging `∑_{N<n≤2N}`, `L^{-c}` saving with `1 ≤ L ≤ log X`, progression
+   `1_{n≡b (W)}` with `W ≤ L^c`, exceptional set `E ⊂ [√X,X]` of log-density `≪ L^{-c}`), and the
+   `D = 2` **natural-density** rung from it — which is what discharges `LogToNaturalCorrelation`
+   at `K = 2` and converts that ledger row from 🔴 to 🟡.
+
+## And the rung — `src/NormalNumbers/C3MrtMultRung.lean` (lap 60b, 2 declarations, sorry-free)
+
+* `initial_segment_bound_of_kElliottMult` — lap 50's window decomposition transcribed onto
+  `KPointLogElliottMult`.  The decomposition never looked at *which* multiplicativity the family
+  had, so only the hypothesis changes; the proof is otherwise verbatim.
+* **`rung_class_of_named_inputs_mult`** — `[propext, Classical.choice, Quot.sound]`.  On
+  `KPointLogElliottMult K` + `TwistedPrimeSumSavingAllLevels` alone:
+
+      ∃ A₀ ≥ 2, ∀ A ≥ A₀, ∃ i₀, ∀ m ≥ i₀,
+        ‖∑_{j ∈ Ioc 0 (A^m)} (1/j) ∏_{i<K} z_i^{ω(M₀·j + r+i+1)}‖
+          ≤ (1 + log(A^{i₀})) + m·(ε log A).
+
+  This ONE statement replaces **both** `rung_multi_of_named_inputs` (lap 51) **and**
+  `rung_multi_uniform_prog` (lap 59).  With no divisor tuples there is nothing to truncate and
+  no `exists_common_threshold` to run (the old route runs it twice, over the finite set of
+  admissible `(d, a)` pairs), so the single `A` and the single `i₀` come out directly.
 
 ## Still refuted — DO NOT RETRY
 
