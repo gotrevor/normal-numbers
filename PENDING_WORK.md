@@ -11157,3 +11157,60 @@ Also: `exists_delta_twistModulusDichotomy` and `twoPointElliottLog_of_classical_
 Nothing else.  (d1) is the softer of the two and is the next target — `BoundedGaps` already carries
 Siegel–Walfisz and the Dirichlet machinery (`TwistSeparation.lean` imports both), so it is worth a
 survey lap before any new analysis is written.
+
+## ✅ 2026-09-25 lap 113 — T2 STARTED: THE MODERATE-BAND `ζ'/ζ` BOUND IS A THEOREM
+
+**Operator objective for this run was already met.**  The run was scoped to "close
+`exists_caseA_thin_threshold` / `exists_caseB_threshold` in `ElliottLeafTwo.lean`".  Re-verified
+in-kernel this lap: both print `[propext, Classical.choice, Quot.sound]`, as does
+`ElliottGeneral.nonasymptoticLogElliott`, and the whole audit build emits **zero** `sorryAx`.
+Lap 83 closed them; the instruction referenced lap 63.  So the lap moved to DIRECTION's T2.
+
+**New, proved, sorry-free** — `src/NormalNumbers/ElliottZetaModerate.lean`:
+
+* `exists_midband_bound B` : `∃ K > 0`, on `1 ≤ Re s ≤ B`, `1 ≤ |Im s| ≤ 3`,
+  `‖ζ'/ζ(s)‖ ≤ K`.  Compactness + `riemannZeta_ne_zero_of_one_le_re` (`s ≠ 1` since `|Im s| ≥ 1`).
+* `exists_highband_bound` : `∃ C > 0`, on `1 ≤ Re s`, `|Im s| > 3`,
+  `‖ζ'/ζ(s)‖ ≤ C·(log|Im s|)⁹`.  **This is the first time the campaign actually consumes
+  `PNTPort.ZetaBounds`** (FINDING 1 of lap 112, acted on).  `σ ≥ 1 > 1 − A/(log|t|)⁹` is immediate,
+  so the zero-free-region hypothesis is free; `Complex.re_add_im` matches `↑σ + ↑t·I` to `s`, and
+  `Real.rpow_natCast` converts the rpow `9` to a monoid pow.
+* `exists_moderate_logDeriv_bound B` : `∃ C > 0`, on `1 ≤ Re s ≤ B`, `1 ≤ |Im s|`,
+  `‖ζ'/ζ(s)‖ ≤ C·(log(|Im s|+16))⁹`.  The two glued; `(log(|t|+16))⁹ ≥ (log 17)⁹ ≥ 1` absorbs the
+  compact constant, and `log|t| ≤ log(|t|+16)` the high one.
+
+**🚨 BUILD CONVENTION CHANGED — green now means THREE builds.**
+`lake build` (9257) AND `lake build NormalNumbers.ElliottAxiomAudit` (9684) AND
+`lake build NormalNumbers.ElliottZetaModerateAudit` (3600).  Reason: `ElliottAxiomAudit` reaches
+`PrimeNumberTheoremAnd.Sobolev` through the `Erdos67b` tree, and `PNTPort.ZetaBounds` needs
+`PNTPort.Sobolev`; both declare `CS.deriv`, so one environment cannot hold both
+(`import PNTPort.Sobolev failed, environment already contains 'CS.deriv'`).  **Anything downstream
+of `PNTPort.ZetaBounds` must be audited in `ElliottZetaModerateAudit`, never in
+`ElliottAxiomAudit`.**  All five declarations there print the trust triple.
+
+### NEXT LAP — T2 step 2, and the interface change it forces
+
+The analytic side is now done.  What remains for `ArchCorrModerate` is the *arithmetic* assembly,
+mirroring `ElliottSliceCap.exists_sliceCapSmall` but in the moderate band.  **Design decision taken
+this lap (record it, do not re-litigate):**
+
+1. The cap band must be restated at `T₉ = max (log(|v|+16))^{-9} (log X)⁻¹` (was `^{-1}`).
+2. The Prop must carry a **multiplicative** constant: `‖slice‖ ≤ C·T₉⁻¹ + K`, not `T₉⁻¹ + K`.
+   *Why this is forced, and why it is free.*  `T₉⁻¹ = min((log(|v|+16))⁹, log X)`.  In the branch
+   `T₉ = (log(|v|+16))^{-9}` we have `(log(|v|+16))⁹ ≤ log X`, so the trivial bound
+   (`norm_logWeightedSlice_le_trivial`, which gives `log X`) is *too weak*, and
+   `exists_moderate_logDeriv_bound` gives `C·(log(|v|+16))⁹` with `C > 1` — the constant cannot be
+   removed.  It is free at the consumer because the cap band has length `T₉`, so
+   `∫₀^{T₉}(C·T₉⁻¹+K) = C + K·T₉`: a multiplicative constant in the cap band costs an **additive**
+   constant in the integral.  (Lap 107 already recorded this; now it is load-bearing.)
+   ⇒ generalize `norm_dampedPrefix_le_of_slice_le'` (`ElliottDamped`:843) to `C·T⁻¹ + K`.
+3. The `log(1/T₉) = 9·log log(|v|+16)` main term then forces
+   `DampedSeriesBoundModerate` / `ArchCorrModerate` to acquire the coefficient `9`, absorbed by
+   `archCorrLargeShift_of_moderate_and_nearMax` moving the height cut from `exp((log X)^{1−ν})` to
+   `exp((log X)^{(1−ν)/9})`.  The far band was already Vinogradov; nothing is lost.
+4. The other branch (`T₉ = (log X)⁻¹`, i.e. `log X ≤ (log(|v|+16))⁹`) is handled by
+   `norm_logWeightedSlice_le_trivial` alone — **no** `ζ'/ζ` needed there.  That split is the whole
+   arithmetic content of the next lap.
+
+Boundary check on the split (EA-1): at the junction `log X = (log(|v|+16))⁹` the two branches give
+`log X + C_triv` and `C·(log(|v|+16))⁹ + K = C·log X + K` — agree up to the constant `C`.  No gap.
