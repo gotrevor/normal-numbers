@@ -89,7 +89,7 @@ Campbell uses exception avoidance for a narrower digit result in [his May paper]
 
 **Established on paper:** sufficiently long Christoffel first-crossing words cannot be realized with a linearly bounded start and distinct odd states.  Time order provides a constraint where unordered spacing failed.  Finite packing gives `L+1=O(X^beta log X)`, beta<1, for distinct states bounded by X.
 
-**Next:** specify an unbounded word family, bound every prefix height, and prove a coverage statement.  Treat repeated odd states as an explicit periodic branch.  Formalizing the finite lemma is bounded work; coverage is the research.
+**Next:** first audit the concrete periodic-branch composition found during this review: packing forces an early repeat; the long remaining balanced Beatty factor forces a Christoffel cycle word; Knight excludes the nontrivial integral cycle.  The trivial cycle has the wrong frequency.  This derivation is unproved locally and concerns only the existing family.  Then seek a broader word-family coverage theorem with a prefix-height bound.  Details: [candidate note](/Users/gotrevor/src/collatz-moonshot/RESEARCH-2026-09-25-packing-balanced-period-candidate.md).
 
 **Larger door:** exclude actual integer trajectories in whole families with a mechanism specific to multiplier 3.  Arbitrary words, arbitrary heights, and nontrivial cycles remain outside the present result.
 
