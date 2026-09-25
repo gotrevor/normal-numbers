@@ -406,6 +406,66 @@ theorem norm_archCorr_sub_dampedPrefix_le {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y 
         norm_sub_le _ _
     _ ≤ _ := by linarith
 
+/-! ### The two soft inputs, reduced to the damped Dirichlet series -/
+
+open NormalNumbers.ElliottArchBands
+
+/-- **The analytic input, sub-unit band.**  The damped prime series is bounded by `log(1/|v|)` up
+to an absolute constant.  This is the statement the `ζ'/ζ` route produces: the pole bound
+`|ζ'/ζ(σ+w+iv)| ≤ min((δ+w)^{-1}, |v|^{-1})` fed into
+`ElliottLogIntegral.integral_le_one_add_log` with `T = |v|`. -/
+def DampedSeriesBoundSmall (K : ℝ) : Prop :=
+  ∀ (X Y : ℕ) (v : ℝ), 2 ≤ X → X ≤ Y → 0 < |v| → |v| ≤ 1 →
+    ‖dampedPrefix v X Y‖ ≤ Real.log (1 / |v|) + K
+
+/-- **The analytic input, moderate band.**  Same route with `T = 1/(C log|v|)`, i.e. the de la
+Vallée Poussin bound `|ζ'/ζ(σ+iv)| ≤ C log|v|` on `σ > 1`. -/
+def DampedSeriesBoundModerate (K : ℝ) : Prop :=
+  ∀ (X Y : ℕ) (v : ℝ), 2 ≤ X → X ≤ Y → 1 < |v| →
+    ‖dampedPrefix v X Y‖ ≤ Real.log (Real.log (|v| + 16)) + K
+
+/-- The absolute cost of the damping step, once and for all. -/
+def dampingCost : ℝ :=
+  (1 + (Real.log 4 + 4) / Real.log 2) + (Real.log 2 + 2 * PrimeEstimates.mertensBound)
+
+theorem norm_archCorr_sub_dampedPrefix_le' {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) (hXY : X ≤ Y) :
+    ‖archCorr v X - dampedPrefix v X Y‖ ≤ dampingCost := by
+  have hXR : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlogX : Real.log 2 ≤ Real.log (X : ℝ) := Real.log_le_log (by norm_num) hXR
+  have hmono : (Real.log 4 + 4) / Real.log (X : ℝ) ≤ (Real.log 4 + 4) / Real.log 2 := by
+    refine div_le_div_of_nonneg_left ?_ hlog2 hlogX
+    have : (0 : ℝ) < Real.log 4 := Real.log_pos (by norm_num)
+    linarith
+  have := norm_archCorr_sub_dampedPrefix_le hX v Y hXY
+  rw [dampingCost]
+  linarith
+
+/-- **(c′-I) FROM THE ANALYTIC INPUT.**  The damping step discharges the arithmetic half of
+`ShiftedMertensSmall`; what is left is exactly the bound on the damped Dirichlet series. -/
+theorem shiftedMertensSmall_of_dampedSeriesBound {K : ℝ} (h : DampedSeriesBoundSmall K) :
+    ShiftedMertensSmall (K + dampingCost) := by
+  refine ⟨2, le_rfl, ?_⟩
+  intro X hX v hv0 hv1
+  have hd := h X X v hX le_rfl hv0 hv1
+  have hs := norm_archCorr_sub_dampedPrefix_le' hX v X le_rfl
+  calc ‖archCorr v X‖ ≤ ‖archCorr v X - dampedPrefix v X X‖ + ‖dampedPrefix v X X‖ := by
+        simpa [add_comm] using norm_le_norm_add_norm_sub' (archCorr v X) (dampedPrefix v X X)
+    _ ≤ dampingCost + (Real.log (1 / |v|) + K) := by linarith
+    _ = Real.log (1 / |v|) + (K + dampingCost) := by ring
+
+/-- **(c′-II-a) FROM THE ANALYTIC INPUT.**  Same reduction on the moderate band. -/
+theorem archCorrModerate_of_dampedSeriesBound {K : ℝ} (h : DampedSeriesBoundModerate K) :
+    ArchCorrModerate (K + dampingCost) := by
+  refine ⟨2, le_rfl, ?_⟩
+  intro X hX v hv1
+  have hd := h X X v hX le_rfl hv1
+  have hs := norm_archCorr_sub_dampedPrefix_le' hX v X le_rfl
+  calc ‖archCorr v X‖ ≤ ‖archCorr v X - dampedPrefix v X X‖ + ‖dampedPrefix v X X‖ := by
+        simpa [add_comm] using norm_le_norm_add_norm_sub' (archCorr v X) (dampedPrefix v X X)
+    _ ≤ dampingCost + (Real.log (Real.log (|v| + 16)) + K) := by linarith
+    _ = Real.log (Real.log (|v| + 16)) + (K + dampingCost) := by ring
+
 end
 
 end NormalNumbers.ElliottDamped

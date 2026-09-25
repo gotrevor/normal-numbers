@@ -7,6 +7,7 @@ import NormalNumbers.ElliottTwistRepair
 import NormalNumbers.ElliottSmallShift
 import NormalNumbers.ElliottArchBands
 import NormalNumbers.ElliottDamped
+import NormalNumbers.ElliottLogIntegral
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
@@ -197,3 +198,8 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottDamped.dampedBlock_le
 #print axioms NormalNumbers.ElliottDamped.dampedTail_le
 #print axioms NormalNumbers.ElliottDamped.norm_archCorr_sub_dampedPrefix_le
+
+/-! ### The calculus core and the reduction of the soft inputs (lap 99) -/
+#print axioms NormalNumbers.ElliottLogIntegral.integral_le_one_add_log
+#print axioms NormalNumbers.ElliottDamped.shiftedMertensSmall_of_dampedSeriesBound
+#print axioms NormalNumbers.ElliottDamped.archCorrModerate_of_dampedSeriesBound

@@ -212,6 +212,29 @@ triple, in the audit surface:
 Step 3 is pure calculus and is the right next Lean target — it is independent of the ζ input and
 turns whatever bound step 2 supplies into the two soft inputs directly.
 
+### ✅ Lap 99 — the calculus core, and both soft inputs reduced to ONE analytic statement each
+
+* `ElliottLogIntegral.integral_le_one_add_log` — **the log is produced here.**  A nonnegative `f`
+  on `[0,1]` with `f ≤ T⁻¹` on `[0,T]` and `f ≤ w⁻¹` on `[T,1]` has `∫_0^1 f ≤ 1 + log(1/T)`.
+  Both bands are this one lemma at different `T`: sub-unit band `T = |v|` (pole bound
+  `|ζ'/ζ(σ+w+iv)| ≤ min((δ+w)^{-1},|v|^{-1})`) gives `log(1/|v|)`; moderate band
+  `T = 1/(C log|v|)` (de la Vallée Poussin) gives `log log|v|`.
+* `DampedSeriesBoundSmall` / `DampedSeriesBoundModerate` — the analytic inputs, stated on the
+  *finite* damped prefix so no `tsum` or improper integral is needed anywhere in the consumer.
+* `dampingCost`, `norm_archCorr_sub_dampedPrefix_le'`, and the reductions
+  **`shiftedMertensSmall_of_dampedSeriesBound`**, **`archCorrModerate_of_dampedSeriesBound`**.
+
+So the arithmetic half of both soft inputs is now *discharged*, and the Elliott consumer's input
+list is: `PrimeDensityAP`, `DampedSeriesBoundSmall`, `DampedSeriesBoundModerate`,
+`ArchCorrNearMaxHeight`.  The first three carry no Vinogradov.
+
+**Next (lap 100).**  The one structural gap left on the soft side is the representation
+`∑_p p^{-s} = ∫_0^∞ (−ζ'/ζ)(s+w) dw + O(1)` (from `1/log n = ∫_0^∞ n^{-w} dw`, plus the elementary
+prime-power correction `∑_{p,k≥2} 1/(k p^{kσ}) ≤ 2∑_p p^{-2σ}`).  Its Lean cost is a Fubini
+interchange for a Dirichlet series on `σ > 1`; mathlib's `tsum_integral_eq_integral_tsum` family is
+the handle.  With that plus the ζ'/ζ bounds, `DampedSeriesBound*` follow from
+`integral_le_one_add_log` directly.  **Do the interchange first — it is shared by both bands.**
+
 ### What is OFF the path now
 
 `CharacterClusterRigidity`, `PrimeDensityAP`, `exists_charDefect_le`, `NearTrivialTwist`,
