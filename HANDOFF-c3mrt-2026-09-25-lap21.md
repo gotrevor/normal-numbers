@@ -190,3 +190,32 @@ assembly:
 2. `max` over the finitely many pairs `(d, e)` with `d, e ≤ Y` of the `A₀` that
    `rung_two_of_named_inputs` returns (the pattern of `range_one_certificate_uniform`,
    now over pairs).
+
+## Lap 27 — the window gap and the rung's spelling (both mismatches closed)
+
+* **`harmonic_gap_le`** — `∑_{K < j ≤ J} j⁻¹ ≤ 1 + log J − log(K+1)`, from mathlib's
+  `harmonic_le_one_add_log` above and `log_add_one_le_harmonic` below.
+* **`harmonic_gap_le_log`** — with `m = Nat.log A J` (so `A^m ≤ J < A^{m+1}` by
+  `Nat.pow_log_le_self` / `Nat.lt_pow_succ_log_self`), the gap `(A^m, J]` has harmonic mass
+  `≤ 1 + log A`.  This is the *only* cost of replacing the true cutoff `J` by a power of `A`,
+  and it is `N`-independent — the rung can therefore be applied at `m = Nat.log A J`, which
+  grows like `log N / log A`, so `m·ε·log A ≤ ε·log J ≤ ε·log N`.
+* **`rung_sum_spelling`** — `∑_{1 ≤ j ≤ J} j⁻¹ • ζ₀^{Ω(ej+b₀)} ζ₁^{Ω(dj+b₁)}` IS
+  `∑_{j ∈ Ioc 0 J} harmonicWeight j · zOmInt ζ₀ (integerAffine e b₀ j) · zOmInt ζ₁ (integerAffine d b₁ j)`,
+  an equality, not an estimate (`harmonicWeight j = j⁻¹`, `Icc 1 J = Ioc 0 J`, lap 11's
+  `zOmInt_integerAffine`; the positivity side conditions are free for `j ≥ 1`, `d, e ≥ 1`).
+
+Every mismatch between our double-shift correlation and `rung_two_of_named_inputs` is now closed.
+
+### NEXT — the arithmetic is all in place; what remains is two assemblies
+1. **Per-pair bound.**  Chain `inner_sum_linear_forms` → `filter_linear_lt_eq_range` →
+   `joint_inner_harmonic_le` → `rung_sum_spelling` → gap → `rung_two_of_named_inputs`, giving for
+   each coprime powerful pair `d, e ≤ Y`
+
+       ‖inner sum‖ ≤ (a+1)⁻¹ + 2/(de) + (de)⁻¹·[(1 + log A^{i₀}) + 1 + log A + ε·log N].
+
+2. **Sum over pairs.**  Weight by `‖sqfW ζ₀ d‖·‖sqfW ζ₁ e‖` and sum.  The `ε log N` term is
+   controlled because `∑_{d,e} ‖g₀(d)‖‖g₁(e)‖/(de) ≤ sqfWMass ζ₀ · sqfWMass ζ₁ < ∞` — so
+   choosing `ε' = ε/(sqfWMass ζ₀ · sqfWMass ζ₁)` gives the rung.  Everything else is
+   `N`-independent.  Also needs a `max` over the finitely many pairs of the `A₀` from
+   `rung_two_of_named_inputs` (the `range_one_certificate_uniform` pattern, over pairs).

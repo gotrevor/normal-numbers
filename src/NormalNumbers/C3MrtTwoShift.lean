@@ -605,6 +605,98 @@ theorem joint_inner_harmonic_le {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz�
   refine le_trans (norm_add_le _ _) ?_
   linarith [hhead, htail]
 
+
+/-! ## The window gap, and the rung's spelling
+
+Two last mismatches between `joint_inner_harmonic_le`'s right-hand sum and
+`rung_two_of_named_inputs`:
+
+* the rung bounds the initial segment `(0, A^m]`, while the cutoff is `(0, J]` with
+  `A^m ≤ J < A^{m+1}` (take `m = Nat.log A J`).  The gap `(A^m, J]` has harmonic mass
+  `≤ 1 + log A` (`harmonic_gap_le_log`), an `N`-independent constant.
+* `∑_{1 ≤ j ≤ J} j⁻¹ • ζ₀^{Ω(ej+b₀)} ζ₁^{Ω(dj+b₁)}` versus
+  `∑_{j ∈ Ioc 0 J} harmonicWeight j · zOmInt ζ₀ (integerAffine e b₀ j) · …`.  These are literally
+  equal (`rung_sum_spelling`): `harmonicWeight j = j⁻¹`, `Icc 1 J = Ioc 0 J`, and lap 11's
+  `zOmInt_integerAffine` identifies the summands (the positivity side condition is free for
+  `j ≥ 1`, `e ≥ 1`).
+-/
+
+/-- `∑_{K < j ≤ J} j⁻¹ ≤ 1 + log J − log(K+1)`, from `harmonic_le_one_add_log` and
+`log_add_one_le_harmonic`. -/
+theorem harmonic_gap_le {K J : ℕ} (hKJ : K ≤ J) :
+    ∑ j ∈ Finset.Ioc K J, ((j : ℝ))⁻¹ ≤ 1 + Real.log J - Real.log (K + 1) := by
+  have hharm : ∀ n : ℕ, ∑ j ∈ Finset.Ioc 0 n, ((j : ℝ))⁻¹ = ((harmonic n : ℚ) : ℝ) := by
+    intro n
+    rw [harmonic_eq_sum_Icc]
+    push_cast
+    refine Finset.sum_congr ?_ (fun _ _ => rfl)
+    ext j; simp only [Finset.mem_Ioc, Finset.mem_Icc]; omega
+  have hsplit := Finset.sum_Ioc_consecutive (fun j : ℕ => ((j : ℝ))⁻¹)
+    (Nat.zero_le K) hKJ
+  rw [hharm K, hharm J] at hsplit
+  have h1 : ((harmonic J : ℚ) : ℝ) ≤ 1 + Real.log J := harmonic_le_one_add_log J
+  have h2 : Real.log (K + 1) ≤ ((harmonic K : ℚ) : ℝ) := by
+    have := log_add_one_le_harmonic K
+    push_cast at this ⊢
+    linarith
+  linarith
+
+/-- The gap between `A^{Nat.log A J}` and `J` has harmonic mass at most `1 + log A`. -/
+theorem harmonic_gap_le_log {A J : ℕ} (hA : 2 ≤ A) (hJ : 1 ≤ J) :
+    ∑ j ∈ Finset.Ioc (A ^ Nat.log A J) J, ((j : ℝ))⁻¹ ≤ 1 + Real.log A := by
+  have hA1 : 1 < A := hA
+  have hlow : A ^ Nat.log A J ≤ J := Nat.pow_log_le_self A (by omega)
+  have hhigh : J < A ^ (Nat.log A J + 1) := Nat.lt_pow_succ_log_self hA1 J
+  refine le_trans (harmonic_gap_le hlow) ?_
+  set m := Nat.log A J with hm
+  have hAR : (1 : ℝ) < (A : ℝ) := by exact_mod_cast hA1
+  have hlogA : 0 < Real.log A := Real.log_pos hAR
+  -- `log J ≤ (m+1) log A` and `log (A^m + 1) ≥ m log A`
+  have h1 : Real.log J ≤ ((m : ℝ) + 1) * Real.log A := by
+    have hle : (J : ℝ) ≤ ((A ^ (m + 1) : ℕ) : ℝ) := by exact_mod_cast hhigh.le
+    refine le_trans (Real.log_le_log (by exact_mod_cast hJ) hle) ?_
+    rw [Nat.cast_pow, Real.log_pow]
+    push_cast
+    ring_nf
+    linarith
+  have h2 : (m : ℝ) * Real.log A ≤ Real.log ((A ^ m : ℕ) + 1) := by
+    have hpow : ((A ^ m : ℕ) : ℝ) ≤ ((A ^ m : ℕ) : ℝ) + 1 := by linarith
+    have hpos : (0 : ℝ) < ((A ^ m : ℕ) : ℝ) := by
+      have : 0 < A ^ m := Nat.pow_pos (show 0 < A by omega)
+      exact_mod_cast this
+    have := Real.log_le_log hpos hpow
+    rw [Nat.cast_pow, Real.log_pow] at this
+    push_cast at this ⊢
+    linarith
+  push_cast at h2 ⊢
+  linarith
+
+open scoped Classical in
+/-- **The rung's spelling.**  Our weighted sum over the progression variable is literally the
+rung's sum. -/
+theorem rung_sum_spelling (z₀ z₁ : ℂ) {d e : ℕ} (hd : 0 < d) (he : 0 < e) (b₀ b₁ J : ℕ) :
+    ∑ j ∈ Finset.Icc 1 J, (((j : ℝ))⁻¹ : ℝ) •
+        (z₀ ^ ArithmeticFunction.cardFactors (e * j + b₀) *
+          z₁ ^ ArithmeticFunction.cardFactors (d * j + b₁))
+      = ∑ j ∈ Finset.Ioc 0 J, (Erdos67b.harmonicWeight j : ℂ) *
+          zOmInt z₀ (Erdos67b.integerAffine e (b₀ : ℤ) j) *
+          zOmInt z₁ (Erdos67b.integerAffine d (b₁ : ℤ) j) := by
+  have hset : Finset.Icc 1 J = Finset.Ioc 0 J := by
+    ext j; simp only [Finset.mem_Icc, Finset.mem_Ioc]; omega
+  rw [hset]
+  refine Finset.sum_congr rfl fun j hj => ?_
+  have hj1 : 1 ≤ j := (Finset.mem_Ioc.1 hj).1
+  have hpos₀ : 0 < e * j + b₀ := by
+    have : 0 < e * j := Nat.mul_pos he (by omega)
+    omega
+  have hpos₁ : 0 < d * j + b₁ := by
+    have : 0 < d * j := Nat.mul_pos hd (by omega)
+    omega
+  rw [zOmInt_integerAffine z₀ e b₀ j hpos₀, zOmInt_integerAffine z₁ d b₁ j hpos₁,
+    Erdos67b.harmonicWeight, Complex.real_smul]
+  push_cast
+  ring
+
 end CastingOut
 
 end NormalNumbers
@@ -617,3 +709,5 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.two_shift_truncation_bound
 #print axioms NormalNumbers.CastingOut.filter_linear_lt_eq_range
 #print axioms NormalNumbers.CastingOut.joint_inner_harmonic_le
+#print axioms NormalNumbers.CastingOut.harmonic_gap_le_log
+#print axioms NormalNumbers.CastingOut.rung_sum_spelling
