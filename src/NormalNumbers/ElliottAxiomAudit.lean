@@ -323,3 +323,9 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottZetaTheta.exists_archCorrModerateTheta
 #print axioms NormalNumbers.ElliottZetaTheta.archCorrNearMaxHeight_of_exponent
 #print axioms NormalNumbers.ElliottLedger.twoPointElliottLog_of_zetaExponent
+
+-- Lap 121: non-vacuity anchor and the machine-visible exponent gap.
+#print axioms NormalNumbers.ElliottZetaTheta.zetaLogDerivExponent_of_nine_le
+#print axioms NormalNumbers.ElliottZetaTheta.zetaLogDerivExponent_gap
+#print axioms NormalNumbers.ElliottLedger.phase_half_re
+#print axioms NormalNumbers.ElliottLedger.ledger_nonvacuous

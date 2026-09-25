@@ -395,6 +395,40 @@ theorem archCorrNearMaxHeight_of_exponent {θ : ℝ} (hθ0 : 0 ≤ θ) (h : Zeta
   rw [this]
   linarith
 
+/-! ### The debt, made machine-visible -/
+
+/-- **What the repo owns**: every exponent `θ ≥ 9`, from `PNTPort.ZetaZeroFree9`. -/
+theorem zetaLogDerivExponent_of_nine_le {θ : ℝ} (hθ : 9 ≤ θ) : ZetaLogDerivExponent θ :=
+  zetaLogDerivExponent_mono hθ zetaLogDerivExponent_nine
+
+/-- **What the campaign needs**: some exponent `θ < 1`.
+
+Putting `zetaLogDerivExponent_of_nine_le` beside `ElliottLedger.twoPointElliottLog_of_zetaExponent`
+makes the entire remaining debt of this campaign visible as a single interval:
+
+* **owned**: `θ ∈ [9, ∞)`
+* **needed**: `θ ∈ [0, 1)`
+
+and `zetaLogDerivExponent_mono` says the hypothesis only weakens as `θ` grows, so nothing in
+between is free — the gap must be closed by a genuinely better zero-free region.
+
+**Where the `9` comes from, and why `< 1` is the honest threshold** (read off
+`src/PNTPort/ZetaBounds.lean` this lap, so no future lap need re-derive it):
+`LogDerivZetaBnd = ZetaInvBnd × ZetaDerivUpperBnd`, i.e. `9 = 7 + 2`, where `7` is the cost of
+`1/‖ζ‖` and `2` that of `‖ζ'‖`.  Meanwhile `ZetaUpperBnd` already gives `‖ζ(σ+it)‖ ≤ C·log|t|` —
+**exponent exactly `1`**.  So the classical material sits precisely *at* the threshold on the `ζ`
+side and *above* it on the `ζ'/ζ` side, which is the analytic content of "the wall is real":
+`|ζ(1+it)| ≪ log t` is borderline, and any proportional saving needs to beat it, i.e. needs
+`(log t)^{1−ε}` — Vinogradov's mean value theorem.
+
+Note the chain needs only `θ < 1`, which is **weaker than Vinogradov's `2/3`**: any sub-linear
+bound suffices.  Whether that weaker statement admits an easier proof than full Vinogradov is
+open, and is the one question worth a literature lap. -/
+theorem zetaLogDerivExponent_gap :
+    (∀ θ : ℝ, 9 ≤ θ → ZetaLogDerivExponent θ) ∧
+      (∀ θ θ' : ℝ, θ ≤ θ' → ZetaLogDerivExponent θ → ZetaLogDerivExponent θ') :=
+  ⟨fun _ h => zetaLogDerivExponent_of_nine_le h, fun _ _ h => zetaLogDerivExponent_mono h⟩
+
 end
 
 end NormalNumbers.ElliottZetaTheta

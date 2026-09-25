@@ -81,6 +81,33 @@ theorem twoPointElliottLog_of_zetaExponent {b p q : ℕ} {t : ℝ} {θ : ℝ}
   intro A
   exact hK A (1 - (1 - 1/2) / 9) (by norm_num)
 
+/-! ### Non-vacuity
+
+A reduction chain is worthless if its hypotheses cannot all hold at once.  The parameter
+hypotheses of `twoPointElliottLog_of_zetaExponent` are `0 < p`, `0 < q`, `p ≠ q` and
+`(CastingOut.phase (t/b)).re < 1`; the last says `cos(2π t/b) < 1`, i.e. `t/b ∉ ℤ`.  The anchor
+below exhibits `b = 1`, `p = 2`, `q = 3`, `t = 1/2`, where `phase (1/2) = exp(πi) = −1`.
+
+So the ledger genuinely reduces a non-empty family of statements; it is not conditionally true by
+vacuity of its side conditions. -/
+theorem phase_half_re : (NormalNumbers.CastingOut.phase ((1 : ℝ) / 2)).re = -1 := by
+  rw [NormalNumbers.CastingOut.phase]
+  have h : (2 : ℂ) * (Real.pi : ℂ) * Complex.I * (((1 : ℝ) / 2 : ℝ) : ℂ)
+      = (Real.pi : ℂ) * Complex.I := by
+    push_cast; ring
+  rw [h, Complex.exp_pi_mul_I]
+  simp
+
+/-- **THE LEDGER IS NOT VACUOUS.**  A concrete instance of every side condition. -/
+theorem ledger_nonvacuous {θ : ℝ} (hθ0 : 0 ≤ θ) (hθ1 : θ < 1)
+    (h : NormalNumbers.ElliottZetaTheta.ZetaLogDerivExponent θ) :
+    NormalNumbers.ElliottTwoPointLog.TwoPointElliottLog 1 2 3 ((1 : ℝ) / 2) := by
+  refine twoPointElliottLog_of_zetaExponent (by norm_num) (by norm_num) (by norm_num) ?_
+    hθ0 hθ1 h
+  have hb : ((1 : ℝ) / 2) / ((1 : ℕ) : ℝ) = (1 : ℝ) / 2 := by norm_num
+  rw [hb, phase_half_re]
+  norm_num
+
 end
 
 end NormalNumbers.ElliottLedger

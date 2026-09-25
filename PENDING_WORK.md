@@ -11539,3 +11539,50 @@ value theorem and remains a multi-year target — narrow it, do not file it as i
 chain needs only `θ < 1`, which is **weaker than Vinogradov's `2/3`**: any sub-linear bound
 `‖ζ'/ζ‖ ≪ (log t)^{1−ε}` suffices.  Whether that weaker statement has an easier proof than full
 Vinogradov is an open question worth a lap of literature reading.
+
+## ✅ 2026-09-25 lap 121 — non-vacuity anchored, and the debt made machine-visible
+
+Two guards on lap 120's result, because a reduction chain is worthless if its hypotheses cannot
+co-exist, and a "one remaining axiom" claim is worthless if nobody can see how big the gap is.
+
+**1. `ElliottLedger.ledger_nonvacuous`.**  The side conditions of
+`twoPointElliottLog_of_zetaExponent` are `0 < p`, `0 < q`, `p ≠ q` and
+`(CastingOut.phase (t/b)).re < 1`.  The last is `cos(2π t/b) < 1`, i.e. `t/b ∉ ℤ`.  Anchored at
+`b = 1, p = 2, q = 3, t = 1/2`, where `phase (1/2) = exp(πi) = −1` (`phase_half_re`, proved).
+So the ledger reduces a **non-empty** family of statements; it is not conditionally true by
+vacuity of its side conditions.
+
+**2. `ElliottZetaTheta.zetaLogDerivExponent_gap`.**  The whole remaining debt, as one interval:
+
+* **owned**: `θ ∈ [9, ∞)` — `zetaLogDerivExponent_of_nine_le`, from `PNTPort.ZetaZeroFree9`.
+* **needed**: `θ ∈ [0, 1)` — `twoPointElliottLog_of_zetaExponent`.
+* and `zetaLogDerivExponent_mono` says the hypothesis only *weakens* as `θ` grows, so nothing in
+  between comes free.
+
+**Why `9`, and why `< 1` is the honest threshold** (read off `src/PNTPort/ZetaBounds.lean` this
+lap; recorded so no future lap re-derives it):
+* `LogDerivZetaBnd = ZetaInvBnd × ZetaDerivUpperBnd`, i.e. **`9 = 7 + 2`**, where `7` is the cost
+  of `1/‖ζ‖` and `2` that of `‖ζ'‖`.
+* **`ZetaUpperBnd` already gives `‖ζ(σ+it)‖ ≤ C·log|t|` — exponent exactly `1`**, on the *wider*
+  region `σ ≥ 1 − A/log|t|`.
+
+So the classical material sits **precisely at** the threshold on the `ζ` side and **above** it on
+the `ζ'/ζ` side.  That is the analytic content of "the wall is real", now pinned to specific
+in-repo lemmas rather than prose: `|ζ(1+it)| ≪ log t` is borderline, and a proportional saving must
+beat it, i.e. needs `(log t)^{1−ε}`.
+
+**A live question this lap surfaced and did not settle.**  The chain needs only `θ < 1`, which is
+**weaker than Vinogradov's `2/3`** — *any* sub-linear bound suffices.  Whether that weaker
+statement has an easier proof than full Vinogradov is open.  That is the one question worth a
+literature lap; if the answer is no, the honest record is "Vinogradov or nothing".
+
+Audit: 9697 jobs, zero `sorryAx`.
+
+### NEXT LAP
+
+Either (a) the literature question above — is `‖ζ'/ζ(1+it)‖ ≪ (log t)^{1−ε}` known by any route
+cheaper than Vinogradov's mean value theorem? — or (b) begin narrowing `9 → 2` by routing the
+near-max band through `log ζ` (`ZetaUpperBnd`, exponent 1) plus `ZetaInvBnd` (exponent 7) instead
+of through `ζ'/ζ`, which would improve the owned interval to `[7, ∞)`.  Note (b) is a *numeric*
+improvement only — it does not reach `< 1` — so prefer (a), and do (b) only to keep the record
+sharp.  Do **not** file the gap as infeasible.
