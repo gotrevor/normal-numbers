@@ -305,6 +305,25 @@ theorem logToNatural_two_of_noExc_of_ne_one (h : TwoPointNaturalCorrelationNoExc
   logToNatural_two_of_noExc h z hz (ttExponent_pos (hz 0) hz0) (ttExponent_le_one (hz 0))
     (ttNonPretentious_of_uniformResonantMass hURM (hz 0) hz0 le_rfl) hM r
 
+/-- **`LogToNaturalCorrelationNZ 2`, on the two named inputs.**  The `D = 2` barrier of
+`C3MrtNatural` — in the `z 0 ≠ 1` form every consumer actually uses — now follows from TT
+Theorem 3.1(ii) with the exceptional set removed, plus the uniform resonant-mass bound.
+
+This is the wiring lap 71 left open: `depthAvg_tendsto_of_transfer_nz` consumes it directly. -/
+theorem logToNaturalCorrelationNZ_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
+    (hURM : UniformResonantMass) : LogToNaturalCorrelationNZ 2 :=
+  fun z hz hz0 _M r hM _ => logToNatural_two_of_noExc_of_ne_one h hURM z hz hz0 hM r
+
+/-- **The `D = 2` depth rung, natural density, on the two named inputs.**  The endpoint of the
+`D = 2` layer: with `ProgressionLogRung 2` in hand (the log-averaged rung, proved on the
+merely-multiplicative anchor in `C3MrtMultChase`), the twisted two-point depth average tends
+to `0` — conditional on exactly the named open problem and the resonance mass bound. -/
+theorem depthAvg_two_tendsto_of_named (h : TwoPointNaturalCorrelationNoExc)
+    (hURM : UniformResonantMass) {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
+    (hζ : depthRoot b hh 0 ≠ 1) (hrung : ProgressionLogRung 2) :
+    Filter.Tendsto (fun N : ℕ => depthAvg b P Q j hh 2 N) Filter.atTop (nhds 0) :=
+  depthAvg_tendsto_of_transfer_nz hQ P j hh hζ hrung (logToNaturalCorrelationNZ_two_of_noExc h hURM)
+
 end CastingOut
 
 end NormalNumbers

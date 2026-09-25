@@ -9850,3 +9850,52 @@ And TT say in print (`:2997`) that removing it is not within current technology.
    inputs, and it is a genuine (but bounded) piece of work: matching two pretentious metrics.
 2. `LogToNaturalCorrelationNZ 2` + the one-line rewiring of `depthAvg_tendsto_of_transfer`, so
    the new theorem plugs into the existing chain rather than sitting beside it.
+
+## Lap 72 (2026-09-25) — TTNonPretentious discharged to one resonance-mass input; D=2 wired in
+
+**Correction (item 1 of the lap-71 NEXT list).**  `TTNonPretentious (zOmegaNat z) X L` for
+`1 ≤ L ≤ log X` is **FALSE**, not merely unproved.  `ttPretentiousSum (z^ω) X t =
+∑_{p ≤ X²}(1 − cos(arg z − t log p))/p`, so at `t = 0` it is `(1−cos θ)(log log X + O(1))` and
+`exp(M) ≍ (log X)^{1−cos θ}`.  For small `arg z` this is `≪ log X`.  The admissible range is
+`L ≤ (log X)^{κ(z)}`, `κ(z) = (1−cos ε)(1 − (126/125)(ε/π))`, `ε = |arg z|/2`.
+
+**Done.**
+* `C3MrtTTPretentious.lean` (new): `ttPretentiousSum_eq_primes`, `ttPretentiousSum_ge`
+  (TT's `M(g;X²,·)` IS the `q = 1` archimedean pretentious distance — the lap-18..21 resonance
+  machinery applies verbatim), `ttExponent`, `ttExponent_pos`, `ttExponent_le_one`,
+  `ttNonPretentious_of_uniformResonantMass`.
+* `C3MrtNoExc`: the three assembly theorems now take `0 < κ ≤ 1` and `L ≤ (log X)^κ`.  The
+  assembly only ever needed `L → ∞`; the consumer-visible exponent is `κ·c`.
+* `C3MrtNatural`: `LogToNaturalCorrelationNZ` (the `z 0 ≠ 1` variant),
+  `depthAvg_tendsto_of_classSums` (shared core), `depthAvg_tendsto_of_transfer_nz`.
+  `depthAvg_tendsto_of_transfer` is unchanged as a statement and now a two-line corollary.
+* `logToNaturalCorrelationNZ_two_of_noExc` and `depthAvg_two_tendsto_of_named`: the `D = 2`
+  depth rung, natural density, from **exactly three** named inputs —
+  `TwoPointNaturalCorrelationNoExc`, `UniformResonantMass`, `ProgressionLogRung 2`.
+
+**The new named input, and why it is the right one.**
+`UniformResonantMass`: for `‖z‖=1, z ≠ 1`, `resonantMass z t Y ≤ (ε/π)(log log Y + log(2+|t|))
++ O_z(1)`, uniformly in `t`.  `resonant_mass_le` (lap 20) proves this with the lossy
+per-window bound `windowMassBound` in place of the sharp `log((γ_m+ε)/(γ_m−ε)) ≈ 2ε/γ_m`, which
+is fine for the `O(T)` windows of the range `|t| ≤ T/log X` but not for TT's
+`|t| ≤ (log X)^{1/125}`, where there are `≈ |t| log X` windows.
+
+**Refuted this lap — DO NOT RETRY.**
+* Summing `reciprocalPrimeInterval_le_log_ratio` per window: the dependency's Mertens error is a
+  FIXED constant `2·mertensBound` with no `1/log u` decay, so `K` windows cost `K·const`.  A
+  decaying-error Mertens, or Brun–Titchmarsh in short multiplicative windows, is required.
+* Grouping windows dyadically in `m` (blocks `m ∈ [2^j, 2^{j+1})` sit in a single ratio-4
+  interval): gives resonant mass `≤ (log 4 + 2·mertensBound)·log K`, which EXCEEDS the total
+  mass `log log Y`.  Useless.
+* `TwistedPrimeSumSaving` / Vinogradov–Korobov is **not** the missing input: it yields a
+  constant saving, and TT's `L → ∞` needs one growing like `κ log log X`.  (Also DIRECTION-
+  forbidden; not attacked.)
+
+**Next attack on the crux.**  Either (a) prove `UniformResonantMass` from Brun–Titchmarsh —
+window `m` has `p ∈ (U, U·e^{2ε/γ_m}]`, so BT gives count `≤ 2y/log y` with
+`y ≈ 2εU/γ_m`, mass `≤ 4ε/(γ_m log U)`; summing over `m ≤ K` reproduces `(ε/π) log K` — or
+(b) restrict the `t`-range: if the assembly can tolerate `L ≤ exp((log X)^{...})`-free small
+`L`, then `|t| ≤ T/log X` suffices and `resonant_mass_le` closes it outright.  (b) is the
+cheaper probe and should be tried first: check whether TT's `(3.3)` can be run with the
+infimum over `|t| ≤ T/log X` only — it cannot, TT need the full range, but the *derived*
+hypothesis in `dyadic_window_bound_of_noExc` might.

@@ -82,12 +82,33 @@ private lemma progIdx_le {M r N : ℕ} (hM : 0 < M) (hN : 0 < N) : progIdx M r N
 
 private lemma progIdx_pos (M r N : ℕ) : 0 < progIdx M r N := by rw [progIdx]; exact Nat.succ_pos _
 
-/-- **The natural-density `D`-point depth rung, at every fixed depth.**  Granting the two named
-obligations, the twisted depth-`D` average tends to `0` for every fixed `D`.  This is
-`depthAvg_one_tendsto` (Selberg–Delange, `D = 1`) at all `D`. -/
-theorem depthAvg_tendsto_of_transfer {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
-    {D : ℕ} (hζ : depthRoot b hh 0 ≠ 1)
-    (hrung : ProgressionLogRung D) (htrans : LogToNaturalCorrelation D) :
+/-- **The `z 0 ≠ 1` variant of the barrier.**  `LogToNaturalCorrelation K` as written is false
+without a non-degeneracy hypothesis (take `z ≡ 1`), so it is only ever usable through its
+log-averaged premise.  Every consumer in this development — `depthAvg_tendsto_of_transfer` —
+has `z 0 ≠ 1` in hand, so this is the form the route actually needs, and the form the
+archimedean certificate can supply (`C3MrtTTPretentious`). -/
+def LogToNaturalCorrelationNZ (K : ℕ) : Prop :=
+  ∀ z : ℕ → ℂ, (∀ i, ‖z i‖ = 1) → z 0 ≠ 1 → ∀ M r : ℕ, 0 < M →
+    (∀ ε : ℝ, 0 < ε → ∃ C : ℝ, ∃ N₀ : ℕ, ∀ N : ℕ, N₀ ≤ N →
+      ‖∑ m ∈ range N, (((m : ℝ) + 1)⁻¹ : ℝ) •
+          ∏ i : Fin K, z i ^ omegaNat (M * m + r + (i : ℕ) + 1)‖
+        ≤ C + ε * Real.log N) →
+    Tendsto (fun J : ℕ =>
+        (∑ m ∈ range J, ∏ i : Fin K, z i ^ omegaNat (M * m + r + (i : ℕ) + 1)) / (J : ℂ))
+      atTop (𝓝 0)
+
+/-- Nothing is weakened: the unrestricted barrier implies its `z 0 ≠ 1` variant. -/
+theorem logToNaturalCorrelationNZ_of_logToNatural {K : ℕ} (h : LogToNaturalCorrelation K) :
+    LogToNaturalCorrelationNZ K := fun z hz _ M r hM hrung => h z hz M r hM hrung
+
+/-- **The depth rung from class-sum convergence.**  The bookkeeping core shared by
+`depthAvg_tendsto_of_transfer` and its `z 0 ≠ 1` variant: once every residue class `r` mod
+`Q·P#` has natural-density-zero `D`-point correlation, the depth average dies. -/
+theorem depthAvg_tendsto_of_classSums {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ) {D : ℕ}
+    (htr : ∀ r : ℕ, Tendsto (fun J : ℕ =>
+      (∑ m ∈ range J, ∏ i : Fin D,
+          depthRoot b hh i ^ omegaNat (Q * primorial P * m + r + (i : ℕ) + 1)) / (J : ℂ))
+      atTop (𝓝 0)) :
     Tendsto (fun N : ℕ => depthAvg b P Q j hh D N) atTop (𝓝 0) := by
   classical
   set z : ℕ → ℂ := fun i => depthRoot b hh i with hzdef
@@ -98,9 +119,6 @@ theorem depthAvg_tendsto_of_transfer {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : 
   -- the class sums
   set S : ℕ → ℕ → ℂ := fun r J =>
     ∑ m ∈ range J, ∏ i : Fin D, z i ^ omegaNat (M * m + r + (i : ℕ) + 1) with hSdef
-  -- obligation B applied to obligation A
-  have htr : ∀ r : ℕ, Tendsto (fun J : ℕ => S r J / (J : ℂ)) atTop (𝓝 0) := fun r =>
-    htrans z hz M r hM0 (hrung z hz hζ M r hM0)
   -- the real-valued rate
   set g : ℕ → ℕ → ℝ := fun r J => ‖S r J‖ / (J : ℝ) with hgdef
   have hg : ∀ r : ℕ, Tendsto (fun J : ℕ => g r J) atTop (𝓝 0) := by
@@ -141,6 +159,29 @@ theorem depthAvg_tendsto_of_transfer {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : 
     rw [heq, hgdef]
     exact div_le_div_of_nonneg_left (norm_nonneg _) hJR hJNR
   exact squeeze_zero_norm' hbd hsum
+
+/-- **The depth rung on the `z 0 ≠ 1` barrier.**  Identical to `depthAvg_tendsto_of_transfer`
+but on `LogToNaturalCorrelationNZ`, which is what `C3MrtTTPretentious` can actually supply at
+`D = 2`: the non-degeneracy `hζ` is already a hypothesis here. -/
+theorem depthAvg_tendsto_of_transfer_nz {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
+    {D : ℕ} (hζ : depthRoot b hh 0 ≠ 1)
+    (hrung : ProgressionLogRung D) (htrans : LogToNaturalCorrelationNZ D) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j hh D N) atTop (𝓝 0) := by
+  refine depthAvg_tendsto_of_classSums hQ P j hh fun r => ?_
+  have hz : ∀ i, ‖depthRoot b hh i‖ = 1 := fun i => by rw [depthRoot]; exact norm_ee_real _
+  have hM0 : 0 < Q * primorial P := Nat.mul_pos hQ (primorial_pos P)
+  exact htrans (fun i => depthRoot b hh i) hz hζ _ r hM0
+    (hrung (fun i => depthRoot b hh i) hz hζ _ r hM0)
+
+/-- **The natural-density `D`-point depth rung, at every fixed depth.**  Granting the two named
+obligations, the twisted depth-`D` average tends to `0` for every fixed `D`.  This is
+`depthAvg_one_tendsto` (Selberg–Delange, `D = 1`) at all `D`. -/
+theorem depthAvg_tendsto_of_transfer {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
+    {D : ℕ} (hζ : depthRoot b hh 0 ≠ 1)
+    (hrung : ProgressionLogRung D) (htrans : LogToNaturalCorrelation D) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j hh D N) atTop (𝓝 0) :=
+  depthAvg_tendsto_of_transfer_nz hQ P j hh hζ hrung
+    (logToNaturalCorrelationNZ_of_logToNatural htrans)
 
 #print axioms ProgressionLogRung
 #print axioms LogToNaturalCorrelation
