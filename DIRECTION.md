@@ -2,37 +2,69 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective.**  `isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′, Fable §9 / Astra §11)
-SORRY-FREE and trust-triple.  The whole chain is assembled and green; the headline's `sorryAx`
-comes from exactly **three** leaves, all in `src/NormalNumbers/PrimeModelFamilyGraded.lean`.
+**Objective.**  `c4_realizable` / `c4_realizable_of_mem_one`
+(`src/NormalNumbers/AbelianWindowSets.lean`) SORRY-FREE: for EVERY `S ⊆ {L ≥ 1}` with `1 ∈ S`,
+a binary sequence abelian at exactly the lengths in `S`.  Operator objective
+`KICKOFF-2026-09-24-c4.md`, branch `wip/c4-infinite`.  (Theorem C′/multicutoff — the previous
+directive — is DONE and trust-triple; that campaign is closed.)
 
-**Mandated next move (2026-09-23 review lap — direction KEPT, priority sharpened).**
-Close the three leaves, hardest first:
-1. **`termE5_tendsto`** (l. ~980) — Astra (8.6), the last structurally NEW estimate and the only
-   one whose feasibility is in real doubt.  Everything it needs is already proved:
-   `recipSumIoc_yG_le` (short root chain at any `j ≤ J1 N`), `JG_le_mass` (`8J ≤ S_P(N)`),
-   Mertens (`primeRecipSum_le` / `recipSumLe_le_crude`), `cIdx ≤ J−1 ≤ J1 N`.
-2. **`schedule_admissible`** (l. ~575) — eleven pointwise clauses, two already proved
-   (`yBotG_le_yG`, `yG_antitone`); bookkeeping, no new mathematics.
-3. **`termE4c_tendsto`** (l. ~974) — `N^{-1+o(1)}`; arithmetic of the support level.
+**Route (set 2026-09-25 lap 15 review; supersedes lap 14's "superpose coordinate groups /
+renewal process" plan).  THE NESTED-LAYER GADGET ROUTE.**  The design is a 4-bit *gadget*
+`T_p` acting on the bit positions `{p, p+1, p+a, p+a+1}` (swap bits `p+a, p+a+1` when
+`bit p ≠ bit (p+1) ∧ bit (p+a) = bit (p+1) ∧ bit (p+a+1) = bit p`) — this is `rectG`, stripped
+to the four positions it actually reads.  Facts settled on paper this lap:
+* A window `[lo,hi)` feels a gadget only if it *separates* both pairs, which forces
+  `lo = p+1`, `hi = p+a+1`, i.e. `L = a` and one offset per gadget.  Hence one gadget = one
+  excluded length (lap 14's `c4_realizable_compl_singleton`).
+* **Layers.**  Layer `m` puts the `a_m`-gadget at every position `≡ o_m (mod q_m)`, with
+  `q_1 | q_2 | …`, `o_m + a_m + 1 < q_m`, and ALL quadruples pairwise disjoint.  Then
+  `s⁽ⁿ⁾ :=` (layers `1..n` applied to a binary normal `x`) IS a `blockSeq` of period `q_n` over
+  the alphabet `2^{q_n}` (`blockOf 2 q_n x` is normal by `isNormalSequence_pow`), so the
+  EXISTING engine computes its law exactly; and the layer-`m` defect has density `1/q_m` in
+  `s⁽ⁿ⁾` for EVERY `n ≥ m` — the stage laws AGREE, killing the uniformity problem.
+* **Gadget removal is an involution, not algebra.**  For a trace `I` containing both-or-neither
+  of a gadget's LOW pair `{p,p+1}`, the bit-swap `ι` (swap `p ↔ p+1` and `p+a ↔ p+a+1`)
+  preserves the trigger set and sends the perturbed exponent to the plain one, so the gadget
+  drops out of `∑_d X^{ones}` POINTWISE.  All but ≤1 gadget is removable for any interval
+  trace, so the multi-gadget block law needs only ONE algebraic computation (a single gadget at
+  position `p` in a block of width `q`).  This is what makes many gadgets per block cheap.
+* `s := lim s⁽ⁿ⁾` (each position is in ≤ 1 quadruple) differs from `s⁽ⁿ⁾` only on layers `> n`,
+  a set of density `≤ 8 ∑_{m>n} 1/q_m → 0`.
 
-**Forbidden drift.**  Do NOT open new campaigns, do NOT touch `PrimeLambertOscillation` or
-`MahlerDriftOne` (the two pre-existing off-campaign `sorry`s — designated open), do NOT edit
-`PrimeModelBrunLower.lean`, `papers/`, or Pair B files.  Do NOT weaken any existing statement to
-make a leaf close; a leaf that resists gets a named sub-`sorry` IN `src/`, never a relocation.
-No constant-class-count route (refuted 2026-09-22, see below).
+**Mandated next moves, in order (hardest/most route-decisive first).**
+1. **`AbelianWindowPerturb.lean` — the limit transfer.**  `|onesFreq s L j N − onesFreq t L j N|
+   ≤ L · diffCount s t (N+L) / N` and the 3ε corollary `tendsto_onesFreq_of_approx`.  This is
+   the mechanism that replaces the multi-scale uniformity analysis; without it the route dies.
+2. **The single gadget at width `q`** — generalize `rect_segGf` from a block of width `a+2` to
+   a gadget at position `p` inside a block of width `q`, plus the removal involution.
+3. **The multi-gadget block law** + interval geometry ⇒ `c4_realizable_of_finite_compl`.
+4. **The layer layout** (periods `q_m`, offsets `o_m` by a counting/pigeonhole dodge,
+   disjointness) + assembly ⇒ `c4_realizable_of_mem_one`.
 
-**Why.**  The graded route's route-decisive question — whether the fresh-mass surrogate `ε_N → 0`
-alone can drive the schedule — was settled affirmatively by the bounded contracting site index
-(`exists_site_re_nonpos_le`, lap G5c-e) plus the short root chain (`recipSumIoc_yG_le`, lap G5c-i).
-E5 is where that finding is finally cashed: if the exponent `8J − 1 − log 2J − o(1)` does not
-materialise in Lean, the schedule constants (the `8` in `JG`, the `2J` floor) need retuning and
-that is a redesign.  Nothing else open can force a pivot.
+**Forbidden drift.**  Do NOT weaken, rename or delete `abelianAt_one_of_abelianAt` or
+`c4_realizable`.  Do NOT edit `Maze.lean`, `papers/`, other KICKOFFs, or any other campaign's
+files; do NOT touch the two designated-open off-campaign `sorry`s (`PrimeLambertOscillation`,
+`MahlerDriftOne`) or the Swing/CF leaves.  New code only in
+`src/NormalNumbers/AbelianWindow*.lean`.  Do NOT restart the "renewal process / ergodic
+theorem" or "staged concatenation with uniform rates" plans: the nested-layer + perturbation
+architecture exists precisely to avoid both.  Do NOT settle for the finite-complement case —
+`S` arbitrary (both `S` and `Sᶜ` infinite, e.g. `S = {1} ∪ {2^k}`) is the crux, and a single
+block length can NEVER reach it (its abelian set is eventually `q`-periodic; `c4_realizable_odd`
+is exactly that ceiling).
+
+**Why.**  The route-decisive question is no longer "is there a design with a prescribed defect
+set" (settled: gadget per excluded length) but "can ONE sequence carry infinitely many scales".
+The nested-layer answer makes every stage's law EXACTLY equal on the decided lengths, so the
+only analysis left is a sparse-perturbation estimate — item 1.  If item 1 fails, the whole
+multi-scale architecture must be redesigned, so it is first.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
 - 2026-09-23 (review lap): route KEPT and vindicated (5/8 leaves closed, tail crux resolved);
   narrowed to the three remaining leaves of `PrimeModelFamilyGraded.lean`, E5 first.
+- 2026-09-25 (C4 lap 15 review): campaign switched to C4 (operator objective, branch
+  `wip/c4-infinite`); the nested-layer gadget route + perturbation transfer replaces lap 14's
+  "superpose coordinate groups, then renewal process" plan.
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically

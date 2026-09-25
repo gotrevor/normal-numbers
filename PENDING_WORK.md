@@ -1,18 +1,59 @@
 # PENDING WORK
 
-## 2026-09-25 — C4 (branch `wip/c4-infinite`): the crux, and where it stands
+## 2026-09-25 (lap 15 review) — C4 (branch `wip/c4-infinite`): the crux and its decomposition
 
-**Crux:** `c4_realizable_of_mem_one` (`src/NormalNumbers/AbelianWindowSets.lean:506`), the one
-open `sorry` in the C4 chain.  **Advance (laps 10–11):** the *rectangle design* —
-`DESIGN-2026-09-25-c4-rectangle.md` — settles every `S` with finite complement on paper and in
-exact rational arithmetic (`probes/c4_rectangle_design.py`), and the general Lean engine is landed
-sorry-free in `src/NormalNumbers/AbelianWindowGf.lean` (`sum_prod_wordOf`,
-`blockFreq_eq_binomial_of_seg`, `isAbelianAt_blockSeq_of_binomSeg`).  **Done lap 14:** `c4_realizable_compl_singleton` — for every `a ≥ 2` a binary sequence abelian at
-exactly the lengths `≠ a` (axiom-clean, `src/NormalNumbers/AbelianWindowRect.lean`).  **Next
-attack:** the two numbered steps in `HANDOFF-c4-2026-09-25-lap14.md` (finite complement by
-superposing rectangles on disjoint coordinate groups; then the multi-scale mixture).  **Still open beyond
-that:** realizing an infinite mixture of designs by one sequence (multi-scale concatenation or a
-renewal block length); no cancellation obstruction exists.
+**Crux:** `c4_realizable_of_mem_one` (`src/NormalNumbers/AbelianWindowSets.lean:506`) — the one
+open `sorry` in the C4 chain, and the only `sorry` this campaign owns.
+
+**Where the ceiling is.**  Laps 1–14 closed: necessity (`abelianAt_one_of_abelianAt`), `S = ∅`,
+`S = {1}` (`altSeq`), `S = odds` (`c4_realizable_odd`), and `S = {L : L ≠ a}` for every `a ≥ 2`
+(`c4_realizable_compl_singleton`, the rectangle design).  ALL of these are single-block-length
+`blockSeq` witnesses, and that class has a hard ceiling, derived this lap:
+
+> For a block sequence of period `q`, the window law at length `L` depends on `L` only through
+> `L mod q` once `L ≥ q` (the trace on each block is a fixed suffix/prefix and the full-block
+> factor is a fixed power).  So its exact abelian set is **eventually `q`-periodic**.
+
+`c4_realizable_odd` (`S ∩ [2,∞)` = the odd numbers, `q = 2`) is exactly that ceiling being hit.
+C4 asks for ARBITRARY `S ∋ 1` — e.g. `S = {1} ∪ {2^k}`, with `S` and `Sᶜ` both infinite and
+`S` not eventually periodic — so **the crux genuinely needs infinitely many block scales**, and
+no amount of work inside the single-`q` engine can reach it.  (Lap 14's step 1, "superpose
+rectangles on disjoint coordinate groups", is still on-path but is NOT the crux: it only enlarges
+the finite-complement family.)
+
+**The route (see `DIRECTION.md` → CURRENT DIRECTIVE for the binding version).**  Nested gadget
+layers + a sparse-perturbation limit transfer.  Four items, hardest first:
+
+1. **`AbelianWindowPerturb.lean` — the limit transfer.**  `diffCount s t N` = number of
+   positions `< N` where `s` and `t` differ;
+   `|onesFreq s L j N − onesFreq t L j N| ≤ L · diffCount s t (N+L) / N` (one changed digit
+   spoils ≤ `L` windows — the same estimate as `G4EntropyStable.card_badWin_le`, which is
+   reusable), then the 3ε corollary: if for every `ε > 0` there is a `t` with
+   `Tendsto (onesFreq t L j) atTop (𝓝 v)` and eventual diff-density `≤ ε`, then
+   `Tendsto (onesFreq s L j) atTop (𝓝 v)`.  THIS is the piece that replaces the multi-scale
+   uniformity analysis (rates, double limits) that blocked lap 14's plan.
+2. **The single gadget at width `q`.**  Generalize `rect_segGf` from "block of width `a+2`,
+   gadget at `{0,1,a,a+1}`" to "block of width `q`, gadget at `{p,p+1,p+a,p+a+1}`", and prove
+   the **removal involution**: if the trace `I` holds both-or-neither of `{p,p+1}`, then the
+   bit-swap `ι` (`p ↔ p+1` and `p+a ↔ p+a+1`) preserves the trigger set and satisfies
+   `ones_I(ι d) = ones_I(d) + u(d)`, `u(ι d) = −u(d)`, so re-indexing the sum by `ι` deletes the
+   gadget from `∑_d X^{ones_I}` with NO polynomial algebra.  (If `I` holds both-or-neither of
+   the HIGH pair `{p+a,p+a+1}` the gadget drops out pointwise, trivially.)
+3. **The multi-gadget block law.**  An interval trace fully separates at most ONE gadget
+   (full separation forces `lo = p+1`, `hi = p+a+1`, so `p` is determined), and suffix/prefix
+   traces separate none (`a = 0` would be needed).  So every other gadget is removable by 2 and
+   the law is `binomial + (one correction)`.  Corollary: `c4_realizable_of_finite_compl`.
+4. **The layer layout and assembly.**  `q_1 | q_2 | …` with `∑ 1/q_m` tiny, `o_m + a_m + 1 < q_m`,
+   quadruples pairwise disjoint (choose `o_m mod q_{m−1}` avoiding ≤ `16(m−1)` residue classes —
+   a `Finset.card` pigeonhole, the only genuinely new bookkeeping).  `s⁽ⁿ⁾` = layers `1..n`
+   applied to a binary normal `x`, which IS `blockSeq g_n (blockOf 2 q_n x) q_n`
+   (`isNormalSequence_pow` supplies normality of the base-`2^{q_n}` digits).  Layer `m`'s defect
+   has density exactly `1/q_m` in EVERY `s⁽ⁿ⁾`, `n ≥ m`, so the stage laws agree on decided
+   lengths; `s = lim s⁽ⁿ⁾` differs from `s⁽ⁿ⁾` on density `≤ 8∑_{m>n} 1/q_m`.  Then 1 gives
+   `c4_realizable_of_mem_one`.
+
+**Confidence C4 is TRUE: high.**  Every ingredient is now either in the kernel or reduced to
+elementary bookkeeping; no step needs a limit theorem beyond the 3ε transfer.
 
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 

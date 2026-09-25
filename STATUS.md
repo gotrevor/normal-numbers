@@ -1,29 +1,39 @@
 # STATUS — normal-numbers 📊
 
-**Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
-· **Build**: 🟢 green (9161 jobs) · **Updated**: 2026-09-23, campaign complete · HEAD `3523f8d`
-· branch `wip/g5-prime-subset`
+**Live campaign: C4 — exact abelian window sets.  One open `sorry`: `c4_realizable_of_mem_one`.**
+· **Build**: 🟢 green (9262 jobs) · **Updated**: lap 15 review · 2026-09-25 · HEAD `7346109`
+· branch `wip/c4-infinite` · (Pair A multicutoff / Theorem C′: PROVED and closed, below)
 
-## Where it stands (multicutoff campaign)
+## Where it stands (C4)
 
-Laps 0–7 of `KICKOFF-2026-09-22-multicutoff-lean.md` are landed and the headline
-`isNormal_subsetLambert_of_sqrtFreshMassZero` is **fully assembled and compiling**: the root chain,
-Lemma B, the graded joint state, hypothesis-free Theorem A (`KMT.window_bound_schedule`), the
-explicit Astra §8 schedule, and the squeeze `kmt_along_graded` + `tailOK_graded`.  `tailOK_graded`
-— the tail crux of the last two laps — is **PROVED**.  What remains is **nothing**: the last three leaves
-(`termE5_tendsto`, `schedule_admissible`, `termE4c_tendsto`) closed on 2026-09-23, and
-`#print axioms isNormal_subsetLambert_of_sqrtFreshMassZero` is the bare trust triple.  `src/`
-holds only the two pre-existing off-campaign `sorry`s.
+C4 asks: for which `S ⊆ {L ≥ 1}` is some binary sequence abelian-normal at *exactly* the window
+lengths in `S`?  Necessity (`1 ∈ S` unless `S = ∅`) is proved; the witnesses for `S = ∅`,
+`S = {1}`, `S = odds` and `S = {L : L ≠ a}` (every `a ≥ 2`) are in the kernel and axiom-clean.
+All four are **single-block-length** witnesses, and lap 15 derived that class's ceiling: a
+`blockSeq` of period `q` has an **eventually `q`-periodic** abelian set.  So the crux —
+arbitrary `S ∋ 1`, e.g. `S = {1} ∪ {2^k}` — needs infinitely many scales in ONE sequence.  The
+route now mandated (`DIRECTION.md`) is nested gadget layers plus a sparse-perturbation limit
+transfer, decomposed into four items in `PENDING_WORK.md`.
 
-**The route finding that got us here** (laps G5c-e…i, both kept): Theorem A's contracting site
-`j₀` has index `≤ log₄|h|`, a constant for fixed `h` uniform in `N`
-(`PrimeModelSiteIndexBound.exists_site_re_nonpos_le`).  So leg E5 collects its contraction at the
-**near-top** cutoff `y_{cIdx}`, not at the bottom cutoff, and the root chain from there to `N` is
-`O(log u_N)` halvings rather than `≍ L₃N`.  That is what lets `J_N` be tied to the full mass
-`S_P(N)` as Astra §8 has it, and it reduced the tail to the one-step chain `S_P(N,2N) ≤ ε_N`.
+## What's happened (newest first)
 
-## What's happened (multicutoff campaign, newest first)
-
+- **2026-09-25 (C4 lap 15, review)** — direction REVISED.  Recorded the single-block ceiling
+  (eventual `q`-periodicity of a block sequence's abelian set) which shows lap 14's "finite
+  complement by superposition" plan cannot reach the crux; replaced it with the **nested-layer
+  gadget route**: the 4-bit gadget on `{p,p+1,p+a,p+a+1}`, layers at nested periods `q_m`,
+  stage laws that agree EXACTLY on decided lengths, and a **removal involution** (the bit-swap
+  `p↔p+1`, `p+a↔p+a+1` deletes a gadget from `∑_d X^{ones}` pointwise) which makes many gadgets
+  per block cheap.  Item 1 of the new decomposition is the `onesFreq` perturbation transfer.
+- **2026-09-25 (C4 laps 10–14)** — the rectangle design: `sum_prod_wordOf`, `rect_key`,
+  `rect_segGf`, `rect_isAbelianAt_of_ne`, `rect_not_isAbelianAt`, and
+  **`c4_realizable_compl_singleton`** — for every `a ≥ 2` a binary sequence abelian at exactly
+  the lengths `≠ a` (axiom-clean).  Plus the general block-window engine
+  (`AbelianWindowGf.lean`: `winGf_eq_prod`, `blockFreq_eq_binomial_of_seg`,
+  `isAbelianAt_blockSeq_of_binomSeg`).
+- **2026-09-25 (C4 laps 1–9)** — necessity `abelianAt_one_of_abelianAt` (the Binomial mean forces
+  digit density 1/2), the `S = ∅` branch, `S = {1}` via `altSeq`, the periodic criterion
+  `isAbelianAt_periodic_iff`, the block-density workhorse, and **`c4_realizable_odd`** (abelian at
+  exactly the odd lengths — an infinite exact window set).
 - **2026-09-23 (laps G5c-k/l/m) — THEOREM C′ PROVED.**  `termE5_tendsto` (Astra 8.6),
   `schedule_admissible` (all eleven clauses) and `termE4c_tendsto` all landed sorry-free, and the
   headline is trust-triple clean.  ROUTE FINDING in the middle one: the cut depth `LG` must be
@@ -49,20 +59,47 @@ holds only the two pre-existing off-campaign `sorry`s.
   model defect, support level, graded CRT counts, graded retained box; Theorem A with all five
   legs.  Nothing in the paper refuted; one paper *gap* closed (Astra §8 tacitly uses `j₀` fixed).
 
-## Outstanding (multicutoff campaign)
+## Outstanding
 
-### Short-term (mirrors PENDING_WORK top)
-1. `Statement.lean`-style audit surface for `SqrtFreshMassZero` / `DivergentRecip` /
-   `IsNormal 4 (subsetLambert P 4)` — the only piece of the campaign's own hygiene not yet done.
-2. The abstract Astra §10 consumer `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0` — strictly weaker
-   hypothesis, same schedule; only the E1 leg needs re-running.
+### Short-term (mirrors PENDING_WORK top — C4)
+1. `AbelianWindowPerturb.lean`: `|onesFreq s L j N − onesFreq t L j N| ≤ L·diffCount/N` and the
+   3ε transfer.  The mechanism the multi-scale limit rests on.
+2. The single gadget at width `q` + the removal involution.
+3. The multi-gadget block law + interval geometry ⇒ finite-complement `S`.
+4. The layer layout (nested periods, pigeonhole offsets) + assembly ⇒ `c4_realizable_of_mem_one`.
 
 ### Long-term
 Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
-`MahlerDriftOne.exists_prime_nonresidue`.
+`MahlerDriftOne.exists_prime_nonresidue`, the Swing/CF leaves.  Multicutoff hygiene: a
+`Statement.lean` audit surface for Theorem C′, and the abstract Astra §10 consumer.
 
-### To completion
-Theorem C′ is done.  The campaign's remaining work is the audit surface and the §10 consumer.
+### To completion (C4)
+Items 1–4 above.  Then `c4_realizable` is unconditional and the campaign's headline is closed;
+a counterexample stated as a theorem would also close it, but nothing found this lap points that
+way (confidence C4 is TRUE: high).
+
+## Axiom ledger — C4 (real `#print axioms`, 2026-09-25, build 9262 jobs)
+
+| headline theorem | paper claim | `#print axioms` shows | verdict |
+|---|---|---|---|
+| `Abelian.abelianAt_one_of_abelianAt` | C4 necessity: abelian at any `L ≥ 1` ⇒ abelian at 1 — UNCOND | trust triple | 🟢 clean |
+| `Abelian.c4_realizable_singleton_one` | `S = {1}` realized (`altSeq`) — UNCOND | trust triple | 🟢 clean |
+| `Abelian.c4_realizable_odd` | `S =` odd lengths realized — UNCOND | trust triple | 🟢 clean |
+| `Abelian.c4_realizable_compl_singleton` | `S = {L : L ≠ a}`, every `a ≥ 2` — UNCOND | trust triple | 🟢 clean |
+| `Abelian.c4_realizable_of_mem_one` | **C4 hard branch**: every `S ∋ 1` realized — UNCOND | trust triple **+ `sorryAx`** | 🔵 THE open crux (disclosed `sorry`, `AbelianWindowSets.lean:506`) |
+| `Abelian.c4_realizable` | **C4 (ratified headline)** — UNCOND | trust triple **+ `sorryAx`** | 🔵 open via the branch above |
+
+Math-axiom count for C4: **0** — no `axiom` declarations; the only gap is the disclosed `sorry`
+on the crux, which is the campaign's whole objective (not debt to be cited).
+
+## Pointers
+`KICKOFF-2026-09-24-c4.md` · `DESIGN-2026-09-25-c4-rectangle.md` ·
+newest baton `HANDOFF-c4-2026-09-25-lap15.md` · `PENDING_WORK.md` ·
+`DIRECTION.md` (CURRENT DIRECTIVE) · `ROADMAP.md`
+
+---
+
+# (below: the Pair A multicutoff campaign — CLOSED 2026-09-23; durable overview kept)
 
 ## Axiom ledger — multicutoff campaign (real `#print axioms`, 2026-09-23, 9161 jobs)
 
