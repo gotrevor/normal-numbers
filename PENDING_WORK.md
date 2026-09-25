@@ -10440,3 +10440,30 @@ is `≤ CstKdeg m K · L^{-cKgeom c₀ θ b K}` under TT's hypotheses minus the 
 NEXT: (1) `∀ᶠ K` instead of `∀ K` — `KN N = max 1 (depthSlow b N - v) → ∞`, so add
 `hKNtop.eventually hin` to the `filter_upwards` in `depthAvg_gen_tendsto_of_unif_depth` and
 thread up.  (2) then the `Statement.lean` audit surface + ledger writeup (trigger C3-T6).
+
+## lap 95 (2026-09-25) — the input needed only at LARGE `K`
+
+`src/NormalNumbers/C3MrtEvtInput.lean` (new, `lake build NormalNumbers.C3MrtEvtInput` green at
+9010 jobs, `lake build` green at 9257; all new declarations `[propext, Classical.choice, Quot.sound]`).
+
+Fifth narrowing of the one open statement:
+
+    lap 94  ∀ K,            KPointNoExcDepth b h' cK CstK K
+    lap 95  ∀ᶠ K in atTop,  KPointNoExcDepth b h' cK CstK K
+
+`conjC3_of_geom_input_evt` is the headline.  Mechanism: the chain evaluates the input only at
+`K = KN N = max 1 (depthSlow b N - v)`, and `tendsto_KNslow_atTop` shows `KN → ∞`; in
+`depthAvg_gen_tendsto_of_unif_evt` the input is already applied inside a `filter_upwards`, so
+`hKNtop.eventually hin` simply joins that list.  A `Tendsto … (𝓝 0)` conclusion cannot see
+finitely many `N`, so every fixed `K` is dispensable.  `conjC3_of_geom_input_depth'`
+(`Filter.Eventually.of_forall`) confirms nothing is given up.
+
+Ledger consequence: **no small-`K` rung is assumed at all** — in particular `K = 2`, the only
+rung anywhere near the literature (TT Thm 3.1(ii)), is now unused by the headline.  The open
+statement is purely asymptotic in the number of correlation points, on one explicit family.
+This also sharpens the honest disclosure: the gap to print is not "we assume a published rung
+without its exceptional set" but "we assume the large-`K` regime, which print does not reach at
+all" (TT: triple correlations "not within current technology").
+
+NEXT: the `Statement.lean` audit surface + ledger writeup (trigger C3-T6 — five narrowings in
+laps 90–95, so the reduction is at or near FINAL).
