@@ -203,72 +203,6 @@ theorem log_lowHeight_le {ε : ℝ} (hε : 0 < ε) (t : ℝ) :
   have := log_le_eps_mul hε hlog2
   linarith
 
-/-! ### The high range: the error tail, and the one remaining obligation -/
-
-/-- **The high range — the remaining obligation of `UniformResonantMass`.**
-
-Above height `lowHeight t = 16 log(2+|t|)` the resonant primes are covered by the windows
-`|t| log p ∈ (γ_m − δ, γ_m + δ)`, `γ_m = |arg z − 2πm| ≥ 2δ`, and `resonant_window_mass_le`
-bounds window `m` by `16δ/(|t| a_m) + 6(1+a_m)³ exp(−a_m/2)` with `a_m = (γ_m − δ)/|t|`.
-
-* The **main terms** sum to `≤ (32δ/π)(1 + log K) + O(δ)` by `sum_inv_gap_le` and
-  `sum_Icc_symm_le`, with `K ≈ (|t| log Y + δ + π)/(2π)` by `abs_windowIndexW_le`, so
-  `log K ≤ log log Y + log(2+|t|) + O(1)` — inside the `100δ(...)` budget, since `32/π < 11`.
-* The **error terms** are where the sketched route in `C3MrtWindowMass` failed.  Because every
-  window here has `a_m ≥ lowHeight t = 8 log(2+|t|)`, each error carries
-  `exp(−a_m/8) ≤ (2+|t|)⁻¹`, and the windows are spaced `2π/|t|` apart in `a`, so the tail sums
-  to `≲ (|t|/2π) · 8 · (2+|t|)⁻¹ ≤ 4/π = O(1)` via `sum_exp_neg_le` and `window_err_le`.  The
-  `|t|` of the window count is cancelled by the `(2+|t|)⁻¹` the raised starting height supplies.
-
-Disclosed as a `sorry`: this is the Brun–Titchmarsh bookkeeping, not a further analytic input —
-every ingredient it needs is already proved in `C3MrtWindowMass`. -/
-theorem highResonantMass_le {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z)
-    (t : ℝ) {Y : ℕ} (hY : 2 ≤ Y) :
-    highResonantMass z t Y δ
-      ≤ 50 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|)) + (2200000 + 40 * δ) := by
-  sorry
-
-/-- **`UniformResonantMass`, modulo the high range.**  With `highResonantMass_le` in hand the
-low/high split closes the statement: the low range contributes
-`ε·log(2+|t|) + C(ε)` with `ε = 50δ`, the high range the rest, and `100δ = 50δ + 50δ` covers
-both.  This is the shape `UniformResonantMass` asks for, with `C` depending only on `z` and `δ`. -/
-theorem uniformResonantMass_of_high {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ)
-    (hδ : δ ≤ resEps z) (t : ℝ) {Y : ℕ} (hY : 2 ≤ Y) :
-    resonantMass z t Y δ
-      ≤ 100 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|))
-        + (Real.log 16 + Real.log (1/(50*δ)) - 1 + Erdos67b.PrimeEstimates.mertensBound
-            + (2200000 + 40 * δ) + 25 * δ + 1) := by
-  have hlow := lowResonantMass_le z t Y δ
-  have habs := log_lowHeight_le (show (0:ℝ) < 50 * δ by linarith) t
-  have hhigh := highResonantMass_le hz hδ0 hδ t hY
-  have hsplit := resonantMass_eq_low_add_high z t Y δ
-  have hll : (0:ℝ) ≤ Real.log (2 + |t|) := by
-    have := abs_nonneg t
-    exact Real.log_nonneg (by linarith)
-  -- `log log Y ≥ log log 2 > −1/2` for `Y ≥ 2`, which is what the `25δ` in the constant pays for
-  have hlogY : Real.log 2 ≤ Real.log (Y : ℝ) := by
-    have : (2:ℝ) ≤ (Y:ℝ) := by exact_mod_cast hY
-    exact Real.log_le_log (by norm_num) this
-  have hexph : (1.6:ℝ) < Real.exp (1/2) := by
-    have hsq : Real.exp (1/2) * Real.exp (1/2) = Real.exp 1 := by
-      rw [← Real.exp_add]; norm_num
-    nlinarith [Real.exp_one_gt_d9, Real.exp_pos (1/2 : ℝ), hsq]
-  have hlog2gt : Real.exp (-(1/2 : ℝ)) < Real.log 2 := by
-    have hinv : Real.exp (-(1/2:ℝ)) = 1 / Real.exp (1/2) := by
-      rw [Real.exp_neg]; ring
-    have h16 : 1 / Real.exp (1/2) < 1 / 1.6 :=
-      one_div_lt_one_div_of_lt (by norm_num) hexph
-    have := Real.log_two_gt_d9
-    rw [hinv]
-    nlinarith
-  have hloglogY : -(1/2 : ℝ) ≤ Real.log (Real.log (Y : ℝ)) := by
-    have hpos : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
-    have h1 : Real.log (Real.exp (-(1/2:ℝ))) ≤ Real.log (Real.log (Y:ℝ)) :=
-      Real.log_le_log (Real.exp_pos _) (le_trans hlog2gt.le hlogY)
-    rwa [Real.log_exp] at h1
-  rw [hsplit]
-  nlinarith [hlow, habs, hhigh, hloglogY, hδ0]
-
 /-! ### Narrowing the open leaf: the window partition, the small-`Y` case, and `log K`
 
 Three of the five steps of `highResonantMass_le` are discharged here, leaving only the
@@ -506,7 +440,7 @@ theorem range_succ_eq_insert_Icc (K : ℕ) :
 
 /-- **Step 3 — the main terms sum inside the budget.**  `∑_{|m| ≤ K} 16δ/(γ_m − δ) ≤ 32 +
 (64δ/π)(1 + log K)`: the central window contributes the absolute constant, and the rest is the
-harmonic sum of `sum_inv_gap_le`.  Since `64/π < 21 < 50`, this sits well inside the
+harmonic sum of `sum_inv_gap_le`.  Since `64/π < 22 < 50`, this sits well inside the
 `50δ(log log Y + log(2+|t|))` the split allots to the high range. -/
 theorem main_sum_le {z : ℂ} {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z) (K : ℕ) :
     ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ), 16 * δ / (|z.arg - 2 * Real.pi * m| - δ)
@@ -701,6 +635,208 @@ theorem err_sum_le {z : ℂ} {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z) 
     _ ≤ (100000 * (2 + |t|)⁻¹) * (2 * (1 + 1 / c)) :=
         mul_le_mul_of_nonneg_left hbound hcoef
     _ ≤ 2200000 := hfin
+
+/-! ### The high range: the error tail, and the one remaining obligation -/
+
+/-- `log K ≤ log(2+|t|) + log log Y` — step 3a's bound in logarithmic form, valid also at `K = 0`
+(where Lean's `log 0 = 0` is below the positive right-hand side). -/
+theorem log_resWindowCount_le {δ : ℝ} (hδ0 : 0 < δ) (hδπ : δ ≤ Real.pi / 2) (t : ℝ) {Y : ℕ}
+    (hY : 3 ≤ Y) :
+    Real.log ((resWindowCount t δ Y : ℕ) : ℝ)
+      ≤ Real.log (2 + |t|) + Real.log (Real.log (Y : ℝ)) := by
+  have ht0 : (0:ℝ) ≤ |t| := abs_nonneg t
+  have hYR : (3:ℝ) ≤ (Y:ℝ) := by exact_mod_cast hY
+  have hlogY : (1:ℝ) < Real.log (Y:ℝ) := by
+    have h3 : Real.log 3 ≤ Real.log (Y:ℝ) := Real.log_le_log (by norm_num) hYR
+    have : (1:ℝ) < Real.log 3 := by
+      rw [Real.lt_log_iff_exp_lt (by norm_num)]
+      nlinarith [Real.exp_one_lt_d9]
+    linarith
+  have hprod : (0:ℝ) < (2 + |t|) * Real.log (Y:ℝ) := by positivity
+  have hsplit : Real.log ((2 + |t|) * Real.log (Y:ℝ))
+      = Real.log (2 + |t|) + Real.log (Real.log (Y:ℝ)) :=
+    Real.log_mul (by linarith) (by linarith)
+  rw [← hsplit]
+  rcases Nat.eq_zero_or_pos (resWindowCount t δ Y) with h0 | hpos
+  · rw [h0]
+    simp only [Nat.cast_zero, Real.log_zero]
+    refine Real.log_nonneg ?_
+    nlinarith
+  · refine Real.log_le_log ?_ (resWindowCount_le hδ0 hδπ t hY)
+    exact_mod_cast hpos
+
+/-- **The high range, short-window case `2δ ≤ |t|`** — the four proved steps assembled. -/
+theorem highResonantMass_le_wide {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ)
+    (hδ : δ ≤ resEps z) {t : ℝ} (ht : 2 * δ ≤ |t|) {Y : ℕ} (hY : 2 ≤ Y) :
+    highResonantMass z t Y δ
+      ≤ 50 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|)) + (2200040 + 22 * δ) := by
+  have hpi : (0:ℝ) < Real.pi := Real.pi_pos
+  have hδπ : δ ≤ Real.pi / 2 := le_trans hδ (resEps_le_pi_div_two z)
+  have ht0 : (0:ℝ) ≤ |t| := abs_nonneg t
+  have hlt : (0:ℝ) < Real.log (2 + |t|) := Real.log_pos (by linarith)
+  -- `Y = 2` has an empty high range
+  rcases lt_or_ge Y 3 with hY2 | hY3
+  · have hYeq : Y = 2 := by omega
+    have hzero : highResonantMass z t Y δ = 0 := by
+      refine highResonantMass_eq_zero ?_
+      have h1 : Real.log ((Y:ℕ) : ℝ) = Real.log 2 := by rw [hYeq]; norm_num
+      have h2 : 8 * Real.log 2 ≤ lowHeight t := lowHeight_ge t
+      have h3 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+      rw [h1]; linarith
+    rw [hzero]
+    have hllY : (0:ℝ) ≤ Real.log (Real.log (Y:ℝ)) + Real.log (2 + |t|) := by
+      have h1 : Real.log ((Y:ℕ) : ℝ) = Real.log 2 := by rw [hYeq]; norm_num
+      have h2 : Real.log (Real.log 2) ≤ 0 := by
+        refine Real.log_nonpos (Real.log_nonneg (by norm_num)) ?_
+        nlinarith [Real.log_two_lt_d9]
+      -- `log log 2 ≥ −1/2` and `log(2+|t|) ≥ log 2 > 1/2`
+      have h3 : -(1/2 : ℝ) ≤ Real.log (Real.log 2) := by
+        have hexph : (1.6:ℝ) < Real.exp (1/2) := by
+          have hsq : Real.exp (1/2) * Real.exp (1/2) = Real.exp 1 := by
+            rw [← Real.exp_add]; norm_num
+          nlinarith [Real.exp_one_gt_d9, Real.exp_pos (1/2 : ℝ), hsq]
+        have hinv : Real.exp (-(1/2:ℝ)) = 1 / Real.exp (1/2) := by
+          rw [Real.exp_neg]; ring
+        have h16 : 1 / Real.exp (1/2) < 1 / 1.6 :=
+          one_div_lt_one_div_of_lt (by norm_num) hexph
+        have hlt2 : Real.exp (-(1/2:ℝ)) < Real.log 2 := by
+          rw [hinv]; nlinarith [Real.log_two_gt_d9]
+        have := Real.log_le_log (Real.exp_pos (-(1/2:ℝ))) hlt2.le
+        rwa [Real.log_exp] at this
+      have h4 : (1/2 : ℝ) < Real.log (2 + |t|) := by
+        have h5 : Real.log 2 ≤ Real.log (2 + |t|) := Real.log_le_log (by norm_num) (by linarith)
+        nlinarith [Real.log_two_gt_d9]
+      rw [h1]; linarith
+    nlinarith [hllY, hδ0]
+  -- the genuine case
+  set K : ℕ := resWindowCount t δ Y with hK
+  have hpart := highResonantMass_eq_sum_windows hz hδ t Y
+  rw [← hK] at hpart
+  -- termwise: main + error
+  have hterm : ∀ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ),
+      windowMass z t Y δ m
+        ≤ 16 * δ / (|z.arg - 2 * Real.pi * m| - δ)
+          + 6 * (1 + aWin z t δ m) ^ 3 / Real.sqrt (Real.exp (aWin z t δ m)) := by
+    intro m _
+    have hgap2 : 2 * resEps z ≤ |z.arg - 2 * Real.pi * m| := two_resEps_le_abs_shift z m
+    have hgap : 0 < |z.arg - 2 * Real.pi * m| - δ := by linarith
+    have h1 := windowMass_le hz hδ0 hδ ht Y m
+    have h2 := windowMass_main_le hδ0 ht m hgap
+    linarith
+  have hsum : highResonantMass z t Y δ
+      ≤ (∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ), 16 * δ / (|z.arg - 2 * Real.pi * m| - δ))
+        + ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ),
+            6 * (1 + aWin z t δ m) ^ 3 / Real.sqrt (Real.exp (aWin z t δ m)) := by
+    rw [hpart, ← Finset.sum_add_distrib]
+    exact Finset.sum_le_sum hterm
+  have hmain := main_sum_le hδ0 hδ K
+  have herr := err_sum_le hδ0 hδ ht K
+  have hlogK : Real.log ((K : ℕ) : ℝ)
+      ≤ Real.log (2 + |t|) + Real.log (Real.log (Y : ℝ)) := by
+    rw [hK]; exact log_resWindowCount_le hδ0 hδπ t hY3
+  -- `(64δ/π)(1 + log K) ≤ 22δ + 50δ(log log Y + log(2+|t|))`
+  have h64 : 64 / Real.pi ≤ 22 := by
+    rw [div_le_iff₀ hpi]; nlinarith [Real.pi_gt_three]
+  have hllY : (0:ℝ) ≤ Real.log (Real.log (Y:ℝ)) + Real.log (2 + |t|) := by
+    have hYR : (3:ℝ) ≤ (Y:ℝ) := by exact_mod_cast hY3
+    have h3 : Real.log 3 ≤ Real.log (Y:ℝ) := Real.log_le_log (by norm_num) hYR
+    have h1 : (1:ℝ) < Real.log 3 := by
+      rw [Real.lt_log_iff_exp_lt (by norm_num)]
+      nlinarith [Real.exp_one_lt_d9]
+    have : (0:ℝ) ≤ Real.log (Real.log (Y:ℝ)) := Real.log_nonneg (by linarith)
+    linarith
+  have hcoef : (64 * δ / Real.pi) * (1 + Real.log ((K : ℕ) : ℝ))
+      ≤ 22 * δ + 50 * δ * (Real.log (Real.log (Y:ℝ)) + Real.log (2 + |t|)) := by
+    have hpos : (0:ℝ) < 64 * δ / Real.pi := by positivity
+    have hc21 : 64 * δ / Real.pi ≤ 22 * δ := by
+      rw [div_le_iff₀ hpi]; nlinarith [Real.pi_gt_three, hδ0]
+    have hstep : (64 * δ / Real.pi) * (1 + Real.log ((K : ℕ) : ℝ))
+        ≤ (64 * δ / Real.pi) * (1 + (Real.log (2 + |t|) + Real.log (Real.log (Y:ℝ)))) :=
+      mul_le_mul_of_nonneg_left (by linarith) hpos.le
+    nlinarith [hstep, hc21, hllY, hδ0]
+  linarith [hsum, hmain, herr, hcoef]
+
+/-- **The high range, long-window case `|t| < 2δ`** — the one step of `UniformResonantMass` still
+open.  Here the windows are longer than a unit in `log p`, so Brun–Titchmarsh does not apply and
+the per-window bound must come from the two-sided Mertens estimate
+`Erdos67b.PrimeEstimates.reciprocalPrimeInterval_le_log_log_sub_add`, which gives
+`log((γ_m+δ)/(γ_m−δ)) + 2·mertensBound ≤ 2δ/(γ_m−δ) + 2·mertensBound` per window.  The main term
+is then summed by the SAME `main_sum_le`; what needs care is that the per-window additive
+`2·mertensBound` is paid for, which the window count `K ≤ (2+|t|) log Y ≤ (2+4δ) log Y` makes
+possible only because `|t| < 2δ` bounds `K` by `O_δ(log Y)`, so the bookkeeping must group windows
+rather than charge each one — the same dyadic grouping the short-window case avoids via the
+exponential decay of `err_term_le`. -/
+theorem highResonantMass_le_narrow {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ)
+    (hδ : δ ≤ resEps z) {t : ℝ} (ht : |t| < 2 * δ) {Y : ℕ} (hY : 2 ≤ Y) :
+    highResonantMass z t Y δ
+      ≤ 50 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|)) + (2200040 + 22 * δ) := by
+  sorry
+
+/-- **The high range — the remaining obligation of `UniformResonantMass`.**
+
+Above height `lowHeight t = 16 log(2+|t|)` the resonant primes are covered by the windows
+`|t| log p ∈ (γ_m − δ, γ_m + δ)`, `γ_m = |arg z − 2πm| ≥ 2δ`, and `resonant_window_mass_le`
+bounds window `m` by `16δ/(|t| a_m) + 6(1+a_m)³ exp(−a_m/2)` with `a_m = (γ_m − δ)/|t|`.
+
+* The **main terms** sum to `≤ (32δ/π)(1 + log K) + O(δ)` by `sum_inv_gap_le` and
+  `sum_Icc_symm_le`, with `K ≈ (|t| log Y + δ + π)/(2π)` by `abs_windowIndexW_le`, so
+  `log K ≤ log log Y + log(2+|t|) + O(1)` — inside the `100δ(...)` budget, since `32/π < 11`.
+* The **error terms** are where the sketched route in `C3MrtWindowMass` failed.  Because every
+  window here has `a_m ≥ lowHeight t = 8 log(2+|t|)`, each error carries
+  `exp(−a_m/8) ≤ (2+|t|)⁻¹`, and the windows are spaced `2π/|t|` apart in `a`, so the tail sums
+  to `≲ (|t|/2π) · 8 · (2+|t|)⁻¹ ≤ 4/π = O(1)` via `sum_exp_neg_le` and `window_err_le`.  The
+  `|t|` of the window count is cancelled by the `(2+|t|)⁻¹` the raised starting height supplies.
+
+Disclosed as a `sorry`: this is the Brun–Titchmarsh bookkeeping, not a further analytic input —
+every ingredient it needs is already proved in `C3MrtWindowMass`. -/
+theorem highResonantMass_le {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z)
+    (t : ℝ) {Y : ℕ} (hY : 2 ≤ Y) :
+    highResonantMass z t Y δ
+      ≤ 50 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|)) + (2200040 + 22 * δ) := by
+  rcases le_or_gt (2 * δ) |t| with ht | ht
+  · exact highResonantMass_le_wide hz hδ0 hδ ht hY
+  · exact highResonantMass_le_narrow hz hδ0 hδ ht hY
+
+/-- **`UniformResonantMass`, modulo the high range.**  With `highResonantMass_le` in hand the
+low/high split closes the statement: the low range contributes
+`ε·log(2+|t|) + C(ε)` with `ε = 50δ`, the high range the rest, and `100δ = 50δ + 50δ` covers
+both.  This is the shape `UniformResonantMass` asks for, with `C` depending only on `z` and `δ`. -/
+theorem uniformResonantMass_of_high {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ)
+    (hδ : δ ≤ resEps z) (t : ℝ) {Y : ℕ} (hY : 2 ≤ Y) :
+    resonantMass z t Y δ
+      ≤ 100 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|))
+        + (Real.log 16 + Real.log (1/(50*δ)) - 1 + Erdos67b.PrimeEstimates.mertensBound
+            + (2200040 + 22 * δ) + 25 * δ + 1) := by
+  have hlow := lowResonantMass_le z t Y δ
+  have habs := log_lowHeight_le (show (0:ℝ) < 50 * δ by linarith) t
+  have hhigh := highResonantMass_le hz hδ0 hδ t hY
+  have hsplit := resonantMass_eq_low_add_high z t Y δ
+  have hll : (0:ℝ) ≤ Real.log (2 + |t|) := by
+    have := abs_nonneg t
+    exact Real.log_nonneg (by linarith)
+  -- `log log Y ≥ log log 2 > −1/2` for `Y ≥ 2`, which is what the `25δ` in the constant pays for
+  have hlogY : Real.log 2 ≤ Real.log (Y : ℝ) := by
+    have : (2:ℝ) ≤ (Y:ℝ) := by exact_mod_cast hY
+    exact Real.log_le_log (by norm_num) this
+  have hexph : (1.6:ℝ) < Real.exp (1/2) := by
+    have hsq : Real.exp (1/2) * Real.exp (1/2) = Real.exp 1 := by
+      rw [← Real.exp_add]; norm_num
+    nlinarith [Real.exp_one_gt_d9, Real.exp_pos (1/2 : ℝ), hsq]
+  have hlog2gt : Real.exp (-(1/2 : ℝ)) < Real.log 2 := by
+    have hinv : Real.exp (-(1/2:ℝ)) = 1 / Real.exp (1/2) := by
+      rw [Real.exp_neg]; ring
+    have h16 : 1 / Real.exp (1/2) < 1 / 1.6 :=
+      one_div_lt_one_div_of_lt (by norm_num) hexph
+    have := Real.log_two_gt_d9
+    rw [hinv]
+    nlinarith
+  have hloglogY : -(1/2 : ℝ) ≤ Real.log (Real.log (Y : ℝ)) := by
+    have hpos : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+    have h1 : Real.log (Real.exp (-(1/2:ℝ))) ≤ Real.log (Real.log (Y:ℝ)) :=
+      Real.log_le_log (Real.exp_pos _) (le_trans hlog2gt.le hlogY)
+    rwa [Real.log_exp] at h1
+  rw [hsplit]
+  nlinarith [hlow, habs, hhigh, hloglogY, hδ0]
 
 end CastingOut
 

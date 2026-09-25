@@ -11412,8 +11412,15 @@ and 3a are now **DONE** (sorry-free, axiom-clean):
    average` costs a factor `2`, and at `8` the surviving factor is only `(2+|t|)^{-1/2}`, which
    does NOT beat the `O(|t|)` window count — the repair would have failed for exactly the reason
    the original plan did.  `lowHeight` is now `16 · log(2+|t|)`.
-5. **The one step left.**  `2δ ≤ |t|` (the hypothesis of `resonant_window_mass_le`) needs the
-   complementary case: when
+**SHORT-WINDOW CASE FULLY PROVED** — `highResonantMass_le_wide` (axiom-clean): for `2δ ≤ |t|` and
+every `2 ≤ Y`,
+`highResonantMass z t Y δ ≤ 50δ(log log Y + log(2+|t|)) + (2200040 + 22δ)`.  Steps 1–4 assembled,
+with `log_resWindowCount_le` supplying `log K ≤ log(2+|t|) + log log Y` (valid at `K = 0` too) and
+`highResonantMass_eq_zero` clearing the `Y = 2` corner where `log log Y < 0`.  Note `64/π < 22`
+needs more than `Real.pi_gt_three` at the constant `21`, so the constant is `22`.
+
+5. **The one step left** (`highResonantMass_le_narrow`).  `2δ ≤ |t|` (the hypothesis of
+   `resonant_window_mass_le`) needs the complementary case: when
    `|t| < 2δ` the windows are long, and the two-sided Mertens
    `Erdos67b.PrimeEstimates.reciprocalPrimeInterval_le_log_log_sub_add` replaces
    Brun–Titchmarsh, giving `log((γ_m+δ)/(γ_m−δ)) ≤ 2δ/(γ_m−δ)` per window with the SAME harmonic
