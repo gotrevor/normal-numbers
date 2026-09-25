@@ -1,4 +1,23 @@
-# HANDOFF c3-mrt 2026-09-25 — laps 7–17
+# HANDOFF c3-mrt 2026-09-25 — laps 7–17 (SESSION WRAP)
+
+**Branch** `wip/c3-mrt` · **HEAD** `b9ec808` · working tree clean · `lake build` green (9257 jobs)
+at every commit.  Every new result axiom-clean `[propext, Classical.choice, Quot.sound]`; no new
+`sorry` anywhere.  Pure addition: 5 new modules (`C3MrtPowerfulSum`, `C3MrtLinearForms`,
+`C3MrtElliottMatch`, `C3MrtRungTwo`, `C3MrtNonPretentious`), no existing statement touched.
+
+## Session result in one line
+
+The log-averaged `D = 2` rung is **fully reduced, structurally, to two NAMED open inputs**:
+`Erdos67b.NonasymptoticLogElliott` (the repo's ratified bet in `ElliottGeneral.lean`) and the
+archimedean (`t ≠ 0`) half of non-pretentiousness (Granville–Soundararajan).  Every other
+mismatch — multiplicativity, non-degeneracy, weight class, weight variable, window, threshold —
+is proved away.
+
+## The crux is untouched
+
+`weylLambertTwist_holds` in `src/NormalNumbers/SwingC3Leaf.lean` is unchanged, and `ConjC3`
+remains reduced axiom-clean to `QuantDepthElliott`.
+
 
 Branch `wip/c3-mrt`.  `lake build` green at both commits; every new result axiom-clean
 `[propext, Classical.choice, Quot.sound]`, no `sorry`.  Pure addition (2 new modules).
