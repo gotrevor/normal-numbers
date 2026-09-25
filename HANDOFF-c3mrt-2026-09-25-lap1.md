@@ -126,3 +126,60 @@ route: the number of Elliott points needed is now *triple*-logarithmic, e.g. `D_
 2. Then the real target: prove the `D`-point correlation `→ 0` for `D = 2` (and ideally uniformly
    for `D ≤ k` with the `κ^D` constant), from `lean-proofs-latest`'s `unitCircleLogElliott`
    (log density) or a Selberg–Delange product over the `D` shifts.
+
+---
+
+# lap 3 addendum — the explicit schedule, and the quantitative target
+
+`src/NormalNumbers/C3MrtSchedule.lean` (axiom-clean, no `sorry`).
+
+The repo already carried the right schedule, built for the Pair-B decoupling:
+`PairDecouple.depthLL b N = ⌊log_b (u_N+1)²⌋ + 1`, `u_N = log₂ log₂ N`, with
+`pow_depthLL_gt` (`b^{depthLL} > (u_N+1)²`) and `eventually_depthLL_add_le`.  Nothing new was
+needed to build it.
+
+* `llProxy N = u_N + 1`, `tendsto_llProxy`, `LLbound_le_llProxy` (`LL(N) ≤ 15 llProxy N`).
+* `tendsto_LLbound_div_pow_depthLL` — the mean discarded phase `LL(N)/b^{depthLL b N} ≤
+  15/llProxy N → 0`.
+* **`weylLambertTwist_of_depthElliottLL`** — the crux follows from the twisted
+  `depthLL b N`-point correlations vanishing.  `O(log log log N)` points.
+* **`QuantDepthElliott`** and **`weylLambertTwist_of_quantDepthElliott`** — the quantitative
+  target, axiom-clean:
+
+      ∃ κ : ℕ, ∃ η : ℕ → ℝ,  0 ≤ η,
+        ‖depthAvg b P Q j h D N‖ ≤ b^{κD} · η N   for ALL D, N,
+        and  llProxy^m · η → 0  for every m.
+
+  The constant is allowed to grow like **any fixed power of `b^D`**, because the schedule only
+  needs `b^{D_N} ≳ log log N`.  And the `D = 1` rung already supplies `η(N) = (log N)^{-a}`
+  (Selberg–Delange, `depthAvg_one_tendsto`), which beats every power of `llProxy`.
+
+## State of the reduction chain (all axiom-clean, no `sorry` in the C3Mrt* modules)
+
+    QuantDepthElliott b                       (the remaining obligation)
+      → weylLambertTwist_of_quantDepthElliott
+      → weylLambertTwist_of_depthElliottLL     (O(log log log N) points)
+      → weylLambertTwist_of_schedule           (any schedule with LL(N)/b^{D_N} → 0)
+      → WeylLambertTwist b
+      → conjC3_of_weylLambertTwist → ConjC3
+
+and `D = 1` of `QuantDepthElliott`'s correlation is PROVED (`depthAvg_one_tendsto`).
+
+## NEXT (lap 4)
+
+The only thing left is the multi-point bound itself.  Attack order:
+1. **`D = 2` with an explicit power-of-log saving.**  `depthAvg b P Q j h 2 N` is
+   `(1/N) ∑ e(jn/Q) ζ_0^{ω_{>P}(n+1)} ζ_1^{ω_{>P}(n+2)}`.  Route A: the repo's own
+   `DelangeSlot` machinery generalised to a product over two shifts — the Dirichlet-character
+   expansion of `e(jn/Q)` is unchanged; what is new is that the summand is a product of two
+   *shifted* multiplicative functions, so `IsCharLike`-style orthogonality no longer applies
+   directly and one needs either Tao's entropy-decrement (log density, so it gives the
+   log-averaged variant) or a Kubilius/sieve model of the joint law of
+   `(ω_{>P}(n+1), ω_{>P}(n+2))`.
+2. Route B (worth a probe first): the **Kubilius model** may give `D` points at once, since the
+   D-window law of `(ω_{>P}(n+1),…,ω_{>P}(n+D))` is what `SwingC3Split`'s
+   `OmegaLargeDecouple` already names.  If the joint law factorises to within `o(1)` in total
+   variation for `D = O(log log log N)`, then `depthAvg` factorises into `D` one-point Delange
+   means, each `→ 0`, and the crux CLOSES.  **This is the highest-value lead**: the `D` shifts
+   are `n+1,…,n+D` with `D` triple-logarithmic, an extremely short window, exactly the regime
+   where sieve independence is strongest.
