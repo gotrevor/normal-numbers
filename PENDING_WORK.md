@@ -1,5 +1,20 @@
 # PENDING WORK
 
+## 2026-09-25 (laps 40–45) — the dilated crux is closed except the mirror leaf
+
+`dilatedNatShiftCMLogElliott` (leaf 1) is **proved**, trust triple.  New proved files:
+`ElliottGenericGraphBounded` (bounded dilated decoupling), `ElliottDilatedSelect`
+(uniform dilated window error, entropy-selected dilated mean, dyadic dilated lower bound,
+**the dilated criterion**), `ElliottDilatedFourier` (dilated Fourier first moment from MRT,
+`MRTNonpretentious_of_le`).  Details and the next attack: `HANDOFF-elliott-2026-09-25-lap45.md`.
+
+Open in scope: `dilatedNatShiftCMLogElliottMirror` (`ElliottDilatedRung.lean:532`) and
+`nonasymptotic_of_affineCM` (`ElliottLadder.lean:295`, Hall).  The mirror is now the crux's last
+leaf: inspect `norm_logProb_dilatedPairTwistedMean_le_of_fourier_first_moment` to see whether the
+second block's moments can be fed in directly (route b) before mirroring the whole upper bound
+(route a, template `ElliottTwistedGraphMirror`).
+
+
 ## 2026-09-25 (REVIEW LAP, laps 36+) — corrected priorities
 
 Build green, 9548 jobs.  Real `#print axioms`:
