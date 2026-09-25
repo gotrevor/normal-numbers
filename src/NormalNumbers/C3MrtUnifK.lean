@@ -808,6 +808,112 @@ theorem depthAvg_diag_tendsto_of_uniform {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (h
     hκ hκ1 hnp Athr hA2 hAthr k₀ ?_
   simpa using hΦ.add hhalf
 
+/-! ### The DEGRADING profile — the realistic shape of the input
+
+The `K`-uniform input of `depthAvg_diag_tendsto_of_uniform` is the strongest conceivable form of
+`KPointNoExcWith`; nothing in TT's proof gives it.  The honest shape lets both constants degrade
+polynomially in `K`:
+
+    cK   K = c₀ / (K+1)^m      (the saving exponent shrinks)
+    CstK K = exp ((K+1)^m)     (the constant blows up)
+
+and the diagonal still closes, because along the schedule `K = depthLL b N` the level is only
+`O(log log log N)` while the base `2 log a_N` is `≍ log N`.  Quantitatively the *whole* question
+becomes one comparison, `hgrow` below: the double logarithm of the cut scale must beat
+`(K+1)^{2m}` — the square appears because the constant costs `(K+1)^m` and the saving is divided
+by `(K+1)^m`. -/
+
+/-- The degrading saving exponent, `c₀/(K+1)^m`. -/
+noncomputable def cKdeg (c₀ : ℝ) (m K : ℕ) : ℝ := c₀ / ((K : ℝ) + 1) ^ m
+
+/-- The degrading constant, `exp ((K+1)^m)`. -/
+noncomputable def CstKdeg (m K : ℕ) : ℝ := Real.exp (((K : ℝ) + 1) ^ m)
+
+theorem cKdeg_pos {c₀ : ℝ} (hc₀ : 0 < c₀) (m K : ℕ) : 0 < cKdeg c₀ m K := by
+  unfold cKdeg; positivity
+
+theorem CstKdeg_pos (m K : ℕ) : 0 < CstKdeg m K := Real.exp_pos _
+
+/-- **The degrading profile still drives the exponent to `-∞`.**  Writing `P = (K+1)^m ≥ 1`, the
+exponent is `P - κ c₀ L / P = P (1 - κ c₀ · L/P²)`; once `L/P² ≥ 1/(κc₀)` the bracket is `≤ 0`
+and `P ≥ 1` only helps, so the exponent is `≤ 1 - κ c₀ · L/P² → -∞`. -/
+theorem exponent_tendsto_atBot_of_degrading {c₀ : ℝ} (hc₀ : 0 < c₀) {κ : ℝ} (hκ : 0 < κ)
+    (m : ℕ) (KN aN : ℕ → ℕ)
+    (hgrow : Tendsto (fun N : ℕ =>
+        Real.log (2 * Real.log (aN N)) / ((KN N : ℝ) + 1) ^ (2 * m)) atTop atTop) :
+    Tendsto (fun N : ℕ =>
+        Real.log (CstKdeg m (KN N))
+          - κ * cKdeg c₀ m (KN N) * Real.log (2 * Real.log (aN N))) atTop atBot := by
+  have hκc : 0 < κ * c₀ := by positivity
+  -- the majorant `1 - κ c₀ · L/P²`
+  have hmaj : Tendsto (fun N : ℕ => 1 - κ * c₀ *
+      (Real.log (2 * Real.log (aN N)) / ((KN N : ℝ) + 1) ^ (2 * m))) atTop atBot := by
+    have h1 := hgrow.const_mul_atTop hκc
+    have h2 := tendsto_neg_atTop_atBot.comp h1
+    have h3 := Filter.tendsto_atBot_add_const_left atTop (1 : ℝ) h2
+    exact h3.congr fun N => by simp [sub_eq_add_neg]
+  refine tendsto_atBot_mono' atTop ?_ hmaj
+  filter_upwards [hgrow.eventually_ge_atTop (1 / (κ * c₀))] with N hN
+  set P : ℝ := ((KN N : ℝ) + 1) ^ m with hP
+  set L : ℝ := Real.log (2 * Real.log (aN N)) with hL
+  have hP1 : 1 ≤ P := one_le_pow₀ (by have h : (0:ℝ) ≤ (KN N : ℝ) := Nat.cast_nonneg _; linarith)
+  have hP0 : 0 < P := lt_of_lt_of_le zero_lt_one hP1
+  have hsq : ((KN N : ℝ) + 1) ^ (2 * m) = P ^ 2 := by
+    rw [hP, ← pow_mul, mul_comm m 2]
+  rw [hsq] at hN ⊢
+  have hR : 1 / (κ * c₀) ≤ L / P ^ 2 := hN
+  have hbr : κ * c₀ * (L / P ^ 2) ≥ 1 := by
+    rw [ge_iff_le, ← div_le_iff₀' hκc] at *
+    exact hR
+  have hlog : Real.log (CstKdeg m (KN N)) = P := by
+    unfold CstKdeg; rw [Real.log_exp]
+  have hc : cKdeg c₀ m (KN N) = c₀ / P := by unfold cKdeg; rfl
+  rw [hlog, hc]
+  have hPsq : (0 : ℝ) < P ^ 2 := by positivity
+  have key : P - κ * (c₀ / P) * L = P * (1 - κ * c₀ * (L / P ^ 2)) := by
+    field_simp
+  rw [key]
+  nlinarith [hbr, hP1]
+
+/-- **The crux from the DEGRADING input, assembled.**  Same shape as
+`depthAvg_diag_tendsto_of_uniform`, but with constants that degrade polynomially in `K`; the extra
+price is the single comparison `hgrow`. -/
+theorem depthAvg_diag_tendsto_of_degrading {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
+    {c₀ : ℝ} (hc₀ : 0 < c₀) (m : ℕ)
+    (hin : ∀ K, KPointNoExcWith (cKdeg c₀ m) (CstKdeg m) K)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+    (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
+    (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * cKdeg c₀ m K))
+    (k₀ : ℕ → ℕ) (hk₀ : Tendsto k₀ atTop atTop)
+    (hscale : Tendsto (fun N : ℕ => N / 2 ^ k₀ N) atTop atTop)
+    (hAle : ∀ᶠ N : ℕ in atTop, Athr (PairDecouple.depthLL b N) ≤ N / 2 ^ k₀ N)
+    (hgrow : Tendsto (fun N : ℕ =>
+        Real.log (2 * Real.log ((N / 2 ^ k₀ N : ℕ) : ℝ))
+          / ((PairDecouple.depthLL b N : ℝ) + 1) ^ (2 * m)) atTop atTop) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j hh (PairDecouple.depthLL b N) N) atTop (𝓝 0) := by
+  have hrate := rate_tendsto_of_exponent (cK := cKdeg c₀ m) (CstK := CstKdeg m)
+    (fun K => CstKdeg_pos m K) (κ := κ) (M₀ := Q * primorial P)
+    (fun N => PairDecouple.depthLL b N) (fun N => N / 2 ^ k₀ N) ?_
+    (exponent_tendsto_atBot_of_degrading hc₀ hκ m (fun N => PairDecouple.depthLL b N)
+      (fun N => N / 2 ^ k₀ N) hgrow)
+  · have hΦ := windowPhi_diag_tendsto (cK := cKdeg c₀ m) (CstK := CstKdeg m) (κ := κ)
+      (M₀ := Q * primorial P) (fun N => PairDecouple.depthLL b N)
+      (fun N => Athr (PairDecouple.depthLL b N)) (fun N => N / 2 ^ k₀ N)
+      (fun N => hA2 _) (fun K => (CstKdeg_pos m K).le) hAle hrate
+    have hhalf : Tendsto (fun N : ℕ => (1 / 2 : ℝ) ^ k₀ N) atTop (𝓝 0) :=
+      (tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)).comp hk₀
+    refine depthAvg_diag_tendsto_of_unif hQ P j hh (fun K => cKdeg_pos hc₀ m K)
+      (fun K => CstKdeg_pos m K) hin hκ hκ1 hnp Athr hA2 hAthr k₀ ?_
+    simpa using hΦ.add hhalf
+  · -- the base `2 log a_N` is eventually positive, since the cut scale grows
+    filter_upwards [hscale.eventually_ge_atTop 2] with N hN
+    have h2 : (2 : ℝ) ≤ ((N / 2 ^ k₀ N : ℕ) : ℝ) := by exact_mod_cast hN
+    have hlog : 0 < Real.log ((N / 2 ^ k₀ N : ℕ) : ℝ) := Real.log_pos (by linarith)
+    linarith
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -824,6 +930,8 @@ theorem depthAvg_diag_tendsto_of_uniform {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (h
 #print axioms NormalNumbers.CastingOut.depthAvg_diag_tendsto_of_unif
 #print axioms NormalNumbers.CastingOut.rate_tendsto_of_exponent
 #print axioms NormalNumbers.CastingOut.depthAvg_diag_tendsto_of_uniform
+#print axioms NormalNumbers.CastingOut.exponent_tendsto_atBot_of_degrading
+#print axioms NormalNumbers.CastingOut.depthAvg_diag_tendsto_of_degrading
 
 end CastingOut
 
