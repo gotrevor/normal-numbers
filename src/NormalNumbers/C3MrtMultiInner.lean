@@ -248,7 +248,8 @@ rung's own bound, which is where the `ε·log N` lives).  The degenerate tuples 
 an unsolvable joint congruence — contribute nothing and so need no rung bound. -/
 theorem multi_bound_of_rung {K : ℕ} (hK : 0 < K) (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1)
     (Y N A : ℕ) (hA : 2 ≤ A) {R : ℝ} (hR0 : 0 ≤ R)
-    (hrung : ∀ d : Fin K → ℕ, (∀ i, 0 < d i) → (∃ n₀ : ℕ, ∀ i : Fin K, d i ∣ n₀ + (i : ℕ) + 1) →
+    (hrung : ∀ d : Fin K → ℕ, (∀ i, d i ≤ Y) → (∀ i, 0 < d i) →
+      (∃ n₀ : ℕ, ∀ i : Fin K, d i ∣ n₀ + (i : ℕ) + 1) →
       ∀ a : ℕ, a < (Finset.univ : Finset (Fin K)).lcm d →
         (∀ i : Fin K, d i ∣ a + (i : ℕ) + 1) →
         ‖∑ j ∈ Finset.Ioc 0 (A ^ Nat.log A
@@ -287,9 +288,14 @@ theorem multi_bound_of_rung {K : ℕ} (hK : 0 < K) (z : ℕ → ℂ) (hz : ∀ i
         rw [hi0] at this
         simp only [Nat.zero_dvd] at this
         omega)
-    (fun d _ h => by
+    (fun d hd h => by
       obtain ⟨hpos, n₀, hn₀⟩ := h
-      exact inner_multi_bound z hz d hpos hn₀ hA hR0 (hrung d hpos ⟨n₀, hn₀⟩))
+      have hdY : ∀ i, d i ≤ Y := by
+        intro i
+        have := Fintype.mem_piFinset.1 hd i
+        have := Finset.mem_range.1 this
+        omega
+      exact inner_multi_bound z hz d hpos hn₀ hA hR0 (hrung d hdY hpos ⟨n₀, hn₀⟩))
   have htri : ‖∑ n ∈ range N, harmW n * ∏ i : Fin K, (z i) ^ omegaNat (n + (i : ℕ) + 1)‖
       ≤ ‖(∑ n ∈ range N, harmW n * ∏ i : Fin K, (z i) ^ omegaNat (n + (i : ℕ) + 1))
           - ∑ d ∈ Fintype.piFinset (fun _ : Fin K => range (Y + 1)),
