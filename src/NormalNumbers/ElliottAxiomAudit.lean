@@ -256,3 +256,6 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottBridge.conj_archimedeanTwist
 #print axioms NormalNumbers.ElliottBridge.term_eq_slice_summand
 #print axioms NormalNumbers.ElliottBridge.slice_eq_sum_term
+#print axioms NormalNumbers.ElliottBridge.primePow_decomp
+#print axioms NormalNumbers.ElliottBridge.term_primePow
+#print axioms NormalNumbers.ElliottBridge.sum_complement_le

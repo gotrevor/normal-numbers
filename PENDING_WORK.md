@@ -81,7 +81,16 @@ away from `t = 0`.
    `∑_{p≤Y} LSeries.term ↗Λ s p` at `s = sliceAbscissa X w v = (1+δ+w) + iv`, exactly, no error
    term.  The content is `conj(archimedeanTwist v p) = p^{-iv}` matched against the `p^{-iv}` inside
    `p^{-s}` (`Complex.cpow_add`, `Complex.ofReal_cpow`, `Complex.natCast_log`).
-4. *The remaining step*: `L ↗Λ s = −ζ'/ζ(s)` (`LSeries_vonMangoldt_eq_deriv_riemannZeta_div`, needs
+4. ✅ *(lap 111)* `sum_complement_le`: every finite `G` disjoint from `primesUpTo Y` has
+   `∑_{n∈G} Λ n·n^{-σ} ≤ 1 + ppCost` for `σ ≥ 1 + δ`.  Split at `Nat.Prime`: the primes land in
+   `primesInInterval Y (G.sup id)` (⟹ `logTail_le`); the rest drop to `IsPrimePow`
+   (`Finset.sum_filter_of_ne`, `vonMangoldt_eq_zero_iff`) and map injectively by
+   `n ↦ (n.minFac, n.factorization n.minFac)` (`primePow_decomp`, using `Nat.pow_minFac` and
+   `Nat.factorization_pow`) to the pair form `sum_pairs_le` consumes (`term_primePow`).
+   *Lean trap*: `n = p^j` with `p, j` defined **from** `n`, so `rw [← hpow]` rewrites the `n` inside
+   `p` too — prove the pair-shape term identity as a standalone lemma in `p, j` and rewrite
+   `hpow : p^j = n` **into** it instead.
+5. *The remaining step*: `L ↗Λ s = −ζ'/ζ(s)` (`LSeries_vonMangoldt_eq_deriv_riemannZeta_div`, needs
    `1 < Re s` ✓) and the complement bound
    `∑'_{n ∉ primesUpTo Y} Λ n·n^{-σ} ≤ 1 + ppCost` via `Finset.sum_add_tsum_compl` +
    `tsum_le_of_sum_le`: every finite `G` in the complement splits into primes `> Y` (⟹ `logTail_le`,
