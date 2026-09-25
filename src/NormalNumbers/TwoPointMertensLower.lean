@@ -393,4 +393,125 @@ theorem mertens_upper (N : ℕ) (hN : 1 ≤ N) :
     nlinarith [this]
   nlinarith [hcomb, hNR]
 
+/-! ### The complex step, part II(a): replacing `S^{(p)}` by `S` costs `O(1)`
+
+The Levin–Fainleib identity is stated with the coprimality-restricted sums `S^{(p)}`.  For the
+Toeplitz argument they must be replaced by `S` itself.  The cost is bounded by an absolute
+constant — it does NOT grow with `N` — because `Σ_p (log p)/p² < ∞`, which is
+`sum_log_div_mul_pred_le` (`TwoPointMertensLower.lean`) again via `1/p² ≤ 1/(p(p−1))`. -/
+
+/-- The identity of lap 33, restated on the named sums. -/
+theorem delangeT_eq_prime_sum (z : ℂ) (N : ℕ) :
+    delangeT z N
+      = (z - 1) * ∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeSrestr z p (N / p) :=
+  sum_delangeKernel_mul_log z N
+
+/-- **`S^{(p)}` is bounded whenever `S` is**, uniformly in `p` and `M`, with the clean constant
+`2B`.  Strong induction on `M` through `delangeSrestr_rec`, using `u/p ≤ 1/2`. -/
+theorem norm_delangeSrestr_le_two_mul {z : ℂ} (hu : ‖z - 1‖ ≤ 1) {p : ℕ} (hp : p.Prime)
+    {B : ℝ} (hB : ∀ M, ‖delangeS z M‖ ≤ B) (M : ℕ) : ‖delangeSrestr z p M‖ ≤ 2 * B := by
+  have hBnn : 0 ≤ B := le_trans (norm_nonneg _) (hB 0)
+  have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hp.two_le
+  induction M using Nat.strong_induction_on with
+  | _ M ih =>
+      rcases Nat.eq_zero_or_pos M with hM | hM
+      · subst hM
+        simp only [delangeSrestr]
+        rw [show Finset.Ioc 0 0 = (∅ : Finset ℕ) by simp]
+        simp
+        linarith
+      have hlt : M / p < M := Nat.div_lt_self hM hp.one_lt
+      have hrec := delangeSrestr_rec z hp M
+      rw [hrec]
+      refine le_trans (norm_sub_le _ _) ?_
+      have h1 : ‖((z - 1) / (p : ℂ)) * delangeSrestr z p (M / p)‖
+          = ‖z - 1‖ / (p : ℝ) * ‖delangeSrestr z p (M / p)‖ := by
+        rw [norm_mul, norm_div, Complex.norm_natCast]
+      rw [h1]
+      have h2 := ih (M / p) hlt
+      have h3 : ‖z - 1‖ / (p : ℝ) ≤ 1 / 2 := by
+        rw [div_le_div_iff₀ (by linarith) (by norm_num)]
+        linarith
+      have h4 : (0 : ℝ) ≤ ‖z - 1‖ / (p : ℝ) := by positivity
+      nlinarith [hB M, h2, h3, h4, hBnn]
+
+/-- **The replacement cost is an absolute constant.**  `‖T(N) − (z−1)·Σ_{p≤N}(log p/p)·S(N/p)‖
+≤ 16·B`, uniformly in `N`. -/
+theorem norm_delangeT_sub_primeSum_le {z : ℂ} (hu : ‖z - 1‖ ≤ 1) {B : ℝ}
+    (hB : ∀ M, ‖delangeS z M‖ ≤ B) (N : ℕ) :
+    ‖delangeT z N
+        - (z - 1) * ∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p)‖
+      ≤ 16 * B := by
+  classical
+  have hBnn : 0 ≤ B := le_trans (norm_nonneg _) (hB 0)
+  rw [delangeT_eq_prime_sum z N, ← mul_sub, ← Finset.sum_sub_distrib]
+  rw [norm_mul]
+  have hstep : ∀ p ∈ primesLe N,
+      ‖((Real.log p : ℂ) / (p : ℂ)) * delangeSrestr z p (N / p)
+        - ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p)‖
+        ≤ 2 * B * (Real.log p / ((p : ℝ) * ((p : ℝ) - 1))) := by
+    intro p hp
+    have hpp := prime_of_mem_primesLe hp
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hlogp : (0 : ℝ) ≤ Real.log p := Real.log_nonneg (by linarith)
+    -- the difference is exactly `((z−1)/p)·S^{(p)}(N/p²)`
+    have hrec := delangeSrestr_rec z hpp (N / p)
+    rw [← mul_sub, hrec]
+    have hcollapse : delangeS z (N / p) - ((z - 1) / (p : ℂ)) * delangeSrestr z p (N / p / p)
+        - delangeS z (N / p) = -(((z - 1) / (p : ℂ)) * delangeSrestr z p (N / p / p)) := by
+      ring
+    rw [hcollapse, norm_mul, norm_neg, norm_mul, norm_div, norm_div, Complex.norm_natCast,
+      Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hlogp]
+    have hb := norm_delangeSrestr_le_two_mul hu hpp hB (N / p / p)
+    have hpe : Real.log p / (p : ℝ) * (‖z - 1‖ / (p : ℝ) * ‖delangeSrestr z p (N / p / p)‖)
+        ≤ Real.log p / (p : ℝ) * (1 / (p : ℝ) * (2 * B)) := by
+      refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+      have hppos : (0 : ℝ) < (p : ℝ) := by linarith
+      have h1 : ‖z - 1‖ / (p : ℝ) ≤ 1 / (p : ℝ) := by
+        rw [div_le_div_iff₀ hppos hppos]
+        nlinarith [hu, hppos]
+      nlinarith [hb, h1, norm_nonneg (delangeSrestr z p (N / p / p)), hBnn,
+        (by positivity : (0:ℝ) ≤ 1 / (p : ℝ))]
+    refine le_trans hpe ?_
+    have hppos : (0 : ℝ) < (p : ℝ) := by linarith
+    have hpp1 : (0 : ℝ) < (p : ℝ) - 1 := by linarith
+    have key : Real.log p / (p : ℝ) * (1 / (p : ℝ) * (2 * B))
+        = 2 * B * (Real.log p / ((p : ℝ) * (p : ℝ))) := by
+      field_simp
+      try ring
+    rw [key]
+    have hmono : Real.log p / ((p : ℝ) * (p : ℝ))
+        ≤ Real.log p / ((p : ℝ) * ((p : ℝ) - 1)) := by
+      rw [div_le_div_iff₀ (by positivity) (by positivity)]
+      nlinarith [hlogp, hp2]
+    nlinarith [hmono, hBnn]
+  have hsum := Finset.sum_le_sum hstep
+  have hnormsum : ‖∑ p ∈ primesLe N,
+      (((Real.log p : ℂ) / (p : ℂ)) * delangeSrestr z p (N / p)
+        - ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))‖
+      ≤ ∑ p ∈ primesLe N, 2 * B * (Real.log p / ((p : ℝ) * ((p : ℝ) - 1))) :=
+    le_trans (norm_sum_le _ _) hsum
+  have hcorr : ∑ p ∈ primesLe N, Real.log p / ((p : ℝ) * ((p : ℝ) - 1)) ≤ 8 := by
+    refine le_trans ?_ (sum_log_div_mul_pred_le N)
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun n hn _ => ?_)
+    · intro q hq
+      have hqq := prime_of_mem_primesLe hq
+      have hqle : q ≤ N := by
+        rw [primesLe, Finset.mem_filter, Finset.mem_range] at hq
+        omega
+      simp only [Finset.mem_Icc]
+      exact ⟨hqq.two_le, hqle⟩
+    · simp only [Finset.mem_Icc] at hn
+      have hn2 : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn.1
+      have : (0 : ℝ) ≤ Real.log n := Real.log_nonneg (by linarith)
+      have hd : (0 : ℝ) < (n : ℝ) * ((n : ℝ) - 1) := by nlinarith
+      positivity
+  rw [← Finset.mul_sum] at hnormsum
+  have hfin : ‖z - 1‖ * ‖∑ p ∈ primesLe N,
+      (((Real.log p : ℂ) / (p : ℂ)) * delangeSrestr z p (N / p)
+        - ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))‖ ≤ 1 * (2 * B * 8) := by
+    refine mul_le_mul hu (le_trans hnormsum ?_) (norm_nonneg _) (by norm_num)
+    nlinarith [hcorr, hBnn]
+  linarith [hfin]
+
 end NormalNumbers.CastingOut
