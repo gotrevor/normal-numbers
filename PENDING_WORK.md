@@ -9303,3 +9303,36 @@ Added to `src/NormalNumbers/ElliottTwistedGraph.lean`, sorry-free and axiom-clea
    bound `Erdos67b.exists_dyadic_primeGraphCorrelationWeight_lower` applies unchanged.
 3. *CRT/entropy concentration.*  `primeGraphSum` / `primeGraphObservable` / Hoeffding: only uses
    `‖edge‖ ≤ 1`, supplied by `norm_pairShiftEdge_le` and `ElliottLadder.norm_pairObservable_le_one`.
+
+### Elliott crux, lap 5 (2026-09-25): twisted multiplier bounds — uniform in the twist
+
+Added to `src/NormalNumbers/ElliottTwistedGraph.lean`, sorry-free, axiom-clean.  Ports of the three
+dependency lemmas that feed the graph upper bound, each proved by the dependency's own argument with
+the lap-3/lap-4 twisted lemmas swapped in.  The *only* cost of the twist is carrying `‖w p‖ ≤ 1`:
+
+* `norm_dyadic_twistedPrimeGraphMultiplier_le_primeCounting`
+  (← `Erdos67b.norm_dyadic_primeGraphMultiplier_le_primeCounting`)
+* `exists_dyadic_twistedPrimeGraphMultiplier_fourth_moment_bound` — **same constant `A` and
+  threshold `P₀`** as `Erdos67b.exists_dyadic_primeGraphMultiplier_fourth_moment_bound`; reuses
+  `exists_primesLE_additiveQuadruples_bound`, `card_additiveQuadruples`, `Finset.addEnergy_mono`
+  unchanged.
+* `exists_eventually_twistedPrimeGraphMultiplier_bounds` — the sharp fourth moment `C / log H ^ 4`
+  and the sup bound `16 / log H` at the entropy-selected dyadic scale, **uniform in the twist**
+  (the `∀ w` is inside, after `H ≥ H₁`), with the dependency's constant `C = 32 A K (4h+1)`.
+* `card_pairTwistedLargeFrequencies_le` — Markov/Chebyshev for the twisted frequency count.
+
+Together with lap 4's `norm_pairTwistedPrimeGraphMean_le_largeFrequencies`, every *pointwise*
+ingredient of `Erdos67b.exists_primeGraphMean_small_of_fourier_first_moment` now exists in twisted,
+two-block form.
+
+**Next attack (lap 6).**  The logarithmic-average layer, then assembly:
+1. Port `Erdos67b.norm_logProb_primeGraphMean_le_of_fourier_first_moment` to
+   `pairTwistedPrimeGraphMean` (it wraps lap 4's large-frequency bound in `logProbExpectation` and
+   applies the first-moment hypothesis on the large-frequency set; the hypothesis is on the `b`
+   block only, per lap 4).
+2. Assemble `exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment`, mirroring
+   `Erdos67b.exists_primeGraphMean_small_of_fourier_first_moment` line for line: the parameter
+   choreography (`cutoff = η/64`, `N = C/cutoff⁴`, `ζ = η/(1024(N+1))`, budget
+   `cutoff + 16ζN ≤ η/32`) carries over verbatim because lap 5's bounds have the dependency's own
+   constants.
+3. Then the lower bound (see lap 4 notes) and the CRT/entropy concentration.

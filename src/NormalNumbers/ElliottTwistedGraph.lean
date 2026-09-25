@@ -1,4 +1,4 @@
-import ErdosProblems.Erdos67b.PrimeGraphRestriction
+import ErdosProblems.Erdos67b.PrimeGraphFrequencyBounds
 
 /-!
 # The phase-twisted prime graph
@@ -359,7 +359,175 @@ theorem norm_pairTwistedPrimeGraphMean_le_largeFrequencies {H T : ℕ} [NeZero T
       rw [pairTwistedLargeFrequencies]
       field_simp
 
-/-! ## The two remaining obligations of the twisted graph -/
+
+/-! ## Uniform bounds for the twisted multiplier
+
+Ports of `Erdos67b.norm_dyadic_primeGraphMultiplier_le_primeCounting`,
+`Erdos67b.exists_dyadic_primeGraphMultiplier_fourth_moment_bound` and
+`Erdos67b.exists_eventually_primeGraphMultiplier_bounds` to the twisted multiplier.  Each proof is
+the dependency's, with `fourth_moment_twistedPrimeGraphMultiplier_le_energy` and
+`norm_twistedPrimeGraphMultiplier_le` in place of their untwisted counterparts: the *only* thing the
+twist costs is carrying the hypothesis `‖w p‖ ≤ 1` along.
+-/
+
+theorem norm_dyadic_twistedPrimeGraphMultiplier_le_primeCounting
+    (T h : ℕ) {P : ℕ} (hP : 0 < P) {w : ℕ → ℂ}
+    (hw : ∀ p ∈ PrimeEstimates.dyadicPrimes P, ‖w p‖ ≤ 1) (t : ℤ) :
+    ‖twistedPrimeGraphMultiplier T h (PrimeEstimates.dyadicPrimes P) w t‖ ≤
+      (Nat.primeCounting (2 * P) : ℝ) / P := by
+  have hPr : (0 : ℝ) < P := Nat.cast_pos.mpr hP
+  have hs : PrimeEstimates.dyadicPrimes P ⊆ Nat.primesLE (2 * P) := by
+    intro p hp
+    have hp' := PrimeEstimates.mem_primesInInterval.mp hp
+    exact Nat.mem_primesLE.mpr ⟨hp'.2.1, hp'.2.2⟩
+  have hcard : (PrimeEstimates.dyadicPrimes P).card ≤ Nat.primeCounting (2 * P) := by
+    simpa only [Nat.primesLE_card_eq_primeCounting] using Finset.card_le_card hs
+  calc
+    _ ≤ ∑ p ∈ PrimeEstimates.dyadicPrimes P, (p : ℝ)⁻¹ :=
+      norm_twistedPrimeGraphMultiplier_le _ _ _ hw _
+    _ ≤ ∑ _p ∈ PrimeEstimates.dyadicPrimes P, (P : ℝ)⁻¹ := by
+      apply Finset.sum_le_sum
+      intro p hp
+      exact inv_anti₀ hPr (by exact_mod_cast (PrimeEstimates.mem_primesInInterval.mp hp).1.le)
+    _ = (PrimeEstimates.dyadicPrimes P).card / (P : ℝ) := by
+      rw [Finset.sum_const, nsmul_eq_mul, div_eq_mul_inv]
+    _ ≤ (Nat.primeCounting (2 * P) : ℝ) / P := by gcongr
+
+/-- The dyadic twisted multiplier inherits the same sharp fourth-moment saving from the four-prime
+sieve as the untwisted one: the constant `A` and threshold `P₀` are literally the dependency's. -/
+theorem exists_dyadic_twistedPrimeGraphMultiplier_fourth_moment_bound :
+    ∃ A : ℝ, 0 < A ∧ ∃ P₀ : ℕ, 2 ≤ P₀ ∧ ∀ P ≥ P₀,
+      ∀ T h : ℕ, 0 < h → 4 * P * h < T →
+      ∀ w : ℕ → ℂ, (∀ p ∈ PrimeEstimates.dyadicPrimes P, ‖w p‖ ≤ 1) →
+      ∑ t ∈ Finset.range T,
+        ‖twistedPrimeGraphMultiplier T h (PrimeEstimates.dyadicPrimes P) w (t : ℤ)‖ ^ 4 ≤
+          A * T / ((P : ℝ) * Real.log P ^ 4) := by
+  obtain ⟨A, hA, henergy⟩ := exists_primesLE_additiveQuadruples_bound
+  obtain ⟨P₀, hP₀⟩ := Filter.eventually_atTop.mp henergy
+  refine ⟨A, hA, max P₀ 2, le_max_right _ _, ?_⟩
+  intro P hP T h hh hT w hw
+  have hP2 : 2 ≤ P := (le_max_right _ _).trans hP
+  have hPr : (0 : ℝ) < P := by positivity
+  have hlog : 0 < Real.log (P : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < P))
+  have hTpos : 0 < T := by omega
+  let _ : NeZero T := ⟨hTpos.ne'⟩
+  have hs : PrimeEstimates.dyadicPrimes P ⊆ Nat.primesLE (2 * P) := by
+    intro p hp
+    have hp' := PrimeEstimates.mem_primesInInterval.mp hp
+    exact Nat.mem_primesLE.mpr ⟨hp'.2.1, hp'.2.2⟩
+  have hcard : (additiveQuadruples (PrimeEstimates.dyadicPrimes P)).card ≤
+      (additiveQuadruples (Nat.primesLE (2 * P))).card := by
+    rw [card_additiveQuadruples, card_additiveQuadruples]
+    exact Finset.addEnergy_mono hs hs
+  have he := hP₀ P ((le_max_left _ _).trans hP)
+  have hbound := fourth_moment_twistedPrimeGraphMultiplier_le_energy T (2 * P) hh
+    (PrimeEstimates.dyadicPrimes P) hw (B := (P : ℝ)⁻¹) (by positivity) (by
+      intro p hp
+      exact inv_anti₀ hPr (by exact_mod_cast (PrimeEstimates.mem_primesInInterval.mp hp).1.le))
+    (fun p hp ↦ (PrimeEstimates.mem_primesInInterval.mp hp).2.1) (by nlinarith)
+  calc
+    _ ≤ T * (additiveQuadruples (PrimeEstimates.dyadicPrimes P)).card * ((P : ℝ)⁻¹) ^ 4 := hbound
+    _ ≤ T * (A * (P : ℝ) ^ 3 / Real.log P ^ 4) * ((P : ℝ)⁻¹) ^ 4 := by
+      gcongr
+      exact (show ((additiveQuadruples (PrimeEstimates.dyadicPrimes P)).card : ℝ) ≤
+        (additiveQuadruples (Nat.primesLE (2 * P))).card by exact_mod_cast hcard).trans he
+    _ = A * T / ((P : ℝ) * Real.log P ^ 4) := by field_simp
+
+/-- Sharp fourth moment and uniform supremum bound for the twisted multiplier at the
+entropy-selected dyadic scale.  Port of `Erdos67b.exists_eventually_primeGraphMultiplier_bounds`;
+the bounds are **uniform in the twist**. -/
+theorem exists_eventually_twistedPrimeGraphMultiplier_bounds {h : ℕ} (hh : 0 < h) :
+    ∃ C : ℝ, 0 < C ∧ ∃ H₁ : ℕ, 2 ≤ H₁ ∧ ∀ H ≥ H₁,
+      ∀ w : ℕ → ℂ, (∀ p ∈ PrimeEstimates.dyadicPrimes (H / (4 * h + 4)), ‖w p‖ ≤ 1) →
+      (∑ t ∈ Finset.range (4 * h * H + 1),
+        ‖twistedPrimeGraphMultiplier (4 * h * H + 1) h
+          (PrimeEstimates.dyadicPrimes (H / (4 * h + 4))) w (t : ℤ)‖ ^ 4 ≤
+            C / Real.log H ^ 4) ∧
+        ∀ t : ℤ, ‖twistedPrimeGraphMultiplier (4 * h * H + 1) h
+          (PrimeEstimates.dyadicPrimes (H / (4 * h + 4))) w t‖ ≤ 16 / Real.log H := by
+  obtain ⟨A, hA, P₀, hP₀, hfourth⟩ := exists_dyadic_twistedPrimeGraphMultiplier_fourth_moment_bound
+  obtain ⟨P₁, hprime⟩ := Filter.eventually_atTop.mp eventually_primeCounting_le_four_mul_div_log
+  let K : ℕ := 4 * h + 4
+  have hK : 2 ≤ K := by dsimp [K]; omega
+  let P₂ : ℕ := max (max P₀ P₁) (2 * K)
+  have hP₂ : 2 * K ≤ P₂ := le_max_right _ _
+  let C : ℝ := 32 * A * K * (4 * h + 1)
+  have hC : 0 < C := by dsimp [C]; positivity
+  refine ⟨C, hC, max 2 (K * P₂), le_max_left _ _, ?_⟩
+  intro H hHH w hw
+  set P := H / K with hPdef
+  set T := 4 * h * H + 1 with hTdef
+  obtain ⟨hPP₂, hPH, hratio, hlogP, hlogH, hlogratio⟩ :=
+    primeGraph_quotient_comparisons hK hP₂ ((le_max_right _ _).trans hHH)
+  have hPP₀ : P₀ ≤ P := ((le_max_left _ _).trans (le_max_left _ _)).trans hPP₂
+  have hPP₁ : P₁ ≤ P := ((le_max_right _ _).trans (le_max_left _ _)).trans hPP₂
+  have hP2 : 2 ≤ P := hP₀.trans hPP₀
+  have hPr : (0 : ℝ) < P := by positivity
+  have hHr : (0 : ℝ) < H := by
+    have : 0 < H := by omega
+    exact_mod_cast this
+  have hTr : (T : ℝ) ≤ (4 * h + 1) * H := by
+    have hH1 : (1 : ℝ) ≤ H := by
+      have : 1 ≤ H := by omega
+      exact_mod_cast this
+    rw [hTdef]
+    push_cast
+    nlinarith
+  have hTP : (T : ℝ) / P ≤ 2 * K * (4 * h + 1) := by
+    apply (div_le_iff₀ hPr).mpr
+    nlinarith
+  have hlogInv : (1 : ℝ) / Real.log P ^ 4 ≤ 16 / Real.log H ^ 4 := by
+    apply (div_le_div_iff₀ (by positivity) (by positivity)).mpr
+    have hpow := pow_le_pow_left₀ hlogH.le hlogratio 4
+    nlinarith [hpow]
+  have hTlow : 4 * P * h < T := by
+    have hPH' : P ≤ H := by rw [hPdef]; omega
+    have hmul := Nat.mul_le_mul_left (4 * h) hPH'
+    rw [hTdef]
+    nlinarith
+  have h4 := hfourth P hPP₀ T h hh hTlow w hw
+  constructor
+  · calc
+      _ ≤ A * T / ((P : ℝ) * Real.log P ^ 4) := h4
+      _ = A * ((T : ℝ) / P) * (1 / Real.log P ^ 4) := by ring
+      _ ≤ A * (2 * K * (4 * h + 1)) * (16 / Real.log H ^ 4) := by gcongr
+      _ = C / Real.log H ^ 4 := by dsimp [C]; ring
+  · intro t
+    have hp := hprime (2 * P) (by omega)
+    have hlog2P : 0 < Real.log (2 * P : ℕ) :=
+      Real.log_pos (by exact_mod_cast (by omega : 1 < 2 * P))
+    have hlogle : Real.log (P : ℝ) ≤ Real.log (2 * P : ℕ) :=
+      Real.log_le_log hPr (by exact_mod_cast (by omega : P ≤ 2 * P))
+    calc
+      _ ≤ (Nat.primeCounting (2 * P) : ℝ) / P :=
+        norm_dyadic_twistedPrimeGraphMultiplier_le_primeCounting T h (by omega) hw t
+      _ ≤ (4 * (2 * P : ℕ) / Real.log (2 * P : ℕ)) / P :=
+        div_le_div_of_nonneg_right (by simpa only [mul_div_assoc] using hp) hPr.le
+      _ = 8 / Real.log (2 * P : ℕ) := by push_cast; field_simp; ring
+      _ ≤ 8 / Real.log P := div_le_div_of_nonneg_left (by norm_num) hlogP hlogle
+      _ ≤ 16 / Real.log H := by
+        apply (div_le_div_iff₀ hlogP hlogH).mpr
+        linarith
+
+/-- Markov's inequality for the twisted frequency count.  Port of
+`Erdos67b.card_primeGraphLargeFrequencies_le`. -/
+theorem card_pairTwistedLargeFrequencies_le {T h : ℕ} (s : Finset ℕ) (w : ℕ → ℂ)
+    {θ B : ℝ} (hθ : 0 < θ)
+    (hmoment : ∑ t ∈ Finset.range T,
+      ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖ ^ 4 ≤ B) :
+    (pairTwistedLargeFrequencies T h s w θ).card ≤ B / θ ^ 4 := by
+  have hsmall : (pairTwistedLargeFrequencies T h s w θ).card * θ ^ 4 ≤
+      ∑ t ∈ pairTwistedLargeFrequencies T h s w θ,
+        ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖ ^ 4 := by
+    rw [← nsmul_eq_mul, ← Finset.sum_const]
+    exact Finset.sum_le_sum fun t ht ↦
+      pow_le_pow_left₀ hθ.le (Finset.mem_filter.mp ht).2 4
+  have hsub : pairTwistedLargeFrequencies T h s w θ ⊆ Finset.range T := Finset.filter_subset _ _
+  have hsum := Finset.sum_le_sum_of_subset_of_nonneg hsub (fun t _ _ ↦ by positivity :
+    ∀ t ∈ Finset.range T, t ∉ pairTwistedLargeFrequencies T h s w θ →
+      0 ≤ ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖ ^ 4)
+  exact (le_div_iff₀ (by positivity : 0 < θ ^ 4)).mpr ((hsmall.trans hsum).trans hmoment)
+
 
 end
 
