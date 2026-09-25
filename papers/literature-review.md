@@ -5,6 +5,87 @@ the route-oriented read: what the sources COLLECTIVELY say about the open
 strategic questions, not a per-paper summary (those are the sibling `.md`s).
 Keep it current — the next reflection lap inherits THIS read.*
 
+## C3/MRT chapter — route synthesis (2026-09-25 DEEP REFLECTION lap 60) ← **CURRENT READ**
+
+*This chapter supersedes the B-chapter's "TT 2512.01739 … still not on disk; still not a
+prerequisite" line: the text extract IS on disk
+(`papers/tao-teravainen-2025-quantitative-correlations.txt`, pdftotext, 3974 lines) and the paper
+IS now the route's anchor.*
+
+### The strategic question this chapter answers
+
+`ConjC3` asks for richness of the base-`b` expansion of `primeLambertAtBase b = ∑' n, ω(n)/bⁿ`
+(`PrimeLambertFour.lean:38`), `b ≥ 3`.  Which published result is the strongest correlation input
+available for it, and is the campaign anchored on it?
+
+### What the corpus actually says
+
+**1.  The constant is Tao–Teräväinen's.**  `∑_n ω(n)/bⁿ = ∑_p 1/(b^p − 1)` is *verbatim* the
+constant of TT Theorem 1.3 (Erdős #69, `…correlations.txt:190`), proved irrational for `b = 2`,
+"the method can also be modified … for any integer base `b ≥ 2`; in fact the case `b > 2` is
+somewhat easier" (`:212`).  The repo proves the `b ≥ 3` irrationality independently
+(`G4.irrational_primeSum`) by a route that avoids their machinery — that remains true and is a
+genuine independent result, but the *richness* question sits directly downstream of their paper.
+
+**2.  Their Theorem 3.1 is the strongest available two-point input, and beats the repo's current
+anchor on four axes at once** (`:1566`).  For 1-bounded **multiplicative** `g₁,g₂` with `g₁`
+non-pretentious (`exp(M(g₁; X², log^{1/125}X)) ≫ L`, `δ_N = 0`) there is `E ⊂ [√X,X]` of
+logarithmic density `≪ L^{-c}` with
+
+    (W/N) ∑_{N<n≤2N} g₁(n+h₁) g₂(n+h₂) 1_{n≡b (W)}  ≪  L^{-c}
+
+for all `N ∈ [√X,X] \ E`, all `W ∈ [L^c]`, `b,h₁,h₂ = O(L^c)`, `h₁ ≠ h₂`, `1 ≤ L ≤ log X`.
+
+| axis | `Erdos67b.NonasymptoticLogElliott` (current anchor) | TT Thm 3.1 |
+|---|---|---|
+| multiplicativity | **completely** multiplicative (`IsMultiplicativeOnPositiveInt`, no coprimality clause — `Erdos67b/LogElliott.lean:329`) | multiplicative ✔ |
+| averaging | logarithmic | **natural** (dyadic block) ✔ |
+| saving | `ε·log W`, qualitative | `L^{-c}`, `L ≤ log X` — a **power of log** ✔ |
+| progressions | via affine forms only | `1_{n≡b (W)}`, `W ≤ (log X)^c`, built in ✔ |
+| price | — | exceptional set `E` of scales, log-density `≪ L^{-c}` |
+
+`ζ^{ω_{>P}}` meets the hypotheses: 1-bounded, multiplicative, and non-pretentious with
+`D(ζ^ω, χ n^{it})² ≍ (1−Re ζ) log log X`, so `L = (log X)^{c'}` is admissible.  Crucially the
+repo's archimedean certificate transfers **verbatim**, because the pretentious distance sees `g`
+only at primes and `ζ^ω`, `ζ^Ω` agree there.
+
+**3.  Precedent for the technique that gets from a two-point estimate to a statement about
+`∑_h ω(n+h)/bʰ`: TT §5** (`:3004`).  They reduce the distribution of exactly that linear
+combination to two-point correlations by (a) an alternating sum over `ε ∈ {0,1}^K` built from
+primes `p_ε = p₀ + ∑ εₖ vₖ`, (b) writing the phase as `∑_p X_p` with `X_p` depending on `n mod p`,
+(c) partitioning the primes into frozen / core / exceptional, (d) bounding the exceptional
+(large-prime) part by a **second moment**, which is where Thm 3.1 enters.  The mean-zero *and*
+`O(2^{-K}/p)`-variance property of their `X_p` is what makes a second moment enough.
+
+**4.  What they say is out of reach** (`:2997`, verbatim): "to handle three-point equations such
+as `ω(n) = ω(n+1) = ω(n+2)` one would require … a version of Theorem 3.1 for triple correlations,
+**which does not appear to be within current technology**.  For similar reasons we are currently
+unable to remove the exceptional set in Theorem 1.7."
+
+### Route judgement
+
+* The campaign's `D ≥ 2` route needs correlations of **unbounded** order (re-derived
+  independently lap 60: truncating `∑_k ω(n+k)b^{-k}` at depth `K` leaves residual s.d.
+  `≍ b^{-K}√(log log N)`).  Per (4) that is generational.  The ratified deliverable — an
+  EQUIVALENCE naming the open problem — is unaffected; the *anchor* must still be the best
+  published statement, which is (2), not the dependency's `Prop`.
+* The `K^{K²}` budget and the `exp(−C(log log log N)⁴)` decay class are artefacts of the
+  complete-multiplicativity hypothesis in the current anchor (see the table in (2) and
+  `ROUTE-ESCALATION-2026-09-25-c3mrt.md` §2a).  They are not "the distance to the literature".
+* TT §5's two-point reduction (3) does **not** transfer to an unconditional Weyl bound: the
+  variance shrinkage is bought with the rationality hypothesis (the dilation identity
+  `ω(n+ph) = ω(n/p+h) + 1 − 1_{p²|n+ph}` applied at `2^K` distinct primes).  Assessed and refuted
+  lap 60 — `PENDING_WORK.md` finding **R3**.  Do not re-chase.
+
+### What is still missing from the corpus
+
+1. **Pilatte, "…" (ref [42] of TT)** — the decoupling inequality Thm 3.3 rests on it, and the
+   `L^{-c}` shape is his.  Not on disk.  Not a prerequisite for *stating* Thm 3.1 as a `Prop`.
+2. **Teräväinen, Forum Math. Sigma 6 (2018) e10** (ref [54]) — the equidistributed case of the
+   qualitative predecessor.  Not on disk; would matter only if the equidistributed branch of
+   Thm 3.1 is ever needed (the campaign uses the non-pretentious branch).
+3. Nothing on disk about **unbounded-order** correlations; per (4) nothing is expected.
+
 ## Campaign B chapter — route synthesis (2026-09-16 DEEP REFLECTION lap)
 
 *Added this lap.  Read this first: it is the current read, and it supersedes the "live campaign"

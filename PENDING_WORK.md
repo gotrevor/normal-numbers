@@ -1,5 +1,123 @@
 # PENDING WORK
 
+## Reflection — 2026-09-25 (deep-reflection lap 60) — ROUTE VERDICT: **ESCALATE**, re-anchor on Tao–Teräväinen Thm 3.1
+
+Full re-cost in `ROUTE-ESCALATION-2026-09-25-c3mrt.md`.  Binding orders in `DIRECTION.md` →
+CURRENT DIRECTIVE.  Summary:
+
+### The destination is unchanged and still worth it
+
+`ConjC3` = *every base-`b` word occurs with positive lower density in the expansion of*
+`primeLambertAtBase b = ∑_n ω(n)/bⁿ`, `b ≥ 3`.  That constant is **verbatim** the constant of
+Tao–Teräväinen arXiv 2512.01739 Theorem 1.3 (Erdős #69), which they prove **irrational** for
+`b = 2` and remark holds for every integer base.  So the repo is formalising the next question
+along a live, top-of-the-field line, on a constant whose first unconditional result is 9 months
+old.  The ratified success criterion remains the EQUIVALENCE, not a proof; that is honest and
+unchanged.
+
+The realistic endpoint, stated plainly: **`ConjC3` will not be proved.**  The Weyl formulation is
+intrinsically an *unbounded*-point correlation (re-derived independently this lap: truncating
+`∑_k ω(n+k) b^{-k}` at depth `K` leaves a residual of standard deviation `≍ b^{-K}√(log log N)`,
+so `K → ∞` is forced, and no reformulation avoids it — richness of a *fixed* word length still
+needs the Weyl sum at a fixed frequency `h ≠ 0`, which sees every digit).  TT state in print that
+even **three**-point correlations are "not within current technology".  The valuable endpoint is a
+ledger that is (i) complete, (ii) anchored on the strongest *published* input, and (iii) honest
+about which residue is generational.
+
+### What was wrong with the route (not the destination)
+
+The whole `D ≥ 2` machinery is built against `Erdos67b.NonasymptoticLogElliott`, whose
+multiplicativity hypothesis `IsMultiplicativeOnPositiveInt` has **no coprimality clause** —
+it is *complete* multiplicativity.  `ζ^ω` fails it, so lap 4 built the `z^ω = z^Ω ⋆ g` powerful-
+divisor bridge, and everything expensive in the campaign descends from that one artificial
+hypothesis: the `D`-fold tuple sums, `prod_le_lcm_mul_pow`'s `K^{K²}`, the lap-40 budget repair,
+and the headline "beat every power of `log log N` by a quasi-polynomial margin" decay class.
+Elliott's conjecture, and Tao's Theorem 1.3 that the dependency is formalising, are stated for
+merely **multiplicative** functions.  With the literature's own hypothesis class none of that
+exists.
+
+### KEEP doing
+
+* **The `Prop`-level ledger discipline.**  Zero `axiom` declarations, every debt carried as an
+  explicit hypothesis, every headline trust-triple clean.  This is why the re-anchoring is cheap:
+  the obligations are named objects, so swapping the anchor is a proof-engineering task.
+* **The archimedean certificate** (`C3MrtArchimedean`, `C3MrtNonPretentious`, laps 18–21).  It
+  transfers to the new anchor **verbatim**: the pretentious distance depends on `g` only through
+  its values at primes, and `ζ^ω`, `ζ^Ω` agree at primes.
+* **The periodicity insights of laps 53–54** (`norm_sum_periodic_le`): the twist `e(jn/Q)` and the
+  small primes `ω_{≤P}` are one and the same obstruction, stripped by one decomposition mod
+  `M₀ = Q · primorial P`.  TT Thm 3.1 has the progression `1_{n ≡ b (W)}`, `W ≤ (log X)^c`, built
+  in — `M₀` is fixed before `N`, so it fits with room to spare.
+* Committing every green build; nothing is ever deleted.
+
+### STOP doing
+
+* **Building on `Erdos67b.NonasymptoticLogElliott` as the main line.**  Keep the K-fold stack —
+  it is sorry-free and is the correct route *for completely multiplicative functions* — but it is
+  no longer the campaign's spine.
+* **Quoting the `exp(−C(log log log N)⁴)` decay class as "the distance to the literature".**  It
+  is the distance to the literature *through the powerful-divisor bridge*.  Restate it as such.
+* **Sharpening `prod_le_lcm_mul_pow`.**  Already recorded as not worth laps; now it is not worth
+  anything, because the constant it bounds should not be in the ledger at all.
+
+### R1–R3: three findings to carry forward
+
+**R1 (compiler-grounded).**  `IsMultiplicativeOnPositiveInt` = complete multiplicativity.  Checked
+at `.lake/packages/lean-proofs-latest/src/latest/ErdosProblems/Erdos67b/LogElliott.lean:329`.  The
+repo's own `KPointLogElliott` inherits it (`C3MrtKPoint.lean:63`), which is why
+`kPointLogElliott_two_iff` can be *proved*.  Any lap tempted to say "`KPointLogElliott` only asks
+multiplicativity" should re-read that definition.
+
+**R2 (source-grounded).**  TT Theorem 3.1 is strictly better than the dependency's `Prop` on four
+axes simultaneously — merely multiplicative, natural (dyadic) averaging, `L^{-c}` saving with
+`L ≤ log X`, and progressions `W ≤ L^c` built in — at the price of an exceptional set of scales of
+logarithmic density `≪ L^{-c}`.  For `ζ^ω` one may take `L = (log X)^{c'}`, which lands **inside**
+`budget_absorb`'s hypothesis class `η N ≤ A (log N)^{-a}`.
+
+**R3 (refuted — do not re-chase).**  A two-point-only proof of the leaf along TT §5's lines.
+Their reduction works because the alternating sum over `ε ∈ {0,1}^K` makes each prime-indexed
+`X_p` mean-zero **and** of variance `O(2^{-K}/p)`, so the large-prime tail has total variance
+`O(2^{-K} log log N) = o(1)` and a second moment (hence pairwise correlations) suffices.  That
+shrinkage is bought with the rationality hypothesis (the dilation identity
+`ω(n+ph) = ω(n/p + h) + 1 − 1_{p²|n+ph}` at `2^K` distinct primes `p_ε`); an unconditional Weyl
+bound has no such identity.  Van der Corput does not substitute — differencing makes `X_p`
+mean-zero but doubles the point count and leaves `Var(X_p) ≍ c_h/p`, so the tail variance stays
+`≍ log log N`.  A direct moment expansion of `e(h ∑_{p>Y} w_p)` against the small-prime period
+fails at the level-of-distribution barrier: the per-progression error costs
+`∑_{p>Y} p · E[w_p] ≍ N/log N`.
+
+### The single highest-value next target
+
+**`src/NormalNumbers/C3MrtMultElliott.lean` — the merely-multiplicative anchor and the
+bridge-free `K`-point correlation form.**  In order:
+
+1. `def IsCoprimeMultiplicativeInt (g : ℤ → ℂ)` — `g 1 = 1` and `g(mn) = g m * g n` for
+   coprime positive `m, n`.  This is Elliott's / Tao's actual hypothesis class.
+2. `def KPointLogElliottMult (K : ℕ) : Prop` — `KPointLogElliott` verbatim with
+   `IsCoprimeMultiplicativeInt` in place of `Erdos67b.IsMultiplicativeOnPositiveInt`.
+3. `kPointLogElliott_of_mult : KPointLogElliottMult K → KPointLogElliott K` — nothing is
+   weakened; the new `Prop` is *stronger*, and is the literature's own statement.
+4. `zOmegaInt z : ℤ → ℂ`, `z ^ ω(n)`; `isCoprimeMultiplicativeInt_zOmegaInt`,
+   `norm_zOmegaInt_le_one`, and the transfer of `nonPretentious_zOm` (values at primes only).
+5. **The decisive lemma** `class_sum_eq_kPointLogCorrelation`: the class-restricted `K`-point sum
+   `∑_{n ≡ r (M₀)} w(n) ∏_{i<K} z_i^{ω(n+i+1)}` *is* `kPointLogCorrelation` of `zOmegaInt` along
+   the affine forms `a i = M₀`, `b i = r + i + 1`, whose pairwise determinant is `M₀(j−i) ≠ 0`
+   (`NondegenerateForms` is immediate).  **No divisors, no truncation, no `K^{K²}`.**
+6. Then transcribe `multi_correlation_of_uniform_rung_prog`'s ε-chase against step 5 to obtain
+   `progression_log_rung_class_mult` — the same conclusion as lap 59's
+   `progression_log_rung_class`, on the *merely multiplicative* anchor, with **no** budget.
+7. Only then: `TwoPointNaturalCorrelation`, TT Thm 3.1(ii) stated faithfully (natural dyadic
+   averaging, `L^{-c}`, `W ≤ L^c`, exceptional set of scales), and the `D = 2` natural-density
+   rung from it.
+
+Why this and not brick 4b: brick 4b perfects the *old* anchor.  Step 5 is the smallest
+compiler-grounded probe that tests whether the re-cost of `ROUTE-ESCALATION-2026-09-25-c3mrt.md`
+is right — if the forms really are nondegenerate and the correlation really is in
+`kPointLogCorrelation`'s shape with no divisor expansion, then eight modules of machinery are
+revealed as a hypothesis artefact, and trigger C3-T2 is on course.  If it fails, C3-T1 fires.
+
+---
+
 ## 2026-09-25 (review lap 40) — C3/MRT: the budget is repaired; resume the `K`-fold assembly
 
 **The defect this lap found and fixed.**  Lap 37's `prod_le_lcm_mul_pow` puts a factor `K^{K²}`

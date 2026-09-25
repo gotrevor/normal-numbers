@@ -2,45 +2,57 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective (2026-09-25 review lap 40 — the C3/MRT moonshot continues; the lap-18 directive's
-mandated move is DONE).**  Drive `weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`)
-by *narrowing the named analytic inputs* its reduction rests on, and by keeping the reduction's
-own `Prop` (`QuantDepthElliott`) HONEST — wide enough to accept what the assembly actually
-produces.  Laps 18–21 closed the archimedean certificate; lap 33 proved the `D = 2` rung; laps
-35–39 reduced `D ≥ 3` to Tao–Teräväinen (a *published* theorem) plus the same VK input, with
-5 of 7 `K`-fold assembly steps proved.
+**Objective (2026-09-25 DEEP-REFLECTION lap 60 — ROUTE VERDICT: ESCALATE, re-anchor).**  The
+destination is unchanged: drive `weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`)
+by narrowing the named analytic inputs its reduction rests on.  The **input anchor changes**.
+Stop building against `Erdos67b.NonasymptoticLogElliott`; build against the literature's own
+hypothesis class — **merely multiplicative** 1-bounded functions — and ultimately against
+**Tao–Teräväinen arXiv 2512.01739 Theorem 3.1**.  Full re-cost:
+`ROUTE-ESCALATION-2026-09-25-c3mrt.md`.  Detail: `PENDING_WORK.md` → "Reflection — 2026-09-25".
 
-**Mandated next move — the BUDGET, before any more assembly.**  Lap 37's
-`prod_le_lcm_mul_pow` introduces a constant `K^{K²}` into the `K`-fold rung.  The current
-`QuantDepthElliott` allows only a `b^{κD}` budget and demands `η` beat every power of
-`llProxy ≍ log log N`.  **That is not enough**: at `D_N ≍ log_b log log N` one has
-`D_N^{D_N²} = exp(Θ((log log log N)² · log log log log N))`, which BEATS every fixed power of
-`log log N`.  (The lap-39 handoff's "`(log log N)^{o(1)}`" is arithmetically wrong; corrected
-here.)  It is, however, comfortably beaten by `(log N)^{-a}` — the decay the `D = 1`
-Selberg–Delange rung actually has.  So, in `C3MrtBudget.lean` (new file, pure addition):
-1. `QuantDepthElliottGen b` — budget a free `C : ℕ → ℝ`, decay clause the JOINT vanishing
-   `C (depthLL b N) · η N → 0`.  Prove `weylLambertTwist_of_quantDepthElliottGen`.
-2. `quantDepthElliottGen_of_quantDepthElliott` — the old Prop implies the new one, so nothing
-   is weakened and the existing ledger row survives verbatim.
-3. `budget_absorb` — the route-decisive lemma: `C D ≤ exp(D³)` together with
-   `η N ≤ A (log N)^{-a}`, `a > 0`, gives the joint vanishing.  With
-   `pow_self_sq_le_exp_cube : (K:ℝ)^(K*K) ≤ exp((K:ℝ)³)` this covers lap 37's constant exactly.
-4. ONLY THEN resume the `K`-fold assembly (handoff steps 1–4: `inner_sum_linear_forms`
-   analogue, `multi_truncation_bound`, the `Fin K`/`Finset.univ.lcm` indexing debt, the
-   per-tuple rung + ε-chase).
+**Why.**  `Erdos67b.IsMultiplicativeOnPositiveInt` (dependency, `Erdos67b/LogElliott.lean:329`)
+has **no coprimality clause** — it is *complete* multiplicativity.  `ζ^ω` fails it, so lap 4
+built the `z^ω = z^Ω ⋆ g` powerful-divisor bridge, and `K^{K²}`, the lap-40 budget repair and the
+"beat every power of `log log N` by a quasi-polynomial margin" decay class are all downstream of
+that one artificial hypothesis.  Elliott's conjecture — and Tao's Theorem 1.3, which the
+dependency is formalising — ask only for *multiplicative*.  Separately, TT Thm 3.1 is natural-
+density, gives an `L^{-c}` saving with `L ≤ log X`, and carries the progression `1_{n≡b (W)}`,
+`W ≤ L^c`, built in; the archimedean certificate transfers verbatim because the pretentious
+distance sees `g` only at primes, where `ζ^ω` and `ζ^Ω` agree.  Three consecutive session wraps
+recorded a *declining* finishability estimate (28 % → 22 % → 22 % → 20 %) with no route change:
+diagnostic tell (b) fired.
 
-**Forbidden drift.**  Do NOT weaken, rename or delete `weylLambertTwist_holds` or `conjC3`; do
-NOT edit `QuantDepthElliott` itself (add `QuantDepthElliottGen` beside it).  Do NOT attack
-`TwistedPrimeSumSaving` (the named VK input) or re-open the refuted routes listed in the lap-39
-session wrap.  New code in `C3Mrt*.lean` only; never import a `lean-proofs-latest` consumer into
-the `NormalNumbers` root.  Build BOTH `lake build` and `lake build NormalNumbers.<C3Mrt tip>`.
+**Mandated next move — the bridge-free correlation form, in `C3MrtMultElliott.lean` (new file,
+pure addition).**
+1. `IsCoprimeMultiplicativeInt` — `g 1 = 1`, `g(mn) = g m · g n` for **coprime** positive `m,n`.
+2. `KPointLogElliottMult K` — `KPointLogElliott` verbatim with (1) in place of the dependency's
+   hypothesis; and `kPointLogElliott_of_mult : KPointLogElliottMult K → KPointLogElliott K`, so
+   nothing is weakened and every existing ledger row survives.
+3. `zOmegaInt`, `isCoprimeMultiplicativeInt_zOmegaInt`, `norm_zOmegaInt_le_one`, and the transfer
+   of the non-pretentiousness certificate (values at primes only).
+4. **The decisive probe** `class_sum_eq_kPointLogCorrelation`: the class-restricted `K`-point sum
+   along `n ≡ r (mod M₀)` **is** `kPointLogCorrelation` of `zOmegaInt` along the affine forms
+   `a i = M₀`, `b i = r+i+1` — pairwise determinant `M₀(j−i) ≠ 0`.  No divisors, no truncation,
+   no `K^{K²}`.
+5. Then `progression_log_rung_class_mult` (lap 59's conclusion on the new anchor, no budget), and
+   only then `TwoPointNaturalCorrelation` = TT Thm 3.1(ii) stated faithfully, with the `D = 2`
+   **natural-density** rung derived from it.
 
-**Why.**  The ratified success criterion is an EQUIVALENCE with named open problems, so the
-value of this campaign is the *fidelity of the ledger*, not a proof of quantitative Elliott.  A
-ledger whose reduction `Prop` cannot absorb the constant its own assembly produces is a broken
-ledger — and lap 37 already produced that constant.  This is the one open obligation whose
-failure would force a redesign of the whole `D ≥ 3` route, so it is hardest-first, and it is
-settled by a small compiler-grounded probe.
+**Forbidden drift.**  Do NOT weaken, rename or delete `weylLambertTwist_holds`, `conjC3`,
+`QuantDepthElliott`, `KPointLogElliott` or anything in the existing `C3Mrt*` chain — this is pure
+addition; the powerful-divisor stack stays in `src/`, sorry-free, as the completely-multiplicative
+route.  Do NOT spend laps on brick 4b, on the quantitative `η`-restatement, or on sharpening
+`prod_le_lcm_mul_pow`: all three perfect the *old* anchor.  Do NOT attack
+`TwistedPrimeSumSaving`.  Do NOT re-chase a two-point-only proof of the leaf — assessed and
+refuted this lap (`PENDING_WORK.md`, finding **R3**).  New code in `C3Mrt*.lean` only; never
+import a `lean-proofs-latest` consumer into the `NormalNumbers` root.  Build BOTH `lake build`
+and `lake build NormalNumbers.<C3Mrt tip>`.
+
+**Registered route triggers.**  🚦 **C3-T1** — if `ζ^ω` provably fails a hypothesis TT Thm 3.1
+needs, ESCALATE (the re-anchoring is void).  🚦 **C3-T2** — if the `D = 2` natural-density rung is
+not a theorem on the new anchor within **6** grind laps of 2026-09-25, ESCALATE.  🚦 **C3-T3** —
+if a lap needs `K ≥ 3` correlations for a step not explicitly disclosed as the generational item,
+that is drift back to the old route: stop and re-read the escalation file.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.
@@ -48,7 +60,12 @@ settled by a small compiler-grounded probe.
 - 2026-09-25 (lap 18 review): REDIRECT to the C3/MRT moonshot; narrow the archimedean
   non-pretentiousness input — COMPLETED laps 18–21.
 - 2026-09-25 (lap 40 review): the `K^{K²}` BUDGET first (`C3MrtBudget.lean`), then resume the
-  `K`-fold assembly; the lap-39 "`(log log N)^{o(1)}`" estimate is corrected.
+  `K`-fold assembly; the lap-39 "`(log log N)^{o(1)}`" estimate is corrected — COMPLETED laps
+  40–59 (33 declarations, all trust-triple clean).
+- 2026-09-25 (DEEP-REFLECTION lap 60): **ROUTE VERDICT ESCALATE.**  `K^{K²}` and the
+  quasi-polynomial decay class are artefacts of the dependency's *complete*-multiplicativity
+  hypothesis.  Re-anchor on merely-multiplicative Elliott and on TT arXiv 2512.01739 Thm 3.1;
+  triggers C3-T1…T3 registered.
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically
 one).  See `G4PrefixDecayAudit.lean` for the proved counterexample and the
