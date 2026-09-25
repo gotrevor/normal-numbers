@@ -202,9 +202,70 @@ theorem abelianAt_one_of_abelianAt (s : ℕ → ℕ) (hs : ∀ m, s m < 2) (L : 
     (h : IsAbelianAt s L) : IsAbelianAt s 1 :=
   abelianAt_one_of_abelianAt' s hs L hL h
 
+/-! ## Realizability: the empty set -/
+
+/-- The all-zeros sequence has every window one-count equal to `0`. -/
+theorem onesCount_zero_fun (L n : ℕ) : onesCount (fun _ => 0) L n = 0 := by
+  simp [onesCount, windowSet]
+
+theorem onesFreq_zero_fun (L N : ℕ) (hN : 1 ≤ N) : onesFreq (fun _ => 0) L 0 N = 1 := by
+  rw [onesFreq]
+  have : (range N).filter (fun n => onesCount (fun _ => 0) L n = 0) = range N := by
+    apply Finset.filter_true_of_mem
+    intro n _
+    exact onesCount_zero_fun L n
+  rw [this, Finset.card_range]
+  exact div_self (Nat.cast_ne_zero.mpr (by omega))
+
+/-- The all-zeros sequence is abelian at no length `L ≥ 1`. -/
+theorem not_isAbelianAt_zero_fun (L : ℕ) (hL : 1 ≤ L) :
+    ¬ IsAbelianAt (fun _ => 0) L := by
+  intro h
+  have h0 := h 0 (Nat.zero_le _)
+  have h1 : Tendsto (onesFreq (fun _ => 0) L 0) atTop (𝓝 1) :=
+    Tendsto.congr' (eventually_atTop.mpr ⟨1, fun N hN => (onesFreq_zero_fun L N hN).symm⟩)
+      tendsto_const_nhds
+  have heq : ((L.choose 0 : ℝ) / 2 ^ L) = 1 := tendsto_nhds_unique h0 h1
+  rw [Nat.choose_zero_right] at heq
+  have hpow : (1 : ℝ) < 2 ^ L := by
+    refine one_lt_pow₀ (by norm_num) (by omega)
+  rw [Nat.cast_one, div_eq_one_iff_eq (by positivity)] at heq
+  linarith
+
+/-! ## Realizability: the hard branch
+
+The remaining obligation.  Written in the symmetrized coordinates of `AbelianNormal.lean`, for a
+sequence whose parity correlations `c T = lim_N parityMean s T N` all exist,
+
+  `IsAbelianAt s L  ↔  ∀ 1 ≤ j ≤ L, F j L = 0`,  where  `F j L = ∑_{T ⊆ [0,L), |T| = j} c T`.
+
+Shift invariance makes `c` a function of the *shape* of `T`.  For a process whose only nonzero
+correlations are on pairs, `F 1 L = L * c {0}` and `F 2 L = ∑_{d=1}^{L-1} (L - d) * ρ d` with
+`ρ d = c {0, d}`, and the second difference is `F 2 (L+1) - 2 * F 2 L + F 2 (L-1) = ρ L`.  So
+`F 2` is an ARBITRARY sequence vanishing at `0` and `1` — which is exactly the shape of the
+admissibility hypothesis `S = ∅ ∨ 1 ∈ S`.  That is the mechanism C4 rests on.
+
+Obstruction found this lap: an exactly-pair-correlated stationary `±1` process does not exist
+(positivity of the length-`n` Fourier expansion `2^{-n}(1 + ∑_{a<b} ρ(b-a) x_a x_b)` fails once
+`n * ∑_d |ρ d| > 1`).  So the higher `F j` cannot be killed correlation-by-correlation; they must
+be killed as symmetrized *sums*.  Block-i.i.d. processes (i.i.d. blocks of length `m`, uniform
+random offset) do kill every `c T` whose trace on some block has odd size, leaving `ρ̃ d =
+ρ d * (m - d) / m` supported on `d < m`; but then `F 2` is eventually affine, so a single scale
+`m` can only realize `S` that is cofinite-or-bounded in a rigid way.  Infinite `S` needs
+infinitely many scales. -/
+
+/-- **C4, hard branch.**  Every set of window lengths containing `1` is realized exactly. -/
+theorem c4_realizable_of_mem_one (S : Set ℕ) (hS : ∀ L ∈ S, 1 ≤ L) (h1 : 1 ∈ S) :
+    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ L ∈ S) := by
+  sorry
+
 /-- **C4 (ratified headline).**  Every admissible set of window lengths is realized exactly. -/
 theorem c4_realizable (S : Set ℕ) (hS : ∀ L ∈ S, 1 ≤ L) (hadm : S = ∅ ∨ 1 ∈ S) :
     ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ L ∈ S) := by
-  sorry
+  rcases hadm with rfl | h1
+  · refine ⟨fun _ => 0, fun m => by norm_num, fun L hL => ?_⟩
+    simp only [Set.mem_empty_iff_false, iff_false]
+    exact not_isAbelianAt_zero_fun L hL
+  · exact c4_realizable_of_mem_one S hS h1
 
 end NormalNumbers.Abelian
