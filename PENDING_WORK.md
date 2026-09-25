@@ -13,6 +13,46 @@ discard needs only `b^{D_N} ≫ u_N`.  A slower schedule with `b^{D_N} ≍ u log
 
 # PENDING WORK
 
+## Lap 90 (2026-09-25) — the threshold data is PROVABLE, not assumable (in flight)
+
+**Correction to the lap-89 handoff.**  Its NEXT ① guessed `KPointThresholdOKWith` FAILS for the
+geometric profile.  That guess was wrong: it estimated the available budget `log log a_N` as
+`log u_N` when in fact `u_N = log₂log₂N` gives `2^{u_N} ≍ log₂ N`, so `log log a_N ≍ u_N·log 2`.
+The demand is `log log Athr(D_N) ≳ b^{θD_N} log D_N ≍ (u log u)^θ log log u`, and for `θ < 1`
+that is `o(u)`.  Numerically confirmed (θ=0.9, b=3): ratio to `u` is 74 at `u=10⁴`, 9.4 at `10²⁰`,
+0.003 at `10⁶⁰` — it holds, just slowly.  So the threshold is a THEOREM to prove, and it is the
+last assumed piece besides the `K`-point input itself.
+
+**Landed this lap.**  `KPointThresholdSlow b Q P cK` — the threshold demanded only up to the slow
+schedule's levels (`K ≤ depthSlow b N`), which is all `depthDiagonalSlow_of_geom` ever uses;
+`kPointThresholdSlow_of_with` bridges from the `depthLL` version so nothing is lost;
+`depthDiagonalSlow_of_geom` / `weylLambertTwist_of_geom_slow` / `conjC3_of_geom_slow` rewired to
+the weaker hypothesis, with `weylLambertTwist_of_geom_slow_of_with` recovering the lap-89 form.
+This matters beyond bookkeeping: at `θ > 1/2` the `depthLL` demand `b^{θ·2log_b u} ≍ u^{2θ}` does
+exceed the `u` budget, so the slow threshold is the only satisfiable one in the widened range.
+
+**Next attack — construct `Athr` and prove `kPointThresholdSlow_of_geom`.**  Plan, all pieces
+checked against existing lemmas:
+
+    φ K    := (b:ℝ)^(θ*K) * log(K+2+M₀) / (κ*c₀*log 2)     -- monotone in K
+    Athr K := 2 ^ (2 ^ Nat.ceil (φ K))                      -- so 2·log(Athr K) ≥ 2^⌈φ K⌉
+
+* clause (ii) `max(max 2 (K+1), M₀) ≤ (2 log Athr K)^(κ·cKgeom c₀ θ b K)`: with
+  `e_K = κc₀b^{-θK}`, `(2^{g})^{e_K} = exp(g·e_K·log 2) ≥ exp(log(K+2+M₀))` exactly when
+  `g ≥ φ K`, which `Nat.le_ceil` gives.  Needs `T_K ≤ K+2+M₀` (trivial) and
+  `Real.rpow_le_rpow` to pass from `2^g ≤ 2 log Athr K`.
+* clause (iii): `Athr` monotone (⌈·⌉ of monotone), so it suffices that
+  `Athr (depthSlow b N) ≤ N/2^{u_N}`.  Reduce via `⌈φ(D_N)⌉ ≤ u_N - 1`, then
+  `2^{2^{u-1}} ≤ 2^{(log₂N)/2} ≤ √N ≤ N/2^{u_N}` using `2^{u} ≤ log₂ N` (`two_pow_llLevel_le`)
+  and `le_sq_cut`.
+* `⌈φ(D_N)⌉ ≤ u_N - 1` is the one analytic step.  Feed `pow_depthSlow_le_log`
+  (`b^{D_N} ≤ b(u+1)(2+2t)`) and `depthLL_succ_le_log` (`D_N+1 ≤ 2+3t`), `t = log(u+1)`, then
+  with `(2+2t)^θ ≤ 2+3t` and `log(4+3t+M₀) ≤ (M₀+4)(2+3t)` reduce to
+  `C(2+3t)^2 + 3 ≤ exp((1-θ)t)`, which is `tendsto_exp_div_polyPow (1-θ) 2` — already in
+  `C3MrtUnifK`.  Same `u^{1-θ}` margin as the saving side, which is the right consistency check.
+
+
+
 ## Review — lap 87 (2026-09-25): the budget layer is VACUOUS; the obligation is the DIAGONAL
 
 Binding orders: `DIRECTION.md` → CURRENT DIRECTIVE.  State at entry: branch `wip/c3-mrt`,

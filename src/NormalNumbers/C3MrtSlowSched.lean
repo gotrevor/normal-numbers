@@ -499,6 +499,30 @@ theorem depthAvg_dvd_tendsto_of_primitive_sched {b : ℕ} (hb : 2 ≤ b) (P Q j 
   filter_upwards [hD.eventually_ge_atTop v] with N hN
   exact norm_depthAvg_dvd_le hb0 P Q j h' hN N
 
+/-! ### The threshold data, on the slow schedule
+
+`C3MrtUnifK.KPointThresholdOKWith` asks for the threshold to be passed for every level
+`K ≤ depthLL b N`.  The slow schedule only ever uses levels `K ≤ depthSlow b N`, so it needs
+strictly less; and — unlike the `depthLL` version at `θ > 1/2` — the weaker demand is one the
+geometric profile can actually MEET.  See `kPointThresholdSlow_of_geom`. -/
+
+/-- The threshold data, demanded only up to the SLOW schedule's levels. -/
+def KPointThresholdSlow (b Q P : ℕ) (cK : ℕ → ℝ) : Prop :=
+  ∀ κ : ℝ, 0 < κ → κ ≤ 1 → ∃ Athr : ℕ → ℕ, (∀ K, 2 ≤ Athr K) ∧
+    (∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * cK K)) ∧
+    (∀ᶠ N : ℕ in atTop, ∀ K : ℕ, K ≤ depthSlow b N →
+        Athr K ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N)))
+
+/-- Nothing is lost: the `depthLL` threshold data implies the slow one. -/
+theorem kPointThresholdSlow_of_with {b Q P : ℕ} (hb : 2 ≤ b) {cK : ℕ → ℝ}
+    (h : KPointThresholdOKWith b Q P cK) : KPointThresholdSlow b Q P cK := by
+  intro κ hκ hκ1
+  obtain ⟨Athr, hA2, hAthr, hAcut⟩ := h κ hκ hκ1
+  refine ⟨Athr, hA2, hAthr, ?_⟩
+  filter_upwards [hAcut, depthSlow_le_depthLL hb] with N hcut hSL K hK
+  exact hcut K (le_trans hK hSL)
+
 /-- The diagonal obligation, on the SLOW schedule. -/
 def DepthDiagonalSlow (b : ℕ) : Prop :=
   ∀ (P Q j : ℕ) (h : ℤ), 0 < Q → 0 < j → j < Q →
@@ -518,7 +542,7 @@ levels, exactly as in `C3MrtUnifK.depthDiagonal_of_geom`. -/
 theorem depthDiagonalSlow_of_geom {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
     (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
     (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
-    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdOKWith b Q P (cKgeom c₀ θ b)) :
+    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdSlow b Q P (cKgeom c₀ θ b)) :
     DepthDiagonalSlow b := by
   intro P Q j hh hQ hj0 hjQ
   have hb0 : 0 < b := by omega
@@ -542,15 +566,12 @@ theorem depthDiagonalSlow_of_geom {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc�
   have hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ depthSlow b N := by
     filter_upwards [hvN] with N hN
     rw [hKNdef]; simp only; omega
-  have hKleLL : ∀ᶠ N : ℕ in atTop, KN N ≤ PairDecouple.depthLL b N := by
-    filter_upwards [hKle, depthSlow_le_depthLL hb] with N h1 h2
-    omega
   have hKeq : ∀ᶠ N : ℕ in atTop, KN N = depthSlow b N - v := by
     filter_upwards [hvN] with N hN
     rw [hKNdef]; simp only; omega
   have hAle : ∀ᶠ N : ℕ in atTop,
       Athr (KN N) ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N)) := by
-    filter_upwards [hAcut, hKleLL] with N hcut hle
+    filter_upwards [hAcut, hKle] with N hcut hle
     exact hcut _ hle
   have hgen := depthAvg_gen_tendsto_of_geom_slow hb hQ P j h' hc₀ hθ0 hθ m KN hKN hKle hin
     hκ hκ1 hnp Athr hA2 hAthr hAle
@@ -571,17 +592,26 @@ mean-phase discard permits. -/
 theorem weylLambertTwist_of_geom_slow {b : ℕ} (hb : 3 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
     (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
     (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
-    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdOKWith b Q P (cKgeom c₀ θ b)) :
+    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdSlow b Q P (cKgeom c₀ θ b)) :
     WeylLambertTwist b :=
   weylLambertTwist_of_depthDiagonalSlow hb
     (depthDiagonalSlow_of_geom (by omega) hc₀ hθ0 hθ m hin hthr)
+
+/-- The lap-89 form, recovered through the bridge: the `depthLL` threshold data still suffices. -/
+theorem weylLambertTwist_of_geom_slow_of_with {b : ℕ} (hb : 3 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdOKWith b Q P (cKgeom c₀ θ b)) :
+    WeylLambertTwist b :=
+  weylLambertTwist_of_geom_slow hb hc₀ hθ0 hθ m hin
+    fun P Q hQ => kPointThresholdSlow_of_with (by omega) (hthr P Q hQ)
 
 /-- …and hence `ConjC3`, base by base. -/
 theorem conjC3_of_geom_slow {c₀ θ : ℝ} (hc₀ : 0 < c₀)
     (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
     (hin : ∀ b : ℕ, 3 ≤ b → ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
     (hthr : ∀ b : ℕ, 3 ≤ b → ∀ P Q : ℕ, 0 < Q →
-      KPointThresholdOKWith b Q P (cKgeom c₀ θ b)) :
+      KPointThresholdSlow b Q P (cKgeom c₀ θ b)) :
     ConjC3 :=
   conjC3_of_weylLambertTwist fun b hb =>
     weylLambertTwist_of_geom_slow hb hc₀ hθ0 hθ m (hin b hb) (hthr b hb)
@@ -602,8 +632,10 @@ theorem conjC3_of_geom_slow {c₀ θ : ℝ} (hc₀ : 0 < c₀)
 #print axioms NormalNumbers.CastingOut.depthAvg_dvd_tendsto_of_primitive_sched
 #print axioms NormalNumbers.CastingOut.depthAvg_gen_tendsto_of_geom_slow
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonalSlow
+#print axioms NormalNumbers.CastingOut.kPointThresholdSlow_of_with
 #print axioms NormalNumbers.CastingOut.depthDiagonalSlow_of_geom
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_geom_slow
+#print axioms NormalNumbers.CastingOut.weylLambertTwist_of_geom_slow_of_with
 #print axioms NormalNumbers.CastingOut.conjC3_of_geom_slow
 
 end CastingOut
