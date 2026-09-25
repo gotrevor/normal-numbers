@@ -914,6 +914,93 @@ theorem depthAvg_diag_tendsto_of_degrading {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) 
     have hlog : 0 < Real.log ((N / 2 ^ k₀ N : ℕ) : ℝ) := Real.log_pos (by linarith)
     linarith
 
+/-! ### Discharging `hgrow` for the concrete schedule
+
+`hgrow` is the only price of the degrading profile.  With the cut level
+`k₀ N = log₂ log₂ N =: u_N` it is a theorem, not a hypothesis, and the reason is a clean
+separation of scales:
+
+* the numerator is `log (2 log a_N) ≥ log log N ≥ (u_N - 2) log 2` — *linear* in `u_N`, because
+  `2^{u_N} ≤ log₂ N`;
+* the denominator is `(D_N+1)^{2m} ≤ (2 + 3 log (u_N+1))^{2m}` — a *power of the logarithm* of
+  `u_N`, because `b^{D_N} ≤ b (u_N+1)²`.
+
+So the ratio is `≍ u / (log u)^{2m} → ∞`, which is the exponential beating a power after the
+substitution `u + 1 = exp t`. -/
+
+/-- `k^3 ≤ 2^k` for `k ≥ 10`. -/
+theorem cube_le_two_pow : ∀ k : ℕ, 10 ≤ k → k ^ 3 ≤ 2 ^ k := by
+  intro k hk
+  induction k with
+  | zero => omega
+  | succ n ih =>
+    rcases Nat.lt_or_ge n 10 with hn | hn
+    · have hn9 : n = 9 := by omega
+      subst hn9; norm_num
+    · have h := ih (by omega)
+      have h1 : 10 * n ^ 2 ≤ n ^ 3 := by
+        calc 10 * n ^ 2 ≤ n * n ^ 2 := Nat.mul_le_mul_right _ hn
+          _ = n ^ 3 := by ring
+      have h2 : 10 * n ≤ n ^ 2 := by
+        calc 10 * n ≤ n * n := Nat.mul_le_mul_right _ hn
+          _ = n ^ 2 := by ring
+      have hn3 : (n + 1) ^ 3 ≤ 2 * n ^ 3 := by nlinarith
+      calc (n + 1) ^ 3 ≤ 2 * n ^ 3 := hn3
+        _ ≤ 2 * 2 ^ n := by omega
+        _ = 2 ^ (n + 1) := by ring
+
+/-- The exponential beats a power of its argument's logarithm, in the shape the schedule needs. -/
+theorem tendsto_expRatio_atTop (p : ℕ) :
+    Tendsto (fun t : ℝ => (Real.exp t - 3) * Real.log 2 / (2 + 3 * t) ^ p) atTop atTop := by
+  have hmin : Tendsto (fun t : ℝ => Real.log 2 / (2 * 5 ^ p) * (Real.exp t / t ^ p))
+      atTop atTop :=
+    (Real.tendsto_exp_div_pow_atTop p).const_mul_atTop (by positivity)
+  refine tendsto_atTop_mono' atTop ?_ hmin
+  filter_upwards [Filter.eventually_ge_atTop (2 : ℝ)] with t ht
+  have ht0 : (0 : ℝ) < t := by linarith
+  have hex : (6 : ℝ) ≤ Real.exp t := by
+    have h1 : Real.exp 2 ≤ Real.exp t := Real.exp_le_exp.2 ht
+    have h2 : (6 : ℝ) ≤ Real.exp 2 := by
+      have h3 := Real.exp_one_gt_d9
+      have h4 : Real.exp 2 = Real.exp 1 * Real.exp 1 := by
+        rw [← Real.exp_add]; norm_num
+      nlinarith [Real.exp_pos (1 : ℝ)]
+    linarith
+  have hnum : Real.exp t / 2 ≤ Real.exp t - 3 := by linarith
+  have hden : (2 + 3 * t) ^ p ≤ (5 * t) ^ p := by
+    exact pow_le_pow_left₀ (by linarith) (by linarith) p
+  have hdenpos : (0 : ℝ) < (2 + 3 * t) ^ p := by positivity
+  have hkey : Real.log 2 / (2 * 5 ^ p) * (Real.exp t / t ^ p)
+      ≤ (Real.exp t / 2) * Real.log 2 / (5 * t) ^ p := by
+    rw [mul_pow]
+    have h5 : (0 : ℝ) < (5 : ℝ) ^ p := by positivity
+    have h6 : (0 : ℝ) < t ^ p := pow_pos ht0 p
+    field_simp
+    norm_num
+  refine hkey.trans ?_
+  have hlog2 : (0 : ℝ) ≤ Real.log 2 := (Real.log_pos (by norm_num)).le
+  have h1 : (Real.exp t / 2) * Real.log 2 ≤ (Real.exp t - 3) * Real.log 2 :=
+    mul_le_mul_of_nonneg_right hnum hlog2
+  have h2 : (Real.exp t - 3) * Real.log 2 / (5 * t) ^ p
+      ≤ (Real.exp t - 3) * Real.log 2 / (2 + 3 * t) ^ p :=
+    div_le_div_of_nonneg_left (by nlinarith) hdenpos hden
+  exact le_trans (div_le_div_of_nonneg_right h1 (by positivity)) h2
+
+/-- The minorant of `hgrow`, as a function of the double-log level `u`. -/
+noncomputable def degMinorant (m u : ℕ) : ℝ :=
+  ((u : ℝ) - 2) * Real.log 2 / (2 + 3 * Real.log ((u : ℝ) + 1)) ^ (2 * m)
+
+/-- **The minorant diverges.**  `u + 1 = exp (log (u+1))` turns this into
+`tendsto_expRatio_atTop`, with no inversion of the logarithm anywhere. -/
+theorem tendsto_degMinorant (m : ℕ) : Tendsto (fun u : ℕ => degMinorant m u) atTop atTop := by
+  have ht : Tendsto (fun u : ℕ => Real.log ((u : ℝ) + 1)) atTop atTop :=
+    Real.tendsto_log_atTop.comp (tendsto_natCast_atTop_atTop.atTop_add tendsto_const_nhds)
+  have hcomp := (tendsto_expRatio_atTop (2 * m)).comp ht
+  refine hcomp.congr fun u => ?_
+  have hpos : (0 : ℝ) < (u : ℝ) + 1 := by positivity
+  simp only [Function.comp_apply, degMinorant, Real.exp_log hpos]
+  ring_nf
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
