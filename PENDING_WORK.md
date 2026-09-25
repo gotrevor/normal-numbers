@@ -10460,3 +10460,28 @@ that is the cheapest next improvement, and it is elementary (Chebyshev/Abel summ
 purely Archimedean `∑_{p≤X}p^{-ikt}/p ≈ M`); (c) the Archimedean bound
 `|∑_{p≤X}p^{-iv}/p| ≪ log(2+|v| log X)/... ` for `1/log X ≪ |v| ≤ A·X`, which is where the zero-free
 region enters and where the dependency stops.
+
+## Lap 87 (2026-09-25) — crux narrowed: the near-trivial regime restored to the classical cutoff
+
+Attack step (a) of lap 86's list, done.  `TwistModulusDichotomy` is now a **strictly weaker**
+(easier) analytic input than it was a lap ago.
+
+* `exists_mertensOne` — **Mertens' first theorem** `∑_{p≤X}(log p)/p ≤ log X + C` is available
+  after all, in `BoundedGaps.Maynard.exists_uniform_abs_primeLogHarmonicSum_sub_log`
+  (`.lake/packages/BoundedGaps`, already in the import graph via the dependency's
+  `TwistSeparation.lean`).  `primesUpTo X = Nat.primesLE X` by `Nat.primesLE_eq_filter_range`.
+  The constant there is non-explicit (a `tsum` over non-prime prime powers); irrelevant here, so
+  the statement is existential.
+* `NearTrivialTwist` is now just `PrincipalAtGoodPrimes χ ∧ |t| · log X ≤ 1` — the classical
+  cutoff.  Lap 86's extra `· M(X) ≤ 1` clause, a `log log X` loss, is gone.
+* `exists_norm_twistCorr_sub_primeMass_le` — the corresponding `X`-uniform bound
+  `‖C − M‖ ≤ K + 2·M(q)`, now with `K = 2 + 4C` from Mertens I instead of the crude `2 + 2M(q)`
+  at the narrower cutoff.  The Archimedean sum is `2|t|∑(log p)/p ≤ 2|t| log X + 2|t|C ≤ 2 + 4C`
+  using `|t| ≤ 1/log X ≤ 1/log 2 ≤ 2`.
+* `uniformlyNonPretentious_zetaOmega_of_dichotomy` re-plumbed through the existential `K`.
+
+Remaining attack on the crux, unchanged in substance: (b) the `k`-th-power bootstrap
+(`‖w^2 − β^2‖ ≤ 2‖w − β‖`, iterated to the order of `χ`) reducing `‖C‖ ≈ M` to the purely
+Archimedean `|∑_{p≤X} p^{-ikt}/p| ≈ M`; (c) that Archimedean bound for `1/log X ≪ |v| ≤ A·X`,
+which is the zero-free-region input and the same wall the dependency's
+`PolynomialHeightPrimeCorrelationBound` names.

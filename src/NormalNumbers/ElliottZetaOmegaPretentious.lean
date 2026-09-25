@@ -1,4 +1,5 @@
 import NormalNumbers.ElliottTwoPointLog
+import BoundedGaps.Maynard.PrimeMertens
 
 /-!
 # Discharging `UniformlyNonPretentious` for `ζ^ω` — the decomposition
@@ -107,13 +108,12 @@ def PrincipalAtGoodPrimes {q : ℕ} (χ : DirichletCharacter ℂ q) : Prop :=
 /-- The near-trivial regime: a principal character and a frequency so small that the whole
 Archimedean twist is a bounded perturbation of `1` across the window.
 
-The cutoff `|t| · log X · M(X) ≤ 1` is marginally smaller than the classical `|t| ≤ 1/log X`,
-by a `log log X` factor; it is what the crude bound `‖p^{it} − 1‖ ≤ 2|t| log p ≤ 2|t| log X`
-affords without Mertens' first theorem `∑_{p≤X} (log p)/p = log X + O(1)`, which is not in the
-dependency.  Proving Mertens I would widen this regime and *weaken* the analytic input below. -/
+The cutoff is the classical `|t| ≤ 1/log X`, reached (lap 87) by routing the Archimedean sum
+through **Mertens' first theorem** `∑_{p≤X}(log p)/p = log X + O(1)`, which is available as
+`BoundedGaps.Maynard.exists_uniform_abs_primeLogHarmonicSum_sub_log`.  Lap 86 had the narrower
+`|t| · log X · M(X) ≤ 1`, a `log log X` loss from summing the crude `2|t| log X` against `∑1/p`. -/
 def NearTrivialTwist {q : ℕ} (χ : DirichletCharacter ℂ q) (t : ℝ) (X : ℕ) : Prop :=
-  PrincipalAtGoodPrimes χ ∧ |t| * Real.log (X : ℝ) ≤ 1 ∧
-    |t| * Real.log (X : ℝ) * primeMass X ≤ 1
+  PrincipalAtGoodPrimes χ ∧ |t| * Real.log (X : ℝ) ≤ 1
 
 theorem primeMass_nonneg (X : ℕ) : 0 ≤ primeMass X :=
   Finset.sum_nonneg fun p _ => by positivity
@@ -122,15 +122,40 @@ theorem primeMass_mono {X Y : ℕ} (h : X ≤ Y) : primeMass X ≤ primeMass Y :
   refine Finset.sum_le_sum_of_subset_of_nonneg (primesUpTo_mono h) ?_
   intro p _ _; positivity
 
+/-- **Mertens' first theorem**, in the form needed: `∑_{p ≤ X} (log p)/p ≤ log X + C`. -/
+theorem exists_mertensOne :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ X : ℕ,
+      ∑ p ∈ primesUpTo X, Real.log (p : ℝ) / (p : ℝ) ≤ Real.log (X : ℝ) + C := by
+  obtain ⟨C, hC⟩ := BoundedGaps.Maynard.exists_uniform_abs_primeLogHarmonicSum_sub_log
+  refine ⟨|C|, abs_nonneg C, ?_⟩
+  intro X
+  have heq : ∑ p ∈ primesUpTo X, Real.log (p : ℝ) / (p : ℝ)
+      = BoundedGaps.Maynard.primeLogHarmonicSum X := by
+    rw [BoundedGaps.Maynard.primeLogHarmonicSum, primesUpTo, Nat.primesLE_eq_filter_range]
+  have := (abs_le.mp (hC X)).2
+  have hCabs : C ≤ |C| := le_abs_self C
+  rw [heq]
+  linarith
+
 /-- **The near-trivial estimate.**  In the near-trivial regime `C` differs from the real number
-`M` by at most `2 + 2·M(q)` — a bound independent of `X`. -/
-theorem norm_twistCorr_sub_primeMass_le {q : ℕ} (χ : DirichletCharacter ℂ q) (hq : 0 < q)
-    (t : ℝ) {X : ℕ} (hX : 2 ≤ X) (hnt : NearTrivialTwist χ t X) :
-    ‖twistCorr χ t X - (primeMass X : ℂ)‖ ≤ 2 + 2 * primeMass q := by
+`M` by at most an absolute constant plus `2·M(q)`, uniformly in `X`. -/
+theorem exists_norm_twistCorr_sub_primeMass_le :
+    ∃ K : ℝ, ∀ (q : ℕ) (χ : DirichletCharacter ℂ q), 0 < q → ∀ (t : ℝ) (X : ℕ), 2 ≤ X →
+      NearTrivialTwist χ t X →
+      ‖twistCorr χ t X - (primeMass X : ℂ)‖ ≤ K + 2 * primeMass q := by
   classical
-  obtain ⟨hprin, htlog, htM⟩ := hnt
-  have hlogX : 0 ≤ Real.log (X : ℝ) := Real.log_natCast_nonneg X
+  obtain ⟨C, hC0, hC⟩ := exists_mertensOne
+  refine ⟨2 + 4 * C, ?_⟩
+  intro q χ hq t X hX hnt
+  obtain ⟨hprin, htlog⟩ := hnt
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlogX : Real.log 2 ≤ Real.log (X : ℝ) :=
+    Real.log_le_log (by norm_num) (by exact_mod_cast hX)
+  have hlogXpos : (0 : ℝ) < Real.log (X : ℝ) := lt_of_lt_of_le hlog2 hlogX
   have habs : (0 : ℝ) ≤ |t| := abs_nonneg t
+  have htsmall : |t| ≤ 2 := by
+    have : |t| * Real.log 2 ≤ 1 := le_trans (by nlinarith) htlog
+    nlinarith [Real.log_two_gt_d9]
   have hsplit : twistCorr χ t X - (primeMass X : ℂ) =
       ∑ p ∈ primesUpTo X,
         ((starRingEnd ℂ) (dirichletArchimedeanTwist χ t p) - 1) / (p : ℂ) := by
@@ -143,17 +168,15 @@ theorem norm_twistCorr_sub_primeMass_le {q : ℕ} (χ : DirichletCharacter ℂ q
     ring
   rw [hsplit]
   refine le_trans (norm_sum_le _ _) ?_
-  -- split the index set according to `p ∣ q`
   have hbound : ∀ p ∈ primesUpTo X,
       ‖((starRingEnd ℂ) (dirichletArchimedeanTwist χ t p) - 1) / (p : ℂ)‖ ≤
-        (if p ∣ q then (2 : ℝ) / p else 2 * (|t| * Real.log (X : ℝ)) / p) := by
+        (if p ∣ q then (2 : ℝ) / p else 2 * |t| * (Real.log (p : ℝ) / p)) := by
     intro p hp
     have hp' : p.Prime := (mem_primesUpTo.mp hp).1
     have hpX : p ≤ X := (mem_primesUpTo.mp hp).2
     have hppos : 0 < p := hp'.pos
     have hpR : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hppos
-    have hnormp : ‖((p : ℂ))‖ = (p : ℝ) := by
-      exact Complex.norm_natCast p
+    have hnormp : ‖((p : ℂ))‖ = (p : ℝ) := Complex.norm_natCast p
     rw [norm_div, hnormp]
     by_cases hdvd : p ∣ q
     · rw [if_pos hdvd]
@@ -166,7 +189,6 @@ theorem norm_twistCorr_sub_primeMass_le {q : ℕ} (χ : DirichletCharacter ℂ q
             norm_sub_le _ _
         _ ≤ 2 := by simp at *; linarith
     · rw [if_neg hdvd]
-      gcongr
       have hχ : χ p = 1 := hprin p hp' hdvd
       have hlogp : Real.log (p : ℝ) ≤ Real.log (X : ℝ) :=
         Real.log_le_log hpR (by exact_mod_cast hpX)
@@ -176,9 +198,13 @@ theorem norm_twistCorr_sub_primeMass_le {q : ℕ} (χ : DirichletCharacter ℂ q
           (starRingEnd ℂ) (archimedeanTwist t p - 1) := by
         rw [dirichletArchimedeanTwist, hχ, one_mul, map_sub, map_one]
       rw [hconj, RCLike.norm_conj]
-      calc ‖archimedeanTwist t p - 1‖ ≤ 2 * (|t| * Real.log (p : ℝ)) :=
-            norm_archimedeanTwist_sub_one_le hppos t hsmall
-        _ ≤ 2 * (|t| * Real.log (X : ℝ)) := by nlinarith
+      have hnum : ‖archimedeanTwist t p - 1‖ ≤ 2 * (|t| * Real.log (p : ℝ)) :=
+        norm_archimedeanTwist_sub_one_le hppos t hsmall
+      rw [div_le_iff₀ hpR]
+      have : 2 * |t| * (Real.log (p : ℝ) / p) * p = 2 * (|t| * Real.log (p : ℝ)) := by
+        field_simp
+      rw [this]
+      exact hnum
   refine le_trans (Finset.sum_le_sum hbound) ?_
   rw [Finset.sum_ite]
   have hA : ∑ p ∈ (primesUpTo X).filter (fun p => p ∣ q), (2 : ℝ) / p ≤ 2 * primeMass q := by
@@ -194,25 +220,23 @@ theorem norm_twistCorr_sub_primeMass_le {q : ℕ} (χ : DirichletCharacter ℂ q
       intro p _
       rw [div_eq_mul_inv]
   have hB : ∑ p ∈ (primesUpTo X).filter (fun p => ¬ p ∣ q),
-      2 * (|t| * Real.log (X : ℝ)) / p ≤ 2 := by
+      2 * |t| * (Real.log (p : ℝ) / p) ≤ 2 + 4 * C := by
     have hstep : ∑ p ∈ (primesUpTo X).filter (fun p => ¬ p ∣ q),
-        2 * (|t| * Real.log (X : ℝ)) / p ≤
-        ∑ p ∈ primesUpTo X, 2 * (|t| * Real.log (X : ℝ)) / p := by
+        2 * |t| * (Real.log (p : ℝ) / p) ≤
+        ∑ p ∈ primesUpTo X, 2 * |t| * (Real.log (p : ℝ) / p) := by
       refine Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _) ?_
       intro p hp _
       have hpR : (0 : ℝ) < (p : ℝ) := by
         exact_mod_cast (mem_primesUpTo.mp hp).1.pos
+      have : (0 : ℝ) ≤ Real.log (p : ℝ) := Real.log_natCast_nonneg p
       positivity
     refine le_trans hstep ?_
-    have : ∑ p ∈ primesUpTo X, 2 * (|t| * Real.log (X : ℝ)) / p
-        = 2 * (|t| * Real.log (X : ℝ) * primeMass X) := by
-      rw [primeMass, Finset.mul_sum, Finset.mul_sum]
-      refine Finset.sum_congr rfl ?_
-      intro p _
-      rw [div_eq_mul_inv]
-      ring
-    rw [this]
-    linarith
+    have heq : ∑ p ∈ primesUpTo X, 2 * |t| * (Real.log (p : ℝ) / p)
+        = 2 * |t| * ∑ p ∈ primesUpTo X, Real.log (p : ℝ) / (p : ℝ) := by
+      rw [Finset.mul_sum]
+    rw [heq]
+    have hmert := hC X
+    nlinarith [htlog, habs, hC0, htsmall]
   linarith
 
 /-! ## The analytic input and the derivation -/
@@ -270,19 +294,21 @@ theorem uniformlyNonPretentious_zetaOmega_of_dichotomy {u : ℝ} (hu : (phase u)
   have hcpos : 0 < c := by rw [hc]; linarith
   set m : ℝ := min c δ with hm
   have hmpos : 0 < m := lt_min hcpos hδ
+  obtain ⟨K, hK⟩ := exists_norm_twistCorr_sub_primeMass_le
   obtain ⟨X₀, hX₀2, hX₀⟩ :=
-    exists_primeMass_ge (((A : ℝ) + 2 + 2 * primeMass A) / m)
+    exists_primeMass_ge (((A : ℝ) + |K| + 2 + 2 * primeMass A) / m)
   refine ⟨X₀, ?_⟩
   intro X hX q hq hqA χ s hs
   have hX2 : 2 ≤ X := le_trans hX₀2 hX
-  have hmass : ((A : ℝ) + 2 + 2 * primeMass A) / m ≤ primeMass X := hX₀ X hX
-  have hkey : (A : ℝ) + 2 + 2 * primeMass A ≤ m * primeMass X := by
+  have hmass : ((A : ℝ) + |K| + 2 + 2 * primeMass A) / m ≤ primeMass X := hX₀ X hX
+  have hkey : (A : ℝ) + |K| + 2 + 2 * primeMass A ≤ m * primeMass X := by
     rw [div_le_iff₀ hmpos] at hmass; linarith [hmass]
   rw [zetaOmegaDistSq_eq]
   have hmA : primeMass q ≤ primeMass A := primeMass_mono hqA
   rcases hdich A X hX2 q hq hqA χ s hs with hnt | hfar
   · -- near-trivial: the rotation by `ζ ≠ 1` costs `c·M`
-    have hcl := norm_twistCorr_sub_primeMass_le χ hq s hX2 hnt
+    have hcl := hK q χ hq s X hX2 hnt
+    have hKabs : K ≤ |K| := le_abs_self K
     have hsplit : (phase u * twistCorr χ s X).re =
         (phase u).re * primeMass X + (phase u * (twistCorr χ s X - (primeMass X : ℂ))).re := by
       have : phase u * twistCorr χ s X =
@@ -291,7 +317,7 @@ theorem uniformlyNonPretentious_zetaOmega_of_dichotomy {u : ℝ} (hu : (phase u)
       rw [this, Complex.add_re]
       congr 1
       simp [Complex.mul_re]
-    have hre : (phase u * (twistCorr χ s X - (primeMass X : ℂ))).re ≤ 2 + 2 * primeMass A := by
+    have hre : (phase u * (twistCorr χ s X - (primeMass X : ℂ))).re ≤ |K| + 2 * primeMass A := by
       refine le_trans (Complex.re_le_norm _) ?_
       rw [norm_mul, norm_phase, one_mul]
       linarith
@@ -306,7 +332,7 @@ theorem uniformlyNonPretentious_zetaOmega_of_dichotomy {u : ℝ} (hu : (phase u)
       exact hfar
     have hmd : m * primeMass X ≤ δ * primeMass X :=
       mul_le_mul_of_nonneg_right (min_le_right _ _) (primeMass_nonneg X)
-    nlinarith [primeMass_nonneg X, primeMass_nonneg A]
+    nlinarith [primeMass_nonneg X, primeMass_nonneg A, abs_nonneg K]
 
 /-- `cos 2πu < 1` exactly when `u` is not an integer. -/
 theorem phase_re_lt_one_of_not_int {u : ℝ} (hu : ∀ k : ℤ, u ≠ k) : (phase u).re < 1 := by

@@ -142,5 +142,6 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottTwoPointLog.twoPointElliottLog_of_nonPretentious
 #print axioms NormalNumbers.ElliottTwoPointLog.isCoprimeMult_zetaOmegaInt
 #print axioms NormalNumbers.ElliottZetaOmegaPretentious.zetaOmegaDistSq_eq
-#print axioms NormalNumbers.ElliottZetaOmegaPretentious.norm_twistCorr_sub_primeMass_le
+#print axioms NormalNumbers.ElliottZetaOmegaPretentious.exists_norm_twistCorr_sub_primeMass_le
+#print axioms NormalNumbers.ElliottZetaOmegaPretentious.exists_mertensOne
 #print axioms NormalNumbers.ElliottZetaOmegaPretentious.twoPointElliottLog_of_dichotomy
