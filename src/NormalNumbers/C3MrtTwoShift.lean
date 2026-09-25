@@ -752,6 +752,48 @@ theorem progression_sum_bound {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ 
     mul_le_mul_of_nonneg_left hIoc (by positivity)
   linarith
 
+
+/-! ## The pair sum, and the `D = 2` rung
+
+The per-pair bound is summed over `d, e ≤ Y` against the weights `‖sqfW ζ₀ d‖·‖sqfW ζ₁ e‖`.
+The one quantitative fact that makes this close is that the weights carry `1/(de)`:
+
+    ∑_{d,e ≤ Y} ‖sqfW ζ₀ d‖·‖sqfW ζ₁ e‖/(de)  ≤  sqfWMass ζ₀ · sqfWMass ζ₁  <  ∞ ,
+
+a bound independent of `Y`.  So the per-pair `ε·log N` survives the pair sum against a FINITE
+constant, and rescaling `ε` by `1/(sqfWMass ζ₀ · sqfWMass ζ₁)` delivers the rung.  Every other
+term in the per-pair bound carries no `log N`, so it contributes an `N`-independent constant
+(`Y`-dependent, which is harmless: `Y` is chosen from `ε` before `N → ∞`).
+-/
+
+lemma sqfWMass_nonneg (z : ℂ) : 0 ≤ sqfWMass z :=
+  tsum_nonneg fun _ => by positivity
+
+/-- **The pair mass is bounded independently of `Y`.**  This is the inequality the whole pair
+sum turns on. -/
+theorem pair_mass_le {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1) (Y : ℕ) :
+    ∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+        ‖sqfW z₀ d‖ * ‖sqfW z₁ e‖ / ((d : ℝ) * (e : ℝ))
+      ≤ sqfWMass z₀ * sqfWMass z₁ := by
+  have hrw : ∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+      ‖sqfW z₀ d‖ * ‖sqfW z₁ e‖ / ((d : ℝ) * (e : ℝ))
+      = (∑ d ∈ Finset.range (Y + 1), ‖sqfW z₀ d‖ / (d : ℝ)) *
+        ∑ e ∈ Finset.range (Y + 1), ‖sqfW z₁ e‖ / (e : ℝ) := by
+    rw [Finset.sum_mul_sum]
+    refine Finset.sum_congr rfl fun d _ => Finset.sum_congr rfl fun e _ => ?_
+    rcases Nat.eq_zero_or_pos d with rfl | hd
+    · simp
+    · rcases Nat.eq_zero_or_pos e with rfl | he
+      · simp
+      · have hdR : (d : ℝ) ≠ 0 := by positivity
+        have heR : (e : ℝ) ≠ 0 := by
+          have : (0 : ℝ) < (e : ℝ) := by exact_mod_cast he
+          exact ne_of_gt this
+        field_simp
+  rw [hrw]
+  refine mul_le_mul (sum_norm_sqfW_div_le_mass hz₀ Y) (sum_norm_sqfW_div_le_mass hz₁ Y)
+    (Finset.sum_nonneg fun _ _ => by positivity) (sqfWMass_nonneg z₀)
+
 end CastingOut
 
 end NormalNumbers
@@ -767,3 +809,4 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.harmonic_gap_le_log
 #print axioms NormalNumbers.CastingOut.rung_sum_spelling
 #print axioms NormalNumbers.CastingOut.progression_sum_bound
+#print axioms NormalNumbers.CastingOut.pair_mass_le

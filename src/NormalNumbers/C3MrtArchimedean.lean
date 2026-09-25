@@ -836,6 +836,48 @@ theorem rung_two_of_named_inputs
     omega
   exact hX₀ (A ^ i) hpow q hq hqA χ t (by exact_mod_cast ht)
 
+
+/-! ## The `D = 2` correlation itself
+
+`rung_two_of_named_inputs` bounds one pair of linear forms.  The `D = 2` obligation of `ConjC3`
+is the correlation of the two shifts `n+1`, `n+2` of `ζ^ω` itself, log-averaged.  Laps 23–28
+supply every step between them:
+
+1. `sum_pow_omega_two_shift_eq_coprime` — expand both shifts over powerful moduli `d, e`
+   (coprime, automatically);
+2. `two_shift_truncation_bound` — cut both moduli at `Y`, error
+   `(1 + log(N+1))·bridgeTail ζ₀ Y + (2·sqfWPartial ζ₀ Y + (1 + log N)·sqfWMass ζ₀)·bridgeTail ζ₁ Y`;
+3. `inner_sum_linear_forms` + `filter_linear_lt_eq_range` — CRT each joint progression to an
+   initial segment in the progression variable `j`;
+4. `progression_sum_bound` — per pair, `≤ (a+1)⁻¹ + 2/(de) + (de)⁻¹·(R + 1 + log A)` where `R`
+   is the rung's bound at `m = Nat.log A J` (note `m·log A ≤ log J ≤ log N`, so the rung's
+   `m·ε·log A` is `≤ ε·log N`);
+5. `pair_mass_le` — `∑_{d,e ≤ Y} ‖sqfW ζ₀ d‖‖sqfW ζ₁ e‖/(de) ≤ sqfWMass ζ₀ · sqfWMass ζ₁ < ∞`,
+   so the pair sum of the `ε·log N` terms is `ε·(finite)·log N`: rescale `ε`.
+
+Everything not carrying `log N` is `N`-independent (it may depend on `Y`, `A`, `i₀`, `ε`, all of
+which are fixed before `N → ∞`), so it lands in the constant `C`.
+-/
+
+/-- **The log-averaged `D = 2` rung for `ζ^ω`.**  Granting the two named literature inputs, the
+harmonically weighted two-point correlation of `ζ₀^ω` and `ζ₁^ω` at the shifts `n+1`, `n+2` is
+`o(log N)`.
+
+TODO(assembly): the five steps are all proved (see the module docstring above); what remains is
+the arithmetic of combining them and the `max` over the finitely many pairs `(d,e)` of the `A₀`
+that `rung_two_of_named_inputs` returns.  Left as a disclosed `sorry` rather than a false claim:
+no mathematical input is missing, only bookkeeping of the order `ε → Y → A → i₀ → N → ∞`. -/
+theorem rung_two_correlation
+    (helliott : Erdos67b.NonasymptoticLogElliott)
+    (hsave : TwistedPrimeSumSavingAllLevels)
+    {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1) (hz₀1 : z₀ ≠ 1)
+    (ε : ℝ) (hε : 0 < ε) :
+    ∃ C : ℝ, ∃ N₀ : ℕ, ∀ N : ℕ, N₀ ≤ N →
+      ‖∑ n ∈ Finset.range N, ((((n : ℝ) + 1)⁻¹ : ℝ)) •
+          (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2))‖
+        ≤ C + ε * Real.log N := by
+  sorry
+
 end CastingOut
 
 end NormalNumbers

@@ -243,3 +243,32 @@ Sum `progression_sum_bound` over the coprime powerful pairs `d, e ≤ Y`, weight
 Also needed: a `max` over the finitely many pairs of the `A₀` that
 `rung_two_of_named_inputs` returns (the `range_one_certificate_uniform` induction, over pairs),
 and `L = de` with `a + 1 ≤ de` from `exists_joint_class`.
+
+## Lap 29 — `pair_mass_le`, and the `D = 2` target STATED in `src/`
+
+* **`pair_mass_le`** (`C3MrtTwoShift`) — `∑_{d,e ≤ Y} ‖sqfW ζ₀ d‖‖sqfW ζ₁ e‖/(de) ≤
+  sqfWMass ζ₀ · sqfWMass ζ₁`, a bound **independent of `Y`**.  This is the inequality the whole
+  pair sum turns on: the per-pair `ε·log N` survives the pair sum against a finite constant,
+  so rescaling `ε` by `1/(sqfWMass ζ₀ · sqfWMass ζ₁)` delivers the rung.
+  (`Finset.sum_mul_sum` after clearing the `d = 0` / `e = 0` terms, which vanish.)
+* **`rung_two_correlation`** (`C3MrtArchimedean`) — the `D = 2` obligation itself, now a named
+  statement in `src/` with **one disclosed `sorry`**:
+
+      (helliott : Erdos67b.NonasymptoticLogElliott) → (hsave : TwistedPrimeSumSavingAllLevels) →
+      ‖ζ₀‖ = 1 → ‖ζ₁‖ = 1 → ζ₀ ≠ 1 → ∀ ε > 0, ∃ C N₀, ∀ N ≥ N₀,
+        ‖∑_{n<N} (n+1)⁻¹ • ζ₀^{ω(n+1)} ζ₁^{ω(n+2)}‖ ≤ C + ε·log N
+
+  Its docstring names the five proved steps that compose it (laps 23–28) and records that **no
+  mathematical input is missing** — what remains is the arithmetic of combining them plus a
+  `max` over the finitely many pairs `(d,e)` of the `A₀` from `rung_two_of_named_inputs`.
+  This RAISES the `src/` sorry count by one, deliberately: the target is now visible and the
+  remaining work is bounded and named.
+
+### NEXT
+Close `rung_two_correlation`, in this order (each is a `have` inside its proof):
+1. `ε_rung := ε / (3·(sqfWMass ζ₀ · sqfWMass ζ₁ + 1))`; obtain `A₀` from
+   `rung_two_of_named_inputs` at `ε_rung`, per pair, and `max` over `d, e ≤ Y`.
+2. Choose `Y` so that `sqfWMass ζ₀ · bridgeTail ζ₁ Y ≤ ε/3` and `bridgeTail ζ₀ Y ≤ ε/3`
+   (`bridgeTail_tendsto`).
+3. Choose `N₀` so that `A^{i₀} ≤ (N − 1 − a)/(de)` for every pair — i.e. `N₀ ≥ Y²·A^{i₀} + Y²`.
+4. Combine: `two_shift_truncation_bound` + the pair sum of `progression_sum_bound`.
