@@ -708,6 +708,67 @@ theorem depthAvg_diag_tendsto_of_unif {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh :
   field_simp
   ring
 
+theorem depthAvg_gen_tendsto_of_unif {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
+    {cK CstK : ℕ → ℝ} (hc : ∀ K, 0 < cK K) (hC : ∀ K, 0 < CstK K)
+    (KN : ℕ → ℕ) (hKN : ∀ N, 0 < KN N)
+    (hin : ∀ K, KPointNoExcWith cK CstK K)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+    (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
+    (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * cK K))
+    (k₀ : ℕ → ℕ)
+    (hsched : Tendsto (fun N : ℕ =>
+        windowPhi cK CstK κ (KN N) (Q * primorial P)
+            (Athr (KN N)) (N / 2 ^ k₀ N)
+          + (1 / 2 : ℝ) ^ k₀ N) atTop (𝓝 0)) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j hh (KN N) N) atTop (𝓝 0) := by
+  classical
+  have hM0 : 0 < Q * primorial P := Nat.mul_pos hQ (primorial_pos P)
+  set M₀ : ℕ := Q * primorial P with hM₀def
+  set Ψ : ℕ → ℝ := fun N =>
+    windowPhi cK CstK κ (KN N) M₀ (Athr (KN N))
+        (N / 2 ^ k₀ N)
+      + (1 / 2 : ℝ) ^ k₀ N with hΨdef
+  -- the three pieces of the majorant
+  have hT1 : Tendsto (fun N : ℕ => (M₀ : ℝ) * (((M₀ : ℝ) + 2)) / (N : ℝ)) atTop (𝓝 0) := by
+    have := tendsto_one_div_atTop_nhds_zero_nat.const_mul ((M₀ : ℝ) * ((M₀ : ℝ) + 2))
+    rw [mul_zero] at this
+    exact this.congr fun N => by ring
+  have hT2 : Tendsto
+      (fun N : ℕ => (M₀ : ℝ) * (((Nat.log 2 (N + M₀) + 1 : ℕ) : ℝ) / (N : ℝ)))
+      atTop (𝓝 0) := by
+    have := (tendsto_natLog_shift_div M₀).const_mul ((M₀ : ℝ))
+    rwa [mul_zero] at this
+  have hone : Tendsto (fun N : ℕ => 1 + (M₀ : ℝ) / (N : ℝ)) atTop (𝓝 1) := by
+    have := tendsto_one_div_atTop_nhds_zero_nat.const_mul ((M₀ : ℝ))
+    rw [mul_zero] at this
+    have h2 : Tendsto (fun N : ℕ => (M₀ : ℝ) / (N : ℝ)) atTop (𝓝 0) :=
+      this.congr fun N => by ring
+    simpa using (tendsto_const_nhds (x := (1 : ℝ)) (f := (atTop : Filter ℕ))).add h2
+  have hT3 : Tendsto (fun N : ℕ => (M₀ : ℝ) * Ψ N * (1 + (M₀ : ℝ) / (N : ℝ)))
+      atTop (𝓝 0) := by
+    have hΨ0 : Tendsto Ψ atTop (𝓝 0) := hsched
+    have := ((hΨ0.const_mul ((M₀ : ℝ))).mul hone)
+    simpa using this
+  have hmaj : Tendsto (fun N : ℕ =>
+      (M₀ : ℝ) * (((M₀ : ℝ) + 2)) / (N : ℝ)
+        + (M₀ : ℝ) * (((Nat.log 2 (N + M₀) + 1 : ℕ) : ℝ) / (N : ℝ))
+        + (M₀ : ℝ) * Ψ N * (1 + (M₀ : ℝ) / (N : ℝ))) atTop (𝓝 0) := by
+    simpa using (hT1.add hT2).add hT3
+  refine squeeze_zero_norm' ?_ hmaj
+  filter_upwards [Filter.eventually_ge_atTop (M₀ + 1)] with N hN
+  have hNpos : (0 : ℝ) < (N : ℝ) := by
+    have : 0 < N := by omega
+    exact_mod_cast this
+  have hstep := depthAvg_le_with hQ P j hh (hKN N) (hc _) (hC _) (hin _)
+    hκ hκ1 hnp (hA2 _) (hAthr _) (show M₀ < N by omega) (k₀ N)
+  refine le_trans hstep (le_of_eq ?_)
+  field_simp
+  ring
+
+
 /-! ### Making the schedule hypothesis checkable -/
 
 /-- **Step 1: the profile's limit is a scalar rate.**  Once the scale `aN N` has passed the
@@ -913,6 +974,44 @@ theorem depthAvg_diag_tendsto_of_degrading {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) 
     have h2 : (2 : ℝ) ≤ ((N / 2 ^ k₀ N : ℕ) : ℝ) := by exact_mod_cast hN
     have hlog : 0 < Real.log ((N / 2 ^ k₀ N : ℕ) : ℝ) := Real.log_pos (by linarith)
     linarith
+
+theorem depthAvg_gen_tendsto_of_degrading {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
+    {c₀ : ℝ} (hc₀ : 0 < c₀) (m : ℕ)
+    (KN : ℕ → ℕ) (hKN : ∀ N, 0 < KN N)
+    (hin : ∀ K, KPointNoExcWith (cKdeg c₀ m) (CstKdeg m) K)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+    (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
+    (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * cKdeg c₀ m K))
+    (k₀ : ℕ → ℕ) (hk₀ : Tendsto k₀ atTop atTop)
+    (hscale : Tendsto (fun N : ℕ => N / 2 ^ k₀ N) atTop atTop)
+    (hAle : ∀ᶠ N : ℕ in atTop, Athr (KN N) ≤ N / 2 ^ k₀ N)
+    (hgrow : Tendsto (fun N : ℕ =>
+        Real.log (2 * Real.log ((N / 2 ^ k₀ N : ℕ) : ℝ))
+          / ((KN N : ℝ) + 1) ^ (2 * m)) atTop atTop) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j hh (KN N) N) atTop (𝓝 0) := by
+  have hrate := rate_tendsto_of_exponent (cK := cKdeg c₀ m) (CstK := CstKdeg m)
+    (fun K => CstKdeg_pos m K) (κ := κ) (M₀ := Q * primorial P)
+    KN (fun N => N / 2 ^ k₀ N) ?_
+    (exponent_tendsto_atBot_of_degrading hc₀ hκ m KN
+      (fun N => N / 2 ^ k₀ N) hgrow)
+  · have hΦ := windowPhi_diag_tendsto (cK := cKdeg c₀ m) (CstK := CstKdeg m) (κ := κ)
+      (M₀ := Q * primorial P) KN
+      (fun N => Athr (KN N)) (fun N => N / 2 ^ k₀ N)
+      (fun N => hA2 _) (fun K => (CstKdeg_pos m K).le) hAle hrate
+    have hhalf : Tendsto (fun N : ℕ => (1 / 2 : ℝ) ^ k₀ N) atTop (𝓝 0) :=
+      (tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)).comp hk₀
+    refine depthAvg_gen_tendsto_of_unif hQ P j hh (fun K => cKdeg_pos hc₀ m K)
+      (fun K => CstKdeg_pos m K) KN hKN hin hκ hκ1 hnp Athr hA2 hAthr k₀ ?_
+    simpa using hΦ.add hhalf
+  · -- the base `2 log a_N` is eventually positive, since the cut scale grows
+    filter_upwards [hscale.eventually_ge_atTop 2] with N hN
+    have h2 : (2 : ℝ) ≤ ((N / 2 ^ k₀ N : ℕ) : ℝ) := by exact_mod_cast hN
+    have hlog : 0 < Real.log ((N / 2 ^ k₀ N : ℕ) : ℝ) := Real.log_pos (by linarith)
+    linarith
+
 
 /-! ### Discharging `hgrow` for the concrete schedule
 
@@ -1182,6 +1281,54 @@ theorem hgrow_of_schedule {b : ℕ} (hb : 2 ≤ b) (m : ℕ) :
           / ((PairDecouple.depthLL b N : ℝ) + 1) ^ (2 * m) :=
         div_le_div_of_nonneg_left hC0 hBpos hBB
 
+theorem hgrow_of_schedule_le {b : ℕ} (hb : 2 ≤ b) (m : ℕ) (KN : ℕ → ℕ)
+    (hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ PairDecouple.depthLL b N) :
+    Tendsto (fun N : ℕ =>
+        Real.log (2 * Real.log ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ))
+          / ((KN N : ℝ) + 1) ^ (2 * m)) atTop atTop := by
+  have hu : Tendsto (fun N : ℕ => Nat.log 2 (Nat.log 2 N)) atTop atTop :=
+    (PairDecouple.tendsto_natLog_atTop 2 le_rfl).comp
+      (PairDecouple.tendsto_natLog_atTop 2 le_rfl)
+  have hmin := (tendsto_degMinorant m).comp hu
+  refine tendsto_atTop_mono' atTop ?_ hmin
+  filter_upwards [Filter.eventually_ge_atTop 1024, hu.eventually_ge_atTop 2, hKle]
+    with N hN hu2 hKN
+  set u : ℕ := Nat.log 2 (Nat.log 2 N) with hudef
+  have hnum := log_two_log_cut_ge N hN
+  have hdenLL := depthLL_succ_le_log hb N
+  have hKR : ((KN N : ℝ) + 1) ≤ ((PairDecouple.depthLL b N : ℝ) + 1) := by
+    have : ((KN N : ℝ)) ≤ ((PairDecouple.depthLL b N : ℝ)) := by exact_mod_cast hKN
+    linarith
+  have hden : ((KN N : ℝ) + 1) ≤ 2 + 3 * Real.log (llProxy N) := le_trans hKR hdenLL
+  have hllp : llProxy N = (u : ℝ) + 1 := by rw [llProxy]
+  rw [hllp] at hden
+  have hA0 : (0 : ℝ) ≤ ((u : ℝ) - 2) * Real.log 2 := by
+    have h1 : (2 : ℝ) ≤ (u : ℝ) := by exact_mod_cast hu2
+    have h2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+    nlinarith
+  have hBpos : (0 : ℝ) < ((KN N : ℝ) + 1) ^ (2 * m) := by positivity
+  have hB'pos : (0 : ℝ) < (2 + 3 * Real.log ((u : ℝ) + 1)) ^ (2 * m) := by
+    have h1 : (1 : ℝ) ≤ (u : ℝ) + 1 := by
+      have h0 : (0 : ℝ) ≤ (u : ℝ) := Nat.cast_nonneg _
+      linarith
+    have h0 : 0 ≤ Real.log ((u : ℝ) + 1) := Real.log_nonneg h1
+    positivity
+  have hBB : ((KN N : ℝ) + 1) ^ (2 * m)
+      ≤ (2 + 3 * Real.log ((u : ℝ) + 1)) ^ (2 * m) :=
+    pow_le_pow_left₀ (by positivity) hden _
+  have hC0 : (0 : ℝ) ≤ Real.log (2 * Real.log ((N / 2 ^ u : ℕ) : ℝ)) := le_trans hA0 hnum
+  have hfirst : ((fun u : ℕ => degMinorant m u) ∘ fun N : ℕ => Nat.log 2 (Nat.log 2 N)) N
+      = ((u : ℝ) - 2) * Real.log 2 / (2 + 3 * Real.log ((u : ℝ) + 1)) ^ (2 * m) := rfl
+  rw [hfirst]
+  calc ((u : ℝ) - 2) * Real.log 2 / (2 + 3 * Real.log ((u : ℝ) + 1)) ^ (2 * m)
+      ≤ Real.log (2 * Real.log ((N / 2 ^ u : ℕ) : ℝ))
+          / (2 + 3 * Real.log ((u : ℝ) + 1)) ^ (2 * m) :=
+        div_le_div_of_nonneg_right hnum hB'pos.le
+    _ ≤ Real.log (2 * Real.log ((N / 2 ^ u : ℕ) : ℝ))
+          / ((KN N : ℝ) + 1) ^ (2 * m) :=
+        div_le_div_of_nonneg_left hC0 hBpos hBB
+
+
 /-- **The cut scale grows.**  `a_N ≥ √N`. -/
 theorem tendsto_cut_atTop :
     Tendsto (fun N : ℕ => N / 2 ^ (Nat.log 2 (Nat.log 2 N))) atTop atTop := by
@@ -1445,6 +1592,29 @@ theorem norm_depthAvg_dvd_le {b : ℕ} (hb : 0 < b) (P Q j : ℕ) (h' : ℤ) {v 
         div_le_div_of_nonneg_right hsplit hNR.le
     _ = ‖∑ m ∈ range N, g m‖ / (N : ℝ) + 2 * v / (N : ℝ) := by ring
 
+/-- **THE DIAGONAL AT ANY LEVEL SEQUENCE BELOW THE SCHEDULE, from the degrading input.**  The
+general-level twin of `depthAvg_diag_tendsto_of_degrading_sched`: `KN N ≤ depthLL b N` (eventually)
+is all the schedule arithmetic needs, so this serves the `b ∣ hh` level too, where the level is
+`depthLL b N - v`. -/
+theorem depthAvg_gen_tendsto_of_degrading_sched {b Q : ℕ} (hb : 2 ≤ b) (hQ : 0 < Q)
+    (P j : ℕ) (hh : ℤ) {c₀ : ℝ} (hc₀ : 0 < c₀) (m : ℕ)
+    (KN : ℕ → ℕ) (hKN : ∀ N, 0 < KN N)
+    (hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ PairDecouple.depthLL b N)
+    (hin : ∀ K, KPointNoExcWith (cKdeg c₀ m) (CstKdeg m) K)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+    (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
+    (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * cKdeg c₀ m K))
+    (hAle : ∀ᶠ N : ℕ in atTop, Athr (KN N) ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N))) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j hh (KN N) N) atTop (𝓝 0) :=
+  depthAvg_gen_tendsto_of_degrading hQ P j hh hc₀ m KN hKN hin hκ hκ1 hnp Athr hA2 hAthr
+    (fun N => Nat.log 2 (Nat.log 2 N))
+    ((PairDecouple.tendsto_natLog_atTop 2 le_rfl).comp
+      (PairDecouple.tendsto_natLog_atTop 2 le_rfl))
+    tendsto_cut_atTop hAle (hgrow_of_schedule_le hb m KN hKle)
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -1473,6 +1643,9 @@ theorem norm_depthAvg_dvd_le {b : ℕ} (hb : 0 < b) (P Q j : ℕ) (h' : ℤ) {v 
 #print axioms NormalNumbers.CastingOut.depthAvg_zero_tendsto
 #print axioms NormalNumbers.CastingOut.ee_tailDepth_dvd
 #print axioms NormalNumbers.CastingOut.norm_depthAvg_dvd_le
+#print axioms NormalNumbers.CastingOut.hgrow_of_schedule_le
+#print axioms NormalNumbers.CastingOut.depthAvg_gen_tendsto_of_unif
+#print axioms NormalNumbers.CastingOut.depthAvg_gen_tendsto_of_degrading_sched
 
 end CastingOut
 
