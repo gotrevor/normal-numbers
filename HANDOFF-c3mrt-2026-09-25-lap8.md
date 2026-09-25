@@ -1,4 +1,4 @@
-# HANDOFF c3-mrt 2026-09-25 — laps 7–12
+# HANDOFF c3-mrt 2026-09-25 — laps 7–13
 
 Branch `wip/c3-mrt`.  `lake build` green at both commits; every new result axiom-clean
 `[propext, Classical.choice, Quot.sound]`, no `sorry`.  Pure addition (2 new modules).
@@ -128,9 +128,38 @@ So the truncation error is now `(1 + log N) · bridgeTail(Y)` against a log-aver
 of size `≍ log N` — the correct relative size, with `bridgeTail(Y) → 0` chosen from `ε` first.
 The weight mismatch named in lap 11 is closed.
 
+## Lap 13 — `C3MrtRungTwo.lean`: weight transfer, and WHAT the rung actually needs
+
+* `sum_inv_sq_le` — `∑_{j≤J} j⁻² ≤ 2 − 1/J`, by telescoping (no appeal to Basel).
+* **`weight_transfer`** — replacing the harmonic weight of the *original* variable
+  `n = Lj + a` by that of the *progression* variable `j` (scaled by `1/L`) costs at most `2/L`,
+  uniformly in the length of the sum and in the summand:
+  `∑_j |1/(Lj+a) − 1/(Lj)| = ∑_j a/(Lj(Lj+a)) ≤ (a/L²)∑j⁻² ≤ 2/L`, using `a < L` from
+  `exists_joint_class`.  Summed over the finitely many `(d,e)` with `d,e ≤ Y` this is a constant
+  `C(Y)` depending on `Y` **but not `N`** — negligible against a main term `≍ log W`, because
+  `Y` is chosen from `ε` before `N → ∞`.
+
+**The decisive finding of this lap.**  The general two-point Elliott needed here is NOT proved
+anywhere available: `Erdos67b.NonasymptoticLogElliott` is a `Prop`, and in this repo it is the
+open, ratified bet `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott` (`ElliottGeneral.lean`,
+one `sorry`; Tao, Forum Math. Pi 4 (2016), Thm 1.3).  The dependency proves only
+`Erdos67b.unitCircleLogElliott`, which covers `g₂ = conj g₁` along `n` and `n+h` — whereas our
+two twists `ζ₀, ζ₁` are independent and our two forms have leading coefficients `e` and `d`.
+Even the main term `d = e = 1` of the tuple sum is a *two-function* correlation, so it does not
+reduce to the unit-circle case.  **The log-averaged `D = 2` rung is therefore equivalent to the
+named open input**, not to something weaker.
+
 ## NEXT — resume here
 
-0. **Instantiate.**  Locate `Erdos67b.NonasymptoticLogElliott` in
+0. **Instantiate (now explicitly CONDITIONAL).**  Write the rung as a theorem taking
+   `Erdos67b.NonasymptoticLogElliott` as a hypothesis — that is the honest form, and it makes
+   the chain complete modulo one named bet.  Remaining glue: match our `j`-range against
+   `elliottLogWindow X W` (ours is an initial segment `1 ≤ j ≤ J`, theirs a dyadic-type window
+   `X/W < j ≤ X`, so a dyadic decomposition of `[1, J]` with `≍ log J` windows is needed — note
+   each window contributes `ε log W`, and the windows telescope, so the total is `ε log J`), and
+   supply the `pretentiousDistSqToTwist` hypothesis for `ζ₀^Ω` from lap 5's certificate
+   (`C3MrtElliottForm.lean`; `ζ^Ω(p) = ζ` is constant on primes, the easier case).
+0'. **Instantiate.**  Locate `Erdos67b.NonasymptoticLogElliott` in
    `.lake/packages/lean-proofs-latest`, read its exact statement (linear-form conventions,
    log-average normalisation, the `pretentiousDistSqToTwist` hypothesis), and match it against
    `inner_sum_linear_forms`.  The non-pretentiousness input for `ζ^Ω` is the *easier* case of
