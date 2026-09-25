@@ -479,4 +479,96 @@ theorem norm_delangeSv_le {N : ℕ} (hN : 1 ≤ N) {ξ : ℂ} (hξ : ‖ξ‖ = 
   rw [hnormS, ← hexpa]
   exact hfin
 
+/-! ### Splitting the error at a cutoff
+
+`E_N` is a `Σ_p 1/p` average, so *all* of its mass sits on small primes in the `log log` sense —
+but the primes `p > K` can be discarded outright: their total weight is
+`(log N + O(1) − log K)/log K`, which is `O(1)` already at `K = √N` and `o(1)` for
+`K = N^{1/log log N}`.  Since each term there is trivially `≤ 2·sup‖S‖`, the large-prime half of
+`E_N` is `O(sup‖S‖)` with an *absolute* constant, and `norm_delangeSv_le`'s gain `1/L` then makes
+it a genuine contraction.  The whole difficulty is therefore concentrated in the small primes,
+where `S^{(p)}(N/p;v)` and `S(N;v)` live at comparable scales. -/
+
+/-- **A `Σ 1/p` Mertens corollary.**  `Σ_{K < p ≤ N} 1/p ≤ (log N + log 4 + 9 − log K)/log K`.
+Immediate from the two-sided bracket of `TwoPointMertensLower.lean` by `1/p ≤ (log p/p)/log K`.
+At `K = √N` the right-hand side is `≤ 1 + O(1/log N)`. -/
+theorem sum_inv_prime_sdiff_le {K N : ℕ} (hK : 2 ≤ K) (hKN : K ≤ N) :
+    ∑ p ∈ primesLe N \ primesLe K, 1 / (p : ℝ)
+      ≤ (Real.log N + Real.log 4 + 9 - Real.log K) / Real.log K := by
+  classical
+  have hK1 : 1 ≤ K := by omega
+  have hN1 : 1 ≤ N := by omega
+  have hKR : (2 : ℝ) ≤ (K : ℝ) := by exact_mod_cast hK
+  have hlogK : 0 < Real.log K := Real.log_pos (by linarith)
+  have hsub : primesLe K ⊆ primesLe N := by
+    intro p hp
+    rw [primesLe, Finset.mem_filter, Finset.mem_range] at hp ⊢
+    exact ⟨by omega, hp.2⟩
+  have hstep : ∀ p ∈ primesLe N \ primesLe K,
+      1 / (p : ℝ) ≤ (Real.log p / (p : ℝ)) / Real.log K := by
+    intro p hp
+    rw [Finset.mem_sdiff] at hp
+    have hpp := prime_of_mem_primesLe hp.1
+    have hpK : K < p := by
+      by_contra hcon
+      push_neg at hcon
+      exact hp.2 (by rw [primesLe, Finset.mem_filter, Finset.mem_range]; exact ⟨by omega, hpp⟩)
+    have hpR : (K : ℝ) < (p : ℝ) := by exact_mod_cast hpK
+    have hppos : (0 : ℝ) < (p : ℝ) := by linarith
+    have hlogp : Real.log K ≤ Real.log p := Real.log_le_log (by linarith) hpR.le
+    rw [div_div, div_le_div_iff₀ hppos (by positivity)]
+    nlinarith [hlogp, hlogK, hppos]
+  refine le_trans (Finset.sum_le_sum hstep) ?_
+  rw [← Finset.sum_div]
+  have hnn : ∀ p ∈ primesLe N, (0 : ℝ) ≤ Real.log p / (p : ℝ) := by
+    intro p hp
+    have hpp := prime_of_mem_primesLe hp
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have : (0 : ℝ) ≤ Real.log p := Real.log_nonneg (by linarith)
+    positivity
+  have hsd : ∑ p ∈ primesLe N \ primesLe K, Real.log p / (p : ℝ)
+      + ∑ p ∈ primesLe K, Real.log p / (p : ℝ)
+      = ∑ p ∈ primesLe N, Real.log p / (p : ℝ) := Finset.sum_sdiff hsub
+  have hup := mertens_upper N hN1
+  have hlo := mertens_lower K hK1
+  refine div_le_div_of_nonneg_right ?_ hlogK.le
+  linarith [hsd, hup, hlo]
+
+/-- **The split of `E_N` at a cutoff `K`.**  The large primes contribute only through their
+total weight `Σ_{K<p≤N} 1/p` (bounded by `sum_inv_prime_sdiff_le`), each term costing `2Φ`. -/
+theorem norm_delangeE_le_split {N K : ℕ} (hKN : K ≤ N) (v : ℂ) {Φ : ℝ}
+    (hS : ∀ M, ‖delangeSv M v‖ ≤ Φ) (hR : ∀ p M, ‖delangeSvRestr p M v‖ ≤ Φ) :
+    ‖delangeE N v‖
+      ≤ (∑ p ∈ primesLe K, (1 / (p : ℝ)) * ‖delangeSvRestr p (N / p) v - delangeSv N v‖)
+        + (∑ p ∈ primesLe N \ primesLe K, 1 / (p : ℝ)) * (2 * Φ) := by
+  classical
+  have hΦnn : 0 ≤ Φ := le_trans (norm_nonneg _) (hS 0)
+  have hsub : primesLe K ⊆ primesLe N := by
+    intro p hp
+    rw [primesLe, Finset.mem_filter, Finset.mem_range] at hp ⊢
+    exact ⟨by omega, hp.2⟩
+  have hterm : ∀ p ∈ primesLe N,
+      ‖(1 / (p : ℂ)) * (delangeSvRestr p (N / p) v - delangeSv N v)‖
+        = (1 / (p : ℝ)) * ‖delangeSvRestr p (N / p) v - delangeSv N v‖ := by
+    intro p hp
+    have hpp := prime_of_mem_primesLe hp
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    rw [norm_mul, norm_div, norm_one, Complex.norm_natCast]
+  rw [delangeE_eq_sum]
+  refine le_trans (norm_sum_le _ _) ?_
+  rw [Finset.sum_congr rfl hterm, ← Finset.sum_sdiff hsub]
+  have hbig : ∑ p ∈ primesLe N \ primesLe K,
+      (1 / (p : ℝ)) * ‖delangeSvRestr p (N / p) v - delangeSv N v‖
+      ≤ (∑ p ∈ primesLe N \ primesLe K, 1 / (p : ℝ)) * (2 * Φ) := by
+    rw [Finset.sum_mul]
+    refine Finset.sum_le_sum fun p hp => ?_
+    have hpp := prime_of_mem_primesLe (Finset.mem_sdiff.mp hp).1
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hinv : (0 : ℝ) ≤ 1 / (p : ℝ) := by positivity
+    have hd : ‖delangeSvRestr p (N / p) v - delangeSv N v‖ ≤ 2 * Φ := by
+      refine le_trans (norm_sub_le _ _) ?_
+      linarith [hR p (N / p), hS N]
+    exact mul_le_mul_of_nonneg_left hd hinv
+  linarith [hbig]
+
 end NormalNumbers.CastingOut
