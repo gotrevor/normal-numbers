@@ -10652,3 +10652,42 @@ joint distribution of `ω` at consecutive shifts — the same wall, but now appr
 van-der-Corput / Weyl-differencing argument on the PHASE rather than a correlation bound on the
 product.  Test whether one differencing step reduces the `K`-shift phase to a shorter one; if it
 does, that is the first genuine crack.
+
+## lap 101 (2026-09-25) — the depth phase is a PERTURBED ×b ORBIT (exact identity)
+
+`src/NormalNumbers/C3MrtPhaseDynamics.lean` (new; tip green at 9015, `lake build` green at 9257;
+both declarations `[propext, Classical.choice, Quot.sound]`, no sorry).
+
+Following lap 100's Weyl-sum reformulation, the dynamics of the phase sequence turn out to be
+EXACT, not approximate.  `depthPhase_succ`, valid for every `K` including `K = 0`:
+
+    depthPhase b K (n+1) = b · depthPhase b K n − ω(n+1) + ω(n+K+1)/b^K
+
+`depthPhase` reads the string `ω(n+1),…,ω(n+K)` as a base-`1/b` expansion, so `n ↦ n+1` is the
+base-`b` SHIFT on that string: multiply by `b`, drop the leading digit `ω(n+1)`, feed the new deep
+digit `ω(n+K+1)` in at weight `b^{-K}`.  The dropped digit is an integer times `h'`, hence
+invisible to the character (`ee_depthPhase_succ`):
+
+    e(h'·depthPhase b K (n+1)) = e(b·h'·depthPhase b K n + h'·ω(n+K+1)/b^K)
+
+**Content.**  Mod 1 the phase sequence is an orbit of the EXPANDING map `x ↦ b·x`, perturbed at
+each step by `≤ |h'|·ω(n+K+1)/b^K`.  So the C3 crux is not an arbitrary equidistribution
+question: it asks that a perturbed `×b` orbit equidistribute.  That is exactly the "casting out"
+dynamics this namespace is named for, now reached from the correlation side — and it explains
+structurally why the depth schedule must satisfy `b^K ≍ log log N`: the per-step perturbation is
+`≍ ω/b^K`, and the route lives or dies on that against the target saving.
+
+Caution recorded: the perturbation is NOT negligible in lap 99's refuted sense — summed over a
+window of length `N` it is `≍ N·log log N/b^K`, which at the diagonal is `≍ N`, not `o(N)`.  The
+recursion is a structural identity to EXPLOIT, not an error term to discard.  Any future argument
+that treats it as small is repeating lap 99's refuted move.
+
+NEXT on the crux: exploit the recursion rather than bound it.
+(i) The `×b` self-similarity relates the Weyl sum at scale `N` to one at scale `N` with phase
+    multiplied by `b` — i.e. a relation between `DepthPhaseBound` at `h'` and at `b·h'`, since
+    `e(b·h'·x) = e(h'·x)^b` is the character at the SHIFTED level.  Test whether iterating gives a
+    closed relation on the family `{h' , b h', b² h', …}` — note `b^v h'` is exactly the
+    non-primitive level the chain strips via `exists_pow_mul_not_dvd`, so this may connect the
+    primitivity reduction to the dynamics.
+(ii) Failing that, van der Corput on the phase, using the recursion to compute the differenced
+    phase `depthPhase b K (n+h) − depthPhase b K n` in closed form.
