@@ -1,11 +1,11 @@
 # STATUS — normal-numbers 📊
 
 **Active campaign: C3/MRT — `ConjC3` (richness of `∑_n ω(n)/bⁿ`, Tao–Teräväinen's Erdős-#69
-constant) is reduced, sorry-free and axiom-clean, to ONE `K`-point correlation input; lap 87
-found that the remaining gap is the DIAGONAL `‖depthAvg b P Q j h (depthLL b N) N‖ → 0`, which
-no budget can manufacture — the input must be made explicitly uniform in `K`.**
-· **Build**: 🟢 green (9004 jobs on the `C3Mrt` tip `NormalNumbers.C3MrtQuantKPoint`)
-· **Updated**: lap 87 · 2026-09-25 · HEAD `990197c` · branch `wip/c3-mrt`
+constant) is a sorry-free, axiom-clean CONDITIONAL THEOREM on ONE open statement: a `K`-point
+correlation input whose saving may degrade geometrically, `c_K = c₀ b^{-θK}`, for any `θ < 1`.
+Lap 90 discharged the last auxiliary hypothesis (the threshold data), so nothing else is assumed.**
+· **Build**: 🟢 green (9257 jobs; `C3Mrt` tip `NormalNumbers.C3MrtSlowSched`)
+· **Updated**: lap 91 · 2026-09-25 · HEAD `b7d9f45` · branch `wip/c3-mrt`
 
 ## Where it stands
 
@@ -20,13 +20,16 @@ TT's hypothesis (3.3) for `z^ω` with no hypothesis at all.  So the tower rests 
 named analytic input per point count, `KPointNaturalCorrelationNoExc K`, plus the bookkeeping
 `ProgressionLogRung K`.
 
-**Lap 87 (review) corrected the next move.**  `QuantDepthElliottGen`'s free budget `C : ℕ → ℝ`
-is vacuous: instantiating `‖depthAvg b P Q j h D N‖ ≤ C D · η N` at `D = depthLL b N` gives
-`C(depthLL b N)·η(N) ≥ ‖depthAvg b P Q j h (depthLL b N) N‖`, so every budget already forces the
-diagonal limit.  Consequently the `sup_D` assembly planned in HANDOFF lap 86 cannot work, and
-neither can any family of fixed-`K` limits (lap 85), because `KPointNaturalCorrelationNoExc K`
-hides its constants behind a per-`K` `∃ c Cst` with no control on their degradation in `K`.
-The mandated brick is now the uniform-in-`K` layer (`C3MrtUnifK.lean`); see DIRECTION.
+**Laps 88–90 closed the reduction.**  The crux `WeylLambertTwist b` follows from the `K`-point
+input at any geometric decay rate `θ < 1` (`weylLambertTwist_of_geom_input`), hence `ConjC3`
+(`conjC3_of_geom_input`).  Three hypotheses were removed on the way: the vacuous budget layer
+(lap 87 F1), the depth-schedule slack that capped `θ` at `1/2` (lap 89, `depthSlow b N` with
+`b^{D_N} ≍ u log u`), and — lap 90 — the threshold data itself, now CONSTRUCTED as
+`Athr K = 2^(2^⌈φ K⌉)`, `φ K = b^{θK}log(K+2+M₀)/(κ c₀ log 2)`
+(`kPointThresholdSlow_of_geom`), refuting lap 89's guess that it fails.  `θ < 1` is spent twice
+and symmetrically — on the saving (`u^{1-θ}(log u)^{-θ}` beating `log Cst = O(log u)^m`) and on
+the threshold (`(u log u)^θ log log u` fitting inside `log log a_N ≍ u log 2`) — which is why
+`θ = 1` is this route's structural boundary, not an artefact.
 
 Honest destination: `ConjC3` will not be proved here.  The Weyl formulation is intrinsically an
 *unbounded*-point correlation, and TT state in print that even **three**-point correlations are
@@ -39,6 +42,16 @@ is COMPLETE and trust-triple clean; its ledger is kept below.
 
 ## What's happened (newest first)
 
+- **2026-09-25 (C3/MRT laps 88–90, + lap 91 REVIEW).**  The reduction is CLOSED onto one
+  statement.  (a) `weylLambertTwist_of_geom` — the crux from a geometrically-degrading `K`-point
+  input, `θ < 1/2` (lap 88).  (b) The SLOW depth schedule `depthSlow` (`b^{D_N} ≍ u_N log u_N`,
+  the minimum the mean-phase discard permits) widens that to **every `θ < 1`** (lap 89); at
+  `θ = 1` the discard and the saving cancel exactly, so the boundary is structural.  (c) The
+  threshold data is DISCHARGED (lap 90): `kPointThresholdSlow_of_geom` builds
+  `Athr K = 2^(2^⌈φ K⌉)` and proves all three clauses, so `conjC3_of_geom_input` carries NO
+  hypothesis but the `K`-point input.  Lap 89's NEXT ① (which guessed the threshold fails) is
+  refuted in the kernel.  Review lap 91: direction KEPT; next move = make that one input ASSUME
+  LESS (`∃ i` non-pretentious ⇝ `∀ i`; `kPointNoExcWith_mono`).  C3-T4 SERVED, C3-T6 registered.
 - **2026-09-25 (C3/MRT lap 87, REVIEW lap).**  Direction KEPT, next move CORRECTED.  (F1) The
   budget layer is provably vacuous — `C(D_N)·η(N) ≥ ‖depthAvg (D_N) N‖` for every `C`, so
   `budget_absorb` / `pow_self_sq_le_exp_cube` / the planned `sup_D` assembly cannot bridge
@@ -111,12 +124,16 @@ leaves residual s.d. `≍ b^{-K}√(log log N)`); lap 87 made the same point *in
 (the budget cannot manufacture uniformity).  The deliverable is the EQUIVALENCE plus the
 strongest published anchor, not a proof.
 
-## Axiom ledger — C3/MRT (real `#print axioms`, 2026-09-25 lap 87, 9004 jobs on the tip)
+## Axiom ledger — C3/MRT (real `#print axioms`, 2026-09-25 lap 91, 9257 jobs on the tip)
 
 | headline theorem | paper claim (uncond/cond) | `#print axioms` shows | verdict |
 |---|---|---|---|
 | `CastingOut.conjC3_via_weylLambert` | `ConjC3` — the repo's own CONJECTURE | trust triple + `sorryAx` | 🔴 via `weylLambertTwist_holds`, the ratified open crux (disclosed, not strayed) |
-| `CastingOut.weylLambertTwist_of_depthElliottLL` | crux ⇐ the diagonal depth limit | trust triple | 🟢 clean — **this is the real reduction** |
+| `CastingOut.conjC3_of_geom_input` | **`ConjC3` ⇐ the `K`-point input ALONE**, any `θ < 1` | trust triple | 🟢 clean — **this is the reduction, in final form** |
+| `CastingOut.weylLambertTwist_of_geom_input` | crux ⇐ the `K`-point input alone | trust triple | 🟢 clean |
+| `CastingOut.kPointThresholdSlow_of_geom` | the threshold data, CONSTRUCTED | trust triple | 🟢 clean — DISCHARGED lap 90 |
+| `CastingOut.weylLambertTwist_of_depthDiagonalSlow` | crux ⇐ the slow diagonal | trust triple | 🟢 clean |
+| `CastingOut.weylLambertTwist_of_depthElliottLL` | crux ⇐ the diagonal depth limit | trust triple | 🟢 clean — the `depthLL` predecessor |
 | `CastingOut.weylLambertTwist_of_quantDepthElliottGen` | crux ⇐ budgeted form | trust triple | 🟢 clean, but the `Prop` is **vacuously stronger** than the diagonal (lap 87 F1) |
 | `CastingOut.uniformResonantMass_holds` | the archimedean named input | trust triple | 🟢 clean — DISCHARGED lap 83 |
 | `CastingOut.ttNonPretentious_zOmegaNat` | TT (3.3) for `z^ω`, unconditional | trust triple | 🟢 clean |
@@ -136,7 +153,8 @@ whole `C3Mrt*` chain (45 files, 13 180 lines) is sorry-free.  The debt is carrie
 |---|---|---|
 | `KPointNaturalCorrelationNoExc 2` | 🔴 | TT Thm 3.1(ii) **with the exceptional set of scales deleted**.  TT say in print this is out of reach.  NOT "the published theorem" — the faithful one is `TwoPointNaturalCorrelation`, which is stated in `C3MrtTTThm31.lean` and does *not* give a pointwise limit (`exceptional_set_can_pin_a_scale`). |
 | `KPointNaturalCorrelationNoExc K`, `K ≥ 3` | 🔴 | TT: a triple-correlation version "does not appear to be within current technology".  Generational; named and chipped opportunistically. |
-| uniformity in `K` of the above (lap 87 F2) | 🔴 | the newly-isolated gap: the diagonal needs `cK`, `CstK` explicit, not a per-`K` `∃`.  Next prerequisite = `KPointNoExcWith` + `depthElliottLL_of_unif`. |
+| uniformity in `K` of the above (lap 87 F2) | 🔴 | RESOLVED as a *shape*: `KPointNoExcWith cK CstK K` makes the constants explicit, and laps 88–90 prove the headline from the profile `cK = c₀b^{-θK}` (`θ < 1`), `CstK = exp((K+1)^m)`.  What remains is the input's CONTENT, not its uniformity. |
+| the threshold data `KPointThresholdSlow` | 🟢 | **DISCHARGED lap 90** (`kPointThresholdSlow_of_geom`) — no longer a hypothesis at all. |
 | `ProgressionLogRung K` | 🟡 | bookkeeping only (`rung_multi_correlation` is the case `M = 1, r = 0`); several files' worth, so it is named rather than inlined.  Current frontier for the *cheap* half of the debt. |
 | Tao–Teräväinen Thm 3.1 itself (faithful, with `E`) | 🟡 | **published** (arXiv 2512.01739), stated in Lean as `TwoPointNaturalCorrelation`; formalising its proof is project-scale. |
 | the Vinogradov–Korobov saving for `∑_{p≤X} χ(p)p^{it}/p` | 🟡 | proven in the literature; no longer load-bearing after lap 83. |

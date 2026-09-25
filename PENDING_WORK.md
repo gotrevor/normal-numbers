@@ -1,3 +1,68 @@
+## Lap 91 (2026-09-25, REVIEW) — the headline rests on ONE statement; now make that statement assume less
+
+**Binding orders: `DIRECTION.md` → CURRENT DIRECTIVE.**  State at entry: branch `wip/c3-mrt`,
+HEAD `b7d9f45`, `lake build` green (9257 jobs), the `C3Mrt*` chain sorry-free with zero `axiom`
+declarations.  The only campaign `sorry` is `SwingC3Leaf.weylLambertTwist_holds` (disclosed).
+
+**Crux advance landed this lap (lap 90).**  `KPointThresholdSlow b Q P (cKgeom c₀ θ b)` is no
+longer a hypothesis — it is a THEOREM for every `0 < θ < 1` (`kPointThresholdSlow_of_geom`), with
+the threshold constructed explicitly as `Athr K = 2^(2^⌈φ K⌉)`, `φ K = b^{θK}log(K+2+M₀)/(κc₀log2)`.
+Lap 89's NEXT ① guessed this FAILS; it does not, and the refutation is now in the kernel, not in a
+numerical table.  Consequently
+
+    conjC3_of_geom_input : (∀ b ≥ 3, ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K) → ConjC3
+
+with NO other hypothesis.  Where `θ < 1` is spent, twice and symmetrically:
+* saving side — `b^{-θD_N}·log log a_N ≍ u^{1-θ}(log u)^{-θ}` must beat `log CstKdeg = O(log u)^m`;
+* threshold side — `log log Athr(D_N) ≍ (u log u)^θ log log u` must fit inside `log log a_N ≍ u log 2`.
+Both are the SAME `u^{1-θ}` margin.  That symmetry is the structural reason `θ = 1` is this
+route's real boundary (lap 89), and it is now visible on both sides of the ledger.
+
+**Next attack (lap 92+) — narrow what `KPointNoExcWith` ASSUMES.**  The input is 🔴 and will stay
+🔴 (TT: triple correlations "not within current technology"); the remaining honest work is to make
+the assumed `Prop` as weak as possible, and to make its shape auditable.
+
+1. `depthRoot_ne_one_of_not_dvd_all {b} (hb : 0 < b) {h'} (hnd : ¬ (b:ℤ) ∣ h') (i : ℕ) :
+   depthRoot b h' i ≠ 1`.  Proof: copy `depthRoot_ne_one_of_not_dvd` with `pow_one` replaced by
+   `b ∣ b^{i+1}`; `ee_eq_one_iff_int` gives `h' = M·b^{i+1}`, contradicting `¬ b ∣ h'`.
+2. `KPointNoExcAllWith cK CstK K` — `KPointNoExcWith` with `(∃ i, TTNonPretentious (g i))`
+   weakened to `(∀ i, TTNonPretentious (g i))`.  Strictly less is assumed; ① shows the C3 consumer
+   can still discharge it, because every factor it feeds in is `zOmegaNat (depthRoot b h' i)` with
+   `depthRoot b h' i ≠ 1`, and `ttNonPretentious_zOmegaNat` is unconditional (lap 83).
+   Add `kPointNoExcAllWith_of_with : KPointNoExcWith cK CstK K → KPointNoExcAllWith cK CstK K`
+   (take `i = 0`) so no existing consumer is disturbed.
+3. Rethread: `dyadic_window_bound_K` currently passes `⟨⟨0, hK⟩, hnp …⟩` at
+   `C3MrtKPointNoExc.lean:133` — that is the ONLY place the `∃ i` is used, so the rethread is
+   local.  Its `_with` twin in `C3MrtUnifK` (`dyadic_window_bound_with`) is the same pattern.
+   Then `depthAvg_gen_tendsto_of_geom_slow` must carry `hnp` for every `i` (its current
+   hypothesis names only `depthRoot b hh 0`), and `depthDiagonalSlow_of_geom` supplies it via ①.
+   Headline: `weylLambertTwist_of_geom_input_all`, `conjC3_of_geom_input_all`.
+4. `kPointNoExcWith_mono {cK cK' CstK CstK'} (hc : ∀ K, cK' K ≤ cK K) (hC : ∀ K, CstK K ≤ CstK' K)
+   (hc0 : ∀ K, 0 < cK' K) : KPointNoExcWith cK CstK K → KPointNoExcWith cK' CstK' K`.  Both the
+   hypotheses (`W ≤ L^{cK K}`, `hsh i ≤ L^{cK K}`) and the conclusion (`≤ CstK K·L^{-cK K}`) move
+   the right way when `cK` shrinks, because `L ≥ 1`.  Consequence to record in the ledger: the
+   geometric profile is NOT an extra assumption beyond `∀ K, KPointNaturalCorrelationNoExc K` —
+   it is precisely the statement that the per-`K` constants that statement already produces
+   existentially degrade no faster than `c_K ≳ c₀ b^{-θK}`, `Cst_K ≲ exp((K+1)^m)`.
+5. Only after 1–4: consider whether `∀ K` can be weakened to `∀ K ≥ 2` (the chain uses
+   `KN N = max 1 (depthSlow b N - v) → ∞`, so all small `K` are used only for finitely many `N`;
+   a `∀ᶠ K` form may be extractable via an eventual-`N` argument).
+
+**Trigger status this lap.**  C3-T1 NOT fired (lap 83 discharged the archimedean hypothesis
+outright).  C3-T4 **SERVED** — the diagonal does close from an explicitly-uniform input, and with
+the threshold discharged; retired.  C3-T5 satisfied by lap 90 (the headline rests on strictly less:
+the threshold hypothesis is gone).  New **C3-T6**: six laps to narrow `KPointNoExcWith` further or
+declare the reduction FINAL and write the audit surface + ledger.
+
+**Repetition check (last 3 laps).**  88 → `θ < 1/2` from a degrading input; 89 → `θ < 1` by slowing
+the schedule; 90 → the threshold discharged.  No repetition: each lap removed a different
+hypothesis, and each is a strictly-less statement about the same headline.  No defect was
+re-derived; lap 90 CORRECTED lap 89's mis-estimate of `log log a_N` rather than re-deriving it.
+
+**Crux-neglect check.**  All three laps hit the headline chain itself, none hit side-leaves.  The
+one thing NOT yet attacked is the open input's own content — and per the source that is generational,
+so the honest attack is the hypothesis-narrowing above, not a proof attempt.
+
 ## Lap 88 (2026-09-25) — the crux is a theorem on the K-point input
 
 **Advance on the crux.**  `weylLambertTwist_of_degrading` / `weylLambertTwist_of_geom`: the C3 crux

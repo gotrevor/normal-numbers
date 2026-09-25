@@ -2,60 +2,56 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective (2026-09-25 REVIEW lap 87 — direction KEPT, next move CORRECTED).**  Destination
-unchanged: turn the `sorry` at `weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`)
-into a *conditional theorem* on ONE named, honestly-labelled correlation input.  What changes
-is the shape of the last brick.
+**Objective (2026-09-25 REVIEW lap 91 — direction KEPT, next move SET).**  Destination unchanged:
+`ConjC3` as a *conditional theorem* on ONE named, honestly-labelled correlation input, with an
+honest ledger.  As of lap 90 that is DONE in the strong form:
 
-**The finding that forces the correction.**  `QuantDepthElliottGen b` asks for `C : ℕ → ℝ`,
-`η : ℕ → ℝ` with `‖depthAvg b P Q j h D N‖ ≤ C D · η N` for ALL `D`, plus
-`C(depthLL b N)·η(N) → 0`.  Instantiating the first at `D = depthLL b N` and squeezing gives
+    conjC3_of_geom_input : (∀ b ≥ 3, ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K) → ConjC3
 
-    C(depthLL b N)·η(N)  ≥  ‖depthAvg b P Q j h (depthLL b N) N‖ ,
+for EVERY `0 < θ < 1` — no threshold hypothesis, no schedule hypothesis, no budget layer.
+The threshold data was DISCHARGED this lap (`kPointThresholdSlow_of_geom`, `thrAthr K = 2^(2^⌈φ K⌉)`),
+refuting lap 89's guess that it fails.  So the ENTIRE headline now rests on the single open
+statement `KPointNoExcWith`.
 
-so **any** budget `C` — `b^{κD}`, `A_D e^{D²}`, anything — already forces the DIAGONAL limit
-`‖depthAvg b P Q j h (depthLL b N) N‖ → 0`.  The budget layer (`budget_absorb`,
-`pow_self_sq_le_exp_cube`, the `sup_D` assembly of HANDOFF lap 86 NEXT ③) therefore buys
-nothing: it cannot manufacture uniformity it is not given.  And a family of fixed-`K` limits
-(`depthAvg_K_tendsto_of_noExc`, lap 85) provably cannot supply a diagonal limit, because
-`KPointNaturalCorrelationNoExc K` hides its constants behind a per-`K` `∃ c Cst` with **no
-control on how they degrade in `K`**.  The real obligation is, and always was, the diagonal.
+**Mandated next move — make that one statement ASSUME LESS.**  Four items, in order:
+1. `depthRoot_ne_one_of_not_dvd_all` — `depthRoot b h' i ≠ 1` for EVERY `i`, not just `i = 0`,
+   whenever `¬ b ∣ h'` (immediate: `b ∣ b^{i+1}`).
+2. `KPointNoExcAllWith cK CstK K` — `KPointNoExcWith` with the hypothesis `∃ i, TTNonPretentious
+   (g i)` replaced by `∀ i, TTNonPretentious (g i)`.  This is a STRICTLY WEAKER `Prop` to assume,
+   and ① shows the consumer can still meet it: in the C3 chain every factor is `zOmegaNat
+   (depthRoot b h' i)` with `depthRoot b h' i ≠ 1`, and `ttNonPretentious_zOmegaNat` is
+   unconditional.  Add `kPointNoExcAllWith_of_with` so nothing existing is weakened.
+3. Rethread `dyadic_window_bound_K` (and the `_with` twins in `C3MrtUnifK`),
+   `depthAvg_gen_tendsto_of_geom_slow`, `depthDiagonalSlow_of_geom`, and the headline
+   `weylLambertTwist_of_geom_input` / `conjC3_of_geom_input` onto the ALL form.
+4. `kPointNoExcWith_mono` — monotone down in `cK` and up in `CstK` (the hypotheses `W ≤ L^{cK}`,
+   `hsh i ≤ L^{cK}` tighten and the conclusion `≤ CstK·L^{-cK}` loosens together).  This pins the
+   ledger's honest reading: the geometric profile is EXACTLY a degradation-RATE hypothesis on the
+   per-`K` constants that `KPointNaturalCorrelationNoExc K` already supplies existentially.
 
-**Mandated next move — the UNIFORM-in-`K` layer, `C3MrtUnifK.lean` (new file, pure addition).**
-1. `quantDepthElliottGen_forces_diagonal` — the finding above, in Lean.  Cheap, route-decisive,
-   and it retires the budget layer honestly.
-2. `KPointNoExcWith (cK CstK : ℕ → ℝ) (K : ℕ)` — `KPointNaturalCorrelationNoExc K` with the two
-   constants as explicit functions of `K`; plus `kPointNoExc_of_with`, so nothing is weakened
-   and every lap-85 consumer survives.
-3. `progression_avg_le_of_window` — the quantitative twin of `progression_avg_tendsto_of_window`
-   (head + two boundary points + `Y = MJ+r`).  HANDOFF lap 86 NEXT ① — still correct, still next.
-4. `dyadic_window_bound_with` / `depthAvg_le_with` — an EXPLICIT `B cK CstK K N` majorant for
-   `‖depthAvg b P Q j h K N‖`, with the `N₀(K)` threshold explicit too.
-5. `depthElliottLL_of_unif` — the diagonal, hence `WeylLambertTwist b`, from ONE schedule-
-   compatibility hypothesis `Tendsto (fun N => B cK CstK (depthLL b N) N) atTop (𝓝 0)`, and a
-   concrete sufficient profile (e.g. `cK K = c₀·γ^K` with `γ > b^{-1/2}`, `CstK K ≤ exp(K^m)`)
-   so the hypothesis is checkable rather than decorative.
-
-**Forbidden drift.**  Do NOT build further fixed-`K` `Tendsto` statements — lap 85 saturated
-that layer and it cannot reach the diagonal.  Do NOT spend laps polishing `QuantDepthElliottGen`
-/ `budget_absorb` / `pow_self_sq_le_exp_cube`: ① retires them.  Do NOT weaken, rename or delete
+**Forbidden drift.**  Do NOT try to derive the `K ≥ 3` rung from the `K = 2` rung: TT state in
+print that triple correlations are "not within current technology" — source-refuted, not a lap to
+spend.  Do NOT re-attempt removing TT's exceptional set (`exceptional_set_can_pin_a_scale`,
+lap 80).  Do NOT build further fixed-`K` `Tendsto` statements (lap 87 F2), and do NOT revive the
+`QuantDepthElliottGen` budget layer (lap 87 F1).  Do NOT weaken, rename or delete
 `weylLambertTwist_holds`, `conjC3`, `KPointNaturalCorrelationNoExc`, `ProgressionLogRung` or
-anything in the existing `C3Mrt*` chain — pure addition.  Do NOT re-attempt removing TT's
-exceptional set (`exceptional_set_can_pin_a_scale`, refuted lap 80) or `TwistedPrimeSumSaving`.
-New code in `C3Mrt*.lean` only.  Build BOTH `lake build` and `lake build NormalNumbers.<tip>`.
+anything in the existing `C3Mrt*` chain — pure addition only.  Build BOTH `lake build` and
+`lake build NormalNumbers.<tip>`.
 
-**Ledger honesty (binding).**  `KPointNaturalCorrelationNoExc K` is 🔴 at EVERY `K`, including
-`K = 2`: it is TT Thm 3.1(ii) with the exceptional set of scales deleted, which TT say in print
-is out of reach.  The faithful input is `TwoPointNaturalCorrelation` (`C3MrtTTThm31.lean`).
-Any document that calls the `K = 2` rung "published" is wrong; say "strictly stronger than
-published, disclosed".
+**Ledger honesty (binding, unchanged).**  `KPointNaturalCorrelationNoExc K` — and therefore
+`KPointNoExcWith` / `KPointNoExcAllWith` — is 🔴 at EVERY `K`, `K = 2` included: it is TT
+Thm 3.1(ii) with the exceptional set of scales deleted, which TT say in print is out of reach.
+The faithful input is `TwoPointNaturalCorrelation` (`C3MrtTTThm31.lean`).  Never call the `K = 2`
+rung "published"; say "strictly stronger than published, disclosed".
 
 **Registered route triggers.**  🚦 **C3-T1** — if `ζ^ω` provably fails a hypothesis TT Thm 3.1
-needs, ESCALATE.  🚦 **C3-T4** (replaces C3-T2/T3, which have served) — if `depthElliottLL_of_unif`
-is not a theorem within **8** grind laps of 2026-09-25, ESCALATE: that would mean the diagonal
-does not close even from an explicitly-uniform input, i.e. the reduction has no endpoint.
-🚦 **C3-T5** — if a lap's advance cannot be stated as "the diagonal now rests on strictly less",
-it is leaf-work: stop and re-read this section.
+needs, ESCALATE.  🚦 **C3-T4** — SERVED (lap 90: `conjC3_of_geom_input` is a theorem; the diagonal
+does close from an explicitly-uniform input).  Retired.  🚦 **C3-T5** — every lap's advance must be
+statable as "the headline now rests on strictly less"; if it cannot, it is leaf-work: stop and
+re-read this section.  🚦 **C3-T6** (new) — if SIX grind laps from 2026-09-25 produce no further
+narrowing of the `KPointNoExcWith` surface (weaker hypotheses, discharged rungs, or a proved
+reduction), declare the reduction FINAL and switch to the `Statement.lean` audit surface +
+ledger writeup: that is the ratified deliverable, not an unbounded grind.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.
@@ -73,6 +69,11 @@ it is leaf-work: stop and re-read this section.
 - 2026-09-25 (REVIEW lap 87): direction KEPT, **next move CORRECTED**.  The budget layer is
   provably vacuous (`C(D_N)·η(N) ≥ ‖depthAvg (D_N) N‖`); fixed-`K` limits cannot reach the
   diagonal; build the UNIFORM-in-`K` layer instead.  C3-T2/T3 retired, C3-T4/T5 registered.
+  COMPLETED laps 88–90: `weylLambertTwist_of_geom` (θ<1/2), the slow schedule (θ<1), and the
+  threshold DISCHARGED — the headline now rests on `KPointNoExcWith` alone.
+- 2026-09-25 (REVIEW lap 91): direction KEPT, next move SET — **narrow what the one open input
+  ASSUMES**: `∃ i` non-pretentious ⇝ `∀ i` non-pretentious, plus `kPointNoExcWith_mono` to pin the
+  profile as a degradation-RATE hypothesis.  C3-T4 SERVED/retired, C3-T6 registered.
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically
