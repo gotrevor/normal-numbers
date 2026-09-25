@@ -676,3 +676,101 @@ theorem diffCount_stage_le {x : ℕ → ℕ} (hx : ∀ m, x m < 2) (n M : ℕ) :
     ring
   rw [he]
   exact mul_le_mul_of_nonneg_left hgeom (by positivity)
+
+end LayerSys
+
+/-! ## The exact window law at a repeated arm
+
+`multi_not_isAbelianAt'` only needs the inequality `coeff < Binomial`.  The limit transfer needs
+the exact common value, so here is the exact constant term at every residue, with NO injectivity
+hypothesis on the arms: a length-`L` window separates the gadget `(p', a')` only from block `b = 0`
+at residue `r = p' + 1` and only when `a' = L`.  Hence at a residue that is not `p' + 1` for any
+`L`-armed gadget the law is exactly Binomial, and at such a residue exactly ONE block (`b = 0`) is
+defective, contributing exactly the factor `3 / 4`.
+-/
+
+/-- A length-`L` window separates a gadget only from block `0`, at residue `p' + 1`, arm `L`. -/
+theorem segSet_unsep_gen (q L r b p' a' : ℕ) (ha' : 2 ≤ a') (hq' : p' + a' + 1 < q) (hr : r < q)
+    (hne : ¬ (b = 0 ∧ r = p' + 1 ∧ a' = L)) : Unsep (segSet q L r b) (p', a') := by
+  rw [segSet_eq_Ico_gen]
+  refine sep_of_ne ha' ?_
+  rintro ⟨h1, h2⟩
+  rcases Nat.eq_zero_or_pos b with rfl | hb1
+  · simp only [Nat.zero_mul, Nat.sub_zero] at h1 h2
+    exact hne ⟨rfl, by omega, by omega⟩
+  · have hbq : q ≤ b * q := Nat.le_mul_of_pos_left q hb1
+    omega
+
+/-- The plain (Binomial) constant term of a segment factor. -/
+theorem segGf_coeff_plain (q : ℕ) (gs : List (ℕ × ℕ)) (hq0 : 0 < q)
+    (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup) (L r b : ℕ)
+    (hsep : ∀ pa ∈ gs, Unsep (segSet q L r b) pa) :
+    (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q L r b d).coeff 0
+      = (2 : ℝ) ^ q / 2 ^ segLen q L r b := by
+  rw [multi_segGf_plain q gs hq0 hok hgs hnd L r b hsep, Polynomial.coeff_C_mul]
+  have hb : ((1 + X : ℝ[X]) ^ segLen q L r b).coeff 0 = 1 := by
+    rw [add_comm, Polynomial.coeff_X_add_one_pow]
+    simp
+  rw [hb, mul_one]
+  push_cast
+  ring
+
+/-- **The exact defective factor.**  At `r = p + 1`, block `0`, an `a`-armed gadget contributes
+exactly `3 / 4` — the dichotomy allows only two values and the defect is strict. -/
+theorem segGf_coeff_defect (q : ℕ) (gs : List (ℕ × ℕ)) (hq0 : 0 < q) (p a : ℕ)
+    (hmem : (p, a) ∈ gs) (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup) :
+    (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q a (p + 1) 0 d).coeff 0
+      = 3 / 4 * ((2 : ℝ) ^ q / 2 ^ segLen q a (p + 1) 0) := by
+  obtain ⟨ha, hq⟩ := hok (p, a) hmem
+  simp only at ha hq
+  have hseg0 : segLen q a (p + 1) 0 = a := by
+    rw [segLen_eq_card q a (p + 1) 0 hq0, segSet_defect q p a hq, Nat.card_Ico]
+    omega
+  have hlt : (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q a (p + 1) 0 d).coeff 0
+      < (2 : ℝ) ^ q / 2 ^ a := by
+    rw [segGf_eq_blockGf q hq0 _ a (p + 1) 0, segSet_defect q p a hq]
+    exact blockGf_defect_coeff q gs p a hmem hok hgs hnd
+  rcases segGf_coeff_dichotomy q hq0 gs hok hgs hnd a (p + 1) 0 with h | h
+  · rw [hseg0] at h
+    rw [h] at hlt
+    exact absurd hlt (lt_irrefl _)
+  · exact h
+
+/-- **Exact law at a clean residue.**  If `r` is not `p' + 1` for any `L`-armed gadget, the
+length-`L` window law at `r` is exactly Binomial. -/
+theorem winGf_coeff_plain_res (q : ℕ) (hq0 : 0 < q) (gs : List (ℕ × ℕ))
+    (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup) (S L r : ℕ) (hr : r < q)
+    (hS : ∀ t < L, (r + t) / q < S)
+    (hclean : ∀ pa ∈ gs, ¬ (r = pa.1 + 1 ∧ pa.2 = L)) :
+    (winGf (multiG q gs) q (2 ^ q) S L r).coeff 0 = ((2 ^ q : ℕ) : ℝ) ^ S / 2 ^ L := by
+  classical
+  have h := winGf_coeff_eq q hq0 gs hok hgs hnd S L r hS ∅ (by simp)
+    (by simp) (fun b _ => ?_)
+  · simpa using h
+  · refine segGf_coeff_plain q gs hq0 hok hgs hnd L r b (fun pa hpa => ?_)
+    obtain ⟨p', a'⟩ := pa
+    obtain ⟨ha', hq'⟩ := hok (p', a') hpa
+    refine segSet_unsep_gen q L r b p' a' ha' hq' hr (fun hc => ?_)
+    exact hclean (p', a') hpa ⟨hc.2.1, hc.2.2⟩
+
+/-- **Exact law at a defective residue.**  At `r = p + 1` for an `L`-armed gadget `(p, L)` exactly
+one block is defective, so the window law is exactly `3 / 4` of Binomial. -/
+theorem winGf_coeff_defect_res (q : ℕ) (hq0 : 0 < q) (gs : List (ℕ × ℕ))
+    (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup) (S L p : ℕ)
+    (hmem : (p, L) ∈ gs) (hSpos : 0 < S) (hr : p + 1 < q)
+    (hS : ∀ t < L, (p + 1 + t) / q < S) :
+    (winGf (multiG q gs) q (2 ^ q) S L (p + 1)).coeff 0
+      = 3 / 4 * (((2 ^ q : ℕ) : ℝ) ^ S / 2 ^ L) := by
+  classical
+  have h := winGf_coeff_eq q hq0 gs hok hgs hnd S L (p + 1) hS {0}
+    (by simpa using Finset.mem_range.mpr hSpos)
+    (fun b hb => ?_) (fun b hb => ?_)
+  · simpa using h
+  · rw [Finset.mem_singleton] at hb
+    subst hb
+    exact segGf_coeff_defect q gs hq0 p L hmem hok hgs hnd
+  · rw [Finset.mem_sdiff, Finset.mem_singleton] at hb
+    refine segGf_coeff_plain q gs hq0 hok hgs hnd L (p + 1) b (fun pa hpa => ?_)
+    obtain ⟨p', a'⟩ := pa
+    obtain ⟨ha', hq'⟩ := hok (p', a') hpa
+    exact segSet_unsep_gen q L (p + 1) b p' a' ha' hq' hr (fun hc => hb.2 hc.1)
