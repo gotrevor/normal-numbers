@@ -492,5 +492,268 @@ theorem blockGf_cons_of_low (ha : 2 ≤ a) (hq : p + a + 1 < q)
 
 end Removal
 
-end NormalNumbers.Abelian
 
+
+/-! ## The single-gadget closed form
+
+Item 2b of the nested-layer route: the exact generating function of a width-`q` block carrying
+ONE gadget at position `p`.  This is the `rfac` / `rect_sum_forced` / `rect_key` chain of
+`AbelianWindowRect`, ported from the special shape `(q, p) = (a + 2, 0)` to arbitrary `q` and `p`
+with `spos a` replaced by `quadSet p a`.
+-/
+
+section SingleGf
+
+variable (q p a : ℕ)
+
+/-- A single gadget's table is `gadBit` everywhere: off the quadruple `gadBit` is the plain bit. -/
+theorem multiG_single (r d : ℕ) : multiG q [(p, a)] r d = gadBit q p a r d := by
+  rw [multiG_cons]
+  by_cases hr : r ∈ quadSet p a
+  · rw [if_pos hr]
+  · rw [if_neg hr, multiG_nil, gadBit]
+    rw [mem_quadSet] at hr
+    push_neg at hr
+    obtain ⟨-, -, h3, h4⟩ := hr
+    split
+    · simp [h3, h4]
+    · rfl
+
+theorem prod_quadSet (ha : 2 ≤ a) (f : ℕ → ℝ[X]) :
+    ∏ i ∈ quadSet p a, f i = f p * (f (p + 1) * (f (p + a) * f (p + a + 1))) := by
+  rw [quadSet,
+    Finset.prod_insert (by simp only [Finset.mem_insert, Finset.mem_singleton]; omega),
+    Finset.prod_insert (by simp only [Finset.mem_insert, Finset.mem_singleton]; omega),
+    Finset.prod_insert (by simp only [Finset.mem_singleton]; omega), Finset.prod_singleton]
+
+/-- The forced bit pattern on `quadSet p a` that triggers the exchange, indexed by `ε = bit p`. -/
+def vvg (ε i : ℕ) : ℕ :=
+  if i = p then ε else if i = p + 1 then 1 - ε else if i = p + a then 1 - ε else ε
+
+/-- The corresponding OUTPUT bit values after the exchange. -/
+def wwg (ε i : ℕ) : ℕ :=
+  if i = p then ε else if i = p + 1 then 1 - ε else if i = p + a then ε else 1 - ε
+
+theorem vvg_lt_two {ε : ℕ} (hε : ε < 2) (i : ℕ) : vvg p a ε i < 2 := by
+  rw [vvg]; split; · omega
+  split; · omega
+  split <;> omega
+
+/-- The per-position factor: on the quadruple the bit is forced to `v i` and the exponent uses the
+output value `o i`; elsewhere the bit is free. -/
+noncomputable def gfac (I : Finset ℕ) (v o : ℕ → ℕ) (i b : ℕ) : ℝ[X] :=
+  if i ∈ quadSet p a then (if b = v i then X ^ (if i ∈ I then o i else 0) else 0)
+  else X ^ (if i ∈ I then b else 0)
+
+theorem gfac_sum (I : Finset ℕ) (v o : ℕ → ℕ) (hv : ∀ i, v i < 2) (i : ℕ) :
+    gfac p a I v o i 0 + gfac p a I v o i 1
+      = if i ∈ quadSet p a then (X : ℝ[X]) ^ (if i ∈ I then o i else 0)
+        else (if i ∈ I then 1 + X else 2) := by
+  classical
+  unfold gfac
+  by_cases hs : i ∈ quadSet p a
+  · simp only [hs, if_true]
+    have := hv i
+    interval_cases h : v i <;> simp
+  · simp only [hs, if_false]
+    by_cases hI : i ∈ I <;> simp [hI]
+    norm_num
+
+/-- The forced sum, evaluated. -/
+theorem gad_sum_forced (hq : p + a + 1 < q) (I : Finset ℕ) (v o : ℕ → ℕ) (hv : ∀ i, v i < 2) :
+    ∑ d ∈ range (2 ^ q), ∏ i ∈ range q, gfac p a I v o i (bitw q d i)
+      = (∏ i ∈ quadSet p a, (X : ℝ[X]) ^ (if i ∈ I then o i else 0))
+        * ∏ i ∈ (range q) \ quadSet p a, (if i ∈ I then (1 + X : ℝ[X]) else 2) := by
+  classical
+  rw [sum_prod_bits q (fun i b => gfac p a I v o i b),
+    Finset.prod_congr rfl (fun i _ => gfac_sum p a I v o hv i),
+    ← Finset.prod_sdiff (quadSet_subset hq), mul_comm]
+  congr 1
+  · exact Finset.prod_congr rfl (fun i hi => by rw [if_pos hi])
+  · exact Finset.prod_congr rfl (fun i hi => by rw [if_neg (Finset.mem_sdiff.mp hi).2])
+
+/-- Under `gadTrig`, the four coupled bits are exactly `vvg ε` and the table outputs `wwg ε`. -/
+theorem gad_pattern (ha : 2 ≤ a) (d : ℕ) (hP : gadTrig q p a d) {ε : ℕ} (h0 : bitw q d p = ε) :
+    (∀ i ∈ quadSet p a, bitw q d i = vvg p a ε i) ∧
+      (∀ i, gadBit q p a i d = if i ∈ quadSet p a then wwg p a ε i else bitw q d i) := by
+  obtain ⟨hne, hA, hB⟩ := hP
+  have hb0 := bitw_lt_two q d p
+  have hb1 := bitw_lt_two q d (p + 1)
+  have h1 : bitw q d (p + 1) = 1 - ε := by omega
+  constructor
+  · intro i hi
+    rw [mem_quadSet] at hi
+    rcases hi with rfl | rfl | rfl | rfl
+    · rw [vvg, if_pos rfl]; exact h0
+    · rw [vvg, if_neg (by omega), if_pos rfl]; exact h1
+    · rw [vvg, if_neg (by omega), if_neg (by omega), if_pos rfl, hA, h1]
+    · rw [vvg, if_neg (by omega), if_neg (by omega), if_neg (by omega), hB, h0]
+  · intro i
+    by_cases hi : i ∈ quadSet p a
+    · rw [if_pos hi, gadBit, if_pos ⟨hne, hA, hB⟩]
+      rw [mem_quadSet] at hi
+      rcases hi with rfl | rfl | rfl | rfl
+      · rw [if_neg (by omega), if_neg (by omega), wwg, if_pos rfl]; exact h0
+      · rw [if_neg (by omega), if_neg (by omega), wwg, if_neg (by omega), if_pos rfl]; exact h1
+      · rw [if_pos rfl, wwg, if_neg (by omega), if_neg (by omega), if_pos rfl, hB, h0]
+      · rw [if_neg (by omega), if_pos rfl, wwg, if_neg (by omega), if_neg (by omega),
+          if_neg (by omega), hA, h1]
+    · rw [if_neg hi, gadBit, if_pos ⟨hne, hA, hB⟩]
+      rw [mem_quadSet] at hi
+      push_neg at hi
+      obtain ⟨-, -, h3, h4⟩ := hi
+      rw [if_neg h3, if_neg h4]
+
+/-- Off `gadTrig`, no forced pattern can be matched. -/
+theorem gad_not_pattern (ha : 2 ≤ a) (d : ℕ) (hP : ¬ gadTrig q p a d) {ε : ℕ} (hε : ε < 2) :
+    ∃ i ∈ quadSet p a, bitw q d i ≠ vvg p a ε i := by
+  by_contra hcon
+  push_neg at hcon
+  have e0 : bitw q d p = ε := by
+    have := hcon p (mem_quadSet.mpr (Or.inl rfl)); rwa [vvg, if_pos rfl] at this
+  have e1 : bitw q d (p + 1) = 1 - ε := by
+    have := hcon (p + 1) (mem_quadSet.mpr (Or.inr (Or.inl rfl)))
+    rwa [vvg, if_neg (by omega), if_pos rfl] at this
+  have e2 : bitw q d (p + a) = 1 - ε := by
+    have := hcon (p + a) (mem_quadSet.mpr (Or.inr (Or.inr (Or.inl rfl))))
+    rwa [vvg, if_neg (by omega), if_neg (by omega), if_pos rfl] at this
+  have e3 : bitw q d (p + a + 1) = ε := by
+    have := hcon (p + a + 1) (mem_quadSet.mpr (Or.inr (Or.inr (Or.inr rfl))))
+    rwa [vvg, if_neg (by omega), if_neg (by omega), if_neg (by omega)] at this
+  exact hP ⟨by omega, by omega, by omega⟩
+
+theorem gfac_prod_matched (I : Finset ℕ) (v o : ℕ → ℕ) (d : ℕ)
+    (hm : ∀ i ∈ quadSet p a, bitw q d i = v i) :
+    ∏ i ∈ range q, gfac p a I v o i (bitw q d i)
+      = ∏ i ∈ range q, (X : ℝ[X]) ^
+          (if i ∈ I then (if i ∈ quadSet p a then o i else bitw q d i) else 0) := by
+  refine Finset.prod_congr rfl (fun i _ => ?_)
+  by_cases hs : i ∈ quadSet p a
+  · rw [gfac, if_pos hs, if_pos (hm i hs)]
+    by_cases hI : i ∈ I <;> simp [hI, hs]
+  · rw [gfac, if_neg hs]
+    by_cases hI : i ∈ I <;> simp [hI, hs]
+
+theorem gfac_prod_unmatched (hq : p + a + 1 < q) (I : Finset ℕ) (v o : ℕ → ℕ) (d : ℕ)
+    (hm : ∃ i ∈ quadSet p a, bitw q d i ≠ v i) :
+    ∏ i ∈ range q, gfac p a I v o i (bitw q d i) = 0 := by
+  obtain ⟨i, hi, hne⟩ := hm
+  refine Finset.prod_eq_zero (quadSet_subset hq hi) ?_
+  rw [gfac, if_pos hi, if_neg hne]
+
+/-- **The pointwise identity** at width `q`, position `p`. -/
+theorem gad_key (ha : 2 ≤ a) (hq : p + a + 1 < q) (I : Finset ℕ) (d : ℕ) :
+    ∏ i ∈ range q, (X : ℝ[X]) ^ (if i ∈ I then gadBit q p a i d else 0)
+      = ∏ i ∈ range q, (X : ℝ[X]) ^ (if i ∈ I then bitw q d i else 0)
+        + ((∏ i ∈ range q, gfac p a I (vvg p a 0) (wwg p a 0) i (bitw q d i))
+           - ∏ i ∈ range q, gfac p a I (vvg p a 0) (vvg p a 0) i (bitw q d i))
+        + ((∏ i ∈ range q, gfac p a I (vvg p a 1) (wwg p a 1) i (bitw q d i))
+           - ∏ i ∈ range q, gfac p a I (vvg p a 1) (vvg p a 1) i (bitw q d i)) := by
+  classical
+  by_cases hP : gadTrig q p a d
+  · obtain ⟨hm, hout⟩ := gad_pattern q p a ha d hP (ε := bitw q d p) rfl
+    have hb0 := bitw_lt_two q d p
+    have hkey : ∀ ε : ℕ, (∀ i ∈ quadSet p a, bitw q d i = vvg p a ε i) →
+        (∏ i ∈ range q, gfac p a I (vvg p a ε) (wwg p a ε) i (bitw q d i)
+            = ∏ i ∈ range q, (X : ℝ[X]) ^ (if i ∈ I then gadBit q p a i d else 0)) ∧
+          (∏ i ∈ range q, gfac p a I (vvg p a ε) (vvg p a ε) i (bitw q d i)
+            = ∏ i ∈ range q, (X : ℝ[X]) ^ (if i ∈ I then bitw q d i else 0)) := by
+      intro ε hmε
+      have h0 : bitw q d p = ε := by
+        have := hmε p (mem_quadSet.mpr (Or.inl rfl)); rwa [vvg, if_pos rfl] at this
+      obtain ⟨-, houtε⟩ := gad_pattern q p a ha d hP (ε := ε) h0
+      refine ⟨?_, ?_⟩
+      · rw [gfac_prod_matched q p a I _ _ d hmε]
+        exact Finset.prod_congr rfl (fun i _ => by rw [houtε i])
+      · rw [gfac_prod_matched q p a I _ _ d hmε]
+        refine Finset.prod_congr rfl (fun i _ => ?_)
+        by_cases hs : i ∈ quadSet p a
+        · rw [if_pos hs, hmε i hs]
+        · rw [if_neg hs]
+    have hzero : ∀ ε : ℕ, ε < 2 → bitw q d p ≠ ε →
+        ∀ o : ℕ → ℕ, ∏ i ∈ range q, gfac p a I (vvg p a ε) o i (bitw q d i) = 0 := by
+      intro ε hε hne o
+      refine gfac_prod_unmatched q p a hq I _ o d ⟨p, mem_quadSet.mpr (Or.inl rfl), ?_⟩
+      rw [vvg, if_pos rfl]; exact hne
+    rcases (by omega : bitw q d p = 0 ∨ bitw q d p = 1) with h | h
+    · obtain ⟨e1, e2⟩ := hkey 0 (by rw [← h]; exact hm)
+      rw [e1, e2, hzero 1 (by norm_num) (by omega) _, hzero 1 (by norm_num) (by omega) _]
+      ring
+    · obtain ⟨e1, e2⟩ := hkey 1 (by rw [← h]; exact hm)
+      rw [e1, e2, hzero 0 (by norm_num) (by omega) _, hzero 0 (by norm_num) (by omega) _]
+      ring
+  · have hg : ∀ i, gadBit q p a i d = bitw q d i := fun i => by rw [gadBit, if_neg hP]
+    have hz : ∀ ε : ℕ, ε < 2 → ∀ o : ℕ → ℕ,
+        ∏ i ∈ range q, gfac p a I (vvg p a ε) o i (bitw q d i) = 0 := by
+      intro ε hε o
+      exact gfac_prod_unmatched q p a hq I _ o d (gad_not_pattern q p a ha d hP hε)
+    rw [hz 0 (by norm_num), hz 0 (by norm_num), hz 1 (by norm_num), hz 1 (by norm_num)]
+    rw [Finset.prod_congr rfl (fun i _ => by rw [hg i] :
+      ∀ i ∈ range q, (X : ℝ[X]) ^ (if i ∈ I then gadBit q p a i d else 0)
+        = (X : ℝ[X]) ^ (if i ∈ I then bitw q d i else 0))]
+    ring
+
+theorem gad_sum_plain (I : Finset ℕ) :
+    ∑ d ∈ range (2 ^ q), ∏ i ∈ range q, (X : ℝ[X]) ^ (if i ∈ I then bitw q d i else 0)
+      = ∏ i ∈ range q, (if i ∈ I then (1 + X : ℝ[X]) else 2) := by
+  rw [sum_prod_bits q (fun i b => (X : ℝ[X]) ^ (if i ∈ I then b else 0))]
+  refine Finset.prod_congr rfl (fun i _ => ?_)
+  by_cases hI : i ∈ I <;> simp [hI] <;> norm_num
+
+/-- **The single-gadget block law.**  The generating function of a width-`q` block carrying one
+gadget at `(p, a)` is the plain binomial product plus a correction supported off the quadruple,
+factoring as a product of two differences — one for each pair. -/
+theorem blockGf_single (ha : 2 ≤ a) (hq : p + a + 1 < q) (I : Finset ℕ) (hI : I ⊆ range q) :
+    blockGf q (multiG q [(p, a)]) I
+      = (∏ i ∈ range q, (if i ∈ I then (1 + X : ℝ[X]) else 2))
+        + (∏ i ∈ (range q) \ quadSet p a, (if i ∈ I then (1 + X : ℝ[X]) else 2))
+          * ((X ^ (if p + a ∈ I then 1 else 0) - X ^ (if p + a + 1 ∈ I then 1 else 0))
+             * (X ^ (if p ∈ I then 1 else 0) - X ^ (if p + 1 ∈ I then 1 else 0))) := by
+  classical
+  have hpow : ∀ d, (X : ℝ[X]) ^ ((I.filter (fun u => multiG q [(p, a)] u d = 1)).card)
+      = ∏ i ∈ range q, (X : ℝ[X]) ^ (if i ∈ I then gadBit q p a i d else 0) := by
+    intro d
+    rw [pow_card_filter q I hI (fun u => multiG q [(p, a)] u d)
+      (fun u => multiG_lt_two q [(p, a)] u d)]
+    exact Finset.prod_congr rfl (fun i _ => by rw [multiG_single])
+  rw [blockGf, Finset.sum_congr rfl (fun d (_ : d ∈ range (2 ^ q)) => (hpow d).trans
+      (gad_key q p a ha hq I d)),
+    Finset.sum_add_distrib, Finset.sum_add_distrib, Finset.sum_sub_distrib,
+    Finset.sum_sub_distrib, gad_sum_plain q I,
+    gad_sum_forced q p a hq I _ _ (vvg_lt_two p a (by norm_num)),
+    gad_sum_forced q p a hq I _ _ (vvg_lt_two p a (by norm_num)),
+    gad_sum_forced q p a hq I _ _ (vvg_lt_two p a (by norm_num)),
+    gad_sum_forced q p a hq I _ _ (vvg_lt_two p a (by norm_num))]
+  have hv00 : vvg p a 0 p = 0 := by rw [vvg, if_pos rfl]
+  have hv01 : vvg p a 0 (p + 1) = 1 := by rw [vvg, if_neg (by omega), if_pos rfl]
+  have hv0a : vvg p a 0 (p + a) = 1 := by
+    rw [vvg, if_neg (by omega), if_neg (by omega), if_pos rfl]
+  have hv0b : vvg p a 0 (p + a + 1) = 0 := by
+    rw [vvg, if_neg (by omega), if_neg (by omega), if_neg (by omega)]
+  have hw00 : wwg p a 0 p = 0 := by rw [wwg, if_pos rfl]
+  have hw01 : wwg p a 0 (p + 1) = 1 := by rw [wwg, if_neg (by omega), if_pos rfl]
+  have hw0a : wwg p a 0 (p + a) = 0 := by
+    rw [wwg, if_neg (by omega), if_neg (by omega), if_pos rfl]
+  have hw0b : wwg p a 0 (p + a + 1) = 1 := by
+    rw [wwg, if_neg (by omega), if_neg (by omega), if_neg (by omega)]
+  have hv10 : vvg p a 1 p = 1 := by rw [vvg, if_pos rfl]
+  have hv11 : vvg p a 1 (p + 1) = 0 := by rw [vvg, if_neg (by omega), if_pos rfl]
+  have hv1a : vvg p a 1 (p + a) = 0 := by
+    rw [vvg, if_neg (by omega), if_neg (by omega), if_pos rfl]
+  have hv1b : vvg p a 1 (p + a + 1) = 1 := by
+    rw [vvg, if_neg (by omega), if_neg (by omega), if_neg (by omega)]
+  have hw10 : wwg p a 1 p = 1 := by rw [wwg, if_pos rfl]
+  have hw11 : wwg p a 1 (p + 1) = 0 := by rw [wwg, if_neg (by omega), if_pos rfl]
+  have hw1a : wwg p a 1 (p + a) = 1 := by
+    rw [wwg, if_neg (by omega), if_neg (by omega), if_pos rfl]
+  have hw1b : wwg p a 1 (p + a + 1) = 0 := by
+    rw [wwg, if_neg (by omega), if_neg (by omega), if_neg (by omega)]
+  rw [prod_quadSet p a ha, prod_quadSet p a ha, prod_quadSet p a ha, prod_quadSet p a ha,
+    hv00, hv01, hv0a, hv0b, hw00, hw01, hw0a, hw0b,
+    hv10, hv11, hv1a, hv1b, hw10, hw11, hw1a, hw1b]
+  simp only [ite_self, pow_zero, one_mul, mul_one]
+  ring
+
+end SingleGf
+
+end NormalNumbers.Abelian
