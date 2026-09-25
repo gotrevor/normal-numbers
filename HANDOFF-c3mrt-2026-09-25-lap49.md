@@ -47,3 +47,24 @@ untouched by adding shifts.
 
 Then `multi_correlation_of_uniform_rung` + `weylLambertTwist_of_kfold_bound` closes the
 `D ≥ 3` rung on `KPointLogElliott K` alone, and the crux's ledger is complete.
+
+## Addendum — lap 50: `initial_segment_bound_of_kElliott`
+
+`src/NormalNumbers/C3MrtMultiRung.lean` (sorry-free, trust triple).  The `K`-point
+`initial_segment_bound_of_elliott`: `KPointLogElliott K` at nondegenerate forms
+`(c_i, b_i)` gives, for every `A ≥ A₀` and every `i₀` at which the archimedean certificate
+holds,
+
+    ‖∑_{j ≤ A^m} harmonicWeight j · ∏_i zOmInt z_i (integerAffine c_i b_i j)‖
+        ≤ (1 + log A^{i₀}) + m·ε·log A .
+
+**The archimedean side does not grow with `K`.**  `KPointLogElliott` constrains only the FIRST
+factor's pretentiousness, so the certificate `nonPretentious_zOm` (laps 18–21) is reused
+verbatim at every `K` — no new archimedean work is needed for `D ≥ 3`.  That was the last
+place where the `D ≥ 3` route could have demanded a genuinely new analytic input beyond the
+`K`-point correlation itself; it does not.
+
+Remaining: `rung_multi_of_named_inputs` (plug `nonPretentious_zOm` + `TwistedPrimeSumSavingAllLevels`
+into the above, mirroring `rung_two_of_named_inputs` exactly) and then `rung_multi_uniform`
+(`exists_common_threshold` over the finitely many admissible tuples), which is
+`multi_correlation_of_uniform_rung`'s `hrungU`.
