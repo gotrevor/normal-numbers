@@ -10979,3 +10979,41 @@ trying, in order: (1) does the `t = 0`, `χ ≠ 1` case follow from a *weak* Mer
 factor* `κ`, not `o(1)`?  (2) the wide range `|t| > (log X)^{1/125}`: partial summation against
 `ψ(x) − x` needs only a `(log x)^{-A}` error, so check whether a fixed-power error suffices, which
 is a weaker input than the zero-free region the module doc assumed.
+
+## 2026-09-25 lap 110 — the multiplier `z` ELIMINATED from the archimedean debt
+
+The archimedean obligation carried two unknowns: the depth root `z` (a `b`-th root of unity ≠ 1)
+and the pair `(χ, t)`.  The multiplier is now gone, by an elementary identity:
+
+    1 − w^b = (1 − w)(1 + w + ⋯ + w^{b−1})  ⟹  ‖1 − w^b‖ ≤ b‖1 − w‖,
+    ‖1 − u‖² = 2 − 2 Re u on the unit circle  ⟹  1 − Re(w^b) ≤ b²(1 − Re w).
+
+* `normSq_one_sub_of_norm_one`, `norm_one_sub_pow_le`, `one_sub_re_pow_le` — the three steps.
+* `ttPretentiousSumChar_pow_le` — applying it at `w = z χ̄(p) p^{−it}` with `z^b = 1`:
+  `ttPretentiousSumChar 1 X (χ^b) (b t) ≤ b² · ttPretentiousSumChar (zOmegaNat z) X χ t`.
+  Handles `p ∣ q` (both summands are `1/p`) and `p ∤ q` (`DirichletCharacter.unit_norm_eq_one`).
+* `depthRoot_pow_eq_one` — `depthRoot b h' 0` IS a `b`-th root of unity (`ee(h'/b)^b = ee(h')`).
+* `OneNonPretentious κ C` — the resulting debt: **TT (3.3) for the CONSTANT function `1`**, i.e.
+  `1` is non-pretentious to `ψ(n)n^{iτ}` whenever `(ψ, τ) ≠ (1, 0)`.  No base, no root of unity,
+  no twist `h'` — so ONE analytic statement serves every base at once, which the resonance route
+  structurally could not do (its constant degrades like `π/b`).
+* `RootOrderCase b κ C` — the one corner the reduction cannot reach: `χ^b = 1` and `t = 0`, where
+  the right-hand side is `0`.  There `χ` has order `d | b`, so it takes `b`-th-root-of-unity
+  values and the bad set is the coset `{χ = z}`, of relative density `1/d`.
+* `faithfulArchLower_of_oneNonPretentious`, `conjC3_of_geom_input_zfree` — `ConjC3` from the
+  faithful `K`-point input + `OneNonPretentious` + `RootOrderCase`.
+
+**Why this is the right split (and where the true hard core now sits).**  In `RootOrderCase`, a
+Brun–Titchmarsh upper bound on the bad coset gives mass `≤ (2/d) log log Y`, so for `d ≥ 3` there
+is a saving `1 − 2/3 > 0` and BT is uniform in `q` with no exceptional-character caveat.  `d = 2`
+— real `χ`, `z = −1`, hence `b` even and `h' ≡ b/2 (mod b)` — is the Siegel-zero case.  So after
+this lap the hard core of the entire C3 archimedean debt is a SINGLE explicit configuration:
+`b` even, depth root exactly `−1`, `χ` real quadratic, `t = 0`.
+
+**Next attack.**  (1) Formalize the `d ≥ 3` branch of `RootOrderCase` against a named
+`BrunTitchmarshAP` statement (check mathlib first: `Mathlib/NumberTheory/` sieve files).  (2) The
+`d = 2`, `z = −1` corner: `1 − Re(−χ(p)) = 1 + χ(p)`, so the obligation is
+`∑_{p≤Y} (1 + χ(p))/p ≥ κ log log Y` for real non-principal `χ` — i.e. `χ(p) = −1` must not hold
+for almost all `p`.  That is `L(1, χ) ≠ 0` with a *rate*; mathlib has the qualitative
+`LFunction_apply_one_ne_zero`, and the elementary Dirichlet-style argument via
+`∑_{n} (1 * χ)(n)/n ≥ 0` (Mertens' trick) may give an effective constant — worth one probe.

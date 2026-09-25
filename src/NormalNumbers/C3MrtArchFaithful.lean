@@ -1070,6 +1070,253 @@ theorem twistedPrimeSum_principal_zero (X : ℝ) :
 #print axioms twistedPrimeSum_principal_zero
 
 
+/-! ### Eliminating the multiplier `z` — the `b`-th power reduction
+
+The archimedean obligation carries two unknowns: the depth root `z` (a `b`-th root of unity `≠ 1`)
+and the pair `(χ, t)`.  The multiplier can be removed outright.  For unimodular `w`,
+
+    1 − w^b = (1 − w)(1 + w + ⋯ + w^{b−1})    ⟹    ‖1 − w^b‖ ≤ b‖1 − w‖,
+
+and `‖1 − u‖² = 2 − 2 Re u` on the unit circle, so `1 − Re(w^b) ≤ b²(1 − Re w)`.  Applying this
+with `w = z χ̄(p) p^{−it}` and using `z^b = 1` kills `z`:
+
+    ttPretentiousSumChar 1 X (χ^b) (b t) ≤ b² · ttPretentiousSumChar (zOmegaNat z) X χ t.
+
+So the whole archimedean debt reduces to: **the constant function `1` is non-pretentious to
+`χ^b(n) n^{ibt}`**, i.e. the case `z = 1` of the same problem, with the character raised to the
+`b`-th power and the twist scaled.  The degenerate case is exactly `χ^b = 1` and `t = 0`, where
+the right-hand side is `0` and the inequality says nothing — and that is the case where `χ` has
+order dividing `b`, i.e. `χ` takes `b`-th-root-of-unity values.  Recorded in `PENDING_WORK`: for
+`χ` of order `d ≥ 3` a Brun–Titchmarsh upper bound on the bad coset gives `2/d ≤ 2/3 < 1`, which
+is a saving; `d = 2` (real `χ`, `z = −1`, `b` even) is the Siegel-zero case and is the genuine
+hard core. -/
+
+theorem normSq_one_sub_of_norm_one {u : ℂ} (hu : ‖u‖ = 1) :
+    Complex.normSq (1 - u) = 2 - 2 * u.re := by
+  have h2 : Complex.normSq u = 1 := by
+    rw [Complex.normSq_eq_norm_sq, hu]; norm_num
+  simp only [Complex.normSq_apply, Complex.sub_re, Complex.sub_im, Complex.one_re,
+    Complex.one_im] at h2 ⊢
+  nlinarith [h2]
+
+/-- `‖1 − w^b‖ ≤ b‖1 − w‖` for `‖w‖ ≤ 1`, from the geometric factorisation. -/
+theorem norm_one_sub_pow_le {w : ℂ} (hw : ‖w‖ ≤ 1) (b : ℕ) :
+    ‖1 - w ^ b‖ ≤ (b : ℝ) * ‖1 - w‖ := by
+  have hfac : 1 - w ^ b = (∑ i ∈ Finset.range b, w ^ i) * (1 - w) :=
+    (geom_sum_mul_neg w b).symm
+  rw [hfac, norm_mul]
+  refine mul_le_mul_of_nonneg_right ?_ (norm_nonneg _)
+  refine le_trans (norm_sum_le _ _) ?_
+  have hb : ∀ i ∈ Finset.range b, ‖w ^ i‖ ≤ (1 : ℝ) := by
+    intro i _
+    rw [norm_pow]
+    exact pow_le_one₀ (norm_nonneg _) hw
+  refine le_trans (Finset.sum_le_sum hb) ?_
+  rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+
+/-- **The pointwise `b`-th power inequality.**  `1 − Re(w^b) ≤ b²(1 − Re w)` on the unit
+circle. -/
+theorem one_sub_re_pow_le {w : ℂ} (hw : ‖w‖ = 1) (b : ℕ) :
+    1 - (w ^ b).re ≤ (b : ℝ) ^ 2 * (1 - w.re) := by
+  have hwb : ‖w ^ b‖ = 1 := by rw [norm_pow, hw, one_pow]
+  have h1 : Complex.normSq (1 - w ^ b) = 2 - 2 * (w ^ b).re := normSq_one_sub_of_norm_one hwb
+  have h2 : Complex.normSq (1 - w) = 2 - 2 * w.re := normSq_one_sub_of_norm_one hw
+  have hn := norm_one_sub_pow_le hw.le b
+  have hsq : ‖1 - w ^ b‖ ^ 2 ≤ ((b : ℝ) * ‖1 - w‖) ^ 2 :=
+    pow_le_pow_left₀ (norm_nonneg _) hn 2
+  rw [mul_pow, ← Complex.normSq_eq_norm_sq, ← Complex.normSq_eq_norm_sq, h1, h2] at hsq
+  linarith
+
+/-- **The `z`-free reduction.**  For a `b`-th root of unity `z`, the faithful pretentious sum of
+`zOmegaNat z` at `(χ, t)` dominates `b^{-2}` times the pretentious sum of the CONSTANT function
+`1` at `(χ^b, b t)`.  The multiplier `z` has disappeared. -/
+theorem ttPretentiousSumChar_pow_le {b : ℕ} (hb : 0 < b) {z : ℂ} (hz : ‖z‖ = 1)
+    (hzb : z ^ b = 1) (X t : ℝ) {q : ℕ} (χ : DirichletCharacter ℂ q) :
+    ttPretentiousSumChar (fun _ => (1 : ℂ)) X (χ ^ b) ((b : ℝ) * t)
+      ≤ (b : ℝ) ^ 2 * ttPretentiousSumChar (zOmegaNat z) X χ t := by
+  classical
+  rw [ttPretentiousSumChar, ttPretentiousSumChar, Finset.mul_sum]
+  refine Finset.sum_le_sum fun p hp => ?_
+  have hpp : Nat.Prime p := (Finset.mem_filter.mp hp).2
+  have hp0 : (0 : ℝ) < p := by exact_mod_cast hpp.pos
+  rw [zOmegaNat_prime hpp]
+  have hbone : (1 : ℝ) ≤ (b : ℝ) ^ 2 := by
+    have h1 : (1 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    nlinarith
+  set e1 : ℂ := Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ)) with he1
+  set E : ℂ := Complex.exp (-(((b : ℝ) * t : ℝ) : ℂ) * Complex.I * (Real.log p : ℂ)) with hE
+  set w : ℂ := z * (starRingEnd ℂ) (χ (p : ZMod q)) * e1 with hw
+  have hEpow : E = e1 ^ b := by
+    rw [hE, he1, ← Complex.exp_nat_mul]
+    congr 1
+    push_cast
+    ring
+  have hchi : (starRingEnd ℂ) ((χ ^ b) (p : ZMod q))
+      = ((starRingEnd ℂ) (χ (p : ZMod q))) ^ b := by
+    rw [MulChar.pow_apply' _ hb.ne', map_pow]
+  have hnum : 1 - ((1 : ℂ) * (starRingEnd ℂ) ((χ ^ b) (p : ZMod q)) * E).re
+      ≤ (b : ℝ) ^ 2 * (1 - w.re) := by
+    rcases eq_or_ne (χ (p : ZMod q)) 0 with h0 | hne
+    · have hL : ((1 : ℂ) * (starRingEnd ℂ) ((χ ^ b) (p : ZMod q)) * E).re = 0 := by
+        rw [hchi, h0]; simp [hb.ne']
+      have hR : w.re = 0 := by rw [hw, h0]; simp
+      rw [hL, hR]; linarith
+    · have hqu : IsUnit ((p : ℕ) : ZMod q) := by
+        by_contra hc
+        exact hne (MulChar.map_nonunit _ hc)
+      have hnorm : ‖χ ((p : ℕ) : ZMod q)‖ = 1 := by
+        have h := DirichletCharacter.unit_norm_eq_one χ hqu.unit
+        rwa [IsUnit.unit_spec] at h
+      have hnorme1 : ‖e1‖ = 1 := by
+        have he1' : e1 = Complex.exp (((-t * Real.log p : ℝ) : ℂ) * Complex.I) := by
+          rw [he1]; push_cast; ring_nf
+        rw [he1', Complex.norm_exp_ofReal_mul_I]
+      have hnormw : ‖w‖ = 1 := by
+        rw [hw, norm_mul, norm_mul, hz, RCLike.norm_conj, hnorm, hnorme1]; ring
+      have hpow : (1 : ℂ) * (starRingEnd ℂ) ((χ ^ b) (p : ZMod q)) * E = w ^ b := by
+        rw [one_mul, hchi, hEpow, hw, mul_pow, mul_pow, hzb, one_mul]
+      rw [hpow]
+      exact one_sub_re_pow_le hnormw b
+  rw [mul_div_assoc']
+  gcongr
+
+#print axioms one_sub_re_pow_le
+#print axioms ttPretentiousSumChar_pow_le
+
+
+/-- `depthRoot b h' 0` is a `b`-th root of unity: `ee(h'/b)^b = ee(h') = 1`. -/
+theorem depthRoot_pow_eq_one {b : ℕ} (hb : 0 < b) (h' : ℤ) :
+    depthRoot b h' 0 ^ b = 1 := by
+  have hb0 : ((b : ℝ)) ≠ 0 := Nat.cast_ne_zero.mpr hb.ne'
+  rw [depthRoot, ee, ← Complex.exp_nat_mul]
+  rw [show (b : ℂ) * (2 * (Real.pi : ℂ) * Complex.I * (((h' : ℝ) / (b : ℝ) ^ (0 + 1) : ℝ) : ℂ))
+      = 2 * (Real.pi : ℂ) * Complex.I * ((h' : ℝ) : ℂ) by
+    have hbc : ((b : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hb.ne'
+    push_cast
+    field_simp]
+  exact (ee_intCast_eq_one h' : ee (((h' : ℝ) : ℂ)) = 1)
+
+/-- **The `z`-free archimedean debt.**  The CONSTANT function `1` is non-pretentious to
+`ψ(n)n^{iτ}` whenever `(ψ, τ) ≠ (1, 0)`.  This is TT (3.3) at `g = 1`; the power reduction
+(`ttPretentiousSumChar_pow_le`) transfers it to every `b`-th root of unity multiplier. -/
+def OneNonPretentious (κ C : ℝ) : Prop :=
+  ∀ X : ℝ, 3 ≤ X → ∀ (q : ℕ) (ψ : DirichletCharacter ℂ q) (τ : ℝ),
+    (q : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) → (ψ ≠ 1 ∨ τ ≠ 0) →
+      κ * Real.log (Real.log X) - C ≤ ttPretentiousSumChar (fun _ => (1 : ℂ)) X ψ τ
+
+/-- **The degenerate corner the power reduction cannot reach**: `χ^b = 1` and `t = 0`, i.e. `χ`
+has order dividing `b`, so it takes `b`-th-root-of-unity values — exactly the values the depth
+root takes.  Here `ttPretentiousSumChar 1 X (χ^b) 0 = 0` and the reduction is vacuous, so the
+multiplier `z` must be used.  For `χ` of order `d ≥ 3` a Brun–Titchmarsh upper bound on the bad
+coset `{χ = z}` gives a `2/d ≤ 2/3` saving; `d = 2` (real `χ`, `z = −1`, `b` even) is the
+Siegel-zero case and is the hard core of the whole archimedean debt. -/
+def RootOrderCase (b : ℕ) (κ C : ℝ) : Prop :=
+  ∀ h' : ℤ, ¬ ((b : ℤ) ∣ h') → ∀ X : ℝ, 3 ≤ X → ∀ (q : ℕ) (χ : DirichletCharacter ℂ q),
+    (q : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) → χ ^ b = 1 →
+      κ * Real.log (Real.log X) - C
+        ≤ ttPretentiousSumChar (zOmegaNat (depthRoot b h' 0)) X χ 0
+
+/-- **`FaithfulArchLower` from the `z`-free debt plus the degenerate corner.**  The multiplier
+`z = depthRoot b h' 0` is eliminated everywhere except on `{χ^b = 1, t = 0}`, so the archimedean
+obligation splits into a statement with **no `b` and no `z` in it** (`OneNonPretentious`) and the
+root-order corner (`RootOrderCase b`).  The `h'`-uniformity is automatic: both constants are
+already independent of `h'`. -/
+theorem faithfulArchLower_of_oneNonPretentious {b : ℕ} (hb : 2 ≤ b) {κ C κ' C' : ℝ}
+    (hκ : 0 < κ) (hC : 0 ≤ C) (hκ' : 0 < κ') (hC' : 0 ≤ C')
+    (hone : OneNonPretentious κ C) (hroot : RootOrderCase b κ' C') :
+    FaithfulArchLower b (max C C' + 1) := by
+  have hb0 : 0 < b := by omega
+  have hbR : (1 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb0
+  have hbsq : (1 : ℝ) ≤ (b : ℝ) ^ 2 := by nlinarith
+  intro h' hnd
+  set z : ℂ := depthRoot b h' 0 with hzdef
+  have hz : ‖z‖ = 1 := norm_ee_real _
+  have hzb : z ^ b = 1 := depthRoot_pow_eq_one hb0 h'
+  refine ⟨min (min κ κ') 1 / (b : ℝ) ^ 2, by positivity, ?_, fun X hX q χ hq t ht => ?_⟩
+  · have h1 : min (min κ κ') 1 ≤ 1 := min_le_right _ _
+    rw [div_le_one (by positivity)]
+    linarith
+  · set μ : ℝ := min (min κ κ') 1 with hμ
+    have hμ0 : 0 < μ := lt_min (lt_min hκ hκ') (by norm_num)
+    have hμκ : μ ≤ κ := le_trans (min_le_left _ _) (min_le_left _ _)
+    have hμκ' : μ ≤ κ' := le_trans (min_le_left _ _) (min_le_right _ _)
+    have hll : 0 < Real.log (Real.log X) := logloglog_pos hX
+    have hCm : C ≤ max C C' := le_max_left _ _
+    have hCm' : C' ≤ max C C' := le_max_right _ _
+    by_cases hdeg : χ ^ b = 1 ∧ t = 0
+    · -- the degenerate corner: use the multiplier
+      obtain ⟨hχb, ht0⟩ := hdeg
+      have h := hroot h' hnd X hX q χ hq hχb
+      rw [ht0]
+      have hb2 : (0 : ℝ) < (b : ℝ) ^ 2 := by positivity
+      have hle : μ / (b : ℝ) ^ 2 * Real.log (Real.log X) ≤ κ' * Real.log (Real.log X) := by
+        rw [div_mul_eq_mul_div, div_le_iff₀ hb2]
+        have h1 : μ * Real.log (Real.log X) ≤ κ' * Real.log (Real.log X) :=
+          mul_le_mul_of_nonneg_right hμκ' hll.le
+        have h2 : κ' * Real.log (Real.log X) * 1 ≤ κ' * Real.log (Real.log X) * (b : ℝ) ^ 2 :=
+          mul_le_mul_of_nonneg_left hbsq (mul_nonneg hκ'.le hll.le)
+        rw [mul_one] at h2
+        linarith
+      linarith [hle, h, hCm']
+    · -- the generic case: the multiplier is eliminated
+      have hor : (χ ^ b ≠ 1 ∨ ((b : ℝ) * t) ≠ 0) := by
+        rcases Classical.em (χ ^ b = 1) with h1 | h1
+        · refine Or.inr ?_
+          have ht0 : t ≠ 0 := fun hc => hdeg ⟨h1, hc⟩
+          have : ((b : ℝ)) ≠ 0 := by positivity
+          exact mul_ne_zero this ht0
+        · exact Or.inl h1
+      have hlow := hone X hX q (χ ^ b) ((b : ℝ) * t) hq hor
+      have hred := ttPretentiousSumChar_pow_le hb0 hz hzb X t χ
+      have hstep : μ * Real.log (Real.log X) - (max C C' + 1)
+          ≤ ttPretentiousSumChar (fun _ => (1 : ℂ)) X (χ ^ b) ((b : ℝ) * t) := by
+        nlinarith
+      have hdiv : μ / (b : ℝ) ^ 2 * Real.log (Real.log X) - (max C C' + 1)
+          ≤ (1 / (b : ℝ) ^ 2)
+            * (ttPretentiousSumChar (fun _ => (1 : ℂ)) X (χ ^ b) ((b : ℝ) * t)) := by
+        have hb2 : (0 : ℝ) < (b : ℝ) ^ 2 := by positivity
+        rw [one_div, inv_mul_eq_div, le_div_iff₀ hb2]
+        have hmul : μ * Real.log (Real.log X) - (max C C' + 1) * (b : ℝ) ^ 2
+            ≤ μ * Real.log (Real.log X) - (max C C' + 1) := by nlinarith [hC, hC']
+        have hexp : (μ / (b : ℝ) ^ 2 * Real.log (Real.log X) - (max C C' + 1)) * (b : ℝ) ^ 2
+            = μ * Real.log (Real.log X) - (max C C' + 1) * (b : ℝ) ^ 2 := by
+          field_simp
+        rw [hexp]
+        linarith
+      have hb2 : (0 : ℝ) < (b : ℝ) ^ 2 := by positivity
+      have hfin : (1 / (b : ℝ) ^ 2)
+          * (ttPretentiousSumChar (fun _ => (1 : ℂ)) X (χ ^ b) ((b : ℝ) * t))
+            ≤ ttPretentiousSumChar (zOmegaNat z) X χ t := by
+        rw [one_div, inv_mul_eq_div, div_le_iff₀ hb2]
+        linarith [hred]
+      linarith
+
+#print axioms depthRoot_pow_eq_one
+#print axioms faithfulArchLower_of_oneNonPretentious
+
+
+/-- **`ConjC3` on the `z`-free archimedean debt.**  The archimedean side is now: TT (3.3) for the
+CONSTANT function `1` (no base, no root of unity, no `h'`) plus the root-order corner
+`RootOrderCase b`.  Note `OneNonPretentious` is *independent of the base* `b`, so a single
+analytic statement serves every base at once — which the resonance route could not do
+(its constant degrades like `π/b`). -/
+theorem conjC3_of_geom_input_zfree {c₀ θ κ C κ' C' : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1)
+    (m : ℕ)
+    (hin : ∀ A : ℝ, 0 < A → ∀ b : ℕ, 3 ≤ b → ∀ K,
+      KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hκ : 0 < κ) (hC : 0 ≤ C) (hκ' : 0 < κ') (hC' : 0 ≤ C')
+    (hone : OneNonPretentious κ C)
+    (hroot : ∀ b : ℕ, 3 ≤ b → RootOrderCase b κ' C') :
+    ConjC3 := by
+  refine conjC3_of_weylLambertTwist fun b hb => ?_
+  have h := faithfulArchLower_of_oneNonPretentious (by omega : 2 ≤ b) hκ hC hκ' hC' hone
+    (hroot b hb)
+  exact weylLambertTwist_of_geom_input_at hb hc₀ hθ0 hθ m
+    (hin _ (Real.exp_pos _) b hb) (archSupply_of_faithfulArchLower h)
+
+#print axioms conjC3_of_geom_input_zfree
+
+
 #print axioms ttPretentiousSumChar_eq
 #print axioms ttPretentiousSumChar_ge
 #print axioms archSupply_of_faithfulArchLower
