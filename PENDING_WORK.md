@@ -9370,3 +9370,40 @@ proved case:
    `exists_logProb_dyadic_primeGraphMean_lower`, both for `pairTwistedPrimeGraphMean`.
 3. The CRT/entropy concentration in between (`primeGraphSum`, `primeGraphObservable`, Hoeffding,
    `PrimeGraphDecoupling`) consumes only `‖edge‖ ≤ 1`, supplied by `norm_pairShiftEdge_le`.
+
+### Elliott crux, lap 7 (2026-09-25): the lower-bound edge estimate — the twist earns its keep
+
+`src/NormalNumbers/ElliottTwistedGraph.lean`, still zero `sorry`s, all axiom-clean.
+
+* `pairLogCorrelation L U f₁ f₂ h` — the two-function correlation;
+  `pairLogCorrelation_conj : pairLogCorrelation L U f (conj ∘ f) h = Erdos67b.logPairCorrelation ...`
+  holds by `rfl`, so the proved development's object is literally the `f₂ = conj f₁` case.
+* `pairTwist f₁ f₂ q := conj (f₁ q * f₂ q)`, with `norm_pairTwist = 1` and `pairTwist_mul_cancel`.
+* `pair_dilation` — the two-function dilation identity, exhibiting the constant `f₁(q) f₂(q)` that
+  `Erdos67b.unit_pair_dilation` gets for free as `1`.
+* `pair_dilation_twisted` — **the twisted identity is exact.**  This is what restores "every graph
+  edge contributes the same correlation", the property the lower bound needs.
+* **`norm_logProb_pairTwistedDivisible_sub_correlation_le`** — port of
+  `Erdos67b.norm_logProb_divisiblePair_sub_correlation_le` with the dependency's *identical* error
+  terms `2/M + 2j/(L·M)`.  The only change in the proof is swapping `unit_pair_dilation` for
+  `pair_dilation_twisted`.
+* `pairTwistedDivisibleObservable`, `norm_pairTwistedDivisibleObservable_le_one`.
+
+Key reusability note: `Erdos67b.primeGraphCorrelationWeight` and
+`Erdos67b.exists_dyadic_primeGraphCorrelationWeight_lower` depend only on `H`, `h` and the prime set
+— **not on the functions** — so they apply to the pair-twisted graph unchanged.
+
+**Next attack (lap 8).**  Assemble the lower bound:
+1. Port `Erdos67b.exists_logProb_primeGraphMean_correlation_close` to the pair-twisted mean.  This is
+   the step that goes through the CRT/entropy concentration
+   (`Erdos67b.primeGraphSum`, `primeGraphObservable`, `PrimeGraphDecoupling`, Hoeffding); those
+   consume only `‖edge‖ ≤ 1`, supplied by `norm_pairShiftEdge_le` /
+   `norm_pairTwistedDivisibleObservable_le_one`.  Expect this to be the largest remaining port —
+   check whether `primeGraphCoordinate`/`primeGraphSum` need a twisted analogue or whether the twist
+   can ride inside the block (it cannot ride inside the block: the weight is indexed by the prime,
+   not the position, so `primeGraphObservable` needs the weight threaded, as `twistedPrimeGraphMean`
+   already does).
+2. Then `exists_logProb_dyadic_primeGraphMean_lower`, and finally the contradiction assembly
+   mirroring `Erdos67b.exists_logPairCorrelation_small_of_fourier_first_moments`.
+3. Separately: audit the MRT side (`Erdos67b.mrtModulatedShortIntervalUnrestricted`) — it is applied
+   to `f₁` alone, so it should need no change at all for the crux.

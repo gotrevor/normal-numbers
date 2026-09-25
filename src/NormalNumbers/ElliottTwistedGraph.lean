@@ -672,6 +672,151 @@ theorem exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment
       mul_le_mul_of_nonneg_right hbudget (by positivity)
     _ = η * H / (32 * Real.log H) := by ring
 
+
+/-! ## The lower-bound side: the twist earns its keep
+
+`Erdos67b.norm_logProb_divisiblePair_sub_correlation_le` says each translated graph edge has mean
+`C_h/q` with explicit errors, where `C_h` is the pair correlation.  Its proof rests on
+`Erdos67b.unit_pair_dilation`, an *exact* identity available only because `f₂ = conj f₁` makes the
+dilation constant `f(q) conj (f q) = 1`.
+
+For two independent functions the constant is `f₁(q) f₂(q)`, unimodular but varying with `q`.
+Attaching the weight `w q = conj (f₁(q) f₂(q))` to the edge at `q` restores the exact identity, and
+the estimate below is then the dependency's proof verbatim.  Note that
+`Erdos67b.primeGraphCorrelationWeight` and `Erdos67b.exists_dyadic_primeGraphCorrelationWeight_lower`
+depend only on `H`, `h` and the prime set — not on the functions — so they apply unchanged: **every
+edge contributes the same correlation again**, which is exactly what the lower bound needs.
+-/
+
+/-- The two-function pair correlation under the finite logarithmic probability law.  Compare
+`Erdos67b.logPairCorrelation`, which is the `f₂ = conj f₁` case. -/
+def pairLogCorrelation (L U : ℕ) (f₁ f₂ : ℕ → ℂ) (h : ℕ) : ℂ :=
+  logProbExpectation L U (fun n ↦ f₁ n * f₂ (n + h))
+
+@[simp]
+theorem pairLogCorrelation_conj (L U : ℕ) (f : ℕ → ℂ) (h : ℕ) :
+    pairLogCorrelation L U f (fun n ↦ conj (f n)) h = logPairCorrelation L U f h := rfl
+
+/-- The unshifted twisted observable for an edge whose step is `q*h`.  Compare
+`Erdos67b.divisiblePairObservable`. -/
+def pairTwistedDivisibleObservable (w : ℕ → ℂ) (f₁ f₂ : ℕ → ℂ) (q h n : ℕ) : ℂ :=
+  if q ∣ n then w q * (f₁ n * f₂ (n + q * h)) else 0
+
+theorem norm_pairTwistedDivisibleObservable_le_one {w f₁ f₂ : ℕ → ℂ} {q : ℕ}
+    (hw : ‖w q‖ ≤ 1)
+    (h₁ : ∀ n, 0 < n → ‖f₁ n‖ = 1) (h₂ : ∀ n, 0 < n → ‖f₂ n‖ = 1)
+    (h : ℕ) {n : ℕ} (hn : 0 < n) :
+    ‖pairTwistedDivisibleObservable w f₁ f₂ q h n‖ ≤ 1 := by
+  unfold pairTwistedDivisibleObservable
+  split_ifs
+  · rw [norm_mul, norm_mul, h₁ n hn, h₂ (n + q * h) (by omega), mul_one]
+    simpa using hw
+  · norm_num
+
+/-- **The two-function dilation identity at the natural-number level.**  Compare
+`Erdos67b.unit_pair_dilation`: the constant `f₁(q) f₂(q)` is what the twist has to cancel. -/
+theorem pair_dilation {f₁ f₂ : ℕ → ℂ}
+    (h₁ : IsCompletelyMultiplicativeOnPositive f₁)
+    (h₂ : IsCompletelyMultiplicativeOnPositive f₂)
+    {q n : ℕ} (hq : 0 < q) (hn : 0 < n) (h : ℕ) :
+    f₁ (q * n) * f₂ (q * n + q * h) = (f₁ q * f₂ q) * (f₁ n * f₂ (n + h)) := by
+  rw [← Nat.mul_add, h₁.2 q n hq hn, h₂.2 q (n + h) hq (by omega)]
+  ring
+
+/-- The canonical twist: the conjugate of the dilation constant. -/
+def pairTwist (f₁ f₂ : ℕ → ℂ) (q : ℕ) : ℂ := conj (f₁ q * f₂ q)
+
+theorem norm_pairTwist {f₁ f₂ : ℕ → ℂ}
+    (h₁ : ∀ n, 0 < n → ‖f₁ n‖ = 1) (h₂ : ∀ n, 0 < n → ‖f₂ n‖ = 1) {q : ℕ} (hq : 0 < q) :
+    ‖pairTwist f₁ f₂ q‖ = 1 := by
+  rw [pairTwist, RCLike.norm_conj, norm_mul, h₁ q hq, h₂ q hq, one_mul]
+
+theorem pairTwist_mul_cancel {f₁ f₂ : ℕ → ℂ}
+    (h₁ : ∀ n, 0 < n → ‖f₁ n‖ = 1) (h₂ : ∀ n, 0 < n → ‖f₂ n‖ = 1) {q : ℕ} (hq : 0 < q) :
+    pairTwist f₁ f₂ q * (f₁ q * f₂ q) = 1 := by
+  have hnorm : ‖f₁ q * f₂ q‖ = 1 := by rw [norm_mul, h₁ q hq, h₂ q hq, one_mul]
+  rw [pairTwist, mul_comm, Complex.mul_conj', hnorm]
+  norm_num
+
+/-- **The twisted dilation identity is exact.**  This is what makes every graph edge contribute the
+same correlation in the two-function case. -/
+theorem pair_dilation_twisted {f₁ f₂ : ℕ → ℂ}
+    (hm₁ : IsCompletelyMultiplicativeOnPositive f₁)
+    (hm₂ : IsCompletelyMultiplicativeOnPositive f₂)
+    (hu₁ : ∀ n, 0 < n → ‖f₁ n‖ = 1) (hu₂ : ∀ n, 0 < n → ‖f₂ n‖ = 1)
+    {q n : ℕ} (hq : 0 < q) (hn : 0 < n) (h : ℕ) :
+    pairTwist f₁ f₂ q * (f₁ (q * n) * f₂ (q * n + q * h)) = f₁ n * f₂ (n + h) := by
+  rw [pair_dilation hm₁ hm₂ hq hn h, ← mul_assoc, pairTwist_mul_cancel hu₁ hu₂ hq, one_mul]
+
+/-- **Each translated twisted graph edge has mean `C/q`, with the dependency's explicit errors.**
+Port of `Erdos67b.norm_logProb_divisiblePair_sub_correlation_le`; the only change is that
+`Erdos67b.unit_pair_dilation` is replaced by `pair_dilation_twisted`. -/
+theorem norm_logProb_pairTwistedDivisible_sub_correlation_le
+    {L U q : ℕ} (hL : 0 < L) (hLU : L ≤ U) (hq : 0 < q)
+    {f₁ f₂ : ℕ → ℂ}
+    (hm₁ : IsCompletelyMultiplicativeOnPositive f₁)
+    (hm₂ : IsCompletelyMultiplicativeOnPositive f₂)
+    (hu₁ : ∀ n, 0 < n → ‖f₁ n‖ = 1) (hu₂ : ∀ n, 0 < n → ‖f₂ n‖ = 1) (h j : ℕ) :
+    ‖logProbExpectation L U
+        (fun n ↦ pairTwistedDivisibleObservable (pairTwist f₁ f₂) f₁ f₂ q h (n + j)) -
+      (q : ℝ)⁻¹ • pairLogCorrelation L U f₁ f₂ h‖ ≤
+        2 / (logProbMassNN L U : ℝ) +
+          2 * j / ((L : ℝ) * logProbMassNN L U) := by
+  have hM : (0 : ℝ) < logProbMassNN L U := by
+    exact_mod_cast logProbMassNN_pos hL hLU
+  have hqr : (0 : ℝ) < q := Nat.cast_pos.mpr hq
+  have htw : ‖pairTwist f₁ f₂ q‖ = 1 := norm_pairTwist hu₁ hu₂ hq
+  -- the dilation estimate, applied to the twisted observable
+  have hdil := norm_logProbExpectation_dilation_sub_le hL hLU hq
+    (fun n ↦ pairTwist f₁ f₂ q * (f₁ n * f₂ (n + q * h))) (B := 1) zero_le_one (by
+      intro n hn
+      rw [norm_mul, norm_mul, htw, hu₁ n hn, hu₂ (n + q * h) (by omega)]
+      norm_num)
+  have heq : logProbExpectation L U
+      (fun n ↦ pairTwist f₁ f₂ q * (f₁ (q * n) * f₂ (q * n + q * h))) =
+      pairLogCorrelation L U f₁ f₂ h := by
+    apply Finset.sum_congr rfl
+    intro n _
+    congr 1
+    exact pair_dilation_twisted hm₁ hm₂ hu₁ hu₂ hq
+      (hL.trans_le (mem_logProbWindow.mp n.2).1) h
+  rw [heq] at hdil
+  change ‖pairLogCorrelation L U f₁ f₂ h -
+    (q : ℝ) • logProbExpectation L U
+      (pairTwistedDivisibleObservable (pairTwist f₁ f₂) f₁ f₂ q h)‖ ≤ _ at hdil
+  have hbase : ‖logProbExpectation L U
+      (pairTwistedDivisibleObservable (pairTwist f₁ f₂) f₁ f₂ q h) -
+      (q : ℝ)⁻¹ • pairLogCorrelation L U f₁ f₂ h‖ ≤ 2 / (logProbMassNN L U : ℝ) := by
+    have hcancel : (q : ℝ)⁻¹ • (pairLogCorrelation L U f₁ f₂ h -
+        (q : ℝ) • logProbExpectation L U
+          (pairTwistedDivisibleObservable (pairTwist f₁ f₂) f₁ f₂ q h)) =
+        (q : ℝ)⁻¹ • pairLogCorrelation L U f₁ f₂ h -
+          logProbExpectation L U
+            (pairTwistedDivisibleObservable (pairTwist f₁ f₂) f₁ f₂ q h) := by
+      rw [smul_sub, smul_smul, inv_mul_cancel₀ hqr.ne', one_smul]
+    calc
+      _ = ‖(q : ℝ)⁻¹ • (pairLogCorrelation L U f₁ f₂ h -
+          (q : ℝ) • logProbExpectation L U
+            (pairTwistedDivisibleObservable (pairTwist f₁ f₂) f₁ f₂ q h))‖ := by
+        rw [hcancel, norm_sub_rev]
+      _ = (q : ℝ)⁻¹ * ‖pairLogCorrelation L U f₁ f₂ h -
+          (q : ℝ) • logProbExpectation L U
+            (pairTwistedDivisibleObservable (pairTwist f₁ f₂) f₁ f₂ q h)‖ := by
+        rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg (inv_nonneg.mpr hqr.le)]
+      _ ≤ (q : ℝ)⁻¹ * (2 * 1 * q / (logProbMassNN L U : ℝ)) :=
+        mul_le_mul_of_nonneg_left hdil (inv_nonneg.mpr hqr.le)
+      _ = 2 / (logProbMassNN L U : ℝ) := by field_simp
+  have htranslate := norm_logProbExpectation_translate_sub_le hL hLU j
+    (pairTwistedDivisibleObservable (pairTwist f₁ f₂) f₁ f₂ q h) (B := 1) zero_le_one
+    (fun n hn ↦ norm_pairTwistedDivisibleObservable_le_one
+      (by rw [htw]) hu₁ hu₂ h (hL.trans_le hn))
+  have htri := norm_sub_le_norm_sub_add_norm_sub
+    (logProbExpectation L U
+      (fun n ↦ pairTwistedDivisibleObservable (pairTwist f₁ f₂) f₁ f₂ q h (n + j)))
+    (logProbExpectation L U (pairTwistedDivisibleObservable (pairTwist f₁ f₂) f₁ f₂ q h))
+    ((q : ℝ)⁻¹ • pairLogCorrelation L U f₁ f₂ h)
+  linarith
+
 end
 
 end NormalNumbers.ElliottTwistedGraph
