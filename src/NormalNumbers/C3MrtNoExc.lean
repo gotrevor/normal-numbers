@@ -493,30 +493,31 @@ theorem top_down_weighted_tendsto {Φ : ℕ → ℝ} (h0 : ∀ a, 0 ≤ Φ a) {G
       simpa using geom_half_Ico_le 0 k₀
     nlinarith [hb1, hb2, hk₀, hε, hgeo]
 
-/-- **The class sum, normalised, tends to zero.**  The whole assembly: halving stack + per-level
-window bound + the top-down Toeplitz estimate. -/
-theorem class_sum_tendsto_of_noExc (h : TwoPointNaturalCorrelationNoExc)
-    {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1) {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
-    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat z₀) X L)
+/-- **The class sum, normalised, tends to zero — for ANY 1-bounded `f` with a dyadic window
+bound.**  The whole assembly: halving stack + per-level window bound + the top-down Toeplitz
+estimate.  Nothing here knows the number of points: the `K`-point layers reuse it verbatim. -/
+theorem class_sum_tendsto_of_window {f : ℕ → ℂ} (hf : ∀ n, ‖f n‖ ≤ 1)
+    (hwinE : ∃ c Cst : ℝ, 0 < c ∧ 0 < Cst ∧ ∃ N₀ : ℕ, ∀ N : ℕ, N₀ ≤ N →
+      ∀ M r : ℕ, 0 < M → (M : ℝ) ≤ (2 * Real.log N) ^ c →
+        ‖∑ n ∈ (Finset.Ioc N (2 * N)).filter (fun n => n % M = r % M), f n‖
+          ≤ Cst * (2 * Real.log N) ^ (-c) * (N : ℝ) / (M : ℝ))
     {M : ℕ} (hM : 0 < M) (r : ℕ) :
     Tendsto (fun Y : ℕ =>
-      ‖∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M),
-          z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2)‖ / (Y : ℝ)) atTop (𝓝 0) := by
+      ‖∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M), f n‖ / (Y : ℝ))
+      atTop (𝓝 0) := by
   classical
-  obtain ⟨c, Cst, hc, hCst, N₀, hwin⟩ := dyadic_window_bound_of_noExc h hz₀ hz₁ hκ hκ1 hnp
+  obtain ⟨c, Cst, hc, hCst, N₀, hwin⟩ := hwinE
   have hMR : (0 : ℝ) < (M : ℝ) := by exact_mod_cast hM
-  set F : ℕ → ℂ := fun n =>
-    if n % M = r % M then z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2) else 0 with hFdef
+  set F : ℕ → ℂ := fun n => if n % M = r % M then f n else 0 with hFdef
   have hFnorm : ∀ n, ‖F n‖ ≤ 1 := by
     intro n
     simp only [hFdef]
     by_cases hn : n % M = r % M
-    · simp only [if_pos hn, norm_mul, norm_pow, hz₀, hz₁, one_pow, mul_one, le_refl]
+    · simp only [if_pos hn]; exact hf n
     · simp [hn]
   have hfilter : ∀ a b : ℕ,
-      ∑ n ∈ (Finset.Ioc a b).filter (fun n => n % M = r % M),
-        z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2) = ∑ n ∈ Finset.Ioc a b, F n := by
+      ∑ n ∈ (Finset.Ioc a b).filter (fun n => n % M = r % M), f n
+        = ∑ n ∈ Finset.Ioc a b, F n := by
     intro a b; simp only [hFdef]; rw [Finset.sum_filter]
   set N₀' : ℕ := max N₀ 2 with hN₀'def
   set Φ : ℕ → ℝ := fun a =>
@@ -640,38 +641,39 @@ theorem class_sum_tendsto_of_noExc (h : TwoPointNaturalCorrelationNoExc)
   rw [hfilter, ← add_div]
   exact div_le_div_of_nonneg_right (hstack Y) hYpos.le
 
-open scoped Classical in
-/-- **THE PAYOFF.**  Removing the exceptional set from Tao–Teräväinen Theorem 3.1(ii)
-discharges the `K = 2` natural-density transfer — the last open obligation of the `D = 2`
-layer of `ConjC3`.
 
-The hypothesis `z 0 ≠ 1` is not stated: what is actually needed is the non-pretentiousness of
-`z 0 ^ ω` in TT's sense, supplied as `hnp`.  (`LogToNaturalCorrelation K` as written carries no
-such hypothesis and is false without one — take `z ≡ 1` — so it is only ever usable through its
-log-averaged premise; the consumer `depthAvg_tendsto_of_transfer` has `z 0 ≠ 1` in hand.) -/
-theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
-    (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1) {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+/-- The `K = 2` instance: the window bound comes from `dyadic_window_bound_of_noExc`. -/
+theorem class_sum_tendsto_of_noExc (h : TwoPointNaturalCorrelationNoExc)
+    {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1) {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (z 0)) X L)
+      TTNonPretentious (zOmegaNat z₀) X L)
     {M : ℕ} (hM : 0 < M) (r : ℕ) :
-    Tendsto (fun J : ℕ =>
-        (∑ m ∈ range J, ∏ i : Fin 2, z i ^ omegaNat (M * m + r + (i : ℕ) + 1)) / (J : ℂ))
-      atTop (𝓝 0) := by
+    Tendsto (fun Y : ℕ =>
+      ‖∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M),
+          z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2)‖ / (Y : ℝ)) atTop (𝓝 0) :=
+  class_sum_tendsto_of_window
+    (fun n => by simp only [norm_mul, norm_pow, hz₀, hz₁, one_pow, mul_one, le_refl])
+    (dyadic_window_bound_of_noExc h hz₀ hz₁ hκ hκ1 hnp) hM r
+
+open scoped Classical in
+/-- **THE PAYOFF, point-count-free.**  A unimodular `g` with a dyadic window bound has
+natural-density-zero progression averages.  Head, the two boundary points, and the `Y = MJ+r`
+rescaling; nothing here knows how many points the correlation has. -/
+theorem progression_avg_tendsto_of_window {g : ℕ → ℂ} (hgnorm : ∀ n, ‖g n‖ = 1)
+    (hwinE : ∃ c Cst : ℝ, 0 < c ∧ 0 < Cst ∧ ∃ N₀ : ℕ, ∀ N : ℕ, N₀ ≤ N →
+      ∀ M r : ℕ, 0 < M → (M : ℝ) ≤ (2 * Real.log N) ^ c →
+        ‖∑ n ∈ (Finset.Ioc N (2 * N)).filter (fun n => n % M = r % M), g n‖
+          ≤ Cst * (2 * Real.log N) ^ (-c) * (N : ℝ) / (M : ℝ))
+    {M : ℕ} (hM : 0 < M) (r : ℕ) :
+    Tendsto (fun J : ℕ => (∑ m ∈ range J, g (M * m + r)) / (J : ℂ)) atTop (𝓝 0) := by
   classical
-  set g : ℕ → ℂ := fun n => z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2) with hgdef
-  have hgnorm : ∀ n, ‖g n‖ = 1 := by
-    intro n; simp only [hgdef, norm_mul, norm_pow, hz, one_pow, mul_one]
-  have hprod : ∀ m : ℕ, (∏ i : Fin 2, z i ^ omegaNat (M * m + r + (i : ℕ) + 1)) = g (M * m + r) := by
-    intro m
-    rw [Fin.prod_univ_two, hgdef]
-    norm_num
-  have hCS := class_sum_tendsto_of_noExc h (hz 0) (hz 1) hκ hκ1 hnp hM r
+  have hCS := class_sum_tendsto_of_window (fun n => le_of_eq (hgnorm n)) hwinE hM r
   -- the head, and the two boundary points
   have hbound : ∀ J : ℕ, 1 ≤ J →
       ‖∑ m ∈ range J, g (M * m + r)‖
         ≤ ((r : ℝ) + 2)
           + ‖∑ n ∈ (Finset.Ioc 0 (M * J + r)).filter (fun n => n % M = r % M),
-              z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2)‖ := by
+              g n‖ := by
     intro J hJ
     set Y : ℕ := M * J + r with hY
     have hsplit := class_sum_split hM r J g
@@ -736,15 +738,11 @@ theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
       ((if (0 : ℕ) % M = r % M then g 0 else 0) - (if Y % M = r % M then g Y else 0))
     have h4 := norm_sub_le
       ((if (0 : ℕ) % M = r % M then g 0 else 0)) ((if Y % M = r % M then g Y else 0))
-    have hgeq : (∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M), g n)
-        = ∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M),
-            z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2) := rfl
-    rw [hgeq] at h3 ⊢
     linarith [hhead, hb1, hb2, this, h3, h4]
   -- the majorant
   have hcomp : Tendsto (fun J : ℕ =>
       ‖∑ n ∈ (Finset.Ioc 0 (M * J + r)).filter (fun n => n % M = r % M),
-          z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2)‖ / ((M * J + r : ℕ) : ℝ))
+          g n‖ / ((M * J + r : ℕ) : ℝ))
       atTop (𝓝 0) := by
     refine hCS.comp (tendsto_atTop.2 fun b => Filter.eventually_atTop.2 ⟨b + r, fun J hJ => ?_⟩)
     calc b ≤ J := by omega
@@ -752,7 +750,7 @@ theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
       _ ≤ M * J + r := by omega
   have hmaj : Tendsto (fun J : ℕ => ((r : ℝ) + 2) / (J : ℝ)
       + (‖∑ n ∈ (Finset.Ioc 0 (M * J + r)).filter (fun n => n % M = r % M),
-            z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2)‖ / ((M * J + r : ℕ) : ℝ))
+            g n‖ / ((M * J + r : ℕ) : ℝ))
         * ((M : ℝ) + r)) atTop (𝓝 0) := by
     have h1 : Tendsto (fun J : ℕ => ((r : ℝ) + 2) / (J : ℝ)) atTop (𝓝 0) := by
       simpa [div_eq_mul_inv] using tendsto_one_div_atTop_nhds_zero_nat.const_mul ((r : ℝ) + 2)
@@ -766,12 +764,8 @@ theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
     have : 0 < M * J + r := by positivity
     exact_mod_cast this
   rw [norm_div, Complex.norm_natCast]
-  have hnum : ‖∑ m ∈ range J, ∏ i : Fin 2, z i ^ omegaNat (M * m + r + (i : ℕ) + 1)‖
-      = ‖∑ m ∈ range J, g (M * m + r)‖ :=
-    congrArg norm (Finset.sum_congr rfl fun m _ => hprod m)
-  rw [hnum]
   set S : ℝ := ‖∑ n ∈ (Finset.Ioc 0 (M * J + r)).filter (fun n => n % M = r % M),
-      z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2)‖ with hS
+      g n‖ with hS
   have hS0 : 0 ≤ S := norm_nonneg _
   have hratio : ((M * J + r : ℕ) : ℝ) / (J : ℝ) ≤ (M : ℝ) + r := by
     rw [div_le_iff₀ hJR]
@@ -793,6 +787,38 @@ theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
     exact div_le_div_of_nonneg_right hthis hJR.le
   linarith [hfin, hkey]
 
+
+open scoped Classical in
+/-- **THE `K = 2` PAYOFF.**  Removing the exceptional set from Tao–Teräväinen Theorem 3.1(ii)
+discharges the `K = 2` natural-density transfer.
+
+The hypothesis `z 0 ≠ 1` is not stated: what is actually needed is the non-pretentiousness of
+`z 0 ^ ω` in TT's sense, supplied as `hnp`. -/
+theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
+    (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1) {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (z 0)) X L)
+    {M : ℕ} (hM : 0 < M) (r : ℕ) :
+    Tendsto (fun J : ℕ =>
+        (∑ m ∈ range J, ∏ i : Fin 2, z i ^ omegaNat (M * m + r + (i : ℕ) + 1)) / (J : ℂ))
+      atTop (𝓝 0) := by
+  classical
+  have hprod : ∀ m : ℕ, (∏ i : Fin 2, z i ^ omegaNat (M * m + r + (i : ℕ) + 1))
+      = z 0 ^ omegaNat (M * m + r + 1) * z 1 ^ omegaNat (M * m + r + 2) := by
+    intro m; rw [Fin.prod_univ_two]; norm_num
+  have hrw : (fun J : ℕ =>
+      (∑ m ∈ range J, ∏ i : Fin 2, z i ^ omegaNat (M * m + r + (i : ℕ) + 1)) / (J : ℂ))
+      = fun J : ℕ =>
+      (∑ m ∈ range J, (fun n => z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2)) (M * m + r))
+        / (J : ℂ) := by
+    funext J
+    exact congrArg (· / (J : ℂ)) (Finset.sum_congr rfl fun m _ => hprod m)
+  rw [hrw]
+  refine progression_avg_tendsto_of_window (g := fun n =>
+    z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2))
+    (fun n => by simp only [norm_mul, norm_pow, hz, one_pow, mul_one])
+    (dyadic_window_bound_of_noExc h (hz 0) (hz 1) hκ hκ1 hnp) hM r
+
 #print axioms exceptional_set_can_pin_a_scale
 #print axioms twoPointNatural_of_noExc
 #print axioms tendsto_geom_weighted_avg
@@ -805,6 +831,7 @@ theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
 #print axioms geom_half_Ico_le
 #print axioms top_down_weighted_tendsto
 #print axioms class_sum_tendsto_of_noExc
+#print axioms progression_avg_tendsto_of_window
 #print axioms logToNatural_two_of_noExc
 
 end CastingOut
