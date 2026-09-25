@@ -630,6 +630,87 @@ theorem range_one_mass_bound {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) {q : �
   apply mul_le_mul_of_nonneg_left _ hcos
   linarith
 
+
+/-! ## Range 1: Mertens in the class makes the mass grow without bound
+
+`range_one_mass_bound` subtracts an `X`-independent constant from the class-`1 (mod q)` prime
+mass.  Mertens in the progression (`G4.MertensAP.mertensRate_residueClass`) says that mass is
+`≥ c·log log X − C`, so for `X` large the difference beats any prescribed `A`.  The resulting
+`range_one_certificate` is exactly Elliott's hypothesis for `ζ^Ω` in the low-frequency range
+`|t| ≤ T / log X`, uniformly in the Dirichlet character.
+-/
+
+/-- The Mertens index set (primes `< X`) sits inside `classPrimes q X` (primes `≤ X`), so the
+Mertens lower bound transfers in the useful direction. -/
+theorem sumInvPrimesIn_le_classPrimes (q X : ℕ) :
+    G4.MertensAP.sumInvPrimesIn (fun p => (p : ZMod q) = 1) X
+      ≤ ∑ p ∈ classPrimes q X, (p : ℝ)⁻¹ := by
+  classical
+  rw [G4.MertensAP.sumInvPrimesIn]
+  refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun p _ _ => by positivity)
+  intro p hp
+  obtain ⟨hpb, hpq⟩ := Finset.mem_filter.1 hp
+  have hpp : p.Prime := Nat.prime_of_mem_primesBelow hpb
+  have hplt : p < X := Nat.lt_of_mem_primesBelow hpb
+  rw [classPrimes, Finset.mem_filter, Erdos67b.mem_primesUpTo]
+  exact ⟨⟨hpp, hplt.le⟩, hpq⟩
+
+/-- `1 − cos ε > 0` for the resonance half-width of a non-trivial `z`. -/
+theorem one_sub_cos_resEps_pos {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) :
+    0 < 1 - Real.cos (resEps z) := by
+  have h : Real.cos (resEps z) < Real.cos 0 :=
+    Real.cos_lt_cos_of_nonneg_of_le_pi le_rfl
+      (le_trans (resEps_le_pi_div_two z) (by linarith [Real.pi_pos])) (resEps_pos hz hz1)
+  rw [Real.cos_zero] at h
+  linarith
+
+/-- **The Range-1 certificate.**  For every target level `A` and every frequency budget `T`
+there is an `X₀` beyond which `ζ^Ω` is `A`-far from *every* twist `χ(n)·n^{it}` whose frequency
+satisfies `|t|·log X ≤ T`.  Uniform in `χ`: the proof only ever uses `χ(p) = 1` on the class
+`p ≡ 1 (mod q)`. -/
+theorem range_one_certificate {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) (A T : ℝ)
+    (q : ℕ) [NeZero q] :
+    ∃ X₀ : ℕ, ∀ X : ℕ, X₀ ≤ X → ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ,
+      |t| * Real.log X ≤ T →
+      A ≤ Erdos67b.pretentiousDistSqToTwist (Erdos67b.restrictToNat (zOmInt z)) χ t X := by
+  classical
+  obtain ⟨c, C, hc, hM⟩ := G4.MertensAP.mertensRate_residueClass
+    (q := q) (a := (1 : ZMod q)) isUnit_one
+  set ε := resEps z with hε
+  have hcos : 0 < 1 - Real.cos ε := one_sub_cos_resEps_pos hz hz1
+  set K := (2 * windowCount T z + 1 : ℕ) * windowMassBound with hK
+  -- the level of class mass we need
+  set L := A / (1 - Real.cos ε) + K + C with hL
+  -- choose `X₀` so that `c · log log X ≥ L` for all `X ≥ X₀`
+  have htend : Filter.Tendsto (fun n : ℕ => c * Real.log (Real.log n)) Filter.atTop
+      Filter.atTop :=
+    Filter.Tendsto.const_mul_atTop hc
+      ((Real.tendsto_log_atTop.comp Real.tendsto_log_atTop).comp
+        tendsto_natCast_atTop_atTop)
+  obtain ⟨X₀, hX₀⟩ := Filter.eventually_atTop.1
+    ((htend.eventually_ge_atTop L).and (Filter.eventually_ge_atTop 2))
+  refine ⟨X₀, fun X hX χ t hTle => ?_⟩
+  obtain ⟨hLX, hX2⟩ := hX₀ X hX
+  -- the hypothesis of `range_one_mass_bound`
+  have hT : ∀ p ∈ Erdos67b.primesUpTo X, |t| * Real.log p ≤ T := by
+    intro p hp
+    obtain ⟨hpp, hpX⟩ := Erdos67b.mem_primesUpTo.1 hp
+    refine le_trans (mul_le_mul_of_nonneg_left ?_ (abs_nonneg t)) hTle
+    exact Real.log_le_log (by exact_mod_cast hpp.pos) (by exact_mod_cast hpX)
+  have hmain := range_one_mass_bound hz hz1 χ t X hT
+  -- Mertens in the class, transferred to `classPrimes`
+  have hmass : c * Real.log (Real.log X) - C
+      ≤ ∑ p ∈ classPrimes q X, (p : ℝ)⁻¹ :=
+    le_trans (hM X hX2) (sumInvPrimesIn_le_classPrimes q X)
+  refine le_trans ?_ hmain
+  have hdiv : A / (1 - Real.cos ε) + K ≤ ∑ p ∈ classPrimes q X, (p : ℝ)⁻¹ := by
+    rw [hL] at hLX; linarith
+  have hA : A = (1 - Real.cos ε) * (A / (1 - Real.cos ε)) := by field_simp
+  rw [hA]
+  refine mul_le_mul_of_nonneg_left ?_ hcos.le
+  rw [hK] at hdiv
+  linarith
+
 end CastingOut
 
 end NormalNumbers
@@ -641,3 +722,4 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.window_mass_le
 #print axioms NormalNumbers.CastingOut.resonant_mass_le
 #print axioms NormalNumbers.CastingOut.range_one_mass_bound
+#print axioms NormalNumbers.CastingOut.range_one_certificate
