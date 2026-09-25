@@ -1,4 +1,4 @@
-import NormalNumbers.ElliottDilatedRung
+import NormalNumbers.ElliottLeafTwo
 
 /-!
 # Bet: Tao's general two-point log-Elliott theorem (2026-09-24)
@@ -22,15 +22,18 @@ The headline is now assembled from the ladder in `NormalNumbers.ElliottLadder`:
   leaves `dilatedNatShiftCMLogElliott` and its mirror.  The earlier *dilation-slice* route
   (`NormalNumbers.ElliottDilatedSlice`) is refuted; its free reductions stay proved there, but the
   headline no longer depends on it.
-* `NormalNumbers.ElliottLadder.nonasymptotic_of_affineCM` — open, the passage from `1`-bounded
-  multiplicative to completely multiplicative unimodular.
+* `NormalNumbers.ElliottLeafTwo.nonasymptotic_of_affineCM` — the passage from `1`-bounded
+  multiplicative to completely multiplicative unimodular.  The assembly itself is **proved** (a
+  dichotomy on the Euler defect of `g₁` at the thin scale); it rests on two disclosed halves,
+  `exists_caseA_thin_threshold` and `exists_caseB_threshold`, plus the uniform squarefull tail
+  `exists_squarefull_tail`.
 -/
 
 namespace NormalNumbers.ElliottGeneral
 
 /-- **THE BET (ratified).**  Tao 2016, Theorem 1.3, in plby's finitary formulation. -/
 theorem nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott :=
-  ElliottLadder.nonasymptotic_of_affineCM
+  ElliottLeafTwo.nonasymptotic_of_affineCM
     (ElliottLadder.affineCM_of_dilatedCM ElliottDilatedRung.dilatedCMLogElliott)
 
 end NormalNumbers.ElliottGeneral

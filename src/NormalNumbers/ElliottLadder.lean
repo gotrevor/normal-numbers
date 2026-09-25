@@ -260,41 +260,20 @@ natural-shift rungs there.  (The earlier *dilation-slice* route of
 through it.)  This file keeps only the statement and the free reductions off it.
 -/
 
-/-- **Open (from `1`-bounded multiplicative to completely multiplicative unimodular).**
+/-! ### Leaf 2 lives in `NormalNumbers.ElliottLeafTwo`
 
-Route, recorded so a later lap can split it further.  Let `g` be `1`-bounded multiplicative and set
-`Σ(g) := ∑_{p ≤ X} (1 - ‖g p‖)/p`.
+The passage from `1`-bounded multiplicative to completely multiplicative unimodular —
+`AffineCMLogElliott → Erdos67b.NonasymptoticLogElliott` — is
+`NormalNumbers.ElliottLeafTwo.nonasymptotic_of_affineCM`.  It cannot live in this file: it consumes
+`ElliottCaseAThin`, `ElliottRandomize`, `ElliottPretentiousTransfer`, `ElliottSquarefullConv` and
+`ElliottProgression`, all of which import `ElliottLadder`.
 
-*Case A: `Σ(g₁)` large.*  Then `‖g₁‖` is a nonnegative `1`-bounded multiplicative function with
-small logarithmic mean — Hall's inequality / the Wirsing–Halász bound in the *nonnegative* case,
-which is elementary compared with Halász proper — and the correlation is bounded pointwise by
-`‖g₁(a₁n+b₁)‖`, so the whole bound is trivial.  Only `g₁` needs this, matching the asymmetry of
-Tao's hypothesis.
-
-*Case B: `Σ(g₁)` bounded by `C`.*  Two separate reductions, both with **absolutely convergent**
-`∑ 1/d` tails, so each is a finite sum of correlations plus an arbitrarily small tail:
-
-* *multiplicative → completely multiplicative.*  With `g̃` the completely multiplicative function
-  agreeing with `g` on the primes, `g = g̃ ⋆ u` where `u = g ⋆ (μ g̃)` is multiplicative, `u(p) = 0`,
-  `‖u(p^k)‖ ≤ 2`; so `u` is supported on **squarefull** `d`, and `∑_{d squarefull} 1/d < ∞`.
-  Expanding gives correlations of `g̃` along the sub-progressions `d ∣ a₁n+b₁`.
-* *`1`-bounded → unimodular.*  For completely multiplicative `g̃` write `g̃ = ĝ · ‖g̃‖` pointwise with
-  `ĝ(p) := g̃(p)/‖g̃(p)‖` (and `1` when `g̃(p) = 0`); `ĝ` is completely multiplicative unimodular.
-  The nonnegative factor is expanded as `‖g̃‖ = 1 ⋆ v` with `v` multiplicative, `v(p) = ‖g̃(p)‖ - 1`,
-  so `∑_d ‖v(d)‖/d ≤ exp(O(C))` converges *precisely because we are in Case B*.  Again the
-  expansion produces correlations of `ĝ` along progressions `d ∣ m`.
-
-Both expansions leave a divisibility constraint `d ∣ a_i n + b_i`, which is a *dilation* of the
-affine form and is therefore absorbed by `AffineCMLogElliott` itself (replace `a_i, b_i` by the
-solved progression), so no new AP-restricted machinery is needed.
-
-Finally the non-pretentiousness hypothesis survives: from
-`Re(ĝ(p)w) - Re(g̃(p)w) ≤ ‖ĝ(p) - g̃(p)‖ = 1 - ‖g̃(p)‖` one gets
-`D(ĝ, χ n^{it}; X)² ≤ D(g̃, χ n^{it}; X)² + C`, and `C` is fixed while `A → ∞`; twisting by a
-character of modulus dividing `d` only shifts `q` inside the range `q ≤ A` quantified over. -/
-theorem nonasymptotic_of_affineCM (h : AffineCMLogElliott) :
-    Erdos67b.NonasymptoticLogElliott := by
-  sorry
+The assembly there is itself gap-free — a dichotomy on the single real number
+`primeDefect (normDivArith g₁) L` — and delegates to two disclosed halves (Case A large defect,
+Case B small defect).  See that file's header for the route and for the one obstruction found while
+assembling it (`AffineCMLogElliott` yields its threshold *per affine pair*, so the squarefull
+`d`-sum must be truncated uniformly in the function).
+-/
 
 end
 

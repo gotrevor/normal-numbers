@@ -107,6 +107,53 @@ One trap worth recording: `L` is defined by *nat* subtraction `a₁(⌊X/W⌋+1)
 `|b₁|` dominates it truncates to `0` and the cast inequality `↑(M−b) ≤ ↑M − ↑b` is **false**.
 The proof case-splits; in the truncated branch the bound is just `0 ≤ a₁n+b₁`, i.e. positivity.
 
+## Lap 60 (2026-09-25) — leaf 2 ASSEMBLED, and a real obstruction found
+
+New module `src/NormalNumbers/ElliottLeafTwo.lean`.  `nonasymptotic_of_affineCM` moved here from
+`ElliottLadder` (it must be: it consumes five modules that import `ElliottLadder`);
+`ElliottGeneral.nonasymptoticLogElliott` repointed.  `src/` sorry count 1 → 3: that is the
+**decomposition**, not a regression.
+
+**The assembly is itself gap-free.**  `ElliottEulerBound.primeDefect (normDivArith g₁) L` is
+*literally* `∑_{p ≤ L}(1 − ‖g₁ p‖)/p`, the Case-B sum.  So the Case A / Case B split is `le_or_gt`
+on one real number, and `nonasymptotic_of_affineCM` is proved outright from the two halves — no gap
+at the junction, which is where a two-case argument usually leaks.  `caseAScale a₁ b₁ X W`
+fixes the shared scale `L = a₁(⌊X/W⌋+1) − |b₁|`.
+
+Three disclosed obligations, all in `src/`:
+1. `exists_caseA_thin_threshold` — the Case-A half.  All ingredients proved (lap 59); what remains
+   is the nat-division estimate `Y/L ≤ c(a₁,b₁)·W` plus threshold bookkeeping of the same shape as
+   the already-proved `ElliottCaseA.exists_caseA_threshold`.
+2. `exists_squarefull_tail` — **NEW, found while assembling.**
+3. `exists_caseB_threshold` — the Case-B half, itemised in the docstring: every one of its six
+   steps now names a proved lemma except (4) = obligation 2 and the window/weight reindexing.
+
+### THE OBSTRUCTION (lap 60's real finding)
+
+Case B applies `AffineCMLogElliott` to each substituted pair `(a₁d₂, c₁; a₂d₁, c₂)`.  Lap 58 proved
+the *determinant* survives exactly — but the **dilations** `a₁d₂, a₂d₁` grow with `d₁,d₂`, and
+`AffineCMLogElliott` hands out its threshold `A₀` **per affine pair**.  So `A₀` cannot be taken as a
+sup over all `d`; the `d`-sum must be truncated at a `D` fixed **before** `g₁`, with `A₀` the finite
+max over `d₁,d₂ ≤ D`.  That requires
+
+> `∑_{D < d ≤ Y} ‖u d‖/d ≤ ε'` for **every** unimodular multiplicative `U` and every `Y`,
+
+which is **strictly stronger** than lap 57's `≤ e²` bound on the *total*.  A uniformly bounded
+total does not give uniformly small tails — that is precisely the error that killed the
+`v`-expansion at lap 54, so this had to be checked, not assumed.
+
+**It is true here, and for a concrete reason.**  The local factors `1 + 2/(p(p−1))` are absolute, so
+a Rankin shift is available: `∑_{d>D} ‖u d‖/d ≤ D^{−1/4} ∑_d ‖u d‖/d^{3/4}`, and the shifted Euler
+product `∏_p (1 + ∑_{k≥2} 2/p^{3k/4})` still converges because `3·2/4 = 3/2 > 1`.  Note `δ = 1/2`
+would **fail** (`∑_p 1/(√p(√p−1)) ≍ ∑_p 1/p` diverges), so the shift must be strictly less than
+`1/2`; `1/4` is a safe choice.
+
+### NEXT — `exists_squarefull_tail` by the Rankin shift
+
+Needs: a shifted variant of `ElliottSquarefull.local_factor_squarefull_le` at exponent `3/4`, and a
+finite bound for `∑_{p ≤ Y} p^{-3/2}` in the style of
+`ElliottEulerBound.sum_primesBelow_inv_mul_pred_le_one`.
+
 ### NEXT — assembly of `nonasymptotic_of_affineCM`
 
 All five directive sub-steps of leaf 2 now have their load-bearing content proved:

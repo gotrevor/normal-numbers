@@ -3,6 +3,7 @@ import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
 import NormalNumbers.ElliottProgression
 import NormalNumbers.ElliottCaseAThin
+import NormalNumbers.ElliottLeafTwo
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -61,6 +62,9 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottCaseAThin.sum_window_le_transfer_ge
 #print axioms NormalNumbers.ElliottCaseAThin.le_integerAffine_of_mem_window
 #print axioms NormalNumbers.ElliottCaseAThin.norm_elliottLogCorrelation_le_caseA_thin
+
+-- leaf 2, the assembly (gap-free itself; the three halves below carry sorryAx)
+#print axioms NormalNumbers.ElliottLeafTwo.nonasymptotic_of_affineCM
 
 -- the dependency's proved special case
 #print axioms Erdos67b.unitCircleLogElliott
