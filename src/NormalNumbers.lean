@@ -532,3 +532,4 @@ import NormalNumbers.PairDecoupleBand
 import NormalNumbers.TwoPointDelangeParity
 import NormalNumbers.TwoPointMoebiusPNT
 import NormalNumbers.TwoPointDelangeLevin
+import NormalNumbers.TwoPointDelangeAll
