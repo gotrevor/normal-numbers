@@ -794,6 +794,80 @@ theorem pair_mass_le {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁
   refine mul_le_mul (sum_norm_sqfW_div_le_mass hz₀ Y) (sum_norm_sqfW_div_le_mass hz₁ Y)
     (Finset.sum_nonneg fun _ _ => by positivity) (sqfWMass_nonneg z₀)
 
+
+/-- **The pair sum.**  If every pair `(d, e)` with `d, e ≤ Y` satisfies `‖Inner d e‖ ≤ 1 + K/(de)`
+— the shape `progression_sum_bound` produces — then the weighted double sum is at most
+`sqfWPartial ζ₀ Y · sqfWPartial ζ₁ Y + K · sqfWMass ζ₀ · sqfWMass ζ₁`.  The first summand is
+`N`-independent; the second is where the `ε·log N` inside `K` gets multiplied by a FINITE
+constant rather than by the divergent `∑_{d,e} ‖g₀(d)‖‖g₁(e)‖`. -/
+theorem full_sum_bound {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1) (Y : ℕ)
+    (Inner : ℕ → ℕ → ℂ) {K : ℝ} (hK : 0 ≤ K)
+    (hpair : ∀ d ∈ Finset.range (Y + 1), ∀ e ∈ Finset.range (Y + 1),
+      ‖Inner d e‖ ≤ 1 + K / ((d : ℝ) * (e : ℝ))) :
+    ‖∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+        sqfW z₀ d * sqfW z₁ e * Inner d e‖
+      ≤ sqfWPartial z₀ Y * sqfWPartial z₁ Y + K * (sqfWMass z₀ * sqfWMass z₁) := by
+  refine le_trans (norm_sum_le _ _) ?_
+  have hrow : ∀ d ∈ Finset.range (Y + 1),
+      ‖∑ e ∈ Finset.range (Y + 1), sqfW z₀ d * sqfW z₁ e * Inner d e‖
+        ≤ ∑ e ∈ Finset.range (Y + 1), (‖sqfW z₀ d‖ * ‖sqfW z₁ e‖
+            + K * (‖sqfW z₀ d‖ * ‖sqfW z₁ e‖ / ((d : ℝ) * (e : ℝ)))) := by
+    intro d hd
+    refine le_trans (norm_sum_le _ _) (Finset.sum_le_sum fun e he => ?_)
+    rw [norm_mul, norm_mul]
+    have h := hpair d hd e he
+    have hprod : (0 : ℝ) ≤ ‖sqfW z₀ d‖ * ‖sqfW z₁ e‖ := by positivity
+    calc ‖sqfW z₀ d‖ * ‖sqfW z₁ e‖ * ‖Inner d e‖
+        ≤ ‖sqfW z₀ d‖ * ‖sqfW z₁ e‖ * (1 + K / ((d : ℝ) * (e : ℝ))) :=
+          mul_le_mul_of_nonneg_left h hprod
+      _ = ‖sqfW z₀ d‖ * ‖sqfW z₁ e‖
+            + K * (‖sqfW z₀ d‖ * ‖sqfW z₁ e‖ / ((d : ℝ) * (e : ℝ))) := by ring
+  refine le_trans (Finset.sum_le_sum hrow) ?_
+  simp only [Finset.sum_add_distrib]
+  have hA : (∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+      ‖sqfW z₀ d‖ * ‖sqfW z₁ e‖) = sqfWPartial z₀ Y * sqfWPartial z₁ Y := by
+    rw [sqfWPartial, sqfWPartial, Finset.sum_mul_sum]
+  have hB : (∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+      K * (‖sqfW z₀ d‖ * ‖sqfW z₁ e‖ / ((d : ℝ) * (e : ℝ))))
+      ≤ K * (sqfWMass z₀ * sqfWMass z₁) := by
+    have heq : (∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+        K * (‖sqfW z₀ d‖ * ‖sqfW z₁ e‖ / ((d : ℝ) * (e : ℝ))))
+        = K * ∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+            ‖sqfW z₀ d‖ * ‖sqfW z₁ e‖ / ((d : ℝ) * (e : ℝ)) := by
+      rw [Finset.mul_sum]
+      exact Finset.sum_congr rfl fun d _ => by rw [Finset.mul_sum]
+    rw [heq]
+    exact mul_le_mul_of_nonneg_left (pair_mass_le hz₀ hz₁ Y) hK
+  rw [hA]
+  linarith
+
+
+/-! ## A common threshold over a finite index set
+
+The pair sum needs, for the finitely many pairs `(d, e)` with `d, e ≤ Y`, ONE cutoff that works
+for all of them — first for the `A₀` that `rung_two_of_named_inputs` returns, then for the `i₀`
+it returns at the chosen `A`.  Both are instances of the same triviality, isolated here once:
+an upward-closed property that holds somewhere for each index holds somewhere for all of them.
+(`range_one_certificate_uniform` did this ad hoc by induction on `Q`; this is the general form.)
+-/
+
+/-- **One threshold for finitely many indices.**  If `Q a ·` is upward closed and satisfiable for
+each `a ∈ s`, then some single `n` satisfies `Q a n` for every `a ∈ s`. -/
+theorem exists_common_threshold {α : Type*} (s : Finset α) (Q : α → ℕ → Prop)
+    (hmono : ∀ a ∈ s, ∀ m n : ℕ, m ≤ n → Q a m → Q a n)
+    (hex : ∀ a ∈ s, ∃ n : ℕ, Q a n) : ∃ n : ℕ, ∀ a ∈ s, Q a n := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => exact ⟨0, by simp⟩
+  | @insert a s ha ih =>
+      obtain ⟨n, hn⟩ := ih (fun b hb => hmono b (Finset.mem_insert_of_mem hb))
+        (fun b hb => hex b (Finset.mem_insert_of_mem hb))
+      obtain ⟨m, hm⟩ := hex a (Finset.mem_insert_self a s)
+      refine ⟨max n m, fun b hb => ?_⟩
+      rcases Finset.mem_insert.1 hb with rfl | hb'
+      · exact hmono b (Finset.mem_insert_self b s) m _ (le_max_right _ _) hm
+      · exact hmono b (Finset.mem_insert_of_mem hb') n _ (le_max_left _ _) (hn b hb')
+
 end CastingOut
 
 end NormalNumbers
@@ -810,3 +884,5 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.rung_sum_spelling
 #print axioms NormalNumbers.CastingOut.progression_sum_bound
 #print axioms NormalNumbers.CastingOut.pair_mass_le
+#print axioms NormalNumbers.CastingOut.full_sum_bound
+#print axioms NormalNumbers.CastingOut.exists_common_threshold
