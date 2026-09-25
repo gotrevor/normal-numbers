@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.AbelianWindowSets
+import NormalNumbers.PowerBaseReal
 
 /-!
 # C4: an INFINITE exact window set
@@ -419,5 +420,225 @@ theorem isAbelianAt_sorted_odd (c : ℕ → ℕ) (hcB : ∀ m, c m < 8) (hc : Is
     (a : ℕ) : IsAbelianAt (blockSeq sortedTable c 2) (2 * a + 1) :=
   (isAbelianAt_blockSeq_iff sortedTable c (by norm_num) (by norm_num) hcB hc
     (2 * a + 1) (a + 1) (by omega)).mpr (fun j _ => blockFreq_sorted_odd a j)
+
+
+/-! ### The even lengths are never abelian -/
+
+theorem winOnes_sorted_zero_even (a : ℕ) (v : List ℕ) :
+    winOnes sortedTable 2 (2 * a) 0 v = ∑ t ∈ range a, zdig (v.getD t 0) := by
+  rw [winOnes_eq_sum, sum_range_two_mul]
+  refine Finset.sum_congr rfl (fun t _ => ?_)
+  have e1 : (0 + 2 * t) % 2 = 0 := by omega
+  have e2 : (0 + 2 * t) / 2 = t := by omega
+  have e3 : (0 + (2 * t + 1)) % 2 = 1 := by omega
+  have e4 : (0 + (2 * t + 1)) / 2 = t := by omega
+  rw [e1, e2, e3, e4, sortedTable_zero, sortedTable_one, zdig_eq]
+
+/-- An even-length window at odd offset is one edge bit followed by an odd-length window at
+even offset. -/
+theorem winOnes_sorted_one_even (b d : ℕ) (w : List ℕ) :
+    winOnes sortedTable 2 (2 * (b + 1)) 1 (d :: w)
+      = (if d < 6 then 0 else 1) + winOnes sortedTable 2 (2 * b + 1) 0 w := by
+  rw [winOnes_eq_sum, winOnes_eq_sum, show 2 * (b + 1) = (2 * b + 1) + 1 by ring,
+    Finset.sum_range_succ']
+  have hterm : ∀ i ∈ range (2 * b + 1),
+      (if sortedTable ((1 + (i + 1)) % 2) ((d :: w).getD ((1 + (i + 1)) / 2) 0) = 1
+        then 1 else 0)
+        = (if sortedTable ((0 + i) % 2) (w.getD ((0 + i) / 2) 0) = 1 then 1 else 0) := by
+    intro i _
+    have e1 : (1 + (i + 1)) % 2 = (0 + i) % 2 := by omega
+    have e2 : (1 + (i + 1)) / 2 = (0 + i) / 2 + 1 := by omega
+    have e3 : ((d :: w).getD ((0 + i) / 2 + 1) 0) = w.getD ((0 + i) / 2) 0 := by
+      simp [List.getD]
+    rw [e1, e2, e3]
+  rw [Finset.sum_congr rfl hterm]
+  have e5 : (1 + 0) % 2 = 1 := by omega
+  have e6 : (1 + 0) / 2 = 0 := by omega
+  rw [e5, e6]
+  have h0 : ((d :: w).getD 0 0) = d := by simp [List.getD]
+  rw [h0, sortedTable_one]
+  ring
+
+theorem Wgf_zero_even (b : ℕ) : Wgf 0 (2 * (b + 1)) (b + 2) = Zgf (b + 1) * 8 := by
+  classical
+  have hR : Zgf (b + 1) * (8 : ℝ[X])
+      = ∑ p ∈ (range (8 ^ (b + 1))) ×ˢ (range 8), X ^ (zsumW (wordOf 8 (b + 1) p.1)) := by
+    rw [Zgf, Finset.sum_mul, Finset.sum_product]
+    refine Finset.sum_congr rfl (fun k _ => ?_)
+    simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul, Nat.cast_ofNat]
+    ring
+  rw [hR, Wgf]
+  have hpow : (8 : ℕ) ^ (b + 2) = 8 ^ (b + 1) * 8 := by ring
+  rw [hpow]
+  refine Finset.sum_nbij' (i := fun k => (k / 8, k % 8)) (j := fun p => p.1 * 8 + p.2)
+    ?_ ?_ ?_ ?_ ?_
+  · intro k hk
+    rw [Finset.mem_range] at hk
+    exact Finset.mem_product.mpr ⟨Finset.mem_range.mpr (Nat.div_lt_of_lt_mul (by omega)),
+      Finset.mem_range.mpr (Nat.mod_lt _ (by norm_num))⟩
+  · intro p hp
+    obtain ⟨h1, h2⟩ := Finset.mem_product.mp hp
+    rw [Finset.mem_range] at h1 h2 ⊢
+    calc p.1 * 8 + p.2 < p.1 * 8 + 8 := by omega
+      _ = (p.1 + 1) * 8 := by ring
+      _ ≤ 8 ^ (b + 1) * 8 := Nat.mul_le_mul_right 8 (by omega)
+  · intro k _
+    exact Nat.div_add_mod' k 8
+  · intro p hp
+    obtain ⟨-, h2⟩ := Finset.mem_product.mp hp
+    rw [Finset.mem_range] at h2
+    have h3 : (p.1 * 8 + p.2) / 8 = p.1 := by
+      rw [Nat.add_comm, Nat.mul_comm, Nat.add_mul_div_left _ _ (by norm_num : 0 < 8),
+        Nat.div_eq_of_lt h2]
+      omega
+    have h4 : (p.1 * 8 + p.2) % 8 = p.2 := by
+      rw [Nat.add_comm, Nat.mul_comm, Nat.add_mul_mod_self_left]
+      exact Nat.mod_eq_of_lt h2
+    exact Prod.ext h3 h4
+  · intro k hk
+    rw [Finset.mem_range] at hk
+    have hd : k % 8 < 8 := Nat.mod_lt _ (by norm_num)
+    have hk8 : k / 8 * 8 + k % 8 = k := Nat.div_add_mod' k 8
+    have hw : wordOf 8 (b + 2) k = wordOf 8 (b + 1) (k / 8) ++ [k % 8] := by
+      conv_lhs => rw [← hk8]
+      exact wordOf_append 8 (b + 1) (k / 8) (k % 8) (by norm_num) hd
+    congr 1
+    rw [winOnes_sorted_zero_even, hw]
+    have hlen : (wordOf 8 (b + 1) (k / 8)).length = b + 1 := length_wordOf 8 (b + 1) (k / 8)
+    have hpre : ∀ t ∈ range (b + 1),
+        zdig ((wordOf 8 (b + 1) (k / 8) ++ [k % 8]).getD t 0)
+          = zdig ((wordOf 8 (b + 1) (k / 8)).getD t 0) := by
+      intro t ht
+      rw [List.getD_append _ _ _ _ (by rw [hlen]; exact Finset.mem_range.mp ht)]
+    rw [Finset.sum_congr rfl hpre, zsumW_eq_sum, hlen]
+
+theorem Wgf_one_even (b : ℕ) :
+    Wgf 1 (2 * (b + 1)) (b + 2) = (6 + 2 * X) * Wgf 0 (2 * b + 1) (b + 1) := by
+  classical
+  have hR : (6 + 2 * (X : ℝ[X])) * Wgf 0 (2 * b + 1) (b + 1)
+      = ∑ p ∈ (range 8) ×ˢ (range (8 ^ (b + 1))),
+          X ^ ((if p.1 < 6 then 0 else 1)
+            + winOnes sortedTable 2 (2 * b + 1) 0 (wordOf 8 (b + 1) p.2)) := by
+    rw [← edge_one_gf, Wgf, Finset.sum_mul, Finset.sum_product]
+    refine Finset.sum_congr rfl (fun d _ => ?_)
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl (fun k _ => by rw [pow_add])
+  rw [hR, Wgf]
+  have hpow : (8 : ℕ) ^ (b + 2) = 8 * 8 ^ (b + 1) := by ring
+  rw [hpow]
+  refine Finset.sum_nbij' (i := fun k => (k / 8 ^ (b + 1), k % 8 ^ (b + 1)))
+    (j := fun p => p.1 * 8 ^ (b + 1) + p.2) ?_ ?_ ?_ ?_ ?_
+  · intro k hk
+    rw [Finset.mem_range] at hk
+    exact Finset.mem_product.mpr ⟨Finset.mem_range.mpr (Nat.div_lt_of_lt_mul (by omega)),
+      Finset.mem_range.mpr (Nat.mod_lt _ (Nat.pow_pos (by norm_num : 0 < 8)))⟩
+  · intro p hp
+    obtain ⟨h1, h2⟩ := Finset.mem_product.mp hp
+    rw [Finset.mem_range] at h1 h2 ⊢
+    calc p.1 * 8 ^ (b + 1) + p.2 < p.1 * 8 ^ (b + 1) + 8 ^ (b + 1) := by omega
+      _ = (p.1 + 1) * 8 ^ (b + 1) := by ring
+      _ ≤ 8 * 8 ^ (b + 1) := Nat.mul_le_mul_right _ (by omega)
+  · intro k _
+    exact Nat.div_add_mod' k (8 ^ (b + 1))
+  · intro p hp
+    obtain ⟨-, h2⟩ := Finset.mem_product.mp hp
+    rw [Finset.mem_range] at h2
+    have hp0 : 0 < 8 ^ (b + 1) := Nat.pow_pos (by norm_num : 0 < 8)
+    have h3 : (p.1 * 8 ^ (b + 1) + p.2) / 8 ^ (b + 1) = p.1 := by
+      rw [Nat.add_comm, Nat.mul_comm, Nat.add_mul_div_left _ _ hp0, Nat.div_eq_of_lt h2]
+      omega
+    have h4 : (p.1 * 8 ^ (b + 1) + p.2) % 8 ^ (b + 1) = p.2 := by
+      rw [Nat.add_comm, Nat.mul_comm, Nat.add_mul_mod_self_left]
+      exact Nat.mod_eq_of_lt h2
+    exact Prod.ext h3 h4
+  · intro k hk
+    rw [Finset.mem_range] at hk
+    have hp0 : 0 < 8 ^ (b + 1) := Nat.pow_pos (by norm_num : 0 < 8)
+    have hlt : k % 8 ^ (b + 1) < 8 ^ (b + 1) := Nat.mod_lt _ hp0
+    have hdlt : k / 8 ^ (b + 1) < 8 := Nat.div_lt_of_lt_mul (by omega)
+    have hk8 : k / 8 ^ (b + 1) * 8 ^ (b + 1) + k % 8 ^ (b + 1) = k :=
+      Nat.div_add_mod' k (8 ^ (b + 1))
+    have hw : wordOf 8 (b + 2) k
+        = (k / 8 ^ (b + 1)) :: wordOf 8 (b + 1) (k % 8 ^ (b + 1)) := by
+      conv_lhs => rw [← hk8]
+      exact wordOf_cons 8 (b + 1) (k % 8 ^ (b + 1)) (k / 8 ^ (b + 1)) (by norm_num) hlt hdlt
+    congr 1
+    rw [hw, winOnes_sorted_one_even]
+
+
+theorem coeff_zero_Zgf (m : ℕ) : (Zgf m).coeff 0 = (2 : ℝ) ^ m := by
+  rw [Zgf_eq, Polynomial.coeff_C_mul, add_comm (1 : ℝ[X]) X, Polynomial.coeff_X_add_one_pow]
+  simp
+
+/-- **No even length is abelian**: the weight-zero frequency is `7/(32·4^b)` where
+`C(2b+2,0)/2^{2b+2} = 8/(32·4^b)`. -/
+theorem blockFreq_sorted_even_ne (b : ℕ) :
+    blockFreq sortedTable 2 8 (b + 2) (2 * (b + 1)) 0
+      ≠ (((2 * (b + 1)).choose 0 : ℝ)) / 2 ^ (2 * (b + 1)) := by
+  rw [blockFreq_sorted, Wgf_zero_even, Wgf_one_even, Wgf_zero_odd,
+    Polynomial.mul_coeff_zero, Polynomial.mul_coeff_zero, Polynomial.mul_coeff_zero,
+    coeff_zero_Zgf, coeff_zero_Zgf]
+  have c8 : ((8 : ℝ[X])).coeff 0 = 8 := by simp
+  have c26 : ((2 + 6 * X : ℝ[X])).coeff 0 = 2 := by simp
+  have c62 : ((6 + 2 * X : ℝ[X])).coeff 0 = 6 := by simp
+  rw [c8, c26, c62, Nat.choose_zero_right]
+  have hA : (0 : ℝ) < (2 : ℝ) ^ b := by positivity
+  have h8b : ((8 : ℝ)) ^ b = ((2 : ℝ) ^ b) ^ 3 := by
+    rw [← pow_mul, mul_comm b 3, pow_mul]
+    norm_num
+  have hden : ((8 : ℝ)) ^ (b + 2) = 64 * ((2 : ℝ) ^ b) ^ 3 := by
+    rw [pow_add, h8b]; norm_num; ring
+  have hnum : ((2 : ℝ)) ^ (b + 1) = 2 * (2 : ℝ) ^ b := by rw [pow_succ]; ring
+  have htgt : ((2 : ℝ)) ^ (2 * (b + 1)) = 4 * ((2 : ℝ) ^ b) ^ 2 := by
+    rw [show 2 * (b + 1) = b * 2 + 2 by ring, pow_add, pow_mul]
+    norm_num
+    ring
+  rw [hden, hnum, htgt]
+  intro h
+  rw [div_eq_div_iff (by positivity) (by positivity)] at h
+  have hA3 : (0 : ℝ) < ((2 : ℝ) ^ b) ^ 3 := by positivity
+  push_cast at h
+  nlinarith [hA3, h]
+
+/-- **No even length is abelian** for the sorted-block witness. -/
+theorem not_isAbelianAt_sorted_even (c : ℕ → ℕ) (hcB : ∀ m, c m < 8)
+    (hc : IsNormalSequence 8 c) (b : ℕ) :
+    ¬ IsAbelianAt (blockSeq sortedTable c 2) (2 * (b + 1)) := by
+  intro h
+  have hk := (isAbelianAt_blockSeq_iff sortedTable c (by norm_num) (by norm_num) hcB hc
+    (2 * (b + 1)) (b + 2) (by omega)).mp h 0 (Nat.zero_le _)
+  exact blockFreq_sorted_even_ne b hk
+
+
+/-! ### The headline of this file -/
+
+theorem blockSeq_sortedTable_lt_two (c : ℕ → ℕ) (n : ℕ) : blockSeq sortedTable c 2 n < 2 := by
+  unfold blockSeq sortedTable
+  split <;> split <;> norm_num
+
+/-- **An INFINITE exact window set.**  Some binary sequence is abelian exactly at the odd
+window lengths.  This is a nontrivial instance of `c4_realizable_of_mem_one` that no periodic
+sequence can provide (a period-`D` sequence is abelian at no length `≥ D`). -/
+theorem c4_realizable_odd :
+    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ Odd L) := by
+  set c := digitOf 8 (Int.fract NormalNumbers.G4.Sched.fullRealW) with hcdef
+  have hc8 : ∀ m, c m < 8 := fun m => digitOf_lt 8 (by norm_num) _ m
+  have hc : IsNormalSequence 8 c := by
+    have h := NormalNumbers.G4.Sched.isNormal_two_pow_fullRealW 3 (by norm_num)
+    norm_num [IsNormal] at h
+    exact h
+  refine ⟨blockSeq sortedTable c 2, blockSeq_sortedTable_lt_two c, fun L hL => ?_⟩
+  constructor
+  · intro h
+    by_contra hodd
+    rw [Nat.not_odd_iff_even] at hodd
+    obtain ⟨b, hb⟩ := hodd
+    have hb1 : ∃ b', L = 2 * (b' + 1) := ⟨b - 1, by omega⟩
+    obtain ⟨b', rfl⟩ := hb1
+    exact not_isAbelianAt_sorted_even c hc8 hc b' h
+  · intro hodd
+    obtain ⟨a, rfl⟩ := hodd
+    have : 2 * a + 1 = 2 * a + 1 := rfl
+    exact isAbelianAt_sorted_odd c hc8 hc a
 
 end NormalNumbers.Abelian

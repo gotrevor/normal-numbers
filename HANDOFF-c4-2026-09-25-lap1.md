@@ -264,3 +264,43 @@ route with an edge bit at BOTH ends:
 At `j = 0` the numerator is `8·2^a + 12·2^{a-1} = 14·2^a` over `2·8^{a+1}`, i.e. `7/(8·4^a)`,
 against the required `C(2a,0)/2^{2a} = 8/(8·4^a)`.  Then
 `c4_realizable` for `S = {L : Odd L}` follows.
+
+## Lap 9 — **`c4_realizable_odd` PROVED, AXIOM-CLEAN**
+```
+theorem c4_realizable_odd :
+    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ Odd L)
+```
+`#print axioms` = `[propext, Classical.choice, Quot.sound]`.
+
+Some binary sequence is abelian at EXACTLY the odd window lengths — an infinite, coinfinite exact
+window set.  No periodic sequence can do this (`G(v) ⊆ [1, D−1]`), which is why the aperiodic
+`blockSeq` class of lap 4/5 was the necessary detour.
+
+The witness is `blockSeq sortedTable c 2` with `c = digitOf 8 (Int.fract fullRealW)`, base-8
+normal by `isNormal_two_pow_fullRealW 3`.
+
+New this lap: `winOnes_sorted_zero_even`, `winOnes_sorted_one_even` (an even window at odd offset
+is one edge bit followed by an ODD window at even offset — so it reuses `Wgf_zero_odd`),
+`Wgf_zero_even : Wgf 0 (2(b+1)) (b+2) = Zgf (b+1) * 8`,
+`Wgf_one_even : Wgf 1 (2(b+1)) (b+2) = (6+2X) * Wgf 0 (2b+1) (b+1)`,
+`coeff_zero_Zgf`, `blockFreq_sorted_even_ne` (the `7` vs `8` at `j = 0`),
+`not_isAbelianAt_sorted_even`, `blockSeq_sortedTable_lt_two`.
+
+## Where C4 stands
+* `abelianAt_one_of_abelianAt` — **PROVED** (lap 1).
+* `c4_realizable`, `S = ∅` branch — **PROVED** (lap 1).
+* `c4_realizable_of_mem_one` — the one open `sorry`.  Instances now proved:
+  `S = {1}` (`c4_realizable_singleton_one`, periodic) and `S = {odd}` (`c4_realizable_odd`,
+  block-i.i.d.).  Every admissible finite `S` probed is realized by a periodic word
+  (`probes/c4_periodic_words.py`); four infinite ones by block laws
+  (`probes/c4_block_iid.py`).
+* **Confidence C4 is TRUE: high.**  No obstruction has appeared at any scale probed, and both
+  the finite and the infinite mechanisms are now demonstrated in the kernel.
+
+**Next attack on the remaining `sorry`.**  The general `S` needs the two mechanisms combined:
+(a) a CONSTRUCTION (not a search) of a periodic word for arbitrary finite `S` — the de Bruijn word
+of order `k` gives `[1,k]`, and the question is how to delete prescribed lengths; (b) for general
+infinite `S`, unbounded block length `q` — the `blockSeq` machinery is already parametric in `q`,
+`B`, `S`, so the obstacle is purely the design of the block law, which lap 6's probe shows is a
+finite rational search at each `q`.  A multi-scale limit (concatenating stage words with rapidly
+growing repetition counts) is the remaining structural gap.
