@@ -264,4 +264,219 @@ theorem hasDerivAt_delangeSv (N : ℕ) (v : ℂ) :
     simpa using hasDerivAt_const v (0 : ℂ)
 
 
+/-! ### The integrating factor
+
+`L := Σ_{p≤N} 1/p` is real and positive, and the ODE is `∂_v S = L·S + E` with
+
+    E_N(v) := Σ_{p≤N} (1/p)·S^{(p)}(N/p; v) − L·S(N; v) = Σ_{p≤N} (1/p)·( S^{(p)}(N/p;v) − S(N;v) ).
+
+Along the ray `v = r·ξ`, `‖ξ‖ = 1`, the function `H(r) = e^{-c r} S(N; rξ)` with `c = L·ξ` has
+`H'(r) = e^{-c r}·ξ·E_N(rξ)` — the whole `L·S` main term is absorbed, and what multiplies the
+initial condition is `e^{c}`, of modulus `e^{L·Re ξ}`.  When `Re ξ < 0` (⟺ `Re z < 1`) that is
+`(log N)^{-|…|} → 0`. -/
+
+/-- `L = Σ_{p ≤ N} 1/p`, the ODE's multiplier: real, positive, `= log log N + O(1)`. -/
+noncomputable def delangeL (N : ℕ) : ℝ := ∑ p ∈ primesLe N, 1 / (p : ℝ)
+
+lemma delangeL_nonneg (N : ℕ) : 0 ≤ delangeL N :=
+  Finset.sum_nonneg fun p _ => by positivity
+
+lemma delangeL_cast (N : ℕ) :
+    ((delangeL N : ℝ) : ℂ) = ∑ p ∈ primesLe N, (1 / (p : ℂ)) := by
+  rw [delangeL]; push_cast; rfl
+
+/-- The scale-comparison error `E_N(v) = Σ_{p≤N} (1/p)·( S^{(p)}(N/p;v) − S(N;v) )`. -/
+noncomputable def delangeE (N : ℕ) (v : ℂ) : ℂ :=
+  (∑ p ∈ primesLe N, (1 / (p : ℂ)) * delangeSvRestr p (N / p) v) - (delangeL N : ℂ) * delangeSv N v
+
+lemma delangeE_eq_sum (N : ℕ) (v : ℂ) :
+    delangeE N v
+      = ∑ p ∈ primesLe N, (1 / (p : ℂ)) * (delangeSvRestr p (N / p) v - delangeSv N v) := by
+  rw [delangeE, delangeL_cast, Finset.sum_mul, ← Finset.sum_sub_distrib]
+  exact Finset.sum_congr rfl fun p _ => by ring
+
+/-- The ODE in the form the integrating factor consumes. -/
+theorem hasDerivAt_delangeSv' (N : ℕ) (v : ℂ) :
+    HasDerivAt (delangeSv N) ((delangeL N : ℂ) * delangeSv N v + delangeE N v) v := by
+  have h := hasDerivAt_delangeSv N v
+  rwa [show (delangeL N : ℂ) * delangeSv N v + delangeE N v
+      = ∑ p ∈ primesLe N, (1 / (p : ℂ)) * delangeSvRestr p (N / p) v by rw [delangeE]; ring]
+
+lemma continuous_delangeSv (N : ℕ) : Continuous (delangeSv N) := by
+  classical
+  refine continuous_finset_sum _ fun n _ => ?_
+  by_cases hsq : Squarefree n
+  · simp only [hsq, if_true]; fun_prop
+  · simp only [hsq, if_false]; fun_prop
+
+lemma continuous_delangeSvRestr (p M : ℕ) : Continuous (delangeSvRestr p M) := by
+  classical
+  refine continuous_finset_sum _ fun n _ => ?_
+  by_cases hsq : Squarefree n
+  · simp only [hsq, if_true]; fun_prop
+  · simp only [hsq, if_false]; fun_prop
+
+lemma continuous_delangeE (N : ℕ) : Continuous (delangeE N) := by
+  refine Continuous.sub (continuous_finset_sum _ fun p _ => ?_) ?_
+  · exact continuous_const.mul (continuous_delangeSvRestr _ _)
+  · exact continuous_const.mul (continuous_delangeSv N)
+
+/-- **The integrating factor identity, in the complex variable.**  With `c = L·ξ`, the function
+`G(w) = e^{-cw}·S(N; wξ)` has derivative `e^{-cw}·ξ·E_N(wξ)`: the `L·S` main term is absorbed, and
+what multiplies the initial condition is `e^{c}`, of modulus `e^{L·Re ξ}`. -/
+theorem hasDerivAt_integratingFactorC (N : ℕ) (ξ w : ℂ) :
+    HasDerivAt (fun w : ℂ => Complex.exp (-((delangeL N : ℂ) * ξ * w)) * delangeSv N (w * ξ))
+      (Complex.exp (-((delangeL N : ℂ) * ξ * w)) * ξ * delangeE N (w * ξ)) w := by
+  have hray := (hasDerivAt_id w).mul_const ξ
+  have hF := (hasDerivAt_delangeSv' N (w * ξ)).comp w hray
+  have hlin := ((hasDerivAt_id w).const_mul ((delangeL N : ℂ) * ξ)).neg
+  have hexp := (Complex.hasDerivAt_exp (-((delangeL N : ℂ) * ξ * w))).comp w hlin
+  have hprod := hexp.mul hF
+  refine hprod.congr_deriv ?_
+  simp only [Function.comp_apply, Pi.neg_apply, id_eq, one_mul, mul_one]
+  ring
+
+/-- The same, restricted to the real ray `r ↦ r·ξ`. -/
+theorem hasDerivAt_integratingFactor (N : ℕ) (ξ : ℂ) (r : ℝ) :
+    HasDerivAt
+      (fun r : ℝ => Complex.exp (-((delangeL N : ℂ) * ξ * (r : ℂ))) * delangeSv N ((r : ℂ) * ξ))
+      (Complex.exp (-((delangeL N : ℂ) * ξ * (r : ℂ))) * ξ * delangeE N ((r : ℂ) * ξ)) r :=
+  (hasDerivAt_integratingFactorC N ξ (r : ℂ)).comp_ofReal
+
+/-! ### The closed bound
+
+FTC on the integrating factor, plus `‖e^{-c r}‖ = e^{a r}` with `a = L·|Re ξ|`, gives the
+conditional estimate with its decisive `1/a` gain. -/
+
+lemma delangeSv_zero {N : ℕ} (hN : 1 ≤ N) : delangeSv N 0 = 1 := by
+  classical
+  rw [delangeSv]
+  refine (Finset.sum_eq_single 1 (fun n hn hne => ?_) (fun hn => ?_)).trans ?_
+  · simp only [Finset.mem_Ioc] at hn
+    by_cases hsq : Squarefree n
+    · have h1 : n ≠ 1 := hne
+      have : omegaNat n ≠ 0 := by
+        simp only [omegaNat, ne_eq, Finset.card_eq_zero, Nat.primeFactors_eq_empty]
+        push_neg
+        exact ⟨by omega, h1⟩
+      simp [hsq, zero_pow this]
+    · simp [hsq]
+  · exact absurd (Finset.mem_Ioc.mpr ⟨Nat.one_pos, hN⟩) hn
+  · simp [omegaNat]
+
+/-- `∫_0^1 B·e^{ar} dr = (B/a)(e^a − 1)`, by the explicit antiderivative. -/
+lemma integral_const_mul_exp_mul {a B : ℝ} (ha : a ≠ 0) :
+    (∫ r in (0:ℝ)..1, B * Real.exp (a * r)) = (B / a) * (Real.exp a - 1) := by
+  have hderiv : ∀ r ∈ Set.uIcc (0:ℝ) 1,
+      HasDerivAt (fun r : ℝ => (B / a) * Real.exp (a * r)) (B * Real.exp (a * r)) r := by
+    intro r _
+    have h1 : HasDerivAt (fun r : ℝ => a * r) a r := by
+      simpa using (hasDerivAt_id r).const_mul a
+    have h2 : HasDerivAt (fun r : ℝ => Real.exp (a * r)) (Real.exp (a * r) * a) r :=
+      (Real.hasDerivAt_exp (a * r)).comp r h1
+    have := h2.const_mul (B / a)
+    refine this.congr_deriv ?_
+    field_simp
+  have hint : IntervalIntegrable (fun r : ℝ => B * Real.exp (a * r)) MeasureTheory.volume 0 1 := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint]
+  simp only [mul_one, mul_zero, Real.exp_zero]
+  ring
+
+/-- **THE CONDITIONAL BOUND.**  If the scale-comparison error `E_N` is bounded by `B` along the
+ray `[0,1]·ξ`, with `‖ξ‖ = 1` and `Re ξ < 0`, then
+
+    ‖S(N; ξ)‖ ≤ e^{L·Re ξ} + B / (L·|Re ξ|).
+
+The first term is `≍ (log N)^{Re ξ} → 0`; the second carries the gain `1/L = O(1/log log N)`, so
+`B = O(1)` — a *boundedness* statement — already forces `S(N; ξ) → 0`. -/
+theorem norm_delangeSv_le {N : ℕ} (hN : 1 ≤ N) {ξ : ℂ} (hξ : ‖ξ‖ = 1) (hre : ξ.re < 0)
+    (hL : 0 < delangeL N) {B : ℝ} (hBnn : 0 ≤ B)
+    (hB : ∀ r ∈ Set.Icc (0:ℝ) 1, ‖delangeE N ((r : ℂ) * ξ)‖ ≤ B) :
+    ‖delangeSv N ξ‖ ≤ Real.exp (delangeL N * ξ.re) + B / (delangeL N * (-ξ.re)) := by
+  classical
+  set L : ℝ := delangeL N with hLdef
+  set a : ℝ := L * (-ξ.re) with hadef
+  have hapos : 0 < a := by rw [hadef]; nlinarith [hL, hre]
+  set H : ℝ → ℂ := fun r => Complex.exp (-((L : ℂ) * ξ * (r : ℂ))) * delangeSv N ((r : ℂ) * ξ)
+    with hHdef
+  set H' : ℝ → ℂ := fun r =>
+    Complex.exp (-((L : ℂ) * ξ * (r : ℂ))) * ξ * delangeE N ((r : ℂ) * ξ) with hH'def
+  have hderiv : ∀ r ∈ Set.uIcc (0:ℝ) 1, HasDerivAt H (H' r) r :=
+    fun r _ => hasDerivAt_integratingFactor N ξ r
+  -- `‖e^{-c r}‖ = e^{a r}`
+  have hnormexp : ∀ r : ℝ, ‖Complex.exp (-((L : ℂ) * ξ * (r : ℂ)))‖ = Real.exp (a * r) := by
+    intro r
+    rw [Complex.norm_exp]
+    congr 1
+    simp only [Complex.neg_re, Complex.mul_re, Complex.mul_im, Complex.ofReal_re,
+      Complex.ofReal_im, hadef]
+    ring
+  have hcontE : Continuous fun r : ℝ => delangeE N ((r : ℂ) * ξ) :=
+    (continuous_delangeE N).comp (by fun_prop)
+  have hcontH' : Continuous H' := by
+    rw [hH'def]
+    exact ((Complex.continuous_exp.comp (by fun_prop)).mul continuous_const).mul hcontE
+  have hint : IntervalIntegrable H' MeasureTheory.volume 0 1 := hcontH'.intervalIntegrable 0 1
+  have hftc := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
+  -- bound the integral
+  have hptw : ∀ r ∈ Set.Icc (0:ℝ) 1, ‖H' r‖ ≤ B * Real.exp (a * r) := by
+    intro r hr
+    rw [hH'def]
+    simp only
+    rw [norm_mul, norm_mul, hnormexp r, hξ, mul_one]
+    have := hB r hr
+    have hpos : (0:ℝ) < Real.exp (a * r) := Real.exp_pos _
+    nlinarith [this, hpos]
+  have hintnorm : IntervalIntegrable (fun r => ‖H' r‖) MeasureTheory.volume 0 1 :=
+    (hcontH'.norm).intervalIntegrable 0 1
+  have hintb : IntervalIntegrable (fun r : ℝ => B * Real.exp (a * r)) MeasureTheory.volume 0 1 := by
+    apply Continuous.intervalIntegrable; fun_prop
+  have hle1 : ‖∫ r in (0:ℝ)..1, H' r‖ ≤ ∫ r in (0:ℝ)..1, ‖H' r‖ :=
+    intervalIntegral.norm_integral_le_integral_norm (by norm_num)
+  have hle2 : (∫ r in (0:ℝ)..1, ‖H' r‖) ≤ ∫ r in (0:ℝ)..1, B * Real.exp (a * r) :=
+    intervalIntegral.integral_mono_on (by norm_num) hintnorm hintb hptw
+  rw [integral_const_mul_exp_mul (ne_of_gt hapos)] at hle2
+  -- `H 1 = H 0 + ∫`, and `H 0 = 1`
+  have hH0 : H 0 = 1 := by
+    rw [hHdef]
+    simp only [Complex.ofReal_zero, mul_zero, neg_zero, Complex.exp_zero, one_mul, zero_mul]
+    exact delangeSv_zero hN
+  have hH1 : ‖H 1‖ ≤ 1 + (B / a) * (Real.exp a - 1) := by
+    have : H 1 = H 0 + ∫ r in (0:ℝ)..1, H' r := by rw [hftc]; ring
+    rw [this, hH0]
+    refine le_trans (norm_add_le _ _) ?_
+    simp only [norm_one]
+    linarith [hle1, hle2]
+  -- transfer back
+  have hSeq : delangeSv N ξ = Complex.exp ((L : ℂ) * ξ) * H 1 := by
+    rw [hHdef]
+    simp only [Complex.ofReal_one, mul_one]
+    rw [← mul_assoc, ← Complex.exp_add]
+    simp
+  have hnormS : ‖delangeSv N ξ‖ = Real.exp (-a) * ‖H 1‖ := by
+    rw [hSeq, norm_mul, Complex.norm_exp]
+    congr 2
+    simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, hadef]
+    ring
+  have hexpa : Real.exp (-a) = Real.exp (L * ξ.re) := by
+    congr 1; rw [hadef]; ring
+  have hkey : Real.exp (-a) * (1 + (B / a) * (Real.exp a - 1))
+      = Real.exp (-a) + (B / a) * (1 - Real.exp (-a)) := by
+    have : Real.exp (-a) * Real.exp a = 1 := by
+      rw [← Real.exp_add]; simp
+    field_simp
+    nlinarith [this]
+  have hfin : Real.exp (-a) * ‖H 1‖ ≤ Real.exp (-a) + B / a := by
+    have h1 : Real.exp (-a) * ‖H 1‖ ≤ Real.exp (-a) * (1 + (B / a) * (Real.exp a - 1)) :=
+      mul_le_mul_of_nonneg_left hH1 (Real.exp_pos _).le
+    rw [hkey] at h1
+    have h2 : (B / a) * (1 - Real.exp (-a)) ≤ B / a := by
+      have hBa : 0 ≤ B / a := by positivity
+      nlinarith [Real.exp_pos (-a), hBa]
+    linarith
+  rw [hnormS, ← hexpa]
+  exact hfin
+
 end NormalNumbers.CastingOut
