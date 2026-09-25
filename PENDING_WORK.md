@@ -9489,3 +9489,51 @@ kernel), `sum_conv_eq` (general hyperbola, any semiring), `summable_divisorCard`
 **NEXT (open).**  `DelangeMean (m/b)`, `b ≥ 3`, `‖m/b‖ ≥ 1/6`: needs `ζ(s)^z` (Selberg–Delange) or
 Halász, over `PNTPort`'s zero-free region + Mellin/residue toolkit.  Cheapest probe recorded in the
 lap-59 handoff, item 1(c).
+
+## 2026-09-25 (lap 60) — **the `‖z−1‖ < 1` wall is BROKEN: a scale equation for `z^ω` itself**
+
+**The crux** was `DelangeMean (m/b)` for `b ≥ 3`, `‖m/b‖ ≥ 1/6` — the last regime of the 🟡.  Lap 59
+recorded that finite convolution down to `μ` is *provably* exhausted there (integer exponent only
+at `z = −1`) and named Selberg–Delange / Halász as the road.  **That was wrong: there is an
+elementary road, and this lap built it.**
+
+**The structural insight.**  Laps 28–56 ran Levin–Fainleib on the *kernel* `h_z = (z−1)^ω μ²`,
+whose `ℓ¹` mass `A(N) ≍ (log N)^{‖z−1‖}` is the error term — hence the cap `‖z−1‖ < 1`.  Run it on
+`f = z^ω` **itself** and every error is `O(N)`, because `‖f‖ ≡ 1`.  The mechanism is that `ω` sees a
+prime power only through its prime:
+
+    ω(p^k·m) = ω(m) + [p ∤ m]     (`omegaNat_primePow_mul`)
+
+uniformly in `k`, so `f(d·m) = z·f(m)` off the multiples of `minFac d`, for EVERY prime power `d`.
+
+**Landed this lap** (`src/NormalNumbers/TwoPointDelangeLevin.lean`, all axiom-clean, no `sorry`):
+* `sum_conv_gen` — hyperbola summation with the summand depending on both `d` and `n/d`;
+* `sum_fOm_log_eq` — the **exact** Levin–Fainleib identity
+  `∑_{n≤N} f(n) log n = ∑_{d≤N} Λ(d)·(z·M(N/d) − (z−1)·G(minFac d, N/d))`;
+* `sum_vonMangoldt_div_mul_minFac_le` — `∑_{d≤N} Λ(d)/(d·minFac d) ≤ 16`, by prime-power
+  regrouping (`ppPair`/`ppTerm`) onto `sum_log_div_sq_prime_le`.  **No Mertens' 2nd.**
+* `sum_hyperbola_swap` — `∑_d k(d)∑_{e≤N/d}T(e) = ∑_e T(e)∑_{d≤N/e}k(d)`;
+* `norm_defect_le` (A), `exists_norm_psi_replace_le` (B, on `DelangeSlot.exists_sum_abs_deltaN_le`),
+  `norm_log_shift_le` (C), and
+
+      exists_levin_scale_bound :  ∃ C, ∀ z, ‖z‖ = 1 → ∀ N,
+          ‖M(N)·log N − z·N·T(N)‖ ≤ C·N        with C ABSOLUTE.
+
+### NEXT LAP — the closure, two steps, both already rehearsed in this repo
+1. **Abel**: `T(N) = M(N)/N + Ũ(N)`, `Ũ(N) = ∑_{1≤m<N} M(m)/(m(m+1))`, and
+   `Ũ(N+1) − Ũ(N) = M(N)/(N(N+1))`.  With `‖M(N)/N‖ ≤ 1` the scale equation becomes
+
+       M(N)/N = (z·Ũ(N) + E_N)/log N ,  ‖E_N‖ ≤ C+1 ,
+       Ũ(N+1) = Ũ(N)·(1 + z·s_N) + s_N·E_N ,  s_N = 1/((N+1)·log N)  (REAL).
+
+2. **Brick 3 again**: the discrete integrating factor.  `‖1+zs‖ ≤ 1 + s·Re z + s²/2`,
+   `(1+σ)^θ ≥ 1 + θσ − σ²`, and `s_N ≤ σ_N = (log(N+1)−log N)/log N`.  Induction gives
+   `‖Ũ(N)‖ ≤ K(log N)^θ` for ANY `θ ∈ (max(Re z, 0), 1)` — the additive `s_N·E_N` is absorbed
+   because `K(θ−θ₀)(log N)^θ ≥ C+1` eventually (`θ > 0`).  Then
+
+       ‖M(N)‖/N ≤ (K(log N)^θ + C+1)/log N → 0     for EVERY `z ≠ 1` on the circle,
+
+   since `Re z < 1` automatically.  That discharges `DelangeMean t` for **all** `t ∉ ℤ` and kills
+   the 🟡 outright.  Reuse `TwoPointDelangeScale.lean`'s brick-1 tool (`∑ s_m ≤ log L_N − log L_{N₀} + 1`)
+   and its brick-3 induction verbatim; only the source of the additive error changes (constant here,
+   `A(N)` there).
