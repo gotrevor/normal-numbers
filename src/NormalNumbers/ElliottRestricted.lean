@@ -54,7 +54,7 @@ theorem norm_restrictedCorr_le {U₁ : ℕ → ℂ} (hUp : ∀ p : ℕ, p.Prime 
     {g₂ : ℤ → ℂ} (h2 : ∀ z : ℤ, ‖g₂ z‖ ≤ 1)
     (a₁ a₂ : ℕ) (b₁ b₂ : ℤ) {X W d : ℕ} (hd : 0 < d) (hW : 0 < W) :
     ‖restrictedCorr U₁ g₂ a₁ a₂ b₁ b₂ X W d‖
-      ≤ ∑ n₀ ∈ Finset.range d,
+      ≤ ∑ n₀ ∈ (Finset.range d).filter (fun n₀ : ℕ => (d : ℤ) ∣ (a₁ : ℤ) * (n₀ : ℤ) + b₁),
           ((d : ℝ)⁻¹ * ‖elliottLogCorrelation
               (positiveIntExtension (fun k => cmExt U₁ k)) g₂
               a₁ (a₂ * d) (newShift a₁ b₁ d n₀) ((a₂ : ℤ) * n₀ + b₂)
@@ -80,9 +80,39 @@ theorem norm_restrictedCorr_le {U₁ : ℕ → ℂ} (hUp : ∀ p : ℕ, p.Prime 
     (fun n => (harmonicWeight n : ℂ) * divTerm (fun k => cmExt U₁ k) d (integerAffine a₁ b₁ n) *
       g₂ (integerAffine a₂ b₂ n))
   rw [restrictedCorr, ← hfiber]
+  -- the classes with `d ∤ a₁n₀+b₁` are empty: every term vanishes
+  have hvanish : ∀ n₀ ∈ Finset.range d,
+      n₀ ∉ (Finset.range d).filter (fun n₀ : ℕ => (d : ℤ) ∣ (a₁ : ℤ) * (n₀ : ℤ) + b₁) →
+      ∑ n ∈ (elliottLogWindow X W).filter (fun n => n % d = n₀),
+        (harmonicWeight n : ℂ) * divTerm (fun k => cmExt U₁ k) d (integerAffine a₁ b₁ n) *
+          g₂ (integerAffine a₂ b₂ n) = 0 := by
+    intro n₀ hn₀ hnf
+    have hdvd : ¬ (d : ℤ) ∣ (a₁ : ℤ) * n₀ + b₁ := fun hc =>
+      hnf (Finset.mem_filter.mpr ⟨hn₀, hc⟩)
+    have hzero : ∀ n ∈ (elliottLogWindow X W).filter (fun n => n % d = n₀),
+        (harmonicWeight n : ℂ) * divTerm (fun k => cmExt U₁ k) d (integerAffine a₁ b₁ n) *
+          g₂ (integerAffine a₂ b₂ n) = 0 := by
+      intro n hn
+      obtain ⟨-, hmod⟩ := Finset.mem_filter.mp hn
+      have hsplit : d * (n / d) + n₀ = n := by
+        conv_rhs => rw [← Nat.div_add_mod n d, hmod]
+      have hnd : ¬ (d : ℤ) ∣ integerAffine a₁ b₁ n := by
+        intro hcon
+        refine hdvd ?_
+        have hcast : (n : ℤ) = (d : ℤ) * ((n / d : ℕ) : ℤ) + (n₀ : ℤ) := by
+          exact_mod_cast hsplit.symm
+        have hrw : integerAffine a₁ b₁ n
+            = (d : ℤ) * ((a₁ : ℤ) * ((n / d : ℕ) : ℤ)) + ((a₁ : ℤ) * n₀ + b₁) := by
+          rw [integerAffine, hcast]
+          ring
+        rw [hrw] at hcon
+        exact (dvd_add_right (dvd_mul_right (d : ℤ) ((a₁ : ℤ) * ((n / d : ℕ) : ℤ)))).mp hcon
+      rw [divTerm_eq_zero_of_not_dvd hnd, mul_zero, zero_mul]
+    rw [Finset.sum_congr rfl hzero, Finset.sum_const_zero]
+  rw [← Finset.sum_subset (Finset.filter_subset _ _) hvanish]
   refine le_trans (norm_sum_le _ _) (Finset.sum_le_sum fun n₀ hn₀ => ?_)
-  have hn₀d : n₀ < d := Finset.mem_range.mp hn₀
-  by_cases hdvd : (d : ℤ) ∣ (a₁ : ℤ) * n₀ + b₁
+  obtain ⟨hn₀mem, hdvd⟩ := Finset.mem_filter.mp hn₀
+  have hn₀d : n₀ < d := Finset.mem_range.mp hn₀mem
   · -- the class contributes a genuine correlation
     set c : ℤ := newShift a₁ b₁ d n₀ with hc
     have hcmul : (a₁ : ℤ) * n₀ + b₁ = (d : ℤ) * c := by
@@ -160,30 +190,6 @@ theorem norm_restrictedCorr_le {U₁ : ℕ → ℂ} (hUp : ∀ p : ℕ, p.Prime 
     have hdn : ‖((d : ℝ)⁻¹ : ℂ)‖ = (d : ℝ)⁻¹ := by
       rw [norm_inv, Complex.norm_real, Real.norm_natCast]
     rw [hdn]
-  · -- the class is empty: every term vanishes
-    have hzero : ∀ n ∈ (elliottLogWindow X W).filter (fun n => n % d = n₀),
-        (harmonicWeight n : ℂ) * divTerm (fun k => cmExt U₁ k) d (integerAffine a₁ b₁ n) *
-          g₂ (integerAffine a₂ b₂ n) = 0 := by
-      intro n hn
-      obtain ⟨-, hmod⟩ := Finset.mem_filter.mp hn
-      have hsplit : d * (n / d) + n₀ = n := by
-        conv_rhs => rw [← Nat.div_add_mod n d, hmod]
-      have hnd : ¬ (d : ℤ) ∣ integerAffine a₁ b₁ n := by
-        intro hcon
-        refine hdvd ?_
-        have hcast : (n : ℤ) = (d : ℤ) * ((n / d : ℕ) : ℤ) + (n₀ : ℤ) := by
-          exact_mod_cast hsplit.symm
-        have hrw : integerAffine a₁ b₁ n
-            = (d : ℤ) * ((a₁ : ℤ) * ((n / d : ℕ) : ℤ)) + ((a₁ : ℤ) * n₀ + b₁) := by
-          rw [integerAffine, hcast]
-          ring
-        rw [hrw] at hcon
-        exact (dvd_add_right (dvd_mul_right (d : ℤ) ((a₁ : ℤ) * ((n / d : ℕ) : ℤ)))).mp hcon
-      rw [divTerm_eq_zero_of_not_dvd hnd, mul_zero, zero_mul]
-    rw [Finset.sum_congr rfl hzero]
-    simp only [Finset.sum_const_zero, norm_zero]
-    positivity
-
 end
 
 end NormalNumbers.ElliottRestricted

@@ -80,7 +80,7 @@ theorem norm_le_of_reduced {U : ℕ → ℂ} (hone : U 1 = 1)
     {εt M : ℝ} (hεt : 0 ≤ εt) (hM : 0 ≤ M)
     (htail : ∑ d ∈ Finset.Icc (D + 1) (a₁ * X + b₁.natAbs),
       ‖squarefullPart U d‖ / (d : ℝ) ≤ εt)
-    (hbound : ∀ d ∈ Finset.Icc 1 D, ∀ n₀ ∈ Finset.range d,
+    (hbound : ∀ d ∈ Finset.Icc 1 D, ∀ n₀ < d, (d : ℤ) ∣ (a₁ : ℤ) * (n₀ : ℤ) + b₁ →
       ‖elliottLogCorrelation (positiveIntExtension (fun k => cmExt U k)) g
           a₁ (a₂ * d) (newShift a₁ b₁ d n₀) ((a₂ : ℤ) * n₀ + b₂)
           (progScale X n₀ d) (min W (progScale X n₀ d))‖ ≤ M) :
@@ -103,33 +103,40 @@ theorem norm_le_of_reduced {U : ℕ → ℂ} (hone : U 1 = 1)
       obtain ⟨hd1, hdD⟩ := Finset.mem_Icc.mp hd
       have hd0 : 0 < d := hd1
       have hrc := norm_restrictedCorr_le (U₁ := U) hUp (g₂ := g) hg a₁ a₂ b₁ b₂ (X := X) hd0 hW
-      have hclass : ∑ n₀ ∈ Finset.range d,
+      have hclass : ∑ n₀ ∈ (Finset.range d).filter
+            (fun n₀ : ℕ => (d : ℤ) ∣ (a₁ : ℤ) * (n₀ : ℤ) + b₁),
           ((d : ℝ)⁻¹ * ‖elliottLogCorrelation
               (positiveIntExtension (fun k => cmExt U k)) g
               a₁ (a₂ * d) (newShift a₁ b₁ d n₀) ((a₂ : ℤ) * n₀ + b₂)
               (progScale X n₀ d) (min W (progScale X n₀ d))‖ + 4)
           ≤ M + 4 * (D : ℝ) := by
-        have hterm : ∀ n₀ ∈ Finset.range d,
+        have hdr : (0 : ℝ) < (d : ℝ) := by exact_mod_cast hd1
+        have hdD' : (d : ℝ) ≤ (D : ℝ) := by exact_mod_cast hdD
+        have hterm : ∀ n₀ ∈ (Finset.range d).filter
+            (fun n₀ : ℕ => (d : ℤ) ∣ (a₁ : ℤ) * (n₀ : ℤ) + b₁),
             ((d : ℝ)⁻¹ * ‖elliottLogCorrelation
                 (positiveIntExtension (fun k => cmExt U k)) g
                 a₁ (a₂ * d) (newShift a₁ b₁ d n₀) ((a₂ : ℤ) * n₀ + b₂)
                 (progScale X n₀ d) (min W (progScale X n₀ d))‖ + 4)
             ≤ (d : ℝ)⁻¹ * M + 4 := by
           intro n₀ hn₀
-          have := hbound d hd n₀ hn₀
+          obtain ⟨hn₀mem, hn₀dvd⟩ := Finset.mem_filter.mp hn₀
+          have := hbound d hd n₀ (Finset.mem_range.mp hn₀mem) hn₀dvd
           have hdinv : (0 : ℝ) ≤ (d : ℝ)⁻¹ := by positivity
           nlinarith
         refine le_trans (Finset.sum_le_sum hterm) ?_
-        rw [Finset.sum_add_distrib, Finset.sum_const, Finset.sum_const, Finset.card_range]
-        have hdr : (0 : ℝ) < (d : ℝ) := by exact_mod_cast hd1
-        have hdD' : (d : ℝ) ≤ (D : ℝ) := by exact_mod_cast hdD
-        have h1 : (d : ℝ) • ((d : ℝ)⁻¹ * M) = M := by
-          rw [smul_eq_mul, ← mul_assoc, mul_inv_cancel₀ (ne_of_gt hdr), one_mul]
-        rw [nsmul_eq_mul, nsmul_eq_mul]
-        have h2 : (d : ℝ) * ((d : ℝ)⁻¹ * M) = M := by
-          rw [← mul_assoc, mul_inv_cancel₀ (ne_of_gt hdr), one_mul]
-        rw [h2]
-        nlinarith
+        rw [Finset.sum_const, nsmul_eq_mul]
+        have hcard : ((((Finset.range d).filter
+            (fun n₀ : ℕ => (d : ℤ) ∣ (a₁ : ℤ) * (n₀ : ℤ) + b₁)).card : ℕ) : ℝ) ≤ (d : ℝ) := by
+          have := Finset.card_filter_le (Finset.range d)
+            (fun n₀ : ℕ => (d : ℤ) ∣ (a₁ : ℤ) * (n₀ : ℤ) + b₁)
+          rw [Finset.card_range] at this
+          exact_mod_cast this
+        have hposfac : (0 : ℝ) ≤ (d : ℝ)⁻¹ * M + 4 := by positivity
+        have hstep := mul_le_mul_of_nonneg_right hcard hposfac
+        have hdM : (d : ℝ) * ((d : ℝ)⁻¹ * M + 4) = M + 4 * (d : ℝ) := by
+          field_simp
+        nlinarith [hstep, hdM.le, hdM.ge]
       have hnn : (0 : ℝ) ≤ ‖squarefullPart U d‖ := norm_nonneg _
       calc ‖squarefullPart U d‖ * ‖restrictedCorr U g a₁ a₂ b₁ b₂ X W d‖
           ≤ ‖squarefullPart U d‖ * (M + 4 * (D : ℝ)) :=
@@ -159,7 +166,7 @@ theorem norm_le_of_reduced_second {U : ℕ → ℂ} (hone : U 1 = 1)
     {εt M : ℝ} (hεt : 0 ≤ εt) (hM : 0 ≤ M)
     (htail : ∑ d ∈ Finset.Icc (D + 1) (a₂ * X + b₂.natAbs),
       ‖squarefullPart U d‖ / (d : ℝ) ≤ εt)
-    (hbound : ∀ d ∈ Finset.Icc 1 D, ∀ n₀ ∈ Finset.range d,
+    (hbound : ∀ d ∈ Finset.Icc 1 D, ∀ n₀ < d, (d : ℤ) ∣ (a₂ : ℤ) * (n₀ : ℤ) + b₂ →
       ‖elliottLogCorrelation g (positiveIntExtension (fun k => cmExt U k))
           (a₁ * d) a₂ ((a₁ : ℤ) * n₀ + b₁) (newShift a₂ b₂ d n₀)
           (progScale X n₀ d) (min W (progScale X n₀ d))‖ ≤ M) :
@@ -169,9 +176,9 @@ theorem norm_le_of_reduced_second {U : ℕ → ℂ} (hone : U 1 = 1)
             ((1 + Real.log ((a₂ * X + b₂.natAbs : ℕ) : ℝ) - Real.log (L : ℝ)) * εt) := by
   rw [elliottLogCorrelation_swap]
   refine norm_le_of_reduced hone hmul hU hg ha₂ a₁ b₂ b₁ hW hL hD hDY hLY hLbd hεt hM htail ?_
-  intro d hd n₀ hn₀
+  intro d hd n₀ hn₀ hdvd
   rw [elliottLogCorrelation_swap]
-  exact hbound d hd n₀ hn₀
+  exact hbound d hd n₀ hn₀ hdvd
 
 end
 
