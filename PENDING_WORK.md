@@ -9585,3 +9585,38 @@ matches TT in print (`:2997`): removing the exceptional set is out of reach.
    statement along `N → ∞`; if the reduction can be re-run over a density-one scale sequence,
    the `D = 2` layer becomes unconditional on a published theorem.  That is the highest-value
    open question on this route and it has never been asked.
+
+## Lap 63 (2026-09-25) — the exceptional set is a THEOREM, not a worry
+
+`src/NormalNumbers/C3MrtExcScales.lean`, sorry-free, `[propext, Classical.choice, Quot.sound]`.
+
+`exceptional_scales_not_tendsto`: there is a set `E ⊆ ℕ` of scale-indices and a `[0,1]`-valued
+sequence `a` with `a = 0` off `E`, `E` of **density zero**, `E` containing **arbitrarily long
+runs**, and `¬ Tendsto a atTop (𝓝 0)`.  Witness `E = ⋃_{j≥1} [j⁴, j⁴+j)`; the counting map
+`k ↦ (⌊k^{1/4}⌋, k − ⌊k^{1/4}⌋⁴)` is injective because `⌊k^{1/4}⌋ = √(√k)` recovers the block
+index (`excScales_index`), giving `|E ∩ [0,K)| ≤ (√(√K)+1)² ≤ 4√K`.
+
+So the lap-62 prose is now machine-checked: **no bound valid only off a density-zero set of
+scales can produce the `Tendsto` that `LogToNaturalCorrelation K` demands**, and the long runs
+kill the "interpolate between two good scales" rescue as well (a run of length `j` in the
+exponent is a multiplicative block of ratio `2^j → ∞`).
+
+**Refuted this lap — the Fubini rescue.**  For a fixed scale `N`, vary `X` over `[N, N²]` and
+hope `N ∉ E(X)` for some admissible `X`.  Swapping the order in `∫_N^{N²}∫_{E(X)} dt/t · dX/X`
+bounds the `X`-measure of bad `X` only *for almost every `t`*, not for the given `t`; the
+exceptional set simply reappears one level up.  TT Thm 3.1 is a black box in `X`, so the
+statement alone offers nothing stronger.
+
+### Next attack — the question this route has never asked
+
+Does the consumer actually need every scale?  `depthAvg_tendsto_of_transfer` feeds
+`weylLambertTwist_holds`, a Weyl-sum statement along `N → ∞`.  Two sub-questions, in order:
+
+1. Is `weylLambertTwist_holds` (or the normality statement above it) stable under replacing
+   "for all `N`" by "for `N` in a set of scales of logarithmic density one"?  For *normality*
+   the answer is expected NO (digit frequencies need every prefix), but the Weyl sum feeding it
+   may be averaged, in which case a density-one scale set is enough.  **Read `SwingC3Leaf.lean`
+   and the reduction above it before assuming either way.**
+2. If NO: the `D = 2` row stays 🔴 and the honest ledger entry is "equivalent to removing the
+   exceptional set from TT Thm 3.1", which TT state is out of reach — i.e. the C3 `D ≥ 2` route
+   is pinned to a *named* open problem, which is the ratified deliverable.
