@@ -57,3 +57,27 @@ construction imports `Sets`.  A pointer comment sits where they used to be.
 Nothing on C4.  The off-campaign designated-open leaves are untouched:
 `PrimeLambertOscillation.phaseOscillation`, `MahlerDriftOne.exists_prime_nonresidue`,
 the Swing/CF leaves, `PairDecoupleProve`.
+
+## STUCK-BAIL (strike 1) — for the confirming lap
+
+**Do not reopen C4.**  It is proved, axiom-clean, committed (`ee38065`), and the build is green.
+
+The repo-wide self-stop gate declines because 14 `sorry`s remain in `src/`.  Every one of them
+is off-limits under the CURRENT DIRECTIVE in `DIRECTION.md`, which altitude laps own and I may
+not edit:
+
+| file:line | why it is operator-gated |
+|---|---|
+| `SwingC1.lean:920,2201`, `SwingC1Log.lean:265,269`, `SwingC2.lean:2994,3003,3011,3032`, `SwingC3Leaf.lean:63`, `SwingC3Rotation.lean:272` | DIRECTION "Forbidden drift": *do NOT touch … the Swing/CF leaves* |
+| `PrimeLambertOscillation.lean:95` | DIRECTION: designated-open off-campaign `sorry` |
+| `MahlerDriftOne.lean:380` | DIRECTION: designated-open off-campaign `sorry` |
+| `PairDecoupleProve.lean:48`, `PairDecoupleRefute.lean:14` | a stated **conjecture** and its refutation-shaped twin (a `Prop` that may be false — house style keeps it a `sorry`, not an `axiom`); and DIRECTION confines new code to `src/NormalNumbers/AbelianWindow*.lean` |
+
+**The exact ask for the operator.**  C4 is finished, so the campaign that `DIRECTION.md`'s
+CURRENT DIRECTIVE governs is over.  Either (a) run an altitude/review lap to write a new
+CURRENT DIRECTIVE naming the next target, or (b) relaunch with
+`--done-when 'sorry-free:src/NormalNumbers/AbelianWindow'` so the host stops on the C4 target
+rather than on the whole repo.
+
+To verify this fast: `grep -rn '^\s*sorry\s*$' src/` (14 hits, all in the table above), then
+`sed -n '/CURRENT DIRECTIVE/,/^## /p' DIRECTION.md` and read "Forbidden drift".
