@@ -17,7 +17,11 @@ with the dependency's verbatim errors and no `a`-dependence at all.
 `sum_dilatedBlockPairing_mul_phase` + `phase_mul_phase_eq_single_frequency`.  The residue-class
 restriction costs one extra frequency variable `u < a`, and the two phases still combine to a
 SINGLE frequency in the prime `q`, so the fourth-moment / entropy stack is untouched.
-Next: re-base `finiteSequenceBlock` at `a*(n+1)` and identify the dilated edge with
+**Lap 18: the dilated graph mean has an exact Fourier identity**
+(`dilatedPairTwistedMean_eq_fourier`), and `dilatedTwistedMultiplier_eq` shows its multiplier is
+LITERALLY the proved `twistedPrimeGraphMultiplier T 1 s w` at frequency `t*h - u*D*c1`, so the whole
+fourth-moment / additive-energy layer transfers verbatim.
+Next: the large-frequency bound for the dilated mean; then re-base `finiteSequenceBlock` at `a*(n+1)` and identify the dilated edge with
 `ElliottAffineGraph.affineTwistedObservable`.
 
 Superseded description of that lemma: the `a`-dilated bilinear pairing

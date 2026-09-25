@@ -203,6 +203,102 @@ theorem sum_dilatedBlockPairing_mul_phase {H T α D : ℕ} [NeZero T] [NeZero α
   · rw [dilatedPairShiftEdge, if_neg hdvd]
     simp [hdvd]
 
+
+/-- The `h`-form of the single-frequency collapse, in the shape the graph mean needs. -/
+theorem phase_pair_single_frequency {T α D : ℕ} (hTD : T = α * D) (hα : α ≠ 0) (hD : D ≠ 0)
+    (t u h c₁ q : ℤ) :
+    phase T t (q * h) * phase α u (-(q * c₁)) = phase T (t * h - u * D * c₁) q := by
+  rw [phase_dilate hTD hα hD, phase, phase, phase, ← Complex.exp_add]
+  congr 1
+  push_cast
+  ring
+
+/-! ## The dilated prime graph mean and its exact Fourier identity -/
+
+/-- The prime graph mean of the `a`-dilated edge: the prime `p` contributes the edge whose
+residue class is `p*c₁ (mod α)` and whose step is `p*h`. -/
+def dilatedPairTwistedMean {H : ℕ} (w : ℕ → ℂ) (b c : Fin H → ℂ) (α c₁ h : ℕ)
+    (s : Finset ℕ) : ℂ :=
+  ∑ p ∈ s, w p * (p : ℂ)⁻¹ * ∑ m : Fin H, dilatedPairShiftEdge b c α ((p * c₁ : ℕ) : ℤ) (p * h) m
+
+/-- The multiplier of the dilated graph: the two frequency variables enter through the *single*
+frequency `t*h - u*D*c₁`. -/
+def dilatedTwistedMultiplier (T D h c₁ : ℕ) (s : Finset ℕ) (w : ℕ → ℂ) (t u : ℤ) : ℂ :=
+  ∑ p ∈ s, w p * (p : ℂ)⁻¹ * phase T (t * h - u * D * c₁) (p : ℤ)
+
+/-- **The dilated multiplier is the *proved* multiplier**, at shift `1` and frequency
+`t*h - u*D*c₁`.  Every bound already established for
+`NormalNumbers.ElliottTwistedGraph.twistedPrimeGraphMultiplier` — in particular the fourth-moment /
+additive-energy bound — therefore applies verbatim. -/
+theorem dilatedTwistedMultiplier_eq (T D h c₁ : ℕ) (s : Finset ℕ) (w : ℕ → ℂ) (t u : ℤ) :
+    dilatedTwistedMultiplier T D h c₁ s w t u =
+      NormalNumbers.ElliottTwistedGraph.twistedPrimeGraphMultiplier T 1 s w
+        (t * h - u * D * c₁) := by
+  simp [dilatedTwistedMultiplier, NormalNumbers.ElliottTwistedGraph.twistedPrimeGraphMultiplier]
+
+/-- **The exact Fourier identity for the dilated graph mean.**  Compare
+`NormalNumbers.ElliottTwistedGraph.pairTwistedPrimeGraphMean_eq_fourier`: the only change is the
+extra frequency variable `u`, ranging over the `α` aliases, and the normalisation `(T*α)⁻¹`. -/
+theorem dilatedPairTwistedMean_eq_fourier {H T α D : ℕ} [NeZero T] [NeZero α]
+    (hTD : T = α * D) (w : ℕ → ℂ) (b c : Fin H → ℂ) (c₁ h : ℕ) (s : Finset ℕ)
+    (hT : ∀ p ∈ s, H + p * h ≤ T) :
+    dilatedPairTwistedMean w b c α c₁ h s = ((T : ℂ) * α)⁻¹ *
+      ∑ t ∈ Finset.range T, ∑ u ∈ Finset.range α,
+        dilatedBlockPairing T D b c (t : ℤ) (u : ℤ) *
+          dilatedTwistedMultiplier T D h c₁ s w (t : ℤ) (u : ℤ) := by
+  classical
+  have hα : α ≠ 0 := NeZero.ne α
+  have hD : D ≠ 0 := by
+    rintro rfl
+    exact (NeZero.ne T) (by simp [hTD])
+  have hTα : ((T : ℂ) * α) ≠ 0 :=
+    mul_ne_zero (Nat.cast_ne_zero.mpr (NeZero.ne T)) (Nat.cast_ne_zero.mpr hα)
+  have hswap : (∑ t ∈ Finset.range T, ∑ u ∈ Finset.range α,
+        dilatedBlockPairing T D b c (t : ℤ) (u : ℤ) *
+          dilatedTwistedMultiplier T D h c₁ s w (t : ℤ) (u : ℤ)) =
+      ∑ p ∈ s, ∑ t ∈ Finset.range T, ∑ u ∈ Finset.range α,
+        dilatedBlockPairing T D b c (t : ℤ) (u : ℤ) *
+          (w p * (p : ℂ)⁻¹ *
+            phase T ((t : ℤ) * h - (u : ℤ) * D * c₁) (p : ℤ)) := by
+    simp only [dilatedTwistedMultiplier, Finset.mul_sum]
+    rw [show (∑ t ∈ Finset.range T, ∑ u ∈ Finset.range α, ∑ p ∈ s,
+          dilatedBlockPairing T D b c (t : ℤ) (u : ℤ) *
+            (w p * (p : ℂ)⁻¹ * phase T ((t : ℤ) * h - (u : ℤ) * D * c₁) (p : ℤ))) =
+        ∑ t ∈ Finset.range T, ∑ p ∈ s, ∑ u ∈ Finset.range α,
+          dilatedBlockPairing T D b c (t : ℤ) (u : ℤ) *
+            (w p * (p : ℂ)⁻¹ * phase T ((t : ℤ) * h - (u : ℤ) * D * c₁) (p : ℤ)) from
+      Finset.sum_congr rfl fun t _ ↦ Finset.sum_comm]
+    exact Finset.sum_comm
+  have hper : ∀ p ∈ s,
+      (∑ t ∈ Finset.range T, ∑ u ∈ Finset.range α,
+        dilatedBlockPairing T D b c (t : ℤ) (u : ℤ) *
+          (w p * (p : ℂ)⁻¹ *
+            phase T ((t : ℤ) * h - (u : ℤ) * D * c₁) (p : ℤ))) =
+      ((T : ℂ) * α) * (w p * (p : ℂ)⁻¹ *
+        ∑ m : Fin H, dilatedPairShiftEdge b c α ((p * c₁ : ℕ) : ℤ) (p * h) m) := by
+    intro p hp
+    have hkey := sum_dilatedBlockPairing_mul_phase (H := H) (T := T) (α := α) (D := D)
+      hTD b c ((p * c₁ : ℕ) : ℤ) (p * h) (hT p hp)
+    calc
+      _ = w p * (p : ℂ)⁻¹ * ∑ t ∈ Finset.range T, ∑ u ∈ Finset.range α,
+            dilatedBlockPairing T D b c (t : ℤ) (u : ℤ) *
+              phase T (t : ℤ) ((p * h : ℕ) : ℤ) * phase α (u : ℤ) (-((p * c₁ : ℕ) : ℤ)) := by
+        rw [Finset.mul_sum]
+        refine Finset.sum_congr rfl fun t _ ↦ ?_
+        rw [Finset.mul_sum]
+        refine Finset.sum_congr rfl fun u _ ↦ ?_
+        have : phase T (t : ℤ) ((p * h : ℕ) : ℤ) * phase α (u : ℤ) (-((p * c₁ : ℕ) : ℤ)) =
+            phase T ((t : ℤ) * h - (u : ℤ) * D * c₁) (p : ℤ) := by
+          have := phase_pair_single_frequency (T := T) (α := α) (D := D) hTD hα hD
+            (t : ℤ) (u : ℤ) (h : ℤ) (c₁ : ℤ) (p : ℤ)
+          push_cast at this ⊢
+          rw [← this]
+        rw [← this]
+        ring
+      _ = _ := by rw [hkey]; ring
+  rw [hswap, Finset.sum_congr rfl hper, ← Finset.mul_sum, ← mul_assoc,
+    inv_mul_cancel₀ hTα, one_mul, dilatedPairTwistedMean]
+
 /-! ## The consequence that keeps the multiplier one-dimensional -/
 
 /-- **The two phases combine into a single frequency in the prime `q`.**  This is why the whole

@@ -93,7 +93,37 @@ Markov / entropy stack above it are untouched.
 
 All `#print axioms` = `[propext, Classical.choice, Quot.sound]`.
 
-## NEXT (lap 18)
+## Lap 18 (same session): the dilated graph mean has an exact Fourier identity
+
+Also in `src/NormalNumbers/ElliottDilatedPairing.lean` (still zero sorry):
+
+* `dilatedPairTwistedMean w b c α c₁ h s = ∑_{p∈s} w p · p⁻¹ · ∑_m dilatedPairShiftEdge b c α (p c₁) (p h) m`
+  — the prime `p` contributes the edge at residue class `p c₁ (mod α)` and step `p h`.
+* `dilatedTwistedMultiplier T D h c₁ s w t u = ∑_{p∈s} w p · p⁻¹ · e_T((t h − u D c₁) p)`.
+* **`dilatedTwistedMultiplier_eq`** — this is *literally*
+  `twistedPrimeGraphMultiplier T 1 s w (t*h − u*D*c₁)`.  So the fourth-moment / additive-energy
+  bound `fourth_moment_twistedPrimeGraphMultiplier_le_energy`, the trivial bound, the dyadic
+  bounds — all of the proved multiplier theory — apply to the dilated graph **verbatim**, at a
+  shifted frequency.  Nothing in the arithmetic layer has to be re-proved.
+* **`dilatedPairTwistedMean_eq_fourier`** —
+  `dilatedPairTwistedMean = (T·α)⁻¹ ∑_{t<T} ∑_{u<α} dilatedBlockPairing T D b c t u · dilatedTwistedMultiplier T D h c₁ s w t u`,
+  under `∀ p ∈ s, H + p*h ≤ T`.  The exact analogue of
+  `pairTwistedPrimeGraphMean_eq_fourier`; the only changes are the extra alias variable `u` and the
+  normalisation `(T·α)⁻¹`.
+* Supporting: `phase_pair_single_frequency` (the `h`-form of the collapse).
+
+## NEXT (lap 19)
+
+1. The large-frequency bound: port `norm_pairTwistedPrimeGraphMean_le_largeFrequencies` to the
+   dilated mean.  The pointwise split at the threshold `θ` needs Parseval on both blocks; the only
+   new point is that `b` is transformed at `t + u D` while `c` is at `t`, so Cauchy–Schwarz must be
+   applied to the two *different* frequencies (AM–GM on `‖b̂(t+uD)‖² + ‖ĉ̄(t)‖²` still works, and
+   the `u`-sum runs over `α` = a constant many aliases, each a permutation of `range T`).
+2. Then re-base `finiteSequenceBlock` at `a*(n+1)` and identify the dilated edge with
+   `ElliottAffineGraph.affineTwistedObservable` (the re-basing shift `q*c₁ ≤ P|c₁|` is absorbed by
+   the existing translation error `2j/(L·M)`).
+
+## Older NEXT (superseded by the two items above)
 
 1. Re-base the sequence block at `a*(n+1)` and prove the analogue of
    `pairTwistedSum_sequenceBlock` for the dilated edge, i.e. identify
