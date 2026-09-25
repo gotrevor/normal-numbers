@@ -9679,3 +9679,27 @@ per-window saving has to be summed.
 `M·J` as a stack of windows; the stated endpoint form may need adjusting), and the assembly
 `logToNatural_two_of_noExc`.  Both remaining sub-goals are bookkeeping; attack
 `dyadic_decomposition` next, since the assembly's exact shape depends on it.
+
+## Lap 66 (2026-09-25) — `class_sum_split` proved: sub-goal 2 down, two left
+
+`class_sum_split` replaces the lap-64 stub `dyadic_decomposition` with the statement the
+assembly actually needs, and it is proved (`[propext, Classical.choice, Quot.sound]`):
+
+    ∑_{n < M·J + r, n ≡ r (M)} F n  =  (∑_{n < r, n ≡ r (M)} F n)  +  ∑_{m<J} F(M m + r)
+
+i.e. the progression sum is the class sum below `M·J + r` minus a head that does not depend on
+`J`, so the head dies under the `1/J` normalisation.  The bijection is `n ↦ (n−r)/M` with
+inverse `m ↦ M m + r`; `M ∣ n − r` comes from `Nat.modEq_iff_dvd'`, which is the step `omega`
+cannot do (truncated subtraction under a modulus).
+
+**Remaining on this crux (2 sorries in `src/`):**
+* `dyadic_window_bound_of_noExc` — instantiate `TwoPointNaturalCorrelationNoExc` at `X = N²`,
+  `L = log X = 2 log N`, `W = M`, `b = r`, `h₁ = 1`, `h₂ = 2`.  `N = √X` is exactly the left
+  endpoint of the admissible range, so the instantiation is legal; the work is the
+  `TTNonPretentious` side condition and the `(W/N) •` normalisation.
+* `logToNatural_two_of_noExc` — the assembly.  All three ingredients now exist:
+  `class_sum_split` (lap 66), `sum_Ioc_pow_decomp` at `A = 2` (`C3MrtRungTwo:181`) for the
+  dyadic stack, and `dyadic_sum_geometric` / `tendsto_geom_weighted_avg` (lap 65) for the sum.
+
+Once those two land, `ConjC3`'s `D = 2` layer is implied by removing the exceptional set from
+TT Theorem 3.1 — a named open problem — and by nothing else.

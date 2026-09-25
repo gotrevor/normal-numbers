@@ -112,12 +112,67 @@ theorem dyadic_window_bound_of_noExc (h : TwoPointNaturalCorrelationNoExc)
           ≤ Cst * (2 * Real.log N) ^ (-c) * (N : ℝ) / (M : ℝ) := by
   sorry
 
-/-- **Sub-goal 2 (bookkeeping).**  The class below `M·J` is the disjoint union of dyadic
-windows plus a bounded head. -/
-theorem dyadic_decomposition {M r : ℕ} (hM : 0 < M) (J : ℕ) (F : ℕ → ℂ) :
-    ∑ m ∈ range J, F (M * m + r)
-      = ∑ n ∈ (range (M * J + r)).filter (fun n => n % M = r % M ∧ r ≤ n), F n := by
-  sorry
+open scoped Classical in
+/-- **Sub-goal 2 (bookkeeping), PROVED.**  The progression sum `∑_{m<J} F(M m + r)` is the
+class sum below `M·J + r` minus a fixed head of at most `r/M + 1` terms.  The head is
+independent of `J`, so it dies under the `1/J` normalisation. -/
+theorem class_sum_split {M : ℕ} (hM : 0 < M) (r J : ℕ) (F : ℕ → ℂ) :
+    ∑ n ∈ (range (M * J + r)).filter (fun n => n % M = r % M), F n
+      = (∑ n ∈ (range r).filter (fun n => n % M = r % M), F n)
+        + ∑ m ∈ range J, F (M * m + r) := by
+  classical
+  set p : ℕ → Prop := fun n => n % M = r % M with hp
+  have hsplit : (range (M * J + r)).filter (fun n => p n)
+      = ((range r).filter (fun n => p n))
+        ∪ (((range (M * J + r)).filter (fun n => p n)).filter (fun n => r ≤ n)) := by
+    ext n
+    simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_range]
+    constructor
+    · rintro ⟨h1, h2⟩
+      rcases lt_or_ge n r with h | h
+      · exact Or.inl ⟨h, h2⟩
+      · exact Or.inr ⟨⟨h1, h2⟩, h⟩
+    · rintro (⟨h1, h2⟩ | ⟨⟨h1, h2⟩, h3⟩)
+      · exact ⟨by omega, h2⟩
+      · exact ⟨h1, h2⟩
+  have hdisj : Disjoint ((range r).filter (fun n => p n))
+      (((range (M * J + r)).filter (fun n => p n)).filter (fun n => r ≤ n)) := by
+    refine Finset.disjoint_left.2 fun n hn hn' => ?_
+    have h1 := (Finset.mem_range.1 (Finset.mem_filter.1 hn).1)
+    have h2 := (Finset.mem_filter.1 hn').2
+    omega
+  rw [hsplit, Finset.sum_union hdisj]
+  congr 1
+  have hrec : ∀ n : ℕ, r ≤ n → n % M = r % M → M * ((n - r) / M) + r = n := by
+    intro n h1 h2
+    have hdvd : M ∣ (n - r) := (Nat.modEq_iff_dvd' h1).1 h2.symm
+    have heq : M * ((n - r) / M) = n - r := Nat.mul_div_cancel' hdvd
+    rw [heq]
+    exact Nat.sub_add_cancel h1
+  refine Finset.sum_nbij' (fun n => (n - r) / M) (fun m => M * m + r) ?_ ?_ ?_ ?_ ?_
+  · intro n hn
+    rw [Finset.mem_filter, Finset.mem_filter, Finset.mem_range] at hn
+    obtain ⟨⟨h1, h2⟩, h3⟩ := hn
+    rw [Finset.mem_range]
+    have hk := hrec n h3 h2
+    have hMJ : M * ((n - r) / M) < M * J := by omega
+    exact lt_of_mul_lt_mul_left hMJ (Nat.zero_le M)
+  · intro m hm
+    rw [Finset.mem_range] at hm
+    rw [Finset.mem_filter, Finset.mem_filter, Finset.mem_range]
+    refine ⟨⟨Nat.add_lt_add_right ((Nat.mul_lt_mul_left hM).2 hm) r, ?_⟩, by omega⟩
+    rw [hp]
+    simp [Nat.mul_add_mod]
+  · intro n hn
+    rw [Finset.mem_filter, Finset.mem_filter] at hn
+    obtain ⟨⟨_, h2⟩, h3⟩ := hn
+    exact hrec n h3 h2
+  · intro m _
+    rw [Nat.add_sub_cancel, Nat.mul_div_cancel_left _ hM]
+  · intro n hn
+    rw [Finset.mem_filter, Finset.mem_filter] at hn
+    obtain ⟨⟨_, h2⟩, h3⟩ := hn
+    rw [hrec n h3 h2]
 
 /-- **The geometric Toeplitz kernel.**  If `a i → 0` and `a ≥ 0`, then the geometrically
 weighted averages `(∑_{i<I} 2^i a i)/2^I` tend to `0`: the weights concentrate on the top
