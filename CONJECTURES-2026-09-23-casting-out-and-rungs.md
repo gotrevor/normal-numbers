@@ -117,3 +117,13 @@ the only open input.
   version proved; L¹ truncation family refuted).  Leaf A (covering) PROVED.  Its one-slot piece,
   the Delange slot (`DelangeSlot.twisted_omegaLarge_mean_tendsto_zero`), is PROVED, including
   PNT in APs in-kernel via the vendored PNT+ MediumPNT chain (`src/PNTPort`).
+
+## C4 PROVED (2026-09-25)
+`NormalNumbers.Abelian.c4_realizable` (branch `wip/c4-infinite`, `src/NormalNumbers/AbelianWindowBuild.lean`):
+for every `S ⊆ {L ≥ 1}` with `S = ∅` or `1 ∈ S` — infinite `S` included — some binary sequence is
+abelian-normal at exactly the window lengths in `S`.  With `abelianAt_one_of_abelianAt` (necessity)
+the dichotomy is complete.  `#print axioms`: the standard three, host-verified.  Construction: a
+layered limit of block perturbations of a binary normal sequence, one gadget layer per excluded
+length ("arm"), periods growing fast enough that each layer's density defect `3/(16·2^n)` sums;
+at an arm the limiting block frequency is `(1 − 1/(4Q))/2^L < 2^{−L}`.  Handoff:
+`HANDOFF-c4-2026-09-25-lap18-PROVED.md` on the branch.
