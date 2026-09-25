@@ -9697,10 +9697,21 @@ partial-sum Euler expansion): every `1 ≤ m ≤ Y` divides `eulerModulus Y = �
 sum, `IsMultiplicative.map_prod` over the pairwise-coprime prime powers splits it, and
 `Nat.sum_divisors_prime_pow` gives the local factors.
 
+**Lap 48 landed step 1 too:** `sum_Icc_le_exp_prime_sum` — for `f` multiplicative, nonnegative,
+with `f n ≤ 1/n`,
+`∑_{m ≤ Y} f m ≤ exp(1 + ∑_{p ≤ Y} f p)`.
+Ingredients, all in the same file and all trust-triple: `local_factor_le` (the `p`-local factor is
+`≤ 1 + f p + 1/(p(p-1))`, geometric tail via `geom_sum_eq`), `sum_primesBelow_inv_mul_pred_le_one`
+(the prime tail `∑_p 1/(p(p-1)) ≤ 1`, by the telescoping `sum_Icc_inv_mul_pred`), then
+`Real.add_one_le_exp` + `Real.exp_sum`.
+With `f m = h m / m` this is `∑_{m ≤ Y} h(m)/m ≤ e · exp(∑_{p ≤ Y} h(p)/p)`, i.e. the crude
+mean-value bound `≪ log Y · exp(-Σ_Y)` once Mertens is applied to `∑_{p≤Y} 1/p`.
+
 **Next on leaf 2, in order.**
-1. Specialize to `f m = h m / m` with `h` nonnegative multiplicative, `h ≤ 1`: the local factor is
-   `∑_{k ≤ K} h(p^k)/p^k ≤ 1 + h(p)/p + 1/(p(p-1))`, hence
-   `∏_{p ≤ Y} ≤ exp(∑_{p ≤ Y} h(p)/p + O(1))`, i.e. `≪ log Y · exp(-Σ_Y)` via Mertens.
-   (`Real.add_one_le_exp` + `Real.exp_sum`; Mertens is already available in the dependency.)
-2. That lands Case A's regime `log W ≥ θ log X` outright.
+1. Turn `exp(∑_{p ≤ Y} f p)` into `C · log Y · exp(-Σ_Y)` for `f m = ‖g m‖/m`:
+   `∑_{p≤Y} ‖g p‖/p = ∑_{p≤Y} 1/p - Σ_Y = log log Y + O(1) - Σ_Y`, so the bound is
+   `≪ log Y · exp(-Σ_Y)`.  Mertens' second theorem is already available in the dependency
+   (`Util/MertensSecond`-style; check `Erdos67b`/`PrimeEstimates` first).
+2. That lands Case A's regime `log W ≥ θ log X` outright (the window `(Y/W, Y]` is bounded by the
+   full sum and `log Y ≪ log W / θ`).
 3. Hall's inequality (Halberstam–Richert Thm 01) for the thin-window regime — still the hard core.

@@ -18,5 +18,6 @@ Euler-product upper bound for a nonnegative multiplicative function.  See `PENDI
 
 ## NEXT (lap 48)
 
-Specialize the Euler product to `f m = h m / m` and bound it by `C · log Y · exp(-Σ_Y)`; that
+Turn the exponential bound into `C · log Y · exp(-Σ_Y)` via Mertens; that settles Case A's
+`log W ≥ θ log X` regime.  Then Hall.
 settles Case A's `log W ≥ θ log X` regime.  Then Hall.
