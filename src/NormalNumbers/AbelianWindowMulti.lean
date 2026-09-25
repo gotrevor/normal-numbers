@@ -343,4 +343,183 @@ theorem not_isAbelianAt_of_one_defect (g : ℕ → ℕ → ℕ) (c : ℕ → ℕ
     exact mul_right_cancel₀ (ne_of_gt h2L) h2
   exact hdef (by linear_combination hcancel)
 
+/-! ## The defect at an arm -/
+
+theorem blockGf_empty (q : ℕ) (T : ℕ → ℕ → ℕ) : blockGf q T ∅ = C ((2 : ℝ) ^ q) := by
+  rw [blockGf]
+  simp only [Finset.filter_empty, Finset.card_empty, pow_zero, Finset.sum_const,
+    Finset.card_range, nsmul_eq_mul, mul_one]
+  push_cast
+  rw [Polynomial.C_pow, Polynomial.C_ofNat]
+
+theorem segSet_defect (q p a : ℕ) (hq : p + a + 1 < q) :
+    segSet q a (p + 1) 0 = Finset.Ico (p + 1) (p + a + 1) := by
+  rw [segSet_eq_Ico_gen]
+  simp only [Nat.zero_mul, Nat.sub_zero]
+  congr 1
+  omega
+
+theorem segSet_defect_pos (q p a b : ℕ) (hq : p + a + 1 < q) (hb : 1 ≤ b) :
+    segSet q a (p + 1) b = ∅ := by
+  rw [segSet_eq_Ico_gen]
+  have hbq : q ≤ b * q := Nat.le_mul_of_pos_left q (by omega)
+  have h1 : p + 1 - b * q = 0 := by omega
+  have h2 : min q (p + 1 + a - b * q) = 0 := by omega
+  rw [h1, h2]
+  rfl
+
+/-- The constant term of the plain product is a positive integer. -/
+theorem prod_const_coeff_pos (s : Finset ℕ) (I : Finset ℕ) :
+    0 < (∏ i ∈ s, (if i ∈ I then (1 + X : ℝ[X]) else 2)).coeff 0 := by
+  classical
+  have h : (∏ i ∈ s, (if i ∈ I then (1 + X : ℝ[X]) else 2)).coeff 0
+      = ∏ i ∈ s, (if i ∈ I then (1 : ℝ) else 2) := by
+    rw [← Polynomial.constantCoeff_apply, map_prod]
+    refine Finset.prod_congr rfl (fun i _ => ?_)
+    by_cases hI : i ∈ I <;> simp [hI]
+  rw [h]
+  exact Finset.prod_pos (fun i _ => by by_cases hI : i ∈ I <;> simp [hI])
+
+/-- **The defective segment.**  At the residue `p + 1` the first block's trace is exactly the
+window that separates both pairs of the gadget `(p, a)`, and the gadget's correction pulls the
+constant term strictly BELOW the Binomial value. -/
+theorem blockGf_defect_coeff (q : ℕ) (gs : List (ℕ × ℕ)) (p a : ℕ) (hmem : (p, a) ∈ gs)
+    (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup)
+    (hinj : ∀ pa ∈ gs, ∀ qb ∈ gs, pa.2 = qb.2 → pa = qb) :
+    (blockGf q (multiG q gs) (Finset.Ico (p + 1) (p + a + 1))).coeff 0
+      < (2 : ℝ) ^ q / 2 ^ a := by
+  classical
+  obtain ⟨ha, hq⟩ := hok (p, a) hmem
+  set I := Finset.Ico (p + 1) (p + a + 1) with hIdef
+  have hI : I ⊆ range q := by
+    intro i hi
+    rw [hIdef, Finset.mem_Ico] at hi
+    exact Finset.mem_range.mpr (by omega)
+  have hsepoth : ∀ qb ∈ gs, qb ≠ (p, a) → Unsep I qb := by
+    intro qb hqb hne
+    obtain ⟨p', a'⟩ := qb
+    obtain ⟨ha', hq'⟩ := hok (p', a') hqb
+    refine sep_of_ne ha' ?_
+    intro ⟨h1, h2⟩
+    have : a' = a := by omega
+    exact hne (hinj (p', a') hqb (p, a) hmem (by simpa using this))
+  have hred := blockGf_reduce q I hI gs.length gs rfl (p, a) hmem hok hgs hnd hsepoth
+  have hb : ∀ k : ℕ, ((1 + X : ℝ[X]) ^ k).coeff 0 = 1 := by
+    intro k
+    rw [add_comm, Polynomial.coeff_X_add_one_pow]
+    simp
+  rw [hred, blockGf_single q p a ha hq I hI, Polynomial.coeff_add, prod_base_eq q I hI,
+    Polynomial.coeff_C_mul, hb]
+  have hcard : I.card = a := by rw [hIdef, Nat.card_Ico]; omega
+  have hp : p ∉ I := by rw [hIdef, Finset.mem_Ico]; omega
+  have hp1 : p + 1 ∈ I := by rw [hIdef, Finset.mem_Ico]; omega
+  have hpa : p + a ∈ I := by rw [hIdef, Finset.mem_Ico]; omega
+  have hpa1 : p + a + 1 ∉ I := by rw [hIdef, Finset.mem_Ico]; omega
+  rw [if_neg hp, if_pos hp1, if_pos hpa, if_neg hpa1, hcard]
+  have hcorr : ((X : ℝ[X]) ^ (1 : ℕ) - X ^ (0 : ℕ)) * (X ^ (0 : ℕ) - X ^ (1 : ℕ))
+      = -(X - 1) ^ 2 := by ring
+  rw [hcorr, Polynomial.mul_coeff_zero]
+  have hF := prod_const_coeff_pos ((range q) \ quadSet p a) I
+  have hsq : ((-(X - 1) ^ 2 : ℝ[X])).coeff 0 = -1 := by
+    simp only [neg_pow, Polynomial.coeff_neg]
+    rw [show ((X - 1 : ℝ[X])) ^ 2 = X ^ 2 - 2 * X + 1 by ring]
+    simp
+  rw [hsq, mul_one]
+  nlinarith [hF]
+
+/-! ## Assembling the exact window set -/
+
+theorem segGf_eq_blockGf (q : ℕ) (hq0 : 0 < q) (T : ℕ → ℕ → ℕ) (L r b : ℕ) :
+    (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes T q L r b d)
+      = blockGf q T (segSet q L r b) := by
+  rw [blockGf]
+  exact Finset.sum_congr rfl (fun d _ => by rw [segOnes_eq_card T hq0 L r b d])
+
+/-- The segment law is exactly Binomial whenever every gadget is unseparated. -/
+theorem multi_segGf_plain (q : ℕ) (gs : List (ℕ × ℕ)) (hq0 : 0 < q)
+    (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup) (L r b : ℕ)
+    (hsep : ∀ pa ∈ gs, Unsep (segSet q L r b) pa) :
+    (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q L r b d)
+      = C (((2 ^ q : ℕ) : ℝ) / 2 ^ segLen q L r b) * (1 + X) ^ segLen q L r b := by
+  have hsub : segSet q L r b ⊆ range q := fun u hu => (Finset.mem_filter.mp hu).1
+  rw [segGf_eq_blockGf q hq0 _ L r b,
+    blockGf_eq_plain q gs (segSet q L r b) hsub hok hgs hnd hsep,
+    prod_base_eq q _ hsub, segLen_eq_card q L r b hq0]
+  norm_num
+
+/-- At a residue other than `p + 1`, a length-`a` window never separates any gadget, provided the
+arms of the gadgets are distinct. -/
+theorem segSet_unsep_other (q : ℕ) (gs : List (ℕ × ℕ)) (p a : ℕ) (hmem : (p, a) ∈ gs)
+    (hok : ∀ pa ∈ gs, GadOk q pa)
+    (hinj : ∀ pa ∈ gs, ∀ qb ∈ gs, pa.2 = qb.2 → pa = qb) (r b : ℕ) (hr : r < q)
+    (hrne : r ≠ p + 1) : ∀ pa ∈ gs, Unsep (segSet q a r b) pa := by
+  intro pa hpa
+  obtain ⟨p', a'⟩ := pa
+  obtain ⟨ha', hq'⟩ := hok (p', a') hpa
+  rw [segSet_eq_Ico_gen]
+  refine sep_of_ne ha' ?_
+  intro ⟨h1, h2⟩
+  rcases Nat.eq_zero_or_pos b with rfl | hb1
+  · simp only [Nat.zero_mul, Nat.sub_zero] at h1 h2
+    have hA : a' = a := by omega
+    have := hinj (p', a') hpa (p, a) hmem (by simpa using hA)
+    have hp' : p' = p := by
+      have := congrArg Prod.fst this; simpa using this
+    omega
+  · have hbq : q ≤ b * q := Nat.le_mul_of_pos_left q hb1
+    omega
+
+/-- **The multi-gadget sequence is NOT abelian at any of the gadget arms.** -/
+theorem multi_not_isAbelianAt (q : ℕ) (gs : List (ℕ × ℕ)) (hq0 : 0 < q) (p a : ℕ)
+    (hmem : (p, a) ∈ gs) (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup)
+    (hinj : ∀ pa ∈ gs, ∀ qb ∈ gs, pa.2 = qb.2 → pa = qb) (c : ℕ → ℕ)
+    (hcB : ∀ m, c m < 2 ^ q) (hc : IsNormalSequence (2 ^ q) c) :
+    ¬ IsAbelianAt (blockSeq (multiG q gs) c q) a := by
+  classical
+  obtain ⟨ha, hq⟩ := hok (p, a) hmem
+  simp only at ha hq
+  have hB0 : 0 < 2 ^ q := by positivity
+  set S := q + a with hSdef
+  have hS1 : 1 ≤ S := by omega
+  have hSle : q + a ≤ q * S + 1 := by
+    have : S ≤ q * S := Nat.le_mul_of_pos_left S hq0
+    omega
+  have hfib : ∀ r < q, ∀ t < a, (r + t) / q < S := by
+    intro r hr t ht
+    have := Nat.div_le_self (r + t) q
+    omega
+  have hcast : ((2 ^ q : ℕ) : ℝ) = (2 : ℝ) ^ q := by push_cast; ring
+  refine not_isAbelianAt_of_one_defect (multiG q gs) c hB0 hq0 hcB hc a S (p + 1) hSle
+    (by omega) ?_ ?_
+  · intro r hr hrne
+    exact winGf_eq_binomial (multiG q gs) hB0 S a r (hfib r hr) (fun b _ =>
+      multi_segGf_plain q gs hq0 hok hgs hnd a r b
+        (segSet_unsep_other q gs p a hmem hok hinj r b hr hrne))
+  · have hprod : winGf (multiG q gs) q (2 ^ q) S a (p + 1)
+        = blockGf q (multiG q gs) (Finset.Ico (p + 1) (p + a + 1)) * (C ((2 : ℝ) ^ q)) ^ (S - 1) := by
+      rw [winGf_eq_prod (multiG q gs) hB0 q S a (p + 1) (hfib (p + 1) (by omega)),
+        Finset.range_eq_Ico, Finset.prod_eq_prod_Ico_succ_bot (by omega : (0 : ℕ) < S)]
+      congr 1
+      · rw [segGf_eq_blockGf q hq0 _ a (p + 1) 0, segSet_defect q p a hq]
+      · have hall : ∀ b ∈ Finset.Ico (0 + 1) S,
+            (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q a (p + 1) b d)
+              = C ((2 : ℝ) ^ q) := by
+          intro b hb
+          rw [Finset.mem_Ico] at hb
+          rw [segGf_eq_blockGf q hq0 _ a (p + 1) b, segSet_defect_pos q p a b hq (by omega),
+            blockGf_empty]
+        rw [Finset.prod_congr rfl hall, Finset.prod_const, Nat.card_Ico]
+    have hc0 := blockGf_defect_coeff q gs p a hmem hok hgs hnd hinj
+    have hpow : ((C ((2 : ℝ) ^ q) : ℝ[X]) ^ (S - 1)).coeff 0 = ((2 : ℝ) ^ q) ^ (S - 1) := by
+      rw [← map_pow, Polynomial.coeff_C_zero]
+    have hpos : (0 : ℝ) < ((2 : ℝ) ^ q) ^ (S - 1) := by positivity
+    have hsplit : ((2 ^ q : ℕ) : ℝ) ^ S / 2 ^ a
+        = ((2 : ℝ) ^ q / 2 ^ a) * ((2 : ℝ) ^ q) ^ (S - 1) := by
+      have hp2 : ((2 : ℝ) ^ q) ^ S = (2 : ℝ) ^ q * ((2 : ℝ) ^ q) ^ (S - 1) := by
+        rw [← pow_succ' ((2 : ℝ) ^ q) (S - 1), show S - 1 + 1 = S from by omega]
+      rw [hcast, hp2]
+      ring
+    rw [hprod, Polynomial.mul_coeff_zero, hpow, hsplit]
+    exact ne_of_lt (by nlinarith [hc0, hpos])
+
 end NormalNumbers.Abelian
