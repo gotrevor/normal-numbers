@@ -8,6 +8,7 @@ import NormalNumbers.ElliottRankin
 import NormalNumbers.ElliottReindex
 import NormalNumbers.ElliottDivisorTail
 import NormalNumbers.ElliottExpand
+import NormalNumbers.ElliottRestricted
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -95,6 +96,10 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottExpand.posExt_eq_sum_divTerm
 #print axioms NormalNumbers.ElliottExpand.elliottLogCorrelation_expand
 #print axioms NormalNumbers.ElliottExpand.norm_elliottLogCorrelation_le_truncated
+
+-- each restricted correlation becomes genuine correlations at the reduced scale
+#print axioms NormalNumbers.ElliottRestricted.det_newShift
+#print axioms NormalNumbers.ElliottRestricted.norm_restrictedCorr_le
 #print axioms NormalNumbers.ElliottLeafTwo.exists_squarefull_tail
 
 -- the dependency's proved special case
