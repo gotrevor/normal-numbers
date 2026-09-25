@@ -95,7 +95,8 @@ theorem one_sub_re_pow_le {b : ℂ} (hb : ‖b‖ ≤ 1) (k : ℕ) :
 
 /-! ### The bootstrap -/
 
-theorem twistDefect_nonneg {w : ℕ → ℂ} {β : ℂ} (hw : ∀ p, ‖w p‖ ≤ 1) (hβ : ‖β‖ ≤ 1) (X : ℕ) :
+theorem twistDefect_nonneg {w : ℕ → ℂ} {β : ℂ} {X : ℕ} (hw : ∀ p ∈ primesUpTo X, ‖w p‖ ≤ 1)
+    (hβ : ‖β‖ ≤ 1) :
     0 ≤ twistDefect w β X := by
   refine Finset.sum_nonneg ?_
   intro p hp
@@ -103,7 +104,7 @@ theorem twistDefect_nonneg {w : ℕ → ℂ} {β : ℂ} (hw : ∀ p, ‖w p‖ �
     exact_mod_cast (mem_primesUpTo.mp hp).1.pos
   have hnorm : ‖(starRingEnd ℂ) β * w p‖ ≤ 1 := by
     rw [norm_mul, RCLike.norm_conj]
-    exact mul_le_one₀ hβ (norm_nonneg _) (hw p)
+    exact mul_le_one₀ hβ (norm_nonneg _) (hw p hp)
   have : ((starRingEnd ℂ) β * w p).re ≤ 1 :=
     le_trans (Complex.re_le_norm _) hnorm
   have hnum : 0 ≤ 1 - ((starRingEnd ℂ) β * w p).re := by linarith
@@ -111,16 +112,16 @@ theorem twistDefect_nonneg {w : ℕ → ℂ} {β : ℂ} (hw : ∀ p, ‖w p‖ �
 
 /-- **The power bootstrap.**  Clustering around `β` propagates to the `k`-th powers, at the
 cost of one square root.  `‖w p‖ ≤ 1` is all that is needed; `β` is unimodular. -/
-theorem twistDefect_pow_le {w : ℕ → ℂ} {β : ℂ} (hw : ∀ p, ‖w p‖ ≤ 1) (hβ : ‖β‖ = 1)
-    (k : ℕ) (X : ℕ) :
+theorem twistDefect_pow_le {w : ℕ → ℂ} {β : ℂ} {X : ℕ} (hw : ∀ p ∈ primesUpTo X, ‖w p‖ ≤ 1)
+    (hβ : ‖β‖ = 1) (k : ℕ) :
     twistDefect (fun p => w p ^ k) (β ^ k) X ≤
       (k : ℝ) * Real.sqrt (2 * twistDefect w β X * primeMass X) := by
   classical
   set b : ℕ → ℂ := fun p => (starRingEnd ℂ) β * w p with hb
-  have hbnorm : ∀ p, ‖b p‖ ≤ 1 := by
-    intro p
+  have hbnorm : ∀ p ∈ primesUpTo X, ‖b p‖ ≤ 1 := by
+    intro p hp
     rw [hb, norm_mul, RCLike.norm_conj, hβ, one_mul]
-    exact hw p
+    exact hw p hp
   -- rewrite both defects in terms of `b`
   have hrw : ∀ p, ((starRingEnd ℂ) (β ^ k) * w p ^ k) = b p ^ k := by
     intro p
@@ -131,15 +132,15 @@ theorem twistDefect_pow_le {w : ℕ → ℂ} {β : ℂ} (hw : ∀ p, ‖w p‖ �
     intro p hp
     have hpR : (0 : ℝ) < (p : ℝ) := by
       exact_mod_cast (mem_primesUpTo.mp hp).1.pos
-    have := one_sub_re_pow_le (hbnorm p) k
+    have := one_sub_re_pow_le (hbnorm p hp) k
     rw [hrw p]
     gcongr
   refine le_trans hstep ?_
   -- Cauchy–Schwarz
   set a : ℕ → ℝ := fun p => 1 - (b p).re with ha
   have hanonneg : ∀ p ∈ primesUpTo X, 0 ≤ a p := by
-    intro p _
-    have : (b p).re ≤ 1 := le_trans (Complex.re_le_norm _) (hbnorm p)
+    intro p hp
+    have : (b p).re ≤ 1 := le_trans (Complex.re_le_norm _) (hbnorm p hp)
     rw [ha]; linarith
   have hCS : (∑ p ∈ primesUpTo X, Real.sqrt (a p) / (p : ℝ)) ^ 2 ≤
       twistDefect w β X * primeMass X := by
@@ -257,6 +258,149 @@ theorem exists_unimodular_twistDefect_le {q : ℕ} (χ : DirichletCharacter ℂ 
       rw [hfrac, Complex.ofReal_re]
     rw [hre]
     nlinarith
+
+/-! ### Killing the character: the `φ(q)`-th power is purely Archimedean -/
+
+/-- `(p^{it})^k = p^{i(kt)}`. -/
+theorem archimedeanTwist_pow {p : ℕ} (hp : 0 < p) (t : ℝ) (k : ℕ) :
+    archimedeanTwist t p ^ k = archimedeanTwist ((k : ℝ) * t) p := by
+  rw [archimedeanTwist_eq_exp hp, archimedeanTwist_eq_exp hp, ← Complex.exp_nat_mul]
+  congr 1
+  push_cast
+  ring
+
+/-- **Euler.**  A Dirichlet character mod `q` has `(χ p)^{φ(q)} = 1` at every prime `p ∤ q`. -/
+theorem dirichletChar_pow_totient {q : ℕ} (χ : DirichletCharacter ℂ q) (hq : 0 < q)
+    {p : ℕ} (hp : p.Prime) (hpq : ¬ p ∣ q) :
+    (χ p) ^ q.totient = 1 := by
+  have hcop : Nat.Coprime p q := (Nat.Prime.coprime_iff_not_dvd hp).mpr hpq
+  have heuler : p ^ q.totient ≡ 1 [MOD q] := Nat.ModEq.pow_totient hcop
+  have hcast : ((p ^ q.totient : ℕ) : ZMod q) = ((1 : ℕ) : ZMod q) :=
+    (ZMod.natCast_eq_natCast_iff _ _ _).mpr heuler
+  calc (χ p) ^ q.totient = χ (((p : ZMod q)) ^ q.totient) := (map_pow χ _ _).symm
+    _ = χ ((p ^ q.totient : ℕ) : ZMod q) := by push_cast; ring_nf
+    _ = χ ((1 : ℕ) : ZMod q) := by rw [hcast]
+    _ = 1 := by push_cast; exact MulChar.map_one χ
+
+/-- The purely Archimedean correlation `∑_{p≤X} conj(p^{iv})/p`. -/
+def archCorr (v : ℝ) (X : ℕ) : ℂ :=
+  ∑ p ∈ primesUpTo X, (starRingEnd ℂ) (archimedeanTwist v p) / (p : ℂ)
+
+/-- **The glue.**  Raising the twist values to the `φ(q)`-th power annihilates the character, so
+the `k`-th power correlation is the Archimedean one up to the conductor primes. -/
+theorem norm_powCorr_sub_archCorr_le {q : ℕ} (χ : DirichletCharacter ℂ q) (hq : 0 < q)
+    (t : ℝ) (X : ℕ) :
+    ‖(∑ p ∈ primesUpTo X,
+        ((starRingEnd ℂ) (dirichletArchimedeanTwist χ t p)) ^ q.totient / (p : ℂ))
+      - archCorr ((q.totient : ℝ) * t) X‖ ≤ 2 * primeMass q := by
+  classical
+  have hsub : (∑ p ∈ primesUpTo X,
+        ((starRingEnd ℂ) (dirichletArchimedeanTwist χ t p)) ^ q.totient / (p : ℂ))
+      - archCorr ((q.totient : ℝ) * t) X
+      = ∑ p ∈ primesUpTo X,
+          ((((starRingEnd ℂ) (dirichletArchimedeanTwist χ t p)) ^ q.totient
+            - (starRingEnd ℂ) (archimedeanTwist ((q.totient : ℝ) * t) p)) / (p : ℂ)) := by
+    rw [archCorr, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl ?_
+    intro p _
+    rw [sub_div]
+  rw [hsub]
+  refine le_trans (norm_sum_le _ _) ?_
+  have hbound : ∀ p ∈ primesUpTo X,
+      ‖((((starRingEnd ℂ) (dirichletArchimedeanTwist χ t p)) ^ q.totient
+            - (starRingEnd ℂ) (archimedeanTwist ((q.totient : ℝ) * t) p)) / (p : ℂ))‖
+        ≤ (if p ∣ q then (2 : ℝ) / p else 0) := by
+    intro p hp
+    have hp' : p.Prime := (mem_primesUpTo.mp hp).1
+    have hppos : 0 < p := hp'.pos
+    have hpR : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hppos
+    rw [norm_div, Complex.norm_natCast]
+    by_cases hdvd : p ∣ q
+    · rw [if_pos hdvd]
+      gcongr
+      have h1 : ‖((starRingEnd ℂ) (dirichletArchimedeanTwist χ t p)) ^ q.totient‖ ≤ 1 := by
+        rw [norm_pow, RCLike.norm_conj]
+        exact pow_le_one₀ (norm_nonneg _) (norm_dirichletArchimedeanTwist_le_one χ t hppos)
+      have h2 : ‖(starRingEnd ℂ) (archimedeanTwist ((q.totient : ℝ) * t) p)‖ = 1 := by
+        rw [RCLike.norm_conj]
+        exact norm_archimedeanTwist hppos _
+      calc ‖_ - _‖ ≤ ‖((starRingEnd ℂ) (dirichletArchimedeanTwist χ t p)) ^ q.totient‖
+            + ‖(starRingEnd ℂ) (archimedeanTwist ((q.totient : ℝ) * t) p)‖ := norm_sub_le _ _
+        _ ≤ 2 := by rw [h2]; linarith
+    · rw [if_neg hdvd]
+      have heq : ((starRingEnd ℂ) (dirichletArchimedeanTwist χ t p)) ^ q.totient
+          = (starRingEnd ℂ) (archimedeanTwist ((q.totient : ℝ) * t) p) := by
+        rw [← map_pow, dirichletArchimedeanTwist, mul_pow,
+          dirichletChar_pow_totient χ hq hp' hdvd, one_mul, archimedeanTwist_pow hppos]
+      rw [heq, sub_self, norm_zero, zero_div]
+  refine le_trans (Finset.sum_le_sum hbound) ?_
+  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
+  have hsubq : (primesUpTo X).filter (fun p => p ∣ q) ⊆ primesUpTo q := by
+    intro p hp
+    rw [Finset.mem_filter] at hp
+    exact mem_primesUpTo.mpr ⟨(mem_primesUpTo.mp hp.1).1, Nat.le_of_dvd hq hp.2⟩
+  rw [primeMass, Finset.mul_sum]
+  refine le_trans (Finset.sum_le_sum_of_subset_of_nonneg hsubq ?_) ?_
+  · intro p _ _; positivity
+  · refine Finset.sum_le_sum ?_
+    intro p _
+    rw [div_eq_mul_inv]
+
+/-! ### The reduction of the crux to a character-free Archimedean bound -/
+
+/-- **The reduction, large-frequency branch.**  If the purely Archimedean correlation at the
+frequency `φ(q)·t` is bounded away from the full prime mass, then so is `‖C‖` — i.e. the hard
+alternative of `TwistModulusDichotomy` holds.
+
+The slack hypothesis is exactly what the bootstrap costs: `φ(q)·√(2δ)·M` from
+`twistDefect_pow_le` plus `2M(q)` from the conductor primes must fit inside `η·M`.  Since
+`φ(q) ≤ A` and `M(q) ≤ M(A)` are fixed before `X → ∞` and `M(X) → ∞`, it is satisfiable by first
+choosing `δ` small and then `X` large. -/
+theorem norm_twistCorr_le_of_archCorr_le {q : ℕ} (χ : DirichletCharacter ℂ q) (hq : 0 < q)
+    (t : ℝ) {X : ℕ} {η δ : ℝ} (hX : 2 ≤ X) (hδ0 : 0 ≤ δ) (hδ1 : δ < 1)
+    (harch : ‖archCorr ((q.totient : ℝ) * t) X‖ ≤ (1 - η) * primeMass X)
+    (hslack : (q.totient : ℝ) * Real.sqrt (2 * δ) * primeMass X + 2 * primeMass q
+      < η * primeMass X) :
+    ‖twistCorr χ t X‖ ≤ (1 - δ) * primeMass X := by
+  classical
+  by_contra hcon
+  push_neg at hcon
+  obtain ⟨β, hβ, hdef⟩ := exists_unimodular_twistDefect_le χ t hX hδ1 hcon.le
+  set w : ℕ → ℂ := fun p => (starRingEnd ℂ) (dirichletArchimedeanTwist χ t p) with hw
+  have hwn : ∀ p ∈ primesUpTo X, ‖w p‖ ≤ 1 := by
+    intro p hp
+    rw [hw, RCLike.norm_conj]
+    exact norm_dirichletArchimedeanTwist_le_one χ t (mem_primesUpTo.mp hp).1.pos
+  set k : ℕ := q.totient with hk
+  have hMnn : 0 ≤ primeMass X := primeMass_nonneg X
+  -- the bootstrap
+  have hpow := twistDefect_pow_le hwn hβ k
+  have hdefnn : 0 ≤ twistDefect w β X := twistDefect_nonneg hwn (le_of_eq hβ)
+  have hmono : Real.sqrt (2 * twistDefect w β X * primeMass X)
+      ≤ Real.sqrt (2 * δ) * primeMass X := by
+    have hb : 2 * twistDefect w β X * primeMass X ≤ (2 * δ) * primeMass X ^ 2 := by
+      nlinarith [hdef, hMnn, hdefnn]
+    have := Real.sqrt_le_sqrt hb
+    rwa [Real.sqrt_mul (by linarith : (0:ℝ) ≤ 2 * δ), Real.sqrt_sq hMnn] at this
+  have hbootstrap : twistDefect (fun p => w p ^ k) (β ^ k) X
+      ≤ (k : ℝ) * (Real.sqrt (2 * δ) * primeMass X) := by
+    refine le_trans hpow ?_
+    gcongr
+  -- unwind to the Archimedean correlation
+  set Ck : ℂ := ∑ p ∈ primesUpTo X, w p ^ k / (p : ℂ) with hCk
+  have hdefeq : twistDefect (fun p => w p ^ k) (β ^ k) X
+      = primeMass X - ((starRingEnd ℂ) (β ^ k) * Ck).re := twistDefect_eq_sub _ _ _
+  have hCknorm : primeMass X - (k : ℝ) * (Real.sqrt (2 * δ) * primeMass X) ≤ ‖Ck‖ := by
+    have hre : ((starRingEnd ℂ) (β ^ k) * Ck).re ≤ ‖Ck‖ := by
+      refine le_trans (Complex.re_le_norm _) ?_
+      rw [norm_mul, RCLike.norm_conj, norm_pow, hβ, one_pow, one_mul]
+    linarith [hdefeq ▸ hbootstrap]
+  have hglue := norm_powCorr_sub_archCorr_le χ hq t X
+  have hCkarch : ‖Ck‖ ≤ ‖archCorr ((k : ℝ) * t) X‖ + 2 * primeMass q := by
+    have htri : ‖Ck‖ ≤ ‖Ck - archCorr ((k : ℝ) * t) X‖ + ‖archCorr ((k : ℝ) * t) X‖ := by
+      simpa using norm_add_le (Ck - archCorr ((k : ℝ) * t) X) (archCorr ((k : ℝ) * t) X)
+    linarith [hglue]
+  linarith [harch]
 
 end
 

@@ -10517,3 +10517,37 @@ that is fine, since `A` is fixed before `X → ∞`.
 
 Not yet written: the glue lemma `w_p^k = conj(χ^k(p)·p^{ikt})` (needs `DirichletCharacter` power
 API) and the statement of (c).  Next lap.
+
+## Lap 89 (2026-09-25) — the character is GONE: the crux is now a character-free statement
+
+Added to `src/NormalNumbers/ElliottTwistBootstrap.lean` (still **zero sorry, trust triple**, all in
+the audit surface).  This completes the glue that lap 88 left open.
+
+* `archimedeanTwist_pow` — `(p^{it})^k = p^{i(kt)}`, through the `exp` form.
+* **`dirichletChar_pow_totient`** — `(χ p)^{φ(q)} = 1` for every prime `p ∤ q`, by **Euler**
+  (`Nat.ModEq.pow_totient` + `ZMod.natCast_eq_natCast_iff` + `map_pow`).  This avoids needing
+  `orderOf` in the Dirichlet character group and any finiteness instance: `φ(q)` is an explicit
+  exponent that works for every `χ` mod `q` at once.
+* `archCorr v X = ∑_{p≤X} conj(p^{iv})/p` — the purely Archimedean correlation.
+* **`norm_powCorr_sub_archCorr_le`** — the glue: `‖∑ w_p^{φ(q)}/p − archCorr(φ(q)·t)‖ ≤ 2M(q)`.
+  The character dies at every `p ∤ q`; the conductor primes cost an `X`-free constant.
+* **`norm_twistCorr_le_of_archCorr_le`** — **the reduction.**  If
+  `‖archCorr(φ(q)·t, X)‖ ≤ (1−η)M` and the slack `φ(q)√(2δ)·M + 2M(q) < ηM` holds, then
+  `‖C‖ ≤ (1−δ)M` — i.e. the hard alternative of `TwistModulusDichotomy` follows.
+
+**State of the crux.**  `TwistModulusDichotomy A δ` now needs only a statement with **no Dirichlet
+character in it**:
+
+> for `|v| ≤ A²·X` outside the near-trivial range, `‖∑_{p≤X} p^{-iv}/p‖ ≤ (1−η)·∑_{p≤X}1/p`.
+
+The slack condition is satisfiable in the right order — `φ(q) ≤ A` and `M(q) ≤ M(A)` are fixed
+before `X → ∞`, so pick `δ` with `A√(2δ) < η/2`, then `X` with `2M(A) < (η/2)M(X)`.
+
+**What is left, precisely.** Two branches, both classical:
+1. *Large frequency* `|v| ≳ 1/log X`: the Archimedean bound above.  Zero-free region; the same wall
+   as the dependency's `PolynomialHeightPrimeCorrelationBound`.
+2. *Small frequency* `|φ(q)t| ≲ 1/log X`: here the Archimedean factor is ≈ 1 and one must instead
+   conclude that `χ` is principal, which needs the prime density in progressions
+   (`∑_{p≤X, p≡a (q)} 1/p ≍ M/φ(q)`) to rule out a non-principal `χ` clustering at a constant.
+   That branch is *not* yet formalized and is the honest next target; it is strictly easier than
+   branch 1 (Mertens for APs / Dirichlet, no zero-free region needed).

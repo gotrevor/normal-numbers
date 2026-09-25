@@ -148,3 +148,6 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottZetaOmegaPretentious.twoPointElliottLog_of_dichotomy
 #print axioms NormalNumbers.ElliottTwistBootstrap.twistDefect_pow_le
 #print axioms NormalNumbers.ElliottTwistBootstrap.exists_unimodular_twistDefect_le
+#print axioms NormalNumbers.ElliottTwistBootstrap.dirichletChar_pow_totient
+#print axioms NormalNumbers.ElliottTwistBootstrap.norm_powCorr_sub_archCorr_le
+#print axioms NormalNumbers.ElliottTwistBootstrap.norm_twistCorr_le_of_archCorr_le
