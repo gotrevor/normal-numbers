@@ -1,0 +1,43 @@
+# HANDOFF c3-mrt lap 44 — lap 38's indexing debt is PAID; the `K`-point `pair_mass_le` is proved
+
+**Branch** `wip/c3-mrt` · both targets green (`lake build` 9257; `lake build
+NormalNumbers.C3MrtBudget` 8980).  Chain tip now
+`… → C3MrtMultiMass → C3MrtMultiTrunc → C3MrtMultiTupleMass → C3MrtBudget`.
+
+## What landed: `src/NormalNumbers/C3MrtMultiTupleMass.lean` (sorry-free, trust triple)
+
+* `extendFin` + `range_lcm_extendFin` — the bridge between the two conventions
+  (`Fin K`/`Fintype.piFinset`/`Finset.univ.lcm` from lap 36, versus `range K`/`ℕ → ℕ` from lap
+  37).  The extension is by `1`, which is `lcm`- and product-neutral.
+* `prod_div_univLcm_le` — `prod_div_lcm_le` restated in the `Fin K` convention.
+* **`kfold_lcm_mass_le`** — the `K`-point `pair_mass_le`:
+
+      ∑_{d ≤ Y, positive, jointly solvable} (∏_i ‖sqfW z_i (d_i)‖)/lcm(d_i)
+          ≤ K^{K²} · ∏_i sqfWMass z_i ,
+
+  uniformly in `Y`, with no `N` anywhere.  This is the total weight the bridge expansion puts on
+  the `1/L`-sized inner sums, i.e. the inequality the whole `K`-fold assembly rests on.
+
+## Scoreboard
+
+| step | status |
+|---|---|
+| 1. `inner_sum_multi_forms` | DONE lap 41 |
+| 2. `multi_truncation_bound` | DONE lap 43 |
+| 3. indexing debt (`Fin K` vs `range K`) | **DONE lap 44** |
+| 4. per-tuple rung bound + ε-chase | next — the only remaining step |
+| 5. widen the budget | DONE lap 40 |
+
+## NEXT — step 4, the last one
+
+Mirror laps 29–33 (`inner_pair_bound` → `full_sum_bound` → `two_shift_bound_of_rung`) at `K`:
+
+1. **Per-tuple**: for a positive, jointly solvable `d`, `inner_sum_multi_forms` writes the inner
+   sum as a `K`-point correlation along the forms `(L/d_i)X + (a+i+1)/d_i` over an initial
+   segment of length `≍ N/L`; feed `KPointLogElliott K` (nondegeneracy from `multi_forms_det`)
+   to get `‖inner‖ ≤ η·(N/L) + O(1)`.
+2. **Sum over tuples**: weight `∏_i ‖sqfW z_i (d_i)‖` and apply `kfold_lcm_mass_le` — total
+   `≤ N·η·K^{K²}·∏_i sqfWMass z_i` plus the truncation error of `multi_truncation_bound`.
+3. **ε-chase**: pick `Y` from `ε` using `truncB_tendsto` (the `α·truncA K` term is
+   `N`-independent and dies under `1/log N` with no condition on `Y` at all), then `N → ∞`.
+   Land in `weylLambertTwist_of_kfold_bound`'s shape.
