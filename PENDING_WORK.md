@@ -10534,3 +10534,40 @@ STATE: the reduction is FINAL in the sense of C3-T6 — laps 90–97 produced si
 narrowings plus the audit surface.  Remaining honest work on the crux is to attack
 `DepthDyadicBound` itself (an explicit exponential-sum bound, now in a form where it can be
 attacked or refuted), not to narrow it further.
+
+## lap 98 (2026-09-25) — WHERE the crux has content, and where it is free
+
+`src/NormalNumbers/C3MrtDyadicContent.lean` (new; tip green at 9012, `lake build` green at 9257;
+all three declarations `[propext, Classical.choice, Quot.sound]`, no new sorry).
+
+First lap ATTACKING `DepthDyadicBound` rather than narrowing it.  Before trying to prove it, map
+which instances are assumptions and which are already theorems.  Write the saving factor
+`dyadicFactor cK CstK κ K N = CstK K · (2 log N)^{-κ·cK K}`.
+
+1. `dyadic_ineq_of_trivial` — **PROVED**: if `M ≤ dyadicFactor` the asserted inequality holds
+   unconditionally, from `‖∑‖ ≤ #(Ioc N (2N)) = N` alone.  So the content of the crux lives
+   entirely in `dyadicFactor < M ≤ (2 log N)^{κ·cK K}`; everything else is free.  (This is the
+   lemma to keep in mind before believing any future "proof" of the crux: it must engage
+   `M > dyadicFactor`.)
+2. `dyadicFactor_ge_one_of_small_scale` — **PROVED**: whenever `(2 log N)^{κ·cK K} ≤ CstK K` the
+   factor is `≥ 1`, so (as `M ≥ 1`) the instance is free.  The threshold hypothesis does NOT
+   exclude this: it only demands `K+1 ≤ (2 log N)^{κ·cK K}`, and `CstKdeg m K = exp((K+1)^m)`
+   dwarfs `K+1`.  So `DepthDyadicBound` at a fixed `K` is trivial on an initial stretch of its
+   admissible `N` and content-bearing only for `log(2 log N) > (K+1)^m b^{θK}/(κ c₀)`.
+3. `dyadicFactor_tendsto_zero_at_diagonal` — **PROVED**: along the diagonal
+   `K = KN N ≤ depthSlow b N`, geometric profile, `θ < 1`, the factor `→ 0`.  So the reduction
+   consumes the crux precisely in its content-bearing range and is NOT extracting `ConjC3` from
+   free instances.
+
+Ledger consequence (honest, and new): the assumption is neither vacuous (lap 97
+`dyadic_threshold_satisfiable`) nor trivially true where used (3), but it IS trivially true on
+part of its stated range (1,2).  A sharper future form could restrict `DepthDyadicBound` to
+`M > dyadicFactor` — a seventh free narrowing, cheap given (1).
+
+NEXT on the crux: (a) restrict the input to `M > dyadicFactor` (free, from `dyadic_ineq_of_trivial`);
+(b) the real attack — the truncation structure.  `∏_{i<K} e(h'/b^{i+1})^{ω(n+i+1)}` has deep
+factors within `O(b^{-i})` of 1, so for `i₀ ≍ δ·log log N` the tail product is `1 + O((log N)^{-δ})`
+on average; the K-point sum reduces to an `i₀`-point sum.  This does NOT collapse to bounded `K`
+(i₀ still grows), which is exactly lap 87's finding, but it may reduce the needed `K`-range to
+`K ≲ log_b log log N` — worth formalizing as the next narrowing, and it is the structural reason
+the route needs uniformity in `K` at all.
