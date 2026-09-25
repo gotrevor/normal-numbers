@@ -1,4 +1,5 @@
 import NormalNumbers.ElliottArchBands
+import NormalNumbers.ElliottLogIntegral
 import ErdosProblems.Erdos49.PNT.IEANTN.Mertens
 
 /-!
@@ -465,6 +466,91 @@ theorem archCorrModerate_of_dampedSeriesBound {K : ℝ} (h : DampedSeriesBoundMo
         simpa [add_comm] using norm_le_norm_add_norm_sub' (archCorr v X) (dampedPrefix v X X)
     _ ≤ dampingCost + (Real.log (Real.log (|v| + 16)) + K) := by linarith
     _ = Real.log (Real.log (|v| + 16)) + (K + dampingCost) := by ring
+
+/-! ### The interchange: the damped prefix as an integral of a von Mangoldt-type series -/
+
+open NormalNumbers.ElliottLogIntegral
+
+/-- The `w`-slice: the log-weighted damped prime sum at abscissa shifted by `w`.  Summed over
+*all* primes and all prime powers this would be `−ζ'/ζ(1+δ+w+iv)`; the point of the lemma below is
+that the `w`-integral of this truncated version is exactly the damped prefix. -/
+def logWeightedSlice (v : ℝ) (X Y : ℕ) (w : ℝ) : ℂ :=
+  ∑ p ∈ primesUpTo Y,
+    (starRingEnd ℂ) (archimedeanTwist v p) *
+      (((Real.log (p : ℝ)) * (p : ℝ) ^ (-(1 : ℝ) - (Real.log (X : ℝ))⁻¹ - w) : ℝ) : ℂ)
+
+/-- **THE INTERCHANGE.**  `dampedPrefix v X Y = ∫_0^∞ logWeightedSlice v X Y w dw`.
+
+This is the structural step of the `ζ'/ζ` route, and because `dampedPrefix` is a *finite* sum the
+interchange is `integral_finset_sum`, with no Fubini and no dominated convergence: the only
+analytic input is `∫_0^∞ p^{-w} dw = 1/log p`.  Extending `logWeightedSlice` to all primes and
+prime powers — an `O(1)` change after integration, by `dampedTail_le` — turns the right-hand side
+into `∫_0^∞ (−ζ'/ζ)(1+δ+w+iv) dw`, which
+`ElliottLogIntegral.integral_le_one_add_log` then bounds. -/
+theorem dampedPrefix_eq_integral {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) :
+    dampedPrefix v X Y = ∫ w in Set.Ioi (0 : ℝ), logWeightedSlice v X Y w := by
+  classical
+  set δ : ℝ := (Real.log (X : ℝ))⁻¹ with hδ
+  have hterm : ∀ p ∈ primesUpTo Y,
+      (∫ w in Set.Ioi (0 : ℝ),
+        (starRingEnd ℂ) (archimedeanTwist v p) *
+          (((Real.log (p : ℝ)) * (p : ℝ) ^ (-(1 : ℝ) - δ - w) : ℝ) : ℂ))
+        = (starRingEnd ℂ) (archimedeanTwist v p) * (((p : ℝ) ^ (-(1 : ℝ) - δ) : ℝ) : ℂ) := by
+    intro p hp
+    have hpp := (mem_primesUpTo.mp hp).1
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hp0 : (0 : ℝ) < (p : ℝ) := by linarith
+    have hp1 : (1 : ℝ) < (p : ℝ) := by linarith
+    have hlogp : 0 < Real.log (p : ℝ) := Real.log_pos hp1
+    have hcongr : ∀ w ∈ Set.Ioi (0 : ℝ),
+        (starRingEnd ℂ) (archimedeanTwist v p) *
+            (((Real.log (p : ℝ)) * (p : ℝ) ^ (-(1 : ℝ) - δ - w) : ℝ) : ℂ)
+          = ((starRingEnd ℂ) (archimedeanTwist v p) *
+              (((Real.log (p : ℝ)) * (p : ℝ) ^ (-(1 : ℝ) - δ) : ℝ) : ℂ))
+            * (((p : ℝ) ^ (-w) : ℝ) : ℂ) := by
+      intro w _
+      have : (p : ℝ) ^ (-(1 : ℝ) - δ - w) = (p : ℝ) ^ (-(1 : ℝ) - δ) * (p : ℝ) ^ (-w) := by
+        rw [← Real.rpow_add hp0]
+        congr 1
+      rw [this]
+      push_cast
+      ring
+    rw [MeasureTheory.setIntegral_congr_fun measurableSet_Ioi hcongr,
+      MeasureTheory.integral_const_mul]
+    have hofReal : (∫ w in Set.Ioi (0 : ℝ), (((p : ℝ) ^ (-w) : ℝ) : ℂ))
+        = (((∫ w in Set.Ioi (0 : ℝ), (p : ℝ) ^ (-w)) : ℝ) : ℂ) :=
+      _root_.integral_ofReal
+    rw [hofReal, integral_rpow_neg_Ioi hp1, mul_assoc, ← Complex.ofReal_mul]
+    congr 1
+    field_simp
+  have hint : ∀ p ∈ primesUpTo Y,
+      MeasureTheory.IntegrableOn (fun w : ℝ =>
+        (starRingEnd ℂ) (archimedeanTwist v p) *
+          (((Real.log (p : ℝ)) * (p : ℝ) ^ (-(1 : ℝ) - δ - w) : ℝ) : ℂ)) (Set.Ioi 0) := by
+    intro p hp
+    have hpp := (mem_primesUpTo.mp hp).1
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hp0 : (0 : ℝ) < (p : ℝ) := by linarith
+    have hp1 : (1 : ℝ) < (p : ℝ) := by linarith
+    have hbase : MeasureTheory.IntegrableOn
+        (fun w : ℝ => ((((p : ℝ) ^ (-w)) : ℝ) : ℂ)) (Set.Ioi 0) :=
+      (integrableOn_rpow_neg_Ioi hp1).ofReal
+    have := (hbase.const_mul ((starRingEnd ℂ) (archimedeanTwist v p) *
+      (((Real.log (p : ℝ)) * (p : ℝ) ^ (-(1 : ℝ) - δ) : ℝ) : ℂ)))
+    refine MeasureTheory.IntegrableOn.congr_fun this ?_ measurableSet_Ioi
+    intro w _
+    have hsplit : (p : ℝ) ^ (-(1 : ℝ) - δ - w) = (p : ℝ) ^ (-(1 : ℝ) - δ) * (p : ℝ) ^ (-w) := by
+      rw [← Real.rpow_add hp0]
+      congr 1
+    simp only [hsplit]
+    push_cast
+    ring
+  rw [dampedPrefix, ← hδ]
+  rw [show (fun w : ℝ => logWeightedSlice v X Y w) = fun w : ℝ => ∑ p ∈ primesUpTo Y,
+      (starRingEnd ℂ) (archimedeanTwist v p) *
+        (((Real.log (p : ℝ)) * (p : ℝ) ^ (-(1 : ℝ) - δ - w) : ℝ) : ℂ) from rfl,
+    MeasureTheory.integral_finsetSum _ hint]
+  exact (Finset.sum_congr rfl hterm).symm
 
 end
 

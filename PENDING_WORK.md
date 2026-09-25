@@ -235,6 +235,25 @@ interchange for a Dirichlet series on `σ > 1`; mathlib's `tsum_integral_eq_inte
 the handle.  With that plus the ζ'/ζ bounds, `DampedSeriesBound*` follow from
 `integral_le_one_add_log` directly.  **Do the interchange first — it is shared by both bands.**
 
+### ✅ Lap 100 — THE INTERCHANGE IS DONE (and it needed no Fubini)
+
+* `ElliottLogIntegral.integral_rpow_neg_Ioi` — `∫_0^∞ a^{-w} dw = (log a)^{-1}` for `a > 1`
+  (via mathlib's `Real.integral_rpow_mul_exp_neg_mul_Ioi` at `a = 1`, `Γ(1) = 1`), plus
+  `integrableOn_rpow_neg_Ioi` (obtained from the value of the integral, so no separate
+  integrability argument is needed).
+* **`ElliottDamped.dampedPrefix_eq_integral`** — `dampedPrefix v X Y = ∫_0^∞ logWeightedSlice v X Y w dw`
+  where `logWeightedSlice` is the log-weighted damped prime sum at abscissa `1+δ+w`.
+
+**The insight that made this cheap:** because lap 98 stated everything on the *finite* prefix, the
+interchange is `integral_finsetSum` over a `Finset` — **no Fubini, no dominated convergence, no
+tsum**.  The only analytic input is `∫_0^∞ p^{-w} dw = 1/log p`.
+
+**What remains on the soft side** is now purely about the integrand: extend `logWeightedSlice` from
+`{p ≤ Y}` to all primes and prime powers (an `O(1)` change *after* integration, by `dampedTail_le`
+and the elementary `∑_{p,k≥2} 1/(k p^{kσ}) ≤ 2∑_p p^{-2σ}`), identify the result with `−ζ'/ζ`, and
+apply `integral_le_one_add_log`.  The two ζ'/ζ bounds (pole-local for `|v| ≤ 1`, dVP for `|v| > 1`)
+are the only genuinely cited inputs left on this side.
+
 ### What is OFF the path now
 
 `CharacterClusterRigidity`, `PrimeDensityAP`, `exists_charDefect_le`, `NearTrivialTwist`,

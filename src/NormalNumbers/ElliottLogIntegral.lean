@@ -1,5 +1,6 @@
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
 
 /-!
 # The calculus core of the `ζ'/ζ` route (lap 99)
@@ -81,6 +82,42 @@ theorem integral_le_one_add_log {f : ℝ → ℝ} {δ T : ℝ}
     linarith [hval ▸ hmono]
   rw [hsplit]
   linarith
+
+end
+
+end NormalNumbers.ElliottLogIntegral
+
+/-! ### The Mellin-style representation `1/log a = ∫_0^∞ a^{-w} dw` -/
+
+namespace NormalNumbers.ElliottLogIntegral
+
+noncomputable section
+
+open Set
+
+/-- `∫_0^∞ a^{-w} dw = 1/log a` for `a > 1`.  This is the identity that turns a prime sum
+`∑_p p^{-s}` into an integral of the von Mangoldt series `∑_n Λ(n) n^{-s-w}`, and hence of
+`−ζ'/ζ`. -/
+theorem integral_rpow_neg_Ioi {a : ℝ} (ha : 1 < a) :
+    ∫ w in Ioi (0 : ℝ), a ^ (-w) = (Real.log a)⁻¹ := by
+  have ha0 : 0 < a := by linarith
+  have hlog : 0 < Real.log a := Real.log_pos ha
+  have hcongr : ∀ w ∈ Ioi (0 : ℝ),
+      a ^ (-w) = w ^ ((1 : ℝ) - 1) * Real.exp (-(Real.log a * w)) := by
+    intro w _
+    rw [sub_self, Real.rpow_zero, one_mul, Real.rpow_def_of_pos ha0]
+    ring_nf
+  rw [MeasureTheory.setIntegral_congr_fun measurableSet_Ioi hcongr,
+    Real.integral_rpow_mul_exp_neg_mul_Ioi (by norm_num) hlog]
+  simp [Real.Gamma_one]
+
+/-- Integrability of `w ↦ a^{-w}` on `(0,∞)`, obtained from the value of the integral. -/
+theorem integrableOn_rpow_neg_Ioi {a : ℝ} (ha : 1 < a) :
+    MeasureTheory.IntegrableOn (fun w : ℝ => a ^ (-w)) (Ioi 0) := by
+  refine MeasureTheory.Integrable.of_integral_ne_zero ?_
+  rw [integral_rpow_neg_Ioi ha]
+  have : 0 < Real.log a := Real.log_pos ha
+  positivity
 
 end
 
