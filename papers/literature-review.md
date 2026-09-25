@@ -5,6 +5,82 @@ the route-oriented read: what the sources COLLECTIVELY say about the open
 strategic questions, not a per-paper summary (those are the sibling `.md`s).
 Keep it current — the next reflection lap inherits THIS read.*
 
+## Elliott chapter — route synthesis (2026-09-25 DEEP REFLECTION lap 112, SUPERSEDES lap 54 below)
+
+*Read this first for the LIVE campaign.  The lap-54 section below is kept for the fidelity and
+precedent records, which still hold; its route table is stale (it predates the lap-92 refutation).*
+
+### What changed since lap 54
+
+The headline (Tao 2016 Thm 1.3) was **proved and axiom-clean** at lap 83, and the genuinely
+multiplicative form at lap 84.  The campaign then moved to the *downstream consumer*
+`TwoPointElliottLog` for `ζ^{ω}`, i.e. to verifying `UniformlyNonPretentious (ζ^ω)`.
+
+### The strategic question this chapter now answers
+
+*What does the literature say it costs to verify Tao's non-pretentiousness hypothesis — `D(g₁,
+χ·n^{it}; X)² ≥ A` for all `q ≤ A` and all `|t| ≤ A·X` — for `g₁ = ζ^{ω}`, `ζ` a root of unity ≠ 1?*
+
+### What the on-disk corpus contains on this
+
+**Still no Tao 2016 PDF on disk**, and none of the three on-disk adjacent texts
+(`tao-teravainen-2025-quantitative-correlations.txt`, `kmt-2023-multiplicative-correlations.txt`,
+`matomaki-teravainen-2023-products-of-primes-in-ap.txt`) states the non-pretentiousness *verification*
+for a specific `g`.  The source of record remains the dependency's own machine-checked Lean
+(`.lake/packages/lean-proofs-latest/src/latest/ErdosProblems/Erdos67b/`).  Consequently the lap-112
+route judgement is grounded in a **from-scratch re-derivation against the compiler**, not in a
+second reading of the handoffs — which is the only independent ground available here.
+
+### The re-derivation (lap 112), and why it matches lap 95's read
+
+Write `C(v,X) = ∑_{p≤X} p^{-iv}/p = log ζ(1+1/log X+iv) + O(1)`, `M(X) = ∑_{p≤X}1/p`,
+`L = log log X`.  For `g(p) = ζ = e^{iθ}` (θ ∉ 2πℤ) the distance is `D² = M(X) − Re(ζ̄·C)`, so the
+consumer needs either `C` within `O(1)` of a nonneg real (then `D² ≥ M(1−cos θ) − O(1)`, the
+`AlmostRealTwist` route) or a **proportional** saving `‖C‖ ≤ (1−η)L + O(1)`.
+
+* `|v| ≤ 1`: `‖C‖ = log(1/|v|) + O(1)`.  Pole-local; **no zero-free region** (proved, laps 107–108).
+* `1 < |v| ≤ exp((log X)^{1−ν})`: the trivial `|ζ(σ+it)| ≪ log|t|` gives `‖C‖ ≤ log log|v| + O(1)`,
+  which is `≤ (1−ν)L` — a proportional saving for free.  The only cost is the truncation
+  `∑_{p≤X} ↦ ∑_p`, which is de la Vallée Poussin strength.
+* `exp((log X)^{1−ν}) < |v| ≤ A²X`: `log log|v| ≍ L`, **no saving**.  Escapes checked and refuted:
+  (i) the free abscissa `σ = 1+λ/log X` gains `log λ` on `log ζ(σ)` and loses exactly
+  `∫₀^λ(1−e^{-y})dy/y = log λ + γ + o(1)` on the truncation; (ii) van der Corput's k-th derivative
+  test gives a *constant* factor `1/k`, and a power saving needs `k ≍ (log t)^η` uniformly — that
+  IS Vinogradov's mean value theorem; (iii) 3-4-1 bounds `|ζ|` from **below**, the wrong direction
+  for `ζ^ω` (for `λ` it is the right direction and is *also* exactly borderline: `3 log ζ(σ) = 3L`
+  against `log|ζ(σ+2it)| ≤ L + O(1)`).  The true bound is `|ζ(1+it)| ≪ (log t)^{2/3}`
+  (Vinogradov–Korobov), giving every `η < 1/3`.
+
+**Conclusion, and it is a feasibility statement about the literature, not about Lean**: verifying
+Tao's hypothesis over the *full* range `|t| ≤ A·X` requires a **sub-classical** zero-free region.
+This is not special to `ζ^ω`: the same borderline occurs for `λ` (there one needs
+`|L(1+it,χ)| ≫ (log)^{-1+δ}`, and classical dVP delivers exactly `(log)^{-1}`).  So
+`ArchCorrNearMaxHeight` is a legitimate long-term **cited 🟠 axiom**, and no cheaper precedent
+exists in the corpus.
+
+### Precedent check (originated vs inherited) — additions
+
+* The band split at `|v| = 1` and at `heightCut ν X = exp((log X)^{1−ν})`, and the observation that
+  the Vinogradov requirement is confined to the *upper* band, is **originated** here (laps 95–96).
+* The `AlmostRealTwist` repair — that the consumer never needed `C ≈ M(X)`, only that `C` be within
+  `O(1)` of a real — is **originated** here (lap 92), and it is what made the sub-unit band soft.
+
+### What is missing that would change the route
+
+1. A copy of arXiv:1509.05422 (Tao 2016) — would show how Tao's own applications discharge the
+   `|t| ≤ Ax` range, and whether he cites Vinogradov–Korobov there.  **This is now the single most
+   valuable missing source**; worth an `ON-LINE-REQUEST.md` entry.
+2. Any source formalising Vinogradov's mean value theorem.  None is on disk; none is in mathlib.
+
+### Route-relevant in-repo assets the corpus does NOT mention but lap 112 found
+
+`src/PNTPort/ZetaBounds.lean` — a vendored, sorry-free `PrimeNumberTheoremAnd/ZetaBounds` with
+`ZetaZeroFree9` and `LogDerivZetaBndUnif99` (`‖ζ'/ζ(σ+it)‖ ≤ C(log|t|)⁹`, `σ ≥ 1−A/(log|t|)⁹`,
+`|t|>3`), verified `[propext, Classical.choice, Quot.sound]`.  That discharges the de la Vallée
+Poussin obligation of the moderate band **without any citation**.  ⚠ `import
+PrimeNumberTheoremAnd.ZetaBounds` fails (a shadowing `lean_lib` in `lean-proofs-latest`); the
+working import is `import PNTPort.ZetaBounds`.
+
 ## Elliott chapter — route synthesis (2026-09-25 DEEP REFLECTION lap 54)
 
 *Added this lap.  Read this first for the LIVE campaign (Tao 2016 Thm 1.3, worktree `nn-elliott`,

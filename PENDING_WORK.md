@@ -1,5 +1,107 @@
 # PENDING WORK
 
+## 🧘 Reflection — 2026-09-25 (DEEP REFLECTION lap 112)
+
+**ROUTE VERDICT: CONTINUE.**  No registered trigger has fired.  EA-1 (boundary-truth audit) is
+being actively honoured — laps 95, 96 and 103 each ran it, and lap 103 caught its *own* fidelity
+bug unprompted.  Neither false-summit tell is present: laps 93–111 closed a named, sorry-free
+theorem *every* lap (`sum_log_div_primesUpTo_ge`, `logTail_le`, `sum_log_rpow_le`,
+`exists_pole_local_bound`, `exists_subunit_logDeriv_bound`, `sum_pairs_le`, `slice_eq_sum_term`,
+`sum_complement_le`, …), and the finishability estimate has been *refined*, not degraded — lap 92's
+in-kernel refutation and laps 95/96's narrowing of the wall to near-maximal height are convergence.
+
+### Ground truth re-derived this lap (not read off a handoff)
+
+* `lake build` 9257 jobs green; `lake build NormalNumbers.ElliottAxiomAudit` 9684 jobs green.
+* All **153** audited Elliott theorems print `[propext, Classical.choice, Quot.sound]`.  A scan of
+  all 446 `#print axioms` lines the audit build emits finds **zero `sorryAx`**.
+* `src/` Elliott scope: zero `sorry` (the two grep hits in `ElliottDamped`/`ElliottTwistedGraphCRT`
+  are docstrings).  43 `sorry` remain in `src/`, all in designated-open off-scope modules
+  (`SwingC*`, `PairDecouple*`, `MahlerDriftOne`, `PrimeLambertOscillation`, `CFSchedule*`, …).
+* Fidelity, re-read against the source: `ElliottMultStatement.NonasymptoticLogElliottMult` matches
+  Tao 2016 Thm 1.3 clause for clause — `a₁b₂−a₂b₁≠0`, `∃A₀` depending on `ε,aᵢ,bᵢ`, `A₀≤A≤W≤X`,
+  `|gᵢ|≤1`, `g₁` non-pretentious over **`q ≤ A` and `|t| ≤ A·X`**, conclusion `≤ ε·log W`.  No
+  transcription drift.
+
+### The three findings that change what the next laps do
+
+**FINDING 1 (the big one) — the campaign has been CITING theorems this repo already owns.**
+`src/PNTPort/ZetaBounds.lean` is a 3142-line vendored `PrimeNumberTheoremAnd/ZetaBounds`, **zero
+`sorry`**, builds green in 3597 jobs, and contains `ZetaZeroFree9` (σ ≥ 1 − A/(log|t|)⁹, |t|>3),
+`LogDerivZetaBnd`, `LogDerivZetaBndUnif99` (`‖ζ'/ζ(σ+it)‖ ≤ C(log|t|)⁹` for all `σ ≥ 1−A/(log|t|)⁹`),
+`ZetaUpperBnd`, `ZetaInvBnd`, `ZetaNoZerosOn1Line`, `triv_bound_zeta`.  Verified in-kernel this lap:
+`LogDerivZetaBndUnif99`, `ZetaZeroFree9`, `triv_bound_zeta` all `[propext, Classical.choice,
+Quot.sound]`.  That is a **de la Vallée Poussin-strength zero-free region, in-repo and free** —
+exactly what laps 95/96 wrote "`PrimeNumberTheoremAnd.{ZetaBounds, StrongPNT}` is where to source
+it" about, and then never sourced.
+
+*Why it was missed*: `import PrimeNumberTheoremAnd.ZetaBounds` **fails** — `lean-proofs-latest`
+declares its own partial `lean_lib PrimeNumberTheoremAnd` (Consequences/Defs/Fourier/Mathlib/
+MediumPNT/SmoothExistence/Sobolev/Wiener, **no ZetaBounds**) which shadows the real package that
+sits in `.lake/packages/PrimeNumberTheoremAnd/`.  One failed import evidently got read as "not
+available".  **The working import is `import PNTPort.ZetaBounds`.**
+
+Similarly `src/NormalNumbers/G4MertensAP.lean` proves `mertensRate_residueClass` — Mertens for a
+unit residue class, built from mathlib's `LSeries/PrimesInAP` + Chebyshev + Abel summation — which
+is the whole content of the open `Prop` `ElliottCharRigidity.PrimeDensityAP`.
+
+**FINDING 2 — a STATUS/DIRECTION correction: `PrimeDensityAP` is NOT proved and is NOT off-path.**
+Lap 92's directive says "`CharacterClusterRigidity` / `PrimeDensityAP` … are proved and stay, but
+do not spend laps on them".  Both halves are wrong.  `PrimeDensityAP` is a bare
+`def … : Prop` with no theorem discharging it, and the live consumers
+`ElliottArchBands.twoPointElliottLog_of_bands` / `…_of_three_bands` and
+`ElliottSmallShift`:539 all take `hdens : ∀ A, PrimeDensityAP A` as a hypothesis.  So the open
+input list of `twoPointElliottLog_of_three_bands` is **four**, not three.
+
+**FINDING 3 — the exponent 9 is free at the consumer.**  `SliceCapModerate` as stated asks for
+`‖ζ'/ζ(σ+iv)‖ ≲ log|v|` (sharp dVP); `LogDerivZetaBndUnif99` gives `(log|v|)⁹`.  Restate the
+moderate band at `T = (log(|v|+16))^{-9}` instead of `(log(|v|+16))^{-1}`.  The cap band then costs
+`T·C(log|v|)⁹ = O(1)` and the harmonic band (lap 106, coefficient exactly 1) yields
+`log(1/T) = 9·log log(|v|+16)`.  So `ArchCorrModerate` acquires a constant `C = 9`, and
+`archCorrLargeShift_of_moderate_and_nearMax` absorbs it by moving the height cut from
+`exp((log X)^{1−ν})` to `exp((log X)^{(1−ν)/9})`.  The Vinogradov band widens; it was already
+Vinogradov, so **nothing is lost**.
+
+### The wall, re-derived independently (so the next lap does not re-litigate it)
+
+Writing `C(v,X) = ∑_{p≤X} p^{-iv}/p = log ζ(1+1/log X+iv) + O(1)` and `L = log log X`: the consumer
+needs a **proportional** saving `‖C‖ ≤ (1−η)L + O(1)` over `|v| ≤ A²X`.  The trivial `|ζ(σ+it)| ≪
+log|t|` gives `‖C‖ ≤ log log|v| + O(1)`, which saves a proportion **only while `log log|v| < L`**,
+i.e. only below `exp((log X)^{1−ν})`.  At `|v| ≍ X` it saves nothing, and beating it needs
+`|ζ(1+it)| ≪ (log t)^{2/3}` — Vinogradov.  Two escapes checked and refuted again this lap: the
+free abscissa `σ = 1+λ/log X` buys `log λ` on the main term and *costs* `log λ + γ` on the
+truncation (`∫₀^λ(1−e^{-y})dy/y`), exactly cancelling; and the 3-4-1 inequality gives only a LOWER
+bound on `|ζ(σ+it)|`, the wrong direction for `ζ^ω` (it is the right direction for `λ`, and there
+too it is exactly borderline: `3·log ζ(σ) = 3L` against `log|ζ(σ+2it)| ≤ L`).  **The wall is real.**
+
+### KEEP doing
+
+* One named, sorry-free, audited theorem per lap.  That cadence is working.
+* The EA-1 boundary audit on every new `Prop`, in the `Prop`'s own docstring.
+* Recording refuted sub-routes in the module docstring (`ElliottArchBands` §"negative results" is
+  the model — it saved this lap from re-deriving van der Corput).
+
+### STOP doing
+
+* **Stop calling an analytic fact "classical, cited" without grepping `src/PNTPort/`,
+  `src/NormalNumbers/G4*.lean` and `Erdos67b.PrimeEstimates` first.**  That is now trigger EP-1.
+* Stop describing the Elliott consumer as if it closes the repo's normality route.
+  `TwoPointElliottLog` is the **logarithmic** average; `CastingOut.TwoPointElliott` (what
+  `PairDecoupleTwoPoint` consumes) is the **natural** average; the passage is a separate known-open
+  Chowla-strength problem.  Nothing currently in `src/` consumes `TwoPointElliottLog`.
+
+### The single highest-value next target, with reasoning
+
+**T1 — `ElliottDamped.SliceCapSmall`, i.e. (c′-I).**  Not because it is easiest, but because it is
+the *smallest compiler-grounded probe of the decisive uncertainty*: whether the bridge
+`logWeightedSlice v X Y w = −ζ'/ζ(sliceAbscissa X w v) + O(1)` actually closes in Lean.  T2
+(`ArchCorrModerate` from `LogDerivZetaBndUnif99`) reuses that same bridge, so if the bridge fails
+BOTH remaining reachable inputs fail and the route must be redesigned.  The recipe is fully scoped
+(`HANDOFF-elliott-2026-09-25-lap111.md` §"NEXT LAP", 4 steps, all four supporting lemmas already
+proved).  Then T2, then T3 (`PrimeDensityAP`).  After those three, the ledger reads: **one cited
+🟠 axiom (`ArchCorrNearMaxHeight` = Vinogradov's mean value theorem) and a fully built remainder.**
+
+
 ## 🔨 2026-09-25 laps 103–104 — the slice inputs made honest, and the tail bricks
 
 **Fidelity repair (lap 103).**  Lap 102's `SliceBound{Small,Moderate}` claimed the pole bound for
