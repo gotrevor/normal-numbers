@@ -69,11 +69,27 @@ namespace NormalNumbers
 namespace CastingOut
 
 open scoped Classical in
-/-- The reciprocal mass of the primes `≤ Y` that resonate with the twist `z·p^{−it}`, i.e.
-those with `|arg(z p^{−it})| < ε = |arg z|/2`. -/
-noncomputable def resonantMass (z : ℂ) (t : ℝ) (Y : ℕ) : ℝ :=
-  ∑ p ∈ (Erdos67b.primesUpTo Y).filter (fun p => |(primePhase z t p).arg| < resEps z),
-    (p : ℝ)⁻¹
+/-- The reciprocal mass of the primes `≤ Y` that resonate with the twist `z·p^{−it}` to within
+a window half-width `δ`, i.e. those with `|arg(z p^{−it})| < δ`.
+
+The half-width is a free parameter, not `resEps z`: the certificate needs
+`(1 − cos δ)(1 − O(δ/π)) > 0`, and the covering that proves the mass bound can lose a factor
+`2` in the `δ/π`, which is fatal at `δ = π/2` (i.e. `z = −1`) but harmless at any `δ ≤ 1/4`. -/
+noncomputable def resonantMass (z : ℂ) (t : ℝ) (Y : ℕ) (δ : ℝ) : ℝ :=
+  ∑ p ∈ (Erdos67b.primesUpTo Y).filter (fun p => |(primePhase z t p).arg| < δ), (p : ℝ)⁻¹
+
+/-- Off a window of half-width `δ ≤ π` the full `1 − cos δ` is collected.  (`δ = resEps z` is
+`one_sub_re_primePhase_ge`.) -/
+theorem one_sub_re_primePhase_ge_width {z : ℂ} (hz : ‖z‖ = 1) {p : ℕ} (hp : 0 < p) {t δ : ℝ}
+    (hδ0 : 0 ≤ δ) (hδπ : δ ≤ π) (hgood : δ ≤ |(primePhase z t p).arg|) :
+    1 - Real.cos δ ≤ 1 - (primePhase z t p).re := by
+  have hre : (primePhase z t p).re = Real.cos ((primePhase z t p).arg) := by
+    rw [Complex.cos_arg (primePhase_ne_zero hz hp t), norm_primePhase hz hp t, div_one]
+  have hcos : Real.cos |(primePhase z t p).arg| ≤ Real.cos δ :=
+    Real.cos_le_cos_of_nonneg_of_le_pi hδ0 (Complex.abs_arg_le_pi _) hgood
+  rw [Real.cos_abs] at hcos
+  rw [hre]
+  linarith
 
 /-! ## TT's sum is the archimedean pretentious distance -/
 
@@ -110,20 +126,21 @@ theorem ttPretentiousTerm_nonneg {z : ℂ} (hz : ‖z‖ = 1) {p : ℕ} (hp : p.
 
 /-- **The good primes deliver**, on TT's index set: the pretentious sum is at least
 `(1 − cos ε)` times the non-resonant prime mass. -/
-theorem ttPretentiousSum_ge {z : ℂ} (hz : ‖z‖ = 1) (X t : ℝ) :
-    (1 - Real.cos (resEps z))
-        * (Erdos67b.PrimeEstimates.primeReciprocals ⌈X ^ 2⌉₊ - resonantMass z t ⌈X ^ 2⌉₊)
+theorem ttPretentiousSum_ge {z : ℂ} (hz : ‖z‖ = 1) (X t : ℝ) {δ : ℝ}
+    (hδ0 : 0 ≤ δ) (hδπ : δ ≤ π) :
+    (1 - Real.cos δ)
+        * (Erdos67b.PrimeEstimates.primeReciprocals ⌈X ^ 2⌉₊ - resonantMass z t ⌈X ^ 2⌉₊ δ)
       ≤ ttPretentiousSum (zOmegaNat z) X t := by
   classical
   set Y : ℕ := ⌈X ^ 2⌉₊ with hY
   set P : Finset ℕ := Erdos67b.primesUpTo Y with hP
-  set res : ℕ → Prop := fun p => |(primePhase z t p).arg| < resEps z with hres
+  set res : ℕ → Prop := fun p => |(primePhase z t p).arg| < δ with hres
   have hmass : Erdos67b.PrimeEstimates.primeReciprocals Y = ∑ p ∈ P, (p : ℝ)⁻¹ := by
     rw [hP, primesUpTo_eq_primesLE]
     rfl
   have hsplit : ∑ p ∈ P.filter res, (p : ℝ)⁻¹ + ∑ p ∈ P.filter (fun p => ¬ res p), (p : ℝ)⁻¹
       = ∑ p ∈ P, (p : ℝ)⁻¹ := Finset.sum_filter_add_sum_filter_not P _ _
-  have hgood : (1 - Real.cos (resEps z)) * ∑ p ∈ P.filter (fun p => ¬ res p), (p : ℝ)⁻¹
+  have hgood : (1 - Real.cos δ) * ∑ p ∈ P.filter (fun p => ¬ res p), (p : ℝ)⁻¹
       ≤ ttPretentiousSum (zOmegaNat z) X t := by
     rw [ttPretentiousSum_eq_primes z X t, ← hP, Finset.mul_sum]
     refine le_trans (Finset.sum_le_sum (g := fun p => (1 - (primePhase z t p).re) / (p : ℝ))
@@ -134,12 +151,12 @@ theorem ttPretentiousSum_ge {z : ℂ} (hz : ‖z‖ = 1) (X t : ℝ) :
     have hpp : p.Prime := (Erdos67b.mem_primesUpTo.1 hpP).1
     rw [div_eq_mul_inv]
     exact mul_le_mul_of_nonneg_right
-      (one_sub_re_primePhase_ge hz hpp.pos (not_lt.1 hpg)) (by positivity)
-  have hrm : resonantMass z t Y = ∑ p ∈ P.filter res, (p : ℝ)⁻¹ := rfl
+      (one_sub_re_primePhase_ge_width hz hpp.pos hδ0 hδπ (not_lt.1 hpg)) (by positivity)
+  have hrm : resonantMass z t Y δ = ∑ p ∈ P.filter res, (p : ℝ)⁻¹ := rfl
   rw [hmass, hrm]
-  calc (1 - Real.cos (resEps z))
+  calc (1 - Real.cos δ)
         * ((∑ p ∈ P, (p : ℝ)⁻¹) - ∑ p ∈ P.filter res, (p : ℝ)⁻¹)
-      = (1 - Real.cos (resEps z)) * ∑ p ∈ P.filter (fun p => ¬ res p), (p : ℝ)⁻¹ := by
+      = (1 - Real.cos δ) * ∑ p ∈ P.filter (fun p => ¬ res p), (p : ℝ)⁻¹ := by
         rw [← hsplit]; ring
     _ ≤ ttPretentiousSum (zOmegaNat z) X t := hgood
 
@@ -158,25 +175,39 @@ This is the sharp form of `resonant_mass_le`: the resonance windows are
 `resonant_mass_le` proves exactly this with the lossy per-window bound `windowMassBound` in
 place of `2ε/(γ_m − ε)`, which suffices only for `O(1)` windows. -/
 def UniformResonantMass : Prop :=
-  ∀ z : ℂ, ‖z‖ = 1 → z ≠ 1 → ∃ C : ℝ, 0 ≤ C ∧ ∀ (t : ℝ) (Y : ℕ), 2 ≤ Y →
-    resonantMass z t Y
-      ≤ (resEps z / π) * (Real.log (Real.log Y) + Real.log (2 + |t|)) + C
+  ∀ (z : ℂ) (δ : ℝ), ‖z‖ = 1 → 0 < δ → δ ≤ resEps z → ∃ C : ℝ, 0 ≤ C ∧
+    ∀ (t : ℝ) (Y : ℕ), 2 ≤ Y →
+      resonantMass z t Y δ
+        ≤ (2 * δ / π) * (Real.log (Real.log Y) + Real.log (2 + |t|)) + C
 
 /-! ## The payoff -/
 
 /-- The exponent the certificate supports: `κ(z) = (1 − cos ε)(1 − (126/125)(ε/π))`, with
 `ε = |arg z|/2 ∈ (0, π/2]`.  Positive exactly when `z ≠ 1`. -/
+noncomputable def ttEps (z : ℂ) : ℝ := min (resEps z) (1 / 4)
+
+theorem ttEps_pos {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) : 0 < ttEps z :=
+  lt_min (resEps_pos hz hz1) (by norm_num)
+
+theorem ttEps_le {z : ℂ} : ttEps z ≤ resEps z := min_le_left _ _
+
+theorem ttEps_le_quarter {z : ℂ} : ttEps z ≤ 1 / 4 := min_le_right _ _
+
 noncomputable def ttExponent (z : ℂ) : ℝ :=
-  (1 - Real.cos (resEps z)) * (1 - (126 / 125) * (resEps z / π))
+  (1 - Real.cos (ttEps z)) * (1 - (126 / 125) * (2 * ttEps z / π))
 
 theorem ttExponent_pos {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) : 0 < ttExponent z := by
-  have hpi : (0 : ℝ) < π := Real.pi_pos
-  have h1 : 0 < 1 - Real.cos (resEps z) := one_sub_cos_resEps_pos hz hz1
-  have h2 : resEps z ≤ π / 2 := resEps_le_pi_div_two z
-  have h3 : resEps z / π ≤ 1 / 2 := by
-    rw [div_le_iff₀ hpi]
+  have hpi : (3 : ℝ) < π := Real.pi_gt_three
+  have hq : ttEps z ≤ 1 / 4 := ttEps_le_quarter
+  have hp0 : 0 < ttEps z := ttEps_pos hz hz1
+  have h1 : 0 < 1 - Real.cos (ttEps z) := by
+    have h : Real.cos (ttEps z) < Real.cos 0 :=
+      Real.cos_lt_cos_of_nonneg_of_le_pi le_rfl (by linarith) hp0
+    rw [Real.cos_zero] at h; linarith
+  have h3 : 2 * ttEps z / π ≤ 1 / 6 := by
+    rw [div_le_iff₀ (by linarith : (0:ℝ) < π)]
     linarith
-  have : 0 < 1 - (126 / 125 : ℝ) * (resEps z / π) := by nlinarith
+  have : 0 < 1 - (126 / 125 : ℝ) * (2 * ttEps z / π) := by nlinarith
   exact mul_pos h1 this
 
 /-- **TT's hypothesis (3.3), discharged for `z^ω`.**  Given the uniform resonant-mass bound,
@@ -186,16 +217,20 @@ theorem ttNonPretentious_of_uniformResonantMass (hURM : UniformResonantMass)
     {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) {κ : ℝ} (hκ : κ ≤ ttExponent z) :
     ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
       TTNonPretentious (zOmegaNat z) X L := by
-  obtain ⟨C, hC0, hC⟩ := hURM z hz hz1
-  set ε := resEps z with hε
-  have hpi : (0 : ℝ) < π := Real.pi_pos
-  have hε0 : 0 < ε := resEps_pos hz hz1
-  have hεπ : ε ≤ π / 2 := resEps_le_pi_div_two z
-  have hεπ' : ε / π ≤ 1 / 2 := by
+  set ε := ttEps z with hε
+  have hε0 : 0 < ε := ttEps_pos hz hz1
+  have hq : ε ≤ 1 / 4 := ttEps_le_quarter
+  obtain ⟨C, hC0, hC⟩ := hURM z ε hz hε0 ttEps_le
+  have hpi3 : (3 : ℝ) < π := Real.pi_gt_three
+  have hpi : (0 : ℝ) < π := by linarith
+  have hεπ' : 2 * ε / π ≤ 1 / 6 := by
     rw [div_le_iff₀ hpi]; linarith
-  have hcos : 0 < 1 - Real.cos ε := one_sub_cos_resEps_pos hz hz1
+  have hcos : 0 < 1 - Real.cos ε := by
+    have h : Real.cos ε < Real.cos 0 :=
+      Real.cos_lt_cos_of_nonneg_of_le_pi le_rfl (by linarith) hε0
+    rw [Real.cos_zero] at h; linarith
   set C₁ : ℝ := (1 - Real.cos ε)
-      * (C + Erdos67b.PrimeEstimates.mertensBound + (ε / π) * Real.log 4) with hC₁
+      * (C + Erdos67b.PrimeEstimates.mertensBound + (2 * ε / π) * Real.log 4) with hC₁
   refine fun X L hX hL1 hLX => ⟨Real.exp (-C₁), Real.exp_pos _, fun t ht => ?_⟩
   -- basic size facts
   have hX0 : (0 : ℝ) < X := by linarith
@@ -240,21 +275,21 @@ theorem ttNonPretentious_of_uniformResonantMass (hURM : UniformResonantMass)
     linarith [this.1]
   have hlower : ttExponent z * Real.log (Real.log X) - C₁
       ≤ ttPretentiousSum (zOmegaNat z) X t := by
-    refine le_trans ?_ (ttPretentiousSum_ge hz X t)
-    rw [← hε, ← hY]
+    refine le_trans ?_ (ttPretentiousSum_ge hz X t hε0.le (by linarith))
+    rw [← hY]
     have hkey : ttExponent z * Real.log (Real.log X) - C₁
         ≤ (1 - Real.cos ε)
             * ((Real.log (Real.log Y) - Erdos67b.PrimeEstimates.mertensBound)
-                - ((ε / π) * (Real.log (Real.log Y) + Real.log (2 + |t|)) + C)) := by
+                - ((2 * ε / π) * (Real.log (Real.log Y) + Real.log (2 + |t|)) + C)) := by
       rw [hC₁, ttExponent, ← hε]
-      have hcoef : (1 - (126/125 : ℝ) * (ε / π)) * Real.log (Real.log X)
+      have hcoef : (1 - (126/125 : ℝ) * (2 * ε / π)) * Real.log (Real.log X)
           ≤ (Real.log (Real.log Y) - Erdos67b.PrimeEstimates.mertensBound)
-              - ((ε / π) * (Real.log (Real.log Y) + Real.log (2 + |t|)) + C)
-            + (C + Erdos67b.PrimeEstimates.mertensBound + (ε / π) * Real.log 4) := by
-        have h1 : (0 : ℝ) ≤ 1 - ε / π := by linarith
-        have h2 : (ε / π) * Real.log (2 + |t|)
-            ≤ (ε / π) * (Real.log 4 + (1/125) * Real.log (Real.log X)) := by
-          have : (0:ℝ) ≤ ε / π := by positivity
+              - ((2 * ε / π) * (Real.log (Real.log Y) + Real.log (2 + |t|)) + C)
+            + (C + Erdos67b.PrimeEstimates.mertensBound + (2 * ε / π) * Real.log 4) := by
+        have h1 : (0 : ℝ) ≤ 1 - 2 * ε / π := by linarith
+        have h2 : (2 * ε / π) * Real.log (2 + |t|)
+            ≤ (2 * ε / π) * (Real.log 4 + (1/125) * Real.log (Real.log X)) := by
+          have : (0:ℝ) ≤ 2 * ε / π := by positivity
           exact mul_le_mul_of_nonneg_left ht4 this
         nlinarith [mul_le_mul_of_nonneg_left hloglog h1]
       nlinarith [hcos.le]
@@ -274,13 +309,13 @@ theorem ttNonPretentious_of_uniformResonantMass (hURM : UniformResonantMass)
   exact hfinal
 
 theorem ttExponent_le_one {z : ℂ} (hz : ‖z‖ = 1) : ttExponent z ≤ 1 := by
-  have hpi : (0 : ℝ) < π := Real.pi_pos
-  have hε0 : 0 ≤ resEps z := resEps_nonneg z
-  have hεπ : resEps z ≤ π / 2 := resEps_le_pi_div_two z
-  have hcos : 0 ≤ Real.cos (resEps z) :=
-    Real.cos_nonneg_of_mem_Icc ⟨by linarith [Real.pi_pos], hεπ⟩
-  have h2 : (0 : ℝ) ≤ (126 / 125 : ℝ) * (resEps z / π) := by positivity
-  have h3 : Real.cos (resEps z) ≤ 1 := Real.cos_le_one _
+  have hpi : (3 : ℝ) < π := Real.pi_gt_three
+  have hε0 : 0 ≤ ttEps z := le_min (resEps_nonneg z) (by norm_num)
+  have hq : ttEps z ≤ 1 / 4 := ttEps_le_quarter
+  have hcos : 0 ≤ Real.cos (ttEps z) :=
+    Real.cos_nonneg_of_mem_Icc ⟨by linarith, by linarith⟩
+  have h2 : (0 : ℝ) ≤ (126 / 125 : ℝ) * (2 * ttEps z / π) := by positivity
+  have h3 : Real.cos (ttEps z) ≤ 1 := Real.cos_le_one _
   rw [ttExponent]
   nlinarith
 
