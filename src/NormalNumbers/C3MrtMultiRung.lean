@@ -96,6 +96,54 @@ theorem initial_segment_bound_of_kElliott {K : ℕ} (hK : 0 < K)
 
 #print axioms initial_segment_bound_of_kElliott
 
+
+/-- **The `K` linear forms of a tuple are pairwise nondegenerate.**  Lap 39's `multi_forms_det`
+in the shape `KPointLogElliott` asks for: the determinant of forms `i ≠ j` is
+`L(j−i)/(d_i d_j) ≠ 0`.  No coprimality, no arithmetic hypothesis beyond what the CRT supplies
+by construction. -/
+theorem nondegenerateForms_of_tuple {K : ℕ} (d : Fin K → ℕ) (hd : ∀ i, 0 < d i) {a : ℕ}
+    (ha : ∀ i : Fin K, d i ∣ a + (i : ℕ) + 1) :
+    NondegenerateForms (fun i : Fin K => (Finset.univ : Finset (Fin K)).lcm d / d i)
+      (fun i : Fin K => (((a + (i : ℕ) + 1) / d i : ℕ) : ℤ)) := by
+  set L : ℕ := (Finset.univ : Finset (Fin K)).lcm d with hLdef
+  have hL : 0 < L := univLcm_pos d hd
+  have hdvd : ∀ i : Fin K, d i ∣ L := fun i => Finset.dvd_lcm (Finset.mem_univ i)
+  refine ⟨fun i => Nat.div_pos (Nat.le_of_dvd hL (hdvd i)) (hd i), fun i j hij hdet => ?_⟩
+  have hkey := multi_forms_det (L := L) (a := a) (di := d i) (dj := d j)
+    (i := (i : ℕ)) (j := (j : ℕ)) (hdvd i) (hdvd j) (ha i) (ha j)
+  rw [hdet, mul_zero] at hkey
+  have hLZ : (L : ℤ) ≠ 0 := by exact_mod_cast hL.ne'
+  have hne : ((j : ℕ) : ℤ) - ((i : ℕ) : ℤ) ≠ 0 := by
+    have : (i : ℕ) ≠ (j : ℕ) := fun h => hij (Fin.ext h)
+    omega
+  exact absurd hkey.symm (mul_ne_zero hLZ hne)
+
+/-- **The `K`-point rung from the named inputs.**  `rung_two_of_named_inputs` at `K` points:
+`KPointLogElliott K` supplies the correlation, `TwistedPrimeSumSavingAllLevels` +
+`nonPretentious_zOm` the archimedean certificate for the first factor. -/
+theorem rung_multi_of_named_inputs {K : ℕ} (hK : 0 < K) (helliott : KPointLogElliott K)
+    (hsave : TwistedPrimeSumSavingAllLevels) (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1) (hz01 : z 0 ≠ 1)
+    (c b : Fin K → ℕ) (hnd : NondegenerateForms c (fun i => ((b i : ℕ) : ℤ)))
+    (ε : ℝ) (hε : 0 < ε) :
+    ∃ A₀ : ℕ, 2 ≤ A₀ ∧ ∀ A : ℕ, A₀ ≤ A → ∃ i₀ : ℕ, ∀ m : ℕ, i₀ ≤ m →
+      ‖∑ j ∈ Ioc 0 (A ^ m), (Erdos67b.harmonicWeight j : ℂ) *
+          ∏ i : Fin K, zOmInt (z i) (Erdos67b.integerAffine (c i) ((b i : ℕ) : ℤ) j)‖
+        ≤ (1 + Real.log (A ^ i₀ : ℕ)) + (m : ℝ) * (ε * Real.log A) := by
+  obtain ⟨A₀, hA₀2, hA₀⟩ := initial_segment_bound_of_kElliott hK helliott c b hnd z hz ε hε
+  refine ⟨A₀, hA₀2, fun A hA => ?_⟩
+  obtain ⟨T, hT⟩ := hsave A
+  obtain ⟨X₀, hX₀⟩ := nonPretentious_zOm (hz 0) hz01 hT
+  refine ⟨X₀, fun m hm => hA₀ A hA X₀ (fun i hi q hq hqA χ t ht => ?_) m hm⟩
+  have hA2 : 2 ≤ A := le_trans hA₀2 hA
+  have hpow : X₀ ≤ A ^ i := by
+    have h1 : i < 2 ^ i := Nat.lt_two_pow_self
+    have h2 : (2 : ℕ) ^ i ≤ A ^ i := Nat.pow_le_pow_left hA2 i
+    omega
+  exact hX₀ (A ^ i) hpow q hq hqA χ t (by exact_mod_cast ht)
+
+#print axioms nondegenerateForms_of_tuple
+#print axioms rung_multi_of_named_inputs
+
 end CastingOut
 
 end NormalNumbers

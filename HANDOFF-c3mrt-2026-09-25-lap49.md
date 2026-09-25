@@ -68,3 +68,20 @@ Remaining: `rung_multi_of_named_inputs` (plug `nonPretentious_zOm` + `TwistedPri
 into the above, mirroring `rung_two_of_named_inputs` exactly) and then `rung_multi_uniform`
 (`exists_common_threshold` over the finitely many admissible tuples), which is
 `multi_correlation_of_uniform_rung`'s `hrungU`.
+
+## Addendum — lap 51: `nondegenerateForms_of_tuple` + `rung_multi_of_named_inputs`
+
+`C3MrtMultiRung.lean` (sorry-free, trust triple).
+
+* `nondegenerateForms_of_tuple` — the `K` forms `(L/d_i)X + (a+i+1)/d_i` of ANY positive tuple
+  with an admissible base point satisfy `NondegenerateForms`, via lap 39's `multi_forms_det`
+  (`det = L(j−i)/(d_i d_j) ≠ 0`).  No coprimality, no side condition.
+* `rung_multi_of_named_inputs` — the `K`-point `rung_two_of_named_inputs`: `KPointLogElliott K`
+  + `TwistedPrimeSumSavingAllLevels` + `nonPretentious_zOm` give, for each `A ≥ A₀`, an `i₀`
+  with the window bound `(1 + log A^{i₀}) + m·ε·log A` for all `m ≥ i₀`.
+
+**Only `rung_multi_uniform` is left**: one `A` and one `I` for the finitely many admissible
+`(d, a)` with `d_i ≤ Y`, `a < Y^K` — `exists_common_threshold` over
+`Fintype.piFinset (range (Y+1)) ×ˢ range (Y^K + 1)`, exactly as lap 32 did over triples.  Feed
+it `rung_multi_of_named_inputs` at `nondegenerateForms_of_tuple`, and
+`multi_correlation_of_uniform_rung` then closes the `D ≥ 3` rung on `KPointLogElliott K` alone.
