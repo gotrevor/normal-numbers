@@ -1300,6 +1300,151 @@ theorem depthAvg_zero_tendsto (b P Q j : ℕ) {D : ℕ → ℕ} (hj0 : 0 < j) (h
     norm_num [ee_zero]
   exact (twistAvg_tendsto hj0 hjQ).congr fun N => (hcongr N).symm
 
+/-- `e(m) = 1` at an integer. -/
+theorem ee_intCast_eq_one (m : ℤ) : ee (((m : ℝ) : ℂ)) = 1 :=
+  ee_eq_one_iff_int.2 ⟨m, rfl⟩
+
+/-- **The first `v` roots of a `b^v`-divisible twist are trivial.** -/
+theorem depthRoot_eq_one_of_dvd {b : ℕ} (hb : 0 < b) (h' : ℤ) {v i : ℕ} (hi : i < v) :
+    depthRoot b ((b : ℤ) ^ v * h') i = 1 := by
+  have hbR : (0 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  have hkey : (((b : ℤ) ^ v * h' : ℤ) : ℝ) / (b : ℝ) ^ (i + 1)
+      = ((h' * (b : ℤ) ^ (v - (i + 1)) : ℤ) : ℝ) := by
+    have hexp : v = (i + 1) + (v - (i + 1)) := by omega
+    push_cast
+    rw [show ((b : ℝ)) ^ v = (b : ℝ) ^ (i + 1) * (b : ℝ) ^ (v - (i + 1)) by
+      rw [← pow_add, ← hexp]]
+    field_simp
+  rw [depthRoot, hkey]
+  exact ee_intCast_eq_one _
+
+/-- **Beyond depth `v` the twist is the shifted one.** -/
+theorem depthRoot_shift {b : ℕ} (hb : 0 < b) (h' : ℤ) (v i : ℕ) :
+    depthRoot b ((b : ℤ) ^ v * h') (v + i) = depthRoot b h' i := by
+  have hbR : (0 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  have hkey : ((((b : ℤ) ^ v * h' : ℤ)) : ℝ) / (b : ℝ) ^ (v + i + 1)
+      = ((h' : ℝ)) / (b : ℝ) ^ (i + 1) := by
+    rw [show v + i + 1 = v + (i + 1) by omega, pow_add]
+    push_cast
+    field_simp
+  rw [depthRoot, depthRoot, hkey]
+
+/-- **The depth phase of a `b^v`-divisible twist is the phase of the reduced twist, re-indexed.**
+`ee (b^v h' · tailDepth D n) = ee (h' · tailDepth (D-v) (n+v))`: the first `v` digit slots
+contribute integer phases. -/
+theorem ee_tailDepth_dvd {b : ℕ} (hb : 0 < b) (P : ℕ) (h' : ℤ) {v D : ℕ} (hvD : v ≤ D) (n : ℕ) :
+    ee (((((((b : ℤ) ^ v * h' : ℤ)) : ℝ) * tailDepth P b D n : ℝ) : ℂ))
+      = ee ((((h' : ℝ) * tailDepth P b (D - v) (n + v) : ℝ) : ℂ)) := by
+  rw [ee_tailDepth_eq_prod, ee_tailDepth_eq_prod]
+  have hD : D = v + (D - v) := by omega
+  conv_lhs => rw [hD]
+  rw [Finset.prod_range_add]
+  have hfirst : (∏ i ∈ range v, depthRoot b ((b : ℤ) ^ v * h') i ^ omegaLarge P (n + i + 1))
+      = 1 := by
+    refine Finset.prod_eq_one fun i hi => ?_
+    rw [depthRoot_eq_one_of_dvd hb h' (Finset.mem_range.1 hi), one_pow]
+  rw [hfirst, one_mul]
+  refine Finset.prod_congr rfl fun i _ => ?_
+  rw [depthRoot_shift hb h' v i]
+  congr 2
+  omega
+
+/-- **The `b ∣ hh` level of `DepthDiagonal`, reduced.**  Writing `hh = b^v h'`, the depth-`D`
+average at `hh` is the depth-`(D-v)` average at `h'`, up to a shift of `n` by `v` — and that shift
+costs at most `2v/N`.  So the diagonal at a `b`-divisible twist level follows from the diagonal at
+the reduced level with the depth schedule lowered by the constant `v`. -/
+theorem norm_depthAvg_dvd_le {b : ℕ} (hb : 0 < b) (P Q j : ℕ) (h' : ℤ) {v D : ℕ} (hvD : v ≤ D)
+    (N : ℕ) :
+    ‖depthAvg b P Q j ((b : ℤ) ^ v * h') D N‖
+      ≤ ‖depthAvg b P Q j h' (D - v) N‖ + 2 * v / N := by
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp [depthAvg]
+  have hNR : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  set T : ℕ → ℂ := fun m => ee ((((j : ℝ) * m / Q : ℝ) : ℂ)) with hT
+  set F : ℕ → ℂ := fun m => ee ((((h' : ℝ) * tailDepth P b (D - v) m : ℝ) : ℂ)) with hF
+  set g : ℕ → ℂ := fun m => T m * F m with hg
+  have hTnorm : ∀ m, ‖T m‖ = 1 := fun m => norm_ee_real _
+  have hFnorm : ∀ m, ‖F m‖ = 1 := fun m => norm_ee_real _
+  have hgnorm : ∀ m, ‖g m‖ = 1 := fun m => by rw [hg]; simp [norm_mul, hTnorm, hFnorm]
+  -- the shift on the twist
+  have hTadd : ∀ n : ℕ, T (n + v) = T n * T v := by
+    intro n
+    rw [hT]
+    simp only
+    rw [← ee_add]
+    congr 1
+    push_cast
+    rcases Nat.eq_zero_or_pos Q with rfl | hQ
+    · simp
+    have hQR : (Q : ℝ) ≠ 0 := by
+      have : (0 : ℝ) < (Q : ℝ) := by exact_mod_cast hQ
+      exact ne_of_gt this
+    field_simp
+  have hTv : T v ≠ 0 := by
+    intro h0
+    have := hTnorm v
+    rw [h0, norm_zero] at this
+    norm_num at this
+  -- step 1: the divisible average is the reduced average with `n` shifted
+  have hstep1 : depthAvg b P Q j ((b : ℤ) ^ v * h') D N
+      = (∑ n ∈ range N, T n * F (n + v)) / N := by
+    rw [depthAvg]
+    congr 1
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [hT, hF]
+    simp only
+    rw [ee_tailDepth_dvd hb P h' hvD n]
+  -- step 2: pull the twist shift out
+  have hstep2 : (∑ n ∈ range N, T n * F (n + v))
+      = (T v)⁻¹ * ∑ n ∈ range N, g (n + v) := by
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [hg]
+    simp only
+    rw [hTadd n]
+    field_simp
+  -- step 3: the shifted sum differs from the plain one by at most `2v` terms
+  have hstep3 : ‖(∑ n ∈ range N, g (n + v)) - ∑ m ∈ range N, g m‖ ≤ 2 * v := by
+    have e1 : (∑ m ∈ range (v + N), g m)
+        = (∑ i ∈ range v, g i) + ∑ i ∈ range N, g (v + i) := Finset.sum_range_add g v N
+    have e2 : (∑ m ∈ range (N + v), g m)
+        = (∑ i ∈ range N, g i) + ∑ i ∈ range v, g (N + i) := Finset.sum_range_add g N v
+    have e3 : v + N = N + v := by omega
+    rw [e3] at e1
+    have hshift : ∀ i, g (v + i) = g (i + v) := fun i => by rw [Nat.add_comm]
+    have key : (∑ n ∈ range N, g (n + v)) - ∑ m ∈ range N, g m
+        = (∑ i ∈ range v, g (N + i)) - ∑ i ∈ range v, g i := by
+      have e1' : (∑ m ∈ range (N + v), g m)
+          = (∑ i ∈ range v, g i) + ∑ i ∈ range N, g (i + v) := by
+        rw [e1]
+        congr 1
+        exact Finset.sum_congr rfl fun i _ => hshift i
+      rw [e1'] at e2
+      linear_combination e2
+    rw [key]
+    refine (norm_sub_le _ _).trans ?_
+    have b1 : ‖∑ i ∈ range v, g (N + i)‖ ≤ v := by
+      refine (norm_sum_le _ _).trans ?_
+      simp [hgnorm]
+    have b2 : ‖∑ i ∈ range v, g i‖ ≤ v := by
+      refine (norm_sum_le _ _).trans ?_
+      simp [hgnorm]
+    linarith
+  -- assemble
+  have hnormTv : ‖(T v)⁻¹‖ = 1 := by
+    rw [norm_inv, hTnorm v, inv_one]
+  rw [hstep1, hstep2, norm_div, norm_mul, hnormTv, one_mul, Complex.norm_natCast]
+  have hplain : depthAvg b P Q j h' (D - v) N = (∑ m ∈ range N, g m) / N := by
+    rw [depthAvg, hg]
+  rw [hplain, norm_div, Complex.norm_natCast]
+  have hsplit : ‖∑ n ∈ range N, g (n + v)‖ ≤ ‖∑ m ∈ range N, g m‖ + 2 * v := by
+    have hrev := norm_sub_norm_le (∑ n ∈ range N, g (n + v)) (∑ m ∈ range N, g m)
+    linarith [hstep3, hrev]
+  calc ‖∑ n ∈ range N, g (n + v)‖ / (N : ℝ)
+      ≤ (‖∑ m ∈ range N, g m‖ + 2 * v) / (N : ℝ) :=
+        div_le_div_of_nonneg_right hsplit hNR.le
+    _ = ‖∑ m ∈ range N, g m‖ / (N : ℝ) + 2 * v / (N : ℝ) := by ring
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -1326,6 +1471,8 @@ theorem depthAvg_zero_tendsto (b P Q j : ℕ) {D : ℕ → ℕ} (hj0 : 0 < j) (h
 #print axioms NormalNumbers.CastingOut.depthAvg_diag_tendsto_of_degrading_sched
 #print axioms NormalNumbers.CastingOut.twistAvg_tendsto
 #print axioms NormalNumbers.CastingOut.depthAvg_zero_tendsto
+#print axioms NormalNumbers.CastingOut.ee_tailDepth_dvd
+#print axioms NormalNumbers.CastingOut.norm_depthAvg_dvd_le
 
 end CastingOut
 
