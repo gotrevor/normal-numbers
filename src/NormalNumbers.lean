@@ -386,6 +386,7 @@ import NormalNumbers.AbelianBlockDensity
 import NormalNumbers.AbelianNormal
 import NormalNumbers.AbelianWindowSets
 import NormalNumbers.AbelianWindowBlocks
+import NormalNumbers.AbelianWindowOdd
 import NormalNumbers.AbelianBinaryExample
 import NormalNumbers.WalshBase
 import NormalNumbers.G4WiringSummatory

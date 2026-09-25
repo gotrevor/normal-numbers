@@ -176,3 +176,42 @@ to be built from; `q → ∞` is the multi-scale axis.
 of uniform, denominator `B`), tabulate `G(blockSeq g c q)` — expected: unlike the periodic case it
 can be INFINITE.  Confirm the first infinite witness there, then port it to Lean by `decide`ing
 the `blockFreq` identities.
+
+## Lap 6 addendum — INFINITE `S` IS REALIZABLE (probed exactly, Lean started)
+`probes/c4_block_iid.py` (known-answer checked against the uniform block law = normal sequence)
+enumerates block-i.i.d. laws and computes `G` exactly by generating functions.  Results:
+
+| `q` | block law `ν` (counts / 8) | `G` |
+|---|---|---|
+| 2 | `00:2, 10:4, 11:2` | **all odd `L`** (verified to `L = 41`) |
+| 3 | `1,0,0,1,3,2,0,1` | `{1} ∪ {L ≡ 2 mod 3}` (to 31) |
+| 3 | `1,0,1,2,2,1,0,1` | `{1,2} ∪ {L ≢ 1 mod 3}` (to 31) |
+| 3 | `1,0,2,1,1,0,2,1` | `{L : 3 ∤ L} ∪ {1,2}` (to 31) |
+
+So the aperiodic block class realizes INFINITE, eventually-periodic exact sets — the thing
+periodic witnesses provably cannot do.  **This settles the route-decisive doubt: infinite `S` is
+not an obstruction in principle.**
+
+**The odd witness, and why it is easy.**  `q = 2`, base `8`, "sorted" table
+`d < 2 ↦ 00`, `2 ≤ d < 6 ↦ 10`, `6 ≤ d ↦ 11`.  Block one-count `zdig d` has the exact
+`Bin(2,1/2)` law `2/8, 4/8, 2/8`; the bit marginals are `3/4` and `1/4`.  With `u = (1+x)/2`:
+* `L = 2a+1`: offsets 0 and 1 give `u^{2a}(1/4+3x/4)` and `u^{2a}(3/4+x/4)`; the average is
+  `u^{2a}·(1+x)/2 = u^L`.  **In counts this is exactly Pascal's rule.**
+* `L = 2a`: offsets give `u^{2a}` and `u^{2a-2}(3/4+x/4)(1/4+3x/4)`; at `j = 0` the average is
+  `7/(8·4^a)` but the target is `8/(8·4^a)`.  Fails for EVERY even `L`, at `j = 0`.
+
+**Lean landed** (`src/NormalNumbers/AbelianWindowOdd.lean`, new, green): `zdig`, `zsumW`, the
+generating function `Zgf m = ∑_{k < 8^m} X^{zsumW (wordOf 8 m k)}`, `Zgf_succ` (the
+digit-splitting bijection `k ↦ (k/8, k%8)`), `Zgf_eq : Zgf m = C (2^m) · (1+X)^{2m}`, and
+
+  **`zcount_eq`** : `#{k < 8^m : zsumW (wordOf 8 m k) = j} = 2^m · C(2m, j)`.
+
+That is the combinatorial core: the digit sum of `m` uniform base-8 digits is exactly
+`Bin(2m, 1/2)`.
+
+**Next attack.**  Wire `zcount_eq` into `blockFreq` through `winOnes`: for the sorted table,
+`winOnes g 2 L r (wordOf 8 S k)` = (edge bits) + `zsumW` of the whole blocks, so `blockFreq`
+reduces to `zcount_eq` convolved with one or two Bernoulli edges.  Then `isAbelianAt_blockSeq_iff`
+gives `IsAbelianAt (blockSeq sorted c 2) L ↔ Odd L`, i.e. `c4_realizable` for the INFINITE set of
+odd lengths.  Requires a base-8 normal sequence to exist — check `PowerBase`/Champernowne in this
+repo for `∃ c, IsNormalSequence 8 c ∧ ∀ m, c m < 8`.
