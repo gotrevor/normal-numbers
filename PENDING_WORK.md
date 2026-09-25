@@ -1,5 +1,24 @@
 # PENDING WORK
 
+## 2026-09-25 (lap 16) — Elliott crux: the slice route is REFUTED; general affine forms directly
+
+The lap-15 slice decomposition (below) is superseded.  Reason: centring the edge observable on
+`f1` requires translating by `p*c1`, which turns `a | m` into `a | n - p*c1`, a condition on
+`p mod a`.  It does not factor out of the prime sum, so the indicator cannot be carried as a fixed
+periodic block factor.  **Do not re-derive.**
+
+Correct route, engine PROVED this lap in `src/NormalNumbers/ElliottAffineGraph.lean`:
+the graph step `n -> q n` dilates BOTH shifts (`(a n + c1, a n + c2) -> q*(a n + c1, a n + c2)`),
+so the common dilation `a` is a pure spectator.
+`norm_logProb_affineTwistedObservable_sub_correlation_le` gives every translated edge mean `C/q`
+with the dependency's verbatim errors and no `a`-dependence at all.
+
+Remaining crux content = **one Fourier lemma**: the `a`-dilated bilinear pairing
+`sum_j b(a j + q c1) c(a j + q c2) e(t j/T) = sum_{t1,t2 : a(t1+t2) = -t} b^(t1) c^(t2) e((t1 c1 + t2 c2) q/T)`,
+generalising `ElliottTwistedGraph.pairBlockPairing` / `sum_pairBlockPairing_mul_phase`.  The phase
+in `q` is still a single frequency, so the fourth-moment / large-frequency / entropy stack above
+is untouched.  See `HANDOFF-elliott-2026-09-25-lap16.md`.
+
 ## 2026-09-25 (review lap 15) — Elliott: the crux is RE-DECOMPOSED onto the dilation slice
 
 Campaign: `KICKOFF-2026-09-24-elliott-general.md`, branch `wip/elliott-port`.
