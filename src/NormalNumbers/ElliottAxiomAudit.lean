@@ -1,4 +1,5 @@
 import NormalNumbers.ElliottTwoPointLog
+import NormalNumbers.ElliottZetaOmegaPretentious
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
@@ -140,3 +141,6 @@ edits; see the fidelity note in `STATUS.md`.
 /-! ### The downstream consumer (`DIRECTION.md` item 4) -/
 #print axioms NormalNumbers.ElliottTwoPointLog.twoPointElliottLog_of_nonPretentious
 #print axioms NormalNumbers.ElliottTwoPointLog.isCoprimeMult_zetaOmegaInt
+#print axioms NormalNumbers.ElliottZetaOmegaPretentious.zetaOmegaDistSq_eq
+#print axioms NormalNumbers.ElliottZetaOmegaPretentious.norm_twistCorr_sub_primeMass_le
+#print axioms NormalNumbers.ElliottZetaOmegaPretentious.twoPointElliottLog_of_dichotomy

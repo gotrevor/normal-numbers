@@ -10417,3 +10417,46 @@ the log form as following from Tao's theorem.  The honest next targets are there
 (a) discharging `UniformlyNonPretentious (zetaOmegaInt (t/b))` from the Delange stack, for `t/b ∉ ℤ`, and
 (b) the log→natural passage, which needs an extra input (e.g. a Tauberian/entropy argument) and
 should be scoped by an altitude lap before anyone grinds at it.
+
+## Lap 86 (2026-09-25) — `UniformlyNonPretentious` for `ζ^ω` reduced to ONE named analytic input
+
+New `src/NormalNumbers/ElliottZetaOmegaPretentious.lean`, **zero sorry, trust triple**, in the
+audit surface.  This is the remaining half of `DIRECTION.md` item 4: `ElliottTwoPointLog` derived
+the log two-point statement *from* `UniformlyNonPretentious (zetaOmegaInt u)`; this lap reduces
+that hypothesis to a single explicitly-named crux.
+
+* `zetaOmegaDistSq_eq` — **the algebraic core, proved.**  `ζ^ω` is constantly `ζ` at the primes
+  (`ω(p) = 1`), so for every twist
+  `D(ζ^ω, χ n^{it}; X)² = M(X) − Re(ζ · C(χ,t,X))`, `M = ∑_{p≤X}1/p`,
+  `C = ∑_{p≤X} conj(χ(p)p^{it})/p`.
+* `norm_archimedeanTwist_sub_one_le` — `‖p^{it} − 1‖ ≤ 2|t| log p` (via
+  `Complex.norm_exp_sub_one_le` after `p^{it} = exp(i t log p)`).
+* `NearTrivialTwist χ t X` — `χ` principal at all `p ∤ q`, and `|t| log X · M(X) ≤ 1`.
+* `norm_twistCorr_sub_primeMass_le` — **proved**: in that regime `‖C − M‖ ≤ 2 + 2·M(q)`,
+  an `X`-free bound.  (The conductor primes cost `2∑_{p∣q}1/p ≤ 2M(q)`; the Archimedean part
+  costs `2|t| log X · M ≤ 2`.)
+* `TwistModulusDichotomy A δ` — **THE CRUX, left open as a named `Prop`, not an axiom.**  For
+  `q ≤ A`, `χ` mod `q`, `|t| ≤ A·X`: either near-trivial, or `‖C‖ ≤ (1−δ)M`.
+* `exists_primeMass_ge`, `phase_re_lt_one_of_not_int`, and the two derivations
+  `uniformlyNonPretentious_zetaOmega_of_dichotomy` and `twoPointElliottLog_of_dichotomy`.
+
+**Why the dependency's twist separation does not already give it** (the real finding of this lap).
+`TwistSeparation.characterTwistDistSq_lower_of_correlation_loglog` controls `Re C = M − D(1,χ_t)²`.
+Rotating by the *constant* `ζ` exposes `Im C` too: `Re(ζC)` can be close to `M` even when `Re C` is
+not, namely if `arg C ≈ −arg ζ`.  So the needed statement is about the **modulus** `‖C‖`, which is
+strictly stronger than anything in the dependency, and it is over the polynomial height range
+`|t| ≤ A·X` for which the dependency also names — and deliberately does not prove —
+`PolynomialHeightPrimeCorrelationBound`.  Two independent VK-strength obstacles, then; the
+`DelangeSlot*` stack (mean values of char-like `κ`) does **not** reach either.
+
+**Recorded drift.**  `NearTrivialTwist`'s cutoff is `|t| log X · M(X) ≤ 1` rather than the classical
+`|t| ≤ 1/log X`, a `log log X` narrowing forced by the crude `‖p^{it}−1‖ ≤ 2|t| log p` summed with
+`∑1/p` instead of Mertens' first theorem `∑_{p≤X}(log p)/p = log X + O(1)`, which the dependency does
+not have.  Proving Mertens I in `src/` would widen the near-trivial regime and *weaken* the crux —
+that is the cheapest next improvement, and it is elementary (Chebyshev/Abel summation).
+
+**Next attack on the crux**, in order: (a) Mertens I, to restore the classical cutoff; (b) the
+`k`-th-power bootstrap (`‖w²−β²‖ ≤ 2‖w−β‖` iterated to the order of `χ`, reducing `‖C‖ ≈ M` to the
+purely Archimedean `∑_{p≤X}p^{-ikt}/p ≈ M`); (c) the Archimedean bound
+`|∑_{p≤X}p^{-iv}/p| ≪ log(2+|v| log X)/... ` for `1/log X ≪ |v| ≤ A·X`, which is where the zero-free
+region enters and where the dependency stops.
