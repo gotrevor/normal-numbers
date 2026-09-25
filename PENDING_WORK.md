@@ -103,10 +103,33 @@ and the corresponding `‖corr‖ ≤ max` corollary.  That is lap 54's work.
 * **Do not re-derive Hall.**  `Erdos448.HalberstamComplete448.halberstam_richert_explicit` is in
   the dependency (lap 52 found this); `ElliottHall.lean` already instantiates it.
 
+### 4b. Lap 54's proof work — item 1 of the attack order is DONE
+
+`src/NormalNumbers/ElliottRandomize.lean`, zero sorry, every statement trust triple:
+`lift`/`lift_add_lift`/`norm_lift`/`re_lift_mul_conj` (the scalar two-point facts),
+`ppIndex` + `prod_ppIndex`/`ppIndex_mul_of_coprime`/`disjoint_ppIndex_of_coprime`,
+`cover`/`cover_one`/`cover_mul_of_coprime`/`norm_cover`/`cover_prime`/`re_cover_prime_mul_conj`,
+`sum_cover` (the averaging identity), `sum_posExt_cover`,
+`sum_sum_elliottLogCorrelation_cover`, and the decisive corollary **`exists_cover_pair_ge`**:
+
+> for `1`-bounded multiplicative `g₁,g₂ : ℕ → ℂ` and any `Y` dominating the affine images on the
+> window, there exist **unimodular multiplicative** `u₁,u₂` that are lifts of `g₁,g₂` at every
+> prime `≤ Y` (so `(u_i p * conj (g_i p)).re = ‖g_i p‖²`) with
+> `‖elliottLogCorrelation (posExt g₁) (posExt g₂) …‖ ≤ ‖elliottLogCorrelation (posExt u₁) (posExt u₂) …‖`.
+
+So **trigger ET-1 is discharged at lap 54**, eight laps early.  Also new: the permanent audit
+surface `src/NormalNumbers/ElliottAxiomAudit.lean`.
+
+Lean notes worth keeping: `Fintype.prod_sum` turns `∏_i ∑_b` into `∑_{ω : ι → Bool} ∏_i`;
+`Finset.sum_mul_sum` + `← Finset.mul_sum` is the clean way to factor a double sum of
+`w * A ω₁ * B ω₂`; `Nat.support_factorization` is `rfl`, so `Finsupp.mem_support_iff` applies to
+`p ∈ m.primeFactors` after one `rw`; the name is `Finsupp.notMem_support_iff` (not `not_mem_`),
+and `Nat.Prime.primeFactors : p.primeFactors = {p}`.
+
 ### 5. Attack order for leaf 2 (replaces the lap-36 "attack order")
 
-1. `ElliottRandomize.lean` — the two-point unimodular cover + the `‖corr‖ ≤ max` corollary.  **← next**
-2. `ElliottPretentiousTransfer.lean` — the 1-bounded triangle inequality (constant 3), the exact
+1. ~~`ElliottRandomize.lean` — the two-point unimodular cover + the `‖corr‖ ≤ max` corollary.~~ **DONE (lap 54)**
+2. `ElliottPretentiousTransfer.lean` — **← next** the 1-bounded triangle inequality (constant 3), the exact
    identity `pretentiousDistSq g U X = ∑(1−‖g p‖²)/p`, and `MRTNonpretentious` for the cover.
 3. Case A thin window (off `ElliottHall.sum_Icc_dyadic_le`), superseding `exists_caseA_threshold`.
 4. `ElliottSquarefull.lean` — `u = U ⋆ μŨ`, squarefull support, the absolute tail `≤ e²`.

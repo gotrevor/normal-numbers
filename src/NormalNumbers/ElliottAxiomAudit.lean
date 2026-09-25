@@ -1,5 +1,6 @@
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
+import NormalNumbers.ElliottRandomize
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -30,6 +31,14 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottHall.sum_Icc_normFun_le
 #print axioms NormalNumbers.ElliottHall.sum_Icc_dyadic_le
 #print axioms NormalNumbers.ElliottEulerBound.sum_Icc_le_log_mul_exp_neg_defect
+
+-- leaf 2: the two-point unimodular cover (lap 54)
+#print axioms NormalNumbers.ElliottRandomize.lift_add_lift
+#print axioms NormalNumbers.ElliottRandomize.norm_lift
+#print axioms NormalNumbers.ElliottRandomize.re_lift_mul_conj
+#print axioms NormalNumbers.ElliottRandomize.sum_cover
+#print axioms NormalNumbers.ElliottRandomize.sum_sum_elliottLogCorrelation_cover
+#print axioms NormalNumbers.ElliottRandomize.exists_cover_pair_ge
 
 -- the dependency's proved special case
 #print axioms Erdos67b.unitCircleLogElliott
