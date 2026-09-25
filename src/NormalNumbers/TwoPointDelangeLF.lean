@@ -409,4 +409,149 @@ theorem delangeA_le_prod (z : ℂ) (N : ℕ) :
   refine Finset.sum_le_sum_of_subset_of_nonneg himg fun t _ _ => ?_
   exact Finset.prod_nonneg fun p _ => by positivity
 
+/-! ### The complex step, part I: a convergent `S` forces `T(N) = o(log N)`
+
+Lap 35 recorded that a real-valued Gronwall on `‖S‖` cannot reach `o(1)`; the endgame needs the
+complex cancellation.  Here is its first half, and it needs **no Mertens and no analytic input**.
+
+The Abel weights `c_m = log(m+1) − log m` are nonnegative and sum to exactly `log N`
+(`sum_log_telescope`), so `Abel(N)/log N` is a regular (Toeplitz) average of `S`: if `S(N) → L`
+then `Abel(N)/log N → L`.  Since `S(N)·log N = T(N) + Abel(N)` exactly, this gives
+`T(N)/log N → L − L = 0`.
+
+Combined with the Levin–Fainleib identity `T(N) = (z−1)·Σ_{p≤N}(log p/p)·S^{(p)}(N/p)`, whose
+right-hand side is `(z−1)·L·log N + o(log N)` once Mertens `Σ_{p≤N} log p/p ~ log N` is available,
+this forces `(z−1)L = 0`, i.e. **`L = 0` for `z ≠ 1`**.  So `DelangeKernelMean` reduces to the mere
+*convergence* of `S` — its value is then automatic.  Part II (the prime-sum side) is the Mertens
+step and is the only remaining analytic input. -/
+
+/-- The Abel weights sum to exactly `log N`. -/
+theorem sum_log_telescope (N : ℕ) :
+    ∑ m ∈ Finset.Ico 1 N, (Real.log ((m : ℝ) + 1) - Real.log (m : ℝ)) = Real.log N := by
+  induction N with
+  | zero => simp
+  | succ N ih =>
+      rcases Nat.eq_zero_or_pos N with hN | hN
+      · subst hN; simp
+      rw [Finset.sum_Ico_succ_top (by omega), ih]
+      have : ((N + 1 : ℕ) : ℝ) = (N : ℝ) + 1 := by push_cast; ring
+      rw [this]
+      ring
+
+/-- **Toeplitz regularity of the Abel average.**  If `S(N) → L` then `Abel(N)/log N → L`. -/
+theorem tendsto_delangeAbel_div_log (z : ℂ) {L : ℂ}
+    (h : Tendsto (fun N => delangeS z N) atTop (𝓝 L)) :
+    Tendsto (fun N => delangeAbel z N / (Real.log N : ℂ)) atTop (𝓝 L) := by
+  classical
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  -- choose a tail where `S` is within `ε/2` of `L`
+  obtain ⟨M₀, hM₀⟩ := (Metric.tendsto_atTop.mp h) (ε / 2) (by linarith)
+  set C : ℝ := ∑ m ∈ Finset.Ico 1 M₀,
+    (Real.log ((m : ℝ) + 1) - Real.log (m : ℝ)) * ‖delangeS z m - L‖ with hC
+  have hCnn : 0 ≤ C := by
+    refine Finset.sum_nonneg fun m hm => ?_
+    simp only [Finset.mem_Ico] at hm
+    exact mul_nonneg (log_succ_sub_log_nonneg hm.1) (norm_nonneg _)
+  -- `log N → ∞`, so the head contributes `o(1)`
+  have hlog : Tendsto (fun N : ℕ => Real.log N) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  obtain ⟨N₁, hN₁⟩ := (hlog.eventually_gt_atTop (max 1 (2 * C / ε))).exists_forall_of_atTop
+  refine ⟨max (max 2 M₀) N₁, fun N hN => ?_⟩
+  have hNM₀ : M₀ ≤ N := le_trans (le_trans (le_max_right 2 M₀) (le_max_left _ _)) hN
+  have hN2 : 2 ≤ N := le_trans (le_trans (le_max_left 2 M₀) (le_max_left _ _)) hN
+  have hNN₁ : N₁ ≤ N := le_trans (le_max_right _ _) hN
+  have hLbig := hN₁ N hNN₁
+  have hL1 : (1 : ℝ) < Real.log N := lt_of_le_of_lt (le_max_left _ _) hLbig
+  have hL2 : 2 * C / ε < Real.log N := lt_of_le_of_lt (le_max_right _ _) hLbig
+  have hLpos : (0 : ℝ) < Real.log N := by linarith
+  have hLc : ((Real.log N : ℝ) : ℂ) ≠ 0 := by
+    simp only [ne_eq, Complex.ofReal_eq_zero]
+    exact ne_of_gt hLpos
+  -- the exact decomposition
+  have hdecomp : delangeAbel z N - L * ((Real.log N : ℝ) : ℂ)
+      = ∑ m ∈ Finset.Ico 1 N,
+          ((Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) : ℝ) : ℂ) * (delangeS z m - L) := by
+    rw [delangeAbel, ← sum_log_telescope N, Complex.ofReal_sum, Finset.mul_sum,
+      ← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl fun m _ => by ring
+  have hbound : ‖∑ m ∈ Finset.Ico 1 N,
+      ((Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) : ℝ) : ℂ) * (delangeS z m - L)‖
+      ≤ C + (ε / 2) * Real.log N := by
+    refine le_trans (norm_sum_le _ _) ?_
+    have hsplit := Finset.sum_filter_add_sum_filter_not (Finset.Ico 1 N) (fun m => m < M₀)
+      (fun m => ‖((Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) : ℝ) : ℂ) * (delangeS z m - L)‖)
+    rw [← hsplit]
+    have hhead : ∑ m ∈ (Finset.Ico 1 N).filter (fun m => m < M₀),
+        ‖((Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) : ℝ) : ℂ) * (delangeS z m - L)‖ ≤ C := by
+      have hcongr : ∀ m ∈ (Finset.Ico 1 N).filter (fun m => m < M₀),
+          ‖((Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) : ℝ) : ℂ) * (delangeS z m - L)‖
+            = (Real.log ((m : ℝ) + 1) - Real.log (m : ℝ)) * ‖delangeS z m - L‖ := by
+        intro m hm
+        simp only [Finset.mem_filter, Finset.mem_Ico] at hm
+        rw [norm_mul, Complex.norm_real, Real.norm_eq_abs,
+          abs_of_nonneg (log_succ_sub_log_nonneg hm.1.1)]
+      rw [Finset.sum_congr rfl hcongr, hC]
+      refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun m hm _ => ?_)
+      · intro m hm
+        simp only [Finset.mem_filter, Finset.mem_Ico] at hm ⊢
+        exact ⟨hm.1.1, hm.2⟩
+      · simp only [Finset.mem_Ico] at hm
+        exact mul_nonneg (log_succ_sub_log_nonneg hm.1) (norm_nonneg _)
+    have htail : ∑ m ∈ (Finset.Ico 1 N).filter (fun m => ¬ m < M₀),
+        ‖((Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) : ℝ) : ℂ) * (delangeS z m - L)‖
+        ≤ (ε / 2) * Real.log N := by
+      have hstep : ∀ m ∈ (Finset.Ico 1 N).filter (fun m => ¬ m < M₀),
+          ‖((Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) : ℝ) : ℂ) * (delangeS z m - L)‖
+            ≤ (ε / 2) * (Real.log ((m : ℝ) + 1) - Real.log (m : ℝ)) := by
+        intro m hm
+        simp only [Finset.mem_filter, Finset.mem_Ico] at hm
+        have hd := hM₀ m (by omega)
+        rw [Complex.dist_eq] at hd
+        rw [norm_mul, Complex.norm_real, Real.norm_eq_abs,
+          abs_of_nonneg (log_succ_sub_log_nonneg hm.1.1)]
+        have hc := log_succ_sub_log_nonneg hm.1.1
+        nlinarith [hd, hc]
+      refine le_trans (Finset.sum_le_sum hstep) ?_
+      rw [← Finset.mul_sum]
+      have hle : ∑ m ∈ (Finset.Ico 1 N).filter (fun m => ¬ m < M₀),
+          (Real.log ((m : ℝ) + 1) - Real.log (m : ℝ)) ≤ Real.log N := by
+        rw [← sum_log_telescope N]
+        refine Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _) fun m hm _ => ?_
+        simp only [Finset.mem_Ico] at hm
+        exact log_succ_sub_log_nonneg hm.1
+      nlinarith [hle, hε]
+    linarith [hhead, htail]
+  rw [Complex.dist_eq]
+  have hrw : delangeAbel z N / ((Real.log N : ℝ) : ℂ) - L
+      = (delangeAbel z N - L * ((Real.log N : ℝ) : ℂ)) / ((Real.log N : ℝ) : ℂ) := by
+    field_simp
+  rw [hrw, norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hLpos.le, hdecomp,
+    div_lt_iff₀ hLpos]
+  have hCle : C < (ε / 2) * Real.log N := by
+    rcases eq_or_lt_of_le hCnn with hC0 | hC0
+    · nlinarith [hLpos, hε]
+    · rw [div_lt_iff₀ hε] at hL2
+      nlinarith [hL2, hε]
+  linarith [hbound, hCle]
+
+/-- **A convergent `S` has `T(N) = o(log N)`.**  Immediate from Abel summation plus Toeplitz. -/
+theorem tendsto_delangeT_div_log (z : ℂ) {L : ℂ}
+    (h : Tendsto (fun N => delangeS z N) atTop (𝓝 L)) :
+    Tendsto (fun N => delangeT z N / (Real.log N : ℂ)) atTop (𝓝 0) := by
+  have hA := tendsto_delangeAbel_div_log z h
+  have hdiff : Tendsto (fun N : ℕ => delangeS z N - delangeAbel z N / (Real.log N : ℂ))
+      atTop (𝓝 (L - L)) := h.sub hA
+  rw [sub_self] at hdiff
+  refine hdiff.congr' ?_
+  filter_upwards [Filter.eventually_gt_atTop 1] with N hN
+  have hNR : (1 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  have hLpos : (0 : ℝ) < Real.log N := Real.log_pos hNR
+  have hLc : ((Real.log N : ℝ) : ℂ) ≠ 0 := by
+    simp only [ne_eq, Complex.ofReal_eq_zero]
+    exact ne_of_gt hLpos
+  have hid := delangeS_mul_log z N
+  rw [eq_div_iff hLc, sub_mul, div_mul_cancel₀ _ hLc]
+  linear_combination hid
+
 end NormalNumbers.CastingOut
