@@ -268,6 +268,126 @@ theorem depthSchedule_err_le {b : ℕ} (hb : 3 ≤ b) (N : ℕ) :
     _ = 3 / ((L : ℝ) + 1) := by
         rw [sq]; field_simp
 
+/-! ### The named reduction target -/
+
+/-- The depth-`D` twisted correlation average. -/
+noncomputable def depthAvg (b P Q j : ℕ) (h : ℤ) (D N : ℕ) : ℂ :=
+  (∑ n ∈ range N, ee ((((j : ℝ) * n / Q : ℝ) : ℂ))
+    * ee ((((h : ℝ) * tailDepth P b D n : ℝ) : ℂ))) / N
+
+/-- **What the C3 crux needs.**  An Elliott-type bound for the twisted `D`-point correlation
+`(1/N) ∑_{n<N} e(jn/Q) ∏_{i<D} ζ_i^{ω_{>P}(n+i+1)}`, `ζ_i = e(h/b^{i+1})`, along the depth
+schedule `D = D_N = O(log log N)`.
+
+This is *not* a fixed-`D` statement, and it cannot be: for fixed `D` the discarded phase
+`h ∑_{i≥D} ω_{>P}(n+i+1)/b^{i+1}` has typical size `≍ log log N / b^D → ∞`, so no bounded number
+of points suffices.  What is needed is Elliott's conjecture **with uniformity in the number of
+points**, the number growing like `log log N`.  Tao's `unitCircleLogElliott` (two points, log
+density) and Tao–Teräväinen (odd order, log density) give fixed point counts only; that gap —
+uniformity in `k` — is precisely the remaining obstruction. -/
+def DepthElliott (b : ℕ) : Prop :=
+  ∀ (P Q j : ℕ) (h : ℤ), 0 < Q → 0 < j → j < Q →
+    Tendsto (fun N : ℕ => depthAvg b P Q j h (depthSchedule b N) N) atTop (𝓝 0)
+
+private lemma tendsto_log_two_atTop : Tendsto (fun N : ℕ => Nat.log 2 N) atTop atTop := by
+  refine tendsto_atTop.2 fun M => ?_
+  refine eventually_atTop.2 ⟨2 ^ M, fun N hN => ?_⟩
+  exact Nat.le_log_of_pow_le (by norm_num) hN
+
+private lemma tendsto_depthErr {b : ℕ} (hb : 3 ≤ b) (C : ℝ) :
+    Tendsto (fun N : ℕ => C * (((Nat.log 2 N : ℝ) + depthSchedule b N + 1)
+      / (((b : ℝ) - 2) * (b : ℝ) ^ depthSchedule b N))) atTop (𝓝 0) := by
+  have h3 : Tendsto (fun N : ℕ => C * (3 / ((Nat.log 2 N : ℝ) + 1))) atTop (𝓝 0) := by
+    have hbase : Tendsto (fun N : ℕ => 3 / ((Nat.log 2 N : ℝ) + 1)) atTop (𝓝 0) := by
+      have : Tendsto (fun N : ℕ => ((Nat.log 2 N : ℝ) + 1)) atTop atTop := by
+        refine tendsto_atTop_add_const_right _ 1 ?_
+        exact tendsto_natCast_atTop_atTop.comp tendsto_log_two_atTop
+      simpa [div_eq_mul_inv, mul_comm] using this.inv_tendsto_atTop.const_mul (3 : ℝ)
+    simpa using hbase.const_mul C
+  refine squeeze_zero_norm' ?_ (by simpa using h3.norm)
+  filter_upwards [] with N
+  have hbR : (3 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hnn : (0 : ℝ) ≤ ((Nat.log 2 N : ℝ) + depthSchedule b N + 1)
+      / (((b : ℝ) - 2) * (b : ℝ) ^ depthSchedule b N) := by
+    have : (0 : ℝ) < ((b : ℝ) - 2) * (b : ℝ) ^ depthSchedule b N :=
+      mul_pos (by linarith) (by positivity)
+    positivity
+  have hle := depthSchedule_err_le hb N
+  have h3nn : (0 : ℝ) ≤ 3 / ((Nat.log 2 N : ℝ) + 1) := by positivity
+  have habs : |((Nat.log 2 N : ℝ) + 1)| = (Nat.log 2 N : ℝ) + 1 :=
+    abs_of_nonneg (by positivity)
+  rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg hnn, habs]
+  exact mul_le_mul_of_nonneg_left hle (abs_nonneg C)
+
+/-- **The reduction.**  `DepthElliott b` implies the C3 crux `WeylLambertTwist b`. -/
+theorem weylLambertTwist_of_depthElliott {b : ℕ} (hb : 3 ≤ b) (H : DepthElliott b) :
+    WeylLambertTwist b := by
+  intro P Q j h hQ hj0 hjQ
+  have hb2 : 2 ≤ b := by omega
+  have hbR : (3 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  set E : ℕ → ℝ := fun N => ((Nat.log 2 N : ℝ) + depthSchedule b N + 1)
+    / (((b : ℝ) - 2) * (b : ℝ) ^ depthSchedule b N) with hE
+  have hEnn : ∀ N, 0 ≤ E N := by
+    intro N
+    have : (0 : ℝ) < ((b : ℝ) - 2) * (b : ℝ) ^ depthSchedule b N :=
+      mul_pos (by linarith) (by positivity)
+    rw [hE]; positivity
+  set A : ℕ → ℂ := fun N => (∑ n ∈ range N, ee ((((j : ℝ) * n / Q : ℝ) : ℂ))
+    * ee ((((h : ℝ) * tailLarge P b n : ℝ) : ℂ))) / N with hA
+  have hnorm : ∀ N : ℕ, ‖A N - depthAvg b P Q j h (depthSchedule b N) N‖
+      ≤ 16 * |(h : ℝ)| * E N := by
+    intro N
+    have hterm : ∀ n ∈ range N,
+        ‖ee ((((j : ℝ) * n / Q : ℝ) : ℂ)) * ee ((((h : ℝ) * tailLarge P b n : ℝ) : ℂ))
+          - ee ((((j : ℝ) * n / Q : ℝ) : ℂ))
+            * ee ((((h : ℝ) * tailDepth P b (depthSchedule b N) n : ℝ) : ℂ))‖
+        ≤ 16 * |(h : ℝ)| * E N := by
+      intro n hn
+      have hnN : n < N := Finset.mem_range.1 hn
+      rw [← mul_sub, norm_mul, norm_ee_real, one_mul]
+      refine (norm_ee_sub_ee_le _ _).trans ?_
+      have hnn := tailLarge_sub_tailDepth_nonneg hb2 P (depthSchedule b N) n
+      have hbd := tailLarge_sub_tailDepth_le_of_lt hb P (depthSchedule b N) N n hnN
+      have habs : |(h : ℝ) * tailLarge P b n
+          - (h : ℝ) * tailDepth P b (depthSchedule b N) n|
+          = |(h : ℝ)| * (tailLarge P b n - tailDepth P b (depthSchedule b N) n) := by
+        rw [← mul_sub, abs_mul, abs_of_nonneg hnn]
+      rw [habs, ← mul_assoc, mul_comm (16 : ℝ) |(h : ℝ)|, mul_assoc, mul_assoc]
+      exact mul_le_mul_of_nonneg_left (by simp only [hE]; linarith) (abs_nonneg _)
+    rcases Nat.eq_zero_or_pos N with rfl | hN
+    · simp only [hA, depthAvg, range_zero, Finset.sum_empty, Nat.cast_zero, div_zero,
+        sub_zero, norm_zero]
+      have := hEnn 0
+      positivity
+    have hNR : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+    have hsub : A N - depthAvg b P Q j h (depthSchedule b N) N
+        = (∑ n ∈ range N, (ee ((((j : ℝ) * n / Q : ℝ) : ℂ))
+            * ee ((((h : ℝ) * tailLarge P b n : ℝ) : ℂ))
+          - ee ((((j : ℝ) * n / Q : ℝ) : ℂ))
+            * ee ((((h : ℝ) * tailDepth P b (depthSchedule b N) n : ℝ) : ℂ)))) / N := by
+      rw [hA, depthAvg, div_sub_div_same, Finset.sum_sub_distrib]
+    rw [hsub, norm_div, Complex.norm_natCast]
+    rw [div_le_iff₀ hNR]
+    calc ‖∑ n ∈ range N, (ee ((((j : ℝ) * n / Q : ℝ) : ℂ))
+            * ee ((((h : ℝ) * tailLarge P b n : ℝ) : ℂ))
+          - ee ((((j : ℝ) * n / Q : ℝ) : ℂ))
+            * ee ((((h : ℝ) * tailDepth P b (depthSchedule b N) n : ℝ) : ℂ)))‖
+        ≤ ∑ n ∈ range N, (16 * |(h : ℝ)| * E N) :=
+          (norm_sum_le _ _).trans (Finset.sum_le_sum hterm)
+      _ = 16 * |(h : ℝ)| * E N * N := by
+          rw [Finset.sum_const, card_range]; ring
+  have hdiff : Tendsto (fun N : ℕ => A N - depthAvg b P Q j h (depthSchedule b N) N)
+      atTop (𝓝 0) := by
+    refine squeeze_zero_norm hnorm ?_
+    simpa [hE] using tendsto_depthErr hb (16 * |(h : ℝ)|)
+  have hAt : Tendsto A atTop (𝓝 0) := by
+    have := hdiff.add (H P Q j h hQ hj0 hjQ)
+    simpa using this
+  refine hAt.congr fun N => ?_
+  simp only [hA]
+  congr 1
+  exact Finset.sum_congr rfl fun n _ => by rw [ee_tailLarge_eq_ee_orbit hb2 P n h]
+
 end CastingOut
 
 end NormalNumbers
