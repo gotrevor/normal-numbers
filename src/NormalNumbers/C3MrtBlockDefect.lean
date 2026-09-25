@@ -667,6 +667,252 @@ theorem blockBandCost_const (J₀ : ℕ) (hJ₀ : 1 ≤ J₀) :
 #print axioms blockBandCost_bound
 #print axioms blockBandCost_const
 
+
+/-! ## §7 the bottom threshold must GROW (directive ②2): exact two-prime phase alignment
+
+A block at a *fixed* index holds finitely many primes.  When it holds exactly two, `p` and `p'`,
+the twist `t = 2π/log(p'/p)` makes their phases **coincide** — `exp(-it log p') = exp(-it log p)` —
+so the block sum is `exp(-it log p)·(1/p + 1/p')` and its norm is EXACTLY the block mass: no saving
+at all.  The wide range permits `|t| ≤ X²`, and such a `t` is a bounded constant, so `X` can always
+be taken large enough.
+
+Blocks `j = 1, 2, 3` are `{2,3}`, `{5,7}`, `{11,13}`, so **every constant threshold `J₀ ≤ 3` is
+refuted in the kernel**.  For `J₀ ≥ 4` the blocks hold `≥ 3` primes, exact alignment is impossible
+(the `log p` are `ℚ`-independent) and only *near*-alignment is available — that needs Kronecker, so
+it stays a conjecture with a sketch, not a claim.  Either way the honest statement carries a
+threshold that grows with `X`, which is what `BlockBandCost` was built to pay for. -/
+
+theorem norm_exp_twist (t : ℝ) (p : ℕ) :
+    ‖Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ))‖ = 1 := by
+  have he : Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ))
+      = Complex.exp (((-t * Real.log p : ℝ) : ℂ) * Complex.I) := by push_cast; ring_nf
+  rw [he, Complex.norm_exp_ofReal_mul_I]
+
+/-- `1 − a/b ≤ log b − log a ≤ b/a − 1` for `0 < a < b`: both directions of `log x ≤ x − 1`. -/
+theorem log_diff_bounds {a b : ℝ} (ha : 0 < a) (hab : a < b) :
+    1 - a / b ≤ Real.log b - Real.log a ∧ Real.log b - Real.log a ≤ b / a - 1 := by
+  have hb : 0 < b := lt_trans ha hab
+  refine ⟨?_, ?_⟩
+  · have h1 : Real.log (a / b) ≤ a / b - 1 := Real.log_le_sub_one_of_pos (by positivity)
+    rw [Real.log_div ha.ne' hb.ne'] at h1
+    linarith
+  · have h1 : Real.log (b / a) ≤ b / a - 1 := Real.log_le_sub_one_of_pos (by positivity)
+    rw [Real.log_div hb.ne' ha.ne'] at h1
+    linarith
+
+/-- **The alignment identity.**  On a two-prime block, the twist `t = 2π/log(p'/p)` gives the block
+sum norm EXACTLY equal to the block mass — the saving is zero. -/
+theorem blockSum_norm_eq_mass_of_pair {X : ℝ} {j p p' : ℕ} {t : ℝ}
+    (χ : DirichletCharacter ℂ 1) (hp : 0 < p) (hpp' : p < p')
+    (hblk : blockPrimes X j = {p, p'})
+    (halign : t * (Real.log p' - Real.log p) = 2 * Real.pi) :
+    ‖dyadicPrimeBlockSum X χ t j‖ = dyadicPrimeBlockMass X j := by
+  classical
+  have hne : p ≠ p' := by omega
+  have hp0 : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp
+  have hp'0 : (0 : ℝ) < (p' : ℝ) := by exact_mod_cast lt_trans hp hpp'
+  have hd : -(t : ℂ) * Complex.I * (Real.log p' : ℂ)
+      = -(t : ℂ) * Complex.I * (Real.log p : ℂ) + -(((2 * Real.pi : ℝ) : ℂ) * Complex.I) := by
+    have h : (t : ℂ) * ((Real.log p' - Real.log p : ℝ) : ℂ) = ((2 * Real.pi : ℝ) : ℂ) := by
+      rw [← Complex.ofReal_mul, halign]
+    rw [Complex.ofReal_sub] at h
+    linear_combination (-Complex.I) * h
+  have hexp : Complex.exp (-(t : ℂ) * Complex.I * (Real.log p' : ℂ))
+      = Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ)) := by
+    rw [hd, Complex.exp_add]
+    have h1 : Complex.exp (-(((2 * Real.pi : ℝ) : ℂ) * Complex.I)) = 1 := by
+      rw [Complex.exp_neg, show (((2 * Real.pi : ℝ) : ℂ)) = 2 * (Real.pi : ℂ) by
+        rw [Complex.ofReal_mul]; norm_num, Complex.exp_two_pi_mul_I, inv_one]
+    rw [h1, mul_one]
+  rw [dyadicPrimeBlockSum_eq, dyadicPrimeBlockMass_eq, hblk, Finset.sum_pair hne,
+    Finset.sum_pair hne, hexp, dirichletChar_one_apply χ, dirichletChar_one_apply χ, map_one]
+  set E : ℂ := Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ)) with hE
+  have hz : (1 : ℂ) * E / (p : ℂ) + (1 : ℂ) * E / (p' : ℂ)
+      = ((((p : ℝ))⁻¹ + (((p' : ℝ)))⁻¹ : ℝ) : ℂ) * E := by
+    have h1 : ((p : ℂ)) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+    have h2 : ((p' : ℂ)) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+    have e1 : ((((p : ℝ))⁻¹ : ℝ) : ℂ) = ((p : ℂ))⁻¹ := by push_cast; ring
+    have e2 : ((((p' : ℝ))⁻¹ : ℝ) : ℂ) = ((p' : ℂ))⁻¹ := by push_cast; ring
+    rw [Complex.ofReal_add, e1, e2]
+    field_simp
+  rw [hz, norm_mul, Complex.norm_real, Real.norm_eq_abs, hE, norm_exp_twist, mul_one,
+    abs_of_nonneg (by positivity)]
+
+/-- Admissibility of the aligned twist in the wide range, from two-sided bounds `dlo ≤ d ≤ dhi` on
+the log gap `d = log p' − log p`. -/
+theorem pair_twist_admissible {X d dlo dhi : ℝ} (hX3 : 3 ≤ X)
+    (hdlo : 0 < dlo) (hd1 : dlo ≤ d) (hd2 : d ≤ dhi)
+    (hlo : X - 1 < 2 * Real.pi / dhi) (hhi : 2 * Real.pi / dlo ≤ X ^ 2) :
+    ((1 : ℕ) : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) ∧
+      Real.log X ^ ((1 : ℝ) / 125) < |2 * Real.pi / d| ∧ |2 * Real.pi / d| ≤ X ^ 2 := by
+  have hd0 : 0 < d := lt_of_lt_of_le hdlo hd1
+  have h1 : 1 < Real.log X := one_lt_log_of_three_le hX3
+  have hlogX : Real.log X ≤ X - 1 := Real.log_le_sub_one_of_pos (by linarith)
+  have hrpow : Real.log X ^ ((1 : ℝ) / 125) ≤ Real.log X := by
+    have h := Real.rpow_le_rpow_of_exponent_le h1.le (by norm_num : (1 : ℝ) / 125 ≤ 1)
+    rwa [Real.rpow_one] at h
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  have habs : |2 * Real.pi / d| = 2 * Real.pi / d := abs_of_nonneg (by positivity)
+  refine ⟨?_, ?_, ?_⟩
+  · have h0 := Real.rpow_le_rpow_of_exponent_le h1.le (by norm_num : (0 : ℝ) ≤ 1 / 125)
+    rw [Real.rpow_zero] at h0
+    push_cast
+    exact h0
+  · rw [habs]
+    have hmono : 2 * Real.pi / dhi ≤ 2 * Real.pi / d := by
+      apply div_le_div_of_nonneg_left hpi.le hd0 hd2
+    linarith
+  · rw [habs]
+    have hmono : 2 * Real.pi / d ≤ 2 * Real.pi / dlo := by
+      apply div_le_div_of_nonneg_left hpi.le hdlo hd1
+    linarith
+
+/-- **The refutation, from any two-prime block inside the band.** -/
+theorem not_wideBlockSavingBand_of_pair {κ : ℝ} (hκ : 0 < κ) {J₀ j : ℕ} {X : ℝ}
+    (hX : 3 ≤ X) (hJ : J₀ ≤ j) (hjtop : j ≤ bandTop X)
+    {p p' : ℕ} (hp : 0 < p) (hpp' : p < p')
+    (hblk : blockPrimes X j = {p, p'})
+    (hq : ((1 : ℕ) : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125))
+    (ht1 : Real.log X ^ ((1 : ℝ) / 125) < |2 * Real.pi / (Real.log p' - Real.log p)|)
+    (ht2 : |2 * Real.pi / (Real.log p' - Real.log p)| ≤ X ^ 2) :
+    ¬ WideBlockSavingBand (fun _ => J₀) bandTop κ := by
+  classical
+  intro h
+  have hne : p ≠ p' := by omega
+  have hp0 : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp
+  have hp'0 : (0 : ℝ) < (p' : ℝ) := by exact_mod_cast lt_trans hp hpp'
+  have hd0 : 0 < Real.log p' - Real.log p := by
+    have : Real.log (p : ℝ) < Real.log (p' : ℝ) :=
+      Real.log_lt_log hp0 (by exact_mod_cast hpp')
+    linarith
+  set t : ℝ := 2 * Real.pi / (Real.log p' - Real.log p) with ht
+  have halign : t * (Real.log p' - Real.log p) = 2 * Real.pi := div_mul_cancel₀ _ hd0.ne'
+  have hspec := h X hX 1 (1 : DirichletCharacter ℂ 1) hq t ht1 ht2 j hJ hjtop
+  rw [blockSum_norm_eq_mass_of_pair (1 : DirichletCharacter ℂ 1) hp hpp' hblk halign] at hspec
+  have hmass : 0 < dyadicPrimeBlockMass X j := by
+    rw [dyadicPrimeBlockMass_eq, hblk, Finset.sum_pair hne]
+    positivity
+  nlinarith
+
+/-! ### The concrete witnesses -/
+
+theorem ceil_five_sq : ⌈(5 : ℝ) ^ 2⌉₊ = 25 := by
+  rw [show (5 : ℝ) ^ 2 = 25 by norm_num, Nat.ceil_eq_iff (by norm_num)]
+  norm_num
+
+theorem ceil_seven_sq : ⌈(7 : ℝ) ^ 2⌉₊ = 49 := by
+  rw [show (7 : ℝ) ^ 2 = 49 by norm_num, Nat.ceil_eq_iff (by norm_num)]
+  norm_num
+
+theorem bandTop_five : bandTop 5 = 3 := by
+  rw [bandTop, ceil_five_sq]
+  have h : Nat.log 2 25 = 4 := Nat.log_eq_of_pow_le_of_lt_pow (by norm_num) (by norm_num)
+  omega
+
+theorem bandTop_seven : bandTop 7 = 4 := by
+  rw [bandTop, ceil_seven_sq]
+  have h : Nat.log 2 49 = 5 := Nat.log_eq_of_pow_le_of_lt_pow (by norm_num) (by norm_num)
+  omega
+
+theorem blockPrimes_five_one : blockPrimes 5 1 = {2, 3} := by
+  classical
+  ext q
+  simp only [blockPrimes, ceil_five_sq, Finset.mem_filter, Finset.mem_range, Finset.mem_insert,
+    Finset.mem_singleton]
+  constructor
+  · rintro ⟨⟨-, hpr⟩, hlog⟩
+    have h2 : 2 ^ 1 ≤ q := by
+      have h := Nat.pow_log_le_self 2 hpr.pos.ne'; rwa [hlog] at h
+    have h4 : q < 2 ^ (1 + 1) := by
+      have h := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) q; rwa [hlog] at h
+    norm_num at h2 h4
+    omega
+  · rintro (rfl | rfl)
+    · exact ⟨⟨by norm_num, by norm_num⟩,
+        Nat.log_eq_of_pow_le_of_lt_pow (by norm_num) (by norm_num)⟩
+    · exact ⟨⟨by norm_num, by norm_num⟩,
+        Nat.log_eq_of_pow_le_of_lt_pow (by norm_num) (by norm_num)⟩
+
+theorem blockPrimes_seven_three : blockPrimes 7 3 = {11, 13} := by
+  classical
+  ext q
+  simp only [blockPrimes, ceil_seven_sq, Finset.mem_filter, Finset.mem_range, Finset.mem_insert,
+    Finset.mem_singleton]
+  constructor
+  · rintro ⟨⟨-, hpr⟩, hlog⟩
+    have h8 : 2 ^ 3 ≤ q := by
+      have h := Nat.pow_log_le_self 2 hpr.pos.ne'; rwa [hlog] at h
+    have h16 : q < 2 ^ (3 + 1) := by
+      have h := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) q; rwa [hlog] at h
+    norm_num at h8 h16
+    interval_cases q <;> revert hpr <;> decide
+  · rintro (rfl | rfl)
+    · exact ⟨⟨by norm_num, by norm_num⟩,
+        Nat.log_eq_of_pow_le_of_lt_pow (by norm_num) (by norm_num)⟩
+    · exact ⟨⟨by norm_num, by norm_num⟩,
+        Nat.log_eq_of_pow_le_of_lt_pow (by norm_num) (by norm_num)⟩
+
+/-- **A constant bottom threshold `J₀ ≤ 3` is REFUTED.**  Witness: the `j = 3` block at `X = 7` is
+the two-prime block `{11,13}`, inside the band (`bandTop 7 = 4`), and the aligned twist
+`t = 2π/log(13/11) ∈ [11π, 13π]` is admissible (`log 7 ≤ 6 < 11π` and `13π ≤ 49 = X²`).  At that
+twist the block sum has norm exactly its mass, so no `κ > 0` saving holds.
+
+So `WideBlockSavingBand` genuinely needs a threshold that GROWS with `X` — which is precisely what
+`blockBandCost_of_log_bound` makes affordable. -/
+theorem not_wideBlockSavingBand_const_le_three {κ : ℝ} (hκ : 0 < κ) {J₀ : ℕ} (hJ₀ : J₀ ≤ 3) :
+    ¬ WideBlockSavingBand (fun _ => J₀) bandTop κ := by
+  have hpi3 : (3 : ℝ) < Real.pi := Real.pi_gt_three
+  have hpi315 : Real.pi < 3.15 := Real.pi_lt_d2
+  obtain ⟨hlo, hhi⟩ := log_diff_bounds (a := (11 : ℝ)) (b := (13 : ℝ)) (by norm_num) (by norm_num)
+  have hd1 : (2 : ℝ) / 13 ≤ Real.log 13 - Real.log 11 := by
+    have : (1 : ℝ) - 11 / 13 = 2 / 13 := by norm_num
+    linarith
+  have hd2 : Real.log 13 - Real.log 11 ≤ 2 / 11 := by
+    have : (13 : ℝ) / 11 - 1 = 2 / 11 := by norm_num
+    linarith
+  have hlogcast : Real.log ((13 : ℕ) : ℝ) - Real.log ((11 : ℕ) : ℝ)
+      = Real.log 13 - Real.log 11 := by norm_num
+  obtain ⟨hq, ht1, ht2⟩ := pair_twist_admissible (X := (7 : ℝ))
+    (d := Real.log 13 - Real.log 11) (dlo := 2 / 13) (dhi := 2 / 11)
+    (by norm_num) (by norm_num) hd1 hd2
+    (by rw [div_div_eq_mul_div]; nlinarith)
+    (by rw [div_div_eq_mul_div]; nlinarith)
+  refine not_wideBlockSavingBand_of_pair hκ (X := (7 : ℝ)) (j := 3) (by norm_num)
+    (by omega) (by rw [bandTop_seven]; omega) (p := 11) (p' := 13) (by norm_num) (by norm_num)
+    blockPrimes_seven_three hq ?_ ?_
+  · rw [hlogcast]; exact ht1
+  · rw [hlogcast]; exact ht2
+
+/-- The same mechanism at the smallest scale, `{2,3}` — kept as the readable illustration:
+`t = 2π/log(3/2) ∈ [4π, 6π]`, admissible at `X = 5` (`log 5 ≤ 4 < 4π`, `6π ≤ 25`). -/
+theorem not_wideBlockSavingBand_const_le_one {κ : ℝ} (hκ : 0 < κ) {J₀ : ℕ} (hJ₀ : J₀ ≤ 1) :
+    ¬ WideBlockSavingBand (fun _ => J₀) bandTop κ := by
+  have hpi3 : (3 : ℝ) < Real.pi := Real.pi_gt_three
+  have hpi315 : Real.pi < 3.15 := Real.pi_lt_d2
+  obtain ⟨hlo, hhi⟩ := log_diff_bounds (a := (2 : ℝ)) (b := (3 : ℝ)) (by norm_num) (by norm_num)
+  have hd1 : (1 : ℝ) / 3 ≤ Real.log 3 - Real.log 2 := by
+    have : (1 : ℝ) - 2 / 3 = 1 / 3 := by norm_num
+    linarith
+  have hd2 : Real.log 3 - Real.log 2 ≤ 1 / 2 := by
+    have : (3 : ℝ) / 2 - 1 = 1 / 2 := by norm_num
+    linarith
+  have hlogcast : Real.log ((3 : ℕ) : ℝ) - Real.log ((2 : ℕ) : ℝ)
+      = Real.log 3 - Real.log 2 := by norm_num
+  obtain ⟨hq, ht1, ht2⟩ := pair_twist_admissible (X := (5 : ℝ))
+    (d := Real.log 3 - Real.log 2) (dlo := 1 / 3) (dhi := 1 / 2)
+    (by norm_num) (by norm_num) hd1 hd2
+    (by rw [div_div_eq_mul_div]; nlinarith)
+    (by rw [div_div_eq_mul_div]; nlinarith)
+  refine not_wideBlockSavingBand_of_pair hκ (X := (5 : ℝ)) (j := 1) (by norm_num)
+    (by omega) (by rw [bandTop_five]; omega) (p := 2) (p' := 3) (by norm_num) (by norm_num)
+    blockPrimes_five_one hq ?_ ?_
+  · rw [hlogcast]; exact ht1
+  · rw [hlogcast]; exact ht2
+
+#print axioms blockSum_norm_eq_mass_of_pair
+#print axioms not_wideBlockSavingBand_const_le_three
+#print axioms not_wideBlockSavingBand_const_le_one
+
 end CastingOut
 
 end NormalNumbers

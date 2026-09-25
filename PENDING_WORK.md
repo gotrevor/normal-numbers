@@ -1,3 +1,37 @@
+## Lap 117 (2026-09-25) — the bottom threshold must GROW: exact two-prime alignment (directive ②2)
+
+`C3MrtBlockDefect.lean` §7, trust-triple clean.  **Every constant bottom threshold `J₀ ≤ 3` for
+`WideBlockSavingBand` is refuted in the kernel.**
+
+* `blockSum_norm_eq_mass_of_pair` — **the alignment identity**.  If `blockPrimes X j = {p,p'}` and
+  `t·(log p' − log p) = 2π`, then `exp(−it log p') = exp(−it log p)`, so the block sum is
+  `exp(−it log p)·(1/p + 1/p')` and its norm is EXACTLY the block mass.  Zero saving.
+* `log_diff_bounds` — `1 − a/b ≤ log b − log a ≤ b/a − 1`, both directions of `log x ≤ x − 1`.
+  This is all the transcendence control the witnesses need.
+* `pair_twist_admissible` — the aligned twist is in the wide range, from two-sided bounds on the log
+  gap: `(log X)^{1/125} ≤ log X ≤ X − 1 < 2π/dhi ≤ t ≤ 2π/dlo ≤ X²`.
+* `not_wideBlockSavingBand_of_pair` — the general refutation from any two-prime block in the band.
+* Witnesses: `ceil_five_sq`, `ceil_seven_sq`, `bandTop_five = 3`, `bandTop_seven = 4`,
+  `blockPrimes_five_one = {2,3}`, `blockPrimes_seven_three = {11,13}`.
+* `not_wideBlockSavingBand_const_le_three` — `J₀ ≤ 3` refuted (block `{11,13}` at `X = 7`,
+  `t = 2π/log(13/11) ∈ [11π,13π]`, `13π ≤ 49 = X²`).  `not_wideBlockSavingBand_const_le_one` keeps
+  the readable `{2,3}` illustration at `X = 5`.  New `Maze.lean` row `hall_const_band_threshold_false`.
+
+**What this settles.**  The threshold in `WideBlockSavingBand` is not a convenience — it is forced,
+and it must grow with `X`.  Lap 116's `blockBandCost_of_log_bound` charges only `log(J X · log 2)`,
+so a threshold growing like any power of `log X` is affordable.  The two results are exactly
+complementary: ②2 says the threshold must grow, ②1 says growth is cheap.
+
+**Not claimed:** for `J₀ ≥ 4` the blocks hold `≥ 3` primes and exact alignment is impossible (the
+`log p` are `ℚ`-independent by unique factorisation).  Near-alignment of `n` phases within `ε` needs
+`|t| ≈ ε^{-(n-1)}` (Kronecker/Weyl on the torus, the `log p` being `ℚ`-independent), which `|t| ≤ X²`
+permits only for blocks with `j = O(log log X)` — that is the conjectural reason the *right*
+threshold is around `log log X`, and it is a sketch, not a kernel claim.  Formalising it needs
+simultaneous-approximation machinery mathlib does not have in usable form.
+
+**Next (directive ②3):** `CharPrimeSumLogQ D` at `t = 0` from `L(1,χ) ≫ q^{-1/2}`, via the
+elementary `f = 1 ∗ χ ≥ 0` argument; then ②4 `UniformResonantMass`.
+
 ## Lap 116 (2026-09-25) — the band cost is DISCHARGED (directive ②1)
 
 `BlockBandCost` is no longer a hypothesis for the intended top `bandTop X = log₂⌈X²⌉₊ − 1`.  All in

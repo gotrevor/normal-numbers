@@ -303,6 +303,19 @@ lap-114 headline — is vacuous; the pairing *bound* `norm_sum_le_of_pairing` re
 reusable. -/
 alias hall_block_phase_pairing_false := NormalNumbers.CastingOut.not_blockPhasePairing
 
+/-- **HALL: a CONSTANT bottom threshold for the banded block saving** (`falseAsStated`,
+2026-09-25).  The repaired `WideBlockSavingBand J Jtop κ` asks for a constant-fraction saving on the
+dyadic blocks of a band; lap 116 shows the bottom of that band cannot be a constant.  On a
+**two-prime** block `{p,p'}` the twist `t = 2π/log(p'/p)` makes the two phases COINCIDE, so the
+block sum has norm exactly its mass and no `κ > 0` saving holds — and `|t| ≤ X²` is permitted by the
+wide range, so `X` can always be taken large enough.  Blocks `j = 1,2,3` are `{2,3}`, `{5,7}`,
+`{11,13}`, which refutes every `J₀ ≤ 3`.  The honest statement therefore carries a threshold that
+GROWS with `X`, whose cost is paid by `blockBandCost_of_log_bound` (only the `log` of the threshold
+is charged).  For `J₀ ≥ 4` the blocks hold `≥ 3` primes, exact alignment is impossible (`ℚ`-
+independence of `log p`) and near-alignment needs Kronecker — a conjecture, not a claim. -/
+alias hall_const_band_threshold_false :=
+  NormalNumbers.CastingOut.not_wideBlockSavingBand_const_le_three
+
 /-- **HALL: uniform casting-out law (C1 draft)** (`falseAsStated`, 2026-09-23).
 The first draft of C1 asked that window digit sums of `G4` be uniform mod `b − 1`.  No normal
 number satisfies that: each digit value contributes `ζ^d` summing to `1`, not `0`, so the
