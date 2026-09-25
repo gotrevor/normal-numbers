@@ -341,6 +341,181 @@ theorem joint_progression_harmonic_mass {F : ℕ → ℂ} (hF : ∀ n : ℕ, ‖
   · rw [joint_progression_eq_empty_of_not_coprime hco, Finset.sum_empty]
     positivity
 
+
+/-! ## The two-shift truncation bound
+
+Both moduli cut at `Y`.  The outer expansion pays `(1 + log(N+1))·bridgeTail z₀ Y`; the inner
+one pays, for each `d ≤ Y`, `(2 + (1 + log N)/d)·bridgeTail z₁ Y`, weighted by `‖sqfW z₀ d‖`.
+Summing the `d`-weights gives the two shapes that appear in the statement: the `2` against the
+partial sum `sqfWPartial` (an `N`-independent constant, absorbed), and the `(1 + log N)/d`
+against the *convergent* weighted mass `sqfWMass` (the term of the right order).
+-/
+
+/-- `∑_{d ≤ Y} ‖sqfW z d‖`, an `N`-independent constant (it grows with `Y`, like `Y^{1/2}`). -/
+noncomputable def sqfWPartial (z : ℂ) (Y : ℕ) : ℝ := ∑ d ∈ Finset.range (Y + 1), ‖sqfW z d‖
+
+/-- `∑_d ‖sqfW z d‖/d`, finite by `summable_norm_sqfW_div`. -/
+noncomputable def sqfWMass (z : ℂ) : ℝ := ∑' d : ℕ, ‖sqfW z d‖ / (d : ℝ)
+
+lemma sqfWPartial_nonneg (z : ℂ) (Y : ℕ) : 0 ≤ sqfWPartial z Y :=
+  Finset.sum_nonneg fun _ _ => norm_nonneg _
+
+lemma sum_norm_sqfW_div_le_mass {z : ℂ} (hz : ‖z‖ = 1) (Y : ℕ) :
+    ∑ d ∈ Finset.range (Y + 1), ‖sqfW z d‖ / (d : ℝ) ≤ sqfWMass z :=
+  (summable_norm_sqfW_div z hz).sum_le_tsum _ (fun _ _ => by positivity)
+
+open scoped Classical in
+/-- **The two-shift truncation bound.**  Cutting BOTH moduli at `Y` costs
+`(1 + log(N+1))·bridgeTail z₀ Y + (2·sqfWPartial z₀ Y + (1 + log N)·sqfWMass z₀)·bridgeTail z₁ Y`.
+Both `bridgeTail`s tend to `0` as `Y → ∞` independently of `N`, and `sqfWMass z₀ < ∞`, so
+choosing `Y` from `ε` first makes the second summand `≤ ε·log N` plus an `N`-independent
+constant — the shape the rung needs. -/
+theorem two_shift_truncation_bound {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1)
+    {F : ℕ → ℂ} (hF : ∀ n : ℕ, ‖F n‖ ≤ ((n : ℝ) + 1)⁻¹) (Y N : ℕ) :
+    ‖(∑ n ∈ Finset.range N, F n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2)))
+        - ∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+            sqfW z₀ d * sqfW z₁ e *
+              ∑ n ∈ ((Finset.range N).filter (fun n => d ∣ n + 1)).filter (fun n => e ∣ n + 2),
+                F n * (z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) *
+                  z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e))‖
+      ≤ (1 + Real.log (N + 1)) * bridgeTail z₀ Y
+        + (2 * sqfWPartial z₀ Y + (1 + Real.log N) * sqfWMass z₀) * bridgeTail z₁ Y := by
+  classical
+  set S : ℕ → Finset ℕ := fun d => (Finset.range N).filter (fun n => d ∣ n + 1) with hS
+  set F₁ : ℕ → ℂ := fun n => F n * z₁ ^ omegaNat (n + 2) with hF₁
+  have hF₁norm : ∀ n, ‖F₁ n‖ = ‖F n‖ := by
+    intro n; rw [hF₁, norm_mul, norm_pow, hz₁, one_pow, mul_one]
+  have hF₁le : ∀ n : ℕ, ‖F₁ n‖ ≤ ((n : ℝ) + 1)⁻¹ := fun n => by rw [hF₁norm]; exact hF n
+  set Mid := ∑ d ∈ Finset.range (Y + 1), sqfW z₀ d *
+    ∑ n ∈ S d, F₁ n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) with hMid
+  -- Step 1: the outer truncation
+  have hstep1 : ‖(∑ n ∈ Finset.range N, F n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2)))
+      - Mid‖ ≤ (1 + Real.log (N + 1)) * bridgeTail z₀ Y := by
+    have hrw : (∑ n ∈ Finset.range N, F n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2)))
+        = ∑ n ∈ Finset.range N, F₁ n * z₀ ^ omegaNat (n + 1) := by
+      refine Finset.sum_congr rfl fun n _ => ?_
+      rw [hF₁]; ring
+    rw [hrw, hMid]
+    refine offset_truncation_bound_of_mass z₀ hz₀ F₁ (Finset.range N) 1 one_pos (N + 1)
+      (fun n hn => by rw [Finset.mem_range] at hn; omega) Y (1 + Real.log (N + 1))
+      (by have h1 : (1 : ℝ) ≤ (N : ℝ) + 1 := by
+            have := Nat.cast_nonneg (α := ℝ) N; linarith
+          have := Real.log_nonneg h1
+          push_cast
+          linarith) ?_
+    intro d hd
+    have := progression_harmonic_mass hF₁le (S := Finset.range N) (M := N)
+      (fun n hn => Finset.mem_range.1 hn) one_pos hd
+    push_cast at this ⊢
+    simpa using this
+  -- Step 2: the inner truncation, for each `d`
+  have hstep2 : ∀ d ∈ Finset.range (Y + 1),
+      ‖(∑ n ∈ S d, F₁ n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d))
+        - ∑ e ∈ Finset.range (Y + 1), sqfW z₁ e *
+            ∑ n ∈ (S d).filter (fun n => e ∣ n + 2),
+              (F n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d)) *
+                z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e)‖
+        ≤ (2 + (1 + Real.log N) / (d : ℝ)) * bridgeTail z₁ Y := by
+    intro d _
+    set G : ℕ → ℂ := fun n => F n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) with hG
+    have hGnorm : ∀ n, ‖G n‖ = ‖F n‖ := by
+      intro n; rw [hG, norm_mul, norm_pow, hz₀, one_pow, mul_one]
+    have hGle : ∀ n : ℕ, ‖G n‖ ≤ ((n : ℝ) + 1)⁻¹ := fun n => by rw [hGnorm]; exact hF n
+    have hrw : (∑ n ∈ S d, F₁ n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d))
+        = ∑ n ∈ S d, G n * z₁ ^ omegaNat (n + 2) := by
+      refine Finset.sum_congr rfl fun n _ => ?_
+      rw [hF₁, hG]; ring
+    rw [hrw]
+    refine offset_truncation_bound_of_mass z₁ hz₁ G (S d) 2 (by norm_num) (N + 2)
+      (fun n hn => by
+        have := Finset.mem_range.1 (Finset.mem_filter.1 hn).1
+        omega) Y (2 + (1 + Real.log N) / (d : ℝ))
+      (by have := Real.log_natCast_nonneg N
+          have hd : (0 : ℝ) ≤ (d : ℝ) := Nat.cast_nonneg d
+          positivity) ?_
+    intro e he
+    rcases Nat.eq_zero_or_pos d with rfl | hd0
+    · have hempty : (S 0).filter (fun n => e ∣ n + 2) = ∅ := by
+        refine Finset.eq_empty_of_forall_notMem fun n hn => ?_
+        have := (Finset.mem_filter.1 (Finset.mem_filter.1 hn).1).2
+        simp at this
+      rw [hempty, Finset.sum_empty]
+      have heR : (0 : ℝ) < (e : ℝ) := by exact_mod_cast he
+      have : (0 : ℝ) ≤ (2 + (1 + Real.log N) / ((0 : ℕ) : ℝ)) / (e : ℝ) := by
+        rw [Nat.cast_zero, div_zero]; positivity
+      linarith
+    · have hjoint := joint_progression_harmonic_mass hGle N hd0 he
+      have hdR : (0 : ℝ) < (d : ℝ) := by exact_mod_cast hd0
+      have heR : (0 : ℝ) < (e : ℝ) := by exact_mod_cast he
+      have heq : (2 + (1 + Real.log N) / (d : ℝ)) / (e : ℝ)
+          = 2 / (e : ℝ) + (1 + Real.log N) / ((d : ℝ) * (e : ℝ)) := by
+        field_simp
+      rw [heq]
+      exact hjoint
+  -- assemble
+  set Full := ∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+    sqfW z₀ d * sqfW z₁ e *
+      ∑ n ∈ (S d).filter (fun n => e ∣ n + 2),
+        F n * (z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) *
+          z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e)) with hFull
+  have hMidFull : ‖Mid - Full‖
+      ≤ (2 * sqfWPartial z₀ Y + (1 + Real.log N) * sqfWMass z₀) * bridgeTail z₁ Y := by
+    have hdiff : Mid - Full = ∑ d ∈ Finset.range (Y + 1), sqfW z₀ d *
+        ((∑ n ∈ S d, F₁ n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d))
+          - ∑ e ∈ Finset.range (Y + 1), sqfW z₁ e *
+              ∑ n ∈ (S d).filter (fun n => e ∣ n + 2),
+                (F n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d)) *
+                  z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e)) := by
+      rw [hMid, hFull, ← Finset.sum_sub_distrib]
+      refine Finset.sum_congr rfl fun d _ => ?_
+      have hinner : ∀ e ∈ Finset.range (Y + 1),
+        sqfW z₀ d * sqfW z₁ e *
+          ∑ n ∈ (S d).filter (fun n => e ∣ n + 2),
+            F n * (z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) *
+              z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e))
+        = sqfW z₀ d * (sqfW z₁ e *
+            ∑ n ∈ (S d).filter (fun n => e ∣ n + 2),
+              (F n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d)) *
+                z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e)) := by
+        intro e _
+        simp only [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun n _ => by ring
+      rw [Finset.sum_congr rfl hinner, ← Finset.mul_sum, ← mul_sub]
+    rw [hdiff]
+    refine le_trans (norm_sum_le _ _) ?_
+    have hterm : ∀ d ∈ Finset.range (Y + 1),
+        ‖sqfW z₀ d * ((∑ n ∈ S d, F₁ n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d))
+          - ∑ e ∈ Finset.range (Y + 1), sqfW z₁ e *
+              ∑ n ∈ (S d).filter (fun n => e ∣ n + 2),
+                (F n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d)) *
+                  z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e))‖
+          ≤ (2 * ‖sqfW z₀ d‖ + (1 + Real.log N) * (‖sqfW z₀ d‖ / (d : ℝ)))
+              * bridgeTail z₁ Y := by
+      intro d hd
+      rw [norm_mul]
+      refine le_trans (mul_le_mul_of_nonneg_left (hstep2 d hd) (norm_nonneg _)) ?_
+      have hT : 0 ≤ bridgeTail z₁ Y := bridgeTail_nonneg z₁ Y
+      have : ‖sqfW z₀ d‖ * ((2 + (1 + Real.log N) / (d : ℝ)) * bridgeTail z₁ Y)
+          = (2 * ‖sqfW z₀ d‖ + (1 + Real.log N) * (‖sqfW z₀ d‖ / (d : ℝ)))
+              * bridgeTail z₁ Y := by ring
+      rw [this]
+    refine le_trans (Finset.sum_le_sum hterm) ?_
+    rw [← Finset.sum_mul]
+    refine mul_le_mul_of_nonneg_right ?_ (bridgeTail_nonneg z₁ Y)
+    rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.mul_sum]
+    have hlog : (0 : ℝ) ≤ 1 + Real.log N := by
+      have := Real.log_natCast_nonneg N; linarith
+    have h2 := sum_norm_sqfW_div_le_mass hz₀ Y
+    have : (2 : ℝ) * ∑ d ∈ Finset.range (Y + 1), ‖sqfW z₀ d‖ = 2 * sqfWPartial z₀ Y := by
+      rw [sqfWPartial]
+    rw [this]
+    have := mul_le_mul_of_nonneg_left h2 hlog
+    linarith
+  calc ‖(∑ n ∈ Finset.range N, F n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2))) - Full‖
+      = ‖((∑ n ∈ Finset.range N, F n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2))) - Mid)
+          + (Mid - Full)‖ := by congr 1; ring
+    _ ≤ _ := le_trans (norm_add_le _ _) (add_le_add hstep1 hMidFull)
+
 end CastingOut
 
 end NormalNumbers
@@ -350,3 +525,4 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.progression_harmonic_mass
 #print axioms NormalNumbers.CastingOut.class_harmonic_mass
 #print axioms NormalNumbers.CastingOut.joint_progression_harmonic_mass
+#print axioms NormalNumbers.CastingOut.two_shift_truncation_bound

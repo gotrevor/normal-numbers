@@ -126,3 +126,31 @@ Assemble `two_shift_truncation_bound` from `offset_truncation_bound_of_mass` (tw
 mass hypotheses from `progression_harmonic_mass` (outer, `c = 1`) and
 `joint_progression_harmonic_mass` (inner, `c = 2`).  The inner application must be summed
 against `‖sqfW z₀ d‖` over `d ≤ Y`, which is where the `1/(de)` is spent.
+
+## Lap 25 — **`two_shift_truncation_bound`**: both moduli cut, sorry-free
+
+    ‖ ∑_{n<N} F n · ζ₀^{ω(n+1)} ζ₁^{ω(n+2)}
+        − ∑_{d,e ≤ Y} g₀(d) g₁(e) ∑_{n<N, d∣n+1, e∣n+2} F n ζ₀^{Ω((n+1)/d)} ζ₁^{Ω((n+2)/e)} ‖
+      ≤ (1 + log(N+1))·bridgeTail ζ₀ Y
+        + (2·sqfWPartial ζ₀ Y + (1 + log N)·sqfWMass ζ₀)·bridgeTail ζ₁ Y
+
+for any `‖F n‖ ≤ (n+1)⁻¹` (so in particular the harmonic weight).  Two new defs:
+`sqfWPartial z Y = ∑_{d ≤ Y} ‖sqfW z d‖` (`N`-independent, grows like `Y^{1/2}`) and
+`sqfWMass z = ∑_d ‖sqfW z d‖/d` (finite, lap 7).
+
+Both `bridgeTail`s → 0 as `Y → ∞` independently of `N`, so with `Y` chosen from `ε` first the
+error is `ε·log N + C(ε)` — the shape the rung consumes.  The `d = 0` term needs no special
+casing in the statement but does inside the mass hypothesis: `0 ∣ n+1` is empty, so the mass is
+`0`, and `joint_progression_harmonic_mass` (which needs `0 < d`) is only invoked for `d ≥ 1`.
+
+**This closes the last structural gap in the `D = 2` chain.**  Every step from the `ζ^ω`
+correlation to "`ζ^Ω` along two linear forms, harmonically weighted, truncated uniformly in `N`"
+is now proved and axiom-clean:
+`sum_pow_omega_two_shift_eq_coprime` (expand) → `two_shift_truncation_bound` (truncate both) →
+`inner_sum_linear_forms` (CRT to linear forms) → `weight_transfer` (weight variable) →
+`rung_two_of_named_inputs` (Elliott + the archimedean certificate).
+
+### NEXT
+Chain those five into one statement: `∑_{n<N} (1/(n+1)) ζ₀^{ω(n+1)} ζ₁^{ω(n+2)} = o(log N)`,
+conditional on the same two named inputs.  The remaining work is bookkeeping of the quantifier
+order `ε → Y → A → i₀ → N → ∞` (laps 13/16 pattern), not new mathematics.
