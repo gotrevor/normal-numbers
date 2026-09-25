@@ -544,6 +544,126 @@ theorem bridge_truncation_bound (z : ℂ) (hz : ‖z‖ = 1) (F : ℕ → ℂ) (
   rw [← hsub]
   exact hsummable.sum_le_tsum _ (fun _ _ => by positivity)
 
+/-! ### The harmonic-weighted truncation bound
+
+`bridge_truncation_bound` costs `N · bridgeTail(Y)`, which is useless against a *log-averaged*
+main term of size `log N`.  The fix is to make the cost proportional to the **mass the weight
+puts on the progression**: for a weight `u` with `∑_{k ≤ N/d} u(dk−1) ≤ B/d` the truncation
+error is `B · bridgeTail(Y)`.  The flat weight gives `B = N`; the harmonic weight `1/n` gives
+`B = 1 + log N`, which is the right size against a log-averaged main term.
+
+The `1/d` in the mass hypothesis is not an extra assumption but the automatic gain of summing a
+weight along a progression of modulus `d` — and it is exactly the `1/d` that `bridgeTail`
+already carries.
+-/
+
+/-- **Truncation bound, weighted form.**  If the weight puts mass at most `B/d` on the
+progression of modulus `d`, then cutting the modulus at `d ≤ Y` costs at most
+`B · bridgeTail(Y)`. -/
+theorem bridge_truncation_bound_of_mass (z : ℂ) (hz : ‖z‖ = 1) (F : ℕ → ℂ) (Y N : ℕ) (B : ℝ)
+    (hmass : ∀ d : ℕ, 0 < d → ∑ k ∈ Icc 1 (N / d), ‖F (d * k - 1)‖ ≤ B / (d : ℝ)) :
+    ‖(∑ n ∈ range N, F n * z ^ omegaNat (n + 1))
+        - ∑ d ∈ range (Y + 1),
+            sqfW z d * ∑ k ∈ Icc 1 (N / d), F (d * k - 1) * z ^ ArithmeticFunction.cardFactors k‖
+      ≤ B * bridgeTail z Y := by
+  have hB : 0 ≤ B := by
+    have h := hmass 1 one_pos
+    have h0 : (0 : ℝ) ≤ ∑ k ∈ Icc 1 (N / 1), ‖F (1 * k - 1)‖ :=
+      Finset.sum_nonneg fun _ _ => norm_nonneg _
+    simpa using h0.trans h
+  set T : ℕ → ℂ := fun d =>
+    sqfW z d * ∑ k ∈ Icc 1 (N / d), F (d * k - 1) * z ^ ArithmeticFunction.cardFactors k with hT
+  set M := max N Y with hM
+  rw [sum_pow_omega_shift_eq z F N]
+  have hext : ∑ d ∈ range (N + 1), T d = ∑ d ∈ range (M + 1), T d := by
+    refine Finset.sum_subset (by intro d hd; rw [Finset.mem_range] at hd ⊢; omega) ?_
+    intro d hd hd'
+    rw [Finset.mem_range] at hd hd'
+    have : N / d = 0 := Nat.div_eq_of_lt (by omega)
+    simp [hT, this]
+  have hsubY : range (Y + 1) ⊆ range (M + 1) := by
+    intro d hd; rw [Finset.mem_range] at hd ⊢; omega
+  have hdiff : (∑ d ∈ range (N + 1), T d) - ∑ d ∈ range (Y + 1), T d
+      = ∑ d ∈ range (M + 1) \ range (Y + 1), T d := by
+    rw [hext, ← Finset.sum_sdiff hsubY]; ring
+  rw [hdiff]
+  have hterm : ∀ d ∈ range (M + 1) \ range (Y + 1),
+      ‖T d‖ ≤ B * (‖sqfW z d‖ / (d : ℝ)) := by
+    intro d hd
+    rw [Finset.mem_sdiff, Finset.mem_range] at hd
+    have hd0 : 0 < d := by
+      rcases Nat.eq_zero_or_pos d with rfl | h
+      · exact absurd (Finset.mem_range.2 (by omega)) hd.2
+      · exact h
+    have hinner : ‖∑ k ∈ Icc 1 (N / d), F (d * k - 1) * z ^ ArithmeticFunction.cardFactors k‖
+        ≤ B / (d : ℝ) := by
+      refine le_trans (norm_sum_le _ _) (le_trans (Finset.sum_le_sum ?_) (hmass d hd0))
+      intro k _
+      rw [norm_mul, norm_pow, hz, one_pow, mul_one]
+    calc ‖T d‖ = ‖sqfW z d‖ *
+          ‖∑ k ∈ Icc 1 (N / d), F (d * k - 1) * z ^ ArithmeticFunction.cardFactors k‖ := by
+          rw [hT, norm_mul]
+      _ ≤ ‖sqfW z d‖ * (B / (d : ℝ)) := mul_le_mul_of_nonneg_left hinner (norm_nonneg _)
+      _ = B * (‖sqfW z d‖ / (d : ℝ)) := by ring
+  refine le_trans (norm_sum_le _ _) ?_
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [← Finset.mul_sum]
+  refine mul_le_mul_of_nonneg_left ?_ hB
+  have hsummable : Summable fun d : {d : ℕ // d ∉ range (Y + 1)} => ‖sqfW z d.val‖ / (d.val : ℝ) :=
+    (summable_norm_sqfW_div z hz).subtype _
+  classical
+  have hfilter : (range (M + 1) \ range (Y + 1)).filter (fun d => d ∉ range (Y + 1))
+      = range (M + 1) \ range (Y + 1) :=
+    Finset.filter_true_of_mem (fun d hd => (Finset.mem_sdiff.1 hd).2)
+  have hsub := Finset.sum_subtype_eq_sum_filter (s := range (M + 1) \ range (Y + 1))
+      (p := fun d : ℕ => d ∉ range (Y + 1)) (f := fun d : ℕ => ‖sqfW z d‖ / (d : ℝ))
+  rw [hfilter] at hsub
+  rw [← hsub]
+  exact hsummable.sum_le_tsum _ (fun _ _ => by positivity)
+
+/-- **The harmonic weight satisfies the mass hypothesis with `B = 1 + log N`.**
+`∑_{k ≤ N/d} 1/(dk) = H_{⌊N/d⌋}/d ≤ (1 + log N)/d`. -/
+theorem harmonic_mass_bound {F : ℕ → ℂ} (hF : ∀ n : ℕ, ‖F n‖ ≤ ((n : ℝ) + 1)⁻¹) (N : ℕ) :
+    ∀ d : ℕ, 0 < d → ∑ k ∈ Icc 1 (N / d), ‖F (d * k - 1)‖ ≤ (1 + Real.log N) / (d : ℝ) := by
+  intro d hd
+  have hdR : (0 : ℝ) < (d : ℝ) := by exact_mod_cast hd
+  have hlogN : 0 ≤ Real.log N := Real.log_natCast_nonneg N
+  have hstep : ∀ k ∈ Icc 1 (N / d), ‖F (d * k - 1)‖ ≤ (1 / (d : ℝ)) * ((k : ℝ))⁻¹ := by
+    intro k hk
+    rw [Finset.mem_Icc] at hk
+    have hk1 : 1 ≤ k := hk.1
+    have hdk : 1 ≤ d * k := Nat.one_le_iff_ne_zero.2 (Nat.mul_ne_zero hd.ne' (by omega))
+    have hcast : ((d * k - 1 : ℕ) : ℝ) + 1 = (d : ℝ) * (k : ℝ) := by
+      have : (d * k - 1 : ℕ) + 1 = d * k := by omega
+      have h2 : (((d * k - 1 : ℕ) + 1 : ℕ) : ℝ) = ((d * k : ℕ) : ℝ) := by rw [this]
+      push_cast at h2 ⊢
+      linarith [h2]
+    refine (hF _).trans ?_
+    rw [hcast]
+    have hkR : (0 : ℝ) < (k : ℝ) := by exact_mod_cast hk1
+    rw [one_div, ← mul_inv]
+  refine le_trans (Finset.sum_le_sum hstep) ?_
+  rw [← Finset.mul_sum]
+  have hharm : ∑ k ∈ Icc 1 (N / d), ((k : ℝ))⁻¹ ≤ 1 + Real.log N := by
+    have h1 : ∑ k ∈ Icc 1 (N / d), ((k : ℝ))⁻¹ = ((harmonic (N / d) : ℚ) : ℝ) := by
+      rw [harmonic_eq_sum_Icc]
+      push_cast
+      rfl
+    rw [h1]
+    refine (harmonic_le_one_add_log (N / d)).trans ?_
+    have hle : ((N / d : ℕ) : ℝ) ≤ (N : ℝ) := by
+      exact_mod_cast Nat.div_le_self N d
+    rcases Nat.eq_zero_or_pos (N / d) with h0 | h0
+    · rw [h0]
+      simp [hlogN]
+    · have : Real.log ((N / d : ℕ) : ℝ) ≤ Real.log N :=
+        Real.log_le_log (by exact_mod_cast h0) hle
+      linarith
+  calc (1 / (d : ℝ)) * ∑ k ∈ Icc 1 (N / d), ((k : ℝ))⁻¹
+      ≤ (1 / (d : ℝ)) * (1 + Real.log N) := by
+        refine mul_le_mul_of_nonneg_left hharm (by positivity)
+    _ = (1 + Real.log N) / (d : ℝ) := by ring
+
 end CastingOut
 
 end NormalNumbers
@@ -556,3 +676,5 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.sum_pow_omega_two_shift_eq_coprime
 #print axioms NormalNumbers.CastingOut.exists_joint_class
 #print axioms NormalNumbers.CastingOut.inner_sum_linear_forms
+#print axioms NormalNumbers.CastingOut.bridge_truncation_bound_of_mass
+#print axioms NormalNumbers.CastingOut.harmonic_mass_bound
