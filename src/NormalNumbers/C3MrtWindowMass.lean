@@ -448,3 +448,59 @@ theorem small_prime_mass_le {B : ℕ} (hB : 2 ≤ B) {G : Finset ℕ}
   have h3 := abs_le.1 (Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le hB)
   rw [h2] at h1
   linarith [h3.2]
+
+/-! ## The block form: an arbitrary interval of `log p` of length `≤ 1`
+
+`resonant_window_mass_le` takes the window length to be `2δ/|t|`, which is `≤ 1` only when
+`2δ ≤ |t|`.  For `|t| < 2δ` the resonance windows are multiplicatively WIDE, Brun–Titchmarsh
+applied to the whole window is exponentially lossy (`4(e^ℓ − 1)/a` versus the truth
+`log(1 + ℓ/a)`), and the dependency's Mertens carries a flat error per window which the
+`≈ δ·log Y` windows of that range cannot afford.
+
+The fix is to cut every window into unit pieces in `log p` and apply Brun–Titchmarsh to each:
+the pieces are then always narrow, and their Brun–Titchmarsh errors are spaced `≥ 1` apart in
+height, so they sum geometrically with NO factor of `|t|`. -/
+
+/-- **The unit-block mass.**  Primes in an interval `log p ∈ (a, a+ℓ)` with `a ≥ log 2` and
+`0 < ℓ ≤ 1` carry reciprocal mass at most `8ℓ/a + 10⁵·exp(−a/8)`. -/
+theorem interval_mass_le {a l : ℝ} (ha : Real.log 2 ≤ a) (hl0 : 0 < l) (hl1 : l ≤ 1)
+    {G : Finset ℕ} (hGp : ∀ p ∈ G, p.Prime)
+    (hGw : ∀ p ∈ G, a < Real.log p ∧ Real.log p < a + l) :
+    ∑ p ∈ G, (p : ℝ)⁻¹ ≤ 8 * l / a + 100000 * Real.exp (-(a / 8)) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hapos : (0 : ℝ) < a := by linarith
+  set w : ℝ := Real.exp l - 1 with hw
+  have hw0 : 0 < w := by
+    rw [hw, sub_pos]
+    linarith [Real.add_one_le_exp l]
+  have hw2 : w ≤ 2 * l := exp_sub_one_le_two_mul hl0.le hl1
+  set P : ℝ := Real.exp a with hP
+  have hP2 : (2 : ℝ) ≤ P := by
+    rw [hP, show (2 : ℝ) = Real.exp (Real.log 2) by rw [Real.exp_log]; norm_num]
+    exact Real.exp_le_exp.2 ha
+  have hlogP : Real.log P = a := by rw [hP, Real.log_exp]
+  have hG : ∀ p ∈ G, p.Prime ∧ P < (p : ℝ) ∧ (p : ℝ) ≤ P * (1 + w) := by
+    intro p hp
+    obtain ⟨h1, h2⟩ := hGw p hp
+    have hppos : (0 : ℝ) < (p : ℝ) := by
+      have := (hGp p hp).pos
+      exact_mod_cast this
+    refine ⟨hGp p hp, ?_, ?_⟩
+    · rw [hP, ← Real.exp_log hppos]
+      exact Real.exp_lt_exp.2 h1
+    · have hlt : (p : ℝ) < Real.exp (a + l) := by
+        rw [← Real.exp_log hppos]
+        exact Real.exp_lt_exp.2 h2
+      have heq : Real.exp (a + l) = P * (1 + w) := by
+        rw [hP, hw, Real.exp_add]; ring
+      linarith [heq ▸ hlt]
+  have hmain := short_interval_mass_le hP2 hw0 hG
+  rw [hlogP] at hmain
+  refine le_trans hmain ?_
+  have herr : 6 * (1 + a) ^ 3 / Real.sqrt P ≤ 100000 * Real.exp (-(a / 8)) := by
+    rw [hP]
+    exact window_err_le hapos.le
+  have h1 : 4 * w / a ≤ 8 * l / a := by
+    refine div_le_div_of_nonneg_right ?_ hapos.le
+    linarith
+  linarith

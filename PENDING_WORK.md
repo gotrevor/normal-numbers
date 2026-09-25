@@ -10053,3 +10053,36 @@ FLAT per-window bound (`windowMassBound`) there costs `O(δ log Y)`, which is to
 So the `|t| < 2δ` branch must ALSO use Brun–Titchmarsh, with `w = exp(2δ/|t|) − 1` bounded by
 `exp(2δ/|t|)` and the main term `4w/a_m` compared against `a_m ≥ (γ_m − δ)/|t|`.  Deferred to
 the assembly lap; it is the one genuinely unresolved corner.
+
+### Lap 80 — ARCHITECTURE CHANGE: unit blocks, not whole windows (supersedes lap 74 step 3/5)
+
+Analysing the `|t| < 2δ` corner flagged in lap 79 shows the per-window architecture is wrong
+in BOTH directions, and one architecture fixes both:
+
+* For `|t| < 2δ` the windows are multiplicatively **wide** (`ℓ = 2δ/|t| > 1`).  Brun–Titchmarsh
+  on the whole window gives `4(e^ℓ − 1)/a`, exponentially worse than the truth `log(1 + ℓ/a)`;
+  the dependency's Mertens gives the truth but with a flat `2·mertensBound` per window, and
+  that range can hold `≈ (δ/π) log Y` windows, costing `O(δ log Y)` — fatal.
+* For `|t|` large the per-window Brun–Titchmarsh error summed over `≈ |t| log Y` windows costs
+  `O(|t|)` unless the cutoff height `A₁` grows with `|t|`.
+
+**The fix: cut every window into unit pieces in `log p`.**  Pieces are then always narrow, so
+Brun–Titchmarsh is sharp on each; and their errors sit at heights spaced `≥ 1` apart, so they
+sum geometrically with **no factor of `|t|`**.  Also note the resonant mass is honestly
+`O_δ(1)`-bounded in the wide case: `2δ/(|t| a_m) ≤ 2δ/(γ_m − δ) ≤ 2` for `m = 0`, since
+`γ_m ≥ 2δ` — the "every prime `≤ Y` is resonant" configuration really does occur (for
+`log Y ≲ 2.2/δ`) and is absorbed by the `δ`-dependent constant `C`.
+
+**Landed:** `interval_mass_le` — primes in `log p ∈ (a, a+ℓ)` with `a ≥ log 2`, `0 < ℓ ≤ 1`
+carry mass `≤ 8ℓ/a + 10⁵·exp(−a/8)`.  This is `resonant_window_mass_le` with the length a free
+parameter, with `window_err_le` already folded in; it is the block brick.
+
+Revised assembly:
+1. Fibre the resonant primes `p` with `log p ≥ A₁` by the pair (window index `m`, block index
+   `k = ⌊log p⌋`).  Each fibre sits in an interval of length `min(1, 2δ/|t|)` at height `≥ k`.
+2. Main terms: `∑ 8·len/k`, a Riemann sum for the log-log measure of the resonant set, bounded
+   via `sum_inv_gap_le` after grouping the blocks of one window.
+3. Errors: `∑_k n_k·10⁵e^{−k/8}` with `n_k ≤ 1 + |t|/(2π)` sub-intervals per block, summed by
+   `sum_exp_neg_le` at `c = 1/8`; the `(1 + |t|/2π)` factor is killed by `A₁ ≈ 8 log(C(1+|t|))`.
+4. `log p < A₁`: `small_prime_mass_le` at `B = exp A₁`, cost `log A₁ + O(1) ≈ log log|t|`,
+   absorbed by `log_log_le_mul_log`.
