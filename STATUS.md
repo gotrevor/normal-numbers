@@ -1,51 +1,69 @@
 # STATUS — normal-numbers 📊
 
-**ACTIVE (branch `wip/twopoint-avg`): the C1 casting-out swing.  `ConjC1` rests on exactly TWO
-inputs — `DelangeMean` (1969, the 🟡 debt now under attack) and one open two-point statement proved
-*equivalent* to the leaf.  The Kátai/BSZ hypothesis is GONE (it is a theorem here).**
-· **Build**: 🟢 green (8803 jobs for the Delange module; 9292 full) · **Updated**: lap 53 ·
-  2026-09-25 · HEAD `c7dca3e`
+**ACTIVE (branch `wip/twopoint-avg`): the casting-out swings.  The C1 swing is CLOSED — its
+kickoff criterion (equivalence with a named open problem) was met at WRAP 4 and the last
+illegitimate 🟡 (`DelangeMean`, Delange 1969) was DISCHARGED at lap 60 by two independent kernel
+proofs, so `ConjC1` rests on exactly ONE input, a 🔴 the paper itself states conditionally.  The
+objective is now `ConjC3`: the depth ladder under `WeylTailHypothesis`.**
+· **Build**: 🟢 green (9298 jobs, full tree) · **Updated**: lap 61 (deep reflection) ·
+  2026-09-25 · HEAD `757b830`
 · On `master`/Pair A: Theorem C′ (`isNormal_subsetLambert_of_sqrtFreshMassZero`) PROVED and
   trust-triple, 2026-09-23.
 
-## Where it stands (ACTIVE: C1 / twopoint campaign, branch `wip/twopoint-avg`)
+## Where it stands (ACTIVE: casting-out swings, branch `wip/twopoint-avg`)
 
-`KICKOFF-2026-09-24-twopoint-bet.md` bets on the averaged weighted two-point leaf of C1.  Laps
-1–10 proved the **Kátai/BSZ inequality itself** in kernel (`katai_master`, `katai_mean_sq`) — it is
-a theorem here, not a citation.  Laps 11–12 rewired C1 onto the growing-`w` arithmetic leaf
-`twoPointGramSum b t (w N) N = o(N·L(w N)²)`.  Laps 13–23 priced four attacks on that leaf against
-the *trivial* bound and refuted three of them as estimation strategies.
+**C1 — closed.**  Laps 1–10 proved the Kátai/BSZ inequality itself in kernel (`katai_mean_sq`);
+laps 11–42 unfolded the leaf and pinned it, by theorems in `src/`, as an *equivalence* with
+natural-density two-point Elliott for `ζ^ω` (`pairDecorr_iff_unweighted`,
+`multiElliottWeighted_iff_growing`); laps 43–60 discharged `DelangeMean` on its whole range, by
+the `z^ω` Levin–Fainleib scale equation (`TwoPointDelangeLevin.lean`) and, independently, via the
+tree's own `DelangeSlot.charSum_tendsto_zero`.  `conjC1_of_multiElliott` /
+`conjC1_of_pairDecorr` are trust-triple with the 🔴 as their only hypothesis.  Nothing cheap is
+left there and `DIRECTION.md` forbids re-opening it.
 
-**Lap 24 (review lap) corrected the laps-13–23 framing.**  The cutoff `w` is existentially
-quantified, so the leaf only has to hold at ONE cutoff per `N`; diagonalising
-(`exists_slow_cutoff`), fixed-pair `o(N)` decorrelation already closes it.  So the whole
-uniform-in-`(p,q,w)` saving programme of laps 15–23 is **sufficient but far from necessary**, and
-the wrap-2 claim "per-pair decorrelation does not imply the leaf" is **false** — the implication is
-now a theorem (`twoPointPairGramSmall_of_fixedPair`).  Cashing it:
-**`conjC1_of_delange_pairDecorr` : Delange + `PairDecorr` ⟹ `ConjC1`**, with NO cited Kátai
-hypothesis — strictly sharper than `conjC1_of_delange_katai` (`SwingC1Weyl.lean`).
+**C3 — the new objective, and the lap-61 route verdict.**  `conjC3_of_weylHypothesis` and
+`isRich_of_weylHypothesis` are trust-triple, so `WeylTailHypothesis` is C3's whole content.  Lap 61
+(deep reflection) read `papers/tao-teravainen-2025-quantitative-correlations.txt` (arXiv
+2512.01739v2, on disk, never read before) and found that **the leaf is not the flat 🔴 the ledger
+said**: its **Theorem 3.1**, built on Pilatte's 2025 decoupling inequality, gives quantitative
+two-point correlations of 1-bounded multiplicative functions *with a congruence twist* at NATURAL
+density, with a power-of-log saving, for every scale outside a set `E` of logarithmic density
+`≪ L^{−c}`.  C3's depth-2 rung is (3.4) verbatim (`h₁=1, h₂=2, W=Q`); C1's `PairDecorr` is
+Remark 3.2's dilated form verbatim (`a₁=p, b₁=1, a₂=q, b₂=1`).  Only "for EVERY scale" is still
+open.  The decisive asymmetry: `IsRich` is a LOWER bound on a MONOTONE count, so it absorbs bad
+scales (`C(M) ≥ C(N) ≥ cN ≥ cM/2`), whereas `ConjC1`'s `CastLaw` is a two-sided limit and does not.
+Hence C3 goes first.  Separately, depth 1 of the peel is *already a theorem here*
+(`DelangeSlot.twisted_omegaLarge_mean_tendsto_zero`, unconsumed until now) and the depth must grow
+(`K ≳ log_b log log N`), so no fixed depth closes it.  A new probe
+(`probes/c3_euler_product.py`) identifies the mechanism as Selberg–Delange and pins the rate in
+closed form: `|(1/N)∑_{n<N} e(h b^n L_P)| ≍ (log N)^{−A}`, `A = ∑_{i≥1}(1−cos(2πh b^{−i}))` —
+exponent matching to four digits with a FLAT constant (7.71 / 3.85 / 2.55 / 8.75) — and the class
+twist buys exactly one further `log N`.
 
-Where that leaves the bet: `PairDecorr b t` for a fixed pair `p ≠ q` is
-`E_m e(t(θ_{pm} − θ_{qm})) → 0`, which by `pairDecorr_iff_twoPointWeighted` **is** a
-natural-density weighted two-point Elliott correlation.  That is a **named open problem** (Tao
-2016 gives it in *logarithmic* average only).  The leaf is therefore no harder than Elliott-2pt at
-natural density, and — by `tendsto_maxRecipSum_div_sq` — strictly weaker than it, with no known
-route in between.
-
-**Lap 53 (review lap): the campaign's objective has MOVED, by success.**  Laps 28–42 cashed the
-kickoff's own success criterion — C1 is pinned to a named open problem *by theorems in `src/`*
-(`pairDecorr_iff_unweighted`, `multiElliottGrowing_schedule_invariant`,
-`multiElliottWeighted_iff_growing`), and `conjC1_of_delange_multiElliott` reduces `ConjC1` to two
-inputs and nothing else.  One of those two (`MultiElliott`) is an open conjecture on a theorem the
-paper itself states conditionally, so it is a legitimate 🔴 and there is no cheap work there.  The
-other, `DelangeMean`, is a 1969 *theorem* cited as a hypothesis — illegitimate 🟡 debt, and now the
-whole remaining obligation of the swing.  Laps 43–52 drove it from "two named `Prop`s" down to one
-conditional (`delangeKernelMean_of_errorBounded`) plus the **proved scale equation**
-`delange_scale_equation`; the 2026-09-25 directive names the three elementary bricks that close it
-on `‖z−1‖<1`, with `Complex.cpow` and Mertens' second theorem both designed out of the route.
+**C2** rests on `shiftedDivisorIncidence_holds` (Brun–Titchmarsh + a Linnik-strength lower bound)
+plus one off-path even-base leaf.  Lap 61 flagged that the *alternative* leaf-1 decomposition does
+not reduce anything: `PrimeDensityAP`'s `Y / M` is ℕ-division, so `Y = N+1` satisfies it with an
+EMPTY prime set while its consumer needs `0 < P.card`.
 
 ## What's happened (C1 / twopoint campaign, newest first)
 
+- **2026-09-25 (lap 61, DEEP REFLECTION lap) — THE LEDGER'S TWO 🔴s ARE 🟠 OUTSIDE A SMALL SET OF
+  SCALES.**  Ground truth re-derived at 9298 jobs; sixteen `#print axioms` re-run.  The lap read
+  `papers/tao-teravainen-2025-quantitative-correlations.txt` (on disk, unread; `literature-review.md`
+  said it was not on disk — corrected).  **Tao–Teräväinen 2025 Thm 3.1** (on Pilatte 2025) gives
+  quantitative two-point correlations of 1-bounded multiplicative functions with a congruence twist
+  at NATURAL density outside a log-density-`L^{−c}` set of scales; C1's `PairDecorr` and C3's
+  depth-2 rung are both verbatim instances.  Decisive asymmetry found: `IsRich` is a monotone
+  lower-density count and absorbs bad scales; `CastLaw` is a two-sided limit and does not — so C3
+  goes first.  Also: (i) C3's depth-1 rung is already proved in-tree
+  (`DelangeSlot.twisted_omegaLarge_mean_tendsto_zero`) and unconsumed, while the peel depth is
+  forced to grow, so the lap-60 handoff's "leaf B is a cheaper alternative route" is WITHDRAWN
+  (`tailLargeDecoupleC_of_weyl` shows leaf B IS the crux); (ii) a new probe confirms the
+  Selberg–Delange rate `(log N)^{−A}`, `A = ∑_i(1−cos(2πh b^{−i}))`, to four digits with a flat
+  constant; (iii) C2's `PrimeDensityAP` is too weak to be useful as stated (ℕ-division ⇒ an empty
+  prime set is admissible, while its consumer needs `0 < P.card`).  Directive REVISED: rung 0 =
+  re-plumb C3 onto the outside-`E` statement and derive the new `IsRichSubpoly` (every word at
+  `≥ N^{1−o(1)}` positions), then the depth ladder.
 - **2026-09-25 (lap 53, review lap) — DIRECTION REVISED: the 🟡 `DelangeMean` is now THE
   objective.**  Ground truth re-derived at 8803 jobs; every C1 headline and every Delange node is
   trust-triple (`[propext, Classical.choice, Quot.sound]`).  The kickoff's success criterion was met
@@ -105,53 +123,73 @@ on `‖z−1‖<1`, with `Complex.cpow` and Mertens' second theorem both designe
   (`TwoPointKataiAssemble.lean`); the repo's cited `KataiOrthogonalityAvg` shown to OVERSTATE the
   literature; the fixed-`w` quantifier worry refuted as an *argument* (`TwoPointWorry.lean`) and
   then shown not to be where a proof comes from (probe: the arithmetic table is not asynchronous).
+## Axiom ledger — casting-out swings (real `#print axioms`, lap 61, 2026-09-25, 9298 jobs)
 
-## Axiom ledger — C1 / twopoint campaign (real `#print axioms`, 2026-09-25, 8803 jobs)
-
-| headline | paper claim | `#print axioms` | math axioms |
+| headline theorem | paper claim | `#print axioms` shows | math axioms / open inputs |
 |---|---|---|---|
-| `conjC1_of_delange_pairDecorr` | C1 is conjectural (Fable C1) | `[propext, Classical.choice, Quot.sound]` | **0** — hypotheses only: `DelangeMean` (🟡 proven, Selberg–Delange, project-scale) and `PairDecorr` (🔴 open: natural-density two-point Elliott for `ζ^ω`) |
-| `conjC1_of_delange_twoPointGram` | as above | trust triple | 0 — `DelangeMean` 🟡 + the growing-`w` leaf 🔴 |
-| `conjC1_of_delange_multiElliott` | C1 is conjectural | trust triple | 0 — `DelangeMean` 🟡 + `MultiElliott` 🔴 (open, *equivalent* to the leaf).  **The sharpest form: two inputs, nothing else cited.** |
-| `truncPair_fullMean_tendsto_zero` | — (new, unconditional) | trust triple | **0 — THEOREM, no hypotheses**: the small-prime half of leaf (D) at natural density |
-| `katai_mean_sq` | Kátai 1986 / BSZ 2013 | trust triple | **0 — DISCHARGED** (was the cited `KataiOrthogonality`) |
-| `delangeMean_of_kernelMean` | Delange 1969 (the 🟡 being discharged) | trust triple | 0 — reduces `DelangeMean t` on `‖phase t−1‖<1` to the single residue `DelangeKernelMean` |
-| `delangeKernelTail_of_norm_lt_one` | — | trust triple | **0 — THEOREM**: half the Delange discharge, unconditional on `‖z−1‖<1` |
-| `delange_scale_equation` | — (new) | trust triple | **0 — THEOREM**: `‖S(N)log N − z·Abel(N)‖ ≤ 19A(N)`; the engine of the discharge |
-| `twoPointWeightedAvg_all` (`TwoPointBet.lean`) | the bet's ratified target | `sorryAx` | open `sorry`, disclosed; 🔴 reduces to fixed-pair Elliott |
+| `conjC1_of_multiElliott` | C1 is conjectural (Fable C1) | `[propext, Classical.choice, Quot.sound]` | **0 axioms; ONE hypothesis**: `MultiElliott` 🔴 (open, and proved *equivalent* to the leaf).  The sharpest C1 form. |
+| `conjC1_of_pairDecorr` | as above | trust triple | 0 axioms; one 🔴 hypothesis |
+| `delangeMean_all` | Delange 1969 (was the 🟡) | trust triple | **0 — THEOREM, no hypotheses.**  Discharged lap 60 on the whole range |
+| `omegaPow_mean_tendsto_zero` | Delange 1969 | trust triple | **0 — THEOREM**: `‖∑_{n≤N} z^{ω(n)}‖/N → 0` for `‖z‖=1, z≠1`, elementary Levin–Fainleib route |
+| `delangeMean_of_phase_ne_one` | Delange 1969 | trust triple | **0 — THEOREM** |
+| `pairDecorr_iff_unweighted` | — (the pin) | trust triple | **0 — THEOREM**: C1's leaf ⟺ the unweighted correlation |
+| `multiElliottWeighted_iff_growing` | — (the pin) | trust triple | **0 — THEOREM**: depth-invariance of the leaf |
+| `DelangeSlot.twisted_omegaLarge_mean_tendsto_zero` | Delange-with-characters | trust triple | **0 — THEOREM**: `(1/N)∑_{m≤N} e(jm/Q) z^{ω_{>P}(m)} → 0`.  **= the depth-1 rung of C3's crux; unconsumed outside `DelangeSlot` (lap-61 finding)** |
+| `DelangeSlot.charSum_tendsto_zero` | as above, general `κ` | trust triple | **0 — THEOREM** |
+| `katai_mean_sq` | Kátai 1986 / BSZ 2013 | trust triple | **0 — DISCHARGED** (was a cited hypothesis) |
+| `conjC3_of_weylHypothesis` | C3 is conjectural | trust triple | **0 axioms; ONE hypothesis**: `WeylTailHypothesis` 🔴.  C3's whole content |
+| `isRich_of_weylHypothesis` | as above | trust triple | 0 axioms; one 🔴 hypothesis |
+| `tailLargeDecoupleC_of_weyl` | — | trust triple | **0 — THEOREM**; with the (unformalised) Fourier-inversion converse this makes leaf B **equivalent** to the Weyl hypothesis |
+| `conjC2_of_windowPrescribable` | C2 is conjectural | trust triple | **0 — THEOREM** (the C2 bridge is clean) |
+| `weylLambertTwist_holds` (`SwingC3Leaf.lean`) | the C3 crux | `sorryAx` | disclosed open `sorry`; 🔴, see verdict above |
+| `tailLargeDecouple_holds` (`SwingC3Rotation.lean`) | C3 leaf B | `sorryAx` | disclosed open `sorry`; **the SAME statement as the crux** |
+| `SwingC2.shiftedDivisorIncidence_holds` | the C2 crux | `sorryAx` | disclosed open `sorry`; Brun–Titchmarsh + a Linnik-strength lower bound |
+| `CastingOut.conjC2` | C2 is conjectural | `sorryAx` | via the crux above |
+| `twoPointWeightedAvg_all` (`TwoPointBet.lean`) | the bet's RATIFIED target | `sorryAx` | disclosed open `sorry`, untouched as ratified; 🔴, reduces to fixed-pair Elliott |
 
-Math-axiom count for the C1 campaign: **0** `axiom` declarations.  The debt is carried as *named
-hypotheses*, which is why it is visible:
+**Math-axiom count for the casting-out swings: `0` `axiom` declarations.**  All debt is carried as
+*named hypotheses* and disclosed `sorry`s, which is why it is visible in the table above.  Bucket
+assignment:
 
-| hypothesis | bucket | status |
+| obligation | bucket | status |
 |---|---|---|
-| `DelangeMean t` (`SwingC1Delange.lean`) | 🟡 proven, project-scale (Delange 1969 / Selberg–Delange, not in mathlib) | **DISCHARGED on `‖t‖_{ℝ/ℤ} < 1/6`** (2026-09-25, laps 53–56): `delangeMean_of_norm_lt_one`, with the hypothesis-free instance `delangeMean_one_div : 7 ≤ b → DelangeMean (1/b)`.  Cashed at the headline by `delangeMean_all_of_large` + `conjC1_of_delangeLarge_multiElliott`/`…_pairDecorr`, which cite Delange only on `‖t‖ ≥ 1/6`.  Remaining frontier = `‖t‖ ≥ 1/6`, which is PNT-strength (at `t = 1/2` the Dirichlet series is `≈ 1/ζ(s)`); next prerequisite = replace `delangeMean_of_kernel`'s crude `⌊N/n⌋` defect bound by a Dirichlet-hyperbola split. |
-| `MultiElliott` / `PairDecorr` / `TwoPointWeightedAvg` | 🔴 open conjecture (two-point Elliott at natural density) | **legitimate**: Fable states C1 conditionally, and all three are proved *equivalent* to each other and to the leaf.  Not debt to chip — the measured depth of the conjecture. |
-| `KataiOrthogonality(Avg)` | — | **DISCHARGED** to `katai_mean_sq` (a theorem here). |
+| `DelangeMean t`, `KataiOrthogonality(Avg)` | — | **DISCHARGED**, both now theorems here |
+| `MultiElliott` / `PairDecorr` / `TwoPointWeightedAvg` (C1) | **🔴 at every scale; 🟠 outside a log-density-small set of SCALES** | Pilatte 2025 + **TT2025 Thm 3.1 / Rmk 3.2** (text on disk) give `(1/N)∑ g(pn+1)\bar g(qn+1) ≪ (log N)^{−c}` for all `N ∉ E`.  Only "for every `N`" is open, and `CastLaw` (a two-sided limit) does NOT absorb `E`.  Fable states C1 conditionally, so 🔴 is legitimate; the 🟠 half is the new frontier |
+| `WeylTailHypothesis` / `weylLambertTwist_holds` / `tailLargeDecouple_holds` (C3) | **🔴 at every scale; 🟠 outside a log-density-small set of SCALES** | depth 1 is a THEOREM here (`DelangeSlot.twisted_omegaLarge_mean_tendsto_zero`); depth 2 is **TT2025 Thm 3.1 (3.4)** verbatim; the peel depth is forced to grow (`K ≳ log_b log log N`).  **`IsRich` is a monotone lower-density count and DOES absorb `E`** — hence rung 0 of the directive, and the new `IsRichSubpoly` |
+| `ShiftedDivisorIncidence` (C2) | 🟡 proven, project-scale (Brun–Titchmarsh + Linnik-strength lower bound) | the one 🟡 left in this worktree; current frontier = a Brun–Titchmarsh formalisation, next prerequisite = the non-emptiness (Linnik) half |
+| `constructionInputs_even` (C2) | 🟡, OFF the headline path | quadratic reciprocity + Dirichlet; `ConjC2` does not require it |
+| `PrimeLambertOscillation.phaseOscillation`, `MahlerDriftOne.exists_drift_one_background` | — | **designated open**, off-campaign, do not touch |
 
-🔴 here is honest: C1 is a *conjecture* in Fable, so a route resting on an open two-point Elliott
-statement is not a straying unconditional theorem — it is the conjecture's true depth, now
-measured.  The 🟡 `DelangeMean` is the live debt, and it is the campaign's current objective.
+🔴 here is honest: C1, C2 and C3 are *conjectures* in the source, so a route resting on an open
+input is not a straying unconditional theorem — it is the conjecture's true depth, now measured.
 
-## Outstanding (C1 / twopoint campaign)
+## Outstanding (casting-out swings)
 
-### Short-term (mirrors PENDING_WORK top / the 2026-09-25 CURRENT DIRECTIVE)
-1. **Brick 1** — the shared telescoping tool `Σ_{N₀ ≤ m < N} δ_m/log m ≤ log log N − log log N₀ + 1`
-   and the Gronwall `a_{m+1} ≤ a_m(1+c s_m) ⟹ a_N ≤ a_{N₀} e^c (L_N/L_{N₀})^c`.
-2. **Brick 2** — `delangeA z N ≤ C(log N)^{u'}`, `u' < 1`, via `delangeA z = delangeS (1+‖z−1‖)`
-   and the scale equation applied to the REAL parameter `z' = 1 + ‖z−1‖`.
-3. **Brick 3** — `‖delangeAbel z N‖ ≤ C(log N)^θ` for `max(Re z, u') < θ < 1`, by induction with
-   `‖1+zs‖ ≤ 1 + s Re z + s²/2` and `(1+s)^θ ≥ 1 + θs − s²`; then `DelangeKernelMean z`.
+### Short-term (mirrors PENDING_WORK top / the 2026-09-25 lap-61 CURRENT DIRECTIVE)
+0. **Rung 0 — the re-plumb (the 🔴→🟠 move).**  Name `WeylTailAlmostAll` (the quantitative,
+   outside-`E` form TT2025 Thm 3.1 actually supplies); prove the **absorption lemma** (a monotone
+   count + one good scale per dyadic block ⟹ positive lower density; a run of `R` bad blocks ⟹
+   `N/2^R`); state and derive **`IsRichSubpoly`** — every word occurs at `≥ N^{1−o(1)}` positions
+   below `N`, a rung strictly between the proved `isDisjunctive_base` and `ConjC3`.
+1. **Rung 1** — `weylTail_depthOne`: `(1/N)∑_{n<N} e(jn/Q)·z^{ω_{>P}(n+1)} → 0`, `z = e(h/b) ≠ 1`,
+   by re-indexing `DelangeSlot.twisted_omegaLarge_mean_tendsto_zero`.  Unconditional; cashes an
+   asset proved weeks ago and never consumed.
+2. **Rung 2** — `(1/N)∑_{n<N} tailLarge P b n → ∞` (rate `(log log N)/(b−1)`): the kernel fact that
+   **refutes every fixed-depth truncation** of the C3 crux.
+3. **Rung 3** — `WeylTailHypothesis b ⟺ ShiftElliott` (growing depth `K ≈ log_b log log N`), then
+   read TT2025 **§5.2**'s alternating-sum/Gowers trick, the literature's way to reduce exactly such
+   a growing-depth combination to PAIRWISE correlations.
 
 ### Long-term
-`DelangeMean t` for ALL `t` (i.e. `‖z−1‖ ≥ 1`) needs Halász/Selberg–Delange over the zero-free
-region — `PNTPort.ZetaBounds` is in-tree, so this is a real (large) target, not a wall.
+`ShiftedDivisorIncidence` (C2) is the only 🟡 on a headline path in this worktree.  A
+Brun–Titchmarsh formalisation is the prerequisite; the Linnik-strength non-emptiness half is the
+harder one and may need its own campaign.
 
 ### To completion
-`ConjC1` unconditional is *not* reachable: it needs two-point Elliott at natural density, an open
-problem, and the equivalence is proved.  The completable target is `DelangeMean` on `‖t‖<1/6`,
-after which `conjC1_of_delange_multiElliott` becomes a clean single-hypothesis reduction of a
-conjecture to a conjecture.
+`ConjC1` and `ConjC3` unconditional are *not* reachable: both need Elliott-type correlations at
+natural density, and for C1 the equivalence is already proved.  The completable targets are the
+depth ladder (C3, rungs 1–3), `ShiftedDivisorIncidence` (C2), and the C3 logarithmic rung if it
+prices out.
 
 ## Where it stands (multicutoff campaign — DONE, `master`/Pair A)
 

@@ -1,5 +1,211 @@
 # PENDING WORK
 
+## Reflection — 2026-09-25 (lap 61, DEEP REFLECTION lap): **the two 🔴s are not as 🔴 as the ledger says — Tao–Teräväinen 2025 is ON DISK and it changes the colour**
+
+Ground truth re-derived this lap from the compiler, not the handoffs: full `lake build` green at
+**9298 jobs**, HEAD `757b830`, tree clean; `#print axioms` re-run on sixteen declarations (see the
+STATUS ledger); a new numerical probe (`probes/c3_euler_product.py`,
+`probes/data-2026-09-25-c3-euler-product.txt`); and — the finding that reorganises everything — a
+read of `papers/tao-teravainen-2025-quantitative-correlations.txt`.
+
+### 0. The headline: a stale literature claim, and what replaces it
+
+`papers/literature-review.md` says of Tao–Teräväinen arXiv 2512.01739: *"whose PDF is still not on
+disk and which is still not a prerequisite."*  **The first half is false — the full text has been
+on disk as `papers/tao-teravainen-2025-quantitative-correlations.txt` (265 KB) and nothing read
+it.**  The second half needs revising too.  What it contains:
+
+* **Theorem 1.3**: `∑_{n≥1} ω(n)/2ⁿ = ∑_p 1/(2^p−1)` is **irrational**, unconditionally (Erdős #69).
+  The paper adds: *"The method can also be modified to establish the irrationality of
+  `∑ ω(n)/bⁿ` for any integer base `b ≥ 2`; in fact the case `b > 2` is somewhat easier."*  That is
+  this repo's `G4_b`.
+* **Theorem 3.1** (the reusable tool, built on Pilatte's 2025 decoupling inequality): for
+  1-bounded multiplicative `g₁, g₂`, `1 ≤ L ≤ log X`, with `g₁` either real+equidistributed or
+  complex+**non-pretentious** (`exp(M(g₁; X², log^{1/125}X)) ≫ L`), there is `E ⊂ [√X, X]` of
+  **logarithmic density `≪ L^{−c}`** such that for all `W ∈ [L^c]` and `b, h₁ ≠ h₂ = O(L^c)`,
+
+      (W/N) ∑_{N<n≤2N} (g₁(n+h₁) − δ_N) g₂(n+h₂) 1_{n ≡ b (mod W)}  ≪  L^{−c}
+
+  for every `N ∈ [√X, X] \ E`.
+* **Remark 3.2, third bullet**, spelled out in the paper: for `a₁,a₂,b₁,b₂ ∈ [1,(log N)^c]` with
+  `a₁b₂ ≠ a₂b₁`,  `(1/N) ∑_{n≤N} λ(a₁n+b₁)λ(a₂n+b₂) ≪ (log N)^{−c}` for all `N` outside such an `E`
+  — *"follows from Theorem 3.1(ii)"*, i.e. for any non-pretentious 1-bounded multiplicative
+  function, not just `λ`.
+* **§5.2** ("Taking an alternating sum to cancel terms", *"inspired by the theory of the Gowers
+  uniformity norms"*): the technique for turning a **growing-depth** linear combination
+  `∑_h ω(n+h)/2^h` into something controlled by **pairwise** correlations, by choosing
+  `p_ε = p₀ + ε₁v₁ + ⋯ + ε_Kv_K` all prime and alternating over `ε ∈ {0,1}^K` so that the first `K`
+  terms cancel identically.
+
+**Why this matters here.**  Both open leaves of this worktree have exactly the shape of
+Theorem 3.1:
+
+| leaf | repo's shape | Theorem 3.1 instance |
+|---|---|---|
+| C1 `PairDecorr` | `(1/N)∑_n z^{ω(pn+1)} \bar z^{ω(qn+1)} → 0` | Remark 3.2 bullet 3 verbatim: `a₁=p, b₁=1, a₂=q, b₂=1`, `a₁b₂ = p ≠ q = a₂b₁`, and `p,q ≤ w ≤ (log N)^c` is exactly the repo's growing cutoff |
+| C3 depth-2 rung | `(1/N)∑_n e(jn/Q) z₁^{ω_{>P}(n+1)} z₂^{ω_{>P}(n+2)} → 0` | (3.4) verbatim: `g_i = z_i^{ω_{>P}}`, `h₁=1, h₂=2`, `W = Q`, and `e(jn/Q)` is a `ℤ/Q`-Fourier combination of the `1_{n≡b(W)}` |
+
+`z^{ω}` and `z^{ω_{>P}}` are 1-bounded multiplicative and non-pretentious for `‖z‖=1, z≠1`
+(`M(z^ω;·) ≈ (1−Re z)·log₂X`, so `exp(M) ≈ (log X)^{1−Re z} ≫ L` for `L` a small power of log) —
+so Theorem 3.1(ii) applies with a power-of-log saving.
+
+**The ONE remaining gap is the exceptional set of scales `E`, not the correlation.**  The repo's
+standing claim — *"natural-density two-point Elliott for `ζ^ω` … is a named open problem (Tao 2016
+gives it in logarithmic average only)"* — was correct in 2016 and is **half-stale in 2026**: at
+natural density, **outside a log-density-`L^{−c}` set of scales, with a power-of-log saving, it is
+a theorem** (Pilatte 2025 → TT2025 Thm 3.1).  Only "for every `N`" remains open.
+
+**Ledger consequence (applied in STATUS).**  `PairDecorr` / `MultiElliott` / `TwoPointWeightedAvg`
+and `WeylTailHypothesis` should no longer be booked as flat 🔴.  The honest entry is
+**"🔴 at every scale; 🟠 outside a log-density-small set of scales — PROVED, Pilatte 2025 +
+TT2025 Thm 3.1, text on disk"**.  That is a colour change on the repo's two biggest obligations
+and it is the single most valuable thing this lap produced.
+
+### 1. Destination — unchanged; the C1 bet is CLOSED by its own criterion
+
+`KICKOFF-2026-09-24-twopoint-bet.md`: *"a refutation or an equivalence with a named open problem is
+a success."*  Met at WRAP 4 (`pairDecorr_iff_unweighted`, `multiElliottWeighted_iff_growing`, both
+re-verified trust-triple this lap).  Lap 60 cleared the last illegitimate 🟡 (`DelangeMean`) by two
+independent kernel proofs.  `ConjC1` rests on one input.  Nothing cheap is left inside C1.
+
+### 2. Route — what fired, and the verdict
+
+The previous CURRENT DIRECTIVE mandated the `DelangeMean` discharge.  **That objective is
+COMPLETE**, so the directive is SPENT and a re-decision is forced.
+
+The lap-60 handoff nominated C3 and priced it at *"15% — because item 1 supplies its first peel
+outright"*, flagging but not checking its own caveat (*"the peel must grow"*).  This lap checked it
+and then checked the literature.  Both halves:
+
+* **The caveat fires.**  `tailLarge P b n = ∑_{i≥1} ω_{>P}(n+i)b^{−i}`, so
+  `e(h·tailLarge) = ∏_{i≥1} z_i^{ω_{>P}(n+i)}`, `z_i = e(h/b^i)`.  Depth 1 **is already a theorem
+  here** — `DelangeSlot.twisted_omegaLarge_mean_tendsto_zero` is literally
+  `(1/N)∑_{m≤N} e(jm/Q) z^{ω_{>P}(m)} → 0` — and it is unconsumed outside its own namespace.  But
+  the depth-`K` truncation error is `≍ b^{−K}·(1/N)∑_n tailLarge(n+K) ≍ b^{−K} log log N`, which
+  forces `K → ∞` (at the very slow rate `K ≳ log_b log log N`).  So no fixed depth closes it.
+* **But depth 2 is NOT open.**  It is Theorem 3.1(3.4) with `h₁=1, h₂=2, W=Q` — a 2026 theorem,
+  outside `E`.  The lap-60 estimate of 15% was optimistic for the wrong reason and the correct
+  number is probably *higher*, not lower, once the route is re-plumbed onto what is actually known.
+
+**ROUTE VERDICT: `CONTINUE` on C3 as the target; `ESCALATE` the framing from "grind the crux" to
+"re-plumb onto the almost-all-scales theorem, then climb the depth ladder".**  Two corrections to
+the lap-60 handoff, both load-bearing:
+
+* its **item 3** ("Alternative C3 route, possibly cheaper: `tailLargeDecouple_holds`") is
+  **withdrawn**.  `tailLargeDecoupleC_of_weyl` (trust-triple, in-tree) already derives leaf B′ from
+  the Weyl hypothesis and the converse is Fourier inversion on `ℤ/Q` plus Weyl's criterion.  Leaf B
+  IS the crux.
+* its **"do NOT retry"** list should gain the `L¹` prime-size truncation family (already refuted
+  in-tree) and lose nothing.
+
+### 3. The exceptional set: which consumer tolerates it (the decisive asymmetry)
+
+This is the question the next laps must settle, and the two conjectures answer it **differently**:
+
+* **`ConjC3` = `IsRich`** (`CastingOut.lean:405`) is
+  `∀ w, ∃ c > 0, ∀ᶠ N, c·N ≤ #{n<N : OccursAt b x w n}` — a **lower** bound on a **monotone**
+  count.  Monotone counts absorb bad scales: if `M/2 ≤ N ≤ M` is good then
+  `C(M) ≥ C(N) ≥ cN ≥ cM/2`.  **So `IsRich` needs only one good scale per dyadic block.**
+* **`ConjC1` = `CastLaw`** is a two-sided density law (a limit), with no monotonicity to exploit.
+
+Honest accounting of what the absorption buys, since `E` has log measure `≪ L^{−c} log X` over
+`[√X, X]` and so can contain a run of up to `≍ L^{−c} log X` consecutive dyadic blocks:
+one good scale per dyadic block is **not** guaranteed by Theorem 3.1 as stated.  Falling back to
+the last good scale costs a factor `X^{o(1)}`, which yields not `IsRich` but
+
+      IsRichSubpoly :  every word occurs at ≥ N^{1−o(1)} positions below N,
+
+a rung **strictly between** the proved `isDisjunctive_base` (infinitely often) and `ConjC3`
+(positive lower density).  **That rung looks reachable and nobody has stated it.**  Whether the
+full `IsRich` survives depends on sharpening `E` (Pilatte's set may be much better than
+`L^{−c}`-log-density in practice) — a source question for a later lap, not a blocker for stating
+and proving the subpolynomial rung.
+
+### 4. The probe: the crux is Selberg–Delange, and its rate is now in closed form
+
+`probes/c3_euler_product.py` (known-answer checked against the existing
+`probes/swingc3_weyl_lambert_twist.py` fixtures; replaces its depth-64 inner loop by the stable
+downward recurrence `t_n = (d_{n+1}+t_{n+1})/b`, buying a 10× larger `N`).  Exact local
+decomposition, verified: with `r_p(n) = p − (n mod p) ∈ [1,p]`,
+
+    tailLarge P b n  =  ∑_{p>P}  b^{−r_p(n)} / (1 − b^{−p}),
+
+so `F(n) = e(h·tailLarge P b n) = ∏_{p>P} g_p(n mod p)` — a product of **independent local
+factors**, one per prime, each a function of `n mod p` alone.  The independent-residues Euler
+product then predicts
+
+    (1/N)∑_{n<N} F(n)  ≍  C·(log N)^{−A},   A = ∑_{i≥1}(1 − cos(2π h b^{−i})).
+
+Measured to `N = 4·10⁶`, seven parameter sets.  The Euler product's own empirical exponent matches
+`A` to four digits (`1.7635` vs `1.7643`; `1.0810` vs `1.0813`), and the ratio `|true mean| /
+|Euler|` is **flat**: `7.24→7.80→7.82→7.71`, `3.28→3.61→3.79→3.85`, `2.25→2.41→2.51→2.55`,
+`7.26→8.16→8.61→8.75`.  A matching exponent with a flat constant is the Selberg–Delange signature.
+Consequences: the crux is **true**; the target is quantitative, not merely `→ 0`; and the class
+twist buys **exactly one further power of `log N`** (measured exponent gap ≈ 1, mechanism: the
+twist sees `n mod Q` only through the primality of `n+i`, a density-`1/log N` event).  Also
+refuted: "twisted = product of the two means", which would predict `O(Q/N)`.  It does not.
+
+Note how well this agrees with the literature read: `(log N)^{−A}` with a power-of-log saving is
+*exactly* the shape of Theorem 3.1's `L^{−c}`.
+
+### 5. What a sharp outsider would say we are missing
+
+**(a) The tree, and now the `papers/` shelf, out-inventory the laps.**  Three instances in two
+laps: lap 60 found `DelangeMean` had been reachable in-tree for weeks; this lap found the C3
+depth-1 rung already proved and unconsumed, and a 265 KB source on disk answering the campaign's
+central literature question, unread.  **Standing rule, now in the directive: before opening an
+attack, grep `src/` for the statement AND `papers/` for the theorem.**
+
+**(b) C2's leaf-1 decomposition does not reduce anything.**  `SwingC2.PrimeDensityAP` asks for
+`∃ Y, N < Y ∧ log₂Y ≤ B ∧ Y / M ≤ B²·#{p ∈ (N,Y] : p ≡ r (M)}` and `Y / M` is **ℕ-division**.
+Whenever `M > N+1`, `Y = N+1` satisfies every clause with the prime set **empty**, while its
+consumer `TauMomentPrimesShiftStruct` needs `0 < P.card`.  So that leaf is not a real reduction.
+(At large `B` the statement is also *provable* here — `M` vs `Y = 2^B` is the Siegel–Walfisz range
+and `PNTPort` is in-tree — so it is not 🔴 either.)  Flagged, not fixed: C2's headline runs through
+`shiftedDivisorIncidence_holds`, not this leaf.
+
+**(c) `IsRichSubpoly` (§3) is a genuinely new, reachable statement** that the repo has never named.
+
+### 6. Faithfulness
+
+`twoPointWeightedAvg_all` re-read against the kickoff prose: unchanged, ratified, `sorryAx`
+disclosed — correct.  `ConjC1`/`ConjC2`/`ConjC3` are *conjectures* in the source, so a 🔴 under
+each is legitimate, not a straying bug.  `conjC3_of_weylHypothesis` and `isRich_of_weylHypothesis`
+are trust-triple, so `WeylTailHypothesis` is genuinely C3's whole content.  `IsRich`'s definition
+re-read at `CastingOut.lean:405` and it is indeed a monotone lower-density statement — the
+asymmetry in §3 is real, not a paraphrase.  One transcription flag raised at 5(b).
+
+### 7. KEEP / STOP / next target
+
+**KEEP.**  "Measure the depth by a theorem in `src/`" — it is what made C1 a success.  Committing
+every green build.  Re-deriving ground truth from `#print axioms`, never from prose.
+
+**STOP.**  (i) Booking C1's and C3's leaves as flat 🔴 — they are 🟠 outside a small set of scales.
+(ii) Treating `tailLargeDecouple_holds` as an alternative route.  (iii) Opening any attack before
+grepping `src/` *and* `papers/`.  (iv) Further work inside the C1 swing.
+
+**THE SINGLE HIGHEST-VALUE NEXT TARGET — the C3 depth ladder, new files `src/NormalNumbers/TwoPointC3*.lean`:**
+
+0. **Rung 0 — the honest restatement.**  Name `WeylTailAlmostAll` (the `L^{−c}`-quantitative,
+   outside-`E` form that TT2025 Thm 3.1 actually supplies) and prove the **absorption lemma**:
+   a monotone count plus one good scale per dyadic block gives positive lower density; with a run
+   of `R` bad blocks it gives `N/2^R`.  Then state `IsRichSubpoly` and derive it.  This is the
+   re-plumb, and it is what converts a 🔴 into a 🟠.
+1. **Rung 1 — cash the unexploited asset.**  `weylTail_depthOne`:
+   `(1/N)∑_{n<N} e(jn/Q)·z^{ω_{>P}(n+1)} → 0` for `z = e(h/b) ≠ 1`, by re-indexing
+   `DelangeSlot.twisted_omegaLarge_mean_tendsto_zero`.  Unconditional, immediate.
+2. **Rung 2 — machine-check the wall.**  `(1/N)∑_{n<N} tailLarge P b n → ∞`: the kernel fact that
+   refutes **every** fixed-depth truncation.
+3. **Rung 3 — the pin.**  `WeylTailHypothesis b ⟺ ShiftElliott` (growing depth
+   `K ≈ log_b log log N`), C3's analogue of `multiElliottWeighted_iff_growing` — and then read
+   TT2025 §5.2's alternating-sum/Gowers trick, which is the literature's way to reduce exactly
+   such a growing-depth combination to **pairwise** correlations.
+
+Why this line and nothing else: it advances the hardest open obligation now reachable; it converts
+already-proved but unconsumed machinery (in-tree AND on the `papers/` shelf) into theorems; it
+machine-checks the wall instead of asserting it; and it ends in the repo's proven success shape.
+Forbidden drift is in `DIRECTION.md`'s CURRENT DIRECTIVE.
+
 ## 2026-09-25 (lap 53, review lap) — the 🟡 `DelangeMean` discharge, decomposed into three bricks
 
 **Direction REVISED** (see `DIRECTION.md` → CURRENT DIRECTIVE, which OUTRANKS every handoff).  The

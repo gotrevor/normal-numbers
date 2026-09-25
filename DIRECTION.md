@@ -2,54 +2,85 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Scope: branch `wip/twopoint-avg`** — the C1 casting-out swing of
+**Scope: branch `wip/twopoint-avg`** — the casting-out swings of
 `KICKOFF-2026-09-24-twopoint-bet.md`.  (The Theorem C′ directive below is the `master`/Pair A
 directive and is NOT active in this worktree; Theorem C′ is proved and trust-triple.)
 
-**Objective (2026-09-25 review lap — direction REVISED).**  Discharge the 🟡 `DelangeMean`
-hypothesis into a theorem on the regime `‖phase t − 1‖ < 1`.  The kickoff's own success criterion
-(C1 pinned to a named open problem by a theorem in `src/`) was MET at SESSION WRAP 4
-(`pairDecorr_iff_unweighted`, `multiElliottWeighted_iff_growing`); after
-`delangeKernelTail_of_norm_lt_one` and `conjC1_of_delange_multiElliott`, `ConjC1` rests on exactly
-two inputs, and `DelangeMean` is the only one that is not an open conjecture.  It is therefore the
-whole remaining debt of the swing.
+**Objective (2026-09-25 lap-61 DEEP REFLECTION — direction REVISED; the previous directive is
+SPENT, its objective having been met at lap 60).**  The C1 swing is CLOSED: its kickoff criterion
+was met at WRAP 4 and the last illegitimate 🟡 (`DelangeMean`) was discharged at lap 60.  The new
+objective is **`ConjC3`: re-plumb `WeylTailHypothesis` onto what the literature ACTUALLY supplies,
+then climb the depth ladder.**  `conjC3_of_weylHypothesis` and `isRich_of_weylHypothesis` are
+trust-triple, so that hypothesis is C3's whole content.
 
-**Mandated next move: `DelangeKernelMean z` for `0 < ‖z−1‖ ≤ 1` by the SCALE route, three bricks.**
-The scale equation `delange_scale_equation` (lap 52, PROVED) is
-`‖S(N)·log N − z·Abel(N)‖ ≤ 19·A(N)`, with `Abel(N+1) − Abel(N) = δ_N·S(N)`, `δ_N = log(N+1)−log N`.
-Write `L_N = log N`, `s_N = δ_N/L_N`.
-1. **Tool (shared).**  `Σ_{N₀ ≤ m < N} s_m ≤ log L_N − log L_{N₀} + 1`, from `log(1+s) ≥ s − s²`
-   (`Real.log_le_sub_one_of_pos` twice) plus `Σ_{m≥3} s_m² ≤ Σ 1/m² ≤ 1`; and the Gronwall
-   `a_{m+1} ≤ a_m(1+c·s_m) ⟹ a_N ≤ a_{N₀}·e^c·(L_N/L_{N₀})^c`.
-2. **`A(N) ≤ C·(log N)^{u'}`, `u' < 1`, WITHOUT Mertens' second theorem.**  The structural
-   insight: `A = delangeA z` is itself a kernel sum, `A(N) = delangeS z' N` for the REAL
-   `z' = 1 + ‖z−1‖`, so the scale equation applies to `z'` and reads
-   `|A(N)·L_N − (1+u)·Ā(N)| ≤ 19A(N)` with `Ā(N) = Σ_{1≤m<N} δ_m A(m)` real.  Brick 1 then falls
-   out of tool 1 with the sharp exponent, and the `19` costs only an `ε` in `u'`.
-3. **The discrete integrating factor, WITHOUT `Complex.cpow`.**  Fix `θ` with
-   `max(Re z, u') < θ < 1` and prove `‖Abel(N)‖ ≤ C·L_N^θ` by induction on `N ≥ N₀`, from
-   `Abel(N+1) = Abel(N)(1 + z·s_N) + s_N·R(N)`, `‖1+zs‖ ≤ 1 + s·Re z + s²/2`, and
-   `(1+s)^θ ≥ 1 + θs − s²` (`Real.add_one_le_exp` + `log(1+s) ≥ s − s²`).  The scale equation then
-   returns `‖S(N)‖ ≤ (C + 19C₁)·L_N^{θ−1} → 0`.  Note `Re z = 1 − ‖z−1‖²/2 < 1` automatically.
+**The fact that forces this revision.**  `papers/tao-teravainen-2025-quantitative-correlations.txt`
+(arXiv 2512.01739v2, 265 KB, **on disk and never read** — `literature-review.md` says otherwise and
+was wrong) contains **Theorem 3.1**: for 1-bounded multiplicative `g₁,g₂` with `g₁`
+non-pretentious, and `1 ≤ L ≤ log X`, there is `E ⊂ [√X,X]` of logarithmic density `≪ L^{−c}` with
 
-**Forbidden drift.**  Do NOT delete, rename or weaken `twoPointWeightedAvg_all`.  Do NOT edit
+    (W/N) ∑_{N<n≤2N} (g₁(n+h₁) − δ_N)·g₂(n+h₂)·1_{n ≡ b (mod W)}  ≪  L^{−c}
+
+for every `N ∈ [√X,X]\E`, all `W ∈ [L^c]`, all `b, h₁ ≠ h₂ = O(L^c)`.  Remark 3.2 spells out the
+dilated form `(1/N)∑ λ(a₁n+b₁)λ(a₂n+b₂) ≪ (log N)^{−c}` for `a_i,b_i ≤ (log N)^c`, `a₁b₂ ≠ a₂b₁`.
+**Both of this worktree's open leaves are instances**: C1's `PairDecorr` is the dilated form with
+`(a₁,b₁,a₂,b₂) = (p,1,q,1)`; C3's depth-2 rung is (3.4) with `h₁=1, h₂=2, W=Q`.  `z^ω` and
+`z^{ω_{>P}}` are 1-bounded multiplicative and non-pretentious for `‖z‖=1, z≠1`.  **So the repo's
+standing "natural-density two-point Elliott is open" is half-stale: it is a 2026 THEOREM outside a
+log-density-small set of SCALES.  Only "for every `N`" is still open.**
+
+**Mandated next move — four rungs, in NEW files `src/NormalNumbers/TwoPointC3*.lean`.**  Write
+`T_n = tailLarge P b n = ∑_{i≥1} ω_{>P}(n+i)b^{−i}`, so `e(h·T_n) = ∏_{i≥1} z_i^{ω_{>P}(n+i)}`,
+`z_i = e(h/b^i)`.
+0. **Rung 0 — the re-plumb (this is the 🔴→🟠 move, do it first).**  Name `WeylTailAlmostAll`: the
+   quantitative, outside-`E` form Theorem 3.1 actually supplies.  Prove the **absorption lemma** —
+   `IsRich` (`CastingOut.lean:405`) is a LOWER bound on a MONOTONE count, so one good scale per
+   dyadic block gives positive lower density (`C(M) ≥ C(N) ≥ cN ≥ cM/2`), and a run of `R` bad
+   blocks degrades it to `N/2^R`.  Then state and derive **`IsRichSubpoly`**: every word occurs at
+   `≥ N^{1−o(1)}` positions below `N` — a rung strictly between the PROVED `isDisjunctive_base` and
+   `ConjC3`, which the repo has never named.  `ConjC1`'s `CastLaw` is a two-sided density limit with
+   no monotonicity, so it does NOT absorb `E`; that asymmetry is why C3 goes first.
+1. **Rung 1 — cash the unexploited asset.**  `DelangeSlot.twisted_omegaLarge_mean_tendsto_zero`
+   (PROVED, trust-triple) is literally `(1/N)∑_{m≤N} e(jm/Q) z^{ω_{>P}(m)} → 0`.  Re-index `m=n+1`:
+   that IS the depth-1 truncation of the crux.  Prove `weylTail_depthOne`.  Unconditional.
+2. **Rung 2 — machine-check the wall.**  `(1/N)∑_{n<N} T_n → ∞` (rate `(log log N)/(b−1)`): the
+   kernel fact that refutes EVERY fixed-depth truncation.  Crude `≥ c·log₂N` suffices.
+3. **Rung 3 — the pin, then the literature's own trick.**  `WeylTailHypothesis b ⟺ ShiftElliott`
+   (growing depth `K ≈ log_b log log N`), C3's analogue of `multiElliottWeighted_iff_growing`.
+   THEN read TT2025 **§5.2** ("taking an alternating sum to cancel terms", *"inspired by the theory
+   of the Gowers uniformity norms"*): choose `p_ε = p₀+ε₁v₁+⋯+ε_Kv_K` all prime and alternate over
+   `ε ∈ {0,1}^K` so the first `K` terms of `∑_h ω(n+h)b^{−h}` cancel identically.  That is the
+   literature's way to reduce a growing-depth combination to PAIRWISE correlations, and the repo
+   has no analogue of it.
+
+**Forbidden drift.**  Do NOT book C1's or C3's leaf as flat 🔴 any more — the honest entry is
+"🔴 at every scale; 🟠 outside a log-density-small set of scales (Pilatte 2025 + TT2025 Thm 3.1)".
+Do NOT attempt to prove `weylLambertTwist_holds` at a FIXED peel depth (rung 2 proves no fixed
+depth suffices).  Do NOT treat `SwingC3Rotation.tailLargeDecouple_holds` as a cheaper alternative
+route — `tailLargeDecoupleC_of_weyl` (in-tree, trust-triple) derives it from the Weyl hypothesis
+and the converse is Fourier inversion on `ℤ/Q`; the lap-60 handoff's "possibly cheaper" is
+WITHDRAWN.  Do NOT retry the `L¹` prime-size truncation family (refuted in-tree: the period
+`∏_{P<p≤K}p ≈ e^K ≤ N` forces `K ≲ log N` while freeness needs `K ≈ N^c`).  Do NOT re-open the C1
+arithmetic leaf, do NOT delete/rename/weaken `twoPointWeightedAvg_all`, do NOT edit
 `PairDecouple*.lean`, `SwingC1*.lean`, `CastingOut*.lean`, `Maze.lean`, `papers/`, `agent-mail/`,
-other KICKOFFs.  New code in `src/NormalNumbers/TwoPoint*.lean` only.  Do NOT re-open the C1
-arithmetic leaf (`PairDecorr` / `MultiElliott` / `TwoPointWeightedAvg`): it is pinned as an
-equivalence with a named open problem, which the kickoff counts as success, and no cheap work
-exists there.  Do NOT retry: absolute majorisation of `E_N` (lap 49, refuted), the `‖·‖`-normed
-`v`-direction Gronwall (lap 35, refuted), the `ℓ¹`/`ℓ²`/rotation-pairing routes (laps 13–23), the
-uniform-in-`(p,q,w)` saving, `WeightDecouple` as an easier sub-problem.  Do NOT reach for
-Mertens' second theorem (`Σ_{p≤N}1/p = log log N + O(1)`): brick 2 above makes it unnecessary, and
-the repo's `primeRecipSum_le` has constant 12, which would shrink the regime to `‖z−1‖<1/12`.
+other KICKOFFs.  Do NOT touch the designated-open `PrimeLambertOscillation` / `MahlerDriftOne`.
 
-**Why.**  Two inputs remain under `ConjC1`; one is an open conjecture the paper itself states
-conditionally (legitimate 🔴), the other is a 1969 theorem of Delange (illegitimate 🟡 debt).  Laps
-43–52 drove the 🟡 from "two named `Prop`s" to "one conditional plus a proved scale equation", and
-the route-decisive question — whether the sign `Re(z−1)<0` survives to the closure step — is
-answered YES by the scale equation, whose multiplier has modulus exactly one.  What is left is
-bookkeeping of a kind this repo has done many times.  If brick 3's induction fails, the failure is
-visible in one lap and the fallback (a stated conditional, as at lap 48) already exists.
+**Standing first move for EVERY lap: grep `src/` for the statement you are about to attack, AND
+`papers/` for the theorem.**  Three misses in two laps — lap 60's `DelangeMean` (already in-tree),
+this lap's C3 depth-1 rung (already in-tree), and a 265 KB source answering the campaign's central
+literature question (already on the shelf, unread).  587 files, 9298 jobs, 60 papers; the
+inventory out-runs the laps.
+
+**Why.**  The two obligations this worktree calls open are, as of 2026, theorems outside a small
+set of scales — and `ConjC3`'s consumer is a monotone lower-density count, which is exactly the
+shape that absorbs bad scales, while `ConjC1`'s is a two-sided limit, which is not.  So the
+highest-value move is not to grind the crux but to re-plumb C3 onto the known statement and see
+what density survives; the by-product (`IsRichSubpoly`) is a genuinely new theorem strictly
+stronger than the repo's proved disjunctivity.  A fresh probe
+(`probes/c3_euler_product.py`) independently confirms the mechanism is Selberg–Delange, with the
+closed-form rate `(log N)^{−A}`, `A = ∑_{i≥1}(1−cos(2πh b^{−i}))` — matching to four digits with a
+flat constant — which is the same power-of-log shape as Theorem 3.1's `L^{−c}` saving.  If rung 0's
+absorption lemma turns out NOT to survive the size of `E`, that is a one-lap failure and the
+fallback (rungs 1–3, which are unconditional) is already the rest of the directive.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route (master/Pair A).
@@ -60,7 +91,11 @@ visible in one lap and the fallback (a stated conditional, as at lap 48) already
 - 2026-09-25 (lap-53 review, branch `wip/twopoint-avg`): C1 objective MET at WRAP 4 (equivalence
   with a named open problem); directive REVISED to the 🟡 `DelangeMean` discharge via the scale
   route's three bricks, with `Complex.cpow` and Mertens' 2nd both designed out.
-
+- 2026-09-25 (lap-61 DEEP REFLECTION, branch `wip/twopoint-avg`): previous directive SPENT.
+  REVISED to C3.  **Route verdict: the two leaves are NOT flat 🔴 — Pilatte 2025 + Tao–Teräväinen
+  2025 Thm 3.1 (text on disk, unread until now) give them at natural density outside a
+  log-density-small set of scales.**  Mandate: re-plumb C3 onto that (rung 0, `IsRichSubpoly`),
+  then the depth ladder.  Lap-60's "leaf B is cheaper" WITHDRAWN.
 ---
 
 ## CURRENT DIRECTIVE — `master` / Pair A (Theorem C′; NOT active in `wip/twopoint-avg`)
