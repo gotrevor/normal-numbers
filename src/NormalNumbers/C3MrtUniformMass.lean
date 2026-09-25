@@ -415,8 +415,235 @@ theorem resonant_big_mass_le {z : ℂ} (hz : ‖z‖ = 1) {t δ A : ℝ} (hδ0 :
       _ = 7000000 * (1 + 32 * |t| / π) * Real.exp (-(A / 16)) := by ring
   nlinarith [hmainsum, herrsum, Real.exp_pos (-(A/16))]
 
+
+/-- At `t = 0` nothing resonates: the phase is `z` itself, and `|arg z| ≥ 2δ`. -/
+theorem resonantMass_zero {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z)
+    (Y : ℕ) : resonantMass z 0 Y δ = 0 := by
+  classical
+  rw [resonantMass]
+  refine Finset.sum_eq_zero ?_
+  intro p hp
+  exfalso
+  obtain ⟨hpm, hres⟩ := Finset.mem_filter.1 hp
+  have hpp : p.Prime := (Erdos67b.mem_primesUpTo.1 hpm).1
+  obtain ⟨h1, _⟩ := windowIndexW_spec hz hpp.two_le hδ hres
+  have hgap : 2 * δ ≤ |z.arg - 2 * π * windowIndexW z 0 δ p| :=
+    le_trans (by linarith) (two_resEps_le_abs_shift z _)
+  rw [abs_zero, zero_mul] at h1
+  linarith
+
+set_option maxHeartbeats 2000000 in
+/-- **`UniformResonantMass`, discharged.**  The resonant primes carry reciprocal mass at most
+`100δ(log log Y + log(2+|t|)) + C`, uniformly in `t` and `Y`.
+
+The cutoff is `A = 16 log(2·10⁸(2+|t|))`, chosen so that the Brun–Titchmarsh error of
+`resonant_big_mass_le` is `≤ 1`; the primes below it cost `log(A+1) + mertensBound`, which
+`log_le_mul_sub` at slope `7δ/8` turns into `14δ log(2+|t|) + O_δ(1)` — and `14 + 85.4 < 100`
+is exactly the budget the window sum leaves. -/
+theorem uniformResonantMass_holds : UniformResonantMass := by
+  classical
+  intro z δ hz hδ0 hδ
+  have hpi : (0 : ℝ) < π := Real.pi_pos
+  have hδpi : δ ≤ π / 2 := by
+    refine le_trans hδ ?_
+    rw [resEps]
+    have := Complex.abs_arg_le_pi z
+    linarith
+  have hlog2 : (0.6931 : ℝ) < Real.log 2 := by linarith [Real.log_two_gt_d9]
+  have hlog2u : Real.log 2 ≤ 1 := by
+    have := Real.log_le_sub_one_of_pos (x := (2:ℝ)) (by norm_num); linarith
+  have hδ4 : δ ≤ 2 := by linarith [Real.pi_le_four]
+  have hlogδ : Real.log (7 * δ / 8) ≤ 7 * δ / 8 - 1 :=
+    Real.log_le_sub_one_of_pos (by positivity)
+  have hΛpos : (0 : ℝ) < Real.log 200000000 := Real.log_pos (by norm_num)
+  have hmert := Erdos67b.PrimeEstimates.mertensBound_nonneg
+  refine ⟨500 + 2000 * δ + 20 * δ * Real.log 200000000 - Real.log (7 * δ / 8) + Erdos67b.PrimeEstimates.mertensBound, ?_, ?_⟩
+  · have : (0:ℝ) ≤ 20 * δ * Real.log 200000000 := by positivity
+    linarith
+  intro t Y hY
+  -- `log log Y ≥ −1`
+  have hlY : Real.log 2 ≤ Real.log Y := Real.log_le_log (by norm_num) (by exact_mod_cast hY)
+  have hlYpos : (0 : ℝ) < Real.log Y := by linarith
+  have hloglog : (-0.443 : ℝ) ≤ Real.log (Real.log Y) := by
+    have hll : Real.log (Real.log 2) ≤ Real.log (Real.log Y) :=
+      Real.log_le_log (by linarith) hlY
+    have hinv : Real.log (Real.log 2) = -Real.log ((Real.log 2)⁻¹) := by
+      rw [Real.log_inv]; ring
+    have hup : Real.log ((Real.log 2)⁻¹) ≤ (Real.log 2)⁻¹ - 1 :=
+      Real.log_le_sub_one_of_pos (by positivity)
+    have hinvle : (Real.log 2)⁻¹ ≤ 1.443 := by
+      rw [inv_le_comm₀ (by linarith) (by norm_num)]
+      linarith
+    linarith [hinv ▸ hll]
+  have hlt2 : Real.log 2 ≤ Real.log (2 + |t|) :=
+    Real.log_le_log (by norm_num) (by linarith [abs_nonneg t])
+  have hbracket : (0 : ℝ) ≤ Real.log (Real.log Y) + Real.log (2 + |t|) := by linarith
+  have hbr : (0 : ℝ) ≤ 100 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|)) :=
+    mul_nonneg (by positivity) hbracket
+  rcases eq_or_ne t 0 with rfl | ht
+  · rw [resonantMass_zero hz hδ0 hδ]
+    nlinarith [hbr, hlogδ, hmert, hδ4, hδ0]
+  -- the cutoff `A = 16 log(2·10⁸(2+|t|))`
+  have habs : (0 : ℝ) ≤ |t| := abs_nonneg t
+  have hXpos : (0 : ℝ) < 200000000 * (2 + |t|) := by positivity
+  set s : ℝ := Real.log (2 + |t|) with hsdef
+  set Λ : ℝ := Real.log 200000000 with hΛdef
+  set A : ℝ := 16 * Real.log (200000000 * (2 + |t|)) with hAdef
+  have hs0 : (0 : ℝ) < s := by
+    rw [hsdef]; exact Real.log_pos (by linarith)
+  have hΛ1 : (1 : ℝ) ≤ Λ := by
+    rw [hΛdef, Real.le_log_iff_exp_le (by norm_num)]
+    linarith [Real.exp_one_lt_d9]
+  have hAsplit : A = 16 * Λ + 16 * s := by
+    rw [hAdef, hΛdef, hsdef, Real.log_mul (by norm_num) (by positivity)]; ring
+  have hA16 : (16 : ℝ) ≤ A := by rw [hAsplit]; nlinarith
+  have hexpA : Real.exp (-(A / 16)) = (200000000 * (2 + |t|))⁻¹ := by
+    rw [hAdef, show (16 : ℝ) * Real.log (200000000 * (2 + |t|)) / 16
+      = Real.log (200000000 * (2 + |t|)) by ring, Real.exp_neg, Real.exp_log hXpos]
+  clear_value A s Λ
+  -- the error term is at most 1
+  have herr : 14000000 * (1 + 32 * |t| / π) * Real.exp (-(A / 16)) ≤ 1 := by
+    rw [hexpA]
+    have h32 : 32 * |t| / π ≤ 11 * |t| := by
+      rw [div_le_iff₀ hpi]
+      nlinarith [Real.pi_gt_three, habs]
+    have hnum : 14000000 * (1 + 32 * |t| / π) ≤ 200000000 * (2 + |t|) := by
+      nlinarith [h32, habs]
+    rw [mul_inv_le_iff₀ hXpos] at *
+    linarith [hnum]
+  -- the window count
+  have hlogY2 : Real.log 2 ≤ Real.log Y := hlY
+  set Kc : ℕ := ⌈(|t| * Real.log Y + δ + π) / (2 * π)⌉₊ with hKcdef
+  have hKle : ((Kc : ℕ) : ℝ) ≤ 8 * ((2 + |t|) * Real.log Y) := by
+    rw [hKcdef]
+    have hnn : (0 : ℝ) ≤ (|t| * Real.log Y + δ + π) / (2 * π) := by positivity
+    have hceil := Nat.ceil_lt_add_one (R := ℝ) hnn
+    have hdiv : (|t| * Real.log Y + δ + π) / (2 * π) ≤ (|t| * Real.log Y + δ + π) / 6 := by
+      refine div_le_div_of_nonneg_left (by positivity) (by norm_num) ?_
+      linarith [Real.pi_gt_three]
+    have h4 : π ≤ 4 := Real.pi_le_four
+    have hmain : (|t| * Real.log Y + δ + π) / 6 + 1 ≤ 8 * ((2 + |t|) * Real.log Y) := by
+      rw [div_add' _ _ _ (by norm_num : (6:ℝ) ≠ 0), div_le_iff₀ (by norm_num : (0:ℝ) < 6)]
+      nlinarith [hlogY2, hlog2, habs, hδ4, h4, mul_nonneg habs hlYpos.le]
+    linarith
+  clear_value Kc
+  have hlogK : Real.log Kc ≤ Real.log 8 + (s + Real.log (Real.log Y)) := by
+    have hrhs : Real.log (8 * ((2 + |t|) * Real.log Y)) = Real.log 8 + (s + Real.log (Real.log Y)) := by
+      rw [Real.log_mul (by norm_num) (by positivity), Real.log_mul (by positivity) (by positivity),
+        hsdef]
+    rw [← hrhs]
+    rcases Nat.eq_zero_or_pos Kc with h0 | hpos
+    · rw [h0]
+      simp only [Nat.cast_zero, Real.log_zero]
+      refine Real.log_nonneg ?_
+      nlinarith [hlogY2, hlog2, habs]
+    · refine Real.log_le_log ?_ hKle
+      exact_mod_cast hpos
+  have hlogKnn : (0 : ℝ) ≤ Real.log Kc := Real.log_natCast_nonneg _
+  -- the small primes
+  set B : ℕ := ⌈Real.exp A⌉₊ with hBdef
+  have hexpA0 : (1 : ℝ) ≤ Real.exp A := Real.one_le_exp (by linarith)
+  have hBge : Real.exp A ≤ (B : ℝ) := by rw [hBdef]; exact Nat.le_ceil _
+  have hBlt : (B : ℝ) < Real.exp A + 1 := by
+    rw [hBdef]; exact Nat.ceil_lt_add_one (R := ℝ) (Real.exp_pos A).le
+  clear_value B
+  have hB2 : 2 ≤ B := by
+    have hge2 : (2 : ℝ) ≤ Real.exp A := by
+      have h1 : Real.exp 1 ≤ Real.exp A := Real.exp_le_exp.2 (by linarith)
+      linarith [Real.add_one_le_exp (1 : ℝ)]
+    have : (2 : ℝ) ≤ (B : ℝ) := by linarith
+    exact_mod_cast this
+  have hlogB : Real.log B ≤ A + 1 := by
+    have hBle : (B : ℝ) ≤ Real.exp (A + 1) := by
+      have h2 : Real.exp A + 1 ≤ Real.exp (A + 1) := by
+        rw [Real.exp_add]
+        nlinarith [Real.add_one_le_exp (1 : ℝ), hexpA0]
+      linarith
+    have hBpos : (0 : ℝ) < (B : ℝ) := by linarith
+    have := Real.log_le_log hBpos hBle
+    rwa [Real.log_exp] at this
+  have hlogBpos : (0 : ℝ) < Real.log B := by
+    refine Real.log_pos ?_
+    have : (2 : ℝ) ≤ (B : ℝ) := by exact_mod_cast hB2
+    linarith
+  have habsorb : Real.log (Real.log B) ≤ 14 * δ * s + ((7 * δ / 8) * (16 * Λ + 1) - 1 -
+      Real.log (7 * δ / 8)) := by
+    have h1 : Real.log (Real.log B) ≤ Real.log (A + 1) := Real.log_le_log hlogBpos hlogB
+    have h2 := log_le_mul_sub (c := 7 * δ / 8) (by positivity) (u := A + 1) (by linarith)
+    have h3 : (7 * δ / 8) * (A + 1) = 14 * δ * s + (7 * δ / 8) * (16 * Λ + 1) := by
+      rw [hAsplit]; ring
+    linarith [h3 ▸ h2]
+  -- put it together
+  set X : ℝ := Real.log (Real.log Y) with hXdef
+  have hlog8 : Real.log 8 ≤ 7 := by
+    have := Real.log_le_sub_one_of_pos (x := (8:ℝ)) (by norm_num); linarith
+  have hstep1 : 128 * δ * ((2 / π) * (1 + Real.log Kc))
+      ≤ 128 * δ * ((2 / 3) * (1 + (Real.log 8 + (s + X)))) := by
+    refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+    refine mul_le_mul ?_ (by linarith [hlogK]) (by linarith) (by norm_num)
+    · rw [div_le_div_iff₀ hpi (by norm_num)]
+      linarith [Real.pi_gt_three]
+  have h_a : δ * Real.log 8 ≤ δ * 7 := mul_le_mul_of_nonneg_left hlog8 hδ0.le
+  have h_b : (0:ℝ) ≤ δ * s := by positivity
+  have h_c : (0:ℝ) ≤ δ * (X + 0.443) := mul_nonneg hδ0.le (by linarith)
+  have h_d : (0:ℝ) ≤ δ * Λ := mul_nonneg hδ0.le (by linarith)
+  -- split the resonant primes at the cutoff
+  rw [resonantMass, ← Finset.sum_filter_add_sum_filter_not
+    ((Erdos67b.primesUpTo Y).filter (fun p => |(primePhase z t p).arg| < δ))
+    (fun p => A ≤ Real.log p)]
+  have hbig := resonant_big_mass_le (z := z) (t := t) (δ := δ) (A := A) (Y := Y) hz hδ0 hδ ht hA16
+    (G := ((Erdos67b.primesUpTo Y).filter (fun p => |(primePhase z t p).arg| < δ)).filter
+      (fun p => A ≤ Real.log p))
+    (fun p hp => by
+      obtain ⟨hp1, hp2⟩ := Finset.mem_filter.1 hp
+      obtain ⟨hp3, hp4⟩ := Finset.mem_filter.1 hp1
+      obtain ⟨hpp, hpY⟩ := Erdos67b.mem_primesUpTo.1 hp3
+      exact ⟨hpp, by exact_mod_cast hpY, hp4, hp2⟩)
+  rw [← hKcdef] at hbig
+  have hsmall := small_prime_mass_le (B := B) hB2
+    (G := ((Erdos67b.primesUpTo Y).filter (fun p => |(primePhase z t p).arg| < δ)).filter
+      (fun p => ¬ A ≤ Real.log p))
+    (fun p hp => by
+      obtain ⟨hp1, hp2⟩ := Finset.mem_filter.1 hp
+      obtain ⟨hp3, _⟩ := Finset.mem_filter.1 hp1
+      obtain ⟨hpp, _⟩ := Erdos67b.mem_primesUpTo.1 hp3
+      refine ⟨hpp, ?_⟩
+      have hplt : Real.log p < A := lt_of_not_ge hp2
+      have hppos : (0 : ℝ) < (p : ℝ) := Nat.cast_pos.mpr hpp.pos
+      have hlt : (p : ℝ) < Real.exp A := by
+        rw [← Real.exp_log hppos]; exact Real.exp_lt_exp.2 hplt
+      exact Nat.cast_le.mp (le_trans hlt.le hBge))
+  linarith [hbig, hsmall, herr, habsorb, hstep1, h_a, h_b, h_c, h_d, hmert, hδ0]
+
+
+
+/-! ## The named input is gone: the unconditional consequences -/
+
+/-- **TT's hypothesis (3.3) for `z^ω`, unconditionally.**  `ttNonPretentious_of_uniformResonantMass`
+with its one hypothesis discharged. -/
+theorem ttNonPretentious_zOmegaNat {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) {κ : ℝ}
+    (hκ : κ ≤ ttExponent z) :
+    ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ → TTNonPretentious (zOmegaNat z) X L :=
+  ttNonPretentious_of_uniformResonantMass uniformResonantMass_holds hz hz1 hκ
+
+/-- **`LogToNaturalCorrelationNZ 2` from the ONE named open problem.**  After this file the
+`D = 2` layer rests on `TwoPointNaturalCorrelationNoExc` alone. -/
+theorem logToNaturalCorrelationNZ_two_of_noExc' (h : TwoPointNaturalCorrelationNoExc) :
+    LogToNaturalCorrelationNZ 2 :=
+  logToNaturalCorrelationNZ_two_of_noExc h uniformResonantMass_holds
+
+/-- **The `D = 2` natural-density depth rung**, from `TwoPointNaturalCorrelationNoExc` and
+`ProgressionLogRung 2` ALONE. -/
+theorem depthAvg_two_tendsto_of_noExc (h : TwoPointNaturalCorrelationNoExc) {b Q : ℕ}
+    (hQ : 0 < Q) (P j : ℕ) (hh : ℤ) (hζ : depthRoot b hh 0 ≠ 1) (hrung : ProgressionLogRung 2) :
+    Filter.Tendsto (fun N : ℕ => depthAvg b P Q j hh 2 N) Filter.atTop (nhds 0) :=
+  depthAvg_two_tendsto_of_named h uniformResonantMass_holds hQ P j hh hζ hrung
+
 #print axioms NormalNumbers.CastingOut.sharp_window_mass_le
 #print axioms NormalNumbers.CastingOut.resonant_big_mass_le
+#print axioms NormalNumbers.CastingOut.uniformResonantMass_holds
+#print axioms NormalNumbers.CastingOut.ttNonPretentious_zOmegaNat
+#print axioms NormalNumbers.CastingOut.depthAvg_two_tendsto_of_noExc
 
 end CastingOut
 
