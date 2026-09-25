@@ -18,6 +18,6 @@ Euler-product upper bound for a nonnegative multiplicative function.  See `PENDI
 
 ## NEXT (lap 48)
 
-Turn the exponential bound into `C · log Y · exp(-Σ_Y)` via Mertens; that settles Case A's
+Wire the Case-A mean-value bound into the thick-window regime (`log W ≥ θ log X`); then Hall.
 `log W ≥ θ log X` regime.  Then Hall.
 settles Case A's `log W ≥ θ log X` regime.  Then Hall.

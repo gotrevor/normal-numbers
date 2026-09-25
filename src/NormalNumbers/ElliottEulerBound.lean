@@ -261,7 +261,57 @@ theorem sum_Icc_le_exp_prime_sum {f : ArithmeticFunction ℝ} (hf : f.IsMultipli
         linarith [sum_primesBelow_inv_mul_pred_le_one Y]
 
 
+/-! ## Mertens: the exponential bound becomes `≪ log Y · exp(-Σ_Y)` -/
+
+/-- The defect `Σ_Y = ∑_{p ≤ Y} (1/p - f p)`, nonnegative when `f p ≤ 1/p`. -/
+noncomputable def primeDefect (f : ArithmeticFunction ℝ) (Y : ℕ) : ℝ :=
+  ∑ p ∈ Nat.primesLE Y, ((p : ℝ)⁻¹ - f p)
+
+/-- **The crude mean-value bound in the form Case A consumes.**  For `f` multiplicative,
+nonnegative, with `f n ≤ 1/n`,
+`∑_{m ≤ Y} f m ≤ exp(1 + B) · log Y · exp(-Σ_Y)`,
+with `B = Erdos67b.PrimeEstimates.mertensBound` the absolute Mertens constant and
+`Σ_Y = ∑_{p ≤ Y}(1/p - f p)`.
+
+So a large defect — Case A's hypothesis — makes the logarithmic mean of `f` small compared with
+`log Y`, which is what the thick-window regime of
+`NormalNumbers.ElliottLadder.nonasymptotic_of_affineCM` needs. -/
+theorem sum_Icc_le_log_mul_exp_neg_defect {f : ArithmeticFunction ℝ} (hf : f.IsMultiplicative)
+    (hnn : ∀ n : ℕ, 0 ≤ f n) (hbd : ∀ n : ℕ, 0 < n → f n ≤ 1 / (n : ℝ)) {Y : ℕ} (hY : 2 ≤ Y) :
+    ∑ m ∈ Finset.Icc 1 Y, f m ≤
+      Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) * Real.log (Y : ℝ) *
+        Real.exp (-primeDefect f Y) := by
+  have hlogY : 0 < Real.log (Y : ℝ) :=
+    Real.log_pos (by exact_mod_cast (by omega : 1 < Y))
+  -- Mertens' second theorem, upper direction
+  have hmert := Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le hY
+  have hmert' : Erdos67b.PrimeEstimates.primeReciprocals Y ≤
+      Real.log (Real.log (Y : ℝ)) + Erdos67b.PrimeEstimates.mertensBound := by
+    have := abs_le.mp hmert
+    linarith [this.2]
+  -- the prime sum of `f` is the reciprocal sum minus the defect
+  have hsplit : ∑ p ∈ Nat.primesLE Y, f p =
+      Erdos67b.PrimeEstimates.primeReciprocals Y - primeDefect f Y := by
+    rw [primeDefect, Erdos67b.PrimeEstimates.primeReciprocals,
+      Erdos784.Analytic.primeReciprocals, Finset.sum_sub_distrib]
+    ring
+  have hkey : 1 + ∑ p ∈ Nat.primesLE Y, f p ≤
+      (1 + Erdos67b.PrimeEstimates.mertensBound) + Real.log (Real.log (Y : ℝ)) +
+        (-primeDefect f Y) := by
+    rw [hsplit]; linarith
+  calc ∑ m ∈ Finset.Icc 1 Y, f m
+      ≤ Real.exp (1 + ∑ p ∈ Nat.primesBelow (Y + 1), f p) :=
+        sum_Icc_le_exp_prime_sum hf hnn hbd Y
+    _ = Real.exp (1 + ∑ p ∈ Nat.primesLE Y, f p) := by rw [Nat.primesLE]
+    _ ≤ Real.exp ((1 + Erdos67b.PrimeEstimates.mertensBound) +
+          Real.log (Real.log (Y : ℝ)) + (-primeDefect f Y)) := Real.exp_le_exp.mpr hkey
+    _ = Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) * Real.log (Y : ℝ) *
+          Real.exp (-primeDefect f Y) := by
+        rw [Real.exp_add, Real.exp_add, Real.exp_log hlogY]
+
+
 end NormalNumbers.ElliottEulerBound
 
 #print axioms NormalNumbers.ElliottEulerBound.sum_Icc_le_euler_product
 #print axioms NormalNumbers.ElliottEulerBound.sum_Icc_le_exp_prime_sum
+#print axioms NormalNumbers.ElliottEulerBound.sum_Icc_le_log_mul_exp_neg_defect

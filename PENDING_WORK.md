@@ -9715,3 +9715,23 @@ mean-value bound `≪ log Y · exp(-Σ_Y)` once Mertens is applied to `∑_{p≤
 2. That lands Case A's regime `log W ≥ θ log X` outright (the window `(Y/W, Y]` is bounded by the
    full sum and `log Y ≪ log W / θ`).
 3. Hall's inequality (Halberstam–Richert Thm 01) for the thin-window regime — still the hard core.
+
+### lap 49 — Mertens applied: the Case-A mean-value bound is complete
+
+`sum_Icc_le_log_mul_exp_neg_defect` (same file, trust triple): for `f` multiplicative, nonnegative,
+`f n ≤ 1/n`, and `Y ≥ 2`,
+`∑_{m ≤ Y} f m ≤ exp(1 + B) · log Y · exp(-Σ_Y)`,
+`Σ_Y = primeDefect f Y = ∑_{p ≤ Y}(1/p - f p)`, `B = Erdos67b.PrimeEstimates.mertensBound`.
+
+Found rather than re-derived: `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` is
+Mertens' second theorem with a *uniform* constant, exactly the upper direction needed.  (The repo's
+own `G4.MertensAP` gives only the lower direction; do not use it here.)
+
+**Next on leaf 2.**
+1. Wire this into Case A proper: with `h m = ‖g₁ m‖` and `f m = h m / m`, the correlation is
+   bounded pointwise by `∑_{n ∈ window} ‖g₁(a₁n+b₁)‖/n ≤ a₁ · ∑_{m ≤ a₁X+|b₁|} f m` (bounding the
+   AP by all integers is free — `a₁` is fixed before `ε`).  In the regime `log W ≥ θ log X` this is
+   `≤ C(a₁,θ) e^{-Σ} log W`, so choosing the Case-A threshold `Σ ≥ Σ₀(ε)` closes it.
+   Needs: `f m = ‖g₁ m‖/m` packaged as a multiplicative `ArithmeticFunction ℝ`, and the window
+   inclusion `elliottLogWindow X W ⊆ Icc 1 X`.
+2. Hall's inequality for `log W < θ log X` — still the hard core.
