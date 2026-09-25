@@ -9899,3 +9899,47 @@ window `m` has `p ∈ (U, U·e^{2ε/γ_m}]`, so BT gives count `≤ 2y/log y` wi
 cheaper probe and should be tried first: check whether TT's `(3.3)` can be run with the
 infimum over `|t| ≤ T/log X` only — it cannot, TT need the full range, but the *derived*
 hypothesis in `dyadic_window_bound_of_noExc` might.
+
+## Lap 74 (2026-09-25) — the crux is formalizable: Brun–Titchmarsh is already in the build
+
+**The unlock.**  `PrimeNumberTheoremAnd.BrunTitchmarsh` is present in `.lake/packages`,
+importable from a `C3Mrt*` file, and **sorry-free / axiom-clean**:
+
+    `BrunTitchmarsh.primesBetween_le : 0 < x → 0 < y → 1 < z →
+       primesBetween x (x+y) ≤ 2y/log z + 6z(1+log z)³`
+
+This is the exact shape the resonance argument needs and the dependency's Mertens cannot give
+(error proportional to the window WIDTH, not a flat additive constant).  So
+`UniformResonantMass` is a formalization target, not an axiom.
+
+**Landed.**  `C3MrtWindowMass.lean`: `window_subset_primesBetween`, and
+
+    `short_interval_mass_le` : `2 ≤ P`, `0 < w`, `G ⊆ primes ∩ (P, P(1+w)]`
+        `⟹ ∑_{p∈G} 1/p ≤ 4w/log P + 6(1 + log P)³/√P`
+
+(Brun–Titchmarsh at level `z = √P`, divided by `P`.)  Axiom-clean.
+
+**The remaining plan for `UniformResonantMass`** (window half-width `δ`, `γ_m = |arg z − 2πm|`,
+`a_m = (γ_m−δ)/|t|`, `b_m = (γ_m+δ)/|t|`):
+
+1. Split the resonant primes at `P₁ = max(4, |t|^4)`.
+2. *Small primes* `p ≤ P₁`: mass `≤ log log P₁ + mertensBound ≤ 4 log log(2+|t|) + O(1)`, and
+   `log log s ≤ c log s + O_c(1)` absorbs this into the `(2δ/π) log(2+|t|)` term for any `c>0`.
+   No window structure needed — just `abs_primeReciprocals_sub_log_log_le`.
+3. *Large primes* `p > P₁`: each lies in exactly one window (`windowIndex` is a function), the
+   window sits in `(P, P(1+w)]` with `P = e^{a_m}`, `w = e^{b_m−a_m} − 1 ≤ 2·(2δ/|t|)`, and
+   `log P = a_m ≥ (γ_m − δ)/|t|`.  `short_interval_mass_le` gives mass
+   `≤ 16δ/γ_m + 6(1+a_m)³ e^{−a_m/2}`.
+4. `∑_{1 ≤ |m| ≤ K} 1/γ_m ≤ (1/π)(1 + log K)` via `γ_m ≥ 2π|m| − π` and mathlib's
+   `harmonic_le_one_add_log`; `K ≈ |t| log Y` gives the `(2δ/π)(log log Y + log(2+|t|))`.
+5. The tail `∑_m (1+a_m)³ e^{−a_m/2}` is a geometric-type sum over `a_m ≈ 2πm/|t|`, bounded by
+   `C|t|` — which again absorbs into `(2δ/π) log(2+|t|)`?  **NO** — `C|t|` is far too big.
+   Handle it instead by grouping the windows into dyadic blocks in `log p`: block `j` covers
+   `log p ∈ [2^j, 2^{j+1})`, holds `≤ |t|·2^j/π + 1` windows each with the SAME `P ≥ e^{2^j}`,
+   so the block's tail contributes `≤ (|t| 2^j/π + 1)·6(1+2^{j+1})³ e^{−2^j/2}`, and
+   `∑_j` of that is `≤ C·|t|` — still `|t|`, but `|t|·e^{−2^j/2}` summed from the FIRST block
+   with `2^j ≥ 4 log(2+|t|)` is `≤ 1`, and the earlier blocks are all inside `p ≤ P₁` and so
+   already counted in step 2.  This is why the split point is `P₁ = |t|^4`.
+
+Next lap: step 2 (self-contained, `log log s ≤ c log s + O_c(1)`), then step 4 (harmonic),
+then the window bookkeeping of step 3.
