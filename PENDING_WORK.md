@@ -1,3 +1,58 @@
+## Lap 92 (2026-09-25) — the `∀ i` narrowing is REFUTED; the `∃ i` is load-bearing
+
+**Directive items 1 and 4 LANDED, items 2–3 REFUTED by a compiler-checked probe.**  New file
+`src/NormalNumbers/C3MrtNoExcAll.lean` (6 declarations, all `[propext, Classical.choice,
+Quot.sound]`).
+
+**① `depthRoot_ne_one_of_not_dvd_all`** — every twist level of a primitive `h'` has a nontrivial
+root, not just the leading one.  So the *bookkeeping* premise of the `∀ i` plan is true.
+
+**④ `kPointNoExcWith_mono`** — the input is monotone: down in `cK`, up in `CstK`.  Both
+hypotheses (`W ≤ L^{cK K}`, `hsh i ≤ L^{cK K}`) tighten exactly when the conclusion
+(`≤ CstK K·L^{-cK K}`) loosens, because `L ≥ 1`.  **Ledger consequence:** asking for
+`KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K` is not a new statement beyond
+`∀ K, KPointNaturalCorrelationNoExc K` — it is exactly the demand that the constants that
+statement already produces existentially degrade no faster than `c₀b^{-θK}`, `exp((K+1)^m)`.
+The headline hypothesis is a *rate*, and that is now a theorem, not prose.
+
+**②③ REFUTED — and the refutation is quantitative, not bookkeeping.**  `KPointNoExcAllWith`
+(defined in the new file, with `kPointNoExcAllWith_of_with` so nothing is lost) weakens
+`∃ i, TTNonPretentious (g i) X L` to `∀ i, …`.  The C3 chain *can* show every factor is
+non-pretentious — but not at a common cutoff `L`.  `ttNonPretentious_zOmegaNat` certifies
+`zOmegaNat z` only for `L ≤ (log X)^{ttExponent z}`, and
+
+    tendsto_ttExponent_depthRoot : ttExponent (depthRoot b h i) → 0   (i → ∞)
+
+because `depthRoot b h i = e(h/b^{i+1}) → 1` (`tendsto_depthRoot_one`) and
+`ttExponent z = (1-cos(ttEps z))(1 - (126/125)(100 ttEps z))` with `ttEps z = min(|arg z|/2, 1/256)`.
+The `K`-point statement has ONE `L` shared by all `K` factors, so the `∀ i` form would force
+`κ ≤ inf_i ttExponent (depthRoot b h' i) = 0`; `no_uniform_ttExponent_depthRoot` shows no positive
+`κ` survives.  Quantitatively `ttExponent (depthRoot b h' i) ≍ b^{-2i}`, so at the diagonal level
+`K = D_N` even the *threshold* clause `L^{c_K} ≥ K+1` would read
+`b^{-(2+θ)K}·log log X ≳ log K`, i.e. `u^{-1-θ}(log u)^{-(2+θ)} ≳ log log u` — false.
+
+**What this tells us about the route (the real content).**  The deep digits of the Lambert
+constant are quantitatively *almost* pretentious: `z_i = e(h/b^{i+1})` sits within `O(b^{-i})` of
+`1`, so `z_i^ω` is nearly the constant function `1`.  Only the LEADING root carries usable
+non-pretentiousness, and that is precisely why the chain fixes `κ = ttExponent (depthRoot b h' 0)`
+once and for all.  The `∃ i` in `KPointNoExcWith` is therefore not slack to be trimmed — it is the
+shape the problem has.
+
+**Next attack (lap 93+).**  With the `∀ i` door closed, the remaining narrowing levers are:
+1. **Weaken `∀ K` to `∀ᶠ K`** (or `∀ K ≥ K₀`).  The chain uses `KN N = max 1 (depthSlow b N - v)`,
+   which tends to `∞`, so every small `K` is used for only finitely many `N`; `depthAvg` at
+   finitely many scales cannot affect a `Tendsto`.  Cheap, and it is a genuine weakening of the
+   assumed family.  Do this FIRST.
+2. **Weaken the coprime-multiplicativity quantifier**: `KPointNoExcWith` quantifies over ALL
+   `g : Fin K → ℕ → ℂ`; the chain only ever feeds `g i = zOmegaNat (z i)` with `‖z i‖ = 1`.
+   Define `KPointNoExcRoots` (the same statement restricted to unimodular-root powers) plus
+   `kPointNoExcRoots_of_with`, and rethread.  This restricts the open `Prop` to the family it is
+   actually used on — a real narrowing, and the rethread is local
+   (`dyadic_window_bound_with` is the only consumer).
+3. **Weaken the shift quantifier**: `hsh` ranges over all injective `Fin K → ℕ`; the chain only
+   uses `hsh i = i+1`.  Same treatment, same single consumer.
+4. Only then: the `Statement.lean` audit surface + ledger writeup (C3-T6).
+
 ## Lap 91 (2026-09-25, REVIEW) — the headline rests on ONE statement; now make that statement assume less
 
 **Binding orders: `DIRECTION.md` → CURRENT DIRECTIVE.**  State at entry: branch `wip/c3-mrt`,
