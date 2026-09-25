@@ -963,6 +963,84 @@ theorem inner_pair_bound {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖
     rw [hempty, Finset.sum_empty, norm_zero]
     linarith
 
+
+lemma norm_harmW (n : ℕ) : ‖harmW n‖ = (((n : ℝ) + 1)⁻¹ : ℝ) := by
+  rw [harmW, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (by positivity)]
+
+/-! ## The deterministic half of the rung
+
+Everything except the choice of `ε`, `Y`, `A`, `i₀`: given ONE rung bound `R` valid for every
+coprime pair `d, e ≤ Y` and every admissible offset, the whole two-shift correlation is bounded.
+The degenerate pairs (`d = 0`, `e = 0`, or `¬ Coprime d e`) contribute nothing — their joint
+progression is empty — so they need no rung bound.
+-/
+
+open scoped Classical in
+/-- **The two-shift correlation, bounded by the rung.**  Truncation error
+(`two_shift_truncation_bound`) plus pair sum (`full_sum_bound` fed by `inner_pair_bound`). -/
+theorem two_shift_bound_of_rung {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1)
+    (Y N A : ℕ) (hA : 2 ≤ A) {R : ℝ} (hR0 : 0 ≤ R)
+    (hrung : ∀ d ∈ Finset.range (Y + 1), ∀ e ∈ Finset.range (Y + 1), 0 < d → 0 < e →
+      Nat.Coprime d e → ∀ a : ℕ, a < d * e → d ∣ a + 1 → e ∣ a + 2 →
+      ‖∑ j ∈ Finset.Ioc 0 (A ^ Nat.log A ((N - 1 - a) / (d * e))),
+          (Erdos67b.harmonicWeight j : ℂ) *
+          zOmInt z₀ (Erdos67b.integerAffine e (((a + 1) / d : ℕ) : ℤ) j) *
+          zOmInt z₁ (Erdos67b.integerAffine d (((a + 2) / e : ℕ) : ℤ) j)‖ ≤ R) :
+    ‖∑ n ∈ Finset.range N, harmW n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2))‖
+      ≤ ((1 + Real.log (N + 1)) * bridgeTail z₀ Y
+          + (2 * sqfWPartial z₀ Y + (1 + Real.log N) * sqfWMass z₀) * bridgeTail z₁ Y)
+        + (sqfWPartial z₀ Y * sqfWPartial z₁ Y
+          + (3 + R + Real.log A) * (sqfWMass z₀ * sqfWMass z₁)) := by
+  classical
+  set Inner : ℕ → ℕ → ℂ := fun d e =>
+    ∑ n ∈ ((Finset.range N).filter (fun n => d ∣ n + 1)).filter (fun n => e ∣ n + 2),
+      harmW n * (z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) *
+        z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e)) with hInner
+  have hF : ∀ n : ℕ, ‖harmW n‖ ≤ ((n : ℝ) + 1)⁻¹ := fun n => le_of_eq (norm_harmW n)
+  have htrunc := two_shift_truncation_bound hz₀ hz₁ hF Y N
+  have hlogA : 0 ≤ Real.log A := Real.log_natCast_nonneg A
+  have hK : (0 : ℝ) ≤ 3 + R + Real.log A := by linarith
+  have hpair : ∀ d ∈ Finset.range (Y + 1), ∀ e ∈ Finset.range (Y + 1),
+      ‖Inner d e‖ ≤ 1 + (3 + R + Real.log A) / ((d : ℝ) * (e : ℝ)) := by
+    intro d hd e he
+    have hzero : ∀ (hs : ((Finset.range N).filter (fun n => d ∣ n + 1)).filter
+        (fun n => e ∣ n + 2) = ∅), ‖Inner d e‖ ≤ 1 + (3 + R + Real.log A) / ((d : ℝ) * (e : ℝ)) := by
+      intro hs
+      rw [hInner]
+      simp only []
+      rw [hs, Finset.sum_empty, norm_zero]
+      have : (0 : ℝ) ≤ (3 + R + Real.log A) / ((d : ℝ) * (e : ℝ)) := by positivity
+      linarith
+    rcases Nat.eq_zero_or_pos d with rfl | hd0
+    · refine hzero ?_
+      refine Finset.eq_empty_of_forall_notMem fun n hn => ?_
+      have := (Finset.mem_filter.1 (Finset.mem_filter.1 hn).1).2
+      simp at this
+    · rcases Nat.eq_zero_or_pos e with rfl | he0
+      · refine hzero ?_
+        refine Finset.eq_empty_of_forall_notMem fun n hn => ?_
+        have := (Finset.mem_filter.1 hn).2
+        simp at this
+      · by_cases hco : Nat.Coprime d e
+        · exact inner_pair_bound hz₀ hz₁ hd0 he0 hco hA hR0
+            (fun a ha hda hea => hrung d hd e he hd0 he0 hco a ha hda hea)
+        · exact hzero (joint_progression_eq_empty_of_not_coprime hco)
+  have hfull := full_sum_bound hz₀ hz₁ Y Inner hK hpair
+  have hsplit : ‖∑ n ∈ Finset.range N, harmW n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2))‖
+      ≤ ‖(∑ n ∈ Finset.range N, harmW n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2)))
+            - ∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+                sqfW z₀ d * sqfW z₁ e * Inner d e‖
+        + ‖∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+            sqfW z₀ d * sqfW z₁ e * Inner d e‖ := by
+    have := norm_add_le
+      ((∑ n ∈ Finset.range N, harmW n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2)))
+        - ∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+            sqfW z₀ d * sqfW z₁ e * Inner d e)
+      (∑ d ∈ Finset.range (Y + 1), ∑ e ∈ Finset.range (Y + 1),
+        sqfW z₀ d * sqfW z₁ e * Inner d e)
+    simpa using this
+  linarith [htrunc, hfull, hsplit]
+
 end CastingOut
 
 end NormalNumbers
@@ -982,3 +1060,4 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.full_sum_bound
 #print axioms NormalNumbers.CastingOut.exists_common_threshold
 #print axioms NormalNumbers.CastingOut.inner_pair_bound
+#print axioms NormalNumbers.CastingOut.two_shift_bound_of_rung

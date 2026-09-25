@@ -272,3 +272,31 @@ Close `rung_two_correlation`, in this order (each is a `have` inside its proof):
    (`bridgeTail_tendsto`).
 3. Choose `N₀` so that `A^{i₀} ≤ (N − 1 − a)/(de)` for every pair — i.e. `N₀ ≥ Y²·A^{i₀} + Y²`.
 4. Combine: `two_shift_truncation_bound` + the pair sum of `progression_sum_bound`.
+
+## Lap 32 — **`two_shift_bound_of_rung`**: the deterministic half of the rung, DONE
+
+Everything except the choice of `ε, Y, A, i₀`:
+
+    ‖∑_{n<N} harmW n · ζ₀^{ω(n+1)} ζ₁^{ω(n+2)}‖
+      ≤ [(1 + log(N+1))·bridgeTail ζ₀ Y + (2·sqfWPartial ζ₀ Y + (1 + log N)·sqfWMass ζ₀)·bridgeTail ζ₁ Y]
+        + [sqfWPartial ζ₀ Y · sqfWPartial ζ₁ Y + (3 + R + log A)·(sqfWMass ζ₀ · sqfWMass ζ₁)]
+
+given ONE rung bound `R` valid for every coprime pair `d, e ≤ Y` and every admissible offset.
+`two_shift_truncation_bound` + `full_sum_bound` fed by `inner_pair_bound`, glued by
+`norm_add_le`.
+
+The degenerate pairs need no rung bound at all, and that is proved, not assumed: `d = 0` and
+`e = 0` give an empty progression (`0 ∣ n+1` is false), and `¬ Coprime d e` gives an empty joint
+progression (`joint_progression_eq_empty_of_not_coprime`), so `Inner d e = 0` and the `1 +` in
+the per-pair shape covers it.
+
+### NEXT — `rung_two_correlation` is now one ε-chase
+Instantiate `two_shift_bound_of_rung` with
+`R = (1 + log(A^{i₀})) + ε_r·log N`, `ε_r = ε/(3(sqfWMass ζ₀ · sqfWMass ζ₁ + 1))`:
+1. `rung_two_of_named_inputs` at `ε_r` → `A₀`; `exists_common_threshold` over
+   `range (Y+1) ×ˢ range (Y+1) ×ˢ range (Y²+1)` → one `A`; then again → one `i₀`.
+2. `bridgeTail_tendsto` → `Y` with `bridgeTail ζ₀ Y ≤ ε/3` and
+   `sqfWMass ζ₀ · bridgeTail ζ₁ Y ≤ ε/3`.
+3. The estimate that converts the rung's per-window bound into `R`:
+   `(Nat.log A J)·log A = log (A^{Nat.log A J}) ≤ log J ≤ log N`.
+4. `C` collects the `N`-independent leftovers.
