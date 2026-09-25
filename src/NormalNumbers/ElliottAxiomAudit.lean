@@ -29,6 +29,7 @@ import NormalNumbers.ElliottWindowTruncate
 import NormalNumbers.ElliottTruncAssemble
 import NormalNumbers.ElliottZetaModerate
 import NormalNumbers.ElliottSliceCapModerate
+import NormalNumbers.ElliottLedger
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -299,3 +300,13 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottArchBands.twoPointElliottLog_of_moderate9
 #print axioms NormalNumbers.ElliottSliceCapModerate.exists_archCorrModerate9
 #print axioms NormalNumbers.ElliottSliceCapModerate.twoPointElliottLog_of_density_and_nearMax
+
+-- Lap 118: T3 — `PrimeDensityAP` is a theorem, and the ledger is ONE cited axiom.
+#print axioms NormalNumbers.ElliottPrimeDensityAP.primesUpTo_eq_primesLE
+#print axioms NormalNumbers.ElliottPrimeDensityAP.primeMass_eq_primeReciprocals
+#print axioms NormalNumbers.ElliottPrimeDensityAP.primeClassMass_eq_sumInvPrimesIn
+#print axioms NormalNumbers.ElliottPrimeDensityAP.exists_uniform
+#print axioms NormalNumbers.ElliottPrimeDensityAP.exists_class_bound
+#print axioms NormalNumbers.ElliottPrimeDensityAP.exists_modulus_bound
+#print axioms NormalNumbers.ElliottPrimeDensityAP.exists_primeDensityAP
+#print axioms NormalNumbers.ElliottLedger.twoPointElliottLog_of_nearMaxHeight

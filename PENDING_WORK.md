@@ -11394,3 +11394,51 @@ before wiring — lap 92's refutation is the precedent.
 
 After T3 the ledger is **one** cited axiom, `ArchCorrNearMaxHeight` (Vinogradov's mean value
 theorem), which DIRECTION designates as the honest endpoint of this campaign.
+
+## 🏁🏁 2026-09-25 lap 118 — **DIRECTION'S OBJECTIVE IS MET: THE LEDGER IS ONE CITED AXIOM**
+
+**T3 done.**  `ElliottPrimeDensityAP.exists_primeDensityAP (A : ℕ) : PrimeDensityAP A` — proved,
+sorry-free, axiom-clean.  `PrimeDensityAP` was a bare `def … : Prop` with no theorem discharging
+it (lap 112's FINDING 2); it is now a theorem.
+
+Route (all in-repo, EP-1 satisfied before writing):
+* four spelling bridges — `primesUpTo_eq_primesLE`, `primesUpTo_eq_primesBelow_succ`,
+  `primeMass_eq_primeReciprocals`, `primeClassMass_eq_sumInvPrimesIn` (the last at `N = X+1`,
+  since `primesBelow` is strict and `primesUpTo` is not);
+* `exists_class_bound` — one unit class: `G4MertensAP.mertensRate_residueClass` gives
+  `c·log log(X+1) − C ≤ primeClassMass`, and
+  `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` gives
+  `primeMass X ≤ log log X + mertensBound`; combine, and absorb `X ≤ 1` (both masses vanish) into
+  `B := max 0 (C + c·mertensBound)`;
+* `exists_uniform` — a reusable `Finset.induction` lemma: finitely many `∃ c>0, ∃ B≥0, P c B`
+  statements, each antitone in `c` and monotone in `B`, admit one common `(c,B)`.  Applied twice,
+  over the units of a modulus and then over `q ∈ Icc 1 A`.  This is where uniformity in `q` —
+  the whole reason `A` is a parameter — actually happens.
+
+**`ElliottLedger.twoPointElliottLog_of_nearMaxHeight`** — `TwoPointElliottLog b p q t` from the
+**single** cited classical input `ArchCorrNearMaxHeight A (1−(1−ν)/9) η₂ K₂`
+(Vinogradov–Korobov, near-maximal height only).  `PrimeDensityAP`, `CharacterClusterRigidity`,
+`ShiftedMertensSmall` and `ArchCorrModerate9` are all discharged inside that call.
+
+**That is exactly the endpoint DIRECTION names**: "Make `ElliottTwoPointLog.TwoPointElliottLog`
+rest on ONE cited classical axiom — `ArchCorrNearMaxHeight` (Vinogradov–Korobov) — with every other
+input a machine-checked theorem."
+
+Audit: 9696 jobs, zero `sorryAx`, every new declaration `[propext, Classical.choice, Quot.sound]`.
+
+**Two things that must keep being said** (DIRECTION requires both, every lap):
+* The remaining axiom is a **real wall**, not an artefact: at `|v| ≍ X` the trivial
+  `|ζ(1+it)| ≪ log t` gives no proportional saving, and beating it needs `(log t)^{2/3}`.
+* `TwoPointElliottLog` is the **logarithmic** average.  `CastingOut.TwoPointElliott` — what the
+  repo's normality route consumes — is the **natural** average; the passage is a separate,
+  known-open, Chowla-strength problem.  **This does not close the normality route**, and nothing
+  in `src/` currently consumes `TwoPointElliottLog`.
+
+### Where a further lap can still add value
+
+* Chip at `ArchCorrNearMaxHeight` only opportunistically — DIRECTION forbids attacking it head-on
+  and it is never an excuse to stop.
+* `SwingC2.PrimeDensityAP` (line 2969) is a *different*, unrelated `Prop` of the same name in a
+  designated-open module; `tauMomentPrimesShiftStruct_of_primeDensity` consumes it.  Off scope.
+* The honest remaining structural question is the log→natural passage.  Designated Chowla-strength;
+  do not present any partial result on it as closing the route.
