@@ -119,14 +119,81 @@ theorem dyadic_decomposition {M r : ℕ} (hM : 0 < M) (J : ℕ) (F : ℕ → ℂ
       = ∑ n ∈ (range (M * J + r)).filter (fun n => n % M = r % M ∧ r ≤ n), F n := by
   sorry
 
-/-- **Sub-goal 3 — the only quantitative step.**  The geometric weight concentrates the dyadic
-stack on its top window, so summing an `L^{-c}` saving over `I` dyadic scales costs only a
-constant. -/
+/-- **The geometric Toeplitz kernel.**  If `a i → 0` and `a ≥ 0`, then the geometrically
+weighted averages `(∑_{i<I} 2^i a i)/2^I` tend to `0`: the weights concentrate on the top
+window, so only the tail of `a` matters. -/
+theorem tendsto_geom_weighted_avg {a : ℕ → ℝ} (ha0 : ∀ i, 0 ≤ a i)
+    (ha : Tendsto a atTop (𝓝 0)) :
+    Tendsto (fun I : ℕ => (∑ i ∈ range I, (2 : ℝ) ^ i * a i) / (2 : ℝ) ^ I) atTop (𝓝 0) := by
+  refine Metric.tendsto_atTop.2 fun ε hε => ?_
+  obtain ⟨m, hm⟩ := Metric.tendsto_atTop.1 ha (ε / 2) (by positivity)
+  have hmlt : ∀ i, m ≤ i → a i < ε / 2 := by
+    intro i hi
+    have := hm i hi
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg (ha0 i)] at this
+    exact this
+  set C : ℝ := ∑ i ∈ range m, (2 : ℝ) ^ i * a i with hC
+  have hC0 : 0 ≤ C := Finset.sum_nonneg fun i _ => mul_nonneg (by positivity) (ha0 i)
+  obtain ⟨I₁, hI₁⟩ := pow_unbounded_of_one_lt (2 * C / ε) (by norm_num : (1 : ℝ) < 2)
+  refine ⟨max m I₁, fun I hI => ?_⟩
+  have hIm : m ≤ I := le_trans (le_max_left _ _) hI
+  have hII : I₁ ≤ I := le_trans (le_max_right _ _) hI
+  have hpow : (0 : ℝ) < (2 : ℝ) ^ I := by positivity
+  have hsplit : ∑ i ∈ range I, (2 : ℝ) ^ i * a i
+      = C + ∑ i ∈ Finset.Ico m I, (2 : ℝ) ^ i * a i := by
+    rw [hC, ← Finset.sum_range_add_sum_Ico _ hIm]
+  have htail : ∑ i ∈ Finset.Ico m I, (2 : ℝ) ^ i * a i ≤ (ε / 2) * (2 : ℝ) ^ I := by
+    have h1 : ∑ i ∈ Finset.Ico m I, (2 : ℝ) ^ i * a i
+        ≤ ∑ i ∈ Finset.Ico m I, (2 : ℝ) ^ i * (ε / 2) := by
+      refine Finset.sum_le_sum fun i hi => ?_
+      have := hmlt i (Finset.mem_Ico.1 hi).1
+      exact mul_le_mul_of_nonneg_left this.le (by positivity)
+    have h2 : ∑ i ∈ Finset.Ico m I, (2 : ℝ) ^ i * (ε / 2)
+        ≤ (∑ i ∈ range I, (2 : ℝ) ^ i) * (ε / 2) := by
+      rw [← Finset.sum_mul]
+      refine mul_le_mul_of_nonneg_right ?_ (by positivity)
+      refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun i _ _ => by positivity)
+      exact Finset.Ico_subset_Ico (Nat.zero_le m) le_rfl |>.trans
+        (by rw [Finset.range_eq_Ico])
+    have h3 : (∑ i ∈ range I, (2 : ℝ) ^ i) ≤ (2 : ℝ) ^ I := by
+      rw [geom_sum_eq (by norm_num : (2 : ℝ) ≠ 1)]
+      have : (0 : ℝ) < (2 : ℝ) ^ I := hpow
+      rw [div_le_iff₀ (by norm_num : (0:ℝ) < (2:ℝ) - 1)]
+      linarith
+    calc ∑ i ∈ Finset.Ico m I, (2 : ℝ) ^ i * a i ≤ (∑ i ∈ range I, (2 : ℝ) ^ i) * (ε / 2) :=
+          le_trans h1 h2
+      _ ≤ (2 : ℝ) ^ I * (ε / 2) := mul_le_mul_of_nonneg_right h3 (by positivity)
+      _ = (ε / 2) * (2 : ℝ) ^ I := by ring
+  have hCsmall : C / (2 : ℝ) ^ I < ε / 2 := by
+    have hmono : (2 : ℝ) ^ I₁ ≤ (2 : ℝ) ^ I := pow_le_pow_right₀ (by norm_num) hII
+    have h1 : 2 * C / ε < (2 : ℝ) ^ I := lt_of_lt_of_le hI₁ hmono
+    rw [div_lt_iff₀ hpow]
+    rw [div_lt_iff₀ hε] at h1
+    linarith
+  have hnn : 0 ≤ ∑ i ∈ range I, (2 : ℝ) ^ i * a i :=
+    Finset.sum_nonneg fun i _ => mul_nonneg (by positivity) (ha0 i)
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg hnn hpow.le)]
+  rw [hsplit, add_div]
+  have : (∑ i ∈ Finset.Ico m I, (2 : ℝ) ^ i * a i) / (2 : ℝ) ^ I ≤ ε / 2 := by
+    rw [div_le_iff₀ hpow]; linarith [htail]
+  linarith
+
+/-- **Sub-goal 3 — the only quantitative step, PROVED.**  The geometric weight concentrates the
+dyadic stack on its top window, so an `L^{-c}` saving applied window-by-window survives the sum:
+the normalised total still tends to `0`. -/
 theorem dyadic_sum_geometric {c : ℝ} (hc : 0 < c) :
-    ∃ D : ℝ, 0 < D ∧ ∀ I : ℕ, 2 ≤ I →
-      ∑ i ∈ range I, (2 : ℝ) ^ i * (2 * Real.log ((2 : ℝ) ^ i)) ^ (-c)
-        ≤ D * (2 : ℝ) ^ I * (2 * Real.log ((2 : ℝ) ^ I)) ^ (-c) := by
-  sorry
+    Tendsto (fun I : ℕ =>
+      (∑ i ∈ range I, (2 : ℝ) ^ i * (2 * Real.log ((2 : ℝ) ^ i)) ^ (-c)) / (2 : ℝ) ^ I)
+      atTop (𝓝 0) := by
+  refine tendsto_geom_weighted_avg (fun i => Real.rpow_nonneg (mul_nonneg (by norm_num)
+    (Real.log_nonneg (one_le_pow₀ (by norm_num)))) _) ?_
+  have hbase : Tendsto (fun i : ℕ => 2 * Real.log ((2 : ℝ) ^ i)) atTop atTop := by
+    have h2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+    have : ∀ i : ℕ, 2 * Real.log ((2 : ℝ) ^ i) = (2 * Real.log 2) * (i : ℝ) := by
+      intro i; rw [Real.log_pow]; ring
+    simp only [this]
+    exact tendsto_natCast_atTop_atTop.const_mul_atTop (by linarith)
+  exact (tendsto_rpow_neg_atTop hc).comp hbase
 
 /-- **THE PAYOFF.**  Removing the exceptional set from TT Theorem 3.1(ii) discharges
 `LogToNaturalCorrelation 2` — the last open obligation of the `D = 2` layer.  With this, the
@@ -140,6 +207,8 @@ theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
 
 #print axioms exceptional_set_can_pin_a_scale
 #print axioms twoPointNatural_of_noExc
+#print axioms tendsto_geom_weighted_avg
+#print axioms dyadic_sum_geometric
 
 end CastingOut
 

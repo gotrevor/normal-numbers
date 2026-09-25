@@ -9656,3 +9656,26 @@ else — an equivalence with a named open problem, which is the ratified deliver
 `TwoPointNaturalCorrelation` *with* its exceptional set (laps 62–64: three independent
 arguments — the density-zero counterexample, the long-run counterexample, and the singleton
 pinning).
+
+## Lap 65 (2026-09-25) — sub-goal 3 PROVED: the quantitative step survives
+
+`dyadic_sum_geometric` is closed, `[propext, Classical.choice, Quot.sound]`.  This was the one
+sub-goal of `logToNatural_two_of_noExc` that could genuinely have failed, so the decomposition
+is now de-risked: **the `L^{-c}` saving does survive summation over the dyadic stack.**
+
+The right statement turned out to be a limit, not a constant:
+
+    Tendsto (fun I => (∑_{i<I} 2^i · (2 log 2^i)^{-c}) / 2^I) atTop (𝓝 0)
+
+which is exactly what the chase needs after dividing by `J ≈ 2^I/M`, and which avoids ever
+naming the constant `D`.  It is an instance of a general lemma proved this lap,
+`tendsto_geom_weighted_avg`: for `a ≥ 0` with `a i → 0`, the geometrically weighted averages
+`(∑_{i<I} 2^i a i)/2^I` tend to `0` — a Toeplitz kernel argument (split at `m`, head `≤ C/2^I`,
+tail `≤ (ε/2)·∑2^i ≤ (ε/2)2^I`).  The kernel is reusable anywhere a dyadic stack with a
+per-window saving has to be summed.
+
+**Remaining sorries in `src/` on this crux (3):** `dyadic_window_bound_of_noExc` (one window at
+`X = N²`, `L = 2 log N` — instantiation bookkeeping), `dyadic_decomposition` (the class below
+`M·J` as a stack of windows; the stated endpoint form may need adjusting), and the assembly
+`logToNatural_two_of_noExc`.  Both remaining sub-goals are bookkeeping; attack
+`dyadic_decomposition` next, since the assembly's exact shape depends on it.
