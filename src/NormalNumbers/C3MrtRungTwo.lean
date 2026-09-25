@@ -72,8 +72,10 @@ theorem sum_inv_sq_le (J : ℕ) (hJ : 1 ≤ J) :
 
 /-- **Weight transfer.**  Replacing the harmonic weight of the original variable `n = Lj + a`
 by that of the progression variable `j` (scaled by `1/L`) costs at most `2/L`, uniformly in the
-length `J` of the sum and in the summand `G`. -/
-theorem weight_transfer {L a : ℕ} (hL : 0 < L) (haL : a < L) (J : ℕ) (G : ℕ → ℂ)
+length `J` of the sum and in the summand `G`.  The hypothesis is `a ≤ L`, not `a < L`: the
+shifted offset `a + 1` of the harmonic weight `1/(Lj + a + 1)` can equal `L` (it does exactly
+when `e = 1`), and only `a ≤ L` is ever used. -/
+theorem weight_transfer {L a : ℕ} (hL : 0 < L) (haL : a ≤ L) (J : ℕ) (G : ℕ → ℂ)
     (hG : ∀ j, ‖G j‖ ≤ 1) :
     ‖(∑ j ∈ Icc 1 J, (((L * j + a : ℕ) : ℝ))⁻¹ • G j)
         - (L : ℝ)⁻¹ • ∑ j ∈ Icc 1 J, ((j : ℝ))⁻¹ • G j‖ ≤ 2 / (L : ℝ) := by
@@ -133,9 +135,7 @@ theorem weight_transfer {L a : ℕ} (hL : 0 < L) (haL : a < L) (J : ℕ) (G : �
       have : (0 : ℝ) < (J : ℝ) := by exact_mod_cast hJ
       have : 0 < 1 / (J : ℝ) := by positivity
       linarith
-    have haL' : (a : ℝ) ≤ (L : ℝ) := by
-      have : a ≤ L := le_of_lt haL
-      exact_mod_cast this
+    have haL' : (a : ℝ) ≤ (L : ℝ) := by exact_mod_cast haL
     calc (a : ℝ) / (L : ℝ) ^ 2 * ∑ j ∈ Icc 1 J, ((j : ℝ) ^ 2)⁻¹
         ≤ (a : ℝ) / (L : ℝ) ^ 2 * 2 := by
           refine mul_le_mul_of_nonneg_left hsum (by positivity)

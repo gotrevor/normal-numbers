@@ -154,3 +154,39 @@ is now proved and axiom-clean:
 Chain those five into one statement: `∑_{n<N} (1/(n+1)) ζ₀^{ω(n+1)} ζ₁^{ω(n+2)} = o(log N)`,
 conditional on the same two named inputs.  The remaining work is bookkeeping of the quantifier
 order `ε → Y → A → i₀ → N → ∞` (laps 13/16 pattern), not new mathematics.
+
+## Lap 26 — the joint inner sum brought to the rung's shape
+
+Three changes, all sorry-free and trust-triple:
+
+* **`weight_transfer` hypothesis relaxed** from `a < L` to `a ≤ L` (`C3MrtRungTwo.lean`; the
+  proof only ever used `a ≤ L`).  This is not cosmetic: the harmonic weight is
+  `1/(Lj + a + 1)`, so the offset `weight_transfer` sees is `a + 1`, and `a + 1 = L` genuinely
+  occurs — exactly when `e = 1` (then `a = d − 1`, since `e ∣ a + 2` forces `e ∣ de + 1`).
+  No call sites existed, so nothing else moved.
+* **`filter_linear_lt_eq_range`** — the cutoff `{j : L·j + a < N}` IS the initial segment
+  `range ((N−1−a)/L + 1)`.
+* **`joint_inner_harmonic_le`** — peeling `j = 0` and applying `weight_transfer`,
+
+      ‖∑_{j ≤ J} (Lj + a + 1)⁻¹ • ζ₀^{Ω(ej+b₀)} ζ₁^{Ω(dj+b₁)}‖
+        ≤ ((a+1)⁻¹ + 2/L) + L⁻¹ · ‖∑_{1 ≤ j ≤ J} j⁻¹ • ζ₀^{Ω(ej+b₀)} ζ₁^{Ω(dj+b₁)}‖ ,
+
+  `L = de`.  The right-hand sum is *exactly* the object `rung_two_of_named_inputs` bounds
+  (modulo the `harmonicWeight`/`integerAffine` spelling, lap 11's `zOmInt_integerAffine`), and
+  the additive cost carries no `log N`, so summed over `d, e ≤ Y` it is an `N`-independent
+  constant.
+
+`C3MrtTwoShift` now imports `C3MrtRungTwo` (was `C3MrtLinearForms`) so it can see
+`weight_transfer`; chain is `C3MrtArchimedean → C3MrtTwoShift → C3MrtRungTwo → … `.
+
+### NEXT
+The remaining gap to the full `D = 2` statement is one spelling bridge plus one quantifier
+assembly:
+1. `∑_{1 ≤ j ≤ J} j⁻¹ • ζ₀^{Ω(ej+b₀)} ζ₁^{Ω(dj+b₁)}` vs the rung's
+   `∑_{j ∈ Ioc 0 (A^m)} harmonicWeight j * zOmInt ζ₀ (integerAffine e b₀ j) * …`:
+   `Erdos67b.harmonicWeight j = j⁻¹`, `Icc 1 J = Ioc 0 J`, and lap 11's
+   `zOmInt_integerAffine` / `integerAffine_eq_linear_form` do the rest.  Also need
+   `A^m ≤ J < A^{m+1}` and the gap `(A^m, J]` whose harmonic mass is `≤ log A + 1`.
+2. `max` over the finitely many pairs `(d, e)` with `d, e ≤ Y` of the `A₀` that
+   `rung_two_of_named_inputs` returns (the pattern of `range_one_certificate_uniform`,
+   now over pairs).

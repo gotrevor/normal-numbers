@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import NormalNumbers.C3MrtLinearForms
+import NormalNumbers.C3MrtRungTwo
 
 /-!
 # The two-shift truncation: cutting BOTH moduli
@@ -516,6 +516,95 @@ theorem two_shift_truncation_bound {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (h
           + (Mid - Full)‖ := by congr 1; ring
     _ ≤ _ := le_trans (norm_add_le _ _) (add_le_add hstep1 hMidFull)
 
+
+/-! ## From the joint progression to the rung's window
+
+`inner_sum_linear_forms` turns the joint inner sum into a sum over the progression variable `j`,
+still carrying the harmonic weight of the ORIGINAL variable `n = de·j + a`.  Two elementary
+steps bring it to the shape `rung_two_of_named_inputs` consumes:
+
+* the cutoff `{j : de·j + a < N}` is an initial segment `range (J+1)` (`filter_linear_lt_eq_range`);
+* peeling `j = 0` and applying `weight_transfer` replaces the weight by `(de)⁻¹ · j⁻¹`
+  (`joint_inner_harmonic_le`), at a cost `((a+1)⁻¹ + 2/(de))` that is bounded by `1 + 2/(de)`
+  and carries no `log N`.
+
+Summed over the `(d,e)` with `d, e ≤ Y` both costs are `N`-independent constants, which the
+quantifier order `ε → Y → A → i₀ → N → ∞` absorbs.
+-/
+
+open scoped Classical in
+/-- The cutoff `{j : L·j + a < N}` is the initial segment `range ((N−1−a)/L + 1)`. -/
+theorem filter_linear_lt_eq_range {L a N : ℕ} (hL : 0 < L) (haN : a < N) :
+    (Finset.range N).filter (fun j => L * j + a < N) = Finset.range ((N - 1 - a) / L + 1) := by
+  classical
+  ext j
+  simp only [Finset.mem_filter, Finset.mem_range]
+  constructor
+  · rintro ⟨-, hlt⟩
+    have h1 : j * L ≤ N - 1 - a := by rw [mul_comm]; omega
+    have := (Nat.le_div_iff_mul_le hL).2 h1
+    omega
+  · intro hj
+    have h1 : j ≤ (N - 1 - a) / L := Nat.lt_succ_iff.1 hj
+    have h2 : L * j ≤ N - 1 - a := by
+      have := Nat.mul_le_mul_left L h1
+      exact le_trans this (by rw [mul_comm]; exact Nat.div_mul_le_self _ _)
+    have h3 : L * j + a < N := by omega
+    have h4 : j ≤ L * j := Nat.le_mul_of_pos_left j hL
+    exact ⟨by omega, h3⟩
+
+/-- **Peel `j = 0`, transfer the weight.**  The harmonically weighted sum over the progression
+variable is `(de)⁻¹` times the rung's sum, up to `(a+1)⁻¹ + 2/(de)` — an `N`-independent cost. -/
+theorem joint_inner_harmonic_le {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1)
+    {L a b₀ b₁ d e : ℕ} (hL : 0 < L) (haL : a + 1 ≤ L) (J : ℕ) :
+    ‖∑ j ∈ Finset.range (J + 1), ((((L * j + a : ℕ) : ℝ) + 1)⁻¹ : ℝ) •
+        (z₀ ^ ArithmeticFunction.cardFactors (e * j + b₀) *
+          z₁ ^ ArithmeticFunction.cardFactors (d * j + b₁))‖
+      ≤ (((a : ℝ) + 1)⁻¹ + 2 / (L : ℝ))
+        + (L : ℝ)⁻¹ * ‖∑ j ∈ Finset.Icc 1 J, (((j : ℝ))⁻¹ : ℝ) •
+            (z₀ ^ ArithmeticFunction.cardFactors (e * j + b₀) *
+              z₁ ^ ArithmeticFunction.cardFactors (d * j + b₁))‖ := by
+  classical
+  set G : ℕ → ℂ := fun j => z₀ ^ ArithmeticFunction.cardFactors (e * j + b₀) *
+    z₁ ^ ArithmeticFunction.cardFactors (d * j + b₁) with hG
+  have hGnorm : ∀ j, ‖G j‖ ≤ 1 := by
+    intro j; rw [hG, norm_mul, norm_pow, norm_pow, hz₀, hz₁, one_pow, one_pow, mul_one]
+  have hLR : (0 : ℝ) < (L : ℝ) := by exact_mod_cast hL
+  -- split off `j = 0`
+  have hsplit : Finset.range (J + 1) = insert 0 (Finset.Icc 1 J) := by
+    ext j; simp only [Finset.mem_range, Finset.mem_insert, Finset.mem_Icc]; omega
+  have h0 : (0 : ℕ) ∉ Finset.Icc 1 J := by simp
+  rw [hsplit, Finset.sum_insert h0]
+  -- the weight is the one `weight_transfer` expects, with offset `a + 1`
+  have hwt : ∀ j : ℕ, (((L * j + a : ℕ) : ℝ) + 1)⁻¹ = (((L * j + (a + 1) : ℕ) : ℝ))⁻¹ := by
+    intro j; push_cast; ring
+  have hrw : ∑ j ∈ Finset.Icc 1 J, ((((L * j + a : ℕ) : ℝ) + 1)⁻¹ : ℝ) • G j
+      = ∑ j ∈ Finset.Icc 1 J, ((((L * j + (a + 1) : ℕ) : ℝ))⁻¹ : ℝ) • G j := by
+    refine Finset.sum_congr rfl fun j _ => ?_
+    rw [hwt j]
+  have htrans := weight_transfer (L := L) (a := a + 1) hL haL J G hGnorm
+  have hhead : ‖((((L * 0 + a : ℕ) : ℝ) + 1)⁻¹ : ℝ) • G 0‖ ≤ ((a : ℝ) + 1)⁻¹ := by
+    rw [norm_smul, Real.norm_eq_abs]
+    have hcast : (((L * 0 + a : ℕ) : ℝ) + 1)⁻¹ = ((a : ℝ) + 1)⁻¹ := by norm_num
+    rw [hcast, abs_of_nonneg (by positivity)]
+    calc ((a : ℝ) + 1)⁻¹ * ‖G 0‖ ≤ ((a : ℝ) + 1)⁻¹ * 1 :=
+          mul_le_mul_of_nonneg_left (hGnorm 0) (by positivity)
+      _ = ((a : ℝ) + 1)⁻¹ := mul_one _
+  have htail : ‖∑ j ∈ Finset.Icc 1 J, ((((L * j + a : ℕ) : ℝ) + 1)⁻¹ : ℝ) • G j‖
+      ≤ 2 / (L : ℝ) + (L : ℝ)⁻¹ * ‖∑ j ∈ Finset.Icc 1 J, (((j : ℝ))⁻¹ : ℝ) • G j‖ := by
+    rw [hrw]
+    have hsub := norm_sub_norm_le
+      (∑ j ∈ Finset.Icc 1 J, ((((L * j + (a + 1) : ℕ) : ℝ))⁻¹ : ℝ) • G j)
+      ((L : ℝ)⁻¹ • ∑ j ∈ Finset.Icc 1 J, (((j : ℝ))⁻¹ : ℝ) • G j)
+    have hnsm : ‖(L : ℝ)⁻¹ • ∑ j ∈ Finset.Icc 1 J, (((j : ℝ))⁻¹ : ℝ) • G j‖
+        = (L : ℝ)⁻¹ * ‖∑ j ∈ Finset.Icc 1 J, (((j : ℝ))⁻¹ : ℝ) • G j‖ := by
+      rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg (by positivity)]
+    rw [hnsm] at hsub
+    have := le_trans hsub htrans
+    linarith
+  refine le_trans (norm_add_le _ _) ?_
+  linarith [hhead, htail]
+
 end CastingOut
 
 end NormalNumbers
@@ -526,3 +615,5 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.class_harmonic_mass
 #print axioms NormalNumbers.CastingOut.joint_progression_harmonic_mass
 #print axioms NormalNumbers.CastingOut.two_shift_truncation_bound
+#print axioms NormalNumbers.CastingOut.filter_linear_lt_eq_range
+#print axioms NormalNumbers.CastingOut.joint_inner_harmonic_le
