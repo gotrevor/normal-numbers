@@ -25,7 +25,11 @@ fourth-moment / additive-energy layer transfers verbatim.
 (`norm_dilatedPairTwistedMean_le_largeFrequencies`): same shape `theta*H + (H*M/(T*a)) * sum_{large}
 |bhat(t+uD)|` as the proved `norm_pairTwistedPrimeGraphMean_le_largeFrequencies`.  Needed aliased
 Parseval (`sum_norm_sq_blockFourier_shift`, via a hand-rolled periodic-shift sum lemma).
-Next: re-base `finiteSequenceBlock` at `a*(n+1)` and identify the dilated edge with
+**Lap 20: the graph/correlation loop is closed** — `dilatedPairShiftEdge_affineBlock`: on the block
+re-based at `a*(n+1)`, the dilated edge at position `m = a*k + q*c1` IS
+`pairObservable f1 f2 a (q c1) (q c2) (n+1+k)`.
+Next: sum that over the residue class (Finset.sum_nbij) to get the dilated analogue of
+`pairTwistedSum_sequenceBlock`; then re-base `finiteSequenceBlock` at `a*(n+1)` and identify the dilated edge with
 `ElliottAffineGraph.affineTwistedObservable`.
 
 Superseded description of that lemma: the `a`-dilated bilinear pairing

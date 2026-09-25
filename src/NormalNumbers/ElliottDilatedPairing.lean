@@ -505,6 +505,50 @@ theorem norm_dilatedPairTwistedMean_le_largeFrequencies {H T α D : ℕ} [NeZero
     _ = _ := by field_simp
 
 
+/-! ## Closing the loop: the dilated edge on affine blocks IS the affine observable
+
+`NormalNumbers.ElliottAffineGraph.norm_logProb_affineTwistedObservable_sub_correlation_le` controls
+the logarithmic mean of `pairObservable f₁ f₂ a (q c₁) (q c₂)` over the window.  The graph side of
+the argument sees, instead, the *block* edge `dilatedPairShiftEdge`.  This section identifies the
+two: on the block re-based at `a*(n+1)`, the edge at a position `m` of the residue class
+`q*c₁ (mod a)` is literally the affine observable at the point `n + 1 + (m - q c₁)/a`.
+
+That is the whole content of the re-basing: the residue class `q*c₁ (mod a)` in the block index is
+what the divisibility `a ∣ ·` of the slice route tried, and failed, to express as an indicator on
+the *observable*.  Here it is an index condition, and the previous sections showed the Fourier layer
+absorbs it for the price of `α` aliases.
+-/
+
+open NormalNumbers.ElliottLadder in
+/-- The block of `f` re-based at `a*(n+1)`: the positions the `a`-dilated edge samples. -/
+def affineBlock (f : ℕ → ℂ) (a n H : ℕ) : Fin H → ℂ :=
+  fun i ↦ positiveIntExtension f (((a * (n + 1) : ℕ) : ℤ) + (i.1 : ℤ))
+
+open NormalNumbers.ElliottLadder in
+/-- **The dilated block edge is the affine pair observable.**  At block position
+`m = a*k + q*c₁` (the general element of the residue class `q*c₁ (mod a)`), the edge with step
+`q*h` equals `pairObservable f₁ f₂ a (q*c₁) (q*c₂) (n+1+k)` with `c₂ = c₁ + h`. -/
+theorem dilatedPairShiftEdge_affineBlock {H : ℕ} (f₁ f₂ : ℕ → ℂ) (a n q c₁ h k : ℕ)
+    (hm : a * k + q * c₁ < H) (hmσ : a * k + q * c₁ + q * h < H) :
+    dilatedPairShiftEdge (affineBlock f₁ a n H) (affineBlock f₂ a n H) a ((q * c₁ : ℕ) : ℤ)
+        (q * h) ⟨a * k + q * c₁, hm⟩ =
+      pairObservable f₁ f₂ a ((q * c₁ : ℕ) : ℤ) ((q * (c₁ + h) : ℕ) : ℤ) (n + 1 + k) := by
+  have hdvd : (a : ℤ) ∣ ((a * k + q * c₁ : ℕ) : ℤ) - ((q * c₁ : ℕ) : ℤ) := by
+    refine ⟨(k : ℤ), ?_⟩
+    push_cast
+    ring
+  rw [dilatedPairShiftEdge, if_pos hdvd, dif_pos hmσ, affineBlock, affineBlock, pairObservable]
+  congr 1
+  · congr 1
+    simp only [integerAffine]
+    push_cast
+    ring
+  · congr 1
+    simp only [integerAffine]
+    push_cast
+    ring
+
+
 end
 
 end NormalNumbers.ElliottDilatedPairing
