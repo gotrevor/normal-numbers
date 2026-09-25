@@ -215,3 +215,174 @@ theorem winGf_coeff_eq (q : ℕ) (hq0 : 0 < q) (gs : List (ℕ × ℕ))
     Finset.prod_congr rfl hcln, Finset.prod_mul_distrib, Finset.prod_const,
     ← hprodv, ← Finset.prod_sdiff hD]
   ring
+
+/-! ## The layer system -/
+
+/-- The data of a nested layer system.  Layer `n` puts an `arm n`-gadget at every position
+`≡ off n (mod Q n)`.  The periods are nested and grow geometrically; `hbig` (the offset is at
+least half the period) is what makes the tail density bound `O(M / Q m)` instead of `O(M / Q m)
++ 1` per layer, and `hdisj` is the conclusion of `exists_avoiding_offset`. -/
+structure LayerSys where
+  Q : ℕ → ℕ
+  off : ℕ → ℕ
+  arm : ℕ → ℕ
+  hQ64 : 64 ≤ Q 0
+  hQdouble : ∀ n, 2 * Q n ≤ Q (n + 1)
+  hQdvd : ∀ n, Q n ∣ Q (n + 1)
+  harm : ∀ n, 2 ≤ arm n
+  hfit : ∀ n, off n + arm n + 1 < Q n
+  hbig : ∀ n, Q n ≤ 2 * off n
+  hdisj : ∀ m n, m < n → ∀ δ ∈ ({0, 1, arm m, arm m + 1} : Finset ℕ),
+            ∀ δ' ∈ ({0, 1, arm n, arm n + 1} : Finset ℕ),
+            (off n + δ') % Q m ≠ (off m + δ) % Q m
+
+namespace LayerSys
+
+variable (Ls : LayerSys)
+
+theorem Qpos (n : ℕ) : 0 < Ls.Q n := by
+  induction n with
+  | zero => have := Ls.hQ64; omega
+  | succ n ih => have := Ls.hQdouble n; omega
+
+theorem dvd_of_le {m n : ℕ} (h : m ≤ n) : Ls.Q m ∣ Ls.Q n := by
+  induction n with
+  | zero => rw [Nat.le_zero] at h; rw [h]
+  | succ n ih =>
+      rcases Nat.lt_or_ge m (n + 1) with h1 | h1
+      · exact dvd_trans (ih (by omega)) (Ls.hQdvd n)
+      · rw [show m = n + 1 from by omega]
+
+/-- The gadgets of layer `m` inside one block of width `Ls.Q n`. -/
+def layerRow (m N : ℕ) : List (ℕ × ℕ) :=
+  (List.range N).map (fun k => (k * Ls.Q m + Ls.off m, Ls.arm m))
+
+/-- All gadgets of layers `0..n`, inside one block of width `Ls.Q n`. -/
+def layerGads (n : ℕ) : List (ℕ × ℕ) :=
+  (List.range (n + 1)).flatMap (fun m => Ls.layerRow m (Ls.Q n / Ls.Q m))
+
+theorem mem_layerGads {n : ℕ} {x : ℕ × ℕ} : x ∈ Ls.layerGads n ↔
+    ∃ m, m ≤ n ∧ ∃ k, k < Ls.Q n / Ls.Q m ∧ x = (k * Ls.Q m + Ls.off m, Ls.arm m) := by
+  simp only [layerGads, layerRow, List.mem_flatMap, List.mem_map, List.mem_range]
+  constructor
+  · intro ⟨m, hm, k, hk, hxk⟩
+    exact ⟨m, by omega, k, hk, hxk.symm⟩
+  · intro ⟨m, hm, k, hk, hxk⟩
+    exact ⟨m, by omega, k, hk, hxk.symm⟩
+
+theorem layerGads_ok (n : ℕ) : ∀ x ∈ Ls.layerGads n, GadOk (Ls.Q n) x := by
+  intro x hx
+  rw [Ls.mem_layerGads] at hx
+  obtain ⟨m, hm, k, hk, rfl⟩ := hx
+  refine ⟨Ls.harm m, ?_⟩
+  simp only
+  -- `k * Q m + off m + arm m + 1 < Q n` because `k + 1 ≤ Q n / Q m` and `off m + arm m + 1 < Q m`
+  have hQm := Ls.Qpos m
+  have hfit := Ls.hfit m
+  have hdvd : Ls.Q m ∣ Ls.Q n := Ls.dvd_of_le hm
+  obtain ⟨t, ht⟩ := hdvd
+  have hkt : k < t := by rwa [ht, Nat.mul_div_cancel_left _ hQm] at hk
+  calc k * Ls.Q m + Ls.off m + Ls.arm m + 1 < k * Ls.Q m + Ls.Q m := by omega
+    _ = (k + 1) * Ls.Q m := by ring
+    _ ≤ t * Ls.Q m := Nat.mul_le_mul_right _ (by omega)
+    _ = Ls.Q n := by rw [ht]; ring
+
+/-- A convenient sufficient condition for two gadgets' quadruples to be disjoint. -/
+theorem gadDisj_of_forall {p a p' a' : ℕ}
+    (h : ∀ δ δ' : ℕ, (δ = 0 ∨ δ = 1 ∨ δ = a ∨ δ = a + 1) →
+      (δ' = 0 ∨ δ' = 1 ∨ δ' = a' ∨ δ' = a' + 1) → p + δ ≠ p' + δ') :
+    GadDisj (p, a) (p', a') := by
+  intro u hu hc
+  rw [mem_quadSet] at hu hc
+  obtain ⟨δ, hδ, rfl⟩ : ∃ δ, (δ = 0 ∨ δ = 1 ∨ δ = a ∨ δ = a + 1) ∧ u = p + δ := by
+    rcases hc with h1 | h1 | h1 | h1
+    exacts [⟨0, by tauto, by omega⟩, ⟨1, by tauto, by omega⟩, ⟨a, by tauto, by omega⟩,
+      ⟨a + 1, by tauto, by omega⟩]
+  obtain ⟨δ', hδ', he⟩ : ∃ δ', (δ' = 0 ∨ δ' = 1 ∨ δ' = a' ∨ δ' = a' + 1) ∧ p + δ = p' + δ' := by
+    rcases hu with h1 | h1 | h1 | h1
+    exacts [⟨0, by tauto, by omega⟩, ⟨1, by tauto, by omega⟩, ⟨a', by tauto, by omega⟩,
+      ⟨a' + 1, by tauto, by omega⟩]
+  exact h δ δ' hδ hδ' he
+
+/-- Layer `m'`'s positions, read modulo an earlier layer's period, are `off m' + δ'`. -/
+theorem base_mod {m m' : ℕ} (h : m ≤ m') (k δ : ℕ) :
+    (k * Ls.Q m' + Ls.off m' + δ) % Ls.Q m = (Ls.off m' + δ) % Ls.Q m := by
+  obtain ⟨t, ht⟩ := Ls.dvd_of_le h
+  rw [show k * Ls.Q m' + Ls.off m' + δ = (Ls.off m' + δ) + Ls.Q m * (k * t) from by
+    rw [ht]; ring]
+  exact Nat.add_mul_mod_self_left _ _ _
+
+theorem layerGads_sep (n : ℕ) : GadSep (Ls.layerGads n) := by
+  intro x hx y hy
+  rw [Ls.mem_layerGads] at hx hy
+  obtain ⟨m, hm, k, hk, rfl⟩ := hx
+  obtain ⟨m', hm', k', hk', rfl⟩ := hy
+  have hQm := Ls.Qpos m
+  by_cases hmm : m = m'
+  · subst hmm
+    by_cases hkk : k = k'
+    · left; rw [hkk]
+    · right
+      refine gadDisj_of_forall (fun δ δ' hδ hδ' he => ?_)
+      have hfit := Ls.hfit m
+      set A := k * Ls.Q m with hA
+      set B := k' * Ls.Q m with hB
+      have hstep : A + Ls.Q m ≤ B ∨ B + Ls.Q m ≤ A := by
+        rcases Nat.lt_or_ge k k' with h1 | h1
+        · left
+          calc A + Ls.Q m = (k + 1) * Ls.Q m := by rw [hA]; ring
+            _ ≤ k' * Ls.Q m := Nat.mul_le_mul_right _ (by omega)
+        · right
+          have hk1 : k' + 1 ≤ k := by omega
+          calc B + Ls.Q m = (k' + 1) * Ls.Q m := by rw [hB]; ring
+            _ ≤ k * Ls.Q m := Nat.mul_le_mul_right _ hk1
+      omega
+  · right
+    -- distinct layers: compare modulo the smaller period
+    refine gadDisj_of_forall (fun δ δ' hδ hδ' he => ?_)
+    rcases Nat.lt_or_ge m m' with hlt | hge
+    · have e1 : (k * Ls.Q m + Ls.off m + δ) % Ls.Q m = (Ls.off m + δ) % Ls.Q m :=
+        Ls.base_mod (le_refl m) k δ
+      have e2 : (k' * Ls.Q m' + Ls.off m' + δ') % Ls.Q m = (Ls.off m' + δ') % Ls.Q m :=
+        Ls.base_mod (le_of_lt hlt) k' δ'
+      refine Ls.hdisj m m' hlt δ (by simp only [Finset.mem_insert, Finset.mem_singleton]; tauto)
+        δ' (by simp only [Finset.mem_insert, Finset.mem_singleton]; tauto) ?_
+      rw [← e2, ← e1, he]
+    · have hlt' : m' < m := by omega
+      have e1 : (k * Ls.Q m + Ls.off m + δ) % Ls.Q m' = (Ls.off m + δ) % Ls.Q m' :=
+        Ls.base_mod (le_of_lt hlt') k δ
+      have e2 : (k' * Ls.Q m' + Ls.off m' + δ') % Ls.Q m' = (Ls.off m' + δ') % Ls.Q m' :=
+        Ls.base_mod (le_refl m') k' δ'
+      refine Ls.hdisj m' m hlt' δ' (by simp only [Finset.mem_insert, Finset.mem_singleton]; tauto)
+        δ (by simp only [Finset.mem_insert, Finset.mem_singleton]; tauto) ?_
+      rw [← e1, ← e2, he]
+
+theorem layerRow_nodup (m N : ℕ) : (Ls.layerRow m N).Nodup := by
+  refine List.Nodup.map (fun k k' he => ?_) (List.nodup_range)
+  have hQm := Ls.Qpos m
+  simp only [Prod.mk.injEq] at he
+  exact Nat.eq_of_mul_eq_mul_right hQm (by omega)
+
+theorem layerGads_nodup (n : ℕ) : (Ls.layerGads n).Nodup := by
+  rw [layerGads, List.nodup_flatMap]
+  refine ⟨fun m _ => Ls.layerRow_nodup m _, ?_⟩
+  rw [List.pairwise_iff_forall_sublist]
+  intro m m' hsub
+  -- `m` comes before `m'` in `range (n+1)`, so `m < m'`
+  have hmm : m < m' := by
+    have := List.Sublist.subset hsub
+    have h1 : m ∈ List.range (n + 1) := this (by simp)
+    have h2 : m' ∈ List.range (n + 1) := this (by simp)
+    exact (List.pairwise_iff_forall_sublist.mp
+      (List.pairwise_lt_range (n := n + 1))) hsub
+  intro x hx hx'
+  simp only [layerRow, List.mem_map, List.mem_range] at hx hx'
+  obtain ⟨k, -, rfl⟩ := hx
+  obtain ⟨k', -, he⟩ := hx'
+  simp only [Prod.mk.injEq] at he
+  have e1 : (k * Ls.Q m + Ls.off m + 0) % Ls.Q m = (Ls.off m + 0) % Ls.Q m :=
+    Ls.base_mod (le_refl m) k 0
+  have e2 : (k' * Ls.Q m' + Ls.off m' + 0) % Ls.Q m = (Ls.off m' + 0) % Ls.Q m :=
+    Ls.base_mod (le_of_lt hmm) k' 0
+  refine Ls.hdisj m m' hmm 0 (by simp) 0 (by simp) ?_
+  rw [← e2, ← e1, he.1]
