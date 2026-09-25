@@ -11214,3 +11214,48 @@ this lap (record it, do not re-litigate):**
 
 Boundary check on the split (EA-1): at the junction `log X = (log(|v|+16))⁹` the two branches give
 `log X + C_triv` and `C·(log(|v|+16))⁹ + K = C·log X + K` — agree up to the constant `C`.  No gap.
+
+## 🔑 2026-09-25 lap 114 — THE STRUCTURAL BLOCKER IS GONE: `PNTPort.ZetaBounds` NOW COEXISTS WITH THE ELLIOTT CHAIN
+
+Lap 113 hit, and this lap **removed**, the real reason the campaign spent ~16 laps citing a de la
+Vallée Poussin bound it already owned.  `import PrimeNumberTheoremAnd.ZetaBounds` failing (lap 112's
+diagnosis) was only the *first* layer.  Underneath it were two genuine **namespace collisions**
+that made `PNTPort.ZetaBounds` unimportable into *any* file that also sees the Elliott chain:
+
+1. `import PNTPort.Sobolev failed, environment already contains 'CS.deriv' from
+   PrimeNumberTheoremAnd.Sobolev` — the Elliott chain reaches `lean-proofs-latest`'s
+   `PrimeNumberTheoremAnd.Sobolev` via `ErdosProblems`/`Util.Primes → Consequences → Defs →
+   Fourier → Sobolev`, and `PNTPort.Sobolev` is a vendored copy of the same `namespace CS`.
+   **Fix:** `PNTPort.ZetaBounds` did not actually need Sobolev.  Its one use of `PNTPort.Fourier`
+   (which is what pulls Sobolev in) is the *function-level* `simp` form `deriv ofReal = fun _ => 1`.
+   Dropped `import PNTPort.Fourier`; restated that one lemma from
+   `PNTPort.Auxiliary.Complex.deriv_ofReal`.
+2. `import PNTPort.EulerMaclaurin failed, environment already contains 'B1' from
+   ErdosProblems.Erdos49.PNT.EulerMaclaurin`.  **Fix:** wrapped `src/PNTPort/EulerMaclaurin.lean`
+   (79 lines, root namespace) in `namespace PNTPort`, `open PNTPort` in `ZetaBounds`.
+
+**Verified:** a probe file importing *both* `NormalNumbers.ElliottSliceCap` and `PNTPort.ZetaBounds`
+now builds (9691 jobs) and `#check`s both `exists_sliceCapSmall` and `LogDerivZetaBndUnif99`.
+
+**Consequences — both large.**
+* The separate `ElliottZetaModerateAudit` target created by lap 113 is **deleted**; the build
+  convention reverts to **TWO** builds, `lake build` (9257) and
+  `lake build NormalNumbers.ElliottAxiomAudit` (**9692**, was 9684).  Disregard lap 113's
+  "green means three builds" note.
+* More importantly: the eventual `ArchCorrModerate` theorem can now be **stated in the same
+  environment as `twoPointElliottLog_of_three_bands`**, i.e. the moderate input can actually be
+  *discharged into the headline chain* rather than proved off to one side.  Before this lap that
+  was impossible and nobody had noticed.
+
+All 158 audited Elliott declarations print `[propext, Classical.choice, Quot.sound]`; zero
+`sorryAx` anywhere in the audit build.
+
+### NEXT LAP — unchanged target, now unobstructed
+
+T2 step 2, exactly as scoped at the end of the lap-113 entry above: the moderate cap assembly
+`exists_sliceCapModerate9`, mirroring `ElliottSliceCap.exists_sliceCapSmall`.  Note
+`ElliottSliceCap.norm_slice_add_logDeriv_le` (`‖slice + ζ'/ζ(sliceAbscissa)‖ ≤ 1 + ppCost`) is
+**band-agnostic** — it already holds for every `v` and every `w ≥ 0`, so the moderate proof reuses
+it verbatim and only the analytic input changes from `exists_band_logDeriv_bound` to
+`ElliottZetaModerate.exists_moderate_logDeriv_bound`.  The two-branch split on
+`max (log(|v|+16))^{-9} (log X)⁻¹` and the forced multiplicative constant are the only new content.

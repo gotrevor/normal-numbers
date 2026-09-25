@@ -8,6 +8,11 @@ public import Mathlib.NumberTheory.AbelSummation
 
 open Finset Interval MeasureTheory
 
+/- Lap 114: the whole file is placed in `namespace PNTPort` because its root-level `B1` collided
+with `ErdosProblems.Erdos49.PNT.EulerMaclaurin.B1`, which blocked importing `PNTPort.ZetaBounds`
+alongside the NormalNumbers Elliott chain. -/
+namespace PNTPort
+
 
 variable {𝕜 : Type*} [RCLike 𝕜] {f : ℝ → 𝕜} {a b : ℝ}
 
@@ -77,3 +82,5 @@ theorem sum_eq_integral_add_integral_deriv (ha : 0 ≤ a) (hab : a ≤ b)
   unfold B1
   push_cast
   ring
+
+end PNTPort

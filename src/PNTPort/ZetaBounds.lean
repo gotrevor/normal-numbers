@@ -5,7 +5,15 @@ import Mathlib.MeasureTheory.Order.Group.Lattice
 import Mathlib.NumberTheory.Harmonic.Bounds
 import Mathlib.NumberTheory.LSeries.Nonvanishing
 import PNTPort.Auxiliary
-import PNTPort.Fourier
+-- `import PNTPort.Fourier` DELIBERATELY DROPPED (lap 114).
+-- `PNTPort.Fourier` pulls in `PNTPort.Sobolev`, whose `namespace CS` collides with
+-- `PrimeNumberTheoremAnd.Sobolev` (reached by the `ErdosProblems`/`Util.Primes` tree that the
+-- NormalNumbers Elliott chain depends on):
+--   `import PNTPort.Sobolev failed, environment already contains 'CS.deriv'`.
+-- That collision made `PNTPort.ZetaBounds` unusable from the Elliott chain -- the whole reason
+-- the campaign spent ~16 laps CITING a de la Vallee Poussin bound this repo already owns.
+-- The only thing `ZetaBounds` actually used from `Fourier` is the function-level `simp` form of
+-- `deriv ofReal`, restated below from `PNTPort.Auxiliary.Complex.deriv_ofReal`.
 import PNTPort.Mathlib.Analysis.SpecialFunctions.Log.Basic
 import PNTPort.ResidueCalcOnRectangles
 import PNTPort.EulerMaclaurin
@@ -13,6 +21,10 @@ import PNTPort.EulerMaclaurin
 set_option lang.lemmaCmd true
 
 open Complex Topology Filter Interval Set Asymptotics
+open PNTPort
+
+/-- Function-level `simp` form of `Complex.deriv_ofReal` (was inherited from `PNTPort.Fourier`). -/
+@[simp] lemma deriv_ofReal : deriv ofReal = fun _ => 1 := funext Complex.deriv_ofReal
 
 lemma div_cpow_eq_cpow_neg (a x s : ℂ) : a / x ^ s = a * x ^ (-s) := by
   rw [div_eq_mul_inv, cpow_neg]
