@@ -58,14 +58,45 @@ condition `z + (j+1) − d_p = 0` with `d_p = ⌊p c₁/a⌋`; that is the stand
 variable by the *caller* and never enters the layer.  Genericity in the edge was the only
 generalisation needed — this is the lap's main structural finding.
 
-## NEXT (lap 28 onwards)
+## Lap 28 — the dilated block is an ordinary block, and the entropy layer needs NO new lemma
 
-1. **The generic decoupling layer.**  Repeat lap 27 one rung up: `ElliottTwistedGraphDecoupling`
-   (`pairTwistedDiscrepancy`, `exists_logProb_pairTwisted_small_tail`,
-   `exists_logProb_pairTwisted_decoupling`) over `genSum`/`genMeanCRT`.  The entropy layer only
-   ever uses the discrepancy's boundedness (`norm_genSum_le` + `norm_genMeanCRT_le`, both proved)
-   and `exists_gen_exponential_tail` (proved).  The one real design point: the edge family must be
-   read off the finite-alphabet block, i.e. `E` becomes `(Fin H → α) → ℕ → Fin H → ℂ`.
+`ElliottDilatedLower.affineBlock_eq_finiteSequenceBlock` (proved): for `a > 0`,
+
+```
+affineBlock f a n H = finiteSequenceBlock f H (a*(n+1) - 1).
+```
+
+The dilated graph therefore reads an **ordinary consecutive block of the same sequence**, at the
+dilated base point `a(n+1) - 1`.
+
+That alone would leave the entropy layer wanting blocks at `β(n) = a(n+1) - 1` while
+`Erdos67b.logProb_block_rare_event_le` and `exists_logProb_block_entropy_control` speak about
+blocks at `n`.  **The fix is to group the alphabet, and then nothing has to be re-proved:**
+
+> Let `G : ℕ → (Fin a → α)`, `G m = (F(a m), …, F(a m + a - 1))`.  The block of `G` of length `H'`
+> at position `n` reads `F` over `[a(n+1), a(n+1) + a H')`.  So `affineBlock f a n (a H')` is a
+> **function of `finiteSequenceBlock G H' n`** — an ordinary block, at the ordinary base point `n`,
+> of a sequence over the still-finite alphabet `α^a`.
+
+`logProb_block_rare_event_le` takes an *arbitrary* rare-event family
+`E : (Fin H → α) → Finset (ZMod P)` over an *arbitrary* finite `α`, so it applies **verbatim** with
+`α ↦ α^a`, `H ↦ H'`; likewise `exists_logProb_block_entropy_control`.  The graph length is
+`H = a H'`, and `a` is a constant fixed before every parameter.
+
+**Consequence for the port.**  The only genericity the decoupling layer still needs, beyond lap
+27's generic edge, is that the two graph blocks be produced from the alphabet block by a
+**block-level** decode `(Fin H' → α) → (Fin H → ℂ)` rather than the pointwise `d₁ ∘ b` of the
+proved port.  That is a widening of a hypothesis, not new mathematics.
+
+## NEXT (lap 29 onwards)
+
+1. **The generic decoupling layer**, with the two widenings lap 27 and lap 28 identified:
+   edge family generic (lap 27, done) and **block-level decode** `(Fin H' → α) → (Fin H → ℂ)`
+   in place of `d₁ ∘ b` (lap 28).  Port `pairTwistedDiscrepancy`,
+   `exists_logProb_pairTwisted_small_tail`, `exists_logProb_pairTwisted_decoupling` over
+   `genSum`/`genMeanCRT`.  Every input is already proved: `norm_genSum_le`, `norm_genMeanCRT_le`,
+   `exists_gen_exponential_tail`, and the dependency's `logProb_block_rare_event_le` /
+   `exists_logProb_block_entropy_control` apply unchanged at `α ↦ α^a`, `H ↦ H'`.
 2. Then instantiate at `E p j = dilatedPairShiftEdge (affineBlock f₁) (affineBlock f₂) a (p c₁) (p h) j`
    with residue variable `z − ⌊p c₁/a⌋`, and combine with
    `sum_dilatedPairShiftEdge_affineBlock` + lap 26's edge-mean estimate.

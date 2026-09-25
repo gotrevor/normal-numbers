@@ -99,6 +99,25 @@ theorem norm_logProb_affineTwistedObservable_shift_sub_correlation_le
   rw [hOeq] at htri
   linarith
 
+/-! ## The dilated block is an ordinary block at a dilated base point
+
+This is the structural fact that lets the finite-alphabet entropy machinery see the dilated graph
+at all.  `affineBlock f a n H` looks like a new kind of block, but it is not: it is the
+dependency's own `finiteSequenceBlock` of the **same** sequence, read at the base point
+`a*(n+1) - 1`.  So the dilated graph is a graph on consecutive blocks — only the base point moves
+with `a`, and the entropy/rare-event layer is a statement about blocks, not about where they sit.
+-/
+
+open NormalNumbers.ElliottDilatedPairing in
+/-- **The `a`-dilated block is the ordinary block at base point `a*(n+1) - 1`.** -/
+theorem affineBlock_eq_finiteSequenceBlock {H : ℕ} (f : ℕ → ℂ) {a : ℕ} (ha : 0 < a) (n : ℕ) :
+    affineBlock f a n H = finiteSequenceBlock f H (a * (n + 1) - 1) := by
+  funext i
+  have hpos : 0 < a * (n + 1) := Nat.mul_pos ha (Nat.succ_pos n)
+  have hidx : a * (n + 1) - 1 + i.1 + 1 = a * (n + 1) + i.1 := by omega
+  have hz : (((a * (n + 1) : ℕ)) : ℤ) + (i.1 : ℤ) = ((a * (n + 1) + i.1 : ℕ) : ℤ) := by push_cast; ring
+  rw [affineBlock, hz, positiveIntExtension_natCast (by omega), finiteSequenceBlock, hidx]
+
 end
 
 end NormalNumbers.ElliottDilatedLower
