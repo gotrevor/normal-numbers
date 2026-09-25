@@ -88,15 +88,31 @@ blocks at `n`.  **The fix is to group the alphabet, and then nothing has to be r
 **block-level** decode `(Fin H' → α) → (Fin H → ℂ)` rather than the pointwise `d₁ ∘ b` of the
 proved port.  That is a widening of a hypothesis, not new mathematics.
 
-## NEXT (lap 29 onwards)
+## Lap 29 — `ElliottGenericGraphDecoupling.lean` (new, zero sorry, trust triple)
 
-1. **The generic decoupling layer**, with the two widenings lap 27 and lap 28 identified:
-   edge family generic (lap 27, done) and **block-level decode** `(Fin H' → α) → (Fin H → ℂ)`
-   in place of `d₁ ∘ b` (lap 28).  Port `pairTwistedDiscrepancy`,
-   `exists_logProb_pairTwisted_small_tail`, `exists_logProb_pairTwisted_decoupling` over
-   `genSum`/`genMeanCRT`.  Every input is already proved: `norm_genSum_le`, `norm_genMeanCRT_le`,
-   `exists_gen_exponential_tail`, and the dependency's `logProb_block_rare_event_le` /
-   `exists_logProb_block_entropy_control` apply unchanged at `α ↦ α^a`, `H ↦ H'`.
+The entropy rung, ported with both widenings:
+
+* `genDiscrepancyAt`, `norm_genDiscrepancyAt_le` — the centred generic graph observable at an
+  **arbitrary** residue (so the caller can apply the per-prime shift; by CRT the family `(d_p)_p`
+  is a single element of `ZMod (primeGraphModulus H)`).
+* `entropy_scale_ratio` — `m / log m ≤ 2 · (am) / log (am)` for `2 ≤ m`, `a ≤ m`.  **This is the
+  only place the dilation costs anything in the entropy layer**, and it costs a factor `2`: the
+  dependency's `τ = cκ/2` becomes `τ = cκ/4`.
+* `exists_logProb_gen_small_tail` — the port of
+  `ElliottTwistedGraph.exists_logProb_pairTwisted_small_tail` for an arbitrary block-level edge
+  builder `mkE : (m : ℕ) → (Fin m → α) → ℕ → Fin (a*m) → ℂ` with `‖mkE m b p j‖ ≤ B²`.  The
+  entropy block length is `m`, the graph length `a*m`; `Erdos67b.logProb_block_rare_event_le` and
+  `exists_logProb_block_entropy_control` are used **unchanged** (the latter's constant `C` becomes
+  `log 4 · a`).
+
+Lap 28's prediction is confirmed in the kernel: no new entropy lemma was needed.
+
+## NEXT (lap 30 onwards)
+
+1. **`exists_logProb_gen_decoupling`** — the averaged form, one short step above lap 29's tail:
+   copy `ElliottTwistedGraph.exists_logProb_pairTwisted_decoupling` verbatim, feeding
+   `norm_genDiscrepancyAt_le` (proved) to `norm_finiteExpectation_le_of_tail`.  Coefficients
+   `ρ = ε/2`, `κ = ε/(16R)` as there, at length `a*m`.
 2. Then instantiate at `E p j = dilatedPairShiftEdge (affineBlock f₁) (affineBlock f₂) a (p c₁) (p h) j`
    with residue variable `z − ⌊p c₁/a⌋`, and combine with
    `sum_dilatedPairShiftEdge_affineBlock` + lap 26's edge-mean estimate.
