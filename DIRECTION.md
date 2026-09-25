@@ -16,6 +16,11 @@ The route's inputs are mis-stated; nothing built on them carries content until f
    With (1), the with-exceptional-set Prop is trivially TRUE.  TT's exceptional set is a set of
    scales measured by logarithmic density of the INTEGERS/dyadic scales, not Lebesgue measure.
 
+4. **`ttPretentiousSum` is not TT's `M(g; X, Q)`**: TT takes the infimum over Dirichlet
+   characters of conductor `q ≤ Q` AND twists `|t| ≤ X` (paper:557-576); the Lean sum omits
+   characters and cuts `t` at `(log X)^(1/125)`.  Full source audit:
+   `~/src/normal-numbers/docs/REVIEW-2026-09-25-normal-numbers.md` lines 66-70.
+
 **First job of the next lap, before any other work:** (a) machine-check both witnesses as named
 refutation theorems (`ttNonPretentious_trivial`, `not_kPointNoExcWith_const_one`, the
 integer-exceptional-set triviality) and add `Maze.lean` rows aliased onto them; (b) restate
