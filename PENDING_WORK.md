@@ -77,7 +77,18 @@ away from `t = 0`.
    bookkeeping): majorize the term by a **product** `a_m·b_j` with `a_m = log m·m^{-2}`,
    `b_j = 4·2^{-j}`, then `F ⊆ (image fst) ×ˢ (image snd)` and `Finset.sum_product` factorizes it.
    So the eventual `n = p^j ↦ (p,j)` may be any injection.
-3. *The arithmetic bridge, remainder*: `slice = −ζ'/ζ(1+δ+w+iv) + O(1)`, i.e. `LSeries_vonMangoldt_eq_deriv_riemannZeta_div`
+3. ✅ *(lap 110)* `ElliottBridge.lean`: `slice_eq_sum_term` — the slice **is** the partial sum
+   `∑_{p≤Y} LSeries.term ↗Λ s p` at `s = sliceAbscissa X w v = (1+δ+w) + iv`, exactly, no error
+   term.  The content is `conj(archimedeanTwist v p) = p^{-iv}` matched against the `p^{-iv}` inside
+   `p^{-s}` (`Complex.cpow_add`, `Complex.ofReal_cpow`, `Complex.natCast_log`).
+4. *The remaining step*: `L ↗Λ s = −ζ'/ζ(s)` (`LSeries_vonMangoldt_eq_deriv_riemannZeta_div`, needs
+   `1 < Re s` ✓) and the complement bound
+   `∑'_{n ∉ primesUpTo Y} Λ n·n^{-σ} ≤ 1 + ppCost` via `Finset.sum_add_tsum_compl` +
+   `tsum_le_of_sum_le`: every finite `G` in the complement splits into primes `> Y` (⟹ `logTail_le`,
+   after `G ⊆ primesInInterval Y (max G)`) and non-prime prime powers (⟹ `sum_pairs_le`, under
+   `n ↦ (n.minFac, n.factorization n.minFac)`, injective since `n = p^j`; `Λ n = log (minFac n)` is
+   `vonMangoldt_apply`).  Then `SliceCapSmall` follows from `exists_subunit_logDeriv_bound`
+   (`‖s−1‖ ≥ max(|v|, δ+w) ≥ T` in the cap band) — and **(c′-I) is fully proved**. `slice = −ζ'/ζ(1+δ+w+iv) + O(1)`, i.e. `LSeries_vonMangoldt_eq_deriv_riemannZeta_div`
    plus `logTail_le` (lap 105) for `∑_{p>Y}` and the prime-power correction
    `∑_{p,j≥2} log p·p^{-jσ} ≤ 2∑_{n≥2} log n·n^{-2}` for the `j ≥ 2` terms.
 

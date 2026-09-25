@@ -20,6 +20,7 @@ import NormalNumbers.ElliottDivisorTail
 import NormalNumbers.ElliottExpand
 import NormalNumbers.ElliottZetaPole
 import NormalNumbers.ElliottPrimePower
+import NormalNumbers.ElliottBridge
 import NormalNumbers.ElliottRestricted
 import NormalNumbers.ElliottScaleDescent
 import NormalNumbers.ElliottCaseB
@@ -250,3 +251,8 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottPrimePower.sum_log_mul_rpow_neg_two_le
 #print axioms NormalNumbers.ElliottPrimePower.sum_half_pow_le
 #print axioms NormalNumbers.ElliottPrimePower.sum_pairs_le
+
+/-! ### The slice is a partial sum of L Λ (lap 110) -/
+#print axioms NormalNumbers.ElliottBridge.conj_archimedeanTwist
+#print axioms NormalNumbers.ElliottBridge.term_eq_slice_summand
+#print axioms NormalNumbers.ElliottBridge.slice_eq_sum_term
