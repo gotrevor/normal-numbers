@@ -38,7 +38,7 @@ theorem norm_le_truncated {g₁ g₂ : ℤ → ℂ} (h₁ : ∀ z : ℤ, ‖g₁
     (a₁ a₂ : ℕ) (b₁ b₂ : ℤ) {X W W'' : ℕ} (hW'' : 0 < W'') (hle : W'' ≤ W) :
     ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W‖
       ≤ ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W''‖
-        + ∑ m ∈ Finset.Icc 1 (X / W''), (m : ℝ)⁻¹ := by
+        + ∑ m ∈ Finset.Icc (X / W + 1) (X / W''), (m : ℝ)⁻¹ := by
   classical
   set F : ℕ → ℂ := fun n => (harmonicWeight n : ℂ) * g₁ (integerAffine a₁ b₁ n) *
     g₂ (integerAffine a₂ b₂ n) with hF
@@ -47,11 +47,17 @@ theorem norm_le_truncated {g₁ g₂ : ℤ → ℂ} (h₁ : ∀ z : ℤ, ‖g₁
       = (∑ n ∈ elliottLogWindow X W'', F n)
         + ∑ n ∈ (elliottLogWindow X W) \ (elliottLogWindow X W''), F n := by
     rw [← Finset.sum_sdiff hsub]; ring
-  have hbad : (elliottLogWindow X W) \ (elliottLogWindow X W'') ⊆ Finset.Icc 1 (X / W'') := by
+  have hbad : (elliottLogWindow X W) \ (elliottLogWindow X W'')
+      ⊆ Finset.Icc (X / W + 1) (X / W'') := by
     intro n hn
     obtain ⟨hnw, hnout⟩ := Finset.mem_sdiff.mp hn
-    obtain ⟨hpos, hnX, -⟩ := mem_elliottLogWindow.mp hnw
-    refine Finset.mem_Icc.mpr ⟨hpos, ?_⟩
+    obtain ⟨hpos, hnX, hXn⟩ := mem_elliottLogWindow.mp hnw
+    have hlow : X / W + 1 ≤ n := by
+      rcases Nat.eq_zero_or_pos W with rfl | hWpos
+      · simp at hXn
+      · have : X / W < n := (Nat.div_lt_iff_lt_mul hWpos).mpr (by rw [Nat.mul_comm]; omega)
+        omega
+    refine Finset.mem_Icc.mpr ⟨hlow, ?_⟩
     have hnot : ¬ (X < W'' * n) := by
       intro hc
       exact hnout (mem_elliottLogWindow.mpr ⟨hpos, hnX, hc⟩)
@@ -74,7 +80,7 @@ theorem norm_le_truncated {g₁ g₂ : ℤ → ℂ} (h₁ : ∀ z : ℤ, ‖g₁
     have hinv : (0 : ℝ) ≤ (n : ℝ)⁻¹ := by positivity
     nlinarith
   have hrest : ‖∑ n ∈ (elliottLogWindow X W) \ (elliottLogWindow X W''), F n‖
-      ≤ ∑ m ∈ Finset.Icc 1 (X / W''), (m : ℝ)⁻¹ := by
+      ≤ ∑ m ∈ Finset.Icc (X / W + 1) (X / W''), (m : ℝ)⁻¹ := by
     refine le_trans (norm_sum_le _ _) ?_
     refine le_trans (Finset.sum_le_sum hterm) ?_
     refine Finset.sum_le_sum_of_subset_of_nonneg hbad ?_
@@ -87,17 +93,22 @@ theorem norm_le_truncated {g₁ g₂ : ℤ → ℂ} (h₁ : ∀ z : ℤ, ‖g₁
     _ ≤ ‖∑ n ∈ elliottLogWindow X W'', F n‖
           + ‖∑ n ∈ (elliottLogWindow X W) \ (elliottLogWindow X W''), F n‖ := norm_add_le _ _
     _ ≤ ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W''‖
-          + ∑ m ∈ Finset.Icc 1 (X / W''), (m : ℝ)⁻¹ := by
+          + ∑ m ∈ Finset.Icc (X / W + 1) (X / W''), (m : ℝ)⁻¹ := by
         rw [elliottLogCorrelation]
         linarith [hrest]
 
-/-- The discarded mass, in closed form. -/
-theorem discarded_mass_le {N : ℕ} :
-    ∑ m ∈ Finset.Icc 1 N, (m : ℝ)⁻¹ ≤ 1 + Real.log (N : ℝ) := by
-  rcases Nat.eq_zero_or_pos N with rfl | hN
-  · simp
-  · have := NormalNumbers.ElliottDivisorTail.sum_Icc_inv_le (a := 1) (b := N) le_rfl hN
-    simpa using this
+/-- The discarded mass, in closed form: `≤ 1 + log (max a N) − log a`, with no side condition
+(the sum is empty when `N < a`). -/
+theorem discarded_mass_le {a N : ℕ} (ha : 1 ≤ a) :
+    ∑ m ∈ Finset.Icc a N, (m : ℝ)⁻¹ ≤ 1 + Real.log ((max a N : ℕ) : ℝ) - Real.log (a : ℝ) := by
+  have haR : (1 : ℝ) ≤ (a : ℝ) := by exact_mod_cast ha
+  rcases le_or_gt a N with h | h
+  · rw [max_eq_right h]
+    exact NormalNumbers.ElliottDivisorTail.sum_Icc_inv_le ha h
+  · rw [max_eq_left h.le]
+    have hempty : Finset.Icc a N = ∅ := Finset.Icc_eq_empty (by omega)
+    rw [hempty, Finset.sum_empty]
+    simp
 
 end
 
