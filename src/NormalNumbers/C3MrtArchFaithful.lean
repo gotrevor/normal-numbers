@@ -1604,6 +1604,203 @@ theorem conjC3_of_geom_input_blocks {c₀ θ D κ₁ : ℝ} (hc₀ : 0 < c₀) (
 #print axioms conjC3_of_geom_input_blocks
 
 
+/-! ### Abel summation: partial-sum savings transfer to the weighted sum
+
+The block target `‖∑_{p ∈ block} χ̄(p)p^{-it}/p‖ ≤ (1−κ)∑_{p ∈ block} 1/p` still carries the
+reciprocal weights.  They can be removed: the weights `1/p` are nonnegative and *decreasing* in
+`p`, so a saving on every **initial segment** of the block transfers to the weighted sum with the
+same constant.  This is Abel summation, applied twice — once against the coefficients and once
+against the indicator of the block — and the two applications produce literally the same weight
+combination, which is why the constant `1 − κ` is preserved exactly with no loss. -/
+
+/-- **Abel transfer.**  If every initial partial sum of `a` saves a factor `1 − κ` against the
+running count `∑ c`, then the sum weighted by any nonnegative decreasing `w` saves the same factor
+against `∑ w·c`.  (`a` is supported on the block, `c` is its indicator, `w i = 1/i`.) -/
+theorem norm_sum_smul_le_of_partial_bound {n : ℕ} {a : ℕ → ℂ} {w c : ℕ → ℝ} {κ : ℝ}
+    (hw0 : ∀ i, 0 ≤ w i) (hwdec : ∀ i, w (i + 1) ≤ w i) (hκ : 0 ≤ 1 - κ)
+    (hA : ∀ m, ‖∑ i ∈ Finset.range m, a i‖
+      ≤ (1 - κ) * ∑ i ∈ Finset.range m, c i) :
+    ‖∑ i ∈ Finset.range n, w i • a i‖ ≤ (1 - κ) * ∑ i ∈ Finset.range n, w i * c i := by
+  classical
+  set A : ℕ → ℂ := fun m => ∑ i ∈ Finset.range m, a i with hA'
+  set C : ℕ → ℝ := fun m => ∑ i ∈ Finset.range m, c i with hC'
+  have hcount : ∑ i ∈ Finset.range n, w i * c i
+      = w (n - 1) * C n - ∑ i ∈ Finset.range (n - 1), (w (i + 1) - w i) * C (i + 1) := by
+    have h := Finset.sum_range_by_parts w c n
+    simpa [hC', smul_eq_mul] using h
+  have hmain : ∑ i ∈ Finset.range n, w i • a i
+      = w (n - 1) • A n - ∑ i ∈ Finset.range (n - 1), (w (i + 1) - w i) • A (i + 1) :=
+    Finset.sum_range_by_parts w a n
+  rw [hmain, hcount]
+  have hstep1 : ‖w (n - 1) • A n - ∑ i ∈ Finset.range (n - 1), (w (i + 1) - w i) • A (i + 1)‖
+      ≤ w (n - 1) * ‖A n‖
+        + ∑ i ∈ Finset.range (n - 1), (w i - w (i + 1)) * ‖A (i + 1)‖ := by
+    refine le_trans (norm_sub_le _ _) ?_
+    have h1 : ‖w (n - 1) • A n‖ = w (n - 1) * ‖A n‖ := by
+      rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg (hw0 _)]
+    have h2 : ‖∑ i ∈ Finset.range (n - 1), (w (i + 1) - w i) • A (i + 1)‖
+        ≤ ∑ i ∈ Finset.range (n - 1), (w i - w (i + 1)) * ‖A (i + 1)‖ := by
+      refine le_trans (norm_sum_le _ _) (Finset.sum_le_sum fun i _ => ?_)
+      rw [norm_smul, Real.norm_eq_abs, abs_of_nonpos (by linarith [hwdec i])]
+      have : -(w (i + 1) - w i) = w i - w (i + 1) := by ring
+      rw [this]
+    linarith
+  have hstep2 : w (n - 1) * ‖A n‖
+        + ∑ i ∈ Finset.range (n - 1), (w i - w (i + 1)) * ‖A (i + 1)‖
+      ≤ w (n - 1) * ((1 - κ) * C n)
+        + ∑ i ∈ Finset.range (n - 1), (w i - w (i + 1)) * ((1 - κ) * C (i + 1)) := by
+    refine add_le_add (mul_le_mul_of_nonneg_left (hA n) (hw0 _))
+      (Finset.sum_le_sum fun i _ => ?_)
+    exact mul_le_mul_of_nonneg_left (hA (i + 1)) (by linarith [hwdec i])
+  have hfin : w (n - 1) * ((1 - κ) * C n)
+        + ∑ i ∈ Finset.range (n - 1), (w i - w (i + 1)) * ((1 - κ) * C (i + 1))
+      = (1 - κ) * (w (n - 1) * C n
+        - ∑ i ∈ Finset.range (n - 1), (w (i + 1) - w i) * C (i + 1)) := by
+    have e1 : ∑ i ∈ Finset.range (n - 1), (w i - w (i + 1)) * ((1 - κ) * C (i + 1))
+        = ∑ i ∈ Finset.range (n - 1), -((1 - κ) * ((w (i + 1) - w i) * C (i + 1))) :=
+      Finset.sum_congr rfl (fun i _ => by ring)
+    rw [e1, Finset.sum_neg_distrib, ← Finset.mul_sum]
+    ring
+  linarith [hstep1, hstep2, hfin.le, hfin.ge]
+
+#print axioms norm_sum_smul_le_of_partial_bound
+
+
+open scoped Classical in
+/-- The primes of the `j`-th dyadic block below `X²`. -/
+noncomputable def blockPrimes (X : ℝ) (j : ℕ) : Finset ℕ :=
+  ((Finset.range (⌈X ^ 2⌉₊ + 1)).filter Nat.Prime).filter (fun p => Nat.log 2 p = j)
+
+theorem dyadicPrimeBlockSum_eq (X : ℝ) {q : ℕ} (χ : DirichletCharacter ℂ q) (t : ℝ) (j : ℕ) :
+    dyadicPrimeBlockSum X χ t j
+      = ∑ p ∈ blockPrimes X j, (starRingEnd ℂ) (χ (p : ZMod q)) *
+          Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ)) / (p : ℂ) := rfl
+
+theorem dyadicPrimeBlockMass_eq (X : ℝ) (j : ℕ) :
+    dyadicPrimeBlockMass X j = ∑ p ∈ blockPrimes X j, ((p : ℝ))⁻¹ := rfl
+
+theorem blockPrimes_prime {X : ℝ} {j p : ℕ} (hp : p ∈ blockPrimes X j) : Nat.Prime p :=
+  (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2
+
+theorem blockPrimes_lt {X : ℝ} {j p : ℕ} (hp : p ∈ blockPrimes X j) : p < ⌈X ^ 2⌉₊ + 1 :=
+  Finset.mem_range.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).1
+
+/-- **The reciprocal-free block debt.**  A constant-fraction cancellation in the twisted character
+sum over every *initial segment* of a dyadic block of primes — no `1/p` weights and no `log log`
+anywhere.  This is a Vinogradov/Vaughan-shaped statement, and by `wideBlockSaving_of_partial` it
+implies `WideBlockSaving`, hence (lap 112) `WideTwistSmall`. -/
+def WideBlockPartial (κ : ℝ) : Prop :=
+  ∀ X : ℝ, 3 ≤ X → ∀ (q : ℕ) (χ : DirichletCharacter ℂ q),
+    (q : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) →
+    ∀ t : ℝ, Real.log X ^ ((1 : ℝ) / 125) < |t| → |t| ≤ X ^ 2 → ∀ j m : ℕ,
+      ‖∑ p ∈ (blockPrimes X j).filter (fun p => p < m),
+          (starRingEnd ℂ) (χ (p : ZMod q)) *
+            Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ))‖
+        ≤ (1 - κ) * (((blockPrimes X j).filter (fun p => p < m)).card : ℝ)
+
+/-- **Abel removes the weights.**  The reciprocal-free initial-segment bound implies the weighted
+block saving, with the SAME constant `1 − κ` — no loss, because the two applications of
+`sum_range_by_parts` produce the identical weight combination. -/
+theorem wideBlockSaving_of_partial {κ : ℝ} (hκ : 0 ≤ 1 - κ) (h : WideBlockPartial κ) :
+    WideBlockSaving κ := by
+  classical
+  intro X hX q χ hqX t hwide ht j
+  set n : ℕ := ⌈X ^ 2⌉₊ + 1 with hn
+  set B : Finset ℕ := blockPrimes X j with hB
+  set F : ℕ → ℂ := fun p => (starRingEnd ℂ) (χ (p : ZMod q)) *
+    Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ)) with hF
+  set a : ℕ → ℂ := fun i => if i ∈ B then F i else 0 with ha
+  set c : ℕ → ℝ := fun i => if i ∈ B then (1 : ℝ) else 0 with hc
+  set w : ℕ → ℝ := fun i => ((max i 1 : ℕ) : ℝ)⁻¹ with hw
+  have hfilter : ∀ m : ℕ,
+      (Finset.range m).filter (fun i => i ∈ B) = B.filter (fun p => p < m) := by
+    intro m
+    ext i
+    simp only [Finset.mem_filter, Finset.mem_range]
+    exact ⟨fun hx => ⟨hx.2, hx.1⟩, fun hx => ⟨hx.2, hx.1⟩⟩
+  have hBfull : B.filter (fun p => p < n) = B := by
+    refine Finset.filter_true_of_mem fun p hp => ?_
+    rw [hB] at hp
+    exact blockPrimes_lt hp
+  -- partial sums of `a` and `c`
+  have hsuma : ∀ m : ℕ, ∑ i ∈ Finset.range m, a i
+      = ∑ p ∈ B.filter (fun p => p < m), F p := by
+    intro m
+    rw [ha, ← Finset.sum_filter, hfilter]
+  have hsumc : ∀ m : ℕ, ∑ i ∈ Finset.range m, c i
+      = ((B.filter (fun p => p < m)).card : ℝ) := by
+    intro m
+    rw [hc, ← Finset.sum_filter, hfilter, Finset.sum_const, nsmul_eq_mul, mul_one]
+  -- the weighted sums are the block sum and the block mass
+  have hwa : ∑ i ∈ Finset.range n, w i • a i = dyadicPrimeBlockSum X χ t j := by
+    rw [dyadicPrimeBlockSum_eq, ← hB]
+    have h1 : ∑ i ∈ Finset.range n, w i • a i
+        = ∑ i ∈ Finset.range n, (if i ∈ B then ((w i : ℝ) : ℂ) * F i else 0) := by
+      refine Finset.sum_congr rfl fun i _ => ?_
+      rw [ha]
+      by_cases hi : i ∈ B
+      · simp only [hi, if_true, Complex.real_smul]
+      · simp only [hi, if_false, smul_zero]
+    rw [h1, ← Finset.sum_filter, hfilter]
+    refine Finset.sum_congr hBfull fun p hp => ?_
+    have hpp : Nat.Prime p := blockPrimes_prime (by rw [hB] at hp; exact hp)
+    have hmax : max p 1 = p := max_eq_left hpp.one_lt.le
+    have hp0 : ((p : ℂ)) ≠ 0 := Nat.cast_ne_zero.mpr hpp.pos.ne'
+    simp only [hw, hF, hmax]
+    push_cast
+    field_simp
+  have hwc : ∑ i ∈ Finset.range n, w i * c i = dyadicPrimeBlockMass X j := by
+    rw [dyadicPrimeBlockMass_eq, ← hB]
+    have h1 : ∑ i ∈ Finset.range n, w i * c i
+        = ∑ i ∈ Finset.range n, (if i ∈ B then w i else 0) := by
+      refine Finset.sum_congr rfl fun i _ => ?_
+      rw [hc]
+      by_cases hi : i ∈ B
+      · simp only [hi, if_true, mul_one]
+      · simp only [hi, if_false, mul_zero]
+    rw [h1, ← Finset.sum_filter, hfilter]
+    refine Finset.sum_congr hBfull fun p hp => ?_
+    have hpp : Nat.Prime p := blockPrimes_prime (by rw [hB] at hp; exact hp)
+    simp only [hw, max_eq_left hpp.one_lt.le]
+  -- Abel
+  have hAbel := norm_sum_smul_le_of_partial_bound (n := n) (a := a) (w := w) (c := c) (κ := κ)
+    (fun i => by rw [hw]; positivity)
+    (fun i => by
+      rw [hw]
+      have h1 : (1 : ℕ) ≤ max i 1 := le_max_right _ _
+      have h2 : max i 1 ≤ max (i + 1) 1 := max_le_max (by omega) le_rfl
+      have h1R : (1 : ℝ) ≤ ((max i 1 : ℕ) : ℝ) := by exact_mod_cast h1
+      have h2R : ((max i 1 : ℕ) : ℝ) ≤ ((max (i + 1) 1 : ℕ) : ℝ) := by exact_mod_cast h2
+      exact inv_anti₀ (by linarith) h2R)
+    hκ
+    (fun m => by
+      rw [hsuma m, hsumc m]
+      exact h X hX q χ hqX t hwide ht j m)
+  rwa [hwa, hwc] at hAbel
+
+#print axioms norm_sum_smul_le_of_partial_bound
+#print axioms wideBlockSaving_of_partial
+
+
+/-- **`ConjC3` on the reciprocal-free block debt.**  The final shape of the archimedean side:
+`UniformResonantMass` (principal narrow corner), `CharPrimeSumLogQ` (a `log`-sized conductor
+bound, classical and Siegel-free at `t = 0`), and `WideBlockPartial` — a constant-fraction
+cancellation in a twisted character sum over the initial segments of one dyadic block of primes,
+with no reciprocal weights and no `log log` anywhere. -/
+theorem conjC3_of_geom_input_blockPartial {c₀ θ D κ₁ : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ)
+    (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ A : ℝ, 0 < A → ∀ b : ℕ, 3 ≤ b → ∀ K,
+      KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hURM : UniformResonantMass)
+    (hD : 0 < D) (hD125 : 2 * D < 125) (hlog : CharPrimeSumLogQ D)
+    (hκ₁ : 0 < κ₁) (hκ₁1 : κ₁ ≤ 1) (hblk : WideBlockPartial κ₁) :
+    ConjC3 :=
+  conjC3_of_geom_input_blocks hc₀ hθ0 hθ m hin hURM hD hD125 hlog hκ₁ hκ₁1
+    (wideBlockSaving_of_partial (by linarith) hblk)
+
+#print axioms conjC3_of_geom_input_blockPartial
+
+
 #print axioms ttPretentiousSumChar_eq
 #print axioms ttPretentiousSumChar_ge
 #print axioms archSupply_of_faithfulArchLower

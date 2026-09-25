@@ -11083,3 +11083,37 @@ primes**.  That is a Vinogradov/Vaughan-type bilinear statement, and unlike the 
 is not scale-degenerate.  Formalize the equivalence `block-norm ⟺ block-count` first (elementary:
 `2^{-(j+1)} ≤ 1/p ≤ 2^{-j}` on the block), which converts the debt into a statement with no
 reciprocals in it.
+
+## 2026-09-25 lap 113 — the wide debt is now reciprocal-free (Abel transfer)
+
+* `norm_sum_smul_le_of_partial_bound` — **Abel transfer, no loss of constant.**  If every initial
+  partial sum of `a` saves a factor `1 − κ` against the running count `∑ c`, then the sum weighted
+  by any nonnegative *decreasing* `w` saves the SAME factor against `∑ w·c`.  Proof: two
+  applications of `Finset.sum_range_by_parts`, once against `a` and once against `c`; they produce
+  literally the same weight combination `w(n−1)·S(n) − ∑ (w(i+1) − w(i))·S(i+1)`, which is why
+  `1 − κ` is preserved exactly.
+* `blockPrimes`, `WideBlockPartial κ` — the reciprocal-free debt:
+  `‖∑_{p ∈ block, p < m} χ̄(p) p^{-it}‖ ≤ (1−κ)·#{p ∈ block : p < m}` for every initial segment.
+  No `1/p` weights, no `log log`, no `X` except through the block.
+* `wideBlockSaving_of_partial` — Abel removes the weights: `WideBlockPartial κ ⟹ WideBlockSaving
+  κ` (indexing by the prime `p` itself with `w p = 1/max(p,1)`, so no enumeration of the block is
+  needed; `a` and `c` are supported on the block).
+* `conjC3_of_geom_input_blockPartial` — the final shape: `ConjC3` from the faithful `K`-point input
+  + `UniformResonantMass` + `CharPrimeSumLogQ` + `WideBlockPartial`.
+
+**Where the C3 archimedean debt now stands.**  Three statements, and the only one that is not
+either pre-existing (`UniformResonantMass`) or classical (`CharPrimeSumLogQ`, Siegel-free at
+`t = 0`) is `WideBlockPartial`: a constant-fraction cancellation in `∑ χ̄(p)p^{-it}` over the
+initial segments of a dyadic block of primes.  That is a bilinear/Vinogradov-shaped statement with
+no scale degeneracy — contrast lap 112's finding that the `log log` route is degenerate at every
+polynomial twist range.
+
+**Next attack.**  `WideBlockPartial` at `q = 1` (no character): the debt is
+`|∑_{p ∈ [2^j, 2^{j+1}), p < m} p^{-it}| ≤ (1−κ)·count` for `|t| > (log X)^{1/125}`.  Probe the
+cheapest sufficient mechanism: `p^{-it} = exp(−it log p)` and `log p` ranges over an interval of
+length `log 2` inside the block, so the phases are `−t·log p` spread over an interval of length
+`|t| log 2 ≫ 1`.  A constant-fraction saving needs only that the primes' `log p` are not
+concentrated in a single residue interval of width `≪ 1/|t|` mod `2π/|t|` — i.e. an equidistribution
+statement for `{t log p / 2π}` at scale `1/|t|`.  Formalize the reduction from a
+"no-concentration" hypothesis on `{t log p}` to `WideBlockPartial`, which converts the analytic
+debt into a statement about the *distribution of `log p`*, not about L-functions at all.
