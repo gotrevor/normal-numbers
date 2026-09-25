@@ -498,20 +498,10 @@ be killed as symmetrized *sums*.  Block-i.i.d. processes (i.i.d. blocks of lengt
 random offset) do kill every `c T` whose trace on some block has odd size, leaving `ρ̃ d =
 ρ d * (m - d) / m` supported on `d < m`; but then `F 2` is eventually affine, so a single scale
 `m` can only realize `S` that is cofinite-or-bounded in a rigid way.  Infinite `S` needs
-infinitely many scales. -/
+infinitely many scales.
 
-/-- **C4, hard branch.**  Every set of window lengths containing `1` is realized exactly. -/
-theorem c4_realizable_of_mem_one (S : Set ℕ) (hS : ∀ L ∈ S, 1 ≤ L) (h1 : 1 ∈ S) :
-    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ L ∈ S) := by
-  sorry
-
-/-- **C4 (ratified headline).**  Every admissible set of window lengths is realized exactly. -/
-theorem c4_realizable (S : Set ℕ) (hS : ∀ L ∈ S, 1 ≤ L) (hadm : S = ∅ ∨ 1 ∈ S) :
-    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ L ∈ S) := by
-  rcases hadm with rfl | h1
-  · refine ⟨fun _ => 0, fun m => by norm_num, fun L hL => ?_⟩
-    simp only [Set.mem_empty_iff_false, iff_false]
-    exact not_isAbelianAt_zero_fun L hL
-  · exact c4_realizable_of_mem_one S hS h1
+**C4's hard branch `c4_realizable_of_mem_one` and the headline `c4_realizable` now live at the
+end of `AbelianWindowBuild.lean`** — they need the nested-layer construction, which imports this
+file.  The statements are unchanged. -/
 
 end NormalNumbers.Abelian

@@ -297,3 +297,79 @@ noncomputable def bLayerSys (harm : ∀ n, 2 ≤ arm n) (hinj : ∀ i j, arm i =
 
 @[simp] theorem bLayerSys_arm (harm : ∀ n, 2 ≤ arm n) (hinj : ∀ i j, arm i = arm j → i = j)
     (n : ℕ) : (bLayerSys arm harm hinj).arm n = arm n := rfl
+
+/-! ## The assembly -/
+
+/-- A concrete binary normal sequence. -/
+noncomputable def binNormal : ℕ → ℕ := digitOf 2 (Int.fract NormalNumbers.G4.Sched.fullRealW)
+
+theorem binNormal_lt_two (m : ℕ) : binNormal m < 2 := digitOf_lt 2 (by norm_num) _ m
+
+theorem binNormal_normal : IsNormalSequence 2 binNormal := by
+  have h := NormalNumbers.G4.Sched.isNormal_two_pow_fullRealW 1 (by norm_num)
+  norm_num [IsNormal] at h
+  exact h
+
+/-- **C4 for any prescribed infinite arm family.** -/
+theorem c4_realizable_of_arms (h2 : ∀ n, 2 ≤ arm n) (hinj : ∀ i j, arm i = arm j → i = j) :
+    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ ∀ i, L ≠ arm i) := by
+  set Ls := bLayerSys arm h2 hinj with hLs
+  refine ⟨Ls.limSeq binNormal, Ls.limSeq_lt_two binNormal, fun L hL => ?_⟩
+  constructor
+  · intro habs i hLi
+    refine Ls.limSeq_not_isAbelianAt binNormal_lt_two binNormal_normal i ?_
+    rw [bLayerSys_arm, ← hLi]
+    exact habs
+  · intro hne
+    refine Ls.limSeq_isAbelianAt binNormal_lt_two binNormal_normal L (fun i => ?_)
+    rw [bLayerSys_arm]
+    exact hne i
+
+/-- **C4, hard branch.**  Every set of window lengths containing `1` is realized exactly.
+(Moved here from `AbelianWindowSets.lean`, which cannot see the construction.) -/
+theorem c4_realizable_of_mem_one (S : Set ℕ) (hS : ∀ L ∈ S, 1 ≤ L) (h1 : 1 ∈ S) :
+    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ L ∈ S) := by
+  classical
+  set p : ℕ → Prop := fun L => 2 ≤ L ∧ L ∉ S with hp
+  have hkey : ∀ L, 1 ≤ L → (¬ p L ↔ L ∈ S) := by
+    intro L hL
+    constructor
+    · intro h
+      by_contra hns
+      refine h ⟨?_, hns⟩
+      rcases Nat.lt_or_ge L 2 with h2 | h2
+      · exact absurd (show L ∈ S from by rw [show L = 1 from by omega]; exact h1) hns
+      · exact h2
+    · intro hmem hc
+      exact hc.2 hmem
+  rcases Set.finite_or_infinite (Set.ofPred p) with hfin | hinf
+  · obtain ⟨s, hs2, hs⟩ := c4_realizable_of_finite_compl hfin.toFinset (fun a ha => by
+      rw [Set.Finite.mem_toFinset] at ha
+      exact ha.1)
+    refine ⟨s, hs2, fun L hL => ?_⟩
+    rw [hs L hL, Set.Finite.mem_toFinset]
+    exact hkey L hL
+  · set arm : ℕ → ℕ := Nat.nth p with harmdef
+    have h2 : ∀ n, 2 ≤ arm n := fun n => (Nat.nth_mem_of_infinite hinf n).1
+    have hinj : ∀ i j, arm i = arm j → i = j := fun i j h => Nat.nth_injective hinf h
+    obtain ⟨s, hs2, hs⟩ := c4_realizable_of_arms arm h2 hinj
+    refine ⟨s, hs2, fun L hL => ?_⟩
+    rw [hs L hL]
+    constructor
+    · intro hne
+      refine (hkey L hL).mp (fun hpL => ?_)
+      obtain ⟨i, hi⟩ := Nat.subset_range_nth (p := p) hpL
+      exact hne i hi.symm
+    · intro hmem i hLi
+      have hmm : p (arm i) := Nat.nth_mem_of_infinite hinf i
+      rw [← hLi] at hmm
+      exact hmm.2 hmem
+
+/-- **C4 (ratified headline).**  Every admissible set of window lengths is realized exactly. -/
+theorem c4_realizable (S : Set ℕ) (hS : ∀ L ∈ S, 1 ≤ L) (hadm : S = ∅ ∨ 1 ∈ S) :
+    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ L ∈ S) := by
+  rcases hadm with rfl | h1
+  · refine ⟨fun _ => 0, fun m => by norm_num, fun L hL => ?_⟩
+    simp only [Set.mem_empty_iff_false, iff_false]
+    exact not_isAbelianAt_zero_fun L hL
+  · exact c4_realizable_of_mem_one S hS h1
