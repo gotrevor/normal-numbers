@@ -1,7 +1,7 @@
 # HANDOFF c3-mrt 2026-09-25 lap86 — the named inputs, and the start of the rate
 
 **Read first:** `DIRECTION.md` → CURRENT DIRECTIVE (OUTRANKS this file).
-Branch `wip/c3-mrt`.  Tip: `NormalNumbers.C3MrtQuantKPoint`.
+Branch `wip/c3-mrt`, HEAD `8480171`, tree clean.  Tip: `NormalNumbers.C3MrtQuantKPoint`.
 
     lake build
     lake build NormalNumbers.C3MrtQuantKPoint
