@@ -552,6 +552,102 @@ theorem dampedPrefix_eq_integral {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) :
     MeasureTheory.integral_finsetSum _ hint]
   exact (Finset.sum_congr rfl hterm).symm
 
+/-! ### Decay of the slice at large `w` -/
+
+/-- The absolute constant `∑_n n^{-3/2}`, used only as a finite bound. -/
+def pSeriesThreeHalves : ℝ := ∑' n : ℕ, ((n : ℝ) ^ (3 / 2 : ℝ))⁻¹
+
+theorem summable_pSeriesThreeHalves :
+    Summable (fun n : ℕ => ((n : ℝ) ^ (3 / 2 : ℝ))⁻¹) :=
+  Real.summable_nat_rpow_inv.mpr (by norm_num)
+
+theorem pSeriesThreeHalves_nonneg : 0 ≤ pSeriesThreeHalves :=
+  tsum_nonneg fun n => by positivity
+
+/-- `log x ≤ 2√x` for `x ≥ 1`, in `rpow` form. -/
+theorem log_le_two_mul_rpow_half {x : ℝ} (hx : 1 ≤ x) :
+    Real.log x ≤ 2 * x ^ (1 / 2 : ℝ) := by
+  have hx0 : (0 : ℝ) < x := by linarith
+  have hroot : (0 : ℝ) < x ^ (1 / 2 : ℝ) := Real.rpow_pos_of_pos hx0 _
+  have hlog : Real.log (x ^ (1 / 2 : ℝ)) ≤ x ^ (1 / 2 : ℝ) - 1 :=
+    Real.log_le_sub_one_of_pos hroot
+  have hhalf : Real.log (x ^ (1 / 2 : ℝ)) = (1 / 2 : ℝ) * Real.log x :=
+    Real.log_rpow hx0 _
+  rw [hhalf] at hlog
+  linarith
+
+/-- **The slice decays geometrically past `w = 1`.**  Beyond the first unit of the `w`-integration
+the abscissa exceeds `2`, and the log-weighted prime sum is dominated by an absolutely convergent
+`p`-series times `2^{-w}`.  This is what makes the improper integral over `(0,∞)` converge, and it
+is completely elementary — no ζ input. -/
+theorem norm_logWeightedSlice_le_decay {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) {w : ℝ} (hw : 1 ≤ w) :
+    ‖logWeightedSlice v X Y w‖ ≤ (4 * pSeriesThreeHalves) * (2 : ℝ) ^ (-w) := by
+  classical
+  have hXR : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+  set δ : ℝ := (Real.log (X : ℝ))⁻¹ with hδ
+  have hδ0 : 0 ≤ δ := by rw [hδ]; positivity
+  refine le_trans (norm_sum_le _ _) ?_
+  have hterm : ∀ p ∈ primesUpTo Y,
+      ‖(starRingEnd ℂ) (archimedeanTwist v p) *
+        (((Real.log (p : ℝ)) * (p : ℝ) ^ (-(1 : ℝ) - δ - w) : ℝ) : ℂ)‖
+        ≤ (2 * (2 : ℝ) ^ (-w)) * (((p : ℝ) ^ (3 / 2 : ℝ))⁻¹ * 2) := by
+    intro p hp
+    have hpp := (mem_primesUpTo.mp hp).1
+    have hppos : 0 < p := hpp.pos
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hp0 : (0 : ℝ) < (p : ℝ) := by linarith
+    have hp1 : (1 : ℝ) ≤ (p : ℝ) := by linarith
+    rw [norm_mul, RCLike.norm_conj, norm_archimedeanTwist hppos v, one_mul,
+      Complex.norm_real, Real.norm_eq_abs,
+      abs_of_nonneg (by positivity : (0 : ℝ) ≤ Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - δ - w))]
+    -- `log p ≤ 2 p^{1/2}`
+    have hlog := log_le_two_mul_rpow_half hp1
+    have hstep1 : Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - δ - w)
+        ≤ (2 * (p : ℝ) ^ (1 / 2 : ℝ)) * (p : ℝ) ^ (-(1 : ℝ) - δ - w) :=
+      mul_le_mul_of_nonneg_right hlog (by positivity)
+    have hcomb : (p : ℝ) ^ (1 / 2 : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - δ - w)
+        = (p : ℝ) ^ (-(1 / 2 : ℝ) - δ - w) := by
+      rw [← Real.rpow_add hp0]
+      congr 1
+      ring
+    have hdrop : (p : ℝ) ^ (-(1 / 2 : ℝ) - δ - w) ≤ (p : ℝ) ^ (-(1 / 2 : ℝ) - w) :=
+      Real.rpow_le_rpow_of_exponent_le hp1 (by linarith)
+    -- `p^{-1/2-w} = p^{-3/2} · p^{1-w} ≤ p^{-3/2} · 2^{1-w}`
+    have hsplit : (p : ℝ) ^ (-(1 / 2 : ℝ) - w) = (p : ℝ) ^ (-(3 / 2 : ℝ)) * (p : ℝ) ^ (1 - w) := by
+      rw [← Real.rpow_add hp0]
+      congr 1
+      ring
+    have hgeo : (p : ℝ) ^ (1 - w) ≤ (2 : ℝ) ^ (1 - w) :=
+      Real.rpow_le_rpow_of_nonpos (by norm_num) hp2 (by linarith)
+    have hinv : (p : ℝ) ^ (-(3 / 2 : ℝ)) = ((p : ℝ) ^ (3 / 2 : ℝ))⁻¹ :=
+      Real.rpow_neg hp0.le _
+    have h2 : (2 : ℝ) ^ (1 - w) = 2 * (2 : ℝ) ^ (-w) := by
+      rw [show (1 : ℝ) - w = 1 + (-w) by ring, Real.rpow_add (by norm_num), Real.rpow_one]
+    have hpow_nonneg : (0 : ℝ) ≤ (p : ℝ) ^ (-(3 / 2 : ℝ)) := by positivity
+    calc Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - δ - w)
+        ≤ 2 * ((p : ℝ) ^ (1 / 2 : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - δ - w)) := by linarith [hstep1]
+      _ = 2 * (p : ℝ) ^ (-(1 / 2 : ℝ) - δ - w) := by rw [hcomb]
+      _ ≤ 2 * (p : ℝ) ^ (-(1 / 2 : ℝ) - w) := by linarith [hdrop]
+      _ = 2 * ((p : ℝ) ^ (-(3 / 2 : ℝ)) * (p : ℝ) ^ (1 - w)) := by rw [hsplit]
+      _ ≤ 2 * ((p : ℝ) ^ (-(3 / 2 : ℝ)) * (2 : ℝ) ^ (1 - w)) := by
+          have := mul_le_mul_of_nonneg_left hgeo hpow_nonneg
+          linarith
+      _ = (2 * (2 : ℝ) ^ (-w)) * (((p : ℝ) ^ (3 / 2 : ℝ))⁻¹ * 2) := by
+          rw [h2, hinv]; ring
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [← Finset.mul_sum]
+  have hbound : ∑ p ∈ primesUpTo Y, (((p : ℝ) ^ (3 / 2 : ℝ))⁻¹ * 2)
+      ≤ 2 * pSeriesThreeHalves := by
+    rw [← Finset.sum_mul, mul_comm]
+    refine mul_le_mul_of_nonneg_left ?_ (by norm_num)
+    exact summable_pSeriesThreeHalves.sum_le_tsum _ (fun n _ => by positivity)
+  have hfac : (0 : ℝ) ≤ 2 * (2 : ℝ) ^ (-w) := by positivity
+  calc (2 * (2 : ℝ) ^ (-w)) * ∑ p ∈ primesUpTo Y, (((p : ℝ) ^ (3 / 2 : ℝ))⁻¹ * 2)
+      ≤ (2 * (2 : ℝ) ^ (-w)) * (2 * pSeriesThreeHalves) :=
+        mul_le_mul_of_nonneg_left hbound hfac
+    _ = (4 * pSeriesThreeHalves) * (2 : ℝ) ^ (-w) := by ring
+
 end
 
 end NormalNumbers.ElliottDamped

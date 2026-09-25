@@ -254,6 +254,26 @@ and the elementary `∑_{p,k≥2} 1/(k p^{kσ}) ≤ 2∑_p p^{-2σ}`), identify 
 apply `integral_le_one_add_log`.  The two ζ'/ζ bounds (pole-local for `|v| ≤ 1`, dVP for `|v| > 1`)
 are the only genuinely cited inputs left on this side.
 
+### ✅ Lap 101 — the slice decays geometrically past `w = 1` (elementary, no ζ)
+
+`norm_logWeightedSlice_le_decay` : for `w ≥ 1`,
+`‖logWeightedSlice v X Y w‖ ≤ (4·∑_n n^{-3/2})·2^{-w}`, uniformly in `X`, `Y`, `v`.
+
+Chain: `‖·‖ ≤ ∑_{p≤Y} log p · p^{-1-δ-w}`; `log p ≤ 2√p` (`log_le_two_mul_rpow_half`, from
+`Real.log_le_sub_one_of_pos` applied to `√p`); drop the `δ`; split
+`p^{-1/2-w} = p^{-3/2}·p^{1-w} ≤ p^{-3/2}·2^{1-w}` (`Real.rpow_le_rpow_of_nonpos`); and compare the
+finite prime sum with `∑'_n n^{-3/2}` (`Summable.sum_le_tsum`).  **No numeric evaluation of the
+`p`-series is needed — it is used only as a finite constant.**
+
+This is what makes the improper `w`-integral over `(0,∞)` converge, and it is the last piece that
+is independent of any ζ input.
+
+**Next (lap 102).**  Assemble: `‖dampedPrefix v X Y‖ ≤ ∫_0^1 ‖slice‖ + ∫_1^∞ ‖slice‖`, the second
+being `≤ 4·pSeriesThreeHalves/(2 log 2)` by this lap, the first being
+`integral_le_one_add_log` applied to the *cited* `ζ'/ζ` bound on `[0,1]`.  That turns
+`DampedSeriesBoundSmall`/`Moderate` into a bound on the slice on `[0,1]` alone — i.e. into the two
+classical `ζ'/ζ` statements, with everything else in the campaign proved.
+
 ### What is OFF the path now
 
 `CharacterClusterRigidity`, `PrimeDensityAP`, `exists_charDefect_le`, `NearTrivialTwist`,

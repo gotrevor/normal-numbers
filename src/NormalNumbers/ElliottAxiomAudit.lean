@@ -205,3 +205,4 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottDamped.archCorrModerate_of_dampedSeriesBound
 #print axioms NormalNumbers.ElliottLogIntegral.integral_rpow_neg_Ioi
 #print axioms NormalNumbers.ElliottDamped.dampedPrefix_eq_integral
+#print axioms NormalNumbers.ElliottDamped.norm_logWeightedSlice_le_decay
