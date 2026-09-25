@@ -141,6 +141,79 @@ theorem genSum_natCast_sub_crtShift {H : ℕ} (w : ℕ → ℂ) (E : ℕ → Fin
     · rw [if_neg (fun hc ↦ hdvd (hiff.mp hc)), if_neg hdvd]
   · rfl
 
+/-! ## The *reindexed* dilated edge family — the one the residue condition wants
+
+`dilatedEdgeFamily` is indexed by the block position `m`.  That is the wrong index for the CRT
+layer: the divisibility the dilated observable carries is `p ∣ n + 1 + j − ⌊p c₁/a⌋` where
+`m = a j + (p c₁ mod a)`, i.e. it is affine in the **progression index `j`**, not in `m`.  Writing
+it in `m` would force the residue random variable to be `a·n + Δ_p`, and
+`Erdos67b.logProb_block_rare_event_le` needs it to be `n` itself.
+
+The fix is to index the edge family by `j` from the start.  Then `genCoordinate`'s standard
+condition `z + (j+1) = 0`, tested at `z = n − crtShift`, is *exactly* the dilated divisibility, and
+laps 27–32 apply unchanged.  The total is unchanged too, by
+`sum_dilatedPairShiftEdge_eq_progression`.
+-/
+
+/-- The `a`-dilated edge family indexed by the progression index `j`: the block position is
+`a*j + (p c₁ mod a)`. -/
+def dilatedEdgeReindexed {H : ℕ} (b c : Fin H → ℂ) (α c₁ h : ℕ) : ℕ → Fin H → ℂ :=
+  fun p j ↦ blockExtend b (α * j.1 + (p * c₁) % α) *
+    blockExtend c (α * j.1 + (p * c₁) % α + p * h)
+
+/-- **Same total.**  Reindexing does not change the edge sum of a prime. -/
+theorem sum_dilatedEdgeReindexed {H : ℕ} (b c : Fin H → ℂ) {α : ℕ} (hα : 0 < α) (c₁ h p : ℕ) :
+    (∑ j : Fin H, dilatedEdgeReindexed b c α c₁ h p j) =
+      ∑ m : Fin H, dilatedPairShiftEdge b c α ((p * c₁ : ℕ) : ℤ) (p * h) m := by
+  classical
+  have hrcast : ((((p * c₁ : ℕ)) : ℤ) % (α : ℤ)).toNat = (p * c₁) % α := by
+    have hc : (((p * c₁ : ℕ) : ℤ) % (α : ℤ)) = (((p * c₁) % α : ℕ) : ℤ) :=
+      (Int.natCast_mod (p * c₁) α).symm
+    rw [hc, Int.toNat_natCast]
+  rw [sum_dilatedPairShiftEdge_eq_progression _ _ hα, hrcast]
+  set r : ℕ := (p * c₁) % α with hrdef
+  have hzero : ∀ j ∈ Finset.range H, j ∉ (Finset.range H).filter (fun j ↦ α * j + r < H) →
+      blockExtend b (α * j + r) * blockExtend c (α * j + r + p * h) = 0 := by
+    intro j hj hj'
+    simp only [Finset.mem_filter, Finset.mem_range] at hj hj'
+    have hover : ¬ (α * j + r < H) := fun hlt ↦ hj' ⟨hj, hlt⟩
+    simp only [blockExtend]
+    rw [dif_neg hover, zero_mul]
+  rw [Finset.sum_subset (Finset.filter_subset _ _) hzero]
+  exact Fin.sum_univ_eq_sum_range
+    (fun j ↦ blockExtend b (α * j + r) * blockExtend c (α * j + r + p * h)) H
+
+/-- **The dilated Fourier mean, from the reindexed family.** -/
+theorem genPrimeGraphMean_dilatedEdgeReindexed {H : ℕ} (w : ℕ → ℂ) (b c : Fin H → ℂ)
+    {α : ℕ} (hα : 0 < α) (c₁ h : ℕ) (s : Finset ℕ) :
+    genPrimeGraphMean w (dilatedEdgeReindexed b c α c₁ h) s =
+      dilatedPairTwistedMean w b c α c₁ h s := by
+  simp only [genPrimeGraphMean, dilatedPairTwistedMean]
+  exact Finset.sum_congr rfl fun p _ ↦ by rw [sum_dilatedEdgeReindexed b c hα c₁ h p]
+
+/-- **The join, at the reindexed dilated edge.** -/
+theorem genMeanCRT_dilatedEdgeReindexed {H : ℕ} (w : ℕ → ℂ) (b c : Fin H → ℂ)
+    {α : ℕ} (hα : 0 < α) (c₁ h : ℕ) (s : Finset ℕ) (hs : s ⊆ Nat.primesLE H) :
+    genMeanCRT w (dilatedEdgeReindexed b c α c₁ h) s =
+      dilatedPairTwistedMean w b c α c₁ h s :=
+  (genMeanCRT_eq_genPrimeGraphMean w _ s hs).trans
+    (genPrimeGraphMean_dilatedEdgeReindexed w b c hα c₁ h s)
+
+theorem norm_blockExtend_le {H : ℕ} {b : Fin H → ℂ} {B : ℝ} (hB : 0 ≤ B)
+    (hb : ∀ j, ‖b j‖ ≤ B) (i : ℕ) : ‖blockExtend b i‖ ≤ B := by
+  unfold blockExtend
+  split_ifs with hi
+  · exact hb _
+  · simpa using hB
+
+theorem norm_dilatedEdgeReindexed_le {H : ℕ} {b c : Fin H → ℂ} {B : ℝ} (hB : 0 ≤ B)
+    (hb : ∀ j, ‖b j‖ ≤ B) (hc : ∀ j, ‖c j‖ ≤ B) (α c₁ h : ℕ) (p : ℕ) (j : Fin H) :
+    ‖dilatedEdgeReindexed b c α c₁ h p j‖ ≤ B ^ 2 := by
+  unfold dilatedEdgeReindexed
+  rw [norm_mul, sq]
+  exact mul_le_mul (norm_blockExtend_le hB hb _) (norm_blockExtend_le hB hc _)
+    (norm_nonneg _) hB
+
 end
 
 end NormalNumbers.ElliottDilatedBridge
@@ -149,3 +222,6 @@ end NormalNumbers.ElliottDilatedBridge
 #print axioms NormalNumbers.ElliottDilatedBridge.norm_dilatedEdgeFamily_le
 
 #print axioms NormalNumbers.ElliottDilatedBridge.genSum_natCast_sub_crtShift
+
+#print axioms NormalNumbers.ElliottDilatedBridge.genMeanCRT_dilatedEdgeReindexed
+#print axioms NormalNumbers.ElliottDilatedBridge.norm_dilatedEdgeReindexed_le

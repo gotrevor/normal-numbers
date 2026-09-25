@@ -157,12 +157,38 @@ genSum w E s (n − crtShift H d)
 shows two identical-looking terms.  Fix: state the `map_sub` / `map_natCast` instance as an
 explicitly-typed `have` using `primeGraphModulus H`, proved by `map_sub _ _ _`.
 
-## NEXT (lap 33 onwards)
+## Lap 33 — the edge family must be indexed by the PROGRESSION index, not the block position
+
+A real obstruction found and removed.  `dilatedEdgeFamily` (lap 31) is indexed by the block
+position `m`.  That is the wrong index for the CRT layer: the divisibility the dilated observable
+carries is `p ∣ n + 1 + j − ⌊p c₁/a⌋` with `m = a j + (p c₁ mod a)`, i.e. **affine in the
+progression index `j`, not in `m`**.  Written in `m` it becomes `m ≡ a d + r − a(n+1) (mod p)`, so
+the residue random variable would have to be `a·n + Δ_p` — and `Erdos67b.logProb_block_rare_event_le`
+requires it to be `n` itself.  (Rescaling by `a⁻¹ mod P` does not save it: `a` is invertible modulo
+each large prime of the graph but not modulo `primeGraphModulus H`, which contains the prime
+factors of `a`.)
+
+The fix is to index the edge family by `j` from the start.  Then `genCoordinate`'s standard
+condition `z + (j+1) = 0` tested at `z = n − crtShift` is *exactly* the dilated divisibility, and
+laps 27–32 apply unchanged.
+
+* `dilatedEdgeReindexed b c α c₁ h p j = blockExtend b (α j + r_p) · blockExtend c (α j + r_p + p h)`,
+  `r_p = (p c₁) mod α`.
+* `sum_dilatedEdgeReindexed` — **same total** as the `m`-indexed family
+  (`sum_dilatedPairShiftEdge_eq_progression` plus the vanishing of the overflow terms).
+* `genPrimeGraphMean_dilatedEdgeReindexed`, `genMeanCRT_dilatedEdgeReindexed` — the join of lap 31,
+  now for the family the CRT layer can actually use.
+* `norm_blockExtend_le`, `norm_dilatedEdgeReindexed_le` — the `B²` hypothesis shape.
+
+## NEXT (lap 34 onwards)
 
 1. **The dilated `pairTwistedSum_sequenceBlock`.**  Instantiate `genSum_natCast_sub_crtShift` at
-   `E = dilatedEdgeFamily (affineBlock f₁ a n H) (affineBlock f₂ a n H) a c₁ h`,
-   `d p = ⌊p c₁ / a⌋`, and rewrite the inner `∑_j` with `sum_dilatedPairShiftEdge_affineBlock` to
-   get a sum of `affineTwistedObservable`s at index `n + 1 + j − d p`.
+   `E = dilatedEdgeReindexed (affineBlock f₁ a n H) (affineBlock f₂ a n H) a c₁ h`,
+   `d p = ⌊p c₁ / a⌋`, and identify the summand with
+   `affineTwistedObservable (pairTwist f₁ f₂) f₁ f₂ a p c₁ (c₁+h) (n + 1 + j − d p)` using the
+   term-level content of `sum_dilatedPairShiftEdge_affineBlock` (which should be extracted as a
+   pointwise lemma: `blockExtend (affineBlock f₁ …) (a j + r) · blockExtend (affineBlock f₂ …) (…)
+   = pairObservable f₁ f₂ a (p c₁) (p c₂) (n+1+j−d)` on the non-overflow range).
 2. Then the correlation-transfer rung with lap 26's
    `norm_logProb_affineTwistedObservable_shift_sub_correlation_le`, and the contradiction.
 2. Combine with lap 26's `norm_logProb_affineTwistedObservable_shift_sub_correlation_le` for the
