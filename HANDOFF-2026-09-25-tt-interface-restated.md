@@ -99,3 +99,20 @@ problem" was false too.
    `∫_E dt/t` **plus** a statement that the integer scales in a dyadic block inherit it.
 3. The crux is unchanged in substance (one Weyl sum, lap 100-101) but its *interface* is now
    `KPointNoExcAtWith`.
+
+---
+
+## Lap 103 addendum — the headline is repaired (same session, after the restatement)
+
+`C3MrtUnifK.KPointNoExcFor Pnp` + `C3MrtSlowSched.ArchSupply Pnp` make the whole
+window/schedule/threshold chain parametric in the archimedean hypothesis, *in place* (old names
+kept as wrappers, no duplication).  Hence
+
+    C3MrtFaithfulInput.conjC3_of_geom_input_at :
+      (∀ b ≥ 3, ∀ K, KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K) →
+      (∀ b ≥ 3, ArchSupply (TTNonPretentiousAt A) b) → ConjC3      (0 < θ < 1)
+
+axiom-clean.  Every row of the SURVIVORS table marked VACUOUS is therefore *recoverable* by the
+same substitution — the plumbing was never the problem.  The ledger now honestly shows TWO open
+inputs (correlation + archimedean supply); the archimedean one used to be hidden inside the
+vacuous `archSupply_tt`.

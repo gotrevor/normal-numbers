@@ -40,6 +40,8 @@ namespace NormalNumbers
 
 namespace CastingOut
 
+variable {Pnp : (ℕ → ℂ) → ℝ → ℝ → Prop}
+
 /-! ### Two elementary `Nat.log` facts -/
 
 theorem add_two_le_two_pow : ∀ k : ℕ, 2 ≤ k → k + 2 ≤ 2 ^ k := by
@@ -751,10 +753,10 @@ theorem depthAvg_gen_tendsto_of_geom_slow {b Q : ℕ} (hb : 2 ≤ b) (hQ : 0 < Q
     {c₀ θ : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
     (KN : ℕ → ℕ) (hKN : ∀ N, 0 < KN N)
     (hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ depthSlow b N)
-    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hin : ∀ K, KPointNoExcFor Pnp (cKgeom c₀ θ b) (CstKdeg m) K)
     {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+      Pnp (zOmegaNat (depthRoot b hh 0)) X L)
     (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
     (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
         ≤ (2 * Real.log (Athr K)) ^ (κ * cKgeom c₀ θ b K))
@@ -865,11 +867,38 @@ theorem weylLambertTwist_of_depthDiagonalSlow {b : ℕ} (hb : 3 ≤ b) (H : Dept
     (eventually_depthSlow_add_le (by omega) 3)
     (tendsto_LLbound_div_pow_depthSlow (by omega)) H
 
-/-- **`DepthDiagonalSlow b` FROM THE GEOMETRICALLY DEGRADING INPUT AT `θ < 1`.**  All twist
-levels, exactly as in `C3MrtUnifK.depthDiagonal_of_geom`. -/
-theorem depthDiagonalSlow_of_geom {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+/-! ### The archimedean certificate as a PARAMETER too
+
+`depthDiagonalSlow_of_geom` is the one place the chain *instantiates* the non-pretentiousness
+hypothesis (at `Pnp = TTNonPretentious`, via `ttNonPretentious_zOmegaNat`).  Lap 102 showed that
+instance is vacuous, so the instantiation is named here as `ArchSupply Pnp b` and the chain is
+restated over it.  For the faithful `Pnp = TTNonPretentiousAt A` (`C3MrtTTDefect`), supplying
+`ArchSupply` is precisely the open archimedean obligation — characters `q > 1` and twists up to
+`X²`; nothing else in the chain changes. -/
+
+/-- **The archimedean certificate, abstracted.**  For every primitive twist `h'` there is an
+exponent `κ ∈ (0, 1]` on which the non-pretentiousness hypothesis `Pnp` holds for
+`zOmegaNat (depthRoot b h' 0)` throughout `1 ≤ L ≤ (log X)^κ`. -/
+def ArchSupply (Pnp : (ℕ → ℂ) → ℝ → ℝ → Prop) (b : ℕ) : Prop :=
+  ∀ h' : ℤ, ¬ ((b : ℤ) ∣ h') → ∃ κ : ℝ, 0 < κ ∧ κ ≤ 1 ∧
+    ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      Pnp (zOmegaNat (depthRoot b h' 0)) X L
+
+/-- The old certificate, in the abstracted shape: unconditional, with `κ = ttExponent`.  It is
+also (lap 102) *content-free*, since `TTNonPretentious` is provable outright. -/
+theorem archSupply_tt {b : ℕ} (hb0 : 0 < b) : ArchSupply TTNonPretentious b := by
+  intro h' hnd
+  have hznorm : ‖depthRoot b h' 0‖ = 1 := norm_ee_real _
+  have hz1 : depthRoot b h' 0 ≠ 1 := depthRoot_ne_one_of_not_dvd hb0 hnd
+  exact ⟨ttExponent (depthRoot b h' 0), ttExponent_pos hznorm hz1,
+    ttExponent_le_one hznorm, ttNonPretentious_zOmegaNat hznorm hz1 le_rfl⟩
+
+/-- **`DepthDiagonalSlow b` from the geometric input, over an ABSTRACT archimedean hypothesis.**
+`depthDiagonalSlow_of_geom` is the `Pnp = TTNonPretentious` instance. -/
+theorem depthDiagonalSlow_of_geom_for {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
     (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
-    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hin : ∀ K, KPointNoExcFor Pnp (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hsup : ArchSupply Pnp b)
     (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdSlow b Q P (cKgeom c₀ θ b)) :
     DepthDiagonalSlow b := by
   intro P Q j hh hQ hj0 hjQ
@@ -878,15 +907,7 @@ theorem depthDiagonalSlow_of_geom {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc�
   · exact depthAvg_zero_tendsto b P Q j hj0 hjQ
   obtain ⟨v, h', hfac, hnd⟩ := exists_pow_mul_not_dvd hb hh hne
   subst hfac
-  set z : ℂ := depthRoot b h' 0 with hzdef
-  have hznorm : ‖z‖ = 1 := norm_ee_real _
-  have hz1 : z ≠ 1 := depthRoot_ne_one_of_not_dvd hb0 hnd
-  set κ : ℝ := ttExponent z with hκdef
-  have hκ : 0 < κ := ttExponent_pos hznorm hz1
-  have hκ1 : κ ≤ 1 := ttExponent_le_one hznorm
-  have hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (depthRoot b h' 0)) X L :=
-    ttNonPretentious_zOmegaNat hznorm hz1 le_rfl
+  obtain ⟨κ, hκ, hκ1, hnp⟩ := hsup h' hnd
   obtain ⟨Athr, hA2, hAthr, hAcut⟩ := hthr P Q hQ κ hκ hκ1
   set KN : ℕ → ℕ := fun N => max 1 (depthSlow b N - v) with hKNdef
   have hKN : ∀ N, 0 < KN N := fun N => lt_of_lt_of_le Nat.zero_lt_one (le_max_left _ _)
@@ -910,6 +931,44 @@ theorem depthDiagonalSlow_of_geom {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc�
     rw [hN]
   exact depthAvg_dvd_tendsto_of_primitive_sched hb P Q j h' v (depthSlow b)
     (tendsto_depthSlow hb) hprim
+
+/-- **THE C3 CRUX, over an abstract archimedean hypothesis.** -/
+theorem weylLambertTwist_of_geom_slow_for {b : ℕ} (hb : 3 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ K, KPointNoExcFor Pnp (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hsup : ArchSupply Pnp b)
+    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdSlow b Q P (cKgeom c₀ θ b)) :
+    WeylLambertTwist b :=
+  weylLambertTwist_of_depthDiagonalSlow hb
+    (depthDiagonalSlow_of_geom_for (by omega) hc₀ hθ0 hθ m hin hsup hthr)
+
+/-- **THE C3 CRUX FROM THE ABSTRACT INPUT ALONE** — the threshold data is discharged. -/
+theorem weylLambertTwist_of_geom_input_for {b : ℕ} (hb : 3 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ K, KPointNoExcFor Pnp (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hsup : ArchSupply Pnp b) :
+    WeylLambertTwist b :=
+  weylLambertTwist_of_geom_slow_for hb hc₀ hθ0 hθ m hin hsup
+    fun P Q _ => kPointThresholdSlow_of_geom (by omega) Q P hc₀ hθ0 hθ
+
+/-- **`ConjC3` FROM THE ABSTRACT `K`-POINT INPUT + ARCHIMEDEAN SUPPLY.**  The headline in the
+shape lap 102 forces: two named inputs, neither of them vacuous by construction. -/
+theorem conjC3_of_geom_input_for {c₀ θ : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ b : ℕ, 3 ≤ b → ∀ K, KPointNoExcFor Pnp (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hsup : ∀ b : ℕ, 3 ≤ b → ArchSupply Pnp b) :
+    ConjC3 :=
+  conjC3_of_weylLambertTwist fun b hb =>
+    weylLambertTwist_of_geom_input_for hb hc₀ hθ0 hθ m (hin b hb) (hsup b hb)
+
+/-- **`DepthDiagonalSlow b` FROM THE GEOMETRICALLY DEGRADING INPUT AT `θ < 1`.**  All twist
+levels, exactly as in `C3MrtUnifK.depthDiagonal_of_geom`. -/
+theorem depthDiagonalSlow_of_geom {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdSlow b Q P (cKgeom c₀ θ b)) :
+    DepthDiagonalSlow b :=
+  depthDiagonalSlow_of_geom_for hb hc₀ hθ0 hθ m (fun K => kPointNoExcFor_of_with (hin K))
+    (archSupply_tt (by omega)) hthr
 
 /-- **THE C3 CRUX FROM THE GEOMETRIC `K`-POINT INPUT, `θ < 1`.**  This supersedes
 `C3MrtUnifK.weylLambertTwist_of_geom`: the admissible decay rate for the `K`-point saving is

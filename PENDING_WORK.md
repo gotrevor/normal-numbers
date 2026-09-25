@@ -28,6 +28,46 @@ the missing content is Dirichlet characters `q > 1` and twists up to `X²`, not 
 ③ Re-read TT 3.1(ii)'s conclusion once more for the exact exceptional-set shape before freezing
 `TwoPointDyadicCorrelation` at general `K`.
 
+## Lap 103 (2026-09-25) — the headline REPAIRED: chain parametric in the archimedean hypothesis
+
+The lap-102 refutation left `conjC3_of_geom_input` vacuous.  Rather than copy the chain, the
+archimedean hypothesis is now a **parameter** everywhere:
+
+* `C3MrtUnifK.KPointNoExcFor Pnp cK CstK K` (+ `kPointNoExcFor_of_with`) — `KPointNoExcWith`
+  with the non-pretentiousness predicate abstracted and the scale condition `3 ≤ X` (all the
+  consumer uses; it applies the input at `X = N²`).  `dyadic_window_bound_with`,
+  `windowPhi_hwin`, `depthAvg_le_with` and the whole tendsto stack up to
+  `depthAvg_gen_tendsto_of_geom` / `_of_geom_slow` are now stated over it — *in place*, with the
+  old call sites wrapped, so nothing downstream was duplicated.
+* `C3MrtSlowSched.ArchSupply Pnp b` — the certificate the chain instantiated silently, named:
+  for every primitive `h'` an exponent `κ ∈ (0,1]` with `Pnp (zOmegaNat (depthRoot b h' 0)) X L`
+  for `1 ≤ L ≤ (log X)^κ`.  `archSupply_tt` is the old (content-free) instance.
+* `depthDiagonalSlow_of_geom_for`, `weylLambertTwist_of_geom_slow_for`,
+  `weylLambertTwist_of_geom_input_for`, `conjC3_of_geom_input_for` — the chain over `Pnp`.
+* **`C3MrtFaithfulInput.conjC3_of_geom_input_at`** — the repaired headline:
+
+      (∀ b ≥ 3, ∀ K, KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K) →
+      (∀ b ≥ 3, ArchSupply (TTNonPretentiousAt A) b) → ConjC3        (0 < θ < 1)
+
+  Both hypotheses faithful (constant outside `X, L`; characters of modulus
+  `≤ (log X)^{1/125}`; twists `|t| ≤ X²`), neither refuted by the constant-one family
+  (`const_one_not_faithful`), neither trivially true (`not_ttNonPretentiousUnif_one`).
+
+**Honest ledger change.** The headline now rests on TWO named open statements, not one: the
+`K`-point correlation input AND the archimedean supply.  The second was previously hidden inside
+a vacuous instance.
+
+**Next attack.** ① Discharge `ArchSupply (TTNonPretentiousAt A) b` as far as the resonance
+machinery reaches: `ttNonPretentious_of_uniformResonantMass` already gives a constant uniform in
+`X, L` (`A = exp(−C₁(z))`); the two genuine gaps are Dirichlet characters `q > 1` (needs the
+character-twisted resonant-mass bound) and twists `|t| ≤ X²` rather than `(log X)^{1/125}` —
+note the latter is where TT's own `M(g; X², Q)` cuts the twist at `X²`, so re-read
+`papers/tao-teravainen-2025-quantitative-correlations.txt:557-576` before assuming the wide
+range is needed for (3.3) as opposed to for the *conclusion*.  ② Rethread `C3MrtRootsInput` /
+`C3MrtDepthInput` / `C3MrtEvtInput` / `C3MrtDyadicInput` onto `KPointNoExcFor` the same way
+(mechanical; they are copies of the `_with` chain).  ③ The crux itself (one Weyl sum, laps
+100-101) is unchanged; its interface is now `KPointNoExcAtWith`.
+
 ## Lap 93 (2026-09-25) — the open input is RESTRICTED to the family the chain actually uses
 
 **New file `src/NormalNumbers/C3MrtRootsInput.lean` (12 declarations, all trust-triple clean).**

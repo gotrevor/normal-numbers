@@ -116,6 +116,43 @@ theorem exists_with_of_kPointNoExc {K : ℕ} (h : KPointNaturalCorrelationNoExc 
   obtain ⟨c, Cst, hc, hCst, hmain⟩ := h
   exact ⟨c, Cst, hc, hCst, hmain⟩
 
+
+/-! ### The archimedean hypothesis as a PARAMETER
+
+Lap 102 found that `TTNonPretentious` is vacuous (`ttNonPretentious_trivial`) and hence
+`KPointNoExcWith` is FALSE (`not_kPointNoExcWith_const_one`).  The repair is to thread the
+non-pretentiousness hypothesis through the whole chain as a **parameter** `Pnp`, so that the
+faithful `CastingOut.TTNonPretentiousAt A` can be substituted for it without copying a line of
+the window/schedule algebra.  Everything from `dyadic_window_bound_with` up to
+`depthAvg_gen_tendsto_of_geom` is stated over `KPointNoExcFor Pnp`; only the two places where
+the archimedean certificate is *instantiated* (`depthDiagonal_of_degrading`,
+`depthDiagonal_of_geom`) name a concrete `Pnp`, and those are exactly the theorems the faithful
+upgrade has to redo. -/
+
+/-- `KPointNoExcWith` with the archimedean hypothesis abstracted to a parameter `Pnp`, and the
+scale condition `3 ≤ X` (which is all the consumer ever uses: it applies the input at
+`X = N²`, `N ≥ 2`).  `Pnp := TTNonPretentious` recovers the old input
+(`kPointNoExcFor_of_with`); `Pnp := TTNonPretentiousAt A` is the faithful one
+(`kPointNoExcFor_of_atWith`, in `C3MrtTTDefect`). -/
+def KPointNoExcFor (Pnp : (ℕ → ℂ) → ℝ → ℝ → Prop) (cK CstK : ℕ → ℝ) (K : ℕ) : Prop :=
+  ∀ g : Fin K → ℕ → ℂ, (∀ i, IsCoprimeMultiplicativeNat (g i)) →
+    (∀ i n, ‖g i n‖ ≤ 1) →
+    ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X →
+      (∃ i, Pnp (g i) X L) →
+        ∀ N : ℕ, Real.sqrt X ≤ (N : ℝ) → (N : ℝ) ≤ X →
+          ∀ (W b : ℕ) (hsh : Fin K → ℕ), 0 < W → (W : ℝ) ≤ L ^ cK K →
+            (∀ i, (hsh i : ℝ) ≤ L ^ cK K) → Function.Injective hsh →
+            ‖((W : ℝ) / (N : ℝ) : ℝ) •
+                ∑ n ∈ (Finset.Ioc N (2 * N)).filter (fun n => n % W = b % W),
+                  ∏ i : Fin K, g i (n + hsh i)‖
+              ≤ CstK K * L ^ (-(cK K))
+
+theorem kPointNoExcFor_of_with {cK CstK : ℕ → ℝ} {K : ℕ} (h : KPointNoExcWith cK CstK K) :
+    KPointNoExcFor TTNonPretentious cK CstK K :=
+  fun g hm hb X L hX => h g hm hb X L (by linarith)
+
+variable {Pnp : (ℕ → ℂ) → ℝ → ℝ → Prop}
+
 /-! ### The quantitative progression average -/
 
 open scoped Classical in
@@ -228,10 +265,10 @@ hypothesis `hthr`, which is a condition on `(K, N)` that can be checked along a 
 
 At `X = N²`, `L = (2 log N)^κ`, shifts `h i = i+1`. -/
 theorem dyadic_window_bound_with {K : ℕ} (hK : 0 < K) {cK CstK : ℕ → ℝ}
-    (h : KPointNoExcWith cK CstK K)
+    (h : KPointNoExcFor Pnp cK CstK K)
     (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1) {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (z 0)) X L)
+      Pnp (zOmegaNat (z 0)) X L)
     {N : ℕ} (hN2 : 2 ≤ N)
     (hthr : max 2 ((K : ℝ) + 1) ≤ (2 * Real.log N) ^ (κ * cK K))
     {M : ℕ} (hM : 0 < M) (r : ℕ) (hML : (M : ℝ) ≤ (2 * Real.log N) ^ (κ * cK K)) :
@@ -502,10 +539,10 @@ open scoped Classical in
 condition at the single scale `A` propagates to every `a ≥ A`, because `a ↦ (2 log a)^(κ·cK K)`
 is increasing.  `A` may — and along the diagonal must — depend on `K`. -/
 theorem windowPhi_hwin {K : ℕ} (hK : 0 < K) {cK CstK : ℕ → ℝ} (hc : 0 < cK K)
-    (h : KPointNoExcWith cK CstK K)
+    (h : KPointNoExcFor Pnp cK CstK K)
     (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1) {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (z 0)) X L)
+      Pnp (zOmegaNat (z 0)) X L)
     {M A : ℕ} (hM : 0 < M) (hA2 : 2 ≤ A)
     (hAthr : max (max 2 ((K : ℝ) + 1)) (M : ℝ) ≤ (2 * Real.log A) ^ (κ * cK K))
     (r : ℕ) {a : ℕ} (haA : A ≤ a) :
@@ -543,10 +580,10 @@ classes and the `1/N`.  Only three quantities move with `K`: `cK K`, `CstK K` an
 scale `A`.  That is exactly the data the diagonal `K = depthLL b N` needs. -/
 theorem depthAvg_le_with {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ) {K : ℕ} (hK : 0 < K)
     {cK CstK : ℕ → ℝ} (hc : 0 < cK K) (hC : 0 < CstK K)
-    (hin : KPointNoExcWith cK CstK K)
+    (hin : KPointNoExcFor Pnp cK CstK K)
     {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+      Pnp (zOmegaNat (depthRoot b hh 0)) X L)
     {A : ℕ} (hA2 : 2 ≤ A)
     (hAthr : max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
         ≤ (2 * Real.log A) ^ (κ * cK K))
@@ -651,10 +688,10 @@ hypothesis is `hsched`, the *schedule compatibility* of the profile —
 which is precisely the uniformity the per-`K` existential could not express (lap 87 F2). -/
 theorem depthAvg_diag_tendsto_of_unif {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
     {cK CstK : ℕ → ℝ} (hc : ∀ K, 0 < cK K) (hC : ∀ K, 0 < CstK K)
-    (hin : ∀ K, KPointNoExcWith cK CstK K)
+    (hin : ∀ K, KPointNoExcFor Pnp cK CstK K)
     {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+      Pnp (zOmegaNat (depthRoot b hh 0)) X L)
     (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
     (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
         ≤ (2 * Real.log (Athr K)) ^ (κ * cK K))
@@ -711,10 +748,10 @@ theorem depthAvg_diag_tendsto_of_unif {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh :
 theorem depthAvg_gen_tendsto_of_unif {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
     {cK CstK : ℕ → ℝ} (hc : ∀ K, 0 < cK K) (hC : ∀ K, 0 < CstK K)
     (KN : ℕ → ℕ) (hKN : ∀ N, 0 < KN N)
-    (hin : ∀ K, KPointNoExcWith cK CstK K)
+    (hin : ∀ K, KPointNoExcFor Pnp cK CstK K)
     {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+      Pnp (zOmegaNat (depthRoot b hh 0)) X L)
     (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
     (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
         ≤ (2 * Real.log (Athr K)) ^ (κ * cK K))
@@ -838,10 +875,10 @@ for free, with no schedule arithmetic: the only remaining hypotheses are that th
 the cut scale both grow, and that the (fixed) threshold sequence is eventually passed. -/
 theorem depthAvg_diag_tendsto_of_uniform {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
     {c₀ Cst₀ : ℝ} (hc₀ : 0 < c₀) (hCst₀ : 0 < Cst₀)
-    (hin : ∀ K, KPointNoExcWith (fun _ => c₀) (fun _ => Cst₀) K)
+    (hin : ∀ K, KPointNoExcFor Pnp (fun _ => c₀) (fun _ => Cst₀) K)
     {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+      Pnp (zOmegaNat (depthRoot b hh 0)) X L)
     (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
     (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
         ≤ (2 * Real.log (Athr K)) ^ (κ * c₀))
@@ -941,10 +978,10 @@ theorem exponent_tendsto_atBot_of_degrading {c₀ : ℝ} (hc₀ : 0 < c₀) {κ 
 price is the single comparison `hgrow`. -/
 theorem depthAvg_diag_tendsto_of_degrading {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
     {c₀ : ℝ} (hc₀ : 0 < c₀) (m : ℕ)
-    (hin : ∀ K, KPointNoExcWith (cKdeg c₀ m) (CstKdeg m) K)
+    (hin : ∀ K, KPointNoExcFor Pnp (cKdeg c₀ m) (CstKdeg m) K)
     {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+      Pnp (zOmegaNat (depthRoot b hh 0)) X L)
     (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
     (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
         ≤ (2 * Real.log (Athr K)) ^ (κ * cKdeg c₀ m K))
@@ -978,10 +1015,10 @@ theorem depthAvg_diag_tendsto_of_degrading {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) 
 theorem depthAvg_gen_tendsto_of_degrading {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
     {c₀ : ℝ} (hc₀ : 0 < c₀) (m : ℕ)
     (KN : ℕ → ℕ) (hKN : ∀ N, 0 < KN N)
-    (hin : ∀ K, KPointNoExcWith (cKdeg c₀ m) (CstKdeg m) K)
+    (hin : ∀ K, KPointNoExcFor Pnp (cKdeg c₀ m) (CstKdeg m) K)
     {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+      Pnp (zOmegaNat (depthRoot b hh 0)) X L)
     (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
     (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
         ≤ (2 * Real.log (Athr K)) ^ (κ * cKdeg c₀ m K))
@@ -1354,10 +1391,10 @@ TT Thm 3.1's `X ≥ X₀(K)` lives; they say the threshold is eventually below `
 threshold depending on `K = O(log log log N)` always satisfies. -/
 theorem depthAvg_diag_tendsto_of_degrading_sched {b Q : ℕ} (hb : 2 ≤ b) (hQ : 0 < Q)
     (P j : ℕ) (hh : ℤ) {c₀ : ℝ} (hc₀ : 0 < c₀) (m : ℕ)
-    (hin : ∀ K, KPointNoExcWith (cKdeg c₀ m) (CstKdeg m) K)
+    (hin : ∀ K, KPointNoExcFor Pnp (cKdeg c₀ m) (CstKdeg m) K)
     {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+      Pnp (zOmegaNat (depthRoot b hh 0)) X L)
     (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
     (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
         ≤ (2 * Real.log (Athr K)) ^ (κ * cKdeg c₀ m K))
@@ -1600,10 +1637,10 @@ theorem depthAvg_gen_tendsto_of_degrading_sched {b Q : ℕ} (hb : 2 ≤ b) (hQ :
     (P j : ℕ) (hh : ℤ) {c₀ : ℝ} (hc₀ : 0 < c₀) (m : ℕ)
     (KN : ℕ → ℕ) (hKN : ∀ N, 0 < KN N)
     (hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ PairDecouple.depthLL b N)
-    (hin : ∀ K, KPointNoExcWith (cKdeg c₀ m) (CstKdeg m) K)
+    (hin : ∀ K, KPointNoExcFor Pnp (cKdeg c₀ m) (CstKdeg m) K)
     {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+      Pnp (zOmegaNat (depthRoot b hh 0)) X L)
     (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
     (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
         ≤ (2 * Real.log (Athr K)) ^ (κ * cKdeg c₀ m K))
@@ -1750,7 +1787,7 @@ theorem depthDiagonal_of_degrading {b : ℕ} (hb : 2 ≤ b) {c₀ : ℝ} (hc₀ 
       Athr (KN N) ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N)) := by
     filter_upwards [hAcut, hKle] with N hcut hle
     exact hcut _ hle
-  have hgen := depthAvg_gen_tendsto_of_degrading_sched hb hQ P j h' hc₀ m KN hKN hKle hin
+  have hgen := depthAvg_gen_tendsto_of_degrading_sched hb hQ P j h' hc₀ m KN hKN hKle (fun K => kPointNoExcFor_of_with (hin K))
     hκ hκ1 hnp Athr hA2 hAthr hAle
   have hprim : Tendsto (fun N : ℕ =>
       depthAvg b P Q j h' (PairDecouple.depthLL b N - v) N) atTop (𝓝 0) := by
@@ -2104,10 +2141,10 @@ theorem depthAvg_gen_tendsto_of_geom {b Q : ℕ} (hb : 2 ≤ b) (hQ : 0 < Q) (P 
     {c₀ θ : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1 / 2) (m : ℕ)
     (KN : ℕ → ℕ) (hKN : ∀ N, 0 < KN N)
     (hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ PairDecouple.depthLL b N)
-    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hin : ∀ K, KPointNoExcFor Pnp (cKgeom c₀ θ b) (CstKdeg m) K)
     {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
     (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+      Pnp (zOmegaNat (depthRoot b hh 0)) X L)
     (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
     (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
         ≤ (2 * Real.log (Athr K)) ^ (κ * cKgeom c₀ θ b K))
@@ -2176,7 +2213,7 @@ theorem depthDiagonal_of_geom {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc₀ : 
       Athr (KN N) ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N)) := by
     filter_upwards [hAcut, hKle] with N hcut hle
     exact hcut _ hle
-  have hgen := depthAvg_gen_tendsto_of_geom hb hQ P j h' hc₀ hθ0 hθ m KN hKN hKle hin
+  have hgen := depthAvg_gen_tendsto_of_geom hb hQ P j h' hc₀ hθ0 hθ m KN hKN hKle (fun K => kPointNoExcFor_of_with (hin K))
     hκ hκ1 hnp Athr hA2 hAthr hAle
   have hprim : Tendsto (fun N : ℕ =>
       depthAvg b P Q j h' (PairDecouple.depthLL b N - v) N) atTop (𝓝 0) := by
