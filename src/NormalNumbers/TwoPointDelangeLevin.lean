@@ -331,4 +331,248 @@ theorem sum_vonMangoldt_div_mul_minFac_le (N : ℕ) :
         Finset.sum_le_sum_of_subset_of_nonneg hsub (fun q _ _ => ppTerm_nonneg q)
     _ ≤ 16 := hprod
 
+
+/-! ### The hyperbola swap -/
+
+/-- `∑_{d ≤ N} k(d)·∑_{e ≤ N/d} T(e) = ∑_{e ≤ N} T(e)·∑_{d ≤ N/e} k(d)`: both sides count the
+lattice points `d·e ≤ N`. -/
+theorem sum_hyperbola_swap {R : Type*} [CommRing R] (k T : ℕ → R) (N : ℕ) :
+    ∑ d ∈ Finset.Ioc 0 N, k d * ∑ e ∈ Finset.Ioc 0 (N / d), T e
+      = ∑ e ∈ Finset.Ioc 0 N, T e * ∑ d ∈ Finset.Ioc 0 (N / e), k d := by
+  classical
+  have hsplit : ∀ (a : ℕ), 0 < a → ∀ (g : ℕ → R),
+      ∑ b ∈ Finset.Ioc 0 (N / a), g b
+        = ∑ b ∈ Finset.Ioc 0 N, if a * b ≤ N then g b else 0 := by
+    intro a ha g
+    rw [← Finset.sum_filter]
+    refine Finset.sum_congr ?_ (fun _ _ => rfl)
+    ext b
+    simp only [Finset.mem_Ioc, Finset.mem_filter]
+    constructor
+    · rintro ⟨hb0, hb⟩
+      have h1 : a * b ≤ N := by
+        have h := (Nat.le_div_iff_mul_le ha).1 hb
+        rw [Nat.mul_comm]; exact h
+      have h2 : b ≤ a * b := Nat.le_mul_of_pos_left b ha
+      exact ⟨⟨hb0, le_trans h2 h1⟩, h1⟩
+    · rintro ⟨⟨hb0, _⟩, hab⟩
+      refine ⟨hb0, (Nat.le_div_iff_mul_le ha).2 ?_⟩
+      rw [Nat.mul_comm]; exact hab
+  have hL : ∑ d ∈ Finset.Ioc 0 N, k d * ∑ e ∈ Finset.Ioc 0 (N / d), T e
+      = ∑ d ∈ Finset.Ioc 0 N, ∑ e ∈ Finset.Ioc 0 N,
+          (if d * e ≤ N then k d * T e else 0) := by
+    refine Finset.sum_congr rfl fun d hd => ?_
+    simp only [Finset.mem_Ioc] at hd
+    rw [hsplit d hd.1 T, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun e _ => ?_
+    by_cases h : d * e ≤ N <;> simp [h]
+  have hR : ∑ e ∈ Finset.Ioc 0 N, T e * ∑ d ∈ Finset.Ioc 0 (N / e), k d
+      = ∑ e ∈ Finset.Ioc 0 N, ∑ d ∈ Finset.Ioc 0 N,
+          (if d * e ≤ N then k d * T e else 0) := by
+    refine Finset.sum_congr rfl fun e he => ?_
+    simp only [Finset.mem_Ioc] at he
+    rw [hsplit e he.1 k, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun d _ => ?_
+    have hc : e * d = d * e := Nat.mul_comm e d
+    rw [hc]
+    by_cases h : d * e ≤ N
+    · rw [if_pos h, if_pos h]; ring
+    · rw [if_neg h, if_neg h, mul_zero]
+  rw [hL, hR, Finset.sum_comm]
+
+/-! ### The scale equation `‖M(N) log N − z·N·T(N)‖ ≤ C·N` -/
+
+/-- `T(N) = ∑_{m ≤ N} z^{ω(m)}/m`. -/
+noncomputable def tOm (z : ℂ) (N : ℕ) : ℂ := ∑ m ∈ Finset.Ioc 0 N, fOm z m / (m : ℂ)
+
+/-- **(A) The defect sum is `O(N)`**, with the absolute constant `32`. -/
+theorem norm_defect_le {z : ℂ} (hz : ‖z‖ = 1) (N : ℕ) :
+    ‖∑ d ∈ Finset.Ioc 0 N,
+        ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * ((z - 1) * gOm z d.minFac (N / d))‖
+      ≤ 32 * N := by
+  have hz1 : ‖z - 1‖ ≤ 2 := by
+    calc ‖z - 1‖ ≤ ‖z‖ + ‖(1:ℂ)‖ := norm_sub_le _ _
+      _ = 2 := by rw [hz]; norm_num
+  have hterm : ∀ d ∈ Finset.Ioc 0 N,
+      ‖((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * ((z - 1) * gOm z d.minFac (N / d))‖
+        ≤ 2 * (N : ℝ) * (ArithmeticFunction.vonMangoldt d / ((d:ℝ) * (d.minFac : ℝ))) := by
+    intro d hd
+    simp only [Finset.mem_Ioc] at hd
+    have hd0 : (0:ℝ) < (d:ℝ) := by exact_mod_cast hd.1
+    have hmf : 0 < d.minFac := Nat.minFac_pos d
+    have hmf0 : (0:ℝ) < (d.minFac : ℝ) := by exact_mod_cast hmf
+    have hΛ : 0 ≤ ArithmeticFunction.vonMangoldt d := vonMangoldt_nonneg
+    have hg : ‖gOm z d.minFac (N / d)‖ ≤ ((N / d : ℕ) : ℝ) / (d.minFac : ℝ) :=
+      norm_gOm_le hz _ _ hmf
+    have hND : ((N / d : ℕ) : ℝ) ≤ (N : ℝ) / (d : ℝ) := Nat.cast_div_le
+    rw [norm_mul, norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hΛ]
+    have h1 : ‖z - 1‖ * ‖gOm z d.minFac (N / d)‖
+        ≤ 2 * ((N : ℝ) / (d : ℝ) / (d.minFac : ℝ)) := by
+      have hgnn : 0 ≤ ‖gOm z d.minFac (N / d)‖ := norm_nonneg _
+      have h2 : ‖gOm z d.minFac (N / d)‖ ≤ (N : ℝ) / (d:ℝ) / (d.minFac : ℝ) := by
+        refine hg.trans ?_
+        gcongr
+      nlinarith [norm_nonneg (z - 1)]
+    calc ArithmeticFunction.vonMangoldt d * (‖z - 1‖ * ‖gOm z d.minFac (N / d)‖)
+        ≤ ArithmeticFunction.vonMangoldt d * (2 * ((N : ℝ) / (d : ℝ) / (d.minFac : ℝ))) :=
+          mul_le_mul_of_nonneg_left h1 hΛ
+      _ = 2 * (N : ℝ) * (ArithmeticFunction.vonMangoldt d / ((d:ℝ) * (d.minFac : ℝ))) := by
+          field_simp
+  refine le_trans (norm_sum_le _ _) ?_
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [← Finset.mul_sum]
+  have hN : (0:ℝ) ≤ (N:ℝ) := Nat.cast_nonneg N
+  have := sum_vonMangoldt_div_mul_minFac_le N
+  nlinarith
+
+/-- **(B) The `ψ`-replacement**, on the hyperbola-averaged quantitative PNT. -/
+theorem exists_norm_psi_replace_le :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ (z : ℂ), ‖z‖ = 1 → ∀ N : ℕ,
+      ‖(∑ d ∈ Finset.Ioc 0 N, ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * mOm z (N / d))
+          - (N : ℂ) * tOm z N‖ ≤ C * N := by
+  obtain ⟨C₀, hC₀, hC⟩ := NormalNumbers.DelangeSlot.exists_sum_abs_deltaN_le
+  refine ⟨C₀ + 1, by linarith, fun z hz N => ?_⟩
+  have hswap : ∑ d ∈ Finset.Ioc 0 N, ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * mOm z (N / d)
+      = ∑ m ∈ Finset.Ioc 0 N, fOm z m * ((NormalNumbers.DelangeSlot.psiN (N / m) : ℝ) : ℂ) := by
+    simp only [mOm]
+    rw [sum_hyperbola_swap (fun d => ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ)) (fOm z) N]
+    refine Finset.sum_congr rfl fun m _ => ?_
+    congr 1
+    rw [NormalNumbers.DelangeSlot.psiN, Complex.ofReal_sum]
+  have hT : (N : ℂ) * tOm z N
+      = ∑ m ∈ Finset.Ioc 0 N, fOm z m * (((N : ℝ) / (m : ℝ) : ℝ) : ℂ) := by
+    rw [tOm, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun m hm => ?_
+    simp only [Finset.mem_Ioc] at hm
+    have hm0 : (m : ℂ) ≠ 0 := by
+      simp only [ne_eq, Nat.cast_eq_zero]; omega
+    push_cast
+    field_simp
+  rw [hswap, hT, ← Finset.sum_sub_distrib]
+  have hbound : ∀ m ∈ Finset.Ioc 0 N,
+      ‖fOm z m * ((NormalNumbers.DelangeSlot.psiN (N / m) : ℝ) : ℂ)
+        - fOm z m * (((N : ℝ) / (m : ℝ) : ℝ) : ℂ)‖
+      ≤ |NormalNumbers.DelangeSlot.deltaN (N / m)| + 1 := by
+    intro m hm
+    simp only [Finset.mem_Ioc] at hm
+    have hm0 : 0 < m := hm.1
+    rw [← mul_sub, norm_mul, ← Complex.ofReal_sub, Complex.norm_real, Real.norm_eq_abs]
+    have hsplit : NormalNumbers.DelangeSlot.psiN (N / m) - (N : ℝ) / (m : ℝ)
+        = NormalNumbers.DelangeSlot.deltaN (N / m) + (((N / m : ℕ) : ℝ) - (N : ℝ) / (m : ℝ)) := by
+      rw [NormalNumbers.DelangeSlot.deltaN]; ring
+    have hfl : |((N / m : ℕ) : ℝ) - (N : ℝ) / (m : ℝ)| ≤ 1 := by
+      have h1 : ((N / m : ℕ) : ℝ) ≤ (N : ℝ) / (m : ℝ) := Nat.cast_div_le
+      have hmR : (0:ℝ) < (m:ℝ) := by exact_mod_cast hm0
+      have h2 : (N : ℝ) / (m : ℝ) < ((N / m : ℕ) : ℝ) + 1 := by
+        have hlt : N < (N / m + 1) * m := by
+          have hd1 := Nat.div_add_mod N m
+          have hd2 : N % m < m := Nat.mod_lt _ hm0
+          have hd3 : (N / m + 1) * m = m * (N / m) + m := by ring
+          omega
+        have : (N:ℝ) < (((N / m : ℕ) : ℝ) + 1) * (m:ℝ) := by exact_mod_cast hlt
+        rw [div_lt_iff₀ hmR]; exact this
+      rw [abs_le]; constructor <;> linarith
+    calc ‖fOm z m‖ * |NormalNumbers.DelangeSlot.psiN (N / m) - (N : ℝ) / (m : ℝ)|
+        ≤ 1 * |NormalNumbers.DelangeSlot.psiN (N / m) - (N : ℝ) / (m : ℝ)| := by
+          have := norm_fOm_le hz m
+          have := abs_nonneg (NormalNumbers.DelangeSlot.psiN (N / m) - (N : ℝ) / (m : ℝ))
+          nlinarith
+      _ = |NormalNumbers.DelangeSlot.deltaN (N / m) + (((N / m : ℕ) : ℝ) - (N : ℝ) / (m : ℝ))| := by
+          rw [one_mul, hsplit]
+      _ ≤ |NormalNumbers.DelangeSlot.deltaN (N / m)| + 1 :=
+          le_trans (abs_add_le _ _) (by linarith)
+  refine le_trans (norm_sum_le _ _) ?_
+  refine le_trans (Finset.sum_le_sum hbound) ?_
+  rw [Finset.sum_add_distrib, Finset.sum_const, Nat.card_Ioc, nsmul_eq_mul]
+  have h1 := hC N
+  have hc0 : ((N - 0 : ℕ) : ℝ) = (N:ℝ) := by simp
+  rw [hc0]
+  linarith
+
+/-- **(C) The log shift.** -/
+theorem norm_log_shift_le {z : ℂ} (hz : ‖z‖ = 1) (N : ℕ) :
+    ‖mOm z N * ((Real.log N : ℝ) : ℂ)
+      - ∑ n ∈ Finset.Ioc 0 N, fOm z n * ((Real.log n : ℝ) : ℂ)‖ ≤ (N : ℝ) := by
+  have hrw : mOm z N * ((Real.log N : ℝ) : ℂ)
+      - ∑ n ∈ Finset.Ioc 0 N, fOm z n * ((Real.log n : ℝ) : ℂ)
+      = ∑ n ∈ Finset.Ioc 0 N, fOm z n * (((Real.log N - Real.log n : ℝ)) : ℂ) := by
+    rw [mOm, Finset.sum_mul, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    push_cast
+    ring
+  rw [hrw]
+  refine le_trans (norm_sum_le _ _) ?_
+  refine le_trans (Finset.sum_le_sum ?_) (sum_log_div_le N)
+  intro n hn
+  simp only [Finset.mem_Ioc] at hn
+  have hlog : 0 ≤ Real.log N - Real.log n := by
+    have h1 : (n : ℝ) ≤ (N : ℝ) := by exact_mod_cast hn.2
+    have h2 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn.1
+    have := Real.log_le_log h2 h1
+    linarith
+  rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hlog]
+  have := norm_fOm_le hz n
+  nlinarith
+
+/-- **The Levin–Fainleib scale equation for `z^ω`.**  With `M(N) = ∑_{n≤N} z^{ω(n)}` and
+`T(N) = ∑_{n≤N} z^{ω(n)}/n`,
+
+    ‖M(N)·log N − z·N·T(N)‖ ≤ C·N ,
+
+with an ABSOLUTE constant `C` — no `(log N)^{‖z−1‖}` anywhere, because `f = z^ω` has modulus one.
+This is the statement the `‖z−1‖ < 1` scale route could not reach. -/
+theorem exists_levin_scale_bound :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ (z : ℂ), ‖z‖ = 1 → ∀ N : ℕ,
+      ‖mOm z N * ((Real.log N : ℝ) : ℂ) - z * (N : ℂ) * tOm z N‖ ≤ C * N := by
+  obtain ⟨CB, hCB0, hCB⟩ := exists_norm_psi_replace_le
+  refine ⟨CB + 33, by linarith, fun z hz N => ?_⟩
+  have hNnn : (0:ℝ) ≤ (N:ℝ) := Nat.cast_nonneg N
+  -- split the Levin–Fainleib identity
+  have hsplit : ∑ n ∈ Finset.Ioc 0 N, fOm z n * ((Real.log n : ℝ) : ℂ)
+      = z * (∑ d ∈ Finset.Ioc 0 N,
+              ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * mOm z (N / d))
+        - ∑ d ∈ Finset.Ioc 0 N,
+            ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * ((z - 1) * gOm z d.minFac (N / d)) := by
+    rw [sum_fOm_log_eq z N, Finset.mul_sum, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun d _ => ?_
+    ring
+  have hB := hCB z hz N
+  have hA := norm_defect_le hz N
+  have hC := norm_log_shift_le hz N
+  have hkey : mOm z N * ((Real.log N : ℝ) : ℂ) - z * (N : ℂ) * tOm z N
+      = (mOm z N * ((Real.log N : ℝ) : ℂ)
+          - ∑ n ∈ Finset.Ioc 0 N, fOm z n * ((Real.log n : ℝ) : ℂ))
+        + z * ((∑ d ∈ Finset.Ioc 0 N,
+              ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * mOm z (N / d)) - (N : ℂ) * tOm z N)
+        - ∑ d ∈ Finset.Ioc 0 N,
+            ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * ((z - 1) * gOm z d.minFac (N / d)) := by
+    rw [hsplit]; ring
+  rw [hkey]
+  have hz' : ‖z‖ = 1 := hz
+  calc ‖(mOm z N * ((Real.log N : ℝ) : ℂ)
+          - ∑ n ∈ Finset.Ioc 0 N, fOm z n * ((Real.log n : ℝ) : ℂ))
+        + z * ((∑ d ∈ Finset.Ioc 0 N,
+              ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * mOm z (N / d)) - (N : ℂ) * tOm z N)
+        - ∑ d ∈ Finset.Ioc 0 N,
+            ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * ((z - 1) * gOm z d.minFac (N / d))‖
+      ≤ ‖(mOm z N * ((Real.log N : ℝ) : ℂ)
+          - ∑ n ∈ Finset.Ioc 0 N, fOm z n * ((Real.log n : ℝ) : ℂ))
+        + z * ((∑ d ∈ Finset.Ioc 0 N,
+              ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * mOm z (N / d)) - (N : ℂ) * tOm z N)‖
+        + ‖∑ d ∈ Finset.Ioc 0 N,
+            ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ)
+              * ((z - 1) * gOm z d.minFac (N / d))‖ := norm_sub_le _ _
+    _ ≤ ((N:ℝ) + 1 * (CB * N)) + 32 * N := by
+        have h1 := norm_add_le (mOm z N * ((Real.log N : ℝ) : ℂ)
+          - ∑ n ∈ Finset.Ioc 0 N, fOm z n * ((Real.log n : ℝ) : ℂ))
+          (z * ((∑ d ∈ Finset.Ioc 0 N,
+              ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * mOm z (N / d)) - (N : ℂ) * tOm z N))
+        have h2 : ‖z * ((∑ d ∈ Finset.Ioc 0 N,
+              ((ArithmeticFunction.vonMangoldt d : ℝ) : ℂ) * mOm z (N / d))
+                - (N : ℂ) * tOm z N)‖ ≤ 1 * (CB * N) := by
+          rw [norm_mul, hz']
+          linarith
+        linarith
+    _ ≤ (CB + 33) * N := by ring_nf; linarith
+
 end NormalNumbers.CastingOut
