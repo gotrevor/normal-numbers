@@ -19,6 +19,7 @@ import NormalNumbers.ElliottReindex
 import NormalNumbers.ElliottDivisorTail
 import NormalNumbers.ElliottExpand
 import NormalNumbers.ElliottZetaPole
+import NormalNumbers.ElliottPrimePower
 import NormalNumbers.ElliottRestricted
 import NormalNumbers.ElliottScaleDescent
 import NormalNumbers.ElliottCaseB
@@ -244,3 +245,8 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottZetaPole.exists_pole_local_bound
 #print axioms NormalNumbers.ElliottZetaPole.exists_far_band_bound
 #print axioms NormalNumbers.ElliottZetaPole.exists_subunit_logDeriv_bound
+
+/-! ### The prime-power correction (lap 109) -/
+#print axioms NormalNumbers.ElliottPrimePower.sum_log_mul_rpow_neg_two_le
+#print axioms NormalNumbers.ElliottPrimePower.sum_half_pow_le
+#print axioms NormalNumbers.ElliottPrimePower.sum_pairs_le

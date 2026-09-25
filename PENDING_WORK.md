@@ -71,7 +71,13 @@ away from `t = 0`.
    `exists_bound_of_continuousOn` argument.  Together with lap 107 this gives the **whole** sub-unit
    cap bound `‖ζ'/ζ(s)‖ ≤ 1/‖s−1‖ + K` on `1 < Re s ≤ 2`, `|Im s| ≤ 1` — i.e. (c′-I) reduced to
    arithmetic only.
-2. *The arithmetic bridge*: `slice = −ζ'/ζ(1+δ+w+iv) + O(1)`, i.e. `LSeries_vonMangoldt_eq_deriv_riemannZeta_div`
+2. ✅ *(lap 109)* The prime-power half of the bridge: `ElliottPrimePower.sum_pairs_le` —
+   **any** finite set of pairs `(m,j)` with `m,j ≥ 2` has `∑ log m·m^{-σj} ≤ ppCost = 16∑n^{-3/2}`,
+   uniformly in `σ ≥ 1`.  The trick that avoids grouping by `p` (and hence any `Λ`-fibre
+   bookkeeping): majorize the term by a **product** `a_m·b_j` with `a_m = log m·m^{-2}`,
+   `b_j = 4·2^{-j}`, then `F ⊆ (image fst) ×ˢ (image snd)` and `Finset.sum_product` factorizes it.
+   So the eventual `n = p^j ↦ (p,j)` may be any injection.
+3. *The arithmetic bridge, remainder*: `slice = −ζ'/ζ(1+δ+w+iv) + O(1)`, i.e. `LSeries_vonMangoldt_eq_deriv_riemannZeta_div`
    plus `logTail_le` (lap 105) for `∑_{p>Y}` and the prime-power correction
    `∑_{p,j≥2} log p·p^{-jσ} ≤ 2∑_{n≥2} log n·n^{-2}` for the `j ≥ 2` terms.
 
