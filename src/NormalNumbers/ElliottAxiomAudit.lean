@@ -9,6 +9,7 @@ import NormalNumbers.ElliottReindex
 import NormalNumbers.ElliottDivisorTail
 import NormalNumbers.ElliottExpand
 import NormalNumbers.ElliottRestricted
+import NormalNumbers.ElliottScaleDescent
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -100,6 +101,10 @@ edits; see the fidelity note in `STATUS.md`.
 -- each restricted correlation becomes genuine correlations at the reduced scale
 #print axioms NormalNumbers.ElliottRestricted.det_newShift
 #print axioms NormalNumbers.ElliottRestricted.norm_restrictedCorr_le
+
+-- non-pretentiousness descends to the reduced scale at an absolute cost
+#print axioms NormalNumbers.ElliottScaleDescent.pretentiousDistSq_descend
+#print axioms NormalNumbers.ElliottScaleDescent.mrtNonpretentious_descend
 #print axioms NormalNumbers.ElliottLeafTwo.exists_squarefull_tail
 
 -- the dependency's proved special case
