@@ -9703,3 +9703,27 @@ cannot do (truncated subtraction under a modulus).
 
 Once those two land, `ConjC3`'s `D = 2` layer is implied by removing the exceptional set from
 TT Theorem 3.1 — a named open problem — and by nothing else.
+
+## Lap 67 (2026-09-25) — `dyadic_window_bound_of_noExc` proved: ONE sorry left on the crux
+
+Sub-goal 1 is closed, `[propext, Classical.choice, Quot.sound]`.  The instantiation is legal
+exactly as designed: at `X = N²` one has `√X = N` (the *left endpoint* of TT's admissible
+range) and `log X = 2 log N =: L`, so `L ≤ log X` holds with **equality** — the strongest
+admissible `L`, which is what makes the saving `L^{-c} = (2 log N)^{-c}` as large as the
+theorem permits.  `N₀` exists only to force `L^c ≥ 2`, i.e. to make `h₂ = 2` admissible; that
+is a `tendsto_rpow_atTop` one-liner.  (`Real.log_two_gt_d9` is needed for `1 ≤ 2 log N` at
+`N = 2` — `nlinarith` cannot see `log 2 > 1/2` on its own.)
+
+**The crux is now ONE `sorry`:** `logToNatural_two_of_noExc`, pure assembly, with all four
+ingredients proved and in the file:
+
+1. `class_sum_split` (lap 66) — progression sum = class sum below `M·J + r` − a `J`-independent
+   head.
+2. `sum_Ioc_pow_decomp` at `A = 2` (`C3MrtRungTwo:181`) — the class sum below `2^I` as the point
+   `1` plus the stack of windows `(2^{i−1}, 2^i]`.
+3. `dyadic_window_bound_of_noExc` (lap 67) — each window `≤ Cst·(2 log 2^i)^{-c}·2^i/M`.
+4. `dyadic_sum_geometric` (lap 65) — `(∑_{i<I} 2^i (2 log 2^i)^{-c})/2^I → 0`.
+
+Remaining care: choose `I = ⌈log₂(M J + r)⌉` so `2^I ≥ M J + r`, absorb the finitely many
+windows below `N₀` into a `J`-independent constant, and note `J ≍ 2^I/M` so dividing by `J`
+converts item 4's normalisation `/2^I` into `/J` up to the factor `M`, which is fixed.

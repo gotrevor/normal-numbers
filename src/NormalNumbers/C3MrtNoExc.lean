@@ -99,7 +99,7 @@ theorem twoPointNatural_of_noExc (h : TwoPointNaturalCorrelationNoExc) :
 The four named sub-goals of `logToNatural_two_of_noExc`.  Each is disclosed as a `sorry` in
 `src/`, deliberately: this is the crux of the `D = 2` layer broken into pieces, not hidden. -/
 
-/-- **Sub-goal 1 (bookkeeping).**  A single dyadic window, at `X = N²`, `L = 2 log N`.
+/-- **Sub-goal 1 (bookkeeping), PROVED.**  A single dyadic window, at `X = N²`, `L = 2 log N`.
 `N = √X` is the left endpoint of the admissible range, and `L = log X`. -/
 theorem dyadic_window_bound_of_noExc (h : TwoPointNaturalCorrelationNoExc)
     {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1)
@@ -110,7 +110,46 @@ theorem dyadic_window_bound_of_noExc (h : TwoPointNaturalCorrelationNoExc)
         ‖∑ n ∈ (Finset.Ioc N (2 * N)).filter (fun n => n % M = r % M),
             z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2)‖
           ≤ Cst * (2 * Real.log N) ^ (-c) * (N : ℝ) / (M : ℝ) := by
-  sorry
+  obtain ⟨c, Cst, hc, hCst, hmain⟩ := h
+  -- `L = 2 log N → ∞`, so `L^c ≥ 2` eventually: that is all `N₀` is for.
+  have hLtend : Tendsto (fun N : ℕ => (2 * Real.log N) ^ c) atTop atTop := by
+    have h1 : Tendsto (fun N : ℕ => 2 * Real.log N) atTop atTop :=
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).const_mul_atTop (by norm_num)
+    exact (tendsto_rpow_atTop hc).comp h1
+  obtain ⟨N₁, hN₁⟩ := Filter.eventually_atTop.1 (hLtend.eventually_ge_atTop 2)
+  refine ⟨c, Cst, hc, hCst, max N₁ 2, fun N hN M r hM hML => ?_⟩
+  have hN2 : 2 ≤ N := le_trans (le_max_right _ _) hN
+  have hNl : N₁ ≤ N := le_trans (le_max_left _ _) hN
+  have h2L : (2 : ℝ) ≤ (2 * Real.log N) ^ c := hN₁ N hNl
+  have hNR : (2 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN2
+  have hNpos : (0 : ℝ) < (N : ℝ) := by linarith
+  have hlogN : Real.log 2 ≤ Real.log N := Real.log_le_log (by norm_num) hNR
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  set X : ℝ := (N : ℝ) ^ 2 with hX
+  have hlogX : Real.log X = 2 * Real.log N := by rw [hX, Real.log_pow]; push_cast; ring
+  have hX2 : 2 ≤ X := by rw [hX]; nlinarith
+  have hlog2gt : (0.6931471803 : ℝ) < Real.log 2 := Real.log_two_gt_d9
+  have hL1 : (1 : ℝ) ≤ 2 * Real.log N := by linarith
+  have hsqrt : Real.sqrt X = (N : ℝ) := by
+    rw [hX, Real.sqrt_sq hNpos.le]
+  have hNX : (N : ℝ) ≤ X := by rw [hX]; nlinarith
+  have hspec := hmain (zOmegaNat z₀) (zOmegaNat z₁)
+    (isCoprimeMultiplicativeNat_zOmegaNat z₀) (isCoprimeMultiplicativeNat_zOmegaNat z₁)
+    (norm_zOmegaNat_le_one hz₀) (norm_zOmegaNat_le_one hz₁) X (2 * Real.log N)
+    hX2 hL1 (le_of_eq hlogX.symm) (hnp X (2 * Real.log N) hX2 hL1 (le_of_eq hlogX.symm))
+    N (by rw [hsqrt]) hNX M r 1 2 hM hML
+    (by simpa using le_trans (by norm_num) h2L) (by simpa using h2L) (by norm_num)
+  rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg (by positivity)] at hspec
+  set S : ℂ := ∑ n ∈ (Finset.Ioc N (2 * N)).filter (fun n => n % M = r % M),
+      zOmegaNat z₀ (n + 1) * zOmegaNat z₁ (n + 2) with hS
+  have hSrw : (∑ n ∈ (Finset.Ioc N (2 * N)).filter (fun n => n % M = r % M),
+      z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2)) = S := by
+    rw [hS]; exact Finset.sum_congr rfl fun n _ => by simp [zOmegaNat]
+  rw [hSrw]
+  have hMpos : (0 : ℝ) < (M : ℝ) := by exact_mod_cast hM
+  rw [div_mul_eq_mul_div, div_le_iff₀ hNpos] at hspec
+  rw [le_div_iff₀ hMpos]
+  nlinarith [hspec, norm_nonneg S, hNpos.le, hMpos.le]
 
 open scoped Classical in
 /-- **Sub-goal 2 (bookkeeping), PROVED.**  The progression sum `∑_{m<J} F(M m + r)` is the
@@ -264,6 +303,8 @@ theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
 #print axioms twoPointNatural_of_noExc
 #print axioms tendsto_geom_weighted_avg
 #print axioms dyadic_sum_geometric
+#print axioms dyadic_window_bound_of_noExc
+#print axioms class_sum_split
 
 end CastingOut
 
