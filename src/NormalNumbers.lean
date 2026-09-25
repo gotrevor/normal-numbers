@@ -384,6 +384,7 @@ import NormalNumbers.Maze
 import NormalNumbers.Walsh
 import NormalNumbers.AbelianBlockDensity
 import NormalNumbers.AbelianNormal
+import NormalNumbers.AbelianWindowSets
 import NormalNumbers.AbelianBinaryExample
 import NormalNumbers.WalshBase
 import NormalNumbers.G4WiringSummatory
