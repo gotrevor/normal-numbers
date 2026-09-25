@@ -9508,3 +9508,33 @@ abbreviation unwound (`IsNormal`/`IsNormalSequence`/`digitOf`, `subsetLambert`/`
 `HANDOFF-2026-09-23-theoremC-COMPLETE.md`'s "next steps"; the campaign's hygiene is now
 complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`; (3) the two off-campaign designated-open `sorry`s.
+
+## Lap 61 (2026-09-25) — `progression_log_rung_class_mult`: the new anchor reaches lap 59's conclusion
+
+**Advance on the crux.** The merely-multiplicative route (lap 60's ESCALATE) now delivers the
+SAME conclusion as `progression_log_rung_class` — the log-averaged `K`-point correlation of
+`ζ^ω` over a residue class — resting on `KPointLogElliottMult K` +
+`TwistedPrimeSumSavingAllLevels` alone.  `src/NormalNumbers/C3MrtMultChase.lean`,
+`[propext, Classical.choice, Quot.sound]`.
+
+The "ONE brick" named in the lap-60 handoff is discharged, and it turned out to need **no new
+mathematics at all**: `class_sum_reindex` (lap 53) + `filter_linear_lt_eq_range` +
+`progression_sum_bound_generic` (lap 46, deliberately generic in the modulus) compose directly.
+The `ε`-budget is a single rescale `ε ↦ ε·M₀`, because the transferred weight carries `M₀⁻¹`.
+Old brick 4b as stated was never needed: `weight_transfer` already sits inside
+`progression_sum_bound_generic`.
+
+**What the new route does NOT use** (and the old chase does): `truncB`/`truncA`, the `ε/2` split,
+`K^{K²}`, `sqfWMass`, `multi_full_sum_bound`, `exists_common_threshold` — i.e. the whole of
+`C3MrtOmegaBridge → MultiForms → MultiMass → MultiTupleMass → MultiTrunc → MultiInner →
+ProgForms → ProgTrunc → ProgInner`.  The old chain stays in `src/`, sorry-free, as the
+completely-multiplicative route; nothing was weakened, renamed or deleted, except the hygiene
+rename `omegaNat_mul_coprime → omegaNat_mul_coprime_pos` in `C3MrtMultElliott` (it collided with
+`SwingC1Katai.omegaNat_mul_coprime` once both files sat in one import closure).
+
+**Next attack (trigger C3-T2, 5 laps left).** `TwoPointNaturalCorrelation` — Tao–Teräväinen
+arXiv 2512.01739 Thm 3.1(ii) stated faithfully (1-bounded multiplicative, natural dyadic
+averaging `∑_{N<n≤2N}`, `L^{-c}` saving with `1 ≤ L ≤ log X`, progression `1_{n≡b (W)}` with
+`W ≤ L^c`, exceptional set `E ⊂ [√X,X]` of log-density `≪ L^{-c}`) — and the `D = 2`
+**natural-density** rung derived from it, which is what discharges `LogToNaturalCorrelation`
+at `K = 2`.

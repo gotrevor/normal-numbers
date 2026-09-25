@@ -83,7 +83,7 @@ noncomputable def zOmegaInt (z : ℂ) : ℤ → ℂ :=
   Erdos67b.positiveIntExtension_natCast hn
 
 /-- `ω` is additive on coprime arguments. -/
-lemma omegaNat_mul_coprime {m n : ℕ} (hm : 0 < m) (hn : 0 < n) (h : Nat.Coprime m n) :
+lemma omegaNat_mul_coprime_pos {m n : ℕ} (hm : 0 < m) (hn : 0 < n) (h : Nat.Coprime m n) :
     omegaNat (m * n) = omegaNat m + omegaNat n := by
   classical
   have hdisj : Disjoint m.primeFactors n.primeFactors :=
@@ -100,7 +100,7 @@ theorem isCoprimeMultiplicativeInt_zOmegaInt (z : ℂ) :
     rw [← this, zOmegaInt_natCast z Nat.one_pos]
     simp [omegaNat]
   · rw [zOmegaInt_natCast z (Nat.mul_pos hm hn), zOmegaInt_natCast z hm,
-      zOmegaInt_natCast z hn, omegaNat_mul_coprime hm hn hmn, pow_add]
+      zOmegaInt_natCast z hn, omegaNat_mul_coprime_pos hm hn hmn, pow_add]
 
 theorem norm_zOmegaInt_le_one {z : ℂ} (hz : ‖z‖ = 1) (n : ℤ) : ‖zOmegaInt z n‖ ≤ 1 := by
   rw [zOmegaInt, Erdos67b.positiveIntExtension]
