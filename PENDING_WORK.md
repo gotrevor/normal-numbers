@@ -10245,3 +10245,63 @@ the image of `elliottLogWindow X W` under `n ↦ a₁n+b₁` lies in `Icc L Y` w
 Then the threshold argument of `exists_caseA_threshold` applies verbatim, with **no** regime
 hypothesis — the Hall route covers *all* `W`, so it will supersede `exists_caseA_threshold`
 rather than complement it.
+
+## Laps 71–75 (2026-09-25) — Case-B assembly bricks, and an OBSTRUCTION found and SOLVED
+
+Five new zero-sorry modules land the mechanical half of `exists_caseB_threshold`:
+
+| module | content |
+|---|---|
+| `ElliottStageStep` | `sum_Icc_norm_squarefullPart_le` (`∑_{d≤D}‖u d‖ ≤ D e²`), and the two reusable bricks **`norm_le_of_reduced`** / **`norm_le_of_reduced_second`**: if every reduced correlation at `(d ≤ D, n₀ < d, d ∣ a n₀ + b)` is `≤ M` then the original is `≤ (M+4D)·D e² + (a+\|b\|)(1+log Y−log L)εt`.  One brick per function; applying them in sequence is what avoids the two-variable `gcd` tail. |
+| `ElliottScaleWindow` | `thinScale a b X W = max 1 (a(⌊X/W⌋+1)−\|b\|)`, `thinScale_le_integerAffine`, and **`logRatio_le`**: `1 + log Y − log (thinScale) ≤ log W + logRatioConst a b`, by the thin/thick dichotomy on `⌊X/W⌋ ≥ 2\|b\|+2`.  This is what makes the truncation cost `O(εt log W)` and not `O(εt log X)`. |
+| `ElliottZeroExt` | **`norm_sub_posExt_le`** — replacing `gᵢ : ℤ → ℂ` by `positiveIntExtension (restrictToNat gᵢ)` costs at most the absolute `2(\|b₁\|+\|b₂\|)`; plus `completelyMultiplicative_restrictToNat`. |
+| `ElliottRestricted` (edited) | `norm_restrictedCorr_le` now sums **only over the residues `n₀` with `d ∣ a₁n₀+b₁`**.  Essential, not cosmetic: only for a divisible class is the determinant preserved, so only there can `AffineCMLogElliott` be applied; the other classes are literally empty. |
+| `ElliottThresholdFamily` | `finalDil₁/₂`, `finalShift₁/₂`, **`det_final`** (the doubly substituted determinant is *exactly* `a₁b₂−a₂b₁`, by two `det_newShift`s), `memberThreshold` + `memberThreshold_spec`, and **`familyThreshold`** — one threshold for the whole finite family `d₁,n₀₁,d₂,n₀₂ ≤ D`. |
+
+### 🚨 OBSTRUCTION (found lap 75) — the dichotomy scale and the transfer scale disagree
+
+`ElliottPretentiousTransfer.mrtNonpretentious_transfer` needs `Σ_x(g₁) = ∑_{p≤x}(1−‖g₁ p‖)/p ≤ D₀`
+at the scale `x` where non-pretentiousness is wanted — i.e. at `x ≈ X` (or `X₂ ≈ X/D²`).  But the
+Case A/B dichotomy is on `Σ_L` at the **thin** scale `L = caseAScale ≈ a₁X/W`, because Hall–Shiu
+only ever sees the smallest affine value on the window.  And
+
+  `Σ_X − Σ_L = ∑_{L<p≤X} 1/p ≈ log(log X / log L)`
+
+is **unbounded** exactly when `W` is close to `X` (then `L ≈ a₁` and `Σ_L ≈ 0` while
+`Σ_X ≈ log log X`).  So Case B as written does not follow from Case B's hypothesis, and Case A
+does not cover the gap either: with `Σ_X ≥ D₀` but `Σ_L` small, the `≈ log W` dyadic blocks near
+`L` give no saving at all.  *This is a real gap in the lap-54 route, not a formalisation nuisance.*
+
+### ✅ RESOLUTION (to build) — truncate the window from below at `W^{ε/4}`
+
+Split the window `(X/W, X]` at `ν := max(X/W, ⌈W^{ε/4}⌉)`:
+
+* the discarded piece `(X/W, ν]` has harmonic mass `≤ log ν − log(X/W) + 1 ≤ (ε/4)·log W + 1`,
+  so it is bounded **trivially**, well inside the `ε log W` budget;
+* the retained piece is the genuine correlation at `(X, W'')` with `W'' = X/ν = min(W, X/W^{ε/4})`,
+  whose thin scale is `L'' ≈ a₁ν` and which satisfies `log W'' ≥ (1−ε/4) log W ≥ (1/2) log W`, so
+  an `ε' log W''` bound is an `ε log W` bound;
+* and now `log ν = max(log(X/W), (ε/4) log W) ≥ (ε/8)·max(log X − log W, log W) ≥ (ε/16)·log X`,
+  hence `X ≤ ν^{16/ε}` and therefore
+
+  `Σ_X − Σ_{L''} ≤ ⌈log₂(16/ε)⌉ · (log 2 + 2·mertensBound)`,
+
+  an **absolute constant depending only on `ε`** — obtained by iterating
+  `ElliottScaleDescent.reciprocalPrimeInterval_le_log_two_add` (which is the `X ≤ X'^2` case)
+  `⌈log₂(16/ε)⌉` times.
+
+`max(a−b, b) ≥ a/2` is the whole trick: whichever of "the window is thin" or "the window is fat"
+holds, one of the two candidate cutoffs is already a fixed power of `X`.
+
+### NEXT, in order
+
+1. `ElliottMertensIterate` — `∑_{L<p≤X} 1/p ≤ k(log 2 + 2·mertensBound)` whenever `X ≤ L^(2^k)`,
+   by iterating `reciprocalPrimeInterval_le_log_two_add`; and the matching
+   `mrtNonpretentious_descend_iter` (same iteration on `pretentiousDistSq_descend`).
+2. `ElliottWindowTruncate` — `‖corr at (X,W)‖ ≤ ‖corr at (X,W'')‖ + (mass of the discarded piece)`,
+   with `W'' ≤ W`, plus the mass bound `≤ log(X/W'') − log(X/W) + 1`.
+3. Re-run the dichotomy of `ElliottLeafTwo` at `(X, W'')` instead of `(X, W)`; Case A is already
+   stated for an arbitrary window so it applies verbatim, and Case B now has `Σ_{X₂} ≤ D₀ + c₁`.
+4. The ε-budget assembly itself (`ElliottStageStep` ×2 + `ElliottThresholdFamily`), with
+   `A'' := min(A, W'')` (`MRTNonpretentious` is monotone downwards in `A`) and
+   `A₀ ≥ max(3(T + 2D₀ + 2c₁ + mrtDescentCost + 1), D²(T'+4), A₀ᴬ², …)`.
