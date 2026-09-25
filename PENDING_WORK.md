@@ -10590,3 +10590,37 @@ Attack for (d), concretely: `∑_{p≤X, p≡a (q)} 1/p ≥ c_q · M(X) − O_q(
 one analytic ingredient; the rest is finite algebra — `(1 − Re(β̄χ̄(a)))·S_a ≤ θM` for each unit
 class `a` gives `χ̄(a) ≈ β` for all `a`, then `χ̄(a)χ̄(b) = χ̄(ab)` forces `β ≈ 1`, and
 `χ(a)^{φ(q)} = 1` (already proved as `dirichletChar_pow_totient`) upgrades `≈ 1` to `= 1`.
+
+## Lap 91 (2026-09-25) — INPUT (d) IS NOW A THEOREM: rigidity derived from Mertens in APs
+
+New `src/NormalNumbers/ElliottCharRigidity.lean`, **zero sorry, trust triple**, in the audit
+surface.  Lap 90's input (d) is no longer assumed: it is *proved* from one standard statement.
+
+* **`eq_one_of_pow_eq_one_of_norm_lt`** — the elementary gap: a `k`-th root of unity with
+  `‖1 − z‖ < 1/k` is `1`.  Proof: if `z ≠ 1` then `∑_{m<k} z^m = 0` (off `geom_sum_mul`), so
+  `k = ‖∑_{m<k}(1 − z^m)‖ ≤ k·k·‖1 − z‖`.  **No cyclotomic theory, no root-of-unity
+  classification, no `orderOf`.**
+* `primeClassMass q a X` and **`PrimeDensityAP A`** — Mertens for arithmetic progressions,
+  `c·M(X) − B ≤ ∑_{p≤X, p≡a (q)} 1/p` for every unit class.  This is the *only* remaining analytic
+  input of branch (d), and it needs no zero-free region (only `L(1,χ) ≠ 0`).
+* `class_defect_le` — restricting the clustering sum to one class: the class's whole mass is
+  multiplied by that class's single character defect.
+* **`exists_characterClusterRigidity`** — (d), with the explicit admissible `θ = c/(32A²)`.
+  The chain: `(1−Re(β̄χ̄(a)))·S_a ≤ θM` and `S_a ≥ (c/2)M` give `≤ 2θ/c`; `‖β − χ̄(a)‖² ≤ 4θ/c`
+  for every unit class, including `a = 1` where `χ̄(1) = 1`; the triangle inequality gives
+  `‖1 − χ(p₀)‖ ≤ 2√(4θ/c) < 1/φ(q)`; then `dirichletChar_pow_totient` + the gap lemma give
+  `χ(p₀) = 1`.
+* **`twoPointElliottLog_of_archimedean_and_density`** — the payoff now rests on exactly two
+  classical statements.
+
+Also: `exists_delta_twistModulusDichotomy` and `twoPointElliottLog_of_classical_inputs` now take
+`∀ A, ∃ θ > 0, CharacterClusterRigidity A θ`, since the admissible `θ` shrinks like `1/A²`.
+
+### The entire remaining debt of DIRECTION item 4
+
+1. **(c)** `‖∑_{p≤X}p^{-iv}/p‖ ≤ (1−η)∑_{p≤X}1/p` for `1 < |v| log X`, `|v| ≤ A²X`.
+2. **(d1)** `PrimeDensityAP`: Mertens in progressions.
+
+Nothing else.  (d1) is the softer of the two and is the next target — `BoundedGaps` already carries
+Siegel–Walfisz and the Dirichlet machinery (`TwistSeparation.lean` imports both), so it is worth a
+survey lap before any new analysis is written.

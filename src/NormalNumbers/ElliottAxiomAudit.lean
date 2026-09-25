@@ -1,6 +1,7 @@
 import NormalNumbers.ElliottTwoPointLog
 import NormalNumbers.ElliottZetaOmegaPretentious
 import NormalNumbers.ElliottTwistBootstrap
+import NormalNumbers.ElliottCharRigidity
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
@@ -154,3 +155,6 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottTwistBootstrap.exists_charDefect_le
 #print axioms NormalNumbers.ElliottTwistBootstrap.twistModulusDichotomy_of_inputs
 #print axioms NormalNumbers.ElliottTwistBootstrap.twoPointElliottLog_of_classical_inputs
+#print axioms NormalNumbers.ElliottCharRigidity.eq_one_of_pow_eq_one_of_norm_lt
+#print axioms NormalNumbers.ElliottCharRigidity.exists_characterClusterRigidity
+#print axioms NormalNumbers.ElliottCharRigidity.twoPointElliottLog_of_archimedean_and_density

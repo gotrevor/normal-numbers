@@ -600,10 +600,11 @@ theorem twistModulusDichotomy_of_inputs {A : ℕ} {η θ δ : ℝ}
         _ = θ * primeMass X := by ring
 
 /-- For each level `A`, a `δ` small enough that the bootstrap loss fits. -/
-theorem exists_delta_twistModulusDichotomy {η θ : ℝ} (hη : 0 < η) (hθ : 0 < θ)
+theorem exists_delta_twistModulusDichotomy {η : ℝ} (hη : 0 < η)
     (harch : ∀ A : ℕ, ArchimedeanCorrelationBound A η)
-    (hrig : ∀ A : ℕ, CharacterClusterRigidity A θ) (A : ℕ) :
+    (hrig : ∀ A : ℕ, ∃ θ : ℝ, 0 < θ ∧ CharacterClusterRigidity A θ) (A : ℕ) :
     ∃ δ : ℝ, 0 < δ ∧ δ ≤ 1 ∧ TwistModulusDichotomy A δ := by
+  obtain ⟨θ, hθ, hrigA⟩ := hrig A
   set R : ℝ := η / (4 * ((A : ℝ) + 1)) with hR
   have hApos : (0 : ℝ) < (A : ℝ) + 1 := by positivity
   have hRpos : 0 < R := by rw [hR]; positivity
@@ -632,7 +633,7 @@ theorem exists_delta_twistModulusDichotomy {η θ : ℝ} (hη : 0 < η) (hθ : 0
       rw [mul_div_assoc', div_lt_div_iff₀ (by positivity) (by norm_num)]
       nlinarith
     linarith
-  exact ⟨δ, hδ0, hδ1.le, twistModulusDichotomy_of_inputs (harch A) (hrig A) hδ0 hδ1 hδθ hboot⟩
+  exact ⟨δ, hδ0, hδ1.le, twistModulusDichotomy_of_inputs (harch A) hrigA hδ0 hδ1 hδθ hboot⟩
 
 /-- **THE PAYOFF, from classical inputs only.**  C1's two-point leaf holds in logarithmic average
 for every `ζ = e(t/b) ≠ 1`, granted the Archimedean prime correlation bound and the rigidity of
@@ -640,12 +641,12 @@ character clustering.  No other unproved statement is involved: the whole Elliot
 this is machine-checked. -/
 theorem twoPointElliottLog_of_classical_inputs {b p q : ℕ} {t : ℝ}
     (hp : 0 < p) (hq : 0 < q) (hpq : p ≠ q)
-    (hu : (phase (t / b)).re < 1) {η θ : ℝ} (hη : 0 < η) (hθ : 0 < θ)
+    (hu : (phase (t / b)).re < 1) {η : ℝ} (hη : 0 < η)
     (harch : ∀ A : ℕ, ArchimedeanCorrelationBound A η)
-    (hrig : ∀ A : ℕ, CharacterClusterRigidity A θ) :
+    (hrig : ∀ A : ℕ, ∃ θ : ℝ, 0 < θ ∧ CharacterClusterRigidity A θ) :
     TwoPointElliottLog b p q t :=
   twoPointElliottLog_of_dichotomy hp hq hpq hu
-    (exists_delta_twistModulusDichotomy hη hθ harch hrig)
+    (exists_delta_twistModulusDichotomy hη harch hrig)
 
 end
 
