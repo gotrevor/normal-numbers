@@ -127,3 +127,11 @@ Two sub-routes refuted in passing: the `‖T‖`-only form of the narrow bound i
 χ = 1), and the existing resonance certificate cannot reach `|t| ≤ X²` because of its
 `log(2+|t|)` loss.  Chain: `faithfulArchLower_of_twist_small` → `FaithfulArchLower` →
 `archSupply_of_faithfulArchLower` → `conjC3_of_geom_input_lower`.
+
+## Lap 105 addendum — narrow range discharged at q = 1
+
+`ttPretentiousSum_lower_of_uniformResonantMass` (extracted from the old vacuous corollary) gives
+`ttExponent z · log log X − C₁ ≤ ttPretentiousSum`, and
+`narrowTwistSmallTriv_of_uniformResonantMass` converts it into `NarrowTwistSmallTriv z
+(ttExponent z) C`.  The narrow range therefore costs no new analysis; the two live debts are the
+characters `q > 1` in the narrow range and `WideTwistSmall` in the wide one.

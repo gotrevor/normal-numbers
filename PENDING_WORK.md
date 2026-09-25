@@ -109,6 +109,28 @@ range `WideTwistSmall`: look for a mathlib/PNTPort route to `∑_{p≤Y} χ(p)p^
 `|t| ≥ (log Y)^{1/125}`; `src/PNTPort` has the Wiener–Ikehara/MediumPNT apparatus but no twisted
 zero-free region.
 
+## Lap 105 (2026-09-25) — the narrow range is DISCHARGED at the trivial character
+
+* `C3MrtTTPretentious.ttPretentiousSum_lower_of_uniformResonantMass` — the resonance
+  certificate's *content*, extracted from the (now vacuous) TT (3.3) corollary:
+  `ttExponent z · log log X − C₁ ≤ ttPretentiousSum (zOmegaNat z) X t` for all `3 ≤ X` and
+  `|t| ≤ (log X)^{1/125}`, with `C₁ = C₁(z) ≥ 0` independent of `X, t`.
+  `ttNonPretentious_of_uniformResonantMass` is now a five-line corollary of it.
+* `C3MrtArchFaithful.narrowTwistSmallTriv_of_uniformResonantMass` —
+  `NarrowTwistSmallTriv z (ttExponent z) C` for unimodular `z ≠ 1`, on the route's existing
+  single analytic input.  Via `ttPretentiousSumChar_eq` + two-sided Mertens + `log_ceil_sq_le`
+  (`log⌈X²⌉ ≤ 3 log X`).
+
+**So the narrow range costs nothing new; the open part of it is exactly the CHARACTERS**
+(`narrowTwistSmall_triv_of_narrow` pins that: `NarrowTwistSmall` at `q = 1` is the discharged
+statement).  Remaining debts, both explicit:
+① narrow range, `q > 1`: resonance windows per residue class mod `q` — a `φ(q)`-fold
+`resonant_mass_le`; the count must beat `(1 − ttExponent) log log X`, and `q ≤ (log X)^{1/125}`
+is the only size information available.
+② wide range `|t| > (log X)^{1/125}`: `WideTwistSmall`, needs cancellation in
+`∑_{p≤Y} conj(χ(p))p^{-it}/p` (zero-free region for `L(s,χ)`); the resonance route is refuted
+there (lap 104).
+
 ## Lap 93 (2026-09-25) — the open input is RESTRICTED to the family the chain actually uses
 
 **New file `src/NormalNumbers/C3MrtRootsInput.lean` (12 declarations, all trust-triple clean).**

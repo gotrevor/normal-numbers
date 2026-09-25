@@ -221,11 +221,103 @@ theorem faithfulArchLower_of_twist_small {b : ℕ} {κ C : ℝ} (hκ : 0 < κ) (
   have hkey := ttPretentiousSumChar_ge (z := depthRoot b h' 0) hX χ t
   nlinarith [hkey, hts, hllmono]
 
+
+/-! ### The narrow range at the trivial character, DISCHARGED
+
+`NarrowTwistSmall` asks for the bound at every modulus `q ≤ (log X)^{1/125}`.  At `q = 1` it is a
+theorem, on the same single analytic input (`UniformResonantMass`) the route already carried:
+the resonance certificate's *content*
+(`ttPretentiousSum_lower_of_uniformResonantMass`, extracted this lap) is exactly a lower bound on
+the pretentious sum, and `ttPretentiousSumChar_eq` converts it into the required upper bound on
+`Re(z · T)`.  The open part of the narrow range is therefore precisely the **characters**. -/
+
+/-- The `q = 1` case of `NarrowTwistSmall`. -/
+def NarrowTwistSmallTriv (z : ℂ) (κ C : ℝ) : Prop :=
+  ∀ X : ℝ, 3 ≤ X → ∀ t : ℝ, |t| ≤ Real.log X ^ ((1 : ℝ) / 125) →
+    (z * twistedPrimeSum X (1 : DirichletCharacter ℂ 1) t).re
+      ≤ (1 - κ) * Real.log (Real.log X) + C
+
+theorem log_ceil_sq_le {X : ℝ} (hX : 3 ≤ X) :
+    Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ) ≤ 3 * Real.log X := by
+  have hlog2 : Real.log 2 ≤ Real.log X := Real.log_le_log (by norm_num) (by linarith)
+  have hceil : ((⌈X ^ 2⌉₊ : ℕ) : ℝ) ≤ X ^ 2 + 1 := by
+    have := Nat.ceil_lt_add_one (show (0:ℝ) ≤ X ^ 2 by positivity)
+    linarith
+  have h2X : X ^ 2 + 1 ≤ 2 * X ^ 2 := by nlinarith
+  calc Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ) ≤ Real.log (2 * X ^ 2) :=
+        Real.log_le_log (by positivity) (le_trans hceil h2X)
+    _ = Real.log 2 + 2 * Real.log X := by
+        rw [Real.log_mul (by norm_num) (by positivity), Real.log_pow]; push_cast; ring
+    _ ≤ 3 * Real.log X := by linarith
+
+/-- **The narrow range, at the trivial character, from the route's existing analytic input.**
+`κ = ttExponent z > 0` for a unimodular `z ≠ 1`. -/
+theorem narrowTwistSmallTriv_of_uniformResonantMass (hURM : UniformResonantMass)
+    {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) :
+    ∃ C : ℝ, NarrowTwistSmallTriv z (ttExponent z) C := by
+  obtain ⟨C₁, hC₁0, hlow⟩ := ttPretentiousSum_lower_of_uniformResonantMass hURM hz hz1
+  refine ⟨Real.log 3 + Erdos67b.PrimeEstimates.mertensBound + C₁, fun X hX t ht => ?_⟩
+  set Y : ℕ := ⌈X ^ 2⌉₊ with hY
+  have hlogX : (1 : ℝ) ≤ Real.log X := by
+    have h1 : Real.log 3 ≤ Real.log X := Real.log_le_log (by norm_num) hX
+    have h3 : (1 : ℝ) ≤ Real.log 3 := by
+      have h := Real.log_le_log (Real.exp_pos 1) (show Real.exp 1 ≤ 3 by
+        nlinarith [Real.exp_one_lt_d9])
+      rwa [Real.log_exp] at h
+    linarith
+  have hXY : X ^ 2 ≤ (Y : ℝ) := Nat.le_ceil _
+  have hY2 : 2 ≤ Y := by
+    have h1 : (2 : ℝ) ≤ X ^ 2 := by nlinarith
+    have : (2 : ℝ) ≤ (Y : ℝ) := le_trans h1 hXY
+    exact_mod_cast this
+  -- Mertens, upper side
+  have hmassle : ∑ p ∈ (Finset.range (Y + 1)).filter Nat.Prime, ((p : ℝ))⁻¹
+      ≤ Real.log (Real.log (Y : ℝ)) + Erdos67b.PrimeEstimates.mertensBound := by
+    have h := abs_le.1 (Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le hY2)
+    have hrw : Erdos67b.PrimeEstimates.primeReciprocals Y
+        = ∑ p ∈ (Finset.range (Y + 1)).filter Nat.Prime, ((p : ℝ))⁻¹ := rfl
+    rw [← hrw]; linarith [h.2]
+  -- log log Y ≤ log log X + log 3
+  have hllY : Real.log (Real.log (Y : ℝ)) ≤ Real.log 3 + Real.log (Real.log X) := by
+    have h1 : Real.log (Y : ℝ) ≤ 3 * Real.log X := log_ceil_sq_le hX
+    calc Real.log (Real.log (Y : ℝ)) ≤ Real.log (3 * Real.log X) :=
+          Real.log_le_log (by
+            have : (2 : ℝ) ≤ (Y : ℝ) := by exact_mod_cast hY2
+            have := Real.log_le_log (by norm_num : (0:ℝ) < 2) this
+            have h2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+            linarith) h1
+      _ = Real.log 3 + Real.log (Real.log X) := by
+          rw [Real.log_mul (by norm_num) (by linarith)]
+  -- the split, at the trivial character
+  have hsplit := ttPretentiousSumChar_eq (z := z) X (1 : DirichletCharacter ℂ 1) t
+  rw [ttPretentiousSumChar_one] at hsplit
+  have hlow' := hlow X hX t ht
+  rw [hsplit] at hlow'
+  linarith [hmassle, hllY]
+
+/-- The character-indexed narrow bound restricted to `q = 1` — the shape
+`faithfulArchLower_of_twist_small` consumes.  The remaining gap in the narrow range is exactly
+`q > 1`: TT's infimum runs over all moduli `q ≤ (log X)^{1/125}`, and the resonance windows must
+then be counted per residue class mod `q`. -/
+theorem narrowTwistSmall_triv_of_narrow {z : ℂ} {κ C : ℝ} (h : NarrowTwistSmall z κ C) :
+    NarrowTwistSmallTriv z κ C :=
+  fun X hX t ht => h X hX 1 (1 : DirichletCharacter ℂ 1)
+    (by
+      have hlogX : (1 : ℝ) ≤ Real.log X := by
+        have h1 : Real.log 3 ≤ Real.log X := Real.log_le_log (by norm_num) hX
+        have h3 : (1 : ℝ) ≤ Real.log 3 := by
+          have h := Real.log_le_log (Real.exp_pos 1) (show Real.exp 1 ≤ 3 by
+            nlinarith [Real.exp_one_lt_d9])
+          rwa [Real.log_exp] at h
+        linarith
+      simpa using Real.one_le_rpow hlogX (by norm_num : (0:ℝ) ≤ 1 / 125)) t ht
+
 #print axioms ttPretentiousSumChar_eq
 #print axioms ttPretentiousSumChar_ge
 #print axioms archSupply_of_faithfulArchLower
 #print axioms conjC3_of_geom_input_lower
 #print axioms faithfulArchLower_of_twist_small
+#print axioms narrowTwistSmallTriv_of_uniformResonantMass
 
 end CastingOut
 

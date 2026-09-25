@@ -207,13 +207,17 @@ theorem ttExponent_pos {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) : 0 < ttExpo
   have : 0 < 1 - (126 / 125 : ℝ) * (100 * ttEps z) := by nlinarith
   exact mul_pos h1 this
 
-/-- **TT's hypothesis (3.3), discharged for `z^ω`.**  Given the uniform resonant-mass bound,
-a unimodular `z ≠ 1` is non-pretentious in Tao–Teräväinen's sense at every `X ≥ 3`, for every
-`L` up to the power `(log X)^{κ(z)}`. -/
-theorem ttNonPretentious_of_uniformResonantMass (hURM : UniformResonantMass)
-    {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) {κ : ℝ} (hκ : κ ≤ ttExponent z) :
-    ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
-      TTNonPretentious (zOmegaNat z) X L := by
+/-- **The archimedean lower bound, extracted** (lap 104).  The *content* of the resonance
+certificate: for a unimodular `z ≠ 1` the pretentious sum exceeds `κ(z) log log X` up to an
+absolute constant, uniformly over the narrow twist range `|t| ≤ (log X)^{1/125}`.
+
+This is the reusable form.  `ttNonPretentious_of_uniformResonantMass` is the (now vacuous, lap
+102) TT (3.3) corollary; `C3MrtArchFaithful.narrowTwistSmall_of_uniformResonantMass` is the
+faithful consumer, which needs the bound and not the corollary. -/
+theorem ttPretentiousSum_lower_of_uniformResonantMass (hURM : UniformResonantMass)
+    {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) :
+    ∃ C₁ : ℝ, 0 ≤ C₁ ∧ ∀ X : ℝ, 3 ≤ X → ∀ t : ℝ, |t| ≤ Real.log X ^ ((1 : ℝ) / 125) →
+      ttExponent z * Real.log (Real.log X) - C₁ ≤ ttPretentiousSum (zOmegaNat z) X t := by
   set ε := ttEps z with hε
   have hε0 : 0 < ε := ttEps_pos hz hz1
   have hq : ε ≤ 1 / 256 := ttEps_le_quarter
@@ -227,7 +231,10 @@ theorem ttNonPretentious_of_uniformResonantMass (hURM : UniformResonantMass)
     rw [Real.cos_zero] at h; linarith
   set C₁ : ℝ := (1 - Real.cos ε)
       * (C + Erdos67b.PrimeEstimates.mertensBound + (100 * ε) * Real.log 4) with hC₁
-  refine fun X L hX hL1 hLX => ⟨Real.exp (-C₁), Real.exp_pos _, fun t ht => ?_⟩
+  have hmert0 : 0 ≤ Erdos67b.PrimeEstimates.mertensBound :=
+    Erdos67b.PrimeEstimates.mertensBound_nonneg
+  have hlog4 : 0 ≤ Real.log 4 := Real.log_nonneg (by norm_num)
+  refine ⟨C₁, by rw [hC₁]; positivity, fun X hX t ht => ?_⟩
   -- basic size facts
   have hX0 : (0 : ℝ) < X := by linarith
   have hlogX : (1 : ℝ) ≤ Real.log X := by
@@ -291,18 +298,37 @@ theorem ttNonPretentious_of_uniformResonantMass (hURM : UniformResonantMass)
       nlinarith [hcos.le]
     refine le_trans hkey (mul_le_mul_of_nonneg_left ?_ hcos.le)
     linarith [hmass, hres]
-  -- exponentiate
-  have hfinal : Real.exp (-C₁) * L ≤ Real.exp (ttPretentiousSum (zOmegaNat z) X t) := by
-    refine le_trans ?_ (Real.exp_le_exp.2 hlower)
-    rw [Real.exp_sub, mul_comm]
-    have hLle : L ≤ Real.exp (ttExponent z * Real.log (Real.log X)) := by
-      refine le_trans hLX ?_
-      rw [Real.rpow_def_of_pos (by linarith)]
-      exact Real.exp_le_exp.2 (by nlinarith [mul_le_mul_of_nonneg_right hκ hllX])
-    have : (0:ℝ) < Real.exp C₁ := Real.exp_pos _
-    rw [div_eq_mul_inv, ← Real.exp_neg] at *
-    nlinarith [Real.exp_pos (-C₁), hLle]
-  exact hfinal
+  exact hlower
+
+/-- **TT's hypothesis (3.3), discharged for `z^ω`.**  Given the uniform resonant-mass bound, a
+unimodular `z ≠ 1` is non-pretentious in Tao–Teräväinen's *old* (lap-102 vacuous) sense at every
+`X ≥ 3`, for every `L` up to `(log X)^{κ(z)}`.  Kept for the ledger; the content is
+`ttPretentiousSum_lower_of_uniformResonantMass`. -/
+theorem ttNonPretentious_of_uniformResonantMass (hURM : UniformResonantMass)
+    {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) {κ : ℝ} (hκ : κ ≤ ttExponent z) :
+    ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat z) X L := by
+  obtain ⟨C₁, hC₁0, hlow⟩ := ttPretentiousSum_lower_of_uniformResonantMass hURM hz hz1
+  refine fun X L hX hL1 hLX => ⟨Real.exp (-C₁), Real.exp_pos _, fun t ht => ?_⟩
+  have hlogX : (1 : ℝ) ≤ Real.log X := by
+    have h1 : Real.log 3 ≤ Real.log X := Real.log_le_log (by norm_num) hX
+    have h3 : (1 : ℝ) ≤ Real.log 3 := by
+      have h := Real.log_le_log (Real.exp_pos 1) (show Real.exp 1 ≤ 3 by
+        nlinarith [Real.exp_one_lt_d9])
+      rwa [Real.log_exp] at h
+    linarith
+  have hll : (0 : ℝ) ≤ Real.log (Real.log X) := Real.log_nonneg hlogX
+  have hLexp : L ≤ Real.exp (ttExponent z * Real.log (Real.log X)) := by
+    refine le_trans hLX ?_
+    rw [Real.rpow_def_of_pos (by linarith)]
+    exact Real.exp_le_exp.mpr (by nlinarith [mul_le_mul_of_nonneg_right hκ hll])
+  calc Real.exp (-C₁) * L
+      ≤ Real.exp (-C₁) * Real.exp (ttExponent z * Real.log (Real.log X)) :=
+        mul_le_mul_of_nonneg_left hLexp (Real.exp_pos _).le
+    _ = Real.exp (ttExponent z * Real.log (Real.log X) - C₁) := by
+        rw [← Real.exp_add]; ring_nf
+    _ ≤ Real.exp (ttPretentiousSum (zOmegaNat z) X t) :=
+        Real.exp_le_exp.mpr (hlow X hX t ht)
 
 theorem ttExponent_le_one {z : ℂ} (hz : ‖z‖ = 1) : ttExponent z ≤ 1 := by
   have hpi : (3 : ℝ) < π := Real.pi_gt_three
