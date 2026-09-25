@@ -1,6 +1,7 @@
 import NormalNumbers.ElliottDilatedSlice
 import NormalNumbers.ElliottDilatedGrouped
 import NormalNumbers.ElliottDilatedFourier
+import NormalNumbers.ElliottDilatedSelectMirror
 
 /-!
 # The live crux route: `DilatedCMLogElliott` from the `a`-dilated graph stack
@@ -524,13 +525,222 @@ theorem dilatedNatShiftCMLogElliott : DilatedNatShiftCMLogElliott := by
         add_le_add (mul_le_mul_of_nonneg_left hMhi hη.le) herror
     _ = ε * Real.log W := by rw [hηdef]; ring
 
-/-- **Open leaf 2 of the crux.**  The mirrored orientation of `dilatedNatShiftCMLogElliott`.
-In the pure-shift case this was `NormalNumbers.ElliottTwistedGraph.shiftCMLogElliottMirror`, proved
-by running the same graph argument with the roles of the two blocks exchanged; the dilated stack is
-symmetric in the same way (the asymmetry enters only through which block's Fourier first moments
-the upper bound consumes). -/
+/-- **Leaf 2 of the crux, PROVED.**  The mirrored orientation of `dilatedNatShiftCMLogElliott`:
+non-pretentiousness now sits on the function at the **larger** shift.
+
+The asymmetry of the dilated stack is only apparent.  In
+`NormalNumbers.ElliottDilatedPairing.norm_dilatedPairTwistedMean_le_largeFrequencies` the two blocks
+enter the pairing `‖F_b(t+uD)‖ · ‖F_{conj c}(t)‖` symmetrically and Parseval is applied to both, so
+which factor survives in the large-frequency sum is a free choice; `ElliottDilatedUpperMirror` makes
+the other choice and `ElliottDilatedSelectMirror` pushes it through the (function-symmetric) lower
+bound and the entropy selection.  This proof is then the forward one verbatim, with MRT applied to
+`conj ∘ f₂` — legitimate because `MRTNonpretentious` is conjugation-invariant
+(`NormalNumbers.ElliottTwistedGraph.mrtNonpretentious_conj`). -/
 theorem dilatedNatShiftCMLogElliottMirror : DilatedNatShiftCMLogElliottMirror := by
-  sorry
+  classical
+  intro a c₁ h ha hh ε hε
+  have har : (0 : ℝ) < a := Nat.cast_pos.mpr ha
+  set η : ℝ := ε / 4 with hηdef
+  have hη : 0 < η := by rw [hηdef]; positivity
+  obtain ⟨ζ, hζ, hgraph⟩ :=
+    NormalNumbers.ElliottDilatedSelect.exists_affineLogCorrelation_small_of_fourier_first_moments_snd
+      ha c₁ hh hη
+  set δ : ℝ := ζ / (8 * a) with hδdef
+  have hδ : 0 < δ := by rw [hδdef]; positivity
+  obtain ⟨Hmin, hHmin, hmrt⟩ := mrtModulatedShortIntervalUnrestricted δ hδ
+  obtain ⟨H₀, J, L₀, W₀, hH₀min, hH₀, hH₀a, hJ, hL₀, hW₀, hgraphMain⟩ := hgraph Hmin
+  set Hmax : ℕ := max H₀ (a * ((Finset.range J).sup (entropyScale H₀))) with hHmaxdef
+  have hHmaxmin : Hmin ≤ Hmax := hH₀min.trans (le_max_left _ _)
+  obtain ⟨N, hN, hmrtMain⟩ := hmrt Hmax hHmaxmin
+  set L₁ : ℕ := max L₀ 2 with hL₁def
+  obtain ⟨A₀, hA₀4, hA₀N, hA₀L, hthreshold⟩ := elliottExists_finalThreshold L₁ N W₀ hε
+  refine ⟨2 * a * A₀ + 2 * a * N + 4, by omega, ?_⟩
+  intro A X W hA hAW hWX f₁ f₂ hm₁ hm₂ hu₁ hu₂ hpret
+  -- the mirrored orientation: the graph criterion consumes the moments of `conj ∘ f₂`
+  have hmg : IsCompletelyMultiplicativeOnPositive (fun n ↦ conj (f₂ n)) :=
+    conj_isCompletelyMultiplicativeOnPositive hm₂
+  have hug : ∀ n : ℕ, 0 < n → ‖conj (f₂ n)‖ = 1 := by
+    intro n hn; rw [Complex.norm_conj]; exact hu₂ n hn
+  have hpretg : MRTNonpretentious (fun n ↦ conj (f₂ n)) A X :=
+    NormalNumbers.ElliottTwistedGraph.mrtNonpretentious_conj hpret
+  have h2a : 0 < 2 * a := by omega
+  have hA₀A : A₀ ≤ A := by
+    have : A₀ ≤ 2 * a * A₀ := Nat.le_mul_of_pos_left A₀ h2a
+    omega
+  have hA₀W : A₀ ≤ W := hA₀A.trans hAW
+  have hW4 : 4 ≤ W := hA₀4.trans hA₀W
+  have hW : 0 < W := by omega
+  obtain ⟨hlog, hmassThreshold, herror⟩ := hthreshold W hA₀W
+  obtain ⟨hLpos, hLL₁, hLX⟩ := elliottTrimmedLower_geometry hW4 hWX
+    (hA₀L.trans (hA₀W.trans hWX))
+  obtain ⟨hMlo, hMhi⟩ := elliottTrimmedMass_bounds (L₀ := L₁) hW hWX hlog
+  set L := elliottTrimmedLower X W L₁ with hLdef
+  have hM : 0 < (logProbMassNN L X : ℝ) := by
+    exact_mod_cast logProbMassNN_pos hLpos (by omega : L ≤ X)
+  have hL2 : 2 ≤ L := (le_max_right L₀ 2).trans hLL₁
+  have hL₀L : L₀ ≤ L := (le_max_left L₀ 2).trans hLL₁
+  have hX1 : 1 ≤ X := by omega
+  -- the rescaled MRT data
+  set A' := A / (2 * a) with hA'def
+  set X' := a * X + a with hX'def
+  set W' := min (2 * W) X' with hW'def
+  have hA'A : A' ≤ A := Nat.div_le_self _ _
+  have hXX' : X ≤ X' := by
+    have : X ≤ a * X := Nat.le_mul_of_pos_left X ha
+    omega
+  have hX'pos : 0 < X' := by omega
+  have hA'N : N ≤ A' := by
+    rw [hA'def]
+    refine (Nat.le_div_iff_mul_le h2a).mpr ?_
+    calc N * (2 * a) = 2 * a * N := by ring
+      _ ≤ A := by omega
+  have hprod : (A' : ℝ) * X' ≤ (A : ℝ) * X := by
+    have h1 : (A' : ℝ) ≤ (A : ℝ) / (2 * a) := by
+      rw [hA'def]
+      have := Nat.cast_div_le (α := ℝ) (m := A) (n := 2 * a)
+      push_cast at this ⊢
+      linarith
+    have h2 : (X' : ℝ) ≤ 2 * a * X := by
+      rw [hX'def]
+      have hXr : (1 : ℝ) ≤ X := by exact_mod_cast hX1
+      push_cast
+      nlinarith
+    have hApos : (0 : ℝ) ≤ A := Nat.cast_nonneg A
+    have hX'nn : (0 : ℝ) ≤ X' := Nat.cast_nonneg X'
+    have hA'nn : (0 : ℝ) ≤ A' := Nat.cast_nonneg A'
+    calc (A' : ℝ) * X' ≤ ((A : ℝ) / (2 * a)) * (2 * a * X) := by
+          apply mul_le_mul h1 h2 hX'nn (by positivity)
+      _ = (A : ℝ) * X := by field_simp
+  have hpret' : MRTNonpretentious (fun n ↦ conj (f₂ n)) A' X' :=
+    NormalNumbers.ElliottDilatedFourier.MRTNonpretentious_of_le hug hpretg hA'A hXX' hprod
+  have hA'W' : A' ≤ W' := by
+    refine le_min ?_ ?_
+    · omega
+    · exact hA'A.trans ((hAW.trans hWX).trans hXX')
+  have hW'X' : W' ≤ X' := min_le_right _ _
+  have hlogW : 0 < Real.log W := by
+    have : (1 : ℝ) < W := by exact_mod_cast (by omega : 1 < W)
+    exact Real.log_pos this
+  have hlogW' : Real.log W' ≤ 2 * Real.log W := by
+    have hmono : Real.log W' ≤ Real.log (2 * W : ℕ) := by
+      apply Real.log_le_log (by exact_mod_cast (by omega : 0 < W'))
+      exact_mod_cast (min_le_left (2 * W) X')
+    have hcast : ((2 * W : ℕ) : ℝ) = 2 * (W : ℝ) := by push_cast; ring
+    have hsplit : Real.log (2 * W : ℕ) = Real.log 2 + Real.log W := by
+      rw [hcast, Real.log_mul (by norm_num) (by positivity)]
+    have hlog2 : Real.log 2 ≤ Real.log W :=
+      Real.log_le_log (by norm_num) (by exact_mod_cast (by omega : 2 ≤ W))
+    linarith [hmono, hsplit]
+  -- the inclusion of dilated base points in the stretched window
+  have hincl : ∀ n ∈ Finset.Icc L X, a * (n + 1) - 1 ∈ elliottLogWindow X' W' := by
+    intro n hn
+    obtain ⟨hnL, hnX⟩ := Finset.mem_Icc.mp hn
+    have hn2 : 2 ≤ n := hL2.trans hnL
+    have haL : a * L ≤ a * (n + 1) - 1 := by
+      have h1 : a * L ≤ a * n := Nat.mul_le_mul_left a (by omega)
+      have h2 : a * n + a = a * (n + 1) := by ring
+      have h3 : 1 ≤ a := ha
+      omega
+    have hm2 : 2 ≤ a * (n + 1) - 1 := by
+      have h1 : a * L ≤ a * (n + 1) - 1 := haL
+      have h2 : L ≤ a * L := Nat.le_mul_of_pos_left L ha
+      omega
+    have hmX' : a * (n + 1) - 1 ≤ X' := by
+      have h1 : a * (n + 1) ≤ a * (X + 1) := Nat.mul_le_mul_left a (by omega)
+      have h2 : a * (X + 1) = a * X + a := by ring
+      rw [hX'def]
+      omega
+    have hwide : X' < W' * (a * (n + 1) - 1) := by
+      rcases le_or_gt X' (2 * W) with hcase | hcase
+      · have hW'eq : W' = X' := by rw [hW'def]; omega
+        rw [hW'eq]
+        exact (Nat.lt_mul_iff_one_lt_right hX'pos).mpr (by omega)
+      · have hW'eq : W' = 2 * W := by rw [hW'def]; omega
+        rw [hW'eq]
+        have hWL : X < W * L := by
+          have h1 : X / W + 1 ≤ L := by
+            rw [hLdef, elliottTrimmedLower]; exact le_max_right _ _
+          have h2 : W * (X / W) + W ≤ W * L := by
+            have := Nat.mul_le_mul_left W h1
+            nlinarith [this]
+          have h3 : X < W * (X / W) + W := by
+            have hdm := Nat.div_add_mod X W
+            have hmod : X % W < W := Nat.mod_lt _ hW
+            omega
+          omega
+        have hk1 : a * X < a * (W * L) := mul_lt_mul_of_pos_left hWL ha
+        have hk2 : a ≤ a * (W * L) := Nat.le_mul_of_pos_right a (by positivity)
+        calc X' = a * X + a := hX'def
+          _ < a * (W * L) + a * (W * L) := by omega
+          _ = 2 * W * (a * L) := by ring
+          _ ≤ 2 * W * (a * (n + 1) - 1) := Nat.mul_le_mul_left _ haL
+    exact mem_elliottLogWindow.mpr ⟨by omega, hmX', hwide⟩
+  -- the graph criterion
+  have hcorr : ‖NormalNumbers.ElliottAffineGraph.affineLogCorrelation L X f₁ f₂ a
+      (c₁ : ℤ) ((c₁ + h : ℕ) : ℤ)‖ < η := by
+    refine hgraphMain L X hLpos (by omega) hL₀L (hmassThreshold.trans hMlo)
+      f₁ f₂ hm₁ hm₂ hu₁ hu₂ ?_
+    intro j hj t
+    set m := entropyScale H₀ j with hmdef
+    set H := a * m with hHdef
+    have hmH₀ : H₀ ≤ m := le_entropyScale H₀ j
+    have hmH : m ≤ H := Nat.le_mul_of_pos_left m ha
+    have hHpos : 0 < H := by
+      have : 0 < m := by omega
+      rw [hHdef]; positivity
+    have hHminH : Hmin ≤ H := (hH₀min.trans hmH₀).trans hmH
+    have hHmaxH : H ≤ Hmax := by
+      rw [hHmaxdef]
+      refine le_max_of_le_right ?_
+      exact Nat.mul_le_mul_left a (Finset.le_sup (f := entropyScale H₀) (mem_range.mpr hj))
+    have hmrtj := hmrtMain A' X' W' H hA'N hA'W' hW'X' hHminH hHmaxH
+      (fun n ↦ conj (f₂ n)) hmg hug hpret'
+      ((t : ℝ) / (a * (4 * h * H + 1) : ℕ))
+    have hfirst : logAverageModulatedShortSum (fun n ↦ conj (f₂ n)) X' W' H
+        ((t : ℝ) / (a * (4 * h * H + 1) : ℕ)) ≤ (2 * δ) * Real.log W := by
+      refine hmrtj.trans ?_
+      calc δ * Real.log W' ≤ δ * (2 * Real.log W) :=
+            mul_le_mul_of_nonneg_left hlogW' hδ.le
+        _ = (2 * δ) * Real.log W := by ring
+    have htrans := NormalNumbers.ElliottDilatedFourier.logProb_fourier_firstMoment_affineBlock_of_MRT
+      (L₀ := L₁) (T := (a * (4 * h * H + 1) : ℕ)) ha (by omega : 2 ≤ W) hHpos hincl hM hMlo
+      (by positivity : (0:ℝ) ≤ 2 * δ) (fun n ↦ conj (f₂ n)) t hfirst
+    refine htrans.trans ?_
+    have hbudget : 4 * (a : ℝ) * (2 * δ) * H = ζ * H := by
+      rw [hδdef]; field_simp; ring
+    rw [hbudget]
+  -- window trimming and the final budget
+  have htrim := norm_elliottWindow_trim_error (X := X) hW L₁
+    (pairObservable f₁ f₂ a (c₁ : ℤ) ((c₁ + h : ℕ) : ℤ))
+    (fun n _ ↦ norm_pairObservable_le_one (fun k hk ↦ (hu₁ k hk).le)
+      (fun k hk ↦ (hu₂ k hk).le) a _ _ n)
+  rw [← elliottLogCorrelation_eq_window_sum f₁ f₂ a (c₁ : ℤ) ((c₁ + h : ℕ) : ℤ) X W] at htrim
+  have hsum : ‖∑ n ∈ Finset.Icc L X, (n : ℝ)⁻¹ • pairObservable f₁ f₂ a (c₁ : ℤ)
+      ((c₁ + h : ℕ) : ℤ) n‖ < η * (logProbMassNN L X : ℝ) := by
+    have hexp : NormalNumbers.ElliottAffineGraph.affineLogCorrelation L X f₁ f₂ a
+        (c₁ : ℤ) ((c₁ + h : ℕ) : ℤ) = (logProbMassNN L X : ℝ)⁻¹ •
+        ∑ n ∈ Finset.Icc L X, (n : ℝ)⁻¹ • pairObservable f₁ f₂ a (c₁ : ℤ) ((c₁ + h : ℕ) : ℤ) n :=
+      logProbExpectation_eq_mass_inv_smul_sum _ _ _
+    rw [hexp, norm_smul, Real.norm_eq_abs, abs_of_pos (inv_pos.2 hM), inv_mul_eq_div] at hcorr
+    have := (div_lt_iff₀ hM).1 hcorr
+    linarith [this]
+  calc ‖elliottLogCorrelation (positiveIntExtension f₁) (positiveIntExtension f₂) a a
+        (c₁ : ℤ) ((c₁ + h : ℕ) : ℤ) X W‖
+      ≤ ‖∑ n ∈ Finset.Icc L X, (n : ℝ)⁻¹ • pairObservable f₁ f₂ a (c₁ : ℤ)
+          ((c₁ + h : ℕ) : ℤ) n‖ + L₁ := by
+        have hadd := norm_add_le
+          (elliottLogCorrelation (positiveIntExtension f₁) (positiveIntExtension f₂) a a
+              (c₁ : ℤ) ((c₁ + h : ℕ) : ℤ) X W -
+            ∑ n ∈ Finset.Icc L X, (n : ℝ)⁻¹ • pairObservable f₁ f₂ a (c₁ : ℤ)
+              ((c₁ + h : ℕ) : ℤ) n)
+          (∑ n ∈ Finset.Icc L X, (n : ℝ)⁻¹ • pairObservable f₁ f₂ a (c₁ : ℤ)
+            ((c₁ + h : ℕ) : ℤ) n)
+        rw [sub_add_cancel] at hadd
+        linarith [hadd, htrim]
+    _ ≤ η * (logProbMassNN L X : ℝ) + L₁ := add_le_add hsum.le le_rfl
+    _ ≤ η * (2 * Real.log W) + (ε / 2) * Real.log W :=
+        add_le_add (mul_le_mul_of_nonneg_left hMhi hη.le) herror
+    _ = ε * Real.log W := by rw [hηdef]; ring
 
 /-- **The crux rung, on the live dilated route.**  Replaces
 `NormalNumbers.ElliottDilatedSlice.dilatedCMLogElliott`, which sat on the refuted slice route. -/
@@ -542,3 +752,5 @@ end
 end NormalNumbers.ElliottDilatedRung
 
 #print axioms NormalNumbers.ElliottDilatedRung.dilatedNatShiftCMLogElliott
+#print axioms NormalNumbers.ElliottDilatedRung.dilatedNatShiftCMLogElliottMirror
+#print axioms NormalNumbers.ElliottDilatedRung.dilatedCMLogElliott
