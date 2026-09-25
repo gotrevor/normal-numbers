@@ -36,9 +36,12 @@ away) is what buys that.
 `|| sliceShiftLogCorrelation f1 f2 a c1 c2 X W || <= eps * log W`, MRT hypothesis on `f1` at
 scale `X` (NOT `aX` — the rung bakes `a*X` into the window so the MRT scale stays `X`).
 
-Attack order:
-1. `dilatedCM_of_slice` — free from the exact identity.  **DO THIS FIRST.**
-2. `a = 1`: `elliottDilationSlice 1 X W = elliottLogWindow X W`, so the rung becomes the two-shift
+Attack order (items 1 and 2 **DONE** 2026-09-25 lap 15):
+1. ~~`dilatedCM_of_slice`~~ — **DONE** (`ElliottDilatedSlice.elliottLogCorrelation_eq_slice`).
+2. ~~`a = 1`~~ — **DONE**: `ElliottTwoShift.twoShiftCMLogElliott`, wired in as
+   `ElliottDilatedSlice.sliceCM_one` / `dilatedSlice_of_ge`; the open rung is now
+   `DilatedSliceCMLogElliottGe` (`2 ≤ a`).  Route as planned and it worked:
+   `elliottDilationSlice 1 X W = elliottLogWindow X W`, so the rung becomes the two-shift
    correlation `sum (1/m) f1(m+c1) f2(m+c2)`.  Reduce to `shiftCMLogElliott` (if `c1 < c2`) or
    `shiftCMLogElliottMirror` on the swapped pair (if `c2 < c1`) by translating the window by `c1`:
    O(|c1|) boundary terms of weight <= 1 and a weight discrepancy

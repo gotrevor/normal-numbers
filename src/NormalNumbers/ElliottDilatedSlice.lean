@@ -1,4 +1,4 @@
-import NormalNumbers.ElliottTwistedGraphMirror
+import NormalNumbers.ElliottTwoShift
 import NormalNumbers.ElliottLadder
 
 /-!
@@ -56,6 +56,7 @@ namespace NormalNumbers.ElliottDilatedSlice
 
 open Erdos67b
 open NormalNumbers.ElliottTwistedGraph
+open NormalNumbers.ElliottTwoShift
 open NormalNumbers.ElliottLadder
 
 noncomputable section
@@ -146,30 +147,81 @@ theorem elliottDilationSlice_one (X W : ℕ) :
   ext m
   simp [elliottDilationSlice]
 
-/-! ## The remaining obligation -/
+/-! ## The `a = 1` case is proved -/
 
-/-- **Open (the crux, re-decomposed).**  The pure two-shift correlation restricted to the multiples
-of `a`.
+/-- At `a = 1` the slice correlation is the two-shift correlation. -/
+theorem sliceShiftLogCorrelation_one (f₁ f₂ : ℕ → ℂ) (c₁ c₂ : ℤ) (X W : ℕ) :
+    sliceShiftLogCorrelation f₁ f₂ 1 c₁ c₂ X W = twoShiftLogCorrelation f₁ f₂ c₁ c₂ X W := by
+  rw [sliceShiftLogCorrelation, elliottDilationSlice_one, twoShiftLogCorrelation]
 
-What is already available:
+/-- **The slice rung holds at `a = 1`** (`NormalNumbers.ElliottTwoShift.twoShiftCMLogElliott`). -/
+theorem sliceCM_one (c₁ c₂ : ℤ) (hne : c₁ ≠ c₂) (ε : ℝ) (hε : 0 < ε) :
+    ∃ A₀ : ℕ, 2 ≤ A₀ ∧
+      ∀ A X W : ℕ, A₀ ≤ A → A ≤ W → W ≤ X →
+        ∀ f₁ f₂ : ℕ → ℂ,
+          IsCompletelyMultiplicativeOnPositive f₁ →
+          IsCompletelyMultiplicativeOnPositive f₂ →
+          (∀ n : ℕ, 0 < n → ‖f₁ n‖ = 1) →
+          (∀ n : ℕ, 0 < n → ‖f₂ n‖ = 1) →
+          MRTNonpretentious f₁ A X →
+          ‖sliceShiftLogCorrelation f₁ f₂ 1 c₁ c₂ X W‖ ≤ ε * Real.log W := by
+  obtain ⟨A₀, hA₀, hmain⟩ := twoShiftCMLogElliott c₁ c₂ hne ε hε
+  refine ⟨A₀, hA₀, ?_⟩
+  intro A X W hA hAW hWX f₁ f₂ hm₁ hm₂ hu₁ hu₂ hpret
+  rw [sliceShiftLogCorrelation_one]
+  exact hmain A X W hA hAW hWX f₁ f₂ hm₁ hm₂ hu₁ hu₂ hpret
 
-* `a = 1`: the slice is the whole window (`elliottDilationSlice_one`) and the statement is the
-  two-shift correlation `∑ (1/m) f₁(m+c₁) f₂(m+c₂)`, which reduces to
-  `NormalNumbers.ElliottTwistedGraph.shiftCMLogElliott` (for `c₁ < c₂`) or to
-  `shiftCMLogElliottMirror` applied to the swapped pair (for `c₂ < c₁`) by translating the window
-  by `c₁`.  The two errors are `O(|c₁|)` boundary terms of harmonic weight `≤ 1` and the weight
-  discrepancy `∑ |1/(m-c₁) - 1/m| = |c₁| ∑ 1/(m(m-c₁)) = O(|c₁|)`; both depend on `c₁, c₂` only and
-  are absorbed by enlarging `A₀`, exactly as `L₀` is in `Erdos67b.elliottExists_finalThreshold`.
-* `a ≥ 2`: the divisibility `a ∣ m` is at **residue `0`**, hence preserved by every dilation
-  `m ↦ p*m` of the prime graph.  The graph's own observable already carries a divisibility
-  indicator (`NormalNumbers.ElliottTwistedGraph.pairTwistedDivisibleObservable`,
-  `if q ∣ n then w q * (f₁ n * f₂ (n + q*h)) else 0`), and for a dyadic prime `q > a` one has
-  `gcd(a, q) = 1`, so `a*q ∣ n ↔ a ∣ n / q` for `q ∣ n`: the two divisibilities compose.  The
-  obligation is to run the twisted-graph stack with `a*q ∣ n` in place of `q ∣ n`.
+/-! ## The remaining obligation: the genuinely dilated slices -/
+
+/-- The slice rung restricted to `a ≥ 2` — the only case still open, since `a = 1` is
+`sliceCM_one`. -/
+def DilatedSliceCMLogElliottGe : Prop :=
+  ∀ (a : ℕ) (c₁ c₂ : ℤ), 2 ≤ a → c₁ ≠ c₂ →
+    ∀ ε : ℝ, 0 < ε →
+      ∃ A₀ : ℕ, 2 ≤ A₀ ∧
+        ∀ A X W : ℕ, A₀ ≤ A → A ≤ W → W ≤ X →
+          ∀ f₁ f₂ : ℕ → ℂ,
+            IsCompletelyMultiplicativeOnPositive f₁ →
+            IsCompletelyMultiplicativeOnPositive f₂ →
+            (∀ n : ℕ, 0 < n → ‖f₁ n‖ = 1) →
+            (∀ n : ℕ, 0 < n → ‖f₂ n‖ = 1) →
+            MRTNonpretentious f₁ A X →
+            ‖sliceShiftLogCorrelation f₁ f₂ a c₁ c₂ X W‖ ≤ ε * Real.log W
+
+/-- The full slice rung follows from its `a ≥ 2` part, because `a = 1` is proved. -/
+theorem dilatedSlice_of_ge (h : DilatedSliceCMLogElliottGe) : DilatedSliceCMLogElliott := by
+  intro a c₁ c₂ ha hne ε hε
+  rcases Nat.lt_or_ge a 2 with hlt | hge
+  · have ha1 : a = 1 := by omega
+    subst ha1
+    exact sliceCM_one c₁ c₂ hne ε hε
+  · exact h a c₁ c₂ hge hne ε hε
+
+
+
+/-- **Open (the crux, re-decomposed and narrowed).**  The pure two-shift correlation restricted to
+the multiples of `a`, for `a ≥ 2`.
+
+Already discharged: `a = 1` (`sliceCM_one`, from
+`NormalNumbers.ElliottTwoShift.twoShiftCMLogElliott`), so the two arbitrary integer shifts cost
+nothing beyond the pure-shift rung.
+
+What is left, and why it should go through: the divisibility `a ∣ m` is at **residue `0`**, hence
+preserved by every dilation `m ↦ p*m` of the prime graph.  The graph's own observable already
+carries a divisibility indicator
+(`NormalNumbers.ElliottTwistedGraph.pairTwistedDivisibleObservable`,
+`if q ∣ n then w q * (f₁ n * f₂ (n + q*h)) else 0`), and for a dyadic prime `q > a` one has
+`gcd(a, q) = 1`, so for `q ∣ n` the conditions `a*q ∣ n` and `a ∣ n / q` agree: the two
+divisibilities compose.  The obligation is to re-run the twisted-graph stack with `a*q ∣ n` in
+place of `q ∣ n`.
 
 See `PENDING_WORK.md` (2026-09-25) for the attack order and for the refuted detours. -/
-theorem dilatedSliceCMLogElliott : DilatedSliceCMLogElliott := by
+theorem dilatedSliceCMLogElliottGe : DilatedSliceCMLogElliottGe := by
   sorry
+
+/-- The slice rung, with its `a = 1` case discharged. -/
+theorem dilatedSliceCMLogElliott : DilatedSliceCMLogElliott :=
+  dilatedSlice_of_ge dilatedSliceCMLogElliottGe
 
 /-- **The crux rung, reduced to the slice rung.**  Replaces the former
 `NormalNumbers.ElliottLadder.dilatedCMLogElliott`. -/
