@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.AbelianWindowGf
+import NormalNumbers.PowerBaseReal
 
 /-!
 # The rectangle design: a block law with ONE excluded window length
@@ -411,6 +412,259 @@ theorem rect_isAbelianAt_ge (ha : 2 ≤ a) (c : ℕ → ℕ) (hcB : ∀ m, c m <
   isAbelianAt_blockSeq_of_binomSeg (rectG a) c (by positivity) (by omega) hcB hc
     (rect_binomSeg a ha) L hL
 
+/-! ### Which segments a window actually makes -/
+
+theorem segSet_eq_Ico_gen (q L r b : ℕ) :
+    segSet q L r b = Finset.Ico (r - b * q) (min q (r + L - b * q)) := by
+  ext u
+  simp only [segSet, Finset.mem_filter, Finset.mem_range, Finset.mem_Ico, lt_min_iff]
+  omega
+
+/-- The correction of `rect_segGf` vanishes on every segment except `Ico 1 (a+1)`. -/
+theorem rect_corr_eq_zero (ha : 2 ≤ a) (lo hi : ℕ) (hhi : hi ≤ a + 2)
+    (hne : ¬ (lo = 1 ∧ hi = a + 1)) :
+    ((X : ℝ[X]) ^ (if a ∈ Finset.Ico lo hi then 1 else 0)
+        - X ^ (if a + 1 ∈ Finset.Ico lo hi then 1 else 0))
+      * (X ^ (if 0 ∈ Finset.Ico lo hi then 1 else 0)
+        - X ^ (if (1 : ℕ) ∈ Finset.Ico lo hi then 1 else 0)) = 0 := by
+  simp only [Finset.mem_Ico]
+  have key : ((lo ≤ a ∧ a < hi) ↔ (lo ≤ a + 1 ∧ a + 1 < hi)) ∨
+      ((lo ≤ 0 ∧ 0 < hi) ↔ (lo ≤ 1 ∧ (1 : ℕ) < hi)) := by omega
+  rcases key with k | k
+  · by_cases hc : lo ≤ a ∧ a < hi
+    · rw [if_pos hc, if_pos (k.mp hc), sub_self, zero_mul]
+    · rw [if_neg hc, if_neg (fun h => hc (k.mpr h)), sub_self, zero_mul]
+  · by_cases hc : lo ≤ 0 ∧ 0 < hi
+    · rw [if_pos hc, if_pos (k.mp hc), sub_self, mul_zero]
+    · rw [if_neg hc, if_neg (fun h => hc (k.mpr h)), sub_self, mul_zero]
+
+/-- **The rectangle sequence is abelian at every window length except `a`.** -/
+theorem rect_isAbelianAt_of_ne (ha : 2 ≤ a) (c : ℕ → ℕ) (hcB : ∀ m, c m < 2 ^ (a + 2))
+    (hc : IsNormalSequence (2 ^ (a + 2)) c) (L : ℕ) (hne : L ≠ a) :
+    IsAbelianAt (blockSeq (rectG a) c (a + 2)) L := by
+  classical
+  set q := a + 2 with hq
+  set S := q + L with hSdef
+  have hq0 : 0 < q := by omega
+  have hB0 : 0 < 2 ^ q := by positivity
+  have hSle : q + L ≤ q * S + 1 := by
+    have : S ≤ q * S := Nat.le_mul_of_pos_left S hq0
+    omega
+  have hfib : ∀ r < q, ∀ t < L, (r + t) / q < S := by
+    intro r hr t ht
+    have := Nat.div_le_self (r + t) q
+    omega
+  refine (isAbelianAt_blockSeq_iff (rectG a) c hB0 hq0 hcB hc L S hSle).mpr (fun j _ => ?_)
+  refine blockFreq_eq_binomial_of_seg (rectG a) hB0 hq0 S L hfib (fun r hr b hb => ?_) j
+  have hsub : segSet q L r b ⊆ range q := by
+    intro u hu
+    exact (Finset.mem_filter.mp hu).1
+  have hshape := segSet_eq_Ico_gen q L r b
+  have hnotdef : ¬ (r - b * q = 1 ∧ min q (r + L - b * q) = a + 1) := by
+    rcases Nat.eq_zero_or_pos b with rfl | hb1
+    · simp only [Nat.zero_mul, Nat.sub_zero]
+      omega
+    · have hbq : q ≤ b * q := Nat.le_mul_of_pos_left q hb1
+      omega
+  have hcard : segLen q L r b = (segSet q L r b).card := segLen_eq_card q L r b hq0
+  have hgf : ∀ d, segOnes (rectG a) q L r b d
+      = ((segSet q L r b).filter (fun u => rectG a u d = 1)).card :=
+    fun d => segOnes_eq_card (rectG a) hq0 L r b d
+  rw [Finset.sum_congr rfl (fun d (_ : d ∈ range (2 ^ q)) => by rw [hgf d]),
+    hshape, rect_segGf a ha _ (by rw [← hshape]; exact hsub),
+    rect_corr_eq_zero a ha _ _ (min_le_left _ _) hnotdef, mul_zero, add_zero,
+    rect_base_eq a _ (by rw [← hshape]; exact hsub), hcard, hshape]
+  push_cast
+  rfl
+
+/-- The segment generating function in `blockFreq` coordinates. -/
+theorem rect_segOnes_gf (ha : 2 ≤ a) (L r b : ℕ) :
+    (∑ d ∈ range (2 ^ (a + 2)), (X : ℝ[X]) ^ segOnes (rectG a) (a + 2) L r b d)
+      = C ((2 : ℝ) ^ (a + 2) / 2 ^ (segLen (a + 2) L r b)) * (1 + X) ^ (segLen (a + 2) L r b)
+        + (∏ i ∈ (range (a + 2)) \ spos a,
+            (if i ∈ segSet (a + 2) L r b then (1 + X : ℝ[X]) else 2))
+          * ((X ^ (if a ∈ segSet (a + 2) L r b then 1 else 0)
+              - X ^ (if a + 1 ∈ segSet (a + 2) L r b then 1 else 0))
+             * (X ^ (if 0 ∈ segSet (a + 2) L r b then 1 else 0)
+               - X ^ (if (1 : ℕ) ∈ segSet (a + 2) L r b then 1 else 0))) := by
+  classical
+  have hq0 : 0 < a + 2 := by omega
+  have hsub : segSet (a + 2) L r b ⊆ range (a + 2) := fun u hu => (Finset.mem_filter.mp hu).1
+  rw [Finset.sum_congr rfl (fun d (_ : d ∈ range (2 ^ (a + 2))) => by
+      rw [segOnes_eq_card (rectG a) hq0 L r b d]),
+    rect_segGf a ha _ hsub, rect_base_eq a _ hsub, ← segLen_eq_card (a + 2) L r b hq0]
+
+/-! ### The defective length -/
+
+theorem segSet_one_zero (ha : 2 ≤ a) : segSet (a + 2) a 1 0 = Finset.Ico 1 (a + 1) := by
+  rw [segSet_eq_Ico_gen]
+  simp only [Nat.zero_mul, Nat.sub_zero]
+  congr 1
+  omega
+
+theorem segSet_one_pos (b : ℕ) (hb : 1 ≤ b) : segSet (a + 2) a 1 b = ∅ := by
+  rw [segSet_eq_Ico_gen]
+  have hbq : a + 2 ≤ b * (a + 2) := Nat.le_mul_of_pos_left (a + 2) (by omega)
+  have h1 : 1 - b * (a + 2) = 0 := by omega
+  have h2 : min (a + 2) (1 + a - b * (a + 2)) = 0 := by omega
+  rw [h1, h2]
+  rfl
+
+theorem sdiff_spos (ha : 2 ≤ a) : (range (a + 2)) \ spos a = Finset.Ico 2 a := by
+  ext i
+  simp only [Finset.mem_sdiff, Finset.mem_range, mem_spos, Finset.mem_Ico]
+  omega
+
+theorem rect_defect_factor (ha : 2 ≤ a) :
+    (∑ d ∈ range (2 ^ (a + 2)), (X : ℝ[X]) ^ segOnes (rectG a) (a + 2) a 1 0 d)
+      = C ((2 : ℝ) ^ (a + 2) / 2 ^ a) * (1 + X) ^ a + (1 + X) ^ (a - 2) * ((X - 1) * (1 - X)) := by
+  classical
+  have hq0 : 0 < a + 2 := by omega
+  have hset := segSet_one_zero a ha
+  have hlen : segLen (a + 2) a 1 0 = a := by
+    rw [segLen_eq_card _ _ _ _ hq0, hset, Nat.card_Ico]
+    omega
+  have hcf : (∏ i ∈ (range (a + 2)) \ spos a,
+      (if i ∈ segSet (a + 2) a 1 0 then (1 + X : ℝ[X]) else 2)) = (1 + X) ^ (a - 2) := by
+    rw [sdiff_spos a ha, hset,
+      Finset.prod_congr rfl (fun i hi => if_pos (by
+        rw [Finset.mem_Ico] at hi ⊢; omega)), Finset.prod_const, Nat.card_Ico]
+  rw [rect_segOnes_gf a ha, hlen, hcf, hset]
+  congr 2
+  rw [if_pos (by rw [Finset.mem_Ico]; omega), if_neg (by rw [Finset.mem_Ico]; omega),
+    if_neg (by rw [Finset.mem_Ico]; omega), if_pos (by rw [Finset.mem_Ico]; omega)]
+  norm_num
+
+theorem rect_empty_factor (ha : 2 ≤ a) (b : ℕ) (hb : 1 ≤ b) :
+    (∑ d ∈ range (2 ^ (a + 2)), (X : ℝ[X]) ^ segOnes (rectG a) (a + 2) a 1 b d)
+      = C ((2 : ℝ) ^ (a + 2)) := by
+  classical
+  have hq0 : 0 < a + 2 := by omega
+  have hset := segSet_one_pos a b hb
+  have hlen : segLen (a + 2) a 1 b = 0 := by
+    rw [segLen_eq_card _ _ _ _ hq0, hset]
+    rfl
+  rw [rect_segOnes_gf a ha, hlen, hset]
+  simp
+
+/-- **The rectangle sequence is NOT abelian at the window length `a`.** -/
+theorem rect_not_isAbelianAt (ha : 2 ≤ a) (c : ℕ → ℕ) (hcB : ∀ m, c m < 2 ^ (a + 2))
+    (hc : IsNormalSequence (2 ^ (a + 2)) c) :
+    ¬ IsAbelianAt (blockSeq (rectG a) c (a + 2)) a := by
+  classical
+  intro h
+  have hq0 : 0 < a + 2 := by omega
+  have hB0 : 0 < 2 ^ (a + 2) := by positivity
+  set S := (a + 2) + a with hSdef
+  have hS1 : 1 ≤ S := by omega
+  have hSle : (a + 2) + a ≤ (a + 2) * S + 1 := by
+    have : S ≤ (a + 2) * S := Nat.le_mul_of_pos_left S hq0
+    omega
+  have hfib : ∀ r < a + 2, ∀ t < a, (r + t) / (a + 2) < S := by
+    intro r hr t ht
+    have := Nat.div_le_self (r + t) (a + 2)
+    omega
+  have hbf := (isAbelianAt_blockSeq_iff (rectG a) c hB0 hq0 hcB hc a S hSle).mp h 0 (by omega)
+  set m : ℝ := (2 : ℝ) ^ (a + 2) with hm
+  have hmpos : 0 < m := by positivity
+  have hcast : ((2 ^ (a + 2) : ℕ) : ℝ) = m := by push_cast [hm]; ring
+  -- every residue other than `1` gives the exact Binomial window
+  have hother : ∀ r, r < a + 2 → r ≠ 1 →
+      (winGf (rectG a) (a + 2) (2 ^ (a + 2)) S a r).coeff 0 = m ^ S / 2 ^ a := by
+    intro r hr hr1
+    have hw : winGf (rectG a) (a + 2) (2 ^ (a + 2)) S a r
+        = C (((2 ^ (a + 2) : ℕ) : ℝ) ^ S / 2 ^ a) * (1 + X) ^ a := by
+      refine winGf_eq_binomial (rectG a) hB0 S a r (hfib r hr) (fun b hb => ?_)
+      have hshape : segSet (a + 2) a r b
+          = Finset.Ico (r - b * (a + 2)) (min (a + 2) (r + a - b * (a + 2))) :=
+        segSet_eq_Ico_gen _ _ _ _
+      have hnd : ¬ (r - b * (a + 2) = 1 ∧ min (a + 2) (r + a - b * (a + 2)) = a + 1) := by
+        rcases Nat.eq_zero_or_pos b with rfl | hb1
+        · simp only [Nat.zero_mul, Nat.sub_zero]
+          omega
+        · have hbq : a + 2 ≤ b * (a + 2) := Nat.le_mul_of_pos_left _ hb1
+          omega
+      rw [rect_segOnes_gf a ha, hshape,
+        rect_corr_eq_zero a ha _ _ (min_le_left _ _) hnd, mul_zero, add_zero, hcast]
+    rw [hw, Polynomial.coeff_C_mul, add_comm (1 : ℝ[X]) X, Polynomial.coeff_X_add_one_pow,
+      hcast]
+    simp
+  -- the residue `1` sees the defective segment
+  have hone : (winGf (rectG a) (a + 2) (2 ^ (a + 2)) S a 1).coeff 0
+      = m ^ S / 2 ^ a - m ^ (S - 1) := by
+    have hw : winGf (rectG a) (a + 2) (2 ^ (a + 2)) S a 1
+        = (C (m / 2 ^ a) * (1 + X) ^ a + (1 + X) ^ (a - 2) * ((X - 1) * (1 - X)))
+          * (C m) ^ (S - 1) := by
+      rw [winGf_eq_prod (rectG a) hB0 (a + 2) S a 1 (hfib 1 (by omega)), Finset.range_eq_Ico,
+        Finset.prod_eq_prod_Ico_succ_bot (by omega : (0 : ℕ) < S)]
+      congr 1
+      · exact rect_defect_factor a ha
+      · rw [Finset.prod_congr rfl (fun b hb => rect_empty_factor a ha b
+          (by rw [Finset.mem_Ico] at hb; omega)), Finset.prod_const, Nat.card_Ico]
+    have cpow : ∀ k : ℕ, ((1 + X : ℝ[X]) ^ k).coeff 0 = 1 := fun k => by
+      rw [add_comm, Polynomial.coeff_X_add_one_pow]
+      simp
+    have c2 : ((X - 1 : ℝ[X]) * (1 - X)).coeff 0 = -1 := by
+      rw [Polynomial.mul_coeff_zero]
+      simp
+    have c3 : ((C m : ℝ[X]) ^ (S - 1)).coeff 0 = m ^ (S - 1) := by
+      rw [← map_pow, Polynomial.coeff_C_zero]
+    rw [hw, Polynomial.mul_coeff_zero, c3, Polynomial.coeff_add, Polynomial.coeff_C_mul,
+      Polynomial.mul_coeff_zero, cpow a, cpow (a - 2), c2]
+    have hpow : m ^ S = m * m ^ (S - 1) := by
+      rw [← pow_succ']
+      congr 1
+      omega
+    field_simp
+    rw [hpow]
+    ring
+  -- assemble
+  rw [blockFreq_eq_coeff, ← Finset.sum_erase_add _ _ (Finset.mem_range.mpr (by omega : 1 < a + 2)),
+    Finset.sum_congr rfl (fun r hr => hother r
+      (Finset.mem_range.mp (Finset.mem_of_mem_erase hr)) (Finset.ne_of_mem_erase hr)),
+    hone, Finset.sum_const, Finset.card_erase_of_mem (Finset.mem_range.mpr (by omega)),
+    Finset.card_range, nsmul_eq_mul, hcast] at hbf
+  have hmS : (0 : ℝ) < m ^ S := by positivity
+  have hmS1 : (0 : ℝ) < m ^ (S - 1) := by positivity
+  have h2a : (0 : ℝ) < 2 ^ a := by positivity
+  have hqR : ((a + 2 : ℕ) : ℝ) ≠ 0 := by positivity
+  rw [Nat.choose_zero_right, Nat.cast_one] at hbf
+  have hden : (((a + 2 : ℕ) : ℝ) * m ^ S) ≠ 0 := by positivity
+  rw [div_eq_iff hden, show (a + 2 - 1 : ℕ) = a + 1 from by omega] at hbf
+  push_cast at hbf
+  have h1 : ((a : ℝ) + 1) * (m ^ S / 2 ^ a) + (m ^ S / 2 ^ a)
+      - 1 / 2 ^ a * (((a : ℝ) + 2) * m ^ S) = 0 := by
+    field_simp
+    ring
+  have hzero : m ^ (S - 1) = 0 := by linarith
+  linarith
+
+theorem blockSeq_rectG_lt_two (c : ℕ → ℕ) (n : ℕ) : blockSeq (rectG a) c (a + 2) n < 2 :=
+  rectG_lt_two a _ _
+
 end Rect
+
+/-- **C4, the single-exclusion case.**  For every `a ≥ 2` some binary sequence is abelian at
+exactly the window lengths `≠ a`.  This is the first witness whose exact window set has a FINITE
+nonempty complement, and the engine (`rect_segGf`) is linear in the design, so superposing
+rectangles on disjoint coordinate groups gives every finite complement. -/
+theorem c4_realizable_compl_singleton (a : ℕ) (ha : 2 ≤ a) :
+    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ L ≠ a) := by
+  set c := digitOf (2 ^ (a + 2)) (Int.fract NormalNumbers.G4.Sched.fullRealW) with hcdef
+  have hb2 : 2 ≤ 2 ^ (a + 2) := by
+    have : 2 ^ 1 ≤ 2 ^ (a + 2) := Nat.pow_le_pow_right (by norm_num) (by omega)
+    simpa using this
+  have hcB : ∀ m, c m < 2 ^ (a + 2) := fun m => digitOf_lt (2 ^ (a + 2)) hb2 _ m
+  have hc : IsNormalSequence (2 ^ (a + 2)) c := by
+    have h := NormalNumbers.G4.Sched.isNormal_two_pow_fullRealW (a + 2) (by omega)
+    rw [IsNormal] at h
+    exact h
+  refine ⟨blockSeq (rectG a) c (a + 2), blockSeq_rectG_lt_two a c, fun L hL => ?_⟩
+  constructor
+  · intro h hLa
+    subst hLa
+    exact rect_not_isAbelianAt L ha c hcB hc h
+  · intro hne
+    exact rect_isAbelianAt_of_ne a ha c hcB hc L hne
 
 end NormalNumbers.Abelian

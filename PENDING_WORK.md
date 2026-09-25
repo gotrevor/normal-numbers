@@ -7,8 +7,10 @@ open `sorry` in the C4 chain.  **Advance (laps 10–11):** the *rectangle design
 `DESIGN-2026-09-25-c4-rectangle.md` — settles every `S` with finite complement on paper and in
 exact rational arithmetic (`probes/c4_rectangle_design.py`), and the general Lean engine is landed
 sorry-free in `src/NormalNumbers/AbelianWindowGf.lean` (`sum_prod_wordOf`,
-`blockFreq_eq_binomial_of_seg`, `isAbelianAt_blockSeq_of_binomSeg`).  **Next attack:** the five
-numbered steps in `HANDOFF-c4-2026-09-25-lap11.md` (`sum_forced` first).  **Still open beyond
+`blockFreq_eq_binomial_of_seg`, `isAbelianAt_blockSeq_of_binomSeg`).  **Done lap 14:** `c4_realizable_compl_singleton` — for every `a ≥ 2` a binary sequence abelian at
+exactly the lengths `≠ a` (axiom-clean, `src/NormalNumbers/AbelianWindowRect.lean`).  **Next
+attack:** the two numbered steps in `HANDOFF-c4-2026-09-25-lap14.md` (finite complement by
+superposing rectangles on disjoint coordinate groups; then the multi-scale mixture).  **Still open beyond
 that:** realizing an infinite mixture of designs by one sequence (multi-scale concatenation or a
 renewal block length); no cancellation obstruction exists.
 

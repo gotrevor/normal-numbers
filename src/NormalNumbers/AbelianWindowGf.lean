@@ -172,6 +172,22 @@ theorem blockFreq_eq_coeff (g : ℕ → ℕ → ℕ) (q B S L j : ℕ) :
 
 /-! ## The criterion: binomial segments give a binomial window -/
 
+/-- The window generating function, when every segment law is exactly Binomial. -/
+theorem winGf_eq_binomial (g : ℕ → ℕ → ℕ) {B q : ℕ} (hB : 0 < B) (S L r : ℕ)
+    (hS : ∀ t < L, (r + t) / q < S)
+    (hseg : ∀ i < S, (∑ d ∈ range B, (X : ℝ[X]) ^ segOnes g q L r i d)
+      = C ((B : ℝ) / 2 ^ segLen q L r i) * (1 + X) ^ segLen q L r i) :
+    winGf g q B S L r = C ((B : ℝ) ^ S / 2 ^ L) * (1 + X) ^ L := by
+  classical
+  rw [winGf_eq_prod g hB q S L r hS,
+    Finset.prod_congr rfl (fun i hi => hseg i (Finset.mem_range.mp hi)),
+    Finset.prod_mul_distrib, ← map_prod C, Finset.prod_pow_eq_pow_sum,
+    sum_segLen q L r S hS]
+  congr 2
+  rw [Finset.prod_div_distrib, Finset.prod_const, Finset.prod_pow_eq_pow_sum,
+    sum_segLen q L r S hS]
+  simp
+
 /-- **The block engine.**  If every trace the length-`L` window makes on a block has an exactly
 Binomial one-count over the `B` digits, then the sequence is abelian at `L`. -/
 theorem blockFreq_eq_binomial_of_seg (g : ℕ → ℕ → ℕ) {B q : ℕ} (hB : 0 < B) (hq : 0 < q)
@@ -180,23 +196,12 @@ theorem blockFreq_eq_binomial_of_seg (g : ℕ → ℕ → ℕ) {B q : ℕ} (hB :
       = C ((B : ℝ) / 2 ^ segLen q L r i) * (1 + X) ^ segLen q L r i)
     (j : ℕ) : blockFreq g q B S L j = (L.choose j : ℝ) / 2 ^ L := by
   classical
-  have hgf : ∀ r ∈ range q, winGf g q B S L r
-      = C ((B : ℝ) ^ S / 2 ^ L) * (1 + X) ^ L := by
-    intro r hr
-    rw [winGf_eq_prod g hB q S L r (hS r (Finset.mem_range.mp hr)),
-      Finset.prod_congr rfl (fun i hi => hseg r (Finset.mem_range.mp hr) i
-        (Finset.mem_range.mp hi)),
-      Finset.prod_mul_distrib, ← map_prod C, Finset.prod_pow_eq_pow_sum,
-      sum_segLen q L r S (hS r (Finset.mem_range.mp hr))]
-    congr 2
-    rw [Finset.prod_div_distrib, Finset.prod_const, Finset.prod_pow_eq_pow_sum,
-      sum_segLen q L r S (hS r (Finset.mem_range.mp hr))]
-    simp
   have hcoeff : ∀ r ∈ range q, (winGf g q B S L r).coeff j
       = (B : ℝ) ^ S / 2 ^ L * (L.choose j : ℝ) := by
     intro r hr
-    rw [hgf r hr, Polynomial.coeff_C_mul, add_comm (1 : ℝ[X]) X,
-      Polynomial.coeff_X_add_one_pow]
+    rw [winGf_eq_binomial g hB S L r (hS r (Finset.mem_range.mp hr))
+        (fun i hi => hseg r (Finset.mem_range.mp hr) i hi),
+      Polynomial.coeff_C_mul, add_comm (1 : ℝ[X]) X, Polynomial.coeff_X_add_one_pow]
   rw [blockFreq_eq_coeff, Finset.sum_congr rfl hcoeff, Finset.sum_const, Finset.card_range,
     nsmul_eq_mul]
   have hB' : (B : ℝ) ^ S ≠ 0 := by positivity
