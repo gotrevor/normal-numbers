@@ -1680,6 +1680,95 @@ theorem depthAvg_dvd_tendsto_of_primitive {b : ℕ} (hb : 2 ≤ b) (P Q j : ℕ)
   filter_upwards [(tendsto_depthLL hb).eventually_ge_atTop v] with N hN
   exact norm_depthAvg_dvd_le hb0 P Q j h' hN N
 
+/-- A primitive twist level has a nontrivial leading root. -/
+theorem depthRoot_ne_one_of_not_dvd {b : ℕ} (hb : 0 < b) {h' : ℤ} (hnd : ¬ ((b : ℤ) ∣ h')) :
+    depthRoot b h' 0 ≠ 1 := by
+  have hbR : (0 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  rw [depthRoot]
+  intro hone
+  obtain ⟨M, hM⟩ := ee_eq_one_iff_int.1 hone
+  have hR : ((h' : ℝ)) = ((M * (b : ℤ) : ℤ) : ℝ) := by
+    push_cast
+    rw [pow_one] at hM
+    field_simp at hM
+    linarith [hM]
+  have hZ : h' = M * (b : ℤ) := by exact_mod_cast hR
+  exact hnd ⟨M, by rw [hZ]; ring⟩
+
+/-- **The threshold data of the `K`-point input, `κ`-uniformly.**  TT Thm 3.1 carries a scale
+threshold `X ≥ X₀(K)`; this says a threshold exists for every admissible saving exponent, and that
+along the schedule it sits below the cut scale `N/2^{u_N}` for every level at or below
+`depthLL b N` (so the constant level drop `v` of a divisible twist is covered too). -/
+def KPointThresholdOK (b Q P : ℕ) (c₀ : ℝ) (m : ℕ) : Prop :=
+  ∀ κ : ℝ, 0 < κ → κ ≤ 1 → ∃ Athr : ℕ → ℕ, (∀ K, 2 ≤ Athr K) ∧
+    (∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * cKdeg c₀ m K)) ∧
+    (∀ᶠ N : ℕ in atTop, ∀ K : ℕ, K ≤ PairDecouple.depthLL b N →
+        Athr K ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N)))
+
+/-- **`DepthDiagonal b` FROM THE DEGRADING INPUT — all twist levels.**  Both degenerate levels are
+discharged inside: `hh = 0` by `depthAvg_zero_tendsto`, and `b ∣ hh` by
+`depthAvg_dvd_tendsto_of_primitive` at the level `depthLL b N - v`.  Composed with
+`weylLambertTwist_of_depthDiagonal` this makes the C3 crux a theorem on
+`KPointNoExcWith (cKdeg c₀ m) (CstKdeg m)` plus the threshold data. -/
+theorem depthDiagonal_of_degrading {b : ℕ} (hb : 2 ≤ b) {c₀ : ℝ} (hc₀ : 0 < c₀) (m : ℕ)
+    (hin : ∀ K, KPointNoExcWith (cKdeg c₀ m) (CstKdeg m) K)
+    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdOK b Q P c₀ m) :
+    DepthDiagonal b := by
+  intro P Q j hh hQ hj0 hjQ
+  have hb0 : 0 < b := by omega
+  rcases eq_or_ne hh 0 with rfl | hne
+  · exact depthAvg_zero_tendsto b P Q j hj0 hjQ
+  obtain ⟨v, h', hfac, hnd⟩ := exists_pow_mul_not_dvd hb hh hne
+  subst hfac
+  -- the archimedean side, at the primitive level
+  set z : ℂ := depthRoot b h' 0 with hzdef
+  have hznorm : ‖z‖ = 1 := norm_ee_real _
+  have hz1 : z ≠ 1 := depthRoot_ne_one_of_not_dvd hb0 hnd
+  set κ : ℝ := ttExponent z with hκdef
+  have hκ : 0 < κ := ttExponent_pos hznorm hz1
+  have hκ1 : κ ≤ 1 := ttExponent_le_one hznorm
+  have hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b h' 0)) X L :=
+    ttNonPretentious_zOmegaNat hznorm hz1 le_rfl
+  obtain ⟨Athr, hA2, hAthr, hAcut⟩ := hthr P Q hQ κ hκ hκ1
+  -- the level sequence: the schedule lowered by `v`, kept positive
+  set KN : ℕ → ℕ := fun N => max 1 (PairDecouple.depthLL b N - v) with hKNdef
+  have hKN : ∀ N, 0 < KN N := fun N => lt_of_lt_of_le Nat.zero_lt_one (le_max_left _ _)
+  have hvN := (tendsto_depthLL hb).eventually_ge_atTop (v + 1)
+  have hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ PairDecouple.depthLL b N := by
+    filter_upwards [hvN] with N hN
+    rw [hKNdef]
+    simp only
+    omega
+  have hKeq : ∀ᶠ N : ℕ in atTop, KN N = PairDecouple.depthLL b N - v := by
+    filter_upwards [hvN] with N hN
+    rw [hKNdef]
+    simp only
+    omega
+  have hAle : ∀ᶠ N : ℕ in atTop,
+      Athr (KN N) ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N)) := by
+    filter_upwards [hAcut, hKle] with N hcut hle
+    exact hcut _ hle
+  have hgen := depthAvg_gen_tendsto_of_degrading_sched hb hQ P j h' hc₀ m KN hKN hKle hin
+    hκ hκ1 hnp Athr hA2 hAthr hAle
+  have hprim : Tendsto (fun N : ℕ =>
+      depthAvg b P Q j h' (PairDecouple.depthLL b N - v) N) atTop (𝓝 0) := by
+    refine hgen.congr' ?_
+    filter_upwards [hKeq] with N hN
+    rw [hN]
+  exact depthAvg_dvd_tendsto_of_primitive hb P Q j h' v hprim
+
+/-- **THE C3 CRUX FROM THE DEGRADING `K`-POINT INPUT.**  `WeylLambertTwist b` — hence `ConjC3` —
+on `KPointNoExcWith (cKdeg c₀ m) (CstKdeg m)` and the threshold data alone.  Every other
+ingredient (the archimedean certificate, the schedule comparison, the two degenerate twist
+levels, the budget layer) is now discharged in-kernel. -/
+theorem weylLambertTwist_of_degrading {b : ℕ} (hb : 3 ≤ b) {c₀ : ℝ} (hc₀ : 0 < c₀) (m : ℕ)
+    (hin : ∀ K, KPointNoExcWith (cKdeg c₀ m) (CstKdeg m) K)
+    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdOK b Q P c₀ m) :
+    WeylLambertTwist b :=
+  weylLambertTwist_of_depthDiagonal hb (depthDiagonal_of_degrading (by omega) hc₀ m hin hthr)
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -1711,6 +1800,9 @@ theorem depthAvg_dvd_tendsto_of_primitive {b : ℕ} (hb : 2 ≤ b) (P Q j : ℕ)
 #print axioms NormalNumbers.CastingOut.hgrow_of_schedule_le
 #print axioms NormalNumbers.CastingOut.exists_pow_mul_not_dvd
 #print axioms NormalNumbers.CastingOut.depthAvg_dvd_tendsto_of_primitive
+#print axioms NormalNumbers.CastingOut.depthRoot_ne_one_of_not_dvd
+#print axioms NormalNumbers.CastingOut.depthDiagonal_of_degrading
+#print axioms NormalNumbers.CastingOut.weylLambertTwist_of_degrading
 #print axioms NormalNumbers.CastingOut.depthAvg_gen_tendsto_of_unif
 #print axioms NormalNumbers.CastingOut.depthAvg_gen_tendsto_of_degrading_sched
 
