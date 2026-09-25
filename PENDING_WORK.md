@@ -10020,3 +10020,36 @@ is NOT `O(δ log(2+|t|))`.  The cutoff must be at height `A₁ ≈ 8 log(C(1+|t|
 * windows above `A₁`: `∑ e^{−a_m/8} ≤ e^{−A₁/16}·∑ e^{−a_m/16}` and the second factor is a
   geometric sum with ratio `e^{−π/(16|t|)}`, hence `≤ 1 + 32|t|/π`; `A₁ = 16 log(C(1+|t|))`
   then makes the whole error `≤ 1`.
+
+### Lap 79 — the last two leaves before the assembly
+
+* `sum_exp_neg_le` — `∑_{j<n} exp(−cj) ≤ 1 + 1/c` for `c > 0`, from `exp(−c) ≤ 1/(1+c)` and
+  `geom_sum_eq`.  Applied with `c = π/(32|t|)` (the window spacing in the height variable)
+  it gives the `1 + 32|t|/π` cost of the Brun–Titchmarsh error tail.
+* `small_prime_mass_le` — any set of primes `≤ B` has mass `≤ log log B + mertensBound`.
+
+**Everything `UniformResonantMass` needs is now proved.**  The assembly is:
+
+    resonantMass z t Y δ
+      = ∑_{m ∈ Icc(−K,K)} (mass of the fibre windowIndexW = m)          [sum_fiberwise_of_maps_to,
+                                                                          abs_windowIndexW_le]
+      ≤ (fibres with a_m < A₁ : all primes ≤ exp(A₁+1))                  [small_prime_mass_le]
+        + ∑_{a_m ≥ A₁} (16δ/(|t| a_m) + 6(1+a_m)³/√(exp a_m))            [resonant_window_mass_le]
+      ≤ log(A₁+1) + mertensBound                                          [absorbed: log_log_le_mul_log]
+        + 2·(32δ/π)(1 + log K)                                            [sum_inv_gap_le, sum_Icc_symm_le]
+        + 10⁵ e^{−A₁/16}·2(1 + 32|t|/π)                                   [window_err_le, sum_exp_neg_le,
+                                                                           sum_Icc_symm_le]
+
+with `A₁ := 16 log(10⁵(1 + 32|t|/π) + 2)` making the last line `≤ 2`, and
+`K := ⌈(|t| log Y + δ + π)/(2π)⌉` so `log K ≤ log log Y + log(2+|t|) + O(1)`.
+Regime split: `2δ ≤ |t|` for the above; `|t| < 2δ` is `resonant_mass_le` (Range 1, lap 20),
+where `T = |t| log Y` is not bounded — **CHECK THIS**: for `|t| < 2δ` the windows are spaced
+`2π/|t|` apart in `a`, so only `O(1 + |t| log Y)` of them meet `[2, Y]`; the honest statement is
+that this branch needs the same treatment with `w = exp(2δ/|t|) − 1` no longer `≤ 2·(2δ/|t|)`.
+Simplest fix: for `|t| < 2δ` use `a_m ≥ (2π|m| − π − δ)/|t| ≥ (π/2)|m|/|t| ≥ (π/4)|m|/δ`, so
+only `m = 0` can have `a_m ≤ log Y` once `|t| ≤ 2δ/log Y`; the intermediate range
+`2δ/log Y < |t| < 2δ` still has `≤ 1 + (2/π)|t| log Y ≤ 1 + (4δ/π) log Y` windows — and a
+FLAT per-window bound (`windowMassBound`) there costs `O(δ log Y)`, which is too big.
+So the `|t| < 2δ` branch must ALSO use Brun–Titchmarsh, with `w = exp(2δ/|t|) − 1` bounded by
+`exp(2δ/|t|)` and the main term `4w/a_m` compared against `a_m ≥ (γ_m − δ)/|t|`.  Deferred to
+the assembly lap; it is the one genuinely unresolved corner.

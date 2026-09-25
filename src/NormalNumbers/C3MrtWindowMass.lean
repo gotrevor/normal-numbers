@@ -386,3 +386,65 @@ theorem sum_Icc_symm_le {K : ℕ} (f : ℝ → ℝ) (hf : ∀ x, 0 ≤ f x) :
     have : (((Finset.Icc (-(K : ℤ)) (K : ℤ)).filter (fun m => m.natAbs = j)).card : ℝ) ≤ 2 := by
       exact_mod_cast hcard
     exact mul_le_mul_of_nonneg_right this (hf _)
+
+/-- **The geometric sum.**  `∑_{j<n} exp(−cj) ≤ 1 + 1/c` for `c > 0`, from
+`exp(−c) ≤ 1/(1+c)`.  With `c = π/(32|t|)` — the spacing of the resonance windows in the
+height variable `a` — this is the `1 + 32|t|/π` that the Brun–Titchmarsh error tail costs. -/
+theorem sum_exp_neg_le {c : ℝ} (hc : 0 < c) (n : ℕ) :
+    ∑ j ∈ Finset.range n, Real.exp (-(c * j)) ≤ 1 + 1 / c := by
+  have hr : ∀ j : ℕ, Real.exp (-(c * j)) = (Real.exp (-c)) ^ j := by
+    intro j
+    rw [← Real.exp_nat_mul]
+    congr 1
+    ring
+  simp_rw [hr]
+  set r : ℝ := Real.exp (-c) with hrdef
+  have hr0 : 0 < r := Real.exp_pos _
+  have hr1 : r < 1 := by
+    rw [hrdef, Real.exp_lt_one_iff]
+    linarith
+  have hrc : r ≤ 1 / (1 + c) := by
+    have h := Real.add_one_le_exp c
+    have h1 : (0 : ℝ) < 1 + c := by linarith
+    rw [hrdef, Real.exp_neg, one_div]
+    exact inv_anti₀ h1 (by linarith)
+  have hgeom : ∑ j ∈ Finset.range n, r ^ j ≤ 1 / (1 - r) := by
+    have hpos : (0 : ℝ) < 1 - r := by linarith
+    have heq : ∑ j ∈ Finset.range n, r ^ j = (1 - r ^ n) / (1 - r) := by
+      rw [geom_sum_eq (by linarith : r ≠ 1),
+        show r ^ n - 1 = -(1 - r ^ n) by ring, show r - 1 = -(1 - r) by ring, neg_div_neg_eq]
+    rw [heq]
+    exact div_le_div_of_nonneg_right (by nlinarith [pow_nonneg hr0.le n]) hpos.le
+  have hden : c / (1 + c) ≤ 1 - r := by
+    have h1 : (0 : ℝ) < 1 + c := by linarith
+    rw [div_le_iff₀ h1]
+    have hr2 : r * (1 + c) ≤ 1 := by
+      rw [← le_div_iff₀ h1]
+      simpa using hrc
+    nlinarith [hr2]
+  have hfin : 1 / (1 - r) ≤ 1 + 1 / c := by
+    have hpos : (0 : ℝ) < 1 - r := by linarith
+    have hcpos : (0 : ℝ) < c / (1 + c) := by positivity
+    calc 1 / (1 - r) ≤ 1 / (c / (1 + c)) := by
+          exact one_div_le_one_div_of_le hcpos hden
+      _ = (1 + c) / c := by rw [one_div_div]
+      _ = 1 + 1 / c := by field_simp; ring
+  linarith
+
+/-- **The small-prime bound.**  Any set of primes `≤ B` carries reciprocal mass at most
+`log log B + mertensBound`.  In the assembly this absorbs every window below the cutoff
+height `A₁`, with `B = exp(A₁ + 1)`, so the cost is `log(A₁+1) + O(1) ≈ log log|t|`. -/
+theorem small_prime_mass_le {B : ℕ} (hB : 2 ≤ B) {G : Finset ℕ}
+    (hG : ∀ p ∈ G, p.Prime ∧ p ≤ B) :
+    ∑ p ∈ G, (p : ℝ)⁻¹
+      ≤ Real.log (Real.log B) + Erdos67b.PrimeEstimates.mertensBound := by
+  have hsub : G ⊆ Erdos67b.primesUpTo B := fun p hp => Erdos67b.mem_primesUpTo.2 (hG p hp)
+  have h1 : ∑ p ∈ G, (p : ℝ)⁻¹ ≤ ∑ p ∈ Erdos67b.primesUpTo B, (p : ℝ)⁻¹ :=
+    Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p _ _ => by positivity)
+  have h2 : ∑ p ∈ Erdos67b.primesUpTo B, (p : ℝ)⁻¹
+      = Erdos67b.PrimeEstimates.primeReciprocals B := by
+    rw [primesUpTo_eq_primesLE]
+    rfl
+  have h3 := abs_le.1 (Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le hB)
+  rw [h2] at h1
+  linarith [h3.2]
