@@ -1,4 +1,4 @@
-# HANDOFF c3-mrt 2026-09-25 — laps 7–8
+# HANDOFF c3-mrt 2026-09-25 — laps 7–9
 
 Branch `wip/c3-mrt`.  `lake build` green at both commits; every new result axiom-clean
 `[propext, Classical.choice, Quot.sound]`, no `sorry`.  Pure addition (2 new modules).
@@ -43,9 +43,32 @@ Net effect: a **one-shift** `ζ^ω` average is now, rigorously and with a unifor
 finite sum of `ζ^Ω` averages along the linear forms `k ↦ dk` — the shape
 `Erdos67b.NonasymptoticLogElliott` is stated for.
 
+## Lap 9 — `D = 2`, and the coprimality constraint (same module)
+
+* `sum_pow_omega_offset_eq` — the substitution in **general form**: arbitrary finite index set
+  `S` of `n`'s and arbitrary offset `c`.  Because `S` is arbitrary the lemma iterates: the
+  `i`-th expansion runs *inside* the congruence conditions already imposed by the previous ones.
+* `sum_pow_omega_two_shift_eq` — both shifts expanded:
+
+      ∑_{n<N} F(n) z₀^{ω(n+1)} z₁^{ω(n+2)}
+        = ∑_{d,e} g₀(d) g₁(e) ∑_{n<N, d∣n+1, e∣n+2} F(n) z₀^{Ω((n+1)/d)} z₁^{Ω((n+2)/e)} .
+
+* **`coprime_of_joint_progression`** — a structural fact the `D = 1` case cannot see: the joint
+  system `d ∣ n+1`, `e ∣ n+2` forces `gcd(d,e) ∣ (n+2)−(n+1) = 1`.  So the tuple sum is really
+  over **coprime** powerful pairs (`sum_pow_omega_two_shift_eq_coprime`).  This is good news
+  twice over: it shrinks the tuple sum, and coprimality is exactly the hypothesis under which
+  the joint condition collapses to a single residue class mod `de`, i.e. under which the CRT
+  reindexing to two linear forms is available at all.
+
 ## NEXT — resume here
 
-1. **`D`-fold version.**  Apply `sum_pow_omega_shift_eq` with
+0. **CRT reindex (`D = 2`).**  For coprime `d, e` produce `a < de` with
+   `(d ∣ n+1 ∧ e ∣ n+2) ↔ n ≡ a (mod de)`, then reindex `n = de·k + a`, turning
+   `(n+1)/d` and `(n+2)/e` into the linear forms `(de/d)k + (a+1)/d = ek + (a+1)/d` and
+   `dk + (a+2)/e`.  Suggested route: `ZMod (d*e) ≃+* ZMod d × ZMod e` (`ZMod.chineseRemainder`),
+   with `d ∣ n+1 ↔ (n : ZMod d) = -1`.  After this the `D = 2` rung is a pure instantiation.
+1. ~~**`D`-fold version.**~~  Done for `D = 2` (lap 9); the general `D` needs only the same
+   iteration over `Fintype.piFinset`, and  Apply `sum_pow_omega_shift_eq` with
    `F(n) = e(jn/Q) ∏_{1≤i<D} ζ_i^{ω(n+1+i)}` and iterate; the `i`-th application needs the
    shift `n+1+i`, i.e. the same lemma with `n + 1` replaced by `n + 1 + i` (generalise
    `sum_over_progression_eq` to the progression `n ≡ −(1+i) (mod d)` — the reindex is

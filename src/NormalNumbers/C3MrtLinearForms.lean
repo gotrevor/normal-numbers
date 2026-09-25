@@ -157,6 +157,150 @@ theorem sum_pow_omega_shift_eq (z : ℂ) (F : ℕ → ℂ) (N : ℕ) :
     have hk1 : d * k - 1 + 1 = d * k := by omega
     rw [hk1, Nat.mul_div_cancel_left _ hdpos]
 
+/-! ### The general form: arbitrary offset, arbitrary index set
+
+For the `D`-point correlation each of the `D` shifts `n+1+i` must be expanded in turn, and the
+`i`-th expansion happens *inside* the congruence conditions already imposed by the previous
+ones.  So the general statement ranges `n` over an arbitrary `Finset` and the shift over an
+arbitrary positive offset.
+-/
+
+/-- **Substitution, general form.**  For any finite index set `S` of `n`'s with `n + c ≤ B`,
+
+    ∑_{n ∈ S} F(n) z^{ω(n+c)} = ∑_{d ≤ B} g(d) ∑_{n ∈ S, d ∣ n+c} F(n) z^{Ω((n+c)/d)} .
+
+Since `S` is arbitrary, this may be applied repeatedly: the `i`-th application runs inside the
+congruence conditions already imposed by the previous ones. -/
+theorem sum_pow_omega_offset_eq (z : ℂ) (F : ℕ → ℂ) (S : Finset ℕ) (c B : ℕ) (hc : 0 < c)
+    (hB : ∀ n ∈ S, n + c ≤ B) :
+    ∑ n ∈ S, F n * z ^ omegaNat (n + c)
+      = ∑ d ∈ range (B + 1),
+          sqfW z d * ∑ n ∈ S.filter (fun n => d ∣ n + c),
+            F n * z ^ ArithmeticFunction.cardFactors ((n + c) / d) := by
+  have step1 : ∀ n ∈ S, F n * z ^ omegaNat (n + c)
+      = ∑ d ∈ range (B + 1),
+          (if d ∣ n + c then sqfW z d * z ^ ArithmeticFunction.cardFactors ((n + c) / d) else 0)
+            * F n := by
+    intro n hn
+    have hm : (n + c) ≠ 0 := by omega
+    have hfilter : (range (B + 1)).filter (fun d => d ∣ n + c) = (n + c).divisors := by
+      ext d
+      constructor
+      · intro hd
+        rw [Finset.mem_filter] at hd
+        exact Nat.mem_divisors.2 ⟨hd.2, hm⟩
+      · intro hd
+        have hdvd := (Nat.mem_divisors.1 hd).1
+        have hle : d ≤ n + c := Nat.le_of_dvd (by omega) hdvd
+        have := hB n hn
+        rw [Finset.mem_filter, Finset.mem_range]
+        exact ⟨by omega, hdvd⟩
+    rw [← Finset.sum_mul, ← Finset.sum_filter, hfilter,
+      pow_omegaNat_eq_sum_divisors' z hm, mul_comm]
+  rw [Finset.sum_congr rfl step1, Finset.sum_comm]
+  refine Finset.sum_congr rfl fun d hd => ?_
+  rw [← Finset.sum_filter_add_sum_filter_not S (fun n => d ∣ n + c)]
+  have hzero : ∑ n ∈ S.filter (fun n => ¬ d ∣ n + c),
+      (if d ∣ n + c then sqfW z d * z ^ ArithmeticFunction.cardFactors ((n + c) / d) else 0)
+        * F n = 0 := by
+    refine Finset.sum_eq_zero fun n hn => ?_
+    rw [Finset.mem_filter] at hn
+    rw [if_neg hn.2, zero_mul]
+  rw [hzero, add_zero, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun n hn => ?_
+  rw [Finset.mem_filter] at hn
+  rw [if_pos hn.2]
+  ring
+
+/-- **The `D = 2` substitution.**  Both shifts expanded: the double sum over the powerful
+moduli `(d, e)` of a correlation of the completely multiplicative `z₀^{Ω}`, `z₁^{Ω}` restricted
+to the joint progression `n ≡ −1 (mod d)`, `n ≡ −2 (mod e)` — which, after CRT on `lcm d e`,
+is a two-point correlation along two linear forms.  This is the shape required by
+`Erdos67b.NonasymptoticLogElliott` at two points. -/
+theorem sum_pow_omega_two_shift_eq (z₀ z₁ : ℂ) (F : ℕ → ℂ) (N : ℕ) :
+    ∑ n ∈ range N, F n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2))
+      = ∑ d ∈ range (N + 2), ∑ e ∈ range (N + 3),
+          sqfW z₀ d * sqfW z₁ e *
+            ∑ n ∈ ((range N).filter (fun n => d ∣ n + 1)).filter (fun n => e ∣ n + 2),
+              F n * (z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) *
+                z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e)) := by
+  have hstep : ∑ n ∈ range N, (fun n => F n * z₁ ^ omegaNat (n + 2)) n * z₀ ^ omegaNat (n + 1)
+      = ∑ d ∈ range (N + 2),
+          sqfW z₀ d * ∑ n ∈ (range N).filter (fun n => d ∣ n + 1),
+            (F n * z₁ ^ omegaNat (n + 2)) *
+              z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) :=
+    sum_pow_omega_offset_eq z₀ (fun n => F n * z₁ ^ omegaNat (n + 2)) (range N) 1 (N + 1)
+      one_pos (fun n hn => by rw [Finset.mem_range] at hn; omega)
+  have hL : ∑ n ∈ range N, F n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2))
+      = ∑ n ∈ range N, (fun n => F n * z₁ ^ omegaNat (n + 2)) n * z₀ ^ omegaNat (n + 1) := by
+    refine Finset.sum_congr rfl fun n _ => by ring
+  rw [hL, hstep]
+  refine Finset.sum_congr rfl fun d _ => ?_
+  have hinner := sum_pow_omega_offset_eq z₁
+    (fun n => F n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d))
+    ((range N).filter (fun n => d ∣ n + 1)) 2 (N + 2) (by norm_num)
+    (fun n hn => by rw [Finset.mem_filter, Finset.mem_range] at hn; omega)
+  have hrw : ∑ n ∈ (range N).filter (fun n => d ∣ n + 1),
+      (F n * z₁ ^ omegaNat (n + 2)) * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d)
+      = ∑ n ∈ (range N).filter (fun n => d ∣ n + 1),
+        (fun n => F n * z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d)) n *
+          z₁ ^ omegaNat (n + 2) := by
+    refine Finset.sum_congr rfl fun n _ => by ring
+  rw [hrw, hinner, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun e _ => ?_
+  rw [mul_assoc, Finset.mul_sum]
+  congr 1
+  rw [← Finset.mul_sum]
+  congr 1
+  exact Finset.sum_congr rfl fun n _ => by ring
+
+/-! ### Only COPRIME tuples survive
+
+A structural constraint that the `D = 1` case cannot see: the joint system `d ∣ n+1`,
+`e ∣ n+2` forces `gcd(d, e) ∣ 1`.  So the double sum over powerful moduli is really a sum over
+*coprime* powerful pairs — and for coprime `d, e` the joint condition is a single residue class
+mod `d e`, which is what makes the CRT reindexing to two linear forms available.
+-/
+
+/-- The joint progression forces coprimality: `gcd(d,e) ∣ (n+2) − (n+1) = 1`. -/
+theorem coprime_of_joint_progression {d e n : ℕ} (h1 : d ∣ n + 1) (h2 : e ∣ n + 2) :
+    Nat.Coprime d e := by
+  have hg1 : Nat.gcd d e ∣ n + 1 := (Nat.gcd_dvd_left d e).trans h1
+  have hg2 : Nat.gcd d e ∣ n + 2 := (Nat.gcd_dvd_right d e).trans h2
+  have hsub : Nat.gcd d e ∣ (n + 2) - (n + 1) := Nat.dvd_sub hg2 hg1
+  have : Nat.gcd d e ∣ 1 := by simpa using hsub
+  exact Nat.eq_one_of_dvd_one this
+
+/-- Hence non-coprime pairs contribute nothing. -/
+theorem joint_progression_eq_empty_of_not_coprime {d e N : ℕ} (h : ¬ Nat.Coprime d e) :
+    ((range N).filter (fun n => d ∣ n + 1)).filter (fun n => e ∣ n + 2) = ∅ := by
+  refine Finset.eq_empty_of_forall_notMem fun n hn => ?_
+  rw [Finset.mem_filter, Finset.mem_filter] at hn
+  exact h (coprime_of_joint_progression hn.1.2 hn.2)
+
+/-- **The `D = 2` substitution, restricted to coprime moduli.**  The clean form: the correlation
+is a sum over *coprime* powerful pairs `(d, e)`, for each of which the surviving `n` form a
+single residue class mod `d e`. -/
+theorem sum_pow_omega_two_shift_eq_coprime (z₀ z₁ : ℂ) (F : ℕ → ℂ) (N : ℕ) :
+    ∑ n ∈ range N, F n * (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2))
+      = ∑ d ∈ range (N + 2), ∑ e ∈ (range (N + 3)).filter (fun e => Nat.Coprime d e),
+          sqfW z₀ d * sqfW z₁ e *
+            ∑ n ∈ ((range N).filter (fun n => d ∣ n + 1)).filter (fun n => e ∣ n + 2),
+              F n * (z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) *
+                z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e)) := by
+  rw [sum_pow_omega_two_shift_eq z₀ z₁ F N]
+  refine Finset.sum_congr rfl fun d _ => ?_
+  rw [← Finset.sum_filter_add_sum_filter_not (range (N + 3)) (fun e => Nat.Coprime d e)]
+  have hzero : ∑ e ∈ (range (N + 3)).filter (fun e => ¬ Nat.Coprime d e),
+      sqfW z₀ d * sqfW z₁ e *
+        ∑ n ∈ ((range N).filter (fun n => d ∣ n + 1)).filter (fun n => e ∣ n + 2),
+          F n * (z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) *
+            z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e)) = 0 := by
+    refine Finset.sum_eq_zero fun e he => ?_
+    rw [Finset.mem_filter] at he
+    rw [joint_progression_eq_empty_of_not_coprime he.2, Finset.sum_empty, mul_zero]
+  rw [hzero, add_zero]
+
 /-! ### Truncating the modulus at `d ≤ Y`, uniformly in `N` -/
 
 /-- The tail of the bridge weight beyond `Y`. -/
@@ -259,3 +403,5 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.sum_pow_omega_shift_eq
 #print axioms NormalNumbers.CastingOut.bridge_truncation_bound
 #print axioms NormalNumbers.CastingOut.bridgeTail_tendsto
+#print axioms NormalNumbers.CastingOut.sum_pow_omega_offset_eq
+#print axioms NormalNumbers.CastingOut.sum_pow_omega_two_shift_eq_coprime
