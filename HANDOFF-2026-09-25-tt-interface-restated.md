@@ -176,3 +176,16 @@ axiom-clean.**  `lake build` green (9443 jobs).  `#print axioms` gives exactly
 
 No restatement drift was introduced by laps 103-117: the later defect round (lap 115) hit the
 *block* layer (`WideBlockSaving`/`WideBlockPartial`/`BlockPhasePairing`), not the TT interface.
+
+### Scope note for the host / next lap
+
+This run was launched with a **bounded** objective (the restatement items (a)-(c), explicitly
+"do not advance the crux"), not repo-wide sorry-freeness.  That objective is met and re-audited
+(`2fc0435`).  The repo-wide self-stop gate therefore correctly declines the stop: 15 open sorries
+remain, all of them on the *crux* side this run was told not to touch.  A bounded run like this
+should be launched with `--done-when 'sorry-free:<target>'`.
+
+**Next lap should resume DIRECTION.md's mandated program**, not the restatement work: item ②.1
+`blockBandCost_holds` for a parametric `J` (top blocks: primes `p > (⌈X²⌉₊+1)/2`, total mass
+`≤ 2`; bottom blocks: `small_prime_mass_le` giving `log(J X · log 2) + mertensBound`), then ②.2
+the kernel pin of the bottom threshold, then `CharPrimeSumLogQ D` at `t = 0`.
