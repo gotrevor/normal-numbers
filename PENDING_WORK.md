@@ -9470,3 +9470,22 @@ abbreviation unwound (`IsNormal`/`IsNormalSequence`/`digitOf`, `subsetLambert`/`
 `HANDOFF-2026-09-23-theoremC-COMPLETE.md`'s "next steps"; the campaign's hygiene is now
 complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`; (3) the two off-campaign designated-open `sorry`s.
+
+## 2026-09-25 (laps 57–59) — the 🟡 `DelangeMean` past the `‖z−1‖ < 1` wall: `t = 1/2` CLOSED
+
+**Result.** `delangeMean_half : DelangeMean (1/2)` unconditionally, and `moebiusMeanZero :
+MoebiusMeanZero` (`M(N) = O(N/log N)`) — both axiom-clean, in `TwoPointDelangeParity.lean` and
+`TwoPointMoebiusPNT.lean`.  See `HANDOFF-twopoint-2026-09-25-lap59.md`.
+
+**The dichotomy to not re-derive.**  `z^ω = z^Ω * k_z` with `k_z` supported on powerful numbers
+(`k_z(p)=0`, `k_z(p^j) = −z(z−1)`), and `z^Ω` reduces to `μ` by a FINITE convolution exactly when
+`z = −1` (`(1−zX)^{-1}(1−X)^w` has integer `w` only there).  So the elementary/finite-convolution
+route closes `t = 1/2` and NOTHING ELSE outside `‖t‖ < 1/6`.
+
+**Reusable tools landed.**  `kernelSum_tendsto_zero` (transfer across a summable convolution
+kernel), `sum_conv_eq` (general hyperbola, any semiring), `summable_divisorCard`,
+`exists_cube_sq_of_powerful` (`n = a³c²` for powerful `n`), `two_pow_omega_le_*`.
+
+**NEXT (open).**  `DelangeMean (m/b)`, `b ≥ 3`, `‖m/b‖ ≥ 1/6`: needs `ζ(s)^z` (Selberg–Delange) or
+Halász, over `PNTPort`'s zero-free region + Mellin/residue toolkit.  Cheapest probe recorded in the
+lap-59 handoff, item 1(c).
