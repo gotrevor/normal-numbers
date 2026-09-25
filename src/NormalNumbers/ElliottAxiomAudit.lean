@@ -6,6 +6,7 @@ import NormalNumbers.ElliottArchimedeanRefuted
 import NormalNumbers.ElliottTwistRepair
 import NormalNumbers.ElliottSmallShift
 import NormalNumbers.ElliottArchBands
+import NormalNumbers.ElliottDamped
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
@@ -189,3 +190,7 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottArchBands.twoPointElliottLog_of_bands
 #print axioms NormalNumbers.ElliottArchBands.archCorrLargeShift_of_moderate_and_nearMax
 #print axioms NormalNumbers.ElliottArchBands.twoPointElliottLog_of_three_bands
+
+/-! ### The damping step towards (c′-I)/(c′-II-a) (lap 97) -/
+#print axioms NormalNumbers.ElliottDamped.sum_log_div_primesUpTo_le
+#print axioms NormalNumbers.ElliottDamped.norm_archCorr_sub_dampedArchCorr_le

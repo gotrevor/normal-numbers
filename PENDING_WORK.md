@@ -156,6 +156,36 @@ is not "all `|v| > 1`" but the near-maximal-height band alone, and the final inp
    `c/log|t| ≪ (log X)^{-(1-ν)}` and the relevant contour push may already give a power saving in
    `log X`.  **That comparison is the route-decisive question for the wall.**
 
+### ✅ Lap 97 — the damping step, and the route that actually reaches (c′-I)/(c′-II-a)
+
+**The route (found by survey, replaces the refuted Abel-summation plan).**  Use
+`1/log n = ∫_0^∞ n^{-w} dw`, so that `∑_p p^{-s} = ∫_0^∞ (−ζ'/ζ)(s+w) dw + O(1)` and both soft
+inputs follow from a bound on `ζ'/ζ` on `σ > 1` by the elementary integration
+`∫_0^∞ min(1/(δ+w), R) dw = log(1/(δR)) + O(1)`:
+
+* sub-unit band `|v| ≤ 1`: `R ≍ 1/|v|`, and the needed non-vanishing `ζ(1+it) ≠ 0` **is already in
+  mathlib** — so (c′-I) may be reachable from mathlib + compactness, *without* a quantitative
+  zero-free region.  (This refines lap 96's correction: the obstruction there was to *Mertens-level*
+  methods, not to ζ-analytic ones.)
+* moderate band `|v| > 1`: `R ≍ log|v|`, which is de la Vallée Poussin.
+
+**Landed (sorry-free, trust triple, in the audit surface):**
+* `sum_log_div_primesUpTo_le` — Mertens' first theorem in this campaign's index set,
+  `∑_{p≤X} log p/p ≤ log X + (log 4 + 4)`, from `Mertens.sum_log_prime_div_eq_log`.
+* `dampedArchCorr` and **`norm_archCorr_sub_dampedArchCorr_le`** — replacing the sharp cutoff
+  `1/p` by `p^{-1-1/log X}` costs at most `1 + (log 4 + 4)/log X`, **uniformly in the frequency**.
+  Mechanism: `1 − p^{-δ} ≤ δ log p` plus Mertens I.
+
+**Trap recorded:** `import PrimeNumberTheoremAnd.IEANTN.Mertens` FAILS — `lean-proofs-latest`
+shadows the `PrimeNumberTheoremAnd` module root with a smaller copy.  The importable path for the
+same file is **`ErdosProblems.Erdos49.PNT.IEANTN.Mertens`**.
+
+**Next step (lap 98):** the other half of the damping, `∑_{p > X} p^{-1-1/log X} = O(1)`, so that
+`archCorr v X = ∑_p p^{-1-1/log X-iv} + O(1)` and the analytic route can start.  Scaffolding exists:
+`Erdos67b.PrimeEstimates.expWeightedPrimeTail` bounds the block `(X, X²]` by `log 2 + 2·mertensBound`
+uniformly; iterate over the blocks `(X^{2^k}, X^{2^{k+1}}]`, where the weight `p^{-1/log X} ≤
+exp(−2^k)` gives geometric decay.
+
 ### What is OFF the path now
 
 `CharacterClusterRigidity`, `PrimeDensityAP`, `exists_charDefect_le`, `NearTrivialTwist`,
