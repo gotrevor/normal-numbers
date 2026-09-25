@@ -40,7 +40,25 @@ being paid down.
   (`H/(4a)` active block positions: `H/(2a)` of them, halved again by the floor).  Constants are
   the dependency's with one extra factor `4a` — i.e. the dilated analogue of
   `Erdos67b.exists_dyadic_primeGraphCorrelationWeight_lower`'s `H/(8 log P)`.
-* **Next: step (i)**, the dilated `norm_logProb_pairTwistedMean_sub_correlation_le`: combine
+* **Step (i) done.**  `src/NormalNumbers/ElliottDilatedMean.lean` (new, zero sorry, trust triple):
+  `norm_logProb_dilatedMean_sub_correlation_le` — given any decoupling bound `e` on
+  `genDiscrepancyAt` at the residue `n - crtShift H (·*c₁/a)`, the **mean**
+  `logProbExpectation (fun n ↦ dilatedPairTwistedMean (pairTwist f₁ f₂) (affineBlock f₁ a n H)
+  (affineBlock f₂ a n H) a c₁ h s)` is `dilatedCorrelationWeight H a c₁ h s` times the affine
+  correlation, up to `e +` the lap-35 transfer error.  Stated on `dilatedPairTwistedMean`, i.e. on
+  **exactly** the object `ElliottDilatedUpper.exists_dilatedPairTwistedMean_small_of_fourier_first_moment`
+  bounds above (join: `ElliottDilatedBridge.genMeanCRT_dilatedEdgeReindexed`).  So both halves of
+  the crux are now inequalities about the same quantity.
+* **Next: step (iii)**, the entropy-selected scale.  Feed
+  `ElliottGenericGraph.exists_logProb_gen_decoupling` the grouped alphabet of lap 28
+  (`α = Fin a → β`, `G m = (F(am), …, F(am+a-1))`, so `affineBlock f a n (a*m)` is a function of
+  `finiteSequenceBlock G m n`) with `Δ m = crtShift (a*m) (·*c₁/a)` and
+  `mkE m b p j = dilatedEdgeReindexed (decode₁ b) (decode₂ b) a c₁ h p j`; that yields the
+  hypothesis `e = ε (a m)/log(a m)` of `norm_logProb_dilatedMean_sub_correlation_le`.  Then the
+  dyadic lower bound of `ElliottDilatedWeight` and the contradiction against the upper bound, and
+  finally the MRT choreography of `ElliottTwistedGraph.shiftCMLogElliott`.
+
+Superseded next-step note (step (i), now done): combine
   `ElliottDilatedCorrelation.norm_logProb_dilatedGraph_sub_correlation_le` (lap 35) with
   `ElliottGenericGraph.exists_logProb_gen_decoupling` (lap 30) at `Δ m = crtShift H (·*c₁/a)`;
   then `genMeanCRT = dilatedPairTwistedMean` by
