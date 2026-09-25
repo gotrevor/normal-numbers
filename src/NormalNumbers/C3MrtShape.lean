@@ -181,6 +181,93 @@ theorem tailLarge_sub_tailDepth_nonneg {b : ℕ} (hb : 2 ≤ b) (P D n : ℕ) :
   rw [tailLarge_sub_tailDepth_eq hb P D n]
   refine tsum_nonneg fun i => by positivity
 
+/-! ### At depth `D` the phase is exactly a `D`-point root-of-unity correlation -/
+
+lemma ee_zero : ee 0 = 1 := by simp [ee]
+
+lemma ee_sum {ι : Type*} (s : Finset ι) (f : ι → ℂ) :
+    ee (∑ i ∈ s, f i) = ∏ i ∈ s, ee (f i) := by
+  classical
+  induction s using Finset.induction with
+  | empty => simp [ee_zero]
+  | insert a s ha ih => rw [Finset.sum_insert ha, Finset.prod_insert ha, ee_add, ih]
+
+lemma ee_nat_mul (k : ℕ) (x : ℂ) : ee ((k : ℂ) * x) = ee x ^ k := by
+  induction k with
+  | zero => simp [ee_zero]
+  | succ k ih => push_cast; rw [add_mul, ee_add, ih, one_mul]; ring
+
+/-- `ζ_i = e(h / b^{i+1})`: the root of unity carried by the digit at depth `i`. -/
+noncomputable def depthRoot (b : ℕ) (h : ℤ) (i : ℕ) : ℂ :=
+  ee ((((h : ℝ) / (b : ℝ) ^ (i + 1) : ℝ) : ℂ))
+
+/-- **The depth-`D` phase is a `D`-point correlation of the multiplicative functions
+`ζ_i^{ω_{>P}}` along the `D` consecutive shifts `n+1, …, n+D`.**  This is the machine-checked
+identification of the C3 crux as an Elliott-type correlation. -/
+theorem ee_tailDepth_eq_prod (b P D n : ℕ) (h : ℤ) :
+    ee ((((h : ℝ) * tailDepth P b D n : ℝ) : ℂ))
+      = ∏ i ∈ range D, depthRoot b h i ^ omegaLarge P (n + i + 1) := by
+  have hpush : (((h : ℝ) * tailDepth P b D n : ℝ) : ℂ)
+      = ∑ i ∈ range D, ((omegaLarge P (n + i + 1) : ℂ)
+          * (((h : ℝ) / (b : ℝ) ^ (i + 1) : ℝ) : ℂ)) := by
+    rw [tailDepth, Finset.mul_sum]
+    push_cast
+    exact Finset.sum_congr rfl fun i _ => by ring
+  rw [hpush, ee_sum]
+  exact Finset.prod_congr rfl fun i _ => by rw [ee_nat_mul]; rfl
+
+/-! ### The depth schedule: `D_N ≍ log_b log N`, and the truncation error along it -/
+
+/-- `D_N = 2(⌊log_b(log₂ N + 1)⌋ + 1)`: the depth schedule.  It is `O(log log N)` and satisfies
+`b^{D_N} ≥ (log₂ N + 1)²`, which is what makes the truncation error `O(1/log N)`. -/
+def depthSchedule (b N : ℕ) : ℕ := 2 * (Nat.log b (Nat.log 2 N + 1) + 1)
+
+lemma sq_log_le_pow_depthSchedule {b : ℕ} (hb : 3 ≤ b) (N : ℕ) :
+    ((Nat.log 2 N : ℝ) + 1) ^ 2 ≤ (b : ℝ) ^ depthSchedule b N := by
+  have hb1 : 1 < b := by omega
+  have key : Nat.log 2 N + 1 < b ^ (Nat.log b (Nat.log 2 N + 1) + 1) :=
+    Nat.lt_pow_succ_log_self hb1 _
+  have keyR : ((Nat.log 2 N : ℝ) + 1) ≤ (b : ℝ) ^ (Nat.log b (Nat.log 2 N + 1) + 1) := by
+    have : ((Nat.log 2 N + 1 : ℕ) : ℝ) ≤ ((b ^ (Nat.log b (Nat.log 2 N + 1) + 1) : ℕ) : ℝ) := by
+      exact_mod_cast key.le
+    push_cast at this; linarith
+  have hnn : (0 : ℝ) ≤ (Nat.log 2 N : ℝ) + 1 := by positivity
+  calc ((Nat.log 2 N : ℝ) + 1) ^ 2
+      ≤ ((b : ℝ) ^ (Nat.log b (Nat.log 2 N + 1) + 1)) ^ 2 := by gcongr
+    _ = (b : ℝ) ^ depthSchedule b N := by
+        rw [depthSchedule, ← pow_mul]; ring_nf
+
+/-- **The truncation error along the schedule is `O(1/log N)`.** -/
+theorem depthSchedule_err_le {b : ℕ} (hb : 3 ≤ b) (N : ℕ) :
+    ((Nat.log 2 N : ℝ) + depthSchedule b N + 1)
+        / (((b : ℝ) - 2) * (b : ℝ) ^ depthSchedule b N)
+      ≤ 3 / ((Nat.log 2 N : ℝ) + 1) := by
+  have hbR : (3 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  set L : ℕ := Nat.log 2 N with hLdef
+  set D : ℕ := depthSchedule b N with hDdef
+  have hD : D ≤ 2 * (L + 1) := by
+    rw [hDdef, depthSchedule, ← hLdef]
+    have := Nat.log_lt_self b (show L + 1 ≠ 0 by omega)
+    omega
+  have hDR : (D : ℝ) ≤ 2 * ((L : ℝ) + 1) := by
+    have : ((D : ℕ) : ℝ) ≤ ((2 * (L + 1) : ℕ) : ℝ) := by exact_mod_cast hD
+    push_cast at this; linarith
+  have hnum : (L : ℝ) + D + 1 ≤ 3 * ((L : ℝ) + 1) := by
+    have : (0 : ℝ) ≤ (L : ℝ) := by positivity
+    linarith
+  have hsq : ((L : ℝ) + 1) ^ 2 ≤ (b : ℝ) ^ D := by
+    rw [hDdef, hLdef]; exact sq_log_le_pow_depthSchedule hb N
+  have hden : ((L : ℝ) + 1) ^ 2 ≤ ((b : ℝ) - 2) * (b : ℝ) ^ D := by
+    nlinarith [pow_pos (show (0:ℝ) < (b:ℝ) by linarith) D]
+  have hL1 : (0 : ℝ) < (L : ℝ) + 1 := by positivity
+  calc ((L : ℝ) + D + 1) / (((b : ℝ) - 2) * (b : ℝ) ^ D)
+      ≤ ((L : ℝ) + D + 1) / (((L : ℝ) + 1) ^ 2) :=
+        div_le_div_of_nonneg_left (by positivity) (by positivity) hden
+    _ ≤ (3 * ((L : ℝ) + 1)) / (((L : ℝ) + 1) ^ 2) :=
+        (div_le_div_iff_of_pos_right (by positivity)).2 hnum
+    _ = 3 / ((L : ℝ) + 1) := by
+        rw [sq]; field_simp
+
 end CastingOut
 
 end NormalNumbers
