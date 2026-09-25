@@ -9777,3 +9777,32 @@ Intermediate also proved: `norm_elliottLogCorrelation_le_caseA`, the master boun
 2. Case B's two convolution expansions (squarefull `u`, unimodularisation `v`) — elementary,
    absolutely convergent tails.
 3. The pretentiousness transfer and the final assembly.
+
+### lap 52 — THE HARD CORE WAS ALREADY FORMALIZED: Hall's inequality is in the dependency
+
+**Do not re-derive.**  `Erdos448.HalberstamComplete448.halberstam_richert_explicit` IS
+Halberstam–Richert Theorem 01, unconditional and fully explicit: for `h` nonnegative multiplicative
+with `h(p^{j+1}) ≤ λ₁λ₂^j` and `λ₂ < 2`,
+`∑_{n ≤ N} h n ≤ (K(λ₁,λ₂)+1)·(N/log N)·∏_{p ≤ N} ∑'_j h(p^j)/p^j`,
+`K = λ₁(log 4 + 8λ₂ log 2/(1-λ₂/2)²)`.  A `1`-bounded `h` is `λ₁ = λ₂ = 1`.
+(Found by grepping the dependency for `halberstam_richert`; the earlier PENDING_WORK note calling
+this "the hard core, still open" was wrong about its availability, not about its role.)
+
+`src/NormalNumbers/ElliottHall.lean` (new, trust triple):
+* `normFun g n = ‖g n‖` (zero at `0`) with its multiplicativity/boundedness lemmas;
+* `tsum_local_le` — `∑'_j ‖g(p^j)‖/p^j ≤ 1 + ‖g p‖/p + 1/(p(p-1))` (geometric tail, `tsum` form);
+* `sum_Icc_normFun_le` — **the density mean-value bound**
+  `∑_{n ≤ N} ‖g n‖ ≤ hallConst · e^{1+B} · N · exp(-Σ_N)`.
+  The `log N` of Halberstam–Richert cancels *exactly* against the `log N` of the Euler product —
+  that cancellation is the whole difference from the crude bound, and is why dyadic summation over
+  a thin window costs only `log W`.
+
+Also added to `ElliottEulerBound`, for reuse by both routes: `prod_le_exp_prime_sum`, `defectOf`,
+`exp_prime_sum_le_log_mul_exp_neg_defect`.
+
+**Next (lap 53): dyadic partial summation.**
+`∑_{Y/W < m ≤ Y} ‖g m‖/m ≤ ∑_{j < ⌈log₂W⌉} (2/T_j)·∑_{n ≤ 2T_j} ‖g n‖` with `T_j = Y/2^{j+1}`,
+each block `≤ 2·hallConst·e^{1+B}·e^{-Σ}` (monotonicity of `Σ_t` in `t` is needed, or just run the
+Hall bound at each `2T_j` and use `Σ_{2T_j} ≥ Σ` — careful: the defect *grows* with the scale, so
+use the defect at the smallest scale `Y/W`).  Total `≪ log W · e^{-Σ_{Y/W}}`.
+Then Case A's thin-window regime closes exactly like `exists_caseA_threshold`.

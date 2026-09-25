@@ -310,6 +310,67 @@ theorem sum_Icc_le_log_mul_exp_neg_defect {f : ArithmeticFunction ℝ} (hf : f.I
         rw [Real.exp_add, Real.exp_add, Real.exp_log hlogY]
 
 
+/-! ## Generic forms, for reuse by the Hall route
+
+The two steps after the Euler product — local factor ⟹ `exp` of the prime sum, and Mertens ⟹
+`log Y · exp(-Σ)` — are stated once here for an arbitrary family of local factors, since the Hall
+(Halberstam–Richert) route needs them for *infinite* local factors `∑' j, h(p^j)/p^j`. -/
+
+/-- Local factors `≤ 1 + w p + 1/(p(p-1))` give a product `≤ exp(1 + ∑_p w p)`. -/
+theorem prod_le_exp_prime_sum {F w : ℕ → ℝ} {Y : ℕ}
+    (hF0 : ∀ p ∈ Nat.primesBelow (Y + 1), 0 ≤ F p)
+    (hFle : ∀ p ∈ Nat.primesBelow (Y + 1),
+      F p ≤ 1 + w p + 1 / ((p : ℝ) * ((p : ℝ) - 1))) :
+    ∏ p ∈ Nat.primesBelow (Y + 1), F p ≤
+      Real.exp (1 + ∑ p ∈ Nat.primesBelow (Y + 1), w p) := by
+  have hstep : ∀ p ∈ Nat.primesBelow (Y + 1),
+      F p ≤ Real.exp (w p + 1 / ((p : ℝ) * ((p : ℝ) - 1))) := by
+    intro p hp
+    refine (hFle p hp).trans ?_
+    have := Real.add_one_le_exp (w p + 1 / ((p : ℝ) * ((p : ℝ) - 1)))
+    linarith
+  calc ∏ p ∈ Nat.primesBelow (Y + 1), F p
+      ≤ ∏ p ∈ Nat.primesBelow (Y + 1), Real.exp (w p + 1 / ((p : ℝ) * ((p : ℝ) - 1))) :=
+        Finset.prod_le_prod hF0 hstep
+    _ = Real.exp (∑ p ∈ Nat.primesBelow (Y + 1),
+          (w p + 1 / ((p : ℝ) * ((p : ℝ) - 1)))) := (Real.exp_sum _ _).symm
+    _ ≤ Real.exp (1 + ∑ p ∈ Nat.primesBelow (Y + 1), w p) := by
+        apply Real.exp_le_exp.mpr
+        rw [Finset.sum_add_distrib]
+        linarith [sum_primesBelow_inv_mul_pred_le_one Y]
+
+/-- The pretentious defect of a weight `w` at scale `Y`. -/
+noncomputable def defectOf (w : ℕ → ℝ) (Y : ℕ) : ℝ :=
+  ∑ p ∈ Nat.primesLE Y, ((p : ℝ)⁻¹ - w p)
+
+theorem primeDefect_eq_defectOf (f : ArithmeticFunction ℝ) (Y : ℕ) :
+    primeDefect f Y = defectOf (fun n ↦ f n) Y := rfl
+
+/-- Mertens' second theorem, in the form the Euler product consumes. -/
+theorem exp_prime_sum_le_log_mul_exp_neg_defect (w : ℕ → ℝ) {Y : ℕ} (hY : 2 ≤ Y) :
+    Real.exp (1 + ∑ p ∈ Nat.primesLE Y, w p) ≤
+      Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) * Real.log (Y : ℝ) *
+        Real.exp (-defectOf w Y) := by
+  have hlogY : 0 < Real.log (Y : ℝ) :=
+    Real.log_pos (by exact_mod_cast (by omega : 1 < Y))
+  have hmert := Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le hY
+  have hmert' : Erdos67b.PrimeEstimates.primeReciprocals Y ≤
+      Real.log (Real.log (Y : ℝ)) + Erdos67b.PrimeEstimates.mertensBound := by
+    have := abs_le.mp hmert
+    linarith [this.2]
+  have hsplit : ∑ p ∈ Nat.primesLE Y, w p =
+      Erdos67b.PrimeEstimates.primeReciprocals Y - defectOf w Y := by
+    rw [defectOf, Erdos67b.PrimeEstimates.primeReciprocals,
+      Erdos784.Analytic.primeReciprocals, Finset.sum_sub_distrib]
+    ring
+  calc Real.exp (1 + ∑ p ∈ Nat.primesLE Y, w p)
+      ≤ Real.exp ((1 + Erdos67b.PrimeEstimates.mertensBound) +
+          Real.log (Real.log (Y : ℝ)) + (-defectOf w Y)) := by
+        apply Real.exp_le_exp.mpr
+        rw [hsplit]; linarith
+    _ = _ := by rw [Real.exp_add, Real.exp_add, Real.exp_log hlogY]
+
+
 end NormalNumbers.ElliottEulerBound
 
 #print axioms NormalNumbers.ElliottEulerBound.sum_Icc_le_euler_product
