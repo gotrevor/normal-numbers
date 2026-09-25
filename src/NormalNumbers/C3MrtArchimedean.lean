@@ -837,6 +837,97 @@ theorem rung_two_of_named_inputs
   exact hX₀ (A ^ i) hpow q hq hqA χ t (by exact_mod_cast ht)
 
 
+/-! ## Uniformity over the finitely many pairs
+
+`rung_two_of_named_inputs` returns its own `A₀` and `i₀` for each linear-form pair.  The
+assembly needs ONE base `A` and ONE starting exponent `I` for all pairs `(d, e, a)` with
+`d, e ≤ Y` and `a < d·e` — finitely many.  `exists_common_threshold`, applied twice.
+-/
+
+/-- **The rung, uniformly over the pairs the two-shift assembly needs.**  One cutoff base `A`
+and one starting exponent `I` serve every admissible `(d, e, a)` with `d, e ≤ Y`. -/
+theorem rung_two_uniform
+    (helliott : Erdos67b.NonasymptoticLogElliott)
+    (hsave : TwistedPrimeSumSavingAllLevels)
+    {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1) (hz₀1 : z₀ ≠ 1)
+    (εr : ℝ) (hεr : 0 < εr) (Y : ℕ) :
+    ∃ A : ℕ, 2 ≤ A ∧ ∃ I : ℕ, ∀ d e a : ℕ, d ≤ Y → e ≤ Y → 0 < d → 0 < e →
+      d ∣ a + 1 → e ∣ a + 2 → a < d * e → ∀ m : ℕ, I ≤ m →
+      ‖∑ j ∈ Finset.Ioc 0 (A ^ m), (Erdos67b.harmonicWeight j : ℂ) *
+          zOmInt z₀ (Erdos67b.integerAffine e (((a + 1) / d : ℕ) : ℤ) j) *
+          zOmInt z₁ (Erdos67b.integerAffine d (((a + 2) / e : ℕ) : ℤ) j)‖
+        ≤ (1 + Real.log (A ^ I : ℕ)) + (m : ℝ) * (εr * Real.log A) := by
+  classical
+  -- the finite index set of admissible triples
+  have hmem : ∀ d e a : ℕ, d ≤ Y → e ≤ Y → a < d * e →
+      ((d, e, a) : ℕ × ℕ × ℕ) ∈ Finset.range (Y + 1) ×ˢ
+        (Finset.range (Y + 1) ×ˢ Finset.range (Y * Y + 1)) := by
+    intro d e a hd he ha
+    have ha' : a < Y * Y + 1 :=
+      lt_of_lt_of_le ha (le_trans (Nat.mul_le_mul hd he) (Nat.le_succ _))
+    simp only [Finset.mem_product, Finset.mem_range]
+    exact ⟨by omega, by omega, ha'⟩
+  -- Step 1: a common base `A`.
+  obtain ⟨A₁, hA₁⟩ := exists_common_threshold
+    (Finset.range (Y + 1) ×ˢ (Finset.range (Y + 1) ×ˢ Finset.range (Y * Y + 1)))
+    (fun p A₀ => 2 ≤ A₀ ∧ (0 < p.1 → 0 < p.2.1 → p.1 ∣ p.2.2 + 1 → p.2.1 ∣ p.2.2 + 2 →
+      ∀ A : ℕ, A₀ ≤ A → ∃ i₀ : ℕ, ∀ m : ℕ, i₀ ≤ m →
+        ‖∑ j ∈ Finset.Ioc 0 (A ^ m), (Erdos67b.harmonicWeight j : ℂ) *
+            zOmInt z₀ (Erdos67b.integerAffine p.2.1 (((p.2.2 + 1) / p.1 : ℕ) : ℤ) j) *
+            zOmInt z₁ (Erdos67b.integerAffine p.1 (((p.2.2 + 2) / p.2.1 : ℕ) : ℤ) j)‖
+          ≤ (1 + Real.log (A ^ i₀ : ℕ)) + (m : ℝ) * (εr * Real.log A)))
+    (by
+      intro p _ m n hmn hm
+      exact ⟨le_trans hm.1 hmn, fun h1 h2 h3 h4 A hA => hm.2 h1 h2 h3 h4 A (le_trans hmn hA)⟩)
+    (by
+      intro p _
+      by_cases h1 : 0 < p.1
+      · by_cases h2 : 0 < p.2.1
+        · by_cases h3 : p.1 ∣ p.2.2 + 1
+          · by_cases h4 : p.2.1 ∣ p.2.2 + 2
+            · obtain ⟨A₀, hA₀2, hA₀⟩ := rung_two_of_named_inputs helliott hsave h1 h2
+                (linear_forms_nondegenerate h1 h2 h3 h4) hz₀ hz₁ hz₀1 εr hεr
+              exact ⟨A₀, hA₀2, fun _ _ _ _ A hA => hA₀ A hA⟩
+            · exact ⟨2, le_rfl, fun _ _ _ h => absurd h h4⟩
+          · exact ⟨2, le_rfl, fun _ _ h _ => absurd h h3⟩
+        · exact ⟨2, le_rfl, fun _ h _ _ => absurd h h2⟩
+      · exact ⟨2, le_rfl, fun h _ _ _ => absurd h h1⟩)
+  set A : ℕ := max 2 A₁ with hAdef
+  have hA2 : 2 ≤ A := le_max_left _ _
+  have hA1A : A₁ ≤ A := le_max_right _ _
+  have hApos : 0 < (A : ℝ) := by positivity
+  -- Step 2: a common starting exponent `I`.
+  obtain ⟨I, hI⟩ := exists_common_threshold
+    (Finset.range (Y + 1) ×ˢ (Finset.range (Y + 1) ×ˢ Finset.range (Y * Y + 1)))
+    (fun p i => 0 < p.1 → 0 < p.2.1 → p.1 ∣ p.2.2 + 1 → p.2.1 ∣ p.2.2 + 2 →
+      ∀ m : ℕ, i ≤ m →
+        ‖∑ j ∈ Finset.Ioc 0 (A ^ m), (Erdos67b.harmonicWeight j : ℂ) *
+            zOmInt z₀ (Erdos67b.integerAffine p.2.1 (((p.2.2 + 1) / p.1 : ℕ) : ℤ) j) *
+            zOmInt z₁ (Erdos67b.integerAffine p.1 (((p.2.2 + 2) / p.2.1 : ℕ) : ℤ) j)‖
+          ≤ (1 + Real.log (A ^ i : ℕ)) + (m : ℝ) * (εr * Real.log A))
+    (by
+      intro p _ i i' hii hi h1 h2 h3 h4 m hm
+      refine le_trans (hi h1 h2 h3 h4 m (le_trans hii hm)) ?_
+      have : Real.log ((A ^ i : ℕ) : ℝ) ≤ Real.log ((A ^ i' : ℕ) : ℝ) := by
+        apply Real.log_le_log (by positivity)
+        exact_mod_cast Nat.pow_le_pow_right (by omega) hii
+      linarith)
+    (by
+      intro p hp
+      by_cases h1 : 0 < p.1
+      · by_cases h2 : 0 < p.2.1
+        · by_cases h3 : p.1 ∣ p.2.2 + 1
+          · by_cases h4 : p.2.1 ∣ p.2.2 + 2
+            · obtain ⟨i₀, hi₀⟩ := (hA₁ p hp).2 h1 h2 h3 h4 A hA1A
+              exact ⟨i₀, fun _ _ _ _ => hi₀⟩
+            · exact ⟨0, fun _ _ _ h => absurd h h4⟩
+          · exact ⟨0, fun _ _ h _ => absurd h h3⟩
+        · exact ⟨0, fun _ h _ _ => absurd h h2⟩
+      · exact ⟨0, fun h _ _ _ => absurd h h1⟩)
+  refine ⟨A, hA2, I, fun d e a hdY heY hd he hda hea hlt m hm => ?_⟩
+  exact hI ((d, e, a) : ℕ × ℕ × ℕ) (hmem d e a hdY heY hlt) hd he hda hea m hm
+
+
 /-! ## The `D = 2` correlation itself
 
 `rung_two_of_named_inputs` bounds one pair of linear forms.  The `D = 2` obligation of `ConjC3`
@@ -863,10 +954,11 @@ which are fixed before `N → ∞`), so it lands in the constant `C`.
 harmonically weighted two-point correlation of `ζ₀^ω` and `ζ₁^ω` at the shifts `n+1`, `n+2` is
 `o(log N)`.
 
-TODO(assembly): the five steps are all proved (see the module docstring above); what remains is
-the arithmetic of combining them and the `max` over the finitely many pairs `(d,e)` of the `A₀`
-that `rung_two_of_named_inputs` returns.  Left as a disclosed `sorry` rather than a false claim:
-no mathematical input is missing, only bookkeeping of the order `ε → Y → A → i₀ → N → ∞`. -/
+PROVED (lap 33).  The assembly order is `ε → εr → Y → A → I → N₀`: `εr = ε/(3(M₀M₁+1))`
+splits the `ε·log N` budget three ways between the two truncation tails and the rung; `Y` comes
+from `bridgeTail_tendsto`; `A, I` from `rung_two_uniform`; and `N₀ = Y²·A^I + Y² + 2` guarantees
+`Nat.log A ((N−1−a)/(de)) ≥ I` for every admissible pair, while `m·log A = log (A^m) ≤ log N`
+converts the rung's per-window `m·εr·log A` into `εr·log N`. -/
 theorem rung_two_correlation
     (helliott : Erdos67b.NonasymptoticLogElliott)
     (hsave : TwistedPrimeSumSavingAllLevels)
@@ -876,7 +968,117 @@ theorem rung_two_correlation
       ‖∑ n ∈ Finset.range N, ((((n : ℝ) + 1)⁻¹ : ℝ)) •
           (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2))‖
         ≤ C + ε * Real.log N := by
-  sorry
+  classical
+  have hM₀ : 0 ≤ sqfWMass z₀ := sqfWMass_nonneg z₀
+  have hM₁ : 0 ≤ sqfWMass z₁ := sqfWMass_nonneg z₁
+  -- the rescaled ε for the rung
+  obtain ⟨εr, hεr0, hεrM⟩ :
+      ∃ r : ℝ, 0 < r ∧ r * (sqfWMass z₀ * sqfWMass z₁) ≤ ε / 3 := by
+    refine ⟨ε / (3 * (sqfWMass z₀ * sqfWMass z₁ + 1)), by positivity, ?_⟩
+    have hprod : 0 ≤ sqfWMass z₀ * sqfWMass z₁ := mul_nonneg hM₀ hM₁
+    rw [div_mul_eq_mul_div,
+      div_le_iff₀ (by positivity : (0 : ℝ) < 3 * (sqfWMass z₀ * sqfWMass z₁ + 1))]
+    nlinarith [hε.le, hprod]
+  -- the truncation cutoff `Y`
+  obtain ⟨Y, hY0, hY1⟩ : ∃ Y : ℕ, bridgeTail z₀ Y ≤ ε / 3 ∧
+      sqfWMass z₀ * bridgeTail z₁ Y ≤ ε / 3 := by
+    have e0 : ∀ᶠ Y : ℕ in Filter.atTop, bridgeTail z₀ Y < ε / 3 :=
+      (bridgeTail_tendsto z₀).eventually_lt_const (by positivity)
+    have t1 : Filter.Tendsto (fun Y : ℕ => sqfWMass z₀ * bridgeTail z₁ Y)
+        Filter.atTop (nhds 0) := by
+      simpa using (bridgeTail_tendsto z₁).const_mul (sqfWMass z₀)
+    have e1 : ∀ᶠ Y : ℕ in Filter.atTop, sqfWMass z₀ * bridgeTail z₁ Y < ε / 3 :=
+      t1.eventually_lt_const (by positivity)
+    obtain ⟨Y, hy0, hy1⟩ := (e0.and e1).exists
+    exact ⟨Y, hy0.le, hy1.le⟩
+  -- the uniform rung
+  obtain ⟨A, hA2, I, hrungU⟩ :=
+    rung_two_uniform helliott hsave hz₀ hz₁ hz₀1 εr hεr0 Y
+  have hApos : 0 < (A : ℝ) := by positivity
+  have hlogA : 0 ≤ Real.log A := Real.log_natCast_nonneg A
+  have hlogAI : 0 ≤ Real.log ((A ^ I : ℕ) : ℝ) := by
+    apply Real.log_nonneg
+    exact_mod_cast Nat.one_le_pow _ _ (by omega)
+  refine ⟨2 * bridgeTail z₀ Y + 2 * sqfWPartial z₀ Y * bridgeTail z₁ Y
+      + sqfWMass z₀ * bridgeTail z₁ Y + sqfWPartial z₀ Y * sqfWPartial z₁ Y
+      + (4 + Real.log ((A ^ I : ℕ) : ℝ) + Real.log A) * (sqfWMass z₀ * sqfWMass z₁),
+    Y * Y * A ^ I + Y * Y + 2, fun N hN => ?_⟩
+  have hN1 : 1 ≤ N := by omega
+  have hNR : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN1
+  have hL0 : 0 ≤ Real.log N := Real.log_nonneg hNR
+  set R : ℝ := (1 + Real.log ((A ^ I : ℕ) : ℝ)) + εr * Real.log N with hRdef
+  have hR0 : 0 ≤ R := by rw [hRdef]; positivity
+  -- the rung bound at the windows the assembly uses
+  have hrung : ∀ d ∈ Finset.range (Y + 1), ∀ e ∈ Finset.range (Y + 1), 0 < d → 0 < e →
+      Nat.Coprime d e → ∀ a : ℕ, a < d * e → d ∣ a + 1 → e ∣ a + 2 →
+      ‖∑ j ∈ Finset.Ioc 0 (A ^ Nat.log A ((N - 1 - a) / (d * e))),
+          (Erdos67b.harmonicWeight j : ℂ) *
+          zOmInt z₀ (Erdos67b.integerAffine e (((a + 1) / d : ℕ) : ℤ) j) *
+          zOmInt z₁ (Erdos67b.integerAffine d (((a + 2) / e : ℕ) : ℤ) j)‖ ≤ R := by
+    intro d hd e he hd0 he0 _ a ha hda hea
+    have hdY : d ≤ Y := by simpa [Nat.lt_succ_iff] using hd
+    have heY : e ≤ Y := by simpa [Nat.lt_succ_iff] using he
+    set J : ℕ := (N - 1 - a) / (d * e) with hJdef
+    have hde : 0 < d * e := Nat.mul_pos hd0 he0
+    have hdeY : d * e ≤ Y * Y := Nat.mul_le_mul hdY heY
+    have haY : a < Y * Y := lt_of_lt_of_le ha hdeY
+    -- `J ≥ A ^ I`
+    have hJge : A ^ I ≤ J := by
+      rw [hJdef, Nat.le_div_iff_mul_le hde]
+      have h1 : A ^ I * (d * e) ≤ Y * Y * A ^ I := by
+        rw [mul_comm]; exact Nat.mul_le_mul_right _ hdeY
+      omega
+    have hJpos : 0 < J := lt_of_lt_of_le (Nat.one_le_pow _ _ (by omega)) hJge
+    set m : ℕ := Nat.log A J with hmdef
+    have hmI : I ≤ m := by
+      rw [hmdef]
+      calc I = Nat.log A (A ^ I) := (Nat.log_pow (by omega) I).symm
+        _ ≤ Nat.log A J := Nat.log_mono_right hJge
+    refine le_trans (hrungU d e a hdY heY hd0 he0 hda hea ha m hmI) ?_
+    -- `m · log A = log (A^m) ≤ log J ≤ log N`
+    have hAmJ : A ^ m ≤ J := Nat.pow_log_le_self A (by omega)
+    have hJN : J ≤ N := le_trans (Nat.div_le_self _ _) (by omega)
+    have hcast : ((A : ℝ)) ^ m ≤ (N : ℝ) := by
+      exact_mod_cast le_trans hAmJ hJN
+    have hlogpow : (m : ℝ) * Real.log A ≤ Real.log N := by
+      have := Real.log_le_log (by positivity) hcast
+      rwa [Real.log_pow] at this
+    have : (m : ℝ) * (εr * Real.log A) ≤ εr * Real.log N := by
+      have h := mul_le_mul_of_nonneg_left hlogpow hεr0.le
+      calc (m : ℝ) * (εr * Real.log A) = εr * ((m : ℝ) * Real.log A) := by ring
+        _ ≤ εr * Real.log N := h
+    rw [hRdef]
+    linarith
+  have hmain := two_shift_bound_of_rung hz₀ hz₁ Y N A hA2 hR0 hrung
+  -- rewrite the goal's `•` as `harmW · * ·`
+  have hgoal : ∑ n ∈ Finset.range N, ((((n : ℝ) + 1)⁻¹ : ℝ)) •
+      (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2))
+      = ∑ n ∈ Finset.range N, harmW n *
+        (z₀ ^ omegaNat (n + 1) * z₁ ^ omegaNat (n + 2)) :=
+    Finset.sum_congr rfl fun n _ => (harmW_smul n _).symm
+  rw [hgoal]
+  refine le_trans hmain ?_
+  -- the ε-bookkeeping
+  have ha0 : 0 ≤ bridgeTail z₀ Y := bridgeTail_nonneg z₀ Y
+  have hb1 : 0 ≤ bridgeTail z₁ Y := bridgeTail_nonneg z₁ Y
+  have hlogN1 : Real.log ((N : ℝ) + 1) ≤ 1 + Real.log N := by
+    have h2 : ((N : ℝ) + 1) ≤ 2 * (N : ℝ) := by linarith
+    have := Real.log_le_log (by positivity) h2
+    rw [Real.log_mul (by norm_num) (by positivity)] at this
+    have hlog2 : Real.log 2 ≤ 1 := le_trans (Real.log_le_sub_one_of_pos (by norm_num)) (by norm_num)
+    linarith
+  have f1 : Real.log ((N : ℝ) + 1) * bridgeTail z₀ Y
+      ≤ (1 + Real.log N) * bridgeTail z₀ Y :=
+    mul_le_mul_of_nonneg_right hlogN1 ha0
+  have f2 : bridgeTail z₀ Y * Real.log N ≤ (ε / 3) * Real.log N :=
+    mul_le_mul_of_nonneg_right hY0 hL0
+  have f3 : (sqfWMass z₀ * bridgeTail z₁ Y) * Real.log N ≤ (ε / 3) * Real.log N :=
+    mul_le_mul_of_nonneg_right hY1 hL0
+  have f4 : (εr * (sqfWMass z₀ * sqfWMass z₁)) * Real.log N ≤ (ε / 3) * Real.log N :=
+    mul_le_mul_of_nonneg_right hεrM hL0
+  rw [hRdef]
+  push_cast
+  nlinarith [f1, f2, f3, f4, ha0, hb1, hL0]
 
 end CastingOut
 
@@ -894,3 +1096,5 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.range_two_certificate
 #print axioms NormalNumbers.CastingOut.nonPretentious_zOm
 #print axioms NormalNumbers.CastingOut.rung_two_of_named_inputs
+#print axioms NormalNumbers.CastingOut.rung_two_uniform
+#print axioms NormalNumbers.CastingOut.rung_two_correlation
