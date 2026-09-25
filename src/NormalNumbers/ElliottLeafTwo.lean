@@ -2,6 +2,7 @@ import NormalNumbers.ElliottCaseAThin
 import NormalNumbers.ElliottProgression
 import NormalNumbers.ElliottPretentiousTransfer
 import NormalNumbers.ElliottRankin
+import NormalNumbers.ElliottTruncAssemble
 
 /-!
 # Leaf 2: the assembly
@@ -52,6 +53,8 @@ namespace NormalNumbers.ElliottLeafTwo
 
 open Erdos67b ArithmeticFunction NormalNumbers.ElliottCaseA NormalNumbers.ElliottEulerBound
 open NormalNumbers.ElliottLadder NormalNumbers.ElliottHall
+open NormalNumbers.ElliottScaleWindow NormalNumbers.ElliottTruncScale
+open NormalNumbers.ElliottTruncAssemble NormalNumbers.ElliottIterSqrt
 
 noncomputable section
 
@@ -265,9 +268,10 @@ Route, now fully itemised, every ingredient proved except the two disclosed obli
    together with the `A'` slack of step 2. -/
 theorem exists_caseB_threshold (h : AffineCMLogElliott)
     {a₁ a₂ : ℕ} (ha₁ : 0 < a₁) (ha₂ : 0 < a₂) {b₁ b₂ : ℤ}
-    (hdet : (a₁ : ℤ) * b₂ - (a₂ : ℤ) * b₁ ≠ 0) {ε : ℝ} (hε : 0 < ε) (D₀ : ℝ) :
+    (hdet : (a₁ : ℤ) * b₂ - (a₂ : ℤ) * b₁ ≠ 0) {ε : ℝ} (hε : 0 < ε) (D₀ : ℝ) (k : ℕ) :
     ∃ A₀ : ℕ, 2 ≤ A₀ ∧
       ∀ A X W : ℕ, A₀ ≤ A → A ≤ W → W ≤ X →
+        X ≤ (thinScale a₁ b₁ X W) ^ (2 ^ k) →
         ∀ g₁ g₂ : ℤ → ℂ,
           IsMultiplicativeOnPositiveInt g₁ →
           IsMultiplicativeOnPositiveInt g₂ →
@@ -277,7 +281,7 @@ theorem exists_caseB_threshold (h : AffineCMLogElliott)
             ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ,
               |t| ≤ (A : ℝ) * X →
                 (A : ℝ) ≤ pretentiousDistSqToTwist (restrictToNat g₁) χ t X) →
-          primeDefect (normDivArith g₁) (caseAScale a₁ b₁ X W) ≤ D₀ →
+          primeDefect (normDivArith g₁) (thinScale a₁ b₁ X W) ≤ D₀ →
           ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W‖ ≤ ε * Real.log (W : ℝ) := by
   sorry
 
@@ -285,21 +289,127 @@ theorem exists_caseB_threshold (h : AffineCMLogElliott)
 
 /-- **Leaf 2, assembled.**  `AffineCMLogElliott → NonasymptoticLogElliott`.
 
-This proof has **no gap of its own**: it is exactly the dichotomy on the single real number
-`primeDefect (normDivArith g₁) (caseAScale a₁ b₁ X W)`, plus the bookkeeping that makes `W ≥ W₀`
-available (from `W₀ ≤ A₀' ≤ A ≤ W`).  Everything else is delegated to the two halves. -/
+The proof is the dichotomy on the single real number `primeDefect (normDivArith g₁) L`, but at the
+**truncated** window `W'' = truncRatio j X W` rather than at `W` — see `PENDING_WORK.md` (laps
+71–75) for why.  In one line: Case A can only see the defect at the thin scale `L ≈ a₁X/W`, whereas
+Case B's pretentious transfer needs it at `≈ X`, and the two differ by `≈ log(log X / log L)`,
+which is unbounded when `W` is close to `X`.  Truncating the window from below at a `2^j`-th root
+of `W` costs only `≤ 1 + 2log2 + (log W)/2^j ≤ (ε/2) log W` of harmonic mass and forces
+`X ≤ L''^(2^(j+2))`, making the discrepancy an absolute constant in `ε`.
+
+`j := max 1 ⌈8/ε⌉₊` works because `2^j ≥ j+1 ≥ 8/ε`. -/
 theorem nonasymptotic_of_affineCM (h : AffineCMLogElliott) :
     Erdos67b.NonasymptoticLogElliott := by
+  classical
   intro a₁ a₂ b₁ b₂ ha₁ ha₂ hdet ε hε
-  obtain ⟨D₀, W₀, hW₀, hA⟩ := exists_caseA_thin_threshold ha₁ b₁ hε
-  obtain ⟨A₀, hA₀, hB⟩ := exists_caseB_threshold h ha₁ ha₂ hdet hε D₀
-  refine ⟨max A₀ W₀, le_trans hA₀ (le_max_left _ _), ?_⟩
-  intro A X W hAA hAW hWX g₁ g₂ hm₁ hm₂ h₁ h₂ hpret
-  have hW₀W : W₀ ≤ W := le_trans (le_trans (le_max_right A₀ W₀) hAA) hAW
-  have hA₀A : A₀ ≤ A := le_trans (le_max_left A₀ W₀) hAA
-  rcases le_or_gt (primeDefect (normDivArith g₁) (caseAScale a₁ b₁ X W)) D₀ with hsmall | hlarge
-  · exact hB A X W hA₀A hAW hWX g₁ g₂ hm₁ hm₂ h₁ h₂ hpret hsmall
-  · exact hA g₁ g₂ hm₁ h₁ h₂ a₂ b₂ X W hW₀W hWX hlarge.le
+  set j : ℕ := max 1 ⌈8 / ε⌉₊ with hjdef
+  have hj1 : 1 ≤ j := le_max_left _ _
+  have hjpow : (8 : ℝ) / ε ≤ ((2 ^ j : ℕ) : ℝ) := by
+    have h1 : (8 : ℝ) / ε ≤ (⌈(8 : ℝ) / ε⌉₊ : ℝ) := Nat.le_ceil _
+    have h2 : (⌈(8 : ℝ) / ε⌉₊ : ℕ) ≤ j := le_max_right _ _
+    have h3 : j + 1 ≤ 2 ^ j := Nat.succ_le_of_lt (Nat.lt_two_pow_self)
+    have h4 : ((j : ℕ) : ℝ) ≤ ((2 ^ j : ℕ) : ℝ) := by exact_mod_cast (by omega : j ≤ 2 ^ j)
+    have h5 : ((⌈(8 : ℝ) / ε⌉₊ : ℕ) : ℝ) ≤ ((j : ℕ) : ℝ) := by exact_mod_cast h2
+    linarith
+  obtain ⟨D₀, W₀, hW₀, hA⟩ := exists_caseA_thin_threshold ha₁ b₁ (ε := ε / 2) (by positivity)
+  obtain ⟨A₀, hA₀, hB⟩ :=
+    exists_caseB_threshold h ha₁ ha₂ hdet (ε := ε / 2) (by positivity) D₀ (j + 2)
+  set c₁ : ℕ := 2 * (b₁.natAbs + 1) ^ 2 with hc₁
+  set M₂ : ℕ := ⌈Real.exp (4 * (1 + 2 * Real.log 2) / ε)⌉₊ + 1 with hM₂
+  refine ⟨max (max 4 (c₁ ^ (2 ^ j))) (max (W₀ * W₀ + A₀ * A₀) M₂), ?_, ?_⟩
+  · exact le_trans (by omega) (le_max_left _ _)
+  intro A X W hNA hAW hWX g₁ g₂ hm₁ hm₂ h₁ h₂ hpret
+  have hNW : max (max 4 (c₁ ^ (2 ^ j))) (max (W₀ * W₀ + A₀ * A₀) M₂) ≤ W := le_trans hNA hAW
+  have hW4 : 4 ≤ W := le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hNW
+  have hWc₁ : c₁ ^ (2 ^ j) ≤ W := le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) hNW
+  have hWsq : W₀ * W₀ + A₀ * A₀ ≤ W := le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) hNW
+  have hWM₂ : M₂ ≤ W := le_trans (le_trans (le_max_right _ _) (le_max_right _ _)) hNW
+  have hsqA₀ : A₀ ≤ A₀ * A₀ := Nat.le_mul_of_pos_left _ (by omega)
+  have hsqW₀ : W₀ ≤ W₀ * W₀ := Nat.le_mul_of_pos_left _ (by omega)
+  have hNA' : W₀ * W₀ + A₀ * A₀ ≤ A :=
+    le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) hNA
+  have hA₀A : A₀ ≤ A := by omega
+  -- the truncated window
+  set W'' : ℕ := truncRatio j X W with hW''def
+  have hW''le : W'' ≤ W := truncRatio_le j X W
+  have hW''pos : 0 < W'' := truncRatio_pos hW4 hWX hj1
+  have hsqle : Nat.sqrt W ≤ W'' := sqrt_le_truncRatio hj1 hW4 hWX
+  have hW₀W'' : W₀ ≤ W'' := by
+    have : W₀ ≤ Nat.sqrt W := Nat.le_sqrt'.mpr (by rw [pow_two]; exact le_trans (Nat.le_add_right _ _) hWsq)
+    omega
+  have hA₀W'' : A₀ ≤ W'' := by
+    have : A₀ ≤ Nat.sqrt W := Nat.le_sqrt'.mpr (by rw [pow_two]; exact le_trans (Nat.le_add_left _ _) hWsq)
+    omega
+  have hW''X : W'' ≤ X := le_trans hW''le hWX
+  have hlogW : 0 < Real.log (W : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < W))
+  have hlogW'' : Real.log (W'' : ℝ) ≤ Real.log (W : ℝ) := by
+    refine Real.log_le_log (by exact_mod_cast hW''pos) ?_
+    exact_mod_cast hW''le
+  have hlogW''nn : 0 ≤ Real.log (W'' : ℝ) :=
+    Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ W''))
+  -- the discarded mass is at most `(ε/2) log W`
+  have hmassbd : ∑ m ∈ Finset.Icc (X / W + 1) (X / W''), (m : ℝ)⁻¹ ≤ (ε / 2) * Real.log (W : ℝ) := by
+    refine le_trans (discarded_mass_bound hW4 hWX hj1) ?_
+    have hconst : (1 : ℝ) + 2 * Real.log 2 ≤ (ε / 4) * Real.log (W : ℝ) := by
+      have hexp : Real.exp (4 * (1 + 2 * Real.log 2) / ε) ≤ (W : ℝ) := by
+        refine le_trans (Nat.le_ceil _) ?_
+        exact_mod_cast (by omega : ⌈Real.exp (4 * (1 + 2 * Real.log 2) / ε)⌉₊ ≤ W)
+      have hlog := Real.log_le_log (Real.exp_pos _) hexp
+      rw [Real.log_exp] at hlog
+      have h2 := mul_le_mul_of_nonneg_left hlog (by positivity : (0 : ℝ) ≤ ε / 4)
+      rwa [show (ε / 4) * (4 * (1 + 2 * Real.log 2) / ε) = 1 + 2 * Real.log 2 by field_simp] at h2
+    have hquot : Real.log (W : ℝ) / ((2 ^ j : ℕ) : ℝ) ≤ (ε / 8) * Real.log (W : ℝ) := by
+      rw [div_le_iff₀ (by positivity : (0 : ℝ) < ((2 ^ j : ℕ) : ℝ))]
+      have hmul : (8 : ℝ) ≤ ((2 ^ j : ℕ) : ℝ) * ε := by
+        have h := mul_le_mul_of_nonneg_right hjpow hε.le
+        rwa [div_mul_cancel₀ _ (ne_of_gt hε)] at h
+      have hnn : (0 : ℝ) ≤ (((2 ^ j : ℕ) : ℝ) * ε - 8) * Real.log (W : ℝ) :=
+        mul_nonneg (by linarith) hlogW.le
+      nlinarith [hnn]
+    have hslack : (0 : ℝ) ≤ (ε / 8) * Real.log (W : ℝ) := by positivity
+    linarith
+  have htrunc := NormalNumbers.ElliottWindowTruncate.norm_le_truncated h₁ h₂ a₁ a₂ b₁ b₂
+    (X := X) (W := W) (W'' := W'') hW''pos hW''le
+  -- the dichotomy, at the truncated window
+  have hdefeq : primeDefect (normDivArith g₁) (thinScale a₁ b₁ X W'')
+      = primeDefect (normDivArith g₁) (caseAScale a₁ b₁ X W'') :=
+    primeDefect_thinScale_eq (normDivArith g₁) (a₁ := a₁) b₁ X W''
+  have hbranch : ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W''‖ ≤ (ε / 2) * Real.log (W : ℝ) := by
+    rcases le_or_gt (primeDefect (normDivArith g₁) (thinScale a₁ b₁ X W'')) D₀ with hsmall | hlarge
+    · -- Case B, at `A'' = min A W''`
+      set A'' : ℕ := min A W'' with hA''
+      have hA₀A'' : A₀ ≤ A'' := le_min hA₀A hA₀W''
+      have hA''A : A'' ≤ A := min_le_left _ _
+      have hA''W'' : A'' ≤ W'' := min_le_right _ _
+      have hpret'' : ∀ q : ℕ, 0 < q → q ≤ A'' →
+          ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ, |t| ≤ (A'' : ℝ) * X →
+            (A'' : ℝ) ≤ pretentiousDistSqToTwist (restrictToNat g₁) χ t X := by
+        intro q hq hqA χ t ht
+        have hA''R : (A'' : ℝ) ≤ (A : ℝ) := by exact_mod_cast hA''A
+        have ht' : |t| ≤ (A : ℝ) * X := by
+          refine le_trans ht ?_
+          exact mul_le_mul_of_nonneg_right hA''R (Nat.cast_nonneg _)
+        exact le_trans hA''R (hpret q hq (le_trans hqA hA''A) χ t ht')
+      have hpow : X ≤ (thinScale a₁ b₁ X W'') ^ (2 ^ (j + 2)) := by
+        refine X_le_thinScale_pow ha₁ b₁ hW4 hWX hj1 ?_
+        -- `iterSqrt j W ≥ c₁` because `W ≥ c₁^(2^j)`
+        by_contra hc
+        push_neg at hc
+        have h1 : iterSqrt j W + 1 ≤ c₁ := by omega
+        have h2 : W < (iterSqrt j W + 1) ^ (2 ^ j) := lt_iterSqrt_succ_pow j W
+        have h3 : (iterSqrt j W + 1) ^ (2 ^ j) ≤ c₁ ^ (2 ^ j) := Nat.pow_le_pow_left h1 _
+        omega
+      refine le_trans (hB A'' X W'' hA₀A'' hA''W'' hW''X hpow g₁ g₂ hm₁ hm₂ h₁ h₂ hpret'' hsmall)
+        (mul_le_mul_of_nonneg_left hlogW'' (by positivity))
+    · -- Case A
+      refine le_trans (hA g₁ g₂ hm₁ h₁ h₂ a₂ b₂ X W'' hW₀W'' hW''X ?_) ?_
+      · rw [← hdefeq]; exact hlarge.le
+      · exact mul_le_mul_of_nonneg_left hlogW'' (by positivity)
+  calc ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W‖
+      ≤ ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W''‖
+        + ∑ m ∈ Finset.Icc (X / W + 1) (X / W''), (m : ℝ)⁻¹ := htrunc
+    _ ≤ (ε / 2) * Real.log (W : ℝ) + (ε / 2) * Real.log (W : ℝ) := by linarith
+    _ = ε * Real.log (W : ℝ) := by ring
 
 end
 
