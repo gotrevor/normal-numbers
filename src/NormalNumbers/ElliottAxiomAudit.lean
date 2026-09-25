@@ -177,3 +177,7 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottSmallShift.norm_twistCorr_sub_le
 #print axioms NormalNumbers.ElliottSmallShift.uniformlyNonPretentious_zetaOmega_of_almostRealProp
 #print axioms NormalNumbers.ElliottSmallShift.almostRealProp_or_far_of_reductionScale
+#print axioms NormalNumbers.ElliottSmallShift.exists_reductionScale
+#print axioms NormalNumbers.ElliottSmallShift.twistAlmostRealPropDichotomy_of_inputs
+#print axioms NormalNumbers.ElliottSmallShift.twoPointElliottLog_of_archimedean_and_rigidity
+#print axioms NormalNumbers.ElliottSmallShift.twoPointElliottLog_of_archimedean_and_primeDensity

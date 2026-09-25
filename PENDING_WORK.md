@@ -45,28 +45,28 @@ The price: the conclusion is "within a small **proportion** `ρ` of `M(X)` of a 
 this supersedes lap 92's "rigidity is off the path" note, and is a strict improvement: one cited
 input becomes a proved theorem plus a softer cited input.
 
-### ▶ NEXT: the reduction scale exists (the one remaining piece of (e))
+### ✅ The reduction scale EXISTS — (e) is fully proved (lap 94)
 
-Prove `∃ Y, ReductionScale ρ t X Y` for all `|t| ≤ T X`, `X` large.  Elementary but fiddly; the
-design is fixed, write it as stated:
+`exists_reductionScale` is landed, sorry-free, trust triple.  The trick that made it cheap:
+**define the threshold by the window**, `smallShiftThreshold ρ X := 1 / log (shortWindow ρ X)` with
+`shortWindow ρ X := ⌊exp (exp ((1 − ρ/2)·log log X))⌋₊` — then the `|t| · log Y ≤ 1` clause is true
+by construction and no `rpow` inequality is ever needed.  The only real estimates are
+`⌊z⌋₊ > z − 1` and two-sided Mertens.
 
-* **Case (i)** `|t| · log X ≤ 1`: take `Y = X`.  All four clauses are immediate.
-* **Case (ii)** `|t| · log X > 1`: take `Y := ⌊exp(exp((1 − ρ/2)·L))⌋₊` where `L := log log X`
-  (equivalently `log Y ≈ (log X)^{1−ρ/2}`), and **define the threshold by the window**,
-  `T X := 1 / Real.log Y` — then the clause `|t| log Y ≤ 1` is true *by definition of `T`* and no
-  rpow inequality is needed for it.
-  * `Y ≤ X` ⟸ `(1−ρ/2)L ≤ L` ⟸ `L ≥ 0` (so `X ≥ 16`).
-  * `Y ≥ 2` and the floor: `⌊z⌋₊ ≥ z/2` for `z ≥ 2`, so `log Y ≥ exp((1−ρ/2)L) − log 2`, and once
-    `exp((1−ρ/2)L) ≥ 2 log 2` this gives `log log Y ≥ (1−ρ/2)L − log 2`.
-  * mass: `M(X) − M(Y) ≤ (L − log log Y) + 2B ≤ (ρ/2)L + log 2 + 2B`, and
-    `ρ·M(X) ≥ ρ(L − B)`, so the clause holds once `L ≥ 2(log 2 + 2B + ρB)/ρ`.
+### ✅ THE WHOLE SMALL-SHIFT BAND IS ASSEMBLED (lap 94)
 
-**Boundary check (trigger EA-1), done:** with this `T`, `T X ≈ (log X)^{-1+ρ/2}`, so at `|v|` just
-above `T X` the true size of `archCorr` is `log(1/|v|) ≈ (1−ρ/2)M(X)` — i.e. (c′) holds there with
-`η ≈ ρ/2` and is **true at the boundary**.  The thresholds are consistent, which is exactly what
-lap 92's refutation showed the old pair was not.
-**Consequence for the assembly**: `η` must be allowed to depend on `ρ` (hence on `u`).  State the
-final hypothesis as `∀ ρ > 0, ∃ η > 0, ∀ A, ArchimedeanCorrelationBoundAbove A η (T ρ)`.
+`twoPointElliottLog_of_archimedean_and_primeDensity` — C1's two-point leaf in logarithmic average,
+on exactly two classical inputs:
+
+| input | statement | depth |
+|---|---|---|
+| **(c′)** `∀ A r, 0 < r → ∃ η > 0, ArchimedeanCorrelationBoundAbove A η (smallShiftThreshold r)` | `T X < \|v\| ≤ A²X → ‖archCorr v X‖ ≤ (1−η)M(X)` | the only zero-free-region site |
+| **(d1)** `PrimeDensityAP A` | `c·M(X) − B ≤ ∑_{p≤X, p≡a (q)} 1/p` on unit classes | Mertens in progressions; **no zero-free region** |
+
+**Boundary check (EA-1) passes**: `smallShiftThreshold ρ X ≈ (log X)^{-1+ρ/2}`, where the true size
+of `archCorr` is `≈ (1−ρ/2)M(X)`, so (c′) holds at its own boundary with `η ≈ ρ/2`.  That is
+precisely what the refuted lap-91 pair failed.  Note the quantifier shape this forces and which the
+statement has: `η` may depend on `r` (hence on `u`), so (c′) is asked *at every threshold scale*.
 
 ### Attack path for (c′) — the long pole
 

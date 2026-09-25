@@ -107,3 +107,40 @@ Landed, sorry-free, trust triple: `AlmostRealTwistProp`, `re_phase_mul_twistCorr
 `T X := 1 / log Y`, so the `|t| log Y ≤ 1` clause holds by definition).  The EA-1 boundary check on
 the resulting `T` is done and passes: `T X ≈ (log X)^{-1+ρ/2}`, where `archCorr`'s true size is
 `(1−ρ/2)M(X)`, so (c′) is true at the boundary — unlike the refuted pair.
+
+---
+
+# lap 94 addendum — (e) FULLY PROVED; the consumer rests on (c′) + `PrimeDensityAP`
+
+`exists_reductionScale` closes the last piece of (e).  The trick that made it cheap: **define the
+threshold by the window**,
+
+```
+shortWindow ρ X        := ⌊exp (exp ((1 − ρ/2) · log log X))⌋₊     -- log Y ≈ (log X)^{1−ρ/2}
+smallShiftThreshold ρ X := 1 / log (shortWindow ρ X)
+```
+
+so the `|t| · log Y ≤ 1` clause of `ReductionScale` holds *by construction* and no `rpow`
+inequality is ever needed.  The only real estimates are `⌊z⌋₊ > z − 1` and two-sided Mertens.
+
+Then the full assembly, all sorry-free and trust triple:
+`almostRealTwistProp_mono`, `twistAlmostRealPropDichotomy_of_inputs` (above the threshold: the
+bootstrap + (c′); below it: the reduction scale + rigidity),
+`exists_twistAlmostRealPropDichotomy` (parameter choice; note the internal `ρ` is taken *smaller*
+than the consumer's tolerance `ρ'`, which is what lets `ρ ≤ δ₀/2 < θ/2` coexist with a `ρ'` fixed
+by `u`), and the two payoffs
+
+* `twoPointElliottLog_of_archimedean_and_rigidity`
+* **`twoPointElliottLog_of_archimedean_and_primeDensity`** — the live headline of the consumer.
+
+**The campaign's open input list is now exactly two**, both honest classical statements:
+(c′) the Archimedean bound above the threshold (the only zero-free-region site) and
+(d1) `PrimeDensityAP` (Mertens in progressions, no zero-free region).
+
+**EA-1 boundary check passes**: `smallShiftThreshold ρ X ≈ (log X)^{-1+ρ/2}`, where `archCorr`'s
+true size is `≈ (1−ρ/2)M(X)`, so (c′) is true at its own boundary — exactly what the refuted
+lap-91 pair was not.  This forces, and the statement has, the quantifier shape "η may depend on the
+threshold scale r".
+
+**Next**: (c′).  Probe the van der Corput route on paper first (`PENDING_WORK.md`), since it would
+give (c′) unconditionally on `1 ≪ |v| ≤ A²X` and leave only `T X ≤ |v| ≲ 1` to Mertens-with-error.
