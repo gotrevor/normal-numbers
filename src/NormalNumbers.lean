@@ -393,6 +393,7 @@ import NormalNumbers.AbelianWindowPerturb
 import NormalNumbers.AbelianWindowGad
 import NormalNumbers.AbelianWindowMulti
 import NormalNumbers.AbelianWindowLayers
+import NormalNumbers.AbelianWindowBuild
 import NormalNumbers.AbelianBinaryExample
 import NormalNumbers.WalshBase
 import NormalNumbers.G4WiringSummatory

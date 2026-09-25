@@ -210,3 +210,90 @@ theorem exists_goodOff (n : ℕ) : ∃ o, o < bQ arm n ∧ GoodOff arm (bQ arm) 
   obtain ⟨o, hoQ, hob⟩ := exists_avoiding_offset (n + 1) (bQ arm n) hQn (fun m => bQ arm m)
     (fun m => badRes arm n m) (fun m hm => ⟨bQ_pos arm m, bQ_dvd_le arm (by omega)⟩) hsum
   exact ⟨o, hoQ, goodOff_of_notMem arm (fun m hm => hob m (by omega))⟩
+
+/-! ## Reading off the chosen offset -/
+
+theorem goodOff_iff (n o : ℕ) :
+    GoodOff arm (bld arm n).1 (bld arm n).2 n o ↔ GoodOff arm (bQ arm) (bOff arm) n o := by
+  unfold GoodOff
+  constructor
+  · intro h m hm δ hδ δ' hδ'
+    rw [← (bld_stable arm n m hm).1, ← (bld_stable arm n m hm).2]
+    exact h m hm δ hδ δ' hδ'
+  · intro h m hm δ hδ δ' hδ'
+    rw [(bld_stable arm n m hm).1, (bld_stable arm n m hm).2]
+    exact h m hm δ hδ δ' hδ'
+
+/-- **The chosen offset.**  `bOff arm (n+1)` is a good offset translated into the top half. -/
+theorem bOff_succ_spec (n : ℕ) : ∃ o, o < bQ arm n ∧ GoodOff arm (bQ arm) (bOff arm) n o ∧
+    bOff arm (n + 1) = o + bQ arm n * (arm (n + 1) + 2) := by
+  classical
+  have hcond : ∃ o, o < (bld arm n).1 n ∧ GoodOff arm (bld arm n).1 (bld arm n).2 n o := by
+    obtain ⟨o, ho, hg⟩ := exists_goodOff arm n
+    exact ⟨o, ho, (goodOff_iff arm n o).mpr hg⟩
+  obtain ⟨ho, hg⟩ := hcond.choose_spec
+  refine ⟨hcond.choose, ho, (goodOff_iff arm n _).mp hg, ?_⟩
+  show (if n + 1 ≤ n then (bld arm n).2 (n + 1)
+    else (if h : ∃ o, o < (bld arm n).1 n ∧ GoodOff arm (bld arm n).1 (bld arm n).2 n o
+      then h.choose else 0) + (bld arm n).1 n * (arm (n + 1) + 2)) = _
+  rw [if_neg (by omega), dif_pos hcond]
+  rfl
+
+/-! ## The layer system -/
+
+theorem bfit : ∀ n, bOff arm n + arm n + 1 < bQ arm n := by
+  intro n
+  cases n with
+  | zero => rw [bQ_zero, bOff_zero]; omega
+  | succ n =>
+      obtain ⟨o, ho, -, hoff⟩ := bOff_succ_spec arm n
+      have hQn : 0 < bQ arm n := bQ_pos arm n
+      have hp : 1 ≤ 2 ^ n := Nat.one_le_two_pow
+      have hgr := bQ_grow arm n
+      have hQ2 : 2 ≤ bQ arm n := by nlinarith
+      rw [hoff, bQ_succ]
+      have h1 : arm (n + 1) + 1 ≤ bQ arm n * (arm (n + 1) + 1) :=
+        Nat.le_mul_of_pos_left _ hQn
+      nlinarith
+
+theorem bbig : ∀ n, bQ arm n ≤ 2 * bOff arm n := by
+  intro n
+  cases n with
+  | zero => rw [bQ_zero, bOff_zero]; omega
+  | succ n =>
+      obtain ⟨o, -, -, hoff⟩ := bOff_succ_spec arm n
+      rw [hoff, bQ_succ,
+        show 2 * bQ arm n * (arm (n + 1) + 2) = 2 * (bQ arm n * (arm (n + 1) + 2)) from by ring]
+      omega
+
+theorem bdisj : ∀ m n, m < n → ∀ δ ∈ ({0, 1, arm m, arm m + 1} : Finset ℕ),
+    ∀ δ' ∈ ({0, 1, arm n, arm n + 1} : Finset ℕ),
+      (bOff arm n + δ') % bQ arm m ≠ (bOff arm m + δ) % bQ arm m := by
+  intro m n hmn δ hδ δ' hδ'
+  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+  obtain ⟨o, -, hg, hoff⟩ := bOff_succ_spec arm k
+  obtain ⟨t, ht⟩ : bQ arm m ∣ bQ arm k * (arm (k + 1) + 2) :=
+    Dvd.dvd.mul_right (bQ_dvd_le arm (by omega)) _
+  have hmod : (bOff arm (k + 1) + δ') % bQ arm m = (o + δ') % bQ arm m := by
+    rw [hoff, show o + bQ arm k * (arm (k + 1) + 2) + δ' = (o + δ') + bQ arm m * t from by
+      rw [ht]; ring, Nat.add_mul_mod_self_left]
+  rw [hmod]
+  exact hg m (by omega) δ hδ δ' hδ'
+
+/-- **The layer system with prescribed arms.** -/
+noncomputable def bLayerSys (harm : ∀ n, 2 ≤ arm n) (hinj : ∀ i j, arm i = arm j → i = j) :
+    LayerSys where
+  Q := bQ arm
+  off := bOff arm
+  arm := arm
+  hQ64 := by rw [bQ_zero]; omega
+  hQdouble := bQ_double arm
+  hQdvd := bQ_dvd arm
+  harm := harm
+  hfit := bfit arm
+  hbig := bbig arm
+  harminj := hinj
+  hdisj := bdisj arm
+
+@[simp] theorem bLayerSys_arm (harm : ∀ n, 2 ≤ arm n) (hinj : ∀ i j, arm i = arm j → i = j)
+    (n : ℕ) : (bLayerSys arm harm hinj).arm n = arm n := rfl
