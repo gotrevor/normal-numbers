@@ -1,8 +1,57 @@
 # STATUS — normal-numbers 📊
 
-**Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
-· **Build**: 🟢 green (9161 jobs) · **Updated**: 2026-09-23, campaign complete · HEAD `3523f8d`
-· branch `wip/g5-prime-subset`
+**Active campaign: Tao 2016 Thm 1.3, the general two-point log-Elliott theorem** (branch
+`wip/elliott-port`, worktree `nn-elliott`).  Pair A multicutoff (Theorem C′) is COMPLETE.
+· **Build**: 🟢 green (9538 jobs, `lake build NormalNumbers.ElliottGeneral`) · **Updated**: review
+lap 15 · 2026-09-25 · HEAD `cdc497c`
+
+## Where it stands (Elliott campaign)
+
+`NormalNumbers.ElliottGeneral.nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott` is
+assembled from a three-rung ladder over the dependency's proved `Erdos67b.unitCircleLogElliott`.
+Rung 2 (`affineCM_of_dilatedCM`, Tao's full affine generality from a common dilation) is **proved
+and free**.  The crux rung's **entire analytic content is proved**: `shiftCMLogElliott` and its
+mirror give the two-function, two-independent-CM-unimodular, pure-shift theorem with
+non-pretentiousness on either factor, built from a seven-file twisted-graph stack that re-runs the
+dependency's graph/Fourier/entropy argument with a per-prime unimodular twist.  **Two `sorry`s
+remain**: the crux's residual bookkeeping (`dilatedCMLogElliott`, now re-decomposed onto the
+*dilation-slice* rung — see PENDING_WORK) and the passage from 1-bounded multiplicative to
+completely multiplicative unimodular (`nonasymptotic_of_affineCM`).
+
+## What's happened (Elliott campaign, newest first)
+
+- **2026-09-25 (review lap 15)** — crux RE-DECOMPOSED.  The remaining content of
+  `dilatedCMLogElliott` is exactly the **dilation-slice rung**: substitute `m = a n` (residue 0,
+  preserved by prime dilations) rather than `m = a n + c1`, keeping both shifts in the observable;
+  `Erdos67b.sum_elliottDilationSlice` makes `DilatedCM = a · slice` an exact identity with no
+  error terms.  The Dirichlet-character detour was checked and **refuted as circular**.
+- **2026-09-25 (laps 8–14)** — the crux's analytic content proved: seven new zero-sorry files
+  (`ElliottTwistedGraph{,CRT,Decoupling,Bounded,Correlation,Criterion,Mirror}.lean`,
+  `ElliottShiftRung.lean`), all axiom-clean, all with the dependency's own constants.
+- **2026-09-24 (laps 1–7)** — the ladder frozen (`ElliottLadder.lean`); `affineCM_of_dilatedCM`
+  proved; the "two functions are free" claim retracted and replaced by the phase-twisted graph.
+- **2026-09-24** — the bet ratified: `plby/lean-proofs` required as a Lake dependency via the fork
+  `gotrevor/lean-proofs` at mathlib v4.33.1.
+
+## Axiom ledger — Elliott campaign (real `#print axioms`, 2026-09-25)
+
+| headline theorem | paper claim | `#print axioms` shows | status |
+|---|---|---|---|
+| `ElliottGeneral.nonasymptoticLogElliott` | Tao 2016 Thm 1.3, **unconditional** | `[propext, sorryAx, Classical.choice, Quot.sound]` | 🔴-free but **sorry-gated** through two named leaves, both in `src/`; not yet a theorem |
+| `ElliottTwistedGraph.shiftCMLogElliott` | the two-function pure-shift case | `[propext, Classical.choice, Quot.sound]` | ✅ trust triple |
+| `ElliottTwistedGraph.shiftCMLogElliottMirror` | mirrored orientation | `[propext, Classical.choice, Quot.sound]` | ✅ trust triple |
+| `ElliottLadder.affineCM_of_dilatedCM` | Tao's affine reduction | `[propext, Classical.choice, Quot.sound]` | ✅ trust triple |
+
+Math-axiom count for the Elliott campaign: **0** (no cited axioms anywhere; the two open items are
+disclosed `sorry`s in `src/`, which is the honest form for work in progress).  The dependency
+`lean-proofs-latest` contributes no axioms of its own — `unitCircleLogElliott` is trust-triple.
+
+## Pointers (Elliott)
+
+`KICKOFF-2026-09-24-elliott-general.md` · newest baton `HANDOFF-elliott-2026-09-25-lap*.md` ·
+`PENDING_WORK.md` top section · `DIRECTION.md` CURRENT DIRECTIVE.
+
+---
 
 ## Where it stands (multicutoff campaign)
 

@@ -1,4 +1,4 @@
-import NormalNumbers.ElliottLadder
+import NormalNumbers.ElliottDilatedSlice
 
 /-!
 # Bet: Tao's general two-point log-Elliott theorem (2026-09-24)
@@ -15,7 +15,10 @@ The headline is now assembled from the ladder in `NormalNumbers.ElliottLadder`:
 
 * `NormalNumbers.ElliottLadder.affineCM_of_dilatedCM` — **proved**: Tao's full affine generality is
   free once the common-dilation case is known, for completely multiplicative unimodular functions.
-* `NormalNumbers.ElliottLadder.dilatedCMLogElliott` — open, the crux.
+* `NormalNumbers.ElliottDilatedSlice.dilatedCMLogElliott` — the crux; its analytic content is
+  **proved** (`NormalNumbers.ElliottTwistedGraph.shiftCMLogElliott` and its mirror), and its common
+  dilation is reduced, by an exact identity, to the multiples-of-`a` slice rung
+  `DilatedSliceCMLogElliott`, which is the one remaining analytic obligation on this branch.
 * `NormalNumbers.ElliottLadder.nonasymptotic_of_affineCM` — open, the passage from `1`-bounded
   multiplicative to completely multiplicative unimodular.
 -/
@@ -25,6 +28,6 @@ namespace NormalNumbers.ElliottGeneral
 /-- **THE BET (ratified).**  Tao 2016, Theorem 1.3, in plby's finitary formulation. -/
 theorem nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott :=
   ElliottLadder.nonasymptotic_of_affineCM
-    (ElliottLadder.affineCM_of_dilatedCM ElliottLadder.dilatedCMLogElliott)
+    (ElliottLadder.affineCM_of_dilatedCM ElliottDilatedSlice.dilatedCMLogElliott)
 
 end NormalNumbers.ElliottGeneral

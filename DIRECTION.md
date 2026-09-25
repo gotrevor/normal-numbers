@@ -2,37 +2,52 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective.**  `isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′, Fable §9 / Astra §11)
-SORRY-FREE and trust-triple.  The whole chain is assembled and green; the headline's `sorryAx`
-comes from exactly **three** leaves, all in `src/NormalNumbers/PrimeModelFamilyGraded.lean`.
+**Objective.**  `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott`
+(Tao 2016, Thm 1.3) sorry-free and trust-triple, on top of the dependency's proved
+`Erdos67b.unitCircleLogElliott`.  Scope: operator run `KICKOFF-2026-09-24-elliott-general.md`,
+branch `wip/elliott-port`, files `src/NormalNumbers/Elliott*.lean` only.
 
-**Mandated next move (2026-09-23 review lap — direction KEPT, priority sharpened).**
-Close the three leaves, hardest first:
-1. **`termE5_tendsto`** (l. ~980) — Astra (8.6), the last structurally NEW estimate and the only
-   one whose feasibility is in real doubt.  Everything it needs is already proved:
-   `recipSumIoc_yG_le` (short root chain at any `j ≤ J1 N`), `JG_le_mass` (`8J ≤ S_P(N)`),
-   Mertens (`primeRecipSum_le` / `recipSumLe_le_crude`), `cIdx ≤ J−1 ≤ J1 N`.
-2. **`schedule_admissible`** (l. ~575) — eleven pointwise clauses, two already proved
-   (`yBotG_le_yG`, `yG_antitone`); bookkeeping, no new mathematics.
-3. **`termE4c_tendsto`** (l. ~974) — `N^{-1+o(1)}`; arithmetic of the support level.
+**Mandated next move (2026-09-25 review lap — direction KEPT, crux RE-DECOMPOSED).**
+The crux `DilatedCMLogElliott` is no longer "re-run the machinery with an AP restriction".
+The exact remaining content is the **dilation-slice rung**
+`DilatedSliceCMLogElliott`: the *pure* two-shift correlation
+`sum_{m in Ioc(aX/W, aX), a | m} (1/m) f1(m+c1) f2(m+c2)` restricted to the multiples of `a`.
+`Erdos67b.sum_elliottDilationSlice` makes `DilatedCM = a * slice` an **exact identity, no error
+terms**, so the reduction is free.  Attack order:
+1. `dilatedCM_of_slice` (exact identity) — free, land it.
+2. The `a = 1` case of the slice rung from `shiftCMLogElliott` + its mirror (window translation
+   by `c1`, boundary + weight discrepancy `O(|c1|)`, absorbed by `A0`).
+3. `a >= 2`: thread `a | m` through the twisted-graph stack.  The residue is **0**, hence
+   preserved by every dilation `m -> pm`, which is why the base point `c1` had to stay in the
+   rung rather than being translated away.
+4. Leaf 2 `nonasymptotic_of_affineCM` (1-bounded multiplicative -> CM unimodular) in parallel
+   when the crux stalls.
 
-**Forbidden drift.**  Do NOT open new campaigns, do NOT touch `PrimeLambertOscillation` or
-`MahlerDriftOne` (the two pre-existing off-campaign `sorry`s — designated open), do NOT edit
-`PrimeModelBrunLower.lean`, `papers/`, or Pair B files.  Do NOT weaken any existing statement to
-make a leaf close; a leaf that resists gets a named sub-`sorry` IN `src/`, never a relocation.
-No constant-class-count route (refuted 2026-09-22, see below).
+**Forbidden drift.**  Do NOT vendor or edit `.lake/packages/lean-proofs-latest/`.  Do NOT delete,
+rename or weaken `nonasymptoticLogElliott`.  Do NOT reopen the Theorem C' / multicutoff campaign
+(complete), `PrimeLambertOscillation`, `MahlerDriftOne`, `SwingC*`, `PairDecouple*` (all
+designated-open, off this run's scope).  **Do NOT pursue the Dirichlet-character route** to the AP
+restriction: checked 2026-09-25 and it LOOPS (coprime-residue AP --(characters + unimodular CM
+surrogate + Mobius)--> mixed-dilation affine forms --(`affineCM_of_dilatedCM`)--> common dilation
+--> AP at residue 0 --> the same object).  The slice rung is the fixed point of that loop; go
+through it, not around it.
 
-**Why.**  The graded route's route-decisive question — whether the fresh-mass surrogate `ε_N → 0`
-alone can drive the schedule — was settled affirmatively by the bounded contracting site index
-(`exists_site_re_nonpos_le`, lap G5c-e) plus the short root chain (`recipSumIoc_yG_le`, lap G5c-i).
-E5 is where that finding is finally cashed: if the exponent `8J − 1 − log 2J − o(1)` does not
-materialise in Lean, the schedule constants (the `8` in `JG`, the `2J` floor) need retuning and
-that is a redesign.  Nothing else open can force a pivot.
+**Why.**  The two-function analytic core (`shiftCMLogElliott`, both orientations) is proved, so the
+only route-decisive uncertainty left on the `DilatedCMLogElliott` path is whether the divisibility
+`a | m` survives the graph/entropy argument.  Residue 0 is preserved by the prime dilations, and
+the graph's own observable already carries a divisibility indicator
+(`pairTwistedDivisibleObservable`, `if q | n then ...`), so the question is whether `q | n` and
+`a | n` compose — a localized question in one layer, not a re-run.  If they do not compose, the
+fallback is restricting the prime graph to `p = 1 (mod a)` (positive density, constant loss), and
+THAT would be the redesign.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
 - 2026-09-23 (review lap): route KEPT and vindicated (5/8 leaves closed, tail crux resolved);
   narrowed to the three remaining leaves of `PrimeModelFamilyGraded.lean`, E5 first.
+- 2026-09-25 (review lap): **campaign switch to Elliott** (operator scope, kickoff 2026-09-24).
+  Theorem C' is complete; the Elliott crux is re-decomposed onto the dilation-slice rung and the
+  Dirichlet-character detour is refuted as circular.
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically

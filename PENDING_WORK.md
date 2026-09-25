@@ -1,5 +1,78 @@
 # PENDING WORK
 
+## 2026-09-25 (review lap 15) — Elliott: the crux is RE-DECOMPOSED onto the dilation slice
+
+Campaign: `KICKOFF-2026-09-24-elliott-general.md`, branch `wip/elliott-port`.
+Headline `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott`.  Two open obligations, both in
+`src/NormalNumbers/`:
+
+| # | obligation | state |
+|---|---|---|
+| 1 | `dilatedCMLogElliott` (the crux) | open; analytic core PROVED (`shiftCMLogElliott` + mirror), remaining content isolated below |
+| 2 | `nonasymptotic_of_affineCM` (1-bounded multiplicative -> CM unimodular) | open, untouched, route in its docstring |
+
+### The re-decomposition (this lap's advance)
+
+Previous handoff framed the remaining crux content as "carry an AP of modulus `a` through the
+graph argument, residue `c1`, NOT preserved by `N -> pN`".  That framing is **avoidable**.  Do not
+substitute `m = a n + c1` (residue `c1`); substitute `m = a n` (**residue 0**) and keep both
+shifts in the observable:
+
+```
+sum_{n in Ioc(X/W,X)} (1/n) f1(a n + c1) f2(a n + c2)
+  = a * sum_{m in Ioc(aX/W, aX), a | m} (1/m) f1(m + c1) f2(m + c2)
+```
+
+and this is an **exact identity with no error terms**: it is the dependency's own
+`Erdos67b.sum_elliottDilationSlice` applied to `F m = pIE f1 (m+c1) * pIE f2 (m+c2)`, where
+`Erdos67b.elliottDilationSlice a X W = (elliottLogWindow (a*X) W).filter (a | .)`.
+
+Residue 0 is preserved by every prime dilation `m -> p m`, which is the whole point: the graph
+step `N -> pN` now respects the restriction.  Keeping `c1` in the rung (instead of translating it
+away) is what buys that.
+
+**New rung to freeze in `src/`** (`ElliottDilatedSlice.lean`):
+`DilatedSliceCMLogElliott` = for each `a > 0`, `c1 != c2`, `eps > 0` a threshold `A0` with
+`|| sliceShiftLogCorrelation f1 f2 a c1 c2 X W || <= eps * log W`, MRT hypothesis on `f1` at
+scale `X` (NOT `aX` — the rung bakes `a*X` into the window so the MRT scale stays `X`).
+
+Attack order:
+1. `dilatedCM_of_slice` — free from the exact identity.  **DO THIS FIRST.**
+2. `a = 1`: `elliottDilationSlice 1 X W = elliottLogWindow X W`, so the rung becomes the two-shift
+   correlation `sum (1/m) f1(m+c1) f2(m+c2)`.  Reduce to `shiftCMLogElliott` (if `c1 < c2`) or
+   `shiftCMLogElliottMirror` on the swapped pair (if `c2 < c1`) by translating the window by `c1`:
+   O(|c1|) boundary terms of weight <= 1 and a weight discrepancy
+   `sum |1/(m-c1) - 1/m| = |c1| sum 1/(m(m-c1)) = O(|c1|)`; both constants depend on `c1, c2` only
+   and are absorbed by enlarging `A0` (`eps log W -> infinity`), exactly as `L0` is in
+   `Erdos67b.elliottExists_finalThreshold`.  Useful: `Erdos67b.norm_sum_harmonic_shift_sub_le`,
+   `Erdos67b.harmonicWeight_sub_shift`, `Erdos67b.mem_elliottLogWindow_shift`.
+3. `a >= 2`: thread `a | m` through the stack.  The graph's own observable already carries a
+   divisibility indicator `pairTwistedDivisibleObservable w f1 f2 q h n = if q | n then ...`; the
+   question is whether `q | n` and `a | n` compose (for `q` a dyadic prime `> a`, `gcd(a,q) = 1`,
+   so `a q | n` iff `a | n/q`, which is exactly what the lower bound needs).  Fallback if they do
+   not: restrict the prime graph to `p = 1 (mod a)` (density `1/phi(a)`, a constant); that needs
+   Mertens in APs and IS a redesign, so probe the composition first.
+
+### Refuted this lap (do not re-derive)
+
+* **Dirichlet-character detour: CIRCULAR.**  Detecting `m = r (mod a)` with `gcd(r,a)=1` by
+  `1_{m=r} = (1/phi(a)) sum_chi conj(chi(r)) chi(m)` works, and `chi * f1` can be kept
+  CM-*unimodular* by replacing `chi` with the completely multiplicative `chi~` that agrees with
+  `chi` off `p | a` and is `1` on `p | a` (they agree on the coprime support).  But removing the
+  leftover coprimality by Mobius (`1_{gcd(m,a)=1} = sum_{e | gcd(m,a)} mu(e)`, `m = e m'`) turns
+  each term into a **mixed-dilation** correlation `sum (1/m') g1(m') f2(e m' + d)`, which
+  `affineCM_of_dilatedCM` sends back to a common dilation, i.e. back to an AP at residue 0 — the
+  same object we started from.  The non-coprime case `g = gcd(r,a) > 1` reduces to the coprime
+  case at modulus `a/g` but again at a mixed dilation.  So the loop
+  `AP(residue r) -> mixed dilation -> AP(residue 0) -> AP(residue r)` has the slice rung as its
+  fixed point.  Go through it.
+* **Additive characters** `1_{a|m} = (1/a) sum_j e(jm/a)`: the twist `m -> e(jm/a)` is not
+  multiplicative, so the resulting correlations leave the rung.  (Recorded lap 14, still true.)
+* **Reducing `a >= 2` to `a = 1` by relabelling**: impossible; `sum (1/n) f1(n) f2(a n + b)` with
+  `gcd(a,b) = 1`, `a >= 2` is equivalent (multiply the first form by `a`) to the multiples-of-`a`
+  slice, and no CM-unimodular `f2'` has `f2'(k+h) = f2(a k + b)`.
+
+
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is sorry-free and

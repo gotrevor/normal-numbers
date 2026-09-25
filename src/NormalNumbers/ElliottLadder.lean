@@ -249,45 +249,16 @@ theorem pairObservable_dilation_twisted {f₁ f₂ : ℕ → ℂ}
     norm_num
   rw [pairObservable_dilation h₁ h₂ hq, ← mul_assoc, hcancel, one_mul]
 
-/-! ## The two remaining obligations -/
+/-! ## The remaining obligation
 
-/-- **Open (the crux).**  The common-dilation, two-function, completely multiplicative unimodular
-two-point logarithmic Elliott bound.
-
-This is the rung that the analytic machinery of `Erdos67b.unitCircleLogElliott` must be re-run for.
-The proved case is `a = 1`, `c₁ = 0`, `c₂ = h`, `f₂ = conj f₁`, and its proof is
-`exists_logPairCorrelation_small_of_fourier_first_moments` (graph/Fourier criterion) combined with
-`mrtModulatedShortIntervalUnrestricted` (MRT) and the entropy-decrement bookkeeping.  Two changes
-are needed:
-
-1. *Two independent functions — a **phase-twisted prime graph**.*  Every step of the graph argument
-   uses the pair observable `f₁(n)·f₂(n+h)` in place of `f(n)·conj f(n+h)`.  The prime-dilation
-   identity (`Erdos67b.unit_pair_dilation`) becomes `pairObservable_dilation`:
-   `f₁(pn)·f₂(pn+ph) = f₁(p)f₂(p) · f₁(n)·f₂(n+h)`.  The constant is unimodular but it **varies with
-   `p`**, and that is *not* harmless: `Erdos67b.primeGraphMean` is a **complex** sum over the primes
-   of the graph, not a sum of norms, so the lower bound
-   `Erdos67b.exists_logProb_dyadic_primeGraphMean_lower` requires every edge to contribute the same
-   correlation, and arbitrary unimodular `f₁(p)f₂(p)` could cancel it entirely.  (An earlier lap
-   claimed this step was free because the dilation is a pointwise isometry; that claim is wrong at
-   the aggregation step and is retracted.)
-
-   The fix is `pairObservable_dilation_twisted`: attach to each prime `p` of the graph the **known**
-   unimodular weight `conj (f₁(p) f₂(p))`, which restores the exact equality.  The obligation is
-   therefore to re-run the graph machinery with a per-prime unimodular weight
-   `w : ℕ → ℂ`, `‖w p‖ = 1`, inserted into `Erdos67b.primeGraphEdge` / `primeGraphObservable`:
-   the lower bound then goes through verbatim, and the upper bound
-   (`Erdos67b.exists_primeGraphMean_small_of_fourier_first_moment`, the CRT/Hoeffding concentration
-   and the large-values count) is insensitive to unimodular per-coordinate weights because it only
-   ever uses the bound `‖·‖ ≤ 1` on each coordinate observable.  *This weighted graph is the real
-   content of the crux and the next thing to formalise.*
-
-   No change is needed on the MRT side: the MRT input is applied to `f₁` alone
-   (non-pretentiousness is assumed on `f₁` only).
-2. *Common dilation `a`.*  The window and divisibility bookkeeping runs over `a·n + c` instead of
-   `n + c`; the graph step `n ↦ pn` sends the shift difference `c₂ - c₁` to `p(c₂ - c₁)`, which is
-   the same `h ↦ ph` step as in the proved case. -/
-theorem dilatedCMLogElliott : DilatedCMLogElliott := by
-  sorry
+The crux `DilatedCMLogElliott` is **no longer open here**.  Its analytic content is proved in
+`NormalNumbers.ElliottTwistedGraph.shiftCMLogElliott` (and its mirror), and what was left — the
+common dilation `a` — is isolated exactly in `NormalNumbers.ElliottDilatedSlice`, where
+`dilatedCM_of_slice` reduces it, by an *exact* identity with no error terms, to the
+multiples-of-`a` slice rung `DilatedSliceCMLogElliott`.  The proof of `DilatedCMLogElliott` now
+lives at `NormalNumbers.ElliottDilatedSlice.dilatedCMLogElliott`; this file keeps only the
+statement and the free reductions off it.
+-/
 
 /-- **Open (from `1`-bounded multiplicative to completely multiplicative unimodular).**
 
