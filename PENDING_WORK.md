@@ -10551,3 +10551,42 @@ before `X → ∞`, so pick `δ` with `A√(2δ) < η/2`, then `X` with `2M(A) <
    (`∑_{p≤X, p≡a (q)} 1/p ≍ M/φ(q)`) to rule out a non-principal `χ` clustering at a constant.
    That branch is *not* yet formalized and is the honest next target; it is strictly easier than
    branch 1 (Mertens for APs / Dirichlet, no zero-free region needed).
+
+## Lap 90 (2026-09-25) — THE CRUX IS FULLY DECOMPOSED into two named classical inputs
+
+`src/NormalNumbers/ElliottTwistBootstrap.lean` (still **zero sorry, trust triple**).  The chain
+from the two classical analytic inputs all the way to C1's two-point leaf in logarithmic average is
+now machine-checked end to end.
+
+New this lap:
+
+* `twistDefect_le_add` — a pointwise comparison `‖w₁ − w₂‖ ≤ e` transfers between defects.
+* **`exists_charDefect_le`** — **de-twisting at small frequency.**  If `|t| log X ≤ 1` then
+  clustering of the *twisted* values around `β` implies clustering of the **character values
+  alone**, at an absolute additive cost `2 + 4C` (Mertens I again).  This is what makes the small-
+  frequency branch a statement about `χ` only.
+* **`ArchimedeanCorrelationBound A η`** (input c) and **`CharacterClusterRigidity A θ`** (input d),
+  both named `Prop`s, both classical, neither an axiom.
+* **`twistModulusDichotomy_of_inputs`** — the crux follows from (c) + (d), with the parameters in
+  the only order that works: `δ` small enough that the bootstrap loss `A√(2δ)` fits in `η/2`, and
+  `δ < θ` so the de-twisting cost is absorbed once `M(X)` is large.
+* `exists_delta_twistModulusDichotomy` — the explicit `δ = min(min(θ/2, 1/2), R²/2)`,
+  `R = η/(4(A+1))`, supplying a `δ` per level `A`.
+* **`twoPointElliottLog_of_classical_inputs`** — the payoff, depending on nothing but (c) and (d).
+
+`TwistModulusDichotomy` was also weakened to carry its own threshold `∃ X₀, ∀ X ≥ X₀`, and
+`uniformlyNonPretentious_zetaOmega_of_dichotomy` now takes `∀ A, ∃ δ > 0, …` rather than one `δ`
+for all `A` — necessary, since the bootstrap's admissible `δ` shrinks with `A`.
+
+### The whole remaining debt of DIRECTION item 4, in two lines
+
+1. **(c)** `‖∑_{p≤X} p^{-iv}/p‖ ≤ (1−η)∑_{p≤X}1/p` for `1 < |v| log X`, `|v| ≤ A²X`.
+   Zero-free region; polynomial height; the dependency's own `PolynomialHeightPrimeCorrelationBound`.
+2. **(d)** a Dirichlet character clustering at a unimodular constant in the `∑1/p` sense is principal.
+   Needs only prime density in progressions + the homomorphism property + finiteness of the value
+   group.  **No zero-free region.**  This is the strictly easier one and the next target.
+
+Attack for (d), concretely: `∑_{p≤X, p≡a (q)} 1/p ≥ c_q · M(X) − O_q(1)` (Mertens for APs) is the
+one analytic ingredient; the rest is finite algebra — `(1 − Re(β̄χ̄(a)))·S_a ≤ θM` for each unit
+class `a` gives `χ̄(a) ≈ β` for all `a`, then `χ̄(a)χ̄(b) = χ̄(ab)` forces `β ≈ 1`, and
+`χ(a)^{φ(q)} = 1` (already proved as `dirichletChar_pow_totient`) upgrades `≈ 1` to `= 1`.

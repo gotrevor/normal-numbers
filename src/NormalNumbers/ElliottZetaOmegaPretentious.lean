@@ -258,8 +258,8 @@ within `o(1)` of a fixed unimodular constant `β` for almost all `p` in the `∑
 to the order of `χ` kills the character and leaves `∑_{p≤X} p^{-ikt}/p ≈ β^k M`, which forces
 `|t| ≪ (log X)^{-1+o(1)}`, hence the near-trivial regime after PNT in progressions pins `β = 1`. -/
 def TwistModulusDichotomy (A : ℕ) (δ : ℝ) : Prop :=
-  ∀ X : ℕ, 2 ≤ X → ∀ q : ℕ, 0 < q → q ≤ A → ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ,
-    |t| ≤ (A : ℝ) * X →
+  ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ X : ℕ, X₀ ≤ X → ∀ q : ℕ, 0 < q → q ≤ A →
+    ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ, |t| ≤ (A : ℝ) * X →
       NearTrivialTwist χ t X ∨ ‖twistCorr χ t X‖ ≤ (1 - δ) * primeMass X
 
 /-- The prime mass is eventually as large as we please (Mertens). -/
@@ -285,27 +285,30 @@ theorem exists_primeMass_ge (R : ℝ) : ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ X : �
 /-- **The derivation.**  Granted the dichotomy, `ζ^ω` is uniformly non-pretentious whenever
 `ζ = e(u) ≠ 1`, i.e. whenever `u ∉ ℤ`. -/
 theorem uniformlyNonPretentious_zetaOmega_of_dichotomy {u : ℝ} (hu : (phase u).re < 1)
-    {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ ≤ 1)
-    (hdich : ∀ A : ℕ, TwistModulusDichotomy A δ) :
+    (hdich : ∀ A : ℕ, ∃ δ : ℝ, 0 < δ ∧ δ ≤ 1 ∧ TwistModulusDichotomy A δ) :
     UniformlyNonPretentious (zetaOmegaInt u) := by
   classical
   intro A
+  obtain ⟨δ, hδ, hδ1, hdichA⟩ := hdich A
   set c : ℝ := 1 - (phase u).re with hc
   have hcpos : 0 < c := by rw [hc]; linarith
   set m : ℝ := min c δ with hm
   have hmpos : 0 < m := lt_min hcpos hδ
   obtain ⟨K, hK⟩ := exists_norm_twistCorr_sub_primeMass_le
+  obtain ⟨X₁, hX₁2, hX₁⟩ := hdichA
   obtain ⟨X₀, hX₀2, hX₀⟩ :=
     exists_primeMass_ge (((A : ℝ) + |K| + 2 + 2 * primeMass A) / m)
-  refine ⟨X₀, ?_⟩
+  refine ⟨max X₀ X₁, ?_⟩
   intro X hX q hq hqA χ s hs
-  have hX2 : 2 ≤ X := le_trans hX₀2 hX
-  have hmass : ((A : ℝ) + |K| + 2 + 2 * primeMass A) / m ≤ primeMass X := hX₀ X hX
+  have hXX₀ : X₀ ≤ X := le_trans (le_max_left _ _) hX
+  have hXX₁ : X₁ ≤ X := le_trans (le_max_right _ _) hX
+  have hX2 : 2 ≤ X := le_trans hX₀2 hXX₀
+  have hmass : ((A : ℝ) + |K| + 2 + 2 * primeMass A) / m ≤ primeMass X := hX₀ X hXX₀
   have hkey : (A : ℝ) + |K| + 2 + 2 * primeMass A ≤ m * primeMass X := by
     rw [div_le_iff₀ hmpos] at hmass; linarith [hmass]
   rw [zetaOmegaDistSq_eq]
   have hmA : primeMass q ≤ primeMass A := primeMass_mono hqA
-  rcases hdich A X hX2 q hq hqA χ s hs with hnt | hfar
+  rcases hX₁ X hXX₁ q hq hqA χ s hs with hnt | hfar
   · -- near-trivial: the rotation by `ζ ≠ 1` costs `c·M`
     have hcl := hK q χ hq s X hX2 hnt
     have hKabs : K ≤ |K| := le_abs_self K
@@ -355,11 +358,10 @@ theorem phase_re_lt_one_of_not_int {u : ℝ} (hu : ∀ k : ℤ, u ≠ k) : (phas
 theorem twoPointElliottLog_of_dichotomy {b p q : ℕ} {t : ℝ}
     (hp : 0 < p) (hq : 0 < q) (hpq : p ≠ q)
     (hu : (phase (t / b)).re < 1)
-    {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ ≤ 1)
-    (hdich : ∀ A : ℕ, TwistModulusDichotomy A δ) :
+    (hdich : ∀ A : ℕ, ∃ δ : ℝ, 0 < δ ∧ δ ≤ 1 ∧ TwistModulusDichotomy A δ) :
     TwoPointElliottLog b p q t :=
   twoPointElliottLog_of_nonPretentious hp hq hpq
-    (uniformlyNonPretentious_zetaOmega_of_dichotomy hu hδ hδ1 hdich)
+    (uniformlyNonPretentious_zetaOmega_of_dichotomy hu hdich)
 
 end
 

@@ -151,3 +151,6 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottTwistBootstrap.dirichletChar_pow_totient
 #print axioms NormalNumbers.ElliottTwistBootstrap.norm_powCorr_sub_archCorr_le
 #print axioms NormalNumbers.ElliottTwistBootstrap.norm_twistCorr_le_of_archCorr_le
+#print axioms NormalNumbers.ElliottTwistBootstrap.exists_charDefect_le
+#print axioms NormalNumbers.ElliottTwistBootstrap.twistModulusDichotomy_of_inputs
+#print axioms NormalNumbers.ElliottTwistBootstrap.twoPointElliottLog_of_classical_inputs
