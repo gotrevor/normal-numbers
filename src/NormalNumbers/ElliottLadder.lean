@@ -251,13 +251,13 @@ theorem pairObservable_dilation_twisted {f₁ f₂ : ℕ → ℂ}
 
 /-! ## The remaining obligation
 
-The crux `DilatedCMLogElliott` is **no longer open here**.  Its analytic content is proved in
-`NormalNumbers.ElliottTwistedGraph.shiftCMLogElliott` (and its mirror), and what was left — the
-common dilation `a` — is isolated exactly in `NormalNumbers.ElliottDilatedSlice`, where
-`dilatedCM_of_slice` reduces it, by an *exact* identity with no error terms, to the
-multiples-of-`a` slice rung `DilatedSliceCMLogElliott`.  The proof of `DilatedCMLogElliott` now
-lives at `NormalNumbers.ElliottDilatedSlice.dilatedCMLogElliott`; this file keeps only the
-statement and the free reductions off it.
+The crux `DilatedCMLogElliott` is **not open here**.  Its two-function analytic content is proved
+in `NormalNumbers.ElliottTwistedGraph.shiftCMLogElliott` (and its mirror), and the common dilation
+`a` is handled by the `a`-dilated prime graph of `NormalNumbers.ElliottDilated*`; the proof lives
+at `NormalNumbers.ElliottDilatedRung.dilatedCMLogElliott`, whose remaining leaves are the two
+natural-shift rungs there.  (The earlier *dilation-slice* route of
+`NormalNumbers.ElliottDilatedSlice` is refuted — see that file — and the headline no longer passes
+through it.)  This file keeps only the statement and the free reductions off it.
 -/
 
 /-- **Open (from `1`-bounded multiplicative to completely multiplicative unimodular).**

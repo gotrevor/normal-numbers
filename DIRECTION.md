@@ -7,39 +7,43 @@
 `Erdos67b.unitCircleLogElliott`.  Scope: operator run `KICKOFF-2026-09-24-elliott-general.md`,
 branch `wip/elliott-port`, files `src/NormalNumbers/Elliott*.lean` only.
 
-**Mandated next move (2026-09-25 review lap — direction KEPT, crux RE-DECOMPOSED).**
-The crux `DilatedCMLogElliott` is no longer "re-run the machinery with an AP restriction".
-The exact remaining content is the **dilation-slice rung**
-`DilatedSliceCMLogElliott`: the *pure* two-shift correlation
-`sum_{m in Ioc(aX/W, aX), a | m} (1/m) f1(m+c1) f2(m+c2)` restricted to the multiples of `a`.
-`Erdos67b.sum_elliottDilationSlice` makes `DilatedCM = a * slice` an **exact identity, no error
-terms**, so the reduction is free.  Attack order:
-1. `dilatedCM_of_slice` (exact identity) — free, land it.
-2. The `a = 1` case of the slice rung from `shiftCMLogElliott` + its mirror (window translation
-   by `c1`, boundary + weight discrepancy `O(|c1|)`, absorbed by `A0`).
-3. `a >= 2`: thread `a | m` through the twisted-graph stack.  The residue is **0**, hence
-   preserved by every dilation `m -> pm`, which is why the base point `c1` had to stay in the
-   rung rather than being translated away.
-4. Leaf 2 `nonasymptotic_of_affineCM` (1-bounded multiplicative -> CM unimodular) in parallel
-   when the crux stalls.
+**Mandated next move (2026-09-25 review lap, laps 36+ — route CORRECTED).**
+The **slice route is DEAD** (`DilatedSliceCMLogElliottGe`): lap 16 refuted it (centring on `f1`
+translates `a | m` into `a | n - p*c1`, a condition on `p mod a` that does not factor out of the
+prime sum).  The live route is the **`a`-dilated graph stack** of laps 17–35, every rung of which
+is a proved, trust-triple statement in `src/`.  But the headline **still routes through the dead
+slice sorry**, so that stack is currently orphaned scaffolding.  In priority order:
 
-**Forbidden drift.**  Do NOT vendor or edit `.lake/packages/lean-proofs-latest/`.  Do NOT delete,
-rename or weaken `nonasymptoticLogElliott`.  Do NOT reopen the Theorem C' / multicutoff campaign
-(complete), `PrimeLambertOscillation`, `MahlerDriftOne`, `SwingC*`, `PairDecouple*` (all
-designated-open, off this run's scope).  **Do NOT pursue the Dirichlet-character route** to the AP
-restriction: checked 2026-09-25 and it LOOPS (coprime-residue AP --(characters + unimodular CM
-surrogate + Mobius)--> mixed-dilation affine forms --(`affineCM_of_dilatedCM`)--> common dilation
---> AP at residue 0 --> the same object).  The slice rung is the fixed point of that loop; go
-through it, not around it.
+1. **WIRE THE LIVE ROUTE FIRST.**  Create `src/NormalNumbers/ElliottDilatedRung.lean`, state the
+   dilated criterion + `DilatedCMLogElliott` there, and repoint `ElliottGeneral` off
+   `ElliottDilatedSlice.dilatedCMLogElliott` onto it, with the remaining gap as ONE named
+   `sorry` on the dilated route.  Retire `dilatedSliceCMLogElliottGe` (leave the file, mark the
+   statement dead, do NOT delete it).  Do this as soon as the rung statement typechecks — do not
+   wait for the proof.  Until it is done, 11 laps of proved work carry zero headline weight.
+2. **Close the dilated crux** (lap-35 NEXT, in order): (i) trade the CRT sum for the mean via
+   `ElliottGenericGraph.exists_logProb_gen_decoupling` with `Delta m = crtShift`; (ii) the dilated
+   `exists_dyadic_primeGraphCorrelationWeight_lower` (function-free counting, `>= H/(2a)`);
+   (iii) `exists_logProb_dyadic_dilatedMean_lower`, then the contradiction against
+   `ElliottDilatedUpper.exists_dilatedPairTwistedMean_small_of_fourier_first_moment` — the
+   `ElliottTwistedGraphCriterion` collision verbatim.  Check whether a dilated **mirror** is
+   needed or whether `ElliottTwistedGraphMirror` composes.
+3. **Then leaf 2, `nonasymptotic_of_affineCM`** — decomposition in PENDING_WORK.  Its hard core is
+   **Hall's inequality** (log-window mean of a nonneg 1-bounded multiplicative function), NOT
+   Shiu: the AP modulus `a1` is fixed before `eps`, so losing a factor `a1` is free.  Start there.
 
-**Why.**  The two-function analytic core (`shiftCMLogElliott`, both orientations) is proved, so the
-only route-decisive uncertainty left on the `DilatedCMLogElliott` path is whether the divisibility
-`a | m` survives the graph/entropy argument.  Residue 0 is preserved by the prime dilations, and
-the graph's own observable already carries a divisibility indicator
-(`pairTwistedDivisibleObservable`, `if q | n then ...`), so the question is whether `q | n` and
-`a | n` compose — a localized question in one layer, not a re-run.  If they do not compose, the
-fallback is restricting the prime graph to `p = 1 (mod a)` (positive density, constant loss), and
-THAT would be the redesign.
+**Forbidden drift.**  Do NOT work `DilatedSliceCMLogElliottGe` (dead).  Do NOT vendor or edit
+`.lake/packages/lean-proofs-latest/`.  Do NOT delete, rename or weaken `nonasymptoticLogElliott`.
+Do NOT pursue the Dirichlet-character route to the AP restriction (checked 2026-09-25, it LOOPS).
+Do NOT reopen the Theorem C' / multicutoff campaign (complete), `PrimeLambertOscillation`,
+`MahlerDriftOne`, `SwingC*`, `PairDecouple*` (all designated-open, off this run's scope).
+
+**Why.**  Laps 25–35 proved every rung of the dilated argument and the two halves now meet on one
+object (`dilatedPairTwistedMean`), so the route-decisive uncertainty on the crux is spent: the
+common dilation `a` is a constant fixed before all parameters and costs only constants (a factor
+`a` in the fourth-moment constant, cancelling in the large-frequency budget; a factor 2 in the
+entropy budget; a factor `a` in the correlation weight).  What is NOT spent is the wiring: the
+headline's `#print axioms` still shows `sorryAx` through a route nobody intends to finish.  Fix the
+wiring, then finish the contradiction, then open Hall.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
@@ -48,6 +52,9 @@ THAT would be the redesign.
 - 2026-09-25 (review lap): **campaign switch to Elliott** (operator scope, kickoff 2026-09-24).
   Theorem C' is complete; the Elliott crux is re-decomposed onto the dilation-slice rung and the
   Dirichlet-character detour is refuted as circular.
+- 2026-09-25 (review lap, laps 36+): slice rung **DEAD** (refuted lap 16); live route is the
+  `a`-dilated graph stack.  Mandate: wire the headline onto it BEFORE finishing the proof, then
+  close the contradiction, then Hall's inequality for leaf 2.
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically

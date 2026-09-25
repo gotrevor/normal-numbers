@@ -2,24 +2,33 @@
 
 **Active campaign: Tao 2016 Thm 1.3, the general two-point log-Elliott theorem** (branch
 `wip/elliott-port`, worktree `nn-elliott`).  Pair A multicutoff (Theorem C′) is COMPLETE.
-· **Build**: 🟢 green (9538 jobs, `lake build NormalNumbers.ElliottGeneral`) · **Updated**: review
-lap 15 · 2026-09-25 · HEAD `cdc497c`
+· **Build**: 🟢 green (9548 jobs, `lake build NormalNumbers.ElliottGeneral`) · **Updated**: review
+lap 36 · 2026-09-25 · HEAD `e31d305`
 
 ## Where it stands (Elliott campaign)
 
 `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott` is
 assembled from a three-rung ladder over the dependency's proved `Erdos67b.unitCircleLogElliott`.
 Rung 2 (`affineCM_of_dilatedCM`, Tao's full affine generality from a common dilation) is **proved
-and free**.  The crux rung's **entire analytic content is proved**: `shiftCMLogElliott` and its
-mirror give the two-function, two-independent-CM-unimodular, pure-shift theorem with
-non-pretentiousness on either factor, built from a seven-file twisted-graph stack that re-runs the
-dependency's graph/Fourier/entropy argument with a per-prime unimodular twist.  **Two `sorry`s
-remain**: the crux's residual bookkeeping (`dilatedCMLogElliott`, now re-decomposed onto the
-*dilation-slice* rung — see PENDING_WORK) and the passage from 1-bounded multiplicative to
-completely multiplicative unimodular (`nonasymptotic_of_affineCM`).
+and free**, and the crux rung's entire two-function analytic content is proved
+(`shiftCMLogElliott` + mirror + `twoShiftCMLogElliott`).  The common dilation `a` is handled by the
+**`a`-dilated graph stack** of laps 17–35: every rung — upper (Fourier/fourth moment), lower
+(generic CRT, entropy decoupling, correlation transfer) and the bridge between them — is a proved,
+trust-triple statement in `src/`, and the two halves meet on one object (`dilatedPairTwistedMean`).
+**Two `sorry`s remain**, and the review lap found that the headline currently routes through the
+*wrong* one: `dilatedSliceCMLogElliottGe` is a route refuted at lap 16, so the live dilated stack
+carries no headline weight until `ElliottGeneral` is repointed onto it.  The second `sorry`,
+`nonasymptotic_of_affineCM` (1-bounded multiplicative → CM unimodular), is now decomposed: its hard
+core is **Hall's inequality**, and Shiu's theorem is *not* needed because the affine modulus is
+fixed before `ε`.
 
 ## What's happened (Elliott campaign, newest first)
 
+- **2026-09-25 (review lap 36)** — route CORRECTED.  The slice rung is dead (lap 16) yet the
+  headline still depends on its `sorry`; the live `a`-dilated stack (laps 17–35, ~10 new zero-sorry
+  files) is orphaned.  Directive: repoint `ElliottGeneral` onto a dilated rung FIRST, then close
+  the contradiction.  Leaf 2 decomposed for the first time (Hall, not Shiu; sign-definite
+  truncation refuted).
 - **2026-09-25 (review lap 15)** — crux RE-DECOMPOSED.  The remaining content of
   `dilatedCMLogElliott` is exactly the **dilation-slice rung**: substitute `m = a n` (residue 0,
   preserved by prime dilations) rather than `m = a n + c1`, keeping both shifts in the observable;
@@ -33,18 +42,23 @@ completely multiplicative unimodular (`nonasymptotic_of_affineCM`).
 - **2026-09-24** — the bet ratified: `plby/lean-proofs` required as a Lake dependency via the fork
   `gotrevor/lean-proofs` at mathlib v4.33.1.
 
-## Axiom ledger — Elliott campaign (real `#print axioms`, 2026-09-25)
+## Axiom ledger — Elliott campaign (real `#print axioms`, review lap 36, 2026-09-25)
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 |---|---|---|---|
 | `ElliottGeneral.nonasymptoticLogElliott` | Tao 2016 Thm 1.3, **unconditional** | `[propext, sorryAx, Classical.choice, Quot.sound]` | 🔴-free but **sorry-gated** through two named leaves, both in `src/`; not yet a theorem |
-| `ElliottTwistedGraph.shiftCMLogElliott` | the two-function pure-shift case | `[propext, Classical.choice, Quot.sound]` | ✅ trust triple |
-| `ElliottTwistedGraph.shiftCMLogElliottMirror` | mirrored orientation | `[propext, Classical.choice, Quot.sound]` | ✅ trust triple |
-| `ElliottLadder.affineCM_of_dilatedCM` | Tao's affine reduction | `[propext, Classical.choice, Quot.sound]` | ✅ trust triple |
+| `ElliottLadder.affineCM_of_dilatedCM` | Tao's affine reduction | trust triple | ✅ |
+| `ElliottTwistedGraph.shiftCMLogElliott` | the two-function pure-shift case | trust triple | ✅ |
+| `ElliottTwoShift.twoShiftCMLogElliott` | two arbitrary integer shifts | trust triple | ✅ |
+| `ElliottDilatedUpper.exists_dilatedPairTwistedMean_small_of_fourier_first_moment` | dilated graph upper bound | trust triple | ✅ |
+| `ElliottGenericGraph.exists_logProb_gen_decoupling` | dilated entropy decoupling | trust triple | ✅ |
+| `ElliottDilatedBridge.genSum_dilatedEdgeReindexed_affineBlock` | dilated block↔graph identity | trust triple | ✅ |
+| `ElliottDilatedCorrelation.norm_logProb_dilatedGraph_sub_correlation_le` | dilated correlation transfer | trust triple | ✅ |
+| `Erdos67b.unitCircleLogElliott` (dependency) | the proved special case | trust triple | ✅ |
 
-Math-axiom count for the Elliott campaign: **0** (no cited axioms anywhere; the two open items are
-disclosed `sorry`s in `src/`, which is the honest form for work in progress).  The dependency
-`lean-proofs-latest` contributes no axioms of its own — `unitCircleLogElliott` is trust-triple.
+Math-axiom count for the Elliott campaign: **0** (🟢 0 · 🟡 0 · 🟠 0 · 🔴 0).  No cited axioms
+anywhere; the two open items are disclosed `sorry`s in `src/`, the honest form for work in
+progress.  The dependency `lean-proofs-latest` contributes no axioms of its own.
 
 ## Pointers (Elliott)
 

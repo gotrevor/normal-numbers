@@ -1,5 +1,81 @@
 # PENDING WORK
 
+## 2026-09-25 (REVIEW LAP, laps 36+) — corrected priorities
+
+Build green, 9548 jobs.  Real `#print axioms`:
+`ElliottGeneral.nonasymptoticLogElliott = [propext, sorryAx, Classical.choice, Quot.sound]`;
+`ElliottLadder.affineCM_of_dilatedCM`, `ElliottTwistedGraph.shiftCMLogElliott`,
+`ElliottTwoShift.twoShiftCMLogElliott`, `ElliottDilatedUpper.exists_dilatedPairTwistedMean_small_of_fourier_first_moment`,
+`ElliottGenericGraph.exists_logProb_gen_decoupling`,
+`ElliottDilatedBridge.genSum_dilatedEdgeReindexed_affineBlock`,
+`ElliottDilatedCorrelation.norm_logProb_dilatedGraph_sub_correlation_le`,
+`Erdos67b.unitCircleLogElliott` = trust triple.
+
+Two open `sorry`s in scope:
+
+| # | obligation | file | state |
+|---|---|---|---|
+| 1 | `dilatedSliceCMLogElliottGe` | `ElliottDilatedSlice.lean:220` | **DEAD ROUTE** (refuted lap 16) — but the headline still goes through it |
+| 2 | `nonasymptotic_of_affineCM` | `ElliottLadder.lean:297` | open, untouched; decomposed below for the first time |
+
+### Finding 1 (the wiring gap) — the highest-value item
+
+Laps 17–35 built a complete, proved, trust-triple `a`-dilated graph stack, but **nothing in
+`src/` consumes it**: `ElliottGeneral` still calls `ElliottDilatedSlice.dilatedCMLogElliott`.
+So the headline's `sorryAx` is charged to a route nobody intends to finish, and the live route
+carries no headline weight.  **Lap 36 must repoint the headline first**, with the residual gap
+as one named `sorry` on the dilated route (`src/NormalNumbers/ElliottDilatedRung.lean`), then
+prove it.  Decomposing raises nothing; it just moves the debt onto the route that is actually
+being paid down.
+
+### Finding 2 — leaf 2 decomposed: the hard core is Hall, and Shiu is NOT needed
+
+The `ElliottLadder.nonasymptotic_of_affineCM` docstring names the route (Case A: `Sigma(g1)` large,
+trivial; Case B: two Dirichlet-convolution expansions).  This lap pinned down what is actually
+hard and removed one imagined obstacle.
+
+* `Sigma_z(g) := sum_{p <= z} (1 - |g(p)|)/p`.
+* **Case B is elementary.**  `g = g~ * u` with `g~` the completely multiplicative function agreeing
+  with `g` on primes; `u = g * (mu g~)` is multiplicative with `u(p) = 0`, `|u(p^k)| <= 2`, hence
+  supported on squarefull `d`, and `sum_{d squarefull} 1/d` converges **unconditionally**.
+  Then `g~ = ghat . |g~|` with `ghat` completely multiplicative unimodular, and `|g~| = 1 * v`
+  with `v(p^k) = |g(p)|^{k-1}(|g(p)| - 1)`, so
+  `sum_d |v(d)|/d = prod_p (1 + (1-|g(p)|)/(p - |g(p)|)) = exp(Sigma_X + O(1))`.
+  Finite for `Sigma_X <= C`, so the tail beyond a `D = D(C, eps)` is small.  Both expansions leave
+  a divisibility `d | a_i n + b_i`, i.e. a sub-progression, which is absorbed by
+  `AffineCMLogElliott` itself (already proved from the crux) — no new AP machinery.
+* **Case A is the crux of leaf 2**, and it needs a genuine mean-value bound, *not* just an Euler
+  product.  Two sub-regimes, split on a fixed `theta`:
+  - `log W >= theta log X`: the crude Euler-product bound
+    `sum_{m <= Y} h(m)/m <= prod_{p<=Y}(1 + h(p)/p + h(p^2)/p^2 + ...) << log Y . exp(-Sigma_Y)`
+    already suffices, because `log Y << log W / theta`.  **Elementary, formalizable directly.**
+  - `log W < theta log X`: the window `(Y/W, Y]` is logarithmically thin and the crude bound loses
+    the factor `log Y / log W`, which is unbounded.  Here one needs the density form,
+    **Hall's inequality** (Halberstam-Richert Theorem 01):
+    `sum_{m <= Y} h(m) << (Y / log Y) prod_{p <= Y}(1 + h(p)/p + ...)`,
+    for `h` nonnegative multiplicative with `h <= 1`; then partial summation over `O(log W)`
+    dyadic blocks gives `sum_{Y/W < m <= Y} h(m)/m << log W . exp(-Sigma_Y)`.
+* **Removed obstacle:** the correlation is over the affine form `a1 n + b1`, i.e. over the residue
+  class `b1 mod a1`, which naively calls for **Shiu's theorem**.  It does not: in both
+  `NonasymptoticLogElliott` and `AffineCMLogElliott` the modulus `a1` is quantified **before**
+  `eps` and `A0`, so bounding the AP sum by the full sum loses only the fixed constant `a1`.
+  Hall over all integers is enough.
+* **Refuted shortcut (recorded so it is not re-derived):** one would like `v = mu * h` to be
+  sign-definite for completely multiplicative nonnegative `h <= 1`, making the truncation of
+  `sum_d v(d) T(d)` free in the upper direction.  It is not: `v(p^k) <= 0` but `v` is
+  multiplicative, so `sign v(d) = (-1)^{omega(d)}`.  Truncation is therefore not free and the
+  regime split above is the way through.
+* Pretentiousness transfer survives: `Re(ghat(p)w) - Re(g~(p)w) <= |ghat(p) - g~(p)| = 1 - |g(p)|`
+  gives `D(ghat, chi n^{it}; X)^2 <= D(g~, chi n^{it}; X)^2 + C`, with `C` fixed while `A -> inf`.
+  The sub-progression substitution `n = d' k + n0` shrinks the MRT scale `X` to `X/d'`, costing
+  `2 log(1/(1 - log d'/log X)) = O_{d'}(1)` in the distance — also absorbed by `A -> inf`.
+
+**Attack order for leaf 2 when the crux closes:** (a) the Euler-product upper bound for nonneg
+multiplicative `h <= 1` (elementary, lands the `log W >= theta log X` regime outright);
+(b) Hall's inequality; (c) the squarefull expansion; (d) the unimodularisation expansion;
+(e) the pretentiousness transfer; (f) assembly.
+
+
 ## 2026-09-25 (lap 16) — Elliott crux: the slice route is REFUTED; general affine forms directly
 
 The lap-15 slice decomposition (below) is superseded.  Reason: centring the edge observable on

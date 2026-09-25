@@ -199,34 +199,20 @@ theorem dilatedSlice_of_ge (h : DilatedSliceCMLogElliottGe) : DilatedSliceCMLogE
 
 
 
-/-- **Open (the crux, re-decomposed and narrowed).**  The pure two-shift correlation restricted to
-the multiples of `a`, for `a ≥ 2`.
+/-! ## Why this route is retired
 
-Already discharged: `a = 1` (`sliceCM_one`, from
-`NormalNumbers.ElliottTwoShift.twoShiftCMLogElliott`), so the two arbitrary integer shifts cost
-nothing beyond the pure-shift rung.
+`DilatedSliceCMLogElliottGe` is **no longer claimed here**, and the headline no longer depends on
+it.  Lap 16 refuted the route: centring the graph edge on `f₁` translates by `p·c₁`, turning the
+restriction `a ∣ m` into `a ∣ n - p c₁`, a condition on `p mod a` that does not factor out of the
+prime sum, so the indicator cannot be carried as a fixed periodic block factor through the Fourier
+layer.  The live crux route is `NormalNumbers.ElliottDilatedRung`, which keeps both shifts inside
+the observable and lets the graph step `n ↦ p n` dilate them together.
 
-What is left, and why it should go through: the divisibility `a ∣ m` is at **residue `0`**, hence
-preserved by every dilation `m ↦ p*m` of the prime graph.  The graph's own observable already
-carries a divisibility indicator
-(`NormalNumbers.ElliottTwistedGraph.pairTwistedDivisibleObservable`,
-`if q ∣ n then w q * (f₁ n * f₂ (n + q*h)) else 0`), and for a dyadic prime `q > a` one has
-`gcd(a, q) = 1`, so for `q ∣ n` the conditions `a*q ∣ n` and `a ∣ n / q` agree: the two
-divisibilities compose.  The obligation is to re-run the twisted-graph stack with `a*q ∣ n` in
-place of `q ∣ n`.
-
-See `PENDING_WORK.md` (2026-09-25) for the attack order and for the refuted detours. -/
-theorem dilatedSliceCMLogElliottGe : DilatedSliceCMLogElliottGe := by
-  sorry
-
-/-- The slice rung, with its `a = 1` case discharged. -/
-theorem dilatedSliceCMLogElliott : DilatedSliceCMLogElliott :=
-  dilatedSlice_of_ge dilatedSliceCMLogElliottGe
-
-/-- **The crux rung, reduced to the slice rung.**  Replaces the former
-`NormalNumbers.ElliottLadder.dilatedCMLogElliott`. -/
-theorem dilatedCMLogElliott : DilatedCMLogElliott :=
-  dilatedCM_of_slice dilatedSliceCMLogElliott
+Everything above stays proved and is still useful: the exact dilation identity
+`elliottLogCorrelation_eq_slice`, the free reduction `dilatedCM_of_slice`, the `a = 1` case
+`sliceCM_one`, and `dilatedSlice_of_ge`.  If a future route ever wants the slice formulation, it
+starts from these.
+-/
 
 end
 

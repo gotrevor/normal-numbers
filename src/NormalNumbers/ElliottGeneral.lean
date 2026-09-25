@@ -1,4 +1,4 @@
-import NormalNumbers.ElliottDilatedSlice
+import NormalNumbers.ElliottDilatedRung
 
 /-!
 # Bet: Tao's general two-point log-Elliott theorem (2026-09-24)
@@ -15,10 +15,13 @@ The headline is now assembled from the ladder in `NormalNumbers.ElliottLadder`:
 
 * `NormalNumbers.ElliottLadder.affineCM_of_dilatedCM` — **proved**: Tao's full affine generality is
   free once the common-dilation case is known, for completely multiplicative unimodular functions.
-* `NormalNumbers.ElliottDilatedSlice.dilatedCMLogElliott` — the crux; its analytic content is
-  **proved** (`NormalNumbers.ElliottTwistedGraph.shiftCMLogElliott` and its mirror), and its common
-  dilation is reduced, by an exact identity, to the multiples-of-`a` slice rung
-  `DilatedSliceCMLogElliott`, which is the one remaining analytic obligation on this branch.
+* `NormalNumbers.ElliottDilatedRung.dilatedCMLogElliott` — the crux, on the **live** route: the
+  `a`-dilated prime graph, every rung of which is a proved axiom-clean statement in `src/`.  Its
+  arbitrary integer shifts are reduced, at cost `3k` for a constant `k`, to the natural-shift
+  shape the graph stack produces (`dilatedCM_of_natShift`, proved), leaving the two analytic
+  leaves `dilatedNatShiftCMLogElliott` and its mirror.  The earlier *dilation-slice* route
+  (`NormalNumbers.ElliottDilatedSlice`) is refuted; its free reductions stay proved there, but the
+  headline no longer depends on it.
 * `NormalNumbers.ElliottLadder.nonasymptotic_of_affineCM` — open, the passage from `1`-bounded
   multiplicative to completely multiplicative unimodular.
 -/
@@ -28,6 +31,6 @@ namespace NormalNumbers.ElliottGeneral
 /-- **THE BET (ratified).**  Tao 2016, Theorem 1.3, in plby's finitary formulation. -/
 theorem nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott :=
   ElliottLadder.nonasymptotic_of_affineCM
-    (ElliottLadder.affineCM_of_dilatedCM ElliottDilatedSlice.dilatedCMLogElliott)
+    (ElliottLadder.affineCM_of_dilatedCM ElliottDilatedRung.dilatedCMLogElliott)
 
 end NormalNumbers.ElliottGeneral
