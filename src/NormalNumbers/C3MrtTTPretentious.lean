@@ -273,6 +273,38 @@ theorem ttNonPretentious_of_uniformResonantMass (hURM : UniformResonantMass)
     nlinarith [Real.exp_pos (-C₁), hLle]
   exact hfinal
 
+theorem ttExponent_le_one {z : ℂ} (hz : ‖z‖ = 1) : ttExponent z ≤ 1 := by
+  have hpi : (0 : ℝ) < π := Real.pi_pos
+  have hε0 : 0 ≤ resEps z := resEps_nonneg z
+  have hεπ : resEps z ≤ π / 2 := resEps_le_pi_div_two z
+  have hcos : 0 ≤ Real.cos (resEps z) :=
+    Real.cos_nonneg_of_mem_Icc ⟨by linarith [Real.pi_pos], hεπ⟩
+  have h2 : (0 : ℝ) ≤ (126 / 125 : ℝ) * (resEps z / π) := by positivity
+  have h3 : Real.cos (resEps z) ≤ 1 := Real.cos_le_one _
+  rw [ttExponent]
+  nlinarith
+
+/-! ## The `D = 2` transfer, on the two named inputs -/
+
+/-- **The `K = 2` natural-density transfer, modulo two named inputs.**  Combining lap 71's
+`logToNatural_two_of_noExc` with the archimedean certificate of this file: for a unimodular
+`z 0 ≠ 1`, the two-point `ζ^ω` correlation along any arithmetic progression has natural
+density `0`, given
+
+* `TwoPointNaturalCorrelationNoExc` — TT Theorem 3.1(ii) with the exceptional set of scales
+  removed (the named open problem of lap 71), and
+* `UniformResonantMass` — the sharp resonance-window mass bound of this file.
+
+No other hypothesis: `z 0 ≠ 1` now supplies TT's (3.3) outright. -/
+theorem logToNatural_two_of_noExc_of_ne_one (h : TwoPointNaturalCorrelationNoExc)
+    (hURM : UniformResonantMass) (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1) (hz0 : z 0 ≠ 1)
+    {M : ℕ} (hM : 0 < M) (r : ℕ) :
+    Filter.Tendsto (fun J : ℕ =>
+        (∑ m ∈ Finset.range J, ∏ i : Fin 2, z i ^ omegaNat (M * m + r + (i : ℕ) + 1)) / (J : ℂ))
+      Filter.atTop (nhds 0) :=
+  logToNatural_two_of_noExc h z hz (ttExponent_pos (hz 0) hz0) (ttExponent_le_one (hz 0))
+    (ttNonPretentious_of_uniformResonantMass hURM (hz 0) hz0 le_rfl) hM r
+
 end CastingOut
 
 end NormalNumbers
