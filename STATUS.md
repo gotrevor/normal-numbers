@@ -125,7 +125,7 @@ hypotheses*, which is why it is visible:
 
 | hypothesis | bucket | status |
 |---|---|---|
-| `DelangeMean t` (`SwingC1Delange.lean`) | 🟡 proven, project-scale (Delange 1969 / Selberg–Delange, not in mathlib) | **the active frontier.**  Half discharged (`delangeKernelTail_of_norm_lt_one`); the other half `DelangeKernelMean` has a designed three-brick route off `delange_scale_equation`.  Next prerequisite = brick 1, `Σ_{N₀≤m<N} δ_m/log m ≤ log log N + O(1)`. |
+| `DelangeMean t` (`SwingC1Delange.lean`) | 🟡 proven, project-scale (Delange 1969 / Selberg–Delange, not in mathlib) | **DISCHARGED on `‖t‖_{ℝ/ℤ} < 1/6`** (2026-09-25, laps 53–56): `delangeMean_of_norm_lt_one`, with the hypothesis-free instance `delangeMean_one_div : 7 ≤ b → DelangeMean (1/b)`.  Cashed at the headline by `delangeMean_all_of_large` + `conjC1_of_delangeLarge_multiElliott`/`…_pairDecorr`, which cite Delange only on `‖t‖ ≥ 1/6`.  Remaining frontier = `‖t‖ ≥ 1/6`, which is PNT-strength (at `t = 1/2` the Dirichlet series is `≈ 1/ζ(s)`); next prerequisite = replace `delangeMean_of_kernel`'s crude `⌊N/n⌋` defect bound by a Dirichlet-hyperbola split. |
 | `MultiElliott` / `PairDecorr` / `TwoPointWeightedAvg` | 🔴 open conjecture (two-point Elliott at natural density) | **legitimate**: Fable states C1 conditionally, and all three are proved *equivalent* to each other and to the leaf.  Not debt to chip — the measured depth of the conjecture. |
 | `KataiOrthogonality(Avg)` | — | **DISCHARGED** to `katai_mean_sq` (a theorem here). |
 
