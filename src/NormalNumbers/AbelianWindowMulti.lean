@@ -522,4 +522,139 @@ theorem multi_not_isAbelianAt (q : ℕ) (gs : List (ℕ × ℕ)) (hq0 : 0 < q) (
     rw [hprod, Polynomial.mul_coeff_zero, hpow, hsplit]
     exact ne_of_lt (by nlinarith [hc0, hpos])
 
+/-! ## The layout: one gadget per excluded length -/
+
+/-- The total width consumed by a list of arms, each gadget getting `a + 2` positions. -/
+def gadWidth : List ℕ → ℕ
+  | [] => 0
+  | a :: as => (a + 2) + gadWidth as
+
+/-- Lay the gadgets out left to right starting at position `p`, arm `a` taking `a + 2`
+positions. -/
+def gadPlace : ℕ → List ℕ → List (ℕ × ℕ)
+  | _, [] => []
+  | p, a :: as => (p, a) :: gadPlace (p + a + 2) as
+
+@[simp] theorem gadPlace_nil (p : ℕ) : gadPlace p [] = [] := rfl
+
+@[simp] theorem gadPlace_cons (p a : ℕ) (as : List ℕ) :
+    gadPlace p (a :: as) = (p, a) :: gadPlace (p + a + 2) as := rfl
+
+theorem gadPlace_mem_bound : ∀ (as : List ℕ) (p : ℕ) (x : ℕ × ℕ), x ∈ gadPlace p as →
+    p ≤ x.1 ∧ x.1 + x.2 + 2 ≤ p + gadWidth as ∧ x.2 ∈ as := by
+  intro as
+  induction as with
+  | nil => intro p x hx; exact absurd hx (by simp)
+  | cons a as ih =>
+      intro p x hx
+      rw [gadPlace_cons, List.mem_cons] at hx
+      rcases hx with rfl | hx
+      · refine ⟨le_refl _, ?_, by simp⟩
+        show p + a + 2 ≤ p + ((a + 2) + gadWidth as)
+        omega
+      · obtain ⟨h1, h2, h3⟩ := ih (p + a + 2) x hx
+        refine ⟨by omega, ?_, by simp [h3]⟩
+        show x.1 + x.2 + 2 ≤ p + ((a + 2) + gadWidth as)
+        omega
+
+theorem gadPlace_arms : ∀ (as : List ℕ) (p : ℕ), (gadPlace p as).map Prod.snd = as := by
+  intro as
+  induction as with
+  | nil => intro p; rfl
+  | cons a as ih => intro p; rw [gadPlace_cons, List.map_cons, ih]
+
+theorem gadPlace_nodup (as : List ℕ) (hnd : as.Nodup) (p : ℕ) : (gadPlace p as).Nodup := by
+  have h := gadPlace_arms as p
+  exact List.Nodup.of_map Prod.snd (by rw [h]; exact hnd)
+
+theorem gadPlace_inj : ∀ (as : List ℕ), as.Nodup → ∀ (p : ℕ) (x : ℕ × ℕ), x ∈ gadPlace p as →
+    ∀ y ∈ gadPlace p as, x.2 = y.2 → x = y := by
+  intro as
+  induction as with
+  | nil => intro _ p x hx; exact absurd hx (by simp)
+  | cons a as ih =>
+      intro hnd p x hx y hy hxy
+      rw [List.nodup_cons] at hnd
+      rw [gadPlace_cons, List.mem_cons] at hx hy
+      rcases hx with rfl | hx
+      · rcases hy with rfl | hy
+        · rfl
+        · exact absurd ((gadPlace_mem_bound as (p + a + 2) y hy).2.2) (by rw [← hxy]; exact hnd.1)
+      · rcases hy with rfl | hy
+        · exact absurd ((gadPlace_mem_bound as (p + a + 2) x hx).2.2) (by rw [hxy]; exact hnd.1)
+        · exact ih hnd.2 (p + a + 2) x hx y hy hxy
+
+theorem gadPlace_sep : ∀ (as : List ℕ) (p : ℕ), as.Nodup → GadSep (gadPlace p as) := by
+  intro as
+  induction as with
+  | nil => intro p _ x hx; exact absurd hx (by simp)
+  | cons a as ih =>
+      intro p hnd
+      rw [List.nodup_cons] at hnd
+      have hdisj : ∀ y ∈ gadPlace (p + a + 2) as, GadDisj (p, a) y := by
+        intro y hy u hu hc
+        obtain ⟨h1, -, -⟩ := gadPlace_mem_bound as (p + a + 2) y hy
+        rw [mem_quadSet] at hu hc
+        rcases hu with rfl | rfl | rfl | rfl <;> rcases hc with h | h | h | h <;> omega
+      intro x hx y hy
+      rw [gadPlace_cons, List.mem_cons] at hx hy
+      rcases hx with rfl | hx
+      · rcases hy with rfl | hy
+        · exact Or.inl rfl
+        · exact Or.inr (hdisj y hy)
+      · rcases hy with rfl | hy
+        · exact Or.inr (hdisj x hx).symm
+        · exact ih (p + a + 2) hnd.2 x hx y hy
+
+theorem gadPlace_ok (as : List ℕ) (has : ∀ a ∈ as, 2 ≤ a) (p : ℕ) :
+    ∀ x ∈ gadPlace p as, GadOk (p + gadWidth as + 1) x := by
+  intro x hx
+  obtain ⟨h1, h2, h3⟩ := gadPlace_mem_bound as p x hx
+  exact ⟨has x.2 h3, by omega⟩
+
+theorem blockSeq_multiG_lt_two (q : ℕ) (gs : List (ℕ × ℕ)) (c : ℕ → ℕ) (n : ℕ) :
+    blockSeq (multiG q gs) c q n < 2 := multiG_lt_two q gs _ _
+
+/-- **C4 for every finite complement.**  For every finite set `A` of lengths `≥ 2` there is a
+binary sequence abelian at exactly the lengths outside `A`. -/
+theorem c4_realizable_of_finite_compl (A : Finset ℕ) (hA : ∀ a ∈ A, 2 ≤ a) :
+    ∃ s : ℕ → ℕ, (∀ m, s m < 2) ∧ ∀ L : ℕ, 1 ≤ L → (IsAbelianAt s L ↔ L ∉ A) := by
+  classical
+  set as := A.sort (· ≤ ·) with hasdef
+  have hmem : ∀ a, a ∈ as ↔ a ∈ A := fun a => by rw [hasdef, Finset.mem_sort]
+  have hnd : as.Nodup := A.sort_nodup _
+  have has : ∀ a ∈ as, 2 ≤ a := fun a ha => hA a ((hmem a).mp ha)
+  set q := 0 + gadWidth as + 1 with hqdef
+  set gs := gadPlace 0 as with hgsdef
+  have hq0 : 0 < q := by omega
+  have hok : ∀ pa ∈ gs, GadOk q pa := gadPlace_ok as has 0
+  have hgs : GadSep gs := gadPlace_sep as 0 hnd
+  have hndgs : gs.Nodup := gadPlace_nodup as hnd 0
+  have hinj : ∀ pa ∈ gs, ∀ qb ∈ gs, pa.2 = qb.2 → pa = qb := gadPlace_inj as hnd 0
+  set c := digitOf (2 ^ q) (Int.fract NormalNumbers.G4.Sched.fullRealW) with hcdef
+  have hb2 : 2 ≤ 2 ^ q := by
+    have : 2 ^ 1 ≤ 2 ^ q := Nat.pow_le_pow_right (by norm_num) (by omega)
+    simpa using this
+  have hcB : ∀ m, c m < 2 ^ q := fun m => digitOf_lt (2 ^ q) hb2 _ m
+  have hc : IsNormalSequence (2 ^ q) c := by
+    have h := NormalNumbers.G4.Sched.isNormal_two_pow_fullRealW q hq0
+    rw [IsNormal] at h
+    exact h
+  refine ⟨blockSeq (multiG q gs) c q, blockSeq_multiG_lt_two q gs c, fun L hL => ?_⟩
+  constructor
+  · intro h hLA
+    -- `L ∈ A` means `L` is one of the arms, so there is a gadget with arm `L`
+    have hLas : L ∈ as := (hmem L).mpr hLA
+    have : ∃ p, (p, L) ∈ gs := by
+      have hmap : gs.map Prod.snd = as := gadPlace_arms as 0
+      rw [← hmap, List.mem_map] at hLas
+      obtain ⟨x, hx, hx2⟩ := hLas
+      exact ⟨x.1, by rw [← hx2]; exact hx⟩
+    obtain ⟨p, hp⟩ := this
+    exact multi_not_isAbelianAt q gs hq0 p L hp hok hgs hndgs hinj c hcB hc h
+  · intro hLA
+    refine multi_isAbelianAt_of_notMem q gs hq0 hok hgs hndgs c hcB hc L (fun pa hpa => ?_)
+    intro hc2
+    exact hLA ((hmem pa.2).mp (gadPlace_mem_bound as 0 pa hpa).2.2 |> fun h => hc2 ▸ h)
+
 end NormalNumbers.Abelian
