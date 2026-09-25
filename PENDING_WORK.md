@@ -9336,3 +9336,37 @@ two-block form.
    `cutoff + 16ζN ≤ η/32`) carries over verbatim because lap 5's bounds have the dependency's own
    constants.
 3. Then the lower bound (see lap 4 notes) and the CRT/entropy concentration.
+
+### Elliott crux, lap 6 (2026-09-25): the twisted two-block graph UPPER BOUND is proved
+
+`src/NormalNumbers/ElliottTwistedGraph.lean` — still zero `sorry`s, all axiom-clean.
+
+* `norm_logProb_pairTwistedPrimeGraphMean_le_of_fourier_first_moment`
+  (← `Erdos67b.norm_logProb_primeGraphMean_le_of_fourier_first_moment`).  Lap 4's asymmetry is
+  carried through the logarithmic average: `hfirst` constrains the **`F₁` block only**; `F₂` is
+  merely `1`-bounded.
+* **`exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment`** — the full analogue of
+  `Erdos67b.exists_primeGraphMean_small_of_fourier_first_moment`, i.e. *one of the two analytic
+  inputs to `Erdos67b.unitCircleLogElliott`*, now available with both generalisations Tao's
+  Theorem 1.3 needs: two independent blocks and a per-prime unimodular twist.  The parameter
+  choreography is the dependency's verbatim (`cutoff = η/64`, `N = C/cutoff⁴`,
+  `ζ = η/(1024(N+1))`, budget `cutoff + 16ζN ≤ η/32`) — possible only because lap 5's bounds carry
+  the dependency's own constants.
+
+**Status of the crux `ElliottLadder.dilatedCMLogElliott`.**  Of the two analytic inputs to the
+proved case:
+* the **graph/Fourier upper bound** is now DONE in twisted two-block form (this lap);
+* the **MRT input** `Erdos67b.mrtModulatedShortIntervalUnrestricted` is applied to `f₁` alone and
+  needs no change beyond relaxing `‖f₁ n‖ = 1` bookkeeping — check whether the `hunit` hypothesis is
+  used essentially or only through `‖·‖ ≤ 1`.
+
+**Next attack (lap 7).**  The graph **lower** bound, which is where the twist earns its keep:
+1. `norm_logProb_divisiblePair_sub_correlation_le` for the pair observable — replace
+   `Erdos67b.unit_pair_dilation` by `ElliottLadder.pairObservable_dilation_twisted`.  With the weight
+   `conj (f₁(p) f₂(p))` every edge contributes the *same* correlation, so
+   `Erdos67b.exists_dyadic_primeGraphCorrelationWeight_lower` and
+   `Erdos67b.primeGraphCorrelationWeight` apply unchanged.
+2. `exists_logProb_primeGraphMean_correlation_close` then
+   `exists_logProb_dyadic_primeGraphMean_lower`, both for `pairTwistedPrimeGraphMean`.
+3. The CRT/entropy concentration in between (`primeGraphSum`, `primeGraphObservable`, Hoeffding,
+   `PrimeGraphDecoupling`) consumes only `‖edge‖ ≤ 1`, supplied by `norm_pairShiftEdge_le`.

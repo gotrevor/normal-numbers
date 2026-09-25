@@ -1,4 +1,4 @@
-import ErdosProblems.Erdos67b.PrimeGraphFrequencyBounds
+import ErdosProblems.Erdos67b.PrimeGraphFourierUpper
 
 /-!
 # The phase-twisted prime graph
@@ -37,6 +37,7 @@ open Erdos438.Fourier
 namespace NormalNumbers.ElliottTwistedGraph
 
 open Erdos67b
+open Erdos67b.FiniteEntropy
 
 noncomputable section
 
@@ -528,6 +529,148 @@ theorem card_pairTwistedLargeFrequencies_le {T h : ℕ} (s : Finset ℕ) (w : �
       0 ≤ ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖ ^ 4)
   exact (le_div_iff₀ (by positivity : 0 < θ ^ 4)).mpr ((hsmall.trans hsum).trans hmoment)
 
+
+
+/-! ## The logarithmic-average layer and the upper-bound assembly -/
+
+/-- Port of `Erdos67b.norm_logProb_primeGraphMean_le_of_fourier_first_moment`.  Note the
+first-moment hypothesis `hfirst` concerns the **first** block only: `F₂` is merely `1`-bounded.
+This is lap 4's structural observation, now carried through the logarithmic average. -/
+theorem norm_logProb_pairTwistedPrimeGraphMean_le_of_fourier_first_moment
+    {L U H T : ℕ} [NeZero T] (hL : 0 < L) (hLU : L ≤ U)
+    (w : ℕ → ℂ) (F₁ F₂ : ℕ → ℂ) (h : ℕ) (s : Finset ℕ)
+    (hHT : H ≤ T) (hT : ∀ p ∈ s, H + p * h ≤ T)
+    (hF₁ : ∀ n, 0 < n → ‖F₁ n‖ ≤ 1) (hF₂ : ∀ n, 0 < n → ‖F₂ n‖ ≤ 1)
+    {θ M Z : ℝ} (hθ : 0 ≤ θ) (hM : 0 ≤ M)
+    (hmult : ∀ t ∈ Finset.range T, ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖ ≤ M)
+    (hfirst : ∀ t ∈ pairTwistedLargeFrequencies T h s w θ,
+      logProbExpectation L U
+        (fun n ↦ ‖blockFourier T (finiteSequenceBlock F₁ H n) (t : ℤ)‖) ≤ Z) :
+    ‖logProbExpectation L U (fun n ↦ pairTwistedPrimeGraphMean w
+        (finiteSequenceBlock F₁ H n) (finiteSequenceBlock F₂ H n) h s)‖ ≤
+      θ * H + ((H : ℝ) * M / T) * (pairTwistedLargeFrequencies T h s w θ).card * Z := by
+  have hpoint (n : ℕ) : ‖pairTwistedPrimeGraphMean w (finiteSequenceBlock F₁ H n)
+      (finiteSequenceBlock F₂ H n) h s‖ ≤
+      θ * H + ((H : ℝ) * M / T) *
+        ∑ t ∈ pairTwistedLargeFrequencies T h s w θ,
+          ‖blockFourier T (finiteSequenceBlock F₁ H n) (t : ℤ)‖ :=
+    norm_pairTwistedPrimeGraphMean_le_largeFrequencies w _ _ h s hHT hT
+      (fun j ↦ hF₁ (n + j.1 + 1) (by omega)) (fun j ↦ hF₂ (n + j.1 + 1) (by omega)) hθ hmult
+  have hweights : ∑ n : LogProbIndex L U, (logProbWeightNN L U n : ℝ) = 1 := by
+    exact_mod_cast sum_logProbWeightNN hL hLU
+  have hexpand : logProbExpectation L U (fun n ↦ θ * H + ((H : ℝ) * M / T) *
+      ∑ t ∈ pairTwistedLargeFrequencies T h s w θ,
+        ‖blockFourier T (finiteSequenceBlock F₁ H n) (t : ℤ)‖) =
+      θ * H + ((H : ℝ) * M / T) * ∑ t ∈ pairTwistedLargeFrequencies T h s w θ,
+        logProbExpectation L U
+          (fun n ↦ ‖blockFourier T (finiteSequenceBlock F₁ H n) (t : ℤ)‖) := by
+    simp only [logProbExpectation, smul_eq_mul, mul_add, Finset.sum_add_distrib]
+    rw [← Finset.sum_mul, hweights, one_mul]
+    congr 1
+    simp_rw [mul_left_comm (logProbWeightNN L U _ : ℝ) ((H : ℝ) * M / T)]
+    rw [← Finset.mul_sum]
+    congr 1
+    simp only [Finset.mul_sum]
+    exact Finset.sum_comm
+  calc
+    _ ≤ logProbExpectation L U (fun n ↦ ‖pairTwistedPrimeGraphMean w
+        (finiteSequenceBlock F₁ H n) (finiteSequenceBlock F₂ H n) h s‖) :=
+      norm_logProbExpectation_le_expectation_norm _ _ _
+    _ ≤ logProbExpectation L U (fun n ↦ θ * H + ((H : ℝ) * M / T) *
+        ∑ t ∈ pairTwistedLargeFrequencies T h s w θ,
+          ‖blockFourier T (finiteSequenceBlock F₁ H n) (t : ℤ)‖) :=
+      logProbExpectation_mono _ _ (fun n _ ↦ hpoint n)
+    _ = _ := hexpand
+    _ ≤ θ * H + ((H : ℝ) * M / T) * ∑ _t ∈ pairTwistedLargeFrequencies T h s w θ, Z := by
+      gcongr
+      exact hfirst _ ‹_›
+    _ = _ := by rw [Finset.sum_const, nsmul_eq_mul]; ring
+
+/-- **The twisted, two-block graph upper bound.**  Port of
+`Erdos67b.exists_primeGraphMean_small_of_fourier_first_moment`.
+
+The parameter choreography is the dependency's verbatim — `cutoff = η/64`, `N = C/cutoff⁴`,
+`ζ = η/(1024(N+1))`, budget `cutoff + 16ζN ≤ η/32` — which is possible only because
+`exists_eventually_twistedPrimeGraphMultiplier_bounds` delivers the dependency's own constants.
+Both generalisations needed for Tao's Theorem 1.3 are present: two independent blocks, and the
+per-prime unimodular twist.  The Fourier first moment is required on `F₁` alone. -/
+theorem exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment
+    {h : ℕ} (hh : 0 < h) {η : ℝ} (hη : 0 < η) :
+    ∃ ζ : ℝ, 0 < ζ ∧ ∃ H₁ : ℕ, 2 ≤ H₁ ∧ ∀ H ≥ H₁,
+      ∀ L U : ℕ, 0 < L → L ≤ U → ∀ F₁ F₂ : ℕ → ℂ,
+      (∀ n, 0 < n → ‖F₁ n‖ ≤ 1) → (∀ n, 0 < n → ‖F₂ n‖ ≤ 1) →
+      ∀ w : ℕ → ℂ, (∀ p ∈ PrimeEstimates.dyadicPrimes (H / (4 * h + 4)), ‖w p‖ ≤ 1) →
+      (∀ t ∈ Finset.range (4 * h * H + 1),
+        logProbExpectation L U (fun n ↦
+          ‖blockFourier (4 * h * H + 1) (finiteSequenceBlock F₁ H n) (t : ℤ)‖) ≤ ζ * H) →
+      ‖logProbExpectation L U (fun n ↦ pairTwistedPrimeGraphMean w
+        (finiteSequenceBlock F₁ H n) (finiteSequenceBlock F₂ H n) h
+        (PrimeEstimates.dyadicPrimes (H / (4 * h + 4))))‖ ≤ η * H / (32 * Real.log H) := by
+  obtain ⟨C, hC, H₁, hH₁, hcontrol⟩ := exists_eventually_twistedPrimeGraphMultiplier_bounds hh
+  let cutoff : ℝ := η / 64
+  have hcutoff : 0 < cutoff := by dsimp [cutoff]; positivity
+  let N : ℝ := C / cutoff ^ 4
+  have hN : 0 < N := by dsimp [N]; positivity
+  let ζ : ℝ := η / (1024 * (N + 1))
+  have hζ : 0 < ζ := by dsimp [ζ]; positivity
+  have hbudget : cutoff + 16 * ζ * N ≤ η / 32 := by
+    have hratio : N / (N + 1) ≤ 1 := (div_le_one (by positivity)).mpr (by linarith)
+    calc
+      cutoff + 16 * ζ * N = η / 64 + (η / 64) * (N / (N + 1)) := by
+        dsimp [cutoff, ζ]
+        field_simp; ring
+      _ ≤ η / 64 + (η / 64) * 1 := by gcongr
+      _ = η / 32 := by ring
+  refine ⟨ζ, hζ, H₁, hH₁, ?_⟩
+  intro H hH L U hL hLU F₁ F₂ hF₁ hF₂ w hw hfirst
+  set P := H / (4 * h + 4) with hPdef
+  set T := 4 * h * H + 1 with hTdef
+  set s := PrimeEstimates.dyadicPrimes P with hsdef
+  have hH2 : 2 ≤ H := hH₁.trans hH
+  have hHr : (0 : ℝ) < H := by positivity
+  have hlog : 0 < Real.log (H : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < H))
+  have hTpos : 0 < T := by rw [hTdef]; omega
+  let _ : NeZero T := ⟨hTpos.ne'⟩
+  have hTr : (0 : ℝ) < T := Nat.cast_pos.mpr hTpos
+  have hHT : H ≤ T := by rw [hTdef]; nlinarith
+  have hdiv : P * (4 * h + 4) ≤ H := Nat.div_mul_le_self H _
+  have hPH : 2 * P ≤ H := by nlinarith
+  have hsprimes : s ⊆ Nat.primesLE H := by
+    intro p hp
+    have hp' := PrimeEstimates.mem_primesInInterval.mp hp
+    exact Nat.mem_primesLE.mpr ⟨hp'.2.1.trans hPH, hp'.2.2⟩
+  have hnowrap : ∀ p ∈ s, H + p * h ≤ T := by
+    intro p hp
+    have hpH := (Nat.mem_primesLE.mp (hsprimes hp)).1
+    have hprod := Nat.mul_le_mul_right h hpH
+    rw [hTdef]
+    nlinarith
+  obtain ⟨hfourth, hsup⟩ := hcontrol H hH w hw
+  have hcard : (pairTwistedLargeFrequencies T h s w (cutoff / Real.log H)).card ≤ N := by
+    have hc := card_pairTwistedLargeFrequencies_le s w
+      (show 0 < cutoff / Real.log H by positivity) hfourth
+    have heq : (C / Real.log H ^ 4) / (cutoff / Real.log H) ^ 4 = N := by
+      dsimp [N]
+      field_simp
+    exact heq ▸ hc
+  have hbound := norm_logProb_pairTwistedPrimeGraphMean_le_of_fourier_first_moment
+    hL hLU w F₁ F₂ h s hHT hnowrap hF₁ hF₂
+    (θ := cutoff / Real.log H) (M := 16 / Real.log H) (Z := ζ * H)
+    (by positivity) (by positivity) (fun t _ ↦ hsup t)
+    (fun t ht ↦ hfirst t (Finset.mem_filter.mp ht).1)
+  have hratio : (H : ℝ) * (16 / Real.log H) / T ≤ 16 / Real.log H := by
+    apply (div_le_iff₀ hTr).mpr
+    have hHTr : (H : ℝ) ≤ T := by exact_mod_cast hHT
+    simpa only [mul_comm] using mul_le_mul_of_nonneg_right hHTr
+      (show 0 ≤ (16 : ℝ) / Real.log H by positivity)
+  calc
+    _ ≤ cutoff / Real.log H * H + ((H : ℝ) * (16 / Real.log H) / T) *
+        (pairTwistedLargeFrequencies T h s w (cutoff / Real.log H)).card * (ζ * H) := hbound
+    _ ≤ cutoff / Real.log H * H + (16 / Real.log H) * N * (ζ * H) := by gcongr
+    _ = (cutoff + 16 * ζ * N) * (H / Real.log H) := by ring
+    _ ≤ (η / 32) * (H / Real.log H) :=
+      mul_le_mul_of_nonneg_right hbudget (by positivity)
+    _ = η * H / (32 * Real.log H) := by ring
 
 end
 
