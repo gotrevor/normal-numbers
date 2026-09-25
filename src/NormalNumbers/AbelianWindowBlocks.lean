@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.AbelianBlockDensity
+import NormalNumbers.AbelianNormal
 
 /-!
 # Block densities at an arbitrary block length
@@ -23,7 +24,7 @@ open Filter Finset Topology
 
 namespace NormalNumbers.Abelian
 
-open NormalNumbers NormalNumbers.PowerBase
+open NormalNumbers NormalNumbers.PowerBase NormalNumbers.Walsh
 
 /-! ### Counting blocks in a residue class -/
 
@@ -278,5 +279,67 @@ theorem tendsto_blockEventG (hB : 0 < B) (hq : 0 < q) (hcB : ∀ m, c m < B)
   exact Finset.sum_congr rfl (fun k _ => by ring)
 
 end EventG
+
+/-! ### Block-driven binary sequences and their exact window laws
+
+`blockSeq g c q n = g (n % q) (c (n / q))` reads a base-`B` normal sequence `c` `q` bits at a
+time through an arbitrary table `g`.  This is the aperiodic block-i.i.d. class: the blocks are
+i.i.d. with the law `g_*(uniform on B letters)`, and the residue `n % q` supplies the uniform
+random offset that makes it stationary.  Every window statistic is an exact finite sum. -/
+
+section BlockSeq
+
+/-- The binary sequence read off `c` in blocks of `q` bits through the table `g`. -/
+def blockSeq (g : ℕ → ℕ → ℕ) (c : ℕ → ℕ) (q : ℕ) (n : ℕ) : ℕ := g (n % q) (c (n / q))
+
+/-- One-count of the length-`L` window at residue `r` inside a block word `v`. -/
+def winOnes (g : ℕ → ℕ → ℕ) (q L r : ℕ) (v : List ℕ) : ℕ :=
+  ((range L).filter (fun i => g ((r + i) % q) (v.getD ((r + i) / q) 0) = 1)).card
+
+theorem onesCount_blockSeq (g : ℕ → ℕ → ℕ) (c : ℕ → ℕ) {q : ℕ} (hq : 0 < q) (L S : ℕ)
+    (hS : q + L ≤ S) (n : ℕ) :
+    onesCount (blockSeq g c q) L n = winOnes g q L (n % q) (blk c S (n / q)) := by
+  classical
+  unfold onesCount windowSet winOnes
+  congr 1
+  refine Finset.filter_congr (fun i hi => ?_)
+  have hiL : i < L := Finset.mem_range.mp hi
+  have hr : n % q < q := Nat.mod_lt _ hq
+  have hidx : (n % q + i) / q < S := by
+    have h1 : (n % q + i) / q ≤ n % q + i := Nat.div_le_self _ _
+    omega
+  have hn : n + i = q * (n / q) + (n % q + i) := by
+    have := Nat.div_add_mod n q
+    omega
+  have hmod : (n + i) % q = (n % q + i) % q := by
+    rw [hn, Nat.add_comm (q * (n / q)) _, Nat.mul_comm q (n / q),
+      Nat.add_mul_mod_self_right]
+  have hdiv : (n + i) / q = n / q + (n % q + i) / q := by
+    rw [hn, Nat.add_comm (q * (n / q)) _, Nat.mul_comm q (n / q),
+      Nat.add_mul_div_right _ _ hq]
+    omega
+  rw [blockSeq, hmod, hdiv, blk_getD c S (n / q) _ hidx]
+
+/-- The exact limiting weight-`j` frequency of a block-driven sequence. -/
+noncomputable def blockFreq (g : ℕ → ℕ → ℕ) (q B S L j : ℕ) : ℝ :=
+  (∑ r ∈ range q, ∑ k ∈ range (B ^ S),
+    if winOnes g q L r (wordOf B S k) = j then (1 : ℝ) else 0) / (q * B ^ S)
+
+/-- **The block-driven window law.** -/
+theorem tendsto_onesFreq_blockSeq (g : ℕ → ℕ → ℕ) (c : ℕ → ℕ) {B q : ℕ} (hB : 0 < B)
+    (hq : 0 < q) (hcB : ∀ m, c m < B) (hc : IsNormalSequence B c) (L S : ℕ) (hS : q + L ≤ S)
+    (j : ℕ) :
+    Tendsto (onesFreq (blockSeq g c q) L j) atTop (𝓝 (blockFreq g q B S L j)) := by
+  classical
+  have h := tendsto_blockEventG c B S q (fun r v => winOnes g q L r v = j) hB hq hcB hc
+  refine h.congr (fun N => ?_)
+  have hset : ((range N).filter (fun n => onesCount (blockSeq g c q) L n = j))
+      = ((range N).filter (fun n => winOnes g q L (n % q) (blk c S (n / q)) = j)) := by
+    ext n
+    simp only [Finset.mem_filter, onesCount_blockSeq g c hq L S hS n]
+  unfold onesFreq
+  rw [hset]
+
+end BlockSeq
 
 end NormalNumbers.Abelian

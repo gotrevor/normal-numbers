@@ -1,4 +1,5 @@
 import NormalNumbers.AbelianNormal
+import NormalNumbers.AbelianWindowBlocks
 
 /-!
 # C4: which sets of window lengths can a binary sequence be abelian-normal at, exactly?
@@ -356,6 +357,26 @@ theorem isAbelianAt_periodic_iff (s : ℕ → ℕ) (D : ℕ) (hD : 0 < D) (hper 
   · intro h j hj
     rw [← h j hj]
     exact tendsto_onesFreq_periodic s D hD hper L j
+
+/-! ## Block-driven witnesses
+
+`AbelianWindowBlocks.tendsto_onesFreq_blockSeq` gives the exact limiting weight law of
+`blockSeq g c q n = g (n % q) (c (n / q))`, an APERIODIC sequence (unlike the periodic witnesses
+above) whose window statistics are nevertheless exact finite sums.  Abelian-ness at `L` therefore
+becomes a decidable arithmetic identity, at every block length `q`. -/
+
+/-- Abelian-ness of a block-driven sequence at `L` is an exact finite arithmetic condition. -/
+theorem isAbelianAt_blockSeq_iff (g : ℕ → ℕ → ℕ) (c : ℕ → ℕ) {B q : ℕ} (hB : 0 < B)
+    (hq : 0 < q) (hcB : ∀ m, c m < B) (hc : IsNormalSequence B c) (L S : ℕ) (hS : q + L ≤ S) :
+    IsAbelianAt (blockSeq g c q) L ↔
+      ∀ j ≤ L, blockFreq g q B S L j = (L.choose j : ℝ) / 2 ^ L := by
+  constructor
+  · intro h j hj
+    exact tendsto_nhds_unique
+      (tendsto_onesFreq_blockSeq g c hB hq hcB hc L S hS j) (h j hj)
+  · intro h j hj
+    rw [← h j hj]
+    exact tendsto_onesFreq_blockSeq g c hB hq hcB hc L S hS j
 
 /-! ## Realizability: the empty set -/
 

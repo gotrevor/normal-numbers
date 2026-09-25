@@ -150,3 +150,29 @@ defect of `q`'s length-`j` window weight law): `L ∈ G(s) ↔ D_{a+1}(x) + ((1+
 So `a, a+1 ∈ G(q) ⇒ 2a+1 ∈ G(s)`, and generically the odd lengths fail.  Hence
 `G(interleave2 q t) = 2·G(q) ∪ {odd exceptions}`, i.e. DOUBLING — iterating from `altSeq` should
 give `S = {1,2,4,8,…}`, the first infinite witness.
+
+## Lap 5 addendum
+**The block workhorse is now wired to the headline predicate.**  New in
+`AbelianWindowBlocks.lean`: `blockSeq g c q n = g (n % q) (c (n / q))` (a binary sequence read off
+a base-`B` normal `c` in blocks of `q` bits through an arbitrary table `g`), `winOnes` (the
+one-count of a length-`L` window at residue `r` inside a block word), `onesCount_blockSeq`
+(the window one-count is EXACTLY a function of `n % q` and the `S` digits of `c` at `n / q`,
+for any `S ≥ q + L`), `blockFreq`, and
+
+  `tendsto_onesFreq_blockSeq` : `onesFreq (blockSeq g c q) L j → blockFreq g q B S L j`,
+
+and in `AbelianWindowSets.lean`:
+
+  **`isAbelianAt_blockSeq_iff`** : `IsAbelianAt (blockSeq g c q) L ↔ ∀ j ≤ L,
+  blockFreq g q B S L j = C(L,j) / 2^L`.
+
+So for the aperiodic block-i.i.d. class, membership in `G(s)` is a DECIDABLE arithmetic identity
+at every block length `q` — the exact analogue of `isAbelianAt_periodic_iff` but without
+periodicity's hard ceiling `G ⊆ [1, D−1]`.  This is the object the infinite-`S` construction has
+to be built from; `q → ∞` is the multi-scale axis.
+
+**Next attack.**  Compute `blockFreq` for concrete `g` and find which `S` the class realizes: run
+`probes/` over tables `g : Fin q → Fin B → Fin 2` for small `q` (the block law is the pushforward
+of uniform, denominator `B`), tabulate `G(blockSeq g c q)` — expected: unlike the periodic case it
+can be INFINITE.  Confirm the first infinite witness there, then port it to Lean by `decide`ing
+the `blockFreq` identities.
