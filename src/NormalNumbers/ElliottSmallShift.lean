@@ -473,7 +473,7 @@ theorem twistAlmostRealPropDichotomy_of_inputs {A : ℕ} {η ρ θ δ₀ δ ρ' 
 /-- Choosing every parameter, at a tolerance `ρ'` fixed by the consumer. -/
 theorem exists_twistAlmostRealPropDichotomy {A : ℕ} {θ : ℝ} (hθ : 0 < θ)
     (hrig : CharacterClusterRigidity A θ)
-    (harch : ∀ r : ℝ, 0 < r →
+    (harch : ∀ r : ℝ, 0 < r → r < 1 →
       ∃ η : ℝ, 0 < η ∧ ArchimedeanCorrelationBoundAbove A η (smallShiftThreshold r))
     {ρ' : ℝ} (hρ' : 0 < ρ') :
     ∃ δ : ℝ, 0 < δ ∧ δ ≤ 1 ∧ TwistAlmostRealPropDichotomy A δ ρ' := by
@@ -488,7 +488,7 @@ theorem exists_twistAlmostRealPropDichotomy {A : ℕ} {θ : ℝ} (hθ : 0 < θ)
   have hρ1 : ρ < 1 := by rw [hρdef]; linarith
   have hρδ : ρ ≤ δ₀ / 2 := le_of_eq hρdef
   have hρρ' : 2 * ρ ≤ ρ' := by rw [hρdef]; linarith
-  obtain ⟨η, hη, harchρ⟩ := harch ρ hρ
+  obtain ⟨η, hη, harchρ⟩ := harch ρ hρ hρ1
   have hApos : (0 : ℝ) < (A : ℝ) + 1 := by positivity
   set R : ℝ := η / (2 * ((A : ℝ) + 1)) with hR
   have hRpos : 0 < R := by rw [hR]; positivity
@@ -520,7 +520,7 @@ average, for every `ζ = e(t/b) ≠ 1`.  The small-shift band is *proved*, not a
 theorem twoPointElliottLog_of_archimedean_and_rigidity {b p q : ℕ} {t : ℝ}
     (hp : 0 < p) (hq : 0 < q) (hpq : p ≠ q) (hu : (phase (t / b)).re < 1)
     (hrig : ∀ A : ℕ, ∃ θ : ℝ, 0 < θ ∧ CharacterClusterRigidity A θ)
-    (harch : ∀ (A : ℕ) (r : ℝ), 0 < r →
+    (harch : ∀ (A : ℕ) (r : ℝ), 0 < r → r < 1 →
       ∃ η : ℝ, 0 < η ∧ ArchimedeanCorrelationBoundAbove A η (smallShiftThreshold r)) :
     TwoPointElliottLog b p q t := by
   refine twoPointElliottLog_of_nonPretentious hp hq hpq
@@ -537,7 +537,7 @@ true size of `archCorr` is `≈ (1−ρ)·M(X)`, so (c′) holds there. -/
 theorem twoPointElliottLog_of_archimedean_and_primeDensity {b p q : ℕ} {t : ℝ}
     (hp : 0 < p) (hq : 0 < q) (hpq : p ≠ q) (hu : (phase (t / b)).re < 1)
     (hdens : ∀ A : ℕ, ElliottCharRigidity.PrimeDensityAP A)
-    (harch : ∀ (A : ℕ) (r : ℝ), 0 < r →
+    (harch : ∀ (A : ℕ) (r : ℝ), 0 < r → r < 1 →
       ∃ η : ℝ, 0 < η ∧ ArchimedeanCorrelationBoundAbove A η (smallShiftThreshold r)) :
     TwoPointElliottLog b p q t :=
   twoPointElliottLog_of_archimedean_and_rigidity hp hq hpq hu

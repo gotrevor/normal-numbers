@@ -5,6 +5,7 @@ import NormalNumbers.ElliottCharRigidity
 import NormalNumbers.ElliottArchimedeanRefuted
 import NormalNumbers.ElliottTwistRepair
 import NormalNumbers.ElliottSmallShift
+import NormalNumbers.ElliottArchBands
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
@@ -181,3 +182,8 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottSmallShift.twistAlmostRealPropDichotomy_of_inputs
 #print axioms NormalNumbers.ElliottSmallShift.twoPointElliottLog_of_archimedean_and_rigidity
 #print axioms NormalNumbers.ElliottSmallShift.twoPointElliottLog_of_archimedean_and_primeDensity
+
+/-! ### (c′) split into bands: the soft band and the isolated Vinogradov wall (lap 95) -/
+#print axioms NormalNumbers.ElliottArchBands.shortWindow_bounds
+#print axioms NormalNumbers.ElliottArchBands.archimedeanCorrelationBoundAbove_of_bands
+#print axioms NormalNumbers.ElliottArchBands.twoPointElliottLog_of_bands

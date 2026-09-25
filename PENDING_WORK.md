@@ -85,6 +85,40 @@ The zero-free-region site.  Do NOT expect to clear it.  Two recorded routes:
   The uncertain half is the mean-value lower bound "pretentious to a constant ⟹ mean `≫ X`"
   (Halász/Wirsing territory).  **Probe that first, on paper, before writing Lean.**
 
+### ✅ Lap 95 — (c′) SPLIT INTO BANDS; the wall is isolated and named
+
+New module `src/NormalNumbers/ElliottArchBands.lean` (sorry-free, trust triple, in the audit
+surface).  (c′) is cut at `|v| = 1`:
+
+* **(c′-I)** `ShiftedMertensSmall K₀` — `0 < |v| ≤ 1 → ‖archCorr v X‖ ≤ log(1/|v|) + K₀`.
+  Mertens with a small shift; **no zero-free region**.
+* **(c′-II)** `ArchCorrLargeShift A η₁ K₁` — `1 < |v| ≤ A²X → ‖archCorr v X‖ ≤ (1−η₁)·log log X + K₁`.
+  **The wall**, and the only one.
+
+`archimedeanCorrelationBoundAbove_of_bands` proves (c′) from the two with `η = min ρ η₁ / 4`
+(the soft band supplies all the `r`-dependence, so (c′-II) is asked at a *single* `η₁`), and
+`twoPointElliottLog_of_bands` gives the whole two-point leaf on `PrimeDensityAP` + (c′-I) + (c′-II).
+`ElliottSmallShift`'s three consumers now ask `harch` only for `0 < r < 1` (the only range they
+ever instantiate), which is what makes (c′) provable at all: for `r ≥ 2` the threshold degenerates
+to `0` and the statement is FALSE.
+
+**⛔ The `(c′-vdC)` route below is REFUTED as stated** (details in the new module's docstring):
+van der Corput's `k`-th derivative test only replaces the trivial `log t` in `|ζ(1+it)|` by
+`(1/k)·log t` — an *additive* `O(1)` saving on `archCorr`, whereas the consumer needs a
+*proportional* one; a power saving needs `k ≍ (log t)^η` uniformly, i.e. Vinogradov's mean value
+theorem.  And the Halász half needs no vdC at all: `∑_{n≤X} n^{-iv} = X^{1-iv}/(1-iv) + O(1+|v|)`
+exactly, of size `≍ X/|v|`, so that route reproves only what the trivial bound already gives.
+**The true statement of (c′-II) is `|ζ(1+it)| ≪ (log t)^{2/3}` (Vinogradov–Korobov), valid for
+every `η₁ < 1/3`.**  EA-1 boundary check on both new inputs: passes (module docstring).
+
+**Next attack.**  (c′-I) is now the tractable half and should be attacked first: it is
+Mertens-with-a-shift on `|v| ≤ 1`, and the repo already has two-sided Mertens with an absolute
+constant.  The natural Lean route is Abel summation of `p^{-iv}` against
+`abs_primeReciprocals_sub_log_log_le`, splitting at `log Y = 1/|v|` exactly as `exists_reductionScale`
+does — below `Y` bound trivially by `M(Y) = log(1/|v|) + O(1)`, above `Y` the oscillation must be
+harvested, and the honest cost there is a Mertens error term of size `O(1/log²u)` (PNT-strength) or
+a second application of the scale trick.  **That error-term strength is the thing to settle first.**
+
 ### What is OFF the path now
 
 `CharacterClusterRigidity`, `PrimeDensityAP`, `exists_charDefect_le`, `NearTrivialTwist`,
