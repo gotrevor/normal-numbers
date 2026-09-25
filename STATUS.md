@@ -2,7 +2,7 @@
 
 **Active campaign: Tao 2016 Thm 1.3, the general two-point log-Elliott theorem** (branch
 `wip/elliott-port`, worktree `nn-elliott`).  Pair A multicutoff (Theorem C′) is COMPLETE.
-· **Build**: 🟢 green (9548 jobs, `lake build NormalNumbers.ElliottGeneral`) · **Updated**: review
+· **Build**: 🟢 green (9560 jobs, `lake build NormalNumbers.ElliottGeneral`) · **Updated**: review
 lap 36 · 2026-09-25 · HEAD `e31d305`
 
 ## Where it stands (Elliott campaign)
@@ -54,6 +54,10 @@ fixed before `ε`.
 | `ElliottGenericGraph.exists_logProb_gen_decoupling` | dilated entropy decoupling | trust triple | ✅ |
 | `ElliottDilatedBridge.genSum_dilatedEdgeReindexed_affineBlock` | dilated block↔graph identity | trust triple | ✅ |
 | `ElliottDilatedCorrelation.norm_logProb_dilatedGraph_sub_correlation_le` | dilated correlation transfer | trust triple | ✅ |
+| `ElliottDilatedRung.dilatedCM_of_natShift` | integer shifts free over natural shifts | trust triple | ✅ (lap 36) |
+| `ElliottDilatedWeight.exists_dyadic_dilatedCorrelationWeight_lower` | dilated dyadic weight lower bound | trust triple | ✅ (lap 37) |
+| `ElliottDilatedMean.norm_logProb_dilatedMean_sub_correlation_le` | CRT sum ↦ uniform-residue mean | trust triple | ✅ (lap 38) |
+| `ElliottDilatedGrouped.ungroupBlock_finiteSequenceBlock_groupSeq` | dilated block = ordinary block over `α^a` | trust triple | ✅ (lap 39) |
 | `Erdos67b.unitCircleLogElliott` (dependency) | the proved special case | trust triple | ✅ |
 
 Math-axiom count for the Elliott campaign: **0** (🟢 0 · 🟡 0 · 🟠 0 · 🔴 0).  No cited axioms
