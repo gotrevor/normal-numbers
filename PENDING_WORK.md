@@ -1,3 +1,44 @@
+## Lap 116 (2026-09-25) — the band cost is DISCHARGED (directive ②1)
+
+`BlockBandCost` is no longer a hypothesis for the intended top `bandTop X = log₂⌈X²⌉₊ − 1`.  All in
+`C3MrtBlockDefect.lean` §6, trust-triple clean.
+
+* `blockPrimes_subset_Ico` — block `j` sits inside `[2^j, 2^{j+1})`.
+* `blockMass_le_one` — **every single block has mass `≤ 1`** (at most `2^j` primes, each reciprocal
+  `≤ 2^{-j}`).  This is what makes the ONE truncated top block affordable.
+* `blockMass_eq_zero_of_lt` — blocks entirely above the truncation are empty.
+* `sum_blockMass_above_le` — **the top of the band costs `≤ 1`**: above `bandTop` only `j = log₂⌈X²⌉₊`
+  can be nonempty, and that one has mass `≤ 1`.
+* `sum_blockMass_range_eq` / `sum_blockMass_range_le` — **the bottom of the band costs
+  `log(J·log 2) + mertensBound`**: the blocks below `J` regroup fiberwise into the primes `< 2^J`,
+  and `small_prime_mass_le` (Mertens) applies.  The `log` is the whole point: a threshold growing
+  like any power of `log X` is affordable, the threshold itself would not be.
+* `sum_filter_or_le` — splitting a filter on a disjunction is free for nonnegative terms.
+* `blockBandCost_bound` — the two halves: cost `≤ log(J X·log 2) + mertensBound + 1`.
+* `blockBandCost_of_log_bound` — **the affordability criterion**: any `J` whose `log` is dominated by
+  `ε·log log X` gives `BlockBandCost J bandTop ε C`.
+* `blockBandCost_const` — a constant threshold is affordable outright (`ε = 0`).
+
+**So the archimedean band route now rests on ONE per-block analytic statement,
+`WideBlockSavingBand J bandTop κ`, with its cost discharged.**
+
+**Next (directive ②2): pin the threshold from below.**  `¬ WideBlockSavingBand (fun _ => J₀) bandTop κ`
+for `J₀ ≤ 3`, by EXACT two-prime phase alignment.  The plan, with the witnesses checked by hand:
+
+| `j` | block | `t = 2π/log(p'/p)` | `X` | `X² ≥ t` | `bandTop X` |
+|---|---|---|---|---|---|
+| 1 | `{2,3}` | `2π/log(3/2) ≈ 15.50` | 5 | `25` ✓ | `log₂25 − 1 = 3` ✓ |
+| 2 | `{5,7}` | `2π/log(7/5) ≈ 18.67` | 5 | `25` ✓ | `3` ✓ |
+| 3 | `{11,13}` | `2π/log(13/11) ≈ 37.6` | 7 | `49` ✓ | `log₂49 − 1 = 4` ✓ |
+
+Admissibility bounds all come from `log x ≤ x − 1` in both directions: `log(3/2) ≤ 1/2` gives
+`t ≥ 4π > log X ≥ (log X)^{1/125}`, and `log(3/2) ≥ 1/3` (i.e. `log(2/3) ≤ −1/3`) gives `t ≤ 6π < 25`.
+The general lemma to prove first is `blockSum_norm_eq_mass_of_pair`: if `blockPrimes X j = {p,p'}` and
+`t(log p' − log p) = 2π` then `exp(−it log p') = exp(−it log p)`, so the block sum is
+`exp(−it log p)·(1/p + 1/p')` and its norm is EXACTLY the mass.  For `J₀ ≥ 4` the blocks have `≥ 3`
+primes and exact alignment is impossible (`ℚ`-independence of `log p`); near-alignment needs
+Kronecker, so that stays a conjecture with a sketch, not a kernel claim.
+
 ## Lap 115 (2026-09-25, REVIEW) — laps 112-114 are REFUTED; the block route repaired and guarded
 
 **Finding.**  The archimedean "geometric endpoint" of laps 112-114 assumed a FALSE statement.  All

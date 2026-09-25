@@ -456,6 +456,217 @@ theorem conjC3_of_geom_input_band {c₀ θ D κ₁ ε C₁ : ℝ} (J Jtop : ℝ 
 #print axioms band_block_complete
 #print axioms conjC3_of_geom_input_band
 
+
+/-! ## §6 the band cost DISCHARGED (directive ②1) — pure arithmetic, no characters, no twists -/
+
+/-- A block is contained in its dyadic interval. -/
+theorem blockPrimes_subset_Ico (X : ℝ) (j : ℕ) :
+    blockPrimes X j ⊆ Finset.Ico (2 ^ j) (2 ^ (j + 1)) := by
+  intro p hp
+  have hpp : Nat.Prime p := blockPrimes_prime hp
+  have hlog : Nat.log 2 p = j := (Finset.mem_filter.mp hp).2
+  refine Finset.mem_Ico.mpr ⟨?_, ?_⟩
+  · have h := Nat.pow_log_le_self 2 hpp.pos.ne'
+    rwa [hlog] at h
+  · have h := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) p
+    rwa [hlog] at h
+
+/-- **Every single block has mass `≤ 1`**: at most `2^j` primes, each of reciprocal `≤ 2^{-j}`.
+This is what makes the ONE truncated top block affordable. -/
+theorem blockMass_le_one (X : ℝ) (j : ℕ) : dyadicPrimeBlockMass X j ≤ 1 := by
+  classical
+  rw [dyadicPrimeBlockMass_eq]
+  have hsub := blockPrimes_subset_Ico X j
+  have hcard : (blockPrimes X j).card ≤ 2 ^ j := by
+    have h1 := Finset.card_le_card hsub
+    rw [Nat.card_Ico] at h1
+    have h2 : 2 ^ (j + 1) - 2 ^ j = 2 ^ j := by
+      have hps : (2 : ℕ) ^ (j + 1) = 2 ^ j * 2 := pow_succ 2 j
+      omega
+    omega
+  have hpow : (0 : ℝ) < (2 : ℝ) ^ j := by positivity
+  have hterm : ∀ p ∈ blockPrimes X j, ((p : ℝ))⁻¹ ≤ ((2 : ℝ) ^ j)⁻¹ := by
+    intro p hp
+    have h1 : (2 : ℕ) ^ j ≤ p := (Finset.mem_Ico.mp (hsub hp)).1
+    have h1' : ((2 : ℝ)) ^ j ≤ (p : ℝ) := by
+      have : (((2 : ℕ) ^ j : ℕ) : ℝ) ≤ (p : ℝ) := by exact_mod_cast h1
+      simpa using this
+    rw [inv_le_inv₀ (by linarith) hpow]
+    exact h1'
+  calc ∑ p ∈ blockPrimes X j, ((p : ℝ))⁻¹
+      ≤ ∑ _p ∈ blockPrimes X j, ((2 : ℝ) ^ j)⁻¹ := Finset.sum_le_sum hterm
+    _ = ((blockPrimes X j).card : ℝ) * ((2 : ℝ) ^ j)⁻¹ := by
+        rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ ((2 : ℝ) ^ j) * ((2 : ℝ) ^ j)⁻¹ := by
+        refine mul_le_mul_of_nonneg_right ?_ (by positivity)
+        have : (((blockPrimes X j).card : ℕ) : ℝ) ≤ (((2 ^ j : ℕ)) : ℝ) := by exact_mod_cast hcard
+        simpa using this
+    _ = 1 := by field_simp
+
+/-- Blocks entirely above the truncation are empty. -/
+theorem blockMass_eq_zero_of_lt {X : ℝ} {j : ℕ} (hj : ⌈X ^ 2⌉₊ < 2 ^ j) :
+    dyadicPrimeBlockMass X j = 0 := by
+  classical
+  rw [dyadicPrimeBlockMass_eq]
+  have hempty : blockPrimes X j = ∅ := by
+    rw [Finset.eq_empty_iff_forall_notMem]
+    intro p hp
+    have hpp : Nat.Prime p := blockPrimes_prime hp
+    have hlt : p < ⌈X ^ 2⌉₊ + 1 := blockPrimes_lt hp
+    have hlog : Nat.log 2 p = j := (Finset.mem_filter.mp hp).2
+    have h2 : 2 ^ j ≤ p := by
+      have h := Nat.pow_log_le_self 2 hpp.pos.ne'
+      rwa [hlog] at h
+    omega
+  rw [hempty, Finset.sum_empty]
+
+/-- The blocks below `J` regroup into the primes `< 2^J`. -/
+theorem sum_blockMass_range_eq (X : ℝ) (J : ℕ) :
+    ∑ j ∈ Finset.range J, dyadicPrimeBlockMass X j
+      = ∑ p ∈ (((Finset.range (⌈X ^ 2⌉₊ + 1)).filter Nat.Prime).filter
+          (fun p => Nat.log 2 p < J)), ((p : ℝ))⁻¹ := by
+  classical
+  have hmaps : ∀ p ∈ (((Finset.range (⌈X ^ 2⌉₊ + 1)).filter Nat.Prime).filter
+      (fun p => Nat.log 2 p < J)), Nat.log 2 p ∈ Finset.range J := fun p hp =>
+    Finset.mem_range.mpr (Finset.mem_filter.mp hp).2
+  rw [← Finset.sum_fiberwise_of_maps_to hmaps (fun p => ((p : ℝ))⁻¹)]
+  refine Finset.sum_congr rfl fun y hy => ?_
+  have hyJ : y < J := Finset.mem_range.mp hy
+  rw [dyadicPrimeBlockMass_eq]
+  simp only [blockPrimes, Finset.filter_filter]
+  refine Finset.sum_congr (Finset.filter_congr fun p _ => ?_) (fun _ _ => rfl)
+  constructor
+  · rintro ⟨hp, hlog⟩
+    exact ⟨⟨hp, by omega⟩, hlog⟩
+  · rintro ⟨⟨hp, -⟩, hlog⟩
+    exact ⟨hp, hlog⟩
+
+/-- **Mertens for the bottom of the band**: the blocks below `J` cost
+`log(J·log 2) + mertensBound`, a `log` of the threshold — NOT the threshold itself.  This is why a
+threshold growing like a power of `log X` is affordable. -/
+theorem sum_blockMass_range_le (X : ℝ) {J : ℕ} (hJ : 1 ≤ J) :
+    ∑ j ∈ Finset.range J, dyadicPrimeBlockMass X j
+      ≤ Real.log ((J : ℝ) * Real.log 2) + Erdos67b.PrimeEstimates.mertensBound := by
+  classical
+  rw [sum_blockMass_range_eq]
+  have hB : 2 ≤ 2 ^ J := by
+    calc (2 : ℕ) = 2 ^ 1 := by norm_num
+      _ ≤ 2 ^ J := Nat.pow_le_pow_right (by norm_num) hJ
+  have hmem : ∀ p ∈ ((Finset.range (⌈X ^ 2⌉₊ + 1)).filter Nat.Prime).filter
+      (fun p => Nat.log 2 p < J), Nat.Prime p ∧ p ≤ 2 ^ J := by
+    intro p hp
+    have hpp : Nat.Prime p := (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2
+    refine ⟨hpp, ?_⟩
+    have hlog : Nat.log 2 p < J := (Finset.mem_filter.mp hp).2
+    have := (Nat.log_lt_iff_lt_pow (by norm_num : 1 < 2) hpp.pos.ne').mp hlog
+    omega
+  have hkey := small_prime_mass_le hB hmem
+  have hlog2 : Real.log (((2 ^ J : ℕ) : ℝ)) = (J : ℝ) * Real.log 2 := by
+    push_cast
+    rw [Real.log_pow]
+  rwa [hlog2] at hkey
+
+/-- Splitting a filter on a disjunction costs nothing for nonnegative terms. -/
+theorem sum_filter_or_le {s : Finset ℕ} {P Q : ℕ → Prop} [DecidablePred P] [DecidablePred Q]
+    {f : ℕ → ℝ} (hf : ∀ x, 0 ≤ f x) :
+    ∑ x ∈ s.filter (fun x => P x ∨ Q x), f x
+      ≤ ∑ x ∈ s.filter P, f x + ∑ x ∈ s.filter Q, f x := by
+  classical
+  rw [← Finset.sum_filter_add_sum_filter_not (s.filter (fun x => P x ∨ Q x)) P f]
+  refine add_le_add ?_ ?_
+  · refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun x _ _ => hf x)
+    intro x hx
+    have h1 := Finset.mem_filter.mp hx
+    exact Finset.mem_filter.mpr ⟨(Finset.mem_filter.mp h1.1).1, h1.2⟩
+  · refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun x _ _ => hf x)
+    intro x hx
+    have h1 := Finset.mem_filter.mp hx
+    have h2 := Finset.mem_filter.mp h1.1
+    exact Finset.mem_filter.mpr ⟨h2.1, h2.2.resolve_left h1.2⟩
+
+/-- The intended top of the band: `Jtop X = log₂⌈X²⌉₊ − 1`. -/
+noncomputable def bandTop (X : ℝ) : ℕ := Nat.log 2 (⌈X ^ 2⌉₊) - 1
+
+/-- **The top of the band costs `≤ 1`**: above `bandTop` exactly one block can be nonempty (the
+truncated one), and every block has mass `≤ 1`. -/
+theorem sum_blockMass_above_le {X : ℝ} (hX : 3 ≤ X) :
+    ∑ j ∈ (Finset.range (⌈X ^ 2⌉₊ + 1)).filter (fun j => bandTop X < j),
+      dyadicPrimeBlockMass X j ≤ 1 := by
+  classical
+  set m : ℕ := ⌈X ^ 2⌉₊ with hm
+  have h9 : (9 : ℝ) ≤ X ^ 2 := by nlinarith
+  have hc : (9 : ℕ) ≤ m := by
+    have := Nat.le_ceil (X ^ 2)
+    exact_mod_cast le_trans h9 this
+  have hlog3 : 3 ≤ Nat.log 2 m := by
+    have h1 := Nat.log_mono_right (b := 2) hc
+    have h8 : Nat.log 2 9 = 3 := Nat.log_eq_of_pow_le_of_lt_pow (by norm_num) (by norm_num)
+    omega
+  set L : ℕ := Nat.log 2 m with hL
+  have hstep : ∀ j ∈ (Finset.range (m + 1)).filter (fun j => bandTop X < j),
+      dyadicPrimeBlockMass X j ≤ (if j = L then (1 : ℝ) else 0) := by
+    intro j hj
+    have hgt : bandTop X < j := (Finset.mem_filter.mp hj).2
+    rw [bandTop, ← hm] at hgt
+    by_cases hjL : j = L
+    · rw [if_pos hjL]; exact blockMass_le_one X j
+    · rw [if_neg hjL]
+      have hjgt : L < j := by omega
+      have hpow : m < 2 ^ j := by
+        have h1 : m < 2 ^ (L + 1) := Nat.lt_pow_succ_log_self (by norm_num) m
+        have h2 : (2 : ℕ) ^ (L + 1) ≤ 2 ^ j := Nat.pow_le_pow_right (by norm_num) (by omega)
+        omega
+      rw [blockMass_eq_zero_of_lt hpow]
+  refine le_trans (Finset.sum_le_sum hstep) ?_
+  rw [Finset.sum_ite_eq' ((Finset.range (m + 1)).filter (fun j => bandTop X < j)) L
+    (fun _ => (1 : ℝ))]
+  split_ifs <;> norm_num
+
+/-- **`BlockBandCost` DISCHARGED** for the intended top `bandTop`, with the threshold `J` free:
+the cost is `log(J X·log 2) + mertensBound + 1`.  The `log` is the whole point — a threshold
+growing like any power of `log X` is affordable, while the threshold itself would not be. -/
+theorem blockBandCost_bound {J : ℝ → ℕ} (hJ : ∀ X : ℝ, 3 ≤ X → 1 ≤ J X) {X : ℝ} (hX : 3 ≤ X) :
+    ∑ j ∈ (Finset.range (⌈X ^ 2⌉₊ + 1)).filter (fun j => j < J X ∨ bandTop X < j),
+      dyadicPrimeBlockMass X j
+      ≤ Real.log ((J X : ℝ) * Real.log 2) + Erdos67b.PrimeEstimates.mertensBound + 1 := by
+  classical
+  have hsplit := sum_filter_or_le (s := Finset.range (⌈X ^ 2⌉₊ + 1))
+    (P := fun j => j < J X) (Q := fun j => bandTop X < j)
+    (f := fun j => dyadicPrimeBlockMass X j) (fun j => dyadicPrimeBlockMass_nonneg X j)
+  have hlow : ∑ j ∈ (Finset.range (⌈X ^ 2⌉₊ + 1)).filter (fun j => j < J X),
+      dyadicPrimeBlockMass X j
+      ≤ Real.log ((J X : ℝ) * Real.log 2) + Erdos67b.PrimeEstimates.mertensBound := by
+    refine le_trans ?_ (sum_blockMass_range_le X (hJ X hX))
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun j _ _ => dyadicPrimeBlockMass_nonneg X j)
+    intro j hj
+    exact Finset.mem_range.mpr (Finset.mem_filter.mp hj).2
+  have htop := sum_blockMass_above_le hX
+  linarith
+
+/-- **The affordability criterion.**  Any threshold whose `log` is dominated by `ε·log log X`
+gives `BlockBandCost`.  So the analytic debt `WideBlockSavingBand` is now the ONLY per-block
+obligation: its cost is discharged. -/
+theorem blockBandCost_of_log_bound {J : ℝ → ℕ} {ε C : ℝ} (hJ : ∀ X : ℝ, 3 ≤ X → 1 ≤ J X)
+    (hdom : ∀ X : ℝ, 3 ≤ X → Real.log ((J X : ℝ) * Real.log 2)
+      + Erdos67b.PrimeEstimates.mertensBound + 1 ≤ ε * Real.log (Real.log X) + C) :
+    BlockBandCost J bandTop ε C :=
+  fun X hX => le_trans (blockBandCost_bound hJ hX) (hdom X hX)
+
+/-- **A constant threshold is affordable outright** (`ε = 0`): the cost is a constant.  Whether the
+*saving* holds at a constant threshold is a different question — directive ②2 says it does not, and
+that is the next thing to prove. -/
+theorem blockBandCost_const (J₀ : ℕ) (hJ₀ : 1 ≤ J₀) :
+    BlockBandCost (fun _ => J₀) bandTop 0
+      (Real.log ((J₀ : ℝ) * Real.log 2) + Erdos67b.PrimeEstimates.mertensBound + 1) := by
+  refine blockBandCost_of_log_bound (fun _ _ => hJ₀) (fun X _ => ?_)
+  simp
+
+#print axioms blockMass_le_one
+#print axioms sum_blockMass_range_le
+#print axioms sum_blockMass_above_le
+#print axioms blockBandCost_bound
+#print axioms blockBandCost_const
+
 end CastingOut
 
 end NormalNumbers
