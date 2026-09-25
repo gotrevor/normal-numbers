@@ -390,6 +390,111 @@ theorem windowPhi_window_bound {cK CstK : ℕ → ℝ} {κ : ℝ} {K M A : ℕ} 
           ≤ CstK K * (2 * Real.log a) ^ (-(κ * cK K)) * (a : ℝ) / (M : ℝ) := this
         _ = CstK K * (2 * Real.log a) ^ (-(κ * cK K)) / (M : ℝ) * (a : ℝ) := by ring
 
+/-! ### From the window profile to an explicit `depthAvg` majorant -/
+
+/-- The number of terms of the progression `M·m + r` that lie below `N`. -/
+def progCount (M r N : ℕ) : ℕ := (N - 1 - r) / M + 1
+
+theorem progCount_pos (M r N : ℕ) : 0 < progCount M r N := Nat.succ_pos _
+
+/-- The progression's top term straddles `N`: `N ≤ M·progCount + r ≤ N + M`. -/
+theorem progCount_bounds {M : ℕ} (hM : 0 < M) {r N : ℕ} (hr : r < N) :
+    N ≤ M * progCount M r N + r ∧ M * progCount M r N + r ≤ N + M := by
+  have h1 := Nat.div_add_mod (N - 1 - r) M
+  have h2 := Nat.mod_lt (N - 1 - r) hM
+  have h3 : M * progCount M r N = M * ((N - 1 - r) / M) + M := by
+    unfold progCount; ring
+  rw [h3]
+  generalize M * ((N - 1 - r) / M) = X at h1 ⊢
+  generalize (N - 1 - r) % M = Y at h1 h2
+  omega
+
+open scoped Classical in
+/-- **One residue class, quantitatively.**  The progression sum below `N` — which is what
+`norm_depthAvg_le_omega_progressions` produces — bounded by the halving stack evaluated at the
+scale `N` itself, with the `Y = M·progCount + r` straddle absorbed into the `+ M`. -/
+theorem norm_progression_below_le {g : ℕ → ℂ} (hg : ∀ n, ‖g n‖ ≤ 1) {Φ : ℕ → ℝ}
+    (h0 : ∀ a, 0 ≤ Φ a) (h1 : ∀ a, Φ a ≤ 1) (hanti : ∀ {a b : ℕ}, a ≤ b → Φ b ≤ Φ a)
+    {M : ℕ} (hM : 0 < M)
+    (hB : ∀ r a : ℕ, ‖∑ n ∈ (Finset.Ioc a (2 * a)).filter (fun n => n % M = r % M), g n‖
+        ≤ Φ a * (a : ℝ))
+    {r N : ℕ} (hr : r < N) (k₀ : ℕ) :
+    ‖∑ m ∈ (range N).filter (fun m => M * m + r < N), g (M * m + r)‖
+      ≤ ((r : ℝ) + 2) + ((Nat.log 2 (N + M) + 1 : ℕ) : ℝ)
+        + (Φ (N / 2 ^ k₀) + (1 / 2) ^ k₀) * ((N : ℝ) + (M : ℝ)) := by
+  classical
+  obtain ⟨hlow, hhigh⟩ := progCount_bounds hM hr
+  rw [filter_linear_lt_eq_range hM hr, show (N - 1 - r) / M + 1 = progCount M r N from rfl]
+  have hstep1 := norm_progression_sum_le_class_sum hg hM r (progCount M r N)
+    (progCount_pos M r N)
+  have hstep2 := class_sum_le_of_window hg h0 h1 hanti (M := M) r (hB r)
+    (M * progCount M r N + r) k₀
+  have hΦ : Φ ((M * progCount M r N + r) / 2 ^ k₀) ≤ Φ (N / 2 ^ k₀) :=
+    hanti (Nat.div_le_div_right hlow)
+  have hlen : ((M * progCount M r N + r : ℕ) : ℝ) ≤ (N : ℝ) + (M : ℝ) := by
+    have hc : ((M * progCount M r N + r : ℕ) : ℝ) ≤ ((N + M : ℕ) : ℝ) := by exact_mod_cast hhigh
+    push_cast at hc ⊢; linarith
+  have hlogm : ((Nat.log 2 (M * progCount M r N + r) + 1 : ℕ) : ℝ)
+      ≤ ((Nat.log 2 (N + M) + 1 : ℕ) : ℝ) := by
+    have := Nat.log_mono_right (b := 2) hhigh
+    exact_mod_cast Nat.succ_le_succ this
+  have hhalf : (0 : ℝ) < (1 / 2 : ℝ) ^ k₀ := by positivity
+  have hnnN : (0 : ℝ) ≤ Φ (N / 2 ^ k₀) + (1 / 2) ^ k₀ := by
+    have := h0 (N / 2 ^ k₀); linarith
+  have hkey : (Φ ((M * progCount M r N + r) / 2 ^ k₀) + (1 / 2) ^ k₀)
+        * ((M * progCount M r N + r : ℕ) : ℝ)
+      ≤ (Φ (N / 2 ^ k₀) + (1 / 2) ^ k₀) * ((N : ℝ) + (M : ℝ)) :=
+    mul_le_mul (by linarith) hlen (by positivity) hnnN
+  linarith
+
+open scoped Classical in
+/-- **The explicit `depthAvg` majorant.**  Everything downstream of the window profile, as one
+inequality: the `M₀ = Q·primorial P` residue classes, the head of each, the halving stack cut at
+`k₀`, and the `1/N` normalisation.  `M₀` is fixed before `N`, so the `M₀²` head term is `O(1/N)`
+and the rate is carried entirely by `Φ (N / 2 ^ k₀) + 2^{-k₀}`. -/
+theorem depthAvg_le_of_window {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ) {D : ℕ}
+    {Φ : ℕ → ℝ} (h0 : ∀ a, 0 ≤ Φ a) (h1 : ∀ a, Φ a ≤ 1)
+    (hanti : ∀ {a b : ℕ}, a ≤ b → Φ b ≤ Φ a)
+    (hB : ∀ r a : ℕ, ‖∑ n ∈ (Finset.Ioc a (2 * a)).filter
+          (fun n => n % (Q * primorial P) = r % (Q * primorial P)),
+            ∏ i ∈ range D, depthRoot b hh i ^ omegaNat (n + i + 1)‖ ≤ Φ a * (a : ℝ))
+    {N : ℕ} (hN : Q * primorial P < N) (k₀ : ℕ) :
+    ‖depthAvg b P Q j hh D N‖
+      ≤ ((Q * primorial P : ℕ) : ℝ)
+          * ((((Q * primorial P : ℕ) : ℝ) + 2) + ((Nat.log 2 (N + Q * primorial P) + 1 : ℕ) : ℝ)
+            + (Φ (N / 2 ^ k₀) + (1 / 2) ^ k₀) * ((N : ℝ) + ((Q * primorial P : ℕ) : ℝ)))
+        / (N : ℝ) := by
+  classical
+  set M : ℕ := Q * primorial P with hMdef
+  have hM0 : 0 < M := Nat.mul_pos hQ (primorial_pos P)
+  set g : ℕ → ℂ := fun n => ∏ i ∈ range D, depthRoot b hh i ^ omegaNat (n + i + 1) with hgdef
+  have hg : ∀ n, ‖g n‖ ≤ 1 := by
+    intro n
+    simp only [hgdef, norm_prod, norm_pow]
+    have : ∀ i ∈ range D, ‖depthRoot b hh i‖ ^ omegaNat (n + i + 1) = 1 := by
+      intro i _
+      rw [show ‖depthRoot b hh i‖ = 1 from by rw [depthRoot]; exact norm_ee_real _, one_pow]
+    rw [Finset.prod_congr rfl this, Finset.prod_const_one]
+  have hN0 : (0 : ℝ) < (N : ℝ) := by
+    have : 0 < N := by omega
+    exact_mod_cast this
+  refine le_trans (norm_depthAvg_le_omega_progressions hQ b P j hh D N) ?_
+  refine div_le_div_of_nonneg_right ?_ hN0.le
+  have hterm : ∀ r ∈ range M,
+      ‖∑ m ∈ (range N).filter (fun m => M * m + r < N),
+          ∏ i ∈ range D, depthRoot b hh i ^ omegaNat (M * m + r + i + 1)‖
+        ≤ ((M : ℝ) + 2) + ((Nat.log 2 (N + M) + 1 : ℕ) : ℝ)
+          + (Φ (N / 2 ^ k₀) + (1 / 2) ^ k₀) * ((N : ℝ) + (M : ℝ)) := by
+    intro r hrm
+    have hrM : r < M := Finset.mem_range.1 hrm
+    have hrN : r < N := by omega
+    have := norm_progression_below_le hg h0 h1 hanti hM0 hB hrN k₀
+    have hrR : (r : ℝ) ≤ (M : ℝ) := by exact_mod_cast hrM.le
+    refine le_trans (le_of_eq ?_) (le_trans this (by linarith))
+    rfl
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -398,6 +503,8 @@ theorem windowPhi_window_bound {cK CstK : ℕ → ℝ} {κ : ℝ} {K M A : ℕ} 
 #print axioms NormalNumbers.CastingOut.dyadic_window_bound_with
 #print axioms NormalNumbers.CastingOut.windowPhi_antitone
 #print axioms NormalNumbers.CastingOut.windowPhi_window_bound
+#print axioms NormalNumbers.CastingOut.norm_progression_below_le
+#print axioms NormalNumbers.CastingOut.depthAvg_le_of_window
 
 end CastingOut
 

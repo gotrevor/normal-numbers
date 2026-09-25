@@ -35,7 +35,7 @@ Thm 3.1(ii) with the exceptional set of scales deleted, which TT say is out of r
 *log*-measure by `Cst (log A)^{1-κc} ≫ 1`.  Same wall as log-Chowla ⇏ Chowla; TT's own Thm 1.3
 escapes it because *irrationality* needs only infinitely many good scales.
 
-## Landed this lap (`C3MrtUnifK.lean`, 12 declarations, all trust-triple clean)
+## Landed this lap (`C3MrtUnifK.lean`, 17 declarations, all trust-triple clean)
 
 * `quantDepthElliottGen_forces_diagonal`, `DepthDiagonal`, `weylLambertTwist_of_depthDiagonal`,
   `depthDiagonal_of_quantDepthElliottGen`.
@@ -52,14 +52,27 @@ escapes it because *irrationality* needs only infinitely many good scales.
   `windowPhi_le_one`, `windowPhi_nonneg`, `windowPhi_antitone` and `windowPhi_window_bound`
   (the `hB` hypothesis of `class_sum_le_of_window` / `progression_avg_le_of_window`, trivial
   count below `A`, analytic bound above).  `A` is free so it can move with `K`.
+* `progCount`, `progCount_bounds` (`N ≤ M·progCount + r ≤ N + M`),
+  `norm_progression_below_le` — one residue class below `N`, bounded by the halving stack
+  evaluated at the scale `N` itself, the straddle absorbed into the `+ M`.
+* **`depthAvg_le_of_window`** — THE EXPLICIT MAJORANT, point-count-free:
+
+      ‖depthAvg b P Q j hh D N‖
+        ≤ M₀ · [ (M₀+2) + (log₂(N+M₀)+1) + (Φ(N/2^{k₀}) + 2^{-k₀})·(N+M₀) ] / N ,
+      M₀ = Q·primorial P  (fixed before N).
+
+  So the head is `O(M₀²/N)` and the rate is carried entirely by `Φ(N/2^{k₀}) + 2^{-k₀}`.
 
 ## NEXT (in order)
 
 1. ~~`windowPhi`~~ — DONE this lap.
-2. **`depthAvg_le_with`** — feed `windowPhi` into `progression_avg_le_of_window`, sum over the
-   `M₀ = Q·primorial P` classes (`norm_depthAvg_le_omega_progressions`) and choose
-   `k₀ ≍ log log Y`, giving an explicit `B cK CstK K N` with
-   `‖depthAvg b P Q j h K N‖ ≤ B cK CstK K N`.
+2. ~~`depthAvg_le_with`~~ — the *window→depthAvg* half is DONE (`depthAvg_le_of_window`).
+   What remains is the **splice**: check `windowPhi`'s `hB` against
+   `dyadic_window_bound_with` for `g n = ∏_{i<K} z_i^{ω(n+i+1)}` (i.e. produce the `hwin`
+   hypothesis of `windowPhi_window_bound` from `dyadic_window_bound_with`, with
+   `A = A(K)` the least scale satisfying `max 2 (K+1) ≤ (2 log a)^(κ·cK K)` and
+   `M₀ ≤ (2 log a)^(κ·cK K)`), then pick `k₀ = k₀(N) ≍ log log N` and read off
+   `B cK CstK K N`.
 3. **`depthElliottLL_of_unif`** — the diagonal from `Tendsto (fun N => B cK CstK (depthLL b N) N)`
    and hence `WeylLambertTwist b`; then a concrete sufficient profile.  Arithmetic already
    checked (PENDING_WORK F2): `cK K = c₀γ^K` needs `γ > b^{-1/2}` (γ = 1/2 FAILS at b = 3,
