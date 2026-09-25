@@ -5,6 +5,72 @@ the route-oriented read: what the sources COLLECTIVELY say about the open
 strategic questions, not a per-paper summary (those are the sibling `.md`s).
 Keep it current — the next reflection lap inherits THIS read.*
 
+## Elliott chapter — route synthesis (2026-09-25 DEEP REFLECTION lap 54)
+
+*Added this lap.  Read this first for the LIVE campaign (Tao 2016 Thm 1.3, worktree `nn-elliott`,
+branch `wip/elliott-port`).  The Campaign B chapter below is the previous campaign's read.*
+
+### What the on-disk corpus contains on this
+
+**No Tao 2016 PDF on disk.**  `papers/` has `tao-teravainen-2025-quantitative-correlations.txt`
+and `kmt-2023-multiplicative-correlations.txt` (both adjacent, neither is arXiv:1509.05422) and
+`matomaki-teravainen-2023-products-of-primes-in-ap.txt`.  Stated plainly so no lap mistakes
+"nothing on disk" for "nothing exists": the source of record for the campaign is the **dependency's
+own Lean formalisation** (`.lake/packages/lean-proofs-latest/src/latest/ErdosProblems/Erdos67b/`),
+whose `LogElliott.lean` states the target and whose `ElliottComplete.lean` proves the unit-circle
+case with the full graph/Fourier + MRT + entropy-decrement apparatus.  That is the template, and
+it is machine-checked, which is a stronger anchor than prose.
+
+### Source-vs-Lean fidelity, checked this lap
+
+Tao 2016 Thm 1.3 (from the statement as universally quoted): `a₁,a₂ ∈ ℕ`, `b₁,b₂ ∈ ℤ`,
+`a₁b₂ − a₂b₁ ≠ 0`; `ε > 0`; `A` large in terms of `ε,a₁,a₂,b₁,b₂`; `x ≥ w ≥ A`; `g₁,g₂` **multiplicative**
+with `|g_i| ≤ 1`; `g₁` non-pretentious (`D(g₁,χ·n^{it};x)² ≥ A` for all `χ` of period `≤ A`, all
+`|t| ≤ Ax`).  Conclusion `|∑_{x/w ≤ n ≤ x} g₁(a₁n+b₁)g₂(a₂n+b₂)/n| ≤ ε log w`.
+
+The Lean `Erdos67b.NonasymptoticLogElliott` matches this **except** that its multiplicativity
+predicate `IsMultiplicativeOnPositiveInt` has **no coprimality hypothesis** and is therefore
+*complete* multiplicativity.  The Lean `Prop` is thus the **completely multiplicative case** of
+Thm 1.3 — a genuine restriction, and the dependency's own docstring ("exactly as in Tao's
+Theorem 1.3") overstates it.  Recorded, not repaired: this repo does not edit the dependency.
+
+### Route judgement, re-grounded against the compiler (not the handoffs)
+
+| axis | status | grounding |
+|---|---|---|
+| crux: two independent functions + common dilation | **PROVED** | `ElliottDilatedRung.dilatedCMLogElliott`, trust triple |
+| Tao's full affine generality from a common dilation | **PROVED, free** | `ElliottLadder.affineCM_of_dilatedCM` |
+| dilation-*slice* route | **REFUTED** (lap 16) | `ElliottDilatedSlice.lean`; `a ∣ n − p c₁` does not factor out of the prime sum |
+| Dirichlet-character route to the AP restriction | **REFUTED as circular** (lap 15) | `PENDING_WORK` lap-15 section |
+| leaf 2, Case A (large pretentious defect) | **thick window PROVED**, thin window one lap out | `ElliottCaseA.exists_caseA_threshold`; `ElliottHall.sum_Icc_dyadic_le` |
+| Hall / Halberstam–Richert Thm 01 | **inherited, do not re-derive** | `Erdos448.HalberstamComplete448.halberstam_richert_explicit` in the dependency |
+| leaf 2, Case B via `‖g̃‖ = 1 ⋆ v` unimodularisation | **REFUTED this lap** | uniform-tail failure; counterexample `g₁ = λ·h`, `h(p)=0` on primes `> D` with `∑1/p = C` |
+| leaf 2, Case B via two-point unimodular cover | **live, elementary, hand-verified** | `Z_± = z ± i√(1−‖z‖²)w(z)`; see `PENDING_WORK` → Reflection 2026-09-25 |
+
+### Precedent check (originated vs inherited)
+
+* The *reduction* "1-bounded multiplicative ⟹ unimodular completely multiplicative" is **not** a
+  standard step in the literature: Tao proves Thm 1.3 directly for 1-bounded multiplicative
+  functions, and the whole reduction exists here only because the dependency's proved case is the
+  unimodular completely multiplicative one.  So this leaf is **originated**, which is exactly why
+  its documented form contained a false step and why a reflection lap had to catch it.
+* The two-point unimodular cover (every `|z| ≤ 1` is the midpoint of two unimodular numbers,
+  applied independently per prime power to average a bounded multiplicative function over
+  unimodular multiplicative ones) is elementary and surely folklore; no precedent search made.
+  The *ordering* observation — randomise to a **merely** multiplicative target first, because the
+  completely multiplicative target forces the Poisson kernel and hence infinite support — is the
+  non-obvious part and is what makes the step finite.
+* The pretentious triangle inequality for **1-bounded** (not unimodular) arguments is classical
+  (Granville–Soundararajan); the dependency only has the all-unimodular form, so the 1-bounded
+  version (constant 3 suffices) must be re-proved in `src/`.
+
+### What is missing that would change the route
+
+A copy of arXiv:1509.05422 would let a lap check whether Tao's own §2 handles the non-unimodular
+case by a device cheaper than the cover above (he does not need one — he never reduces to the
+unimodular case — but his handling of `g(pn) = g(p)g(n)` failing at `p ∣ n` is the model for the
+fallback route if trigger ET-1 fires).  Worth an `ON-LINE-REQUEST.md` entry only if ET-1 fires.
+
 ## Campaign B chapter — route synthesis (2026-09-16 DEEP REFLECTION lap)
 
 *Added this lap.  Read this first: it is the current read, and it supersedes the "live campaign"

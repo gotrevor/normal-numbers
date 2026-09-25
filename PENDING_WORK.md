@@ -1,5 +1,129 @@
 # PENDING WORK
 
+## Reflection — 2026-09-25 (DEEP REFLECTION lap 54, Elliott campaign)
+
+Ground truth re-derived this lap, not inherited: `lake build NormalNumbers.ElliottAxiomAudit`
+green, **9569 jobs**; new permanent audit surface `src/NormalNumbers/ElliottAxiomAudit.lean`
+prints every load-bearing `#print axioms` in one build.  Result: the headline is
+`[propext, sorryAx, Classical.choice, Quot.sound]`; **everything else is the bare trust triple**,
+including `dilatedCMLogElliott`, `affineCM_of_dilatedCM`, `exists_caseA_threshold`,
+`ElliottHall.sum_Icc_dyadic_le` and the dependency's `unitCircleLogElliott`.
+`grep` over `src/NormalNumbers/Elliott*.lean`: **exactly one `sorry`**, at
+`ElliottLadder.lean:297` (`nonasymptotic_of_affineCM`).
+
+### 1. Destination — unchanged, and closer than it has ever been
+
+Prove `Erdos67b.NonasymptoticLogElliott` on top of the dependency's proved unit-circle case.  The
+crux — pushing the graph/Fourier/entropy machinery through *two independent* functions and a
+*common dilation* — was the route-decisive uncertainty and it is **spent**: closed at lap 46,
+kernel-checked.  Laps 17–46 were not a false summit; the object they built
+(`dilatedPairTwistedMean`) is consumed by the headline today.  Remaining distance = one leaf.
+
+### 2. Route — VERDICT **CONTINUE**, with one documented step REFUTED and replaced
+
+No registered trigger had fired (the Elliott section of `DIRECTION.md` carried none; one is
+registered now, ET-1).  The tells of rationalising past a trigger are both absent: whole-lemma
+targets keep closing (lap 46 crux, lap 51 Case A thick window, lap 52 Hall, lap 53 dyadic), and
+the finishability estimate has *risen*, not declined, across the last three altitude laps.
+
+**But the documented Case-B route for leaf 2 contains an invalid step, and this lap kills it.**
+
+> **REFUTED — the `‖g̃‖ = 1 ⋆ v` unimodularisation expansion.**  `PENDING_WORK` (lap 36 Finding 2)
+> argued: `∑_d ‖v(d)‖/d = ∏_p(1 + (1−‖g(p)‖)/(p−‖g(p)‖)) = exp(Σ_X + O(1))`, "finite for
+> `Σ_X ≤ C`, so the tail beyond a `D = D(C,ε)` is small."  The last inference is **false**.
+> `D` must be fixed *before* `g₁` (it feeds `A₀`, which the statement quantifies before `g₁`), and
+> a convergent series with uniformly bounded sum need not have uniformly small tails across a
+> family.  Explicit counterexample satisfying **both** Case B and the non-pretentiousness
+> hypothesis: `g₁ = λ·h`, `h` completely multiplicative with `h(p) = 0` exactly on a set `S` of
+> primes all `> D` with `∑_{p∈S} 1/p = C`, `h(p) = 1` off `S`.  Then `Σ_X(g₁) ≤ C`;
+> `D(g₁,χn^{it};X)² ≥ D(λ,χn^{it};X)² − 2C → ∞`, so `g₁` *is* non-pretentious; and `v` has
+> `‖v(p)‖ = 1` for every `p ∈ S`, so `∑_{d>D}‖v(d)‖/d ≥ C` for **every** `D`.
+
+**The replacement (this lap's main mathematical contribution).**  Do not unimodularise by
+convolution at all.  Unimodularise by an **exact finite two-point average**:
+
+* For `z` with `‖z‖ ≤ 1` set `w(z) = if z = 0 then 1 else z/‖z‖` and
+  `Z_±(z) = z ± i·√(1−‖z‖²)·w(z)`.  Then `‖Z_±‖ = 1` (because `Z_± = w(z)(‖z‖ ± i√(1−‖z‖²))`)
+  and `(Z_+ + Z_-)/2 = z`.  Elementary, exact, no measure theory.
+* Apply it **once per prime power** `p^k ≤ Y := a₁X+‖b₁‖`.  Over the finite space
+  `Ω = {p^k ≤ Y} → Bool` this produces unimodular **multiplicative** `U^ω` with
+  `avg_ω U^ω(m) = ∏_{p^k ‖ m} avg(Z_±) = g(m)` for every `m ≤ Y` (`Finset.prod_univ_sum`).
+* Hence `elliottLogCorrelation g₁ g₂ ⋯ = avg_{ω₁,ω₂} elliottLogCorrelation U₁^{ω₁} U₂^{ω₂} ⋯`
+  (the correlation is linear in each function), so `‖corr(g₁,g₂)‖ ≤ max_ω ‖corr(U₁,U₂)‖`.
+* **The ordering is the whole trick.**  Randomise to a *merely multiplicative* unimodular target
+  first — that needs only one moment per prime power, `E[Z] = z`, which the two-point measure
+  gives exactly.  Randomising to a *completely* multiplicative unimodular target would need
+  `E[V^k] = r^k` for all `k`; the unique solution is the Poisson kernel `P_r(θ)dθ/2π`, which has
+  no finite support, so that ordering is strictly harder.  Only afterwards does the squarefull
+  convolution turn unimodular-multiplicative into unimodular-completely-multiplicative.
+* **The pretentious transfer becomes deterministic.**  `Re(Z_±(z)·conj z) = ‖z‖²` for *both*
+  signs (the perturbation `i√(1−‖z‖²)w(z)` is orthogonal to `z`), so for **every** `ω`
+  `pretentiousDistSq g₁ U₁ X = ∑_{p≤X}(1−‖g₁(p)‖²)/p ≤ 2·Σ_X(g₁)`.  No Markov, no good event.
+  With a 1-bounded triangle inequality this gives `MRTNonpretentious U₁ (A/3 − 2D₀) X`.
+* **The triangle inequality must be re-proved in `src/` for 1-bounded arguments.**  The
+  dependency's `Erdos67b.pretentiousDistSq_triangle_sq` assumes all three functions unimodular;
+  here `g₁` is not, and neither is `χ·n^{it}` (it vanishes at `p ∣ q`).  Constant 3 suffices and
+  is easy: with `u = 1−Re(ab̄)`, `v = 1−Re(bc̄)`,
+  `1−Re(ac̄) = [1−(‖a‖²+‖c‖²)/2] + ‖a−c‖²/2 ≤ (u+v) + 2(u+v)`, using `1−x² ≤ 2(1−x)` on `[0,1]`,
+  `u ≥ 1−‖a‖`, `v ≥ 1−‖c‖`, and `‖a−c‖² ≤ 2(‖a−b‖²+‖b−c‖²)` with `‖a−b‖² ≤ 2u`, `‖b−c‖² ≤ 2v`.
+
+**What survives untouched from the old plan:** Case A (Hall + dyadic, laps 47–53) is the other
+half and is *needed* — it is exactly what supplies the Case-B hypothesis `Σ_X(g₁) < D₀` used in
+the transfer.  The **squarefull** expansion also survives, and is uniform precisely where the
+`v`-expansion is not: `‖u(p^k)‖ = ‖U(p^k) − U(p)U(p^{k−1})‖ ≤ 2`, `u(p) = 0`, so
+`∑_d ‖u(d)‖/d ≤ ∏_p(1 + 2/(p(p−1))) ≤ e²` is an **absolute** constant, independent of `U`.
+
+### 3. Highest-value target — and it is also the hardest
+
+There is exactly one open obligation, so hardest-first and only-one coincide.  Within it, the
+route-decisive piece is **not** Case A's thin window (tractable, ~1 lap) but the **averaging
+identity** of `ElliottRandomize`: if the two-point cover cannot be made to carry the correlation,
+the whole "reduce to unimodular" strategy dies and leaf 2 must instead be attacked by re-proving
+the crux for 1-bounded (non-unimodular) completely multiplicative `f₁,f₂` — a redesign touching
+~10 proved files.  **Smallest decisive probe: state and prove**
+`exists_unimodular_cover : ∀ (g : ℤ → ℂ) (Y : ℕ), IsMultiplicativeOnPositiveInt g → (∀ n, ‖g n‖ ≤ 1) →
+ ∃ (Ω : Finset _) (U : _ → ℤ → ℂ), (∀ ω, unimodular-multiplicative (U ω)) ∧
+   ∀ m ≤ Y, (∑ ω, U ω m)/|Ω| = g m`
+and the corresponding `‖corr‖ ≤ max` corollary.  That is lap 54's work.
+
+### 4. What a sharp outsider would say we are missing
+
+* **A statement-fidelity check we had never run.**  `Erdos67b.IsMultiplicativeOnPositiveInt` has
+  **no coprimality hypothesis**: `∀ m n : ℕ, 0 < m → 0 < n → g (m*n) = g m * g n`.  That is
+  *complete* multiplicativity, identical in shape to `IsCompletelyMultiplicativeOnPositive`.  So
+  the dependency's `NonasymptoticLogElliott` — whose docstring says "exactly as in Tao's Theorem
+  1.3" — is Tao Thm 1.3 **restricted to completely multiplicative `g₁,g₂`**, strictly weaker than
+  the paper ("let `g₁,g₂` be multiplicative functions with `|g_i| ≤ 1`").  The drift is the
+  dependency's, not ours, and the kickoff ratifies its `Prop` as the target, so the target stays;
+  but STATUS.md now says so plainly.  Bonus: the corrected leaf-2 route never uses complete
+  multiplicativity of `g_i`, so stating and proving the genuinely general form in `src/` is a
+  cheap stretch goal once the headline lands.
+* **A permanent audit surface** (`ElliottAxiomAudit.lean`) instead of ad-hoc `#print axioms` in
+  each lap's scratch — added this lap.
+* **Do not re-derive Hall.**  `Erdos448.HalberstamComplete448.halberstam_richert_explicit` is in
+  the dependency (lap 52 found this); `ElliottHall.lean` already instantiates it.
+
+### 5. Attack order for leaf 2 (replaces the lap-36 "attack order")
+
+1. `ElliottRandomize.lean` — the two-point unimodular cover + the `‖corr‖ ≤ max` corollary.  **← next**
+2. `ElliottPretentiousTransfer.lean` — the 1-bounded triangle inequality (constant 3), the exact
+   identity `pretentiousDistSq g U X = ∑(1−‖g p‖²)/p`, and `MRTNonpretentious` for the cover.
+3. Case A thin window (off `ElliottHall.sum_Icc_dyadic_le`), superseding `exists_caseA_threshold`.
+4. `ElliottSquarefull.lean` — `u = U ⋆ μŨ`, squarefull support, the absolute tail `≤ e²`.
+5. `ElliottProgression.lean` — `d ∣ a₁n+b₁ ⟹ n = qk+n₀`; determinant `(a₁b₂−a₂b₁)/g ≠ 0`;
+   `1/(qk+n₀) − 1/(qk)` sums to `O(1)`; scale `X ↦ X/q`, ratio `W` preserved; feed
+   `AffineCMLogElliott`.
+6. Assembly of `nonasymptotic_of_affineCM`.
+
+### 6. Honest finishability
+
+One leaf, six named files, every step elementary and hand-verified above; the only real cost is
+bookkeeping volume (step 5 is the fiddliest).  Estimate **≈2500–3500 lines / 15–25 laps** at this
+campaign's observed rate (~9.7k lines of Elliott code in 53 laps).  Confidence the headline lands
+sorry-free on this route: **high** — higher than at lap 36, when the crux was still open and
+leaf 2 rested on a step that turns out to be false.
+
+
 ## 2026-09-25 (laps 40–45) — the dilated crux is closed except the mirror leaf
 
 `dilatedNatShiftCMLogElliott` (leaf 1) is **proved**, trust triple.  New proved files:

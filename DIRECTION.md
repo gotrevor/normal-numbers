@@ -3,47 +3,79 @@
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
 **Objective.**  `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott`
-(Tao 2016, Thm 1.3) sorry-free and trust-triple, on top of the dependency's proved
-`Erdos67b.unitCircleLogElliott`.  Scope: operator run `KICKOFF-2026-09-24-elliott-general.md`,
-branch `wip/elliott-port`, files `src/NormalNumbers/Elliott*.lean` only.
+sorry-free and trust-triple, on top of the dependency's proved `Erdos67b.unitCircleLogElliott`.
+Scope: operator run `KICKOFF-2026-09-24-elliott-general.md`, branch `wip/elliott-port`, files
+`src/NormalNumbers/Elliott*.lean` only.
 
-**Mandated next move (2026-09-25 review lap, laps 36+ — route CORRECTED).**
-The **slice route is DEAD** (`DilatedSliceCMLogElliottGe`): lap 16 refuted it (centring on `f1`
-translates `a | m` into `a | n - p*c1`, a condition on `p mod a` that does not factor out of the
-prime sum).  The live route is the **`a`-dilated graph stack** of laps 17–35, every rung of which
-is a proved, trust-triple statement in `src/`.  But the headline **still routes through the dead
-slice sorry**, so that stack is currently orphaned scaffolding.  In priority order:
+**State (2026-09-25 DEEP REFLECTION lap, lap 54).**  The crux is CLOSED:
+`ElliottDilatedRung.dilatedCMLogElliott` and `ElliottLadder.affineCM_of_dilatedCM` are both
+trust-triple.  **Exactly one `sorry` remains in scope**, `ElliottLadder.nonasymptotic_of_affineCM`
+(`src/NormalNumbers/ElliottLadder.lean:297`): `1`-bounded → unimodular, on completely
+multiplicative functions.  ROUTE VERDICT: **CONTINUE** (no registered trigger had fired) — but
+this lap REFUTED one documented step of leaf 2 and REPLACES it; see below.
 
-1. **WIRE THE LIVE ROUTE FIRST.**  Create `src/NormalNumbers/ElliottDilatedRung.lean`, state the
-   dilated criterion + `DilatedCMLogElliott` there, and repoint `ElliottGeneral` off
-   `ElliottDilatedSlice.dilatedCMLogElliott` onto it, with the remaining gap as ONE named
-   `sorry` on the dilated route.  Retire `dilatedSliceCMLogElliottGe` (leave the file, mark the
-   statement dead, do NOT delete it).  Do this as soon as the rung statement typechecks — do not
-   wait for the proof.  Until it is done, 11 laps of proved work carry zero headline weight.
-2. **Close the dilated crux** (lap-35 NEXT, in order): (i) trade the CRT sum for the mean via
-   `ElliottGenericGraph.exists_logProb_gen_decoupling` with `Delta m = crtShift`; (ii) the dilated
-   `exists_dyadic_primeGraphCorrelationWeight_lower` (function-free counting, `>= H/(2a)`);
-   (iii) `exists_logProb_dyadic_dilatedMean_lower`, then the contradiction against
-   `ElliottDilatedUpper.exists_dilatedPairTwistedMean_small_of_fourier_first_moment` — the
-   `ElliottTwistedGraphCriterion` collision verbatim.  Check whether a dilated **mirror** is
-   needed or whether `ElliottTwistedGraphMirror` composes.
-3. **Then leaf 2, `nonasymptotic_of_affineCM`** — decomposition in PENDING_WORK.  Its hard core is
-   **Hall's inequality** (log-window mean of a nonneg 1-bounded multiplicative function), NOT
-   Shiu: the AP modulus `a1` is fixed before `eps`, so losing a factor `a1` is free.  Start there.
+**Mandated next move — leaf 2 on the CORRECTED route, hardest step first.**
 
-**Forbidden drift.**  Do NOT work `DilatedSliceCMLogElliottGe` (dead).  Do NOT vendor or edit
-`.lake/packages/lean-proofs-latest/`.  Do NOT delete, rename or weaken `nonasymptoticLogElliott`.
-Do NOT pursue the Dirichlet-character route to the AP restriction (checked 2026-09-25, it LOOPS).
-Do NOT reopen the Theorem C' / multicutoff campaign (complete), `PrimeLambertOscillation`,
-`MahlerDriftOne`, `SwingC*`, `PairDecouple*` (all designated-open, off this run's scope).
+0. *(refuted, do NOT build it)* The `|g̃| = 1 ⋆ v` **unimodularisation expansion is INVALID.**
+   Its truncation `∑_{d>D}|v(d)|/d ≤ ε` cannot hold with `D` chosen before `g₁`: take
+   `g₁ = λ·h` with `h` completely multiplicative, `h(p) = 0` exactly on a set `S` of primes all
+   `> D` with `∑_{p∈S} 1/p = C`.  Then `Σ_X(g₁) ≤ C` (Case B holds), `g₁` is non-pretentious
+   (`D(g₁,χn^{it};X)² ≥ D(λ,·)² − 2C → ∞`), yet `∑_{d>D}|v(d)|/d ≥ C` for every `D`.  A convergent
+   series with uniformly bounded sum does **not** have uniformly small tails across a family.
 
-**Why.**  Laps 25–35 proved every rung of the dilated argument and the two halves now meet on one
-object (`dilatedPairTwistedMean`), so the route-decisive uncertainty on the crux is spent: the
-common dilation `a` is a constant fixed before all parameters and costs only constants (a factor
-`a` in the fourth-moment constant, cancelling in the large-frequency budget; a factor 2 in the
-entropy budget; a factor `a` in the correlation weight).  What is NOT spent is the wiring: the
-headline's `#print axioms` still shows `sorryAx` through a route nobody intends to finish.  Fix the
-wiring, then finish the contradiction, then open Hall.
+1. **`ElliottRandomize.lean` — THE new crux of leaf 2, and the first thing to build.**  Replace the
+   unimodularisation by an EXACT finite two-point averaging:
+   for each prime power `p^k ≤ Y` put `z = g(p^k)`, `w(z) = if z = 0 then 1 else z/‖z‖`,
+   `Z_± = z ± i·√(1−‖z‖²)·w(z)`; both are **unimodular** and `(Z_+ + Z_-)/2 = z`.  Over
+   `Ω = ({p^k ≤ Y}) → Bool` (finite!) this builds unimodular **multiplicative** `U^ω` with
+   `avg_ω U^ω(m) = g(m)` for every `m ≤ Y` (`Finset.prod_univ_sum`), hence
+   `elliottLogCorrelation g₁ g₂ … = avg_{ω₁,ω₂} elliottLogCorrelation U₁^{ω₁} U₂^{ω₂} …` and
+   `‖corr(g₁,g₂)‖ ≤ max_ω ‖corr(U₁^{ω₁},U₂^{ω₂})‖`.
+   **Order matters**: randomise FIRST (multiplicative target — one moment per prime power, trivial),
+   expand to completely multiplicative SECOND.  Randomising a *completely* multiplicative target
+   needs `E[V^k] = r^k` for all `k`, whose only solution is the Poisson kernel — no finite support.
+
+2. **The pretentious transfer is DETERMINISTIC, not probabilistic.**
+   `Re(U(p)·conj g₁(p)) = ‖g₁(p)‖²` exactly for both signs, so
+   `pretentiousDistSq g₁ U X = ∑_{p≤X}(1−‖g₁(p)‖²)/p ≤ 2·Σ_X(g₁) ≤ 2D₀` in Case B, for EVERY `ω`.
+   Then a 1-bounded triangle inequality (prove it in `src/`; the dependency's
+   `Erdos67b.pretentiousDistSq_triangle_sq` needs all three arguments unimodular, which
+   `g₁` and `χ·n^{it}` are not) gives `MRTNonpretentious U₁ (A/3 − 2D₀) X`.  The constant-3 form
+   `1−Re(a·c̄) ≤ 3((1−Re(a·b̄)) + (1−Re(b·c̄)))` for `‖a‖,‖b‖,‖c‖ ≤ 1` follows from
+   `1−x² ≤ 2(1−x)` plus `‖a−c‖² ≤ 2(‖a−b‖²+‖b−c‖²)`.
+
+3. **Squarefull expansion** (unimodular multiplicative `U` → unimodular completely multiplicative
+   `Ũ`): `u = U ⋆ μŨ`, `u(p) = 0`, `‖u(p^k)‖ ≤ 2`, so `u` is supported on squarefull `d` and
+   `∑_d ‖u(d)‖/d ≤ ∏_p(1 + 2/(p(p−1))) ≤ e²` — an **absolute** bound, so the tail IS uniformly
+   small (this is the step the `v`-expansion fails).  `D(Ũ,·;X) = D(U,·;X)` exactly (primes only).
+
+4. **Progression substitution**: `d ∣ a₁n+b₁` ⟹ `n = q k + n₀`, new pair `(a₁/g, B₁; a₂q, B₂)` with
+   determinant `(a₁b₂−a₂b₁)/g ≠ 0`; weight `1/(qk+n₀) = 1/(qk) + O(1/q)` summing to a constant;
+   scale `X ↦ X/q`, ratio `W` preserved.  Feed `AffineCMLogElliott`.
+
+5. **Case A** (`Σ_Y(g₁) ≥ D₀`) is the other half and is nearly done: `exists_caseA_threshold`
+   (thick window) is proved; finish the **thin-window** version off `ElliottHall.sum_Icc_dyadic_le`
+   so Case A covers all `W`.  Do this only AFTER step 1 exists — it is the tractable half.
+
+**Forbidden drift.**  Do NOT build the `v`/unimodularisation expansion (refuted, item 0).  Do NOT
+work `DilatedSliceCMLogElliottGe` (dead).  Do NOT vendor or edit `.lake/packages/lean-proofs-latest/`.
+Do NOT delete, rename or weaken `nonasymptoticLogElliott`.  Do NOT reopen Theorem C′/multicutoff,
+`PrimeLambertOscillation`, `MahlerDriftOne`, `SwingC*`, `PairDecouple*` (designated-open, off scope).
+
+**🚦 Registered route trigger (Elliott, ET-1).**  If `ElliottRandomize`'s averaging identity
+(`‖corr(g₁,g₂)‖ ≤ max_ω ‖corr(U₁^{ω₁},U₂^{ω₂})‖` for 1-bounded multiplicative `g_i`) is **not** a
+proved trust-triple statement in `src/` by **lap 62**, the two-point route is in doubt: stop
+building on it, write `ROUTE-ESCALATION-<date>.md` re-costing (a) proving the crux directly for
+1-bounded (non-unimodular) completely multiplicative `f₁,f₂` via η-good primes at η-good dyadic
+scales, against (b) the Poisson-kernel randomisation with real measure theory.
+
+**Fidelity note (do not lose).**  `Erdos67b.IsMultiplicativeOnPositiveInt` has **no coprimality
+hypothesis** — it is *complete* multiplicativity.  So the dependency's `NonasymptoticLogElliott`
+is Tao 2016 Thm 1.3 **restricted to completely multiplicative** `g₁,g₂`, weaker than the paper's
+statement (Tao says "multiplicative").  The drift is the dependency's, and the kickoff ratifies
+its statement as the target, so the target stays — but STATUS.md must say so, and the corrected
+leaf-2 route above never uses complete multiplicativity of `g_i`, so a `src/`-stated genuinely
+general `NonasymptoticLogElliottMult` is a cheap stretch goal once the headline lands.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
@@ -53,8 +85,10 @@ wiring, then finish the contradiction, then open Hall.
   Theorem C' is complete; the Elliott crux is re-decomposed onto the dilation-slice rung and the
   Dirichlet-character detour is refuted as circular.
 - 2026-09-25 (review lap, laps 36+): slice rung **DEAD** (refuted lap 16); live route is the
-  `a`-dilated graph stack.  Mandate: wire the headline onto it BEFORE finishing the proof, then
-  close the contradiction, then Hall's inequality for leaf 2.
+  `a`-dilated graph stack.  Mandate: wire the headline onto it BEFORE finishing the proof.
+- 2026-09-25 (DEEP REFLECTION lap 54): crux CLOSED; verdict CONTINUE.  Leaf 2's **unimodularisation
+  step REFUTED** and replaced by the exact two-point randomisation (multiplicative-first ordering);
+  trigger ET-1 registered; fidelity note recorded (the dependency's Prop is the CM case of Thm 1.3).
 
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically
