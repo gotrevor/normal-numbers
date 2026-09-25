@@ -6,6 +6,7 @@ import NormalNumbers.ElliottCaseAThin
 import NormalNumbers.ElliottLeafTwo
 import NormalNumbers.ElliottRankin
 import NormalNumbers.ElliottReindex
+import NormalNumbers.ElliottDivisorTail
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -83,6 +84,11 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottReindex.norm_sum_sub_reindexed_le
 #print axioms NormalNumbers.ElliottSquarefullConv.squarefullPart_mul_cmExt
 #print axioms NormalNumbers.ElliottSquarefullConv.U_eq_sum_divisors
+
+-- the divisor tail over the window: the cost of truncating the expansion at D
+#print axioms NormalNumbers.ElliottDivisorTail.sum_Icc_multiples_inv_le
+#print axioms NormalNumbers.ElliottDivisorTail.sum_window_le_transfer_nonneg
+#print axioms NormalNumbers.ElliottDivisorTail.sum_window_divisor_tail_le
 #print axioms NormalNumbers.ElliottLeafTwo.exists_squarefull_tail
 
 -- the dependency's proved special case
