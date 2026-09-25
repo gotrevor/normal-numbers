@@ -446,8 +446,113 @@ theorem windowMass_main_le {z : ℂ} {δ : ℝ} (hδ0 : 0 < δ) {t : ℝ} (ht : 
     positivity
   exact div_le_div_of_nonneg_left (by linarith) hgap hmul
 
+/-! ### Step 3: summing the main terms over the windows
+
+The bound function is taken to be `16δ / max(2π|m| − π − δ, δ)`, which is **nonneg for every
+`m`** — including `m = 0`, where the naive `2π|m| − π − δ` is negative.  That is what lets
+`sum_Icc_symm_le` (which needs a nonneg function of `|m|`) apply directly, with no separate
+treatment of the central window: the `max` absorbs it, because `γ_m − δ ≥ δ` always holds
+(`γ_m ≥ 2·resEps z ≥ 2δ` by `two_resEps_le_abs_shift`). -/
+
+/-- The nonneg majorant of the per-window main term. -/
+noncomputable def gapMaj (δ : ℝ) (x : ℝ) : ℝ := 16 * δ / max (2 * Real.pi * x - Real.pi - δ) δ
+
+theorem gapMaj_nonneg {δ : ℝ} (hδ0 : 0 < δ) (x : ℝ) : 0 ≤ gapMaj δ x := by
+  rw [gapMaj]
+  have : (0:ℝ) < max (2 * Real.pi * x - Real.pi - δ) δ := lt_of_lt_of_le hδ0 (le_max_right _ _)
+  positivity
+
+/-- The per-window main term is majorised by `gapMaj` at `|m|`. -/
+theorem main_term_le_gapMaj {z : ℂ} {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z) (m : ℤ) :
+    16 * δ / (|z.arg - 2 * Real.pi * m| - δ) ≤ gapMaj δ |(m : ℝ)| := by
+  have hgap2 : 2 * resEps z ≤ |z.arg - 2 * Real.pi * m| := two_resEps_le_abs_shift z m
+  have hγ : 2 * δ ≤ |z.arg - 2 * Real.pi * m| := by linarith
+  have hden : (0:ℝ) < |z.arg - 2 * Real.pi * m| - δ := by linarith
+  -- both branches of the `max` are `≤ γ_m − δ`
+  have h1 : 2 * Real.pi * |(m:ℝ)| - Real.pi - δ ≤ |z.arg - 2 * Real.pi * m| - δ := by
+    have h2 : |z.arg| ≤ Real.pi := Complex.abs_arg_le_pi z
+    have h3 := abs_sub_abs_le_abs_sub (2 * Real.pi * (m : ℝ)) z.arg
+    rw [abs_sub_comm] at h3
+    have h4 : |2 * Real.pi * (m : ℝ)| = 2 * Real.pi * |(m : ℝ)| := by
+      rw [abs_mul, abs_of_pos (by positivity : (0:ℝ) < 2 * Real.pi)]
+    linarith [h4 ▸ h3]
+  have h2 : δ ≤ |z.arg - 2 * Real.pi * m| - δ := by linarith
+  have hmax : max (2 * Real.pi * |(m:ℝ)| - Real.pi - δ) δ ≤ |z.arg - 2 * Real.pi * m| - δ :=
+    max_le h1 h2
+  have hmaxpos : (0:ℝ) < max (2 * Real.pi * |(m:ℝ)| - Real.pi - δ) δ :=
+    lt_of_lt_of_le hδ0 (le_max_right _ _)
+  rw [gapMaj]
+  exact div_le_div_of_nonneg_left (by linarith) hmaxpos hmax
+
+/-- `range (K+1)` is `{0} ∪ Icc 1 K`, the split that separates the central window. -/
+theorem range_succ_eq_insert_Icc (K : ℕ) :
+    Finset.range (K + 1) = insert 0 (Finset.Icc 1 K) := by
+  ext j
+  simp only [Finset.mem_range, Finset.mem_insert, Finset.mem_Icc]
+  omega
+
+/-- **Step 3 — the main terms sum inside the budget.**  `∑_{|m| ≤ K} 16δ/(γ_m − δ) ≤ 32 +
+(64δ/π)(1 + log K)`: the central window contributes the absolute constant, and the rest is the
+harmonic sum of `sum_inv_gap_le`.  Since `64/π < 21 < 50`, this sits well inside the
+`50δ(log log Y + log(2+|t|))` the split allots to the high range. -/
+theorem main_sum_le {z : ℂ} {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z) (K : ℕ) :
+    ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ), 16 * δ / (|z.arg - 2 * Real.pi * m| - δ)
+      ≤ 32 + (64 * δ / Real.pi) * (1 + Real.log K) := by
+  have hpi : (0:ℝ) < Real.pi := Real.pi_pos
+  have hδπ : δ ≤ Real.pi / 2 := le_trans hδ (resEps_le_pi_div_two z)
+  -- majorise termwise, then use the symmetric-sum brick
+  have hstep1 : ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ),
+      16 * δ / (|z.arg - 2 * Real.pi * m| - δ)
+      ≤ ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ), gapMaj δ |(m : ℝ)| :=
+    Finset.sum_le_sum fun m _ => main_term_le_gapMaj hδ0 hδ m
+  have hstep2 : ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ), gapMaj δ |(m : ℝ)|
+      ≤ 2 * ∑ j ∈ Finset.range (K + 1), gapMaj δ (j : ℝ) :=
+    sum_Icc_symm_le (gapMaj δ) (gapMaj_nonneg hδ0)
+  -- the central window is an absolute constant, the rest is harmonic
+  have hzero : gapMaj δ 0 = 16 := by
+    rw [gapMaj]
+    have hmax : max (2 * Real.pi * 0 - Real.pi - δ) δ = δ := by
+      refine max_eq_right ?_
+      linarith
+    rw [hmax]
+    field_simp
+  have htail : ∀ j ∈ Finset.Icc 1 K,
+      gapMaj δ (j : ℝ) ≤ 16 * δ * (2 * Real.pi * (j : ℝ) - Real.pi - δ)⁻¹ := by
+    intro j hj
+    have hj1 : (1:ℝ) ≤ (j : ℝ) := by
+      have := (Finset.mem_Icc.1 hj).1; exact_mod_cast this
+    have hgap0 : (0:ℝ) < 2 * Real.pi * (j : ℝ) - Real.pi - δ := by nlinarith
+    rw [gapMaj]
+    have hge : 2 * Real.pi * (j : ℝ) - Real.pi - δ
+        ≤ max (2 * Real.pi * (j : ℝ) - Real.pi - δ) δ := le_max_left _ _
+    calc 16 * δ / max (2 * Real.pi * (j : ℝ) - Real.pi - δ) δ
+        ≤ 16 * δ / (2 * Real.pi * (j : ℝ) - Real.pi - δ) :=
+          div_le_div_of_nonneg_left (by linarith) hgap0 hge
+      _ = 16 * δ * (2 * Real.pi * (j : ℝ) - Real.pi - δ)⁻¹ := by
+          rw [div_eq_mul_inv]
+  have hharm := sum_inv_gap_le hδ0.le hδπ K
+  have hsplit : ∑ j ∈ Finset.range (K + 1), gapMaj δ (j : ℝ)
+      = gapMaj δ 0 + ∑ j ∈ Finset.Icc 1 K, gapMaj δ (j : ℝ) := by
+    rw [range_succ_eq_insert_Icc, Finset.sum_insert (by simp)]
+    norm_num
+  have htailsum : ∑ j ∈ Finset.Icc 1 K, gapMaj δ (j : ℝ)
+      ≤ 16 * δ * ((2 / Real.pi) * (1 + Real.log K)) := by
+    refine le_trans (Finset.sum_le_sum htail) ?_
+    rw [← Finset.mul_sum]
+    exact mul_le_mul_of_nonneg_left hharm (by positivity)
+  have hfin : 2 * ∑ j ∈ Finset.range (K + 1), gapMaj δ (j : ℝ)
+      ≤ 32 + (64 * δ / Real.pi) * (1 + Real.log K) := by
+    rw [hsplit, hzero]
+    have : (0:ℝ) < Real.pi := hpi
+    have heq : 2 * (16 * δ * ((2 / Real.pi) * (1 + Real.log K)))
+        = (64 * δ / Real.pi) * (1 + Real.log K) := by
+      field_simp; ring
+    nlinarith [htailsum, heq]
+  linarith [hstep1, hstep2, hfin]
+
 end CastingOut
 
 end NormalNumbers
+
 
 

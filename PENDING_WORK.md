@@ -11393,8 +11393,13 @@ and 3a are now **DONE** (sorry-free, axiom-clean):
    Raising the start costs nothing on the main term: `windowMass_main_le` shows
    `16δ/(|t|·aWin) ≤ 16δ/(γ_m − δ)`, exactly the shape `sum_inv_gap_le` sums, so the comparison
    `sum_inv_gap_le` needs survives the raise (`aWin_ge_gap`).
-3. main terms: `sum_Icc_symm_le` + `sum_inv_gap_le` ⇒ `(32δ/π)(1 + log K) + O(δ)`, and
-   `log K ≤ log log Y + log(2+|t|) + O(1)`; `32/π < 11 < 50` leaves ample room;
+3. **DONE** — `main_sum_le`: `∑_{|m| ≤ K} 16δ/(γ_m − δ) ≤ 32 + (64δ/π)(1 + log K)`.  The trick
+   that makes `sum_Icc_symm_le` (which needs a nonneg function of `|m|`) apply *with no separate
+   central-window case* is to majorise by `gapMaj δ x = 16δ/max(2πx − π − δ, δ)`: the `max` is
+   nonneg even at `x = 0`, where the naive `2π|m| − π − δ` goes negative, and it is a valid
+   majorant because `γ_m − δ ≥ δ` always (from `two_resEps_le_abs_shift`).  `64/π < 21 < 50`, so
+   with step 3a's constant-`0` `log K` bound the main terms sit well inside the high range's
+   `50δ(log log Y + log(2+|t|))` allotment.
 4. error terms: `window_err_le` + `sum_exp_neg_le` at `c = 2π/|t|` in the height variable, with
    the `exp(−lowHeight t/8) ≤ (2+|t|)⁻¹` factor pulled out first — this is the step the old plan
    got wrong, and pulling that factor out *before* summing is what fixes it.
