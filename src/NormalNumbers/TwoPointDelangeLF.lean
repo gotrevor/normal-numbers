@@ -233,4 +233,110 @@ theorem norm_delangeT_le (z : ℂ) (N : ℕ) :
 theorem delangeKernelMean_iff (z : ℂ) :
     DelangeKernelMean z ↔ Tendsto (fun N => delangeS z N) atTop (𝓝 0) := Iff.rfl
 
+/-! ### Abel summation: `S(N) log N = T(N) + Σ_{m<N} (log(m+1) − log m)·S(m)`
+
+The purely discrete form of `Σ_{n≤N}(h(n)/n)log(N/n) = ∫_1^N S(t) dt/t`.  Writing
+`log(N/n) = Σ_{m=n}^{N−1}(log(m+1) − log m)` and swapping turns the `log`-weighted sum into a
+weighted average of `S` at SMALLER arguments — which is exactly the shape a Gronwall/Wirsing
+induction consumes.  Proved by induction on `N`, so no integrals are needed. -/
+
+/-- The Abel term `Σ_{1 ≤ m < N} (log(m+1) − log m)·S(m)`. -/
+noncomputable def delangeAbel (z : ℂ) (N : ℕ) : ℂ :=
+  ∑ m ∈ Finset.Ico 1 N, ((Real.log (m + 1) - Real.log m : ℝ) : ℂ) * delangeS z m
+
+/-- **Discrete Abel summation for the kernel sum.**  Exact, for every `N`. -/
+theorem delangeS_mul_log (z : ℂ) (N : ℕ) :
+    delangeS z N * (Real.log N : ℂ) = delangeT z N + delangeAbel z N := by
+  classical
+  induction N with
+  | zero => simp [delangeS, delangeT, delangeAbel]
+  | succ N ih =>
+      rcases Nat.eq_zero_or_pos N with hN | hN
+      · subst hN
+        simp [delangeS, delangeT, delangeAbel]
+      have hS : delangeS z (N + 1)
+          = delangeS z N + delangeKernel z (N + 1) / ((N + 1 : ℕ) : ℂ) := by
+        rw [delangeS, delangeS, Finset.sum_Ioc_succ_top (by omega)]
+      have hT : delangeT z (N + 1)
+          = delangeT z N
+            + delangeKernel z (N + 1) * (Real.log ((N + 1 : ℕ) : ℝ) : ℂ) / ((N + 1 : ℕ) : ℂ) := by
+        rw [delangeT, delangeT, Finset.sum_Ioc_succ_top (by omega)]
+      have hA : delangeAbel z (N + 1)
+          = delangeAbel z N
+            + ((Real.log ((N : ℝ) + 1) - Real.log (N : ℝ) : ℝ) : ℂ) * delangeS z N := by
+        rw [delangeAbel, delangeAbel, Finset.sum_Ico_succ_top (by omega)]
+      have hc1 : ((N + 1 : ℕ) : ℝ) = (N : ℝ) + 1 := by push_cast; ring
+      have hc2 : ((N + 1 : ℕ) : ℂ) = (N : ℂ) + 1 := by push_cast; ring
+      have hpush : (((Real.log ((N : ℝ) + 1) - Real.log (N : ℝ)) : ℝ) : ℂ)
+          = ((Real.log ((N : ℝ) + 1) : ℝ) : ℂ) - ((Real.log (N : ℝ) : ℝ) : ℂ) :=
+        Complex.ofReal_sub _ _
+      rw [hS, hT, hA, hc1, hc2, hpush]
+      linear_combination ih
+
+/-- `log(m+1) − log m ≤ 1/m`. -/
+lemma log_succ_sub_log_le {m : ℕ} (hm : 1 ≤ m) :
+    Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) ≤ 1 / (m : ℝ) := by
+  have hmR : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm
+  have hx : (0 : ℝ) < ((m : ℝ) + 1) / (m : ℝ) := by positivity
+  have h := Real.log_le_sub_one_of_pos hx
+  rw [Real.log_div (by positivity) (ne_of_gt hmR)] at h
+  have heq : ((m : ℝ) + 1) / (m : ℝ) - 1 = 1 / (m : ℝ) := by field_simp; ring
+  rw [heq] at h
+  exact h
+
+lemma log_succ_sub_log_nonneg {m : ℕ} (hm : 1 ≤ m) :
+    0 ≤ Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) := by
+  have hmR : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm
+  have := Real.log_le_log hmR (by linarith : (m : ℝ) ≤ (m : ℝ) + 1)
+  linarith
+
+/-- **The Gronwall shape.**  `‖Abel(N)‖ ≤ Σ_{1 ≤ m < N} ‖S(m)‖/m`. -/
+theorem norm_delangeAbel_le (z : ℂ) (N : ℕ) :
+    ‖delangeAbel z N‖ ≤ ∑ m ∈ Finset.Ico 1 N, ‖delangeS z m‖ / (m : ℝ) := by
+  refine le_trans (norm_sum_le _ _) (Finset.sum_le_sum fun m hm => ?_)
+  simp only [Finset.mem_Ico] at hm
+  have hmR : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm.1
+  rw [norm_mul, Complex.norm_real, Real.norm_eq_abs,
+    abs_of_nonneg (log_succ_sub_log_nonneg hm.1)]
+  have h := log_succ_sub_log_le hm.1
+  have hS : (0 : ℝ) ≤ ‖delangeS z m‖ := norm_nonneg _
+  calc (Real.log ((m : ℝ) + 1) - Real.log (m : ℝ)) * ‖delangeS z m‖
+      ≤ (1 / (m : ℝ)) * ‖delangeS z m‖ := mul_le_mul_of_nonneg_right h hS
+    _ = ‖delangeS z m‖ / (m : ℝ) := by ring
+
+/-- **THE RECURSION.**  Combining Abel summation with the Levin–Fainleib inequality:
+
+    ‖S(N)‖·log N  ≤  u·Σ_{p≤N} (log p/p)·(‖S(N/p)‖ + (u/p)·A(N/p))  +  Σ_{m<N} ‖S(m)‖/m .
+
+Both right-hand terms involve `S` only at arguments `< N`, so this is a genuine induction on `N` —
+the Wirsing endgame.  No analytic input has been used anywhere to reach this point. -/
+theorem norm_delangeS_mul_log_le (z : ℂ) (N : ℕ) :
+    ‖delangeS z N‖ * Real.log N
+      ≤ ‖z - 1‖ * (∑ p ∈ primesLe N, Real.log p / (p : ℝ)
+            * (‖delangeS z (N / p)‖ + ‖z - 1‖ / (p : ℝ) * delangeA z (N / p)))
+        + ∑ m ∈ Finset.Ico 1 N, ‖delangeS z m‖ / (m : ℝ) := by
+  rcases Nat.eq_zero_or_pos N with hN | hN
+  · subst hN
+    simp only [Nat.cast_zero, Real.log_zero, mul_zero]
+    have h1 : (0 : ℝ) ≤ ‖z - 1‖ * (∑ p ∈ primesLe 0, Real.log p / (p : ℝ)
+        * (‖delangeS z (0 / p)‖ + ‖z - 1‖ / (p : ℝ) * delangeA z (0 / p))) := by
+      refine mul_nonneg (norm_nonneg _) (Finset.sum_nonneg fun p hp => ?_)
+      have hpp := prime_of_mem_primesLe hp
+      have : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hpp.pos
+      have hlog : (0 : ℝ) ≤ Real.log p := Real.log_nonneg (by exact_mod_cast hpp.one_lt.le)
+      have hA := delangeA_nonneg z (0 / p)
+      have : (0 : ℝ) ≤ ‖delangeS z (0 / p)‖ + ‖z - 1‖ / (p : ℝ) * delangeA z (0 / p) := by
+        positivity
+      positivity
+    rw [Finset.Ico_eq_empty (by omega), Finset.sum_empty, add_zero]
+    exact h1
+  have hid := delangeS_mul_log z N
+  have hnorm : ‖delangeS z N‖ * Real.log N ≤ ‖delangeT z N‖ + ‖delangeAbel z N‖ := by
+    have hlog : (0 : ℝ) ≤ Real.log N := Real.log_nonneg (by exact_mod_cast hN)
+    have : ‖delangeS z N * (Real.log N : ℂ)‖ = ‖delangeS z N‖ * Real.log N := by
+      rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hlog]
+    rw [← this, hid]
+    exact norm_add_le _ _
+  linarith [hnorm, norm_delangeT_le z N, norm_delangeAbel_le z N]
+
 end NormalNumbers.CastingOut
