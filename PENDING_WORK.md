@@ -65,9 +65,15 @@ formalised; recorded as the reason not to spend laps sharpening `prod_le_lcm_mul
 
 ### Attack order from here
 
-1. `inner_sum_linear_forms` analogue at `K` points: reindex `n = L·k + a` (from
-   `joint_class_multi`), so `(n+i+1)/d_i = (L/d_i)k + (a+i+1)/d_i`; `filter_linear_lt_eq_range`
-   then applies verbatim with `L` for `d·e`.
+1. ~~`inner_sum_linear_forms` analogue at `K` points.~~  **DONE lap 41** —
+   `src/NormalNumbers/C3MrtMultiLinear.lean` (sorry-free, trust triple).
+   `inner_sum_multi_forms`: for any tuple whose joint progression is nonempty, the inner sum
+   equals `∑_j F(Lj+a)·∏_i z_i^{Ω((L/d_i)j + (a+i+1)/d_i)}` over `{j : Lj+a < N}`, with
+   `a = n₀ mod L`, `L = Finset.univ.lcm d`.  **No coprimality anywhere** — `joint_class_multi`
+   supplies the class, `multi_forms_det` the nondegeneracy.  `inner_sum_multi_empty` covers the
+   tuples with no solution.  Helpers: `univLcm_pos`, `shift_div_eq_linear_multi`,
+   `joint_base_mod`.  `filter_linear_lt_eq_range` applies to the `j`-index set verbatim with
+   `L` for `d·e`.
 2. `multi_truncation_bound`: iterate `offset_truncation_bound_of_mass` `K` times; the error
    telescopes to `≤ ∑_{i<K}(∏_{j<i} sqfWMass z_j)(1 + log(N+K))·bridgeTail z_i Y`.
 3. Pay lap 38's indexing debt: standardise on `Fin K` + `Finset.univ.lcm` (the convention

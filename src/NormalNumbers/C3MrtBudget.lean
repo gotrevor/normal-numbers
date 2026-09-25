@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.C3MrtSchedule
-import NormalNumbers.C3MrtMultiForms
+import NormalNumbers.C3MrtMultiLinear
 
 /-!
 # The constant budget: what the `D`-point correlation bound is allowed to carry

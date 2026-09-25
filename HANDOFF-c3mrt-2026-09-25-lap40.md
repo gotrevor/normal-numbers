@@ -109,3 +109,35 @@ Everything in the lap-39 session wrap, plus, new this lap:
 * leaf PROVABLE with known techniques ≈ 22% (down from 28%: the required decay is now known
   precisely, and it is a quasi-polynomial margin beyond the best published `k`-point rates —
   previously this margin was unmeasured and assumed favourable).
+
+---
+
+## Lap 41 addendum — step 1 of the assembly is DONE
+
+`src/NormalNumbers/C3MrtMultiLinear.lean` (new, sorry-free, all trust triple; it is now the
+chain tip's parent, so the tip build is `lake build NormalNumbers.C3MrtBudget`, 8977 jobs):
+
+* `univLcm_pos` — `0 < Finset.univ.lcm d` in lap 39's `Fin K` convention.
+* `shift_div_eq_linear_multi` — `(L·j + a + k + 1)/d_i = (L/d_i)·j + (a+k+1)/d_i`, needing only
+  `d_i ∣ L`.
+* `joint_base_mod` — the class base can be taken `< L`: `d_i ∣ (n₀ mod L) + i + 1`.
+* `inner_sum_multi_forms` — **the `K`-fold `inner_sum_linear_forms`**.  For any tuple whose
+  joint progression is nonempty,
+
+      ∑_{n<N, ∀i: d_i ∣ n+i+1} F n · ∏_i z_i^{Ω((n+i+1)/d_i)}
+        = ∑_{j : L·j+a<N} F(L·j+a) · ∏_i z_i^{Ω((L/d_i)·j + (a+i+1)/d_i)} ,
+
+  i.e. a `K`-point correlation of completely multiplicative unimodular functions along the `K`
+  linear forms `(L/d_i)·X + (a+i+1)/d_i` in ONE progression variable — verbatim the hypothesis
+  shape of `KPointLogElliott K` / `ProductLogElliott K`.  **No coprimality is used anywhere**;
+  that was the `K ≥ 3` worry and it is now discharged end-to-end.
+* `inner_sum_multi_empty` — tuples with no solution contribute `0`, so the two lemmas cover
+  every tuple in the `piFinset`.
+
+`filter_linear_lt_eq_range` (`C3MrtTwoShift`) turns the `j`-index set into `range ((N−1−a)/L+1)`,
+an initial segment, verbatim with `L` in place of `d·e`.
+
+**NEXT is step 2**: `multi_truncation_bound` — iterate `offset_truncation_bound_of_mass` `K`
+times over the `K` shifts; the error telescopes to
+`≤ ∑_{i<K}(∏_{j<i} sqfWMass z_j)·(1 + log(N+K))·bridgeTail z_i Y`.  Model:
+`two_shift_truncation_bound` (`C3MrtTwoShift`), which is the `K = 2` case.
