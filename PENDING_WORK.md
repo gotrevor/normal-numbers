@@ -61,6 +61,32 @@ prime powers only, `∀ q prime k, f (q^k) ≤ 2/q^k` — that is all the local-
 `‖u n‖ ≤ 2` is *false* for general `n` (it grows with the number of prime factors) while
 `‖u (p^k)‖ ≤ 2` is exactly right.  This was a real trap; the weakened form is the usable one.
 
+## Lap 58 (2026-09-25) — Case-B step 4, arithmetic core PROVED: determinant preservation
+
+New module `src/NormalNumbers/ElliottProgression.lean`, **zero sorry, trust triple**, in the
+audit surface.  Directive item 4's decisive half.
+
+* `integerAffine_progression` — along `n = qk + n₀`, if `d ∣ aq` and `a n₀ + b = d c`, then
+  `integerAffine a b (qk+n₀) = d · ((aq/d) k + c)`.  The quotient is affine in `k`, exactly.
+* **`det_progression`** — with `q = d₁d₂`, `a₁' = a₁d₂`, `a₂' = a₂d₁`,
+  `a₁' c₂ − a₂' c₁ = a₁ b₂ − a₂ b₁`.  **The determinant is preserved EXACTLY**, with no shrinkage
+  and no dependence on `d₁, d₂`.
+* `newDilation_eq`, `dvd_mul_of_prod(')` — the `q = d₁d₂` side conditions, automatic.
+* `exists_progression_of_jointCongruence` — the joint congruence set is closed under `n ↦ n + q`.
+
+**Why this is the part that mattered.**  The whole squarefull expansion is only a *finite*
+reduction to the same rung `AffineCMLogElliott` if the new pair is still admissible — i.e. if
+`a₁'b₂' − a₂'b₁' ≠ 0` — uniformly over the (unboundedly many) `d₁,d₂` the expansion produces.
+Had the determinant degraded with `d₁d₂` the route would have been an infinite regress.  It does
+not degrade: it is *equal*.  Choosing `q = d₁d₂` rather than `lcm` is what buys this.
+
+Still open in step 4 (analytic, not arithmetic): window rescaling `X ↦ X/q` at fixed ratio `W`,
+and the harmonic-weight comparison `1/(qk+n₀) = (1/q)(1/k) + O(1/(qk²))`, whose total cost is an
+absolute constant times `∑_d ‖u d‖/d ≤ e²`.  Deliberately not stated as a lemma yet: the statement
+needs the restricted correlation, which is introduced at assembly.
+
+### NEXT — item 5 (Case A thin window), then assembly
+
 ### NEXT — items 4, 5
 
 ### NEXT — arithmetic half of item 3, then items 4, 5

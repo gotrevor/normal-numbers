@@ -1,7 +1,7 @@
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
-import NormalNumbers.ElliottSquarefullConv
+import NormalNumbers.ElliottProgression
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -51,6 +51,10 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottSquarefull.sum_Icc_le_exp_two
 #print axioms NormalNumbers.ElliottSquarefullConv.squarefullPart_prime_pow
 #print axioms NormalNumbers.ElliottSquarefullConv.sum_norm_squarefullPart_div_le_exp_two
+
+-- leaf 2, Case B step 4: the progression substitution (arithmetic core)
+#print axioms NormalNumbers.ElliottProgression.integerAffine_progression
+#print axioms NormalNumbers.ElliottProgression.det_progression
 
 -- the dependency's proved special case
 #print axioms Erdos67b.unitCircleLogElliott
