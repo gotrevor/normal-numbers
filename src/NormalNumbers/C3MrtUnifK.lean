@@ -1223,6 +1223,83 @@ theorem depthAvg_diag_tendsto_of_degrading_sched {b Q : ℕ} (hb : 2 ≤ b) (hQ 
       (PairDecouple.tendsto_natLog_atTop 2 le_rfl))
     tendsto_cut_atTop hAle (hgrow_of_schedule hb m)
 
+/-! ### The degenerate twist levels of `DepthDiagonal`
+
+`DepthDiagonal b` quantifies over ALL `hh : ℤ`, while the chain needs `depthRoot b hh 0 ≠ 1`
+(i.e. `b ∤ hh`) to get `κ > 0`.  Two levels are degenerate, and both are elementary.
+
+* `hh = 0`: the depth phase is identically `1` and `depthAvg` is the bare twist average
+  `(1/N) ∑_{n<N} e(jn/Q)`, a geometric sum with `0 < j < Q`, hence `O(1/N)`.
+* `b ∣ hh`, `hh ≠ 0`: the first `v = v_b(hh)` roots are trivial and the correlation is the same
+  shape re-indexed from depth `v` — handled by `depthAvg_eq_shift` below. -/
+
+/-- **The bare twist average vanishes.**  `0 < j < Q` makes `e(j/Q) ≠ 1`, so the geometric sum is
+bounded and the average is `O(1/N)`. -/
+theorem twistAvg_tendsto {Q j : ℕ} (hj0 : 0 < j) (hjQ : j < Q) :
+    Tendsto (fun N : ℕ => (∑ n ∈ range N, ee ((((j : ℝ) * n / Q : ℝ) : ℂ))) / N)
+      atTop (𝓝 0) := by
+  have hQ0 : 0 < Q := lt_of_le_of_lt (Nat.zero_le j) hjQ
+  have hQR : (0 : ℝ) < (Q : ℝ) := by exact_mod_cast hQ0
+  set ζ : ℂ := ee ((((j : ℝ) / Q : ℝ) : ℂ)) with hζdef
+  -- `ζ ≠ 1`: `j/Q` is not an integer
+  have hζ : ζ ≠ 1 := by
+    rw [hζdef]
+    intro hone
+    obtain ⟨M, hM⟩ := ee_eq_one_iff_int.1 hone
+    have hjR : (0 : ℝ) < (j : ℝ) := by exact_mod_cast hj0
+    have hjQR : (j : ℝ) < (Q : ℝ) := by exact_mod_cast hjQ
+    have h0 : (0 : ℝ) < (M : ℝ) := by rw [← hM]; positivity
+    have h1 : (M : ℝ) < 1 := by
+      rw [← hM, div_lt_one hQR]; exact hjQR
+    have h2 : (0 : ℤ) < M := by exact_mod_cast h0
+    have h3 : (M : ℤ) < 1 := by exact_mod_cast h1
+    omega
+  -- the sum is geometric
+  have hgeom : ∀ N : ℕ, (∑ n ∈ range N, ee ((((j : ℝ) * n / Q : ℝ) : ℂ)))
+      = ∑ n ∈ range N, ζ ^ n := by
+    intro N
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [hζdef, ← ee_nat_mul]
+    congr 1
+    push_cast
+    ring
+  have hbd : ∀ N : ℕ, ‖(∑ n ∈ range N, ee ((((j : ℝ) * n / Q : ℝ) : ℂ))) / N‖
+      ≤ (2 / ‖ζ - 1‖) * (1 / N) := by
+    intro N
+    rcases Nat.eq_zero_or_pos N with rfl | hN
+    · simp
+    have hNR : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+    have hζ1 : ζ - 1 ≠ 0 := sub_ne_zero_of_ne hζ
+    have hnormζ : ‖ζ‖ = 1 := norm_ee_real _
+    have hsum : (∑ n ∈ range N, ζ ^ n) = (ζ ^ N - 1) / (ζ - 1) :=
+      geom_sum_eq hζ N
+    rw [hgeom, hsum, norm_div, norm_div, Complex.norm_natCast]
+    have hnum : ‖ζ ^ N - 1‖ ≤ 2 := by
+      refine (norm_sub_le _ _).trans ?_
+      rw [norm_pow, hnormζ, one_pow, norm_one]
+      norm_num
+    have hden : (0 : ℝ) < ‖ζ - 1‖ := norm_pos_iff.2 hζ1
+    rw [div_div, div_le_iff₀ (by positivity : (0 : ℝ) < ‖ζ - 1‖ * N)]
+    have hid : 2 / ‖ζ - 1‖ * (1 / (N : ℝ)) * (‖ζ - 1‖ * N) = 2 := by
+      field_simp
+    rw [hid]
+    exact hnum
+  refine squeeze_zero_norm hbd ?_
+  have := tendsto_one_div_atTop_nhds_zero_nat.const_mul (2 / ‖ζ - 1‖)
+  rwa [mul_zero] at this
+
+/-- **`DepthDiagonal` at the trivial twist level.**  `hh = 0`. -/
+theorem depthAvg_zero_tendsto (b P Q j : ℕ) {D : ℕ → ℕ} (hj0 : 0 < j) (hjQ : j < Q) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j 0 (D N) N) atTop (𝓝 0) := by
+  have hcongr : ∀ N : ℕ, depthAvg b P Q j 0 (D N) N
+      = (∑ n ∈ range N, ee ((((j : ℝ) * n / Q : ℝ) : ℂ))) / N := by
+    intro N
+    rw [depthAvg]
+    congr 1
+    refine Finset.sum_congr rfl fun n _ => ?_
+    norm_num [ee_zero]
+  exact (twistAvg_tendsto hj0 hjQ).congr fun N => (hcongr N).symm
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -1247,6 +1324,8 @@ theorem depthAvg_diag_tendsto_of_degrading_sched {b Q : ℕ} (hb : 2 ≤ b) (hQ 
 #print axioms NormalNumbers.CastingOut.log_two_log_cut_ge
 #print axioms NormalNumbers.CastingOut.hgrow_of_schedule
 #print axioms NormalNumbers.CastingOut.depthAvg_diag_tendsto_of_degrading_sched
+#print axioms NormalNumbers.CastingOut.twistAvg_tendsto
+#print axioms NormalNumbers.CastingOut.depthAvg_zero_tendsto
 
 end CastingOut
 
