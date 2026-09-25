@@ -697,6 +697,61 @@ theorem rung_sum_spelling (z₀ z₁ : ℂ) {d e : ℕ} (hd : 0 < d) (he : 0 < e
   push_cast
   ring
 
+
+/-! ## The per-pair bound
+
+Everything for one coprime pair `(d, e)`, assembled: the weight transfer, the rung's spelling,
+and the window gap.  The rung's own bound enters as the hypothesis `hrung`, so this lemma is
+independent of which analytic input supplies it.
+-/
+
+/-- **The per-pair bound.**  Granting the rung's bound `R` at the window `(0, A^{log_A J}]`, the
+harmonically weighted sum over the progression variable is at most
+`(a+1)⁻¹ + 2/L + L⁻¹·(R + 1 + log A)`.  Only the `L⁻¹·R` term can grow with `N`. -/
+theorem progression_sum_bound {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1)
+    {L a b₀ b₁ d e J A : ℕ} (hd : 0 < d) (he : 0 < e) (hL : 0 < L) (haL : a + 1 ≤ L)
+    (hA : 2 ≤ A) (hJ1 : 1 ≤ J) (R : ℝ)
+    (hrung : ‖∑ j ∈ Finset.Ioc 0 (A ^ Nat.log A J), (Erdos67b.harmonicWeight j : ℂ) *
+        zOmInt z₀ (Erdos67b.integerAffine e (b₀ : ℤ) j) *
+        zOmInt z₁ (Erdos67b.integerAffine d (b₁ : ℤ) j)‖ ≤ R) :
+    ‖∑ j ∈ Finset.range (J + 1), ((((L * j + a : ℕ) : ℝ) + 1)⁻¹ : ℝ) •
+        (z₀ ^ ArithmeticFunction.cardFactors (e * j + b₀) *
+          z₁ ^ ArithmeticFunction.cardFactors (d * j + b₁))‖
+      ≤ (((a : ℝ) + 1)⁻¹ + 2 / (L : ℝ)) + (L : ℝ)⁻¹ * (R + (1 + Real.log A)) := by
+  set m := Nat.log A J with hm
+  set Z : ℕ → ℂ := fun j => (Erdos67b.harmonicWeight j : ℂ) *
+    zOmInt z₀ (Erdos67b.integerAffine e (b₀ : ℤ) j) *
+    zOmInt z₁ (Erdos67b.integerAffine d (b₁ : ℤ) j) with hZ
+  have hlow : A ^ m ≤ J := Nat.pow_log_le_self A (by omega)
+  have hLR : (0 : ℝ) < (L : ℝ) := by exact_mod_cast hL
+  -- split the rung's window off the cutoff
+  have hsplit := Finset.sum_Ioc_consecutive Z (Nat.zero_le (A ^ m)) hlow
+  have hgap : ‖∑ j ∈ Finset.Ioc (A ^ m) J, Z j‖ ≤ 1 + Real.log A := by
+    have hterm : ∀ j ∈ Finset.Ioc (A ^ m) J, ‖Z j‖ ≤ ((j : ℝ))⁻¹ := by
+      intro j _
+      rw [hZ]
+      simp only []
+      rw [norm_mul, norm_mul, Complex.norm_real, Real.norm_eq_abs,
+        abs_of_nonneg (Erdos67b.harmonicWeight_nonneg j), Erdos67b.harmonicWeight]
+      calc ((j : ℝ))⁻¹ * ‖zOmInt z₀ (Erdos67b.integerAffine e (b₀ : ℤ) j)‖ *
+            ‖zOmInt z₁ (Erdos67b.integerAffine d (b₁ : ℤ) j)‖
+          ≤ ((j : ℝ))⁻¹ * 1 * 1 := by
+            refine mul_le_mul (mul_le_mul_of_nonneg_left (norm_zOmInt_le_one hz₀ _)
+              (by positivity)) (norm_zOmInt_le_one hz₁ _) (norm_nonneg _) (by positivity)
+        _ = ((j : ℝ))⁻¹ := by ring
+    exact le_trans (norm_sum_le _ _)
+      (le_trans (Finset.sum_le_sum hterm) (harmonic_gap_le_log hA hJ1))
+  have hIoc : ‖∑ j ∈ Finset.Ioc 0 J, Z j‖ ≤ R + (1 + Real.log A) := by
+    rw [← hsplit]
+    exact le_trans (norm_add_le _ _) (add_le_add hrung hgap)
+  have hkey := joint_inner_harmonic_le (z₀ := z₀) (z₁ := z₁) (L := L) (a := a)
+    (b₀ := b₀) (b₁ := b₁) (d := d) (e := e) hz₀ hz₁ hL haL J
+  rw [rung_sum_spelling z₀ z₁ hd he b₀ b₁ J] at hkey
+  refine le_trans hkey ?_
+  have : (L : ℝ)⁻¹ * ‖∑ j ∈ Finset.Ioc 0 J, Z j‖ ≤ (L : ℝ)⁻¹ * (R + (1 + Real.log A)) :=
+    mul_le_mul_of_nonneg_left hIoc (by positivity)
+  linarith
+
 end CastingOut
 
 end NormalNumbers
@@ -711,3 +766,4 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.joint_inner_harmonic_le
 #print axioms NormalNumbers.CastingOut.harmonic_gap_le_log
 #print axioms NormalNumbers.CastingOut.rung_sum_spelling
+#print axioms NormalNumbers.CastingOut.progression_sum_bound

@@ -219,3 +219,27 @@ Every mismatch between our double-shift correlation and `rung_two_of_named_input
    choosing `ε' = ε/(sqfWMass ζ₀ · sqfWMass ζ₁)` gives the rung.  Everything else is
    `N`-independent.  Also needs a `max` over the finitely many pairs of the `A₀` from
    `rung_two_of_named_inputs` (the `range_one_certificate_uniform` pattern, over pairs).
+
+## Lap 28 — **`progression_sum_bound`**: the per-pair bound, assembled
+
+    ‖∑_{j ≤ J} (Lj + a + 1)⁻¹ • ζ₀^{Ω(ej+b₀)} ζ₁^{Ω(dj+b₁)}‖
+      ≤ ((a+1)⁻¹ + 2/L) + L⁻¹·(R + 1 + log A)
+
+where `R` is the rung's bound at the window `(0, A^{log_A J}]`, supplied as a hypothesis
+(`hrung`) so the lemma is independent of which analytic input provides it.  Chains
+`joint_inner_harmonic_le` (weight transfer, `j = 0` peeled) → `rung_sum_spelling` (equality) →
+`Finset.sum_Ioc_consecutive` + `harmonic_gap_le_log` (the window gap) → `norm_zOmInt_le_one`.
+
+Only the `L⁻¹·R` term can grow with `N`; everything else is an `N`-independent constant.
+
+### NEXT — the last assembly
+Sum `progression_sum_bound` over the coprime powerful pairs `d, e ≤ Y`, weighted by
+`‖sqfW ζ₀ d‖·‖sqfW ζ₁ e‖`, and add `two_shift_truncation_bound`.  Two facts make it close:
+
+* `∑_{d,e ≤ Y} ‖sqfW ζ₀ d‖‖sqfW ζ₁ e‖/(de) ≤ sqfWMass ζ₀ · sqfWMass ζ₁ < ∞` (lap 7 + lap 25),
+  so the `ε·log N` from each rung survives the pair sum with a finite constant — rescale `ε`.
+* Every other term is `N`-independent, hence `o(log N)`.
+
+Also needed: a `max` over the finitely many pairs of the `A₀` that
+`rung_two_of_named_inputs` returns (the `range_one_certificate_uniform` induction, over pairs),
+and `L = de` with `a + 1 ≤ de` from `exists_joint_class`.
