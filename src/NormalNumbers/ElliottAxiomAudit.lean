@@ -7,6 +7,7 @@ import NormalNumbers.ElliottLeafTwo
 import NormalNumbers.ElliottRankin
 import NormalNumbers.ElliottReindex
 import NormalNumbers.ElliottDivisorTail
+import NormalNumbers.ElliottExpand
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -89,6 +90,11 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottDivisorTail.sum_Icc_multiples_inv_le
 #print axioms NormalNumbers.ElliottDivisorTail.sum_window_le_transfer_nonneg
 #print axioms NormalNumbers.ElliottDivisorTail.sum_window_divisor_tail_le
+
+-- the squarefull expansion of the correlation, and its truncation at D
+#print axioms NormalNumbers.ElliottExpand.posExt_eq_sum_divTerm
+#print axioms NormalNumbers.ElliottExpand.elliottLogCorrelation_expand
+#print axioms NormalNumbers.ElliottExpand.norm_elliottLogCorrelation_le_truncated
 #print axioms NormalNumbers.ElliottLeafTwo.exists_squarefull_tail
 
 -- the dependency's proved special case
