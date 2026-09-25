@@ -705,4 +705,204 @@ theorem exists_uOm_step :
     abs_of_nonneg (invStep_nonneg hN)]
   exact mul_le_mul_of_nonneg_left (hC z hz N hN) (invStep_nonneg hN)
 
+/-! ### The discrete integrating factor, and the mean -/
+
+/-- The scalar step of the integrating factor, isolated so that `nlinarith` sees a small
+context. -/
+lemma levin_step_scalar {u P s θ θ₀ K C : ℝ}
+    (huP : u ≤ K * P) (hu : 0 ≤ u) (hP1 : 1 ≤ P) (hs : 0 ≤ s) (hθ₀ : 0 ≤ θ₀)
+    (hC : 0 ≤ C) (hK : 0 < K) (hκ : 0 < θ - θ₀) (hσ : s ≤ (θ - θ₀) / 3)
+    (hKκ : 2 * C ≤ K * (θ - θ₀)) :
+    u * (1 + s * θ₀ + s ^ 2 / 2) + s * C ≤ K * P * (1 + θ * s - s ^ 2) := by
+  have hfac : (0:ℝ) ≤ 1 + s * θ₀ + s ^ 2 / 2 := by positivity
+  have h1 : u * (1 + s * θ₀ + s ^ 2 / 2) ≤ K * P * (1 + s * θ₀ + s ^ 2 / 2) :=
+    mul_le_mul_of_nonneg_right huP hfac
+  have hKP : K ≤ K * P := by nlinarith
+  have h2 : s * C ≤ K * P * ((θ - θ₀) * s - (3/2) * s ^ 2) := by
+    have hstep : (θ - θ₀) * s - (3/2) * s ^ 2 ≥ (θ - θ₀) / 2 * s := by nlinarith
+    have h3 : K * P * ((θ - θ₀) / 2 * s) ≥ K * ((θ - θ₀) / 2 * s) := by nlinarith
+    have h4 : K * ((θ - θ₀) / 2 * s) ≥ C * s := by nlinarith
+    nlinarith [mul_le_mul_of_nonneg_left hstep (by positivity : (0:ℝ) ≤ K * P)]
+  nlinarith
+
+/-- **`‖Ũ(N)‖ ≤ K(log N)^θ` for any `θ ∈ (max(Re z, 0), 1)`.**  The additive error is a CONSTANT
+here (not `A(N)`), so the only requirement is `θ > 0` — which is automatic. -/
+theorem exists_norm_uOm_le_rpow {z : ℂ} (hz : ‖z‖ = 1) (hzne : z ≠ 1) :
+    ∃ K θ : ℝ, ∃ N₀ : ℕ, 0 < K ∧ 0 < θ ∧ θ < 1 ∧ 3 ≤ N₀ ∧
+      ∀ N, N₀ ≤ N → ‖uOm z N‖ ≤ K * (Real.log (N : ℝ)) ^ θ := by
+  obtain ⟨C, hC0, hC⟩ := exists_uOm_step
+  have hre := re_lt_one_of_norm_one z hz hzne
+  have hn : z.re * z.re + z.im * z.im = 1 := by
+    have h := Complex.normSq_eq_norm_sq z
+    rw [hz] at h
+    simp only [Complex.normSq_apply] at h
+    nlinarith [h]
+  have hreg : (-1 : ℝ) ≤ z.re := by nlinarith [hn, mul_self_nonneg z.im]
+  set θ₀ : ℝ := max z.re 0 with hθ0def
+  have hθ00 : 0 ≤ θ₀ := le_max_right _ _
+  have hθ0re : z.re ≤ θ₀ := le_max_left _ _
+  have hθ01 : θ₀ < 1 := max_lt hre (by norm_num)
+  set θ : ℝ := (θ₀ + 1) / 2 with hθdef
+  have hθ1 : θ < 1 := by rw [hθdef]; linarith
+  have hθpos : 0 < θ := by rw [hθdef]; linarith
+  set κ : ℝ := θ - θ₀ with hκdef
+  have hκ : 0 < κ := by rw [hκdef, hθdef]; linarith
+  set N₀ : ℕ := max 3 ⌈(3 / κ : ℝ)⌉₊ with hN0def
+  have h03 : 3 ≤ N₀ := le_max_left _ _
+  have hs3 : ∀ m, N₀ ≤ m → logRatioStep m ≤ κ / 3 := by
+    intro m hm
+    have hm3 : 3 ≤ m := le_trans h03 hm
+    have hceil : (3 / κ : ℝ) ≤ (m : ℝ) := by
+      refine le_trans (Nat.le_ceil _) ?_
+      have hc : ⌈(3 / κ : ℝ)⌉₊ ≤ m := le_trans (le_max_right 3 _) hm
+      exact_mod_cast hc
+    have hκ3 : (0 : ℝ) < 3 / κ := by positivity
+    calc logRatioStep m ≤ 1 / (m : ℝ) := logRatioStep_le_inv hm3
+      _ ≤ 1 / (3 / κ) := one_div_le_one_div_of_le hκ3 hceil
+      _ = κ / 3 := by field_simp
+  set K : ℝ := 2 * C / κ + ‖uOm z N₀‖ + 1 with hKdef
+  have hKpos : 0 < K := by
+    have : (0:ℝ) ≤ 2 * C / κ := by positivity
+    rw [hKdef]; linarith [norm_nonneg (uOm z N₀)]
+  have hKU : ‖uOm z N₀‖ ≤ K := by
+    have : (0:ℝ) ≤ 2 * C / κ := by positivity
+    rw [hKdef]; linarith
+  have hKκ : 2 * C ≤ K * κ := by
+    have hbase : 2 * C / κ ≤ K := by
+      have : (0:ℝ) ≤ 2 * C / κ := by positivity
+      rw [hKdef]; linarith [norm_nonneg (uOm z N₀)]
+    calc 2 * C = (2 * C / κ) * κ := by field_simp
+      _ ≤ K * κ := mul_le_mul_of_nonneg_right hbase hκ.le
+  refine ⟨K, θ, N₀, hKpos, hθpos, hθ1, h03, ?_⟩
+  intro N hN
+  induction N, hN using Nat.le_induction with
+  | base =>
+      have hL := one_le_log_cast h03
+      have hone : (1 : ℝ) ≤ (Real.log (N₀ : ℝ)) ^ θ := by
+        calc (1 : ℝ) = (1 : ℝ) ^ θ := (Real.one_rpow θ).symm
+          _ ≤ (Real.log (N₀ : ℝ)) ^ θ := Real.rpow_le_rpow (by norm_num) hL hθpos.le
+      nlinarith [hKU, hone, hKpos]
+  | succ N hN ih =>
+      have hm3 : 3 ≤ N := le_trans h03 hN
+      have hs0 := logRatioStep_nonneg hm3
+      have hi0 := invStep_nonneg hm3
+      have his := invStep_le_logRatioStep hm3
+      have hL := one_le_log_cast hm3
+      have hLpos : (0 : ℝ) < Real.log (N : ℝ) := by linarith
+      have hPnn : (0 : ℝ) ≤ (Real.log (N : ℝ)) ^ θ := Real.rpow_nonneg hLpos.le _
+      have hP1 : (1 : ℝ) ≤ (Real.log (N : ℝ)) ^ θ := by
+        calc (1 : ℝ) = (1 : ℝ) ^ θ := (Real.one_rpow θ).symm
+          _ ≤ (Real.log (N : ℝ)) ^ θ := Real.rpow_le_rpow (by norm_num) hL hθpos.le
+      have hfac : (0 : ℝ) ≤ 1 + invStep N * z.re + (invStep N) ^ 2 / 2 := by
+        nlinarith [mul_nonneg hi0 (show (0:ℝ) ≤ z.re + 1 by linarith),
+          sq_nonneg (invStep N - 1)]
+      have hnorm : ‖uOm z (N + 1)‖
+          ≤ ‖uOm z N‖ * (1 + invStep N * z.re + (invStep N) ^ 2 / 2) + invStep N * C := by
+        have hstep := hC z hz N hm3
+        have hsplit : uOm z (N + 1)
+            = uOm z N * (1 + z * ((invStep N : ℝ) : ℂ))
+              + (uOm z (N + 1) - uOm z N * (1 + z * ((invStep N : ℝ) : ℂ))) := by ring
+        rw [hsplit]
+        refine le_trans (norm_add_le _ _) ?_
+        rw [norm_mul]
+        exact add_le_add (mul_le_mul_of_nonneg_left (norm_one_add_mul_ofReal_le hz hi0)
+          (norm_nonneg _)) hstep
+      -- move from `s_N` to `σ_N`
+      have hmono : ‖uOm z N‖ * (1 + invStep N * z.re + (invStep N) ^ 2 / 2) + invStep N * C
+          ≤ ‖uOm z N‖ * (1 + logRatioStep N * θ₀ + (logRatioStep N) ^ 2 / 2)
+            + logRatioStep N * C := by
+        have h1 : invStep N * z.re ≤ logRatioStep N * θ₀ := by
+          nlinarith [mul_le_mul_of_nonneg_left hθ0re hi0,
+            mul_le_mul_of_nonneg_right his hθ00]
+        have h2 : (invStep N) ^ 2 ≤ (logRatioStep N) ^ 2 := by nlinarith
+        nlinarith [norm_nonneg (uOm z N), mul_le_mul_of_nonneg_right his hC0]
+      have hcast : ((N + 1 : ℕ) : ℝ) = (N : ℝ) + 1 := by push_cast; ring
+      rw [hcast]
+      have hLsucc : (Real.log ((N : ℝ) + 1)) ^ θ
+          = (Real.log (N : ℝ)) ^ θ * (1 + logRatioStep N) ^ θ := by
+        rw [log_succ_eq_mul hm3, Real.mul_rpow hLpos.le (by linarith)]
+      rw [hLsucc]
+      have hber := one_add_rpow_ge hs0 hθpos.le hθ1.le
+      calc ‖uOm z (N + 1)‖
+          ≤ ‖uOm z N‖ * (1 + invStep N * z.re + (invStep N) ^ 2 / 2) + invStep N * C := hnorm
+        _ ≤ ‖uOm z N‖ * (1 + logRatioStep N * θ₀ + (logRatioStep N) ^ 2 / 2)
+              + logRatioStep N * C := hmono
+        _ ≤ (K * (Real.log (N : ℝ)) ^ θ)
+              * (1 + θ * logRatioStep N - (logRatioStep N) ^ 2) :=
+              levin_step_scalar ih (norm_nonneg _) hP1 hs0 hθ00 hC0 hKpos
+                (by rw [← hκdef]; exact hκ) (by rw [← hκdef]; exact hs3 N hN)
+                (by rw [← hκdef]; exact hKκ)
+        _ ≤ (K * (Real.log (N : ℝ)) ^ θ) * ((1 + logRatioStep N) ^ θ) :=
+              mul_le_mul_of_nonneg_left hber (mul_nonneg hKpos.le hPnn)
+        _ = K * ((Real.log (N : ℝ)) ^ θ * (1 + logRatioStep N) ^ θ) := by ring
+
+/-! ### The payoff -/
+
+/-- **`∑_{n ≤ N} z^{ω(n)} = o(N)` for EVERY `z` on the unit circle with `z ≠ 1`.**
+No regime restriction: `Re z < 1` is automatic, and the additive error in the recursion is an
+absolute constant, so any `θ ∈ (max(Re z, 0), 1)` works. -/
+theorem omegaPow_mean_tendsto_zero {z : ℂ} (hz : ‖z‖ = 1) (hzne : z ≠ 1) :
+    Tendsto (fun N : ℕ => ‖mOm z N‖ / (N : ℝ)) atTop (𝓝 0) := by
+  obtain ⟨C, hC0, hC⟩ := exists_mOm_scale
+  obtain ⟨K, θ, N₀, hKpos, hθ0, hθ1, hN03, hU⟩ := exists_norm_uOm_le_rpow hz hzne
+  have hlim : Tendsto (fun N : ℕ => (K + C) * (Real.log (N : ℝ)) ^ (θ - 1)) atTop (𝓝 0) := by
+    have h1 : Tendsto (fun x : ℝ => x ^ (θ - 1)) atTop (𝓝 0) := by
+      have := tendsto_rpow_neg_atTop (show (0 : ℝ) < 1 - θ by linarith)
+      simpa [neg_sub] using this
+    have h2 : Tendsto (fun N : ℕ => Real.log (N : ℝ)) atTop atTop :=
+      Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+    simpa using (h1.comp h2).const_mul (K + C)
+  refine squeeze_zero' (Filter.Eventually.of_forall fun N => by positivity) ?_ hlim
+  filter_upwards [Filter.eventually_ge_atTop N₀] with N hN
+  have hN3 : 3 ≤ N := le_trans hN03 hN
+  have hL := one_le_log_cast hN3
+  have hLpos : (0 : ℝ) < Real.log (N : ℝ) := by linarith
+  have hNpos : (0:ℝ) < (N:ℝ) := by
+    have : (3:ℝ) ≤ (N:ℝ) := by exact_mod_cast hN3
+    linarith
+  have hP1 : (1 : ℝ) ≤ (Real.log (N : ℝ)) ^ θ := by
+    calc (1 : ℝ) = (1 : ℝ) ^ θ := (Real.one_rpow θ).symm
+      _ ≤ (Real.log (N : ℝ)) ^ θ := Real.rpow_le_rpow (by norm_num) hL hθ0.le
+  have hsc := hC z hz N hN3
+  have hsplit : ‖mOm z N / (N : ℂ) * ((Real.log (N:ℝ) : ℝ) : ℂ)‖ ≤ ‖z * uOm z N‖ + C := by
+    have h := norm_sub_norm_le (mOm z N / (N : ℂ) * ((Real.log (N:ℝ) : ℝ) : ℂ)) (z * uOm z N)
+    linarith
+  have hlhs : ‖mOm z N / (N : ℂ) * ((Real.log (N:ℝ) : ℝ) : ℂ)‖
+      = (‖mOm z N‖ / (N:ℝ)) * Real.log (N : ℝ) := by
+    rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hLpos.le, norm_div,
+      Complex.norm_natCast]
+  have hzu : ‖z * uOm z N‖ = ‖uOm z N‖ := by rw [norm_mul, hz, one_mul]
+  have hUN : ‖uOm z N‖ ≤ K * (Real.log (N : ℝ)) ^ θ := hU N hN
+  have hmain : (‖mOm z N‖ / (N:ℝ)) * Real.log (N : ℝ)
+      ≤ ((K + C) * (Real.log (N : ℝ)) ^ (θ - 1)) * Real.log (N : ℝ) := by
+    have hstep : (‖mOm z N‖ / (N:ℝ)) * Real.log (N : ℝ) ≤ (K + C) * (Real.log (N : ℝ)) ^ θ := by
+      rw [← hlhs]
+      rw [hzu] at hsplit
+      nlinarith
+    calc (‖mOm z N‖ / (N:ℝ)) * Real.log (N : ℝ)
+        ≤ (K + C) * (Real.log (N : ℝ)) ^ θ := hstep
+      _ = ((K + C) * (Real.log (N : ℝ)) ^ (θ - 1)) * Real.log (N : ℝ) := by
+          rw [rpow_sub_one_mul hLpos θ]; ring
+  exact le_of_mul_le_mul_right hmain hLpos
+
+/-- **THE DISCHARGE, in full.**  `DelangeMean t` for every `t` with `e(t) ≠ 1`, i.e. every
+`t ∉ ℤ` — no regime restriction whatsoever.  The 🟡 cited hypothesis of `SwingC1Delange.lean`
+is now a theorem of this repo on its whole range. -/
+theorem delangeMean_of_phase_ne_one (t : ℝ) (ht : phase t ≠ 1) : DelangeMean t := by
+  have hz : ‖phase t‖ = 1 := norm_phase t
+  have hkey := omegaPow_mean_tendsto_zero hz ht
+  rw [DelangeMean, tendsto_zero_iff_norm_tendsto_zero]
+  refine hkey.congr fun N => ?_
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp [fullMean, mOm]
+  have hidx : ∑ n ∈ Finset.range N, phase (t * (omegaNat (n + 1) : ℝ)) = mOm (phase t) N := by
+    rw [mOm]
+    have hIoc : Finset.Ioc 0 N = Finset.Ico 1 (N + 1) := by
+      ext m; simp only [Finset.mem_Ioc, Finset.mem_Ico]; omega
+    rw [hIoc, Finset.sum_Ico_eq_sum_range]
+    simp only [Nat.add_sub_cancel]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [show 1 + n = n + 1 by omega, fOm_of_pos (by omega : n + 1 ≠ 0), ← phase_omegaNat_pow]
+  rw [fullMean, hidx, norm_div, Complex.norm_natCast]
+
 end NormalNumbers.CastingOut
