@@ -1,6 +1,6 @@
 # HANDOFF twopoint — laps 57–59, 2026-09-25: **`DelangeMean (1/2)` is UNCONDITIONAL**
 
-Branch `wip/twopoint-avg`.  Working tree clean; every lap committed green (pre-commit `lake build`,
+Branch `wip/twopoint-avg`.  HEAD `51d4624`.  Working tree clean; every lap committed green (pre-commit `lake build`,
 9296 jobs).  All new declarations `#print axioms`-clean (`[propext, Classical.choice, Quot.sound]`).
 **No `sorry` introduced.**
 
