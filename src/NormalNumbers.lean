@@ -496,3 +496,4 @@ import NormalNumbers.C3MrtTTDefect
 import NormalNumbers.C3MrtFaithfulInput
 import NormalNumbers.C3MrtArchFaithful
 import NormalNumbers.C3MrtBlockDefect
+import NormalNumbers.C3MrtCharSumZero

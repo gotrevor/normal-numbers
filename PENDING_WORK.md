@@ -11283,3 +11283,37 @@ one within a maximal run" works (pair `p_i ↔ p_{i+1}` alternately, which is an
 When `|t| 2^{-j} ≪ 1`, instead pair `p_i ↔ p_{i+k}` with `k ≍ 2^j/|t|`, which needs only that the
 block contains `≥ 2k` primes — i.e. a lower bound on `#block`, available from Chebyshev.  Formalize
 the `|t| 2^{-j} ≳ 1` branch first: it needs no prime counting at all.
+
+## 2026-09-25 — DIRECTION ②.3: the `t = 0` conductor debt, narrowed to the tail
+
+`src/NormalNumbers/C3MrtCharSumZero.lean` (new, sorry-free, axiom-clean).
+
+**Advance on the crux.**  The `t = 0` slice of `CharPrimeSumLogQ` is split at the conductor and
+the **head is discharged in the kernel**: `norm_charHeadSum_le` proves
+`‖∑_{p ≤ q} conj(χ(p))/p‖ ≤ log(q+2) + mertensBound` via `small_prime_mass_le`, i.e. the head is
+`O(log log q)` — a whole exponential *below* the `log q` budget, so the head can never be the
+obstruction.  `charPrimeSumLogQZero_of_tail` then gives the whole slice with
+`D = C + 1 + mertensBound` from the single remaining input `CharTailCancellation C`
+(cancellation over `q < p ≤ X²`, equivalent in strength to the Siegel-free `L(1,χ) ≫ q^{-1/2}`;
+mathlib has only the qualitative `LFunction_apply_one_ne_zero`).
+
+**GUARD RULE discharged for `CharTailCancellation`** (all four configurations):
+* content locator — `charTailSum_head_free` (below the conductor the tail range is *empty*, so
+  the content is at `X² ≫ q`);
+* empty — `charTailCancellation_vacuous_below` (survives, any `0 ≤ C`);
+* singleton — `charTailSum_singleton_le` (`≤ 1`; the bound is additive in the mass, not
+  multiplicative in a saving, so no singleton can refute it — the lap-115 failure mode is
+  structurally absent);
+* constant-function — `charTail_conductor_ne_one` (`χ = 1` is exactly what `χ ≠ 1` excludes, and
+  `q = 1` forces `χ = 1`).
+
+**Next attack on this item.**  `CharTailCancellation C` from `L(1,χ) ≫ q^{-1/2}`:
+1. `∑_{q<p≤Y} χ(p)/p = ∑_{p≤Y} χ(p)p^{-σ} + O(1)` at `σ = 1 + 1/log Y` (smoothing; the head
+   subtraction is already `O(log log q)` by `norm_charHeadSum_le`);
+2. `∑_p χ(p)p^{-σ} = 𝓛(σ,χ) + O(1)` where `𝓛 = ∑_{p,k} χ(p^k)/(k p^{kσ})` — the `k ≥ 2` tail is
+   `≤ ∑_p ∑_{k≥2} 1/(k p^k) ≤ 1` (elementary, next leaf to formalize);
+3. `exp 𝓛 = L(σ,χ)` (Euler product; mathlib `DirichletCharacter.LSeries_eulerProduct`-family);
+4. `|Re 𝓛| ≤ |log‖L‖| ≤ (1/2) log q + O(log log q)` from the lower bound plus `‖L(1,χ)‖ ≪ log q`;
+5. `|Im 𝓛| ≪ log q` — the winding number of `arg L(σ,χ)` as `σ: ∞ → 1`.  **This is the one step
+   with no shortcut**; budget is generous (`D` up to `62` is admissible, since downstream only
+   needs `2D < 125`), so a crude Jensen/zero-counting bound suffices.
