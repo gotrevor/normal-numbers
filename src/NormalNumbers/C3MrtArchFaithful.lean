@@ -312,6 +312,217 @@ theorem narrowTwistSmall_triv_of_narrow {z : ℂ} {κ C : ℝ} (h : NarrowTwistS
         linarith
       simpa using Real.one_le_rpow hlogX (by norm_num : (0:ℝ) ≤ 1 / 125)) t ht
 
+
+/-! ### The narrow range at PRINCIPAL characters, reduced to `q = 1`
+
+TT's infimum runs over all moduli `q ≤ (log X)^{1/125}`.  The principal character mod `q` is
+not a new case: `χ₀(p) = 1` except at the finitely many `p ∣ q`, so its twisted prime sum
+differs from the trivial one by at most `∑_{p ∣ q} 1/p ≤ log log q + mertensBound`, and
+`log q ≤ (1/125) log log X` makes that `≤ log log log X` — absorbed into any positive fraction
+of `log log X`.  So the genuinely open part of the narrow range is the **non-principal**
+characters, where the expected mechanism is different anyway (`∑_{p≤Y} χ(p)p^{-it}/p` is
+`O(log log(q(2+|t|)))` by the non-vanishing of `L(1+it, χ)`, which is *smaller* than the
+principal case, not larger). -/
+
+/-- `∑_{p ≤ Y, p ∣ q} 1/p ≤ log log q + mertensBound` for `q ≥ 2`: the bad primes of a modulus
+carry at most the full reciprocal mass below `q`. -/
+theorem sum_inv_primes_dvd_le {q Y : ℕ} (hq : 2 ≤ q) :
+    ∑ p ∈ (Finset.range (Y + 1)).filter (fun p => Nat.Prime p ∧ p ∣ q), ((p : ℝ))⁻¹
+      ≤ Real.log (Real.log (q : ℝ)) + Erdos67b.PrimeEstimates.mertensBound := by
+  classical
+  have hsub : (Finset.range (Y + 1)).filter (fun p => Nat.Prime p ∧ p ∣ q)
+      ⊆ (Finset.range (q + 1)).filter Nat.Prime := by
+    intro p hp
+    obtain ⟨-, hpp, hpd⟩ := Finset.mem_filter.mp hp
+    have hple : p ≤ q := Nat.le_of_dvd (by omega) hpd
+    exact Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), hpp⟩
+  have hle : ∑ p ∈ (Finset.range (Y + 1)).filter (fun p => Nat.Prime p ∧ p ∣ q), ((p : ℝ))⁻¹
+      ≤ ∑ p ∈ (Finset.range (q + 1)).filter Nat.Prime, ((p : ℝ))⁻¹ :=
+    Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p _ _ => by positivity)
+  have h := abs_le.1 (Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le hq)
+  have hrw : Erdos67b.PrimeEstimates.primeReciprocals q
+      = ∑ p ∈ (Finset.range (q + 1)).filter Nat.Prime, ((p : ℝ))⁻¹ := rfl
+  rw [← hrw] at hle
+  linarith [h.2]
+
+/-- The principal-character twisted prime sum differs from the trivial one only on `p ∣ q`. -/
+theorem norm_twistedPrimeSum_principal_sub {X : ℝ} {q : ℕ} (hq : 0 < q) (t : ℝ) :
+    ‖twistedPrimeSum X (1 : DirichletCharacter ℂ 1) t - twistedPrimeSum X (1 : DirichletCharacter ℂ q) t‖
+      ≤ ∑ p ∈ (Finset.range (⌈X ^ 2⌉₊ + 1)).filter (fun p => Nat.Prime p ∧ p ∣ q),
+          ((p : ℝ))⁻¹ := by
+  classical
+  set F : Finset ℕ := (Finset.range (⌈X ^ 2⌉₊ + 1)).filter Nat.Prime with hF
+  have hterm : ∀ p ∈ F,
+      (starRingEnd ℂ) ((1 : DirichletCharacter ℂ 1) ((p : ℕ) : ZMod 1)) *
+          Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ)) / (p : ℂ)
+        - (starRingEnd ℂ) ((1 : DirichletCharacter ℂ q) ((p : ℕ) : ZMod q)) *
+          Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ)) / (p : ℂ)
+      = if p ∣ q then
+          Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ)) / (p : ℂ) else 0 := by
+    intro p hp
+    have hpp : Nat.Prime p := (Finset.mem_filter.mp hp).2
+    have h1 : (starRingEnd ℂ) ((1 : DirichletCharacter ℂ 1) ((p : ℕ) : ZMod 1)) = 1 := by
+      rw [Subsingleton.elim ((p : ℕ) : ZMod 1) 1, map_one, map_one]
+    by_cases hd : p ∣ q
+    · have hnu : ¬ IsUnit ((p : ℕ) : ZMod q) := by
+        rw [ZMod.isUnit_iff_coprime, Nat.Prime.coprime_iff_not_dvd hpp]
+        exact fun h => h hd
+      rw [h1, MulChar.map_nonunit _ hnu]
+      simp [hd]
+    · have hu : IsUnit ((p : ℕ) : ZMod q) := by
+        rw [ZMod.isUnit_iff_coprime, Nat.Prime.coprime_iff_not_dvd hpp]
+        exact hd
+      rw [h1, MulChar.one_apply hu]
+      simp [hd]
+  rw [twistedPrimeSum, twistedPrimeSum, ← hF, ← Finset.sum_sub_distrib,
+    Finset.sum_congr rfl hterm, ← Finset.sum_filter]
+  have hfil : F.filter (fun p => p ∣ q)
+      = (Finset.range (⌈X ^ 2⌉₊ + 1)).filter (fun p => Nat.Prime p ∧ p ∣ q) := by
+    rw [hF, Finset.filter_filter]
+  rw [hfil]
+  refine le_trans (norm_sum_le _ _) (le_of_eq (Finset.sum_congr rfl ?_))
+  · intro p hp
+    have hpp : Nat.Prime p := (Finset.mem_filter.mp hp).2.1
+    have hp0 : (0 : ℝ) < p := by exact_mod_cast hpp.pos
+    rw [norm_div, Complex.norm_exp]
+    have hre : (-(t : ℂ) * Complex.I * (Real.log p : ℂ)).re = 0 := by
+      simp only [Complex.mul_re, Complex.mul_im, Complex.neg_re, Complex.neg_im,
+        Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+      ring
+    rw [hre, Real.exp_zero, Complex.norm_natCast, one_div]
+
+
+/-- `log log X > 0` for `X ≥ 3`, the standing size fact. -/
+theorem logloglog_pos {X : ℝ} (hX : 3 ≤ X) : 0 < Real.log (Real.log X) := by
+  have h1 : Real.log 3 ≤ Real.log X := Real.log_le_log (by norm_num) hX
+  have h3 : (1 : ℝ) < Real.log 3 := by
+    have h := Real.log_le_log (Real.exp_pos 1) (show Real.exp 1 ≤ 2.72 by
+      nlinarith [Real.exp_one_lt_d9])
+    rw [Real.log_exp] at h
+    have : Real.log 2.72 < Real.log 3 := Real.log_lt_log (by norm_num) (by norm_num)
+    linarith
+  exact Real.log_pos (by linarith)
+
+/-- **The principal characters of the narrow range, reduced to `q = 1`.**  The loss is
+`log log q + mertensBound ≤ log log log X + O(1)`, absorbed by halving the saving. -/
+theorem narrowTwist_principal_of_triv {z : ℂ} {κ C : ℝ} (hz : ‖z‖ = 1) (hκ : 0 < κ)
+    (h : NarrowTwistSmallTriv z κ C) :
+    ∀ X : ℝ, 3 ≤ X → ∀ q : ℕ, 0 < q → (q : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) →
+      ∀ t : ℝ, |t| ≤ Real.log X ^ ((1 : ℝ) / 125) →
+        (z * twistedPrimeSum X (1 : DirichletCharacter ℂ q) t).re
+          ≤ (1 - κ / 2) * Real.log (Real.log X)
+            + (C + Erdos67b.PrimeEstimates.mertensBound + 1 + |Real.log (κ / 2)|) := by
+  intro X hX q hq hqX t ht
+  set u : ℝ := Real.log (Real.log X) with hu
+  have hu0 : 0 < u := logloglog_pos hX
+  have hmert0 : 0 ≤ Erdos67b.PrimeEstimates.mertensBound :=
+    Erdos67b.PrimeEstimates.mertensBound_nonneg
+  have habs : (0 : ℝ) ≤ |Real.log (κ / 2)| := abs_nonneg _
+  have hq0R : (0 : ℝ) < (q : ℝ) := by exact_mod_cast hq
+  have htriv := h X hX t ht
+  rw [← hu] at htriv
+  by_cases hq1 : q = 1
+  · -- `q = 1`: the same sum
+    subst hq1
+    nlinarith
+  · -- `q ≥ 2`
+    have hq2' : 2 ≤ q := by omega
+    have hlogq : Real.log (q : ℝ) ≤ u / 125 := by
+      have h1 : Real.log (q : ℝ) ≤ Real.log (Real.log X ^ ((1 : ℝ) / 125)) :=
+        Real.log_le_log hq0R hqX
+      have hlogX1 : (1 : ℝ) < Real.log X := by
+        have he : Real.log (Real.exp 1) < Real.log 3 :=
+          Real.log_lt_log (Real.exp_pos 1) (by nlinarith [Real.exp_one_lt_d9])
+        rw [Real.log_exp] at he
+        have h3 : Real.log 3 ≤ Real.log X := Real.log_le_log (by norm_num) hX
+        linarith
+      rw [Real.log_rpow (by linarith)] at h1
+      rw [hu]
+      linarith
+    have hlogq0 : 0 < Real.log (q : ℝ) := by
+      refine Real.log_pos ?_
+      have : (2 : ℝ) ≤ (q : ℝ) := by exact_mod_cast hq2'
+      linarith
+    have hllq : Real.log (Real.log (q : ℝ)) ≤ Real.log u := by
+      refine Real.log_le_log hlogq0 (by linarith)
+    -- `log u ≤ (κ/2) u − 1 − log(κ/2)`
+    have hsub : Real.log ((κ / 2) * u) ≤ (κ / 2) * u - 1 :=
+      Real.log_le_sub_one_of_pos (by positivity)
+    have hsplit : Real.log ((κ / 2) * u) = Real.log (κ / 2) + Real.log u :=
+      Real.log_mul (by positivity) (by positivity)
+    have hlu : Real.log u ≤ (κ / 2) * u - 1 - Real.log (κ / 2) := by
+      rw [hsplit] at hsub; linarith
+    have habs : -Real.log (κ / 2) ≤ |Real.log (κ / 2)| := neg_le_abs _
+    -- the difference of the two twisted sums
+    have hdiff := norm_twistedPrimeSum_principal_sub (X := X) (q := q) hq t
+    have hbad := sum_inv_primes_dvd_le (q := q) (Y := ⌈X ^ 2⌉₊) hq2'
+    have hre : (z * twistedPrimeSum X (1 : DirichletCharacter ℂ q) t).re
+        ≤ (z * twistedPrimeSum X (1 : DirichletCharacter ℂ 1) t).re
+          + ‖twistedPrimeSum X (1 : DirichletCharacter ℂ 1) t
+              - twistedPrimeSum X (1 : DirichletCharacter ℂ q) t‖ := by
+      have heq : (z * twistedPrimeSum X (1 : DirichletCharacter ℂ q) t).re
+          - (z * twistedPrimeSum X (1 : DirichletCharacter ℂ 1) t).re
+          = (z * (twistedPrimeSum X (1 : DirichletCharacter ℂ q) t
+              - twistedPrimeSum X (1 : DirichletCharacter ℂ 1) t)).re := by
+        rw [mul_sub, Complex.sub_re]
+      have hle : (z * (twistedPrimeSum X (1 : DirichletCharacter ℂ q) t
+            - twistedPrimeSum X (1 : DirichletCharacter ℂ 1) t)).re
+          ≤ ‖twistedPrimeSum X (1 : DirichletCharacter ℂ 1) t
+              - twistedPrimeSum X (1 : DirichletCharacter ℂ q) t‖ := by
+        refine le_trans (Complex.re_le_norm _) ?_
+        rw [norm_mul, hz, one_mul, norm_sub_rev]
+      linarith [heq, hle]
+    have hgoal : (z * twistedPrimeSum X (1 : DirichletCharacter ℂ q) t).re
+        ≤ (1 - κ / 2) * u + (C + Erdos67b.PrimeEstimates.mertensBound + 1
+            + |Real.log (κ / 2)|) := by nlinarith [hre, hdiff, hbad, hllq, hlu, habs, htriv]
+    rw [hu] at hgoal
+    exact hgoal
+
+/-- **The non-principal characters of the narrow range** — the residual debt, named.  Expected to
+be *easier* than the principal case: `∑_{p≤Y} χ(p)p^{-it}/p = O(log log(q(2+|t|)))` by the
+non-vanishing of `L(1+it, χ)` on the 1-line, and `q, |t| ≤ (log X)^{1/125}` makes that
+`O(log log log X)`. -/
+def NonPrincipalTwistSmall (κ C : ℝ) : Prop :=
+  ∀ X : ℝ, 3 ≤ X → ∀ (q : ℕ) (χ : DirichletCharacter ℂ q), χ ≠ 1 →
+    (q : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) →
+    ∀ t : ℝ, |t| ≤ Real.log X ^ ((1 : ℝ) / 125) →
+      ‖twistedPrimeSum X χ t‖ ≤ (1 - κ) * Real.log (Real.log X) + C
+
+/-- The `q = 0` characters carry no primes at all: in `ZMod 0 = ℤ` no prime is a unit, so the
+principal character vanishes on every prime and the twisted sum is `0`. -/
+theorem twistedPrimeSum_zero_modulus (X : ℝ) (t : ℝ) :
+    twistedPrimeSum X (1 : DirichletCharacter ℂ 0) t = 0 := by
+  rw [twistedPrimeSum]
+  refine Finset.sum_eq_zero fun p hp => ?_
+  have hpp : Nat.Prime p := (Finset.mem_filter.mp hp).2
+  have hnu : ¬ IsUnit ((p : ℕ) : ZMod 0) := by
+    rw [ZMod.isUnit_iff_coprime, Nat.coprime_zero_right]
+    exact hpp.ne_one
+  rw [MulChar.map_nonunit _ hnu, map_zero, zero_mul, zero_div]
+
+/-- **The narrow range, assembled from the `q = 1` theorem and the non-principal debt.** -/
+theorem narrowTwistSmall_of_triv_of_nonPrincipal {z : ℂ} {κ C : ℝ} (hz : ‖z‖ = 1) (hκ : 0 < κ)
+    (hκ1 : κ ≤ 1) (hC : 0 ≤ C) (htriv : NarrowTwistSmallTriv z κ C) (hnp : NonPrincipalTwistSmall κ C) :
+    NarrowTwistSmall z (κ / 2)
+      (C + Erdos67b.PrimeEstimates.mertensBound + 1 + |Real.log (κ / 2)|) := by
+  intro X hX q χ hqX t ht
+  have hu0 : 0 < Real.log (Real.log X) := logloglog_pos hX
+  have hmert0 : 0 ≤ Erdos67b.PrimeEstimates.mertensBound :=
+    Erdos67b.PrimeEstimates.mertensBound_nonneg
+  have habs : (0 : ℝ) ≤ |Real.log (κ / 2)| := abs_nonneg _
+  have hznorm : ∀ T : ℂ, (z * T).re ≤ ‖T‖ := by
+    intro T
+    refine le_trans (Complex.re_le_norm _) ?_
+    rw [norm_mul, hz, one_mul]
+  rcases eq_or_ne χ 1 with rfl | hne
+  · rcases Nat.eq_zero_or_pos q with rfl | hq
+    · rw [twistedPrimeSum_zero_modulus X t, mul_zero, Complex.zero_re]
+      nlinarith
+    · exact le_trans (narrowTwist_principal_of_triv hz hκ htriv X hX q hq hqX t ht) (by linarith)
+  · have h2 := hnp X hX q χ hne hqX t ht
+    have h1 := hznorm (twistedPrimeSum X χ t)
+    nlinarith
+
 #print axioms ttPretentiousSumChar_eq
 #print axioms ttPretentiousSumChar_ge
 #print axioms archSupply_of_faithfulArchLower

@@ -131,6 +131,41 @@ is the only size information available.
 `∑_{p≤Y} conj(χ(p))p^{-it}/p` (zero-free region for `L(s,χ)`); the resonance route is refuted
 there (lap 104).
 
+## Lap 106 (2026-09-25) — the narrow range's PRINCIPAL characters reduced to `q = 1`
+
+`C3MrtArchFaithful`, all axiom-clean:
+
+* `sum_inv_primes_dvd_le` — `∑_{p ≤ Y, p ∣ q} 1/p ≤ log log q + mertensBound` (`q ≥ 2`).
+* `norm_twistedPrimeSum_principal_sub` — the principal character mod `q` and the trivial
+  character differ only on `p ∣ q`: `‖T₁ − T_{χ₀}‖ ≤ ∑_{p ∣ q} 1/p`.
+* `twistedPrimeSum_zero_modulus` — the `q = 0` corner: in `ZMod 0 = ℤ` no prime is a unit, so
+  `T = 0`.
+* `narrowTwist_principal_of_triv` — the principal characters cost only `log log q + O(1) ≤
+  log log log X + O(1)`, absorbed by halving the saving (`log u ≤ (κ/2)u − 1 − log(κ/2)`).
+* `NonPrincipalTwistSmall` + `narrowTwistSmall_of_triv_of_nonPrincipal` —
+  `NarrowTwistSmallTriv z κ C` **and** the non-principal debt give the full
+  `NarrowTwistSmall z (κ/2) C'`.
+
+So the narrow range is now: `q = 1` **proved** (lap 105, on `UniformResonantMass`), principal
+`q > 1` **proved** (this lap), non-principal `q > 1` open — and the non-principal case is
+expected to be the *easy* one (`∑_{p≤Y} χ(p)p^{-it}/p = O(log log(q(2+|t|)))` by non-vanishing of
+`L(1+it,χ)`, which at `q, |t| ≤ (log X)^{1/125}` is `O(log log log X)`).
+
+**NEW OBLIGATION SURFACED — uniformity of the constant in the twist `h'`.**  `ArchSupply
+(TTNonPretentiousAt A) b` fixes ONE `A` across all primitive `h'`, so `FaithfulArchLower b C`
+needs `C` uniform in `h'` and a `κ(h') > 0`.  This was invisible while the hypothesis was
+vacuous.  It looks provable and should be the next concrete step:
+`depthRoot b h' 0 = ee(h'/b)` with `b ∤ h'`, so `|arg (depthRoot b h' 0)| ≥ 2π/b`, hence
+`ttEps ≥ min(π/b, 1/256)` — a bound depending on `b` ALONE.  Then `ttExponent` is increasing in
+`ε` on `[0, 1/256]`, giving a uniform `κ(b) > 0`; the constant `C₁` of
+`ttPretentiousSum_lower_of_uniformResonantMass` must likewise be shown uniform over that finite
+angle set (there are at most `b − 1` residues `h' mod b`, so this should be a `Finset.max`
+argument, not an analytic one).
+
+**Next attack.** ① The `κ(b)`/`C(b)` uniformity above (`Finset.max` over `h' mod b`; the
+`UniformResonantMass` constant depends on `z` only through `arg z`).  ② `NonPrincipalTwistSmall`.
+③ `WideTwistSmall` (lap 104's refutation says: needs a zero-free region, not resonance).
+
 ## Lap 93 (2026-09-25) — the open input is RESTRICTED to the family the chain actually uses
 
 **New file `src/NormalNumbers/C3MrtRootsInput.lean` (12 declarations, all trust-triple clean).**

@@ -135,3 +135,12 @@ Two sub-routes refuted in passing: the `‖T‖`-only form of the narrow bound i
 `narrowTwistSmallTriv_of_uniformResonantMass` converts it into `NarrowTwistSmallTriv z
 (ttExponent z) C`.  The narrow range therefore costs no new analysis; the two live debts are the
 characters `q > 1` in the narrow range and `WideTwistSmall` in the wide one.
+
+## Lap 106 addendum — principal characters reduced; a uniformity obligation surfaced
+
+Narrow range status: `q = 1` proved (lap 105), principal `q > 1` proved
+(`narrowTwist_principal_of_triv`, cost `log log q ≤ log log log X`, absorbed by halving κ),
+non-principal `q > 1` named (`NonPrincipalTwistSmall`) and expected easier.  New obligation made
+visible by the repair: `ArchSupply (TTNonPretentiousAt A) b` fixes ONE constant across all
+primitive twists `h'`, so `FaithfulArchLower b C` needs `C` and `κ` uniform in `h'`.  Route:
+`|arg (depthRoot b h' 0)| ≥ 2π/b` for `b ∤ h'`, so both depend on `b` alone.
