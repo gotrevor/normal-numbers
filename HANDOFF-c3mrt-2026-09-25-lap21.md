@@ -59,3 +59,35 @@ Do NOT attack `TwistedPrimeSumSaving`.
   (shapes were matched deliberately; item 1 is the check).
 * `D = 2` rung conditional on exactly two literature-proved inputs: ≈ 80% (up from 75%).
 * leaf TRUE ≈ 95%; leaf PROVABLE with known techniques ≈ 15% (unchanged).
+
+## Lap 23 — `C3MrtTwoShift.lean`: the truncation machinery for BOTH moduli
+
+The `D = 2` assembly expands twice, so the truncation bound must be iterable.  Two new
+sorry-free, trust-triple results:
+
+* **`offset_truncation_bound_of_mass`** — `bridge_truncation_bound_of_mass` in the generality of
+  `sum_pow_omega_offset_eq`: arbitrary finite index set `S`, arbitrary offset `c`.  That
+  generality is exactly what makes it applicable a *second* time, inside the congruence
+  condition the first expansion imposed.  Cost still `B · bridgeTail z Y`.
+* **`progression_harmonic_mass`** — the mass hypothesis in the same generality: for any
+  `S ⊆ range M`, any offset `c ≥ 1`, any modulus `e ≥ 1`,
+  `∑_{n ∈ S, e ∣ n+c} ‖F n‖ ≤ c·(1 + log(M+c))/e` when `‖F n‖ ≤ (n+1)⁻¹`.
+  Mechanism: inject `n ↦ (n+c)/e` into `Icc 1 ((M+c)/e)` (injective because `n + c = e·φ(n)`
+  pins `n`), and pay the harmless factor `c` from `(n+1)⁻¹ ≤ c·(n+c)⁻¹`.
+  `harmonic_mass_bound`'s reindexing `n = dk−1` does not survive to a general `S`; the
+  injection does.
+
+**Build hygiene note (found this lap, IMPORTANT).**  `src/NormalNumbers.lean` does NOT import
+the `C3Mrt*` chain — deliberately, since the directive forbids importing a `lean-proofs-latest`
+consumer into the `NormalNumbers` root.  Consequence: a bare `lake build` (and hence the
+pre-commit hook) does NOT typecheck any `C3Mrt*` module.  **Always also run
+`lake build NormalNumbers.C3MrtArchimedean`** (the chain tip, which now imports
+`C3MrtTwoShift` as well) before claiming green.  Done for laps 20–23.
+
+### NEXT (revised)
+1. **Assemble the two-shift truncation** from the two new lemmas: apply
+   `offset_truncation_bound_of_mass` with `(z₀, c = 1)` and then, inside each `d ≤ Y` term, with
+   `(z₁, c = 2)`, the mass hypotheses coming from `progression_harmonic_mass`.  Total cost
+   `≍ (1 + log N)·(bridgeTail z₀ Y + bridgeTail z₁ Y)`.
+2. Then combine with `inner_sum_linear_forms` (CRT), `weight_transfer`, and
+   `rung_two_of_named_inputs` to get the full `D = 2` correlation bound.

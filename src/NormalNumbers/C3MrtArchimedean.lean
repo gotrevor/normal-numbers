@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.C3MrtNonPretentious
+import NormalNumbers.C3MrtTwoShift
 import ErdosProblems.Erdos67b.PrimeEstimates
 
 /-!
