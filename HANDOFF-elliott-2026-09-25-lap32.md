@@ -136,13 +136,33 @@ instantiates it at the dilated edge:
 
 So both halves of the crux now speak about one object, `dilatedPairTwistedMean`.
 
-## NEXT (lap 32 onwards)
+## Lap 32 — `genSum` at the shifted residue is the shifted-divisibility graph sum
 
-1. **`genSum` at the shifted residue = a sum of affine observables.**  The remaining
-   identification, the dilated analogue of
-   `ElliottTwistedGraphCorrelation.pairTwistedSum_sequenceBlock`: expand `genSum` by
-   `genCoordinate` (whose residue condition at `z - Δ` selects the block positions `j` with
-   `p ∣ n + 1 + j - ⌊p c₁/a⌋`) and feed `sum_dilatedPairShiftEdge_affineBlock`.
+* `crtShift H d` — the CRT element whose `p`-component is `d p`; `crtShift_component`.
+* `genSum_natCast_sub_crtShift` — for `d p ≤ n`,
+
+```
+genSum w E s (n − crtShift H d)
+  = ∑_p [p ∈ s] ∑_j [ p ∣ n + (j+1) − d p ] · w p · E p j.
+```
+
+  Generic analogue of `ElliottTwistedGraph.pairTwistedSum_natCast`.  This is the formal content of
+  "the per-prime residue shift never enters the layer": testing `genSum` one CRT element to the
+  left imposes exactly the dilated divisibility condition, prime by prime.
+
+**Lean gotcha (cost ~4 builds, worth remembering).**  `primeGraphModulus H` is a plain `def` for
+`∏ p : PrimeGraphIndex H, p.1`.  `map_sub e x y` / `map_natCast e n` elaborate `e`'s domain in the
+`∏` form, so the resulting hypothesis is *not syntactically* rewritable against a goal written with
+`primeGraphModulus H` — `rw` and even `simp only` both fail with "no progress" while `trace_state`
+shows two identical-looking terms.  Fix: state the `map_sub` / `map_natCast` instance as an
+explicitly-typed `have` using `primeGraphModulus H`, proved by `map_sub _ _ _`.
+
+## NEXT (lap 33 onwards)
+
+1. **The dilated `pairTwistedSum_sequenceBlock`.**  Instantiate `genSum_natCast_sub_crtShift` at
+   `E = dilatedEdgeFamily (affineBlock f₁ a n H) (affineBlock f₂ a n H) a c₁ h`,
+   `d p = ⌊p c₁ / a⌋`, and rewrite the inner `∑_j` with `sum_dilatedPairShiftEdge_affineBlock` to
+   get a sum of `affineTwistedObservable`s at index `n + 1 + j − d p`.
 2. Then the correlation-transfer rung with lap 26's
    `norm_logProb_affineTwistedObservable_shift_sub_correlation_le`, and the contradiction.
 2. Combine with lap 26's `norm_logProb_affineTwistedObservable_shift_sub_correlation_le` for the

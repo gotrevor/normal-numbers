@@ -81,9 +81,71 @@ theorem norm_dilatedEdgeFamily_le {H : ℕ} {b c : Fin H → ℂ} {B : ℝ} (hB 
   · simpa using hsq
   · simpa using hsq
 
+/-! ## The CRT residue shift, and the expansion of `genSum` at a shifted residue
+
+The dilated graph's divisibility condition is `p ∣ n + 1 + j − d p` with `d p = ⌊p c₁ / a⌋`.  By
+CRT the family `(d p)_p` assembles into one element `crtShift H d` of
+`ZMod (primeGraphModulus H)`, and testing `genSum` at `n − crtShift H d` imposes exactly that
+condition prime by prime.  This is the promised "the residue shift never enters the layer".
+-/
+
+/-- The CRT element whose `p`-component is `d p`. -/
+def crtShift (H : ℕ) (d : ℕ → ℕ) : ZMod (primeGraphModulus H) :=
+  (ZMod.prodEquivPi (fun p : PrimeGraphIndex H ↦ p.1) (primeGraphModuli_pairwise H)).symm
+    (fun p ↦ ((d p.1 : ℕ) : ZMod p.1))
+
+theorem crtShift_component (H : ℕ) (d : ℕ → ℕ) (p : PrimeGraphIndex H) :
+    ZMod.prodEquivPi (fun q : PrimeGraphIndex H ↦ q.1) (primeGraphModuli_pairwise H)
+      (crtShift H d) p = ((d p.1 : ℕ) : ZMod p.1) := by
+  rw [crtShift, RingEquiv.apply_symm_apply]
+
+/-- **`genSum` at the shifted residue is the shifted-divisibility graph sum.**  Generic analogue of
+`NormalNumbers.ElliottTwistedGraph.pairTwistedSum_natCast`. -/
+theorem genSum_natCast_sub_crtShift {H : ℕ} (w : ℕ → ℂ) (E : ℕ → Fin H → ℂ) (s : Finset ℕ)
+    (d : ℕ → ℕ) (n : ℕ) (hd : ∀ p : PrimeGraphIndex H, d p.1 ≤ n) :
+    genSum w E s ((n : ZMod (primeGraphModulus H)) - crtShift H d) =
+      ∑ p : PrimeGraphIndex H, if p.1 ∈ s then
+        ∑ j : Fin H, if p.1 ∣ n + (j.1 + 1) - d p.1 then w p.1 * E p.1 j else 0
+      else 0 := by
+  classical
+  have hcrt (p : PrimeGraphIndex H) :
+      ZMod.prodEquivPi (fun q : PrimeGraphIndex H ↦ q.1) (primeGraphModuli_pairwise H)
+        ((n : ZMod (primeGraphModulus H)) - crtShift H d) p =
+        (n : ZMod p.1) - ((d p.1 : ℕ) : ZMod p.1) := by
+    have hms : (ZMod.prodEquivPi (fun q : PrimeGraphIndex H ↦ q.1)
+          (primeGraphModuli_pairwise H)) ((n : ZMod (primeGraphModulus H)) - crtShift H d) =
+        (ZMod.prodEquivPi (fun q : PrimeGraphIndex H ↦ q.1)
+          (primeGraphModuli_pairwise H)) ((n : ZMod (primeGraphModulus H))) -
+        (ZMod.prodEquivPi (fun q : PrimeGraphIndex H ↦ q.1)
+          (primeGraphModuli_pairwise H)) (crtShift H d) := map_sub _ _ _
+    have hnat : (ZMod.prodEquivPi (fun q : PrimeGraphIndex H ↦ q.1)
+        (primeGraphModuli_pairwise H)) ((n : ZMod (primeGraphModulus H))) =
+        (n : ∀ q : PrimeGraphIndex H, ZMod q.1) := map_natCast _ n
+    rw [hms, Pi.sub_apply, crtShift_component, hnat]
+    simp
+  simp only [genSum, crtComplexSum, genObservable, genCoordinate, hcrt]
+  refine Finset.sum_congr rfl fun p _ ↦ ?_
+  split_ifs with hp
+  · refine Finset.sum_congr rfl fun j _ ↦ ?_
+    have hcast : ((n + (j.1 + 1) - d p.1 : ℕ) : ZMod p.1) =
+        (n : ZMod p.1) - ((d p.1 : ℕ) : ZMod p.1) + ((j.1 + 1 : ℕ) : ZMod p.1) := by
+      have hle : d p.1 ≤ n + (j.1 + 1) := (hd p).trans (by omega)
+      push_cast [Nat.cast_sub hle]
+      ring
+    have hiff : ((n : ZMod p.1) - ((d p.1 : ℕ) : ZMod p.1) + ((j.1 + 1 : ℕ) : ZMod p.1) = 0) ↔
+        p.1 ∣ n + (j.1 + 1) - d p.1 := by
+      rw [← hcast, ZMod.natCast_eq_zero_iff]
+    simp only [Nat.cast_add, Nat.cast_one] at hiff ⊢
+    by_cases hdvd : p.1 ∣ n + (j.1 + 1) - d p.1
+    · rw [if_pos (hiff.mpr hdvd), if_pos hdvd]
+    · rw [if_neg (fun hc ↦ hdvd (hiff.mp hc)), if_neg hdvd]
+  · rfl
+
 end
 
 end NormalNumbers.ElliottDilatedBridge
 
 #print axioms NormalNumbers.ElliottDilatedBridge.genMeanCRT_dilatedEdgeFamily
 #print axioms NormalNumbers.ElliottDilatedBridge.norm_dilatedEdgeFamily_le
+
+#print axioms NormalNumbers.ElliottDilatedBridge.genSum_natCast_sub_crtShift
