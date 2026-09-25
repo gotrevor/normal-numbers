@@ -71,3 +71,25 @@ b_i)}` with `kPointLogCorrelation`'s spelling via `zOmInt_integerAffine`), then 
 (feed `inner_sum_multi_forms` + `filter_linear_lt_eq_range` into the generic bound, giving
 `‖Inner d‖ ≤ 1 + (3 + R + log A)/L`, exactly `multi_full_sum_bound`'s hypothesis), then the
 ε-chase.
+
+## Addendum — lap 47: **the per-tuple bound is PROVED**
+
+`multi_rung_spelling` and **`inner_multi_bound`** (`C3MrtMultiInner.lean`, sorry-free, trust
+triple).  For a positive, solvable tuple `d`, granting the `K`-point rung's bound `R` on the
+Elliott window `(0, A^{⌊log_A J⌋}]` at every admissible base point `a`:
+
+    ‖∑_{n < N, ∀i d_i ∣ n+i+1} harmW n · ∏_i z_i^{Ω((n+i+1)/d_i)}‖ ≤ 1 + (3 + R + log A)/lcm(d) ,
+
+which is **exactly** `multi_full_sum_bound`'s hypothesis.  No coprimality anywhere.
+
+So the deterministic half of step 4 is complete: `multi_truncation_bound` (lap 43) +
+`multi_full_sum_bound` (lap 45) + `inner_multi_bound` (lap 47) bound the whole `K`-fold
+correlation by
+
+    [truncation: K·truncA + (1+log N)K^{K²}·truncB]
+      + [∏_i sqfWPartial z_i Y + (3 + R + log A)·K^{K²}·∏_i sqfWMass z_i] .
+
+**NEXT (the only thing left in step 4):** the ε-chase — assemble these three into a
+`multi_bound_of_rung` (the `K`-fold `two_shift_bound_of_rung`), then choose `ε → Y → A → N`
+using `truncB_tendsto`/`bridgeTail_tendsto` and land in `weylLambertTwist_of_kfold_bound`'s
+shape.  Model: `rung_two_correlation` (`C3MrtArchimedean`, laps 29–33).

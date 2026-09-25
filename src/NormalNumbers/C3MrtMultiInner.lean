@@ -118,6 +118,124 @@ theorem progression_sum_bound_generic {L a A J : ℕ} (hL : 0 < L) (haL : a + 1 
 #print axioms window_gap_generic
 #print axioms progression_sum_bound_generic
 
+
+/-- **The rung's spelling, at `K` points.**  Our weighted sum over the progression variable is
+literally the summand of `kPointLogCorrelation`. -/
+theorem multi_rung_spelling {K : ℕ} (z : ℕ → ℂ) (c b : Fin K → ℕ) (hc : ∀ i, 0 < c i) (J : ℕ) :
+    ∑ j ∈ Finset.Ioc 0 J, (((j : ℝ))⁻¹ : ℝ) •
+        ∏ i : Fin K, (z i) ^ ArithmeticFunction.cardFactors (c i * j + b i)
+      = ∑ j ∈ Finset.Ioc 0 J, (Erdos67b.harmonicWeight j : ℂ) *
+          ∏ i : Fin K, zOmInt (z i) (Erdos67b.integerAffine (c i) ((b i : ℕ) : ℤ) j) := by
+  refine Finset.sum_congr rfl fun j hj => ?_
+  have hj1 : 1 ≤ j := (Finset.mem_Ioc.1 hj).1
+  have hprod : ∏ i : Fin K, zOmInt (z i) (Erdos67b.integerAffine (c i) ((b i : ℕ) : ℤ) j)
+      = ∏ i : Fin K, (z i) ^ ArithmeticFunction.cardFactors (c i * j + b i) := by
+    refine Finset.prod_congr rfl fun i _ => ?_
+    have hpos : 0 < c i * j + b i := by
+      have : 0 < c i * j := Nat.mul_pos (hc i) (by omega)
+      omega
+    exact zOmInt_integerAffine (z i) (c i) (b i) j hpos
+  rw [hprod, Erdos67b.harmonicWeight, Complex.real_smul]
+
+open scoped Classical in
+/-- **The per-tuple bound.**  Granting the `K`-point rung's bound `R` on the Elliott window, the
+harmonically weighted inner sum over the joint progression of a positive, solvable tuple `d`
+satisfies exactly `multi_full_sum_bound`'s hypothesis:
+
+    ‖Inner d‖  ≤  1 + (3 + R + log A) / lcm(d) .
+
+This is `inner_pair_bound` at `K` points.  Note there is **no coprimality hypothesis**: the
+joint progression is one class mod `lcm(d)` whatever the pairwise gcds are. -/
+theorem inner_multi_bound {K N A : ℕ} (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1)
+    (d : Fin K → ℕ) (hd : ∀ i, 0 < d i) {n₀ : ℕ}
+    (hn₀ : ∀ i : Fin K, d i ∣ n₀ + (i : ℕ) + 1) (hA : 2 ≤ A) {R : ℝ} (hR0 : 0 ≤ R)
+    (hrung : ∀ a : ℕ, a < (Finset.univ : Finset (Fin K)).lcm d →
+      (∀ i : Fin K, d i ∣ a + (i : ℕ) + 1) →
+      ‖∑ j ∈ Finset.Ioc 0 (A ^ Nat.log A
+            ((N - 1 - a) / (Finset.univ : Finset (Fin K)).lcm d)),
+          (Erdos67b.harmonicWeight j : ℂ) *
+            ∏ i : Fin K, zOmInt (z i)
+              (Erdos67b.integerAffine ((Finset.univ : Finset (Fin K)).lcm d / d i)
+                (((a + (i : ℕ) + 1) / d i : ℕ) : ℤ) j)‖ ≤ R) :
+    ‖∑ n ∈ (range N).filter (fun n => ∀ i : Fin K, d i ∣ n + (i : ℕ) + 1),
+        harmW n * ∏ i : Fin K, (z i) ^ ArithmeticFunction.cardFactors ((n + (i : ℕ) + 1) / d i)‖
+      ≤ 1 + (3 + R + Real.log A) / (((Finset.univ : Finset (Fin K)).lcm d : ℕ) : ℝ) := by
+  classical
+  set L : ℕ := (Finset.univ : Finset (Fin K)).lcm d with hLdef
+  have hL : 0 < L := univLcm_pos d hd
+  have hLR : (0 : ℝ) < (L : ℝ) := by exact_mod_cast hL
+  have hlogA : 0 ≤ Real.log A := Real.log_natCast_nonneg A
+  have hRHS : 0 ≤ (3 + R + Real.log A) / (L : ℝ) := by positivity
+  obtain ⟨a, haL, hadvd, heq⟩ := inner_sum_multi_forms (N := N) d hd hn₀ z harmW
+  rw [heq]
+  by_cases haN : a < N
+  · rw [filter_linear_lt_eq_range hL haN]
+    set J := (N - 1 - a) / L with hJ
+    set G : ℕ → ℂ := fun j =>
+      ∏ i : Fin K, (z i) ^ ArithmeticFunction.cardFactors ((L / d i) * j + (a + (i : ℕ) + 1) / d i)
+      with hG
+    have hGnorm : ∀ j, ‖G j‖ ≤ 1 := by
+      intro j
+      rw [hG]
+      simp only []
+      rw [norm_prod]
+      refine le_of_eq ?_
+      refine Finset.prod_eq_one fun i _ => ?_
+      rw [norm_pow, hz i, one_pow]
+    have hrw : ∑ j ∈ Finset.range (J + 1), harmW (L * j + a) * G j
+        = ∑ j ∈ Finset.range (J + 1), ((((L * j + a : ℕ) : ℝ) + 1)⁻¹ : ℝ) • G j :=
+      Finset.sum_congr rfl fun j _ => harmW_smul _ _
+    show ‖∑ j ∈ Finset.range (J + 1), harmW (L * j + a) * G j‖ ≤ _
+    rw [hrw]
+    rcases Nat.eq_zero_or_pos J with hJ0 | hJ1
+    · rw [hJ0]
+      have hone : Finset.range (0 + 1) = ({0} : Finset ℕ) := by
+        ext j; simp only [Finset.mem_range, Finset.mem_singleton]; omega
+      rw [hone, Finset.sum_singleton]
+      have hnorm : ‖((((L * 0 + a : ℕ) : ℝ) + 1)⁻¹ : ℝ) • G 0‖ ≤ 1 := by
+        rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg (by positivity)]
+        have h1 : (((L * 0 + a : ℕ) : ℝ) + 1)⁻¹ ≤ 1 := by
+          rw [inv_le_one_iff₀]
+          right
+          have : (0 : ℝ) ≤ ((L * 0 + a : ℕ) : ℝ) := Nat.cast_nonneg _
+          linarith
+        calc (((L * 0 + a : ℕ) : ℝ) + 1)⁻¹ * ‖G 0‖
+            ≤ 1 * 1 := mul_le_mul h1 (hGnorm 0) (norm_nonneg _) zero_le_one
+          _ = 1 := by ring
+      linarith
+    · have hspell := multi_rung_spelling z (fun i => L / d i)
+        (fun i => (a + (i : ℕ) + 1) / d i)
+        (fun i => Nat.div_pos (Nat.le_of_dvd hL (Finset.dvd_lcm (Finset.mem_univ i)))
+          (hd i))
+        (A ^ Nat.log A J)
+      have hrung' : ‖∑ j ∈ Finset.Ioc 0 (A ^ Nat.log A J), (((j : ℝ))⁻¹ : ℝ) • G j‖ ≤ R := by
+        rw [hG]
+        simp only []
+        rw [hspell]
+        exact hrung a haL hadvd
+      have hbound := progression_sum_bound_generic (L := L) (a := a) (A := A) (J := J)
+        hL (by omega) hA hJ1 G hGnorm hrung'
+      refine le_trans hbound ?_
+      have h1 : ((a : ℝ) + 1)⁻¹ ≤ 1 := by
+        rw [inv_le_one_iff₀]
+        right
+        have : (0 : ℝ) ≤ (a : ℝ) := Nat.cast_nonneg a
+        linarith
+      have heq2 : 2 / (L : ℝ) + (L : ℝ)⁻¹ * (R + (1 + Real.log A))
+          = (3 + R + Real.log A) / (L : ℝ) := by
+        field_simp
+        ring
+      linarith
+  · have hempty : (Finset.range N).filter (fun j => L * j + a < N) = ∅ := by
+      refine Finset.eq_empty_of_forall_notMem fun j hj => ?_
+      have := (Finset.mem_filter.1 hj).2
+      omega
+    rw [hempty, Finset.sum_empty, norm_zero]
+    linarith
+
+#print axioms multi_rung_spelling
+#print axioms inner_multi_bound
+
 end CastingOut
 
 end NormalNumbers
