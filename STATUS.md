@@ -1,10 +1,99 @@
 # STATUS — normal-numbers 📊
 
-**Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
-· **Build**: 🟢 green (9161 jobs) · **Updated**: 2026-09-23, campaign complete · HEAD `3523f8d`
-· branch `wip/g5-prime-subset`
+**Active campaign: C3/MRT — `ConjC3` reduced, axiom-clean, to a quantitative Elliott
+correlation; the `D = 2` rung now rests on two NAMED analytic inputs.**
+· **Build**: 🟢 green (9257 jobs) · **Updated**: lap 18 · 2026-09-25 · HEAD `ee66b76`
+· branch `wip/c3-mrt`
+
+## Where it stands
+
+The ratified crux is `CastingOut.weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`),
+the one `sorry` carrying `ConjC3`.  Laps 1–6 reduced it, sorry-free and axiom-clean, to
+`QuantDepthElliott` — a *quantitative* Elliott correlation with only `O(log log log N)` points —
+and PROVED its base rung `D = 1` in natural density from the repo's own Delange slot.  Laps 7–17
+built the whole `D = 2` log-averaged rung: the `ω → Ω` bridge, the CRT reindex to two linear
+forms with determinant exactly `1`, the harmonic-weight transfer, and the window stack; what
+survives is `Erdos67b.NonasymptoticLogElliott` (Tao, Forum Math. Pi 4 (2016), Thm 1.3 — the
+repo's ratified open bet) plus non-pretentiousness of `ζ^Ω` against every Dirichlet–archimedean
+twist.  Lap 17 proved the unramified (`t = 0`) half; lap 18 settled the archimedean half's exact
+shape and proved its key estimate.
+
+The prior campaign (Pair A multicutoff, Theorem C′
+`isNormal_subsetLambert_of_sqrtFreshMassZero`) is COMPLETE and trust-triple clean; its ledger is
+kept below.
+
+## What's happened (newest first)
+
+- **2026-09-25 (C3/MRT lap 18, review lap).**  Direction redirected to the C3/MRT moonshot.
+  The archimedean obligation's shape SETTLED: Elliott asks only for a CONSTANT
+  `A ≤ dist`, and the new bridge makes `dist = mass(X) − Re(z·S)` with
+  `S = ∑_{p≤X} conj(χ(p)p^{it})/p`, hence `dist ≥ mass − ‖S‖` with **no `z`**.  So the whole
+  residue is a bound on the classical twisted prime sum, split at `|t| ≈ T/log X`.  New module
+  `C3MrtArchimedean.lean` (sorry-free, trust triple) proves the bridge and `window_mass_le`:
+  primes confined to one resonance window carry reciprocal mass `≤` an absolute constant,
+  uniformly in `t, m, X`, because the window's endpoint RATIO is `≤ 3` (the `|t|` cancels).
+- **2026-09-25 (C3/MRT laps 7–17).**  The `D = 2` rung reduced structurally to two named open
+  inputs; every other mismatch (multiplicativity, non-degeneracy, weight class, weight variable,
+  window, threshold) proved away.  5 modules.
+- **2026-09-25 (C3/MRT laps 1–6).**  `ConjC3 ⇐ QuantDepthElliott`, axiom-clean; rung `D = 1`
+  proved; vertical (digit-depth) truncation replaces the impossible prime cutoff; deep tail on
+  AVERAGE drops the depth from `log log N` to `log log log N`.  6 modules.
+- **2026-09-23 (laps G5c-k/l/m) — THEOREM C′ PROVED**, trust-triple clean (see the ledger below).
+
+## Outstanding
+
+### Short-term (mirrors PENDING_WORK top)
+1. **Range 1 of the archimedean certificate** — assemble `window_mass_le` over the `O(T)` windows
+   that meet `[2, X]` when `|t| ≤ T/log X`, against the class-`1 (mod q)` Mertens lower bound.
+2. **Range 2** — state the single named Prop (the Vinogradov–Korobov constant saving) and
+   assemble `nonPretentious_zOm`.
+3. **The tuple sum** over coprime powerful pairs `d, e ≤ Y`, feeding
+   `initial_segment_bound_of_elliott`.
+
+### Long-term
+`QuantDepthElliott` itself (quantitative Elliott at `≍ log log log N` points) — out of reach of
+current technology; the ratified success criterion is the EQUIVALENCE, not the proof.
+Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
+`MahlerDriftOne.exists_prime_nonresidue`.  Also open from the previous campaign: the Theorem-C′
+audit surface and the Astra §10 consumer.
+
+### To completion
+`weylLambertTwist_holds` needs `QuantDepthElliott`.  Nothing weaker is known to suffice, and the
+lap-3 argument shows a *qualitative fixed-`k`* Elliott provably cannot.
+
+## Axiom ledger — C3/MRT (real `#print axioms`, 2026-09-25, 9257 jobs)
+
+| headline theorem | paper claim | `#print axioms` shows | verdict |
+|---|---|---|---|
+| `CastingOut.conjC3_via_weylLambert` | `ConjC3` — UNCOND | trust triple + `sorryAx` | 🔴 via `weylLambertTwist_holds`, the ratified open crux |
+| `CastingOut.weylLambertTwist_of_quantDepthElliott` | the reduction `QuantDepthElliott → crux` | trust triple | 🟢 clean |
+| `CastingOut.depthAvg_one_tendsto` | rung `D = 1`, natural density (Delange) | trust triple | 🟢 clean |
+| `CastingOut.initial_segment_bound_of_elliott` | the conditional `D = 2` rung | trust triple | 🟢 clean (Elliott is an explicit hypothesis) |
+| `CastingOut.pretentiousDistSq_ge_class_sum` | non-pretentiousness of `ζ^Ω`, `t = 0` | trust triple | 🟢 clean |
+| `CastingOut.pretentiousDistSqToTwist_zOm_eq` / `_ge` | the archimedean bridge | trust triple | 🟢 clean |
+| `CastingOut.window_mass_le` | bounded mass of a resonance window | trust triple | 🟢 clean |
+
+Math-axiom count for the C3/MRT campaign: **0** — no `axiom` declarations.  The debt is carried
+by *hypotheses*, which is the honest form: `QuantDepthElliott` (🔴 open: quantitative Elliott),
+`Erdos67b.NonasymptoticLogElliott` (🟡 proven in the literature — Tao 2016 — project-scale to
+formalise; the repo's ratified bet in `ElliottGeneral.lean`), and the Vinogradov–Korobov
+constant saving for `∑_{p≤X} χ(p)p^{it}/p` (🟡 proven in the literature; the dependency isolates
+the same input as `Erdos67b.PolynomialHeightPrimeCorrelationBound`).  The 🔴 sits on
+`conjC3_via_weylLambert`, which the paper itself states as a CONJECTURE, so it is disclosed, not
+strayed.
+
+## Pointers (C3/MRT)
+`KICKOFF-2026-09-24-c3-mrt.md` · `HANDOFF-c3mrt-2026-09-25-lap18.md` ·
+`HANDOFF-c3mrt-2026-09-25-lap8.md` (laps 7–17) ·
+`HANDOFF-c3mrt-2026-09-25-session-wrap.md` (laps 1–6) · `PENDING_WORK.md` ·
+`DIRECTION.md` (CURRENT DIRECTIVE) · `CONJECTURES-2026-09-23-casting-out-and-rungs.md`
+
+---
+
+# (below: the Pair A multicutoff campaign — COMPLETE; kept as the durable overview of that work)
 
 ## Where it stands (multicutoff campaign)
+
 
 Laps 0–7 of `KICKOFF-2026-09-22-multicutoff-lean.md` are landed and the headline
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is **fully assembled and compiling**: the root chain,
