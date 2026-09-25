@@ -23,7 +23,7 @@ because `u p = 0`, and what remains is bounded by an **absolute** constant indep
 so the tail beyond any `D` is uniformly small over the whole family of covers.
 
 This file proves the analytic half — the absolute bound for any nonnegative multiplicative `f`
-with `f p = 0` at primes and `f n ≤ 2/n`.  The arithmetic half (that `‖u ·‖ / ·` is such an `f`)
+with `f p = 0` at primes and `f (p^k) ≤ 2/p^k`.  The arithmetic half (that `‖u ·‖ / ·` is such an `f`)
 is `ElliottSquarefullConv.lean`.
 
 ## Main results
@@ -67,7 +67,8 @@ theorem geom_sum_Ico_two_le {r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) (K : ℕ) :
 /-- **The squarefull local factor.**  Vanishing at the prime itself kills the `1/p` term, and the
 remaining geometric tail is `2/(p(p-1))` — independent of `f` beyond the stated hypotheses. -/
 theorem local_factor_squarefull_le {f : ArithmeticFunction ℝ} (hf : f.IsMultiplicative)
-    (hnn : ∀ n : ℕ, 0 ≤ f n) (hbd : ∀ n : ℕ, 0 < n → f n ≤ 2 / (n : ℝ))
+    (hnn : ∀ n : ℕ, 0 ≤ f n)
+    (hbd : ∀ q : ℕ, q.Prime → ∀ k : ℕ, f (q ^ k) ≤ 2 / ((q : ℝ) ^ k))
     (hprime : ∀ p : ℕ, p.Prime → f p = 0)
     {p : ℕ} (hp : p.Prime) (K : ℕ) :
     ∑ k ∈ Finset.range (K + 1), f (p ^ k) ≤
@@ -106,10 +107,7 @@ theorem local_factor_squarefull_le {f : ArithmeticFunction ℝ} (hf : f.IsMultip
         2 * (1 / ((p : ℝ) * ((p : ℝ) - 1))) := by
       have hterm : ∀ k ∈ Finset.Ico 2 (K + 1), f (p ^ k) ≤ 2 * r ^ k := by
         intro k _
-        have hkpos : 0 < p ^ k := pow_pos hp.pos k
-        have h := hbd (p ^ k) hkpos
-        have hcast : ((p ^ k : ℕ) : ℝ) = (p : ℝ) ^ k := by push_cast; ring
-        rw [hcast] at h
+        have h := hbd p hp k
         calc f (p ^ k) ≤ 2 / (p : ℝ) ^ k := h
           _ = 2 * r ^ k := by rw [hr, div_pow, one_pow]; ring
       refine (Finset.sum_le_sum hterm).trans ?_
@@ -119,12 +117,13 @@ theorem local_factor_squarefull_le {f : ArithmeticFunction ℝ} (hf : f.IsMultip
     linarith
 
 /-- **The absolute squarefull bound.**  For every nonnegative multiplicative `f` vanishing at the
-primes and bounded by `2/n`, and for *every* truncation `Y`, `∑_{m ≤ Y} f m ≤ e²`.
+primes and bounded by `2/p^k` at prime powers, and for *every* truncation `Y`, `∑_{m ≤ Y} f m ≤ e²`.
 
 Both the function and the scale are arbitrary: this is the uniformity that the refuted
 `‖g̃‖ = 1 ⋆ v` expansion could not supply. -/
 theorem sum_Icc_le_exp_two {f : ArithmeticFunction ℝ} (hf : f.IsMultiplicative)
-    (hnn : ∀ n : ℕ, 0 ≤ f n) (hbd : ∀ n : ℕ, 0 < n → f n ≤ 2 / (n : ℝ))
+    (hnn : ∀ n : ℕ, 0 ≤ f n)
+    (hbd : ∀ q : ℕ, q.Prime → ∀ k : ℕ, f (q ^ k) ≤ 2 / ((q : ℝ) ^ k))
     (hprime : ∀ p : ℕ, p.Prime → f p = 0) (Y : ℕ) :
     ∑ m ∈ Finset.Icc 1 Y, f m ≤ Real.exp 2 := by
   classical

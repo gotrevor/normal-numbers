@@ -1,7 +1,7 @@
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
-import NormalNumbers.ElliottSquarefull
+import NormalNumbers.ElliottSquarefullConv
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -49,6 +49,8 @@ edits; see the fidelity note in `STATUS.md`.
 -- leaf 2, Case B step 3: the ABSOLUTE squarefull tail bound
 #print axioms NormalNumbers.ElliottSquarefull.local_factor_squarefull_le
 #print axioms NormalNumbers.ElliottSquarefull.sum_Icc_le_exp_two
+#print axioms NormalNumbers.ElliottSquarefullConv.squarefullPart_prime_pow
+#print axioms NormalNumbers.ElliottSquarefullConv.sum_norm_squarefullPart_div_le_exp_two
 
 -- the dependency's proved special case
 #print axioms Erdos67b.unitCircleLogElliott

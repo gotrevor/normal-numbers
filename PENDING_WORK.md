@@ -39,6 +39,30 @@ is absolute.  Built on the existing `ElliottEulerBound` scaffolding
 (`sum_Icc_le_euler_product`, `prod_le_exp_prime_sum`, `sum_primesBelow_inv_mul_pred_le_one`) —
 no new analytic infrastructure was needed.
 
+## Lap 57 (2026-09-25) — Case-B step 3 COMPLETE: the squarefull convolution
+
+New module `src/NormalNumbers/ElliottSquarefullConv.lean`, **zero sorry, trust triple**, in the
+audit surface.  Directive item 3 is now closed end to end.
+
+* `cmExt U` — the completely multiplicative extension, `n ↦ n.factorization.prod (p,k) ↦ (U p)^k`.
+  Multiplicativity is `Finsupp.prod_add_index'` off `Nat.factorization_mul`, which needs **no**
+  coprimality: `cmExt` is completely multiplicative for free.  `cmExt_prime_pow : cmExt U (p^k) = U p ^ k`.
+* `mul_apply_divisors` — the divisor-sum form of Dirichlet convolution (mathlib only has the
+  antidiagonal form); one line off `Nat.map_div_right_divisors`.
+* `squarefullPart U = (μ · cmExt U) ⋆ U`, multiplicative, with
+  **`squarefullPart_prime_pow : u (p^k) = U (p^k) - U p · U (p^(k-1))`** for `k ≥ 1`
+  (the `μ`-factor annihilates every exponent `≥ 2`, so the convolution has exactly two terms),
+  hence `u p = 0` and `‖u (p^k)‖ ≤ 2`.
+* **`sum_norm_squarefullPart_div_le_exp_two`** — `∑_{d ≤ Y} ‖u d‖/d ≤ e²` for **every** unimodular
+  multiplicative `U` and **every** `Y`.
+
+Also weakened `ElliottSquarefull.sum_Icc_le_exp_two`'s `hbd` from `∀ n > 0, f n ≤ 2/n` to
+prime powers only, `∀ q prime k, f (q^k) ≤ 2/q^k` — that is all the local-factor proof uses, and
+`‖u n‖ ≤ 2` is *false* for general `n` (it grows with the number of prime factors) while
+`‖u (p^k)‖ ≤ 2` is exactly right.  This was a real trap; the weakened form is the usable one.
+
+### NEXT — items 4, 5
+
 ### NEXT — arithmetic half of item 3, then items 4, 5
 
 3b. `ElliottSquarefullConv.lean`: for unimodular multiplicative `U`, let `Ũ` be completely
