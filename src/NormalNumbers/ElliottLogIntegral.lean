@@ -83,6 +83,73 @@ theorem integral_le_one_add_log {f : ℝ → ℝ} {δ T : ℝ}
   rw [hsplit]
   linarith
 
+/-- **The bound with an additive constant**, which is the shape the true `ζ'/ζ` estimates have
+(`|ζ'/ζ(s)| ≤ 1/|s-1| + C` near the pole: the leading constant is `1`, the slack is additive). -/
+theorem integral_le_one_add_log_add_const {f : ℝ → ℝ} {δ T K : ℝ}
+    (hδ : 0 < δ) (hδT : δ ≤ T) (hT1 : T ≤ 1) (hK : 0 ≤ K)
+    (hf : IntervalIntegrable f volume 0 1)
+    (hnn : ∀ w ∈ Set.Icc (0 : ℝ) 1, 0 ≤ f w)
+    (hcap : ∀ w ∈ Set.Icc (0 : ℝ) T, f w ≤ T⁻¹ + K)
+    (hharm : ∀ w ∈ Set.Icc T 1, f w ≤ w⁻¹ + K) :
+    ∫ w in (0 : ℝ)..1, f w ≤ 1 + Real.log (1 / T) + K := by
+  have hT0 : 0 < T := lt_of_lt_of_le hδ hδT
+  have huIcc : T ∈ Set.uIcc (0 : ℝ) 1 := Set.mem_uIcc.mpr (Or.inl ⟨hT0.le, hT1⟩)
+  have hint1 : IntervalIntegrable f volume 0 T :=
+    hf.mono_set (Set.uIcc_subset_uIcc_left huIcc)
+  have hint2 : IntervalIntegrable f volume T 1 :=
+    hf.mono_set (Set.uIcc_subset_uIcc_right huIcc)
+  have hinvint : IntervalIntegrable (fun w : ℝ => w⁻¹) volume T 1 := by
+    refine intervalIntegral.intervalIntegrable_inv ?_ continuousOn_id
+    intro x hx
+    have : T ≤ x := (Set.mem_uIcc.mp hx).elim (fun h => h.1) (fun h => le_trans hT1 h.1)
+    exact ne_of_gt (lt_of_lt_of_le hT0 this)
+  have hsplit : (∫ w in (0 : ℝ)..1, f w)
+      = (∫ w in (0 : ℝ)..T, f w) + ∫ w in T..(1 : ℝ), f w :=
+    (integral_add_adjacent_intervals hint1 hint2).symm
+  have hp1 : (∫ w in (0 : ℝ)..T, f w) ≤ 1 + K * T := by
+    have hmono : (∫ w in (0 : ℝ)..T, f w) ≤ ∫ _w in (0 : ℝ)..T, (T⁻¹ + K) :=
+      integral_mono_on hT0.le hint1 intervalIntegrable_const (fun w hw => hcap w hw)
+    have hval : (∫ _w in (0 : ℝ)..T, (T⁻¹ + K)) = 1 + K * T := by
+      rw [intervalIntegral.integral_const, smul_eq_mul]
+      field_simp
+      ring
+    linarith [hval ▸ hmono]
+  have hp2 : (∫ w in T..(1 : ℝ), f w) ≤ Real.log (1 / T) + K * (1 - T) := by
+    have hmono : (∫ w in T..(1 : ℝ), f w) ≤ ∫ w in T..(1 : ℝ), (w⁻¹ + K) :=
+      integral_mono_on hT1 hint2 (hinvint.add intervalIntegrable_const)
+        (fun w hw => hharm w hw)
+    have hval : (∫ w in T..(1 : ℝ), (w⁻¹ + K)) = Real.log (1 / T) + K * (1 - T) := by
+      rw [intervalIntegral.integral_add hinvint intervalIntegrable_const,
+        integral_inv_of_pos hT0 (by norm_num), intervalIntegral.integral_const, smul_eq_mul]
+      ring
+    linarith [hval ▸ hmono]
+  rw [hsplit]
+  linarith
+
+/-- The same bound with an explicit constant on the two caps. -/
+theorem integral_le_const_mul_one_add_log {f : ℝ → ℝ} {δ T K : ℝ}
+    (hδ : 0 < δ) (hδT : δ ≤ T) (hT1 : T ≤ 1) (hK : 0 < K)
+    (hf : IntervalIntegrable f volume 0 1)
+    (hnn : ∀ w ∈ Set.Icc (0 : ℝ) 1, 0 ≤ f w)
+    (hcap : ∀ w ∈ Set.Icc (0 : ℝ) T, f w ≤ K * T⁻¹)
+    (hharm : ∀ w ∈ Set.Icc T 1, f w ≤ K * w⁻¹) :
+    ∫ w in (0 : ℝ)..1, f w ≤ K * (1 + Real.log (1 / T)) := by
+  have hmain := integral_le_one_add_log (f := fun w => f w / K) hδ hδT hT1
+    (hf.div_const K) (fun w hw => div_nonneg (hnn w hw) hK.le) ?_ ?_
+  · rw [intervalIntegral.integral_div] at hmain
+    rw [div_le_iff₀ hK] at hmain
+    linarith [hmain]
+  · intro w hw
+    rw [div_le_iff₀ hK]
+    have := hcap w hw
+    calc f w ≤ K * T⁻¹ := this
+      _ = T⁻¹ * K := by ring
+  · intro w hw
+    rw [div_le_iff₀ hK]
+    have := hharm w hw
+    calc f w ≤ K * w⁻¹ := this
+      _ = w⁻¹ * K := by ring
+
 end
 
 end NormalNumbers.ElliottLogIntegral

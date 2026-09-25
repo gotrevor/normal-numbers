@@ -274,6 +274,38 @@ being `≤ 4·pSeriesThreeHalves/(2 log 2)` by this lap, the first being
 `DampedSeriesBoundSmall`/`Moderate` into a bound on the slice on `[0,1]` alone — i.e. into the two
 classical `ζ'/ζ` statements, with everything else in the campaign proved.
 
+### ✅ Lap 102 — BOTH SOFT INPUTS ARE NOW PURE `ζ'/ζ` STATEMENTS
+
+The whole distance from `archCorr` to `ζ'/ζ` is proved.  New, sorry-free, trust triple:
+
+* `continuous_logWeightedSlice`, `integrableOn_norm_slice_Ioc`, `integrableOn_norm_slice_Ioi`,
+  `integral_norm_slice_Ioi_le` (`∫_1^∞‖slice‖ ≤ tailCost := 4·∑n^{-3/2}/log 2`).
+* `ElliottLogIntegral.integral_le_one_add_log_add_const` — the calculus core in the shape the true
+  estimates have: `|ζ'/ζ(s)| ≤ 1/|s−1| + C`, i.e. **leading constant `1`, additive slack**.
+  (The `K * T⁻¹` form is wrong for this consumer: a multiplicative `K` would multiply the `log`.)
+* **`norm_dampedPrefix_le_of_slice_le'`** — `‖dampedPrefix v X Y‖ ≤ 1 + log(1/T) + K + tailCost`
+  from the two slice clauses, uniformly in `Y` and `v`.
+* `SliceBoundSmall` / `SliceBoundModerate` + **`dampedSeriesBoundSmall_of_sliceBound`**,
+  **`dampedSeriesBoundModerate_of_sliceBound`**, with `T = max(|v|, δ)` resp.
+  `T = max(1/log(|v|+16), δ)`.
+* `DampedSeriesBound*` were given an `X₀` (they are now `∃ X₀ ≥ 2, ∀ X ≥ X₀`), because the
+  calculus needs `δ = 1/log X ≤ 1`, which **fails at `X = 2`** (`1/log 2 ≈ 1.44`).  `X₀ = 3` works.
+
+**The campaign's remaining cited inputs, in full:**
+1. `ElliottCharRigidity.PrimeDensityAP` — Mertens in progressions.
+2. `SliceBoundSmall` — pole-local `ζ'/ζ`; needs only `ζ(1+it) ≠ 0` (**in mathlib**) + compactness.
+3. `SliceBoundModerate` — de la Vallée Poussin `|ζ'/ζ(σ+iv)| ≪ log|v|`.
+4. `ArchCorrNearMaxHeight` — Vinogradov–Korobov, near-maximal height only.
+
+**Next (lap 103).**  Attack (2).  The slice is the *truncated* von Mangoldt series over primes
+only; to compare it with `ζ'/ζ(1+δ+w+iv)` the missing pieces are (a) the prime-power correction
+(elementary, `∑_{p,k≥2} log p · p^{-kσ} ≤ 2∑_p log p · p^{-2σ}`, same `p`-series technique as lap
+101) and (b) the truncation `∑_{p>Y}` — which, **note**, is *not* `O(1)` slice-wise, only after the
+`w`-integration (lap 98's `dampedTail_le`).  So the honest lap-103 target is a slice bound for the
+FULL series plus a separate integrated treatment of the truncation, not a slice bound for the
+truncated series.  Check this before writing Lean: it may be cleaner to restate `SliceBound*` for
+the full series and re-route the truncation through `dampedTail_le`.
+
 ### What is OFF the path now
 
 `CharacterClusterRigidity`, `PrimeDensityAP`, `exists_charDefect_le`, `NearTrivialTwist`,

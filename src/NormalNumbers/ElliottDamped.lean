@@ -416,13 +416,13 @@ to an absolute constant.  This is the statement the `ζ'/ζ` route produces: the
 `|ζ'/ζ(σ+w+iv)| ≤ min((δ+w)^{-1}, |v|^{-1})` fed into
 `ElliottLogIntegral.integral_le_one_add_log` with `T = |v|`. -/
 def DampedSeriesBoundSmall (K : ℝ) : Prop :=
-  ∀ (X Y : ℕ) (v : ℝ), 2 ≤ X → X ≤ Y → 0 < |v| → |v| ≤ 1 →
+  ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ (X Y : ℕ) (v : ℝ), X₀ ≤ X → X ≤ Y → 0 < |v| → |v| ≤ 1 →
     ‖dampedPrefix v X Y‖ ≤ Real.log (1 / |v|) + K
 
 /-- **The analytic input, moderate band.**  Same route with `T = 1/(C log|v|)`, i.e. the de la
 Vallée Poussin bound `|ζ'/ζ(σ+iv)| ≤ C log|v|` on `σ > 1`. -/
 def DampedSeriesBoundModerate (K : ℝ) : Prop :=
-  ∀ (X Y : ℕ) (v : ℝ), 2 ≤ X → X ≤ Y → 1 < |v| →
+  ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ (X Y : ℕ) (v : ℝ), X₀ ≤ X → X ≤ Y → 1 < |v| →
     ‖dampedPrefix v X Y‖ ≤ Real.log (Real.log (|v| + 16)) + K
 
 /-- The absolute cost of the damping step, once and for all. -/
@@ -446,9 +446,11 @@ theorem norm_archCorr_sub_dampedPrefix_le' {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y
 `ShiftedMertensSmall`; what is left is exactly the bound on the damped Dirichlet series. -/
 theorem shiftedMertensSmall_of_dampedSeriesBound {K : ℝ} (h : DampedSeriesBoundSmall K) :
     ShiftedMertensSmall (K + dampingCost) := by
-  refine ⟨2, le_rfl, ?_⟩
-  intro X hX v hv0 hv1
-  have hd := h X X v hX le_rfl hv0 hv1
+  obtain ⟨X₀, hX₀, h⟩ := h
+  refine ⟨X₀, hX₀, ?_⟩
+  intro X hXX₀ v hv0 hv1
+  have hX : 2 ≤ X := le_trans hX₀ hXX₀
+  have hd := h X X v hXX₀ le_rfl hv0 hv1
   have hs := norm_archCorr_sub_dampedPrefix_le' hX v X le_rfl
   calc ‖archCorr v X‖ ≤ ‖archCorr v X - dampedPrefix v X X‖ + ‖dampedPrefix v X X‖ := by
         simpa [add_comm] using norm_le_norm_add_norm_sub' (archCorr v X) (dampedPrefix v X X)
@@ -458,9 +460,11 @@ theorem shiftedMertensSmall_of_dampedSeriesBound {K : ℝ} (h : DampedSeriesBoun
 /-- **(c′-II-a) FROM THE ANALYTIC INPUT.**  Same reduction on the moderate band. -/
 theorem archCorrModerate_of_dampedSeriesBound {K : ℝ} (h : DampedSeriesBoundModerate K) :
     ArchCorrModerate (K + dampingCost) := by
-  refine ⟨2, le_rfl, ?_⟩
-  intro X hX v hv1
-  have hd := h X X v hX le_rfl hv1
+  obtain ⟨X₀, hX₀, h⟩ := h
+  refine ⟨X₀, hX₀, ?_⟩
+  intro X hXX₀ v hv1
+  have hX : 2 ≤ X := le_trans hX₀ hXX₀
+  have hd := h X X v hXX₀ le_rfl hv1
   have hs := norm_archCorr_sub_dampedPrefix_le' hX v X le_rfl
   calc ‖archCorr v X‖ ≤ ‖archCorr v X - dampedPrefix v X X‖ + ‖dampedPrefix v X X‖ := by
         simpa [add_comm] using norm_le_norm_add_norm_sub' (archCorr v X) (dampedPrefix v X X)
@@ -647,6 +651,275 @@ theorem norm_logWeightedSlice_le_decay {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : �
       ≤ (2 * (2 : ℝ) ^ (-w)) * (2 * pSeriesThreeHalves) :=
         mul_le_mul_of_nonneg_left hbound hfac
     _ = (4 * pSeriesThreeHalves) * (2 : ℝ) ^ (-w) := by ring
+
+/-! ### Assembling the integral bound -/
+
+theorem continuous_logWeightedSlice (v : ℝ) (X Y : ℕ) :
+    Continuous (fun w : ℝ => logWeightedSlice v X Y w) := by
+  classical
+  refine continuous_finset_sum _ (fun p hp => ?_)
+  have hpp := (mem_primesUpTo.mp hp).1
+  have hp0 : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hpp.pos
+  refine continuous_const.mul ?_
+  refine Complex.continuous_ofReal.comp ?_
+  refine continuous_const.mul ?_
+  have hfun : (fun w : ℝ => (p : ℝ) ^ (-(1 : ℝ) - (Real.log (X : ℝ))⁻¹ - w))
+      = fun w : ℝ => Real.exp ((-(1 : ℝ) - (Real.log (X : ℝ))⁻¹ - w) * Real.log (p : ℝ)) := by
+    funext w
+    rw [Real.rpow_def_of_pos hp0]
+    ring_nf
+  rw [hfun]
+  fun_prop
+
+theorem integrableOn_norm_slice_Ioc (v : ℝ) (X Y : ℕ) :
+    MeasureTheory.IntegrableOn
+      (fun w : ℝ => ‖logWeightedSlice v X Y w‖) (Set.Ioc (0 : ℝ) 1) :=
+  ((continuous_logWeightedSlice v X Y).norm).integrableOn_Ioc
+
+theorem integrableOn_norm_slice_Ioi {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) :
+    MeasureTheory.IntegrableOn
+      (fun w : ℝ => ‖logWeightedSlice v X Y w‖) (Set.Ioi (1 : ℝ)) := by
+  have hdom : MeasureTheory.IntegrableOn
+      (fun w : ℝ => (4 * pSeriesThreeHalves) * (2 : ℝ) ^ (-w)) (Set.Ioi (1 : ℝ)) := by
+    refine ((integrableOn_rpow_neg_Ioi (a := 2) (by norm_num)).mono_set ?_).const_mul _
+    exact Set.Ioi_subset_Ioi (by norm_num)
+  refine MeasureTheory.Integrable.mono' hdom
+    (((continuous_logWeightedSlice v X Y).norm).aestronglyMeasurable.restrict) ?_
+  refine MeasureTheory.ae_restrict_of_forall_mem measurableSet_Ioi ?_
+  intro w hw
+  rw [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _)]
+  exact norm_logWeightedSlice_le_decay hX v Y (le_of_lt hw)
+
+/-- The absolute cost of the `w ≥ 1` range of the integral. -/
+def tailCost : ℝ := (4 * pSeriesThreeHalves) / Real.log 2
+
+theorem integral_norm_slice_Ioi_le {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) :
+    (∫ w in Set.Ioi (1 : ℝ), ‖logWeightedSlice v X Y w‖) ≤ tailCost := by
+  have hS : 0 ≤ pSeriesThreeHalves := pSeriesThreeHalves_nonneg
+  have hdom : MeasureTheory.IntegrableOn
+      (fun w : ℝ => (4 * pSeriesThreeHalves) * (2 : ℝ) ^ (-w)) (Set.Ioi (1 : ℝ)) := by
+    refine ((integrableOn_rpow_neg_Ioi (a := 2) (by norm_num)).mono_set ?_).const_mul _
+    exact Set.Ioi_subset_Ioi (by norm_num)
+  have hstep1 : (∫ w in Set.Ioi (1 : ℝ), ‖logWeightedSlice v X Y w‖)
+      ≤ ∫ w in Set.Ioi (1 : ℝ), (4 * pSeriesThreeHalves) * (2 : ℝ) ^ (-w) := by
+    refine MeasureTheory.setIntegral_mono_on (integrableOn_norm_slice_Ioi hX v Y) hdom
+      measurableSet_Ioi ?_
+    intro w hw
+    exact norm_logWeightedSlice_le_decay hX v Y (le_of_lt hw)
+  have hdom0 : MeasureTheory.IntegrableOn
+      (fun w : ℝ => (4 * pSeriesThreeHalves) * (2 : ℝ) ^ (-w)) (Set.Ioi (0 : ℝ)) :=
+    (integrableOn_rpow_neg_Ioi (a := 2) (by norm_num)).const_mul _
+  have hstep2 : (∫ w in Set.Ioi (1 : ℝ), (4 * pSeriesThreeHalves) * (2 : ℝ) ^ (-w))
+      ≤ ∫ w in Set.Ioi (0 : ℝ), (4 * pSeriesThreeHalves) * (2 : ℝ) ^ (-w) := by
+    refine MeasureTheory.setIntegral_mono_set hdom0 ?_ ?_
+    · filter_upwards with w
+      positivity
+    · exact Filter.Eventually.of_forall (Set.Ioi_subset_Ioi (by norm_num))
+  have hval : (∫ w in Set.Ioi (0 : ℝ), (4 * pSeriesThreeHalves) * (2 : ℝ) ^ (-w)) = tailCost := by
+    rw [MeasureTheory.integral_const_mul, integral_rpow_neg_Ioi (a := 2) (by norm_num), tailCost]
+    ring
+  linarith [hstep1, hstep2, hval ▸ hstep2]
+
+/-- **THE ASSEMBLY.**  A bound on the `w`-slice on `[0,1]` of the shape the `ζ'/ζ` estimates
+supply — capped by `T⁻¹` up to `T`, harmonic beyond it — bounds the damped prefix by
+`1 + log(1/T) + tailCost`, uniformly in `Y` and in the frequency.
+
+Instantiating `T = |v|` gives `DampedSeriesBoundSmall`; `T = 1/(C log|v|)` gives
+`DampedSeriesBoundModerate`.  Everything except the slice bound itself is now proved. -/
+theorem norm_dampedPrefix_le_of_slice_le {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) {T : ℝ}
+    (hδT : (Real.log (X : ℝ))⁻¹ ≤ T) (hT1 : T ≤ 1)
+    (hcap : ∀ w ∈ Set.Icc (0 : ℝ) T, ‖logWeightedSlice v X Y w‖ ≤ T⁻¹)
+    (hharm : ∀ w ∈ Set.Icc T 1, ‖logWeightedSlice v X Y w‖ ≤ w⁻¹) :
+    ‖dampedPrefix v X Y‖ ≤ 1 + Real.log (1 / T) + tailCost := by
+  have hXR : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+  have hδ0 : 0 < (Real.log (X : ℝ))⁻¹ := by positivity
+  -- pass to the integral
+  rw [dampedPrefix_eq_integral hX v Y]
+  refine le_trans (MeasureTheory.norm_integral_le_integral_norm _) ?_
+  -- split at `w = 1`
+  have hunion : Set.Ioi (0 : ℝ) = Set.Ioc (0 : ℝ) 1 ∪ Set.Ioi (1 : ℝ) := by
+    ext w
+    simp only [Set.mem_Ioi, Set.mem_union, Set.mem_Ioc]
+    constructor
+    · intro hw
+      rcases le_or_gt w 1 with h | h
+      · exact Or.inl ⟨hw, h⟩
+      · exact Or.inr h
+    · rintro (⟨h1, _⟩ | h1)
+      · exact h1
+      · linarith
+  have hdisj : Disjoint (Set.Ioc (0 : ℝ) 1) (Set.Ioi (1 : ℝ)) := by
+    rw [Set.disjoint_left]
+    intro w hw hw'
+    have h1 : w ≤ 1 := hw.2
+    have h2 : (1 : ℝ) < w := hw'
+    linarith
+  have hsplit : (∫ w in Set.Ioi (0 : ℝ), ‖logWeightedSlice v X Y w‖)
+      = (∫ w in Set.Ioc (0 : ℝ) 1, ‖logWeightedSlice v X Y w‖)
+        + ∫ w in Set.Ioi (1 : ℝ), ‖logWeightedSlice v X Y w‖ := by
+    rw [hunion]
+    exact MeasureTheory.setIntegral_union hdisj measurableSet_Ioi
+      (integrableOn_norm_slice_Ioc v X Y) (integrableOn_norm_slice_Ioi hX v Y)
+  rw [hsplit]
+  have hfirst : (∫ w in Set.Ioc (0 : ℝ) 1, ‖logWeightedSlice v X Y w‖)
+      ≤ 1 + Real.log (1 / T) := by
+    have hI : (∫ w in Set.Ioc (0 : ℝ) 1, ‖logWeightedSlice v X Y w‖)
+        = ∫ w in (0 : ℝ)..1, ‖logWeightedSlice v X Y w‖ :=
+      (intervalIntegral.integral_of_le (by norm_num)).symm
+    rw [hI]
+    refine NormalNumbers.ElliottLogIntegral.integral_le_one_add_log
+      (δ := (Real.log (X : ℝ))⁻¹) hδ0 hδT hT1 ?_ (fun w _ => norm_nonneg _) hcap hharm
+    exact ((continuous_logWeightedSlice v X Y).norm).intervalIntegrable 0 1
+  linarith [integral_norm_slice_Ioi_le hX v Y]
+
+/-- The constant-carrying form of the assembly. -/
+theorem norm_dampedPrefix_le_of_slice_le' {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) {T K : ℝ}
+    (hδT : (Real.log (X : ℝ))⁻¹ ≤ T) (hT1 : T ≤ 1) (hK : 0 ≤ K)
+    (hcap : ∀ w ∈ Set.Icc (0 : ℝ) T, ‖logWeightedSlice v X Y w‖ ≤ T⁻¹ + K)
+    (hharm : ∀ w ∈ Set.Icc T 1, ‖logWeightedSlice v X Y w‖ ≤ w⁻¹ + K) :
+    ‖dampedPrefix v X Y‖ ≤ 1 + Real.log (1 / T) + K + tailCost := by
+  have hXR : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+  have hδ0 : 0 < (Real.log (X : ℝ))⁻¹ := by positivity
+  rw [dampedPrefix_eq_integral hX v Y]
+  refine le_trans (MeasureTheory.norm_integral_le_integral_norm _) ?_
+  have hunion : Set.Ioi (0 : ℝ) = Set.Ioc (0 : ℝ) 1 ∪ Set.Ioi (1 : ℝ) := by
+    ext w
+    simp only [Set.mem_Ioi, Set.mem_union, Set.mem_Ioc]
+    constructor
+    · intro hw
+      rcases le_or_gt w 1 with h | h
+      · exact Or.inl ⟨hw, h⟩
+      · exact Or.inr h
+    · rintro (⟨h1, _⟩ | h1)
+      · exact h1
+      · linarith
+  have hdisj : Disjoint (Set.Ioc (0 : ℝ) 1) (Set.Ioi (1 : ℝ)) := by
+    rw [Set.disjoint_left]
+    intro w hw hw'
+    have h1 : w ≤ 1 := hw.2
+    have h2 : (1 : ℝ) < w := hw'
+    linarith
+  have hsplit : (∫ w in Set.Ioi (0 : ℝ), ‖logWeightedSlice v X Y w‖)
+      = (∫ w in Set.Ioc (0 : ℝ) 1, ‖logWeightedSlice v X Y w‖)
+        + ∫ w in Set.Ioi (1 : ℝ), ‖logWeightedSlice v X Y w‖ := by
+    rw [hunion]
+    exact MeasureTheory.setIntegral_union hdisj measurableSet_Ioi
+      (integrableOn_norm_slice_Ioc v X Y) (integrableOn_norm_slice_Ioi hX v Y)
+  rw [hsplit]
+  have hfirst : (∫ w in Set.Ioc (0 : ℝ) 1, ‖logWeightedSlice v X Y w‖)
+      ≤ 1 + Real.log (1 / T) + K := by
+    have hI : (∫ w in Set.Ioc (0 : ℝ) 1, ‖logWeightedSlice v X Y w‖)
+        = ∫ w in (0 : ℝ)..1, ‖logWeightedSlice v X Y w‖ :=
+      (intervalIntegral.integral_of_le (by norm_num)).symm
+    rw [hI]
+    refine NormalNumbers.ElliottLogIntegral.integral_le_one_add_log_add_const
+      (δ := (Real.log (X : ℝ))⁻¹) hδ0 hδT hT1 hK ?_ (fun w _ => norm_nonneg _) hcap hharm
+    exact ((continuous_logWeightedSlice v X Y).norm).intervalIntegrable 0 1
+  linarith [integral_norm_slice_Ioi_le hX v Y]
+
+/-! ### The final shape of the two soft inputs: a bound on the slice -/
+
+/-- **The `ζ'/ζ` input, sub-unit band, in slice form.**  The slice is the truncated von Mangoldt
+series at `1+δ+w+iv`; the classical pole-local bound `|ζ'/ζ(s)| ≪ 1/|s-1|` (which needs only
+`ζ(1+it) ≠ 0`, already in mathlib, plus compactness) gives exactly these two clauses with
+`T = max(|v|, δ)`. -/
+def SliceBoundSmall (K : ℝ) : Prop :=
+  ∀ (X Y : ℕ) (v : ℝ), 2 ≤ X → 0 < |v| → |v| ≤ 1 →
+    (∀ w ∈ Set.Icc (0 : ℝ) (max |v| (Real.log (X : ℝ))⁻¹),
+        ‖logWeightedSlice v X Y w‖ ≤ (max |v| (Real.log (X : ℝ))⁻¹)⁻¹ + K) ∧
+    (∀ w ∈ Set.Icc (max |v| (Real.log (X : ℝ))⁻¹) 1,
+        ‖logWeightedSlice v X Y w‖ ≤ w⁻¹ + K)
+
+/-- **(c′-I) REDUCED TO THE SLICE BOUND.**  Everything between `archCorr` and `ζ'/ζ` is now
+proved: the damping (laps 97–98), the interchange (lap 100), the decay (lap 101) and the
+integration (lap 102). -/
+theorem dampedSeriesBoundSmall_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : SliceBoundSmall K) :
+    DampedSeriesBoundSmall (1 + K + tailCost) := by
+  refine ⟨3, by norm_num, ?_⟩
+  intro X Y v hX3 hXY hv0 hv1
+  have hX : 2 ≤ X := by omega
+  have hXR : (3 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX3
+  have hlogX : 1 < Real.log (X : ℝ) := by
+    have h3 : Real.log 3 ≤ Real.log (X : ℝ) := Real.log_le_log (by norm_num) hXR
+    have : (1 : ℝ) < Real.log 3 := by
+      have hexp : Real.exp 1 < 3 := by
+        have := Real.exp_one_lt_d9
+        linarith
+      have := Real.log_lt_log (Real.exp_pos 1) hexp
+      rwa [Real.log_exp] at this
+    linarith
+  have hδ0 : 0 < (Real.log (X : ℝ))⁻¹ := by positivity
+  have hδ1 : (Real.log (X : ℝ))⁻¹ ≤ 1 := by
+    rw [inv_le_one_iff₀]; exact Or.inr hlogX.le
+  set T : ℝ := max |v| (Real.log (X : ℝ))⁻¹ with hT
+  have hδT : (Real.log (X : ℝ))⁻¹ ≤ T := le_max_right _ _
+  have hvT : |v| ≤ T := le_max_left _ _
+  have hT0 : 0 < T := lt_of_lt_of_le hv0 hvT
+  have hT1 : T ≤ 1 := max_le hv1 hδ1
+  obtain ⟨hcap, hharm⟩ := h X Y v hX hv0 hv1
+  have hmain := norm_dampedPrefix_le_of_slice_le' hX v Y hδT hT1 hK hcap hharm
+  have hlogmono : Real.log (1 / T) ≤ Real.log (1 / |v|) :=
+    Real.log_le_log (by positivity) (one_div_le_one_div_of_le hv0 hvT)
+  have hlogv : 0 ≤ Real.log (1 / |v|) := by
+    refine Real.log_nonneg ?_
+    rw [le_div_iff₀ hv0]
+    linarith
+  linarith [hmain, hlogmono]
+
+/-- **The `ζ'/ζ` input, moderate band, in slice form.**  The de la Vallée Poussin bound
+`|ζ'/ζ(σ+iv)| ≤ C log|v|` on `σ > 1` gives these two clauses with `T = max(1/log(|v|+16), δ)`. -/
+def SliceBoundModerate (K : ℝ) : Prop :=
+  ∀ (X Y : ℕ) (v : ℝ), 3 ≤ X → 1 < |v| →
+    (∀ w ∈ Set.Icc (0 : ℝ) (max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹),
+        ‖logWeightedSlice v X Y w‖
+          ≤ (max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹)⁻¹ + K) ∧
+    (∀ w ∈ Set.Icc (max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹) 1,
+        ‖logWeightedSlice v X Y w‖ ≤ w⁻¹ + K)
+
+/-- **(c′-II-a) REDUCED TO THE SLICE BOUND.** -/
+theorem dampedSeriesBoundModerate_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : SliceBoundModerate K) :
+    DampedSeriesBoundModerate (1 + K + tailCost) := by
+  refine ⟨3, by norm_num, ?_⟩
+  intro X Y v hX3 hXY hv1
+  have hX : 2 ≤ X := by omega
+  have hXR : (3 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX3
+  have hlogX : 1 < Real.log (X : ℝ) := by
+    have h3 : Real.log 3 ≤ Real.log (X : ℝ) := Real.log_le_log (by norm_num) hXR
+    have : (1 : ℝ) < Real.log 3 := by
+      have hexp : Real.exp 1 < 3 := by linarith [Real.exp_one_lt_d9]
+      have := Real.log_lt_log (Real.exp_pos 1) hexp
+      rwa [Real.log_exp] at this
+    linarith
+  have hδ0 : 0 < (Real.log (X : ℝ))⁻¹ := by positivity
+  have hδ1 : (Real.log (X : ℝ))⁻¹ ≤ 1 := by
+    rw [inv_le_one_iff₀]; exact Or.inr hlogX.le
+  have hv0 : (0 : ℝ) < |v| := lt_trans one_pos hv1
+  have hL : (1 : ℝ) < Real.log (|v| + 16) := by
+    have h17 : (17 : ℝ) ≤ |v| + 16 := by linarith
+    have hlog17 : Real.log 17 ≤ Real.log (|v| + 16) := Real.log_le_log (by norm_num) h17
+    have : (1 : ℝ) < Real.log 17 := by
+      have hexp : Real.exp 1 < 17 := by linarith [Real.exp_one_lt_d9]
+      have := Real.log_lt_log (Real.exp_pos 1) hexp
+      rwa [Real.log_exp] at this
+    linarith
+  have hL0 : 0 < Real.log (|v| + 16) := by linarith
+  set T : ℝ := max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹ with hT
+  have hδT : (Real.log (X : ℝ))⁻¹ ≤ T := le_max_right _ _
+  have hLT : (Real.log (|v| + 16))⁻¹ ≤ T := le_max_left _ _
+  have hT0 : 0 < T := lt_of_lt_of_le (by positivity) hLT
+  have hLinv1 : (Real.log (|v| + 16))⁻¹ ≤ 1 := by
+    rw [inv_le_one_iff₀]; exact Or.inr hL.le
+  have hT1 : T ≤ 1 := max_le hLinv1 hδ1
+  obtain ⟨hcap, hharm⟩ := h X Y v hX3 hv1
+  have hmain := norm_dampedPrefix_le_of_slice_le' hX v Y hδT hT1 hK hcap hharm
+  have hlogmono : Real.log (1 / T) ≤ Real.log (Real.log (|v| + 16)) := by
+    refine Real.log_le_log (by positivity) ?_
+    rw [div_le_iff₀ hT0]
+    have : (Real.log (|v| + 16))⁻¹ * Real.log (|v| + 16) = 1 := by field_simp
+    nlinarith [hLT, hL0]
+  linarith [hmain, hlogmono]
 
 end
 

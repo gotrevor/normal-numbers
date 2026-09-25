@@ -206,3 +206,9 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottLogIntegral.integral_rpow_neg_Ioi
 #print axioms NormalNumbers.ElliottDamped.dampedPrefix_eq_integral
 #print axioms NormalNumbers.ElliottDamped.norm_logWeightedSlice_le_decay
+
+/-! ### The soft inputs reduced to a ζ'/ζ slice bound (lap 102) -/
+#print axioms NormalNumbers.ElliottLogIntegral.integral_le_one_add_log_add_const
+#print axioms NormalNumbers.ElliottDamped.norm_dampedPrefix_le_of_slice_le'
+#print axioms NormalNumbers.ElliottDamped.dampedSeriesBoundSmall_of_sliceBound
+#print axioms NormalNumbers.ElliottDamped.dampedSeriesBoundModerate_of_sliceBound
