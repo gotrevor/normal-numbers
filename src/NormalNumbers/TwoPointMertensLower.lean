@@ -514,4 +514,318 @@ theorem norm_delangeT_sub_primeSum_le {z : ℂ} (hu : ‖z - 1‖ ≤ 1) {B : �
     nlinarith [hcorr, hBnn]
   linarith [hfin]
 
+/-! ### The complex step, part II(b): the prime-sum side is a Toeplitz average
+
+`norm_delangeT_sub_primeSum_le` (part II(a)) replaced `S^{(p)}` by `S` at cost `O(1)`, leaving
+
+    T(N) = (z−1) · Σ_{p ≤ N} (log p / p) · S(N/p) + O(1).
+
+The prime sum is again a regular average of `S`: the weights `log p / p` are nonnegative and, by
+the two-sided Mertens bracket (`mertens_lower`, `mertens_upper`), total `log N + O(1)`.  The only
+wrinkle over the Abel case is that the argument `N/p` is *small* for the largest primes; but those
+`p` carry weight `O_{M₀}(1)` — exactly the difference of the Mertens bracket at `N` and at
+`N/M₀` — so they die after dividing by `log N`. -/
+
+/-- **The heavy primes carry bounded weight.**  The primes `p ≤ N` for which `N/p` has not yet
+reached `M₀` have total Mertens weight at most `log(2M₀) + log 4 + 9`, an absolute constant in
+`N`.  This is the difference of the two-sided Mertens bracket at `N` and at `N/M₀`. -/
+theorem sum_weight_tail_le {M₀ N : ℕ} (hM₀ : 1 ≤ M₀) (hN : 2 * M₀ ≤ N) :
+    ∑ p ∈ (primesLe N).filter (fun p => N / p < M₀), Real.log p / (p : ℝ)
+      ≤ Real.log (2 * M₀) + Real.log 4 + 9 := by
+  classical
+  set K : ℕ := N / M₀ with hK
+  have hM₀pos : 0 < M₀ := hM₀
+  have hK2 : 2 ≤ K := (Nat.le_div_iff_mul_le hM₀pos).mpr (by omega)
+  have hKN : K ≤ N := Nat.div_le_self _ _
+  have hN1 : 1 ≤ N := by omega
+  have hK1 : 1 ≤ K := by omega
+  -- nonnegativity of the summand
+  have hnn : ∀ p ∈ primesLe N, (0 : ℝ) ≤ Real.log p / (p : ℝ) := by
+    intro p hp
+    have hpp := prime_of_mem_primesLe hp
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have : (0 : ℝ) ≤ Real.log p := Real.log_nonneg (by linarith)
+    positivity
+  -- `primesLe K ⊆ primesLe N`
+  have hsub : primesLe K ⊆ primesLe N := by
+    intro p hp
+    rw [primesLe, Finset.mem_filter, Finset.mem_range] at hp ⊢
+    exact ⟨by omega, hp.2⟩
+  -- the filtered set avoids `primesLe K`
+  have hsub2 : (primesLe N).filter (fun p => N / p < M₀) ⊆ primesLe N \ primesLe K := by
+    intro p hp
+    rw [Finset.mem_filter] at hp
+    obtain ⟨hpN, hlt⟩ := hp
+    have hpp := prime_of_mem_primesLe hpN
+    refine Finset.mem_sdiff.mpr ⟨hpN, ?_⟩
+    intro hmem
+    rw [primesLe, Finset.mem_filter, Finset.mem_range] at hmem
+    have hpK : p ≤ K := by omega
+    have hMK : M₀ * K ≤ N := by
+      rw [hK, Nat.mul_comm]; exact Nat.div_mul_le_self N M₀
+    have : M₀ * p ≤ N := le_trans (Nat.mul_le_mul_left _ hpK) hMK
+    have : M₀ ≤ N / p := (Nat.le_div_iff_mul_le hpp.pos).mpr (by omega)
+    omega
+  have hle1 : ∑ p ∈ (primesLe N).filter (fun p => N / p < M₀), Real.log p / (p : ℝ)
+      ≤ ∑ p ∈ primesLe N \ primesLe K, Real.log p / (p : ℝ) := by
+    refine Finset.sum_le_sum_of_subset_of_nonneg hsub2 (fun p hp _ => hnn p (Finset.mem_sdiff.mp hp).1)
+  have hsd : ∑ p ∈ primesLe N \ primesLe K, Real.log p / (p : ℝ)
+      + ∑ p ∈ primesLe K, Real.log p / (p : ℝ)
+      = ∑ p ∈ primesLe N, Real.log p / (p : ℝ) := Finset.sum_sdiff hsub
+  -- Mertens both sides
+  have hup := mertens_upper N hN1
+  have hlo := mertens_lower K hK1
+  -- `log N ≤ log(2M₀) + log K`
+  have hKR : (2 : ℝ) ≤ (K : ℝ) := by exact_mod_cast hK2
+  have hM₀R : (1 : ℝ) ≤ (M₀ : ℝ) := by exact_mod_cast hM₀
+  have hidr : (N : ℝ) = (M₀ : ℝ) * (K : ℝ) + ((N % M₀ : ℕ) : ℝ) := by
+    have := Nat.div_add_mod N M₀
+    have : (M₀ * K + N % M₀ : ℕ) = N := by rw [hK]; exact Nat.div_add_mod N M₀
+    exact_mod_cast this.symm
+  have hrR : ((N % M₀ : ℕ) : ℝ) < (M₀ : ℝ) := by
+    exact_mod_cast Nat.mod_lt _ hM₀pos
+  have hNK : (N : ℝ) ≤ 2 * (M₀ : ℝ) * (K : ℝ) := by nlinarith [hidr, hrR, hKR, hM₀R]
+  have hNpos : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN1
+  have hlogN : Real.log N ≤ Real.log (2 * M₀) + Real.log K := by
+    have h1 : Real.log N ≤ Real.log (2 * (M₀ : ℝ) * (K : ℝ)) := Real.log_le_log hNpos hNK
+    rw [Real.log_mul (by positivity) (by positivity)] at h1
+    linarith [h1]
+  linarith [hle1, hsd, hup, hlo, hlogN]
+
+/-- **Toeplitz regularity of the prime-sum average.**  If `S(N) → L` then
+`(Σ_{p≤N}(log p/p)·S(N/p)) / log N → L`.  The weights are nonnegative with total `log N + O(1)`
+(Mertens, both halves), and the primes at which `N/p` has not yet reached the `ε`-threshold `M₀`
+carry only `O_{M₀}(1)` weight (`sum_weight_tail_le`). -/
+theorem tendsto_primeSum_div_log (z : ℂ) {L : ℂ}
+    (h : Tendsto (fun N => delangeS z N) atTop (𝓝 L)) :
+    Tendsto (fun N => (∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+        / (Real.log N : ℂ)) atTop (𝓝 L) := by
+  classical
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨M₁, hM₁⟩ := (Metric.tendsto_atTop.mp h) (ε / 4) (by linarith)
+  set M₀ : ℕ := max 1 M₁ with hM₀def
+  have hM₀1 : 1 ≤ M₀ := le_max_left _ _
+  have hM₀S : ∀ M, M₀ ≤ M → ‖delangeS z M - L‖ ≤ ε / 4 := by
+    intro M hM
+    have := hM₁ M (le_trans (le_max_right 1 M₁) hM)
+    rw [Complex.dist_eq] at this
+    linarith
+  set C₀ : ℝ := ∑ M ∈ Finset.range M₀, ‖delangeS z M - L‖ with hC₀def
+  have hC₀nn : (0 : ℝ) ≤ C₀ := Finset.sum_nonneg fun _ _ => norm_nonneg _
+  have hC₀ : ∀ M, M < M₀ → ‖delangeS z M - L‖ ≤ C₀ := by
+    intro M hM
+    exact Finset.single_le_sum (f := fun M => ‖delangeS z M - L‖)
+      (fun _ _ => norm_nonneg _) (Finset.mem_range.mpr hM)
+  set D : ℝ := Real.log (2 * M₀) + Real.log 4 + 9 with hDdef
+  have hM₀R : (1 : ℝ) ≤ (M₀ : ℝ) := by exact_mod_cast hM₀1
+  have hDnn : (0 : ℝ) ≤ D := by
+    have h1 : (0 : ℝ) ≤ Real.log (2 * (M₀ : ℝ)) := Real.log_nonneg (by linarith)
+    have h2 : (0 : ℝ) ≤ Real.log 4 := Real.log_nonneg (by norm_num)
+    rw [hDdef]; linarith
+  set X : ℝ := C₀ * D + 9 * ‖L‖ with hXdef
+  have hXnn : (0 : ℝ) ≤ X := by
+    rw [hXdef]; have := norm_nonneg L; nlinarith [hC₀nn, hDnn]
+  have hlogtt : Tendsto (fun N : ℕ => Real.log N) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  obtain ⟨N₁, hN₁⟩ := (hlogtt.eventually_gt_atTop
+    (max (max 1 (Real.log 4)) (2 * X / ε))).exists_forall_of_atTop
+  refine ⟨max (2 * M₀) N₁, fun N hN => ?_⟩
+  have hN2M : 2 * M₀ ≤ N := le_trans (le_max_left _ _) hN
+  have hN1' : 1 ≤ N := by omega
+  have hbig := hN₁ N (le_trans (le_max_right _ _) hN)
+  have hlog1 : (1 : ℝ) < Real.log N :=
+    lt_of_le_of_lt (le_trans (le_max_left _ _) (le_max_left _ _)) hbig
+  have hlog4 : Real.log 4 < Real.log N :=
+    lt_of_le_of_lt (le_trans (le_max_right _ _) (le_max_left _ _)) hbig
+  have hlogX : 2 * X / ε < Real.log N := lt_of_le_of_lt (le_max_right _ _) hbig
+  have hLpos : (0 : ℝ) < Real.log N := by linarith
+  have hLc : ((Real.log N : ℝ) : ℂ) ≠ 0 := by
+    simp only [ne_eq, Complex.ofReal_eq_zero]; exact ne_of_gt hLpos
+  set W : ℝ := ∑ p ∈ primesLe N, Real.log p / (p : ℝ) with hWdef
+  have hwnn : ∀ p ∈ primesLe N, (0 : ℝ) ≤ Real.log p / (p : ℝ) := by
+    intro p hp
+    have hpp := prime_of_mem_primesLe hp
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have : (0 : ℝ) ≤ Real.log p := Real.log_nonneg (by linarith)
+    positivity
+  have hnormterm : ∀ p ∈ primesLe N, ∀ x : ℂ,
+      ‖((Real.log p : ℂ) / (p : ℂ)) * x‖ = Real.log p / (p : ℝ) * ‖x‖ := by
+    intro p hp x
+    have hpp := prime_of_mem_primesLe hp
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hlp : (0 : ℝ) ≤ Real.log p := Real.log_nonneg (by linarith)
+    rw [norm_mul, norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hlp,
+      Complex.norm_natCast]
+  -- the exact decomposition
+  have hcastW : ((W : ℝ) : ℂ) = ∑ p ∈ primesLe N, (Real.log p : ℂ) / (p : ℂ) := by
+    rw [hWdef]; push_cast; rfl
+  have hdecomp : (∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+      - L * ((W : ℝ) : ℂ)
+      = ∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * (delangeS z (N / p) - L) := by
+    rw [hcastW, Finset.mul_sum, ← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl fun p _ => by ring
+  -- the two-piece bound
+  have hsplit := Finset.sum_filter_add_sum_filter_not (primesLe N) (fun p => N / p < M₀)
+    (fun p => ‖((Real.log p : ℂ) / (p : ℂ)) * (delangeS z (N / p) - L)‖)
+  have hheavy : ∑ p ∈ (primesLe N).filter (fun p => N / p < M₀),
+      ‖((Real.log p : ℂ) / (p : ℂ)) * (delangeS z (N / p) - L)‖ ≤ C₀ * D := by
+    have hstep : ∀ p ∈ (primesLe N).filter (fun p => N / p < M₀),
+        ‖((Real.log p : ℂ) / (p : ℂ)) * (delangeS z (N / p) - L)‖
+          ≤ C₀ * (Real.log p / (p : ℝ)) := by
+      intro p hp
+      rw [Finset.mem_filter] at hp
+      rw [hnormterm p hp.1]
+      have h1 := hC₀ (N / p) hp.2
+      have h2 := hwnn p hp.1
+      nlinarith [h1, h2]
+    refine le_trans (Finset.sum_le_sum hstep) ?_
+    rw [← Finset.mul_sum]
+    have := sum_weight_tail_le (M₀ := M₀) (N := N) hM₀1 hN2M
+    nlinarith [this, hC₀nn]
+  have hlight : ∑ p ∈ (primesLe N).filter (fun p => ¬ N / p < M₀),
+      ‖((Real.log p : ℂ) / (p : ℂ)) * (delangeS z (N / p) - L)‖ ≤ (ε / 4) * W := by
+    have hstep : ∀ p ∈ (primesLe N).filter (fun p => ¬ N / p < M₀),
+        ‖((Real.log p : ℂ) / (p : ℂ)) * (delangeS z (N / p) - L)‖
+          ≤ (ε / 4) * (Real.log p / (p : ℝ)) := by
+      intro p hp
+      rw [Finset.mem_filter] at hp
+      rw [hnormterm p hp.1]
+      have h1 := hM₀S (N / p) (by omega)
+      have h2 := hwnn p hp.1
+      nlinarith [h1, h2]
+    refine le_trans (Finset.sum_le_sum hstep) ?_
+    rw [← Finset.mul_sum]
+    have hsub : ∑ p ∈ (primesLe N).filter (fun p => ¬ N / p < M₀), Real.log p / (p : ℝ) ≤ W := by
+      rw [hWdef]
+      exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+        (fun p hp _ => hwnn p hp)
+    nlinarith [hsub, hε]
+  -- Mertens bracket
+  have hup := mertens_upper N hN1'
+  have hlo := mertens_lower N hN1'
+  have hlog4nn : (0 : ℝ) ≤ Real.log 4 := Real.log_nonneg (by norm_num)
+  have hlog4le : Real.log 4 ≤ 9 := by
+    have : Real.log 4 ≤ 4 - 1 := by
+      have := Real.log_le_sub_one_of_pos (show (0:ℝ) < 4 by norm_num)
+      linarith
+    linarith
+  have hWbr : Real.log N - 9 ≤ W ∧ W ≤ Real.log N + Real.log 4 := ⟨hlo, hup⟩
+  -- assemble
+  have hkey : ‖(∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+      - L * ((W : ℝ) : ℂ)‖ ≤ (ε / 4) * W + C₀ * D := by
+    rw [hdecomp]
+    refine le_trans (norm_sum_le _ _) ?_
+    rw [← hsplit]
+    linarith [hheavy, hlight]
+  have hshift : ‖L * ((W : ℝ) : ℂ) - L * ((Real.log N : ℝ) : ℂ)‖ ≤ 9 * ‖L‖ := by
+    rw [← mul_sub, norm_mul, ← Complex.ofReal_sub, Complex.norm_real, Real.norm_eq_abs]
+    have : |W - Real.log N| ≤ 9 := by
+      rw [abs_le]; constructor <;> linarith [hWbr.1, hWbr.2, hlog4le]
+    nlinarith [this, norm_nonneg L]
+  have htotal : ‖(∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+      - L * ((Real.log N : ℝ) : ℂ)‖ ≤ (ε / 4) * W + C₀ * D + 9 * ‖L‖ := by
+    have := norm_add_le
+      ((∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p)) - L * ((W : ℝ) : ℂ))
+      (L * ((W : ℝ) : ℂ) - L * ((Real.log N : ℝ) : ℂ))
+    have heq : ((∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+        - L * ((W : ℝ) : ℂ)) + (L * ((W : ℝ) : ℂ) - L * ((Real.log N : ℝ) : ℂ))
+        = (∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+          - L * ((Real.log N : ℝ) : ℂ) := by ring
+    rw [heq] at this
+    linarith [this, hkey, hshift]
+  rw [Complex.dist_eq]
+  have hrw : (∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+        / ((Real.log N : ℝ) : ℂ) - L
+      = ((∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+        - L * ((Real.log N : ℝ) : ℂ)) / ((Real.log N : ℝ) : ℂ) := by
+    field_simp
+  rw [hrw, norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hLpos.le,
+    div_lt_iff₀ hLpos]
+  -- `(ε/4)·W ≤ (ε/2)·log N` and `X < (ε/2)·log N`
+  have hWle : W ≤ 2 * Real.log N := by linarith [hWbr.2, hlog4]
+  have h1 : (ε / 4) * W ≤ (ε / 2) * Real.log N := by nlinarith [hWle, hε]
+  have h2 : X < (ε / 2) * Real.log N := by
+    rw [div_lt_iff₀ hε] at hlogX
+    linarith [hlogX]
+  have h3 : C₀ * D + 9 * ‖L‖ = X := by rw [hXdef]
+  linarith [htotal, h1, h2, h3]
+
+/-! ### The complex step, part II(c): convergence of `S` already forces `S → 0`
+
+With both Toeplitz limits in hand the value of the limit is no longer free.  `T(N)/log N → 0`
+(lap 37) and `T(N) = (z−1)·Σ_p(log p/p)·S(N/p) + O(1)` (part II(a)) and
+`Σ_p(log p/p)·S(N/p)/log N → L` (part II(b)) together give `(z−1)·L = 0`.  So for `z ≠ 1` the
+residue `DelangeKernelMean z` is **equivalent to the mere convergence of `S`** — the limit is
+automatically `0`. -/
+
+/-- A convergent sequence in `ℂ` is bounded, in the uniform-`∀ M` form the `S^{(p)}` lemmas want. -/
+theorem exists_bound_of_tendsto {f : ℕ → ℂ} {L : ℂ} (h : Tendsto f atTop (𝓝 L)) :
+    ∃ B, ∀ M, ‖f M‖ ≤ B := by
+  classical
+  obtain ⟨M₀, hM₀⟩ := (Metric.tendsto_atTop.mp h) 1 (by norm_num)
+  refine ⟨(∑ M ∈ Finset.range M₀, ‖f M‖) + ‖L‖ + 1, fun M => ?_⟩
+  have hsnn : (0 : ℝ) ≤ ∑ M ∈ Finset.range M₀, ‖f M‖ :=
+    Finset.sum_nonneg fun _ _ => norm_nonneg _
+  rcases lt_or_ge M M₀ with hM | hM
+  · have := Finset.single_le_sum (f := fun M => ‖f M‖) (fun _ _ => norm_nonneg _)
+      (Finset.mem_range.mpr hM)
+    have := norm_nonneg L
+    linarith
+  · have hd := hM₀ M hM
+    rw [Complex.dist_eq] at hd
+    have := norm_sub_norm_le (f M) L
+    linarith
+
+/-- **The limit of `S` is forced to be `0`.**  For `z ≠ 1` with `‖z−1‖ ≤ 1`, if `S` converges at
+all then it converges to `0`, i.e. `DelangeKernelMean z` holds. -/
+theorem delangeKernelMean_of_converges {z : ℂ} (hz : z ≠ 1) (hu : ‖z - 1‖ ≤ 1)
+    (h : ∃ L, Tendsto (fun N => delangeS z N) atTop (𝓝 L)) : DelangeKernelMean z := by
+  classical
+  obtain ⟨L, hL⟩ := h
+  obtain ⟨B, hB⟩ := exists_bound_of_tendsto hL
+  have hBnn : (0 : ℝ) ≤ B := le_trans (norm_nonneg _) (hB 0)
+  have hlogtt : Tendsto (fun N : ℕ => Real.log N) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  -- the `O(1)` replacement error dies after dividing by `log N`
+  have herr : Tendsto (fun N : ℕ => (delangeT z N
+      - (z - 1) * ∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+      / (Real.log N : ℂ)) atTop (𝓝 0) := by
+    refine squeeze_zero_norm' ?_ (Filter.Tendsto.const_div_atTop hlogtt (16 * B))
+    filter_upwards [Filter.eventually_gt_atTop 1] with N hN
+    have hNR : (1 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+    have hLpos : (0 : ℝ) < Real.log N := Real.log_pos hNR
+    rw [norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hLpos.le]
+    have := norm_delangeT_sub_primeSum_le hu hB N
+    gcongr
+  -- so `(z−1)·(prime average) → 0`
+  have hT := tendsto_delangeT_div_log z hL
+  have hdiff : Tendsto (fun N : ℕ => (delangeT z N) / (Real.log N : ℂ)
+      - (delangeT z N
+        - (z - 1) * ∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+        / (Real.log N : ℂ)) atTop (𝓝 (0 - 0)) := hT.sub herr
+  rw [sub_zero] at hdiff
+  have hcongr : Tendsto (fun N : ℕ => (z - 1)
+      * ((∑ p ∈ primesLe N, ((Real.log p : ℂ) / (p : ℂ)) * delangeS z (N / p))
+        / (Real.log N : ℂ))) atTop (𝓝 0) := by
+    refine hdiff.congr' ?_
+    filter_upwards [Filter.eventually_gt_atTop 1] with N hN
+    have hNR : (1 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+    have hLpos : (0 : ℝ) < Real.log N := Real.log_pos hNR
+    have hLc : ((Real.log N : ℝ) : ℂ) ≠ 0 := by
+      simp only [ne_eq, Complex.ofReal_eq_zero]; exact ne_of_gt hLpos
+    field_simp
+    ring
+  -- but it also tends to `(z−1)·L`
+  have hP := (tendsto_primeSum_div_log z hL).const_mul (z - 1)
+  have hzero : (z - 1) * L = 0 := tendsto_nhds_unique hP hcongr
+  have hz1 : z - 1 ≠ 0 := sub_ne_zero_of_ne hz
+  have hL0 : L = 0 := by
+    rcases mul_eq_zero.mp hzero with h | h
+    · exact absurd h hz1
+    · exact h
+  rw [delangeKernelMean_iff]
+  rw [hL0] at hL
+  exact hL
+
 end NormalNumbers.CastingOut
