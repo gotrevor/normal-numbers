@@ -868,6 +868,101 @@ theorem exists_common_threshold {α : Type*} (s : Finset α) (Q : α → ℕ →
       · exact hmono b (Finset.mem_insert_self b s) m _ (le_max_right _ _) hm
       · exact hmono b (Finset.mem_insert_of_mem hb') n _ (le_max_left _ _) (hn b hb')
 
+
+/-! ## The per-pair `Inner` bound
+
+Chaining `inner_sum_linear_forms` (CRT), `filter_linear_lt_eq_range` (the cutoff is an initial
+segment) and `progression_sum_bound` (weight transfer + window gap) gives the joint inner sum in
+exactly the shape `full_sum_bound` consumes, `1 + K/(de)`.
+
+The rung's bound enters as `hrung`, quantified over the admissible offsets `a` — there is in fact
+only one (CRT), but quantifying avoids having to prove that, and the assembly supplies the bound
+for all `a < de` anyway (finitely many).
+-/
+
+/-- The harmonic weight as a complex-valued function of the summation variable. -/
+noncomputable def harmW (n : ℕ) : ℂ := ((((n : ℝ) + 1)⁻¹ : ℝ) : ℂ)
+
+lemma harmW_smul (n : ℕ) (G : ℂ) : harmW n * G = ((((n : ℝ) + 1)⁻¹ : ℝ)) • G := by
+  rw [harmW, Complex.real_smul]
+
+/-- **The per-pair bound, in the shape `full_sum_bound` consumes.** -/
+theorem inner_pair_bound {z₀ z₁ : ℂ} (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1)
+    {d e A N : ℕ} (hd : 0 < d) (he : 0 < e) (hco : Nat.Coprime d e) (hA : 2 ≤ A)
+    {R : ℝ} (hR0 : 0 ≤ R)
+    (hrung : ∀ a : ℕ, a < d * e → d ∣ a + 1 → e ∣ a + 2 →
+      ‖∑ j ∈ Finset.Ioc 0 (A ^ Nat.log A ((N - 1 - a) / (d * e))),
+          (Erdos67b.harmonicWeight j : ℂ) *
+          zOmInt z₀ (Erdos67b.integerAffine e (((a + 1) / d : ℕ) : ℤ) j) *
+          zOmInt z₁ (Erdos67b.integerAffine d (((a + 2) / e : ℕ) : ℤ) j)‖ ≤ R) :
+    ‖∑ n ∈ ((Finset.range N).filter (fun n => d ∣ n + 1)).filter (fun n => e ∣ n + 2),
+        harmW n * (z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) *
+          z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e))‖
+      ≤ 1 + (3 + R + Real.log A) / ((d : ℝ) * (e : ℝ)) := by
+  classical
+  have hde : 0 < d * e := Nat.mul_pos hd he
+  have hdeR : (0 : ℝ) < (d : ℝ) * (e : ℝ) := by
+    have h1 : (0 : ℝ) < (d : ℝ) := by exact_mod_cast hd
+    have h2 : (0 : ℝ) < (e : ℝ) := by exact_mod_cast he
+    positivity
+  have hlogA : 0 ≤ Real.log A := Real.log_natCast_nonneg A
+  have hRHS : 0 ≤ (3 + R + Real.log A) / ((d : ℝ) * (e : ℝ)) := by positivity
+  obtain ⟨a, haL, hda, hea, heq⟩ := inner_sum_linear_forms hd he hco z₀ z₁ harmW N
+  rw [heq]
+  by_cases haN : a < N
+  · rw [filter_linear_lt_eq_range hde haN]
+    set J := (N - 1 - a) / (d * e) with hJ
+    -- rewrite the summand into the `•` form `progression_sum_bound` uses
+    have hrw : ∑ j ∈ Finset.range (J + 1), harmW (d * e * j + a) *
+          (z₀ ^ ArithmeticFunction.cardFactors (e * j + (a + 1) / d) *
+            z₁ ^ ArithmeticFunction.cardFactors (d * j + (a + 2) / e))
+        = ∑ j ∈ Finset.range (J + 1),
+            ((((d * e * j + a : ℕ) : ℝ) + 1)⁻¹ : ℝ) •
+              (z₀ ^ ArithmeticFunction.cardFactors (e * j + (a + 1) / d) *
+                z₁ ^ ArithmeticFunction.cardFactors (d * j + (a + 2) / e)) :=
+      Finset.sum_congr rfl fun j _ => harmW_smul _ _
+    rw [hrw]
+    rcases Nat.eq_zero_or_pos J with hJ0 | hJ1
+    · -- only the `j = 0` term survives
+      rw [hJ0]
+      have hone : Finset.range (0 + 1) = ({0} : Finset ℕ) := by
+        ext j; simp only [Finset.mem_range, Finset.mem_singleton]; omega
+      rw [hone, Finset.sum_singleton]
+      have hnorm : ‖((((d * e * 0 + a : ℕ) : ℝ) + 1)⁻¹ : ℝ) •
+          (z₀ ^ ArithmeticFunction.cardFactors (e * 0 + (a + 1) / d) *
+            z₁ ^ ArithmeticFunction.cardFactors (d * 0 + (a + 2) / e))‖ ≤ 1 := by
+        rw [norm_smul, Real.norm_eq_abs, norm_mul, norm_pow, norm_pow, hz₀, hz₁,
+          one_pow, one_pow, mul_one, mul_one, abs_of_nonneg (by positivity)]
+        rw [inv_le_one_iff₀]
+        right
+        have : (0 : ℝ) ≤ ((d * e * 0 + a : ℕ) : ℝ) := Nat.cast_nonneg _
+        linarith
+      linarith
+    · have haL' : a + 1 ≤ d * e := haL
+      have hbound := progression_sum_bound (z₀ := z₀) (z₁ := z₁) (L := d * e) (a := a)
+        (b₀ := (a + 1) / d) (b₁ := (a + 2) / e) (d := d) (e := e) (J := J) (A := A)
+        hz₀ hz₁ hd he hde haL' hA hJ1 R (hrung a haL hda hea)
+      have hcast : ((d * e : ℕ) : ℝ) = (d : ℝ) * (e : ℝ) := by push_cast; ring
+      rw [hcast] at hbound
+      refine le_trans hbound ?_
+      have h1 : ((a : ℝ) + 1)⁻¹ ≤ 1 := by
+        rw [inv_le_one_iff₀]
+        right
+        have : (0 : ℝ) ≤ (a : ℝ) := Nat.cast_nonneg a
+        linarith
+      have heq2 : 2 / ((d : ℝ) * (e : ℝ)) + ((d : ℝ) * (e : ℝ))⁻¹ * (R + (1 + Real.log A))
+          = (3 + R + Real.log A) / ((d : ℝ) * (e : ℝ)) := by
+        field_simp
+        ring
+      linarith [heq2]
+  · -- `a ≥ N`: the progression is empty
+    have hempty : (Finset.range N).filter (fun j => d * e * j + a < N) = ∅ := by
+      refine Finset.eq_empty_of_forall_notMem fun j hj => ?_
+      have := (Finset.mem_filter.1 hj).2
+      omega
+    rw [hempty, Finset.sum_empty, norm_zero]
+    linarith
+
 end CastingOut
 
 end NormalNumbers
@@ -886,3 +981,4 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.pair_mass_le
 #print axioms NormalNumbers.CastingOut.full_sum_bound
 #print axioms NormalNumbers.CastingOut.exists_common_threshold
+#print axioms NormalNumbers.CastingOut.inner_pair_bound
