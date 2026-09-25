@@ -384,8 +384,7 @@ theorem prod_const_coeff_pos (s : Finset ℕ) (I : Finset ℕ) :
 window that separates both pairs of the gadget `(p, a)`, and the gadget's correction pulls the
 constant term strictly BELOW the Binomial value. -/
 theorem blockGf_defect_coeff (q : ℕ) (gs : List (ℕ × ℕ)) (p a : ℕ) (hmem : (p, a) ∈ gs)
-    (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup)
-    (hinj : ∀ pa ∈ gs, ∀ qb ∈ gs, pa.2 = qb.2 → pa = qb) :
+    (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup) :
     (blockGf q (multiG q gs) (Finset.Ico (p + 1) (p + a + 1))).coeff 0
       < (2 : ℝ) ^ q / 2 ^ a := by
   classical
@@ -401,8 +400,7 @@ theorem blockGf_defect_coeff (q : ℕ) (gs : List (ℕ × ℕ)) (p a : ℕ) (hme
     obtain ⟨ha', hq'⟩ := hok (p', a') hqb
     refine sep_of_ne ha' ?_
     intro ⟨h1, h2⟩
-    have : a' = a := by omega
-    exact hne (hinj (p', a') hqb (p, a) hmem (by simpa using this))
+    exact hne (by simp only [Prod.mk.injEq]; omega)
   have hred := blockGf_reduce q I hI gs.length gs rfl (p, a) hmem hok hgs hnd hsepoth
   have hb : ∀ k : ℕ, ((1 + X : ℝ[X]) ^ k).coeff 0 = 1 := by
     intro k
@@ -509,7 +507,7 @@ theorem multi_not_isAbelianAt (q : ℕ) (gs : List (ℕ × ℕ)) (hq0 : 0 < q) (
           rw [segGf_eq_blockGf q hq0 _ a (p + 1) b, segSet_defect_pos q p a b hq (by omega),
             blockGf_empty]
         rw [Finset.prod_congr rfl hall, Finset.prod_const, Nat.card_Ico]
-    have hc0 := blockGf_defect_coeff q gs p a hmem hok hgs hnd hinj
+    have hc0 := blockGf_defect_coeff q gs p a hmem hok hgs hnd
     have hpow : ((C ((2 : ℝ) ^ q) : ℝ[X]) ^ (S - 1)).coeff 0 = ((2 : ℝ) ^ q) ^ (S - 1) := by
       rw [← map_pow, Polynomial.coeff_C_zero]
     have hpos : (0 : ℝ) < ((2 : ℝ) ^ q) ^ (S - 1) := by positivity
@@ -612,6 +610,161 @@ theorem blockGf_coeff_dichotomy (q : ℕ) (gs : List (ℕ × ℕ)) (lo hi : ℕ)
     have h1 := plain_coeff_zero q I hI
     rw [hcardI, hsplit] at h1
     linarith
+
+/-! ### Summing the dichotomy over the blocks -/
+
+theorem segLen_sum (q L r S : ℕ) (hS : ∀ t < L, (r + t) / q < S) :
+    ∑ b ∈ range S, segLen q L r b = L := by
+  classical
+  have h := Finset.card_eq_sum_card_fiberwise
+    (f := fun t => (r + t) / q) (s := range L) (t := range S)
+    (fun t ht => Finset.mem_range.mpr (hS t (Finset.mem_range.mp ht)))
+  rw [Finset.card_range] at h
+  exact h.symm
+
+/-- The constant term of a segment factor, and its Binomial upper bound. -/
+theorem segGf_coeff_dichotomy (q : ℕ) (hq0 : 0 < q) (gs : List (ℕ × ℕ))
+    (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup) (L r b : ℕ) :
+    (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q L r b d).coeff 0
+        = (2 : ℝ) ^ q / 2 ^ segLen q L r b
+      ∨ (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q L r b d).coeff 0
+        = 3 / 4 * ((2 : ℝ) ^ q / 2 ^ segLen q L r b) := by
+  classical
+  have hshape := segSet_eq_Ico_gen q L r b
+  have hsub : Finset.Ico (r - b * q) (min q (r + L - b * q)) ⊆ range q := by
+    intro i hi
+    rw [Finset.mem_Ico] at hi
+    exact Finset.mem_range.mpr (lt_of_lt_of_le hi.2 (min_le_left _ _))
+  have hlen : segLen q L r b = min q (r + L - b * q) - (r - b * q) := by
+    rw [segLen_eq_card q L r b hq0, hshape, Nat.card_Ico]
+  rw [segGf_eq_blockGf q hq0 _ L r b, hshape, hlen]
+  exact blockGf_coeff_dichotomy q gs _ _ hok hgs hnd hsub
+
+/-- **The window law is never better than Binomial.**  Summing the dichotomy over the blocks. -/
+theorem winGf_coeff_le (q : ℕ) (hq0 : 0 < q) (gs : List (ℕ × ℕ))
+    (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup) (S L r : ℕ)
+    (hS : ∀ t < L, (r + t) / q < S) :
+    (winGf (multiG q gs) q (2 ^ q) S L r).coeff 0 ≤ ((2 ^ q : ℕ) : ℝ) ^ S / 2 ^ L := by
+  classical
+  have hB0 : 0 < 2 ^ q := by positivity
+  have hcast : ((2 ^ q : ℕ) : ℝ) = (2 : ℝ) ^ q := by push_cast; ring
+  have hcoeff : (winGf (multiG q gs) q (2 ^ q) S L r).coeff 0
+      = ∏ b ∈ range S,
+        (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q L r b d).coeff 0 := by
+    rw [winGf_eq_prod (multiG q gs) hB0 q S L r hS, ← Polynomial.constantCoeff_apply, map_prod]
+    rfl
+  have hv : ∏ b ∈ range S, ((2 : ℝ) ^ q / 2 ^ segLen q L r b)
+      = ((2 ^ q : ℕ) : ℝ) ^ S / 2 ^ L := by
+    rw [Finset.prod_div_distrib, Finset.prod_const, Finset.card_range,
+      Finset.prod_pow_eq_pow_sum, segLen_sum q L r S hS, hcast]
+  rw [hcoeff, ← hv]
+  refine Finset.prod_le_prod (fun b _ => ?_) (fun b _ => ?_)
+  · rcases segGf_coeff_dichotomy q hq0 gs hok hgs hnd L r b with h | h <;> rw [h] <;> positivity
+  · rcases segGf_coeff_dichotomy q hq0 gs hok hgs hnd L r b with h | h
+    · rw [h]
+    · rw [h]
+      have : (0 : ℝ) < (2 : ℝ) ^ q / 2 ^ segLen q L r b := by positivity
+      linarith
+
+/-- A strictly defective residue suffices to refute abelianness. -/
+theorem not_isAbelianAt_of_defect_lt (g : ℕ → ℕ → ℕ) (c : ℕ → ℕ) {B q : ℕ} (hB : 0 < B)
+    (hq : 0 < q) (hcB : ∀ m, c m < B) (hc : IsNormalSequence B c) (L S r0 : ℕ)
+    (hSle : q + L ≤ q * S + 1) (hr0 : r0 < q)
+    (hle : ∀ r < q, (winGf g q B S L r).coeff 0 ≤ (B : ℝ) ^ S / 2 ^ L)
+    (hlt : (winGf g q B S L r0).coeff 0 < (B : ℝ) ^ S / 2 ^ L) :
+    ¬ IsAbelianAt (blockSeq g c q) L := by
+  classical
+  intro h
+  have hbf := (isAbelianAt_blockSeq_iff g c hB hq hcB hc L S hSle).mp h 0 (by omega)
+  set v : ℝ := (B : ℝ) ^ S / 2 ^ L with hv
+  have hsum : ∑ r ∈ range q, (winGf g q B S L r).coeff 0 < (q : ℝ) * v := by
+    calc ∑ r ∈ range q, (winGf g q B S L r).coeff 0
+        < ∑ _r ∈ range q, v :=
+          Finset.sum_lt_sum (fun r hr => hle r (Finset.mem_range.mp hr))
+            ⟨r0, Finset.mem_range.mpr hr0, hlt⟩
+      _ = (q : ℝ) * v := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  rw [blockFreq_eq_coeff, Nat.choose_zero_right, Nat.cast_one] at hbf
+  have hBS : (0 : ℝ) < (B : ℝ) ^ S := by positivity
+  have h2L : (0 : ℝ) < (2 : ℝ) ^ L := by positivity
+  have hqR : (0 : ℝ) < (q : ℝ) := by positivity
+  rw [div_eq_div_iff (by positivity) (by positivity)] at hbf
+  have hkey : ∑ r ∈ range q, (winGf g q B S L r).coeff 0 = (q : ℝ) * v := by
+    have h2 : (∑ r ∈ range q, (winGf g q B S L r).coeff 0) * 2 ^ L = ((q : ℝ) * v) * 2 ^ L := by
+      rw [hbf, one_mul, hv]; field_simp
+    exact mul_right_cancel₀ (ne_of_gt h2L) h2
+  rw [hkey] at hsum
+  exact absurd hsum (lt_irrefl _)
+
+/-- **The multi-gadget sequence is not abelian at any arm** — with NO hypothesis on the arms,
+so arbitrarily many gadgets may share an arm.  This is the form item 4 needs. -/
+theorem multi_not_isAbelianAt' (q : ℕ) (gs : List (ℕ × ℕ)) (hq0 : 0 < q) (p a : ℕ)
+    (hmem : (p, a) ∈ gs) (hok : ∀ pa ∈ gs, GadOk q pa) (hgs : GadSep gs) (hnd : gs.Nodup)
+    (c : ℕ → ℕ) (hcB : ∀ m, c m < 2 ^ q) (hc : IsNormalSequence (2 ^ q) c) :
+    ¬ IsAbelianAt (blockSeq (multiG q gs) c q) a := by
+  classical
+  obtain ⟨ha, hq⟩ := hok (p, a) hmem
+  simp only at ha hq
+  have hB0 : 0 < 2 ^ q := by positivity
+  have hcast : ((2 ^ q : ℕ) : ℝ) = (2 : ℝ) ^ q := by push_cast; ring
+  set S := q + a with hSdef
+  have hSle : q + a ≤ q * S + 1 := by
+    have : S ≤ q * S := Nat.le_mul_of_pos_left S hq0
+    omega
+  have hfib : ∀ r < q, ∀ t < a, (r + t) / q < S := by
+    intro r hr t ht
+    have := Nat.div_le_self (r + t) q
+    omega
+  refine not_isAbelianAt_of_defect_lt (multiG q gs) c hB0 hq0 hcB hc a S (p + 1) hSle
+    (by omega) (fun r hr => winGf_coeff_le q hq0 gs hok hgs hnd S a r (hfib r hr)) ?_
+  -- the strict bound at `r = p + 1`
+  set r := p + 1 with hrdef
+  have hS : ∀ t < a, (r + t) / q < S := hfib r (by omega)
+  have hcoeff : (winGf (multiG q gs) q (2 ^ q) S a r).coeff 0
+      = ∏ b ∈ range S,
+        (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q a r b d).coeff 0 := by
+    rw [winGf_eq_prod (multiG q gs) hB0 q S a r hS, ← Polynomial.constantCoeff_apply, map_prod]
+    rfl
+  set vf : ℕ → ℝ := fun b => (2 : ℝ) ^ q / 2 ^ segLen q a r b with hvf
+  set cf : ℕ → ℝ := fun b =>
+    (∑ d ∈ range (2 ^ q), (X : ℝ[X]) ^ segOnes (multiG q gs) q a r b d).coeff 0 with hcf
+  have hvpos : ∀ b, 0 < vf b := fun b => by rw [hvf]; positivity
+  have hdich : ∀ b, cf b = vf b ∨ cf b = 3 / 4 * vf b :=
+    fun b => segGf_coeff_dichotomy q hq0 gs hok hgs hnd a r b
+  have hnn : ∀ b, 0 ≤ cf b := by
+    intro b
+    rcases hdich b with h | h <;> rw [h] <;> [exact le_of_lt (hvpos b); nlinarith [hvpos b]]
+  have hcle : ∀ b, cf b ≤ vf b := by
+    intro b
+    rcases hdich b with h | h
+    · rw [h]
+    · rw [h]; nlinarith [hvpos b]
+  -- the first block's trace is the separating window, so its factor is strictly smaller
+  have hseg0 : segLen q a r 0 = a := by
+    rw [segLen_eq_card q a r 0 hq0, hrdef, segSet_defect q p a hq, Nat.card_Ico]
+    omega
+  have hc0 : cf 0 < vf 0 := by
+    have hd := blockGf_defect_coeff q gs p a hmem hok hgs hnd
+    simp only [hcf, hvf, hseg0]
+    rw [segGf_eq_blockGf q hq0 _ a r 0, hrdef, segSet_defect q p a hq]
+    exact hd
+  -- split off the first factor
+  have hsplit : ∀ f : ℕ → ℝ, ∏ b ∈ range S, f b = f 0 * ∏ b ∈ Finset.Ico 1 S, f b := by
+    intro f
+    rw [Finset.range_eq_Ico, Finset.prod_eq_prod_Ico_succ_bot (by omega : (0 : ℕ) < S)]
+  have hV : (0 : ℝ) < ∏ b ∈ Finset.Ico 1 S, vf b :=
+    Finset.prod_pos (fun b _ => hvpos b)
+  have hPV : ∏ b ∈ Finset.Ico 1 S, cf b ≤ ∏ b ∈ Finset.Ico 1 S, vf b :=
+    Finset.prod_le_prod (fun b _ => hnn b) (fun b _ => hcle b)
+  have hPnn : (0 : ℝ) ≤ ∏ b ∈ Finset.Ico 1 S, cf b :=
+    Finset.prod_nonneg (fun b _ => hnn b)
+  have hprodv : ∏ b ∈ range S, vf b = ((2 ^ q : ℕ) : ℝ) ^ S / 2 ^ a := by
+    rw [hvf, Finset.prod_div_distrib, Finset.prod_const, Finset.card_range,
+      Finset.prod_pow_eq_pow_sum, segLen_sum q a r S hS, hcast]
+  rw [hcoeff, ← hprodv, hsplit cf, hsplit vf]
+  calc cf 0 * ∏ b ∈ Finset.Ico 1 S, cf b ≤ cf 0 * ∏ b ∈ Finset.Ico 1 S, vf b := by
+        exact mul_le_mul_of_nonneg_left hPV (hnn 0)
+    _ < vf 0 * ∏ b ∈ Finset.Ico 1 S, vf b := by
+        exact mul_lt_mul_of_pos_right hc0 hV
 
 /-! ## The layout: one gadget per excluded length -/
 
