@@ -11374,9 +11374,17 @@ shape `UniformResonantMass` asks for.  Status: 4 declarations axiom-clean; the a
 `sorryAx` through exactly one disclosed leaf.
 
 **Next attack (the one open leaf, `highResonantMass_le`).**  Pure Brun–Titchmarsh bookkeeping —
-no further analytic input; every ingredient is already proved in `C3MrtWindowMass`:
-1. partition the high-range resonant primes by `windowIndexW` (`Finset.sum_fiberwise_of_maps_to`),
-   the index range from `abs_windowIndexW_le` with `T = |t| log Y`, giving `K`;
+no further analytic input; every ingredient is already proved in `C3MrtWindowMass`.  Steps 1, 1b
+and 3a are now **DONE** (sorry-free, axiom-clean):
+1. **DONE** — `highResonantMass_eq_sum_windows`: the high-range resonant primes partition
+   *exactly* into the windows `|m| ≤ resWindowCount t δ Y`
+   (`Finset.sum_fiberwise_of_maps_to`, index range from `abs_windowIndexW_le` at `T = |t| log Y`).
+1b. **DONE** — `highResonantMass_eq_zero`: if `log Y ≤ lowHeight t` the high range is *empty*, so
+   the whole `Y = 2` boundary case (where `log 2 < 8 log 2 ≤ lowHeight t`) is discharged and the
+   remaining work may assume `3 ≤ Y`.
+3a. **DONE** — `resWindowCount_le`: `K ≤ (2+|t|)·log Y` for `3 ≤ Y` and `δ ≤ π/2`, hence
+   `log K ≤ log(2+|t|) + log log Y` **with constant `0`** — the window count costs exactly the
+   budget's two terms and not a shred more.  (`32/π < 11 < 50` then leaves ample room.)
 2. per window `m`, `resonant_window_mass_le` at `a_m = (γ_m − δ)/|t|` — note `a_m ≥ lowHeight t`
    holds *by the split*, which also supplies its `log 2 ≤ a` hypothesis for free;
 3. main terms: `sum_Icc_symm_le` + `sum_inv_gap_le` ⇒ `(32δ/π)(1 + log K) + O(δ)`, and

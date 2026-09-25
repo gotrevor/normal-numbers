@@ -256,6 +256,106 @@ theorem uniformResonantMass_of_high {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ
   rw [hsplit]
   nlinarith [hlow, habs, hhigh, hloglogY, hδ0]
 
+/-! ### Narrowing the open leaf: the window partition, the small-`Y` case, and `log K`
+
+Three of the five steps of `highResonantMass_le` are discharged here, leaving only the
+per-window estimate and its summation. -/
+
+/-- The number of resonance windows that can meet `[2, Y]`. -/
+noncomputable def resWindowCount (t δ : ℝ) (Y : ℕ) : ℕ :=
+  ⌈(|t| * Real.log (Y : ℝ) + δ + Real.pi) / (2 * Real.pi)⌉₊
+
+open scoped Classical in
+/-- The reciprocal mass of the high-range resonant primes in window `m`. -/
+noncomputable def windowMass (z : ℂ) (t : ℝ) (Y : ℕ) (δ : ℝ) (m : ℤ) : ℝ :=
+  ∑ p ∈ (((Erdos67b.primesUpTo Y).filter (fun p => |(primePhase z t p).arg| < δ)).filter
+      (fun p : ℕ => ¬ Real.log (p : ℝ) ≤ lowHeight t)).filter
+      (fun p => windowIndexW z t δ p = m), (p : ℝ)⁻¹
+
+/-- **Step 1 — the window partition.**  Every high-range resonant prime lands in exactly one
+window of index `|m| ≤ resWindowCount t δ Y`, so the high mass is the sum of the window masses. -/
+theorem highResonantMass_eq_sum_windows {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ : δ ≤ resEps z)
+    (t : ℝ) (Y : ℕ) :
+    highResonantMass z t Y δ
+      = ∑ m ∈ Finset.Icc (-(resWindowCount t δ Y : ℤ)) (resWindowCount t δ Y : ℤ),
+          windowMass z t Y δ m := by
+  classical
+  rw [highResonantMass]
+  refine (Finset.sum_fiberwise_of_maps_to (g := fun p => windowIndexW z t δ p) ?_ _).symm
+  intro p hp
+  obtain ⟨hp1, _⟩ := Finset.mem_filter.1 hp
+  obtain ⟨hpY, hres⟩ := Finset.mem_filter.1 hp1
+  obtain ⟨hpp, hple⟩ := Erdos67b.mem_primesUpTo.1 hpY
+  have hp2 : 2 ≤ p := hpp.two_le
+  have hp0 : (0:ℝ) < (p:ℝ) := by exact_mod_cast hpp.pos
+  have hlogle : Real.log (p:ℝ) ≤ Real.log (Y:ℝ) := by
+    have : (p:ℝ) ≤ (Y:ℝ) := by exact_mod_cast hple
+    exact Real.log_le_log hp0 this
+  have hT : |t| * Real.log (p:ℝ) ≤ |t| * Real.log (Y:ℝ) :=
+    mul_le_mul_of_nonneg_left hlogle (abs_nonneg t)
+  have hbd := abs_windowIndexW_le hz hp2 hδ hres hT
+  rw [Finset.mem_Icc]
+  rw [resWindowCount]
+  constructor
+  · have := abs_le.1 hbd |>.1; omega
+  · have := abs_le.1 hbd |>.2; omega
+
+/-- **Step 1b — the small-`Y` case is trivial.**  If `log Y` does not even reach the split height
+there is no high range at all; in particular this covers `Y = 2`, where
+`log 2 < 8 log 2 ≤ lowHeight t`. -/
+theorem highResonantMass_eq_zero {z : ℂ} {δ : ℝ} {t : ℝ} {Y : ℕ}
+    (h : Real.log (Y : ℝ) ≤ lowHeight t) : highResonantMass z t Y δ = 0 := by
+  classical
+  rw [highResonantMass, Finset.sum_eq_zero]
+  intro p hp
+  exfalso
+  obtain ⟨hp1, hp2⟩ := Finset.mem_filter.1 hp
+  obtain ⟨hpY, _⟩ := Finset.mem_filter.1 hp1
+  obtain ⟨hpp, hple⟩ := Erdos67b.mem_primesUpTo.1 hpY
+  have hp0 : (0:ℝ) < (p:ℝ) := by exact_mod_cast hpp.pos
+  have hlogle : Real.log (p:ℝ) ≤ Real.log (Y:ℝ) := by
+    have : (p:ℝ) ≤ (Y:ℝ) := by exact_mod_cast hple
+    exact Real.log_le_log hp0 this
+  exact hp2 (le_trans hlogle h)
+
+/-- **Step 3a — the window count is at most `(2+|t|)·log Y`,** so `log K` costs exactly the
+budget's two terms and nothing more: `log K ≤ log(2+|t|) + log log Y`, with constant `0`. -/
+theorem resWindowCount_le {δ : ℝ} (hδ0 : 0 < δ) (hδπ : δ ≤ Real.pi / 2) (t : ℝ) {Y : ℕ}
+    (hY : 3 ≤ Y) :
+    ((resWindowCount t δ Y : ℕ) : ℝ) ≤ (2 + |t|) * Real.log (Y : ℝ) := by
+  have hpi : (0:ℝ) < Real.pi := Real.pi_pos
+  have hYR : (3:ℝ) ≤ (Y:ℝ) := by exact_mod_cast hY
+  have hlogY : (1:ℝ) < Real.log (Y:ℝ) := by
+    have h3 : Real.log 3 ≤ Real.log (Y:ℝ) := Real.log_le_log (by norm_num) hYR
+    have : (1:ℝ) < Real.log 3 := by
+      rw [Real.lt_log_iff_exp_lt (by norm_num)]
+      nlinarith [Real.exp_one_lt_d9]
+    linarith
+  have ht0 : (0:ℝ) ≤ |t| := abs_nonneg t
+  set A : ℝ := (|t| * Real.log (Y:ℝ) + δ + Real.pi) / (2 * Real.pi) with hA
+  have hceil : ((resWindowCount t δ Y : ℕ) : ℝ) ≤ A + 1 := by
+    rw [resWindowCount, ← hA]
+    exact le_of_lt (Nat.ceil_lt_add_one (by
+      rw [hA]
+      have : (0:ℝ) ≤ |t| * Real.log (Y:ℝ) := by positivity
+      positivity))
+  refine le_trans hceil ?_
+  have hAsplit : A = |t| * Real.log (Y:ℝ) / (2 * Real.pi) + (δ + Real.pi) / (2 * Real.pi) := by
+    rw [hA]; ring
+  have h34 : (δ + Real.pi) / (2 * Real.pi) ≤ 3 / 4 := by
+    rw [div_le_iff₀ (by positivity)]; nlinarith
+  have hAle : A ≤ |t| * Real.log (Y:ℝ) / (2 * Real.pi) + 3 / 4 := by
+    rw [hAsplit]; linarith
+  have hnn : (0:ℝ) ≤ |t| * Real.log (Y:ℝ) := by
+    have : (0:ℝ) ≤ Real.log (Y:ℝ) := by linarith
+    positivity
+  have h1 : |t| * Real.log (Y:ℝ) / (2 * Real.pi) ≤ |t| * Real.log (Y:ℝ) := by
+    rw [div_le_iff₀ (by positivity)]
+    nlinarith [Real.pi_gt_three, hnn]
+  have h2 : (3:ℝ)/4 + 1 ≤ 2 * Real.log (Y:ℝ) := by linarith
+  linarith
+
 end CastingOut
 
 end NormalNumbers
+
