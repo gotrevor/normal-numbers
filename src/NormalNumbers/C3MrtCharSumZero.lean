@@ -320,6 +320,95 @@ theorem primePower_tail_le_one {P : Finset ℕ} (hP : ∀ p ∈ P, Nat.Prime p) 
   intro p hp
   exact primePower_inner_le (hP p hp).two_le N
 
+
+/-! ### Where the archimedean content actually is: the `κ = 0` end is free
+
+`NonPrincipalTwistSmall κ C` asks `‖twistedPrimeSum X χ t‖ ≤ (1 − κ) log log X + C`, and the
+chain needs `κ > 0`.  The theorems below pin the two ends of that scale in the kernel, which
+settles how much precision the archimedean debt really requires:
+
+* **`κ = 0` is free** (`nonPrincipalTwistSmall_zero`): the triangle inequality plus Mertens gives
+  `‖twistedPrimeSum X χ t‖ ≤ log log X + log 3 + mertensBound` for *every* `χ` and `t`, with no
+  cancellation whatsoever.  So the entire content of the archimedean supply is the strict
+  improvement on Mertens — not the bound itself.
+* **`κ > 0` is exactly a `≪ log q` bound** (`nonPrincipalTwistSmall_of_logQBound`, already in
+  `C3MrtArchFaithful`): in TT's range `q, |t| ≤ (log X)^{1/125}` one has
+  `log q ≤ (1/125) log log X`, so a bound `D·(log(q+2) + log(2+|t|) + 1)` yields
+  `κ = 1 − 2D/125`, admissible for every `D < 62.5`.
+
+Together these say the tolerance is *neither* loose nor tight in a surprising way: nothing weaker
+than `O(log q)` can work (anything of size `log log X` at the top of the range gives `κ = 0`,
+which `nonPrincipalTwistSmall_zero` shows is already free and therefore useless), and the
+constant in the `O` is generous (up to `62`).  This is why the `t = 0` route above aims at
+`L(1,χ) ≫ q^{-1/2}` rather than anything sharper: a crude Siegel-free rate is all the chain can
+use, and all it needs. -/
+
+/-- Every twisted prime sum is bounded by the prime reciprocal mass — no cancellation used. -/
+theorem norm_twistedPrimeSum_le_mass {X : ℝ} (hX : 3 ≤ X) {q : ℕ}
+    (χ : DirichletCharacter ℂ q) (t : ℝ) :
+    ‖twistedPrimeSum X χ t‖
+      ≤ Real.log (Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ)) + Erdos67b.PrimeEstimates.mertensBound := by
+  have hceilR : ((9:ℕ) : ℝ) ≤ ((⌈X ^ 2⌉₊ : ℕ) : ℝ) :=
+    le_trans (by push_cast; nlinarith) (Nat.le_ceil _)
+  have hceil : (9:ℕ) ≤ ⌈X ^ 2⌉₊ := by exact_mod_cast hceilR
+  have hB : (2:ℕ) ≤ ⌈X ^ 2⌉₊ := by omega
+  have hterm : ∀ p ∈ primesUpToSq X,
+      ‖(starRingEnd ℂ) (χ (p : ZMod q)) *
+        Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ)) / (p : ℂ)‖ ≤ (p : ℝ)⁻¹ := by
+    intro p hp
+    have hpp : p.Prime := (mem_primesUpToSq.1 hp).2
+    have hp0 : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hpp.pos
+    rw [norm_div, norm_mul, RCLike.norm_conj, norm_exp_twist, mul_one, Complex.norm_natCast]
+    have hchi : ‖χ (p : ZMod q)‖ ≤ 1 := dirichletChar_norm_le_one χ _
+    rw [div_le_iff₀ hp0]
+    calc ‖χ ((p : ℕ) : ZMod q)‖ ≤ 1 := hchi
+      _ = (p : ℝ)⁻¹ * (p : ℝ) := by field_simp
+  have hnorm : ‖twistedPrimeSum X χ t‖ ≤ ∑ p ∈ primesUpToSq X, (p : ℝ)⁻¹ := by
+    rw [twistedPrimeSum, ← primesUpToSq]
+    exact le_trans (norm_sum_le _ _) (Finset.sum_le_sum hterm)
+  have hGb : ∀ p ∈ primesUpToSq X, p.Prime ∧ p ≤ ⌈X ^ 2⌉₊ := by
+    intro p hp
+    obtain ⟨hlt, hpp⟩ := mem_primesUpToSq.1 hp
+    exact ⟨hpp, by omega⟩
+  exact le_trans hnorm (small_prime_mass_le hB hGb)
+
+/-- **Content locator for the archimedean debt: `κ = 0` is free.**  For *every* character and
+*every* twist, `‖twistedPrimeSum X χ t‖ ≤ log log X + log 3 + mertensBound`, by the triangle
+inequality alone.  So `NonPrincipalTwistSmall 0 C` carries no arithmetic content: the whole
+content of the archimedean supply is the *strict* improvement `κ > 0` over Mertens. -/
+theorem norm_twistedPrimeSum_le_loglog {X : ℝ} (hX : 3 ≤ X) {q : ℕ}
+    (χ : DirichletCharacter ℂ q) (t : ℝ) :
+    ‖twistedPrimeSum X χ t‖
+      ≤ Real.log (Real.log X) + (Real.log 3 + Erdos67b.PrimeEstimates.mertensBound) := by
+  have hX0 : (0:ℝ) < X := by linarith
+  have hlogX : 1 < Real.log X := one_lt_log_of_three_le hX
+  -- `⌈X²⌉₊ ≤ X³`, so `log ⌈X²⌉₊ ≤ 3 log X`
+  have hcl : ((⌈X ^ 2⌉₊ : ℕ) : ℝ) ≤ X ^ 3 := by
+    have h1 : ((⌈X ^ 2⌉₊ : ℕ) : ℝ) < X ^ 2 + 1 := Nat.ceil_lt_add_one (by positivity)
+    nlinarith
+  have h9 : ((9:ℕ) : ℝ) ≤ ((⌈X ^ 2⌉₊ : ℕ) : ℝ) :=
+    le_trans (by push_cast; nlinarith) (Nat.le_ceil _)
+  have h9' : (9:ℝ) ≤ ((⌈X ^ 2⌉₊ : ℕ) : ℝ) := by push_cast at h9; linarith
+  have hcl0 : (0:ℝ) < ((⌈X ^ 2⌉₊ : ℕ) : ℝ) := by linarith
+  have hlogcl : Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ) ≤ 3 * Real.log X := by
+    have h := Real.log_le_log hcl0 hcl
+    rw [Real.log_pow] at h
+    push_cast at h
+    linarith
+  have hlogcl0 : 0 < Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ) := Real.log_pos (by linarith)
+  have houter : Real.log (Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ)) ≤ Real.log 3 + Real.log (Real.log X) := by
+    have h1 := Real.log_le_log hlogcl0 hlogcl
+    rwa [Real.log_mul (by norm_num) (by linarith)] at h1
+  have := norm_twistedPrimeSum_le_mass hX χ t
+  linarith
+
+/-- …packaged as the `Prop` the chain uses: the `κ = 0` instance holds outright. -/
+theorem nonPrincipalTwistSmall_zero :
+    NonPrincipalTwistSmall 0 (Real.log 3 + Erdos67b.PrimeEstimates.mertensBound) := by
+  intro X hX q χ _ _ t _
+  have := norm_twistedPrimeSum_le_loglog hX χ t
+  linarith
+
 end CastingOut
 
 end NormalNumbers

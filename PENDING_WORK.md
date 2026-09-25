@@ -11321,3 +11321,26 @@ mathlib has only the qualitative `LFunction_apply_one_ne_zero`).
 5. `|Im 𝓛| ≪ log q` — the winding number of `arg L(σ,χ)` as `σ: ∞ → 1`.  **This is the one step
    with no shortcut**; budget is generous (`D` up to `62` is admissible, since downstream only
    needs `2D < 125`), so a crude Jensen/zero-counting bound suffices.
+
+### Tolerance of the archimedean debt — SETTLED in the kernel (same lap)
+
+A route-decisive question that had not been pinned: *how much* precision does the archimedean
+supply actually need?  `NonPrincipalTwistSmall κ C` asks
+`‖twistedPrimeSum X χ t‖ ≤ (1−κ) log log X + C` and the chain needs only `κ > 0`, which looked as
+though it might admit something far weaker than `≪ log q`.  It does not, and both ends are now
+theorems:
+
+* **`κ = 0` is FREE** — `nonPrincipalTwistSmall_zero` (via `norm_twistedPrimeSum_le_mass` and
+  `norm_twistedPrimeSum_le_loglog`): for *every* `χ` and *every* `t`,
+  `‖twistedPrimeSum X χ t‖ ≤ log log X + log 3 + mertensBound`, by the triangle inequality and
+  Mertens, with zero cancellation.  So all archimedean content is the *strict* improvement over
+  Mertens, never the bound itself.
+* **`κ > 0` is exactly `≪ log q`** — in TT's range `q, |t| ≤ (log X)^{1/125}` one has
+  `log q ≤ (1/125) log log X`, so `nonPrincipalTwistSmall_of_logQBound` converts a
+  `D·(log(q+2)+log(2+|t|)+1)` bound into `κ = 1 − 2D/125`, admissible for every `D < 62.5`.
+
+**Consequence for the route.**  Anything of size `log log X` at the top of the range gives `κ = 0`,
+which is already free and therefore useless; so no statement weaker than `O(log q)` can serve.
+And the constant is generous (`D` up to `62`).  That is precisely why the `t = 0` attack aims at
+the crude Siegel-free `L(1,χ) ≫ q^{-1/2}` and not at anything sharper: a crude rate is all the
+chain can use, and all it needs.  This closes off "find a cheaper archimedean input" as a route.
