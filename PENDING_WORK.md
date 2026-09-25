@@ -39,7 +39,34 @@ clause outright: `norm_logWeightedSlice_le_trivial` + `sliceBoundSmall_of_cap` /
 the clause asks for `1/|v|` (resp. `log|v|`).  Boundary check: at `w = T = |v|` the two clauses agree
 to a constant, so nothing is lost at the junction.
 
-**NEXT — the prime-power correction, then the pole bound.**  With the tail closed, the remaining gap
+### ✅ Lap 107 — THE POLE-LOCAL `ζ'/ζ` BOUND IS PROVED (`ElliottZetaPole.lean`)
+
+`exists_pole_local_bound`: `∃ r > 0, ∃ K > 0, ∀ s ≠ 1 with ‖s−1‖ ≤ r`,
+`ζ(s) ≠ 0` **and** `‖ζ'/ζ(s)‖ ≤ 1/‖s−1‖ + K` — coefficient of the pole exactly `1`, and **no
+zero-free region is used**: near `s = 1` the pole of `ζ` *is* the bound.  Route:
+`zetaG := update (s ↦ (s−1)ζ(s)) 1 1` is analytic at `1` with `G(1) = 1` by Riemann's removable
+singularity theorem (`Complex.analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt` +
+`riemannZeta_residue_one`); `logDeriv ζ = logDeriv G − 1/(s−1)` (`logDeriv_div`, plus a
+`𝓝`-congruence off `1`); `logDeriv G` is continuous on a small closed ball where `G ≠ 0`, hence
+bounded by compactness.
+
+**Why the coefficient no longer has to be `1`.**  In the cap band the clause is integrated over a
+range of length `T`, so a bound `C·T⁻¹ + K` costs only `C` in the integral — the `log(1/T)` main term
+comes entirely from the harmonic band, which lap 106 closed with coefficient `1`.  So the cap clause
+may be relaxed to `C·T⁻¹ + K`; `ElliottLogIntegral.integral_le_const_mul_one_add_log` is the variant
+to route it through.
+
+**NEXT (two independent pieces, either order).**
+1. *The far band* `r ≤ ‖s−1‖`, `1 ≤ Re s ≤ 2`, `|Im s| ≤ 1`: compact, `ζ` analytic (`s ≠ 1`) and
+   `ζ ≠ 0` (`riemannZeta_ne_zero_of_one_le_re`), so `ζ'/ζ` is bounded by the same
+   `exists_bound_of_continuousOn` argument.  Together with lap 107 this gives the **whole** sub-unit
+   cap bound `‖ζ'/ζ(s)‖ ≤ 1/‖s−1‖ + K` on `1 < Re s ≤ 2`, `|Im s| ≤ 1` — i.e. (c′-I) reduced to
+   arithmetic only.
+2. *The arithmetic bridge*: `slice = −ζ'/ζ(1+δ+w+iv) + O(1)`, i.e. `LSeries_vonMangoldt_eq_deriv_riemannZeta_div`
+   plus `logTail_le` (lap 105) for `∑_{p>Y}` and the prime-power correction
+   `∑_{p,j≥2} log p·p^{-jσ} ≤ 2∑_{n≥2} log n·n^{-2}` for the `j ≥ 2` terms.
+
+**Superseded plan (kept for the record) — the prime-power correction, then the pole bound.**  With the tail closed, the remaining gap
 between `logWeightedSlice` and `−ζ'/ζ(1+δ+w+iv)` is the prime powers:
 `∑_{p,j≥2} log p·p^{-jσ} ≤ 2∑_p log p·p^{-2σ} ≤ 2∑_{n≥2} log n·n^{-2} = O(1)` for `σ ≥ 1`
 (same `p`-series technique as lap 101, and no cancellation needed).  Then `SliceBoundSmall` is the

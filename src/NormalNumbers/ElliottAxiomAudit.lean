@@ -18,6 +18,7 @@ import NormalNumbers.ElliottRankin
 import NormalNumbers.ElliottReindex
 import NormalNumbers.ElliottDivisorTail
 import NormalNumbers.ElliottExpand
+import NormalNumbers.ElliottZetaPole
 import NormalNumbers.ElliottRestricted
 import NormalNumbers.ElliottScaleDescent
 import NormalNumbers.ElliottCaseB
@@ -236,3 +237,8 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottDamped.norm_logWeightedSlice_le_trivial
 #print axioms NormalNumbers.ElliottDamped.sliceBoundSmall_of_cap
 #print axioms NormalNumbers.ElliottDamped.sliceBoundModerate_of_cap
+
+/-! ### The pole-local ζ'/ζ bound, no zero-free region (lap 107) -/
+#print axioms NormalNumbers.ElliottZetaPole.analyticAt_zetaG
+#print axioms NormalNumbers.ElliottZetaPole.logDeriv_riemannZeta_eq
+#print axioms NormalNumbers.ElliottZetaPole.exists_pole_local_bound
