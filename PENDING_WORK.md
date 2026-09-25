@@ -9760,3 +9760,26 @@ therefore takes `z 0 ≠ 1` explicitly — which the consumer `depthAvg_tendsto_
 already has in hand as `hζ`.  A `LogToNaturalCorrelationNZ` predicate plus the one-line
 re-wiring of that consumer is a follow-up item, deliberately deferred until the analytic
 content lands.
+
+## Lap 69 (2026-09-25) — `top_down_weighted_tendsto`: the analytic heart of the assembly, proved
+
+The one genuinely analytic ingredient the top-down stack needs is now in, sorry-free:
+
+    Φ ≥ 0 bounded, Φ a → 0  ⟹  Tendsto (fun Y => (∑_{k<K Y} Φ(Y/2^{k+1})·(Y/2^{k+1}))/Y) (𝓝 0)
+
+**for an arbitrary level count `K : ℕ → ℕ`** — the level count drops out entirely, because
+`Y/2^{k+1} ≤ Y·2^{-(k+1)}` turns the normalised stack into a geometric average of `Φ` along
+scales that all tend to `∞`.  Not having to pin `K` to `log₂ Y` removes what would have been
+the fiddliest part of the instantiation.
+
+Proof: cut at `k₀` with `G·2^{-k₀} < ε/2` (tail), and use `Φ < ε/2` on the first `k₀` levels,
+legitimate once `Y ≥ A·2^{k₀}` since then `Y/2^{k+1} ≥ A` for `k < k₀`.  Supporting lemma
+`geom_half_Ico` / `geom_half_Ico_le`: `∑_{k∈[a,b)} 2^{-(k+1)} = 2^{-a} − 2^{-b} ≤ 2^{-a}`.
+
+**Inventory for the last `sorry` (`logToNatural_two_of_noExc`).**  Every ingredient is proved:
+`class_sum_split` (66) · `sum_Ioc_halving_stack` + `double_le_level` + `level_le_double_succ` +
+`norm_sum_level_le` (68) · `dyadic_window_bound_of_noExc` (67) · `top_down_weighted_tendsto` (69).
+What remains is purely the glue: define
+`Φ a = if N₀ ≤ a ∧ (M:ℝ) ≤ (2 log a)^c then Cst·(2 log a)^{-c}/M else 1`, check `Φ ≥ 0`,
+`Φ ≤ max 1 (Cst·(2 log N₀)^{-c}/M)` and `Φ → 0`, take `K Y = Nat.log 2 Y + 1` so the head
+`(0, Y/2^K]` is empty, and add the `K Y` stray points (`≍ log Y`, so `/Y → 0`).

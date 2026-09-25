@@ -345,6 +345,134 @@ theorem norm_sum_level_le {F : ℕ → ℂ} (hF : ∀ n, ‖F n‖ ≤ 1) {a b :
     rw [Finset.sum_Ioc_succ_top (by omega)]
     exact le_trans (norm_add_le _ _) (add_le_add hB (hF _))
 
+/-! ### The top-down Toeplitz estimate
+
+The analytic heart of the assembly, isolated from all the arithmetic.  After the halving stack,
+level `k` contributes `Φ(N_{k+1}) · N_{k+1}` where `N_{k+1} = Y/2^{k+1}` and `Φ` is the
+normalised per-scale bound (`Φ a ≍ Cst (2 log a)^{-c}/M` for large `a`, and `Φ a ≤ 1` trivially
+for small `a`).  Since `N_{k+1} ≤ Y·2^{-(k+1)}`, the normalised total is at most
+`∑_k Φ(N_{k+1}) 2^{-(k+1)}` — a geometric average of `Φ` along scales that all tend to `∞`.
+It therefore tends to `0`, **for any number of levels**, which is why the estimate below is
+stated for an arbitrary level count `K : ℕ → ℕ`. -/
+
+/-- `∑_{k ∈ [a,b)} 2^{-(k+1)} = 2^{-a} − 2^{-b}`. -/
+theorem geom_half_Ico (a : ℕ) : ∀ b : ℕ, a ≤ b →
+    ∑ k ∈ Finset.Ico a b, ((1 : ℝ) / 2) ^ (k + 1) = (1 / 2 : ℝ) ^ a - (1 / 2 : ℝ) ^ b := by
+  intro b
+  induction b with
+  | zero => intro h; interval_cases a; simp
+  | succ b ih =>
+    intro h
+    rcases Nat.eq_or_lt_of_le h with h1 | h1
+    · rw [← h1]; simp
+    · have hab : a ≤ b := by omega
+      rw [Finset.sum_Ico_succ_top hab, ih hab]
+      ring
+
+/-- `∑_{k ∈ [a,b)} 2^{-(k+1)} ≤ 2^{-a}`. -/
+theorem geom_half_Ico_le (a b : ℕ) :
+    ∑ k ∈ Finset.Ico a b, ((1 : ℝ) / 2) ^ (k + 1) ≤ (1 / 2 : ℝ) ^ a := by
+  rcases le_or_gt a b with h | h
+  · rw [geom_half_Ico a b h]
+    have : (0 : ℝ) ≤ (1 / 2 : ℝ) ^ b := by positivity
+    linarith
+  · rw [Finset.Ico_eq_empty (by omega), Finset.sum_empty]
+    positivity
+
+/-- **The top-down Toeplitz estimate.**  If `Φ ≥ 0` is bounded and `Φ a → 0`, then the
+`Y`-normalised halving stack `∑_{k<K} Φ(Y/2^{k+1})·(Y/2^{k+1})` tends to `0`, for any level
+count `K`. -/
+theorem top_down_weighted_tendsto {Φ : ℕ → ℝ} (h0 : ∀ a, 0 ≤ Φ a) {G : ℝ}
+    (hG : ∀ a, Φ a ≤ G) (hlim : Tendsto Φ atTop (𝓝 0)) (K : ℕ → ℕ) :
+    Tendsto (fun Y : ℕ =>
+      (∑ k ∈ range (K Y), Φ (Y / 2 ^ (k + 1)) * ((Y / 2 ^ (k + 1) : ℕ) : ℝ)) / (Y : ℝ))
+      atTop (𝓝 0) := by
+  have hG0 : 0 ≤ G := le_trans (h0 0) (hG 0)
+  refine Metric.tendsto_atTop.2 fun ε hε => ?_
+  -- choose the cut `k₀` so the geometric tail is `< ε/2`
+  obtain ⟨k₀, hk₀⟩ : ∃ k₀ : ℕ, G * (1 / 2 : ℝ) ^ k₀ < ε / 2 := by
+    have hpos : (0 : ℝ) < G + 1 := by linarith
+    obtain ⟨k₀, hk₀⟩ := exists_pow_lt_of_lt_one (by positivity : (0:ℝ) < ε / (2 * (G + 1)))
+      (by norm_num : (1 / 2 : ℝ) < 1)
+    refine ⟨k₀, ?_⟩
+    have hp : (0 : ℝ) ≤ (1 / 2 : ℝ) ^ k₀ := by positivity
+    have h3 : (G + 1) * (1 / 2 : ℝ) ^ k₀ < (G + 1) * (ε / (2 * (G + 1))) :=
+      mul_lt_mul_of_pos_left hk₀ hpos
+    have h2 : (G + 1) * (ε / (2 * (G + 1))) = ε / 2 := by field_simp
+    nlinarith [h3, h2, hp]
+  -- choose `A` beyond which `Φ < ε/2`
+  obtain ⟨A, hA⟩ := Metric.tendsto_atTop.1 hlim (ε / 2) (by positivity)
+  have hAlt : ∀ a, A ≤ a → Φ a < ε / 2 := by
+    intro a ha
+    have := hA a ha
+    rwa [Real.dist_eq, sub_zero, abs_of_nonneg (h0 a)] at this
+  refine ⟨max 1 (A * 2 ^ k₀), fun Y hY => ?_⟩
+  have hY1 : 1 ≤ Y := le_trans (le_max_left _ _) hY
+  have hYA : A * 2 ^ k₀ ≤ Y := le_trans (le_max_right _ _) hY
+  have hYR : (0 : ℝ) < (Y : ℝ) := by exact_mod_cast hY1
+  -- termwise: `Φ(N_{k+1})·N_{k+1}/Y ≤ Φ(N_{k+1})·2^{-(k+1)}`
+  have hterm : ∀ k : ℕ, Φ (Y / 2 ^ (k + 1)) * ((Y / 2 ^ (k + 1) : ℕ) : ℝ) / (Y : ℝ)
+      ≤ Φ (Y / 2 ^ (k + 1)) * ((1 : ℝ) / 2) ^ (k + 1) := by
+    intro k
+    have hdiv : ((Y / 2 ^ (k + 1) : ℕ) : ℝ) ≤ (Y : ℝ) / ((2 : ℝ) ^ (k + 1)) := by
+      have := Nat.div_mul_le_self Y (2 ^ (k + 1))
+      rw [le_div_iff₀ (by positivity)]
+      calc ((Y / 2 ^ (k + 1) : ℕ) : ℝ) * ((2 : ℝ) ^ (k + 1))
+          = (((Y / 2 ^ (k + 1)) * 2 ^ (k + 1) : ℕ) : ℝ) := by push_cast; ring
+        _ ≤ (Y : ℝ) := by exact_mod_cast this
+    have hgoal : ((Y / 2 ^ (k + 1) : ℕ) : ℝ) / (Y : ℝ) ≤ ((1 : ℝ) / 2) ^ (k + 1) := by
+      rw [div_le_iff₀ hYR, div_pow, one_pow, div_mul_eq_mul_div, one_mul]
+      exact hdiv
+    rw [mul_div_assoc]
+    exact mul_le_mul_of_nonneg_left hgoal (h0 _)
+  have hsplit : ∀ k : ℕ, k < k₀ → Φ (Y / 2 ^ (k + 1)) < ε / 2 := by
+    intro k hk
+    refine hAlt _ ?_
+    rw [Nat.le_div_iff_mul_le (by positivity)]
+    have h1 : (2 : ℕ) ^ (k + 1) ≤ 2 ^ k₀ := Nat.pow_le_pow_right (by norm_num) (by omega)
+    calc A * 2 ^ (k + 1) ≤ A * 2 ^ k₀ := Nat.mul_le_mul_left _ h1
+      _ ≤ Y := hYA
+  have hnn : 0 ≤ (∑ k ∈ range (K Y), Φ (Y / 2 ^ (k + 1)) * ((Y / 2 ^ (k + 1) : ℕ) : ℝ))
+      / (Y : ℝ) :=
+    div_nonneg (Finset.sum_nonneg fun k _ => mul_nonneg (h0 _) (by positivity)) hYR.le
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg hnn, Finset.sum_div]
+  -- split the stack at `k₀`
+  rcases le_or_gt (K Y) k₀ with hK | hK
+  · have hb : ∑ k ∈ range (K Y),
+        Φ (Y / 2 ^ (k + 1)) * ((Y / 2 ^ (k + 1) : ℕ) : ℝ) / (Y : ℝ)
+        ≤ ∑ k ∈ range (K Y), (ε / 2) * ((1 : ℝ) / 2) ^ (k + 1) := by
+      refine Finset.sum_le_sum fun k hk => ?_
+      refine le_trans (hterm k) (mul_le_mul_of_nonneg_right
+        (hsplit k (lt_of_lt_of_le (Finset.mem_range.1 hk) hK)).le (by positivity))
+    refine lt_of_le_of_lt hb ?_
+    rw [← Finset.mul_sum]
+    have : ∑ k ∈ range (K Y), ((1 : ℝ) / 2) ^ (k + 1) ≤ 1 := by
+      rw [Finset.range_eq_Ico]
+      simpa using geom_half_Ico_le 0 (K Y)
+    nlinarith [this, hε]
+  · rw [← Finset.sum_range_add_sum_Ico _ hK.le]
+    have hb1 : ∑ k ∈ range k₀, Φ (Y / 2 ^ (k + 1)) * ((Y / 2 ^ (k + 1) : ℕ) : ℝ) / (Y : ℝ)
+        ≤ (ε / 2) * ∑ k ∈ range k₀, ((1 : ℝ) / 2) ^ (k + 1) := by
+      rw [Finset.mul_sum]
+      refine Finset.sum_le_sum fun k hk => ?_
+      exact le_trans (hterm k) (mul_le_mul_of_nonneg_right
+        (hsplit k (Finset.mem_range.1 hk)).le (by positivity))
+    have hb2 : ∑ k ∈ Finset.Ico k₀ (K Y),
+        Φ (Y / 2 ^ (k + 1)) * ((Y / 2 ^ (k + 1) : ℕ) : ℝ) / (Y : ℝ)
+        ≤ G * (1 / 2 : ℝ) ^ k₀ := by
+      have hstep : ∑ k ∈ Finset.Ico k₀ (K Y),
+          Φ (Y / 2 ^ (k + 1)) * ((Y / 2 ^ (k + 1) : ℕ) : ℝ) / (Y : ℝ)
+          ≤ ∑ k ∈ Finset.Ico k₀ (K Y), G * ((1 : ℝ) / 2) ^ (k + 1) :=
+        Finset.sum_le_sum fun k _ =>
+          le_trans (hterm k) (mul_le_mul_of_nonneg_right (hG _) (by positivity))
+      refine le_trans hstep ?_
+      rw [← Finset.mul_sum]
+      exact mul_le_mul_of_nonneg_left (geom_half_Ico_le k₀ (K Y)) hG0
+    have hgeo : ∑ k ∈ range k₀, ((1 : ℝ) / 2) ^ (k + 1) ≤ 1 := by
+      rw [Finset.range_eq_Ico]
+      simpa using geom_half_Ico_le 0 k₀
+    nlinarith [hb1, hb2, hk₀, hε, hgeo]
+
 /-- **THE PAYOFF.**  Removing the exceptional set from TT Theorem 3.1(ii) discharges
 `LogToNaturalCorrelation 2` — the last open obligation of the `D = 2` layer.  With this, the
 `D = 2` row of the ledger is *equivalent to a named open problem in the literature*, and
@@ -364,6 +492,8 @@ theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
 #print axioms sum_Ioc_halving_stack
 #print axioms double_le_level
 #print axioms norm_sum_level_le
+#print axioms geom_half_Ico_le
+#print axioms top_down_weighted_tendsto
 
 end CastingOut
 
