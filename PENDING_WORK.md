@@ -11053,3 +11053,33 @@ the weakest useful form: is there a `κ > 0` and an elementary argument giving a
 saving for large twists, e.g. by splitting `p ≤ exp((log log X)^2)` (where `p^{-it}` oscillates
 across dyadic blocks) from the tail?  Formalize whichever split reduces `WideTwistSmall` to a
 statement about a *single* dyadic block.
+
+## 2026-09-25 lap 112 — the wide range reduced to ONE dyadic block
+
+* **Refuted (route-decisive, recorded in the module doc).**  `WideTwistSmall` cannot be closed by
+  a standard `|log L(1+it,χ)| ≤ log log(q(2+|t|)) + O(1)` upper bound.  For `|t|` anywhere
+  polynomial in `X`, `log log(q(2+|t|)) = log log X + O(1)`, while `∑_{p ≤ X²} 1/p = log log X +
+  O(1)` as well — so that route yields `κ = 0`, not a saving.  The `log log` scale collapses under
+  ANY polynomial twist range, so the positive saving must come from cancellation *inside* the sum.
+  Do not attempt the wide range via an L-function upper bound.
+* `dyadicPrimeBlockSum` / `dyadicPrimeBlockMass` (fibres of `Nat.log 2 p = j`),
+  `twistedPrimeSum_eq_sum_blocks`, `sum_blockMass_eq` — the dyadic decomposition of the twisted
+  prime sum, via `Finset.sum_fiberwise_of_maps_to`.
+* `WideBlockSaving κ` + `wideTwistSmall_of_blockSaving` — **a constant-fraction saving on EACH
+  dyadic block suffices**: the block norms sum to `(1−κ)·∑_{p≤X²} 1/p`, and `small_prime_mass_le`
+  plus `logloglog_ceil_sq_le` turn that into `(1−κ) log log X + O(1)`.  This is the right target
+  because inside a block `log p` varies by at most `log 2`, so `t log p` sweeps an interval of
+  length `≍ |t|` — enormous in the wide range, which is exactly where oscillation is available.
+* `wideTwistSmall_mono`, `twistedPrimeSumSmall_of_parts`, `conjC3_of_geom_input_blocks` —
+  `ConjC3` from the faithful `K`-point input plus THREE archimedean statements:
+  `UniformResonantMass`, `CharPrimeSumLogQ` (log-sized, classical at `t = 0`), `WideBlockSaving`.
+
+**Next attack.**  `WideBlockSaving` at a single block: the block is
+`{p : 2^j ≤ p < 2^{j+1}, p ≤ X²}` and the target is
+`‖∑ conj(χ(p)) p^{-it}/p‖ ≤ (1−κ) ∑ 1/p`.  Since `1/p ≍ 2^{-j}` across the block, this is
+equivalent (up to constants) to `|∑_{p ∈ block} χ̄(p) p^{-it}| ≤ (1−κ)·#block`, i.e. a
+**constant-fraction cancellation in a character sum twisted by `p^{-it}` over one dyadic block of
+primes**.  That is a Vinogradov/Vaughan-type bilinear statement, and unlike the `log log` route it
+is not scale-degenerate.  Formalize the equivalence `block-norm ⟺ block-count` first (elementary:
+`2^{-(j+1)} ≤ 1/p ≤ 2^{-j}` on the block), which converts the debt into a statement with no
+reciprocals in it.

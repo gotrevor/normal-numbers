@@ -1441,6 +1441,169 @@ theorem faithfulArchLower_of_urm_of_logQ {b : ℕ} (hb : 2 ≤ b) (hURM : Unifor
 #print axioms faithfulArchLower_of_urm_of_logQ
 
 
+/-! ### The wide range reduced to a per-dyadic-block saving
+
+`WideTwistSmall` needs a *constant-fraction* saving on the whole twisted prime sum, not smallness.
+That is exactly the kind of statement that survives a crude decomposition: split the primes into
+dyadic blocks `Nat.log 2 p = j` and it suffices to save a constant fraction *on each block*.  The
+blocks are where large twists are actually tractable — inside a block `log p` varies by at most
+`log 2`, so `t log p` sweeps an interval of length `≍ |t|`, which is enormous in the wide range.
+
+A warning, recorded from this lap's analysis: the wide range cannot be closed by a standard
+`|log L(1+it,χ)| ≤ log log (q(2+|t|)) + O(1)` upper bound.  For `|t|` anywhere polynomial in `X`,
+`log log(q(2+|t|)) = log log X + O(1)` while `∑_{p ≤ X²} 1/p = log log X + O(1)` too, so that route
+yields `κ = 0`.  The `log log` scale collapses under any polynomial twist range, so a positive
+saving must come from cancellation inside the sum, not from an L-function upper bound.  That is
+what makes the block form the right target. -/
+
+open scoped Classical in
+/-- The `j`-th dyadic block of the twisted prime sum: the primes with `Nat.log 2 p = j`. -/
+noncomputable def dyadicPrimeBlockSum (X : ℝ) {q : ℕ} (χ : DirichletCharacter ℂ q) (t : ℝ)
+    (j : ℕ) : ℂ :=
+  ∑ p ∈ ((Finset.range (⌈X ^ 2⌉₊ + 1)).filter Nat.Prime).filter (fun p => Nat.log 2 p = j),
+    (starRingEnd ℂ) (χ (p : ZMod q)) *
+      Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ)) / (p : ℂ)
+
+open scoped Classical in
+/-- The reciprocal mass of the `j`-th dyadic block. -/
+noncomputable def dyadicPrimeBlockMass (X : ℝ) (j : ℕ) : ℝ :=
+  ∑ p ∈ ((Finset.range (⌈X ^ 2⌉₊ + 1)).filter Nat.Prime).filter (fun p => Nat.log 2 p = j),
+    ((p : ℝ))⁻¹
+
+theorem twistedPrimeSum_eq_sum_blocks (X : ℝ) {q : ℕ} (χ : DirichletCharacter ℂ q) (t : ℝ) :
+    twistedPrimeSum X χ t
+      = ∑ j ∈ Finset.range (⌈X ^ 2⌉₊ + 1), dyadicPrimeBlockSum X χ t j := by
+  classical
+  rw [twistedPrimeSum]
+  refine (Finset.sum_fiberwise_of_maps_to (fun p hp => ?_) _).symm
+  have hp' : p ∈ Finset.range (⌈X ^ 2⌉₊ + 1) := (Finset.mem_filter.mp hp).1
+  rw [Finset.mem_range] at hp' ⊢
+  exact lt_of_le_of_lt (Nat.log_le_self 2 p) hp'
+
+theorem sum_blockMass_eq (X : ℝ) :
+    ∑ j ∈ Finset.range (⌈X ^ 2⌉₊ + 1), dyadicPrimeBlockMass X j
+      = ∑ p ∈ (Finset.range (⌈X ^ 2⌉₊ + 1)).filter Nat.Prime, ((p : ℝ))⁻¹ := by
+  classical
+  refine Finset.sum_fiberwise_of_maps_to (fun p hp => ?_) _
+  have hp' : p ∈ Finset.range (⌈X ^ 2⌉₊ + 1) := (Finset.mem_filter.mp hp).1
+  rw [Finset.mem_range] at hp' ⊢
+  exact lt_of_le_of_lt (Nat.log_le_self 2 p) hp'
+
+/-- **The one-block target.**  A constant-fraction saving on every dyadic block, in the wide
+twist range. -/
+def WideBlockSaving (κ : ℝ) : Prop :=
+  ∀ X : ℝ, 3 ≤ X → ∀ (q : ℕ) (χ : DirichletCharacter ℂ q),
+    (q : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) →
+    ∀ t : ℝ, Real.log X ^ ((1 : ℝ) / 125) < |t| → |t| ≤ X ^ 2 → ∀ j : ℕ,
+      ‖dyadicPrimeBlockSum X χ t j‖ ≤ (1 - κ) * dyadicPrimeBlockMass X j
+
+/-- `log log ⌈X²⌉₊ ≤ log log X + log 3` — the block masses sum to at most the prime mass of
+`⌈X²⌉₊`, and that is `log log X + O(1)`. -/
+theorem logloglog_ceil_sq_le {X : ℝ} (hX : 3 ≤ X) :
+    Real.log (Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ)) ≤ Real.log (Real.log X) + Real.log 3 := by
+  have hu1 : 1 < Real.log X := one_lt_log_of_three_le hX
+  have hX0 : (0 : ℝ) < X := by linarith
+  have hc := log_ceil_sq_le hX
+  have hpos : 0 < Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ) := by
+    have h1 : (3 : ℝ) ≤ ((⌈X ^ 2⌉₊ : ℕ) : ℝ) := by
+      have h2 : X ^ 2 ≤ ((⌈X ^ 2⌉₊ : ℕ) : ℝ) := Nat.le_ceil _
+      nlinarith
+    have := one_lt_log_of_three_le h1
+    linarith
+  have hle : Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ) ≤ 3 * Real.log X := le_trans hc (by linarith)
+  have h1 : Real.log (Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ)) ≤ Real.log (3 * Real.log X) :=
+    Real.log_le_log hpos hle
+  rwa [Real.log_mul (by norm_num) (by linarith), add_comm] at h1
+
+/-- **The reduction.**  A per-block saving gives `WideTwistSmall`. -/
+theorem wideTwistSmall_of_blockSaving {κ : ℝ} (hκ0 : 0 < κ) (hκ1 : κ ≤ 1)
+    (h : WideBlockSaving κ) :
+    WideTwistSmall κ ((1 - κ) * (Real.log 3 + Erdos67b.PrimeEstimates.mertensBound)) := by
+  intro X hX q χ hqX t hwide ht
+  have hX0 : (0 : ℝ) < X := by linarith
+  have hκ1' : (0 : ℝ) ≤ 1 - κ := by linarith
+  have hmass : ∑ p ∈ (Finset.range (⌈X ^ 2⌉₊ + 1)).filter Nat.Prime, ((p : ℝ))⁻¹
+      ≤ Real.log (Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ)) + Erdos67b.PrimeEstimates.mertensBound := by
+    have hB : 2 ≤ ⌈X ^ 2⌉₊ := by
+      have h2 : X ^ 2 ≤ ((⌈X ^ 2⌉₊ : ℕ) : ℝ) := Nat.le_ceil _
+      have : (2 : ℝ) ≤ ((⌈X ^ 2⌉₊ : ℕ) : ℝ) := by nlinarith
+      exact_mod_cast this
+    refine small_prime_mass_le hB (fun p hp => ?_)
+    refine ⟨(Finset.mem_filter.mp hp).2, ?_⟩
+    have := (Finset.mem_range.mp (Finset.mem_filter.mp hp).1)
+    omega
+  calc ‖twistedPrimeSum X χ t‖
+      = ‖∑ j ∈ Finset.range (⌈X ^ 2⌉₊ + 1), dyadicPrimeBlockSum X χ t j‖ := by
+        rw [twistedPrimeSum_eq_sum_blocks]
+    _ ≤ ∑ j ∈ Finset.range (⌈X ^ 2⌉₊ + 1), ‖dyadicPrimeBlockSum X χ t j‖ := norm_sum_le _ _
+    _ ≤ ∑ j ∈ Finset.range (⌈X ^ 2⌉₊ + 1), (1 - κ) * dyadicPrimeBlockMass X j :=
+        Finset.sum_le_sum fun j _ => h X hX q χ hqX t hwide ht j
+    _ = (1 - κ) * ∑ j ∈ Finset.range (⌈X ^ 2⌉₊ + 1), dyadicPrimeBlockMass X j := by
+        rw [Finset.mul_sum]
+    _ ≤ (1 - κ) * (Real.log (Real.log ((⌈X ^ 2⌉₊ : ℕ) : ℝ))
+          + Erdos67b.PrimeEstimates.mertensBound) := by
+        rw [sum_blockMass_eq]
+        exact mul_le_mul_of_nonneg_left hmass hκ1'
+    _ ≤ (1 - κ) * Real.log (Real.log X)
+          + (1 - κ) * (Real.log 3 + Erdos67b.PrimeEstimates.mertensBound) := by
+        have := logloglog_ceil_sq_le hX
+        nlinarith [Erdos67b.PrimeEstimates.mertensBound_nonneg]
+
+#print axioms twistedPrimeSum_eq_sum_blocks
+#print axioms wideTwistSmall_of_blockSaving
+
+
+theorem wideTwistSmall_mono {κ κ' C C' : ℝ} (hκ : κ' ≤ κ) (hC : C ≤ C')
+    (h : WideTwistSmall κ C) : WideTwistSmall κ' C' := by
+  intro X hX q χ hqX t hwide ht
+  have h0 : 0 < Real.log (Real.log X) := logloglog_pos hX
+  nlinarith [h X hX q χ hqX t hwide ht]
+
+/-- The unified debt from its two halves. -/
+theorem twistedPrimeSumSmall_of_parts {κ₀ C₀ κ₁ C₁ : ℝ}
+    (hnp : NonPrincipalTwistSmall κ₀ C₀) (hwide : WideTwistSmall κ₁ C₁) :
+    TwistedPrimeSumSmall (min κ₀ κ₁) (max C₀ C₁) := by
+  intro X hX q χ hqX t ht hor
+  rcases le_or_gt |t| (Real.log X ^ ((1 : ℝ) / 125)) with hnar | hwd
+  · rcases hor with hne | hcon
+    · exact nonPrincipalTwistSmall_mono (min_le_left _ _) (le_max_left _ _) hnp X hX q χ hne hqX
+        t hnar
+    · exact absurd hnar (not_le.mpr hcon)
+  · exact wideTwistSmall_mono (min_le_right _ _) (le_max_right _ _) hwide X hX q χ hqX t hwd ht
+
+/-- **`ConjC3` on the THREE reduced archimedean inputs.**  `UniformResonantMass` (principal narrow
+corner), `CharPrimeSumLogQ` (a `log`-sized conductor bound — classical and Siegel-free at
+`t = 0`), and `WideBlockSaving` (a constant-fraction saving on each dyadic block in the wide twist
+range).  This is the tightest honest statement of the C3/MRT archimedean reduction. -/
+theorem conjC3_of_geom_input_blocks {c₀ θ D κ₁ : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1)
+    (m : ℕ)
+    (hin : ∀ A : ℝ, 0 < A → ∀ b : ℕ, 3 ≤ b → ∀ K,
+      KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hURM : UniformResonantMass)
+    (hD : 0 < D) (hD125 : 2 * D < 125) (hlog : CharPrimeSumLogQ D)
+    (hκ₁ : 0 < κ₁) (hκ₁1 : κ₁ ≤ 1) (hblk : WideBlockSaving κ₁) :
+    ConjC3 := by
+  have hnp : NonPrincipalTwistSmall (1 - 2 * D / 125) (D * (2 * Real.log 3 + 1)) :=
+    nonPrincipalTwistSmall_of_logQBound hD hD125 hlog
+  have hwide := wideTwistSmall_of_blockSaving hκ₁ hκ₁1 hblk
+  have hsav := twistedPrimeSumSmall_of_parts hnp hwide
+  have h3 : (0 : ℝ) ≤ Real.log 3 := Real.log_nonneg (by norm_num)
+  have hmert : (0 : ℝ) ≤ Erdos67b.PrimeEstimates.mertensBound :=
+    Erdos67b.PrimeEstimates.mertensBound_nonneg
+  have hκ0 : 0 < min (1 - 2 * D / 125) κ₁ := lt_min (by linarith) hκ₁
+  have hC0 : (0 : ℝ) ≤ max (D * (2 * Real.log 3 + 1))
+      ((1 - κ₁) * (Real.log 3 + Erdos67b.PrimeEstimates.mertensBound)) := by
+    refine le_trans ?_ (le_max_left _ _)
+    positivity
+  refine conjC3_of_weylLambertTwist fun b hb => ?_
+  obtain ⟨C, hC⟩ := faithfulArchLower_of_urm_of_saving (by omega : 2 ≤ b) hURM hκ0 hC0 hsav
+  exact weylLambertTwist_of_geom_input_at hb hc₀ hθ0 hθ m
+    (hin _ (Real.exp_pos _) b hb) (archSupply_of_faithfulArchLower hC)
+
+#print axioms twistedPrimeSumSmall_of_parts
+#print axioms conjC3_of_geom_input_blocks
+
+
 #print axioms ttPretentiousSumChar_eq
 #print axioms ttPretentiousSumChar_ge
 #print axioms archSupply_of_faithfulArchLower
