@@ -11385,8 +11385,14 @@ and 3a are now **DONE** (sorry-free, axiom-clean):
 3a. **DONE** — `resWindowCount_le`: `K ≤ (2+|t|)·log Y` for `3 ≤ Y` and `δ ≤ π/2`, hence
    `log K ≤ log(2+|t|) + log log Y` **with constant `0`** — the window count costs exactly the
    budget's two terms and not a shred more.  (`32/π < 11 < 50` then leaves ample room.)
-2. per window `m`, `resonant_window_mass_le` at `a_m = (γ_m − δ)/|t|` — note `a_m ≥ lowHeight t`
-   holds *by the split*, which also supplies its `log 2 ≤ a` hypothesis for free;
+2. **DONE (short-window case `2δ ≤ |t|`)** — `windowMass_le`: the per-window mass is
+   `≤ 16δ/(|t|·aWin) + 6(1+aWin)³/√(exp aWin)` at the *effective* start
+   `aWin z t δ m = max((γ_m − δ)/|t|, lowHeight t)`.  The split pays for itself twice here:
+   `aWin ≥ lowHeight t ≥ 8 log 2` supplies `resonant_window_mass_le`'s `log 2 ≤ a` hypothesis for
+   free (`aWin_ge_log_two`) *and* supplies the `exp(−a/8) ≤ (2+|t|)⁻¹` the error tail needs.
+   Raising the start costs nothing on the main term: `windowMass_main_le` shows
+   `16δ/(|t|·aWin) ≤ 16δ/(γ_m − δ)`, exactly the shape `sum_inv_gap_le` sums, so the comparison
+   `sum_inv_gap_le` needs survives the raise (`aWin_ge_gap`).
 3. main terms: `sum_Icc_symm_le` + `sum_inv_gap_le` ⇒ `(32δ/π)(1 + log K) + O(δ)`, and
    `log K ≤ log log Y + log(2+|t|) + O(1)`; `32/π < 11 < 50` leaves ample room;
 4. error terms: `window_err_le` + `sum_exp_neg_le` at `c = 2π/|t|` in the height variable, with

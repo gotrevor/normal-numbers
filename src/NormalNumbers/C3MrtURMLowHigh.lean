@@ -355,7 +355,99 @@ theorem resWindowCount_le {δ : ℝ} (hδ0 : 0 < δ) (hδπ : δ ≤ Real.pi / 2
   have h2 : (3:ℝ)/4 + 1 ≤ 2 * Real.log (Y:ℝ) := by linarith
   linarith
 
+/-! ### Step 2: the per-window estimate, at the raised starting height
+
+The split supplies the window's starting height for free: a high-range prime in window `m` has
+`log p` both `> (γ_m − δ)/|t|` and `> lowHeight t`, so the effective start is the **max** of the
+two, which is `≥ lowHeight t ≥ 8 log 2` — and that is simultaneously
+
+* the `log 2 ≤ a` hypothesis of `resonant_window_mass_le`, for free, and
+* the `exp(−a/8) ≤ (2+|t|)⁻¹` that makes the error tail summable to `O(1)`.
+
+Raising the start does not weaken the main term: it only ever *decreases* `16δ/(|t|·a)`, and
+`aWin_ge_gap` keeps the comparison with `γ_m − δ` that `sum_inv_gap_le` needs. -/
+
+/-- The effective starting height of window `m` in the high range. -/
+noncomputable def aWin (z : ℂ) (t δ : ℝ) (m : ℤ) : ℝ :=
+  max ((|z.arg - 2 * Real.pi * m| - δ) / |t|) (lowHeight t)
+
+theorem aWin_ge_low (z : ℂ) (t δ : ℝ) (m : ℤ) : lowHeight t ≤ aWin z t δ m := le_max_right _ _
+
+theorem aWin_ge_gap (z : ℂ) (t δ : ℝ) (m : ℤ) :
+    (|z.arg - 2 * Real.pi * m| - δ) / |t| ≤ aWin z t δ m := le_max_left _ _
+
+theorem aWin_ge_log_two (z : ℂ) (t δ : ℝ) (m : ℤ) : Real.log 2 ≤ aWin z t δ m := by
+  have h1 := aWin_ge_low z t δ m
+  have h2 := lowHeight_ge t
+  have h3 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  linarith
+
+/-- **Step 2 — the per-window mass, short-window case `2δ ≤ |t|`.**  Brun–Titchmarsh at the
+raised starting height. -/
+theorem windowMass_le {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z)
+    {t : ℝ} (ht : 2 * δ ≤ |t|) (Y : ℕ) (m : ℤ) :
+    windowMass z t Y δ m
+      ≤ 16 * δ / (|t| * aWin z t δ m)
+        + 6 * (1 + aWin z t δ m) ^ 3 / Real.sqrt (Real.exp (aWin z t δ m)) := by
+  classical
+  have htpos : (0:ℝ) < |t| := by linarith
+  rw [windowMass]
+  refine resonant_window_mass_le hδ0 ht (aWin_ge_log_two z t δ m) ?_ ?_
+  · intro p hp
+    obtain ⟨hp1, _⟩ := Finset.mem_filter.1 hp
+    obtain ⟨hp2, _⟩ := Finset.mem_filter.1 hp1
+    exact (Erdos67b.mem_primesUpTo.1 (Finset.mem_filter.1 hp2).1).1
+  · intro p hp
+    obtain ⟨hp1, hpm⟩ := Finset.mem_filter.1 hp
+    obtain ⟨hp2, hphigh⟩ := Finset.mem_filter.1 hp1
+    obtain ⟨hpY, hres⟩ := Finset.mem_filter.1 hp2
+    obtain ⟨hpp, _⟩ := Erdos67b.mem_primesUpTo.1 hpY
+    have hp2le : 2 ≤ p := hpp.two_le
+    obtain ⟨hlo, hhi⟩ := windowIndexW_spec hz hp2le hδ hres
+    rw [hpm] at hlo hhi
+    have hgaplt : (|z.arg - 2 * Real.pi * m| - δ) / |t| < Real.log (p:ℝ) := by
+      rw [div_lt_iff₀ htpos]
+      calc |z.arg - 2 * Real.pi * m| - δ < |t| * Real.log (p:ℝ) := hlo
+        _ = Real.log (p:ℝ) * |t| := by ring
+    have hhighlt : lowHeight t < Real.log (p:ℝ) := lt_of_not_ge hphigh
+    refine ⟨max_lt hgaplt hhighlt, ?_⟩
+    -- `log p < (γ_m + δ)/|t| = (γ_m − δ)/|t| + 2δ/|t| ≤ aWin + 2δ/|t|`
+    have hupper : Real.log (p:ℝ) < (|z.arg - 2 * Real.pi * m| + δ) / |t| := by
+      rw [lt_div_iff₀ htpos]
+      calc Real.log (p:ℝ) * |t| = |t| * Real.log (p:ℝ) := by ring
+        _ < |z.arg - 2 * Real.pi * m| + δ := hhi
+    have hsplit : (|z.arg - 2 * Real.pi * m| + δ) / |t|
+        = (|z.arg - 2 * Real.pi * m| - δ) / |t| + 2 * δ / |t| := by
+      field_simp
+      ring
+    have hmono : (|z.arg - 2 * Real.pi * m| - δ) / |t| + 2 * δ / |t|
+        ≤ aWin z t δ m + 2 * δ / |t| := by
+      have := aWin_ge_gap z t δ m; linarith
+    calc Real.log (p:ℝ) < (|z.arg - 2 * Real.pi * m| + δ) / |t| := hupper
+      _ = (|z.arg - 2 * Real.pi * m| - δ) / |t| + 2 * δ / |t| := hsplit
+      _ ≤ aWin z t δ m + 2 * δ / |t| := hmono
+
+/-- The main term at the raised height is still controlled by the *gap* `γ_m − δ`, so
+`sum_inv_gap_le` applies unchanged: raising the start only helps. -/
+theorem windowMass_main_le {z : ℂ} {δ : ℝ} (hδ0 : 0 < δ) {t : ℝ} (ht : 2 * δ ≤ |t|) (m : ℤ)
+    (hgap : 0 < |z.arg - 2 * Real.pi * m| - δ) :
+    16 * δ / (|t| * aWin z t δ m) ≤ 16 * δ / (|z.arg - 2 * Real.pi * m| - δ) := by
+  have htpos : (0:ℝ) < |t| := by linarith
+  have hge := aWin_ge_gap z t δ m
+  have hmul : |z.arg - 2 * Real.pi * m| - δ ≤ |t| * aWin z t δ m := by
+    rw [div_le_iff₀ htpos] at hge
+    have hcomm : aWin z t δ m * |t| = |t| * aWin z t δ m := mul_comm _ _
+    rw [hcomm] at hge
+    exact hge
+  have hpos : (0:ℝ) < |t| * aWin z t δ m := by
+    have := aWin_ge_log_two z t δ m
+    have h2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+    have : (0:ℝ) < aWin z t δ m := by linarith
+    positivity
+  exact div_le_div_of_nonneg_left (by linarith) hgap hmul
+
 end CastingOut
 
 end NormalNumbers
+
 
