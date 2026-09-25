@@ -13,6 +13,7 @@ import NormalNumbers.G4RowMassOptimal
 import NormalNumbers.G4WiringSparse
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
+import NormalNumbers.C3MrtTTDefect
 import NormalNumbers.Walsh
 import NormalNumbers.WalshBase
 
@@ -240,6 +241,33 @@ of `0.1·3ᵐ` forced zeros pushes freq(0) at `N = 1.1·3ᵐ` up to `8/33 > 1/6`
 even **simply** normal in base 6, let alone abelian-normal.  (Bailey–Borwein 2012 proved
 base-6 non-normality first; this is that mechanism, formalized.) -/
 alias hall_stoneham_six_abelian := NormalNumbers.Failures.not_simplyNormal_six_stoneham23
+
+
+/-- **HALL: `TTNonPretentious` as TT's hypothesis (3.3)** (`vacuous`, 2026-09-25).
+The formal non-pretentiousness hypothesis put `∃ A > 0` *inside* the `∀ X L`, so `A = 1/L`
+discharges it for **every** 1-bounded `g`, `g = 1` included: every summand of
+`ttPretentiousSum` is `≥ 0`.  TT's implied constant is absolute.  Restated faithfully as
+`CastingOut.TTNonPretentiousUnif` (constant outside, Dirichlet characters of conductor
+`≤ (log X)^{1/125}` included, twists up to `X²`), which `g = 1` provably fails
+(`not_ttNonPretentiousUnif_one`). -/
+alias hall_tt_nonpretentious_vacuous := NormalNumbers.CastingOut.ttNonPretentious_trivial
+
+/-- **HALL: the `K`-point no-exceptional-set input, as stated** (`falseAsStated`, 2026-09-25).
+`KPointNoExcWith cK CstK 2` is FALSE for any `0 < cK 2`: with both factors the constant `1`
+(free by the row above), `W = 1`, shifts `1, 2`, `X = exp L`, `N = ⌈√X⌉`, the
+progression-restricted mean is exactly `1` while the claimed bound tends to `0`.  Every
+consumer of `KPointNoExcWith` / `Roots` / `Depth` / `AllWith` is therefore vacuous until the
+hypothesis is rethreaded onto `CastingOut.KPointNoExcAtWith`. -/
+alias hall_kpoint_noexc_false := NormalNumbers.CastingOut.not_kPointNoExcWith_const_one
+
+/-- **HALL: a Lebesgue-measured exceptional set of scales** (`vacuous`, 2026-09-25).
+`TwoPointNaturalCorrelation` charged its exceptional set `E ⊆ ℝ` by `∫_E t⁻¹` while asking the
+conclusion only at integer scales, so `E = ℕ ∩ [√X, X]` is free and the whole `Prop` is
+*provably true* and empty.  The faithful cost is a count of dyadic scales
+(`CastingOut.TwoPointDyadicCorrelation`), under which the all-scales set is inadmissible
+(`full_exceptional_set_not_admissible`). -/
+alias hall_lebesgue_exceptional_scales :=
+  NormalNumbers.CastingOut.twoPointNaturalCorrelation_trivially_true
 
 /-- **HALL: uniform casting-out law (C1 draft)** (`falseAsStated`, 2026-09-23).
 The first draft of C1 asked that window digit sums of `G4` be uniform mod `b − 1`.  No normal
@@ -897,6 +925,21 @@ def register : List Hall := [
    .parked, .frozen,
    "The hexSwap example does not refute it (3*xi is not abelian: probe z about 84 at L = 1), but a dimension count makes a single multiplier implausible; the odd-multiplier version is open",
    "Failures.TimesThreeLifting", "2026-09-23"⟩,
+  ⟨"TT (3.3) as TTNonPretentious",
+   "Assume TT's non-pretentiousness hypothesis with the implied constant existentially quantified after X and L",
+   .vacuous, .kernel,
+   "Every summand of ttPretentiousSum is nonnegative, so A = 1/L discharges it for every 1-bounded g including g = 1; TT's constant is absolute, and the faithful restatement also needs Dirichlet characters and twists up to X squared",
+   "alias hall_tt_nonpretentious_vacuous; restatement CastingOut.TTNonPretentiousUnif", "2026-09-25"⟩,
+  ⟨"K-point no-exceptional-set input as stated",
+   "Take KPointNoExcWith cK CstK K as the single open input of the C3/MRT headline",
+   .falseAsStated, .kernel,
+   "At K = 2 with both factors the constant 1, W = 1, shifts 1 and 2, X = exp L and N = ceil sqrt X the progression mean is exactly 1 while the claimed bound CstK 2 times L to the minus cK 2 tends to 0",
+   "alias hall_kpoint_noexc_false; repaired input CastingOut.KPointNoExcAtWith", "2026-09-25"⟩,
+  ⟨"Lebesgue-measured exceptional set of scales",
+   "Charge TT's exceptional set of scales by the Lebesgue integral of 1/t over a measurable subset of the reals",
+   .vacuous, .kernel,
+   "The conclusion is only asked at integer scales, so E = the integers in [sqrt X, X] has zero cost and excludes every scale: the Prop is provably true and empty",
+   "alias hall_lebesgue_exceptional_scales; faithful cost CastingOut.TwoPointDyadicCorrelation", "2026-09-25"⟩,
   ⟨"uniform casting-out law (C1 draft)",
    "Assume a normal number's window digit sum is uniform mod b-1",
    .falseAsStated, .kernel,

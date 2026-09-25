@@ -492,3 +492,4 @@ import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
 import NormalNumbers.PairDecoupleAttacks
 import NormalNumbers.PairDecoupleBand
+import NormalNumbers.C3MrtTTDefect
