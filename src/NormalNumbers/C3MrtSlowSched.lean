@@ -237,6 +237,193 @@ theorem pow_depthSlow_le_log {b : ℕ} (hb : 2 ≤ b) (N : ℕ) :
   have h4 := mul_le_mul_of_nonneg_left h3 hb0.le
   linarith
 
+
+/-! ### The `θ < 1` exponent estimate
+
+The saving now carries an extra `1/(2+2t)`, `t = log(u_N+1)`, from the logarithmic factor `W` in
+the schedule.  A power of `t` is no obstruction: the majorant lemma below absorbs it by halving
+the exponential rate. -/
+
+/-- A power of a linear function, minus an exponential DIVIDED by a linear function, still goes
+to `-∞`: halve the rate and the linear divisor is swallowed whole. -/
+theorem tendsto_polyPow_sub_expDiv {α c₁ : ℝ} (hα : 0 < α) (hc₁ : 0 < c₁) (p : ℕ) :
+    Tendsto (fun t : ℝ => (2 + 3 * t) ^ p - c₁ * ((Real.exp (α * t) - 3) / (2 + 2 * t)))
+      atTop atBot := by
+  have hα2 : (0 : ℝ) < α / 2 := by linarith
+  have hmaj := tendsto_polyPow_sub_exp hα2 hc₁ p
+  refine tendsto_atBot_mono' atTop ?_ hmaj
+  have hR := tendsto_exp_div_polyPow hα2 1
+  filter_upwards [hR.eventually_ge_atTop 2, Filter.eventually_ge_atTop (1 : ℝ)] with t ht ht1
+  set E : ℝ := Real.exp (α / 2 * t) with hEdef
+  have hS : (0 : ℝ) < 2 + 2 * t := by linarith
+  have hE5 : 5 + 2 * t ≤ E := by
+    rw [pow_one] at ht
+    have hp : (0 : ℝ) < 2 + 3 * t := by linarith
+    rw [le_div_iff₀ hp] at ht
+    linarith
+  have hEsq : Real.exp (α * t) = E ^ 2 := by
+    rw [hEdef, sq, ← Real.exp_add]
+    congr 1
+    ring
+  have hkey : E - 3 ≤ (Real.exp (α * t) - 3) / (2 + 2 * t) := by
+    rw [hEsq, le_div_iff₀ hS]
+    nlinarith [hE5, ht1]
+  have := mul_le_mul_of_nonneg_left hkey hc₁.le
+  linarith
+
+/-- **The geometric profile drives the exponent to `-∞` for EVERY `θ < 1`, on the slow schedule.**
+
+This is the payoff of `C3MrtSlowSched`: `C3MrtUnifK.exponent_tendsto_atBot_of_geom_le` needs
+`θ < 1/2` because it pays `b^{D_N} ≍ (u_N+1)²`; here `b^{D_N} ≤ b(u_N+1)(2+2\log(u_N+1))`, so the
+surviving saving is `u^{1-θ}(\log u)^{-θ}`, which still beats `\log Cst = (D_N+1)^m = O(\log u)^m`
+for every `θ < 1`. -/
+theorem exponent_tendsto_atBot_of_geom_slow {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1) {κ : ℝ} (hκ : 0 < κ) (m : ℕ)
+    (KN : ℕ → ℕ) (hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ depthSlow b N) :
+    Tendsto (fun N : ℕ =>
+        Real.log (CstKdeg m (KN N))
+          - κ * cKgeom c₀ θ b (KN N)
+            * Real.log (2 * Real.log ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ)))
+      atTop atBot := by
+  have hbR : (1 : ℝ) < (b : ℝ) := by
+    have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  have hb0 : (0 : ℝ) < (b : ℝ) := by linarith
+  set α : ℝ := 1 - θ with hαdef
+  have hα : 0 < α := by rw [hαdef]; linarith
+  set c₁ : ℝ := κ * c₀ * (b : ℝ) ^ (-θ) * Real.log 2 with hc₁def
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hbθ : (0 : ℝ) < (b : ℝ) ^ (-θ) := Real.rpow_pos_of_pos hb0 _
+  have hc₁ : 0 < c₁ := by rw [hc₁def]; positivity
+  have hu : Tendsto (fun N : ℕ => Nat.log 2 (Nat.log 2 N)) atTop atTop :=
+    (PairDecouple.tendsto_natLog_atTop 2 le_rfl).comp
+      (PairDecouple.tendsto_natLog_atTop 2 le_rfl)
+  have ht : Tendsto (fun N : ℕ => Real.log ((Nat.log 2 (Nat.log 2 N) : ℝ) + 1)) atTop atTop :=
+    Real.tendsto_log_atTop.comp (tendsto_natCast_atTop_atTop.comp hu |>.atTop_add
+      tendsto_const_nhds)
+  have hmaj := (tendsto_polyPow_sub_expDiv hα hc₁ m).comp ht
+  refine tendsto_atBot_mono' atTop ?_ hmaj
+  filter_upwards [Filter.eventually_ge_atTop 1024, hu.eventually_ge_atTop 3, hKle,
+    depthSlow_le_depthLL hb] with N hN hu3 hKN hSL
+  set u : ℕ := Nat.log 2 (Nat.log 2 N) with hudef
+  set t : ℝ := Real.log ((u : ℝ) + 1) with htdef
+  set D : ℕ := KN N with hDdef
+  set L : ℝ := Real.log (2 * Real.log ((N / 2 ^ u : ℕ) : ℝ)) with hLdef
+  have hu1 : (3 : ℝ) ≤ (u : ℝ) := by exact_mod_cast hu3
+  have hupos : (0 : ℝ) < (u : ℝ) + 1 := by linarith
+  have hllp : llProxy N = (u : ℝ) + 1 := by rw [llProxy]
+  have hlogllp : Real.log (llProxy N) = t := by rw [hllp]
+  have ht0 : 0 ≤ t := by
+    rw [htdef]; exact Real.log_nonneg (by linarith)
+  have hS : (0 : ℝ) < 2 + 2 * t := by linarith
+  -- the constant side
+  have hDLL : D ≤ PairDecouple.depthLL b N := le_trans hKN hSL
+  have hCst : Real.log (CstKdeg m D) = ((D : ℝ) + 1) ^ m := by
+    unfold CstKdeg; rw [Real.log_exp]
+  have hDle : ((D : ℝ) + 1) ≤ 2 + 3 * t := by
+    have h1 := depthLL_succ_le_log hb N
+    rw [hllp] at h1
+    have h2 : ((D : ℝ)) ≤ ((PairDecouple.depthLL b N : ℝ)) := by exact_mod_cast hDLL
+    linarith
+  have hCstle : Real.log (CstKdeg m D) ≤ (2 + 3 * t) ^ m := by
+    rw [hCst]
+    exact pow_le_pow_left₀ (by positivity) hDle m
+  -- the saving side: `b^D ≤ b·(u+1)·(2+2t)`
+  have hpowD : (b : ℝ) ^ D ≤ (b : ℝ) * (((u : ℝ) + 1) * (2 + 2 * t)) := by
+    have h1 : (b : ℝ) ^ D ≤ (b : ℝ) ^ depthSlow b N :=
+      pow_le_pow_right₀ hbR.le hKN
+    have h2 := pow_depthSlow_le_log hb N
+    rw [hllp, ← htdef] at h2
+    linarith
+  set M : ℝ := (b : ℝ) * (((u : ℝ) + 1) * (2 + 2 * t)) with hMdef
+  have hM : (0 : ℝ) < M := by rw [hMdef]; positivity
+  have hA : (b : ℝ) ^ (-θ) * (((u : ℝ) + 1) ^ (-θ) * (1 / (2 + 2 * t)))
+      ≤ (b : ℝ) ^ (-(θ * (D : ℕ))) := by
+    have hprodpos : (0 : ℝ) < (b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-θ) := by
+      have : (0 : ℝ) < ((u : ℝ) + 1) ^ (-θ) := Real.rpow_pos_of_pos hupos _
+      positivity
+    have h2 : (1 : ℝ) / (2 + 2 * t) ≤ (2 + 2 * t) ^ (-θ) := by
+      have hone : (1 : ℝ) ≤ 2 + 2 * t := by linarith
+      have := Real.rpow_le_rpow_of_exponent_le hone (by linarith : (-1 : ℝ) ≤ -θ)
+      rw [one_div]
+      rwa [Real.rpow_neg_one] at this
+    have hsplit : (b : ℝ) ^ (-θ) * (((u : ℝ) + 1) ^ (-θ) * (2 + 2 * t) ^ (-θ)) = M ^ (-θ) := by
+      rw [hMdef, Real.mul_rpow hb0.le (by positivity),
+        Real.mul_rpow hupos.le (by linarith : (0:ℝ) ≤ 2 + 2 * t)]
+    have h3 : M ^ (-θ) ≤ (b : ℝ) ^ (-(θ * (D : ℕ))) := by
+      have he2 : -(θ * (D : ℝ)) = (D : ℝ) * (-θ) := by ring
+      have hrhs : (b : ℝ) ^ (-(θ * ((D : ℕ) : ℝ))) = ((b : ℝ) ^ ((D : ℕ) : ℝ)) ^ (-θ) := by
+        rw [← Real.rpow_mul hb0.le, he2]
+      have hpowD' : (b : ℝ) ^ ((D : ℕ) : ℝ) ≤ M := by
+        rw [Real.rpow_natCast]; exact hpowD
+      rw [hrhs]
+      exact Real.rpow_le_rpow_of_nonpos (Real.rpow_pos_of_pos hb0 _) hpowD' (by linarith)
+    calc (b : ℝ) ^ (-θ) * (((u : ℝ) + 1) ^ (-θ) * (1 / (2 + 2 * t)))
+        = ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-θ)) * (1 / (2 + 2 * t)) := by ring
+      _ ≤ ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-θ)) * (2 + 2 * t) ^ (-θ) :=
+          mul_le_mul_of_nonneg_left h2 hprodpos.le
+      _ = M ^ (-θ) := by rw [← hsplit]; ring
+      _ ≤ (b : ℝ) ^ (-(θ * (D : ℕ))) := h3
+  -- the cut side
+  have hL : ((u : ℝ) - 2) * Real.log 2 ≤ L := by
+    rw [hLdef, hudef]
+    exact log_two_log_cut_ge N hN
+  have hL0 : (0 : ℝ) ≤ ((u : ℝ) - 2) * Real.log 2 := by nlinarith [hu1, hlog2]
+  -- `(u+1)^{-θ}(u-2) ≥ exp(αt) - 3`
+  have hrpow_a : ((u : ℝ) + 1) ^ α = Real.exp (α * t) := by
+    rw [Real.rpow_def_of_pos hupos]
+    congr 1
+    rw [htdef]; ring
+  have hrpow_b : ((u : ℝ) + 1) ^ (-θ) ≤ 1 :=
+    Real.rpow_le_one_of_one_le_of_nonpos (by linarith) (by linarith)
+  have hrpow_c : (0 : ℝ) < ((u : ℝ) + 1) ^ (-θ) := Real.rpow_pos_of_pos hupos _
+  have hsplit2 : ((u : ℝ) + 1) ^ (-θ) * ((u : ℝ) - 2)
+      = ((u : ℝ) + 1) ^ α - 3 * ((u : ℝ) + 1) ^ (-θ) := by
+    have h1 : ((u : ℝ) + 1) ^ (-θ) * ((u : ℝ) + 1) = ((u : ℝ) + 1) ^ α := by
+      rw [← Real.rpow_add_one (ne_of_gt hupos) (-θ)]
+      congr 1
+      rw [hαdef]; ring
+    have h2 : ((u : ℝ) - 2) = ((u : ℝ) + 1) - 3 := by ring
+    rw [h2, mul_sub, h1]
+    ring
+  have hnum : Real.exp (α * t) - 3 ≤ ((u : ℝ) + 1) ^ (-θ) * ((u : ℝ) - 2) := by
+    rw [hsplit2, hrpow_a]
+    nlinarith [hrpow_b, hrpow_c]
+  -- assemble the saving
+  have hsav : c₁ * ((Real.exp (α * t) - 3) / (2 + 2 * t)) ≤ κ * cKgeom c₀ θ b D * L := by
+    have hstep1 : c₁ * ((Real.exp (α * t) - 3) / (2 + 2 * t))
+        ≤ c₁ * ((((u : ℝ) + 1) ^ (-θ) * ((u : ℝ) - 2)) / (2 + 2 * t)) :=
+      mul_le_mul_of_nonneg_left (div_le_div_of_nonneg_right hnum hS.le) hc₁.le
+    have hid : c₁ * ((((u : ℝ) + 1) ^ (-θ) * ((u : ℝ) - 2)) / (2 + 2 * t))
+        = κ * c₀ * ((b : ℝ) ^ (-θ) * (((u : ℝ) + 1) ^ (-θ) * (1 / (2 + 2 * t))))
+          * (((u : ℝ) - 2) * Real.log 2) := by
+      rw [hc₁def]; field_simp
+    have hpos : (0 : ℝ) < κ * c₀ := by positivity
+    have hstep2 : κ * c₀ * ((b : ℝ) ^ (-θ) * (((u : ℝ) + 1) ^ (-θ) * (1 / (2 + 2 * t))))
+        * (((u : ℝ) - 2) * Real.log 2)
+        ≤ κ * c₀ * (b : ℝ) ^ (-(θ * (D : ℕ))) * (((u : ℝ) - 2) * Real.log 2) := by
+      refine mul_le_mul_of_nonneg_right ?_ hL0
+      exact mul_le_mul_of_nonneg_left hA hpos.le
+    have hstep3 : κ * c₀ * (b : ℝ) ^ (-(θ * (D : ℕ))) * (((u : ℝ) - 2) * Real.log 2)
+        ≤ κ * cKgeom c₀ θ b D * L := by
+      have hfacpos : (0 : ℝ) < κ * c₀ * (b : ℝ) ^ (-(θ * (D : ℕ))) := by
+        have : (0 : ℝ) < (b : ℝ) ^ (-(θ * (D : ℕ))) := Real.rpow_pos_of_pos hb0 _
+        positivity
+      have hid2 : κ * cKgeom c₀ θ b D = κ * c₀ * (b : ℝ) ^ (-(θ * (D : ℕ))) := by
+        rw [cKgeom]; ring
+      rw [hid2]
+      exact mul_le_mul_of_nonneg_left hL hfacpos.le
+    calc c₁ * ((Real.exp (α * t) - 3) / (2 + 2 * t))
+        ≤ c₁ * ((((u : ℝ) + 1) ^ (-θ) * ((u : ℝ) - 2)) / (2 + 2 * t)) := hstep1
+      _ = _ := hid
+      _ ≤ κ * c₀ * (b : ℝ) ^ (-(θ * (D : ℕ))) * (((u : ℝ) - 2) * Real.log 2) := hstep2
+      _ ≤ κ * cKgeom c₀ θ b D * L := hstep3
+  have hfinal : ((fun t : ℝ => (2 + 3 * t) ^ m - c₁ * ((Real.exp (α * t) - 3) / (2 + 2 * t)))
+      ∘ fun N : ℕ => Real.log ((Nat.log 2 (Nat.log 2 N) : ℝ) + 1)) N
+      = (2 + 3 * t) ^ m - c₁ * ((Real.exp (α * t) - 3) / (2 + 2 * t)) := rfl
+  rw [hfinal]
+  linarith [hCstle, hsav]
+
 #print axioms NormalNumbers.CastingOut.add_two_le_two_pow
 #print axioms NormalNumbers.CastingOut.natLog_add_two_le
 #print axioms NormalNumbers.CastingOut.natLog_mul_log_two_le
@@ -247,6 +434,8 @@ theorem pow_depthSlow_le_log {b : ℕ} (hb : 2 ≤ b) (N : ℕ) :
 #print axioms NormalNumbers.CastingOut.tendsto_LLbound_div_pow_depthSlow
 #print axioms NormalNumbers.CastingOut.slowW_le_log
 #print axioms NormalNumbers.CastingOut.pow_depthSlow_le_log
+#print axioms NormalNumbers.CastingOut.tendsto_polyPow_sub_expDiv
+#print axioms NormalNumbers.CastingOut.exponent_tendsto_atBot_of_geom_slow
 
 end CastingOut
 
