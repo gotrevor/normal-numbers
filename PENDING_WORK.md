@@ -9735,3 +9735,22 @@ own `G4.MertensAP` gives only the lower direction; do not use it here.)
    Needs: `f m = ‖g₁ m‖/m` packaged as a multiplicative `ArithmeticFunction ℝ`, and the window
    inclusion `elliottLogWindow X W ⊆ Icc 1 X`.
 2. Hall's inequality for `log W < θ log X` — still the hard core.
+
+### lap 50 — Case A wiring: correlation ⟶ logarithmic mean of `‖g₁‖`
+
+`src/NormalNumbers/ElliottCaseA.lean` (new), all trust triple:
+* `normDivArith g` — `m ↦ ‖g m‖/m` as an `ArithmeticFunction ℝ`, with
+  `isMultiplicative_normDivArith`, `normDivArith_nonneg`, `normDivArith_le` (`≤ 1/m`).
+  These are exactly the three hypotheses of `sum_Icc_le_log_mul_exp_neg_defect`.
+* `norm_elliottLogCorrelation_le_window_sum` — `‖corr‖ ≤ ∑_{n ∈ window} ‖g₁(a₁n+b₁)‖/n`.
+* `sum_window_le_transfer` — the affine-form transfer:
+  `∑_{n ∈ window} ‖g₁(a₁n+b₁)‖/n ≤ (a₁+|b₁|)·∑_{m ≤ a₁X+|b₁|} ‖g₁ m‖/m + |b₁|`.
+  The `|b₁|` remainder collects the `n` with `a₁n+b₁ ≤ 0`, where `g₁` is unconstrained; it is
+  a *constant*, absorbed by `Erdos67b.elliottExists_finalThreshold` exactly like the `3k`
+  translation cost in `ElliottDilatedRung.dilatedCM_of_natShift`.
+
+**Next: Case A proper.**  Chain the three: for `Σ = primeDefect (normDivArith g₁) (a₁X+|b₁|)`,
+`‖corr‖ ≤ (a₁+|b₁|)·e^{1+B}·log(a₁X+|b₁|)·e^{-Σ} + |b₁|`.
+In the regime `log W ≥ θ log X` we have `log(a₁X+|b₁|) ≤ c(a₁,b₁,θ)·log W` for `W` large, so
+choosing the Case-A threshold `Σ ≥ Σ₀(ε,a₁,b₁,θ)` gives `≤ ε log W`.
+Then: Hall's inequality for `log W < θ log X`; then Case B's two convolution expansions.
