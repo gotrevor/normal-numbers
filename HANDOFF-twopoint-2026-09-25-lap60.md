@@ -4,6 +4,25 @@ Branch `wip/twopoint-avg`.  Working tree clean; five green commits this lap (pre
 9298 jobs).  Every new declaration `#print axioms`-clean (`[propext, Classical.choice, Quot.sound]`).
 **No `sorry` introduced.**
 
+## CORRECTION, found at the end of the lap — read this first
+
+`DelangeSlot.charSum_tendsto_zero` (`DelangeSlotMaster.lean`, proved and axiom-clean, written in an
+earlier campaign) specialises at `M = 1`, `κ ≡ 1`, `P = 0` to exactly `∑_{n≤N} z^{ω(n)} = o(N)`,
+because `omegaLarge 0 = ω`.  **The 🟡 was therefore already discharged in this tree; the connection
+had never been made.**  `TwoPointDelangeAll.delangeMean_via_delangeSlot` now records that
+derivation in kernel.  So the honest accounting of this lap is:
+
+* the *ledger* advance (ConjC1 free of all cited-but-unproved theorems) is real, and was blocked
+  only by missing wiring, not by missing mathematics;
+* `TwoPointDelangeLevin.lean` is an **independent second proof**, by a genuinely different route:
+  `charSum_tendsto_zero` goes through Dirichlet `L`-functions, `ψ(x,χ) = o(x)` and Wiener–Ikehara;
+  the new file uses only the hyperbola-averaged quantitative PNT and elementary summation — no
+  `L`-function, no character, no contour, and it is quantitative (`≪ (log N)^{θ−1}`, any
+  `θ > max(Re z, 0)`).  Two independent kernel proofs of the same statement is worth having.
+* The lap-59 handoff's claim that `b ≥ 3`, `‖t‖ ≥ 1/6` "needs `ζ(s)^z` — Selberg–Delange or
+  Halász" is **refuted twice over**: by the elementary route below, and by the tree's own
+  `DelangeSlot`.  Do not repeat that claim.
+
 ## The headline
 
     delangeMean_of_phase_ne_one :  phase t ≠ 1  →  DelangeMean t          -- unconditional
