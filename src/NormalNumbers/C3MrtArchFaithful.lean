@@ -932,6 +932,144 @@ theorem conjC3_of_geom_input_reduced {c₀ θ B : ℝ} (hc₀ : 0 < c₀) (hθ0 
 #print axioms conjC3_of_geom_input_reduced
 
 
+/-! ### Both remaining debts are ONE statement
+
+After the previous section the archimedean side rests on three things.  Two of them —
+`NonPrincipalLocalBound` (narrow range, `χ ≠ 1`) and `WideTwistSmall` (wide range, any `χ`) — are
+bounds on the *same* object `‖twistedPrimeSum X χ t‖`, differing only in which corner of the
+`(χ, t)` box they cover.  Together they are exactly: **the twisted prime sum has a saving
+everywhere except the principal-character narrow corner**, which is the corner
+`UniformResonantMass` already handles.  So the honest ledger is `UniformResonantMass` + ONE named
+bound.
+
+Why the corner cannot be absorbed too: at `χ = 1`, `t = 0` the twisted prime sum *is*
+`∑_{p ≤ X²} 1/p = log log X + O(1)`, so no `κ > 0` saving holds there — the resonance count,
+which uses the multiplier `z` and not cancellation among primes, is genuinely needed for it.
+
+Why this statement is not cheaper than it looks: it subsumes prime equidistribution in
+progressions with uniformity in the modulus.  Taking `t = 0` and `χ` non-principal, a saving
+`κ log log X` on `∑_{p ≤ Y} χ̄(p)/p` uniformly for `q ≤ (log X)^{1/125}` is Siegel–Walfisz-strength;
+mathlib's `DirichletCharacter.LFunction_ne_zero_of_one_le_re` is qualitative and supplies no rate,
+so this is a genuine debt and is disclosed as one. -/
+
+/-- **The one remaining archimedean debt.**  A saving on the twisted prime sum off the
+principal-character narrow corner: for `χ ≠ 1` (any admissible twist), or for any `χ` with a wide
+twist.  `UniformResonantMass` covers the excluded corner. -/
+def TwistedPrimeSumSmall (κ C : ℝ) : Prop :=
+  ∀ X : ℝ, 3 ≤ X → ∀ (q : ℕ) (χ : DirichletCharacter ℂ q),
+    (q : ℝ) ≤ Real.log X ^ ((1 : ℝ) / 125) →
+    ∀ t : ℝ, |t| ≤ X ^ 2 → (χ ≠ 1 ∨ Real.log X ^ ((1 : ℝ) / 125) < |t|) →
+      ‖twistedPrimeSum X χ t‖ ≤ (1 - κ) * Real.log (Real.log X) + C
+
+theorem narrow_twist_le_sq {X t : ℝ} (hX : 3 ≤ X) (ht : |t| ≤ Real.log X ^ ((1 : ℝ) / 125)) :
+    |t| ≤ X ^ 2 := by
+  have hX0 : (0 : ℝ) < X := by linarith
+  have h1 : Real.log X ≤ X := by
+    have := Real.log_le_sub_one_of_pos hX0; linarith
+  have hlog1 : 1 < Real.log X := one_lt_log_of_three_le hX
+  have h2 : Real.log X ^ ((1 : ℝ) / 125) ≤ Real.log X := by
+    have := Real.rpow_le_rpow_of_exponent_le hlog1.le (show (1:ℝ)/125 ≤ 1 by norm_num)
+    rwa [Real.rpow_one] at this
+  nlinarith
+
+theorem nonPrincipalTwistSmall_of_saving {κ C : ℝ} (h : TwistedPrimeSumSmall κ C) :
+    NonPrincipalTwistSmall κ C := fun X hX q χ hne hqX t ht =>
+  h X hX q χ hqX t (narrow_twist_le_sq hX ht) (Or.inl hne)
+
+theorem wideTwistSmall_of_saving {κ C : ℝ} (h : TwistedPrimeSumSmall κ C) :
+    WideTwistSmall κ C := fun X hX q χ hqX t hwide ht =>
+  h X hX q χ hqX t ht (Or.inr hwide)
+
+/-- **`FaithfulArchLower` on TWO inputs.**  `UniformResonantMass` (the principal-character narrow
+corner, already the route's input) and `TwistedPrimeSumSmall` (everything else).  The
+`h'`-uniformity of the constant is discharged by `exists_uniform_narrow_const`. -/
+theorem faithfulArchLower_of_urm_of_saving {b : ℕ} (hb : 2 ≤ b) (hURM : UniformResonantMass)
+    {κ₀ C₀ : ℝ} (hκ₀ : 0 < κ₀) (hC₀ : 0 ≤ C₀) (hsav : TwistedPrimeSumSmall κ₀ C₀) :
+    ∃ C : ℝ, FaithfulArchLower b (C + Erdos67b.PrimeEstimates.mertensBound) := by
+  have hkp := kappaDepth_pos hb
+  have hmin0 : 0 ≤ min (Real.pi / (b : ℝ)) ((1 : ℝ) / 256) :=
+    le_min (by positivity) (by norm_num)
+  have hminle : min (Real.pi / (b : ℝ)) ((1 : ℝ) / 256) ≤ 1 / 256 := min_le_right _ _
+  have hk1 : kappaDepth b ≤ 1 := by rw [kappaDepth]; nlinarith
+  set κ : ℝ := min (kappaDepth b) κ₀ / 2 with hκdef
+  have hκ0 : 0 < κ := by
+    have : 0 < min (kappaDepth b) κ₀ := lt_min hkp hκ₀
+    simp only [hκdef]; linarith
+  have hκ1 : κ ≤ 1 := by
+    have : min (kappaDepth b) κ₀ ≤ kappaDepth b := min_le_left _ _
+    simp only [hκdef]; linarith
+  have hpt : ∀ h' : ℤ, ¬ ((b : ℤ) ∣ h') →
+      ∃ C : ℝ, NarrowTwistSmall (depthRoot b h' 0) κ C := by
+    intro h' hnd
+    have hz : ‖depthRoot b h' 0‖ = 1 := norm_ee_real _
+    have hz1 : depthRoot b h' 0 ≠ 1 := by
+      intro hone
+      have hge := resEps_depthRoot_ge hb hnd
+      rw [hone] at hge
+      simp only [resEps, Complex.arg_one, abs_zero] at hge
+      have : 0 < Real.pi / (b : ℝ) := by positivity
+      linarith
+    obtain ⟨Ct, htriv0⟩ := narrowTwistSmallTriv_of_uniformResonantMass hURM hz hz1
+    set κ' : ℝ := min (kappaDepth b) κ₀ with hκ'
+    have hκ'0 : 0 < κ' := lt_min hkp hκ₀
+    have hκ'1 : κ' ≤ 1 := le_trans (min_le_left _ _) hk1
+    set C : ℝ := max Ct C₀ with hC
+    have hC0 : 0 ≤ C := le_trans hC₀ (le_max_right Ct C₀)
+    have htriv : NarrowTwistSmallTriv (depthRoot b h' 0) κ' C := by
+      refine narrowTwistSmallTriv_mono ?_ (le_max_left _ _) htriv0
+      exact le_trans (min_le_left _ _) (ttExponent_depthRoot_ge hb hnd)
+    have hnp : NonPrincipalTwistSmall κ' C :=
+      nonPrincipalTwistSmall_mono (min_le_right _ _) (le_max_right _ _)
+        (nonPrincipalTwistSmall_of_saving hsav)
+    exact ⟨_, narrowTwistSmall_of_triv_of_nonPrincipal hz hκ'0 hκ'1 hC0 htriv hnp⟩
+  obtain ⟨C1, hC1⟩ := exists_uniform_narrow_const hb hpt
+  refine ⟨max C1 C₀, faithfulArchLower_of_twist_small hκ0 hκ1
+    (fun h' hnd => narrowTwistSmall_mono le_rfl (le_max_left _ _) (hC1 h' hnd)) ?_⟩
+  refine fun X hX q χ hqX t hwide ht => ?_
+  have h0 : 0 < Real.log (Real.log X) := logloglog_pos hX
+  have hmain := wideTwistSmall_of_saving hsav X hX q χ hqX t hwide ht
+  have hκle : κ ≤ κ₀ := by
+    have : min (kappaDepth b) κ₀ ≤ κ₀ := min_le_right _ _
+    simp only [hκdef]; linarith
+  have hCle : C₀ ≤ max C1 C₀ := le_max_right _ _
+  nlinarith
+
+/-- **`ConjC3` on TWO archimedean inputs plus the faithful correlation input.**  This is the
+tightest honest statement of the C3/MRT reduction to date: `UniformResonantMass` was already the
+route's analytic input before the defect was found, so the *entire* cost of stating TT (3.3)
+faithfully is the single named bound `TwistedPrimeSumSmall`. -/
+theorem conjC3_of_geom_input_saving {c₀ θ κ₀ C₀ : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1)
+    (m : ℕ)
+    (hin : ∀ A : ℝ, 0 < A → ∀ b : ℕ, 3 ≤ b → ∀ K,
+      KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hURM : UniformResonantMass) (hκ₀ : 0 < κ₀) (hC₀ : 0 ≤ C₀)
+    (hsav : TwistedPrimeSumSmall κ₀ C₀) :
+    ConjC3 := by
+  refine conjC3_of_weylLambertTwist fun b hb => ?_
+  obtain ⟨C, hC⟩ := faithfulArchLower_of_urm_of_saving (by omega : 2 ≤ b) hURM hκ₀ hC₀ hsav
+  exact weylLambertTwist_of_geom_input_at hb hc₀ hθ0 hθ m
+    (hin _ (Real.exp_pos _) b hb) (archSupply_of_faithfulArchLower hC)
+
+/-- The excluded corner is genuinely excluded: at `χ = 1`, `t = 0` the twisted prime sum equals
+the full prime reciprocal mass, so `TwistedPrimeSumSmall` would be FALSE if the corner were
+included.  (Guard: the statement above is not an accidental over-reach.) -/
+theorem twistedPrimeSum_principal_zero (X : ℝ) :
+    twistedPrimeSum X (1 : DirichletCharacter ℂ 1) 0
+      = ((Finset.range (⌈X ^ 2⌉₊ + 1)).filter Nat.Prime).sum (fun p => ((p : ℂ))⁻¹) := by
+  rw [twistedPrimeSum]
+  refine Finset.sum_congr rfl fun p _ => ?_
+  have h1 : (starRingEnd ℂ) ((1 : DirichletCharacter ℂ 1) ((p : ℕ) : ZMod 1)) = 1 := by
+    rw [Subsingleton.elim ((p : ℕ) : ZMod 1) 1, map_one, map_one]
+  rw [h1, one_mul]
+  norm_num
+
+#print axioms nonPrincipalTwistSmall_of_saving
+#print axioms wideTwistSmall_of_saving
+#print axioms faithfulArchLower_of_urm_of_saving
+#print axioms conjC3_of_geom_input_saving
+#print axioms twistedPrimeSum_principal_zero
+
+
 #print axioms ttPretentiousSumChar_eq
 #print axioms ttPretentiousSumChar_ge
 #print axioms archSupply_of_faithfulArchLower

@@ -10945,3 +10945,37 @@ range, and the `h'`-uniformity obligation is discharged.
 for `L(s,χ)`; the module doc records that the resonance count provably cannot supply it).  Before
 that, check whether mathlib's Dirichlet L-function non-vanishing on `Re s = 1` can discharge
 `NonPrincipalLocalBound` directly — that would clear the narrow range outright.
+
+## 2026-09-25 lap 109 — the archimedean side reduced to UniformResonantMass + ONE bound
+
+* **Refuted (source-grounded):** mathlib cannot discharge `NonPrincipalLocalBound`.
+  `DirichletCharacter.LFunction_ne_zero_of_one_le_re`
+  (`Mathlib/NumberTheory/LSeries/Nonvanishing.lean:398`) is purely qualitative — no rate, no
+  uniformity in `q` or `t`.  Two elementary substitutes were tried and both reduce back to the
+  same wall: (i) restricting to `p ≡ 1 (q)` gives a saving `κ/φ(q)`, which dies as
+  `φ(q) → (log X)^{1/125}`; (ii) the `b`-th-root-of-unity averaging `∑_{j<b} z^j = 0` gives the
+  *average* over `j` of the savings, not the saving at `j = 1`, and chasing the bad case
+  (`χ̄(p)p^{-it} ≈ z̄` for most `p`) lands on `χ^b` pretending to the principal character, i.e. on
+  prime equidistribution in progressions with `q`-uniformity — Siegel–Walfisz.  So the debt is
+  real and is disclosed as one.  Do not re-attempt via mathlib L-functions.
+* `TwistedPrimeSumSmall κ C` — **the two remaining archimedean debts unified into one.**  The
+  narrow non-principal range and the wide range are bounds on the *same* object
+  `‖twistedPrimeSum X χ t‖`; together they say the twisted prime sum has a saving everywhere
+  except the principal-character narrow corner.  `nonPrincipalTwistSmall_of_saving` and
+  `wideTwistSmall_of_saving` recover both.
+* `faithfulArchLower_of_urm_of_saving` — `FaithfulArchLower b` from exactly TWO inputs:
+  `UniformResonantMass` and `TwistedPrimeSumSmall`.
+* `conjC3_of_geom_input_saving` — `ConjC3` from the faithful `K`-point input plus those two.
+  Since `UniformResonantMass` was already the route's analytic input *before* the defect was
+  found, the entire cost of stating TT (3.3) faithfully is now the single bound
+  `TwistedPrimeSumSmall`.
+* `twistedPrimeSum_principal_zero` — guard: at `χ = 1, t = 0` the twisted prime sum IS the full
+  prime reciprocal mass, so the excluded corner cannot be folded in; `TwistedPrimeSumSmall` is
+  not an accidental over-reach.
+
+**Next attack.** `TwistedPrimeSumSmall` is now the single archimedean target.  Two probes worth
+trying, in order: (1) does the `t = 0`, `χ ≠ 1` case follow from a *weak* Mertens-in-AP with
+`q`-uniformity that is easier than Siegel–Walfisz, given that we only need a saving of a *constant
+factor* `κ`, not `o(1)`?  (2) the wide range `|t| > (log X)^{1/125}`: partial summation against
+`ψ(x) − x` needs only a `(log x)^{-A}` error, so check whether a fixed-power error suffices, which
+is a weaker input than the zero-free region the module doc assumed.
