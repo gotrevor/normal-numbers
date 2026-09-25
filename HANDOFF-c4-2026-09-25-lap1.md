@@ -215,3 +215,29 @@ reduces to `zcount_eq` convolved with one or two Bernoulli edges.  Then `isAbeli
 gives `IsAbelianAt (blockSeq sorted c 2) L ↔ Odd L`, i.e. `c4_realizable` for the INFINITE set of
 odd lengths.  Requires a base-8 normal sequence to exist — check `PowerBase`/Champernowne in this
 repo for `∃ c, IsNormalSequence 8 c ∧ ∀ m, c m < 8`.
+
+## Lap 7 addendum
+Wiring toward the infinite witness.  All green.
+
+* `isAbelianAt_blockSeq_iff` / `onesCount_blockSeq` hypothesis SHARPENED from `q + L ≤ S` to
+  `q + L ≤ q*S + 1` — the sharp bound `(q-1 + L-1)/q < S`.  This matters: the odd witness needs
+  `S = a + 1` digits for `L = 2a+1`, and the crude bound would have demanded `S ≥ 2a+3`, making
+  the block word count `8^S` too big to relate to `Zgf a`.
+* A base-8 normal sequence exists in-repo: `digitOf 8 (Int.fract G4.Sched.fullRealW)` with
+  `isNormal_two_pow_fullRealW 3` (the base-16 analogue is what `AbelianBinaryExample` uses).
+* New: `sortedTable`, `winOnes_eq_sum`, `sum_range_two_mul`, `zsumW_eq_sum`, `sortedTable_zero`,
+  `sortedTable_one`, `zdig_eq`, and the two window formulas
+
+  `winOnes_sorted_zero_odd : winOnes sortedTable 2 (2a+1) 0 v = ∑_{t<a} zdig (v_t) + [v_a ≥ 2]`
+  `winOnes_sorted_one_odd  : winOnes sortedTable 2 (2a+1) 1 v = [v_0 ≥ 6] + ∑_{t<a} zdig (v_{t+1})`
+
+  — the two halves whose generating functions are `Zgf a · (2 + 6X)` and `(6 + 2X) · Zgf a`, and
+  whose SUM is `Zgf a · (8 + 8X)`, giving `C(2^a)(1+X)^{2a+1}·8`; dividing by `2·8^{a+1}` lands on
+  `C(L,j)/2^L` exactly.  Pascal, as predicted.
+
+**Next.**  (i) `Wgf r L S := ∑_{k<8^S} X^{winOnes sortedTable 2 L r (wordOf 8 S k)}`;
+`Wgf 0 (2a+1) (a+1) = Zgf a * (2+6X)` via `wordOf_append` (split off the LAST digit) and
+`Wgf 1 (2a+1) (a+1) = (6+2X) * Zgf a` via `wordOf_cons` (split off the FIRST digit) — both
+splittings already appear in `Zgf_succ`. (ii) `blockFreq sortedTable 2 8 (a+1) (2a+1) j =
+((Wgf 0).coeff j + (Wgf 1).coeff j)/(2·8^{a+1})`. (iii) Even `L`: the analogous formulas with an
+edge bit at BOTH ends, failing at `j = 0` with `7` against `8`.

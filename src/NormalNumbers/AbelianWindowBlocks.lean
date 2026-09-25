@@ -297,7 +297,7 @@ def winOnes (g : ℕ → ℕ → ℕ) (q L r : ℕ) (v : List ℕ) : ℕ :=
   ((range L).filter (fun i => g ((r + i) % q) (v.getD ((r + i) / q) 0) = 1)).card
 
 theorem onesCount_blockSeq (g : ℕ → ℕ → ℕ) (c : ℕ → ℕ) {q : ℕ} (hq : 0 < q) (L S : ℕ)
-    (hS : q + L ≤ S) (n : ℕ) :
+    (hS : q + L ≤ q * S + 1) (n : ℕ) :
     onesCount (blockSeq g c q) L n = winOnes g q L (n % q) (blk c S (n / q)) := by
   classical
   unfold onesCount windowSet winOnes
@@ -306,7 +306,8 @@ theorem onesCount_blockSeq (g : ℕ → ℕ → ℕ) (c : ℕ → ℕ) {q : ℕ}
   have hiL : i < L := Finset.mem_range.mp hi
   have hr : n % q < q := Nat.mod_lt _ hq
   have hidx : (n % q + i) / q < S := by
-    have h1 : (n % q + i) / q ≤ n % q + i := Nat.div_le_self _ _
+    rw [Nat.div_lt_iff_lt_mul hq]
+    have : q * S = S * q := Nat.mul_comm q S
     omega
   have hn : n + i = q * (n / q) + (n % q + i) := by
     have := Nat.div_add_mod n q
@@ -327,7 +328,7 @@ noncomputable def blockFreq (g : ℕ → ℕ → ℕ) (q B S L j : ℕ) : ℝ :=
 
 /-- **The block-driven window law.** -/
 theorem tendsto_onesFreq_blockSeq (g : ℕ → ℕ → ℕ) (c : ℕ → ℕ) {B q : ℕ} (hB : 0 < B)
-    (hq : 0 < q) (hcB : ∀ m, c m < B) (hc : IsNormalSequence B c) (L S : ℕ) (hS : q + L ≤ S)
+    (hq : 0 < q) (hcB : ∀ m, c m < B) (hc : IsNormalSequence B c) (L S : ℕ) (hS : q + L ≤ q * S + 1)
     (j : ℕ) :
     Tendsto (onesFreq (blockSeq g c q) L j) atTop (𝓝 (blockFreq g q B S L j)) := by
   classical

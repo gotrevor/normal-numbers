@@ -134,4 +134,105 @@ theorem zcount_eq (m j : ℕ) :
   rw [hcoeff] at hval
   exact_mod_cast hval
 
+
+/-! ### Window one-counts of the sorted-block witness -/
+
+/-- The "sorted" two-bit table: digit `d` spells `00`, `10`, `11` as `d` crosses `2` and `6`. -/
+def sortedTable (r d : ℕ) : ℕ :=
+  if r % 2 = 0 then (if d < 2 then 0 else 1) else (if d < 6 then 0 else 1)
+
+theorem winOnes_eq_sum (g : ℕ → ℕ → ℕ) (q L r : ℕ) (v : List ℕ) :
+    winOnes g q L r v
+      = ∑ i ∈ range L, (if g ((r + i) % q) (v.getD ((r + i) / q) 0) = 1 then 1 else 0) := by
+  rw [winOnes, Finset.card_filter]
+
+/-- Summing over `range (2 * a)` two at a time. -/
+theorem sum_range_two_mul (f : ℕ → ℕ) (a : ℕ) :
+    ∑ i ∈ range (2 * a), f i = ∑ t ∈ range a, (f (2 * t) + f (2 * t + 1)) := by
+  induction a with
+  | zero => simp
+  | succ a ih =>
+      have h : 2 * (a + 1) = (2 * a + 1) + 1 := by ring
+      rw [h, Finset.sum_range_succ, Finset.sum_range_succ, ih, Finset.sum_range_succ]
+      ring
+
+/-- `zsumW` as an indexed sum. -/
+theorem zsumW_eq_sum (v : List ℕ) :
+    zsumW v = ∑ t ∈ range v.length, zdig (v.getD t 0) := by
+  induction v with
+  | nil => simp [zsumW]
+  | cons d w ih =>
+      have hz : zsumW (d :: w) = zdig d + zsumW w := by
+        simp [zsumW]
+      rw [hz, ih]
+      simp only [List.length_cons]
+      rw [Finset.sum_range_succ']
+      have hstep : ∀ t, ((d :: w).getD (t + 1) 0) = w.getD t 0 := by
+        intro t; simp [List.getD]
+      simp only [hstep]
+      have h0 : ((d :: w).getD 0 0) = d := by simp [List.getD]
+      rw [h0]
+      ring
+
+/-- The one-count contributed by the leading bit of the block spelled by `d`. -/
+theorem sortedTable_zero (d : ℕ) : (if sortedTable 0 d = 1 then 1 else 0)
+    = (if d < 2 then 0 else 1) := by
+  unfold sortedTable
+  by_cases h : d < 2 <;> simp [h]
+
+theorem sortedTable_one (d : ℕ) : (if sortedTable 1 d = 1 then 1 else 0)
+    = (if d < 6 then 0 else 1) := by
+  unfold sortedTable
+  by_cases h : d < 6 <;> simp [h]
+
+theorem zdig_eq (d : ℕ) : zdig d = (if d < 2 then 0 else 1) + (if d < 6 then 0 else 1) := by
+  unfold zdig
+  have h1 : (if 2 ≤ d then 1 else 0) = (if d < 2 then 0 else 1) := by
+    by_cases h : 2 ≤ d
+    · rw [if_pos h, if_neg (by omega)]
+    · rw [if_neg h, if_pos (by omega)]
+  have h2 : (if 6 ≤ d then 1 else 0) = (if d < 6 then 0 else 1) := by
+    by_cases h : 6 ≤ d
+    · rw [if_pos h, if_neg (by omega)]
+    · rw [if_neg h, if_pos (by omega)]
+  rw [h1, h2]
+
+
+/-- The window one-count of an ODD-length window at even offset: whole blocks then one edge bit. -/
+theorem winOnes_sorted_zero_odd (a : ℕ) (v : List ℕ) :
+    winOnes sortedTable 2 (2 * a + 1) 0 v
+      = (∑ t ∈ range a, zdig (v.getD t 0)) + (if v.getD a 0 < 2 then 0 else 1) := by
+  rw [winOnes_eq_sum, Finset.sum_range_succ, sum_range_two_mul]
+  congr 1
+  · refine Finset.sum_congr rfl (fun t _ => ?_)
+    have e1 : (0 + 2 * t) % 2 = 0 := by omega
+    have e2 : (0 + 2 * t) / 2 = t := by omega
+    have e3 : (0 + (2 * t + 1)) % 2 = 1 := by omega
+    have e4 : (0 + (2 * t + 1)) / 2 = t := by omega
+    rw [e1, e2, e3, e4, sortedTable_zero, sortedTable_one, zdig_eq]
+  · have e1 : (0 + 2 * a) % 2 = 0 := by omega
+    have e2 : (0 + 2 * a) / 2 = a := by omega
+    rw [e1, e2, sortedTable_zero]
+
+/-- The window one-count of an ODD-length window at odd offset: one edge bit then whole blocks. -/
+theorem winOnes_sorted_one_odd (a : ℕ) (v : List ℕ) :
+    winOnes sortedTable 2 (2 * a + 1) 1 v
+      = (if v.getD 0 0 < 6 then 0 else 1) + ∑ t ∈ range a, zdig (v.getD (t + 1) 0) := by
+  rw [winOnes_eq_sum, Finset.sum_range_succ']
+  have hmain : ∑ i ∈ range (2 * a),
+      (if sortedTable ((1 + (i + 1)) % 2) (v.getD ((1 + (i + 1)) / 2) 0) = 1 then 1 else 0)
+      = ∑ t ∈ range a, zdig (v.getD (t + 1) 0) := by
+    rw [sum_range_two_mul]
+    refine Finset.sum_congr rfl (fun t _ => ?_)
+    have e1 : (1 + (2 * t + 1)) % 2 = 0 := by omega
+    have e2 : (1 + (2 * t + 1)) / 2 = t + 1 := by omega
+    have e3 : (1 + (2 * t + 1 + 1)) % 2 = 1 := by omega
+    have e4 : (1 + (2 * t + 1 + 1)) / 2 = t + 1 := by omega
+    rw [e1, e2, e3, e4, sortedTable_zero, sortedTable_one, zdig_eq]
+  rw [hmain]
+  have e5 : (1 + 0) % 2 = 1 := by omega
+  have e6 : (1 + 0) / 2 = 0 := by omega
+  rw [e5, e6, sortedTable_one]
+  ring
+
 end NormalNumbers.Abelian

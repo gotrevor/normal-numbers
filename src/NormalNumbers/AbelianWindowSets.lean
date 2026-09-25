@@ -367,7 +367,7 @@ becomes a decidable arithmetic identity, at every block length `q`. -/
 
 /-- Abelian-ness of a block-driven sequence at `L` is an exact finite arithmetic condition. -/
 theorem isAbelianAt_blockSeq_iff (g : ℕ → ℕ → ℕ) (c : ℕ → ℕ) {B q : ℕ} (hB : 0 < B)
-    (hq : 0 < q) (hcB : ∀ m, c m < B) (hc : IsNormalSequence B c) (L S : ℕ) (hS : q + L ≤ S) :
+    (hq : 0 < q) (hcB : ∀ m, c m < B) (hc : IsNormalSequence B c) (L S : ℕ) (hS : q + L ≤ q * S + 1) :
     IsAbelianAt (blockSeq g c q) L ↔
       ∀ j ≤ L, blockFreq g q B S L j = (L.choose j : ℝ) / 2 ^ L := by
   constructor
