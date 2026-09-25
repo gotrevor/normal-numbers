@@ -31,9 +31,13 @@ crude `|ζ(1+it)| ≪ log t` suffices at `|t| ≍ X` (it gives `log log t ≍ lo
 cancelling the main term).  A saving factor < 1 in the exponent (i.e. VK) is not optional.
 
 **Attack order.**
-1. `C3MrtArchimedean.lean`: the bridge `dist ≥ mass − ‖S‖`; `pretentiousDistSq_ge_class_sum`
-   generalised from `t = 0` to all `t`; the resonance split.
-2. Range 1 in full (the `O(T)`-interval Mertens count).
+1. ~~`C3MrtArchimedean.lean`: the bridge `dist ≥ mass − ‖S‖`; the resonance split.~~  DONE lap 18.
+2. ~~Range 1 (the `O(T)`-window Mertens count).~~  DONE lap 19 —
+   `range_one_mass_bound`.  **What remains of Range 1**: insert
+   `G4.MertensAP.mertensRate_residueClass` at `a = 1` to turn the class mass into
+   `c·log log X − C`, and state `range_one_certificate` in `∃ X₀, ∀ X ≥ X₀ … A ≤ dist` form.
+   Index-set mismatch to watch: `sumInvPrimesIn` sums `N.primesBelow` (`< N`), `classPrimes`
+   uses `primesUpTo` (`≤ X`); the inclusion is in the useful direction.
 3. `TwistedPrimeSumSaving A` as the single named Range-2 Prop; assemble
    `nonPretentious_zOm`, then feed `initial_segment_bound_of_elliott`.
 4. Then, and only then, the tuple sum over `d,e ≤ Y` (laps 8–13 supply every other piece).
