@@ -3,6 +3,7 @@ import NormalNumbers.ElliottProgression
 import NormalNumbers.ElliottPretentiousTransfer
 import NormalNumbers.ElliottRankin
 import NormalNumbers.ElliottTruncAssemble
+import NormalNumbers.ElliottCaseB
 
 /-!
 # Leaf 2: the assembly
@@ -282,8 +283,8 @@ theorem exists_caseB_threshold (h : AffineCMLogElliott)
               |t| ≤ (A : ℝ) * X →
                 (A : ℝ) ≤ pretentiousDistSqToTwist (restrictToNat g₁) χ t X) →
           primeDefect (normDivArith g₁) (thinScale a₁ b₁ X W) ≤ D₀ →
-          ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W‖ ≤ ε * Real.log (W : ℝ) := by
-  sorry
+          ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W‖ ≤ ε * Real.log (W : ℝ) :=
+  NormalNumbers.ElliottCaseB.exists_caseB_threshold h ha₁ ha₂ hdet hε D₀ k
 
 /-! ## The assembly -/
 
