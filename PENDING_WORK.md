@@ -9943,3 +9943,24 @@ This is the exact shape the resonance argument needs and the dependency's Merten
 
 Next lap: step 2 (self-contained, `log log s ≤ c log s + O_c(1)`), then step 4 (harmonic),
 then the window bookkeeping of step 3.
+
+### Lap 75 — constant retune (forced by Brun–Titchmarsh's factor 2) + two bricks
+
+**Constant retune.**  The BT route cannot deliver the ideal coefficient `2δ/π`: BT at level
+`z = √P` costs a factor `4`, the window width bound `w ≤ 2(b−a)` another `2`, and the gap
+estimate `γ_m − δ ≥ (π/2)m` another `4/π`.  The honest coefficient is `≈ 20δ`.
+`UniformResonantMass` is therefore restated with the round constant **`100·δ`**, and
+`ttEps z := min (resEps z) (1/256)` so that `(126/125)·100·δ ≤ 0.394 < 1` and
+`κ = ttExponent z = (1 − cos δ)(1 − (126/125)·100δ) ≥ 0.6(1 − cos δ) > 0` with margin.
+Everything downstream is unchanged.
+
+**Bricks landed** (`C3MrtWindowMass`, both axiom-clean):
+* `log_le_mul_sub` / `log_log_le_mul_log` — `log u ≤ c·u − 1 − log c`, the tangent-line bound
+  with free slope.  This is step 2's absorption of the small-prime mass `log log P₁` into the
+  `log(2+|t|)` budget.
+* `sum_inv_gap_le` — `∑_{m=1}^{K} (2πm − π − δ)⁻¹ ≤ (2/π)(1 + log K)` for `0 ≤ δ ≤ π/2`, via
+  `2πm − π − δ ≥ (π/2)m` and mathlib's `harmonic_le_one_add_log`.  This is step 4.
+
+Remaining for `UniformResonantMass`: the window bookkeeping of step 3 (map each resonant prime
+`p > P₁` to its `windowIndex`, fit the fibre into `(P, P(1+w)]` with `P = exp((γ_m−δ)/|t|)`,
+apply `short_interval_mass_le`), then the dyadic-block treatment of the BT error tail (step 5).

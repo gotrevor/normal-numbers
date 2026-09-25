@@ -102,3 +102,49 @@ theorem short_interval_mass_le {P w : ℝ} (hP : 2 ≤ P) (hw : 0 < w) {G : Fins
       exact div_le_div_of_nonneg_right this hsq0.le
     rw [add_mul, h1]
     linarith
+
+/-! ## Two elementary bricks for the resonance sum -/
+
+/-- `log u ≤ c·u − 1 − log c` for every `c, u > 0`: the tangent-line bound on the logarithm,
+with the slope a free parameter.  Used to absorb the small-prime mass `log log P₁` into the
+`log(2+|t|)` budget: `log log s ≤ c log s + O_c(1)` for every `c > 0`. -/
+theorem log_le_mul_sub {c : ℝ} (hc : 0 < c) {u : ℝ} (hu : 0 < u) :
+    Real.log u ≤ c * u - 1 - Real.log c := by
+  have h := Real.log_le_sub_one_of_pos (x := c * u) (by positivity)
+  rw [Real.log_mul (ne_of_gt hc) (ne_of_gt hu)] at h
+  linarith
+
+/-- The small-prime absorption in the form the resonance argument uses. -/
+theorem log_log_le_mul_log {c : ℝ} (hc : 0 < c) {s : ℝ} (hs : 1 < s) :
+    Real.log (Real.log s) ≤ c * Real.log s - 1 - Real.log c :=
+  log_le_mul_sub hc (Real.log_pos hs)
+
+/-- **The resonance harmonic sum.**  With `γ_m = |arg z − 2πm| ≥ 2π|m| − π`, the reciprocals of
+the window gaps `γ_m − δ` over `1 ≤ m ≤ K` sum to at most `(2/π)(1 + log K)`.
+
+The gap bound is `2πm − π − δ ≥ (π/2)m` for `m ≥ 1` and `δ ≤ π/2`, which is what makes the
+sum harmonic; mathlib's `harmonic_le_one_add_log` finishes it. -/
+theorem sum_inv_gap_le {δ : ℝ} (hδ0 : 0 ≤ δ) (hδ : δ ≤ π / 2) (K : ℕ) :
+    ∑ m ∈ Finset.Icc 1 K, (2 * π * (m : ℝ) - π - δ)⁻¹ ≤ (2 / π) * (1 + Real.log K) := by
+  have hpi : (0 : ℝ) < π := Real.pi_pos
+  have hstep : ∀ m ∈ Finset.Icc 1 K, (2 * π * (m : ℝ) - π - δ)⁻¹ ≤ (2 / π) * ((m : ℝ)⁻¹) := by
+    intro m hm
+    have hm1 : (1 : ℝ) ≤ (m : ℝ) := by
+      have := (Finset.mem_Icc.1 hm).1
+      exact_mod_cast this
+    have hmpos : (0 : ℝ) < (m : ℝ) := by linarith
+    have hgap : (π / 2) * (m : ℝ) ≤ 2 * π * (m : ℝ) - π - δ := by nlinarith
+    have hgap0 : (0 : ℝ) < (π / 2) * (m : ℝ) := by positivity
+    calc (2 * π * (m : ℝ) - π - δ)⁻¹ ≤ ((π / 2) * (m : ℝ))⁻¹ := by
+          exact inv_anti₀ hgap0 hgap
+      _ = (2 / π) * ((m : ℝ)⁻¹) := by field_simp
+  refine le_trans (Finset.sum_le_sum hstep) ?_
+  rw [← Finset.mul_sum]
+  have hharm : ∑ m ∈ Finset.Icc 1 K, ((m : ℝ))⁻¹ ≤ 1 + Real.log K := by
+    have h := harmonic_le_one_add_log K
+    have heq : ((harmonic K : ℚ) : ℝ) = ∑ m ∈ Finset.Icc 1 K, ((m : ℝ))⁻¹ := by
+      rw [harmonic_eq_sum_Icc]
+      push_cast
+      rfl
+    rwa [heq] at h
+  exact mul_le_mul_of_nonneg_left hharm (by positivity)
