@@ -110,6 +110,34 @@ bridge-free `K`-point correlation form.**  In order:
    averaging, `L^{-c}`, `W ≤ L^c`, exceptional set of scales), and the `D = 2` natural-density
    rung from it.
 
+**Progress (same lap, two green commits).**  Steps 1–5 are DONE
+(`src/NormalNumbers/C3MrtMultElliott.lean`, `class_window_bound_of_mult` trust-triple clean), and
+the rung is DONE (`src/NormalNumbers/C3MrtMultRung.lean`,
+**`rung_class_of_named_inputs_mult`**): on `KPointLogElliottMult K` +
+`TwistedPrimeSumSavingAllLevels` alone,
+
+    ∃ A₀ ≥ 2, ∀ A ≥ A₀, ∃ i₀, ∀ m ≥ i₀,
+      ‖∑_{j ∈ Ioc 0 (A^m)} (1/j) ∏_{i<K} z_i^{ω(M₀·j + r+i+1)}‖
+        ≤ (1 + log(A^{i₀})) + m·(ε log A).
+
+That single statement replaces BOTH `rung_multi_of_named_inputs` AND `rung_multi_uniform_prog`:
+with no divisor tuples there is nothing to truncate and no `exists_common_threshold` to run, so
+the single `A` and the single `i₀` come out directly.
+
+**REMAINING — the one brick between the new anchor and lap 59's conclusion.**
+`progression_log_rung_class_mult` needs, from `rung_class_of_named_inputs_mult`:
+
+1. *Reindex.*  `n ≡ r (mod M₀)`, `n < N` ↔ `n = M₀·j + r`, `j < (N−r+M₀−1)/M₀`; then
+   `n + i + 1 = M₀·j + (r+i+1)`, which is exactly the rung's argument.  `class_sum_reindex`
+   (lap 53) does this bookkeeping already.
+2. *The weight bridge* (brick 4b, unchanged in shape and now the ONLY bookkeeping item).  The
+   rung carries `harmonicWeight j = 1/j`; the target carries `harmW n = (M₀ j + r + 1)⁻¹`.
+   `(M₀ j + r + 1)⁻¹ − M₀⁻¹ j⁻¹ = (M₀ − r − 1)/(M₀ j (M₀ j + r + 1))`, absolutely
+   `≤ (M₀ + r)/(M₀ j²)`, and `sum_inv_sq_le` (`C3MrtRungTwo:372`) is in the repo.  `ε ↦ ε M₀`
+   absorbs the factor `M₀⁻¹`.
+3. *Choose `m`.*  `m = Nat.log A ((N − r)/M₀)`, exactly as in
+   `multi_correlation_of_uniform_rung_prog`'s `hrung` step, giving `m log A ≤ log N`.
+
 Why this and not brick 4b: brick 4b perfects the *old* anchor.  Step 5 is the smallest
 compiler-grounded probe that tests whether the re-cost of `ROUTE-ESCALATION-2026-09-25-c3mrt.md`
 is right — if the forms really are nondegenerate and the correlation really is in
