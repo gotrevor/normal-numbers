@@ -1,4 +1,4 @@
-# HANDOFF c3-mrt 2026-09-25 — laps 7–10
+# HANDOFF c3-mrt 2026-09-25 — laps 7–11
 
 Branch `wip/c3-mrt`.  `lake build` green at both commits; every new result axiom-clean
 `[propext, Classical.choice, Quot.sound]`, no `sorry`.  Pure addition (2 new modules).
@@ -83,8 +83,43 @@ finite sum of `ζ^Ω` averages along the linear forms `k ↦ dk` — the shape
 `bridge_truncation_bound` (truncate, uniformly in `N`).  What remains for the rung is
 *analytic*, not structural: feed this into the dependency's log-Elliott theorem.
 
+## Lap 11 — `C3MrtElliottMatch.lean`: the hypotheses of `NonasymptoticLogElliott` checked
+
+The dependency's statement (read at
+`.lake/packages/lean-proofs-latest/src/latest/ErdosProblems/Erdos67b/LogElliott.lean:411`) is
+
+    ∀ a₁ a₂ : ℕ, b₁ b₂ : ℤ, 0 < a₁ → 0 < a₂ → a₁b₂ − a₂b₁ ≠ 0 → ∀ ε>0, ∃ A₀ ≥ 2, ∀ A X W …
+      IsMultiplicativeOnPositiveInt g₁ → … → ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W‖
+        ≤ ε · log W
+
+with `elliottLogCorrelation = ∑_{X/W < n ≤ X} (1/n) g₁(a₁n+b₁) g₂(a₂n+b₂)`.  Two findings:
+
+* **`IsMultiplicativeOnPositiveInt` is COMPLETE multiplicativity** (`g(mn) = g(m)g(n)` for all
+  positive `m,n`, no coprimality).  So `z^ω` is excluded and `z^Ω` admitted — the lap-6
+  diagnosis is confirmed against the actual Lean statement, not a recollection of it.
+  `isMultiplicativeOnPositiveInt_zOmInt`, `norm_zOmInt_le_one` discharge both pointwise
+  hypotheses for `zOmInt z = positiveIntExtension (z^Ω)`.
+* **The non-degeneracy hypothesis is automatic, with determinant exactly `1`**
+  (`linear_forms_det_eq_one`): with `a₁ = e, b₁ = (a+1)/d, a₂ = d, b₂ = (a+2)/e`,
+  `a₁b₂ − a₂b₁ = (a+2) − (a+1) = 1` for **every** coprime powerful pair — no exceptional moduli
+  to exclude.  This is the same unit determinant that forced coprimality in
+  `coprime_of_joint_progression`, seen once in `ℕ` and once in `ℤ`.
+* `integerAffine_eq_linear_form` / `zOmInt_integerAffine` — our summand is literally the
+  dependency's summand, modulo the harmonic weight.
+
+**The only remaining mismatch is the WEIGHT**, and it is a real one: `elliottLogCorrelation`
+carries `1/n` over the log window `X/W < n ≤ X`, while laps 8–10 produce a flat sum over an
+initial segment.  See NEXT.
+
 ## NEXT — resume here
 
+0'. **Harmonic-weight truncation bound (the live obstruction).**  `bridge_truncation_bound`
+   bounds the truncation error by `N · bridgeTail(Y)`, which is useless against a log-averaged
+   main term of size `log N`.  Needed: the same bound with harmonic weights, where the
+   progression `d ∣ n+1` carries mass `∑_{k ≤ N/d} 1/(dk) ≤ (1 + log N)/d`, giving error
+   `(1 + log N) · bridgeTail(Y)` against a main term `≍ log N`.  The `1/d` is already present
+   in `bridgeTail`, so the shape is right; this is bookkeeping with `Finset` harmonic sums, not
+   new mathematics.  **Do this before attempting the instantiation.**
 0. **Instantiate.**  Locate `Erdos67b.NonasymptoticLogElliott` in
    `.lake/packages/lean-proofs-latest`, read its exact statement (linear-form conventions,
    log-average normalisation, the `pretentiousDistSqToTwist` hypothesis), and match it against
