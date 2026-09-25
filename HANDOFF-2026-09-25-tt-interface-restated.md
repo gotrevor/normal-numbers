@@ -144,3 +144,10 @@ non-principal `q > 1` named (`NonPrincipalTwistSmall`) and expected easier.  New
 visible by the repair: `ArchSupply (TTNonPretentiousAt A) b` fixes ONE constant across all
 primitive twists `h'`, so `FaithfulArchLower b C` needs `C` and `κ` uniform in `h'`.  Route:
 `|arg (depthRoot b h' 0)| ≥ 2π/b` for `b ∤ h'`, so both depend on `b` alone.
+
+## Lap 107 addendum — uniformity in `h'`, exponent side proved
+
+`resEps_depthRoot_ge`: `|arg(depthRoot b h' 0)| ≥ 2π/b` for every `b ∤ h'`; hence
+`ttExponent_depthRoot_ge : kappaDepth b ≤ ttExponent (depthRoot b h' 0)` with
+`kappaDepth b = (1/10)·min(π/b,1/256)² > 0`.  Remaining: the constant side, a finite max over
+the `b − 1` values of `h' mod b`.

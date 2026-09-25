@@ -166,6 +166,32 @@ argument, not an analytic one).
 `UniformResonantMass` constant depends on `z` only through `arg z`).  ② `NonPrincipalTwistSmall`.
 ③ `WideTwistSmall` (lap 104's refutation says: needs a zero-free region, not resonance).
 
+## Lap 107 (2026-09-25) — the uniformity in the twist `h'` is PROVED (exponent side)
+
+`C3MrtArchFaithful`, axiom-clean:
+
+* `cos_two_pi_mul_div_le` — `cos(2πk/b) ≤ cos(2π/b)` for `1 ≤ k ≤ b−1` (both halves of the
+  circle, via `cos_two_pi_sub`).
+* `ee_re_real` — `Re (ee r) = cos(2π r)`.
+* **`resEps_depthRoot_ge`** — `|arg (depthRoot b h' 0)| / 2 ≥ π/b` for EVERY `h'` with `b ∤ h'`:
+  the angle is `2πk/b` with `1 ≤ k ≤ b−1`, so it is bounded away from `0` uniformly in `h'`.
+* `kappaDepth b := (1/10)·min(π/b, 1/256)²` and **`ttExponent_depthRoot_ge`** —
+  `kappaDepth b ≤ ttExponent (depthRoot b h' 0)` for every primitive `h'`, using
+  `Real.cos_le_one_sub_mul_cos_sq` (`1 − cos ε ≥ (2/π²)ε²`) and `π² ≤ 12`.
+
+So the *exponent* side of the uniformity obligation raised in lap 106 is discharged: one
+positive `κ(b)` works for all twists.  What remains of that obligation is the *constant* side:
+the `C₁` of `ttPretentiousSum_lower_of_uniformResonantMass` (equivalently the `C(z, ε)` of
+`UniformResonantMass`) must also be bounded uniformly over `z ∈ {ee(k/b) : 1 ≤ k ≤ b−1}` —
+a FINITE set for each `b`, so this is a `Finset.max` argument, not analysis.
+
+**Next attack.** ① The finite-max step: `∃ C(b), ∀ h' with b ∤ h', C₁(depthRoot b h' 0) ≤ C(b)`
+— note `depthRoot b h' 0` depends only on `h' mod b`, so the sup is over `b − 1` values; the
+cleanest Lean route is to index by `k : Fin b` and take `Finset.max'`.  ② Then assemble
+`FaithfulArchLower b C(b)` from `narrowTwistSmallTriv_of_uniformResonantMass` +
+`narrowTwistSmall_of_triv_of_nonPrincipal` + `WideTwistSmall`. ③ Debts left after that:
+`NonPrincipalTwistSmall` and `WideTwistSmall` only.
+
 ## Lap 93 (2026-09-25) — the open input is RESTRICTED to the family the chain actually uses
 
 **New file `src/NormalNumbers/C3MrtRootsInput.lean` (12 declarations, all trust-triple clean).**

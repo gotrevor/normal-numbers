@@ -523,12 +523,155 @@ theorem narrowTwistSmall_of_triv_of_nonPrincipal {z : ℂ} {κ C : ℝ} (hz : �
     have h1 := hznorm (twistedPrimeSum X χ t)
     nlinarith
 
+
+/-! ### Uniformity in the twist `h'`
+
+`ArchSupply (TTNonPretentiousAt A) b` fixes ONE constant `A` across every primitive twist `h'`,
+so the saving `κ` and the constant must be uniform in `h'`.  They are: `depthRoot b h' 0 =
+ee(h'/b)` and `b ∤ h'`, so the angle is `2π k/b` with `1 ≤ k ≤ b−1` and
+`|arg| ≥ 2π/b` — a bound depending on `b` alone.  (This obligation was invisible while the
+hypothesis was vacuous.) -/
+
+/-- `cos(2πk/b) ≤ cos(2π/b)` for `1 ≤ k ≤ b−1`: on the circle the angle sits at distance at
+least `2π/b` from `0`. -/
+theorem cos_two_pi_mul_div_le {b k : ℕ} (hb : 2 ≤ b) (hk1 : 1 ≤ k) (hkb : k ≤ b - 1) :
+    Real.cos (2 * Real.pi * (k : ℝ) / (b : ℝ)) ≤ Real.cos (2 * Real.pi / (b : ℝ)) := by
+  have hpi : 0 < Real.pi := Real.pi_pos
+  have hb0 : (0 : ℝ) < (b : ℝ) := by exact_mod_cast (by omega : 0 < b)
+  have hb2 : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hk1' : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk1
+  have hkb' : (k : ℝ) ≤ (b : ℝ) - 1 := by
+    have h1 : (1 : ℕ) ≤ b := by omega
+    have : (k : ℝ) ≤ ((b - 1 : ℕ) : ℝ) := by exact_mod_cast hkb
+    rwa [Nat.cast_sub h1, Nat.cast_one] at this
+  have hlow : 2 * Real.pi / (b : ℝ) ≤ 2 * Real.pi * (k : ℝ) / (b : ℝ) := by
+    rw [div_le_div_iff_of_pos_right hb0]
+    nlinarith
+  have hhigh : 2 * Real.pi * (k : ℝ) / (b : ℝ) ≤ 2 * Real.pi - 2 * Real.pi / (b : ℝ) := by
+    rw [div_le_iff₀ hb0]
+    have hdiv : 2 * Real.pi / (b : ℝ) * (b : ℝ) = 2 * Real.pi := by field_simp
+    nlinarith [hkb', hpi, hb0]
+  have hbpi : 2 * Real.pi / (b : ℝ) ≤ Real.pi := by
+    rw [div_le_iff₀ hb0]; nlinarith
+  have h0 : (0 : ℝ) ≤ 2 * Real.pi / (b : ℝ) := by positivity
+  rcases le_or_gt (2 * Real.pi * (k : ℝ) / (b : ℝ)) Real.pi with hle | hgt
+  · exact Real.cos_le_cos_of_nonneg_of_le_pi h0 hle hlow
+  · rw [← Real.cos_two_pi_sub (2 * Real.pi * (k : ℝ) / (b : ℝ))]
+    exact Real.cos_le_cos_of_nonneg_of_le_pi h0 (by linarith) (by linarith)
+
+/-- `Re (ee r) = cos (2π r)` for real `r`. -/
+theorem ee_re_real (r : ℝ) : (ee ((r : ℝ) : ℂ)).re = Real.cos (2 * Real.pi * r) := by
+  rw [ee, show (2 : ℂ) * (Real.pi : ℂ) * Complex.I * ((r : ℝ) : ℂ)
+      = ((2 * Real.pi * r : ℝ) : ℂ) * Complex.I by push_cast; ring,
+    Complex.exp_ofReal_mul_I_re]
+
+/-- **The angle of a primitive depth root is at least `2π/b`** — uniformly in the twist `h'`,
+which is exactly the uniformity `ArchSupply (TTNonPretentiousAt A) b` needs. -/
+theorem resEps_depthRoot_ge {b : ℕ} (hb : 2 ≤ b) {h' : ℤ} (hnd : ¬ ((b : ℤ) ∣ h')) :
+    Real.pi / (b : ℝ) ≤ resEps (depthRoot b h' 0) := by
+  have hpi : 0 < Real.pi := Real.pi_pos
+  have hb0 : (0 : ℝ) < (b : ℝ) := by exact_mod_cast (by omega : 0 < b)
+  have hb2 : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hbz : (0 : ℤ) < (b : ℤ) := by exact_mod_cast (by omega : 0 < b)
+  set k : ℕ := (h' % (b : ℤ)).toNat with hk
+  have hmod0 : 0 ≤ h' % (b : ℤ) := Int.emod_nonneg _ hbz.ne'
+  have hmodlt : h' % (b : ℤ) < (b : ℤ) := Int.emod_lt_of_pos _ hbz
+  have hmodne : h' % (b : ℤ) ≠ 0 := fun hcon => hnd (Int.dvd_of_emod_eq_zero hcon)
+  have hkz : (k : ℤ) = h' % (b : ℤ) := Int.toNat_of_nonneg hmod0
+  have hk1 : 1 ≤ k := by omega
+  have hkb : k ≤ b - 1 := by omega
+  have hsplit : (h' : ℝ) / (b : ℝ) = (k : ℝ) / (b : ℝ) + ((h' / (b : ℤ) : ℤ) : ℝ) := by
+    have hid : (b : ℤ) * (h' / (b : ℤ)) + h' % (b : ℤ) = h' := Int.mul_ediv_add_emod h' (b : ℤ)
+    have hidk : (b : ℤ) * (h' / (b : ℤ)) + (k : ℤ) = h' := by rw [hkz]; exact hid
+    have hR : (b : ℝ) * ((h' / (b : ℤ) : ℤ) : ℝ) + (k : ℝ) = (h' : ℝ) := by
+      exact_mod_cast congrArg (fun z : ℤ => (z : ℝ)) hidk
+    field_simp
+    linarith
+  have hre : (depthRoot b h' 0).re = Real.cos (2 * Real.pi * (k : ℝ) / (b : ℝ)) := by
+    rw [depthRoot, show ((h' : ℝ) / (b : ℝ) ^ (0 + 1)) = (h' : ℝ) / (b : ℝ) by norm_num,
+      ee_re_real, hsplit,
+      show 2 * Real.pi * ((k : ℝ) / (b : ℝ) + ((h' / (b : ℤ) : ℤ) : ℝ))
+        = 2 * Real.pi * (k : ℝ) / (b : ℝ) + ((h' / (b : ℤ) : ℤ) : ℝ) * (2 * Real.pi) by ring]
+    exact Real.cos_add_int_mul_two_pi _ _
+  have hznorm : ‖depthRoot b h' 0‖ = 1 := norm_ee_real _
+  have hz0 : depthRoot b h' 0 ≠ 0 := by
+    intro hcon; rw [hcon] at hznorm; simp at hznorm
+  have hcosarg : Real.cos (depthRoot b h' 0).arg = (depthRoot b h' 0).re := by
+    rw [Complex.cos_arg hz0, hznorm, div_one]
+  by_contra hcon
+  push_neg at hcon
+  rw [resEps] at hcon
+  have hring : 2 * (Real.pi / (b : ℝ)) = 2 * Real.pi / (b : ℝ) := by ring
+  have habs : |(depthRoot b h' 0).arg| < 2 * Real.pi / (b : ℝ) := by linarith [hring]
+  have hbpi : 2 * Real.pi / (b : ℝ) ≤ Real.pi := by
+    rw [div_le_iff₀ hb0]; nlinarith
+  have hstrict : Real.cos (2 * Real.pi / (b : ℝ)) < Real.cos |(depthRoot b h' 0).arg| :=
+    Real.cos_lt_cos_of_nonneg_of_le_pi (abs_nonneg _) hbpi habs
+  rw [Real.cos_abs, hcosarg, hre] at hstrict
+  exact absurd (cos_two_pi_mul_div_le hb hk1 hkb) (not_le.mpr hstrict)
+
+
+/-- **The uniform saving.**  `κ(b) := (1/10)·min(π/b, 1/256)²` is a positive lower bound for
+`ttExponent (depthRoot b h' 0)` valid for EVERY primitive twist `h'` — the uniformity
+`FaithfulArchLower b C` needs on the exponent side. -/
+noncomputable def kappaDepth (b : ℕ) : ℝ := (1 / 10) * (min (Real.pi / (b : ℝ)) (1 / 256)) ^ 2
+
+theorem kappaDepth_pos {b : ℕ} (hb : 2 ≤ b) : 0 < kappaDepth b := by
+  have hb0 : (0 : ℝ) < (b : ℝ) := by exact_mod_cast (by omega : 0 < b)
+  have h : 0 < min (Real.pi / (b : ℝ)) (1 / 256 : ℝ) :=
+    lt_min (by positivity) (by norm_num)
+  rw [kappaDepth]; positivity
+
+theorem ttExponent_depthRoot_ge {b : ℕ} (hb : 2 ≤ b) {h' : ℤ} (hnd : ¬ ((b : ℤ) ∣ h')) :
+    kappaDepth b ≤ ttExponent (depthRoot b h' 0) := by
+  have hpi : 0 < Real.pi := Real.pi_pos
+  have hpi2 : Real.pi ^ 2 ≤ 12 := by nlinarith [Real.pi_lt_d2, Real.pi_gt_three]
+  have hb0 : (0 : ℝ) < (b : ℝ) := by exact_mod_cast (by omega : 0 < b)
+  set z : ℂ := depthRoot b h' 0 with hzdef
+  set ε : ℝ := ttEps z with hε
+  set e : ℝ := min (Real.pi / (b : ℝ)) (1 / 256 : ℝ) with he
+  have he0 : 0 < e := lt_min (by positivity) (by norm_num)
+  have hres : Real.pi / (b : ℝ) ≤ resEps z := resEps_depthRoot_ge hb hnd
+  have hεe : e ≤ ε := by
+    rw [hε, ttEps, he]
+    exact min_le_min hres le_rfl
+  have hε0 : 0 < ε := lt_of_lt_of_le he0 hεe
+  have hεq : ε ≤ 1 / 256 := ttEps_le_quarter
+  have hcos : (2 / Real.pi ^ 2) * ε ^ 2 ≤ 1 - Real.cos ε := by
+    have hle : |ε| ≤ Real.pi := by
+      rw [abs_of_pos hε0]
+      nlinarith [Real.pi_gt_three]
+    have h := Real.cos_le_one_sub_mul_cos_sq (x := ε) hle
+    linarith
+  have hfac : (3 : ℝ) / 5 ≤ 1 - (126 / 125 : ℝ) * (100 * ε) := by nlinarith
+  have hsq : e ^ 2 ≤ ε ^ 2 := by nlinarith
+  have hc0 : (0 : ℝ) ≤ 1 - Real.cos ε := by nlinarith [Real.cos_le_one ε]
+  have hkey : (2 / Real.pi ^ 2) * e ^ 2 * (3 / 5) ≤ (1 - Real.cos ε) * (1 - (126 / 125) * (100 * ε)) := by
+    have h1 : (2 / Real.pi ^ 2) * e ^ 2 ≤ 1 - Real.cos ε := by
+      have : (2 / Real.pi ^ 2) * e ^ 2 ≤ (2 / Real.pi ^ 2) * ε ^ 2 := by
+        have : (0 : ℝ) < 2 / Real.pi ^ 2 := by positivity
+        nlinarith
+      linarith
+    nlinarith [hc0, he0]
+  have hnum : kappaDepth b ≤ (2 / Real.pi ^ 2) * e ^ 2 * (3 / 5) := by
+    have h1 : (1 / 10 : ℝ) ≤ 6 / (5 * Real.pi ^ 2) := by
+      rw [le_div_iff₀ (by positivity)]; nlinarith
+    have h2 : (2 / Real.pi ^ 2) * e ^ 2 * (3 / 5) = (6 / (5 * Real.pi ^ 2)) * e ^ 2 := by
+      field_simp; ring
+    rw [kappaDepth, ← he, h2]
+    nlinarith [sq_nonneg e, h1]
+  rw [ttExponent, ← hε]
+  linarith
+
+
 #print axioms ttPretentiousSumChar_eq
 #print axioms ttPretentiousSumChar_ge
 #print axioms archSupply_of_faithfulArchLower
 #print axioms conjC3_of_geom_input_lower
 #print axioms faithfulArchLower_of_twist_small
 #print axioms narrowTwistSmallTriv_of_uniformResonantMass
+#print axioms resEps_depthRoot_ge
+#print axioms ttExponent_depthRoot_ge
 
 end CastingOut
 
