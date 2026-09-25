@@ -11400,10 +11400,20 @@ and 3a are now **DONE** (sorry-free, axiom-clean):
    majorant because `γ_m − δ ≥ δ` always (from `two_resEps_le_abs_shift`).  `64/π < 21 < 50`, so
    with step 3a's constant-`0` `log K` bound the main terms sit well inside the high range's
    `50δ(log log Y + log(2+|t|))` allotment.
-4. error terms: `window_err_le` + `sum_exp_neg_le` at `c = 2π/|t|` in the height variable, with
-   the `exp(−lowHeight t/8) ≤ (2+|t|)⁻¹` factor pulled out first — this is the step the old plan
-   got wrong, and pulling that factor out *before* summing is what fixes it.
-5. `2δ ≤ |t|` (the hypothesis of `resonant_window_mass_le`) needs the complementary case: when
+4. **DONE** — `err_sum_le`: the whole Brun–Titchmarsh error tail is `≤ 2200000`, an **absolute**
+   constant, uniform in `t`, `K` and `z`.  This is the step the old plan got wrong (`O(|t|)`
+   there).  `err_term_le` is the repair in one line: because the effective start is a `max`, it
+   dominates the *average* of its two lower bounds (`aWin_ge_avg`), so
+   `exp(−aWin/8) ≤ exp(−lowHeight t/16)·exp(−(γ_m−δ)/(16|t|)) = (2+|t|)⁻¹·exp(−(γ_m−δ)/(16|t|))`
+   — first factor free of `m`, second summable to `O(1+|t|)` by `exp_neg_gWin_le` (gap grows
+   linearly in `|m|`) plus `sum_Icc_symm_le` and `sum_exp_neg_le` at `c = π/(32|t|)`.  Product
+   `O(1)`.
+   **The split height had to be raised from `8 log(2+|t|)` to `16 log(2+|t|)` for this**: `max ≥
+   average` costs a factor `2`, and at `8` the surviving factor is only `(2+|t|)^{-1/2}`, which
+   does NOT beat the `O(|t|)` window count — the repair would have failed for exactly the reason
+   the original plan did.  `lowHeight` is now `16 · log(2+|t|)`.
+5. **The one step left.**  `2δ ≤ |t|` (the hypothesis of `resonant_window_mass_le`) needs the
+   complementary case: when
    `|t| < 2δ` the windows are long, and the two-sided Mertens
    `Erdos67b.PrimeEstimates.reciprocalPrimeInterval_le_log_log_sub_add` replaces
    Brun–Titchmarsh, giving `log((γ_m+δ)/(γ_m−δ)) ≤ 2δ/(γ_m−δ)` per window with the SAME harmonic

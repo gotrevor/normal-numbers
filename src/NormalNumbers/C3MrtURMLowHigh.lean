@@ -22,7 +22,7 @@ budget by an exponential, and the sketched route fails on its own error term.
 
 **The repair (this file).**  Split the resonant primes at the height
 
-    lowHeight t = 8 · log(2 + |t|)                  (in the variable `log p`)
+    lowHeight t = 16 · log(2 + |t|)                 (in the variable `log p`)
 
 instead of at an absolute constant.
 
@@ -31,8 +31,13 @@ instead of at an absolute constant.
   `O(log log(2+|t|))`.  That is a whole exponential *below* the `100δ·log(2+|t|)` the budget
   allows, and `log_log_absorb` below discharges the comparison for every fixed `δ > 0` (the
   constant absorbing it may depend on `δ`, which `UniformResonantMass` permits).
-* **High range** `log p > lowHeight t`: every window now sits at height `a ≥ 8 log(2+|t|)`, so its
-  Brun–Titchmarsh error carries the factor `exp(−a/8) ≤ (2+|t|)⁻¹`.  Summing over the windows,
+* **High range** `log p > lowHeight t`: the effective start of window `m` is
+  `aWin = max((γ_m − δ)/|t|, lowHeight t) ≥ (lowHeight t + (γ_m − δ)/|t|)/2`, so its
+  Brun–Titchmarsh error carries `exp(−aWin/8) ≤ exp(−lowHeight t/16)·exp(−(γ_m−δ)/(16|t|))`
+  `= (2+|t|)⁻¹ · exp(−(γ_m−δ)/(16|t|))`.  **The `16` in `lowHeight` is exactly the factor `2`
+  that `max ≥ average` costs**: at `8` the surviving factor would be only `(2+|t|)^{-1/2}`, which
+  does not beat the `O(|t|)` window count, and the repair would fail for the same reason the
+  original plan did.  Summing over the windows,
   whose spacing in the height variable is `2π/|t|`, costs `≈ (|t|/2π)·8·(2+|t|)⁻¹ ≤ 4/π`:
   **the error tail is `O(1)`, not `O(|t|)`.**  The `|t|` from the window count is cancelled by the
   `(2+|t|)⁻¹` that the raised starting height supplies — which is exactly what the absolute
@@ -51,7 +56,7 @@ namespace CastingOut
 /-- The height (in `log p`) at which the resonance analysis switches from Mertens to
 Brun–Titchmarsh.  Growing like `log(2+|t|)` is the whole point: it is what makes the
 Brun–Titchmarsh error tail summable to `O(1)` rather than `O(|t|)`. -/
-noncomputable def lowHeight (t : ℝ) : ℝ := 8 * Real.log (2 + |t|)
+noncomputable def lowHeight (t : ℝ) : ℝ := 16 * Real.log (2 + |t|)
 
 theorem lowHeight_pos (t : ℝ) : 0 < lowHeight t := by
   have h : (1:ℝ) < 2 + |t| := by have := abs_nonneg t; linarith
@@ -60,8 +65,16 @@ theorem lowHeight_pos (t : ℝ) : 0 < lowHeight t := by
 
 theorem lowHeight_ge (t : ℝ) : 8 * Real.log 2 ≤ lowHeight t := by
   have h : (2:ℝ) ≤ 2 + |t| := by have := abs_nonneg t; linarith
-  have := Real.log_le_log (by norm_num) h
+  have h2 := Real.log_le_log (by norm_num) h
+  have h3 : (0:ℝ) ≤ Real.log 2 := Real.log_nonneg (by norm_num)
   rw [lowHeight]; linarith
+
+/-- `exp(−lowHeight t / 16) = (2 + |t|)⁻¹` — the factor that cancels the window count. -/
+theorem exp_neg_lowHeight (t : ℝ) :
+    Real.exp (-(lowHeight t / 16)) = (2 + |t|)⁻¹ := by
+  have hpos : (0:ℝ) < 2 + |t| := by have := abs_nonneg t; linarith
+  have h : lowHeight t / 16 = Real.log (2 + |t|) := by rw [lowHeight]; ring
+  rw [h, Real.exp_neg, Real.exp_log hpos]
 
 /-! ### The split -/
 
@@ -180,11 +193,11 @@ theorem log_le_eps_mul {ε : ℝ} (hε : 0 < ε) {w : ℝ} (hw : 0 < w) :
 exceeds the budget, no matter how large `|t|` is. -/
 theorem log_lowHeight_le {ε : ℝ} (hε : 0 < ε) (t : ℝ) :
     Real.log (lowHeight t)
-      ≤ ε * Real.log (2 + |t|) + (Real.log 8 + Real.log (1/ε) - 1) := by
+      ≤ ε * Real.log (2 + |t|) + (Real.log 16 + Real.log (1/ε) - 1) := by
   have hlog2 : (0:ℝ) < Real.log (2 + |t|) := by
     have := abs_nonneg t
     exact Real.log_pos (by linarith)
-  have hsplit : Real.log (lowHeight t) = Real.log 8 + Real.log (Real.log (2 + |t|)) := by
+  have hsplit : Real.log (lowHeight t) = Real.log 16 + Real.log (Real.log (2 + |t|)) := by
     rw [lowHeight, Real.log_mul (by norm_num) (ne_of_gt hlog2)]
   rw [hsplit]
   have := log_le_eps_mul hε hlog2
@@ -194,7 +207,7 @@ theorem log_lowHeight_le {ε : ℝ} (hε : 0 < ε) (t : ℝ) :
 
 /-- **The high range — the remaining obligation of `UniformResonantMass`.**
 
-Above height `lowHeight t = 8 log(2+|t|)` the resonant primes are covered by the windows
+Above height `lowHeight t = 16 log(2+|t|)` the resonant primes are covered by the windows
 `|t| log p ∈ (γ_m − δ, γ_m + δ)`, `γ_m = |arg z − 2πm| ≥ 2δ`, and `resonant_window_mass_le`
 bounds window `m` by `16δ/(|t| a_m) + 6(1+a_m)³ exp(−a_m/2)` with `a_m = (γ_m − δ)/|t|`.
 
@@ -212,7 +225,7 @@ every ingredient it needs is already proved in `C3MrtWindowMass`. -/
 theorem highResonantMass_le {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z)
     (t : ℝ) {Y : ℕ} (hY : 2 ≤ Y) :
     highResonantMass z t Y δ
-      ≤ 50 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|)) + (4 / Real.pi + 40 * δ) := by
+      ≤ 50 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|)) + (2200000 + 40 * δ) := by
   sorry
 
 /-- **`UniformResonantMass`, modulo the high range.**  With `highResonantMass_le` in hand the
@@ -223,8 +236,8 @@ theorem uniformResonantMass_of_high {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ
     (hδ : δ ≤ resEps z) (t : ℝ) {Y : ℕ} (hY : 2 ≤ Y) :
     resonantMass z t Y δ
       ≤ 100 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|))
-        + (Real.log 8 + Real.log (1/(50*δ)) - 1 + Erdos67b.PrimeEstimates.mertensBound
-            + (4 / Real.pi + 40 * δ) + 25 * δ + 1) := by
+        + (Real.log 16 + Real.log (1/(50*δ)) - 1 + Erdos67b.PrimeEstimates.mertensBound
+            + (2200000 + 40 * δ) + 25 * δ + 1) := by
   have hlow := lowResonantMass_le z t Y δ
   have habs := log_lowHeight_le (show (0:ℝ) < 50 * δ by linarith) t
   have hhigh := highResonantMass_le hz hδ0 hδ t hY
@@ -550,9 +563,149 @@ theorem main_sum_le {z : ℂ} {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z)
     nlinarith [htailsum, heq]
   linarith [hstep1, hstep2, hfin]
 
+/-! ### Step 4: the error tail sums to an ABSOLUTE constant
+
+This is the step the plan sketched in `C3MrtWindowMass` got wrong (it costs `O(|t|)` there).  The
+whole repair is visible in `err_term_le`: because the effective start is a `max`, it dominates the
+*average* of the two lower bounds, so the Brun–Titchmarsh factor `exp(−aWin/8)` splits as
+
+    exp(−lowHeight t/16) · exp(−(γ_m − δ)/(16|t|))  =  (2+|t|)⁻¹ · exp(−(γ_m − δ)/(16|t|)),
+
+the first factor independent of `m` and the second summable to `O(1+|t|)`.  The product is `O(1)`.
+Note the `16` in `lowHeight` is not cosmetic: `max ≥ average` costs a factor `2`, and at a split
+height of `8 log(2+|t|)` the surviving factor would be `(2+|t|)^{-1/2}`, too weak to beat the
+`O(|t|)` window count. -/
+
+/-- The window gap in the height variable. -/
+noncomputable def gWin (z : ℂ) (t δ : ℝ) (m : ℤ) : ℝ := (|z.arg - 2 * Real.pi * m| - δ) / |t|
+
+/-- `max` dominates the average — the inequality the whole error-tail repair rests on. -/
+theorem aWin_ge_avg (z : ℂ) (t δ : ℝ) (m : ℤ) :
+    (lowHeight t + gWin z t δ m) / 2 ≤ aWin z t δ m := by
+  rw [aWin, gWin]
+  rcases le_total ((|z.arg - 2 * Real.pi * m| - δ) / |t|) (lowHeight t) with h | h
+  · rw [max_eq_right h]; linarith
+  · rw [max_eq_left h]; linarith
+
+/-- **The split of the Brun–Titchmarsh error factor.** -/
+theorem err_term_le (z : ℂ) (t δ : ℝ) (m : ℤ) :
+    6 * (1 + aWin z t δ m) ^ 3 / Real.sqrt (Real.exp (aWin z t δ m))
+      ≤ 100000 * ((2 + |t|)⁻¹ * Real.exp (-(gWin z t δ m / 16))) := by
+  have hlog2 : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have ha0 : (0:ℝ) ≤ aWin z t δ m := le_trans hlog2.le (aWin_ge_log_two z t δ m)
+  refine le_trans (window_err_le ha0) ?_
+  have havg := aWin_ge_avg z t δ m
+  have hexp : -(aWin z t δ m / 8) ≤ -(lowHeight t / 16) + -(gWin z t δ m / 16) := by linarith
+  have hmono : Real.exp (-(aWin z t δ m / 8))
+      ≤ Real.exp (-(lowHeight t / 16)) * Real.exp (-(gWin z t δ m / 16)) := by
+    rw [← Real.exp_add]
+    exact Real.exp_le_exp.2 hexp
+  rw [exp_neg_lowHeight] at hmono
+  have : (0:ℝ) ≤ (100000 : ℝ) := by norm_num
+  nlinarith [hmono, Real.exp_pos (-(gWin z t δ m / 16))]
+
+/-- The gap grows linearly in `|m|`, so the second factor decays geometrically. -/
+theorem exp_neg_gWin_le {z : ℂ} {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z) {t : ℝ}
+    (ht : 2 * δ ≤ |t|) (m : ℤ) :
+    Real.exp (-(gWin z t δ m / 16))
+      ≤ Real.exp (-(Real.pi / (32 * |t|) * |(m : ℝ)|)) := by
+  have hpi : (0:ℝ) < Real.pi := Real.pi_pos
+  have htpos : (0:ℝ) < |t| := by linarith
+  have hδπ : δ ≤ Real.pi / 2 := le_trans hδ (resEps_le_pi_div_two z)
+  have hgap2 : 2 * resEps z ≤ |z.arg - 2 * Real.pi * m| := two_resEps_le_abs_shift z m
+  have hγ : 2 * δ ≤ |z.arg - 2 * Real.pi * m| := by linarith
+  -- `2(γ_m − δ) ≥ π|m|`
+  have hkey : Real.pi * |(m : ℝ)| ≤ 2 * (|z.arg - 2 * Real.pi * m| - δ) := by
+    rcases eq_or_ne m 0 with rfl | hm
+    · have hz0 : ((0:ℤ) : ℝ) = 0 := by norm_num
+      rw [hz0, mul_zero, abs_zero, mul_zero, sub_zero]
+      rw [hz0, mul_zero, sub_zero] at hγ
+      linarith
+    · have hm1 : (1:ℝ) ≤ |(m : ℝ)| := by
+        have h1 : (1:ℤ) ≤ |m| := Int.one_le_abs (by omega)
+        rw [← Int.cast_abs]
+        exact_mod_cast h1
+      have hlow : 2 * Real.pi * |(m:ℝ)| - Real.pi ≤ |z.arg - 2 * Real.pi * m| := by
+        have h2 : |z.arg| ≤ Real.pi := Complex.abs_arg_le_pi z
+        have h3 := abs_sub_abs_le_abs_sub (2 * Real.pi * (m : ℝ)) z.arg
+        rw [abs_sub_comm] at h3
+        have h4 : |2 * Real.pi * (m : ℝ)| = 2 * Real.pi * |(m : ℝ)| := by
+          rw [abs_mul, abs_of_pos (by positivity : (0:ℝ) < 2 * Real.pi)]
+        linarith [h4 ▸ h3]
+      nlinarith
+  refine Real.exp_le_exp.2 ?_
+  rw [neg_le_neg_iff]
+  have hL : Real.pi / (32 * |t|) * |(m:ℝ)| = (Real.pi * |(m:ℝ)|) / (32 * |t|) := by ring
+  have hR : gWin z t δ m / 16 = (|z.arg - 2 * Real.pi * m| - δ) / (16 * |t|) := by
+    rw [gWin]; field_simp
+  rw [hL, hR, div_le_div_iff₀ (by positivity) (by positivity)]
+  nlinarith [hkey, htpos, abs_nonneg ((m:ℝ))]
+
+/-- **Step 4 — the error tail is an ABSOLUTE constant.**  `∑_{|m| ≤ K}` of the Brun–Titchmarsh
+errors is at most `2200000`, uniformly in `t`, `K` and `z`.  This is where the old plan's
+`O(|t|)` becomes `O(1)`. -/
+theorem err_sum_le {z : ℂ} {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z) {t : ℝ}
+    (ht : 2 * δ ≤ |t|) (K : ℕ) :
+    ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ),
+        6 * (1 + aWin z t δ m) ^ 3 / Real.sqrt (Real.exp (aWin z t δ m))
+      ≤ 2200000 := by
+  have hpi : (0:ℝ) < Real.pi := Real.pi_pos
+  have htpos : (0:ℝ) < |t| := by linarith
+  set c : ℝ := Real.pi / (32 * |t|) with hc
+  have hc0 : 0 < c := by rw [hc]; positivity
+  have hinvpos : (0:ℝ) < (2 + |t|)⁻¹ := by positivity
+  -- termwise: `≤ 100000 · (2+|t|)⁻¹ · exp(−c|m|)`
+  have hstep1 : ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ),
+      6 * (1 + aWin z t δ m) ^ 3 / Real.sqrt (Real.exp (aWin z t δ m))
+      ≤ ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ),
+          (100000 * (2 + |t|)⁻¹) * Real.exp (-(c * |(m : ℝ)|)) := by
+    refine Finset.sum_le_sum fun m _ => ?_
+    have h1 := err_term_le z t δ m
+    have h2 := exp_neg_gWin_le hδ0 hδ ht m
+    have h3 : (100000:ℝ) * ((2 + |t|)⁻¹ * Real.exp (-(gWin z t δ m / 16)))
+        ≤ (100000 * (2 + |t|)⁻¹) * Real.exp (-(c * |(m : ℝ)|)) := by
+      have hmul : Real.exp (-(gWin z t δ m / 16)) ≤ Real.exp (-(c * |(m : ℝ)|)) := by
+        rw [hc]; exact h2
+      nlinarith [hmul, hinvpos]
+    linarith
+  -- the symmetric geometric sum
+  have hsym : ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ), Real.exp (-(c * |(m : ℝ)|))
+      ≤ 2 * ∑ j ∈ Finset.range (K + 1), Real.exp (-(c * (j : ℝ))) :=
+    sum_Icc_symm_le (fun x => Real.exp (-(c * x))) (fun x => (Real.exp_pos _).le)
+  have hgeo := sum_exp_neg_le hc0 (K + 1)
+  have hrw : ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ),
+      (100000 * (2 + |t|)⁻¹) * Real.exp (-(c * |(m : ℝ)|))
+      = (100000 * (2 + |t|)⁻¹)
+          * ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ), Real.exp (-(c * |(m : ℝ)|)) :=
+    (Finset.mul_sum _ _ _).symm
+  have hcoef : (0:ℝ) ≤ 100000 * (2 + |t|)⁻¹ := by positivity
+  have hbound : ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ), Real.exp (-(c * |(m : ℝ)|))
+      ≤ 2 * (1 + 1 / c) := by linarith [hsym, hgeo]
+  -- `(2+|t|)⁻¹ · 2(1 + 32|t|/π) ≤ 22`
+  have hcinv : 1 / c = 32 * |t| / Real.pi := by
+    rw [hc, one_div_div]
+  have hfin : (100000 * (2 + |t|)⁻¹) * (2 * (1 + 1 / c)) ≤ 2200000 := by
+    rw [hcinv]
+    have h32 : 32 * |t| / Real.pi ≤ 11 * |t| := by
+      rw [div_le_iff₀ hpi]
+      nlinarith [Real.pi_gt_three, htpos]
+    have hpos2 : (0:ℝ) < 2 + |t| := by linarith
+    rw [mul_comm (100000:ℝ) ((2 + |t|)⁻¹), mul_assoc, inv_mul_eq_div, div_le_iff₀ hpos2]
+    linarith [h32, htpos]
+  calc ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ),
+      6 * (1 + aWin z t δ m) ^ 3 / Real.sqrt (Real.exp (aWin z t δ m))
+      ≤ ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ),
+          (100000 * (2 + |t|)⁻¹) * Real.exp (-(c * |(m : ℝ)|)) := hstep1
+    _ = (100000 * (2 + |t|)⁻¹)
+          * ∑ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ), Real.exp (-(c * |(m : ℝ)|)) := hrw
+    _ ≤ (100000 * (2 + |t|)⁻¹) * (2 * (1 + 1 / c)) :=
+        mul_le_mul_of_nonneg_left hbound hcoef
+    _ ≤ 2200000 := hfin
+
 end CastingOut
 
 end NormalNumbers
+
 
 
 
