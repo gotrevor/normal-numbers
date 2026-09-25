@@ -187,3 +187,5 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottArchBands.shortWindow_bounds
 #print axioms NormalNumbers.ElliottArchBands.archimedeanCorrelationBoundAbove_of_bands
 #print axioms NormalNumbers.ElliottArchBands.twoPointElliottLog_of_bands
+#print axioms NormalNumbers.ElliottArchBands.archCorrLargeShift_of_moderate_and_nearMax
+#print axioms NormalNumbers.ElliottArchBands.twoPointElliottLog_of_three_bands

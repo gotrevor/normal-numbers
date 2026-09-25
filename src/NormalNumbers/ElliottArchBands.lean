@@ -69,20 +69,105 @@ noncomputable section
 
 /-! ### The two bands -/
 
-/-- **Input (c′-I), the soft band.**  Mertens' theorem with a small Archimedean shift: for
-`0 < |v| ≤ 1` the correlation is at most `log(1/|v|)` up to an absolute constant.  Classical, and
-**free of any zero-free region** — it only reflects the pole of `ζ` at distance `|v|`. -/
+/-- **Input (c′-I), the sub-unit band.**  Mertens' theorem with a small Archimedean shift: for
+`0 < |v| ≤ 1` the correlation is at most `log(1/|v|)` up to an absolute constant — it reflects the
+pole of `ζ` at distance `max(|v|, 1/log X)`.
+
+⚠ **Fidelity correction (lap 96).**  Lap 95 called this input "free of any zero-free region".
+That is WRONG for `|v|` bounded away from `0`, and the correction is recorded here so it is not
+re-asserted.  Splitting at `log Y = 1/|v|` handles `[2,Y]` by two-sided Mertens alone, but the
+range `[Y,X]` needs genuine cancellation of `p^{-iv}`, and Mertens-level input cannot supply it:
+Abel summation against `∑_{p≤u}1/p = log log u + B + E(u)` costs `|v|·∫|E|` over `log u ∈ [1/|v|,
+log X]`, which is `O(1)` only if `E(u) = O(1/log²u)` — already PNT strength — and is
+`≍ |v|·log(|v| log X)`, i.e. unbounded, for the absolute-constant `E` the repo has.  The interval
+version of the same obstruction: chopping `[Y,X]` into the `≍ |v| log X` intervals where
+`cos(v log p) ≤ 0` incurs one absolute Mertens error per interval.  So (c′-I) is de la Vallée
+Poussin strength (classical zero-free region / PNT with error) — *strictly weaker than (c′-III)
+below, but not elementary*.  `PrimeNumberTheoremAnd.{ZetaBounds, StrongPNT}` is where to source it. -/
 def ShiftedMertensSmall (K : ℝ) : Prop :=
   ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ X : ℕ, X₀ ≤ X → ∀ v : ℝ, 0 < |v| → |v| ≤ 1 →
     ‖archCorr v X‖ ≤ Real.log (1 / |v|) + K
 
-/-- **Input (c′-II), the wall.**  A *proportional* saving on the Archimedean correlation at unit
-or larger frequency, over the polynomial-height range.  Equivalent to a power saving
-`|ζ(1 + 1/log X + iv)| ≪ (log X)^{1-η}`; true for every `η < 1/3` by Vinogradov–Korobov, and false
-for no `η > 0` reachable by van der Corput alone (see the module docstring). -/
+/-- **Input (c′-II), the whole super-unit band.**  A *proportional* saving on the Archimedean
+correlation at unit or larger frequency, over the polynomial-height range.  Equivalent to a power
+saving `|ζ(1 + 1/log X + iv)| ≪ (log X)^{1-η}` at `|v| ≍ X`; true for every `η < 1/3` by
+Vinogradov–Korobov, and reachable by no `η > 0` from van der Corput alone (see the module
+docstring).  Lap 96 splits it further, at `heightCut`, into a de la Vallée Poussin part and a
+genuinely narrow Vinogradov part. -/
 def ArchCorrLargeShift (A : ℕ) (η K : ℝ) : Prop :=
   ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ X : ℕ, X₀ ≤ X → ∀ v : ℝ, 1 < |v| → |v| ≤ (A : ℝ) * (A : ℝ) * X →
     ‖archCorr v X‖ ≤ (1 - η) * Real.log (Real.log (X : ℝ)) + K
+
+/-! ### Lap 96: the wall is narrower than (c′-II) — it lives only at near-maximal height -/
+
+/-- The height cut: `log log (heightCut ν X) = (1 − ν)·log log X` exactly, i.e.
+`heightCut ν X = exp((log X)^{1-ν})`. -/
+def heightCut (ν : ℝ) (X : ℕ) : ℝ :=
+  Real.exp (Real.exp ((1 - ν) * Real.log (Real.log (X : ℝ))))
+
+theorem logLog_heightCut (ν : ℝ) (X : ℕ) :
+    Real.log (Real.log (heightCut ν X)) = (1 - ν) * Real.log (Real.log (X : ℝ)) := by
+  rw [heightCut, Real.log_exp, Real.log_exp]
+
+/-- **Input (c′-II-a), moderate height.**  The *shape-true* bound `‖archCorr v X‖ ≤ log log|v| +
+O(1)` for `|v| > 1`.  This is the size of `log ζ(1 + 1/log X + iv)` under the **trivial** bound
+`|ζ(σ+it)| ≪ log t` for `σ ≥ 1`; only the truncation `∑_{p≤X}` ↦ `∑_p` costs anything, and that
+cost is de la Vallée Poussin strength, the same as (c′-I).  **No Vinogradov.**  Note it is stated
+for *all* `v` with `1 < |v|`, which is safe: for `|v|` beyond polynomial height the right side is
+larger than the trivial bound `M(X)` anyway. -/
+def ArchCorrModerate (K : ℝ) : Prop :=
+  ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ X : ℕ, X₀ ≤ X → ∀ v : ℝ, 1 < |v| →
+    ‖archCorr v X‖ ≤ Real.log (Real.log (|v| + 16)) + K
+
+/-- **Input (c′-II-b), THE WALL, and all that is left of it.**  A proportional saving, needed only
+on the near-maximal-height band `exp((log X)^{1-ν}) < |v| ≤ A²X`.  This is the sole place where
+`log log |v| ≍ log log X` and hence where the trivial bound on `ζ(1+it)` fails to save a
+proportion; it is exactly the Vinogradov–Korobov site. -/
+def ArchCorrNearMaxHeight (A : ℕ) (ν η K : ℝ) : Prop :=
+  ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ X : ℕ, X₀ ≤ X → ∀ v : ℝ,
+    heightCut ν X < |v| + 16 → |v| ≤ (A : ℝ) * (A : ℝ) * X →
+      ‖archCorr v X‖ ≤ (1 - η) * Real.log (Real.log (X : ℝ)) + K
+
+/-- **THE WALL, NARROWED.**  The super-unit band (c′-II) follows from the shape-true moderate bound
+plus a proportional saving on the near-maximal-height band alone.  Combined with
+`archimedeanCorrelationBoundAbove_of_bands`, the only Vinogradov-strength input the whole Elliott
+consumer needs is `ArchCorrNearMaxHeight`, on `|v| > exp((log X)^{1-ν})`. -/
+theorem archCorrLargeShift_of_moderate_and_nearMax {A : ℕ} {ν η₂ K₁ K₂ : ℝ}
+    (hν : 0 < ν) (hν1 : ν < 1) (hη₂ : 0 < η₂)
+    (hmod : ArchCorrModerate K₁) (hmax : ArchCorrNearMaxHeight A ν η₂ K₂) :
+    ArchCorrLargeShift A (min ν η₂) (|K₁| + |K₂|) := by
+  classical
+  obtain ⟨X₁, hX₁2, hX₁⟩ := hmod
+  obtain ⟨X₂, hX₂2, hX₂⟩ := hmax
+  obtain ⟨X₃, hX₃2, hX₃⟩ := exists_logLog_ge 0
+  refine ⟨max (max X₁ X₂) (max X₃ 2), le_trans (le_max_right _ _) (le_max_right _ _), ?_⟩
+  intro X hX v hv1 hvA
+  have hXX₁ : X₁ ≤ X := le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hX
+  have hXX₂ : X₂ ≤ X := le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) hX
+  have hXX₃ : X₃ ≤ X := le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) hX
+  set L : ℝ := Real.log (Real.log (X : ℝ)) with hL
+  have hL0 : (0 : ℝ) ≤ L := hX₃ X hXX₃
+  have hm : min ν η₂ ≤ ν := min_le_left _ _
+  have hm' : min ν η₂ ≤ η₂ := min_le_right _ _
+  have hK₁ : K₁ ≤ |K₁| := le_abs_self _
+  have hK₂ : K₂ ≤ |K₂| := le_abs_self _
+  have hK₁0 : (0 : ℝ) ≤ |K₁| := abs_nonneg _
+  have hK₂0 : (0 : ℝ) ≤ |K₂| := abs_nonneg _
+  rcases le_or_gt (|v| + 16) (heightCut ν X) with hcut | hcut
+  · -- moderate height: the shape-true bound already saves the proportion `ν`
+    have hbound := hX₁ X hXX₁ v hv1
+    have hpos : (0 : ℝ) < Real.log (|v| + 16) := Real.log_pos (by linarith [abs_nonneg v])
+    have hstep : Real.log (Real.log (|v| + 16)) ≤ (1 - ν) * L := by
+      have h1 : Real.log (|v| + 16) ≤ Real.log (heightCut ν X) :=
+        Real.log_le_log (by linarith [abs_nonneg v]) hcut
+      have := Real.log_le_log hpos h1
+      rwa [logLog_heightCut] at this
+    have hmono : (1 - ν) * L ≤ (1 - min ν η₂) * L := by nlinarith
+    linarith
+  · -- near-maximal height: the wall
+    have hbound := hX₂ X hXX₂ v hcut hvA
+    have hmono : (1 - η₂) * L ≤ (1 - min ν η₂) * L := by nlinarith
+    linarith
 
 /-! ### The short window, from above -/
 
@@ -234,6 +319,31 @@ theorem twoPointElliottLog_of_bands {b p q : ℕ} {t : ℝ} {K₀ η₁ K₁ : �
   intro A r hr hr1
   refine ⟨min r η₁ / 4, by have := lt_min hr hη₁; linarith, ?_⟩
   exact archimedeanCorrelationBoundAbove_of_bands hr hr1 hη₁ hη₁1 hsmall (hlarge A)
+
+/-- **THE CONSUMER ON THE FINAL INPUT LIST (lap 96).**  `TwoPointElliottLog` on four classical
+statements, of which exactly one is Vinogradov-strength and it is confined to frequencies of
+near-maximal height `|v| > exp((log X)^{1-ν})`:
+
+| input | depth |
+|---|---|
+| `ElliottCharRigidity.PrimeDensityAP A` | Mertens in progressions |
+| `ShiftedMertensSmall K₀` | `\|v\| ≤ 1`; de la Vallée Poussin |
+| `ArchCorrModerate K₁` | `\|v\| > 1`, shape-true `log log\|v\|`; de la Vallée Poussin |
+| `ArchCorrNearMaxHeight A ν η₂ K₂` | **Vinogradov–Korobov**, near-maximal height only | -/
+theorem twoPointElliottLog_of_three_bands {b p q : ℕ} {t : ℝ} {K₀ K₁ K₂ ν η₂ : ℝ}
+    (hp : 0 < p) (hq : 0 < q) (hpq : p ≠ q)
+    (hu : (NormalNumbers.CastingOut.phase (t / b)).re < 1)
+    (hν : 0 < ν) (hν1 : ν < 1) (hη₂ : 0 < η₂) (hη₂1 : η₂ ≤ 1)
+    (hdens : ∀ A : ℕ, ElliottCharRigidity.PrimeDensityAP A)
+    (hsmall : ShiftedMertensSmall K₀)
+    (hmod : ArchCorrModerate K₁)
+    (hmax : ∀ A : ℕ, ArchCorrNearMaxHeight A ν η₂ K₂) :
+    NormalNumbers.ElliottTwoPointLog.TwoPointElliottLog b p q t := by
+  refine twoPointElliottLog_of_bands (η₁ := min ν η₂) (K₁ := |K₁| + |K₂|)
+    hp hq hpq hu (lt_min hν hη₂) ?_ hdens hsmall ?_
+  · exact le_trans (min_le_right _ _) hη₂1
+  · intro A
+    exact archCorrLargeShift_of_moderate_and_nearMax hν hν1 hη₂ hmod (hmax A)
 
 end
 

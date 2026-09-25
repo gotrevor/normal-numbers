@@ -119,6 +119,43 @@ does — below `Y` bound trivially by `M(Y) = log(1/|v|) + O(1)`, above `Y` the 
 harvested, and the honest cost there is a Mertens error term of size `O(1/log²u)` (PNT-strength) or
 a second application of the scale trick.  **That error-term strength is the thing to settle first.**
 
+### ✅ Lap 96 — FIDELITY CORRECTION + the wall narrowed to near-maximal height
+
+**Correction to lap 95 (EA-1).**  (c′-I) `ShiftedMertensSmall` is **not** free of a zero-free
+region.  Splitting at `log Y = 1/|v|` handles `[2,Y]` by two-sided Mertens, but `[Y,X]` needs real
+cancellation and Abel summation against `∑_{p≤u}1/p = log log u + B + E(u)` costs `|v|·∫|E|`, which
+is `O(1)` only for `E = O(1/log²u)` — already PNT strength.  The interval form of the same
+obstruction: the `≍ |v| log X` sign-intervals of `cos(v log p)` each cost one absolute Mertens
+error.  So (c′-I) is **de la Vallée Poussin strength**, and no Mertens-level route exists.  This is
+recorded in the module docstring so it is not re-asserted.
+
+**The narrowing (new, proved).**  `ArchCorrLargeShift` (all `|v| > 1`) now follows from
+
+* `ArchCorrModerate K₁` — the *shape-true* `‖archCorr v X‖ ≤ log log|v| + K₁`, which is what the
+  **trivial** bound `|ζ(σ+it)| ≪ log t` gives; dVP strength, **no Vinogradov**; and
+* `ArchCorrNearMaxHeight A ν η₂ K₂` — the proportional saving on `|v| > heightCut ν X =
+  exp((log X)^{1-ν})` only.
+
+(`archCorrLargeShift_of_moderate_and_nearMax`, with `η = min ν η₂`.)  Reason: below the cut,
+`log log|v| ≤ (1−ν) log log X` already *is* a proportional saving.  So the Vinogradov–Korobov site
+is not "all `|v| > 1`" but the near-maximal-height band alone, and the final input list is
+`twoPointElliottLog_of_three_bands`: `PrimeDensityAP` + `ShiftedMertensSmall` + `ArchCorrModerate`
++ `ArchCorrNearMaxHeight` — three dVP-strength inputs and one narrow Vinogradov one.
+
+**Next attack, in order.**
+1. `ArchCorrModerate` / `ArchCorrSmall` share one engine: `∑_{p≤X} p^{-1-iv} = log ζ(1+1/log X+iv)
+   + O(1)` plus a truncation estimate.  Source the ζ side from `PrimeNumberTheoremAnd.ZetaBounds`
+   (`ZetaSum_aux*`, `ζ₀` Euler–Maclaurin: this gives the trivial `≪ log t` bound directly) and the
+   truncation from `StrongPNT`.  **Survey those two files for a usable `ψ(x) − x` error bound and
+   for a Chebyshev-weighted Abel summation before writing any analysis.**
+2. `ArchCorrNearMaxHeight` stays the wall.  Its one non-Vinogradov hope worth a probe: at
+   near-maximal height `|v| ≥ exp((log X)^{1-ν})` the frequency is *huge* relative to the window, so
+   the relevant exponential sum `∑_{p≤X} p^{-iv}` is in the range where the prime-counting side is
+   dominated by the zero-free region's shape, not by its strength — check whether the zero-free
+   region `σ > 1 − c/log|t|` alone suffices when `log|t| ≫ (log X)^{1-ν}`, since then
+   `c/log|t| ≪ (log X)^{-(1-ν)}` and the relevant contour push may already give a power saving in
+   `log X`.  **That comparison is the route-decisive question for the wall.**
+
 ### What is OFF the path now
 
 `CharacterClusterRigidity`, `PrimeDensityAP`, `exists_charDefect_le`, `NearTrivialTwist`,
