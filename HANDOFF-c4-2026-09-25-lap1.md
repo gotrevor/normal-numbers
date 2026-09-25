@@ -116,3 +116,37 @@ first nontrivial instance of the crux, `S = {1}`, proved end-to-end through
 `interleave m Q t` = a normal sequence `t` overwritten on the AP `m ∣ n` by `Q`.  The
 renormalisation `G(interleave m Q t) ∩ mℕ = m · G(Q)` is the lemma to aim at; with `m = 2` it
 already gives infinitely many new `S` by recursion, which is the infinite-`S` crux.
+
+## Lap 4 addendum
+**Infrastructure unlocked: `src/NormalNumbers/AbelianWindowBlocks.lean` (new, green).**
+`AbelianBlockDensity.tendsto_blockEvent` — the workhorse behind `AbelianBinaryExample` — was
+hard-wired to hex digits read four bits at a time.  Ported to arbitrary `(q, B)`:
+
+  `tendsto_blockEventG` : for `c` normal in base `B`, any event determined by `n % q` together
+  with the `S` base-`B` digits of `c` starting at `n / q` has density
+  `#{admissible (r, word) pairs} / (q · B ^ S)`.
+
+with `blocksG`, `lt_blocksG_iff`, `blocksG_bounds`, `tendsto_blocksG_atTop`,
+`tendsto_blocksG_div`, `card_res_eq_winCountG`, `tendsto_res_blkG`, `indicator_decompG`.
+
+**Why this is the right next step.**  Taking `B = 2^q`, the sequences `s n = f (n % q) (digits of
+c at n/q)` are exactly the BLOCK-I.I.D. processes of block length `q` with an arbitrary rational
+block law of denominator `2^{qS}`, plus the uniform random offset mod `q` that makes them
+stationary — and they are APERIODIC, so unlike the periodic witnesses of lap 2 they can be abelian
+at infinitely many `L`.  With `S ≥ 2` the class widens to block-Markov laws.  Every window
+statistic of such an `s` is now a finite sum computable by `decide`, so the design problem is
+finite arithmetic at each block length, and multi-scale means letting `q` grow.
+
+**Why the interleave route needs it.**  `interleave2 q t n = q(n/2)` on evens, `t` on odds, with
+`t` normal: the even-`L` renormalisation `IsAbelianAt (interleave2 q t) (2a) ↔ IsAbelianAt q a`
+needs the odd positions to supply an exactly-independent `Bin(k,1/2)`, which is exactly what
+`tendsto_blockEventG` delivers.  Note a periodic `q` cannot supply this: a periodic sequence
+abelian at length 1 must have EVEN period, so CRT independence against a base-`2^K` filler is
+unavailable — the filler has to be a genuinely normal (aperiodic) sequence.  Recorded so the next
+lap does not retry the coprime-period trick.
+
+Odd-`L` analysis (for the same interleave, `L = 2a+1`, with `D_j(x)` the generating-function
+defect of `q`'s length-`j` window weight law): `L ∈ G(s) ↔ D_{a+1}(x) + ((1+x)/2)·D_a(x) = 0`.
+So `a, a+1 ∈ G(q) ⇒ 2a+1 ∈ G(s)`, and generically the odd lengths fail.  Hence
+`G(interleave2 q t) = 2·G(q) ∪ {odd exceptions}`, i.e. DOUBLING — iterating from `altSeq` should
+give `S = {1,2,4,8,…}`, the first infinite witness.
