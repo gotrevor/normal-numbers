@@ -33,7 +33,12 @@ progression `r, r+a, r+2a, ...` with `r = s mod a`.  The class enters ONLY throu
 through an `a`-periodic function of the prime `q` — the same fact the alias sum Fourier-expands.
 Caveat: positions below `q*c1` are `a k + (q c1 mod a)` with a smaller quotient, so combining with
 lap 20 needs the hypothesis `floor(q c1 / a) <= n+1` (true in the application, `n >= L >> P|c1|`).
-Next: combine laps 20+21 into the dilated analogue of `pairTwistedSum_sequenceBlock` and identify the dilated edge with
+**Lap 22: `sum_dilatedPairShiftEdge_affineBlock`** — the dilated analogue of
+`pairTwistedSum_sequenceBlock` is proved.  ALL layers of the a-dilated graph argument are now proved
+statements in `src/`: edge->correlation, block edge<->observable, edge sum<->progression, Fourier
+identity, multiplier (= the proved one), large frequencies.
+Next: assemble — port `exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment` to the
+dilated mean and identify the dilated edge with
 `ElliottAffineGraph.affineTwistedObservable`.
 
 Superseded description of that lemma: the `a`-dilated bilinear pairing

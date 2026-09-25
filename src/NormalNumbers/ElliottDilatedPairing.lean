@@ -648,6 +648,78 @@ theorem sum_dilatedPairShiftEdge_eq_progression {H : ℕ} (b c : Fin H → ℂ) 
             have h2 := hkey2 i hir
             rw [h2, h1]
 
+open NormalNumbers.ElliottLadder in
+/-- **The dilated analogue of `pairTwistedSum_sequenceBlock`.**  On the block re-based at
+`a*(n+1)`, the whole `a`-dilated edge sum is a sum of affine pair observables:
+
+```
+∑_{m : Fin H} dilatedPairShiftEdge (affineBlock f₁) (affineBlock f₂) a (q c₁) (q h) m
+  = ∑_{j : a j + r + q h < H} pairObservable f₁ f₂ a (q c₁) (q c₂) (n + 1 + j − ⌊q c₁ / a⌋)
+```
+
+with `r = q c₁ mod a` and `c₂ = c₁ + h`.  The hypothesis `⌊q c₁ / a⌋ ≤ n + 1` is what makes the
+observable index a natural number; in the application the block sits at `n ≥ L` and
+`q c₁ ≤ P |c₁| ≪ L`, so it is free. -/
+theorem sum_dilatedPairShiftEdge_affineBlock {H : ℕ} (f₁ f₂ : ℕ → ℂ) {a : ℕ} (ha : 0 < a)
+    (n q c₁ h : ℕ) (hd : q * c₁ / a ≤ n + 1) :
+    (∑ m : Fin H, dilatedPairShiftEdge (affineBlock f₁ a n H) (affineBlock f₂ a n H) a
+        ((q * c₁ : ℕ) : ℤ) (q * h) m) =
+      ∑ j ∈ (Finset.range H).filter (fun j ↦ a * j + (q * c₁) % a + q * h < H),
+        pairObservable f₁ f₂ a ((q * c₁ : ℕ) : ℤ) ((q * (c₁ + h) : ℕ) : ℤ)
+          (n + 1 + j - q * c₁ / a) := by
+  classical
+  set r : ℕ := (q * c₁) % a with hrdef
+  set d : ℕ := (q * c₁) / a with hddef
+  have hrd : a * d + r = q * c₁ := Nat.div_add_mod (q * c₁) a
+  have hrcast : ((((q * c₁ : ℕ)) : ℤ) % (a : ℤ)).toNat = r := by
+    have hc : (((q * c₁ : ℕ) : ℤ) % (a : ℤ)) = (((q * c₁) % a : ℕ) : ℤ) :=
+      (Int.natCast_mod (q * c₁) a).symm
+    rw [hc, Int.toNat_natCast, hrdef]
+  rw [sum_dilatedPairShiftEdge_eq_progression _ _ ha, hrcast]
+  -- the terms overflowing the block are zero
+  have hsub : (Finset.range H).filter (fun j ↦ a * j + r + q * h < H) ⊆
+      (Finset.range H).filter (fun j ↦ a * j + r < H) := by
+    intro j hj
+    simp only [Finset.mem_filter, Finset.mem_range] at hj ⊢
+    exact ⟨hj.1, by omega⟩
+  have hzero : ∀ j ∈ (Finset.range H).filter (fun j ↦ a * j + r < H),
+      j ∉ (Finset.range H).filter (fun j ↦ a * j + r + q * h < H) →
+      blockExtend (affineBlock f₁ a n H) (a * j + r) *
+        blockExtend (affineBlock f₂ a n H) (a * j + r + q * h) = 0 := by
+    intro j hj hj'
+    simp only [Finset.mem_filter, Finset.mem_range] at hj hj'
+    have hover : ¬ (a * j + r + q * h < H) := by
+      intro hlt; exact hj' ⟨hj.1, hlt⟩
+    simp only [blockExtend]
+    rw [dif_neg hover, mul_zero]
+  rw [← Finset.sum_subset hsub hzero]
+  refine Finset.sum_congr rfl fun j hj ↦ ?_
+  simp only [Finset.mem_filter, Finset.mem_range] at hj
+  obtain ⟨hjH, hlt⟩ := hj
+  have hlt1 : a * j + r < H := by omega
+  have hdj : d ≤ n + 1 + j := le_trans hd (by omega)
+  have hidx : ((n + 1 + j - d : ℕ) : ℤ) = ((n + 1 + j : ℕ) : ℤ) - (d : ℤ) := by
+    push_cast [Nat.cast_sub hdj]
+    ring
+  simp only [blockExtend]
+  rw [dif_pos hlt1, dif_pos hlt, affineBlock, affineBlock, pairObservable]
+  congr 1
+  · congr 1
+    simp only [integerAffine]
+    rw [hidx]
+    have : ((a : ℤ)) * (d : ℤ) + (r : ℤ) = ((q * c₁ : ℕ) : ℤ) := by exact_mod_cast hrd
+    push_cast
+    push_cast at this
+    linarith [this]
+  · congr 1
+    simp only [integerAffine]
+    rw [hidx]
+    have : ((a : ℤ)) * (d : ℤ) + (r : ℤ) = ((q * c₁ : ℕ) : ℤ) := by exact_mod_cast hrd
+    push_cast
+    push_cast at this
+    linarith [this]
+
+
 end
 
 end NormalNumbers.ElliottDilatedPairing
