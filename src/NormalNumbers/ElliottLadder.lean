@@ -181,6 +181,74 @@ theorem unitCircle_of_dilatedCM (h : DilatedCMLogElliott) : UnitCircleLogElliott
   have hres := hmain A X W hA hAW hWX f (fun n ↦ conj (f n)) hmul hconjMul hunit hconjUnit hpret'
   rwa [elliottLogCorrelation_positiveIntExtension] at hres
 
+/-! ## The two-function pair observable and its dilation phase
+
+This section pins down, at the level of the compiler, *where* the two-function generality bites.
+-/
+
+/-- The two-function, common-dilation pair observable whose logarithmic average is the correlation
+bounded by `DilatedCMLogElliott`. -/
+def pairObservable (f₁ f₂ : ℕ → ℂ) (a : ℕ) (c₁ c₂ : ℤ) (n : ℕ) : ℂ :=
+  positiveIntExtension f₁ (integerAffine a c₁ n) * positiveIntExtension f₂ (integerAffine a c₂ n)
+
+theorem norm_pairObservable_le_one {f₁ f₂ : ℕ → ℂ}
+    (h₁ : ∀ n : ℕ, 0 < n → ‖f₁ n‖ ≤ 1) (h₂ : ∀ n : ℕ, 0 < n → ‖f₂ n‖ ≤ 1)
+    (a : ℕ) (c₁ c₂ : ℤ) (n : ℕ) : ‖pairObservable f₁ f₂ a c₁ c₂ n‖ ≤ 1 := by
+  rw [pairObservable, norm_mul]
+  have b₁ := norm_positiveIntExtension_le_one h₁ (integerAffine a c₁ n)
+  have b₂ := norm_positiveIntExtension_le_one h₂ (integerAffine a c₂ n)
+  simpa using mul_le_mul b₁ b₂ (norm_nonneg _) zero_le_one
+
+theorem elliottLogCorrelation_eq_pairObservable (f₁ f₂ : ℕ → ℂ)
+    (a : ℕ) (c₁ c₂ : ℤ) (X W : ℕ) :
+    elliottLogCorrelation (positiveIntExtension f₁) (positiveIntExtension f₂) a a c₁ c₂ X W =
+      ∑ n ∈ elliottLogWindow X W, (harmonicWeight n : ℂ) * pairObservable f₁ f₂ a c₁ c₂ n := by
+  refine Finset.sum_congr rfl fun n _ ↦ ?_
+  rw [pairObservable, mul_assoc]
+
+/-- **The dilation identity for two independent functions picks up a phase.**
+
+Compare `Erdos67b.unit_pair_dilation`, where `f₂ = conj f₁` makes the phase `f(q) conj (f q) = 1`
+identically.  Here the constant `f₁(q) f₂(q)` is unimodular but *varies with `q`*, and the prime
+graph lower bound (`Erdos67b.exists_logProb_dyadic_primeGraphMean_lower`, via
+`Erdos67b.primeGraphMean`, which is a **complex** sum over primes and not a sum of norms) needs all
+its edges to contribute the *same* correlation.  So the two-function generality is genuinely new
+content, not a free relabelling. -/
+theorem pairObservable_dilation {f₁ f₂ : ℕ → ℂ}
+    (h₁ : IsCompletelyMultiplicativeOnPositive f₁)
+    (h₂ : IsCompletelyMultiplicativeOnPositive f₂)
+    {a q : ℕ} (hq : 0 < q) (c₁ c₂ : ℤ) (n : ℕ) :
+    pairObservable f₁ f₂ a ((q : ℤ) * c₁) ((q : ℤ) * c₂) (q * n) =
+      (f₁ q * f₂ q) * pairObservable f₁ f₂ a c₁ c₂ n := by
+  have e₁ : integerAffine a ((q : ℤ) * c₁) (q * n) = (q : ℤ) * integerAffine a c₁ n := by
+    simp only [integerAffine]; push_cast; ring
+  have e₂ : integerAffine a ((q : ℤ) * c₂) (q * n) = (q : ℤ) * integerAffine a c₂ n := by
+    simp only [integerAffine]; push_cast; ring
+  rw [pairObservable, pairObservable, e₁, e₂,
+    positiveIntExtension_natMul h₁ hq, positiveIntExtension_natMul h₂ hq]
+  ring
+
+/-- **The fix: twist each graph edge by the conjugate of its own phase.**
+
+Because `‖f₁(q) f₂(q)‖ = 1`, multiplying the `q`-dilated observable by `conj (f₁(q) f₂(q))` restores
+the *exact* equality that `Erdos67b.unit_pair_dilation` provides in the proved case.  The twist is a
+**known**, explicitly computable unimodular weight attached to the prime `q`, so inserting it into
+the prime graph is legitimate; the whole content of the crux is that the graph/Fourier/entropy
+machinery tolerates a per-prime unimodular weight — see `dilatedCMLogElliott`. -/
+theorem pairObservable_dilation_twisted {f₁ f₂ : ℕ → ℂ}
+    (h₁ : IsCompletelyMultiplicativeOnPositive f₁)
+    (h₂ : IsCompletelyMultiplicativeOnPositive f₂)
+    (hu₁ : ∀ n : ℕ, 0 < n → ‖f₁ n‖ = 1) (hu₂ : ∀ n : ℕ, 0 < n → ‖f₂ n‖ = 1)
+    {a q : ℕ} (hq : 0 < q) (c₁ c₂ : ℤ) (n : ℕ) :
+    conj (f₁ q * f₂ q) *
+        pairObservable f₁ f₂ a ((q : ℤ) * c₁) ((q : ℤ) * c₂) (q * n) =
+      pairObservable f₁ f₂ a c₁ c₂ n := by
+  have hnorm : ‖f₁ q * f₂ q‖ = 1 := by rw [norm_mul, hu₁ q hq, hu₂ q hq, one_mul]
+  have hcancel : conj (f₁ q * f₂ q) * (f₁ q * f₂ q) = 1 := by
+    rw [mul_comm, Complex.mul_conj', hnorm]
+    norm_num
+  rw [pairObservable_dilation h₁ h₂ hq, ← mul_assoc, hcancel, one_mul]
+
 /-! ## The two remaining obligations -/
 
 /-- **Open (the crux).**  The common-dilation, two-function, completely multiplicative unimodular
@@ -192,13 +260,29 @@ The proved case is `a = 1`, `c₁ = 0`, `c₂ = h`, `f₂ = conj f₁`, and its 
 `mrtModulatedShortIntervalUnrestricted` (MRT) and the entropy-decrement bookkeeping.  Two changes
 are needed:
 
-1. *Two independent functions.*  Every step of the graph argument uses the pair observable
-   `f₁(n)·f₂(n+h)` in place of `f(n)·conj f(n+h)`.  The prime-dilation identity
-   (`Erdos67b.unit_pair_dilation`) becomes
-   `f₁(pn)·f₂(pn+ph) = f₁(p)f₂(p) · f₁(n)·f₂(n+h)`, and `‖f₁(p)f₂(p)‖ = 1`, so the dilation is
-   still an isometry — this is exactly why unimodularity, not `1`-boundedness, is the right
-   hypothesis for this rung.  The MRT input is applied to `f₁` alone (non-pretentiousness is
-   assumed on `f₁` only), unchanged.
+1. *Two independent functions — a **phase-twisted prime graph**.*  Every step of the graph argument
+   uses the pair observable `f₁(n)·f₂(n+h)` in place of `f(n)·conj f(n+h)`.  The prime-dilation
+   identity (`Erdos67b.unit_pair_dilation`) becomes `pairObservable_dilation`:
+   `f₁(pn)·f₂(pn+ph) = f₁(p)f₂(p) · f₁(n)·f₂(n+h)`.  The constant is unimodular but it **varies with
+   `p`**, and that is *not* harmless: `Erdos67b.primeGraphMean` is a **complex** sum over the primes
+   of the graph, not a sum of norms, so the lower bound
+   `Erdos67b.exists_logProb_dyadic_primeGraphMean_lower` requires every edge to contribute the same
+   correlation, and arbitrary unimodular `f₁(p)f₂(p)` could cancel it entirely.  (An earlier lap
+   claimed this step was free because the dilation is a pointwise isometry; that claim is wrong at
+   the aggregation step and is retracted.)
+
+   The fix is `pairObservable_dilation_twisted`: attach to each prime `p` of the graph the **known**
+   unimodular weight `conj (f₁(p) f₂(p))`, which restores the exact equality.  The obligation is
+   therefore to re-run the graph machinery with a per-prime unimodular weight
+   `w : ℕ → ℂ`, `‖w p‖ = 1`, inserted into `Erdos67b.primeGraphEdge` / `primeGraphObservable`:
+   the lower bound then goes through verbatim, and the upper bound
+   (`Erdos67b.exists_primeGraphMean_small_of_fourier_first_moment`, the CRT/Hoeffding concentration
+   and the large-values count) is insensitive to unimodular per-coordinate weights because it only
+   ever uses the bound `‖·‖ ≤ 1` on each coordinate observable.  *This weighted graph is the real
+   content of the crux and the next thing to formalise.*
+
+   No change is needed on the MRT side: the MRT input is applied to `f₁` alone
+   (non-pretentiousness is assumed on `f₁` only).
 2. *Common dilation `a`.*  The window and divisibility bookkeeping runs over `a·n + c` instead of
    `n + c`; the graph step `n ↦ pn` sends the shift difference `c₂ - c₁` to `p(c₂ - c₁)`, which is
    the same `h ↦ ph` step as in the proved case. -/

@@ -9200,3 +9200,36 @@ abbreviation unwound (`IsNormal`/`IsNormalSequence`/`digitOf`, `subsetLambert`/`
 `HANDOFF-2026-09-23-theoremC-COMPLETE.md`'s "next steps"; the campaign's hygiene is now
 complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`; (3) the two off-campaign designated-open `sorry`s.
+
+## Elliott general (Tao 2016 Thm 1.3) — `wip/elliott-port`, 2026-09-25
+
+Headline `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott`; ladder in
+`src/NormalNumbers/ElliottLadder.lean`.  Two open leaves.
+
+**Crux: `dilatedCMLogElliott`** — two independent CM unimodular `f₁,f₂`, common dilation
+`a·n+c₁`, `a·n+c₂`.
+
+* lap 1 (2026-09-25): `affineCM_of_dilatedCM` PROVED — Tao's affine generality is free on this rung
+  (multiply form 1 by `a₂`, form 2 by `a₁`; the constant `f₁(a₂)f₂(a₁)` is unimodular so norms are
+  equal, and `a₁b₂−a₂b₁ ≠ 0` is exactly "the two new shifts differ").  No residue classes, no
+  AP-restricted machinery.  Anchor `unitCircle_of_dilatedCM` PROVED.
+* lap 2 (2026-09-25): **sub-approach refuted, and repaired.**  Lap 1's docstring claimed the
+  two-function case was free because the prime dilation stays a pointwise isometry.  Wrong at the
+  *aggregation* step: `Erdos67b.primeGraphMean` is a complex sum over the graph's primes, so
+  `exists_logProb_dyadic_primeGraphMean_lower` needs every edge to contribute the *same*
+  correlation, and the phase `f₁(p)f₂(p)` from `pairObservable_dilation` varies with `p` and can
+  cancel.  Retracted in the docstring.  The repair is `pairObservable_dilation_twisted` (PROVED):
+  attach the known unimodular weight `conj (f₁(p) f₂(p))` to each prime, restoring exact equality.
+
+**Next attack (lap 3).**  Formalise the **phase-twisted prime graph** in `src/`: thread a weight
+`w : ℕ → ℂ` with `‖w p‖ = 1` through `Erdos67b.primeGraphEdge` / `primeGraphObservable` /
+`primeGraphMean`, restate the lower bound (goes through verbatim with the twist) and check the upper
+bound `exists_primeGraphMean_small_of_fourier_first_moment` — the CRT/Hoeffding concentration and
+large-values count only ever use `‖coordinate observable‖ ≤ 1`, so unimodular weights should pass.
+Start with the weighted `primeGraphMean` and `primeGraphMean_eq_fourier`, the two places a weight
+could break linearity.  Never edit dependency files; new statements in `src/` only.
+
+**Second leaf: `nonasymptotic_of_affineCM`** (`1`-bounded multiplicative → CM unimodular).  Full
+route in its docstring: Hall/Wirsing dichotomy on `∑_{p≤X}(1−‖g₁(p)‖)/p`; Case B's two convolution
+expansions have absolutely convergent `∑1/d` tails and their divisibility constraints are dilations
+of the affine form, hence absorbed by `AffineCMLogElliott` itself.

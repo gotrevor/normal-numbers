@@ -56,6 +56,23 @@ obligations, and the third generalisation is **fully discharged, axiom-clean**:
    Non-pretentiousness survives: `D(ĝ, χn^{it};X)² ≤ D(g̃, χn^{it};X)² + C` from
    `Re(ĝ(p)w) − Re(g̃(p)w) ≤ 1 − ‖g̃(p)‖`, and `C` is fixed while `A → ∞`.
 
+## Lap 2 (same day): sub-approach refuted and repaired
+
+Lap 1's claim that the two-function generality is free (because the prime dilation is a pointwise
+isometry) is **wrong at the aggregation step** and is retracted in the crux docstring.
+`Erdos67b.primeGraphMean` is a *complex* sum over the graph's primes, not a sum of norms, so
+`exists_logProb_dyadic_primeGraphMean_lower` needs every edge to contribute the same correlation;
+the phase `f₁(p)f₂(p)` of `pairObservable_dilation` varies with `p` and can cancel it entirely.
+
+Repair, PROVED and axiom-clean: `pairObservable_dilation_twisted` — attaching the **known**
+unimodular weight `conj (f₁(p) f₂(p))` to each prime restores the exact equality that
+`Erdos67b.unit_pair_dilation` supplies in the proved case.  Also PROVED: `pairObservable`,
+`norm_pairObservable_le_one`, `elliottLogCorrelation_eq_pairObservable`,
+`pairObservable_dilation`.  So the crux's real content is now named: a **phase-twisted prime
+graph** — thread a per-prime unimodular weight through `primeGraphEdge`/`primeGraphObservable`/
+`primeGraphMean` and re-derive the lower bound (verbatim, with the twist) and the upper bound
+(insensitive to unimodular per-coordinate weights, which only enter through `‖·‖ ≤ 1`).
+
 ## Confidence
 
 That the *headline lands eventually*: the route is now fully specified with no step whose
