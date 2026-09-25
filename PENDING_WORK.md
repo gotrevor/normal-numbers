@@ -9754,3 +9754,26 @@ own `G4.MertensAP` gives only the lower direction; do not use it here.)
 In the regime `log W ≥ θ log X` we have `log(a₁X+|b₁|) ≤ c(a₁,b₁,θ)·log W` for `W` large, so
 choosing the Case-A threshold `Σ ≥ Σ₀(ε,a₁,b₁,θ)` gives `≤ ε log W`.
 Then: Hall's inequality for `log W < θ log X`; then Case B's two convolution expansions.
+
+### lap 51 — CASE A, THICK-WINDOW REGIME: CLOSED
+
+`ElliottCaseA.exists_caseA_threshold` (trust triple).  For fixed `a₁ > 0, b₁, θ > 0, ε > 0` there
+are `D₀ : ℝ` and `W₀ : ℕ` — depending on **none** of `g₁, g₂, a₂, b₂, X, W` — such that whenever
+`W₀ ≤ W ≤ X`, `θ log X ≤ log W`, and the pretentious defect
+`primeDefect (normDivArith g₁) (a₁X+|b₁|) ≥ D₀`, then
+`‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W‖ ≤ ε log W`.
+
+Threshold choreography: `C = a₁+|b₁|`, `K = C·e^{1+B}·(1+1/θ)`, `D₀ = log(2K/ε)`,
+`W₀ = max (a₁+|b₁|+2) ⌈exp(2|b₁|/ε)⌉₊`.  The two halves are `K e^{-D₀} log W = (ε/2) log W`
+(via `log Y ≤ (1+1/θ) log W`, which is where `θ log X ≤ log W` enters) and
+`|b₁| ≤ (ε/2) log W` (where `W ≥ exp(2|b₁|/ε)` enters).
+
+Intermediate also proved: `norm_elliottLogCorrelation_le_caseA`, the master bound
+`‖corr‖ ≤ (a₁+|b₁|)·e^{1+B}·log(a₁X+|b₁|)·e^{-Σ} + |b₁|`, with no regime hypothesis at all.
+
+**Remaining for leaf 2:**
+1. **Hall's inequality** (Halberstam–Richert Thm 01) — the thin-window regime `log W < θ log X`,
+   where the crude Euler bound loses the unbounded factor `log Y / log W`.  THE HARD CORE.
+2. Case B's two convolution expansions (squarefull `u`, unimodularisation `v`) — elementary,
+   absolutely convergent tails.
+3. The pretentiousness transfer and the final assembly.

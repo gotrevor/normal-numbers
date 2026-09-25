@@ -220,6 +220,139 @@ theorem sum_window_le_transfer {g : ℤ → ℂ} (hg : ∀ n : ℤ, ‖g n‖ �
   linarith
 
 
+/-! ## Case A proper: the master bound -/
+
+open NormalNumbers.ElliottEulerBound in
+/-- **The Case-A master bound.**  With
+`Σ = ∑_{p ≤ a₁X+|b₁|} (1/p - ‖g₁ p‖/p)` the pretentious defect of `g₁`,
+
+`‖corr‖ ≤ (a₁+|b₁|) · e^{1+B} · log(a₁X+|b₁|) · e^{-Σ} + |b₁|`.
+
+No oscillation is used: the correlation is bounded by the logarithmic mean of `‖g₁‖`, which the
+Euler product controls.  A large defect — Case A's hypothesis — therefore makes the whole
+correlation small compared with `log X`, hence with `log W` in the thick-window regime. -/
+theorem norm_elliottLogCorrelation_le_caseA {g₁ g₂ : ℤ → ℂ}
+    (hm₁ : IsMultiplicativeOnPositiveInt g₁)
+    (h₁ : ∀ n : ℤ, ‖g₁ n‖ ≤ 1) (h₂ : ∀ n : ℤ, ‖g₂ n‖ ≤ 1)
+    {a₁ : ℕ} (ha₁ : 0 < a₁) (b₁ : ℤ) (a₂ : ℕ) (b₂ : ℤ) (X W : ℕ)
+    (hY : 2 ≤ a₁ * X + b₁.natAbs) :
+    ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W‖ ≤
+      ((a₁ + b₁.natAbs : ℕ) : ℝ) *
+          (Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) *
+            Real.log ((a₁ * X + b₁.natAbs : ℕ) : ℝ) *
+            Real.exp (-primeDefect (normDivArith g₁) (a₁ * X + b₁.natAbs)))
+        + (b₁.natAbs : ℝ) := by
+  set Y : ℕ := a₁ * X + b₁.natAbs with hYdef
+  have hmean := sum_Icc_le_log_mul_exp_neg_defect
+    (isMultiplicative_normDivArith hm₁) (normDivArith_nonneg g₁)
+    (fun n hn ↦ normDivArith_le g₁ h₁ hn) hY
+  have hCnn : (0 : ℝ) ≤ ((a₁ + b₁.natAbs : ℕ) : ℝ) := by positivity
+  calc ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W‖
+      ≤ ∑ n ∈ elliottLogWindow X W, (n : ℝ)⁻¹ * ‖g₁ (integerAffine a₁ b₁ n)‖ :=
+        norm_elliottLogCorrelation_le_window_sum g₁ g₂ h₂ a₁ a₂ b₁ b₂ X W
+    _ ≤ ((a₁ + b₁.natAbs : ℕ) : ℝ) * ∑ m ∈ Finset.Icc 1 Y, normDivArith g₁ m
+          + (b₁.natAbs : ℝ) := sum_window_le_transfer h₁ ha₁ b₁ X W
+    _ ≤ _ := by
+        have := mul_le_mul_of_nonneg_left hmean hCnn
+        linarith
+
+
+open NormalNumbers.ElliottEulerBound in
+/-- **Case A, in the form the ladder consumes.**  In the thick-window regime
+`θ log X ≤ log W`, a large enough pretentious defect of `g₁` forces
+`‖corr‖ ≤ ε log W`, with a threshold depending only on `(a₁, b₁, θ, ε)` — never on `g₁, g₂`.
+
+This settles the `log W ≥ θ log X` half of Case A of
+`NormalNumbers.ElliottLadder.nonasymptotic_of_affineCM`.  The thin-window half needs Hall's
+inequality and is still open. -/
+theorem exists_caseA_threshold {a₁ : ℕ} (ha₁ : 0 < a₁) (b₁ : ℤ) {θ ε : ℝ}
+    (hθ : 0 < θ) (hε : 0 < ε) :
+    ∃ (D₀ : ℝ) (W₀ : ℕ), 2 ≤ W₀ ∧
+      ∀ (g₁ g₂ : ℤ → ℂ), IsMultiplicativeOnPositiveInt g₁ →
+        (∀ n : ℤ, ‖g₁ n‖ ≤ 1) → (∀ n : ℤ, ‖g₂ n‖ ≤ 1) →
+        ∀ (a₂ : ℕ) (b₂ : ℤ) (X W : ℕ), W₀ ≤ W → W ≤ X →
+          θ * Real.log (X : ℝ) ≤ Real.log (W : ℝ) →
+          D₀ ≤ primeDefect (normDivArith g₁) (a₁ * X + b₁.natAbs) →
+          ‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W‖ ≤ ε * Real.log (W : ℝ) := by
+  classical
+  set C : ℝ := ((a₁ + b₁.natAbs : ℕ) : ℝ) with hC
+  have hCpos : 0 < C := by
+    rw [hC]
+    have : 0 < a₁ + b₁.natAbs := by omega
+    exact_mod_cast this
+  set K : ℝ := C * Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) * (1 + 1 / θ) with hK
+  have hKpos : 0 < K := by rw [hK]; positivity
+  refine ⟨Real.log (2 * K / ε),
+    max (a₁ + b₁.natAbs + 2) (⌈Real.exp (2 * (b₁.natAbs : ℝ) / ε)⌉₊), ?_, ?_⟩
+  · exact le_trans (by omega) (le_max_left _ _)
+  intro g₁ g₂ hm₁ h₁ h₂ a₂ b₂ X W hW hWX hthick hdefect
+  have hW2 : 2 ≤ W := le_trans (by omega) ((le_max_left _ _).trans hW)
+  have hWC : a₁ + b₁.natAbs ≤ W := le_trans (by omega) ((le_max_left _ _).trans hW)
+  have hX2 : 2 ≤ X := le_trans hW2 hWX
+  set Y : ℕ := a₁ * X + b₁.natAbs with hYdef
+  have hY2 : 2 ≤ Y := by
+    have : X ≤ a₁ * X := Nat.le_mul_of_pos_left X ha₁
+    omega
+  have hYr : (2 : ℝ) ≤ (Y : ℝ) := by exact_mod_cast hY2
+  have hlogW : 0 < Real.log (W : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < W))
+  have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < X))
+  have hlogY : 0 ≤ Real.log (Y : ℝ) := Real.log_nonneg (by linarith)
+  -- `log Y ≤ (1 + 1/θ) log W`
+  have hYle : (Y : ℝ) ≤ C * (X : ℝ) := by
+    rw [hYdef, hC]
+    have hX1 : (1 : ℝ) ≤ (X : ℝ) := by exact_mod_cast (by omega : 1 ≤ X)
+    push_cast
+    nlinarith [Nat.cast_nonneg (α := ℝ) b₁.natAbs, Nat.cast_nonneg (α := ℝ) a₁]
+  have hlogCW : Real.log C ≤ Real.log (W : ℝ) := by
+    apply Real.log_le_log hCpos
+    rw [hC]; exact_mod_cast hWC
+  have hlogXW : Real.log (X : ℝ) ≤ (1 / θ) * Real.log (W : ℝ) := by
+    rw [div_mul_eq_mul_div, le_div_iff₀ hθ]
+    linarith [hthick]
+  have hlogYle : Real.log (Y : ℝ) ≤ (1 + 1 / θ) * Real.log (W : ℝ) := by
+    have h1 : Real.log (Y : ℝ) ≤ Real.log (C * (X : ℝ)) :=
+      Real.log_le_log (by linarith) hYle
+    rw [Real.log_mul (ne_of_gt hCpos) (by positivity)] at h1
+    nlinarith [hlogCW, hlogXW]
+  -- the exponential factor
+  have hexp : Real.exp (-primeDefect (normDivArith g₁) Y) ≤ ε / (2 * K) := by
+    have h1 : Real.exp (-primeDefect (normDivArith g₁) Y) ≤
+        Real.exp (-Real.log (2 * K / ε)) := by
+      apply Real.exp_le_exp.mpr
+      linarith [hdefect]
+    have h2 : Real.exp (-Real.log (2 * K / ε)) = ε / (2 * K) := by
+      rw [Real.exp_neg, Real.exp_log (by positivity)]
+      field_simp
+    linarith [h1, h2.le, h2.ge]
+  -- the constant remainder
+  have hrem : (b₁.natAbs : ℝ) ≤ (ε / 2) * Real.log (W : ℝ) := by
+    have hceil : (⌈Real.exp (2 * (b₁.natAbs : ℝ) / ε)⌉₊ : ℕ) ≤ W := (le_max_right _ _).trans hW
+    have hexpW : Real.exp (2 * (b₁.natAbs : ℝ) / ε) ≤ (W : ℝ) := by
+      refine le_trans (Nat.le_ceil _) ?_
+      exact_mod_cast hceil
+    have hlog := Real.log_le_log (Real.exp_pos _) hexpW
+    rw [Real.log_exp] at hlog
+    have h2 := mul_le_mul_of_nonneg_left hlog (by positivity : (0 : ℝ) ≤ ε / 2)
+    rw [show (ε / 2) * (2 * (b₁.natAbs : ℝ) / ε) = (b₁.natAbs : ℝ) by field_simp] at h2
+    exact h2
+  -- assemble
+  have hmaster := norm_elliottLogCorrelation_le_caseA hm₁ h₁ h₂ ha₁ b₁ a₂ b₂ X W hY2
+  have hstep : C * (Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) *
+      Real.log (Y : ℝ) * Real.exp (-primeDefect (normDivArith g₁) Y)) ≤
+      (ε / 2) * Real.log (W : ℝ) := by
+    have hEpos : (0 : ℝ) < Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) := Real.exp_pos _
+    have h1 : C * (Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) *
+        Real.log (Y : ℝ) * Real.exp (-primeDefect (normDivArith g₁) Y)) ≤
+        C * (Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) *
+          ((1 + 1 / θ) * Real.log (W : ℝ)) * (ε / (2 * K))) := by
+      have hnn : (0 : ℝ) ≤ Real.exp (-primeDefect (normDivArith g₁) Y) := (Real.exp_pos _).le
+      gcongr
+    refine h1.trans_eq ?_
+    rw [hK]
+    field_simp
+  linarith [hmaster, hstep, hrem]
+
+
 end
 
 end NormalNumbers.ElliottCaseA
@@ -227,3 +360,5 @@ end NormalNumbers.ElliottCaseA
 #print axioms NormalNumbers.ElliottCaseA.isMultiplicative_normDivArith
 #print axioms NormalNumbers.ElliottCaseA.norm_elliottLogCorrelation_le_window_sum
 #print axioms NormalNumbers.ElliottCaseA.sum_window_le_transfer
+#print axioms NormalNumbers.ElliottCaseA.norm_elliottLogCorrelation_le_caseA
+#print axioms NormalNumbers.ElliottCaseA.exists_caseA_threshold
