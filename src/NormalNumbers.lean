@@ -539,3 +539,4 @@ import NormalNumbers.TwoPointC3Wall
 import NormalNumbers.TwoPointC3Pin
 import NormalNumbers.TwoPointC3Budget
 import NormalNumbers.TwoPointC3Alt
+import NormalNumbers.TwoPointC3Trade
