@@ -386,3 +386,123 @@ theorem layerGads_nodup (n : ℕ) : (Ls.layerGads n).Nodup := by
     Ls.base_mod (le_of_lt hmm) k' 0
   refine Ls.hdisj m m' hmm 0 (by simp) 0 (by simp) ?_
   rw [← e2, ← e1, he.1]
+
+/-! ## The stages and their common limit
+
+`stage x n` is the sequence obtained by driving the width-`Ls.Q n` block engine with the digits of
+`x`.  By `blockSeq_multiG_eq_absGad` the perturbation it applies is INTRINSIC: at a position
+covered by layer `i` the value is `absGad x (base) (arm i)`, where `base` is the unique multiple of
+`Ls.Q i` shifted by `Ls.off i` that covers the position.  Neither the base nor the value mentions
+`n`, so the stages agree wherever the later layers do not reach — and `hbig` says layer `i` reaches
+no position below `Ls.Q i / 2`.  Hence `stage x n m` is eventually constant in `n`, position by
+position, and `limSeq x m := stage x m m` is the limit. -/
+
+/-- Periods grow at least like `64 * 2 ^ n`. -/
+theorem Qgrow (n : ℕ) : 64 * 2 ^ n ≤ Ls.Q n := by
+  induction n with
+  | zero => simpa using Ls.hQ64
+  | succ n ih =>
+      have := Ls.hQdouble n
+      calc 64 * 2 ^ (n + 1) = 2 * (64 * 2 ^ n) := by ring
+        _ ≤ 2 * Ls.Q n := by omega
+        _ ≤ Ls.Q (n + 1) := this
+
+/-- A late layer reaches no early position. -/
+theorem notMem_quad_of_lt {i m : ℕ} (h : m < i) :
+    m % Ls.Q i ∉ quadSet (Ls.off i) (Ls.arm i) := by
+  have h2 : i + 1 ≤ 2 ^ i := Nat.succ_le_of_lt (Nat.lt_two_pow_self)
+  have hg := Ls.Qgrow i
+  have hb := Ls.hbig i
+  have hmQ : m < Ls.Q i := by nlinarith
+  have hmo : m < Ls.off i := by nlinarith
+  rw [Nat.mod_eq_of_lt hmQ, mem_quadSet]
+  omega
+
+/-- Reading a layer-`i` gadget of the width-`Ls.Q n` block engine modulo `Ls.Q i`. -/
+theorem quad_of_row {i n k m : ℕ} (hi : i ≤ n) (hk : k < Ls.Q n / Ls.Q i)
+    (h : m % Ls.Q n ∈ quadSet (k * Ls.Q i + Ls.off i) (Ls.arm i)) :
+    m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i) ∧ k = (m % Ls.Q n) / Ls.Q i := by
+  have hQi := Ls.Qpos i
+  have hfit := Ls.hfit i
+  have hdvd : Ls.Q i ∣ Ls.Q n := Ls.dvd_of_le hi
+  rw [mem_quadSet] at h
+  obtain ⟨δ, hδ, hr⟩ : ∃ δ, (δ = 0 ∨ δ = 1 ∨ δ = Ls.arm i ∨ δ = Ls.arm i + 1) ∧
+      m % Ls.Q n = k * Ls.Q i + (Ls.off i + δ) := by
+    rcases h with h | h | h | h
+    exacts [⟨0, by tauto, by omega⟩, ⟨1, by tauto, by omega⟩,
+      ⟨Ls.arm i, by tauto, by omega⟩, ⟨Ls.arm i + 1, by tauto, by omega⟩]
+  have hlt : Ls.off i + δ < Ls.Q i := by omega
+  have hmod : (m % Ls.Q n) % Ls.Q i = Ls.off i + δ := by
+    rw [hr, Nat.mul_comm, Nat.mul_add_mod, Nat.mod_eq_of_lt hlt]
+  have hdiv : (m % Ls.Q n) / Ls.Q i = k := by
+    rw [hr, Nat.mul_comm, Nat.mul_add_div hQi, Nat.div_eq_of_lt hlt]; omega
+  refine ⟨?_, hdiv.symm⟩
+  rw [Nat.mod_mod_of_dvd m hdvd] at hmod
+  rw [hmod, mem_quadSet]
+  omega
+
+/-- The width-`Ls.Q n` stage of the layer system, driven by the binary sequence `x`. -/
+def stage (x : ℕ → ℕ) (n : ℕ) : ℕ → ℕ :=
+  blockSeq (multiG (Ls.Q n) (Ls.layerGads n)) (blockOf 2 (Ls.Q n) x) (Ls.Q n)
+
+/-- Off every layer, the stage is `x` itself. -/
+theorem stage_eq_self {x : ℕ → ℕ} (hx : ∀ m, x m < 2) {n m : ℕ}
+    (h : ∀ i ≤ n, m % Ls.Q i ∉ quadSet (Ls.off i) (Ls.arm i)) : Ls.stage x n m = x m := by
+  refine blockSeq_multiG_eq_of_notMem _ (Ls.Qpos n) _ x hx m (fun pa hpa hmem => ?_)
+  rw [Ls.mem_layerGads] at hpa
+  obtain ⟨i, hi, k, hk, rfl⟩ := hpa
+  exact h i hi (Ls.quad_of_row hi hk hmem).1
+
+/-- **The intrinsic stage law.**  On a layer-`i` position the stage applies the absolute gadget
+action at the base `Ls.Q i * (m / Ls.Q i) + Ls.off i` — no mention of the stage index `n`. -/
+theorem stage_eq_absGad {x : ℕ → ℕ} (hx : ∀ m, x m < 2) {n i m : ℕ} (hi : i ≤ n)
+    (h : m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i)) :
+    Ls.stage x n m = absGad x (Ls.Q i * (m / Ls.Q i) + Ls.off i) (Ls.arm i) m := by
+  have hQi := Ls.Qpos i
+  have hQn := Ls.Qpos n
+  have hfit := Ls.hfit i
+  have hdvd : Ls.Q i ∣ Ls.Q n := Ls.dvd_of_le hi
+  set k := (m % Ls.Q n) / Ls.Q i with hkdef
+  rw [mem_quadSet] at h
+  obtain ⟨δ, hδ, hr⟩ : ∃ δ, (δ = 0 ∨ δ = 1 ∨ δ = Ls.arm i ∨ δ = Ls.arm i + 1) ∧
+      m % Ls.Q i = Ls.off i + δ := by
+    rcases h with h | h | h | h
+    exacts [⟨0, by tauto, by omega⟩, ⟨1, by tauto, by omega⟩,
+      ⟨Ls.arm i, by tauto, by omega⟩, ⟨Ls.arm i + 1, by tauto, by omega⟩]
+  have hmod : (m % Ls.Q n) % Ls.Q i = Ls.off i + δ := by rw [Nat.mod_mod_of_dvd m hdvd, hr]
+  have hsplit : Ls.Q i * k + (Ls.off i + δ) = m % Ls.Q n := by
+    rw [hkdef, ← hmod]; exact Nat.div_add_mod _ _
+  have hk : k < Ls.Q n / Ls.Q i :=
+    Nat.div_lt_div_of_lt_of_dvd hdvd (Nat.mod_lt _ hQn)
+  have hmemq : m % Ls.Q n ∈ quadSet (k * Ls.Q i + Ls.off i) (Ls.arm i) := by
+    rw [mem_quadSet]; rw [Nat.mul_comm k]; omega
+  have hmem : (k * Ls.Q i + Ls.off i, Ls.arm i) ∈ Ls.layerGads n :=
+    Ls.mem_layerGads.mpr ⟨i, hi, k, hk, rfl⟩
+  have hbase : Ls.Q n * (m / Ls.Q n) + (k * Ls.Q i + Ls.off i) = Ls.Q i * (m / Ls.Q i) + Ls.off i := by
+    have e1 : Ls.Q n * (m / Ls.Q n) + m % Ls.Q n = m := Nat.div_add_mod _ _
+    have e2 : Ls.Q i * (m / Ls.Q i) + m % Ls.Q i = m := Nat.div_add_mod _ _
+    rw [Nat.mul_comm k] at *
+    omega
+  rw [stage, blockSeq_multiG_eq_absGad _ hQn _ (Ls.layerGads_sep n) (Ls.layerGads_nodup n) x hx
+    _ _ hmem ((Ls.layerGads_ok n _ hmem).2) m hmemq, hbase]
+
+/-- **The stages stabilize.**  Position `m` is settled from stage `m` on. -/
+theorem stage_eq_of_ge {x : ℕ → ℕ} (hx : ∀ m, x m < 2) {n m : ℕ} (hnm : m ≤ n) :
+    Ls.stage x n m = Ls.stage x m m := by
+  classical
+  by_cases h : ∃ i ≤ m, m % Ls.Q i ∈ quadSet (Ls.off i) (Ls.arm i)
+  · obtain ⟨i, hi, hmem⟩ := h
+    rw [Ls.stage_eq_absGad hx (le_trans hi hnm) hmem, Ls.stage_eq_absGad hx hi hmem]
+  · push_neg at h
+    have hall : ∀ i ≤ n, m % Ls.Q i ∉ quadSet (Ls.off i) (Ls.arm i) := by
+      intro i _
+      rcases Nat.lt_or_ge m i with h1 | h1
+      · exact Ls.notMem_quad_of_lt h1
+      · exact h i h1
+    rw [Ls.stage_eq_self hx hall, Ls.stage_eq_self hx h]
+
+/-- The limit sequence of the layer system. -/
+def limSeq (x : ℕ → ℕ) (m : ℕ) : ℕ := Ls.stage x m m
+
+theorem stage_eq_limSeq {x : ℕ → ℕ} (hx : ∀ m, x m < 2) {n m : ℕ} (hnm : m ≤ n) :
+    Ls.stage x n m = Ls.limSeq x m := Ls.stage_eq_of_ge hx hnm
