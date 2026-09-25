@@ -1,5 +1,5 @@
 import NormalNumbers.ElliottDilatedSlice
-import NormalNumbers.ElliottDilatedCorrelation
+import NormalNumbers.ElliottDilatedWeight
 
 /-!
 # The live crux route: `DilatedCMLogElliott` from the `a`-dilated graph stack

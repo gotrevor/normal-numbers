@@ -28,6 +28,25 @@ as one named `sorry` on the dilated route (`src/NormalNumbers/ElliottDilatedRung
 prove it.  Decomposing raises nothing; it just moves the debt onto the route that is actually
 being paid down.
 
+### Lap 36 progress on leaf 1 (the dilated crux)
+
+* **Wiring done.**  `src/NormalNumbers/ElliottDilatedRung.lean`: `dilatedCM_of_natShift` is proved,
+  so the headline now depends on the two natural-shift leaves of the LIVE dilated route and no
+  longer on the refuted slice route.
+* **Step (ii) done.**  `src/NormalNumbers/ElliottDilatedWeight.lean` (new, zero sorry, trust
+  triple): `exists_dyadic_dilatedCorrelationWeight_lower` —
+  `(H:ℝ)/(16 a log P) ≤ dilatedCorrelationWeight H a c₁ h (dyadicPrimes P)` under `2P ≤ H` and
+  `4a + 4Ph ≤ H`.  Function-free counting via `card_dilatedProgression_lower`
+  (`H/(4a)` active block positions: `H/(2a)` of them, halved again by the floor).  Constants are
+  the dependency's with one extra factor `4a` — i.e. the dilated analogue of
+  `Erdos67b.exists_dyadic_primeGraphCorrelationWeight_lower`'s `H/(8 log P)`.
+* **Next: step (i)**, the dilated `norm_logProb_pairTwistedMean_sub_correlation_le`: combine
+  `ElliottDilatedCorrelation.norm_logProb_dilatedGraph_sub_correlation_le` (lap 35) with
+  `ElliottGenericGraph.exists_logProb_gen_decoupling` (lap 30) at `Δ m = crtShift H (·*c₁/a)`;
+  then `genMeanCRT = dilatedPairTwistedMean` by
+  `ElliottDilatedBridge.genMeanCRT_dilatedEdgeReindexed`.  Then step (iii), the collision with
+  `ElliottDilatedUpper.exists_dilatedPairTwistedMean_small_of_fourier_first_moment`.
+
 ### Finding 2 — leaf 2 decomposed: the hard core is Hall, and Shiu is NOT needed
 
 The `ElliottLadder.nonasymptotic_of_affineCM` docstring names the route (Case A: `Sigma(g1)` large,
