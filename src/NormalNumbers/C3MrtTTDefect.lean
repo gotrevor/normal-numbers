@@ -450,6 +450,11 @@ theorem const_one_not_faithful {A : ℝ} {K : ℕ} {X L : ℝ} (hX : Real.exp 1 
 #print axioms ttNonPretentious_of_At
 #print axioms full_exceptional_set_not_admissible
 #print axioms kPointNoExcAtWith_of_with
+#print axioms ttNonPretentious_one
+#print axioms ttPretentiousSumChar_one
+#print axioms not_ttNonPretentiousAt_one
+#print axioms const_one_not_faithful
+#print axioms exists_L_cost_lt_one
 
 end CastingOut
 

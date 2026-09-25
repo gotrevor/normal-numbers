@@ -10885,3 +10885,27 @@ NEXT on the crux: exploit the recursion rather than bound it.
     primitivity reduction to the dynamics.
 (ii) Failing that, van der Corput on the phase, using the recursion to compute the differenced
     phase `depthPhase b K (n+h) − depthPhase b K n` in closed form.
+
+## 2026-09-25 restatement-run verification lap
+
+Independent re-verification of the HALT mandate (a)-(c), no crux advance (as instructed):
+* (a) all four defects machine-checked in `src/NormalNumbers/C3MrtTTDefect.lean`
+  (`ttNonPretentious_trivial`/`_one`, `not_kPointNoExcWith_const_one`,
+  `not_kPointNaturalCorrelationNoExc`, `not_twoPointNaturalCorrelationNoExc`,
+  `twoPointNaturalCorrelation_trivially_true`), aliased in `Maze.lean` as
+  `hall_tt_nonpretentious_vacuous`, `hall_kpoint_noexc_false`, `hall_two_point_noexc_false`,
+  `hall_lebesgue_exceptional_scales`.
+* (b) faithful restatements `TTNonPretentiousAt`/`TTNonPretentiousUnif` (constant OUTSIDE
+  `X, L`; `ttPretentiousSumChar` over Dirichlet characters of conductor `≤ (log X)^{1/125}`;
+  twists `|t| ≤ X²`), `TwoPointDyadicCorrelation` (Finset-counted dyadic exceptional scales),
+  `KPointNoExcAtWith`; guards `not_ttNonPretentiousUnif_one`, `not_ttNonPretentiousAt_one`,
+  `full_exceptional_set_not_admissible` + `exists_L_cost_lt_one`, `const_one_not_faithful`;
+  no-weakening bridges `ttNonPretentious_of_At`, `kPointNoExcAtWith_of_with`.
+* (c) SURVIVORS table in `HANDOFF-2026-09-25-tt-interface-restated.md` §(c).
+* This lap's only change: the `#print axioms` audit block now covers all 14 statements
+  (5 guards/bridges were previously unprinted).  `lake build` green, 9442 jobs; every one
+  depends only on `propext, Classical.choice, Quot.sound`.
+
+Next lap (crux, per DIRECTION "Next attack"): rethread `KPointNoExcWith → KPointNoExcAtWith A`
+bottom-up and upgrade `ttNonPretentious_of_uniformResonantMass` to the faithful hypothesis
+(gap: characters `q > 1`, twists up to `X²`).
