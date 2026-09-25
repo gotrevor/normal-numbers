@@ -625,4 +625,109 @@ theorem delangeKernelMean_of_errorBounded {z : ℂ} (hre : z.re < 1) {B : ℝ} (
   refine this.congr fun N => ?_
   exact delangeSv_eq z N
 
+/-! ### Removing the coprimality restriction from the open core
+
+`delangeSrestr_rec` says `S^{(p)}(M) = S(M) − (v/p)·S^{(p)}(M/p)` exactly, so replacing
+`S^{(p)}(N/p)` by `S(N/p)` inside `delangeE` costs `Σ_p ‖v‖/p²·sup‖S^{(p)}‖ ≤ ‖v‖·Φ`: an absolute
+constant, since `Σ_p 1/p² ≤ 1`.  What is left is a **pure Toeplitz error**
+
+    Σ_{p ≤ N} (1/p)·( S(N/p; v) − S(N; v) ),
+
+a statement about `delangeSv` at dilated scales only — no restricted sums anywhere. -/
+
+/-- `Σ_{2 ≤ n ≤ N} 1/(n(n−1)) = 1 − 1/N`. -/
+lemma sum_inv_mul_pred (N : ℕ) (hN : 1 ≤ N) :
+    ∑ n ∈ Finset.Icc 2 N, 1 / ((n : ℝ) * ((n : ℝ) - 1)) = 1 - 1 / (N : ℝ) := by
+  induction N with
+  | zero => omega
+  | succ N ih =>
+      rcases Nat.eq_zero_or_pos N with hN0 | hN0
+      · subst hN0
+        norm_num
+      rw [Finset.sum_Icc_succ_top (by omega), ih hN0]
+      have hNR : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN0
+      have h1 : ((N + 1 : ℕ) : ℝ) = (N : ℝ) + 1 := by push_cast; ring
+      rw [h1, show ((N : ℝ) + 1) - 1 = (N : ℝ) from by ring]
+      have hNne : (N : ℝ) ≠ 0 := by linarith
+      have hN1ne : (N : ℝ) + 1 ≠ 0 := by linarith
+      field_simp
+      ring
+
+/-- `Σ_{p ≤ N} 1/p² ≤ 1`. -/
+theorem sum_inv_sq_prime_le (N : ℕ) : ∑ p ∈ primesLe N, 1 / ((p : ℝ) ^ 2) ≤ 1 := by
+  classical
+  rcases Nat.eq_zero_or_pos N with hN | hN
+  · subst hN
+    rw [primesLe]
+    norm_num [Finset.filter_singleton, Nat.not_prime_zero]
+  have hsub : primesLe N ⊆ Finset.Icc 2 N := by
+    intro p hp
+    have hpp := prime_of_mem_primesLe hp
+    rw [primesLe, Finset.mem_filter, Finset.mem_range] at hp
+    simp only [Finset.mem_Icc]
+    exact ⟨hpp.two_le, by omega⟩
+  have hstep : ∀ n ∈ Finset.Icc 2 N,
+      1 / ((n : ℝ) ^ 2) ≤ 1 / ((n : ℝ) * ((n : ℝ) - 1)) := by
+    intro n hn
+    simp only [Finset.mem_Icc] at hn
+    have hn2 : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn.1
+    rw [div_le_div_iff₀ (by positivity) (by nlinarith)]
+    nlinarith
+  have h1 : ∑ p ∈ primesLe N, 1 / ((p : ℝ) ^ 2) ≤ ∑ n ∈ Finset.Icc 2 N, 1 / ((n : ℝ) ^ 2) := by
+    refine Finset.sum_le_sum_of_subset_of_nonneg hsub fun n hn _ => ?_
+    simp only [Finset.mem_Icc] at hn
+    have : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn.1
+    positivity
+  have h2 := Finset.sum_le_sum hstep
+  rw [sum_inv_mul_pred N hN] at h2
+  have h3 : (0 : ℝ) ≤ 1 / (N : ℝ) := by positivity
+  linarith
+
+/-- The restriction recursion, in the parametrised variable. -/
+lemma delangeSvRestr_rec (v : ℂ) {p : ℕ} (hp : p.Prime) (M : ℕ) :
+    delangeSvRestr p M v = delangeSv M v - (v / (p : ℂ)) * delangeSvRestr p (M / p) v := by
+  have h := delangeSrestr_rec (1 + v) hp M
+  rw [← delangeSv_eq (1 + v) M, ← delangeSvRestr_eq (1 + v) p M,
+    ← delangeSvRestr_eq (1 + v) p (M / p)] at h
+  simp only [add_sub_cancel_left] at h
+  exact h
+
+/-- **The open core is a pure Toeplitz error.**  Removing the coprimality restriction costs at
+most `‖v‖·Φ`, an absolute constant. -/
+theorem norm_delangeE_sub_toeplitz_le (N : ℕ) (v : ℂ) {Φ : ℝ}
+    (hR : ∀ p M, ‖delangeSvRestr p M v‖ ≤ Φ) :
+    ‖delangeE N v - ∑ p ∈ primesLe N, (1 / (p : ℂ)) * (delangeSv (N / p) v - delangeSv N v)‖
+      ≤ ‖v‖ * Φ := by
+  classical
+  have hΦnn : 0 ≤ Φ := le_trans (norm_nonneg _) (hR 2 0)
+  rw [delangeE_eq_sum, ← Finset.sum_sub_distrib]
+  have hterm : ∀ p ∈ primesLe N,
+      ‖(1 / (p : ℂ)) * (delangeSvRestr p (N / p) v - delangeSv N v)
+        - (1 / (p : ℂ)) * (delangeSv (N / p) v - delangeSv N v)‖
+        ≤ (‖v‖ * Φ) * (1 / ((p : ℝ) ^ 2)) := by
+    intro p hp
+    have hpp := prime_of_mem_primesLe hp
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hrec := delangeSvRestr_rec v hpp (N / p)
+    rw [← mul_sub, hrec]
+    have hcollapse : delangeSv (N / p) v - (v / (p : ℂ)) * delangeSvRestr p (N / p / p) v
+        - delangeSv N v - (delangeSv (N / p) v - delangeSv N v)
+        = -((v / (p : ℂ)) * delangeSvRestr p (N / p / p) v) := by ring
+    rw [hcollapse, norm_mul, norm_neg, norm_mul, norm_div, norm_div, norm_one,
+      Complex.norm_natCast]
+    have hb := hR p (N / p / p)
+    have hppos : (0 : ℝ) < (p : ℝ) := by linarith
+    calc 1 / (p : ℝ) * (‖v‖ / (p : ℝ) * ‖delangeSvRestr p (N / p / p) v‖)
+        ≤ 1 / (p : ℝ) * (‖v‖ / (p : ℝ) * Φ) := by
+          refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+          exact mul_le_mul_of_nonneg_left hb (by positivity)
+      _ = (‖v‖ * Φ) * (1 / ((p : ℝ) ^ 2)) := by field_simp; try ring
+  refine le_trans (norm_sum_le _ _) ?_
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [← Finset.mul_sum]
+  calc ‖v‖ * Φ * ∑ p ∈ primesLe N, 1 / ((p : ℝ) ^ 2)
+      ≤ ‖v‖ * Φ * 1 :=
+        mul_le_mul_of_nonneg_left (sum_inv_sq_prime_le N) (mul_nonneg (norm_nonneg v) hΦnn)
+    _ = ‖v‖ * Φ := by ring
+
 end NormalNumbers.CastingOut
