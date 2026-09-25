@@ -720,6 +720,96 @@ theorem sum_dilatedPairShiftEdge_affineBlock {H : ℕ} (f₁ f₂ : ℕ → ℂ)
     linarith [this]
 
 
+/-! ## Every dilated-multiplier estimate is a proved estimate with a re-twisted weight
+
+`dilatedTwistedMultiplier_eq` identifies the dilated multiplier with the proved one at shift `1`.
+That is not quite enough for the *arithmetic* bounds, which are proved at the shift `h` (the
+frequency `t ↦ t*h` is what meets the additive-energy input).  The following identity is the useful
+one: the alias variable `u` only re-twists the per-prime weight by the unimodular constant
+`e_T(−u D c₁ p)`, leaving the shift `h` and the frequency `t` exactly where the proved bounds want
+them.  This is the same "a per-prime unimodular weight costs nothing" principle that
+`fourth_moment_twistedPrimeGraphMultiplier_le_energy` already cashes.
+-/
+
+/-- **The alias variable only re-twists the weight.** -/
+theorem dilatedTwistedMultiplier_eq_twisted (T D h c₁ : ℕ) (s : Finset ℕ) (w : ℕ → ℂ) (t u : ℤ) :
+    dilatedTwistedMultiplier T D h c₁ s w t u =
+      NormalNumbers.ElliottTwistedGraph.twistedPrimeGraphMultiplier T h s
+        (fun p ↦ w p * phase T (-(u * D * c₁)) (p : ℤ)) t := by
+  simp only [dilatedTwistedMultiplier,
+    NormalNumbers.ElliottTwistedGraph.twistedPrimeGraphMultiplier]
+  refine Finset.sum_congr rfl fun p _ ↦ ?_
+  have hph : phase T (t * h - u * D * c₁) (p : ℤ) =
+      phase T t ((p * h : ℕ) : ℤ) * phase T (-(u * D * c₁)) (p : ℤ) := by
+    rw [phase, phase, phase, ← Complex.exp_add]
+    congr 1
+    push_cast
+    ring
+  rw [hph]
+  ring
+
+/-- The re-twisted weight is still unimodular-bounded. -/
+theorem norm_retwist_le {T : ℕ} {w : ℕ → ℂ} {s : Finset ℕ} (hw : ∀ p ∈ s, ‖w p‖ ≤ 1)
+    (k : ℤ) : ∀ p ∈ s, ‖w p * phase T k (p : ℤ)‖ ≤ 1 := by
+  intro p hp
+  rw [norm_mul, norm_phase, mul_one]
+  exact hw p hp
+
+/-- **The fourth moment of the dilated multiplier**: the proved bound, `α` times. -/
+theorem sum_fourth_dilatedTwistedMultiplier_le {T D h c₁ α : ℕ} (s : Finset ℕ) (w : ℕ → ℂ)
+    {B : ℝ}
+    (hfourth : ∀ w' : ℕ → ℂ, (∀ p ∈ s, ‖w' p‖ ≤ 1) →
+      ∑ t ∈ Finset.range T,
+        ‖NormalNumbers.ElliottTwistedGraph.twistedPrimeGraphMultiplier T h s w' (t : ℤ)‖ ^ 4 ≤ B)
+    (hw : ∀ p ∈ s, ‖w p‖ ≤ 1) :
+    (∑ x ∈ (Finset.range T) ×ˢ (Finset.range α),
+      ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖ ^ 4) ≤ (α : ℝ) * B := by
+  classical
+  rw [Finset.sum_product, Finset.sum_comm]
+  calc
+    _ ≤ ∑ _u ∈ Finset.range α, B := by
+      refine Finset.sum_le_sum fun u _ ↦ ?_
+      have hrw : ∀ t ∈ Finset.range T,
+          ‖dilatedTwistedMultiplier T D h c₁ s w (t : ℤ) (u : ℤ)‖ ^ 4 =
+            ‖NormalNumbers.ElliottTwistedGraph.twistedPrimeGraphMultiplier T h s
+              (fun p ↦ w p * phase T (-((u : ℤ) * D * c₁)) (p : ℤ)) (t : ℤ)‖ ^ 4 := by
+        intro t _
+        rw [dilatedTwistedMultiplier_eq_twisted]
+      rw [Finset.sum_congr rfl hrw]
+      exact hfourth _ (norm_retwist_le hw _)
+    _ = (α : ℝ) * B := by simp [mul_comm]
+
+/-- The supremum bound transfers the same way. -/
+theorem norm_dilatedTwistedMultiplier_le {T D h c₁ : ℕ} (s : Finset ℕ) (w : ℕ → ℂ) {M : ℝ}
+    (hsup : ∀ w' : ℕ → ℂ, (∀ p ∈ s, ‖w' p‖ ≤ 1) → ∀ t : ℤ,
+      ‖NormalNumbers.ElliottTwistedGraph.twistedPrimeGraphMultiplier T h s w' t‖ ≤ M)
+    (hw : ∀ p ∈ s, ‖w p‖ ≤ 1) (t u : ℤ) :
+    ‖dilatedTwistedMultiplier T D h c₁ s w t u‖ ≤ M := by
+  rw [dilatedTwistedMultiplier_eq_twisted]
+  exact hsup _ (norm_retwist_le hw _) t
+
+/-- Markov's inequality for the dilated frequency count. -/
+theorem card_dilatedLargeFrequencies_le {T D h c₁ α : ℕ} (s : Finset ℕ) (w : ℕ → ℂ)
+    {θ B : ℝ} (hθ : 0 < θ)
+    (hmoment : (∑ x ∈ (Finset.range T) ×ˢ (Finset.range α),
+      ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖ ^ 4) ≤ B) :
+    (dilatedLargeFrequencies T D h c₁ α s w θ).card ≤ B / θ ^ 4 := by
+  classical
+  have hsmall : (dilatedLargeFrequencies T D h c₁ α s w θ).card * θ ^ 4 ≤
+      ∑ x ∈ dilatedLargeFrequencies T D h c₁ α s w θ,
+        ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖ ^ 4 := by
+    rw [← nsmul_eq_mul, ← Finset.sum_const]
+    exact Finset.sum_le_sum fun x hx ↦
+      pow_le_pow_left₀ hθ.le (Finset.mem_filter.mp hx).2 4
+  have hsub : dilatedLargeFrequencies T D h c₁ α s w θ ⊆
+      (Finset.range T) ×ˢ (Finset.range α) := Finset.filter_subset _ _
+  have hsum := Finset.sum_le_sum_of_subset_of_nonneg hsub (fun x _ _ ↦ by positivity :
+    ∀ x ∈ (Finset.range T) ×ˢ (Finset.range α),
+      x ∉ dilatedLargeFrequencies T D h c₁ α s w θ →
+      0 ≤ ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖ ^ 4)
+  exact (le_div_iff₀ (by positivity : 0 < θ ^ 4)).mpr ((hsmall.trans hsum).trans hmoment)
+
+
 end
 
 end NormalNumbers.ElliottDilatedPairing

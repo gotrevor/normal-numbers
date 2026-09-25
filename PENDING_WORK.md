@@ -37,8 +37,13 @@ lap 20 needs the hypothesis `floor(q c1 / a) <= n+1` (true in the application, `
 `pairTwistedSum_sequenceBlock` is proved.  ALL layers of the a-dilated graph argument are now proved
 statements in `src/`: edge->correlation, block edge<->observable, edge sum<->progression, Fourier
 identity, multiplier (= the proved one), large frequencies.
-Next: assemble — port `exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment` to the
-dilated mean and identify the dilated edge with
+**Lap 23: `dilatedTwistedMultiplier_eq_twisted`** — the alias variable u ONLY re-twists the
+per-prime weight by a unimodular constant, leaving the shift h and frequency t where the proved
+arithmetic bounds want them.  Hence `sum_fourth_dilatedTwistedMultiplier_le` (fourth moment <= a*B),
+`norm_dilatedTwistedMultiplier_le`, `card_dilatedLargeFrequencies_le` (Markov).  The dilated graph
+needs NO new arithmetic: the additive-energy input is used unchanged, a times.
+Next: port `norm_logProb_pairTwistedPrimeGraphMean_le_of_fourier_first_moment`, then
+`exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment`, to the dilated mean and identify the dilated edge with
 `ElliottAffineGraph.affineTwistedObservable`.
 
 Superseded description of that lemma: the `a`-dilated bilinear pairing
