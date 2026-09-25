@@ -116,3 +116,14 @@ axiom-clean.  Every row of the SURVIVORS table marked VACUOUS is therefore *reco
 same substitution — the plumbing was never the problem.  The ledger now honestly shows TWO open
 inputs (correlation + archimedean supply); the archimedean one used to be hidden inside the
 vacuous `archSupply_tt`.
+
+## Lap 104 addendum — the new crux, decomposed
+
+`C3MrtArchFaithful.lean`: the faithful archimedean supply is *exactly* one bound on
+`Re(z · ∑_{p≤X²} conj(χ(p))p^{-it}/p)` (`ttPretentiousSumChar_eq`, `ttPretentiousSumChar_ge`),
+split into `NarrowTwistSmall` (resonance range, essentially available) and `WideTwistSmall`
+(new debt: needs cancellation in the twisted prime sum, i.e. a zero-free region for `L(s,χ)`).
+Two sub-routes refuted in passing: the `‖T‖`-only form of the narrow bound is false (t = 0,
+χ = 1), and the existing resonance certificate cannot reach `|t| ≤ X²` because of its
+`log(2+|t|)` loss.  Chain: `faithfulArchLower_of_twist_small` → `FaithfulArchLower` →
+`archSupply_of_faithfulArchLower` → `conjC3_of_geom_input_lower`.

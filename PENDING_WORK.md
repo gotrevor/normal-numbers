@@ -68,6 +68,47 @@ range is needed for (3.3) as opposed to for the *conclusion*.  ② Rethread `C3M
 (mechanical; they are copies of the `_with` chain).  ③ The crux itself (one Weyl sum, laps
 100-101) is unchanged; its interface is now `KPointNoExcAtWith`.
 
+## Lap 104 (2026-09-25) — the faithful archimedean supply, DECOMPOSED (and one route refuted)
+
+New `src/NormalNumbers/C3MrtArchFaithful.lean`, all axiom-clean.
+
+**The exact split.**  `ttPretentiousSumChar_eq`: for `‖z‖ = 1`,
+
+    ttPretentiousSumChar (zOmegaNat z) X χ t = ∑_{p ≤ X²} 1/p − Re(z · twistedPrimeSum X χ t)
+
+with `twistedPrimeSum X χ t = ∑_{p ≤ X²} conj(χ(p)) p^{-it}/p`.  With two-sided Mertens
+(`abs_primeReciprocals_sub_log_log_le`) this gives `ttPretentiousSumChar_ge`:
+`log log X² − mertensBound − Re(z·T) ≤ ttPretentiousSumChar`.  So the ENTIRE faithful archimedean
+obligation is one bound on `Re(z · twistedPrimeSum)`.
+
+**Refuted sub-route (recorded in the file's doc-comment).**  Stating the bound on `‖T‖` instead
+of `Re(z·T)` is FALSE in the narrow range: at `t = 0`, `χ = 1`, `T` is the full mass
+`≈ log log X`.  What makes the pretentious sum large there is the *direction* of `z`, not the
+size of `T` — that is precisely the resonance mechanism.  Hence `NarrowTwistSmall` is stated
+with `Re` and `WideTwistSmall` with the norm (converted by `re_le_norm`).
+
+**Second refuted sub-route.**  The resonance certificate `ttNonPretentious_of_uniformResonantMass`
+CANNOT cover the faithful twist range: its resonant-mass bound carries `log(2+|t|)`, affordable
+only for `|t| ≤ (log X)^{1/125}` (that is where its `ht4` step is used).  At `|t| ≤ X²` that term
+is `≍ log X` and swamps `log log X`.  So the wide range needs cancellation in
+`∑_{p≤Y} conj(χ(p))p^{-it}/p` — a zero-free region for `L(s,χ)` (Vinogradov–Korobov), not a
+resonance count.  This is the genuinely NEW analytic debt created by faithfulness.
+
+**The chain now:** `NarrowTwistSmall` + `WideTwistSmall` → `faithfulArchLower_of_twist_small` →
+`FaithfulArchLower b C` → `archSupply_of_faithfulArchLower` → `ArchSupply (TTNonPretentiousAt
+(exp (−C))) b` → `conjC3_of_geom_input_lower : … → ConjC3`.  `ttNonPretentiousAt_of_lower` is the
+exponentiation step, once and for all.
+
+**Next attack.** ① `narrowTwistSmall_of_uniformResonantMass` at `q = 1`: the algebra above turns
+the existing `ttPretentiousSum_ge` + `UniformResonantMass` into exactly `Re(zT) ≤ cos ε · log log
+X² + (1−cos ε)·resonantMass`, i.e. `NarrowTwistSmall` with `κ ≈ 1 − cos ε − 100ε`.  Do this first;
+it is bookkeeping over lemmas that already exist. ② The character case `q > 1` of the narrow
+range: the resonance windows must be taken per residue class mod `q`, so `resonant_mass_le` needs
+a `φ(q)`-fold version — state it as `UniformResonantMassChar` and check the count. ③ The wide
+range `WideTwistSmall`: look for a mathlib/PNTPort route to `∑_{p≤Y} χ(p)p^{-it}/p = O(1)` for
+`|t| ≥ (log Y)^{1/125}`; `src/PNTPort` has the Wiener–Ikehara/MediumPNT apparatus but no twisted
+zero-free region.
+
 ## Lap 93 (2026-09-25) — the open input is RESTRICTED to the family the chain actually uses
 
 **New file `src/NormalNumbers/C3MrtRootsInput.lean` (12 declarations, all trust-triple clean).**

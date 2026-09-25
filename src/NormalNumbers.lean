@@ -494,3 +494,4 @@ import NormalNumbers.PairDecoupleAttacks
 import NormalNumbers.PairDecoupleBand
 import NormalNumbers.C3MrtTTDefect
 import NormalNumbers.C3MrtFaithfulInput
+import NormalNumbers.C3MrtArchFaithful

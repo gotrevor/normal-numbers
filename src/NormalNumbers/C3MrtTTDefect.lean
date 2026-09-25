@@ -247,20 +247,21 @@ theorem twoPointNaturalCorrelation_trivially_true : TwoPointNaturalCorrelation :
 /-! ## §4 the faithful non-pretentiousness hypothesis -/
 
 /-- The inner sum of TT's `M(g; X², Q)` at the Dirichlet character `χ` and the twist `t`:
-`∑_{p ≤ X²} (1 − Re(g(p) χ(p) p^{-it}))/p`.  `ttPretentiousSum` is the `q = 1` case
+`∑_{p ≤ X²} (1 − Re(g(p) conj(χ(p)) p^{-it}))/p` — TT's `D(g, n ↦ χ(n)n^{it}; X²)²`, whose
+summand is `1 − Re(g(p) conj(χ(p)p^{it}))` (paper (1.17)-(1.18), lines 557-576).  `ttPretentiousSum` is the `q = 1` case
 (`ttPretentiousSumChar_one`), which is exactly what the old interface omitted. -/
 noncomputable def ttPretentiousSumChar (g : ℕ → ℂ) (X : ℝ) {q : ℕ}
     (χ : DirichletCharacter ℂ q) (t : ℝ) : ℝ :=
   ∑ p ∈ (Finset.range (⌈X ^ 2⌉₊ + 1)).filter Nat.Prime,
-    (1 - (g p * χ (p : ZMod q) *
+    (1 - (g p * (starRingEnd ℂ) (χ (p : ZMod q)) *
       Complex.exp (-(t : ℂ) * Complex.I * (Real.log p : ℂ))).re) / (p : ℝ)
 
 theorem ttPretentiousSumChar_one (g : ℕ → ℂ) (X t : ℝ) :
     ttPretentiousSumChar g X (1 : DirichletCharacter ℂ 1) t = ttPretentiousSum g X t := by
   unfold ttPretentiousSumChar ttPretentiousSum
   refine Finset.sum_congr rfl fun p _ => ?_
-  have : (1 : DirichletCharacter ℂ 1) ((p : ℕ) : ZMod 1) = 1 := by
-    rw [Subsingleton.elim ((p : ℕ) : ZMod 1) 1, map_one]
+  have : (starRingEnd ℂ) ((1 : DirichletCharacter ℂ 1) ((p : ℕ) : ZMod 1)) = 1 := by
+    rw [Subsingleton.elim ((p : ℕ) : ZMod 1) 1, map_one, map_one]
   rw [this, mul_one]
 
 /-- **TT (3.3), faithfully** — `exp(M(g; X², (log X)^{1/125})) ≥ A · L` with the implied
