@@ -35,7 +35,7 @@ Thm 3.1(ii) with the exceptional set of scales deleted, which TT say is out of r
 *log*-measure by `Cst (log A)^{1-κc} ≫ 1`.  Same wall as log-Chowla ⇏ Chowla; TT's own Thm 1.3
 escapes it because *irrationality* needs only infinitely many good scales.
 
-## Landed this lap (`C3MrtUnifK.lean`, 17 declarations, all trust-triple clean)
+## Landed this lap (`C3MrtUnifK.lean`, 19 declarations, all trust-triple clean)
 
 * `quantDepthElliottGen_forces_diagonal`, `DepthDiagonal`, `weylLambertTwist_of_depthDiagonal`,
   `depthDiagonal_of_quantDepthElliottGen`.
@@ -62,19 +62,24 @@ escapes it because *irrationality* needs only infinitely many good scales.
       M₀ = Q·primorial P  (fixed before N).
 
   So the head is `O(M₀²/N)` and the rate is carried entirely by `Φ(N/2^{k₀}) + 2^{-k₀}`.
+* `windowPhi_hwin` — the splice: ONE threshold condition at the single scale `A`,
+  `max (max 2 (K+1)) M₀ ≤ (2 log A)^(κ·cK K)`, propagates to every `a ≥ A`.
+* **`depthAvg_le_with`** — everything of laps 84–87 in one statement: named input ⇒ explicit
+  majorant.  Only THREE quantities move with `K`: `cK K`, `CstK K`, and the threshold scale
+  `A = A(K)`.  That is exactly the data the diagonal needs.
 
 ## NEXT (in order)
 
 1. ~~`windowPhi`~~ — DONE this lap.
-2. ~~`depthAvg_le_with`~~ — the *window→depthAvg* half is DONE (`depthAvg_le_of_window`).
-   What remains is the **splice**: check `windowPhi`'s `hB` against
-   `dyadic_window_bound_with` for `g n = ∏_{i<K} z_i^{ω(n+i+1)}` (i.e. produce the `hwin`
-   hypothesis of `windowPhi_window_bound` from `dyadic_window_bound_with`, with
-   `A = A(K)` the least scale satisfying `max 2 (K+1) ≤ (2 log a)^(κ·cK K)` and
-   `M₀ ≤ (2 log a)^(κ·cK K)`), then pick `k₀ = k₀(N) ≍ log log N` and read off
-   `B cK CstK K N`.
-3. **`depthElliottLL_of_unif`** — the diagonal from `Tendsto (fun N => B cK CstK (depthLL b N) N)`
-   and hence `WeylLambertTwist b`; then a concrete sufficient profile.  Arithmetic already
+2. ~~`depthAvg_le_with`~~ — DONE this lap.
+3. **`depthElliottLL_of_unif`** — THE REMAINING BRICK.  Instantiate `depthAvg_le_with` at
+   `K = depthLL b N`, with `k₀ = k₀(N)` (take `k₀ N = Nat.log 2 (Nat.log 2 N)`, so
+   `2^{-k₀} ≍ 1/log₂ N`) and `A = A(K)` supplied as a function
+   `Athr : ℕ → ℕ` with the two hypotheses `2 ≤ Athr K` and
+   `max (max 2 (K+1)) M₀ ≤ (2 log (Athr K))^(κ·cK K)`.  The schedule hypothesis is then
+   exactly `Tendsto (fun N => windowPhi cK CstK κ (depthLL b N) M₀ (Athr (depthLL b N))
+   (N / 2^(k₀ N))) atTop (𝓝 0)` plus `Athr (depthLL b N) ≤ N / 2^(k₀ N)` eventually.
+   Then `weylLambertTwist_of_depthDiagonal`.  Arithmetic already
    checked (PENDING_WORK F2): `cK K = c₀γ^K` needs `γ > b^{-1/2}` (γ = 1/2 FAILS at b = 3,
    θ = 2log2/log3 ≈ 1.26 > 1); `cK K = c₀/K^m` is comfortable; `CstK K ≤ exp(K^m)` always
    affordable since `CstK (depthLL b N) = exp(O((log log log N)^m))`.

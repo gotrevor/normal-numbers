@@ -495,6 +495,88 @@ theorem depthAvg_le_of_window {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ) {D
   refine le_trans (Finset.sum_le_sum hterm) ?_
   rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
 
+/-! ### The splice: the named input supplies the profile -/
+
+open scoped Classical in
+/-- **`dyadic_window_bound_with` supplies `windowPhi`'s analytic branch.**  One threshold
+condition at the single scale `A` propagates to every `a ≥ A`, because `a ↦ (2 log a)^(κ·cK K)`
+is increasing.  `A` may — and along the diagonal must — depend on `K`. -/
+theorem windowPhi_hwin {K : ℕ} (hK : 0 < K) {cK CstK : ℕ → ℝ} (hc : 0 < cK K)
+    (h : KPointNoExcWith cK CstK K)
+    (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1) {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (z 0)) X L)
+    {M A : ℕ} (hM : 0 < M) (hA2 : 2 ≤ A)
+    (hAthr : max (max 2 ((K : ℝ) + 1)) (M : ℝ) ≤ (2 * Real.log A) ^ (κ * cK K))
+    (r : ℕ) {a : ℕ} (haA : A ≤ a) :
+    ‖∑ n ∈ (Finset.Ioc a (2 * a)).filter (fun n => n % M = r % M),
+        ∏ i ∈ range K, z i ^ omegaNat (n + i + 1)‖
+      ≤ CstK K * (2 * Real.log a) ^ (-(κ * cK K)) * (a : ℝ) / (M : ℝ) := by
+  classical
+  have ha2 : 2 ≤ a := le_trans hA2 haA
+  have haR : (2 : ℝ) ≤ (a : ℝ) := by exact_mod_cast ha2
+  have hAR : (2 : ℝ) ≤ (A : ℝ) := by exact_mod_cast hA2
+  have hAa : (A : ℝ) ≤ (a : ℝ) := by exact_mod_cast haA
+  have hlogA : Real.log 2 ≤ Real.log A := Real.log_le_log (by norm_num) hAR
+  have hlog2 : (0.6931471803 : ℝ) < Real.log 2 := Real.log_two_gt_d9
+  have hlogAa : Real.log A ≤ Real.log a := Real.log_le_log (by linarith) hAa
+  have hmono : (2 * Real.log A) ^ (κ * cK K) ≤ (2 * Real.log a) ^ (κ * cK K) :=
+    Real.rpow_le_rpow (by linarith) (by linarith) (mul_pos hκ hc).le
+  have hthr : max 2 ((K : ℝ) + 1) ≤ (2 * Real.log a) ^ (κ * cK K) :=
+    le_trans (le_trans (le_max_left _ _) hAthr) hmono
+  have hML : (M : ℝ) ≤ (2 * Real.log a) ^ (κ * cK K) :=
+    le_trans (le_trans (le_max_right _ _) hAthr) hmono
+  have hrw : ∑ n ∈ (Finset.Ioc a (2 * a)).filter (fun n => n % M = r % M),
+        ∏ i ∈ range K, z i ^ omegaNat (n + i + 1)
+      = ∑ n ∈ (Finset.Ioc a (2 * a)).filter (fun n => n % M = r % M),
+        ∏ i : Fin K, z i ^ omegaNat (n + (i : ℕ) + 1) :=
+    Finset.sum_congr rfl fun n _ =>
+      (Fin.prod_univ_eq_prod_range (fun i => z i ^ omegaNat (n + i + 1)) K).symm
+  rw [hrw]
+  exact dyadic_window_bound_with hK h z hz hκ hκ1 hnp ha2 hthr hM r hML
+
+open scoped Classical in
+/-- **The explicit `depthAvg` majorant from the named input, constants and all.**
+Everything of laps 84–87 in one statement: the `K`-point input with named constants, the
+archimedean certificate, the window profile, the halving stack cut at `k₀`, the `M₀` residue
+classes and the `1/N`.  Only three quantities move with `K`: `cK K`, `CstK K` and the threshold
+scale `A`.  That is exactly the data the diagonal `K = depthLL b N` needs. -/
+theorem depthAvg_le_with {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ) {K : ℕ} (hK : 0 < K)
+    {cK CstK : ℕ → ℝ} (hc : 0 < cK K) (hC : 0 < CstK K)
+    (hin : KPointNoExcWith cK CstK K)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+    {A : ℕ} (hA2 : 2 ≤ A)
+    (hAthr : max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log A) ^ (κ * cK K))
+    {N : ℕ} (hN : Q * primorial P < N) (k₀ : ℕ) :
+    ‖depthAvg b P Q j hh K N‖
+      ≤ ((Q * primorial P : ℕ) : ℝ)
+          * ((((Q * primorial P : ℕ) : ℝ) + 2)
+              + ((Nat.log 2 (N + Q * primorial P) + 1 : ℕ) : ℝ)
+            + (windowPhi cK CstK κ K (Q * primorial P) A (N / 2 ^ k₀) + (1 / 2) ^ k₀)
+                * ((N : ℝ) + ((Q * primorial P : ℕ) : ℝ)))
+        / (N : ℝ) := by
+  classical
+  have hM0 : 0 < Q * primorial P := Nat.mul_pos hQ (primorial_pos P)
+  have hz : ∀ i, ‖depthRoot b hh i‖ = 1 := fun i => by rw [depthRoot]; exact norm_ee_real _
+  have hf : ∀ n : ℕ, ‖∏ i ∈ range K, depthRoot b hh i ^ omegaNat (n + i + 1)‖ ≤ 1 := by
+    intro n
+    simp only [norm_prod, norm_pow]
+    have hone : ∀ i ∈ range K, ‖depthRoot b hh i‖ ^ omegaNat (n + i + 1) = 1 := by
+      intro i _
+      rw [hz i, one_pow]
+    rw [Finset.prod_congr rfl hone, Finset.prod_const_one]
+  refine depthAvg_le_of_window hQ P j hh
+    (windowPhi_nonneg hA2 hC.le)
+    (fun a => windowPhi_le_one cK CstK κ K (Q * primorial P) A a)
+    (fun {x y} hxy => windowPhi_antitone hA2 hC.le (mul_pos hκ hc).le hxy)
+    (fun r a => windowPhi_window_bound hf
+      (fun a' ha' => windowPhi_hwin hK hc hin (fun i => depthRoot b hh i) hz hκ hκ1 hnp
+        hM0 hA2 hAthr r ha') a)
+    hN k₀
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -505,6 +587,8 @@ theorem depthAvg_le_of_window {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ) {D
 #print axioms NormalNumbers.CastingOut.windowPhi_window_bound
 #print axioms NormalNumbers.CastingOut.norm_progression_below_le
 #print axioms NormalNumbers.CastingOut.depthAvg_le_of_window
+#print axioms NormalNumbers.CastingOut.windowPhi_hwin
+#print axioms NormalNumbers.CastingOut.depthAvg_le_with
 
 end CastingOut
 
