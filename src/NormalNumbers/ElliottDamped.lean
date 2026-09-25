@@ -407,6 +407,70 @@ theorem norm_archCorr_sub_dampedPrefix_le {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y 
         norm_sub_le _ _
     _ ≤ _ := by linarith
 
+/-- The norm of the damped weight of the primes in `(X, Y]`: an absolute bound, uniform in the
+frequency `v` and in the cutoff `Y`.  Extracted from `norm_archCorr_sub_dampedPrefix_le`'s
+internals so that the *cutoff* can be moved freely (`norm_dampedPrefix_transfer`). -/
+theorem norm_dampedPrefix_sub_le {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y : ℕ) (hXY : X ≤ Y) :
+    ‖dampedPrefix v X Y - dampedPrefix v X X‖
+      ≤ Real.log 2 + 2 * PrimeEstimates.mertensBound := by
+  classical
+  set δ : ℝ := (Real.log (X : ℝ))⁻¹ with hδ
+  have hsplit : dampedPrefix v X Y - dampedPrefix v X X
+      = ∑ p ∈ primesInInterval X Y,
+          (starRingEnd ℂ) (archimedeanTwist v p) * (((p : ℝ) ^ (-(1 : ℝ) - δ) : ℝ) : ℂ) := by
+    have h := sum_primesUpTo_split (f := fun p : ℕ =>
+      (starRingEnd ℂ) (archimedeanTwist v p) * (((p : ℝ) ^ (-(1 : ℝ) - δ) : ℝ) : ℂ)) hXY
+    simp only [dampedPrefix, hδ] at *
+    rw [h]
+    ring
+  rw [hsplit]
+  refine le_trans (norm_sum_le _ _) ?_
+  have hterm : ∀ p ∈ primesInInterval X Y,
+      ‖(starRingEnd ℂ) (archimedeanTwist v p) * (((p : ℝ) ^ (-(1 : ℝ) - δ) : ℝ) : ℂ)‖
+        = (p : ℝ) ^ (-(1 : ℝ) - δ) := by
+    intro p hp
+    have hppos : 0 < p := (mem_primesInInterval.mp hp).2.2.pos
+    rw [norm_mul, RCLike.norm_conj, norm_archimedeanTwist hppos v, one_mul,
+      Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (by positivity)]
+  rw [Finset.sum_congr rfl hterm]
+  exact dampedTail_le hX Y
+
+/-- **THE CUTOFF IS FREE.**  Because the damping exponent is tuned to `X`, the damped prefix at two
+different cutoffs `Y, Y' ≥ X` differ by an absolute constant.  This is what lets the analytic input
+below be stated only at a *large* cutoff (`sliceCut X`), where the truncated von Mangoldt series is
+genuinely within `O(1)` of `−ζ'/ζ`, while the consumers keep calling it at `Y = X`. -/
+theorem norm_dampedPrefix_transfer {X : ℕ} (hX : 2 ≤ X) (v : ℝ) (Y Y' : ℕ)
+    (hXY : X ≤ Y) (hXY' : X ≤ Y') :
+    ‖dampedPrefix v X Y‖
+      ≤ ‖dampedPrefix v X Y'‖ + 2 * (Real.log 2 + 2 * PrimeEstimates.mertensBound) := by
+  have h1 := norm_dampedPrefix_sub_le hX v Y hXY
+  have h2 := norm_dampedPrefix_sub_le hX v Y' hXY'
+  have h3 : ‖dampedPrefix v X Y - dampedPrefix v X Y'‖
+      ≤ 2 * (Real.log 2 + 2 * PrimeEstimates.mertensBound) := by
+    have : dampedPrefix v X Y - dampedPrefix v X Y'
+        = (dampedPrefix v X Y - dampedPrefix v X X)
+          - (dampedPrefix v X Y' - dampedPrefix v X X) := by ring
+    rw [this]
+    calc ‖_‖ ≤ ‖dampedPrefix v X Y - dampedPrefix v X X‖
+          + ‖dampedPrefix v X Y' - dampedPrefix v X X‖ := norm_sub_le _ _
+      _ ≤ _ := by linarith
+  have := norm_le_norm_add_norm_sub' (dampedPrefix v X Y) (dampedPrefix v X Y')
+  linarith
+
+/-- The cutoff at which the analytic (`ζ'/ζ`) inputs are stated: `exp((log X)²)`, so that
+`sliceCut X ^ (−1/log X) = 1/X` and the primes beyond the cut contribute `≤ (log X)²/X ≤ 1` to
+every slice with `w ≥ 0`.  Nothing about its size is needed for the reductions — only the
+*freedom* of the cutoff (`norm_dampedPrefix_transfer`) — so it is kept opaque here. -/
+noncomputable def sliceCut (X : ℕ) : ℕ := ⌈Real.exp ((Real.log (X : ℝ)) ^ 2)⌉₊
+
+/-- The absolute cost of moving the cutoff to `sliceCut X`. -/
+def cutCost : ℝ := 2 * (Real.log 2 + 2 * PrimeEstimates.mertensBound)
+
+theorem cutCost_nonneg : 0 ≤ cutCost := by
+  have h1 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have := PrimeEstimates.mertensBound_nonneg
+  rw [cutCost]; linarith
+
 /-! ### The two soft inputs, reduced to the damped Dirichlet series -/
 
 open NormalNumbers.ElliottArchBands
@@ -826,7 +890,7 @@ series at `1+δ+w+iv`; the classical pole-local bound `|ζ'/ζ(s)| ≪ 1/|s-1|` 
 `ζ(1+it) ≠ 0`, already in mathlib, plus compactness) gives exactly these two clauses with
 `T = max(|v|, δ)`. -/
 def SliceBoundSmall (K : ℝ) : Prop :=
-  ∀ (X Y : ℕ) (v : ℝ), 2 ≤ X → 0 < |v| → |v| ≤ 1 →
+  ∀ (X Y : ℕ) (v : ℝ), 2 ≤ X → sliceCut X ≤ Y → 0 < |v| → |v| ≤ 1 →
     (∀ w ∈ Set.Icc (0 : ℝ) (max |v| (Real.log (X : ℝ))⁻¹),
         ‖logWeightedSlice v X Y w‖ ≤ (max |v| (Real.log (X : ℝ))⁻¹)⁻¹ + K) ∧
     (∀ w ∈ Set.Icc (max |v| (Real.log (X : ℝ))⁻¹) 1,
@@ -836,7 +900,7 @@ def SliceBoundSmall (K : ℝ) : Prop :=
 proved: the damping (laps 97–98), the interchange (lap 100), the decay (lap 101) and the
 integration (lap 102). -/
 theorem dampedSeriesBoundSmall_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : SliceBoundSmall K) :
-    DampedSeriesBoundSmall (1 + K + tailCost) := by
+    DampedSeriesBoundSmall (1 + K + tailCost + cutCost) := by
   refine ⟨3, by norm_num, ?_⟩
   intro X Y v hX3 hXY hv0 hv1
   have hX : 2 ≤ X := by omega
@@ -858,8 +922,13 @@ theorem dampedSeriesBoundSmall_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : Slice
   have hvT : |v| ≤ T := le_max_left _ _
   have hT0 : 0 < T := lt_of_lt_of_le hv0 hvT
   have hT1 : T ≤ 1 := max_le hv1 hδ1
-  obtain ⟨hcap, hharm⟩ := h X Y v hX hv0 hv1
-  have hmain := norm_dampedPrefix_le_of_slice_le' hX v Y hδT hT1 hK hcap hharm
+  set Y' : ℕ := max Y (sliceCut X) with hY'
+  have hXY' : X ≤ Y' := le_trans hXY (le_max_left _ _)
+  obtain ⟨hcap, hharm⟩ := h X Y' v hX (le_max_right _ _) hv0 hv1
+  have hmain0 := norm_dampedPrefix_le_of_slice_le' hX v Y' hδT hT1 hK hcap hharm
+  have htr := norm_dampedPrefix_transfer hX v Y Y' hXY hXY'
+  have hmain : ‖dampedPrefix v X Y‖ ≤ 1 + Real.log (1 / T) + K + tailCost + cutCost := by
+    rw [cutCost] at *; linarith
   have hlogmono : Real.log (1 / T) ≤ Real.log (1 / |v|) :=
     Real.log_le_log (by positivity) (one_div_le_one_div_of_le hv0 hvT)
   have hlogv : 0 ≤ Real.log (1 / |v|) := by
@@ -871,7 +940,7 @@ theorem dampedSeriesBoundSmall_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : Slice
 /-- **The `ζ'/ζ` input, moderate band, in slice form.**  The de la Vallée Poussin bound
 `|ζ'/ζ(σ+iv)| ≤ C log|v|` on `σ > 1` gives these two clauses with `T = max(1/log(|v|+16), δ)`. -/
 def SliceBoundModerate (K : ℝ) : Prop :=
-  ∀ (X Y : ℕ) (v : ℝ), 3 ≤ X → 1 < |v| →
+  ∀ (X Y : ℕ) (v : ℝ), 3 ≤ X → sliceCut X ≤ Y → 1 < |v| →
     (∀ w ∈ Set.Icc (0 : ℝ) (max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹),
         ‖logWeightedSlice v X Y w‖
           ≤ (max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹)⁻¹ + K) ∧
@@ -880,7 +949,7 @@ def SliceBoundModerate (K : ℝ) : Prop :=
 
 /-- **(c′-II-a) REDUCED TO THE SLICE BOUND.** -/
 theorem dampedSeriesBoundModerate_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : SliceBoundModerate K) :
-    DampedSeriesBoundModerate (1 + K + tailCost) := by
+    DampedSeriesBoundModerate (1 + K + tailCost + cutCost) := by
   refine ⟨3, by norm_num, ?_⟩
   intro X Y v hX3 hXY hv1
   have hX : 2 ≤ X := by omega
@@ -912,8 +981,13 @@ theorem dampedSeriesBoundModerate_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : Sl
   have hLinv1 : (Real.log (|v| + 16))⁻¹ ≤ 1 := by
     rw [inv_le_one_iff₀]; exact Or.inr hL.le
   have hT1 : T ≤ 1 := max_le hLinv1 hδ1
-  obtain ⟨hcap, hharm⟩ := h X Y v hX3 hv1
-  have hmain := norm_dampedPrefix_le_of_slice_le' hX v Y hδT hT1 hK hcap hharm
+  set Y' : ℕ := max Y (sliceCut X) with hY'
+  have hXY' : X ≤ Y' := le_trans hXY (le_max_left _ _)
+  obtain ⟨hcap, hharm⟩ := h X Y' v hX3 (le_max_right _ _) hv1
+  have hmain0 := norm_dampedPrefix_le_of_slice_le' hX v Y' hδT hT1 hK hcap hharm
+  have htr := norm_dampedPrefix_transfer hX v Y Y' hXY hXY'
+  have hmain : ‖dampedPrefix v X Y‖ ≤ 1 + Real.log (1 / T) + K + tailCost + cutCost := by
+    rw [cutCost] at *; linarith
   have hlogmono : Real.log (1 / T) ≤ Real.log (Real.log (|v| + 16)) := by
     refine Real.log_le_log (by positivity) ?_
     rw [div_le_iff₀ hT0]

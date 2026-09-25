@@ -212,3 +212,7 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottDamped.norm_dampedPrefix_le_of_slice_le'
 #print axioms NormalNumbers.ElliottDamped.dampedSeriesBoundSmall_of_sliceBound
 #print axioms NormalNumbers.ElliottDamped.dampedSeriesBoundModerate_of_sliceBound
+
+/-! ### The cutoff is free: the ζ'/ζ inputs are stated at a large cut (lap 103) -/
+#print axioms NormalNumbers.ElliottDamped.norm_dampedPrefix_sub_le
+#print axioms NormalNumbers.ElliottDamped.norm_dampedPrefix_transfer
