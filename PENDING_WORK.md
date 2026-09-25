@@ -32,13 +32,21 @@ layers + a sparse-perturbation limit transfer.  Four items, hardest first:
    `Tendsto (onesFreq t L j) atTop (𝓝 v)` and eventual diff-density `≤ ε`, then
    `Tendsto (onesFreq s L j) atTop (𝓝 v)`.  THIS is the piece that replaces the multi-scale
    uniformity analysis (rates, double limits) that blocked lap 14's plan.
-2. **The single gadget at width `q`.**  Generalize `rect_segGf` from "block of width `a+2`,
-   gadget at `{0,1,a,a+1}`" to "block of width `q`, gadget at `{p,p+1,p+a,p+a+1}`", and prove
-   the **removal involution**: if the trace `I` holds both-or-neither of `{p,p+1}`, then the
-   bit-swap `ι` (`p ↔ p+1` and `p+a ↔ p+a+1`) preserves the trigger set and satisfies
-   `ones_I(ι d) = ones_I(d) + u(d)`, `u(ι d) = −u(d)`, so re-indexing the sum by `ι` deletes the
-   gadget from `∑_d X^{ones_I}` with NO polynomial algebra.  (If `I` holds both-or-neither of
-   the HIGH pair `{p+a,p+a+1}` the gadget drops out pointwise, trivially.)
+2. **The single gadget at width `q`.**  *(a) REMOVAL: DONE, lap 16* —
+   `src/NormalNumbers/AbelianWindowGad.lean`, axiom-clean: `gadBit`/`gadTrig` (the gadget at an
+   arbitrary position `p` in a block of width `q`), `multiG` (a list of gadgets on disjoint
+   quadruples), the bit surgery (`swapBits`, `bitw_ext`, `gadSwap`, `gadTrig_gadSwap`,
+   `gadSwap_involutive`, `gadPhi`), and the two removal lemmas
+   `blockGf_cons_of_high` / `blockGf_cons_of_low`.  *(b) STILL OPEN*: the CLOSED FORM for a
+   block carrying ONE gadget — generalize `rect_segGf` from width `a+2` / position `0` to
+   width `q` / position `p`:
+   `blockGf q (multiG q [(p,a)]) I = ∏_{i<q} w_i(I) + (∏_{i ∉ quadSet p a} w_i(I))·corr(I)` with
+   `w_i(I) = if i ∈ I then 1+X else 2` and
+   `corr(I) = (X^{[p+a∈I]} − X^{[p+a+1∈I]})(X^{[p∈I]} − X^{[p+1∈I]})`.  Port of the existing
+   `rfac`/`rect_sum_forced`/`rect_key` chain (re-index `a+2 → q`, `spos → quadSet p a`), OR the
+   cheaper route found lap 16: in the fully-separated case split the digit sum over the trigger
+   set by `ε = bit p` and use `rect_sum_forced`-style forced patterns once, giving the
+   correction `−(X−1)²` directly (hand-checked against `rect_segGf`: they agree).
 3. **The multi-gadget block law.**  An interval trace fully separates at most ONE gadget
    (full separation forces `lo = p+1`, `hi = p+a+1`, so `p` is determined), and suffix/prefix
    traces separate none (`a = 0` would be needed).  So every other gadget is removable by 2 and

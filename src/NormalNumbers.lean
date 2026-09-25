@@ -390,6 +390,7 @@ import NormalNumbers.AbelianWindowOdd
 import NormalNumbers.AbelianWindowGf
 import NormalNumbers.AbelianWindowRect
 import NormalNumbers.AbelianWindowPerturb
+import NormalNumbers.AbelianWindowGad
 import NormalNumbers.AbelianBinaryExample
 import NormalNumbers.WalshBase
 import NormalNumbers.G4WiringSummatory
