@@ -214,6 +214,74 @@ theorem norm_sum_Ioc_pow_le {A : ℕ} (hA : 1 ≤ A) (f : ℕ → ℂ) (m : ℕ)
   rw [h1] at this
   linarith
 
+/-! ### The conditional rung
+
+Everything above is unconditional.  Here the named open input enters, and ONLY here:
+`Erdos67b.NonasymptoticLogElliott` — in this repo the ratified bet
+`NormalNumbers.ElliottGeneral.nonasymptoticLogElliott` (Tao, Forum Math. Pi 4 (2016), Thm 1.3).
+
+The theorem below takes it as a hypothesis and returns the bound on an *initial segment*, which
+is the form laps 8–13 need.  Note what is NOT a hypothesis: multiplicativity, unimodularity and
+non-degeneracy are all discharged internally from `C3MrtElliottMatch`.  The only hypothesis left
+to the caller is non-pretentiousness of the first twist — the genuinely arithmetic input, and
+the easier case of lap 5's certificate since `ζ^Ω` is constant on primes.
+-/
+
+/-- **The `D = 2` rung, conditional on the general two-point log-Elliott theorem.**
+
+Given `ε > 0` there is a threshold `A₀` such that for every `A ≥ A₀` at which the first twist is
+non-pretentious, and every `m`, the initial segment `1 ≤ j ≤ A^m` of the two-linear-form
+correlation of `ζ₀^Ω` and `ζ₁^Ω` is bounded by `1 + m·ε·log A = 1 + ε·log(A^m)`.
+
+The bound is `ε` times the log-mass of the segment, plus an absolute constant — i.e. `o(log J)`
+on the initial segment of length `J`, which is exactly the rung. -/
+theorem initial_segment_bound_of_elliott
+    (helliott : Erdos67b.NonasymptoticLogElliott)
+    {d e b₀ b₁ : ℕ} (hd : 0 < d) (he : 0 < e)
+    (hdet : (e : ℤ) * (b₁ : ℤ) - (d : ℤ) * (b₀ : ℤ) ≠ 0)
+    (z₀ z₁ : ℂ) (hz₀ : ‖z₀‖ = 1) (hz₁ : ‖z₁‖ = 1)
+    (ε : ℝ) (hε : 0 < ε) :
+    ∃ A₀ : ℕ, 2 ≤ A₀ ∧ ∀ A : ℕ, A₀ ≤ A →
+      (∀ X : ℕ, ∀ q : ℕ, 0 < q → q ≤ A → ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ,
+          |t| ≤ (A : ℝ) * X →
+            (A : ℝ) ≤ Erdos67b.pretentiousDistSqToTwist
+              (Erdos67b.restrictToNat (zOmInt z₀)) χ t X) →
+      ∀ m : ℕ,
+        ‖∑ j ∈ Ioc 0 (A ^ m),
+            (Erdos67b.harmonicWeight j : ℂ) * zOmInt z₀ (Erdos67b.integerAffine e (b₀ : ℤ) j) *
+              zOmInt z₁ (Erdos67b.integerAffine d (b₁ : ℤ) j)‖
+          ≤ 1 + (m : ℝ) * (ε * Real.log A) := by
+  obtain ⟨A₀, hA₀2, hA₀⟩ := helliott e d (b₀ : ℤ) (b₁ : ℤ) he hd hdet ε hε
+  refine ⟨A₀, hA₀2, fun A hA hpret m => ?_⟩
+  have hA1 : 1 ≤ A := by omega
+  set f : ℕ → ℂ := fun j =>
+    (Erdos67b.harmonicWeight j : ℂ) * zOmInt z₀ (Erdos67b.integerAffine e (b₀ : ℤ) j) *
+      zOmInt z₁ (Erdos67b.integerAffine d (b₁ : ℤ) j) with hf
+  have hwin : ∀ i ∈ Icc 1 m, ‖∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j‖ ≤ ε * Real.log A := by
+    intro i hi
+    rw [Finset.mem_Icc] at hi
+    have hWX : A ≤ A ^ i := by
+      calc A = A ^ 1 := (pow_one A).symm
+        _ ≤ A ^ i := Nat.pow_le_pow_right hA1 hi.1
+    have hcorr : ∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j
+        = Erdos67b.elliottLogCorrelation (zOmInt z₀) (zOmInt z₁) e d (b₀ : ℤ) (b₁ : ℤ) (A ^ i) A := by
+      rw [Erdos67b.elliottLogCorrelation, ← elliottLogWindow_pow (by omega) hi.1]
+    rw [hcorr]
+    exact hA₀ A (A ^ i) A hA (le_refl A) hWX (zOmInt z₀) (zOmInt z₁)
+      (isMultiplicativeOnPositiveInt_zOmInt z₀) (isMultiplicativeOnPositiveInt_zOmInt z₁)
+      (norm_zOmInt_le_one hz₀) (norm_zOmInt_le_one hz₁) (hpret (A ^ i))
+  have hone : ‖f 1‖ ≤ 1 := by
+    rw [hf]
+    simp only []
+    rw [norm_mul, norm_mul]
+    have h1 : ‖((Erdos67b.harmonicWeight 1 : ℝ) : ℂ)‖ = 1 := by
+      rw [Erdos67b.harmonicWeight]
+      norm_num
+    rw [h1, one_mul]
+    exact mul_le_one₀ (norm_zOmInt_le_one hz₀ _) (norm_nonneg _) (norm_zOmInt_le_one hz₁ _)
+  have := norm_sum_Ioc_pow_le hA1 f m (ε * Real.log A) hwin
+  linarith
+
 end CastingOut
 
 end NormalNumbers
@@ -223,3 +291,4 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.weight_transfer
 #print axioms NormalNumbers.CastingOut.elliottLogWindow_pow
 #print axioms NormalNumbers.CastingOut.norm_sum_Ioc_pow_le
+#print axioms NormalNumbers.CastingOut.initial_segment_bound_of_elliott

@@ -1,4 +1,4 @@
-# HANDOFF c3-mrt 2026-09-25 — laps 7–14
+# HANDOFF c3-mrt 2026-09-25 — laps 7–15
 
 Branch `wip/c3-mrt`.  `lake build` green at both commits; every new result axiom-clean
 `[propext, Classical.choice, Quot.sound]`, no `sorry`.  Pure addition (2 new modules).
@@ -168,17 +168,35 @@ With this, every mismatch between our sum and `Erdos67b.elliottLogCorrelation` i
 shape (lap 10), multiplicativity + non-degeneracy (lap 11), weight class (lap 12), weight
 variable (lap 13), window (lap 14).
 
+## Lap 15 — **`initial_segment_bound_of_elliott`**: the conditional rung, assembled
+
+    (helliott : Erdos67b.NonasymptoticLogElliott) → ∀ ε > 0, ∃ A₀ ≥ 2, ∀ A ≥ A₀ at which ζ₀^Ω
+    is non-pretentious, ∀ m,
+      ‖∑_{1 ≤ j ≤ A^m} (1/j) · ζ₀^{Ω(ej + b₀)} · ζ₁^{Ω(dj + b₁)}‖  ≤  1 + ε · log(A^m).
+
+`ε` times the log-mass of the segment plus an absolute constant: that IS the rung, for the
+per-`(d,e)` term.  What is **not** a hypothesis of this theorem: multiplicativity,
+unimodularity, and non-degeneracy, all discharged internally from lap 11.  The only hypothesis
+left to the caller besides Elliott itself is non-pretentiousness of the first twist — the
+genuinely arithmetic input (and the easier case of lap 5's certificate, `ζ^Ω(p) = ζ` being
+constant on primes).
+
+Axiom-clean: `[propext, Classical.choice, Quot.sound]`.  Elliott is an explicit hypothesis, so
+nothing here rests on `sorryAx`.
+
 ## NEXT — resume here
 
-0. **Instantiate (now explicitly CONDITIONAL).**  Write the rung as a theorem taking
-   `Erdos67b.NonasymptoticLogElliott` as a hypothesis — that is the honest form, and it makes
-   the chain complete modulo one named bet.  Remaining glue: match our `j`-range against
-   `elliottLogWindow X W` (ours is an initial segment `1 ≤ j ≤ J`, theirs a dyadic-type window
-   `X/W < j ≤ X`, so a dyadic decomposition of `[1, J]` with `≍ log J` windows is needed — note
-   each window contributes `ε log W`, and the windows telescope, so the total is `ε log J`), and
-   supply the `pretentiousDistSqToTwist` hypothesis for `ζ₀^Ω` from lap 5's certificate
-   (`C3MrtElliottForm.lean`; `ζ^Ω(p) = ζ` is constant on primes, the easier case).
-0'. **Instantiate.**  Locate `Erdos67b.NonasymptoticLogElliott` in
+0. **Non-pretentiousness for `ζ^Ω`.**  Supply the remaining caller hypothesis:
+   `(A:ℝ) ≤ pretentiousDistSqToTwist (restrictToNat (zOmInt ζ₀)) χ t X` for all `q ≤ A`, `χ`,
+   `|t| ≤ AX`.  Adapt lap 5's certificate in `C3MrtElliottForm.lean` (which is stated for
+   `ζ^{ω_{>P}}`) to `ζ^Ω`; on primes both equal `ζ`, so the prime-sum that `pretentiousDistSq`
+   measures is literally the same object — this should be a re-statement, not new analysis.
+   Read `ErdosProblems/Erdos67b/Pretentious.lean:60` for the exact definition first.
+1. **Sum over the tuple.**  Combine `initial_segment_bound_of_elliott` over `d, e ≤ Y` with
+   `sum_pow_omega_two_shift_eq_coprime` + `weight_transfer` + `bridge_truncation_bound_of_mass`.
+   The per-pair constants (`1` from `j=1`, `2/L` from the weight transfer) sum to a `C(Y)`
+   independent of `N`, so the order of quantifiers is: `ε` → `Y` → `A` → `N → ∞`.
+2'. **Instantiate.**  Locate `Erdos67b.NonasymptoticLogElliott` in
    `.lake/packages/lean-proofs-latest`, read its exact statement (linear-form conventions,
    log-average normalisation, the `pretentiousDistSqToTwist` hypothesis), and match it against
    `inner_sum_linear_forms`.  The non-pretentiousness input for `ζ^Ω` is the *easier* case of
