@@ -9233,3 +9233,35 @@ could break linearity.  Never edit dependency files; new statements in `src/` on
 route in its docstring: Hall/Wirsing dichotomy on `∑_{p≤X}(1−‖g₁(p)‖)/p`; Case B's two convolution
 expansions have absolutely convergent `∑1/d` tails and their divisibility constraints are dilations
 of the affine form, hence absorbed by `AffineCMLogElliott` itself.
+
+### Elliott crux, lap 3 (2026-09-25): route-decisive question SETTLED
+
+`src/NormalNumbers/ElliottTwistedGraph.lean`, sorry-free and axiom-clean.  The lap-2 repair
+(per-prime unimodular twist) had one genuinely uncertain step: whether the **additive-energy**
+input — the sharp arithmetic ingredient of the graph upper bound — tolerates the twist.  It does,
+with *no loss in the constant*:
+
+* `twistedPrimeGraphMean_eq_fourier` — `Erdos67b.primeGraphMean_eq_fourier` holds verbatim for the
+  twisted mean; `blockFourier` is untouched and the weight lives **entirely inside the multiplier**.
+  So the twist enters the upper-bound chain only via `twistedPrimeGraphMultiplier`.
+* `fourth_moment_twistedPrimeGraphMultiplier_le_energy` — the twisted multiplier satisfies *exactly*
+  `Erdos67b.fourth_moment_primeGraphMultiplier_le_energy`'s bound
+  `T · #(additiveQuadruples s) · B⁴`.  Structural reason: the dependency's
+  `fourth_moment_weightedExponentialSum_le_energy` is already stated for an **arbitrary** complex
+  weight with `‖w x‖ ≤ B`, so folding a unimodular phase into the reciprocal-prime coefficient is
+  free.  `card_additiveQuadruples_image_mul` is reused unchanged.
+* `norm_twistedPrimeGraphMultiplier_le` (trivial bound unchanged),
+  `twistedPrimeGraphMean_one` / `twistedPrimeGraphMultiplier_one` (untwisted case is `w = 1`, so
+  nothing is lost relative to the proved development).
+
+**Next attack (lap 4).**  Two independent fronts, both now de-risked on the analytic side:
+1. *Upper bound.*  Restate `Erdos67b.norm_primeGraphMean_le_largeFrequencies` and then
+   `exists_primeGraphMean_small_of_fourier_first_moment` for the twisted mean.  Both should follow
+   from `twistedPrimeGraphMean_eq_fourier` plus the two multiplier bounds above, since the large
+   frequency set is defined by the multiplier's size and the twisted multiplier now has both the
+   trivial and the fourth-moment bound.  `primeGraphLargeFrequencies` needs a twisted analogue.
+2. *Two-block edge.*  `Erdos67b.primeGraphEdge b p h j = b j * conj (b (j+ph))` hardcodes
+   `b ⊗ conj b`.  The two-function case needs `b j * c (j+ph)` for the blocks `b, c` of `f₁, f₂`.
+   This is a separate, purely definitional generalisation; the CRT/entropy concentration side
+   (`primeGraphSum`, `primeGraphObservable`, Hoeffding) only uses `‖edge‖ ≤ 1`, which
+   `norm_pairObservable_le_one` supplies.
