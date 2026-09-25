@@ -151,3 +151,28 @@ primitive twists `h'`, so `FaithfulArchLower b C` needs `C` and `κ` uniform in 
 `ttExponent_depthRoot_ge : kappaDepth b ≤ ttExponent (depthRoot b h' 0)` with
 `kappaDepth b = (1/10)·min(π/b,1/256)² > 0`.  Remaining: the constant side, a finite max over
 the `b − 1` values of `h' mod b`.
+
+## Re-verification at HEAD (2026-09-25, restatement-run re-audit)
+
+The operator's restatement objective (a)-(c) was re-audited at `871797b` (i.e. after laps
+103-117 rethreaded and then partly refuted the block route).  Result: **still intact and still
+axiom-clean.**  `lake build` green (9443 jobs).  `#print axioms` gives exactly
+`[propext, Classical.choice, Quot.sound]` for every item of the surface:
+
+* (a) defects — `ttNonPretentious_trivial`, `ttNonPretentious_one`,
+  `not_kPointNoExcWith_const_one`, `twoPointNaturalCorrelation_trivially_true`;
+  `Maze.lean` aliases `hall_tt_nonpretentious_vacuous`, `hall_kpoint_noexc_false` (also clean).
+* (b) restatements — `TTNonPretentiousAt` / `TTNonPretentiousUnif` (Dirichlet characters of
+  conductor `≤ Q`, `|t| ≤ X`, constant `A` outside `X` and `L`), `TwoPointDyadicCorrelation`
+  (exceptional set a `Finset` of dyadic scales with a *counting* cost), `KPointNoExcAtWith`.
+  Non-vacuity guards, all kernel-checked: `not_ttNonPretentiousAt_one`,
+  `not_ttNonPretentiousUnif_one`, `const_one_not_faithful`,
+  `full_exceptional_set_not_admissible` + `exists_L_cost_lt_one`; bridge
+  `ttNonPretentious_of_At`, `kPointNoExcAtWith_of_with`.
+* (c) SURVIVORS table above — consumer verdicts unchanged; the two FREE-HYP rows
+  (`ttNonPretentious_of_uniformResonantMass`, `ttNonPretentious_zOmegaNat`) remain the only
+  genuine survivors on the supply side, and the archimedean gap they leave (characters `q > 1`,
+  twists to `X²`) is exactly what DIRECTION.md's mandated next move attacks.
+
+No restatement drift was introduced by laps 103-117: the later defect round (lap 115) hit the
+*block* layer (`WideBlockSaving`/`WideBlockPartial`/`BlockPhasePairing`), not the TT interface.
