@@ -216,3 +216,9 @@ edits; see the fidelity note in `STATUS.md`.
 /-! ### The cutoff is free: the ζ'/ζ inputs are stated at a large cut (lap 103) -/
 #print axioms NormalNumbers.ElliottDamped.norm_dampedPrefix_sub_le
 #print axioms NormalNumbers.ElliottDamped.norm_dampedPrefix_transfer
+
+/-! ### The log-weighted tail bricks (lap 104) -/
+#print axioms NormalNumbers.ElliottDamped.sum_log_div_primesUpTo_ge
+#print axioms NormalNumbers.ElliottDamped.sum_log_div_primesInInterval_le
+#print axioms NormalNumbers.ElliottDamped.logBlock_le
+#print axioms NormalNumbers.ElliottDamped.logTail_blocks

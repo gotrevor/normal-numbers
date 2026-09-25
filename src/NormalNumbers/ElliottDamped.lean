@@ -337,7 +337,7 @@ theorem dampedTail_le {X : ℕ} (hX : 2 ≤ X) (Y : ℕ) :
 
 /-! ### The damping step, assembled -/
 
-theorem sum_primesUpTo_split {f : ℕ → ℂ} {X Y : ℕ} (hXY : X ≤ Y) :
+theorem sum_primesUpTo_split {M : Type*} [AddCommMonoid M] {f : ℕ → M} {X Y : ℕ} (hXY : X ≤ Y) :
     ∑ p ∈ primesUpTo Y, f p
       = (∑ p ∈ primesUpTo X, f p) + ∑ p ∈ primesInInterval X Y, f p := by
   classical
@@ -890,7 +890,7 @@ series at `1+δ+w+iv`; the classical pole-local bound `|ζ'/ζ(s)| ≪ 1/|s-1|` 
 `ζ(1+it) ≠ 0`, already in mathlib, plus compactness) gives exactly these two clauses with
 `T = max(|v|, δ)`. -/
 def SliceBoundSmall (K : ℝ) : Prop :=
-  ∀ (X Y : ℕ) (v : ℝ), 2 ≤ X → sliceCut X ≤ Y → 0 < |v| → |v| ≤ 1 →
+  ∀ (X Y : ℕ) (v : ℝ), 256 ≤ X → sliceCut X ≤ Y → 0 < |v| → |v| ≤ 1 →
     (∀ w ∈ Set.Icc (0 : ℝ) (max |v| (Real.log (X : ℝ))⁻¹),
         ‖logWeightedSlice v X Y w‖ ≤ (max |v| (Real.log (X : ℝ))⁻¹)⁻¹ + K) ∧
     (∀ w ∈ Set.Icc (max |v| (Real.log (X : ℝ))⁻¹) 1,
@@ -901,10 +901,10 @@ proved: the damping (laps 97–98), the interchange (lap 100), the decay (lap 10
 integration (lap 102). -/
 theorem dampedSeriesBoundSmall_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : SliceBoundSmall K) :
     DampedSeriesBoundSmall (1 + K + tailCost + cutCost) := by
-  refine ⟨3, by norm_num, ?_⟩
+  refine ⟨256, by norm_num, ?_⟩
   intro X Y v hX3 hXY hv0 hv1
   have hX : 2 ≤ X := by omega
-  have hXR : (3 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX3
+  have hXR : (3 : ℝ) ≤ (X : ℝ) := by exact_mod_cast (by omega : 3 ≤ X)
   have hlogX : 1 < Real.log (X : ℝ) := by
     have h3 : Real.log 3 ≤ Real.log (X : ℝ) := Real.log_le_log (by norm_num) hXR
     have : (1 : ℝ) < Real.log 3 := by
@@ -924,7 +924,7 @@ theorem dampedSeriesBoundSmall_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : Slice
   have hT1 : T ≤ 1 := max_le hv1 hδ1
   set Y' : ℕ := max Y (sliceCut X) with hY'
   have hXY' : X ≤ Y' := le_trans hXY (le_max_left _ _)
-  obtain ⟨hcap, hharm⟩ := h X Y' v hX (le_max_right _ _) hv0 hv1
+  obtain ⟨hcap, hharm⟩ := h X Y' v hX3 (le_max_right _ _) hv0 hv1
   have hmain0 := norm_dampedPrefix_le_of_slice_le' hX v Y' hδT hT1 hK hcap hharm
   have htr := norm_dampedPrefix_transfer hX v Y Y' hXY hXY'
   have hmain : ‖dampedPrefix v X Y‖ ≤ 1 + Real.log (1 / T) + K + tailCost + cutCost := by
@@ -940,7 +940,7 @@ theorem dampedSeriesBoundSmall_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : Slice
 /-- **The `ζ'/ζ` input, moderate band, in slice form.**  The de la Vallée Poussin bound
 `|ζ'/ζ(σ+iv)| ≤ C log|v|` on `σ > 1` gives these two clauses with `T = max(1/log(|v|+16), δ)`. -/
 def SliceBoundModerate (K : ℝ) : Prop :=
-  ∀ (X Y : ℕ) (v : ℝ), 3 ≤ X → sliceCut X ≤ Y → 1 < |v| →
+  ∀ (X Y : ℕ) (v : ℝ), 256 ≤ X → sliceCut X ≤ Y → 1 < |v| →
     (∀ w ∈ Set.Icc (0 : ℝ) (max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹),
         ‖logWeightedSlice v X Y w‖
           ≤ (max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹)⁻¹ + K) ∧
@@ -950,10 +950,10 @@ def SliceBoundModerate (K : ℝ) : Prop :=
 /-- **(c′-II-a) REDUCED TO THE SLICE BOUND.** -/
 theorem dampedSeriesBoundModerate_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : SliceBoundModerate K) :
     DampedSeriesBoundModerate (1 + K + tailCost + cutCost) := by
-  refine ⟨3, by norm_num, ?_⟩
+  refine ⟨256, by norm_num, ?_⟩
   intro X Y v hX3 hXY hv1
   have hX : 2 ≤ X := by omega
-  have hXR : (3 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX3
+  have hXR : (3 : ℝ) ≤ (X : ℝ) := by exact_mod_cast (by omega : 3 ≤ X)
   have hlogX : 1 < Real.log (X : ℝ) := by
     have h3 : Real.log 3 ≤ Real.log (X : ℝ) := Real.log_le_log (by norm_num) hXR
     have : (1 : ℝ) < Real.log 3 := by
@@ -994,6 +994,157 @@ theorem dampedSeriesBoundModerate_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : Sl
     have : (Real.log (|v| + 16))⁻¹ * Real.log (|v| + 16) = 1 := by field_simp
     nlinarith [hLT, hL0]
   linarith [hmain, hlogmono]
+
+/-! ### The log-weighted tail (lap 104)
+
+The slice `logWeightedSlice v X Y w` is the prime part of `−ζ'/ζ(1+δ+w+iv)` *truncated* at `Y`.
+To hand the analytic input the untruncated series one needs the tail
+`∑_{p>Y} log p · p^{-1-δ-w}` to be `O(1)`, which is false at `Y = X` (it is `≍ 1/(δ+w)`) but true
+at `Y = sliceCut X = exp((log X)²)`, because there the damping has already decayed by `Y^{-δ} = 1/X`
+while the log-weight has only grown to `log Y = (log X)²`.  These are the square-block bricks for
+that tail: the same iteration as `dampedTail_blocks`, but with Mertens' *first* theorem (two-sided,
+constant `log 4 + 4`) supplying the block mass in place of Mertens' second. -/
+
+/-- Mertens' first theorem, lower half, in this campaign's index set. -/
+theorem sum_log_div_primesUpTo_ge {X : ℕ} (hX : 1 ≤ X) :
+    Real.log (X : ℝ) - (Real.log 4 + 4) ≤ ∑ p ∈ primesUpTo X, Real.log (p : ℝ) / (p : ℝ) := by
+  classical
+  have hXR : (1 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hfloor : ⌊(X : ℝ)⌋₊ = X := Nat.floor_natCast X
+  have hset : (primesUpTo X) = {p ∈ Ioc 0 ⌊(X : ℝ)⌋₊ | p.Prime} := by
+    rw [hfloor]
+    ext p
+    simp only [primesUpTo, mem_filter, mem_range, mem_Ioc]
+    constructor
+    · rintro ⟨hp, hpp⟩; exact ⟨⟨hpp.pos, by omega⟩, hpp⟩
+    · rintro ⟨⟨_, hle⟩, hpp⟩; exact ⟨by omega, hpp⟩
+  have hM := Mertens.sum_log_prime_div_eq_log hXR
+  rw [abs_le] at hM
+  rw [hset]
+  linarith [hM.1]
+
+/-- The log-weighted reciprocal mass of a prime interval: `∑_{M<p≤N} log p/p ≤ log(N/M) + 2C`. -/
+theorem sum_log_div_primesInInterval_le {M N : ℕ} (hM : 1 ≤ M) (hMN : M ≤ N) :
+    ∑ p ∈ primesInInterval M N, Real.log (p : ℝ) / (p : ℝ)
+      ≤ (Real.log (N : ℝ) - Real.log (M : ℝ)) + 2 * (Real.log 4 + 4) := by
+  classical
+  have hreal := sum_primesUpTo_split (f := fun p : ℕ => Real.log (p : ℝ) / (p : ℝ)) hMN
+  have h1 := sum_log_div_primesUpTo_le (X := N) (le_trans hM hMN)
+  have h2 := sum_log_div_primesUpTo_ge (X := M) hM
+  linarith
+
+/-- **One square block of the log-weighted tail.**  On `(M, N]` with `N ≤ M²`. -/
+theorem logBlock_le {M N : ℕ} {a : ℝ} (hM : 2 ≤ M) (hMN : M ≤ N) (hN : N ≤ M ^ 2)
+    (ha : 0 ≤ a) :
+    ∑ p ∈ primesInInterval M N, Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - a)
+      ≤ (M : ℝ) ^ (-a) * (Real.log (M : ℝ) + 2 * (Real.log 4 + 4)) := by
+  classical
+  have hMR : (2 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM
+  have hMpos : (0 : ℝ) < (M : ℝ) := by linarith
+  have hlogM : 0 < Real.log (M : ℝ) := Real.log_pos (by linarith)
+  have hterm : ∀ p ∈ primesInInterval M N,
+      Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - a)
+        ≤ (M : ℝ) ^ (-a) * (Real.log (p : ℝ) / (p : ℝ)) := by
+    intro p hp
+    have hpM : M < p := (mem_primesInInterval.mp hp).1
+    have hpR : (M : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpM.le
+    have hppos : (0 : ℝ) < (p : ℝ) := by linarith
+    have hlogp : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by linarith)
+    have hsplit : (p : ℝ) ^ (-(1 : ℝ) - a) = (p : ℝ) ^ (-a) * (p : ℝ)⁻¹ := by
+      rw [show -(1 : ℝ) - a = (-a) + (-1 : ℝ) by ring, Real.rpow_add hppos, Real.rpow_neg_one]
+    have hmono : (p : ℝ) ^ (-a) ≤ (M : ℝ) ^ (-a) :=
+      Real.rpow_le_rpow_of_nonpos hMpos hpR (by linarith)
+    rw [hsplit]
+    have : Real.log (p : ℝ) * ((p : ℝ) ^ (-a) * (p : ℝ)⁻¹)
+        = (p : ℝ) ^ (-a) * (Real.log (p : ℝ) / (p : ℝ)) := by
+      field_simp
+    rw [this]
+    exact mul_le_mul_of_nonneg_right hmono (by positivity)
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [← Finset.mul_sum]
+  have hmass : ∑ p ∈ primesInInterval M N, Real.log (p : ℝ) / (p : ℝ)
+      ≤ Real.log (M : ℝ) + 2 * (Real.log 4 + 4) := by
+    have h := sum_log_div_primesInInterval_le (M := M) (N := N) (by omega) hMN
+    have hNR : (0 : ℝ) < (N : ℝ) := by
+      have : 2 ≤ N := le_trans hM hMN
+      exact_mod_cast (by omega : 0 < N)
+    have hlogN : Real.log (N : ℝ) ≤ 2 * Real.log (M : ℝ) := by
+      have hNM : (N : ℝ) ≤ (M : ℝ) ^ 2 := by exact_mod_cast hN
+      have := Real.log_le_log hNR hNM
+      rwa [Real.log_pow] at this
+    linarith
+  exact mul_le_mul_of_nonneg_left hmass (by positivity)
+
+/-- **The log-weighted tail over `(Y, Z]`, by square blocks.**  Exact geometric shape: the `k`-th
+block contributes `Y^{-a·2^k} · (2^k log Y + 2C)`. -/
+theorem logTail_blocks {Y : ℕ} {a : ℝ} (hY : 2 ≤ Y) (ha : 0 ≤ a) :
+    ∀ K : ℕ, ∀ Z : ℕ, Z ≤ Y ^ (2 ^ K) →
+      ∑ p ∈ primesInInterval Y Z, Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - a)
+        ≤ ∑ k ∈ Finset.range K,
+            (Y : ℝ) ^ (-(a * 2 ^ k)) * (2 ^ k * Real.log (Y : ℝ) + 2 * (Real.log 4 + 4)) := by
+  classical
+  have hYR : (2 : ℝ) ≤ (Y : ℝ) := by exact_mod_cast hY
+  have hYpos : (0 : ℝ) < (Y : ℝ) := by linarith
+  have hlogY : 0 < Real.log (Y : ℝ) := Real.log_pos (by linarith)
+  intro K
+  induction K with
+  | zero =>
+    intro Z hZ
+    have hZY : Z ≤ Y := by simpa using hZ
+    have hempty : primesInInterval Y Z = ∅ := by
+      refine Finset.eq_empty_of_forall_notMem ?_
+      intro p hp
+      have h1 := (mem_primesInInterval.mp hp).1
+      have h2 := (mem_primesInInterval.mp hp).2.1
+      omega
+    simp [hempty]
+  | succ K ih =>
+    intro Z hZ
+    set M : ℕ := Y ^ (2 ^ K) with hM
+    have hM2 : 2 ≤ M := by
+      rw [hM]
+      calc 2 ≤ Y := hY
+        _ = Y ^ 1 := (pow_one Y).symm
+        _ ≤ Y ^ (2 ^ K) := Nat.pow_le_pow_right (by omega) (Nat.one_le_two_pow)
+    have hYM : Y ≤ M := by
+      rw [hM]
+      calc Y = Y ^ 1 := (pow_one Y).symm
+        _ ≤ Y ^ (2 ^ K) := Nat.pow_le_pow_right (by omega) (Nat.one_le_two_pow)
+    have hnew : (0 : ℝ) ≤ (Y : ℝ) ^ (-(a * 2 ^ K))
+        * (2 ^ K * Real.log (Y : ℝ) + 2 * (Real.log 4 + 4)) := by
+      have h1 : (0 : ℝ) < (Y : ℝ) ^ (-(a * 2 ^ K)) := Real.rpow_pos_of_pos hYpos _
+      have h2 : (0 : ℝ) ≤ 2 ^ K * Real.log (Y : ℝ) + 2 * (Real.log 4 + 4) := by
+        have : (0 : ℝ) < Real.log 4 := Real.log_pos (by norm_num)
+        positivity
+      positivity
+    have hrange : ∑ k ∈ Finset.range (K + 1),
+        (Y : ℝ) ^ (-(a * 2 ^ k)) * (2 ^ k * Real.log (Y : ℝ) + 2 * (Real.log 4 + 4))
+        = (∑ k ∈ Finset.range K,
+            (Y : ℝ) ^ (-(a * 2 ^ k)) * (2 ^ k * Real.log (Y : ℝ) + 2 * (Real.log 4 + 4)))
+          + (Y : ℝ) ^ (-(a * 2 ^ K)) * (2 ^ K * Real.log (Y : ℝ) + 2 * (Real.log 4 + 4)) :=
+      Finset.sum_range_succ _ _
+    rcases le_or_gt Z M with hZM | hZM
+    · refine le_trans (ih Z hZM) ?_
+      rw [hrange]; linarith
+    · have hMZ : M ≤ Z := hZM.le
+      rw [sum_primesInInterval_split
+        (f := fun p : ℕ => Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - a)) hYM hMZ]
+      have hZM2 : Z ≤ M ^ 2 := by
+        have : Y ^ (2 ^ (K + 1)) = M ^ 2 := by rw [hM, ← pow_mul, pow_succ]
+        omega
+      have hblock := logBlock_le (M := M) (N := Z) (a := a) hM2 hMZ hZM2 ha
+      have hlogM : Real.log (M : ℝ) = (2 ^ K : ℝ) * Real.log (Y : ℝ) := by
+        rw [hM]; push_cast [Real.log_pow]; ring
+      have hMpow : (M : ℝ) ^ (-a) = (Y : ℝ) ^ (-(a * 2 ^ K)) := by
+        have hMRpos : (0 : ℝ) < (M : ℝ) := by
+          have : (2 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM2
+          linarith
+        rw [Real.rpow_def_of_pos hMRpos, Real.rpow_def_of_pos hYpos, hlogM]
+        congr 1; ring
+      rw [hMpow, hlogM] at hblock
+      have hIH := ih M le_rfl
+      rw [hrange]
+      linarith
 
 end
 

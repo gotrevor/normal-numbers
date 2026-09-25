@@ -1,5 +1,28 @@
 # PENDING WORK
 
+## 🔨 2026-09-25 laps 103–104 — the slice inputs made honest, and the tail bricks
+
+**Fidelity repair (lap 103).**  Lap 102's `SliceBound{Small,Moderate}` claimed the pole bound for
+the *truncated* sum `∑_{p≤Y} log p·p^{-1-δ-w-iv}` at **every** `Y`; `ζ'/ζ` gives no such thing (at
+`Y = X`, `w = 0` the discarded tail is `≍ 1/δ`, the size of the main term).  Repaired by
+`norm_dampedPrefix_transfer`: the damping exponent is tuned to `X`, so `dampedTail_le` (uniform in
+`Y`) makes the cutoff **free** — the Props are now asked at `sliceCut X = exp((log X)²)` and at
+`256 ≤ X`, while consumers still call them at `Y = X`.  Cost: one additive `cutCost`.
+
+**Lap 104 bricks (all sorry-free, in the audit surface).**  `sum_log_div_primesUpTo_ge` (Mertens I
+lower half), `sum_log_div_primesInInterval_le` (block mass `≤ log(N/M)+2(log4+4)`), `logBlock_le`
+(one square block of the log-weighted tail), `logTail_blocks` (the iteration:
+`∑_{p∈(Y,Z]} log p·p^{-1-a} ≤ ∑_k Y^{-a2^k}(2^k log Y + 2C)`, exact geometric shape).
+
+**NEXT — `logTail_le`, the numeric collapse.**  With `L = log Y ≥ (log X)²` and `a ≥ 1/log X`, put
+`u = aL ≥ log X`.  Then `Y^{-a2^k} ≤ X^{-2^k}` and, splitting `x e^{-ax} = (x e^{-ax/2})e^{-ax/2}`
+with `x = 2^k L` (so `x e^{-ax/2} ≤ 2/(ea) ≤ 2 log X/e`),
+`term_k ≤ (2 log X/e)·X^{-2^{k-1}} + 2C·X^{-2^k}`, hence
+`tail ≤ (4 log X/e)X^{-1/2} + 4C/X ≤ 1` for `X ≥ 256` (`≈0.6` there) — which is exactly why the
+Props were bumped to `256 ≤ X` this lap.  After that: the prime-power correction
+`∑_{p,k≥2} log p·p^{-kσ} ≤ 2∑_p log p·p^{-2σ}`, and then the slice is `-ζ'/ζ(1+δ+w+iv) + O(1)` and
+`SliceBoundSmall` becomes the genuine pole-local statement (`ζ(1+it) ≠ 0` + compactness).
+
 ## ⛔ 2026-09-25 (review lap 92) — INPUT (c) IS FALSE.  New attack path.
 
 **Read `ROUTE-ESCALATION-2026-09-25-archimedean.md` and `DIRECTION.md` CURRENT DIRECTIVE first.**
