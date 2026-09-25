@@ -1,6 +1,7 @@
 # HANDOFF elliott 2026-09-25 (review lap 15 + drive) — the crux is down to `a ≥ 2`
 
-Branch `wip/elliott-port`.  `lake build NormalNumbers.ElliottGeneral` green, 9548 jobs.
+Branch `wip/elliott-port`, HEAD `9cbabb7` (this lap: `db80291` then `9cbabb7`).  Working tree
+clean.  `lake build NormalNumbers.ElliottGeneral` green, 9548 jobs.
 Never `lake exe cache get`.  Never edit / vendor `.lake/packages/lean-proofs-latest/`.
 
 ## Headline
