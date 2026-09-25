@@ -118,6 +118,67 @@ theorem kfold_lcm_mass_le {K : ℕ} (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1
 #print axioms prod_div_univLcm_le
 #print axioms kfold_lcm_mass_le
 
+
+open scoped Classical in
+/-- **The `K`-fold `full_sum_bound`.**  If every contributing tuple `d` (positive entries, joint
+progression nonempty) satisfies the shape `progression_sum_bound` produces,
+`‖Inner d‖ ≤ 1 + R/lcm(d)`, and the non-contributing tuples give `Inner d = 0`, then the whole
+weighted tuple sum is at most
+
+    ∏_i sqfWPartial z_i Y  +  R · K^{K²} · ∏_i sqfWMass z_i .
+
+The first summand is `N`-independent (it grows with `Y`, harmlessly — it is killed by the
+`1/log N` normalisation); the second is where the `ε·log N` inside `R` meets a FINITE constant
+instead of the divergent `∑_d ∏_i ‖sqfW z_i (d_i)‖`.  This is the `K`-point `full_sum_bound`,
+and `kfold_lcm_mass_le` is what makes it true. -/
+theorem multi_full_sum_bound {K : ℕ} (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1) (Y : ℕ)
+    (Inner : (Fin K → ℕ) → ℂ) {R : ℝ} (hR : 0 ≤ R)
+    (sol : (Fin K → ℕ) → Prop)
+    (hsol : ∀ d, sol d → (∀ i, 0 < d i) ∧ ∃ n : ℕ, ∀ i : Fin K, d i ∣ n + (i : ℕ) + 1)
+    (hzero : ∀ d ∈ Fintype.piFinset (fun _ : Fin K => range (Y + 1)), ¬ sol d → Inner d = 0)
+    (hbound : ∀ d ∈ Fintype.piFinset (fun _ : Fin K => range (Y + 1)), sol d →
+      ‖Inner d‖ ≤ 1 + R / (((Finset.univ : Finset (Fin K)).lcm d : ℕ) : ℝ)) :
+    ‖∑ d ∈ Fintype.piFinset (fun _ : Fin K => range (Y + 1)),
+        (∏ i : Fin K, sqfW (z i) (d i)) * Inner d‖
+      ≤ (∏ i : Fin K, sqfWPartial (z i) Y)
+        + R * ((K : ℝ) ^ (K * K) * ∏ i : Fin K, sqfWMass (z i)) := by
+  classical
+  set P := Fintype.piFinset (fun _ : Fin K => range (Y + 1)) with hP
+  have hterm : ∀ d ∈ P, ‖(∏ i : Fin K, sqfW (z i) (d i)) * Inner d‖
+      ≤ (if sol d then (∏ i : Fin K, ‖sqfW (z i) (d i)‖)
+            + R * ((∏ i : Fin K, ‖sqfW (z i) (d i)‖) /
+              (((Finset.univ : Finset (Fin K)).lcm d : ℕ) : ℝ)) else 0) := by
+    intro d hd
+    by_cases h : sol d
+    · simp only [h, if_true]
+      rw [norm_mul, norm_prod]
+      have hw : (0 : ℝ) ≤ ∏ i : Fin K, ‖sqfW (z i) (d i)‖ :=
+        Finset.prod_nonneg fun i _ => norm_nonneg _
+      calc (∏ i : Fin K, ‖sqfW (z i) (d i)‖) * ‖Inner d‖
+          ≤ (∏ i : Fin K, ‖sqfW (z i) (d i)‖) *
+              (1 + R / (((Finset.univ : Finset (Fin K)).lcm d : ℕ) : ℝ)) :=
+            mul_le_mul_of_nonneg_left (hbound d hd h) hw
+        _ = _ := by ring
+    · simp only [h, if_false, hzero d hd h, mul_zero, norm_zero]
+      exact le_refl 0
+  refine le_trans (norm_sum_le _ _) (le_trans (Finset.sum_le_sum hterm) ?_)
+  rw [← Finset.sum_filter, Finset.sum_add_distrib]
+  have h1 : ∑ d ∈ P.filter sol, (∏ i : Fin K, ‖sqfW (z i) (d i)‖)
+      ≤ ∏ i : Fin K, sqfWPartial (z i) Y := by
+    refine le_trans (Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+      (fun d _ _ => Finset.prod_nonneg fun i _ => norm_nonneg _)) ?_
+    rw [hP, Finset.sum_prod_piFinset (range (Y + 1))
+      (fun (i : Fin K) (j : ℕ) => ‖sqfW (z i) j‖)]
+    exact le_of_eq rfl
+  have h2 : ∑ d ∈ P.filter sol, R * ((∏ i : Fin K, ‖sqfW (z i) (d i)‖) /
+        (((Finset.univ : Finset (Fin K)).lcm d : ℕ) : ℝ))
+      ≤ R * ((K : ℝ) ^ (K * K) * ∏ i : Fin K, sqfWMass (z i)) := by
+    rw [← Finset.mul_sum]
+    exact mul_le_mul_of_nonneg_left (kfold_lcm_mass_le z hz Y sol hsol) hR
+  linarith
+
+#print axioms multi_full_sum_bound
+
 end CastingOut
 
 end NormalNumbers

@@ -41,3 +41,16 @@ Mirror laps 29–33 (`inner_pair_bound` → `full_sum_bound` → `two_shift_boun
 3. **ε-chase**: pick `Y` from `ε` using `truncB_tendsto` (the `α·truncA K` term is
    `N`-independent and dies under `1/log N` with no condition on `Y` at all), then `N → ∞`.
    Land in `weylLambertTwist_of_kfold_bound`'s shape.
+
+## Addendum — lap 45: the `K`-fold `full_sum_bound`
+
+`multi_full_sum_bound` (same file, sorry-free, trust triple): given `‖Inner d‖ ≤ 1 + R/lcm(d)`
+on the contributing tuples (and `Inner d = 0` off them), the weighted tuple sum is
+`≤ ∏_i sqfWPartial z_i Y + R·K^{K²}·∏_i sqfWMass z_i`.  This is the second of the three moves of
+step 4; with `multi_truncation_bound` (lap 43) it reduces the whole `K`-fold correlation to the
+**per-tuple** bound `‖Inner d‖ ≤ 1 + R/lcm(d)`, which is the only piece of step 4 still open.
+
+Remaining for step 4: (i) the `K`-point `progression_sum_bound`/`inner_pair_bound` — turn
+`inner_sum_multi_forms`'s linear-form shape plus `KPointLogElliott K` into that per-tuple bound;
+(ii) the ε-chase (`truncB_tendsto`, `bridgeTail_tendsto`) into
+`weylLambertTwist_of_kfold_bound`'s shape.
