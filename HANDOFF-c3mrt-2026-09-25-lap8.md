@@ -1,4 +1,4 @@
-# HANDOFF c3-mrt 2026-09-25 — laps 7–9
+# HANDOFF c3-mrt 2026-09-25 — laps 7–10
 
 Branch `wip/c3-mrt`.  `lake build` green at both commits; every new result axiom-clean
 `[propext, Classical.choice, Quot.sound]`, no `sorry`.  Pure addition (2 new modules).
@@ -60,13 +60,38 @@ finite sum of `ζ^Ω` averages along the linear forms `k ↦ dk` — the shape
   the joint condition collapses to a single residue class mod `de`, i.e. under which the CRT
   reindexing to two linear forms is available at all.
 
+## Lap 10 — the CRT reindex: the shifts ARE linear forms (same module)
+
+* `dvd_add_iff_modEq` — `d ∣ n + c ↔ n ≡ M − c (mod d)` for any multiple `M ≥ c` of `d`
+  (phrased with a large multiple to keep every residue in `ℕ`).
+* **`exists_joint_class`** — for coprime `d, e > 0` there is a single `a < de` with
+  `(d ∣ n+1 ∧ e ∣ n+2) ↔ n ≡ a (mod de)`, and `a` itself satisfies both divisibilities.
+  Built from `Nat.chineseRemainder` + `Nat.modEq_and_modEq_iff_modEq_mul`.
+* `sum_over_class_eq` — reindexing a residue class by its progression variable.
+* `shift_div_eq_linear` / `'` — `(dej + a + 1)/d = ej + (a+1)/d`, and the companion for `e`.
+* **`inner_sum_linear_forms`** — the payoff:
+
+      ∑_{n<N, d∣n+1, e∣n+2} F(n) z₀^{Ω((n+1)/d)} z₁^{Ω((n+2)/e)}
+        = ∑_j F(dej+a) · z₀^{Ω(ej + (a+1)/d)} · z₁^{Ω(dj + (a+2)/e)} .
+
+  Two completely multiplicative unimodular functions, two **linear forms**, one progression
+  variable: exactly the hypothesis shape of `Erdos67b.NonasymptoticLogElliott` at two points.
+
+**Status of the `D = 2` chain.**  Every structural step from `ζ^ω`-correlation to
+"`ζ^Ω` along linear forms" is now proved and axiom-clean:
+`sum_pow_omega_two_shift_eq_coprime` (expand) → `inner_sum_linear_forms` (CRT) →
+`bridge_truncation_bound` (truncate, uniformly in `N`).  What remains for the rung is
+*analytic*, not structural: feed this into the dependency's log-Elliott theorem.
+
 ## NEXT — resume here
 
-0. **CRT reindex (`D = 2`).**  For coprime `d, e` produce `a < de` with
-   `(d ∣ n+1 ∧ e ∣ n+2) ↔ n ≡ a (mod de)`, then reindex `n = de·k + a`, turning
-   `(n+1)/d` and `(n+2)/e` into the linear forms `(de/d)k + (a+1)/d = ek + (a+1)/d` and
-   `dk + (a+2)/e`.  Suggested route: `ZMod (d*e) ≃+* ZMod d × ZMod e` (`ZMod.chineseRemainder`),
-   with `d ∣ n+1 ↔ (n : ZMod d) = -1`.  After this the `D = 2` rung is a pure instantiation.
+0. **Instantiate.**  Locate `Erdos67b.NonasymptoticLogElliott` in
+   `.lake/packages/lean-proofs-latest`, read its exact statement (linear-form conventions,
+   log-average normalisation, the `pretentiousDistSqToTwist` hypothesis), and match it against
+   `inner_sum_linear_forms`.  The non-pretentiousness input for `ζ^Ω` is the *easier* case of
+   lap 5's certificate (`ζ^Ω(p) = ζ`, constant on primes) — `C3MrtElliottForm.lean`.
+   Watch for: the log-average weight `1/n` vs. our flat sum; and the `j`-range
+   `{j : dej + a < N}`, which is an initial segment, so partial summation is available.
 1. ~~**`D`-fold version.**~~  Done for `D = 2` (lap 9); the general `D` needs only the same
    iteration over `Fintype.piFinset`, and  Apply `sum_pow_omega_shift_eq` with
    `F(n) = e(jn/Q) ∏_{1≤i<D} ζ_i^{ω(n+1+i)}` and iterate; the `i`-th application needs the

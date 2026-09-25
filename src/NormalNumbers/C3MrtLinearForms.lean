@@ -301,6 +301,155 @@ theorem sum_pow_omega_two_shift_eq_coprime (z₀ z₁ : ℂ) (F : ℕ → ℂ) (
     rw [joint_progression_eq_empty_of_not_coprime he.2, Finset.sum_empty, mul_zero]
   rw [hzero, add_zero]
 
+/-! ### CRT: the joint progression is a single class, and the shifts become linear forms -/
+
+/-- `d ∣ n + c` is a congruence condition on `n`, with representative `M − c` for any multiple
+`M ≥ c` of `d`.  (Stated this way to avoid negative residues in `ℕ`.) -/
+theorem dvd_add_iff_modEq {d n c M : ℕ} (hdM : d ∣ M) (hcM : c ≤ M) :
+    d ∣ n + c ↔ n ≡ M - c [MOD d] := by
+  have hMc : M - c + c = M := by omega
+  constructor
+  · intro h
+    refine Nat.ModEq.add_right_cancel' c ?_
+    rw [hMc]
+    calc n + c ≡ 0 [MOD d] := (Nat.modEq_zero_iff_dvd).2 h
+      _ ≡ M [MOD d] := ((Nat.modEq_zero_iff_dvd).2 hdM).symm
+  · intro h
+    have h' : n + c ≡ M - c + c [MOD d] := Nat.ModEq.add_right c h
+    rw [hMc] at h'
+    refine (Nat.modEq_zero_iff_dvd).1 ?_
+    exact h'.trans ((Nat.modEq_zero_iff_dvd).2 hdM)
+
+/-- **The joint progression is a single residue class.**  For coprime `d, e > 0` there is a
+single `a < de` with `(d ∣ n+1 ∧ e ∣ n+2) ↔ n ≡ a (mod de)`, and `a` itself satisfies the two
+divisibilities.  Coprimality is necessary as well as sufficient
+(`coprime_of_joint_progression`). -/
+theorem exists_joint_class {d e : ℕ} (hd : 0 < d) (he : 0 < e) (hco : Nat.Coprime d e) :
+    ∃ a : ℕ, a < d * e ∧ d ∣ a + 1 ∧ e ∣ a + 2 ∧
+      ∀ n : ℕ, (d ∣ n + 1 ∧ e ∣ n + 2) ↔ n % (d * e) = a := by
+  set M := 2 * (d * e) with hM
+  have hde : 0 < d * e := Nat.mul_pos hd he
+  have hdM : d ∣ M := Dvd.dvd.mul_left (Dvd.intro e rfl) 2
+  have heM : e ∣ M := Dvd.dvd.mul_left (Dvd.intro_left d rfl) 2
+  have hM2 : 2 ≤ M := by omega
+  obtain ⟨k, hk1, hk2⟩ := Nat.chineseRemainder hco (M - 1) (M - 2)
+  set a := k % (d * e) with ha
+  have hak : a ≡ k [MOD d * e] := Nat.mod_modEq k (d * e)
+  have hakd : a ≡ k [MOD d] := hak.of_dvd (Dvd.intro e rfl)
+  have hake : a ≡ k [MOD e] := hak.of_dvd (Dvd.intro_left d rfl)
+  have hjoint : ∀ n : ℕ, (d ∣ n + 1 ∧ e ∣ n + 2) ↔ n ≡ a [MOD d * e] := by
+    intro n
+    constructor
+    · rintro ⟨h1, h2⟩
+      rw [dvd_add_iff_modEq hdM (by omega)] at h1
+      rw [dvd_add_iff_modEq heM (by omega)] at h2
+      exact (Nat.modEq_and_modEq_iff_modEq_mul hco).1
+        ⟨(h1.trans hk1.symm).trans hakd.symm, (h2.trans hk2.symm).trans hake.symm⟩
+    · intro h
+      obtain ⟨hd', he'⟩ := (Nat.modEq_and_modEq_iff_modEq_mul hco).2 h
+      exact ⟨(dvd_add_iff_modEq hdM (by omega)).2 ((hd'.trans hakd).trans hk1),
+        (dvd_add_iff_modEq heM (by omega)).2 ((he'.trans hake).trans hk2)⟩
+  have hamod : a % (d * e) = a := Nat.mod_eq_of_lt (Nat.mod_lt _ hde)
+  refine ⟨a, Nat.mod_lt _ hde, ?_, ?_, fun n => ?_⟩
+  · exact ((hjoint a).2 (by rfl)).1
+  · exact ((hjoint a).2 (by rfl)).2
+  · rw [hjoint n]
+    unfold Nat.ModEq
+    rw [hamod]
+
+/-- Reindexing a residue class by its progression variable. -/
+theorem sum_over_class_eq {L a N : ℕ} (hL : 0 < L) (haL : a < L) (G : ℕ → ℂ) :
+    ∑ n ∈ (range N).filter (fun n => n % L = a), G n
+      = ∑ j ∈ (range N).filter (fun j => L * j + a < N), G (L * j + a) := by
+  refine Finset.sum_nbij' (i := fun n => (n - a) / L) (j := fun j => L * j + a) ?_ ?_ ?_ ?_ ?_
+  · intro n hn
+    rw [Finset.mem_filter, Finset.mem_range] at hn
+    obtain ⟨hnN, hmod⟩ := hn
+    have hage : a ≤ n := hmod ▸ Nat.mod_le n L
+    have hdvd : L ∣ n - a := by
+      have : n % L = a % L := by rw [hmod, Nat.mod_eq_of_lt haL]
+      exact (Nat.modEq_iff_dvd' hage).1 this.symm
+    have hrec : L * ((n - a) / L) + a = n := by
+      rw [Nat.mul_div_cancel' hdvd]; omega
+    rw [Finset.mem_filter, Finset.mem_range]
+    constructor
+    · have : (n - a) / L ≤ n - a := Nat.div_le_self _ _
+      omega
+    · omega
+  · intro j hj
+    rw [Finset.mem_filter, Finset.mem_range] at hj
+    rw [Finset.mem_filter, Finset.mem_range]
+    refine ⟨hj.2, ?_⟩
+    rw [Nat.mul_add_mod]
+    exact Nat.mod_eq_of_lt haL
+  · intro n hn
+    rw [Finset.mem_filter, Finset.mem_range] at hn
+    obtain ⟨hnN, hmod⟩ := hn
+    have hage : a ≤ n := hmod ▸ Nat.mod_le n L
+    have hdvd : L ∣ n - a := by
+      have : n % L = a % L := by rw [hmod, Nat.mod_eq_of_lt haL]
+      exact (Nat.modEq_iff_dvd' hage).1 this.symm
+    rw [Nat.mul_div_cancel' hdvd]
+    omega
+  · intro j hj
+    rw [Nat.add_sub_cancel, Nat.mul_div_cancel_left _ hL]
+  · intro n hn
+    rw [Finset.mem_filter, Finset.mem_range] at hn
+    obtain ⟨hnN, hmod⟩ := hn
+    have hage : a ≤ n := hmod ▸ Nat.mod_le n L
+    have hdvd : L ∣ n - a := by
+      have : n % L = a % L := by rw [hmod, Nat.mod_eq_of_lt haL]
+      exact (Nat.modEq_iff_dvd' hage).1 this.symm
+    have : L * ((n - a) / L) + a = n := by rw [Nat.mul_div_cancel' hdvd]; omega
+    rw [this]
+
+/-- **The shifts become linear forms.**  On the class `n = (de)j + a`, the argument of the
+completely multiplicative factor is an honest linear form in the progression variable `j`:
+`(n+1)/d = e j + (a+1)/d`. -/
+theorem shift_div_eq_linear (d e a j : ℕ) (hd : 0 < d) :
+    (d * e * j + a + 1) / d = e * j + (a + 1) / d := by
+  have : d * e * j + a + 1 = (a + 1) + d * (e * j) := by ring
+  rw [this, Nat.add_mul_div_left _ _ hd, Nat.add_comm]
+
+/-- Its companion for the second shift: `(n+2)/e = d j + (a+2)/e`. -/
+theorem shift_div_eq_linear' (d e a j : ℕ) (he : 0 < e) :
+    (d * e * j + a + 2) / e = d * j + (a + 2) / e := by
+  have : d * e * j + a + 2 = (a + 2) + e * (d * j) := by ring
+  rw [this, Nat.add_mul_div_left _ _ he, Nat.add_comm]
+
+/-- **The `D = 2` inner sum, as a two-point correlation along two linear forms.**
+
+For coprime `d, e > 0` the joint progression collapses to `n = (de)j + a`, and on it the two
+completely multiplicative factors are evaluated at the **linear forms** `e j + (a+1)/d` and
+`d j + (a+2)/e`.  This is precisely the hypothesis shape of `Erdos67b.NonasymptoticLogElliott`
+at two points: two completely multiplicative unimodular functions along two linear forms in a
+single progression variable. -/
+theorem inner_sum_linear_forms {d e : ℕ} (hd : 0 < d) (he : 0 < e) (hco : Nat.Coprime d e)
+    (z₀ z₁ : ℂ) (F : ℕ → ℂ) (N : ℕ) :
+    ∃ a : ℕ, a < d * e ∧ d ∣ a + 1 ∧ e ∣ a + 2 ∧
+      ∑ n ∈ ((range N).filter (fun n => d ∣ n + 1)).filter (fun n => e ∣ n + 2),
+          F n * (z₀ ^ ArithmeticFunction.cardFactors ((n + 1) / d) *
+            z₁ ^ ArithmeticFunction.cardFactors ((n + 2) / e))
+        = ∑ j ∈ (range N).filter (fun j => d * e * j + a < N),
+            F (d * e * j + a) *
+              (z₀ ^ ArithmeticFunction.cardFactors (e * j + (a + 1) / d) *
+                z₁ ^ ArithmeticFunction.cardFactors (d * j + (a + 2) / e)) := by
+  obtain ⟨a, haL, hda, hea, hclass⟩ := exists_joint_class hd he hco
+  refine ⟨a, haL, hda, hea, ?_⟩
+  have hfil : ((range N).filter (fun n => d ∣ n + 1)).filter (fun n => e ∣ n + 2)
+      = (range N).filter (fun n => n % (d * e) = a) := by
+    ext n
+    simp only [Finset.mem_filter, Finset.mem_range, and_assoc]
+    constructor
+    · rintro ⟨hn, h1, h2⟩
+      exact ⟨hn, (hclass n).1 ⟨h1, h2⟩⟩
+    · rintro ⟨hn, h⟩
+      obtain ⟨h1, h2⟩ := (hclass n).2 h
+      exact ⟨hn, h1, h2⟩
+  rw [hfil, sum_over_class_eq (Nat.mul_pos hd he) haL]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  rw [shift_div_eq_linear d e a j hd, shift_div_eq_linear' d e a j he]
+
 /-! ### Truncating the modulus at `d ≤ Y`, uniformly in `N` -/
 
 /-- The tail of the bridge weight beyond `Y`. -/
@@ -405,3 +554,5 @@ end NormalNumbers
 #print axioms NormalNumbers.CastingOut.bridgeTail_tendsto
 #print axioms NormalNumbers.CastingOut.sum_pow_omega_offset_eq
 #print axioms NormalNumbers.CastingOut.sum_pow_omega_two_shift_eq_coprime
+#print axioms NormalNumbers.CastingOut.exists_joint_class
+#print axioms NormalNumbers.CastingOut.inner_sum_linear_forms
