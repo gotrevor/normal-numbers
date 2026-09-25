@@ -533,3 +533,4 @@ import NormalNumbers.TwoPointDelangeParity
 import NormalNumbers.TwoPointMoebiusPNT
 import NormalNumbers.TwoPointDelangeLevin
 import NormalNumbers.TwoPointDelangeAll
+import NormalNumbers.TwoPointC3Depth
