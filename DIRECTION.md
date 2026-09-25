@@ -2,38 +2,50 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective.**  `isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′, Fable §9 / Astra §11)
-SORRY-FREE and trust-triple.  The whole chain is assembled and green; the headline's `sorryAx`
-comes from exactly **three** leaves, all in `src/NormalNumbers/PrimeModelFamilyGraded.lean`.
+**Objective (2026-09-25 review lap — direction REDIRECTED from the completed Theorem-C′
+directive to the ratified C3/MRT moonshot, `KICKOFF-2026-09-24-c3-mrt.md`).**
+Drive `weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`) — the one `sorry`
+carrying `ConjC3` — by *narrowing the named analytic inputs* its reduction now rests on.
+The reduction itself is DONE and axiom-clean: `ConjC3 ⇐ QuantDepthElliott`
+(quantitative Elliott, `O(log log log N)` points), and the log-averaged `D = 2` rung
+`initial_segment_bound_of_elliott` ⇐ `Erdos67b.NonasymptoticLogElliott` + non-pretentiousness
+of `ζ^Ω` against every Dirichlet–Archimedean twist.
 
-**Mandated next move (2026-09-23 review lap — direction KEPT, priority sharpened).**
-Close the three leaves, hardest first:
-1. **`termE5_tendsto`** (l. ~980) — Astra (8.6), the last structurally NEW estimate and the only
-   one whose feasibility is in real doubt.  Everything it needs is already proved:
-   `recipSumIoc_yG_le` (short root chain at any `j ≤ J1 N`), `JG_le_mass` (`8J ≤ S_P(N)`),
-   Mertens (`primeRecipSum_le` / `recipSumLe_le_crude`), `cIdx ≤ J−1 ≤ J1 N`.
-2. **`schedule_admissible`** (l. ~575) — eleven pointwise clauses, two already proved
-   (`yBotG_le_yG`, `yG_antitone`); bookkeeping, no new mathematics.
-3. **`termE4c_tendsto`** (l. ~974) — `N^{-1+o(1)}`; arithmetic of the support level.
+**Mandated next move.**  Close the ARCHIMEDEAN half of the non-pretentiousness certificate
+(`C3MrtArchimedean.lean`), which lap 17 left as the second named open input.  The 2026-09-25
+review settled its true shape; work it in this order:
+1. `pretentiousDistSq_zOm_ge_mass_sub_corr` — the `z`-free bridge
+   `dist ≥ (prime mass at X) − ‖∑_{p≤X} χ(p)p^{it}/p‖`.  Elementary, unconditional; it routes
+   ALL remaining analytic content into one classical object.
+2. **Range 1, `|t| ≤ T/log X`: prove it outright.**  Only `O(T)` resonance intervals
+   `t log p ∈ arg z + 2πℤ + (−ε,ε)` meet `[2,X]`, each of BOUNDED reciprocal mass by the
+   dependency's two-sided Mertens (`Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le`,
+   proved, error `mertensBound`); the surviving class-`1 mod q` primes give `≫ log log X`.
+3. **Range 2, `|t| ≥ T/log X`: name it once**, as the classical saving
+   `‖∑_{p≤X} χ(p)p^{it}/p‖ ≤ log log X − A` (i.e. `log|L(1+1/log X+it,χ)| ≤ log log X − A`),
+   the Vinogradov–Korobov log-derivative bound — the SAME input the dependency itself isolates
+   as `Erdos67b.PolynomialHeightPrimeCorrelationBound`.  Then assemble the `D = 2` rung on
+   exactly TWO named inputs, both of them the Erdős-67b project's own open analytic bets.
 
-**Forbidden drift.**  Do NOT open new campaigns, do NOT touch `PrimeLambertOscillation` or
-`MahlerDriftOne` (the two pre-existing off-campaign `sorry`s — designated open), do NOT edit
-`PrimeModelBrunLower.lean`, `papers/`, or Pair B files.  Do NOT weaken any existing statement to
-make a leaf close; a leaf that resists gets a named sub-`sorry` IN `src/`, never a relocation.
-No constant-class-count route (refuted 2026-09-22, see below).
+**Forbidden drift.**  Do NOT weaken, rename or delete `weylLambertTwist_holds` or `conjC3`.
+Do NOT retry the four refuted routes (smooth/rough Kubilius split; self-similar recursion;
+growing `P`; direct use of `unitCircleLogElliott`).  Do NOT chase an ELEMENTARY proof of the
+large-`|t|` correlation bound: the 2026-09-25 review showed the resonance-interval argument
+needs prime counting in intervals of length `p/|t|`, so for `|t| ≳ (log X)^K` it is
+short-interval-hard and the VK input is not an artefact.  New code in `C3Mrt*.lean` only;
+never import a `lean-proofs-latest` consumer into the `NormalNumbers` root.
 
-**Why.**  The graded route's route-decisive question — whether the fresh-mass surrogate `ε_N → 0`
-alone can drive the schedule — was settled affirmatively by the bounded contracting site index
-(`exists_site_re_nonpos_le`, lap G5c-e) plus the short root chain (`recipSumIoc_yG_le`, lap G5c-i).
-E5 is where that finding is finally cashed: if the exponent `8J − 1 − log 2J − o(1)` does not
-materialise in Lean, the schedule constants (the `8` in `JG`, the `2J` floor) need retuning and
-that is a redesign.  Nothing else open can force a pivot.
+**Why.**  `QuantDepthElliott` is out of reach (quantitative Elliott at `≍ log log log N`
+points), so the ratified success criterion is an EQUIVALENCE with named open problems.  The
+archimedean certificate is the last input that is plausibly OURS to prove; every other
+mismatch was closed in laps 7–17.  Settling which part of it is elementary and which part is
+genuinely VK-strength is the route-decisive question, and Range 1 is the smallest probe of it.
 
 **Directive history.**
-- 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
-- 2026-09-23 (review lap): route KEPT and vindicated (5/8 leaves closed, tail crux resolved);
-  narrowed to the three remaining leaves of `PrimeModelFamilyGraded.lean`, E5 first.
-
+- 2026-09-22 (lap 7 review): graded joint state route.
+- 2026-09-23 (review lap): Theorem-C′ leaves, E5 first — COMPLETED 2026-09-23.
+- 2026-09-25 (review lap): REDIRECT to the C3/MRT moonshot; narrow the archimedean
+  non-pretentiousness input (Range 1 elementary, Range 2 named VK).
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically
 one).  See `G4PrefixDecayAudit.lean` for the proved counterexample and the

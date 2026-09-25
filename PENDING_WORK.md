@@ -1,5 +1,46 @@
 # PENDING WORK
 
+## 2026-09-25 (review lap 18) — C3/MRT: the archimedean non-pretentiousness certificate
+
+**Where the crux stands.**  `weylLambertTwist_holds` (`SwingC3Leaf.lean`) is the one `sorry`
+carrying `ConjC3`.  Laps 1–17 reduced it, axiom-clean, to `QuantDepthElliott`, and reduced the
+log-averaged `D = 2` rung to `Erdos67b.NonasymptoticLogElliott` + non-pretentiousness of `ζ^Ω`
+against every Dirichlet–Archimedean twist (`t = 0` done, lap 17).
+
+**Review finding (2026-09-25): the exact shape of the archimedean obligation.**
+Elliott's hypothesis is `A ≤ pretentiousDistSqToTwist (ζ₀^Ω) χ t X` for `q ≤ A`, `|t| ≤ A·X`,
+with `A` a CONSTANT (not `≫ log log X`).  Writing `S = ∑_{p≤X} χ(p)p^{it}/p` and
+`mass = ∑_{p≤X} 1/p`, the distance is exactly `mass − Re(z·S)`, hence `≥ mass − ‖S‖`:
+
+* **Range 2 (`|t| ≥ T/log X`, `T` a constant chosen from `A`).**  Needs only the CONSTANT
+  saving `‖S‖ ≤ log log X − A`.  This is `log|L(1+1/log X+it, χ)| ≤ log log X − A`, the
+  Vinogradov–Korobov log-derivative bound; the dependency isolates the same input as
+  `Erdos67b.PolynomialHeightPrimeCorrelationBound` ("expected proof: the log-derivative
+  argument in the Vinogradov–Korobov zero-free region").  NAME IT, do not chase it.
+* **Range 1 (`|t| ≤ T/log X`).**  Elementary and OURS.  `|t log p| ≤ T` for `p ≤ X`, so the
+  resonance set `{p : ‖arg z − t log p‖_{2π} < ε}` meets only `O(T)` of the intervals
+  `log p ∈ (arg z + 2πk ± ε)/t`; each has reciprocal mass `≤ log((θ+2πk+ε)/(θ+2πk−ε)) + 2·
+  mertensBound` (bounded, `t` cancels), so the total resonance mass is an `X`-INDEPENDENT
+  constant, while the class-`1 mod q` primes carry `(1/φ(q))log log X − C_q → ∞`.
+
+**Refuted this lap (do not retry).**  Extending the resonance-interval argument past
+`|t| ≈ (log X)^K`: the number of intervals is `|t|·log X/2π`, so the per-interval Mertens error
+`2·mertensBound` alone contributes `≫ log log X`, and the trivial/Brun–Titchmarsh replacement
+needs primes in intervals of length `p/|t|` — short-interval-hard.  Equally refuted: hoping the
+crude `|ζ(1+it)| ≪ log t` suffices at `|t| ≍ X` (it gives `log log t ≍ log log X`, exactly
+cancelling the main term).  A saving factor < 1 in the exponent (i.e. VK) is not optional.
+
+**Attack order.**
+1. `C3MrtArchimedean.lean`: the bridge `dist ≥ mass − ‖S‖`; `pretentiousDistSq_ge_class_sum`
+   generalised from `t = 0` to all `t`; the resonance split.
+2. Range 1 in full (the `O(T)`-interval Mertens count).
+3. `TwistedPrimeSumSaving A` as the single named Range-2 Prop; assemble
+   `nonPretentious_zOm`, then feed `initial_segment_bound_of_elliott`.
+4. Then, and only then, the tuple sum over `d,e ≤ Y` (laps 8–13 supply every other piece).
+
+---
+
+
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is sorry-free and
