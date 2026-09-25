@@ -31,6 +31,78 @@ namespace NormalNumbers
 
 namespace CastingOut
 
+/-- **The initial-segment bound at `K` points, for an ARBITRARY multiplicative family.**
+`initial_segment_bound_of_kElliott` with `zOmInt (z i)` replaced by a free family
+`g : Fin K → ℤ → ℂ`.  Nothing in the window decomposition cared which multiplicative functions
+were being correlated — `KPointLogElliott` is itself stated for a free `g` — so the generalisation
+is free, and it is what the `ω_{>P}` side of the ledger needs: `depthAvg` correlates
+`ζ_i^{ω_{>P}}`, which is multiplicative (not completely) and NOT of the form `z^Ω`.
+
+The non-pretentiousness hypothesis is imposed on `g ⟨0, hK⟩` only, exactly as
+`KPointLogElliott` imposes it on its first factor. -/
+theorem initial_segment_bound_of_kElliott_gen {K : ℕ} (hK : 0 < K)
+    (helliott : KPointLogElliott K) (c b : Fin K → ℕ)
+    (hnd : NondegenerateForms c (fun i => ((b i : ℕ) : ℤ)))
+    (g : Fin K → ℤ → ℂ) (hgmul : ∀ i, Erdos67b.IsMultiplicativeOnPositiveInt (g i))
+    (hgn : ∀ i, ∀ n : ℤ, ‖g i n‖ ≤ 1) (ε : ℝ) (hε : 0 < ε) :
+    ∃ A₀ : ℕ, 2 ≤ A₀ ∧ ∀ A : ℕ, A₀ ≤ A → ∀ i₀ : ℕ,
+      (∀ i : ℕ, i₀ < i → ∀ q : ℕ, 0 < q → q ≤ A → ∀ χ : DirichletCharacter ℂ q, ∀ t : ℝ,
+          |t| ≤ (A : ℝ) * (A ^ i : ℕ) →
+            (A : ℝ) ≤ Erdos67b.pretentiousDistSqToTwist
+              (Erdos67b.restrictToNat (g ⟨0, hK⟩)) χ t (A ^ i)) →
+      ∀ m : ℕ, i₀ ≤ m →
+        ‖∑ j ∈ Ioc 0 (A ^ m), (Erdos67b.harmonicWeight j : ℂ) *
+            ∏ i : Fin K, g i (Erdos67b.integerAffine (c i) ((b i : ℕ) : ℤ) j)‖
+          ≤ (1 + Real.log (A ^ i₀ : ℕ)) + (m : ℝ) * (ε * Real.log A) := by
+  obtain ⟨A₀, hA₀2, hA₀⟩ := helliott c (fun i => ((b i : ℕ) : ℤ)) hnd ε hε
+  refine ⟨A₀, hA₀2, fun A hA i₀ hpret m him => ?_⟩
+  have hA1 : 1 ≤ A := by omega
+  set f : ℕ → ℂ := fun j => (Erdos67b.harmonicWeight j : ℂ) *
+    ∏ i : Fin K, g i (Erdos67b.integerAffine (c i) ((b i : ℕ) : ℤ) j) with hf
+  have hprodnorm : ∀ j : ℕ,
+      ‖∏ i : Fin K, g i (Erdos67b.integerAffine (c i) ((b i : ℕ) : ℤ) j)‖ ≤ 1 := by
+    intro j
+    rw [norm_prod]
+    exact Finset.prod_le_one (fun i _ => norm_nonneg _) (fun i _ => hgn i _)
+  have hwin : ∀ i ∈ Icc (i₀ + 1) m, ‖∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j‖ ≤ ε * Real.log A := by
+    intro i hi
+    rw [Finset.mem_Icc] at hi
+    have hi1 : 1 ≤ i := by omega
+    have hWX : A ≤ A ^ i := by
+      calc A = A ^ 1 := (pow_one A).symm
+        _ ≤ A ^ i := Nat.pow_le_pow_right hA1 hi1
+    have hcorr : ∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j
+        = kPointLogCorrelation g c (fun i => ((b i : ℕ) : ℤ)) (A ^ i) A := by
+      rw [kPointLogCorrelation, ← elliottLogWindow_pow (by omega) hi1]
+    rw [hcorr]
+    refine hA₀ A (A ^ i) A hA (le_refl A) hWX g hgmul hgn ?_
+    intro ii hi0 q hq hqA χ t ht
+    have hii : ii = (⟨0, hK⟩ : Fin K) := Fin.ext hi0
+    rw [hii]
+    exact hpret i (by omega) q hq hqA χ t (by exact_mod_cast ht)
+  have hhead : ‖∑ j ∈ Ioc 0 (A ^ i₀), f j‖ ≤ 1 + Real.log (A ^ i₀ : ℕ) := by
+    refine norm_head_le f 0 ?_
+    intro j hj
+    rw [hf]
+    simp only []
+    rw [norm_mul]
+    have h1 : ‖((Erdos67b.harmonicWeight j : ℝ) : ℂ)‖ = ((j : ℝ))⁻¹ := by
+      rw [Erdos67b.harmonicWeight, Complex.norm_real, Real.norm_eq_abs,
+        abs_of_nonneg (by positivity)]
+    rw [h1]
+    calc ((j : ℝ))⁻¹ * ‖∏ i : Fin K, g i
+          (Erdos67b.integerAffine (c i) ((b i : ℕ) : ℤ) j)‖
+        ≤ ((j : ℝ))⁻¹ * 1 :=
+          mul_le_mul_of_nonneg_left (hprodnorm j) (by positivity)
+      _ = ((j : ℝ))⁻¹ := by ring
+  have hBnn : (0 : ℝ) ≤ ε * Real.log A := by
+    have : (0 : ℝ) ≤ Real.log A := Real.log_natCast_nonneg A
+    positivity
+  exact norm_sum_Ioc_pow_le_from hA1 f i₀ m him _ _ hBnn hhead hwin
+
+#print axioms initial_segment_bound_of_kElliott_gen
+
+
 /-- **The initial-segment bound at `K` points.**  The `K`-point
 `initial_segment_bound_of_elliott`. -/
 theorem initial_segment_bound_of_kElliott {K : ℕ} (hK : 0 < K)
