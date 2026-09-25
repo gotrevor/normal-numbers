@@ -10504,3 +10504,33 @@ within current technology").
 
 NEXT: `Statement.lean` audit surface + ledger writeup (trigger C3-T6; six narrowings in laps
 90–96, so the reduction is FINAL unless the audit pass finds slack).
+
+## lap 97 (2026-09-25) — the AUDIT SURFACE (trigger C3-T6 served)
+
+`src/NormalNumbers/C3MrtStatement.lean` (new; tip green at 9014 jobs, `lake build` green at
+9257; both declarations `[propext, Classical.choice, Quot.sound]`).
+
+`audit_conjC3_of_dyadic_input` restates the lap-96 headline with EVERY abbreviation of the chain
+unwound — no `ConjC3`, `IsRich`, `WeylLambertTwist`, `DepthDyadicBound`, `depthRoot`, `ee`,
+`omegaNat`, `cKgeom`, `CstKdeg` or `Filter.Eventually`.  An auditor reads only
+`Nat.primeFactors`, `Complex.exp`, `Real.log`, `Real.exp`, an rpow, a `tsum`, `⌊·⌋`,
+`Int.fract` and a `Finset.card` density.  It went green first try, which is itself the
+faithfulness check: Lean accepted `exact hK₀ …` against `DepthDyadicBound` and the conclusion
+against `ConjC3` BY DEFEQ, so the unwinding is not a paraphrase.
+
+One honest gap is documented in the file: the audit form quantifies `∀ κ ∈ (0,1]` where the sharp
+theorem needs only `κ = ttExponent (depthRoot b h' 0)`.  That assumes strictly MORE, and is done
+only to keep `ttEps` / `resEps` off the audit surface.  `conjC3_of_dyadic_input` remains the
+sharp statement.
+
+`dyadic_threshold_satisfiable` checks the surface is not vacuous: for every `K` and every `s > 0`
+the threshold `max 2 (K+1) ≤ (2 log N)^s` holds for all large `N`, so the bound is asserted about
+genuinely many sums, not an empty range of `N`.
+
+Ledger text written into the file header: 🔴 OPEN, strictly stronger than print at every `K`
+(`K = 2` included), needed only in the large-`K` regime which print does not reach at all.
+
+STATE: the reduction is FINAL in the sense of C3-T6 — laps 90–97 produced six successive
+narrowings plus the audit surface.  Remaining honest work on the crux is to attack
+`DepthDyadicBound` itself (an explicit exponential-sum bound, now in a form where it can be
+attacked or refuted), not to narrow it further.
